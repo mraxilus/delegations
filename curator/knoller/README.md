@@ -10,7 +10,7 @@ Authority replicated: none. The rules are those of `CONSTITUTION.md` and `STYLE.
 ## Use
 
 ```sh
-knoller [--check] path...
+knoller [--check] [--nim:path] path...
 ```
 
 - A path names a file or a directory. A directory stands for the `.nim`, `.nims` and `.nimble`
@@ -23,6 +23,12 @@ knoller [--check] path...
   change that is due.
 - Knoller passes over a nimble file whose copy `atlas.lock` holds, because a rewrite would leave
   that copy stale.
+- A group of needless parentheses goes only where the parser of the compiler reads the same tree
+  without it. `--nim` names that compiler, and `nim` on `PATH` is the default. Name the compiler
+  that the code is pinned to: the `ronri` projects need their commit pin, because 2.2.12 lexes
+  their glyph operators as names. `koch fix` passes the pin of each project.
+- Where the compiler does not run, knoller removes no parentheses and prints one warning that
+  says why.
 - Knoller has no style option. A fence, from a line `#!fix off` to a line `#!fix on`, keeps its
   lines as written. Each run prints one warning for each fence, which names each rule that breaks
   inside it. So you always see what the fence keeps, and knoller writes none of it.
@@ -33,6 +39,7 @@ Each line of output names a path, a line and a rule id, and the output is sorted
 path:line: <rule-id> fixed
 path:line: <rule-id> left: <message>
 path:line: fence-held warning: <message>
+needless-parentheses warning: <message>
 N fixed.
 ```
 
@@ -70,7 +77,7 @@ Each rule id is stable, so a tool can read the output. `koch` cites the article 
 | `message-value` | A message echoes its value in backticks. |
 | `and-with-or` | A condition that mixes `and` with `or` puts each `and` in parentheses. |
 | `not-over-binary` | A `not` over a binary expression takes parentheses. No fix reaches it. |
-| `needless-parentheses` | Parentheses that the parser groups anyway go, around one operand alone. |
+| `needless-parentheses` | Parentheses go where the parser of the compiler reads the same tree. |
 | `to-target-subject-first` | A `to<Target>` call takes its plain subject first. |
 | `dotted-command` | A dotted call statement of one call or group argument takes command form. |
 | `return-result` | A routine never ends on `return result`. |

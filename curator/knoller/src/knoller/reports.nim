@@ -10,6 +10,10 @@
 ##     rewrites freely, and wrapping that runs after it breaks line; on held line it keeps
 ##     width guard, i.e. refuses rewrite that makes narrow line wide. Held lines are sorted
 ##     `seq`, never set or table, so every reading of them runs in one order.
+##   Prover step's rewrite stands only where parser of code's compiler proves it (`Proofs`):
+##     step reads answer for source it sees, and where none is held, writes nothing and asks
+##     (`Fix.asked`). Caller runs compiler on what is asked and runs chain again, so chain stays
+##     pure, and same answers give same output.
 ##   Path fixer reads is `/` separated: repository-relative from `koch`, absolute from command
 ##     line (`command.layoutOf`). Rule reading layout from it reads test file and stub here
 ##     alone, both from last directory `tests` (`testsPart`), so each meaning is written once.
@@ -20,7 +24,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, sequtils, strutils]
+import std/[algorithm, sequtils, strutils, tables]
 import ./rules
 
 export rules
@@ -38,6 +42,7 @@ type
     fixed*: seq[Report]  ## Path and line of input rewritten, with rule fixed.
     origin*: seq[int]  ## Input line of each output line, `0` where inserted; empty if none moved.
     left*: seq[Report]  ## Finding fix leaves for hand, with its message; empty where none.
+    asked*: seq[string]  ## Source whose rewrite parser must prove and no answer holds yet.
 
   Held* = object  ## Define lines whose width guard holds: every line, or lines listed.
     is_every*: bool  ## Every line held, so widener writes no wide line, as fixer before it.
@@ -49,10 +54,23 @@ type
   Widener* = proc (path, source: string; held: Held): Fix {.nimcall, noSideEffect.}
     ## Define fixer whose rewrite may widen line: free off held lines, width guard on them.
 
-  Step* = object  ## Define one fixer of chain: guarded on every line, or widening off held lines.
-    case is_widening*: bool
-    of true: widener*: Widener
-    of false: fixer*: Fixer
+  Proofs* = object  ## Define answers of parser of code's compiler, by source it was asked.
+    answers*: Table[string, seq[int]]
+      ## Byte offset of `(` of each group whose removal parser reads as same tree.
+
+  Proven* = proc (path, source: string; proofs: Proofs): Fix {.nimcall, noSideEffect.}
+    ## Define fixer whose rewrite parser must prove: writes what proofs answer, asks for rest.
+
+  StepKind* {.pure.} = enum  ## Define how step reads lines held and answers of parser.
+    Guarded  ## Fixer guarded on every line.
+    Widening  ## Widener, off held lines.
+    Proving  ## Fixer writing what parser proves, guarded on every line.
+
+  Step* = object  ## Define one fixer of chain, of one kind.
+    case kind*: StepKind
+    of StepKind.Guarded: fixer*: Fixer
+    of StepKind.Widening: widener*: Widener
+    of StepKind.Proving: proven*: Proven
 
 
 const EVERY* = Held(is_every: true)  ## Held of every line, as each widener's two-argument form.
@@ -83,17 +101,26 @@ func isStub*(path: string): bool =
 
 func guarded*(fixer: Fixer): Step =
   ## Construct step of fixer guarded on every line.
-  Step(is_widening: false, fixer: fixer)
+  Step(kind: StepKind.Guarded, fixer: fixer)
 
 
 func widening*(widener: Widener): Step =
   ## Construct step of widener, which reads held lines.
-  Step(is_widening: true, widener: widener)
+  Step(kind: StepKind.Widening, widener: widener)
 
 
-func run*(step: Step; path, source: string; held: Held): Fix =
-  ## Run step on source: widener reads held lines, guarded fixer reads none.
-  if step.is_widening: step.widener(path, source, held) else: step.fixer(path, source)
+func proving*(proven: Proven): Step =
+  ## Construct step of fixer whose rewrite parser proves, which reads answers.
+  Step(kind: StepKind.Proving, proven: proven)
+
+
+func run*(step: Step; path, source: string; held: Held; proofs = Proofs()): Fix =
+  ## Run step on source: widener reads held lines, prover step reads answers, guarded fixer
+  ##   reads neither.
+  case step.kind
+  of StepKind.Guarded: step.fixer(path, source)
+  of StepKind.Widening: step.widener(path, source, held)
+  of StepKind.Proving: step.proven(path, source, proofs)
 
 
 func isHeld*(held: Held, line: int): bool =
@@ -122,3 +149,6 @@ func chain*(fix, step: Fix): Fix =
   result.origin =
     if step.origin.len == 0: fix.origin
     else: step.origin.mapIt(fix.traced(it))
+  result.asked = fix.asked
+  for asked in step.asked:
+    if asked notin result.asked: result.asked.add asked

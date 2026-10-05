@@ -1,4 +1,5 @@
-## Run knoller from shell: `knoller [--check] path...`, fixing each Nim file paths name.
+## Run knoller from shell: `knoller [--check] [--nim:path] path...`, fixing each Nim file paths
+##   name.
 ##   Path names file, or directory standing for `.nim`, `.nims` and `.nimble` files `git
 ##     ls-files` lists under it, sorted. Named file of other extension is passed over; path
 ##     naming nothing is usage error, and so is directory naming no Nim file, which says why:
@@ -17,6 +18,11 @@
 ##   Exit: 0 clean; 1 finding left, or change due under `--check`; 2 usage error. Warning
 ##     changes no exit code, since fence is escape charter grants (Article X.1).
 ##   No style option: rules are constants, and fence is only escape (Article X.1).
+##   Needless parentheses go where parser of compiler `--nim` names proves it, `nim` on `PATH`
+##     unless named (`proofs.nim`): run fixes every file, asks parser what chain asked, and
+##     fixes again, at most `ASKS_MAX` times. Where no compiler answers, rule removes nothing,
+##     and run prints one line `needless-parentheses warning: <message>` before count; warning
+##     changes no exit code.
 ##   Fixers read each path whole, absolute and with `.` and `..` resolved (`layoutOf`), so test
 ##     file, stub and umbrella read alike however command line names them; output prints path
 ##     as named.
@@ -30,46 +36,55 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, options, os, osproc, parseopt, sequtils, strutils]
-import ./[chain, reports]
+import std/[algorithm, options, os, osproc, parseopt, sequtils, strutils, tables]
+import ./[chain, fences, parentheses, proofs, reports]
 
 
 const
   USAGE = """
-Usage: knoller [--check] path...
+Usage: knoller [--check] [--nim:path] path...
 
 Fix each Nim file path names; directory stands for Nim files git lists under it.
 
 Options:
-  --check  write nothing; report each change due, and exit 1 where any
+  --check     write nothing; report each change due, and exit 1 where any
+  --nim:path  compiler whose parser proves each parentheses removal; default `nim`
 """
     ## Text printed on usage error.
   EXTENSIONS: array[Dialect, string] = [".nim", ".nims", ".nimble"]
     ## Extension of file of each dialect.
+  NIM_DEFAULT = "nim"  ## Compiler proving removals where none is named: `nim` on `PATH`.
+  ASKS_MAX = 8
+    ## Rounds of asking parser at most; each answers sources chain asked, and tree settles in
+    ##   three (`PROVENANCE.md`, Content fixes).
 
 
 type
   Options* = object  ## Define parsed command line.
     is_check*: bool  ## Report changes due and write none.
+    nim*: string  ## Compiler whose parser proves each removal of parentheses.
     paths*: seq[string]  ## Paths named, files or directories, in order given.
 
   Outcome* = object  ## Define what one run writes and prints, and its exit code.
     written*: seq[(string, string)]  ## Path and new text of each file that changes.
     lines*: seq[string]  ## Lines printed, in order.
     code*: int  ## Exit code: 0 clean, 1 finding left or change due under `--check`.
+    asked*: seq[string]  ## Source chain asked parser about and no answer holds yet.
 
 
 proc parseOptions*(arguments: openArray[string]): Option[Options] =
-  ## Parse command line; `none` on unknown option, option value, or no path.
+  ## Parse command line; `none` on unknown option, value where none belongs, `--nim` without
+  ##   one, or no path.
   var
-    options = Options()
+    options = Options(nim: NIM_DEFAULT)
     parser = initOptParser(@arguments)
   for kind, key, value in parser.getopt():
     case kind
     of cmdArgument: options.paths.add key
     of cmdLongOption, cmdShortOption:
-      if key != "check" or value.len > 0: return none(Options)
-      options.is_check = true
+      if key == "check" and value.len == 0: options.is_check = true
+      elif key == "nim" and value.len > 0: options.nim = value
+      else: return none(Options)
     of cmdEnd: break
   if options.paths.len == 0: none(Options) else: some(options)
 
@@ -110,19 +125,28 @@ func `<`(a, b: Report): bool =
 
 
 func outcomeOf*(
-  files: openArray[(string, string)], locked: openArray[string], is_check: bool, directory = "/"
+  files: openArray[(string, string)];
+  locked: openArray[string];
+  is_check: bool;
+  directory = "/";
+  proofs = Proofs();
+  failure = "",
 ): Outcome =
   ## Fix each file of Nim dialect, as path and text, and decide what run writes and prints;
   ##   file `locked` names, or of no dialect, is passed over. Fixers read each path whole from
-  ##   directory it is named from (`layoutOf`).
+  ##   directory it is named from (`layoutOf`). Parentheses go where `proofs` prove them, and
+  ##   each source no answer reaches is in `Outcome.asked`, source as given too where fence
+  ##   holds lines, since fence's warning reads it. Failure of prover prints as warning.
   var fixed, left, held: seq[Report]
   for (path, source) in files:
     let dialect = path.dialectOf
     if dialect.isNone or path in locked: continue
     let layout = path.layoutOf(directory)
-    held.add heldOf(layout, source, dialect.get).shownAs(path)
-    let fix = formatted(layout, source, dialect.get)
-    var after = checkFormatting(layout, fix.source, dialect.get)
+    held.add heldOf(layout, source, dialect.get, proofs).shownAs(path)
+    if source.fenceOf.lines.len > 0: result.asked.add source.questionsOf(proofs)
+    let fix = formatted(layout, source, dialect.get, proofs)
+    result.asked.add fix.asked
+    var after = checkFormatting(layout, fix.source, dialect.get, proofs)
     for report in after.mitems: report.line = fix.traced(report.line)  # Line as given.
     left.add shownAs(fix.left & after, path)
     if fix.source == source: continue
@@ -132,8 +156,31 @@ func outcomeOf*(
   for report in fixed.sorted: result.lines.add report.located & outcome
   for report in left.sorted: result.lines.add report.located & " left: " & report.message
   for report in held.sorted: result.lines.add report.located & " warning: " & report.message
+  if failure.len > 0: result.lines.add Rule.NeedlessParentheses.id & " warning: " & failure
   result.lines.add $fixed.len & outcome & "."
   result.code = if left.len > 0 or (is_check and fixed.len > 0): 1 else: 0
+  result.asked = result.asked.deduplicate
+
+
+proc provenOutcome*(
+  files: openArray[(string, string)];
+  locked: openArray[string];
+  is_check: bool;
+  directory: string;
+  prover: Prover,
+): Outcome =
+  ## Fix files as `outcomeOf` does, ask prover what chain asked, and fix again, at most
+  ##   `ASKS_MAX` times; prover that fails is asked no more, and its failure prints as warning.
+  var
+    proofs = Proofs()
+    failure = ""
+  result = outcomeOf(files, locked, is_check, directory, proofs)
+  for ask in 1 .. ASKS_MAX:
+    if result.asked.len == 0: break
+    if failure.len > 0:
+      for source in result.asked: proofs.answers[source] = @[]
+    else: failure = proofs.answered(result.asked, prover)
+    result = outcomeOf(files, locked, is_check, directory, proofs, failure)
 
 
 func listingOf*(directory, output: string; code: int): tuple[files: seq[string], refusal: string] =
@@ -189,11 +236,13 @@ proc main*(): int =
       stderr.write USAGE
       return 2
   paths = paths.deduplicate
-  let outcome = outcomeOf(
+
+  let outcome = provenOutcome(
     paths.mapIt((it, readFile(it))),
     paths.lockedOf,
     options.get.is_check,
     getCurrentDir(),
+    compilerProver(options.get.nim),
   )
   for (path, text) in outcome.written: writeFile(path, text)
   for line in outcome.lines: echo line
