@@ -17,6 +17,8 @@
 ##     it was timed at (`measured_at`). Record taken at pin before digests existed takes digest of
 ##     its builds there (Architect, 2026-10-05).
 ##     Rejected: timing again at each cosmetic head, which records drift of host alone.
+##     Digest names each type hash, and any run of its shape, by order of first appearance,
+##       since hash folds path of module into name of type; so any checkout takes same digest.
 ##     Cost: digest taken at record's own pin after its timing names C of that later build;
 ##       project code changed between them would go unseen, as stamp alone never saw it.
 ##
@@ -90,14 +92,44 @@ func checkEvaluation*(evaluation: JsonNode; pin, digest, path: string): seq[Find
 #[ Restamp ]#
 
 func digestSources*(sources: openArray[(string, string)], pin: string): string =
-  ## Digest C of one build: every file by name, in name order, with pin's commit left out.
+  ## Digest C of one build: every file by name, in name order, with pin's commit left out, and
+  ##   each run of 20 to 32 letters and digits after `__`, as Nim spells type hashes, named by
+  ##   order of first appearance.
+  ##   Few such runs are module names, as `pureZcollectionsZtables`; they read alike at any path.
   ##   Build names commit in documents it writes, so commit is text two pins' C differ by
   ##     even where library compiles alike.
-  var sorted = @sources
+  ##   Type hash folds path of module into name of type, so same tree at two checkout paths
+  ##     emits C that differs in hashes alone; body of each type stays, so type that changes
+  ##     shape still moves digest.
+
+  func numbered(text: string, seen: var Table[string, string]): string =
+    ## Replace each run of 20 to 32 letters and digits after `__` by `H` and its order.
+    const
+      alphanumeric = {'a'..'z', 'A'..'Z', '0'..'9'}
+      width = 20..32
+    result = newStringOfCap(text.len)
+    var index = 0
+    while index < text.len:
+      if index + 1 < text.len and text[index] == '_' and text[index+1] == '_':
+        var stop = index + 2
+        while stop < text.len and text[stop] in alphanumeric: inc stop
+        if stop - index - 2 in width:
+          let hash = text[index+2..<stop]
+          if hash notin seen: seen[hash] = "H" & $seen.len
+          result.add "__" & seen[hash]
+          index = stop
+          continue
+      result.add text[index]
+      inc index
+
+  var
+    sorted = @sources
+    seen: Table[string, string]
+    text = ""
   sorted.sort
-  var text = ""
   for (name, source) in sorted:
-    text.add name & "\0" & (if pin.len > 0: source.replace(pin, "") else: source) & "\0"
+    let pinless = if pin.len > 0: source.replace(pin, "") else: source
+    text.add name & "\0" & pinless.numbered(seen) & "\0"
   digestOf(text)
 
 
