@@ -16,4 +16,4 @@ srcDir = "src"
 #   with characters no release lexes. Same commit `rga_visualiser` pins, so one cached
 #   build serves both projects; see PROVENANCE.md, Dependencies.
 requires "nim == 27763495bcfe265507ca98aedc1c7064bf1e0e4d"
-requires "https://gitlab.com/mraxilus/replications#d9be8ae"
+requires "https://gitlab.com/mraxilus/replications#edb0c9d"

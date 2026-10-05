@@ -110,7 +110,7 @@ func compare*(baseline, current: JsonNode; path: string): Verdict =
       elif now < was:
         result.improvements.add(
           "Total `" & metric & "` of `" & key & "` shrank; got `" & $now & "`, baseline `" &
-              $was & "`.",
+          $was & "`.",
         )
   # Bounds are derived, so they never drift: any move means derivation itself changed.
   let

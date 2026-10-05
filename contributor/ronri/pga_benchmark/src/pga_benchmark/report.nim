@@ -131,7 +131,7 @@ func median*(values: openArray[float]): float =
   let
     sorted = values.sorted
     middle = sorted.len div 2
-  if sorted.len mod 2 == 1: sorted[middle] else: (sorted[middle - 1] + sorted[middle]) / 2.0
+  if sorted.len mod 2 == 1: sorted[middle] else: (sorted[middle-1] + sorted[middle]) / 2.0
 
 
 func combineRuns*(runs: openArray[JsonNode]): JsonNode =

@@ -21,13 +21,13 @@ export cayleys  # tables are compile-time values; reading one at runtime allocat
 
 ```nim
 when IS_RIGID:
-  func bulk*(m: Multivector): Multivector {.inline.} = ∙ m
+  func bulk*(m: Multivector): Multivector {.inline.} = ∙m
 ```
 
 ```nim
 when IS_RIGID:
   ## Same symbol carries two names by metric: bulk here, bulkRound under conformal.
-  func bulk*(m: Multivector): Multivector {.inline.} = ∙ m
+  func bulk*(m: Multivector): Multivector {.inline.} = ∙m
 ```
 
 ## Edit `pga/algebra.nim`
@@ -55,33 +55,35 @@ when IS_RIGID:
 ## Edit `pga/algebra.nim`
 
 ```nim
-#   Ideally Nim would have a feature to auto borrow everything, but prevent interop.
+#   Ideally Nim would have feature to auto borrow everything, but prevent interop.
 ```
 
 ```nim
-#   Ideally Nim would have a feature to auto borrow everything, but prevent interop.
+#   Ideally Nim would have feature to auto borrow everything, but prevent interop.
 #   `{.used.}` markers below are needed only because cayleys.nim imports `{.all.}`.
 ```
 
 ## Edit `pga/algebra.nim`
 
 ```nim
-  ## Define bases for a `dimensions`-dimensional PGA.
+  ## Define bases for `dimensions`-dimensional PGA.
 ```
 
 ```nim
-  ## Define bases for a `dimensions`-dimensional PGA.
+  ## Define bases for `dimensions`-dimensional PGA.
   ##   At 4D emits: S, E1..E4, E41, E42, E43, E23, E31, E12, E423, E431, E412, E321, E1234.
 ```
 
 ## Edit `pga/algebra.nim`
 
 ```nim
-    ## Populate missing algebras up to the `dimensions`-dimensional PGA.
+  proc generateUpTo(algebras: var Table[int, Algebra], dimensions: int) {.compileTime.} =
+    ## Populate missing algebras up to `dimensions`-dimensional PGA.
 ```
 
 ```nim
-    ## Populate missing algebras up to the `dimensions`-dimensional PGA.
+  proc generateUpTo(algebras: var Table[int, Algebra], dimensions: int) {.compileTime.} =
+    ## Populate missing algebras up to `dimensions`-dimensional PGA.
     ##   Nested and mutating by design: builds each dimension from one below it.
 ```
 
@@ -120,11 +122,11 @@ when IS_RIGID:
 ## Edit `pga/cayleys.nim`
 
 ```nim
-func constructMetric(dimensions: int; is_conformal: bool): Cayley1D {.compileTime.} =
+func constructMetric(dimensions: int, is_conformal: bool): Cayley1D {.compileTime.} =
 ```
 
 ```nim
-func constructMetric(dimensions: int; is_conformal: bool): Cayley1D {.compileTime.} =
+func constructMetric(dimensions: int, is_conformal: bool): Cayley1D {.compileTime.} =
   # NOTE: Only constructor taking configuration as arguments; siblings read globals.
 ```
 
@@ -142,11 +144,11 @@ func constructMetric(dimensions: int; is_conformal: bool): Cayley1D {.compileTim
 ## Edit `pga/cayleys.nim`
 
 ```nim
-): tuple[basis: BasisSigned; is_degenerate: bool] {.compileTime.} =
+): tuple[basis: BasisSigned, is_degenerate: bool] {.compileTime.} =
 ```
 
 ```nim
-): tuple[basis: BasisSigned; is_degenerate: bool] {.compileTime.} =
+): tuple[basis: BasisSigned, is_degenerate: bool] {.compileTime.} =
   ## Perform exterior product of two bases, reducing to its standard basis form.
   ##   Parity argument below is the proof; keep it with the code.
 ```
@@ -166,11 +168,11 @@ func constructMetric(dimensions: int; is_conformal: bool): Cayley1D {.compileTim
 ## Edit `pga/multivectors.nim`
 
 ```nim
-  Multivector* = object ## Define generalised multivector for n-dimensional PGA.
+  Multivector* = object  ## Define generalised multivector for n-dimensional PGA.
 ```
 
 ```nim
-  Multivector* = object ## Define generalised multivector for n-dimensional PGA.
+  Multivector* = object  ## Define generalised multivector for n-dimensional PGA.
     ## Dense by design: 2^N floats per object whatever its grade, 128 bytes at 4D.
 ```
 

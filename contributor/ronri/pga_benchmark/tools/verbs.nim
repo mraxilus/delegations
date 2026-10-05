@@ -29,8 +29,8 @@ import ../src/pga_benchmark/pages/[docket, listing, marginalia, render, shell]
 import ../src/pga_benchmark/pages/proposal as page_proposal
 import ../src/pga_benchmark/pages/evaluation as page_evaluation
 from ../src/pga_benchmark/evaluations import
-  Candidate, Toolchain, algebrasEvaluated, digestEdits, binaryPristine, suitesPristine,
-  readLibrary, runEvaluation
+  Candidate, Toolchain, algebrasEvaluated, digestCache, digestEdits, binaryPristine,
+  suitesPristine, readLibrary, runEvaluation
 
 
 const
@@ -50,7 +50,7 @@ const
   FLAGS = "-d:release"  ## Build flags every measured build carries; documents name them.
   CONFIGS = [("rga4d", 4, false), ("cga5d", 5, true), ("rga3d", 3, false), ("cga4d", 4, true)]
     ## Algebras driven, typed ones first: name, dimensions, conformal.
-  SWEEP = 2 .. 6  ## Dimensions swept, rigid metric, general measurands only.
+  SWEEP = 2..6  ## Dimensions swept, rigid metric, general measurands only.
   USAGE = "Usage: nim r tools/build.nim <verb> [arguments]; this file runs through it alone.\n"
     ## Text printed where verb is unknown here; dispatcher's own usage names every verb.
   CHECKOUT = "dependencies" / "replications.mraxilus.gitlab.com"
@@ -141,7 +141,7 @@ proc compile(
   run(
     "nim",
     @["c", "--hints:off", FLAGS, "--nimcache:" & cache, "-o:" & binary] &
-        defines(dimensions, is_conformal, nim, pga) & @extra & @[entry],
+    defines(dimensions, is_conformal, nim, pga) & @extra & @[entry],
   )
 
 
@@ -210,6 +210,8 @@ proc bench() =
   createDir BUILD
   createDir BASELINE
   for (name, dimensions, is_conformal) in CONFIGS:
+    removeDir BUILD / "cache_" & name
+    removeDir BUILD / "cache_alloc_" & name
     compile(
       ENTRY_BENCH,
       BUILD / "bench_" & name,
@@ -230,7 +232,7 @@ proc bench() =
       ["-d:nimAllocStats"],
     )
   var runs: Table[string, seq[JsonNode]]
-  for index in 1 .. RUNS_BENCH:
+  for index in 1..RUNS_BENCH:
     for (name, _, _) in CONFIGS:
       let output = BUILD / "bench_" & name & "_" & $index & ".json"
       run(BUILD / "bench_" & name, [output])
@@ -241,6 +243,10 @@ proc bench() =
     let
       measurements = mergeAllocations(combineRuns(runs[name]), readDocument(instrumented & ".json"))
       recorded = BASELINE / "runtime_" & name & ".json"
+    measurements["digest_c"] = %*{
+      "plain": digestCache(BUILD / "cache_" & name, pga),
+      "alloc": digestCache(BUILD / "cache_alloc_" & name, pga),
+    }
     writeFile(recorded, pretty(measurements) & "\n")
     echo "Recorded ", recorded
 
@@ -460,7 +466,7 @@ proc facesFromStore(): Table[string, string] =
   ##   it could not serve, and short list would pair wrong bytes with right name.
   let (written, code) = execCmdEx(
     "nim r --hints:off --warnings:off " & quoteShell(PATH_KOCH) & " fetch-assets " &
-        FACES.quoteShellCommand,
+    FACES.quoteShellCommand,
   )
   if code != 0:
     raise newException(
@@ -679,6 +685,59 @@ proc publishedAt(name, url: string) =
 
 #[ Evaluations ]#
 
+proc tried(
+  selected: seq[Candidate],
+  names_algebra: seq[string],
+  taken: JsonNode,
+  before: Table[string, JsonNode],
+  findings: var seq[Finding],
+) =
+  ## Try each candidate at pin on algebras named, and write each evaluation document.
+  ##   Candidate `before` names keeps times of that evaluation, on its own algebras, with its
+  ##     stamp moved to pin; every other candidate is timed, stamped `taken`.
+  let chain = Toolchain(
+    library: LIBRARY,
+    work: BUILD / "evaluations",
+    nim: commitNim(),
+    pga: commitPga(),
+    flags: FLAGS,
+    runs: RUNS_EVALUATION,
+  )
+  var
+    algebras: seq[evaluations.Algebra]
+    baselines: Table[string, JsonNode]
+    pristine: Table[string, string]
+  for (name, dimensions, is_conformal) in CONFIGS:
+    if name notin names_algebra: continue
+    let algebra =
+      evaluations.Algebra(name: name, dimensions: dimensions, is_conformal: is_conformal)
+    algebras.add algebra
+    baselines[name] = readDocument(BASELINE / "static_" & name & ".json")
+    pristine[name] = binaryPristine(chain, algebra)
+  let suites_pin = suitesPristine(chain, algebras)
+  createDir DIRECTORY_EVALUATIONS
+  for candidate in selected:
+    echo "Trying ", candidate.name
+    let
+      earlier = before.getOrDefault(candidate.name)
+      (document, why) = runEvaluation(
+        chain,
+        candidate,
+        algebras.filterIt(earlier.isNil or earlier{"algebras"}.hasKey(it.name)),
+        baselines,
+        pristine,
+        suites_pin,
+        if earlier.isNil: taken else: stampMoved(earlier{"taken"}, chain.pga),
+        earlier,
+      )
+    removeDir chain.work / candidate.name
+    if document.isNil:
+      findings.add why
+      continue
+    writeFile(DIRECTORY_EVALUATIONS / candidate.name & ".json", pretty(document) & "\n")
+    echo "Recorded ", DIRECTORY_EVALUATIONS / candidate.name & ".json"
+
+
 proc evaluate(which: string, is_thorough: bool) =
   ## Try one change or proposal at pin, and write each evaluation document.
   ##   `all` tries every one, and `stale` tries those `drive` would name.
@@ -696,11 +755,13 @@ proc evaluate(which: string, is_thorough: bool) =
   if findings.len > 0: report(findings)
   let
     pin = commitPga()
-    tried = readEvaluations()
+    tried_before = readEvaluations()
     selected = case which
       of "all": candidates
-      of "stale": candidates.filterIt(it.name notin tried or checkEvaluation(tried[it.name], pin,
-        digestEdits(it.changes, it.claims, it.programs), "").len > 0)
+      of "stale": candidates.filterIt(
+        it.name notin tried_before or checkEvaluation(
+          tried_before[it.name], pin, digestEdits(it.changes, it.claims, it.programs), "").len > 0,
+      )
       else: candidates.filterIt(it.name == which)
   if selected.len == 0 and which == "stale":
     echo "Every evaluation is current."
@@ -709,48 +770,99 @@ proc evaluate(which: string, is_thorough: bool) =
     ValueError,
     "No change or proposal named `" & which & "`.",
   )
-  let chain = Toolchain(
-    library: LIBRARY,
-    work: BUILD / "evaluations",
-    nim: commitNim(),
-    pga: commitPga(),
-    flags: FLAGS,
-    runs: RUNS_EVALUATION,
-  )
-  var
-    algebras: seq[evaluations.Algebra]
-    baselines: Table[string, JsonNode]
-    pristine: Table[string, string]
-  let evaluated = algebrasEvaluated(is_thorough)
-  for (name, dimensions, is_conformal) in CONFIGS:
-    if name notin evaluated: continue
-    let algebra =
-      evaluations.Algebra(name: name, dimensions: dimensions, is_conformal: is_conformal)
-    algebras.add algebra
-    baselines[name] = readDocument(BASELINE / "static_" & name & ".json")
-    pristine[name] = binaryPristine(chain, algebra)
+  let taken = %*{"date": now().format("yyyy-MM-dd"), "machine": machine(), "nim": commitNim(),
+    "pga": pin, "flags": FLAGS, "runs": RUNS_EVALUATION}
+  tried(selected, algebrasEvaluated(is_thorough), taken, initTable[string, JsonNode](), findings)
+  report(findings)
+
+
+proc restamp() =
+  ## Restamp every timed record to pin where its builds emit C it was timed on (`head.nim`).
+  ##   Runtime baselines and sweep compile to C alone. Evaluations are tried again with times
+  ##     kept, so every other figure of theirs is taken at pin. Record whose C differs, or
+  ##     that names no digest away from pin, is finding, and its verb takes it again.
+  ##   Record at pin without digest takes digest of its builds, and keeps every figure.
+  ##   Evaluation already at pin with its digests is left alone, so run cut short resumes.
   let
-    suites_pin = suitesPristine(chain, algebras)
-    taken = %*{"date": now().format("yyyy-MM-dd"), "machine": machine(), "nim": chain.nim,
-      "pga": chain.pga, "flags": FLAGS, "runs": RUNS_EVALUATION}
-  createDir DIRECTORY_EVALUATIONS
-  for candidate in selected:
-    echo "Trying ", candidate.name
-    let (document, why) = runEvaluation(
-      chain,
-      candidate,
-      algebras,
-      baselines,
-      pristine,
-      suites_pin,
-      taken,
+    nim = commitNim()
+    pin = commitPga()
+  var findings: seq[Finding]
+
+  proc restampTo(path: string, digests: JsonNode, again: string, findings: var seq[Finding]) =
+    ## Restamp one record to pin, or find why it cannot move.
+    let
+      document = readDocument(path)
+      why = checkRestamp(
+        document{"digest_c"},
+        digests,
+        document{"taken", "pga"}.getStr,
+        pin,
+        path,
+        again,
+      )
+    findings.add why
+    if why.len > 0: return
+    let moved = restamped(document, digests, pin)
+    if moved != document:
+      writeFile(path, pretty(moved) & "\n")
+      echo "Restamped ", path
+
+  proc digestOfBuild(
+    name: string, dimensions: int, is_conformal: bool, extra: openArray[string]
+  ): JsonNode =
+    ## Compile bench entry to C alone in fresh cache; digest of C.
+    let cache = BUILD / "cache_carry_" & name
+    removeDir cache
+    compile(
+      ENTRY_BENCH,
+      BUILD / "carry_" & name,
+      cache,
+      dimensions,
+      is_conformal,
+      nim,
+      pin,
+      @["--compileOnly"] & @extra,
     )
-    removeDir chain.work / candidate.name
-    if document.isNil:
-      findings.add why
-      continue
-    writeFile(DIRECTORY_EVALUATIONS / candidate.name & ".json", pretty(document) & "\n")
-    echo "Recorded ", DIRECTORY_EVALUATIONS / candidate.name & ".json"
+    %digestCache(cache, pin)
+
+  createDir BUILD
+  for (name, dimensions, is_conformal) in CONFIGS:
+    let path = BASELINE / "runtime_" & name & ".json"
+    if not fileExists(path): continue
+    let digests = %*{
+      "plain": digestOfBuild(name, dimensions, is_conformal, []),
+      "alloc": digestOfBuild("alloc_" & name, dimensions, is_conformal, ["-d:nimAllocStats"]),
+    }
+    restampTo(path, digests, "run `bench`", findings)
+  if fileExists(PATH_SWEEP):
+    var digests = newJObject()
+    for dimensions in SWEEP:
+      digests[$dimensions&"d"] = digestOfBuild(
+        "sweep_" & $dimensions & "d",
+        dimensions,
+        false,
+        [],
+      )
+    restampTo(PATH_SWEEP, digests, "run `sweep`", findings)
+  let
+    changes = readChanges(findings)
+    proposals = readProposals(findings)
+    candidates = candidatesOf(changes, proposals, findings)
+    before = readEvaluations()
+  var names_algebra: seq[string]
+  for document in before.values:
+    for name in document{"algebras"}.keys:
+      if name notin names_algebra: names_algebra.add name
+  tried(
+    candidates.filterIt(it.name in before and not before[it.name].isRestamped(
+      pin,
+      digestEdits(it.changes, it.claims, it.programs),
+    )),
+    names_algebra,
+    nil,
+    before,
+    findings,
+  )
   report(findings)
 
 
@@ -829,11 +941,14 @@ proc sweep() =
   var
     documents: seq[JsonNode]
     swept = newJObject()
+    digests = newJObject()
   for dimensions in SWEEP:
     let
       name = "sweep_" & $dimensions & "d"
       binary = BUILD / name
+    removeDir BUILD / "cache_" & name
     compile(ENTRY_BENCH, binary, BUILD / "cache_" & name, dimensions, false, nim, pga)
+    digests[$dimensions&"d"] = %digestCache(BUILD / "cache_" & name, pga)
     run(binary, [binary & ".json"])
     let document = readDocument(binary & ".json")
     documents.add document
@@ -841,9 +956,9 @@ proc sweep() =
     for id, measured in document{"measurands"}.pairs:
       let library = measured{"library"}
       if not library.isNil and library.kind == JObject: medians[id] = library{"ns_median"}
-    swept[$dimensions & "d"] = medians
+    swept[$dimensions&"d"] = medians
   let recorded = %*{"schema": 1, "kind": "sweep", "taken": documents[0]{"taken"}, "runs": 1,
-      "dimensions": swept}
+      "dimensions": swept, "digest_c": digests}
   writeFile(PATH_SWEEP, pretty(recorded) & "\n")
   echo "Recorded ", PATH_SWEEP
   var header = "measurand".alignLeft(26)
@@ -868,7 +983,7 @@ func shortened(text, stem, plain: string): string =
     if at < 0:
       result.add text[i .. ^1]
       break
-    result.add text[i ..< at]
+    result.add text[i..<at]
     result.add plain
     var j = at + stem.len + 2
     while j < text.len and (text[j].isAlphaNumeric or text[j] == '_'): inc j
@@ -890,8 +1005,8 @@ func unindexed(text: string): string =
     if close < 0:
       result.add text[i .. ^1]
       break
-    result.add text[i ..< at]
-    result.add text[at + opening.len ..< close]
+    result.add text[i..<at]
+    result.add text[at+opening.len..<close]
     i = close + closing.len
 
 
@@ -968,7 +1083,7 @@ proc showFunction(symbol, algebra: string) =
         if printed >= LINES_SHOWN:
           echo "     … ", counts.lines - printed, " more lines; whole body is in ", cache
           break
-        echo "     ", (if line.len > WIDTH_SHOWN: line[0 ..< WIDTH_SHOWN] & " …" else: line)
+        echo "     ", (if line.len > WIDTH_SHOWN: line[0..<WIDTH_SHOWN] & " …" else: line)
         inc printed
       echo ""
       echo "   machine code"
@@ -1011,6 +1126,7 @@ proc main(): int =
     of "baseline": baseline()
     of "guard": guard()
     of "evaluate": evaluate(paramStr(2), paramCount() == 3)
+    of "restamp": restamp()
     of "pages": pages()
     of "published": publishedAt(paramStr(2), paramStr(3))
     of "drive": drive()

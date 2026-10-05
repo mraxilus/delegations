@@ -61,7 +61,7 @@ func bodyMarginalia*(
         renderBlocks(note.body, 2) & "</article>"
 
   result = "<div class=\"page\"><header><h1>PGA Marginalia</h1><p class=\"meta\">pga " &
-      code(pin[0 ..< 7]) & " · every change tried at pin, every note located at pin" & links &
+      code(pin[0..<7]) & " · every change tried at pin, every note located at pin" & links &
       "</p></header>"
   result.add "<section class=\"block\"><h2>Changes proposed</h2><p class=\"note\">" &
       textSpread(spread) & "</p>"

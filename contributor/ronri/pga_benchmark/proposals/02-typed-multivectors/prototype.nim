@@ -44,10 +44,10 @@ func basesOfParity(parity: Parity): set[Basis] {.compileTime.} =
 
 func kinds(): seq[(string, set[Basis])] {.compileTime.} =
   ## List every generated kind with its bases, smallest first: grades, then parities.
-  for grade in Grade.low .. Grade.high:
-    result.add(("Kvector" & $int(grade), basesOfGrade(grade)))
-  result.add(("MultivectorEven", basesOfParity(Parity.Even)))
-  result.add(("MultivectorOdd", basesOfParity(Parity.Odd)))
+  for grade in Grade.low..Grade.high:
+    result.add ("Kvector" & $int(grade), basesOfGrade(grade))
+  result.add ("MultivectorEven", basesOfParity(Parity.Even))
+  result.add ("MultivectorOdd", basesOfParity(Parity.Odd))
 
 
 func slotOf(listed: set[Basis], basis: Basis): int =
@@ -158,7 +158,7 @@ func toMultivector*[T: SomeMultivector](m: T): Multivector =
 
 proc sample[T: SomeMultivector](): T =
   ## Draw one kind with every slot uniform in [-1, 1].
-  for index in 0 ..< result.elements.len: result.elements[index] = rand(-1.0 .. 1.0)
+  for index in 0..<result.elements.len: result.elements[index] = rand(-1.0..1.0)
 
 
 proc main(): int =
@@ -167,7 +167,7 @@ proc main(): int =
   let (p, q, v) = (sample[Kvector1](), sample[Kvector1](), sample[MultivectorEven]())
   doAssert (p ∧ q) is Kvector2, "vector wedge vector must be bivector"
   doAssert ((v ⟇ p) ⟇ v) is MultivectorOdd, "even sandwich of vector reaches odd half"
-  for _ in 1 .. SAMPLES:
+  for _ in 1..SAMPLES:
     let
       (a, b) = (sample[Kvector1](), sample[Kvector2]())
       motor = sample[MultivectorEven]()

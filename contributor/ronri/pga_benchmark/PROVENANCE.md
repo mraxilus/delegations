@@ -234,11 +234,12 @@ One run times both implementations, so the runs pair by index, and each run give
 ratio. The docket draws one tick for each of those ratios. Rejected: the spread of rounds inside
 one run, because it misses drift between runs. That drift is the larger part on this machine.
 
-**The runtime baselines are from 2026-10-03 at all four algebras**, at `d9be8ae`, five runs each
-on `linux amd64, 4 cores`. The bench of 2026-10-01, run at `3121342` on 2026-10-02 in turn with
-the baselines of that day, gives the drift between days. At rga4d its library runs ×1.19 to ×1.22
-of its own times of 2026-10-01. Its reference runs ×1.26 to ×1.27, and its dense forms ×1.00 to
-×1.01. The bench of 2026-10-02 runs ×0.99 to ×1.01 of it in the same runs.
+**The runtime baselines are from 2026-10-03 at all four algebras**, at `d9be8ae`, five runs each on
+`linux amd64, 4 cores`. `restamp` moved them to the pin `edb0c9d`, whose bench emits the same C. The
+bench of 2026-10-01, run at `3121342` on 2026-10-02 in turn with the baselines of that day, gives
+the drift between days. At rga4d its library runs ×1.19 to ×1.22 of its own times of 2026-10-01. Its
+reference runs ×1.26 to ×1.27, and its dense forms ×1.00 to ×1.01. The bench of 2026-10-02 runs
+×0.99 to ×1.01 of it in the same runs.
 
 So the machine moves between days, and not by one factor for each implementation. Times
 taken at different hours never compare, and ratios within one run do.
@@ -864,6 +865,29 @@ exits 1.
 taken at the pin. Each evaluation must carry the digest of its edits as they are now. Each change
 and proposal must apply at pin, and each note must find its quote.
 
+**`restamp` moves a timed record to a new pin where its C is the same.** Each runtime baseline,
+the sweep and each algebra of an evaluation name the digest of the C that their timed builds
+emitted. The digest leaves out the commit of the pin, since the build writes that commit into its
+documents. `restamp` compiles the same builds at the pin. Where each digest holds, the record moves
+its stamp to the pin, keeps its times, and names the commit it was timed at. The same C on the
+same compiler and flags makes the same machine code, so the times stand.
+
+An evaluation is tried again with its times kept, so its suites, counts and claims are taken at
+the pin. The suites of the library hold line numbers in their C, so `restamp` cannot keep them. A
+record whose C differs is a finding, and `bench`, `sweep` or `evaluate` takes it again. A record
+taken before digests existed took the digest of its builds at its own pin, on 2026-10-05. The
+bench at the commit of the runtime baselines emits the same C as the bench of that day, file for
+file. The Architect chose this rule on 2026-10-05, for a head that moved only comments and form.
+
+Rejected: a new timing of each record at such a head. The binaries are the same, so new times
+would record the drift of this host alone, ×1.19 to ×1.27 between days at rga4d. Cost: `restamp`
+compiles each evaluation at each algebra, and runs its suites and claims again.
+
+Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Head`. It holds the order of
+files, and the commit left out of the digest. It holds a move on equal digests alone, a digest
+taken at its own pin, and the first commit timed at. Suite `Internal: Gaps` holds the list to name
+that commit.
+
 **`drive` holds the checkout to the pin.** Any edit under the library directory of the
 checkout is a finding. The checkout is under `dependencies/`, which git ignores, so a tool
 that runs over this project reaches it too. A quote would then match text that the pin does
@@ -890,10 +914,10 @@ to read no head, and the verb `head` to report what `checkHead` finds.
 **The PGA library is a pinned dependency, and never a copy.** It lives in [replications],
 which carries no nimble file and holds the library three directories inside it. So the
 requirement in `pga_benchmark.nimble` names the repository by URL and commit. `atlas.lock`
-records the resolved commit `d9be8aefc193f6ee0a7a3fead25cd4fe1d8f09cf`, and `nim.cfg` names
+records the resolved commit `edb0c9d3a247185874b8825c9da4b120317b00cf`, and `nim.cfg` names
 the subdirectory that Atlas restores it to.
 
-That commit is the head of the library on 2026-10-03, as the standing instruction of the
+That commit is the head of the library on 2026-10-04, as the standing instruction of the
 Architect asks. Both projects are under the Prosperity Public License 3.0.0. Rejected: a copy
 of the library in this tree, which Article XI.3 forbids.
 
@@ -947,7 +971,7 @@ norm, writes no zero. The Architect decided this, because the library is about P
 micro-optimisation.
 
 Each function that a Cayley table can express moves to generation, and so gets its zeros
-unrolled at no cost. At the pin `d9be8ae` the library works this way, and its attitude and
+unrolled at no cost. At the pin `edb0c9d` the library works this way, and its attitude and
 carrier are generated. Its hand-written `+` and `-` carry `noinit` and write each slot, so they
 fill nothing. The cost that stays is what the hand-written norms pay.
 
@@ -955,8 +979,8 @@ The cost is measured at `3121342` on `linux amd64, 4 cores`, an Intel Xeon at 2.
 2026-10-03. The harness calls each function through a volatile procedure pointer. So the body of
 each function compiles alone, and writes to memory that it cannot see. Each figure comes from two
 passes, and each pass is the median of nine runs of 41 rounds over 1024 objects. Nine in ten
-functions that did not change moved ×0.86 to ×1.02. The pin `d9be8ae` changes no norm and no
-generated operator, as its static baselines show, so these figures stand for it.
+functions that did not change moved ×0.86 to ×1.02. The pins `d9be8ae` and `edb0c9d` change no
+norm and no generated operator, as their static baselines show, so these figures stand for them.
 
 For the norms, a cell gives nanoseconds with the default fill, then with straight stores that
 write the zeros first. The cell is the lower of the two passes:
@@ -995,7 +1019,7 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
   what would say so. A loop whose bound is a variable counts once.
 - 32-bit floats and SIMD forms are unmeasured, and the SSE paths of Terathon were not
   compared.
-- `sweep` is hand-run only, and times one run of each algebra. Two sweeps at the pin on
+- `sweep` is hand-run only, and times one run of each algebra. Two sweeps at `d9be8ae` on
   2026-10-04 differ by ×1.05 at the median cell, and by up to ×1.57 in one cell. So one cell of
   one sweep is weak evidence alone. The growth from 2D to 6D holds better: `wedge_dot` grows ×472
   in one sweep and ×425 in the other.
@@ -1009,6 +1033,10 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
   load, add and store, and the dense form groups its loads first. Of the 66 rows that spend the
   same counts in both, the median reads ×1.00, and light rows stray to ×0.65 at cga5d. Why order
   moves time is unmeasured, since this container offers no hardware counters.
+
+- `restamp` reads C, and the C names types by hashes of the paths of their modules. A second
+  checkout of one tree, at another path, emitted 11 C files that differ from the first. So
+  `restamp` runs in the checkout whose builds took the digests.
 
 ## Open questions
 
