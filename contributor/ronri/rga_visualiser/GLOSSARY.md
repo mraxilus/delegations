@@ -52,7 +52,7 @@ or takes, and every saved file, is relative to it.
 _Avoid_: reference origin, global origin, scene origin, absolute origin
 
 **View origin**:
-The point near the camera that a frame is drawn about. It follows the camera in steps, and
+The point near the camera that a frame is drawn about. It follows the camera every frame, and
 nothing stores it.
 _Avoid_: camera origin, precision origin, floating origin, records origin, centre
 

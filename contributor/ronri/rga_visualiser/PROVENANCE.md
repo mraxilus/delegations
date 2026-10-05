@@ -1583,44 +1583,40 @@ which is once for each frame rather than once for each object. `picking.pickWalk
 and the frame before its walk, and `drawExtentFor` hands every reader one extent. It is the trade
 that `mesh.directionAcross` already makes.
 
-**Each frame reads the eye and frame once, and hands both to every reader.** Each front-end reads
-`sight` after the ease moves the camera. It hands that eye and frame to the near reach, the origin
-of the records, the extent, the frustum and the transform. Each read of `eye` or `frame` lifts the
-motor and carries the reference stance through it again. A hold of the aim can move the camera, so a
-front-end reads again only where the motor moved. Rejected: the first read for the transform too,
-which then draws where the camera stood before the hold.
+**Each frame reads the eye and frame once, and hands both to every reader.** Each front-end calls
+`moveOriginView` after the ease moves the camera. It moves the view origin to the eye, and reads the
+eye and frame about it off the same lift (see Origins). It hands both to the near reach, the extent,
+the frustum and the transform. Each read of `eye` or `frame` lifts the motor and carries the
+reference stance through it again.
+
+A hold of the aim can move the camera, so a front-end reads again only where the motor moved.
+Rejected: the first read for the transform too, which then draws where the camera stood before the
+hold.
 
 **The view holds are keyed on what the camera holds, and never on what it reads out.**
-`SettingsFurniture` and the browser's `SettingsOverlay` both take the motor and the depth. Those are
-the stance itself, so two frames that agree on them agree on the eye, every axis, the pivot and both
-angles.
+`SettingsFurniture` and the browser's `SettingsOverlay` both take the view origin, the motor and the
+depth. Those are the stance itself, so two frames that agree on them agree on the eye, every axis,
+the pivot and both angles.
 
 A key built from the pivot and the two angles derives the eye and the frame for each field it reads.
 `ensureViewOverlay` runs for every overlay call, so such a key costs about eighteen sandwiches to
 decide whether to skip four. `drivePinAnchor` allows an anchor lookup 15 µs.
 
-**An orbit distance has a floor and no ceiling.** `DISTANCE_LIMIT_NEAR` at 10⁻⁹ is geometry: at
+**An orbit distance has a floor and no ceiling.** `DISTANCE_LIMIT_NEAR` at 10⁻¹³ is geometry: at
 zero the eye coincides with its pivot, and every direction that `camera.frame` derives collapses.
 `distanceHeld` is the one statement of it.
 
-It is tiny rather than small. The moons of the demo ring their planets at thousandths of a unit, and
-are millionths wide. A floor of a twentieth kept the camera outside every one of them. There is no
+It is tiny rather than small: 1.5 cm, so an object a metre wide fills the frame. The stance, the
+records and the transform are held about the view origin, near the eye. So doubles and float32 hold
+that close-up wherever the eye stands (see Origins). The near clip is a four-hundredth of the local
+scale, and the logarithmic depth spans it out to a far bound millions of units off. There is no
 ceiling, which would read as a camera bounded to a region, and which nothing downstream needs.
 
-**Every record is stored about the view origin.** `mesh.clearMeshes` takes that origin, and
-both front-ends pass the one that `originView` keeps. Each of the five record writers subtracts
-it at the float32 write. What the camera looks at is then exact wherever it stands. Take a moon a
-thousandth of a unit from its planet, a million units out. Float32 about the world origin steps by
-a sixteenth there, and loses the whole offset.
-
-The transform of the GPU is `initMatrixViewProjection` about the same origin, with only its
-translation column moved. Picking, hover and every marker keep the transform about the world.
-`Matrix4` is double precision for the same reason: a float32 translation column carried tenths of
-a unit that far out, into every pick.
-
-It is not a moving world origin, which would rewrite every stored multivector for each frame.
-Float32 degrades what stands past roughly 10⁶ units from that origin, which is invisible at that
-reach. Wheeled out to 3 × 10¹⁹ the view empties to a speck, and `home` returns.
+**One transform serves the GPU, the picks and the markers, about the view origin.** Its translation
+is the remainder of the eye about that origin, under half a world step. `Matrix4` stays double
+precision, since picking reads it on the CPU. Rejected: a moving world origin, which would rewrite
+every stored multivector for each frame. Wheeled out to 3 × 10¹⁹ the view empties to a speck, and
+`home` returns.
 
 **Clip planes follow the orbit distance, and nothing clips at the far bound.** `FACTOR_CLIP_NEAR`
 is 1/400 of the orbit distance, and `FACTOR_CLIP_FAR` is 20 times it. Where the eye's distance to
@@ -1686,12 +1682,15 @@ speed of flight shows only without one, as a multiple of `SPEED_LIGHT` (`interac
 - the flattened float32 matrix keeps the farthest star and the dome half the slack inside the far
   plane, at four orbit distances;
 - `norm(eye − pivot)` equals the held distance after a floored dolly;
+- an object a metre wide two million units out fills the frame, with the near clip short of it.
+  Its two sides stand more than a sixteen-bit step apart in depth;
 - a typed motor settles on the rigid motion it names, with the frame orthonormal after any typed
   slide, and a weightless one refused;
 - every seed object stands inside the opening frame, on six frames from upright phones to wide
   desktops. A frame wider than tall keeps 19 units;
 - the far bound reaches the scene's reach that its caller passes, however close the orbit is;
-- the extent and the transform, given the camera alone, each lift its motor once;
+- the extent, the transform and the move of the view origin, given the camera alone, each lift
+  its motor once;
 - the readers of a frame, given its eye and frame, lift the motor no more.
 
 Verified by driven checks:
@@ -1859,18 +1858,6 @@ reads the last edit's reach of the scene.
 Both front-ends hold a placement cache, filled on an edit beside the reach of the scene, and
 `BYTES_MEMORY_TOTAL` counts one placement for each handle. `assembleMeshes` places as it emits.
 
-**The view origin stands at the eye, held there.** `originView` keeps the origin until
-travel has spent float32's precision about it: `FRACTION_ORIGIN_HOLD` of the near clip, divided by
-`STEP_SINGLE`. That is about 152 thousand units at the opening stance, and less as close work draws
-the near clip in.
-
-The eye rather than the pivot, because free flight turns about the eye. A `look` swings the pivot
-through a whole arc while the eye stands, and what a reader is about to reach stands near the eye.
-
-Held rather than followed. An origin that moved every frame would rebuild every record of every held
-frame, which is what those holds exist to skip. One origin serves both mesh sets, because one
-transform draws them; see `initMatrixViewProjection`.
-
 **The wheel travels the pointer's own ray in free flight.** `anchorZoomAt` answers the object under
 the pointer, as it does with a selection.
 
@@ -1898,9 +1885,7 @@ then scales as the turntable's dolly scales it.
 - 40 notches onto a point stop where its sphere fills the frame, with the point held on its pixel;
 - the frustum takes its scale from the nearest drawn object, and hands it back at zero;
 - the far clip still reaches a scene 6.5 million units across, and both depth ends still land;
-- the nearest reach is read ahead of the eye, never behind it, and never from a hidden object;
-- the origin holds through half the bound, moves onto the eye past it, and then holds again;
-- the bound draws in with the near clip, so close work moves the origin sooner.
+- the nearest reach is read ahead of the eye, never behind it, and never from a hidden object.
 
 Verified by driven checks, in Chromium on 2026-09-26:
 
@@ -2167,8 +2152,10 @@ evaluator need not agree with the libm of each backend in the last bit.
 The rim as one record is what the demo frame turns on. A plane's 96 ribbon records made 99.2% of
 ribbon traffic on 132 planes, and a 239 ms median frame under SwiftShader against 84 ms.
 
-**Every position of a record is stored about the origin of the frame**, which is the pivot of the
-camera (see Camera). The suite pins the five writers against an origin a million units off.
+**Every position of a record is stored about the view origin** (see Origins). Emission reads each
+world place about it once, and the five record writers store what they are handed. The suite pins a
+point, a line, a plane and the sky, each through `emitObject`, against a view origin a million units
+off.
 
 **Veil order is kept, and not assumed away.** Two translucent veils still blend in scene order, so
 every append extends or opens a `VeilRun`, and both render paths walk the runs in sequence.
@@ -2236,7 +2223,7 @@ the steep view alone, so that view holds the box of the rim, at 4758 of 4758 spo
 
 The **algebra owns geometry**, which is what a thing is and where it stands. That covers
 construction, incidence, meets, joins, projections, nearest points and side tests. It covers the
-world-space camera, and the rays cast from the screen. It covers the lattice lines and the axes,
+camera, and the rays cast from the screen. It covers the lattice lines and the axes,
 which are lines, and everything at the horizon.
 
 The **picture owns representation**, which is how geometry becomes GPU primitives. That covers the
@@ -2355,9 +2342,9 @@ field stores with no fill.
 ## Origins
 
 **Three origins, as a GPU pipeline has three spaces.** The world origin is world space: the scene
-stores each object about it, and stores nothing else. The view origin is view space: a frame is
-drawn about it, near the camera, through `originView`. The model origin is model space: an
-operation holds its operands about it, at a point of one of them, through `originModel`.
+stores each object about it, and stores nothing else. The view origin is view space: each frame is
+reckoned about it, near the camera, through `camera.moveOriginView`. The model origin is model
+space: an operation holds its operands about it, at a point of one of them, through `originModel`.
 
 **Only the world origin is stored.** A GPU stores a vertex in model space and derives the others.
 This scene stores in world space, and derives the view and model spaces inside the calculation
@@ -2365,6 +2352,92 @@ that uses each. Rounding grows with the distance from the origin a number is hel
 calculation is held about the origin nearest what it serves: a frame about the camera, an operation
 about its operands. Storage keeps its step far out, which Classification at any scale counts as a
 cost.
+
+**The view origin follows the camera every frame.** It is the double nearest the eye, and each
+front-end moves it there once for each frame, before anything reads the stance. The camera holds
+its stance about it: `Camera.motor` carries the reference stance to the eye about the view origin.
+So the eye keeps the remainder that no world double can hold. The step between two origins is exact
+for nearby doubles, and the motor slides back by it, so that remainder carries over exactly. The
+move reads the eye and frame off the one lift that `sight` makes.
+
+A still camera stands within half a world step of its origin. So a still frame leaves the origin and
+the motor as they were, bit for bit, and every hold keyed on them still holds. Not held in steps:
+both frame holds key on the motor, so a moving camera rebuilds every record whatever the origin
+does.
+
+Two million units out a double steps by 17 to 35 m. An eye held as a world double there wobbles an
+orbit 150 m wide on that step. It cannot name an orbit a metre wide at all.
+
+**Every calculation of a frame reads about the view origin.** That covers the eye, the frame, the
+pivot, the extent, the transform and the frustum. It covers picking rays and hits, markers and
+labels, framing and aim, and the drags. Each world value enters the frame once, by a subtraction
+(`euclid.toView`). A placement is read by its place, so a line or a plane slides by plain
+translation of its support. It keeps its arms, and no slide runs for each object.
+
+Where the algebra meets a world object with the eye or a ray, it builds the line or plane through
+the place so read. A world plane met with a ray far out lands on the world step.
+
+The aim stays world's, because it has to compare equal frame to frame while the origin moves.
+Framing reads its places about the view origin, and a destination stance carries the origin it is
+held about (`CameraStance.origin`). So an ease lands on its destination bit for bit while the view
+origin moves under it. The point that a right drag holds carries its origin too.
+
+**Records are float32 about the view origin, with no split into parts.** Emission reads each world
+place about the view origin and hands it on. The five record writers store what they are handed.
+So the one subtraction for each object sits at that read, and not in the writer. The furniture and
+the horizon are reckoned about the view origin from the start. A lattice line a decimetre apart two
+million units out has no world double to lift it back to.
+
+The eye that the shaders take is the remainder, about zero at world scale. The translation of the
+transform is that remainder too, under half a world step. Dropping it would snap an orbit a metre
+wide to that step.
+
+**What stores or shows the stance converts at that edge.** History's steps and the motor in the
+panel are about the world origin (`stanceWorld`). So are the drive's readings of the eye, the pivot
+and an anchor (`eyeWorld`, `pivotWorld`). Cost: a stance that history restores far out lands on the
+world step.
+
+*Checked.* Verified by `suites.nim`:
+
+- an orbit 1 m and 150 m wide, two million units out, holds its pivot over 2,000 steps. It stays
+  within a millionth of its separation, and lands where one turn of their sum lands;
+- 10,000 moves of 0.3 m out and 10,000 back carry the remainder over exactly. The eye goes 3 km,
+  and comes back to within a millionth of a move, and to within one world step as world reads it;
+- a moved camera carries the view origin to its eye, and a still one leaves the origin and the motor
+  bit for bit;
+- a transform about the view origin agrees with the world one, and keeps the offset of a moon a
+  million units out;
+- every record of a point, a line, a plane and the sky stands about a view origin a million units
+  off.
+
+Verified by a probe that is not kept, on 2026-10-05, against `0fdcfcfc`. The 2,000 steps hold the
+pivot to 1.9e-14 of 1 m, and to 2.8e-14 of 150 m. On `0fdcfcfc` the 150 m orbit moved its pivot
+398 m, and 873 m at worst. An orbit asked for at 1 m was floored to 150 m there, and the 10,000
+moves out moved the eye 0 m. Here they move it 3,000 m, within 1.3e-11 of a move of their sum.
+
+**Cost: none that the frame shows.** Each moving frame slides the motor once, and each object is
+read about the view origin by one subtraction. Measured on 2026-10-05 on one delegate, under the
+lock of the gate, in three interleaved pairs, `0fdcfcfc` first. The page runs at 1200 by 900 px
+under SwiftShader, with antialias, and times 6 s of frames for each scene, as Algebra boundary
+describes. Each figure is the median of the frame callback, in ms:
+
+| Scene | `0fdcfcfc` | View origin |
+|-------|------------|-------------|
+| Opening scene, still | 0.8, 0.8, 0.9 | 0.9, 0.9, 1.0 |
+| Opening scene, orbit | 1.1, 1.0, 1.1 | 1.0, 1.1, 1.1 |
+| 5,038 objects, still | 1.1, 1.2, 1.1 | 1.1, 1.1, 1.1 |
+| 5,038 objects, orbit | 2.3, 2.4, 2.2 | 2.3, 2.2, 2.2 |
+
+The clock of the page resolves 0.1 ms, so every pair overlaps. The desktop's `--timings` reads 300
+frames. Its median frame read 5.29, 5.54 and 4.68 ms at the opening scene, against 5.10, 5.01 and
+4.72 ms. At 5,038 objects it read 80.5, 84.9 and 85.5 ms, against 85.7, 85.9 and 84.1 ms. Its
+tessellation read 14.7, 15.4 and 15.5 ms there, against 15.5, 15.4 and 15.4 ms.
+
+Verified by driven check (`driveFarOrbit`), in Chromium on 2026-10-05. The demo's farthest point,
+4.72 million units out, is picked and held at its fill, 217 m away. It stands 0.001 px off the
+middle of the frame before and after a drag of 180 px that turns the view 0.450 rad. Run alone
+against the page of `0fdcfcfc`, the same check read 403 px off the middle, and the drag turned
+nothing.
 
 ## Classification at any scale
 
@@ -3145,9 +3218,12 @@ same reason.
 
 **The stance rides along, and an orbit is never a step of its own.** Each step records the
 `CameraStance`, the motor and the separation, that the view stood at when *that step's* edit was
-made. Undo reads it off the entry stepped away from, and redo off the entry arrived at. Nothing
-else of the camera crosses a step. Rejected: a whole `Camera` in each step, which put the lens of
-the edit over the reader's own. Home keeps the lens by the same rule.
+made. It is read about the world origin, as the scene is stored (see Origins). Undo reads it off
+the entry stepped away from, and redo off the entry arrived at. Nothing
+else of the camera crosses a step.
+
+Rejected: a whole `Camera` in each step, which put the lens of the edit over the reader's own. Home
+keeps the lens by the same rule.
 
 To restore the camera of the state arrived at hands back the view that the *previous* edit was
 made from. An undo of the first construction of a session then teleports to the startup view. Not
@@ -3319,8 +3395,8 @@ Sol stands at the origin, with its ecliptic flat in the plane `z = 0`. `sol` is
 
 The price is that from the opening camera every body is the least dot, and the moons of Jupiter
 lie inside its dot. The reader dollies in, and each body is its real size when the camera arrives.
-`camera.DISTANCE_LIMIT_NEAR` and `mesh.RADIUS_OBJECT_LEAST`, both 10⁻⁹, and the pivot-relative
-record (see Camera) are what let it do that.
+`camera.DISTANCE_LIMIT_NEAR` at 10⁻¹³, `mesh.RADIUS_OBJECT_LEAST` at 10⁻⁹, and a camera and records
+held about the view origin (see Origins) are what let it do that.
 
 **Every moon rings its planet in its real orbit plane.** `MOONS` carries the mean orbital elements
 of JPL, fetched from https://ssd.jpl.nasa.gov/sats/elem/ on 2026-09-18. Each one is an inclination
@@ -3731,10 +3807,9 @@ height of the frame. A sixth was too close, and 0.01 was chosen by eye. A point 
 and a line, come in no further than the orbit distance.
 
 A star or a planet of the demo carries `RADIUS_OBJECT_LEAST`, so a pick of one comes in to 2.4e-7
-units. The pivot lands on it there, and it reads in front (see Camera aiming and Picking). Far out,
-a double steps by 9.3e-10 at 4.7 million units, which is 0.39% of that separation. An orbit there
-moves the star about 10 px off the middle, against a disc 4.5 px in radius. At 1.66 million units
-it moves up to 4.5 px, and at 0.41 million under 0.5 px.
+units. The pivot lands on it there, and it reads in front (see Camera aiming and Picking). An orbit
+there keeps it at the middle of the frame however far out it stands. The camera is held about the
+view origin (see Origins).
 
 A plane comes in until the diameter of its whole disc spans `FRACTION_HEIGHT_APPROACH_PLANE` 0.40.
 That is the reach its own centre asks for, and no crossing enters it. It is not the centring rule
@@ -3806,8 +3881,7 @@ Verified by driven check:
 
 Verified by a Playwright script that is not kept, in Playwright's Chromium under SwiftShader, on
 2026-10-04. A click on HD 222237b in the demo of 5,038 objects settles at 2.413e-7 units, with its
-ring and label at the middle. A mouse drag of 215 px then turns the sight 13.4° about it. The
-figures for the far orbit above come from the same script, at both sizes of the demo.
+ring and label at the middle. A mouse drag of 215 px then turns the sight 13.4° about it.
 
 ## Objects search
 
@@ -4151,8 +4225,12 @@ passing proves that the runner carries that library. Assumed: nothing about the 
 - A page whose WebGL lacks `EXT_frag_depth` keeps linear depth. It keeps the fault of the far
   field with it, and the disc of every plane at the depth of its centre.
 - The planet inclinations, ring phases and neighbour planes of the demo are stated simplifications.
-- A star picked far out moves a few pixels off the middle as the view orbits. At 4.7 million
-  units a double steps by 0.39% of the 2.4e-7 units that the pick comes in to (see Framing).
+- A stance that history restores far out lands on the world step, as the stance is stored about the
+  world origin (see Origins).
+- A pick made from afar reads the place of its object about the view origin where the camera stands.
+  So the pivot lands a world step or so off the object. A probe that is not kept read 176 m at 4.7
+  million units, where doubles step by 139 m, on 2026-10-05. A second pick from near read 0.000 m.
+- The aim of several objects is their middle as a world double, so far out it steps as storage does.
 - Two million units from the world origin, a double steps by 17 to 35 m, as at the demo's HD 222237
   b. A metre pair there is stored as one point (see Classification at any scale).
 - A line drawn with the camera inside the body that it frames stands a few pixels off the point
