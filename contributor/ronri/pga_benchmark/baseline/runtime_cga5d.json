@@ -4080,5 +4080,9 @@
       },
       "dense": null
     }
+  },
+  "digest_c": {
+    "plain": "d57e59a7b3d396f4",
+    "alloc": "3aa17dcc41156959"
   }
 }

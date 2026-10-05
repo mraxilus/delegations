@@ -3460,5 +3460,9 @@
       },
       "dense": null
     }
+  },
+  "digest_c": {
+    "plain": "1a3366adad485c31",
+    "alloc": "b06bc525aa798dff"
   }
 }

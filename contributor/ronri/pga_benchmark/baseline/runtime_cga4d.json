@@ -3522,5 +3522,9 @@
       },
       "dense": null
     }
+  },
+  "digest_c": {
+    "plain": "5253b94350a98c7b",
+    "alloc": "1bc5195dbb27fde9"
   }
 }

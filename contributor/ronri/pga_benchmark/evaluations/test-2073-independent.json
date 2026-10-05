@@ -1320,7 +1320,11 @@
           1.0016
         ]
       },
-      "nan": {}
+      "nan": {},
+      "digest_c": {
+        "pristine": "2d5cd4e2a678c120",
+        "changed": "8930caeba65292fa"
+      }
     },
     "cga5d": {
       "suites": {
@@ -2833,7 +2837,11 @@
           1.1167
         ]
       },
-      "nan": {}
+      "nan": {},
+      "digest_c": {
+        "pristine": "8fd6361dd9dd1a4d",
+        "changed": "36c89262e6bc3621"
+      }
     },
     "rga3d": {
       "suites": {
@@ -4005,7 +4013,11 @@
           0.9988
         ]
       },
-      "nan": {}
+      "nan": {},
+      "digest_c": {
+        "pristine": "0471853b9be85fbf",
+        "changed": "47b7d957a0610050"
+      }
     },
     "cga4d": {
       "suites": {
@@ -5428,7 +5440,11 @@
           0.9724
         ]
       },
-      "nan": {}
+      "nan": {},
+      "digest_c": {
+        "pristine": "d014b02752c7a84c",
+        "changed": "fca2addd19eac78b"
+      }
     }
   },
   "claims": []

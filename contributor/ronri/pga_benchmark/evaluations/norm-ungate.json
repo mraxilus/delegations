@@ -1320,7 +1320,11 @@
           0.9845
         ]
       },
-      "nan": {}
+      "nan": {},
+      "digest_c": {
+        "pristine": "2d5cd4e2a678c120",
+        "changed": "5de80f70fd8bfd6f"
+      }
     },
     "cga5d": {
       "suites": {
@@ -2833,7 +2837,11 @@
           1.082
         ]
       },
-      "nan": {}
+      "nan": {},
+      "digest_c": {
+        "pristine": "8fd6361dd9dd1a4d",
+        "changed": "67758eeea240f23a"
+      }
     },
     "rga3d": {
       "suites": {
@@ -4005,7 +4013,11 @@
           0.9769
         ]
       },
-      "nan": {}
+      "nan": {},
+      "digest_c": {
+        "pristine": "0471853b9be85fbf",
+        "changed": "1193df98f6f60db4"
+      }
     },
     "cga4d": {
       "suites": {
@@ -5428,7 +5440,11 @@
           0.9125
         ]
       },
-      "nan": {}
+      "nan": {},
+      "digest_c": {
+        "pristine": "d014b02752c7a84c",
+        "changed": "0f6edb623a4ae32a"
+      }
     }
   },
   "claims": []

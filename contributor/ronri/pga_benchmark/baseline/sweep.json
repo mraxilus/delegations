@@ -342,5 +342,12 @@
       "support": 443.3046875,
       "support_anti": 462.8515625
     }
+  },
+  "digest_c": {
+    "2d": "282ebeeb4c07d1ea",
+    "3d": "3bf146644d667075",
+    "4d": "1a3366adad485c31",
+    "5d": "01bea20814dd25a5",
+    "6d": "ddf8f4ec76b7eaac"
   }
 }

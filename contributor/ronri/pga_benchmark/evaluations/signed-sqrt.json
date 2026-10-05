@@ -1498,7 +1498,11 @@
           1.0647
         ]
       },
-      "nan": {}
+      "nan": {},
+      "digest_c": {
+        "pristine": "2d5cd4e2a678c120",
+        "changed": "f9435a07714e404f"
+      }
     },
     "cga5d": {
       "suites": {
@@ -3286,6 +3290,10 @@
           0.5029296875,
           0.0
         ]
+      },
+      "digest_c": {
+        "pristine": "8fd6361dd9dd1a4d",
+        "changed": "3cd3d0645fcf0dae"
       }
     },
     "rga3d": {
@@ -4636,7 +4644,11 @@
           0.9954
         ]
       },
-      "nan": {}
+      "nan": {},
+      "digest_c": {
+        "pristine": "0471853b9be85fbf",
+        "changed": "9ed78774ce1585eb"
+      }
     },
     "cga4d": {
       "suites": {
@@ -6334,6 +6346,10 @@
           0.525390625,
           0.0
         ]
+      },
+      "digest_c": {
+        "pristine": "d014b02752c7a84c",
+        "changed": "3a9f63c6f9ea86a6"
       }
     }
   },

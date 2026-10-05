@@ -1384,7 +1384,11 @@
           0.9896
         ]
       },
-      "nan": {}
+      "nan": {},
+      "digest_c": {
+        "pristine": "2d5cd4e2a678c120",
+        "changed": "09adb6af59e97dc5"
+      }
     },
     "cga5d": {
       "suites": {
@@ -3025,7 +3029,11 @@
           0.7321
         ]
       },
-      "nan": {}
+      "nan": {},
+      "digest_c": {
+        "pristine": "8fd6361dd9dd1a4d",
+        "changed": "a8ea85a9e60e5123"
+      }
     },
     "rga3d": {
       "suites": {
@@ -4261,7 +4269,11 @@
           1.0159
         ]
       },
-      "nan": {}
+      "nan": {},
+      "digest_c": {
+        "pristine": "0471853b9be85fbf",
+        "changed": "2f226910102fd0ec"
+      }
     },
     "cga4d": {
       "suites": {
@@ -5812,7 +5824,11 @@
           0.5553
         ]
       },
-      "nan": {}
+      "nan": {},
+      "digest_c": {
+        "pristine": "d014b02752c7a84c",
+        "changed": "71fe8a1d21ca1de5"
+      }
     }
   },
   "claims": [
@@ -5978,7 +5994,7 @@
       "at_most": 0.75,
       "passed": true,
       "detail": [
-        "rga6d peak 235.0 → 170.8 MiB, 5.75 → 4.41 s, ×0.73"
+        "rga6d peak 234.9 → 170.7 MiB, 6.22 → 4.29 s, ×0.73"
       ]
     }
   ]
