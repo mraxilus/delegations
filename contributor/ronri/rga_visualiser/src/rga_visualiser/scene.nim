@@ -11,6 +11,19 @@
 ##   Stable handle keeps every cross-frame index GUI holds (operands picked, object hovered,
 ##   object mid-drag) valid, narrowing staleness to removed object's own references, without
 ##   generation counter.
+## Each object is stored about exact anchor of its own, and read about world origin.
+##   Anchor is place in doubles, never computed again once chosen; coefficients are held
+##   about it, so object far out keeps scale of its own.
+##     Two points metre apart beside HD 222237 b stay metre apart about anchor there,
+##     where about Sol double steps 17 to 35 m and stores pair as one point.
+##   Geometry about world origin is derived from anchor and coefficients on each edit,
+##   through library's own slide, and never written back to storage.
+##     Every per-frame reader reads that cache: desktop places every object each frame.
+##     Rejected: storage rewritten about each new centre, which loses metre pair beside
+##     star after one move there and back.
+##   Cost: anchor and coefficients about it beside cached geometry, 152 bytes more per
+##   handle in scene and in each step of undo timeline; one slide per edit of object
+##   anchored away from world origin.
 ## Operation catalogue is what makes scene live rather than scripted.
 ##   Every entry is one of library's named aliases, applied to objects user picks.
 ##
@@ -92,8 +105,15 @@ type
       scene: ptr Scene
     handle: int
 
+  Anchored* = object  ## Define object as scene stores it: exact anchor, and coefficients about it.
+    anchor*: Position  ## Place coefficients stand about, never computed again once chosen.
+    local*: Multivector  ## Object about `anchor`.
+
   Scene* = object  ## Define fixed-capacity arena of objects, addressed by stable handle.
-    geometries: array[OBJECTS_MAX, Multivector]  ## Per-handle geometry.
+    anchors: array[OBJECTS_MAX, Position]  ## Per-handle place geometry is stored about.
+    locals: array[OBJECTS_MAX, Multivector]  ## Per-handle geometry about its anchor, as stored.
+    geometries: array[OBJECTS_MAX, Multivector]  ## Per-handle geometry about world origin.
+      ## Derived from anchor and local coefficients on each edit, never written back.
     labels: array[OBJECTS_MAX, Label]  ## Per-handle display label.
     inks: array[OBJECTS_MAX, Ink]  ## Per-handle palette entry.
     radii: array[OBJECTS_MAX, float]  ## Per-handle drawn radius, in world units; see `radiusAt`.
@@ -106,7 +126,7 @@ type
       ## `bornReplaying`.
     revisions_placing: array[OBJECTS_MAX, int]  ## Per-handle revision at which handle's placing
       ## inputs last changed; see `revisionPlacingAt`.
-      ## Placing inputs are geometry and anchor override.
+      ## Placing inputs are geometry, its anchor and anchor override.
     orders: array[OBJECTS_MAX, uint32]  ## Per-handle creation ordinal.
       ## How many objects scene had ever been given when this one arrived.
       ## Separate from `borns` because clock reading cannot answer this.
@@ -119,6 +139,7 @@ type
     anchor_overrides: array[OBJECTS_MAX, Option[Position]]  ## Where plane's circle should
       ## centre, for object whose construction fixes that more specifically than its
       ## closest-to-origin support; see `creationAnchor`.
+      ## Held about object's anchor, as its coefficients are; see `anchorOverrideAt`.
       ## None for anything else.
       ## Not saved or loaded: rendering hint recomputed from how object was built.
     next_free: array[OBJECTS_MAX, Option[int]]  ## Link to next free handle; intrusive free list.
@@ -410,6 +431,9 @@ func slid(m: Multivector, offset: Direction): Multivector =
   ## Slide `m` by `offset` through library's own motor, keeping only grades `m` occupies.
   ##   Slide keeps every grade, so what lands on another is sandwich's rounding: about `ε`
   ##   of distance slid, against `m`. Join metre across one unit out reads it as mixed.
+  ##   `m` itself, bit for bit, where offset is zero: object read about own anchor pays
+  ##   nothing, and slide by zero would round nothing anyway.
+  if offset.x == 0.0 and offset.y == 0.0 and offset.z == 0.0: return m
   let
     motor = motorSliding(offset.toMultivector)
     moved = m.carried(motor, ~∘motor)
@@ -418,6 +442,21 @@ func slid(m: Multivector, offset: Direction): Multivector =
     if m[b] != 0.0: occupied[int(b.grade)] = true
   for b in Basis:
     if occupied[int(b.grade)]: result[b] = moved[b]
+
+
+func geometryAbout*(anchored: Anchored, centre: Position): Multivector =
+  ## Read object about `centre`: its coefficients slid by its anchor less `centre`.
+  ##   Exact where anchor is `centre`; else rounding is `ε` of distance slid, never of
+  ##   distance either stands from Sol.
+  slid(anchored.local, anchored.anchor - centre)
+
+
+func overrideAbout(held: Option[Position]; anchor, centre: Position): Option[Position] =
+  ## Read anchor override held about `anchor` as it stands about `centre`.
+  ##   Hint for picture, where plane's disc centres, so offset by Euclidean sum, as disc is
+  ##   drawn; exact where anchor is `centre`.
+  if held.isNone: return
+  some(held.get + (anchor - centre))
 
 
 func operated(operation: Operation; m, n: Multivector): Multivector =
@@ -453,70 +492,83 @@ func operated(operation: Operation; m, n: Multivector): Multivector =
   of Operation.ProjectOrthogonal: projectOrthogonal(m, n)
 
 
-func applyOperation*(operation: Operation; m, n: Multivector): Multivector =
-  ## Apply operation to operands, ignoring `n` where operation is unary.
+func applyOperation*(operation: Operation; m, n: Anchored): Anchored =
+  ## Apply operation to operands as scene stores them, ignoring `n` where operation is unary.
+  ##   Answer is anchored at origin operation ran about, coefficients about it.
   ##   Operation that commutes with slide (`OPERATIONS_SLIDING`) runs about point near its
-  ##   operands, then slides back through library's own motor.
-  ##     Join of two points metre apart one unit out then holds both to micrometres.
+  ##   operands: each is slid there from own anchor, through library's own motor.
+  ##     Join of two points metre apart one unit out then holds both to micrometres, and
+  ##     beside HD 222237 b, anchored there, to nanometres.
   ##     Never about Sol: its moment, `p × q`, cancels to about 1e-5 of itself there, and
   ##     both points stand hundreds of kilometres off it.
-  ##     Slide back adds `t × d` to small moment, cancelling nothing: rounding is `ε` of
+  ##     Slide adds `t × d` to small moment, cancelling nothing: rounding is `ε` of
   ##     distance slid.
   ##   Origin is point operand's own place, first operand's first: cancellation is about
-  ##   point joined. Else first finite operand's anchor, its support. Else Sol, where no
-  ##   operand stands anywhere finite.
+  ##   point joined. Else first finite operand's anchor for drawing, its support. Else Sol,
+  ##   where no operand stands anywhere finite.
+  ##     Each is read about operand's anchor, then offset by it: origin need only stand
+  ##     near, and anchor less origin is then exact where two stand within factor two.
+  ##   Every other operation runs about Sol, origin it means, and its answer is anchored
+  ##   there.
   ##   Each slide keeps only grades its multivector occupies; see `slid`.
   ##   Result within rounding of zero, judged against operands that made it, is zero:
   ##   point lying on line joins with it to nothing, never to rounding.
   ##     `objects.kindOf` reads object at its own scale, so rounding left standing reads
   ##     as plane, and every path building from catalogue builds through here.
-  ##     Judged on operands as slid, against scale of point they were slid from: each
+  ##     Judged on operands as slid, against farthest either was slid, at least one: each
   ##     carries rounding of where it stood, so far out rounding still reads as zero.
   ##   Sum is judged against its larger operand, as it rounds to that.
   ##   Every other operation is homogeneous in each operand, so it runs again on
   ##   `scaleFree` copies: positive multiple of result, rounding at `TOLERANCE_ROUNDING`
   ##   of one whatever degree operation has in each operand.
-  ##   Cost: three slides, two antiproducts each, and second run of operation, once for
-  ##   each preview and each build.
+  ##   Cost: two slides, two antiproducts each, and second run of operation, once for each
+  ##   preview and each build; third slide where caller reads answer about world origin.
 
-  func originLocal(m, n: Multivector): Option[Position] =
+  func originLocal(m, n: Anchored): Option[Position] =
     ## Choose point to run about: point operand's own place, else finite operand's anchor.
     for operand in [m, n]:
-      if kindOf(operand) == some(Kind.Point):
-        let place = position(operand)
-        if place.isSome: return place
+      if kindOf(operand.local) == some(Kind.Point):
+        let place = position(operand.local)
+        if place.isSome: return some(operand.anchor + (place.get - ORIGIN_WORLD))
     for operand in [m, n]:
-      if kindOf(operand).isSome:
-        let anchor = positionAnchor(operand)
-        if anchor.isSome: return anchor
+      if kindOf(operand.local).isSome:
+        let anchor = positionAnchor(operand.local)
+        if anchor.isSome: return some(operand.anchor + (anchor.get - ORIGIN_WORLD))
 
-  # Slide operands to origin chosen, or leave them about Sol.
+  # Slide operands to origin chosen, or to Sol.
   let origin =
-    if operation in OPERATIONS_SLIDING: originLocal(m, n)
-    else: none(Position)
-  var
-    (m_local, n_local) = (m, n)
-    scale_origin = 1.0
-  if origin.isSome:
-    let toward = ORIGIN_WORLD - origin.get
-    m_local = slid(m, toward)
-    n_local = slid(n, toward)
-    scale_origin = origin.get.toMultivector.coefficientLargest
-  result = operated(operation, m_local, n_local)
+    if operation in OPERATIONS_SLIDING: originLocal(m, n).get(ORIGIN_WORLD)
+    else: ORIGIN_WORLD
+  let
+    (offset_m, offset_n) = (m.anchor - origin, n.anchor - origin)
+    (m_local, n_local) = (slid(m.local, offset_m), slid(n.local, offset_n))
+    scale_origin = max(
+      1.0,
+      max(offset_m.toMultivector.coefficientLargest, offset_n.toMultivector.coefficientLargest),
+    )
+  result.anchor = origin
+  result.local = operated(operation, m_local, n_local)
 
   # Answer zero where that is rounding of zero.
   let is_rounding =
     case operation
     of Operation.Add, Operation.Subtract:
-      result.isRoundingOf(
+      result.local.isRoundingOf(
         max(m_local.coefficientLargest, n_local.coefficientLargest) * scale_origin,
       )
     else:
       operated(operation, m_local.scaleFree, n_local.scaleFree).isRoundingOf(scale_origin)
-  if is_rounding: return Multivector()
+  if is_rounding: result.local = Multivector()
 
-  # Slide result back about Sol.
-  if origin.isSome: result = slid(result, origin.get - ORIGIN_WORLD)
+
+func applyOperation*(operation: Operation; m, n: Multivector): Multivector =
+  ## Apply operation to operands about world origin, ignoring `n` where operation is unary.
+  ##   Each is read as anchored at world origin, and answer is read back about it; see
+  ##   sibling taking `Anchored` for where operation runs.
+  ##   For caller holding multivectors alone; scene's own builds go through sibling.
+  applyOperation(
+    operation, Anchored(anchor: ORIGIN_WORLD, local: m), Anchored(anchor: ORIGIN_WORLD, local: n)
+  ).geometryAbout(ORIGIN_WORLD)
 
 
 func creationAnchor*(operation: Operation; m, n, derived: Multivector): Option[Position] =
@@ -547,6 +599,27 @@ func creationAnchor*(operation: Operation; m, n, derived: Multivector): Option[P
     position(wedgeAnti(line, derived))
 
   else: none(Position)
+
+
+const OPERATIONS_CENTRING = {Operation.ExpandWeight, Operation.Wedge}
+  ## Name operations `creationAnchor` centres plane of; every other answers none.
+  ##   Lets anchored sibling slide no operand for operation it would answer none for.
+  ##   Suite holds set to cases sibling answers; reached there through `{.all.}`.
+
+
+func creationAnchor*(operation: Operation; m, n, derived: Anchored): Option[Position] =
+  ## Resolve where freshly derived plane's circle should centre, about anchor `derived` holds.
+  ##   Operands are slid to that anchor first, so all three stand about one point, near
+  ##   them; then as sibling resolves it.
+  ##   Covariant, as every operator it reads commutes with slide: same place about any
+  ##   origin, read there.
+  if operation notin OPERATIONS_CENTRING: return
+  creationAnchor(
+    operation,
+    m.geometryAbout(derived.anchor),
+    n.geometryAbout(derived.anchor),
+    derived.local,
+  )
 
 
 
@@ -804,7 +877,7 @@ func `[]`*(scene: Scene, handle: int): Object =
 
 
 func geometry*(one: Object): lent Multivector = one.scene.geometries[one.handle]
-  ## Read object's geometry, straight out of scene handle points at.
+  ## Read object's geometry about world origin, straight out of scene handle points at.
 
 
 func label*(one: Object): lent Label = one.scene.labels[one.handle]
@@ -827,13 +900,15 @@ func born*(one: Object): float = one.scene.borns[one.handle]
   ## Read object's `born` reading, straight out of scene handle points at.
 
 
-func anchorOverride*(one: Object): Option[Position] = one.scene.anchor_overrides[one.handle]
-  ## Read where object's circle should centre, if construction fixed that.
+func anchorOverride*(one: Object): Option[Position] =
+  ## Read where object's circle should centre about world origin, if construction fixed that.
   ##   See `creationAnchor`.
+  overrideAbout(one.scene.anchor_overrides[one.handle], one.scene.anchors[one.handle], ORIGIN_WORLD)
 
 
 func geometryOf*(scene: Scene, handle: int): lent Multivector =
-  ## Read object's geometry in place, by handle, without mutable scene.
+  ## Read object's geometry about world origin in place, by handle, without mutable scene.
+  ##   Cached from anchor and local coefficients on each edit, so reading slides nothing.
   ##   `lent`, not `var`: `var`-returning accessor read rather than written miscompiles
   ##   under JS backend; borrow cannot be written through.
   ##   `lent` pays only where result is never bound.
@@ -846,13 +921,49 @@ func geometryOf*(scene: Scene, handle: int): lent Multivector =
   scene.geometries[handle]
 
 
+func anchoredAt*(scene: Scene, handle: int): Anchored =
+  ## Read object as storage holds it, by handle: its anchor, and coefficients about it.
+  ##   What every operation reads its operands as; see `applyOperation`.
+  doAssert scene.isAlive(handle), &"Object handle must be alive; got `{handle}`."
+  Anchored(anchor: scene.anchors[handle], local: scene.locals[handle])
+
+
+func geometryAbout*(scene: Scene, handle: int, centre: Position): Multivector =
+  ## Read object's geometry about `centre`, by handle, slid afresh from what storage holds.
+  ##   For reader standing about point other than world origin; per-frame reader takes
+  ##   `geometryOf`, which slides nothing.
+  ##   Reads storage and writes nothing, so object read about any centre, any number of
+  ##   times, keeps anchor and coefficients bit for bit.
+  doAssert scene.isAlive(handle), &"Object handle must be alive; got `{handle}`."
+  slid(scene.locals[handle], scene.anchors[handle] - centre)
+
+
+func deriveGeometryAt(scene: var Scene, handle: int) =
+  ## Derive object's geometry about world origin from its anchor and local coefficients.
+  ##   One statement of cache's rule, for every writer of either.
+  scene.geometries[handle] = slid(scene.locals[handle], scene.anchors[handle] - ORIGIN_WORLD)
+
+
 func setGeometryAt*(scene: var Scene, handle: int, geometry: Multivector) =
-  ## Write object's geometry, by handle, only way live object's geometry changes.
+  ## Write object's geometry about world origin, by handle: only way its geometry changes.
   ##   Setter rather than `var Multivector`, for reason `geometryOf` gives and second.
   ##     Front-end holding last frame's meshes can only know scene changed if every write
   ##     passes one door; see `revision`.
+  ##   Object is anchored again at world origin, where `geometry` stands as reader typed it.
+  ##     Anchor override moves with it, so plane's circle stays where it was drawn.
+  ##   Geometry object reads already, coefficient for coefficient, writes nothing.
+  ##     Edit saved with no coefficient changed keeps object at its own anchor, to precision
+  ##     it holds there rather than to that of world origin.
   doAssert scene.isAlive(handle), &"Object handle must be alive; got `{handle}`."
-  scene.geometries[handle] = geometry
+  var is_unchanged = true
+  for b in Basis:
+    if geometry[b] != scene.geometries[handle][b]: is_unchanged = false
+  if is_unchanged: return
+  scene.anchor_overrides[handle] =
+    overrideAbout(scene.anchor_overrides[handle], scene.anchors[handle], ORIGIN_WORLD)
+  scene.anchors[handle] = ORIGIN_WORLD
+  scene.locals[handle] = geometry
+  scene.deriveGeometryAt(handle)
   scene.markEdited()
   scene.revisions_placing[handle] = scene.count_edits
 
@@ -937,10 +1048,10 @@ func handlesCreated*(scene: Scene, handles: var array[OBJECTS_MAX, int]): int =
 
 
 func anchorOverrideAt*(scene: Scene, handle: int): Option[Position] =
-  ## Read where object's circle should centre, by handle rather than through `Object`.
-  ##   See `inkAt`.
+  ## Read where object's circle should centre about world origin, by handle; see `inkAt`.
+  ##   Held about object's anchor and offset here, three sums for object carrying one.
   doAssert scene.isAlive(handle), &"Object handle must be alive; got `{handle}`."
-  scene.anchor_overrides[handle]
+  overrideAbout(scene.anchor_overrides[handle], scene.anchors[handle], ORIGIN_WORLD)
 
 
 
@@ -1050,15 +1161,17 @@ func previewApplying*(scene: Scene; operation: Operation; first, second: int): O
   ##     each other.
   ##   Takes handles rather than multivectors so operands travel with answer.
   ##   Unary operation ignores `second`; pass first handle again, as every commit path does.
+  ##   Built from operands as stored, as commit builds it, then read about world origin as
+  ##   commit's cache reads it: preview and object built are same bits.
   if not (scene.isAlive(first) and scene.isAlive(second)): return
   let
-    m = scene.geometryOf(first)
-    n = scene.geometryOf(second)
+    m = scene.anchoredAt(first)
+    n = scene.anchoredAt(second)
     derived = applyOperation(operation, m, n)
-  if kindOf(derived).isNone: return
+  if kindOf(derived.local).isNone: return
   some(Preview(
-    geometry: derived,
-    anchor: creationAnchor(operation, m, n, derived),
+    geometry: derived.geometryAbout(ORIGIN_WORLD),
+    anchor: overrideAbout(creationAnchor(operation, m, n, derived), derived.anchor, ORIGIN_WORLD),
     operands: some((first, second)),
     radius: RADIUS_OBJECT_DEFAULT,
   ))
@@ -1116,26 +1229,29 @@ iterator pairs*(scene: Scene): (int, Object) =
 
 func addObject*(
   scene: var Scene,
-  geometry: Multivector,
+  anchored: Anchored,
   label: string,
   ink: Ink,
   now = 0.0,
   anchor_override = none(Position),
   radius: float = RADIUS_OBJECT_DEFAULT,
 ): int {.discardable.} =
-  ## Insert object into scene at first free handle, visible; report handle used.
+  ## Insert object as anchored into scene at first free handle, visible; report handle used.
   ##   Silently refuses nothing: caller checks `isFull` first, as scene cannot grow.
   ##   `now` is stamped as object's `born` reading.
   ##     Default reads as "born at dawn of time" and never animates.
   ##   `anchor_override` is where plane's circle should centre instead of support, where
   ##   construction fixes that; see `creationAnchor`.
+  ##     Held about `anchored.anchor`, as coefficients are.
   ##   `radius` is how large point is drawn, in world units; see `radiusAt`.
   doAssert not scene.isFull,
     &"Scene holds at most {OBJECTS_MAX} objects, raise `--define:visualiser.objects_max`; got " &
     &"`{scene.len}`."
   result = scene.handle_free_first.get
   scene.handle_free_first = scene.next_free[result]
-  scene.geometries[result] = geometry
+  scene.anchors[result] = anchored.anchor
+  scene.locals[result] = anchored.local
+  scene.deriveGeometryAt(result)
   toChars(label, scene.labels[result])
   scene.inks[result] = ink
   doAssert radius > 0.0, &"Object radius must be positive; got `{radius}`."
@@ -1152,6 +1268,23 @@ func addObject*(
   scene.handle_live_last = max(scene.handle_live_last, result + 1)
   scene.markEdited()
   scene.revisions_placing[result] = scene.count_edits
+
+
+func addObject*(
+  scene: var Scene,
+  geometry: Multivector,
+  label: string,
+  ink: Ink,
+  now = 0.0,
+  anchor_override = none(Position),
+  radius: float = RADIUS_OBJECT_DEFAULT,
+): int {.discardable.} =
+  ## Insert object standing about world origin, anchored there; report handle used.
+  ##   For object reader composes, and caller holding geometry about world origin alone.
+  ##   `anchor_override` stands about world origin too; see sibling taking `Anchored`.
+  scene.addObject(
+    Anchored(anchor: ORIGIN_WORLD, local: geometry), label, ink, now, anchor_override, radius
+  )
 
 
 func removeObject*(scene: var Scene, handle: int) =

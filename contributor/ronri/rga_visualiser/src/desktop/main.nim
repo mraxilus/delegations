@@ -866,7 +866,7 @@ proc drawChoiceMenu(interaction: Interaction, scene: Scene) =
       is_offered =
         choice == DragChoice.More or
         (is_pair_live and isOffered(
-          choice, scene.geometryOf(interaction.index_source), scene.geometryOf(over.get)
+          choice, scene.anchoredAt(interaction.index_source), scene.anchoredAt(over.get)
         ))
       is_chosen = highlighted == some(choice)
       at = anchorOf(centre, choice)

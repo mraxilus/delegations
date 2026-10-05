@@ -122,14 +122,15 @@ proc constructSeeds*(scene: var Scene, now = 0.0) =
 
 func applyStep*(scene: var Scene, step: Step, now = 0.0): Multivector {.discardable.} =
   ## Apply one step, appending its result exactly as GUI's apply button would.
-  ##   Reports derived geometry directly: caller naming what step produced cannot assume
-  ##   it landed in last handle of dense array.
+  ##   Reports derived geometry about world origin directly: caller naming what step
+  ##   produced cannot assume it landed in last handle of dense array.
   doAssert scene.isAlive(step.index_first) and scene.isAlive(step.index_second),
     &"Storyboard step must name operands scene has built; got `{step.index_first}` and " &
     &"`{step.index_second}`."
   let
-    operand_first = scene[step.index_first].geometry
-    operand_second = scene[step.index_second].geometry
-  result = applyOperation(step.operation, operand_first, operand_second)
-  let anchor = creationAnchor(step.operation, operand_first, operand_second, result)
-  scene.addObject(result, step.label, step.ink, now, anchor)
+    operand_first = scene.anchoredAt(step.index_first)
+    operand_second = scene.anchoredAt(step.index_second)
+    derived = applyOperation(step.operation, operand_first, operand_second)
+    anchor = creationAnchor(step.operation, operand_first, operand_second, derived)
+    handle = scene.addObject(derived, step.label, step.ink, now, anchor)
+  scene.geometryOf(handle)

@@ -787,8 +787,8 @@ proc nimApplyOperation(
   ##   As `panel.layoutOperation`'s apply button does.
   let
     operation = Operation(operation_ordinal)
-    operand_first = SCENE_PAGE.geometryOf(int(handle_first))
-    operand_second = SCENE_PAGE.geometryOf(int(handle_second))
+    operand_first = SCENE_PAGE.anchoredAt(int(handle_first))
+    operand_second = SCENE_PAGE.anchoredAt(int(handle_second))
     derived = applyOperation(operation, operand_first, operand_second)
     anchor = creationAnchor(operation, operand_first, operand_second, derived)
     name_first = SCENE_PAGE.labelAt(int(handle_first)).toText
@@ -801,7 +801,7 @@ proc nimApplyOperation(
   stampBorn(handle_created, float(now))
   SELECTION_PAGE.selectOnly(handle_created)
   HISTORY_PAGE.record(SCENE_PAGE, CAMERA_PAGE)
-  let kind_word = kindText(derived)
+  let kind_word = kindText(SCENE_PAGE.geometryOf(handle_created))
   OperationResult(
     created_handle: cint(handle_created),
     message: cstring(derivedMessage(label, kind_word)),
@@ -1986,8 +1986,8 @@ proc nimDragMenuLayout(): FlatBuffer {.exportc.} =
       is_offered =
         choice == DragChoice.More or
         (is_pair_live and isOffered(
-          choice, SCENE_PAGE.geometryOf(INTERACTION_PAGE.index_source),
-          SCENE_PAGE.geometryOf(over.get),
+          choice, SCENE_PAGE.anchoredAt(INTERACTION_PAGE.index_source),
+          SCENE_PAGE.anchoredAt(over.get),
         ))
     let base = 3 * ord(choice)
     FLAT_MENU[base] = float32(at.x)

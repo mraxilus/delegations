@@ -8,6 +8,20 @@ import ./fixtures
 import ../../src/rga_visualiser/scene {.all.}
 
 
+const
+  PLACE_FAR = Position(x: 698390.5003793767, y: -953804.3278982069, z: -2043454.9154813075)
+    ## Hold place two million units out, where demo stands HD 222237 b.
+    ##   Double steps 17 m in x and y there, and 35 m in z.
+  PLACE_EARTH = Position(x: 0.2512598425822558, y: 0.9679196720314863, z: 0.0)
+    ## Hold place one unit out, where demo stands earth.
+  METRE = 1.0 / (1000.0 * KILOMETRES_PER_ASTRONOMICAL_UNIT)  ## Hold one metre in world units.
+  OFFSET_PAIR = Direction(x: 3000.0 * METRE, y: -4000.0 * METRE, z: 2000.0 * METRE)
+    ## Hold where first of pair stands from its anchor, kilometres out.
+  ALONG_PAIR = Direction(x: 0.6, y: 0.0, z: -0.8)  ## Hold unit direction pair's second lies along.
+  TOLERANCE_HOLD_METRE = 1.0e-3
+    ## Bound, in metres, how far metre-scale construction stands off what built it.
+
+
 
 suite "Scene":
   test "the startup scene gives every seed point a colour of its own":
@@ -229,6 +243,188 @@ suite "Scene":
               differs = true
       check compared >= SAMPLES
       check differs == (operation notin OPERATIONS_SLIDING)
+
+
+  proc addPairFar(scene: var Scene): (int, int) =
+    ## Add two points metre apart beside HD 222237 b, each anchored at its place.
+    let place = ORIGIN_WORLD + OFFSET_PAIR
+    (
+      scene.addObject(Anchored(anchor: PLACE_FAR, local: place.toMultivector), "p", Ink.Rose),
+      scene.addObject(
+        Anchored(anchor: PLACE_FAR, local: (place + METRE * ALONG_PAIR).toMultivector),
+        "q",
+        Ink.Jade,
+      ),
+    )
+
+
+  proc distanceBetween(m, n: Multivector): float =
+    ## Measure how far apart two finite points stand, in world units.
+    norm(position(n).get - position(m).get)
+
+
+  test "two points a metre apart beside HD 222237 b, anchored there, stay a metre apart":
+    # Each is stored about star, kilometres from it, and read about centre there exactly.
+    #   About Sol double steps 17 to 35 m there: pair stored so is one point, or tens of
+    #   metres apart, which is why storage is anchored.
+    var scene = initScene()
+    let
+      (first, second) = addPairFar(scene)
+      stored = distanceBetween(scene.anchoredAt(first).local, scene.anchoredAt(second).local)
+      (first_star, second_star) =
+        (scene.geometryAbout(first, PLACE_FAR), scene.geometryAbout(second, PLACE_FAR))
+      about_star = distanceBetween(first_star, second_star)
+      about_sol = distanceBetween(scene.geometryOf(first), scene.geometryOf(second))
+    check abs(stored - METRE) <= 1.0e-9 * METRE
+    check abs(about_star - METRE) <= 1.0e-9 * METRE
+    check abs(about_sol - METRE) > 0.5 * METRE
+
+
+  test "a join of that pair, built through the catalogue, holds both points about the star":
+    # Built as both apply pickers and drag build it: from operands as stored, about local
+    #   origin beside them. Read about centre at star, line holds both to micrometres.
+    #   Anchored where it ran, beside pair, never at Sol: about Sol pair is one point.
+    var scene = initScene()
+    let
+      (first, second) = addPairFar(scene)
+      (m, n) = (scene.anchoredAt(first), scene.anchoredAt(second))
+      derived = applyOperation(Operation.Wedge, m, n)
+      centred = creationAnchor(Operation.Wedge, m, n, derived)
+      line = scene.addObject(derived, "p ∧ q", Ink.Olive, anchor_override = centred)
+      about_star = unitize(scene.geometryAbout(line, PLACE_FAR))
+    check kindOf(about_star) == some(Kind.Line)
+    for handle in [first, second]:
+      check normWeight(about_star ∧ scene.geometryAbout(handle, PLACE_FAR))[Basis.scalarAnti] <=
+          TOLERANCE_HOLD_METRE * METRE
+    check norm(scene.anchoredAt(line).anchor - (PLACE_FAR + OFFSET_PAIR)) <= 1.0e-9
+    # Drag offers and builds same line, and preview is what commit stored, bit for bit.
+    let offered = resultOf(DragChoice.Join, m, n)
+    check offered.isSome
+    for b in Basis: check offered.get.local[b] == derived.local[b]
+    let preview = scene.previewApplying(Operation.Wedge, first, second)
+    check preview.isSome
+    for b in Basis: check preview.get.geometry[b] == scene.geometryOf(line)[b]
+
+
+  test "reading about other centres a hundred times there and back leaves storage bit for bit":
+    # Geometry about any centre is slid afresh from anchor and coefficients, and written
+    #   nowhere: metre pair reads metre about star after every trip.
+    #   Rejected path rewrites storage about each centre in turn: about earth, pair stands
+    #   two million units off, steps of tens of metres, and one trip loses it.
+    var scene = initScene()
+    let
+      (first, second) = addPairFar(scene)
+      line = scene.addObject(
+        applyOperation(Operation.Wedge, scene.anchoredAt(first), scene.anchoredAt(second)),
+        "p ∧ q",
+        Ink.Olive,
+      )
+      handles = [first, second, line]
+    var held: array[3, Anchored]
+    for index, handle in handles: held[index] = scene.anchoredAt(handle)
+    const trips = 100
+    for trip in 0..<trips:
+      for centre in [PLACE_FAR, PLACE_EARTH, PLACE_FAR]:
+        for handle in handles: discard scene.geometryAbout(handle, centre)
+    for index, handle in handles:
+      let now = scene.anchoredAt(handle)
+      check now.anchor.x == held[index].anchor.x
+      check now.anchor.y == held[index].anchor.y
+      check now.anchor.z == held[index].anchor.z
+      for b in Basis: check now.local[b] == held[index].local[b]
+    let about_star =
+      distanceBetween(scene.geometryAbout(first, PLACE_FAR), scene.geometryAbout(second, PLACE_FAR))
+    check abs(about_star - METRE) <= 1.0e-9 * METRE
+    var (rewritten_first, rewritten_second) =
+      (scene.geometryAbout(first, PLACE_FAR), scene.geometryAbout(second, PLACE_FAR))
+    for centre in [(PLACE_FAR, PLACE_EARTH), (PLACE_EARTH, PLACE_FAR)]:
+      rewritten_first = slid(rewritten_first, centre[0] - centre[1])
+      rewritten_second = slid(rewritten_second, centre[0] - centre[1])
+    check abs(distanceBetween(rewritten_first, rewritten_second) - METRE) > 0.5 * METRE
+
+
+  test "an operation on operands anchored apart gives what it gives about world origin":
+    # Each operand is stored about point of its own, within sample's extent. Every
+    #   operation answers same object about world origin, to billionth of its scale:
+    #   sliding ones run about local origin, rest about Sol, as on world operands.
+    #   Rounding of zero is passed over, as noise either way.
+    for operation in Operation:
+      var compared = 0
+      for i in 0..<SAMPLES:
+        let k = (i + 7) mod SAMPLES
+        for m in [POINTS[i], LINES[i], PLANES[i]]:
+          for n in [POINTS[k], LINES[k], PLANES[k]]:
+            let
+              (anchor_m, anchor_n) = (PLACES[(i+3) mod SAMPLES], PLACES[(k+5) mod SAMPLES])
+              about_world = applyOperation(operation, m, n)
+              read = applyOperation(
+                operation,
+                Anchored(anchor: anchor_m, local: slid(m, ORIGIN_WORLD - anchor_m)),
+                Anchored(anchor: anchor_n, local: slid(n, ORIGIN_WORLD - anchor_n)),
+              ).geometryAbout(ORIGIN_WORLD)
+              scale = m.coefficientLargest * n.coefficientLargest
+            if about_world.isRoundingOf(scale) or read.isRoundingOf(scale): continue
+            inc compared
+            check read.scaleFree =~ about_world.scaleFree
+      check compared >= SAMPLES
+
+
+  test "a creation anchor of operands anchored apart stands where it does about world origin":
+    # Plane wedged from point and line, and plane through point across line, centre on
+    #   one place whatever origin operands are read about. Every other operation names
+    #   none, so anchored sibling slides operands for those two alone.
+    for operation in Operation:
+      for i in 0..<SAMPLES:
+        let
+          k = (i + 7) mod SAMPLES
+          (m, n) = (POINTS[k], LINES[i])
+          (anchor_m, anchor_n) = (PLACES[(i+3) mod SAMPLES], PLACES[(k+5) mod SAMPLES])
+          (m_anchored, n_anchored) = (
+            Anchored(anchor: anchor_m, local: slid(m, ORIGIN_WORLD - anchor_m)),
+            Anchored(anchor: anchor_n, local: slid(n, ORIGIN_WORLD - anchor_n)),
+          )
+          derived = applyOperation(operation, m_anchored, n_anchored)
+          centred = creationAnchor(operation, m_anchored, n_anchored, derived)
+          about_world = creationAnchor(operation, m, n, applyOperation(operation, m, n))
+        check about_world.isSome == (operation in OPERATIONS_CENTRING)
+        check centred.isSome == about_world.isSome
+        if about_world.isSome:
+          check overrideAbout(centred, derived.anchor, ORIGIN_WORLD).get =~ about_world.get
+
+
+  test "an edit that changes geometry anchors it at world origin, and one that does not keeps it":
+    # Reader types coefficients about world origin, so object stands there as typed, and
+    #   plane's circle stays where it was drawn. Edit saved with nothing changed writes
+    #   nothing, so object far out keeps anchor and precision it holds there.
+    var scene = initScene()
+    let
+      (first, _) = addPairFar(scene)
+      held = scene.anchoredAt(first)
+      revision = scene.revision
+    scene.setGeometryAt(first, scene.geometryOf(first))
+    check scene.revision == revision
+    check scene.anchoredAt(first).anchor.x == held.anchor.x
+    for b in Basis: check scene.anchoredAt(first).local[b] == held.local[b]
+    scene.setGeometryAt(first, POINTS[0])
+    check scene.revision > revision
+    check scene.anchoredAt(first).anchor =~ ORIGIN_WORLD
+    for b in Basis:
+      check scene.anchoredAt(first).local[b] == POINTS[0][b]
+      check scene.geometryOf(first)[b] == POINTS[0][b]
+    let
+      local_plane = ORIGIN_WORLD.toMultivector ∧ Direction(x: 1, y: 0, z: 0).toMultivector ∧
+          Direction(x: 0, y: 1, z: 0).toMultivector
+      plane = scene.addObject(
+        Anchored(anchor: PLACE_FAR, local: local_plane),
+        "plane",
+        Ink.Cobalt,
+        anchor_override = some(ORIGIN_WORLD + OFFSET_PAIR),
+      )
+      drawn = scene.anchorOverrideAt(plane).get
+    check drawn =~ PLACE_FAR + OFFSET_PAIR
+    scene.setGeometryAt(plane, scene.geometryOf(plane) + initElement(Basis.E321, 1.0e-3))
+    check scene.anchorOverrideAt(plane).get.x == drawn.x
+    check scene.anchorOverrideAt(plane).get.z == drawn.z
 
 
   test "meet finds where a line crosses a plane even far outside its own drawn disc":

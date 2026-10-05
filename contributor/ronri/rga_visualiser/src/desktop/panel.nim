@@ -896,18 +896,19 @@ func applyPickedOperation(
   ##   menu reads selection, and neither learns other's indexing.
   ##   Unary operation names same handle twice.
   let
-    operand_first = scene[first].geometry
-    operand_second = scene[second].geometry
+    operand_first = scene.anchoredAt(first)
+    operand_second = scene.anchoredAt(second)
     derived = applyOperation(operation, operand_first, operand_second)
     anchor = creationAnchor(operation, operand_first, operand_second, derived)
     name_first = scene.labelAt(first).toText
     name_second = scene.labelAt(second).toText
     label = notationSubstituted(operation, name_first, name_second)
+    handle_created = scene.addObject(derived, label, scene.takeInk(), now, anchor)
   panel.operations.remember(operation)
-  panel.selection.selectOnly scene.addObject(derived, label, scene.takeInk(), now, anchor)
+  panel.selection.selectOnly handle_created
   history.record(scene, camera)
 
-  panel.say(derivedMessage(label, kindText(derived)), now)
+  panel.say(derivedMessage(label, kindText(scene.geometryOf(handle_created))), now)
 
 
 proc layoutApply*(

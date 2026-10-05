@@ -257,3 +257,30 @@ suite "History":
       check history.redo(scene, camera)
       check scene.revision > max(seen)
       seen.add(scene.revision)
+
+
+  test "a step either way restores each object's anchor and its coefficients, bit for bit":
+    # Step holds whole scene, storage included, so anchor and coefficients about it ride
+    #   along: object far out comes back to precision it held there, not to world origin's.
+    #   Edit that rewrites geometry anchors object at world origin; undo puts anchor back.
+    var
+      scene = initScene()
+      camera = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
+      history: History
+    history.initHistory(scene, camera)
+    let
+      far = Position(x: 698390.5003793767, y: -953804.3278982069, z: -2043454.9154813075)
+      handle = scene.addObject(Anchored(anchor: far, local: POINTS[0]), "far", Ink.Rose)
+      held = scene.anchoredAt(handle)
+    history.record(scene, camera)
+    scene.setGeometryAt(handle, POINTS[1])
+    history.record(scene, camera)
+    check history.undo(scene, camera)
+    let restored = scene.anchoredAt(handle)
+    check restored.anchor.x == held.anchor.x
+    check restored.anchor.y == held.anchor.y
+    check restored.anchor.z == held.anchor.z
+    for b in Basis: check restored.local[b] == held.local[b]
+    check history.redo(scene, camera)
+    check scene.anchoredAt(handle).anchor =~ ORIGIN_WORLD
+    for b in Basis: check scene.anchoredAt(handle).local[b] == POINTS[1][b]

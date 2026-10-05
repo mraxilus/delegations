@@ -568,8 +568,10 @@ func choiceAt*(centre, cursor: ScreenPosition): Option[DragChoice] =
   none(DragChoice)
 
 
-func resultOf*(choice: DragChoice; m, n: Multivector): Option[Multivector] =
+func resultOf*[T: Anchored | Multivector](choice: DragChoice; m, n: T): Option[T] =
   ## Compute what choice would make of these two operands, if it makes anything.
+  ##   Operands as scene stores them, anchored, or as multivectors about world origin;
+  ##   answer comes in kind, through `scene.applyOperation` either way.
   ##   None for `More`, and none wherever result has no drawable shape.
   ##     One test covers both ways construction comes to nothing: wrong grades landing on
   ##     scalar or antiscalar, and pair lying on each other giving zero.
@@ -577,18 +579,20 @@ func resultOf*(choice: DragChoice; m, n: Multivector): Option[Multivector] =
   ##     and `objects.kindOf` reads zero as no shape; line metre long still reads as line.
   let drag = choice.toDrag
   if drag.isNone: return
-  let derived = applyOperation(drag.get.toOperation, m, n)
-  if kindOf(derived).isNone: return
+  let
+    derived = applyOperation(drag.get.toOperation, m, n)
+    kind = when T is Anchored: kindOf(derived.local) else: kindOf(derived)
+  if kind.isNone: return
   some(derived)
 
 
-func isOffered*(choice: DragChoice; m, n: Multivector): bool =
+func isOffered*[T: Anchored | Multivector](choice: DragChoice; m, n: T): bool =
   ## Report whether choice would make something of these two operands.
   ##   `More` is always offered: only route from this gesture to rest of catalogue.
   choice == DragChoice.More or resultOf(choice, m, n).isSome
 
 
-func proposalFor*(m, n: Multivector): Option[DragChoice] =
+func proposalFor*[T: Anchored | Multivector](m, n: T): Option[DragChoice] =
   ## Choose what plain release should make of these two operands, if anything.
   ##   Order, not ranking.
   ##     Over every ordered pair of point, line and plane, at most one of join and meet is
@@ -1428,8 +1432,8 @@ func updateDrag*(interaction: var Interaction, scene: Scene, now: float) =
     interaction.is_menu_entered = false
 
   let
-    m = scene.geometryOf(interaction.index_source)
-    n = scene.geometryOf(over.get)
+    m = scene.anchoredAt(interaction.index_source)
+    n = scene.anchoredAt(over.get)
   # Resolve in `endDrag`'s order.
   #   Wheel answers where open, `proposalFor` where none, except dwell wheel nobody has
   #   entered answers nothing at centre, so pair's answer stands.
@@ -1473,8 +1477,8 @@ func commitChoice*(
   let
     label_source = scene.labelAt(interaction.index_source).toText
     label_destination = scene.labelAt(over.get).toText
-    m = scene.geometryOf(interaction.index_source)
-    n = scene.geometryOf(over.get)
+    m = scene.anchoredAt(interaction.index_source)
+    n = scene.anchoredAt(over.get)
     operands = some((source: interaction.index_source, destination: over.get))
   if choice == DragChoice.More:
     return DragOutcome(
@@ -1511,7 +1515,7 @@ func commitChoice*(
     index_created =
       scene.addObject(derived.get, label, scene.takeInk(), now, anchor)
   DragOutcome(
-    message: derivedMessage(label, kindText(derived.get)),
+    message: derivedMessage(label, kindText(scene.geometryOf(index_created))),
     index_created: some(index_created),
     choice: some(choice),
     operands: operands,
@@ -1580,7 +1584,8 @@ func endDrag*(interaction: var Interaction, scene: var Scene, now = 0.0): DragOu
   if not (scene.isAlive(interaction.index_source) and scene.isAlive(over.get)):
     return DragOutcome(message: "Source or destination no longer exists; nothing done.")
 
-  let proposal = proposalFor(scene.geometryOf(interaction.index_source), scene.geometryOf(over.get))
+  let proposal =
+    proposalFor(scene.anchoredAt(interaction.index_source), scene.anchoredAt(over.get))
   if proposal.isNone:
     let
       label_source = scene.labelAt(interaction.index_source).toText
