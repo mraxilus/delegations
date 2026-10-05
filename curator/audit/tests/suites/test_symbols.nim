@@ -5,7 +5,8 @@
 {.experimental: "strictFuncs".}
 
 import std/[options, os, strutils, tables, tempfiles, unittest]
-import ../../src/[symbols, toolchain]
+import ../../../knoller/src/knoller
+import ../../src/symbols
 import ./fixtures
 
 

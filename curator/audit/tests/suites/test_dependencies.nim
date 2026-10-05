@@ -9,13 +9,6 @@ import ./fixtures
 
 
 suite "Dependencies":
-  test "package name ends at version, hash or space":
-    check packageName("malebolgia") == "malebolgia"  # bare
-    check packageName("malebolgia >= 1.0") == "malebolgia"  # version
-    check packageName("pkg#head") == "pkg"  # hash
-    check packageName("https://github.com/x/y@1.0") == "https://github.com/x/y"  # url at tag
-
-
   test "requirements skip nim and read every literal on requires lines":
     check requirements(NIMBLE_TEXT).len == 0  # nim only
     check requirements("requires \"Nim >= 2.0\"\n").len == 0  # case-insensitive

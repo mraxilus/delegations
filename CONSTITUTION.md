@@ -500,11 +500,14 @@ suite "Chapter 2":
    the shape of the data, and say so in a comment. A condition that mixes `and` with `or`, or
    applies `not` to a binary expression, is parenthesised.
 
-   Parentheses that group what the parser groups anyway go. That covers a prefix term or one
-   plain operand as one side of a binary operator (`|∙ ⊖(𝐦 ∧ 𝐧) + |∘(𝐦 ∧ ⊖𝐧)`, `2'u^DIMENSIONS`).
-   It also covers one plain operand after a prefix operator (`■𝐧`). A plain operand is a name
-   or a literal, with any call, index or field glued after it. Parentheses around a binary
-   expression stay, and so do those whose removal would glue two tokens into one, as in `^(|𝐦)`.
+   Parentheses go only where the parser of the code's own compiler reads the same tree without
+   them. The candidates are a prefix term or one plain operand as one side of a binary operator
+   (`|∙ ⊖(𝐦 ∧ 𝐧) + |∘(𝐦 ∧ ⊖𝐧)`, `2'u^DIMENSIONS`). One plain operand after a prefix operator is
+   also a candidate (`■𝐧`). A plain operand is a name or a literal, with any call, index or field
+   glued after it.
+   A candidate that the parser reads otherwise stays: `@(x[i])` stays, since `@x[i]` reads as
+   `(@x)[i]`. Parentheses around a binary expression stay, and so do those whose removal would
+   glue two tokens into one, as in `^(|𝐦)`.
 5. Group related constants and bindings under one keyword, dependent bindings included, where the
    language allows it. Two or more consecutive single bindings always share one keyword.
    Destructure where one expression yields the values together, or where a parallel pair fits one

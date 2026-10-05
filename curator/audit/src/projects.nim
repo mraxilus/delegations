@@ -49,8 +49,8 @@ const
     ## of every project, kept by driver that enforces it: declaration is data carrying its
     ## reason, and `koch list-packages` prints it.
     ##   Nim is not here: it is toolchain koch runs under rather than package machine installs,
-    ##   and `compilers.nim` resolves each pin itself. npm is not here either -- it is needed
-    ##   where project carries node manifest, so it belongs to that project rather than to
+    ##   and `compilers.nim` of knoller resolves each pin itself. npm is not here either -- it is
+    ##   needed where project carries node manifest, so it belongs to that project rather than to
     ##   koch, and `restoreNode` reports its absence by name.
     ##   `libbrotli1` serves audit suite rather than koch: `curator/audit` carries no driver to
     ##   declare it through `system`, and its suite is checker's own.

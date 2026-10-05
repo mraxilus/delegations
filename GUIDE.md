@@ -150,20 +150,21 @@ reads out of your context, so hand it work wherever the work allows.
 Every project pins its compiler exactly (`CONTRIBUTOR.md`, Toolchain). What follows is how a
 pin is served, installed and moved.
 
-- **You do not have to install it.** Koch resolves each pin. It takes the compiler on `PATH`
-  where that one already serves, else one cached under `~/.cache/koch/nim/<pin>/`, else a
-  fetch. A release arrives as a checksummed tarball in seconds. A commit is cloned from
-  `nim-lang/Nim` and built in minutes. Either fetch is paid once for each pin.
-- **One toolchain serves the whole run.** `$KOCH_NIM_DIR` moves the cache. Testament and
-  Atlas come from the toolchain that serves the pin, and its `bin/` leads `PATH`. So a lock
-  is never replayed against another compiler. That is why `koch check` and `koch test` stay
-  green as one command over projects that pin different compilers.
-- **A pin that nothing can serve is a finding.** It names the pin and the cache that was
-  tried. The network may be unreachable, or the version may not exist. Neither is a reason to
-  fall back to another compiler in silence.
+- **You do not have to install it.** Koch resolves each pin, and the `knoller` command
+  resolves the pin of each file that it fixes. Each takes the compiler on `PATH` where that one
+  already serves, else one cached under `~/.cache/knoller/nim/<pin>/`, else a fetch. A release
+  arrives as a checksummed tarball in seconds. A commit is cloned from `nim-lang/Nim` and built
+  in minutes. Either fetch is paid once for each pin.
+- **One toolchain serves the whole run.** `$KNOLLER_NIM_DIR` moves the cache, for koch and
+  knoller both. Testament and Atlas come from the toolchain that serves the pin, and its `bin/`
+  leads `PATH`. So a lock is never replayed against another compiler. That is why `koch check`
+  and `koch test` stay green as one command over projects that pin different compilers.
+- **A pin that nothing can serve is a finding of koch, and a warning of knoller.** It names the
+  pin, and the finding names the cache that was tried. The network may be unreachable, or the
+  version may not exist. Neither is a reason to fall back to another compiler in silence.
 - **You may install it yourself, and skip the fetch.** Put a matching `bin/` on `PATH`, or a
-  toolchain at `~/.cache/koch/nim/<pin>/`. `nim --version` prints `git hash:`, which a commit
-  pin is compared against.
+  toolchain at `~/.cache/knoller/nim/<pin>/`. `nim --version` prints `git hash:`, which a
+  commit pin is compared against.
 - **A bump of the pin is your work.** Run the suites on the new version. Move the line.
   Record in `PROVENANCE.md` what moved and why.
 - **CI installs your pin for your project alone**, in its own job. No project is held to the

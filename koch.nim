@@ -32,8 +32,8 @@
 ##     and suites cost minutes (`curator/audit/PROVENANCE.md`, Figures); push run on `main`
 ##     and weekly run do same against their own base, so nothing compiles every project
 ##     (CURATOR.md duty 11). Matrix runs each on its own pin, as `check` does locally:
-##     `compilers.nim` serves each changed project's pin from PATH, cache or fetch, so which
-##     compiler PATH holds decides nothing.
+##     `compilers.nim` of knoller serves each changed project's pin from PATH, cache or fetch, so
+##     which compiler PATH holds decides nothing.
 ##
 ##   Rejected: make (second toolchain, recipe tabs, untested glue); NimScript tasks (compiler
 ##     VM subset, script loaded on every compile, task names shadow compiler commands,
@@ -64,6 +64,7 @@ import ./curator/audit/src/[
   symbols,
   tree,
 ]
+import ./curator/knoller/src/knoller
 
 
 const USAGE = """
@@ -447,6 +448,8 @@ proc run(options: Options): int =
     #   Each fence prints as warning naming each rule broken inside it, so lines no fixer reads
     #   stay in view; exit code ignores it.
     #   Semantic pass runs first, on files holding candidate text cannot settle (`symbols.nim`).
+    #   Parser of each project's pin proves each needless group (`fixes.provenFix`); run that
+    #   proved nothing prints one warning saying why.
     if not options.isReadAll({Root, Branch, Base, All, Recent, DryRun}, has_project = true):
       return options.refused
     let
@@ -461,14 +464,18 @@ proc run(options: Options): int =
     let
       locked = tree.lockedNimbles
       answers = resolve(options.root, tree, semanticQueries(tree, entries, locked))
-      (written, fixed, refused, left, held) = fixEntries(
+      (fix, failures) = provenFix(
         options.branchOrDefault,
+        tree,
         entries,
         locked,
         tree.contextOf(entries, answers, locked),
+        pinProvers(initToolchains()),
       )
+      (written, fixed, refused, left, held, _) = fix
     for f in left.sorted: echo f.render
     for f in held.sorted: echo "warning: " & f.render
+    for failure in failures: echo "warning: " & failure
     if refused.len > 0:
       refused.report
       echo "Nothing written; fix writes only inside branch scope."
