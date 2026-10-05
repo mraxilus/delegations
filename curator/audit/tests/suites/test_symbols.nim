@@ -6,7 +6,7 @@
 
 import std/[options, os, strutils, tables, tempfiles, unittest]
 import ../../../knoller/src/knoller
-import ../../src/[symbols, toolchain]
+import ../../src/symbols
 import ./fixtures
 
 

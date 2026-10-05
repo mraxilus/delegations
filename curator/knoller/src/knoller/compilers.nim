@@ -14,6 +14,9 @@
 ##   Fetched compiler is asked what it is before it is trusted: wrong tarball is not
 ##     toolchain, and half-built tree carries bootstrap `bin/nim` answering with another
 ##     commit entirely. Build therefore lands beside destination and moves in once finished.
+##   Caller holds one `Toolchains`, which resolves each pin once however many files or projects
+##     share it, and holds failure too, so pin nothing serves costs one try. Suites of koch,
+##     semantic pass of audit and prover of each pin (`proofs.nim`) all read it.
 ##   Everything resolution prints goes to stderr: its own line, and output of curl, tar, git and
 ##     build, streamed line by line (`runAside`). Stdout of caller holds its own product alone,
 ##     such as report of `koch fix`.
@@ -32,7 +35,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, os, osproc, strutils]
+import std/[options, os, osproc, strutils, tables]
 import ./pins
 
 
@@ -56,9 +59,17 @@ const
     ## Anything absent here is built from source, which serves every platform Nim serves.
 
 
-type Compiler* = object  ## Define what `nim --version` says about compiler on PATH.
-  version*: string  ## Dotted release version it names.
-  commit*: string  ## Git hash it reports; empty when it reports none.
+type
+  Compiler* = object  ## Define what `nim --version` says about compiler on PATH.
+    version*: string  ## Dotted release version it names.
+    commit*: string  ## Git hash it reports; empty when it reports none.
+
+  Toolchains* = object
+    ## Define toolchain serving each pin asked so far, each resolved once (`binFor`).
+    root*: string  ## Cache toolchains live under.
+    running: Option[Compiler]  ## Compiler on PATH, read where first pin asks.
+    bins: Table[string, Option[string]]
+      ## `bin` serving each pin asked: `some("")` names PATH, `none` failure.
 
 
 func isServedBy*(pin: string, compiler: Compiler): bool =
@@ -238,3 +249,20 @@ proc resolve*(pin: string, running: Compiler, root: string): Option[string] =
   if is_built and pin.isServedBy(compilerAt(bin / NIM)): return some(bin)
   removeDir(directory)
   none(string)
+
+
+proc initToolchains*(
+  root: string = cacheRoot(getEnv(CACHE_KEY)), running = none(Compiler)
+): Toolchains =
+  ## Construct toolchains of none resolved yet, under cache `root`; compiler on PATH is read
+  ##   where first pin asks, unless `running` names it.
+  Toolchains(root: root, running: running)
+
+
+proc binFor*(toolchains: var Toolchains, pin: string): Option[string] =
+  ## Read `bin` of toolchain serving pin, resolving it on first ask alone: `some("")` names PATH,
+  ##   `none` failure, which no later ask tries again.
+  if pin notin toolchains.bins:
+    if toolchains.running.isNone: toolchains.running = some(runningCompiler())
+    toolchains.bins[pin] = resolve(pin, toolchains.running.get, toolchains.root)
+  toolchains.bins[pin]

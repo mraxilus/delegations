@@ -5,13 +5,15 @@
 
 import std/[options, os, strutils, tempfiles, unittest]
 from std/posix import nil
-import ../../src/knoller/compilers
+import ../../src/knoller/[compilers, proofs]
 
 
 const
   PIN = "2.2.4"  ## Compiler version suite resolves.
   COMMIT = "295bafc0d7e9a0c9a3ba0d9b39b5b0b6a4c1d2e3"
     ## Compiler commit, forty lowercase hex, standing where suite resolves commit, not version.
+  NIM = getCurrentCompilerExe()  ## Compiler building suite, whose parser fake toolchain runs.
+  GROUPED = "let s = @(x) + @(x[0])\n"  ## Source holding group parser proves, and group it refuses.
 
 
 proc streamsOf(action: proc ()): tuple[output, errors: string] =
@@ -36,6 +38,30 @@ proc streamsOf(action: proc ()): tuple[output, errors: string] =
   files[0].close
   files[1].close
   (readFile(directory / "output"), readFile(directory / "errors"))
+
+
+proc writeTools(directory: string) =
+  ## Write `curl` and `git` failing as unreachable network would, each printing on both streams.
+  createDir(directory)
+  for (tool, code) in [("curl", 22), ("git", 128)]:
+    writeFile(
+      directory / tool,
+      "#!/bin/sh\necho \"" & tool & " stub ran\"\necho \"" & tool & " stub failed\" >&2\n" &
+      "exit " & $code & "\n",
+    )
+    inclFilePermissions(directory / tool, {fpUserExec})
+
+
+proc writeToolchain(root, pin: string) =
+  ## Write toolchain of pin under cache root: its `nim` names pin as version, and runs compiler
+  ##   building suite for every other command.
+  createDir(root / pin / "bin")
+  writeFile(
+    root / pin / "bin" / "nim",
+    "#!/bin/sh\nif [ \"$1\" = --version ]; then echo \"Nim Compiler Version " & pin &
+    " [Linux: amd64]\"; exit 0; fi\nexec " & NIM.quoteShell & " \"$@\"\n",
+  )
+  inclFilePermissions(root / pin / "bin" / "nim", {fpUserExec})
 
 
 
@@ -119,14 +145,7 @@ suite "Compilers":
     #   them through runner resolution uses (Article IX.5).
     let directory = createTempDir("knoller_", "_aside")
     defer: removeDir(directory)
-    createDir(directory / "tools")
-    for (tool, code) in [("curl", 22), ("git", 128)]:
-      writeFile(
-        directory / "tools" / tool,
-        "#!/bin/sh\necho \"" & tool & " stub ran\"\necho \"" & tool & " stub failed\" >&2\n" &
-        "exit " & $code & "\n",
-      )
-      inclFilePermissions(directory / "tools" / tool, {fpUserExec})
+    writeTools(directory / "tools")
     let path = getEnv("PATH")
     putEnv("PATH", directory / "tools" & PathSep & path)
     defer: putEnv("PATH", path)
@@ -140,3 +159,44 @@ suite "Compilers":
     check "git stub ran" in streams.errors and "git stub failed" in streams.errors  # commit builds
     if platformOf(hostOS, hostCPU).len > 0:
       check "curl stub ran" in streams.errors and "curl stub failed" in streams.errors  # fetch
+
+
+  test "toolchains resolve each pin once: PATH where it serves, cache next, and failure held":
+    let directory = createTempDir("knoller_", "_toolchains")
+    defer: removeDir(directory)
+    writeTools(directory / "tools")
+    writeToolchain(directory / "cache", "9.9.9")
+    let path = getEnv("PATH")
+    putEnv("PATH", directory / "tools" & PathSep & path)
+    defer: putEnv("PATH", path)
+    var
+      toolchains = initToolchains(directory / "cache", some(Compiler(version: "9.9.8")))
+      bins: seq[Option[string]]
+    let streams = streamsOf(proc () =
+      for pin in ["9.9.8", "9.9.9", "0.0.1", "0.0.1"]: bins.add toolchains.binFor(pin)
+    )
+    check bins[0] == some("")  # compiler on PATH serves its own version
+    check bins[1] == some(directory / "cache" / "9.9.9" / "bin")  # cache serves, no fetch
+    check bins[2..3] == @[none(string), none(string)]  # nothing serves
+    check streams.errors.count("== fetching Nim ") == 1  # failure held, never tried again
+    check streams.output.len == 0
+
+
+  test "prover of pin is parser of compiler serving it; pin nothing serves names itself":
+    let directory = createTempDir("knoller_", "_provers")
+    defer: removeDir(directory)
+    writeTools(directory / "tools")
+    writeToolchain(directory / "cache", "9.9.9")
+    let path = getEnv("PATH")
+    putEnv("PATH", directory / "tools" & PathSep & path)
+    defer: putEnv("PATH", path)
+    let provers = pinProvers(initToolchains(directory / "cache", some(Compiler(version: "9.9.8"))))
+    var provings: seq[Proving]
+    let streams = streamsOf(proc () =
+      for pin in ["9.9.9", "0.0.1"]: provings.add provers(pin)(@[GROUPED])
+    )
+    check provings[0].failure.len == 0 and provings[0].answers == @[@[9]]  # `@(x[0])` stays
+    check provings[1].answers == @[newSeq[int]()]  # nothing proven
+    check provings[1].failure ==
+        "Parser proved no removal, since no compiler serves pin; got `0.0.1`."
+    check streams.output.len == 0

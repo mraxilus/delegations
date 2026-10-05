@@ -27,7 +27,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, json, options, os, sequtils, strutils, tables]
+import std/[algorithm, json, options, sequtils, strutils]
 import ../../knoller/src/knoller
 import ./[checker, compilers, dependencies, findings, layout, projects, toolchain, tree]
 
@@ -216,16 +216,13 @@ proc targetsFor(jobs: openArray[Job]): (seq[Target], seq[Finding]) =
   ##   fetched. Pin nothing serves is finding naming cache, and its project is dropped
   ##   rather than run by wrong compiler, which either fails confusingly or passes without
   ##   testing what CI will run.
-  ##   Resolution happens once per distinct pin, since projects commonly share one.
+  ##   Resolution happens once per distinct pin, since projects commonly share one (`Toolchains`
+  ##   of knoller).
   if jobs.len == 0: return
-  let
-    running = runningCompiler()
-    cache = cacheRoot(getEnv(CACHE_KEY))
-  var bins = initTable[string, Option[string]]()
+  var toolchains = initToolchains()
   for job in jobs:
-    if job.pin notin bins: bins[job.pin] = resolve(job.pin, running, cache)
-    let bin = bins[job.pin]
-    if bin.isNone: result[1].add missing(job.directory, job.pin, binOf(cache, job.pin))
+    let bin = toolchains.binFor(job.pin)
+    if bin.isNone: result[1].add missing(job.directory, job.pin, binOf(toolchains.root, job.pin))
     else: result[0].add Target(directory: job.directory, bin: bin.get)
 
 

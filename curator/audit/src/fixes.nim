@@ -41,7 +41,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, os, sequtils, sets, strutils, tables]
+import std/[options, sequtils, sets, strutils, tables]
 import ../../knoller/src/knoller
 import ./[
   checker, conversions, findings, glossary, kinds, layout, names, plan, rewrites, scope, symbols,
@@ -59,9 +59,6 @@ type
     answers: Table[string, Answer]  ## Semantic pass's answer for each file asked, by path.
     plans: seq[Plan]  ## Rename of each declaration coining abbreviation, planned or refused.
     proofs: Table[string, Proofs]  ## Answers of parser of project's compiler, by path.
-
-  ProverOf* = proc (pin: string): Prover {.closure.}
-    ## Define prover of each pin: parser of compiler serving it.
 
   Fixed* = tuple
     ## Define what fix of entries writes and reports, and what it asks parser.
@@ -420,19 +417,3 @@ proc provenFix*(
     for k, e in entries:
       if parts[k].asked.len > 0: parts[k] = e.partOf(locked, known)
   result.fix = scoped(branch, parts)
-
-
-proc pinProvers*(): ProverOf =
-  ## Build prover of each pin: parser of compiler serving it, resolved once for each pin as
-  ##   `compilers.resolve` does; pin nothing serves proves nothing, with reason.
-  let
-    running = runningCompiler()
-    cache = cacheRoot(getEnv(CACHE_KEY))
-  var bins = initTable[string, Option[string]]()
-  result = proc (pin: string): Prover =
-    if pin notin bins: bins[pin] = resolve(pin, running, cache)
-    let bin = bins[pin]
-    if bin.isSome: return compilerProver(if bin.get.len == 0: NIM else: bin.get / NIM)
-    let failure = "Parser proved no removal, since no compiler serves pin; got `" & pin & "`."
-    result = proc (sources: seq[string]): Proving =
-      Proving(answers: newSeq[seq[int]](sources.len), failure: failure)

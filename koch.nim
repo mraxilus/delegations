@@ -64,6 +64,7 @@ import ./curator/audit/src/[
   symbols,
   tree,
 ]
+import ./curator/knoller/src/knoller
 
 
 const USAGE = """
@@ -469,7 +470,7 @@ proc run(options: Options): int =
         entries,
         locked,
         tree.contextOf(entries, answers, locked),
-        pinProvers(),
+        pinProvers(initToolchains()),
       )
       (written, fixed, refused, left, held, _) = fix
     for f in left.sorted: echo f.render
