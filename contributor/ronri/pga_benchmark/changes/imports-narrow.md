@@ -9,7 +9,7 @@ and compile again. The equality of `Grade` is a private borrow, so the list name
 ## Edit `pga/operators.nim`
 
 ```nim
-import ./[algebra {.all.}, helpers, cayleys {.all.}, multivectors]
+import ./[algebra {.all.}, cayleys {.all.}, helpers, multivectors]
 ```
 
 ```nim

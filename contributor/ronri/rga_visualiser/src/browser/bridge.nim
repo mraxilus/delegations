@@ -443,8 +443,8 @@ var
   IS_CULLING = true  ## Whether points outside view are skipped before emitting.
     ## Off only through `nimSetCulling`, for check that culling changes no pixel.
   REACH_SCENE = 0.0  ## Scene's reach from origin, refreshed with placements; see `ensurePlacement`.
-  ORIGIN_RECORDS = Position(x: 0.0, y: 0.0, z: 0.0)
-    ## Point every record is stored from; see `camera.originHeld` and `mesh.clearMeshes`.
+  ORIGIN_VIEW = Position(x: 0.0, y: 0.0, z: 0.0)
+    ## Hold view origin, point every record is stored from; see `camera.originView`.
     ##   One value for both mesh sets, because one transform draws them.
     ##   Decided once for each frame, and held across frames that keep their meshes: it
     ##   moves only once travel has spent float32's precision about it.
@@ -2568,9 +2568,9 @@ proc nimBuildFrame(
   #   Walks every placement, so here rather than in `ensureViewOverlay`; see `REACH_NEAR`.
   REACH_NEAR = reachNearOf(PLACEMENTS, SCENE_PAGE, eye, frame.forward)
   CAMERA_PAGE.reach_near = REACH_NEAR
-  # Decide records' origin after scale, since bound is read off near clip.
+  # Decide view origin after scale, since bound is read off near clip.
   #   Both holds carry motor, so frame moving this origin rebuilds both anyway.
-  ORIGIN_RECORDS = CAMERA_PAGE.originHeld(eye, ORIGIN_RECORDS)
+  ORIGIN_VIEW = CAMERA_PAGE.originView(eye, ORIGIN_VIEW)
   let scale = CAMERA_PAGE.drawExtentFor(eye, frame, int(height_pixels), REACH_SCENE)
   # Derive frustum once, for cull of every point below; see `isPointInView`.
   let bounds = CAMERA_PAGE.viewBoundsFor(eye, frame, scale, float(aspect), REACH_SCENE)
@@ -2618,7 +2618,7 @@ proc nimBuildFrame(
     ms_axes = 0.0
   if not is_furniture_held:
     SETTINGS_FURNITURE_HELD = some(settings_furniture)
-    clearMeshes(MESHES_FURNITURE, ORIGIN_RECORDS)
+    clearMeshes(MESHES_FURNITURE, ORIGIN_VIEW)
     # Clock lattice and axes apart: axes are three lines, lattice is however many fog
     #   reaches on each plane picked.
     let ms_before_grid = performanceNow()
@@ -2671,8 +2671,8 @@ proc nimBuildFrame(
   ensurePlacement()
 
   if not is_scene_held:
-    # About held origin, as furniture is; see `ORIGIN_RECORDS`.
-    clearMeshes(MESHES, ORIGIN_RECORDS)
+    # About view origin, as furniture is; see `ORIGIN_VIEW`.
+    clearMeshes(MESHES, ORIGIN_VIEW)
     cost.openTally()
     # Mark picks once and read mark per handle below; see `selection.markOnto`.
     SELECTION_PAGE.markOnto(MARKS_PICKED)
@@ -2825,7 +2825,7 @@ proc nimBuildFrame(
     furniture_ribbon_vertices: FLAT_FURNITURE.view,
     is_scene_held: is_scene_held,
     is_furniture_held: is_furniture_held,
-    # Eye about records' origin, frame shaders measure depth in.
+    # Eye about view origin, frame shaders measure depth in.
     camera_eye_x: float32(scale.eye.x - MESHES.origin.x),
     camera_eye_y: float32(scale.eye.y - MESHES.origin.y),
     camera_eye_z: float32(scale.eye.z - MESHES.origin.z),

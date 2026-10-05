@@ -158,7 +158,7 @@ func wedgeAnti*(l: Line, g: Plane): Point {.inline.} =
 
 func wedgeAnti*(k, l: Line): float {.inline.} =
   ## Meet lines in scalar measuring their crossing, i.e. 𝐤 ∨ 𝐥; 6 mul, 5 add.
-  -(dot(k.v, l.m)) - dot(k.m, l.v)
+  -dot(k.v, l.m) - dot(k.m, l.v)
 
 func wedgeAnti*(p: Point, g: Plane): float {.inline.} =
   ## Meet point and plane in scalar measuring incidence, i.e. 𝐩 ∨ 𝐠; 4 mul, 3 add.

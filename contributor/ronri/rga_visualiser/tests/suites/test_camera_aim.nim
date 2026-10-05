@@ -1144,13 +1144,30 @@ suite "Camera Aim":
     check placement_behind.isNone
 
 
+  test "a pointer pick of a small object up close comes in to it, and one behind does not":
+    # Camera hundredth of millionth off its pivot, above its own floor, picks point six
+    #   thousandths of millionth ahead. Ahead is judged against object's own reach from
+    #   eye, so depth that small still reads ahead, as camera can hold it.
+    let
+      camera = cameraAround(Position(x: 1.0, y: 0.0, z: 0.0), 1.0e-8, Direction(x: 12, y: 10, z: 3))
+      eye = camera.eye
+      axes = camera.frame
+      scale = camera.drawExtentFor(height_aim, 0.0)
+      near = eye + 6.0e-9 * axes.forward + 1.0e-10 * axes.axis_right
+      placement = stanceApproaching(Kind.Point, RADIUS_OBJECT_LEAST, near, camera, scale)
+    check placement.isSome
+    check norm(camera.placed(placement.get).pivot - near) <= 1.0e-3 * norm(near - eye)
+    let behind = eye - 6.0e-9 * axes.forward
+    check stanceApproaching(Kind.Point, RADIUS_OBJECT_LEAST, behind, camera, scale).isNone
+
+
   test "a pointer pick of a star at least radius lands on it in front, near and far out":
     # Catalogue's stars and planets are drawn at `RADIUS_OBJECT_LEAST`, so pick comes in
     #   until disc spans `FRACTION_HEIGHT_APPROACH_POINT` of height: 2.4e-7 units off it.
     #   Separation must land there and pivot on star, which must read in front: ring, label,
     #   menu and every pick read that, and orbit turns about pivot.
     #   Swept beside origin and at HD 222237, 2.36 million units out, where double steps by
-    #   about 5e-10 and records' origin follows eye.
+    #   about 5e-10 and view origin follows eye.
     const
       duration = 0.35
       aspect = float(width_aim) / float(height_aim)
@@ -1209,6 +1226,100 @@ suite "Camera Aim":
         turned.orbit(0.7, 0.3)
         check norm(camera.pivot - place) < 0.02 * fit
         check norm(turned.pivot - place) < 0.02 * fit
+
+
+  test "a point picked from the list never lands nearer than its fit, and one further out stays":
+    # Ruling of #535: selection never starts nearer than its fit. Wheel over empty sky shrinks
+    #   separation to 9.4e-8 while view barely moves, and pick from list carried pivot onto
+    #   star at that separation: star at least radius drew as sphere 20 px across. It eases
+    #   out to fit pointer pick comes in to, 2.4e-7 units, where its disc spans
+    #   `FRACTION_HEIGHT_APPROACH_POINT` of frame.
+    #   Swept with star ahead of eye, behind it and beside it, beside origin and at HD 222237:
+    #   pick from list need not stand in view. Separation past fit is reader's, and stands.
+
+    proc pickedFromList(
+      camera: var Camera; scene: Scene; picked: Selection; width, height: int
+    ): bool =
+      ## Tick selection as list does, ease it out, and report whether ease arrived.
+      const duration = 0.35
+      var tween: CameraTween
+      tween.offerAim(
+        camera,
+        scene,
+        picked,
+        none(Preview),
+        camera.drawExtentFor(height, 0.0),
+        width,
+        height,
+        0.0,
+        duration,
+      )
+      for step in 1..5:
+        tween.advance(camera, duration * float(step) / 5.0, easeOutCubic)
+      tween.is_arrived
+
+    const separations = [9.4e-8, 1.0e-6, 12.0]  ## Wheeled in under fit, just past it, opening's.
+    let centres = [
+      Position(x: 1.0, y: 0.0, z: 0.0),
+      Position(x: 698390.5004, y: -953804.3279, z: -2043454.915),
+    ]
+    for centre in centres:
+      for out_to in out_to_aim:
+        let axes = cameraAround(centre, 12.0, out_to).frame
+        for offset in [40.0 * axes.forward, -40.0 * axes.forward, 40.0 * axes.axis_right]:
+          let place = centre + offset
+          var (scene, picked) = sceneOf(place.toMultivector)
+          scene.setRadius(picked.at(0), RADIUS_OBJECT_LEAST)
+          for separation in separations:
+            var camera = cameraAround(centre, 12.0, out_to)
+            camera.dollyTo(separation)
+            let held = camera.distance
+            check pickedFromList(camera, scene, picked, width_aim, height_aim)
+            let fit =
+              depthSpanning(2.0 * RADIUS_OBJECT_LEAST, FRACTION_HEIGHT_APPROACH_POINT, camera)
+            if held >= fit:
+              check camera.distance == held
+              continue
+            # Separation lands on fit, read relatively: `=~` floors its tolerance at one unit.
+            check abs(camera.distance / fit - 1.0) < 1.0e-6
+            # Pivot is star, which reads in front at that share of frame's height.
+            #   Held to 2% of separation, as pointer pick's far case above holds it.
+            let
+              is_in_front = projectToScreen(
+                camera.initMatrixViewProjection(float(width_aim) / float(height_aim)),
+                width_aim,
+                height_aim,
+                place,
+              ).isInFront
+              diameter = 2.0 * RADIUS_OBJECT_LEAST /
+                  worldPerPixelAt(place, camera.drawExtentFor(height_aim, 0.0).scale)
+            check is_in_front
+            check norm(camera.pivot - place) < 0.02 * fit
+            check abs(diameter / (FRACTION_HEIGHT_APPROACH_POINT * float(height_aim)) - 1.0) < 0.01
+    # Point seen at its size is reader's working scale, kept as pointer pick keeps it: 0.08
+    #   three units off draws 58 px across, and its fit is 19.3 units out.
+    var camera_seen = stanceAim(Direction(x: 12, y: 10, z: 3))
+    camera_seen.dollyTo(1.0)
+    let
+      held_seen = camera_seen.distance
+      (scene_seen, picked_seen) =
+        sceneOf(toMultivector(camera_seen.eye + 3.0 * camera_seen.frame.forward))
+    check depthSpanning(2.0 * RADIUS_OBJECT_DEFAULT, FRACTION_HEIGHT_APPROACH_POINT, camera_seen) >
+        held_seen
+    check pickedFromList(camera_seen, scene_seen, picked_seen, width_aim, height_aim)
+    check camera_seen.distance == held_seen
+    # Dot never lands further off than it stood, as pointer pick never moves eye past it.
+    #   Frame 390 tall draws 1% of its height under least dot, so 0.08 fifteen units off is
+    #   dot short of its fit.
+    const height_short = 390
+    var camera_short = stanceAim(Direction(x: 12, y: 10, z: 3))
+    camera_short.dollyTo(1.0)
+    let (scene_short, picked_short) =
+      sceneOf(toMultivector(camera_short.eye + 15.0 * camera_short.frame.forward))
+    check pickedFromList(camera_short, scene_short, picked_short, width_aim, height_short)
+    check depthSpanning(2.0 * RADIUS_OBJECT_DEFAULT, FRACTION_HEIGHT_APPROACH_POINT, camera_short) >
+        15.0
+    check abs(camera_short.distance - 15.0) < 1.0e-9
 
 
   test "a depth spanning a fraction of the frame is read off the lens":

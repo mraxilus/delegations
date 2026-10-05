@@ -874,8 +874,13 @@ func directionAcross(geometry: Multivector, eye: Position): Option[Direction] =
   ##   Perpendicular to sight ray reaching line rather than camera's axis, so rails
   ##   straddle plane line's projection is, symmetric from any angle.
   ##     Cost is step tilting hair out of plane perspective divides by, under pixel.
-  ##   None where eye lies on line itself, edge-on with no side to flank.
-  directionNormal(geometry ∧ eye.toMultivector)
+  ##   None where eye lies on line itself, edge-on with no side to flank: join is then
+  ##   rounding of zero against line and eye (`isRoundingOf`), whatever line's own scale.
+  let
+    point_eye = eye.toMultivector
+    plane = geometry ∧ point_eye
+  if plane.isRoundingOf(geometry.coefficientLargest * point_eye.coefficientLargest): return
+  directionNormal(plane)
 
 
 func awayFromScreen*(point, first, second: ScreenPosition): float =

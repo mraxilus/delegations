@@ -92,7 +92,7 @@ func isNull*(m: Metric, index: int): bool =
 
 func isImaged*(m: Metric, b: Blade): bool =
   ## Read whether blade survives metric, i.e. whether every factor carries image.
-  for i in 0 ..< m.dimensions:
+  for i in 0..<m.dimensions:
     if ((b shr i) and 1) == 1 and m.isNull(i): return false
   true
 
@@ -102,7 +102,7 @@ func termsWedge*(m: Metric): int =
   ##   Each dimension stands in one of three states for pair: in neither, in first, in
   ##   second. So count is three raised to dimensions, and metric never enters.
   result = 1
-  for _ in 0 ..< m.dimensions: result *= 3
+  for _ in 0..<m.dimensions: result *= 3
 
 
 func termsGeometric*(m: Metric): int =
@@ -110,13 +110,13 @@ func termsGeometric*(m: Metric): int =
   ##   Dimension carrying image stands in four states for pair; null dimension loses state
   ##   where both operands carry it, leaving three.
   result = 1
-  for i in 0 ..< m.dimensions:
+  for i in 0..<m.dimensions:
     result *= (if m.isNull(i): 3 else: 4)
 
 
 func termsFormScalar*(m: Metric): int =
   ## Count terms bilinear form landing in one slot spends, i.e. blades carrying image.
-  for b in 0 ..< m.slots:
+  for b in 0..<m.slots:
     if m.isImaged(Blade(b)): inc result
 
 
@@ -200,10 +200,10 @@ func termsCompound*(m: Metric, shape: Shape): int =
   ##   operand holds one term for each pair of blades whose product survives, and no more.
   ##   Pairs give distinct products of two components, so count holds under same assumption
   ##   as primitives: no subexpression shared between slots.
-  for raw in 0 ..< m.slots:
+  for raw in 0..<m.slots:
     let image = m.imageOf(shape, Blade(raw))
     if image.isNone: continue
-    for other in 0 ..< m.slots:
+    for other in 0..<m.slots:
       let
         a = Blade(other)
         survives = case shape
@@ -219,7 +219,7 @@ func termsProductDual*(m: Metric; as_weight, as_expand: bool): int =
   ##   Antiwedge with dual of `n` needs first operand to contain `n`, which two raised to
   ##   dimensions less grade of `n` counts; wedge needs it contained in `n` instead, which
   ##   two raised to grade of `n` counts.
-  for raw in 0 ..< m.slots:
+  for raw in 0..<m.slots:
     let
       n = Blade(raw)
       has_null = not m.isImaged(n)
@@ -228,7 +228,7 @@ func termsProductDual*(m: Metric; as_weight, as_expand: bool): int =
     result += 1 shl (if as_expand: grade else: m.dimensions - grade)
 
 
-func boundLowerOf*(shape: Shape, m: Metric, arity: range[1 .. 2]): BoundLower =
+func boundLowerOf*(shape: Shape, m: Metric, arity: range[1..2]): BoundLower =
   ## Derive multivector lower bound of one operation from its shape and algebra.
   ##   Movement is operands read once and result written once, since dense operation needs
   ##   no fill, no copy and no intermediate to be correct.
@@ -292,7 +292,7 @@ func boundLowerOf*(shape: Shape, m: Metric, arity: range[1 .. 2]): BoundLower =
     result.adds = max(0, result.multiplies - m.slots)
 
 
-func boundLowerOfChain*(parts: openArray[Shape], m: Metric, arity: range[1 .. 2]): BoundLower =
+func boundLowerOfChain*(parts: openArray[Shape], m: Metric, arity: range[1..2]): BoundLower =
   ## Sum what each step of operation's own definition demands, where library composes it.
   ##   Arithmetic is sum over steps, and step carrying no rule adds nothing. Movement stays
   ##   operands read once and final result written once, since chain needs no intermediate

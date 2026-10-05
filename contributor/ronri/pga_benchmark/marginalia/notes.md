@@ -13,7 +13,7 @@ a note never points at lines that say something else.
 
 ```nim
 type
-  Multivector* = object ## Define generalised multivector for n-dimensional PGA.
+  Multivector* = object  ## Define generalised multivector for n-dimensional PGA.
 ```
 
 A point carries all 2^D slots, and each product reads every slot. Of the measurands with a
@@ -61,7 +61,7 @@ with the other grade predicates, or let the suites define their own.
 func `|∙`*(m: Multivector): Multivector {.inline.} =
   ## Get (round) bulk norm of multivector as size of (round) bulk components.
   ##   I.e. ‖𝐦‖∙ = √(𝐦∙𝐦).
-  result[Basis.scalar] = (`|∙ ²`m)[Basis.scalar].sqrt
+  result[Basis.scalar] = (`|∙²`m)[Basis.scalar].sqrt
 ```
 
 `∙ ∘`, the squared norms and the norms each write a full multivector to carry one double.
@@ -107,7 +107,7 @@ where the weight dot is negative. 2.103 is `★𝐦 =~ /(∙𝐦)`, which is not
 `pga/cayleys.nim` · open
 
 ```nim
-import ./[algebra {.all.}]
+import ./algebra {.all.}
 ```
 
 `import ./[algebra {.all.}]` opens the module boundary. This file needs `complement`,
@@ -172,8 +172,8 @@ call site with it, so the Architect decides.
 `pga/operators.nim` · open
 
 ```nim
-        ident"Multivector",
-        nnkIdentDefs.newTree(ident"m", ident"Multivector", newEmptyNode()),
+      ident"Multivector",
+      nnkIdentDefs.newTree(ident"m", ident"Multivector", newEmptyNode()),
     ),
     pragma = nnkPragma.newTree(ident"inline", ident"noinit"),
 ```
@@ -188,9 +188,7 @@ that writes every slot does not lose.
 `pga/operators.nim` · open
 
 ```nim
-        ident"Multivector",
-        ident_defs,
-    ),
+    params = nnkFormalParams.newTree(ident"Multivector", ident_defs),
     pragma = nnkPragma.newTree(ident"inline", ident"noinit"),
 ```
 
@@ -204,8 +202,8 @@ Binary products also write every slot, with `noinit`. The same effect of the ben
 ```nim
   func `⊛`*(m: Multivector): Multivector =
     ## Get partner of multivector, i.e. (-1)^(grade(𝐦)+1) (𝐦☆)⊡ ∨ 𝐦⊟.
-    let sign = float(-1^(int(m.grade.get) + 1))
-    sign * ⊡( ☆ m) ∨ ⊟ m
+    let sign = float(-1 ^ (int(m.grade.get) + 1))
+    sign * ⊡(☆m) ∨ ⊟m
 ```
 
 `⊛` reads `m.grade.get`, which scans every slot. The sign (−1)^(grade+1) can fold into the
@@ -248,10 +246,10 @@ leaves the norm out, since the norm takes a root of a squared norm.
 `pga.nim` · proposal
 
 ```nim
-  func support*(m: Multivector): Multivector {.inline.} = ∩ m
+  func support*(m: Multivector): Multivector {.inline.} = ∩m
     ## Perform orthogonal projection of origin (i.e. eₙ) onto multivector.
 
-  func supportAnti*(m: Multivector): Multivector {.inline.} = ∪ m
+  func supportAnti*(m: Multivector): Multivector {.inline.} = ∪m
     ## Perform orthogonal projection of horizon (i.e. e̅ₙ) onto multivector.
 ```
 

@@ -279,7 +279,7 @@ func isLight(f: JsonNode): bool =
 func named(names: openArray[string], most = 6): string =
   ## Join names, first few spelled and rest counted, so evidence stays one sentence.
   if names.len <= most: return names.join(", ")
-  names[0 ..< most].join(", ") & ", and " & $(names.len - most) & " more"
+  names[0..<most].join(", ") & ", and " & $(names.len - most) & " more"
 
 
 func countFunctions(
@@ -507,6 +507,8 @@ func headerOf(algebra: Algebra): string =
         ", over " & $taken_runtime{"rounds"}.getInt & " rounds of " &
         $taken_runtime{"objects"}.getInt & " objects" &
         (if count_runs > 1: " each. Each time is the median of those runs." else: ".") &
+        (if taken_runtime.hasKey("measured_at"): " It ran at pga `" &
+          taken_runtime{"measured_at"}.getStr & "`, which emits the same C as the pin." else: "") &
         " The allocation gauge was " &
         (if taken_runtime{"is_allocation_measured"}.getBool: "live" else: "off") & "."
 
@@ -520,45 +522,45 @@ func render*(
   lines.add ""
   lines.add wrap(
     "The driver writes this file. To make it again, run `nim r tools/build.nim gaps`, which " &
-        "reads `baseline/*.json`. Do not edit it by hand. Every gap keeps its number, " &
-        "because `baseline/docket.json` holds the numbers and the driver reuses none. The " &
-        "pinned compiler emits C for the `bench` entry, and the inspector counts that C. A " &
-        "cell gives the library value first and the reference value second.",
+    "reads `baseline/*.json`. Do not edit it by hand. Every gap keeps its number, " &
+    "because `baseline/docket.json` holds the numbers and the driver reuses none. The " &
+    "pinned compiler emits C for the `bench` entry, and the inspector counts that C. A " &
+    "cell gives the library value first and the reference value second.",
   )
   lines.add ""
   lines.add wrap(
     "A gap is over where the library spends more than its reference. It is also over where " &
-        "the library spends a zero fill, an intermediate, an error check, an allocation or " &
-        "a NaN. Time is over where the library median is more than " & $TOLERANCE &
-        " times the reference median. A gap is met in every other case. Bytes are modelled " &
-        "movement for each call, and runtime measurements are medians of the last bench that " &
-        "ran by hand.",
+    "the library spends a zero fill, an intermediate, an error check, an allocation or " &
+    "a NaN. Time is over where the library median is more than " & $TOLERANCE &
+    " times the reference median. A gap is met in every other case. Bytes are modelled " &
+    "movement for each call, and runtime measurements are medians of the last bench that " &
+    "ran by hand.",
   )
   lines.add ""
   lines.add wrap(
     "Each operation carries two lower bounds, and the library stands above both. The " &
-        "multivector lower bound is what the algebra demands of any implementation over a " &
-        "dense multivector. It is derived from the axioms, and it is never measured. The type " &
-        "optimised lower bound is the typed reference, which is measured rather than derived. " &
-        "Work that reaches the first bound changes no type, and work that reaches the second " &
-        "changes every one.",
+    "multivector lower bound is what the algebra demands of any implementation over a " &
+    "dense multivector. It is derived from the axioms, and it is never measured. The type " &
+    "optimised lower bound is the typed reference, which is measured rather than derived. " &
+    "Work that reaches the first bound changes no type, and work that reaches the second " &
+    "changes every one.",
   )
   lines.add ""
   lines.add wrap(
     "Each algebra below carries a table of multivector lower bounds. That bound spends no " &
-        "zero fill, no intermediate, no error check and no allocation, and it moves its " &
-        "operands read once plus its result written once. It rests on the operation alone, so " &
-        "one row serves every measurand that spells that operation. The last column is what " &
-        "the library spends there, as multiplies over bytes moved. An operation whose shape " &
-        "carries no rule is absent, rather than present without ground.",
+    "zero fill, no intermediate, no error check and no allocation, and it moves its " &
+    "operands read once plus its result written once. It rests on the operation alone, so " &
+    "one row serves every measurand that spells that operation. The last column is what " &
+    "the library spends there, as multiplies over bytes moved. An operation whose shape " &
+    "carries no rule is absent, rather than present without ground.",
   )
   lines.add ""
   lines.add wrap(
     "A shape of several steps names a chain, which the library composes from several " &
-        "operators. The bound of a chain sums what each step demands, and a step that carries " &
-        "no rule adds nothing. Such a bound is an estimate of that chain, and never a proved " &
-        "minimum, because a special routine can share work between steps. Every other bound in " &
-        "these tables is derived from the axioms alone.",
+    "operators. The bound of a chain sums what each step demands, and a step that carries " &
+    "no rule adds nothing. Such a bound is an estimate of that chain, and never a proved " &
+    "minimum, because a special routine can share work between steps. Every other bound in " &
+    "these tables is derived from the axioms alone.",
   )
   lines.add ""
   lines.add "## Causes"
@@ -566,7 +568,7 @@ func render*(
   for d in decided:
     lines.add wrap(
       "- **" & d.cause.id & ", " & d.status.word & ".** " & d.cause.title & " Evidence: " &
-          d.evidence & " Closes when " & d.cause.closes_when,
+      d.evidence & " Closes when " & d.cause.closes_when,
       indent = "  ",
     )
   for algebra in algebras:
@@ -583,7 +585,7 @@ func render*(
         own.add gap
     lines.add wrap(
       "Gaps: " & $own.len & ". Over " & $counts[Status.Over] & ", met " &
-          $counts[Status.Met] & ", unmeasured " & $counts[Status.Unmeasured] & ".",
+      $counts[Status.Met] & ", unmeasured " & $counts[Status.Unmeasured] & ".",
     )
     lines.add ""
     lines.add "| Id | Measurand | Mul | Div | Bytes | Int | Chk | ns | Status |"

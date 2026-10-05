@@ -80,7 +80,7 @@ func allocationsOf*(stats: AllocStats): int =
     text = $stats
     start = text.find("allocCount: ") + "allocCount: ".len
     stop = text.find(',', start)
-  parseInt(text[start ..< stop])
+  parseInt(text[start..<stop])
 
 
 
@@ -131,13 +131,13 @@ func summarise*(rounds: openArray[int64], objects: int): tuple[median, minimum: 
   let
     middle = sorted.len div 2
     median = if sorted.len mod 2 == 1: float(sorted[middle])
-      else: (float(sorted[middle - 1]) + float(sorted[middle])) / 2.0
+      else: (float(sorted[middle-1]) + float(sorted[middle])) / 2.0
   (median: median / float(objects), minimum: float(sorted[0]) / float(objects))
 
 
 template timeRounds(rounds: var array[ROUNDS, int64], loop: untyped) =
   ## Run loop `ROUNDS` times, recording nanoseconds of each.
-  for r in 0 ..< ROUNDS:
+  for r in 0..<ROUNDS:
     let started = getMonoTime()
     loop
     rounds[r] = (getMonoTime() - started).inNanoseconds
@@ -185,7 +185,7 @@ macro emitMeasurand(
       # Hot path, per pool slot: index and pool reads constant; work linear in `OBJECTS` times
       #   `ROUNDS`; nothing allocates but `body`, and `allocations` counts what it does.
       timeRounds(rounds):
-        for i in 0 ..< OBJECTS:
+        for i in 0..<OBJECTS:
           let j = (i * 7 + 3) mod OBJECTS
           template `m`(): untyped {.used.} = `pool_m`[i]  # Read by `body`.
           template `n`(): untyped {.used.} = `pool_n`[j]  # Read by binary `body`; unary leaves it.
@@ -197,7 +197,7 @@ macro emitMeasurand(
             results[i] = `body`
       let statistics_after = getAllocStats()
       var count_nan = 0
-      for i in 0 ..< OBJECTS:
+      for i in 0..<OBJECTS:
         if isAnyNan(results[i]): inc count_nan
         else: SINK += fold(results[i])
       let (median, minimum) = summarise(rounds, OBJECTS)
@@ -216,7 +216,7 @@ macro emitCatalogue(): untyped =
   ##   machine drift lands on each alike.
   result = newStmtList()
   let calls = newStmtList()
-  for index in 0 ..< CATALOGUE.len:
+  for index in 0..<CATALOGUE.len:
     for implementation in Implementation:
       let
         name = ident("measure" & $index & $implementation)

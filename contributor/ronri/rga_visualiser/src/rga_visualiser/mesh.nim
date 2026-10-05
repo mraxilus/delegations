@@ -855,7 +855,9 @@ func directionAcross*(tail, head, eye: Position): Option[Direction] =
   ##     walking 16x16 coefficient pairs through `nimCopy` on JS backend.
   ##     Suite holds this cross equal to that join, sign included.
   ##   None where eye lies on segment's line, or segment has no length.
-  normalize(cross(head - tail, eye - tail))
+  ##     Judged in world units, scale one, as ribbon shaders' sibling tests are: segment's
+  ##     size is picture's, records about pivot, never geometry's own.
+  normalize(cross(head - tail, eye - tail), scale = 1.0)
 
 
 func expandRibbon*(record: RibbonRecord, scale: DrawScale): array[6, Vertex] =

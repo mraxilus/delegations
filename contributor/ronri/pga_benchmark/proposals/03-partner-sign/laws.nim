@@ -22,17 +22,17 @@ const
 proc sample(grade: Grade): Multivector =
   ## Draw multivector of one grade, every slot of that grade uniform in [-1, 1].
   for basis in Basis:
-    if basis.grade == grade: result[basis] = rand(-1.0 .. 1.0)
+    if basis.grade == grade: result[basis] = rand(-1.0..1.0)
 
 
 proc main(): int =
   ## Hold partner to its definition on seeded samples of every grade; exit zero.
   randomize(SEED)
-  for grade in Grade.low .. Grade.high:
-    let sign = float(-1 ^ (int(grade) + 1))
-    for _ in 1 .. SAMPLES:
+  for grade in Grade.low..Grade.high:
+    let sign = float(-1^(int(grade) + 1))
+    for _ in 1..SAMPLES:
       let m = sample(grade)
-      doAssert (⊛m) =~ ((sign * ⊡(☆m)) ∨ (⊟m)), "partner must equal its definition"
+      doAssert (⊛m) =~ ((sign * ⊡(☆m)) ∨ ⊟m), "partner must equal its definition"
   echo "partner-sign: laws hold at ", DIMENSIONS, "D, conformal ", IS_CONFORMAL
   0
 

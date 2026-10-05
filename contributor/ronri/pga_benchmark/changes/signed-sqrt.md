@@ -27,21 +27,21 @@ func `|∙`*(m: Multivector): Multivector {.inline.} =
 ## Edit `pga/operators.nim`
 
 ```nim
-  result[Basis.scalar] = (`|∙ ²`m)[Basis.scalar].sqrt
+  result[Basis.scalar] = (`|∙²`m)[Basis.scalar].sqrt
 ```
 
 ```nim
-  result[Basis.scalar] = (`|∙ ²`m)[Basis.scalar].signedSqrt
+  result[Basis.scalar] = (`|∙²`m)[Basis.scalar].signedSqrt
 ```
 
 ## Edit `pga/operators.nim`
 
 ```nim
-  result[Basis.scalarAnti] = (`|∘ ²`m)[Basis.scalarAnti].sqrt
+  result[Basis.scalarAnti] = (`|∘²`m)[Basis.scalarAnti].sqrt
 ```
 
 ```nim
-  result[Basis.scalarAnti] = (`|∘ ²`m)[Basis.scalarAnti].signedSqrt
+  result[Basis.scalarAnti] = (`|∘²`m)[Basis.scalarAnti].signedSqrt
 ```
 
 ## Edit `pga/operators.nim`
@@ -67,19 +67,19 @@ func `|∙`*(m: Multivector): Multivector {.inline.} =
 ## Edit `pga/operators.nim`
 
 ```nim
-  let m_norm_bulk = (`|∙ ²`m)[Basis.scalar].sqrt
+    m_norm_bulk = (`|∙²`m)[Basis.scalar].sqrt
 ```
 
 ```nim
-  let m_norm_bulk = (`|∙ ²`m)[Basis.scalar].signedSqrt
+    m_norm_bulk = (`|∙²`m)[Basis.scalar].signedSqrt
 ```
 
 ## Edit `pga/operators.nim`
 
 ```nim
-  let m_norm_weight = (`|∘ ²`m)[Basis.scalarAnti].sqrt
+    m_norm_weight = (`|∘²`m)[Basis.scalarAnti].sqrt
 ```
 
 ```nim
-  let m_norm_weight = (`|∘ ²`m)[Basis.scalarAnti].signedSqrt
+    m_norm_weight = (`|∘²`m)[Basis.scalarAnti].signedSqrt
 ```

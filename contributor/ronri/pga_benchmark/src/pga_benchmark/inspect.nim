@@ -65,7 +65,7 @@ func keyed(functions: seq[FunctionC]): seq[(string, FunctionC)] =
     group.sort(proc (a, b: FunctionC): int = cmp(a.overload, b.overload))
     for i, f in group:
       let numbered = if i == 0: key else: key & "#u" & $f.overload
-      result.add((numbered, f))
+      result.add (numbered, f)
 
 
 func stemLibrary(k: Kind): string =
@@ -85,7 +85,7 @@ func keyLibrary(p: Measurand): string =
   let head = p.headEmitted
   if head.len == 0: return ""
   var stems: seq[string]
-  for i in 0 ..< int(p.arity): stems.add stemLibrary(p.operands[i])
+  for i in 0..<int(p.arity): stems.add stemLibrary(p.operands[i])
   head & "(" & stems.join(",") & ")"
 
 
@@ -96,19 +96,19 @@ func keyReference(p: Measurand): string =
     close = p.reference.rfind(')')
   if open < 0 or close < open: return ""
   var stems: seq[string]
-  for argument in p.reference[open + 1 ..< close].split(','):
+  for argument in p.reference[open+1..<close].split(','):
     case argument.strip
     of "m": stems.add stemReference(p.operands[0])
     of "n": stems.add stemReference(p.operands[1])
     else: discard
-  p.reference[0 ..< open] & "(" & stems.join(",") & ")"
+  p.reference[0..<open] & "(" & stems.join(",") & ")"
 
 
 func keyDense(p: Measurand): string =
   ## Get key of dense form of general measurand; empty on typed one, which has none.
   if p.reference.len > 0: return ""
   var stems: seq[string]
-  for i in 0 ..< int(p.arity): stems.add stemLibrary(p.operands[i])
+  for i in 0..<int(p.arity): stems.add stemLibrary(p.operands[i])
   p.nameDenseOf & "(" & stems.join(",") & ")"
 
 

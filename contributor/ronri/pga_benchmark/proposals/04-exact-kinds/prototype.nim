@@ -53,11 +53,11 @@ macro defineKinds(): untyped =
   ## Name kinds as aliases of exact kinds: grades, parities, and whole algebra.
   result = newStmtList()
   var named: seq[(string, set[Basis])]
-  for grade in Grade.low .. Grade.high:
-    named.add(("Kvector" & $int(grade), basesOfGrade(grade)))
-  named.add(("MultivectorEven", basesOfParity(true)))
-  named.add(("MultivectorOdd", basesOfParity(false)))
-  named.add(("MultivectorWhole", {Basis.low .. Basis.high}))
+  for grade in Grade.low..Grade.high:
+    named.add ("Kvector" & $int(grade), basesOfGrade(grade))
+  named.add ("MultivectorEven", basesOfParity(true))
+  named.add ("MultivectorOdd", basesOfParity(false))
+  named.add ("MultivectorWhole", {Basis.low..Basis.high})
   for (name, listed) in named:
     let (kind, spelled) = (ident(name), literal(listed))
     result.add quote do:
@@ -204,7 +204,7 @@ func toMultivector*[B: static set[Basis]](m: MultivectorOf[B]): Multivector =
 
 proc sample[B: static set[Basis]](kind: typedesc[MultivectorOf[B]]): MultivectorOf[B] =
   ## Draw one kind with every slot uniform in [-1, 1].
-  for index in 0 ..< result.elements.len: result.elements[index] = rand(-1.0 .. 1.0)
+  for index in 0..<result.elements.len: result.elements[index] = rand(-1.0..1.0)
 
 
 func basesOf[B: static set[Basis]](kind: typedesc[MultivectorOf[B]]): set[Basis] = B
@@ -226,7 +226,7 @@ proc main(): int =
   when IS_RIGID:
     doAssert basesOf(typeof(∙bivector)) + basesOf(typeof(∘bivector)) == basesOf(Kvector2),
       "bulk and weight of bivector cover its grade, under rigid metric"
-  for _ in 1 .. SAMPLES:
+  for _ in 1..SAMPLES:
     let
       (a, b) = (sample(Kvector1), sample(Kvector2))
       (u, v) = (sample(MultivectorWhole), sample(MultivectorWhole))
@@ -236,8 +236,8 @@ proc main(): int =
         ((motor.toMultivector ⟇ a.toMultivector) ⟇ motor.toMultivector)
     doAssert (u ∙ v).toMultivector =~ (u.toMultivector ∙ v.toMultivector)
     doAssert (u ∘ v).toMultivector =~ (u.toMultivector ∘ v.toMultivector)
-    doAssert (∙b).toMultivector =~ (∙b.toMultivector)
-    doAssert (∘b).toMultivector =~ (∘b.toMultivector)
+    doAssert (∙b).toMultivector =~ ∙b.toMultivector
+    doAssert (∘b).toMultivector =~ ∘b.toMultivector
   echo "exact-kinds: laws hold at ", DIMENSIONS, "D, conformal ", IS_CONFORMAL
   0
 

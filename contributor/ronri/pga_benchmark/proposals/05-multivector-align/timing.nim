@@ -32,7 +32,7 @@ const
 template timeRounds(label: string, loop: untyped) =
   ## Run loop `ROUNDS` times and print median nanoseconds per object under label.
   var rounds: array[ROUNDS, float]
-  for r in 0 ..< ROUNDS:
+  for r in 0..<ROUNDS:
     let started = getMonoTime()
     loop
     rounds[r] = float((getMonoTime() - started).inNanoseconds) / float(OBJECTS)
@@ -46,7 +46,7 @@ template timeLibrary(label: string, body: untyped) =
     proc run(pool: seq[Multivector], results: var seq[Multivector]) {.noinline.} =
       ## Time operation in procedure of its own.
       timeRounds("library " & label):
-        for i in 0 ..< OBJECTS:
+        for i in 0..<OBJECTS:
           let j = (i * 7 + 3) mod OBJECTS
           template m(): untyped {.used.} = pool[i]  # Read by `body`.
           template n(): untyped {.used.} = pool[j]  # Read by binary `body`.
@@ -54,7 +54,7 @@ template timeLibrary(label: string, body: untyped) =
     var
       pool = newSeq[Multivector](OBJECTS)
       results = newSeq[Multivector](OBJECTS)
-    for i in 0 ..< OBJECTS:
+    for i in 0..<OBJECTS:
       for b in Basis: pool[i][b] = gauss()
     run(pool, results)
 
@@ -77,11 +77,11 @@ template defineKind(name: untyped, count: static int, alignment: static int) =
 
   func `+`(a, b: name): name =
     ## Add slot by slot.
-    for k in 0 ..< count: result.elements[k] = a.elements[k] + b.elements[k]
+    for k in 0..<count: result.elements[k] = a.elements[k] + b.elements[k]
 
   func `-`(a: name): name =
     ## Negate slot by slot.
-    for k in 0 ..< count: result.elements[k] = -a.elements[k]
+    for k in 0..<count: result.elements[k] = -a.elements[k]
 
 
 template timeKind(kind: typedesc, label: string) =
@@ -90,17 +90,17 @@ template timeKind(kind: typedesc, label: string) =
     proc run(pool: seq[kind], results: var seq[kind]) {.noinline.} =
       ## Time both operations in procedure of their own.
       timeRounds("kind " & label & " size " & $sizeof(kind) & " add"):
-        for i in 0 ..< OBJECTS:
+        for i in 0..<OBJECTS:
           let j = (i * 7 + 3) mod OBJECTS
           results[i] = pool[i] + pool[j]
       timeRounds("kind " & label & " size " & $sizeof(kind) & " negate"):
-        for i in 0 ..< OBJECTS:
+        for i in 0..<OBJECTS:
           results[i] = -pool[i]
     var
       pool = newSeq[kind](OBJECTS)
       results = newSeq[kind](OBJECTS)
-    for i in 0 ..< OBJECTS:
-      for k in 0 ..< pool[i].elements.len: pool[i].elements[k] = gauss()
+    for i in 0..<OBJECTS:
+      for k in 0..<pool[i].elements.len: pool[i].elements[k] = gauss()
     run(pool, results)
 
 

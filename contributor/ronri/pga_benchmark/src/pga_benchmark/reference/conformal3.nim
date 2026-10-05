@@ -315,7 +315,7 @@ func dotAnti*(d, f: Dipole): Antiscalar {.inline.} =
   Antiscalar(
     -(
       dot(d.v, Vector3(x: f.p.x, y: f.p.y, z: f.p.z)) + dot(d.m, f.m) +
-          dot(Vector3(x: d.p.x, y: d.p.y, z: d.p.z), f.v) - d.p.w * f.p.w
+      dot(Vector3(x: d.p.x, y: d.p.y, z: d.p.z), f.v) - d.p.w * f.p.w
     ),
   )
 
@@ -324,7 +324,7 @@ func dotAnti*(c, o: Circle): Antiscalar {.inline.} =
   Antiscalar(
     -(
       c.g.w * o.g.w - dot(Vector3(x: c.g.x, y: c.g.y, z: c.g.z), o.m) -
-          dot(c.m, Vector3(x: o.g.x, y: o.g.y, z: o.g.z)) - dot(c.v, o.v)
+      dot(c.m, Vector3(x: o.g.x, y: o.g.y, z: o.g.z)) - dot(c.v, o.v)
     ),
   )
 
