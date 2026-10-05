@@ -3,14 +3,15 @@
   "kind": "evaluation",
   "name": "algebra-hygiene",
   "path": "changes/algebra-hygiene.md",
-  "edits_digest": "43d433410c7d95c7",
+  "edits_digest": "67ce3c93324f12ce",
   "taken": {
     "date": "2026-10-04",
     "machine": "linux amd64, 4 cores",
     "nim": "27763495bcfe265507ca98aedc1c7064bf1e0e4d",
-    "pga": "d9be8aefc193f6ee0a7a3fead25cd4fe1d8f09cf",
+    "pga": "edb0c9d3a247185874b8825c9da4b120317b00cf",
     "flags": "-d:release",
-    "runs": 5
+    "runs": 5,
+    "timed_at": "d9be8aefc193f6ee0a7a3fead25cd4fe1d8f09cf"
   },
   "pin_suites": {
     "rga4d": {

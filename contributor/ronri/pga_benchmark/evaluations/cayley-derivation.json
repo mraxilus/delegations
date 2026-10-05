@@ -3,14 +3,15 @@
   "kind": "evaluation",
   "name": "cayley-derivation",
   "path": "proposals/01-cayley-derivation",
-  "edits_digest": "788960a886121c9a",
+  "edits_digest": "a8f6fad21296c903",
   "taken": {
     "date": "2026-10-04",
     "machine": "linux amd64, 4 cores",
     "nim": "27763495bcfe265507ca98aedc1c7064bf1e0e4d",
-    "pga": "d9be8aefc193f6ee0a7a3fead25cd4fe1d8f09cf",
+    "pga": "edb0c9d3a247185874b8825c9da4b120317b00cf",
     "flags": "-d:release",
-    "runs": 5
+    "runs": 5,
+    "timed_at": "d9be8aefc193f6ee0a7a3fead25cd4fe1d8f09cf"
   },
   "pin_suites": {
     "rga4d": {
@@ -5994,7 +5995,7 @@
       "at_most": 0.75,
       "passed": true,
       "detail": [
-        "rga6d peak 234.9 → 170.7 MiB, 6.22 → 4.29 s, ×0.73"
+        "rga6d peak 234.9 → 170.7 MiB, 6.18 → 4.36 s, ×0.73"
       ]
     }
   ]

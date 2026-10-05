@@ -102,11 +102,14 @@ changes.
 ## Edit `pga.nim`
 
 ```nim
+when compileOption("profiler"): import std/nimprof
 
 import std/math
 ```
 
 ```nim
+when compileOption("profiler"):
+  import std/nimprof
   ## Driven by `nim c -d:release --profiler:on --stackTrace:on -r tests/rga/test_4d.nim`.
 
 import std/math

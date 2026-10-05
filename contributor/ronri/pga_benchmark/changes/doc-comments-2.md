@@ -59,7 +59,7 @@ when IS_RIGID:
 ```
 
 ```nim
-#   Ideally Nim would have a feature to auto borrow everything, but prevent interop.
+#   Ideally Nim would have feature to auto borrow everything, but prevent interop.
 #   `{.used.}` markers below are needed only because cayleys.nim imports `{.all.}`.
 ```
 
@@ -70,7 +70,7 @@ when IS_RIGID:
 ```
 
 ```nim
-  ## Define bases for a `dimensions`-dimensional PGA.
+  ## Define bases for `dimensions`-dimensional PGA.
   ##   At 4D emits: S, E1..E4, E41, E42, E43, E23, E31, E12, E423, E431, E412, E321, E1234.
 ```
 
@@ -82,7 +82,8 @@ when IS_RIGID:
 ```
 
 ```nim
-    ## Populate missing algebras up to the `dimensions`-dimensional PGA.
+  proc generateUpTo(algebras: var Table[int, Algebra], dimensions: int) {.compileTime.} =
+    ## Populate missing algebras up to `dimensions`-dimensional PGA.
     ##   Nested and mutating by design: builds each dimension from one below it.
 ```
 
@@ -125,7 +126,7 @@ func constructMetric(dimensions: int, is_conformal: bool): Cayley1D {.compileTim
 ```
 
 ```nim
-func constructMetric(dimensions: int; is_conformal: bool): Cayley1D {.compileTime.} =
+func constructMetric(dimensions: int, is_conformal: bool): Cayley1D {.compileTime.} =
   # NOTE: Only constructor taking configuration as arguments; siblings read globals.
 ```
 
@@ -147,7 +148,7 @@ func constructMetric(dimensions: int; is_conformal: bool): Cayley1D {.compileTim
 ```
 
 ```nim
-): tuple[basis: BasisSigned; is_degenerate: bool] {.compileTime.} =
+): tuple[basis: BasisSigned, is_degenerate: bool] {.compileTime.} =
   ## Perform exterior product of two bases, reducing to its standard basis form.
   ##   Parity argument below is the proof; keep it with the code.
 ```
@@ -171,7 +172,7 @@ func constructMetric(dimensions: int; is_conformal: bool): Cayley1D {.compileTim
 ```
 
 ```nim
-  Multivector* = object ## Define generalised multivector for n-dimensional PGA.
+  Multivector* = object  ## Define generalised multivector for n-dimensional PGA.
     ## Dense by design: 2^N floats per object whatever its grade, 128 bytes at 4D.
 ```
 
