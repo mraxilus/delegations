@@ -3567,6 +3567,24 @@ for a plane, which never pulls in.
 past it rather than turn, which is a jump nobody asked for. `stanceApproaching` answers none there,
 and `stanceFor` takes it by its own bound.
 
+**A dot picked alone never lands nearer than its fit**, by the ruling of #535. The fit is the depth
+that a pointer pick of the dot comes in to. The wheel over empty sky can take the separation to
+9.4e-8 with no visible change. Without this floor, a star picked from the list keeps it, and draws
+about 20 px across. `stanceFitted` dollies the destination of the frame rule out to the fit, once,
+as a new goal lands. A separation past the fit stays, and so does a stance set after the pick.
+
+A point seen at its size has no fit, so the working scale of the reader stays. The fit is capped at
+the reach of the dot, so the eye never moves further off than the dot stands. A group, a line and a
+plane keep the frame rule alone. `stanceFitted` reads the dot by its reach from the eye. Rejected:
+its depth along the sight, which reads every dot behind the eye as seen at its size. Rejected also:
+a fit for every point, which takes a point at working scale out to 19.3 units.
+
+Verified by `suites.nim`: a point picked from the list never lands nearer than its fit, and one
+further out stays. Verified also by a Playwright script that is not kept, in Playwright's Chromium
+under SwiftShader, on 2026-10-05. After 175 notches over empty sky in the demo of 5,038 objects, a
+tick of HD 222237b settles at 2.414e-7 units. The star then draws 7.7 px across in a canvas 771 px
+tall, against 19.9 px at 9.38e-8 without the floor.
+
 **A pick renews a held goal.** The `is_renewed` of `aimAt` re-arms the ease for a pointer pick
 whatever the tween holds. Without it, the same object picked again, after the wheel had taken the
 reader out, goes nowhere.
