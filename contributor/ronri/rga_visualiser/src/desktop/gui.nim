@@ -214,6 +214,14 @@ proc dragFloat*(
 ): bool {.sideEffect, importc: "guiDragFloat".}
   ## Draw draggable number bound to `value`, reporting whether it changed.
 
+proc dragDouble*(
+  label: cstring; value: ptr float; speed: cfloat; lowest, highest: float
+): bool {.sideEffect, importc: "guiDragDouble".}
+  ## Draw draggable double bound to `value`, reporting whether it changed.
+  ##   Nim's `float` is C's `double` on every target this binds.
+  ##   Bounds equal leave it unbounded, as `dragFloat`'s do.
+
+
 proc dragFloat3*(
   label: cstring, values: ptr cfloat, speed: cfloat
 ): bool {.sideEffect, importc: "guiDragFloat3".}
