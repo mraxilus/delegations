@@ -109,11 +109,10 @@ type
     anchor*: Position  ## Place coefficients stand about, never computed again once chosen.
     local*: Multivector  ## Object about `anchor`.
 
-  Scene* = object  ## Define fixed-capacity arena of objects, addressed by stable handle.
+  SceneStored* = object  ## Define everything scene stores: each field but geometry it derives.
+    ## Held apart from that cache, so value holding what scene stores carries none of it.
     anchors: array[OBJECTS_MAX, Position]  ## Per-handle place geometry is stored about.
     locals: array[OBJECTS_MAX, Multivector]  ## Per-handle geometry about its anchor, as stored.
-    geometries: array[OBJECTS_MAX, Multivector]  ## Per-handle geometry about world origin.
-      ## Derived from anchor and local coefficients on each edit, never written back.
     labels: array[OBJECTS_MAX, Label]  ## Per-handle display label.
     inks: array[OBJECTS_MAX, Ink]  ## Per-handle palette entry.
     radii: array[OBJECTS_MAX, float]  ## Per-handle drawn radius, in world units; see `radiusAt`.
@@ -155,6 +154,11 @@ type
       ##   Reader watched colour on band and it should not be offered again.
       ## Undo restores it with rest of scene.
       ## Not written to file: `loadScene` sets it from object count.
+
+  Scene* = object  ## Define fixed-capacity arena of objects, addressed by stable handle.
+    stored: SceneStored  ## Everything scene stores; see `SceneStored`.
+    geometries: array[OBJECTS_MAX, Multivector]  ## Per-handle geometry about world origin.
+      ## Derived from anchor and local coefficients on each edit, never written back.
 
   Arity* {.pure.} = enum  ## Define count of operands operation consumes.
     One, Two
@@ -774,15 +778,15 @@ when not defined(js):
 func initScene*(): Scene =
   ## Construct empty scene, threading every handle onto free list ahead of first use.
   for handle in 0 ..< OBJECTS_MAX - 1:
-    result.next_free[handle] = some(handle + 1)
-  result.handle_free_first = some(0)
+    result.stored.next_free[handle] = some(handle + 1)
+  result.stored.handle_free_first = some(0)
 
 
-func len*(scene: Scene): int = scene.count_live
+func len*(scene: Scene): int = scene.stored.count_live
   ## Count live objects held by scene.
 
 
-func bound*(scene: Scene): int = scene.handle_live_last
+func bound*(scene: Scene): int = scene.stored.handle_live_last
   ## Report one past highest handle this scene has ever occupied.
   ##   What walk over "every handle" runs to.
   ##     Handles are stable addresses, so by-handle reader sweeps range rather than dense list,
@@ -794,7 +798,7 @@ func bound*(scene: Scene): int = scene.handle_live_last
   ##   Not `len`: living are not packed at bottom.
 
 
-func revision*(scene: Scene): int = scene.count_edits
+func revision*(scene: Scene): int = scene.stored.count_edits
   ## Report how many times scene's drawn content has changed.
   ##   Named apart from field, as `len` and `bound` are: reader named for field it reads
   ##   recurses under this module's scoping.
@@ -817,7 +821,7 @@ func markEdited*(scene: var Scene) =
   ##   Called by every writer in this module.
   ##   Caller wanting this for anything else is writing to scene by route that ought to be
   ##   proc here.
-  inc scene.count_edits
+  inc scene.stored.count_edits
 
 
 func restoreFrom*(scene: var Scene, snapshot: Scene) =
@@ -826,11 +830,12 @@ func restoreFrom*(scene: var Scene, snapshot: Scene) =
   ##     Revision only ever rises and no two states front-end has drawn share one.
   ##   Every live handle is stamped as re-placed, since any of them may differ from what
   ##   cache holds.
-  let revision_live = scene.count_edits
+  let revision_live = scene.stored.count_edits
   scene = snapshot
-  scene.count_edits = max(revision_live, snapshot.count_edits) + 1
+  scene.stored.count_edits = max(revision_live, snapshot.stored.count_edits) + 1
   for handle in 0..<scene.bound:
-    if scene.are_alive[handle]: scene.revisions_placing[handle] = scene.count_edits
+    if scene.stored.are_alive[handle]:
+      scene.stored.revisions_placing[handle] = scene.stored.count_edits
 
 
 func revisionPlacingAt*(scene: Scene, handle: int): int =
@@ -839,10 +844,10 @@ func revisionPlacingAt*(scene: Scene, handle: int): int =
   ##   stamped past what it holds: one handle per edit, every handle after `restoreFrom`.
   ##   Re-placing whole scene per edit is whole frame at capacity; figures in
   ##   `PROVENANCE.md`.
-  scene.revisions_placing[handle]
+  scene.stored.revisions_placing[handle]
 
 
-func isFull*(scene: Scene): bool = scene.count_live >= OBJECTS_MAX
+func isFull*(scene: Scene): bool = scene.stored.count_live >= OBJECTS_MAX
   ## Report whether scene has no room for another object.
 
 
@@ -852,7 +857,7 @@ func isAlive*(scene: Scene, handle: int): bool =
   ##   Two comparisons, not `handle in 0 ..< OBJECTS_MAX`.
   ##     JS backend builds slice object per call, and every by-handle reader asserts through
   ##     here, so one moving frame at capacity allocated one per handle.
-  handle >= 0 and handle < OBJECTS_MAX and scene.are_alive[handle]
+  handle >= 0 and handle < OBJECTS_MAX and scene.stored.are_alive[handle]
 
 
 func handleStepped*(scene: Scene, handle: Option[int], step: int): Option[int] =
@@ -883,31 +888,35 @@ func geometry*(one: Object): lent Multivector = one.scene.geometries[one.handle]
   ## Read object's geometry about world origin, straight out of scene handle points at.
 
 
-func label*(one: Object): lent Label = one.scene.labels[one.handle]
+func label*(one: Object): lent Label = one.scene.stored.labels[one.handle]
   ## Read object's label, straight out of scene handle points at.
 
 
-func ink*(one: Object): Ink = one.scene.inks[one.handle]
+func ink*(one: Object): Ink = one.scene.stored.inks[one.handle]
   ## Read object's palette slot, straight out of scene handle points at.
 
 
-func isVisible*(one: Object): bool = one.scene.are_visible[one.handle]
+func isVisible*(one: Object): bool = one.scene.stored.are_visible[one.handle]
   ## Read object's visibility, straight out of scene handle points at.
 
 
-func radius*(one: Object): float = one.scene.radii[one.handle]
+func radius*(one: Object): float = one.scene.stored.radii[one.handle]
   ## Read object's drawn radius, straight out of scene handle points at; see `radiusAt`.
 
 
-func born*(one: Object): float = one.scene.borns[one.handle]
+func born*(one: Object): float = one.scene.stored.borns[one.handle]
   ## Read object's `born` reading, straight out of scene handle points at.
 
 
 func anchorOverride*(one: Object): Option[Position] =
   ## Read where object's circle should centre about world origin, if construction fixed that.
   ##   See `creationAnchor`.
-  if one.scene.anchor_overrides[one.handle].isNone: return
-  overrideAbout(one.scene.anchor_overrides[one.handle], one.scene.anchors[one.handle], ORIGIN_WORLD)
+  if one.scene.stored.anchor_overrides[one.handle].isNone: return
+  overrideAbout(
+    one.scene.stored.anchor_overrides[one.handle],
+    one.scene.stored.anchors[one.handle],
+    ORIGIN_WORLD,
+  )
 
 
 func geometryOf*(scene: Scene, handle: int): lent Multivector =
@@ -929,7 +938,7 @@ func anchoredAt*(scene: Scene, handle: int): Anchored =
   ## Read object as storage holds it, by handle: its anchor, and coefficients about it.
   ##   What every operation reads its operands as; see `applyOperation`.
   doAssert scene.isAlive(handle), &"Object handle must be alive; got `{handle}`."
-  Anchored(anchor: scene.anchors[handle], local: scene.locals[handle])
+  Anchored(anchor: scene.stored.anchors[handle], local: scene.stored.locals[handle])
 
 
 func geometryAbout*(scene: Scene, handle: int, centre: Position): Multivector =
@@ -939,13 +948,14 @@ func geometryAbout*(scene: Scene, handle: int, centre: Position): Multivector =
   ##   Reads storage and writes nothing, so object read about any centre, any number of
   ##   times, keeps anchor and coefficients bit for bit.
   doAssert scene.isAlive(handle), &"Object handle must be alive; got `{handle}`."
-  slid(scene.locals[handle], scene.anchors[handle] - centre)
+  slid(scene.stored.locals[handle], scene.stored.anchors[handle] - centre)
 
 
 func deriveGeometryAt(scene: var Scene, handle: int) =
   ## Derive object's geometry about world origin from its anchor and local coefficients.
   ##   One statement of cache's rule, for every writer of either.
-  scene.geometries[handle] = slid(scene.locals[handle], scene.anchors[handle] - ORIGIN_WORLD)
+  scene.geometries[handle] =
+    slid(scene.stored.locals[handle], scene.stored.anchors[handle] - ORIGIN_WORLD)
 
 
 func setGeometryAt*(scene: var Scene, handle: int, geometry: Multivector) =
@@ -963,19 +973,19 @@ func setGeometryAt*(scene: var Scene, handle: int, geometry: Multivector) =
   for b in Basis:
     if geometry[b] != scene.geometries[handle][b]: is_unchanged = false
   if is_unchanged: return
-  scene.anchor_overrides[handle] =
-    overrideAbout(scene.anchor_overrides[handle], scene.anchors[handle], ORIGIN_WORLD)
-  scene.anchors[handle] = ORIGIN_WORLD
-  scene.locals[handle] = geometry
+  scene.stored.anchor_overrides[handle] =
+    overrideAbout(scene.stored.anchor_overrides[handle], scene.stored.anchors[handle], ORIGIN_WORLD)
+  scene.stored.anchors[handle] = ORIGIN_WORLD
+  scene.stored.locals[handle] = geometry
   scene.deriveGeometryAt(handle)
   scene.markEdited()
-  scene.revisions_placing[handle] = scene.count_edits
+  scene.stored.revisions_placing[handle] = scene.stored.count_edits
 
 
 func labelAt*(scene: var Scene, handle: int): var Label =
   ## Reach object's label for editing, by handle.
   doAssert scene.isAlive(handle), &"Object handle must be alive; got `{handle}`."
-  scene.labels[handle]
+  scene.stored.labels[handle]
 
 
 func isVisible*(scene: Scene, handle: int): bool =
@@ -983,7 +993,7 @@ func isVisible*(scene: Scene, handle: int): bool =
   ##   Read and written through plain accessor pair, never `var bool`-returning one.
   ##     Proc handing back `var bool` over `array[N, bool]` miscompiles under JS backend,
   ##     reading `undefined` and writing to dropped copy; `setVisible` is writer.
-  scene.are_visible[handle]
+  scene.stored.are_visible[handle]
 
 
 func inkAt*(scene: Scene, handle: int): Ink =
@@ -992,7 +1002,7 @@ func inkAt*(scene: Scene, handle: int): Ink =
   ##     Under JS backend `Object` holds `Scene` by value, so constructing one to read single
   ##     field copies whole scene.
   doAssert scene.isAlive(handle), &"Object handle must be alive; got `{handle}`."
-  scene.inks[handle]
+  scene.stored.inks[handle]
 
 
 func radiusAt*(scene: Scene, handle: int): float =
@@ -1001,13 +1011,13 @@ func radiusAt*(scene: Scene, handle: int): float =
   ##   World units rather than pixels, so object shrinks with distance as everything else
   ##   drawn at position does; front-end holds least on-screen size, not this.
   doAssert scene.isAlive(handle), &"Object handle must be alive; got `{handle}`."
-  scene.radii[handle]
+  scene.stored.radii[handle]
 
 
 func bornAt*(scene: Scene, handle: int): float =
   ## Read moment object arrived, by handle rather than through `Object`; see `inkAt`.
   doAssert scene.isAlive(handle), &"Object handle must be alive; got `{handle}`."
-  scene.borns[handle]
+  scene.stored.borns[handle]
 
 
 func orderOf*(scene: Scene, handle: int): uint32 =
@@ -1017,7 +1027,7 @@ func orderOf*(scene: Scene, handle: int): uint32 =
   ##   Steps of one undo timeline count as one scene: each restores count beside its
   ##   objects, and edit after undo truncates future that held any ordinal it reuses.
   doAssert scene.isAlive(handle), &"Object handle must be alive; got `{handle}`."
-  scene.orders[handle]
+  scene.stored.orders[handle]
 
 
 func siftDown(scene: Scene; handles: var array[OBJECTS_MAX, int]; root, count: int) =
@@ -1026,9 +1036,10 @@ func siftDown(scene: Scene; handles: var array[OBJECTS_MAX, int]; root, count: i
   while true:
     var child = 2 * parent + 1
     if child >= count: return
-    if child + 1 < count and scene.orders[handles[child+1]] > scene.orders[handles[child]]:
+    if child + 1 < count and
+        scene.stored.orders[handles[child+1]] > scene.stored.orders[handles[child]]:
       inc child
-    if scene.orders[handles[parent]] >= scene.orders[handles[child]]: return
+    if scene.stored.orders[handles[parent]] >= scene.stored.orders[handles[child]]: return
     swap(handles[parent], handles[child])
     parent = child
 
@@ -1042,7 +1053,7 @@ func handlesCreated*(scene: Scene, handles: var array[OBJECTS_MAX, int]): int =
   ##     `PROVENANCE.md`.
   ##   To `bound`, by handle: no handle above watermark has ever held anything.
   for handle in 0..<scene.bound:
-    if not scene.are_alive[handle]: continue
+    if not scene.stored.are_alive[handle]: continue
     handles[result] = handle
     inc result
   for root in countdown(result div 2 - 1, 0): siftDown(scene, handles, root, result)
@@ -1055,8 +1066,8 @@ func anchorOverrideAt*(scene: Scene, handle: int): Option[Position] =
   ## Read where object's circle should centre about world origin, by handle; see `inkAt`.
   ##   Held about object's anchor and offset here, three sums for object carrying one.
   doAssert scene.isAlive(handle), &"Object handle must be alive; got `{handle}`."
-  if scene.anchor_overrides[handle].isNone: return
-  overrideAbout(scene.anchor_overrides[handle], scene.anchors[handle], ORIGIN_WORLD)
+  if scene.stored.anchor_overrides[handle].isNone: return
+  overrideAbout(scene.stored.anchor_overrides[handle], scene.stored.anchors[handle], ORIGIN_WORLD)
 
 
 
@@ -1116,7 +1127,7 @@ func isMatchingSearch*(scene: Scene, handle: int, query: openArray[char]): bool 
       continue
     var stop = start
     while stop < length_query and query[stop] notin BLANKS_SEARCH: inc stop
-    if not isHoldingWord(scene.labels[handle], query, start, stop):
+    if not isHoldingWord(scene.stored.labels[handle], query, start, stop):
       if not is_kind_described:
         var cursor = 0
         describeKind(scene.geometries[handle], kind, cursor)
@@ -1194,7 +1205,7 @@ func previewStaging*(geometry: Multivector, radius: float): Preview =
 func setInk*(scene: var Scene, handle: int, ink: Ink) =
   ## Rewrite object's palette slot, by handle.
   doAssert scene.isAlive(handle), &"Object handle must be alive; got `{handle}`."
-  scene.inks[handle] = ink
+  scene.stored.inks[handle] = ink
   scene.markEdited()
 
 
@@ -1204,7 +1215,7 @@ func setRadius*(scene: var Scene, handle: int, radius: float) =
   ##   stands changes.
   doAssert scene.isAlive(handle), &"Object handle must be alive; got `{handle}`."
   doAssert radius > 0.0, &"Object radius must be positive; got `{radius}`."
-  scene.radii[handle] = radius
+  scene.stored.radii[handle] = radius
   scene.markEdited()
 
 
@@ -1213,7 +1224,7 @@ func setVisible*(scene: var Scene, handle: int, is_visible: bool) =
   ##   Only writer: `isVisibleAt(...) = visible` accessor silently lands on copied
   ##   primitive under JS backend; see `isVisible`.
   doAssert scene.isAlive(handle), &"Object handle must be alive; got `{handle}`."
-  scene.are_visible[handle] = is_visible
+  scene.stored.are_visible[handle] = is_visible
   scene.markEdited()
 
 
@@ -1221,7 +1232,7 @@ iterator items*(scene: Scene): Object =
   ## Yield each live object, in handle order.
   ##   Walks to `bound`, as sibling `pairs` does; check both when either changes.
   for handle in 0..<scene.bound:
-    if scene.are_alive[handle]: yield scene[handle]
+    if scene.stored.are_alive[handle]: yield scene[handle]
 
 
 iterator pairs*(scene: Scene): (int, Object) =
@@ -1229,7 +1240,7 @@ iterator pairs*(scene: Scene): (int, Object) =
   ##   Walks to `bound` rather than capacity, so every consumer stops sweeping empty handles
   ##   at once; sibling of `objects`.
   for handle in 0..<scene.bound:
-    if scene.are_alive[handle]: yield (handle, scene[handle])
+    if scene.stored.are_alive[handle]: yield (handle, scene[handle])
 
 
 func addObject*(
@@ -1252,27 +1263,27 @@ func addObject*(
   doAssert not scene.isFull,
     &"Scene holds at most {OBJECTS_MAX} objects, raise `--define:visualiser.objects_max`; got " &
     &"`{scene.len}`."
-  result = scene.handle_free_first.get
-  scene.handle_free_first = scene.next_free[result]
-  scene.anchors[result] = anchored.anchor
-  scene.locals[result] = anchored.local
+  result = scene.stored.handle_free_first.get
+  scene.stored.handle_free_first = scene.stored.next_free[result]
+  scene.stored.anchors[result] = anchored.anchor
+  scene.stored.locals[result] = anchored.local
   scene.deriveGeometryAt(result)
-  toChars(label, scene.labels[result])
-  scene.inks[result] = ink
+  toChars(label, scene.stored.labels[result])
+  scene.stored.inks[result] = ink
   doAssert radius > 0.0, &"Object radius must be positive; got `{radius}`."
-  scene.radii[result] = radius
-  scene.are_visible[result] = true
-  scene.are_alive[result] = true
-  scene.borns[result] = now
-  scene.anchor_overrides[result] = anchor_override
+  scene.stored.radii[result] = radius
+  scene.stored.are_visible[result] = true
+  scene.stored.are_alive[result] = true
+  scene.stored.borns[result] = now
+  scene.stored.anchor_overrides[result] = anchor_override
   # Stamp arrival relative to everything else, which handle cannot say.
   #   Refilled handle sits wherever free list put it.
-  scene.orders[result] = scene.count_created
-  inc scene.count_created
-  inc scene.count_live
-  scene.handle_live_last = max(scene.handle_live_last, result + 1)
+  scene.stored.orders[result] = scene.stored.count_created
+  inc scene.stored.count_created
+  inc scene.stored.count_live
+  scene.stored.handle_live_last = max(scene.stored.handle_live_last, result + 1)
   scene.markEdited()
-  scene.revisions_placing[result] = scene.count_edits
+  scene.stored.revisions_placing[result] = scene.stored.count_edits
 
 
 func addObject*(
@@ -1295,10 +1306,10 @@ func addObject*(
 func removeObject*(scene: var Scene, handle: int) =
   ## Drop object at handle, in constant time: handle returns to free list, nothing moves.
   doAssert scene.isAlive(handle), &"Object handle must be alive; got `{handle}`."
-  scene.are_alive[handle] = false
-  scene.next_free[handle] = scene.handle_free_first
-  scene.handle_free_first = some(handle)
-  dec scene.count_live
+  scene.stored.are_alive[handle] = false
+  scene.stored.next_free[handle] = scene.stored.handle_free_first
+  scene.stored.handle_free_first = some(handle)
+  dec scene.stored.count_live
   scene.markEdited()
 
 
@@ -1403,7 +1414,7 @@ func inkCycled*(index: int): Ink = inkCategorical(index mod COUNT_INK_CATEGORICA
   ##   chosen.
 
 
-func inkNext*(scene: Scene): Ink = inkCycled(scene.index_ink)
+func inkNext*(scene: Scene): Ink = inkCycled(scene.stored.index_ink)
   ## Read hue next object built will wear, without taking it.
   ##   What drag in flight is drawn in, so band, comet and preview show colour thing being
   ##   built will be; see `interaction.inkOfDrag`.
@@ -1413,14 +1424,14 @@ func inkNext*(scene: Scene): Ink = inkCycled(scene.index_ink)
 func takeInk*(scene: var Scene): Ink =
   ## Read hue for object being built, and step cycle past it.
   result = scene.inkNext
-  inc scene.index_ink
+  inc scene.stored.index_ink
 
 
 func skipInk*(scene: var Scene) =
   ## Step cycle without building anything.
   ##   For construction gesture that ended in no object: reader was shown colour for whole
   ##   drag, and offering same colour again reads as gesture not registering.
-  inc scene.index_ink
+  inc scene.stored.index_ink
 
 const
   ORDINAL_INK_CATEGORICAL_V1* = 7
@@ -1599,7 +1610,7 @@ func replayFrom*(scene: var Scene, now: float) =
   var handles: array[OBJECTS_MAX, int]
   let count = scene.handlesCreated(handles)
   for position in 0..<count:
-    scene.borns[handles[position]] = bornReplaying(position, count, now)
+    scene.stored.borns[handles[position]] = bornReplaying(position, count, now)
   scene.markEdited()
 
 
@@ -1774,7 +1785,7 @@ when not defined(js):
     # Carry palette on past what was loaded.
     #   Next object built then does not repeat first object's hue.
     #   Not stored in file: count places cycle.
-    staging.index_ink = int(count)
+    staging.stored.index_ink = int(count)
     scene = staging
     &"Loaded {count} object(s) from `{path}`."
 
