@@ -2438,9 +2438,11 @@ compare with zero through `=~`. Measured on `f779cec8` on 2026-10-05, by a probe
 **Cost: rounding that stands alone reads as an object.** A stored object of pure rounding is drawn,
 where the tolerance of the library refuses it. Only a caller that holds the factors can refuse it.
 
-**Cost: storage far from the world origin still steps.** Two million units out, a double steps by 17
-to 35 m, as at the demo's HD 222237 b. Two points a metre apart there are stored as one. Storage
-about an anchor addresses that.
+**Cost: storage far from the world origin still steps.** Each object is stored relative to the world
+origin, and that is all that is stored. A double steps by half a millimetre at 30 units, and by a
+metre at 60,000 units. Two million units out it steps by 17 to 35 m, as at the demo's HD 222237 b.
+Two points a metre apart there are stored as one. Rejected: an exact place stored with each object,
+because the origins of a calculation stay implicit in that calculation.
 
 A join holds a metre wherever storage holds one. It runs about the point it joins, so its rounding
 is `ε` of that point's distance from the world origin.
