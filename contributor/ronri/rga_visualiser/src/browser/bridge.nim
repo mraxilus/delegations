@@ -71,6 +71,9 @@ type
     ##   Keyed on what camera holds, as `SettingsFurniture` is, and never on read-outs.
     ##     `nimAnchorScreen` runs this for every overlay call, so key built from pivot and
     ##     both angles cost more than derivation it skips: 488 us against 8 us repaired.
+    ##     View origin beside motor, since motor is held about it; coordinates, as
+    ##     `SettingsFurniture` holds them.
+    origin_x, origin_y, origin_z: float
     motor: Motor
     distance, degrees_field_of_view, reach_near, reach_scene: float
     width, height: int
@@ -443,11 +446,6 @@ var
   IS_CULLING = true  ## Whether points outside view are skipped before emitting.
     ## Off only through `nimSetCulling`, for check that culling changes no pixel.
   REACH_SCENE = 0.0  ## Scene's reach from origin, refreshed with placements; see `ensurePlacement`.
-  ORIGIN_VIEW = Position(x: 0.0, y: 0.0, z: 0.0)
-    ## Hold view origin, point every record is stored from; see `camera.originView`.
-    ##   One value for both mesh sets, because one transform draws them.
-    ##   Decided once for each frame, and held across frames that keep their meshes: it
-    ##   moves only once travel has spent float32's precision about it.
   REACH_NEAR = 0.0  ## Reach to nearest drawn object ahead of eye; see `camera.scaleLocal`.
     ## Refreshed once for each frame, in frame build, because it reads every placement and
     ## moves with camera as well as with scene.
@@ -1208,10 +1206,12 @@ proc ensureViewOverlay(width, height: int) =
   ##   Callers read globals rather than copies: returning pair deep-copies `DrawExtent`
   ##   full of multivectors per call on JS backend, cache hit or not.
   CAMERA_PAGE.reach_near = REACH_NEAR
-  let settings: SettingsOverlay = (
-    CAMERA_PAGE.motor, CAMERA_PAGE.distance, CAMERA_PAGE.degrees_field_of_view,
-    CAMERA_PAGE.reach_near, REACH_SCENE, width, height,
-  )
+  let
+    origin = CAMERA_PAGE.originView
+    settings: SettingsOverlay = (
+      origin.x, origin.y, origin.z, CAMERA_PAGE.motor, CAMERA_PAGE.distance,
+      CAMERA_PAGE.degrees_field_of_view, CAMERA_PAGE.reach_near, REACH_SCENE, width, height,
+    )
   if SETTINGS_OVERLAY_HELD.isNone or SETTINGS_OVERLAY_HELD.get != settings:
     SETTINGS_OVERLAY_HELD = some(settings)
     # Read eye and frame once for both; see `camera.drawExtentFor`.
@@ -1240,7 +1240,7 @@ proc nimCameraTurnAt(
     int(width),
     int(height),
     SELECTION_PAGE.len > 0,
-    TWEEN_CAMERA.reachAimed(CAMERA_PAGE.pivot),
+    TWEEN_CAMERA.reachAimed(CAMERA_PAGE),
   )
 
 
@@ -1321,7 +1321,7 @@ proc nimCameraPanGrab(width, height: cint) {.exportc.} =
     int(width),
     int(height),
     SELECTION_PAGE.len > 0,
-    TWEEN_CAMERA.reachAimed(CAMERA_PAGE.pivot),
+    TWEEN_CAMERA.reachAimed(CAMERA_PAGE),
   )
 
 
@@ -1340,8 +1340,8 @@ proc nimCameraPanAt(
     ScreenPosition(x: float(after_x), y: float(after_y)), int(width), int(height),
     SELECTION_PAGE.len > 0,
     if is_grabbed: INTERACTION_PAGE.depth_pan else: CAMERA_PAGE.distance,
-    if is_grabbed: INTERACTION_PAGE.point_pan else: none(Position),
-    TWEEN_CAMERA.reachAimed(CAMERA_PAGE.pivot),
+    if is_grabbed: INTERACTION_PAGE.pointPanNow(CAMERA_PAGE) else: none(Position),
+    TWEEN_CAMERA.reachAimed(CAMERA_PAGE),
   )
 
 
@@ -1350,12 +1350,13 @@ proc nimCameraPanHeldAt(width, height: cint): FlatBuffer {.exportc.} =
   ## `[x, y, is_in_front]`.
   ##   For checks, which ask whether drag kept it under pointer; see `nimCameraPanGrab`.
   ##   Zeros where none is held, as in free flight.
-  if INTERACTION_PAGE.point_pan.isNone: return FLAT_PAN_HELD.fill3(0.0'f32, 0.0'f32, 0.0'f32)
+  let held = INTERACTION_PAGE.pointPanNow(CAMERA_PAGE)
+  if held.isNone: return FLAT_PAN_HELD.fill3(0.0'f32, 0.0'f32, 0.0'f32)
   let screen = projectToScreen(
     CAMERA_PAGE.initMatrixViewProjection(float(width) / float(height)),
     int(width),
     int(height),
-    INTERACTION_PAGE.point_pan.get,
+    held.get,
   )
   FLAT_PAN_HELD.fill3(
     float32(screen.x), float32(screen.y), (if screen.isInFront: 1.0'f32 else: 0.0'f32)
@@ -1390,28 +1391,27 @@ proc nimCameraCarrying(): bool {.exportc.} =
   TWEEN_CAMERA.goal.isSome and not TWEEN_CAMERA.is_arrived
 
 proc nimCameraPivot(): FlatBuffer {.exportc.} =
-  ## Report point camera orbits around, as `[x, y, z]` view over `FLAT_PIVOT`.
+  ## Report point camera orbits around, in world, as `[x, y, z]` view over `FLAT_PIVOT`.
   ##   Refilled per call; camera fields' tick asks five times second and compares before
   ##   writing, so fresh sequence here was allocation per tick.
-  FLAT_PIVOT.fill3(
-    cfloat(CAMERA_PAGE.pivot.x),
-    cfloat(CAMERA_PAGE.pivot.y),
-    cfloat(CAMERA_PAGE.pivot.z),
-  )
+  ##   World's, as every reading is; see `camera.stanceWorld`.
+  let pivot = CAMERA_PAGE.pivotWorld
+  FLAT_PIVOT.fill3(cfloat(pivot.x), cfloat(pivot.y), cfloat(pivot.z))
 
 
 proc nimCameraEye(): FlatBuffer {.exportc.} =
-  ## Report where eye stands, as `[x, y, z]` view over `FLAT_EYE`.
+  ## Report where eye stands, in world, as `[x, y, z]` view over `FLAT_EYE`.
   ##   Driven checks read sight line off eye and pivot, to tell zoom along it from
   ##   slide across it; nothing on page asks.
-  let eye = CAMERA_PAGE.eye
+  let eye = CAMERA_PAGE.eyeWorld
   FLAT_EYE.fill3(cfloat(eye.x), cfloat(eye.y), cfloat(eye.z))
 
 
 proc nimCameraMotor(): FlatBuffer {.exportc.} =
   ## Report camera's motor as every basis coefficient in basis order, over `FLAT_MOTOR`.
   ##   Whole multivector, odd grades and all, since view shows it in grid objects use.
-  let m = CAMERA_PAGE.motor.toMultivector
+  ##   About world origin, as panel shows and takes it; see `camera.stanceWorld`.
+  let m = CAMERA_PAGE.stanceWorld.motor.toMultivector
   for b in Basis: FLAT_MOTOR[ord(b)] = cfloat(m[b])
   FLAT_MOTOR.used = ord(Basis.high) + 1
   FLAT_MOTOR.view
@@ -1422,7 +1422,8 @@ proc nimSetCameraMotorAt(basis: cint, value: cfloat): bool {.exportc.} =
   ##   One coefficient into live motor, not all sixteen from fields: field shows four
   ##   digits, and writing all back would round fifteen nobody touched.
   ##   Reports whether coefficients name motion; where not, camera stands.
-  var typed = CAMERA_PAGE.motor.toMultivector
+  ##   Motor is world's, as `nimCameraMotor` reports it.
+  var typed = CAMERA_PAGE.stanceWorld.motor.toMultivector
   typed[Basis(basis)] = float(value)
   let settled = motorRigid(typed)
   if settled.isNone: return false
@@ -2106,7 +2107,9 @@ proc nimAnchorWorld(handle: cint): FlatBuffer {.exportc.} =
     SCENE_PAGE.geometryOf(int(handle)), SCENE_PAGE.anchorOverrideAt(int(handle)), SCALE_OVERLAY
   )
   if anchor.isNone: return FLAT_ANCHOR_WORLD.fill3(0.0'f32, 0.0'f32, 0.0'f32)
-  FLAT_ANCHOR_WORLD.fill3(float32(anchor.get.x), float32(anchor.get.y), float32(anchor.get.z))
+  # Read back about world origin: anchor is about overlay's view origin.
+  let world = anchor.get.toWorld(SCALE_OVERLAY.origin)
+  FLAT_ANCHOR_WORLD.fill3(float32(world.x), float32(world.y), float32(world.z))
 
 
 proc nimSelectionMarker(
@@ -2559,18 +2562,16 @@ proc nimBuildFrame(
   #   device-pixel-ratio multiple.
   # Place first, so scene's reach is this frame's before extent reads far clip.
   ensurePlacement()
-  # Read eye and frame once for frame, after ease moved camera, and hand both to every reader.
-  #   Each `eye` or `frame` read lifts motor again; see `camera.drawExtentFor`.
+  # Move view origin to eye, after ease moved camera, and read eye and frame about it once.
+  #   Hand both to every reader: each `eye` or `frame` read lifts motor again; see
+  #   `camera.drawExtentFor`.
   #   Unpacked and handed on with no copy, and motor kept below is one copy of eight floats
   #   (read in emitted JS).
-  var (eye, frame) = CAMERA_PAGE.sight
+  var (eye, frame) = CAMERA_PAGE.moveOriginView
   # Read local scale once for this frame, before extent reads clip planes off it.
   #   Walks every placement, so here rather than in `ensureViewOverlay`; see `REACH_NEAR`.
-  REACH_NEAR = reachNearOf(PLACEMENTS, SCENE_PAGE, eye, frame.forward)
+  REACH_NEAR = reachNearOf(PLACEMENTS, SCENE_PAGE, CAMERA_PAGE.originView, eye, frame.forward)
   CAMERA_PAGE.reach_near = REACH_NEAR
-  # Decide view origin after scale, since bound is read off near clip.
-  #   Both holds carry motor, so frame moving this origin rebuilds both anyway.
-  ORIGIN_VIEW = CAMERA_PAGE.originView(eye, ORIGIN_VIEW)
   let scale = CAMERA_PAGE.drawExtentFor(eye, frame, int(height_pixels), REACH_SCENE)
   # Derive frustum once, for cull of every point below; see `isPointInView`.
   let bounds = CAMERA_PAGE.viewBoundsFor(eye, frame, scale, float(aspect), REACH_SCENE)
@@ -2618,7 +2619,7 @@ proc nimBuildFrame(
     ms_axes = 0.0
   if not is_furniture_held:
     SETTINGS_FURNITURE_HELD = some(settings_furniture)
-    clearMeshes(MESHES_FURNITURE, ORIGIN_VIEW)
+    clearMeshes(MESHES_FURNITURE)
     # Clock lattice and axes apart: axes are three lines, lattice is however many fog
     #   reaches on each plane picked.
     let ms_before_grid = performanceNow()
@@ -2671,8 +2672,7 @@ proc nimBuildFrame(
   ensurePlacement()
 
   if not is_scene_held:
-    # About view origin, as furniture is; see `ORIGIN_VIEW`.
-    clearMeshes(MESHES, ORIGIN_VIEW)
+    clearMeshes(MESHES)
     cost.openTally()
     # Mark picks once and read mark per handle below; see `selection.markOnto`.
     SELECTION_PAGE.markOnto(MARKS_PICKED)
@@ -2790,9 +2790,8 @@ proc nimBuildFrame(
     ms_after_scene = performanceNow()
     COUNTS_SCENE = cost
 
-  # About records' own origin; overlay's matrix stays about world, for picking.
-  let flat_view =
-    CAMERA_PAGE.initMatrixViewProjection(eye, frame, float(aspect), MESHES.origin).flattened
+  # About view origin, as records and overlay's own matrix are.
+  let flat_view = CAMERA_PAGE.initMatrixViewProjection(eye, frame, float(aspect)).flattened
   for index in 0..15: FLAT_VIEW[index] = flat_view[index]
 
   # Flatten into locals rather than in constructor.
@@ -2825,10 +2824,10 @@ proc nimBuildFrame(
     furniture_ribbon_vertices: FLAT_FURNITURE.view,
     is_scene_held: is_scene_held,
     is_furniture_held: is_furniture_held,
-    # Eye about view origin, frame shaders measure depth in.
-    camera_eye_x: float32(scale.eye.x - MESHES.origin.x),
-    camera_eye_y: float32(scale.eye.y - MESHES.origin.y),
-    camera_eye_z: float32(scale.eye.z - MESHES.origin.z),
+    # Eye about view origin, frame shaders measure depth in: its remainder, about zero.
+    camera_eye_x: float32(scale.eye.x),
+    camera_eye_y: float32(scale.eye.y),
+    camera_eye_z: float32(scale.eye.z),
     camera_forward_x: float32(scale.forward.x),
     camera_forward_y: float32(scale.forward.y),
     camera_forward_z: float32(scale.forward.z),

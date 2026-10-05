@@ -27,6 +27,10 @@
 ## Last two draw fixed to eye rather than around point in scene.
 ##   What marker surrounds is *whatever is drawn*, and both are drawn: great circle and
 ##   whole sky.
+## Every place reckoned here is about view origin, as frame's eye and transform are.
+##   Geometry is world's, so its anchor is read about it once (`euclid.toView`), and line
+##   is joined with eye as line through that anchor: join with world line far out lands on
+##   world's step, at eye that stands metre off line.
 ## Markers are described here and drawn by each render path's foreground layer
 ## (`main.drawSelectionMarker`, browser scripts's SVG overlay), never as scene geometry.
 ##   Loop lying exactly on plane would z-fight with its fill, and marker occluded by
@@ -1038,11 +1042,13 @@ func markerRails(
   ##     Measured from support, lapped against shorter rail, so camera restretching
   ##     rails does not move comet, and pair cannot drift apart. None leaves rails still.
   ##   None in horizon, and none where line collapses to point on screen.
+  let (anchor_world, axis) = (positionAnchor(geometry), direction(geometry))
+  if anchor_world.isNone or axis.isNone: return
+  # Read support about view origin, and join eye with line through it.
   let
-    anchor = positionAnchor(geometry)
-    axis = direction(geometry)
-    across = directionAcross(geometry, scale.eye)
-  if anchor.isNone or axis.isNone or across.isNone: return
+    anchor = anchor_world.get.toView(scale.origin)
+    across = directionAcross(anchor.toMultivector ∧ axis.get.toMultivector, scale.eye)
+  if across.isNone: return
 
   marker = Marker(kind: MarkerKind.Rails)
   var
@@ -1051,12 +1057,12 @@ func markerRails(
     counts: array[2, int]  ## How many of each side's three points that was.
     origins: array[2, int]  ## Where support landed in each, for pulse to measure on.
     tracks: array[2, PulseTrack]  ## Each side's reach either way from that support.
-  let offset_stated = offsetMarkerRail(anchor.get, scale, clearance)
+  let offset_stated = offsetMarkerRail(anchor, scale, clearance)
   # Settle against finished rail, then draw at progress asked for.
   #   Settling against partial rail made gap widen as hold filled, pair breathing
   #   sideways.
   railsAt(
-    anchor.get,
+    anchor,
     axis.get,
     across.get,
     offset_stated,
@@ -1083,7 +1089,7 @@ func markerRails(
     if widest <= ceiling: break
     offset = offset * ceiling / widest
     railsAt(
-      anchor.get,
+      anchor,
       axis.get,
       across.get,
       offset,
@@ -1099,7 +1105,7 @@ func markerRails(
 
   if progress < 1.0:
     railsAt(
-      anchor.get,
+      anchor,
       axis.get,
       across.get,
       offset,
@@ -1131,7 +1137,7 @@ func markerRails(
       )
 
   # Label beside line on its own left, anchored at support clamped into view.
-  marker.placeLabelBesideLine(anchor.get, axis.get, scale, view_projection, width, height)
+  marker.placeLabelBesideLine(anchor, axis.get, scale, view_projection, width, height)
 
   if travel.isSome:
     # Lap both rails against one shared reach either way; see `shared`.
@@ -1226,13 +1232,15 @@ proc markerLoop(
   ##     that order reads. None leaves circle still.
   ##   None in horizon, where plane draws as dome fixed to eye.
   let
-    anchor = if anchor_override.isSome: anchor_override else: positionAnchor(geometry)
+    anchor_world = if anchor_override.isSome: anchor_override else: positionAnchor(geometry)
     axes = frame(geometry)
-  if anchor.isNone or axes.isNone: return
+  if anchor_world.isNone or axes.isNone: return
+  # Read anchor about view origin, as transform reads it.
+  let anchor = anchor_world.get.toView(scale.origin)
 
   let
-    radius_loop = progress * radiusMarkerLoop(anchor.get, scale, placement, height, clearance)
-    positions = positionsMarkerLoop(anchor.get, axes.get, radius_loop)
+    radius_loop = progress * radiusMarkerLoop(anchor, scale, placement, height, clearance)
+    positions = positionsMarkerLoop(anchor, axes.get, radius_loop)
   var
     ring: array[SEGMENTS_MARKER_LOOP, ScreenPosition]
     are_in_front: array[SEGMENTS_MARKER_LOOP, bool]
@@ -1268,14 +1276,14 @@ proc markerLoop(
   #   Sampled top only where true top is cut away.
   let
     top = topmostOnCircle(
-      anchor.get,
+      anchor,
       radius_loop * axes.get.axis_first,
       radius_loop * axes.get.axis_second,
       view_projection,
       width,
       height,
     )
-    centre = projectToScreen(view_projection, width, height, anchor.get)
+    centre = projectToScreen(view_projection, width, height, anchor)
   if top.isSome and centre.isInFront: marker.placeLabelAbove(centre.x, top.get.y)
   else: marker.placeLabelAboveTopmost(marker.points, marker.count_point)
   if travel.isSome:

@@ -23,6 +23,11 @@
 ##   Finite *line object* reaches same extent from own support, since it is content and
 ##   not reference.
 ## Storage is fixed and owned by caller: meshes are cleared and refilled every frame.
+## Every place handed in is about frame's view origin (`DrawScale.origin`), and records store
+## it as handed, in float32.
+##   Near eye float32 then holds what eye looks at, wherever eye stands: about world
+##   origin, it carried tenth of unit million units out. Callers read each world place
+##   about that origin once; see `tessellate`.
 ##
 ##   |--------|-----------------------|----------------------------------------------|
 ##   | Kind   | Crosses wire as       | Carries                                      |
@@ -125,9 +130,10 @@ const
     ## Bound smallest radius either editor lets reader type, in world units.
     ##   Model refuses only zero and below; this is floor editor states.
     ##   Also size body with no radius on record is drawn at: demo's neighbour stars and
-    ##   planets, whose catalogues carry none. Under least on-screen dot from any camera
-    ##   further off than `camera.DISTANCE_LIMIT_NEAR` lets it stand, so what is shown is
-    ##   dot claiming no size, and nothing is invented.
+    ##   planets, whose catalogues carry none. Under least on-screen dot from camera further
+    ##   off than about 360 times it, so what is shown there is dot claiming no size.
+    ##     Nearer, which `camera.DISTANCE_LIMIT_NEAR` allows, it is drawn at this
+    ##     stand-in, and frame rule holds point picked alone where it fills frame.
   FRACTION_AMBIENT_SHADE* = 0.25'f32
     ## Set how bright point's underside is drawn, as fraction of its colour.
     ##   Rest is Lambert's cosine toward world's up, `camera.UP_WORLD`, which both vertex
@@ -445,7 +451,6 @@ type
 
   MeshSet* = object  ## Define everything one frame draws: vertices and every record kind.
     ## Points are one shape still assembled as vertices; rest cross wire as records.
-    origin*: Position  ## Point every stored position is measured from; see `clearMeshes`.
     points*: Mesh
     ribbons*: RibbonMesh
     discs*: DiscMesh
@@ -463,7 +468,10 @@ type
     extent_furniture*: float  ## How far lattices and world axes extend.
       ## Tied to orbit distance via `extentFurnitureFor`, twenty of them, so furniture
       ## reads as reaching indefinitely at any zoom and its cell follows reader, not scene.
-    eye*: Position  ## Camera's eye position, horizon geometry is anchored to.
+    origin*: Position  ## View origin, as world position: point every place of frame is about.
+      ## Camera's own, which follows eye every frame; see `camera.moveOriginView`.
+      ## Reader of world place reads it about this, once (`euclid.toView`).
+    eye*: Position  ## Camera's eye position about `origin`, horizon geometry is anchored to.
       ## Stays in fixed apparent direction as camera pans or dollies.
     radius_horizon*: float  ## How far from `eye` horizon geometry is drawn.
     forward*: Direction  ## Camera's sight axis, depth is measured along.
@@ -766,19 +774,8 @@ func animationProgress*(now, born: float): float =
 
 #[ Vertex Assembly ]#
 
-func clearMeshes*(meshes: var MeshSet, origin: Position = ORIGIN_WORLD) =
+func clearMeshes*(meshes: var MeshSet) =
   ## Drop every vertex and record assembled so far, so frame may be rebuilt from scratch.
-  ##   `origin` is point every position appended after is stored relative to: camera's
-  ##   pivot on both front-ends, world origin where nothing chose one.
-  ##     Records are float32, and float32 million units from world origin carries tenth
-  ##     of unit, which smeared moon rings thousandths of unit wide across screen when
-  ##     camera stood at far star. Stored about pivot, what camera looks at is exact and
-  ##     what is far off is far off. GPU transform is built about same point; see
-  ##     `camera.initMatrixViewProjection`.
-  ##     Every writer of position subtracts it, and nothing else reads it: CPU
-  ##     reference expanders take records as stored, against scale whose eye is in same
-  ##     frame, which suite keeps at world origin.
-  meshes.origin = origin
   meshes.points.count_vertices = 0
   meshes.points.index_overlay = none(int)
   meshes.ribbons.count = 0
@@ -815,9 +812,9 @@ func addMarker*(meshes: var MeshSet, at: Position, radius: float, tint: Rgba, al
   # Write fields in place.
   #   `Vertex` literal assigned here was deep copy per point on JS backend (Art. VII.1).
   template vertex: untyped = meshes.points.vertices[count]
-  vertex.x = float32(at.x - meshes.origin.x)
-  vertex.y = float32(at.y - meshes.origin.y)
-  vertex.z = float32(at.z - meshes.origin.z)
+  vertex.x = float32(at.x)
+  vertex.y = float32(at.y)
+  vertex.z = float32(at.z)
   vertex.radius = float32(radius)
   vertex.red = tint.red
   vertex.green = tint.green
@@ -856,7 +853,7 @@ func directionAcross*(tail, head, eye: Position): Option[Direction] =
   ##     Suite holds this cross equal to that join, sign included.
   ##   None where eye lies on segment's line, or segment has no length.
   ##     Judged in world units, scale one, as ribbon shaders' sibling tests are: segment's
-  ##     size is picture's, records about pivot, never geometry's own.
+  ##     size is picture's, records about view origin, never geometry's own.
   normalize(cross(head - tail, eye - tail), scale = 1.0)
 
 
@@ -968,12 +965,12 @@ func addRibbon*(
     &"Frame holds at most {RIBBONS_MAX} ribbons, raise `--define:visualiser.ribbons_max`; " &
     &"got `{count}`."
   meshes.ribbons.records[count] = RibbonRecord(
-    tail_x: float32(tail.x - meshes.origin.x),
-    tail_y: float32(tail.y - meshes.origin.y),
-    tail_z: float32(tail.z - meshes.origin.z),
-    head_x: float32(head.x - meshes.origin.x),
-    head_y: float32(head.y - meshes.origin.y),
-    head_z: float32(head.z - meshes.origin.z),
+    tail_x: float32(tail.x),
+    tail_y: float32(tail.y),
+    tail_z: float32(tail.z),
+    head_x: float32(head.x),
+    head_y: float32(head.y),
+    head_z: float32(head.z),
     width: width,
     fog: (if is_fogged: 1.0'f32 else: 0.0'f32),
     tail_red: tint_tail.red,
@@ -1077,9 +1074,9 @@ func addRing*(
   #   `RingRecord` constructor assigned to slot is deep copy per plane per frame on JS backend
   #   (read in emitted JS). Every field written, so slot keeps nothing of record before.
   template record: untyped = meshes.rings.records[meshes.rings.count]
-  record.centre_x = float32(centre.x - meshes.origin.x)
-  record.centre_y = float32(centre.y - meshes.origin.y)
-  record.centre_z = float32(centre.z - meshes.origin.z)
+  record.centre_x = float32(centre.x)
+  record.centre_y = float32(centre.y)
+  record.centre_z = float32(centre.z)
   record.arm_first_x = float32(arm_first.x)
   record.arm_first_y = float32(arm_first.y)
   record.arm_first_z = float32(arm_first.z)
@@ -1492,9 +1489,9 @@ func addDisc*(
   #   `DiscRecord` constructor assigned to slot is deep copy per plane per frame on JS backend
   #   (read in emitted JS). Every field written, so slot keeps nothing of record before.
   template record: untyped = meshes.discs.records[count]
-  record.centre_x = float32(center.x - meshes.origin.x)
-  record.centre_y = float32(center.y - meshes.origin.y)
-  record.centre_z = float32(center.z - meshes.origin.z)
+  record.centre_x = float32(center.x)
+  record.centre_y = float32(center.y)
+  record.centre_z = float32(center.z)
   record.arm_first_x = float32(arm_first.x)
   record.arm_first_y = float32(arm_first.y)
   record.arm_first_z = float32(arm_first.z)
@@ -1523,9 +1520,9 @@ func addDome*(meshes: var MeshSet, center: Position, radius: float, tint: Rgba) 
     &"`{count}`."
   meshes.appendVeilRun(VeilKind.Dome)
   meshes.domes.records[count] = DomeRecord(
-    centre_x: float32(center.x - meshes.origin.x),
-    centre_y: float32(center.y - meshes.origin.y),
-    centre_z: float32(center.z - meshes.origin.z),
+    centre_x: float32(center.x),
+    centre_y: float32(center.y),
+    centre_z: float32(center.z),
     radius: float32(radius),
     red: tint.red,
     green: tint.green,

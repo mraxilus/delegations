@@ -301,9 +301,6 @@ var
 #   Costs `OBJECTS_MAX` placements of fixed reservation, counted by `BYTES_MEMORY_TOTAL`.
 var
   PLACEMENTS: array[OBJECTS_MAX, Placement]
-  ORIGIN_VIEW = Position(x: 0.0, y: 0.0, z: 0.0)
-    ## Hold view origin, point every record is stored from; see `camera.originView`.
-    ##   One value for both mesh sets, because one transform draws them.
   REACH_NEAR = 0.0
     ## Reach to nearest drawn object ahead of eye; see `camera.scaleLocal`.
     ##   Moves with camera as well as with scene, so it is read once for each frame rather
@@ -536,13 +533,13 @@ proc assembleMeshes(
   )
   if SETTINGS_FURNITURE_HELD.isNone or SETTINGS_FURNITURE_HELD.get != settings_furniture:
     SETTINGS_FURNITURE_HELD = some(settings_furniture)
-    MESHES_FURNITURE.clearMeshes(ORIGIN_VIEW)
+    MESHES_FURNITURE.clearMeshes
     if panel.is_grid_shown:
       MESHES_FURNITURE.addLatticesPicked(scratch[0], scale, scene, panel.selection)
     if panel.is_axes_shown:
       MESHES_FURNITURE.addAxes(scratch[0], scale.extentFurniture, scale)
 
-  MESHES.clearMeshes(ORIGIN_VIEW)  # About view origin; see `ORIGIN_VIEW`.
+  MESHES.clearMeshes
   # Mark picks once and read mark per handle below; see `selection.markOnto`.
   panel.selection.markOnto(MARKS_PICKED)
   defer: panel.selection.markOnto(MARKS_PICKED, is_marked = false)
@@ -1117,14 +1114,13 @@ proc renderFrame(
           scene.anchorOverrideAt(handle),
         )
     REVISION_REACH = some(scene.revision)
-  # Read eye and frame once for frame, after ease moved camera, and hand both to every reader.
-  #   Each `eye` or `frame` read lifts motor again; see `camera.drawExtentFor`.
-  var (eye, frame) = camera.sight
+  # Move view origin to eye, after ease moved camera, and read eye and frame about it once.
+  #   Hand both to every reader: each `eye` or `frame` read lifts motor again; see
+  #   `camera.drawExtentFor`.
+  var (eye, frame) = camera.moveOriginView
   # Read local scale once for this frame, before extent reads clip planes off it.
-  REACH_NEAR = reachNearOf(PLACEMENTS, scene, eye, frame.forward)
+  REACH_NEAR = reachNearOf(PLACEMENTS, scene, camera.originView, eye, frame.forward)
   camera.reach_near = REACH_NEAR
-  # Decide view origin after scale, since bound is read off near clip.
-  ORIGIN_VIEW = camera.originView(eye, ORIGIN_VIEW)
 
   # Derive extent aim reads, and keep motor before aim, so hold it makes is seen below.
   let
@@ -1166,12 +1162,9 @@ proc renderFrame(
     are_dimmed,
   )
   clearFrame(int(width), int(height))
-  # GPU takes transform about view origin; `view_projection` above stays about world,
-  #   for hover, menu and markers, which read world coordinates.
-  let view_projection_drawn =
-    camera.initMatrixViewProjection(eye, frame, width / height, MESHES.origin)
-  renderer.drawMeshes(MESHES_FURNITURE, view_projection_drawn, scale, width / height)
-  renderer.drawMeshes(MESHES, view_projection_drawn, scale, width / height)
+  # GPU takes same transform hover, menu and markers read: all about view origin.
+  renderer.drawMeshes(MESHES_FURNITURE, view_projection, scale, width / height)
+  renderer.drawMeshes(MESHES, view_projection, scale, width / height)
 
   # Take one reading per frame, before any handle advances.
   #   Every selected object's comet then moves by same step.
@@ -1397,7 +1390,7 @@ proc handleEvent(
         width_frame,
         height_frame,
         panel.selection.len > 0,
-        panel.tween_camera.reachAimed(camera.pivot),
+        panel.tween_camera.reachAimed(camera),
       )
   of uint32(EventKind.MouseButtonUp):
     let is_shifted = (sdl3.getModState() and MODIFIER_SHIFT) != 0
@@ -1490,7 +1483,7 @@ proc handleEvent(
         width_frame,
         height_frame,
         panel.selection.len > 0,
-        panel.tween_camera.reachAimed(camera.pivot),
+        panel.tween_camera.reachAimed(camera),
       )
     if is_dragging_pan:
       panel.tween_camera.halt()  # Pan places pivot itself; see `halt`.
@@ -1507,8 +1500,8 @@ proc handleEvent(
         height_frame,
         panel.selection.len > 0,
         interaction.depth_pan,
-        interaction.point_pan,
-        panel.tween_camera.reachAimed(camera.pivot),
+        interaction.pointPanNow(camera),
+        panel.tween_camera.reachAimed(camera),
       )
   else: discard
 
@@ -2096,7 +2089,11 @@ proc verdictDriven(
     # Where pick put pivot is read off ease's own destination, not where slide started.
     #   First held key can land while ease still carries, and ease then finishes carrying
     #   pivot onto what was picked underneath orbit; see `camera.abandon`.
-    let pivot_picked = camera.placed(panel.tween_camera.destination).pivot
+    #   Read about camera's own view origin, since destination is held about its own.
+    let
+      destination = panel.tween_camera.destination
+      pivot_picked =
+        camera.placed(destination).pivot.rebased(destination.origin, camera.originView)
     report(
       "a held key orbited the view, and left the pivot where the pick put it",
       # Script selects before it holds anything, so every held key here orbits.
@@ -2378,7 +2375,8 @@ proc runInteractive(
     echo &"Keys: focus {interaction.index_focus}, selected {len(panel.selection)}, " &
         &"azimuth {camera.azimuth:.4f}, elevation {camera.elevation:.4f}, " &
         &"distance {camera.distance:.4f}, " &
-        &"pivot ({camera.pivot.x:.3f}, {camera.pivot.y:.3f}, {camera.pivot.z:.3f}), " &
+        &"pivot ({camera.pivotWorld.x:.3f}, {camera.pivotWorld.y:.3f}, " &
+        &"{camera.pivotWorld.z:.3f}), " &
         &"held {len(interaction.keys_held)}; " &
         &"gui.wantsKeys {gui.wantsKeys()}, nav enabled {gui.isNavEnabled()}."
   if options.isDriven:
@@ -2514,7 +2512,7 @@ proc runStoryboard(
     #   Representative point for line's great circle, since aiming along normal puts ring
     #   at frame's edge; plane at horizon needs no aiming; lens stays default.
     camera = camera.placed(stanceFacing(
-      camera.pivot + -camera.distance * heading_default, camera.pivot
+      camera.pivot + -camera.distance * heading_default, camera.pivot, camera.originView
     ))
     # Settle instantly, not eased: captured frame must never show half-finished pan.
     #   Same `framing` rule interactive path uses.
