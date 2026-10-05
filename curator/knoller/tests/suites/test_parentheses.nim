@@ -1,22 +1,36 @@
 ## Replicate rule of `parentheses.nim` header: parentheses around prefix term or plain operand
-##   beside binary operator, and around plain operand after prefix operator, go; every other
-##   group stays, and fix changes nothing second time.
+##   beside binary operator, and around plain operand after prefix operator, go where parser
+##   proves it; every other group stays, and fix changes nothing second time.
+##   Parser is stub (`stubs.nim`), answering as commit pin of `ronri` projects does.
 
 {.experimental: "strictFuncs".}
 
-import std/[sequtils, strutils, unittest]
+import std/[sequtils, strutils, tables, unittest]
 import ../../src/knoller/[parentheses, reports]
+import ./stubs
+
+
+const LINKS =
+  "      let\n        task = SETTLES[i]\n        links = @(PAIRS[task.pair][0])\n" &
+  "        is_away = PAIRS[task.pair][1]\n"
+  ## Lines 77 to 80 of `tests/test_read.nim` of `dance_ontology` (#539), as found.
+
+
+func proofsOf(source: string): Proofs =
+  ## Answer source by stub parser, as caller holds answer before fix runs again.
+  result.answers[source] = source.stubbed
 
 
 func fixed(source: string): string =
-  ## Fix parentheses of source, as `koch fix` does.
-  fixParentheses("a.nim", source).source
+  ## Fix parentheses of source, parser answering, as `koch fix` does.
+  fixParentheses("a.nim", source, source.proofsOf).source
 
 
 func isSettled(source: string): bool =
   ## Decide whether source reports no parentheses finding and fixes to itself again.
-  checkParentheses("a.nim", source).len == 0 and source.fixed == source and
-    fixParentheses("a.nim", source).fixed.len == 0
+  let proofs = source.proofsOf
+  checkParentheses("a.nim", source, proofs).len == 0 and source.fixed == source and
+    fixParentheses("a.nim", source, proofs).fixed.len == 0
 
 
 
@@ -46,10 +60,11 @@ suite "Parentheses":
       ),
       ("let x = (a.b(c)[i]) + 1\n", "let x = a.b(c)[i] + 1\n", 1),  # call, index, field glued
     ]:
-      check checkParentheses("a.nim", breach).len == count
+      check checkParentheses("a.nim", breach, breach.proofsOf).len == count
       check breach.fixed == mended
       check mended.isSettled  # second run writes nothing
-    check checkParentheses("a.nim", "let c = ☆(m) ∧ n\n")[0].message.endsWith("got `(m)`.")
+    let named = "let c = ☆(m) ∧ n\n"
+    check checkParentheses("a.nim", named, named.proofsOf)[0].message.endsWith("got `(m)`.")
 
 
   test "group whose removal glues tokens, or that holds binary expression or suffix, stays":
@@ -75,3 +90,39 @@ suite "Parentheses":
       "let p = a^(-1)\n",
     ]:
       check kept.isSettled
+
+
+  test "group parser reads otherwise without it stays, and bare operand after sigil goes":
+    check LINKS.isSettled  # `@PAIRS[task.pair][0]` reads `(@PAIRS)[task.pair][0]`
+    for kept in [
+      "let s = @(x.items)\n",  # sigil binds name before field, call or index
+      "let s = @(f(a))\n",
+      "let s = @@(x[0])\n",
+      "let s = @(x[i])\n",  # X.4 example
+    ]:
+      check kept.isSettled
+    check "let s = @(x)\n".fixed == "let s = @x\n"
+    check "let s = @x\n".isSettled  # second run writes nothing
+
+
+  test "check and fix agree: each names only groups parser proves, none where no answer holds":
+    let
+      source = "let x = (a.b(c)[i]) + @(x[0])\n"
+      proofs = source.proofsOf
+    check proofs.answers[source] == @[8]  # `(x[0])` refused
+    check checkParentheses("a.nim", source, proofs).mapIt(it.message.split("got ")[1]) ==
+      @["`(a.b(c)[i])`."]
+    check fixParentheses("a.nim", source, proofs).fixed.len == 1
+    let unanswered = fixParentheses("a.nim", source, Proofs())
+    check unanswered.source == source and unanswered.fixed.len == 0  # nothing proven, nothing
+    check unanswered.asked == @[source]  # source holding candidate asks parser
+    check checkParentheses("a.nim", source, Proofs()).len == 0  # check names none fix keeps
+    check fixParentheses("a.nim", source, proofs).asked.len == 0  # answered source asks none
+    check fixParentheses("a.nim", "let y = (a)\n", Proofs()).asked.len == 0  # no candidate
+
+
+  test "candidates are three kinds alone, in source order, each with its spans":
+    let groups = candidatesOf("let x = (|∙ m) + ■(n) * (a and b) + 2^(k)\n")
+    check groups.mapIt(it.got) == @["(|∙ m)", "(n)", "(k)"]  # binary group no candidate
+    check groups[0].opening == (8, 9) and groups[0].closing == (15, 16)  # `∙` three bytes
+    check candidatesOf("let y = (\n  a) + b\n").len == 0  # spanning lines

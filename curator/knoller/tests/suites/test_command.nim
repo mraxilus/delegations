@@ -1,10 +1,12 @@
-## Replicate command line of `command.nim` header: what `knoller [--check] path...` reads,
-##   writes, prints and exits with, driven through `outcomeOf` on text alone.
+## Replicate command line of `command.nim` header: what `knoller [--check] [--nim:path] path...`
+##   reads, writes, prints and exits with, driven through `outcomeOf` on text alone, and through
+##   `provenOutcome` with parser stubbed (`stubs.nim`).
 
 {.experimental: "strictFuncs".}
 
 import std/[options, os, sequtils, strutils, unittest]
-import ../../src/knoller/[chain, command, rules]
+import ../../src/knoller/[chain, command, proofs, rules]
+import ./stubs
 
 
 const
@@ -21,6 +23,8 @@ const
     ## Testament stub whose `cmd` holds `-r`.
   UMBRELLA = "{.experimental: \"strictFuncs\".}\n\nimport ./p/a\n"
     ## Library umbrella lacking profiler import.
+  GROUPED = "{.experimental: \"strictFuncs\".}\n\nlet s = @(x) + @(x[0])\n"
+    ## Nim source holding group parser proves needless, and group it refuses.
 
 
 func shown(path, directory, source: string): seq[string] =
@@ -38,6 +42,9 @@ suite "Command line":
     check parseOptions(["--check"]).isNone  # option alone names no path
     check parseOptions(["--width=80", "a.nim"]).isNone  # no style option
     check parseOptions(["--check=no", "a.nim"]).isNone  # check takes no value
+    check parseOptions(["a.nim"]).get.nim == "nim"  # compiler on `PATH` unless named
+    check parseOptions(["--nim:/p/bin/nim", "a.nim"]).get.nim == "/p/bin/nim"
+    check parseOptions(["--nim", "a.nim"]).isNone  # compiler option names compiler
 
 
   test "dialect follows extension, and other file has none":
@@ -143,3 +150,26 @@ suite "Command line":
   test "README lists every rule id output cites":
     let record = readFile(README)
     for rule in Rule: check ("`" & rule.id & "`") in record  # id named as code span
+
+
+  test "parentheses go where parser proves it, after one more run, and second run writes none":
+    let unanswered = outcomeOf([("a.nim", GROUPED)], [], is_check = false)
+    check unanswered.written.len == 0 and unanswered.asked == @[GROUPED]  # waits for parser
+    let outcome = provenOutcome([("a.nim", GROUPED)], [], false, "/", stubProver)
+    check outcome.written == @[("a.nim", GROUPED.replace("@(x) +", "@x +"))]
+    check outcome.lines == @["a.nim:3: needless-parentheses fixed", "1 fixed."]
+    check outcome.asked.len == 0 and outcome.code == 0
+    let again = provenOutcome(outcome.written, [], false, "/", stubProver)
+    check again.written.len == 0 and again.lines == @["0 fixed."]  # second run writes nothing
+
+
+  test "where no compiler answers, nothing goes, one warning says why, and exit code holds":
+    for prover in [failingProver, compilerProver("/nonexistent/nim")]:
+      let outcome = provenOutcome([("a.nim", GROUPED), ("b.nim", CLEAN)], [], true, "/", prover)
+      check outcome.written.len == 0 and outcome.code == 0  # nothing due, nothing left
+      check outcome.lines.len == 2 and outcome.lines[^1] == "0 to fix."
+      check outcome.lines[0].startsWith("needless-parentheses warning: ")  # one line, before count
+    let dirty =
+      provenOutcome([("a.nim", DIRTY & "let s = @(x) + 1\n")], [], true, "/", failingProver)
+    check dirty.code == 1 and dirty.lines[^1] == "4 to fix."  # other rules still due
+    check dirty.lines[^2] == "needless-parentheses warning: Compiler ran no probe; got `x`."
