@@ -1116,6 +1116,22 @@ suite "Internal: Gaps":
     check docket.next == 5  # docket grew with gaps
 
 
+  test "carried runtime names commit bench ran at":
+    var carried_runtime = documentRuntimeFixture()
+    carried_runtime["taken"]["timed_at"] = %"d9be8ae"
+    let
+      algebras_carried = @[Algebra(
+        name: "rga4d",
+        measurements_static: documentStaticFixture(),
+        measurements_runtime: carried_runtime,
+      )]
+      (text, _) = generate(algebras_carried, docketOf(nil))
+      (text_timed, _) = generate(algebras_fixture, docketOf(nil))
+    check "It ran at pga `d9be8ae`, which emits the same C as the pin." in
+        text.splitWhitespace.join(" ")  # header names commit timed at
+    check "emits the same C" notin text_timed  # timed at stamp says nothing more
+
+
   test "wrap breaks at spaces within width and indents continuation":
     check wrap("aa bb cc", 5) == @["aa bb", "cc"]  # fits, then breaks
     check wrap("aa bb cc", 5, "  ") == @["aa bb", "  cc"]  # continuation indented
@@ -1270,6 +1286,44 @@ suite "Internal: Head":
     check "`marginalia`" in findings[0].message or
         "`marginalia`" in findings[1].message  # changed page named
     check checkPublished(built, publications, "Pages: https://x/1.", "p").len == 4  # URLs unnamed
+
+
+  test "digest of C reads every file by name, and leaves pin's commit out":
+    let
+      at_pin = @[("b.nim.c", "x = \"" & pin & "\";"), ("a.nim.c", "y")]
+      at_head = @[("a.nim.c", "y"), ("b.nim.c", "x = \"ffff\";")]
+    check digestSources(at_pin, pin) == digestSources(at_head, "ffff")  # order and commit aside
+    check digestSources(at_pin, pin) != digestSources(@[("a.nim.c", "y")], pin)  # file gone
+    check digestSources(@[("a.nim.c", "y")], pin) !=
+        digestSources(@[("a.nim.c", "z")], pin)  # one byte of C moved
+
+
+  test "carry moves stamp only where builds emit C figures were timed on":
+    const old = "0bc4655"
+    let
+      digests = %*{"plain": "d1", "alloc": "d2"}
+      timed = %*{"taken": {"pga": old, "date": "2026-10-03"}, "digest_c": digests}
+      moved = carried(timed, digests, pin)
+    check checkCarry(digests, digests, old, pin, "r.json", "run `bench`").len == 0  # same C
+    check checkCarry(digests, %*{"plain": "d1", "alloc": "d3"}, old, pin, "r.json",
+      "run `bench`").len == 1  # one build moved
+    check checkCarry(nil, digests, pin, pin, "r.json", "run `bench`").len == 0  # at pin, first
+    check checkCarry(nil, digests, old, pin, "r.json", "run `bench`").len == 1  # away, none
+    check checkCarry(nil, digests, "", pin, "r.json", "run `bench`").len == 1  # edits moved
+    check moved{"taken", "pga"}.getStr == pin  # stamp at pin
+    check moved{"taken", "timed_at"}.getStr == old  # names commit timed at
+    check moved{"taken", "date"}.getStr == "2026-10-03"  # date of timing kept
+    check carried(moved, digests, "ffff"){"taken", "timed_at"}.getStr == old  # first stays
+    check not carried(%*{"taken": {"pga": pin}}, digests, pin)["taken"].hasKey(
+      "timed_at")  # backfill at own pin
+    check stampCarried(%*{"pga": old}, pin)["pga"].getStr == pin  # stamp alone
+
+
+  test "carried figures name commit they were timed at":
+    check timedAt(%*{"pga": pin}) == ""  # timed at stamp
+    check timedAt(%*{"pga": pin, "timed_at": "0bc4655aa"}) ==
+        " at pga <code>0bc4655</code>"  # carried
+    check timedAt(nil) == ""  # no stamp
 
 
 
