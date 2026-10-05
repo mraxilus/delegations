@@ -301,8 +301,8 @@ var
 #   Costs `OBJECTS_MAX` placements of fixed reservation, counted by `BYTES_MEMORY_TOTAL`.
 var
   PLACEMENTS: array[OBJECTS_MAX, Placement]
-  ORIGIN_RECORDS = Position(x: 0.0, y: 0.0, z: 0.0)
-    ## Point every record is stored from; see `camera.originHeld` and `mesh.clearMeshes`.
+  ORIGIN_VIEW = Position(x: 0.0, y: 0.0, z: 0.0)
+    ## Hold view origin, point every record is stored from; see `camera.originView`.
     ##   One value for both mesh sets, because one transform draws them.
   REACH_NEAR = 0.0
     ## Reach to nearest drawn object ahead of eye; see `camera.scaleLocal`.
@@ -536,13 +536,13 @@ proc assembleMeshes(
   )
   if SETTINGS_FURNITURE_HELD.isNone or SETTINGS_FURNITURE_HELD.get != settings_furniture:
     SETTINGS_FURNITURE_HELD = some(settings_furniture)
-    MESHES_FURNITURE.clearMeshes(ORIGIN_RECORDS)
+    MESHES_FURNITURE.clearMeshes(ORIGIN_VIEW)
     if panel.is_grid_shown:
       MESHES_FURNITURE.addLatticesPicked(scratch[0], scale, scene, panel.selection)
     if panel.is_axes_shown:
       MESHES_FURNITURE.addAxes(scratch[0], scale.extentFurniture, scale)
 
-  MESHES.clearMeshes(ORIGIN_RECORDS)  # About held origin; see `ORIGIN_RECORDS`.
+  MESHES.clearMeshes(ORIGIN_VIEW)  # About view origin; see `ORIGIN_VIEW`.
   # Mark picks once and read mark per handle below; see `selection.markOnto`.
   panel.selection.markOnto(MARKS_PICKED)
   defer: panel.selection.markOnto(MARKS_PICKED, is_marked = false)
@@ -1123,8 +1123,8 @@ proc renderFrame(
   # Read local scale once for this frame, before extent reads clip planes off it.
   REACH_NEAR = reachNearOf(PLACEMENTS, scene, eye, frame.forward)
   camera.reach_near = REACH_NEAR
-  # Decide records' origin after scale, since bound is read off near clip.
-  ORIGIN_RECORDS = camera.originHeld(eye, ORIGIN_RECORDS)
+  # Decide view origin after scale, since bound is read off near clip.
+  ORIGIN_VIEW = camera.originView(eye, ORIGIN_VIEW)
 
   # Derive extent aim reads, and keep motor before aim, so hold it makes is seen below.
   let
@@ -1166,7 +1166,7 @@ proc renderFrame(
     are_dimmed,
   )
   clearFrame(int(width), int(height))
-  # GPU takes transform about records' origin; `view_projection` above stays about world,
+  # GPU takes transform about view origin; `view_projection` above stays about world,
   #   for hover, menu and markers, which read world coordinates.
   let view_projection_drawn =
     camera.initMatrixViewProjection(eye, frame, width / height, MESHES.origin)

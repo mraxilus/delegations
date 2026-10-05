@@ -1167,7 +1167,7 @@ suite "Camera Aim":
     #   Separation must land there and pivot on star, which must read in front: ring, label,
     #   menu and every pick read that, and orbit turns about pivot.
     #   Swept beside origin and at HD 222237, 2.36 million units out, where double steps by
-    #   about 5e-10 and records' origin follows eye.
+    #   about 5e-10 and view origin follows eye.
     const
       duration = 0.35
       aspect = float(width_aim) / float(height_aim)

@@ -111,12 +111,12 @@ const
     ##   orbits past it.
   STEP_SINGLE* = 1.0 / 16_777_216.0
     ## Fix float32's own relative step, which is two to power of minus twenty-four.
-    ##   Position stored `r` from records' origin carries about `r*STEP_SINGLE` of error.
+    ##   Position stored `r` from view origin carries about `r*STEP_SINGLE` of error.
   FRACTION_ORIGIN_HOLD* = 0.25
-    ## Spend at most this fraction of near clip on float32 error about records' origin.
+    ## Spend at most this fraction of near clip on float32 error about view origin.
     ##   Nothing nearer than near clip is drawn, so near clip is finest thing on screen,
     ##   and quarter of it is error no reader resolves.
-    ##   Sets how far camera travels before origin follows; see `originHeld`.
+    ##   Sets how far camera travels before origin follows; see `originView`.
   FRACTION_VIEW_CENTRED* = 2.0 / 3.0
     ## Fix fraction of frame that counts as being looked at.
     ##   This much of height, and this much of width *or height, whichever is less*;
@@ -1026,8 +1026,8 @@ func flyAhead*(camera: var Camera, step: float) =
   camera.depth_pivot = distanceHeld(camera.depth_pivot - step)
 
 
-func originHeld*(camera: Camera; eye, origin: Position): Position =
-  ## Say where records are stored from, given where they were stored from last.
+func originView*(camera: Camera; eye, origin: Position): Position =
+  ## Say where view origin stands this frame, given where it stood last.
   ##   `eye` is camera's own, read once for frame by caller; see `drawExtentFor`.
   ##   Eye, held where it stands until travel spends float32's precision about it.
   ##     Eye rather than pivot: free flight turns about eye, so pivot swings through whole
