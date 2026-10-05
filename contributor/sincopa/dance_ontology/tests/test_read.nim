@@ -22,10 +22,10 @@ import ./fixtures
 
 const
   APART = 0.40
-  PAIRS = [([Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Right)]),
-             Link(ends: [(Body.One, Arm.Right), (Body.Two, Arm.Left)])], false),
-           ([Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Left)]),
-             Link(ends: [(Body.One, Arm.Right), (Body.Two, Arm.Right)])], true)]
+  PAIRS = [(@[Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Right)]),
+              Link(ends: [(Body.One, Arm.Right), (Body.Two, Arm.Left)])], false),
+           (@[Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Left)]),
+              Link(ends: [(Body.One, Arm.Right), (Body.Two, Arm.Right)])], true)]
     ## Both two-hand holds, and whether each rests with follow turned away.
   TURNS = [0.0, 0.25, 0.5, 0.75, 1.0]  ## Turns each hold is settled at.
   FLOOR_CROSSINGS = 4
@@ -76,7 +76,7 @@ proc settling(id: int) {.thread.} =
       if i >= SETTLES.len: return
       let
         task = SETTLES[i]
-        links = @PAIRS[task.pair][0]
+        links = PAIRS[task.pair][0]
         is_away = PAIRS[task.pair][1]
       var couple = build(
         HUMAN,
@@ -225,7 +225,7 @@ suite "Internal: Two hands":
       # Stance each couple was built at, which settling keeps.
       poses.add (
         stance: turned(restStance(HUMAN, APART, PAIRS[task.pair][1]), Body.Two, task.turn),
-        links: @PAIRS[task.pair][0],
+        links: PAIRS[task.pair][0],
         arms: @[SETTLED_ARMS[i][0], SETTLED_ARMS[i][1]],
       )
     for (stance, pose_links, arms) in poses:
