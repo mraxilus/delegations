@@ -442,16 +442,16 @@ func operated(operation: Operation; m, n: Multivector): Multivector =
 
 func applyOperation*(operation: Operation; m, n: Multivector): Multivector =
   ## Apply operation to operands, ignoring `n` where operation is unary.
-  ##   Operation that commutes with slide (`OPERATIONS_SLIDING`) runs about point near its
-  ##   operands, then slides back through library's own motor.
+  ##   Operation that commutes with slide (`OPERATIONS_SLIDING`) runs about its model origin, point
+  ##   of one of its operands, then slides back through library's own motor.
   ##     Join of two points metre apart one unit out then holds both to micrometres.
   ##     Never about world origin: one unit out its moment, `p × q`, cancels there to about
   ##     1e-5 of itself, and both points stand hundreds of kilometres off it.
   ##     Slide back adds `t × d` to small moment, cancelling nothing: rounding is `ε` of
   ##     distance slid.
-  ##   Origin is point operand's own place, first operand's first: cancellation is about
+  ##   Model origin is point operand's own place, first operand's first: cancellation is about
   ##   point joined. Else first finite operand's anchor, its support. Else world origin,
-  ##   where no operand stands anywhere finite.
+  ##   where no operand stands anywhere finite. Implicit: nothing stores it.
   ##   Each slide keeps only grades its multivector occupies; see `slid`.
   ##   Result within rounding of zero, judged against operands that made it, is zero:
   ##   point lying on line joins with it to nothing, never to rounding.
@@ -466,8 +466,8 @@ func applyOperation*(operation: Operation; m, n: Multivector): Multivector =
   ##   Cost: three slides, two antiproducts each, and second run of operation, once for
   ##   each preview and each build.
 
-  func originLocal(m, n: Multivector): Option[Position] =
-    ## Choose point to run about: point operand's own place, else finite operand's anchor.
+  func originModel(m, n: Multivector): Option[Position] =
+    ## Choose model origin: point operand's own place, else finite operand's anchor.
     for operand in [m, n]:
       if kindOf(operand) == some(Kind.Point):
         let place = position(operand)
@@ -488,32 +488,32 @@ func applyOperation*(operation: Operation; m, n: Multivector): Multivector =
     for b in Basis:
       if occupied[int(b.grade)]: result[b] = moved[b]
 
-  # Slide operands to origin chosen, or leave them about world origin.
+  # Slide operands to model origin, or leave them about world origin.
   let origin =
-    if operation in OPERATIONS_SLIDING: originLocal(m, n)
+    if operation in OPERATIONS_SLIDING: originModel(m, n)
     else: none(Position)
   var
-    (m_local, n_local) = (m, n)
+    (m_model, n_model) = (m, n)
     scale_origin = 1.0
   if origin.isSome:
     let
       point_origin = origin.get.toMultivector
       slide = motorSliding(subtract(1.0.e4, point_origin))
       slide_reversed = ~∘slide
-    m_local = slid(m, slide, slide_reversed)
-    n_local = slid(n, slide, slide_reversed)
+    m_model = slid(m, slide, slide_reversed)
+    n_model = slid(n, slide, slide_reversed)
     scale_origin = point_origin.coefficientLargest
-  result = operated(operation, m_local, n_local)
+  result = operated(operation, m_model, n_model)
 
   # Answer zero where that is rounding of zero.
   let is_rounding =
     case operation
     of Operation.Add, Operation.Subtract:
       result.isRoundingOf(
-        max(m_local.coefficientLargest, n_local.coefficientLargest) * scale_origin,
+        max(m_model.coefficientLargest, n_model.coefficientLargest) * scale_origin,
       )
     else:
-      operated(operation, m_local.scaleFree, n_local.scaleFree).isRoundingOf(scale_origin)
+      operated(operation, m_model.scaleFree, n_model.scaleFree).isRoundingOf(scale_origin)
   if is_rounding: return Multivector()
 
   # Slide result back to world origin.
