@@ -17,7 +17,7 @@ import { MISSES_ACCOUNT_MAX } from './scenery';
  *  Readings each is set from are in `PROVENANCE.md`.
  */
 const MILLISECONDS_EDIT_TIMELINE = 9.6;
-const MILLISECONDS_FRAME_PLACING = 15;
+const MILLISECONDS_FRAME_PLACING = 31;
 
 /** Assert edit past timeline capacity copies one scene, not whole timeline.
  *

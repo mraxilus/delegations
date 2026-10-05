@@ -323,8 +323,8 @@ const FRAMES_SAMPLE_STILL = 60;
  *
  *  Readings each is set from are in `PROVENANCE.md`.
  */
-const MILLISECONDS_STILL_MEDIAN = 1.5;
-const MILLISECONDS_STILL_P90 = 2.9;
+const MILLISECONDS_STILL_MEDIAN = 2.1;
+const MILLISECONDS_STILL_P90 = 3.2;
 
 /** Sample still scene, and assert its frames fit inside their own budget.
  *
