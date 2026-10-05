@@ -363,7 +363,7 @@ bool guiButtonToggle(const char* label, bool is_on, float width) {
     //   straight onto scene has no track to sit on.
     //   Tones are browser's `--surface` and `--border` so two controls still read as same
     //   thing.
-    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.086f, 0.106f, 0.133f, 0.82f));
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.086f, 0.106f, 0.133f, 0.88f));
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 1.0f, 1.0f, 0.06f));
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(1.0f, 1.0f, 1.0f, 0.12f));
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.545f, 0.588f, 0.639f, 1.0f));

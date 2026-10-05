@@ -120,18 +120,13 @@ export async function driveRings(page: Page): Promise<void> {
 
 /** Assert each experiment pill switches its suspect off, and back on.
  *
- *  Blur through one class on body, pixel ratio through canvas's own backing store, overlay
- *  through its display.
+ *  Pixel ratio through canvas's own backing store, overlay through its display.
  */
 async function driveExperiments(page: Page): Promise<void> {
   const pills = await page.evaluate(() => {
     const canvas = document.getElementById('gl') as HTMLCanvasElement;
     const width_full = canvas.width;
     const click = (id: string): void => document.getElementById(id)?.click();
-    click('toggle-blur');
-    const is_blur_off = document.body.classList.contains('without-blur');
-    click('toggle-blur');
-    const is_blur_back = !document.body.classList.contains('without-blur');
     click('toggle-full-ratio');
     const width_low = canvas.width;
     click('toggle-full-ratio');
@@ -141,19 +136,18 @@ async function driveExperiments(page: Page): Promise<void> {
     click('toggle-overlay');
     const is_overlay_back = document.getElementById('overlay')?.style.display === '';
     return {
-      is_blur_off, is_blur_back, width_full, width_low, width_back,
+      width_full, width_low, width_back,
       ratio: Math.min(window.devicePixelRatio || 1, 2.5), is_overlay_off, is_overlay_back,
     };
   });
   report(
     'each experiment pill switches its suspect off, and back on',
-    pills.is_blur_off && pills.is_blur_back && pills.is_overlay_off && pills.is_overlay_back &&
+    pills.is_overlay_off && pills.is_overlay_back &&
       pills.width_back === pills.width_full &&
       (pills.ratio === 1 ? pills.width_low === pills.width_full
         : pills.width_low < pills.width_full),
-    `blur ${pills.is_blur_off}/${pills.is_blur_back}, canvas ${pills.width_full} -> ` +
-      `${pills.width_low} -> ${pills.width_back} at ratio ${pills.ratio}, overlay ` +
-      `${pills.is_overlay_off}/${pills.is_overlay_back}`,
+    `canvas ${pills.width_full} -> ${pills.width_low} -> ${pills.width_back} at ratio ` +
+      `${pills.ratio}, overlay ${pills.is_overlay_off}/${pills.is_overlay_back}`,
   );
 }
 

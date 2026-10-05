@@ -185,7 +185,7 @@ and this file does not:
 | `demo`, `loaded`, `objects` | preset, culling, occlusion, a line through a point, loaded |
 | `message`, `style`, `type`, `canvas` | outcome fade, declared CSS, faces in roles, blank refused |
 | `host`, `shade` | save through the artifact host, every point shaded from world-up |
-| `blur` | every backdrop blur, what the drawer softens, and what its blur costs |
+| `surface` | no backdrop filter on the page, and the fill of every surface |
 | `veil` | the veil of a plane over every spot its pick finds it at |
 | `clock` | simulated time that correctness checks run on |
 
@@ -580,9 +580,9 @@ a sentinel and an `IntersectionObserver`.
 **A heading wears the pill that the controls of the chip row wear**, still or scrolling. It has the
 same radius, the same 1 px `--border`, and the box that `.object-row.selected` already uses.
 
-The fill is **opaque**, although the pills it borrows its shape from are `--surface` over a blur. A
+The fill is **opaque**, although the pills it borrows its shape from let the scene through. A
 heading asked to hide rows cannot be seen through. That fill is the ground of the drawer itself,
-arrived at as the drawer does. It is `color-mix(in srgb, rgb(22 27 34) 82%, var(--bg))`, and `gl.ts`
+arrived at as the drawer does. It is `color-mix(in srgb, rgb(22 27 34) 88%, var(--bg))`, and `gl.ts`
 writes `--bg` at runtime from the clear colour. A named tone drifts.
 
 Rejected: a shadow, which made pinning read as *floating*. Rejected: a rule under a section. The
@@ -621,35 +621,31 @@ the viewport is an estimate until it is scrolled to, which the scroll anchoring 
 absorbs. The spacers are `overflow-anchor: none`, so the anchor is always a row. A jump to an
 estimated offset, with nothing but a spacer in view, adjusts nothing.
 
-**The chrome over the scene is frosted, and the Architect ruled to keep it** (#453). The drawer
-takes `backdrop-filter: blur(16px)`, the brand and toggle pills `blur(10px)`, and the help button
-`blur(9px)`. The blur makes the chrome read as glass over a live view. It is work of the compositor
-over a canvas that changes each frame, so it costs most with the drawer open over the largest
-scene.
+**The chrome over the scene is partly transparent, with no blur, by instruction of the
+Architect.** The brand and toggle pills, the help button and the drawer each fill with
+`--surface`, which is `rgba(22, 27, 34, 0.88)`. Detail of the scene behind a surface then shows
+at 12% of its contrast. The headings and the search row of the drawer are opaque, and mix the
+same tone at the same weight over `--bg`. The toggle segment of the desktop takes the same tone
+and alpha.
 
-**At 5,038 objects with the drawer open, the blur adds one frame of the display.** Paced to the
-display, a frame takes 50.0 ms with the blur and 33.3 ms without it, in each of four rounds.
-Unpaced, under `--disable-gpu-vsync` and `--disable-frame-rate-limit`, the blur adds 8.3, 12.1,
-16.0 and 13.8 ms. With the drawer shut, the pills add 2.2 ms. Each figure is the median of 40
-frames each way, in Chromium with SwiftShader in the Claude Code cloud container, on 2026-10-04.
-Software rendering inflates a blur more than the rest, so these are upper bounds for hardware.
+Rejected: 0.82, the fill under the blur, because the Architect asked for a fill a tiny bit more
+opaque. Rejected: a larger step, for the same reason. Rejected: a backdrop blur. At 5,038 objects
+with the drawer open, it added one frame of the display. Paced to the display, a frame took
+50.0 ms with it and 33.3 ms without it, in each of four rounds. That was Chromium with
+SwiftShader in the Claude Code cloud container, on 2026-10-04.
 
-**A speed check holds that cost, and every other check runs without the blur.** `driveBlurCost`
-reads frames paced to the display, as a reader sees them. Its bound, `MILLISECONDS_BLUR_DRAWER`, is
-25 ms, which is 1.5 times the paced reading of 16.7 ms. The runner reads the same, 50.0 ms against
-33.3 ms, on `4c76f0f`. The harness turns the blur off through the page's own pill (`blur.setBlur`),
-so no other bound carries its cost. The pill check of `rings` runs with the blur on, which is the
-default of the page.
+Verified by driven check: `driveSurfacesFilled` finds no rule and no element with a backdrop
+filter, and each surface computes alpha 0.88. It reads each opaque band over white, where one
+percent of weight moves red by two levels. There each band must equal the fill of the drawer over
+white, within half a level. Verified by a break on purpose, 2026-10-05: a band at 87% fails it,
+and so does a blur on `.toggles`.
 
-**Without the blur, the page's checks run about 7% faster.** Here they take 278.0 and 277.5 s,
-against 286.9 and 308.5 s with the blur on, four checks fewer. The drive step of the runner takes
-619 s, against 656 and 661 s on the two heads before it. Each runner figure is one run, so the
-saving there is likely, and not a bound.
-
-Verified by driven check: every surface computes the radius it declares when the page opens, and
-the pill clears every one. The drawer softens the band behind it from a step of 20.76 luma levels
-to 0.72, read at the 99.9th percentile of steps between neighbours. The band leaves out the brand
-pill and the scale bar, which stand over the drawer and stay sharp.
+Verified by eye in Chrome for Testing 153 with SwiftShader, 2026-10-05. The pictures show the
+drawer over the largest demo and the opening scene, each at 0.82, 0.88 and 0.92, with no blur. At
+0.88 the lines of the demo show faintly through the drawer, and every row stays legible. Nothing
+stands behind the pills of the opening scene, so there 0.82 and 0.88 look the same. To take the
+pictures again, run `nim r tools/build.nim web`, and open `build/rga_visualiser.html` at 1200 by
+900 px. Then load the largest demo from the menu, and open the drawer.
 
 **A comment may not quote a closing block-comment delimiter.** A comment that does ends itself on
 the spot, and the prose after it parses as CSS. That was enough to swallow 141 of the 150 rules of
@@ -2249,7 +2245,7 @@ them all. `fade` and `addRibbon` keep their constructors, because their copies r
 a moving frame at 5,038 objects.
 
 Measured on 2026-10-04 on one delegate, under the lock of the gate, by a harness that is not kept.
-It drives the page at 1200 by 900 px under SwiftShader, with antialias, and with the blur off. It
+It drives the page at 1200 by 900 px under SwiftShader, with antialias. It
 times 6 s of frames for each scene, then profiles 6 s more through the DevTools protocol of
 Chromium. An orbit turns the camera 0.004 radians in each frame. Each pair is `c4e7e1fd`, then
 this design, run in turn, in ms of the frame callback:

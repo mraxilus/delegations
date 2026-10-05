@@ -11,9 +11,9 @@
 // **Experiments: one suspect off at time, its cost read off rows.** Browser's main.
 //   thread spends most of frame on device after callback returns (`style + layout +
 //   paint` at 10.7 ms median of 16.7 on still scene), and page cannot tell apart from
-//   inside what it spends it on: every backdrop blur over canvas that changes each
-//   frame, canvas at full pixel ratio with antialiasing, or SVG overlay's paint. Each
-//   pill switches one off at runtime; reader flips one, watches row, and reports.
+//   inside what it spends it on: canvas at full pixel ratio with antialiasing, or SVG
+//   overlay's paint. Each pill switches one off at runtime; reader flips one, watches row,
+//   and reports.
 //   None is saved: these are instruments, not settings.
 let cap_ratio_pixel = 2.5;
 function ratioPixel() {
@@ -27,9 +27,6 @@ function wireExperiment(id: string, apply: (is_on: boolean) => void) {
     apply(is_on);
   });
 }
-wireExperiment('toggle-blur', (is_on) => {
-  document.body.classList.toggle('without-blur', !is_on);
-});
 wireExperiment('toggle-full-ratio', (is_on) => {
   cap_ratio_pixel = is_on ? 2.5 : 1;
   resize();
