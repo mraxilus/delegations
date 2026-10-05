@@ -57,9 +57,11 @@ one issue open until the pin follows. To follow head:
 
 1. Bump the commit in `pga_benchmark.nimble` and `atlas.lock`, and restore with
    `nim r koch fetch-deps`.
-2. Re-take every measurement: `baseline`, then `bench`, then `gaps`.
-3. Re-quote each change, proposal and note that `drive` names, then run `evaluate all`.
-4. Run `pages`, publish each page that `drive` names, and record each one with
+2. Re-take the static counts with `baseline`, and re-quote each change, proposal and note that
+   `drive` names.
+3. Run `carry`. It moves each timed record whose builds emit the same C to the pin, and names
+   each other one. Re-take those with `bench`, `sweep` or `evaluate <name>`.
+4. Run `gaps` and `pages`, publish each page that `drive` names, and record each one with
    `published <name> <url>`.
 
 ## Build and test
@@ -76,6 +78,7 @@ nim r tools/build.nim guard         # compare the last inspection against the ba
 nim r tools/build.nim gaps          # regenerate gaps.md and the docket from baseline/
 nim r tools/build.nim evaluate all  # try every change and proposal at pin, into evaluations/
 nim r tools/build.nim evaluate all --thorough  # the same, at rga3d and cga4d as well
+nim r tools/build.nim carry         # move timed records to the pin where their C is the same
 nim r tools/build.nim pages         # build every page into build/<name>.html
 nim r tools/build.nim sweep         # timings at two to six dimensions, into baseline/sweep.json
 ```
@@ -120,7 +123,8 @@ tests/                             suites, the testament stubs that run them, an
 
 ## Status
 
-Measured on the pinned compiler and on library head `d9be8ae`, which is the pin. The library
+Measured on the pinned compiler and on library head `edb0c9d`, which is the pin. Times were
+taken at `d9be8ae`, whose builds emit the same C. The library
 stands above both lower bounds; `gaps.md` counts the gaps, and the docket shows each one.
 Unreviewed by a human. See `PROVENANCE.md` for the figures, and for what each subsystem was
 checked against.
