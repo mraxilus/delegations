@@ -406,6 +406,20 @@ const OPERATIONS_SLIDING = {
   ##   Suite holds set to exactly operations that commute; reached there through `{.all.}`.
 
 
+func slid(m: Multivector, offset: Direction): Multivector =
+  ## Slide `m` by `offset` through library's own motor, keeping only grades `m` occupies.
+  ##   Slide keeps every grade, so what lands on another is sandwich's rounding: about `ε`
+  ##   of distance slid, against `m`. Join metre across one unit out reads it as mixed.
+  let
+    motor = motorSliding(offset.toMultivector)
+    moved = m.carried(motor, ~∘motor)
+  var occupied: array[0..DIMENSIONS, bool]
+  for b in Basis:
+    if m[b] != 0.0: occupied[int(b.grade)] = true
+  for b in Basis:
+    if occupied[int(b.grade)]: result[b] = moved[b]
+
+
 func operated(operation: Operation; m, n: Multivector): Multivector =
   ## Apply catalogue's operation as library names it, about origin operands stand about.
   ##   Suite reaches it through `{.all.}`, as reference `applyOperation` is held to.
@@ -476,17 +490,6 @@ func applyOperation*(operation: Operation; m, n: Multivector): Multivector =
         let anchor = positionAnchor(operand)
         if anchor.isSome: return anchor
 
-  func slid(m, motor, motor_reversed: Multivector): Multivector =
-    ## Carry `m` through slide, keeping only grades `m` occupies.
-    ##   Slide keeps every grade, so what lands on another is sandwich's rounding: about `ε`
-    ##   of distance slid, against `m`. Join metre across one unit out reads it as mixed.
-    let moved = m.carried(motor, motor_reversed)
-    var occupied: array[0..DIMENSIONS, bool]
-    for b in Basis:
-      if m[b] != 0.0: occupied[int(b.grade)] = true
-    for b in Basis:
-      if occupied[int(b.grade)]: result[b] = moved[b]
-
   # Slide operands to origin chosen, or leave them about Sol.
   let origin =
     if operation in OPERATIONS_SLIDING: originLocal(m, n)
@@ -495,13 +498,10 @@ func applyOperation*(operation: Operation; m, n: Multivector): Multivector =
     (m_local, n_local) = (m, n)
     scale_origin = 1.0
   if origin.isSome:
-    let
-      point_origin = origin.get.toMultivector
-      slide = motorSliding(subtract(1.0.e4, point_origin))
-      slide_reversed = ~∘slide
-    m_local = slid(m, slide, slide_reversed)
-    n_local = slid(n, slide, slide_reversed)
-    scale_origin = point_origin.coefficientLargest
+    let toward = ORIGIN_WORLD - origin.get
+    m_local = slid(m, toward)
+    n_local = slid(n, toward)
+    scale_origin = origin.get.toMultivector.coefficientLargest
   result = operated(operation, m_local, n_local)
 
   # Answer zero where that is rounding of zero.
@@ -516,9 +516,7 @@ func applyOperation*(operation: Operation; m, n: Multivector): Multivector =
   if is_rounding: return Multivector()
 
   # Slide result back about Sol.
-  if origin.isSome:
-    let back = motorSliding(subtract(origin.get.toMultivector, 1.0.e4))
-    result = slid(result, back, ~∘back)
+  if origin.isSome: result = slid(result, origin.get - ORIGIN_WORLD)
 
 
 func creationAnchor*(operation: Operation; m, n, derived: Multivector): Option[Position] =
