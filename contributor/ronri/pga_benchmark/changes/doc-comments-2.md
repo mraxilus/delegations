@@ -21,13 +21,13 @@ export cayleys  # tables are compile-time values; reading one at runtime allocat
 
 ```nim
 when IS_RIGID:
-  func bulk*(m: Multivector): Multivector {.inline.} = ∙ m
+  func bulk*(m: Multivector): Multivector {.inline.} = ∙m
 ```
 
 ```nim
 when IS_RIGID:
   ## Same symbol carries two names by metric: bulk here, bulkRound under conformal.
-  func bulk*(m: Multivector): Multivector {.inline.} = ∙ m
+  func bulk*(m: Multivector): Multivector {.inline.} = ∙m
 ```
 
 ## Edit `pga/algebra.nim`
@@ -55,7 +55,7 @@ when IS_RIGID:
 ## Edit `pga/algebra.nim`
 
 ```nim
-#   Ideally Nim would have a feature to auto borrow everything, but prevent interop.
+#   Ideally Nim would have feature to auto borrow everything, but prevent interop.
 ```
 
 ```nim
@@ -66,7 +66,7 @@ when IS_RIGID:
 ## Edit `pga/algebra.nim`
 
 ```nim
-  ## Define bases for a `dimensions`-dimensional PGA.
+  ## Define bases for `dimensions`-dimensional PGA.
 ```
 
 ```nim
@@ -77,7 +77,8 @@ when IS_RIGID:
 ## Edit `pga/algebra.nim`
 
 ```nim
-    ## Populate missing algebras up to the `dimensions`-dimensional PGA.
+  proc generateUpTo(algebras: var Table[int, Algebra], dimensions: int) {.compileTime.} =
+    ## Populate missing algebras up to `dimensions`-dimensional PGA.
 ```
 
 ```nim
@@ -120,7 +121,7 @@ when IS_RIGID:
 ## Edit `pga/cayleys.nim`
 
 ```nim
-func constructMetric(dimensions: int; is_conformal: bool): Cayley1D {.compileTime.} =
+func constructMetric(dimensions: int, is_conformal: bool): Cayley1D {.compileTime.} =
 ```
 
 ```nim
@@ -142,7 +143,7 @@ func constructMetric(dimensions: int; is_conformal: bool): Cayley1D {.compileTim
 ## Edit `pga/cayleys.nim`
 
 ```nim
-): tuple[basis: BasisSigned; is_degenerate: bool] {.compileTime.} =
+): tuple[basis: BasisSigned, is_degenerate: bool] {.compileTime.} =
 ```
 
 ```nim
@@ -166,7 +167,7 @@ func constructMetric(dimensions: int; is_conformal: bool): Cayley1D {.compileTim
 ## Edit `pga/multivectors.nim`
 
 ```nim
-  Multivector* = object ## Define generalised multivector for n-dimensional PGA.
+  Multivector* = object  ## Define generalised multivector for n-dimensional PGA.
 ```
 
 ```nim
