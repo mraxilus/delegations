@@ -150,7 +150,7 @@ func constructMetric(dimensions: int, is_conformal: bool): Cayley1D {.compileTim
 ```nim
 ): tuple[basis: BasisSigned, is_degenerate: bool] {.compileTime.} =
   ## Perform exterior product of two bases, reducing to its standard basis form.
-  ##   Parity argument below is the proof; keep it with the code.
+  ##   Parity argument below is proof; keep it with code.
 ```
 
 ## Edit `pga/helpers.nim`

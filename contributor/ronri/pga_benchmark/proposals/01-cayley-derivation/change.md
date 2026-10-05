@@ -312,29 +312,27 @@ suite "Transwedge":
 
 import std/[bitops, sequtils, strformat]
 
-import ./[algebra {.all.}]
+import ./algebra {.all.}
 
 
 
 #[ Type Definitions ]#
 
-type ## Define type definitions dependent on `Basis` needed for macros.
-  BasisSigned* = object ## Define signed representation of basis.
+type  ## Define type definitions dependent on `Basis` needed for macros.
+  BasisSigned* = object  ## Define signed representation of basis.
     basis*: Basis
     is_negated*: bool = false
-  Cayley1D* = ## Define data structure for constructing unary algebra operations (map).
-    array[Basis, seq[BasisSigned]] # Empty cell is absence; several terms sum.
-  Cayley2D* = ## Define data structure for constructing binary algebra operations.
-    array[Basis, array[Basis, seq[BasisSigned]]] # Support conformal operators with `seq`.
+  Cayley1D* =  ## Define data structure for constructing unary algebra operations (map).
+    array[Basis, seq[BasisSigned]]  # Empty cell is absence; several terms sum.
+  Cayley2D* =  ## Define data structure for constructing binary algebra operations.
+    array[Basis, array[Basis, seq[BasisSigned]]]  # Support conformal operators with `seq`.
     # TODO: Avoid seq as heap allocated, perhaps array with count custom type.
 
-type ## Define type definitions for algebraic distinctions.
-  Chirality {.pure.} = enum Left, Right
-    ## Define distinction between PGA operation orientations.
-  Partiality {.pure.} = enum Bulk, Weight
-    ## Define distinction between PGA's disjoint parts.
+type  ## Define type definitions for algebraic distinctions.
+  Chirality {.pure.} = enum Left, Right  ## Define distinction between PGA operation orientations.
+  Partiality {.pure.} = enum Bulk, Weight  ## Define distinction between PGA's disjoint parts.
 
-type ## Define type defintions for containers of algebraic distinctions.
+type  ## Define type defintions for containers of algebraic distinctions.
   Chiral*[T] = object
     left*, right*: T
   Formal*[T] = object
@@ -362,13 +360,13 @@ const
     left: constructComplement(Chirality.Left),
     right: constructComplement(Chirality.Right),
   )
-  CAYLEYS_REVERSE* = block: # Antireverse conjugates reverse by complements.
+  CAYLEYS_REVERSE* = block:  # Antireverse conjugates reverse by complements.
     let reverse = constructReverse()
     Spatial[Cayley1D](base: reverse, anti: reverse.constructAnti(CAYLEYS_COMPLEMENT))
 
 const
   CAYLEY_METRIC* = constructMetric(DIMENSIONS, IS_CONFORMAL)
-  CAYLEYS_METRIC_EXOMORPHISM* = block: # 𝔾 conjugates 𝐆 by complements, i.e. 𝔾𝐦 = (𝐆𝐦̲)̅.
+  CAYLEYS_METRIC_EXOMORPHISM* = block:  # 𝔾 conjugates 𝐆 by complements, i.e. 𝔾𝐦 = (𝐆𝐦̲)̅.
     let metric_exomorphism = constructMetricExomorphism(CAYLEY_METRIC)
     Spatial[Cayley1D](
       base: metric_exomorphism,
@@ -376,54 +374,54 @@ const
     )
 
 const
-  CAYLEYS_PARTS* = Partial[Formal[Cayley1D]]( # Weight conjugates bulk under rigid metric only.
+  CAYLEYS_PARTS* = Partial[Formal[Cayley1D]](  # Weight conjugates bulk under rigid metric only.
     bulk: constructParts(Partiality.Bulk),
     weight: constructParts(Partiality.Weight),
   )
 
 const
-  CAYLEYS_DUAL* = block: # Right complement after exomorphism, i.e. 𝐦★ = (𝐆𝐦)̅; ☆ conjugates ★.
+  CAYLEYS_DUAL* = block:  # Right complement after exomorphism, i.e. 𝐦★ = (𝐆𝐦)̅; ☆ conjugates ★.
     let dual = CAYLEYS_COMPLEMENT.right.applyMap(CAYLEYS_METRIC_EXOMORPHISM.base)
     Spatial[Cayley1D](base: dual, anti: dual.constructAnti(CAYLEYS_COMPLEMENT))
 
 const
-  CAYLEYS_WEDGE* = block: # Antiwedge conjugates wedge by complements, i.e. 𝐦 ∨ 𝐧 = (𝐦̲ ∧ 𝐧̲)̅.
+  CAYLEYS_WEDGE* = block:  # Antiwedge conjugates wedge by complements, i.e. 𝐦 ∨ 𝐧 = (𝐦̲ ∧ 𝐧̲)̅.
     let wedge = constructProductExterior()
     Spatial[Cayley2D](base: wedge, anti: wedge.constructAnti(CAYLEYS_COMPLEMENT))
-  CAYLEYS_WEDGES_TRANS* = constructProductsTransitional( # Σ𝐜 (𝐜̱ ∨ 𝐚) ∧ (𝐛 ∨ 𝐜★), one per order.
+  CAYLEYS_WEDGES_TRANS* = constructProductsTransitional(  # Σ𝐜 (𝐜̱ ∨ 𝐚) ∧ (𝐛 ∨ 𝐜★), one per order.
     CAYLEYS_COMPLEMENT.left, CAYLEYS_DUAL.base, CAYLEYS_WEDGE
   )
-  CAYLEYS_WEDGE_DOT* = block: # Antiproduct conjugates geometric product by complements.
+  CAYLEYS_WEDGE_DOT* = block:  # Antiproduct conjugates geometric product by complements.
     let wedge_dot = constructProductGeometric(CAYLEYS_WEDGES_TRANS)
     Spatial[Cayley2D](base: wedge_dot, anti: wedge_dot.constructAnti(CAYLEYS_COMPLEMENT))
 
 const
   # Interior products feed one dual into right operand of wedge or antiwedge.
   #   Transwedge of order gr(𝐚) reduces to 𝐛 ∨ 𝐚★ as well; suite holds it, build takes map.
-  CAYLEYS_CONTRACT* = Partial[Cayley2D]( # 𝐦 ∨ 𝐧★ and 𝐦 ∨ 𝐧☆.
+  CAYLEYS_CONTRACT* = Partial[Cayley2D](  # 𝐦 ∨ 𝐧★ and 𝐦 ∨ 𝐧☆.
     bulk: CAYLEYS_WEDGE.anti.applyMap(CAYLEYS_DUAL.base, Chirality.Right),
     weight: CAYLEYS_WEDGE.anti.applyMap(CAYLEYS_DUAL.anti, Chirality.Right),
   )
-  CAYLEYS_EXPAND* = Partial[Cayley2D]( # 𝐦 ∧ 𝐧★ and 𝐦 ∧ 𝐧☆.
+  CAYLEYS_EXPAND* = Partial[Cayley2D](  # 𝐦 ∧ 𝐧★ and 𝐦 ∧ 𝐧☆.
     bulk: CAYLEYS_WEDGE.base.applyMap(CAYLEYS_DUAL.base, Chirality.Right),
     weight: CAYLEYS_WEDGE.base.applyMap(CAYLEYS_DUAL.anti, Chirality.Right),
   )
-  CAYLEYS_DOT* = block: # Dot is scalar part of bulk contraction; antidot conjugates it.
+  CAYLEYS_DOT* = block:  # Dot is scalar part of bulk contraction; antidot conjugates it.
     var dot = CAYLEYS_CONTRACT.bulk
     dot.filterGrades(products = @[Grade.low])
     Spatial[Cayley2D](base: dot, anti: dot.constructAnti(CAYLEYS_COMPLEMENT))
-  CAYLEY_ATTITUDE*: Cayley1D = # 𝐦 ∨ 𝐞̄ₙ.
+  CAYLEY_ATTITUDE*: Cayley1D =  # 𝐦 ∨ 𝐞̄ₙ.
     CAYLEYS_WEDGE.anti.applyConstant(Basis.horizon, Chirality.Right)
 
 when IS_CONFORMAL:
   const
-    CAYLEY_CARRIER*: Cayley1D = # 𝐦 ∧ 𝐞ₙ.
+    CAYLEY_CARRIER*: Cayley1D =  # 𝐦 ∧ 𝐞ₙ.
       CAYLEYS_WEDGE.base.applyConstant(Basis.infinity.toSigned, Chirality.Right)
-    CAYLEY_CARRIER_CO*: Cayley1D = # 𝐦☆ ∧ 𝐞ₙ, i.e. dual, then carrier.
+    CAYLEY_CARRIER_CO*: Cayley1D =  # 𝐦☆ ∧ 𝐞ₙ, i.e. dual, then carrier.
       CAYLEY_CARRIER.applyMap(CAYLEYS_DUAL.anti)
-    CAYLEY_CENTER*: Cayley2D = # 𝐦⊞ ∨ 𝐦, read with both operands 𝐦.
+    CAYLEY_CENTER*: Cayley2D =  # 𝐦⊞ ∨ 𝐦, read with both operands 𝐦.
       CAYLEYS_WEDGE.anti.applyMap(CAYLEY_CARRIER_CO, Chirality.Left)
-    CAYLEY_CONTAINER*: Cayley2D = # 𝐦 ∧ (𝐦⊟)☆, read with both operands 𝐦.
+    CAYLEY_CONTAINER*: Cayley2D =  # 𝐦 ∧ (𝐦⊟)☆, read with both operands 𝐦.
       CAYLEYS_WEDGE.base.applyMap(
         CAYLEYS_DUAL.anti.applyMap(CAYLEY_CARRIER),
         Chirality.Right,
@@ -431,14 +429,14 @@ when IS_CONFORMAL:
 
 when IS_RIGID:
   const
-    CAYLEY_SUPPORT*: Cayley2D = # 𝐦 ∨ (𝐞ₙ ∧ 𝐦☆), read with both operands 𝐦.
+    CAYLEY_SUPPORT*: Cayley2D =  # 𝐦 ∨ (𝐞ₙ ∧ 𝐦☆), read with both operands 𝐦.
       CAYLEYS_WEDGE.anti.applyMap(
         CAYLEYS_WEDGE.base
           .applyConstant(Basis.origin.toSigned, Chirality.Left)
           .applyMap(CAYLEYS_DUAL.anti),
         Chirality.Right,
       )
-    CAYLEY_SUPPORT_ANTI*: Cayley2D = # 𝐦 ∧ (𝐞̄ₙ ∨ 𝐦★), read with both operands 𝐦.
+    CAYLEY_SUPPORT_ANTI*: Cayley2D =  # 𝐦 ∧ (𝐞̄ₙ ∨ 𝐦★), read with both operands 𝐦.
       CAYLEYS_WEDGE.base.applyMap(
         CAYLEYS_WEDGE.anti
           .applyConstant(Basis.horizon, Chirality.Left)
@@ -462,7 +460,7 @@ func constructReverse(): Cayley1D {.compileTime, noinit.} =
     result[b] = @[b.reverse]
 
 
-func constructMetric(dimensions: int; is_conformal: bool): Cayley1D {.compileTime.} =
+func constructMetric(dimensions: int, is_conformal: bool): Cayley1D {.compileTime.} =
   ## Construct metric 𝖌 simplified as 1D cayley table.
   let 𝐞ₙ = Basis(dimensions)
   for b in Basis:
@@ -485,8 +483,9 @@ func constructMetricExomorphism(metric: Cayley1D): Cayley1D {.compileTime, noini
 
   for b in Basis:
     if b.grade < Grade(2): continue
-    var bases: seq[BasisSigned]
-    var is_degenerate = false
+    var
+      bases: seq[BasisSigned]
+      is_degenerate = false
 
     # Determine if any vector component of basis is degenerate.
     for d in b.toDigits:
@@ -501,7 +500,7 @@ func constructMetricExomorphism(metric: Cayley1D): Cayley1D {.compileTime, noini
     var product = multiplyExterior(bases[0], bases[1])
     assert not product.is_degenerate
     if len(bases) > 2:
-      for i in 2 ..< len(bases):
+      for i in 2..<len(bases):
         product = multiplyExterior(product.basis, bases[i])
 
     result[b] = @[product.basis]
@@ -551,7 +550,7 @@ func constructProductGeometric(wedges_trans: array[Order, Cayley2D]): Cayley2D {
   for order in Order:
     let
       k = int(order)
-      is_negated = (k*(k-1) div 2 and 1) == 1
+      is_negated = (k * (k - 1) div 2 and 1) == 1
     result.merge(wedges_trans[order], as_negated = is_negated)
 
 
@@ -607,14 +606,14 @@ func constructProductTransitional(
             product_center.is_negated xor
             product_right.is_negated
           )
-        result[a][b].add(BasisSigned(basis: product_center.basis, is_negated: is_negated))
+        result[a][b].add BasisSigned(basis: product_center.basis, is_negated: is_negated)
 
 
 
 #[ Map Operations ]#
 
 func applyConstant(
-  cayley: Cayley2D; basis: BasisSigned; chirality: Chirality
+  cayley: Cayley2D, basis: BasisSigned, chirality: Chirality
 ): Cayley1D {.compileTime.} =
   ## Apply constant unit basis to left or right operand, collapsing 2D cayley into 1D map.
   ##   I.e. cayley(𝐞, 𝐦) for left and cayley(𝐦, 𝐞) for right, with sign of 𝐞 carried.
@@ -622,21 +621,19 @@ func applyConstant(
   if basis.is_negated: result.negate()
 
 
-func applyMap(cayley: Cayley1D; map: Cayley1D): Cayley1D {.compileTime.} =
+func applyMap(cayley: Cayley1D, map: Cayley1D): Cayley1D {.compileTime.} =
   ## Apply map to operand of 1D cayley, i.e. cayley(map(𝐦)).
   ##   Map runs first, cayley second; several terms distribute and opposing terms cancel.
   for b in Basis:
     for b_map in map[b]:
       for b_to in cayley[b_map.basis]:
-        result[b].mergeTerm(BasisSigned(
+        result[b].mergeTerm BasisSigned(
           basis: b_to.basis,
           is_negated: b_map.is_negated xor b_to.is_negated,
-        ))
+        )
 
 
-func applyMap(
-  cayley: Cayley2D; map: Cayley1D; chirality: Chirality
-): Cayley2D {.compileTime.} =
+func applyMap(cayley: Cayley2D, map: Cayley1D, chirality: Chirality): Cayley2D {.compileTime.} =
   ## Apply map to left or right operand of 2D cayley.
   ##   I.e. cayley(map(𝐦), 𝐧) for left and cayley(𝐦, map(𝐧)) for right.
   ##   Product with map in one operand emits as one table, so no intermediate multivector.
@@ -650,26 +647,26 @@ func applyMap(
           of Chirality.Left: cayley[b_map.basis][b]
           of Chirality.Right: cayley[a][b_map.basis]
         for term in product:
-          result[a][b].mergeTerm(BasisSigned(
+          result[a][b].mergeTerm BasisSigned(
             basis: term.basis,
             is_negated: b_map.is_negated xor term.is_negated,
-          ))
+          )
 
 
-func constructAnti(map: Cayley1D; complements: Chiral[Cayley1D]): Cayley1D {.compileTime.} =
+func constructAnti(map: Cayley1D, complements: Chiral[Cayley1D]): Cayley1D {.compileTime.} =
   ## Construct anti-variant of map by conjugating with complements, i.e. (map 𝐦̲)̅.
   ##   Right complement into operand, left complement out of product.
   for b in Basis:
     let b_from = complements.right[b].toSigned
     for b_map in map[b_from.basis]:
       let b_to = complements.left[b_map.basis].toSigned
-      result[b].mergeTerm(BasisSigned(
+      result[b].mergeTerm BasisSigned(
         basis: b_to.basis,
         is_negated: b_from.is_negated xor b_map.is_negated xor b_to.is_negated,
-      ))
+      )
 
 
-func constructAnti(cayley: Cayley2D; complements: Chiral[Cayley1D]): Cayley2D {.compileTime.} =
+func constructAnti(cayley: Cayley2D, complements: Chiral[Cayley1D]): Cayley2D {.compileTime.} =
   ## Construct anti-variant of product by conjugating with complements, i.e. (𝐦̲ ∘ 𝐧̲)̅.
   ##   Right complement into each operand, left complement out of product.
   for a in Basis:
@@ -677,18 +674,18 @@ func constructAnti(cayley: Cayley2D; complements: Chiral[Cayley1D]): Cayley2D {.
       let (a_from, b_from) = (complements.right[a].toSigned, complements.right[b].toSigned)
       for term in cayley[a_from.basis][b_from.basis]:
         let b_to = complements.left[term.basis].toSigned
-        result[a][b].mergeTerm(BasisSigned(
+        result[a][b].mergeTerm BasisSigned(
           basis: b_to.basis,
           is_negated: (
             a_from.is_negated xor b_from.is_negated xor term.is_negated xor b_to.is_negated
           ),
-        ))
+        )
 
 
 
 #[ Basis Transformations ]#
 
-func complement(b: Basis; chirality: Chirality): BasisSigned {.compileTime.} =
+func complement(b: Basis, chirality: Chirality): BasisSigned {.compileTime.} =
   ## Get complement of basis (right by default).
   let
     mask = Basis.scalarAnti.toFlags
@@ -711,7 +708,7 @@ func reverse(b: Basis): BasisSigned {.compileTime.} =
 
 func multiplyExterior(
   a, b: BasisSigned
-): tuple[basis: BasisSigned; is_degenerate: bool] {.compileTime.} =
+): tuple[basis: BasisSigned, is_degenerate: bool] {.compileTime.} =
   ## Perform exterior product of two bases, reducing to its standard basis form.
   ##   If duplicate 1-vectors are present, `is_degenerate` returns true.
   ##   Uses bit operations instead of inverting vectors anti-commutively, remaining equivalent.
@@ -752,7 +749,7 @@ func toSigned(product: seq[BasisSigned]): BasisSigned {.compileTime.} =
 
 #[ Cell Operations ]#
 
-func mergeTerm(cell: var seq[BasisSigned]; term: BasisSigned; as_negated = false) {.compileTime.} =
+func mergeTerm(cell: var seq[BasisSigned], term: BasisSigned, as_negated = false) {.compileTime.} =
   ## Merge term into cell, cancelling opposing term when found, else adding term.
   ##   Cancels matching where `as_negated = true`.
   let
@@ -762,10 +759,10 @@ func mergeTerm(cell: var seq[BasisSigned]; term: BasisSigned; as_negated = false
   if position != -1:
     cell.delete(position)
     return
-  cell.add(BasisSigned(basis: term.basis, is_negated: term.is_negated xor as_negated))
+  cell.add BasisSigned(basis: term.basis, is_negated: term.is_negated xor as_negated)
 
 
-func merge(destination: var Cayley2D; source: Cayley2D; as_negated = false) {.compileTime.} =
+func merge(destination: var Cayley2D, source: Cayley2D, as_negated = false) {.compileTime.} =
   ## Merge two 2D cayley tables in place, simplifying/cancelling opposing terms.
   for bm in Basis:
     for bn in Basis:
@@ -780,9 +777,7 @@ func negate(cayley: var Cayley1D) {.compileTime.} =
       term.is_negated = not term.is_negated
 
 
-func slice(
-  cayley: Cayley2D; operand: Basis; chirality: Chirality
-): Cayley1D {.compileTime.} =
+func slice(cayley: Cayley2D, operand: Basis, chirality: Chirality): Cayley1D {.compileTime.} =
   ## Extract slice of 2D cayley at constant operand as 1D map.
   for b in Basis:
     result[b] = case chirality
@@ -791,18 +786,18 @@ func slice(
 
 
 func filterGrades(
-  cayley: var Cayley2D;
-  operands_m: seq[Grade] = default(seq[Grade]);
-  operands_n: seq[Grade] = default(seq[Grade]);
-  products: seq[Grade] = default(seq[Grade]);
-  as_exclusions = false;
+  cayley: var Cayley2D,
+  operands_m = default(seq[Grade]),
+  operands_n = default(seq[Grade]),
+  products = default(seq[Grade]),
+  as_exclusions = false,
 ) {.compileTime.} =
   ## Filter out specific operands/products from 2D cayley table by grades.
   ##   Empty selection keeps all; `as_exclusions` inverts selection.
   for bm in Basis:
     for bn in Basis:
-      if operands_m.len != 0 and (bm.grade in operands_m) == as_exclusions or
-          operands_n.len != 0 and (bn.grade in operands_n) == as_exclusions:
+      if (operands_m.len != 0 and (bm.grade in operands_m) == as_exclusions) or
+          (operands_n.len != 0 and (bn.grade in operands_n) == as_exclusions):
         cayley[bm][bn] = @[]
         continue
       if products.len != 0:
@@ -810,7 +805,7 @@ func filterGrades(
 
 
 func filterFactors(
-  cayley: var Cayley1D; factors: seq[Basis]; as_exclusions = false
+  cayley: var Cayley1D, factors: seq[Basis], as_exclusions = false
 ) {.compileTime.} =
   ## Filter out specific operands/products from 1D cayley table.
   for f in factors:
@@ -867,16 +862,18 @@ func isNegatedFromOrderLexicographic(b: Basis): bool {.compileTime.} =
 func isNegatedByJoinLexicographic(a, b: BasisFlags): bool {.compileTime.} =
   ## Determine if joining two lexicographically ordered bases negates result.
   let a_flags = uint(a)
-  var b_flags_remaining = uint(b)
-  var swaps = 0
+  var
+    b_flags_remaining = uint(b)
+    swaps = 0
 
-  # Count a flags greater than each b flag (i.e. requires swap).
+  # Count `a` flags greater than each `b` flag (i.e. requires swap).
   while b_flags_remaining != 0:
-    let offset_b_flags_min = countTrailingZeroBits(b_flags_remaining)
-    let count_flags_where_a_greater = countSetBits(a_flags shr (offset_b_flags_min + 1))
+    let
+      offset_b_flags_min = countTrailingZeroBits(b_flags_remaining)
+      count_flags_where_a_greater = countSetBits(a_flags shr (offset_b_flags_min + 1))
     swaps += count_flags_where_a_greater
 
-    # Clear b flags already accounted for.
+    # Clear `b` flags already accounted for.
     b_flags_remaining = b_flags_remaining and (b_flags_remaining - 1)
 
   # Determine if parity (negation) bit remains set.

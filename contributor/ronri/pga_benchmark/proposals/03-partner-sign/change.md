@@ -8,7 +8,7 @@ generated tables, read in a chain, and no grade scan.
 ## Edit `pga/cayleys.nim`
 
 ```nim
-    CAYLEY_CONTAINER*: Cayley2D = # 𝐦 ∧ (𝐦⊟)☆, read with both operands 𝐦.
+    CAYLEY_CONTAINER*: Cayley2D =  # 𝐦 ∧ (𝐦⊟)☆, read with both operands 𝐦.
       CAYLEYS_WEDGE.base.applyMap(
         CAYLEYS_DUAL.anti.applyMap(CAYLEY_CARRIER),
         Chirality.Right,
@@ -16,12 +16,12 @@ generated tables, read in a chain, and no grade scan.
 ```
 
 ```nim
-    CAYLEY_CONTAINER*: Cayley2D = # 𝐦 ∧ (𝐦⊟)☆, read with both operands 𝐦.
+    CAYLEY_CONTAINER*: Cayley2D =  # 𝐦 ∧ (𝐦⊟)☆, read with both operands 𝐦.
       CAYLEYS_WEDGE.base.applyMap(
         CAYLEYS_DUAL.anti.applyMap(CAYLEY_CARRIER),
         Chirality.Right,
       )
-    CAYLEY_PARTNER_CONTAINER*: Cayley2D = block: # (-1)^(gr 𝐦 + 1) (𝐦☆)⊡, read with both 𝐦.
+    CAYLEY_PARTNER_CONTAINER*: Cayley2D = block:  # (-1)^(gr 𝐦 + 1) (𝐦☆)⊡, read with both 𝐦.
       # Sign rides left read alone, by grade of its term. Container is quadratic, so sign on
       #   both reads would square away; on one, it is exact for single-grade operand.
       var sign: Cayley1D
@@ -29,7 +29,7 @@ generated tables, read in a chain, and no grade scan.
       CAYLEY_CONTAINER
         .applyMap(CAYLEYS_DUAL.anti.applyMap(sign), Chirality.Left)
         .applyMap(CAYLEYS_DUAL.anti, Chirality.Right)
-    CAYLEY_PARTNER_JOIN*: Cayley2D = # 𝐭 ∨ 𝐦⊟, i.e. antiwedge against carrier of second.
+    CAYLEY_PARTNER_JOIN*: Cayley2D =  # 𝐭 ∨ 𝐦⊟, i.e. antiwedge against carrier of second.
       CAYLEYS_WEDGE.anti.applyMap(CAYLEY_CARRIER, Chirality.Right)
 ```
 
