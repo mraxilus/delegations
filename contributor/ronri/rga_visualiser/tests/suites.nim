@@ -24,8 +24,7 @@
 {.experimental: "strictFuncs".}
 {.warning[UnusedImport]: off.}  # suite modules run for effect and export nothing
 
-when compileOption("profiler"):
-  import std/nimprof
+when compileOption("profiler"): import std/nimprof
 
 import ./suites/[
   test_arena_swap,

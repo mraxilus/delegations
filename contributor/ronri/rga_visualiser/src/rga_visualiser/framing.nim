@@ -60,11 +60,11 @@ const
     ##   by least turn that reaches this; see `stanceLifted`.
 
 
-type PointerPick* = object ## Define pick made by pointer, awaiting camera's aim.
+type PointerPick* = object  ## Define pick made by pointer, awaiting camera's aim.
   ## Front-end records it beside selection change; `offerAim` consumes it next frame.
   ## What pointer picked is centred as camera comes in; see `stanceApproaching`.
   ##   Where pointer stood is not held: aim reads object's own anchor, not clicked pixel.
-  handle*: int ## Object clicked or tapped.
+  handle*: int  ## Object clicked or tapped.
 
 
 
@@ -97,7 +97,7 @@ iterator watched*(
         if scene.isAlive(handle):
           yield (scene.geometryOf(handle), scene.anchorOverrideAt(handle))
   else:
-    for position in 0 ..< picked.len:
+    for position in 0..<picked.len:
       let handle = picked.at(position)
       if scene.isAlive(handle):
         yield (scene.geometryOf(handle), scene.anchorOverrideAt(handle))
@@ -122,13 +122,13 @@ func reachOf*(placed: openArray[Placement], scene: Scene): float =
   ##   For `camera.distanceFar`, from placements caller already holds; browser path.
   ##   Sibling of `reachOf(scene)`, which places for itself.
   result = 0.0
-  for handle in 0 ..< scene.bound:
+  for handle in 0..<scene.bound:
     if not scene.isAlive(handle) or not scene.isVisible(handle): continue
     result = max(result, reachOfPlacement(placed[handle], scene.radiusAt(handle)))
 
 
 func reachNearOf*(
-  placed: openArray[Placement], scene: Scene; eye: Position, forward: Direction
+  placed: openArray[Placement], scene: Scene, eye: Position, forward: Direction
 ): float =
   ## Measure how near nearest drawn object stands ahead of eye, along sight.
   ##   For `Camera.reach_near`, from placements caller already holds.
@@ -142,7 +142,7 @@ func reachNearOf*(
   ##   anywhere.
   ##   Zero where nothing is drawn ahead, which hands scale back to separation.
   result = 0.0
-  for handle in 0 ..< scene.bound:
+  for handle in 0..<scene.bound:
     if not scene.isAlive(handle) or not scene.isVisible(handle): continue
     let place = placed[handle]
     if place.kind notin {Case.PointAt, Case.LineThrough, Case.PlaneOn}: continue
@@ -175,8 +175,7 @@ func aimFor*(
 
 
 func isShownAll*(
-  scene: Scene; picked: Selection; staged: Option[Preview];
-  placement: Camera; width, height: int
+  scene: Scene; picked: Selection; staged: Option[Preview]; placement: Camera; width, height: int
 ): bool =
   ## Report whether every watched object is in view at once, each by own criterion.
   ##   True of nothing at all: camera asked to show no objects shows all of them.
@@ -194,11 +193,9 @@ func isFramed*(aim: CameraAim; camera: Camera; width, height: int): bool =
   ##   True where `aim` names nothing finite: horizon objects are bound by their own rule,
   ##   and camera asked to hold no finite object holds them all.
   if aim.sphere.isNone: return true
-  let reach = distanceFitting(
-    aim.sphere.get.radius, camera, width, height, INSET_POINT_SHOWN
-  )
-  distanceBetween(toMultivector(camera.eye), toMultivector(aim.sphere.get.centre)) >=
-    reach*(1.0 - SLACK_FRAMED)
+  let reach = distanceFitting(aim.sphere.get.radius, camera, width, height, INSET_POINT_SHOWN)
+  distanceBetween(camera.eye.toMultivector, aim.sphere.get.centre.toMultivector) >=
+      reach*(1.0 - SLACK_FRAMED)
 
 
 func headingFacing*(aim: CameraAim): Option[Direction] =
@@ -223,15 +220,15 @@ func isBounded*(aim: CameraAim; camera: Camera; width, height: int): bool =
   ##   at every orientation.
   if aim.sphere.isSome: return true
   let
-    sight = toMultivector(camera.frame.forward)
+    sight = camera.frame.forward.toMultivector
     half = halfAngleCentred(camera, width, height, INSET_POINT_SHOWN)
   # Star has to be on screen: sight within box's half-angle of it. Two freedoms bound.
   #   Unit directions both, so inner product reads cosine of angle between them.
   if aim.heading.isSome:
-    return innerOf(sight, toMultivector(aim.heading.get)) >= cos(half) - SLACK_FRAMED
+    return innerOf(sight, aim.heading.get.toMultivector) >= cos(half) - SLACK_FRAMED
   if aim.normal_crossing.isNone: return true
   # Circle has to cross screen: sight within that half-angle of circle's own plane. One.
-  abs(innerOf(sight, toMultivector(aim.normal_crossing.get))) <= sin(half) + SLACK_FRAMED
+  abs(innerOf(sight, aim.normal_crossing.get.toMultivector)) <= sin(half) + SLACK_FRAMED
 
 
 func holdHorizon*(camera: var Camera; aim: CameraAim; width, height: int) =
@@ -256,20 +253,20 @@ func holdHorizon*(camera: var Camera; aim: CameraAim; width, height: int) =
   #   so camera's own across stands in: sight straight down onto ecliptic, its circle's
   #   normal, has whole bound to turn through, and nothing clamps it off pole.
   let
-    (sight, demanded) = (toMultivector(forward), toMultivector(toward))
+    (sight, demanded) = (forward.toMultivector, toward.toMultivector)
     pencil = sight ∧ demanded
     axis = directionNormalHorizon(pencil).get(camera.frame.axis_right)
     cosine = innerOf(sight, demanded)
   # Angle off inner product and pencil's bulk norm, which is its sine: `arccos` alone
   #   reads 2e-8 radians off parallel pair, twenty times `SLACK_FRAMED`.
   let
-    angle_now = arctan2(( |∙ pencil)[Basis.scalar], cosine)
+    angle_now = arctan2((|∙pencil)[Basis.scalar], cosine)
     angle_held =
       if aim.heading.isSome: half
       # Circle's plane is what sight must come near, so target is quarter turn off normal,
       #   on whichever side sight already stands.
       else: (
-        if cosine >= 0.0: 0.5*PI - half else: 0.5*PI + half
+        if cosine >= 0.0: 0.5 * PI - half else: 0.5 * PI + half
       )
   # Positive turn about sight crossed with what is demanded carries sight toward it, so
   #   overshoot is what is given back.
@@ -291,15 +288,13 @@ func holdFramed*(camera: var Camera; aim: CameraAim; width, height: int) =
   ##   Nothing finite named means no bound; horizon objects are bound by their own rule.
   if aim.sphere.isNone: return
   let
-    reach = distanceFitting(
-      aim.sphere.get.radius, camera, width, height, INSET_POINT_SHOWN
-    )
+    reach = distanceFitting(aim.sphere.get.radius, camera, width, height, INSET_POINT_SHOWN)
     centre = aim.sphere.get.centre
-  if distanceBetween(toMultivector(camera.eye), toMultivector(centre)) >=
+  if distanceBetween(camera.eye.toMultivector, centre.toMultivector) >=
       reach*(1.0 - SLACK_FRAMED):
     return
   let back = stepOutTo(camera.eye, centre, -camera.frame.forward, reach)
-  camera.slideBy(wedge(back, toMultivector(-camera.frame.forward)))
+  camera.slideBy wedge(back, toMultivector(-camera.frame.forward))
   let
     middle = if aim.centroid.isSome: aim.centroid.get else: centre
     (eye, frame) = camera.sight
@@ -337,17 +332,15 @@ func stanceFor*(aim: CameraAim; camera: Camera; width, height: int): CameraStanc
     # Level stance facing that way names that turn, about pivot and at reader's separation:
     #   direction alone names no roll, and least turn off steep sight leaves view rolled.
     #   Eye and pivot name it, so no pole collapses.
-    let length = sqrt(innerOf(toMultivector(facing.get), toMultivector(facing.get)))
-    return stanceFacing(pointAlong(pivot, facing.get, -camera.distance/length), pivot)
+    let length = sqrt(innerOf(facing.get.toMultivector, facing.get.toMultivector))
+    return stanceFacing(pointAlong(pivot, facing.get, -camera.distance / length), pivot)
   # Pull eye back along its own sight, by least step carrying it out to fitting reach.
   #   Sphere's centre is not pivot, so separation is not that reach; quadratic is what
   #   accounts for offset between them.
   let
     placed = camera.placed(settled)
     axes = placed.frame
-    reach = distanceFitting(
-      aim.sphere.get.radius, placed, width, height, INSET_POINT_SHOWN
-    )
+    reach = distanceFitting(aim.sphere.get.radius, placed, width, height, INSET_POINT_SHOWN)
     back = stepOutTo(placed.eye, aim.sphere.get.centre, -axes.forward, reach)
   if back <= 0.0: return settled
   camera.stanceDollied(settled, settled.distance + back)
@@ -379,25 +372,25 @@ func stanceApproaching*(
   ##   nobody asked for; frame rule turns nothing and handles it by its own bound.
   let
     (eye, frame) = camera.sight
-    reach_now = distanceBetween(toMultivector(centre), toMultivector(eye))
+    reach_now = distanceBetween(centre.toMultivector, eye.toMultivector)
   if depthAlong(eye, frame.forward, centre) <= 1.0e-6: return
   var depth_end = min(reach_now, camera.distance)
   case shaped
   of Kind.Point:
     let is_dot =
-      radius < 0.5*float(DIAMETER_POINT_LEAST)*worldPerPixelAt(centre, scale.scale)
+      radius < 0.5 * float(DIAMETER_POINT_LEAST) * worldPerPixelAt(centre, scale.scale)
     if is_dot:
       depth_end = min(
-        reach_now, depthSpanning(2.0*radius, FRACTION_HEIGHT_APPROACH_POINT, camera)
+        reach_now, depthSpanning(2.0 * radius, FRACTION_HEIGHT_APPROACH_POINT, camera)
       )
   of Kind.Plane:
-    depth_end = depthSpanning(2.0*EXTENT_PLANE_F, FRACTION_HEIGHT_APPROACH_PLANE, camera)
+    depth_end = depthSpanning(2.0 * EXTENT_PLANE_F, FRACTION_HEIGHT_APPROACH_PLANE, camera)
     if depth_end <= 1.0e-6: return
   of Kind.Line: discard
   some(camera.stanceDollied(camera.stanceRepivoted(centre), distanceHeld(depth_end)))
 
 
-func stanceLifted*(stance: CameraStance; camera: Camera; normal: Direction): CameraStance =
+func stanceLifted*(stance: CameraStance, camera: Camera, normal: Direction): CameraStance =
   ## Turn `stance` about its pivot until sight stands `ANGLE_PLANE_LEAST` off plane of unit
   ## `normal`, by least turn; return it unchanged where sight already stands that far off.
   ##   Plane picked alone from level view draws as sliver, and centring sliver shows nothing.
@@ -411,22 +404,20 @@ func stanceLifted*(stance: CameraStance; camera: Camera; normal: Direction): Cam
   ##     as `stanceFor` faces star: least turn off steep sight leaves view rolled.
   let
     placed = camera.placed(stance)
-    (point_sight, point_normal) = (toMultivector(placed.frame.forward), toMultivector(normal))
+    (point_sight, point_normal) = (placed.frame.forward.toMultivector, normal.toMultivector)
     cosine = innerOf(point_sight, point_normal)
   if abs(cosine) >= sin(ANGLE_PLANE_LEAST) - SLACK_FRAMED: return stance
-  let level = direction(
-    (1.0.e4 ∧☆ (1.0.e4 ∧ point_normal)) ∨ (1.0.e4 ∧ point_sight ∧ point_normal)
-  )
+  let level = direction((1.0.e4 ∧☆ (1.0.e4 ∧ point_normal)) ∨ (1.0.e4 ∧ point_sight ∧ point_normal))
   if level.isNone: return stance
   let
     along =
-      if innerOf(toMultivector(level.get), point_sight) < 0.0: -level.get else: level.get
+      if innerOf(level.get.toMultivector, point_sight) < 0.0: -level.get else: level.get
     is_above =
       if abs(cosine) > SLACK_FRAMED: cosine < 0.0
-      else: innerOf(point_normal, toMultivector(UP_WORLD)) >= 0.0
+      else: innerOf(point_normal, UP_WORLD.toMultivector) >= 0.0
     lean = if is_above: -sin(ANGLE_PLANE_LEAST) else: sin(ANGLE_PLANE_LEAST)
     lifted = directionHorizon(add(
-      wedge(cos(ANGLE_PLANE_LEAST), toMultivector(along)), wedge(lean, point_normal)
+      wedge(cos(ANGLE_PLANE_LEAST), along.toMultivector), wedge(lean, point_normal)
     ))
   if lifted.isNone: return stance
   stanceFacing(pointAlong(placed.pivot, lifted.get, -stance.distance), placed.pivot)
@@ -455,13 +446,20 @@ func holdFilled*(
     depth = depthAlong(eye, frame.forward, centre.get)
     least = depthFilling(scene.radiusAt(handle), scale, width, height)
   if depth <= 0.0 or depth >= least: return
-  camera.dolly((camera.distance + least - depth)/camera.distance)
+  camera.dolly((camera.distance + least - depth) / camera.distance)
 
 
 func offerAim*(
-  tween: var CameraTween; camera: var Camera; scene: Scene; picked: Selection;
-  staged: Option[Preview]; scale: DrawExtent; width, height: int; now, duration: float;
-  pointer: var Option[PointerPick]; is_moving_camera = false
+  tween: var CameraTween;
+  camera: var Camera;
+  scene: Scene;
+  picked: Selection;
+  staged: Option[Preview];
+  scale: DrawExtent;
+  width, height: int;
+  now, duration: float;
+  pointer: var Option[PointerPick];
+  is_moving_camera = false;
 ) =
   ## Offer camera whatever is being worked on to look at.
   ##   One call both front-ends and storyboard make, once per frame.
@@ -503,7 +501,7 @@ func offerAim*(
   #   Still camera eases back in instead, which is what window resized and selection grown
   #   both get, through same standing offer.
   let is_framed = aim.get.isFramed(camera, width, height) and
-    aim.get.isBounded(camera, width, height)
+      aim.get.isBounded(camera, width, height)
   if not is_framed and is_moving_camera:
     camera.holdFramed(aim.get, width, height)
     camera.holdHorizon(aim.get, width, height)
@@ -535,14 +533,17 @@ func offerAim*(
   # Frame broken under arrived ease re-arms it: goal held is no answer while rule fails.
   #   Ease still running is left to land, or re-arming each frame restarts it forever.
   tween.aimAt(
-    camera, aim.get, destination.get, now, duration,
+    camera,
+    aim.get,
+    destination.get,
+    now,
+    duration,
     is_renewed = pick.isSome or (not is_framed and tween.is_arrived),
   )
 
 
 func offerAimAt*(
-  tween: var CameraTween; camera: Camera; m: Multivector;
-  width, height: int; now, duration: float
+  tween: var CameraTween; camera: Camera; m: Multivector; width, height: int; now, duration: float
 ) =
   ## Offer camera one object, outside any scene.
   ##   For storyboard, whose captures aim at step's derived multivector before selection
@@ -557,8 +558,17 @@ func offerAimAt*(
     pointer = none(PointerPick)
     held = camera
   offerAim(
-    tween, held, alone, Selection(), some(previewStaging(m, RADIUS_OBJECT_DEFAULT)),
-    camera.drawExtentFor(height, 0.0), width, height, now, duration, pointer,
+    tween,
+    held,
+    alone,
+    Selection(),
+    some(previewStaging(m, RADIUS_OBJECT_DEFAULT)),
+    camera.drawExtentFor(height, 0.0),
+    width,
+    height,
+    now,
+    duration,
+    pointer,
   )
 
 
@@ -571,7 +581,7 @@ proc addLatticesPicked*(
   ## Rule lattice on every visible finite plane picked; see `tessellate.addLattice`.
   ##   One loop both front-ends' furniture runs, so which plane is ruled is decided once.
   ##   Here rather than in `tessellate`, which holds no scene: selection is what asks.
-  for position in 0 ..< picked.len:
+  for position in 0..<picked.len:
     let handle = picked.at(position)
     if not scene.isAlive(handle) or not scene.isVisible(handle): continue
     let m = scene.geometryOf(handle)

@@ -98,13 +98,13 @@ func bivectorOf(turn, slide: array[3, float]): Multivector =
 
 func magnitudeOf(v: array[3, float]): float =
   ## Measure length of one half of bivector.
-  sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2])
+  sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2])
 
 
 func alignmentOf(a, b: array[3, float]): float =
   ## Measure how far one half of bivector runs along other, i.e. their dot product.
   ##   For motor's bivector this is pitch times turn's magnitude: slide along axis itself.
-  a[0]*b[0] + a[1]*b[1] + a[2]*b[2]
+  a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
 
 
 func scalesOf(angle: float): (float, float) =
@@ -113,11 +113,11 @@ func scalesOf(angle: float): (float, float) =
   ##   where they read 1 and -1/3, so neither `exp` nor `log` needs degenerate branch.
   ##   Series below `ANGLE_SERIES`, closed form above; see that constant for why.
   if abs(angle) < ANGLE_SERIES:
-    let square = angle*angle
-    (1.0 - square/6.0, -1.0/3.0 + square/30.0)
+    let square = angle * angle
+    (1.0 - square / 6.0, -1.0 / 3.0 + square / 30.0)
   else:
     let (cosine, sine) = (cos(angle), sin(angle))
-    (sine/angle, (angle*cosine - sine)/(angle*angle*angle))
+    (sine / angle, (angle * cosine - sine) / (angle * angle * angle))
 
 
 
@@ -136,12 +136,12 @@ func exp*(b_line: Multivector): Multivector =
     along = alignmentOf(turn, slide)
     (scale_turn, scale_slide) = scalesOf(angle)
   var turned, slid: array[3, float]
-  for index in 0 .. 2:
-    turned[index] = scale_turn*turn[index]
-    slid[index] = scale_turn*slide[index] + along*scale_slide*turn[index]
+  for index in 0..2:
+    turned[index] = scale_turn * turn[index]
+    slid[index] = scale_turn * slide[index] + along * scale_slide * turn[index]
   result = bivectorOf(turned, slid)
   result[Basis.E1234] = cos(angle)
-  result[Basis.scalar] = -along*scale_turn
+  result[Basis.scalar] = -along * scale_turn
 
 
 func log*(motor: Multivector): Multivector =
@@ -162,11 +162,11 @@ func log*(motor: Multivector): Multivector =
     # Recover pitch from scalar term `exp` wrote, which carried it alone.
     #   `scale_turn` never vanishes here: short way round holds `a` at or under π/2, where
     #   `sin(a)/a` stays above 0.63.
-    along = -held[Basis.scalar]/scale_turn
+    along = -held[Basis.scalar] / scale_turn
   var turned, slid: array[3, float]
-  for index in 0 .. 2:
-    turned[index] = turn[index]/scale_turn
-    slid[index] = (slide[index] - along*scale_slide*turned[index])/scale_turn
+  for index in 0..2:
+    turned[index] = turn[index] / scale_turn
+    slid[index] = (slide[index] - along * scale_slide * turned[index]) / scale_turn
   bivectorOf(turned, slid)
 
 
@@ -176,7 +176,7 @@ func turnAbout*(axis: Multivector, radians: float): Option[Multivector] =
   ##   to turn about. `unitize` would return such line unchanged rather than refuse.
   ##   Half-angle and its sign live here, so no caller holds either.
   if normWeight(axis)[Basis.scalarAnti] <= TOLERANCE_ABS: return
-  some(exp(wedge(-0.5*radians, unitize(axis))))
+  some(exp(wedge(-0.5 * radians, unitize(axis))))
 
 
 func carried*(m, motor, motor_reversed: Multivector): Multivector =
@@ -191,4 +191,4 @@ func carried*(m, motor: Multivector): Multivector =
   ## Carry `m` through rigid motion `motor`, i.e. 𝐐 ⟇ 𝐦 ⟇ ~∘𝐐.
   ##   One form for point, line and plane alike, since sandwich reads grade from `m`.
   ##   Expects unit motor: antireverse is inverse only there.
-  carried(m, motor, ~∘ motor)
+  carried(m, motor, ~∘motor)

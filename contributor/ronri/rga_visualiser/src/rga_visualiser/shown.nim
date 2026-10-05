@@ -41,19 +41,19 @@ func textsShown*(): seq[string] =
   appendSpeedLight(units, cursor, 2.0)
   appendRuler(units, cursor, 1.0)
   finishChars(units, cursor)
-  result.add toText(units)
+  result.add units.toText
 
 
 func codepointsOf*(texts: openArray[string]): seq[int] =
   ## Gather every codepoint `texts` hold, with all of printable ASCII, sorted and once each.
   ##   Printable ASCII is in whatever texts hold, since reader names objects in it.
-  for codepoint in 0x20 .. 0x7E: result.add codepoint
+  for codepoint in 0x20..0x7E: result.add codepoint
   for text in texts:
     for rune in text.runes: result.add int(rune)
   result.sort
   var kept = 0
   for codepoint in result:
-    if kept == 0 or result[kept - 1] != codepoint:
+    if kept == 0 or result[kept-1] != codepoint:
       result[kept] = codepoint
       inc kept
   result.setLen kept

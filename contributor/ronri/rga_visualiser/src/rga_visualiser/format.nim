@@ -21,8 +21,7 @@ import std/[math, strutils]
 
 #[ Binding Configuration ]#
 
-const HEADER = "<stdio.h>"
-  ## Name header C runtime's formatter is imported through.
+const HEADER = "<stdio.h>"  ## Name header C runtime's formatter is imported through.
 
 # Import C runtime's formatter one-to-one; see its manual page.
 #   Guarded rather than left to fail at run time: JS backend *compiles* `importc` it has no
@@ -76,6 +75,7 @@ func formatMagnitude*(value: float): string =
   ##   Scales by *multiplying* by positive power of ten wherever it can.
   ##     10^k is exact as double for k in 0 .. 22, 10^-k never is, and inexact divisor
   ##     moves true tie off half.
+
   func trimmed(text: string): string =
     ## Drop trailing zeros, and point left bare by dropping them.
     if '.' notin text: return text
@@ -93,8 +93,8 @@ func formatMagnitude*(value: float): string =
   func scaledTo(value: float, exponent: int): float =
     ## Carry `value`'s leading `DIGITS_SIGNIFICANT` digits into whole-number range.
     let shift = DIGITS_SIGNIFICANT - 1 - exponent
-    if shift >= 0: abs(value)*pow(10.0, float(shift))
-    else: abs(value)/pow(10.0, float(-shift))
+    if shift >= 0: abs(value) * pow(10.0, float(shift))
+    else: abs(value) / pow(10.0, float(-shift))
 
   var scaled = roundHalfToEven(scaledTo(value, exponent))
 
@@ -113,11 +113,11 @@ func formatMagnitude*(value: float): string =
       magnitude = abs(exponent)
       sign_exponent = if exponent < 0: "-" else: "+"
       padding = if magnitude < 10: "0" else: ""
-    sign & trimmed(digits[0 .. 0] & "." & digits[1 .. ^1]) &
-      "e" & sign_exponent & padding & $magnitude
+    sign & trimmed(digits[0..0] & "." & digits[1 .. ^1]) &
+        "e" & sign_exponent & padding & $magnitude
   elif exponent >= 0:
     let count_integer = exponent + 1
-    sign & trimmed(digits[0 ..< count_integer] & "." & digits[count_integer .. ^1])
+    sign & trimmed(digits[0..<count_integer] & "." & digits[count_integer .. ^1])
   else:
     sign & trimmed("0." & repeat('0', -exponent - 1) & digits)
 
@@ -133,7 +133,7 @@ func bytesCharacter*(lead: char): int =
   ##   subscripts, ellipsis.
   let value = uint8(lead)
   if value < 0x80: 1
-  elif value < 0xC0: 1 # Stray continuation byte; not lead, so not character start.
+  elif value < 0xC0: 1  # Stray continuation byte; not lead, so not character start.
   elif value < 0xE0: 2
   elif value < 0xF0: 3
   else: 4
@@ -158,7 +158,7 @@ func appendChars*(storage: var openArray[char], cursor: var int, text: openArray
   ##     Byte-wise copy cut three-byte operator in half, and invalid tail reached browser
   ##     as literal `%e2%8a`: Nim's JS backend percent-escapes what it cannot decode.
   ##     Same mismatch `.rgascene` label field had, other half of it.
-  for offset in 0 ..< lengthFitting(text, len(storage) - 1 - cursor):
+  for offset in 0..<lengthFitting(text, len(storage) - 1 - cursor):
     storage[cursor] = text[offset]
     inc cursor
 
@@ -214,9 +214,7 @@ func appendInt*(storage: var openArray[char], cursor: var int, value: int) =
 
 
 when not defined(js):
-  func appendFixed*(
-    storage: var openArray[char], cursor: var int, value: float, digits: int
-  ) =
+  func appendFixed*(storage: var openArray[char], cursor: var int, value: float, digits: int) =
     ## Format `value` to fixed digits after point straight into `storage`.
     ##   Matches `strformat`'s `:.Nf`.
     ##   Desktop-only: it serves diagnostics panel, which has no browser counterpart.
@@ -230,7 +228,7 @@ when not defined(js):
 func finishChars*(storage: var openArray[char], cursor: int) =
   ## Zero every byte from `cursor` onward.
   ##   Text longer previous write left behind never trails past what was written this time.
-  for i in cursor ..< len(storage): storage[i] = '\0'
+  for i in cursor..<len(storage): storage[i] = '\0'
 
 
 

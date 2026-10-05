@@ -9,6 +9,7 @@ import ./fixtures
 import ../../src/rga_visualiser/marker {.all.}
 
 
+
 suite "Marker":
   const
     (width_mark, height_mark) = (800, 600)
@@ -21,9 +22,7 @@ suite "Marker":
     ## Name direction from origin out to eye: `bearing` round world up, `rise` over unit run.
     Direction(x: cos(bearing), y: sin(bearing), z: rise)
 
-  proc setUpAt(
-    out_to: Direction, distance: float
-  ): (Camera, Matrix4, DrawExtent) =
+  proc setUpAt(out_to: Direction, distance: float): (Camera, Matrix4, DrawExtent) =
     ## Build camera looking at origin from one placement, with transform and extent frame carries.
     ##   Orientation is parameter because marker's own worst case can lie along it:
     ##   line's rails flared threefold at one bearing while reading true at another, and
@@ -31,36 +30,64 @@ suite "Marker":
     let
       placement = cameraAround(ORIGIN, distance, out_to)
       scale = placement.drawExtentFor(height_mark, 0.0)
-    (placement, placement.initMatrixViewProjection(width_mark/height_mark), scale)
+    (placement, placement.initMatrixViewProjection(width_mark / height_mark), scale)
 
   proc setUp(distance = 19.0): (Camera, Matrix4, DrawExtent) =
     ## Hold placement most of these cases read, at one orientation they were written against.
     setUpAt(outToward(0.9, 0.42), distance)
 
   proc shapedMarkerFor(
-    geometry: Multivector; anchor: Option[Position]; scale: DrawExtent;
-    placement: Camera; view_projection: Matrix4; width, height: int;
-    progress: float = 1.0; is_touch: bool = false; travel: Option[float] = none(float);
-    swell: float = 0.0
+    geometry: Multivector;
+    anchor: Option[Position];
+    scale: DrawExtent;
+    placement: Camera;
+    view_projection: Matrix4;
+    width, height: int;
+    progress = 1.0;
+    is_touch = false;
+    travel = none(float);
+    swell = 0.0;
   ): Option[Marker] =
     ## Wrap `markerFor`'s fill-in-place shape as option, for suite's own reading.
     ##   Cases here read one answer many times over, and clarity outranks copy option
     ##   costs in test.
     var marker: Marker
     if markerFor(
-      geometry, anchor, RADIUS_OBJECT_DEFAULT, scale, placement, view_projection, width, height,
-      marker, progress, is_touch, travel, swell,
+      geometry,
+      anchor,
+      RADIUS_OBJECT_DEFAULT,
+      scale,
+      placement,
+      view_projection,
+      width,
+      height,
+      marker,
+      progress,
+      is_touch,
+      travel,
+      swell,
     ): some(marker)
     else: none(Marker)
 
   proc markerOf(
-    geometry: Multivector, anchor = none(Position), progress = 1.0,
-    travel = none(float), distance = 19.0
+    geometry: Multivector,
+    anchor = none(Position),
+    progress = 1.0,
+    travel = none(float),
+    distance = 19.0,
   ): Option[Marker] =
     let (placement, view_projection, scale) = setUp(distance)
     shapedMarkerFor(
-      geometry, anchor, scale, placement, view_projection, width_mark, height_mark,
-      progress, is_touch = false, travel = travel,
+      geometry,
+      anchor,
+      scale,
+      placement,
+      view_projection,
+      width_mark,
+      height_mark,
+      progress,
+      is_touch = false,
+      travel = travel,
     )
 
   func apartRails(marker: Marker): float =
@@ -74,10 +101,8 @@ suite "Marker":
     #   and run opposite ways, so either half's own line carries whole rail.
     if marker.count_segment < 4: return 0.0
     for (own, other) in [(0, 2), (1, 3), (2, 0), (3, 1)]:
-      for step in 0 .. 2:
-        let along = marker.segments[own][0].towards(
-          marker.segments[own][1], float(step)/2.0
-        )
+      for step in 0..2:
+        let along = marker.segments[own][0].towards(marker.segments[own][1], float(step) / 2.0)
         result = max(
           result,
           awayFromScreen(along, marker.segments[other][0], marker.segments[other][1]),
@@ -85,32 +110,34 @@ suite "Marker":
 
   proc reachRails(marker: Marker): float =
     ## Sum screen length of every rail piece, which is what filling hold grows.
-    for i in 0 ..< marker.count_segment:
+    for i in 0..<marker.count_segment:
       let piece = marker.segments[i]
       result += hypot(piece[1].x - piece[0].x, piece[1].y - piece[0].y)
 
   proc radiusLoop(marker: Marker): float =
     ## Measure greatest screen distance between two of loop's own points.
     ##   Stands in for its radius without needing centre it was built around.
-    for i in 0 ..< marker.count_point:
+    for i in 0..<marker.count_point:
       for j in i + 1 ..< marker.count_point:
-        result = max(result, hypot(
-          marker.points[j].x - marker.points[i].x, marker.points[j].y - marker.points[i].y
-        ))
+        result = max(
+          result,
+          hypot(marker.points[j].x - marker.points[i].x, marker.points[j].y - marker.points[i].y),
+        )
 
   let
-    point_a = toMultivector(Position(x: 1.0, y: 0.0, z: 2.0))
-    point_b = toMultivector(Position(x: 4.0, y: 1.0, z: 2.0))
-    point_c = toMultivector(Position(x: 2.0, y: 5.0, z: 3.5))
+    point_a = Position(x: 1.0, y: 0.0, z: 2.0).toMultivector
+    point_b = Position(x: 4.0, y: 1.0, z: 2.0).toMultivector
+    point_c = Position(x: 2.0, y: 5.0, z: 3.5).toMultivector
     line = point_a ∧ point_b
     plane = point_a ∧ point_b ∧ point_c
     line_horizon = attitude(plane)
       ## Take plane's own attitude: pencil of directions it spans, lying in horizon.
     plane_horizon = attitude(
-      toMultivector(Position(x: 0.0, y: 0.0, z: 0.0)) ∧ plane
-    ) ## Whole sky, built way `storyboard`'s own step 11 builds it, as attitude.
+      Position(x: 0.0, y: 0.0, z: 0.0).toMultivector ∧ plane,
+    )  ## Whole sky, built way `storyboard`'s own step 11 builds it, as attitude.
       ## of grade-4 volume, which needs point genuinely *off* plane or wedge
       ## vanishes and there is no volume to take attitude of.
+
 
   test "each shape asks for the outline that echoes it":
     check markerOf(point_a).get.kind == MarkerKind.Ring
@@ -128,26 +155,41 @@ suite "Marker":
       marker = markerOf(point_a).get
       anchor = anchorFor(point_a, scale).get
     check marker.radius =~
-      radiusPixelsAt(RADIUS_OBJECT_DEFAULT, anchor, scale.scale) + GAP_MARKER
-    check marker.radius > 0.5*float(DIAMETER_POINT_LEAST) + GAP_MARKER
+        radiusPixelsAt(RADIUS_OBJECT_DEFAULT, anchor, scale.scale) + GAP_MARKER
+    check marker.radius > 0.5 * float(DIAMETER_POINT_LEAST) + GAP_MARKER
     # Far point falls to least radius; huge one grows with its own.
     let (stance_far, view_projection_far, scale_far) = setUp(1900.0)
     var ring_far: Marker
     check markerFor(
-      point_a, none(Position), RADIUS_OBJECT_DEFAULT, scale_far, stance_far,
-      view_projection_far, width_mark, height_mark, ring_far,
+      point_a,
+      none(Position),
+      RADIUS_OBJECT_DEFAULT,
+      scale_far,
+      stance_far,
+      view_projection_far,
+      width_mark,
+      height_mark,
+      ring_far,
     )
-    check ring_far.radius =~ 0.5*float(DIAMETER_POINT_LEAST) + GAP_MARKER
+    check ring_far.radius =~ 0.5 * float(DIAMETER_POINT_LEAST) + GAP_MARKER
     var ring_huge: Marker
     check markerFor(
-      point_a, none(Position), 100.0*RADIUS_OBJECT_DEFAULT, scale, placement,
-      view_projection, width_mark, height_mark, ring_huge,
+      point_a,
+      none(Position),
+      100.0 * RADIUS_OBJECT_DEFAULT,
+      scale,
+      placement,
+      view_projection,
+      width_mark,
+      height_mark,
+      ring_huge,
     )
-    check ring_huge.radius > 10.0*marker.radius
+    check ring_huge.radius > 10.0 * marker.radius
 
 
   const tolerance_pixel_tilt = 0.25
     ## Measure what `directionAcross`'s own tilt out of projection plane is worth, in pixels.
+
 
   test "a line's rails hold their own gap, at every orientation":
     # Case previous two rounds needed and did not have. World offset hands.
@@ -166,8 +208,16 @@ suite "Marker":
           let (placement, view_projection, scale) =
             setUpAt(outToward(bearing, rise), distance)
           let marker = shapedMarkerFor(
-            line, none(Position), scale, placement, view_projection, width_mark,
-            height_mark, progress = 1.0, is_touch = false, travel = none(float),
+            line,
+            none(Position),
+            scale,
+            placement,
+            view_projection,
+            width_mark,
+            height_mark,
+            progress = 1.0,
+            is_touch = false,
+            travel = none(float),
           )
           if marker.isNone: continue
           # Two-sided, which is whole property: pair reads its stated gap at its.
@@ -178,8 +228,8 @@ suite "Marker":
           #   perpendicular to sight ray tilts hair out of plane perspective
           #   divides by -- see `marker.directionAcross`.
           let apart = apartRails(marker.get)
-          check apart <= 2.0*OFFSET_MARKER_RAIL + tolerance_pixel_tilt
-          check apart >= 0.95*2.0*OFFSET_MARKER_RAIL
+          check apart <= 2.0 * OFFSET_MARKER_RAIL + tolerance_pixel_tilt
+          check apart >= 0.95 * 2.0 * OFFSET_MARKER_RAIL
 
 
   test "a rail is one straight line, not two halves meeting at an angle":
@@ -196,13 +246,21 @@ suite "Marker":
         let
           (placement, view_projection, scale) = setUpAt(outToward(bearing, rise), 19.0)
           marker = shapedMarkerFor(
-            line, none(Position), scale, placement, view_projection, width_mark,
-            height_mark, progress = 1.0, is_touch = false, travel = none(float),
+            line,
+            none(Position),
+            scale,
+            placement,
+            view_projection,
+            width_mark,
+            height_mark,
+            progress = 1.0,
+            is_touch = false,
+            travel = none(float),
           )
         if marker.isNone or marker.get.count_segment < 4: continue
         # Segments 0 and 1 are one side's own two halves, sharing support at index 0.
         for side in [0, 2]:
-          let (before, after) = (marker.get.segments[side], marker.get.segments[side + 1])
+          let (before, after) = (marker.get.segments[side], marker.get.segments[side+1])
           # Far end of one half, against infinite line through other.
           check awayFromScreen(after[1], before[0], before[1]) < TOLERANCE_SINGLE
 
@@ -217,8 +275,16 @@ suite "Marker":
       let
         (placement, view_projection, scale) = setUpAt(out_to, distance)
         marker = shapedMarkerFor(
-          line, none(Position), scale, placement, view_projection, width_mark, height_mark,
-          progress = 1.0, is_touch = false, travel = none(float),
+          line,
+          none(Position),
+          scale,
+          placement,
+          view_projection,
+          width_mark,
+          height_mark,
+          progress = 1.0,
+          is_touch = false,
+          travel = none(float),
         )
       if marker.isNone or marker.get.count_segment < 4: return 0.0
       hypot(
@@ -228,7 +294,7 @@ suite "Marker":
     # Support is where world offset states its gap, and it is exactly what oblique.
     #   view now gives up: 4.5 px at camera below against 13.1 at squarer one.
     check apartAtSupport(outToward(0.2, 0.05), 12.0) < apartAtSupport(outToward(1.6, 1.26), 19.0)
-    check apartAtSupport(outToward(0.2, 0.05), 12.0) < 2.0*OFFSET_MARKER_RAIL
+    check apartAtSupport(outToward(0.2, 0.05), 12.0) < 2.0 * OFFSET_MARKER_RAIL
     # And marker is still there to be seen, which sweep above holds everywhere: it.
     #   is *widest* reading that is pinned, so pair is that far apart somewhere by
     #   construction. No floor under narrowing is needed, and one tried at four tenths
@@ -246,8 +312,8 @@ suite "Marker":
     #   nothing pair of rails either side of it could mean to viewer inside it.
     let
       scale = setUp()[2]
-      through_eye = toMultivector(scale.eye) ∧
-        toMultivector(scale.eye + Direction(x: 1.0, y: 0.0, z: 0.0))
+      through_eye = scale.eye.toMultivector ∧
+          toMultivector(scale.eye + Direction(x: 1.0, y: 0.0, z: 0.0))
     check markerOf(through_eye).isNone
 
 
@@ -260,7 +326,7 @@ suite "Marker":
     # Unitized point wedged with unitized plane leaves its own signed distance from.
     #   that plane on antiscalar, so this reads as `how far off surface`.
     for point in ring:
-      check abs((unitize(toMultivector(point)) ∧ unitize(plane))[Basis.scalarAnti]) =~ 0.0
+      check abs((unitize(point.toMultivector) ∧ unitize(plane))[Basis.scalarAnti]) =~ 0.0
 
 
   test "a marker's ring is stepped in arithmetic, and lands where the algebra says":
@@ -279,27 +345,31 @@ suite "Marker":
         centre = anchor.get
         radius = radiusMarkerLoop(centre, scale_ring, setUp()[0], height_mark)
         ring = positionsMarkerLoop(centre, axes.get, radius)
-        centre_point = toMultivector(centre)
-        arm_first_point = wedge(radius, toMultivector(axes.get.axis_first))
-        arm_second_point = wedge(radius, toMultivector(axes.get.axis_second))
+        centre_point = centre.toMultivector
+        arm_first_point = wedge(radius, axes.get.axis_first.toMultivector)
+        arm_second_point = wedge(radius, axes.get.axis_second.toMultivector)
       check len(ring) == SEGMENTS_MARKER_LOOP
-      for i in 0 ..< SEGMENTS_MARKER_LOOP:
+      for i in 0..<SEGMENTS_MARKER_LOOP:
         let
-          angle = (2.0*PI*float(i))/float(SEGMENTS_MARKER_LOOP)
-          assembled = pointFrom(add(centre_point, add(
-            wedge(cos(angle), arm_first_point), wedge(sin(angle), arm_second_point),
-          )))
+          angle = (2.0 * PI * float(i)) / float(SEGMENTS_MARKER_LOOP)
+          assembled = pointFrom(add(
+            centre_point,
+            add(
+              wedge(cos(angle), arm_first_point),
+              wedge(sin(angle), arm_second_point),
+            ),
+          ))
         check ring[i] =~ assembled
 
     # And ring bands are stepped from is same table's, at their own count:
     #   both rings are `euclid.unitRing`'s, so neither can drift from angles
     #   sums above take.
-    for i in 0 ..< SEGMENTS_MARKER_LOOP:
-      let angle = (2.0*PI*float(i))/float(SEGMENTS_MARKER_LOOP)
+    for i in 0..<SEGMENTS_MARKER_LOOP:
+      let angle = (2.0 * PI * float(i)) / float(SEGMENTS_MARKER_LOOP)
       check UNIT_RING_LOOP[i].cos_angle =~ cos(angle)
       check UNIT_RING_LOOP[i].sin_angle =~ sin(angle)
-    for i in 0 ..< SEGMENTS_MARKER_BANDS:
-      let angle = (2.0*PI*float(i))/float(SEGMENTS_MARKER_BANDS)
+    for i in 0..<SEGMENTS_MARKER_BANDS:
+      let angle = (2.0 * PI * float(i)) / float(SEGMENTS_MARKER_BANDS)
       check UNIT_RING_BANDS[i].cos_angle =~ cos(angle)
       check UNIT_RING_BANDS[i].sin_angle =~ sin(angle)
 
@@ -320,19 +390,27 @@ suite "Marker":
     var kinds_shaped: set[MarkerKind]
     # Pulse rides outline already shaped, so marker reads same with one and without.
     for geometry in [point_a, line, plane, line_horizon, plane_horizon]:
-      for travel in [none(float), some(0.3*LENGTH_MARKER_COMET)]:
+      for travel in [none(float), some(0.3 * LENGTH_MARKER_COMET)]:
         var
           marker: Marker
           is_shaped = false
         let count = countPointsRead:
           is_shaped = markerFor(
-            geometry, none(Position), RADIUS_OBJECT_DEFAULT, scale, placement,
-            view_projection, width_mark, height_mark, marker, travel = travel,
+            geometry,
+            none(Position),
+            RADIUS_OBJECT_DEFAULT,
+            scale,
+            placement,
+            view_projection,
+            width_mark,
+            height_mark,
+            marker,
+            travel = travel,
           )
         check is_shaped
         kinds_shaped.incl marker.kind
         check count <= lut_reads_most_by_kind[marker.kind]
-    check kinds_shaped == {MarkerKind.low .. MarkerKind.high}
+    check kinds_shaped == {MarkerKind.low..MarkerKind.high}
 
 
   test "a plane's marker circle clears the drawn rim by the shared gap":
@@ -341,11 +419,11 @@ suite "Marker":
       centre = positionAnchor(plane).get
       radius = radiusMarkerLoop(centre, scale, placement, height_mark)
       per_pixel = worldPerPixelAt(centre, scale)
-    check (radius - EXTENT_PLANE_F)/per_pixel =~ GAP_MARKER
+    check (radius - EXTENT_PLANE_F) / per_pixel =~ GAP_MARKER
 
 
   test "a plane's marker follows its stored creation anchor, as its disc does":
-    let elsewhere = positionAnchor(plane).get + 3.0*frame(plane).get.axis_first
+    let elsewhere = positionAnchor(plane).get + 3.0 * frame(plane).get.axis_first
     let
       centred = markerOf(plane).get
       shifted = markerOf(plane, some(elsewhere)).get
@@ -368,18 +446,18 @@ suite "Marker":
     # Only what survives near plane *and* edge of window is reported, so every.
     #   point handed to overlay is one it can actually stroke and one reader can
     #   actually see -- `Loop`'s own rule, twice over and one cut further.
-    for side in 0 .. 1:
-      for i in 0 ..< marker.counts_band[side]:
+    for side in 0..1:
+      for i in 0..<marker.counts_band[side]:
         check marker.points_band[side][i].isInFront
         check marker.points_band[side][i].isWithinView(width_mark, height_mark)
 
     # And it stops *at* edge rather than sample short of it: band's samples are.
     #   even in angle around sky and hundreds of pixels apart once projected, so
     #   crossing point is placed rather than rounded to last one inside.
-    for side in 0 .. 1:
+    for side in 0..1:
       let (first, last) = (
         marker.points_band[side][0],
-        marker.points_band[side][marker.counts_band[side] - 1],
+        marker.points_band[side][marker.counts_band[side]-1],
       )
       for at in [first, last]:
         check min(min(at.x, float(width_mark) - at.x), min(at.y, float(height_mark) - at.y)) =~ 0.0
@@ -392,13 +470,13 @@ suite "Marker":
     #   fixed screen pace was then off screen for all but four frames in thousand,
     #   which is what `the pulse does not work on horizon lines` meant.
     let
-      bands = markerOf(line_horizon, travel = some(0.3*LENGTH_MARKER_COMET)).get
-      rails = markerOf(line, travel = some(0.3*LENGTH_MARKER_COMET)).get
+      bands = markerOf(line_horizon, travel = some(0.3 * LENGTH_MARKER_COMET)).get
+      rails = markerOf(line, travel = some(0.3 * LENGTH_MARKER_COMET)).get
     # Within same order of magnitude as finite line's rails, which are bounded by.
     #   very same rule. Window's own diagonal is scale both are measuring.
     check bands.lap > 0.0
-    check bands.lap < 4.0*rails.lap
-    check bands.lap < hypot(float(width_mark), float(height_mark))*2.0
+    check bands.lap < 4.0 * rails.lap
+    check bands.lap < hypot(float(width_mark), float(height_mark)) * 2.0
     # Both bands pulse, and in step: one of pair lit and other not reads as.
     #   marker having broken rather than as direction.
     check bands.count_run_pulse == 2
@@ -406,18 +484,18 @@ suite "Marker":
     # Comet advances along band at screen pace, rather than standing still.
     #   because almost all of its lap is somewhere reader cannot look.
     var
-      travel = 0.3*LENGTH_MARKER_COMET
+      travel = 0.3 * LENGTH_MARKER_COMET
       heads: seq[ScreenPosition]
-    for frame in 0 .. 3:
+    for frame in 0..3:
       let marker = markerOf(line_horizon, travel = some(travel)).get
       check marker.count_run_pulse > 0
       heads.add(marker.pulses[0][0])
       travel = travelAdvanced(travel, marker.lap, 1.0)
-    for i in 1 ..< heads.len:
-      let step = hypot(heads[i].x - heads[i - 1].x, heads[i].y - heads[i - 1].y)
+    for i in 1..<heads.len:
+      let step = hypot(heads[i].x - heads[i-1].x, heads[i].y - heads[i-1].y)
       # Chord of gently curved band rather than arc along it, so within.
       #   fraction of percent of pace rather than exactly it.
-      check abs(step - SPEED_MARKER_PULSE) < 0.01*SPEED_MARKER_PULSE
+      check abs(step - SPEED_MARKER_PULSE) < 0.01 * SPEED_MARKER_PULSE
       check heads[i].isWithinView(width_mark, height_mark)
 
 
@@ -471,7 +549,7 @@ suite "Marker":
     check midway < opening
     check settled < midway
     # And settles at very gap finite line's rails keep, read as angle.
-    check settled =~ OFFSET_MARKER_RAIL*radiansPerPixel(scale)
+    check settled =~ OFFSET_MARKER_RAIL * radiansPerPixel(scale)
 
 
   test "a horizon plane is framed by the viewport, arriving as the screen's edge":
@@ -480,20 +558,20 @@ suite "Marker":
     check marker.kind == MarkerKind.Frame
 
     let
-      (centre_x, centre_y) = (0.5*float(width_mark), 0.5*float(height_mark))
+      (centre_x, centre_y) = (0.5 * float(width_mark), 0.5 * float(height_mark))
       (inside_x, inside_y) =
         (float(width_mark) - GAP_MARKER, float(height_mark) - GAP_MARKER)
     proc distancesFromCentre(marker: Marker): seq[float] =
-      for i in 0 ..< marker.count_frame:
+      for i in 0..<marker.count_frame:
         let point = marker.points_frame[i]
-        result.add(hypot(point.x - centre_x, point.y - centre_y))
+        result.add hypot(point.x - centre_x, point.y - centre_y)
 
     # Check finished frame is viewport's rectangle, standing `GAP_MARKER` inside it.
     #   Same clear space every other marker in family keeps from what it surrounds.
     #   Every point lies on that rectangle, and its extremes reach whole way to it.
     check marker.count_frame >= SEGMENTS_MARKER_FRAME
     var (reached_x, reached_y) = (false, false)
-    for i in 0 ..< marker.count_frame:
+    for i in 0..<marker.count_frame:
       let point = marker.points_frame[i]
       check point.x >= GAP_MARKER - TOLERANCE_SINGLE
       check point.x <= inside_x + TOLERANCE_SINGLE
@@ -501,7 +579,7 @@ suite "Marker":
       check point.y <= inside_y + TOLERANCE_SINGLE
       # On rectangle, not merely within it: one coordinate is pinned to edge.
       check point.x =~ GAP_MARKER or point.x =~ inside_x or
-        point.y =~ GAP_MARKER or point.y =~ inside_y
+          point.y =~ GAP_MARKER or point.y =~ inside_y
       if point.x =~ GAP_MARKER or point.x =~ inside_x: reached_x = true
       if point.y =~ GAP_MARKER or point.y =~ inside_y: reached_y = true
     check reached_x and reached_y
@@ -514,17 +592,17 @@ suite "Marker":
     # Full reach is corners' own distance, so `progress` of it is circle's radius.
     #   for as long as circle is thing bounding it.
     let half_diagonal = hypot(centre_x - GAP_MARKER, centre_y - GAP_MARKER)
-    proc reachAt(progress: float): float = progress*half_diagonal
+    proc reachAt(progress: float): float = progress * half_diagonal
     let opening = distancesFromCentre(markerOf(plane_horizon, progress = 0.1).get)
     for distance in opening: check distance =~ reachAt(0.1)
-    check reachAt(0.1) < centre_y - GAP_MARKER # Still clear of nearest edge.
+    check reachAt(0.1) < centre_y - GAP_MARKER  # Still clear of nearest edge.
 
     # Part way, circle has passed short edges but not corners, so boundary.
     #   is edge in some directions and still circle in others -- which is what "highlights
     #   each part of edge as it gets there" means, checked rather than assumed.
     let partial = markerOf(plane_horizon, progress = 0.75).get
     var (count_on_edge, count_off_edge) = (0, 0)
-    for i in 0 ..< partial.count_frame:
+    for i in 0..<partial.count_frame:
       let point = partial.points_frame[i]
       if point.x =~ GAP_MARKER or point.x =~ inside_x or
           point.y =~ GAP_MARKER or point.y =~ inside_y:
@@ -535,7 +613,7 @@ suite "Marker":
     check count_off_edge > 0
     # And part still short of edge is circular at that same shared reach, so.
     #   marker really is one expanding circle bitten into by screen, not two shapes.
-    for i in 0 ..< partial.count_frame:
+    for i in 0..<partial.count_frame:
       let point = partial.points_frame[i]
       if point.x =~ GAP_MARKER or point.x =~ inside_x or
           point.y =~ GAP_MARKER or point.y =~ inside_y: continue
@@ -544,7 +622,7 @@ suite "Marker":
     # Frame's four corners are sampled explicitly, so finished outline has real.
     #   corners rather than corners cut across by wherever even steps happened to land.
     var count_corner = 0
-    for i in 0 ..< marker.count_frame:
+    for i in 0..<marker.count_frame:
       let point = marker.points_frame[i]
       if (point.x =~ GAP_MARKER or point.x =~ inside_x) and
           (point.y =~ GAP_MARKER or point.y =~ inside_y):
@@ -556,10 +634,10 @@ suite "Marker":
     # Reason swell exists: fingertip covers what it presses, so marker filling.
     #   underneath one says nothing to person filling it. How far out it stands is now
     #   plain scaling of swell, whose *shape* is `interaction.swellHold`'s to decide.
-    const radius_finger = 22.0 # Half 44-pixel minimum touch pivot.
+    const radius_finger = 22.0  # Half 44-pixel minimum touch pivot.
     check clearanceTouch(0.0, is_touch = true) =~ 0.0
-    check 0.5*float(DIAMETER_POINT_LEAST) + GAP_MARKER + clearanceTouch(1.0, is_touch = true) >
-      radius_finger
+    check 0.5 * float(DIAMETER_POINT_LEAST) + GAP_MARKER + clearanceTouch(1.0, is_touch = true) >
+        radius_finger
     for swell in [0.0, 0.25, 0.5, 0.75, 1.0]:
       check clearanceTouch(swell, is_touch = false) =~ 0.0
 
@@ -573,8 +651,13 @@ suite "Marker":
         placement = cameraAround(ORIGIN, 19.0, outToward(bearing, 0.42))
         scale = placement.drawExtentFor(height_mark, 0.0)
       shapedMarkerFor(
-        attitude(line), none(Position), scale, placement,
-        placement.initMatrixViewProjection(width_mark/height_mark), width_mark, height_mark,
+        attitude(line),
+        none(Position),
+        scale,
+        placement,
+        placement.initMatrixViewProjection(width_mark / height_mark),
+        width_mark,
+        height_mark,
       )
     check ringAt(1.9).get.kind == MarkerKind.Ring
     check ringAt(0.0).isNone
@@ -585,7 +668,7 @@ suite "Marker":
     #   top moves continuously: no step more than twice one before it and pixel, even
     #   where thin ellipse's top runs along its length. Label's top is never below any
     #   sampled vertex, and within segment's sag of lowest one.
-    let lift = GAP_MARKER + 0.5*HEIGHT_MARKER_LABEL
+    let lift = GAP_MARKER + 0.5 * HEIGHT_MARKER_LABEL
     var
       hops_sampled = 0
       hops_label = 0
@@ -594,7 +677,7 @@ suite "Marker":
       step_sampled_before = 0.0
       step_label_before = 0.0
     var bearing = 0.0
-    while bearing < 2.0*PI:
+    while bearing < 2.0 * PI:
       let
         (placement, view_projection, scale) = setUpAt(outToward(bearing, 0.42), 19.0)
         loop = shapedMarkerFor(
@@ -602,7 +685,7 @@ suite "Marker":
         ).get
       check loop.kind == MarkerKind.Loop and loop.has_label and loop.is_closed
       var (x_sampled, y_lowest) = (0.0, Inf)
-      for i in 0 ..< loop.count_point:
+      for i in 0..<loop.count_point:
         if loop.points[i].y < y_lowest: (x_sampled, y_lowest) = (loop.points[i].x, loop.points[i].y)
       let top_y = loop.label_at.y + lift
       check top_y <= y_lowest + TOLERANCE_TEST
@@ -611,13 +694,13 @@ suite "Marker":
         let
           step_sampled = abs(x_sampled - x_sampled_before.get)
           step_label = abs(loop.label_at.x - x_label_before.get)
-        if step_sampled > 2.0*step_sampled_before + 1.0: inc hops_sampled
-        if step_label > 2.0*step_label_before + 1.0: inc hops_label
+        if step_sampled > 2.0 * step_sampled_before + 1.0: inc hops_sampled
+        if step_label > 2.0 * step_label_before + 1.0: inc hops_label
         (step_sampled_before, step_label_before) = (step_sampled, step_label)
       (x_sampled_before, x_label_before) = (some(x_sampled), some(loop.label_at.x))
       bearing += step_glide
     check hops_label == 0
-    check hops_sampled > 0 # Failure this replaces, pinned.
+    check hops_sampled > 0  # Failure this replaces, pinned.
 
 
   test "a plane's label passes through the flip without a jump":
@@ -625,7 +708,7 @@ suite "Marker":
     #   disc centre's column at top's height, and both go to plane's horizon as ellipse
     #   flattens: milliradian either side, labels stand under pixel apart. Disc off sight
     #   axis too, where far top and near top themselves part in x.
-    let ground = planeThrough(toMultivector(ORIGIN), toMultivector(UP_WORLD))
+    let ground = planeThrough(ORIGIN.toMultivector, UP_WORLD.toMultivector)
     for anchor in [none(Position), some(Position(x: 3.0, y: -4.0, z: 0.0))]:
       var labels: seq[ScreenPosition]
       for rise in [0.001, -0.001]:
@@ -648,17 +731,21 @@ suite "Marker":
       axes = placement.frame
       centre = Position(x: 0.0, y: 0.0, z: 0.0)
     let top = topmostOnCircle(
-      centre, 2.0*axes.axis_right, 2.0*axes.axis_up, view_projection, width_mark, height_mark
+      centre, 2.0 * axes.axis_right, 2.0 * axes.axis_up, view_projection, width_mark, height_mark
     )
     check top.isSome
     let expected = projectToScreen(
-      view_projection, width_mark, height_mark, centre + 2.0*axes.axis_up
+      view_projection, width_mark, height_mark, centre + 2.0 * axes.axis_up
     )
     check abs(top.get.x - expected.x) < 1.0e-6
     check abs(top.get.y - expected.y) < 1.0e-6
     let behind = topmostOnCircle(
-      eye - 2.0*axes.forward, 0.5*axes.axis_right, 0.5*axes.axis_up, view_projection,
-      width_mark, height_mark,
+      eye - 2.0 * axes.forward,
+      0.5 * axes.axis_right,
+      0.5 * axes.axis_up,
+      view_projection,
+      width_mark,
+      height_mark,
     )
     check behind.isNone
 
@@ -674,7 +761,7 @@ suite "Marker":
         away_before = (0.0, 0.0)
         step_before = 0.0
       var bearing = 0.0
-      while bearing < 2.0*PI:
+      while bearing < 2.0 * PI:
         let
           (placement, view_projection, scale) = setUpAt(outToward(bearing, rise), 19.0)
           rails = shapedMarkerFor(
@@ -685,7 +772,7 @@ suite "Marker":
         check rails.label_at.y >= 0.0 and rails.label_at.y <= float(height_mark)
         if at_before.isSome:
           let step = hypot(rails.label_at.x - at_before.get.x, rails.label_at.y - at_before.get.y)
-          check step <= 2.0*step_before + 1.0
+          check step <= 2.0 * step_before + 1.0
           check hypot(
             rails.label_away_x - away_before[0], rails.label_away_y - away_before[1]
           ) < 0.05
@@ -704,11 +791,16 @@ suite "Marker":
         at_before = none(ScreenPosition)
         count_labelled = 0
         bearing = 0.0
-      while bearing < 2.0*PI:
+      while bearing < 2.0 * PI:
         let
           (placement, view_projection, scale) = setUpAt(outToward(bearing, rise), 19.0)
           bands = shapedMarkerFor(
-            line_horizon, none(Position), scale, placement, view_projection, width_mark,
+            line_horizon,
+            none(Position),
+            scale,
+            placement,
+            view_projection,
+            width_mark,
             height_mark,
           )
         bearing += 0.02
@@ -721,10 +813,10 @@ suite "Marker":
         #   view: tilted horizon here leaves through top or bottom edge on right at some
         #   bearings, and whole visible stretch stands right of centre.
         check at.x >= MARGIN_LABEL_HORIZON - TOLERANCE_TEST and at.x <= float(width_mark)
-        for side in 0 .. 1:
-          for i in 0 ..< bands.get.counts_band[side]:
+        for side in 0..1:
+          for i in 0..<bands.get.counts_band[side]:
             check bands.get.points_band[side][i].x >=
-              at.x - MARGIN_LABEL_HORIZON - PIXELS_TIE_LEFTMOST - TOLERANCE_TEST
+                at.x - MARGIN_LABEL_HORIZON - PIXELS_TIE_LEFTMOST - TOLERANCE_TEST
         if at_before.isSome:
           check hypot(at.x - at_before.get.x, at.y - at_before.get.y) < 40.0
         at_before = some(at)
@@ -742,11 +834,12 @@ suite "Marker":
       # Eye square to line, so support stands twelve units aside at eight of depth.
       let
         placement = cameraAround(
-          support + (sign*12.0)*axis, 8.0,
-          Direction(x: -axis.y, y: axis.x, z: 0.36*hypot(axis.x, axis.y)),
+          support + (sign * 12.0) * axis,
+          8.0,
+          Direction(x: -axis.y, y: axis.x, z: 0.36 * hypot(axis.x, axis.y)),
         )
         scale = placement.drawExtentFor(height_mark, 0.0)
-        view_projection = placement.initMatrixViewProjection(width_mark/height_mark)
+        view_projection = placement.initMatrixViewProjection(width_mark / height_mark)
         projected = projectToScreen(view_projection, width_mark, height_mark, support)
       check not projected.isWithinView(width_mark, height_mark)
       let rails = shapedMarkerFor(
@@ -760,14 +853,14 @@ suite "Marker":
       check awayFromScreen(at, projected, along) < 0.5
       # Margin in from nearest edge, along line, is `MARGIN_LABEL_VIEW`.
       let room = min(min(at.x, float(width_mark) - at.x), min(at.y, float(height_mark) - at.y))
-      check room > 0.5*MARGIN_LABEL_VIEW - 1.0
+      check room > 0.5 * MARGIN_LABEL_VIEW - 1.0
 
 
   test "label is held wholly inside view, and centred where its box cannot fit":
     # Page 393 wide, 560 tall, label 80 wide: right edge, top edge, both corners, and free.
     const (width_page, height_page, half) = (393.0, 560.0, 40.0)
     let
-      half_height = 0.5*HEIGHT_MARKER_LABEL
+      half_height = 0.5 * HEIGHT_MARKER_LABEL
       (min_x, max_x) = (MARGIN_LABEL_EDGE + half, width_page - MARGIN_LABEL_EDGE - half)
       (min_y, max_y) =
         (MARGIN_LABEL_EDGE + half_height, height_page - MARGIN_LABEL_EDGE - half_height)
@@ -779,7 +872,7 @@ suite "Marker":
     check max_x + half == width_page - MARGIN_LABEL_EDGE
     check MARGIN_LABEL_EDGE > WIDTH_MARKER_LABEL_HALO
     # Wider than view, or taller: centred on that axis.
-    check labelInView(100.0, 100.0, 300.0, width_page, height_page) == (0.5*width_page, 100.0)
+    check labelInView(100.0, 100.0, 300.0, width_page, height_page) == (0.5 * width_page, 100.0)
     check labelInView(100.0, 100.0, half, width_page, 10.0) == (100.0, 5.0)
 
 
@@ -790,7 +883,7 @@ suite "Marker":
     check abs(clearanceBeside(1.0, 0.0, 30.0) - (OFFSET_MARKER_RAIL + GAP_MARKER + 30.0)) < 1.0e-9
     let diagonal = clearanceBeside(sqrt(0.5), sqrt(0.5), 30.0)
     check diagonal > OFFSET_MARKER_RAIL + GAP_MARKER + 8.0 and
-      diagonal < OFFSET_MARKER_RAIL + GAP_MARKER + 30.0
+        diagonal < OFFSET_MARKER_RAIL + GAP_MARKER + 30.0
 
 
   test "every marker places its name label above its own top, clear of the outline":
@@ -799,7 +892,7 @@ suite "Marker":
     #   highest outline point. Bands: above leftmost, pushed in from edge. Frame is whole
     #   view, so label stands inside its bottom-left corner, in from edge, pushed rightward.
     let
-      lift = GAP_MARKER + 0.5*HEIGHT_MARKER_LABEL
+      lift = GAP_MARKER + 0.5 * HEIGHT_MARKER_LABEL
       ring = markerOf(point_a).get
     check ring.has_label
     check ring.label_at.x =~ ring.centre.x
@@ -808,14 +901,23 @@ suite "Marker":
     let
       (placement, view_projection, scale) = setUp()
       swollen = shapedMarkerFor(
-        point_a, none(Position), scale, placement, view_projection, width_mark, height_mark,
-        1.0, is_touch = true, travel = none(float), swell = 1.0,
+        point_a,
+        none(Position),
+        scale,
+        placement,
+        view_projection,
+        width_mark,
+        height_mark,
+        1.0,
+        is_touch = true,
+        travel = none(float),
+        swell = 1.0,
       ).get
     check swollen.radius > ring.radius
     check swollen.label_at.y =~ swollen.centre.y - swollen.radius - lift
     let loop = markerOf(plane).get
     check loop.kind == MarkerKind.Loop and loop.has_label
-    for i in 0 ..< loop.count_point:
+    for i in 0..<loop.count_point:
       check loop.points[i].y >= loop.label_at.y + lift - TOLERANCE_TEST
     let rails = markerOf(line).get
     check rails.kind == MarkerKind.Rails and rails.has_label and rails.is_label_beside
@@ -827,22 +929,24 @@ suite "Marker":
     check abs(rails.label_at.y - support.y) < 1.0e-6
     check abs(hypot(rails.label_away_x, rails.label_away_y) - 1.0) < 1.0e-9
     let along = projectToScreen(
-      view_projection, width_mark, height_mark, positionAnchor(line).get + 0.1*direction(line).get
+      view_projection, width_mark, height_mark, positionAnchor(line).get + 0.1 * direction(line).get
     )
-    check abs((along.x - support.x)*rails.label_away_x + (along.y - support.y)*rails.label_away_y) <
-      1.0e-6*hypot(along.x - support.x, along.y - support.y)
+    check abs(
+      (along.x - support.x) * rails.label_away_x + (along.y - support.y) * rails.label_away_y,
+    ) <
+      1.0e-6 * hypot(along.x - support.x, along.y - support.y)
     let bands = markerOf(line_horizon).get
     check bands.kind == MarkerKind.Bands and bands.has_label and bands.is_label_beside
     check bands.label_away_x =~ 1.0 and bands.label_away_y =~ 0.0
-    for side in 0 .. 1:
-      for i in 0 ..< bands.counts_band[side]:
+    for side in 0..1:
+      for i in 0..<bands.counts_band[side]:
         check bands.points_band[side][i].x >=
-          bands.label_at.x - MARGIN_LABEL_HORIZON - PIXELS_TIE_LEFTMOST - TOLERANCE_TEST
+            bands.label_at.x - MARGIN_LABEL_HORIZON - PIXELS_TIE_LEFTMOST - TOLERANCE_TEST
     let frame = markerOf(plane_horizon).get
     check frame.kind == MarkerKind.Frame and frame.has_label and frame.is_label_beside
     check frame.label_at.x =~ GAP_MARKER + MARGIN_LABEL_HORIZON
     check frame.label_at.y =~
-      float(height_mark) - MARGIN_LABEL_FOOT - MARGIN_LABEL_HORIZON - 0.5*HEIGHT_MARKER_LABEL
+        float(height_mark) - MARGIN_LABEL_FOOT - MARGIN_LABEL_HORIZON - 0.5 * HEIGHT_MARKER_LABEL
     check frame.label_away_x =~ 1.0 and frame.label_away_y =~ 0.0
 
 
@@ -861,13 +965,13 @@ suite "Marker":
     #   its horizons; plane's circle opens from its centre.
     check markerOf(point_a, progress = 0.25).get.fraction =~ 0.25
     check markerOf(point_a, progress = 0.25).get.radius =~
-      markerOf(point_a).get.radius # Swept, never shrunk.
+        markerOf(point_a).get.radius  # Swept, never shrunk.
     var
       reach_previous = 0.0
       radius_previous = 0.0
-    for step in 1 .. 8:
+    for step in 1..8:
       let
-        progress = float(step)/8.0
+        progress = float(step) / 8.0
         (reach, radius) = (
           reachRails(markerOf(line, progress = progress).get),
           radiusLoop(markerOf(plane, progress = progress).get),
@@ -883,10 +987,10 @@ suite "Marker":
     #   screen projection -- reason shortening is done after projecting, along
     #   that segment, rather than by scaling world reach anchored at eye.
     let whole = markerOf(line).get
-    for step in 1 .. 4:
-      let part = markerOf(line, progress = float(step)/4.0).get
+    for step in 1..4:
+      let part = markerOf(line, progress = float(step) / 4.0).get
       check part.count_segment == whole.count_segment
-      for i in 0 ..< whole.count_segment:
+      for i in 0..<whole.count_segment:
         let
           (tail, head) = (whole.segments[i][0], whole.segments[i][1])
           grown = part.segments[i][1]
@@ -894,10 +998,10 @@ suite "Marker":
           # Distance from grown head to whole rail, as twice triangle's area.
           #   over its base: zero exactly when three points are collinear.
           area_twice = abs(
-            (head.x - tail.x)*(grown.y - tail.y) - (head.y - tail.y)*(grown.x - tail.x)
+            (head.x - tail.x) * (grown.y - tail.y) - (head.y - tail.y) * (grown.x - tail.x),
           )
-        check part.segments[i][0] == tail # Still starts where finished rail starts.
-        check area_twice/along < TOLERANCE_SINGLE
+        check part.segments[i][0] == tail  # Still starts where finished rail starts.
+        check area_twice / along < TOLERANCE_SINGLE
 
 
   test "a line's rails grow across the view, both halves at a comparable rate":
@@ -909,9 +1013,9 @@ suite "Marker":
     #   into nothing; reach is measured against edge of view instead.
     proc lengthsAt(progress: float): seq[float] =
       let marker = markerOf(line, progress = progress).get
-      for i in 0 ..< marker.count_segment:
+      for i in 0..<marker.count_segment:
         let (tail, head) = (marker.segments[i][0], marker.segments[i][1])
-        result.add(hypot(head.x - tail.x, head.y - tail.y))
+        result.add hypot(head.x - tail.x, head.y - tail.y)
 
     let whole = lengthsAt(1.0)
     check len(whole) >= 2
@@ -921,13 +1025,13 @@ suite "Marker":
 
     # Halves stay within small factor of one another rather than wild one, and.
     #   each is straight multiple of progress -- one speed, from support, both ways.
-    check max(whole)/max(min(whole), 1.0) < 4.0
-    for step in 1 .. 3:
+    check max(whole) / max(min(whole), 1.0) < 4.0
+    for step in 1..3:
       let
-        progress = float(step)/4.0
+        progress = float(step) / 4.0
         partial = lengthsAt(progress)
       check len(partial) == len(whole)
-      for i in 0 ..< len(whole): check partial[i] =~ progress*whole[i]
+      for i in 0..<len(whole): check partial[i] =~ progress * whole[i]
 
 
   test "a rail bounded by the view stops at the edge it leaves through":
@@ -943,8 +1047,10 @@ suite "Marker":
     ) =~ 1.0
     # Starting outside and heading further out draws nothing, which is what can be seen.
     check fractionLeavingView(
-      ScreenPosition(x: 400.0, y: 50.0), ScreenPosition(x: 900.0, y: 50.0),
-      int(wide), int(tall),
+      ScreenPosition(x: 400.0, y: 50.0),
+      ScreenPosition(x: 900.0, y: 50.0),
+      int(wide),
+      int(tall),
     ) =~ 0.0
 
 
@@ -961,7 +1067,7 @@ suite "Marker":
     #   through -- third of pixel past which is comet with no tail yet, by same
     #   clamp that keeps arc's run from drawing chord across view. Read where
     #   comet is actually on its way round.
-    check pulsed(line_horizon, 0.3*LENGTH_MARKER_COMET).count_run_pulse > 0
+    check pulsed(line_horizon, 0.3 * LENGTH_MARKER_COMET).count_run_pulse > 0
     check pulsed(point_a, 0.3).count_run_pulse == 0
     check pulsed(plane_horizon, 0.3).count_run_pulse == 0
     # Nothing pulses unless caller says object is selected by passing time.
@@ -973,23 +1079,27 @@ suite "Marker":
     let marker = pulsed(plane, 0.3)
     proc distanceToLoop(point: ScreenPosition, marker: Marker): float =
       result = high(float)
-      for i in 0 ..< marker.count_point:
+      for i in 0..<marker.count_point:
         let
-          (first, second) = (marker.points[i], marker.points[(i + 1) mod marker.count_point])
+          (first, second) = (marker.points[i], marker.points[(i+1) mod marker.count_point])
           (offset_x, offset_y) = (second.x - first.x, second.y - first.y)
-          span = offset_x*offset_x + offset_y*offset_y
+          span = offset_x * offset_x + offset_y * offset_y
           along =
             if span <= 0.0: 0.0
             else:
-              clamp(((point.x - first.x)*offset_x + (point.y - first.y)*offset_y)/span, 0.0, 1.0)
+              clamp(
+                ((point.x - first.x) * offset_x + (point.y - first.y) * offset_y) / span,
+                0.0,
+                1.0,
+              )
           on = first.towards(second, along)
         result = min(result, hypot(point.x - on.x, point.y - on.y))
-    for run in 0 ..< marker.count_run_pulse:
+    for run in 0..<marker.count_run_pulse:
       # Both sides and head's cap, so every run is one closed loop of them.
       check marker.counts_pulse[run] mod 2 == SEGMENTS_MARKER_CAP mod 2
-      for i in 0 ..< marker.counts_pulse[run]:
+      for i in 0..<marker.counts_pulse[run]:
         check distanceToLoop(marker.pulses[run][i], marker) <
-          0.5*float(WIDTH_MARKER_COMET) + 1.0
+            0.5 * float(WIDTH_MARKER_COMET) + 1.0
 
     # Run tapers: its head stands off spine by half `WIDTH_MARKER_COMET`, and its.
     #   tail meets outline at outline's own width, so only head is edge.
@@ -998,12 +1108,11 @@ suite "Marker":
       count = marker.counts_pulse[0]
       spans = (count - SEGMENTS_MARKER_CAP) div 2
     proc widthAcross(i: int): float =
-      hypot(outline[i].x - outline[2*spans - 1 - i].x,
-        outline[i].y - outline[2*spans - 1 - i].y)
+      hypot(outline[i].x - outline[2*spans-1-i].x, outline[i].y - outline[2*spans-1-i].y)
     check widthAcross(0) =~ float(WIDTH_MARKER_COMET)
     check widthAcross(spans - 1) =~ float(WIDTH_MARKER)
     # And it thins whole way, never swelling again behind its own head.
-    for i in 1 ..< spans:
+    for i in 1..<spans:
       check widthAcross(i) <= widthAcross(i - 1) + TOLERANCE_SINGLE
 
 
@@ -1015,9 +1124,11 @@ suite "Marker":
       # Down middle of ribbon, which recovers spine it was built around: its.
       #   own two edges splay wherever width changes, and are longer than run.
       let spans = (marker.counts_pulse[run] - SEGMENTS_MARKER_CAP) div 2
+
       proc middleAt(i: int): ScreenPosition =
-        marker.pulses[run][i].towards(marker.pulses[run][2*spans - 1 - i], 0.5)
-      for i in 1 ..< spans:
+        marker.pulses[run][i].towards(marker.pulses[run][2*spans-1-i], 0.5)
+
+      for i in 1..<spans:
         let (a, b) = (middleAt(i - 1), middleAt(i))
         result += hypot(b.x - a.x, b.y - a.y)
 
@@ -1025,20 +1136,21 @@ suite "Marker":
     for geometry in [plane, line, line_horizon]:
       let
         lap = markerOf(geometry, travel = some(0.0)).get.lap
-        shaped = markerOf(geometry, travel = some(0.4*lap)).get
+        shaped = markerOf(geometry, travel = some(0.4 * lap)).get
       check shaped.count_run_pulse > 0
-      for run in 0 ..< shaped.count_run_pulse:
+      for run in 0..<shaped.count_run_pulse:
         # Run laid along curve is chain of chords, so it falls hair short of.
         #   arc it covers; nothing else may.
         check lengthOfRun(shaped, run) <= LENGTH_MARKER_COMET + TOLERANCE_SINGLE
-        check lengthOfRun(shaped, run) > 0.98*LENGTH_MARKER_COMET
+        check lengthOfRun(shaped, run) > 0.98 * LENGTH_MARKER_COMET
 
 
   proc headOfRun(marker: Marker, run: int): ScreenPosition =
     ## Find where run's spine begins, recovered from middle of ribbon around it.
     ##   Its own edges ride wide of spine on outside of any bend.
     let spans = (marker.counts_pulse[run] - SEGMENTS_MARKER_CAP) div 2
-    marker.pulses[run][0].towards(marker.pulses[run][2*spans - 1], 0.5)
+    marker.pulses[run][0].towards(marker.pulses[run][2*spans-1], 0.5)
+
 
   test "one step of travel carries the head that many pixels, on every shape":
     # Marker's half of constant screen speed, and whole point of units:
@@ -1052,14 +1164,14 @@ suite "Marker":
         headOfRun(markerOf(geometry, travel = some(travelled)).get, 0)
       const step = 4.0
       let
-        start = 0.4*lap
+        start = 0.4 * lap
         crossed = hypot(
           headAt(start + step).x - headAt(start).x, headAt(start + step).y - headAt(start).y
         )
       # Chord, so hair under arc actually covered -- and no `lap` on either side of.
       #   comparison, which is assertion this case exists to make.
       check crossed <= step + TOLERANCE_SINGLE
-      check crossed > 0.98*step
+      check crossed > 0.98 * step
 
 
   test "a camera move slides a line's comet with the line, never along it":
@@ -1081,13 +1193,21 @@ suite "Marker":
           let (placement, view_projection, scale) =
             setUpAt(outToward(bearing, rise), distance)
           let shaped = shapedMarkerFor(
-            line, none(Position), scale, placement, view_projection,
-            width_mark, height_mark, 1.0, is_touch = false, travel = some(travel_case),
+            line,
+            none(Position),
+            scale,
+            placement,
+            view_projection,
+            width_mark,
+            height_mark,
+            1.0,
+            is_touch = false,
+            travel = some(travel_case),
           )
           if shaped.isNone or shaped.get.count_run_pulse == 0: continue
           # Skip placement with too little rail left to hold travel, which laps it.
           if shaped.get.lap <= travel_case: continue
-          for run in 0 ..< shaped.get.count_run_pulse:
+          for run in 0..<shaped.get.count_run_pulse:
             let
               head = headOfRun(shaped.get, run)
               anchor = shaped.get.anchors_pulse[run]
@@ -1103,7 +1223,7 @@ suite "Marker":
     #   pulse on its own -- four comets at four unrelated places on one selected line.
     let
       lap = markerOf(line, travel = some(0.0)).get.lap
-      shaped = markerOf(line, travel = some(0.4*lap)).get
+      shaped = markerOf(line, travel = some(0.4 * lap)).get
     check shaped.count_segment == 4
     check shaped.count_run_pulse == 2
     # And pair travels together rather than each rail keeping its own clock, so.
@@ -1122,7 +1242,7 @@ suite "Marker":
     #   run exists immediately and deadlock has no state to occupy at all. Lap must
     #   still be reported, because that is what clock reduces against.
     let stalled = markerOf(line, travel = some(0.0)).get
-    check stalled.count_run_pulse == 2 # One per rail, from first frame.
+    check stalled.count_run_pulse == 2  # One per rail, from first frame.
     check stalled.lap > 0.0
     check travelAdvanced(0.0, stalled.lap, 1.0) > 0.0
     # Closed outline never entered that state and still does not.
@@ -1136,9 +1256,9 @@ suite "Marker":
 
     let start = headAt(0.0)
     var moved = 0
-    for step in 1 .. 5:
-      if hypot(headAt(float(step)*lap/6.0).x - start.x,
-        headAt(float(step)*lap/6.0).y - start.y) > 1.0: inc moved
+    for step in 1..5:
+      if hypot(headAt(float(step) * lap / 6.0).x - start.x,
+        headAt(float(step) * lap / 6.0).y - start.y) > 1.0: inc moved
     check moved == 5
     # Whole lap on is where it began, so motion is circulation rather than run.
     #   that ends somewhere.
@@ -1149,8 +1269,8 @@ suite "Marker":
     #   than at point of use, is what stops change in lap being amplified by
     #   however many laps have gone by -- see `travelAdvanced`.
     const lap_fixed = 300.0
-    check travelAdvanced(0.25*lap_fixed, lap_fixed, 3.0*lap_fixed/SPEED_MARKER_PULSE) =~
-      0.25*lap_fixed
+    check travelAdvanced(0.25 * lap_fixed, lap_fixed, 3.0 * lap_fixed / SPEED_MARKER_PULSE) =~
+        0.25 * lap_fixed
 
 
   test "the drag band swells into its head, whichever way it runs":
@@ -1163,25 +1283,28 @@ suite "Marker":
       # Widest across point aimed at, thinning to band's own width behind it, so.
       #   swell itself is what says which end answer lands at.
       proc widthAcross(i: int): float =
-        hypot(drawn[i].x - drawn[2*spans - 1 - i].x, drawn[i].y - drawn[2*spans - 1 - i].y)
+        hypot(drawn[i].x - drawn[2*spans-1-i].x, drawn[i].y - drawn[2*spans-1-i].y)
       check widthAcross(0) =~ float(WIDTH_MARKER_COMET)
       check widthAcross(spans - 1) =~ float(WIDTH_MARKER)
       # Centred on band rather than swung to one side of it.
       for i in [0, spans div 2, spans - 1]:
         let middle = ScreenPosition(
-          x: 0.5*(drawn[i].x + drawn[2*spans - 1 - i].x),
-          y: 0.5*(drawn[i].y + drawn[2*spans - 1 - i].y),
+          x: 0.5 * (drawn[i].x + drawn[2*spans-1-i].x),
+          y: 0.5 * (drawn[i].y + drawn[2*spans-1-i].y),
         )
-        check abs((middle.x - head.x)*offset_y - (middle.y - head.y)*offset_x) < TOLERANCE_SINGLE
+        check abs((middle.x - head.x) * offset_y - (middle.y - head.y) * offset_x) <
+            TOLERANCE_SINGLE
       # Lying behind point aimed at, never past it, apart from head's own cap.
-      for i in 0 ..< 2*spans:
-        check (drawn[i].x - head.x)*offset_x + (drawn[i].y - head.y)*offset_y <= TOLERANCE_SINGLE
+      for i in 0 ..< 2 * spans:
+        check (drawn[i].x - head.x) * offset_x + (drawn[i].y - head.y) * offset_y <=
+            TOLERANCE_SINGLE
+
 
   test "a drag band shorter than the comet lights all of itself, and no more":
     # Otherwise head would reach back past very object drag started on.
     let
       tail = ScreenPosition(x: 100.0, y: 100.0)
-      near = ScreenPosition(x: 100.0 + 0.5*LENGTH_MARKER_COMET, y: 100.0)
+      near = ScreenPosition(x: 100.0 + 0.5 * LENGTH_MARKER_COMET, y: 100.0)
       drawn = cometFor(tail, near).get
     for point in drawn: check point.x >= tail.x - TOLERANCE_SINGLE
 

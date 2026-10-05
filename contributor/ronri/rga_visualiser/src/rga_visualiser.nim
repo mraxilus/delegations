@@ -59,8 +59,7 @@
 
 {.experimental: "strictFuncs".}
 
-when compileOption("profiler"):
-  import std/nimprof
+when compileOption("profiler"): import std/nimprof
 
 import ./rga_visualiser/[
   boundary, camera, euclid, format, framing, help, history, interaction, marker,

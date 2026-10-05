@@ -5,6 +5,7 @@
 import ./fixtures
 
 
+
 suite "Message":
   test "an outcome stands its time, fades, and reaches nothing at all":
     # Whole defect this module exists for. Window had no age on its message: line stood
@@ -13,17 +14,17 @@ suite "Message":
     #   outcome of nothing.
     #   Read as fraction still on screen, which is what drawing multiplies alpha by.
     check messageFade(0.0) == 1.0
-    check messageFade(0.5*SECONDS_MESSAGE) == 1.0
+    check messageFade(0.5 * SECONDS_MESSAGE) == 1.0
     check messageFade(SECONDS_MESSAGE) == 1.0
     # Halfway through fade, half of it is left.
-    check messageFade(SECONDS_MESSAGE + 0.5*SECONDS_MESSAGE_FADE) =~ 0.5
+    check messageFade(SECONDS_MESSAGE + 0.5 * SECONDS_MESSAGE_FADE) =~ 0.5
     # Exactly nothing by end of fade, and nothing ever after -- not merely small.
     check messageFade(SECONDS_MESSAGE + SECONDS_MESSAGE_FADE) == 0.0
     check messageFade(60.0) == 0.0
     # Never rises again, at any age.
     var previous = 1.0
-    for step in 0 .. 200:
-      let faded = messageFade(float(step)*0.05)
+    for step in 0..200:
+      let faded = messageFade(float(step) * 0.05)
       check faded <= previous
       previous = faded
 
@@ -34,7 +35,7 @@ suite "Message":
     check objectsCounted(1) == "1 object"
     check objectsCounted(2) == "2 objects"
     check objectsCounted(0) == "0 objects"
-    for count in 0 .. 8:
+    for count in 0..8:
       check "(s)" notin objectsCounted(count)
 
 

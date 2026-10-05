@@ -30,8 +30,7 @@
 import std/[math, options, strformat, strutils, unicode]
 
 # `pga` arrives through `projections`, which stands in for four it has withdrawn.
-import ./projections
-import ./[boundary, format, tessellate]
+import ./[boundary, format, projections, tessellate]
 
 
 
@@ -45,8 +44,7 @@ const
     ##   Sized so demo holds real solar neighbourhood; see `orrery`.
     ##   Four capacities in `mesh` are sized against this and checked below, since `mesh`
     ##   cannot see it from where it sits in import order.
-  LABEL_MAX* {.define: "visualiser.label_max".} = 40
-    ## Bound characters label may hold.
+  LABEL_MAX* {.define: "visualiser.label_max".} = 40  ## Bound characters label may hold.
 static:
   doAssert OBJECTS_MAX > 0, &"Scene capacity must be positive; got `{OBJECTS_MAX}`."
   doAssert LABEL_MAX >= 8, &"Label must hold 8 characters; got `{LABEL_MAX}`."
@@ -54,24 +52,24 @@ static:
   # Tie mesh's capacities to this one where both are visible.
   #   Overflowing any is `doAssert` at draw time, dead page, so raising `OBJECTS_MAX` fails
   #   to compile instead.
-  doAssert VERTICES_MAX >= 2*OBJECTS_MAX,
+  doAssert VERTICES_MAX >= 2 * OBJECTS_MAX,
     &"`mesh.VERTICES_MAX` must hold every point drawn twice, `{2*OBJECTS_MAX}` at this " &
-      &"capacity; got `{VERTICES_MAX}`."
-  doAssert DISCS_MAX >= 2*OBJECTS_MAX + 1,
+    &"capacity; got `{VERTICES_MAX}`."
+  doAssert DISCS_MAX >= 2 * OBJECTS_MAX + 1,
     &"`mesh.DISCS_MAX` must hold every plane drawn twice plus a preview, " &
-      &"`{2*OBJECTS_MAX + 1}` at this capacity; got `{DISCS_MAX}`."
-  doAssert DOMES_MAX >= 2*OBJECTS_MAX + 1,
+    &"`{2*OBJECTS_MAX + 1}` at this capacity; got `{DISCS_MAX}`."
+  doAssert DOMES_MAX >= 2 * OBJECTS_MAX + 1,
     &"`mesh.DOMES_MAX` must hold every horizon plane drawn twice plus a preview, " &
-      &"`{2*OBJECTS_MAX + 1}` at this capacity; got `{DOMES_MAX}`."
-  doAssert RINGS_MAX >= 2*OBJECTS_MAX + 1,
+    &"`{2*OBJECTS_MAX + 1}` at this capacity; got `{DOMES_MAX}`."
+  doAssert RINGS_MAX >= 2 * OBJECTS_MAX + 1,
     &"`mesh.RINGS_MAX` must hold every plane's rim drawn twice plus a preview, " &
-      &"`{2*OBJECTS_MAX + 1}` at this capacity; got `{RINGS_MAX}`."
+    &"`{2*OBJECTS_MAX + 1}` at this capacity; got `{RINGS_MAX}`."
   # Bind on scene of lines.
   #   Rim is one ring record, so what fills ribbons is two segments `tessellate.addLine`
   #   steps out per anchor, drawn twice.
-  doAssert RIBBONS_MAX >= 4*OBJECTS_MAX + 1,
+  doAssert RIBBONS_MAX >= 4 * OBJECTS_MAX + 1,
     &"`mesh.RIBBONS_MAX` must hold a scene of lines, each two segments drawn twice, " &
-      &"plus a preview, `{4*OBJECTS_MAX + 1}` at this capacity; got `{RIBBONS_MAX}`."
+    &"plus a preview, `{4*OBJECTS_MAX + 1}` at this capacity; got `{RIBBONS_MAX}`."
 
 
 
@@ -81,7 +79,7 @@ type
   Label* = array[LABEL_MAX, char]
     ## Define object's display text, terminated by 0, so GUI may edit it without allocating.
 
-  Object* = object ## Define handle onto one live handle's data.
+  Object* = object  ## Define handle onto one live handle's data.
     ## View on native builds, copy under JS backend, where value parameter's address does
     ## not carry across calls.
     ## Holds pointer into `scene`'s storage plus handle number.
@@ -94,22 +92,22 @@ type
       scene: ptr Scene
     handle: int
 
-  Scene* = object ## Define fixed-capacity arena of objects, addressed by stable handle.
-    geometries: array[OBJECTS_MAX, Multivector] ## Per-handle geometry.
-    labels: array[OBJECTS_MAX, Label] ## Per-handle display label.
-    inks: array[OBJECTS_MAX, Ink] ## Per-handle palette entry.
-    radii: array[OBJECTS_MAX, float] ## Per-handle drawn radius, in world units; see `radiusAt`.
+  Scene* = object  ## Define fixed-capacity arena of objects, addressed by stable handle.
+    geometries: array[OBJECTS_MAX, Multivector]  ## Per-handle geometry.
+    labels: array[OBJECTS_MAX, Label]  ## Per-handle display label.
+    inks: array[OBJECTS_MAX, Ink]  ## Per-handle palette entry.
+    radii: array[OBJECTS_MAX, float]  ## Per-handle drawn radius, in world units; see `radiusAt`.
       ## Read only for point: line and plane take their size from camera and horizon.
-    are_visible: array[OBJECTS_MAX, bool] ## Per-handle visibility.
-    are_alive: array[OBJECTS_MAX, bool] ## Per-handle occupancy; false where handle is free.
-    borns: array[OBJECTS_MAX, float] ## Per-handle moment object was added, for appear animation.
+    are_visible: array[OBJECTS_MAX, bool]  ## Per-handle visibility.
+    are_alive: array[OBJECTS_MAX, bool]  ## Per-handle occupancy; false where handle is free.
+    borns: array[OBJECTS_MAX, float]  ## Per-handle moment object was added, for appear animation.
       ## Not written to scene file, since clock reading means nothing across runs.
       ## Loaded object is stamped all same, so file replays own construction; see
       ## `bornReplaying`.
-    revisions_placing: array[OBJECTS_MAX, int] ## Per-handle revision at which handle's placing
+    revisions_placing: array[OBJECTS_MAX, int]  ## Per-handle revision at which handle's placing
       ## inputs last changed; see `revisionPlacingAt`.
       ## Placing inputs are geometry and anchor override.
-    orders: array[OBJECTS_MAX, uint32] ## Per-handle creation ordinal.
+    orders: array[OBJECTS_MAX, uint32]  ## Per-handle creation ordinal.
       ## How many objects scene had ever been given when this one arrived.
       ## Separate from `borns` because clock reading cannot answer this.
       ##   Two objects added in one frame share reading, loaded readings are stamped for
@@ -118,29 +116,29 @@ type
       ## object sequence is this order.
       ##   Buys `saveScene` writing objects in order built, so reload replays construction
       ##   even after removals scrambled handle order.
-    anchor_overrides: array[OBJECTS_MAX, Option[Position]] ## Where plane's circle should
+    anchor_overrides: array[OBJECTS_MAX, Option[Position]]  ## Where plane's circle should
       ## centre, for object whose construction fixes that more specifically than its
       ## closest-to-origin support; see `creationAnchor`.
       ## None for anything else.
       ## Not saved or loaded: rendering hint recomputed from how object was built.
-    next_free: array[OBJECTS_MAX, Option[int]] ## Link to next free handle; intrusive free list.
-    handle_free_first: Option[int] ## Head of free list; none where scene is full.
-    count_live: int ## Number of occupied handles, so `len` need not rescan `are_alive`.
-    handle_live_last: int ## One past highest handle ever occupied; see `bound`.
-    count_created: uint32 ## Ordinals handed out so far, and next one to hand out.
+    next_free: array[OBJECTS_MAX, Option[int]]  ## Link to next free handle; intrusive free list.
+    handle_free_first: Option[int]  ## Head of free list; none where scene is full.
+    count_live: int  ## Number of occupied handles, so `len` need not rescan `are_alive`.
+    handle_live_last: int  ## One past highest handle ever occupied; see `bound`.
+    count_created: uint32  ## Ordinals handed out so far, and next one to hand out.
       ## Counts additions over scene's whole life, never removals.
-    count_edits: int ## How many times scene's drawn content has changed; see `revision`.
-    index_ink: int ## How far categorical cycle has been walked; next hue to hand out.
+    count_edits: int  ## How many times scene's drawn content has changed; see `revision`.
+    index_ink: int  ## How far categorical cycle has been walked; next hue to hand out.
       ## Own counter rather than `len`, because drag that built nothing still steps
       ## palette.
       ##   Reader watched colour on band and it should not be offered again.
       ## Undo restores it with rest of scene.
       ## Not written to file: `loadScene` sets it from object count.
 
-  Arity* {.pure.} = enum ## Define count of operands operation consumes.
+  Arity* {.pure.} = enum  ## Define count of operands operation consumes.
     One, Two
 
-  Operation* {.pure.} = enum ## Define every operation GUI may apply to scene's objects.
+  Operation* {.pure.} = enum  ## Define every operation GUI may apply to scene's objects.
     ## Name one-operand operations, in order library's own documentation lists them.
     Attitude, Support, SupportAnti, Bulk, Weight, Unitize,
     ComplementLeft, ComplementRight, DualBulk, DualWeight,
@@ -150,18 +148,18 @@ type
     ExpandBulk, ExpandWeight, ContractBulk, ContractWeight,
     ProjectCentral, ProjectOrthogonal,
 
-  Preview* = object ## Define what applying operation would build, ready to draw and frame.
+  Preview* = object  ## Define what applying operation would build, ready to draw and frame.
     ## One statement of uncommitted construction, shared by every path offering one.
     ##   Drag's rubber-band answer and both apply pickers.
-    geometry*: Multivector ## What operation makes of its operands.
-    anchor*: Option[Position] ## Where plane's disc should centre, from `creationAnchor`.
+    geometry*: Multivector  ## What operation makes of its operands.
+    anchor*: Option[Position]  ## Where plane's disc should centre, from `creationAnchor`.
       ## None for every other kind.
       ## Carried so previewed plane is drawn exactly where commit will put it.
-    operands*: Option[(int, int)] ## Handles this was derived from.
+    operands*: Option[(int, int)]  ## Handles this was derived from.
       ## For camera framing preview to keep in view beside it.
       ## None where there are none to name: staged edit replaces very object it would be
       ## framed against.
-    radius*: float ## Drawn radius preview takes, where it is point; see `radiusAt`.
+    radius*: float  ## Drawn radius preview takes, where it is point; see `radiusAt`.
       ## Staged session's own, so editing moon previews moon-sized; derived preview takes
       ## `RADIUS_OBJECT_DEFAULT`, what commit gives it.
 
@@ -170,20 +168,20 @@ type
     ##   Kind reading works in, and thing `upgradedFrom<n>` carries between versions.
     ##   Distinct from `Object`: value read off bytes that may not describe anything this
     ##   build can make yet.
-    ink_ordinal*: int ## Palette slot, as writing version's `Ink` numbered it.
-    is_visible*: bool ## Whether object was hidden when saved.
-    label*: string ## Display label, decoded from file's UTF-8 bytes.
-    geometry*: Multivector ## Object itself, one coefficient per basis term.
-    radius*: float ## Drawn radius, in world units; `RADIUS_OBJECT_DEFAULT` before version 4.
+    ink_ordinal*: int  ## Palette slot, as writing version's `Ink` numbered it.
+    is_visible*: bool  ## Whether object was hidden when saved.
+    label*: string  ## Display label, decoded from file's UTF-8 bytes.
+    geometry*: Multivector  ## Object itself, one coefficient per basis term.
+    radius*: float  ## Drawn radius, in world units; `RADIUS_OBJECT_DEFAULT` before version 4.
 
-  OperationMemory* = object ## Define memory of operation last applied, one per arity.
+  OperationMemory* = object  ## Define memory of operation last applied, one per arity.
     ## Picker opens on what reader last reached for.
     ##   Reader applying five wedges in row picks operation once.
     ## Per arity because two pickers offer disjoint lists.
     ## Plain value type with no refs, like `Selection`, so GUI holds one by value.
     unary: Operation
     binary: Operation
-    is_started: bool ## Whether two above have been set; false leaves defaults below.
+    is_started: bool  ## Whether two above have been set; false leaves defaults below.
 
 
 
@@ -217,7 +215,7 @@ const LUT_ARITY_BY_OPERATION*: array[Operation, Arity] = [
   Operation.ContractWeight: Arity.Two,
   Operation.ProjectCentral: Arity.Two,
   Operation.ProjectOrthogonal: Arity.Two,
-] ## Map operation to number of operands it consumes.
+]  ## Map operation to number of operands it consumes.
 
 
 const LUT_NOTATION_BY_OPERATION* = [
@@ -248,7 +246,7 @@ const LUT_NOTATION_BY_OPERATION* = [
   Operation.ContractWeight: "𝐦 ∨ 𝐧☆  weight contraction",
   Operation.ProjectCentral: "𝐧 ∨ (𝐦 ∧ 𝐧★)  central projection",
   Operation.ProjectOrthogonal: "𝐧 ∨ (𝐦 ∧ 𝐧☆)  orthogonal projection",
-] ## Map operation to notation and name GUI offers it under, for both render paths.
+]  ## Map operation to notation and name GUI offers it under, for both render paths.
   ##   Operands in Lengyel's mathematical bold, every symbol's placement his.
   ##   Written with spacing modifier letters (`ˆ` U+02C6, `ˍ` U+02CD, `¯` U+00AF, `˜`
   ##   U+02DC, `˷` U+02F7) rather than combining marks.
@@ -286,7 +284,7 @@ const
         full = LUT_NOTATION_BY_OPERATION[operation]
         cutoff = full.find("  ")
       lut[operation] =
-        if cutoff >= 0: (symbols: full[0 ..< cutoff], name: full[cutoff + 2 .. ^1].strip())
+        if cutoff >= 0: (symbols: full[0..<cutoff], name: full[cutoff+2 .. ^1].strip())
         else: (symbols: full, name: "")
     lut
 
@@ -314,8 +312,7 @@ const
     ##   Products are associative too, but chain of them is rare and brackets cost nothing.
   SYMBOLS_OPERATOR_POSTFIX = ["⊖", "★", "☆", "¯", "˜", "˷", "ˆ", "ˍ"]
     ## List unary operators templates write after operand, binding tighter than any binary.
-  SYMBOL_NEGATE = "−"
-    ## Unary operator templates write before operand, U+2212.
+  SYMBOL_NEGATE = "−"  ## Unary operator templates write before operand, U+2212.
 
 
 func operatorsOutermost(name: string): seq[string] =
@@ -372,7 +369,7 @@ func notationSubstituted*(operation: Operation; name_first, name_second: string)
     operand_first = "𝐦"
     operand_second = "𝐧"
   var tokens = notationSymbolic(operation).split(' ')
-  for i in 0 ..< tokens.len:
+  for i in 0..<tokens.len:
     let
       token = tokens[i]
       (placeholder, name) =
@@ -381,17 +378,17 @@ func notationSubstituted*(operation: Operation; name_first, name_second: string)
         else: continue
     let
       at = token.find(placeholder)
-      before = token[0 ..< at]
-      after = token[at + placeholder.len .. ^1]
+      before = token[0..<at]
+      after = token[at+placeholder.len .. ^1]
     var is_unary = before.endsWith(SYMBOL_NEGATE)
     for symbol in SYMBOLS_OPERATOR_POSTFIX:
       if after.startsWith(symbol): is_unary = true
     var binding = ""
     if not is_unary:
-      if i + 1 < tokens.len and tokens[i + 1] in SYMBOLS_OPERATOR_BINARY:
-        binding = tokens[i + 1]
-      elif i > 0 and tokens[i - 1] in SYMBOLS_OPERATOR_BINARY:
-        binding = tokens[i - 1]
+      if i + 1 < tokens.len and tokens[i+1] in SYMBOLS_OPERATOR_BINARY:
+        binding = tokens[i+1]
+      elif i > 0 and tokens[i-1] in SYMBOLS_OPERATOR_BINARY:
+        binding = tokens[i-1]
     tokens[i] = before & nameInContext(name, binding, is_unary) & after
   tokens.join(" ")
 
@@ -470,9 +467,9 @@ const LUT_NAME_BY_BASIS* = block:
   ##     Rule is second copy of one inside `pga/multivectors.nim`'s `$`, which does not
   ##     expose it; check that one whenever this is touched.
   const
-    name_scalar = "\u{1D7CF}" # Mathematical bold digit one.
-    name_scalar_anti = "\u{1D7D9}" # Mathematical double-struck digit one.
-    name_vector = "\u{1D41E}" # Mathematical bold small e.
+    name_scalar = "\u{1D7CF}"  # Mathematical bold digit one.
+    name_scalar_anti = "\u{1D7D9}"  # Mathematical double-struck digit one.
+    name_vector = "\u{1D41E}"  # Mathematical bold small e.
     codepoint_subscript_zero = 0x2080
   var lut: array[Basis, string]
   for b in Basis:
@@ -495,7 +492,7 @@ const
     ##   Separator, magnitude at `DIGITS_SIGNIFICANT` with sign and exponent, space, and
     ##   basis name in mathematical bold with subscripts at up to 13 bytes.
     ##   Bytes, since that is what buffer holds.
-  WIDTH_MULTIVECTOR* = (ord(Basis.high) + 1)*WIDTH_TERM + 1
+  WIDTH_MULTIVECTOR* = (ord(Basis.high) + 1) * WIDTH_TERM + 1
     ## Bound one printed multivector: every basis term at `WIDTH_TERM`, plus terminator.
     ##   Derived from `Basis`, so build of another dimension sizes own buffers.
 
@@ -521,8 +518,7 @@ func formatMultivector*(m: Multivector, storage: var openArray[char], cursor: va
     appendChars(storage, cursor, LUT_NAME_BY_BASIS[Basis.scalar])
 
 
-const WIDTH_KIND_WORD* = 32
-  ## Bound kind word alone, longest being "mixed grade, nothing to draw".
+const WIDTH_KIND_WORD* = 32  ## Bound kind word alone, longest being "mixed grade, nothing to draw".
 
 
 func describeKind*(m: Multivector, storage: var openArray[char], cursor: var int) =
@@ -547,7 +543,7 @@ func multivectorText*(m: Multivector): string =
     cursor = 0
   formatMultivector(m, storage, cursor)
   finishChars(storage, cursor)
-  toText(storage)
+  storage.toText
 
 
 func kindText*(m: Multivector): string =
@@ -561,7 +557,7 @@ func kindText*(m: Multivector): string =
     cursor = 0
   describeKind(m, storage, cursor)
   finishChars(storage, cursor)
-  toText(storage)
+  storage.toText
 
 
 
@@ -659,7 +655,7 @@ func restoreFrom*(scene: var Scene, snapshot: Scene) =
   let revision_live = scene.count_edits
   scene = snapshot
   scene.count_edits = max(revision_live, snapshot.count_edits) + 1
-  for handle in 0 ..< scene.bound:
+  for handle in 0..<scene.bound:
     if scene.are_alive[handle]: scene.revisions_placing[handle] = scene.count_edits
 
 
@@ -694,8 +690,8 @@ func handleStepped*(scene: Scene, handle: Option[int], step: int): Option[int] =
   if scene.len == 0: return none(int)
   doAssert step != 0, &"Step must be non-zero, or search runs forever; got `{step}`."
   let start = if handle.isSome: handle.get else: -1
-  for offset in 1 .. OBJECTS_MAX:
-    let candidate = floorMod(start + step*offset, OBJECTS_MAX)
+  for offset in 1..OBJECTS_MAX:
+    let candidate = floorMod(start + step * offset, OBJECTS_MAX)
     if scene.isAlive(candidate): return some(candidate)
   none(int)
 
@@ -815,9 +811,9 @@ func siftDown(scene: Scene; handles: var array[OBJECTS_MAX, int]; root, count: i
   ## Sift handle at `root` down until neither child carries later ordinal, over first `count`.
   var parent = root
   while true:
-    var child = 2*parent + 1
+    var child = 2 * parent + 1
     if child >= count: return
-    if child + 1 < count and scene.orders[handles[child + 1]] > scene.orders[handles[child]]:
+    if child + 1 < count and scene.orders[handles[child+1]] > scene.orders[handles[child]]:
       inc child
     if scene.orders[handles[parent]] >= scene.orders[handles[child]]: return
     swap(handles[parent], handles[child])
@@ -832,7 +828,7 @@ func handlesCreated*(scene: Scene, handles: var array[OBJECTS_MAX, int]): int =
   ##     quadratic sort here was most of desktop frame at capacity; figures in
   ##     `PROVENANCE.md`.
   ##   To `bound`, by handle: no handle above watermark has ever held anything.
-  for handle in 0 ..< scene.bound:
+  for handle in 0..<scene.bound:
     if not scene.are_alive[handle]: continue
     handles[result] = handle
     inc result
@@ -852,8 +848,7 @@ func anchorOverrideAt*(scene: Scene, handle: int): Option[Position] =
 
 #[ Searching Objects ]#
 
-const BLANKS_SEARCH = {' ', '\t'}
-  ## Name characters parting one word of search from next.
+const BLANKS_SEARCH = {' ', '\t'}  ## Name characters parting one word of search from next.
 
 
 func isSearching*(query: openArray[char]): bool =
@@ -877,6 +872,7 @@ func isMatchingSearch*(scene: Scene, handle: int, query: openArray[char]): bool 
   ##   read same.
   ##   Kind word is described only where label misses word, since it is dearer of two reads.
   ##   Cost: fold is ASCII alone, so non-ASCII byte matches only itself; `é` does not find `É`.
+
   func lengthOf(text: openArray[char]): int =
     ## Count characters ahead of terminator, or all of them where none stands.
     while result < text.len and text[result] != '\0': inc result
@@ -889,7 +885,7 @@ func isMatchingSearch*(scene: Scene, handle: int, query: openArray[char]): bool 
     for at in 0 .. length_text - length_word:
       var offset = 0
       while offset < length_word and
-          toLowerAscii(text[at + offset]) == toLowerAscii(query[start + offset]):
+          text[at+offset].toLowerAscii == query[start+offset].toLowerAscii:
         inc offset
       if offset == length_word: return true
     false
@@ -918,8 +914,7 @@ func isMatchingSearch*(scene: Scene, handle: int, query: openArray[char]): bool 
 
 
 func handlesMatching*(
-  scene: Scene, query: openArray[char], handles: var array[OBJECTS_MAX, int],
-  kept: openArray[int]
+  scene: Scene, query: openArray[char], handles: var array[OBJECTS_MAX, int], kept: openArray[int]
 ): tuple[count_shown, count_matched: int] =
   ## Fill `handles` with every live handle `query` matches or `kept` names, oldest creation
   ## first; report how many were filled, and how many of those `query` matches.
@@ -933,10 +928,10 @@ func handlesMatching*(
   ##     be kept, and scan per handle costs 25 million comparisons at capacity.
   var is_kept: array[OBJECTS_MAX, bool]
   for handle in kept:
-    doAssert handle in 0 ..< OBJECTS_MAX, &"Kept handle must be in range; got `{handle}`."
+    doAssert handle in 0..<OBJECTS_MAX, &"Kept handle must be in range; got `{handle}`."
     is_kept[handle] = true
   let count = scene.handlesCreated(handles)
-  for position in 0 ..< count:
+  for position in 0..<count:
     let
       handle = handles[position]
       is_matched = scene.isMatchingSearch(handle, query)
@@ -949,9 +944,7 @@ func handlesMatching*(
 
 #[ Previewing Construction ]#
 
-func previewApplying*(
-  scene: Scene; operation: Operation; first, second: int
-): Option[Preview] =
+func previewApplying*(scene: Scene; operation: Operation; first, second: int): Option[Preview] =
   ## Resolve what applying `operation` to these two handles would build.
   ##   None where it would build nothing worth showing.
   ##     Either handle dead, since picker left open across delete is ordinary.
@@ -1011,7 +1004,7 @@ func setVisible*(scene: var Scene, handle: int, is_visible: bool) =
 iterator items*(scene: Scene): Object =
   ## Yield each live object, in handle order.
   ##   Walks to `bound`, as sibling `pairs` does; check both when either changes.
-  for handle in 0 ..< scene.bound:
+  for handle in 0..<scene.bound:
     if scene.are_alive[handle]: yield scene[handle]
 
 
@@ -1019,13 +1012,18 @@ iterator pairs*(scene: Scene): (int, Object) =
   ## Yield each live object together with handle it stands at, in handle order.
   ##   Walks to `bound` rather than capacity, so every consumer stops sweeping empty handles
   ##   at once; sibling of `objects`.
-  for handle in 0 ..< scene.bound:
+  for handle in 0..<scene.bound:
     if scene.are_alive[handle]: yield (handle, scene[handle])
 
 
 func addObject*(
-  scene: var Scene, geometry: Multivector, label: string, ink: Ink, now: float = 0.0,
-  anchor_override: Option[Position] = none(Position), radius: float = RADIUS_OBJECT_DEFAULT
+  scene: var Scene,
+  geometry: Multivector,
+  label: string,
+  ink: Ink,
+  now = 0.0,
+  anchor_override = none(Position),
+  radius: float = RADIUS_OBJECT_DEFAULT,
 ): int {.discardable.} =
   ## Insert object into scene at first free handle, visible; report handle used.
   ##   Silently refuses nothing: caller checks `isFull` first, as scene cannot grow.
@@ -1036,7 +1034,7 @@ func addObject*(
   ##   `radius` is how large point is drawn, in world units; see `radiusAt`.
   doAssert not scene.isFull,
     &"Scene holds at most {OBJECTS_MAX} objects, raise `--define:visualiser.objects_max`; got " &
-      &"`{scene.len}`."
+    &"`{scene.len}`."
   result = scene.handle_free_first.get
   scene.handle_free_first = scene.next_free[result]
   scene.geometries[result] = geometry
@@ -1131,8 +1129,7 @@ func removeObject*(scene: var Scene, handle: int) =
 ##   Adding version means adding one func.
 
 const
-  MAGIC_SCENE* = "RGAS"
-    ## Open every `.rgascene` file with these four bytes.
+  MAGIC_SCENE* = "RGAS"  ## Open every `.rgascene` file with these four bytes.
   VERSION_SCENE* = 7'u8
     ## Stamp format version this build writes.
     ##   Every version down to `VERSION_SCENE_LEAST` is still read; see table above.
@@ -1285,7 +1282,7 @@ func objectUpgraded*(saved: ObjectSaved, version: uint8): Option[ObjectSaved] =
   ##     Last guard here buys that, checked once at end.
   if not isSceneVersionReadable(version): return none(ObjectSaved)
   var carried = saved
-  for boundary in version ..< VERSION_SCENE:
+  for boundary in version..<VERSION_SCENE:
     let stepped =
       case boundary
       of 1'u8: carried.upgradedFrom1
@@ -1294,10 +1291,10 @@ func objectUpgraded*(saved: ObjectSaved, version: uint8): Option[ObjectSaved] =
       of 4'u8: carried.upgradedFrom4
       of 5'u8: carried.upgradedFrom5
       of 6'u8: carried.upgradedFrom6
-      else: none(ObjectSaved) # Unreachable: `isSceneVersionReadable` bounds walk above.
+      else: none(ObjectSaved)  # Unreachable: `isSceneVersionReadable` bounds walk above.
     if stepped.isNone: return none(ObjectSaved)
     carried = stepped.get
-  if carried.ink_ordinal notin ord(Ink.low) .. ord(Ink.high): return none(ObjectSaved)
+  if carried.ink_ordinal notin ord(Ink.low)..ord(Ink.high): return none(ObjectSaved)
   # Refuse radius no build could have written, as palette slot is refused above.
   #   Zero or negative would draw nothing and trip `addObject`; NaN compares false to both.
   if not (carried.radius > 0.0): return none(ObjectSaved)
@@ -1323,8 +1320,8 @@ func bornReplaying*(index, count: int; now: float): float =
   ##     Caller not knowing whole passes own index plus one and gets unbounded beat.
   let step =
     if count <= 1: SECONDS_REPLAY_STEP
-    else: min(SECONDS_REPLAY_STEP, SECONDS_REPLAY_WHOLE/float(count - 1))
-  now + float(index)*step
+    else: min(SECONDS_REPLAY_STEP, SECONDS_REPLAY_WHOLE / float(count - 1))
+  now + float(index) * step
 
 
 func replayFrom*(scene: var Scene, now: float) =
@@ -1336,7 +1333,7 @@ func replayFrom*(scene: var Scene, now: float) =
   ##   applied after fact.
   var handles: array[OBJECTS_MAX, int]
   let count = scene.handlesCreated(handles)
-  for position in 0 ..< count:
+  for position in 0..<count:
     scene.borns[handles[position]] = bornReplaying(position, count, now)
   scene.markEdited()
 
@@ -1383,21 +1380,21 @@ when not defined(js):
     defer: file.close
 
     discard file.writeChars(MAGIC_SCENE, 0, len(MAGIC_SCENE))
-    file.write(char(VERSION_SCENE))
-    file.write(char(ord(Basis.high) + 1))
-    file.writeLittle(uint32(scene.len))
+    file.write char(VERSION_SCENE)
+    file.write char(ord(Basis.high) + 1)
+    file.writeLittle uint32(scene.len)
 
     # Write in creation order, whole of what sequence means from version 3 on.
     var handles: array[OBJECTS_MAX, int]
     let count = scene.handlesCreated(handles)
-    for position in 0 ..< count:
+    for position in 0..<count:
       let one = scene[handles[position]]
-      file.write(char(ord(one.ink)))
-      file.write(char(ord(one.isVisible)))
+      file.write char(ord(one.ink))
+      file.write char(ord(one.isVisible))
       let
-        text = toText(one.label)
+        text = one.label.toText
         geometry = one.geometry
-      file.write(char(len(text)))
+      file.write char(len(text))
       discard file.writeChars(text, 0, len(text))
       for b in Basis: file.writeLittle(geometry[b])
       file.writeLittle(one.radius)
@@ -1405,7 +1402,7 @@ when not defined(js):
     &"Saved {scene.len} object(s) to `{path}`."
 
 
-  proc loadScene*(scene: var Scene, path: string, now: float = 0.0): string =
+  proc loadScene*(scene: var Scene, path: string, now = 0.0): string =
     ## Replace scene's contents with what `path` holds; report outcome for display.
     ##   Parses into scene of own and replaces caller's only on complete success, so bad
     ##   or foreign file leaves scene untouched rather than half-overwritten.
@@ -1433,17 +1430,17 @@ when not defined(js):
     var basis_count: array[1, char]
     if file.readChars(basis_count) != 1 or int(uint8(basis_count[0])) != basis_count_here:
       return &"`{path}` was saved under a different PGA dimension or metric; " &
-        &"this build reads {basis_count_here}-term multivectors."
+          &"this build reads {basis_count_here}-term multivectors."
 
     var count: uint32
     if not file.readLittle(count):
       return &"`{path}` is truncated; no object count."
     if int(count) > OBJECTS_MAX:
       return &"`{path}` holds {count} objects, more than this build's {OBJECTS_MAX}-object " &
-        "capacity; raise `--define:visualiser.objects_max`."
+          "capacity; raise `--define:visualiser.objects_max`."
 
     var staging = initScene()
-    for index in 0 ..< int(count):
+    for index in 0..<int(count):
       var ink_byte, visible_byte, length_byte: array[1, char]
       if file.readChars(ink_byte) != 1 or file.readChars(visible_byte) != 1 or
           file.readChars(length_byte) != 1:
@@ -1489,8 +1486,11 @@ when not defined(js):
 
       # Add in file order, so staging scene's ordinals come out as file's sequence.
       let handle = staging.addObject(
-        carried.get.geometry, carried.get.label, Ink(carried.get.ink_ordinal),
-        bornReplaying(index, int(count), now), radius = carried.get.radius,
+        carried.get.geometry,
+        carried.get.label,
+        Ink(carried.get.ink_ordinal),
+        bornReplaying(index, int(count), now),
+        radius = carried.get.radius,
       )
       staging.setVisible(handle, carried.get.is_visible)
 

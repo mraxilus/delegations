@@ -5,6 +5,7 @@
 import ./fixtures
 
 
+
 suite "Help":
   test "every entry lands in exactly one tab, and the tabs account for the whole table":
     # What stops reflow that quietly drops row to make rest fit. `countOf` is what.
@@ -27,7 +28,7 @@ suite "Help":
         of HelpPath.Operations: ENTRIES_MAX_PATH_CATALOGUE
         of HelpPath.Keys: ENTRIES_MAX_PATH_KEYS
         else: ENTRIES_MAX_PATH
-      check countOf(path) in 1 .. entries_max
+      check countOf(path) in 1..entries_max
 
 
   test "the help records every operation the build offers, by the name it offers it under":

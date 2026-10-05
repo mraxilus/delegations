@@ -41,6 +41,8 @@
 
 {.experimental: "strictFuncs".}
 
+when compileOption("profiler"): import std/nimprof
+
 import std/[os, osproc, sequtils, strutils, tables]
 
 # Catalogue read as text, never imported: type check runs this driver on koch's compiler,
@@ -49,12 +51,9 @@ import ./catalogue
 
 
 const
-  BUILD = "build"
-    ## Directory every product lands in.
-  BINARIES = "binaries"
-    ## Directory compiled binaries land in.
-  BUILD_BROWSER = BUILD / "browser"
-    ## Directory browser products land in.
+  BUILD = "build"  ## Directory every product lands in.
+  BINARIES = "binaries"  ## Directory compiled binaries land in.
+  BUILD_BROWSER = BUILD / "browser"  ## Directory browser products land in.
   DIRECTORY_FONTS = BUILD / "fonts"
     ## Directory vendored faces land in; never committed (Article XI.3).
   PATH_KOCH = ".." / ".." / ".." / "koch.nim"
@@ -74,13 +73,11 @@ const
     ## Catalogue of shown text, read for its keys and words; see `catalogue`.
   PATH_HELP_NIM = "src" / "rga_visualiser" / "help.nim"
     ## Help tables, swept for shown text written where they are composed.
-  PATH_BRIDGE_JS = BUILD_BROWSER / "bridge.js"
-    ## Compiled bridge, first script on page.
+  PATH_BRIDGE_JS = BUILD_BROWSER / "bridge.js"  ## Compiled bridge, first script on page.
   PATH_DECLARATIONS = BUILD / "bridge.d.ts"
     ## Derived declarations of bridge's exports, read by type-checker alone.
     ##   Outside `outDir`, which TypeScript excludes from its own inputs by default.
-  PATH_TSCONFIG = "tsconfig.json"
-    ## Page's own type-checker configuration, targeting browser.
+  PATH_TSCONFIG = "tsconfig.json"  ## Page's own type-checker configuration, targeting browser.
   PATH_TSCONFIG_DRIVE = "tsconfig.drive.json"
     ## Harness's own type-checker configuration, targeting node not browser.
   DRIVES = ["keys", "sky", "undo", "select", "drag", "search", "menu", "faces"]
@@ -101,12 +98,10 @@ const
     ## Dear ImGui checkout desktop front-end compiles into itself; see `gui.PATH_IMGUI`.
   URL_IMGUI = "https://github.com/ocornut/imgui.git"
     ## Origin `imgui` clones from; PROVENANCE.md records it with licence.
-  BRANCH_IMGUI = "docking"
-    ## Branch carrying `COMMIT_IMGUI`; master lacks docking `gui` asks for.
+  BRANCH_IMGUI = "docking"  ## Branch carrying `COMMIT_IMGUI`; master lacks docking `gui` asks for.
   DIRECTORY_SDL3 = "dependencies" / "sdl3"
     ## SDL3 checkout `sdl3` builds, beside Dear ImGui's and never committed (Article XI.3).
-  DIRECTORY_SDL3_BUILD = BUILD / "sdl3-build"
-    ## Directory cmake configures SDL3 into.
+  DIRECTORY_SDL3_BUILD = BUILD / "sdl3-build"  ## Directory cmake configures SDL3 into.
   DIRECTORY_SDL3_PREFIX = BUILD / "sdl3"
     ## Prefix SDL3 installs into, so build needs no root and writes nothing outside tree.
   URL_SDL3 = "https://github.com/libsdl-org/SDL.git"
@@ -138,12 +133,10 @@ const
     ##   Docking branch rather than master: `gui` asks for docking, which master lacks.
   PATH_SHELL = "pages" / "shell.html"
     ## Committed markup, carrying `@EMBED:<face>@` and `@SCRIPT@` tokens.
-  PATH_PAGE = BUILD / "rga_visualiser.html"
-    ## Assembled page.
+  PATH_PAGE = BUILD / "rga_visualiser.html"  ## Assembled page.
   TOKEN_SCRIPT = "@SCRIPT@"
     ## Token every script replaces, so committed shell stays whole document.
-  TOKEN_EMBED = "@EMBED:"
-    ## Opening of token one face replaces.
+  TOKEN_EMBED = "@EMBED:"  ## Opening of token one face replaces.
   TOKEN_WORD = "@WORD:"
     ## Opening of token one catalogue entry replaces, closed by `@`.
     ##   Page's own labels sit in markup rather than in script, so they cannot be assigned at
@@ -151,7 +144,7 @@ const
     ##   reader meets real words with first paint, catalogue stays their only home, and page
     ##   with scripts refused still reads.
   MARKER_GATE = "// Not Nim because generated from Nim: declarations of bridge's exports,\n" &
-    "//   derived so no second copy of signature can drift from it (Article II.9).\n"
+      "//   derived so no second copy of signature can drift from it (Article II.9).\n"
     ## Header derived declarations carry, since `.ts` is gated kind.
   RECORDS = ["OperationResult", "DragResult", "FrameData"]
     ## Object types crossing boundary, whose fields page reads by name.
@@ -225,7 +218,7 @@ const
     ##   -- only SDL2 -- so SDL3 is built and installed from source too. Both are pinned to
     ##   commit rather than to package manager; see `COMMIT_IMGUI` and `COMMIT_SDL3`.
   USAGE = "Usage: nim r tools/build.nim " &
-    "<declare|types|web|drive|desktop|driven|assets|system|clean>\n"
+      "<declare|types|web|drive|desktop|driven|assets|system|clean>\n"
     ## Text printed on usage error.
 
 
@@ -266,7 +259,7 @@ func signatureAt(lines: openArray[string], index: int): string =
     dec start
   if start < 0: return ""
   var parts: seq[string]
-  for i in start .. index: parts.add lines[i].strip
+  for i in start..index: parts.add lines[i].strip
   parts.join(" ").split("{.exportc")[0].strip
 
 
@@ -275,7 +268,7 @@ func declarationOf(signature: string): string =
   let opened = signature.find('(')
   if opened < 0: return ""
   let
-    name = signature[0 ..< opened].split(' ')[^1].strip
+    name = signature[0..<opened].split(' ')[^1].strip
     closed = signature.rfind(')')
   if closed < opened: return ""
 
@@ -283,28 +276,28 @@ func declarationOf(signature: string): string =
   #   share one (`a, b: int`), so names accumulate until fragment states type, and that
   #   type covers every name waiting.
   var rendered, waiting: seq[string]
-  for group in signature[opened + 1 ..< closed].split(';'):
+  for group in signature[opened+1..<closed].split(';'):
     for fragment in group.split(','):
       let stated_at = fragment.find(':')
       if stated_at < 0:
         if fragment.strip.len > 0: waiting.add fragment.strip
         continue
-      waiting.add fragment[0 ..< stated_at].strip
+      waiting.add fragment[0..<stated_at].strip
       # Default value belongs to declaration, never to type, and never reaches page.
       #   Nim applies it to Nim caller alone: JS call omitting argument passes `undefined`,
       #   which proc then compares and computes with. So every parameter is required on
       #   page, and omission fails type check rather than at run time; see
       #   `bridge.MARKER_SHAPED`.
       let
-        stated = fragment[stated_at + 1 .. ^1]
+        stated = fragment[stated_at+1 .. ^1]
         defaulted = stated.find('=')
-        rendered_type = (if defaulted >= 0: stated[0 ..< defaulted] else: stated).typeScriptOf
+        rendered_type = (if defaulted >= 0: stated[0..<defaulted] else: stated).typeScriptOf
       for name in waiting:
         rendered.add name & ": " & rendered_type
       waiting.setLen 0
 
   let
-    tail = signature[closed + 1 .. ^1].strip
+    tail = signature[closed+1 .. ^1].strip
     returned = if tail.startsWith(":"): tail[1 .. ^1].typeScriptOf else: "void"
   "declare function " & name & "(" & rendered.join(", ") & "): " & returned & ";"
 
@@ -339,8 +332,8 @@ func recordOf(lines: openArray[string], name: string): string =
       stated = bare.split("##")[0].strip
       split_at = stated.find(':')
     if split_at < 0: continue
-    let rendered_type = stated[split_at + 1 .. ^1].typeScriptOf
-    for field in stated[0 ..< split_at].split(','):
+    let rendered_type = stated[split_at+1 .. ^1].typeScriptOf
+    for field in stated[0..<split_at].split(','):
       if field.strip.len == 0: continue
       fields.add "  " & field.strip & ": " & rendered_type & ";"
   if fields.len == 0: return ""
@@ -380,8 +373,8 @@ proc declare() =
   writeFile(
     PATH_DECLARATIONS,
     MARKER_GATE &
-      "//   Regenerate with `nim r tools/build.nim declare`; never edit by hand.\n\n" &
-      wording & "\n" & records.join("\n") & "\n" & declarations.join("\n") & "\n",
+    "//   Regenerate with `nim r tools/build.nim declare`; never edit by hand.\n\n" &
+    wording & "\n" & records.join("\n") & "\n" & declarations.join("\n") & "\n",
   )
   echo "Wrote ", PATH_DECLARATIONS, " (", declarations.len, " declarations, ",
     keys.len, " wording keys)."
@@ -412,14 +405,14 @@ proc isLiteralShown(line, call: string): bool =
   ##   other is identity ImGui keys widget by. Everything else quoted here is words.
   let opened = line.find(call)
   if opened < 0: return false
-  var rest = line[opened + call.len .. ^1].strip
+  var rest = line[opened+call.len .. ^1].strip
   if rest.startsWith("cstring"): rest = rest[7 .. ^1].strip
   if not (rest.startsWith("\"") or rest.startsWith("'")): return false
   let
     quoted = rest[1 .. ^1]
     closed = quoted.find(rest[0])
   if closed < 0: return false
-  let text = quoted[0 ..< closed]
+  let text = quoted[0..<closed]
   text.len > 0 and not text.startsWith("##")
 
 proc isWordsLiteral(line: string): bool =
@@ -495,8 +488,8 @@ proc checkWording() =
       if not line.strip.startsWith(DECLARATION_CAPTION): continue
       is_declared = true
       if not line.namesKey("captionWindow"):
-        found.add PATH_DESKTOP_NIM & ":" & $(i + 1) & ": caption must name `captionWindow`; got " &
-          line.strip
+        found.add PATH_DESKTOP_NIM & ":" & $(i + 1) & ": caption must name `captionWindow`; got `" &
+            line.strip & "`."
     if not is_declared:
       found.add PATH_DESKTOP_NIM & ": no `" & DECLARATION_CAPTION & "` for caption to read from"
 
@@ -510,8 +503,8 @@ proc checkWording() =
   if found.len > 0:
     raise newException(
       OSError,
-      "Shown text belongs in `wording.nim`, named by key; got " & $found.len & ":\n  " &
-        found.join("\n  "),
+      "Shown text belongs in `wording.nim`, named by key; got `" & $found.len & "`:\n  `" &
+      found.join("\n  ") & "`.",
     )
 
 
@@ -554,11 +547,14 @@ proc facesFromStore(names: openArray[string]): seq[string] =
   ##   Compiler chatter is turned off rather than filtered, since paths are what is parsed.
   let (written, code) = execCmdEx(
     "nim r --hints:off --warnings:off " & quoteShell(PATH_KOCH) & " fetch-assets " &
-      names.quoteShellCommand
+    names.quoteShellCommand,
   )
   if code != 0:
-    raise newException(OSError,
-      "`koch fetch-assets` would not serve every face; got exit `" & $code & "` --\n" & written)
+    raise newException(
+      OSError,
+      "`koch fetch-assets` would not serve every face; got exit `" & $code & "` --\n`" & written &
+      "`.",
+    )
   for line in written.strip.splitLines:
     let path = line.strip
     if path.len > 0 and fileExists(path): result.add path
@@ -628,15 +624,14 @@ proc checkFace(face: string, copied: Table[string, string]) =
   ##   this file.
   let path = DIRECTORY_FONTS / face
   if face notin copied:
-    raise newException(OSError,
-      "Face `" & face & "` names no store entry; run `assets` first.")
+    raise newException(OSError, "Face `" & face & "` names no store entry; run `assets` first.")
   if not fileExists(copied[face]):
     raise newException(OSError,
       "Store no longer holds `" & copied[face] & "` for `" & face & "`; run `assets` again.")
   if not sameFileContent(path, copied[face]):
     raise newException(OSError,
       "Face `" & face & "` is not what the store served; compare `" & path & "` against `" &
-        copied[face] & "`.")
+      copied[face] & "`.")
 
 
 proc browser() =
@@ -677,7 +672,7 @@ proc worded(page: string): string =
     raise newException(
       OSError,
       "Shell names wording catalogue does not carry, at " & PATH_SHELL & ":\n  " &
-        unfilled.join("\n  "),
+      unfilled.join("\n  "),
     )
 
 
@@ -783,7 +778,7 @@ proc versionSdl3(): string =
     path_config = getCurrentDir() / DIRECTORY_SDL3_PREFIX / "lib" / "pkgconfig"
     (written, code) = execCmdEx(
       "PKG_CONFIG_PATH=" & quoteShell(path_config) &
-        ":$PKG_CONFIG_PATH pkg-config --modversion sdl3",
+      ":$PKG_CONFIG_PATH pkg-config --modversion sdl3",
     )
   if code != 0: "" else: written.strip
 
@@ -805,17 +800,23 @@ proc sdl3() =
     echo "Kept SDL3 ", VERSION_SDL3, ", already reported by pkg-config"
     return
   if not dirExists(DIRECTORY_SDL3):
-    run("git", [
-      "clone", "--depth", "1", "--branch", "release-" & VERSION_SDL3, URL_SDL3, DIRECTORY_SDL3,
-    ])
+    run(
+      "git",
+      [
+        "clone", "--depth", "1", "--branch", "release-" & VERSION_SDL3, URL_SDL3, DIRECTORY_SDL3,
+      ],
+    )
   # Held before cmake rather than after: build is minutes, and sources this refuses are
   #   sources none of those minutes should be spent on.
   checkCommit(DIRECTORY_SDL3, COMMIT_SDL3, "SDL3")
   run("cmake", ["-S", DIRECTORY_SDL3, "-B", DIRECTORY_SDL3_BUILD, "-DCMAKE_BUILD_TYPE=Release"])
   run("cmake", ["--build", DIRECTORY_SDL3_BUILD, "-j", $countProcessors()])
-  run("cmake", [
-    "--install", DIRECTORY_SDL3_BUILD, "--prefix", getCurrentDir() / DIRECTORY_SDL3_PREFIX,
-  ])
+  run(
+    "cmake",
+    [
+      "--install", DIRECTORY_SDL3_BUILD, "--prefix", getCurrentDir() / DIRECTORY_SDL3_PREFIX,
+    ],
+  )
   echo "Built SDL3 ", VERSION_SDL3, " into ", DIRECTORY_SDL3_PREFIX
 
 
@@ -946,7 +947,7 @@ proc driven() =
   delEnv(ENV_FONT)
   if failed.len > 0:
     raise newException(OSError,
-      "Driven runs failed; got " & $failed.len & " -- " & failed.join(", ") & ".")
+      "Driven runs failed; got `" & $failed.len & "` -- `" & failed.join(", ") & "`.")
   echo "\nEvery scripted run passed."
 
 

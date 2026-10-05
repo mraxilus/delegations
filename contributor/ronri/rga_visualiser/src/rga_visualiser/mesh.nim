@@ -204,7 +204,7 @@ const
     ##   half off rendered lattice that read as absent.
     ##   Applied where grid is built rather than to `Ink.Grid`, which is also
     ##   `INK_POOL_FREE`; dimming entry would make that object translucent.
-  LINES_GRID_MAX* = 2*CELLS_GRID_HALF_MAX + 1
+  LINES_GRID_MAX* = 2 * CELLS_GRID_HALF_MAX + 1
     ## Bound how many lattice lines one grid family lays, also how many ribbon records.
     ##   Line is one record spanning whole chord of fog disc, faded per fragment.
     ##   Per-fragment fade needs no piece boundaries and is exact, where cutting each
@@ -224,8 +224,7 @@ const
     ##   Horizon line's great circle is largest, one extra boundary so closing segment ends
     ##   on place stepped at angle loop would have used.
   LATITUDES_HORIZON* = 12
-  LONGITUDES_HORIZON* = 24
-    ## Set band counts in horizon plane's whole-sky dome.
+  LONGITUDES_HORIZON* = 24  ## Set band counts in horizon plane's whole-sky dome.
   ORIGIN_WORLD* = Position(x: 0, y: 0, z: 0)
     ## Set world origin, which objects through it are drawn about.
   ALPHA_VEIL* = 0.16'f32
@@ -274,18 +273,18 @@ static:
 #[ Type Definitions ]#
 
 type
-  Ink* {.pure.} = enum ## Define palette slot, so every colour in output lives in one table.
+  Ink* {.pure.} = enum  ## Define palette slot, so every colour in output lives in one table.
     ## Structural slots, spent on furniture of drawing itself.
-    Backdrop, ## Colour framebuffer is cleared to.
-    AxisX, ## World x axis through origin; standard convention is red.
-    AxisY, ## World y axis through origin; standard convention is green.
-    AxisZ, ## World z axis through origin; standard convention is blue.
-    Grid, ## Lattice ruled on picked plane.
-    Guide, ## Construction helper, e.g. plane normal.
-    Outline, ## Selection outline drawn around highlighted object.
+    Backdrop,  ## Colour framebuffer is cleared to.
+    AxisX,  ## World x axis through origin; standard convention is red.
+    AxisY,  ## World y axis through origin; standard convention is green.
+    AxisZ,  ## World z axis through origin; standard convention is blue.
+    Grid,  ## Lattice ruled on picked plane.
+    Guide,  ## Construction helper, e.g. plane normal.
+    Outline,  ## Selection outline drawn around highlighted object.
       ## Never cycled to, only drawn where caller names slot as highlighted (see
       ## `renderer.drawOutline`).
-    Invalid, ## Reserved for object that is wrong rather than merely coloured.
+    Invalid,  ## Reserved for object that is wrong rather than merely coloured.
       ## Magenta no object may be assigned, so seeing it always means something is
       ## invalid.
       ##   Worn by rubber-band of drag over pair that makes nothing
@@ -306,26 +305,26 @@ type
     ##     `LUT_RGBA_BY_INK`.
     Rose, Copper, Olive, Jade, Cobalt,
 
-  Outcome* {.pure.} = enum ## Define what became of object once drawn.
-    Finite, ## Object had finite extent and was drawn where it stands.
-    Horizon, ## Object lay wholly in horizon; only its direction could be drawn.
-    Empty, ## Multivector carried no drawable geometry at all.
+  Outcome* {.pure.} = enum  ## Define what became of object once drawn.
+    Finite,  ## Object had finite extent and was drawn where it stands.
+    Horizon,  ## Object lay wholly in horizon; only its direction could be drawn.
+    Empty,  ## Multivector carried no drawable geometry at all.
 
-  Rgba* = object ## Define colour channels, in 0 .. 1.
+  Rgba* = object  ## Define colour channels, in 0 .. 1.
     red*, green*, blue*, alpha*: float32
 
-  Vertex* = object ## Define one point record exactly as it is uploaded.
+  Vertex* = object  ## Define one point record exactly as it is uploaded.
     ## One instance per point: vertex shader fans it into camera-facing quad of
     ## `pointCorners`, and fragment stage rounds quad into disc; see `radiusDrawnAt`.
     x*, y*, z*: float32
-    radius*: float32 ## Drawn radius, in world units.
+    radius*: float32  ## Drawn radius, in world units.
     red*, green*, blue*, alpha*: float32
 
-  Mesh* = object ## Define point vertices, in storage fixed at compile time.
+  Mesh* = object  ## Define point vertices, in storage fixed at compile time.
     ## One shape still uploaded as vertices; every widened kind crosses wire as records.
     vertices*: array[VERTICES_MAX, Vertex]
     count_vertices*: int
-    index_overlay*: Option[int] ## Where overlay run begins, if this mesh has one.
+    index_overlay*: Option[int]  ## Where overlay run begins, if this mesh has one.
       ## Vertices below it are drawn against depth buffer; rest are drawn after against
       ## depth cleared first, landing over whatever is there and in depth order among
       ## themselves.
@@ -337,7 +336,7 @@ type
       ##   Order already decides buckets (see `main.assembleMeshes`), so index into
       ##   order costs nothing.
 
-  RibbonRecord* = object ## Define one line segment exactly as it is uploaded.
+  RibbonRecord* = object  ## Define one line segment exactly as it is uploaded.
     ## Vertex shader's input, not vertex.
     ##   Each record is drawn as one instance of six corners.
     ##   Shader clips to near plane, derives across as `cross(head - tail, eye - tail)`,
@@ -348,19 +347,19 @@ type
     tail_x*, tail_y*, tail_z*: float32
     head_x*, head_y*, head_z*: float32
     width*: float32
-    fog*: float32 ## Whether fragment shader fades this record by distance from eye.
+    fog*: float32  ## Whether fragment shader fades this record by distance from eye.
       ## 1 for world furniture, 0 otherwise.
       ## `alphaGridFade` states fade; flag on record lets fogged and unfogged ribbons
       ## share one buffer in any order.
     tail_red*, tail_green*, tail_blue*, tail_alpha*: float32
     head_red*, head_green*, head_blue*, head_alpha*: float32
 
-  RibbonMesh* = object ## Define every ribbon segment of one frame, in fixed storage.
+  RibbonMesh* = object  ## Define every ribbon segment of one frame, in fixed storage.
     records*: array[RIBBONS_MAX, RibbonRecord]
     count*: int
-    index_overlay*: Option[int] ## Where overlay run begins; see `Mesh.index_overlay`.
+    index_overlay*: Option[int]  ## Where overlay run begins; see `Mesh.index_overlay`.
 
-  DiscRecord* = object ## Define one filled disc exactly as it is uploaded.
+  DiscRecord* = object  ## Define one filled disc exactly as it is uploaded.
     ## Disc-fill vertex shader's input, not vertex.
     ##   Each record is drawn as one instance of static quad, `discCorners`.
     ##   Shader places quad's corners on box of disc's sphere, tightened to rim's own picture
@@ -374,14 +373,14 @@ type
     arm_second_x*, arm_second_y*, arm_second_z*: float32
     fill_red*, fill_green*, fill_blue*, fill_alpha*: float32
 
-  DiscBox* = object ## Define box disc's veil spans, on view turned to its plane.
+  DiscBox* = object  ## Define box disc's veil spans, on view turned to its plane.
     ## Disc-fill vertex shader's own reckoning, stated in Nim; see `viewBoxOfDisc`.
     corner_min*, corner_max*: (float, float)
       ## Opposite corners, in fractions of turned view's own half extents, across and up.
     step_across*, step_up*: (float, float)
       ## View fractions one turned fraction across, or up, moves by; they place box on view.
 
-  DomeRecord* = object ## Define one whole-sky sphere exactly as it is uploaded.
+  DomeRecord* = object  ## Define one whole-sky sphere exactly as it is uploaded.
     ## Dome vertex shader's input, not vertex.
     ##   Each record is drawn as one instance of static lat/long sphere of unit
     ##   directions; shader places every corner at `centre + radius*direction`, stated
@@ -390,11 +389,11 @@ type
     centre_x*, centre_y*, centre_z*, radius*: float32
     red*, green*, blue*, alpha*: float32
 
-  DiscMesh* = object ## Define every disc record of one frame, in fixed storage.
+  DiscMesh* = object  ## Define every disc record of one frame, in fixed storage.
     records*: array[DISCS_MAX, DiscRecord]
     count*: int
 
-  RingRecord* = object ## Define one plane's rim exactly as it is uploaded.
+  RingRecord* = object  ## Define one plane's rim exactly as it is uploaded.
     ## Ring vertex shader's input, not vertex.
     ##   `DiscRecord` with width: same centre and same two radius-scaled arms, drawn as
     ##   one instance of `SEGMENTS_CIRCLE_HORIZON` quads rather than fan of triangles.
@@ -411,42 +410,42 @@ type
     red*, green*, blue*, alpha*: float32
     width*: float32
 
-  RingMesh* = object ## Define every ring record of one frame, in fixed storage.
+  RingMesh* = object  ## Define every ring record of one frame, in fixed storage.
     records*: array[RINGS_MAX, RingRecord]
     count*: int
-    index_overlay*: Option[int] ## Where overlay run begins; see `Mesh.index_overlay`.
+    index_overlay*: Option[int]  ## Where overlay run begins; see `Mesh.index_overlay`.
       ## Rim needs own split as line does: selected plane is tessellated second time
       ## after `markOverlay`, and without mark second rim draws behind own translucent
       ## fill, exactly highlight it exists to draw.
 
-  DomeMesh* = object ## Define every dome record of one frame, in fixed storage.
+  DomeMesh* = object  ## Define every dome record of one frame, in fixed storage.
     records*: array[DOMES_MAX, DomeRecord]
     count*: int
 
-  VeilKind* {.pure.} = enum ## Define which record array one veil run draws from.
+  VeilKind* {.pure.} = enum  ## Define which record array one veil run draws from.
     Disc, Dome
 
-  VeilRun* = object ## Define one stretch of same-kind veil records, drawn as one call.
+  VeilRun* = object  ## Define one stretch of same-kind veil records, drawn as one call.
     kind*: VeilKind
-    first*: int32 ## Index of run's first record, within own kind's array.
+    first*: int32  ## Index of run's first record, within own kind's array.
     count*: int32
 
-  VeilRuns* = object ## Define frame's veil draw order, across both record kinds.
+  VeilRuns* = object  ## Define frame's veil draw order, across both record kinds.
     ## Translucent pass's memory of scene order.
     ##   Discs and domes land in two arrays, but two veils crossing still blend in order
     ##   scene emitted them.
     ##   Each append extends current run where it can and opens new one where kind
     ##   changes, and each render path walks runs in sequence.
     ##   Usually one run per object, of one record.
-    runs*: array[DISCS_MAX + DOMES_MAX, VeilRun]
+    runs*: array[DISCS_MAX+DOMES_MAX, VeilRun]
     count*: int
-    index_overlay*: Option[int] ## Index of first *run* of overlay pass.
+    index_overlay*: Option[int]  ## Index of first *run* of overlay pass.
       ## `Mesh.index_overlay`'s rule at run grain, since run never straddles mark:
       ## `markOverlay` seals current run, and append refuses to extend across it.
 
-  MeshSet* = object ## Define everything one frame draws: vertices and every record kind.
+  MeshSet* = object  ## Define everything one frame draws: vertices and every record kind.
     ## Points are one shape still assembled as vertices; rest cross wire as records.
-    origin*: Position ## Point every stored position is measured from; see `clearMeshes`.
+    origin*: Position  ## Point every stored position is measured from; see `clearMeshes`.
     points*: Mesh
     ribbons*: RibbonMesh
     discs*: DiscMesh
@@ -454,28 +453,28 @@ type
     domes*: DomeMesh
     veils*: VeilRuns
 
-  DrawScale* = object ## Define how far this frame's geometry reaches, and from where.
+  DrawScale* = object  ## Define how far this frame's geometry reaches, and from where.
     ## Euclidean half of frame's camera.
     ##   Everything ribbon needs to hold constant width on screen, and everything picture
     ##   is measured against.
     ##   Algebra's reading of same camera lives beside it in `tessellate.DrawExtent`,
     ##   which carries this whole record and adds multivector twins; this module cannot
     ##   name those, point of split.
-    extent_furniture*: float ## How far lattices and world axes extend.
+    extent_furniture*: float  ## How far lattices and world axes extend.
       ## Tied to orbit distance via `extentFurnitureFor`, twenty of them, so furniture
       ## reads as reaching indefinitely at any zoom and its cell follows reader, not scene.
-    eye*: Position ## Camera's eye position, horizon geometry is anchored to.
+    eye*: Position  ## Camera's eye position, horizon geometry is anchored to.
       ## Stays in fixed apparent direction as camera pans or dollies.
-    radius_horizon*: float ## How far from `eye` horizon geometry is drawn.
-    forward*: Direction ## Camera's sight axis, depth is measured along.
-    axis_right*: Direction ## Camera's screen-right axis; point's disc spans it.
-    axis_up*: Direction ## Camera's screen-up axis; point's disc spans it.
-    tangent_half_view*: float ## Tangent of half vertical field of view.
-    height_pixels*: int ## Framebuffer height, which vertical field of view spans.
-    depth_near*: float ## Camera's near clip distance, depth is clamped at.
+    radius_horizon*: float  ## How far from `eye` horizon geometry is drawn.
+    forward*: Direction  ## Camera's sight axis, depth is measured along.
+    axis_right*: Direction  ## Camera's screen-right axis; point's disc spans it.
+    axis_up*: Direction  ## Camera's screen-up axis; point's disc spans it.
+    tangent_half_view*: float  ## Tangent of half vertical field of view.
+    height_pixels*: int  ## Framebuffer height, which vertical field of view spans.
+    depth_near*: float  ## Camera's near clip distance, depth is clamped at.
       ## Nothing nearer is drawn, and without clamp segment past eye reads negative depth
       ## and turns ribbon inside out.
-    depth_log*: float ## Scale depth's logarithm maps by; see `camera.depthOf`.
+    depth_log*: float  ## Scale depth's logarithm maps by; see `camera.depthOf`.
 
   RibbonPiece* = object
     ## Define one ribbon segment, fully resolved: where it runs, and colour of each end.
@@ -493,7 +492,7 @@ type
     ##     per frame, and suite's copy is same shape.
     ##   Both members are written and read within single step, so they carry nothing
     ##   between callers and need no clearing.
-    ribbons*: array[LINES_GRID_MAX, RibbonPiece] ## One piece per lattice line or axis chord.
+    ribbons*: array[LINES_GRID_MAX, RibbonPiece]  ## One piece per lattice line or axis chord.
       ## Sized for larger grid family.
     places*: array[POINTS_SCRATCH_MAX, Position]
 
@@ -506,7 +505,7 @@ func radiansPerPixel*(scale: DrawScale): float =
   ##   Small-angle reading of `worldPerPixelAt` at unit depth, right unit for anything
   ##   placed by *direction*: horizon geometry sits on sphere about eye, where pixel is
   ##   angle and not distance.
-  2.0*scale.tangentHalfView/float(max(scale.heightPixels, 1))
+  2.0 * scale.tangentHalfView / float(max(scale.heightPixels, 1))
 
 
 func worldPerPixelAt*(place: Position, scale: DrawScale): float =
@@ -518,7 +517,7 @@ func worldPerPixelAt*(place: Position, scale: DrawScale): float =
   ##   Clamped at near plane: depth goes negative behind eye, and negative half-width
   ##   folds ribbon over on itself.
   let depth = max(dot(place - scale.eye, scale.forward), scale.depthNear)
-  2.0*depth*scale.tangentHalfView/float(max(scale.heightPixels, 1))
+  2.0 * depth * scale.tangentHalfView / float(max(scale.heightPixels, 1))
 
 
 const
@@ -527,8 +526,7 @@ const
     ##   Span is stepped 1-2-5 by decade to land near it, way every map scale is stepped:
     ##   bar tied to one length runs off screen close in and shrinks to nothing far out,
     ##   since length steps by decades while projection does not.
-  STEPS_RULER = [1.0, 2.0, 5.0]
-    ## Name steps within each decade scale bar may claim.
+  STEPS_RULER = [1.0, 2.0, 5.0]  ## Name steps within each decade scale bar may claim.
 
 
 func spanRulerFor*(world_per_pixel: float): float =
@@ -538,11 +536,11 @@ func spanRulerFor*(world_per_pixel: float): float =
   ##   One rule both front-ends draw by. Zero where pixel spans nothing to measure.
   if not (world_per_pixel > 0.0) or world_per_pixel == Inf: return 0.0
   let
-    wanted = PIXELS_RULER_WANTED*world_per_pixel
+    wanted = PIXELS_RULER_WANTED * world_per_pixel
     decade = pow(10.0, floor(log10(wanted)))
   result = decade
   for step in STEPS_RULER:
-    if step*decade <= wanted: result = step*decade
+    if step * decade <= wanted: result = step * decade
 
 
 func radiusDrawnAt*(radius: float, place: Position, scale: DrawScale): float =
@@ -551,7 +549,7 @@ func radiusDrawnAt*(radius: float, place: Position, scale: DrawScale): float =
   ##   Rule both vertex shaders apply, stated once here for marker and pick to follow.
   ##   Perspective alone: radius stays fixed and disc shrinks as depth grows, until floor
   ##   `DIAMETER_POINT_LEAST` holds it at readable dot.
-  max(radius, 0.5*float(DIAMETER_POINT_LEAST)*worldPerPixelAt(place, scale))
+  max(radius, 0.5 * float(DIAMETER_POINT_LEAST) * worldPerPixelAt(place, scale))
 
 
 func radiusPixelsAtDepth*(radius: float, depth: float, scale: DrawScale): float =
@@ -561,8 +559,8 @@ func radiusPixelsAtDepth*(radius: float, depth: float, scale: DrawScale): float 
   ##   point per walk allocated on JS backend. Same clamp at near plane as
   ##   `worldPerPixelAt`.
   let per_pixel =
-    2.0*max(depth, scale.depthNear)*scale.tangentHalfView/float(max(scale.heightPixels, 1))
-  max(radius/per_pixel, 0.5*float(DIAMETER_POINT_LEAST))
+    2.0 * max(depth, scale.depthNear) * scale.tangentHalfView / float(max(scale.heightPixels, 1))
+  max(radius / per_pixel, 0.5 * float(DIAMETER_POINT_LEAST))
 
 
 func radiusPixelsAt*(radius: float, place: Position, scale: DrawScale): float =
@@ -603,9 +601,9 @@ func fogFurnitureFor*(extent: float): tuple[radius_full, radius_gone: float] =
   ##   Uncapped: outer radius stopping at `CELLS_GRID_HALF_MAX` cells left camera far out
   ##   in black void, axes included.
   ##     Line count is bounded by `sizeCellGridFor` stepping *cell* instead.
-  let radius_gone = FRACTION_GRID_FADE_END*extent
+  let radius_gone = FRACTION_GRID_FADE_END * extent
   # Hold inner radius as ratio of outer, so two keep same proportion at any reach.
-  (radius_full: radius_gone*(FRACTION_GRID_FADE_START/FRACTION_GRID_FADE_END),
+  (radius_full: radius_gone * (FRACTION_GRID_FADE_START / FRACTION_GRID_FADE_END),
    radius_gone: radius_gone)
 
 
@@ -622,9 +620,9 @@ func sizeCellGridFor*(radius_ground: float): float =
   ##   First step at 1,200 units of lattice reach, about orbit distance 316, far past
   ##   anything reader reads distances off.
   ##   `SIZE_CELL_GRID` itself for disc of no radius.
-  let radius_cells = float(CELLS_GRID_HALF_MAX)*SIZE_CELL_GRID
+  let radius_cells = float(CELLS_GRID_HALF_MAX) * SIZE_CELL_GRID
   if radius_ground <= radius_cells: return SIZE_CELL_GRID
-  SIZE_CELL_GRID*pow(10.0, ceil(log10(radius_ground/radius_cells)))
+  SIZE_CELL_GRID * pow(10.0, ceil(log10(radius_ground / radius_cells)))
 
 
 func extentFurnitureFor*(distance_scaled: float): float =
@@ -647,10 +645,12 @@ func axisTinted(base: Rgba): Rgba =
   ##   0.299/0.587/0.114 weights, then scales by `SCALE_AXIS_LUMINANCE`.
   ##   Alpha untouched: permanent palette entry, not per-frame dim.
   ##   Evaluated at compile time into table below, so axes *are* what constants say.
-  let grey = 0.299*base.red + 0.587*base.green + 0.114*base.blue
+  let grey = 0.299 * base.red + 0.587 * base.green + 0.114 * base.blue
+
   func softened(channel: float32): float32 =
-    SCALE_AXIS_LUMINANCE*((1.0'f32 - MUTE_AXIS_TOWARD_GREY)*channel +
-      MUTE_AXIS_TOWARD_GREY*grey)
+    SCALE_AXIS_LUMINANCE*((1.0'f32 - MUTE_AXIS_TOWARD_GREY) * channel +
+      MUTE_AXIS_TOWARD_GREY * grey)
+
   Rgba(
     red: softened(base.red),
     green: softened(base.green),
@@ -675,7 +675,7 @@ const LUT_RGBA_BY_INK: array[Ink, Rgba] = [
   Ink.Olive: Rgba(red: 0.341, green: 0.431, blue: 0.000, alpha: 1.0),
   Ink.Jade: Rgba(red: 0.133, green: 0.655, blue: 0.478, alpha: 1.0),
   Ink.Cobalt: Rgba(red: 0.357, green: 0.565, blue: 0.780, alpha: 1.0),
-] ## Map palette slot to colour: five assignable hues, magenta `Invalid` held out of run.
+]  ## Map palette slot to colour: five assignable hues, magenta `Invalid` held out of run.
   ##   Held to floors `REQUIREMENTS.md` states by `tools/check_palette`, which reads this
   ##   table itself: typical vision, red-green deficiency, tritanopia, and every hue
   ##   against `Invalid` and each axis.
@@ -687,8 +687,7 @@ const LUT_RGBA_BY_INK: array[Ink, Rgba] = [
 
 
 const
-  COUNT_INK* = ord(Ink.high) + 1
-    ## Count palette slots, structural and categorical alike.
+  COUNT_INK* = ord(Ink.high) + 1  ## Count palette slots, structural and categorical alike.
 
   INK_CATEGORICAL_FIRST* = Ink.Rose
     ## Name where categorical run begins.
@@ -704,7 +703,7 @@ const
 static:
   doAssert COUNT_INK_CATEGORICAL == 5,
     &"Ink's categorical slots must stay one contiguous run of five ending at Ink.high, " &
-      &"or a colour picker offers a different run; got `{COUNT_INK_CATEGORICAL}`."
+    &"or a colour picker offers a different run; got `{COUNT_INK_CATEGORICAL}`."
 
 
 func inkCategorical*(index: int): Ink = Ink(ord(INK_CATEGORICAL_FIRST) + index)
@@ -739,12 +738,12 @@ func muted*(base: Rgba): Rgba =
   ##   For constructed object not in focus: shown as context rather than hidden.
   ##   Blended toward own luminance, not replaced by `Ink.Grid.colour`: fading every hue
   ##   to one grey made muted line indistinguishable from grid and lost identity.
-  let luminance = 0.299'f32*base.red + 0.587'f32*base.green + 0.114'f32*base.blue
+  let luminance = 0.299'f32 * base.red + 0.587'f32 * base.green + 0.114'f32 * base.blue
   Rgba(
-    red: base.red + (luminance - base.red)*MUTE_DESATURATION,
-    green: base.green + (luminance - base.green)*MUTE_DESATURATION,
-    blue: base.blue + (luminance - base.blue)*MUTE_DESATURATION,
-    alpha: base.alpha*FRACTION_DIMMED_ALPHA,
+    red: base.red + (luminance - base.red) * MUTE_DESATURATION,
+    green: base.green + (luminance - base.green) * MUTE_DESATURATION,
+    blue: base.blue + (luminance - base.blue) * MUTE_DESATURATION,
+    alpha: base.alpha * FRACTION_DIMMED_ALPHA,
   )
 
 
@@ -754,7 +753,7 @@ func muted*(base: Rgba): Rgba =
 func easeOutCubic*(t: float): float =
   ## Ease progress toward 1, quickly at first then settling, for materialising feel.
   let u = 1.0 - clamp(t, 0.0, 1.0)
-  1.0 - u*u*u
+  1.0 - u * u * u
 
 
 func animationProgress*(now, born: float): float =
@@ -803,9 +802,7 @@ func markOverlay*(meshes: var MeshSet) =
   meshes.veils.index_overlay = some(meshes.veils.count)
 
 
-func addMarker*(
-  meshes: var MeshSet, at: Position, radius: float, tint: Rgba, alpha: float32
-) =
+func addMarker*(meshes: var MeshSet, at: Position, radius: float, tint: Rgba, alpha: float32) =
   ## Append point marking single position at `radius`, in `tint`'s hue at `alpha`.
   ##   Shaded as sphere lit from world's up by shaders; see `FRACTION_AMBIENT_SHADE`.
   ##   Alpha apart from tint so caller fading point need not build faded `Rgba` first.
@@ -814,7 +811,7 @@ func addMarker*(
   let count = meshes.points.count_vertices
   doAssert count < VERTICES_MAX,
     &"Mesh holds at most {VERTICES_MAX} vertices, raise `--define:visualiser.vertices_max`; " &
-      &"got `{count}`."
+    &"got `{count}`."
   # Write fields in place.
   #   `Vertex` literal assigned here was deep copy per point on JS backend (Art. VII.1).
   template vertex: untyped = meshes.points.vertices[count]
@@ -833,7 +830,7 @@ func steppedFrom(near, far: Position; fraction: float): Position =
   ## Place point `fraction` of way from `near` to `far`, stepping from end it stands nearer.
   ##   Step from far end is difference of two places decades apart where end is horizon's,
   ##   which float32 cancels; see `expandRibbon`.
-  if fraction < 0.5: near + fraction*(far - near) else: far + (fraction - 1.0)*(far - near)
+  if fraction < 0.5: near + fraction * (far - near) else: far + (fraction - 1.0) * (far - near)
 
 
 func blend(first, second: Rgba; fraction: float): Rgba =
@@ -842,10 +839,10 @@ func blend(first, second: Rgba; fraction: float): Rgba =
   ##   routine on every call of its parent, thousands of times per frame.
   let (a, b) = (1.0 - fraction, fraction)
   Rgba(
-    red: float32(a*float(first.red) + b*float(second.red)),
-    green: float32(a*float(first.green) + b*float(second.green)),
-    blue: float32(a*float(first.blue) + b*float(second.blue)),
-    alpha: float32(a*float(first.alpha) + b*float(second.alpha)),
+    red: float32(a * float(first.red) + b * float(second.red)),
+    green: float32(a * float(first.green) + b * float(second.green)),
+    blue: float32(a * float(first.blue) + b * float(second.blue)),
+    alpha: float32(a * float(first.alpha) + b * float(second.alpha)),
   )
 
 
@@ -903,10 +900,10 @@ func expandRibbon*(record: RibbonRecord, scale: DrawScale): array[6, Vertex] =
     (tint_near, tint_far) = (tint_tail, tint_head)
   if min(depth_tail, depth_head) < scale.depthNear:
     let
-      toward_head = (scale.depthNear - depth_tail)/(depth_head - depth_tail)
+      toward_head = (scale.depthNear - depth_tail) / (depth_head - depth_tail)
       crossing =
-        if toward_head < 0.5: tail + toward_head*(head - tail)
-        else: head + (toward_head - 1.0)*(head - tail)
+        if toward_head < 0.5: tail + toward_head * (head - tail)
+        else: head + (toward_head - 1.0) * (head - tail)
       tint_crossing = blend(tint_tail, tint_head, toward_head)
     if depth_tail < scale.depthNear:
       (near, tint_near) = (crossing, tint_crossing)
@@ -915,17 +912,17 @@ func expandRibbon*(record: RibbonRecord, scale: DrawScale): array[6, Vertex] =
 
   # Cut to guard pyramid, stepping each cut from end it stands nearer, as near crossing is.
   let
-    slope = FACTOR_GUARD*scale.tangentHalfView
+    slope = FACTOR_GUARD * scale.tangentHalfView
     (off_near, off_far) = (near - scale.eye, far - scale.eye)
   var (fraction_in, fraction_out) = (0.0, 1.0)
   for normal in [
-    slope*scale.forward + -scale.axis_right, slope*scale.forward + scale.axis_right,
-    slope*scale.forward + -scale.axis_up, slope*scale.forward + scale.axis_up,
+    slope * scale.forward + -scale.axis_right, slope * scale.forward + scale.axis_right,
+    slope * scale.forward + -scale.axis_up, slope * scale.forward + scale.axis_up,
   ]:
     let (room_near, room_far) = (dot(off_near, normal), dot(off_far, normal))
     if room_near < 0.0 and room_far < 0.0: return
-    if room_near < 0.0: fraction_in = max(fraction_in, room_near/(room_near - room_far))
-    elif room_far < 0.0: fraction_out = min(fraction_out, room_near/(room_near - room_far))
+    if room_near < 0.0: fraction_in = max(fraction_in, room_near / (room_near - room_far))
+    elif room_far < 0.0: fraction_out = min(fraction_out, room_near / (room_near - room_far))
   if fraction_in >= fraction_out: return
   (near, far) = (steppedFrom(near, far, fraction_in), steppedFrom(near, far, fraction_out))
   (tint_near, tint_far) = (
@@ -933,8 +930,8 @@ func expandRibbon*(record: RibbonRecord, scale: DrawScale): array[6, Vertex] =
   )
 
   let
-    offset_near = 0.5*float(record.width)*worldPerPixelAt(near, scale)*across.get
-    offset_far = 0.5*float(record.width)*worldPerPixelAt(far, scale)*across.get
+    offset_near = 0.5 * float(record.width) * worldPerPixelAt(near, scale) * across.get
+    offset_far = 0.5 * float(record.width) * worldPerPixelAt(far, scale) * across.get
     corners = [
       near - offset_near, far - offset_far, far + offset_far, near + offset_near,
     ]
@@ -952,8 +949,11 @@ func expandRibbon*(record: RibbonRecord, scale: DrawScale): array[6, Vertex] =
 
 
 func addRibbon*(
-  meshes: var MeshSet; tail, head: Position; tint_tail, tint_head: Rgba; width: float32;
-  is_fogged: bool = false
+  meshes: var MeshSet;
+  tail, head: Position;
+  tint_tail, tint_head: Rgba;
+  width: float32;
+  is_fogged = false;
 ) =
   ## Append one line segment as ribbon record, for vertex shader to widen.
   ##   No camera needed: near clip, across direction and screen-constant width all moved
@@ -964,7 +964,7 @@ func addRibbon*(
   let count = meshes.ribbons.count
   doAssert count < RIBBONS_MAX,
     &"Frame holds at most {RIBBONS_MAX} ribbons, raise `--define:visualiser.ribbons_max`; " &
-      &"got `{count}`."
+    &"got `{count}`."
   meshes.ribbons.records[count] = RibbonRecord(
     tail_x: float32(tail.x - meshes.origin.x),
     tail_y: float32(tail.y - meshes.origin.y),
@@ -987,25 +987,20 @@ func addRibbon*(
 
 
 func addRibbonPieces*(
-  meshes: var MeshSet, pieces: openArray[RibbonPiece], width: float32,
-  is_fogged: bool = false
+  meshes: var MeshSet, pieces: openArray[RibbonPiece], width: float32, is_fogged = false
 ) =
   ## Append every assembled piece as ribbon record.
   ##   Emit half of seam: no multivector is named here, and none can be.
   for piece in pieces:
-    meshes.addRibbon(
-      piece.tail, piece.head, piece.tint_tail, piece.tint_head, width, is_fogged
-    )
+    meshes.addRibbon(piece.tail, piece.head, piece.tint_tail, piece.tint_head, width, is_fogged)
 
 
-func addSegment*(
-  meshes: var MeshSet; tail, head: Position; tint: Rgba; width: float32
-) =
+func addSegment*(meshes: var MeshSet; tail, head: Position; tint: Rgba; width: float32) =
   ## Append ribbon of one tint end to end.
   meshes.addRibbon(tail, head, tint, tint, width)
 
 
-let UNIT_CIRCLE_RIM* = unitRing[SEGMENTS_CIRCLE_HORIZON + 1](SEGMENTS_CIRCLE_HORIZON)
+let UNIT_CIRCLE_RIM* = unitRing[SEGMENTS_CIRCLE_HORIZON+1](SEGMENTS_CIRCLE_HORIZON)
   ## Hold rim's fixed ring of angles, resolved once at start-up by `euclid.unitRing`.
   ##   One boundary past wrap rather than reuse of first entry, so closing segment ends
   ##   on value `cos(2*PI)` takes, hair off `cos(0)`'s.
@@ -1024,12 +1019,10 @@ proc ribbonOfRing*(record: RingRecord, segment: int): RibbonRecord =
   ##   `strictFuncs` counts as effect.
   let
     centre = Position(x: record.centre_x, y: record.centre_y, z: record.centre_z)
-    arm_first = Direction(x: record.arm_first_x, y: record.arm_first_y,
-      z: record.arm_first_z)
-    arm_second = Direction(x: record.arm_second_x, y: record.arm_second_y,
-      z: record.arm_second_z)
+    arm_first = Direction(x: record.arm_first_x, y: record.arm_first_y, z: record.arm_first_z)
+    arm_second = Direction(x: record.arm_second_x, y: record.arm_second_y, z: record.arm_second_z)
     at_tail = UNIT_CIRCLE_RIM[segment]
-    at_head = UNIT_CIRCLE_RIM[segment + 1]
+    at_head = UNIT_CIRCLE_RIM[segment+1]
     tail = onCircleAt(centre, arm_first, arm_second, at_tail.cos_angle, at_tail.sin_angle)
     head = onCircleAt(centre, arm_first, arm_second, at_head.cos_angle, at_head.sin_angle)
   RibbonRecord(
@@ -1052,9 +1045,7 @@ proc ribbonOfRing*(record: RingRecord, segment: int): RibbonRecord =
   )
 
 
-proc expandRingVertex*(
-  record: RingRecord, segment: int, scale: DrawScale
-): array[6, Vertex] =
+proc expandRingVertex*(record: RingRecord, segment: int, scale: DrawScale): array[6, Vertex] =
   ## Expand one segment of ring into six vertices shader will make of it.
   ##   Reference implementation of ring vertex shader; nothing else runs it.
   ##     Both front-ends carry same arithmetic in GLSL, sibling copies as
@@ -1065,17 +1056,21 @@ proc expandRingVertex*(
 
 
 func addRing*(
-  meshes: var MeshSet; centre: Position; axis_first, axis_second: Direction;
-  radius: float; tint: Rgba; width: float
+  meshes: var MeshSet;
+  centre: Position;
+  axis_first, axis_second: Direction;
+  radius: float;
+  tint: Rgba;
+  width: float;
 ) =
   ## Append one plane's rim as single record: circle `addDisc` fills, outlined.
   ##   Arms arrive already scaled by radius, as `addDisc`'s do.
   doAssert meshes.rings.count < RINGS_MAX,
     &"Ring storage holds {RINGS_MAX} records, raise `--define:visualiser.rings_max`; got " &
-      &"`{meshes.rings.count}`."
+    &"`{meshes.rings.count}`."
   let
-    arm_first = radius*axis_first
-    arm_second = radius*axis_second
+    arm_first = radius * axis_first
+    arm_second = radius * axis_second
   # Write fields in place.
   #   `RingRecord` constructor assigned to slot is deep copy per plane per frame on JS backend
   #   (read in emitted JS). Every field written, so slot keeps nothing of record before.
@@ -1105,8 +1100,8 @@ const TANGENT_BOUND = 1.0e6
 
 func tanBounded(angle: float): float =
   ## Tangent of `angle`, bounded past quarter turn either way; see `TANGENT_BOUND`.
-  if angle >= 0.5*PI: return TANGENT_BOUND
-  if angle <= -0.5*PI: return -TANGENT_BOUND
+  if angle >= 0.5 * PI: return TANGENT_BOUND
+  if angle <= -0.5 * PI: return -TANGENT_BOUND
   tan(angle)
 
 
@@ -1125,8 +1120,10 @@ const
 
 
 func viewBoxOfDisc*(
-  record: DiscRecord; eye: Position; axis_right, axis_up, forward: Direction;
-  tangent_half_view, aspect: float
+  record: DiscRecord;
+  eye: Position;
+  axis_right, axis_up, forward: Direction;
+  tangent_half_view, aspect: float;
 ): DiscBox =
   ## Bound disc's picture on view turned to its plane, and stop it at plane's vanishing line.
   ##   Reference disc vertex shaders are held to, beside `expandRibbon`.
@@ -1165,11 +1162,11 @@ func viewBoxOfDisc*(
     ##   `a` is nearest rim depth times farthest, positive while whole rim stands ahead, so
     ##   least root takes minus. Discriminant is floored at zero against rounding alone.
     let
-      a = depth*depth - swings[0]*swings[0] - swings[1]*swings[1]
-      b = offset*depth - arms[0]*swings[0] - arms[1]*swings[1]
-      c = offset*offset - arms[0]*arms[0] - arms[1]*arms[1]
-      root = sqrt(max(b*b - a*c, 0.0))
-    ((b - root)/a, (b + root)/a)
+      a = depth * depth - swings[0] * swings[0] - swings[1] * swings[1]
+      b = offset * depth - arms[0] * swings[0] - arms[1] * swings[1]
+      c = offset * offset - arms[0] * arms[0] - arms[1] * arms[1]
+      root = sqrt(max(b * b - a * c, 0.0))
+    ((b - root) / a, (b + root) / a)
 
   # Turn view so plane's normal, signed toward eye's side of plane, points up on it.
   let
@@ -1192,25 +1189,25 @@ func viewBoxOfDisc*(
     radius = norm(arm_first)
     distance = dot(to_centre, normal)
     side = (if distance > 0.0: 1.0 elif distance < 0.0: -1.0 else: 0.0)
-    lateral = (side*dot(normal, axis_right), side*dot(normal, axis_up))
+    lateral = (side * dot(normal, axis_right), side * dot(normal, axis_up))
     reach_lateral = hypot(lateral[0], lateral[1])
     turn_up =
-      if reach_lateral > 0.0: (lateral[0]/reach_lateral, lateral[1]/reach_lateral)
+      if reach_lateral > 0.0: (lateral[0] / reach_lateral, lateral[1] / reach_lateral)
       else: (0.0, 1.0)
     turn_across = (turn_up[1], -turn_up[0])
-    wide = tangent_half_view*aspect
+    wide = tangent_half_view * aspect
     tall = tangent_half_view
     extent = (
-      abs(turn_across[0])*wide + abs(turn_across[1])*tall,
-      abs(turn_up[0])*wide + abs(turn_up[1])*tall,
+      abs(turn_across[0]) * wide + abs(turn_across[1]) * tall,
+      abs(turn_up[0]) * wide + abs(turn_up[1]) * tall,
     )
-  result.step_across = (turn_across[0]*extent[0]/wide, turn_across[1]*extent[0]/tall)
-  result.step_up = (turn_up[0]*extent[1]/wide, turn_up[1]*extent[1]/tall)
+  result.step_across = (turn_across[0] * extent[0] / wide, turn_across[1] * extent[0] / tall)
+  result.step_up = (turn_up[0] * extent[1] / wide, turn_up[1] * extent[1] / tall)
 
   # Bound sphere's picture along each turned axis.
   let
-    right_turned = turn_across[0]*axis_right + turn_across[1]*axis_up
-    up_turned = turn_up[0]*axis_right + turn_up[1]*axis_up
+    right_turned = turn_across[0] * axis_right + turn_across[1] * axis_up
+    up_turned = turn_up[0] * axis_right + turn_up[1] * axis_up
     across = dot(to_centre, right_turned)
     rise = dot(to_centre, up_turned)
     depth = dot(to_centre, forward)
@@ -1222,43 +1219,49 @@ func viewBoxOfDisc*(
   else:
     let
       bearing_across = arctan2(across, depth)
-      spread_across = arcsin(radius/reach_across)
+      spread_across = arcsin(radius / reach_across)
       bearing_up = arctan2(rise, depth)
-      spread_up = arcsin(radius/reach_up)
+      spread_up = arcsin(radius / reach_up)
     result.corner_min = (
-      clamp(tanBounded(bearing_across - spread_across)/extent[0], -1.0, 1.0),
-      clamp(tanBounded(bearing_up - spread_up)/extent[1], -1.0, 1.0),
+      clamp(tanBounded(bearing_across - spread_across) / extent[0], -1.0, 1.0),
+      clamp(tanBounded(bearing_up - spread_up) / extent[1], -1.0, 1.0),
     )
     result.corner_max = (
-      clamp(tanBounded(bearing_across + spread_across)/extent[0], -1.0, 1.0),
-      clamp(tanBounded(bearing_up + spread_up)/extent[1], -1.0, 1.0),
+      clamp(tanBounded(bearing_across + spread_across) / extent[0], -1.0, 1.0),
+      clamp(tanBounded(bearing_up + spread_up) / extent[1], -1.0, 1.0),
     )
 
   # Tighten box to rim's own picture, padded, where whole rim stands in front of eye.
   let swings = (dot(arm_first, forward), dot(arm_second, forward))
-  if depth > FACTOR_RIM_AHEAD*hypot(swings[0], swings[1]):
+  if depth > FACTOR_RIM_AHEAD * hypot(swings[0], swings[1]):
     let
       (least_across, most_across) = slopesOnRim(
-        across, depth, (dot(arm_first, right_turned), dot(arm_second, right_turned)), swings,
+        across,
+        depth,
+        (dot(arm_first, right_turned), dot(arm_second, right_turned)),
+        swings,
       )
       (least_up, most_up) = slopesOnRim(
-        rise, depth, (dot(arm_first, up_turned), dot(arm_second, up_turned)), swings,
+        rise,
+        depth,
+        (dot(arm_first, up_turned), dot(arm_second, up_turned)),
+        swings,
       )
     result.corner_min = (
-      max(result.corner_min[0], clamp(least_across/extent[0] - MARGIN_BOX_RIM, -1.0, 1.0)),
-      max(result.corner_min[1], clamp(least_up/extent[1] - MARGIN_BOX_RIM, -1.0, 1.0)),
+      max(result.corner_min[0], clamp(least_across / extent[0] - MARGIN_BOX_RIM, -1.0, 1.0)),
+      max(result.corner_min[1], clamp(least_up / extent[1] - MARGIN_BOX_RIM, -1.0, 1.0)),
     )
     result.corner_max = (
-      min(result.corner_max[0], clamp(most_across/extent[0] + MARGIN_BOX_RIM, -1.0, 1.0)),
-      min(result.corner_max[1], clamp(most_up/extent[1] + MARGIN_BOX_RIM, -1.0, 1.0)),
+      min(result.corner_max[0], clamp(most_across / extent[0] + MARGIN_BOX_RIM, -1.0, 1.0)),
+      min(result.corner_max[1], clamp(most_up / extent[1] + MARGIN_BOX_RIM, -1.0, 1.0)),
     )
 
   # Raise floor to vanishing line, or past view where none crosses it.
   #   Two either way is past view; bound keeps shaders' `float` finite at near-zero reach.
   let
-    facing = side*dot(normal, forward)
+    facing = side * dot(normal, forward)
     line_vanishing =
-      if reach_lateral > 0.0: clamp(-facing/(reach_lateral*extent[1]), -2.0, 2.0)
+      if reach_lateral > 0.0: clamp(-facing / (reach_lateral * extent[1]), -2.0, 2.0)
       elif facing > 0.0: -2.0
       else: 2.0
   result.corner_min[1] = min(max(result.corner_min[1], line_vanishing), result.corner_max[1])
@@ -1269,14 +1272,14 @@ func expandDiscCorner*(box: DiscBox; corner_across, corner_up: float): (float, f
   ##   Box's middle plus corner, -1 or 1 each way, scaled by box's half extents, then turned
   ##   back by box's steps: quad of `discCorners` covers box exactly, and nothing past it.
   let turned = (
-    0.5*(box.corner_min[0] + box.corner_max[0]) +
-      0.5*corner_across*(box.corner_max[0] - box.corner_min[0]),
-    0.5*(box.corner_min[1] + box.corner_max[1]) +
-      0.5*corner_up*(box.corner_max[1] - box.corner_min[1]),
+    0.5 * (box.corner_min[0] + box.corner_max[0]) +
+    0.5 * corner_across * (box.corner_max[0] - box.corner_min[0]),
+    0.5 * (box.corner_min[1] + box.corner_max[1]) +
+    0.5 * corner_up * (box.corner_max[1] - box.corner_min[1]),
   )
   (
-    turned[0]*box.step_across[0] + turned[1]*box.step_up[0],
-    turned[0]*box.step_across[1] + turned[1]*box.step_up[1],
+    turned[0] * box.step_across[0] + turned[1] * box.step_up[0],
+    turned[0] * box.step_across[1] + turned[1] * box.step_up[1],
   )
 
 
@@ -1287,16 +1290,16 @@ func rayThroughView*(
   ## Cast sight ray through view fraction `(view_x, view_y)`, -1 .. 1 across and up.
   ##   Sight axis plus lateral step, unnormalised, so distance along it is view depth.
   let
-    across = view_x*aspect*tangent_half_view
-    up = view_y*tangent_half_view
+    across = view_x * aspect * tangent_half_view
+    up = view_y * tangent_half_view
   Direction(
-    x: forward.x + across*axis_right.x + up*axis_up.x,
-    y: forward.y + across*axis_right.y + up*axis_up.y,
-    z: forward.z + across*axis_right.z + up*axis_up.z,
+    x: forward.x + across * axis_right.x + up * axis_up.x,
+    y: forward.y + across * axis_right.y + up * axis_up.y,
+    z: forward.z + across * axis_right.z + up * axis_up.z,
   )
 
 
-func hitDiscAlong*(record: DiscRecord; eye: Position; ray: Direction): Option[float] =
+func hitDiscAlong*(record: DiscRecord, eye: Position, ray: Direction): Option[float] =
   ## Cast `ray` from `eye` at disc; report view depth where it lands inside disc.
   ##   Reference disc fragment shaders are held to, same three-way rule as
   ##   `viewBoxOfDisc`. `ray` is `rayThroughView`'s, so depth along it is view depth.
@@ -1312,7 +1315,8 @@ func hitDiscAlong*(record: DiscRecord; eye: Position; ray: Direction): Option[fl
       z: float(record.arm_first_z),
     )
     arm_second = Direction(
-      x: float(record.arm_second_x), y: float(record.arm_second_y),
+      x: float(record.arm_second_x),
+      y: float(record.arm_second_y),
       z: float(record.arm_second_z),
     )
     to_centre = Direction(
@@ -1323,17 +1327,17 @@ func hitDiscAlong*(record: DiscRecord; eye: Position; ray: Direction): Option[fl
     normal = cross(arm_first, arm_second)
     rate = dot(ray, normal)
   if rate == 0.0: return
-  let depth = dot(to_centre, normal)/rate
+  let depth = dot(to_centre, normal) / rate
   if depth <= 0.0: return
   let
     hit = Direction(
-      x: depth*ray.x - to_centre.x,
-      y: depth*ray.y - to_centre.y,
-      z: depth*ray.z - to_centre.z,
+      x: depth * ray.x - to_centre.x,
+      y: depth * ray.y - to_centre.y,
+      z: depth * ray.z - to_centre.z,
     )
-    first = dot(hit, arm_first)/dot(arm_first, arm_first)
-    second = dot(hit, arm_second)/dot(arm_second, arm_second)
-  if first*first + second*second > 1.0: return
+    first = dot(hit, arm_first) / dot(arm_first, arm_first)
+    second = dot(hit, arm_second) / dot(arm_second, arm_second)
+  if first * first + second * second > 1.0: return
   some(depth)
 
 
@@ -1345,9 +1349,9 @@ func expandDomeVertex*(record: DomeRecord, unit: Direction): Vertex =
   ##     Sum `spherePoint` walked through algebra before sphere became static geometry,
   ##     which suite still holds it equal to.
   Vertex(
-    x: float32(float(record.centre_x) + float(record.radius)*unit.x),
-    y: float32(float(record.centre_y) + float(record.radius)*unit.y),
-    z: float32(float(record.centre_z) + float(record.radius)*unit.z),
+    x: float32(float(record.centre_x) + float(record.radius) * unit.x),
+    y: float32(float(record.centre_y) + float(record.radius) * unit.y),
+    z: float32(float(record.centre_z) + float(record.radius) * unit.z),
     red: record.red,
     green: record.green,
     blue: record.blue,
@@ -1400,19 +1404,19 @@ proc ringCorners*(): seq[float32] =
   ##   One source for both front-ends, as `discCorners` is.
   const winding = [(0.0'f32, -1.0'f32), (1.0'f32, -1.0'f32), (1.0'f32, 1.0'f32),
     (0.0'f32, -1.0'f32), (1.0'f32, 1.0'f32), (0.0'f32, 1.0'f32)]
-  result = newSeq[float32](6*6*SEGMENTS_CIRCLE_HORIZON)
+  result = newSeq[float32](6 * 6 * SEGMENTS_CIRCLE_HORIZON)
   var at = 0
-  for segment in 0 ..< SEGMENTS_CIRCLE_HORIZON:
+  for segment in 0..<SEGMENTS_CIRCLE_HORIZON:
     let
       tail = UNIT_CIRCLE_RIM[segment]
-      head = UNIT_CIRCLE_RIM[segment + 1]
+      head = UNIT_CIRCLE_RIM[segment+1]
     for (which_end, side) in winding:
-      result[at + 0] = float32(tail.cos_angle)
-      result[at + 1] = float32(tail.sin_angle)
-      result[at + 2] = float32(head.cos_angle)
-      result[at + 3] = float32(head.sin_angle)
-      result[at + 4] = which_end
-      result[at + 5] = side
+      result[at+0] = float32(tail.cos_angle)
+      result[at+1] = float32(tail.sin_angle)
+      result[at+2] = float32(head.cos_angle)
+      result[at+3] = float32(head.sin_angle)
+      result[at+4] = which_end
+      result[at+5] = side
       at += 6
 
 
@@ -1421,25 +1425,25 @@ func domeCorners*(): seq[float32] =
   ##   One unit direction per corner, six corners per lat/long quad, wound as CPU quads
   ##   were. `expandDomeVertex` says what each becomes.
   ##   One source for both front-ends, as `discCorners` is.
-  result = newSeq[float32](3*6*LATITUDES_HORIZON*LONGITUDES_HORIZON)
+  result = newSeq[float32](3 * 6 * LATITUDES_HORIZON * LONGITUDES_HORIZON)
   var at = 0
-  for lat in 0 ..< LATITUDES_HORIZON:
-    for lon in 0 ..< LONGITUDES_HORIZON:
+  for lat in 0..<LATITUDES_HORIZON:
+    for lon in 0..<LONGITUDES_HORIZON:
       # Wind quad's four unit directions [0, 1, 2, 0, 2, 3] as `addQuad` wound it.
       var corners: array[4, tuple[theta, phi: float]]
-      corners[0] = (theta: PI*float(lat)/float(LATITUDES_HORIZON),
-        phi: 2.0*PI*float(lon)/float(LONGITUDES_HORIZON))
-      corners[1] = (theta: PI*float(lat)/float(LATITUDES_HORIZON),
-        phi: 2.0*PI*float(lon + 1)/float(LONGITUDES_HORIZON))
-      corners[2] = (theta: PI*float(lat + 1)/float(LATITUDES_HORIZON),
-        phi: 2.0*PI*float(lon + 1)/float(LONGITUDES_HORIZON))
-      corners[3] = (theta: PI*float(lat + 1)/float(LATITUDES_HORIZON),
-        phi: 2.0*PI*float(lon)/float(LONGITUDES_HORIZON))
+      corners[0] = (theta: PI * float(lat) / float(LATITUDES_HORIZON),
+        phi: 2.0 * PI * float(lon) / float(LONGITUDES_HORIZON))
+      corners[1] = (theta: PI * float(lat) / float(LATITUDES_HORIZON),
+        phi: 2.0 * PI * float(lon + 1) / float(LONGITUDES_HORIZON))
+      corners[2] = (theta: PI * float(lat + 1) / float(LATITUDES_HORIZON),
+        phi: 2.0 * PI * float(lon + 1) / float(LONGITUDES_HORIZON))
+      corners[3] = (theta: PI * float(lat + 1) / float(LATITUDES_HORIZON),
+        phi: 2.0 * PI * float(lon) / float(LONGITUDES_HORIZON))
       for index in [0, 1, 2, 0, 2, 3]:
         let (theta, phi) = corners[index]
-        result[at + 0] = float32(sin(theta)*cos(phi))
-        result[at + 1] = float32(sin(theta)*sin(phi))
-        result[at + 2] = float32(cos(theta))
+        result[at+0] = float32(sin(theta) * cos(phi))
+        result[at+1] = float32(sin(theta) * sin(phi))
+        result[at+2] = float32(cos(theta))
         at += 3
 
 
@@ -1448,9 +1452,9 @@ func appendVeilRun(meshes: var MeshSet, kind: VeilKind) =
   ##   Extends current run where it is same kind and this side of overlay mark, opens
   ##   new one otherwise. See `VeilRuns`.
   let count = meshes.veils.count
-  if count > 0 and meshes.veils.runs[count - 1].kind == kind and
+  if count > 0 and meshes.veils.runs[count-1].kind == kind and
       meshes.veils.index_overlay != some(count):
-    meshes.veils.runs[count - 1].count += 1
+    meshes.veils.runs[count-1].count += 1
     return
   doAssert count < len(meshes.veils.runs),
     &"Frame holds at most {len(meshes.veils.runs)} veil runs; got `{count}`."
@@ -1463,8 +1467,11 @@ func appendVeilRun(meshes: var MeshSet, kind: VeilKind) =
 
 
 func addDisc*(
-  meshes: var MeshSet; center: Position; axis_first, axis_second: Direction;
-  radius: float; tint: Rgba
+  meshes: var MeshSet;
+  center: Position;
+  axis_first, axis_second: Direction;
+  radius: float;
+  tint: Rgba;
 ) =
   ## Append flat, uniformly translucent disc record filling circle `addRing` outlines.
   ##   For disc-fill vertex shader to span over its box.
@@ -1474,11 +1481,11 @@ func addDisc*(
   let count = meshes.discs.count
   doAssert count < DISCS_MAX,
     &"Frame holds at most {DISCS_MAX} discs, raise `--define:visualiser.discs_max`; got " &
-      &"`{count}`."
+    &"`{count}`."
   meshes.appendVeilRun(VeilKind.Disc)
   let
-    arm_first = radius*axis_first
-    arm_second = radius*axis_second
+    arm_first = radius * axis_first
+    arm_second = radius * axis_second
   # Write fields in place.
   #   `DiscRecord` constructor assigned to slot is deep copy per plane per frame on JS backend
   #   (read in emitted JS). Every field written, so slot keeps nothing of record before.
@@ -1511,7 +1518,7 @@ func addDome*(meshes: var MeshSet, center: Position, radius: float, tint: Rgba) 
   let count = meshes.domes.count
   doAssert count < DOMES_MAX,
     &"Frame holds at most {DOMES_MAX} domes, raise `--define:visualiser.domes_max`; got " &
-      &"`{count}`."
+    &"`{count}`."
   meshes.appendVeilRun(VeilKind.Dome)
   meshes.domes.records[count] = DomeRecord(
     centre_x: float32(center.x - meshes.origin.x),

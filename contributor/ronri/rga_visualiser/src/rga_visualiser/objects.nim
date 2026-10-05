@@ -21,18 +21,18 @@ import pga
 static:
   doAssert DIMENSIONS == 4 and IS_RIGID,
     &"Visualiser draws 3D Euclidean space, so it needs 4D rigid PGA, i.e. " &
-      &"`--define:pga.dimensions=4 --define:pga.is_conformal=false`; got `{DIMENSIONS}` " &
-      &"with conformal `{IS_CONFORMAL}`."
+    &"`--define:pga.dimensions=4 --define:pga.is_conformal=false`; got `{DIMENSIONS}` " &
+    &"with conformal `{IS_CONFORMAL}`."
 
 
 
 #[ Type Definitions ]#
 
 type
-  Kind* {.pure.} = enum ## Define geometry k-vector stands for in 4D RGA.
-    Point, ## Grade 1.
-    Line, ## Grade 2.
-    Plane, ## Grade 3.
+  Kind* {.pure.} = enum  ## Define geometry k-vector stands for in 4D RGA.
+    Point,  ## Grade 1.
+    Line,  ## Grade 2.
+    Plane,  ## Grade 3.
 
 
 
@@ -50,7 +50,7 @@ func kindOf*(m: Multivector): Option[Kind] =
   else: none[Kind]()
 
 
-func isHorizon*(m: Multivector): bool = abs(( |∘ m)[Basis.scalarAnti]) <= TOLERANCE_ABS
+func isHorizon*(m: Multivector): bool = abs((|∘m)[Basis.scalarAnti]) <= TOLERANCE_ABS
   ## Report whether object lies wholly in horizon, i.e. whether its weight vanishes.
 
 

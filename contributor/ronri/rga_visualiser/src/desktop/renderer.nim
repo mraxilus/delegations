@@ -28,8 +28,7 @@ import ./opengl as gl
 # Read `DIAMETER_POINT_LEAST`, `WIDTH_LINE_FURNITURE` and `WIDTH_LINE_OBJECT` from `mesh`.
 #   `marker` derives selection marker's clearance from them and cannot import module
 #   binding straight to OpenGL; one home, read by both render paths.
-const LOG_MAX = 1024
-  ## Bound how much of driver's compile log is reported.
+const LOG_MAX = 1024  ## Bound how much of driver's compile log is reported.
 
 
 const SOURCE_VERTEX_POINT = """
@@ -266,7 +265,7 @@ void main() {
 
 const CORNERS_RIBBON: array[12, float32] = [
   0.0'f32, -1.0, 1.0, -1.0, 1.0, 1.0, 0.0, -1.0, 1.0, 1.0, 0.0, 1.0,
-] ## Six (end, side) corners of one ribbon instance, in `expandRibbon`'s winding.
+]  ## Six (end, side) corners of one ribbon instance, in `expandRibbon`'s winding.
 
 
 const SOURCE_VERTEX_DISC = """
@@ -515,10 +514,10 @@ void main() {
 
 
 const
-  COUNT_CORNERS_DOME = 6*LATITUDES_HORIZON*LONGITUDES_HORIZON
+  COUNT_CORNERS_DOME = 6 * LATITUDES_HORIZON * LONGITUDES_HORIZON
     ## Count corners dome's static buffer holds.
     ##   `mesh.domeCorners` emits exactly this many unit directions.
-  COUNT_CORNERS_RING = 6*SEGMENTS_CIRCLE_HORIZON
+  COUNT_CORNERS_RING = 6 * SEGMENTS_CIRCLE_HORIZON
     ## Count corners ring's static buffer holds, whole rim at six per segment.
     ##   `mesh.ringCorners` emits exactly this many six-float entries.
 
@@ -527,7 +526,7 @@ const
 #[ Type Definitions ]#
 
 type
-  Renderer* = object ## Define every OpenGL name visualiser allocates.
+  Renderer* = object  ## Define every OpenGL name visualiser allocates.
     program: gl.Uint
     location_view_projection: gl.Int
     location_point_eye: gl.Int
@@ -643,7 +642,7 @@ proc linkProgram(source_vertex, source_fragment: string): gl.Uint =
 const
   VIEWS_POINT = [
     (gl.Uint(1), gl.Int(3), 0), (gl.Uint(2), gl.Int(1), 3), (gl.Uint(3), gl.Int(4), 4),
-  ] ## Hold point record's three views over `mesh.Vertex`.
+  ]  ## Hold point record's three views over `mesh.Vertex`.
     ## Centre, radius then colour, after corner's one at location zero.
   VIEWS_CORNER_FLAT = [(gl.Uint(0), gl.Int(2), 0)]
     ## Hold one view over corner buffer of `(end, side)` pairs, ribbon's and disc's alike.
@@ -654,22 +653,20 @@ const
   VIEWS_RIBBON = [
     (gl.Uint(1), gl.Int(3), 0), (gl.Uint(2), gl.Int(3), 3), (gl.Uint(3), gl.Int(1), 6),
     (gl.Uint(4), gl.Int(1), 7), (gl.Uint(5), gl.Int(4), 8), (gl.Uint(6), gl.Int(4), 12),
-  ] ## Hold record's six views, `mesh.RibbonRecord`'s field order.
+  ]  ## Hold record's six views, `mesh.RibbonRecord`'s field order.
   VIEWS_DISC = [
     (gl.Uint(1), gl.Int(3), 0), (gl.Uint(2), gl.Int(3), 3), (gl.Uint(3), gl.Int(3), 6),
     (gl.Uint(4), gl.Int(4), 9),
-  ] ## Hold record's four views, `mesh.DiscRecord`'s field order.
+  ]  ## Hold record's four views, `mesh.DiscRecord`'s field order.
   VIEWS_RING = [
     (gl.Uint(2), gl.Int(3), 0), (gl.Uint(3), gl.Int(3), 3), (gl.Uint(4), gl.Int(3), 6),
     (gl.Uint(5), gl.Int(4), 9), (gl.Uint(6), gl.Int(1), 13),
-  ] ## Hold record's five views, `mesh.RingRecord`'s field order, after corner's two.
+  ]  ## Hold record's five views, `mesh.RingRecord`'s field order, after corner's two.
   VIEWS_DOME = [(gl.Uint(1), gl.Int(4), 0), (gl.Uint(2), gl.Int(4), 4)]
     ## Hold record's two views, `mesh.DomeRecord`'s field order.
 
 
-proc pointViews(
-  stride: gl.Sizei, views: openArray[AttributeView], is_instanced: bool, base = 0
-) =
+proc pointViews(stride: gl.Sizei, views: openArray[AttributeView], is_instanced: bool, base = 0) =
   ## Point each view at its floats within current buffer, `base` bytes in.
   ##   `is_instanced` advances view once per instance rather than once per vertex.
   ##   Called at build with `base` zero, and per run at draw time with run's first byte, so
@@ -677,7 +674,7 @@ proc pointViews(
   for (index, floats, offset) in views:
     gl.enableVertexAttribArray(index)
     gl.vertexAttribPointer(index, floats, gl.FLOAT_TYPE, gl.FALSE, stride,
-      cast[pointer](base + offset*sizeof(float32)))
+      cast[pointer](base + offset * sizeof(float32)))
     if is_instanced: gl.vertexAttribDivisor(index, 1)
 
 
@@ -685,7 +682,9 @@ proc uploadCorners(buffer: gl.Uint, corners: openArray[float32]) =
   ## Upload static corner geometry every instance of one record kind shares.
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
   gl.bufferData(
-    gl.ARRAY_BUFFER, gl.Sizeiptr(len(corners)*sizeof(float32)), unsafeAddr corners[0],
+    gl.ARRAY_BUFFER,
+    gl.Sizeiptr(len(corners) * sizeof(float32)),
+    unsafeAddr corners[0],
     gl.STATIC_DRAW,
   )
 
@@ -714,10 +713,10 @@ proc initPointProgram(renderer: var Renderer) =
   gl.genBuffers(1, addr renderer.buffer_points)
   gl.bindVertexArray(renderer.array_points)
   let corners = pointCorners()
-  doAssert len(corners) == 2*COUNT_CORNERS_POINT,
+  doAssert len(corners) == 2 * COUNT_CORNERS_POINT,
     &"Point corner buffer must hold {2*COUNT_CORNERS_POINT} floats; got `{len(corners)}`."
   uploadCorners(renderer.buffer_point_corners, corners)
-  pointViews(gl.Sizei(2*sizeof(float32)), VIEWS_CORNER_FLAT, is_instanced = false)
+  pointViews(gl.Sizei(2 * sizeof(float32)), VIEWS_CORNER_FLAT, is_instanced = false)
   gl.bindBuffer(gl.ARRAY_BUFFER, renderer.buffer_points)
   pointViews(gl.Sizei(sizeof(Vertex)), VIEWS_POINT, is_instanced = true)
   gl.bindVertexArray(0)
@@ -754,7 +753,7 @@ proc initRibbonProgram(renderer: var Renderer) =
   gl.genBuffers(1, addr renderer.buffer_ribbon_records)
   gl.bindVertexArray(renderer.array_ribbon)
   uploadCorners(renderer.buffer_ribbon_corners, CORNERS_RIBBON)
-  pointViews(gl.Sizei(2*sizeof(float32)), VIEWS_CORNER_FLAT, is_instanced = false)
+  pointViews(gl.Sizei(2 * sizeof(float32)), VIEWS_CORNER_FLAT, is_instanced = false)
   gl.bindBuffer(gl.ARRAY_BUFFER, renderer.buffer_ribbon_records)
   pointViews(gl.Sizei(sizeof(RibbonRecord)), VIEWS_RIBBON, is_instanced = true)
   gl.bindVertexArray(0)
@@ -777,10 +776,10 @@ proc initDiscProgram(renderer: var Renderer) =
   gl.genBuffers(1, addr renderer.buffer_disc_records)
   gl.bindVertexArray(renderer.array_disc)
   let corners = discCorners()
-  doAssert len(corners) == 2*COUNT_CORNERS_DISC,
+  doAssert len(corners) == 2 * COUNT_CORNERS_DISC,
     &"Disc corner buffer must hold {2*COUNT_CORNERS_DISC} floats; got `{len(corners)}`."
   uploadCorners(renderer.buffer_disc_corners, corners)
-  pointViews(gl.Sizei(2*sizeof(float32)), VIEWS_CORNER_FLAT, is_instanced = false)
+  pointViews(gl.Sizei(2 * sizeof(float32)), VIEWS_CORNER_FLAT, is_instanced = false)
   gl.bindBuffer(gl.ARRAY_BUFFER, renderer.buffer_disc_records)
   pointViews(gl.Sizei(sizeof(DiscRecord)), VIEWS_DISC, is_instanced = true)
   gl.bindVertexArray(0)
@@ -810,10 +809,10 @@ proc initRingProgram(renderer: var Renderer) =
   gl.genBuffers(1, addr renderer.buffer_ring_records)
   gl.bindVertexArray(renderer.array_ring)
   let corners = ringCorners()
-  doAssert len(corners) == 6*COUNT_CORNERS_RING,
+  doAssert len(corners) == 6 * COUNT_CORNERS_RING,
     &"Ring corner buffer must hold {6*COUNT_CORNERS_RING} floats; got `{len(corners)}`."
   uploadCorners(renderer.buffer_ring_corners, corners)
-  pointViews(gl.Sizei(6*sizeof(float32)), VIEWS_CORNER_RING, is_instanced = false)
+  pointViews(gl.Sizei(6 * sizeof(float32)), VIEWS_CORNER_RING, is_instanced = false)
   gl.bindBuffer(gl.ARRAY_BUFFER, renderer.buffer_ring_records)
   pointViews(gl.Sizei(sizeof(RingRecord)), VIEWS_RING, is_instanced = true)
   gl.bindVertexArray(0)
@@ -831,10 +830,10 @@ proc initDomeProgram(renderer: var Renderer) =
   gl.genBuffers(1, addr renderer.buffer_dome_records)
   gl.bindVertexArray(renderer.array_dome)
   let corners = domeCorners()
-  doAssert len(corners) == 3*COUNT_CORNERS_DOME,
+  doAssert len(corners) == 3 * COUNT_CORNERS_DOME,
     &"Dome corner buffer must hold {3*COUNT_CORNERS_DOME} floats; got `{len(corners)}`."
   uploadCorners(renderer.buffer_dome_corners, corners)
-  pointViews(gl.Sizei(3*sizeof(float32)), VIEWS_CORNER_DOME, is_instanced = false)
+  pointViews(gl.Sizei(3 * sizeof(float32)), VIEWS_CORNER_DOME, is_instanced = false)
   gl.bindBuffer(gl.ARRAY_BUFFER, renderer.buffer_dome_records)
   pointViews(gl.Sizei(sizeof(DomeRecord)), VIEWS_DOME, is_instanced = true)
   gl.bindVertexArray(0)
@@ -890,7 +889,7 @@ proc uploadPoints(renderer: Renderer, meshes: MeshSet) =
   gl.bindBuffer(gl.ARRAY_BUFFER, renderer.buffer_points)
   gl.bufferData(
     gl.ARRAY_BUFFER,
-    gl.Sizeiptr(count*sizeof(Vertex)),
+    gl.Sizeiptr(count * sizeof(Vertex)),
     unsafeAddr meshes.points.vertices[0],
     gl.DYNAMIC_DRAW,
   )
@@ -902,7 +901,7 @@ proc uploadRibbons(renderer: Renderer, meshes: MeshSet) =
   gl.bindBuffer(gl.ARRAY_BUFFER, renderer.buffer_ribbon_records)
   gl.bufferData(
     gl.ARRAY_BUFFER,
-    gl.Sizeiptr(meshes.ribbons.count*sizeof(RibbonRecord)),
+    gl.Sizeiptr(meshes.ribbons.count * sizeof(RibbonRecord)),
     unsafeAddr meshes.ribbons.records[0],
     gl.DYNAMIC_DRAW,
   )
@@ -916,7 +915,7 @@ proc uploadVeils(renderer: Renderer, meshes: MeshSet) =
     gl.bindBuffer(gl.ARRAY_BUFFER, renderer.buffer_ring_records)
     gl.bufferData(
       gl.ARRAY_BUFFER,
-      gl.Sizeiptr(meshes.rings.count*sizeof(RingRecord)),
+      gl.Sizeiptr(meshes.rings.count * sizeof(RingRecord)),
       unsafeAddr meshes.rings.records[0],
       gl.DYNAMIC_DRAW,
     )
@@ -924,7 +923,7 @@ proc uploadVeils(renderer: Renderer, meshes: MeshSet) =
     gl.bindBuffer(gl.ARRAY_BUFFER, renderer.buffer_disc_records)
     gl.bufferData(
       gl.ARRAY_BUFFER,
-      gl.Sizeiptr(meshes.discs.count*sizeof(DiscRecord)),
+      gl.Sizeiptr(meshes.discs.count * sizeof(DiscRecord)),
       unsafeAddr meshes.discs.records[0],
       gl.DYNAMIC_DRAW,
     )
@@ -932,7 +931,7 @@ proc uploadVeils(renderer: Renderer, meshes: MeshSet) =
     gl.bindBuffer(gl.ARRAY_BUFFER, renderer.buffer_dome_records)
     gl.bufferData(
       gl.ARRAY_BUFFER,
-      gl.Sizeiptr(meshes.domes.count*sizeof(DomeRecord)),
+      gl.Sizeiptr(meshes.domes.count * sizeof(DomeRecord)),
       unsafeAddr meshes.domes.records[0],
       gl.DYNAMIC_DRAW,
     )
@@ -957,8 +956,10 @@ proc drawRibbonRun(renderer: Renderer, meshes: MeshSet, is_overlay: bool) =
   gl.bindVertexArray(renderer.array_ribbon)
   gl.bindBuffer(gl.ARRAY_BUFFER, renderer.buffer_ribbon_records)
   pointViews(
-    gl.Sizei(sizeof(RibbonRecord)), VIEWS_RIBBON, is_instanced = true,
-    base = run.first*sizeof(RibbonRecord),
+    gl.Sizei(sizeof(RibbonRecord)),
+    VIEWS_RIBBON,
+    is_instanced = true,
+    base = run.first * sizeof(RibbonRecord),
   )
   gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, gl.Sizei(run.count))
 
@@ -981,12 +982,12 @@ proc drawRingRun(renderer: Renderer, meshes: MeshSet, is_overlay: bool) =
   gl.bindVertexArray(renderer.array_ring)
   gl.bindBuffer(gl.ARRAY_BUFFER, renderer.buffer_ring_records)
   pointViews(
-    gl.Sizei(sizeof(RingRecord)), VIEWS_RING, is_instanced = true,
-    base = run.first*sizeof(RingRecord),
+    gl.Sizei(sizeof(RingRecord)),
+    VIEWS_RING,
+    is_instanced = true,
+    base = run.first * sizeof(RingRecord),
   )
-  gl.drawArraysInstanced(
-    gl.TRIANGLES, 0, gl.Sizei(COUNT_CORNERS_RING), gl.Sizei(run.count)
-  )
+  gl.drawArraysInstanced(gl.TRIANGLES, 0, gl.Sizei(COUNT_CORNERS_RING), gl.Sizei(run.count))
 
 
 func runOf(mesh: Mesh, is_overlay: bool): tuple[first, count: int] =
@@ -1009,12 +1010,12 @@ proc drawPointRun(renderer: Renderer, meshes: MeshSet, is_overlay: bool) =
   gl.bindVertexArray(renderer.array_points)
   gl.bindBuffer(gl.ARRAY_BUFFER, renderer.buffer_points)
   pointViews(
-    gl.Sizei(sizeof(Vertex)), VIEWS_POINT, is_instanced = true,
-    base = run.first*sizeof(Vertex),
+    gl.Sizei(sizeof(Vertex)),
+    VIEWS_POINT,
+    is_instanced = true,
+    base = run.first * sizeof(Vertex),
   )
-  gl.drawArraysInstanced(
-    gl.TRIANGLE_STRIP, 0, gl.Sizei(COUNT_CORNERS_POINT), gl.Sizei(run.count)
-  )
+  gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, gl.Sizei(COUNT_CORNERS_POINT), gl.Sizei(run.count))
 
 
 func runsOfVeils(veils: VeilRuns, is_overlay: bool): tuple[begin, until: int] =
@@ -1036,23 +1037,23 @@ proc drawVeilRun(renderer: Renderer, run: VeilRun) =
     gl.bindVertexArray(renderer.array_disc)
     gl.bindBuffer(gl.ARRAY_BUFFER, renderer.buffer_disc_records)
     pointViews(
-      gl.Sizei(sizeof(DiscRecord)), VIEWS_DISC, is_instanced = true,
-      base = int(run.first)*sizeof(DiscRecord),
+      gl.Sizei(sizeof(DiscRecord)),
+      VIEWS_DISC,
+      is_instanced = true,
+      base = int(run.first) * sizeof(DiscRecord),
     )
-    gl.drawArraysInstanced(
-      gl.TRIANGLES, 0, gl.Sizei(COUNT_CORNERS_DISC), gl.Sizei(run.count)
-    )
+    gl.drawArraysInstanced(gl.TRIANGLES, 0, gl.Sizei(COUNT_CORNERS_DISC), gl.Sizei(run.count))
   of VeilKind.Dome:
     gl.useProgram(renderer.program_dome)
     gl.bindVertexArray(renderer.array_dome)
     gl.bindBuffer(gl.ARRAY_BUFFER, renderer.buffer_dome_records)
     pointViews(
-      gl.Sizei(sizeof(DomeRecord)), VIEWS_DOME, is_instanced = true,
-      base = int(run.first)*sizeof(DomeRecord),
+      gl.Sizei(sizeof(DomeRecord)),
+      VIEWS_DOME,
+      is_instanced = true,
+      base = int(run.first) * sizeof(DomeRecord),
     )
-    gl.drawArraysInstanced(
-      gl.TRIANGLES, 0, gl.Sizei(COUNT_CORNERS_DOME), gl.Sizei(run.count)
-    )
+    gl.drawArraysInstanced(gl.TRIANGLES, 0, gl.Sizei(COUNT_CORNERS_DOME), gl.Sizei(run.count))
 
 
 proc drawVeilRuns(renderer: Renderer, meshes: MeshSet, is_overlay: bool) =
@@ -1060,7 +1061,7 @@ proc drawVeilRuns(renderer: Renderer, meshes: MeshSet, is_overlay: bool) =
   ##   Two veils then blend in order scene emitted them.
   ##   Mirrors `glue.js`'s `drawVeilRuns`.
   let (begin, until) = runsOfVeils(meshes.veils, is_overlay)
-  for i in begin ..< until: renderer.drawVeilRun(meshes.veils.runs[i])
+  for i in begin..<until: renderer.drawVeilRun(meshes.veils.runs[i])
 
 
 func isHoldingOverlay(meshes: MeshSet): bool =
@@ -1073,8 +1074,7 @@ func isHoldingOverlay(meshes: MeshSet): bool =
 
 
 proc drawMeshes*(
-  renderer: Renderer, meshes: MeshSet, view_projection: Matrix4, scale: DrawScale,
-  aspect: float
+  renderer: Renderer, meshes: MeshSet, view_projection: Matrix4, scale: DrawScale, aspect: float
 ) =
   ## Draw every mesh, opaque kinds before translucent ones, then overlay over both.
   ##   Takes frame's `DrawScale` because ribbon program needs camera, and `aspect`, width
@@ -1096,11 +1096,8 @@ proc drawMeshes*(
       z: scale.eye.z - meshes.origin.z,
     )
   gl.useProgram(renderer.program_ribbon)
-  gl.uniformMatrix4fv(
-    renderer.location_ribbon_view_projection, 1, gl.FALSE, unsafeAddr flat[0]
-  )
-  gl.uniform3f(renderer.location_ribbon_eye,
-    gl.Float(eye.x), gl.Float(eye.y), gl.Float(eye.z))
+  gl.uniformMatrix4fv(renderer.location_ribbon_view_projection, 1, gl.FALSE, unsafeAddr flat[0])
+  gl.uniform3f(renderer.location_ribbon_eye, gl.Float(eye.x), gl.Float(eye.y), gl.Float(eye.z))
   gl.uniform3f(renderer.location_ribbon_forward,
     gl.Float(scale.forward.x), gl.Float(scale.forward.y), gl.Float(scale.forward.z))
   gl.uniform1f(renderer.location_ribbon_depth_near, gl.Float(scale.depthNear))
@@ -1123,11 +1120,8 @@ proc drawMeshes*(
   # Give point program ribbon program's camera and both screen axes.
   #   Disc is spanned across them at centre's depth; see `mesh.radiusDrawnAt`.
   gl.useProgram(renderer.program)
-  gl.uniformMatrix4fv(
-    renderer.location_view_projection, 1, gl.FALSE, unsafeAddr flat[0]
-  )
-  gl.uniform3f(renderer.location_point_eye,
-    gl.Float(eye.x), gl.Float(eye.y), gl.Float(eye.z))
+  gl.uniformMatrix4fv(renderer.location_view_projection, 1, gl.FALSE, unsafeAddr flat[0])
+  gl.uniform3f(renderer.location_point_eye, gl.Float(eye.x), gl.Float(eye.y), gl.Float(eye.z))
   gl.uniform3f(renderer.location_point_forward,
     gl.Float(scale.forward.x), gl.Float(scale.forward.y), gl.Float(scale.forward.z))
   gl.uniform3f(renderer.location_point_right,
@@ -1157,19 +1151,14 @@ proc drawMeshes*(
   gl.uniform1f(renderer.location_disc_tangent, gl.Float(scale.tangentHalfView))
   gl.uniform1f(renderer.location_disc_aspect, gl.Float(aspect))
   gl.useProgram(renderer.program_dome)
-  gl.uniformMatrix4fv(
-    renderer.location_dome_view_projection, 1, gl.FALSE, unsafeAddr flat[0]
-  )
+  gl.uniformMatrix4fv(renderer.location_dome_view_projection, 1, gl.FALSE, unsafeAddr flat[0])
   gl.uniform1f(renderer.location_dome_depth_near, gl.Float(scale.depthNear))
   gl.uniform1f(renderer.location_dome_depth_log, gl.Float(scale.depthLog))
   # Give ring program ribbon program's whole camera.
   #   Rim is widened in screen space by very rule line is.
   gl.useProgram(renderer.program_ring)
-  gl.uniformMatrix4fv(
-    renderer.location_ring_view_projection, 1, gl.FALSE, unsafeAddr flat[0]
-  )
-  gl.uniform3f(renderer.location_ring_eye,
-    gl.Float(eye.x), gl.Float(eye.y), gl.Float(eye.z))
+  gl.uniformMatrix4fv(renderer.location_ring_view_projection, 1, gl.FALSE, unsafeAddr flat[0])
+  gl.uniform3f(renderer.location_ring_eye, gl.Float(eye.x), gl.Float(eye.y), gl.Float(eye.z))
   gl.uniform3f(renderer.location_ring_forward,
     gl.Float(scale.forward.x), gl.Float(scale.forward.y), gl.Float(scale.forward.z))
   gl.uniform1f(renderer.location_ring_depth_near, gl.Float(scale.depthNear))
@@ -1221,10 +1210,8 @@ proc capturePixels*(width, height: int; pixels: var openArray[uint8]) =
   ## Read framebuffer back as tightly packed RGB triples, first row nearest bottom.
   ##   Caller owns fixed storage, sized to largest export this build allows.
   ##   Window resized past that bound fails loudly rather than silently reallocating.
-  let count = width*height*3
+  let count = width * height * 3
   doAssert len(pixels) >= count,
     &"Readback buffer must hold {count} bytes; got `{len(pixels)}`."
   gl.pixelStorei(gl.PACK_ALIGNMENT, 1)
-  gl.readPixels(
-    0, 0, gl.Sizei(width), gl.Sizei(height), gl.RGB, gl.UNSIGNED_BYTE, addr pixels[0]
-  )
+  gl.readPixels(0, 0, gl.Sizei(width), gl.Sizei(height), gl.RGB, gl.UNSIGNED_BYTE, addr pixels[0])

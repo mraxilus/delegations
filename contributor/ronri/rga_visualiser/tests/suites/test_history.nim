@@ -5,6 +5,7 @@
 import ./fixtures
 
 
+
 suite "History":
   proc scenesEqual(a, b: Scene): bool =
     ## Compare two scenes object by object, rather than through plain `==`:
@@ -13,7 +14,7 @@ suite "History":
     ##   same comparison, just folded field by field over whole scene rather than one multivector at
     ##   time.
     if a.len != b.len: return false
-    for handle in 0 ..< OBJECTS_MAX:
+    for handle in 0..<OBJECTS_MAX:
       if a.isAlive(handle) != b.isAlive(handle): return false
       if not a.isAlive(handle): continue
       let (object_a, object_b) = (a[handle], b[handle])
@@ -34,7 +35,7 @@ suite "History":
       history: History
     camera.degrees_field_of_view = 90.0
     history.initHistory(scene, camera)
-    scene.addObject(toMultivector(PLACES[0]), "a", Ink.Cobalt)
+    scene.addObject(PLACES[0].toMultivector, "a", Ink.Cobalt)
     history.record(scene, camera)
     # Reader widens lens, then steps back over edit they made at other lens.
     camera.degrees_field_of_view = 30.0
@@ -44,6 +45,7 @@ suite "History":
     check camera.degrees_field_of_view =~ 30.0
     # Stance itself still crosses, which is what stepping is for.
     check camera.pivot =~ initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED).pivot
+
 
   test "a step either way keeps each pick that still names the object it named":
     # Frame rule binds only while something is picked, so step must not drop picks it
@@ -91,7 +93,7 @@ suite "History":
       camera = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
       history: History
     history.initHistory(scene, camera)
-    var snapshots = @[scene] # Index 0 is seeded initial state.
+    var snapshots = @[scene]  # Index 0 is seeded initial state.
     for i in 0 ..< CAPACITY_HISTORY - 1:
       scene.addObject(POINTS[i mod SAMPLES], "p" & $i, inkCycled(i))
       history.record(scene, camera)
@@ -107,13 +109,13 @@ suite "History":
     for i in countdown(len(snapshots) - 1, 1):
       check history.isUndoable
       check history.undo(scene, camera)
-      check scenesEqual(scene, snapshots[i - 1])
+      check scenesEqual(scene, snapshots[i-1])
     check not history.isUndoable
     check not history.undo(scene, camera)
     check scenesEqual(scene, snapshots[0])
 
     # Walk all way forward again, same way.
-    for i in 1 ..< len(snapshots):
+    for i in 1..<len(snapshots):
       check history.isRedoable
       check history.redo(scene, camera)
       check scenesEqual(scene, snapshots[i])
@@ -128,7 +130,7 @@ suite "History":
       history: History
     history.initHistory(scene, camera)
     var snapshots = @[scene]
-    for i in 0 ..< CAPACITY_HISTORY + 4: # Four states past what timeline retains.
+    for i in 0 ..< CAPACITY_HISTORY + 4:  # Four states past what timeline retains.
       scene.addObject(POINTS[i mod SAMPLES], "p" & $i, inkCycled(i))
       history.record(scene, camera)
       snapshots.add(scene)
@@ -145,15 +147,15 @@ suite "History":
     #   ring, so wrapped one has its oldest step somewhere in middle of array
     #   and its newest just behind it; index that forgets wrap still lands
     #   count and can still land two ends, and misorders everything between them.
-    for i in 1 ..< CAPACITY_HISTORY:
+    for i in 1..<CAPACITY_HISTORY:
       check history.isRedoable
       check history.redo(scene, camera)
-      check scenesEqual(scene, snapshots[len(snapshots) - CAPACITY_HISTORY + i])
+      check scenesEqual(scene, snapshots[len(snapshots)-CAPACITY_HISTORY+i])
     check not history.isRedoable
     for i in countdown(CAPACITY_HISTORY - 2, 0):
       check history.isUndoable
       check history.undo(scene, camera)
-      check scenesEqual(scene, snapshots[len(snapshots) - CAPACITY_HISTORY + i])
+      check scenesEqual(scene, snapshots[len(snapshots)-CAPACITY_HISTORY+i])
     check not history.isUndoable
 
 
@@ -168,13 +170,13 @@ suite "History":
     let state_a = scene
 
     scene.addObject(POINTS[1], "b", Ink.Rose)
-    history.record(scene, camera) # State undo will later discard, never redone.
+    history.record(scene, camera)  # State undo will later discard, never redone.
 
     discard history.undo(scene, camera)
     check scenesEqual(scene, state_a)
     check history.isRedoable
 
-    scene.addObject(POINTS[2], "c", Ink.Rose) # Diverges from discarded state above.
+    scene.addObject(POINTS[2], "c", Ink.Rose)  # Diverges from discarded state above.
     history.record(scene, camera)
     check not history.isRedoable
     check not history.redo(scene, camera)
@@ -243,15 +245,15 @@ suite "History":
       history: History
     history.initHistory(scene, camera)
     var seen = @[scene.revision]
-    for i in 0 ..< 3:
+    for i in 0..<3:
       scene.addObject(POINTS[i], "p" & $i, Ink.Rose)
       history.record(scene, camera)
       seen.add(scene.revision)
-    for _ in 0 ..< 3:
+    for _ in 0..<3:
       check history.undo(scene, camera)
       check scene.revision > max(seen)
       seen.add(scene.revision)
-    for _ in 0 ..< 3:
+    for _ in 0..<3:
       check history.redo(scene, camera)
       check scene.revision > max(seen)
       seen.add(scene.revision)

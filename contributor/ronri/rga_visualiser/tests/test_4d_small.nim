@@ -16,4 +16,6 @@ matrix: "-d:visualiser.objects_max=12 -d:visualiser.label_max=12 -d:visualiser.h
 
 {.experimental: "strictFuncs".}
 
+when compileOption("profiler"): import std/nimprof
+
 include "suites.nim"

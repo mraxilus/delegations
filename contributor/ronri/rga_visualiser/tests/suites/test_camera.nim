@@ -11,7 +11,7 @@ func pointOnRay(camera: Camera; width, height: int; cursor: ScreenPosition): Pos
   let
     heading = headingThrough(camera, camera.frame, width, height, cursor)
     along = dot(heading, camera.frame.forward)
-  camera.eye + (camera.distance/along)*heading
+  camera.eye + (camera.distance / along) * heading
 
 
 template countLiftsIn(body: untyped): int =
@@ -22,30 +22,31 @@ template countLiftsIn(body: untyped): int =
   countLifts()
 
 
+
 suite "Camera":
   test "a stance named by eye and pivot stands at the eye, faces the pivot, and is level":
     # Whole claim of stance held as rigid motion: eye and pivot name it, and nothing else.
     #   416 cases. Separation spans five decades, and eye stands off pivot along every one
     #   of 26 lattice directions, straight above and straight below included: no pole.
     var count = 0
-    for i_pivot in 0 .. 3:
+    for i_pivot in 0..3:
       for distance in [0.001, 1.0, 19.0, 4000.0]:
-        for i in -1 .. 1:
-          for j in -1 .. 1:
-            for k in -1 .. 1:
+        for i in -1..1:
+          for j in -1..1:
+            for k in -1..1:
               if i == 0 and j == 0 and k == 0: continue
               let
                 pivot = Position(
-                  x: -7.0 + 5.0*float(i_pivot),
-                  y: 2.0*float(i_pivot) - 3.0,
-                  z: 1.5*float(i_pivot),
+                  x: -7.0 + 5.0 * float(i_pivot),
+                  y: 2.0 * float(i_pivot) - 3.0,
+                  z: 1.5 * float(i_pivot),
                 )
                 out_to = Direction(x: float(i), y: float(j), z: float(k))
-                eye = pivot + (distance/norm(out_to))*out_to
+                eye = pivot + (distance / norm(out_to)) * out_to
                 camera = initCamera(eye = eye, pivot = pivot)
                 axes = camera.frame
               check camera.eye =~ eye
-              check axes.forward =~ (-1.0/norm(out_to))*out_to
+              check axes.forward =~ (-1.0 / norm(out_to)) * out_to
               # Level: across axis horizontal, up on world up's side of it.
               check abs(axes.axis_right.z) <= TOLERANCE_TEST
               check axes.axis_up.z >= -TOLERANCE_TEST
@@ -61,21 +62,23 @@ suite "Camera":
               inc count
     check count == 416
 
+
   test "one read of the stance gives the eye, the frame and the pivot that three reads give":
     # `sight` lifts motor and takes its antireverse once for eye and frame together.
     #   `eye`, `frame` and `pivot` read apart are reference; stances rolled and steep.
-    for i in 0 ..< COUNT_GENERAL:
+    for i in 0..<COUNT_GENERAL:
       var camera = cameraAround(
-        PLACES[i], 0.5 + 3.0*float(i),
-        Direction(x: 1.0, y: 0.3*float(i) - 1.5, z: 0.4*float(i) - 2.2),
+        PLACES[i],
+        0.5 + 3.0 * float(i),
+        Direction(x: 1.0, y: 0.3 * float(i) - 1.5, z: 0.4 * float(i) - 2.2),
       )
-      camera.roll(0.3*float(i) - 1.0)
+      camera.roll(0.3 * float(i) - 1.0)
       let (eye, frame) = camera.sight
       check eye =~ camera.eye
       check frame.axis_right =~ camera.frame.axis_right
       check frame.axis_up =~ camera.frame.axis_up
       check frame.forward =~ camera.frame.forward
-      check eye + camera.distance*frame.forward =~ camera.pivot
+      check eye + camera.distance * frame.forward =~ camera.pivot
 
 
   test "a reader handed the camera alone reads its stance once":
@@ -90,7 +93,7 @@ suite "Camera":
       lifts_extent = countLiftsIn:
         discard camera.drawExtentFor(900, 50.0)
       lifts_transform = countLiftsIn:
-        discard camera.initMatrixViewProjection(16.0/9.0, PLACES[1])
+        discard camera.initMatrixViewProjection(16.0 / 9.0, PLACES[1])
     check lifts_sight == 1
     check lifts_extent == 1
     check lifts_transform == 1
@@ -105,8 +108,8 @@ suite "Camera":
       (eye, frame) = camera.sight
       lifts = countLiftsIn:
         let scale = camera.drawExtentFor(eye, frame, 900, 50.0)
-        discard camera.viewBoundsFor(eye, frame, scale, 16.0/9.0, 50.0)
-        discard camera.initMatrixViewProjection(eye, frame, 16.0/9.0, PLACES[3])
+        discard camera.viewBoundsFor(eye, frame, scale, 16.0 / 9.0, 50.0)
+        discard camera.initMatrixViewProjection(eye, frame, 16.0 / 9.0, PLACES[3])
         discard camera.distanceFar(eye, 50.0)
         discard camera.originHeld(eye, PLACES[3])
     check lifts == 0
@@ -115,15 +118,16 @@ suite "Camera":
   test "the camera's depths and held points agree with their classical forms":
     # Camera reads depth over plane through eye and projects onto finger's ray in algebra.
     #   Dot products and Pythagoras are reference it is held to, here and nowhere else.
-    for i in 0 ..< COUNT_GENERAL:
+    for i in 0..<COUNT_GENERAL:
       let
         eye = PLACES[i]
-        pivot = PLACES[(i + 3) mod SAMPLES]
-        toward = PLACES[(i + 5) mod SAMPLES]
+        pivot = PLACES[(i+3) mod SAMPLES]
+        toward = PLACES[(i+5) mod SAMPLES]
         forward = normalize(Direction(x: toward.x, y: toward.y, z: toward.z)).get
-        place = PLACES[(i + 7) mod SAMPLES]
+        place = PLACES[(i+7) mod SAMPLES]
       let reference_depth =
-        (place.x - eye.x)*forward.x + (place.y - eye.y)*forward.y + (place.z - eye.z)*forward.z
+          (place.x - eye.x) * forward.x + (place.y - eye.y) * forward.y +
+          (place.z - eye.z) * forward.z
       check depthAlong(eye, forward, place) =~ reference_depth
       # Held point: on ray, `back` short of foot of pivot, whichever branch radius takes.
       for radius in [0.5, 3.0, 40.0]:
@@ -131,12 +135,12 @@ suite "Camera":
           heading = Direction(x: forward.x + 0.1, y: forward.y - 0.2, z: forward.z)
           along = normalize(heading).get
           offset = Direction(x: pivot.x - eye.x, y: pivot.y - eye.y, z: pivot.z - eye.z)
-          nearest = offset.x*along.x + offset.y*along.y + offset.z*along.z
+          nearest = offset.x * along.x + offset.y * along.y + offset.z * along.z
           miss = sqrt(max(offset.x^2 + offset.y^2 + offset.z^2 - nearest^2, 0.0))
           back =
-            if miss <= radius/sqrt(2.0): sqrt(radius*radius - miss*miss)
-            else: radius*radius/(2.0*miss)
-        check pointHeld(eye, pivot, heading, radius) =~ eye + (nearest - back)*along
+            if miss <= radius / sqrt(2.0): sqrt(radius * radius - miss * miss)
+            else: radius * radius / (2.0 * miss)
+        check pointHeld(eye, pivot, heading, radius) =~ eye + (nearest - back) * along
 
 
   test "an orbit repeated many times lands where the sum of its steps says":
@@ -148,9 +152,9 @@ suite "Camera":
     const (steps, turn) = (2000, 0.004)
     let pivot = Position(x: 2.0, y: -1.0, z: 0.5)
     var stepped = cameraAround(pivot, 19.0, Direction(x: 19, y: 6, z: 4))
-    for _ in 1 .. steps: stepped.orbit(turn, 0.0)
+    for _ in 1..steps: stepped.orbit(turn, 0.0)
     var once = cameraAround(pivot, 19.0, Direction(x: 19, y: 6, z: 4))
-    once.orbit(float(steps)*turn, 0.0)
+    once.orbit(float(steps) * turn, 0.0)
     check stepped.eye =~ once.eye
     check stepped.frame.forward =~ once.frame.forward
     check stepped.frame.axis_up =~ once.frame.axis_up
@@ -165,15 +169,17 @@ suite "Camera":
     check abs(rolled.frame.axis_right.z) > TOLERANCE_TEST
     check rolled.pivot =~ pivot
 
+
   test "the flat motor and the multivector say one motion, and it is unit":
     # `Camera` holds eight floats rather than multivector, so crossing must lose nothing.
-    for i in 0 ..< COUNT_GENERAL:
+    for i in 0..<COUNT_GENERAL:
       let camera = cameraAround(
-        PLACES[i], 1.0 + float(i), Direction(x: 1.0, y: 0.2*float(i) - 1.0, z: 0.1*float(i))
+        PLACES[i], 1.0 + float(i), Direction(x: 1.0, y: 0.2 * float(i) - 1.0, z: 0.1 * float(i))
       )
-      let lifted = toMultivector(camera.motor)
+      let lifted = camera.motor.toMultivector
       check motorOf(lifted) == camera.motor
       check normWeight(lifted)[Basis.scalarAnti] =~ 1.0
+
 
   test "looking turns sight about the camera's own axes, and leaves the eye standing":
     # Free flight's whole claim: orientation moves and placement does not.
@@ -202,12 +208,13 @@ suite "Camera":
     check abs(dot(axes_steep.axis_up, axes_steep.forward)) < TOLERANCE_TEST
     check abs(norm(axes_steep.forward) - 1.0) < TOLERANCE_TEST
 
+
   test "a look and an orbit both pass the pole that the panel's own field stops short of":
     # What rotor buys: neither verb has clamp, because neither rebuilds from angles.
     var
       flown = cameraAround(ORIGIN, 19.0, Direction(x: 1, y: 0, z: 0))
       orbited = flown
-    for _ in 1 .. 8:
+    for _ in 1..8:
       flown.look(0.0, 0.25)
       orbited.orbit(0.0, 0.25)
     # Eight quarter-radian pitches compose to exactly two radians of turn, and two radians
@@ -217,6 +224,7 @@ suite "Camera":
     check abs(dot(orbited.frame.forward, forward_start) - cos(2.0)) < TOLERANCE_TEST
     check flown.frame.forward.x > 0.0
     check abs(norm(flown.frame.forward) - 1.0) < TOLERANCE_TEST
+
 
   test "a look and an orbit turn sight the same way, so one drag reads the same in either":
     # One left drag feeds either verb as selection comes and goes. Signs that disagreed
@@ -237,6 +245,7 @@ suite "Camera":
       risen.orbit(0.0, step)
       check raised.elevation =~ risen.elevation
 
+
   test "roll turns about the sight axis alone, and a whole turn returns every axis":
     var camera = cameraAround(
       Position(x: 1.0, y: 2.0, z: -0.5), 7.0, Direction(x: 18, y: 19, z: -8)
@@ -251,9 +260,10 @@ suite "Camera":
     check dot(camera.frame.axis_up, axes_start.axis_right) > 0.0
     # Whole turn in steps lands back on frame it started from.
     var whole = cameraAround(Position(x: 1.0, y: 2.0, z: -0.5), 7.0, Direction(x: 18, y: 19, z: -8))
-    for _ in 1 .. 64: whole.roll(TAU/64.0)
+    for _ in 1..64: whole.roll(TAU / 64.0)
     check whole.frame.axis_up =~ axes_start.axis_up
     check whole.frame.axis_right =~ axes_start.axis_right
+
 
   test "travel moves along the camera's own axes, whatever roll it carries":
     var camera = cameraAround(Position(x: -3.0, y: 4.0, z: 2.0), 11.0, Direction(x: 5, y: 13, z: 6))
@@ -271,18 +281,20 @@ suite "Camera":
     # Forward dives where sight dives, unlike `slideGround`, which holds height.
     check abs(step.z) > TOLERANCE_TEST
 
+
   test "the speed climbs toward its cap, and never reaches it":
     const cap = 12.0
     check speedTravelling(0.0, cap) =~ 0.0
     var before = 0.0
-    for i in 1 .. 40:
-      let speed = speedTravelling(0.1*float(i), cap)
+    for i in 1..40:
+      let speed = speedTravelling(0.1 * float(i), cap)
       check speed > before
       check speed < cap
       before = speed
     # One time constant is 63 percent of cap, three are 95 percent.
-    check abs(speedTravelling(SECONDS_SPEED_RISE, cap)/cap - 0.6321) < 1.0e-4
-    check abs(speedTravelling(3.0*SECONDS_SPEED_RISE, cap)/cap - 0.9502) < 1.0e-4
+    check abs(speedTravelling(SECONDS_SPEED_RISE, cap) / cap - 0.6321) < 1.0e-4
+    check abs(speedTravelling(3.0 * SECONDS_SPEED_RISE, cap) / cap - 0.9502) < 1.0e-4
+
 
   test "distance travelled is the integral, so halves sum to the whole":
     # What keeps 144 Hz reader beside 60 Hz one over one hold.
@@ -293,47 +305,48 @@ suite "Camera":
         walked = 0.0
         age = 0.0
       # Same span in 120 frames must equal same span in one.
-      for _ in 1 .. 120:
-        walked += distanceTravelled(age, age + span/120.0, cap)
-        age += span/120.0
+      for _ in 1..120:
+        walked += distanceTravelled(age, age + span / 120.0, cap)
+        age += span / 120.0
       check abs(walked - distanceTravelled(0.0, span, cap)) < TOLERANCE_TEST
     # Long hold is cap times span, less cap times one time constant of lag.
-    check abs(
-      distanceTravelled(0.0, 20.0, cap) - cap*(20.0 - SECONDS_SPEED_RISE)
-    ) < 1.0e-6
+    check abs(distanceTravelled(0.0, 20.0, cap) - cap * (20.0 - SECONDS_SPEED_RISE)) < 1.0e-6
+
 
   test "the speed cap is the smaller of the local scale and the ceiling":
     # Pointer over something takes that depth as its scale.
-    check capTravelling(some(19.0), 999.0, 1.0) =~ FACTOR_SPEED_LOCAL*19.0
+    check capTravelling(some(19.0), 999.0, 1.0) =~ FACTOR_SPEED_LOCAL * 19.0
     # Pointer over empty sky falls back to camera's own scale, never to ceiling.
     #   Ceiling alone there crossed solar system in half second.
-    check capTravelling(none(float), 19.0, 1.0) =~ FACTOR_SPEED_LOCAL*19.0
+    check capTravelling(none(float), 19.0, 1.0) =~ FACTOR_SPEED_LOCAL * 19.0
     # Close work is slow, so reader inside moon's orbit is not thrown across it.
-    check capTravelling(some(0.001), 19.0, 1.0) =~ FACTOR_SPEED_LOCAL*0.001
+    check capTravelling(some(0.001), 19.0, 1.0) =~ FACTOR_SPEED_LOCAL * 0.001
     # Far work is held at ceiling rather than scaled past it.
     check capTravelling(some(1.0e9), 1.0, 1.0) =~ SPEED_CEILING
     check capTravelling(none(float), 1.0e9, 1.0) =~ SPEED_CEILING
     # Haste multiplies both figures, so shift stays one multiplier on every rate.
     check capTravelling(some(2.0), 1.0, FACTOR_HASTE) =~
-      FACTOR_SPEED_LOCAL*2.0*FACTOR_HASTE
-    check capTravelling(some(1.0e9), 1.0, FACTOR_HASTE) =~ SPEED_CEILING*FACTOR_HASTE
+        FACTOR_SPEED_LOCAL * 2.0 * FACTOR_HASTE
+    check capTravelling(some(1.0e9), 1.0, FACTOR_HASTE) =~ SPEED_CEILING * FACTOR_HASTE
     # Depth behind eye is refused rather than freezing camera at zero.
     check capTravelling(some(-5.0), 19.0, 1.0) =~ 0.0
 
+
   test "the far clip reaches the scene's farthest object however close the orbit is":
     var camera = cameraAround(Position(x: 0, y: 0, z: 0), 10.0, Direction(x: 1, y: 0, z: 0))
-    check abs(camera.distanceFar(0.0) - 10.0*FACTOR_CLIP_FAR) < 1.0e-9
+    check abs(camera.distanceFar(0.0) - 10.0 * FACTOR_CLIP_FAR) < 1.0e-9
     let eye = camera.eye
     check camera.distanceFar(3000.0) >= norm(eye - Position(x: 0, y: 0, z: 0)) + 3000.0
     # Near stays scaled whatever far reaches: depth is logarithmic, so ratio costs nothing.
-    check camera.distanceNear =~ camera.distance*FACTOR_CLIP_NEAR
+    check camera.distanceNear =~ camera.distance * FACTOR_CLIP_NEAR
     var close = cameraAround(Position(x: 0, y: 0, z: 0), 0.05, Direction(x: 1, y: 0, z: 0))
-    check close.distanceNear =~ close.distance*FACTOR_CLIP_NEAR
-    check close.distanceFar(3000.0)/close.distanceNear > 1.0e6
+    check close.distanceNear =~ close.distance * FACTOR_CLIP_NEAR
+    check close.distanceFar(3000.0) / close.distanceNear > 1.0e6
     # Reach is measured from what scene holds, point's own radius included.
     var scene = initScene()
-    scene.addObject(toMultivector(Position(x: 300, y: 0, z: 0)), "p", Ink.Rose, radius = 2.5)
+    scene.addObject(Position(x: 300, y: 0, z: 0).toMultivector, "p", Ink.Rose, radius = 2.5)
     check abs(reachOf(scene) - 302.5) < 1.0e-6
+
 
   test "the frustum takes its scale from the nearest drawn object, not from the separation":
     # Separation alone kept scale of stance reader set off from. Near clip is one
@@ -341,11 +354,11 @@ suite "Camera":
     #   plane long before planet.
     var camera = cameraAround(ORIGIN, 19.0, Direction(x: 12, y: 5, z: 4))
     check camera.scaleLocal =~ 19.0
-    check camera.distanceNear =~ 19.0*FACTOR_CLIP_NEAR
+    check camera.distanceNear =~ 19.0 * FACTOR_CLIP_NEAR
     # Stamped reach takes over, and near clip follows it down by four decades.
     camera.reach_near = 0.002
     check camera.scaleLocal =~ 0.002
-    check camera.distanceNear =~ 0.002*FACTOR_CLIP_NEAR
+    check camera.distanceNear =~ 0.002 * FACTOR_CLIP_NEAR
     # Far clip still reaches whole scene, since scene's own reach is its other term.
     check camera.distanceFar(6.5e6) >= norm(camera.eye - ORIGIN) + 6.5e6
     # Depth stays logarithmic across that range, and both ends still land where they must.
@@ -358,20 +371,19 @@ suite "Camera":
     var floored = cameraAround(ORIGIN, DISTANCE_LIMIT_NEAR, Direction(x: 1, y: 0, z: 0))
     check floored.scaleLocal > 0.0
 
+
   test "the nearest reach is read ahead of the eye, and never behind it":
     var scene = initScene()
     # Camera at origin looking along -x; one object ahead, one behind, one further ahead.
     let camera = cameraAround(ORIGIN, 1.0, Direction(x: 1, y: 0, z: 0))
     check camera.frame.forward =~ Direction(x: -1.0, y: 0.0, z: 0.0)
-    scene.addObject(toMultivector(Position(x: -4.0, y: 0.0, z: 0.0)), "ahead", Ink.Rose)
-    scene.addObject(toMultivector(Position(x: 9.0, y: 0.0, z: 0.0)), "behind", Ink.Jade)
-    scene.addObject(toMultivector(Position(x: -30.0, y: 0.0, z: 0.0)), "far", Ink.Cobalt)
+    scene.addObject(Position(x: -4.0, y: 0.0, z: 0.0).toMultivector, "ahead", Ink.Rose)
+    scene.addObject(Position(x: 9.0, y: 0.0, z: 0.0).toMultivector, "behind", Ink.Jade)
+    scene.addObject(Position(x: -30.0, y: 0.0, z: 0.0).toMultivector, "far", Ink.Cobalt)
     var placed = newSeq[Placement](scene.bound)
-    for handle in 0 ..< scene.bound:
+    for handle in 0..<scene.bound:
       if scene.isAlive(handle):
-        placed[handle] = placeObject(
-          scene.geometryOf(handle), scene.anchorOverrideAt(handle)
-        )
+        placed[handle] = placeObject(scene.geometryOf(handle), scene.anchorOverrideAt(handle))
     let eye = camera.eye
     # Nearest ahead answers, and one behind is passed over however near it stands.
     #   Eye stands one unit out at +x, so depths are five and thirty one.
@@ -383,94 +395,97 @@ suite "Camera":
     scene.setVisible(2, false)
     check reachNearOf(placed, scene, eye, camera.frame.forward) =~ 0.0
 
+
   test "records' origin holds until travel spends float32's precision about it":
     var camera = cameraAround(ORIGIN, 19.0, Direction(x: 1, y: 0, z: 0))
     let eye_start = camera.eye
     # Bound is quarter of near clip, divided by float32's own step.
-    let reach_hold = FRACTION_ORIGIN_HOLD*camera.distanceNear/STEP_SINGLE
+    let reach_hold = FRACTION_ORIGIN_HOLD * camera.distanceNear / STEP_SINGLE
     check reach_hold > 1.0e5
     check camera.originHeld(camera.eye, eye_start) =~ eye_start
     # Travel well inside bound keeps origin exactly where it was.
-    camera.travel(0.5*reach_hold, 0.0, 0.0)
+    camera.travel(0.5 * reach_hold, 0.0, 0.0)
     check camera.originHeld(camera.eye, eye_start) =~ eye_start
     # Travel past it moves origin onto eye, once.
-    camera.travel(0.6*reach_hold, 0.0, 0.0)
+    camera.travel(0.6 * reach_hold, 0.0, 0.0)
     let moved = camera.originHeld(camera.eye, eye_start)
     check moved =~ camera.eye
     check camera.originHeld(camera.eye, moved) =~ moved
     # Close work draws bound in with near clip, so origin follows sooner.
     camera.reach_near = 0.002
-    check FRACTION_ORIGIN_HOLD*camera.distanceNear/STEP_SINGLE < reach_hold
+    check FRACTION_ORIGIN_HOLD * camera.distanceNear / STEP_SINGLE < reach_hold
+
 
   test "a point is culled only where the frustum, sprite margin included, does not reach":
     # Bounds are camera's own frame; what is checked is test against them.
     let
       camera = cameraAround(Position(x: 1, y: 2, z: 3), 10.0, Direction(x: 12, y: 5, z: 4))
       scale = camera.drawExtentFor(900, 0.0)
-      bounds = camera.viewBoundsFor(camera.eye, camera.frame, scale, 16.0/9.0, 0.0)
+      bounds = camera.viewBoundsFor(camera.eye, camera.frame, scale, 16.0 / 9.0, 0.0)
     const radius = RADIUS_OBJECT_DEFAULT
-    check isPointInView(placeObject(toMultivector(camera.pivot)), radius, bounds)
+    check isPointInView(placeObject(camera.pivot.toMultivector), radius, bounds)
     check not isPointInView(
-      placeObject(toMultivector(bounds.eye - 1.0*bounds.forward)), radius, bounds
+      placeObject(toMultivector(bounds.eye - 1.0 * bounds.forward)), radius, bounds
     )
     # Sideways at pivot's depth: just inside half-width stays, just outside goes.
     let
-      reach_across = camera.distance*bounds.bound_width
-      reach_above = camera.distance*bounds.bound_height
+      reach_across = camera.distance * bounds.bound_width
+      reach_above = camera.distance * bounds.bound_height
     check isPointInView(
-      placeObject(toMultivector(camera.pivot + (0.9*reach_across)*bounds.right)), radius,
+      placeObject(toMultivector(camera.pivot + (0.9 * reach_across) * bounds.right)),
+      radius,
       bounds,
     )
     check not isPointInView(
-      placeObject(toMultivector(camera.pivot + (1.1*reach_across)*bounds.right)), radius,
+      placeObject(toMultivector(camera.pivot + (1.1 * reach_across) * bounds.right)),
+      radius,
       bounds,
     )
     check isPointInView(
-      placeObject(toMultivector(camera.pivot + (0.9*reach_above)*bounds.up)), radius, bounds
+      placeObject(toMultivector(camera.pivot + (0.9 * reach_above) * bounds.up)), radius, bounds
     )
     check not isPointInView(
-      placeObject(toMultivector(camera.pivot + (1.1*reach_above)*bounds.up)), radius, bounds
+      placeObject(toMultivector(camera.pivot + (1.1 * reach_above) * bounds.up)), radius, bounds
     )
     # Point's own radius widens margin: same centre just past edge stays once its disc.
     #   reaches back in, exactly as far as radius says.
-    let just_out = placeObject(toMultivector(camera.pivot + (1.1*reach_across)*bounds.right))
-    check isPointInView(just_out, 0.2*reach_across, bounds)
-    check not isPointInView(just_out, 0.05*reach_across, bounds)
+    let just_out = placeObject(toMultivector(camera.pivot + (1.1 * reach_across) * bounds.right))
+    check isPointInView(just_out, 0.2 * reach_across, bounds)
+    check not isPointInView(just_out, 0.05 * reach_across, bounds)
     # Horizon point is tested by direction alone; every other kind passes untested.
-    check isPointInView(
-      Placement(kind: Case.PointToward, toward: bounds.forward), radius, bounds
-    )
+    check isPointInView(Placement(kind: Case.PointToward, toward: bounds.forward), radius, bounds)
     check not isPointInView(
       Placement(kind: Case.PointToward, toward: -bounds.forward), radius, bounds
     )
     check isPointInView(Placement(kind: Case.LineThrough), radius, bounds)
+
 
   test "the angles read off the sight name the eye's own place about the pivot":
     # `camera.eye` places point as multivector sum; spherical closed form of readings.
     #   lives HERE. Readings are parametrization -- what is checked is placement.
     var seed = 27.0
     proc pseudo(): float =
-      seed = (seed*97.31 + 33.77) mod 41.0
+      seed = (seed * 97.31 + 33.77) mod 41.0
       seed - 20.5
     const count_trials = 100
       ## Seeded stances: pivots, distances and directions across sphere, off poles.
-    for trial in 0 ..< count_trials:
+    for trial in 0..<count_trials:
       let
         pivot = Position(x: pseudo(), y: pseudo(), z: pseudo())
         distance = 1.0 + abs(pseudo())
-        out_to = Direction(x: pseudo(), y: pseudo(), z: pseudo()/3.0)
+        out_to = Direction(x: pseudo(), y: pseudo(), z: pseudo() / 3.0)
         camera = cameraAround(pivot, distance, out_to)
-        radius = distance*cos(camera.elevation)
+        radius = distance * cos(camera.elevation)
         classical = pivot + Direction(
-          x: radius*cos(camera.azimuth),
-          y: radius*sin(camera.azimuth),
-          z: distance*sin(camera.elevation),
+          x: radius * cos(camera.azimuth),
+          y: radius * sin(camera.azimuth),
+          z: distance * sin(camera.elevation),
         )
       check camera.eye =~ classical
 
 
   test "frame is orthonormal and perpendicular to sight axis":
-    for i in 0 ..< SAMPLES:
+    for i in 0..<SAMPLES:
       let
         camera = cameraAround(PLACES[i], 2.0 + rand(20.0), randomOutTo())
         axes = camera.frame
@@ -484,7 +499,7 @@ suite "Camera":
 
 
   test "eye stands at orbit distance from pivot, and looks back at it":
-    for i in 0 ..< SAMPLES:
+    for i in 0..<SAMPLES:
       let camera = cameraAround(PLACES[i], 7.0, randomOutTo())
       check norm(camera.eye - camera.pivot) =~ camera.distance
       let heading = normalize(camera.pivot - camera.eye)
@@ -509,14 +524,14 @@ suite "Camera":
     let
       projection = initMatrixProjection(45.0, 1.6, near)
       at_near = transform(projection, Position(x: 0, y: 0, z: -near), 1.0)
-    check isNear(at_near[3], near) and isNear(at_near[2]/at_near[3], -1.0)
+    check isNear(at_near[3], near) and isNear(at_near[2] / at_near[3], -1.0)
     # No far plane: depth climbs toward `1 - SLACK_CLIP_FAR` and never reaches it.
     var below = -1.0
     for depth in [1.0, 60.0, 1.0e3, 1.0e6, 1.0e9, 1.0e12]:
       let
         clipped = transform(projection, Position(x: 0, y: 0, z: -depth), 1.0)
-        mapped = clipped[2]/clipped[3]
-      check mapped > below and mapped < 1.0 - 0.5*SLACK_CLIP_FAR
+        mapped = clipped[2] / clipped[3]
+      check mapped > below and mapped < 1.0 - 0.5 * SLACK_CLIP_FAR
       below = mapped
 
 
@@ -536,43 +551,43 @@ suite "Camera":
           flat = camera.initMatrixViewProjection(1.6).flattened
           eye = camera.eye
           forward = camera.frame.forward
-        for (depth, name) in [(reach, "star"), (0.9*camera.distanceFar(reach), "dome")]:
-          let at = eye + depth*forward
+        for (depth, name) in [(reach, "star"), (0.9 * camera.distanceFar(reach), "dome")]:
+          let at = eye + depth * forward
           var (z, w) = (0.0'f32, 0.0'f32)
           for (column, coordinate) in [(0, at.x), (1, at.y), (2, at.z)]:
-            z += flat[column*4 + 2]*float32(coordinate)
-            w += flat[column*4 + 3]*float32(coordinate)
+            z += flat[column*4+2] * float32(coordinate)
+            w += flat[column*4+3] * float32(coordinate)
           z += flat[14]
           w += flat[15]
           check w > 0.0'f32
-          check w - z > float32(0.5*SLACK_CLIP_FAR)*w
+          check w - z > float32(0.5 * SLACK_CLIP_FAR) * w
 
 
   test "whole transform carries pivot to centre of view":
-    for i in 0 ..< SAMPLES:
+    for i in 0..<SAMPLES:
       let
         camera = cameraAround(PLACES[i], 11.0, randomOutTo())
         clipped = transform(camera.initMatrixViewProjection(1.6), camera.pivot, 1.0)
       check clipped[3] > 0
-      check isNear(clipped[0]/clipped[3], 0)
-      check isNear(clipped[1]/clipped[3], 0)
+      check isNear(clipped[0] / clipped[3], 0)
+      check isNear(clipped[1] / clipped[3], 0)
 
 
   test "a transform about an origin agrees with the world one, and keeps a far close-up":
     # Records are stored about frame's origin (`mesh.clearMeshes`) and GPU takes transform.
     #   built about same point, so position about origin lands where world transform puts
     #   world position: storing relative to pivot is invisible on screen.
-    for i in 0 ..< SAMPLES:
+    for i in 0..<SAMPLES:
       let
         camera = cameraAround(PLACES[i], 3.0, randomOutTo())
         place = camera.pivot +
-          Direction(x: rand(-1.0 .. 1.0), y: rand(-1.0 .. 1.0), z: rand(-1.0 .. 1.0))
+            Direction(x: rand(-1.0..1.0), y: rand(-1.0..1.0), z: rand(-1.0..1.0))
         about_world = transform(camera.initMatrixViewProjection(1.6), place, 1.0)
         about_pivot = transform(
           camera.initMatrixViewProjection(1.6, camera.pivot), ORIGIN + (place - camera.pivot), 1.0
         )
-      for k in 0 .. 3:
-        check abs(about_world[k] - about_pivot[k]) <= 1.0e-9*max(1.0, abs(about_world[k]))
+      for k in 0..3:
+        check abs(about_world[k] - about_pivot[k]) <= 1.0e-9 * max(1.0, abs(about_world[k]))
     # Far out is where it matters: pivot million units off and moon thousandth of unit from.
     #   it, as demo's moons are. Float32 of world position steps by sixteenth there, so
     #   moon's whole offset is lost; float32 about pivot carries what close-up needs, and
@@ -584,10 +599,13 @@ suite "Camera":
       )
       moon = far.pivot + Direction(x: 0.001, y: 0.0, z: 0.0)
       stored_world = Position(
-        x: float(float32(moon.x)), y: float(float32(moon.y)), z: float(float32(moon.z)),
+        x: float(float32(moon.x)),
+        y: float(float32(moon.y)),
+        z: float(float32(moon.z)),
       )
       stored_pivot = Position(
-        x: float(float32(moon.x - far.pivot.x)), y: float(float32(moon.y - far.pivot.y)),
+        x: float(float32(moon.x - far.pivot.x)),
+        y: float(float32(moon.y - far.pivot.y)),
         z: float(float32(moon.z - far.pivot.z)),
       )
     # C backend alone: JS backend keeps `float32` as double, and page's typed arrays round
@@ -598,8 +616,8 @@ suite "Camera":
     let
       seen_world = transform(far.initMatrixViewProjection(1.6), moon, 1.0)
       seen_pivot = transform(far.initMatrixViewProjection(1.6, far.pivot), stored_pivot, 1.0)
-    for k in 0 .. 1:
-      check abs(seen_world[k]/seen_world[3] - seen_pivot[k]/seen_pivot[3]) < 1.0e-6
+    for k in 0..1:
+      check abs(seen_world[k] / seen_world[3] - seen_pivot[k] / seen_pivot[3]) < 1.0e-6
 
 
   test "the clip planes follow the orbit distance, rather than where they were built":
@@ -611,11 +629,11 @@ suite "Camera":
     var camera = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
     let (near_opened, far_opened) = (camera.distanceNear, camera.distanceFar(0.0))
     camera.dolly(4.0)
-    check camera.distanceNear =~ 4.0*near_opened
-    check camera.distanceFar(0.0) =~ 4.0*far_opened
+    check camera.distanceNear =~ 4.0 * near_opened
+    check camera.distanceFar(0.0) =~ 4.0 * far_opened
     # Scale together, so frustum keeps its shape and depth buffer its precision.
     #   Precision is function of far-to-near ratio, however far camera stands.
-    check camera.distanceFar(0.0)/camera.distanceNear =~ far_opened/near_opened
+    check camera.distanceFar(0.0) / camera.distanceNear =~ far_opened / near_opened
 
 
   test "depth is logarithmic, so a moon before its planet and the sky behind a star stay apart":
@@ -625,7 +643,7 @@ suite "Camera":
     #   vanished from beside far star. Pinned against sixteen-bit step, coarsest buffer
     #   WebGL may hand out, at demo's own camera and at moon's.
     const
-      step_sixteen_bit = 2.0/65535.0
+      step_sixteen_bit = 2.0 / 65535.0
       reach = 6.5e6
     var camera = cameraAround(ORIGIN, 122.0, Direction(x: 2, y: 3, z: 5))
     let far = camera.distanceFar(reach)
@@ -633,22 +651,22 @@ suite "Camera":
     check camera.depthOf(far, reach) =~ 1.0
     # Star at million units stands clear of sky dome at nine tenths of far, and of star.
     #   at fifth of its distance.
-    check camera.depthOf(0.9*far, reach) - camera.depthOf(1.0e6, reach) > step_sixteen_bit
+    check camera.depthOf(0.9 * far, reach) - camera.depthOf(1.0e6, reach) > step_sixteen_bit
     check camera.depthOf(1.0e6, reach) - camera.depthOf(2.0e5, reach) > step_sixteen_bit
     # Io before Jupiter, from where occlusion check stands: three spans out, moon one in.
     var near = cameraAround(ORIGIN, 0.0085, Direction(x: 7, y: 11, z: 4))
     check near.depthOf(0.0085, reach) - near.depthOf(0.0085 - 0.0028, reach) > step_sixteen_bit
     # Monotone across every decade scene spans, and clipping planes still clip.
     var last = -2.0
-    for exponent in -8 .. 6:
+    for exponent in -8..6:
       let depth = pow(10.0, float(exponent))
       if depth <= camera.distanceNear or depth >= far: continue
       let z = camera.depthOf(depth, reach)
       check z > last and z > -1.0 and z < 1.0
       last = z
-    check camera.depthOf(0.5*camera.distanceNear, reach) < -1.0
-    check camera.depthOf(2.0*far, reach) > 1.0
-    check camera.depthLogScale(reach) =~ 2.0/log2(far/camera.distanceNear)
+    check camera.depthOf(0.5 * camera.distanceNear, reach) < -1.0
+    check camera.depthOf(2.0 * far, reach) > 1.0
+    check camera.depthLogScale(reach) =~ 2.0 / log2(far / camera.distanceNear)
 
 
   test "an orbit distance has a floor and no ceiling":
@@ -663,7 +681,7 @@ suite "Camera":
 
     # Holding dolly out walks straight past where limit used to sit.
     var camera = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
-    for _ in 1 .. 6: camera.dolly(FACTOR_DOLLY_SECOND)
+    for _ in 1..6: camera.dolly(FACTOR_DOLLY_SECOND)
     check camera.distance > 5_000.0
 
 
@@ -678,13 +696,13 @@ suite "Camera":
     ]:
       let
         camera = initCameraDefault(width, height)
-        view_projection = initMatrixViewProjection(camera, float(width)/float(height))
+        view_projection = initMatrixViewProjection(camera, float(width) / float(height))
       # Frame wider than tall keeps 19 units it opened at; narrower one stands eye out.
       if width > height: check camera.distance =~ 19.0
       else: check camera.distance > 19.0
       proc isInFrame(at: Position): bool =
         let seen = projectToScreen(view_projection, width, height, at)
-        seen.isInFront and seen.x in 0.0 .. float(width) and seen.y in 0.0 .. float(height)
+        seen.isInFront and seen.x in 0.0..float(width) and seen.y in 0.0..float(height)
       for handle, one in scene.pairs:
         let placed = placeObject(one.geometry, one.anchorOverride)
         case placed.kind
@@ -692,11 +710,11 @@ suite "Camera":
           check isInFrame(placed.at)
         of Case.PlaneOn:
           let
-            centre = toMultivector(placed.at)
-            arm_first = wedge(EXTENT_PLANE_F, toMultivector(placed.axes.axis_first))
-            arm_second = wedge(EXTENT_PLANE_F, toMultivector(placed.axes.axis_second))
-          for i in 0 ..< SEGMENTS_CIRCLE_HORIZON:
-            let turn = (2.0*PI*float(i))/float(SEGMENTS_CIRCLE_HORIZON)
+            centre = placed.at.toMultivector
+            arm_first = wedge(EXTENT_PLANE_F, placed.axes.axis_first.toMultivector)
+            arm_second = wedge(EXTENT_PLANE_F, placed.axes.axis_second.toMultivector)
+          for i in 0..<SEGMENTS_CIRCLE_HORIZON:
+            let turn = (2.0 * PI * float(i)) / float(SEGMENTS_CIRCLE_HORIZON)
             check isInFrame(pointFrom(add(centre,
               add(wedge(cos(turn), arm_first), wedge(sin(turn), arm_second)))))
         else: discard
@@ -715,8 +733,8 @@ suite "Camera":
     check camera.distanceFar(0.0) > camera.distanceNear
     let clipped = transform(camera.initMatrixViewProjection(1.6), camera.pivot, 1.0)
     check clipped[3] > 0
-    check isNear(clipped[0]/clipped[3], 0)
-    check isNear(clipped[1]/clipped[3], 0)
+    check isNear(clipped[0] / clipped[3], 0)
+    check isNear(clipped[1] / clipped[3], 0)
 
 
   test "a zoom aimed at the cursor keeps what is under it under it":
@@ -733,18 +751,22 @@ suite "Camera":
         let
           anchor = pointOnRay(camera, width_zoom, height_zoom, cursor)
           before = projectToScreen(
-            camera.initMatrixViewProjection(float(width_zoom)/float(height_zoom)),
-            width_zoom, height_zoom, anchor,
+            camera.initMatrixViewProjection(float(width_zoom) / float(height_zoom)),
+            width_zoom,
+            height_zoom,
+            anchor,
           )
         camera.dollyToward(factor, anchor)
         let after = projectToScreen(
-          camera.initMatrixViewProjection(float(width_zoom)/float(height_zoom)),
-          width_zoom, height_zoom, anchor,
+          camera.initMatrixViewProjection(float(width_zoom) / float(height_zoom)),
+          width_zoom,
+          height_zoom,
+          anchor,
         )
         check after.isInFront
-        check abs(after.x - before.x) <= 0.5 # Half pixel: what reader could not see.
+        check abs(after.x - before.x) <= 0.5  # Half pixel: what reader could not see.
         check abs(after.y - before.y) <= 0.5
-        check camera.distance =~ 19.0*factor
+        check camera.distance =~ 19.0 * factor
         # Angles are what keep anchor on its own ray; zoom must not turn.
         check camera.azimuth =~ initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED).azimuth
         check camera.elevation =~ initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED).elevation
@@ -759,7 +781,7 @@ suite "Camera":
       opening = camera
       anchor = pointOnRay(camera, 1440, 900, ScreenPosition(x: 300.0, y: 640.0))
     camera.dollyToward(0.5, anchor)
-    check not (camera.pivot =~ opening.pivot) # It really did move view, not just in.
+    check not (camera.pivot =~ opening.pivot)  # It really did move view, not just in.
     camera.dollyToward(2.0, anchor)
     check camera.pivot =~ opening.pivot
     check camera.distance =~ opening.distance
@@ -772,11 +794,17 @@ suite "Camera":
       interaction = Interaction(is_enabled: true)
       camera = cameraAround(ORIGIN, 12.0, Direction(x: 18, y: 10, z: 1))
       scene = initScene()
-    let cursor = ScreenPosition(x: 720.0, y: 60.0) # High in frame, on empty sky.
+    let cursor = ScreenPosition(x: 720.0, y: 60.0)  # High in frame, on empty sky.
     interaction.updateCursor(cursor.x, cursor.y)
     interaction.dollyAtCursor(
-      camera, scene, 2.0, camera.drawExtentFor(900, 0.0),
-      camera.initMatrixViewProjection(1440.0/900.0), 1440, 900, has_selection = true,
+      camera,
+      scene,
+      2.0,
+      camera.drawExtentFor(900, 0.0),
+      camera.initMatrixViewProjection(1440.0 / 900.0),
+      1440,
+      900,
+      has_selection = true,
     )
     check camera.distance =~ 24.0
     check camera.pivot =~ ORIGIN
@@ -794,42 +822,59 @@ suite "Camera":
     var interaction = Interaction(is_enabled: true)
     interaction.updateCursor(cursor.x, cursor.y)
     interaction.dollyAtCursor(
-      camera, initScene(), 0.5, camera.drawExtentFor(tall, 0.0),
-      camera.initMatrixViewProjection(float(wide)/float(tall)), wide, tall,
+      camera,
+      initScene(),
+      0.5,
+      camera.drawExtentFor(tall, 0.0),
+      camera.initMatrixViewProjection(float(wide) / float(tall)),
+      wide,
+      tall,
       has_selection = false,
     )
     # Step lies along that ray, and not along sight: cursor is well off middle.
     let step = camera.eye - eye_start
-    check dot(step, (1.0/norm(heading))*heading) =~ norm(step)
+    check dot(step, (1.0 / norm(heading)) * heading) =~ norm(step)
     check dot(step, axes_start.forward) < norm(step)
     # Scale halves with factor, as it does under turntable's own dolly.
     check camera.distance =~ 6.0
     # Nothing turned: wheel travels and never turns.
     check camera.frame.forward =~ axes_start.forward
 
+
   test "the wheel comes in to what the pointer is over, and stops where a point fills the frame":
     const (wide, tall) = (1440, 900)
     let planet = Position(x: 3.0, y: 1.0, z: 0.0)
     var scene = initScene()
-    scene.addObject(toMultivector(planet), "planet", Ink.Cobalt)
+    scene.addObject(planet.toMultivector, "planet", Ink.Cobalt)
     let radius = scene.radiusAt(0)
     check radius > 0.0
     # Camera aimed straight at it, so middle of frame is over it.
     var camera = cameraAround(planet, 20.0, Direction(x: 12, y: 5, z: 7))
-    let cursor = ScreenPosition(x: float(wide)/2.0, y: float(tall)/2.0)
+    let cursor = ScreenPosition(x: float(wide) / 2.0, y: float(tall) / 2.0)
     var interaction = Interaction(is_enabled: true)
     interaction.updateCursor(cursor.x, cursor.y)
     # What is under pointer keeps its pixel through notch.
     let before = projectToScreen(
-      camera.initMatrixViewProjection(float(wide)/float(tall)), wide, tall, planet,
+      camera.initMatrixViewProjection(float(wide) / float(tall)),
+      wide,
+      tall,
+      planet,
     )
     interaction.dollyAtCursor(
-      camera, scene, 0.5, camera.drawExtentFor(tall, 0.0),
-      camera.initMatrixViewProjection(float(wide)/float(tall)), wide, tall,
+      camera,
+      scene,
+      0.5,
+      camera.drawExtentFor(tall, 0.0),
+      camera.initMatrixViewProjection(float(wide) / float(tall)),
+      wide,
+      tall,
       has_selection = false,
     )
     let after = projectToScreen(
-      camera.initMatrixViewProjection(float(wide)/float(tall)), wide, tall, planet,
+      camera.initMatrixViewProjection(float(wide) / float(tall)),
+      wide,
+      tall,
+      planet,
     )
     check after.isInFront
     check abs(after.x - before.x) <= 0.5
@@ -838,19 +883,25 @@ suite "Camera":
     # Notch after notch stops where point's sphere reaches every corner of frame: nearer
     #   shows nothing more of it. Its drawn radius was floor before, and eye came on into
     #   it until it filled screen and went past.
-    for _ in 1 .. 40:
+    for _ in 1..40:
       interaction.dollyAtCursor(
-        camera, scene, 0.5, camera.drawExtentFor(tall, 0.0),
-        camera.initMatrixViewProjection(float(wide)/float(tall)), wide, tall,
+        camera,
+        scene,
+        0.5,
+        camera.drawExtentFor(tall, 0.0),
+        camera.initMatrixViewProjection(float(wide) / float(tall)),
+        wide,
+        tall,
         has_selection = false,
       )
-    let filling = radius*float(tall)/(
-      tan(0.5*degToRad(camera.degrees_field_of_view))*hypot(float(wide), float(tall))
+    let filling = radius * float(tall) / (
+      tan(0.5 * degToRad(camera.degrees_field_of_view)) * hypot(float(wide), float(tall))
     )
     check filling > radius
     check norm(camera.eye - planet) =~ filling
     # Floor never pushes eye out again, however many notches follow.
     check dot(camera.eye - planet, camera.frame.forward) < 0.0
+
 
   test "a wheel with a selection stops where the point it aims at fills the frame":
     # Fault: turntable's wheel had no floor, so notch after notch onto point under pointer
@@ -858,21 +909,27 @@ suite "Camera":
     const (wide, tall) = (1440, 900)
     let planet = Position(x: 3.0, y: 1.0, z: 0.0)
     var scene = initScene()
-    scene.addObject(toMultivector(planet), "planet", Ink.Cobalt)
+    scene.addObject(planet.toMultivector, "planet", Ink.Cobalt)
     var
       camera = cameraAround(planet, 20.0, Direction(x: 12, y: 5, z: 7))
       interaction = Interaction(is_enabled: true)
-    interaction.updateCursor(float(wide)/2.0, float(tall)/2.0)
-    for _ in 1 .. 40:
+    interaction.updateCursor(float(wide) / 2.0, float(tall) / 2.0)
+    for _ in 1..40:
       interaction.dollyAtCursor(
-        camera, scene, 0.5, camera.drawExtentFor(tall, 0.0),
-        camera.initMatrixViewProjection(float(wide)/float(tall)), wide, tall,
+        camera,
+        scene,
+        0.5,
+        camera.drawExtentFor(tall, 0.0),
+        camera.initMatrixViewProjection(float(wide) / float(tall)),
+        wide,
+        tall,
         has_selection = true,
       )
-    let filling = scene.radiusAt(0)*float(tall)/(
-      tan(0.5*degToRad(camera.degrees_field_of_view))*hypot(float(wide), float(tall))
+    let filling = scene.radiusAt(0) * float(tall) / (
+      tan(0.5 * degToRad(camera.degrees_field_of_view)) * hypot(float(wide), float(tall))
     )
     check norm(camera.eye - planet) =~ filling
+
 
   test "a wheel onto a point off the middle stops at the depth where it fills the frame":
     # Fault: floor was reach from eye, and fill is depth along sight. Off middle, reach runs
@@ -881,7 +938,7 @@ suite "Camera":
     const (wide, tall) = (1440, 900)
     let planet = Position(x: 3.0, y: 1.0, z: 0.0)
     var scene = initScene()
-    scene.addObject(toMultivector(planet), "planet", Ink.Cobalt)
+    scene.addObject(planet.toMultivector, "planet", Ink.Cobalt)
     for has_selection in [false, true]:
       # Pivot 6 units across sight from planet, so planet stands 17 degrees off middle.
       var
@@ -890,27 +947,39 @@ suite "Camera":
         )
         interaction = Interaction(is_enabled: true)
       let at = projectToScreen(
-        camera.initMatrixViewProjection(float(wide)/float(tall)), wide, tall, planet,
+        camera.initMatrixViewProjection(float(wide) / float(tall)),
+        wide,
+        tall,
+        planet,
       )
       interaction.updateCursor(at.x, at.y)
-      for _ in 1 .. 40:
+      for _ in 1..40:
         interaction.dollyAtCursor(
-          camera, scene, 0.5, camera.drawExtentFor(tall, 0.0),
-          camera.initMatrixViewProjection(float(wide)/float(tall)), wide, tall,
+          camera,
+          scene,
+          0.5,
+          camera.drawExtentFor(tall, 0.0),
+          camera.initMatrixViewProjection(float(wide) / float(tall)),
+          wide,
+          tall,
           has_selection,
         )
       let
-        filling = scene.radiusAt(0)*float(tall)/(
-          tan(0.5*degToRad(camera.degrees_field_of_view))*hypot(float(wide), float(tall))
+        filling = scene.radiusAt(0) * float(tall) / (
+          tan(0.5 * degToRad(camera.degrees_field_of_view)) * hypot(float(wide), float(tall))
         )
         (eye, frame) = camera.sight
         held = projectToScreen(
-          camera.initMatrixViewProjection(float(wide)/float(tall)), wide, tall, planet,
+          camera.initMatrixViewProjection(float(wide) / float(tall)),
+          wide,
+          tall,
+          planet,
         )
       check depthAlong(eye, frame.forward, planet) =~ filling
-      check norm(camera.eye - planet) > 1.04*filling
+      check norm(camera.eye - planet) > 1.04 * filling
       check abs(held.x - at.x) <= 0.5
       check abs(held.y - at.y) <= 0.5
+
 
   test "a zoom onto a point brings the pivot to its depth, and over nothing the pivot stands":
     # Turntable follows what reader looks at: eye carried up to planet while pivot.
@@ -919,30 +988,41 @@ suite "Camera":
     const (wide, tall) = (1440, 900)
     let planet = Position(x: 3.0, y: 1.0, z: 0.0)
     var scene = initScene()
-    scene.addObject(toMultivector(planet), "planet", Ink.Cobalt)
+    scene.addObject(planet.toMultivector, "planet", Ink.Cobalt)
     # Middle of frame over planet, camera aimed at it from afar: pinch's case.
     let aimed = cameraAround(planet, 20.0, Direction(x: 12, y: 5, z: 7))
     # Eye twenty units off planet, pivot ten units past it.
-    var camera = initCamera(eye = aimed.eye, pivot = planet + 10.0*aimed.frame.forward)
+    var camera = initCamera(eye = aimed.eye, pivot = planet + 10.0 * aimed.frame.forward)
     let eye_before = camera.eye
     dollyAtCentre(
-      camera, scene, 0.5, camera.drawExtentFor(tall, 0.0),
-      camera.initMatrixViewProjection(float(wide)/float(tall)), wide, tall,
+      camera,
+      scene,
+      0.5,
+      camera.drawExtentFor(tall, 0.0),
+      camera.initMatrixViewProjection(float(wide) / float(tall)),
+      wide,
+      tall,
       has_selection = true,
     )
     # Eye moved halfway to planet, and pivot now stands on it.
     check camera.pivot =~ planet
     check abs(camera.distance - 10.0) < 1.0e-6
-    check camera.eye =~ (planet + 0.5*(eye_before - planet))
+    check camera.eye =~ (planet + 0.5 * (eye_before - planet))
     # Over empty sky nothing answers: distance scales alone.
     var
       level = cameraAround(ORIGIN, 12.0, Direction(x: 18, y: 10, z: 1))
       interaction = Interaction(is_enabled: true)
     interaction.updateCursor(720.0, 200.0)
     dollyAt(
-      level, initScene(), 0.5, level.drawExtentFor(tall, 0.0),
-      level.initMatrixViewProjection(float(wide)/float(tall)), wide, tall,
-      ScreenPosition(x: 720.0, y: 200.0), has_selection = true,
+      level,
+      initScene(),
+      0.5,
+      level.drawExtentFor(tall, 0.0),
+      level.initMatrixViewProjection(float(wide) / float(tall)),
+      wide,
+      tall,
+      ScreenPosition(x: 720.0, y: 200.0),
+      has_selection = true,
     )
     check abs(level.distance - 6.0) < 1.0e-6
     check abs(level.pivot.z) < 1.0e-6
@@ -953,8 +1033,14 @@ suite "Camera":
     )
     let under = ScreenPosition(x: 720.0, y: 700.0)
     dollyAt(
-      over_ground, initScene(), 0.5, over_ground.drawExtentFor(tall, 0.0),
-      over_ground.initMatrixViewProjection(float(wide)/float(tall)), wide, tall, under,
+      over_ground,
+      initScene(),
+      0.5,
+      over_ground.drawExtentFor(tall, 0.0),
+      over_ground.initMatrixViewProjection(float(wide) / float(tall)),
+      wide,
+      tall,
+      under,
       has_selection = true,
     )
     check abs(over_ground.distance - 6.0) < 1.0e-6
@@ -968,17 +1054,22 @@ suite "Camera":
     const (wide, tall) = (1440, 900)
     let
       camera = cameraAround(ORIGIN, 20.0, Direction(x: 12, y: 5, z: 7))
-      view_projection = camera.initMatrixViewProjection(float(wide)/float(tall))
+      view_projection = camera.initMatrixViewProjection(float(wide) / float(tall))
       # Point standing well above ground, so aiming at *it* and aiming at ground.
       #   under cursor are different answers and test can tell them apart.
       raised = Position(x: 2.0, y: -1.0, z: 6.0)
       on_screen = projectToScreen(view_projection, wide, tall, raised)
     var scene = initScene()
-    scene.addObject(toMultivector(raised), "raised", inkCycled(0))
+    scene.addObject(raised.toMultivector, "raised", inkCycled(0))
 
     # Over point: its own place, not ground below it nor pivot's level.
     let at_object = anchorZoomAt(
-      scene, camera, camera.drawExtentFor(tall, 0.0), view_projection, wide, tall,
+      scene,
+      camera,
+      camera.drawExtentFor(tall, 0.0),
+      view_projection,
+      wide,
+      tall,
       ScreenPosition(x: on_screen.x, y: on_screen.y),
     )
     check at_object.isSome
@@ -992,22 +1083,31 @@ suite "Camera":
       elsewhere = ScreenPosition(x: on_screen.x + 200.0, y: on_screen.y + 400.0)
     for cursor in [elsewhere, ScreenPosition(x: on_screen.x + 200.0, y: on_screen.y + 60.0)]:
       check anchorZoomAt(
-        scene, camera_raised, camera_raised.drawExtentFor(tall, 0.0),
-        camera_raised.initMatrixViewProjection(float(wide)/float(tall)),
-        wide, tall, cursor,
+        scene,
+        camera_raised,
+        camera_raised.drawExtentFor(tall, 0.0),
+        camera_raised.initMatrixViewProjection(float(wide) / float(tall)),
+        wide,
+        tall,
+        cursor,
       ).isNone
 
     # Plane under cursor is crossing, not place: anchored where ray meets it, but not.
     #   followed to depth, which is not plane's depth at middle of frame.
     var scene_floor = initScene()
     scene_floor.addObject(
-      planeThrough(toMultivector(ORIGIN), toMultivector(Direction(x: 0, y: 0, z: 1))),
-      "floor", inkCycled(1),
+      planeThrough(ORIGIN.toMultivector, Direction(x: 0, y: 0, z: 1).toMultivector),
+      "floor",
+      inkCycled(1),
     )
     let at_plane = anchorZoomAt(
-      scene_floor, camera_raised, camera_raised.drawExtentFor(tall, 0.0),
-      camera_raised.initMatrixViewProjection(float(wide)/float(tall)),
-      wide, tall, elsewhere,
+      scene_floor,
+      camera_raised,
+      camera_raised.drawExtentFor(tall, 0.0),
+      camera_raised.initMatrixViewProjection(float(wide) / float(tall)),
+      wide,
+      tall,
+      elsewhere,
     )
     check at_plane.isSome
     check abs(at_plane.get.at.z) <= 1.0e-6
@@ -1023,14 +1123,15 @@ suite "Camera":
       axis = Direction(x: 1.0, y: 0.0, z: 0.0)
       # Ray crossing that line from above, four units along it.
       found = positionOnLineNearest(
-        anchor, axis, Position(x: 4.0, y: 0.0, z: 3.0), Direction(x: 0, y: 0, z: -1),
+        anchor,
+        axis,
+        Position(x: 4.0, y: 0.0, z: 3.0),
+        Direction(x: 0, y: 0, z: -1),
       )
     check found.isSome
     check found.get =~ Position(x: 4.0, y: 0.0, z: 0.0)
     # Ray running along line has whole direction of nearest points, not one.
-    check positionOnLineNearest(
-      anchor, axis, Position(x: 0.0, y: 1.0, z: 0.0), axis
-    ).isNone
+    check positionOnLineNearest(anchor, axis, Position(x: 0.0, y: 1.0, z: 0.0), axis).isNone
 
 
   test "the algebra's nearest point on a line agrees with the closed form":
@@ -1040,13 +1141,13 @@ suite "Camera":
     #   from parallel, so failure names same pair on every run.
     var seed = 9.0
     proc pseudo(): float =
-      seed = (seed*97.31 + 33.77) mod 41.0
+      seed = (seed * 97.31 + 33.77) mod 41.0
       seed - 20.5
     proc someway(): Direction =
       var d = Direction(x: 0, y: 0, z: 0)
       while norm(d) < 0.1: d = Direction(x: pseudo(), y: pseudo(), z: pseudo())
       normalize(d).get
-    for trial in 0 ..< 100:
+    for trial in 0..<100:
       let
         anchor = Position(x: pseudo(), y: pseudo(), z: pseudo())
         axis = someway()
@@ -1054,11 +1155,11 @@ suite "Camera":
         ray_along = someway()
         between = anchor - ray_from
         along_both = dot(axis, ray_along)
-        denominator = 1.0 - along_both*along_both
-      if abs(denominator) <= 1.0e-3: continue # Near-parallel pair proves nothing here.
+        denominator = 1.0 - along_both * along_both
+      if abs(denominator) <= 1.0e-3: continue  # Near-parallel pair proves nothing here.
       let
-        step = (along_both*dot(ray_along, between) - dot(axis, between))/denominator
-        classical = anchor + step*axis
+        step = (along_both * dot(ray_along, between) - dot(axis, between)) / denominator
+        classical = anchor + step * axis
         answered = positionOnLineNearest(anchor, axis, ray_from, ray_along)
       check answered.isSome
       if answered.isSome:
@@ -1072,22 +1173,22 @@ suite "Camera":
     #   deliberate boundary asymmetry cannot drift.
     var seed = 17.0
     proc pseudo(): float =
-      seed = (seed*97.31 + 33.77) mod 41.0
+      seed = (seed * 97.31 + 33.77) mod 41.0
       seed - 20.5
     proc someway(): Direction =
       var d = Direction(x: 0, y: 0, z: 0)
       while norm(d) < 0.1: d = Direction(x: pseudo(), y: pseudo(), z: pseudo())
       normalize(d).get
-    for trial in 0 ..< 100:
+    for trial in 0..<100:
       let
         tail = Position(x: pseudo(), y: pseudo(), z: pseudo())
         head = Position(x: pseudo(), y: pseudo(), z: pseudo())
         eye = Position(x: pseudo(), y: pseudo(), z: pseudo())
         forward = someway()
-        near = 0.05 + abs(pseudo())/10.0
+        near = 0.05 + abs(pseudo()) / 10.0
         plane_near = planeThrough(
-          add(toMultivector(eye), wedge(near, toMultivector(forward))),
-          toMultivector(forward),
+          add(eye.toMultivector, wedge(near, forward.toMultivector)),
+          forward.toMultivector,
         )
         answered = clipToEyeSide(tail, head, plane_near)
         # Componentwise reference, exactly as boundary's own packing clips.
@@ -1101,10 +1202,10 @@ suite "Camera":
       var (expected_tail, expected_head) = (tail, head)
       if depth_tail <= near:
         expected_tail =
-          tail + ((near - depth_tail)/(depth_head - depth_tail))*(head - tail)
+          tail + ((near - depth_tail) / (depth_head - depth_tail)) * (head - tail)
       elif depth_head <= near:
         expected_head =
-          head + ((near - depth_head)/(depth_tail - depth_head))*(tail - head)
+          head + ((near - depth_head) / (depth_tail - depth_head)) * (tail - head)
       check answered.get[0] =~ expected_tail
       check answered.get[1] =~ expected_head
 
@@ -1123,18 +1224,22 @@ suite "Camera":
       let
         (eye, axes) = camera.sight
         # Heading carries unit depth along sight, so point stands at `depth` exactly.
-        held = eye + depth*camera.headingThrough(axes, wide, tall, before)
+        held = eye + depth * camera.headingThrough(axes, wide, tall, before)
       camera.panAcross(before, after, wide, tall, has_selection = false, depth_held = depth)
       let seen = projectToScreen(
-        camera.initMatrixViewProjection(float(wide)/float(tall)), wide, tall, held,
+        camera.initMatrixViewProjection(float(wide) / float(tall)),
+        wide,
+        tall,
+        held,
       )
       check seen.isInFront
       check abs(seen.x - after.x) < 0.01
       check abs(seen.y - after.y) < 0.01
       # Slide is square to sight, so held depth stays held, and nothing turns.
-      check abs(dot(camera.eye - eye, axes.forward)) < TOLERANCE_TEST*depth
+      check abs(dot(camera.eye - eye, axes.forward)) < TOLERANCE_TEST * depth
       check camera.frame.forward =~ axes.forward
       check camera.distance =~ 19.0
+
 
   test "a right drag holds the depth under the pointer, or the pivot's over nothing":
     let camera = cameraAround(ORIGIN, 19.0, Direction(x: 8, y: 14, z: 7))
@@ -1147,6 +1252,7 @@ suite "Camera":
     interaction.grabPan(camera, 1440, 900, has_selection = false)
     check interaction.depth_pan =~ camera.distance
 
+
   test "a right drag with a selection zooms by the pointer's heights, and turns along the row":
     # Fault: rates stood here, fixed angle and fixed factor for each pixel, which matched
     #   cursor nowhere. Point held is one left drag's orbit holds, on sphere about pivot.
@@ -1154,7 +1260,7 @@ suite "Camera":
     #   where that turn left it, scales as pointer's does, so away from row zooms in.
     const (wide, tall) = (1440, 900)
     let
-      row = 0.5*float(tall)
+      row = 0.5 * float(tall)
       opening = cameraAround(ORIGIN, 19.0, Direction(x: 8, y: 14, z: 7))
       steps = [
         # Above row and away from it, off middle column, so dolly spreads point across.
@@ -1172,30 +1278,36 @@ suite "Camera":
       let
         (eye, axes) = camera.sight
         held = pointHeld(
-          eye, camera.pivot, camera.headingThrough(axes, wide, tall, before),
+          eye,
+          camera.pivot,
+          camera.headingThrough(axes, wide, tall, before),
           camera.radiusHeld(wide, tall, 0.0),
         )
       var left = opening
       left.turnFollowing(
-        ScreenPosition(x: before.x, y: row), ScreenPosition(x: after.x, y: row), wide, tall,
+        ScreenPosition(x: before.x, y: row),
+        ScreenPosition(x: after.x, y: row),
+        wide,
+        tall,
         has_selection = true,
       )
       camera.panAcross(before, after, wide, tall, has_selection = true, depth_held = 19.0)
       let
-        aspect = float(wide)/float(tall)
+        aspect = float(wide) / float(tall)
         turned = projectToScreen(left.initMatrixViewProjection(aspect), wide, tall, held)
         seen = projectToScreen(camera.initMatrixViewProjection(aspect), wide, tall, held)
-        least = FRACTION_STRETCH_LEAST*float(tall)
+        least = FRACTION_STRETCH_LEAST * float(tall)
         side = if before.y <= row: 1.0 else: -1.0
-        spread = max(side*(row - after.y), least)/max(side*(row - before.y), least)
+        spread = max(side * (row - after.y), least) / max(side * (row - before.y), least)
       check seen.isInFront
       check camera.frame.forward =~ left.frame.forward
-      check abs((row - seen.y) - (row - turned.y)*spread) < 0.01
+      check abs((row - seen.y) - (row - turned.y) * spread) < 0.01
       check camera.pivot =~ opening.pivot
       case way
       of 1: check camera.distance < opening.distance
       of -1: check camera.distance > opening.distance
       else: check camera.distance =~ opening.distance
+
 
   test "a right drag with a selection keeps the point it took at the press":
     # Point asked again at each step lies on sphere zoom resizes, so it is other point, and
@@ -1203,7 +1315,7 @@ suite "Camera":
     const (wide, tall) = (1440, 900)
     let opening = cameraAround(ORIGIN, 19.0, Direction(x: 8, y: 14, z: 7))
     proc dragged(
-      steps: int; press: ScreenPosition; ends: openArray[ScreenPosition]
+      steps: int, press: ScreenPosition, ends: openArray[ScreenPosition]
     ): (Camera, Position) =
       ## Drag from `press` through `ends` in `steps` even steps each, holding what press took.
       var
@@ -1212,10 +1324,10 @@ suite "Camera":
         at = press
       interaction.grabPan(camera, wide, tall, has_selection = true)
       for reached in ends:
-        for step in 1 .. steps:
+        for step in 1..steps:
           let next = ScreenPosition(
-            x: at.x + (reached.x - at.x)/float(steps - step + 1),
-            y: at.y + (reached.y - at.y)/float(steps - step + 1),
+            x: at.x + (reached.x - at.x) / float(steps - step + 1),
+            y: at.y + (reached.y - at.y) / float(steps - step + 1),
           )
           camera.panAcross(at, next, wide, tall, has_selection = true, depth_held = 19.0,
             point_held = interaction.point_pan)
@@ -1228,12 +1340,18 @@ suite "Camera":
         (ScreenPosition(x: 760.0, y: 330.0), ScreenPosition(x: 700.0, y: 240.0))
       (slanted, held) = dragged(12, slant_press, [slant_release])
       seen = projectToScreen(
-        slanted.initMatrixViewProjection(float(wide)/float(tall)), wide, tall, held,
+        slanted.initMatrixViewProjection(float(wide) / float(tall)),
+        wide,
+        tall,
+        held,
       )
     var left = opening
     left.turnFollowing(
-      ScreenPosition(x: slant_press.x, y: 0.5*float(tall)),
-      ScreenPosition(x: slant_release.x, y: 0.5*float(tall)), wide, tall, has_selection = true,
+      ScreenPosition(x: slant_press.x, y: 0.5 * float(tall)),
+      ScreenPosition(x: slant_release.x, y: 0.5 * float(tall)),
+      wide,
+      tall,
+      has_selection = true,
     )
     check slanted.distance < opening.distance
     check slanted.frame.forward =~ left.frame.forward
@@ -1256,6 +1374,7 @@ suite "Camera":
     check slant_back.frame.forward =~ opening.frame.forward
     check norm(slant_back.eye - opening.eye) < 0.0025
 
+
   test "a vertical right drag with a selection zooms, and turns nothing":
     # Fault: turn chased point's column after dolly spread it, and point stood near line
     #   above pivot, where column asks for great yaw. One drag out, 80 px off middle,
@@ -1272,15 +1391,15 @@ suite "Camera":
         interaction = Interaction(is_enabled: true, cursor: press)
         at = press
       interaction.grabPan(camera, wide, tall, has_selection = true)
-      for step in 1 .. 20:
-        let next = ScreenPosition(
-          x: press.x, y: at.y + (release.y - at.y)/float(20 - step + 1)
-        )
+      for step in 1..20:
+        let next = ScreenPosition(x: press.x, y: at.y + (release.y - at.y) / float(20 - step + 1))
         camera.panAcross(at, next, wide, tall, has_selection = true, depth_held = 19.0,
           point_held = interaction.point_pan)
         at = next
       let seen = projectToScreen(
-        camera.initMatrixViewProjection(float(wide)/float(tall)), wide, tall,
+        camera.initMatrixViewProjection(float(wide) / float(tall)),
+        wide,
+        tall,
         interaction.point_pan.get,
       )
       check camera.frame.forward =~ opening.frame.forward
@@ -1288,6 +1407,7 @@ suite "Camera":
       check camera.pivot =~ opening.pivot
       check not (camera.distance =~ opening.distance)
       check abs(seen.y - release.y) < 0.01
+
 
   test "a right drag with a selection turns across as a left drag along the pivot's row":
     # Fault: turn carried point press took across, and point taken near top of frame stands
@@ -1297,20 +1417,23 @@ suite "Camera":
     let
       opening = cameraAround(ORIGIN, 19.0, Direction(x: 8, y: 14, z: 7))
       press = ScreenPosition(x: 723.0, y: 6.0)
-      row = 0.5*float(tall)
+      row = 0.5 * float(tall)
     var
       camera = opening
       interaction = Interaction(is_enabled: true, cursor: press)
       at = press
     interaction.grabPan(camera, wide, tall, has_selection = true)
-    for step in 1 .. 24:
+    for step in 1..24:
       let next = ScreenPosition(
-        x: 723.0 + (if step mod 2 == 1: 4.0 else: -2.0) + 0.5*float(step),
-        y: 6.0 + 16.0*float(step),
+        x: 723.0 + (if step mod 2 == 1: 4.0 else: -2.0) + 0.5 * float(step),
+        y: 6.0 + 16.0 * float(step),
       )
       var left = camera
       left.turnFollowing(
-        ScreenPosition(x: at.x, y: row), ScreenPosition(x: next.x, y: row), wide, tall,
+        ScreenPosition(x: at.x, y: row),
+        ScreenPosition(x: next.x, y: row),
+        wide,
+        tall,
         has_selection = true,
       )
       camera.panAcross(at, next, wide, tall, has_selection = true, depth_held = 19.0,
@@ -1319,6 +1442,7 @@ suite "Camera":
       check camera.frame.axis_up =~ left.frame.axis_up
       at = next
     check camera.pivot =~ opening.pivot
+
 
   test "an aimed zoom draws the pivot toward what it aimed at":
     # `dollyToward` scales pivot toward anchor by exactly factor distance.
@@ -1332,11 +1456,11 @@ suite "Camera":
       opening = camera
       anchor = Position(x: 3.0, y: -2.0, z: 0.0)
     camera.dollyToward(0.5, anchor)
-    let scale = camera.distance/opening.distance
-    check camera.pivot =~ anchor + scale*(opening.pivot - anchor)
+    let scale = camera.distance / opening.distance
+    check camera.pivot =~ anchor + scale * (opening.pivot - anchor)
     check camera.pivot.z < opening.pivot.z
     # And back out along same line, so reader who overshoots loses nothing.
-    camera.dollyToward(1.0/scale, anchor)
+    camera.dollyToward(1.0 / scale, anchor)
     check camera.pivot =~ opening.pivot
     check camera.distance =~ opening.distance
 
@@ -1366,13 +1490,13 @@ suite "Camera":
     var rolled = camera
     rolled.roll(0.4)
     for held in [camera, rolled]:
-      let motor = toMultivector(held.motor)
+      let motor = held.motor.toMultivector
       # Unit motor lands on same motion: every coefficient, since it turns under half turn.
       let settled = motorRigid(motor)
       check settled.isSome
-      check toMultivector(settled.get) =~ motor
+      check settled.get.toMultivector =~ motor
       # Weight scaled, odd grades typed: both drop away, and same motion is named.
-      var typed = 3.0*motor
+      var typed = 3.0 * motor
       typed[Basis.E1] = 0.7
       typed[Basis.E423] = -0.2
       let rescaled = held.placedAtMotor(motorRigid(typed).get)
@@ -1394,6 +1518,6 @@ suite "Camera":
       check moved.distance =~ held.distance
       check moved.degrees_field_of_view =~ held.degrees_field_of_view
     # Weight zero names no motion: camera stays where it stood.
-    var weightless = toMultivector(camera.motor)
+    var weightless = camera.motor.toMultivector
     for basis in [Basis.E41, Basis.E42, Basis.E43, Basis.E1234]: weightless[basis] = 0.0
     check motorRigid(weightless).isNone

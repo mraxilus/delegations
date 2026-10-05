@@ -11,10 +11,11 @@ when not defined(js):
   suite "Image":
     var buffer_arena: array[1024*1024, byte]
 
+
     test "written file is a PNG carrying the size it was given":
       const (width, height) = (37, 21)
-      var pixels = newSeq[uint8](width*height*3)
-      for i in 0 ..< len(pixels): pixels[i] = uint8((i*7) mod 256)
+      var pixels = newSeq[uint8](width * height * 3)
+      for i in 0..<len(pixels): pixels[i] = uint8((i * 7) mod 256)
 
       var test_arena = initArena(buffer_arena)
       let path = getTempDir() / "visualiser_suite.png"
@@ -23,12 +24,12 @@ when not defined(js):
       let document = readFile(path)
 
       check len(document) > 8
-      check document[0 .. 7] == "\x89PNG\r\n\x1A\n"
-      check document[12 .. 15] == "IHDR"
-      check document[16 .. 19] == "\0\0\0" & char(width)
-      check document[20 .. 23] == "\0\0\0" & char(height)
-      check document[24] == char(8) # Bit depth.
-      check document[25] == char(2) # Colour type: truecolour.
+      check document[0..7] == "\x89PNG\r\n\x1A\n"
+      check document[12..15] == "IHDR"
+      check document[16..19] == "\0\0\0" & char(width)
+      check document[20..23] == "\0\0\0" & char(height)
+      check document[24] == char(8)  # Bit depth.
+      check document[25] == char(2)  # Colour type: truecolour.
       check document.find("IDAT") > 0
       check document[^8 .. ^5] == "IEND"
 
@@ -36,7 +37,7 @@ when not defined(js):
     test "chunk lengths and checksums agree end to end":
       const (width, height) = (16, 9)
       var
-        pixels = newSeq[uint8](width*height*3)
+        pixels = newSeq[uint8](width * height * 3)
         test_arena = initArena(buffer_arena)
       let path = getTempDir() / "visualiser_suite_chunks.png"
       writePng(test_arena, path, width, height, pixels)
@@ -49,8 +50,8 @@ when not defined(js):
         names: seq[string]
       while offset < len(document):
         var length = 0
-        for i in 0 .. 3: length = length*256 + int(uint8(document[offset + i]))
-        names.add(document[offset + 4 .. offset + 7])
+        for i in 0..3: length = length * 256 + int(uint8(document[offset+i]))
+        names.add(document[offset+4..offset+7])
         offset += 12 + length
       check offset == len(document)
       check names == @["IHDR", "IDAT", "IEND"]
@@ -60,17 +61,18 @@ when not defined(js):
   suite "Gif":
     var buffer_arena: array[1024*1024, byte]
 
+
     test "written file carries the size and frame count it was given":
       const (width, height) = (12, 8)
       var
-        frames = newSeq[uint8](3*width*height*3)
+        frames = newSeq[uint8](3 * width * height * 3)
         test_arena = initArena(buffer_arena)
       let path = getTempDir() / "visualiser_suite.gif"
       writeGif(test_arena, path, width, height, frames, 3, 8)
       defer: removeFile(path)
       let document = readFile(path)
 
-      check document[0 .. 5] == "GIF89a"
+      check document[0..5] == "GIF89a"
       check uint8(document[6]) == uint8(width) and uint8(document[7]) == 0
       check uint8(document[8]) == uint8(height) and uint8(document[9]) == 0
       check document[^1] == char(0x3B)
@@ -78,14 +80,14 @@ when not defined(js):
       # Walk every frame's own blocks by their own lengths, landing exactly on.
       #   trailer proves each frame's sub-blocks are sound, exactly as PNG test does.
       # Signature, logical screen, colour table, application extension.
-      const header_length = 6 + 7 + 256*3 + 19
+      const header_length = 6 + 7 + 256 * 3 + 19
       var
         offset = header_length
         count_frames = 0
       while document[offset] == '\x21':
-        offset += 8 # Graphic Control Extension is fixed length.
-        check document[offset] == '\x2C' # Image Descriptor.
-        offset += 10 + 1 # Image Descriptor fields, then LZW minimum code size byte.
+        offset += 8  # Graphic Control Extension is fixed length.
+        check document[offset] == '\x2C'  # Image Descriptor.
+        offset += 10 + 1  # Image Descriptor fields, then LZW minimum code size byte.
         while true:
           let length = int(uint8(document[offset]))
           offset += 1
@@ -121,10 +123,10 @@ when not defined(js):
         has_prev = false
 
       proc readCode(width: int): int =
-        for i in 0 ..< width:
+        for i in 0..<width:
           let (byte_index, bit_index) = ((position_bit + i) div 8, (position_bit + i) mod 8)
           if byte_index < len(data):
-            result = result or (int((data[byte_index].int shr bit_index) and 1) shl i)
+            result = result or (int((int(data[byte_index]) shr bit_index) and 1) shl i)
         position_bit += width
 
       while true:
@@ -157,20 +159,20 @@ when not defined(js):
       ##   Flat or small image never reaches dictionary sizes where that bites, so this
       ##   drives enough distinct colour pairs to grow code width at least once.
       const (width, height) = (64, 64)
-      var frame = newSeq[uint8](width*height*3)
-      for i in 0 ..< width*height:
-        frame[i*3] = uint8((i*173) mod 256)
-        frame[i*3 + 1] = uint8((i*97) mod 256)
-        frame[i*3 + 2] = uint8((i*211) mod 256)
+      var frame = newSeq[uint8](width * height * 3)
+      for i in 0 ..< width * height:
+        frame[i*3] = uint8((i * 173) mod 256)
+        frame[i*3+1] = uint8((i * 97) mod 256)
+        frame[i*3+2] = uint8((i * 211) mod 256)
 
       # `writeGif` takes rows bottom-up and writes them top-down, exactly as `writePng`.
       #   does; build expected indices in that same written order, not source's.
       var expected: seq[uint8]
-      for row_top in 0 ..< height:
+      for row_top in 0..<height:
         let row_source = height - 1 - row_top
-        for column in 0 ..< width:
-          let at = (row_source*width + column)*3
-          expected.add(paletteIndex(frame[at], frame[at + 1], frame[at + 2]))
+        for column in 0..<width:
+          let at = (row_source * width + column) * 3
+          expected.add paletteIndex(frame[at], frame[at+1], frame[at+2])
 
       var test_arena = initArena(buffer_arena)
       let path = getTempDir() / "visualiser_suite_growth.gif"
@@ -178,8 +180,8 @@ when not defined(js):
       defer: removeFile(path)
       let document = readFile(path)
 
-      const header_length = 6 + 7 + 256*3 + 19
-      var offset = header_length + 8 + 10 # Past Graphic Control Extension and Image Descriptor.
+      const header_length = 6 + 7 + 256 * 3 + 19
+      var offset = header_length + 8 + 10  # Past Graphic Control Extension and Image Descriptor.
       let width_code = uint8(document[offset])
       check width_code == 8
       offset += 1
@@ -189,9 +191,9 @@ when not defined(js):
         let length = int(uint8(document[offset]))
         offset += 1
         if length == 0: break
-        for i in 0 ..< length: sub_blocks.add(uint8(document[offset + i]))
+        for i in 0..<length: sub_blocks.add(uint8(document[offset+i]))
         offset += length
 
       let decoded = decodeGifFrame(sub_blocks)
-      check len(decoded) == width*height
+      check len(decoded) == width * height
       check decoded == expected

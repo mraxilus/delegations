@@ -23,12 +23,12 @@ import ./[marker, scene]
 #[ Type Definitions ]#
 
 type
-  Selection* = object ## Define handles picked, in order they were picked.
-    handles: array[OBJECTS_MAX, int] ## Picked handles, oldest pick first; first `count` are live.
-    count: int ## Handles picked so far, <= OBJECTS_MAX.
-    count_changes: int ## How many times membership or order has changed; see `revision`.
+  Selection* = object  ## Define handles picked, in order they were picked.
+    handles: array[OBJECTS_MAX, int]  ## Picked handles, oldest pick first; first `count` are live.
+    count: int  ## Handles picked so far, <= OBJECTS_MAX.
+    count_changes: int  ## How many times membership or order has changed; see `revision`.
 
-  PulseClock* = object ## Define each selected object's orientation pulse between frames.
+  PulseClock* = object  ## Define each selected object's orientation pulse between frames.
     ## Travel in screen pixels per handle, integrated and reduced, not position computed from
     ## clock. Two faults decided this; second is why units are pixels, not fraction.
     ##   Phase read off time meant `frac(now·speed ÷ around)`, and outline's length changes
@@ -52,9 +52,9 @@ type
     ##   neighbour. `arena.nim` is desktop-only in any case.
     ## Here rather than `marker.nim` because indexed by *handle*, over exactly selected set,
     ## which is view of scene this module already is.
-    travels: array[OBJECTS_MAX, float] ## Each handle's travel along its marker's outline.
+    travels: array[OBJECTS_MAX, float]  ## Each handle's travel along its marker's outline.
       ## In screen pixels from outline's anchor, always reduced below one lap.
-    seconds_last: Option[float] ## Clock reading `tick` last saw, for step between frames.
+    seconds_last: Option[float]  ## Clock reading `tick` last saw, for step between frames.
 
 
 
@@ -79,7 +79,7 @@ func at*(selection: Selection, position: int): int = selection.handles[position]
 func contains*(selection: Selection, handle: int): bool =
   ## Report whether handle is picked.
   ##   Walks picks; loop asking per object marks once instead (`markOnto`).
-  for position in 0 ..< selection.count:
+  for position in 0..<selection.count:
     if selection.handles[position] == handle: return true
   false
 
@@ -90,7 +90,7 @@ func markOnto*(selection: Selection, marks: var openArray[bool], is_marked = tru
   ##   loop then costs objects times picks, which select all at capacity squares.
   ##   Loop marks once, reads one mark per object, then clears same marks with `false`, so
   ##   neither walk reaches capacity and marks need no reset of their own.
-  for position in 0 ..< selection.count: marks[selection.handles[position]] = is_marked
+  for position in 0..<selection.count: marks[selection.handles[position]] = is_marked
 
 
 func impliedArity*(selection: Selection): Arity =
@@ -112,7 +112,7 @@ func isAllHidden*(selection: Selection, scene: Scene): bool =
   ##   each front-end folding `isVisible` its own way.
   ##   Empty selection is not hidden: nothing there to show.
   if selection.count == 0: return false
-  for position in 0 ..< selection.count:
+  for position in 0..<selection.count:
     if scene.isVisible(selection.handles[position]): return false
   true
 
@@ -144,7 +144,7 @@ func addAll*(selection: var Selection, handles: openArray[int]) =
   ##   Handle already picked, or given twice, is picked once, where it first stands.
   ##   Nothing new to add changes nothing, so revision stands, as `selectOnly`'s does.
   var is_picked: array[OBJECTS_MAX, bool]
-  for position in 0 ..< selection.count: is_picked[selection.handles[position]] = true
+  for position in 0..<selection.count: is_picked[selection.handles[position]] = true
   let count_before = selection.count
   for handle in handles:
     if is_picked[handle]: continue
@@ -158,14 +158,14 @@ func toggle*(selection: var Selection, handle: int) =
   ## Add handle to end of selection, or drop it where already picked.
   ##   Appending is what makes order meaningful: two objects picked become `m` and `n` in
   ##   order picked.
-  for position in 0 ..< selection.count:
+  for position in 0..<selection.count:
     if selection.handles[position] != handle: continue
     for shift in position ..< selection.count - 1:
-      selection.handles[shift] = selection.handles[shift + 1]
+      selection.handles[shift] = selection.handles[shift+1]
     selection.count.dec
     inc selection.count_changes
     return
-  if selection.count >= OBJECTS_MAX: return # Every handle already picked; nothing to add.
+  if selection.count >= OBJECTS_MAX: return  # Every handle already picked; nothing to add.
   selection.handles[selection.count] = handle
   selection.count.inc
   inc selection.count_changes
@@ -176,7 +176,7 @@ func pruneDead*(selection: var Selection, scene: Scene) =
   ##   Call after removing object: freed handle is handed straight to next add, so stale
   ##   pick would silently reattach to unrelated new object.
   var kept = 0
-  for position in 0 ..< selection.count:
+  for position in 0..<selection.count:
     if not scene.isAlive(selection.handles[position]): continue
     selection.handles[kept] = selection.handles[position]
     kept.inc
@@ -192,7 +192,7 @@ func keepNaming*(selection: var Selection; before, after: Scene) =
   ##   remove and add hands one handle two objects. Creation ordinal does, since no two
   ##   objects along one timeline share one.
   var kept = 0
-  for position in 0 ..< selection.count:
+  for position in 0..<selection.count:
     let handle = selection.handles[position]
     if not (before.isAlive(handle) and after.isAlive(handle)): continue
     if before.orderOf(handle) != after.orderOf(handle): continue
