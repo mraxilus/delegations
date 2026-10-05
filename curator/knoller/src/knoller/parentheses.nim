@@ -13,7 +13,9 @@
 ##     reads `■(𝐧.x)`; group whose removal glues two tokens into one (`isMerging` of
 ##     `spacing.nim`), as `^(|𝐦)` and `-(1)`; tuple, call, signature and argument of command
 ##     form (`x.f (a, b)`), which hold separator or glue to callee; prefix term after command
-##     head, since `check |∙ x` reads `|∙` as binary operator.
+##     head, since `check |∙ x` reads `|∙` as binary operator; group after prefix opening with
+##     `@` around operand with call, index or field, since that prefix binds before them and
+##     `@x[i]` reads `(@x)[i]`.
 ##   Group after power operator `^` reads glued, since spacing glues `^` (X.9), so `a ^ (-b)`
 ##     keeps exponent spacing wraps (`a^(-b)`), and both rules agree.
 ##   Rewrite moves no reading: parser keeps parentheses around one node as `nkPar` of it alone,
@@ -97,6 +99,7 @@ func groups(source: string): seq[Group] =
       after = if at < elements.high: elements[at + 1].kind else: ElementKind.Delimiter
       is_symbol_prefix = before == ElementKind.Prefix and
         tokens[elements[at - 1].first].kind == TokenKind.Operator
+      is_sigil = is_symbol_prefix and tokens[elements[at - 1].first].spelling(source)[0] == '@'
       is_side = before == ElementKind.Binary or
         (after == ElementKind.Binary and before != ElementKind.Prefix)
       is_plain = inner.len == 1 and inner[0].kind == ElementKind.Operand and
@@ -107,6 +110,8 @@ func groups(source: string): seq[Group] =
         )
       is_term_side = is_term and is_side and before != ElementKind.Operand
     if not (is_term_side or (is_plain and (is_symbol_prefix or is_side))): continue
+    # Prefix opening with `@` binds before call, index or field, so `@x[i]` reads `(@x)[i]`.
+    if is_sigil and inner[0].last > inner[0].first: continue
 
     # Removal leaves gap before `(` and after `)`; where either is none, tokens must not merge.
     #   Power operator before group counts glued, since spacing glues it (X.9).
