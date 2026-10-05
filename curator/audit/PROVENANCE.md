@@ -840,8 +840,8 @@ a copy from two different faces.
   names the table to add a row to. Alter one declared digest in its last character, and the
   fetch refuses the bytes and **leaves the store empty** rather than keeps them.
 - Cost: the store grows and nothing prunes it. A face is less than 1 MB, where a fetched compiler
-  is about 140 MB and a built one about 2.4 GB. So what is unbounded is the number of pins the repository has ever held, and
-  not the bytes.
+  is about 140 MB and a built one about 2.4 GB. So what is unbounded is the number of pins the
+  repository has ever held, and not the bytes.
 - Cost: an upstream that moves bytes under one address fails every project at once, rather
   than one. That is the same failure that a digest exists to make loud, and it is louder
   shared.
@@ -1094,9 +1094,10 @@ points hold here.
 - On CI, the installed compiler of every job already satisfies its pin, so resolution stops at
   `PATH` and never fetches.
 - Verified by `suites/test_toolchain.nim` and `test_projects.nim` here, and by the suites
-  `test_pins.nim` and `test_compilers.nim` of knoller. Verified by hand, 2026-09-06: `curator/probe`, pinned to a release that nothing local served, fetched the
-  tarball and ran. One command over projects on two pins gave **0 findings**, and its log held no
-  Atlas mismatch warning.
+  `test_pins.nim` and `test_compilers.nim` of knoller. Verified by hand, 2026-09-06:
+  `curator/probe`, pinned to a release that nothing local served, fetched the tarball and ran.
+  One command over projects on two pins gave **0 findings**, and its log held no Atlas mismatch
+  warning.
 - A pin that nothing can serve is one finding, which names the pin and the cache it tried, and
   not a crash. Cost, unmeasured on the current pin: the time of a cold fetch.
 
