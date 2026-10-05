@@ -84,11 +84,14 @@ func kindOf*(m: Multivector): Option[Kind] =
   ##   Grade is read off `scaleFree` copy, so library's tolerance stands relative to
   ##   largest coefficient: coefficient under billionth of it reads as zero, at any scale.
   ##     Never off `m` alone, whose coefficients library judges against absolute 1e-9.
-  ##   Copy is skipped where largest coefficient is at least one and library reads one
-  ##   grade off `m`: copy's threshold then stands at or above library's, so it keeps
-  ##   subset of what library keeps, largest among them, and reads same grade.
-  ##     Every unit-weight point takes that path; copy cost 5 µs for each on JS backend.
-  var grade = if m.coefficientLargest >= 1.0: m.grade else: none(Grade)
+  ##   Copy is skipped where weight `E4` stands at one or more, as every unit-weight
+  ##   point's does, and library reads one grade off `m`.
+  ##     Largest coefficient is then at least one, so copy's threshold stands at or above
+  ##     library's: it keeps subset of what library keeps, largest among them, and reads
+  ##     same grade.
+  ##     Weight alone is read, not largest: search for largest cost as much as `grade` on
+  ##     desktop's debug build, which classifies every object three times each frame.
+  var grade = if abs(m[Basis.E4]) >= 1.0: m.grade else: none(Grade)
   if grade.isNone: grade = m.scaleFree.grade
   if grade.isNone: return
   case int(grade.get)
