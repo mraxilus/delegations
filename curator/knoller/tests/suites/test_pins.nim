@@ -2,7 +2,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, unittest]
+import std/[options, strutils, unittest]
 import ../../src/knoller/pins
 
 
@@ -52,3 +52,25 @@ suite "Pins":
     check nimPin("requires \"malebolgia\"\n").isNone  # no compiler requirement
     check nimPin("requires \"nim == " & COMMIT & "\"\n") == some(COMMIT)  # devel dependency
     check nimPin("requires \"nim == devel\"\n").isNone  # label, not pin
+
+
+  test "commit pin reads as `nim == <commit>` or `nim#<commit>`, and nothing looser does":
+    check nimPin("requires \"nim == 2.2.12\"\n") == some("2.2.12")  # release
+    check nimPin("requires \"nim == " & COMMIT & "\"\n") == some(COMMIT)  # commit, exact form
+    check nimPin("requires \"nim#" & COMMIT & "\"\n") == some(COMMIT)  # commit, as nimble writes
+    check nimPin("requires \"Nim#" & COMMIT & "\"\n") == some(COMMIT)  # case-insensitive name
+    check nimPin("requires \"nim >= 2.0\"\n").isNone  # lower bound
+    check nimPin("requires \"nim >= 2.0 & < 3.0\"\n").isNone  # range
+    check nimPin("requires \"nim#295bafc\"\n").isNone  # short commit names many
+    check nimPin("requires \"nim == 295bafc\"\n").isNone  # short commit, exact form
+    check nimPin("requires \"nim#devel\"\n").isNone  # branch moves
+    check nimPin("requires \"nim#v2.2.12\"\n").isNone  # tag is no commit
+    check nimPin("requires \"nim#" & COMMIT.toUpperAscii & "\"\n").isNone  # not as git writes
+
+
+  test "requirement of compiler reads as written after `nim`, first one alone":
+    check nimRequirement("requires \"nim == 2.2.12\"\n") == some("== 2.2.12")
+    check nimRequirement("requires \"nim#" & COMMIT & "\"\n") == some("#" & COMMIT)
+    check nimRequirement("requires \"malebolgia\"\n").isNone  # no compiler named
+    check nimRequirement("requires \"nim >= 2.0\"\nrequires \"nim == 2.2.12\"\n") ==
+        some(">= 2.0")  # first wins, as `nimPin` reads it

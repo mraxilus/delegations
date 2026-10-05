@@ -21,6 +21,14 @@ suite "Toolchain":
     check found[0].message.endsWith("got `nim >= 2.2.4`.")  # Article IV.4 echoes value
 
 
+  test "pin is written `nim == <pin>` alone, though knoller reads `nim#<commit>` too":
+    check checkPin("p/p.nimble", "requires \"nim == " & COMMIT & "\"\n").len == 0  # duty 8
+    let found = checkPin("p/p.nimble", "requires \"nim#" & COMMIT & "\"\n")
+    check found.len == 1  # one form, which `.claude/hooks.sh` reads as text
+    check found[0].message.endsWith("got `nim#" & COMMIT & "`.")
+    check checkPin("p/p.nimble", "requires \"Nim#" & COMMIT & "\"\n").len == 1  # any case
+
+
   test "driver version is read from workflow, quotes either way":
     check WORKFLOW_TEXT.workflowVersion == some(PIN)  # single quotes
     check workflowVersion("  NIM_VERSION: \"2.2.6\"\n") == some("2.2.6")  # double quotes

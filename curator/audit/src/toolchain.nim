@@ -48,8 +48,11 @@ const
 
 
 func checkPin*(path, nimble: string): seq[Finding] =
-  ## Report nimble file carrying no exact Nim pin.
-  if nimble.nimPin.isNone:
+  ## Report nimble file carrying no exact Nim pin as `nim == <pin>`.
+  ##   `nim#<commit>`, which knoller reads as pin too, is finding here: repository writes pin in
+  ##   one form, which CONTRIBUTOR.md (Toolchain) names and `.claude/hooks.sh` reads as text.
+  let is_exact = nimble.nimRequirement.get("").startsWith(EXACT)
+  if nimble.nimPin.isNone or not is_exact:
     result.add finding(
       path,
       0,
