@@ -147,8 +147,8 @@ left, or where a change is due under `--check`.
 
 **The command takes one compiler for each file, in a fixed order.** The compiler that `--nim`
 names comes first. Else knoller takes the compiler of the pin in the nearest nimble file at or
-above the directory of the file. Else it takes `nim` on `PATH`. The Architect set this order (D1
-of #548), so a run by hand on the `ronri` projects takes their commit pin with no option.
+above the directory of the file. Else it takes `nim` on `PATH`. This order (D1 of #548) lets a run
+by hand on the `ronri` projects take their commit pin with no option.
 
 - A pin is `requires "nim == <pin>"`, or `requires "nim#<commit>"` with a full commit, as nimble
   writes a commit. A range, a branch, a tag and a short commit name no pin. A nimble file that
@@ -161,9 +161,8 @@ of #548), so a run by hand on the `ronri` projects takes their commit pin with n
 - A pin that no compiler serves proves nothing. The rule removes no group in its files, and the
   run prints one warning that names the pin. No other compiler stands in (`GUIDE.md`,
   Toolchain).
-- A directory that holds more than one nimble file has no pin that knoller can trust, and
-  nimble itself refuses such a directory. Its files prove nothing, and the run prints one
-  warning that names the directory.
+- A directory that holds more than one nimble file has no pin that knoller can trust. Its files
+  prove nothing, and the run prints one warning that names the directory.
 - A warning changes no exit code.
 - A pin resolves when the first file under it asks the parser. So a pin that no file asks about
   costs no fetch.
@@ -661,9 +660,8 @@ answers by source, and fixes again each file that asked. An answer never changes
 file that asked nothing gives the same result again. The command line asks at most eight times.
 
 - `koch fix` does the same for each pin (`curator/audit`).
-- The Architect kept this loop (D2 of #548), with a test that it equals a fix of every file each
-  round. Verified by `suites/test_command.nim`: the loop as it was before, which fixes every file
-  again, runs as a reference. On several files, where some ask over two rounds, one asks through
+- A fix of every file each round gives the same outcome (D2 of #548). Verified by
+  `suites/test_command.nim`, where a reference loop fixes every file again. On several files, where some ask over two rounds, one asks through
   its fence and some ask nothing, both give the same outcome. This holds for a stub parser, for a
   parser that fails, and for a parser that fails from its second run.
 - The prover is a proc value (`Prover`), so the suites stub it (`suites/stubs.nim`). The stub
