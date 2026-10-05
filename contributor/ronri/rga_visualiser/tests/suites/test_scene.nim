@@ -376,6 +376,24 @@ suite "Scene":
     check kindText(1.0 + POINTS[0]) == "mixed grade, nothing to draw"
 
 
+  test "a line a metre long prints the terms it carries, and no rounding beside them":
+    # Its coefficients stand near 1e-12 one unit out, under library's absolute tolerance.
+    #   Term prints against largest coefficient instead, as `kindOf` reads it, so line
+    #   reads as line in panel rather than as zero.
+    let
+      metre = 1.0 / (1000.0 * KILOMETRES_PER_ASTRONOMICAL_UNIT)
+      base = Position(x: 0.2512598425822558, y: 0.9679196720314863, z: 0.0)
+      line = base.toMultivector ∧ (base + Direction(x: 0.0, y: 0.0, z: metre)).toMultivector
+    check kindText(line) == "line"
+    check formatMultivectorString(line) == "6.685e-12 𝐞₄₃ + 6.47e-12 𝐞₂₃ - 1.68e-12 𝐞₃₁"
+    # Rounding under billionth of largest term stays unprinted, beside large term or small.
+    let point = Position(x: 2, y: 0, z: -3).toMultivector
+    check formatMultivectorString(point + initElement(Basis.E23, 1.0e-12)) ==
+        "2 𝐞₁ - 3 𝐞₃ + 1 𝐞₄"
+    check formatMultivectorString(line + initElement(Basis.E12, 1.0e-24)) ==
+        "6.685e-12 𝐞₄₃ + 6.47e-12 𝐞₂₃ - 1.68e-12 𝐞₃₁"
+
+
   test "handlesCreated walks creation order, whatever order the handles fell in":
     # Arena reuses most recently freed handle, so handle order stops being creation.
     #   order moment anything is removed. This is what save path walks, and what
