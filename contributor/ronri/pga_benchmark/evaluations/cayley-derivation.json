@@ -1387,8 +1387,8 @@
       },
       "nan": {},
       "digest_c": {
-        "pristine": "2d5cd4e2a678c120",
-        "changed": "09adb6af59e97dc5"
+        "pristine": "4f426fb52144e809",
+        "changed": "879bc3d894ddae43"
       }
     },
     "cga5d": {
@@ -3032,8 +3032,8 @@
       },
       "nan": {},
       "digest_c": {
-        "pristine": "8fd6361dd9dd1a4d",
-        "changed": "a8ea85a9e60e5123"
+        "pristine": "6302fcbda87a9567",
+        "changed": "7e2de05acfbf5b96"
       }
     },
     "rga3d": {
@@ -4272,8 +4272,8 @@
       },
       "nan": {},
       "digest_c": {
-        "pristine": "0471853b9be85fbf",
-        "changed": "2f226910102fd0ec"
+        "pristine": "5b1504fdd2245478",
+        "changed": "e362c66ddf4bf289"
       }
     },
     "cga4d": {
@@ -5827,8 +5827,8 @@
       },
       "nan": {},
       "digest_c": {
-        "pristine": "d014b02752c7a84c",
-        "changed": "71fe8a1d21ca1de5"
+        "pristine": "a8a06b35e23bc455",
+        "changed": "c8c60041539b6b62"
       }
     }
   },
@@ -5995,7 +5995,7 @@
       "at_most": 0.75,
       "passed": true,
       "detail": [
-        "rga6d peak 234.9 → 170.7 MiB, 10.06 → 6.76 s, ×0.73"
+        "rga6d peak 234.9 → 170.7 MiB, 9.11 → 6.39 s, ×0.73"
       ]
     }
   ]
