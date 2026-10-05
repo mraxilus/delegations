@@ -11,7 +11,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, options, sequtils, strutils, unittest]
+import std/[algorithm, sequtils, strutils, unittest]
 import ../../src/knoller/[chain {.all.}, fences, idioms, reports, tokens]
 import ./stubs
 

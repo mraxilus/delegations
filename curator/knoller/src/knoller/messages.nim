@@ -26,7 +26,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, sequtils, strutils, unicode]
+import std/[algorithm, sequtils, strutils]
 import ./[form, precedence, reports, tokens]
 
 
