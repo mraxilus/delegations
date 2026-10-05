@@ -394,18 +394,29 @@ tokens. Verified by `suites/test_spacing.nim`, with each example of the ruling.
 - A range in prefix place, such as `a[.. 2]`, stays unread. Verified by hand, 2026-10-04, with
   `checkSpacing` and `fixSpacing` on that line.
 
-**The power operator `^` takes no space (X.9).** With spaces it reads like an operator on bits,
-as the Architect ruled. So `-1 ^ (k)` becomes `-1^(k)`, and `a + b ^ 2` becomes `a + b^2`. Only a
+**The power operator `^` is always tight (X.9).** With spaces it reads like an operator on bits,
+as the Architect ruled. So `-1 ^ k` becomes `-1^k`, and `a + b ^ 2` becomes `a + b^2`. Only a
 prefix operator binds tighter, so no piece beside it keeps it apart, and math beside it makes no
 exception. Verified by `suites/test_spacing.nim`, with each example of the ruling.
 
 - The rule reads the binary token `^` alone. The assignment `^=`, the prefix `^` of a backwards
   index, as in `s[^1]`, and the compound `..^` read as before.
-- The merge guard keeps one space on each side where the glued tokens would lex as one, as in
-  `a ^ -b` and `x ^ ~y`. A `^` that ends its line takes one space before it, as a range does.
-- Spacing moves no parse tree here either. Verified by hand, 2026-10-05, with the parser of the
-  commit pin of the `ronri` projects: `-1 ^ (k)`, `a + b ^ 2` and `(a + b) ^ 2` read as their
-  glued forms do.
+- The exponent glued to `^` can lex as one token with it. There it takes parentheses instead of
+  spaces: `a ^ -b` becomes `a^(-b)`, and `x ^ ~y` becomes `x^(~y)`. The exponent is
+  the prefix operators and the one operand after `^`, with any call, index or field glued to it
+  (`exponentLast`). An exponent that runs past its line stays as written, with no finding.
+- Only the exponent takes parentheses. A left operand ends in a name, a literal, a quoted name or
+  a closing bracket. None of them joins an operator run, so no left operand merges with `^`.
+  The fixer still passes over such a case, should one ever lex so.
+- The rule of needless parentheses reads a group after `^` as glued, so it keeps `a^(-b)`, and
+  `a ^ (-b)` settles on `a^(-b)` in one round. A group of one plain operand still goes, so
+  `-1 ^ (k)` becomes `-1^k` through the chain. A group that holds math stays, as in
+  `-1^(int(b.grade) * int(b.gradeAnti))`. Verified by `suites/test_chain.nim`.
+- A `^` that ends its line takes one space before it, as a range does.
+- Spacing moves no parse tree, and the wrap adds one group around the exponent alone. Verified by
+  hand, 2026-10-05, with the parser of the commit pin of the `ronri` projects. `-1 ^ k`,
+  `a + b ^ 2` and `(a + b) ^ 2` read as their glued forms do. `a ^ -b` reads as `a^(-b)` once
+  the group around one operand is normalised.
 
 **A symbol operator inside a bracket glued to its operand takes no space (X.9).** The bracket is
 `[` with no gap after an operand, at any depth inside it, so `prev[i - 1]` becomes `prev[i-1]`. A
@@ -488,6 +499,9 @@ Verified by `suites/test_parentheses.nim` and `suites/test_chain.nim`.
 - A group whose removal would glue two tokens into one stays, by the merge guard of
   `spacing.nim`. That covers `\(/𝐮)`, `^(|𝐦)`, `/(∙𝐦)`, `☆( ⊟ m)` and `-(1)`, which would lex
   as the literal `-1`.
+- A group after the power operator `^` reads as glued, since spacing always glues `^`. So the
+  guard keeps the wrapped exponent of `a^(-b)`, from `a ^ (-b)` too. Verified by
+  `suites/test_parentheses.nim`.
 - The guard reads the gaps as they stand. So where spacing sets a space beside a glued group,
   the next round removes it: `back*(-heading)` becomes `back * -heading`, with the same tree.
   Verified by hand, 2026-10-04, with `knoller --check` on `rga_visualiser`.
