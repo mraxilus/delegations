@@ -21,7 +21,7 @@ const
     "(x[i])",
   ]
     ## Text of each group parser of commit pin reads otherwise without it.
-  ASKS_MAX = 8  ## Rounds of asking at most, as `command.nim` takes.
+  ASKS_MAX* = 8  ## Rounds of asking at most, as `command.nim` takes.
 
 
 func stubbed*(source: string): seq[int] =

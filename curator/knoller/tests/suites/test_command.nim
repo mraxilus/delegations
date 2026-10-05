@@ -7,8 +7,8 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, os, sequtils, strutils, tempfiles, unittest]
-import ../../src/knoller/[chain, command, proofs, rules]
+import std/[options, os, sequtils, strutils, tables, tempfiles, unittest]
+import ../../src/knoller/[chain, command, proofs, reports, rules]
 import ./stubs
 
 
@@ -39,6 +39,27 @@ proc writeTree(root: string, files: openArray[(string, string)]) =
   for (path, text) in files:
     createDir((root / path).parentDir)
     writeFile(root / path, text)
+
+
+proc everyOutcome(
+  files: openArray[(string, string)],
+  locked: openArray[string],
+  is_check: bool,
+  directory: string,
+  prover: Prover,
+): Outcome =
+  ## Fix every file again each round of asking, as loop of `provenOutcome` did before it fixed
+  ##   files that asked alone: reference that optimised loop is held equal to (Article IX.2).
+  var
+    proofs = Proofs()
+    failure = ""
+  result = outcomeOf(files, locked, is_check, directory, proofs)
+  for ask in 1..ASKS_MAX:
+    if result.asked.len == 0: break
+    if failure.len > 0:
+      for source in result.asked: proofs.answers[source] = @[]
+    else: failure = proofs.answered(result.asked, prover)
+    result = outcomeOf(files, locked, is_check, directory, proofs, failure)
 
 
 func shown(path, directory, source: string): seq[string] =
@@ -298,3 +319,45 @@ suite "Command line":
       "r/b.nim:3: needless-parentheses to fix",
       "2 to fix.",
     ]  # real parser proves `@(x)` and `@(y)`, and keeps `@(x[0])` and `@(y[0])`
+
+
+  test "fix of files that asked alone gives same outcome as fix of every file, each round":
+    # Several files, some asking parser over two rounds, one asking through its fence alone,
+    #   and some asking nothing; perf commit `e609e03` made loop fix askers alone.
+    let
+      files = [
+        ("a.nim", GROUPED),
+        ("b.nim", CLEAN),
+        ("c.nim", DIRTY),
+        ("d.nims", "let a = 1\n#!fix off\nlet b = @(x) + 1\n#!fix on\n"),
+        ("e.nim", GROUPED.replace("@(x) + @(x[0])", "@(y) + @(y[0])") & "let t = a+b\n"),
+        ("p/p.nimble", "version = \"0.1.0\" \n"),
+        ("README.md", "x \n"),
+      ]
+      asking = files.filterIt(outcomeOf([it], ["p/p.nimble"], is_check = true).asked.len > 0)
+    check asking.mapIt(it[0]) == @["a.nim", "d.nims", "e.nim"]  # some files ask, some do not
+    for is_check in [false, true]:
+      var calls = 0
+      let
+        counted = proc (sources: seq[string]): Proving =
+          inc calls
+          stubProver(sources)
+        failing_later = proc (): Prover =
+          var count = 0
+          result = proc (sources: seq[string]): Proving =
+            inc count
+            if count == 1: stubProver(sources) else: failingProver(sources)
+      let pairs: array[3, (Prover, Prover)] = [
+        (counted, counted),
+        (failingProver, failingProver),
+        (failing_later(), failing_later()),
+      ]
+      for (fast, every) in pairs:
+        let
+          proven = provenOutcome(files, ["p/p.nimble"], is_check, "/", fast)
+          reference = everyOutcome(files, ["p/p.nimble"], is_check, "/", every)
+        check proven.written == reference.written
+        check proven.lines == reference.lines
+        check proven.code == reference.code
+        check proven.asked == reference.asked
+      check calls >= 4  # askers asked again in second round, under both runs
