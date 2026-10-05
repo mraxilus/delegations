@@ -31,7 +31,6 @@ import {
 } from './label';
 import { driveChipRowFits, driveHelp, driveHoverDuringGesture } from './chrome';
 import { driveTypeDrawn, driveTypeLigatures, driveTypeRoles } from './type';
-import { driveBlurCost, driveBlurDeclared, driveDrawerBlurs, setBlur } from './blur';
 import { driveFacesCovered } from './faces';
 import { driveCreep, drivePlaneBuilt, driveRuler } from './finger';
 import { driveHoldScene } from './hold';
@@ -167,11 +166,6 @@ async function driveSimulated(browser: Browser): Promise<void> {
   //   layout nobody wrote, and every check below is against page it styled.
   await driveStyleDeclared(page);
   await driveSurfacesFilled(page);
-  // Blur's own checks next, on page as it opened; every check after them runs without it, by
-  //   ruling of #453 (`blur.ts`).
-  await driveBlurDeclared(page);
-  await driveDrawerBlurs(page);
-  await setBlur(page, false);
 
   // Reader every pixel check leans on, checked before any of them lean on it.
   await driveBlankRefused(page);
@@ -238,10 +232,7 @@ async function driveSimulated(browser: Browser): Promise<void> {
   await driveAxis(page);
   await driveAxisGlide(page);
   await driveScaleSwitch(page);
-  // Rings check every experiment pill from page's own default, which has blur on.
-  await setBlur(page, true);
   await driveRings(page);
-  await setBlur(page, false);
   driveAllowance();
   await driveHold(page);
   await drivePinPool(page);
@@ -306,8 +297,6 @@ async function driveMeasured(browser: Browser): Promise<void> {
   await page.goto(`file://${PATH_PAGE}`);
   await waitScene(page);
   await focusCanvas(page);
-  // Blur off for every timing below but its own, so no other bound carries its cost.
-  await setBlur(page, false);
   // Multisampled as reader's page is, so every bound below times what reader runs.
   await driveAntialias(page, true);
 
@@ -332,7 +321,6 @@ async function driveMeasured(browser: Browser): Promise<void> {
   await drivePlacingCost(page, objects_largest);
   await drivePinPickLoaded(page, MILLISECONDS_PICK_HOVER_LOADED);
   await driveLoadedAccounting(page);
-  await driveBlurCost(page, objects_largest);
 
   report(
     'the measured page raised no error', errors_page.length === 0, errors_page.join(' | '),

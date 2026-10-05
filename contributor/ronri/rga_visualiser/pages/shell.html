@@ -2,7 +2,10 @@
 <style>
   :root {
     --bg: #101318;
-    --surface: rgba(22, 27, 34, 0.82);
+    /* Scene shows through every surface by fill alone, with no backdrop blur, by Architect's
+       instruction: blur cost one frame of display over largest scene. Drawer's opaque bands
+       mix same tone at same weight; `tools/drive/surface.ts` holds both. */
+    --surface: rgba(22, 27, 34, 0.88);
     --surface-solid: #161b22;
     --surface-raised: #1b212b;
     --border: #2a323d;
@@ -228,8 +231,6 @@
     align-items: center;
     gap: 8px;
     background: var(--surface);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
     border: 1px solid var(--border);
     border-radius: 999px;
     padding: 7px 14px;
@@ -238,8 +239,8 @@
      its own metrics rather than inheriting ones tuned for that pair. Left as inherited it
      drew `☰` at browser's own 16px default with `line-height: normal` -- 15px glyph in
      27px box, pushed off centre by padding 4px deeper on one side than other -- beside
-     chips set at 11px on `line-height: 1`. Glyph is three hairlines; at that size against
-     blurred ground they wash out, which is what made it unreadable.
+     chips set at 11px on `line-height: 1`. Glyph is three hairlines, and at that size they
+     wash out, which is what made it unreadable.
      Square, so pill reads as one chip rather than as pill with word missing.
      Same metrics `#button-drawer` wears below its own breakpoint; two rules rather than
      one because this holds at every width and that holds only under media query. Change
@@ -272,8 +273,6 @@
     display: flex;
     gap: 6px;
     background: var(--surface);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
     border: 1px solid var(--border);
     border-radius: 999px;
     padding: 5px;
@@ -373,7 +372,6 @@
     color: var(--ink-muted);
     background: var(--surface);
     border: 1px solid var(--border);
-    backdrop-filter: blur(9px);
     transition: color var(--anim) var(--ease), border-color var(--anim) var(--ease);
     z-index: 6;
   }
@@ -635,8 +633,6 @@
     bottom: 0;
     width: min(400px, 100vw);
     background: var(--surface);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
     border-right: 1px solid var(--border);
     display: flex;
     flex-direction: column;
@@ -747,10 +743,10 @@
        each gutter: rows span content box, so pill at that width covers them outright, and
        its 10px padding still lands text on column rows below start on.
        Fill is drawer's own ground, arrived at same way drawer arrives at it, rather than tone
-       picked to sit near it: `--surface` over `--bg` at 82% is exactly what `.drawer`
+       picked to sit near it: `--surface` over `--bg` at 88% is exactly what `.drawer`
        paints, and `--bg` is written by `gl.ts` from clear colour, so this tracks scene rather
-       than guessing at it. Opaque, although pills it borrows shape from are `--surface` over
-       blur: rows pass under this one, and heading asked to hide them cannot be seen through.
+       than guessing at it. Opaque, although pills it borrows shape from are see-through
+       `--surface`: rows pass under this one, and heading asked to hide them cannot be seen through.
        No shadow, which read as *floating* in way nothing else on page did.
        Box is square and pill is drawn over it by `::before`, rather than box being pill
        itself. Radius clips background it rounds, so pill drew nothing in four corners its own
@@ -770,7 +766,7 @@
     z-index: 1;
     margin: -10px -10px 0 -10px;
     padding: 10px 10px;
-    background: color-mix(in srgb, rgb(22 27 34) 82%, var(--bg));
+    background: color-mix(in srgb, rgb(22 27 34) 88%, var(--bg));
     border: 0;
     color: var(--ink);
     /* Title role: heading naming section takes serif face, which is only role it is
@@ -916,7 +912,7 @@
     z-index: 1;
     margin: 0 -10px;
     padding: 0 10px 8px;
-    background: color-mix(in srgb, rgb(22 27 34) 82%, var(--bg));
+    background: color-mix(in srgb, rgb(22 27 34) 88%, var(--bg));
   }
   .objects-search input { flex: 1; min-width: 0; width: auto; }
   .objects-shown { font-family: var(--sans); font-size: 11px; color: var(--ink-faint);
@@ -1060,11 +1056,6 @@
   }
   .diagnostic-cut-row { padding-left: 12px; }
   .diagnostic-experiments { display: flex; gap: 6px; }
-  /* Experiment: every backdrop blur off at once, so its cost can be read on device. */
-  body.without-blur * {
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-  }
   .diagnostic-children { display: none; padding-left: 12px; }
   .diagnostic-node.open > .diagnostic-children { display: block; }
   .sparkline { width: 100%; height: 40px; display: block; }
@@ -1166,7 +1157,7 @@
   .selection-menu-close { padding: 9px 11px; }
 
   /* ---- Top menu -- rare, file-management-flavored actions only (save/load scene,
-     save PNG/load demo): popover under #button-menu, same fixed/blurred/bordered look as
+     save PNG/load demo): popover under #button-menu, same fixed/bordered look as
      .selection-menu. Undo/redo and axes/grid stay live in chip-row instead --
      two things reached for constantly during editing shouldn't cost extra click. ---- */
   .top-menu {
@@ -1403,12 +1394,10 @@
         <div class="diagnostic-line diagnostic-cut-row"><span>page &middot; browser</span
           ><b id="diagnostic-slowest-split">&mdash;</b></div>
         <!-- Experiments, each switching one suspect off at runtime so its cost can be
-             read on device from rows below: every backdrop blur, canvas at full pixel
-             ratio, and SVG overlay. All on by default; none is saved. -->
+             read on device from rows below: canvas at full pixel ratio, and SVG overlay.
+             All on by default; none is saved. -->
         <div class="diagnostic-line"><span>experiments</span
           ><span class="diagnostic-experiments"
-            ><button id="toggle-blur" class="diagnostic-toggle on" type="button"
-              aria-label="backdrop blur">blur</button
             ><button id="toggle-full-ratio" class="diagnostic-toggle on" type="button"
               aria-label="full pixel ratio">hi-dpi</button
             ><button id="toggle-overlay" class="diagnostic-toggle on" type="button"

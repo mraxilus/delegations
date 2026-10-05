@@ -229,7 +229,7 @@ export async function driveHeaderBanded(page: Page): Promise<void> {
  *  is open -- which it has to be for this check to have heading to read. First form compared
  *  against it and reported `rgb(0, 167, 165)` where heading held `rgb(42, 50, 61)`: exemplar
  *  was in state, not idiom. `.toggles` wears same pill and has no state of its own.
- *  Fill is deliberately *not* compared. Those pills are `--surface` over blur; this one is
+ *  Fill is deliberately *not* compared. Those pills are see-through `--surface`; this one is
  *  opaque, because rows pass under it and heading asked to hide them cannot be seen through.
  *  `driveHeaderBanded` holds that opacity; this holds shape. Read while pinned, where shape
  *  matters most; heading wears same pill at rest.
