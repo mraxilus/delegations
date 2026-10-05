@@ -14,6 +14,29 @@ func pointOnRay(camera: Camera; width, height: int; cursor: ScreenPosition): Pos
   camera.eye + (camera.distance / along) * heading
 
 
+const METRE = 1.0 / 149_597_870_700.0
+  ## Hold one metre in world units, at one astronomical unit to unit.
+
+
+const PLACE_FAR = Position(x: 1.7e6, y: -1.2e6, z: 0.6e6)
+  ## Place pivot two million units out, among demo's far stars.
+
+
+func cameraFarAt(separation: float): Camera =
+  ## Build camera `separation` from pivot at `PLACE_FAR`, view origin moved as frame moves it.
+  ##   Built at 19 units, where world's doubles hold stance, then dollied in about view
+  ##   origin: far pivot named alone by world points carries their step.
+  result = cameraAround(PLACE_FAR, 19.0, Direction(x: 3, y: -2, z: 1))
+  discard result.moveOriginView
+  result.dollyTo(separation)
+  discard result.moveOriginView
+
+
+func stepWorld(coordinate: float): float =
+  ## Measure step between world's doubles at `coordinate`, i.e. its unit in last place.
+  pow(2.0, floor(log2(abs(coordinate))) - 52.0)
+
+
 template countLiftsIn(body: untyped): int =
   ## Run `body`, and report how many motors it lifted into algebra; see `setCountingLifts`.
   setCountingLifts(true)
@@ -168,6 +191,92 @@ suite "Camera":
     check dot(rolled.frame.axis_up, UP_WORLD) < dot(axis_up_rolled, UP_WORLD) + TOLERANCE_TEST
     check abs(rolled.frame.axis_right.z) > TOLERANCE_TEST
     check rolled.pivot =~ pivot
+
+
+  test "an orbit a metre wide two million units out keeps its pivot to a micrometre":
+    # World's doubles step by 17 to 35 m two million units out, so orbit 150 m wide about
+    #   far object broke on that step, and one metre wide could not be named at all.
+    #   Stance is held about view origin, moved after each step as each frame moves it, so
+    #   every motion composes near eye. Metre and 150 m, floor orbit had before.
+    const (steps, turn) = (2000, 0.004)
+    for separation in [METRE, 150.0 * METRE]:
+      var
+        stepped = cameraFarAt(separation)
+        once = stepped
+      let (origin_start, pivot_start, eye_start) = (stepped.originView, stepped.pivot, stepped.eye)
+      for _ in 1..steps:
+        stepped.orbit(turn, 0.0)
+        discard stepped.moveOriginView
+      once.orbit(float(steps) * turn, 0.0)
+      discard once.moveOriginView
+      let
+        pivot = stepped.pivot.rebased(stepped.originView, origin_start)
+        eye = stepped.eye.rebased(stepped.originView, origin_start)
+        eye_once = once.eye.rebased(once.originView, origin_start)
+      check norm(pivot - pivot_start) <= 1.0e-6 * separation
+      check abs(stepped.distance - separation) <= 1.0e-6 * separation
+      check abs(norm(eye - pivot) - separation) <= 1.0e-6 * separation
+      check norm(eye - eye_once) <= 1.0e-6 * separation
+      # Eye went round, half separation or more from where it began.
+      check norm(eye - eye_start) >= 0.5 * separation
+
+
+  test "the view origin carries the eye's remainder over exactly, out and back":
+    # Ten thousand moves out, each under world's step there, then ten thousand back, view
+    #   origin moved after each as frames move it. World's doubles alone swallow every one;
+    #   eye about view origin keeps each, and comes back to where it began.
+    const
+      moves = 10_000
+      step = 0.3 * METRE
+    var camera = cameraFarAt(METRE)
+    let
+      (origin_start, eye_start, world_start) = (camera.originView, camera.eye, camera.eyeWorld)
+      forward = camera.frame.forward
+    for _ in 1..moves:
+      camera.travel(step, 0.0, 0.0)
+      discard camera.moveOriginView
+    let gone = camera.eye.rebased(camera.originView, origin_start)
+    check norm(gone - (eye_start + (float(moves) * step) * forward)) <= 1.0e-6 * step
+    for _ in 1..moves:
+      camera.travel(-step, 0.0, 0.0)
+      discard camera.moveOriginView
+    check norm(camera.eye.rebased(camera.originView, origin_start) - eye_start) <=
+        1.0e-6 * step
+    # As world reads it, eye stands within world's own step of where it began.
+    let world = camera.eyeWorld
+    for (now, began) in [(world.x, world_start.x), (world.y, world_start.y),
+        (world.z, world_start.z)]:
+      check abs(now - began) <= stepWorld(began)
+
+
+  test "a metre-wide object two million units out fills the frame, with depth to spare":
+    # Floor of orbit is 1.5 cm, so camera comes in until metre-wide object fills frame, as it
+    #   does with any other. Near clip and logarithmic depth span that close-up out to far
+    #   bound millions of units off, monotone across it, and keep object's near and far
+    #   sides apart by more than sixteen-bit step.
+    const
+      (wide, tall) = (1440, 900)
+      reach = 6.5e6
+      step_sixteen_bit = 2.0 / 65535.0
+      radius = 0.5 * METRE
+    var camera = cameraFarAt(19.0)
+    let filling = depthFilling(radius, camera.drawExtentFor(tall, reach), wide, tall)
+    check filling > DISTANCE_LIMIT_NEAR
+    camera.dollyTo(filling)
+    check abs(camera.distance - filling) <= 1.0e-9 * filling
+    check camera.distanceNear < filling - radius
+    let far = camera.distanceFar(reach)
+    check camera.depthOf(camera.distanceNear, reach) =~ -1.0
+    check camera.depthOf(far, reach) =~ 1.0
+    check camera.depthOf(filling + radius, reach) - camera.depthOf(filling - radius, reach) >
+        step_sixteen_bit
+    var last = -2.0
+    for exponent in -14..6:
+      let depth = pow(10.0, float(exponent))
+      if depth <= camera.distanceNear or depth >= far: continue
+      let z = camera.depthOf(depth, reach)
+      check z > last and z > -1.0 and z < 1.0
+      last = z
 
 
   test "the flat motor and the multivector say one motion, and it is unit":
