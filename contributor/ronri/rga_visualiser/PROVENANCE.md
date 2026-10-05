@@ -534,12 +534,18 @@ computed by `src/browser/bridge.nim`, compiled from the same modules that the de
 TypeScript owns WebGL, DOM and pointer events alone. Each script argues for itself in its header, on
 the phrase `not Nim because`, which `justification.nim` demands of a gated kind.
 
-**The declarations of the bridge are derived, and never kept beside it.** `tools/build.nim declare`
-reads the `{.exportc.}` signatures of the bridge itself, and writes `build/bridge.d.ts` with every
-parameter required (Marker pulse). A hand-written copy of those signatures would be a second home
-for each one. `types` is `declare` and both type-checker configurations, and it stops there. `web`
-and `drive` both call it. Verified by a break on purpose: to rename `nimSceneHandles` alone fails
-`types`.
+**The declarations of the bridge are derived, and never kept beside it.**
+`tools/declarations.nim` reads the `{.exportc.}` signatures of the bridge itself, and
+`tools/build.nim declare` writes them to `build/bridge.d.ts`, with every parameter required (Marker
+pulse). A hand-written copy of those signatures would be a second home for each one. `types` is
+`declare` and both type-checker configurations, and it stops there. `web` and `drive` both call it.
+Verified by a break on purpose: to rename `nimSceneHandles` alone fails `types`.
+
+**A parameter with a literal default takes its type from the literal.** Such a parameter states no
+type (Article X.12), as `is_tally_skipped = false` shows. A parameter that the reading cannot type
+leaves no declaration, so each call to that export fails `types`. A declaration one parameter short
+would let the page leave that argument out, and pass `undefined`. Verified by `suites.nim`: every
+parameter reaching its declaration, one whose literal fixes its type included.
 
 **Type-checking runs under `strict`, `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes`**,
 as CONTRIBUTOR.md requires. Indexing therefore reports absence. The flat buffers of the bridge are
