@@ -2399,8 +2399,8 @@ world step.
 
 *Checked.* Verified by `suites.nim`:
 
-- an orbit 1 m and 150 m wide, two million units out, holds its pivot over 2,000 steps. It stays
-  within a millionth of its separation, and lands where one turn of their sum lands;
+- an orbit 1 m and 150 m wide, 0.41, 2.1 and 4.7 million units out, holds its pivot over 2,000
+  steps. It stays within a millionth of its separation, and lands where one turn of their sum lands;
 - 10,000 moves of 0.3 m out and 10,000 back carry the remainder over exactly. The eye goes 3 km,
   and comes back to within a millionth of a move, and to within one world step as world reads it;
 - a moved camera carries the view origin to its eye, and a still one leaves the origin and the motor
