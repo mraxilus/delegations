@@ -12,7 +12,10 @@ import ../../src/dance_ontology
 import ../../tools/[review, title]
 
 
-const OUT = "build/review"  ## Where page and pictures land; ignored by git, created here.
+const OUT = "build/suites/review"
+  ## Where page and pictures land; ignored by git, created here.
+  ##   Apart from `build/review`, where `pages` writes page dressed in its faces: page
+  ##     written here carries none, and publishing reads that directory.
 
 
 func importsOf(source: string): seq[string] =

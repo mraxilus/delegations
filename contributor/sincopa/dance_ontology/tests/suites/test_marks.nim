@@ -8,7 +8,10 @@ import ../../design/[marks, parts, plain, rig_page]
 import ../../tools/title
 
 
-const OUT = "build/design"  ## Where pages land; ignored by git, created here.
+const OUT = "build/suites/design"
+  ## Where pages land; ignored by git, created here.
+  ##   Apart from `build/design`, where `pages` writes each page dressed in its faces: page
+  ##     written here carries none, and publishing reads that directory.
 
 const SMALL = ["a", "an", "and", "as", "at", "but", "by", "for", "from", "in", "into",
                "nor", "of", "on", "or", "over", "so", "the", "to", "up", "with", "yet"]

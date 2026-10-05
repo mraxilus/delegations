@@ -5,9 +5,9 @@
 ##   Two tables name same faces from opposite ends -- one pins bytes, other names
 ##     family each answers to -- and pair that drifts is fault neither file shows
 ##     on its own, so it is checked here.
-##   Style sheets are read as text, rule by rule, and never rendered.  Cost: which face draws
-##     each codepoint is beyond them, so coverage is verified by hand and recorded with its
-##     tool and date (`PROVENANCE.md`, Faces).
+##   Style sheets are read as text, rule by rule, and never rendered.  Which face draws each
+##     codepoint is beyond them, so `drive` holds coverage, by rendering every page
+##     (`design/render.nim`).
 
 {.experimental: "strictFuncs".}
 
