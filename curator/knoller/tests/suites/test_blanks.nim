@@ -72,11 +72,7 @@ suite "Blanks":
       check kept.isSettled
 
 
-  test "nested helper takes one blank line on each side, right after owner's doc too":
-    let one_line = "proc f(): int =\n  ## Doc.\n  func g(x: int): int = x + 1\n  g(1)\n"
-    check checkBlanks("a.nim", one_line).mapIt(it.line) == @[3, 3]
-    check one_line.fixed("a.nim") ==
-      "proc f(): int =\n  ## Doc.\n\n  func g(x: int): int = x + 1\n\n  g(1)\n"
+  test "nested helper of several lines takes one blank line on each side, after owner's doc too":
     let body = "proc f() =\n  proc g() =\n    discard\n\n\n  g()\n\nproc h() = discard\n"
     check body.fixed("a.nim") ==
       "proc f() =\n\n  proc g() =\n    discard\n\n  g()\n\nproc h() = discard\n"
@@ -84,7 +80,33 @@ suite "Blanks":
       "  discard g(1)\n"
     check wrapped.fixed("a.nim") == "proc f() =\n  ## Doc.\n\n  proc g(\n    a: int,\n" &
       "  ): int =\n    a\n\n  discard g(1)\n"
-    for settled in [one_line.fixed("a.nim"), body.fixed("a.nim"), wrapped.fixed("a.nim")]:
+    for settled in [body.fixed("a.nim"), wrapped.fixed("a.nim")]:
+      check settled.isSettled("a.nim")
+
+
+  test "one-line routines stack after owner's head, its doc or each other; stage after takes one":
+    let borrows = "# Borrow functions for performing basic operations on grades.\n" &
+      "template borrowGradeOperations(T: typedesc) =\n  func `-`*(g, h: T): T {.borrow.}\n" &
+      "  func `*`*(g, h: T): T {.borrow.}\n  func `+`*(g, h: T): T {.borrow.}\n" &
+      "  func `<`*(g, h: T): bool {.borrow.}\n  func `≤`*(g, h: T): bool {.borrow.}\n" &
+      "  func `≡`*(g, h: T): bool {.borrow.}\nborrowGradeOperations(Grade)\n"
+    check borrows.isSettled("a.nim")  # template of PGA library, as hand writes it
+    let one_line = "proc f(): int =\n  ## Doc.\n  func g(x: int): int = x + 1\n  g(1)\n"
+    check checkBlanks("a.nim", one_line).mapIt(it.line) == @[3]  # stage after it alone
+    check one_line.fixed("a.nim") ==
+      "proc f(): int =\n  ## Doc.\n  func g(x: int): int = x + 1\n\n  g(1)\n"
+    let spread = "proc f() =\n\n  func a(): int = 1\n\n  # Why.\n  func b(): int = 2\n" &
+      "  discard a() + b()\n"
+    check checkBlanks("a.nim", spread)[0].message.startsWith("One-line routine")
+    check spread.fixed("a.nim") == "proc f() =\n  func a(): int = 1\n  # Why.\n" &
+      "  func b(): int = 2\n\n  discard a() + b()\n"
+    for settled in [
+      one_line.fixed("a.nim"),
+      spread.fixed("a.nim"),
+      "proc f() =\n  func a(): int = 1\n\n  proc b() =\n    discard\n\n  b()\n",  # longer after
+      "proc f() =\n\n  proc b() =\n    discard\n\n  func a(): int = 1\n\n  b()\n",  # longer before
+      "proc f() =\n\n  func a(): int = 1\n    ## Doc.\n\n  a()\n",  # documented: one each side
+    ]:
       check settled.isSettled("a.nim")
 
 

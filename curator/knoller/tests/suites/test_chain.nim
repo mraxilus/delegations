@@ -19,7 +19,9 @@ const
     "#[ Section ]#\n\n" &
     "proc f(a: int; b: string): int {.noSideEffect, inline.} = a+b.len\n" &
     "proc g(\n    a: int\n) = discard\n" &
-    "let x = foo(\n  1,\n  2,\n)\necho x\nlet y = @[\n  1,\n  2\n]\necho h(q=1)\nexport y, x\n"
+    "let x = foo(\n  1,\n  2\n)\necho x\n" &
+    "let y = @[\n  first_item_named_at_length_so_list_crosses_column,\n" &
+    "  second_item_named_at_length_so_list_crosses_column\n]\necho h(q=1)\nexport y, x\n"
     ## Nim source breaking each layout rule `checkFormatting` holds.
   FENCED_ROWS =
     "let m = matrix(\n  #!fix off\n  1,  0,\n\n  0,  1,\n  #!fix on\n)\n" &
@@ -79,6 +81,10 @@ const
       "    tag(\"div\", \"class=\\\"question\\\"\", tag(\"span\", \"class=\\\"asks\\\"\", " &
       "\"follow's hand held\") & follow),\n  )\n"
     ## Argument hand continued at its own indent, whose lines four spaces in cross `LINE_MAX`.
+  PACKED =
+      "  found.add \"" & "a".repeat(60) & "\" &\n    \"" & "b".repeat(46) & " " &
+      "b".repeat(46) & "\"\n"
+    ## Command argument opening mid-line, continued two spaces in on line of 99 runes.
   NAMES = "  const NAMES =\n    \"" & "a".repeat(45) & "\"&\"" & "b".repeat(45) & "\"\n"
     ## Value after `=`, one line of 99 runes that spacing takes to 101.
   RANGES =
@@ -136,7 +142,9 @@ suite "Chain":
       "\n\n\n#[ Section ]#\n\n" &
       "proc f(a: int, b: string): int {.inline, noSideEffect.} = a + b.len\n" &
       "proc g(a: int) = discard\n" &
-      "let x = foo(1, 2)\necho x\nlet y = @[\n  1,\n  2,\n]\necho h(q = 1)\nexport x, y\n"
+      "let x = foo(1, 2)\necho x\n" &
+      "let y = @[\n  first_item_named_at_length_so_list_crosses_column,\n" &
+      "  second_item_named_at_length_so_list_crosses_column,\n]\necho h(q = 1)\nexport x, y\n"
     check checkFormatting("a.nim", fix.source, Dialect.Module).len == 0  # all cleared
     check formatted("a.nim", fix.source, Dialect.Module).source == fix.source  # settled
     check fix.fixed.allIt(it.line in 0 .. LAYOUT.count('\n'))  # each report names line as given
@@ -205,6 +213,12 @@ suite "Chain":
     check heldOf("a.nims", crossing, Dialect.Script).len == 0  # fault, and no warning
 
 
+  test "comment table stays as written: width reader sees depends on font, so reading holds it":
+    let table = "## Map operators.\n##   |-----|------|\n##   |Oper.| Name |\n" &
+      "##   |-----|------|\n##   | ⊖  | anti |\n##   |-----|------|\n\n" & STRICT_FUNCS & "\n"
+    check table.isSettled  # glyph row, padded as hand's font shows it (I.4)
+
+
   test "nimble file whose copy lock holds is named, beside its lock":
     let files = @[
       ("p/alpha/atlas.lock", LOCK),
@@ -234,21 +248,21 @@ suite "Repair that widens its line":
     check (STRICT_FUNCS & "\n\n" & VERDICTS).fixedOf.isSettled
 
 
-  test "message ending on its value takes shape, and its continuation four spaces in":
+  test "message ending on its value takes shape; continuation four in, or flat in argument":
     check (HEAD & CAPTION).fixedOf == HEAD & "  for i, line in lines:\n    if is_caption:\n" &
         "      if not line.namesKey(\"captionWindow\"):\n        found.add PATH_DESKTOP_NIM & " &
         "\":\" & $(i + 1) & \": caption must name `captionWindow`; got `\" &\n" &
         "            line.strip & \"`.\"\n"  # first line exactly 100 runes
     check (HEAD & SHOWN).fixedOf == HEAD & "  if found.len > 0:\n    raise newException(\n" &
         "      OSError,\n      \"Shown text belongs in `wording.nim`, named by key; got `\" & " &
-        "$found.len & \"`:\\n  `\" &\n          found.join(\"\\n  \") & \"`.\",\n    )\n"
+        "$found.len & \"`:\\n  `\" &\n      found.join(\"\\n  \") & \"`.\",\n    )\n"
     for source in [CAPTION, SHOWN]: check (HEAD & source).fixedOf.isSettled
 
 
-  test "message shape fitting no call split breaks after operator, four spaces in":
+  test "message shape fitting no call split breaks after operator, flat in its argument":
     check (HEAD & FACES).fixedOf == HEAD & "  if code != 0:\n    raise newException(\n" &
         "      OSError,\n      \"`koch fetch-assets` would not serve every face; got exit `\" & " &
-        "$code & \"` --\\n`\" & written &\n          \"`.\",\n    )\n"
+        "$code & \"` --\\n`\" & written &\n      \"`.\",\n    )\n"
     check (HEAD & FACES).fixedOf.isSettled
 
 
@@ -271,8 +285,12 @@ suite "Repair that widens its line":
 
 
   test "continuation run with line no wrap fits keeps its indent whole, with its findings":
-    check (HEAD & FILTERS).fixedOf == HEAD & FILTERS  # no continuation parts from its run
-    check checkFormatting("a.nim", HEAD & FILTERS, Dialect.Module).mapIt(it.line) == @[8, 9]
+    check (HEAD & PACKED).fixedOf == HEAD & PACKED  # no continuation parts from its run
+    check checkFormatting("a.nim", HEAD & PACKED, Dialect.Module).mapIt(it.line) == @[5]
+
+
+  test "argument continued at its own indent stays, since its first piece opens its line":
+    check (HEAD & FILTERS).isSettled
 
 
   test "value after `=` that breaks after operator sits four spaces past statement, flat":
@@ -285,6 +303,59 @@ suite "Repair that widens its line":
     let source = STRICT_FUNCS & "\n\n" & RANGES
     check source.fixedOf == source
     check checkFormatting("a.nim", source, Dialect.Module).mapIt(it.line) == @[5, 6, 7]
+
+
+  test "dotted call statement drops its double bracket, and call layout keeps its lines":
+    let hugged = HEAD & "  result[a][b].add(BasisSigned(\n    basis: term.basis,\n" &
+      "    is_negated: dual_signed.is_negated xor term.is_negated,\n  ))\n"
+    check hugged.fixedOf == HEAD & "  result[a][b].add BasisSigned(\n    basis: term.basis,\n" &
+      "    is_negated: dual_signed.is_negated xor term.is_negated,\n  )\n"
+    check hugged.fixedOf.isSettled
+
+
+  test "group one item to line that would not fit joined takes comma, lines and chain kept":
+    let
+      chained = HEAD & "  result[m][n].add BasisSigned(\n    basis: product_to.basis,\n" &
+        "    is_negated: (\n      m_from.is_negated xor\n      n_from.is_negated xor\n" &
+        "      term.is_negated xor\n      product_to.is_negated\n    )\n  )\n"
+      dual = HEAD & "  result[b_from] = @[BasisSigned(\n    basis: b_to_complement.basis,\n" &
+        "    is_negated: b_to_signed.is_negated xor b_to_complement.is_negated\n  )]\n"
+      sliced = HEAD & "  result[b] = @[BasisSigned(\n    basis: result[b][0].basis,\n" &
+        "    is_negated: result[b][0].is_negated xor basis.is_negated\n  )]\n"
+    check chained.fixedOf == chained.replace("    )\n  )\n", "    ),\n  )\n")  # `cayleys.nim:271`
+    check dual.fixedOf == dual.replace("is_negated\n  )]", "is_negated,\n  )]")  # `:338`
+    check sliced.fixedOf == sliced.replace("is_negated\n  )]", "is_negated,\n  )]")  # `:604`
+    for source in [chained, dual, sliced]: check source.fixedOf.isSettled  # second run
+
+
+  test "block head whose last line would stand at body's indent reads apart from body":
+    let head = HEAD & "  if check(a_long_name, first_condition or second_condition or\n" &
+      "    second_condition and first_condition):\n    echo a_long_name\n"
+    check head.fixedOf == HEAD &
+      "  if check(a_long_name, first_condition or second_condition or\n" &
+      "      (second_condition and first_condition)):\n    echo a_long_name\n"  # STYLE.md §5
+    check head.fixedOf.isSettled
+
+
+  test "needless parentheses go, and spacing glues prefix operator they leave, in one round":
+    let distances = HEAD & "  let distance_b = (|∙ ⊖(𝐦 ∧ 𝐧)) + (|∘ (𝐦 ∧ ⊖𝐧))\n"
+    check distances.fixedOf == HEAD & "  let distance_b = |∙ ⊖(𝐦 ∧ 𝐧) + |∘(𝐦 ∧ ⊖𝐧)\n"
+    check attempted("a.nim", distances, Dialect.Module.stepsOf).attempts == 1
+    check distances.fixedOf.isSettled
+
+
+  test "power operator and needless parentheses agree on wrapped exponent, in one round":
+    let wrapped = HEAD & "  let p = a^(-b)\n"
+    check wrapped.isSettled  # parentheses rule keeps group power operator needs
+    for breach in [HEAD & "  let p = a ^ -b\n", HEAD & "  let p = a ^ (-b)\n"]:
+      check breach.fixedOf == wrapped
+      check attempted("a.nim", breach, Dialect.Module.stepsOf).attempts == 1
+    for (breach, mended) in [
+      ("  let p = -1 ^ (k)\n", "  let p = -1^k\n"),  # group of one operand goes (X.4)
+      ("  let p = -1 ^ (a * b)\n", "  let p = -1^(a * b)\n"),  # group of math stays
+    ]:
+      check (HEAD & breach).fixedOf == HEAD & mended
+      check (HEAD & mended).isSettled
 
 
   test "value after `=` that is no chain keeps one level under its statement":

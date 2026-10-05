@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | a72b7a39a1de2b08 |
+| Rules   | 58190f8c6dfcc686 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 | Pruned  | ab8fb063b62bb03ba9fd7f2964a1866b3862909b |
 
@@ -1703,10 +1703,11 @@ banner check of `checkForm`, which `checkBanners` replaces. The list on every ki
 - `checkDefaults`, a type that a literal default gives (X.12);
 - `checkSpacing`, the spaces inside an expression (X.9);
 - `checkSeparators`, `checkSignatures`, `checkCalls` and `checkTrailing` (X.3, STYLE.md §5);
-- `checkAlignment`, the columns of a comment table (I.4);
 - `checkMessages`, the backticks around a value that a message echoes (IV.4);
 - `checkMixtures` and `checkNegations`, the parentheses of a condition (X.4);
-- `checkTargets`, the subject of a `to<Target>` call (STYLE.md §5).
+- `checkParentheses`, the parentheses that group what the parser groups anyway (X.4);
+- `checkTargets`, the subject of a `to<Target>` call (STYLE.md §5);
+- `checkCommands`, the command form of a dotted call statement (STYLE.md §5).
 
 On `.nim` alone, as the idiom checks read it, the list adds `checkImportBrackets` (X.5),
 `checkLists` (X.10) and `checkProfiler` (STYLE.md §3). The move of a late `strictFuncs` needs no
@@ -1804,9 +1805,9 @@ project, so only a name reaches it.
 fixes.** What follows is what `koch fix` showed over the tree.
 
 **Spaces inside an expression take the count of X.9, and the record of knoller holds the rule.**
-No fixer of the chain writes a spaced range again. Verified by `suites/test_fixes.nim`: a spaced
-source goes through every fixer unwritten, and a split call, a joined call and a wrapped
-signature keep each space.
+No fixer of the chain writes a range out of the form of X.9. Verified by `suites/test_fixes.nim`: a
+source in that form goes through every fixer unwritten. A split call, a joined call and a wrapped
+signature keep each range.
 
 **Two generated data files of `rga_visualiser` hold most of its call findings.** They are
 `starfield.nim` and `neighbourhood.nim`, contributor code that a generator writes. They hold
@@ -1842,9 +1843,9 @@ every Nim file of the tree in memory, on branch `main`, so scope refused nothing
 ## Content fixes
 
 **Each content rule that has one right answer has a check and a fixer, from one reading.** The
-rules are the I.4 tables, the IV.4 messages, the X.4 conditions, the profiler import and the
-`to<Target>` calls. The static pass does not run their checks yet, as with the layout checks. So
-a project clears their findings with `koch fix` on its own branch (CURATOR.md, duty 3).
+rules are the IV.4 messages, the X.4 conditions, the profiler import and the `to<Target>` calls.
+The static pass does not run their checks yet, as with the layout checks. So a project clears
+their findings with `koch fix` on its own branch (CURATOR.md, duty 3).
 
 **Every entry module, library umbrella and test stub imports the profiler on one line (STYLE.md
 §3).** An entry module holds a `when isMainModule:` block in its code. The umbrella is

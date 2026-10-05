@@ -203,10 +203,10 @@ func normCenter*(m: Multivector): Multivector {.inline, error: "TODO:  |⊙ m".}
 #   Library allows up to 9D PGAs, however, after 6D, compile/run times are increasingly slow.
 #   9D limit is implementation restriction as bases are encoded as single decimal digits.
 static:
-  doAssert DIMENSIONS in 2 .. 6,
+  doAssert DIMENSIONS in 2..6,
     &"Dimensionality should be in the range 2..6; got `{DIMENSIONS}`."
 
-for slot in 0 ..< pool.bound:  # Bound, never `HANDLES_MAX`.
+for slot in 0..<pool.bound:  # Bound, never `HANDLES_MAX`.
 ```
 
 ## Article V: Names form an ordered system
@@ -482,18 +482,29 @@ suite "Chapter 2":
      its tier: three before a suite, two before a test. A first child follows its opener at
      once, as a test that opens a suite, and a suite that opens a `when` body. A suite after a
      banner takes the one blank line of the banner.
-3. A call stays on its own line where it fits, and otherwise takes one argument to a line. A
-   signature that does not fit first wraps its parameters onto one line of their own. Where
-   that line does not fit either, it takes one parameter, or one group of a shared type, to a
-   line. One item to a line takes a trailing separator. A declarative call names its
+3. A call stays on its own line where it fits. A signature that does not fit first wraps its
+   parameters onto one line of their own. Where that line does not fit either, it takes one
+   parameter, or one group of a shared type, to a line. One item to a line takes a trailing
+   separator where the list would not fit joined on one line. A declarative call names its
    arguments, and so do a code-generating call and a constructor. A positional call stays
    positional.
+
+   A call written one argument to a line, with a separator after its last argument, stays so
+   where it would fit. That separator is the one mark of the split that the hand wants. A call
+   without it that does not fit keeps the line breaks of the hand while each line fits.
+   Otherwise it takes one argument to a line, with that separator.
 4. Guard clauses (`continue`, `break`, `return`) keep the success path prominent. Nest one
    loop for each axis of the data, and make a condition inside it a guard where it can be.
    Past four levels, split the routine or say why in a comment. Sixty lines is a review
    signal, and not a forced split. Keep a unified derivation intact where a split would hide
    the shape of the data, and say so in a comment. A condition that mixes `and` with `or`, or
    applies `not` to a binary expression, is parenthesised.
+
+   Parentheses that group what the parser groups anyway go. That covers a prefix term or one
+   plain operand as one side of a binary operator (`|∙ ⊖(𝐦 ∧ 𝐧) + |∘(𝐦 ∧ ⊖𝐧)`, `2'u^DIMENSIONS`).
+   It also covers one plain operand after a prefix operator (`■𝐧`). A plain operand is a name
+   or a literal, with any call, index or field glued after it. Parentheses around a binary
+   expression stay, and so do those whose removal would glue two tokens into one, as in `^(|𝐦)`.
 5. Group related constants and bindings under one keyword, dependent bindings included, where the
    language allows it. Two or more consecutive single bindings always share one keyword.
    Destructure where one expression yields the values together, or where a parallel pair fits one
@@ -520,14 +531,32 @@ suite "Chapter 2":
    the coverage.
 9. A space inside an expression stands only where this list puts it, or where the tokeniser
    demands it:
-   - one space on each side of a binary operator, a range operator among them (`2 .. 6`,
-     `0 ..< n`), and of `=`;
+   - one space on each side of a binary operator, and of `=`;
    - one space after a comma, a semicolon and a colon;
    - two spaces before the marker of a trailing comment, a citation among them.
 
-   No space stands inside a bracket, or after a prefix operator, which is glued to its operand
-   (`s[1 .. ^1]`). A compound operator stays whole (`s[1 ..^ 1]`), since it can carry an
-   optimisation that its parts lack.
+   No space stands inside a bracket, or after a prefix operator, which is glued to its operand.
+   A compound operator stays whole (`s[1..^1]`), since it can carry an optimisation that its
+   parts lack.
+
+   A range operator takes no space (`2..6`, `0..<n`). It takes one on each side where a piece
+   beside it holds an operator that binds tighter, as in `i + 1 ..< n`. Glued, `i + 1..<n` would
+   read as if the range starts at 1. It also keeps one where the glued tokens would lex as one
+   token, as before the prefix operator of `s[1 .. ^1]`.
+
+   The power operator `^` takes no space (`-1^k`, `2'u^DIMENSIONS`), since with spaces it reads like
+   an operator on bits. Only a prefix operator binds tighter, so no piece beside it keeps it apart.
+   An exponent that holds math keeps its parentheses (`-1^(int(b.grade) * int(b.gradeAnti))`).
+   Where the glued tokens would lex as one, the exponent takes parentheses instead of spaces
+   (`a^(-b)`).
+
+   Inside a bracket glued to the operand before it, as an index or a generic argument is, a symbol
+   operator takes no space (`prev[i-1]`). That holds at every depth inside the bracket, and a
+   range goes tight with its math (`digits[i+1..<n]`). A word operator keeps its spaces, which
+   the tokeniser demands, and so do `=` and `:` as this list gives them. Where the glued tokens
+   would lex as one token, the space stays. An array literal that stands alone keeps the spaces
+   of this list. So does the generic list that a routine or a type declares after its name, with
+   or without the export marker (`func pick[I: Basis | Grade]`, `Foo*[T: A | B] = object`).
 10. A list that the language gives no order of its own is alphabetised, as the imports are.
     That covers exports, pragmas and attributes, and a list of flags. Alphabetical order is
     dictionary order: case and `_` are ignored, and a tie falls to the code point. Pragmas sort
