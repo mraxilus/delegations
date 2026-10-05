@@ -48,8 +48,8 @@ proc everyOutcome(
   directory: string,
   prover: Prover,
 ): Outcome =
-  ## Fix every file again each round of asking, as loop of `provenOutcome` did before it fixed
-  ##   files that asked alone: reference that optimised loop is held equal to (Article IX.2).
+  ## Fix every file again each round of asking: reference that loop of `provenOutcome`, fixing
+  ##   files that asked alone, is held equal to (Article IX.2).
   var
     proofs = Proofs()
     failure = ""
@@ -323,7 +323,7 @@ suite "Command line":
 
   test "fix of files that asked alone gives same outcome as fix of every file, each round":
     # Several files, some asking parser over two rounds, one asking through its fence alone,
-    #   and some asking nothing; perf commit `e609e03` made loop fix askers alone.
+    #   and some asking nothing.
     let
       files = [
         ("a.nim", GROUPED),

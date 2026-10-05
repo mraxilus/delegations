@@ -49,8 +49,8 @@ proc everyFix(
   context: Context,
   provers: ProverOf,
 ): tuple[fix: Fixed, failures: seq[string]] =
-  ## Fix every entry again each round of asking, as loop of `provenFix` did before it fixed
-  ##   entries that asked alone: reference that optimised loop is held equal to (Article IX.2).
+  ## Fix every entry again each round of asking: reference that loop of `provenFix`, fixing
+  ##   entries that asked alone, is held equal to (Article IX.2).
   var known = context
   result.fix = fixEntries(branch, entries, locked, known)
   for ask in 1..ASKS_MAX:
@@ -481,7 +481,7 @@ suite "Fixes":
 
   test "fix of entries that asked alone gives same fix as fix of every entry, each round":
     # Entries under two pins, some asking parser over two rounds, one asking through its fence
-    #   alone, and some asking nothing; perf commit `4250066` made loop fix askers alone.
+    #   alone, and some asking nothing.
     let
       other = GROUPED.replace("@(x) + @(x[0])", "@(y) + @(y[0])")
       fenced = "## Do.\n\n" & STRICT_FUNCS & "\n\n#!fix off\nlet b = @(x) + 1\n#!fix on\n"
