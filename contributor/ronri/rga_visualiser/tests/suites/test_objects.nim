@@ -5,6 +5,16 @@
 import ./fixtures
 
 
+const
+  PLACE_EARTH = Position(x: 0.2512598425822558, y: 0.9679196720314863, z: 0.0)
+    ## Hold place one unit out, where demo stands earth.
+  PLACE_NEAR_ORIGIN = Position(x: 2.0e-6, y: -1.0e-6, z: 3.0e-6)
+    ## Hold place few hundred kilometres from Sol's centre, where coordinates keep metre.
+  TOLERANCE_HOLD_METRE = 1.0e-3
+    ## Bound, in metres, how far metre-scale construction near origin stands off itself.
+    ##   Rounding of join there is `2ε|p|²/|q - p|`, under fifth of this.
+
+
 
 suite "Objects":
   test "position inverts toMultivector":
@@ -195,3 +205,63 @@ suite "Objects":
       # And sum's own weight *is* how many places it is middle of -- which is what.
       #   lets running total stand in for count nobody carries.
       check middle[Basis.E4] =~ float(counted + 1)
+
+
+  test "a join of two points a metre apart is a line, one unit out as near the origin":
+    # Join's coefficients stand near 1e-12 one unit out, under library's absolute tolerance.
+    #   Classification reads object against its own scale, so line it is reads as line.
+    #   One unit out is where demo stands earth; second base stands near Sol.
+    let
+      metre = 1.0 / (1000.0 * KILOMETRES_PER_ASTRONOMICAL_UNIT)
+      along = Direction(x: 1.0 / 3.0, y: 2.0 / 3.0, z: 2.0 / 3.0)
+    for base in [PLACE_EARTH, PLACE_NEAR_ORIGIN]:
+      let line = base.toMultivector ∧ (base + metre * along).toMultivector
+      check kindOf(line) == some(Kind.Line)
+      check not isHorizon(line)
+      check direction(line).isSome
+      check placeObject(line).kind == Case.LineThrough
+
+
+  test "a line a metre long holds both its points near the origin, as placed":
+    # Near origin each coordinate keeps its digits through join, so line is metre's own.
+    #   One unit out it does not: join's moment cancels to about 1e-5 of itself there, so
+    #   points stand hundreds of kilometres off it, and only storing about anchor mends that.
+    let
+      metre = 1.0 / (1000.0 * KILOMETRES_PER_ASTRONOMICAL_UNIT)
+      along = Direction(x: 1.0 / 3.0, y: 2.0 / 3.0, z: 2.0 / 3.0)
+      (p, q) = (PLACE_NEAR_ORIGIN, PLACE_NEAR_ORIGIN + metre * along)
+      line = p.toMultivector ∧ q.toMultivector
+      placed = placeObject(line)
+    # Unitized line wedged with unit point leaves that point's distance from it as weight.
+    for point in [p, q]:
+      check normWeight(unitize(line) ∧ point.toMultivector)[Basis.scalarAnti] <=
+          TOLERANCE_HOLD_METRE * metre
+    check placed.kind == Case.LineThrough
+    check norm(cross(q - placed.at, placed.toward)) <= TOLERANCE_HOLD_METRE * metre
+    check dot(placed.toward, along) =~ 1.0
+    # Line about metre long is still axis to turn about; turn keeps its own points.
+    let turn = turnAbout(line, 0.5 * PI)
+    check turn.isSome
+    check norm(position(q.toMultivector.carried(turn.get)).get - q) <=
+        TOLERANCE_HOLD_METRE * metre
+
+
+  test "a plane a metre across is a plane, and a line meets it in a point":
+    # Plane joined from points metre apart carries weight near 1e-23: area of their triangle.
+    let
+      metre = 1.0 / (1000.0 * KILOMETRES_PER_ASTRONOMICAL_UNIT)
+      base = PLACE_NEAR_ORIGIN
+      plane = base.toMultivector ∧
+          (base + Direction(x: metre, y: 0.0, z: 0.0)).toMultivector ∧
+          (base + Direction(x: 0.0, y: metre, z: 0.0)).toMultivector
+    check kindOf(plane) == some(Kind.Plane)
+    check not isHorizon(plane)
+    check placeObject(plane).kind == Case.PlaneOn
+    let
+      through = base + Direction(x: 0.25 * metre, y: 0.25 * metre, z: 0.0)
+      line = (through + Direction(x: 0.0, y: 0.0, z: 0.5 * metre)).toMultivector ∧
+          (through + Direction(x: 0.0, y: 0.0, z: -0.5 * metre)).toMultivector
+      crossing = wedgeAnti(line, plane)
+    check kindOf(crossing) == some(Kind.Point)
+    check position(crossing).isSome
+    check norm(position(crossing).get - through) <= TOLERANCE_HOLD_METRE * metre

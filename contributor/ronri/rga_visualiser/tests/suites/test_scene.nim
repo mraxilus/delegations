@@ -128,6 +128,30 @@ suite "Scene":
       check POINTS[j] ∧ line =~ 0
 
 
+  test "points that coincide, and a point lying on its line, join to nothing":
+    # Coincident pair joins to exact zero. Point met on line joins with it to rounding of
+    #   zero, never exact zero: classification reads object at its own scale, so rounding
+    #   standing alone would read as plane. Operation answers zero for it instead.
+    const rounded_floor = SAMPLES div 2
+      ## Bound below how many joins carry rounding rather than exact zero.
+      ##   Law is about rounding; exact zeros alone would hold it vacuously.
+    var rounded = 0
+    for i in 0..<SAMPLES:
+      check kindOf(applyOperation(Operation.Wedge, POINTS[i], POINTS[i])).isNone
+      let
+        line = LINES[i]
+        crossing = wedgeAnti(line, PLANES[(i+7) mod SAMPLES])
+      if kindOf(crossing) != some(Kind.Point) or isHorizon(crossing): continue
+      let on_line = unitize(crossing)
+      for b in Basis:
+        if wedge(line, on_line)[b] != 0.0:
+          inc rounded
+          break
+      check kindOf(applyOperation(Operation.Wedge, line, on_line)).isNone
+      check resultOf(DragChoice.Join, line, on_line).isNone
+    check rounded >= rounded_floor
+
+
   test "meet finds where a line crosses a plane even far outside its own drawn disc":
     # `mesh.addPlane`'s disc is only rendering choice -- plane it represents is.
     #   same infinite object algebraically either way, and `WedgeAnti` (meet) reads
