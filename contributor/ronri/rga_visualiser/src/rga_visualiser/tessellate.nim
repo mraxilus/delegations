@@ -506,56 +506,58 @@ proc placeInto*(placed: var Placement, geometry: Multivector, anchor_override: O
   ##   `Placement` or `Option` built and assigned is copy on JS backend (read in emitted JS).
   ##     Coordinates go one by one (`euclid.setTo`), so `placed` shares no storage with any
   ##     input. Fields `kind` leaves meaningless keep whatever they held.
+  ##   Each answer leaves by `break answered`: `timed` refuses `return`; see `timings.timed`.
   timed(Side.Placing):
-    var kind = Kind.Point
-    if not geometry.kindInto(kind):
-      placed.kind = Case.Nothing
-      return
-    case kind
-    of Kind.Point:
-      if geometry.positionInto(placed.at):
-        placed.kind = Case.PointAt
-        return
-      let heading = directionHorizon(geometry)
-      if heading.isSome:
-        placed.kind = Case.PointToward
-        placed.toward.setTo(heading.get)
-        return
-    of Kind.Line:
-      let
-        anchor = positionAnchor(geometry)
-        axis = direction(geometry)
-      if anchor.isSome and axis.isSome:
-        placed.kind = Case.LineThrough
+    block answered:
+      var kind = Kind.Point
+      if not geometry.kindInto(kind):
+        placed.kind = Case.Nothing
+        break answered
+      case kind
+      of Kind.Point:
+        if geometry.positionInto(placed.at):
+          placed.kind = Case.PointAt
+          break answered
+        let heading = directionHorizon(geometry)
+        if heading.isSome:
+          placed.kind = Case.PointToward
+          placed.toward.setTo(heading.get)
+          break answered
+      of Kind.Line:
+        let
+          anchor = positionAnchor(geometry)
+          axis = direction(geometry)
+        if anchor.isSome and axis.isSome:
+          placed.kind = Case.LineThrough
+          placed.at.setTo(anchor.get)
+          placed.toward.setTo(axis.get)
+          break answered
+        let normal = directionNormalHorizon(geometry)
+        if normal.isSome:
+          # Span great circle's plane at origin.
+          #   Which plane depends on line, not eye, so circle is centred on eye when drawn
+          #   rather than when placed.
+          let spanned = spanPerpendicular(ORIGIN_WORLD, normal.get)
+          if spanned.isSome:
+            placed.kind = Case.LineAcross
+            placed.axes.axis_first.setTo(spanned.get[0])
+            placed.axes.axis_second.setTo(spanned.get[1])
+            placed.axes.normal.setTo(normal.get)
+            break answered
+      of Kind.Plane:
+        let
+          anchor = if anchor_override.isSome: anchor_override else: positionAnchor(geometry)
+          axes = frame(geometry)
+        if anchor.isNone or axes.isNone:
+          placed.kind = Case.PlaneEverywhere
+          break answered
+        placed.kind = Case.PlaneOn
         placed.at.setTo(anchor.get)
-        placed.toward.setTo(axis.get)
-        return
-      let normal = directionNormalHorizon(geometry)
-      if normal.isSome:
-        # Span great circle's plane at origin.
-        #   Which plane depends on line, not eye, so circle is centred on eye when drawn
-        #   rather than when placed.
-        let spanned = spanPerpendicular(ORIGIN_WORLD, normal.get)
-        if spanned.isSome:
-          placed.kind = Case.LineAcross
-          placed.axes.axis_first.setTo(spanned.get[0])
-          placed.axes.axis_second.setTo(spanned.get[1])
-          placed.axes.normal.setTo(normal.get)
-          return
-    of Kind.Plane:
-      let
-        anchor = if anchor_override.isSome: anchor_override else: positionAnchor(geometry)
-        axes = frame(geometry)
-      if anchor.isNone or axes.isNone:
-        placed.kind = Case.PlaneEverywhere
-        return
-      placed.kind = Case.PlaneOn
-      placed.at.setTo(anchor.get)
-      placed.axes.axis_first.setTo(axes.get.axis_first)
-      placed.axes.axis_second.setTo(axes.get.axis_second)
-      placed.axes.normal.setTo(axes.get.normal)
-      return
-  placed.kind = Case.Nothing
+        placed.axes.axis_first.setTo(axes.get.axis_first)
+        placed.axes.axis_second.setTo(axes.get.axis_second)
+        placed.axes.normal.setTo(axes.get.normal)
+        break answered
+      placed.kind = Case.Nothing
 
 
 proc placeObject*(geometry: Multivector, anchor_override = none(Position)): Placement =
