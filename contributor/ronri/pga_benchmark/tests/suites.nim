@@ -1319,6 +1319,17 @@ suite "Internal: Head":
     check stampCarried(%*{"pga": old}, pin)["pga"].getStr == pin  # stamp alone
 
 
+  test "evaluation at pin with digest at every algebra leaves carry nothing to move":
+    let
+      done = %*{"taken": {"pga": pin}, "edits_digest": "d1",
+        "algebras": {"rga4d": {"digest_c": {"pristine": "a", "changed": "b"}}}}
+      bare = %*{"taken": {"pga": pin}, "edits_digest": "d1", "algebras": {"rga4d": {}}}
+    check done.isCarried(pin, "d1")  # nothing to move
+    check not bare.isCarried(pin, "d1")  # digest to take
+    check not done.isCarried(pin, "d2")  # edits moved
+    check not done.isCarried("ffff", "d1")  # pin moved
+
+
   test "carried figures name commit they were timed at":
     check timedAt(%*{"pga": pin}) == ""  # timed at stamp
     check timedAt(%*{"pga": pin, "timed_at": "0bc4655aa"}) ==
