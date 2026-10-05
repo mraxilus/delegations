@@ -1298,6 +1298,17 @@ suite "Internal: Head":
         digestSources(@[("a.nim.c", "z")], pin)  # one byte of C moved
 
 
+  test "digest names type hashes by order, so checkouts at two paths take one digest":
+    let
+      here = @[("a.nim.c", "typedef struct tyObject_M__IkjEFFLcwCB5cipET7bBTw M;\nM x;")]
+      there = @[("a.nim.c", "typedef struct tyObject_M__Y6c3NLon59ae9aWWHEZFTy0Q M;\nM x;")]
+      reshaped = @[("a.nim.c", "typedef struct tyObject_M__Y6c3NLon59ae9aWWHEZFTy0Q M;\nM y;")]
+    check digestSources(here, pin) == digestSources(there, pin)  # hash alone differs
+    check digestSources(here, pin) != digestSources(reshaped, pin)  # body still counts
+    check digestSources(@[("a.nim.c", "f__u12();")], pin) !=
+        digestSources(@[("a.nim.c", "f__u13();")], pin)  # short suffix is no hash
+
+
   test "restamp moves stamp only where builds emit C figures were timed on":
     const old = "0bc4655"
     let
