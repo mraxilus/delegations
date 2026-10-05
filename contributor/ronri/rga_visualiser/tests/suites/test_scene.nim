@@ -3,6 +3,9 @@
 {.experimental: "strictFuncs".}
 
 import ./fixtures
+# Opened with `{.all.}`, so suite holds `applyOperation` to library's own `operated`, and
+#   `OPERATIONS_SLIDING` to operations that commute with slide.
+import ../../src/rga_visualiser/scene {.all.}
 
 
 
@@ -128,28 +131,41 @@ suite "Scene":
       check POINTS[j] ∧ line =~ 0
 
 
-  test "points that coincide, and a point lying on its line, join to nothing":
+  test "points that coincide, and a point lying on its line, join to nothing, near and far":
     # Coincident pair joins to exact zero. Point met on line joins with it to rounding of
     #   zero, never exact zero: classification reads object at its own scale, so rounding
     #   standing alone would read as plane. Operation answers zero for it instead.
+    #   Far out is HD 222237 b's place, where point met stands up to 2e-8 off line it was
+    #   met on: rounding of where it stood, which judgement about that point scales by.
+    #   Line, plane and meet are catalogue's own there, as reader builds them: library's
+    #   join about Sol cancels line's moment, and point met stands up to 7e-4 off it.
     const rounded_floor = SAMPLES div 2
       ## Bound below how many joins carry rounding rather than exact zero.
       ##   Law is about rounding; exact zeros alone would hold it vacuously.
-    var rounded = 0
-    for i in 0..<SAMPLES:
-      check kindOf(applyOperation(Operation.Wedge, POINTS[i], POINTS[i])).isNone
-      let
-        line = LINES[i]
-        crossing = wedgeAnti(line, PLANES[(i+7) mod SAMPLES])
-      if kindOf(crossing) != some(Kind.Point) or isHorizon(crossing): continue
-      let on_line = unitize(crossing)
-      for b in Basis:
-        if wedge(line, on_line)[b] != 0.0:
-          inc rounded
-          break
-      check kindOf(applyOperation(Operation.Wedge, line, on_line)).isNone
-      check resultOf(DragChoice.Join, line, on_line).isNone
-    check rounded >= rounded_floor
+    for offset in [
+      Direction(x: 0.0, y: 0.0, z: 0.0),
+      Direction(x: 698390.5, y: -953804.3, z: -2043454.9),
+    ]:
+      var rounded = 0
+      for i in 0..<SAMPLES:
+        proc at(index: int): Multivector = (PLACES[index mod SAMPLES] + offset).toMultivector
+        let
+          point = at(i)
+          line = applyOperation(Operation.Wedge, point, at(i + 1))
+          plane = applyOperation(
+            Operation.Wedge, applyOperation(Operation.Wedge, at(i + 7), at(i + 8)), at(i + 9)
+          )
+          crossing = applyOperation(Operation.WedgeAnti, line, plane)
+        check kindOf(applyOperation(Operation.Wedge, point, point)).isNone
+        if kindOf(crossing) != some(Kind.Point) or isHorizon(crossing): continue
+        let on_line = unitize(crossing)
+        for b in Basis:
+          if wedge(line, on_line)[b] != 0.0:
+            inc rounded
+            break
+        check kindOf(applyOperation(Operation.Wedge, line, on_line)).isNone
+        check resultOf(DragChoice.Join, line, on_line).isNone
+      check rounded >= rounded_floor
 
 
   test "the catalogue's joins, meets and projections give what the library gives, near and far":
@@ -181,6 +197,38 @@ suite "Scene":
             wedgeAnti(line, other).scaleFree
         check applyOperation(Operation.ProjectOrthogonal, p, other).scaleFree =~
             projectOrthogonal(p, other).scaleFree
+
+
+  test "the catalogue runs about a local origin exactly the operations that commute with a slide":
+    # Run about Sol, and about origin slid away then slid back: commuting operation gives
+    #   same result either way, to billionth of operands' and result's scale. Every operation
+    #   outside set differs for some pair, so set is no wider and no narrower than library
+    #   allows. Never scale-free: scalar's copy is its sign, which slide keeps.
+    #   Rounding of zero is passed over, as noise either way.
+    let
+      shift = Direction(x: 0.7, y: -1.3, z: 2.1).toMultivector
+      (slide, back) = (motorSliding(shift), motorSliding(-shift))
+    for operation in Operation:
+      var (compared, differs) = (0, false)
+      for i in 0..<SAMPLES:
+        # Second triple shares no point with first, so no pair lies on each other.
+        let k = (i + 7) mod SAMPLES
+        for m in [POINTS[i], LINES[i], PLANES[i]]:
+          for n in [POINTS[k], LINES[k], PLANES[k]]:
+            let about_sol = operated(operation, m, n)
+            if about_sol.isRoundingOf(m.coefficientLargest * n.coefficientLargest): continue
+            inc compared
+            let
+              about_moved =
+                operated(operation, m.carried(slide), n.carried(slide)).carried(back)
+              scale = max(
+                m.coefficientLargest * n.coefficientLargest,
+                max(about_sol.coefficientLargest, about_moved.coefficientLargest),
+              )
+            if subtract(about_sol, about_moved).coefficientLargest > TOLERANCE_ABS * scale:
+              differs = true
+      check compared >= SAMPLES
+      check differs == (operation notin OPERATIONS_SLIDING)
 
 
   test "meet finds where a line crosses a plane even far outside its own drawn disc":

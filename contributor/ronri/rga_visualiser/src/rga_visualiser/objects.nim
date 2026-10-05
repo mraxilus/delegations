@@ -50,7 +50,7 @@ const TOLERANCE_ROUNDING* = 2.0.pow(float(2 * DIMENSIONS - 52))
   ##   coefficients multiplied, and each step of sum loses `ε` of it: `2^(2·DIMENSIONS)·ε`,
   ##   `ε` being `2^-52`, spacing of doubles at one.
   ##   Sits between rounding and metre: point met on line joins with it to 2e-16 of
-  ##   factors, and join of points metre apart thirty units out stands 1.5e-13 of them.
+  ##   factors, and points metre apart join, about either one, to 6.7e-12 of theirs.
   ##     Measured; see `PROVENANCE.md`, Classification at any scale.
 
 
