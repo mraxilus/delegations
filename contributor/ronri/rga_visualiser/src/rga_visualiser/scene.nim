@@ -22,8 +22,8 @@
 ##     Rejected: storage rewritten about each new centre, which loses metre pair beside
 ##     star after one move there and back.
 ##   Cost: anchor and coefficients about it beside cached geometry, 152 bytes more per
-##   handle in scene and in each step of undo timeline; one slide per edit of object
-##   anchored away from world origin.
+##   handle in scene, and 24 in each step of undo timeline, which holds storage alone;
+##   one slide per edit of object anchored away from world origin.
 ## Operation catalogue is what makes scene live rather than scripted.
 ##   Every entry is one of library's named aliases, applied to objects user picks.
 ##
@@ -111,7 +111,12 @@ type
 
   SceneStored* = object  ## Define everything scene stores: each field but geometry it derives.
     ## Held apart from that cache, so value holding what scene stores carries none of it.
-    anchors: array[OBJECTS_MAX, Position]  ## Per-handle place geometry is stored about.
+    anchors_x: array[OBJECTS_MAX, float]  ## Per-handle place geometry is stored about: its x.
+      ## Three arrays of doubles rather than one of `Position`, read through `anchorAt`.
+      ##   On JS each `Position` is object of its own, boxing each double, and every step of
+      ##   undo timeline holds one for each handle.
+    anchors_y: array[OBJECTS_MAX, float]  ## Per-handle place geometry is stored about: its y.
+    anchors_z: array[OBJECTS_MAX, float]  ## Per-handle place geometry is stored about: its z.
     locals: array[OBJECTS_MAX, Multivector]  ## Per-handle geometry about its anchor, as stored.
     labels: array[OBJECTS_MAX, Label]  ## Per-handle display label.
     inks: array[OBJECTS_MAX, Ink]  ## Per-handle palette entry.
@@ -847,6 +852,22 @@ func markEdited*(scene: var Scene) =
   inc scene.stored.count_edits
 
 
+func anchorAt(stored: SceneStored, handle: int): Position {.noinit.} =
+  ## Read place handle's geometry is stored about, out of its three arrays.
+  ##   Field by field, as `euclid` operators write: constructor assigned to `result` copies
+  ##   on JS.
+  result.x = stored.anchors_x[handle]
+  result.y = stored.anchors_y[handle]
+  result.z = stored.anchors_z[handle]
+
+
+func setAnchorAt(stored: var SceneStored, handle: int, anchor: Position) =
+  ## Write place handle's geometry is stored about, into its three arrays.
+  stored.anchors_x[handle] = anchor.x
+  stored.anchors_y[handle] = anchor.y
+  stored.anchors_z[handle] = anchor.z
+
+
 func writeStorage*(scene: Scene, destination: var SceneStored) = destination = scene.stored
   ## Write everything scene stores, without geometry it derives, into step of timeline.
   ##   Writer rather than `lent` reader: JS backend builds empty `SceneStored` for any such
@@ -860,7 +881,7 @@ func deriveGeometryAt(scene: var Scene, handle: int) =
   ##   One statement of cache's rule, for every writer of either.
   ##   Tallied while suite counts; see `countDerivations`.
   scene.geometries[handle] =
-    slid(scene.stored.locals[handle], scene.stored.anchors[handle] - ORIGIN_WORLD)
+    slid(scene.stored.locals[handle], scene.stored.anchorAt(handle) - ORIGIN_WORLD)
   # Cast covers tally alone: instrument's own state, which no caller reads as result.
   {.cast(noSideEffect).}:
     if IS_COUNTING_DERIVATIONS: inc COUNT_DERIVATIONS
@@ -888,14 +909,14 @@ func restoreFrom*(scene: var Scene, snapshot: SceneStored) =
   # Derive geometry where storage moves; keep it where storage stands.
   for handle in 0..<reach:
     var is_same =
-        scene.stored.anchors[handle].x == snapshot.anchors[handle].x and
-        scene.stored.anchors[handle].y == snapshot.anchors[handle].y and
-        scene.stored.anchors[handle].z == snapshot.anchors[handle].z
+        scene.stored.anchors_x[handle] == snapshot.anchors_x[handle] and
+        scene.stored.anchors_y[handle] == snapshot.anchors_y[handle] and
+        scene.stored.anchors_z[handle] == snapshot.anchors_z[handle]
     for b in Basis:
       if not is_same: break
       is_same = scene.stored.locals[handle][b] == snapshot.locals[handle][b]
     if is_same: continue
-    scene.stored.anchors[handle] = snapshot.anchors[handle]
+    scene.stored.setAnchorAt(handle, snapshot.anchorAt(handle))
     scene.stored.locals[handle] = snapshot.locals[handle]
     scene.deriveGeometryAt(handle)
 
@@ -989,7 +1010,7 @@ func anchorOverride*(one: Object): Option[Position] =
   if one.scene.stored.anchor_overrides[one.handle].isNone: return
   overrideAbout(
     one.scene.stored.anchor_overrides[one.handle],
-    one.scene.stored.anchors[one.handle],
+    one.scene.stored.anchorAt(one.handle),
     ORIGIN_WORLD,
   )
 
@@ -1013,7 +1034,7 @@ func anchoredAt*(scene: Scene, handle: int): Anchored =
   ## Read object as storage holds it, by handle: its anchor, and coefficients about it.
   ##   What every operation reads its operands as; see `applyOperation`.
   doAssert scene.isAlive(handle), &"Object handle must be alive; got `{handle}`."
-  Anchored(anchor: scene.stored.anchors[handle], local: scene.stored.locals[handle])
+  Anchored(anchor: scene.stored.anchorAt(handle), local: scene.stored.locals[handle])
 
 
 func geometryAbout*(scene: Scene, handle: int, centre: Position): Multivector =
@@ -1023,7 +1044,7 @@ func geometryAbout*(scene: Scene, handle: int, centre: Position): Multivector =
   ##   Reads storage and writes nothing, so object read about any centre, any number of
   ##   times, keeps anchor and coefficients bit for bit.
   doAssert scene.isAlive(handle), &"Object handle must be alive; got `{handle}`."
-  slid(scene.stored.locals[handle], scene.stored.anchors[handle] - centre)
+  slid(scene.stored.locals[handle], scene.stored.anchorAt(handle) - centre)
 
 
 func setGeometryAt*(scene: var Scene, handle: int, geometry: Multivector) =
@@ -1041,9 +1062,10 @@ func setGeometryAt*(scene: var Scene, handle: int, geometry: Multivector) =
   for b in Basis:
     if geometry[b] != scene.geometries[handle][b]: is_unchanged = false
   if is_unchanged: return
-  scene.stored.anchor_overrides[handle] =
-    overrideAbout(scene.stored.anchor_overrides[handle], scene.stored.anchors[handle], ORIGIN_WORLD)
-  scene.stored.anchors[handle] = ORIGIN_WORLD
+  scene.stored.anchor_overrides[handle] = overrideAbout(
+    scene.stored.anchor_overrides[handle], scene.stored.anchorAt(handle), ORIGIN_WORLD
+  )
+  scene.stored.setAnchorAt(handle, ORIGIN_WORLD)
   scene.stored.locals[handle] = geometry
   scene.deriveGeometryAt(handle)
   scene.markEdited()
@@ -1149,7 +1171,7 @@ func anchorOverrideAt*(scene: Scene, handle: int): Option[Position] =
   ##   Held about object's anchor and offset here, three sums for object carrying one.
   doAssert scene.isAlive(handle), &"Object handle must be alive; got `{handle}`."
   if scene.stored.anchor_overrides[handle].isNone: return
-  overrideAbout(scene.stored.anchor_overrides[handle], scene.stored.anchors[handle], ORIGIN_WORLD)
+  overrideAbout(scene.stored.anchor_overrides[handle], scene.stored.anchorAt(handle), ORIGIN_WORLD)
 
 
 
@@ -1347,7 +1369,7 @@ func addObject*(
     &"`{scene.len}`."
   result = scene.stored.handle_free_first.get
   scene.stored.handle_free_first = scene.stored.next_free[result]
-  scene.stored.anchors[result] = anchored.anchor
+  scene.stored.setAnchorAt(result, anchored.anchor)
   scene.stored.locals[result] = anchored.local
   scene.deriveGeometryAt(result)
   toChars(label, scene.stored.labels[result])
