@@ -184,6 +184,11 @@ _Avoid_: anchor, snippet, hunk
 The newest commit of the library repository. The pin must hold the same library tree.
 _Avoid_: reference head, latest
 
+**Restamp**:
+Move the stamp of a runtime measurement to a new pin, where every build it was taken on emits
+the same C there.
+_Avoid_: carry, port, rebase, re-pin
+
 **Algebra**:
 One measured setting, a dimension count and a metric, such as `rga4d`.
 _Avoid_: configuration, config, target, signature
