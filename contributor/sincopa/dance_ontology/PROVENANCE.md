@@ -657,8 +657,7 @@ why no number of it is written here.
 `design/README.md` quotes each one. `design/checks.nim` checks each standing rule on every build and
 prints one line for it. A check verifies that a drawing follows a rule as it is written. It never
 verifies that a couple can dance what the drawing shows. The Architect trusts only a reference cell
-that is kept, modelled and confirmed. `CONFIRMED` in `design/review_page.nim` names each confirmed
-cell, and the review page counts them.
+that is kept, modelled and confirmed, and `CONFIRMED` in `design/review_page.nim` names each one.
 
 **A rule that is implemented and not checked stops being true, so each rule drawn has a check.** A
 check names its rules in a comment in `checks.nim` that opens `RULE`. Nothing in the workbench
@@ -1409,10 +1408,14 @@ counted off the built page, rather than written here.
 holds a hash of the points of that still, in `rig.json`, for each ask of the cell. The build of the
 review page stops when a confirmed cell shows another still, or carries no fixture. A reflected twin
 answers to the still of the twin it mirrors. A twin that no other cell answers keeps its own still.
+
 `tools/build.nim confirmed` writes the fixtures from the built page, as `fixtures` does for the
 drawings. To run it again would hand the confirmation to the new still, so it runs only when a cell
 is confirmed. Cost: a change that moves a confirmed still fails the build until the Architect sees
 that still again.
+
+Verified by `suites/test_marks.nim`, which builds the review page. Red first: another hash for A05
+stops the build, and so does no fixture for B04.
 
 Two joined pairs of one still may stand close, and may touch. Only pairs that hook or tangle are
 connected or interlocked. So the Architect confirmed A10, where the two pairs almost meet over the
