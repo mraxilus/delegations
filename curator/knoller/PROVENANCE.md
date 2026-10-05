@@ -394,6 +394,19 @@ tokens. Verified by `suites/test_spacing.nim`, with each example of the ruling.
 - A range in prefix place, such as `a[.. 2]`, stays unread. Verified by hand, 2026-10-04, with
   `checkSpacing` and `fixSpacing` on that line.
 
+**The power operator `^` takes no space (X.9).** With spaces it reads like an operator on bits,
+as the Architect ruled. So `-1 ^ (k)` becomes `-1^(k)`, and `a + b ^ 2` becomes `a + b^2`. Only a
+prefix operator binds tighter, so no piece beside it keeps it apart, and math beside it makes no
+exception. Verified by `suites/test_spacing.nim`, with each example of the ruling.
+
+- The rule reads the binary token `^` alone. The assignment `^=`, the prefix `^` of a backwards
+  index, as in `s[^1]`, and the compound `..^` read as before.
+- The merge guard keeps one space on each side where the glued tokens would lex as one, as in
+  `a ^ -b` and `x ^ ~y`. A `^` that ends its line takes one space before it, as a range does.
+- Spacing moves no parse tree here either. Verified by hand, 2026-10-05, with the parser of the
+  commit pin of the `ronri` projects: `-1 ^ (k)`, `a + b ^ 2` and `(a + b) ^ 2` read as their
+  glued forms do.
+
 **A symbol operator inside a bracket glued to its operand takes no space (X.9).** The bracket is
 `[` with no gap after an operand, at any depth inside it, so `prev[i - 1]` becomes `prev[i-1]`. A
 range there goes tight with its math, as in `digits[i+1..<n]`, since everything inside reads as
