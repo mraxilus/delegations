@@ -24,6 +24,10 @@
 ##
 ## Point wins tie over line, and line over plane.
 ##   Smaller pivot should not be swallowed by larger one drawn behind or through it.
+## Every place reckoned here is about view origin, as frame's eye and transform are.
+##   Placement and geometry are world's, so each world place is read about it once
+##   (`euclid.toView`), and plane is met as plane through its anchor so read.
+##   Cost: one subtraction for each object walked, as record writing pays.
 ##
 ## Shared by desktop (`main.nim`) and browser (`bridge.nim`) render paths.
 
@@ -129,7 +133,7 @@ type
     hiders: Hiders  ## Drawn discs cursor lay inside, gathered as walk went.
 
   AnchorZoom* = object  ## Define what zoom holds still, and whether it stands somewhere.
-    at*: Position  ## World point that keeps its pixel through zoom.
+    at*: Position  ## Point, about view origin, that keeps its pixel through zoom.
     floor_reach*: float  ## How near wheel may come to `at`, in either state.
       ## Point's is reach at which its depth fills frame (`depthFilling`): nearer shows
       ## nothing more of it. Other object's is its drawn radius, so wheel stops at surface rather
@@ -161,7 +165,7 @@ func towards*(start, finish: ScreenPosition; fraction: float): ScreenPosition =
 func projectToScreen*(
   view_projection: Matrix4; width, height: int; position: Position
 ): ScreenPosition =
-  ## Project world position through clip space onto window pixels.
+  ## Project position, about view origin, through clip space onto window pixels.
   ##   Written out rather than looped; hot proc.
   ##     Nested loops allocated two four-element arrays per call on JS backend, once per
   ##     live handle per pick, and copies dominated pick's profile.
@@ -330,10 +334,15 @@ func scaleCrossing(ray, plane: Multivector): float =
   normWeight(ray)[Basis.scalarAnti] * normWeight(plane)[Basis.scalarAnti]
 
 
-func positionOnObjectUnder(geometry, ray, plane_eye, point_eye: Multivector): Option[Position] =
-  ## Solve world point of one object cursor's sight `ray` is over.
+func positionOnObjectUnder(
+  geometry, ray, plane_eye, point_eye: Multivector; origin: Position
+): Option[Position] =
+  ## Solve point of one object cursor's sight `ray` is over, about view origin `origin`.
   ##   Point stands where it stands, plane is met where ray crosses it, line is read at
   ##   nearest point to ray; see `positionOnLineNearest`.
+  ##   `geometry` is world's, so its anchor is read about `origin`, and plane is met as
+  ##   plane through that anchor along its own normal: ray met with world plane far out
+  ##   lands on world's step.
   ##   Finite shapes only.
   ##     Object in horizon is drawn at `radius_horizon` about eye and is not *at* any
   ##     place, so nothing there to fly toward.
@@ -347,18 +356,25 @@ func positionOnObjectUnder(geometry, ray, plane_eye, point_eye: Multivector): Op
     shaped = kindOf(geometry)
     heading = direction(ray)
   if shaped.isNone or heading.isNone: return
+  let anchor_world = positionAnchor(geometry)
+  if anchor_world.isNone: return
+  let anchor = anchor_world.get.toView(origin)
   var found = none(Position)
   case shaped.get
-  of Kind.Point: found = positionAnchor(geometry)
+  of Kind.Point: found = some(anchor)
   of Kind.Line:
-    let (anchor, axis) = (positionAnchor(geometry), direction(geometry))
-    if anchor.isSome and axis.isSome:
+    let axis = direction(geometry)
+    if axis.isSome:
       # Read ray's two defining elements off ray multivector.
       #   Nearest-point question is then asked of exactly ray that was cast.
       let ray_from = positionSupport(ray)
       if ray_from.isSome:
-        found = positionOnLineNearest(anchor.get, axis.get, ray_from.get, heading.get)
-  of Kind.Plane: found = position(ray ∨ geometry, scale = scaleCrossing(ray, geometry))
+        found = positionOnLineNearest(anchor, axis.get, ray_from.get, heading.get)
+  of Kind.Plane:
+    let normal = directionNormal(geometry)
+    if normal.isSome:
+      let plane = planeThrough(anchor.toMultivector, normal.get.toMultivector)
+      found = position(ray ∨ plane, scale = scaleCrossing(ray, plane))
   if found.isNone: return
   let hit = found.get.toMultivector
   if depthAgainst(plane_eye, hit) <= TOLERANCE_ABS * distanceBetween(hit, point_eye): return
@@ -408,6 +424,7 @@ func rayPlaneHit(
   ray, plane_eye, point_eye, plane: Multivector; anchor: Position; extent: float
 ): Option[float] =
   ## Meet cursor's sight ray with `plane`; report view depth where it lands inside disc.
+  ##   Plane and `anchor` are about view origin, as ray is.
   ##   Nearer plane can then be preferred over farther one behind it.
   ##   None where ray misses plane, hit falls behind eye (depth against `plane_eye`), or
   ##   lands outside drawn disc.
@@ -551,16 +568,19 @@ proc pickWalk(
       #   Disc hundred pixels across is picked anywhere on it, not only near middle.
       # Read depth off projection, and drawn radius off depth.
       #   Neither builds anything per point; see `depthAlongSight`.
-      let depth = depthAlongSight(view_projection, place.at)
+      # Read place about view origin once, as transform reads it.
+      let
+        at_view = place.at.toView(scale.origin)
+        depth = depthAlongSight(view_projection, at_view)
       if depth <= DISTANCE_LIMIT_NEAR: continue  # Behind eye; `isInFront`'s test.
       let
-        distance = pixelsFromCursor(view_projection, width, height, place.at, cursor)
+        distance = pixelsFromCursor(view_projection, width, height, at_view, cursor)
         radius_drawn = radiusPixelsAtDepth(scene.radiusAt(handle), depth, scale.scale)
         radius_pick = max(RADIUS_PICK_POINT, radius_drawn)
       if distance > max(RADIUS_CROWD_TOUCH, radius_pick): continue
       # Project only what is within reach, which is few; see `pixelsFromCursor`.
       let
-        at = projectToScreen(view_projection, width, height, place.at)
+        at = projectToScreen(view_projection, width, height, at_view)
         is_under = distance <= radius_drawn
       if is_under: hiders.add(Hider(depth: depth, x: at.x, y: at.y, radius: radius_drawn))
       # Behind body wider than fingertip: neither winner nor rival.
@@ -618,9 +638,10 @@ proc pickWalk(
       # Test both halves `tessellate.addLine` draws, support out to each vanishing point.
       #   Which half is on screen changes as camera orbits.
       var distance_nearest = Inf
+      let support = place.at.toView(scale.origin)
       for reach in [scale.radiusHorizon, -scale.radiusHorizon]:
         let clipped = clipToEyeSide(
-          place.at,
+          support,
           pointFrom(add(scale.eye_point, wedge(reach, place.toward.toMultivector))),
           scale.plane_near,
         )
@@ -639,17 +660,26 @@ proc pickWalk(
       # Meet only where disc could reach cursor at all; see `isBeyondDisc`.
       #   Frame guard is kind's to say: `placeObject` reaches `PlaneOn` only with anchor
       #   and frame in hand, anchor carrying override where disc is actually centred.
+      let centre = place.at.toView(scale.origin)
       if isBeyondDisc(
         view_projection,
         width,
         height,
         scale.tangentHalfView,
-        place.at,
+        centre,
         EXTENT_PLANE_F,
         cursor,
       ): continue
-      let hit =
-        rayPlaneHit(ray, scale.plane_eye, scale.eye_point, geometry, place.at, EXTENT_PLANE_F)
+      # Meet plane through disc's centre along its normal, both about view origin.
+      #   Placement's own answer, so plane past broad phase costs one join, never slide.
+      let hit = rayPlaneHit(
+        ray,
+        scale.plane_eye,
+        scale.eye_point,
+        planeThrough(centre.toMultivector, place.axes.normal.toMultivector),
+        centre,
+        EXTENT_PLANE_F,
+      )
       if hit.isSome:
         consider(3, hit.get, Inf, false)
         crowd(3)
@@ -814,7 +844,7 @@ func positionUnderPointerOn*(
   width, height: int;
   cursor: ScreenPosition;
 ): Option[Position] =
-  ## Solve where one object stands under `cursor`.
+  ## Solve where one object stands under `cursor`, about view origin.
   ##   Point at its place, line at its point nearest sight ray, plane where ray crosses it.
   ##   For zoom's anchor and for pointer pick's aim, both holding that place on its pixel.
   ##   None for horizon shapes and hits behind eye; see `positionOnObjectUnder`.
@@ -822,7 +852,9 @@ func positionUnderPointerOn*(
   let
     frame_camera = camera.frame
     ray = castRay(camera, scale.eye, frame_camera, width, height, cursor)
-  positionOnObjectUnder(scene.geometryOf(handle), ray, scale.plane_eye, scale.eye_point)
+  positionOnObjectUnder(
+    scene.geometryOf(handle), ray, scale.plane_eye, scale.eye_point, scale.origin
+  )
 
 
 proc anchorZoomAt*(
@@ -1029,11 +1061,13 @@ func isLineShownCentrally(
 
   # Test both halves `tessellate.addLine` draws, clipped to eye side as `pickNearest` clips.
   #   Half can sit behind eye while other half fills frame.
+  #   Support is world's, read about view origin as frame is.
   let (anchor, axis) = (positionAnchor(m), direction(m))
   if anchor.isNone or axis.isNone: return false
+  let support = anchor.get.toView(scale.origin)
   for reach in [scale.radiusHorizon, -scale.radiusHorizon]:
     let clipped = clipToEyeSide(
-      anchor.get,
+      support,
       pointFrom(add(scale.eye_point, wedge(reach, axis.get.toMultivector))),
       scale.plane_near,
     )
@@ -1047,7 +1081,11 @@ func isLineShownCentrally(
 
 
 func isPlaneShownCentrally(
-  m: Multivector; anchor_override: Option[Position]; view_projection: Matrix4; width, height: int
+  m: Multivector;
+  anchor_override: Option[Position];
+  origin: Position;
+  view_projection: Matrix4;
+  width, height: int;
 ): bool =
   ## Report whether grade-3 object is in view: disc centred in centred box, rim on screen.
   ##   Two bounds, because disc has middle and extent answering different questions.
@@ -1059,18 +1097,20 @@ func isPlaneShownCentrally(
   ##   Horizon plane is whole sky, in view from every camera.
   ##   `anchor_override` centres disc there instead of support, as `tessellate.addPlane`
   ##   reads it; two can stand units apart against disc's radius.
+  ##   Either anchor is world's, read about view `origin` as transform is.
   if m.isHorizon: return true
   let
     anchor = if anchor_override.isSome: anchor_override else: positionAnchor(m)
     axes = frame(m)
   if anchor.isNone or axes.isNone: return false
+  let centre = anchor.get.toView(origin)
   # Use no inset on centre: nothing is drawn there, rim alone marks disc.
   if not isWithinCentre(
-    projectToScreen(view_projection, width, height, anchor.get), width, height, 0.0
+    projectToScreen(view_projection, width, height, centre), width, height, 0.0
   ):
     return false
   isRingWithinFrame(
-    anchor.get,
+    centre,
     axes.get.axis_first,
     axes.get.axis_second,
     EXTENT_PLANE_F,
@@ -1119,4 +1159,4 @@ func isShownCentrally*(
     )
   of Kind.Line: isLineShownCentrally(m, scale, view_projection, width, height)
   of Kind.Plane:
-    isPlaneShownCentrally(m, anchor_override, view_projection, width, height)
+    isPlaneShownCentrally(m, anchor_override, scale.origin, view_projection, width, height)

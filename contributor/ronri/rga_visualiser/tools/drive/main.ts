@@ -22,8 +22,8 @@ import {
 import { driveApply, driveApplyNamed, driveReachable, driveUndo } from './apply';
 import { driveMessageGoes } from './message';
 import {
-  driveGroupTurnedAtOnce, drivePanWhileSelected, drivePickOrbit, drivePlaneLifted, drivePlanePick,
-  drivePointerPick,
+  driveFarOrbit, driveGroupTurnedAtOnce, drivePanWhileSelected, drivePickOrbit, drivePlaneLifted,
+  drivePlanePick, drivePointerPick,
 } from './framing';
 import {
   driveFrameLabelCorner, driveLabelFirstFrame, driveLabelGlide, driveLabelHeldInView,
@@ -262,6 +262,7 @@ async function driveSimulated(browser: Browser): Promise<void> {
   await driveLabelFirstFrame(page);
   await driveFrameLabelCorner(page);
   await driveZoomLoaded(page);
+  await driveFarOrbit(page);
   await driveUndoDrawn(page);
   await driveFullRefused(page, errors_page);
   await driveObjectsList(page, objects_largest);

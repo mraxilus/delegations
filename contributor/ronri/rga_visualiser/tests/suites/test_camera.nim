@@ -14,6 +14,37 @@ func pointOnRay(camera: Camera; width, height: int; cursor: ScreenPosition): Pos
   camera.eye + (camera.distance / along) * heading
 
 
+const METRE = 1.0 / 149_597_870_700.0
+  ## Hold one metre in world units, at one astronomical unit to unit.
+
+
+const PLACE_FAR = Position(x: 1.7e6, y: -1.2e6, z: 0.6e6)
+  ## Place pivot two million units out, among demo's far stars.
+
+
+const PLACES_FAR = [
+  Position(x: 0.3e6, y: 0.26e6, z: -0.1e6),
+  PLACE_FAR,
+  Position(x: -3.8e6, y: 2.6e6, z: 1.0e6),
+]
+  ## Sample far pivots: 0.41 million units out, two million, and 4.7 million, demo's farthest.
+
+
+func cameraFarAt(place: Position, separation: float): Camera =
+  ## Build camera `separation` from pivot at `place`, view origin moved as frame moves it.
+  ##   Built at 19 units, where world's doubles hold stance, then dollied in about view
+  ##   origin: far pivot named alone by world points carries their step.
+  result = cameraAround(place, 19.0, Direction(x: 3, y: -2, z: 1))
+  discard result.moveOriginView
+  result.dollyTo(separation)
+  discard result.moveOriginView
+
+
+func stepWorld(coordinate: float): float =
+  ## Measure step between world's doubles at `coordinate`, i.e. its unit in last place.
+  pow(2.0, floor(log2(abs(coordinate))) - 52.0)
+
+
 template countLiftsIn(body: untyped): int =
   ## Run `body`, and report how many motors it lifted into algebra; see `setCountingLifts`.
   setCountingLifts(true)
@@ -86,6 +117,8 @@ suite "Camera":
     #   Extent and transform read both, and far bound reads eye once more; `sight` reads both
     #   off one lift (PROVENANCE.md, Camera). Counted rather than timed: count never moves
     #   with load.
+    #   Moving view origin reads both as `sight` does, sliding motor already lifted.
+    var moved = cameraAround(PLACES[1], 7.0, Direction(x: 1.0, y: -0.4, z: 0.6))
     let
       camera = cameraAround(PLACES[0], 7.0, Direction(x: 1.0, y: -0.4, z: 0.6))
       lifts_sight = countLiftsIn:
@@ -93,10 +126,15 @@ suite "Camera":
       lifts_extent = countLiftsIn:
         discard camera.drawExtentFor(900, 50.0)
       lifts_transform = countLiftsIn:
-        discard camera.initMatrixViewProjection(16.0 / 9.0, PLACES[1])
+        discard camera.initMatrixViewProjection(16.0 / 9.0)
+      lifts_follow = countLiftsIn:
+        discard moved.moveOriginView
     check lifts_sight == 1
     check lifts_extent == 1
     check lifts_transform == 1
+    check lifts_follow == 1
+    check moved.originView =~ PLACES[1] + (7.0 / norm(Direction(x: 1.0, y: -0.4, z: 0.6))) *
+        Direction(x: 1.0, y: -0.4, z: 0.6)
 
 
   test "the readers of a frame handed its eye and frame read the stance no more":
@@ -109,9 +147,9 @@ suite "Camera":
       lifts = countLiftsIn:
         let scale = camera.drawExtentFor(eye, frame, 900, 50.0)
         discard camera.viewBoundsFor(eye, frame, scale, 16.0 / 9.0, 50.0)
-        discard camera.initMatrixViewProjection(eye, frame, 16.0 / 9.0, PLACES[3])
+        discard camera.initMatrixViewProjection(eye, frame, 16.0 / 9.0)
         discard camera.distanceFar(eye, 50.0)
-        discard camera.originView(eye, PLACES[3])
+        discard camera.originView
     check lifts == 0
 
 
@@ -168,6 +206,99 @@ suite "Camera":
     check dot(rolled.frame.axis_up, UP_WORLD) < dot(axis_up_rolled, UP_WORLD) + TOLERANCE_TEST
     check abs(rolled.frame.axis_right.z) > TOLERANCE_TEST
     check rolled.pivot =~ pivot
+
+
+  test "an orbit a metre wide far from the world origin keeps its pivot to a micrometre":
+    # As found (repository issue 535), two million units out: orbit asked 1.0 m held 149.6 m,
+    #   and its pivot drifted up to 872.86 m over 2,000 steps.
+    #   World's doubles step by 17 to 35 m there, so orbit 150 m wide about far object broke
+    #   on that step, and one metre wide could not be named at all.
+    #   Stance is held about view origin, moved after each step as each frame moves it, so
+    #   every motion composes near eye. Metre and 150 m, floor orbit had before, at each of
+    #   `PLACES_FAR`: domain is any pivot far from world origin, out to demo's farthest.
+    const (steps, turn) = (2000, 0.004)
+    for (place, separation) in [
+        (PLACES_FAR[0], METRE), (PLACES_FAR[1], METRE), (PLACES_FAR[2], METRE),
+        (PLACES_FAR[0], 150.0 * METRE), (PLACES_FAR[1], 150.0 * METRE),
+        (PLACES_FAR[2], 150.0 * METRE),
+    ]:
+      var
+        stepped = cameraFarAt(place, separation)
+        once = stepped
+      let (origin_start, pivot_start, eye_start) = (stepped.originView, stepped.pivot, stepped.eye)
+      for _ in 1..steps:
+        stepped.orbit(turn, 0.0)
+        discard stepped.moveOriginView
+      once.orbit(float(steps) * turn, 0.0)
+      discard once.moveOriginView
+      let
+        pivot = stepped.pivot.rebased(stepped.originView, origin_start)
+        eye = stepped.eye.rebased(stepped.originView, origin_start)
+        eye_once = once.eye.rebased(once.originView, origin_start)
+      check norm(pivot - pivot_start) <= 1.0e-6 * separation
+      check abs(stepped.distance - separation) <= 1.0e-6 * separation
+      check abs(norm(eye - pivot) - separation) <= 1.0e-6 * separation
+      check norm(eye - eye_once) <= 1.0e-6 * separation
+      # Eye went round, half separation or more from where it began.
+      check norm(eye - eye_start) >= 0.5 * separation
+
+
+  test "the view origin carries the eye's remainder over exactly, out and back":
+    # Ten thousand moves out, each under world's step there, then ten thousand back, view
+    #   origin moved after each as frames move it. World's doubles alone swallow every one;
+    #   eye about view origin keeps each, and comes back to where it began.
+    const
+      moves = 10_000
+      step = 0.3 * METRE
+    var camera = cameraFarAt(PLACE_FAR, METRE)
+    let
+      (origin_start, eye_start, world_start) = (camera.originView, camera.eye, camera.eyeWorld)
+      forward = camera.frame.forward
+    for _ in 1..moves:
+      camera.travel(step, 0.0, 0.0)
+      discard camera.moveOriginView
+    let gone = camera.eye.rebased(camera.originView, origin_start)
+    check norm(gone - (eye_start + (float(moves) * step) * forward)) <= 1.0e-6 * step
+    for _ in 1..moves:
+      camera.travel(-step, 0.0, 0.0)
+      discard camera.moveOriginView
+    check norm(camera.eye.rebased(camera.originView, origin_start) - eye_start) <=
+        1.0e-6 * step
+    # As world reads it, eye stands within world's own step of where it began.
+    let world = camera.eyeWorld
+    for (now, began) in [(world.x, world_start.x), (world.y, world_start.y),
+        (world.z, world_start.z)]:
+      check abs(now - began) <= stepWorld(began)
+
+
+  test "a metre-wide object two million units out fills the frame, with depth to spare":
+    # Floor of orbit is 1.5 cm, so camera comes in until metre-wide object fills frame, as it
+    #   does with any other. Near clip and logarithmic depth span that close-up out to far
+    #   bound millions of units off, monotone across it, and keep object's near and far
+    #   sides apart by more than sixteen-bit step.
+    const
+      (wide, tall) = (1440, 900)
+      reach = 6.5e6
+      step_sixteen_bit = 2.0 / 65535.0
+      radius = 0.5 * METRE
+    var camera = cameraFarAt(PLACE_FAR, 19.0)
+    let filling = depthFilling(radius, camera.drawExtentFor(tall, reach), wide, tall)
+    check filling > DISTANCE_LIMIT_NEAR
+    camera.dollyTo(filling)
+    check abs(camera.distance - filling) <= 1.0e-9 * filling
+    check camera.distanceNear < filling - radius
+    let far = camera.distanceFar(reach)
+    check camera.depthOf(camera.distanceNear, reach) =~ -1.0
+    check camera.depthOf(far, reach) =~ 1.0
+    check camera.depthOf(filling + radius, reach) - camera.depthOf(filling - radius, reach) >
+        step_sixteen_bit
+    var last = -2.0
+    for exponent in -14..6:
+      let depth = pow(10.0, float(exponent))
+      if depth <= camera.distanceNear or depth >= far: continue
+      let z = camera.depthOf(depth, reach)
+      check z > last and z > -1.0 and z < 1.0
+      last = z
 
 
   test "the flat motor and the multivector say one motion, and it is unit":
@@ -387,33 +518,32 @@ suite "Camera":
     let eye = camera.eye
     # Nearest ahead answers, and one behind is passed over however near it stands.
     #   Eye stands one unit out at +x, so depths are five and thirty one.
-    check reachNearOf(placed, scene, eye, camera.frame.forward) =~ 5.0
+    check reachNearOf(placed, scene, camera.originView, eye, camera.frame.forward) =~ 5.0
     # Hidden objects are not drawn, so they set no scale.
     scene.setVisible(0, false)
-    check reachNearOf(placed, scene, eye, camera.frame.forward) =~ 31.0
+    check reachNearOf(placed, scene, camera.originView, eye, camera.frame.forward) =~ 31.0
     # Nothing ahead at all reads zero, which hands scale back to separation.
     scene.setVisible(2, false)
-    check reachNearOf(placed, scene, eye, camera.frame.forward) =~ 0.0
+    check reachNearOf(placed, scene, camera.originView, eye, camera.frame.forward) =~ 0.0
 
 
-  test "view origin holds until travel spends float32's precision about it":
+  test "a moved camera carries the view origin to its eye, and a still one leaves it standing":
+    # Front-ends move origin once for each frame. Eye stands where it stood, now about origin
+    #   at it; frame whose camera stood still keeps origin and motor bit for bit, so every
+    #   record stays about same origin.
     var camera = cameraAround(ORIGIN, 19.0, Direction(x: 1, y: 0, z: 0))
-    let eye_start = camera.eye
-    # Bound is quarter of near clip, divided by float32's own step.
-    let reach_hold = FRACTION_ORIGIN_HOLD * camera.distanceNear / STEP_SINGLE
-    check reach_hold > 1.0e5
-    check camera.originView(camera.eye, eye_start) =~ eye_start
-    # Travel well inside bound keeps origin exactly where it was.
-    camera.travel(0.5 * reach_hold, 0.0, 0.0)
-    check camera.originView(camera.eye, eye_start) =~ eye_start
-    # Travel past it moves origin onto eye, once.
-    camera.travel(0.6 * reach_hold, 0.0, 0.0)
-    let moved = camera.originView(camera.eye, eye_start)
-    check moved =~ camera.eye
-    check camera.originView(camera.eye, moved) =~ moved
-    # Close work draws bound in with near clip, so origin follows sooner.
-    camera.reach_near = 0.002
-    check FRACTION_ORIGIN_HOLD * camera.distanceNear / STEP_SINGLE < reach_hold
+    for step in [0.5, 1.0e5, 3.0e-7, 2.5e6]:
+      camera.travel(step, 0.3 * step, -0.2 * step)
+      let eye_world = camera.eyeWorld
+      discard camera.moveOriginView
+      check camera.eyeWorld =~ eye_world
+      check camera.originView =~ eye_world
+      check norm(camera.eye - ORIGIN) <= 1.0e-15 * norm(eye_world - ORIGIN)
+      let (origin, motor) = (camera.originView, camera.motor)
+      discard camera.moveOriginView
+      check camera.originView.x == origin.x and camera.originView.y == origin.y and
+          camera.originView.z == origin.z
+      check camera.motor == motor
 
 
   test "a point is culled only where the frustum, sprite margin included, does not reach":
@@ -573,51 +703,51 @@ suite "Camera":
       check isNear(clipped[1] / clipped[3], 0)
 
 
-  test "a transform about an origin agrees with the world one, and keeps a far close-up":
-    # Records are stored about frame's origin (`mesh.clearMeshes`) and GPU takes transform.
-    #   built about same point, so position about origin lands where world transform puts
-    #   world position: storing relative to pivot is invisible on screen.
+  test "a transform about the view origin agrees with the world one, and keeps a far close-up":
+    # Records are stored about view origin (`tessellate`) and GPU takes transform built about
+    #   same point, so position about origin lands where world transform puts world position:
+    #   storing relative to view origin is invisible on screen.
     for i in 0..<SAMPLES:
+      var moved = cameraAround(PLACES[i], 3.0, randomOutTo())
+      let camera = moved
+      discard moved.moveOriginView
       let
-        camera = cameraAround(PLACES[i], 3.0, randomOutTo())
         place = camera.pivot +
             Direction(x: rand(-1.0..1.0), y: rand(-1.0..1.0), z: rand(-1.0..1.0))
         about_world = transform(camera.initMatrixViewProjection(1.6), place, 1.0)
-        about_pivot = transform(
-          camera.initMatrixViewProjection(1.6, camera.pivot), ORIGIN + (place - camera.pivot), 1.0
+        about_view = transform(
+          moved.initMatrixViewProjection(1.6), place.toView(moved.originView), 1.0
         )
       for k in 0..3:
-        check abs(about_world[k] - about_pivot[k]) <= 1.0e-9 * max(1.0, abs(about_world[k]))
-    # Far out is where it matters: pivot million units off and moon thousandth of unit from.
+        check abs(about_world[k] - about_view[k]) <= 1.0e-9 * max(1.0, abs(about_world[k]))
+    # Far out is where it matters: pivot million units off and moon thousandth of unit from
     #   it, as demo's moons are. Float32 of world position steps by sixteenth there, so
-    #   moon's whole offset is lost; float32 about pivot carries what close-up needs, and
-    #   double matrix keeps translation column of world transform, which picking reads,
-    #   exact too.
+    #   moon's whole offset is lost; float32 about view origin carries what close-up needs.
+    var moved = cameraAround(
+      Position(x: 1.0e6, y: -2.0e6, z: 3.0e5), 0.004, Direction(x: 16, y: 5, z: 7)
+    )
+    let far = moved
+    discard moved.moveOriginView
     let
-      far = cameraAround(
-        Position(x: 1.0e6, y: -2.0e6, z: 3.0e5), 0.004, Direction(x: 16, y: 5, z: 7)
-      )
       moon = far.pivot + Direction(x: 0.001, y: 0.0, z: 0.0)
       stored_world = Position(
         x: float(float32(moon.x)),
         y: float(float32(moon.y)),
         z: float(float32(moon.z)),
       )
-      stored_pivot = Position(
-        x: float(float32(moon.x - far.pivot.x)),
-        y: float(float32(moon.y - far.pivot.y)),
-        z: float(float32(moon.z - far.pivot.z)),
-      )
+      about = moon.toView(moved.originView)
+      stored_view = Position(x: float(float32(about.x)), y: float(float32(about.y)),
+          z: float(float32(about.z)))
     # C backend alone: JS backend keeps `float32` as double, and page's typed arrays round
     #   outside suite's reach.
     when not defined(js):
       check norm(stored_world - moon) > 0.5e-3
-      check norm((far.pivot + (stored_pivot - ORIGIN)) - moon) < 1.0e-9
+      check norm(stored_view.toWorld(moved.originView) - moon) < 1.0e-9
     let
       seen_world = transform(far.initMatrixViewProjection(1.6), moon, 1.0)
-      seen_pivot = transform(far.initMatrixViewProjection(1.6, far.pivot), stored_pivot, 1.0)
+      seen_view = transform(moved.initMatrixViewProjection(1.6), stored_view, 1.0)
     for k in 0..1:
-      check abs(seen_world[k] / seen_world[3] - seen_pivot[k] / seen_pivot[3]) < 1.0e-6
+      check abs(seen_world[k] / seen_world[3] - seen_view[k] / seen_view[3]) < 1.0e-6
 
 
   test "the clip planes follow the orbit distance, rather than where they were built":

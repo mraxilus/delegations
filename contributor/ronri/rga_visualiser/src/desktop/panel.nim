@@ -1022,8 +1022,9 @@ proc layoutView*(panel: var Panel, camera: var Camera, speed: float) =
   gui.textTinted(wordingText(NameViewMotor), INK_LABEL.red, INK_LABEL.green, INK_LABEL.blue)
   gui.tooltip wordingText(TipViewMotor)
   # Changed coefficient alone is written into live motor; fields hold doubles, as motor does.
+  #   Motor about world origin, as every reading is; see `camera.stanceWorld`.
   var
-    typed = camera.motor.toMultivector
+    typed = camera.stanceWorld.motor.toMultivector
     staged: array[Basis, float]
   for b in Basis: staged[b] = typed[b]
   let changed = layoutCoefficientGrid(staged)

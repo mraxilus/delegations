@@ -13,6 +13,9 @@
 ##   puts view back where it was made from.
 ##   Stance alone, never whole camera value: lens is reader's setting, and speed is no part
 ##   of camera at all.
+##   Stance about world origin (`camera.stanceWorld`), as scene is stored: view origin is
+##   stored nowhere. Cost: step restored far out lands on world's doubles, which step by
+##   17 to 35 m two million units out.
 ## Selection rides across step where caller hands it over, kept wherever it names same
 ## object; see `keepNaming` in `selection.nim`.
 ##   Step's camera belongs to *edit*, not state: stepping off step and stepping back onto
@@ -63,7 +66,7 @@ static:
 type
   Step* = object  ## Define one committed edit: scene it produced, and where camera stood.
     scene*: Scene
-    stance*: CameraStance  ## Where view stood as *this* step's edit was made.
+    stance*: CameraStance  ## Where view stood as *this* step's edit was made, about world.
       ## Stance to restore in either direction across this step, not on arriving at its
       ## scene. First entry's is never restored: no edit leads into it.
 
@@ -100,7 +103,7 @@ func initHistory*(history: var History, scene: Scene, camera: Camera) =
   ##     literal copies scene twice; caller owning storage is Art. IV.6.
   ##   `camera` completes entry rather than being read back; see `Step.stance`.
   history.entries[0].scene = scene
-  history.entries[0].stance = camera.stanceOf
+  history.entries[0].stance = camera.stanceWorld
   history.first = 0
   history.count = 1
   history.cursor = 0
@@ -119,7 +122,7 @@ func record*(history: var History, scene: Scene, camera: Camera) =
   # Copy scene once, field by field; see `initHistory`.
   let handle = history.handleOf(history.cursor)
   history.entries[handle].scene = scene
-  history.entries[handle].stance = camera.stanceOf
+  history.entries[handle].stance = camera.stanceWorld
   history.count = history.cursor + 1
 
 

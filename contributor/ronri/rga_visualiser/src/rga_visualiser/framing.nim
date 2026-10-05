@@ -18,6 +18,9 @@
 ##   Grows only if it must, never shrinks.
 ## Lives above `picking` because folding selection needs `Selection`, and `picking` cannot
 ## import it: `selection` imports `marker`, which imports `picking`.
+## Aim is world's, as geometry is, so it compares equal frame to frame while view origin
+## moves; every place it names is read about camera's view origin where frame uses it.
+##   Destination stance is held about that origin too, as camera is (`CameraStance.origin`).
 ##
 ## Shared by desktop (`main.nim`) and browser (`bridge.nim`) render paths.
 ##   Rule was once written out in each, duplication that drifted.
@@ -129,10 +132,12 @@ func reachOf*(placed: openArray[Placement], scene: Scene): float =
 
 
 func reachNearOf*(
-  placed: openArray[Placement], scene: Scene, eye: Position, forward: Direction
+  placed: openArray[Placement]; scene: Scene; origin, eye: Position; forward: Direction
 ): float =
   ## Measure how near nearest drawn object stands ahead of eye, along sight.
   ##   For `Camera.reach_near`, from placements caller already holds.
+  ##   `eye` is about view `origin`; each world place is read about it, in components, so
+  ##   walk builds nothing for each object (Art. VII.1).
   ##   Depth along sight, never distance, and never behind eye.
   ##     What reader turned away from is not drawn, and scale read off it would follow
   ##     that.
@@ -145,9 +150,11 @@ func reachNearOf*(
   result = 0.0
   for handle in 0..<scene.bound:
     if not scene.isAlive(handle) or not scene.isVisible(handle): continue
-    let place = placed[handle]
+    template place: untyped = placed[handle]  # Alias; `let` deep-copies on JS backend.
     if place.kind notin {Case.PointAt, Case.LineThrough, Case.PlaneOn}: continue
-    let depth = dot(place.at - eye, forward)
+    let depth = ((place.at.x - origin.x) - eye.x) * forward.x +
+        ((place.at.y - origin.y) - eye.y) * forward.y +
+        ((place.at.z - origin.z) - eye.z) * forward.z
     if depth <= 0.0: continue
     if result <= 0.0 or depth < result: result = depth
 
@@ -164,15 +171,13 @@ proc reachOf*(scene: Scene): float =
     )
 
 
-func aimFor*(
-  scene: Scene, picked: Selection, staged: Option[Preview], scale: DrawExtent
-): Option[CameraAim] =
+func aimFor*(scene: Scene, picked: Selection, staged: Option[Preview]): Option[CameraAim] =
   ## Resolve what camera is asked to bring into view, or none where nothing is.
   ##   Pure function of geometry: see `CameraAim`, whose worth is that caller re-offering
   ##   same selection every frame offers something comparing equal.
   result = none(CameraAim)
   for (m, anchor) in watched(scene, picked, staged):
-    result = result.aimIncluding(m, scale, anchor)
+    result = result.aimIncluding(m, anchor)
 
 
 func isShownAll*(
@@ -194,9 +199,10 @@ func isFramed*(aim: CameraAim; camera: Camera; width, height: int): bool =
   ##   True where `aim` names nothing finite: horizon objects are bound by their own rule,
   ##   and camera asked to hold no finite object holds them all.
   if aim.sphere.isNone: return true
-  let reach = distanceFitting(aim.sphere.get.radius, camera, width, height, INSET_POINT_SHOWN)
-  distanceBetween(camera.eye.toMultivector, aim.sphere.get.centre.toMultivector) >=
-      reach*(1.0 - SLACK_FRAMED)
+  let
+    reach = distanceFitting(aim.sphere.get.radius, camera, width, height, INSET_POINT_SHOWN)
+    centre = aim.sphere.get.centre.toView(camera.originView)
+  distanceBetween(camera.eye.toMultivector, centre.toMultivector) >= reach * (1.0 - SLACK_FRAMED)
 
 
 func headingFacing*(aim: CameraAim): Option[Direction] =
@@ -290,14 +296,15 @@ func holdFramed*(camera: var Camera; aim: CameraAim; width, height: int) =
   if aim.sphere.isNone: return
   let
     reach = distanceFitting(aim.sphere.get.radius, camera, width, height, INSET_POINT_SHOWN)
-    centre = aim.sphere.get.centre
+    origin = camera.originView
+    centre = aim.sphere.get.centre.toView(origin)
   if distanceBetween(camera.eye.toMultivector, centre.toMultivector) >=
       reach*(1.0 - SLACK_FRAMED):
     return
   let back = stepOutTo(camera.eye, centre, -camera.frame.forward, reach)
   camera.slideBy wedge(back, toMultivector(-camera.frame.forward))
   let
-    middle = if aim.centroid.isSome: aim.centroid.get else: centre
+    middle = if aim.centroid.isSome: aim.centroid.get.toView(origin) else: centre
     (eye, frame) = camera.sight
     depth = depthAlong(eye, frame.forward, middle)
   if depth > 0.0: camera.repivotToDepth(depth)
@@ -322,7 +329,10 @@ func stanceFor*(aim: CameraAim; camera: Camera; width, height: int): CameraStanc
   ##     rule demands.
   ##   Price is named in `CameraAim`: one bounding sphere frames line further out than
   ##   crossing frame would need.
-  let pivot = if aim.centroid.isSome: aim.centroid.get else: camera.pivot
+  ##   Stance is held about camera's view origin, and aim's places are read about it.
+  let
+    origin = camera.originView
+    pivot = if aim.centroid.isSome: aim.centroid.get.toView(origin) else: camera.pivot
   # Framing something finite turns nothing, so whole motion crosses and roll with it.
   let settled = camera.stanceRepivoted(pivot)
   if aim.sphere.isNone:
@@ -334,7 +344,7 @@ func stanceFor*(aim: CameraAim; camera: Camera; width, height: int): CameraStanc
     #   direction alone names no roll, and least turn off steep sight leaves view rolled.
     #   Eye and pivot name it, so no pole collapses.
     let length = sqrt(innerOf(facing.get.toMultivector, facing.get.toMultivector))
-    return stanceFacing(pointAlong(pivot, facing.get, -camera.distance / length), pivot)
+    return stanceFacing(pointAlong(pivot, facing.get, -camera.distance / length), pivot, origin)
   # Pull eye back along its own sight, by least step carrying it out to fitting reach.
   #   Sphere's centre is not pivot, so separation is not that reach; quadratic is what
   #   accounts for offset between them.
@@ -342,7 +352,7 @@ func stanceFor*(aim: CameraAim; camera: Camera; width, height: int): CameraStanc
     placed = camera.placed(settled)
     axes = placed.frame
     reach = distanceFitting(aim.sphere.get.radius, placed, width, height, INSET_POINT_SHOWN)
-    back = stepOutTo(placed.eye, aim.sphere.get.centre, -axes.forward, reach)
+    back = stepOutTo(placed.eye, aim.sphere.get.centre.toView(origin), -axes.forward, reach)
   if back <= 0.0: return settled
   camera.stanceDollied(settled, settled.distance + back)
 
@@ -368,6 +378,7 @@ func stanceApproaching*(
   ##     close leaves reader's own scale alone.
   ##     Plane comes in until its whole disc spans `FRACTION_HEIGHT_APPROACH_PLANE`, which
   ##     is reach its own centre asks for rather than one any crossing does.
+  ##   `centre` is about camera's view origin, as `tessellate.anchorFor` reads it.
   ##   None where object is not ahead of eye, leaving caller `stanceFor`. Centring one
   ##   behind reader would slide camera back past it rather than turn, which is jump
   ##   nobody asked for; frame rule turns nothing and handles it by its own bound.
@@ -406,6 +417,7 @@ func stanceLifted*(stance: CameraStance, camera: Camera, normal: Direction): Cam
   ##     origin; turned sight is sum of two weightless points, read back unit.
   ##   Result is level stance facing pivot along turned sight, at stance's own separation,
   ##     as `stanceFor` faces star: least turn off steep sight leaves view rolled.
+  ##   Held about stance's own origin, which its pivot is read about.
   let
     placed = camera.placed(stance)
     (point_sight, point_normal) = (placed.frame.forward.toMultivector, normal.toMultivector)
@@ -427,7 +439,11 @@ func stanceLifted*(stance: CameraStance, camera: Camera, normal: Direction): Cam
       scale = 1.0,
     )
   if lifted.isNone: return stance
-  stanceFacing(pointAlong(placed.pivot, lifted.get, -stance.distance), placed.pivot)
+  stanceFacing(
+    pointAlong(placed.pivot, lifted.get, -stance.distance),
+    placed.pivot,
+    stance.origin,
+  )
 
 
 func stanceFitted*(
@@ -519,7 +535,7 @@ func offerAim*(
   # Take caller's extent, not second derivation.
   #   Building another here ran `algebraFilled` and `camera.frame`'s joins twice per frame.
   let
-    aim = aimFor(scene, picked, staged, scale)
+    aim = aimFor(scene, picked, staged)
     pick = pointer
   pointer = none(PointerPick)
   if aim.isNone:
