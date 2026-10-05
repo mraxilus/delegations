@@ -2448,8 +2448,8 @@ interleaved pairs, each the best of seven runs. A finger's turn takes 223 to 251
 247 to 283 in orbit, against 144 to 158 and 113 to 122. A turn and a frame build take 0.93 to 0.94
 ms, against 0.86 to 0.94.
 
-Verified by `suites.nim`: placing every kind charges the placing side, and a stretch that leaves
-early fails to build.
+Verified by `suites.nim`: placing charges the placing side on each of its seven exits, and a
+stretch that leaves early fails to build.
 
 Verified by driven check: a still frame under the largest demo copies fewer values than the scene
 has objects. Verified by a read of the emitted code on 2026-10-04. No `nimCopy` stands in the six
