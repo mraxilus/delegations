@@ -879,24 +879,26 @@ taken before digests existed took the digest of its builds at its own pin, on 20
 bench at the commit of the runtime baselines emits the same C as the bench of that day, file for
 file. The Architect chose this rule on 2026-10-05, for a head that moved only comments and form.
 
-**The digest names type hashes by order.** Nim folds the path of a module into the hash in the
-name of each type. So one tree at two checkout paths emits C that differs in those hashes alone.
-The digest names each run of 20 to 32 letters and digits after `__` by its order of first
-appearance. So any checkout takes one digest.
+**The digest reads C alone, at any path.** Nim folds the path of a module into the hash in the
+name of each type. The digest names each run of 20 to 32 letters and digits after `__` by its
+order of first appearance. A full build also writes the command of the C compiler, with absolute
+paths, at the head of each file. The digest leaves that header out, and a build that stops at C
+writes none. So any checkout takes one digest, from either build.
 
 The body of each type stays in the digest, so a type that changes shape still moves it. A copy of
 the tree at a second path emits 181 such runs in the bench at rga4d. Some are module names, such
 as `pureZcollectionsZtables`, which read the same at each path. Read with names by order, the C of
-the copy matches the first, file for file.
+the copy matches the first, file for file. The sweep, built in full, takes the digest of its C
+alone at each of five dimensions.
 
 Rejected: a new timing of each record at such a head. The binaries are the same, so new times
 would record the drift of this host alone, ×1.19 to ×1.27 between days at rga4d. Cost: `restamp`
 compiles each evaluation at each algebra, and runs its suites and claims again.
 
 Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Head`. It holds the order of
-files, the commit left out of the digest, and a type hash that moves no digest. It holds a move on
-equal digests alone, a digest taken at its own pin, and the first commit timed at. Suite
-`Internal: Gaps` holds the list to name that commit.
+files, and the commit left out of the digest. It holds a type hash and the header of a full build,
+which move no digest. It holds a move on equal digests alone, a digest taken at its own pin, and
+the first commit timed at. Suite `Internal: Gaps` holds the list to name that commit.
 
 **`drive` holds the checkout to the pin.** Any edit under the library directory of the
 checkout is a finding. The checkout is under `dependencies/`, which git ignores, so a tool
