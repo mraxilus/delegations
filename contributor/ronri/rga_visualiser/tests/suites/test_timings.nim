@@ -8,16 +8,31 @@ import ../../src/rga_visualiser/timings
 
 
 suite "Timings":
-  test "placing an object charges its time to the placing side":
-    # Placing stops as soon as it knows its answer; charge lands whichever path it takes.
-    #   Every kind at once, from clear totals: stretch never charged reads exactly zero.
+  test "placing an object charges its time to the placing side, whichever way it leaves":
+    # As found by library-share study (repository issue 553): with every object of demo
+    #   placed, placing side read 0.000 ms of 5.0 ms, as each answer returned inside `timed`.
+    #   Domain is every exit of placing: point at place and on horizon, line through place
+    #   and across sky, plane on place and everywhere, and no geometry at all.
+    #   Each from clear totals, so exit never charged reads exactly zero; each placed
+    #   `SAMPLES` times, so clock of either backend ticks within it.
+    let exits = [
+      ("point at a place", POINTS[0], Case.PointAt),
+      ("point on the horizon", ⊖LINES[0], Case.PointToward),
+      ("line through a place", LINES[0], Case.LineThrough),
+      ("line across the sky", ⊖PLANES[0], Case.LineAcross),
+      ("plane on a place", PLANES[0], Case.PlaneOn),
+      ("plane everywhere", ⊖(POINTS[10] ∧ PLANES[0]), Case.PlaneEverywhere),
+      ("no geometry", 1.0 + POINTS[0], Case.Nothing),
+    ]
     setTallying(true)
-    openFrameTimings()
-    for index in 0..<SAMPLES:
-      discard placeObject(POINTS[index])
-      discard placeObject(LINES[index])
-      discard placeObject(PLANES[index])
-    check spentOn(Side.Placing) > 0.0
+    for (exit, geometry, expected) in exits:
+      checkpoint exit
+      openFrameTimings()
+      var placed = Placement()
+      for _ in 0..<SAMPLES:
+        placed.placeInto(geometry, none(Position))
+      check placed.kind == expected
+      check spentOn(Side.Placing) > 0.0
 
 
   test "a timed stretch that leaves before its end fails to build":
