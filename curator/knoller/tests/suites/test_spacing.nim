@@ -90,12 +90,17 @@ suite "Spacing":
       check kept.fixed == kept
 
 
-  test "power operator takes no space, since with spaces it reads like operator on bits":
+  test "power operator is always tight, and exponent that would merge with it is wrapped":
     for (breach, mended) in [
-      ("let p = -1 ^ (k)\n", "let p = -1^(k)\n"),
+      ("let p = -1 ^ k\n", "let p = -1^k\n"),
+      ("let p = -1 ^ (a * b)\n", "let p = -1^(a * b)\n"),  # exponent holding math keeps its group
       ("let p = a + b ^ 2\n", "let p = a + b^2\n"),  # no exception for math in piece
       ("let p = (a + b) ^ 2\n", "let p = (a + b)^2\n"),
       ("let m = 2'u ^ DIMENSIONS\n", "let m = 2'u^DIMENSIONS\n"),
+      ("let p = a ^ -b\n", "let p = a^(-b)\n"),  # glued, `^-` would lex one operator: wrapped
+      ("let p = x ^ ~y\n", "let p = x^(~y)\n"),
+      ("let p = a ^ -f(x).y + c\n", "let p = a^(-f(x).y) + c\n"),  # exponent is whole prefix term
+      ("let p = a ^ -1\n", "let p = a^(-1)\n"),  # literal `-1`
     ]:
       check checkSpacing("a.nim", breach).len == 1
       check breach.fixed == mended
@@ -103,9 +108,10 @@ suite "Spacing":
     check checkSpacing("a.nim", "let p = b ^ 2\n")[0].message.startsWith(
       "Power operator takes no space",
     )
+    check checkSpacing("a.nim", "let p = a ^ -b\n")[0].message.startsWith(
+      "Power operator takes no space, and exponent",
+    )
     for kept in [
-      "let p = a ^ -b\n",  # glued, `^-` would lex one operator
-      "let p = x ^ ~y\n",
       "x ^= 2\n",  # assignment, no power operator
       "let l = s[^1]\n",  # prefix `^` of backwards index
       "let r = s[1 .. ^1]\n",

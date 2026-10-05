@@ -70,5 +70,8 @@ suite "Parentheses":
       "proc f(a: int) = discard\n",  # signature
       "let y = (a)\n",  # no operator beside it
       "check (|∙ x) =~ y\n",  # after command head, `|∙` would read binary
+      "let p = a^(-b)\n",  # wrapped exponent of power operator, `^-` would lex one operator
+      "let p = a ^ (-b)\n",  # spacing glues power operator, so guard reads it glued
+      "let p = a^(-1)\n",
     ]:
       check kept.isSettled

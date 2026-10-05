@@ -344,6 +344,20 @@ suite "Repair that widens its line":
     check distances.fixedOf.isSettled
 
 
+  test "power operator and needless parentheses agree on wrapped exponent, in one round":
+    let wrapped = HEAD & "  let p = a^(-b)\n"
+    check wrapped.isSettled  # parentheses rule keeps group power operator needs
+    for breach in [HEAD & "  let p = a ^ -b\n", HEAD & "  let p = a ^ (-b)\n"]:
+      check breach.fixedOf == wrapped
+      check attempted("a.nim", breach, Dialect.Module.stepsOf).attempts == 1
+    for (breach, mended) in [
+      ("  let p = -1 ^ (k)\n", "  let p = -1^k\n"),  # group of one operand goes (X.4)
+      ("  let p = -1 ^ (a * b)\n", "  let p = -1^(a * b)\n"),  # group of math stays
+    ]:
+      check (HEAD & breach).fixedOf == HEAD & mended
+      check (HEAD & mended).isSettled
+
+
   test "value after `=` that is no chain keeps one level under its statement":
     check (HEAD & TWIST).fixedOf == HEAD & TWIST
     check checkFormatting("a.nim", HEAD & TWIST, Dialect.Module).len == 0
