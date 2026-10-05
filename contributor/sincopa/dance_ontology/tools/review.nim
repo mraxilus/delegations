@@ -117,19 +117,19 @@ func inked(said: string, should_escape = true): string =
 func statisticCard(number: int, caption: string, is_good = false): string =
   ## Draw one figure in strip at head of page.
   "<div class=\"stat" & (if is_good: " good" else: "") & "\"><b>" & $number &
-    "</b><span>" & caption & "</span></div>"
+      "</b><span>" & caption & "</span></div>"
 
 
 proc renderStatistics(): string =
   ## Draw figures page opens with.
   "<div class=\"stats\">" &
-    statisticCard(FRAMES.len, "frames the model derives") &
-    statisticCard(countMoves(), "moves between them") &
-    statisticCard(CELLS.len - countDeferredCells(), "cells checkable today") &
-    statisticCard(countDisagreements(), "cells that disagree", is_good = true) &
-    statisticCard(countDeferredCells(), "cells waiting on the body") &
-    statisticCard(countLaws(), "laws under test") &
-    "</div>"
+      statisticCard(FRAMES.len, "frames the model derives") &
+      statisticCard(countMoves(), "moves between them") &
+      statisticCard(CELLS.len - countDeferredCells(), "cells checkable today") &
+      statisticCard(countDisagreements(), "cells that disagree", is_good = true) &
+      statisticCard(countDeferredCells(), "cells waiting on the body") &
+      statisticCard(countLaws(), "laws under test") &
+      "</div>"
 
 
 func renderGallery(): string =
@@ -138,10 +138,10 @@ func renderGallery(): string =
   for target in FRAMES:
     let is_absent = workbookName(target).isNone
     result.add "<div class=\"card" & (if is_absent: " absent" else: "") & "\">" &
-      renderFrame(target) & "<div><div class=\"name\">" &
-      inked(target.describe) & "</div><div class=\"meta\">" &
-      $moves(target).len & " moves" &
-      (if is_absent: " &middot; no row in the sheet" else: "") & "</div></div></div>"
+        renderFrame(target) & "<div><div class=\"name\">" &
+        inked(target.describe) & "</div><div class=\"meta\">" &
+        $moves(target).len & " moves" &
+        (if is_absent: " &middot; no row in the sheet" else: "") & "</div></div></div>"
   result.add "</div>"
 
 
@@ -150,8 +150,8 @@ func renderArms(): string =
   result = "<div class=\"legend\">"
   for side in Side:
     result.add "<span class=\"swatch\"><i class=\"arm-" &
-      ($side).toLowerAscii & "\"></i>the lead's " & leadName(side) &
-      " arm</span>"
+        ($side).toLowerAscii & "\"></i>the lead's " & leadName(side) &
+        " arm</span>"
   result.add "</div>"
 
 
@@ -163,10 +163,10 @@ func renderLegend(): string =
     result.add "<b>" & HELPER_MARKS[helper] & "</b> " & helper.name
     if HELPER_SYNONYMS[helper].len > 0:
       result.add " (your <em class=\"term\">" &
-        HELPER_SYNONYMS[helper].split(' ')[0] & "</em>)"
+          HELPER_SYNONYMS[helper].split(' ')[0] & "</em>)"
   for named in Compound:
     result.add " &middot; <b>" & COMPOUND_MARKS[named] & "</b> " &
-      ($named).toLowerAscii & ", two moves"
+        ($named).toLowerAscii & ", two moves"
 
 
 func renderMatrix(): string =
@@ -201,22 +201,22 @@ func renderMatrix(): string =
 func renderHelpers(): string =
   ## List moves, what each changes, and workbook's other word.
   result = "<table class=\"plain\"><thead><tr><th>Move</th>" &
-    "<th>What changes</th><th>Your words</th></tr></thead><tbody>"
+      "<th>What changes</th><th>Your words</th></tr></thead><tbody>"
   for helper in Helper:
     let synonym =
       if HELPER_SYNONYMS[helper].len == 0: "<span class=\"dim\">&mdash;</span>"
       else: "also <code>" & HELPER_SYNONYMS[helper].split(' ')[0] & "</code>, " &
-        HELPER_SYNONYMS[helper].split(' ', 1)[1]
+          HELPER_SYNONYMS[helper].split(' ', 1)[1]
     result.add "<tr><td>" & helper.name & "</td><td>" & HELPER_CHANGES[helper] &
-      "</td><td>" & synonym & "</td></tr>"
+        "</td><td>" & synonym & "</td></tr>"
   result.add "</tbody></table>"
 
 
 func renderCompounds(): string =
   ## List compound moves, what each does, and why ontology names it.
   result = "<table class=\"plain\"><thead><tr><th>Compound move</th>" &
-    "<th>What changes</th><th>The two moves</th><th>Obstructed</th>" &
-    "</tr></thead><tbody>"
+      "<th>What changes</th><th>The two moves</th><th>Obstructed</th>" &
+      "</tr></thead><tbody>"
   for named in Compound:
     result.add "<tr><td>" & ($named).toLowerAscii & "</td><td>" &
       COMPOUND_CHANGES[named] & "</td><td>" & COMPOUND_ORDERS[named] &
@@ -231,7 +231,7 @@ func countCells(is_compound: bool): int =
   for cell in CELLS:
     if cell.source.isDeferred or cell.destination.isDeferred:
       continue
-    if (readCompound(readCell(cell.text)[0]).isSome) == is_compound:
+    if readCompound(readCell(cell.text)[0]).isSome == is_compound:
       inc result
 
 
@@ -313,7 +313,7 @@ proc renderReview*(): string =
   let at = page.find("{{")
   doAssert at < 0,
     "Every marker in review prose should be filled; got `" &
-      page[at..<min(at + 24, page.len)] & "`."
+    page[at..<min(at+24, page.len)] & "`."
   inkTerms(page)
 
 

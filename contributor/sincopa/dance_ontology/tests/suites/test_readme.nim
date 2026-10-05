@@ -65,7 +65,7 @@ suite "Internal: This project's own Markdown":
     var numbers: seq[int]
     for (rule, words) in readFile(currentSourcePath.parentDir / ".." / ".." / RULED).quoted:
       numbers.add rule
-      let ledger = (if rule in 1..RULES.len: RULES[rule - 1] else: "")
+      let ledger = (if rule in 1..RULES.len: RULES[rule-1] else: "")
       if words != ledger:
         echo "    rule ", rule, " quoted: ", words
         echo "    rule ", rule, " ledger: ", ledger

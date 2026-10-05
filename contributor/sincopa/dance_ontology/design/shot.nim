@@ -96,8 +96,8 @@ proc playwright(): JsObject =
     report(
       cstring(
         "Cannot load playwright from `" & $at & "`; install what " &
-          "`nim r tools/build.nim shot` names, or point `" & VARIABLE_PLAYWRIGHT &
-          "` at it.",
+        "`nim r tools/build.nim shot` names, or point `" & VARIABLE_PLAYWRIGHT &
+        "` at it.",
       ),
     )
     stop(1)

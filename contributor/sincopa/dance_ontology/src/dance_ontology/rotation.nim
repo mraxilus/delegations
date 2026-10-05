@@ -544,7 +544,7 @@ func armName*(state: FrameState): string =
         levelName(state.level[side]) notin heights:
       heights.add levelName(state.level[side])
   (if heights.len == 1: heights[0] & " " else: "") &
-    ($what.get).toLowerAscii
+      ($what.get).toLowerAscii
 
 
 func describe*(state: FrameState): string =

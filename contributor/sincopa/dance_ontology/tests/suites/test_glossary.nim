@@ -57,7 +57,7 @@ func replaced(source, term: string): seq[string] =
   for line in source.splitLines:
     let bare = line.strip
     if bare.startsWith("**") and bare.endsWith("**:"):
-      is_inside = bare[2..<bare.len - 3] == term
+      is_inside = bare[2..<bare.len-3] == term
     elif bare.startsWith("_Avoid_:") and is_inside:
       for word in bare["_Avoid_:".len .. ^1].split(','):
         let trimmed = word.strip
@@ -72,7 +72,7 @@ func avoided(source: string, terms: openArray[string]): Table[string, seq[string
   for line in source.splitLines:
     let bare = line.strip
     if bare.startsWith("**") and bare.endsWith("**:"):
-      term = bare[2..<bare.len - 3]
+      term = bare[2..<bare.len-3]
     elif bare.startsWith("_Avoid_:") and term in terms:
       for word in bare["_Avoid_:".len .. ^1].split(','):
         result.mgetOrPut(term, @[]).add word.strip.toLowerAscii
@@ -92,15 +92,15 @@ func literals(source: string): seq[tuple[said: string, next: char]] =
       let opens = i + 3
       var shuts = source.find("\"\"\"", opens)
       if shuts < 0: shuts = source.len
-      result.add (source[opens..<shuts], (if shuts + 3 < source.len: source[shuts + 3] else: ' '))
+      result.add (source[opens..<shuts], (if shuts + 3 < source.len: source[shuts+3] else: ' '))
       i = shuts + 3
     elif source[i] == '\"':
       var j = i + 1
       while j < source.len and source[j] != '\"':
         if source[j] == '\\': j += 1
         j += 1
-      result.add (source[i + 1..<min(j, source.len)],
-                  (if j + 1 < source.len: source[j + 1] else: ' '))
+      result.add (source[i+1..<min(j, source.len)],
+                  (if j + 1 < source.len: source[j+1] else: ' '))
       i = j + 1
     else:
       i += 1
@@ -129,7 +129,7 @@ func rungsOf(report: string): seq[tuple[turns: int, said, facing: string]] =
     if opens < 0 or shuts < opens: continue
     var wound: float
     try:
-      wound = parseFloat(cell[opens + 1..<shuts])
+      wound = parseFloat(cell[opens+1..<shuts])
     except ValueError:
       continue
     result.add (int(round(wound * 100.0)), cell[0..<opens].strip, cells[2].strip)
@@ -141,8 +141,8 @@ func isSaying(text, phrase: string): bool =
   while true:
     let at = text.find(phrase, from_here)
     if at < 0: return false
-    if (at == 0 or text[at - 1] notin Letters) and
-        (at + phrase.len >= text.len or text[at + phrase.len] notin Letters):
+    if (at == 0 or text[at-1] notin Letters) and
+        (at + phrase.len >= text.len or text[at+phrase.len] notin Letters):
       return true
     from_here = at + 1
 

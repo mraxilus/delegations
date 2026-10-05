@@ -25,11 +25,11 @@ suite "Internal: The axle":
     var gap = 0
     for i in 1..<places.len:
       let
-        (prev_x, prev_y) = centreOf(stood, places[i - 1])
+        (prev_x, prev_y) = centreOf(stood, places[i-1])
         (curr_x, curr_y) = centreOf(stood, places[i])
       check curr_x > prev_x  # laid out in order they are turned into
       check prev_y == curr_y  # one line, one row
-      let step = (curr_x - prev_x) div (places[i] - places[i - 1])
+      let step = (curr_x - prev_x) div (places[i] - places[i-1])
       if gap == 0: gap = step
       check step == gap
 

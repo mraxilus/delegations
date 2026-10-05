@@ -657,7 +657,7 @@ why no number of it is written here.
 `design/README.md` quotes each one. `design/checks.nim` checks each standing rule on every build and
 prints one line for it. A check verifies that a drawing follows a rule as it is written. It never
 verifies that a couple can dance what the drawing shows. The Architect trusts only a reference cell
-that is kept, modelled and confirmed, and `CONFIRMED` in `design/review_page.nim` holds none yet.
+that is kept, modelled and confirmed, and `CONFIRMED` in `design/review_page.nim` names each one.
 
 **A rule that is implemented and not checked stops being true, so each rule drawn has a check.** A
 check names its rules in a comment in `checks.nim` that opens `RULE`. Nothing in the workbench
@@ -1404,6 +1404,23 @@ A confirmation is of one still, so a confirmed cell whose still moves comes out 
 badge sits outside every drawing and moves no fixture. What the simulation reaches today is
 counted off the built page, rather than written here.
 
+**Each confirmed cell is held to the still it was confirmed on.** `design/confirmed-fixtures.json`
+holds a hash of the points of that still, in `rig.json`, for each ask of the cell. The build of the
+review page stops when a confirmed cell shows another still, or carries no fixture. A reflected twin
+answers to the still of the twin it mirrors. A twin that no other cell answers keeps its own still.
+
+`tools/build.nim confirmed` writes the fixtures from the built page, as `fixtures` does for the
+drawings. To run it again would hand the confirmation to the new still, so it runs only when a cell
+is confirmed. Cost: a change that moves a confirmed still fails the build until the Architect sees
+that still again.
+
+Verified by `suites/test_marks.nim`, which builds the review page. Red first: another hash for A05
+stops the build, and so does no fixture for B04.
+
+Two joined pairs of one still may stand close, and may touch. Only pairs that hook or tangle are
+connected or interlocked. So the Architect confirmed A10, where the two pairs almost meet over the
+head.
+
 Two readings of section A come apart at A09 and A11, which draw the same-name pair face to face.
 Rule 31 of the project itself says that this frame state has its connections lying through each
 other.
@@ -1747,16 +1764,15 @@ Playwright itself (`PLAYWRIGHT_BROWSERS_PATH`), and otherwise lets Playwright re
 installed. Absent Playwright stops with a finding that names the verb that says what to install,
 rather than as a missing file.
 
-Rejected: to pin Playwright itself. It is a node package, and that would mean a `package.json`
-beside its lock. That enrols the project in `koch check-types` and demands a `types` verb. The
-Architect has asked not to have that work built while this half of the project may go.
+`package-lock.json` pins Playwright for `drive`, and `npm ci` installs it where node resolves the
+bare module name. So `shot` finds the pinned Playwright with no variable set.
 
-Cost, stated rather than implied: **Playwright carries no pin here at all**, and the system packages
-carry whatever version the machine has. Verified by a run of all four routes on this machine,
-2026-09-08, Node 22 and Chromium 1194 of Playwright. Nothing set stops with the finding and exit 1.
-`DANCE_PLAYWRIGHT`, `NODE_PATH` and `DANCE_CHROMIUM` each write the screenshots of both themes. A
-path that names no browser fails loudly rather than silently. Not repeatable from a checkout: no
-test drives `shot`, because the project carries no `drive` verb.
+Cost, stated rather than implied: the system packages carry whatever version the machine has.
+Verified by a run of all four routes on this machine, 2026-09-08, Node 22 and Chromium 1194 of
+Playwright. Nothing set stops with the finding and exit 1. `DANCE_PLAYWRIGHT`, `NODE_PATH` and
+`DANCE_CHROMIUM` each write the screenshots of both themes. A path that names no browser fails
+loudly rather than silently. No test drives `shot`, since `drive` renders pages and takes no
+screenshot.
 
 **URLs are listed once.** The URL of every published page is in the `README.md` of this project, in
 two tables that carry the same split. `design/README.md` and `simulation/README.md` point at it
@@ -1828,11 +1844,71 @@ face, then Noto Sans Math, then Commit Mono. That is the merge by codepoint rang
 were read with fontconfig 2.15.0 on 2026-10-03, from the whole faces with the digests of the store.
 
 The wiring is verified by `suites/test_faces.nim`, test "every stack falls back to faces that draw
-what its own face lacks". The coverage is verified by hand in Chromium 141, 2026-10-03. Each
-character beyond ASCII went into a clone of its element, alone, at load and in each view of the
-Reference. The DevTools call `CSS.getPlatformFontsForNode` then named the face that drew it.
+what its own face lacks". The coverage is verified by `drive`, below, on every page that `pages`
+writes.
 
-On every page, every one of those characters came from a shipped face.
+**`drive` proves the faces of every page, as `CONTRIBUTOR.md`, Pages and assets, asks.** It builds
+every page, and renders each one in Chromium as the publish host serves it. For each character
+beyond ASCII, it resolves the font stack of the element against the `cmap` of each face that the
+page ships. A character that no face of that stack maps is a finding. The finding names the page,
+the element and the codepoint. A face that the browser does not load is a finding too.
+
+The harness is TypeScript under `tools/drive/`, ported from `pga_benchmark`. TypeScript is admitted
+for the host API of a test driver. It checks each expression that runs inside the page against the
+types of the DOM. The verdict is Nim, in `design/render.nim`, where the suites reach it (Article
+II.9).
+
+Rejected: a harness in Nim compiled to JavaScript, as `shot` is, where each of those expressions is
+an unchecked string. Rejected: `CSS.getPlatformFontsForNode`, which answers only for text laid out
+alone.
+
+**A control page proves that the render sees.** It is built from `tests/drive/control_faces.json`,
+and dressed with every face, as every page is. Two of its paragraphs write a character that no
+shipped face maps under their stack. A third writes `𝐀` under the body stack, which Noto Sans Math
+maps. The drive fails where the control raises a finding that it does not expect, or misses one that
+it expects. The fixture is under `tests/`, because the static check of coverage reads every other
+file, and no face maps these characters.
+
+**Each page is rendered inside the document skeleton that the publish host wraps it in.** So the
+charset and the viewport are the ones that a viewer gets. `SKELETON_HOST` was read off Frame States,
+Drawn, version 11, on 2026-10-05. It is the host's own, so it can change. The style sheet of the
+host is left out, because its body stack leads with faces of the system, which X.8 forbids here.
+
+No check is lost by that. An element that inherits no stack from its page takes the default of the
+browser. That default is a face of the system too, so the drive finds it either way.
+
+Verified by `suites/test_render.nim`, nine laws over the verdict. Without the line that keeps an
+expected finding of the control out of the findings, three of the nine fail. Verified by `drive` on
+2026-10-05, in Chromium 141 (revision 1194) under Playwright 1.63.0: nine pages, no finding, and
+the control raised its two findings. With Noto Sans Math taken out of `FACES`, the drive fails with
+seven findings. Among them are `U+2192` on the review page and `p#closed` of the control.
+
+Cost: a page is read at one viewport, in the state it opens on. Text that a script writes only after
+the reader acts, as the Reference writes the moves of a frame, is not read. Cost: a character is
+resolved alone, as its `cmap` maps it, so a combining mark can draw from a face that this does not
+name. Cost: `drive` takes about 30 s on a warm build, and `pages` is most of it.
+
+**`package-lock.json` pins the node tools, and git ignores their checkout.** The project commits
+`package.json` and `package-lock.json` with the versions that `pga_benchmark` pins. `typescript`
+7.0.2 type-checks the harness, and `@playwright/test` 1.63.0 drives Chromium. Both are Microsoft's,
+under Apache-2.0. `@types/node` 22.20.2 is DefinitelyTyped's, under MIT, and types the node surface
+that the harness reaches. The `license` field of each entry in `package-lock.json` gives these
+licences, and the licences of what they bring.
+
+**Chromium is the one that Playwright pins, unless `DANCE_CHROMIUM` names one.** `package-lock.json`
+pins `@playwright/test`, and that version pins the revision of the browser. `drive` fetches it with
+`npx playwright install chromium`. Playwright publishes no checksum, so the bytes arrive on TLS
+alone. The run above used revision 1194 through `DANCE_CHROMIUM`, where Playwright 1.63.0 pins
+revision 1243.
+
+**`types` compiles this driver, and the project code that it imports, on the compiler of koch.**
+That holds while the pin of this project is the pin of koch, 2.2.12 for both. A pin that moves first
+splits the driver, as `pga_benchmark` split its own.
+
+**Suites write pages apart from the directories that `pages` writes.** A page that a suite writes
+carries no faces. So `test_marks` and `test_review` write under `build/suites/`, and `pages` dresses
+only `build/app`, `build/review` and `build/design`. A suite page that stands where a published page
+stands could be published without its faces. `drive` renders only what `pages` dresses.
 
 Rejected: Commit Mono alone, which draws no `⇄`. Rejected: another mark for `place`, which would
 change the design.
@@ -1895,9 +1971,8 @@ Verified 2026-10-03. All eight arrive, and each one carries the digest that the 
 ask for a face that the store does not declare fails with a finding that names it, which is checked
 rather than assumed.
 
-That check has to live in a suite, and not only in the build. This project carries no `drive` verb,
-so the runner never runs its `assets`. A face named that the store lacks would otherwise surface
-only when somebody built pages by hand.
+That check also lives in a suite. A suite reads no network, so it fails on a checkout before
+`drive` asks the store.
 
 `test_faces.nim` reads the declaration of the store as text, and holds every face named here against
 it. It reads it as text rather than by import. The law then depends on the declaration, and not on

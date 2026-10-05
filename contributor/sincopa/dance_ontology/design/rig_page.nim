@@ -198,12 +198,12 @@ func cardsOf(html: string): Table[string, seq[Card]] =
       figure_start = html.find("<figure class=\"pic", at)
     if figure_start < 0: break
     if heading_start >= 0 and heading_start < figure_start:
-      section = $html[heading_start + 4]
+      section = $html[heading_start+4]
       at = heading_start + 4
       continue
     let shut = html.find("</figure>", figure_start)
     doAssert shut > figure_start, "A card on reference page never closes."
-    let whole = html[figure_start..<shut + "</figure>".len]
+    let whole = html[figure_start..<shut+"</figure>".len]
     at = shut + 1
     if section notin ["A", "B", "C", "D"]: continue
     let
@@ -271,11 +271,11 @@ proc cardsBody(review: string, data: JsonNode): string =
       for key in card.asks:
         if key in entry_of: entries.add $entry_of[key]
       result.add &"""<figure class="{card.classes}" data-id="{card.id}" """ &
-        &"""data-entries="{entries.join(" ")}"><div class="pair">""" &
-        &"""<div class="art">{card.art}</div><div class="simulation">"""
+          &"""data-entries="{entries.join(" ")}"><div class="pair">""" &
+          &"""<div class="art">{card.art}</div><div class="simulation">"""
       if entries.len > 0:
         result.add &"""<canvas class="thumb" data-entry="{entries[0]}"></canvas>""" &
-          &"""<p class="held">{escaped(held[card.asks[0]])}</p>"""
+            &"""<p class="held">{escaped(held[card.asks[0]])}</p>"""
       else:
         result.add """<p class="held">not asked of simulation</p>"""
       result.add &"""</div></div>{card.caption}</figure>"""
