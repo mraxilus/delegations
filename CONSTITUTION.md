@@ -505,6 +505,8 @@ suite "Chapter 2":
    It also covers one plain operand after a prefix operator (`■𝐧`). A plain operand is a name
    or a literal, with any call, index or field glued after it. Parentheses around a binary
    expression stay, and so do those whose removal would glue two tokens into one, as in `^(|𝐦)`.
+   A prefix that opens with `@` binds tighter than a call, an index or a field, so `@(x[i])`
+   keeps its parentheses.
 5. Group related constants and bindings under one keyword, dependent bindings included, where the
    language allows it. Two or more consecutive single bindings always share one keyword.
    Destructure where one expression yields the values together, or where a parallel pair fits one
