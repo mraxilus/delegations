@@ -1607,8 +1607,8 @@ It is tiny rather than small. The moons of the demo ring their planets at thousa
 are millionths wide. A floor of a twentieth kept the camera outside every one of them. There is no
 ceiling, which would read as a camera bounded to a region, and which nothing downstream needs.
 
-**Every record is stored about the origin of the frame.** `mesh.clearMeshes` takes that origin,
-and both front-ends pass the one that `originHeld` keeps. Each of the five record writers subtracts
+**Every record is stored about the view origin.** `mesh.clearMeshes` takes that origin, and
+both front-ends pass the one that `originView` keeps. Each of the five record writers subtracts
 it at the float32 write. What the camera looks at is then exact wherever it stands. Take a moon a
 thousandth of a unit from its planet, a million units out. Float32 about the world origin steps by
 a sixteenth there, and loses the whole offset.
@@ -1859,7 +1859,7 @@ reads the last edit's reach of the scene.
 Both front-ends hold a placement cache, filled on an edit beside the reach of the scene, and
 `BYTES_MEMORY_TOTAL` counts one placement for each handle. `assembleMeshes` places as it emits.
 
-**Records are stored from the eye, held where it stands.** `originHeld` keeps the origin until
+**The view origin stands at the eye, held there.** `originView` keeps the origin until
 travel has spent float32's precision about it: `FRACTION_ORIGIN_HOLD` of the near clip, divided by
 `STEP_SINGLE`. That is about 152 thousand units at the opening stance, and less as close work draws
 the near clip in.
@@ -2356,7 +2356,7 @@ field stores with no fill.
 
 **Three origins, as a GPU pipeline has three spaces.** The world origin is world space: the scene
 stores each object about it, and stores nothing else. The view origin is view space: a frame is
-drawn about it, near the camera, through `originHeld`. The model origin is model space: an
+drawn about it, near the camera, through `originView`. The model origin is model space: an
 operation holds its operands about it, at a point of one of them, through `originModel`.
 
 **Only the world origin is stored.** A GPU stores a vertex in model space and derives the others.
