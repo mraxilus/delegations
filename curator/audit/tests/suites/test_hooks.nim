@@ -550,7 +550,7 @@ suite "Hooks":
     #   hook ran; real git and real `sh` run hook file itself (Article IX.5).
     proc runHook(root, toolchain, event: string): string =
       ## Run hook file of root for event, with stub compiler of toolchain first on `PATH`.
-      let command = "KOCH_NIM_DIR=" & toolchain.quoteShell & " LOG_BUILDS=" &
+      let command = "KNOLLER_NIM_DIR=" & toolchain.quoteShell & " LOG_BUILDS=" &
         (toolchain / "builds.log").quoteShell & " CLAUDE_ENV_FILE= sh " &
         (root / ".claude" / "hooks.sh").quoteShell & " " & event
       execCmdEx(command).output.strip

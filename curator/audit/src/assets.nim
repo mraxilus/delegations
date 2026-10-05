@@ -31,10 +31,10 @@
 ##     per project in nimble files, Atlas checkouts per project, npm per project, each
 ##     deliberately. Bytes of file are not toolchain: they are same bytes whoever fetches.
 ##
-##   Store is `$KOCH_ASSETS_DIR`, else `~/.cache/koch/assets`, beside `~/.cache/koch/nim` that
-##     knoller's `compilers.nim` keeps and for same reasons: never inside checkout, since audit
-##     reads untracked files; keyed by what pins it, so entry cannot serve bytes pin would not
-##     have fetched.
+##   Store is `$KOCH_ASSETS_DIR`, else `~/.cache/koch/assets`: repository's own, so koch's, while
+##     compiler cache `~/.cache/knoller/nim` is knoller's, which koch uses too. Both stay outside
+##     checkout for one reason, since audit reads untracked files; store is keyed by what pins
+##     it, so entry cannot serve bytes pin would not have fetched.
 ##   Keyed by digest rather than by name: two projects asking for one asset share one file by
 ##     construction, and changed pin is different path rather than stale one. Same property
 ##     `check.yml` gets from keying cache on file holding digests, one layer down.
@@ -63,7 +63,7 @@ import ./findings
 const
   ASSETS_KEY* = "KOCH_ASSETS_DIR"  ## Environment name overriding where assets are stored.
   ASSETS_DIRECTORY* = ".cache/koch/assets"
-    ## Default store, under home and beside `~/.cache/koch/nim`.
+    ## Default store, under home and outside checkout, in koch's own directory.
   FONTSOURCE = "https://cdn.jsdelivr.net/npm/"
     ## Host serving `woff2` subsets packaged by `@fontsource`.
   NOTOFONTS = "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io"

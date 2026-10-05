@@ -5,9 +5,10 @@
 ##   Compiler is what `nim --version` says (`compilerAt`), never `NimVersion` caller was built
 ##     with: prebuilt binary and newer `nim` on PATH would otherwise disagree silently.
 ##
-##   Cache is `$KOCH_NIM_DIR`, else `~/.cache/koch/nim/<pin>`, beside Nim's own
-##     `~/.cache/nim`. Never inside checkout: audit reads untracked files, so toolchain there
-##     would be audited.
+##   Cache is `$KNOLLER_NIM_DIR`, else `~/.cache/knoller/nim/<pin>`, beside Nim's own
+##     `~/.cache/nim`. Knoller owns it, and koch and `.claude/hooks.sh` use it too, so machine
+##     holds one toolchain for each pin whichever tool asked first. Never inside checkout: audit
+##     reads untracked files, so toolchain there would be audited.
 ##   Release on platform nim-lang.org publishes arrives as tarball, in seconds. Commit, and
 ##     platform publishing none, is built from source, in minutes, by recipe `check.yml`
 ##     already ran, so it is proven rather than new.
@@ -41,8 +42,8 @@ import ./pins
 
 const
   HASH_KEY = "git hash:"  ## Line `nim --version` reports its commit under.
-  CACHE_KEY* = "KOCH_NIM_DIR"  ## Environment name overriding where toolchains are cached.
-  CACHE_DIRECTORY* = ".cache/koch/nim"
+  CACHE_KEY* = "KNOLLER_NIM_DIR"  ## Environment name overriding where toolchains are cached.
+  CACHE_DIRECTORY* = ".cache/knoller/nim"
     ## Default cache, under home and beside Nim's own `~/.cache/nim`.
   DOWNLOAD* = "https://nim-lang.org/download/nim-"  ## Prefix of published release tarball.
   DIGEST* = ".sha256"

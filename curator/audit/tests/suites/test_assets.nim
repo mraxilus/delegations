@@ -207,7 +207,8 @@ suite "Assets":
     check storeRoot("").endsWith(ASSETS_DIRECTORY)
     # Audit reads untracked files, so store inside checkout would be audited.
     check not storeRoot("").startsWith(".")
-    check ASSETS_DIRECTORY.parentDir == CACHE_DIRECTORY.parentDir  # beside `~/.cache/koch/nim`
+    check ASSETS_DIRECTORY.parentDir == ".cache/koch"  # store is koch's own
+    check CACHE_DIRECTORY.parentDir == ".cache/knoller"  # compiler cache is knoller's, koch uses it
 
 
   test "asset is stored under its digest, never under its name":

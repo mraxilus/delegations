@@ -125,11 +125,23 @@ suite "Compilers":
 
 
   test "cache lies outside repository, keyed by pin":
-    let root = cacheRoot("/h/.cache/koch/nim")
-    check root == "/h/.cache/koch/nim"
-    check binOf(root, PIN) == "/h/.cache/koch/nim/2.2.4/bin"
+    let root = cacheRoot("/h/.cache/knoller/nim")
+    check root == "/h/.cache/knoller/nim"
+    check binOf(root, PIN) == "/h/.cache/knoller/nim/2.2.4/bin"
     # Audit reads untracked files, so toolchain inside checkout would be audited.
     check not binOf(root, PIN).startsWith(".")
+
+
+  test "cache is knoller's, under home, and `$KNOLLER_NIM_DIR` moves it for koch too":
+    check cacheRoot("") == getHomeDir() / ".cache/knoller/nim"  # one cache, whichever tool asks
+    let (is_set, moved) = (existsEnv(CACHE_KEY), getEnv(CACHE_KEY))
+    defer:
+      if is_set: putEnv(CACHE_KEY, moved) else: delEnv(CACHE_KEY)
+    putEnv(CACHE_KEY, "/h/toolchains")
+    check CACHE_KEY == "KNOLLER_NIM_DIR"
+    check initToolchains().root == "/h/toolchains"  # table koch and knoller hold reads it
+    putEnv(CACHE_KEY, "")
+    check initToolchains().root == getHomeDir() / ".cache/knoller/nim"  # empty moves nothing
 
 
   test "pin is served by commit for commit, by version otherwise":
