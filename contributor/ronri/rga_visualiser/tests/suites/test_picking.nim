@@ -571,6 +571,39 @@ suite "Picking":
       ) == some(0)
 
 
+  test "a plane a camera stands millionths off is picked, and found under the pointer":
+    # Hit stands at camera's own separation, under millionth yet over camera's floor.
+    #   In front is judged against hit's own reach from eye, so it reads in front.
+    #   Plane as far behind eye answers neither.
+    let corners = [
+      Position(x: 0, y: -3, z: -3).toMultivector,
+      Position(x: 0, y: 3, z: -3).toMultivector,
+      Position(x: 0, y: 0, z: 3).toMultivector,
+    ]
+    for power in -8 .. -7:
+      let depth = pow(10.0, float(power))
+      var (scene, behind) = (initScene(), initScene())
+      scene.addObject(corners[0] ∧ corners[1] ∧ corners[2], "spanning", Ink.Olive)
+      let shift = Direction(x: 2.0 * depth, y: 0.0, z: 0.0).toMultivector
+      behind.addObject(
+        (corners[0] + shift) ∧ (corners[1] + shift) ∧ (corners[2] + shift), "behind", Ink.Olive
+      )
+      let
+        camera = cameraFacingOrigin(depth)
+        view_projection = camera.initMatrixViewProjection(width_pick / height_pick)
+        scale = camera.drawExtentFor(height_pick, 0.0)
+      check pickNearest(
+        scene, camera, scale, view_projection, width_pick, height_pick, centre
+      ) == some(0)
+      let under = positionUnderPointerOn(scene, 0, camera, scale, width_pick, height_pick, centre)
+      check under.isSome
+      check norm(under.get - ORIGIN) <= 1.0e-3 * depth
+      check pickNearest(
+        behind, camera, scale, view_projection, width_pick, height_pick, centre
+      ).isNone
+      check positionUnderPointerOn(behind, 0, camera, scale, width_pick, height_pick, centre).isNone
+
+
   test "nearer plane wins over a farther one behind it":
     # Eye sits at (10, 0, 0) looking toward origin along -x, so plane at x=6 stands.
     #   nearer eye (distance 4) than one at x=3 (distance 7).
