@@ -939,9 +939,10 @@ func handlesCreated*(scene: Scene, handles: var array[OBJECTS_MAX, int]): int =
     siftDown(scene, handles, 0, last)
 
 
-func anchorOverrideAt*(scene: Scene, handle: int): Option[Position] =
+func anchorOverrideAt*(scene: Scene, handle: int): lent Option[Position] =
   ## Read where object's circle should centre, by handle rather than through `Object`.
   ##   See `inkAt`.
+  ##   `lent`, as `geometryOf` is, for same reason: placing whole scene reads it for each handle.
   doAssert scene.isAlive(handle), &"Object handle must be alive; got `{handle}`."
   scene.anchor_overrides[handle]
 

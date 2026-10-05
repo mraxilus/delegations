@@ -1185,7 +1185,7 @@ proc ensurePlacement() =
     let is_stale = REVISION_PLACEMENT.isNone or
         SCENE_PAGE.revisionPlacingAt(handle) > REVISION_PLACEMENT.get
     if SCENE_PAGE.isAlive(handle) and is_stale:
-      PLACEMENTS[handle] = placeObject(
+      PLACEMENTS[handle].placeInto(
         SCENE_PAGE.geometryOf(handle),
         SCENE_PAGE.anchorOverrideAt(handle),
       )

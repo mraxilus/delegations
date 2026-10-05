@@ -1109,7 +1109,7 @@ proc renderFrame(
     REACH_SCENE = reachOf(scene)
     for handle in 0..<scene.bound:
       if scene.isAlive(handle):
-        PLACEMENTS[handle] = placeObject(
+        PLACEMENTS[handle].placeInto(
           scene.geometryOf(handle),
           scene.anchorOverrideAt(handle),
         )
