@@ -102,7 +102,11 @@ const
           "F01", "F02"]
     ## Ids Architect has kept: drawn right.  Added as they are ruled on.
   DROPPED: seq[string] = @[]  ## Ids Architect has ruled out.
-  CONFIRMED*: seq[string] = @[]
+  CONFIRMED* = @["A01", "A02", "A03", "A04", "A05", "A06", "A07", "A08", "A09", "A10",
+                   "A11", "A12", "A13", "A14", "A15", "A16", "A17", "B01", "B02", "B03",
+                   "B04", "B05", "B06", "B07", "B08", "B09", "B10", "B11", "B12", "B13",
+                   "B14", "B15", "B16", "B17", "B18", "B19", "B20", "B21", "B22", "B23",
+                   "B24", "B25", "B26", "B27", "B28"]
     ## Ids whose simulation still Architect has confirmed against their own body, on
     ## viewer page that lays each beside its cell.  Added as they are confirmed.
     ##   Confirmation is of one still, so each confirmed card is held to its still
