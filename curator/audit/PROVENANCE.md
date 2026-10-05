@@ -839,8 +839,8 @@ a copy from two different faces.
 - Verified by a break of it, on 2026-09-10. A face that nobody declares is a finding, which
   names the table to add a row to. Alter one declared digest in its last character, and the
   fetch refuses the bytes and **leaves the store empty** rather than keeps them.
-- Cost: the store grows and nothing prunes it. A face is less than 1 MB, where a compiler is
-  about 300 MB. So what is unbounded is the number of pins the repository has ever held, and
+- Cost: the store grows and nothing prunes it. A face is less than 1 MB, where a fetched compiler
+  is about 140 MB and a built one about 2.4 GB. So what is unbounded is the number of pins the repository has ever held, and
   not the bytes.
 - Cost: an upstream that moves bytes under one address fails every project at once, rather
   than one. That is the same failure that a digest exists to make loud, and it is louder
@@ -1069,8 +1069,8 @@ The curator projects pin 2.2.12 for that reason.
 **Koch runs each project on the compiler of its pin, and knoller serves that compiler.** Koch
 imports the resolution of knoller: `PATH` where that already serves, then
 `~/.cache/knoller/nim/<pin>/bin`, then a fetch. `$KNOLLER_NIM_DIR` moves the cache. The record
-of knoller holds that design, under Compilers. `plan.nim` and `symbols.nim` each hold one
-`Toolchains` of knoller, which resolves each pin once.
+of knoller holds that design, under Compilers. `plan.nim`, `symbols.nim` and `koch fix` each
+hold one `Toolchains` of knoller, which resolves each pin once.
 
 So `nim r koch check` stays green as one command over a changed set that spans pins. These
 points hold here.
@@ -1093,8 +1093,8 @@ points hold here.
   between Nim versions.
 - On CI, the installed compiler of every job already satisfies its pin, so resolution stops at
   `PATH` and never fetches.
-- Verified by `suites/test_toolchain.nim`, `test_compilers.nim` and `test_projects.nim`. Verified by
-  hand, 2026-09-06: `curator/probe`, pinned to a release that nothing local served, fetched the
+- Verified by `suites/test_toolchain.nim` and `test_projects.nim` here, and by the suites
+  `test_pins.nim` and `test_compilers.nim` of knoller. Verified by hand, 2026-09-06: `curator/probe`, pinned to a release that nothing local served, fetched the
   tarball and ran. One command over projects on two pins gave **0 findings**, and its log held no
   Atlas mismatch warning.
 - A pin that nothing can serve is one finding, which names the pin and the cache it tried, and
@@ -2087,7 +2087,7 @@ answers by path, and fixes again each entry that asked. The rule and its probe a
 of knoller, under Content fixes.
 
 - The pin is that of the project that holds the file, and that of `curator/audit` for a file at
-  the root. `pinProvers` of knoller serves it, through the `Toolchains` that the suites use too.
+  the root. `pinProvers` of knoller serves it, through a `Toolchains` of its own.
   So the `ronri` projects read with their commit pin, whose glyph operators 2.2.12 lexes as names.
 - Where no compiler serves a pin, or a project pins none, no group goes. `koch fix` then prints
   one line `warning: needless-parentheses: <message>`, and the exit code stays.
@@ -2105,8 +2105,8 @@ of knoller, under Content fixes.
     `@(PAIRS[task.pair][0])` at lines 79 and 228 of `tests/test_read.nim` (#539);
   - `curator`: 1308 and 1345, in 13.9 s and 15.3 s. Outside the files that hold the proof, each
     line is the same, so the new lines are code that waits for its own fix.
-- Verified by hand, 2026-10-05, with resolution in audit at `6e5140d` and in knoller at `80954e6`.
-  Koch built at each gives the same output, byte for byte. Each ran
+- Verified by hand, 2026-10-05: koch built at `80954e6` gives the same output as koch built at
+  `6e5140d`, byte for byte. Each ran
   `koch fix --dry-run --branch:main`, with no checkout that `koch fetch-deps` restores:
   - `rga_visualiser`: 0 to fix on both, in 29.1 s and 30.4 s;
   - `pga_benchmark`: 1 to fix on both, in 6.1 s and 6.0 s;
