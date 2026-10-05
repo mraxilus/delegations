@@ -34,8 +34,8 @@ _Avoid_: variant, tag, kind
 
 **Placement**:
 What the algebra alone says about one object. That is its kind, where it stands, which way
-it points, and the arms that its disc is spanned by. The camera is not in it, which is why a
-placement survives an orbit, and is computed once rather than every frame.
+it points, and the arms that its disc is spanned by. The camera is not in it, so one placement
+serves every pass of its frame. Each frame computes it again for every object.
 _Avoid_: placed, derivation, resolution, geometry
 
 **Revision**:
