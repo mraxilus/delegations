@@ -210,7 +210,7 @@ func readSweep(sweep: var Sweep, hold: Hold, level: Level) =
   ## Read one sweep's limits into `sweep`, keeping its moments as reference.
   ##   Fills table's own slot: constructor returned or assigned would deep copy.
   let
-    sweep_data = turns().sweeps[HOLDS[hold].key & "|" & LEVEL_NAMES[level]]
+    sweep_data = turns().sweeps[HOLDS[hold].key&"|"&LEVEL_NAMES[level]]
     negative = sweep_data.negative.to(float)
     positive = sweep_data.positive.to(float)
   sweep.limits.negative = min(MOST, negative)
@@ -313,10 +313,10 @@ func markShape(centre: Vector2; who: Dancer; style, extra: cstring): cstring =
   case who
   of Dancer.Lead:
     "<rect x=\"" & (centre[0] - 6.0).toFixed(1) & "\" y=\"" & (centre[1] - 6.0).toFixed(1) &
-      "\" width=\"12\" height=\"12\" rx=\"1.5\" style=\"" & style & "\"" & extra & "/>"
+        "\" width=\"12\" height=\"12\" rx=\"1.5\" style=\"" & style & "\"" & extra & "/>"
   of Dancer.Follow:
     "<circle cx=\"" & centre[0].toFixed(1) & "\" cy=\"" & centre[1].toFixed(1) &
-      "\" r=\"6\" style=\"" & style & "\"" & extra & "/>"
+        "\" r=\"6\" style=\"" & style & "\"" & extra & "/>"
 
 func markSvg(centre: Vector2, who: Dancer, arm: Arm, level: Level, is_held: bool): cstring =
   ## Draw one mark at shoulder: filled by level when held, hollow and faded when free.
@@ -339,7 +339,7 @@ func markSvg(centre: Vector2, who: Dancer, arm: Arm, level: Level, is_held: bool
   )
   if is_held and level == Level.High:
     result.add "<circle cx=\"" & centre[0].toFixed(1) & "\" cy=\"" & centre[1].toFixed(1) &
-      "\" r=\"2.7\" style=\"fill:var(--" & colour & ")\"/>"
+        "\" r=\"2.7\" style=\"fill:var(--" & colour & ")\"/>"
 
 func bodySvg(centre: Vector2, facing: Vector2): cstring =
   ## Draw one dancer from above: rim and chevron turned to facing.
@@ -356,7 +356,7 @@ func bodySvg(centre: Vector2, facing: Vector2): cstring =
     if i > 0: points.add " "
     points.add pointText([centre[0] + turned[0], centre[1] + turned[1]])
   "<circle cx=\"" & centre[0].toFixed(1) & "\" cy=\"" & centre[1].toFixed(1) & "\" r=\"" &
-    RIM.toText & "\" class=\"rim\"/><polyline points=\"" & points & "\" class=\"chev\"/>"
+      RIM.toText & "\" class=\"rim\"/><polyline points=\"" & points & "\" class=\"chev\"/>"
 
 func shoulderOf(centre: Vector2, facing: float, arm: Arm): Vector2 =
   ## Locate shoulder joint in metres: left arm's quarter turn anticlockwise of facing.
@@ -386,8 +386,8 @@ func sideBodies(scene: Scene): cstring =
         top = SIDE_Y - extent.z_to / 1000.0 * Z_SCALE
         height = (extent.z_to - extent.z_from) / 1000.0 * Z_SCALE
       result.add "<rect x=\"" & left.toFixed(1) & "\" y=\"" & top.toFixed(1) & "\" width=\"" &
-        (2.0 * half).toFixed(1) & "\" height=\"" & height.toFixed(1) &
-        "\" class=\"rim\" style=\"fill:var(--wash, #eee);fill-opacity:0.5\"/>"
+          (2.0 * half).toFixed(1) & "\" height=\"" & height.toFixed(1) &
+          "\" class=\"rim\" style=\"fill:var(--wash, #eee);fill-opacity:0.5\"/>"
 
 
 
@@ -472,19 +472,19 @@ func sceneSvg(hold: Hold, level: Level, scene: Scene): cstring =
       deep = INKS[HOLDS[hold].ropes[i].lead] & "-deep"
       plain = INKS[HOLDS[hold].ropes[i].follow]
     result.add "<path d=\"" & pathOf(connection.lead, View.Above) & "\" class=\"" & classes &
-      "\" style=\"stroke:var(--" & deep & ")\"/>"
+        "\" style=\"stroke:var(--" & deep & ")\"/>"
     result.add "<path d=\"" & pathOf(connection.follow, View.Above) & "\" class=\"" & classes &
-      "\" style=\"stroke:var(--" & plain & ")\"/>"
+        "\" style=\"stroke:var(--" & plain & ")\"/>"
     for k in 1..2:
       let joint = page(connection.lead[k][0], connection.lead[k][1])
       result.add "<circle cx=\"" & joint[0].toFixed(1) & "\" cy=\"" & joint[1].toFixed(1) &
-        "\" r=\"1.6\" style=\"fill:var(--mark-bg);stroke:var(--" & deep &
-        ");stroke-width:0.8\"/>"
+          "\" r=\"1.6\" style=\"fill:var(--mark-bg);stroke:var(--" & deep &
+          ");stroke-width:0.8\"/>"
     for k in 1..2:
       let joint = page(connection.follow[k][0], connection.follow[k][1])
       result.add "<circle cx=\"" & joint[0].toFixed(1) & "\" cy=\"" & joint[1].toFixed(1) &
-        "\" r=\"1.6\" style=\"fill:var(--mark-bg);stroke:var(--" & plain &
-        ");stroke-width:0.8\"/>"
+          "\" r=\"1.6\" style=\"fill:var(--mark-bg);stroke:var(--" & plain &
+          ");stroke-width:0.8\"/>"
 
   # Marks at every shoulder, filled where that arm is held.
   var
@@ -525,9 +525,9 @@ func sceneSvg(hold: Hold, level: Level, scene: Scene): cstring =
       deep = INKS[HOLDS[hold].ropes[i].lead] & "-deep"
       plain = INKS[HOLDS[hold].ropes[i].follow]
     result.add "<path d=\"" & pathOf(connection.lead, View.Side) & "\" class=\"" & classes &
-      "\" style=\"stroke:var(--" & deep & ")\"/>"
+        "\" style=\"stroke:var(--" & deep & ")\"/>"
     result.add "<path d=\"" & pathOf(connection.follow, View.Side) & "\" class=\"" & classes &
-      "\" style=\"stroke:var(--" & plain & ")\"/>"
+        "\" style=\"stroke:var(--" & plain & ")\"/>"
   result.add "</g>"
 
 
@@ -606,7 +606,7 @@ proc renderStage() =
     if found_scene: sceneSvg(HOLD_SHOWN, LEVEL_SHOWN, SCENE_STORAGE) else: ""
   SLIDER_ELEMENT.value = TURN_DRAWN.toText
   let head = "<b>" & HOLDS[HOLD_SHOWN].name & "</b> · " & LEVEL_NAMES[LEVEL_SHOWN] & " · @ " &
-    turnFigure(TURN_DRAWN) & " from " & HOLDS[HOLD_SHOWN].from_rest
+      turnFigure(TURN_DRAWN) & " from " & HOLDS[HOLD_SHOWN].from_rest
   if not found_scene or not limits.found_rest:
     READOUT_ELEMENT.innerHTML = head & "<br>no pose holds at the rest"
     return
@@ -646,12 +646,12 @@ proc renderStage() =
   const unstopped: cstring = " (not within two turns)"
     ## Block's word where sweep ran out of range before any joint refused.
   var blocks = "blocks at " & turnFigure(-limits.negative) &
-    (if limits.is_stopped_negative: " (" & limits.why_negative & ")" else: unstopped) &
-    " and " & turnFigure(limits.positive) &
-    (if limits.is_stopped_positive: " (" & limits.why_positive & ")" else: unstopped)
+      (if limits.is_stopped_negative: " (" & limits.why_negative & ")" else: unstopped) &
+      " and " & turnFigure(limits.positive) &
+      (if limits.is_stopped_positive: " (" & limits.why_positive & ")" else: unstopped)
   if is_at_negative or is_at_positive:
     blocks = "<b class=\"bad\">blocked here</b> — " &
-      (if is_at_negative: limits.why_negative else: limits.why_positive) & "; " & blocks
+        (if is_at_negative: limits.why_negative else: limits.why_positive) & "; " & blocks
   lines.add "<br>" & blocks
   READOUT_ELEMENT.innerHTML = head & lines
 
@@ -675,8 +675,8 @@ proc renderStrip() =
   # Sort ascending; insertion suits eleven values and keeps equal ones in order.
   for i in 1..<count:
     var j = i
-    while j > 0 and shown[j - 1] > shown[j]:
-      swap(shown[j - 1], shown[j])
+    while j > 0 and shown[j-1] > shown[j]:
+      swap(shown[j-1], shown[j])
       dec j
 
   # One figure per turn: crossed out beyond blocks, else scene with simulation's words.
@@ -688,10 +688,10 @@ proc renderStrip() =
     if turn < -sweep.limits.negative - 1e-6 or turn > sweep.limits.positive + 1e-6 or
         not sweep.limits.found_rest:
       html.add "<figure class=\"mini blocked\" data-t=\"" & turn.toText &
-        "\"><div class=\"x\">&#10005;</div><figcaption><b>@ " & turnWord(turn) &
-        "</b><br><span class=\"say\">blocked — " &
-        (if turn < 0.0: sweep.limits.why_negative else: sweep.limits.why_positive) &
-        "</span></figcaption></figure>"
+          "\"><div class=\"x\">&#10005;</div><figcaption><b>@ " & turnWord(turn) &
+          "</b><br><span class=\"say\">blocked — " &
+          (if turn < 0.0: sweep.limits.why_negative else: sweep.limits.why_positive) &
+          "</span></figcaption></figure>"
       continue
     doAssert fillScene(SCENE_STORAGE, sweep.frames, turn),
       "Sweep within its blocks must have moments."
@@ -703,11 +703,11 @@ proc renderStrip() =
       is_rest = abs(turn - HOLDS[HOLD_SHOWN].rest) < 1e-6
       is_limit = not is_half
     html.add "<figure class=\"mini" & (if is_limit: cstring(" limit") else: "") &
-      "\" data-t=\"" & turn.toText & "\"><svg viewBox=\"-52 -56 104 112\" width=\"70\">" &
-      sceneSvg(HOLD_SHOWN, LEVEL_SHOWN, SCENE_STORAGE) & "</svg>" & "<figcaption><b>@ " &
-      (if is_half: turnWord(turn) else: turnFigure(turn)) & "</b>" &
-      (if is_rest: cstring(" rest") else: "") & (if is_limit: cstring(" the block") else: "") &
-      "<br><span class=\"say\">" & words & "</span></figcaption></figure>"
+        "\" data-t=\"" & turn.toText & "\"><svg viewBox=\"-52 -56 104 112\" width=\"70\">" &
+        sceneSvg(HOLD_SHOWN, LEVEL_SHOWN, SCENE_STORAGE) & "</svg>" & "<figcaption><b>@ " &
+        (if is_half: turnWord(turn) else: turnFigure(turn)) & "</b>" &
+        (if is_rest: cstring(" rest") else: "") & (if is_limit: cstring(" the block") else: "") &
+        "<br><span class=\"say\">" & words & "</span></figcaption></figure>"
   STRIP_ELEMENT.innerHTML = html
   for figure in STRIP_ELEMENT.querySelectorAll(".mini:not(.blocked)"):
     figure.addEventListener("click", proc (event: Event) =
@@ -720,12 +720,12 @@ proc renderButtons() =
   var html: cstring = ""
   for hold in Hold:
     html.add "<button class=\"" & (if hold == HOLD_SHOWN: cstring("on") else: "") & "\" data-k=\"" &
-      HOLDS[hold].key & "\">" & HOLDS[hold].name & "</button>"
+        HOLDS[hold].key & "\">" & HOLDS[hold].name & "</button>"
   HOLD_BOX.innerHTML = html
   html = ""
   for level in Level:
     html.add "<button class=\"" & (if level == LEVEL_SHOWN: cstring("on") else: "") &
-      "\" data-l=\"" & LEVEL_NAMES[level] & "\">" & LEVEL_NAMES[level] & "</button>"
+        "\" data-l=\"" & LEVEL_NAMES[level] & "\">" & LEVEL_NAMES[level] & "</button>"
   LEVEL_BOX.innerHTML = html
   for button in HOLD_BOX.querySelectorAll("button"):
     button.addEventListener("click", proc (event: Event) =

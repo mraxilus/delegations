@@ -36,10 +36,10 @@ func suitesOf(stub: string): seq[string] =
       let
         open = statement.find("/[", at)
         shut = statement.find(']', at)
-      if statement[at - 1] != '.' and open > at and shut > open and
-          statement[at + 2..<open].allCharsInSet(IdentChars):
-        for name in statement[open + 2..<shut].split(','):
-          result.add "tests" / statement[at + 2..<open] / name.strip & ".nim"
+      if statement[at-1] != '.' and open > at and shut > open and
+          statement[at+2..<open].allCharsInSet(IdentChars):
+        for name in statement[open+2..<shut].split(','):
+          result.add "tests" / statement[at+2..<open] / name.strip & ".nim"
       at = statement.find("./", at + 2)
 
 
@@ -119,7 +119,7 @@ suite "Internal: The review page":
       var said = chunk[0..<chunk.find("</div>")]
       while said.contains("<span"):
         said = said[0..<said.find("<span")] & said[said.find('>',
-          said.find("<span")) + 1 .. ^1]
+          said.find("<span"))+1 .. ^1]
       named.add said
     check named.len == FRAMES.len
     var cells = 0

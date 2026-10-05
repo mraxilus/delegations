@@ -32,7 +32,7 @@ suite "Internal: The relation":
     for source in FRAMES:
       for destination in FRAMES:
         check classify(source, destination) ==
-          classify(source.reflect, destination.reflect)
+            classify(source.reflect, destination.reflect)
 
 
   test "the relation is not empty and not everything":

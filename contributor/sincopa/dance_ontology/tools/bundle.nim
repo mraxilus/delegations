@@ -27,9 +27,9 @@ proc bundle(directory, name: string) =
     markup = readFile(directory / "index.html")
     script = readFile(directory / (name & ".js"))
     tag = "<script src=\"" & name & ".js\"></script>"
-  var head = markup[markup.find("<title>")..markup.find("</style>") + 7]
+  var head = markup[markup.find("<title>")..markup.find("</style>")+7]
   head = head.replace("<title>", "<title>" & TITLE_PREFIX)
-  var body = markup[markup.find("<body>") + 6..<markup.find("</body>")]
+  var body = markup[markup.find("<body>")+6..<markup.find("</body>")]
   doAssert body.contains(tag),
     "Markup should load its script as bundle expects; got `" & directory / "index.html" & "`."
   body = body.replace(tag, "<script>\n" & script & "\n</script>")

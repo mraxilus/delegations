@@ -102,9 +102,9 @@ func buildScenes(): array[HOW_MANY, string] {.compileTime.} =
   ##     apart; other way is one frame drawn with its crossing unbroken,
   ##     and rule 14 has no exception in it.
   for i, target in FRAMES:
-    result[i * 3] = sceneOf(target, is_facing = true, is_clockwise = true)
-    result[i * 3 + 1] = sceneOf(target, is_facing = false, is_clockwise = true)
-    result[i * 3 + 2] = sceneOf(target, is_facing = false, is_clockwise = false)
+    result[i*3] = sceneOf(target, is_facing = true, is_clockwise = true)
+    result[i*3+1] = sceneOf(target, is_facing = false, is_clockwise = true)
+    result[i*3+2] = sceneOf(target, is_facing = false, is_clockwise = false)
 
 
 const SCENES = buildScenes()  ## Every frame picture, drawn in compiler and shipped as text.
@@ -120,4 +120,4 @@ func sceneFor*(target: Frame; is_facing, is_clockwise: bool): string =
   let at = frameIndex(target)
   if at.isNone:
     return ""
-  SCENES[at.get * 3 + (if is_facing: 0 elif is_clockwise: 1 else: 2)]
+  SCENES[at.get*3+(if is_facing: 0 elif is_clockwise: 1 else: 2)]

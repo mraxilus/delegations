@@ -15,6 +15,8 @@
 ##   | assets   | fetch faces pages embed from repository store into build/fonts        |
 ##   | fixtures | rewrite design/review-fixtures.json from page just built: run when    |
 ##   |          | Architect rules on cards, never to quiet check that says one moved    |
+##   | confirmed| rewrite design/confirmed-fixtures.json from page just built: run when |
+##   |          | Architect confirms stills, never to quiet check that says one moved   |
 ##   | modelled | rewrite design/modelled.json: which reference cards simulation        |
 ##   |          | reaches, stamped, and only where stamp changed                        |
 ##   | rig      | rewrite design/rig.json: sweeps rig viewer plays, and every still,    |
@@ -61,7 +63,8 @@ const
     ## Directory faces land in.  Never committed: fonts are unregistered kind, so
     ##   lock is committed and checkout is not, as Atlas does for packages.
   USAGE = "Usage: nim r tools/build.nim " &
-    "<pages|assets|fixtures|modelled|rig|record|turns|verdicts|answers|engine|shot|system|clean>\n"
+      "<pages|assets|fixtures|confirmed|modelled|rig|record|turns|verdicts|answers|engine|shot|" &
+      "system|clean>\n"
     ## Text printed on usage error.
   SYSTEM = [
     ("git", true, "clone engine's source at its pinned commit; `engine` shells out to it"),
@@ -87,12 +90,13 @@ const
     ##   helper is one person runs by hand.  Naming them in `SYSTEM` anyway keeps one
     ##   spelling of what each needs (Article II.1), and `shot` prints them where it builds,
     ##   so person running it is told what to install while runner installs no browser it
-    ##   never starts.  `pages`, `fixtures`, `verdicts` and `clean` need Nim alone.
+    ##   never starts.  `pages`, `fixtures`, `confirmed`, `verdicts` and `clean` need Nim
+    ##   alone.
   SOURCES = [
     ("box3d", "https://github.com/erincatto/box3d",
      "47d7f7cc7e091142c08d11dc7d2e493c5d34f536",
      "rigid body solver with contacts that slide; pose search this project had could " &
-       "not wind chain past half turn without arms passing through each other",
+     "not wind chain past half turn without arms passing through each other",
      "MIT"),
   ]
     ## Source clones no package manager carries, each pinned by its commit, which is what
@@ -138,7 +142,7 @@ proc rootOf(): string =
       raise newException(
         OSError,
         "No repository root above project, so shared store cannot be reached; got `" &
-          getCurrentDir() & "`.",
+        getCurrentDir() & "`.",
       )
     result = above
 
@@ -168,7 +172,7 @@ proc assets() =
     raise newException(
       OSError,
       "Store answered with `" & $paths.len & "` paths for `" & $wanted.len &
-        "` faces asked for, so which is which cannot be told; got:\n" & written,
+      "` faces asked for, so which is which cannot be told; got:\n" & written,
     )
   for i, file in wanted:
     copyFile(paths[i], DIRECTORY_FONTS / file)
@@ -294,6 +298,18 @@ proc fixtures() =
   echo "wrote design/review-fixtures.json"
 
 
+proc confirmed() =
+  ## Write which still every confirmed card stands for into `design/confirmed-fixtures.json`.
+  ##   Second step, as `fixtures` is, and for like reason: confirmation and fixture are
+  ##     added together, so build that says confirmed still moved is never quieted by
+  ##     running this alone.
+  let page = BUILD / "design" / "review.html"
+  if not fileExists(page):
+    quit("No review page to read; run `pages` first.", 1)
+  writeFile("design/confirmed-fixtures.json", confirmedIn(readFile(page)))
+  echo "wrote design/confirmed-fixtures.json"
+
+
 proc modelled() =
   ## Rewrite `design/modelled.json`: which cards simulation reaches.
   ##   Second step, as `fixtures` is, and for like reason: badge saying model agrees
@@ -389,6 +405,7 @@ proc main(): int =
     of "pages": pages()
     of "assets": assets()
     of "fixtures": fixtures()
+    of "confirmed": confirmed()
     of "modelled": modelled()
     of "rig": rig()
     of "record": record()

@@ -82,16 +82,16 @@ func arc(stood: FrameState, twist: HalfTurns, is_refused: bool): string =
     lift = ARC_RISE + reach * 30
     (control_x, control_y) = ((start_x + end_x) div 2, start_y - lift)
     told = TURN_NAMES[min(reach, TURN_NAMES.high)] &
-      (if twist > stood.twist: " right" else: " left")
+        (if twist > stood.twist: " right" else: " left")
   result = "<g class=\"turn" & (if is_refused: " refused" else: "") & "\">" &
-    "<path class=\"turn-line\" d=\"M" & $start_x & " " & $(start_y - 58) & "Q" & $control_x &
-    " " & $control_y & " " & $end_x & " " & $(end_y - 58) & "\"/>"
+      "<path class=\"turn-line\" d=\"M" & $start_x & " " & $(start_y - 58) & "Q" & $control_x &
+      " " & $control_y & " " & $end_x & " " & $(end_y - 58) & "\"/>"
   let (label_x, label_y) = (control_x, start_y - lift * 3 div 4)
   result.add "<rect class=\"turn-plate\" x=\"" & $(label_x - told.len * 3 - 5) &
-    "\" y=\"" & $(label_y - 9) & "\" width=\"" & $(told.len * 6 + 10) &
-    "\" height=\"15\" rx=\"3\"/>"
+      "\" y=\"" & $(label_y - 9) & "\" width=\"" & $(told.len * 6 + 10) &
+      "\" height=\"15\" rx=\"3\"/>"
   result.add "<text class=\"turn-name\" x=\"" & $label_x & "\" y=\"" & $(label_y + 3) &
-    "\" text-anchor=\"middle\" style=\"" & LABEL_FONT & "\">" & told & "</text>"
+      "\" text-anchor=\"middle\" style=\"" & LABEL_FONT & "\">" & told & "</text>"
   result.add "</g>"
 
 
@@ -102,16 +102,16 @@ func renderAxle*(stood: FrameState, motion = Motion.Still, taken = none(HalfTurn
     is_leaving = motion == Motion.Leaving and taken.isSome
     here = if is_leaving: taken.get else: stood.twist
   result = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 " & $width &
-    " " & $AXLE_HEIGHT & "\" class=\"axle" & (if is_leaving: " leaving" else: "") &
-    "\" style=\"" & passStyle(WIDE_TEMPO) & "\" role=\"img\">" &
-    "<title>" & stood.describe & ", and every turn out of it</title>"
+      " " & $AXLE_HEIGHT & "\" class=\"axle" & (if is_leaving: " leaving" else: "") &
+      "\" style=\"" & passStyle(WIDE_TEMPO) & "\" role=\"img\">" &
+      "<title>" & stood.describe & ", and every turn out of it</title>"
 
   # Axle itself, drawn width of what stands on it and no wider.
   let ends = standing(stood)
   if ends.len > 0:
     result.add "<line class=\"axle-line\" x1=\"" &
-      $(centreOf(stood, ends[0])[0]) & "\" y1=\"" & $AXLE_Y & "\" x2=\"" &
-      $(centreOf(stood, ends[^1])[0]) & "\" y2=\"" & $AXLE_Y & "\"/>"
+        $centreOf(stood, ends[0])[0] & "\" y1=\"" & $AXLE_Y & "\" x2=\"" &
+        $centreOf(stood, ends[^1])[0] & "\" y2=\"" & $AXLE_Y & "\"/>"
 
   # Arcs: one per place turn can land, refused ones included.
   var drawn: seq[HalfTurns] = @[]
@@ -129,13 +129,13 @@ func renderAxle*(stood: FrameState, motion = Motion.Still, taken = none(HalfTurn
       (centre_x, centre_y) = centreOf(stood, twist)
       is_reachable = twist != stood.twist
       classes = "node" & (if twist == here: " here" else: "") &
-        (if is_reachable: " reachable" else: "")
+          (if is_reachable: " reachable" else: "")
     result.add "<g class=\"" & classes & "\" data-frame-state=\"" & landing.key &
-      "\">"
+        "\">"
     result.add "<rect class=\"node-plate\" x=\"" & $(centre_x - NODE_WIDTH div 2 - 5) &
-      "\" y=\"" & $(centre_y - frameHeight(NODE_WIDTH) div 2 - 5) & "\" width=\"" &
-      $(NODE_WIDTH + 10) & "\" height=\"" & $(frameHeight(NODE_WIDTH) + 10) &
-      "\" rx=\"6\"/>"
+        "\" y=\"" & $(centre_y - frameHeight(NODE_WIDTH) div 2 - 5) & "\" width=\"" &
+        $(NODE_WIDTH + 10) & "\" height=\"" & $(frameHeight(NODE_WIDTH) + 10) &
+        "\" rx=\"6\"/>"
     result.add renderFramePlaced(
       landing.frame,
       centre_x - NODE_WIDTH div 2,
@@ -145,14 +145,14 @@ func renderAxle*(stood: FrameState, motion = Motion.Still, taken = none(HalfTurn
     )
     let name = turnName(twist)
     result.add "<text class=\"node-name\" x=\"" & $centre_x & "\" y=\"" &
-      $(centre_y - frameHeight(NODE_WIDTH) div 2 - NAME_RISE) &
-      "\" text-anchor=\"middle\" style=\"" & LABEL_FONT & "\">" & name & "</text>"
+        $(centre_y - frameHeight(NODE_WIDTH) div 2 - NAME_RISE) &
+        "\" text-anchor=\"middle\" style=\"" & LABEL_FONT & "\">" & name & "</text>"
     let arms = landing.armName
     if arms.len > 0:
       result.add "<text class=\"node-arms\" x=\"" & $centre_x & "\" y=\"" &
-        $(centre_y + frameHeight(NODE_WIDTH) div 2 + 18) &
-        "\" text-anchor=\"middle\" style=\"" & LABEL_FONT & "\">" & arms &
-        "</text>"
+          $(centre_y + frameHeight(NODE_WIDTH) div 2 + 18) &
+          "\" text-anchor=\"middle\" style=\"" & LABEL_FONT & "\">" & arms &
+          "</text>"
     result.add "</g>"
 
   # Mark carries distance to where it is going, so taking turn is

@@ -353,11 +353,11 @@ suite "Internal: Two dancers in rigid body engine":
         var run: seq[tuple[a, z: Vector]]
         for shape in couple.shapes:
           if shape.mark in {Mark.Upper, Mark.Fore, Mark.Palm} and shape.who == who and
-             shape.arm == arm:
+              shape.arm == arm:
             run.add couple.endsOf(shape)
         check run.len == 3
-        for i in 0..<run.len - 1:
-          check distance(run[i].z, run[i + 1].a) < 2.0 * HUMAN.limb + 0.01
+        for i in 0 ..< run.len - 1:
+          check distance(run[i].z, run[i+1].a) < 2.0 * HUMAN.limb + 0.01
     couple.free()
 
 
@@ -386,8 +386,8 @@ suite "Internal: Two dancers in rigid body engine":
     let
       hip = axesOf(couple.stance[Body.One]).origin
       after = couple.endsOf(couple.shapes[0]).a
-      radius_was = sqrt((before.a.x - hip.x) ^ 2 + (before.a.y - hip.y) ^ 2)
-      radius_now = sqrt((after.x - hip.x) ^ 2 + (after.y - hip.y) ^ 2)
+      radius_was = sqrt((before.a.x - hip.x)^2 + (before.a.y - hip.y)^2)
+      radius_now = sqrt((after.x - hip.x)^2 + (after.y - hip.y)^2)
     check abs(radius_was - radius_now) < 1e-4
     check abs(before.a.z - after.z) < 1e-4
     couple.free()
@@ -456,7 +456,7 @@ suite "Internal: Two dancers in rigid body engine":
       if question.is_raw or not twin.is_reflected: continue
       for other in SWEEPS:
         if other.band != question.band or other.most != question.most or
-           other.links.len != twin.links.len: continue
+            other.links.len != twin.links.len: continue
         var is_same = true
         for k in 0..<other.links.len:
           is_same = is_same and other.links[k].ends == twin.links[k].ends
@@ -501,7 +501,7 @@ suite "Internal: Two dancers in rigid body engine":
         peak = max(positive.peak, negative.peak)
         at_end = positive.at_end + negative.at_end
       echo &"    {key}: extension peaks {peak * 180.0 / PI:.1f} degrees, " &
-        &"{at_end} arm-moments at swing's end"
+          &"{at_end} arm-moments at swing's end"
       check at_end == 0
 
 
@@ -664,7 +664,7 @@ func leapIn(walk: Walk, links: seq[Link]): tuple[most, at: float] =
     for i in 0..<links.len:
       for k in 0..1:
         let
-          before = walk.moments[j - 1].arms[i][k]
+          before = walk.moments[j-1].arms[i][k]
           after = walk.moments[j].arms[i][k]
         for (joint_before, joint_after) in [
           (before.shoulder, after.shoulder),
@@ -908,7 +908,7 @@ suite "Internal: Arms move as arms do":
   test "no point of any arm leaps between two moments":
     for (name, band, links, went) in corpus():
       echo &"    {name}: furthest any point moves between moments {went.leap * 1000:.0f} mm, " &
-        &"at {went.leap_at:.2f}"
+          &"at {went.leap_at:.2f}"
       check went.leap < LEAP
 
 
@@ -941,7 +941,7 @@ proc overlapOf(couple: Couple): tuple[depth: float, pair: string] =
       if shape_a.mark notin limbs and shape_b.mark notin limbs: return true
       if shape_a.arm == shape_b.arm and shape_a.mark in limbs and shape_b.mark in limbs: return true
       if shape_a.arm == shape_b.arm and
-         {shape_a.mark, shape_b.mark} == {Mark.Girdle, Mark.Upper}: return true
+          {shape_a.mark, shape_b.mark} == {Mark.Girdle, Mark.Upper}: return true
     if shape_a.mark == Mark.Palm and shape_b.mark == Mark.Palm:
       for link in couple.links:
         let (first_hand, second_hand) = (link.ends[0], link.ends[1])
@@ -953,7 +953,7 @@ proc overlapOf(couple: Couple): tuple[depth: float, pair: string] =
 
   result = (0.0, "")
   for i in 0..<couple.shapes.len:
-    for k in i + 1..<couple.shapes.len:
+    for k in i + 1 ..< couple.shapes.len:
       let (shape_a, shape_b) = (couple.shapes[i], couple.shapes[k])
       if isSkipped(shape_a, shape_b): continue
       let
@@ -964,7 +964,7 @@ proc overlapOf(couple: Couple): tuple[depth: float, pair: string] =
         result = (
           depth,
           &"{shape_a.who} {shape_a.arm} {shape_a.mark} against " &
-            &"{shape_b.who} {shape_b.arm} {shape_b.mark}",
+          &"{shape_b.who} {shape_b.arm} {shape_b.mark}",
         )
 
 
@@ -1006,7 +1006,7 @@ suite "Internal: Every still stands at ease":
       check where.is_holding
       check still.is_holding
       echo &"    {still.key}: stood {where.apart:.2f}, strain {still.strain.most:.2f} " &
-        &"at {still.strain.what} {still.strain.whose.body} {still.strain.whose.arm}"
+          &"at {still.strain.what} {still.strain.whose.body} {still.strain.whose.arm}"
       check still.strain.most <= AT_EASE
 
 
@@ -1027,9 +1027,9 @@ suite "Internal: Every still stands at ease":
           pose = couple.armPoseOf(who, arm)
           hang = pose.grip - pose.shoulder
         echo &"    {who} {arm}: extend {swings.extend * 180.0 / PI:.1f}, across " &
-          &"{swings.across * 180.0 / PI:.1f}, twist {twist_angle * 180.0 / PI:.1f}, bend " &
-          &"{bend_angle * 180.0 / PI:.1f}, wrist {wrist_angle * 180.0 / PI:.1f}, hand " &
-          &"{sqrt(hang.x * hang.x + hang.y * hang.y) * 1000:.0f} mm off plumb"
+            &"{swings.across * 180.0 / PI:.1f}, twist {twist_angle * 180.0 / PI:.1f}, bend " &
+            &"{bend_angle * 180.0 / PI:.1f}, wrist {wrist_angle * 180.0 / PI:.1f}, hand " &
+            &"{sqrt(hang.x * hang.x + hang.y * hang.y) * 1000:.0f} mm off plumb"
         check abs(swings.extend) <= 10.0 * DEGREE
         check abs(twist_angle) <= 15.0 * DEGREE
         check bend_angle <= 20.0 * DEGREE
@@ -1038,7 +1038,7 @@ suite "Internal: Every still stands at ease":
     for shape_a in couple.shapes:
       for shape_b in couple.shapes:
         if shape_a.who == shape_b.who or shape_a.mark notin {Mark.Upper, Mark.Fore, Mark.Palm} or
-           shape_b.mark notin {Mark.Upper, Mark.Fore, Mark.Palm}: continue
+            shape_b.mark notin {Mark.Upper, Mark.Fore, Mark.Palm}: continue
         let (ends_a, ends_b) = (couple.endsOf(shape_a), couple.endsOf(shape_b))
         nearest = min(
           nearest,
@@ -1066,7 +1066,7 @@ suite "Internal: Every still stands at ease":
             pose = couple.armPoseOf(who, arm)
             hang = pose.grip - pose.shoulder
           echo &"    wound {turns:+.1f} {who} {arm}: extend {swings.extend * 180.0 / PI:.1f}, " &
-            &"hand {sqrt(hang.x * hang.x + hang.y * hang.y) * 1000:.0f} mm off plumb"
+              &"hand {sqrt(hang.x * hang.x + hang.y * hang.y) * 1000:.0f} mm off plumb"
           check abs(swings.extend) <= 10.0 * DEGREE
           check sqrt(hang.x * hang.x + hang.y * hang.y) <= 0.2
       couple.free()
@@ -1082,7 +1082,7 @@ suite "Internal: Every still stands at ease":
       check still.is_holding
       if not still.is_holding: continue
       echo &"    {still.key}: deepest {still.depth * 1000:.1f} mm ({still.pair}), hands " &
-        &"{still.apart * 1000:.1f} mm apart, joints parted {still.parted * 1000:.1f} mm"
+          &"{still.apart * 1000:.1f} mm apart, joints parted {still.parted * 1000:.1f} mm"
       check still.depth <= SLOP
       check still.apart <= JOINED
       check still.parted <= PART
@@ -1173,8 +1173,8 @@ suite "Internal: Every still stands at ease":
                              answered().stillOf("right to left at half, either way"))
       (asked_strain, free_strain) = (asked_at.strainOf, free_at.strainOf)
     echo &"    right to left at half: asked way stood {asked_way.apart:.2f} strain " &
-      &"{asked_strain.most:.2f}; either way stood {free_way.apart:.2f} at " &
-      &"{free_way.turns:+.1f} strain {free_strain.most:.2f}"
+        &"{asked_strain.most:.2f}; either way stood {free_way.apart:.2f} at " &
+        &"{free_way.turns:+.1f} strain {free_strain.most:.2f}"
     check is_asked_holding
     check is_free_holding
     check free_strain.most <= asked_strain.most
@@ -1252,7 +1252,7 @@ suite "Internal: Answers":
         check went.why == kept.why
     for (question, kept, went) in replayed():
       echo &"    {question.key}, from {kept.apart:.2f}: kept {kept.carried:.2f}, " &
-        &"walked {went.carried:.2f}"
+          &"walked {went.carried:.2f}"
       check went.is_holding == kept.is_holding
       check went.is_stopped == kept.is_stopped
       check went.at == kept.at

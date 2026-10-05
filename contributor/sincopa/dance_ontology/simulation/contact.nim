@@ -78,7 +78,7 @@ func partGap*(axes: Axes; part_shape: PartShape; a, b: Vector): float =
   let k = if near.distance < 1e-9: 1.0
           else: sqrt(
             near.near_x * near.near_x +
-                       part_shape.flat * part_shape.flat * near.near_y * near.near_y,
+            part_shape.flat * part_shape.flat * near.near_y * near.near_y,
           ) / near.distance
   (near.distance - part_shape.half_breadth) * k
 

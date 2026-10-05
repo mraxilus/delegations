@@ -26,7 +26,7 @@ import ./drawn
 
 const VERDICTS* = [
   "Holds. The simulation wound the couple here from rest, lifted their joined hands, and let the " &
-    "pose settle.",
+  "pose settle.",
   "No pose holds, at any distance the couple can stand.",
   "Nothing stops the turn inside the range this sweep tried.",
 ]
@@ -110,8 +110,8 @@ proc ends(recording: JsObject; i, at: int): tuple[a, z: Spot] =
   let
     row = recording.points[at]
     k = i * 6
-  ((x: row[k].toFloat, y: row[k + 1].toFloat, z: row[k + 2].toFloat),
-   (x: row[k + 3].toFloat, y: row[k + 4].toFloat, z: row[k + 5].toFloat))
+  ((x: row[k].toFloat, y: row[k+1].toFloat, z: row[k+2].toFloat),
+   (x: row[k+3].toFloat, y: row[k+4].toFloat, z: row[k+5].toFloat))
 
 
 proc paintOn(
@@ -158,8 +158,8 @@ proc paintOn(
   for who in 0..1:
     let
       k = who * 4
-      here: Spot = (look[k].toFloat, look[k + 1].toFloat, 0.0)
-      ahead: Spot = (here.x + look[k + 2].toFloat, here.y + look[k + 3].toFloat, 0.0)
+      here: Spot = (look[k].toFloat, look[k+1].toFloat, 0.0)
+      ahead: Spot = (here.x + look[k+2].toFloat, here.y + look[k+3].toFloat, 0.0)
       seen_here = seen(here, azimuth, elevation, framing)
       seen_ahead = seen(ahead, azimuth, elevation, framing)
     facing[who] = (
@@ -233,10 +233,10 @@ proc paintOn(
 
   # Where hands are joined, and how far engine has pulled them apart.
   let grip = recording.grips[at]
-  for k in 0..<count(grip) div 3:
+  for k in 0 ..< count(grip) div 3:
     let seen_grip = seen(
-      (x: grip[k * 3].toFloat, y: grip[k * 3 + 1].toFloat,
-                    z: grip[k * 3 + 2].toFloat),
+      (x: grip[k*3].toFloat, y: grip[k*3+1].toFloat,
+                    z: grip[k*3+2].toFloat),
       azimuth,
       elevation,
       framing,
@@ -270,8 +270,8 @@ proc readout() =
         side = int(sweep_shown.arm[arm][1].toFloat)
       # Label, not heading: heading would take serif face (Article X.8).
       html = html & cstring"<div class='arm'><p class='who'><i style='background:" &
-        inkOf(side, who) & cstring"'></i>" & WHOSE[who] & cstring" " &
-        SIDES[side] & cstring"</p>"
+          inkOf(side, who) & cstring"'></i>" & WHOSE[who] & cstring" " &
+          SIDES[side] & cstring"</p>"
       for dof in 0..<DOFS.len:
         let
           k = arm * DOFS.len + dof
@@ -282,12 +282,12 @@ proc readout() =
           at = (angle - lower) / width
           is_strained = angle <= lower + NEAR or angle >= upper - NEAR
         html = html & cstring"<div class='dof" &
-          (if is_strained: cstring" strained" else: cstring"") & cstring"'><span>" &
-          DOFS[dof] & cstring"</span><div class='track'><b style='left:" &
-          toFixed(max(0.0, min(1.0, at)) * 100.0, 1) & cstring"%'></b></div><em>" &
-          toFixed(angle * 180.0 / PI, 0) & cstring"°</em><u>" &
-          toFixed(lower * 180.0 / PI, 0) & cstring"…" &
-          toFixed(upper * 180.0 / PI, 0) & cstring"</u></div>"
+            (if is_strained: cstring" strained" else: cstring"") & cstring"'><span>" &
+            DOFS[dof] & cstring"</span><div class='track'><b style='left:" &
+            toFixed(max(0.0, min(1.0, at)) * 100.0, 1) & cstring"%'></b></div><em>" &
+            toFixed(angle * 180.0 / PI, 0) & cstring"°</em><u>" &
+            toFixed(lower * 180.0 / PI, 0) & cstring"…" &
+            toFixed(upper * 180.0 / PI, 0) & cstring"</u></div>"
       html = html & cstring"</div>"
   document.getElementById("reads").innerHTML = html
 
@@ -299,21 +299,21 @@ proc caption() =
     document.getElementById("where").innerHTML =
       (if moments() > 0:
          cstring"<b>" & toFixed(sweep_shown.turns.toFloat, 2) & cstring"</b> turns · stood <b>" &
-           toFixed(sweep_shown.apart.toFloat, 2) & cstring"</b> m apart"
+             toFixed(sweep_shown.apart.toFloat, 2) & cstring"</b> m apart"
        else:
          cstring"<b>" & toFixed(sweep_shown.turns.toFloat, 2) &
-           cstring"</b> turns · no pose holds")
+             cstring"</b> turns · no pose holds")
     document.getElementById("verdict").innerHTML =
       (if moments() > 0: cstring(VERDICTS[0]) else: cstring(VERDICTS[1]))
   else:
     let turned = sweep_shown.at[MOMENT_SHOWN].toFloat
     document.getElementById("where").innerHTML =
-      cstring"<b>" & toFixed(turned, 2) & cstring"</b> turns · stood <b>" &
-      toFixed(sweep_shown.apart.toFloat, 2) & cstring"</b> m apart"
+        cstring"<b>" & toFixed(turned, 2) & cstring"</b> turns · stood <b>" &
+        toFixed(sweep_shown.apart.toFloat, 2) & cstring"</b> m apart"
     document.getElementById("verdict").innerHTML =
       (if truth(sweep_shown.stopped):
          cstring"Stops at <b>" & toFixed(sweep_shown.turns.toFloat, 2) & cstring"</b> turns: " &
-           text(sweep_shown.says)
+             text(sweep_shown.says)
        else:
          cstring(VERDICTS[2]))
 
@@ -326,9 +326,9 @@ proc framingOf(recording: JsObject): Framing =
     upper = [-1e9, -1e9, -1e9]
   for moment in 0..<momentsOf(recording):
     let row = recording.points[moment]
-    for k in 0..<count(row) div 3:
+    for k in 0 ..< count(row) div 3:
       for axis in 0..2:
-        let coordinate = row[k * 3 + axis].toFloat
+        let coordinate = row[k*3+axis].toFloat
         lower[axis] = min(lower[axis], coordinate)
         upper[axis] = max(upper[axis], coordinate)
   ## Framed to capsules, not to floor.  Rig is trunk upward and has no legs, so
@@ -438,7 +438,7 @@ proc start() =
       name = (if isStill(recording): LUT_ID_BY_ENTRY[i] & cstring" · " & text(recording.key)
               else: text(recording.hold) & cstring" · " & text(recording.band))
     option_list = option_list & cstring"<option value='" & toFixed(float(i), 0) &
-      cstring"'>" & name & cstring"</option>"
+        cstring"'>" & name & cstring"</option>"
   document.getElementById("pick").innerHTML = option_list
 
   document.getElementById("pick").addEventListener("change", proc (event: Event) =

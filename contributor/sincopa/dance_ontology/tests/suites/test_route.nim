@@ -32,7 +32,7 @@ let
 proc crossingAt(where: float): seq[Point] =
   ## Get reach crossing line square on, this far along it.
   ##   `proc` rather than `func` only because it reads module's own `REACH_SQUARE`.
-  REACH_SQUARE.mapIt((x: where, y: it.y))
+  REACH_SQUARE.mapIt (x: where, y: it.y)
 
 
 const
@@ -159,7 +159,7 @@ suite "Internal: Crossings found":
     for wavelength in WAVELENGTHS:
       let met = crossingsOf(LINE_SAMPLED, crossedBy(wavelength))
       for i in 1..<met.len:
-        check met[i - 1].x < met[i].x  # rule 27
+        check met[i-1].x < met[i].x  # rule 27
 
 
 

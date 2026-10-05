@@ -56,14 +56,14 @@ const
     ##     page earlier run left there arrives already dressed.  Marked block is
     ##     what lets dressing take old one out before it puts new one in.
   SERIF* = "\"Noto Serif\", \"Noto Sans Math\", \"Commit Mono\", Georgia, " &
-    "\"Times New Roman\", serif"
+      "\"Times New Roman\", serif"
     ## Titles.  Fallback is only for face that failed to load, never for one absent.
     ##   Noto Sans Math draws arrows, and Commit Mono marks such as `✓` that both lack.
   SANS_SERIF* = "\"Noto Sans\", \"Noto Sans Math\", \"Commit Mono\", ui-sans-serif, " &
-    "system-ui, sans-serif"
+      "system-ui, sans-serif"
     ## Body text, with same two faces after it as titles.
   MONOSPACE* = "\"Commit Mono\", \"Noto Sans Math\", ui-monospace, SFMono-Regular, " &
-    "Menlo, monospace"
+      "Menlo, monospace"
     ## Code, data and figures, with Noto Sans Math for `⇄`, which Commit Mono lacks.
 
 
@@ -87,12 +87,12 @@ proc faceStyle*(directory = DIRECTORY_FONTS): string =
       raise newException(
         IOError,
         "Face is absent, so page would name one reader may lack; run " &
-          "`nim r tools/build.nim assets`: got `" & path & "`.",
+        "`nim r tools/build.nim assets`: got `" & path & "`.",
       )
     let (media, format) = formatOf(file)
     rules.add "@font-face{font-family:\"" & family & "\";font-style:" & style &
-      ";font-weight:" & weight & ";font-display:block;src:url(data:" & media & ";base64," &
-      encode(readFile(path)) & ") format(\"" & format & "\")}"
+        ";font-weight:" & weight & ";font-display:block;src:url(data:" & media & ";base64," &
+        encode(readFile(path)) & ") format(\"" & format & "\")}"
   FACES_MARK & rules.join("\n") & "\n:root{font-variant-ligatures:contextual}</style>"
 
 
@@ -142,7 +142,7 @@ proc withFaces*(raw: string, directory = DIRECTORY_FONTS): string =
     html =
       if "<meta charset" in bare: bare
       elif opens < 0: charset & "\n" & bare
-      else: bare[0..<opens + head.len] & "\n" & charset & bare[opens + head.len .. ^1]
+      else: bare[0..<opens+head.len] & "\n" & charset & bare[opens+head.len .. ^1]
     shuts = html.find(shut)
   if shuts >= 0:
     return html[0..<shuts] & faceStyle(directory) & "\n" & html[shuts .. ^1]
@@ -151,6 +151,6 @@ proc withFaces*(raw: string, directory = DIRECTORY_FONTS): string =
     raise newException(
       ValueError,
       "Page carries neither head nor title to put faces by; got first 40 " &
-        "characters `" & html[0..<min(40, html.len)] & "`.",
+      "characters `" & html[0..<min(40, html.len)] & "`.",
     )
-  html[0..<titled + title.len] & "\n" & faceStyle(directory) & html[titled + title.len .. ^1]
+  html[0..<titled+title.len] & "\n" & faceStyle(directory) & html[titled+title.len .. ^1]

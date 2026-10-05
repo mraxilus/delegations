@@ -5,7 +5,7 @@
 version = "0.1.0"
 author = "Emmanuel M. Smith"
 description = "Executable ontology of partner dance frames, with drawings, validator and body " &
-  "simulation."
+    "simulation."
 license = "Prosperity-3.0.0"
 srcDir = "src"
 

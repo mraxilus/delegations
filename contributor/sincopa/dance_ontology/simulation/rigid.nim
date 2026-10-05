@@ -235,15 +235,15 @@ func quaternionProduct(a, b: engine.Quaternion): engine.Quaternion =
   engine.Quaternion(
     vector: engine.initVector(
       a.scalar * b.vector.x + a.vector.x * b.scalar +
-        a.vector.y * b.vector.z - a.vector.z * b.vector.y,
+      a.vector.y * b.vector.z - a.vector.z * b.vector.y,
       a.scalar * b.vector.y - a.vector.x * b.vector.z +
-        a.vector.y * b.scalar + a.vector.z * b.vector.x,
+      a.vector.y * b.scalar + a.vector.z * b.vector.x,
       a.scalar * b.vector.z + a.vector.x * b.vector.y -
-        a.vector.y * b.vector.x + a.vector.z * b.scalar,
+      a.vector.y * b.vector.x + a.vector.z * b.scalar,
     ),
     scalar: cfloat(
       a.scalar * b.scalar - a.vector.x * b.vector.x -
-                     a.vector.y * b.vector.y - a.vector.z * b.vector.z,
+      a.vector.y * b.vector.y - a.vector.z * b.vector.z,
     ),
   )
 
@@ -1249,7 +1249,7 @@ proc easeOff(couple: Couple) =
       let
         bend = float(engine.angleOf(arm_rig.elbow))
         over_bend = bend -
-          (couple.rig.range[Dof.Bend].upper - couple.rig.range[Dof.Bend].ease_upper)
+            (couple.rig.range[Dof.Bend].upper - couple.rig.range[Dof.Bend].ease_upper)
       if over_bend > 0.0:
         let normal = cross(upper_direction, fore_direction)
         if dot(normal, normal) > 1e-6:
@@ -1331,27 +1331,27 @@ proc steer*(couple: var Couple, plan: openArray[float], hertz: float) =
   ## elbows, wrists.  Plan is waists then nine per arm, lead's left first.
   couple.is_steered = true
   for who in Body:
-    engine.aimHinge(couple.who[who].waist, cfloat(plan[2 + ord(who)]))
+    engine.aimHinge(couple.who[who].waist, cfloat(plan[2+ord(who)]))
     engine.stiffenHinge(couple.who[who].waist, cfloat(hertz))
     for arm in Arm:
       let
         base = 4 + 9 * (2 * ord(who) + ord(arm))
         arm_rig = couple.who[who].arm[arm]
       engine.aimHinge(arm_rig.swing[Collar.Fore], cfloat(side(arm) * plan[base]))
-      engine.aimHinge(arm_rig.swing[Collar.Up], cfloat(-side(arm) * plan[base + 1]))
+      engine.aimHinge(arm_rig.swing[Collar.Up], cfloat(-side(arm) * plan[base+1]))
       for k in Collar: engine.stiffenHinge(arm_rig.swing[k], cfloat(hertz))
       let shoulder_turn = times(
         transposed(MATRIX_REST),
-        times(turnAbout([plan[base + 2], plan[base + 3], plan[base + 4]]), MATRIX_REST),
+        times(turnAbout([plan[base+2], plan[base+3], plan[base+4]]), MATRIX_REST),
       )
       engine.aimBall(arm_rig.shoulder, quaternionOfMatrix(shoulder_turn))
       engine.stiffenBall(arm_rig.shoulder, cfloat(hertz))
-      engine.aimHinge(arm_rig.elbow, cfloat(plan[base + 5]))
+      engine.aimHinge(arm_rig.elbow, cfloat(plan[base+5]))
       engine.stiffenHinge(arm_rig.elbow, cfloat(hertz))
       let wrist_turn = quaternionOfMatrix(
         turnAbout(
-          [plan[base + 6], plan[base + 7],
-                                                         plan[base + 8]],
+          [plan[base+6], plan[base+7],
+                                                         plan[base+8]],
         ),
       )
       engine.aimBall(arm_rig.wrist, wrist_turn)
@@ -1402,7 +1402,7 @@ proc poseVector*(couple: Couple): array[40, float] =
   result[0] = two.y - one.y
   result[1] = two.x - one.x
   for who in Body:
-    result[2 + ord(who)] = float(engine.angleOf(couple.who[who].waist))
+    result[2+ord(who)] = float(engine.angleOf(couple.who[who].waist))
     for arm in Arm:
       let
         base = 4 + 9 * (2 * ord(who) + ord(arm))
@@ -1424,10 +1424,10 @@ proc poseVector*(couple: Couple): array[40, float] =
         shoulder_vector = turnVector(shoulder_turn)
         wrist_vector = turnVector(wrist_turn)
       result[base] = protract
-      result[base + 1] = elevate
-      for k in 0..2: result[base + 2 + k] = shoulder_vector[k]
-      result[base + 5] = float(engine.angleOf(arm_rig.elbow))
-      for k in 0..2: result[base + 6 + k] = wrist_vector[k]
+      result[base+1] = elevate
+      for k in 0..2: result[base+2+k] = shoulder_vector[k]
+      result[base+5] = float(engine.angleOf(arm_rig.elbow))
+      for k in 0..2: result[base+6+k] = wrist_vector[k]
 
 type ArmPlacing* = object  ## Where one arm's five bodies stand, in world.
   root*, shoulder*, elbow*, wrist*: Vector
@@ -1452,7 +1452,7 @@ proc placeBodies*(couple: var Couple, chests: array[Body, Stance], arms: array[4
     engine.place(couple.who[who].chest, asPlace(axes.origin), standing(axes))
     for arm in Arm:
       let
-        placing = arms[2 * ord(who) + ord(arm)]
+        placing = arms[2*ord(who)+ord(arm)]
         arm_rig = couple.who[who].arm[arm]
       engine.place(arm_rig.collar, asPlace(placing.root), turnOf(placing.collar))
       engine.place(arm_rig.girdle, asPlace(placing.shoulder), turnOf(placing.girdle))
@@ -1721,7 +1721,7 @@ proc stoppedBy*(couple: Couple, i: int): tuple[why: Stop, end_index: int] =
       hand = couple.links[i].ends[k]
       arm_joints = joints(couple.chestStance(hand.body), hand.arm, pose.arms[k])
     if margin(couple.rig.range[Dof.Extend], arm_joints.extend) < -GIVE or
-       margin(couple.rig.range[Dof.Across], arm_joints.across) < -GIVE:
+        margin(couple.rig.range[Dof.Across], arm_joints.across) < -GIVE:
       return (Stop.Swing, k)
   let deep = deepest(couple, i)
   if deep.depth > THROUGH:

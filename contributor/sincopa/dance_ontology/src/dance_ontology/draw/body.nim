@@ -176,9 +176,9 @@ func rim*(centre: Point; facing, bearing_start, bearing_stop: float; width = RIM
     large = if abs(span) > 180: 1 else: 0
     sweep = if span > 0: 1 else: 0
     path_data = &"M{coordinates(start)} A{numeral(BODY_RADIUS)} {numeral(BODY_RADIUS)}" &
-      &" 0 {large} {sweep} {coordinates(stop)}"
+        &" 0 {large} {sweep} {coordinates(stop)}"
   &"""<path d="{path_data}" fill="none" stroke="{QUIET}" stroke-width="{width}"""" &
-    " stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+      " stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
 
 
 func chevronPoints*(centre: Point, facing: float): array[3, Point] =
@@ -206,10 +206,10 @@ func chevron*(centre: Point, facing: float): string =
     drawn = chevronPoints(centre, facing)
     (wing_a, apex, wing_b) = (drawn[0], drawn[1], drawn[2])
   &"""<polyline points="{numeral(wing_a.x)},{numeral(wing_a.y)}""" &
-    &""" {numeral(apex.x)},{numeral(apex.y)}""" &
-    &""" {numeral(wing_b.x)},{numeral(wing_b.y)}" fill="none" stroke="{QUIET}"""" &
-    &" stroke-width=\"{numeral(CHEVRON_WIDTH)}\" stroke-linecap=\"round\"" &
-    " stroke-linejoin=\"round\"/>"
+      &""" {numeral(apex.x)},{numeral(apex.y)}""" &
+      &""" {numeral(wing_b.x)},{numeral(wing_b.y)}" fill="none" stroke="{QUIET}"""" &
+      &" stroke-width=\"{numeral(CHEVRON_WIDTH)}\" stroke-linecap=\"round\"" &
+      " stroke-linejoin=\"round\"/>"
 
 
 func border*(pose: Pose, who: Dancer): string =
@@ -267,18 +267,18 @@ func hand*(
             else: &" opacity=\"{FREE_FADE}\""
     dot = if level == some(Level.High):
             &"""<circle cx="{numeral(centre_x)}" cy="{numeral(centre_y)}"""" &
-              &""" r="2.7" fill="{stroke}"/>"""
+                &""" r="2.7" fill="{stroke}"/>"""
           else: ""
     style = &"fill: {fill}; stroke: {stroke}; stroke-width: 1.5"
     shape =
       if is_leading:
         &"""<rect x="{numeral(centre_x - HAND_RADIUS)}" y="{numeral(centre_y - HAND_RADIUS)}"""" &
-          &""" width="{numeral(2 * HAND_RADIUS)}"""" &
-          &""" height="{numeral(2 * HAND_RADIUS)}" rx="1.5" style="{style}"{faded}/>"""
+            &""" width="{numeral(2 * HAND_RADIUS)}"""" &
+            &""" height="{numeral(2 * HAND_RADIUS)}" rx="1.5" style="{style}"{faded}/>"""
       else:
         &"""<circle cx="{numeral(centre_x)}" cy="{numeral(centre_y)}"""" &
-          &""" r="{numeral(HAND_RADIUS)}" style="{style}"""" &
-          &"{faded}/>"
+            &""" r="{numeral(HAND_RADIUS)}" style="{style}"""" &
+            &"{faded}/>"
   shape & dot
 
 
@@ -291,8 +291,8 @@ func ringOf*(pose: Pose): string =
     return ""
   let (centre, radius) = pose.ring.get
   &"""<circle cx="{numeral(centre.x)}" cy="{numeral(centre.y)}" r="{numeral(radius)}"""" &
-    &""" fill="none" stroke="{QUIET}" stroke-width="1"""" &
-    """ stroke-dasharray="3 4"/>"""
+      &""" fill="none" stroke="{QUIET}" stroke-width="1"""" &
+      """ stroke-dasharray="3 4"/>"""
 
 
 func caption*(
@@ -313,5 +313,5 @@ func caption*(
       elif delta_x > 2: ("start", 3.0)
       else: ("middle", if point.y < centre.y: -3.0 else: 8.0)
   &"""<text x="{numeral(point.x)}" y="{numeral(point.y + shift_y)}" text-anchor="{anchor}"""" &
-    " style=\"font: 8px 'Noto Sans', ui-sans-serif, system-ui, sans-serif;" &
-    &""" fill: {ink}">{text}</text>"""
+      " style=\"font: 8px 'Noto Sans', ui-sans-serif, system-ui, sans-serif;" &
+      &""" fill: {ink}">{text}</text>"""

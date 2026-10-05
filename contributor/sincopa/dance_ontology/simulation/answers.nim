@@ -168,7 +168,7 @@ func engineCommit*(build: string): string =
   while opens >= 0:
     let shut = build.find('"', opens + 1)
     if shut < 0: return
-    let quoted = build[opens + 1..<shut]
+    let quoted = build[opens+1..<shut]
     if quoted.len == 40 and quoted.allCharsInSet(HexDigits): return quoted
     opens = build.find('"', shut + 1)
 
@@ -198,25 +198,25 @@ proc kept*(path = KEPT): Answers =
 proc sweepOf*(answers: Answers, key: string): Ways =
   ## Kept sweep, or failure naming verb that answers it.
   doAssert key in answers.sweeps, "No sweep answered; run `nim r tools/build.nim answers`: got `" &
-    key & "`."
+      key & "`."
   answers.sweeps[key]
 
 proc walksOf*(answers: Answers, key: string): seq[Walked] =
   ## Kept walks from every distance, nearest first.
   doAssert key in answers.walks, "No walks answered; run `nim r tools/build.nim answers`: got `" &
-    key & "`."
+      key & "`."
   answers.walks[key]
 
 proc isReaching*(answers: Answers, key: string): bool =
   ## Kept answer of `reaches`.
   doAssert key in answers.reaches, "No reach answered; run `nim r tools/build.nim answers`: got `" &
-    key & "`."
+      key & "`."
   answers.reaches[key]
 
 proc stillOf*(answers: Answers, key: string): Stand =
   ## Kept distance couple stand at for still.
   doAssert key in answers.stills, "No still answered; run `nim r tools/build.nim answers`: got `" &
-    key & "`."
+      key & "`."
   answers.stills[key]
 
 
