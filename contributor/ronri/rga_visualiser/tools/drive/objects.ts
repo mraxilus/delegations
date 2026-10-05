@@ -167,8 +167,9 @@ export async function driveHeaderPinned(page: Page): Promise<void> {
  *  alpha. Written because fill is `color-mix`, which computes to `color(srgb …)`, and check
  *  spelling out one notation holds syntax where it means to hold paint.
  *  Said again inside `waitForFunction` above, which runs in page and cannot see this.
+ *  Exported for `surface.ts`, which reads fill of each surface over scene same way.
  */
-function alphaOfFill(fill: string): number {
+export function alphaOfFill(fill: string): number {
   const sliced = fill.match(/\/\s*([0-9.]+)\s*\)/);
   if (sliced !== null) return Number(sliced[1]);
   const listed = fill.match(/^rgba\(.*,\s*([0-9.]+)\s*\)$/);

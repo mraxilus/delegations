@@ -54,6 +54,7 @@ import { driveComet } from './comet';
 import { driveMarkerShapedOnce } from './marker';
 import { driveShadedFromAbove } from './shade';
 import { driveStyleDeclared } from './style';
+import { driveSurfacesFilled } from './surface';
 import { driveHeapUnit, drivePhaseSums, driveTree } from './diagnostics';
 import { driveAxis, driveAxisGlide, driveCurve, driveScaleSwitch } from './exceedance';
 import { driveSums, driveTint, openEveryBranch } from './ramp';
@@ -165,6 +166,7 @@ async function driveSimulated(browser: Browser): Promise<void> {
   // Stylesheet first, before anything reads what it drew: declaration browser dropped is
   //   layout nobody wrote, and every check below is against page it styled.
   await driveStyleDeclared(page);
+  await driveSurfacesFilled(page);
   // Blur's own checks next, on page as it opened; every check after them runs without it, by
   //   ruling of #453 (`blur.ts`).
   await driveBlurDeclared(page);
