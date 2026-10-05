@@ -491,6 +491,12 @@ Verified by `suites/test_parentheses.nim` and `suites/test_chain.nim`.
 - A prefix operator binds tighter than any binary one, so `|∙ x + y` reads as `(|∙ x) + y`. So
   the parse tree changes only by the `nkPar` around one node. Verified by hand, 2026-10-04, with
   the parser of the commit pin of the `ronri` projects, on the PGA library as `koch fix` writes it.
+- A prefix that opens with `@` binds before a call, an index or a field, as Nim reads a prefix
+  like a sigil. So `@x[i]` reads as `(@x)[i]`, and its group stays where the operand holds a
+  call, an index or a field. A group around a bare operand goes, as `@(x)` becomes `@x`.
+- Verified by `suites/test_parentheses.nim`, and by hand, 2026-10-05, with the parser of the
+  commit pin. `@(x[0])`, `@(x.y)`, `@(f(a))` and `@@(x[0])` read otherwise without their group.
+  `$(x[0])`, `-(x.y)` and `■(n.x)` read the same.
 - A group around a binary expression stays, whatever its precedence, as the Architect ruled. So
   `1'u shl (i-1)`, `(2'u^DIMENSIONS) - 1` and the parentheses of X.4 around `and` stay.
 - A group with a suffix glued after it stays, since `■𝐧.x` reads as `■(𝐧.x)`. So do a tuple, a
