@@ -63,8 +63,8 @@ const
     ## Directory faces land in.  Never committed: fonts are unregistered kind, so
     ##   lock is committed and checkout is not, as Atlas does for packages.
   USAGE = "Usage: nim r tools/build.nim " &
-    "<pages|assets|fixtures|confirmed|modelled|rig|record|turns|verdicts|answers|engine|shot|" &
-    "system|clean>\n"
+      "<pages|assets|fixtures|confirmed|modelled|rig|record|turns|verdicts|answers|engine|shot|" &
+      "system|clean>\n"
     ## Text printed on usage error.
   SYSTEM = [
     ("git", true, "clone engine's source at its pinned commit; `engine` shells out to it"),
@@ -96,7 +96,7 @@ const
     ("box3d", "https://github.com/erincatto/box3d",
      "47d7f7cc7e091142c08d11dc7d2e493c5d34f536",
      "rigid body solver with contacts that slide; pose search this project had could " &
-       "not wind chain past half turn without arms passing through each other",
+     "not wind chain past half turn without arms passing through each other",
      "MIT"),
   ]
     ## Source clones no package manager carries, each pinned by its commit, which is what
@@ -142,7 +142,7 @@ proc rootOf(): string =
       raise newException(
         OSError,
         "No repository root above project, so shared store cannot be reached; got `" &
-          getCurrentDir() & "`.",
+        getCurrentDir() & "`.",
       )
     result = above
 
@@ -172,7 +172,7 @@ proc assets() =
     raise newException(
       OSError,
       "Store answered with `" & $paths.len & "` paths for `" & $wanted.len &
-        "` faces asked for, so which is which cannot be told; got:\n" & written,
+      "` faces asked for, so which is which cannot be told; got:\n" & written,
     )
   for i, file in wanted:
     copyFile(paths[i], DIRECTORY_FONTS / file)

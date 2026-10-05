@@ -147,8 +147,8 @@ proc sweepJson(hold, word: string; band: Band): JsonNode =
     "apartPositive": round(sweep.positive.apart * 1000.0) / 1000.0,
     "frames": (if sweep.found_rest: frames(sweep, band, links) else: newJArray())}
   stderr.writeLine hold & " " & word & ": -" & $went(sweep.negative) &
-    " +" & $went(sweep.positive) &
-    " (" & $(sweep.negative.moments.len + sweep.positive.moments.len) & " moments)"
+      " +" & $went(sweep.positive) &
+      " (" & $(sweep.negative.moments.len + sweep.positive.moments.len) & " moments)"
 
 
 type Sweep* = tuple[hold, word: string, band: Band]  ## One sweep of whole-cloth page.
@@ -189,5 +189,5 @@ proc bridged*(texts: seq[string]): string =
             "shoulder": int(round(HUMAN.shoulder_up * 1000.0))}},
     "sweeps": {}}
   for i, sweep in sweeps():
-    node["sweeps"][sweep.hold & "|" & sweep.word] = parseJson(texts[i])
+    node["sweeps"][sweep.hold&"|"&sweep.word] = parseJson(texts[i])
   pretty(node) & "\n"

@@ -225,7 +225,7 @@ func phrase*(source: Frame, move: Move): string =
     result = "collect " & hand & " to " & followName(move.to.hold[move.side].get)
     if move.to.isOverlapping:
       result.add ", " & (if move.to.over.get == move.side: "over" else: "under") &
-        " the " & leadName(other(move.side)) & " arm"
+          " the " & leadName(other(move.side)) & " arm"
   of Helper.Drop:
     result = "drop " & hand & " from " & followName(source.hold[move.side].get)
 
@@ -296,10 +296,10 @@ func compoundPhrase*(source, destination: Frame): string =
   case named.get
   of Compound.Cut:
     "cut " & hand & ": drop " & leadName(side) & ", then collect it back over " &
-      "the " & leadName(other(side)) & " arm"
+        "the " & leadName(other(side)) & " arm"
   of Compound.Place:
     "place " & hand & " from " & leadName(other(side)) & " into " &
-      leadName(side)
+        leadName(side)
 
 
 func label*(source: Frame, move: Move): seq[string] =

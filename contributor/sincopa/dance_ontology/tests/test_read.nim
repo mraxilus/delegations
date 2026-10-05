@@ -42,7 +42,7 @@ func nearestOn(line: array[7, Vector], point: Vector): tuple[offset, z: float] =
   for i in 0..<6:
     let
       a = line[i]
-      b = line[i + 1]
+      b = line[i+1]
       delta_x = b.x - a.x
       delta_y = b.y - a.y
       run = delta_x * delta_x + delta_y * delta_y
@@ -50,7 +50,7 @@ func nearestOn(line: array[7, Vector], point: Vector): tuple[offset, z: float] =
       continue
     let
       u = clamp(((point.x - a.x) * delta_x + (point.y - a.y) * delta_y) / run, 0.0, 1.0)
-      offset = sqrt((point.x - a.x - delta_x * u) ^ 2 + (point.y - a.y - delta_y * u) ^ 2)
+      offset = sqrt((point.x - a.x - delta_x * u)^2 + (point.y - a.y - delta_y * u)^2)
     if offset < result.offset:
       result = (offset, a.z + (b.z - a.z) * u)
 
@@ -76,7 +76,7 @@ proc settling(id: int) {.thread.} =
       if i >= SETTLES.len: return
       let
         task = SETTLES[i]
-        links = @(PAIRS[task.pair][0])
+        links = @PAIRS[task.pair][0]
         is_away = PAIRS[task.pair][1]
       var couple = build(
         HUMAN,
@@ -118,7 +118,7 @@ suite "Internal: Two hands":
         inc seen
         let
           k = int(crossing.along)
-          on = first_line[k] + (first_line[k + 1] - first_line[k]) * (crossing.along - float(k))
+          on = first_line[k] + (first_line[k+1] - first_line[k]) * (crossing.along - float(k))
           other = nearestOn(second_line, crossing.at)
         check crossing.at.x =~ on.x and crossing.at.y =~ on.y
         check other.offset < 1e-9
@@ -225,7 +225,7 @@ suite "Internal: Two hands":
       # Stance each couple was built at, which settling keeps.
       poses.add (
         stance: turned(restStance(HUMAN, APART, PAIRS[task.pair][1]), Body.Two, task.turn),
-        links: @(PAIRS[task.pair][0]),
+        links: @PAIRS[task.pair][0],
         arms: @[SETTLED_ARMS[i][0], SETTLED_ARMS[i][1]],
       )
     for (stance, pose_links, arms) in poses:

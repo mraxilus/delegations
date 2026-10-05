@@ -31,7 +31,7 @@ func titleOf(page: string): string =
   let opens = page.find("<title>")
   doAssert opens >= 0, "Page carries no title."
   let shuts = page.find("</title>", opens)
-  page[opens + "<title>".len..<shuts].split(" \u2014 ")[^1]
+  page[opens+"<title>".len..<shuts].split(" \u2014 ")[^1]
 
 func pageIndex(name: string): int =
   ## Index of page `name` in `PAGES`, which builds it.
@@ -103,7 +103,7 @@ suite "Internal: Mark workbench":
     for line in readFile(currentSourcePath()).splitLines:
       let opening = line.strip
       if opening.startsWith("holdPage(\"") and opening.endsWith("\")"):
-        held.add opening["holdPage(\"".len..<opening.len - "\")".len]
+        held.add opening["holdPage(\"".len..<opening.len-"\")".len]
     var pages: seq[string]
     for page in PAGES: pages.add page.name
     check held == pages
@@ -218,11 +218,11 @@ suite "Internal: The rests and the chains, named by model":
       let
         first = at + "<figcaption><code>".len
         last = page.find("</code>", first)
-      names.add page[first ..< last]
+      names.add page[first..<last]
       at = page.find("<figcaption><code>", last)
     check names.len > 0
     for name in names:
-      if not (name.len == 3 and name[0] in {'A' .. 'G'} and name[1 .. 2].allCharsInSet(Digits)):
+      if not (name.len == 3 and name[0] in {'A'..'G'} and name[1..2].allCharsInSet(Digits)):
         checkpoint "card named `" & name & "`"
         fail()
 

@@ -38,7 +38,7 @@ suite "Internal: The picture":
     for target in FRAMES:
       # Two hands to connection, one of lead's and one of follow's.
       check renderFrame(target).count("opacity=\"0.5\"") ==
-        4 - 2 * target.countHolds
+          4 - 2 * target.countHolds
 
 
   test "every frame is drawn in the one space, whatever it holds":
@@ -50,7 +50,7 @@ suite "Internal: The picture":
         picture = renderFrame(target)
         start = picture.find("viewBox=\"")
       check start >= 0
-      let space = picture[start..picture.find('"', start + 9)]
+      let space = picture[start..picture.find('"', start+9)]
       if space notin spaces:
         spaces.add space
     check spaces.len == 1

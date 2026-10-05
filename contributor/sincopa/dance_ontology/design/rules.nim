@@ -38,117 +38,117 @@ export terms
 
 const RULES* = [
   "the hands should only pass through the circle when the hand positions " &
-    "are above",
+  "are above",
   "the hands can only move from their positions at the side of the body " &
-    "only if a level is specified",
+  "only if a level is specified",
   "the slots are relative to the front facing side of the lead/follow, " &
-    "not from the diagram itself",
+  "not from the diagram itself",
   "high and low wraps go around to the front of the other hand",
   "low lock goes around the back to the back of the other hand",
   "in high lock the line goes around the back of the modified body",
   "lock/wrap positions can only be used when the connecting line goes " &
-    "around no less than just under 1/2 of the circumference. it doesn't " &
-    "make sense to have a wrap or a lock without the line actually going " &
-    "around the body",
+  "around no less than just under 1/2 of the circumference. it doesn't " &
+  "make sense to have a wrap or a lock without the line actually going " &
+  "around the body",
   "above has no locks/wraps and can only transition to upper wrap or back " &
-    "to default (physical restrictions)",
+  "to default (physical restrictions)",
   "the connection is drawn in its two hands' own colours, meeting at its " &
-    "middle, the lead's end in the deep shade",
+  "middle, the lead's end in the deep shade",
   "using only the rotations that allow us to change between just those " &
-    "(i.e. assumed all rotations are high so no wraps/locks)",
+  "(i.e. assumed all rotations are high so no wraps/locks)",
   "no additional frame positions, just the addition of rotations that let " &
-    "us travel between them",
+  "us travel between them",
   "hand to hand should have 3 positions allowed by rotation",
   "left to left and right to right should technically have 4 (left over " &
-    "right, right over left, and the two sides with an extra arm twist, " &
-    "in either direction)",
+  "right, right over left, and the two sides with an extra arm twist, " &
+  "in either direction)",
   "the rotations should be high, such that there should be no body " &
-    "wrapping, also make sure any twists are visually clear just like the " &
-    "crossover",
+  "wrapping, also make sure any twists are visually clear just like the " &
+  "crossover",
   "for each mock up, a static image version of every derived position and " &
-    "full set of animated transitions between states",
+  "full set of animated transitions between states",
   "if held high, they can turn infinitely in either direction, so all we " &
-    "add is the additional quarter turn orientations for each of the 4 " &
-    "single hand connections",
+  "add is the additional quarter turn orientations for each of the 4 " &
+  "single hand connections",
   "all turns should be in the \"above\" position, not the high. high/low " &
-    "causes wraps/locks, so we're currently making the assumption to avoid " &
-    "those",
+  "causes wraps/locks, so we're currently making the assumption to avoid " &
+  "those",
   "the leads' transitions should still be in the 2 stage form, stage 1 is " &
-    "the lead turns with the original perspective stage 2 is reorienting " &
-    "the perspective",
+  "the lead turns with the original perspective stage 2 is reorienting " &
+  "the perspective",
   "you should also include orbit turns not just the axis turns",
   "make sure orbit turns keep their bearing, youre currently combining " &
-    "orbit and axis turns to keep the partner facing the other",
+  "orbit and axis turns to keep the partner facing the other",
   "also, the animations should also have the above level as that's the " &
-    "only valid one for the current scope",
+  "only valid one for the current scope",
   "an arm shouldn't settle in a hand cell it's not connected to. it " &
-    "should bend around all hand cells and chevrons as to not imply " &
-    "connection and not obscure direction. it is however fine to animate " &
-    "smoothly past it as it would do now for a full turn for example",
+  "should bend around all hand cells and chevrons as to not imply " &
+  "connection and not obscure direction. it is however fine to animate " &
+  "smoothly past it as it would do now for a full turn for example",
   "the current line finding does a good job of finding the shortest line, " &
-    "but we also need to balance simplicity. prefer paths that have fewers " &
-    "bends (ideally 1) as well as length. in many cases I see, 1 bend can " &
-    "be used with minimal change to the overall line",
+  "but we also need to balance simplicity. prefer paths that have fewers " &
+  "bends (ideally 1) as well as length. in many cases I see, 1 bend can " &
+  "be used with minimal change to the overall line",
   "prefer smooth long curves instead of sharp breaks as well. some of " &
-    "these can be accomplished with a singular bezier with a more gentle " &
-    "curvature just as well as the current sharp direction changes",
+  "these can be accomplished with a singular bezier with a more gentle " &
+  "curvature just as well as the current sharp direction changes",
   "reposition the lead such that when the follow orbits or the lead turns " &
-    "on axis, the 2nd animation stage doesn't have to move the result " &
-    "around, i.e. lead position should remain fixed as much as possible " &
-    "(obviously this can't really be the case when the lead orbits, a " &
-    "reposition/re entering) will still be necessary I think",
+  "on axis, the 2nd animation stage doesn't have to move the result " &
+  "around, i.e. lead position should remain fixed as much as possible " &
+  "(obviously this can't really be the case when the lead orbits, a " &
+  "reposition/re entering) will still be necessary I think",
   "make the second animation stage quicker or something so it has less " &
-    "emphasis. or whatever the recommended UX is to make it less " &
-    "noticeable than the actual rotation itself",
+  "emphasis. or whatever the recommended UX is to make it less " &
+  "noticeable than the actual rotation itself",
   "the two twisted ends in reality the arms make an overlapping box " &
-    "shape. on one side of the twist the lead left is over the right " &
-    "(reversed for other end of twist). the arms should reflect that " &
-    "visual on both ends of the twist. there should be two crossovers one " &
-    "on the leads side of the arms, one on the follows. for both sides of " &
-    "the twist chain. there should be a visible box/diamond between the " &
-    "crossovers (hence the preliminary names, Left over Right box, Right " &
-    "over Left box)",
+  "shape. on one side of the twist the lead left is over the right " &
+  "(reversed for other end of twist). the arms should reflect that " &
+  "visual on both ends of the twist. there should be two crossovers one " &
+  "on the leads side of the arms, one on the follows. for both sides of " &
+  "the twist chain. there should be a visible box/diamond between the " &
+  "crossovers (hence the preliminary names, Left over Right box, Right " &
+  "over Left box)",
   "the animations are very jankey and tied to the final visual " &
-    "representations of the box/diamond state, add the half turns which " &
-    "should actually form an X overhead when partners are facing the same " &
-    "direction (similar to the existing L-over-R etc. when facing one " &
-    "another) as states in-between the outside 2",
+  "representations of the box/diamond state, add the half turns which " &
+  "should actually form an X overhead when partners are facing the same " &
+  "direction (similar to the existing L-over-R etc. when facing one " &
+  "another) as states in-between the outside 2",
   "the animations don't have the proper breaks that the static images do, " &
-    "they seem to not be tracking which arms are over/under because of " &
-    "this and they are instances where they end up on the wrong z order, " &
-    "fix",
+  "they seem to not be tracking which arms are over/under because of " &
+  "this and they are instances where they end up on the wrong z order, " &
+  "fix",
   "the boxes/diamonds are the ends of the turn chain this highlighted is " &
-    "not allowed. all I'm referring to is that double box is not allowed",
+  "not allowed. all I'm referring to is that double box is not allowed",
   "both hand to hand and the overs are essentially the same thing but with " &
-    "one half turn of offset. the neutral (non crossed) state in hand to " &
-    "hand is when partners are facing, and the same state in the other set " &
-    "is when a partner is facing away (in between Left over and Right " &
-    "over). hand to hand actually has an extra half turn on both ends " &
-    "(which I previously thought only the other pattern had). this means " &
-    "both patterns follow the same logic, just one starts with the " &
-    "partners facing each other, and the other starts with both partners " &
-    "facing the same way",
+  "one half turn of offset. the neutral (non crossed) state in hand to " &
+  "hand is when partners are facing, and the same state in the other set " &
+  "is when a partner is facing away (in between Left over and Right " &
+  "over). hand to hand actually has an extra half turn on both ends " &
+  "(which I previously thought only the other pattern had). this means " &
+  "both patterns follow the same logic, just one starts with the " &
+  "partners facing each other, and the other starts with both partners " &
+  "facing the same way",
   "orbit should not maintain bearing, but instead keep whatever side faces " &
-    "the center, facing the center otherwise we can't equate the 1/2 turns",
+  "the center, facing the center otherwise we can't equate the 1/2 turns",
   "the swan zig zag is a bit to large, make it tighter so it looks more " &
-    "readable. also, the above level hatching appears to be a background " &
-    "that moves around a lot as the squares/circles move, it should stay " &
-    "visually consistent during animation",
+  "readable. also, the above level hatching appears to be a background " &
+  "that moves around a lot as the squares/circles move, it should stay " &
+  "visually consistent during animation",
   "the hatching is good, but revert the swan change, it looks worse",
   "they both have the same issue, go back to the tighter version try to " &
-    "make the swan arm, even tighter to the straighter arm, but make it " &
-    "smoother (a simpler curved, right now it looks jagged/sharp)",
+  "make the swan arm, even tighter to the straighter arm, but make it " &
+  "smoother (a simpler curved, right now it looks jagged/sharp)",
   "above: connection held above head. high: connection held above shoulder " &
-    "level (about neck). low: connection held below shoulder level (about " &
-    "torso)",
+  "level (about neck). low: connection held below shoulder level (about " &
+  "torso)",
   "lock: where a lead/follow's arm is bent behind their back (low) or bent " &
-    "to the shoulder of the same arm. To get into low lock, the form must " &
-    "enter from a low position only due to physical/safety limitations",
+  "to the shoulder of the same arm. To get into low lock, the form must " &
+  "enter from a low position only due to physical/safety limitations",
   "wrap: where a lead/follow's arm is crossed around the front of their " &
-    "body under (low) or over (high) their other arm",
+  "body under (low) or over (high) their other arm",
   "generated two hand combinations for up to 1 modifier per lead/follow " &
-    "(maximum 2 total across all 4 hands); permutations with 2 modifiers " &
-    "for a single person are excluded, until deemed necessary",
+  "(maximum 2 total across all 4 hands); permutations with 2 modifiers " &
+  "for a single person are excluded, until deemed necessary",
   "half-closed, Left to left held low: wrap at left@0.5, lock at right@1",
   "that applies to everything but high lock",
 ]  ## Each rule verbatim, one-indexed in prose as `RULES[i - 1]`.

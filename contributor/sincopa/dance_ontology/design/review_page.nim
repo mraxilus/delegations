@@ -150,7 +150,7 @@ func unpinned(svg: string): string =
   let shut = result.find('"', at + opening.len)
   if shut < 0:
     return
-  result = result[0..<at] & result[shut + 1 .. ^1]
+  result = result[0..<at] & result[shut+1 .. ^1]
 
 proc checkReview*() =
   ## Check every card ruled on has fixture holding it to what it was drawn as.
@@ -202,17 +202,17 @@ func pageOf(parts: Parts): string =
     for i, step in steps:
       let at = &"{id}-{i + 1}"
       picks.add &"""<input type="radio" name="{id}" id="{at}""" &
-        (if i == 0: "\" checked>" else: "\">")
+          (if i == 0: "\" checked>" else: "\">")
       let says = if i >= asks.len or asks[i] notin LUT_MODELLED_BY_CARD: ""
                  elif not LUT_MODELLED_BY_CARD[asks[i]]:
                    """<em class="badge nomodel">not modelled</em>"""
                  elif id in CONFIRMED: """<em class="badge model">modelled</em>"""
                  else: """<em class="badge unsure">unconfirmed</em>"""
       frames.add &"""<div>{unpinned(step.svg)}{says}""" &
-        &"""<span class="step">{escaped(step.note)}</span></div>"""
+          &"""<span class="step">{escaped(step.note)}</span></div>"""
       buttons.add &"""<label for="{at}">{escaped(step.pick)}</label>"""
     &"""{picks}<div class="frames">{frames}</div>""" &
-      &"""<div class="picks">{buttons}</div>"""
+        &"""<div class="picks">{buttons}</div>"""
 
   func card(
     id, label, note, art: string;
@@ -263,19 +263,19 @@ func pageOf(parts: Parts): string =
     if is_kept or is_dropped:
       doAssert $hash(drawings.join("")) == LUT_FIXTURE_BY_CARD.getOrDefault(id),
         &"A card already ruled on has been re-drawn: `{id}`.  Either the " &
-          "mend is too wide, or that ruling has to go back."
+        "mend is too wide, or that ruling has to go back."
     # Confirmation was given on still, so still that moved under one carries confirmation
     # it was never given.
     if id in CONFIRMED:
       doAssert stillsOf(put) == LUT_STILLS_BY_CARD.getOrDefault(id),
         &"A confirmed card now shows another still: `{id}`.  Its confirmation goes " &
-          "back until the Architect confirms it again."
+        "back until the Architect confirms it again."
     &"""<figure class="pic{mark}{stand}" data-asks="{put.join(" ")}"><div class="art""" &
-    (if is_switching: " steps" else: "") & &"""">{art}{badge}{says}</div>""" &
-    &"""<figcaption><code>{escaped(id)}</code><b>{escaped(label)}</b>""" &
-    (if note.len > 0: &"""<span>{escaped(note)}</span>""" else: "") &
-    (if is_flawed: &"""<span class="fix">{escaped(FLAWED[id])}</span>""" else: "") &
-    "</figcaption></figure>"
+        (if is_switching: " steps" else: "") & &"""">{art}{badge}{says}</div>""" &
+        &"""<figcaption><code>{escaped(id)}</code><b>{escaped(label)}</b>""" &
+        (if note.len > 0: &"""<span>{escaped(note)}</span>""" else: "") &
+        (if is_flawed: &"""<span class="fix">{escaped(FLAWED[id])}</span>""" else: "") &
+        "</figcaption></figure>"
 
   func card(id, label, note, svg: string; asks: seq[string] = @[]): string =
     ## Set one drawing in cell of its own.
@@ -405,7 +405,7 @@ func pageOf(parts: Parts): string =
     for svg in order:
       # Where every manner lands on one picture, say so once rather than four times.
       let who = if whose[svg].len == MANNERS.len and
-                   QUARTER_SAID[0] in whose[svg][0]: "every manner, before it starts"
+          QUARTER_SAID[0] in whose[svg][0]: "every manner, before it starts"
                 else: whose[svg].join(" \u00B7 ")
       body.add card(seen[svg], SINGLES[connection].name, who, svg, asks = asked[svg])
     body.add "</div>"
@@ -539,7 +539,7 @@ func pageOf(parts: Parts): string =
         asks_e.add key
         steps.add ($(quarter + 1),
           &"quarter {quarter + 1} of 4: from {QUARTER_FROM[quarter]} to " &
-            &"{QUARTER_FROM[(quarter + 1) mod QUARTERS_ROUND]}",
+          &"{QUARTER_FROM[(quarter + 1) mod QUARTERS_ROUND]}",
           stills[key])
       if steps.len > 0:
         inc e_count
@@ -583,11 +583,11 @@ func pageOf(parts: Parts): string =
     var
       steps: seq[tuple[pick, note, svg: string]]
       asks_f: seq[string]
-    for i in 0..<CHAIN.len - 1:
+    for i in 0 ..< CHAIN.len - 1:
       let key = &"hw_{tag}_{i}"
       if key notin chains: continue
       asks_f.add key
-      steps.add ($(i + 1), CHAIN[i].name & " to " & CHAIN[i + 1].name, chains[key])
+      steps.add ($(i + 1), CHAIN[i].name & " to " & CHAIN[i+1].name, chains[key])
     if steps.len > 0:
       inc f_count
       body.add card(&"F{f_count:02}", said, "one edge at a time", steps, asks = asks_f)
@@ -619,12 +619,12 @@ func pageOf(parts: Parts): string =
     var
       steps: seq[tuple[pick, note, svg: string]]
       asks_g: seq[string]
-    for i in 0..<dual_chain.len - 1:
+    for i in 0 ..< dual_chain.len - 1:
       let key = &"pw_{tag}_{i}"
       if key notin chains: continue
       asks_g.add key
       steps.add ($(i + 1),
-                 dual_chain[i].name & " to " & dual_chain[i + 1].name, chains[key])
+                 dual_chain[i].name & " to " & dual_chain[i+1].name, chains[key])
     if steps.len > 0:
       inc g_count
       body.add card(&"G{g_count:02}", said, "one edge at a time", steps, asks = asks_g)
@@ -639,10 +639,10 @@ func pageOf(parts: Parts): string =
     var css = ""
     for i in 1..max(QUARTERS_ROUND, CHAIN.len - 1):
       css.add &"  .steps input:nth-of-type({i}):checked ~ .frames > " &
-        &"div:nth-child({i}) {{ display: block; }}\n"
+          &"div:nth-child({i}) {{ display: block; }}\n"
       css.add &"  .steps input:nth-of-type({i}):checked ~ .picks > " &
-        &"label:nth-child({i}) {{ background: var(--ink);" &
-        " color: var(--card); border-color: var(--ink); }\n"
+          &"label:nth-child({i}) {{ background: var(--ink);" &
+          " color: var(--card); border-color: var(--ink); }\n"
     css
 
   const head = """<style>
@@ -744,10 +744,10 @@ func pageOf(parts: Parts): string =
     seen = markup.count("""<figure class="pic""")
     unsure = markup.count("""<em class="badge unsure">""")
     tally = &"""<b>{KEPT.len}</b> kept &middot; <b>{DROPPED.len}</b> dropped """ &
-      &"""&middot; <b>{FLAWED.len}</b> marked for a mend &middot; """ &
-      &"""<b>{seen - KEPT.len - DROPPED.len}</b> still to rule on, of {seen}. """ &
-      &"""Against the model: <b>{CONFIRMED.len}</b> confirmed by the Architect, """ &
-      &"""<b>{unsure}</b> reached by the simulation and not yet confirmed."""
+        &"""&middot; <b>{FLAWED.len}</b> marked for a mend &middot; """ &
+        &"""<b>{seen - KEPT.len - DROPPED.len}</b> still to rule on, of {seen}. """ &
+        &"""Against the model: <b>{CONFIRMED.len}</b> confirmed by the Architect, """ &
+        &"""<b>{unsure}</b> reached by the simulation and not yet confirmed."""
   markup.replace("{{tally}}", tally)
 
 
@@ -778,7 +778,7 @@ func drawingOf(html, id: string): string =
     let shuts = html.find("</svg>", starts)
     if shuts < 0:
       break
-    result.add html[starts..shuts + "</svg>".len - 1]
+    result.add html[starts..shuts+"</svg>".len-1]
     at = shuts + 1
 
 
@@ -790,7 +790,7 @@ func asksOf(html, id: string): seq[string] =
   let starts = html.rfind(opening, last = names)
   doAssert starts >= 0, &"A confirmed card names no question: got `{id}`."
   let stops = html.find('"', starts + opening.len)
-  html[starts + opening.len..<stops].split(' ')
+  html[starts+opening.len..<stops].split(' ')
 
 func confirmedIn*(html: string): string =
   ## Read back which still every confirmed card stands for, as `confirmed-fixtures.json`

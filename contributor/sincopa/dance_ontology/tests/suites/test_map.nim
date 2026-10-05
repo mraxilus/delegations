@@ -22,7 +22,7 @@ func spoken(picture: string): string =
     let at = result.find("<tspan")
     if at < 0:
       break
-    result = result[0..<at] & result[result.find('>', at) + 1 .. ^1]
+    result = result[0..<at] & result[result.find('>', at)+1 .. ^1]
   result = result.replace("</tspan>", "")
 
 
@@ -33,7 +33,7 @@ func attribute(chunk, name: string): int =
     at = chunk.find(key)
   if at < 0:
     return 0
-  let rest = chunk[at + key.len .. ^1]
+  let rest = chunk[at+key.len .. ^1]
   parseInt(rest[0..<rest.find('"')])
 
 
@@ -92,7 +92,7 @@ suite "Internal: The layout":
     for target in FRAMES:
       check target in order
     for index in 1..<order.len:
-      check centreOf(order[index - 1])[1] <= centreOf(order[index])[1]
+      check centreOf(order[index-1])[1] <= centreOf(order[index])[1]
 
 
 
@@ -113,7 +113,7 @@ suite "Internal: The drawing":
     # One group of ink and one of words for each, wearing same marks, so
     # that dimming and lighting still take them as one thing.
     check picture.count("<g class=\"join\"") + picture.count("<g class=\"join ") -
-      picture.count("<g class=\"join naming") == joined div 2
+        picture.count("<g class=\"join naming") == joined div 2
     check picture.count("<g class=\"join naming") == joined div 2
     check picture.count("<g class=\"way naming") == moved div 2
 
@@ -143,7 +143,7 @@ suite "Internal: The drawing":
     var names: seq[string] = @[]
     for chunk in picture.split("class=\"node-name\"")[1 .. ^1]:
       let said = chunk[0..<chunk.find("</text>")]
-      names.add said[said.find('>') + 1 .. ^1]
+      names.add said[said.find('>')+1 .. ^1]
     check names.len == FRAMES.len
     for target in FRAMES:
       check picture.contains("data-frame=\"" & target.key & "\"")
@@ -226,7 +226,7 @@ suite "Internal: The drawing":
           own.attribute("height"))
       check plates.len == moved div 2 + joined div 2
       for index, plate in plates:
-        for other in plates[index + 1 .. ^1]:
+        for other in plates[index+1 .. ^1]:
           check not isOverlapping(plate, other)
         for frame in frameBounds():
           check not isOverlapping(plate, frame)
@@ -297,12 +297,12 @@ suite "Internal: The drawing":
     let picture = renderMap(none(Frame))
     check picture.count("class=\"name-plate\"") == FRAMES.len
     check renderSpokes(FRAMES[0]).count("class=\"name-plate\"") ==
-      spokesOf(FRAMES[0]).len + 1
+        spokesOf(FRAMES[0]).len + 1
     for here in FRAMES:
       let (x, y, width, height) = nameBounds(here, centreOf(here)[0], centreOf(here)[1], 74)
       check picture.contains(
         "class=\"name-plate\" x=\"" & $x & "\" y=\"" & $y &
-          "\" width=\"" & $width & "\" height=\"" & $height & "\"",
+        "\" width=\"" & $width & "\" height=\"" & $height & "\"",
       )
 
 
@@ -322,7 +322,7 @@ suite "Internal: The drawing":
       inc lines
       let element = fragment[0..<fragment.find("/>")]
       check element.contains("var(--left-deep") or
-        element.contains("var(--right-deep")
+          element.contains("var(--right-deep")
       check not element.contains("var(--left,")
       check not element.contains("var(--right,")
     var moved = 0
@@ -350,12 +350,12 @@ suite "Internal: The drawing":
         inc named_hands
         check picture.contains(
           "<tspan style=\"fill: " &
-            followColour(hand.get) & "\">" & followName(hand.get) & "</tspan>",
+          followColour(hand.get) & "\">" & followName(hand.get) & "</tspan>",
         )
         # Follow's plain shade, never lead's deep one.
         check not picture.contains(
           "<tspan style=\"fill: " &
-            armColour(move.side) & "\">" & followName(hand.get) & "</tspan>",
+          armColour(move.side) & "\">" & followName(hand.get) & "</tspan>",
         )
     check named_hands > 0
 
@@ -382,7 +382,7 @@ suite "Internal: The drawing":
         )
         check picture.contains(
           "<tspan style=\"fill: " &
-            followColour(target.hold[side].get) & "\">" &
-            followName(target.hold[side].get) & "</tspan>",
+          followColour(target.hold[side].get) & "\">" &
+          followName(target.hold[side].get) & "</tspan>",
         )
     check named_frames == FRAMES.len - 1

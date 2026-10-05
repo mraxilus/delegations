@@ -209,7 +209,7 @@ func escaped(text: string): string =
 func tag(name, attributes, body: string): string =
   ## Wrap body in one element, with attributes already formed.
   "<" & name & (if attributes.len > 0: " " & attributes else: "") & ">" & body &
-    "</" & name & ">"
+      "</" & name & ">"
 
 
 func inked(said: string): string =
@@ -240,7 +240,7 @@ func button(action, value, classes, body: string): string =
   tag(
     "button",
     "class=\"" & classes & "\" data-action=\"" & action &
-      "\" data-value=\"" & escaped(value) & "\"",
+    "\" data-value=\"" & escaped(value) & "\"",
     body,
   )
 
@@ -434,17 +434,17 @@ func renderSpokesView(current: Frame, motion: Motion, taken: Option[Frame]): str
       "p",
       "class=\"note\"",
       "The frame in the middle is the frame you hold. " &
-        "Every spoke is a way out of it, and nothing else is drawn. A collect " &
-        "takes a hand, so it points up. A drop lets one go, so it points down.",
+      "Every spoke is a way out of it, and nothing else is drawn. A collect " &
+      "takes a hand, so it points up. A drop lets one go, so it points down.",
     ) &
     tag(
       "p",
       "class=\"note\"",
       "A compound move is two moves, so it goes out to " &
-        "the side, inked in both arms that it hands a hand between. Each name " &
-        "says the hand of the follow that the move takes or lets go, in the " &
-        "colour of that hand. The rest of the name is the arm of the lead, in " &
-        "the deeper shade. Take a spoke, and it becomes the middle.",
+      "the side, inked in both arms that it hands a hand between. Each name " &
+      "says the hand of the follow that the move takes or lets go, in the " &
+      "colour of that hand. The rest of the name is the arm of the lead, in " &
+      "the deeper shade. Take a spoke, and it becomes the middle.",
     ))
 
 
@@ -456,32 +456,32 @@ func renderMapView(current: Frame, motion: Motion, taken: Option[Frame]): string
       "p",
       "class=\"note\"",
       "Each row holds one more connection than the " &
-        "row below it. So a line up the page is a collect, and a line down is " &
-        "a drop. A line you stand on is named for the move away from you, " &
-        "which is the move you can make. Every other line is named for the " &
-        "move that runs up it.",
+      "row below it. So a line up the page is a collect, and a line down is " &
+      "a drop. A line you stand on is named for the move away from you, " &
+      "which is the move you can make. Every other line is named for the " &
+      "move that runs up it.",
     ) &
     tag(
       "p",
       "class=\"note\"",
       "Every name says the hand of the follow that " &
-        "the move takes or lets go, in the colour of that hand. The rest of " &
-        "the name is the arm of the lead that does it, in the deeper shade. So " &
-        "a name runs deep into plain, as the connection it makes does. Where a " &
-        "name lies across its own line, the line is cut for it and rounded at " &
-        "both ends. The break then reads as a name rather than as a line that " &
-        "stops.",
+      "the move takes or lets go, in the colour of that hand. The rest of " &
+      "the name is the arm of the lead that does it, in the deeper shade. So " &
+      "a name runs deep into plain, as the connection it makes does. Where a " &
+      "name lies across its own line, the line is cut for it and rounded at " &
+      "both ends. The break then reads as a name rather than as a line that " &
+      "stops.",
     ) &
     tag(
       "p",
       "class=\"note\"",
       "A dashed curve is a compound move, inked in both " &
-        "arms, because it hands a hand from one arm to the other. The ink at " &
-        "each end is the arm that acts on the way to it. The frames you can " &
-        "reach come forward, the rest go quiet, and the ring moves along the " &
-        "line you take. A frame ringed in a solid line is one move away, and a " &
-        "dashed ring is a compound move, which is two moves away. Both can be " &
-        "clicked, and a compound move dances its two moves in turn.",
+      "arms, because it hands a hand from one arm to the other. The ink at " &
+      "each end is the arm that acts on the way to it. The frames you can " &
+      "reach come forward, the rest go quiet, and the ring moves along the " &
+      "line you take. A frame ringed in a solid line is one move away, and a " &
+      "dashed ring is a compound move, which is two moves away. Both can be " &
+      "clicked, and a compound move dances its two moves in turn.",
     ))
 
 
@@ -667,9 +667,9 @@ func renderCrosshair(across: int): string =
   ##     and gridless table needs it: without lines to follow, whole
   ##     difficulty of eight-by-eight is knowing which column you are in.
   result = "<style>"
-  for column in 2..across + 1:
+  for column in 2 .. across + 1:
     result.add ".matrix:has(td:nth-child(" & $column & "):hover) " &
-      ":is(th, td):nth-child(" & $column & ") { background: var(--cross); }"
+        ":is(th, td):nth-child(" & $column & ") { background: var(--cross); }"
   result.add "</style>"
 
 
@@ -711,7 +711,7 @@ func renderMatrix(): string =
   # has to fall in same place down rows as it does across columns.
   var opens: seq[bool] = @[]
   for index, target in order:
-    opens.add index > 0 and order[index - 1].countHolds != target.countHolds
+    opens.add index > 0 and order[index-1].countHolds != target.countHolds
   var head = tag(
     "th",
     "class=\"corner\"",
@@ -781,12 +781,12 @@ func renderMatrix(): string =
         "p",
         "class=\"note\"",
         "A matrix cell is the move from its row to its " &
-          "column, inked in the arm of the lead that dances it. The frames are " &
-          "ordered down the tower, the same way the map stacks them. So every " &
-          "collect falls below the diagonal, and every drop above it. The " &
-          "compound moves fall in the blocks along it, because they change what is " &
-          "held and not how much. A faded number is a pair that no single move " &
-          "joins, and it says how far apart they are.",
+        "column, inked in the arm of the lead that dances it. The frames are " &
+        "ordered down the tower, the same way the map stacks them. So every " &
+        "collect falls below the diagonal, and every drop above it. The " &
+        "compound moves fall in the blocks along it, because they change what is " &
+        "held and not how much. A faded number is a pair that no single move " &
+        "joins, and it says how far apart they are.",
       )))
 
 

@@ -130,9 +130,9 @@ func crossings*(arms: Arms): seq[Crossing] =
     for j in 0..<6:
       let
         a = first[i]
-        b = first[i + 1]
+        b = first[i+1]
         c = second[j]
-        d = second[j + 1]
+        d = second[j+1]
       if lifted(sideOf(a, b, c)) == lifted(sideOf(a, b, d)):
         continue
       if lifted(sideOf(c, d, a)) == lifted(sideOf(c, d, b)):
