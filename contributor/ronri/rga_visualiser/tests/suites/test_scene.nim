@@ -152,6 +152,37 @@ suite "Scene":
     check rounded >= rounded_floor
 
 
+  test "the catalogue's joins, meets and projections give what the library gives, near and far":
+    # Read at scale of result, i.e. scale-free copies compared: rounding of product stands
+    #   against its operands' scales, never against its smallest coefficient.
+    #   Far out is HD 222237 b's place, two million units off Sol.
+    for offset in [
+      Direction(x: 0.0, y: 0.0, z: 0.0),
+      Direction(x: 698390.5, y: -953804.3, z: -2043454.9),
+    ]:
+      for i in 0..<SAMPLES:
+        let
+          (j, k) = ((i + 1) mod SAMPLES, (i + 2) mod SAMPLES)
+          (p, q, r) = (
+            (PLACES[i] + offset).toMultivector,
+            (PLACES[j] + offset).toMultivector,
+            (PLACES[k] + offset).toMultivector,
+          )
+          line = applyOperation(Operation.Wedge, p, q)
+          plane = applyOperation(Operation.Wedge, line, r)
+          other = applyOperation(
+            Operation.Wedge,
+            applyOperation(Operation.Wedge, q, r),
+            (PLACES[(i+5) mod SAMPLES] + offset).toMultivector,
+          )
+        check line.scaleFree =~ wedge(p, q).scaleFree
+        check plane.scaleFree =~ wedge(line, r).scaleFree
+        check applyOperation(Operation.WedgeAnti, line, other).scaleFree =~
+            wedgeAnti(line, other).scaleFree
+        check applyOperation(Operation.ProjectOrthogonal, p, other).scaleFree =~
+            projectOrthogonal(p, other).scaleFree
+
+
   test "meet finds where a line crosses a plane even far outside its own drawn disc":
     # `mesh.addPlane`'s disc is only rendering choice -- plane it represents is.
     #   same infinite object algebraically either way, and `WedgeAnti` (meet) reads
