@@ -393,6 +393,15 @@ bool guiDragFloat(const char* label, float* value, float speed, float lowest,
   return ImGui::DragFloat(label, value, speed, lowest, highest, "%.4g");
 }
 
+// Double, for value scene holds as double: coefficient far out keeps every bit staged.
+//   Drag never rounds to "%.4g" shown: four digits of coefficient two million out would
+//   move it hundreds of units. Bounds equal leave it unbounded, as `DragFloat`'s do.
+bool guiDragDouble(const char* label, double* value, float speed, double lowest,
+                   double highest) {
+  return ImGui::DragScalar(label, ImGuiDataType_Double, value, speed, &lowest, &highest,
+                           "%.4g", ImGuiSliderFlags_NoRoundToFormat);
+}
+
 bool guiDragFloat3(const char* label, float* values, float speed) {
   return ImGui::DragFloat3(label, values, speed, 0.0f, 0.0f, "%.4g");
 }

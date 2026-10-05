@@ -30,7 +30,7 @@
 import std/[math, options, strformat, strutils, unicode]
 
 # `pga` arrives through `projections`, which stands in for four it has withdrawn.
-import ./[boundary, format, projections, tessellate]
+import ./[boundary, format, motors, projections, tessellate]
 
 
 
@@ -393,8 +393,23 @@ func notationSubstituted*(operation: Operation; name_first, name_second: string)
   tokens.join(" ")
 
 
-func applyOperation*(operation: Operation; m, n: Multivector): Multivector =
-  ## Apply operation to operands, ignoring `n` where operation is unary.
+const OPERATIONS_SLIDING = {
+  Operation.Add, Operation.Attitude, Operation.ContractWeight, Operation.DotAnti,
+  Operation.DualWeight, Operation.ExpandWeight, Operation.Negate, Operation.ProjectOrthogonal,
+  Operation.Reverse, Operation.ReverseAnti, Operation.Subtract, Operation.Unitize,
+  Operation.Wedge, Operation.WedgeAnti, Operation.WedgeDotAnti,
+}
+  ## Name operations that commute with slide: run about any origin, then slid back, each gives
+  ##   what it gives about world origin, so `applyOperation` runs each about point near its
+  ##   operands.
+  ##   Other twelve read origin itself (support, bulk, weight dot, complements, central
+  ##   projection), and run about world origin, which is origin they mean.
+  ##   Suite holds set to exactly operations that commute; reached there through `{.all.}`.
+
+
+func operated(operation: Operation; m, n: Multivector): Multivector =
+  ## Apply catalogue's operation as library names it, about origin operands stand about.
+  ##   Suite reaches it through `{.all.}`, as reference `applyOperation` is held to.
   case operation
   of Operation.Attitude: attitude(m)
   of Operation.Support: support(m)
@@ -423,6 +438,88 @@ func applyOperation*(operation: Operation; m, n: Multivector): Multivector =
   of Operation.ContractWeight: contractWeight(m, n)
   of Operation.ProjectCentral: projectCentral(m, n)
   of Operation.ProjectOrthogonal: projectOrthogonal(m, n)
+
+
+func applyOperation*(operation: Operation; m, n: Multivector): Multivector =
+  ## Apply operation to operands, ignoring `n` where operation is unary.
+  ##   Operation that commutes with slide (`OPERATIONS_SLIDING`) runs about its model origin, point
+  ##   of one of its operands, then slides back through library's own motor.
+  ##     Join of two points metre apart one unit out then holds both to micrometres.
+  ##     Never about world origin: one unit out its moment, `p × q`, cancels there to about
+  ##     1e-5 of itself, and both points stand hundreds of kilometres off it.
+  ##     Slide back adds `t × d` to small moment, cancelling nothing: rounding is `ε` of
+  ##     distance slid.
+  ##   Model origin is point operand's own place, first operand's first: cancellation is about
+  ##   point joined. Else first finite operand's anchor, its support. Else world origin,
+  ##   where no operand stands anywhere finite. Implicit: nothing stores it.
+  ##   Each slide keeps only grades its multivector occupies; see `slid`.
+  ##   Result within rounding of zero, judged against operands that made it, is zero:
+  ##   point lying on line joins with it to nothing, never to rounding.
+  ##     `objects.kindOf` reads object at its own scale, so rounding left standing reads
+  ##     as plane, and every path building from catalogue builds through here.
+  ##     Judged on operands as slid, against scale of point they were slid from: each
+  ##     carries rounding of where it stood, so far out rounding still reads as zero.
+  ##   Sum is judged against its larger operand, as it rounds to that.
+  ##   Every other operation is homogeneous in each operand, so it runs again on
+  ##   `scaleFree` copies: positive multiple of result, rounding at `TOLERANCE_ROUNDING`
+  ##   of one whatever degree operation has in each operand.
+  ##   Cost: three slides, two antiproducts each, and second run of operation, once for
+  ##   each preview and each build.
+
+  func originModel(m, n: Multivector): Option[Position] =
+    ## Choose model origin: point operand's own place, else finite operand's anchor.
+    for operand in [m, n]:
+      if kindOf(operand) == some(Kind.Point):
+        let place = position(operand)
+        if place.isSome: return place
+    for operand in [m, n]:
+      if kindOf(operand).isSome:
+        let anchor = positionAnchor(operand)
+        if anchor.isSome: return anchor
+
+  func slid(m, motor, motor_reversed: Multivector): Multivector =
+    ## Carry `m` through slide, keeping only grades `m` occupies.
+    ##   Slide keeps every grade, so what lands on another is sandwich's rounding: about `ε`
+    ##   of distance slid, against `m`. Join metre across one unit out reads it as mixed.
+    let moved = m.carried(motor, motor_reversed)
+    var occupied: array[0..DIMENSIONS, bool]
+    for b in Basis:
+      if m[b] != 0.0: occupied[int(b.grade)] = true
+    for b in Basis:
+      if occupied[int(b.grade)]: result[b] = moved[b]
+
+  # Slide operands to model origin, or leave them about world origin.
+  let origin =
+    if operation in OPERATIONS_SLIDING: originModel(m, n)
+    else: none(Position)
+  var
+    (m_model, n_model) = (m, n)
+    scale_origin = 1.0
+  if origin.isSome:
+    let
+      point_origin = origin.get.toMultivector
+      slide = motorSliding(subtract(1.0.e4, point_origin))
+      slide_reversed = ~∘slide
+    m_model = slid(m, slide, slide_reversed)
+    n_model = slid(n, slide, slide_reversed)
+    scale_origin = point_origin.coefficientLargest
+  result = operated(operation, m_model, n_model)
+
+  # Answer zero where that is rounding of zero.
+  let is_rounding =
+    case operation
+    of Operation.Add, Operation.Subtract:
+      result.isRoundingOf(
+        max(m_model.coefficientLargest, n_model.coefficientLargest) * scale_origin,
+      )
+    else:
+      operated(operation, m_model.scaleFree, n_model.scaleFree).isRoundingOf(scale_origin)
+  if is_rounding: return Multivector()
+
+  # Slide result back to world origin.
+  if origin.isSome:
+    let back = motorSliding(subtract(origin.get.toMultivector, 1.0.e4))
+    result = slid(result, back, ~∘back)
 
 
 func creationAnchor*(operation: Operation; m, n, derived: Multivector): Option[Position] =
@@ -504,9 +601,13 @@ func formatMultivector*(m: Multivector, storage: var openArray[char], cursor: va
   ##   Magnitudes stay project's four significant digits.
   ##   Appends from `cursor` rather than returning `string`, so redrawing every visible
   ##   object's coefficients every frame never touches heap.
+  ##   Term prints where it stands over billionth of largest, as `objects.kindOf` reads it.
+  ##     Never against library's absolute tolerance, as `$` judges: line metre long one
+  ##     unit out carries coefficients near 1e-12, which that prints as zero.
+  let floor = TOLERANCE_ABS * m.coefficientLargest
   var has_written = false
   for b in Basis:
-    if abs(m[b]) <= TOLERANCE_ABS: continue
+    if abs(m[b]) <= floor: continue
     if m[b] < 0: appendChars(storage, cursor, " - ")
     elif has_written: appendChars(storage, cursor, " + ")
     appendMagnitude(storage, cursor, abs(m[b]))

@@ -174,8 +174,10 @@ func turnAbout*(axis: Multivector, radians: float): Option[Multivector] =
   ## Build motor turning `radians` about line `axis`, right-handed about its direction.
   ##   None where `axis` has no direction, i.e. where it lies in horizon and names no axis
   ##   to turn about. `unitize` would return such line unchanged rather than refuse.
+  ##     Weight judged against bulk, as `objects.isHorizon` judges it: line metre long is
+  ##     axis, whatever its own scale.
   ##   Half-angle and its sign live here, so no caller holds either.
-  if normWeight(axis)[Basis.scalarAnti] <= TOLERANCE_ABS: return
+  if normWeight(axis)[Basis.scalarAnti] <= TOLERANCE_ABS * normBulk(axis)[Basis.scalar]: return
   some(exp(wedge(-0.5 * radians, unitize(axis))))
 
 

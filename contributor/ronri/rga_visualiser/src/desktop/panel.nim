@@ -23,9 +23,11 @@
 ##   Top bar sits outside them all, because its `add` button has to open Objects.
 ##   Only Objects opens by default: what returning session looks at first, and opening
 ##   all four buries 3D view.
-## Coefficients are staged through 32-bit floats because that is what widget writes.
-##   Written back only where widget reports change, so editing costs no precision on
-##   untouched coefficients.
+## Coefficients and radius are staged as doubles, through Dear ImGui's double widget.
+##   Edit opened and saved unchanged writes back every bit (`--drive-edit`).
+##     Never through 32-bit floats: two million units out, as demo's HD 222237 b stands,
+##     `float32` steps eighth of unit, so unchanged save through them would move object.
+##   Drag never rounds to four digits shown, which would move it hundreds of units.
 ## Multivectors are printed by `scene.formatMultivector` rather than library's `$`.
 ##   `$` returns fresh heap `string` once per visible item per frame.
 ##   Atlas carries mathematical bold and subscript blocks library writes basis elements
@@ -142,14 +144,14 @@ type
   EditSession* = object  ## Define what open edit is staging, before any of it reaches scene.
     ## One session at time, in one of two modes; see `handle`.
     handle*: Option[int]  ## Object being edited; none while composing brand-new object.
-    coefficients*: array[Basis, cfloat]  ## Staged multivector, one per basis element.
+    coefficients*: array[Basis, float]  ## Staged multivector, one per basis element.
       ## Drawn every frame as muted preview.
-      ## `cfloat` because that is what drag widget writes.
+      ## Double, as scene holds it, so staging rounds nothing; see module header.
     label*: array[LABEL_MAX, char]  ## Staged label.
       ## Staged because `gui.inputText` writes straight through pointer, and scene's
       ## buffer must not change before save.
     index_ink*: cint  ## Staged palette handle.
-    radius*: cfloat  ## Staged drawn radius, in world units; see `scene.radiusAt`.
+    radius*: float  ## Staged drawn radius, in world units; see `scene.radiusAt`.
 
   ObjectRow* = object  ## Define what one object row has resolved about itself.
     ## Computed once at top of `layoutObject` and handed to each part of row, so three agree.
@@ -336,15 +338,14 @@ func hideSelectionMenu*(panel: var Panel) =
 
 func geometry*(session: EditSession): Multivector =
   ## Read what session is staging, as multivector saving it would commit.
-  ##   Coefficients are `cfloat`, so every reader needs this widening; one place, so no
-  ##   reader drifts.
-  for b in Basis: result[b] = float(session.coefficients[b])
+  ##   Copy, never conversion: both hold doubles.
+  for b in Basis: result[b] = session.coefficients[b]
 
 
 func stage*(session: var EditSession, geometry: Multivector) =
   ## Load multivector into session, as values its widgets edit.
   ##   Inverse of `geometry`, and only other place two representations meet.
-  for b in Basis: session.coefficients[b] = cfloat(geometry[b])
+  for b in Basis: session.coefficients[b] = geometry[b]
 
 
 func staged*(panel: Panel): Option[Preview] =
@@ -355,7 +356,7 @@ func staged*(panel: Panel): Option[Preview] =
   ##   pickers.
   ##   Sibling is `browser_bridge.staged`; fix both or neither.
   if panel.session.isSome:
-    return some(previewStaging(panel.session.get.geometry, float(panel.session.get.radius)))
+    return some(previewStaging(panel.session.get.geometry, panel.session.get.radius))
   panel.preview
 
 
@@ -387,7 +388,7 @@ proc fieldLabel(name: cstring) =
 
 #[ Objects Panel ]#
 
-proc layoutCoefficientGrid(staged: var array[Basis, cfloat]): Option[Basis] =
+proc layoutCoefficientGrid(staged: var array[Basis, float]): Option[Basis] =
   ## Lay out one drag widget per basis coefficient; report which coefficient changed.
   ##   Each under its basis name, at most six per line, each grade starting fresh line.
   ##   Grade comes from library's `grade`, so nothing hardcodes dimension.
@@ -418,30 +419,61 @@ proc layoutCoefficientGrid(staged: var array[Basis, cfloat]): Option[Basis] =
       gui.widthPush(width_cell)
       # Let name recede and number read, as browser's `--ink-faint` label does.
       gui.textTinted(cstring(LUT_NAME_BY_BASIS[b]), INK_LABEL.red, INK_LABEL.green, INK_LABEL.blue)
-      if gui.dragFloat(cstring("##" & LUT_NAME_BY_BASIS[b]), addr staged[b], SPEED_DRAG, 0.0, 0.0):
+      if gui.dragDouble(cstring("##" & LUT_NAME_BY_BASIS[b]), addr staged[b], SPEED_DRAG, 0.0, 0.0):
         result = some(b)
       gui.widthPop()
       gui.groupEnd()
       inc placed
 
 
-func beginSession(panel: var Panel, scene: var Scene, handle: Option[int]) =
+func beginSession*(panel: var Panel, scene: var Scene, handle: Option[int]) =
   ## Open edit session against `handle`, or composing one where handle is none.
   ##   Composing session starts on same auto-label and cycled ink every other construction
   ##   path assigns, both editable before object exists.
   ##   Does not aim camera: session's staged geometry is offered to tween every frame by
   ##   `layoutObjects`.
+  ##   Row's edit button opens session through here, and so does `main.driveEdit`.
   var session = EditSession(handle: handle)
   if handle.isSome:
     session.stage scene.geometryOf(handle.get)
     session.label = scene.labelAt(handle.get)
     session.index_ink = cint(scene.inkAt(handle.get))
-    session.radius = cfloat(scene.radiusAt(handle.get))
+    session.radius = scene.radiusAt(handle.get)
   else:
     toChars(&"m{scene.len}", session.label)
     session.index_ink = cint(scene.inkNext)
-    session.radius = cfloat(RADIUS_OBJECT_DEFAULT)
+    session.radius = RADIUS_OBJECT_DEFAULT
   panel.session = some(session)
+
+
+proc saveSession*(
+  panel: var Panel, scene: var Scene, camera: Camera, history: var History, now: float
+) =
+  ## Commit open session to scene: add object it composes, or write edited one back.
+  ##   Records one step of history, and closes session.
+  ##   Row's save button saves through here, and so does `main.driveEdit`, so driven run
+  ##   saves as reader does.
+  let
+    session = panel.session.get
+    geometry = session.geometry
+  if session.handle.isNone:
+    let handle_added = scene.addObject(
+      geometry,
+      session.label.toText,
+      Ink(session.index_ink),
+      now,
+      radius = session.radius,
+    )
+    panel.selection.selectOnly(handle_added)
+    panel.say(addedMessage(session.label.toText), now)
+  else:
+    scene.setGeometryAt(session.handle.get, geometry)
+    scene.labelAt(session.handle.get) = session.label
+    scene.setInk(session.handle.get, Ink(session.index_ink))
+    scene.setRadius(session.handle.get, session.radius)
+    panel.say(savedMessage(session.label.toText), now)
+  history.record(scene, camera)
+  panel.session = none(EditSession)
 
 
 proc layoutSessionFields(panel: var Panel, is_pending: bool) =
@@ -466,12 +498,12 @@ proc layoutSessionFields(panel: var Panel, is_pending: bool) =
   # Size reads for point alone; line and plane take theirs from camera and horizon.
   #   Bounded below at what editor accepts, since model refuses zero outright.
   fieldLabel(wordingText(NameRowSize))
-  discard gui.dragFloat(
+  discard gui.dragDouble(
     "##size",
     addr panel.session.get.radius,
     SPEED_DRAG,
-    cfloat(RADIUS_OBJECT_LEAST),
-    cfloat(RADIUS_OBJECT_MOST),
+    RADIUS_OBJECT_LEAST,
+    RADIUS_OBJECT_MOST,
   )
   gui.tooltip wordingText(TipRowRadius)
   gui.widthPop()
@@ -540,30 +572,8 @@ proc layoutObjectButtons(
       )
   gui.alignRight(width_buttons)
   if gui.buttonSmall(label_commit):
-    if not row.is_open:
-      beginSession(panel, scene, row.handle)
-    else:
-      let
-        session = panel.session.get
-        geometry = session.geometry
-      if row.isPending:
-        let handle_added = scene.addObject(
-          geometry,
-          session.label.toText,
-          Ink(session.index_ink),
-          now,
-          radius = float(session.radius),
-        )
-        panel.selection.selectOnly(handle_added)
-        panel.say(addedMessage(session.label.toText), now)
-      else:
-        scene.setGeometryAt(row.handle.get, geometry)
-        scene.labelAt(row.handle.get) = session.label
-        scene.setInk(row.handle.get, Ink(session.index_ink))
-        scene.setRadius(row.handle.get, float(session.radius))
-        panel.say(savedMessage(session.label.toText), now)
-      history.record(scene, camera)
-      panel.session = none(EditSession)
+    if not row.is_open: beginSession(panel, scene, row.handle)
+    else: saveSession(panel, scene, camera, history, now)
   gui.tooltip(if row.is_open: wordingText(TipRowCommit) else: wordingText(TipRowEdit))
 
   if row.is_open:
@@ -1011,15 +1021,14 @@ proc layoutView*(panel: var Panel, camera: var Camera, speed: float) =
   if not gui.header(wordingText(NameHeadView), is_open_first = false): return
   gui.textTinted(wordingText(NameViewMotor), INK_LABEL.red, INK_LABEL.green, INK_LABEL.blue)
   gui.tooltip wordingText(TipViewMotor)
-  # Changed coefficient alone is written into live motor: fields hold `cfloat`, and
-  #   writing all sixteen back would round fifteen nobody touched.
+  # Changed coefficient alone is written into live motor; fields hold doubles, as motor does.
   var
     typed = camera.motor.toMultivector
-    staged: array[Basis, cfloat]
-  for b in Basis: staged[b] = cfloat(typed[b])
+    staged: array[Basis, float]
+  for b in Basis: staged[b] = typed[b]
   let changed = layoutCoefficientGrid(staged)
   if changed.isSome:
-    typed[changed.get] = float(staged[changed.get])
+    typed[changed.get] = staged[changed.get]
     let settled = motorRigid(typed)
     if settled.isSome:
       camera = camera.placedAtMotor(settled.get)

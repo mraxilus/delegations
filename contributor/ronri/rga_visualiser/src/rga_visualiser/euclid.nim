@@ -132,11 +132,16 @@ func norm*(d: Direction): float = sqrt(dot(d, d))
   ## Get magnitude of direction.
 
 
-func normalize*(d: Direction): Option[Direction] =
+func normalize*(d: Direction, scale = 0.0): Option[Direction] =
   ## Scale direction to unit magnitude.
   ##   None where direction has no magnitude, as it names no direction at all.
+  ##   Magnitude is judged against `scale`, size of what direction was read from: none
+  ##   where it is no more than `TOLERANCE_ABS` of that.
+  ##     Default zero refuses zero alone, as direction of any length names one.
+  ##     Never against absolute tolerance: line metre long one unit out runs along
+  ##     direction of length 7e-12.
   let magnitude = d.norm
-  if magnitude <= TOLERANCE_ABS: return
+  if magnitude <= TOLERANCE_ABS * scale: return
   some(Direction(x: d.x / magnitude, y: d.y / magnitude, z: d.z / magnitude))
 
 

@@ -1144,13 +1144,30 @@ suite "Camera Aim":
     check placement_behind.isNone
 
 
+  test "a pointer pick of a small object up close comes in to it, and one behind does not":
+    # Camera hundredth of millionth off its pivot, above its own floor, picks point six
+    #   thousandths of millionth ahead. Ahead is judged against object's own reach from
+    #   eye, so depth that small still reads ahead, as camera can hold it.
+    let
+      camera = cameraAround(Position(x: 1.0, y: 0.0, z: 0.0), 1.0e-8, Direction(x: 12, y: 10, z: 3))
+      eye = camera.eye
+      axes = camera.frame
+      scale = camera.drawExtentFor(height_aim, 0.0)
+      near = eye + 6.0e-9 * axes.forward + 1.0e-10 * axes.axis_right
+      placement = stanceApproaching(Kind.Point, RADIUS_OBJECT_LEAST, near, camera, scale)
+    check placement.isSome
+    check norm(camera.placed(placement.get).pivot - near) <= 1.0e-3 * norm(near - eye)
+    let behind = eye - 6.0e-9 * axes.forward
+    check stanceApproaching(Kind.Point, RADIUS_OBJECT_LEAST, behind, camera, scale).isNone
+
+
   test "a pointer pick of a star at least radius lands on it in front, near and far out":
     # Catalogue's stars and planets are drawn at `RADIUS_OBJECT_LEAST`, so pick comes in
     #   until disc spans `FRACTION_HEIGHT_APPROACH_POINT` of height: 2.4e-7 units off it.
     #   Separation must land there and pivot on star, which must read in front: ring, label,
     #   menu and every pick read that, and orbit turns about pivot.
     #   Swept beside origin and at HD 222237, 2.36 million units out, where double steps by
-    #   about 5e-10 and records' origin follows eye.
+    #   about 5e-10 and view origin follows eye.
     const
       duration = 0.35
       aspect = float(width_aim) / float(height_aim)

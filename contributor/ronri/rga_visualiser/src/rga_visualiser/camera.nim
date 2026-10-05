@@ -111,12 +111,12 @@ const
     ##   orbits past it.
   STEP_SINGLE* = 1.0 / 16_777_216.0
     ## Fix float32's own relative step, which is two to power of minus twenty-four.
-    ##   Position stored `r` from records' origin carries about `r*STEP_SINGLE` of error.
+    ##   Position stored `r` from view origin carries about `r*STEP_SINGLE` of error.
   FRACTION_ORIGIN_HOLD* = 0.25
-    ## Spend at most this fraction of near clip on float32 error about records' origin.
+    ## Spend at most this fraction of near clip on float32 error about view origin.
     ##   Nothing nearer than near clip is drawn, so near clip is finest thing on screen,
     ##   and quarter of it is error no reader resolves.
-    ##   Sets how far camera travels before origin follows; see `originHeld`.
+    ##   Sets how far camera travels before origin follows; see `originView`.
   FRACTION_VIEW_CENTRED* = 2.0 / 3.0
     ## Fix fraction of frame that counts as being looked at.
     ##   This much of height, and this much of width *or height, whichever is less*;
@@ -719,8 +719,10 @@ func acrossLevel(frame: FrameCamera): Direction =
   ##   Normal to pencil sight and world up span: their join is horizon line, and
   ##   `directionNormalHorizon` reads its normal. Unit.
   ##   Camera's own across where sight runs along world up, pencil collapses, and no level
-  ##   axis is named.
-  let level = directionNormalHorizon(frame.forward.toMultivector ∧ UP_WORLD.toMultivector)
+  ##   axis is named: judged against scale one, as both directions are unit.
+  let level = directionNormalHorizon(
+    frame.forward.toMultivector ∧ UP_WORLD.toMultivector, scale = 1.0
+  )
   if level.isNone: return frame.axis_right
   if innerOf(level.get.toMultivector, frame.axis_right.toMultivector) >= 0.0: level.get
   else: -level.get
@@ -841,7 +843,7 @@ func turnsCarrying(frame: FrameCamera; held, under: Direction): (Direction, floa
     across = frame.acrossLevel
     up = UP_WORLD.toMultivector
     level = across.toMultivector
-    ahead = directionNormalHorizon(up ∧ level).get(frame.forward).toMultivector
+    ahead = directionNormalHorizon(up ∧ level, scale = 1.0).get(frame.forward).toMultivector
     toward = ^∙under.toMultivector
     target = ^∙held.toMultivector
     along_ahead = innerOf(toward, ahead)
@@ -1024,8 +1026,8 @@ func flyAhead*(camera: var Camera, step: float) =
   camera.depth_pivot = distanceHeld(camera.depth_pivot - step)
 
 
-func originHeld*(camera: Camera; eye, origin: Position): Position =
-  ## Say where records are stored from, given where they were stored from last.
+func originView*(camera: Camera; eye, origin: Position): Position =
+  ## Say where view origin stands this frame, given where it stood last.
   ##   `eye` is camera's own, read once for frame by caller; see `drawExtentFor`.
   ##   Eye, held where it stands until travel spends float32's precision about it.
   ##     Eye rather than pivot: free flight turns about eye, so pivot swings through whole
@@ -1304,12 +1306,13 @@ func aimIncluding*(
 
   if isHorizon(m):
     # Merge directions as sum of horizon points, read back through horizon reader.
-    #   Reader also refuses cancelling pair, and first one standing is kept then: neither
-    #   turn shows both.
+    #   Reader also refuses cancelling pair, judged against scale one of two unit
+    #   directions, and first one standing is kept then: neither turn shows both.
     func folded(held, one: Option[Direction]): Option[Direction] =
       if one.isNone: return held
       if held.isNone: return one
-      let merged = directionHorizon(add(held.get.toMultivector, one.get.toMultivector))
+      let merged =
+        directionHorizon(add(held.get.toMultivector, one.get.toMultivector), scale = 1.0)
       if merged.isSome: merged else: held
     case shape_m.get
     of Kind.Point:

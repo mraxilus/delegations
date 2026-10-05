@@ -3,6 +3,9 @@
 {.experimental: "strictFuncs".}
 
 import ./fixtures
+# Opened with `{.all.}`, so suite holds `applyOperation` to library's own `operated`, and
+#   `OPERATIONS_SLIDING` to operations that commute with slide.
+import ../../src/rga_visualiser/scene {.all.}
 
 
 
@@ -126,6 +129,107 @@ suite "Scene":
       # Both seed points must lie on line joining them.
       check POINTS[i] ∧ line =~ 0
       check POINTS[j] ∧ line =~ 0
+
+
+  test "points that coincide, and a point lying on its line, join to nothing, near and far":
+    # Coincident pair joins to exact zero. Point met on line joins with it to rounding of
+    #   zero, never exact zero: classification reads object at its own scale, so rounding
+    #   standing alone would read as plane. Operation answers zero for it instead.
+    #   Far out is two million units from world origin, as demo's HD 222237 b stands. Point
+    #   met there stands up to 2e-8 off line it was met on: rounding of where it stood,
+    #   which judgement about that point scales by. Line, plane and meet are catalogue's
+    #   own there, as reader builds them: library's join about world origin cancels line's
+    #   moment, and point met stands up to 7e-4 off it.
+    const rounded_floor = SAMPLES div 2
+      ## Bound below how many joins carry rounding rather than exact zero.
+      ##   Law is about rounding; exact zeros alone would hold it vacuously.
+    for offset in [
+      Direction(x: 0.0, y: 0.0, z: 0.0),
+      Direction(x: 698390.5, y: -953804.3, z: -2043454.9),
+    ]:
+      var rounded = 0
+      for i in 0..<SAMPLES:
+        proc at(index: int): Multivector = (PLACES[index mod SAMPLES] + offset).toMultivector
+        let
+          point = at(i)
+          line = applyOperation(Operation.Wedge, point, at(i + 1))
+          plane = applyOperation(
+            Operation.Wedge, applyOperation(Operation.Wedge, at(i + 7), at(i + 8)), at(i + 9)
+          )
+          crossing = applyOperation(Operation.WedgeAnti, line, plane)
+        check kindOf(applyOperation(Operation.Wedge, point, point)).isNone
+        if kindOf(crossing) != some(Kind.Point) or isHorizon(crossing): continue
+        let on_line = unitize(crossing)
+        for b in Basis:
+          if wedge(line, on_line)[b] != 0.0:
+            inc rounded
+            break
+        check kindOf(applyOperation(Operation.Wedge, line, on_line)).isNone
+        check resultOf(DragChoice.Join, line, on_line).isNone
+      check rounded >= rounded_floor
+
+
+  test "the catalogue's joins, meets and projections give what the library gives, near and far":
+    # Read at scale of result, i.e. scale-free copies compared: rounding of product stands
+    #   against its operands' scales, never against its smallest coefficient.
+    #   Far out is two million units from world origin, as demo's HD 222237 b stands.
+    for offset in [
+      Direction(x: 0.0, y: 0.0, z: 0.0),
+      Direction(x: 698390.5, y: -953804.3, z: -2043454.9),
+    ]:
+      for i in 0..<SAMPLES:
+        let
+          (j, k) = ((i + 1) mod SAMPLES, (i + 2) mod SAMPLES)
+          (p, q, r) = (
+            (PLACES[i] + offset).toMultivector,
+            (PLACES[j] + offset).toMultivector,
+            (PLACES[k] + offset).toMultivector,
+          )
+          line = applyOperation(Operation.Wedge, p, q)
+          plane = applyOperation(Operation.Wedge, line, r)
+          other = applyOperation(
+            Operation.Wedge,
+            applyOperation(Operation.Wedge, q, r),
+            (PLACES[(i+5) mod SAMPLES] + offset).toMultivector,
+          )
+        check line.scaleFree =~ wedge(p, q).scaleFree
+        check plane.scaleFree =~ wedge(line, r).scaleFree
+        check applyOperation(Operation.WedgeAnti, line, other).scaleFree =~
+            wedgeAnti(line, other).scaleFree
+        check applyOperation(Operation.ProjectOrthogonal, p, other).scaleFree =~
+            projectOrthogonal(p, other).scaleFree
+
+
+  test "the catalogue runs about a local origin exactly the operations that commute with a slide":
+    # Run about world origin, and about origin slid away then slid back: commuting operation gives
+    #   same result either way, to billionth of operands' and result's scale. Every operation
+    #   outside set differs for some pair, so set is no wider and no narrower than library
+    #   allows. Never scale-free: scalar's copy is its sign, which slide keeps.
+    #   Rounding of zero is passed over, as noise either way.
+    let
+      shift = Direction(x: 0.7, y: -1.3, z: 2.1).toMultivector
+      (slide, back) = (motorSliding(shift), motorSliding(-shift))
+    for operation in Operation:
+      var (compared, differs) = (0, false)
+      for i in 0..<SAMPLES:
+        # Second triple shares no point with first, so no pair lies on each other.
+        let k = (i + 7) mod SAMPLES
+        for m in [POINTS[i], LINES[i], PLANES[i]]:
+          for n in [POINTS[k], LINES[k], PLANES[k]]:
+            let about_sol = operated(operation, m, n)
+            if about_sol.isRoundingOf(m.coefficientLargest * n.coefficientLargest): continue
+            inc compared
+            let
+              about_moved =
+                operated(operation, m.carried(slide), n.carried(slide)).carried(back)
+              scale = max(
+                m.coefficientLargest * n.coefficientLargest,
+                max(about_sol.coefficientLargest, about_moved.coefficientLargest),
+              )
+            if subtract(about_sol, about_moved).coefficientLargest > TOLERANCE_ABS * scale:
+              differs = true
+      check compared >= SAMPLES
+      check differs == (operation notin OPERATIONS_SLIDING)
 
 
   test "meet finds where a line crosses a plane even far outside its own drawn disc":
@@ -350,6 +454,24 @@ suite "Scene":
       # Attitude of line is its direction, which is point lying in horizon.
       check kindText(⊖LINES[i]) == "horizon point"
     check kindText(1.0 + POINTS[0]) == "mixed grade, nothing to draw"
+
+
+  test "a line a metre long prints the terms it carries, and no rounding beside them":
+    # Its coefficients stand near 1e-12 one unit out, under library's absolute tolerance.
+    #   Term prints against largest coefficient instead, as `kindOf` reads it, so line
+    #   reads as line in panel rather than as zero.
+    let
+      metre = 1.0 / (1000.0 * KILOMETRES_PER_ASTRONOMICAL_UNIT)
+      base = Position(x: 0.2512598425822558, y: 0.9679196720314863, z: 0.0)
+      line = base.toMultivector ∧ (base + Direction(x: 0.0, y: 0.0, z: metre)).toMultivector
+    check kindText(line) == "line"
+    check formatMultivectorString(line) == "6.685e-12 𝐞₄₃ + 6.47e-12 𝐞₂₃ - 1.68e-12 𝐞₃₁"
+    # Rounding under billionth of largest term stays unprinted, beside large term or small.
+    let point = Position(x: 2, y: 0, z: -3).toMultivector
+    check formatMultivectorString(point + initElement(Basis.E23, 1.0e-12)) ==
+        "2 𝐞₁ - 3 𝐞₃ + 1 𝐞₄"
+    check formatMultivectorString(line + initElement(Basis.E12, 1.0e-24)) ==
+        "6.685e-12 𝐞₄₃ + 6.47e-12 𝐞₂₃ - 1.68e-12 𝐞₃₁"
 
 
   test "handlesCreated walks creation order, whatever order the handles fell in":

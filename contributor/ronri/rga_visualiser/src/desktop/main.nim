@@ -96,6 +96,8 @@
 ##   `--drive-keys` scripts run of view keys and reports what camera and focus did.
 ##   `--drive-undo` builds something, orbits away and undoes it, so where undo leaves view
 ##   can be looked at.
+##   `--drive-edit` opens edit on object far out and saves it unchanged, so what staging
+##   keeps of its coefficients can be read.
 
 {.experimental: "strictFuncs".}
 
@@ -299,8 +301,8 @@ var
 #   Costs `OBJECTS_MAX` placements of fixed reservation, counted by `BYTES_MEMORY_TOTAL`.
 var
   PLACEMENTS: array[OBJECTS_MAX, Placement]
-  ORIGIN_RECORDS = Position(x: 0.0, y: 0.0, z: 0.0)
-    ## Point every record is stored from; see `camera.originHeld` and `mesh.clearMeshes`.
+  ORIGIN_VIEW = Position(x: 0.0, y: 0.0, z: 0.0)
+    ## Hold view origin, point every record is stored from; see `camera.originView`.
     ##   One value for both mesh sets, because one transform draws them.
   REACH_NEAR = 0.0
     ## Reach to nearest drawn object ahead of eye; see `camera.scaleLocal`.
@@ -346,6 +348,8 @@ type
       ## tabs; verdict then reads what menu laid out.
     is_faces_driven: bool  ## Whether to ask each role's face for every codepoint build writes.
       ## Headless run then shows no text drawn falls to `.notdef`; see `shown`.
+    is_edit_driven: bool  ## Whether to open edit on object far out and save it unchanged.
+      ## Headless run then shows what staging keeps of it; see `driveEdit`.
     path_help_driven: Option[HelpPath]  ## Which help tab to open at startup, if any.
       ## Headless run cannot click tab strip, so `--drive-help:<tab>` names one.
 
@@ -392,6 +396,7 @@ proc applyOption(options: var Options; key, value: string) =
   of "drive-search": options.is_search_driven = true
   of "drive-menu": options.is_menu_driven = true
   of "drive-faces": options.is_faces_driven = true
+  of "drive-edit": options.is_edit_driven = true
   of "drive-help":
     for path in HelpPath:
       if titleOf(path) == value: options.path_help_driven = some(path)
@@ -401,8 +406,8 @@ proc applyOption(options: var Options; key, value: string) =
     doAssert false,
       "Option must be one of screenshot, storyboard, load-scene, frames, hidden, " &
       "timings, novsync, fill, demo[:<objects>], help-tabs, drive-drag, drive-keys, " &
-      "drive-select, drive-undo, drive-sky, drive-search, drive-menu, drive-faces or " &
-      "drive-help; " &
+      "drive-select, drive-undo, drive-sky, drive-search, drive-menu, drive-faces, " &
+      "drive-edit or drive-help; " &
       &"got `--{key}`."
 
 
@@ -410,7 +415,8 @@ func isDriven(options: Options): bool =
   ## Report whether any scripted run was asked for.
   options.is_drag_driven or options.is_key_driven or options.is_select_driven or
       options.is_undo_driven or options.is_sky_driven or options.is_search_driven or
-      options.is_menu_driven or options.is_faces_driven or options.path_help_driven.isSome
+      options.is_menu_driven or options.is_faces_driven or options.is_edit_driven or
+      options.path_help_driven.isSome
 
 
 proc parseOptions(): Options =
@@ -530,13 +536,13 @@ proc assembleMeshes(
   )
   if SETTINGS_FURNITURE_HELD.isNone or SETTINGS_FURNITURE_HELD.get != settings_furniture:
     SETTINGS_FURNITURE_HELD = some(settings_furniture)
-    MESHES_FURNITURE.clearMeshes(ORIGIN_RECORDS)
+    MESHES_FURNITURE.clearMeshes(ORIGIN_VIEW)
     if panel.is_grid_shown:
       MESHES_FURNITURE.addLatticesPicked(scratch[0], scale, scene, panel.selection)
     if panel.is_axes_shown:
       MESHES_FURNITURE.addAxes(scratch[0], scale.extentFurniture, scale)
 
-  MESHES.clearMeshes(ORIGIN_RECORDS)  # About held origin; see `ORIGIN_RECORDS`.
+  MESHES.clearMeshes(ORIGIN_VIEW)  # About view origin; see `ORIGIN_VIEW`.
   # Mark picks once and read mark per handle below; see `selection.markOnto`.
   panel.selection.markOnto(MARKS_PICKED)
   defer: panel.selection.markOnto(MARKS_PICKED, is_marked = false)
@@ -1117,8 +1123,8 @@ proc renderFrame(
   # Read local scale once for this frame, before extent reads clip planes off it.
   REACH_NEAR = reachNearOf(PLACEMENTS, scene, eye, frame.forward)
   camera.reach_near = REACH_NEAR
-  # Decide records' origin after scale, since bound is read off near clip.
-  ORIGIN_RECORDS = camera.originHeld(eye, ORIGIN_RECORDS)
+  # Decide view origin after scale, since bound is read off near clip.
+  ORIGIN_VIEW = camera.originView(eye, ORIGIN_VIEW)
 
   # Derive extent aim reads, and keep motor before aim, so hold it makes is seen below.
   let
@@ -1160,7 +1166,7 @@ proc renderFrame(
     are_dimmed,
   )
   clearFrame(int(width), int(height))
-  # GPU takes transform about records' origin; `view_projection` above stays about world,
+  # GPU takes transform about view origin; `view_projection` above stays about world,
   #   for hover, menu and markers, which read world coordinates.
   let view_projection_drawn =
     camera.initMatrixViewProjection(eye, frame, width / height, MESHES.origin)
@@ -1702,6 +1708,34 @@ proc driveSearch(window: Window, panel: var Panel, scene: Scene, count_drawn: in
   sdl3.pushEvent(addr event)
 
 
+const
+  PLACE_EDIT_DRIVEN = Position(x: 698390.5003793767, y: -953804.3278982069, z: -2043454.9154813075)
+    ## Place `--drive-edit` edits: two million units out, as demo's HD 222237 b stands.
+    ##   `float32` steps eighth of unit there.
+  RADIUS_EDIT_DRIVEN = 4.2635e-5  ## Radius it carries, as demo's earth does; `float32` rounds it.
+  LABEL_EDIT_DRIVEN = "far"  ## Label it carries, for verdict to find it by.
+
+
+proc driveEdit(panel: var Panel, scene: var Scene, camera: Camera, count_drawn: int, now: float) =
+  ## Add object far out, open edit on it, and save it unchanged frames later, for `--drive-edit`.
+  ##   Opened and saved through panel's own `beginSession` and `saveSession`, as row's
+  ##   buttons do: headless run has no pointer to press them with, as `--drive-search` has
+  ##   none for its pick.
+  ##   Frames between lay session's coefficient grid out, every widget bound to staged value.
+  const (frame_open, frame_save) = (3, 8)  # Past startup, so first frame's layout has settled.
+  if count_drawn == frame_open:
+    let handle = scene.addObject(
+      PLACE_EDIT_DRIVEN.toMultivector,
+      LABEL_EDIT_DRIVEN,
+      Ink.Rose,
+      now,
+      radius = RADIUS_EDIT_DRIVEN,
+    )
+    beginSession(panel, scene, some(handle))
+  elif count_drawn == frame_save and panel.session.isSome:
+    saveSession(panel, scene, camera, HISTORY_DESKTOP, now)
+
+
 proc driveSelect(scene: Scene; camera: Camera; width, height, count_drawn: int; scale: DrawExtent) =
   ## Script click, then two shift-clicks, on first three objects, then drag off menu's object.
   ##   Headless run then shows floating selection menu at each size and proves it does not
@@ -1986,6 +2020,31 @@ proc verdictDriven(
       &"{panel.count_demo_offered} sizes offered, {ord(ScaleOrrery.high) + 1} in `orrery`",
     )
 
+  # Edit is its own verdict, and fires only in run that asked for it.
+  #   Claim is that edit opened on object far out and saved unchanged writes back every
+  #   coefficient and its radius to bit. Exact, not approximate: nothing rounding is claim.
+  if options.is_edit_driven:
+    let expected = PLACE_EDIT_DRIVEN.toMultivector
+    var
+      found = none(int)
+      count_moved = 0
+    for handle in 0..<scene.bound:
+      if scene.isAlive(handle) and scene[handle].label.toText == LABEL_EDIT_DRIVEN:
+        found = some(handle)
+    if found.isSome:
+      for b in Basis:
+        if scene.geometryOf(found.get)[b] != expected[b]: inc count_moved
+    let (z_saved, radius_saved) =
+      if found.isSome: (scene.geometryOf(found.get)[Basis.E3], scene.radiusAt(found.get))
+      else: (NaN, NaN)
+    report(
+      "an edit opened far out and saved unchanged keeps every coefficient to the bit",
+      found.isSome and panel.session.isNone and count_moved == 0 and
+      radius_saved == RADIUS_EDIT_DRIVEN,
+      &"{count_moved} coefficients moved, z {z_saved:.10f} for {expected[Basis.E3]:.10f}, " &
+      &"radius {radius_saved:.10g} for {RADIUS_EDIT_DRIVEN:.10g}",
+    )
+
   # Faces are their own verdict, and fire only in run that asked for them.
   #   Claim is that every codepoint each role sets draws from glyph of some face merged into
   #   that role's, never from `.notdef` (Article X.8). Title role sets panel headings alone,
@@ -2213,6 +2272,7 @@ proc runInteractive(
 
     if options.is_key_driven: driveKeys(count_drawn)
     if options.is_search_driven: driveSearch(window, panel, scene, count_drawn)
+    if options.is_edit_driven: driveEdit(panel, scene, camera, count_drawn, now)
     if options.is_sky_driven:
       driveSky(scene, camera, PIXELS_WIDTH, PIXELS_HEIGHT, count_drawn, now)
     if options.is_drag_driven or options.is_select_driven or options.is_undo_driven:

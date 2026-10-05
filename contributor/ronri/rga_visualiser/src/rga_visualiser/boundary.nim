@@ -30,7 +30,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, strformat]
+import std/[math, options, strformat]
 
 import pga
 import ./[euclid, objects]
@@ -177,12 +177,20 @@ func motorOf*(m: Multivector): Motor =
 
 #[ Object Interrogation ]#
 
-func position*(m: Multivector): Option[Position] =
+func position*(m: Multivector, scale = 0.0): Option[Position] =
   ## Read Euclidean position of point.
-  ##   None where point lies in horizon, as direction has no place.
+  ##   None where point lies in horizon, as direction has no place: weight no more than
+  ##   `TOLERANCE_ABS` of bulk, as `isHorizon` judges it, whatever point's own scale.
+  ##   `scale` is for caller that built `m` on spot: its factors' scales multiplied.
+  ##     Weight no more than `TOLERANCE_ABS` of it reads none too, so meet whose operands
+  ##     run parallel, or lie in each other, reads none rather than rounding's place.
   ##   Divides by signed weight rather than weight norm, so antipodal points stay distinct.
-  let weight = m[Basis.E4]
-  if abs(weight) <= TOLERANCE_ABS: return
+  ##   Bulk is read off coefficients, not library's norm: `placeObject` reads every point,
+  ##   and `pointFrom` every marker point of every frame.
+  let
+    weight = m[Basis.E4]
+    bulk = sqrt(m[Basis.E1] * m[Basis.E1] + m[Basis.E2] * m[Basis.E2] + m[Basis.E3] * m[Basis.E3])
+  if abs(weight) <= TOLERANCE_ABS * max(bulk, scale): return
   some(Position(x: m[Basis.E1] / weight, y: m[Basis.E2] / weight, z: m[Basis.E3] / weight))
 
 
@@ -202,21 +210,26 @@ func positionAnchor*(m: Multivector): Option[Position] =
   some(Position(x: 0, y: 0, z: 0))
 
 
-func direction*(m: Multivector): Option[Direction] =
+# Four readers of direction share one `scale`, as `position` takes it.
+#   Default zero refuses only no direction at all: object read as it stands, at own scale.
+#   Caller that built `m` on spot passes its factors' scales multiplied, and direction no
+#   more than `TOLERANCE_ABS` of that reads none: pair that runs parallel names none.
+func direction*(m: Multivector, scale = 0.0): Option[Direction] =
   ## Read unit direction line extends along.
-  ##   None where line lies in horizon, as its attitude then vanishes.
+  ##   None where line lies in horizon (`isHorizon`), as its attitude then vanishes.
+  if m.isHorizon: return
   let attitude = ⊖m
-  normalize(Direction(x: attitude[Basis.E1], y: attitude[Basis.E2], z: attitude[Basis.E3]))
+  normalize(Direction(x: attitude[Basis.E1], y: attitude[Basis.E2], z: attitude[Basis.E3]), scale)
 
 
-func directionHorizon*(m: Multivector): Option[Direction] =
+func directionHorizon*(m: Multivector, scale = 0.0): Option[Direction] =
   ## Read unit direction horizon point stands for.
   ##   None where point has weight, as it then names place rather than direction.
   if not m.isHorizon: return
-  normalize(Direction(x: m[Basis.E1], y: m[Basis.E2], z: m[Basis.E3]))
+  normalize(Direction(x: m[Basis.E1], y: m[Basis.E2], z: m[Basis.E3]), scale)
 
 
-func directionNormalHorizon*(m: Multivector): Option[Direction] =
+func directionNormalHorizon*(m: Multivector, scale = 0.0): Option[Direction] =
   ## Read unit direction normal to pencil of directions horizon line stands for.
   ##   Line's weight lives in `E41`/`E42`/`E43`; `E23`/`E31`/`E12` survive in horizon and
   ##   carry same normal finite plane's attitude would leave there, unnormalized.
@@ -224,15 +237,17 @@ func directionNormalHorizon*(m: Multivector): Option[Direction] =
   ##   None where line has weight, as it then runs along direction, not perpendicular to
   ##   pencil of them.
   if not m.isHorizon: return
-  normalize(Direction(x: m[Basis.E23], y: m[Basis.E31], z: m[Basis.E12]))
+  normalize(Direction(x: m[Basis.E23], y: m[Basis.E31], z: m[Basis.E12]), scale)
 
 
-func directionNormal*(m: Multivector): Option[Direction] =
+func directionNormal*(m: Multivector, scale = 0.0): Option[Direction] =
   ## Read unit direction perpendicular to plane.
   ##   Antidual is negated so normal runs along plane's own weight gˣ, gʸ, gᶻ.
-  ##   None where plane lies in horizon, as horizon has no normal in Euclidean space.
+  ##   None where plane lies in horizon (`isHorizon`), as horizon has no normal in
+  ##   Euclidean space.
+  if m.isHorizon: return
   let normal = -(☆m)
-  normalize(Direction(x: normal[Basis.E1], y: normal[Basis.E2], z: normal[Basis.E3]))
+  normalize(Direction(x: normal[Basis.E1], y: normal[Basis.E2], z: normal[Basis.E3]), scale)
 
 
 

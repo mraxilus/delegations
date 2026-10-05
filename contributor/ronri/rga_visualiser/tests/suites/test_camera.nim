@@ -101,7 +101,7 @@ suite "Camera":
 
   test "the readers of a frame handed its eye and frame read the stance no more":
     # Each front-end reads `sight` once for each frame and hands eye and frame on, so extent,
-    #   frustum, transform, far bound and records' origin lift nothing more. Page's driven
+    #   frustum, transform, far bound and view origin lift nothing more. Page's driven
     #   check counts its whole frame build; desktop's frame is held by this and by reading.
     let
       camera = cameraAround(PLACES[2], 11.0, Direction(x: -0.3, y: 1.0, z: 0.5))
@@ -111,7 +111,7 @@ suite "Camera":
         discard camera.viewBoundsFor(eye, frame, scale, 16.0 / 9.0, 50.0)
         discard camera.initMatrixViewProjection(eye, frame, 16.0 / 9.0, PLACES[3])
         discard camera.distanceFar(eye, 50.0)
-        discard camera.originHeld(eye, PLACES[3])
+        discard camera.originView(eye, PLACES[3])
     check lifts == 0
 
 
@@ -396,21 +396,21 @@ suite "Camera":
     check reachNearOf(placed, scene, eye, camera.frame.forward) =~ 0.0
 
 
-  test "records' origin holds until travel spends float32's precision about it":
+  test "view origin holds until travel spends float32's precision about it":
     var camera = cameraAround(ORIGIN, 19.0, Direction(x: 1, y: 0, z: 0))
     let eye_start = camera.eye
     # Bound is quarter of near clip, divided by float32's own step.
     let reach_hold = FRACTION_ORIGIN_HOLD * camera.distanceNear / STEP_SINGLE
     check reach_hold > 1.0e5
-    check camera.originHeld(camera.eye, eye_start) =~ eye_start
+    check camera.originView(camera.eye, eye_start) =~ eye_start
     # Travel well inside bound keeps origin exactly where it was.
     camera.travel(0.5 * reach_hold, 0.0, 0.0)
-    check camera.originHeld(camera.eye, eye_start) =~ eye_start
+    check camera.originView(camera.eye, eye_start) =~ eye_start
     # Travel past it moves origin onto eye, once.
     camera.travel(0.6 * reach_hold, 0.0, 0.0)
-    let moved = camera.originHeld(camera.eye, eye_start)
+    let moved = camera.originView(camera.eye, eye_start)
     check moved =~ camera.eye
-    check camera.originHeld(camera.eye, moved) =~ moved
+    check camera.originView(camera.eye, moved) =~ moved
     # Close work draws bound in with near clip, so origin follows sooner.
     camera.reach_near = 0.002
     check FRACTION_ORIGIN_HOLD * camera.distanceNear / STEP_SINGLE < reach_hold

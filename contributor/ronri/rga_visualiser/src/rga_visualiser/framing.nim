@@ -256,7 +256,7 @@ func holdHorizon*(camera: var Camera; aim: CameraAim; width, height: int) =
   let
     (sight, demanded) = (forward.toMultivector, toward.toMultivector)
     pencil = sight ∧ demanded
-    axis = directionNormalHorizon(pencil).get(camera.frame.axis_right)
+    axis = directionNormalHorizon(pencil, scale = 1.0).get(camera.frame.axis_right)
     cosine = innerOf(sight, demanded)
   # Angle off inner product and pencil's bulk norm, which is its sine: `arccos` alone
   #   reads 2e-8 radians off parallel pair, twenty times `SLACK_FRAMED`.
@@ -371,10 +371,13 @@ func stanceApproaching*(
   ##   None where object is not ahead of eye, leaving caller `stanceFor`. Centring one
   ##   behind reader would slide camera back past it rather than turn, which is jump
   ##   nobody asked for; frame rule turns nothing and handles it by its own bound.
+  ##     Ahead is judged against object's own reach from eye: depth no more than
+  ##     `TOLERANCE_ABS` of it stands in eye's plane. Never against fixed millionth,
+  ##     which object picked from hundredth of millionth off stands well under.
   let
     (eye, frame) = camera.sight
     reach_now = distanceBetween(centre.toMultivector, eye.toMultivector)
-  if depthAlong(eye, frame.forward, centre) <= 1.0e-6: return
+  if depthAlong(eye, frame.forward, centre) <= TOLERANCE_ABS * reach_now: return
   var depth_end = min(reach_now, camera.distance)
   case shaped
   of Kind.Point:
@@ -408,7 +411,9 @@ func stanceLifted*(stance: CameraStance, camera: Camera, normal: Direction): Cam
     (point_sight, point_normal) = (placed.frame.forward.toMultivector, normal.toMultivector)
     cosine = innerOf(point_sight, point_normal)
   if abs(cosine) >= sin(ANGLE_PLANE_LEAST) - SLACK_FRAMED: return stance
-  let level = direction((1.0.e4 ∧☆ (1.0.e4 ∧ point_normal)) ∨ (1.0.e4 ∧ point_sight ∧ point_normal))
+  let level = direction(
+    (1.0.e4 ∧☆ (1.0.e4 ∧ point_normal)) ∨ (1.0.e4 ∧ point_sight ∧ point_normal), scale = 1.0
+  )
   if level.isNone: return stance
   let
     along =
@@ -417,9 +422,10 @@ func stanceLifted*(stance: CameraStance, camera: Camera, normal: Direction): Cam
       if abs(cosine) > SLACK_FRAMED: cosine < 0.0
       else: innerOf(point_normal, UP_WORLD.toMultivector) >= 0.0
     lean = if is_above: -sin(ANGLE_PLANE_LEAST) else: sin(ANGLE_PLANE_LEAST)
-    lifted = directionHorizon(add(
-      wedge(cos(ANGLE_PLANE_LEAST), along.toMultivector), wedge(lean, point_normal)
-    ))
+    lifted = directionHorizon(
+      add(wedge(cos(ANGLE_PLANE_LEAST), along.toMultivector), wedge(lean, point_normal)),
+      scale = 1.0,
+    )
   if lifted.isNone: return stance
   stanceFacing(pointAlong(placed.pivot, lifted.get, -stance.distance), placed.pivot)
 

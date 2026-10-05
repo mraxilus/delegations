@@ -573,8 +573,8 @@ func resultOf*(choice: DragChoice; m, n: Multivector): Option[Multivector] =
   ##   None for `More`, and none wherever result has no drawable shape.
   ##     One test covers both ways construction comes to nothing: wrong grades landing on
   ##     scalar or antiscalar, and pair lying on each other giving zero.
-  ##     `objects.kindOf` reads `grade`, which already tolerances near-zero away, so line of
-  ##     negligible magnitude reports no shape.
+  ##     `scene.applyOperation` answers zero for rounding of it, judged against operands,
+  ##     and `objects.kindOf` reads zero as no shape; line metre long still reads as line.
   let drag = choice.toDrag
   if drag.isNone: return
   let derived = applyOperation(drag.get.toOperation, m, n)

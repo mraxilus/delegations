@@ -880,10 +880,29 @@ second implementation.
 **The panel holds only what the GUI needs between frames.** Everything else is read straight off
 the scene and the camera.
 
+**An edit stages doubles, as the scene holds them.** `EditSession` holds its sixteen coefficients
+and its radius as `float`. `gui.dragDouble` binds `DragScalar` on `ImGuiDataType_Double`. The grid
+of an edit, the motor grid and the size field draw through it. An edit that opens and saves
+unchanged then writes back every bit.
+
+Rejected: `float32`, which `DragFloat` writes. Two million units from the world origin, a `float32`
+steps an eighth of a unit. An unchanged save through one moves an object there by up to 0.04 units,
+as the demo's HD 222237 b shows.
+
+A drag never rounds to the four digits shown (`ImGuiSliderFlags_NoRoundToFormat`). That rounding
+would move such a coefficient hundreds of units. Verified by a read of `imgui_widgets.cpp` alone,
+on 2026-10-05, and no check drags a coefficient.
+
+**The proof of an unchanged edit is a driven run, and not a suite case.** The suite compiles no
+`panel`, since `gui` needs a GL context. A pure helper would prove a copy, and not the widget that
+writes through the staged value. `--drive-edit` opens and saves through `beginSession` and
+`saveSession`, as the buttons of the row do, and lays the grid out for five frames between them.
+
 **The entry point owns the window, the event loop and every headless run.** The run modes are
 `--screenshot`, `--frames`, `--hidden`, `--storyboard`, `--timings`, `--novsync`, `--fill`,
 `--demo` and `--drive-*`. Each one pushes real events through the queue of SDL itself, rather
-than calls a handler.
+than calls a handler. `--drive-edit` alone calls the procs that the buttons of a row call, since no
+pointer reaches them.
 
 **The compiler flags of the desktop live in the build driver.** The `desktop` verb of
 `tools/build.nim` passes the `cpp` backend and the output path. Rejected: `main.nim.cfg`, which
@@ -939,7 +958,10 @@ multisampled visual, so thin lines alias.
 **The suites test the rules, `tools/drive/` tests the wiring of the browser, and this tests the
 wiring of the desktop.** The entry point carries scripted runs: `--drive-keys`, `--drive-sky`,
 `--drive-undo`, `--drive-select`, `--drive-drag`, `--drive-search`, `--drive-menu`, `--drive-faces`,
-and `--drive-help:<tab>`, one for each tab. Each one pushes real events through the queue of SDL.
+`--drive-edit`, and `--drive-help:<tab>`, one for each tab. Each one pushes real events through the
+queue of SDL, except where no pointer can reach a button. There, `--drive-edit` opens and saves
+through the procs that the buttons call.
+
 `driven` runs all of them and reports every failure, and not the first. It asks the binary which
 help tabs exist (`--help-tabs`), so `help.HelpPath` stays their one home (Article I.4). `drive`
 chains it, here and on the runner (repository issue 91).
@@ -955,7 +977,8 @@ chains it, here and on the runner (repository issue 91).
 - every type role is drawn in a face of its own;
 - every codepoint that each role sets has a glyph in the face of that role;
 - a scene filled to capacity leaves what follows its list on the window;
-- the menu opens and offers the demo at every size that `orrery` has.
+- the menu opens and offers the demo at every size that `orrery` has;
+- an edit opened far out and saved unchanged keeps every coefficient and its radius to the bit.
 
 **An absent face is a finding, and never an abort.** Dear ImGui asserts inside
 `AddFontFromFileTTF` where it cannot open a path, and an assertion is SIGABRT rather than a
@@ -1584,8 +1607,8 @@ It is tiny rather than small. The moons of the demo ring their planets at thousa
 are millionths wide. A floor of a twentieth kept the camera outside every one of them. There is no
 ceiling, which would read as a camera bounded to a region, and which nothing downstream needs.
 
-**Every record is stored about the origin of the frame.** `mesh.clearMeshes` takes that origin,
-and both front-ends pass the one that `originHeld` keeps. Each of the five record writers subtracts
+**Every record is stored about the view origin.** `mesh.clearMeshes` takes that origin, and
+both front-ends pass the one that `originView` keeps. Each of the five record writers subtracts
 it at the float32 write. What the camera looks at is then exact wherever it stands. Take a moon a
 thousandth of a unit from its planet, a million units out. Float32 about the world origin steps by
 a sixteenth there, and loses the whole offset.
@@ -1641,7 +1664,9 @@ one pixel for one; see Drags.
 typed on the rigid motion it names. Odd grades drop, and the even part passes through the library's
 `unitize`, `log` and `exp`. `unitize` alone leaves a slide that the turn does not allow, which
 carries the eye off an orthonormal frame. Only the changed coefficient is written into the live
-motor, so the four digits of a field never round the other fifteen.
+motor.
+
+On the desktop, each field holds a double, and never rounds to the four digits that it shows.
 
 Azimuth and elevation stand beside it as readings in degrees, and are never typed: two numbers name
 no roll. The separation shows only with a selection, which the frame rule measures it from. The
@@ -1834,7 +1859,7 @@ reads the last edit's reach of the scene.
 Both front-ends hold a placement cache, filled on an edit beside the reach of the scene, and
 `BYTES_MEMORY_TOTAL` counts one placement for each handle. `assembleMeshes` places as it emits.
 
-**Records are stored from the eye, held where it stands.** `originHeld` keeps the origin until
+**The view origin stands at the eye, held there.** `originView` keeps the origin until
 travel has spent float32's precision about it: `FRACTION_ORIGIN_HOLD` of the near clip, divided by
 `STEP_SINGLE`. That is about 152 thousand units at the opening stance, and less as close work draws
 the near clip in.
@@ -2327,6 +2352,151 @@ has objects. Verified by a read of the emitted code on 2026-10-04. No `nimCopy` 
 operators, `addRing` or `addDisc` on the JavaScript backend. On the C backend each operator is three
 field stores with no fill.
 
+## Origins
+
+**Three origins, as a GPU pipeline has three spaces.** The world origin is world space: the scene
+stores each object about it, and stores nothing else. The view origin is view space: a frame is
+drawn about it, near the camera, through `originView`. The model origin is model space: an
+operation holds its operands about it, at a point of one of them, through `originModel`.
+
+**Only the world origin is stored.** A GPU stores a vertex in model space and derives the others.
+This scene stores in world space, and derives the view and model spaces inside the calculation
+that uses each. Rounding grows with the distance from the origin a number is held about. So each
+calculation is held about the origin nearest what it serves: a frame about the camera, an operation
+about its operands. Storage keeps its step far out, which Classification at any scale counts as a
+cost.
+
+## Classification at any scale
+
+**An object is judged against its own scale, and never against an absolute tolerance.** One world
+unit is one astronomical unit. A join of two points a metre apart, one unit out, carries
+coefficients near 1e-12. The library's `TOLERANCE_ABS` is an absolute 1e-9, so the library alone
+reads that line as no object. `objects.kindOf` therefore reads the grade of a scale-free copy, which
+`scaleFree` divides by its largest coefficient. A coefficient then counts where it is more than a
+billionth of the largest one.
+
+**The copy is skipped where it changes nothing.** Where the weight `E4` is one or more and the
+library reads one grade, the largest coefficient is at least one. The threshold of the copy then
+stands at or above that of the library. So the copy keeps a subset of the same coefficients, the
+largest among them, and reads the same grade. Every unit-weight point takes this path.
+
+**Horizon is weight against bulk.** `isHorizon` reads an object as horizon where its weight norm is
+no more than a billionth of its bulk norm. That is an object more than a billion units out.
+`boundary.position` weighs the weight of a point against its bulk in the same way.
+`motors.turnAbout` refuses an axis by the same rule. The library does not change (see Algebra
+boundary).
+
+**A product that a caller builds on the spot is judged against its factors.** Rounding of zero
+carries no scale of its own, so the product alone cannot show it. `euclid.normalize` and the four
+direction readers of `boundary` take a `scale`, and refuse a direction no more than `TOLERANCE_ABS`
+of it. A caller that wedges unit directions passes one, so a parallel pair names no direction at
+1e-9 radians, as before. The default of zero refuses only a direction with no length.
+
+The ribbon's own test stays in world units, as the tests of its shaders do, since its segment is the
+picture's.
+
+**A catalogue operation runs about a point near its operands.** `scene.applyOperation` slides its
+operands to a local origin through the library's own motor (`motorSliding` and `carried`), applies
+the operation there, and slides the result back. About the world origin, the join of two points a
+metre apart, one unit out, computes its moment `p × q` from products near one. That moment cancels
+to about 1e-5 of itself, and both points stand hundreds of kilometres off the line.
+
+Only the operations of `OPERATIONS_SLIDING` run so, which are the fifteen that commute with a slide.
+The other twelve read the origin itself, as support, bulk and the central projection do. So they run
+about the world origin, which is the origin they mean.
+
+The origin is the place of a point operand, the first operand's first. The cancellation is about the
+point that is joined. Else it is the anchor of the first finite operand, which is its support. Else
+it is the world origin, where no operand stands anywhere finite.
+
+A slide back adds `t × d` to a small moment, and cancels nothing, so the rounding is `ε` of the
+distance slid. That is 33 µm one unit out, and about a millimetre thirty units out. Each slide keeps
+only the grades that its multivector occupies. A rigid slide keeps every grade, so a coefficient on
+another grade is rounding of the sandwich. A join a metre across one unit out reads that rounding as
+a mixed grade.
+
+Measured on 2026-10-05 by a probe that is not kept, over 2,000 random pairs one unit out, beside the
+demo's earth. The line held both points within 47 µm, where about the world origin it stood 182 km
+off at the median. A plane joined from three such points held them within 0.45 mm, and a meet with a
+crossing plane within 0.29 mm. Rejected: a pair of doubles for each coefficient, which the dense
+`Multivector` of the library cannot carry.
+
+**An operation answers zero for rounding of zero.** `scene.applyOperation` applies the operation
+again to scale-free copies of its operands, as they stand about the local origin. Where the largest
+coefficient of that second result is under `TOLERANCE_ROUNDING` times the scale of the point they
+slid from, the result is zero. A sum is judged against its larger operand instead.
+
+Each operand carries the rounding of where it stood, so the scale of that point keeps rounding far
+out at zero. A point met on its own line then joins with it to nothing, near the world origin and
+two million units out. The drag and both apply pickers read it so. The marker judges an eye on its
+line against the line and the eye in the same way.
+
+**`TOLERANCE_ROUNDING` is `2^(2·4)·ε`, about 5.7e-14.** That is the worst rounding of one product of
+two multivectors, against the scales of its factors. Within five units of the world origin, a point
+met on its line joins with it to about 2e-16 of its operands. Two million units out, the point
+stands up to 2e-8 off the line, against a bound of 1.2e-7 there. Points a metre apart join, about
+either one, to 6.7e-12 of their operands.
+
+Measured on 2026-10-05 by a probe that is not kept. The far figures are at the place of the demo's
+HD 222237 b.
+
+**The panel prints a term against the largest one.** `scene.formatMultivector` prints a term where
+it is more than a billionth of the largest coefficient. A metre-long line then prints its three
+terms, and not `0 𝟏`.
+
+**Rejected: an absolute tolerance of more places.** With `-d:pga.tolerance_places=12` the suite
+passes, but the floor only moves. The smallest coefficient of a metre join one unit out, beside the
+demo's earth, is 1.04e-12, just above that floor. At 15 places, eight cases fail, because they
+compare with zero through `=~`. Measured on `f779cec8` on 2026-10-05, by a probe that is not kept.
+
+**Cost: rounding that stands alone reads as an object.** A stored object of pure rounding is drawn,
+where the tolerance of the library refuses it. Only a caller that holds the factors can refuse it.
+
+**Cost: storage far from the world origin still steps.** Each object is stored relative to the world
+origin, and that is all that is stored. A double steps by half a millimetre at 30 units, and by a
+metre at 60,000 units. Two million units out it steps by 17 to 35 m, as at the demo's HD 222237 b.
+Two points a metre apart there are stored as one. Rejected: an exact place stored with each object,
+because the origins of a calculation stay implicit in that calculation.
+
+A join holds a metre wherever storage holds one. It runs about the point it joins, so its rounding
+is `ε` of that point's distance from the world origin.
+
+**Cost: more work in each classification.** Measured on 2026-10-05 on one delegate, under the lock
+of the gate. Each probe places the 5,038 objects of the largest demo. Each pair is `0d47eab3`,
+then this design:
+
+- release C, five pairs of the median of 41 runs: 0.48 to 0.55 ms, then 0.50 to 0.52 ms;
+- release JS on Node 22, five pairs of the same probe: 26.2 to 29.6 ms, then 26.6 to 35.9 ms;
+- tessellation that the debug desktop's `--timings` reads over 300 frames, three pairs: 12.5 to
+  12.9 ms, then 14.4 to 14.6 ms;
+- the frame at p50 from that same run: 79.6 to 80.3 ms, then 86.7 to 87.2 ms.
+
+The page places every object only after a load or a restore. The desktop places every object in each
+frame, and asks `isHorizon` of each row of its objects list. That second norm of `isHorizon`, and
+the second pass of `formatMultivector`, are most of what the desktop frame gained.
+
+**Cost: three slides for each catalogue operation.** Measured on 2026-10-05 on one delegate, under
+the lock of the gate, the median of 21 runs of 2,000 calls each. Each pair is `7119f4cb`, then this
+design:
+
+- debug C, a join or a meet: 5.1 to 5.4 µs, then 32 to 41 µs a call;
+- release JS on Node 22, the same calls: 20 to 33 µs, then 85 to 177 µs a call.
+
+A drag over an object calls it up to seven times in each update: three proposals, one preview, and
+three offers of the menu. The apply section calls it once in each frame. No path calls it for each
+object.
+
+*Checked.* Verified by `suites.nim`:
+
+- a join of two points a metre apart is a line, one unit out as near the origin;
+- a line a metre long holds both its points, one unit out as near the origin, as placed;
+- a plane a metre across holds its three points, and a line meets it where it crosses;
+- points that coincide, and a point lying on its line, join to nothing, near and far;
+- the catalogue's joins, meets and projections give what the library gives, near and far;
+- the catalogue runs about a local origin exactly the operations that commute with a slide;
+- a line a metre long prints the terms it carries, and no rounding beside them;
+- an eye standing on the line has no side to flank it from.
+
 ## Motors
 
 `motors.nim` holds the rigid motions that `pga` lacks. A motor is one value that carries a turn
@@ -2701,6 +2871,12 @@ separation that the camera holds then reads as behind it. Rejected: a fixed mill
 pointer pick of a star at least radius stands 2.4e-7 units off it. The ring, the label, the menu and
 every pick then lost the star.
 
+**A hit on an object reads as ahead by its own reach from the eye.** `positionOnObjectUnder` and
+`rayPlaneHit` read a hit as behind where its depth is no more than a billionth of its distance from
+the eye. Rejected: a fixed millionth of a unit. A camera can stand a hundredth of a millionth off a
+plane. The plane under the middle of the frame would then be neither picked nor found. A meet of the
+ray with a plane reads none where the ray grazes the plane within a billionth of a radian.
+
 **Handle-liveness guards.** Hovered, dragged, focused and selected handles are plain values
 carried across frames. Any of them can name a removed object the frame after a delete.
 `nimAnchorScreen` reports nothing for a dead handle. `endDrag` on both paths checks `isAlive` on
@@ -2717,7 +2893,8 @@ the source and the destination. A removal of an object clears the highlight on b
 - a disc spanning 965.7 px read as backdrop and one spanning 724.3 px did not, against a corner
   750 px from the middle;
 - a point ahead of the eye reads in front and is picked at each decade from 1e-8 to 1,000 units;
-- a point as far behind the eye reads behind.
+- a point as far behind the eye reads behind;
+- a plane a camera stands millionths off is picked, and found under the pointer.
 
 Verified by a handle-for-handle map: 4,914 cursor positions across three cameras over the demo of
 1,024 objects. They answered identically before and after the placement and copy changes. Verified
@@ -3565,7 +3742,11 @@ for a plane, which never pulls in.
 
 **An object behind the reader is left to the frame rule.** Centring one would slide the camera back
 past it rather than turn, which is a jump nobody asked for. `stanceApproaching` answers none there,
-and `stanceFor` takes it by its own bound.
+and `stanceFor` takes it by its own bound. Ahead is judged against the reach of the object from the
+eye, as a pick judges a hit (see Picking).
+
+Verified by `suites.nim`: a pointer pick of a small object up close comes in to it, and one behind
+does not.
 
 **A dot picked alone never lands nearer than its fit**, by the ruling of #535. The fit is the depth
 that a pointer pick of the dot comes in to. The wheel over empty sky can take the separation to
@@ -3990,6 +4171,8 @@ passing proves that the runner carries that library. Assumed: nothing about the 
 - The planet inclinations, ring phases and neighbour planes of the demo are stated simplifications.
 - A star picked far out moves a few pixels off the middle as the view orbits. At 4.7 million
   units a double steps by 0.39% of the 2.4e-7 units that the pick comes in to (see Framing).
+- Two million units from the world origin, a double steps by 17 to 35 m, as at the demo's HD 222237
+  b. A metre pair there is stored as one point (see Classification at any scale).
 - A line drawn with the camera inside the body that it frames stands a few pixels off the point
   that it joins. The error is 0.4 px at an orbit distance of 0.0001, and 3.2 px at 0.00001.
   Float32 holds about 0.06 of a unit at 530,000 units, and the record stores the vanishing point
