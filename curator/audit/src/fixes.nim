@@ -10,10 +10,11 @@
 ##     knoller: `.nim` module, `.nims` script, `.nimble` package.
 ##   Needless parentheses go where parser of project's own compiler proves it (X.4): knoller's
 ##     chain asks (`Fix.asked`), `provenFix` runs compiler of each pin asked once on all its
-##     sources (`answered`), holds answers by path in `Context`, and fixes again, at most
-##     `ASKS_MAX` times. Pin is that of project holding file, driver's for root file, served as
-##     `compilers.resolve` serves it, so `ronri` projects read with commit pin, whose glyphs
-##     2.2.12 lexes as names. Pin nothing serves proves nothing, and run prints why.
+##     sources (`answered`), holds answers by path in `Context`, and fixes again each entry
+##     that asked, at most `ASKS_MAX` times. Pin is that of project holding file, driver's for
+##     root file, served as `compilers.resolve` serves it, so `ronri` projects read with commit
+##     pin, whose glyphs 2.2.12 lexes as names. Pin nothing serves proves nothing, and run
+##     prints why.
 ##   Fixer whose rule needs more than text of one file runs first, once, on source as given,
 ##     from what `contextOf` reads: rename of abbreviation (V.6), and to case of name's kind
 ##     (V.1, V.11), across files, planned whole or refused whole (`names.nim`, `rewrites.nim`),
@@ -273,6 +274,73 @@ func fixSource(
   result.left = fix.left.findingsOf
 
 
+func partOf(e: Entry; locked: openArray[string]; context: Context): Fixed =
+  ## Fix one entry as `fixEntries` does, scope left unread.
+  if e.kind.isNone or not e.kind.get.rule.has_guide: return
+  if e.path in locked:
+    result.left.add finding(
+      e.path,
+      0,
+      "Nimble file whose copy `" & LOCK_FILE & "` holds stays as written; got its copy there.",
+    )
+    return
+  let fence = e.content.fenceOf
+  if fence.fault >= 0:
+    result.left.add faultOf(e.path, fence).findingsOf
+    return
+  let proofs = context.proofs.getOrDefault(e.path)
+  result.held.add heldOf(e.path, e.content, e.kind.get.dialectOf, proofs).findingsOf
+  if fence.lines.len > 0:
+    for source in e.content.questionsOf(proofs): result.asked.add (e.path, source)
+  for plan in context.plans:
+    if plan.rename.path != e.path or plan.refusal.len == 0: continue
+    result.left.add finding(
+      e.path,
+      plan.rename.line,
+      plan.rename.rule.capitalizeAscii & " stays for hand, since rename to `" &
+        plan.rename.renamed & "` is refused: " & plan.refusal & "; got `" & plan.rename.name &
+        "`.",
+    )
+  let entry = e.content.blockEntry
+  if entry.refusal.len > 0:
+    result.left.add finding(
+      e.path,
+      entry.bindings[0][0],
+      "Entry block (V.10) stays for hand, since move into `proc main` is refused: " &
+        entry.refusal & "; got `" & entry.bindings[0][1] & "`.",
+    )
+  if e.path in context.answers and context.answers[e.path].reason.len > 0:
+    result.left.add finding(
+      e.path,
+      0,
+      "File compiles on no backend of its pin, so fixers resting on semantic pass leave it; " &
+        "got `" & context.answers[e.path].reason & "`.",
+    )
+  let fix = fixSource(e.path, e.content, e.kind.get, fence, context)
+  for source in fix.asked:
+    if (e.path, source) notin result.asked: result.asked.add (e.path, source)
+  result.left.add fix.left
+  if fix.source == e.content: return
+  result.written.add Entry(path: e.path, kind: e.kind, content: fix.source)
+  result.fixed.add fix.fixed
+
+
+func scoped(branch: string; parts: openArray[Fixed]): Fixed =
+  ## Join parts of entries; where any path to write lies outside branch scope, nothing is
+  ##   written or reported fixed.
+  for part in parts:
+    result.written.add part.written
+    result.fixed.add part.fixed
+    result.left.add part.left
+    result.held.add part.held
+    result.asked.add part.asked
+  if result.written.len == 0: return
+  result.refused = checkScope(branch, result.written.mapIt(it.path))
+  if result.refused.len > 0:
+    result.written.setLen(0)
+    result.fixed.setLen(0)
+
+
 func fixEntries*(
   branch: string, entries: openArray[Entry], locked: openArray[string] = [], context = Context()
 ): Fixed =
@@ -283,59 +351,7 @@ func fixEntries*(
   ##   answers of parser; each source chain asks and no answer holds is in `asked`, source as
   ##   given too where fence holds lines, since its warning reads it.
   ##   Where any path to write lies outside branch scope, nothing is written or reported fixed.
-  for e in entries:
-    if e.kind.isNone or not e.kind.get.rule.has_guide: continue
-    if e.path in locked:
-      result.left.add finding(
-        e.path,
-        0,
-        "Nimble file whose copy `" & LOCK_FILE & "` holds stays as written; got its copy there.",
-      )
-      continue
-    let fence = e.content.fenceOf
-    if fence.fault >= 0:
-      result.left.add faultOf(e.path, fence).findingsOf
-      continue
-    let proofs = context.proofs.getOrDefault(e.path)
-    result.held.add heldOf(e.path, e.content, e.kind.get.dialectOf, proofs).findingsOf
-    if fence.lines.len > 0:
-      for source in e.content.questionsOf(proofs): result.asked.add (e.path, source)
-    for plan in context.plans:
-      if plan.rename.path != e.path or plan.refusal.len == 0: continue
-      result.left.add finding(
-        e.path,
-        plan.rename.line,
-        plan.rename.rule.capitalizeAscii & " stays for hand, since rename to `" &
-          plan.rename.renamed & "` is refused: " & plan.refusal & "; got `" & plan.rename.name &
-          "`.",
-      )
-    let entry = e.content.blockEntry
-    if entry.refusal.len > 0:
-      result.left.add finding(
-        e.path,
-        entry.bindings[0][0],
-        "Entry block (V.10) stays for hand, since move into `proc main` is refused: " &
-          entry.refusal & "; got `" & entry.bindings[0][1] & "`.",
-      )
-    if e.path in context.answers and context.answers[e.path].reason.len > 0:
-      result.left.add finding(
-        e.path,
-        0,
-        "File compiles on no backend of its pin, so fixers resting on semantic pass leave it; " &
-          "got `" & context.answers[e.path].reason & "`.",
-      )
-    let fix = fixSource(e.path, e.content, e.kind.get, fence, context)
-    for source in fix.asked:
-      if (e.path, source) notin result.asked: result.asked.add (e.path, source)
-    result.left.add fix.left
-    if fix.source == e.content: continue
-    result.written.add Entry(path: e.path, kind: e.kind, content: fix.source)
-    result.fixed.add fix.fixed
-  if result.written.len == 0: return
-  result.refused = checkScope(branch, result.written.mapIt(it.path))
-  if result.refused.len > 0:
-    result.written.setLen(0)
-    result.fixed.setLen(0)
+  scoped(branch, entries.mapIt(it.partOf(locked, context)))
 
 
 func pinFor(tree: Tree, path: string): string =
@@ -390,14 +406,20 @@ proc provenFix*(
   ## Fix entries as `fixEntries` does, ask parser of each pin what fix asked, and fix again, at
   ##   most `ASKS_MAX` times; each run that proved nothing gives one failure, for warning, led
   ##   by rule id: `needless-parentheses: <message>`.
-  var known = context
-  result.fix = fixEntries(branch, entries, locked, known)
+  ##   Entry that asked nothing read only sources answered, and answer once held never changes,
+  ##   so each round fixes again only entries that asked.
+  var
+    known = context
+    parts = entries.mapIt(it.partOf(locked, known))
   for ask in 1 .. ASKS_MAX:
-    if result.fix.asked.len == 0: break
-    for failure in known.answered(tree, result.fix.asked, provers):
+    let asked = parts.mapIt(it.asked).concat
+    if asked.len == 0: break
+    for failure in known.answered(tree, asked, provers):
       let line = Rule.NeedlessParentheses.id & ": " & failure
       if line notin result.failures: result.failures.add line
-    result.fix = fixEntries(branch, entries, locked, known)
+    for k, e in entries:
+      if parts[k].asked.len > 0: parts[k] = e.partOf(locked, known)
+  result.fix = scoped(branch, parts)
 
 
 proc pinProvers*(): ProverOf =
