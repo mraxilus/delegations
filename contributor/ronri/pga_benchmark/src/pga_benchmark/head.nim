@@ -101,6 +101,21 @@ func digestSources*(sources: openArray[(string, string)], pin: string): string =
   ##   Type hash folds path of module into name of type, so same tree at two checkout paths
   ##     emits C that differs in hashes alone; body of each type stays, so type that changes
   ##     shape still moves digest.
+  ##   Header full build writes, target and command of C compiler with absolute paths, is left
+  ##     out; build that stops at C writes none, so both read as same C at any path.
+
+  func headless(text: string): string =
+    ## Drop each comment full build writes at head of file.
+    const openings = ["/* Compiled for:", "/* Command for C compiler:"]
+    result = text
+    for opening in openings:
+      let start = result.find(opening)
+      if start < 0: continue
+      let stop = result.find("*/", start)
+      if stop < 0: continue
+      var finish = stop + 2
+      if finish < result.len and result[finish] == '\n': inc finish
+      result.delete(start..<finish)
 
   func numbered(text: string, seen: var Table[string, string]): string =
     ## Replace each run of 20 to 32 letters and digits after `__` by `H` and its order.
@@ -129,7 +144,7 @@ func digestSources*(sources: openArray[(string, string)], pin: string): string =
   sorted.sort
   for (name, source) in sorted:
     let pinless = if pin.len > 0: source.replace(pin, "") else: source
-    text.add name & "\0" & pinless.numbered(seen) & "\0"
+    text.add name & "\0" & pinless.headless.numbered(seen) & "\0"
   digestOf(text)
 
 
