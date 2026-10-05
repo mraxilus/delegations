@@ -2,9 +2,34 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[os, strutils, tempfiles, unittest]
-import ../../src/compilers
+import std/[options, os, strutils, tempfiles, unittest]
+from std/posix import nil
+import ../../src/[compilers, toolchain]
 import ./fixtures
+
+
+proc streamsOf(action: proc ()): tuple[output, errors: string] =
+  ## Run action with descriptors `1` and `2` written to files, so output of each child lands
+  ##   there too, as it would on terminal; read both back.
+  let directory = createTempDir("koch_", "_streams")
+  defer: removeDir(directory)
+  flushFile(stdout)
+  flushFile(stderr)
+  let
+    saved = (posix.dup(1), posix.dup(2))
+    files = (open(directory / "output", fmWrite), open(directory / "errors", fmWrite))
+  discard posix.dup2(files[0].getFileHandle, 1)
+  discard posix.dup2(files[1].getFileHandle, 2)
+  action()
+  flushFile(stdout)
+  flushFile(stderr)
+  discard posix.dup2(saved[0], 1)
+  discard posix.dup2(saved[1], 2)
+  discard posix.close(saved[0])
+  discard posix.close(saved[1])
+  files[0].close
+  files[1].close
+  (readFile(directory / "output"), readFile(directory / "errors"))
 
 
 
@@ -81,3 +106,30 @@ suite "Compilers":
     check found[0].path == "curator/probe"
     check found[0].message.endsWith("got `2.2.6`.")
     check "/c/2.2.6/bin" in found[0].message  # names cache it tried
+
+
+  test "resolution prints aside: its line and output of each tool it runs reach stderr alone":
+    # Stub tools fail as unreachable network would, and print on both streams; real `sh` runs
+    #   them through runner resolution uses (Article IX.5).
+    let directory = createTempDir("koch_", "_aside")
+    defer: removeDir(directory)
+    for (tool, code) in [("curl", 22), ("git", 128)]:
+      directory.writeInto(
+        "tools/" & tool,
+        "#!/bin/sh\necho \"" & tool & " stub ran\"\necho \"" & tool & " stub failed\" >&2\n" &
+        "exit " & $code & "\n",
+      )
+      inclFilePermissions(directory / "tools" / tool, {fpUserExec})
+    let path = getEnv("PATH")
+    putEnv("PATH", directory / "tools" & PathSep & path)
+    defer: putEnv("PATH", path)
+    var bins: seq[Option[string]]
+    let streams = streamsOf(proc () =
+      for pin in [PIN, COMMIT]: bins.add resolve(pin, Compiler(), directory / "cache")
+    )
+    check bins == @[none(string), none(string)]  # stub serves neither
+    check streams.output.len == 0  # stdout holds caller's product alone
+    for pin in [PIN, COMMIT]: check ("== fetching Nim " & pin) in streams.errors
+    check "git stub ran" in streams.errors and "git stub failed" in streams.errors  # commit builds
+    if platformOf(hostOS, hostCPU).len > 0:
+      check "curl stub ran" in streams.errors and "curl stub failed" in streams.errors  # fetch

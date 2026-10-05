@@ -12,6 +12,11 @@
 ##   Fetched compiler is asked what it is before it is trusted: wrong tarball is not
 ##     toolchain, and half-built tree carries bootstrap `bin/nim` answering with another
 ##     commit entirely. Build therefore lands beside destination and moves in once finished.
+##   Everything resolution prints goes to stderr: its own line, and output of curl, tar, git and
+##     build, streamed line by line (`runAside`). Stdout of caller holds its own product alone,
+##     such as report of `koch fix`.
+##     Rejected: runner of `projects.nim`, which streams to stdout, since output of verb it
+##       runs is that verb's product.
 ##
 ##   Rejected: directory developer populates by hand, which leaves defect for anyone who has
 ##     not; `choosenim` layout, second convention to maintain that cannot serve commit pin.
@@ -27,7 +32,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[options, os, osproc, strutils]
-import ./[findings, projects, toolchain]
+import ./[findings, toolchain]
 
 
 const
@@ -117,6 +122,20 @@ proc digestOf*(path: string): string =
   pinnedDigest(written)
 
 
+proc runAside(directory, program: string; arguments: openArray[string]): int =
+  ## Run program with arguments in directory, its stdout and stderr streamed to stderr line by
+  ##   line; return exit code.
+  let process = startProcess(
+    program,
+    args = arguments,
+    workingDir = directory,
+    options = {poStdErrToStdOut, poUsePath},
+  )
+  defer: process.close
+  for line in process.lines: stderr.writeLine line
+  process.waitForExit
+
+
 proc fetchRelease(version, platform, directory: string): bool =
   ## Download published tarball, check it against digest published beside it, and unpack it
   ## as `directory`; false when any step fails.
@@ -132,18 +151,19 @@ proc fetchRelease(version, platform, directory: string): bool =
   createDir(work)
   defer: removeDir(work)
   let archive = work / "nim.tar.xz"
-  if runIn(work, "curl", ["-sSLf", "-o", archive, releaseUrl(version, platform)]) != 0:
+  if runAside(work, "curl", ["-sSLf", "-o", archive, releaseUrl(version, platform)]) != 0:
     return false
   let sidecar = work / "nim.tar.xz.sha256"
-  if runIn(work, "curl", ["-sSLf", "-o", sidecar, digestUrl(version, platform)]) != 0:
-    echo "No digest published at " & digestUrl(version, platform) & "; refusing tarball."
+  if runAside(work, "curl", ["-sSLf", "-o", sidecar, digestUrl(version, platform)]) != 0:
+    stderr.writeLine "No digest published beside tarball, so it is refused; got `" &
+        digestUrl(version, platform) & "`."
     return false
   let (wanted, got) = (pinnedDigest(readFile(sidecar)), archive.digestOf)
   if wanted.len == 0 or wanted != got:
-    echo "Digest of tarball does not match published one; wanted `" & wanted &
-      "`, got `" & got & "`."
+    stderr.writeLine "Digest of tarball does not match published one; wanted `" & wanted &
+        "`, got `" & got & "`."
     return false
-  if runIn(work, "tar", ["xf", archive]) != 0: return false
+  if runAside(work, "tar", ["xf", archive]) != 0: return false
   let unpacked = work / ("nim-" & version)
   if not dirExists(unpacked): return false
   moveDir(unpacked, directory)
@@ -162,10 +182,10 @@ proc buildSource(pin, directory: string): bool =
   removeDir(work)
   removeDir(directory)
   let reference = if pin.isCommit: pin else: "v" & pin
-  if runIn(".", "git", ["clone", "--filter=blob:none", "--quiet", SOURCE, work]) != 0:
+  if runAside(".", "git", ["clone", "--filter=blob:none", "--quiet", SOURCE, work]) != 0:
     return false
-  if runIn(work, "git", ["checkout", "--quiet", reference]) != 0: return false
-  if runIn(work, "sh", ["build_all.sh"]) != 0: return false
+  if runAside(work, "git", ["checkout", "--quiet", reference]) != 0: return false
+  if runAside(work, "sh", ["build_all.sh"]) != 0: return false
   moveDir(work, directory)
   true
 
@@ -180,7 +200,7 @@ proc resolve*(pin: string, running: Compiler, root: string): Option[string] =
   if pin.isServedBy(compilerAt(bin / NIM)): return some(bin)
   let directory = root / pin
   createDir(root)
-  echo "== fetching Nim " & pin
+  stderr.writeLine "== fetching Nim " & pin
   let
     platform = platformOf(hostOS, hostCPU)
     is_built =
