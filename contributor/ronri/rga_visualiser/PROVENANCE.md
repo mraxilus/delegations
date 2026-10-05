@@ -885,8 +885,9 @@ and its radius as `float`. `gui.dragDouble` binds `DragScalar` on `ImGuiDataType
 of an edit, the motor grid and the size field draw through it. An edit that opens and saves
 unchanged then writes back every bit.
 
-Rejected: `float32`, which `DragFloat` writes. HD 222237 b stands two million units out, where a
-`float32` steps an eighth of a unit. An unchanged save through one moves it 0.04 units.
+Rejected: `float32`, which `DragFloat` writes. Two million units from the world origin, a `float32`
+steps an eighth of a unit. An unchanged save through one moves an object there by up to 0.04 units,
+as the demo's HD 222237 b shows.
 
 A drag never rounds to the four digits shown (`ImGuiSliderFlags_NoRoundToFormat`). That rounding
 would move such a coefficient hundreds of units. Verified by a read of `imgui_widgets.cpp` alone,
@@ -2382,17 +2383,17 @@ picture's.
 
 **A catalogue operation runs about a point near its operands.** `scene.applyOperation` slides its
 operands to a local origin through the library's own motor (`motorSliding` and `carried`), applies
-the operation there, and slides the result back. About Sol, the join of two points a metre apart one
-unit out computes its moment, `p × q`, from products near one. That moment cancels to about 1e-5 of
-itself, and both points stand hundreds of kilometres off the line.
+the operation there, and slides the result back. About the world origin, the join of two points a
+metre apart, one unit out, computes its moment `p × q` from products near one. That moment cancels
+to about 1e-5 of itself, and both points stand hundreds of kilometres off the line.
 
 Only the operations of `OPERATIONS_SLIDING` run so, which are the fifteen that commute with a slide.
 The other twelve read the origin itself, as support, bulk and the central projection do. So they run
-about Sol, the origin they mean.
+about the world origin, which is the origin they mean.
 
 The origin is the place of a point operand, the first operand's first. The cancellation is about the
 point that is joined. Else it is the anchor of the first finite operand, which is its support. Else
-it is Sol, where no operand stands anywhere finite.
+it is the world origin, where no operand stands anywhere finite.
 
 A slide back adds `t × d` to a small moment, and cancels nothing, so the rounding is `ε` of the
 distance slid. That is 33 µm one unit out, and about a millimetre thirty units out. Each slide keeps
@@ -2400,11 +2401,11 @@ only the grades that its multivector occupies. A rigid slide keeps every grade, 
 another grade is rounding of the sandwich. A join a metre across one unit out reads that rounding as
 a mixed grade.
 
-Measured on 2026-10-05 by a probe that is not kept, over 2,000 random pairs beside earth. The line
-held both points within 47 µm, where about Sol it stood 182 km off at the median. A plane joined
-from three such points held them within 0.45 mm, and a meet with a crossing plane within 0.29 mm.
-Rejected: a pair of doubles for each coefficient, which the dense `Multivector` of the library
-cannot carry.
+Measured on 2026-10-05 by a probe that is not kept, over 2,000 random pairs one unit out, beside the
+demo's earth. The line held both points within 47 µm, where about the world origin it stood 182 km
+off at the median. A plane joined from three such points held them within 0.45 mm, and a meet with a
+crossing plane within 0.29 mm. Rejected: a pair of doubles for each coefficient, which the dense
+`Multivector` of the library cannot carry.
 
 **An operation answers zero for rounding of zero.** `scene.applyOperation` applies the operation
 again to scale-free copies of its operands, as they stand about the local origin. Where the largest
@@ -2412,31 +2413,37 @@ coefficient of that second result is under `TOLERANCE_ROUNDING` times the scale 
 slid from, the result is zero. A sum is judged against its larger operand instead.
 
 Each operand carries the rounding of where it stood, so the scale of that point keeps rounding far
-out at zero. A point met on its own line then joins with it to nothing, near Sol and two million
-units out. The drag and both apply pickers read it so. The marker judges an eye on its line against
-the line and the eye in the same way.
+out at zero. A point met on its own line then joins with it to nothing, near the world origin and
+two million units out. The drag and both apply pickers read it so. The marker judges an eye on its
+line against the line and the eye in the same way.
 
 **`TOLERANCE_ROUNDING` is `2^(2·4)·ε`, about 5.7e-14.** That is the worst rounding of one product of
-two multivectors, against the scales of its factors. A point met on its line joins with it to about
-2e-16 of its operands near Sol. Two million units out, the point stands up to 2e-8 off the line,
-against a bound of 1.2e-7 there. Points a metre apart join, about either one, to 6.7e-12 of their
-operands. Measured on 2026-10-05 by a probe that is not kept.
+two multivectors, against the scales of its factors. Within five units of the world origin, a point
+met on its line joins with it to about 2e-16 of its operands. Two million units out, the point
+stands up to 2e-8 off the line, against a bound of 1.2e-7 there. Points a metre apart join, about
+either one, to 6.7e-12 of their operands.
+
+Measured on 2026-10-05 by a probe that is not kept. The far figures are at the place of the demo's
+HD 222237 b.
 
 **The panel prints a term against the largest one.** `scene.formatMultivector` prints a term where
 it is more than a billionth of the largest coefficient. A metre-long line then prints its three
 terms, and not `0 𝟏`.
 
 **Rejected: an absolute tolerance of more places.** With `-d:pga.tolerance_places=12` the suite
-passes, but the floor only moves. The smallest coefficient of a metre join beside earth is 1.04e-12,
-just above that floor. At 15 places, eight cases fail, because they compare with zero through `=~`.
-Measured on `f779cec8` on 2026-10-05, by a probe that is not kept.
+passes, but the floor only moves. The smallest coefficient of a metre join one unit out, beside the
+demo's earth, is 1.04e-12, just above that floor. At 15 places, eight cases fail, because they
+compare with zero through `=~`. Measured on `f779cec8` on 2026-10-05, by a probe that is not kept.
 
 **Cost: rounding that stands alone reads as an object.** A stored object of pure rounding is drawn,
 where the tolerance of the library refuses it. Only a caller that holds the factors can refuse it.
 
-**Cost: storage far out still steps.** Near HD 222237 b, a double steps by 17 m in x and y, and by
-35 m in z. Two points a metre apart there are stored as one. Storage about an anchor addresses that.
-Joins near Sol hold a metre, since each runs about the point it joins.
+**Cost: storage far from the world origin still steps.** Two million units out, a double steps by 17
+to 35 m, as at the demo's HD 222237 b. Two points a metre apart there are stored as one. Storage
+about an anchor addresses that.
+
+A join holds a metre wherever storage holds one. It runs about the point it joins, so its rounding
+is `ε` of that point's distance from the world origin.
 
 **Cost: more work in each classification.** Measured on 2026-10-05 on one delegate, under the lock
 of the gate. Each probe places the 5,038 objects of the largest demo. Each pair is `0d47eab3`,
@@ -4130,8 +4137,8 @@ passing proves that the runner carries that library. Assumed: nothing about the 
 - The planet inclinations, ring phases and neighbour planes of the demo are stated simplifications.
 - A star picked far out moves a few pixels off the middle as the view orbits. At 4.7 million
   units a double steps by 0.39% of the 2.4e-7 units that the pick comes in to (see Framing).
-- A double steps by 17 to 35 m near HD 222237 b. A metre pair there is stored as one point (see
-  Classification at any scale).
+- Two million units from the world origin, a double steps by 17 to 35 m, as at the demo's HD 222237
+  b. A metre pair there is stored as one point (see Classification at any scale).
 - A line drawn with the camera inside the body that it frames stands a few pixels off the point
   that it joins. The error is 0.4 px at an orbit distance of 0.0001, and 3.2 px at 0.00001.
   Float32 holds about 0.06 of a unit at 530,000 units, and the record stores the vanishing point
