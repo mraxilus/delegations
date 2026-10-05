@@ -45,9 +45,9 @@ func seen*(point: Spot; azimuth, elevation: float; framing: Framing): Seen =
     z = point.z - framing.middle[2]
   (x: -sine_azimuth * x + cosine_azimuth * y,
    y: cosine_azimuth * sine_elevation * x + sine_azimuth * sine_elevation * y -
-     cosine_elevation * z,
+       cosine_elevation * z,
    depth: cosine_azimuth * cosine_elevation * x + sine_azimuth * cosine_elevation * y +
-     sine_elevation * z)
+       sine_elevation * z)
 
 func drawnAs*(a, z: Spot): Drawn =
   ## Stroke between its two ends, and disc where they are one point.
@@ -72,8 +72,8 @@ func drawOrder*(
   for i, capsule in capsules:
     let
       long = sqrt(
-        (capsule.z.x - capsule.a.x) ^ 2 + (capsule.z.y - capsule.a.y) ^ 2 +
-                    (capsule.z.z - capsule.a.z) ^ 2,
+        (capsule.z.x - capsule.a.x)^2 + (capsule.z.y - capsule.a.y)^2 +
+        (capsule.z.z - capsule.a.z)^2,
       )
       n = max(1, int(ceil(long / DAB)))
     for k in 0..<n:
@@ -113,7 +113,7 @@ func mixColours*(dark, light: string; t: float): string =
   var parts: seq[string]
   for k in 0..2:
     let
-      a = float(parseHexInt(dark[1 + 2 * k..2 + 2 * k]))
-      b = float(parseHexInt(light[1 + 2 * k..2 + 2 * k]))
+      a = float(parseHexInt(dark[1+2*k..2+2*k]))
+      b = float(parseHexInt(light[1+2*k..2+2*k]))
     parts.add $int(round(a + (b - a) * t))
   "rgb(" & parts.join(", ") & ")"

@@ -8,7 +8,7 @@ _Who made this, from what, and how far it has been checked._
 | Author  | Claude Opus 5 and Claude Sonnet 5 |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 58190f8c6dfcc686 |
+| Rules   | ed5c4c748d0f0435 |
 | Pruned  | 70ced35ec366aee22cbe207185a75f4a2de440b0 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
@@ -3788,6 +3788,52 @@ stands the level stance facing it about the pivot (`camera.stanceFacing`): a lea
 sight leaves the view rolled. Without the floor, a pick of something already on screen pulled the
 view about. The comet drifted 75.5 px against a band of 5 to 60.
 
+**A pick renews a held goal.** The `is_renewed` of `aimAt` re-arms the ease for a pointer pick
+whatever the tween holds. Without it, the same object picked again, after the wheel had taken the
+reader out, goes nowhere.
+
+**So does a broken frame, once the ease has arrived.** A still camera out of frame is eased back,
+though the tween holds its goal. That is how a resized window and a restored stance correct
+themselves. An ease still running is left to land, since to re-arm it at each frame restarts it.
+
+**A turn inside the ease still turns about the middle of what is picked.** A finger that adds an
+object and turns at once lands inside the 0.35 s ease. `CameraTween.abandon` gives the turn to the
+reader, and the pivot still arrives, 0.000 units from the middle. Rejected: stopping the ease, which
+left the pivot 23.2 px off the middle of two points on a 390 by 844 phone.
+
+*Checked.* Verified by `suites.nim`:
+
+- a re-pick after `abandon` and a dolly re-arms;
+- the step out reaches its own distance, and answers zero from every stance already past it;
+- the floor leaves a camera standing further out alone, and backs the near one out along its
+  sight with its bearing held;
+- a pinch past the floor, over three points whose middle is off their sphere's centre, backs out
+  along the sight;
+- the pivot stays on their middle there, and through sixty orbit steps after it;
+- a turn at a fifth of the ease still lands the pivot on the middle of two points, and keeps the
+  turn, as `settle` does;
+- a pan mid-ease halts it, and the pivot stays where the reader put it;
+- a frame narrowed to half its width asks for more room, and the same floor supplies it;
+- a still camera that a resize leaves out of frame eases back, though it holds its goal;
+- a stance that history restores stays while framed, and eases back where it is not;
+- a horizon point is bound to the screen, a horizon line to crossing it, a horizon plane not at all;
+- a plane picked alone from a level view lifts the sight to 10° off it, on the side of the eye;
+- so does a plane seen from below, a sight in the plane, and an upright plane;
+- the pivot, the separation, the level direction and a level horizon stay through that lift;
+- a sight already 28° off the plane turns nothing, and a point picked turns nothing.
+
+Verified by driven check:
+
+- the preview framed with its operands;
+- a move with a selection standing, through `driveTwoFingerPan` and `drivePan`;
+- a finger adds a second point and turns as the ease is armed, with the pivot 1.500 short; it ends
+  0.0000 from their middle;
+- a comet in view, picked, still pacing the screen at 35.1 px against a band of 5 to 60;
+- a pick of the ground plane from 1.375° above lifts the elevation to 10.000°, and a pick from
+  28.072° leaves it at 28.072° (`drivePlaneLifted`).
+
+## Approach to a pick
+
 **A pointer pick centres its object, and comes in to it.** A click or a tap on a point or a line
 records a `framing.PointerPick`, which `offerAim` consumes on the next frame. The destination is
 `stanceApproaching`, which puts the pivot on the object's own anchor. Every pick therefore centres,
@@ -3823,18 +3869,23 @@ eye, as a pick judges a hit (see Picking).
 Verified by `suites.nim`: a pointer pick of a small object up close comes in to it, and one behind
 does not.
 
-**A pick renews a held goal.** The `is_renewed` of `aimAt` re-arms the ease for a pointer pick
-whatever the tween holds. Without it, the same object picked again, after the wheel had taken the
-reader out, goes nowhere.
+**A dot picked alone never lands nearer than its fit**, by the ruling of #535. The fit is the depth
+that a pointer pick of the dot comes in to. The wheel over empty sky can take the separation to
+9.4e-8 with no visible change. Without this floor, a star picked from the list keeps it, and draws
+about 20 px across. `stanceFitted` dollies the destination of the frame rule out to the fit, once,
+as a new goal lands. A separation past the fit stays, and so does a stance set after the pick.
 
-**So does a broken frame, once the ease has arrived.** A still camera out of frame is eased back,
-though the tween holds its goal. That is how a resized window and a restored stance correct
-themselves. An ease still running is left to land, since to re-arm it at each frame restarts it.
+A point seen at its size has no fit, so the working scale of the reader stays. The fit is capped at
+the reach of the dot, so the eye never moves further off than the dot stands. A group, a line and a
+plane keep the frame rule alone. `stanceFitted` reads the dot by its reach from the eye. Rejected:
+its depth along the sight, which reads every dot behind the eye as seen at its size. Rejected also:
+a fit for every point, which takes a point at working scale out to 19.3 units.
 
-**A turn inside the ease still turns about the middle of what is picked.** A finger that adds an
-object and turns at once lands inside the 0.35 s ease. `CameraTween.abandon` gives the turn to the
-reader, and the pivot still arrives, 0.000 units from the middle. Rejected: stopping the ease, which
-left the pivot 23.2 px off the middle of two points on a 390 by 844 phone.
+Verified by `suites.nim`: a point picked from the list never lands nearer than its fit, and one
+further out stays. Verified also by a Playwright script that is not kept, in Playwright's Chromium
+under SwiftShader, on 2026-10-05. After 175 notches over empty sky in the demo of 5,038 objects, a
+tick of HD 222237b settles at 2.414e-7 units. The star then draws 7.7 px across in a canvas 771 px
+tall, against 19.9 px at 9.38e-8 without the floor.
 
 *Checked.* Verified by `suites.nim`:
 
@@ -3844,25 +3895,7 @@ left the pivot 23.2 px off the middle of two points on a 390 by 844 phone.
 - an orbit of 0.7 by 0.3 then leaves it there;
 - the arrival distance equals the fit, and the reach to the object equals it too;
 - a near point and a line keep the orbit distance, and one behind the reader is refused;
-- a re-pick after `abandon` and a dolly re-arms;
-- the arrival of the plane from 12 units and from 1;
-- the step out reaches its own distance, and answers zero from every stance already past it;
-- the floor leaves a camera standing further out alone, and backs the near one out along its
-  sight with its bearing held;
-- a pinch past the floor, over three points whose middle is off their sphere's centre, backs out
-  along the sight;
-- the pivot stays on their middle there, and through sixty orbit steps after it;
-- a turn at a fifth of the ease still lands the pivot on the middle of two points, and keeps the
-  turn, as `settle` does;
-- a pan mid-ease halts it, and the pivot stays where the reader put it;
-- a frame narrowed to half its width asks for more room, and the same floor supplies it;
-- a still camera that a resize leaves out of frame eases back, though it holds its goal;
-- a stance that history restores stays while framed, and eases back where it is not;
-- a horizon point is bound to the screen, a horizon line to crossing it, a horizon plane not at all.
-- a plane picked alone from a level view lifts the sight to 10° off it, on the side of the eye;
-- so does a plane seen from below, a sight in the plane, and an upright plane;
-- the pivot, the separation, the level direction and a level horizon stay through that lift;
-- a sight already 28° off the plane turns nothing, and a point picked turns nothing.
+- the arrival of the plane from 12 units and from 1.
 
 Verified by driven check:
 
@@ -3870,14 +3903,7 @@ Verified by driven check:
   from 45 units to 19.3;
 - a second pick after a wheel out past 100 comes in to 19.3 again;
 - a right-click on the ground plane from Home settles its centre at 48.28, which is exactly the
-  depth wanted for 0.40;
-- the preview framed with its operands;
-- a move with a selection standing, through `driveTwoFingerPan` and `drivePan`;
-- a finger adds a second point and turns as the ease is armed, with the pivot 1.500 short; it ends
-  0.0000 from their middle;
-- a comet in view, picked, still pacing the screen at 35.1 px against a band of 5 to 60;
-- a pick of the ground plane from 1.375° above lifts the elevation to 10.000°, and a pick from
-  28.072° leaves it at 28.072° (`drivePlaneLifted`).
+  depth wanted for 0.40.
 
 Verified by a Playwright script that is not kept, in Playwright's Chromium under SwiftShader, on
 2026-10-04. A click on HD 222237b in the demo of 5,038 objects settles at 2.413e-7 units, with its

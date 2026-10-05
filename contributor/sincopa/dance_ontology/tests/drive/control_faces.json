@@ -1,0 +1,7 @@
+{
+  "paragraphs": [
+    {"id": "han", "stack": "", "text": "中", "is_drawn_by_system": true},
+    {"id": "open", "stack": "\"Noto Sans\", sans-serif", "text": "𝐀", "is_drawn_by_system": true},
+    {"id": "closed", "stack": "", "text": "𝐀", "is_drawn_by_system": false}
+  ]
+}

@@ -80,8 +80,8 @@ generated tables, read in a chain, and no grade scan.
 ```nim
   func `⊛`*(m: Multivector): Multivector =
     ## Get partner of multivector, i.e. (-1)^(grade(𝐦)+1) (𝐦☆)⊡ ∨ 𝐦⊟.
-    let sign = float(-1^(int(m.grade.get) + 1))
-    sign * ⊡( ☆ m) ∨ ⊟ m
+    let sign = float(-1 ^ (int(m.grade.get) + 1))
+    sign * ⊡(☆m) ∨ ⊟m
 ```
 
 ```nim

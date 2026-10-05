@@ -130,7 +130,7 @@ suite "Internal: What the arm can carry":
         state.level = [level, level]
         for twist in -4..4:
           let is_within_both = abs(twist) <= state.capacity and
-            abs(twist) <= state.armsCapacity(twist)
+              abs(twist) <= state.armsCapacity(twist)
           check state.isHolding(twist) == is_within_both
 
 
@@ -187,7 +187,7 @@ suite "Internal: Modifiers":
     for twist in -6..6:
       check blockerOf(twist, Level.Above).isNone
       check armCapacity(blockerOf(twist, Level.Above), Level.Above) ==
-        UNBOUNDED_TURNS
+          UNBOUNDED_TURNS
     check not IS_ABOVE_BLOCKING
 
 
@@ -230,7 +230,7 @@ suite "Internal: What there is":
     let lone = fromKey("l-.").get.rest
     for size in 1..MOST_TURN:
       check lone.turn(rotates(Dancer.Lead, size)) ==
-        lone.turn(rotates(Dancer.Follow, -size))
+          lone.turn(rotates(Dancer.Follow, -size))
 
 
   test "a turn is offered exactly when it is not refused":
@@ -335,7 +335,7 @@ suite "Internal: Facings":
         turned[who] = way
         let seen = facing(seenAfter(turned)).sides
         check seen[who] == side
-        check seen[if who == Dancer.Lead: Dancer.Follow else: Dancer.Lead] == Seen.Ahead
+        check seen[if who==Dancer.Lead: Dancer.Follow else: Dancer.Lead] == Seen.Ahead
     # Ruling's own examples (issue #289).
     check facing(seenAfter([0, 2])).name == "Face-to-back"  # Lead behind Follow.
     check facing(seenAfter([0, 1])).name == "Face-to-port"  # Lead at Follow's left.

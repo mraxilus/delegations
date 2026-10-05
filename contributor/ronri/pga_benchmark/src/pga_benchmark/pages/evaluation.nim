@@ -59,7 +59,7 @@ func spreadOf*(evaluations: openArray[JsonNode]): Spread =
   ratios.sort
   Spread(
     low: ratios[ratios.len div 20],
-    high: ratios[ratios.len - 1 - ratios.len div 20],
+    high: ratios[ratios.len-1-ratios.len div 20],
     count: ratios.len,
   )
 
@@ -83,7 +83,7 @@ func chipsVerdict*(
     if ratios.len == 0: return 0.0
     ratios.sort
     if ratios.len mod 2 == 1: ratios[ratios.len div 2]
-    else: (ratios[ratios.len div 2 - 1] + ratios[ratios.len div 2]) / 2.0
+    else: (ratios[ratios.len div 2-1] + ratios[ratios.len div 2]) / 2.0
 
   func textSuites(evaluation: JsonNode, algebra: string): string =
     ## Render suites passed over run, with pin's beside where they differ.
@@ -198,7 +198,7 @@ func htmlEdits*(change: Change, files: Table[string, string]): string =
   func isDeclaration(line: string): bool =
     ## Tell whether line opens routine, test or suite.
     let stripped = line.strip(trailing = false)
-    declarations.anyIt(stripped.startsWith(it))
+    declarations.anyIt stripped.startsWith(it)
 
   func signature(lines: openArray[string], first: int): (string, int) =
     ## Read declaration opening at `first`, continued while its brackets stay open.
@@ -237,17 +237,17 @@ func htmlEdits*(change: Change, files: Table[string, string]): string =
       elif level == 0 and c == '#':
         cut = index
         break
-      elif level == 0 and c == '=' and index > 0 and text[index - 1] == ' ' and
-          (index + 1 == text.len or text[index + 1] == ' '):
+      elif level == 0 and c == '=' and index > 0 and text[index-1] == ' ' and
+          (index + 1 == text.len or text[index+1] == ' '):
         cut = index
         break
-    var clean = text[0 ..< cut]
+    var clean = text[0..<cut]
     while "{." in clean and ".}" in clean:
       let
         opening = clean.find("{.")
         closing = clean.find(".}", opening)
       if closing < 0: break
-      clean = clean[0 ..< opening] & clean[closing + 2 .. ^1]
+      clean = clean[0..<opening] & clean[closing+2 .. ^1]
     clean = clean.splitWhitespace.join(" ").replace("( ", "(").replace(" )", ")")
       .replace(";)", ")").replace(",)", ")")
     (clean.strip(chars = {' ', ':'}), last)

@@ -102,11 +102,14 @@ changes.
 ## Edit `pga.nim`
 
 ```nim
+when compileOption("profiler"): import std/nimprof
 
 import std/math
 ```
 
 ```nim
+when compileOption("profiler"):
+  import std/nimprof
   ## Driven by `nim c -d:release --profiler:on --stackTrace:on -r tests/rga/test_4d.nim`.
 
 import std/math
@@ -251,22 +254,18 @@ func projectOrthogonalAnti*(m, n: Multivector): Multivector {.inline.} = n ∧ (
 ## Edit `pga/cayleys.nim`
 
 ```nim
-  Chirality {.pure.} = enum Left, Right
-    ## Define distinction between PGA operation orientations.
-  Partiality {.pure.} = enum Bulk, Weight
-    ## Define distinction between PGA's disjoint parts.
-  Spatiality {.pure.} = enum Base, Anti
-    ## Define distinction between PGA's spacial duality.
+type  ## Define type definitions for algebraic distinctions.
+  Chirality {.pure.} = enum Left, Right  ## Define distinction between PGA operation orientations.
+  Partiality {.pure.} = enum Bulk, Weight  ## Define distinction between PGA's disjoint parts.
+  Spatiality {.pure.} = enum Base, Anti  ## Define distinction between PGA's spacial duality.
 ```
 
 ```nim
-  Chirality {.pure.} = enum Left, Right
-    ## Define distinction between PGA operation orientations.
+type  ## Define type definitions for algebraic distinctions.
+  Chirality {.pure.} = enum Left, Right  ## Define distinction between PGA operation orientations.
     ##   Right is library default; left tables are built but nothing reads them.
-  Partiality {.pure.} = enum Bulk, Weight
-    ## Define distinction between PGA's disjoint parts.
-  Spatiality {.pure.} = enum Base, Anti
-    ## Define distinction between PGA's spacial duality.
+  Partiality {.pure.} = enum Bulk, Weight  ## Define distinction between PGA's disjoint parts.
+  Spatiality {.pure.} = enum Base, Anti  ## Define distinction between PGA's spacial duality.
     ##   Base spans 𝟏..eₙ; anti is its complement under antiscalar.
 ```
 
@@ -392,9 +391,9 @@ func projectOrthogonalAnti*(m, n: Multivector): Multivector {.inline.} = n ∧ (
 ## Edit `tests/suites.nim`
 
 ```nim
-    var 𝐦 = ELEMENTS[Basis.scalar.succ] # 1'e1
+    var 𝐦 = ELEMENTS[Basis.scalar.succ]  # 1'e1
 ```
 
 ```nim
-    var 𝐦 = ELEMENTS[Basis.scalar.succ] # e1, constructed as e1(1.0)
+    var 𝐦 = ELEMENTS[Basis.scalar.succ]  # e1, constructed as e1(1.0)
 ```

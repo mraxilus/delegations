@@ -127,7 +127,7 @@ func questions*(): seq[Question] =
       # Page walks chain by manner's own dancer, `windSense` half turns per step
       # (`parts.chainTurnParts`).
       result.add moving(&"{key}c_{tag}", links, is_away, manner, sense * STEPS[^1])
-      for i in 0..<STEPS.len - 1:
+      for i in 0 ..< STEPS.len - 1:
         # Edge is walked entire, so what it asks of couple is its *furthest*
         # wound end, kept with its own sign, and not where it happens to
         # finish.  Chain runs from swan in to frame and out to other swan, so
@@ -135,8 +135,8 @@ func questions*(): seq[Question] =
         # which leaves far swan, read as easy as its near end, while last edge,
         # which arrives at other swan, read as hard as its far one.  Architect
         # saw it at once -- they are same edge mirrored.
-        let far = (if abs(STEPS[i]) > abs(STEPS[i + 1]): STEPS[i]
-                   else: STEPS[i + 1])
+        let far = (if abs(STEPS[i]) > abs(STEPS[i+1]): STEPS[i]
+                   else: STEPS[i+1])
         result.add moving(&"{key}w_{tag}_{i}", links, is_away, manner, sense * far)
 
 # Mutable and global: thread takes one argument, so workers write into slots allotted here.

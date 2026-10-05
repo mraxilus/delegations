@@ -51,7 +51,7 @@ const FACINGS* =
     var each: array[16, ((int, int), string)]
     for by_lead in 0..3:
       for by_follow in 0..3:
-        each[by_lead * 4 + by_follow] = ((by_lead, by_follow),
+        each[by_lead*4+by_follow] = ((by_lead, by_follow),
           SIDES[by_lead] & "-to-" & SIDES[by_follow].toLowerAscii)
     each
   ## Name each state two stand in to one another: where lead sees follow, then

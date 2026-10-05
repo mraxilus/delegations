@@ -136,8 +136,8 @@ func clearingMarks*(put: Pose; a, b: Point): seq[Mark] =
     for leg in 0..1:
       for step in 0..CHEVRON_STEPS:
         let part = float(step) / float(CHEVRON_STEPS)
-        result.add ((drawn[leg].x + (drawn[leg + 1].x - drawn[leg].x) * part,
-                     drawn[leg].y + (drawn[leg + 1].y - drawn[leg].y) * part),
+        result.add ((drawn[leg].x + (drawn[leg+1].x - drawn[leg].x) * part,
+                     drawn[leg].y + (drawn[leg+1].y - drawn[leg].y) * part),
                     CHEVRON_CLEAR)
     for side in Arm:
       let hand_centre = hands[who][side]
@@ -243,7 +243,7 @@ func partsOf*(
   # Wound pair crosses: once by half turn, twice by whole one, with
   # cross or diamond that makes (rules 27, 28).
   let is_winding = holds[Arm.Left].isSome and holds[Arm.Right].isSome and
-    abs(twist[Arm.Left]) > 1e-9
+      abs(twist[Arm.Left]) > 1e-9
   # And wound pair says which way it wound by which arm it keeps on top,
   # so wind names over-arm rather than caller saying it twice.
   let on_top = if not is_winding: over else: some(overArm(twist[Arm.Left]))
@@ -388,7 +388,7 @@ func renderFigure*(
       should_clear_marks = should_clear_marks,
     )
   &"""<svg class="{classes}" {view(bounds)}>""" & "\n        " &
-    bits.join("\n        ") & "\n      </svg>"
+      bits.join("\n        ") & "\n      </svg>"
 
 
 
@@ -434,8 +434,8 @@ func animate*(
 ): string =
   ## Animate one attribute over cycle.
   &"""<animate attributeName="{attribute}" values="{series(steps)}"""" &
-    keyed(times, steps.len) &
-    &""" dur="{duration}s" repeatCount="indefinite"/>"""
+      keyed(times, steps.len) &
+      &""" dur="{duration}s" repeatCount="indefinite"/>"""
 
 
 func paired*(markup, inner: string): string =
@@ -482,7 +482,7 @@ func dashedAt*(points: seq[Point], dives: seq[tuple[opens, shuts: float]], start
   ##     markup has to say same number of things either way.
   var runs = @[0.0]
   for i in 0..<points.high:
-    runs.add runs[^1] + distance(points[i], points[i + 1])
+    runs.add runs[^1] + distance(points[i], points[i+1])
   # Where along this half each break falls, in order, so pattern reads
   # from one end to other.  Gap is centred on crossing and
   # clipped to this half's own ends, which is what lets it cross join
@@ -598,10 +598,10 @@ func animatedPoses*(
       ring_radius.add ring.radius
     bits.add paired(
       &"""<circle cx="0" cy="0" r="0" fill="none" stroke="{QUIET}"""" &
-        """ stroke-width="1" stroke-dasharray="3 4"/>""",
+      """ stroke-width="1" stroke-dasharray="3 4"/>""",
       animate("cx", ring_centre_x, duration, times) &
-        animate("cy", ring_centre_y, duration, times) &
-        animate("r", ring_radius, duration, times),
+      animate("cy", ring_centre_y, duration, times) &
+      animate("r", ring_radius, duration, times),
     )
 
   # Body is rigid: only where it is and which way it faces ever change.  So
@@ -614,15 +614,15 @@ func animatedPoses*(
     still.wind[who] = poses[0].wind[who]
     let places = poses.mapIt(&"{numeral(it.place[who].x)} {numeral(it.place[who].y)}")
     bits.add "<g>" &
-      """<animateTransform attributeName="transform" type="translate"""" &
-      &""" values="{series(places)}"""" & keyed(times, poses.len) &
-      &""" dur="{duration}s" repeatCount="indefinite"/>""" &
-      """<animateTransform attributeName="transform" type="rotate"""" &
-      &""" additive="sum" values="{series(facings(poses, who))}"""" &
-      keyed(times, poses.len) &
-      &""" dur="{duration}s" repeatCount="indefinite"/>""" &
-      border(still, who) & chevron(still.place[who], still.facing[who]) &
-      "</g>"
+        """<animateTransform attributeName="transform" type="translate"""" &
+        &""" values="{series(places)}"""" & keyed(times, poses.len) &
+        &""" dur="{duration}s" repeatCount="indefinite"/>""" &
+        """<animateTransform attributeName="transform" type="rotate"""" &
+        &""" additive="sum" values="{series(facings(poses, who))}"""" &
+        keyed(times, poses.len) &
+        &""" dur="{duration}s" repeatCount="indefinite"/>""" &
+        border(still, who) & chevron(still.place[who], still.facing[who]) &
+        "</g>"
 
   # One reach per frame, every frame same number of points, and -- this
   # is whole of it -- **one way round both bodies for entire move**
@@ -742,11 +742,11 @@ func animatedPoses*(
           &""" dur="{duration}s" repeatCount="indefinite"/>""" &
           (if dashes.len == 0: ""
            else: &"""<animate attributeName="stroke-dasharray"""" &
-             &""" values="{dashes.join(";")}"""" & keyed(times, poses.len) &
-             &""" dur="{duration}s" repeatCount="indefinite"/>""" &
-             &"""<animate attributeName="stroke-dashoffset"""" &
-             &""" values="{offsets.join(";")}"""" & keyed(times, poses.len) &
-             &""" dur="{duration}s" repeatCount="indefinite"/>"""))
+               &""" values="{dashes.join(";")}"""" & keyed(times, poses.len) &
+               &""" dur="{duration}s" repeatCount="indefinite"/>""" &
+               &"""<animate attributeName="stroke-dashoffset"""" &
+               &""" values="{offsets.join(";")}"""" & keyed(times, poses.len) &
+               &""" dur="{duration}s" repeatCount="indefinite"/>"""))
 
   # Moving hand says its level, as still one does (rule 21) -- and it
   # has to say it same way throughout.
@@ -763,9 +763,9 @@ func animatedPoses*(
     ## Carry mark along points, looped over whole cycle.
     let places = points.mapIt(coordinates(it))
     "<g>" &
-      """<animateTransform attributeName="transform" type="translate"""" &
-      &""" values="{series(places)}"""" & keyed(times, points.len) &
-      &""" dur="{duration}s" repeatCount="indefinite"/>""" & mark & "</g>"
+        """<animateTransform attributeName="transform" type="translate"""" &
+        &""" values="{series(places)}"""" & keyed(times, points.len) &
+        &""" dur="{duration}s" repeatCount="indefinite"/>""" & mark & "</g>"
 
   for arm in Arm:
     bits.add carried(
@@ -781,7 +781,7 @@ func animatedPoses*(
            level = (if is_held: levels[by[0]] else: none(Level))),
       hands.mapIt(it[Dancer.Follow][own]))
   &"""<svg class="{classes}" {view(bounds)}>""" & "\n        " &
-    bits.join("\n        ") & "\n      </svg>"
+      bits.join("\n        ") & "\n      </svg>"
 
 
 func animated*(

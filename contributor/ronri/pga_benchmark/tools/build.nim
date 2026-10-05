@@ -24,6 +24,9 @@
 ##   | evaluate  | try one change or proposal at pin, `stale` ones, or `all`, and       |
 ##   |           | record what each measured as `evaluations/<name>.json`; typed        |
 ##   |           | algebras alone, or all four after `--thorough`                       |
+##   | restamp   | move every timed record to pin where its builds emit C it was        |
+##   |           | timed on, keep its times, and take every other figure of each        |
+##   |           | evaluation again; finding where C differs (`head.nim`)               |
 ##   | pages     | build every page from committed files into `build/<name>.html`       |
 ##   | types     | type-check harness `tools/drive/`, and emit it into `build/drive/`;  |
 ##   |           | no browser, no page                                                  |
@@ -74,8 +77,8 @@ const
     ##   Faces come from repository's store.
     ##   Type-checker and Playwright are node packages, pinned by `package-lock.json`.
   USAGE = "Usage: nim r tools/build.nim " &
-      "<inspect|bench|baseline|guard|evaluate|pages|types|published|drive|head|gaps|show|sweep|" &
-      "system|clean> [name|symbol] [url|algebra|--thorough]\n"
+      "<inspect|bench|baseline|guard|evaluate|restamp|pages|types|published|drive|head|gaps|show|" &
+      "sweep|system|clean> [name|symbol] [url|algebra|--thorough]\n"
     ## Text printed on usage error; trailing words serve `evaluate`, `published` and `show`.
   FLAG_THOROUGH = "--thorough"  ## Flag after `evaluate <name>` that measures 2D algebras too.
 
@@ -102,7 +105,7 @@ proc delegated(): int =
   ## Run verb command line names in `tools/verbs.nim`, with its arguments; exit code of run.
   ##   Compiler is one on PATH, which koch sets to pin, so project code compiles on pin alone.
   var arguments = @["r", "--hints:off", PATH_VERBS]
-  for index in 1 .. paramCount(): arguments.add paramStr(index)
+  for index in 1..paramCount(): arguments.add paramStr(index)
   runStatus("nim", arguments)
 
 
@@ -140,10 +143,10 @@ proc main(): int =
     verb = if paramCount() > 0: paramStr(1) else: ""
     arguments =
       case verb
-      of "show": 2 .. 3
-      of "evaluate": 2 .. 3
-      of "published": 3 .. 3
-      else: 1 .. 1
+      of "show": 2..3
+      of "evaluate": 2..3
+      of "published": 3..3
+      else: 1..1
   if paramCount() notin arguments or
       (verb == "evaluate" and paramCount() == 3 and paramStr(3) != FLAG_THOROUGH):
     stderr.write USAGE
@@ -156,6 +159,7 @@ proc main(): int =
     of "baseline": return delegated()
     of "guard": return delegated()
     of "evaluate": return delegated()
+    of "restamp": return delegated()
     of "pages": return delegated()
     of "types": types()
     of "published": return delegated()

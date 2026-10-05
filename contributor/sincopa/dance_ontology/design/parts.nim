@@ -121,7 +121,7 @@ func replaceFirst*(text, pattern, by: string): string =
   ## Replace only first occurrence, as figure post-passes need.
   let at = text.find(pattern)
   if at < 0: text
-  else: text[0..<at] & by & text[at + pattern.len .. ^1]
+  else: text[0..<at] & by & text[at+pattern.len .. ^1]
 
 
 func slotChart*(arm = Arm.Left): string =
@@ -160,9 +160,9 @@ func slotChart*(arm = Arm.Left): string =
         anchor = if label.x < 0: "end" else: "start"
         text = if slot == Slot.Default: "side" else: word(slot)
       bits.add &"""<text x="{numeral(label.x)}" y="{numeral(label.y + 3)}"""" &
-        &""" text-anchor="{anchor}"""" &
-        " style=\"font: 8px 'Noto Sans', ui-sans-serif, system-ui," &
-        &""" sans-serif; fill: {FAINT}">{text}</text>"""
+          &""" text-anchor="{anchor}"""" &
+          " style=\"font: 8px 'Noto Sans', ui-sans-serif, system-ui," &
+          &""" sans-serif; fill: {FAINT}">{text}</text>"""
   bits.join("") & "</svg>"
 
 
@@ -372,7 +372,7 @@ func frameParts*(): Parts =
       tag = named_move.name.replace(" ", "_").replace(",", "")
       half = cycle(named_move.apply).poses.mapIt(extent(it, has_captions = false)).max
       style = &"""class="mv" style="width: {numeral(2 * half * move_pixels)}px;""" &
-        &""" height: {numeral(2 * half * move_pixels)}px""""
+          &""" height: {numeral(2 * half * move_pixels)}px""""
     result[&"mv_{tag}"] = animated("mv", HOLD, named_move.apply, some half)
       .replaceFirst("class=\"mv\"", style)
     result[&"mv_{tag}_still"] = renderFigure(
@@ -383,7 +383,7 @@ func frameParts*(): Parts =
     )
       .replaceFirst("class=\"mv still\"",
         &"""class="mv still" style="width: {numeral(2 * half * move_pixels)}px;""" &
-          &""" height: {numeral(2 * half * move_pixels)}px"""")
+        &""" height: {numeral(2 * half * move_pixels)}px"""")
 
 
 
@@ -404,7 +404,7 @@ func sized(svg, classes: string; half, pixels: float): string =
   ##     inside each builder before pages were read side by side.
   svg.replaceFirst(&"class=\"{classes}\"",
     &"""class="{classes}" style="width: {numeral(2 * half * pixels)}px;""" &
-      &""" height: {numeral(2 * half * pixels)}px"""")
+    &""" height: {numeral(2 * half * pixels)}px"""")
 
 
 const SINGLES*: array[4, tuple[holds: Holds, name: string]] = [
@@ -431,33 +431,33 @@ const MANNERS*: array[Manner, tuple[
     tag, title, blurb: string, who: Dancer, about: About]] = [
   (tag: "fa", title: "The follow turns on the spot",
    blurb: "The follow turns on their own axis, and nobody travels. Their " &
-     "<b>chevron</b> comes round, and with it the hand that stands nearer. " &
-     "The lead stands still and faces up, so nothing needs to come back " &
-     "afterward. One stage, and it is over.",
+       "<b>chevron</b> comes round, and with it the hand that stands nearer. " &
+       "The lead stands still and faces up, so nothing needs to come back " &
+       "afterward. One stage, and it is over.",
    who: Dancer.Follow, about: About.Axis),
   (tag: "la", title: "The lead turns on the spot",
    blurb: "The lead turns on their own axis, and here the two stages " &
-     "matter. <b>Stage one</b>: the lead turns, the room holds still, and " &
-     "the picture leans off upright. <b>Stage two</b>: the picture turns " &
-     "back until the lead faces up, which swings the follow round them. It " &
-     "is one turn, told in the order it is danced.",
+       "matter. <b>Stage one</b>: the lead turns, the room holds still, and " &
+       "the picture leans off upright. <b>Stage two</b>: the picture turns " &
+       "back until the lead faces up, which swings the follow round them. It " &
+       "is one turn, told in the order it is danced.",
    who: Dancer.Lead, about: About.Axis),
   (tag: "fo", title: "The follow orbits the lead",
    blurb: "The follow walks the ring round the lead, who stands still. The " &
-     "dashed ring says so, and says who stands. <b>Whichever side of them " &
-     "faced the lead goes on facing them</b>, so they turn as far as they " &
-     "travel (rule 32). The lead never moves and never turns, so there is " &
-     "no second stage: the walk is the whole figure. It lands on the " &
-     "pictures the <em>axis turn of the lead</em> reaches, and every " &
-     "build measures that.",
+       "dashed ring says so, and says who stands. <b>Whichever side of them " &
+       "faced the lead goes on facing them</b>, so they turn as far as they " &
+       "travel (rule 32). The lead never moves and never turns, so there is " &
+       "no second stage: the walk is the whole figure. It lands on the " &
+       "pictures the <em>axis turn of the lead</em> reaches, and every " &
+       "build measures that.",
    who: Dancer.Follow, about: About.Orbit),
   (tag: "lo", title: "The lead orbits the follow",
    blurb: "The lead walks the ring round the follow, and faces the centre " &
-     "the same way. It is the one manner of the four that takes the lead " &
-     "off their spot. Its second stage has something to do. It lands " &
-     "where the <em>axis turn of the follow</em> lands. The drawing cannot " &
-     "say which dancer walked, and only the path says that, so all four " &
-     "are drawn in motion.",
+       "the same way. It is the one manner of the four that takes the lead " &
+       "off their spot. Its second stage has something to do. It lands " &
+       "where the <em>axis turn of the follow</em> lands. The drawing cannot " &
+       "say which dancer walked, and only the path says that, so all four " &
+       "are drawn in motion.",
    who: Dancer.Lead, about: About.Orbit),
 ]  ## What each manner of turn is called on pages, who dances it, and
   ## about what.  Which round it walks is not restated here: `LUT_ROUND_BY_MANNER`
@@ -515,16 +515,16 @@ func turnGlyph*(label: string, width = 44.0): string =
     middle = width / 2
     (tail, head) = (middle - 15, middle + 15)
   &"""<svg viewBox="0 0 {numeral(width)} 30" width="{numeral(width)}" height="30"""" &
-    " aria-hidden=\"true\">" &
-    &"""<text x="{numeral(middle)}" y="9" text-anchor="middle" style="font: 8px""" &
-    &""" 'Noto Sans', ui-sans-serif, system-ui, sans-serif; fill: {FAINT}">{label}""" &
-    "</text>" &
-    &"""<path d="M{numeral(tail)} 20 L{numeral(head)} 20 M{numeral(tail + 5)} 15""" &
-    &""" L{numeral(tail)} 20 L{numeral(tail + 5)} 25""" &
-    &""" M{numeral(head - 5)} 15 L{numeral(head)} 20""" &
-    &""" L{numeral(head - 5)} 25" fill="none" stroke="{QUIET}"""" &
-    """ stroke-width="1.6" stroke-linecap="round"""" &
-    """ stroke-linejoin="round"/></svg>"""
+      " aria-hidden=\"true\">" &
+      &"""<text x="{numeral(middle)}" y="9" text-anchor="middle" style="font: 8px""" &
+      &""" 'Noto Sans', ui-sans-serif, system-ui, sans-serif; fill: {FAINT}">{label}""" &
+      "</text>" &
+      &"""<path d="M{numeral(tail)} 20 L{numeral(head)} 20 M{numeral(tail + 5)} 15""" &
+      &""" L{numeral(tail)} 20 L{numeral(tail + 5)} 25""" &
+      &""" M{numeral(head - 5)} 15 L{numeral(head)} 20""" &
+      &""" L{numeral(head - 5)} 25" fill="none" stroke="{QUIET}"""" &
+      """ stroke-width="1.6" stroke-linecap="round"""" &
+      """ stroke-linejoin="round"/></svg>"""
 
 
 func singleTurnParts*(): Parts =
@@ -800,7 +800,7 @@ func chainFor*(holds: Holds): seq[Position] =
     let
       shape = case int(abs(wind) * 2)
               of 0: &"Left-to-{handName(holds[Arm.Left].get)} and " &
-                    &"Right-to-{handName(holds[Arm.Right].get)}"
+                  &"Right-to-{handName(holds[Arm.Right].get)}"
               of 1: "cross"
               of 2: "diamond"
               else: "swan"
@@ -914,7 +914,7 @@ func chainTurnParts*(holds: Holds, key: string): Parts =
       description = MANNERS[manner]
       sense = windSense(manner)
     walks[manner] = newSeq[Walk](chain.len - 1)
-    for i in 0..<chain.len - 1:
+    for i in 0 ..< chain.len - 1:
       # Each edge starts where it starts and turns half, so manner that
       # winds walks one step along chain and manner that does not
       # simply carries pair out and back.
@@ -972,7 +972,7 @@ func chainTurnParts*(holds: Holds, key: string): Parts =
   # And every edge of it, walked by every manner of turn.
   for manner in Manner:
     let description = MANNERS[manner]
-    for i in 0..<chain.len - 1:
+    for i in 0 ..< chain.len - 1:
       result[&"{key}w_{description.tag}_{i}"] = sized(
         animatedPoses(
           "mv",

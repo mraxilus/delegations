@@ -30,25 +30,25 @@ const TITLE* = "Hand-to-Hand Turns, So Far"  ## What page calls itself, in its t
 
 const WINDING: array[Manner, string] = [
   "The follow turns half a circle where they stand, and the pair winds " &
-    "half a turn with them. Nobody travels, and nothing comes back " &
-    "afterward, so this is the plainest of the four: one stage, and the " &
-    "arms wind as it runs.",
+  "half a turn with them. Nobody travels, and nothing comes back " &
+  "afterward, so this is the plainest of the four: one stage, and the " &
+  "arms wind as it runs.",
   "The lead turns half a circle on the spot. A turn by the lead winds the " &
-    "pair the opposite way to a turn by the follow. So to take the " &
-    "<em>same</em> step of the chain, the lead turns the other way round. " &
-    "<b>Stage one</b> is the turn with the room held still. <b>Stage " &
-    "two</b> brings the picture back to the lead facing up. That swings " &
-    "the follow round them, and leaves the twist where the turn put it.",
+  "pair the opposite way to a turn by the follow. So to take the " &
+  "<em>same</em> step of the chain, the lead turns the other way round. " &
+  "<b>Stage one</b> is the turn with the room held still. <b>Stage " &
+  "two</b> brings the picture back to the lead facing up. That swings " &
+  "the follow round them, and leaves the twist where the turn put it.",
   "The follow walks half a circle round the lead, and the dashed ring says " &
-    "who stands still. They keep <b>whichever side of them faced the lead " &
-    "facing them</b>, so they turn as far as they travel (rule 32). That " &
-    "winds the pair half a turn, which is the half turn an axis turn " &
-    "winds. So it walks the chain, and it lands on the frame state that the " &
-    "axis turn of the <em>lead</em> lands on.",
+  "who stands still. They keep <b>whichever side of them faced the lead " &
+  "facing them</b>, so they turn as far as they travel (rule 32). That " &
+  "winds the pair half a turn, which is the half turn an axis turn " &
+  "winds. So it walks the chain, and it lands on the frame state that the " &
+  "axis turn of the <em>lead</em> lands on.",
   "The lead walks the half circle instead, and faces the centre the same " &
-    "way, so it winds the pair half a turn too. It is the one manner of " &
-    "the four that takes the lead off their spot. Its second stage brings " &
-    "back the travel and the turn together.",
+  "way, so it winds the pair half a turn too. It is the one manner of " &
+  "the four that takes the lead off their spot. Its second stage brings " &
+  "back the travel and the turn together.",
 ]  ## What each manner of turn does to pair, in this page's terms.
   ##   Not `MANNERS`'s own blurbs: those speak of single hand
   ##     coming round, and here orientation is exactly what returns.
@@ -63,7 +63,7 @@ func plates(parts: Parts): string =
     result.add """<p>Every edge of the chain. Each one rocks between its two
       ends, so the half turn reads both ways:</p>"""
     result.add """<div class="row mid">"""
-    for i in 0..<CHAIN.len - 1:
+    for i in 0 ..< CHAIN.len - 1:
       let
         moving = parts[&"hw_{description.tag}_{i}"].replaceFirst(
           "class=\"mv\"",
@@ -73,7 +73,7 @@ func plates(parts: Parts): string =
       # Every manner walks chain now, orbits included (rule 32), so every
       # cell says frame state it lands on.
       result.add &"<figure>{moving}{still}<figcaption>{CHAIN[i].name}" &
-        &"<br>&rarr; <b>{CHAIN[i + 1].name}</b></figcaption></figure>"
+          &"<br>&rarr; <b>{CHAIN[i + 1].name}</b></figcaption></figure>"
     result.add "</div></div>"
 
 

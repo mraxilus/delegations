@@ -25,5 +25,6 @@ when compileOption("profiler"): import std/nimprof
 
 import
   ./suites/[test_asks, test_axle, test_diagram, test_drawn, test_faces, test_frame, test_glossary,
-            test_limb, test_map, test_marks, test_plain, test_readme, test_record, test_review,
-            test_rotation, test_route, test_spokes, test_transition, test_words, test_workbook]
+            test_limb, test_map, test_marks, test_plain, test_readme, test_record, test_render,
+            test_review, test_rotation, test_route, test_spokes, test_transition, test_words,
+            test_workbook]

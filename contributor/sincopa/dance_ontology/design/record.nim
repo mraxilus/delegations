@@ -154,7 +154,7 @@ proc askedOf(task: Task): string =
     of Recording.Answers: result = taskText(tasks()[task.index])
     of Recording.Verdicts:
       result = (if task.index < READ_RUNGS.len: rungText(READ_RUNGS[task.index])
-                else: sweepText(READ_SWEEPS[task.index - READ_RUNGS.len]))
+                else: sweepText(READ_SWEEPS[task.index-READ_RUNGS.len]))
     echo &"{nameOf(task)}: {result.len} bytes ({epochTime() - start:.0f} s)"
 
 proc isKept(path, stamp: string): bool =
@@ -220,7 +220,7 @@ proc main() =
     case recording
     of Recording.Rig:
       var bodies: seq[string]
-      for text in texts: bodies.add text[text.find('\n') + 1..^1]
+      for text in texts: bodies.add text[text.find('\n')+1..^1]
       writeFile(KEPT_RIG, assembled(stamps[recording], bodies))
     of Recording.Modelled:
       var told = initOrderedTable[string, bool]()
@@ -229,8 +229,11 @@ proc main() =
     of Recording.Turns: writeFile("design/turns.json", bridged(texts))
     of Recording.Answers: writeFile(answers.KEPT, answers.assembled(texts))
     of Recording.Verdicts:
-      writeFile("simulation/verdicts.md", verdicts.assembled(
-        READ_SWEEPS, texts[READ_RUNGS.len..^1], READ_RUNGS, texts[0..<READ_RUNGS.len]))
+      writeFile(
+        "simulation/verdicts.md",
+        verdicts.assembled(
+          READ_SWEEPS, texts[READ_RUNGS.len..^1], READ_RUNGS, texts[0..<READ_RUNGS.len]),
+      )
     removeDir(root / &"{recording}-{stamps[recording]}")
     echo &"wrote {recording}"
 

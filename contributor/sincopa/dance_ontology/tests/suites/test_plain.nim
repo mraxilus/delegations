@@ -90,7 +90,7 @@ suite "Internal: Prose off Markdown":
   test "each list item is its own block, and blank line ends one":
     let document = "- First item.\n- Second item,\n  wrapped.\n\nPlain line one.\nPlain line two."
     check document.markdownProse ==
-      @["First item.", "Second item, wrapped.", "Plain line one. Plain line two."]
+        @["First item.", "Second item, wrapped.", "Plain line one. Plain line two."]
 
 
   test "numbered item loses its number and keeps its words":

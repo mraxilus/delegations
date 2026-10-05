@@ -185,9 +185,11 @@ and the shared allowance. This section adds only what differs for a curator.
    fixes. A stale stamp and a standard moved to the root glossary are propagation, so they stay
    yours in any project. Never push with `--no-verify`, and the `bash` hook refuses it.
 
-4. **Regression.** Every mistake that slipped past the audit becomes a fixture-driven test in
-   `curator/audit/tests/`, before the fix. A suite takes the name of the article that it
-   replicates, or of its module where no article fits. The assertions cite the rule.
+4. **Regression.** Every mistake that slipped past the checks becomes a fixture-driven test,
+   before the fix. It lives in the tests of the package that holds the check, `curator/audit/tests/`
+   or `curator/knoller/tests/`. It holds the case as found and its domain, as the regression rule
+   of `CONTRIBUTOR.md` asks. A suite takes the name of the article that it replicates, or of its
+   module where no article fits. The assertions cite the rule.
 
 5. **New file kind.** Register it in `curator/audit/src/kinds.nim` with its comment syntax,
    extend `comments.nim` where the syntax is new, update the header table, and add fixtures.

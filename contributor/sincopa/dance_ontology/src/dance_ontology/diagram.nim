@@ -76,7 +76,7 @@ func frameBody(target: Frame, twist: HalfTurns): string =
   ##   Arithmetic is done here because `scene` may not have `rotation`'s
   ##     words; it takes two plain flags.
   "<title>" & target.describe & "</title>" &
-    sceneFor(target, isFacing(twist), is_clockwise = twist > 0)
+      sceneFor(target, isFacing(twist), is_clockwise = twist > 0)
 
 
 func frameHeight*(width: int): int =
@@ -89,7 +89,7 @@ func renderFrame*(target: Frame, twist: HalfTurns = 0): string =
   ##   Given twist it draws frame state instead: same frame, seen with
   ##     follow turned as far as that twist has turned them.
   "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"" & VIEW &
-    "\" class=\"frame\" role=\"img\">" & frameBody(target, twist) & "</svg>"
+      "\" class=\"frame\" role=\"img\">" & frameBody(target, twist) & "</svg>"
 
 
 func renderFramePlaced*(target: Frame; x, y, width: int; twist: HalfTurns = 0): string =
@@ -98,5 +98,5 @@ func renderFramePlaced*(target: Frame; x, y, width: int; twist: HalfTurns = 0): 
   ##     coordinates, so drawing around it never has to know how frame
   ##     is made.
   "<svg x=\"" & $x & "\" y=\"" & $y & "\" width=\"" & $width & "\" height=\"" &
-    $frameHeight(width) & "\" viewBox=\"" & VIEW &
-    "\" class=\"frame\">" & frameBody(target, twist) & "</svg>"
+      $frameHeight(width) & "\" viewBox=\"" & VIEW &
+      "\" class=\"frame\">" & frameBody(target, twist) & "</svg>"

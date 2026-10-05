@@ -50,10 +50,7 @@ changes.
       else:
         some(newFloatLitNode(0.0))
 
-    # let mapping = mappings[b]
-    # if mapping.get: continue
-    assignments.add(
-      newAssignment(nnkBracketExpr.newTree(ident"result", ident($b)), mapping.get)
+    assignments.add newAssignment(
 ```
 
 ```nim
@@ -67,8 +64,19 @@ changes.
     for term in terms[1 .. ^1]:
       expression = infix(expression, "+", term)
 
-    assignments.add(
-      newAssignment(nnkBracketExpr.newTree(ident"result", ident($b)), expression)
+    assignments.add newAssignment(
+```
+
+## Edit `pga/operators.nim`
+
+```nim
+      mapping.get,
+    )
+```
+
+```nim
+      expression,
+    )
 ```
 
 ## Edit `pga/operators.nim`
@@ -182,68 +190,28 @@ changes.
 ## Edit `pga/operators.nim`
 
 ```nim
-#     right: CAYLEY_EXPAND_WEIGHT_RIGHT,
-```
-
-```nim
-#     right: CAYLEYS_EXPAND.weight,
-```
-
-## Edit `pga/operators.nim`
-
-```nim
-#     right: CAYLEY_CONTRACT_WEIGHT_RIGHT,
-```
-
-```nim
-#     right: CAYLEYS_CONTRACT.weight,
-```
-
-## Edit `pga/operators.nim`
-
-```nim
-#     right: CAYLEY_CONTRACT_BULK_RIGHT,
-```
-
-```nim
-#     right: CAYLEYS_CONTRACT.bulk,
-```
-
-## Edit `pga/operators.nim`
-
-```nim
-#     right: CAYLEY_EXPAND_BULK_RIGHT,
-```
-
-```nim
-#     right: CAYLEYS_EXPAND.bulk,
-```
-
-## Edit `pga/operators.nim`
-
-```nim
   func `∩`*(m: Multivector): Multivector =
     ## Get right support of multivector, i.e. 𝐦∩ = 𝐦 ∨ (𝐞ₙ ∧ 𝐦☆).
     const 𝐞ₙ = initElement(Basis.origin)
-    m ∨ (𝐞ₙ ∧ ☆ m)
+    m ∨ (𝐞ₙ ∧ ☆m)
 
   func `∪`*(m: Multivector): Multivector =
     ## Get right antisupport of multivector, i.e. 𝐦∪ = 𝐦 ∧ (𝐞̄ₙ ∨ 𝐦★).
     const 𝐞̄ₙ = block:
       let h = Basis.horizon
       h.basis.initElement(if h.is_negated: -1 else: 1)
-    m ∧ (𝐞̄ₙ ∨ ★ m)
+    m ∧ (𝐞̄ₙ ∨ ★m)
 
 when IS_CONFORMAL:
   func `⊞`*(m: Multivector): Multivector =
     ## Get cocarrier of multivector, i.e. 𝐦☆ ∧ 𝐞ₙ.
     const 𝐞ₙ = Basis.infinity.initElement()
-    ☆(m) ∧ 𝐞ₙ
+    ☆m ∧ 𝐞ₙ
 
-  func `⊙`*(m: Multivector): Multivector = ⊞ m ∨ m
+  func `⊙`*(m: Multivector): Multivector = ⊞m ∨ m
     ## Get center of multivector, i.e. 𝐦⊞ ∨ 𝐦.
 
-  func `⊡`*(m: Multivector): Multivector = m ∧ ☆( ⊟ m)
+  func `⊡`*(m: Multivector): Multivector = m ∧ ☆(⊟m)
     ## Get container of multivector, i.e. 𝐦 ∧ (𝐦⊟)☆.
 
 ```
@@ -322,7 +290,7 @@ suite "Transwedge":
 
 ```
 
-## Replace `pga/cayleys.nim` from `5830753c587df8bb`
+## Replace `pga/cayleys.nim` from `358411640e5809dd`
 
 ```nim
 ## Define and construct Cayley tables for any PGA.
