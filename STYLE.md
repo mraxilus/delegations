@@ -50,7 +50,10 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
 - Nest a helper used once inside the derivation that owns it. Do not promote it to module
   scope for a reuse that you only expect. The nested helper comes first in the body of the
   routine that owns it, after the doc and before the first stage. One blank line stands on
-  each side of it.
+  each side of it, but a routine on one line, such as a `{.borrow.}` with no body, stacks. It
+  takes no blank line after the head or doc of the routine around it, or after another routine
+  on one line. One blank line still stands between the last of them and a stage or a longer
+  routine.
 - Hand a stored value out with no copy. Return `lent T` from an accessor into storage. Take
   `var T` where the callee reads a large value in place and nothing writes it. Add a comment
   that says `var` is for the copy and not for a write. A `lent` result saves the copy only
@@ -132,7 +135,7 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
   constant at the return of the boundary proc, and never upstream of it.
 - Use an enum-indexed fixed array for a closed static domain (`array[Basis, float]`), and a
   `range` type for a bounded index. A fixed pool carries its live extent as a field
-  (`bound`), and every walk is `for slot in 0 ..< pool.bound`.
+  (`bound`), and every walk is `for slot in 0..<pool.bound`.
 - Give a distinct type whose domain you walk an `items` iterator over its typedesc, so that
   `for k in Order:` reads as the domain.
 - Define `=~` as `abs(a - b) <= TOLERANCE_ABS * max(1, abs(a), abs(b))`, and derive
@@ -181,9 +184,11 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
   ): array[Order, Cayley2D] {.compileTime.} =
   ```
 
-- A call that does not fit on its line puts one argument on each line, with a trailing comma.
-  It never wraps its arguments onto one line of their own. A generator call and a constructor
-  name their arguments, and a positional call stays positional:
+- A call written one argument to a line, with a comma after its last argument, stays so even
+  where it fits. That comma is the one mark of the split that the hand wants. A call without it
+  joins its line where it fits. Where it does not fit, it keeps the line breaks of the hand while
+  each line fits. Otherwise it puts one argument on each line, with a trailing comma. A generator
+  call and a constructor name their arguments, and a positional call stays positional:
 
   ```nim
   CAYLEY_EXPAND_BULK_RIGHT* = constructProductInterior(
@@ -195,14 +200,26 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
 
 - An expression that does not fit breaks after a binary operator, because Nim refuses a line
   that opens with one. Each line of the expression past its statement line takes four spaces
-  more than that line, and all of them take that one indent. A chain that opens on the line after
-  `=` takes the four spaces too, its first line included. Any other value on its own line after
-  `=` keeps one level, as an `if` expression or a split call does. A call and a signature keep
-  their layout of one level, as above:
+  more than that line, and all of them take that one indent. A chain that opens on the line
+  after `=` takes the four spaces too, its first line included. Any other value on its own line
+  after `=` keeps one level, as an `if` expression or a split call does. A call and a signature
+  keep their layout of one level, as above.
+
+  An expression can open its own line after an opening bracket or the comma of a list. Then
+  every line of it takes the indent of that line. A bare value that opens its statement line
+  keeps the four spaces, since no bracket or comma sets it apart from the body:
 
   ```nim
   let depth = offset_x * bounds.forward.x + offset_y * bounds.forward.y +
       offset_z * bounds.forward.z
+  result.add BasisSigned(
+    basis: product.basis,
+    is_negated: (
+      m_from.is_negated xor
+      n_from.is_negated xor
+      term.is_negated
+    ),
+  )
 
   const
     RANGES_NOTO_SANS_MATH =
@@ -212,6 +229,18 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
     STEP_TWIST =
       if DIMENSIONS == 3: STEP_SPATIAL
       else: STEP_PLANAR
+  ```
+
+  The four spaces keep the head of a block apart from its body. Where the line right above a body
+  would stand at the indent of the body, every continuation line of the head takes them. They
+  stand past the first line of the head. That holds inside a call too, whose layout of one level
+  would put the line on the body. A head that closes on its own `):` or `) =` already stands
+  apart:
+
+  ```nim
+  if check(a_long_name, first_condition or second_condition or
+      (second_condition and first_condition)):
+    echo a_long_name
   ```
 
 - A parameter with a default states its type only where the default does not fix it
@@ -231,6 +260,10 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
   `x.Grade`), and wherever no argument plainly dominates. Use backticks for an operator
   definition. Use a raw string (`r"\"`) and a backtick-quoted call (`` m.`∧ ☆`n ``) where the
   tokeniser demands one.
+- A dotted call that is a whole statement takes the command form where its one argument is a
+  call or a parenthesised expression. So write `result.add BasisSigned(basis: b)` and
+  `x.f (a, b)`, with no double bracket. Inside an expression the call form stays, since the
+  command form can read otherwise there.
 - A first-tier banner is `#[ Title Case ]#`, and a second-tier banner is `#[[ Title Case ]]#`.
   Each one stands alone on its line, and is never indented.
 - `nim r koch fix` is the formatter. It applies each fix that a check names, and nothing else,
@@ -239,7 +272,7 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
 - Put `*` on every intentional export, and on nothing else. The umbrella module re-exports
   the coherent surface (`import ./pga/[...]`, then `export ...`).
 - Membership in a hot path is two comparisons (`slot >= 0 and slot < N`). Do not write
-  `slot in 0 ..< N`, which allocates on the JS backend (§7).
+  `slot in 0..<N`, which allocates on the JS backend (§7).
 
 ## 6. Test harness
 
@@ -309,7 +342,7 @@ the lowered output. A `let` of a scalar is free on both backends. What to look f
 - **JS backend.** Every object and array is a JS object, every copy is deep, and a
   `let x = y` of an object emits `nimCopy`. A by-value parameter copies at the call, and a
   by-value return copies on the way out. `lent` and `var` avoid the copy only where the
-  caller reads the value inline. `slot in a ..< b` builds a slice object, and `seq.add` and
+  caller reads the value inline. `slot in a..<b` builds a slice object, and `seq.add` and
   string concatenation allocate. Check with `grep -c nimCopy` on the emitted file, and read
   one call site of each new binding shape.
 - A boundary (`{.importc.}`, `{.importjs.}`, `{.exportc.}`) is where the rule of each target

@@ -67,11 +67,12 @@ Each rule id is stable, so a tool can read the output. `koch` cites the article 
 | `banner-spacing` | The blank lines beside a banner follow its tier. |
 | `entry-block` | An entry block holds no binding, so its body moves into `proc main`. |
 | `article-in-comment` | A comment holds no article. |
-| `table-alignment` | A table column aligns by display width. |
 | `message-value` | A message echoes its value in backticks. |
 | `and-with-or` | A condition that mixes `and` with `or` puts each `and` in parentheses. |
 | `not-over-binary` | A `not` over a binary expression takes parentheses. No fix reaches it. |
+| `needless-parentheses` | Parentheses that the parser groups anyway go, around one operand alone. |
 | `to-target-subject-first` | A `to<Target>` call takes its plain subject first. |
+| `dotted-command` | A dotted call statement of one call or group argument takes command form. |
 | `return-result` | A routine never ends on `return result`. |
 | `bracket-import` | A bracket import is in alphabetical order. |
 | `import-rank` | The standard library comes first, then packages, then local modules. |
@@ -82,7 +83,7 @@ Each rule id is stable, so a tool can read the output. `koch` cites the article 
 | `stub-keys` | A test stub leaves out `-r`, `batchable` and `joinable`. |
 | `unordered-list` | A list that the language leaves unordered is in alphabetical order. |
 | `test-blank-lines` | The blank lines beside a suite or a test follow its tier. |
-| `helper-blank-lines` | A nested helper takes one blank line on each side. |
+| `helper-blank-lines` | A nested helper takes one blank line each side; one-line routines stack. |
 | `doc-position` | A doc stands where the shape of its declaration puts it. |
 | `literal-default` | A parameter with a literal default states no type. |
 | `expression-spacing` | A space stands only where the expression rule puts it. |

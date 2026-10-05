@@ -69,7 +69,8 @@ GUIDE.md and CONTRIBUTOR.md.
 _Avoid_: rules, law, guidelines, policy
 
 **Stamp**:
-The short code that says which charter the audit last checked a project against.
+A short code that ties a file to what it was checked or made against. The stamp of a project
+names the charter that the audit last checked it against.
 _Avoid_: seal, hash, fingerprint
 
 **Provenance**:

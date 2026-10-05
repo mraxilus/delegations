@@ -138,17 +138,48 @@ suite "Wrapping":
 
 
   test "call that fits joins; one that fits not takes one argument to line, trailing comma":
-    check fixCalls("a.nim", "foo(\n  a,\n  b,\n)\n").source == "foo(a, b)\n"
-    check fixCalls("a.nim", "x\nfoo(\n  a,\n)\ny\n").fixed.mapIt(it.line) == @[2]  # line as given
-    check "if foo(\n  a,\n):\n  discard\n".fixed == "if foo(a):\n  discard\n"  # `:` of `if`
+    check fixCalls("a.nim", "foo(\n  a,\n  b\n)\n").source == "foo(a, b)\n"  # no comma after last
+    check fixCalls("a.nim", "x\nfoo(\n  a\n)\ny\n").fixed.mapIt(it.line) == @[2]  # line as given
+    check "if foo(\n  a\n):\n  discard\n".fixed == "if foo(a):\n  discard\n"  # `:` of `if`
     let wide = "  result.add " & LONG_NAME & "(path, line, \"message long enough to cross " &
       "column one hundred\")\n"
     check wide.fixed == "  result.add " & LONG_NAME & "(\n    path,\n    line,\n" &
       "    \"message long enough to cross column one hundred\",\n  )\n"
     let own_line = "  result.add finding(\n    path, 0, \"" & "x".repeat(84) & "\",\n  )\n"
     check own_line.fixed == "  result.add finding(\n    path,\n    0,\n    \"" & "x".repeat(84) &
-      "\",\n  )\n"  # never all arguments on one line of their own
+      "\",\n  )\n"  # comma after last argument: one argument to line
     for example in [EXAMPLE_CALL, EXAMPLE_DECLARATIVE]: check example.isSettled
+
+
+  test "call one argument to line with comma after last stays so, though it fits on one line":
+    let enumerated = "  newEnum(\n    ident\"Basis\",\n" &
+      "    fields = vectors.map(b => ident(b.toBasisName)),\n    public = true,\n" &
+      "    pure = true,\n  )\n"
+    check enumerated.isSettled  # `algebra.nim` of PGA library, comma marks split hand wants
+    let bare = enumerated.replace("pure = true,", "pure = true")
+    check bare.fixed == "  newEnum(ident\"Basis\", fields = vectors.map(b => " &
+      "ident(b.toBasisName)), public = true, pure = true)\n"  # no comma after last: joins
+    check bare.fixed.isSettled
+    let wide = "  result.add " & LONG_NAME & "(path, line, \"message long enough to cross " &
+      "column one hundred\")\n"
+    check wide.fixed.isSettled  # its comma keeps it split on second run
+    let hugged = "  result[a][b].add(BasisSigned(\n    basis: term.basis,\n" &
+      "    is_negated: dual_signed.is_negated xor term.is_negated,\n  ))\n"
+    check hugged.isSettled  # call hand hugs keeps its hug, inner one to line
+
+
+  test "call with no comma after last argument keeps hand's line breaks where each line fits":
+    let shared = "      result[b].add BasisSigned(\n        basis: b_to.basis, is_negated: " &
+      "b_from.is_negated xor term.is_negated xor b_to.is_negated\n      )\n"
+    check shared.isSettled  # `cayleys.nim` of PGA library, arguments on one line of their own
+    let crossing = shared.replace("b_to.is_negated\n", "b_to.is_negated_at_length\n")
+    check crossing.fixed == "      result[b].add BasisSigned(\n        basis: b_to.basis,\n" &
+      "        is_negated: b_from.is_negated xor term.is_negated xor " &
+      "b_to.is_negated_at_length,\n      )\n"  # shared line crosses `LINE_MAX`: one to line
+    check crossing.fixed.isSettled
+    let hand = "foo(alpha_argument_held_at_great_length, beta_argument_held_at_great_length,\n" &
+      "    gamma_argument_held_at_great_length)\n"
+    check hand.isSettled  # break after comma kept, each line fits
 
 
   test "outermost call crossing column splits first, then each line it leaves":
@@ -163,7 +194,7 @@ suite "Wrapping":
     let continued = "  result.add finding(\n    path, 0,\n    \"" & "x".repeat(90) & "\" &\n" &
       "      name,\n  )\n"
     check continued.fixed == "  result.add finding(\n    path,\n    0,\n    \"" & "x".repeat(90) &
-        "\" &\n        name,\n  )\n"  # continuation four spaces in (STYLE.md §5)
+        "\" &\n    name,\n  )\n"  # argument opens its line, so continuation stays flat
     let rows = "check foo(bar, @[\n  1, 2,\n  3, 4,\n])\n"
     check rows.fixed == "check foo(\n  bar,\n  @[\n    1, 2,\n    3, 4,\n  ],\n)\n"
     check rows.fixed.isSettled
@@ -188,7 +219,7 @@ suite "Wrapping":
     let call = "  result.add finding(path, \"" & "x".repeat(60) & "\" & name & \"" &
         "y".repeat(30) & "\")\n"
     check call.fixed == "  result.add finding(\n    path,\n    \"" & "x".repeat(60) &
-        "\" & name &\n        \"" & "y".repeat(30) & "\",\n  )\n"  # argument breaks four in
+        "\" & name &\n    \"" & "y".repeat(30) & "\",\n  )\n"  # argument opens line: flat
     let condition = "  if " & "a".repeat(45) & " and " & "b".repeat(45) & ":\n    discard\n"
     check condition.fixed == "  if " & "a".repeat(45) & " and\n      " & "b".repeat(45) &
         ":\n    discard\n"  # condition four in, body two
@@ -209,7 +240,7 @@ suite "Wrapping":
     for kept in [
       "  let x = " & "a".repeat(45) & " + " & "b".repeat(45) & "  # Why.\n",  # comment
       "  let x = " & "a".repeat(30) & " + " & "b".repeat(48) & " * " & "c".repeat(48) & "\n",
-      "foo(\n  " & "a".repeat(60) & " &\n      " & "b".repeat(60) & ",\n)\n",  # by hand
+      "foo(\n  " & "a".repeat(60) & " &\n  " & "b".repeat(60) & ",\n)\n",  # by hand
       "  let x = " & "a".repeat(45) & " in " & "b".repeat(45) & "\n",  # membership
       "  if a: " & "b".repeat(45) & " + " & "c".repeat(45) & "\n",  # `:` before code
     ]:
@@ -263,6 +294,72 @@ suite "Wrapping":
     check checkContinuations("a.nim", "foo(\n  name =\n    1,\n)\n").len == 0  # call's own
 
 
+  test "expression whose first piece opens its own line keeps every piece at its indent":
+    let
+      argument = "static:\n  doAssert IS_RIGID or DIMENSIONS >= 3,\n" &
+          "    &\"Conformal Geometric Algebras must have dimensionality of 3 or more \" &\n" &
+          "    &\"(2 Conformal + 1 Euclidean); got `{DIMENSIONS}`.\"\n"
+      bracket = "let p = BasisSigned(\n  basis: b,\n  is_negated: (\n" &
+          "    m_from.is_negated xor\n    n_from.is_negated xor\n    term.is_negated\n  ),\n)\n"
+      binding = "let\n  is_negated = (\n    c_dual.is_negated xor\n" &
+          "    c_complement.is_negated\n  )\n"
+      condition = "if products.len != 0 and cayley[b][0].basis notin products or\n" &
+          "    (as_exclusions and cayley[b][0].basis in products):\n  discard\n"
+    for kept in [argument, bracket, binding, condition]:
+      check checkContinuations("a.nim", kept).len == 0  # shapes of PGA library, as written
+      check kept.fixed == kept
+    let stepped = "let x = (\n  a xor\n      b xor\n      c\n)\n"
+    check checkContinuations("a.nim", stepped).mapIt(it.line) == @[3, 4]
+    check checkContinuations("a.nim", stepped)[0].message.endsWith("got `4`.")
+    check stepped.fixed == "let x = (\n  a xor\n  b xor\n  c\n)\n"  # flat at first piece
+    check "doAssert c,\n  \"a \" &\n      \"b\"\n".fixed == "doAssert c,\n  \"a \" &\n  \"b\"\n"
+    for kept in [
+      "foo(\n  name = a +\n      b,\n)\n",  # named argument opens mid-line
+      "foo(\n  x, a +\n      b,\n)\n",  # after other code
+      "let x = a +\n    b\n",  # after statement head
+      "func f(): bool =\n  a or\n      b\n",  # bare value opens its statement line
+    ]:
+      check checkContinuations("a.nim", kept).len == 0  # four spaces past statement line
+    let bare = "func f(): bool =\n  a or\n  b\n"  # no bracket or comma sets value apart from body
+    check bare.fixed == bare.replace("\n  b", "\n      b")
+    check bare.fixed.isSettled
+
+
+  test "block head whose last line would stand at body's indent takes four spaces past first":
+    let
+      head = "proc p() =\n  if check(a_long_name, first_condition or second_condition or\n" &
+        "    second_condition and first_condition):\n    echo a_long_name\n"
+      lifted = head.replace("\n    second_condition", "\n      second_condition")
+    check checkContinuations("a.nim", head).mapIt(it.line) == @[3]
+    check checkContinuations("a.nim", head)[0].message.endsWith("got `2`.")
+    check head.fixed == lifted  # head reads apart from body
+    check lifted.isSettled  # second run writes nothing
+    let nested = "proc p() =\n  for x in (a, (b,\n      c),\n    d):\n    discard\n"
+    check nested.fixed == "proc p() =\n  for x in (a, (b,\n        c),\n      d):\n    discard\n"
+      # one step for every line, so hand's shape stays
+    for kept in [
+      "proc p() =\n  for b in x:\n    if (products.len != 0 and b.basis notin products) or\n" &
+        "        (as_exclusions and b.basis in products):\n      cayley[bm][bn] = @[]\n",
+      "proc p() =\n  if someCall(\n    argument_one,\n    argument_two,\n  ):\n    body()\n",
+      EXAMPLE_PARAMETERS_LINE,  # signature layouts of STYLE.md §5
+      EXAMPLE_GROUPS,
+      "static:\n  doAssert IS_RIGID or DIMENSIONS >= 3,\n" &
+        "    &\"Conformal Geometric Algebras must have dimensionality of 3 or more \" &\n" &
+        "    &\"(2 Conformal + 1 Euclidean); got `{DIMENSIONS}`.\"\n",  # no body under it
+    ]:
+      check checkContinuations("a.nim", kept).len == 0
+      check kept.fixed == kept
+
+
+  test "block head lift held on no line widens it, and keeps width guard on held line":
+    let
+      wide = "proc p() =\n  if check(a, first or\n    " & "b".repeat(45) & " + " & "c".repeat(45) &
+        "):\n    discard\n"  # line 3 of 99 runes; four spaces past first, 101
+      lifted = wide.replace("\n    b", "\n      b")
+    check WRAPPING_STEPS[3].run("a.nim", wide, Held()).source == lifted  # no line held: widens
+    check WRAPPING_STEPS[3].run("a.nim", wide, Held(lines: @[3])).source == wide  # its line held
+
+
   test "call holding comment, long string spanning lines, or block stays":
     for kept in [
       "foo(\n  a,  # Why.\n  b\n)\n",
@@ -275,22 +372,27 @@ suite "Wrapping":
     check "foo(\n  a,  # Why.\n  b\n)\n".fixed == "foo(\n  a,  # Why.\n  b,\n)\n"  # trailing alone
 
 
-  test "list written one item to line takes trailing separator":
-    let lists = "let\n  a = @[\n    1,\n    2\n  ]\n  b = {\n    'x',\n    'y'\n  }\n" &
-      "  c = (\n    1,\n    2\n  )\n  d = Foo(\n    x: 1,  # Why.\n    y: 2\n  )\n"
-    check checkTrailing("a.nim", lists).len == 4
-    check lists.fixed == lists.replace("2\n  ]", "2,\n  ]").replace("'y'\n", "'y',\n")
-      .replace("2\n  )\n  d", "2,\n  )\n  d").replace("y: 2\n", "y: 2,\n")
+  test "list one item to line takes trailing separator where it would not fit joined":
+    let
+      (x, y) = ("\"" & "x".repeat(50) & "\"", "\"" & "y".repeat(50) & "\"")
+      lists = "let\n  a = @[\n    " & x & ",\n    " & y & "\n  ]\n  b = {\n    " & x & ",\n    " &
+        y & "\n  }\n  c = (\n    " & x & ",\n    " & y & "\n  )\n  d = Foo(\n    x: 1,  # Why.\n" &
+        "    y: 2\n  )\n"
+    check checkTrailing("a.nim", lists).len == 4  # comment keeps `Foo` from joining
+    check lists.fixed == lists.replace(y & "\n", y & ",\n").replace("y: 2\n", "y: 2,\n")
     check lists.fixed.isSettled
-    let imported = "import ./[\n  a,\n  b\n]\n"
-    check imported.fixed == "import ./[\n  a,\n  b,\n]\n"
+    let imported = "import ./[\n  " & "a".repeat(50) & ",\n  " & "b".repeat(50) & "\n]\n"
+    check imported.fixed == imported.replace("b\n]", "b,\n]")
     check fixTrailing("a.nim", imported).source == imported.fixed  # rule alone writes it
     for kept in [
       "let a = (\n  b\n)\n",
       "let a = @[1, 2,\n  3, 4]\n",
       "type T = array[\n  3,\n  int\n]\n",
+      "let a = @[\n  1,\n  2\n]\n",  # fits joined: rows kept, no comma
+      "foo(\n  " & x & ", " & y & "\n)\n",  # items share line: comma would mark one to line
     ]:
       check checkTrailing("a.nim", kept).len == 0  # grouping, flowed list, type bracket
+    check "foo(\n  a,\n  b\n)\n".fixed == "foo(a, b)\n"  # fits joined: call joins, no comma
 
 
   test "trailing separator held on no line widens it, and keeps width guard on held line":

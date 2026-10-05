@@ -24,7 +24,9 @@ const
     "#[ Section ]#\n\n" &
     "proc f(a: int; b: string): int {.noSideEffect, inline.} = a+b.len\n" &
     "proc g(\n    a: int\n) = discard\n" &
-    "let x = foo(\n  1,\n  2,\n)\necho x\nlet y = @[\n  1,\n  2\n]\necho h(q=1)\nexport y, x\n"
+    "let x = foo(\n  1,\n  2\n)\necho x\n" &
+    "let y = @[\n  first_item_named_at_length_so_list_crosses_column,\n" &
+    "  second_item_named_at_length_so_list_crosses_column\n]\necho h(q=1)\nexport y, x\n"
     ## Nim source breaking each layout rule `checkFormatting` holds, and no wired check.
   FENCED_ROWS =
     "let m = matrix(\n  #!fix off\n  1,  0,\n\n  0,  1,\n  #!fix on\n)\n" &
@@ -111,7 +113,9 @@ suite "Fixes":
       "\n\n\n#[ Section ]#\n\n" &
       "proc f(a: int, b: string): int {.inline, noSideEffect.} = a + b.len\n" &
       "proc g(a: int) = discard\n" &
-      "let x = foo(1, 2)\necho x\nlet y = @[\n  1,\n  2,\n]\necho h(q = 1)\nexport x, y\n"
+      "let x = foo(1, 2)\necho x\n" &
+      "let y = @[\n  first_item_named_at_length_so_list_crosses_column,\n" &
+      "  second_item_named_at_length_so_list_crosses_column,\n]\necho h(q = 1)\nexport x, y\n"
     check fixed.allIt(it.line in 0 .. LAYOUT.count('\n'))  # each report names line as given
 
 
@@ -122,22 +126,25 @@ suite "Fixes":
     check checkFormatting("a.md", breach, Kind.Markdown).len == 0
 
 
-  test "spaced range passes every fixer: none writes it, wrapping keeps its spaces (X.9, X.3)":
+  test "range in X.9 form passes every fixer: none writes it, wrapping keeps it (X.9, X.3)":
     let
       path = "curator/audit/src/a.nim"
       head = "## Do.\n\n" & STRICT_FUNCS & "\n\n"
-      spaced = head & "for i in 0 ..< n: f(s[i .. ^1], t[1 ..^ 2])\nconst C = {'a' .. 'z'}\n" &
-        "case c\nof 'a' .. 'z': discard\nelse: discard\n"
-      wide = head & "let x = foo(s[0 ..< n], t[1 .. ^1], " & "a".repeat(40) & ", " &
-        "b".repeat(26) & ")\nf(\n  s[0 ..< n],\n  t[1 .. ^1],\n)\nproc h(" &
-        "a".repeat(20) & ": range[0 .. 9], " & "b".repeat(24) &
-        ": array[0 ..< 4, int], c: int): int = c\n"
-    check fixEntries(CURATOR_BRANCH, [entry(path, spaced)]).written.len == 0  # already spaced
+      ranged = head & "for i in 0..<n: f(s[i .. ^1], t[1..^2], i + 1 ..< n)\n" &
+        "const C = {'a'..'z'}\ncase c\nof 'a'..'z': discard\nelse: discard\n"
+      wide = head & "let x = foo(s[0..<n], t[1 .. ^1], " & "a".repeat(40) & ", " &
+        "b".repeat(26) & ")\nf(\n  s[0..<n],\n  t[1 .. ^1]\n)\nproc h(" &
+        "a".repeat(20) & ": range[0..9], " & "b".repeat(24) &
+        ": array[0..<4, int], c: int): int = c\n"
+    check fixEntries(CURATOR_BRANCH, [entry(path, ranged)]).written.len == 0  # in X.9 form
+    let spaced = ranged.replace("0..<n", "0 ..< n").replace("1..^2", "1 ..^ 2")
+      .replace("'a'..'z'", "'a' .. 'z'")
+    check fixEntries(CURATOR_BRANCH, [entry(path, spaced)]).written[0].content == ranged
     let (written, fixed, _, _, _) = fixEntries(CURATOR_BRANCH, [entry(path, wide)])
-    check written[0].content == head & "let x = foo(\n  s[0 ..< n],\n  t[1 .. ^1],\n  " &
-      "a".repeat(40) & ",\n  " & "b".repeat(26) & ",\n)\nf(s[0 ..< n], t[1 .. ^1])\n" &
-      "proc h(\n  " & "a".repeat(20) & ": range[0 .. 9], " & "b".repeat(24) &
-      ": array[0 ..< 4, int], c: int\n): int = c\n"  # split, joined and wrapped, spaces kept
+    check written[0].content == head & "let x = foo(\n  s[0..<n],\n  t[1 .. ^1],\n  " &
+      "a".repeat(40) & ",\n  " & "b".repeat(26) & ",\n)\nf(s[0..<n], t[1 .. ^1])\n" &
+      "proc h(\n  " & "a".repeat(20) & ": range[0..9], " & "b".repeat(24) &
+      ": array[0..<4, int], c: int\n): int = c\n"  # split, joined and wrapped, ranges kept
     check not fixed.anyIt(it.message.startsWith("expression spacing"))  # no range respaced
     check fixEntries(CURATOR_BRANCH, written).written.len == 0  # second run writes nothing
 

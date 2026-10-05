@@ -54,22 +54,117 @@ suite "Spacing":
     check checkSpacing("a.nim", "m∧n")[0].message.endsWith("got `m∧n`.")  # glyph operator
 
 
-  test "range operator takes one space each side, as binary operator does":
-    let breach = "let r = 0..<n\nlet s = x[1..2]\nfor i in 0  ..  3: discard\n" &
-      "let c = 'a'..'z'\nlet t = x[1..^1]\n"
-    check checkSpacing("a.nim", breach).len == 5
-    check checkSpacing("a.nim", breach).allIt(it.message.startsWith("Range operator takes one"))
-    check breach.fixed == "let r = 0 ..< n\nlet s = x[1 .. 2]\nfor i in 0 .. 3: discard\n" &
-      "let c = 'a' .. 'z'\nlet t = x[1 ..^ 1]\n"  # `..^` lexes one operator
-    check breach.fixed.isSettled
-    check "let r = a..<b\n".fixed == "let r = a ..< b\n"
-    check "let s = a..\n  b\n".fixed == "let s = a ..\n  b\n"  # range ending line
+  test "range operator takes no space, unless piece binds tighter or glued tokens would merge":
+    for (breach, mended) in [
+      ("let r = 2 .. 6\n", "let r = 2..6\n"),
+      ("let r = 0 ..< n\n", "let r = 0..<n\n"),
+      ("let r = x in 2 .. 6\n", "let r = x in 2..6\n"),  # looser `in` ends piece
+      ("let r = a.b .. c.d\n", "let r = a.b..c.d\n"),  # field stands inside piece
+      ("let r = range[0 .. 3]\n", "let r = range[0..3]\n"),
+      ("let r = x == b .. c\n", "let r = x == b..c\n"),  # looser `==` ends piece
+      ("let r = i + 1..<n\n", "let r = i + 1 ..< n\n"),  # `+` binds tighter than range
+      ("let r = s[1 ..^ 1]\n", "let r = s[1..^1]\n"),  # compound operator stays whole
+      ("let r = 'a'  ..  'z'\n", "let r = 'a'..'z'\n"),
+    ]:
+      check checkSpacing("a.nim", breach).len == 1
+      check breach.fixed == mended
+      check mended.isSettled
+    check checkSpacing("a.nim", "let r = 2 .. 6\n")[0].message.startsWith(
+      "Range operator takes no space",
+    )
+    check checkSpacing("a.nim", "let r = i + 1..<n\n")[0].message.startsWith(
+      "Range operator takes one space on each side where",
+    )
+    for kept in [
+      "let r = i + 1 ..< len(d)\n",  # `+` binds tighter than range
+      "let r = m ∧ n .. k\n",  # glyph binds at 9
+      "let s = x[1 .. ^1]\n",  # glued, `..^` would lex one operator
+      "let s = 0 .. -1\n",  # glued, `..-` would lex one operator
+      "let r = f(i + 1)..n\n",  # spaces inside bracket do not count
+    ]:
+      check kept.isSettled
+    check "let s = a..\n  b\n".fixed == "let s = a ..\n  b\n"  # range ending line takes one before
     check "let s = x[1 .. ^ 1]\n".fixed == "let s = x[1 .. ^1]\n"  # `^` after range is prefix
-    for kept in ["let r = 0 ..< n\n", "let s = x[1 .. ^1]\n", "let s = a .. -1\n"]:
-      check kept.isSettled  # spaced range, `^` glued to operand
     for kept in ["echo a ..b\n", "let s = a.. b\n"]:
       check checkSpacing("a.nim", kept).len == 0  # asymmetric, as for binary operator
       check kept.fixed == kept
+
+
+  test "power operator is always tight, and exponent that would merge with it is wrapped":
+    for (breach, mended) in [
+      ("let p = -1 ^ k\n", "let p = -1^k\n"),
+      ("let p = -1 ^ (a * b)\n", "let p = -1^(a * b)\n"),  # exponent holding math keeps its group
+      ("let p = a + b ^ 2\n", "let p = a + b^2\n"),  # no exception for math in piece
+      ("let p = (a + b) ^ 2\n", "let p = (a + b)^2\n"),
+      ("let m = 2'u ^ DIMENSIONS\n", "let m = 2'u^DIMENSIONS\n"),
+      ("let p = a ^ -b\n", "let p = a^(-b)\n"),  # glued, `^-` would lex one operator: wrapped
+      ("let p = x ^ ~y\n", "let p = x^(~y)\n"),
+      ("let p = a ^ -f(x).y + c\n", "let p = a^(-f(x).y) + c\n"),  # exponent is whole prefix term
+      ("let p = a ^ -1\n", "let p = a^(-1)\n"),  # literal `-1`
+    ]:
+      check checkSpacing("a.nim", breach).len == 1
+      check breach.fixed == mended
+      check mended.isSettled  # second run writes nothing
+    check checkSpacing("a.nim", "let p = b ^ 2\n")[0].message.startsWith(
+      "Power operator takes no space",
+    )
+    check checkSpacing("a.nim", "let p = a ^ -b\n")[0].message.startsWith(
+      "Power operator takes no space, and exponent",
+    )
+    for kept in [
+      "x ^= 2\n",  # assignment, no power operator
+      "let l = s[^1]\n",  # prefix `^` of backwards index
+      "let r = s[1 .. ^1]\n",
+      "let p = float(-1^(int(b.grade) * int(b.gradeAnti)))\n",  # `suites.nim` of PGA library
+    ]:
+      check kept.isSettled
+    check "let p = a ^\n  b\n".fixed == "let p = a ^\n  b\n"  # ending line: one space before
+    check "let p = a^\n  b\n".fixed == "let p = a ^\n  b\n"
+
+
+  test "symbol operator inside bracket glued to operand takes no space, range and math alike":
+    for (breach, mended) in [
+      ("let a = prev[i - 1]\n", "let a = prev[i-1]\n"),
+      ("curr.add(prev[i] & prev[i - 1].map(f))\n", "curr.add(prev[i] & prev[i-1].map(f))\n"),
+      ("let a = cayley[dimension - 1]\n", "let a = cayley[dimension-1]\n"),
+      ("let a = MULTIVECTORS[Basis(i - 1)]\n", "let a = MULTIVECTORS[Basis(i-1)]\n"),  # call inside
+      ("let b = a[f(x, y + 1)]\n", "let b = a[f(x, y+1)]\n"),  # comma keeps its space
+      ("type T = array[N + 1, int]\n", "type T = array[N+1, int]\n"),  # type bracket alike
+      ("let a = s[1  ..^  1]\n", "let a = s[1..^1]\n"),
+    ]:
+      check checkSpacing("a.nim", breach).len == 1
+      check breach.fixed == mended
+      check mended.isSettled  # second run writes nothing
+    let ranged = "let a = digits[i + 1 ..< n]\n"
+    check checkSpacing("a.nim", ranged).len == 2  # `+` and range, math included
+    check ranged.fixed == "let a = digits[i+1..<n]\n"
+    check ranged.fixed.isSettled
+    check checkSpacing("a.nim", "let a = prev[i - 1]\n")[0].message.startsWith(
+      "Symbol operator inside bracket glued to operand takes no space",
+    )
+    for kept in [
+      "let a = [a + b, c]\n",  # array literal stands alone
+      "let a = f([a + b], @[c - d])\n",
+      "let a = x[i div 2]\n",  # word operator keeps spaces tokeniser demands
+      "let a = x[f(n = 1)]\n",  # `=` of named argument as X.9 gives
+      "let a = s[1 .. ^1]\n",  # glued, `..^` would lex one operator
+      "let a = x[0 .. -1]\n",  # glued, `..-` would lex one operator
+    ]:
+      check kept.isSettled
+
+
+  test "generic list that routine or type declares keeps its spaces, since it selects nothing":
+    for kept in [
+      "func scalar*[I: Basis | Grade | GradeAnti](t: typedesc[I]): I = I.low\n",  # STYLE.md §1
+      "func pick[I: Basis | Grade](t: typedesc[I]): I = I.low\n",  # private: no export marker
+      "proc `+`*[T: A | B](a, b: T): T = a\n",
+      "type Foo[T: A | B] = object\n",
+      "type\n  Bar[T: A | B] = object\n    x: T\n",  # entry of `type` section
+    ]:
+      check kept.isSettled
+    check "proc f() =\n  x[i - 1] = 5\n".fixed == "proc f() =\n  x[i-1] = 5\n"  # selector still
+    check "func p[T](a: seq[T]): T = a[a.len - 1]\n".fixed ==
+      "func p[T](a: seq[T]): T = a[a.len-1]\n"
 
 
   test "asymmetric spacing stays, since lexer reads it: `a -b` is call of prefix operand":
@@ -171,6 +266,6 @@ suite "Spacing":
 
 
   test "clean source passes through unchanged":
-    let clean = "let x = a + b\nfor i in 0 ..< n: echo -i\nf(name = 1, b: 2)\n"
+    let clean = "let x = a + b\nfor i in 0..<n: echo -i\nf(name = 1, b: 2)\n"
     check clean.isSettled
     check fixSpacing("a.nim", clean).fixed.mapIt(it.line).len == 0
