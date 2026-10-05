@@ -2095,6 +2095,34 @@ block moved, and the parser read each written file to the same tree once its bod
 its block. `nim check` gave each written file the same result before and after, and a second run
 moved nothing.
 
+## Parser proof
+
+**`koch fix` proves each group of needless parentheses with the parser of the compiler that the
+project pins (X.4).** The chain of knoller asks for each source whose groups it cannot prove yet
+(`Fix.asked`). `provenFix` gives every source of one pin to one run of that compiler, holds the
+answers by path, and fixes again each entry that asked. The rule and its probe are in the record
+of knoller, under Content fixes.
+
+- The pin is that of the project that holds the file, and that of `curator/audit` for a file at
+  the root. `compilers.resolve` serves it, as for the suites. So the `ronri` projects read with
+  their commit pin, whose glyph operators 2.2.12 lexes as names.
+- Where no compiler serves a pin, or a project pins none, no group goes. `koch fix` then prints
+  one line `warning: needless-parentheses: <message>`, and the exit code stays.
+- An entry that asked nothing read only sources that hold an answer, and an answer never changes
+  once held. So each round fixes again only the entries that asked, and the scope check reads all
+  parts joined.
+- Verified by `suites/test_fixes.nim`, with the prover of each pin stubbed. One run serves each
+  pin, the group that the parser refuses stays, and a second fix writes nothing.
+- Verified by hand, 2026-10-05, with `koch fix --dry-run --branch:main` at `main` and at this
+  head, and the dependencies that `koch fetch-deps` restored:
+  - `rga_visualiser`: 0 to fix on both, in 29.1 s and 28.9 s;
+  - `pga_benchmark`: 263 and 264, in 7.6 s and 9.8 s. The one more is `(⊛m)` at line 35 of
+    `proposals/03-partner-sign/laws.nim`, which the guard on the head of a command keeps at `main`;
+  - `dance_ontology`: 1121 and 1119, in 18.1 s and 20.2 s. The two fewer are
+    `@(PAIRS[task.pair][0])` at lines 79 and 228 of `tests/test_read.nim` (#539);
+  - `curator`: 1308 and 1345, in 13.9 s and 15.3 s. Outside the files that hold the proof, each
+    line is the same, so the new lines are code that waits for its own fix.
+
 ## Fixed waits
 
 **A fixed wait in drive code is a finding, because it reads the real clock in every
