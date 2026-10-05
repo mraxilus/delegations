@@ -538,7 +538,7 @@ proc pickWalk(
       handle_best = some(handle)
 
   # Ask once whether caller brought whole frame's placements; cannot change mid-walk.
-  let is_placement_held = placed.len >= OBJECTS_MAX
+  let is_placement_given = placed.len >= OBJECTS_MAX
   var placement_here: Placement  # Filled per handle only where caller brought none.
 
   # Walk by handle to `bound`, not to capacity.
@@ -548,13 +548,13 @@ proc pickWalk(
   #   By-handle readers, never `pairs`, which copies whole scene per live handle on JS backend.
   for handle in 0..<scene.bound:
     if not scene.isAlive(handle) or not scene.isVisible(handle): continue
-    if not is_placement_held:
+    if not is_placement_given:
       placement_here = placeObject(scene.geometryOf(handle), scene.anchorOverrideAt(handle))
     # Read in place, never bound.
     #   `Placement` holds five multivectors, and binding to `let` deep-copies on JS backend.
     #   Both aliases expand to read at each use; confirmed in generated JavaScript that
     #   neither copies.
-    template place: untyped = (if is_placement_held: placed[handle] else: placement_here)
+    template place: untyped = (if is_placement_given: placed[handle] else: placement_here)
     template geometry: untyped = scene.geometryOf(handle)
 
     case place.kind
@@ -715,14 +715,15 @@ proc pickAt*(
 ): PickReport =
   ## Find visible object nearest cursor and count its rivals.
   ##   Prefers points over lines over planes; see `PickReport`.
-  ##   `placed` is frame's own placements, where caller kept them.
+  ##   `placed` is frame's own placements, where caller has them.
   ##     `tessellate.placeObject` already answers what object is and where, and
-  ##     front-end holding frame's worth of answers (`bridge.PLACEMENTS`) hands them
-  ##     over instead of having walk ask again.
-  ##     Pick then ranks *what was drawn*, off one derivation, and stops running placing
-  ##     side per live handle per pointer event.
-  ##   Pass nothing and every handle is placed here instead: desktop path and every suite
-  ##   case. Partial array is treated as none: cache is frame's whole answer or not one.
+  ##     front-end holding frame's answers (`bridge.PLACEMENTS`, `main.PLACEMENTS`) hands
+  ##     them over instead of having walk ask again.
+  ##     Pick then ranks *what was drawn*, off frame's one derivation, and runs no placing
+  ##     side of its own.
+  ##   Pass nothing and every handle is placed here instead: caller holding no frame's
+  ##   placements, and every suite case. Partial array is treated as none: frame's
+  ##   placements are whole answer or not one.
   ##   None where nothing visible falls within its shape's pick radius.
   ##   Every drawn shape is pickable, horizon or not, ranked point, finite line, horizon
   ##   line, finite plane, horizon plane.

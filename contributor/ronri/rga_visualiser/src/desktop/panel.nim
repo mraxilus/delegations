@@ -247,7 +247,8 @@ type
       ##   `handleEvent` has no `History`, and routing button and key through one call
       ##   stops them drifting.
     is_vsync_enabled*: bool  ## Whether swap waits for display refresh before returning.
-    microseconds_tessellate*: float  ## Cost of rebuilding vertex storage, last frame.
+    microseconds_tessellate*: float  ## Cost of placing every object and rebuilding vertex
+      ## storage, last frame.
     count_vertices*: int  ## Vertices assembled, last frame.
     path_export*: array[PATH_MAX, char]  ## Where exported frame is written.
     path_scene*: array[PATH_MAX, char]  ## Where scene is saved to and loaded from.

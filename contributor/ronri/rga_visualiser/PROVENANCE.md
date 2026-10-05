@@ -181,7 +181,7 @@ and this file does not:
 | `chrome`, `comet`, `ground` | hover during gesture, help, horizon comet, lattice's reach |
 | `frame`, `diagnostics`, `ramp` | frame's own clocks, tree, colour each row wears |
 | `exceedance`, `rings` | distribution curve, its axis, rings each reading is taken over |
-| `scenery`, `pins`, `hold`, `pool` | what scene costs, repaired faults, scene hold, drawer |
+| `scenery`, `pins`, `built`, `pool` | what scene costs, repaired faults, each frame built, drawer |
 | `demo`, `loaded`, `objects` | preset, culling, occlusion, a line through a point, loaded |
 | `message`, `style`, `type`, `canvas` | outcome fade, declared CSS, faces in roles, blank refused |
 | `host`, `shade` | save through the artifact host, every point shaded from world-up |
@@ -224,8 +224,8 @@ is another.
 `settleReading` waits on `ms_refresh_ui`, which is the clock of the tick itself. It never waits on a
 row that the tick writes, or the wait would assert what the check goes on to ask.
 
-A demo that loads is settled when a frame holds its scene. The load staggers the births of its
-objects, so no fixed span is sure to cover them.
+A demo that loads is settled when a frame reports every object grown in (`FrameData.is_grown`).
+The load staggers the births of its objects, so no fixed span is sure to cover them.
 
 **Settle on what moves, and not on what has stopped changing.** Two polls of an unmoving stance
 agree before an ease has begun. So `settleCamera` asks the ease: `nimCameraCarrying` reports
@@ -417,8 +417,7 @@ So `driveHeapUnit` reads that row on the second page too.
 
 **A speed bound is 1.5 times the slowest reading on a delegate, rounded up to two figures.**
 Runners and delegates meet it, and each fault that a bound pins reads over it. A fault reads as
-`pins.ts` recorded it on a delegate on 2026-09-07, under the figure that the check took then. The
-fault of the frame after an edit reads as Scene storage gives it, from 2026-10-04.
+`pins.ts` recorded it on a delegate on 2026-09-07, under the figure that the check took then.
 
 Delegate readings are from 20 or 21 runs of the drive on one delegate, from 2026-09-28 to
 2026-09-30, alone and in the gate. The anchor takes a new figure, so its readings are from 11 runs
@@ -427,18 +426,28 @@ of the measured page up to its pins, on 2026-09-30. The marker readings are from
 CI run of the change that set each bound. The runner reading of the marker is from the drive job on
 `d305c68c`.
 
+**The still frame, the moving frame and the frame after an edit take readings of a full build.**
+Every frame builds the whole scene (Render paths). So those rows are from 20 runs of the measured
+page on one delegate, on 2026-10-05, in the lock of the gate. Those rows carry no runner reading.
+
+One run of the 20 is left out. It read the anchor at 23.5 µs and the loaded pick at 7.4 ms, each
+over its own bound. That is load, and not a fault.
+
+In 10 runs of `a1702384` beside them, frames that held their scene read 0.4 to 0.5 ms still. After
+an edit they read 1.5 to 2.4 ms.
+
 | Check | Bound | Runner | Delegates | Fault |
 |-------|-------|--------|-----------|-------|
-| Still frame, median | 1.5 ms | 0.6 | 0.4 to 1.0 | |
-| Still frame, slowest tenth | 2.9 ms | 0.9 | 0.6 to 1.9 | |
-| Moving frame, median | 3 ms | 0.8 | 0.7 to 2.0 | |
+| Still frame, median | 2.1 ms | | 0.7 to 1.4 | |
+| Still frame, slowest tenth | 3.2 ms | | 1.0 to 2.1 | |
+| Moving frame, median | 3 ms | | 1.3 to 2.0 | |
 | Hover pick | 2.6 ms | 0.1 | 0.2 to 1.7 | 7.1 |
 | Anchor lookup | 15 µs | 5.0 | 7.0 to 10.0 | 280 |
 | Marker and its pulse, worst kind | 1.1 ms | 0.38 | 0.34 to 0.70 | 3.2 |
 | Moving grid, median | 26 ms | 4.3 | 6.3 to 17.1 | 26.1 |
 | CPU emit, median | 2 ms | 0.3 | 0.3 to 1.3 | 6.3 |
 | Edit past the timeline capacity, at 5,038 | 9.6 ms | 1.7 | 1.7 to 6.4 | |
-| Frame after an edit, at 5,038 | 15 ms | 2.5 | 3.1 to 9.5 | 30.3 to 33.1 |
+| Frame after an edit, at 5,038 | 31 ms | | 8.4 to 20.2 | |
 | Hover pick, at 5,038 | 7.2 ms | 1.9 | 1.2 to 4.8 | |
 
 The marker fault read 3.2 ms against 1.2 ms repaired, both with each outline shaped twice, so it
@@ -1125,10 +1134,107 @@ compile. `format.snprintf` alone keeps `noSideEffect`: it writes only the buffer
 and each caller hands one on its own stack. Without that mark the compiler holds an imported body to
 be pure.
 
+**Every frame builds, uploads and draws the whole scene, still or moving.** Both front-ends run
+one pipeline for each frame. The ease moves the camera first. `framing.placeEvery` then places every
+live object through the reference library, and the reach of the scene is read off those placements.
+The view origin moves to the eye, and the eye and frame come off one lift (Origins).
+
+The near reach, the extent, the frustum and the aim read those. The furniture and the scene records
+are then built from the placements. The records are flattened, uploaded and drawn, and the overlay
+reads the extent of the frame. Nothing in the pipeline asks whether anything moved.
+
+**Frame consistency over work savings: every frame does the same work, still or moving.** A saving
+must speed up every frame alike, and a saving that only a still frame gets is rejected. This rules
+out the scene hold, the furniture holds and the overlay hold. Each kept the records, the furniture
+or the extent of the overlay from an earlier frame where nothing had moved. A still frame then read
+cheaper than the work that it stands for.
+
+The rule keeps sharing within one frame. The stance is read once and handed to every reader. Each
+object is placed once, and every walk of the frame reads that placement. `MARKER_SHAPED` hands a
+marker to the pulse that follows it, and the overlay calls of a frame share one extent.
+
+**The rule has two halves.** First, every frame runs the reference library for the whole scene,
+and no result of the library is kept across frames. So a faster library shows as a faster page.
+Second, the project adds no work beyond what the frame needs. Each library call runs once in a frame
+for what needs it. The own code of the project stays lean: its copies, conversions, allocations and
+glue.
+
+A speed-up of the own code of the project is welcome where every frame pays the overhead that it
+removes. A speed-up that skips library work is rejected.
+
+**The reason: the page is a stress test of the reference library.** As the library gets faster, the
+page gets faster. A result of the library kept across frames hides what the library costs.
+
+**Within a frame, the overlay takes the extent that the build derived.** Each frame build drops the
+extent of the overlay and the marker that the frame before shaped (`SETTINGS_OVERLAY_FRAME`,
+`MARKER_SHAPED`). The first overlay reader of a frame derives the extent again, and each reader at
+the same camera and viewport shares it. Where the camera stands as the build left it, the overlay
+takes the extent of the build at its own pixel height (`camera.atHeight`). The stance is then read,
+and the algebra twins derived, once in the frame.
+
+**A reader between two frames reads the placements of the last frame.** Pointer events land between
+frames. After an edit that no frame has placed yet, `placeStamped` places only the handles that the
+edit stamped (Scene storage). The next frame places every handle again, so no placement outlives
+it. The desktop calls it in the middle of its frame too, after the selection menu, which can edit.
+
+**The desktop places each object once in a frame.** Its reach, near reach, cull, emission and hover
+pick all read `PLACEMENTS`. Rejected: a placement again in `addObject` and in the pick. That ran
+`kindOf` three times for each object in each frame, and placed each object twice.
+
+**A placement is written into its slot field by field** (`tessellate.placeInto`). On the JS
+backend, a placement or an `Option` built and assigned is one `nimCopy`, and a point placed that way
+costs about ten. `kindInto` and `positionInto` classify a multivector and read a point the same way.
+The two copies that remain for each point are inside `grade`, in the reference library.
+
+**The diagnostics tree has a row for placing every object**, `objects placed`. So the prologue row
+stays what the camera and the aim cost.
+
+**What a frame costs, held and built.** Measured on 2026-10-05 on one delegate, under the lock of
+the gate, by a harness that is not kept. It drives the page at 1200 by 900 px under SwiftShader,
+with antialias, and times 6 s of frames for each scene. An orbit turns the camera 0.004 radians in
+each frame. Three pairs ran in turn: `a1702384`, which held a still frame, then this design. The
+figures are ranges over the three, in ms of the frame callback:
+
+| Scene | Median, held | Median, built | Slowest tenth, held | Slowest tenth, built |
+|-------|--------------|---------------|---------------------|----------------------|
+| Opening scene, still | 0.7 to 0.8 | 0.9 to 1.0 | 1.0 to 1.2 | 1.4 to 1.6 |
+| Opening scene, orbit | 0.9 to 1.0 | 0.9 to 1.0 | 1.4 to 1.7 | 1.3 to 1.4 |
+| 5,038 objects, still | 1.0 to 1.2 | 9.4 to 12.7 | 1.4 to 1.7 | 14.8 to 17.6 |
+| 5,038 objects, orbit | 1.9 to 2.1 | 10.1 to 15.3 | 3.2 to 3.4 | 15.8 to 17.4 |
+
+At 5,038 objects a still frame and a moving frame now cost the same. Most of either is the placing
+side of the whole scene through the library, which the `objects placed` row shows. The held still
+frame read 1 ms because it did none of that work.
+
+The desktop runs `--timings` for 300 frames, in three such pairs, on the build that `desktop` makes
+without `-d:release`. It reads the median frame in ms, and the mean of placing and tessellating in
+µs:
+
+| Scene | Frame, before | Frame, after | Placing and tessellating, before | And after |
+|-------|---------------|--------------|----------------------------------|-----------|
+| Opening scene | 4.66 to 5.01 | 4.63 to 5.63 | 42 to 44 | 73 to 80 |
+| 5,038 objects | 83.6 to 83.9 | 68.3 to 71.5 | 14,994 to 15,079 | 7,030 to 7,353 |
+
+At the opening scene the furniture is built in every frame, so tessellating costs more. At 5,038
+objects the desktop places each object once, where it classified each one three times. So its frame
+costs less, with the same 27,167 vertices.
+
 *Checked.* Verified: the suite runs on both backends, so it exercises the guard rather than trusts
 it (see Testing). The `sideEffect` marks are what turned 51 funcs back into procs (see Style guide).
 Verified by a compile, 2026-10-02: a `func` that calls `timings.nowMilliseconds` on the JavaScript
-backend is refused as `can have side effects`. It compiled before the mark. Assumed: nothing.
+backend is refused as `can have side effects`. It compiled before the mark.
+
+Verified by driven check:
+
+- a still camera builds its scenery on every frame, the same each time, and a moved camera too;
+- a still camera over a still scene builds its whole records on every frame;
+- every edit reaches the canvas, and the frame after an undo draws the scene that it restored;
+- a still frame under the largest demo copies fewer values of its own than the scene has objects;
+- each frame build of the page lifts the motor once, still and while a drag orbits.
+
+Verified by the measurements above, and by `suites.nim` on both backends: the placements that
+`placeInto` writes give what `placeObject` gave. Assumed: that no edit of the desktop lands
+between `placeEdited` and the emission of its frame, which no check drives.
 
 ## Scene storage
 
@@ -1158,14 +1264,13 @@ write with nothing recorded. Undo, redo, clear and every load replace the whole 
 which is `max(live, snapshot) + 1`.
 
 It is not the count of the snapshot plus one. A state between the two had already worn that number.
-A placement cache keyed on it then drew six objects of the previous demo over the new one.
+A reader keyed on it would then take the new scene for one that it had read. Placements kept on it
+drew six objects of the previous demo over the new one.
 
 **A placement falls out of date one handle at a time.** `Scene.revisions_placing` stamps each
 handle at the edit that last changed it, and `restoreFrom` stamps every live handle of the
-snapshot. The placement cache of the browser re-places only the handles that carry a stamp later
-than the revision it last filled at. To re-place the whole scene for each edit costs a frame of
-30.3 to 33.1 ms at 5,038 objects. The frame after an edit that re-places one handle reads 2.8 to
-4.9 ms. A restore still re-places everything.
+snapshot. Every frame places every handle (Render paths). A reader between two frames, after an
+edit that the frame has not placed, places only the handles stamped later (`placeStamped`).
 
 **The record of the creation order is explicit** (`orders`, `count_created`, `handlesCreated`),
 and nothing infers it. Handle order stops being creation order as soon as anything is removed.
@@ -1198,11 +1303,11 @@ so the loops that run for each frame use the accessors that take a handle instea
 - `restoreFrom` lands on a revision that no earlier state carried;
 - a label cut never splits a character, at any buffer size.
 
-Verified by driven check: undo while the frame is held redraws the current scene, and not the
-previous one. Verified by measurement on one delegate on 2026-10-04, under the lock of the gate, by
-builds and a counter that are not kept. A build that brings back the walk to capacity, and one that
-re-places every handle for each edit, each drove the measured page 3 times. The build without
-either fault drove it 11 times. A count over the largest demo on the C backend gave the comparisons.
+Verified by driven check: the frame after an undo draws the current scene, and not the previous
+one. Verified by measurement on one delegate on 2026-10-04, under the lock of the gate, by builds
+and a counter that are not kept. A build that brings back the walk to capacity drove the measured
+page 3 times, and the build without it 11 times. A count over the largest demo on the C backend
+gave the comparisons.
 
 ## Memory and allocation
 
@@ -1241,8 +1346,9 @@ scratch until the fifth one overflows.
 is a `Scene` beside a `Camera` of twelve floats, eight of them the motor, and `CAPACITY_HISTORY` is
 32 of them. They reserve 36.8 MiB, which is 38,549,528 bytes, against 6.2 MiB for both mesh sets.
 
-The placing side of every handle is held beside them on both front-ends, so the local scale may be
-read without placing twice. It is 128 bytes for each of 5040 handles, which is 645,120 bytes.
+The placing side of every handle stands beside them on both front-ends. Each frame places every
+handle there, and every walk of that frame reads it. It is 128 bytes for each of 5040 handles,
+which is 645,120 bytes.
 
 In the browser the same timeline is about 105 MB of JS heap. The live page measured 85 MB at
 load, before the placing stamps for each handle were added, and nothing has measured it again
@@ -1454,9 +1560,6 @@ least cell. A line cut into pieces faded apart lays several records on one line.
 26.1 ms of moving grid at 300, against a bound of 26 ms. Cut in two, it lays 482 records on 242
 lines there, which the cap of 482 in `driveSceneryBound` allows.
 
-**The furniture hold keys on the revisions of the scene and of the selection too**
-(`SettingsFurniture`), so a pick or an edit rebuilds the lattice. Both are plain counters.
-
 **The cell is `SIZE_CELL_GRID` at 10.0, at every reach that a reader works at.** A cell that walks
 with the reach re-scales the plane under a reader as they dolly, and a fixed cell is a ruler. Ten
 rather than a hundred, by a render of both. At the opening reach of about 72 units, a hundred-unit
@@ -1593,10 +1696,10 @@ A hold of the aim can move the camera, so a front-end reads again only where the
 Rejected: the first read for the transform too, which then draws where the camera stood before the
 hold.
 
-**The view holds are keyed on what the camera holds, and never on what it reads out.**
-`SettingsFurniture` and the browser's `SettingsOverlay` both take the view origin, the motor and the
-depth. Those are the stance itself, so two frames that agree on them agree on the eye, every axis,
-the pivot and both angles.
+**The overlay shares its extent within a frame by what the camera holds, and never by what it
+reads out.** The browser's `SettingsOverlay` takes the view origin, the motor and the depth. Those
+are the stance itself, so two readings that agree on them agree on the eye, every axis, the pivot
+and both angles.
 
 A key built from the pivot and the two angles derives the eye and the frame for each field it reads.
 `ensureViewOverlay` runs for every overlay call, so such a key costs about eighteen sandwiches to
@@ -1703,15 +1806,12 @@ Verified by driven checks:
 - each frame build of the page lifts the motor once, still and while a drag orbits, where
   `4a478976` lifts it 11 times.
 
-Verified by a probe in Chromium under SwiftShader on 2026-10-04, on an Intel Xeon at 2.10 GHz. It
-times batches of frame builds with the loop of the page stopped, in five interleaved pairs against
-`4a478976`. At the opening scene a still frame takes 0.11 to 0.13 ms against 0.26 to 0.31 ms. An
-orbiting frame takes 0.24 to 0.27 ms against 0.41 to 0.45 ms. At 5,038 objects they take 0.85 to
-0.90 and 1.62 to 1.76 ms, against 0.98 to 1.09 and 1.82 to 2.18 ms. Over 80 frames, the records
-and the transform that each frame hands the GPU match in both builds, bit for bit.
+Verified by a probe in Chromium under SwiftShader on 2026-10-04, on an Intel Xeon at 2.10 GHz,
+against `4a478976`. Over 80 frames, the records and the transform that each frame hands the GPU
+match in both builds, bit for bit. Render paths gives what a frame costs.
 
 Assumed: that no reader wants a ceiling on the separation. Assumed: that the desktop hands its five
-readers one read of the stance, which no check counts. Its frame time is unmeasured.
+readers one read of the stance, which no check counts.
 
 ## Zoom
 
@@ -1845,18 +1945,16 @@ It is the object's own middle, with no drawn radius taken off. A camera at a pla
 reads that planet's radius rather than zero. A near clip of one four-hundredth of that still holds
 the whole planet.
 
-It is never the pointer's own depth, which `capTravelling` reads. `SettingsFurniture` compares
-exactly, so a pointer figure would rebuild the furniture at every pointer move. It also feeds
-`depthLogScale`, so a pointer figure would move the depth mapping while the camera stood still.
+It is never the pointer's own depth, which `capTravelling` reads. A pointer figure would move the
+furniture at every pointer move, and the depth mapping too, while the camera stood still.
 
 **It is read once for each frame, and never for each overlay call.** `reachNearOf` walks every
-placement, and `ensureViewOverlay` runs many times over one frame: the anchor, each marker, each
-pulse and the hover ring. Putting the walk there would have placed it inside a hold that exists to
-skip one derivation. An overlay call landing between frames reads the last frame's figure, as it
-reads the last edit's reach of the scene.
+placement of the frame, and `ensureViewOverlay` runs many times over one frame: the anchor, each
+marker, each pulse and the hover ring. An overlay call landing between frames reads the figure of
+the last frame, as it reads the reach of the scene that frame measured.
 
-Both front-ends hold a placement cache, filled on an edit beside the reach of the scene, and
-`BYTES_MEMORY_TOTAL` counts one placement for each handle. `assembleMeshes` places as it emits.
+Both front-ends place every handle in each frame, beside the reach of the scene, and
+`BYTES_MEMORY_TOTAL` counts one placement for each handle (Render paths).
 
 **The wheel travels the pointer's own ray in free flight.** `anchorZoomAt` answers the object under
 the pointer, as it does with a selection.
@@ -2257,7 +2355,7 @@ slot. A field write is a plain store. Each write does the operations of the cons
 order, so each result is the same to the bit.
 
 The copy matters most in `framing.reachNearOf`, which subtracts two positions for each object in
-each frame, held or not. On the C backend `noinit` skips the zero fill of each operator, so it emits
+each frame. On the C backend `noinit` skips the zero fill of each operator, so it emits
 the stores that the constructor did. Cost: one statement for each field, where one constructor named
 them all. `fade` and `addRibbon` keep their constructors, because their copies read 1.7% and 0.3% of
 a moving frame at 5,038 objects.
@@ -2282,11 +2380,18 @@ operators alone in place, the copies of `addRing` and `addDisc` read 2.6% and 2.
 frame.
 
 **A count holds the design, as it holds a fault close to its speed bound** (Clocks of the driven
-checks). A count reads the same on every machine, and load never moves it. No speed check times a
-still frame at 5,038 objects. `driveCopiesStill` counts the outermost `nimCopy` calls over 3 held
-frames of the largest demo, and fails at one copy for each object. It reads 15,598 copies on
-`c4e7e1fd`, and 481 in place. Rejected: a reading of the emitted JavaScript for the six operators
-alone, which passes a copy for each object at any other site.
+checks). A count reads the same on every machine, and load never moves it. `driveCopiesStill`
+counts the outermost `nimCopy` calls over 3 still frames of the largest demo. Each of those frames
+places, builds and flattens the whole scene. The check fails at one copy of the own code of the
+project for each object. Rejected: a reading of the emitted JavaScript for the six operators alone,
+which passes a copy for each object at any other site.
+
+A copy that a function of the reference library asks for is counted apart and reported, and never
+bound. Every frame runs the library for the whole scene, and what that costs is the library's
+(Render paths). The check names the maker of each copy by the function that calls `nimCopy`, from
+the stack. Over 3 frames at 5,038 objects it reads 9,639 copies of the project and 30,663 of the
+library, which is 13,434 a frame in all. With each object placed whole, as `placeObject` builds a
+placement, a frame read 64,232. A counter that is not kept read that on 2026-10-05.
 
 **A lift writes its coefficients, and a read-out reads them.** Geometry goes through the operators,
 and the crossing is the coefficient table. A motor's sum of blades made 23 arrays, and a write makes
@@ -2361,9 +2466,8 @@ for nearby doubles, and the motor slides back by it, so that remainder carries o
 move reads the eye and frame off the one lift that `sight` makes.
 
 A still camera stands within half a world step of its origin. So a still frame leaves the origin and
-the motor as they were, bit for bit, and every hold keyed on them still holds. Not held in steps:
-both frame holds key on the motor, so a moving camera rebuilds every record whatever the origin
-does.
+the motor as they were, bit for bit. Not held in steps: every frame builds every record (Render
+paths), so an origin that stood for a step would save nothing.
 
 Two million units out a double steps by 17 to 35 m. An eye held as a world double there wobbles an
 orbit 150 m wide on that step. It cannot name an orbit a metre wide at all.
@@ -2927,7 +3031,8 @@ of picking. Three paths pick inside their handler because they must answer befor
 
 **The pick ranks what was drawn.** It takes the placements of the frame and dispatches on
 `Placement.kind`, rather than asks `position`, `direction`, `frame` and `spanPerpendicular` again
-for each handle. Empty means derive for each handle, which is the desktop path and every suite case.
+for each handle. Both front-ends hand them to the hover pick. Empty means derive for each handle,
+which is a pick between frames on the desktop, and every suite case.
 
 **The pick rejects a plane before it meets it.** `isBeyondDisc` bounds the screen extent of the
 disc by the silhouette of the sphere that contains it. It is conservative in the depth and

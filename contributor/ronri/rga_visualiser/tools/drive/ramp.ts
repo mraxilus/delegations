@@ -208,9 +208,9 @@ export async function driveSums(page: Page): Promise<void> {
       build: number; children: number; placing: number; emitting: number;
     }> = [];
     for (let i = 0; i < 30; i += 1) {
-      nimCameraOrbit(0.01, 0); // Rebuild furniture, so sum covers real work.
+      nimCameraOrbit(0.01, 0); // Move, as reader's frame does.
       const data = nimBuildFrame(1200 / 900, performance.now() / 1000, 900, true, true, false);
-      const children = data.ms_camera + data.ms_furniture + data.ms_scene +
+      const children = data.ms_camera + data.ms_place + data.ms_furniture + data.ms_scene +
         data.ms_matrix + data.ms_flatten + data.ms_unaccounted;
       runs.push({
         build: data.ms_build, children,

@@ -732,17 +732,6 @@ const STRIDE_DISC = 13 * 4;
 const STRIDE_DOME = 8 * 4;
 const STRIDE_RING = 14 * 4;
 
-// Count furniture vertices its own buffer holds, carried between frames.
-//   Bridge stops sending them once camera is still; see `renderFrame`.
-let count_furniture_held = 0;
-// And same for scene's own buffers, carried for same reason one layer out:
-//   frame bridge reports as held has uploaded nothing, so what stands in each buffer is last
-//   frame's -- correct, since bridge only says held when it would have written very same bytes.
-//   See `FrameData.is_scene_held`.
-let count_ribbon_held = 0;
-let count_ring_held = 0;
-let count_point_held = 0;
-
 // One mesh handed to driver whole, ready to be drawn as one run or two.
 //   Separate from drawing because two runs go out in different passes (see draw loop below), and
 //   mesh uploaded twice frame would be one real cost of that split.

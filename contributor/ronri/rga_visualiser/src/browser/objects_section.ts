@@ -96,13 +96,13 @@ let signatures_row = new Map<string, string>();
 //   **Costly half of signature, and function of geometry alone.** Measured at
 //   1,024 objects, `nimFormatMultivector` is 11.8 ms of walk and `nimObjectKindWord` 2.9,
 //   against 0.8 ms for every other field row draws put together. Geometry changes only
-//   when `scene.revision` does -- every writer bumps it, which is what frame hold and
-//   placement cache already rest on -- so text is re-derived when revision moves
-//   and reused otherwise. Selection change, which is what most refreshes are, moves no
-//   revision and re-derives nothing.
+//   when `scene.revision` does -- every writer bumps it -- so text is re-derived when
+//   revision moves and reused otherwise. Selection change, which is what most refreshes are,
+//   moves no revision and re-derives nothing.
+//   Text for reader, never for frame: no frame reads it, so frame's work is not skipped.
 //   Cleared whole rather than per handle: revision is scene's, not handle's, so
-//   edit re-derives every row. That is same over-approximation `PLACEMENTS` makes, and it
-//   costs one deliberate action walk it would have paid anyway.
+//   edit re-derives every row, which costs one deliberate action walk it would have paid
+//   anyway.
 let text_geometry_row = new Map();
 let revision_geometry_row = -1;
 

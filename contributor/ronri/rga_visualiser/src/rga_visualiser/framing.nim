@@ -121,9 +121,29 @@ func reachOfPlacement(placed: Placement, radius: float): float =
   else: 0.0
 
 
+proc placeEvery*(placed: var openArray[Placement], scene: Scene) =
+  ## Place every live handle through algebra, into `placed` by handle.
+  ##   Each frame's first step, on both front-ends: placing side runs for whole scene, still
+  ##   or moving, and every walk of that frame reads answer (reach, cull, emission, pick).
+  ##   Dead handles keep whatever last occupant left; every walk skips them.
+  for handle in 0..<scene.bound:
+    if scene.isAlive(handle):
+      placed[handle].placeInto(scene.geometryOf(handle), scene.anchorOverrideAt(handle))
+
+
+proc placeStamped*(placed: var openArray[Placement], scene: Scene, revision: int) =
+  ## Place handles whose placing inputs changed after `revision`, into `placed` by handle.
+  ##   For reader landing between two frames, after edit frame has not placed: one handle
+  ##   per edit, every handle after restore; see `scene.revisionPlacingAt`.
+  ##   Next frame places every handle again, so nothing placed here outlives it.
+  for handle in 0..<scene.bound:
+    if scene.isAlive(handle) and scene.revisionPlacingAt(handle) > revision:
+      placed[handle].placeInto(scene.geometryOf(handle), scene.anchorOverrideAt(handle))
+
+
 func reachOf*(placed: openArray[Placement], scene: Scene): float =
   ## Measure how far scene's farthest visible finite object stands from origin.
-  ##   For `camera.distanceFar`, from placements caller already holds; browser path.
+  ##   For `camera.distanceFar`, from frame's own placements; both front-ends, every frame.
   ##   Sibling of `reachOf(scene)`, which places for itself.
   result = 0.0
   for handle in 0..<scene.bound:
@@ -135,7 +155,7 @@ func reachNearOf*(
   placed: openArray[Placement]; scene: Scene; origin, eye: Position; forward: Direction
 ): float =
   ## Measure how near nearest drawn object stands ahead of eye, along sight.
-  ##   For `Camera.reach_near`, from placements caller already holds.
+  ##   For `Camera.reach_near`, from frame's own placements.
   ##   `eye` is about view `origin`; each world place is read about it, in components, so
   ##   walk builds nothing for each object (Art. VII.1).
   ##   Depth along sight, never distance, and never behind eye.
@@ -161,8 +181,8 @@ func reachNearOf*(
 
 proc reachOf*(scene: Scene): float =
   ## Measure how far scene's farthest visible finite object stands from origin.
-  ##   For `camera.distanceFar` on path holding no placements; desktop, once per scene
-  ##   change. Sibling of `reachOf(placed, scene)`.
+  ##   For `camera.distanceFar`, for caller holding no frame's placements.
+  ##   Sibling of `reachOf(placed, scene)`.
   result = 0.0
   for handle, one in scene.pairs:
     if not one.isVisible: continue

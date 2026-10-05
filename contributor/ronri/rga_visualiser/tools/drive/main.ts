@@ -33,8 +33,8 @@ import { driveChipRowFits, driveHelp, driveHoverDuringGesture } from './chrome';
 import { driveTypeDrawn, driveTypeLigatures, driveTypeRoles } from './type';
 import { driveFacesCovered } from './faces';
 import { driveCreep, drivePlaneBuilt, driveRuler } from './finger';
-import { driveHoldScene } from './hold';
-import { driveDrawerCost, drivePlacementHeld } from './pool';
+import { driveSceneBuilt } from './built';
+import { driveDrawerCost } from './pool';
 import {
   driveCulling, driveDemo, driveDiscUnderfoot, driveFarSky, driveLineCrossing, driveOccluded,
   driveZoomLoaded, loadDemo, objectsDefault, objectsLargest,
@@ -63,7 +63,7 @@ import {
 } from './pins';
 import { driveRings, driveRingsTimed } from './rings';
 import {
-  driveAllowance, driveHold, driveKinds, driveMoving, driveSceneryBound,
+  driveAllowance, driveKinds, driveMoving, driveSceneryBound, driveSceneryEvery,
 } from './scenery';
 import { driveGround } from './ground';
 import { driveAntialias, driveBlankRefused } from './canvas';
@@ -159,7 +159,7 @@ async function driveSimulated(browser: Browser): Promise<void> {
   const devtools = await openTouch(page);
   await hastenTransitions(devtools);
   await focusCanvas(page);
-  // Counts and flags each frame carries, for hold and rim checks; times on this page read zero.
+  // Counts and flags each frame carries, for growth and rim checks; times on this page read zero.
   await watchFrames(page);
 
   // Stylesheet first, before anything reads what it drew: declaration browser dropped is
@@ -234,15 +234,14 @@ async function driveSimulated(browser: Browser): Promise<void> {
   await driveScaleSwitch(page);
   await driveRings(page);
   driveAllowance();
-  await driveHold(page);
+  await driveSceneryEvery(page);
   await drivePinPool(page);
 
   await driveCreep(page, devtools);
   await drivePlaneBuilt(page, devtools);
   await driveRuler(page);
-  await driveHoldScene(page);
+  await driveSceneBuilt(page);
   await driveDrawerCost(page);
-  await drivePlacementHeld(page);
 
   // Demo runs last, and under load: it builds thousands of objects, and every check above is
   //   written against opening scene's own weight.
@@ -251,7 +250,7 @@ async function driveSimulated(browser: Browser): Promise<void> {
   await driveApplyNamed(page);
   const objects_largest = await objectsLargest(page);
   await loadDemo(page, objects_largest);
-  // First, while demo stands as loaded and every frame holds its scene.
+  // First, while demo stands as loaded and nothing in it moves.
   await driveCopiesStill(page, objects_largest);
   await driveCulling(page);
   await driveOccluded(page);

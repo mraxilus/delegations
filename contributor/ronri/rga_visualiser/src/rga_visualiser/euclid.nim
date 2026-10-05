@@ -135,6 +135,22 @@ func rebased*(place: Position; origin_from, origin_to: Position): Position {.noi
   result.z = (origin_from.z - origin_to.z) + place.z
 
 
+func setTo*(place: var Position, source: Position) =
+  ## Write `source`'s coordinates into `place`, one by one.
+  ##   Never assigned whole: on JS backend that is copy, or share of storage where source is
+  ##   call's answer, and `place` is written again in later frames.
+  place.x = source.x
+  place.y = source.y
+  place.z = source.z
+
+
+func setTo*(heading: var Direction, source: Direction) =
+  ## Write `source`'s components into `heading`, one by one; see `setTo` for position.
+  heading.x = source.x
+  heading.y = source.y
+  heading.z = source.z
+
+
 func dot*(d, e: Direction): float = d.x * e.x + d.y * e.y + d.z * e.z
   ## Get inner product of directions.
 

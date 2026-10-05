@@ -78,9 +78,15 @@ func isRoundingOf*(m: Multivector, scale: float): bool =
 
 #[ Kind Classification ]#
 
-func kindOf*(m: Multivector): Option[Kind] =
-  ## Name geometry multivector stands for.
-  ##   None for mixed grade, and for zero, scalar and antiscalar, which draw nothing.
+func levelOf(read: Option[Grade]): int =
+  ## Read library's grade as number, or -1 where it found none (mixed grade).
+  ##   Taken by value and read through `get` with default: nothing bound, nothing copied.
+  if read.isSome: int(read.get(Grade(0))) else: -1
+
+
+func kindInto*(m: Multivector, kind: var Kind): bool =
+  ## Name geometry multivector stands for into `kind`, and report whether it stands for any.
+  ##   False for mixed grade, and for zero, scalar and antiscalar, which draw nothing.
   ##   Grade is read off `scaleFree` copy, so library's tolerance stands relative to
   ##   largest coefficient: coefficient under billionth of it reads as zero, at any scale.
   ##     Never off `m` alone, whose coefficients library judges against absolute 1e-9.
@@ -90,15 +96,23 @@ func kindOf*(m: Multivector): Option[Kind] =
   ##     library's: it keeps subset of what library keeps, largest among them, and reads
   ##     same grade.
   ##     Weight alone is read, not largest: search for largest cost as much as `grade` on
-  ##     desktop's debug build, which classifies every object three times each frame.
-  var grade = if abs(m[Basis.E4]) >= 1.0: m.grade else: none(Grade)
-  if grade.isNone: grade = m.scaleFree.grade
-  if grade.isNone: return
-  case int(grade.get)
-  of 1: some(Kind.Point)
-  of 2: some(Kind.Line)
-  of 3: some(Kind.Plane)
-  else: none[Kind]()
+  ##     desktop's debug build.
+  ##   Writes `kind` rather than building `Option`: every frame classifies every object, and
+  ##   each `Option` built or bound is copy on JS backend (read in emitted JS).
+  var level = if abs(m[Basis.E4]) >= 1.0: levelOf(m.grade) else: -1
+  if level < 0: level = levelOf(m.scaleFree.grade)
+  case level
+  of 1: kind = Kind.Point
+  of 2: kind = Kind.Line
+  of 3: kind = Kind.Plane
+  else: return false
+  true
+
+
+func kindOf*(m: Multivector): Option[Kind] =
+  ## Name geometry multivector stands for; none where `kindInto` names none.
+  var kind = Kind.Point
+  if m.kindInto(kind): some(kind) else: none(Kind)
 
 
 func isHorizon*(m: Multivector): bool =

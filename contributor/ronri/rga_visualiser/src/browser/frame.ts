@@ -64,9 +64,11 @@ function renderFrame(now_seconds: number) {
   // Record bridge's own three phases into same rings this side's phases use.
   //   Bridge times them where only it can see them.
   recordPhaseTime('build', data.ms_build);
-  // Frame's prologue and its view matrix each take row of own, and residue named phases
-  //   fail to cover takes `unaccounted`, so `build` sums from what is under it.
+  // Frame's prologue, its placing of every object and its view matrix each take row of own,
+  //   and residue named phases fail to cover takes `unaccounted`, so `build` sums from what is
+  //   under it.
   recordPhaseTime('camera', data.ms_camera);
+  recordPhaseTime('place', data.ms_place);
   recordPhaseTime('matrix', data.ms_matrix);
   recordPhaseTime('unaccounted', data.ms_unaccounted);
   // Second cut: same milliseconds re-divided by which side of algebra.
@@ -101,11 +103,9 @@ function renderFrame(now_seconds: number) {
   }
   count_points_culled = data.count_points_culled;
 
-  // **Every frame is drawn, still or moving.** Held frame could skip clear and draws.
-  //   and leave compositor showing last presentation, and did for one round: on
-  //   device it changed spikes not at all, and reader would rather still and moving
-  //   frames behave alike than have still ones cheap. Records are still held above;
-  //   that changes nothing about what is drawn or when.
+  // **Every frame builds, uploads and draws, still or moving.** Still frame could skip all.
+  //   three where nothing moved, and reader would rather still and moving frames cost alike
+  //   than have still ones cheap; see `PROVENANCE.md`, Render paths.
   const ms_before_draw = performance.now();
   const ratio_pixel = ratioPixel();
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -132,28 +132,17 @@ function renderFrame(now_seconds: number) {
   gl.uniform1f(ribbon_uniforms.factor_guard, FACTOR_GUARD);
 
   // World furniture first, with normal depth test/write.
-  //   One record segment now -- kept rather than re-uploaded where bridge says furniture is
-  //   unchanged, since grid and axes are function of camera alone.
   //   Mirrors renderer.nim's own drawMeshes(MESHES_FURNITURE, ...) call exactly.
-  if (!data.is_furniture_held) {
-    count_furniture_held =
-      uploadBuffer(data.furniture_ribbon_vertices, buffers.ribbon_furniture, 16);
-  }
-  drawRibbons(buffers.ribbon_furniture, count_furniture_held, 0, false);
+  const count_furniture =
+    uploadBuffer(data.furniture_ribbon_vertices, buffers.ribbon_furniture, 16);
+  drawRibbons(buffers.ribbon_furniture, count_furniture, 0, false);
 
   // Draw scene objects last, opaque kinds before translucent veils.
   //   Depth writes off for veils, so translucent plane never occludes line or point
   //   that happens to sit behind it; it only tints over whatever was already drawn
   //   there.
   //   Mirrors renderer.nim's own drawMeshes(MESHES, ...) call exactly.
-  // Upload only where bridge rebuilt.
-  //   Held frame's buffers already hold this frame's records, and re-uploading
-  //   identical bytes is copy hold exists to skip.
-  //   Draws below still run; framebuffer is cleared every frame.
-  if (!data.is_scene_held) {
-    count_ribbon_held = uploadBuffer(data.ribbon_vertices, buffers.ribbon, 16);
-  }
-  const count_ribbon = count_ribbon_held;
+  const count_ribbon = uploadBuffer(data.ribbon_vertices, buffers.ribbon, 16);
   drawRibbons(buffers.ribbon, count_ribbon, data.ribbon_over, false);
   // Draw plane rims, one record each, straight after lines they are drawn like.
   //   Widening is ribbon program's own, so this program takes same six camera uniforms
@@ -170,8 +159,7 @@ function renderFrame(now_seconds: number) {
   gl.uniform3f(ring_uniforms.right, data.camera_right_x, data.camera_right_y, data.camera_right_z);
   gl.uniform3f(ring_uniforms.up, data.camera_up_x, data.camera_up_y, data.camera_up_z);
   gl.uniform1f(ring_uniforms.factor_guard, FACTOR_GUARD);
-  if (!data.is_scene_held) count_ring_held = uploadBuffer(data.ring_records, buffers.ring, 14);
-  const count_ring = count_ring_held;
+  const count_ring = uploadBuffer(data.ring_records, buffers.ring, 14);
   drawRings(count_ring, data.ring_over, false);
   // Point program's camera, once per frame, with both screen axes disc spans.
   //   Least diameter scaled by device pixel ratio, since `uHeightPixels` is framebuffer's.
@@ -189,8 +177,7 @@ function renderFrame(now_seconds: number) {
   gl.uniform1f(point_uniforms.diameter_least, DIAMETER_POINT_LEAST * ratio_pixel);
   gl.uniform1f(point_uniforms.ambient, AMBIENT_SHADE);
   gl.uniform1f(point_uniforms.depth_log, data.camera_depth_log);
-  if (!data.is_scene_held) count_point_held = uploadBuffer(data.point_vertices, buffers.point, 8);
-  const count_point = count_point_held;
+  const count_point = uploadBuffer(data.point_vertices, buffers.point, 8);
   drawPoints(count_point, data.point_over, false);
   // Veils:
   //   one record disc or dome, fanned out by their own vertex shaders and walked in scene order
@@ -212,10 +199,8 @@ function renderFrame(now_seconds: number) {
   gl.uniformMatrix4fv(uniform_dome_model_view_projection, false, data.view_projection);
   gl.uniform1f(uniform_dome_depth_near, data.camera_depth_near);
   gl.uniform1f(uniform_dome_depth_log, data.camera_depth_log);
-  if (!data.is_scene_held) {
-    uploadBuffer(data.disc_records, buffers.disc, 13);
-    uploadBuffer(data.dome_records, buffers.dome, 8);
-  }
+  uploadBuffer(data.disc_records, buffers.disc, 13);
+  uploadBuffer(data.dome_records, buffers.dome, 8);
   gl.depthMask(false);
   drawVeilRuns(data.veil_runs, data.veil_run_over, false);
   gl.depthMask(true);

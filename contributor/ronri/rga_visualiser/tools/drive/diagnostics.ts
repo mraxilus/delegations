@@ -58,7 +58,7 @@ async function settleTurn(page: Page, selector: string): Promise<void> {
 
 /** Rows every drawing step owns, which must all read live once branch is open. */
 const ROWS_STEP = [
-  'build', 'camera', 'furniture', 'scene', 'matrix', 'flatten', 'unaccounted',
+  'build', 'camera', 'place', 'furniture', 'scene', 'matrix', 'flatten', 'unaccounted',
   'placing', 'emitting', 'hover', 'upload', 'overlay', 'ui',
 ];
 
