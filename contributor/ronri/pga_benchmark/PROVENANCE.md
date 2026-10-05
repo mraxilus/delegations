@@ -235,7 +235,7 @@ ratio. The docket draws one tick for each of those ratios. Rejected: the spread 
 one run, because it misses drift between runs. That drift is the larger part on this machine.
 
 **The runtime baselines are from 2026-10-03 at all four algebras**, at `d9be8ae`, five runs each on
-`linux amd64, 4 cores`. `carry` moved them to the pin `edb0c9d`, whose bench emits the same C. The
+`linux amd64, 4 cores`. `restamp` moved them to the pin `edb0c9d`, whose bench emits the same C. The
 bench of 2026-10-01, run at `3121342` on 2026-10-02 in turn with the baselines of that day, gives
 the drift between days. At rga4d its library runs ×1.19 to ×1.22 of its own times of 2026-10-01. Its
 reference runs ×1.26 to ×1.27, and its dense forms ×1.00 to ×1.01. The bench of 2026-10-02 runs
@@ -865,22 +865,22 @@ exits 1.
 taken at the pin. Each evaluation must carry the digest of its edits as they are now. Each change
 and proposal must apply at pin, and each note must find its quote.
 
-**`carry` moves a timed record to a new pin where its C is the same.** Each runtime baseline,
+**`restamp` moves a timed record to a new pin where its C is the same.** Each runtime baseline,
 the sweep and each algebra of an evaluation name the digest of the C that their timed builds
 emitted. The digest leaves out the commit of the pin, since the build writes that commit into its
-documents. `carry` compiles the same builds at the pin. Where each digest holds, the record moves
+documents. `restamp` compiles the same builds at the pin. Where each digest holds, the record moves
 its stamp to the pin, keeps its times, and names the commit it was timed at. The same C on the
 same compiler and flags makes the same machine code, so the times stand.
 
 An evaluation is tried again with its times kept, so its suites, counts and claims are taken at
-the pin. The suites of the library hold line numbers in their C, so `carry` cannot keep them. A
+the pin. The suites of the library hold line numbers in their C, so `restamp` cannot keep them. A
 record whose C differs is a finding, and `bench`, `sweep` or `evaluate` takes it again. A record
 taken before digests existed took the digest of its builds at its own pin, on 2026-10-05. The
 bench at the commit of the runtime baselines emits the same C as the bench of that day, file for
 file. The Architect chose this rule on 2026-10-05, for a head that moved only comments and form.
 
 Rejected: a new timing of each record at such a head. The binaries are the same, so new times
-would record the drift of this host alone, ×1.19 to ×1.27 between days at rga4d. Cost: `carry`
+would record the drift of this host alone, ×1.19 to ×1.27 between days at rga4d. Cost: `restamp`
 compiles each evaluation at each algebra, and runs its suites and claims again.
 
 Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Head`. It holds the order of
@@ -1034,9 +1034,9 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
   same counts in both, the median reads ×1.00, and light rows stray to ×0.65 at cga5d. Why order
   moves time is unmeasured, since this container offers no hardware counters.
 
-- `carry` reads C, and the C names types by hashes of the paths of their modules. A second
+- `restamp` reads C, and the C names types by hashes of the paths of their modules. A second
   checkout of one tree, at another path, emitted 11 C files that differ from the first. So
-  `carry` runs in the checkout whose builds took the digests.
+  `restamp` runs in the checkout whose builds took the digests.
 
 ## Open questions
 
