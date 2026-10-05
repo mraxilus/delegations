@@ -45,6 +45,7 @@ suite "Parentheses":
         1,
       ),
       ("let x = (a.b(c)[i]) + 1\n", "let x = a.b(c)[i] + 1\n", 1),  # call, index, field glued
+      ("let s = @(x)\n", "let s = @x\n", 1),  # bare operand: `@` binds it alone either way
     ]:
       check checkParentheses("a.nim", breach).len == count
       check breach.fixed == mended
@@ -73,5 +74,9 @@ suite "Parentheses":
       "let p = a^(-b)\n",  # wrapped exponent of power operator, `^-` would lex one operator
       "let p = a ^ (-b)\n",  # spacing glues power operator, so guard reads it glued
       "let p = a^(-1)\n",
+      "links = @(PAIRS[task.pair][0])\n",  # `@x[i]` reads `(@x)[i]` (#539)
+      "let s = @(x.items)\n",
+      "let s = @(f(a))\n",
+      "let s = @@(x[0])\n",
     ]:
       check kept.isSettled
