@@ -780,6 +780,7 @@ proc carry() =
   ##     kept, so every other figure of theirs is taken at pin. Record whose C differs, or
   ##     that names no digest away from pin, is finding, and its verb takes it again.
   ##   Record at pin without digest takes digest of its builds, and keeps every figure.
+  ##   Evaluation already at pin with its digests is left alone, so run cut short resumes.
   let
     nim = commitNim()
     pin = commitPga()
@@ -850,7 +851,16 @@ proc carry() =
   for document in before.values:
     for name in document{"algebras"}.keys:
       if name notin names_algebra: names_algebra.add name
-  tried(candidates.filterIt(it.name in before), names_algebra, nil, before, findings)
+  tried(
+    candidates.filterIt(it.name in before and not before[it.name].isCarried(
+      pin,
+      digestEdits(it.changes, it.claims, it.programs),
+    )),
+    names_algebra,
+    nil,
+    before,
+    findings,
+  )
   report(findings)
 
 

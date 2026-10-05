@@ -120,6 +120,17 @@ func checkCarry*(recorded, digests: JsonNode; taken, pin, path, again: string): 
     )
 
 
+func isCarried*(evaluation: JsonNode; pin, digest: string): bool =
+  ## Tell whether evaluation stands at pin on its edits, with digest of C at every algebra, so
+  ##   carry has nothing to move; carry cut short then resumes where it stopped.
+  if checkEvaluation(evaluation, pin, digest, "").len > 0: return false
+  let algebras = evaluation{"algebras"}
+  if algebras.isNil or algebras.len == 0: return false
+  for _, algebra in algebras.pairs:
+    if not algebra.hasKey("digest_c"): return false
+  true
+
+
 func stampCarried*(taken: JsonNode, pin: string): JsonNode =
   ## Copy stamp moved to pin, naming commit figures were timed at where it moves.
   ##   Earlier `timed_at` stays, since figures were timed there and nowhere since.
