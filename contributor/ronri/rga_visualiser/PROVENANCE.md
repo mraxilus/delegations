@@ -1132,11 +1132,13 @@ backend is refused as `can have side effects`. It compiled before the mark. Assu
 ## Scene storage
 
 `Scene` (`scene.nim`) is a fixed-capacity arena, held as a structure of arrays. The arrays are
-geometries, labels, inks, visibility, liveness, birth stamps, creation ordinals, placing stamps,
-anchor overrides and radii. A handle addresses each object. `addObject` assigns that handle once,
-and nothing moves it after. Free handles thread onto an intrusive singly-linked free list, so an
-add and a remove are both O(1). `OBJECTS_MAX` is 5040 and `LABEL_MAX` is 40, and `{.define.}`
-overrides both.
+anchors, local coefficients and geometries about world origin (see Anchored storage). Beside them
+stand labels, inks, visibility, liveness, birth stamps, creation ordinals, placing stamps, anchor
+overrides and radii.
+
+A handle addresses each object. `addObject` assigns that handle once, and nothing moves it after.
+Free handles thread onto an intrusive singly-linked free list, so an add and a remove are both O(1).
+`OBJECTS_MAX` is 5040 and `LABEL_MAX` is 40, and `{.define.}` overrides both.
 
 This is not a shift-on-delete array. A removal from such an array renumbers every cross-frame
 index that a caller holds. Here **a handle number stays valid until its object is removed**.
@@ -1203,6 +1205,96 @@ builds and a counter that are not kept. A build that brings back the walk to cap
 re-places every handle for each edit, each drove the measured page 3 times. The build without
 either fault drove it 11 times. A count over the largest demo on the C backend gave the comparisons.
 
+## Anchored storage
+
+**Each object is stored about an exact anchor of its own.** `Scene` holds three arrays for the
+geometry of each handle. `anchors` holds a place in doubles, which nothing computes again once it is
+chosen. `locals` holds the coefficients of the object about that anchor. `geometries` holds the
+object about world origin, where Sol stands.
+
+**The geometry about world origin is a cache, and storage never reads it back.** Each writer
+derives it from the anchor and the local coefficients, through the slide of the library
+(`motorSliding` and `carried`). The slide keeps only the grades that the object occupies, as the
+operations do. A slide by zero returns the coefficients as they are, so an object anchored at world
+origin reads back to the bit.
+
+Every reader of `geometryOf` reads the cache, so no frame slides an object. The desktop places all
+5,038 objects of the largest demo in each frame. `geometryAbout` reads an object about any other
+centre, slid again from storage, and writes nothing.
+
+**Why.** One world unit is one astronomical unit. Near HD 222237 b, about 2.36e6 units out, a double
+steps by 17 m in x and y, and by 35 m in z. Two points a metre apart there, stored about Sol, are
+one point. Stored about an anchor at the star, each stands kilometres from it, where a double steps
+by about a picometre.
+
+**Rejected: storage rewritten about each new centre.** Each move would round every coefficient at
+the distance of the new centre. A pair a metre apart beside the star, rewritten about Earth and back
+once, comes back as one point or tens of metres apart.
+
+**Where each object is anchored:**
+
+- An object of the orrery is anchored at the sun of its system. Its sun, planets, moons and plane
+  are built about origin, and stored about the place of the sun. A star with no planet is anchored
+  at itself. Sol stands at world origin, so its objects and the four in horizon are anchored there.
+- An object that an operation builds is anchored at the origin that the operation ran about (see
+  Classification at any scale).
+- An object that the reader composes or edits is anchored at world origin, because the panel shows
+  and takes coefficients about world origin. An edit that changes no coefficient writes nothing.
+  So a save that changes only a label, a colour or a size keeps a far object at its own anchor.
+- An anchor override is held about the anchor of its object. A reader takes it about world origin by
+  a Euclidean offset (see Creation-anchored plane centring).
+
+A step of the undo timeline holds the whole scene, so each anchor and its local coefficients ride
+along. A file of version 8 holds them too (see Save and load format).
+
+**Cost: memory.** The anchors and the local coefficients add 152 bytes for each handle, in the live
+scene and in each step of the undo timeline. On the release compiler, `sizeof(Scene)` reads
+2,011,016 bytes against 1,244,936, and `sizeof(History)` 64,354,840 against 39,840,280. On Node 22,
+the largest demo with a full timeline holds 218.3 MiB of heap and array buffers, against 140.9 MiB.
+Measured on 2026-10-05 against `df50ec68`, after a collection, by a probe that is not kept.
+
+A step could hold storage alone and derive the cache again on each restore. That saves the 128 bytes
+of the cache for each handle of each step, at a slide for each object that a restore changes. No
+step does that.
+
+**Cost: time.** Each edit of an object anchored away from world origin costs a slide. So does each
+such object that a build or a load adds.
+
+Measured on 2026-10-05 on one delegate, under the lock of the gate, by a probe that is not kept. It
+builds the largest demo, places each object as the page does after a load, and reads each object
+about HD 222237 b. A C or JS cell is the range of five medians, one for each pair, of 41 runs, or of
+15 runs for a build. A desktop cell is the range over three pairs of `--timings` over 300 frames.
+
+| Probe | `df50ec68` | This design |
+| --- | --- | --- |
+| Place every object, release C | 0.501 to 0.544 ms | 0.494 to 0.506 ms |
+| Place every object, release JS on Node 22 | 40.6 to 45.8 ms | 39.2 to 42.7 ms |
+| Build the largest demo, release C | 2.99 to 3.20 ms | 4.67 to 4.91 ms |
+| Build the largest demo, release JS on Node 22 | 264 to 321 ms | 417 to 472 ms |
+| Read every object about another centre, release C | none | 1.82 to 1.88 ms |
+| Read every object about another centre, release JS | none | 151 to 167 ms |
+| Tessellation, debug desktop | 14.95 to 15.03 ms | 15.13 to 15.42 ms |
+| Frame at p50, debug desktop | 89.55 to 90.02 ms | 89.54 to 90.39 ms |
+
+Placement reads the cache, so it costs what it did. The frame of the desktop overlaps too. Its
+tessellation reads 0.1 to 0.4 ms more, where it reads the anchor override of each object. Each
+reader of an override checks that one is held before it reads the anchor. Without that check the
+pairs read 14.62 to 14.87 ms, then 15.22 to 15.56 ms.
+
+To read every object about another centre is what a move of the centre costs, once for each move. On
+JS that is about 160 ms, and to place every object again adds about 40 ms.
+
+*Checked.* Verified by `suites.nim`:
+
+- two points a metre apart beside HD 222237 b, anchored there, stay a metre apart;
+- a join of that pair, built through the catalogue, holds both points about the star;
+- reading about other centres a hundred times there and back leaves storage bit for bit;
+- an operation on operands anchored apart gives what it gives about world origin;
+- a creation anchor of operands anchored apart stands where it does about world origin;
+- an edit that changes geometry anchors it at world origin, and one that does not keeps it;
+- every object of a system is stored about its sun, and reads about Sol as built there;
+- a step either way restores each object's anchor and its coefficients, bit for bit.
+
 ## Memory and allocation
 
 The interactive render loop allocates nothing. `format.nim` wraps the C `snprintf`, so the
@@ -1236,18 +1328,18 @@ the storyboard turns the pair over in its own `renderAt`. Without that, captured
 scratch until the fifth one overflows.
 
 **The undo timeline is the largest reservation that the binary makes.** A `Scene` at 5040 handles is
-1.15 MiB as a C struct, which `sizeof` reports as 1,204,616 bytes on the release compiler. A `Step`
+1.92 MiB as a C struct, which `sizeof` reports as 2,011,016 bytes on the release compiler. A `Step`
 is a `Scene` beside a `Camera` of twelve floats, eight of them the motor, and `CAPACITY_HISTORY` is
-32 of them. They reserve 36.8 MiB, which is 38,549,528 bytes, against 6.2 MiB for both mesh sets.
+32 of them. `sizeof(History)` reports 61.4 MiB, which is 64,354,840 bytes, against 6.2 MiB for both
+mesh sets. Anchored storage adds 152 bytes for each handle of each scene (see Anchored storage).
 
 The placing side of every handle is held beside them on both front-ends, so the local scale may be
 read without placing twice. It is 128 bytes for each of 5040 handles, which is 645,120 bytes.
 
-In the browser the same timeline is about 105 MB of JS heap. The live page measured 85 MB at
-load, before the placing stamps for each handle were added, and nothing has measured it again
-since. The depth stays at 32: an edit costs nothing for each step (see Undo/redo), so what
-remains is a flat reservation. The lever is linear, at about 1.15 MiB of address space and 3.3 MB
-of JS heap for each step. `BYTES_MEMORY_TOTAL` counts it, because a figure that leaves out its
+On JS the largest demo with a full timeline holds 218.3 MiB of heap and array buffers on Node 22.
+No live page has measured it. The depth stays at 32: an edit costs nothing for each step (see
+Undo/redo), so what remains is a flat reservation. The lever is linear, at about 1.92 MiB of address
+space for each step. `BYTES_MEMORY_TOTAL` counts it, because a figure that leaves out its
 own largest term is worse than no figure.
 
 The LZW dictionary of GIF is a fixed open-addressed hash table, with `CAPACITY_DICTIONARY` at 8192
@@ -2380,19 +2472,25 @@ of it. A caller that wedges unit directions passes one, so a parallel pair names
 The ribbon's own test stays in world units, as the tests of its shaders do, since its segment is the
 picture's.
 
-**A catalogue operation runs about a point near its operands.** `scene.applyOperation` slides its
-operands to a local origin through the library's own motor (`motorSliding` and `carried`), applies
-the operation there, and slides the result back. About Sol, the join of two points a metre apart one
-unit out computes its moment, `p × q`, from products near one. That moment cancels to about 1e-5 of
-itself, and both points stand hundreds of kilometres off the line.
+**A catalogue operation runs about a point near its operands.** `scene.applyOperation` reads each
+operand as the scene stores it, about its anchor. It slides each one from its anchor to a local
+origin through the library's own motor (`motorSliding` and `carried`), and applies the operation
+there. Its answer is anchored at that origin, and a reader takes it about world origin by one more
+slide. About Sol, the join of two points a metre apart one unit out computes its moment, `p × q`,
+from products near one. That moment cancels to about 1e-5 of itself, and both points stand hundreds
+of kilometres off the line.
 
 Only the operations of `OPERATIONS_SLIDING` run so, which are the fifteen that commute with a slide.
 The other twelve read the origin itself, as support, bulk and the central projection do. So they run
 about Sol, the origin they mean.
 
 The origin is the place of a point operand, the first operand's first. The cancellation is about the
-point that is joined. Else it is the anchor of the first finite operand, which is its support. Else
-it is Sol, where no operand stands anywhere finite.
+point that is joined. Else it is the anchor for drawing of the first finite operand, which is its
+support. Else it is Sol, where no operand stands anywhere finite.
+
+Each place is read about the anchor of its operand, then offset by that anchor. The origin need
+only stand near the operands. An anchor less the origin is then exact, since the two stand within a
+factor of two.
 
 A slide back adds `t × d` to a small moment, and cancels nothing, so the rounding is `ε` of the
 distance slid. That is 33 µm one unit out, and about a millimetre thirty units out. Each slide keeps
@@ -2434,9 +2532,10 @@ Measured on `f779cec8` on 2026-10-05, by a probe that is not kept.
 **Cost: rounding that stands alone reads as an object.** A stored object of pure rounding is drawn,
 where the tolerance of the library refuses it. Only a caller that holds the factors can refuse it.
 
-**Cost: storage far out still steps.** Near HD 222237 b, a double steps by 17 m in x and y, and by
-35 m in z. Two points a metre apart there are stored as one. Storage about an anchor addresses that.
-Joins near Sol hold a metre, since each runs about the point it joins.
+**Storage far out holds a metre, and so does a join there.** Two points a metre apart beside HD
+222237 b, anchored at the star, join to a line anchored beside them. About a centre at the star, the
+line holds both points within 5e-13 m. Measured on 2026-10-05 by a probe that is not kept (see
+Anchored storage).
 
 **Cost: more work in each classification.** Measured on 2026-10-05 on one delegate, under the lock
 of the gate. Each probe places the 5,038 objects of the largest demo. Each pair is `0d47eab3`,
@@ -2452,12 +2551,17 @@ The page places every object only after a load or a restore. The desktop places 
 frame, and asks `isHorizon` of each row of its objects list. That second norm of `isHorizon`, and
 the second pass of `formatMultivector`, are most of what the desktop frame gained.
 
-**Cost: three slides for each catalogue operation.** Measured on 2026-10-05 on one delegate, under
+**Cost: three slides for each catalogue operation.** Two slide the operands to the local origin,
+and a third reads the answer about world origin. Measured on 2026-10-05 on one delegate, under
 the lock of the gate, the median of 21 runs of 2,000 calls each. Each pair is `7119f4cb`, then this
 design:
 
 - debug C, a join or a meet: 5.1 to 5.4 µs, then 32 to 41 µs a call;
 - release JS on Node 22, the same calls: 20 to 33 µs, then 85 to 177 µs a call.
+
+Operands read about their anchors leave that as it was. On 2026-10-05, two pairs against `df50ec68`
+read 31.8 to 41.8 µs a call on debug C either way. On release JS they read 103 to 196 µs, against
+114 to 194 µs.
 
 A drag over an object calls it up to seven times in each update: three proposals, one preview, and
 three offers of the menu. The apply section calls it once in each frame. No path calls it for each
@@ -3114,7 +3218,7 @@ integer. To shift every later entry down is 31 whole scene copies for each edit 
 thirty-second. On the JS backend at 5,038 handles, that took 153.5 ms to toggle the visibility of
 one object, against 11.3 ms as a ring.
 
-What remains for each edit is the one copy of a `Scene` into the timeline, which is 1.15 MiB
+What remains for each edit is the one copy of a `Scene` into the timeline, which is 1.92 MiB
 through `nimCopy`. It is not for each frame. `initHistory` fills a timeline that the caller owns.
 Returned by value it compiles to a `nimCopy` of thirty-two whole scenes, which was 65% of the load
 of the largest demo. `record` writes the fields of a `Step` rather than assigns a literal, for the
@@ -3155,6 +3259,7 @@ of that button is refreshed on the low-cadence tick.
 - camera restoration across two edits from two viewpoints;
 - a step either way, which carries the stance across and leaves the field of view alone;
 - a step keeps the picks it still names, in pick order, and drops one whose handle was refilled;
+- a step either way restores each object's anchor and its coefficients, bit for bit;
 - Home, which keeps the field of view.
 
 Verified end to end: `--drive-undo` and the browser drive both build, orbit away, undo, and hold
@@ -3196,6 +3301,11 @@ The anchor is computed at construction and stored (`anchor_overrides`, a renderi
 and load exclude). Many operand sets produce an identical plane `Multivector`. All the anchor
 arithmetic is RGA-native: it sums unit-weight points and reads `position`, which divides by weight.
 
+It is computed about the origin where its plane was built, and held about the anchor of that plane.
+A reader takes it about world origin by a Euclidean offset. It is a hint for the picture, which
+draws a disc there, so it leaves the algebra as the disc does. Only `Wedge` and `ExpandWeight` name
+one (`OPERATIONS_CENTRING`), so no other operation slides its operands for it.
+
 *Checked.* Verified by `suites.nim`: the anchor of each special case. Assumed: that no other
 operation wants one, because nobody has asked for one.
 
@@ -3209,11 +3319,12 @@ little-endian because every file already written contained it. The desktop conve
 | Bytes | Field |
 |-------|-------|
 | 4 | Magic `RGAS` |
-| 1 | Format version (`VERSION_SCENE` = 7) |
+| 1 | Format version (`VERSION_SCENE` = 8) |
 | 1 | Basis count (16 under this build); must match |
 | 4 | Object count, little-endian `uint32` |
 | per object | Ink (1), visibility (1), label length in bytes (1) + UTF-8, one |
-|  | little-endian `float` per basis term, the radius as one more `float` |
+|  | little-endian `float` per basis term about the anchor of the object, |
+|  | the radius as one more `float`, then x, y and z of the anchor |
 
 `MAGIC_SCENE` and `VERSION_SCENE` are exported, and reach the browser through `nimSceneMagic` and
 `nimSceneVersion`, so there is no literal to drift. Labels go through `TextEncoder` and
@@ -3226,8 +3337,15 @@ whole of what version 3 added. Version 4 appended the radius after the geometry 
 Version 5 appended a byte after that, which said whether the point shone. Version 7 dropped it, so
 versions 5 and 6 alone carry one, read and skipped.
 
-Which versions carry each is `scene.isCarryingRadius` and `isCarryingShine`, which the browser
-parser reaches through `nimSceneHasRadius` and `nimSceneHasShine` rather than literals.
+**Version 8 writes each object as the scene stores it.** It writes the coefficients about the anchor
+of the object, then the anchor after the radius. A pair a metre apart far out then reloads a metre
+apart. Coefficients about Sol would reload it as one point. Versions 1 to 7 wrote coefficients about
+world origin, so `upgradedFrom7` anchors each of their objects there, and each loads to the bit. The
+chain refuses an anchor that is infinite or NaN, as it refuses such a radius.
+
+Which versions carry each is `scene.isCarryingRadius`, `isCarryingShine` and `isCarryingAnchor`.
+The browser parser reaches them through `nimSceneHasRadius`, `nimSceneHasShine` and
+`nimSceneHasAnchor` rather than literals. Its packer writes `nimObjectLocal` and `nimObjectAnchor`.
 
 Version 6 changed no byte. It records that the palette lost its structural `Algebra` handle at
 ordinal 7. Every hue that a file of version 2 to 5 wrote therefore sits one past today's, and
@@ -3269,9 +3387,17 @@ scene, and replaces the caller's only on complete success. It is native-only.
 - ordinal 15 in a version-1 file refused;
 - the version-6 fold pinned ordinal by ordinal.
 
-Verified by watching: the seeds arrive over 0.480 s, and the sixteen of the demo over 1.84 s in
-the browser. Verified by `suites.nim`: the on-disk bytes of a known float. Assumed: the big-endian
-host path, which is never exercised (see Known limitations).
+Verified by `suites.nim`:
+
+- save then load keeps each object's anchor and coefficients about it, bit for bit;
+- each object's anchor follows its radius, as three little-endian floats;
+- a file of each version before 8 loads every object about world origin, as written;
+- an object of a version before 8 is anchored at world origin, whatever parser passed.
+
+Verified by driven check: the default demo, saved through the host and loaded again, brings back
+each anchor and coefficient bit for bit. Verified by watching: the seeds arrive over 0.480 s, and
+the sixteen of the demo over 1.84 s in the browser. Verified by `suites.nim`: the on-disk bytes of a
+known float. Assumed: the big-endian host path, which is never exercised (see Known limitations).
 
 ## Demo: the solar neighbourhood
 
@@ -3460,6 +3586,7 @@ stands nine thousand opening radii out, and a frame that held it shows one dot.
   of flipped sign fails for every moon;
 - every body at its phase on its ring against a closed form, which a backward flat ring fails;
 - every neighbour planet at its real axis at the height of its star;
+- every object of a system stored about its sun, and read about Sol as built there;
 - every planet without an axis absent, 49 counted from the table;
 - the radius of every body the conversion of its kilometres;
 - no point a hub, with lines and planes through any point at 6 or fewer;
@@ -4130,8 +4257,11 @@ passing proves that the runner carries that library. Assumed: nothing about the 
 - The planet inclinations, ring phases and neighbour planes of the demo are stated simplifications.
 - A star picked far out moves a few pixels off the middle as the view orbits. At 4.7 million
   units a double steps by 0.39% of the 2.4e-7 units that the pick comes in to (see Framing).
-- A double steps by 17 to 35 m near HD 222237 b. A metre pair there is stored as one point (see
-  Classification at any scale).
+- Storage holds a metre pair near HD 222237 b, but every reader of the scene still reads about world
+  origin. There a double steps by 17 to 35 m, so the camera, picking and drawing still see one point
+  (see Anchored storage).
+- An edit through the panel anchors its object at world origin, since the panel shows coefficients
+  about it. A far object that the reader edits keeps only the precision of those coefficients.
 - A line drawn with the camera inside the body that it frames stands a few pixels off the point
   that it joins. The error is 0.4 px at an orbit distance of 0.0001, and 3.2 px at 0.00001.
   Float32 holds about 0.06 of a unit at 530,000 units, and the record stores the vanishing point
