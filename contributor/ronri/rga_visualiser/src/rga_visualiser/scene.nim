@@ -527,9 +527,13 @@ func formatMultivector*(m: Multivector, storage: var openArray[char], cursor: va
   ##   Magnitudes stay project's four significant digits.
   ##   Appends from `cursor` rather than returning `string`, so redrawing every visible
   ##   object's coefficients every frame never touches heap.
+  ##   Term prints where it stands over billionth of largest, as `objects.kindOf` reads it.
+  ##     Never against library's absolute tolerance, as `$` judges: line metre long one
+  ##     unit out carries coefficients near 1e-12, which that prints as zero.
+  let floor = TOLERANCE_ABS * m.coefficientLargest
   var has_written = false
   for b in Basis:
-    if abs(m[b]) <= TOLERANCE_ABS: continue
+    if abs(m[b]) <= floor: continue
     if m[b] < 0: appendChars(storage, cursor, " - ")
     elif has_written: appendChars(storage, cursor, " + ")
     appendMagnitude(storage, cursor, abs(m[b]))
