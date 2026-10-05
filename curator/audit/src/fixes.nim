@@ -8,6 +8,12 @@
 ##     written and every other kind passes through. Checks read every kind still; finding in
 ##     Markdown, TypeScript, YAML or shell stays for hand. Each kind of Nim is dialect of
 ##     knoller: `.nim` module, `.nims` script, `.nimble` package.
+##   Needless parentheses go where parser of project's own compiler proves it (X.4): knoller's
+##     chain asks (`Fix.asked`), `provenFix` runs compiler of each pin asked once on all its
+##     sources (`answered`), holds answers by path in `Context`, and fixes again, at most
+##     `ASKS_MAX` times. Pin is that of project holding file, driver's for root file, served as
+##     `compilers.resolve` serves it, so `ronri` projects read with commit pin, whose glyphs
+##     2.2.12 lexes as names. Pin nothing serves proves nothing, and run prints why.
 ##   Fixer whose rule needs more than text of one file runs first, once, on source as given,
 ##     from what `contextOf` reads: rename of abbreviation (V.6), and to case of name's kind
 ##     (V.1, V.11), across files, planned whole or refused whole (`names.nim`, `rewrites.nim`),
@@ -34,9 +40,12 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, sequtils, sets, strutils, tables]
+import std/[options, os, sequtils, sets, strutils, tables]
 import ../../knoller/src/knoller
-import ./[checker, conversions, findings, glossary, kinds, layout, names, rewrites, scope, symbols]
+import ./[
+  checker, compilers, conversions, findings, glossary, kinds, layout, names, plan, rewrites, scope,
+  symbols, toolchain,
+]
 
 
 
@@ -48,6 +57,20 @@ type
     dead: seq[(string, string)]  ## Path and name of each export no other module names.
     answers: Table[string, Answer]  ## Semantic pass's answer for each file asked, by path.
     plans: seq[Plan]  ## Rename of each declaration coining abbreviation, planned or refused.
+    proofs: Table[string, Proofs]  ## Answers of parser of project's compiler, by path.
+
+  ProverOf* = proc (pin: string): Prover {.closure.}
+    ## Define prover of each pin: parser of compiler serving it.
+
+  Fixed* = tuple
+    ## Define what fix of entries writes and reports, and what it asks parser.
+    written: seq[Entry]  ## Entry to write, with new text.
+    fixed, refused, left, held: seq[Finding]  ## Rewrite, scope finding, finding left, fence.
+    asked: seq[(string, string)]  ## Path and source chain asks parser, no answer held yet.
+
+
+const ASKS_MAX = 8
+  ## Rounds of asking parser at most, as knoller's command line takes (`command.nim`).
 
 
 func dialectOf(kind: Kind): Dialect =
@@ -214,7 +237,7 @@ func contextOf*(
 
 func fixSource(
   path, source: string; kind: Kind; fence: Fence; context: Context
-): tuple[source: string, fixed, left: seq[Finding]] =
+): tuple[source: string, fixed, left: seq[Finding], asked: seq[string]] =
   ## Write edits semantic pass and tree settle, off fenced lines, then fix rest by knoller
   ##   (`formatted`); none of those edits moves line, so every report names line of source as
   ##   given. Source knoller cannot settle keeps those edits alone, with finding left, since
@@ -243,19 +266,22 @@ func fixSource(
       result.fixed.add step.fixed
 
   # Run chain of knoller's fixers until source settles; unsettled source keeps edits above.
-  let fix = formatted(path, base, kind.dialectOf)
+  let fix = formatted(path, base, kind.dialectOf, context.proofs.getOrDefault(path))
   result.source = fix.source
+  result.asked = fix.asked
   result.fixed.add fix.fixed.findingsOf
   result.left = fix.left.findingsOf
 
 
 func fixEntries*(
   branch: string, entries: openArray[Entry], locked: openArray[string] = [], context = Context()
-): tuple[written: seq[Entry], fixed, refused, left, held: seq[Finding]] =
+): Fixed =
   ## Fix each entry: entries to write, one report per rewrite, scope findings, files left as
   ##   written with reason (nimble file `locked` names, fence fix cannot read), and one warning
   ##   for each fence, which keeps its lines as written, naming each rule broken among them
-  ##   (`heldOf`). `context` carries what tree tells fixers across modules (`contextOf`).
+  ##   (`heldOf`). `context` carries what tree tells fixers across modules (`contextOf`), and
+  ##   answers of parser; each source chain asks and no answer holds is in `asked`, source as
+  ##   given too where fence holds lines, since its warning reads it.
   ##   Where any path to write lies outside branch scope, nothing is written or reported fixed.
   for e in entries:
     if e.kind.isNone or not e.kind.get.rule.has_guide: continue
@@ -270,7 +296,10 @@ func fixEntries*(
     if fence.fault >= 0:
       result.left.add faultOf(e.path, fence).findingsOf
       continue
-    result.held.add heldOf(e.path, e.content, e.kind.get.dialectOf).findingsOf
+    let proofs = context.proofs.getOrDefault(e.path)
+    result.held.add heldOf(e.path, e.content, e.kind.get.dialectOf, proofs).findingsOf
+    if fence.lines.len > 0:
+      for source in e.content.questionsOf(proofs): result.asked.add (e.path, source)
     for plan in context.plans:
       if plan.rename.path != e.path or plan.refusal.len == 0: continue
       result.left.add finding(
@@ -296,6 +325,8 @@ func fixEntries*(
           "got `" & context.answers[e.path].reason & "`.",
       )
     let fix = fixSource(e.path, e.content, e.kind.get, fence, context)
+    for source in fix.asked:
+      if (e.path, source) notin result.asked: result.asked.add (e.path, source)
     result.left.add fix.left
     if fix.source == e.content: continue
     result.written.add Entry(path: e.path, kind: e.kind, content: fix.source)
@@ -305,3 +336,81 @@ func fixEntries*(
   if result.refused.len > 0:
     result.written.setLen(0)
     result.fixed.setLen(0)
+
+
+func pinFor(tree: Tree, path: string): string =
+  ## Read pin of project holding path, driver's for file at root; empty where none is pinned.
+  let directory = path.split('/').projectDirectory
+  tree.pinOf(if directory.len == 0: DRIVER_DIRECTORY else: directory).get("")
+
+
+proc answered*(
+  context: var Context; tree: Tree; asked: openArray[(string, string)]; provers: ProverOf
+): seq[string] =
+  ## Ask parser of each pin what `asked` holds and no answer holds yet, one run for each pin on
+  ##   all its sources, and hold answers by path; return why each run proved nothing, empty
+  ##   where all answered. Path of no pin is answered none, with reason.
+  var
+    pins: seq[string]
+    questions: seq[seq[(string, string)]]
+  for (path, source) in asked:
+    if source in context.proofs.getOrDefault(path).answers: continue
+    let pin = tree.pinFor(path)
+    var k = pins.find(pin)
+    if k < 0:
+      pins.add pin
+      questions.add @[]
+      k = pins.high
+    if (path, source) notin questions[k]: questions[k].add (path, source)
+  for k, pin in pins:
+    let
+      sources = questions[k].mapIt(it[1]).deduplicate
+      proving =
+        if pin.len == 0:
+          Proving(
+            answers: newSeq[seq[int]](sources.len),
+            failure: "Parser proved no removal, since project pins no compiler; got `" &
+              questions[k][0][0] & "`.",
+          )
+        else: provers(pin)(sources)
+    for (path, source) in questions[k]:
+      context.proofs.mgetOrPut(path, Proofs()).answers[source] =
+        proving.answers[sources.find(source)]
+    if proving.failure.len > 0 and proving.failure notin result: result.add proving.failure
+
+
+proc provenFix*(
+  branch: string;
+  tree: Tree;
+  entries: openArray[Entry];
+  locked: openArray[string];
+  context: Context;
+  provers: ProverOf,
+): tuple[fix: Fixed, failures: seq[string]] =
+  ## Fix entries as `fixEntries` does, ask parser of each pin what fix asked, and fix again, at
+  ##   most `ASKS_MAX` times; each run that proved nothing gives one failure, for warning, led
+  ##   by rule id: `needless-parentheses: <message>`.
+  var known = context
+  result.fix = fixEntries(branch, entries, locked, known)
+  for ask in 1 .. ASKS_MAX:
+    if result.fix.asked.len == 0: break
+    for failure in known.answered(tree, result.fix.asked, provers):
+      let line = Rule.NeedlessParentheses.id & ": " & failure
+      if line notin result.failures: result.failures.add line
+    result.fix = fixEntries(branch, entries, locked, known)
+
+
+proc pinProvers*(): ProverOf =
+  ## Build prover of each pin: parser of compiler serving it, resolved once for each pin as
+  ##   `compilers.resolve` does; pin nothing serves proves nothing, with reason.
+  let
+    running = runningCompiler()
+    cache = cacheRoot(getEnv(CACHE_KEY))
+  var bins = initTable[string, Option[string]]()
+  result = proc (pin: string): Prover =
+    if pin notin bins: bins[pin] = resolve(pin, running, cache)
+    let bin = bins[pin]
+    if bin.isSome: return compilerProver(if bin.get.len == 0: NIM else: bin.get / NIM)
+    let failure = "Parser proved no removal, since no compiler serves pin; got `" & pin & "`."
+    result = proc (sources: seq[string]): Proving =
+      Proving(answers: newSeq[seq[int]](sources.len), failure: failure)

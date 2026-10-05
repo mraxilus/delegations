@@ -447,6 +447,8 @@ proc run(options: Options): int =
     #   Each fence prints as warning naming each rule broken inside it, so lines no fixer reads
     #   stay in view; exit code ignores it.
     #   Semantic pass runs first, on files holding candidate text cannot settle (`symbols.nim`).
+    #   Parser of each project's pin proves each needless group (`fixes.provenFix`); run that
+    #   proved nothing prints one warning saying why.
     if not options.isReadAll({Root, Branch, Base, All, Recent, DryRun}, has_project = true):
       return options.refused
     let
@@ -461,14 +463,18 @@ proc run(options: Options): int =
     let
       locked = tree.lockedNimbles
       answers = resolve(options.root, tree, semanticQueries(tree, entries, locked))
-      (written, fixed, refused, left, held) = fixEntries(
+      (fix, failures) = provenFix(
         options.branchOrDefault,
+        tree,
         entries,
         locked,
         tree.contextOf(entries, answers, locked),
+        pinProvers(),
       )
+      (written, fixed, refused, left, held, _) = fix
     for f in left.sorted: echo f.render
     for f in held.sorted: echo "warning: " & f.render
+    for failure in failures: echo "warning: " & failure
     if refused.len > 0:
       refused.report
       echo "Nothing written; fix writes only inside branch scope."
