@@ -6,7 +6,7 @@ rules of the drawing, the frame picture and the turn sign.
 
 **A check holds a drawing to a rule as it is written.** It does not show that a couple can dance
 what the drawing shows. The frame states to trust are reference cells that are kept, modelled
-and confirmed. `CONFIRMED` in `review_page.nim` holds none yet.
+and confirmed. `CONFIRMED` in `review_page.nim` names each confirmed cell.
 
 ## Pages
 
