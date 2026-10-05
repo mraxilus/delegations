@@ -24,11 +24,21 @@ knoller [--check] [--nim:path] path...
 - Knoller passes over a nimble file whose copy `atlas.lock` holds, because a rewrite would leave
   that copy stale.
 - A group of needless parentheses goes only where the parser of the compiler reads the same tree
-  without it. `--nim` names that compiler, and `nim` on `PATH` is the default. Name the compiler
-  that the code is pinned to: the `ronri` projects need their commit pin, because 2.2.12 lexes
-  their glyph operators as names. `koch fix` passes the pin of each project.
-- Where the compiler does not run, knoller removes no parentheses and prints one warning that
-  says why.
+  without it. Knoller takes that compiler for each file in this order:
+  1. the compiler that `--nim` names;
+  2. else the compiler of the pin in the nearest nimble file at or above the directory of the
+     file, written `requires "nim == <pin>"` or `requires "nim#<commit>"`;
+  3. else `nim` on `PATH`.
+- So the `ronri` projects take their commit pin with no option. That matters, because 2.2.12 lexes
+  their glyph operators as names. `koch fix` passes the pin of each project in the same way.
+- Knoller takes the compiler of a pin from `PATH` where that one serves it, else from
+  `~/.cache/knoller/nim/<pin>/`. Else it fetches a release, or builds a commit, into that cache.
+  `$KNOLLER_NIM_DIR` moves the cache, for koch too. The first run on a new pin pays the fetch, in
+  seconds, or the build, in minutes, once. What a fetch prints goes to stderr, so the output below
+  is all that stdout holds.
+- Where no compiler answers, knoller removes no parentheses in those files and prints one warning
+  that says why. A pin that no compiler serves gives that warning, and so does a directory that
+  holds more than one nimble file. Knoller never takes another compiler in silence.
 - Knoller has no style option. A fence, from a line `#!fix off` to a line `#!fix on`, keeps its
   lines as written. Each run prints one warning for each fence, which names each rule that breaks
   inside it. So you always see what the fence keeps, and knoller writes none of it.
@@ -114,7 +124,9 @@ nim r koch test curator/knoller                   # this project alone: every su
 nim r koch check                                  # every check a pull request runs
 ```
 
-This needs the compiler that the project pins in `knoller.nimble`, and git.
+This needs the compiler that the project pins in `knoller.nimble`, and git. To serve the pin of
+another project, knoller may also need `curl`, `tar` and `sha256sum`, and a C compiler to build a
+commit. `koch list-packages` names the packages that hold the first three.
 
 ## Published pages
 
@@ -122,5 +134,6 @@ None. Knoller publishes no page.
 
 ## Status
 
-The fixers that read one file alone live here, with the command line. A test that also reads a
-check of `audit` stays in the suites of `audit`. Unreviewed by a human.
+The fixers that read one file alone live here, with the command line, and the compiler that
+serves each pin. A test that also reads a check of `audit` stays in the suites of `audit`.
+Unreviewed by a human.

@@ -10,8 +10,8 @@
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: a curator project, from the brief of the Architect. It holds the fixers of `koch fix`
-that read the text of one file and nothing else. The fixers that ask the compiler stay in
-`curator/audit`. There is no vendored source.
+that read the text of one file and nothing else, and the compiler that serves each pin. The fixers
+that ask the compiler stay in `curator/audit`. There is no vendored source.
 
 ## Package
 
@@ -112,8 +112,9 @@ left, or where a change is due under `--check`.
 
 - No option sets a style. The rules are constants, and a fence is the only way to keep a layout.
 - `--nim` names the compiler whose parser proves each group of needless parentheses
-  (`## Content fixes`). Where it does not run, one line `needless-parentheses warning:` comes
-  before the count, and the exit code stays.
+  (`## Content fixes`). Without it, each file takes the compiler of the pin above it, else `nim`
+  on `PATH` (`## Compilers`). Where no compiler answers, one line `needless-parentheses warning:`
+  comes before the count, and the exit code stays.
 - A nimble file whose copy `atlas.lock` holds is passed over, because a rewrite would leave the
   copy stale.
 - The module is `command.nim`, because a path spells its words in full (Article V.9), and no
@@ -141,6 +142,106 @@ left, or where a change is due under `--check`.
   parent each gave 73 changes, with the same lines.
 - Verified by hand, 2026-10-04: the built binary fixed a scratch file, and a second run wrote
   nothing. A run without a path, and a run with an unknown option, exited 2.
+
+## Compilers
+
+**The command takes one compiler for each file, in a fixed order.** The compiler that `--nim`
+names comes first. Else knoller takes the compiler of the pin in the nearest nimble file at or
+above the directory of the file. Else it takes `nim` on `PATH`. The Architect set this order (D1
+of #548), so a run by hand on the `ronri` projects takes their commit pin with no option.
+
+- A pin is `requires "nim == <pin>"`, or `requires "nim#<commit>"` with a full commit, as nimble
+  writes a commit. A range, a branch, a tag and a short commit name no pin. A nimble file that
+  holds one of them gives `nim` on `PATH`. Verified by `suites/test_pins.nim`.
+- The nearest nimble file decides. A package inside another package, with no pin of its own,
+  takes `nim` on `PATH`, and never the pin of the outer package.
+- The files of one compiler form one batch. Each batch asks its own prover and holds its own
+  answers, because two compilers can read one source in two ways. So the files under two pins
+  get one prover for each pin.
+- A pin that no compiler serves proves nothing. The rule removes no group in its files, and the
+  run prints one warning that names the pin. No other compiler stands in (`GUIDE.md`,
+  Toolchain).
+- A directory that holds more than one nimble file has no pin that knoller can trust, and
+  nimble itself refuses such a directory. Its files prove nothing, and the run prints one
+  warning that names the directory.
+- A warning changes no exit code.
+- A pin resolves when the first file under it asks the parser. So a pin that no file asks about
+  costs no fetch.
+- Verified by `suites/test_command.nim`. `--nim` wins over a pin, and a pin wins over `PATH`. A
+  file with no nimble file above, or under a nimble file of no pin, takes `PATH`. An unserved pin
+  and a directory of two nimble files each warn once, and remove nothing. Two pins get two
+  provers, and each is asked about the files of its own pin alone.
+- In that suite the parser is real for `--nim` and for `PATH`. It is a stub for a pin, because
+  to serve a pin can fetch a compiler.
+
+**Knoller resolves each pin to a compiler, and `curator/audit` imports that resolution.** It
+takes `PATH` where that already serves, then the cache, then a fetch. A release arrives as a
+tarball. A commit comes from a clone of `nim-lang/Nim` and a run of `sh build_all.sh`, which is
+the recipe of `check.yml`. A platform that nim-lang.org publishes no build for takes the same
+recipe.
+
+- Resolution lives in knoller, because the command needs it, and the audit imports knoller and
+  never the reverse (D3 of #548). One copy serves koch, the semantic pass of audit and the
+  command.
+- `Toolchains` holds the compiler of each pin asked so far, and resolves each pin once. It holds
+  a failure too, so a pin that nothing serves costs one try.
+- The cache is `~/.cache/knoller/nim/<pin>`, and `$KNOLLER_NIM_DIR` moves it (D4 of #548). Koch,
+  knoller and `.claude/hooks.sh` all use it, so a machine holds one toolchain for each pin. It
+  sits outside the checkout, because the audit reads untracked files.
+- Everything that resolution prints goes to stderr: its own line, and the output of curl, tar,
+  git and the build, line by line. So the stdout of knoller holds its sorted reports alone.
+- Verified by `suites/test_compilers.nim`. Stub tools that print on both streams leave stdout
+  empty. `PATH` serves its own version, and the cache serves next with no fetch. A failure is
+  held, and the prover of a pin runs the parser of the compiler that serves it.
+- **A half-built toolchain lies.** A probe of `bin/nim` before the `boot` step of the `koch` of
+  Nim finishes returns the bootstrap binary of csources. That binary answers `--version` with an
+  unrelated commit. So a build completes beside its destination, and moves in only when it is
+  done, as a tarball does.
+- Rejected: a directory that a delegate populates by hand, which leaves the defect for anyone
+  who has not. Rejected: the layout of `choosenim`, a second convention that cannot serve a
+  commit pin at all.
+- Cost: the first run on a pin that the machine lacks fetches a release in seconds, or builds a
+  commit in minutes, once. A fetched release takes about 140 MB, and a built commit about
+  2.4 GB, measured below. Nothing prunes them.
+- On CI, the installed compiler of each job serves its pin, so resolution stops at `PATH`.
+
+**The fetched tarball is checked against the digest published beside it.**
+`<tarball url>.sha256` is exactly the output of `sha256sum`, for every release checked.
+`fetchRelease` fetches it, and refuses a tarball whose bytes differ.
+
+- What it defends against, stated rather than overclaimed: the digest comes from the same host
+  over the same TLS as the tarball. So it catches a truncated, mirrored or swapped file, and
+  **not a compromised nim-lang.org**. A signature would answer that, and none is published.
+  `.asc` beside these tarballs is a 404, read rather than assumed.
+- Text that is not a digest reads as *nothing*, rather than as a digest that cannot match. So
+  an error document or an empty answer reports "none published" instead of "mismatch". The two
+  are different failures, and say different things to whoever reads the line.
+- Verified by a break of it, and not by a fetch that happened to pass. `suites/test_compilers.nim`
+  digests a temporary file, changes one byte, and checks that the digest moves. The parse is
+  mutation-tested: drop its hex validation and the suite reddens.
+- Honest limit of that test: the exit-code check of `sha256sum` is belt-and-braces, because the
+  parse already rejects the error text, so no test distinguishes it. It is kept for saying what
+  it means.
+- Verified by hand with koch, 2026-09-10: `2.2.2`, which nothing on the machine served, fetched,
+  digest-checked and unpacked.
+
+**The command takes the commit pin of `pga_benchmark` with no option.** Verified by hand,
+2026-10-05, with the binary built at `db2f90a`. It ran on a copy of `pga_benchmark` in a new git
+repository, with a private cache.
+
+- With no `--nim`, knoller took the pin `27763495b` from `pga_benchmark.nimble`. The cache held
+  no compiler for it, so knoller built one, and that first run took 603 s. A second run took
+  8.1 s, and a run with `--nim` naming the same compiler took 8.4 s.
+- The output of each run without `--nim` equals the output with `--nim`, byte for byte. Each
+  gives one group to fix, `(⊛m)` at line 35 of `proposals/03-partner-sign/laws.nim`. The build
+  printed 717 lines, all on stderr, and stdout held the report alone.
+- On a directory with no nimble file, knoller took `nim` on `PATH`. Its output equals the output
+  with `--nim` naming that compiler, byte for byte.
+- With the pin `0.0.99`, which no release serves, knoller printed one warning that names the pin,
+  and removed nothing. The exit code was 0. The fetch printed its line and the 404 of curl, on
+  stderr alone.
+- Cost, measured on that run: the built toolchain takes 2.4 GB, and its bootstrap tree
+  `csources_v3` takes 2.0 GB of that. The release 2.2.12, fetched, takes 140 MB.
 
 ## Tests
 
@@ -560,20 +661,25 @@ answers by source, and fixes again each file that asked. An answer never changes
 file that asked nothing gives the same result again. The command line asks at most eight times.
 
 - `koch fix` does the same for each pin (`curator/audit`).
+- The Architect kept this loop (D2 of #548), with a test that it equals a fix of every file each
+  round. Verified by `suites/test_command.nim`: the loop as it was before, which fixes every file
+  again, runs as a reference. On several files, where some ask over two rounds, one asks through
+  its fence and some ask nothing, both give the same outcome. This holds for a stub parser, for a
+  parser that fails, and for a parser that fails from its second run.
 - The prover is a proc value (`Prover`), so the suites stub it (`suites/stubs.nim`). The stub
   answers each case as the commit pin of the `ronri` projects answered it, 2026-10-05.
   `suites/test_proofs.nim` runs the compiler that builds it, 2.2.12 in the job of knoller, and
   holds the verdicts of the ASCII cases to the real parser.
 - The compiler is the caller's. `koch fix` passes the pin of each project. The command line takes
-  `--nim:path`, with `nim` on `PATH` as the default.
+  `--nim:path`, else the pin of the nearest nimble file, else `nim` on `PATH` (`## Compilers`).
 - Where the compiler does not run, the rule removes nothing, and the run prints one warning that
   says why. The exit code stays. Verified by `suites/test_command.nim`.
 - Rejected: the parser of the compiler linked into knoller. The source of the commit pin does not
   build under the standard library of 2.2.12 (`llstream.nim`: `readRawData`). Knoller builds with
   2.2.12, and the parser of 2.2.12 lexes the glyph operators of the commit pin as names.
 - Cost: a wrong compiler can prove what the right one refuses. 2.2.12 reads `■m` as one name, so
-  it proves the group of `(■m).x + y`, and the commit pin reads `■m.x` as `■(m.x)`. So a run by
-  hand on the `ronri` projects needs `--nim` with their pin. Verified by `suites/test_proofs.nim`.
+  it proves the group of `(■m).x + y`, and the commit pin reads `■m.x` as `■(m.x)`. So `koch fix`
+  and the command line each take the pin of the project. Verified by `suites/test_proofs.nim`.
 - Cost: each round of asking compiles the probe once, about 0.6 s to 0.8 s on this container.
   Measured 2026-10-05 with `knoller --check`, this head against `main`: `rga_visualiser` took
   6.0 s against 5.5 s, and `pga_benchmark` 3.1 s against 2.0 s. `dance_ontology` took 5.3 s
@@ -785,10 +891,6 @@ whitespace-split, punctuation-stripped and lowercased, after the backtick spans 
   "Tests are paramount").
 
 ## Open questions
-
-- The command line proves with `nim` on `PATH` unless `--nim` names another compiler. On the
-  `ronri` projects, 2.2.12 can prove a group that their pin reads otherwise, as `(■m).x`. Knoller
-  could read the pin from the nimble file of the project instead, as `koch fix` does.
 
 - Install by git URL needs the `?subdir=curator/knoller` form of nimble. It is not verified with
   the nimble that 2.2.12 ships.
