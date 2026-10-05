@@ -661,9 +661,10 @@ file that asked nothing gives the same result again. The command line asks at mo
 
 - `koch fix` does the same for each pin (`curator/audit`).
 - A fix of every file each round gives the same outcome (D2 of #548). Verified by
-  `suites/test_command.nim`, where a reference loop fixes every file again. On several files, where some ask over two rounds, one asks through
-  its fence and some ask nothing, both give the same outcome. This holds for a stub parser, for a
-  parser that fails, and for a parser that fails from its second run.
+  `suites/test_command.nim`, where a reference loop fixes every file again. On several files,
+  where some ask over two rounds, one asks through its fence and some ask nothing, both give the
+  same outcome. This holds for a stub parser, for a parser that fails, and for a parser that fails
+  from its second run.
 - The prover is a proc value (`Prover`), so the suites stub it (`suites/stubs.nim`). The stub
   answers each case as the commit pin of the `ronri` projects answered it, 2026-10-05.
   `suites/test_proofs.nim` runs the compiler that builds it, 2.2.12 in the job of knoller, and
