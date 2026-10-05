@@ -19,5 +19,5 @@ metric, where the library puts the horizon.
     # Expectation independent of operator: attitude of point is its weight, in scalar slot.
     for b, 𝐦 in enumerateBasis():
       if b.grade == Grade(1):
-        check (⊖𝐦)[Basis.scalar] =~ 𝐦[Basis(if IS_RIGID: DIMENSIONS else: DIMENSIONS - 1)]
+        check (⊖𝐦)[Basis.scalar] =~ 𝐦[Basis(if IS_RIGID: DIMENSIONS else: DIMENSIONS-1)]
 ```

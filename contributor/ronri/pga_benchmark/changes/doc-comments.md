@@ -371,7 +371,7 @@ type  ## Define type definitions for algebraic distinctions.
 
 ```nim
   docs = "Multiply multivectors through right inner product bulk expansion, i.e. 𝐦 ∧ 𝐧★." &
-    "\n  Built from dual-and-exterior table, not from transwedge tables.",
+      "\n  Built from dual-and-exterior table, not from transwedge tables.",
 ```
 
 ## Edit `tests/suites.nim`

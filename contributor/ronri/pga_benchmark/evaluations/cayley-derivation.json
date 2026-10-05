@@ -3,7 +3,7 @@
   "kind": "evaluation",
   "name": "cayley-derivation",
   "path": "proposals/01-cayley-derivation",
-  "edits_digest": "a8f6fad21296c903",
+  "edits_digest": "58840390dbf54f95",
   "taken": {
     "date": "2026-10-04",
     "machine": "linux amd64, 4 cores",
@@ -5995,7 +5995,7 @@
       "at_most": 0.75,
       "passed": true,
       "detail": [
-        "rga6d peak 234.9 → 170.7 MiB, 6.18 → 4.36 s, ×0.73"
+        "rga6d peak 234.9 → 170.7 MiB, 10.06 → 6.76 s, ×0.73"
       ]
     }
   ]

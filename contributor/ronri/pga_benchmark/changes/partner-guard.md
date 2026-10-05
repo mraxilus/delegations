@@ -18,6 +18,6 @@ with it.
     ##   Requires single-grade multivector; mixed grade has no defined partner.
     let grade_option = m.grade
     doAssert grade_option.isSome, "partner requires single-grade multivector"
-    let sign = float(-1 ^ (int(grade_option.get) + 1))
-    (sign * ⊡(☆m)) ∨ (⊟m)
+    let sign = float(-1^(int(grade_option.get) + 1))
+    (sign * ⊡(☆m)) ∨ ⊟m
 ```

@@ -3,7 +3,7 @@
   "kind": "evaluation",
   "name": "partner-guard",
   "path": "changes/partner-guard.md",
-  "edits_digest": "37379396f62226b1",
+  "edits_digest": "41c915c0b11aff54",
   "taken": {
     "date": "2026-10-05",
     "machine": "linux amd64, 4 cores",

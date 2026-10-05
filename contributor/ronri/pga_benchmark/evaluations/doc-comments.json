@@ -3,7 +3,7 @@
   "kind": "evaluation",
   "name": "doc-comments",
   "path": "changes/doc-comments.md",
-  "edits_digest": "97d92e9a3d025af5",
+  "edits_digest": "bc91cd878dbd139e",
   "taken": {
     "date": "2026-10-04",
     "machine": "linux amd64, 4 cores",

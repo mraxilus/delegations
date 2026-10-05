@@ -15,7 +15,7 @@ their wedge plus their dot.
   test "Equation 3.30: reverse is involution":
     for 𝐦, _, _ in randMultivectors():
       check ~(~𝐦) =~ 𝐦
-      check ~∘(~∘ 𝐦) =~ 𝐦
+      check ~∘(~∘𝐦) =~ 𝐦
 
   test "Equation 3.14: geometric product contains wedge and dot":
     for b, c, 𝐮, 𝐯 in enumerateBasisPair():
