@@ -1131,10 +1131,10 @@ backend is refused as `can have side effects`. It compiled before the mark. Assu
 
 ## Scene storage
 
-`Scene` (`scene.nim`) is a fixed-capacity arena, held as a structure of arrays. The arrays are
-anchors, local coefficients and geometries about world origin (see Anchored storage). Beside them
-stand labels, inks, visibility, liveness, birth stamps, creation ordinals, placing stamps, anchor
-overrides and radii.
+`Scene` (`scene.nim`) is a fixed-capacity arena, held as a structure of arrays. `SceneStored` holds
+every array that the scene stores: anchors, local coefficients, labels, inks, visibility, liveness,
+birth stamps, creation ordinals, placing stamps, anchor overrides and radii. `Scene` holds it beside
+the geometries about world origin, which it derives (see Anchored storage).
 
 A handle addresses each object. `addObject` assigns that handle once, and nothing moves it after.
 Free handles thread onto an intrusive singly-linked free list, so an add and a remove are both O(1).
@@ -1207,10 +1207,14 @@ either fault drove it 11 times. A count over the largest demo on the C backend g
 
 ## Anchored storage
 
-**Each object is stored about an exact anchor of its own.** `Scene` holds three arrays for the
-geometry of each handle. `anchors` holds a place in doubles, which nothing computes again once it is
-chosen. `locals` holds the coefficients of the object about that anchor. `geometries` holds the
-object about world origin, where Sol stands.
+**Each object is stored about an exact anchor of its own.** `SceneStored` holds the anchor of each
+handle, a place in doubles that nothing computes again once it is chosen. It holds the x, y and z of
+it in three arrays of doubles. `locals` holds the coefficients of the object about that anchor.
+`Scene` holds `geometries` beside them, the object about world origin, where Sol stands.
+
+The anchor is three arrays and not one array of `Position`. On JS each `Position` is an object of
+its own, with each double boxed. With an array of them, the largest demo and a full timeline held
+160.5 MiB on Node 22, against 146.5 MiB.
 
 **The geometry about world origin is a cache, and storage never reads it back.** Each writer
 derives it from the anchor and the local coefficients, through the slide of the library
@@ -1244,18 +1248,20 @@ once, comes back as one point or tens of metres apart.
 - An anchor override is held about the anchor of its object. A reader takes it about world origin by
   a Euclidean offset (see Creation-anchored plane centring).
 
-A step of the undo timeline holds the whole scene, so each anchor and its local coefficients ride
-along. A file of version 8 holds them too (see Save and load format).
+**A step of the undo timeline holds `SceneStored`, and never the cache.** A restore derives the
+geometry again only for each handle whose anchor or local coefficients differ from the scene it
+replaces. Every other handle keeps its entry. Each writer of storage derives as it writes, so that
+entry is what the same storage derives, to the bit. An undo across an edit of one object slides that
+one object. A file of version 8 holds anchors too (see Save and load format).
 
-**Cost: memory.** The anchors and the local coefficients add 152 bytes for each handle, in the live
-scene and in each step of the undo timeline. On the release compiler, `sizeof(Scene)` reads
-2,011,016 bytes against 1,244,936, and `sizeof(History)` 64,354,840 against 39,840,280. On Node 22,
-the largest demo with a full timeline holds 218.3 MiB of heap and array buffers, against 140.9 MiB.
-Measured on 2026-10-05 against `df50ec68`, after a collection, by a probe that is not kept.
+Rejected: a step that holds the whole scene with its cache. At the largest demo with a full timeline
+it held 218.3 MiB on Node 22, against 146.5 MiB, and `sizeof(History)` read 64,354,840 bytes.
+Measured on 2026-10-05 against `09f7fd51`, under the lock of the gate.
 
-A step could hold storage alone and derive the cache again on each restore. That saves the 128 bytes
-of the cache for each handle of each step, at a slide for each object that a restore changes. No
-step does that.
+**Cost: memory.** The anchors and the local coefficients add 152 bytes for each handle of the live
+scene. A step holds the local coefficients in place of the cache, so it adds the 24 bytes of the
+anchor alone. The table below gives the measured sizes. The heap on JS is heap used plus array
+buffers, read after a collection.
 
 **Cost: time.** Each edit of an object anchored away from world origin costs a slide. So does each
 such object that a build or a load adds.
@@ -1275,6 +1281,14 @@ about HD 222237 b. A C or JS cell is the range of five medians, one for each pai
 | Read every object about another centre, release JS | none | 151 to 167 ms |
 | Tessellation, debug desktop | 14.95 to 15.03 ms | 15.13 to 15.42 ms |
 | Frame at p50, debug desktop | 89.55 to 90.02 ms | 89.54 to 90.39 ms |
+| One undo across an edit of one far object, release JS | 3.20 to 3.63 ms | 3.40 to 5.28 ms |
+| `sizeof(Scene)`, release C | 1,244,936 bytes | 2,011,016 bytes |
+| `sizeof(History)`, release C | 39,840,280 bytes | 43,711,000 bytes |
+| Largest demo with a full timeline, Node 22 | 140.9 MiB | 146.5 MiB |
+
+The rows of undo and memory come from `556679f9`, in pairs against `df50ec68`. Five more pairs of
+the rows above them read the same within their spread. Those pairs ran this layout of storage
+against the step that held the whole scene.
 
 Placement reads the cache, so it costs what it did. The frame of the desktop overlaps too. Its
 tessellation reads 0.1 to 0.4 ms more, where it reads the anchor override of each object. Each
@@ -1293,7 +1307,8 @@ JS that is about 160 ms, and to place every object again adds about 40 ms.
 - a creation anchor of operands anchored apart stands where it does about world origin;
 - an edit that changes geometry anchors it at world origin, and one that does not keeps it;
 - every object of a system is stored about its sun, and reads about Sol as built there;
-- a step either way restores each object's anchor and its coefficients, bit for bit.
+- a step either way restores each object's anchor and its coefficients, bit for bit;
+- an undo and a redo derive geometry for each object the step changed, and no other.
 
 ## Memory and allocation
 
@@ -1329,18 +1344,18 @@ scratch until the fifth one overflows.
 
 **The undo timeline is the largest reservation that the binary makes.** A `Scene` at 5040 handles is
 1.92 MiB as a C struct, which `sizeof` reports as 2,011,016 bytes on the release compiler. A `Step`
-is a `Scene` beside a `Camera` of twelve floats, eight of them the motor, and `CAPACITY_HISTORY` is
-32 of them. `sizeof(History)` reports 61.4 MiB, which is 64,354,840 bytes, against 6.2 MiB for both
-mesh sets. Anchored storage adds 152 bytes for each handle of each scene (see Anchored storage).
+holds what the scene stores, 1.30 MiB without its cache of geometry, beside a `CameraStance`.
+`CAPACITY_HISTORY` is 32 of them. `sizeof(History)` reports 41.7 MiB, which is 43,711,000 bytes,
+against 6.2 MiB for both mesh sets (see Anchored storage).
 
 The placing side of every handle is held beside them on both front-ends, so the local scale may be
 read without placing twice. It is 128 bytes for each of 5040 handles, which is 645,120 bytes.
 
-On JS the largest demo with a full timeline holds 218.3 MiB of heap and array buffers on Node 22.
-No live page has measured it. The depth stays at 32: an edit costs nothing for each step (see
-Undo/redo), so what remains is a flat reservation. The lever is linear, at about 1.92 MiB of address
-space for each step. `BYTES_MEMORY_TOTAL` counts it, because a figure that leaves out its
-own largest term is worse than no figure.
+On JS the largest demo with a full timeline holds 146.5 MiB of heap and array buffers on Node 22. No
+live page has measured it. The depth stays at 32: an edit costs nothing for each step (see
+Undo/redo), so what remains is a flat reservation. The lever is linear, at about 1.30 MiB of address
+space for each step. `BYTES_MEMORY_TOTAL` counts it, because a figure that leaves out its own
+largest term is worse than no figure.
 
 The LZW dictionary of GIF is a fixed open-addressed hash table, with `CAPACITY_DICTIONARY` at 8192
 and multiplicative hashing after Knuth. It is not a third arena, because it probes at random within
@@ -3207,10 +3222,20 @@ it in one frame.
 ## Undo/redo
 
 `history.nim` is shared. It is scoped to edits of scene content: add, apply, remove, visibility,
-ink, and the `save` of an edit session. That save is the "edit committed" moment that the
-continuous widgets lack. It is one fixed array plus one cursor, and not two stacks. An entry is a
-`Step {scene, stance}`, and both are plain value types, so a record is a copy and
-`entries[cursor].scene` is exactly the live scene. `CAPACITY_HISTORY` is 32.
+ink, and the `save` of an edit session. That save is the "edit committed" moment that the continuous
+widgets lack. It is one fixed array plus one cursor, and not two stacks.
+
+An entry is a `Step {scene, stance}`, and both are plain value types, so a record is a copy.
+`entries[cursor].scene` is exactly what the live scene stores, a `SceneStored` without the cache of
+geometry. `CAPACITY_HISTORY` is 32.
+
+**A restore derives only what a step changed.** `restoreFrom` compares the anchor and the local
+coefficients of each handle, up to the higher bound of the two scenes. Where they differ, it derives
+the geometry about world origin again. Elsewhere it keeps the entry it holds.
+
+An undo or a redo across an edit of one object derives one geometry, and across a removal it derives
+none. `countDerivations` counts them for the suite. One undo across an edit of one far object at the
+largest demo takes 3.40 to 5.28 ms on release JS (see Anchored storage).
 
 **The array is a ring.** `first` names the handle that holds the oldest step, and `handleOf` is
 the one place where a timeline position becomes an index. To retire the oldest entry moves one
@@ -3218,11 +3243,14 @@ integer. To shift every later entry down is 31 whole scene copies for each edit 
 thirty-second. On the JS backend at 5,038 handles, that took 153.5 ms to toggle the visibility of
 one object, against 11.3 ms as a ring.
 
-What remains for each edit is the one copy of a `Scene` into the timeline, which is 1.92 MiB
+What remains for each edit is the one copy of a `SceneStored` into the timeline, which is 1.30 MiB
 through `nimCopy`. It is not for each frame. `initHistory` fills a timeline that the caller owns.
 Returned by value it compiles to a `nimCopy` of thirty-two whole scenes, which was 65% of the load
 of the largest demo. `record` writes the fields of a `Step` rather than assigns a literal, for the
 same reason.
+
+`scene.writeStorage` writes that copy. Rejected: a `lent` reader of the store, which on JS builds an
+empty store before it returns. An edit past capacity then read 12.4 ms, against a bound of 9.6.
 
 **The stance rides along, and an orbit is never a step of its own.** Each step records the
 `CameraStance`, the motor and the separation, that the view stood at when *that step's* edit was
@@ -3260,6 +3288,7 @@ of that button is refreshed on the low-cadence tick.
 - a step either way, which carries the stance across and leaves the field of view alone;
 - a step keeps the picks it still names, in pick order, and drops one whose handle was refilled;
 - a step either way restores each object's anchor and its coefficients, bit for bit;
+- an undo and a redo derive geometry for each object the step changed, and no other;
 - Home, which keeps the field of view.
 
 Verified end to end: `--drive-undo` and the browser drive both build, orbit away, undo, and hold
