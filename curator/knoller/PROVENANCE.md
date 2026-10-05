@@ -149,6 +149,27 @@ holds that a fixer of knoller clears what a check of audit reports, so it needs 
 test that reads knoller alone sits here. A fixture that both suites read is copied, and each copy
 names the other.
 
+**Each case that the review of the PGA library or a delegate report found stands as a regression
+test, end to end (`suites/test_regressions.nim`).** The Architect asked for this on 2026-10-05.
+Each case quotes the source as found and names where it came from. It runs through `formatted`,
+as `koch fix` runs it, and holds the exact output and a second run that writes nothing.
+
+- The cases come from the PGA library at `d9be8ae`, from `dance_ontology` (#539), from
+  `rga_visualiser` (#521), and from the rulings of #533 and #526.
+- A case keeps its domain test in the suite of its rule, which holds the rule over many inputs.
+  The regression suite holds that the case as found is fixed. Neither one alone holds both.
+- A case that 2.2.12 reads rightly asks the parser of 2.2.12, which builds the suite. A case with
+  the glyph operators of the commit pin asks the stub (`suites/stubs.nim`), since the job of
+  knoller runs 2.2.12 alone. The stub gave the verdict of the commit pin on each such case,
+  verified by hand, 2026-10-05.
+- The case of `test_mesh.nim` (#521) leaves no finding under the present rules, because spacing
+  now fixes `)*radius`. So it holds that each report on its lines prints at its line as given.
+  `suites/test_command.nim` holds a finding left at its line as given.
+- Verified by hand, 2026-10-05: the suite ran against the parent of the commit that fixed each
+  case, with a shim that proves nothing. Each case that a commit fixed failed at its parent. A
+  case that holds a bound of its rule, such as `[1 .. ^1]`, passed there.
+- Cost: the suite asks the compiler for each case with candidates, about 6 s in all.
+
 ## Tokens
 
 **`tokens.nim` keeps the rules of the lexer of the compiler.** A run of operator characters is one
