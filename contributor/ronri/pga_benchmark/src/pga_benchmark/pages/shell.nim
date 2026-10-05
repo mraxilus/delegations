@@ -22,7 +22,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[base64, strutils, tables]
+import std/[base64, json, strutils, tables]
 from std/unicode import runeAt, runeLenAt
 
 import ../[changes, markdown]
@@ -208,6 +208,13 @@ func textRatio*(ratio: float): string =
 func code*(text: string): string =
   ## Render text as inline code.
   "<code>" & escapeHtml(text) & "</code>"
+
+
+func timedAt*(taken: JsonNode): string =
+  ## Render commit figures were timed at, where their stamp moved since (`head.nim`); empty
+  ##   where they were timed at commit stamp names.
+  let commit = if taken.isNil: "" else: taken{"timed_at"}.getStr
+  if commit.len == 0: "" else: " at pga " & code(commit[0 ..< min(7, commit.len)])
 
 
 func chip*(text, kind: string): string =

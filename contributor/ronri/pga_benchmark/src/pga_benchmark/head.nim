@@ -11,15 +11,24 @@
 ##     directory of larger repository, and commit elsewhere in it changes nothing measured.
 ##   Checks are pure over values tool side reads (commits, trees, documents, digests), so
 ##     tests feed them; reading repository and network stays in driver.
+##   Carry: timed record names digest of C its timed builds emitted (`digest_c`). Where pin
+##     moves and same builds emit same C at new pin, record moves its stamp to pin and keeps its
+##     times, since same C makes same machine code on same compiler and flags; it names commit
+##     it was timed at (`timed_at`). Record taken at pin before digests existed takes digest of
+##     its builds there (Architect, 2026-10-05).
+##     Rejected: timing again at each cosmetic head, which records drift of host alone.
+##     Cost: digest taken at record's own pin after its timing names C of that later build;
+##       project code changed between them would go unseen, as stamp alone never saw it.
 ##
 ##   Cost: pin that lags head fails `head`, which `head.yml` runs daily and which keeps one
 ##     issue open until pin follows; no merge waits on it, so library moving is never red here.
 
 {.experimental: "strictFuncs".}
 
-import std/[json, strutils, tables]
+import std/[algorithm, json, strutils, tables]
 
 import ./guard
+from ./changes import digestOf
 
 
 const SHORT = 7  ## Digits of commit findings name, as `git log --oneline` prints.
@@ -75,6 +84,57 @@ func checkEvaluation*(evaluation: JsonNode; pin, digest, path: string): seq[Find
       message: "Edits changed since evaluation; run `evaluate` again; got digest `" &
           (if recorded.isNil: "" else: recorded.getStr) & "`.",
     )
+
+
+
+#[ Carry ]#
+
+func digestSources*(sources: openArray[(string, string)], pin: string): string =
+  ## Digest C of one build: every file by name, in name order, with pin's commit left out.
+  ##   Build names commit in documents it writes, so commit is text two pins' C differ by
+  ##     even where library compiles alike.
+  var sorted = @sources
+  sorted.sort
+  var text = ""
+  for (name, source) in sorted:
+    text.add name & "\0" & (if pin.len > 0: source.replace(pin, "") else: source) & "\0"
+  digestOf(text)
+
+
+func checkCarry*(recorded, digests: JsonNode; taken, pin, path, again: string): seq[Finding] =
+  ## Hold timed figures to C they were timed on: none where they may stand at pin.
+  ##   Figures taken at pin stand without digest, and carry records digest given.
+  ##   `taken` is commit figures stand at, empty where they no longer stand anywhere.
+  ##   `again` names verb that takes figures again.
+  if recorded.isNil:
+    if taken.len > 0 and taken == pin: return
+    return @[Finding(
+      path: path,
+      message: "Not current at pin, and names no digest of C it was timed on; " & again &
+          "; got `" & taken.short & "`.",
+    )]
+  if recorded != digests:
+    result.add Finding(
+      path: path,
+      message: "Builds C other than C it was timed on; " & again & "; got `" & $digests & "`.",
+    )
+
+
+func stampCarried*(taken: JsonNode, pin: string): JsonNode =
+  ## Copy stamp moved to pin, naming commit figures were timed at where it moves.
+  ##   Earlier `timed_at` stays, since figures were timed there and nowhere since.
+  result = taken.copy
+  let commit = result{"pga"}.getStr
+  if commit != pin:
+    if not result.hasKey("timed_at"): result["timed_at"] = %commit
+    result["pga"] = %pin
+
+
+func carried*(document, digests: JsonNode; pin: string): JsonNode =
+  ## Copy timed record standing at pin: its digests, and its stamp moved to pin.
+  result = document.copy
+  result["digest_c"] = digests
+  result["taken"] = stampCarried(document{"taken"}, pin)
 
 
 

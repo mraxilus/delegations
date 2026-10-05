@@ -24,6 +24,9 @@
 ##   | evaluate  | try one change or proposal at pin, `stale` ones, or `all`, and       |
 ##   |           | record what each measured as `evaluations/<name>.json`; typed        |
 ##   |           | algebras alone, or all four after `--thorough`                       |
+##   | carry     | move every timed record to pin where its builds emit C it was        |
+##   |           | timed on, keep its times, and take every other figure of each        |
+##   |           | evaluation again; finding where C differs (`head.nim`)               |
 ##   | pages     | build every page from committed files into `build/<name>.html`       |
 ##   | types     | type-check harness `tools/drive/`, and emit it into `build/drive/`;  |
 ##   |           | no browser, no page                                                  |
@@ -74,8 +77,8 @@ const
     ##   Faces come from repository's store.
     ##   Type-checker and Playwright are node packages, pinned by `package-lock.json`.
   USAGE = "Usage: nim r tools/build.nim " &
-      "<inspect|bench|baseline|guard|evaluate|pages|types|published|drive|head|gaps|show|sweep|" &
-      "system|clean> [name|symbol] [url|algebra|--thorough]\n"
+      "<inspect|bench|baseline|guard|evaluate|carry|pages|types|published|drive|head|gaps|show|" &
+      "sweep|system|clean> [name|symbol] [url|algebra|--thorough]\n"
     ## Text printed on usage error; trailing words serve `evaluate`, `published` and `show`.
   FLAG_THOROUGH = "--thorough"  ## Flag after `evaluate <name>` that measures 2D algebras too.
 
@@ -156,6 +159,7 @@ proc main(): int =
     of "baseline": return delegated()
     of "guard": return delegated()
     of "evaluate": return delegated()
+    of "carry": return delegated()
     of "pages": return delegated()
     of "types": types()
     of "published": return delegated()

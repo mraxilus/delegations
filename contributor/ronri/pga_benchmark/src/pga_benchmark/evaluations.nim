@@ -11,6 +11,8 @@
 ##       and build of library alone costs no more than stated share of pristine build.
 ##   Result is one document in `evaluations/`, taken at pin and naming digest of edits it tried,
 ##     so `drive` refuses evaluation of another commit or of edits since changed (`head.nim`).
+##   Each algebra names digest of C its two timed builds emitted. Carried evaluation takes
+##     every figure again but times, which it keeps where both builds emit same C (`head.nim`).
 ##   Working copy keeps checkout's directory name, since function keys and module tails are
 ##     read from path and must match baseline's.
 ##
@@ -25,7 +27,7 @@
 
 import std/[algorithm, json, math, os, osproc, sequtils, strutils, tables]
 
-import ./[changes, guard, report]
+import ./[changes, guard, head, report]
 
 
 type
@@ -109,6 +111,14 @@ proc readLibrary*(directory: string): Table[string, string] =
       "Library checkout holds no Nim file; restore it with `nim r koch fetch-deps`; got `" &
           directory & "`.",
     )
+
+
+proc digestCache*(cache, pin: string): string =
+  ## Digest C build left in cache, pin's commit left out (`head.nim`).
+  var sources: seq[(string, string)]
+  for path in walkFiles(cache / "*.c"): sources.add (path.extractFilename, readFile(path))
+  if sources.len == 0: raise newException(IOError, "Cache holds no C; got `" & cache & "`.")
+  digestSources(sources, pin)
 
 
 proc prepareCopy(chain: Toolchain, candidate: Candidate): (string, seq[Finding]) =
@@ -491,9 +501,14 @@ proc runEvaluation*(
   baselines: Table[string, JsonNode];
   pristine: Table[string, string];
   suites_pin, taken: JsonNode;
+  carried: JsonNode = nil;
 ): (JsonNode, seq[Finding]) =
   ## Try candidate on every algebra; evaluation document and findings that stopped it.
+  ##   With `carried`, earlier evaluation of candidate: keep its times where both timed builds
+  ##     emit C they were timed on, and find where they do not; time nothing.
+  ##   Work directory starts empty, so digest reads C of this build alone.
   let directory = chain.work / candidate.name
+  removeDir directory
   createDir directory
   let (copy, findings) = prepareCopy(chain, candidate)
   if findings.len > 0: return (nil, findings)
@@ -532,12 +547,37 @@ proc runEvaluation*(
     if code != 0:
       return (nil, @[Finding(path: candidate.path, message: "Timed build failed at " &
         algebra.name & "; got `" & log.strip.splitLines[^1] & "`.")])
-    let (times, nan) = timed(chain, pristine[algebra.name], binary, directory)
+    let digests = %*{
+      "pristine": digestCache(
+        pristine[algebra.name].parentDir / "cache_timed_" & algebra.name,
+        chain.pga,
+      ),
+      "changed": digestCache(directory / "cache_timed_" & algebra.name, chain.pga),
+    }
+    var times, nan: JsonNode
+    if carried.isNil:
+      (times, nan) = timed(chain, pristine[algebra.name], binary, directory)
+    else:
+      let
+        before = carried{"algebras", algebra.name}
+        is_current = carried{"edits_digest"}.getStr == evaluation["edits_digest"].getStr
+        why = checkCarry(
+          if before.isNil: nil else: before{"digest_c"},
+          digests,
+          if is_current: carried{"taken", "pga"}.getStr else: "",
+          chain.pga,
+          candidate.path,
+          "run `evaluate " & candidate.name & "`",
+        )
+      if why.len > 0: return (nil, why)
+      times = before{"times"}
+      nan = before{"nan"}
     evaluation["algebras"][algebra.name] = %*{
       "suites": suite,
       "functions": functionsChanged(baselines[algebra.name], after),
       "times": times,
       "nan": nan,
+      "digest_c": digests,
     }
   evaluation["claims"] = checkClaims(chain, copy, directory, candidate, counted, suited, algebras)
   (evaluation, @[])
@@ -552,9 +592,11 @@ proc suitesPristine*(chain: Toolchain, algebras: openArray[Algebra]): JsonNode =
 
 
 proc binaryPristine*(chain: Toolchain, algebra: Algebra): string =
-  ## Build timed bench against library at pin; path of binary.
+  ## Build timed bench against library at pin from empty cache, which digest then reads alone;
+  ##   path of binary.
   let directory = chain.work / "pristine"
   createDir directory
+  removeDir directory / "cache_timed_" & algebra.name
   result = directory / "bench_" & algebra.name
   let (log, code) = compileAgainst(
     chain,

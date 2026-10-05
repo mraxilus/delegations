@@ -763,7 +763,7 @@ func bodyDocket*(
   result = "<div class=\"page\" style=\"--origin:" & axis.positionOf(1.0).fixed & "%;--octaves:" &
       $(axis.exponent_high - axis.exponent_low) & "\"><header><h1>PGA Gap Docket</h1>" &
       "<p class=\"meta\">pga " & code(pin[0 ..< 7]) & " · time " & escapeHtml(text_dates) &
-      ", " & escapeHtml(taken{"machine"}.getStr) &
+      timedAt(taken) & ", " & escapeHtml(taken{"machine"}.getStr) &
       (if count_runs > 1: ", median of " & $count_runs & " runs" else: "") &
       " · counts read from emitted C, exact" & links & "</p><label class=\"toggle\"><input " &
       "type=\"checkbox\" id=\"typed\"> typed measurands</label></header><nav class=\"tabs\" " &
