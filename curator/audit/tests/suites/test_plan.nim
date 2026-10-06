@@ -15,8 +15,10 @@ const DIRECTORIES = [DIRECTORY_ALPHA, DIRECTORY_AUDIT]
 
 suite "Plan":
   test "code change selects its project alone":
-    check projectsTest(DIRECTORIES, [DIRECTORY_ALPHA & "/src/alpha.nim"]) == @[DIRECTORY_ALPHA]  # source
-    check projectsTest(DIRECTORIES, [DIRECTORY_ALPHA & "/tests/tall.nim"]) == @[DIRECTORY_ALPHA]  # test
+    check projectsTest(DIRECTORIES, [DIRECTORY_ALPHA & "/src/alpha.nim"]) ==
+      @[DIRECTORY_ALPHA]  # source
+    check projectsTest(DIRECTORIES, [DIRECTORY_ALPHA & "/tests/tall.nim"]) ==
+      @[DIRECTORY_ALPHA]  # test
     check projectsTest(DIRECTORIES, [DIRECTORY_ALPHA & "/alpha.nimble"]) ==
       @[DIRECTORY_ALPHA]  # requirements
     check projectsTest(DIRECTORIES, [DIRECTORY_ALPHA & "/pages/index.html"]) ==
@@ -26,7 +28,8 @@ suite "Plan":
   test "record change alone selects nothing, so rules propagation compiles nothing":
     check projectsTest(DIRECTORIES, [DIRECTORY_ALPHA & "/PROVENANCE.md"]).len == 0  # stamp only
     check projectsTest(DIRECTORIES, [DIRECTORY_ALPHA & "/GLOSSARY.md"]).len == 0  # terms only
-    check projectsTest(DIRECTORIES, [DIRECTORY_ALPHA & "/README.md"]).len == 0  # README runs nothing
+    # README runs nothing.
+    check projectsTest(DIRECTORIES, [DIRECTORY_ALPHA & "/README.md"]).len == 0
     # Nested README is code: only project's own three records describe project.
     check projectsTest(DIRECTORIES, [DIRECTORY_ALPHA & "/design/README.md"]) == @[DIRECTORY_ALPHA]
     for directory in DIRECTORIES:
