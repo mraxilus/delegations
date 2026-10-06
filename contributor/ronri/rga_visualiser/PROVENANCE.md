@@ -1148,7 +1148,8 @@ at 13.7% and the project algebra at 5.9%, of 4,033 busy samples. The page read t
 
 **The drive checks the figure of the page against the own profiler of the engine on every run.**
 It serves the built page with the policy, at an address that a route answers. Both profilers
-sample the largest demo for 12 s, and both name owners through `nimShareOwner`. The bound is four
+sample the largest demo until the page holds 350 busy samples, about 12 s. Both name owners
+through `nimShareOwner`. The bound is four
 standard errors of the two counts, and 2 points of bias. Five runs read the library within -5.3
 to +2.2 points of the engine, and the project algebra within -1.8 to +1.1.
 
