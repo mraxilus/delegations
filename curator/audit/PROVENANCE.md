@@ -1588,10 +1588,9 @@ before `; got `, or before the closing period. So `koch check` prints
   The test of `unsettled` builds its report from the sentence of `chain.nim`, since no source in
   the suite leaves the fixers unsettled. The messages of checks that no pass of koch runs yet
   render through their checks too, and so does a message with no value.
-- Cost: `CITATIONS` gives each rule one article, the one that its rewrite cites. So the message for
-  a bracket of one module cites X.5, though STYLE.md §5 states that rule. Signature and call
+- Cost: `CITATIONS` gives each rule one article, the one that its rewrite cites. Signature and call
   wrapping cite X.3 alone, though STYLE.md §5 states them too. Operator wrapping cites STYLE.md §5
-  alone, though X.1 states it too. The static pass runs none of these four checks, so koch prints
+  alone, though X.1 states it too. The static pass runs none of these three checks, so koch prints
   none of these messages.
 - Cost: a backtick in a sentence that no run of as many backticks closes pairs with the backtick of
   the value. The article then goes before the closing period. No message of knoller holds such a
