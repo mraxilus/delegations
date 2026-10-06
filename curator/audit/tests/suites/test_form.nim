@@ -46,6 +46,23 @@ suite "Article X":
       @["Line holds tab (X.1)."]  # cfg too
 
 
+  test "X.2 static pass reads banners exactly, as fixer writes them, in every kind of Nim":
+    # Case held: lenient banner check of `form.nim` stood beside exact one of knoller, so static
+    #   pass took two blank lines before first tier, where X.2 asks three (#557); domain is each
+    #   count exact check reads, in each kind of Nim syntax, and kind of other syntax reads none.
+    for (path, kind) in [
+      ("a.nim", Kind.Nim), ("a.nims", Kind.NimScript), ("a.nimble", Kind.Nimble),
+    ]:
+      check messages(path, "x = 1\n\n\n#[ Section ]#\n\ny = 2\n", kind) ==
+        @["First-tier banner takes three blank lines before it (X.2); got `2`."]
+      check messages(path, "x = 1\n\n\n\n#[[ Child ]]#\n\ny = 2\n", kind) ==
+        @["Second-tier banner takes two blank lines before it (X.2); got `3`."]
+      check messages(path, "x = 1\n\n\n\n#[ Section ]#\ny = 2\n", kind) ==
+        @["Banner takes one blank line after it (X.2); got `0`."]
+      check messages(path, "x = 1\n\n\n\n#[ Parent ]#\n\n\n#[[ Child ]]#\n\ny = 2\n", kind).len == 0
+    check messages("nim.cfg", "x\n\n#[ Section ]#\ny\n", Kind.Configuration).len == 0
+
+
   test "X.2 banner spacing":
     let good = "x = 1\n\n\n\n#[ Section ]#\n\ny = 2\n"
     check messages("a.nim", good, Kind.Nim).len == 0  # three before, one after
