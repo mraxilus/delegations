@@ -94,7 +94,10 @@ suite "Findings":
           checkComments("a.nim", "let a = 1 # One.\n") & checkMessages("a.nim", tail) &
           heldOf("a.nims", fenced, Dialect.Script) & faultOf("a.nim", crossing.fenceOf) &
           checkSpacing("a.nim", "let r = 0 .. n\n") &
+          checkStrictFuncs("a.nim", @["import std/os"], @["import std/os"]) &
           checkStrictFuncs("a.nim", late.splitLines, late.codeOnly.splitLines) &
+          checkImports("a.nim", @["import std/[strutils, os]", "import ./a", "import std/math"]) &
+          checkBindings("a.nim", @["proc f() =", "  let a = 1", "  let b = 2"]) &
           checkReturns("a.nim", @["proc f(): int =", "  return result"]) &
           checkStubKeys("tests/test_a.nim", stub)
     check found.findingsOf.mapIt(it.message) == @[
@@ -106,7 +109,11 @@ suite "Findings":
       "Fence closes outside bracket, string or comment it opens in, so fix leaves file as " &
       "written (X.1); got `#!fix off` and `#!fix on` either side.",
       "Range operator takes no space (X.9); got `0 .. n`.",
+      "Module carries `" & STRICT_FUNCS & "` before its imports (STYLE.md §2); got none.",
       "Module carries `" & STRICT_FUNCS & "` before its imports (STYLE.md §2); got it after.",
+      "Bracket import is alphabetised (X.5); got `strutils, os`.",
+      "Standard library comes first, then packages, then local modules (X.5); got `std/math`.",
+      "Consecutive single bindings share one keyword (X.5); got `let` twice.",
       "Bare `return` exits early with `result`, and routine ends on value itself (STYLE.md " &
       "§5); got `return result`.",
       "Stub `cmd` leaves out `-r`, since testament runs binary itself (STYLE.md §6); got `-r`.",
