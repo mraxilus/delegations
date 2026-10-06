@@ -191,7 +191,7 @@ proc baseOrDefault(options: Options): string =
   getEnv("BASE", "origin/" & MAIN)
 
 
-proc plannedJobs(options: Options, tree: Tree): seq[Job] =
+proc jobsPlanned(options: Options, tree: Tree): seq[Job] =
   ## Read jobs one run asks for: named project, else window, else every project, else changed.
   if options.project.len > 0:
     tree.jobsFor([options.project.strip(chars = {'/'})])
@@ -200,7 +200,7 @@ proc plannedJobs(options: Options, tree: Tree): seq[Job] =
   else: tree.jobs(pathsChanged(options.root, options.baseOrDefault))
 
 
-proc scopedDirsOf(options: Options, tree: Tree): seq[string] =
+proc dirsScopedOf(options: Options, tree: Tree): seq[string] =
   ## Read project directories one-job check drives: named one, else those one change asks for.
   ##   Directories rather than jobs, since type check runs on driver's compiler and so needs
   ##   no pin; project pinning none is still type-checked.
@@ -372,7 +372,7 @@ proc run(options: Options): int =
       echo "Held for their projects (CURATOR.md, duty 3); runner stays red until they fix:"
       held.report
     found = own
-    found.add typeJobs(options.root, tree, options.scopedDirsOf(tree))
+    found.add typeJobs(options.root, tree, options.dirsScopedOf(tree))
     found.add ciJobs(options.root, tree, tree.jobs(pathsChanged(options.root, base)))
     # Green run on clean tree records tree hash, which `pre-push` hook compares against
     #   pushed commit; dirty tree records nothing, since no commit holds exactly what passed.
@@ -390,7 +390,7 @@ proc run(options: Options): int =
     if not options.isReadAll({Root, Base, All, Recent}, has_project = true):
       return options.refused
     let tree = options.root.readTree
-    found = typeJobs(options.root, tree, options.scopedDirsOf(tree))
+    found = typeJobs(options.root, tree, options.dirsScopedOf(tree))
   of "check-scope":
     if not options.isReadAll({Root, Branch, Base}): return options.refused
     let base = options.baseOrDefault
@@ -427,17 +427,17 @@ proc run(options: Options): int =
     if not options.isReadAll({Root, Base, All, Recent}, has_project = true):
       return options.refused
     let tree = options.root.readTree
-    found = runJobs(options.root, options.plannedJobs(tree))
+    found = runJobs(options.root, options.jobsPlanned(tree))
   of "drive":
     if not options.isReadAll({Root, Base, All, Recent}, has_project = true):
       return options.refused
     let tree = options.root.readTree
-    found = drivenJobs(options.root, tree, options.plannedJobs(tree))
+    found = drivenJobs(options.root, tree, options.jobsPlanned(tree))
   of "head":
     if not options.isReadAll({Root, Base, All, Recent}, has_project = true):
       return options.refused
     let tree = options.root.readTree
-    found = jobsHead(options.root, tree, options.plannedJobs(tree))
+    found = jobsHead(options.root, tree, options.jobsPlanned(tree))
   of "fix":
     # Fixers, file selection and scope refusal live in `fixes.nim`; koch writes and prints.
     #   Named files or directories come first, else projects `--recent`, `--all` or change
@@ -456,7 +456,7 @@ proc run(options: Options): int =
       tree = options.root.readTree
       named = (if options.project.len > 0: @[options.project] else: @[]) & options.rest
       (entries, unknown) = tree.entriesNamed(
-        if named.len > 0: named else: options.scopedDirsOf(tree)
+        if named.len > 0: named else: options.dirsScopedOf(tree)
       )
     if unknown.len > 0:
       unknown.report
@@ -490,7 +490,7 @@ proc run(options: Options): int =
     if not options.isReadAll({Root, Base, All, Recent}, has_project = true):
       return options.refused
     let tree = options.root.readTree
-    found = restoreJobs(options.root, options.plannedJobs(tree))
+    found = restoreJobs(options.root, options.jobsPlanned(tree))
   of "fetch-assets":
     # Fetched file is repository's, never one project's: two targets pinning one file would
     #   hold two copies of one digest. Store holds digest; caller names which files it wants,
@@ -530,7 +530,7 @@ proc run(options: Options): int =
     if not options.isReadAll({Root, Base, All, Recent, Drive, Head}, has_project = true):
       return options.refused
     let tree = options.root.readTree
-    var jobs = options.plannedJobs(tree)
+    var jobs = options.jobsPlanned(tree)
     if options.is_drive: jobs = tree.drivenOnly(jobs)
     if options.is_head: jobs = tree.carryingOnly(jobs, VERB_HEAD)
     echo render(jobs)
