@@ -71,14 +71,6 @@ const ASKS_MAX = 8
   ## Rounds of asking parser at most, as knoller's command line takes (`command.nim`).
 
 
-func dialectOf(kind: Kind): Dialect =
-  ## Read dialect of knoller kind of Nim source is: module, script or package.
-  case kind
-  of Kind.NimScript: Dialect.Script
-  of Kind.Nimble: Dialect.Package
-  else: Dialect.Module
-
-
 func lockedNimbles*(tree: Tree): seq[string] =
   ## Read path of each nimble file whose copy `atlas.lock` beside it holds.
   lockedNimbles(tree.mapIt((it.path, it.content)))

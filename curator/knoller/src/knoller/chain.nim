@@ -3,8 +3,9 @@
 ##   (`heldOf`).
 ##   Built from checks (Article II.1): each fixer sits beside its check and reads that check's
 ##     own data, so each rule is written once.
-##   Fixer runs where its check runs: idiom fixers on module (`.nim`) alone, every other fixer
-##     in every dialect. Order keeps each fixer from undoing one before it:
+##   Fixer runs where its check runs: idiom fixers of module (`.nim`) alone, those of any Nim code
+##     (return, bindings) and every other fixer in every dialect (`idiomFixers`). Order keeps each
+##     fixer from undoing one before it:
 ##   - form first (whitespace, ending, tab in string, trailing comment, banner), so later
 ##     fixers read clean line ends and final comment gaps, which wrapping counts in width;
 ##   - entry block next, whose body moves into `proc main` (V.10): it moves lines and widens
@@ -51,7 +52,7 @@
 ##     stale, and Atlas reads that as change of package.
 ##   Command line checks what fixers leave by every check knoller holds (`checkSource`): those
 ##     `checkFormatting` holds, off fenced lines, and those static pass of `curator/audit` reads
-##     on Nim source (`staticOf`): form, articles, entry block, names, idioms of module, and
+##     on Nim source (`staticOf`): form, articles, entry block, names, idioms of dialect, and
 ##     fixed waits of drive file. Fence keeps its lines from fixers alone, as static pass reads
 ##     every line, so finding there fails command line as it fails static pass.
 ##   Fence's warning runs checks as dry run: same checks on source unmasked, where each marker
@@ -78,20 +79,12 @@ import ./[
 ]
 
 
-type Dialect* {.pure.} = enum  ## Define which Nim source file holds, which decides fixers it takes.
-  Module  ## `.nim`, which idiom fixers read too.
-  Script  ## `.nims`.
-  Package  ## `.nimble`.
-
-
 const
   ROUNDS_MAX = 3
     ## Rounds of whole chain at most; tree settles in two (`curator/audit/PROVENANCE.md`, Fixes).
   ATTEMPTS_MAX = 4
     ## Attempts of rounds at most, last holding every line; tree settles in two
     ##   (`PROVENANCE.md`, Wraps).
-  EXTENSIONS*: array[Dialect, string] = [".nim", ".nims", ".nimble"]
-    ## Extension of file of each dialect.
   LOCK_FILE* = "atlas.lock"  ## Lock holding copy of project's nimble file.
   NIMBLE_KEY = "\"nimbleFile\""  ## Key of lock's copy of nimble file, whose `filename` names it.
 
@@ -103,8 +96,7 @@ func stepsOf(dialect: Dialect): seq[Step] =
     guarded(fixBlockEntry), guarded(fixArticles), widening(fixMessages),
     widening(fixMixtures), guarded(fixTargets), guarded(fixCommands), proving(fixParentheses),
   ]
-  if dialect == Dialect.Module:
-    for fixer in IDIOM_FIXERS: result.add guarded(fixer)
+  for fixer in dialect.idiomFixers: result.add guarded(fixer)
   result.add @[guarded(fixBlanks), guarded(fixDocs), guarded(fixDefaults), widening(fixSpacing)]
   result.add WRAPPING_STEPS
   result.add guarded(fixCommentsAbove)
@@ -156,11 +148,11 @@ func checkFormatting*(path, source: string; dialect: Dialect; proofs = Proofs())
 
 func staticOf(path, source: string; dialect: Dialect): seq[Report] =
   ## Run on source as given each check static pass of `curator/audit` reads on Nim source: form,
-  ##   articles, entry block, names with no word exempt beyond `JARGON`, idioms of module, and
+  ##   articles, entry block, names with no word exempt beyond `JARGON`, idioms of dialect, and
   ##   fixed waits of drive file (`isDriveFile`). Fence keeps no line from them.
   result = checkForm(path, source) & checkArticles(path, source)
   result.add checkBlockEntry(path, source) & checkNames(path, source, [])
-  if dialect == Dialect.Module: result.add checkIdioms(path, source)
+  result.add checkIdioms(path, source, dialect)
   if path.isDriveFile: result.add checkWaits(path, source)
 
 

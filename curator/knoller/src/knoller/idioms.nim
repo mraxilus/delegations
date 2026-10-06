@@ -28,7 +28,9 @@
 ##   - Under `tests/` (`reports.isTestFile`): suite importing `std/random` seeds it, and stub
 ##     carries testament header (§6); `echo` of value without label, outside condition, is
 ##     debug output (VIII.5).
-##   `checkIdioms` reads every idiom static pass of `curator/audit` reads.
+##   `checkIdioms` reads every idiom static pass of `curator/audit` reads, by dialect: module
+##     each, script and package those of any Nim code, i.e. bindings, pragmas, return and test
+##     rules but stub; `strictFuncs`, import order and stub keys are module's (`idiomFixers` too).
 ##
 ##   Fixers read same spans, runs and constants their checks read, so each rule is written
 ##     once (Article II.1), and each rewrites only lines its check reports:
@@ -430,9 +432,10 @@ func isSeeded(code: string): bool =
   "initRand(" in code or (at >= 0 and at + 10 < code.len and code[at + 10] != ')')
 
 
-func checkTests(path, source: string; lines, code: seq[string]): seq[Report] =
+func checkTests(path, source: string; lines, code: seq[string]; dialect: Dialect): seq[Report] =
   ## Report, in test file, unseeded random suite, stub lacking testament header, and `echo` of
-  ##   debug shape (§6, VIII.5); file outside `tests/` reports none.
+  ##   debug shape (§6, VIII.5); file outside `tests/` reports none, and stub is module alone,
+  ##   since koch runs testament over `tests/t*.nim`.
   if not path.isTestFile: return
   if code.isRandomImported and not code.join("\n").isSeeded:
     result.add initReport(
@@ -441,7 +444,7 @@ func checkTests(path, source: string; lines, code: seq[string]): seq[Report] =
       Rule.RandomSeed,
       "Suite seeds `std/random`, as `randomize(0)` does; got no seed.",
     )
-  if path.isStub and source.find(TESTAMENT_HEADER) < 0:
+  if dialect == Dialect.Module and path.isStub and source.find(TESTAMENT_HEADER) < 0:
     result.add initReport(path, 0, Rule.StubHeader, "Test stub carries testament header; got none.")
   for i, c in code:
     if c.firstWord == "echo" and '"' notin lines[i] and not code.isUnderCondition(i):
@@ -454,20 +457,24 @@ func checkTests(path, source: string; lines, code: seq[string]): seq[Report] =
       )
 
 
-func checkIdioms*(path, source: string): seq[Report] =
+func checkIdioms*(path, source: string; dialect: Dialect = Dialect.Module): seq[Report] =
   ## Report Nim source breaking one-line idiom of STYLE.md or Article X.5, as static pass reads
-  ##   them: those fixers reach, then those none reaches; test file adds its own.
+  ##   them: those fixers reach, then those none reaches; test file adds its own. Script and
+  ##   package read idioms of any Nim code alone, and module reads its own too: `strictFuncs`,
+  ##   import order and keys of stub.
   let
     lines = source.splitLines
     code = source.codeOnly.splitLines
-  result = checkStrictFuncs(path, lines, code)
-  result.add checkImports(path, code)
+    is_module = dialect == Dialect.Module
+  if is_module:
+    result.add checkStrictFuncs(path, lines, code)
+    result.add checkImports(path, code)
   result.add checkBindings(path, code)
   result.add checkPragmas(path, lines, code)
   result.add checkReturns(path, code)
   if path.isTestFile:
-    result.add checkTests(path, source, lines, code)
-    result.add checkStubKeys(path, source)
+    result.add checkTests(path, source, lines, code, dialect)
+    if is_module: result.add checkStubKeys(path, source)
 
 
 func placeOf(lines, code: seq[string]; i: int): ReturnPlace =
@@ -982,7 +989,7 @@ func fixLists(path, source: string): Fix =
   for d in found: result.fixed.add initReport(path, d.line + 1, Rule.UnorderedList)
 
 
-const IDIOM_FIXERS*: array[8, Fixer] = [
+const IDIOM_FIXERS: array[8, Fixer] = [
   fixReturnResult,
   fixStubKeys,
   fixImports,
@@ -995,6 +1002,12 @@ const IDIOM_FIXERS*: array[8, Fixer] = [
   ## Idiom fixers in order they run: brackets merge after rank orders blocks, so merged
   ##   statement takes first rank's place; profiler import goes after pragma `strictFuncs`
   ##   fixer places.
+
+
+func idiomFixers*(dialect: Dialect): seq[Fixer] =
+  ## List idiom fixers dialect takes, in order they run: module takes each, script and package
+  ##   those whose check reads any Nim code (`checkIdioms`), i.e. return and bindings.
+  if dialect == Dialect.Module: @IDIOM_FIXERS else: @[fixReturnResult, fixBindings]
 
 
 func fixIdioms*(path, source: string): Fix =

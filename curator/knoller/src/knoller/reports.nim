@@ -17,6 +17,8 @@
 ##     step reads answer for source it sees, and where none is held, writes nothing and asks
 ##     (`Fix.asked`). Caller runs compiler on what is asked and runs chain again, so chain stays
 ##     pure, and same answers give same output.
+##   Dialect of Nim file, module, script or package, decides which idiom checks and fixers it
+##     takes; `idioms.nim` and `chain.nim` both read it, so it stands here, below both.
 ##   Path fixer reads is `/` separated: repository-relative from `koch`, absolute from command
 ##     line (`command.layoutOf`). Rule reading layout from it reads test file and stub here
 ##     alone, both from last directory `tests` (`testsPart`), so each meaning is written once;
@@ -79,10 +81,17 @@ type
     of StepKind.Widening: widener*: Widener
     of StepKind.Proving: proven*: Proven
 
+  Dialect* {.pure.} = enum  ## Define which Nim source file holds, which decides fixers it takes.
+    Module  ## `.nim`, which module's idiom checks and fixers read too.
+    Script  ## `.nims`.
+    Package  ## `.nimble`.
+
 
 const
   EVERY* = Held(is_every: true)  ## Held of every line, as each widener's two-argument form.
   DRIVE_DIRECTORIES = ["tests", "tools"]  ## Directories whose files command line reads as drive.
+  EXTENSIONS*: array[Dialect, string] = [".nim", ".nims", ".nimble"]
+    ## Extension of file of each dialect.
 
 
 func initReport*(path: string, line: int, rule: Rule, message = ""): Report =

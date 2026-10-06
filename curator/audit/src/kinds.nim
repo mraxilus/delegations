@@ -48,6 +48,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[options, os]
+from ../../knoller/src/knoller import Dialect
 
 
 type
@@ -120,3 +121,12 @@ func kindOf*(path: string): Option[Kind] =
 func rule*(kind: Kind): lent KindRule =
   ## Read rule of kind.
   LUT_RULE_BY_KIND[kind]
+
+
+func dialectOf*(kind: Kind): Dialect =
+  ## Read dialect of knoller kind of Nim source is: module, script or package; every other kind
+  ##   reads as module, and no caller asks of one.
+  case kind
+  of Kind.NimScript: Dialect.Script
+  of Kind.Nimble: Dialect.Package
+  else: Dialect.Module

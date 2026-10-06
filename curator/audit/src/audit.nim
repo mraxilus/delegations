@@ -171,7 +171,8 @@ proc auditTree*(tree: Tree): seq[Finding] =
     if not e.path.startsWith(DRIVER_DIRECTORY & "/"):
       result.add checkFaces(e.path, e.content)
       if e.kind.get != Kind.Markdown: result.add checkMachinePaths(e.path, e.content)
-    if e.kind.get == Kind.Nim: result.add checkIdioms(e.path, e.content).findingsOf
+    if e.kind.get.rule.has_guide:
+      result.add checkIdioms(e.path, e.content, e.kind.get.dialectOf).findingsOf
     for directory in directories:
       if e.path == directory & "/PROVENANCE.md":
         result.add checkProvenance(e.path, e.content, stamp_now)

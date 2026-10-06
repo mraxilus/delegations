@@ -8,7 +8,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[options, os, osproc, sequtils, strutils, tables, tempfiles, unittest]
-import ../../src/knoller/[chain, command, proofs, reports, rules]
+import ../../src/knoller/[command, proofs, reports, rules]
 import ./stubs
 
 
@@ -115,7 +115,7 @@ suite "Command line":
 
   test "finding fix leaves prints by rule id with its message, and exits 1":
     let
-      crossing = "let A = 1+2\nlet M = f(\n  #!fix off\n  1,  0,\n)\n#!fix on\n"
+      crossing = "let A = 1+2\nvar M = f(\n  #!fix off\n  1,  0,\n)\n#!fix on\n"
       outcome = outcomeOf([("a.nims", crossing)], [], is_check = false)
     check outcome.written.len == 0  # fence it cannot read leaves file as written
     check outcome.lines[0].startsWith("a.nims:2: fence left: Fence closes outside bracket")

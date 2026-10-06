@@ -205,7 +205,8 @@ suite "Chain":
       held = heldOf("a.nims", source, Dialect.Script)
     check held.len == 1 and held[0].line == 2 and held[0].rule == Rule.FenceHeld  # at marker
     check held[0].message == "Fence keeps its lines as written, and inside them " &
-      "not-over-binary breaks once at line 4 and expression-spacing 2 times from line 3" &
+      "not-over-binary breaks once at line 4, single-bindings once at line 3 and " &
+      "expression-spacing 2 times from line 3" &
       "; got lines `2` to `6`."  # rule left for hand and rule fixer clears alike
     check checkFormatting("a.nims", unfenced, Dialect.Script).mapIt((it.line, it.rule)).sorted ==
       @[(3, Rule.ExpressionSpacing), (4, Rule.NotOverBinary), (5, Rule.ExpressionSpacing)]
@@ -225,12 +226,17 @@ suite "Chain":
     check heldOf("a.nims", "let a = 1+2\n", Dialect.Script).len == 0  # no fence, no line
 
 
-  test "fence of module counts idiom checks too, and script reads none":
-    let source = FENCE_OFF & "\nlet A = 1\nlet B = 2\nproc f(): int =\n  return result\n"
+  test "fence counts idioms of its dialect, and module's own in module alone":
+    let source =
+      FENCE_OFF & "\nimport std/[strutils, os]\nlet A = 1\nlet B = 2\nproc f(): int =\n" &
+        "  return result\n"
     check heldOf("a.nim", source, Dialect.Module)[0].message.contains(
-      "inside them return-result breaks once at line 5 and single-bindings once at line 2; got",
+      "inside them return-result breaks once at line 6, bracket-import once at line 2 and " &
+        "single-bindings once at line 3; got",
     )
-    check heldOf("a.nims", source, Dialect.Script)[0].message.contains("nothing inside breaks")
+    check heldOf("a.nims", source, Dialect.Script)[0].message.contains(
+      "inside them return-result breaks once at line 6 and single-bindings once at line 3; got",
+    )  # script keeps its imports
 
 
   test "fence crossing bracket leaves source as written, and is its one finding":
