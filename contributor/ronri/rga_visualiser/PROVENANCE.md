@@ -1394,8 +1394,8 @@ placements first, so those of the frame before stay readable until the next turn
 **The scratch of an export is one stretch of the program arena.** It is carved once, and each
 export overwrites it from its start. At most one export runs in a frame, and each one finishes
 inside its own call. Rejected: an arena for exports alone, which adds a fourth region for no gain.
-Rejected: the scratch in the frame arenas. It is 64 MiB, and each of the two would reserve it for a
-turn that an export never uses.
+Rejected: the scratch in the frame arenas, where each of the two would reserve it for a turn that an
+export never uses. Cost: 64 MiB that the program arena holds for the whole run.
 
 A frame carves 666,728 bytes sixty times a second: 645,120 of placements and 21,608 of
 `DrawScratch`, as `sizeof` reads them. That is also the peak of each frame arena, since a frame
@@ -1409,6 +1409,11 @@ since carved memory is never traced.
 **The object pool is an arena with a free list.** `Scene` holds a fixed array for each field, with
 one entry for each handle. Removing an object puts its handle on the free list, and nothing moves.
 The next object added takes the handle that was freed last.
+
+So a handle names one object for as long as that object lives, and an add or a remove takes
+constant time. Rejected: an array that closes each gap, which moves objects and so changes their
+handles. Cost: the whole pool, 1.15 MiB, at any count of objects, and a copy of it in each step of
+the undo timeline.
 
 **The undo timeline is the largest reservation that the binary makes.** A `Scene` at 5040 handles is
 1.15 MiB as a C struct, which `sizeof` reports as 1,204,616 bytes on the release compiler. A `Step`
@@ -1433,7 +1438,12 @@ a frame rather than appends by bump alone. **LZW early change**: the format wide
 symbol earlier on a decode than on an encode. A decoder written from scratch in the suite
 round-trips a real frame past the point of growth.
 
-*Checked.* Verified by `suites.nim`: the frame arenas keep the bytes of the last frame, and the GIF
+*Checked.* Verified by `suites.nim`: a freed handle goes to the next object added, most recently
+freed first. Verified on 2026-10-06 by `xvfb-run -a binaries/rga_visualiser --storyboard:<dir>`:
+12 PNG frames and a GIF go through the export scratch in one process. With its overwrite taken out,
+the ninth PNG asks for 70,010,991 bytes of 67,108,864, and the arena stops it.
+
+Verified by `suites.nim`: the frame arenas keep the bytes of the last frame, and the GIF
 round-trip holds. Verified by `sizeof`: the sizes of the struct and of the timeline. Verified by
 `sizeof` on 2026-10-06: 128 bytes for a placement and 21,608 for `DrawScratch`. Assumed: the
 JS heap figure for each step, which is extrapolated from one measurement of the earlier layout
