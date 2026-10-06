@@ -376,12 +376,12 @@ suite "Fixes":
         "  let count = runAll()\n  echo count\n\n\nwhen isMainModule:\n  main()\n",
     ]  # V.1, V.10
     check plan.fixed.mapIt((it.path, it.line, it.message)) == @[
-      (a.path, 5, "routine case (V.1)"),
-      (b.path, 10, "routine case (V.1)"),
-      (b.path, 10, "local constant case (V.1)"),
-      (b.path, 11, "local constant case (V.1)"),
+      (a.path, 5, "name case (V.1)"),
+      (b.path, 10, "name case (V.1)"),
+      (b.path, 10, "name case (V.1)"),
+      (b.path, 11, "name case (V.1)"),
       (b.path, 10, "entry block (V.10)"),
-    ]  # each report at line of source as given
+    ]  # each report at line of source as given, by rule knoller's check names
     check plan.left.len == 0
     let again = plan.written
     check again.mapIt(checkNames(it.path, it.content, []).len) == @[0, 0]  # V.1, V.10: none left
@@ -410,8 +410,7 @@ suite "Fixes":
       head & "let TEMPORARY_DIRECTORY* = \"a\"\n",
       head & "import ./a\n\nlet PATH_HOME = TEMPORARY_DIRECTORY\n",
     ]  # V.1, V.6
-    check plan.fixed.mapIt(it.message) ==
-      @["abbreviation (V.6) and global case (V.1)", "abbreviation (V.6) and global case (V.1)"]
+    check plan.fixed.mapIt(it.message) == @["name case (V.1)", "name case (V.1)"]  # one rename
     check plan.written.mapIt(checkNames(it.path, it.content, []).len) == @[0, 0]  # V.1, V.6
 
 
@@ -425,7 +424,7 @@ suite "Fixes":
     check queriesSemantic(tree, tree).len == 0  # refused already, so nothing asked
     check plan.written.len == 0
     check plan.left.mapIt((it.line, it.message)) == @[
-      (6, "Field case (V.1) stays for hand, since rename to `enable_sleep` is refused: " &
+      (6, "Name case (V.1) stays for hand, since rename to `enable_sleep` is refused: " &
         "foreign code reads name through `importc`; got `enableSleep`."),
     ]  # V.1
 

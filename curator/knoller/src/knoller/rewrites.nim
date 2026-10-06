@@ -1,5 +1,5 @@
 ## Plan rename of symbol across files from what semantic pass resolves (`symbols.nim`), as edits
-##   of knoller (`edits.nim` there).
+##   (`edits.nim`).
 ##   Rename is planned whole or refused whole, since part of rename breaks build:
 ##   - declaration must resolve, in file that compiles, to symbol declared at that very site;
 ##     name check's scanner may read use as declaration, and rename of it would repeat other;
@@ -25,10 +25,11 @@
 ##   Mention of old name in backticks, in comment of file where rename takes every use, is
 ##     renamed too, so comment still names what code does.
 ##   Refusal names its reason, and rule's finding stays for hand. Rule choosing new name is
-##     caller's (`names.nim`): V.6 abbreviation, and V.1 and V.11 case of each kind.
+##     `names.nim`'s: V.6 abbreviation, and V.1 and V.11 case of each kind.
 ##
-##   Cost: scope is caller's: project of declaring file and root files that import across
-##     projects (`koch.nim`). Use in other project's file is not read, and none exists today.
+##   Cost: scope is caller's: command line reads project of nearest nimble file (D2 a of #558),
+##     and `koch` adds root files that import across projects (`koch.nim`). Use in other
+##     project's file is not read.
 ##   Cost: collision test is by name presence, so rename that would compile may be refused.
 ##   Cost: overloads of one routine in one file share qualified name of parameter, so named
 ##     argument to overload whose parameter rename does not reach is renamed too; build then
@@ -37,8 +38,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, sequtils, strutils, tables]
-import ../../knoller/src/knoller
-import ./symbols
+import ./[edits, form, rules, symbols, tokens, views]
 
 
 type
@@ -48,7 +48,7 @@ type
     column*: int  ## Zero-based byte column of declared name.
     name*: string  ## Name as declared.
     renamed*: string  ## Name rule gives.
-    rule*: string  ## Rule report names, e.g. `abbreviation (V.6)`.
+    rule*: Rule  ## Rule rename fixes, which report of each edit names.
     is_local*: bool  ## Binding no other module can name, so scope is declaring file alone.
 
   Plan* = object  ## Define rename planned, or refused with reason.
@@ -250,7 +250,7 @@ func planRename*(
     for edit in edits:
       let line = starts.upperBound(edit.first) - 1
       if line in fenced.getOrDefault(path):
-        refuse "`" & path & ":" & $(line + 1) & "` is fenced (X.1)"
+        refuse "`" & path & ":" & $(line + 1) & "` is fenced"
     for i in 0 ..< min(before.len, after.len):
       if after[i].isWide and not before[i].isWide:
         refuse "`" & path & ":" & $(i + 1) & "` would cross " & $LINE_MAX & " characters"

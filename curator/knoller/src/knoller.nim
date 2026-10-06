@@ -22,13 +22,13 @@ when compileOption("profiler"): import std/nimprof
 import ./knoller/[
   articles, blanks, chain, command, commands, compilers, conversions, declarations, declared, edits,
   entry, fences, form, idioms, messages, names, parentheses, pins, precedence, proofs, reports,
-  rules, spacing, symbols, targets, tokens, views, waits, wrapping,
+  rewrites, rules, spacing, symbols, targets, tokens, views, waits, wrapping,
 ]
 
 export
   articles, blanks, chain, commands, compilers, conversions, declarations, declared, edits, entry,
-  fences, form, idioms, messages, names, parentheses, pins, precedence, proofs, reports, rules,
-  spacing, symbols, targets, tokens, views, waits, wrapping
+  fences, form, idioms, messages, names, parentheses, pins, precedence, proofs, reports, rewrites,
+  rules, spacing, symbols, targets, tokens, views, waits, wrapping
 
 
 when isMainModule:
