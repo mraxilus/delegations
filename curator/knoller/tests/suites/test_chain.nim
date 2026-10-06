@@ -169,6 +169,25 @@ suite "Chain":
       "\n\nimport std/[os, strutils]\nlet a = b + c\n"  # pragma and bracket too
 
 
+  test "idioms of any Nim code reach script and package, checks and fixers, module's do not":
+    # Case held: static pass of `curator/audit` ran idiom checks on `.nim` alone, and chain took
+    #   idiom fixers in module alone (`audit.nim`, `stepsOf`), so script and package read none
+    #   (#557); domain is each dialect, idioms of any Nim code in each, module's in module alone.
+    let breach =
+      "let A = 1\nlet B = 2\n{.push inline.}\nproc f(): int =\n  return result\n{.pop.}\n"
+    for dialect in Dialect:
+      let rules = checkSource("a" & EXTENSIONS[dialect], breach, dialect).mapIt(it.rule)
+      check Rule.SingleBindings in rules and Rule.ReturnResult in rules  # fixer reaches both
+      check Rule.PushForeign in rules  # no fixer reaches it
+      check (Rule.StrictFuncs in rules) == (dialect == Dialect.Module)  # STYLE.md §2: module
+      check formatted("a" & EXTENSIONS[dialect], breach, dialect).source.contains(
+        "let\n  A = 1\n  B = 2\n",
+      )  # bindings share keyword in every dialect
+    check checkSource("tests/a.nims", "echo x\n", Dialect.Script).mapIt(it.rule) ==
+      @[Rule.DebugOutput]  # test rules of any Nim code read script under `tests/`
+    check checkSource("tests/test_a.nims", "echo \"x\"\n", Dialect.Script).len == 0  # no stub
+
+
   test "fence keeps lines between its markers, and fix reaches every other line":
     let
       source = "## Do.\n\n" & STRICT_FUNCS & "\n\n" & FENCED_ROWS

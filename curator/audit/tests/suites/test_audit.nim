@@ -42,6 +42,35 @@ suite "Audit":
     check "lacks definition" in undefined.auditTree[0].message  # same check projects get
 
 
+  test "idioms of any Nim code reach scripts and packages, and module's rules stay on modules":
+    # Case held: `auditTree` ran `checkIdioms` on `Kind.Nim` alone (`audit.nim`), so `.nims` and
+    #   `.nimble` took none of it (#557); domain is each kind of Nim, each reporting idioms that
+    #   read any Nim code, and `strictFuncs`, which STYLE.md §2 asks of module, reported nowhere
+    #   else.
+    let
+      breach = "{.push inline.}\nproc f() = discard\n{.pop.}\nproc g(): int =\n  return result\n"
+      found = @[
+        "`{.push.}` stands only over foreign bindings, which `{.pop.}` closes (STYLE.md §2); " &
+          "got `{.push inline.}`.",
+        "Bare `return` exits early with `result`, and routine ends on value itself (STYLE.md " &
+          "§5); got `return result`.",
+      ]
+      nimble = ALPHA_DIRECTORY & "/alpha.nimble"
+    for (tree, path) in [
+      (goodTree().with(entry(ALPHA_DIRECTORY & "/src/a.nim", STRICT_FUNCS & "\n\n" & breach)),
+        ALPHA_DIRECTORY & "/src/a.nim"),
+      (goodTree().with(entry(ALPHA_DIRECTORY & "/config.nims", breach)),
+        ALPHA_DIRECTORY & "/config.nims"),
+      (goodTree().replaced(nimble, NIMBLE_TEXT & breach), nimble),
+    ]:
+      check tree.auditTree.filterIt(it.path == path).mapIt(it.message).sorted == found.sorted
+    let script = goodTree().with(entry(ALPHA_DIRECTORY & "/tests/helpers.nims", "echo x\n"))
+    check script.auditTree.mapIt(it.message) == @[
+      "Test leaves no debug output; label report, or print under failing condition (VIII.5); " &
+        "got `echo x`.",
+    ]  # test rules of any Nim code read script under `tests/` too
+
+
   test "form and prose findings reach umbrella":
     let messy =
       goodTree() & @[entry(ALPHA_DIRECTORY & "/src/x.nim", "# the trap \n\n" & STRICT_FUNCS & "\n")]
