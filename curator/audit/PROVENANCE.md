@@ -108,7 +108,7 @@ Html and Svg carry hand-written pages, which the layout check confines to `pages
   `data.csv`, which names `curator/audit/src/kinds.nim`.
 
 **A kind whose language has a style guide is the only kind that `koch fix` writes.** The `Guide`
-column of the table is `KindRule.has_guide`. STYLE.md is the guide of Nim, so Nim, NimScript and
+column of the table is `RuleKind.has_guide`. STYLE.md is the guide of Nim, so Nim, NimScript and
 nimble carry it, and they are the kinds that read as Nim syntax. No other language has a guide.
 
 - Verified by `suites/test_kinds.nim`: the column equals the registry, and the guide marks the
@@ -177,7 +177,7 @@ most 25 words, and a paragraph at most 6 sentences. `REPLACEMENTS` is a short ta
 each with one approved replacement. The dictionary of about 900 words belongs to ASD, so no
 check can hold all of it. `GUIDE.md` carries the working subset of the other rules.
 
-**The governed set is half data and half derivation.** `ENGLISH_PATHS` holds every root
+**The governed set is half data and half derivation.** `PATHS_ENGLISH` holds every root
 Markdown document except `LICENSE.md`, and the issue and pull request templates. No rule can
 derive those. Everything else comes from the layout. That is the README of each project root
 and of each registered domain, and each record directly inside a project directory.
@@ -189,7 +189,7 @@ next project is governed from its first line.
 
 **A README below a project directory is outside the set.** `dance_ontology` keeps prose under
 `sim/` and `design/` in its own register. With `design/README.md`, `sim/README.md` and
-`sim/verdicts.md` added to `ENGLISH_PATHS`, `nim r koch check-files` reports 192 findings, measured
+`sim/verdicts.md` added to `PATHS_ENGLISH`, `nim r koch check-files` reports 192 findings, measured
 2026-09-23. Curator duty 3 forbids a check that reddens a project which cannot see it yet.
 Cost: that prose holds Article VI.8 by reading alone.
 
@@ -335,7 +335,7 @@ curator-only edit touches no project.
   document goes stale in every project, and one byte in CURATOR.md in none.
 
 **`koch stamp --write` sets the `Rules` row of every provenance file itself.** `withRulesRow`
-rewrites the row in place, and finds it as `headerFields` finds it, so what is written is what
+rewrites the row in place, and finds it as `fieldsHeader` finds it, so what is written is what
 the check then reads. A provenance file already current is not touched, and each path that
 moved is printed. So duty 1 takes one verb for the rows, and no hand edit (CURATOR.md, duty
 1).
@@ -353,8 +353,8 @@ that the guide states.** No heading carries a date. `## Open questions` is the l
 section. No heading text appears twice. No title is underlined, because every reader here sees
 `#` lines, and an underlined title is invisible to all of them.
 
-**A provenance file over `RECORD_LINES`, 5,000, is a finding.** Its remedy is the prune that
-the guide asks for. The ceiling is a backstop, and `SECTION_LINES` is the instrument that reads
+**A provenance file over `LINES_RECORD`, 5,000, is a finding.** Its remedy is the prune that
+the guide asks for. The ceiling is a backstop, and `LINES_SECTION` is the instrument that reads
 narration. The Architect chose 5,000. At 3,000, the largest record, that of `rga_visualiser`,
 stood exactly at the ceiling, so every addition there had to prune first. At 5,000, that record
 stands two fifths clear.
@@ -363,7 +363,7 @@ stands two fifths clear.
   catches narration inside it.
 - Rejected: 3,000. A backstop that fires on ordinary work reports growth, and not narration.
 
-**A `##` section over `SECTION_LINES`, 200, is the same finding, on the unit where narration
+**A `##` section over `LINES_SECTION`, 200, is the same finding, on the unit where narration
 collects.** The whole-file ceiling is crude. It punishes a wide project and lets a narrow one
 narrate freely. Over the sections that the limit was set against, the median is 34 lines and
 the ninetieth percentile is 137. The length of a whole file does not say which section
@@ -411,7 +411,7 @@ two ways passes, as a paraphrase passes the duplicates check. Verified by
 `suites/test_glossary.nim`.
 
 **The people words that the glossary avoids are held out of the root Markdown files and the
-Markdown under `curator/`.** `PEOPLE_WORDS` is the avoid list under Architect, Delegate,
+Markdown under `curator/`.** `WORDS_PEOPLE` is the avoid list under Architect, Delegate,
 Curator, Contributor and Role, cut to the words for people. It is read whole and without case,
 plural included, outside code spans, fences and tables. A glossary is exempt, because it lists
 the words it avoids.
@@ -425,7 +425,7 @@ the words it avoids.
 **The opening prompts are held to duty 10 by a diary form and a size ceiling.** A prose line
 that names a date, `#N`, `issue N`, `pull request N` or `run N` is a finding. An incident
 belongs in this file or in the log, and only the rule belongs in a prompt. A prompt over
-`PROMPT_BYTES`, 40,000, is a finding, so runaway growth is caught while an ordinary addition is
+`BYTES_PROMPT`, 40,000, is a finding, so runaway growth is caught while an ordinary addition is
 not. Code spans and fences pass, which keeps the carried-list example legal.
 
 - Cost: `II.9`, `duty 10` and a bare year pass by shape, so only a whole date is diary here.
@@ -538,7 +538,7 @@ passes, because a push to it is a merge that the Architect approved.
 
 **The reach of a curator into a contributor project stops at its records.** Under
 `contributor/`, the only writable paths on a curator branch are `README.md`, `PROVENANCE.md`
-and `GLOSSARY.md`. Those are `PROJECT_FILES`, read from `layout.nim` rather than repeated.
+and `GLOSSARY.md`. Those are `FILES_PROJECT`, read from `layout.nim` rather than repeated.
 Without this, duty 11 holds by reading alone, on the role that runs most often.
 
 - Rejected: `PROVENANCE.md` and `GLOSSARY.md` alone. A rule change can make the README of a
@@ -548,7 +548,7 @@ Without this, duty 11 holds by reading alone, on the role that runs most often.
 - Verified by `suites/test_scope.nim`: a curator branch that writes contributor code is a finding,
   and one that writes the records of that project is not.
 
-**A curator may move the files of a contributor, and never edit them.** `tree.movedPaths`
+**A curator may move the files of a contributor, and never edit them.** `tree.pathsMoved`
 reads `--name-status --find-renames=100%`, and `checkScope` exempts exactly those paths on a
 curator branch. So only an exact rename qualifies, and an edit disguised as a move is still
 caught. To rename a domain is a registry change, and the registry is the curator's. To move
@@ -566,7 +566,7 @@ and the move is visible in review, so the cost is disorder rather than damage.
 Git quotes a non-ASCII path by default, so `git ls-files` piped into any shell tool fails on
 it. An ASCII folder needs no `core.quotepath off` instruction for any delegate. macOS stores
 such a name as NFD, so the same folder has different bytes there. A `static` assertion in
-`domains.nim` holds every folder to `isProjectName`, and fails the build rather than the suite
+`domains.nim` holds every folder to `isNameProject`, and fails the build rather than the suite
 (Article IV.4).
 
 Cost: a path written with the accented folder name does not parse, so an old link to one
@@ -736,14 +736,14 @@ may open with a whole paragraph, and the finding is read in a log.
   requests of each role, as they stand, report none.
 
 **The coordinator holds no branch, so `check-role` never reads it.** It opens issues and
-comments, and no pull request. Its role string is `coordinator`, which `isRoleString` in the
+comments, and no pull request. Its role string is `coordinator`, which `isStringRole` in the
 `body` hook accepts (section Hooks on messages).
 
 **The role line may stand below the attribution block of a harness.** A harness that starts a
 delegate in a thread writes two lines above each pull request body that it opens, and it
 requires them. First comes a marker, an HTML comment that opens `<!-- ccr-projects-attribution:`
 and renders as nothing. Then comes a credit line in italics that opens `_Requested by **` and
-names who asked. `roleLine` passes each line only whole and in its place. A credit line with no
+names who asked. `lineRole` passes each line only whole and in its place. A credit line with no
 marker, a second block or any other comment still reads as the opening line.
 
 - Rejected: a skip of every leading comment and every italic line. Each would let a stray line
@@ -753,7 +753,7 @@ marker, a second block or any other comment still reads as the opening line.
 - Cost: the block is the text of the harness, held as data in `LINES_ATTRIBUTION`. Where the
   harness changes it, each such pull request fails again. The suite stays green, because its
   fixture copies the block.
-- The `body` hook reads the line through `roleLine` too, so it lets such a pull request through
+- The `body` hook reads the line through `lineRole` too, so it lets such a pull request through
   where the hooks run. The ledger reads the block more loosely (section Ledger).
 - Verified by `suites/test_role.nim`: a body below the block reads as the body alone, with `\n`
   or `\r\n` line ends. Each stray part of a block reads as the opening line.
@@ -928,7 +928,7 @@ is the failure it exists to catch.
   pattern still names an unfilled template, whose role line opens `**Role:** <!--`.
 - **On a pull request, the role line may also follow the credit line of an attribution block**
   (section Role). The ledger passes that line after any leading comment, and not only after the
-  marker. That is looser than `roleLine`, as the rest of the ledger reading is. An issue carries
+  marker. That is looser than `lineRole`, as the rest of the ledger reading is. An issue carries
   no block, so the pattern for issues does not pass the line.
 - The `permissions` block of `ledger.yml` names `actions: read`, `issues: write` and
   `pull-requests: read`, and nothing else. `workflows.nim` marks `gh pr` as a use of
@@ -1090,7 +1090,7 @@ So `nim r koch check` stays green as one command over a changed set that spans p
 points hold here.
 
 - What stays in audit is the policy of this repository (CURATOR.md duty 8). That is
-  `checkPin`, `checkDriver`, `checkKnoller` and `workflowVersion`, with the constants of the
+  `checkPin`, `checkDriver`, `checkKnoller` and `versionWorkflow`, with the constants of the
   driver and of the workflow. `missing` stays too, because it returns the `Finding` of audit, and
   knoller returns none.
 - Resolution lives in knoller, because the `knoller` command takes the compiler of a pin as
@@ -1148,7 +1148,7 @@ and over a lock that is not JSON.
 the nimble file under `nimbleFile.content`, and `atlas rep` writes it back over the file. So a
 requirement edited without a regenerated lock is undone on the next `koch test` or `koch check`.
 Nothing fails at that moment, so the loss surfaces later, as a `koch check-files` finding on a
-reverted line that the contributor never wrote. `checkLockNimble` compares the stored copy
+reverted line that the contributor never wrote. `checkNimbleLock` compares the stored copy
 against the committed file, and reports the first differing line.
 
 - The comparison runs in the static pass, over the tree as git holds it. Run after
@@ -1169,7 +1169,7 @@ against the committed file, and reports the first differing line.
 ## Scoped checks
 
 **The static pass stays whole-tree, and only compilation is scoped.** A project enters the test
-set when a changed path under it is anything but its records (`PROJECT_FILES`). A change to
+set when a changed path under it is anything but its records (`FILES_PROJECT`). A change to
 `koch.nim`, `koch.nim.cfg` or `curator/audit/src/` selects `curator/audit` alone. Its suites
 read koch, and the check sources are its code. Nothing selects every project.
 
@@ -1201,7 +1201,7 @@ The phase finished in about four minutes, against about nine summed. It fired **
 its 06:00 slot**, which is what GitHub does with `schedule` under load. So a curator who reads
 the cron and returns at 06:05 finds nothing. To wait is part of a read of this signal.
 
-**The weekly run plans what merged inside `RECENT_DAYS`**, and nothing in a quiet week. It
+**The weekly run plans what merged inside `DAYS_RECENT`**, and nothing in a quiet week. It
 judges "code" by the record-file exclusion that scoped runs use. Rot arrives with merges, and
 to compile a project that nothing touched is runner time for no information.
 
@@ -1210,7 +1210,7 @@ to compile a project that nothing touched is runner time for no information.
   that project next changes.
 - Cost: rot from outside the repository goes unseen through a quiet week, such as a runner
   image that moves under a pinned compiler.
-- The window is named twice, as the cron and as `RECENT_DAYS`, and `checkWindow` holds the two
+- The window is named twice, as the cron and as `DAYS_RECENT`, and `checkWindow` holds the two
   together (Watching main).
 - A repository younger than the window has every commit inside it. So the skip is verified by
   suite rather than by a live Monday. `test_plan.nim` drives `recentFor` on a throwaway repository,
@@ -1250,7 +1250,7 @@ a line that carries whitespace is dropped. A compiler that complained still fail
 absent package names itself.
 
 **Koch declares its own system packages, as the rule it enforces asks of every project.**
-`KOCH_SYSTEM` in `projects.nim` pairs each one with its reason. It holds git and curl, `tar`
+`SYSTEM_KOCH` in `projects.nim` pairs each one with its reason. It holds git and curl, `tar`
 for the tarball that `fetchRelease` unpacks, and `coreutils` for `sha256sum`. It also holds
 `libbrotli1` for the audit suite, which reads `woff2` faces, because `curator/audit` carries no
 driver with a `system` verb. The runner holds it: verified by run 906 of `check`, whose `test`
@@ -1309,7 +1309,7 @@ here, because a written count goes stale. The suites of `dance_ontology` dominat
 whole-tree run. Verified by hand, 2026-09-08: `nim r koch test` over every project passes with
 0 findings. Each project ran on the compiler that it pins, with one pin alone on `PATH`.
 
-**Trap: `koch check` selects suites from committed paths.** `changedPaths` reads
+**Trap: `koch check` selects suites from committed paths.** `pathsChanged` reads
 `git diff <base>...HEAD`, so a change that is not committed selects no project. `koch check` then
 passes on a tree that a fresh checkout fails. Commit before `koch check`, or run
 `nim r koch test <project>`, which runs that project whatever changed. Testament itself
@@ -1324,7 +1324,7 @@ rebuilds a suite whose source module changed, with a warm `nimcache`. Verified b
 configuration, and it stops before anything that needs a browser. Koch names the verb and
 nothing else, because what a check needs differs for each project, while the name need not.
 
-- **Enrolment is derived, and never listed.** `nodeDirectories` selects the projects that hold
+- **Enrolment is derived, and never listed.** `directoriesNode` selects the projects that hold
   `package.json` beside `package-lock.json`. So a project enrols by carrying them, and no
   second list can drift. The lock is demanded because `npm ci` needs one, and unpinned tools
   would be the one thing here that nothing pins.
@@ -1353,9 +1353,9 @@ slide does to the pivot, and nothing in it presses a key. So a rule wired to the
 a defect that no suite here can see. A driven check that the runner never runs is evidence only
 that its writer ran it (Article IX.6).
 
-**Enrolment is the verb, read from the driver of the project itself.** `verbDirectories` reads the
+**Enrolment is the verb, read from the driver of the project itself.** `directoriesVerb` reads the
 dispatch of `tools/build.nim` and selects the projects that name `drive`, the derivation that
-`nodeDirectories` uses one step earlier. `dispatchVerbs` reads the dispatch of koch and of a project
+`directoriesNode` uses one step earlier. `verbsDispatch` reads the dispatch of koch and of a project
 driver alike, with the opening line as an argument. Koch cases over parsed options, and a
 project driver over its first argument. Cost: a project that spells the verb otherwise is
 passed by in silence, which is why CONTRIBUTOR.md names `drive`, `head` and `system` outright.
@@ -1649,7 +1649,7 @@ list. The list on every kind of Nim syntax:
 - `checkTargets`, the subject of a `to<Target>` call (STYLE.md §5);
 - `checkCommands`, the command form of a dotted call statement (STYLE.md §5).
 
-On `.nim` alone, as the idiom checks read it, the list adds `checkImportBrackets` (X.5),
+On `.nim` alone, as the idiom checks read it, the list adds `checkBracketsImport` (X.5),
 `checkLists` (X.10) and `checkProfiler` (STYLE.md §3). The move of a late `strictFuncs` needs no
 new check, because `checkIdioms` already reports it. `checkNegations` has no fixer, so a project
 clears it by hand before the wiring. The check of a type conversion needs the semantic pass. The
@@ -2044,7 +2044,7 @@ answers by path, and fixes again each entry that asked. The rule and its probe a
 of knoller, under Content fixes.
 
 - The pin is that of the project that holds the file, and that of `curator/audit` for a file at
-  the root. `pinProvers` of knoller serves it, through a `Toolchains` of its own.
+  the root. `proversPin` of knoller serves it, through a `Toolchains` of its own.
   So the `ronri` projects read with their commit pin, whose glyph operators 2.2.12 lexes as names.
 - Where no compiler serves a pin, or a project pins none, no group goes. `koch fix` then prints
   one line `warning: needless-parentheses: <message>`, and the exit code stays.
@@ -2233,7 +2233,7 @@ through `gh api` as it counts the call of a tool.
 - Verified by hand through koch built from the branch, 2026-10-04. A body file with a sentence
   of 27 words is refused, and the mended file passes.
 
-**`coordinator` is a role string that no branch names.** `isRoleString` accepts it, so a
+**`coordinator` is a role string that no branch names.** `isStringRole` accepts it, so a
 sign-off row or a decision class may name the coordinator as the role that acts. A hook
 compares a role line with the branch only where the branch is in the grammar, and the
 coordinator holds no branch. An issue that carries the label `coordinator` is refused. A brief
@@ -2387,10 +2387,10 @@ and a checkout still wants `contents`. The `draft` workflow is the case: GitHub 
 token converts. The marks are text here too: `GH_TOKEN: ${{` and the two spellings of the run
 token.
 
-**The weekly window is named twice, as the cron of `check.yml` and as `RECENT_DAYS`.** So a
+**The weekly window is named twice, as the cron of `check.yml` and as `DAYS_RECENT`.** So a
 workflow that passes `--recent` runs on a cron whose interval is that constant. The interval is
 read for two shapes alone, one weekday and every day. Any other shape reads as zero and fails, so
-a new shape is taught to `cronDays` first.
+a new shape is taught to `daysCron` first.
 
 - Verified by `suites/test_workflows.nim`. Verified by a break of it: delete `actions: read` from
   `watch.yml`, and `koch check-files` reports it by name and by what was granted. Restore it, and 0
