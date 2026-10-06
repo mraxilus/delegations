@@ -214,3 +214,13 @@ A labelled line on a diagnostics chart at a known frame rate, drawn so a reading
 placed against it. Nothing is held to a mark: the goal is as fast as possible, not a
 budget. Not a marker, which rings an object in the view.
 _Avoid_: budget, threshold, target, goal
+
+**PGA share**:
+The share of a front-end's busy time that runs inside PGA, the reference library, as a sampling
+profiler counts it.
+_Avoid_: library share, reference share, library cost, profile
+
+**Project algebra**:
+The four modules of this project whose own work is algebra: motors, projections, objects and
+boundary.
+_Avoid_: wrappers, glue, own algebra
