@@ -1,10 +1,11 @@
 # Make the width of each float configurable
 
 At pin, each coefficient of a multivector is a 64-bit `float`, and no build option changes it.
-This change adds the define `pga.float`, 64 by default or 32, and the type `Coefficient` that it
-selects. Each coefficient, scalar operand and comparison takes `Coefficient` in place of
-`float`. At 64 bits `Coefficient` and `float` name one type, so the library emits the same C as
-pin.
+This change adds the define `pga.float_width`, 64 by default or 32, and the type `Coefficient`
+that it selects. Each coefficient, scalar operand and comparison takes `Coefficient` in place of
+`float`. The define `pga.tolerance_places` becomes `pga.float_tolerance`, and its default
+follows the width. At 64 bits `Coefficient` and `float` name one type, so the library emits the
+same C as pin.
 
 ## Edit `pga/algebra.nim`
 
@@ -16,15 +17,15 @@ pin.
 
 ```nim
   # Choose bits in each coefficient: 64, or 32 to halve every multivector.
-  FLOAT* {.define: "pga.float".} = 64
+  FLOAT_WIDTH* {.define: "pga.float_width".} = 64
 
-  # Avoid small-value comparison failures; 32-bit coefficient holds about seven places.
-  TOLERANCE_PLACES* {.define: "pga.tolerance_places".} = (when FLOAT == 32: 5 else: 9)
+  # Avoid small-value comparison failures, in decimal places; 32-bit coefficient holds about seven.
+  FLOAT_TOLERANCE* {.define: "pga.float_tolerance".} = (when FLOAT_WIDTH == 32: 5 else: 9)
 
-type Coefficient* = (when FLOAT == 32: float32 else: float64)
-  ## Define each coefficient of every multivector, in as many bits as `FLOAT` says.
+type Coefficient* = (when FLOAT_WIDTH == 32: float32 else: float64)
+  ## Define each coefficient of every multivector, in as many bits as `FLOAT_WIDTH` says.
 
-const TOLERANCE_ABS* = Coefficient(10.pow(-TOLERANCE_PLACES.float))
+const TOLERANCE_ABS* = Coefficient(10.pow(-FLOAT_TOLERANCE.float))
 ```
 
 ## Edit `pga/algebra.nim`
@@ -35,7 +36,7 @@ static:
 
 ```nim
 static:
-  doAssert FLOAT in [32, 64], &"Float width should be 32 or 64 bits; got `{FLOAT}`."
+  doAssert FLOAT_WIDTH in [32, 64], &"Float width should be 32 or 64 bits; got `{FLOAT_WIDTH}`."
 ```
 
 ## Edit `pga/multivectors.nim`

@@ -1,10 +1,11 @@
 # P06: Make the width of each float configurable
 
 At pin, each coefficient of a multivector is a 64-bit `float`, and no build option changes it.
-This proposal adds the define `pga.float`, 64 by default or 32, and the type `Coefficient` that it
-selects. Each coefficient, scalar operand and comparison takes `Coefficient` in place of `float`.
-At 64 bits the library emits the same C as pin, so the default costs nothing. At 32 bits each
-multivector takes half the bytes.
+This proposal adds the define `pga.float_width`, 64 by default or 32, and the type `Coefficient`
+that it selects. Each coefficient, scalar operand and comparison takes `Coefficient` in place of
+`float`. The define `pga.tolerance_places` becomes `pga.float_tolerance`. At 64 bits the library
+emits the same C as pin, so the default costs nothing. At 32 bits each multivector takes half
+the bytes.
 
 This proposal applies at pin and builds on no other. The Architect ruled on 2026-10-06 that
 32-bit floats and SIMD forms stay unmeasured while the library holds 64-bit floats alone. A
@@ -12,15 +13,16 @@ SIMD form may come later as a proposal that keeps 64-bit floats, and this propos
 
 ## What it is
 
-- **Define.** `FLOAT` in `pga/algebra.nim` reads `pga.float`, 64 by default. A static
-  assertion refuses any width other than 32 or 64.
+- **Define.** `FLOAT_WIDTH` in `pga/algebra.nim` reads `pga.float_width`, 64 by default. A
+  static assertion refuses any width other than 32 or 64.
 - **Type.** `Coefficient` is `float32` at 32 bits and `float64` at 64 bits. `float64` is the type
   that `float` names, so at 64 bits each signature means what it meant at pin.
 - **Uses.** The coefficients of `Multivector`, its indexers, `=~`, each operator that takes a
   scalar, and the sign of the conjugate take `Coefficient`. So do four signs in the library's own
   suites, since a 64-bit sign does not convert to a 32-bit coefficient by itself.
-- **Tolerance.** `pga.tolerance_places` defaults to 9 at 64 bits, as at pin, and to 5 at 32
-  bits. A 32-bit coefficient holds about seven places, so 9 places would fail.
+- **Tolerance.** `FLOAT_TOLERANCE` reads `pga.float_tolerance`, which takes the place of
+  `pga.tolerance_places` and still counts decimal places. It defaults to 9 at 64 bits, as at pin,
+  and to 5 at 32 bits. A 32-bit coefficient holds about seven places, so 9 places would fail.
 
 ## What it costs at 64 bits
 
@@ -82,16 +84,18 @@ The library's own suites ran at 32 bits at each algebra, at three tolerances:
 | 6 | 33 of 33 | 33 of 33 | 28 of 28 | 27 of 28 |
 
 So the default at 32 bits is 5 places, one place inside the first that fails. A caller who needs
-more places at 32 bits names `pga.tolerance_places`, as at pin.
+more places at 32 bits names `pga.float_tolerance`.
 
 ## Names
 
-The Architect chose `Coefficient` and `pga.float` on 2026-10-06.
+The Architect chose `Coefficient`, `pga.float_width` and `pga.float_tolerance` on 2026-10-06.
 
 - `Coefficient` is the word the library already uses for each slot of a multivector, as the
   docs of its indexers say.
-- `pga.float` takes a count of bits, as Nim names `float32` and `float64` by bits. The constant
-  that reads it is `FLOAT`, as `DIMENSIONS` reads `pga.dimensions`.
+- `pga.float_width` takes a count of bits, as Nim names `float32` and `float64` by bits.
+- `pga.float_tolerance` sits beside it, since the tolerance follows the width. Both share the
+  prefix `float_`, so a reader finds the two together.
+- Each constant is its define in capitals, as `DIMENSIONS` reads `pga.dimensions`.
 - `Real` names a number in mathematics, and not the slot that it fills.
 - `Scalar` is the element of grade zero in the book, so it would name two things.
 - `Float` reads as `float` at a glance, and Nim tells them apart by the case of one letter.

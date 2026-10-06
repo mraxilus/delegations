@@ -57,7 +57,7 @@ template timeLibrary(label: string, body: untyped) =
 proc main() =
   ## Print width and size of this build, then time each library operation at it.
   randomize(SEED)
-  echo "width ", FLOAT, " size ", sizeof(Multivector)
+  echo "width ", FLOAT_WIDTH, " size ", sizeof(Multivector)
   timeLibrary("add", m + n)
   timeLibrary("negate", -m)
   timeLibrary("complement", /m)
