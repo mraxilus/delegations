@@ -75,7 +75,7 @@ type Wording* = enum
   TipApplyArity, TipApplyOperation, TipApplyFirst, TipApplySecond,
   TipViewMotor, TipViewAzimuth, TipViewElevation, TipViewDistance, TipViewSpeed, TipViewLens,
   TipDiagnosticsFrames, TipDiagnosticsVsync, TipDiagnosticsProgram, TipDiagnosticsFrameArena,
-  TipDiagnosticsPool, TipDiagnosticsScene, TipDiagnosticsLibrary, TipDiagnosticsAlgebra,
+  TipDiagnosticsPool, TipDiagnosticsScene, TipDiagnosticsPga, TipDiagnosticsAlgebra,
   TipPickApply, TipPickOperation, TipPickBack, TipPickEdit, TipPickVisible, TipPickDelete,
   TipPickClose,
   TipMenuSceneFile, TipMenuImageFile, TipMenuSaveScene, TipMenuSaveImage, TipMenuLoadScene,
@@ -91,7 +91,7 @@ type Wording* = enum
   NameViewLens,
   NameDiagnosticsFrame, NameDiagnosticsVsync, NameDiagnosticsMemory, NameDiagnosticsProgram,
   NameDiagnosticsFrameArena, NameDiagnosticsPool, NameDiagnosticsTotal, NameDiagnosticsShare,
-  NameDiagnosticsLibrary, NameDiagnosticsAlgebra,
+  NameDiagnosticsPga, NameDiagnosticsAlgebra,
   NamePickApply, NamePickEdit, NamePickBack, NamePickHide, NamePickShow, NamePickDelete,
   NamePickClose,
   NameMenuSave, NameMenuSaveScene, NameMenuSaveImage, NameMenuLoad, NameMenuLoadScene,
@@ -187,12 +187,12 @@ const LUT_TEXT_BY_WORDING: array[Wording, cstring] = [
   TipDiagnosticsScene:
     "Scene is one fixed block sized for every handle up front, not allocated one object at a " &
         "time: `allocated` is that whole block, `used` is however much of it carries an object.",
-  TipDiagnosticsLibrary:
+  TipDiagnosticsPga:
     "Share of this build's busy time over the last 20 seconds that ran " &
-        "inside the reference library, pga. A sampling profiler counts it, so read it as about " &
+        "inside PGA, the reference library. A sampling profiler counts it, so read it as about " &
         "right rather than exact; n is how many samples it rests on.",
   TipDiagnosticsAlgebra:
-    "Share of the same busy time that ran in this project's own algebra, outside the library: " &
+    "Share of the same busy time that ran in this project's own algebra, outside PGA: " &
         "its motors and projections, its incidence questions, and the boundary that lifts into " &
         "the algebra and reads back out.",
 
@@ -271,8 +271,8 @@ const LUT_TEXT_BY_WORDING: array[Wording, cstring] = [
   NameDiagnosticsFrameArena: "frame arena",
   NameDiagnosticsPool: "object pool",
   NameDiagnosticsTotal: "total",
-  NameDiagnosticsShare: "library share",
-  NameDiagnosticsLibrary: "library",
+  NameDiagnosticsShare: "pga share",
+  NameDiagnosticsPga: "pga",
   NameDiagnosticsAlgebra: "project algebra",
 
   # Menu that opens over whatever is picked.
@@ -323,7 +323,7 @@ const LUT_TEXT_BY_WORDING: array[Wording, cstring] = [
     "The 16 numbers of this object's own multivector, in the library's basis order, " &
         "stacked one row per grade. The object itself only moves when you save.",
   NoteDiagnostics: "Live cost of this build, updated every frame.",
-  # Library share in place of its figure: none sampled yet, or no way to sample here.
+  # PGA share in place of its figure: none sampled yet, or no way to sample here.
   NoteDiagnosticsShareWaiting: "No samples yet.",
   NoteDiagnosticsShareLinux: "Unavailable: this build samples on Linux alone.",
   NoteDiagnosticsShareFrames: "Unavailable: this build keeps no stack frames to sample.",

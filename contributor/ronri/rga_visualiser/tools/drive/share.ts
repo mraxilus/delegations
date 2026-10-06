@@ -1,4 +1,4 @@
-// Check page's library share against engine's own profiler, and its word where it may not
+// Check page's PGA share against engine's own profiler, and its word where it may not
 //   sample; not Nim because Chrome's protocol and its profiler are what this reads, and Nim
 //   reaches them only through glue.
 //   Page samples with browser's sampling profiler, which runs only on page served with
@@ -39,7 +39,7 @@ interface NodeProfile {
   children?: number[];
 }
 
-/** Busy samples by owner, `share.Owner` order: rest, project algebra, library. */
+/** Busy samples by owner, `share.Owner` order: rest, project algebra, PGA. */
 type CountsShare = [number, number, number];
 
 /** Count engine's busy samples by owner, each stack owned by highest owner on it. */
@@ -96,21 +96,21 @@ export async function driveShareRefused(page: Page): Promise<void> {
   const was = await openDiagnostics(page);
   const reason = await page.evaluate(() => nimWording(Wording.NoteDiagnosticsSharePolicy));
   await page.waitForFunction(
-    (given) => document.getElementById('diagnostic-share-library')?.textContent === given,
+    (given) => document.getElementById('diagnostic-share-pga')?.textContent === given,
     reason,
   ).catch(() => undefined);
   const rows = await page.evaluate(() => [
-    document.getElementById('diagnostic-share-library')?.textContent ?? '',
+    document.getElementById('diagnostic-share-pga')?.textContent ?? '',
     document.getElementById('diagnostic-share-algebra')?.textContent ?? '',
   ]);
   report(
-    'the page says why it cannot sample its library share, where the browser refuses',
+    'the page says why it cannot sample its PGA share, where the browser refuses',
     rows.every((row) => row === reason), rows.join(' | '),
   );
   await closeDiagnostics(page, was);
 }
 
-/** Assert page's library share, and its project algebra's, agree with engine's profiler.
+/** Assert page's PGA share, and its project algebra's, agree with engine's profiler.
  *
  *  Page given here must be served with `Document-Policy: js-profiling`. Largest demo, every
  *  object placed every frame, nothing selected: steady load, so one span of each profiler
@@ -137,15 +137,15 @@ export async function driveShareAgrees(page: Page): Promise<void> {
     page, profile.nodes as NodeProfile[], profile.samples ?? [],
   );
   const row = await page.evaluate(
-    () => document.getElementById('diagnostic-share-library')?.textContent ?? '',
+    () => document.getElementById('diagnostic-share-pga')?.textContent ?? '',
   );
   report(
-    'the page samples its library share where the browser allows it',
+    'the page samples its PGA share where the browser allows it',
     /^\d+\.\d%, n \d+$/.test(row) && page_counts[0] + page_counts[1] + page_counts[2] >= 100,
     `${row}, pooled ${page_counts.join(' ')}`,
   );
   reportAgreed(
-    'the page\'s library share agrees with the engine\'s own profiler', 2, page_counts,
+    'the page\'s PGA share agrees with the engine\'s own profiler', 2, page_counts,
     engine_counts,
   );
   reportAgreed(

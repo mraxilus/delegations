@@ -84,11 +84,11 @@ static int samplerDisarm(void) {
   proc onSample(signal: cint) {.noconv, stackTrace: off.} =
     ## Name owner of stack this sample interrupted, and count it.
     ##   Pushes no frame of its own: it walks frames that interrupted code pushed.
-    ##   Library owns stack with any frame in it, so walk stops at first.
+    ##   PGA owns stack with any frame in it, so walk stops at first.
     var
       owner = Owner.Rest
       frame = getFrame()
-    while frame != nil and owner != Owner.Library:
+    while frame != nil and owner != Owner.Pga:
       owner = max(owner, ownerOfPath(frame.filename))
       frame = frame.prev
     atomicInc(COUNTS_SAMPLED[owner])

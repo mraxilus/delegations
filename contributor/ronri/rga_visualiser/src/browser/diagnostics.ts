@@ -1054,11 +1054,11 @@ function drawSparkline() {
   context_sparkline.stroke();
 }
 
-// **Library share: browser's own sampling profiler, run while section is shown.**
+// **PGA share: browser's own sampling profiler, run while section is shown.**
 //   Each sample is stack of calls; bridge names owner of each function by name JS backend
 //   gave it, and pools counts over `share.SECONDS_SHARE`, as desktop's sampler is pooled.
 //   Busy samples alone count: sample with no stack is browser waiting or working outside
-//   page's script, which neither library nor project owns.
+//   page's script, which neither PGA nor project owns.
 //   Profiler exists in Chromium alone, and only on page whose own response carries
 //   `Document-Policy: js-profiling`; page opened from file is refused. There rows say why,
 //   rather than guess figure.
@@ -1078,9 +1078,9 @@ const MILLISECONDS_WINDOW_SHARE = 2000; // Span of one profiler, whose trace is 
 const MILLISECONDS_SAMPLE_SHARE = 10; // Interval asked of profiler; Chromium gives no finer.
 // Room for one window's samples at that interval, with margin for late stop.
 const SAMPLES_WINDOW_SHARE = 2 * MILLISECONDS_WINDOW_SHARE / MILLISECONDS_SAMPLE_SHARE;
-const diagnostic_share_library = elementById('diagnostic-share-library');
+const diagnostic_share_pga = elementById('diagnostic-share-pga');
 const diagnostic_share_algebra = elementById('diagnostic-share-algebra');
-diagnostic_share_library.parentElement!.title = nimWording(Wording.TipDiagnosticsLibrary);
+diagnostic_share_pga.parentElement!.title = nimWording(Wording.TipDiagnosticsPga);
 diagnostic_share_algebra.parentElement!.title = nimWording(Wording.TipDiagnosticsAlgebra);
 let profiler_share: ProfilerShare | null = null; // Profiler sampling now, if any.
 let ms_profiler_share_opened = 0; // When it began, on page's clock.
@@ -1089,7 +1089,7 @@ let reason_share: Wording | null = null; // Why page cannot sample, once known.
 //   Few hundred names recur in every trace, so each crosses into bridge once.
 const owner_by_name_share = new Map<string, number>();
 
-// Count one trace's busy samples by owner: rest, project algebra, library.
+// Count one trace's busy samples by owner: rest, project algebra, PGA.
 //   Stack's owner is highest owner of any frame on it, as `share` rules.
 function countTraceShare(trace: TraceShare): [number, number, number] {
   const owner_frame = trace.frames.map((frame) => {
@@ -1132,8 +1132,8 @@ function closeProfilerShare() {
   const closing = profiler_share;
   profiler_share = null;
   void closing.stop().then((trace) => {
-    const [rest, algebra, library] = countTraceShare(trace);
-    nimShareAdd(rest, algebra, library);
+    const [rest, algebra, pga] = countTraceShare(trace);
+    nimShareAdd(rest, algebra, pga);
   });
 }
 
@@ -1162,16 +1162,16 @@ function tickShare(is_shown: boolean) {
   }
   if (reason_share !== null) {
     const reason = nimWording(reason_share);
-    writeText(diagnostic_share_library, reason);
+    writeText(diagnostic_share_pga, reason);
     writeText(diagnostic_share_algebra, reason);
     return;
   }
-  const [rest, algebra, library] = nimSharePooled();
-  const busy = (rest ?? 0) + (algebra ?? 0) + (library ?? 0);
+  const [rest, algebra, pga] = nimSharePooled();
+  const busy = (rest ?? 0) + (algebra ?? 0) + (pga ?? 0);
   const textOf = (count: number) => busy === 0
     ? nimWording(Wording.NoteDiagnosticsShareWaiting)
     : (100 * count / busy).toFixed(1) + '%, n ' + busy;
-  writeText(diagnostic_share_library, textOf(library ?? 0));
+  writeText(diagnostic_share_pga, textOf(pga ?? 0));
   writeText(diagnostic_share_algebra, textOf(algebra ?? 0));
 }
 
@@ -1191,7 +1191,7 @@ function refreshDiagnostics() {
   //   so they fell back to 300 pixels and drew, five times second, for reader looking
   //   at objects list. Drawer guard above did not catch it because drawer is
   //   genuinely open.
-  // Library share samples while section is shown, and stops when it is not.
+  // PGA share samples while section is shown, and stops when it is not.
   tickShare(isDiagnosticsShown());
   if (!isDiagnosticsShown()) { is_diagnostics_shown_last = false; return; }
   // Which slow-pass job this tick asks for; see `TICKS_DISTRIBUTION` and `askSlowPass`.

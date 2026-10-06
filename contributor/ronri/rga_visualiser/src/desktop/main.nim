@@ -89,7 +89,7 @@
 ##   never maps window, `--storyboard:DIR` writes one frame per scripted construction step
 ##   and quits.
 ##   `--timings` reports frame-time statistics (mean, percentiles, tessellation cost) and
-##   library share over `--frames:N` run; `--novsync` disables vsync from startup, `--fill`
+##   PGA share over `--frames:N` run; `--novsync` disables vsync from startup, `--fill`
 ##   tops scene up to capacity first.
 ##   `--drive-drag` scripts construction drag through SDL's event queue, so headless run
 ##   can be caught mid-gesture with choice menu open.
@@ -298,7 +298,7 @@ var
   ARENA_SCRATCH_EXPORT = initArena(SCRATCH_EXPORT.toOpenArray(0, CAPACITY_SCRATCH_EXPORT - 1))
     ## Carve export's buffers from `SCRATCH_EXPORT`, reset as each export begins.
 
-# Pool library share over `share.SECONDS_SHARE` for panel, and over whole `--timings` run.
+# Pool PGA share over `share.SECONDS_SHARE` for panel, and over whole `--timings` run.
 #   Filled from `sampler` in each frame's snapshot; see `renderFrame`.
 var
   RING_SHARE = initRingShare()
@@ -2467,13 +2467,13 @@ proc runInteractive(
         &"(both this run's own CPU-side cost, not the rasterizer's)."
     let busy = COUNTS_SHARE_RUN.busy
     if busy > 0:
-      echo &"  library share {COUNTS_SHARE_RUN.percentOf(Owner.Library):.1f}%, project " &
+      echo &"  PGA share {COUNTS_SHARE_RUN.percentOf(Owner.Pga):.1f}%, project " &
           &"algebra {COUNTS_SHARE_RUN.percentOf(Owner.Algebra):.1f}%, of {busy} busy samples."
     else:
       let reason = if IS_SAMPLER_BUILT: NoteDiagnosticsShareWaiting
         elif defined(linux): NoteDiagnosticsShareFrames
         else: NoteDiagnosticsShareLinux
-      echo &"  library share: {wordingText(reason)}"
+      echo &"  PGA share: {wordingText(reason)}"
 
 
 proc runStoryboard(

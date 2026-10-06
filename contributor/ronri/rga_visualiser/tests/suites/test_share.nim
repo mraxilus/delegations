@@ -15,9 +15,9 @@ suite "Share":
     # Names as JS backend emits them into built page, one for each kind of owner.
     let names = [
       ("HEX5BHEX5D_u0__OOZOOZdependenciesZreplicationsOmraxilusOgitlabOcomZlengyelZ" &
-        "projective95geometric95algebra95illuminatedZpgaZmultivectors", Owner.Library),
+        "projective95geometric95algebra95illuminatedZpgaZmultivectors", Owner.Pga),
       ("wedge_u12__OOZOOZdependenciesZreplicationsOmraxilusOgitlabOcomZlengyelZ" &
-        "projective95geometric95algebra95illuminatedZpga", Owner.Library),
+        "projective95geometric95algebra95illuminatedZpga", Owner.Pga),
       ("kindOf_u3__OOZrga95visualiserZobjects", Owner.Algebra),
       ("motorBetween_u7__OOZrga95visualiserZmotors", Owner.Algebra),
       ("liftPoint_u2__OOZrga95visualiserZboundary", Owner.Algebra),
@@ -35,9 +35,9 @@ suite "Share":
       # Paths as debug build's frames carry them, absolute and checkout-dependent.
       let paths = [
         ("/c/rga_visualiser/dependencies/replications.mraxilus.gitlab.com/lengyel/" &
-          "projective_geometric_algebra_illuminated/pga/multivectors.nim", Owner.Library),
+          "projective_geometric_algebra_illuminated/pga/multivectors.nim", Owner.Pga),
         ("/c/rga_visualiser/dependencies/replications.mraxilus.gitlab.com/lengyel/" &
-          "projective_geometric_algebra_illuminated/pga.nim", Owner.Library),
+          "projective_geometric_algebra_illuminated/pga.nim", Owner.Pga),
         ("/c/rga_visualiser/src/rga_visualiser/objects.nim", Owner.Algebra),
         ("/c/rga_visualiser/src/rga_visualiser/projections.nim", Owner.Algebra),
         ("/c/rga_visualiser/src/rga_visualiser/tessellate.nim", Owner.Rest),
@@ -51,30 +51,30 @@ suite "Share":
 
   test "the tooltip names the span the ring pools over":
     # Catalogue holds literal text alone, so span is written there twice and held equal here.
-    check ($SECONDS_SHARE & " seconds") in $wordingText(TipDiagnosticsLibrary)
+    check ($SECONDS_SHARE & " seconds") in $wordingText(TipDiagnosticsPga)
 
 
   test "the ring pools the last twenty seconds, and forgets a second that left them":
     var ring = initRingShare()
-    ring.add(100, [Owner.Rest: 6, Owner.Algebra: 1, Owner.Library: 3])
-    ring.add(100, [Owner.Rest: 4, Owner.Algebra: 1, Owner.Library: 5])
-    ring.add(110, [Owner.Rest: 10, Owner.Algebra: 0, Owner.Library: 10])
+    ring.add(100, [Owner.Rest: 6, Owner.Algebra: 1, Owner.Pga: 3])
+    ring.add(100, [Owner.Rest: 4, Owner.Algebra: 1, Owner.Pga: 5])
+    ring.add(110, [Owner.Rest: 10, Owner.Algebra: 0, Owner.Pga: 10])
     let pooled = ring.pooled(110)
-    check pooled == [Owner.Rest: 20, Owner.Algebra: 2, Owner.Library: 18]
+    check pooled == [Owner.Rest: 20, Owner.Algebra: 2, Owner.Pga: 18]
     check pooled.busy == 40
-    check pooled.percentOf(Owner.Library) == 45.0
+    check pooled.percentOf(Owner.Pga) == 45.0
     # Second 100 left window at 120; its bucket is counted again from nothing at 120.
-    check ring.pooled(119)[Owner.Library] == 18
-    check ring.pooled(120)[Owner.Library] == 10
-    ring.add(120, [Owner.Rest: 1, Owner.Algebra: 0, Owner.Library: 0])
-    check ring.pooled(120) == [Owner.Rest: 11, Owner.Algebra: 0, Owner.Library: 10]
-    check initRingShare().pooled(0).percentOf(Owner.Library) == 0.0
+    check ring.pooled(119)[Owner.Pga] == 18
+    check ring.pooled(120)[Owner.Pga] == 10
+    ring.add(120, [Owner.Rest: 1, Owner.Algebra: 0, Owner.Pga: 0])
+    check ring.pooled(120) == [Owner.Rest: 11, Owner.Algebra: 0, Owner.Pga: 10]
+    check initRingShare().pooled(0).percentOf(Owner.Pga) == 0.0
 
 
   when not defined(js):
     when IS_SAMPLER_BUILT:
-      test "the sampler counts a loop of library calls as the library's":
-        # Spins on geometric products, so nearly every busy sample is inside library.
+      test "the sampler counts a loop of PGA calls as PGA's":
+        # Spins on geometric products, so nearly every busy sample is inside PGA.
         #   Bound sits below that, since sample landing in push or pop of tiny proc misses.
         discard drainSamples()
         check startSampling()
@@ -89,5 +89,5 @@ suite "Share":
         let counts = drainSamples()
         checkpoint &"{counts} over {spins} products, {product}"
         check counts.busy >= 40
-        check counts.percentOf(Owner.Library) > 50.0
+        check counts.percentOf(Owner.Pga) > 50.0
         check drainSamples().busy == 0

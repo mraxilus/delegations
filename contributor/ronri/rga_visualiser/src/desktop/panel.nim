@@ -11,7 +11,7 @@
 ##   | Top bar     | Start new object, toggle world furniture, save or load scene.           |
 ##   | Apply       | Apply any library operation of chosen arity to picked operands, both of |
 ##   |             | which current selection fills in.                                       |
-##   | Diagnostics | Live frame time, vsync, library share, memory use of program arena,     |
+##   | Diagnostics | Live frame time, vsync, PGA share, memory use of program arena,         |
 ##   |             | frame arenas and object pool, and all else this binary reserves for     |
 ##   |             | itself, added up.                                                       |
 ##   | Objects     | Select, show, hide, remove; edit any object's label, colour and         |
@@ -1123,7 +1123,7 @@ proc layoutDiagnosticsFrameTime(panel: var Panel) =
 
 
 proc layoutDiagnosticsShare(panel: Panel) =
-  ## Lay out "library share" section: library's and project algebra's share of busy samples.
+  ## Lay out "PGA share" section: PGA's and project algebra's share of busy samples.
   ##   Build that cannot sample says why, in place of both figures.
   gui.separatorText wordingText(NameDiagnosticsShare)
   when not defined(linux):
@@ -1132,7 +1132,7 @@ proc layoutDiagnosticsShare(panel: Panel) =
     gui.textWrapped wordingText(NoteDiagnosticsShareFrames)
   else:
     let rows = [
-      (Owner.Library, NameDiagnosticsLibrary, TipDiagnosticsLibrary),
+      (Owner.Pga, NameDiagnosticsPga, TipDiagnosticsPga),
       (Owner.Algebra, NameDiagnosticsAlgebra, TipDiagnosticsAlgebra),
     ]
     for (owner, name, tip) in rows:

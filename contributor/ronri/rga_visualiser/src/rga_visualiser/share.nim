@@ -1,9 +1,9 @@
-## Read what share of front-end's busy time reference library takes, and project's own algebra.
+## Read PGA share of front-end's busy time, and share of project's own algebra.
 ##
 ## Sampling profiler answers it: each sample is one stack of calls, and one rule names its owner.
-##   Library owns sample with any frame inside `pga`.
-##     Library calls back into nothing of project's, so whatever runs under it is its own.
-##   Project's own algebra owns sample with frame in one of `MODULES_ALGEBRA`, and none in library.
+##   PGA, reference library, owns sample with any frame inside `pga`.
+##     PGA calls back into nothing of project's, so whatever runs under it is its own.
+##   Project's own algebra owns sample with frame in one of `MODULES_ALGEBRA`, and none in PGA.
 ##   Rest is everything else: drawing, panel, browser's or driver's own work.
 ## Each front-end samples its own way, and both read their stacks through this one rule.
 ##   Desktop: timer on main thread's CPU clock, walking Nim's frames; see `desktop/sampler`.
@@ -30,9 +30,9 @@ const SECONDS_SHARE* = 20
 
 type
   Owner* {.pure.} = enum  ## Define who owns one sample's time, in rule's order of precedence.
-    Rest,  ## Neither library nor project's algebra: drawing, panel, browser, driver.
+    Rest,  ## Neither PGA nor project's algebra: drawing, panel, browser, driver.
     Algebra,  ## Project's own algebra, one of `MODULES_ALGEBRA`.
-    Library  ## Reference library, `pga`.
+    Pga  ## PGA, reference library: module `pga` and every module under it.
 
   CountsShare* = array[Owner, int]  ## Count busy samples by owner.
 
@@ -48,7 +48,7 @@ type
 #[ Ownership Rule ]#
 
 const
-  PATH_LIBRARY = "/projective_geometric_algebra_illuminated/pga"
+  PATH_PGA = "/projective_geometric_algebra_illuminated/pga"
     ## Name reference library by tail of its path: module `pga` and every module under it.
   MODULES_ALGEBRA* = ["motors", "projections", "objects", "boundary"]
     ## Name project's modules whose own work is algebra.
@@ -81,7 +81,7 @@ func tailsAlgebraName(): array[MODULES_ALGEBRA.len, string] {.compileTime.} =
 
 
 const
-  MARK_LIBRARY_NAME = mangled(PATH_LIBRARY)  ## Mark function name JS backend gives inside library.
+  MARK_NAME_PGA = mangled(PATH_PGA)  ## Mark function name JS backend gives inside library.
   TAILS_ALGEBRA_PATH = tailsAlgebraPath()  ## End path of each project algebra module's file.
   TAILS_ALGEBRA_NAME = tailsAlgebraName()  ## End name of each project algebra module's function.
 
@@ -94,7 +94,7 @@ when not defined(js):
     let (length_text, length_part) = (len(text), len(part))
     for start in 0..(length_text - length_part):
       var i = 0
-      while i < length_part and text[start + i] == part[i]: inc i
+      while i < length_part and text[start+i] == part[i]: inc i
       if i == length_part: return true
     false
 
@@ -104,7 +104,7 @@ when not defined(js):
     let (length_text, length_part) = (len(text), len(part))
     if length_part > length_text: return false
     for i in 0..<length_part:
-      if text[length_text - length_part + i] != part[i]: return false
+      if text[length_text-length_part+i] != part[i]: return false
     true
 
 
@@ -112,7 +112,7 @@ when not defined(js):
     ## Name owner of one desktop frame, by file its code is in.
     ##   Allocates nothing, so sampler's signal handler calls it on each frame it walks.
     if path.isNil: return Owner.Rest
-    if path.isContaining(PATH_LIBRARY): return Owner.Library
+    if path.isContaining(PATH_PGA): return Owner.Pga
     for i in 0..<TAILS_ALGEBRA_PATH.len:
       if path.isEndingWith(TAILS_ALGEBRA_PATH[i]): return Owner.Algebra
     Owner.Rest
@@ -123,8 +123,8 @@ func ownerOfName*(name: string): Owner =
   ##   Name ends in mangled path of its module, after last `__`.
   let at = name.rfind("__")
   if at < 0: return Owner.Rest
-  let module = name[at + 2 .. ^1]
-  if MARK_LIBRARY_NAME in module: return Owner.Library
+  let module = name[at+2 .. ^1]
+  if MARK_NAME_PGA in module: return Owner.Pga
   for tail in TAILS_ALGEBRA_NAME:
     if module.endsWith(tail): return Owner.Algebra
   Owner.Rest

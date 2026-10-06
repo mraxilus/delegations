@@ -338,7 +338,7 @@ async function driveMeasured(browser: Browser): Promise<void> {
   await page.close();
 }
 
-/** Drive library share on page served as browser's profiler needs, on real clock.
+/** Drive PGA share on page served as browser's profiler needs, on real clock.
  *
  *  Page of its own: profiler runs only where page's own response carries
  *  `Document-Policy: js-profiling`, which no page opened from file has. Route serves built
