@@ -30,18 +30,22 @@ The bench at rga4d and at cga5d, built against pin and against the changed libra
 path, emits the same C, file for file. The evaluation below moves no function at any of four
 algebras, so a caller who names no width pays nothing.
 
-Its times still stray, since the same C ran in each evaluation. Three evaluations of this C on
+Its times still stray, since the same C ran in each evaluation. Six evaluations of this C on
 2026-10-06 put these counts of times outside the spread of the pages:
 
 | Evaluation | rga4d | cga5d | rga3d | cga4d |
 |------------|-------|-------|-------|-------|
 | First | 0 of 111 | 0 of 131 | 0 of 88 | 1 of 113 |
 | Second | 51 of 111 | 6 of 131 | 0 of 88 | 4 of 113 |
-| Third, below | 1 of 111 | 1 of 131 | 0 of 88 | 21 of 113 |
+| Third | 1 of 111 | 1 of 131 | 0 of 88 | 21 of 113 |
+| Fourth | 6 of 111 | 24 of 131 | 82 of 88 | 23 of 113 |
+| Fifth | 11 of 111 | 21 of 131 | 12 of 88 | 3 of 113 |
+| Sixth, below | 16 of 111 | 15 of 131 | 17 of 88 | 42 of 113 |
 
 In the second, the pristine binary ran slow, as `norm_bulk_plane` read 16.18 ns against 10.34
-ns in the first. So a cluster of moved times at one algebra of one evaluation is the noise of
-this machine, and the counts carry the verdict.
+ns in the first. In the fourth, the compiler ran beside the pristine binary at rga3d, which ran
+×1.58 its time in the third. So a cluster of moved times at one algebra of one evaluation is the
+noise of this machine, and the counts carry the verdict.
 
 ## What 32 bits buy
 
