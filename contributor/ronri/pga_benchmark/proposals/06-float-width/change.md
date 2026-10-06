@@ -20,7 +20,7 @@ same C as pin.
   FLOAT_WIDTH* {.define: "pga.float_width".} = 64
 
   # Avoid small-value comparison failures, in decimal places; 32-bit coefficient holds about seven.
-  FLOAT_TOLERANCE* {.define: "pga.float_tolerance".} = (when FLOAT_WIDTH == 32: 5 else: 9)
+  FLOAT_TOLERANCE* {.define: "pga.float_tolerance".} = (when FLOAT_WIDTH == 32: 4 else: 9)
 
 type Coefficient* = (when FLOAT_WIDTH == 32: float32 else: float64)
   ## Define each coefficient of every multivector, in as many bits as `FLOAT_WIDTH` says.

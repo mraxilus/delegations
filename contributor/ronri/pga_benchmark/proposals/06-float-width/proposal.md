@@ -22,7 +22,7 @@ SIMD form may come later as a proposal that keeps 64-bit floats, and this propos
   suites, since a 64-bit sign does not convert to a 32-bit coefficient by itself.
 - **Tolerance.** `FLOAT_TOLERANCE` reads `pga.float_tolerance`, which takes the place of
   `pga.tolerance_places` and still counts decimal places. It defaults to 9 at 64 bits, as at pin,
-  and to 5 at 32 bits. A 32-bit coefficient holds about seven places, so 9 places would fail.
+  and to 4 at 32 bits. A 32-bit coefficient holds about seven places, so 9 places would fail.
 
 ## What it costs at 64 bits
 
@@ -73,7 +73,7 @@ bytes. It then copies the dual out with loads of 16 bytes, and each load spans t
 those stores. A processor cannot forward such a load from its stores, so the load waits. That is
 the likely cause, since this container offers no hardware counters to confirm it.
 
-## Tolerance at 32 bits
+## Tolerance
 
 The library's own suites ran at 32 bits at each algebra, at three tolerances:
 
@@ -83,8 +83,36 @@ The library's own suites ran at 32 bits at each algebra, at three tolerances:
 | 5 | 33 of 33 | 33 of 33 | 28 of 28 | 28 of 28 |
 | 6 | 33 of 33 | 33 of 33 | 28 of 28 | 27 of 28 |
 
-So the default at 32 bits is 5 places, one place inside the first that fails. A caller who needs
-more places at 32 bits names `pga.float_tolerance`.
+`noise.nim` measures the noise that `=~` sees among unitized points, lines, planes and motors at
+rga4d. Each law computes one object two ways that agree in exact arithmetic. The scene sits at a
+distance from the origin, in its own units. Each cell is the most places a tolerance may keep
+with no noise in 4096 samples, in this container on 2026-10-06.
+
+| Distance | 64 bits | 32 bits | Point on line, 64 bits | Point on line, 32 bits |
+|----------|---------|---------|------------------------|------------------------|
+| 1 | 14 | 5 | 15 | 6 |
+| 10 | 13 | 5 | 13 | 4 |
+| 100 | 13 | 4 | 11 | 2 |
+| 1,000 | 12 | 3 | 9 | 0 |
+| 10,000 | 11 | 2 | 7 | 0 |
+| 100,000 | 10 | 1 | 5 | 0 |
+| 1,000,000 | 9 | 0 | 3 | 0 |
+
+The first two columns take the worst of three laws: a point moved twice, a join moved, and a meet
+moved. Point on line tests `^(p ∧ q) ∧ r =~ 0`, where r lies on the line through p and q.
+
+The noise lands in coefficients that should be zero or small, such as the `𝐞₃₂₁` part of a moved
+point. The products build them from terms as large as the scene. `=~` weighs such a coefficient
+against 1, so one place goes per decade of distance, and two for a point on a line.
+
+So the default at 32 bits is 4 places. It holds for every law within about 10 units, and for
+moves, joins and meets within about 100. Engines on 32-bit floats compare vectors at a similar
+size, since `KINDA_SMALL_NUMBER` of Unreal is 1e-4 in its unit, the centimetre. The default at 64
+bits stays 9, as at pin. It holds for every law within 1,000 units, and for moves, joins and meets
+within 1,000,000.
+
+A 32-bit scene larger than that moves its origin near the camera, as engines do, or takes 64 bits.
+A caller who needs another tolerance names `pga.float_tolerance`.
 
 ## Names
 
@@ -105,3 +133,5 @@ The Architect chose `Coefficient`, `pga.float_width` and `pga.float_tolerance` o
 - The bench, the references and the gap list stay at 64 bits. They measure the library at its
   default, and the pin holds 64 bits alone.
 - No form packs coefficients into vector registers. That is the work of the later SIMD proposal.
+- `=~` keeps its floor of 1. A comparison against the largest coefficient of either object would
+  keep the places level at every distance, and it is outside this proposal.

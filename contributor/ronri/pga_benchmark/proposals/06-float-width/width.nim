@@ -13,7 +13,7 @@ import pga
 
 const
   COUNT_BASES = ord(Basis.high) + 1  ## Size of basis set of multivector, 2^D.
-  PLACES = (when FLOAT_WIDTH == 32: 5 else: 9)  ## Default tolerance of each width, in places.
+  PLACES = (when FLOAT_WIDTH == 32: 4 else: 9)  ## Default tolerance of each width, in places.
 
 
 proc main() =

@@ -22,6 +22,17 @@
     },
     {
       "kind": "program",
+      "path": "noise.nim",
+      "algebras": ["rga4d"]
+    },
+    {
+      "kind": "program",
+      "path": "noise.nim",
+      "algebras": ["rga4d"],
+      "defines": ["pga.float_width=32"]
+    },
+    {
+      "kind": "program",
       "path": "timing.nim",
       "algebras": ["rga4d", "cga5d"]
     },
