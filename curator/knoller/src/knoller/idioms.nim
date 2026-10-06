@@ -24,7 +24,8 @@
 ##   Rules no fixer reaches, since each needs knowledge text does not hold (`checkPragmas`,
 ##     `checkTests`):
 ##   - `{.used.}` carries trailing comment naming its consumer (§2).
-##   - `{.push.}` stands only over block of foreign bindings, which `{.pop.}` closes (§2).
+##   - `{.push.}` stands only over block of foreign bindings, which `{.pop.}` closes (§2): word of
+##     `MARKS_FOREIGN` stands among pragmas of block (`declared.nim`).
 ##   - Under `tests/` (`reports.isTestFile`): suite importing `std/random` seeds it, and stub
 ##     carries testament header (§6); `echo` of value without label, outside condition, is
 ##     debug output (VIII.5).
@@ -77,7 +78,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, sequtils, strutils]
-import ./[entry, form, reports, tokens, views]
+import ./[declared, entry, form, reports, tokens, views]
 
 
 type
@@ -153,8 +154,6 @@ const
     ## Pragma bracket item may carry (STYLE.md §5); any other keeps its import apart.
   CONDITIONS = ["case", "elif", "else", "except", "if", "of", "when"]
     ## Openers making `echo` beneath them conditional, i.e. failure diagnostic.
-  FOREIGN_MARKS = ["dynlib", "header:", "importc", "importcpp", "importjs"]
-    ## Pragmas marking foreign bindings, which alone may stand under `{.push.}`.
   PRAGMAS_BUILT_IN = [
     "acyclic", "align", "asmnostackframe", "base", "bitsize", "booldefine", "borrow", "bycopy",
     "byref", "callsite", "cdecl", "closure", "codegendecl", "compilerproc", "compiletime",
@@ -394,12 +393,12 @@ func checkPragmas(path: string; lines, code: seq[string]): seq[Report] =
     if s.startsWith("{.push"):
       var
         j = i
-        text = ""
+        words: seq[string]  # Words among pragmas of block, push to pop.
       while j < code.len:
-        text.add code[j]
+        words.add code[j].pragmaWords
         if j > i and code[j].strip.startsWith("{.pop"): break
         inc j
-      if not FOREIGN_MARKS.anyIt(it in text):
+      if not words.anyIt(it in MARKS_FOREIGN):
         result.add initReport(
           path,
           i + 1,

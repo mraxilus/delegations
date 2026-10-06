@@ -117,3 +117,22 @@ func identifierAt*(text: string, start: int): string =
 func identity*(name: string): string =
   ## Read name as Nim compares it: first character exact, rest without case and underscores.
   if name.len == 0: "" else: name[0] & name[1 .. ^1].replace("_", "").toLowerAscii
+
+
+func pragmaWords*(code: string): seq[string] =
+  ## Read every name inside each `{. .}` of code, values included, in order: `{.push importc,
+  ##   header: H.}` gives `push`, `importc`, `header`, `H`; name outside them is never read.
+  var at = 0
+  while true:
+    let open = code.find("{.", at)
+    if open < 0: break
+    let close = code.find(".}", open + 2)
+    if close < 0: break
+    var k = open + 2
+    while k < close:
+      let name = code.identifierAt(k)
+      if name.len == 0: inc k
+      else:
+        result.add name
+        k += name.len
+    at = close + 2

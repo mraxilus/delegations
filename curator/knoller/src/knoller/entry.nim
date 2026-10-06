@@ -19,11 +19,9 @@ import ./[declared, reports, tokens, views]
 
 const
   MAIN_GUARD* = "when isMainModule:"  ## Block that makes module entry of program (STYLE.md §1).
-  PRAGMAS_MODULE = [
-    "dynlib", "exportc", "exportcpp", "extern", "global", "header", "importc", "importcpp",
-    "importjs", "importobjc", "threadvar",
-  ]
-    ## Pragmas binding name at module level alone, or across foreign boundary, never in routine.
+  PRAGMAS_MODULE = @MARKS_FOREIGN & @["global", "threadvar"]
+    ## Pragmas binding name at module level alone, or across foreign boundary (`MARKS_FOREIGN`),
+    ##   never in routine.
   KEYWORDS_MODULE = ["converter", "export", "from", "import", "include", "method"]
     ## Keywords opening statement module level holds alone, or bringing what routine may not
     ##   hold, as `include` brings exported declarations.

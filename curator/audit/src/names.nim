@@ -14,7 +14,7 @@
 ##     spells it in case of its kind word by word (`cased`), abbreviation spelled out too; same
 ##     planner renames it. Binding of entry block that moves takes case of local it becomes.
 ##     Fix refuses before planner where meaning would leave text: name foreign code reads by
-##     spelling (`MARKS_FOREIGN` on its line, on its type, or `{.push.}` over it), member
+##     spelling (`MARKS_FOREIGN` of knoller on its line, on its type, or `{.push.}` over it), member
 ##     without own string, whose `$` reads its name, name line declares twice, and new name
 ##     reading as new acronym. Parameter of foreign routine is renamed: call passes it by place.
 ##   V.10 has fixer in knoller (`entry.nim`), and declarations are read by its scanner
@@ -40,13 +40,6 @@ type RenameCase* = object
   rule*: string  ## Rule report names, e.g. `local constant case (V.1)`.
   refusal*: string  ## Why fix leaves rename to hand before semantic pass reads it; empty if none.
   is_local*: bool  ## Binding no other module can name: local, or binding of entry block.
-
-
-const MARKS_FOREIGN = [
-  "dynlib", "exportc", "exportcpp", "extern", "header", "importc", "importcpp", "importjs",
-  "importobjc", "JsRoot",
-]
-  ## Words marking name foreign code reads by its spelling: pragma, or root of JavaScript object.
 
 
 func glossaryExemptions*(glossary: string): seq[string] =
