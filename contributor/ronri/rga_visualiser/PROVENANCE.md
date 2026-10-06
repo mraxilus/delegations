@@ -179,7 +179,7 @@ and this file does not:
 | `touch`, `construct`, `finger` | pinch, long press, drag construction, crowd, paused drag |
 | `apply`, `framing`, `label`, `view` | pickers, what picking does to camera, names, view section |
 | `chrome`, `comet`, `ground` | hover during gesture, help, horizon comet, lattice's reach |
-| `frame`, `diagnostics`, `ramp` | frame's own clocks, tree, colour each row wears |
+| `frame`, `classified`, `diagnostics`, `ramp` | frame's own clocks and counts, tree, colours |
 | `exceedance`, `rings` | distribution curve, its axis, rings each reading is taken over |
 | `scenery`, `pins`, `built`, `pool` | what scene costs, repaired faults, each frame built, drawer |
 | `demo`, `loaded`, `objects` | preset, culling, occlusion, a line through a point, loaded |
@@ -1150,7 +1150,7 @@ or the extent of the overlay from an earlier frame where nothing had moved. A st
 cheaper than the work that it stands for.
 
 The rule keeps sharing within one frame. The stance is read once and handed to every reader. Each
-object is placed once, and every walk of the frame reads that placement. `MARKER_SHAPED` hands a
+object is placed once, and every reader of the frame reads that placement. `MARKER_SHAPED` hands a
 marker to the pulse that follows it, and the overlay calls of a frame share one extent.
 
 **The rule has two halves.** First, every frame runs the reference library for the whole scene,
@@ -1174,12 +1174,64 @@ and the algebra twins derived, once in the frame.
 
 **A reader between two frames reads the placements of the last frame.** Pointer events land between
 frames. After an edit that no frame has placed yet, `placeStamped` places only the handles that the
-edit stamped (Scene storage). The next frame places every handle again, so no placement outlives
-it. The desktop calls it in the middle of its frame too, after the selection menu, which can edit.
+edit stamped (Scene storage). The next frame places every handle again, so no placement serves a
+later frame as its answer. The desktop calls it in the middle of its frame too, after the selection
+menu, which can edit.
 
-**The desktop places each object once in a frame.** Its reach, near reach, cull, emission and hover
-pick all read `PLACEMENTS`. Rejected: a placement again in `addObject` and in the pick. That ran
-`kindOf` three times for each object in each frame, and placed each object twice.
+**Each front-end places each object once in a frame, and no reader classifies it again.** The
+reach, the near reach, the cull, the emission and the hover pick read the placements of the frame.
+So do the marker, its pulse and its label, the anchor and the comet of the overlay, and the menu
+anchor. So do the aim of the camera and the lattice of a selected plane, through `framing`. The
+wheel pick of the desktop reads them after `placeEdited`. A caller with no frame, such as a preview,
+still hands a multivector, and the reader places it first (`placementOf`).
+
+Rejected: a placement again in `addObject` and in the pick. That ran `kindOf` three times for each
+object in each frame, and placed each object twice. Rejected: readers that classify the multivector
+again. The overlay did so for each selected object on each call, with no cap (repository issue
+556).
+
+**The placements of a frame live in the swap pair of the frame.** The desktop carves them first from
+`ARENA_SWAP_DRAW` at each turn (`turnFrame`), and draw scratch after them. The page keeps two typed
+blocks (`PLACEMENTS_PAIR`), and turns them as each build opens, because the JS backend cannot carve
+typed memory. Both read the frame through `placements`, and the frame before through
+`placementsPrevious`, for work across two frames. A handle dead or newly born in that frame holds
+nothing meaningful there. The Architect set this design on repository issue 556.
+
+The desktop turns its pair after the events and before the frame places. So a handler between two
+frames reads the placements of the last frame, which it picks against. Every path that turns the
+pair places straight after, the capture of the storyboard included. Rejected: one fixed array,
+which the next frame overwrites, so that nothing of the frame before stays to read. Cost: a second
+block of placements on each front-end, which is 645,120 bytes on the desktop (Memory and
+allocation).
+
+**One frame classifies each live object once, its overlay included.** `kindInto` tallies each
+classification while a reader counts (Algebra boundary). `driveClassifiedOnce` counts one frame of
+the page, from its build to the placing of its menu, at the largest demo. It counts with nothing
+selected, one object of each kind alone, every object, a hovered point, and a left drag that
+orbits. Each frame must read 5,038, and the hover pick must read none.
+
+The test commit `7ba32bda` comes before this design. There the check read 5,045 to 5,048 for one
+point selected, and 30,196 to 39,832 for every object. The hover pick read 4 there.
+
+**Placing tests the horizon once for each object.** `placeInto` asks `isHorizon` once, and hands
+the answer to each read that needs it. `positionAnchor`, `direction`, `directionHorizon`,
+`directionNormalHorizon` and `directionNormal` each have a twin that takes it. A plane reads its
+support once, and spans its frame about it. A horizon line and a horizon plane each tested it three
+times before. The cost of one test is unmeasured here.
+
+**What the largest demo costs a frame, before and after.** Measured on 2026-10-06 on one delegate,
+by a harness that is not kept, on the real clock. It drives the page at 1200 by 900 px under
+SwiftShader, and reads the median of `ms_build`, the build of a frame alone. The pairs run in turn,
+`598e7fa1` first, then this design. No measured frame runs a pick.
+
+With every object selected, each pair reads 10 settled frames. The build read 447.6 to 387.2 ms,
+460.8 to 418.9 ms and 442.8 to 381.6 ms. The overlay of those frames took 11.5 to 11.7 s on both
+builds, which its SVG elements and labels spend.
+
+With nothing selected, each of six pairs reads 300 frames. The build read 7.9 to 8.1 ms before and
+7.9 to 8.4 ms after. This design read 0.1 to 0.5 ms more in five pairs, and 0.2 ms less in one. The
+swap pair alone, `8271aab1`, read 8.0 to 8.1 ms beside them. The cause of that difference is
+unmeasured.
 
 **A placement is written into its slot field by field** (`tessellate.placeInto`). On the JS
 backend, a placement or an `Option` built and assigned is one `nimCopy`, and a point placed that way
@@ -1230,10 +1282,13 @@ Verified by driven check:
 - a still camera over a still scene builds its whole records on every frame;
 - every edit reaches the canvas, and the frame after an undo draws the scene that it restored;
 - a still frame under the largest demo copies fewer values of its own than the scene has objects;
-- each frame build of the page lifts the motor once, still and while a drag orbits.
+- each frame build of the page lifts the motor once, still and while a drag orbits;
+- one frame of the page classifies each live object once, in each state that it counts.
 
 Verified by the measurements above, and by `suites.nim` on both backends: the placements that
-`placeInto` writes give what `placeObject` gave. Assumed: that no edit of the desktop lands
+`placeInto` writes give what `placeObject` gave. Verified by `suites.nim`: each exit of placing
+tests the horizon of its object once at most. A line and a plane through the origin are among them,
+and each lands where the reads alone land. Assumed: that no edit of the desktop lands
 between `placeEdited` and the emission of its frame, which no check drives.
 
 ## Scene storage
@@ -1323,7 +1378,7 @@ desktop entry point holds three instances:
 |---|---|---|---|
 | permanent | `CAPACITY_ARENA_PERMANENT` 160 MiB | pixel readback, every GIF frame | never |
 | frame | `CAPACITY_ARENA_FRAME` 64 MiB | one PNG's scanlines, one GIF frame's scratch | per unit |
-| swap pair | `CAPACITY_ARENA_SWAP` 256 KiB × 2 | the draw loop's `DrawScratch` | per frame |
+| swap pair | `CAPACITY_ARENA_SWAP` 886 KiB × 2 | placements, then `DrawScratch` | per frame |
 
 **Every byte count that a reader sees is in KiB and MiB, as IEC 80000-13 names them.** Each one
 divides by 1024 or by 1048576. That holds for the memory rows and the pool line of the window, and
@@ -1333,22 +1388,28 @@ the panel at a full pool.
 
 The storyboard run sizes the permanent capacity from its own `arena.used + bytes_needed`, and
 not from a round number. The **swap pair** reclaims on the way *in*. What one frame assembled
-stays readable through the next, while the block that it moves to starts empty.
+stays readable through the next, while the block that it moves to starts empty. Each frame carves
+its placements first, so those of the frame before stay readable until the next turn (Render paths).
 
 A separate pair is better than a larger frame arena. The scratch of an export is tens of
-megabytes on a keypress. The scratch of a frame is under 20 KiB sixty times a second. The
-largest carver of a frame is the `LINES_GRID_MAX` chords of one lattice family. The capture loop of
-the storyboard turns the pair over in its own `renderAt`. Without that, captured sub-frames stack
-scratch until the fifth one overflows.
+megabytes on a keypress. A frame carves 666,728 bytes sixty times a second: 645,120 of placements
+and 21,608 of `DrawScratch`, as `sizeof` reads them. That is also the peak of each half, since a
+frame carves each once. The largest carver of `DrawScratch` is the `LINES_GRID_MAX` chords of one
+lattice family. The capture loop of the storyboard turns the pair over in its own `renderAt`.
+
+Each half is one placement for each handle and 256 KiB for the scratch, which is 907,264 bytes at
+5040 handles. A static check holds that both fit, and that a placement holds no reference, since
+carved memory is never traced. Before the placements moved in, each half was 256 KiB.
 
 **The undo timeline is the largest reservation that the binary makes.** A `Scene` at 5040 handles is
 1.15 MiB as a C struct, which `sizeof` reports as 1,204,616 bytes on the release compiler. A `Step`
 is a `Scene` beside a `Camera` of twelve floats, eight of them the motor, and `CAPACITY_HISTORY` is
 32 of them. They reserve 36.8 MiB, which is 38,549,528 bytes, against 6.2 MiB for both mesh sets.
 
-The placing side of every handle stands beside them on both front-ends. Each frame places every
-handle there, and every walk of that frame reads it. It is 128 bytes for each of 5040 handles,
-which is 645,120 bytes.
+The placing side of every handle stands twice on both front-ends: for this frame, and for the frame
+before. Each frame places every handle there, and every reader of that frame reads it. It is 128
+bytes for each of 5040 handles, which is 645,120 bytes for each block. On the desktop both blocks
+sit inside the swap pair, and `BYTES_MEMORY_TOTAL` counts them through it.
 
 In the browser the same timeline is about 105 MB of JS heap. The live page measured 85 MB at
 load, before the placing stamps for each handle were added, and nothing has measured it again
@@ -1364,7 +1425,8 @@ symbol earlier on a decode than on an encode. A decoder written from scratch in 
 round-trips a real frame past the point of growth.
 
 *Checked.* Verified by `suites.nim`: the swap pair keeps the bytes of the last frame, and the GIF
-round-trip holds. Verified by `sizeof`: the sizes of the struct and of the timeline. Assumed: the
+round-trip holds. Verified by `sizeof`: the sizes of the struct and of the timeline. Verified by
+`sizeof` on 2026-10-06: 128 bytes for a placement and 21,608 for `DrawScratch`. Assumed: the
 JS heap figure for each step, which is extrapolated from one measurement of the earlier layout
 without stamps.
 
@@ -2422,8 +2484,11 @@ the browser hands it a fixed buffer.
 **A timed stretch is charged at its end, so nothing leaves it early.** `timed` reads the clock on
 entry, and again as its last statement. A stretch that leaves before that read is never charged,
 and its side reads low. So `timed` refuses at build time a `return`, and a `break` or `continue`
-that no loop or block inside catches. `placeInto` leaves each answer by a labelled block inside its
-stretch.
+that no loop or block inside catches.
+
+`placeInto` times one call to `placeUntimed`, whose answers leave by `return` inside its own body.
+That body is a pure function, so `placementOf` places an object for a `func` that holds no frame,
+and charges no side. The aim of the camera does so for staged geometry.
 
 Rejected: a `try`/`finally` bracket, which charges any exit. It puts a `try` around the placing of
 every object, and the guard emits no code. The cost of that `try` is not measured.
@@ -2437,6 +2502,12 @@ reader (STYLE.md).
 
 **`toMultivector` tallies each lift of a motor the same way.** `setCountingLifts` opens that tally,
 for the suite and for the driven check of the page, which reaches it through the bridge (Camera).
+
+**`kindInto` tallies each classification the same way.** `setCountingKinds` opens it, for the
+suite and for the driven check of the page (Render paths). **`isHorizon` tallies the tests of one
+multivector**, for the suite alone (`countHorizonTests`). It matches that multivector coefficient
+for coefficient. A read can join a plane of its own, as `spanPerpendicular` does. It then tests the
+horizon of that plane, which is no test of the object.
 
 **There is no debug layer, and nobody is to reintroduce it without an instruction.** A switch that
 drew every multivector a frame computed, as what it is, never helped to resolve anything.
@@ -2977,7 +3048,8 @@ swells into its head** (`marker.cometFor`), because `a ∨ b` and `b ∨ a` are 
 **The pulse and the label of a selected marker read the outline that the marker call shaped.** In
 each frame the page asks the bridge three times for each selected object: `nimSelectionMarker`,
 then `nimSelectionPulse`, then `nimSelectionLabelAt`. The marker call shapes the outline into
-`BOX_MARKER`, and `MARKER_SHAPED` keeps it beside every input that shaped it. Those inputs are the
+`BOX_MARKER`, from the placement of the frame, and `MARKER_SHAPED` keeps it beside every input
+that shaped it. Those inputs are the
 handle, the view size, the progress, the touch flag, the swell, the travel and the overlay
 settings. The pulse reads that entry where every input matches, and the label where the handle and
 the view size match. A miss shapes the outline again and drops the entry, so the label then shapes
@@ -3043,8 +3115,9 @@ of picking. Three paths pick inside their handler because they must answer befor
 
 **The pick ranks what was drawn.** It takes the placements of the frame and dispatches on
 `Placement.kind`, rather than asks `position`, `direction`, `frame` and `spanPerpendicular` again
-for each handle. Both front-ends hand them to the hover pick. Empty means derive for each handle,
-which is a pick between frames on the desktop, and every suite case.
+for each handle. Both front-ends hand them to the hover pick, and to the wheel pick. Empty means
+derive for each handle, which a scripted drive of the desktop and every suite case do. The object
+that a hover or a wheel names is read from its placement too, so the pick classifies nothing.
 
 **The pick rejects a plane before it meets it.** `isBeyondDisc` bounds the screen extent of the
 disc by the silhouette of the sphere that contains it. It is conservative in the depth and
@@ -3786,10 +3859,10 @@ the eye. A dolly calls `stanceDollied`, which moves the eye and holds the pivot.
 `stanceRepivoted` is the other half. It slides the whole camera between two pivots, which is as far
 as the rebuild moved the eye, and it keeps the roll.
 
-`camera.aimIncluding(aim, geometry, scale)` folds one object into what the camera has been asked
-to show. A horizon point contributes its direction. A horizon line contributes the first axis that
-spans perpendicular to its normal. A horizon plane contributes nothing. Anything finite widens a
-bounding sphere by the point of `mesh.anchorFor`.
+`camera.aimIncluding(aim, placed)` folds one placed object into what the camera has been asked to
+show, from the placements of the frame. A horizon point contributes its direction. A horizon line
+contributes its normal. A horizon plane contributes nothing. Anything finite widens a bounding
+sphere about its place, as `tessellate.anchorFor` reads it.
 
 `CameraAim` is a **requirement**, and a pure function of the geometry, so the standing offer
 re-made in every frame compares equal. **The sphere is over what has to fit**
