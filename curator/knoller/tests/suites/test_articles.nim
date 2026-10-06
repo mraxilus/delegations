@@ -1,4 +1,5 @@
-## Replicate Article VI.5: articles found in comment text, and fix deleting each from Nim.
+## Replicate Article VI.5: articles found in comment text, check of Nim comments, and fix deleting
+##   each from Nim.
 
 {.experimental: "strictFuncs".}
 
@@ -38,6 +39,41 @@ suite "Article VI":
       check findArticles(words.join(" ")).len == 0  # no article, no finding
       words.insert(["a", "An", "the."][rand(2)], rand(words.len))
       check findArticles(words.join(" ")).len == 1  # one article, one finding
+
+
+  test "VI.5 check names each line whose comments hold article, with articles found":
+    let found = checkArticles("x.nim", "# fine\n# the trap\nlet a = 1  # an alias\n")
+    check found.mapIt((it.line, it.rule, it.message)) == @[
+      (2, Rule.ArticleInComment, "Comment holds article; got `the`."),
+      (3, Rule.ArticleInComment, "Comment holds article; got `an`."),
+    ]  # one finding to line, value echoed
+    check checkArticles("x.nim", "#[ A row ]# let b = 2  # the end\n").mapIt(it.message) ==
+      @["Comment holds article; got `a, the`."]  # comments of one line, one finding
+    check checkArticles("x.nim", "let s = \"the row\"\n").len == 0  # string, never comment
+    check checkArticles("x.cfg", [(4, "Skip the header")]).mapIt((it.line, it.message)) ==
+      @[(4, "Comment holds article; got `the`.")]  # lines of other syntax, same words
+
+
+  test "VI.5 comment lines drop markers, hide hashes of literals, and nest blocks":
+    check "x = 1 # note\n## doc\n### deep\n".commentLines ==
+      @[(1, "note"), (2, "doc"), (3, "deep")]  # marker runs stripped
+    check "x = 1 # note\n\n## doc\n".commentLines.mapIt(it[0]) == @[1, 3]  # one-based lines
+    for (source, line) in [
+      ("a = \"# not\" # yes\n", 1),  # plain string
+      ("a = r\"x\\#\"\"\" # yes\n", 1),  # raw string with "", backslash before hash
+      ("a = \"\"\"\n# inside\n\"\"\" # yes\n", 3),  # triple string
+      ("a = '#' # yes\n", 1),  # char literal
+      ("a = '\\n' # yes\n", 1),  # escaped char literal
+      ("a = 1'i32 # yes\n", 1),  # numeric suffix quote
+    ]:
+      check source.commentLines == @[(line, "yes")]
+    check "discard \"\"\"\naction: run\n\"\"\"\n# after\n".commentLines == @[(4, "after")]
+    check "#[ Basis Conversion ]#\n".commentLines == @[(1, "Basis Conversion")]  # banner
+    check "#[ one\n two #[ inner ]# tail\n three ]# x = 1 # four\n".commentLines ==
+      @[(1, "one"), (2, "two inner tail"), (3, "three four")]  # nested, line by line
+    check "##[ doc block ]##\n".commentLines == @[(1, "doc block")]  # doc block
+    check "# `#[ x ]#` in line comment\n".commentLines ==
+      @[(1, "`#[ x ]#` in line comment")]  # markers of line comment are its text
 
 
 

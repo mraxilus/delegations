@@ -1,9 +1,10 @@
 # knoller
 
-The fixers of Nim source that read the text of one file alone, and the checks that those
-fixers clear. `koch fix` runs them through `curator/audit`, which keeps each fixer that asks the
-compiler. `audit` imports knoller by a relative path. Knoller also runs alone, on a file or a
-directory of any repository.
+The fixers and the checks of Nim source that read the text of one file alone. The checks are
+those that the fixers clear, and those of form, names, idioms, articles and fixed waits that the
+static pass of `curator/audit` reads. `koch fix` runs the fixers through `curator/audit`, which
+keeps each fixer that asks the compiler. `audit` imports knoller by a relative path. Knoller also
+runs alone, on a file or a directory of any repository.
 
 Authority replicated: none. The rules are those of `CONSTITUTION.md` and `STYLE.md`.
 
@@ -14,13 +15,21 @@ knoller [--check] [--nim:path] path...
 ```
 
 - A path names a file or a directory. A directory stands for the `.nim`, `.nims` and `.nimble`
-  files that `git ls-files` lists under it.
+  files that `git ls-files` lists under it. What git writes on stderr never reaches a path.
 - A directory that gives no Nim file is a usage error. Its message says why: the directory is
   outside a git work tree, or git lists no Nim file under it.
 - Knoller reads each path whole, from the directory where you run it. So a test file, a stub and
   an umbrella get the same rules from any directory. The output prints each path as you name it.
 - Knoller writes only the files that change. With `--check`, it writes no file and reports each
   change that is due.
+- After the fix, every check reads the text that the fixers leave. Each finding there is `left`,
+  and fails the run. A fence keeps its lines from the fixers, and from the checks of layout that
+  `koch fix` clears, with `not-over-binary`. It never keeps them from a check that the static pass
+  of `koch` reads, such as width, names or idioms.
+- Knoller reads no glossary, since a glossary belongs to a repository. So it runs no rule that
+  needs one, and the acronym rule of V.9 stays with `koch`. The names check takes no word as exempt
+  beyond the jargon of V.6. A caller such as `koch` adds the words that its glossaries list.
+- The check of fixed waits reads each file under a directory `tests` or `tools`, at any depth.
 - Knoller passes over a nimble file whose copy `atlas.lock` holds, because a rewrite would leave
   that copy stale.
 - A group of needless parentheses goes only where the parser of the compiler reads the same tree
@@ -44,10 +53,12 @@ knoller [--check] [--nim:path] path...
   lines as written. Each run prints one warning for each fence, which names each rule that breaks
   inside it. So you always see what the fence keeps, and knoller writes none of it.
 
-Each line of output names a path, a line and a rule id, and the output is sorted in that order:
+Each finding names a path, a line and a rule id, and the output is sorted in that order. An
+unsettled file names its path alone:
 
 ```text
 path:line: <rule-id> fixed
+path: unsettled: <message>
 path:line: <rule-id> left: <message>
 path:line: fence-held warning: <message>
 needless-parentheses warning: <message>
@@ -55,6 +66,10 @@ N fixed.
 ```
 
 With `--check`, each `fixed` reads `to fix`. A finding that no fix clears is `left`.
+
+A file that the fixers still change after their last round stays as written, and its line reads
+`unsettled` after the path alone. That line names no rule, because the fault is in the tool, and
+the source breaks no rule of style there. So `koch fix` prints it as a warning, with no article.
 
 Each line number is a line of the file as given, for a finding left too. A line that the fix
 inserts has no such number. So a finding there prints with the path alone, as a finding of the
@@ -69,7 +84,7 @@ that a fixer clears and a rule left for the hand count alike.
 A warning changes no exit code. The exit codes are these:
 
 - 0 for a clean run;
-- 1 where a finding is left, or where a change is due under `--check`;
+- 1 where a finding is left, where a file is unsettled, or where a change is due under `--check`;
 - 2 for a usage error.
 
 ## Rules
@@ -82,11 +97,23 @@ the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, 
 | Id | Rule |
 |----|------|
 | `trailing-whitespace` | A line ends in no space, tab or carriage return. |
-| `file-ending` | A file ends in exactly one newline. |
+| `file-ending` | A file ends in exactly one newline, so an empty file breaks it. |
+| `line-ending` | A line holds no carriage return. No fix reaches it. |
 | `tab-in-string` | A tab inside a plain string on one line is written `\t`. |
+| `tab` | A line holds no tab. A fix reaches a tab in a plain string alone. |
+| `line-width` | A line holds at most 100 characters, where a break can fix it. |
 | `trailing-comment` | Two spaces stand before the marker of a trailing comment. |
 | `banner-spacing` | The blank lines beside a banner follow its tier. |
 | `entry-block` | An entry block holds no binding, so its body moves into `proc main`. |
+| `abbreviation` | A name coins no abbreviation, and its full word stands. |
+| `action-verb` | An action is an imperative verb, and a property is the bare noun. |
+| `boolean-name` | A boolean opens `is_`, `as_`, `should_`, `found_` or `has_`, a predicate `is`. |
+| `lookup-table` | A lookup table reads `lut_<value>_by_<key>`. |
+| `name-case` | The case of a name follows its kind. |
+| `member-case` | A member of an enum is `PascalCase`, as its type is. |
+| `placeholder-letter` | A placeholder of a generic is one capital letter. |
+| `notation` | The notation of the source holds over case only for an immutable global. |
+| `global-word` | A global shares no word with a type. |
 | `article-in-comment` | A comment holds no article. |
 | `message-value` | A message echoes its value in backticks. |
 | `and-with-or` | A condition that mixes `and` with `or` puts each `and` in parentheses. |
@@ -103,6 +130,12 @@ the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, 
 | `strictfuncs` | A module carries `strictFuncs` before its imports. |
 | `profiler-import` | An entry module imports the profiler on one line. |
 | `stub-keys` | A test stub leaves out `-r`, `batchable` and `joinable`. |
+| `used-consumer` | A `{.used.}` carries a comment that names its consumer. No fix reaches it. |
+| `push-foreign` | A `{.push.}` stands over foreign bindings alone. No fix reaches it. |
+| `random-seed` | A suite that imports `std/random` seeds it. No fix reaches it. |
+| `stub-header` | A test stub carries a testament header. No fix reaches it. |
+| `debug-output` | A test prints no value without a label, outside a condition. No fix reaches it. |
+| `fixed-wait` | Drive code waits on a condition or a clock, and never sleeps. No fix reaches it. |
 | `unordered-list` | A list that the language leaves unordered is in alphabetical order. |
 | `test-blank-lines` | The blank lines beside a suite or a test follow its tier. |
 | `helper-blank-lines` | A nested helper takes one blank line each side; one-line routines stack. |
@@ -119,7 +152,6 @@ the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, 
 | `comment-above` | A trailing comment that does not fit moves to its own line above. |
 | `fence` | A fence closes inside the bracket, string or comment it opens in. No fix reaches it. |
 | `fence-held` | A fence keeps its lines as written, and each run names what breaks inside it. |
-| `unsettled` | A file that the fixers still change after their last round stays as written. |
 
 ## Build and test
 
@@ -139,6 +171,6 @@ None. Knoller publishes no page.
 
 ## Status
 
-The fixers that read one file alone live here, with the command line, and the compiler that
-serves each pin. A test that also reads a check of `audit` stays in the suites of `audit`.
+The fixers and the checks that read one file alone live here, with the command line, and the
+compiler that serves each pin. A test that also reads a check of `audit` stays in its suites.
 Unreviewed by a human.

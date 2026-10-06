@@ -19,11 +19,9 @@ import ./[declared, reports, tokens, views]
 
 const
   MAIN_GUARD* = "when isMainModule:"  ## Block that makes module entry of program (STYLE.md §1).
-  PRAGMAS_MODULE = [
-    "dynlib", "exportc", "exportcpp", "extern", "global", "header", "importc", "importcpp",
-    "importjs", "importobjc", "threadvar",
-  ]
-    ## Pragmas binding name at module level alone, or across foreign boundary, never in routine.
+  PRAGMAS_MODULE = @MARKS_FOREIGN & @["global", "threadvar"]
+    ## Pragmas binding name at module level alone, or across foreign boundary (`MARKS_FOREIGN`),
+    ##   never in routine.
   KEYWORDS_MODULE = ["converter", "export", "from", "import", "include", "method"]
     ## Keywords opening statement module level holds alone, or bringing what routine may not
     ##   hold, as `include` brings exported declarations.
@@ -112,6 +110,18 @@ func blockEntry*(source: string): BlockEntry =
     if t.kind == TokenKind.Word and t.spelling(source).identity == ROUTINE_ENTRY:
       result.refusal = "`" & t.spelling(source) & "` stands in module already"
       return
+
+
+func checkBlockEntry*(path, source: string): seq[Report] =
+  ## Report each binding entry block holds, its case unjudged (V.10); fix moves block that
+  ##   `blockEntry` refuses none, so finding after fix is block left to hand.
+  for (line, name) in source.blockEntry.bindings:
+    result.add initReport(
+      path,
+      line,
+      Rule.EntryBlock,
+      "Entry block holds no binding; move code that binds into `proc main`; got `" & name & "`.",
+    )
 
 
 func fixBlockEntry*(path, source: string): Fix =

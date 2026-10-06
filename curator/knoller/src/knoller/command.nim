@@ -4,19 +4,23 @@
 ##     ls-files` lists under it, sorted. Named file of other extension is passed over; path
 ##     naming nothing is usage error, and so is directory naming no Nim file, which says why:
 ##     it lies outside git work tree, or git lists no Nim file under it (`listingOf`). Silent
-##     `0 to fix.` would read as clean run over files never read.
+##     `0 to fix.` would read as clean run over files never read. Git runs as direct process,
+##     its stderr read apart from paths, so warning never glues to first of them (`runGit`).
 ##   Nimble file whose copy `atlas.lock` beside it holds is passed over (`lockedNimbles`).
 ##   Fix writes only file that changes; `--check` writes none, and reports each change due.
 ##   Output, sorted by path, line, then rule id: `path:line: <rule-id> fixed`, or `to fix`
-##     with `--check`; `path:line: <rule-id> left: <message>` for finding left for hand;
+##     with `--check`; `path: unsettled: <message>` for file fixers do not settle, which stays
+##     as written, with no line and no rule, since fault is tool's (`Fix.unsettled`);
+##     `path:line: <rule-id> left: <message>` for finding left for hand, as every check of
+##     knoller reads fixed text (`checkSource`), static pass's among them;
 ##     `path:line: fence-held warning: <message>` for each fence, naming each rule broken
 ##     inside it with count and first line, so no fenced line goes unseen (`heldOf`); then
 ##     count, `N fixed.` or `N to fix.`. Line `0` is whole file, so its location is path alone.
 ##   Every line printed is line of file as given: finding left in fixed text is traced back
 ##     through fix (`traced`), as each rewrite is. Finding on line fix inserts has no line as
 ##     given, so it prints at line `0`, path alone, and its message echoes its text.
-##   Exit: 0 clean; 1 finding left, or change due under `--check`; 2 usage error. Warning
-##     changes no exit code, since fence is escape charter grants (Article X.1).
+##   Exit: 0 clean; 1 finding left, file unsettled, or change due under `--check`; 2 usage
+##     error. Warning changes no exit code, since fence is escape charter grants (Article X.1).
 ##   No style option: rules are constants, and fence is only escape (Article X.1).
 ##   Needless parentheses go where parser of file's compiler proves it (`proofs.nim`). Compiler
 ##     of file is one `--nim` names; else compiler of pin of nearest nimble file at or above
@@ -48,7 +52,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, options, os, osproc, parseopt, sequtils, strutils, tables]
+import std/[algorithm, options, os, osproc, parseopt, sequtils, streams, strutils, tables]
 import ./[chain, compilers, fences, parentheses, pins, proofs, reports]
 
 
@@ -64,9 +68,6 @@ Options:
               compiler of pin of nearest nimble file above each file, else `nim`
 """
     ## Text printed on usage error.
-  EXTENSIONS: array[Dialect, string] = [".nim", ".nims", ".nimble"]
-    ## Extension of file of each dialect.
-  NIM_DEFAULT = "nim"  ## Compiler proving removals where none is named and no pin found.
   ASKS_MAX = 8
     ## Rounds of asking parser at most; each answers sources chain asked, and tree settles in
     ##   three (`PROVENANCE.md`, Content fixes).
@@ -81,7 +82,7 @@ type
   Outcome* = object  ## Define what one run writes and prints, and its exit code.
     written*: seq[(string, string)]  ## Path and new text of each file that changes.
     lines*: seq[string]  ## Lines printed, in order.
-    code*: int  ## Exit code: 0 clean, 1 finding left or change due under `--check`.
+    code*: int  ## Exit code: 0 clean; 1 finding left, file unsettled, change due on `--check`.
     asked*: seq[string]  ## Source chain asked parser about and no answer holds yet.
 
   Batch* = object  ## Define files whose groups one compiler proves, and its prover.
@@ -93,8 +94,10 @@ type
     refusal: string  ## Directory holding several nimble files, so no pin; empty where one.
 
   Part = object  ## Define what fix of one file gives, before `joined` sorts it into outcome.
+    path: string  ## Path as named.
     written: seq[(string, string)]  ## Path and new text, where file changes.
     fixed, left, held: seq[Report]  ## Rewrite, finding left and fence warning, unsorted.
+    unsettled: string  ## Why fixers leave file as written (`Fix.unsettled`); empty if settled.
     asked: seq[string]  ## Source chain asked parser about and no answer holds yet.
 
 
@@ -160,9 +163,11 @@ func partOf(path, source: string; is_check: bool; directory: string; proofs: Pro
   if source.fenceOf.lines.len > 0: result.asked.add source.questionsOf(proofs)
   let fix = formatted(layout, source, dialect, proofs)
   result.asked.add fix.asked
-  var after = checkFormatting(layout, fix.source, dialect, proofs)
+  var after = checkSource(layout, fix.source, dialect, proofs)
   for report in after.mitems: report.line = fix.traced(report.line)  # Line as given.
-  result.left = shownAs(fix.left & after, path)
+  result.path = path
+  result.unsettled = fix.unsettled
+  result.left = after.shownAs(path)
   if fix.source == source: return
   result.fixed = fix.fixed.shownAs(path)
   if not is_check: result.written.add (path, fix.source)
@@ -171,21 +176,25 @@ func partOf(path, source: string; is_check: bool; directory: string; proofs: Pro
 func joined(parts: openArray[Part], is_check: bool, failures: openArray[string]): Outcome =
   ## Sort reports of each file's part into lines printed, and decide exit code; each failure of
   ##   prover prints as one warning, in order given.
-  var fixed, left, held: seq[Report]
+  var
+    fixed, left, held: seq[Report]
+    unsettled: seq[string]
   for part in parts:
     result.written.add part.written
     result.asked.add part.asked
     fixed.add part.fixed
     left.add part.left
     held.add part.held
+    if part.unsettled.len > 0: unsettled.add part.path & ": unsettled: " & part.unsettled
   let outcome = if is_check: " to fix" else: " fixed"
   for report in fixed.sorted: result.lines.add report.located & outcome
+  for line in unsettled.sorted: result.lines.add line
   for report in left.sorted: result.lines.add report.located & " left: " & report.message
   for report in held.sorted: result.lines.add report.located & " warning: " & report.message
   for failure in failures:
     if failure.len > 0: result.lines.add Rule.NeedlessParentheses.id & " warning: " & failure
   result.lines.add $fixed.len & outcome & "."
-  result.code = if left.len > 0 or (is_check and fixed.len > 0): 1 else: 0
+  result.code = if left.len + unsettled.len > 0 or (is_check and fixed.len > 0): 1 else: 0
   result.asked = result.asked.deduplicate
 
 
@@ -316,7 +325,7 @@ proc batchesOf*(paths: openArray[string]; nim, directory: string; provers: Prove
               "pin is trusted; got `" & pinning.refusal & "`.",
             )
           elif pinning.pin.isSome: provers(pinning.pin.get)
-          else: compilerProver(NIM_DEFAULT),
+          else: compilerProver(NIM),
       )
       k = keys.high
     result[k].paths.add path
@@ -336,9 +345,31 @@ func listingOf*(directory, output: string; code: int): tuple[files: seq[string],
     result.refusal = "Directory holds no Nim file that git lists; got `" & directory & "`."
 
 
-proc listed(directory: string): tuple[files: seq[string], refusal: string] =
-  ## Read Nim files git lists under directory, sorted, or why it names none.
-  let (output, code) = execCmdEx("git -C " & directory.quoteShell & " ls-files -z")
+proc runGit*(
+  directory: string, arguments: openArray[string]
+): tuple[output, failure: string, code: int] =
+  ## Run git in directory as direct process with argument list, never through shell, and read
+  ##   stdout and stderr apart: output, what git says on stderr, and exit code.
+  ##   Git ends warning on stderr in newline rather than NUL, so stream carrying both would glue
+  ##     warning to first field of `-z` output.
+  ##   Umbrella exports none of command line, so `tree.nim` of `curator/audit` reaches this proc
+  ##     here, and reads git through it too.
+  ##   Both pipes are drained before exit is waited on, since child blocks where pipe fills.
+  let process = startProcess(
+    "git",
+    args = @["-C", directory] & @arguments,
+    options = {poUsePath},
+  )
+  defer: process.close
+  result.output = process.outputStream.readAll
+  result.failure = process.errorStream.readAll
+  result.code = process.waitForExit
+
+
+proc listed*(directory: string): tuple[files: seq[string], refusal: string] =
+  ## Read Nim files git lists under directory, sorted, or why it names none; what git writes on
+  ##   stderr never reaches path (`runGit`).
+  let (output, _, code) = runGit(directory, ["ls-files", "-z"])
   listingOf(directory, output, code)
 
 

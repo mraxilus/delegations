@@ -445,7 +445,8 @@ proc run(options: Options): int =
     #   change as `path:line: <rule> to fix`, and exits 1 where any would apply. File fix
     #   leaves as written, i.e. locked nimble file or fence it cannot read, prints with reason.
     #   Each fence prints as warning naming each rule broken inside it, so lines no fixer reads
-    #   stay in view; exit code ignores it.
+    #   stay in view; so does each file knoller's fixers do not settle, with no article, since
+    #   fault is tool's. Exit code ignores warnings.
     #   Semantic pass runs first, on files holding candidate text cannot settle (`symbols.nim`).
     #   Parser of each project's pin proves each needless group (`fixes.provenFix`); run that
     #   proved nothing prints one warning saying why.
@@ -471,9 +472,9 @@ proc run(options: Options): int =
         tree.contextOf(entries, answers, locked),
         pinProvers(initToolchains()),
       )
-      (written, fixed, refused, left, held, _) = fix
+      (written, fixed, refused, left, warned, _) = fix
     for f in left.sorted: echo f.render
-    for f in held.sorted: echo "warning: " & f.render
+    for f in warned.sorted: echo "warning: " & f.render
     for failure in failures: echo "warning: " & failure
     if refused.len > 0:
       refused.report

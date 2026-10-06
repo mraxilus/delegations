@@ -36,11 +36,6 @@ suite "Internal: Symbols":
     check blocks[0].len == 0 and blocks[1] == @[ANSWER] and blocks[2].len == 0
 
 
-  test "names compare as Nim compares them: first character exact, rest loose":
-    check isSameName("ctxFoo", "ctx_foo") and isSameName("ctx", "cTX")
-    check not isSameName("Ctx", "ctx")
-
-
   test "included file resolves through file including it, followed to top":
     let tree = @[
       entry("p/tests/test_a.nim", "include \"suites.nim\"\n"),

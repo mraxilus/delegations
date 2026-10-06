@@ -20,6 +20,7 @@
 {.experimental: "strictFuncs".}
 
 import std/strutils
+import ./views
 
 
 type
@@ -53,8 +54,6 @@ const
     "⊡", "■", "□", "★", "☆", "⟇", "⟑", "⩓", "⩔",
   ]
     ## Unicode glyphs operator is built from (`unicodeOprLen`), commit pin's set.
-  IDENTIFIER_CHARS = {'a' .. 'z', 'A' .. 'Z', '0' .. '9', '_', '\x80' .. '\xFF'}
-    ## Characters identifier is built from; glyph opening operator ends it.
   NEGATION_AFTER = {' ', '\t', '\n', '\r', ',', ';', '(', '[', '{'}
     ## Characters before `-` that make `-<digit>` number (`UnaryMinusWhitelist`).
   KEYWORDS = [
@@ -114,7 +113,7 @@ func textAfter(source: string, at: int): int =
         return k + 3
       inc k
     return source.len
-  let is_raw = at > 0 and source[at - 1] in IDENTIFIER_CHARS
+  let is_raw = at > 0 and source[at - 1] in NAME_CHARS
   var k = at + 1
   while k < source.len and source[k] != '\n':
     if source[k] == '\\' and not is_raw: k += 2
@@ -158,7 +157,7 @@ func numberAfter(source: string, at: int): int =
 func wordAfter(source: string, at: int): int =
   ## Find offset after identifier opening at `at`; operator glyph ends it.
   var k = at
-  while k < source.len and source[k] in IDENTIFIER_CHARS:
+  while k < source.len and source[k] in NAME_CHARS:
     if k > at and source.glyphLength(k) > 0: break
     inc k
   k
@@ -222,7 +221,7 @@ func tokens*(source: string): seq[Token] =
       else: after = source.operatorAfter(i)
     else:
       if c in OPERATOR_CHARS or source.glyphLength(i) > 0: after = source.operatorAfter(i)
-      elif c in IDENTIFIER_CHARS: (kind, after) = (TokenKind.Word, source.wordAfter(i))
+      elif c in NAME_CHARS: (kind, after) = (TokenKind.Word, source.wordAfter(i))
     result.add Token(kind: kind, first: i, after: after, line: line)
     for k in i ..< after:
       if source[k] == '\n': inc line

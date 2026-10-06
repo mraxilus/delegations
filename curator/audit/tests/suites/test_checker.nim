@@ -41,6 +41,17 @@ suite "Checker":
     check exportedRoutines("func `<`*(a, b: Finding): bool =\n").len == 0
 
 
+  test "exported routine of every keyword is collected, `method` among them, and fixed alike":
+    # Case held: `ROUTINES` of `checker.nim` lacked `method`, so exported `method` nothing names
+    #   was never dead, and its `*` never dropped (#557); domain is each keyword opening routine.
+    for keyword in ["func", "proc", "iterator", "template", "macro", "converter", "method"]:
+      let source = keyword & " area*(s: Shape): float = 1.0\n"
+      check exportedRoutines(source) == @["area"]  # collected
+      check checkDeadExports(["m.nim"], [source], []).len == 1  # dead where nothing names it
+      check fixDeadExports("m.nim", source & "let x = area(s)\n", ["area"]).source ==
+        keyword & " area(s: Shape): float = 1.0\nlet x = area(s)\n"  # `*` drops where called
+
+
   test "routine no other module and no suite names is dead, however it is called":
     let dead = "func gone*(): int = 1\n"
     check checkDeadExports(["m.nim"], [dead], []).len == 1

@@ -5,14 +5,17 @@
 ##   Same door serves branch context: changed paths, paths base gained, commit subjects since
 ##   base, and oldest commit outside `--recent` window.
 ##
-##   Git runs as direct process with argument list, never through shell: no quoting, and
-##     `execCmdEx` is rejected because it reads by line and appends newline to NUL output.
+##   Git runs as direct process with argument list, never through shell, through knoller's
+##     `runGit`, which command line of knoller lists directory with too: no quoting, and
+##     `execCmdEx` is rejected because it reads by line, appends newline to NUL output, and
+##     joins stderr to stdout.
 ##
 ##   Cost: needs git on PATH and repository root; tests build throwaway repositories.
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, options, os, osproc, sequtils, streams, strutils]
+import std/[algorithm, options, os, sequtils, strutils]
+from ../../knoller/src/knoller/command import runGit
 import ./[commits, kinds, layout]
 
 export layout.Entry, layout.Tree
@@ -20,21 +23,14 @@ export layout.Entry, layout.Tree
 
 proc gitFields*(root: string, arguments: openArray[string]): seq[string] =
   ## Run git in root, return NUL-separated stdout fields; raise on non-zero exit.
-  ##   Streams are read apart. Git writes warning to stderr, ending it in newline rather
-  ##     than in NUL, so stream carrying both would leave warning glued to first field.
+  ##   Streams are read apart (`runGit`). Git writes warning to stderr, ending it in newline
+  ##     rather than in NUL, so stream carrying both would leave warning glued to first field.
   ##     `diff base...HEAD` warns whenever branch and base share two merge bases, which is
   ##     ordinary, and glued field then starts with `warning:` rather than with path.
   ##   Stderr is kept rather than dropped: it is where git says why it failed, and `IOError`
   ##     carries it.
-  ##   Both pipes are drained before exit is waited on, since child blocks where either one
-  ##     fills while other is read.
-  let process = startProcess("git", args = @["-C", root] & @arguments, options = {poUsePath})
-  defer: process.close
-  let
-    output = process.outputStream.readAll
-    failure = process.errorStream.readAll
-  if process.waitForExit != 0:
-    raise newException(IOError, "git failed; got `" & failure.strip & "`.")
+  let (output, failure, code) = runGit(root, arguments)
+  if code != 0: raise newException(IOError, "git failed; got `" & failure.strip & "`.")
   output.split('\0').filterIt(it.len > 0)
 
 
