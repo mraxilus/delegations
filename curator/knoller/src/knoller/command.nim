@@ -8,7 +8,8 @@
 ##   Nimble file whose copy `atlas.lock` beside it holds is passed over (`lockedNimbles`).
 ##   Fix writes only file that changes; `--check` writes none, and reports each change due.
 ##   Output, sorted by path, line, then rule id: `path:line: <rule-id> fixed`, or `to fix`
-##     with `--check`; `path:line: <rule-id> left: <message>` for finding left for hand;
+##     with `--check`; `path:line: <rule-id> left: <message>` for finding left for hand, as
+##     every check of knoller reads fixed text (`checkSource`), static pass's among them;
 ##     `path:line: fence-held warning: <message>` for each fence, naming each rule broken
 ##     inside it with count and first line, so no fenced line goes unseen (`heldOf`); then
 ##     count, `N fixed.` or `N to fix.`. Line `0` is whole file, so its location is path alone.
@@ -157,7 +158,7 @@ func partOf(path, source: string; is_check: bool; directory: string; proofs: Pro
   if source.fenceOf.lines.len > 0: result.asked.add source.questionsOf(proofs)
   let fix = formatted(layout, source, dialect, proofs)
   result.asked.add fix.asked
-  var after = checkFormatting(layout, fix.source, dialect, proofs)
+  var after = checkSource(layout, fix.source, dialect, proofs)
   for report in after.mitems: report.line = fix.traced(report.line)  # Line as given.
   result.left = shownAs(fix.left & after, path)
   if fix.source == source: return

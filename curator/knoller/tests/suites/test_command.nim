@@ -13,9 +13,9 @@ import ./stubs
 
 
 const
-  DIRTY = "let x = a+b # c\nproc f(a: int; b: string) = discard\n"
+  DIRTY = "let X = a+b # c\nproc f(a: int; b: string) = discard\n"
     ## Nim source breaking spacing, comment gap and separators, and lacking `strictFuncs`.
-  CLEAN = "{.experimental: \"strictFuncs\".}\n\nlet x = a + b  # c\n"  ## Nim source fix leaves.
+  CLEAN = "{.experimental: \"strictFuncs\".}\n\nlet X = a + b  # c\n"  ## Nim source fix leaves.
   README = currentSourcePath().parentDir.parentDir.parentDir / "README.md"
     ## Record listing every rule id output cites.
   SUITES =
@@ -26,7 +26,7 @@ const
     ## Testament stub whose `cmd` holds `-r`.
   UMBRELLA = "{.experimental: \"strictFuncs\".}\n\nimport ./p/a\n"
     ## Library umbrella lacking profiler import.
-  GROUPED = "{.experimental: \"strictFuncs\".}\n\nlet s = @(x) + @(x[0])\n"
+  GROUPED = "{.experimental: \"strictFuncs\".}\n\nlet S = @(x) + @(x[0])\n"
     ## Nim source holding group parser proves needless, and group it refuses.
   NIM = getCurrentCompilerExe()  ## Compiler building suite, 2.2.12, whose parser answers.
   COMMIT = "27763495bcfe265507ca98aedc1c7064bf1e0e4d"  ## Commit pin of `ronri` projects.
@@ -115,7 +115,7 @@ suite "Command line":
 
   test "finding fix leaves prints by rule id with its message, and exits 1":
     let
-      crossing = "let a = 1+2\nlet m = f(\n  #!fix off\n  1,  0,\n)\n#!fix on\n"
+      crossing = "let A = 1+2\nlet M = f(\n  #!fix off\n  1,  0,\n)\n#!fix on\n"
       outcome = outcomeOf([("a.nims", crossing)], [], is_check = false)
     check outcome.written.len == 0  # fence it cannot read leaves file as written
     check outcome.lines[0].startsWith("a.nims:2: fence left: Fence closes outside bracket")
@@ -124,7 +124,7 @@ suite "Command line":
 
 
   test "finding left prints at its line in file as given, as each rewrite does":
-    let outcome = outcomeOf([("a.nim", "let a = 1\nlet b = not x == y\n")], [], is_check = true)
+    let outcome = outcomeOf([("a.nim", "let A = 1\nlet B = not x == y\n")], [], is_check = true)
     check outcome.lines.len == 4
     check outcome.lines[0 .. 1] == @["a.nim: strictfuncs to fix", "a.nim:1: single-bindings to fix"]
     check outcome.lines[2].startsWith("a.nim:2: not-over-binary left: ")  # fix moves it to 5
@@ -161,7 +161,7 @@ suite "Command line":
 
   test "each fence prints as warning naming what breaks inside it, and changes no exit code":
     let
-      fenced = "let a = 1\n#!fix off\nlet b = 1+2\n#!fix on\n"
+      fenced = "let A = 1\n#!fix off\nlet B = 1+2\n#!fix on\n"
       outcome = outcomeOf([("a.nims", fenced)], [], is_check = true)
     check outcome.lines == @[
       "a.nims:2: fence-held warning: Fence keeps its lines as written, and inside them " &
@@ -234,7 +234,7 @@ suite "Command line":
       check outcome.lines.len == 2 and outcome.lines[^1] == "0 to fix."
       check outcome.lines[0].startsWith("needless-parentheses warning: ")  # one line, before count
     let dirty =
-      provenOutcome([("a.nim", DIRTY & "let s = @(x) + 1\n")], [], true, "/", failingProver)
+      provenOutcome([("a.nim", DIRTY & "let S = @(x) + 1\n")], [], true, "/", failingProver)
     check dirty.code == 1 and dirty.lines[^1] == "4 to fix."  # other rules still due
     check dirty.lines[^2] == "needless-parentheses warning: Compiler ran no probe; got `x`."
 

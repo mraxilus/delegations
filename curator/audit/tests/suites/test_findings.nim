@@ -98,7 +98,7 @@ suite "Findings":
 
   test "finding of knoller's check reads as koch prints it, article where sentence ends":
     let
-      fenced = "let a = 1\n" & FENCE_OFF & "\nlet b = 1+2\n" & FENCE_ON & "\n"
+      fenced = "let A = 1\n" & FENCE_OFF & "\nlet B = 1+2\n" & FENCE_ON & "\n"
       crossing = "let m = f(\n  " & FENCE_OFF & "\n  1,\n)\n" & FENCE_ON & "\n"
       late = "import std/os\n" & STRICT_FUNCS & "\n"
       stub = "discard \"\"\"\naction: run\ncmd: \"nim c -r $file\"\njoinable: false\n\"\"\"\n"

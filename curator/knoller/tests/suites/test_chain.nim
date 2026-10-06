@@ -180,7 +180,7 @@ suite "Chain":
 
   test "fence names each rule broken inside, by count and first line, in order of `Rule`":
     let
-      source = "let a = 1\n" & FENCE_OFF & "\nlet b = 1+2\nlet c = not a == b\nlet d = 3*4\n" &
+      source = "let A = 1\n" & FENCE_OFF & "\nlet B = 1+2\nlet C = not A == B\nlet D = 3*4\n" &
         FENCE_ON & "\n"
       unfenced = source.replace(FENCE_OFF, "# Rows.").replace(FENCE_ON, "# Rows.")
       held = heldOf("a.nims", source, Dialect.Script)
@@ -196,8 +196,8 @@ suite "Chain":
 
   test "each fence gives one line: clean one breaks nothing, and open one runs to last line":
     let
-      source = "let a = 1+2\n" & FENCE_OFF & "\nlet b = 1+2\n" & FENCE_ON & "\nlet c = 3\n" &
-        FENCE_OFF & "\nlet d = 4\n"
+      source = "let A = 1+2\n" & FENCE_OFF & "\nlet B = 1+2\n" & FENCE_ON & "\nlet C = 3\n" &
+        FENCE_OFF & "\nlet D = 4\n"
       held = heldOf("a.nims", source, Dialect.Script)
     check held.mapIt(it.line) == @[2, 6]  # one for each fence
     check held[0].message.contains(" expression-spacing breaks once at line 3; got")  # 1 outside
@@ -207,7 +207,7 @@ suite "Chain":
 
 
   test "fence of module counts idiom checks too, and script reads none":
-    let source = FENCE_OFF & "\nlet a = 1\nlet b = 2\nproc f(): int =\n  return result\n"
+    let source = FENCE_OFF & "\nlet A = 1\nlet B = 2\nproc f(): int =\n  return result\n"
     check heldOf("a.nim", source, Dialect.Module)[0].message.contains(
       "inside them return-result breaks once at line 5 and single-bindings once at line 2; got",
     )

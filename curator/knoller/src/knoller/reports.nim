@@ -19,11 +19,15 @@
 ##     pure, and same answers give same output.
 ##   Path fixer reads is `/` separated: repository-relative from `koch`, absolute from command
 ##     line (`command.layoutOf`). Rule reading layout from it reads test file and stub here
-##     alone, both from last directory `tests` (`testsPart`), so each meaning is written once.
+##     alone, both from last directory `tests` (`testsPart`), so each meaning is written once;
+##     drive file, where command line reads fixed waits, too (`isDriveFile`).
 ##
 ##   Cost: line `0` marks whole-file report, so `0` never means first line.
 ##   Cost: absolute path reads directories above repository too, so file under directory
 ##     `tests` there reads as test file from command line.
+##   Cost: drive file is file under directory `tests` or `tools` at any depth, wider than
+##     `curator/audit` reads it (those of each project alone), since command line knows no
+##     project; so command line reports fixed wait static pass passes over.
 
 {.experimental: "strictFuncs".}
 
@@ -76,7 +80,9 @@ type
     of StepKind.Proving: proven*: Proven
 
 
-const EVERY* = Held(is_every: true)  ## Held of every line, as each widener's two-argument form.
+const
+  EVERY* = Held(is_every: true)  ## Held of every line, as each widener's two-argument form.
+  DRIVE_DIRECTORIES = ["tests", "tools"]  ## Directories whose files command line reads as drive.
 
 
 func initReport*(path: string, line: int, rule: Rule, message = ""): Report =
@@ -100,6 +106,13 @@ func isStub*(path: string): bool =
   ## Decide whether path is testament stub: `test_*`, directly under directory `tests`.
   let part = path.testsPart
   part.len == 1 and part[0].startsWith("test_")
+
+
+func isDriveFile*(path: string): bool =
+  ## Decide whether path lies under directory `tests` or `tools`, at any depth: drive code, where
+  ##   command line reads fixed waits.
+  let parts = path.split('/')
+  parts[0 ..< parts.high].anyIt(it in DRIVE_DIRECTORIES)
 
 
 func guarded*(fixer: Fixer): Step =
