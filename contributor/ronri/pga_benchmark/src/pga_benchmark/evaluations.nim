@@ -28,6 +28,7 @@
 import std/[algorithm, json, math, os, osproc, sequtils, strutils, tables]
 
 import ./[changes, guard, head, report]
+from ./proposals import definesOf
 
 
 type
@@ -173,14 +174,18 @@ proc compileAgainst(
   runCompiler(arguments)
 
 
-proc suites(library, cache: string; algebra: Algebra): JsonNode =
-  ## Compile and run library's own suites on copy; count passed and failed tests.
+proc suites(
+  library, cache: string; algebra: Algebra; defines: openArray[string] = []
+): JsonNode =
+  ## Compile and run library's own suites on copy, with defines claim adds; count passed and
+  ##   failed tests.
   let stub = library / PATH_STUB % algebra.name
   if not fileExists(stub): return %*{"ok": 0, "failed": 0, "built": false}
   var arguments = @["c", "--hints:off", "--warnings:off", "--skipParentCfg:on", "--noNimblePath",
     "-d:testing", "-d:nimUnittestAbortOnError:off", "--nimcache:" & cache,
     "-o:" & cache / "suites", "-r"]
   arguments.add definesAlgebra(algebra)
+  arguments.add defines
   arguments.add stub
   let (output, code) = runCompiler(arguments)
   %*{
@@ -418,7 +423,17 @@ proc checkClaims(
       detail: seq[string]
     case kind
     of "suites":
-      for name, node in suited.pairs:
+      var held = suited
+      if claim.hasKey("defines"):
+        held = newJObject()
+        for algebra in algebras:
+          held[algebra.name] = suites(
+            copy,
+            directory / "cache_suites_defined_" & algebra.name,
+            algebra,
+            definesOf(claim),
+          )
+      for name, node in held.pairs:
         if node{"failed"}.getInt > 0 or not node{"built"}.getBool:
           is_holding = false
           detail.add name & " failed " & $node{"failed"}.getInt
@@ -452,6 +467,7 @@ proc checkClaims(
           "--nimcache:" & directory / "cache_program_" & algebra.name,
           "-o:" & directory / "program_" & algebra.name, "-r"]
         arguments.add definesAlgebra(algebra)
+        arguments.add definesOf(claim)
         arguments.add program
         let (output, code) = runCompiler(arguments)
         if code != 0:
