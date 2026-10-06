@@ -47,10 +47,10 @@ suite "Workflows":
     # Absent block takes repository default; empty block grants nothing. Only first
     #   is somebody's choice rather than drift, so only second is read.
     const blockless = "name: check\n\njobs:\n  a:\n    steps:\n      - run: gh issue list\n"
-    check blockless.permissionScopes.isNone
+    check blockless.scopesPermission.isNone
     check checkScopes("check.yml", blockless).len == 0
     const empty = "name: c\n\npermissions:\n\njobs:\n  a:\n    steps:\n      - run: gh issue x\n"
-    check empty.permissionScopes == some(newSeq[string]())
+    check empty.scopesPermission == some(newSeq[string]())
     check checkScopes("check.yml", empty).len == 1  # empty block grants nothing at all
 
 
@@ -64,13 +64,13 @@ jobs:
     steps:
       - run: gh issue list
 """
-    check after.permissionScopes == some(@["contents"])  # `jobs` and `a` are not scopes
+    check after.scopesPermission == some(@["contents"])  # `jobs` and `a` are not scopes
     check checkScopes("w.yml", after).len == 1  # `gh issue` still wants `issues`
 
 
   test "a job-level block is left to its job, since only column zero is the whole grant":
     const nested = "name: x\n\njobs:\n  a:\n    permissions:\n      issues: write\n"
-    check nested.permissionScopes.isNone
+    check nested.scopesPermission.isNone
 
 
   test "listing pull requests wants `pull-requests`, which no other mark reaches":
@@ -140,13 +140,13 @@ jobs:
     check checkScopes("draft.yml", minted).len == 0
 
 
-  test "weekly schedule and RECENT_DAYS name one window":
+  test "weekly schedule and DAYS_RECENT name one window":
     # Window is named twice, as cron and as constant, so change of one alone is finding.
     const weekly =
       "on:\n  schedule:\n    - cron: '0 6 * * 1'\njobs:\n  a:\n    run: koch --recent\n"
-    check weekly.cronDays == 7
+    check weekly.daysCron == 7
     check checkWindow("check.yml", weekly, 7).len == 0
     check "got `7` days against `1`" in checkWindow("check.yml", weekly, 1)[0].message
-    check weekly.replace("* * 1", "* * *").cronDays == 1
-    check weekly.replace("* * 1", "* * 1-5").cronDays == 0  # shape untaught reads as 0
+    check weekly.replace("* * 1", "* * *").daysCron == 1
+    check weekly.replace("* * 1", "* * 1-5").daysCron == 0  # shape untaught reads as 0
     check checkWindow("ledger.yml", weekly.replace("--recent", ""), 1).len == 0  # no window

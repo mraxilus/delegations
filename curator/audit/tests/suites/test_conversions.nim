@@ -12,7 +12,7 @@ suite "Style §5":
     let
       source = "let\n  y = x.float\n  z = (a + b).int\n  w = rigid3.Point\n  v = -x.float.int\n" &
         "  t = (a, b).T\n"
-      query = conversionQuery("a.nim", source)
+      query = queryConversion("a.nim", source)
     check query.sites == @[(2, 8), (2, 6), (3, 14), (4, 13), (4, 6), (5, 9), (5, 7), (5, 15),
                            (6, 13)]  # names, and receiver's last name where it ends on one
     var answer = Answer(path: "a.nim")
@@ -37,4 +37,4 @@ suite "Style §5":
       "import std/os\nlet c = os.DirSep\n",  # imported module
       "export layout.Entry\n",  # export statement
     ]:
-      check conversionQuery("a.nim", kept).sites.len == 0
+      check queryConversion("a.nim", kept).sites.len == 0

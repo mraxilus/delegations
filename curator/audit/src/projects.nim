@@ -25,21 +25,21 @@ import ./findings
 
 
 const
-  DRIVER_FILE* = "tools/build.nim"  ## Build driver project carries, holding verbs koch has none of.
-  TYPES_VERB* = "types"
+  FILE_DRIVER* = "tools/build.nim"  ## Build driver project carries, holding verbs koch has none of.
+  VERB_TYPES* = "types"
     ## Verb type-checking project's own scripts, deriving what they read first, and
     ## stopping before anything needing browser. Named here and in CONTRIBUTOR.md.
-  DRIVEN_VERB* = "drive"
+  VERB_DRIVEN* = "drive"
     ## Verb building project's page and driving it through real events. Project gains driven
-    ## checks by carrying this verb and nothing else (`plan.nim`, `verbDirectories`).
-  HEAD_VERB* = "head"
+    ## checks by carrying this verb and nothing else (`plan.nim`, `directoriesVerb`).
+  VERB_HEAD* = "head"
     ## Verb holding project's pin to outside reference that moves without commit here, such as
     ## head of library repository. Its verdict varies with that reference, so it runs daily in
     ## `head.yml` and never where merge waits (CONTRIBUTOR.md, Tests are paramount).
-  SYSTEM_VERB* = "system"
+  VERB_SYSTEM* = "system"
     ## Verb printing system packages project needs, one bare name per line, for caller to
     ## install. Named here and in CONTRIBUTOR.md, "System dependencies".
-  KOCH_SYSTEM* = [
+  SYSTEM_KOCH* = [
     ("git", "tree is what git lists, and `check` fetches base to compare against"),
     ("curl", "compiler pin nothing on machine serves is downloaded"),
     ("tar", "that download is archive, and unpacking it is what makes it toolchain"),
@@ -81,7 +81,7 @@ proc nimOf*(bin: string): string =
   if bin.len == 0: findExe(NIM) else: bin / NIM
 
 
-proc childEnv(bin: string): StringTableRef =
+proc envChild(bin: string): StringTableRef =
   ## Build environment putting toolchain first on PATH; `nil` inherits this process's own.
   ##   Naming tool by path is not enough: Atlas resolves `nim` through PATH, so toolchain's
   ##   own Atlas still reads whichever compiler PATH holds and reports environment mismatch
@@ -100,7 +100,7 @@ proc runIn*(directory, program: string; arguments: openArray[string]; bin = ""):
     program,
     args = arguments,
     workingDir = directory,
-    env = childEnv(bin),
+    env = envChild(bin),
     options = {poUsePath, poParentStreams},
   )
   result = process.waitForExit
@@ -119,7 +119,7 @@ proc linesIn*(directory, program: string; arguments: openArray[string]; bin = ""
     program,
     args = arguments,
     workingDir = directory,
-    env = childEnv(bin),
+    env = envChild(bin),
     options = {poUsePath},
   )
   defer: process.close
@@ -138,12 +138,12 @@ proc runVerb(root: string; targets: openArray[Target]; verb, failed: string): se
     let code = runIn(
       root / target.directory,
       target.bin.nimOf,
-      ["r", "--hints:off", DRIVER_FILE, verb],
+      ["r", "--hints:off", FILE_DRIVER, verb],
       target.bin,
     )
     if code != 0:
       result.add finding(
-        target.directory & "/" & DRIVER_FILE,
+        target.directory & "/" & FILE_DRIVER,
         0,
         failed & "; got exit `" & $code & "`.",
       )
@@ -153,7 +153,7 @@ proc runTypes*(root: string, targets: openArray[Target]): seq[Finding] =
   ## Type-check each project's own scripts, through build driver that project carries.
   ##   Verb is project's, never koch's: what type-checking needs differs per project, and
   ##   driver already derives its declarations first. koch names verb and nothing else.
-  runVerb(root, targets, TYPES_VERB, "Type check failed")
+  runVerb(root, targets, VERB_TYPES, "Type check failed")
 
 
 proc runDriven*(root: string, targets: openArray[Target]): seq[Finding] =
@@ -161,14 +161,14 @@ proc runDriven*(root: string, targets: openArray[Target]): seq[Finding] =
   ##   Same shape as `runTypes` one step further along: verb is project's, koch names it and
   ##   nothing else. What that verb builds first, and what browser it reaches for, is project's
   ##   own business (CONTRIBUTOR.md, "System dependencies").
-  runVerb(root, targets, DRIVEN_VERB, "Driven checks failed")
+  runVerb(root, targets, VERB_DRIVEN, "Driven checks failed")
 
 
 proc runHead*(root: string, targets: openArray[Target]): seq[Finding] =
   ## Hold each project's pin to its outside reference, through driver that project carries.
   ##   Verb prints its own finding; koch adds exit code alone, so workflow posting output
   ##   posts what project said.
-  runVerb(root, targets, HEAD_VERB, "Head check failed")
+  runVerb(root, targets, VERB_HEAD, "Head check failed")
 
 
 proc systemOf*(root: string, targets: openArray[Target]): seq[string] =
@@ -181,7 +181,7 @@ proc systemOf*(root: string, targets: openArray[Target]): seq[string] =
     for package in linesIn(
       root / target.directory,
       target.bin.nimOf,
-      ["r", "--hints:off", DRIVER_FILE, SYSTEM_VERB],
+      ["r", "--hints:off", FILE_DRIVER, VERB_SYSTEM],
       target.bin,
     ):
       if package notin result: result.add package

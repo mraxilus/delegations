@@ -163,9 +163,9 @@ suite "Idioms":
 
 
   test "machine path is finding in any kind but Markdown":
-    check checkMachinePaths("a.nim", "let p = \"/home/me/data\"\n")[0].line == 1
-    check checkMachinePaths("a.yml", "run: cd /Users/me\n").len == 1
-    check checkMachinePaths("a.nim", "let p = getEnv(\"HOME\")\n").len == 0
+    check checkPathsMachine("a.nim", "let p = \"/home/me/data\"\n")[0].line == 1
+    check checkPathsMachine("a.yml", "run: cd /Users/me\n").len == 1
+    check checkPathsMachine("a.nim", "let p = getEnv(\"HOME\")\n").len == 0
 
 
   test "tsconfig sets every flag to true, read as text":
@@ -177,7 +177,7 @@ suite "Idioms":
     check checkTsconfig("tsconfig.json", all_set).len == 0
     let one_off = all_set.replace("\"strict\": true", "\"strict\": false")
     check checkTsconfig("tsconfig.json", one_off).mapIt(it.message).anyIt("`strict`" in it)
-    check checkTsconfig("tsconfig.json", "{}").len == TYPESCRIPT_FLAGS.len
+    check checkTsconfig("tsconfig.json", "{}").len == FLAGS_TYPESCRIPT.len
 
 
 
@@ -246,8 +246,8 @@ suite "Idiom fixes":
       "let\n  a = 1\n  b = block:\n    let\n      c = 2\n      d = 3\n    c + d\n",
     )  # inner run first, then outer carries it
     check nested.source.isSettled
-    let long_string = module("const A = 1\nconst B = \"\"\"\ntext\n\"\"\"\n")
-    check fixed(long_string).source == long_string  # indent would change string: left to hand
+    let string_long = module("const A = 1\nconst B = \"\"\"\ntext\n\"\"\"\n")
+    check fixed(string_long).source == string_long  # indent would change string: left to hand
 
 
   test "missing strictFuncs goes where X.6 puts directives":

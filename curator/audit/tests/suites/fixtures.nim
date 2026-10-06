@@ -1,8 +1,8 @@
 ## Build fixtures checker tests drive: synthetic trees, temporary git repositories.
-##   Checker writes its own fixtures (Article IX.8): `goodTree` is smallest tree passing
+##   Checker writes its own fixtures (Article IX.8): `treeGood` is smallest tree passing
 ##   every static check, so each negative test mutates one thing and names what broke.
 ##
-##   Cost: `goodTree` repeats layout rules as data; when layout grows, fixture grows with it,
+##   Cost: `treeGood` repeats layout rules as data; when layout grows, fixture grows with it,
 ##     and `taudit` proves they still agree.
 
 {.experimental: "strictFuncs".}
@@ -17,7 +17,7 @@ func entry*(path, content: string): Entry =
   Entry(path: path, kind: path.kindOf, content: content)
 
 
-func provenanceText*(stamp: string): string =
+func textProvenance*(stamp: string): string =
   ## Render minimal PROVENANCE.md header carrying stamp.
   "# Provenance\n\n| Field | Value |\n|---|---|\n| Harness | Test |\n| Author | Test |\n" &
     "| Date | 2026-01-01 |\n| Style | CONSTITUTION.md and STYLE.md, followed. |\n" &
@@ -25,7 +25,7 @@ func provenanceText*(stamp: string): string =
 
 
 const
-  GLOSSARY_TEXT* = "# Fixture\n\nFixture glossary.\n\n## Standards\n\n## Language\n\n" &
+  TEXT_GLOSSARY* = "# Fixture\n\nFixture glossary.\n\n## Standards\n\n## Language\n\n" &
     "**Term**:\nOne thing.\n"
     ## Minimal glossary passing shape check.
   PIN* = "2.2.4"
@@ -35,43 +35,43 @@ const
   TEXT_NIMBLE* = "# Package description; requirements live here.\n\nversion = \"0.1.0\"\n" &
     "srcDir = \"src\"\n\nrequires \"nim == " & PIN & "\"\n"
     ## Minimal nimble file pinning compiler exactly and requiring no package.
-  WORKFLOW_TEXT* = "# Run checks.\nname: check\n\nenv:\n  NIM_VERSION: '" & PIN & "'\n"
+  TEXT_WORKFLOW* = "# Run checks.\nname: check\n\nenv:\n  NIM_VERSION: '" & PIN & "'\n"
     ## Minimal workflow stating driver version, which must equal `curator/audit` pin.
-  LOCK_TEXT* = "{\n  \"items\": {\n    \"replications.example.invalid\": {\n" &
+  TEXT_LOCK* = "{\n  \"items\": {\n    \"replications.example.invalid\": {\n" &
     "      \"dir\": \"$deps/replications.example.invalid\",\n" &
     "      \"commit\": \"0123456789abcdef\"\n    }\n  }\n}\n"
     ## Minimal Atlas lock naming one checkout directory.
-  RULES_TEXT* = [
+  TEXT_RULES* = [
     "# Constitution\n\nRules.\n", "# Style\n\nSpelling.\n", "# Contributor\n\nDuties.\n",
     "# Examples\n\nCases.\n", "# Guide\n\nSteps.\n",
   ]
     ## Contents of rules documents in fixture tree, in `RULES` order.
-  ALPHA_DIRECTORY* = CONTRIBUTOR & "/ronri/alpha"  ## Contributor project in fixture tree.
-  AUDIT_DIRECTORY* = CURATOR & "/audit"  ## Curator project in fixture tree.
+  DIRECTORY_ALPHA* = CONTRIBUTOR & "/ronri/alpha"  ## Contributor project in fixture tree.
+  DIRECTORY_AUDIT* = CURATOR & "/audit"  ## Curator project in fixture tree.
 
 
-func headerTable*(source: string): seq[seq[string]] =
+func tableHeader*(source: string): seq[seq[string]] =
   ## Read pipe table of module header, i.e. `##   |` lines with prefix cut, heading row first.
   ##   Suites read it from `staticRead` source, so table is checked against declarations it
   ##   describes (Article I.4) without src exporting reader nothing else needs.
   var table: string
   for line in source.splitLines:
     if line.startsWith("##   |"): table.add line["##   ".len .. ^1] & "\n"
-  table.tableRows
+  table.rowsTable
 
 
-func readmeText*(): string =
+func textReadme*(): string =
   ## Render root README.md holding domain table derived from `DOMAINS`.
   result = "# Fixture\n\n| Folder | Name | Theme |\n|---|---|---|\n"
   for d in DOMAINS: result.add "| " & d.folder & " | " & d.name & " | " & d.theme & " |\n"
 
 
-func projectEntries*(directory: string, stamp: string): seq[Entry] =
+func entriesProject*(directory: string, stamp: string): seq[Entry] =
   ## Build entries of one complete project directory.
   @[
     entry(directory & "/README.md", "# Project\n\nPurpose.\n"),
-    entry(directory & "/PROVENANCE.md", provenanceText(stamp)),
-    entry(directory & "/GLOSSARY.md", GLOSSARY_TEXT),
+    entry(directory & "/PROVENANCE.md", textProvenance(stamp)),
+    entry(directory & "/GLOSSARY.md", TEXT_GLOSSARY),
     entry(directory & "/" & directory.projectName & EXTENSIONS[Dialect.Package], TEXT_NIMBLE),
     entry(
       directory & "/tests/tall.nim",
@@ -80,11 +80,11 @@ func projectEntries*(directory: string, stamp: string): seq[Entry] =
   ]
 
 
-func goodTree*(): Tree =
+func treeGood*(): Tree =
   ## Build smallest tree passing every static check, with projects in both roots.
-  let stamp_now = stamp(RULES_TEXT)
+  let stamp_now = stamp(TEXT_RULES)
   result = @[
-    entry("README.md", readmeText()),
+    entry("README.md", textReadme()),
     entry("LICENSE.md", "# Licence\n\nText.\n"),
     entry("CLAUDE.md", "# Claude\n\nRead rules.\n"),
     entry(
@@ -96,17 +96,17 @@ func goodTree*(): Tree =
     entry("koch.nim.cfg", "# Flags for koch.\nhints:off\n"),
     entry(".gitignore", "# Build products.\nbin/\n"),
     entry(".gitattributes", "# Endings.\n* text=auto eol=lf\n"),
-    entry(".github/workflows/check.yml", WORKFLOW_TEXT),
+    entry(".github/workflows/check.yml", TEXT_WORKFLOW),
   ]
-  for k, rule in RULES: result.add entry(rule, RULES_TEXT[k])
+  for k, rule in RULES: result.add entry(rule, TEXT_RULES[k])
   for root in ROOTS: result.add entry(root & "/README.md", "# " & root & "\n\nProjects.\n")
   for d in DOMAINS:
     result.add entry(
       CONTRIBUTOR & "/" & d.folder & "/README.md",
       "# " & d.name & "\n\n" & d.theme & "\n",
     )
-  result.add projectEntries(AUDIT_DIRECTORY, stamp_now)
-  result.add projectEntries(ALPHA_DIRECTORY, stamp_now)
+  result.add entriesProject(DIRECTORY_AUDIT, stamp_now)
+  result.add entriesProject(DIRECTORY_ALPHA, stamp_now)
 
 
 func with*(tree: Tree, entries: varargs[Entry]): Tree =
@@ -142,7 +142,7 @@ proc writeInto*(root, path, content: string) =
   writeFile(root / path, content)
 
 
-proc tempRepo*(): string =
+proc repoTemp*(): string =
   ## Create temporary git repository on branch `main` with one empty commit.
   result = createTempDir("delegations_", "_fixture")
   discard result.git("init -q -b main")

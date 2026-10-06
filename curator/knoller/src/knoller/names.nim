@@ -8,7 +8,7 @@
 ##   Table `ABBREVIATIONS` gives each banned word its one replacement; word outside table
 ##     passes, and reading catches rest. `JARGON` is closed list of V.6. Words name may take
 ##     beyond them are caller's (`exempt`): `curator/audit` reads them from its glossaries
-##     (`glossaryExemptions` there), and command line passes none.
+##     (`exemptionsGlossary` there), and command line passes none.
 ##   V.9 is no rule here: acronym stays only where glossary lists it, and glossary belongs to
 ##     repository, so knoller, which runs on any repository, reads none. `curator/audit` checks
 ##     acronyms (`checkAcronyms` there), from words of its glossaries (D2 of #572).

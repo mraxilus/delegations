@@ -9,7 +9,7 @@
 ##     cannot be told from words and hold by reading. Declarations alone are read, so name library
 ##     owns, which reaches code only at use site, passes by construction.
 ##   `JARGON` is closed list of V.6. Caller adds symbols glossaries list under `## Standards` as
-##     code spans, and their `**Term**` names, through `glossaryExemptions`; `exemptionsOf`
+##     code spans, and their `**Term**` names, through `exemptionsGlossary`; `exemptionsOf`
 ##     reads root glossary and glossary of path's own project, and static pass gives them to
 ##     knoller's check.
 ##
@@ -37,7 +37,7 @@ import ../../knoller/src/knoller
 import ./[findings, glossary]
 
 
-type RenameCase* = object
+type CaseRename* = object
   ## Define rename case of declaration's kind asks (V.1, V.11), or why fix leaves it to hand.
   line*: int  ## One-based line of declared name.
   column*: int  ## Zero-based byte column of declared name.
@@ -48,11 +48,11 @@ type RenameCase* = object
   is_local*: bool  ## Binding no other module can name: local, or binding of entry block.
 
 
-func glossaryExemptions*(glossary: string): seq[string] =
+func exemptionsGlossary*(glossary: string): seq[string] =
   ## Collect code spans under `## Standards` and names of terms, as words name may take.
   var is_standards = false
   for line in glossary.splitLines:
-    if line.startsWith("#"): is_standards = line == STANDARDS_HEADING
+    if line.startsWith("#"): is_standards = line == HEADING_STANDARDS
     if is_standards:
       var i = 0
       while true:
@@ -63,17 +63,17 @@ func glossaryExemptions*(glossary: string): seq[string] =
         for w in line[open + 1 ..< close].split({' ', ','}):
           if w.len > 0: result.add w
         i = close + 1
-    if line.isTermLine: result.add line[2 ..< line.len - 3]
+    if line.isLineTerm: result.add line[2 ..< line.len - 3]
 
 
 func exemptionsOf*(glossaries: openArray[(string, string)], path: string): seq[string] =
   ## Read words name in path may take beyond table: jargon of V.6, and what root glossary and
-  ##   glossary of path's own project list (`glossaryExemptions`).
+  ##   glossary of path's own project list (`exemptionsGlossary`).
   result = JARGON.toSeq
   for (glossary, source) in glossaries:
-    let directory = glossary[0 ..< glossary.len - ROOT_GLOSSARY.len]
-    if glossary == ROOT_GLOSSARY or path.startsWith(directory):
-      result.add source.glossaryExemptions
+    let directory = glossary[0 ..< glossary.len - GLOSSARY_ROOT.len]
+    if glossary == GLOSSARY_ROOT or path.startsWith(directory):
+      result.add source.exemptionsGlossary
 
 
 func acronyms*(name: string): seq[string] =
@@ -181,7 +181,7 @@ func isMemberSpelled(
   toSeq(k + 3 ..< partners[k + 2]).anyIt(tokens[it].kind == KindToken.Text)
 
 
-func renamesCase*(source: string, exempt: openArray[string]): seq[RenameCase] =
+func renamesCase*(source: string, exempt: openArray[string]): seq[CaseRename] =
   ## Read rename each declaration needs to take case of its kind, as `checkNames` reports case
   ##   (V.1, V.11), each coined abbreviation spelled out too (V.6). Binding of entry block that
   ##   fix moves into `proc main` takes case of local, as it reads there.
@@ -208,18 +208,18 @@ func renamesCase*(source: string, exempt: openArray[string]): seq[RenameCase] =
     let
       respelled = d.name.respelled(exempt)
       renamed = respelled.cased(casing)
-      rule_case =
+      case_rule =
         if d.kind == KindName.Member: "member case (V.11)"
         elif d.kind == KindName.Binding and subject.reach == Reach.Local and
             d.name.isCased(Casing.Screaming):
           "local constant case (V.1)"
         elif d.kind == KindName.Binding: ($subject.reach).toLowerAscii & " case (V.1)"
         else: ($d.kind).toLowerAscii & " case (V.1)"
-    var rename = RenameCase(
+    var rename = CaseRename(
       line: d.line,
       name: d.name,
       renamed: renamed,
-      rule: if respelled == d.name: rule_case else: "abbreviation (V.6) and " & rule_case,
+      rule: if respelled == d.name: case_rule else: "abbreviation (V.6) and " & case_rule,
       is_local: d.kind == KindName.Binding and subject.reach == Reach.Local,
     )
 

@@ -7,7 +7,7 @@ import ../../src/domains
 import ./fixtures
 
 
-const TABLE = staticRead("../../src/domains.nim").headerTable
+const TABLE = staticRead("../../src/domains.nim").tableHeader
   ## Heading row, then one row per domain, as `domains.nim` header holds them.
 
 
@@ -60,9 +60,9 @@ suite "Branch grammar":
 
 
   test "project names are lowercase snake_case":
-    for name in ["a", "alpha", "alpha_2", "a1b2"]: check name.isProjectName  # [a-z][a-z0-9_]*
+    for name in ["a", "alpha", "alpha_2", "a1b2"]: check name.isNameProject  # [a-z][a-z0-9_]*
     for name in ["", "1a", "Alpha", "a-b", "a b", "_a", "síncopa"]:
-      check not name.isProjectName  # [a-z][a-z0-9_]*
+      check not name.isNameProject  # [a-z][a-z0-9_]*
 
 
   test "domain lookup is exact":

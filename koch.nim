@@ -195,9 +195,9 @@ proc plannedJobs(options: Options, tree: Tree): seq[Job] =
   ## Read jobs one run asks for: named project, else window, else every project, else changed.
   if options.project.len > 0:
     tree.jobsFor([options.project.strip(chars = {'/'})])
-  elif options.is_recent: recentFor(options.root, tree, RECENT_DAYS)
-  elif options.is_all: tree.allJobs
-  else: tree.jobs(changedPaths(options.root, options.baseOrDefault))
+  elif options.is_recent: recentFor(options.root, tree, DAYS_RECENT)
+  elif options.is_all: tree.jobsAll
+  else: tree.jobs(pathsChanged(options.root, options.baseOrDefault))
 
 
 proc scopedDirsOf(options: Options, tree: Tree): seq[string] =
@@ -207,9 +207,9 @@ proc scopedDirsOf(options: Options, tree: Tree): seq[string] =
   ##   `--recent` scopes to window rather than to base commit, exactly as `list-projects` does
   ##   on schedule; `--all` drops scoping.
   if options.project.len > 0: @[options.project.strip(chars = {'/'})]
-  elif options.is_recent: recentFor(options.root, tree, RECENT_DAYS).mapIt(it.directory)
-  elif options.is_all: tree.projectDirectories
-  else: testSet(tree.projectDirectories, changedPaths(options.root, options.baseOrDefault))
+  elif options.is_recent: recentFor(options.root, tree, DAYS_RECENT).mapIt(it.directory)
+  elif options.is_all: tree.directoriesProject
+  else: testSet(tree.directoriesProject, pathsChanged(options.root, options.baseOrDefault))
 
 
 proc markFile(root: string): string =
@@ -259,13 +259,13 @@ proc runHook(root, event, input: string): int =
       file = if written.isAbsolute: written else: directory / written
     case event
     of "path":
-      if tool notin EDIT_TOOLS: return 0
+      if tool notin TOOLS_EDIT: return 0
       let checkout = checkoutAt(root, file.parentDir)
-      refuse(checkEditPath(checkout.branchOf, insideRoot(checkout, file)), 2)
+      refuse(checkPathEdit(checkout.branchOf, insideRoot(checkout, file)), 2)
     of "bash":
       let
         command = data{"tool_input", "command"}.getStr
-        checkout = checkoutAt(root, commandDirectory(command, directory))
+        checkout = checkoutAt(root, directoryCommand(command, directory))
         is_pushed = gitFields(checkout, ["branch", "-r", "--contains", "HEAD"]).len > 0
       # Post through `gh api` speaks for delegate, so role line reads root's branch, as `body` does.
       var found = checkBash(checkout.branchOf, command, is_pushed)
@@ -291,7 +291,7 @@ proc runHook(root, event, input: string): int =
         path = insideRoot(checkout, file)
         tree = checkout.readTree
       var found = tree.auditTree
-      found.add prunedFindings(checkout, tree)
+      found.add findingsPruned(checkout, tree)
       let mine = found.filterIt(it.path == path)
       if mine.len == 0: return 0
       let lines = mine.mapIt(it.path & ":" & $it.line & ": " & it.message)
@@ -309,13 +309,13 @@ proc runHook(root, event, input: string): int =
       found.add checkReferencesBare(turn.text)
       if turn.calls.isTurnWriting: found.add checkEndTurn(turn.text, branch)
       if found.len == 0: return 0
-      echo %*{"decision": "block", "reason": found.stopReason}
+      echo %*{"decision": "block", "reason": found.reasonStop}
       0
   of "start":
     var drift: seq[Finding]
     try:
       discard gitFields(root, ["fetch", "-q", "origin", MAIN])
-      drift = checkBase(gainedPaths(root, "origin/" & MAIN))
+      drift = checkBase(pathsGained(root, "origin/" & MAIN))
     except CatchableError: discard
     echo startContext(
       branch,
@@ -358,10 +358,10 @@ proc run(options: Options): int =
       tree = options.root.readTree
       (branch, base) = (options.branchOrDefault, options.baseOrDefault)
     found = tree.auditTree
-    found.add prunedFindings(options.root, tree)
-    found.add checkScope(branch, changedPaths(options.root, base), movedPaths(options.root, base))
-    found.add checkHistory(branch, branchCommits(options.root, base))
-    found.add checkBase(gainedPaths(options.root, base))
+    found.add findingsPruned(options.root, tree)
+    found.add checkScope(branch, pathsChanged(options.root, base), pathsMoved(options.root, base))
+    found.add checkHistory(branch, commitsBranch(options.root, base))
+    found.add checkBase(pathsGained(options.root, base))
     # Curator branch holds what reddens contributor project (duty 3), and blocks on rest.
     let (held, own) = splitHeld(branch, found)
     if own.len > 0:
@@ -373,7 +373,7 @@ proc run(options: Options): int =
       held.report
     found = own
     found.add typeJobs(options.root, tree, options.scopedDirsOf(tree))
-    found.add ciJobs(options.root, tree, tree.jobs(changedPaths(options.root, base)))
+    found.add ciJobs(options.root, tree, tree.jobs(pathsChanged(options.root, base)))
     # Green run on clean tree records tree hash, which `pre-push` hook compares against
     #   pushed commit; dirty tree records nothing, since no commit holds exactly what passed.
     if found.len == 0:
@@ -385,7 +385,7 @@ proc run(options: Options): int =
     if not options.isReadAll({Root}): return options.refused
     let tree = options.root.readTree
     found = tree.auditTree
-    found.add prunedFindings(options.root, tree)
+    found.add findingsPruned(options.root, tree)
   of "check-types":
     if not options.isReadAll({Root, Base, All, Recent}, has_project = true):
       return options.refused
@@ -396,16 +396,16 @@ proc run(options: Options): int =
     let base = options.baseOrDefault
     found = checkScope(
       options.branchOrDefault,
-      changedPaths(options.root, base),
-      movedPaths(options.root, base),
+      pathsChanged(options.root, base),
+      pathsMoved(options.root, base),
     )
   of "check-commits":
     if not options.isReadAll({Root, Branch, Base}): return options.refused
-    let commits = branchCommits(options.root, options.baseOrDefault)
+    let commits = commitsBranch(options.root, options.baseOrDefault)
     found = checkHistory(options.branchOrDefault, commits)
   of "check-drift":
     if not options.isReadAll({Root, Base}): return options.refused
-    found = checkBase(gainedPaths(options.root, options.baseOrDefault))
+    found = checkBase(pathsGained(options.root, options.baseOrDefault))
   of "check-role":
     # Pull request's own facts, which runner alone holds: they arrive through environment,
     #   never interpolated into script, as branch and event kind already do.
@@ -437,7 +437,7 @@ proc run(options: Options): int =
     if not options.isReadAll({Root, Base, All, Recent}, has_project = true):
       return options.refused
     let tree = options.root.readTree
-    found = headJobs(options.root, tree, options.plannedJobs(tree))
+    found = jobsHead(options.root, tree, options.plannedJobs(tree))
   of "fix":
     # Fixers, file selection and scope refusal live in `fixes.nim`; koch writes and prints.
     #   Named files or directories come first, else projects `--recent`, `--all` or change
@@ -463,7 +463,7 @@ proc run(options: Options): int =
       return 1
     let
       locked = tree.nimblesLocked
-      answers = resolve(options.root, tree, semanticQueries(tree, entries, locked))
+      answers = resolve(options.root, tree, queriesSemantic(tree, entries, locked))
       (fix, failures) = provenFix(
         options.branchOrDefault,
         tree,
@@ -496,7 +496,7 @@ proc run(options: Options): int =
     #   hold two copies of one digest. Store holds digest; caller names which files it wants,
     #   so what is shared is bytes rather than choice.
     if not options.isReadAll({}, has_project = true): return options.refused
-    let root = storeRoot(getEnv(ASSETS_KEY))
+    let root = rootStore(getEnv(KEY_ASSETS))
     var wanted = options.rest
     if options.project.len > 0: wanted.insert(options.project, 0)
     # Naming no file asks for declaration rather than for bytes: consumer checking whether
@@ -507,7 +507,7 @@ proc run(options: Options): int =
     for file in wanted:
       let path = assetIn(root, file)
       if path.len == 0:
-        found.add(if file.declaredDigest.len == 0: unknown(file) else: @[finding(
+        found.add(if file.digestDeclared.len == 0: unknown(file) else: @[finding(
           "curator/audit/src/assets.nim", 0,
           "Asset is declared but could not be fetched or checked; got `" & file & "`.",
         )])
@@ -522,8 +522,8 @@ proc run(options: Options): int =
       tree = options.root.readTree
       named =
         if options.project.len > 0:
-          systemPackages(options.root, tree, [options.project.strip(chars = {'/'})])
-        else: repositorySystem(options.root, tree, tree.projectDirectories)
+          packagesSystem(options.root, tree, [options.project.strip(chars = {'/'})])
+        else: systemRepository(options.root, tree, tree.directoriesProject)
     for package in named: echo package
     return 0
   of "list-projects":
@@ -532,7 +532,7 @@ proc run(options: Options): int =
     let tree = options.root.readTree
     var jobs = options.plannedJobs(tree)
     if options.is_drive: jobs = tree.drivenOnly(jobs)
-    if options.is_head: jobs = tree.carryingOnly(jobs, HEAD_VERB)
+    if options.is_head: jobs = tree.carryingOnly(jobs, VERB_HEAD)
     echo render(jobs)
     return 0
   of "stamp":
@@ -541,7 +541,7 @@ proc run(options: Options): int =
     if not options.isReadAll({Root, Write}): return options.refused
     let tree = options.root.readTree
     if options.is_write:
-      for path in writeRulesRows(options.root, tree): echo path
+      for path in writeRowsRules(options.root, tree): echo path
     else: echo tree.rulesStamp
     return 0
   else:

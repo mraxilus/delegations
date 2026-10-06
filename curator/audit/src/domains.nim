@@ -76,7 +76,7 @@ func findDomain*(folder: string): Option[Domain] =
   none(Domain)
 
 
-func isProjectName*(s: string): bool =
+func isNameProject*(s: string): bool =
   ## Decide whether `s` is valid project folder, i.e. `[a-z][a-z0-9_]*`.
   s.len > 0 and s[0] in {'a' .. 'z'} and s.allCharsInSet({'a' .. 'z', '0' .. '9', '_'})
 
@@ -85,7 +85,7 @@ static:
   # Slug is ASCII, checked at earliest boundary (Article IV.4): accented folder fails build
   #   rather than suite, and never reaches path git must quote.
   for d in DOMAINS:
-    doAssert d.folder.isProjectName, "Domain folder must be slug; got `" & d.folder & "`."
+    doAssert d.folder.isNameProject, "Domain folder must be slug; got `" & d.folder & "`."
 
 
 func isBranchTail(s: string): bool =
@@ -101,10 +101,10 @@ func parseBranch*(branch: string): Option[Branch] =
   let tail = parts[^1]
   if parts.len == 2 and parts[0] == CURATOR:
     return some(Branch(role: Role.Curator, name: tail))
-  if parts.len == 3 and parts[0] == CURATOR and parts[1].isProjectName:
+  if parts.len == 3 and parts[0] == CURATOR and parts[1].isNameProject:
     return some(Branch(role: Role.CuratorProject, project: parts[1], name: tail))
   if parts.len == 4 and parts[0] == CONTRIBUTOR and parts[1].findDomain.isSome and
-      parts[2].isProjectName:
+      parts[2].isNameProject:
     return some(Branch(role: Role.Contributor, domain: parts[1], project: parts[2], name: tail))
   none(Branch)
 

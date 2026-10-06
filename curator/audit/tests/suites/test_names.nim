@@ -48,7 +48,7 @@ suite "Names":
     const glossary = "# d\n\n## Standards\n\n- **SI**, BIPM, 9th: `s` and `m` (Table 2), so " &
         "`ms`.\n- **Acronyms**, Architect: `3D`, `JSON` and `fps`.\n\n## Language\n\n" &
         "**Measurand**:\nOne.\n"
-    let exempt = glossary.glossaryExemptions
+    let exempt = glossary.exemptionsGlossary
     for w in ["s", "m", "ms", "3D", "JSON", "fps", "Measurand"]: check w in exempt
     check "BIPM" notin exempt  # owner, not symbol
     check "func toJSON() = discard\n".breaches(exempt).len == 0  # V.9, glossary admits it

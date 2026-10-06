@@ -31,7 +31,7 @@ const WIDTH_EXEMPT = ["LICENSE.md"]
 
 
 
-func checkForm*(path, source: string; rule: KindRule): seq[Finding] =
+func checkForm*(path, source: string; rule: RuleKind): seq[Finding] =
   ## Report form violations of source under kind rule: knoller's form of text, width aside on
   ##   path exempt from it, then banners of Nim syntax, exactly.
   let is_width_exempt = path in WIDTH_EXEMPT

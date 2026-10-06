@@ -3,7 +3,7 @@
 ##     approved words. Dictionary is ASD's and is not copied here. Three rules are mechanical
 ##     enough to check: sentence length, paragraph length, and words outside dictionary that
 ##     have one approved replacement. Rest holds by reading, as `GUIDE.md` sets out.
-##   Root documents and five templates are data in `ENGLISH_PATHS`, and every other governed
+##   Root documents and five templates are data in `PATHS_ENGLISH`, and every other governed
 ##     document derives from layout: README of each project root and each domain, and three
 ##     records of each project. Project or domain added later is read from its first line,
 ##     rather than when curator remembers to widen list.
@@ -36,7 +36,7 @@ import ./[domains, findings, layout, markdown]
 
 
 const
-  ENGLISH_PATHS* = [
+  PATHS_ENGLISH* = [
     ".github/ISSUE_TEMPLATE/brief.md",
     ".github/ISSUE_TEMPLATE/process-change.md",
     ".github/ISSUE_TEMPLATE/queued-work.md",
@@ -57,11 +57,11 @@ const
     ## Records joined governed set once every one was written in this register, which was
     ## cheapest moment: widening costs more with every line of prose written after it. They
     ## are derived rather than listed since then, so next project pays that cost at birth.
-  SENTENCE_WORDS* = 25
+  WORDS_SENTENCE* = 25
     ## Words one sentence may hold, which is STE's limit for descriptive writing.
-  PARAGRAPH_SENTENCES* = 6  ## Sentences one paragraph may hold.
-  ECHO_WORDS = 8  ## Words finding quotes back of sentence it names.
-  SPAN_WORD = "name"
+  SENTENCES_PARAGRAPH* = 6  ## Sentences one paragraph may hold.
+  WORDS_ECHO = 8  ## Words finding quotes back of sentence it names.
+  WORD_SPAN = "name"
     ## Word backticked span collapses to, so identifier counts once however long it is.
   REPLACEMENTS* = [
     ("additional", "more"),
@@ -121,7 +121,7 @@ func spansCollapsed*(text: string): string =
   var is_code = false
   for c in text:
     if c == '`':
-      if not is_code: result.add SPAN_WORD
+      if not is_code: result.add WORD_SPAN
       is_code = not is_code
     elif not is_code: result.add c
 
@@ -207,8 +207,8 @@ func sentences(text: string): seq[string] =
 func opening(sentence: string): string =
   ## Quote back first words of sentence, with ellipsis where more follow.
   let words = sentence.splitWhitespace
-  if words.len <= ECHO_WORDS: return sentence
-  words[0 ..< ECHO_WORDS].join(" ") & " ..."
+  if words.len <= WORDS_ECHO: return sentence
+  words[0 ..< WORDS_ECHO].join(" ") & " ..."
 
 
 func tokenised(text: string): string =
@@ -230,36 +230,36 @@ func isGoverned*(path: string): bool =
   ##   Three arms beyond data above: README of project root, README of registered domain,
   ##     and record sitting directly in project directory. Each derives from layout, so
   ##     nothing has to be added by hand when project or domain arrives.
-  if path in ENGLISH_PATHS: return true
+  if path in PATHS_ENGLISH: return true
   let parts = path.split('/')
-  if parts[^1] == README_FILE:
+  if parts[^1] == FILE_README:
     if parts.len == 2 and parts[0] in ROOTS: return true
     if parts.len == 3 and parts[0] == CONTRIBUTOR and parts[1].findDomain.isSome: return true
-  let directory = parts.projectDirectory
+  let directory = parts.directoryProject
   if directory.len == 0: return false
-  for file in PROJECT_FILES:
+  for file in FILES_PROJECT:
     if path == directory & "/" & file: return true
   false
 
 
-func englishFindings*(path, source: string): seq[Finding] =
+func findingsEnglish*(path, source: string): seq[Finding] =
   ## Report long sentence, long paragraph and word outside approved dictionary, whatever path.
   ##   Governed files reach it through `checkEnglish`; hook reaches it with body of post.
   for b in source.blocks:
     let found = b.text.sentences
-    if found.len > PARAGRAPH_SENTENCES:
+    if found.len > SENTENCES_PARAGRAPH:
       result.add finding(
         path,
         b.line,
-        "Paragraph must hold at most " & $PARAGRAPH_SENTENCES &
+        "Paragraph must hold at most " & $SENTENCES_PARAGRAPH &
           " sentences; split it (ASD-STE100); got `" & $found.len & "`.",
       )
     for s in found:
-      if s.splitWhitespace.len > SENTENCE_WORDS:
+      if s.splitWhitespace.len > WORDS_SENTENCE:
         result.add finding(
           path,
           b.line,
-          "Sentence must hold at most " & $SENTENCE_WORDS &
+          "Sentence must hold at most " & $WORDS_SENTENCE &
             " words; split it (ASD-STE100); got `" & s.opening & "`.",
         )
     let plain = b.text.tokenised
@@ -275,4 +275,4 @@ func englishFindings*(path, source: string): seq[Finding] =
 
 func checkEnglish*(path, source: string): seq[Finding] =
   ## Report English findings of governed document; other paths pass unread.
-  if path.isGoverned: englishFindings(path, source) else: @[]
+  if path.isGoverned: findingsEnglish(path, source) else: @[]

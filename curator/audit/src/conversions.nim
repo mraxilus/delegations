@@ -40,22 +40,22 @@ type
 
 
 const
-  BUILTIN_TYPES = [
+  TYPES_BUILTIN = [
     "bool", "byte", "cchar", "cdouble", "cfloat", "char", "cint", "clong", "clonglong",
     "cshort", "csize_t", "cstring", "cuint", "culong", "float", "float32", "float64", "int",
     "int16", "int32", "int64", "int8", "Natural", "Positive", "string", "uint", "uint16",
     "uint32", "uint64", "uint8",
   ]
     ## Lowercase types `system` declares; capitalised name is candidate on its case alone.
-  TYPE_KINDS = ["skType", "skGenericParam"]  ## Symbol kinds conversion name resolves to.
-  VALUE_KINDS = [
+  KINDS_TYPE = ["skType", "skGenericParam"]  ## Symbol kinds conversion name resolves to.
+  KINDS_VALUE = [
     "skConst", "skConverter", "skEnumField", "skField", "skForVar", "skFunc", "skIterator",
     "skLet", "skMacro", "skMethod", "skParam", "skProc", "skResult", "skTemplate", "skVar",
   ]
     ## Symbol kinds receiver's last name resolves to where it is value, or call yielding one.
 
 
-func importedNames(
+func namesImported(
   tokens: openArray[Token], partners: openArray[int], source: string
 ): HashSet[string] =
   ## Collect names standing in `import`, `include`, `from` and `export` statements: modules
@@ -96,7 +96,7 @@ func candidates(source: string): seq[Candidate] =
     tokens = source.tokens
     partners = tokens.partners
     skipped = tokens.tokensPath(partners, source)
-    modules = importedNames(tokens, partners, source)
+    modules = namesImported(tokens, partners, source)
   for k in 1 ..< tokens.len - 1:
     let t = tokens[k]
     if t.kind != KindToken.Operator or t.spelling(source) != "." or k in skipped: continue
@@ -104,7 +104,7 @@ func candidates(source: string): seq[Candidate] =
     if tokens[k - 1].after != t.first or name.first != t.after: continue
     if name.kind != KindToken.Word or name.isKeyword(source): continue
     let text = name.spelling(source)
-    if text notin BUILTIN_TYPES and text[0] notin {'A' .. 'Z'}: continue
+    if text notin TYPES_BUILTIN and text[0] notin {'A' .. 'Z'}: continue
     if k + 2 < tokens.len and tokens[k + 2].first == name.after and
         tokens[k + 2].kind == KindToken.Open:
       continue
@@ -118,7 +118,7 @@ func candidates(source: string): seq[Candidate] =
     result.add Candidate(first: first, last: k - 1, dot: k, name: k + 1)
 
 
-func conversionQuery*(path, source: string): Query =
+func queryConversion*(path, source: string): Query =
   ## Build what conversion check asks semantic pass of file: each candidate's type name, and
   ##   receiver's last name where it ends on one.
   result.path = path
@@ -162,8 +162,8 @@ func conversions(source: string, answer: Answer): seq[Conversion] =
 
   var converted: seq[int]  # Name token of each conversion so far; its call is value too.
   for c in source.candidates.sortedByIt(it.name):
-    if kindAt(c.name) notin TYPE_KINDS: continue
-    if tokens[c.last].kind == KindToken.Word and kindAt(c.last) notin VALUE_KINDS and
+    if kindAt(c.name) notin KINDS_TYPE: continue
+    if tokens[c.last].kind == KindToken.Word and kindAt(c.last) notin KINDS_VALUE and
         c.last notin converted:
       continue
     converted.add c.name

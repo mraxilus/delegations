@@ -19,14 +19,14 @@ suite "Dependencies":
 
 
   test "lock names its checkout directories, deps placeholder resolved":
-    check LOCK_TEXT.lockDirectories == @["deps/replications.example.invalid"]  # one item
-    check lockDirectories("{}").len == 0  # no items table
-    check lockDirectories("{\"items\": {}}").len == 0  # empty items
-    check LOCK_TEXT.lockDirectories("dependencies") ==
+    check TEXT_LOCK.directoriesLock == @["deps/replications.example.invalid"]  # one item
+    check directoriesLock("{}").len == 0  # no items table
+    check directoriesLock("{\"items\": {}}").len == 0  # empty items
+    check TEXT_LOCK.directoriesLock("dependencies") ==
       @["dependencies/replications.example.invalid"]
-    check depsDirectoryOf("{\"deps\": \"dependencies\"}") == "dependencies"  # V.9 name
-    check depsDirectoryOf("{\"deps\": \"\"}") == "deps"  # empty name takes default
-    check depsDirectoryOf("{}") == "deps"  # no key takes default
+    check directoryDepsOf("{\"deps\": \"dependencies\"}") == "dependencies"  # V.9 name
+    check directoryDepsOf("{\"deps\": \"\"}") == "deps"  # empty name takes default
+    check directoryDepsOf("{}") == "deps"  # no key takes default
 
 
   test "checkout absent after restore is finding":
@@ -35,7 +35,7 @@ suite "Dependencies":
     #   ships, is unmeasured.
     let root = createTempDir("delegations_", "_lock")
     defer: removeDir(root)
-    root.writeInto("curator/probe/atlas.lock", LOCK_TEXT)
+    root.writeInto("curator/probe/atlas.lock", TEXT_LOCK)
     check checkCheckouts(root, "curator/probe").len == 1  # directory absent
     createDir(root / "curator/probe/deps/replications.example.invalid")
     check checkCheckouts(root, "curator/probe").len == 0  # directory present
@@ -58,7 +58,7 @@ suite "Dependencies":
 
   test "lock stores copy of nimble, read back whole":
     check lockNimble(lockWith(TEXT_NIMBLE)) == some(TEXT_NIMBLE)  # round trip
-    check lockNimble(LOCK_TEXT).isNone  # lock storing no copy names none
+    check lockNimble(TEXT_LOCK).isNone  # lock storing no copy names none
 
 
   test "stored nimble differing from committed one is finding, naming line about to be lost":
@@ -67,7 +67,7 @@ suite "Dependencies":
     #   contributor never touched.
     let
       stale = TEXT_NIMBLE.replace("nim == " & PIN, "nim >= " & PIN)
-      found = checkLockNimble("p/p.nimble", "p/atlas.lock", lockWith(stale), TEXT_NIMBLE)
+      found = checkNimbleLock("p/p.nimble", "p/atlas.lock", lockWith(stale), TEXT_NIMBLE)
     check found.len == 1
     check found[0].path == "p/p.nimble"  # file about to be overwritten, never lock
     check found[0].line == 6  # `requires` line of fixture
@@ -75,15 +75,15 @@ suite "Dependencies":
 
 
   test "stored nimble matching committed one is clean, and absent copy compares nothing":
-    let (nimble_path, lock_path) = ("p/p.nimble", "p/atlas.lock")
-    check checkLockNimble(nimble_path, lock_path, lockWith(TEXT_NIMBLE), TEXT_NIMBLE).len == 0
-    check checkLockNimble(nimble_path, lock_path, LOCK_TEXT, TEXT_NIMBLE).len == 0  # cost
+    let (path_nimble, path_lock) = ("p/p.nimble", "p/atlas.lock")
+    check checkNimbleLock(path_nimble, path_lock, lockWith(TEXT_NIMBLE), TEXT_NIMBLE).len == 0
+    check checkNimbleLock(path_nimble, path_lock, TEXT_LOCK, TEXT_NIMBLE).len == 0  # cost
     # Drift beyond pin is caught too, since lock stores whole file.
     let extra = TEXT_NIMBLE & "requires \"malebolgia\"\n"
-    check checkLockNimble(nimble_path, lock_path, lockWith(TEXT_NIMBLE), extra).len == 1
+    check checkNimbleLock(path_nimble, path_lock, lockWith(TEXT_NIMBLE), extra).len == 1
 
 
   test "unreadable lock is finding in static pass, not only at restore":
-    let found = checkLockNimble("p/p.nimble", "p/atlas.lock", "not json at all", TEXT_NIMBLE)
+    let found = checkNimbleLock("p/p.nimble", "p/atlas.lock", "not json at all", TEXT_NIMBLE)
     check found.len == 1
     check found[0].path == "p/atlas.lock"  # fault is lock's, so finding points there

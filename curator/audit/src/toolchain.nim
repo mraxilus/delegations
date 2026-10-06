@@ -38,13 +38,13 @@ import ./findings
 
 
 const
-  DRIVER_DIRECTORY* = "curator/audit"
+  DIRECTORY_DRIVER* = "curator/audit"
     ## Project whose pin is driver version, since koch compiles its modules.
-  KNOLLER_DIRECTORY* = "curator/knoller"
+  DIRECTORY_KNOLLER* = "curator/knoller"
     ## Project driver imports by path, so koch compiles it and it pins driver version.
-  WORKFLOW_PATH* = ".github/workflows/check.yml"
+  PATH_WORKFLOW* = ".github/workflows/check.yml"
     ## Driver's own workflow, which must name driver version; others must agree where they do.
-  VERSION_KEY* = "NIM_VERSION:"  ## Key workflow states driver version under.
+  KEY_VERSION* = "NIM_VERSION:"  ## Key workflow states driver version under.
 
 
 func checkPin*(path, nimble: string): seq[Finding] =
@@ -63,12 +63,12 @@ func checkPin*(path, nimble: string): seq[Finding] =
     )
 
 
-func workflowVersion*(workflow: string): Option[string] =
+func versionWorkflow*(workflow: string): Option[string] =
   ## Read driver version workflow states, quotes stripped; `none` when key is absent.
   for line in workflow.splitLines:
     let s = line.strip
-    if not s.startsWith(VERSION_KEY): continue
-    let value = s[VERSION_KEY.len .. ^1].strip.strip(chars = {'\'', '"'})
+    if not s.startsWith(KEY_VERSION): continue
+    let value = s[KEY_VERSION.len .. ^1].strip.strip(chars = {'\'', '"'})
     return if value.isVersion: some(value) else: none(string)
   none(string)
 
@@ -80,25 +80,25 @@ func checkDriver*(path, workflow, pin: string): seq[Finding] =
   ##   Pin itself and absent key are named against driver's own workflow alone, however many
   ##   state version: both are one fault, and reporting it per file would multiply it.
   if pin.isCommit:
-    if path != WORKFLOW_PATH: return
+    if path != PATH_WORKFLOW: return
     return @[finding(
-      DRIVER_DIRECTORY & "/" & DRIVER_DIRECTORY.split('/')[^1] & ".nimble", 0,
+      DIRECTORY_DRIVER & "/" & DIRECTORY_DRIVER.split('/')[^1] & ".nimble", 0,
       "Driver project pins version, never commit: setup action installs releases only, and " &
         "every job waits on it; got `" & pin & "`.",
     )]
-  let stated = workflow.workflowVersion
+  let stated = workflow.versionWorkflow
   if stated.isNone:
-    if path != WORKFLOW_PATH: return
+    if path != PATH_WORKFLOW: return
     result.add finding(
       path,
       0,
-      "Workflow must state driver version as `" & VERSION_KEY & " '<version>'`; got nothing.",
+      "Workflow must state driver version as `" & KEY_VERSION & " '<version>'`; got nothing.",
     )
   elif stated.get != pin:
     result.add finding(
       path,
       0,
-      "Driver version must equal `" & DRIVER_DIRECTORY & "` pin `" & pin & "`; got `" & stated.get &
+      "Driver version must equal `" & DIRECTORY_DRIVER & "` pin `" & pin & "`; got `" & stated.get &
         "`.",
     )
 

@@ -149,11 +149,11 @@ func charactersIn(text: string, has_references: bool): seq[(int, string)] =
     inc i
 
 
-func isPageSource(path, directory: string): bool =
+func isSourcePage(path, directory: string): bool =
   ## Decide whether file of project may reach page: anything outside `tests/`, records aside.
   if not path.startsWith(directory & "/"): return false
   let inside = path[directory.len + 1 .. ^1]
-  not inside.startsWith(TESTS_DIRECTORY & "/") and inside.extractFilename notin PROJECT_FILES
+  not inside.startsWith(DIRECTORY_TESTS & "/") and inside.extractFilename notin FILES_PROJECT
 
 
 func charactersOutside(e: Entry): seq[Character] =
@@ -178,14 +178,14 @@ func charactersOutside(e: Entry): seq[Character] =
 func charactersOf*(tree: Tree, directory: string): seq[Character] =
   ## Read each character beyond ASCII that page sources of project use, comments set aside.
   for e in tree:
-    if e.kind.isSome and e.path.isPageSource(directory): result.add e.charactersOutside
+    if e.kind.isSome and e.path.isSourcePage(directory): result.add e.charactersOutside
 
 
 func facesOf*(tree: Tree, directory: string): seq[string] =
   ## Read store faces that page sources of project name by file, in store order.
   for (file, _) in FACES:
     for e in tree:
-      if e.kind.isSome and e.path.isPageSource(directory) and file in e.content:
+      if e.kind.isSome and e.path.isSourcePage(directory) and file in e.content:
         result.add file
         break
 
@@ -213,7 +213,7 @@ func checkCoverage*(tree: Tree, directory: string): seq[Finding] =
     is_held: Table[int, bool]  # Codepoint decided once, since project spells few many times.
     reported: HashSet[(string, int, int)]
   for e in tree:
-    if e.kind.isNone or not e.path.isPageSource(directory): continue
+    if e.kind.isNone or not e.path.isSourcePage(directory): continue
 
     # Decide every character of source, comments included; nothing uncovered ends it here.
     var is_covered = true

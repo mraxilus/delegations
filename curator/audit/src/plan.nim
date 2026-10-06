@@ -5,7 +5,7 @@
 ##   retired there leaves no stale copy behind.
 ##
 ##   Project enters test set when changed path under it is code, i.e. anything but its three
-##     records, `PROJECT_FILES`: rules propagation rewrites provenance and glossary in every
+##     records, `FILES_PROJECT`: rules propagation rewrites provenance and glossary in every
 ##     project and changes no behaviour, so it compiles nothing while static pass still
 ##     verifies every stamp; README describes project and runs nothing, by same reasoning.
 ##   Change to `koch.nim` or `koch.nim.cfg` selects driver's project, whose suites read them;
@@ -33,14 +33,14 @@ import ./[checker, compilers, dependencies, findings, layout, projects, toolchai
 
 
 const
-  CHECKER_FILES* = ["koch.nim", "koch.nim.cfg"]  ## Root files driving every project's checks.
-  RECENT_DAYS* = 7
+  FILES_CHECKER* = ["koch.nim", "koch.nim.cfg"]  ## Root files driving every project's checks.
+  DAYS_RECENT* = 7
     ## Window `--recent` looks back over, matching weekly cron in `check.yml`. Both are named
     ## once; changing one means changing other, which CURATOR.md duty 9 says.
-  CHECKER_DIRECTORY* = DRIVER_DIRECTORY & "/src"
+  DIRECTORY_CHECKER* = DIRECTORY_DRIVER & "/src"
     ## Check sources driving every project; same folder as driver project, by coincidence
     ## of koch compiling exactly what it drives.
-  KNOLLER_FILES* = [KNOLLER_DIRECTORY & "/src", KNOLLER_DIRECTORY & "/knoller.nimble"]
+  FILES_KNOLLER* = [DIRECTORY_KNOLLER & "/src", DIRECTORY_KNOLLER & "/knoller.nimble"]
     ## Sources and nimble file of package driver imports by path; folder covers what it holds.
 
 
@@ -56,21 +56,21 @@ func kind*(job: Job): string =
 
 func isKnoller(path: string): bool =
   ## Decide whether path is source or nimble file of knoller, which driver imports by path.
-  KNOLLER_FILES.anyIt(path == it or path.startsWith(it & "/"))
+  FILES_KNOLLER.anyIt(path == it or path.startsWith(it & "/"))
 
 
 func isChecker*(path: string): bool =
   ## Decide whether path drives how every project is checked: root files, check sources, and
   ##   knoller, which check sources import.
-  path in CHECKER_FILES or path.startsWith(CHECKER_DIRECTORY & "/") or path.isKnoller
+  path in FILES_CHECKER or path.startsWith(DIRECTORY_CHECKER & "/") or path.isKnoller
 
 
 func isCode(directory, path: string): bool =
   ## Decide whether changed path is code of project, i.e. inside it and not its record.
-  ##   Records are `PROJECT_FILES`, same three `layout.nim` demands: README, provenance and
+  ##   Records are `FILES_PROJECT`, same three `layout.nim` demands: README, provenance and
   ##   glossary describe project and run nothing, so changing one compiles nothing.
   if not path.startsWith(directory & "/"): return false
-  path[directory.len + 1 .. ^1] notin PROJECT_FILES
+  path[directory.len + 1 .. ^1] notin FILES_PROJECT
 
 
 func testSet*(directories, paths: openArray[string]): seq[string] =
@@ -78,8 +78,8 @@ func testSet*(directories, paths: openArray[string]): seq[string] =
   ##   driver's project when driver's root files or knoller did, since its suites read them.
   for directory in directories:
     for path in paths:
-      let is_driving = path in CHECKER_FILES or path.isKnoller
-      if isCode(directory, path) or (directory == DRIVER_DIRECTORY and is_driving):
+      let is_driving = path in FILES_CHECKER or path.isKnoller
+      if isCode(directory, path) or (directory == DIRECTORY_DRIVER and is_driving):
         result.add directory
         break
   result.sort
@@ -92,53 +92,53 @@ func isHolding(tree: Tree; directory, name: string): bool =
     if e.path == path: return true
 
 
-func nodeDirectories*(tree: Tree, directories: openArray[string]): seq[string] =
+func directoriesNode*(tree: Tree, directories: openArray[string]): seq[string] =
   ## Select projects type-checker reaches, i.e. those carrying node manifest and its lock.
   ##   Derived from tree rather than listed anywhere: project gains type check by carrying
   ##   manifest, and `check.yml` names no project, as it names none for compiler matrix.
   ##   Lock is demanded beside manifest, since `npm ci` needs one and unpinned tools would
   ##   be only thing here nothing pins.
   for directory in directories:
-    if tree.isHolding(directory, NODE_MANIFEST) and tree.isHolding(directory, NODE_LOCK):
+    if tree.isHolding(directory, MANIFEST_NODE) and tree.isHolding(directory, LOCK_NODE):
       result.add directory
 
 
 func driverOf(tree: Tree, directory: string): string =
   ## Read project's build driver from tree; empty when project carries none.
-  let path = directory & "/" & DRIVER_FILE
+  let path = directory & "/" & FILE_DRIVER
   for e in tree:
     if e.path == path: return e.content
   ""
 
 
-func verbDirectories*(tree: Tree, directories: openArray[string], verb: string): seq[string] =
+func directoriesVerb*(tree: Tree, directories: openArray[string], verb: string): seq[string] =
   ## Select projects whose build driver dispatches that verb.
-  ##   Derived from driver rather than listed anywhere, same reasoning as `nodeDirectories`: project
+  ##   Derived from driver rather than listed anywhere, same reasoning as `directoriesNode`: project
   ##   gains driven checks by carrying verb, and `check.yml` names no project. Driver is read
   ##   by same parser `checker.nim` reads koch's own dispatch with, since both hold one shape.
   for directory in directories:
-    if verb in tree.driverOf(directory).dispatchVerbs(DRIVER_CASE): result.add directory
+    if verb in tree.driverOf(directory).verbsDispatch(CASE_DRIVER): result.add directory
 
 
-proc systemPackages*(root: string, tree: Tree, directories: openArray[string]): seq[string] =
+proc packagesSystem*(root: string, tree: Tree, directories: openArray[string]): seq[string] =
   ## Read system packages every selected project declares, sorted.
   ##   Sorted so output is stable between runs: caller pipes it into installer, and list
   ##   reordering itself would read as change where nothing changed.
   var targets: seq[Target]
-  for directory in tree.verbDirectories(directories, SYSTEM_VERB):
+  for directory in tree.directoriesVerb(directories, VERB_SYSTEM):
     targets.add Target(directory: directory)
   systemOf(root, targets).sorted
 
 
-proc repositorySystem*(root: string, tree: Tree, directories: openArray[string]): seq[string] =
+proc systemRepository*(root: string, tree: Tree, directories: openArray[string]): seq[string] =
   ## Read what whole machine needs: koch's own packages, plus every named project's, sorted.
   ##   Answer to "what must be installed before any of this runs" is one command rather than
   ##   prose somewhere, which is what rule koch enforces asks of every project, koch included.
   ##   koch's own are unconditional; project's arrive by that project declaring them, so caller
-  ##   naming one project gets that project's alone and is served by `systemPackages`.
+  ##   naming one project gets that project's alone and is served by `packagesSystem`.
   var names: seq[string]
-  for (package, _) in KOCH_SYSTEM: names.add package
-  for package in systemPackages(root, tree, directories):
+  for (package, _) in SYSTEM_KOCH: names.add package
+  for package in packagesSystem(root, tree, directories):
     if package notin names: names.add package
   names.sorted
 
@@ -154,7 +154,7 @@ proc typeJobs*(root: string, tree: Tree, directories: openArray[string]): seq[Fi
   ##   Restore failing short-circuits, since type check without installed tools fails again
   ##   for second reason and reports neither clearly.
   var targets: seq[Target]
-  for directory in tree.nodeDirectories(directories): targets.add Target(directory: directory)
+  for directory in tree.directoriesNode(directories): targets.add Target(directory: directory)
   if targets.len == 0: return
   for target in targets: result.add restoreNode(root, target)
   if result.len > 0: return
@@ -163,7 +163,7 @@ proc typeJobs*(root: string, tree: Tree, directories: openArray[string]): seq[Fi
 
 func nimbleOf(tree: Tree, directory: string): string =
   ## Read project's nimble text from tree; empty when file is absent.
-  let path = directory.nimblePath
+  let path = directory.pathNimble
   for e in tree:
     if e.path == path: return e.content
   ""
@@ -184,12 +184,12 @@ func jobsFor*(tree: Tree, directories: openArray[string]): seq[Job] =
 
 func jobs*(tree: Tree, paths: openArray[string]): seq[Job] =
   ## Build jobs for projects one change asks to compile.
-  tree.jobsFor(testSet(tree.projectDirectories, paths))
+  tree.jobsFor(testSet(tree.directoriesProject, paths))
 
 
-func allJobs*(tree: Tree): seq[Job] =
+func jobsAll*(tree: Tree): seq[Job] =
   ## Build jobs for every project, for `--all` rather than for one change.
-  tree.jobsFor(tree.projectDirectories)
+  tree.jobsFor(tree.directoriesProject)
 
 
 proc recentFor*(root: string, tree: Tree, days: int): seq[Job] =
@@ -198,8 +198,8 @@ proc recentFor*(root: string, tree: Tree, days: int): seq[Job] =
   ##   so week nobody merged code has nothing to find, and week somebody did has that project
   ##   to compile. Record-only merge counts as nothing, by same rule scoped runs use.
   let base = revBefore(root, days)
-  if base.len == 0: return tree.allJobs
-  tree.jobs(changedPaths(root, base))
+  if base.len == 0: return tree.jobsAll
+  tree.jobs(pathsChanged(root, base))
 
 
 proc render*(jobs: openArray[Job]): string =
@@ -247,14 +247,14 @@ func carryingOnly*(tree: Tree, jobs: openArray[Job], verb: string): seq[Job] =
   ##   own, so verb's set inherits scoping, `--all` and `--recent` without restating any of it.
   var directories: seq[string]
   for job in jobs: directories.add job.directory
-  let carrying = tree.verbDirectories(directories, verb)
+  let carrying = tree.directoriesVerb(directories, verb)
   for job in jobs:
     if job.directory in carrying: result.add job
 
 
 func drivenOnly*(tree: Tree, jobs: openArray[Job]): seq[Job] =
   ## Keep planned jobs of projects carrying driven checks.
-  tree.carryingOnly(jobs, DRIVEN_VERB)
+  tree.carryingOnly(jobs, VERB_DRIVEN)
 
 
 proc drivenJobs*(root: string, tree: Tree, jobs: openArray[Job]): seq[Finding] =
@@ -272,19 +272,19 @@ proc drivenJobs*(root: string, tree: Tree, jobs: openArray[Job]): seq[Finding] =
   result = found
   result.add restoreAll(root, targets)
   for target in targets:
-    if tree.nodeDirectories([target.directory]).len > 0: result.add restoreNode(root, target)
+    if tree.directoriesNode([target.directory]).len > 0: result.add restoreNode(root, target)
   if result.len > 0: return
   result.add runDriven(root, targets)
 
 
-proc headJobs*(root: string, tree: Tree, jobs: openArray[Job]): seq[Finding] =
+proc jobsHead*(root: string, tree: Tree, jobs: openArray[Job]): seq[Finding] =
   ## Restore and run `head` of each planned project carrying it, on its own pin.
   ##   Pin is resolved as `drivenJobs` resolves it, since verb compiles project code; restore
   ##   failing short-circuits for reason it does there. No node restore: verb reads reference,
   ##   and builds no page.
   ##   `check` and `ciJobs` never call this. Verdict varies with reference rather than with
   ##   code, so only `head.yml` runs it, daily, off every path merge waits on.
-  let held = tree.carryingOnly(jobs, HEAD_VERB)
+  let held = tree.carryingOnly(jobs, VERB_HEAD)
   if held.len == 0: return
   let (targets, found) = held.targetsFor
   result = found
@@ -311,6 +311,6 @@ proc ciJobs*(root: string, tree: Tree, jobs: openArray[Job]): seq[Finding] =
   if driven.len == 0 or found.len > 0 or restored.len > 0: return
   var node_found: seq[Finding]
   for target in driven:
-    if tree.nodeDirectories([target.directory]).len > 0: node_found.add restoreNode(root, target)
+    if tree.directoriesNode([target.directory]).len > 0: node_found.add restoreNode(root, target)
   result.add node_found
   if node_found.len == 0: result.add runDriven(root, driven)

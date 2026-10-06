@@ -3,7 +3,7 @@
 ##     states: no section is headed by date, `## Open questions` is last section, no heading
 ##     appears twice, and headings are ATX, since every reader here sees `#` lines only and
 ##     underlined title is invisible to all of them.
-##   Length: record over `RECORD_LINES`, or `##` section over `SECTION_LINES`, is finding
+##   Length: record over `LINES_RECORD`, or `##` section over `LINES_SECTION`, is finding
 ##     asking for prune to log (curator review, C8). Section catches narration that whole-file
 ##     ceiling misses, since one long section hides inside short record. Header may carry
 ##     `Pruned` row naming commit before last prune; its form is checked here and its existence
@@ -24,7 +24,7 @@ import ./[findings, markdown, provenance]
 
 
 const
-  SECTION_LINES* = 200
+  LINES_SECTION* = 200
     ## Lines one `##` section may hold before prune to log is asked.
     ##   Record's own ceiling is crude: it punishes wide project and lets narrow one narrate
     ##     freely. Measured over 93 sections of five records, median is 34 lines and p90 is
@@ -32,9 +32,9 @@ const
     ##     collects, so section is where it is caught.
     ##   200 rather than 150: measured then, 150 flagged three sections of three projects and
     ##     200 flagged one, and both flagged same narration.
-  RECORD_LINES* = 5000
+  LINES_RECORD* = 5000
     ## Lines record may hold before prune to log is asked.
-    ##   `SECTION_LINES` is instrument that reads narration. This is only backstop, and
+    ##   `LINES_SECTION` is instrument that reads narration. This is only backstop, and
     ##     backstop that fires on ordinary work reports growth rather than narration.
     ##   5,000 is Architect's choice. At 3,000, largest record (`rga_visualiser`) stood exactly
     ##     at ceiling, so every addition there had to prune first; 5,000 leaves it two fifths
@@ -51,7 +51,7 @@ const
 func isDated*(s: string): bool =
   ## Decide whether `s` holds `YYYY-MM-DD` anywhere, digits bounded by non-digits.
   for i in 0 .. s.len - 10:
-    if s[i ..< i + 10].isIsoDate and (i == 0 or s[i - 1] notin Digits) and
+    if s[i ..< i + 10].isDateIso and (i == 0 or s[i - 1] notin Digits) and
         (i + 10 == s.len or s[i + 10] notin Digits):
       return true
   false
@@ -63,7 +63,7 @@ func isUnderline(line: string): bool =
   s.len > 0 and (s.allCharsInSet({'='}) or s.allCharsInSet({'-'}))
 
 
-func headingText(line: string): string =
+func textHeading(line: string): string =
   ## Read heading's text without its marks.
   line.strip(chars = {'#', ' '})
 
@@ -76,7 +76,7 @@ func checkHeadings(path, source: string): seq[Finding] =
     open_at, last_at = 0
   for i, line in lines:
     if line.startsWith("#"):
-      let text = line.headingText
+      let text = line.textHeading
       if line.isDated:
         result.add finding(
           path,
@@ -108,19 +108,19 @@ func checkHeadings(path, source: string): seq[Finding] =
 
 
 func checkLength(path, source: string): seq[Finding] =
-  ## Report record over `RECORD_LINES`, lines counted as `wc -l` counts them.
+  ## Report record over `LINES_RECORD`, lines counted as `wc -l` counts them.
   let count = source.count('\n') + (if source.len > 0 and source[^1] != '\n': 1 else: 0)
-  if count > RECORD_LINES:
+  if count > LINES_RECORD:
     result.add finding(
       path,
       0,
-      "Record over " & $RECORD_LINES & " lines; prune to log and set `" & PRUNED &
+      "Record over " & $LINES_RECORD & " lines; prune to log and set `" & PRUNED &
         "` row (provenance guide); got `" & $count & "`.",
     )
 
 
 func checkSections*(path, source: string): seq[Finding] =
-  ## Report `##` section over `SECTION_LINES`, since narration collects inside one section.
+  ## Report `##` section over `LINES_SECTION`, since narration collects inside one section.
   let lines = source.fencedOut.splitLines
   # Final newline leaves empty last element; counting it would charge last section one line.
   let body = if lines.len > 0 and lines[^1].len == 0: lines.len - 1 else: lines.len
@@ -131,30 +131,30 @@ func checkSections*(path, source: string): seq[Finding] =
     let
       stop = if k + 1 < opened.len: opened[k + 1] else: body
       count = stop - start - 1
-    if count > SECTION_LINES:
+    if count > LINES_SECTION:
       result.add finding(
         path,
         start + 1,
-        "Section over " & $SECTION_LINES & " lines; prune to log or split it (provenance " &
+        "Section over " & $LINES_SECTION & " lines; prune to log or split it (provenance " &
           "guide); got `" & $count & "`.",
       )
 
 
-func isCommitId*(s: string): bool =
+func isIdCommit*(s: string): bool =
   ## Decide whether `s` is 7 to 40 lowercase hex digits, as git abbreviates commits.
   s.len in 7 .. 40 and s.allCharsInSet({'0' .. '9', 'a' .. 'f'})
 
 
 func prunedOf*(source: string): string =
   ## Read `Pruned` row's value; empty when row is absent.
-  let fields = source.headerFields
+  let fields = source.fieldsHeader
   if PRUNED in fields: fields[PRUNED] else: ""
 
 
-func checkPrunedRow(path, source: string): seq[Finding] =
+func checkRowPruned(path, source: string): seq[Finding] =
   ## Report `Pruned` row whose value is not commit id.
   let value = source.prunedOf
-  if value.len > 0 and not value.isCommitId:
+  if value.len > 0 and not value.isIdCommit:
     result.add finding(
       path,
       0,
@@ -190,4 +190,4 @@ func checkRecord*(path, source: string): seq[Finding] =
   result.add checkCounts(path, source)
   result.add checkLength(path, source)
   result.add checkSections(path, source)
-  result.add checkPrunedRow(path, source)
+  result.add checkRowPruned(path, source)

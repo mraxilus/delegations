@@ -51,7 +51,7 @@ proc readTree*(root: string): Tree =
     result.add Entry(path: path, kind: kind, content: content)
 
 
-proc changedPaths*(root, base: string): seq[string] =
+proc pathsChanged*(root, base: string): seq[string] =
   ## List paths differing between merge base of `base` and HEAD; renames show as two paths.
   gitFields(root, ["diff", "-z", "--name-only", "--no-renames", base & "...HEAD"])
 
@@ -63,7 +63,7 @@ proc revBefore*(root: string, days: int): string =
   if fields.len == 0: "" else: fields[0].strip
 
 
-proc movedPaths*(root, base: string): seq[string] =
+proc pathsMoved*(root, base: string): seq[string] =
   ## List paths on both sides of content-preserving rename, i.e. file moved and not edited.
   ##   `--name-status -M100%` reports `R100`, old path, new path; only exact renames count,
   ##   so edited file is never mistaken for moved one.
@@ -81,9 +81,9 @@ proc movedPaths*(root, base: string): seq[string] =
       i += 2
 
 
-proc gainedPaths*(root, base: string): seq[string] =
+proc pathsGained*(root, base: string): seq[string] =
   ## List paths base holds that branch does not, i.e. what base gained since branch forked.
-  ##   Mirror of `changedPaths`: same three-dot range, other way round.
+  ##   Mirror of `pathsChanged`: same three-dot range, other way round.
   gitFields(root, ["diff", "-z", "--name-only", "--no-renames", "HEAD..." & base])
 
 
@@ -92,7 +92,7 @@ proc subjects*(root, base: string): seq[string] =
   gitFields(root, ["log", "-z", "--format=%s", "--no-merges", base & "..HEAD"])
 
 
-proc branchCommits*(root, base: string): seq[Commit] =
+proc commitsBranch*(root, base: string): seq[Commit] =
   ## Read commits reachable from HEAD but not `base`, newest first, merges excluded.
   ##   Paths come from `diff-tree` of each commit, so rename reads as both of its paths.
   for hash in gitFields(root, ["log", "-z", "--format=%H", "--no-merges", base & "..HEAD"]):

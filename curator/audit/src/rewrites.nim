@@ -68,7 +68,7 @@ type
 
 
 const
-  RESULT_NAME = "result"  ## Name compiler declares in each routine returning value.
+  NAME_RESULT = "result"  ## Name compiler declares in each routine returning value.
   KIND_MEMBER = "skEnumField"  ## Kind of enum member, which bare name reaches unless enum is pure.
   INTERPOLATORS = ["&", "fmt"]  ## Prefixes of string strformat interpolates (`&"…{x}…"`).
 
@@ -86,7 +86,7 @@ func isIdentical(a, b: Symbol): bool =
   a.file == b.file and a.line == b.line and a.column == b.column
 
 
-func interpolatedLines(source, name: string): seq[int] =
+func linesInterpolated(source, name: string): seq[int] =
   ## Read zero-based line of each interpolated string naming `name` inside its braces, i.e.
   ##   `&"…{x}…"` or `fmt"…{x}…"`: strformat parses it from text, so no name token stands there.
   let tokens = source.tokens
@@ -188,7 +188,7 @@ func planRename*(
 
   result.rename = rename
   if rename.renamed.isKeyword: refuse "`" & rename.renamed & "` is keyword"
-  if rename.renamed.identity == RESULT_NAME.identity:
+  if rename.renamed.identity == NAME_RESULT.identity:
     refuse "`" & rename.renamed & "` names implicit result of routine"
   if rename.path notin answers or answers[rename.path].reason.len > 0:
     refuse "declaring file does not compile on its pin"
@@ -209,7 +209,7 @@ func planRename*(
 
   # Classify each site of old name; any site unresolved refuses rename whole.
   for (path, source) in files:
-    let interpolated = source.interpolatedLines(rename.name)
+    let interpolated = source.linesInterpolated(rename.name)
     if interpolated.len > 0:
       refuse "`" & path & ":" & $(interpolated[0] + 1) & "` names `" & rename.name &
         "` inside interpolated string"

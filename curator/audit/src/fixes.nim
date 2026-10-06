@@ -3,7 +3,7 @@
 ##     one chain until source settles (`formatted`); this module selects files, applies fixers
 ##     that need more than one file's text, hands rest to knoller, and refuses any write outside
 ##     scope.
-##   Fix writes kind whose language has style guide alone (`KindRule.has_guide`): fixer
+##   Fix writes kind whose language has style guide alone (`RuleKind.has_guide`): fixer
 ##     applies guide, and STYLE.md is guide of Nim alone, so Nim, NimScript and nimble are
 ##     written and every other kind passes through. Checks read every kind still; finding in
 ##     Markdown, TypeScript, YAML or shell stays for hand. Each kind of Nim is dialect of
@@ -112,7 +112,7 @@ func entriesNamed*(
       result.unknown.add finding(path, 0, "Name matches no file git lists; got `" & name & "`.")
 
 
-func isNimKind(e: Entry): bool =
+func isKindNim(e: Entry): bool =
   ## Decide whether entry is of kind fix writes: Nim, NimScript or nimble.
   e.kind.isSome and e.kind.get.rule.has_guide
 
@@ -120,11 +120,11 @@ func isNimKind(e: Entry): bool =
 func scopeOf(tree: Tree, rename: Rename): seq[(string, string)] =
   ## Read Nim files rename may reach: declaring file alone for local binding, which no other
   ##   module names; else its project, and root files, which import across projects (`koch.nim`).
-  let directory = rename.path.split('/').projectDirectory
+  let directory = rename.path.split('/').directoryProject
   for e in tree:
-    if not e.isNimKind: continue
+    if not e.isKindNim: continue
     if rename.is_local and e.path != rename.path: continue
-    if e.path.split('/').projectDirectory == directory or '/' notin e.path:
+    if e.path.split('/').directoryProject == directory or '/' notin e.path:
       result.add (e.path, e.content)
 
 
@@ -134,13 +134,13 @@ func renamesOf(
   ## Read rename of each declaration in entries, as names check reads it with words glossaries
   ##   admit, and refusal known before semantic pass: coined abbreviation (V.6), and case of
   ##   name's kind (V.1, V.11), which spells abbreviation out too and takes its place.
-  let directories = tree.projectDirectories
+  let directories = tree.directoriesProject
   var glossaries: seq[(string, string)]
   for e in tree:
-    if e.path == ROOT_GLOSSARY or directories.anyIt(e.path == it & "/" & ROOT_GLOSSARY):
+    if e.path == GLOSSARY_ROOT or directories.anyIt(e.path == it & "/" & GLOSSARY_ROOT):
       glossaries.add (e.path, e.content)
   for e in entries:
-    if not e.isNimKind or e.path in locked: continue
+    if not e.isKindNim or e.path in locked: continue
     let
       exempt = glossaries.exemptionsOf(e.path)
       recased = renamesCase(e.content, exempt)
@@ -168,7 +168,7 @@ func renamesOf(
       result.add (rename, r.refusal)
 
 
-func semanticQueries*(
+func queriesSemantic*(
   tree: Tree, entries: openArray[Entry], locked: openArray[string] = []
 ): seq[Query] =
   ## Build what fixers of entries ask semantic pass: each type conversion candidate (STYLE.md
@@ -177,7 +177,7 @@ func semanticQueries*(
   ##   nothing; one query holds all one file is asked.
   var asked: seq[Query]
   for e in entries:
-    if e.isNimKind and e.path notin locked: asked.add conversionQuery(e.path, e.content)
+    if e.isKindNim and e.path notin locked: asked.add queryConversion(e.path, e.content)
   for (rename, refusal) in renamesOf(tree, entries, locked):
     if refusal.len == 0: asked.add rename.queriesOf(tree.scopeOf(rename))
   for query in asked:
@@ -208,7 +208,7 @@ func contextOf*(
       paths.add e.path
       sources.add e.content
     if e.path.isCalling: suites.add e.content
-  result.dead = deadExports(paths, sources, suites).deduplicate
+  result.dead = exportsDead(paths, sources, suites).deduplicate
   for answer in answers: result.answers[answer.path] = answer
   let named = entries.mapIt(it.path)
   for (rename, refusal) in renamesOf(tree, entries, locked):
@@ -258,7 +258,7 @@ func fixSource(
   # Drop `*` of dead export, fenced lines read as `FENCED`; fix moving them is skipped.
   let dead = context.dead.filterIt(it[0] == path).mapIt(it[1])
   if dead.len > 0:
-    let step = fixDeadExports(path, base.masked(fence), dead)
+    let step = fixExportsDead(path, base.masked(fence), dead)
     if step.source.shapeFence == base.masked(fence).shapeFence:
       base = step.source.restored(base, fence)
       result.fixed.add step.fixed
@@ -354,8 +354,8 @@ func fixEntries*(
 
 func pinFor(tree: Tree, path: string): string =
   ## Read pin of project holding path, driver's for file at root; empty where none is pinned.
-  let directory = path.split('/').projectDirectory
-  tree.pinOf(if directory.len == 0: DRIVER_DIRECTORY else: directory).get("")
+  let directory = path.split('/').directoryProject
+  tree.pinOf(if directory.len == 0: DIRECTORY_DRIVER else: directory).get("")
 
 
 proc answered*(

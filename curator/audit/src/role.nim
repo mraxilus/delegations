@@ -36,7 +36,7 @@ import ./[commits, domains, findings]
 
 
 const
-  ROLE_KEY* = "**Role:**"  ## Opening of role line, bold as every prompt and template writes it.
+  KEY_ROLE* = "**Role:**"  ## Opening of role line, bold as every prompt and template writes it.
   COMMENT_OPEN* = "<!--"  ## Opening of HTML comment, which unfilled template carries after key.
   LINES_ATTRIBUTION = [
     (opening: "<!-- ccr-projects-attribution:", closing: "-->"),  # Marker; renders as nothing.
@@ -53,7 +53,7 @@ func shortened*(line: string): string =
   if line.runeLen <= ECHO_MAX: line else: line.runeSubStr(0, ECHO_MAX) & "…"
 
 
-func roleLine*(body: string): string =
+func lineRole*(body: string): string =
   ## Read first non-blank line below any attribution block, with trailing HTML comment dropped.
   ##   Unfilled template opens `**Role:** <!-- curator, or ... -->`, which then reads as key
   ##     alone and fails equality below, rather than passing as line naming no role.
@@ -78,12 +78,12 @@ func checkRole*(branch, body: string; labels: openArray[string]): seq[Finding] =
   if parsed.isNone: return
   let
     expected = parsed.get.roleName
-    opening = body.roleLine
-  if opening != ROLE_KEY & " " & expected:
+    opening = body.lineRole
+  if opening != KEY_ROLE & " " & expected:
     result.add finding(
       "",
       0,
-      "Pull request must open with `" & ROLE_KEY & " " & expected &
+      "Pull request must open with `" & KEY_ROLE & " " & expected &
         "`, which its branch names; got `" & opening.shortened & "`.",
     )
   if expected notin labels:

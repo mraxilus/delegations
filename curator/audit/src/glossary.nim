@@ -15,7 +15,7 @@
 ##     as `duplicates.nim` does.
 ##
 ##   People words: root glossary names Architect, Delegate, Curator and Contributor and lists
-##     synonyms to avoid under each; those for people are `PEOPLE_WORDS`, and root files and
+##     synonyms to avoid under each; those for people are `WORDS_PEOPLE`, and root files and
 ##     curator records are held to them outside code (curator review, C7). List is people only:
 ##     full avoid list holds build, rules and version, which have plain senses everywhere.
 
@@ -26,14 +26,14 @@ import ./[findings, markdown]
 
 
 const
-  STANDARDS_HEADING* = "## Standards"
+  HEADING_STANDARDS* = "## Standards"
     ## Heading under which glossary names standards its symbols come from.
-  LANGUAGE_HEADING* = "## Language"  ## Heading under which glossary defines its terms.
-  ROOT_GLOSSARY* = "GLOSSARY.md"
+  HEADING_LANGUAGE* = "## Language"  ## Heading under which glossary defines its terms.
+  GLOSSARY_ROOT* = "GLOSSARY.md"
     ## Path of root glossary, home of every standard two projects share.
 
 
-const PEOPLE_WORDS* = [
+const WORDS_PEOPLE* = [
   "owner", "user", "session", "agent", "bot", "maintainer", "developer", "worker", "author",
   "assistant", "admin", "director", "reviewer", "persona",
 ]
@@ -41,12 +41,12 @@ const PEOPLE_WORDS* = [
   ## `identity`, avoided under Role, is left out: it is algebra's word in `curator/probe`.
 
 
-func isTermLine*(line: string): bool =
+func isLineTerm*(line: string): bool =
   ## Decide whether line opens glossary entry, i.e. `**Term**:`.
   line.len > 5 and line.startsWith("**") and line.endsWith("**:")
 
 
-func isStandardLine*(line: string): bool =
+func isLineStandard*(line: string): bool =
   ## Decide whether line opens standards entry, i.e. `- **Name**, owner and edition: symbols`.
   if not line.startsWith("- **"): return false
   let close = line.find("**", 4)
@@ -59,9 +59,9 @@ func standardsIn*(source: string): seq[(int, string)] =
   let lines = source.splitLines
   for i, line in lines:
     if line.startsWith("#"):
-      is_inside = line == STANDARDS_HEADING
+      is_inside = line == HEADING_STANDARDS
       continue
-    if is_inside and line.isStandardLine:
+    if is_inside and line.isLineStandard:
       result.add (i + 1, line[4 ..< line.find("**", 4)])
 
 
@@ -69,29 +69,29 @@ func checkGlossary*(path, source: string): seq[Finding] =
   ## Report missing or misplaced headings, malformed standards, and terms lacking definition.
   if not source.firstNonBlank.startsWith("# "):
     result.add finding(path, 1, "Glossary must open with `# <Name>` heading.")
-  let headings = source.headingLines
-  if STANDARDS_HEADING notin headings:
+  let headings = source.linesHeading
+  if HEADING_STANDARDS notin headings:
     result.add finding(path, 0, "Glossary lacks `## Standards` heading.")
-  if LANGUAGE_HEADING notin headings:
+  if HEADING_LANGUAGE notin headings:
     result.add finding(path, 0, "Glossary lacks `## Language` heading.")
-  if headings.find(STANDARDS_HEADING) > headings.find(LANGUAGE_HEADING) and
-      LANGUAGE_HEADING in headings:
+  if headings.find(HEADING_STANDARDS) > headings.find(HEADING_LANGUAGE) and
+      HEADING_LANGUAGE in headings:
     result.add finding(path, 0, "Glossary must put `## Standards` before `## Language`.")
   let lines = source.splitLines
   var is_standards = false
   for i, line in lines:
-    if line.startsWith("#"): is_standards = line == STANDARDS_HEADING
-    if is_standards and line.startsWith("- ") and not line.isStandardLine:
+    if line.startsWith("#"): is_standards = line == HEADING_STANDARDS
+    if is_standards and line.startsWith("- ") and not line.isLineStandard:
       result.add finding(
         path,
         i + 1,
         "Standard must read `- **Name**, owner and edition: symbols`; got `" & line & "`.",
       )
-    if not line.isTermLine: continue
+    if not line.isLineTerm: continue
     let
       next = if i + 1 < lines.len: lines[i + 1] else: ""
       is_defined = next.strip.len > 0 and not next.startsWith("#") and
-        not next.isTermLine and not next.startsWith("_Avoid_")
+        not next.isLineTerm and not next.startsWith("_Avoid_")
     if not is_defined:
       result.add finding(
         path,
@@ -103,15 +103,15 @@ func checkGlossary*(path, source: string): seq[Finding] =
 func checkStandardsAcross*(glossaries: openArray[(string, string)]): seq[Finding] =
   ## Report standard project glossary repeats from root, or two project glossaries both list.
   ##   Later place is named, since earlier one is where it belongs unless root should hold it.
-  var root_names: seq[string]
+  var names_root: seq[string]
   for (path, source) in glossaries:
-    if path == ROOT_GLOSSARY:
-      for (_, name) in source.standardsIn: root_names.add name
+    if path == GLOSSARY_ROOT:
+      for (_, name) in source.standardsIn: names_root.add name
   var first_seen = initTable[string, string]()
   for (path, source) in glossaries:
-    if path == ROOT_GLOSSARY: continue
+    if path == GLOSSARY_ROOT: continue
     for (line, name) in source.standardsIn:
-      if name in root_names:
+      if name in names_root:
         result.add finding(
           path,
           line,
@@ -138,34 +138,34 @@ func withoutCode(line: string): string =
     result.add(if is_inside or c == '`': ' ' else: c)
 
 
-func isWordChar(c: char): bool =
+func isCharWord(c: char): bool =
   ## Decide whether character continues word.
   c in Letters or c in Digits or c == '_'
 
 
-func peopleWordsIn*(line: string): seq[string] =
+func wordsPeopleIn*(line: string): seq[string] =
   ## Collect people words line uses outside code, as written, in order.
   let text = line.withoutCode
   var i = 0
   while i < text.len:
-    if not text[i].isWordChar:
+    if not text[i].isCharWord:
       inc i
       continue
     var j = i
-    while j < text.len and text[j].isWordChar: inc j
+    while j < text.len and text[j].isCharWord: inc j
     let
       word = text[i ..< j]
       bare = word.toLowerAscii.strip(leading = false, chars = {'s'})
-    if bare in PEOPLE_WORDS or word.toLowerAscii in PEOPLE_WORDS: result.add word
+    if bare in WORDS_PEOPLE or word.toLowerAscii in WORDS_PEOPLE: result.add word
     i = j
 
 
-func checkPeopleWords*(path, source: string): seq[Finding] =
+func checkWordsPeople*(path, source: string): seq[Finding] =
   ## Report people word glossary avoids, outside fenced code, code spans and tables.
   let lines = source.fencedOut.splitLines
   for i, line in lines:
     if line.strip.startsWith("|"): continue
-    for word in line.peopleWordsIn:
+    for word in line.wordsPeopleIn:
       result.add finding(
         path,
         i + 1,

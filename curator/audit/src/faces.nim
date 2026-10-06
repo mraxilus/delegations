@@ -31,7 +31,7 @@
 ##     registry of kinds is not consulted; page emitted from Nim is read exactly as `.html`
 ##     is, which is what `design/page.nim` needed.
 ##   Cost: checker's own sources name these families as data and would report themselves, so
-##     they are exempt -- same exemption `checkDeadExports` needs and for same reason.
+##     they are exempt -- same exemption `checkExportsDead` needs and for same reason.
 ##   Nim literals that `&` carries across line end are joined before declarations are read, so
 ##     stack whose first family opens next literal is read whole (#412). Joined text lands on
 ##     first line and each line it consumed is left empty, so every line keeps its number.
@@ -78,10 +78,10 @@ const
   DEFERS* = ["inherit", "initial", "unset", "revert"]
     ## Values naming no family at all: each defers to what cascade already settled, which
     ## this check has read where it was set. Reporting them would be reporting twice.
-  LITERAL_CLOSERS = ["\"\"\" &", "\" &"]
+  CLOSERS_LITERAL = ["\"\"\" &", "\" &"]
     ## Line end that closes Nim string literal and continues it with `&`; triple quote first,
     ## since it also ends in single one.
-  LITERAL_OPENERS = ["&\"\"\"", "fmt\"\"\"", "\"\"\"", "&\"", "fmt\"", "\""]
+  OPENERS_LITERAL = ["&\"\"\"", "fmt\"\"\"", "\"\"\"", "&\"", "fmt\"", "\""]
     ## Line start that opens literal continuing previous one; longer forms first, since each
     ## shorter one is prefix of one before it.
   GENERICS = [
@@ -99,7 +99,7 @@ func isFamily*(name: string): bool =
   false
 
 
-func shorthandFamilies*(value: string): string =
+func familiesShorthand*(value: string): string =
   ## Read family list out of `font` shorthand, i.e. what stands after size and line height.
   ##   Tokens are dropped while each is shape word or carries digit; remainder is list.
   ##   Value naming no family leaves nothing, which reads as no stack rather than as bad one.
@@ -118,7 +118,7 @@ func shorthandFamilies*(value: string): string =
   rest.join(" ")
 
 
-func joinedLiterals(content: string): string =
+func literalsJoined(content: string): string =
   ## Join Nim string literals that `&` continues across line end into first line, leaving each
   ##   consumed line empty so line numbers hold.
   var
@@ -129,14 +129,14 @@ func joinedLiterals(content: string): string =
     while j < lines.len:
       let tail = lines[i].strip(leading = false)
       var closer = ""
-      for candidate in LITERAL_CLOSERS:
+      for candidate in CLOSERS_LITERAL:
         if tail.endsWith(candidate):
           closer = candidate
           break
       if closer.len == 0: break
       let head = lines[j].strip(trailing = false)
       var opener = ""
-      for candidate in LITERAL_OPENERS:
+      for candidate in OPENERS_LITERAL:
         if head.startsWith(candidate):
           opener = candidate
           break
@@ -148,7 +148,7 @@ func joinedLiterals(content: string): string =
   lines.join("\n")
 
 
-func firstFamily*(stack: string): string =
+func familyFirst*(stack: string): string =
   ## Read first family of stack, unquoted and stripped; empty when stack names none.
   ##   Stack is comma-separated and first entry is what viewer gets when face ships, so it
   ##   is only entry this rule reads.
@@ -173,7 +173,7 @@ func declarations*(content: string, property: string): seq[(int, string)] =
       rest = rest[at + property.len + 1 .. ^1]
 
 
-func propertyValues*(content: string): seq[(string, string)] =
+func valuesProperty*(content: string): seq[(string, string)] =
   ## Read every custom property `--name: value` as name and value, for one-deep resolution.
   ##   Every property on line, not first alone: `:root { --sans: ...; --serif: ...; }` is one
   ##   line carrying two, and reading only first left second unresolved -- which then read as
@@ -208,7 +208,7 @@ func resolved*(value: string, properties: openArray[(string, string)]): string =
   value
 
 
-func isSubjectHeading(compound: string): bool =
+func isHeadingSubject(compound: string): bool =
   ## Decide whether one compound selector's element is heading.
   ##   Compound is `h3`, `h3.tag`, `.tag` or `span`; element is what stands before first class,
   ##   identifier, attribute or pseudo. Empty element means compound names class alone.
@@ -238,7 +238,7 @@ func isHeading*(selector: string): bool =
     if compounds.len == 0: continue
     var subject = compounds[^1]
     while subject.len > 0 and subject[0] in {'>', '+', '~'}: subject = subject[1 .. ^1]
-    if subject.isSubjectHeading: return true
+    if subject.isHeadingSubject: return true
   false
 
 
@@ -249,7 +249,7 @@ func checkFaces*(path, content: string): seq[Finding] =
   ##   Both forms are asked for: page writing every stack as shorthand carries no
   ##   `font-family` at all, and guard reading that alone skipped whole page.
   if MARK & ":" notin content and SHORTHAND & ":" notin content: return
-  let content = (if path.endsWith(".nim"): content.joinedLiterals else: content)
+  let content = (if path.endsWith(".nim"): content.literalsJoined else: content)
 
   let lines: seq[string] = content.splitLines
   for i, line in lines:
@@ -264,17 +264,17 @@ func checkFaces*(path, content: string): seq[Finding] =
   # Only stacks declaration names are read. Property is reached through `var()` from one
   #   of those, so it is checked where it is used; property scanned on its own would take
   #   `--ease: cubic-bezier(0.2, ...)` for stack, which it did.
-  let properties = content.propertyValues
+  let properties = content.valuesProperty
   var stacks: seq[(int, string)]
   for (line, value) in content.declarations(MARK): stacks.add (line, value)
   for (line, value) in content.declarations(SHORTHAND):
-    let families = value.shorthandFamilies
+    let families = value.familiesShorthand
     if families.len > 0: stacks.add (line, families)
 
   for (line, value) in stacks:
     let
       stack = value.resolved(properties)
-      first = stack.firstFamily
+      first = stack.familyFirst
     if first.len == 0 or first.toLowerAscii in DEFERS: continue
     # Stack built from variable leaves operators in what reads as family. Check reads
     #   declarations, never expressions, and says so rather than reporting `&` as family.
@@ -294,7 +294,7 @@ func checkFaces*(path, content: string): seq[Finding] =
       before = lines[line - 1]
       selector = before[0 ..< before.find(SHORTHAND)]
     if not selector.isHeading: continue
-    let first = value.resolved(properties).firstFamily
+    let first = value.resolved(properties).familyFirst
     if first.len > 0 and first.toLowerAscii notin DEFERS and not first.startsWith(SERIF):
       result.add finding(
         path,
