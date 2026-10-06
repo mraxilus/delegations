@@ -50,14 +50,14 @@ template timeLibrary(label: string, body: untyped) =
       pool = newSeq[Multivector](OBJECTS)
       results = newSeq[Multivector](OBJECTS)
     for i in 0..<OBJECTS:
-      for b in Basis: pool[i][b] = Real(gauss())
+      for b in Basis: pool[i][b] = Coefficient(gauss())
     run(pool, results)
 
 
 proc main() =
   ## Print width and size of this build, then time each library operation at it.
   randomize(SEED)
-  echo "width ", FLOAT_BITS, " size ", sizeof(Multivector)
+  echo "width ", FLOAT, " size ", sizeof(Multivector)
   timeLibrary("add", m + n)
   timeLibrary("negate", -m)
   timeLibrary("complement", /m)

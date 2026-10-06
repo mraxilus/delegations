@@ -7,7 +7,7 @@
     },
     {
       "kind": "suites",
-      "defines": ["pga.float_bits=32"]
+      "defines": ["pga.float=32"]
     },
     {
       "kind": "program",
@@ -18,7 +18,7 @@
       "kind": "program",
       "path": "width.nim",
       "algebras": ["rga3d", "rga4d", "cga4d", "cga5d"],
-      "defines": ["pga.float_bits=32"]
+      "defines": ["pga.float=32"]
     },
     {
       "kind": "program",
@@ -29,7 +29,7 @@
       "kind": "program",
       "path": "timing.nim",
       "algebras": ["rga4d", "cga5d"],
-      "defines": ["pga.float_bits=32"]
+      "defines": ["pga.float=32"]
     }
   ]
 }
