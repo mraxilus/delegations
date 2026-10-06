@@ -74,14 +74,10 @@ type PointerPick* = object  ## Define pick made by pointer, awaiting camera's ai
 
 #[ What Is Being Watched ]#
 
-iterator watched*(
-  scene: Scene, picked: Selection, staged: Option[Preview]
-): (Multivector, Option[Position]) =
-  ## Walk whatever camera is asked to show, in order module doc states.
-  ##   Each comes beside anchor its disc is drawn about where it has one: plane's creation
-  ##   anchor, see `scene.creationAnchor`.
+iterator handlesWatched*(scene: Scene, picked: Selection, staged: Option[Preview]): int =
+  ## Walk handles camera is asked to show, in order module doc states.
   ##   Something staged takes whole offer: it is thing being made, and selection beside it
-  ##   is not what reader looks at.
+  ##   is not what reader looks at. Staged geometry is no handle; see `watched`.
   ##   What goes with it depends on where it came from, which `Preview.operands` says.
   ##     Preview named operands, so they are framed *with* it: result judged without
   ##     objects it was applied to is half picture.
@@ -91,20 +87,38 @@ iterator watched*(
   ##     Selection outlives removal of what it names, and operand can go same way with
   ##     picker left open across delete.
   if staged.isSome:
-    yield (staged.get.geometry, staged.get.anchor)
     if staged.get.operands.isSome:
       let (first, second) = staged.get.operands.get
       # Yield unary operation's operand once.
       #   Bound cannot be widened by ball it holds, but middle folded twice is pulled
       #   toward, and camera turns about that middle.
       for handle in (if first == second: @[first] else: @[first, second]):
-        if scene.isAlive(handle):
-          yield (scene.geometryOf(handle), scene.anchorOverrideAt(handle))
+        if scene.isAlive(handle): yield handle
   else:
     for position in 0..<picked.len:
       let handle = picked.at(position)
-      if scene.isAlive(handle):
-        yield (scene.geometryOf(handle), scene.anchorOverrideAt(handle))
+      if scene.isAlive(handle): yield handle
+
+
+iterator watched*(
+  scene: Scene, picked: Selection, staged: Option[Preview]
+): (Multivector, Option[Position]) =
+  ## Walk whatever camera is asked to show, in order module doc states, staged geometry first.
+  ##   Each comes beside anchor its disc is drawn about where it has one: plane's creation
+  ##   anchor, see `scene.creationAnchor`.
+  ##   Handles are `handlesWatched`'s; frame holding their placements reads those instead.
+  if staged.isSome: yield (staged.get.geometry, staged.get.anchor)
+  for handle in handlesWatched(scene, picked, staged):
+    yield (scene.geometryOf(handle), scene.anchorOverrideAt(handle))
+
+
+func kindFinite(placed: Placement): Option[Kind] =
+  ## Name finite shape placement stands for: none in horizon, and for no geometry.
+  case placed.kind
+  of Case.PointAt: some(Kind.Point)
+  of Case.LineThrough: some(Kind.Line)
+  of Case.PlaneOn: some(Kind.Plane)
+  of Case.Nothing, Case.PointToward, Case.LineAcross, Case.PlaneEverywhere: none(Kind)
 
 
 func reachOfPlacement(placed: Placement, radius: float): float =
@@ -191,13 +205,23 @@ proc reachOf*(scene: Scene): float =
     )
 
 
-func aimFor*(scene: Scene, picked: Selection, staged: Option[Preview]): Option[CameraAim] =
+func aimFor*(
+  scene: Scene, picked: Selection, staged: Option[Preview], placed: openArray[Placement] = []
+): Option[CameraAim] =
   ## Resolve what camera is asked to bring into view, or none where nothing is.
   ##   Pure function of geometry: see `CameraAim`, whose worth is that caller re-offering
   ##   same selection every frame offers something comparing equal.
+  ##   `placed` is frame's placements, where caller has them: each handle watched is read
+  ##   from there in place, classified and anchored once in frame.
+  ##     Pass nothing and each is placed here instead, as for staged geometry, no handle.
   result = none(CameraAim)
-  for (m, anchor) in watched(scene, picked, staged):
-    result = result.aimIncluding(m, anchor)
+  if not placed.isWhole:
+    for (m, anchor) in watched(scene, picked, staged):
+      result = result.aimIncluding(m, anchor)
+    return
+  if staged.isSome: result = result.aimIncluding(staged.get.geometry, staged.get.anchor)
+  for handle in handlesWatched(scene, picked, staged):
+    result = result.aimIncluding(placed[handle])
 
 
 func isShownAll*(
@@ -467,7 +491,12 @@ func stanceLifted*(stance: CameraStance, camera: Camera, normal: Direction): Cam
 
 
 func stanceFitted*(
-  stance: CameraStance, camera: Camera, scene: Scene, picked: Selection, scale: DrawExtent
+  stance: CameraStance,
+  camera: Camera,
+  scene: Scene,
+  picked: Selection,
+  scale: DrawExtent,
+  placed: openArray[Placement] = [],
 ): CameraStance =
   ## Carry `stance` back out to fit of point picked alone where it lands nearer: ruling of #535.
   ##   Selection never starts nearer than its fit. Far star picked from list then draws as
@@ -482,16 +511,17 @@ func stanceFitted*(
   ##   Floor, not fit: stance standing further out keeps reader's own scale, as frame rule does.
   ##   Pivot stands on point after `stanceFor`, so separation is reach to it, and dolly
   ##   holding pivot carries eye back along sight.
+  ##   `placed` is frame's placements, where caller has them; see `aimFor`.
   if picked.len != 1: return stance
   let handle = picked.at(0)
   if not scene.isAlive(handle): return stance
-  let m = scene.geometryOf(handle)
-  if kindOf(m) != some(Kind.Point) or isHorizon(m): return stance
-  let centre = anchorFor(m, scale)
-  if centre.isNone: return stance
+  # Fit finite point alone, at its place about view origin.
+  let placement = placementAt(placed, scene, handle)
+  if placement.kind != Case.PointAt: return stance
   let
+    centre = placement.at.toView(scale.origin)
     radius = scene.radiusAt(handle)
-    reach = distanceBetween(centre.get.toMultivector, camera.eye.toMultivector)
+    reach = distanceBetween(centre.toMultivector, camera.eye.toMultivector)
   if radius >= 0.5 * float(DIAMETER_POINT_LEAST) * reach * radiansPerPixel(scale.scale):
     return stance
   let fit = min(reach, depthSpanning(2.0 * radius, FRACTION_HEIGHT_APPROACH_POINT, camera))
@@ -503,7 +533,12 @@ func stanceFitted*(
 #[ Standing Offer ]#
 
 func holdFilled*(
-  camera: var Camera; scene: Scene; picked: Selection; scale: DrawExtent; width, height: int
+  camera: var Camera;
+  scene: Scene;
+  picked: Selection;
+  scale: DrawExtent;
+  width, height: int;
+  placed: openArray[Placement] = [];
 ) =
   ## Carry eye back out until point picked alone fills frame, and no further in.
   ##   Nearer shows nothing more of it: its sphere already reaches every corner, as
@@ -511,11 +546,13 @@ func holdFilled*(
   ##   Floor, as frame rule is, so it holds whatever moved camera: drag, keys, wheel and
   ##   pinch alike. Eye goes back along its own sight, so nothing turns.
   ##   There point is backdrop, so every press on it moves view.
+  ##   `placed` is frame's placements, where caller has them; see `aimFor`.
   if picked.len != 1: return
   let handle = picked.at(0)
-  if not scene.isAlive(handle) or kindOf(scene.geometryOf(handle)) != some(Kind.Point):
-    return
-  let centre = anchorFor(scene.geometryOf(handle), scene.anchorOverrideAt(handle), scale)
+  if not scene.isAlive(handle): return
+  let placement = placementAt(placed, scene, handle)
+  if placement.kind notin {Case.PointAt, Case.PointToward}: return
+  let centre = anchorFor(placement, scale)
   if centre.isNone: return
   let
     (eye, frame) = camera.sight
@@ -536,6 +573,7 @@ func offerAim*(
   now, duration: float;
   pointer: var Option[PointerPick];
   is_moving_camera = false;
+  placed: openArray[Placement] = [];
 ) =
   ## Offer camera whatever is being worked on to look at.
   ##   One call both front-ends and storyboard make, once per frame.
@@ -552,10 +590,12 @@ func offerAim*(
   ##     it and comes in to it (`stanceApproaching`); group and horizon shape frame as
   ##     ever, since group has to fit, which one object's reach cannot promise.
   ##   Every other pick of dot alone lands no nearer than its fit (`stanceFitted`).
+  ##   `placed` is frame's placements, where caller has them, so every object watched is
+  ##   read as frame placed it; pass nothing and each is placed here; see `aimFor`.
   # Take caller's extent, not second derivation.
   #   Building another here ran `algebraFilled` and `camera.frame`'s joins twice per frame.
   let
-    aim = aimFor(scene, picked, staged)
+    aim = aimFor(scene, picked, staged, placed)
     pick = pointer
   pointer = none(PointerPick)
   if aim.isNone:
@@ -571,7 +611,7 @@ func offerAim*(
   # Hold point picked alone off its fill whenever no ease carries camera: ease landing
   #   is its own to place, and hold fighting it each frame would shake view.
   if staged.isNone and (is_moving_camera or tween.is_arrived):
-    camera.holdFilled(scene, picked, scale, width, height)
+    camera.holdFilled(scene, picked, scale, width, height, placed)
   # Hold frame rule, in whichever way suits what reader is doing.
   #   Reader moving camera is cut back at once: ease would fight their own drag, and they
   #   are one in control.
@@ -588,14 +628,17 @@ func offerAim*(
   var destination = none(CameraStance)
   if pick.isSome and staged.isNone and picked.len == 1 and picked.at(0) == pick.get.handle and
       scene.isAlive(pick.get.handle):
+    # Size plane by disc it is drawn as, about its stored anchor, which placement holds.
     let
-      m = scene.geometryOf(pick.get.handle)
-      shaped = kindOf(m)
-      # Size plane by disc it is drawn as, about its stored anchor.
-      centre = anchorFor(m, scene.anchorOverrideAt(pick.get.handle), scale)
-    if shaped.isSome and not isHorizon(m) and centre.isSome:
+      placement = placementAt(placed, scene, pick.get.handle)
+      shaped = placement.kindFinite
+    if shaped.isSome:
       destination = stanceApproaching(
-        shaped.get, scene.radiusAt(pick.get.handle), centre.get, camera, scale
+        shaped.get,
+        scene.radiusAt(pick.get.handle),
+        placement.at.toView(scale.origin),
+        camera,
+        scale,
       )
   # Frame what pointer pick did not place, and hold dot picked alone off its fit as it lands.
   #   Ruling of #535. Pointer pick's own approach already ends there. Goal already held is
@@ -603,15 +646,14 @@ func offerAim*(
   if destination.isNone:
     destination = some(stanceFor(aim.get, camera, width, height))
     if is_new_goal and staged.isNone:
-      destination = some(destination.get.stanceFitted(camera, scene, picked, scale))
+      destination = some(destination.get.stanceFitted(camera, scene, picked, scale, placed))
   # Lift view off plane picked alone from level view, once, as pick lands (#454).
   #   Plane is only finite pick that turns: sliver centred shows nothing of it. Goal already
   #   held is reader's own framing since, kept as every other pick keeps it.
   if is_new_goal and staged.isNone and picked.len == 1 and scene.isAlive(picked.at(0)):
-    let m = scene.geometryOf(picked.at(0))
-    if kindOf(m) == some(Kind.Plane) and not isHorizon(m):
-      let normal = directionNormal(m)
-      if normal.isSome: destination = some(destination.get.stanceLifted(camera, normal.get))
+    let placement = placementAt(placed, scene, picked.at(0))
+    if placement.kind == Case.PlaneOn:
+      destination = some(destination.get.stanceLifted(camera, placement.axes.normal))
   # Frame broken under arrived ease re-arms it: goal held is no answer while rule fails.
   #   Ease still running is left to land, or re-arming each frame restarts it forever.
   tween.aimAt(
@@ -658,14 +700,28 @@ func offerAimAt*(
 #[ Furniture Picked ]#
 
 proc addLatticesPicked*(
-  meshes: var MeshSet, scratch: var DrawScratch, scale: DrawExtent, scene: Scene, picked: Selection
+  meshes: var MeshSet,
+  scratch: var DrawScratch,
+  scale: DrawExtent,
+  scene: Scene,
+  picked: Selection,
+  placed: openArray[Placement] = [],
 ) =
   ## Rule lattice on every visible finite plane picked; see `tessellate.addLattice`.
   ##   One loop both front-ends' furniture runs, so which plane is ruled is decided once.
   ##   Here rather than in `tessellate`, which holds no scene: selection is what asks.
+  ##   `placed` is frame's placements, where caller has them: plane is read as placed, and
+  ##   its frame read from there in place rather than spanned again.
+  ##     Pass nothing and each plane's kind and frame are read from its multivector.
   for position in 0..<picked.len:
     let handle = picked.at(position)
     if not scene.isAlive(handle) or not scene.isVisible(handle): continue
+    if placed.isWhole:
+      if placed[handle].kind != Case.PlaneOn: continue
+      meshes.addLattice(
+        scratch, scale.extentFurniture, scale, scene.geometryOf(handle), placed[handle].axes
+      )
+      continue
     let m = scene.geometryOf(handle)
     if kindOf(m) != some(Kind.Plane) or isHorizon(m): continue
     meshes.addLattice(scratch, scale.extentFurniture, scale, m)

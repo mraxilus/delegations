@@ -65,6 +65,54 @@ suite "Mesh":
       check anchorFor(m, none(Position), scale_test).get =~ anchorFor(m, scale_test).get
 
 
+  test "placing an object tests its horizon once at most, and lands where its reads land":
+    # As found (repository issue 556): `placeInto` ran horizon test, weight norm and bulk norm
+    #   through library, once for each read: up to three times for line and twice for plane,
+    #   for each object in each frame. `positionAnchor`, `direction`, `directionNormalHorizon`
+    #   and `directionHorizon` each asked `isHorizon` again.
+    #   Domain is every exit of placing, as timings suite builds them, and line and plane
+    #   through origin, whose support is none, so anchor asks horizon too.
+    #   Each lands where reads standing alone land: one test, same answer.
+    let
+      origin = ORIGIN.toMultivector
+      exits = [
+        ("point at a place", POINTS[0], Case.PointAt),
+        ("point on the horizon", ⊖LINES[0], Case.PointToward),
+        ("line through a place", LINES[0], Case.LineThrough),
+        ("line through the origin", origin ∧ POINTS[0], Case.LineThrough),
+        ("line across the sky", ⊖PLANES[0], Case.LineAcross),
+        ("plane on a place", PLANES[0], Case.PlaneOn),
+        ("plane through the origin", origin ∧ POINTS[0] ∧ POINTS[1], Case.PlaneOn),
+        ("plane everywhere", ⊖(POINTS[10] ∧ PLANES[0]), Case.PlaneEverywhere),
+        ("no geometry", 1.0 + POINTS[0], Case.Nothing),
+      ]
+    for (exit, geometry, expected) in exits:
+      checkpoint exit
+      var placed = Placement()
+      let tests = countHorizonTests(geometry):
+        placed.placeInto(geometry, none(Position))
+      check tests <= 1
+      check placed.kind == expected
+      case placed.kind
+      of Case.PointAt: check placed.at =~ position(geometry).get
+      of Case.PointToward: check placed.toward =~ directionHorizon(geometry).get
+      of Case.LineThrough:
+        check placed.at =~ positionAnchor(geometry).get
+        check placed.toward =~ direction(geometry).get
+      of Case.LineAcross:
+        let normal = directionNormalHorizon(geometry).get
+        check placed.axes.normal =~ normal
+        check placed.axes.axis_first =~ spanPerpendicular(ORIGIN, normal).get[0]
+        check placed.axes.axis_second =~ spanPerpendicular(ORIGIN, normal).get[1]
+      of Case.PlaneOn:
+        let axes = frame(geometry).get
+        check placed.at =~ positionAnchor(geometry).get
+        check placed.axes.axis_first =~ axes.axis_first
+        check placed.axes.axis_second =~ axes.axis_second
+        check placed.axes.normal =~ axes.normal
+      of Case.PlaneEverywhere, Case.Nothing: discard
+
+
   proc isRibbonDrawn(corners: array[6, Vertex]): bool =
     ## Say whether expansion is drawable quad or shader's refusal.
     ##   Refusal is six coincident vertices, for segment wholly behind eye or one eye

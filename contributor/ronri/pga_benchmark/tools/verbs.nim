@@ -78,7 +78,8 @@ const
     ## Fixture control page is built from; under `tests/`, as `render.nim` says why.
   RUNS_EVALUATION = 5  ## Timed runs of each binary per evaluation, alternating.
   RUNS_BENCH = 5
-    ## Timed runs of each algebra's bench, alternating algebras, so drift lands on all alike.
+    ## Timed runs of each algebra's bench, and of each swept dimension, alternating algebras, so
+    ##   drift lands on all alike.
   TITLES = {"rga4d": "Rigid 4D", "cga5d": "Conformal 5D", "rga3d": "Rigid 3D",
     "cga4d": "Conformal 4D"}.toTable
     ## Tab title of each algebra on docket.
@@ -933,32 +934,40 @@ proc drive() =
 
 proc sweep() =
   ## Time general measurands at every swept dimension, rigid metric, print medians, and record
-  ##   them in `PATH_SWEEP`, one run of each algebra, stamped as bench stamps its own.
+  ##   them in `PATH_SWEEP`, stamped as bench stamps its own.
+  ##   Run binaries in turn, dimension after dimension, `RUNS_BENCH` times, as bench runs
+  ##     algebras, and keep median of run medians.
   let
     nim = commitNim()
     pga = commitPga()
   createDir BUILD
   var
+    runs: Table[int, seq[JsonNode]]
     documents: seq[JsonNode]
     swept = newJObject()
     digests = newJObject()
   for dimensions in SWEEP:
-    let
-      name = "sweep_" & $dimensions & "d"
-      binary = BUILD / name
+    let name = "sweep_" & $dimensions & "d"
     removeDir BUILD / "cache_" & name
-    compile(ENTRY_BENCH, binary, BUILD / "cache_" & name, dimensions, false, nim, pga)
+    compile(ENTRY_BENCH, BUILD / name, BUILD / "cache_" & name, dimensions, false, nim, pga)
     digests[$dimensions&"d"] = %digestCache(BUILD / "cache_" & name, pga)
-    run(binary, [binary & ".json"])
-    let document = readDocument(binary & ".json")
+  for index in 1..RUNS_BENCH:
+    for dimensions in SWEEP:
+      let
+        binary = BUILD / "sweep_" & $dimensions & "d"
+        output = binary & "_" & $index & ".json"
+      run(binary, [output])
+      runs.mgetOrPut(dimensions, @[]).add readDocument(output)
+  for dimensions in SWEEP:
+    let document = combineRuns(runs[dimensions])
     documents.add document
     var medians = newJObject()
     for id, measured in document{"measurands"}.pairs:
       let library = measured{"library"}
       if not library.isNil and library.kind == JObject: medians[id] = library{"ns_median"}
     swept[$dimensions&"d"] = medians
-  let recorded = %*{"schema": 1, "kind": "sweep", "taken": documents[0]{"taken"}, "runs": 1,
-      "dimensions": swept, "digest_c": digests}
+  let recorded = %*{"schema": 1, "kind": "sweep", "taken": documents[0]{"taken"},
+      "runs": RUNS_BENCH, "dimensions": swept, "digest_c": digests}
   writeFile(PATH_SWEEP, pretty(recorded) & "\n")
   echo "Recorded ", PATH_SWEEP
   var header = "measurand".alignLeft(26)

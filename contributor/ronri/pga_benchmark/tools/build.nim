@@ -41,8 +41,9 @@
 ##   | gaps      | regenerate `gaps.md` and docket from committed baselines             |
 ##   | show      | print one function's emitted C, its counts, its movement and its     |
 ##   |           | machine code, as `show ∧` or `show ⟇ cga5d`                          |
-##   | sweep     | time general measurands at two to six dimensions, rigid, and record  |
-##   |           | them in `baseline/sweep.json`; never in CI                           |
+##   | sweep     | time general measurands at two to six dimensions, rigid, in five     |
+##   |           | alternating runs, and record their medians in `baseline/sweep.json`; |
+##   |           | never in CI                                                          |
 ##   | system    | print system packages build needs, one per line, for caller          |
 ##   | clean     | remove `build`                                                       |
 ##   |-----------|----------------------------------------------------------------------|

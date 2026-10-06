@@ -82,7 +82,7 @@ var
 
 proc openFrameTimings*() =
   ## Begin frame: forget both sides' totals, and turn record pair over.
-  ##   Same two-frame lifetime draw scratch has (`arena.ArenaSwap`).
+  ##   Same two-frame lifetime draw scratch has (`arena.ArenasFrame`).
   ##   Incoming record is cleared on way *in*, so last frame's stays readable until this
   ##   frame replaces it.
   for side in Side: SPENT_SIDE[side] = 0.0

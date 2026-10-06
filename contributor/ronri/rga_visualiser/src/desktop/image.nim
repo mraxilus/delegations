@@ -15,7 +15,7 @@
 ##
 ## Rows arrive bottom-up, as OpenGL reads them, and are flipped while being filtered.
 ##   No separate copy of image exists.
-## Two buffers proportional to image are carved from caller's frame arena per call.
+## Two buffers proportional to image are carved from caller's arena per call.
 ##   Reclaimed when it is next reset.
 ##   Arena carving costs same fixed bound (`writePng` asserts instead of growing) in one
 ##   place caller owns.

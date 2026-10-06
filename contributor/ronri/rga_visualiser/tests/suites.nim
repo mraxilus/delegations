@@ -27,7 +27,7 @@
 when compileOption("profiler"): import std/nimprof
 
 import ./suites/[
-  test_arena_swap,
+  test_arenas_frame,
   test_camera,
   test_camera_aim,
   test_declarations,

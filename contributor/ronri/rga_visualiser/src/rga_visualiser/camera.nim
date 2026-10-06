@@ -1304,82 +1304,84 @@ func widened*(bound: SphereWorld, place: Position, reach: float): SphereWorld =
   )
 
 
-func aimIncluding*(
-  aim: Option[CameraAim], m: Multivector, anchor_override = none(Position)
-): Option[CameraAim] =
-  ## Fold one more object into aim, or start one where there was none.
+func aimIncluding*(aim: Option[CameraAim], placed: Placement): Option[CameraAim] =
+  ## Fold one more placed object into aim, or start one where there was none.
   ##   World's, as geometry is: aim compares equal frame to frame, while view origin moves
   ##   with camera. Readers take its places about view origin (`euclid.toView`).
+  ##   `placed` is object's placement, plane's creation anchor applied: frame's own where
+  ##   object is handle, so aim classifies nothing again. Read in place (read in emitted JS).
   ##   Unchanged by geometry drawing nothing, and by horizon plane, in view from every
   ##   camera.
   ##   Horizon point is fixed star, faced along own direction.
   ##   Horizon line keeps its circle's normal instead, because crossing frame is what
   ##   seeing it means; `framing.headingFacing` reads which way to face from either.
-  ##   Everything finite widens sphere about `anchorFor`'s point; finite plane widens it
-  ##   by whole disc round that point.
+  ##   Everything finite widens sphere about its place, as `anchorFor` reads it; finite
+  ##   plane widens it by whole disc round that place.
   ##     Except first object that has to *fit* throws away whatever lines contributed,
   ##     and they contribute nothing thereafter; see `CameraAim.is_bound_by_fitted`.
   ##     Which objects contribute does not depend on order.
-  ##   `anchor_override` centres plane's disc there instead of on support, read as
-  ##   `tessellate.addPlane` reads it; ignored for every other kind.
   ##   Horizon objects widen nothing.
   ##     Star is drawn about eye, and goal built from where camera stands would stop
   ##     comparing equal frame to frame.
   ##     Twice over for centroid: middle moving with eye would re-aim camera every frame.
-  let shape_m = kindOf(m)
-  if shape_m.isNone: return aim
+
+  # Merge directions as sum of horizon points, read back through horizon reader.
+  #   Reader also refuses cancelling pair, judged against scale one of two unit directions,
+  #   and first one standing is kept then: neither turn shows both.
+  func folded(held: Option[Direction], one: Direction): Option[Direction] =
+    if held.isNone: return some(one)
+    let merged = directionHorizon(add(held.get.toMultivector, one.toMultivector), scale = 1.0)
+    if merged.isSome: merged else: held
+
+  if placed.kind == Case.Nothing: return aim
   var grown = if aim.isSome: aim.get else: CameraAim()
 
-  if isHorizon(m):
-    # Merge directions as sum of horizon points, read back through horizon reader.
-    #   Reader also refuses cancelling pair, judged against scale one of two unit
-    #   directions, and first one standing is kept then: neither turn shows both.
-    func folded(held, one: Option[Direction]): Option[Direction] =
-      if one.isNone: return held
-      if held.isNone: return one
-      let merged =
-        directionHorizon(add(held.get.toMultivector, one.get.toMultivector), scale = 1.0)
-      if merged.isSome: merged else: held
-    case shape_m.get
-    of Kind.Point:
-      let heading = directionHorizon(m)
-      if heading.isNone: return aim
-      grown.heading = folded(grown.heading, heading)
-    of Kind.Line:
-      # Line's own normal, and not one axis of its circle: circle crossing frame is what
-      #   seeing it means, and only normal states that.
-      let normal = directionNormalHorizon(m)
-      if normal.isNone: return aim
-      grown.normal_crossing = folded(grown.normal_crossing, normal)
-    of Kind.Plane: discard
+  # Fold horizon shapes by direction alone.
+  #   Line's own normal, and not one axis of its circle: circle crossing frame is what
+  #   seeing it means, and only normal states that.
+  case placed.kind
+  of Case.PointToward:
+    grown.heading = folded(grown.heading, placed.toward)
     return some(grown)
+  of Case.LineAcross:
+    grown.normal_crossing = folded(grown.normal_crossing, placed.axes.normal)
+    return some(grown)
+  of Case.PlaneEverywhere: return some(grown)
+  of Case.Nothing, Case.PointAt, Case.LineThrough, Case.PlaneOn: discard
 
-  let is_plane = shape_m.get == Kind.Plane
-  var anchor = anchorWorld(m)
-  if is_plane and anchor_override.isSome: anchor = anchor_override
-  if anchor.isNone: return aim
   let
+    is_plane = placed.kind == Case.PlaneOn
     # Fit whole ball plane's disc is drawn as, not anchor alone.
     reach = if is_plane: EXTENT_PLANE_F else: 0.0
-    does_fit = shape_m.get in {Kind.Point, Kind.Plane}
+    does_fit = placed.kind in {Case.PointAt, Case.PlaneOn}
   if grown.is_bound_by_fitted and not does_fit: return some(grown)
   # Start bound afresh at first object that has to fit, discarding lines that only cross.
   if does_fit and not grown.is_bound_by_fitted:
     return some(CameraAim(
-      sphere: some(SphereWorld(centre: anchor.get, radius: reach)),
+      sphere: some(SphereWorld(centre: placed.at, radius: reach)),
       is_bound_by_fitted: true, heading: grown.heading,
       # Restart middle with bound: centre still holding lines would sit off everything left.
-      centroid_sum: some(anchor.get.toMultivector),
+      centroid_sum: some(placed.at.toMultivector),
     ))
   grown.sphere =
-    if grown.sphere.isNone: some(SphereWorld(centre: anchor.get, radius: reach))
-    else: some(grown.sphere.get.widened(anchor.get, reach))
+    if grown.sphere.isNone: some(SphereWorld(centre: placed.at, radius: reach))
+    else: some(grown.sphere.get.widened(placed.at, reach))
   # Fold middle through algebra's reading of one (`objects.centroidFolded`).
   #   Plane folds in by disc's centre, not whole ball. Nothing is read out or scaled here.
   grown.centroid_sum =
-    if grown.centroid_sum.isNone: some(anchor.get.toMultivector)
-    else: some(centroidFolded(grown.centroid_sum.get, anchor.get.toMultivector))
+    if grown.centroid_sum.isNone: some(placed.at.toMultivector)
+    else: some(centroidFolded(grown.centroid_sum.get, placed.at.toMultivector))
   some(grown)
+
+
+func aimIncluding*(
+  aim: Option[CameraAim], m: Multivector, anchor_override = none(Position)
+): Option[CameraAim] =
+  ## Fold one more object into aim, placing it first; see placement twin above.
+  ##   For object no frame placed: staged preview, storyboard's step, suite.
+  ##   `anchor_override` centres plane's disc there instead of on support, read as
+  ##   `tessellate.placeObject` reads it; ignored for every other kind.
+  aimIncluding(aim, placementOf(m, anchor_override))
 
 
 func aimFor*(m: Multivector, anchor_override = none(Position)): Option[CameraAim] =

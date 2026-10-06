@@ -76,6 +76,61 @@ func isRoundingOf*(m: Multivector, scale: float): bool =
 
 
 
+#[ Classification Tally ]#
+
+var
+  IS_COUNTING_KINDS = false
+    ## Say whether anyone reads how many times `kindInto` classifies multivector.
+    ##   Mutable global because it is instrument, as `boundary.IS_COUNTING_POINTS_READ` is:
+    ##   gated on its reader, never on build flag (Art. VII.4). Closed, each classification
+    ##   pays one load and one branch.
+    ##   Suite opens it, and so does page's driven check through bridge's
+    ##   `nimSetCountingKinds`; desktop never does.
+  COUNT_KINDS = 0  ## Count classifications since `setCountingKinds` last opened gate.
+  IS_COUNTING_HORIZONS = false
+    ## Say whether anyone reads how many times `isHorizon` tests `MULTIVECTOR_WATCHED`.
+    ##   Instrument, gated on its reader as `IS_COUNTING_KINDS` is, at same closed cost.
+    ##   Suite alone opens it, through `countHorizonTests`.
+  COUNT_HORIZONS = 0  ## Count horizon tests of watched multivector since gate opened.
+  MULTIVECTOR_WATCHED: Multivector
+    ## Hold multivector whose horizon tests `countHorizonTests` counts.
+    ##   Test of any other is not its own: plane joined to span frame tests its own horizon.
+
+
+proc setCountingKinds*(is_counting: bool) =
+  ## Open or close tally of classifications `kindInto` makes; opening zeroes count.
+  ##   Pins cost where clock cannot: count reads same on every machine, and load never
+  ##   moves it.
+  if is_counting: COUNT_KINDS = 0
+  IS_COUNTING_KINDS = is_counting
+
+
+proc countKinds*(): int = COUNT_KINDS
+  ## Report how many classifications `kindInto` made since tally last opened.
+
+
+template countHorizonTests*(m: Multivector, body: untyped): int =
+  ## Run `body`, and report how many times `isHorizon` tested `m` in it.
+  ##   Tests of `m` alone, matched coefficient for coefficient: read that builds multivector
+  ##   of its own tests that one's horizon, which is not `m`'s.
+  ##   Never nest two: inner would zero outer's count.
+  MULTIVECTOR_WATCHED = m
+  COUNT_HORIZONS = 0
+  IS_COUNTING_HORIZONS = true
+  body
+  IS_COUNTING_HORIZONS = false
+  COUNT_HORIZONS
+
+
+func isSameCoefficients(m, n: Multivector): bool =
+  ## Report whether two multivectors carry equal coefficients, each compared exactly.
+  ##   For tally's match alone: geometry compares through `=~`, and `==` is poisoned.
+  for b in Basis:
+    if m[b] != n[b]: return false
+  true
+
+
+
 #[ Kind Classification ]#
 
 func levelOf(read: Option[Grade]): int =
@@ -99,6 +154,10 @@ func kindInto*(m: Multivector, kind: var Kind): bool =
   ##     desktop's debug build.
   ##   Writes `kind` rather than building `Option`: every frame classifies every object, and
   ##   each `Option` built or bound is copy on JS backend (read in emitted JS).
+  ##   Tallied while reader counts; see `setCountingKinds`.
+  # Cast covers tally alone: instrument's own state, which no caller reads as result.
+  {.cast(noSideEffect).}:
+    if IS_COUNTING_KINDS: inc COUNT_KINDS
   var level = if abs(m[Basis.E4]) >= 1.0: levelOf(m.grade) else: -1
   if level < 0: level = levelOf(m.scaleFree.grade)
   case level
@@ -120,6 +179,10 @@ func isHorizon*(m: Multivector): bool =
   ##   Weight is judged against bulk, so object reads as horizon where it stands more
   ##   than billion units out, i.e. `‖𝐦‖∘ ≤ 1e-9 ‖𝐦‖∙`, whatever its own scale.
   ##     Zero reads as horizon: it has no weight.
+  ##   Tallied while suite counts tests of `m`; see `countHorizonTests`.
+  # Cast covers tally alone: instrument's own state, which no caller reads as result.
+  {.cast(noSideEffect).}:
+    if IS_COUNTING_HORIZONS and m.isSameCoefficients(MULTIVECTOR_WATCHED): inc COUNT_HORIZONS
   abs((|∘m)[Basis.scalarAnti]) <= TOLERANCE_ABS * abs((|∙m)[Basis.scalar])
 
 

@@ -3,28 +3,31 @@
 ## Short-lived buffer costs offset bump instead of allocator call, and whole block is
 ## reclaimed at once by resetting offset.
 ##   Style Casey Muratori and Ryan Fleury both write about.
-## Three lifetimes cover everything this project still allocates dynamically:
+## Three regions hold everything this project would otherwise allocate dynamically:
 ##
-##   |-----------|---------------------------------|--------------------------------------|
-##   | Arena     | Reset                           | Backs                                |
-##   |-----------|---------------------------------|--------------------------------------|
-##   | Permanent | Never; lives until process exit | Pixel readback buffer, sized once    |
-##   |           |                                 | and reused for every export.         |
-##   | Export    | After each throwaway unit of    | PNG's filtered/compressed scanlines, |
-##   |           | work: one PNG write, one GIF    | GIF's quantized indices and LZW      |
-##   |           | sub-frame.                      | output; built once, read once.       |
-##   | Frame     | On next frame's swap, so last   | Draw loop's scratch: points          |
-##   | swap pair | frame's bytes survive this one. | tessellation step assembles before   |
-##   |           | See `ArenaSwap`.                | emitting them.                       |
-##   |-----------|---------------------------------|--------------------------------------|
+##   |--------------|--------------------------------|---------------------------------------|
+##   | Region       | Reclaimed                      | Backs                                 |
+##   |--------------|--------------------------------|---------------------------------------|
+##   | Program      | Never; lives until process     | Pixel readback buffer, every          |
+##   | arena        | exit. Export's scratch is one  | storyboard GIF frame, and export's    |
+##   |              | stretch of it, overwritten by  | scratch: PNG's filtered scanlines,    |
+##   |              | each export.                   | GIF's quantized indices and LZW.      |
+##   | Frame arenas | Two, turned each frame; block  | Frame's placements, one for each      |
+##   |              | coming round is reclaimed, so  | handle, then draw loop's scratch.     |
+##   |              | last frame's bytes survive     |                                       |
+##   |              | this one. See `ArenasFrame`.   |                                       |
+##   | Object pool  | One handle at time: removing   | `Scene`'s objects. Free handles link  |
+##   |              | object puts its handle on free | into list, and next object added      |
+##   |              | list. See `scene.Scene`.       | takes most recently freed.            |
+##   |--------------|--------------------------------|---------------------------------------|
 ##
-## `Scene` and `MeshSet` are on none of them.
-##   Fixed arrays with own lifetime, permanent and cleared-in-place.
-##   Loop's text formatting writes into stack buffers (`format.nim`).
-## Export arena and frame pair are kept apart deliberately.
-##   Export's scratch is tens of megabytes once per keypress, frame's tens of kilobytes
-##   sixty times per second.
-##   Sizing one block for both would reserve export's capacity twice to buy frame's swap.
+## Object pool is arena with free list in place of offset, not `Arena`.
+##   Fixed arrays in `Scene`, threaded by free list; undo timeline holds whole copies of it.
+##   `MeshSet` is fixed arrays too, cleared in place; loop's text formatting writes into stack
+##   buffers (`format.nim`).
+## Export's scratch is stretch of program arena, not of frame arenas.
+##   Tens of megabytes at most once per keypress, where frame's work is tens of kilobytes
+##   every frame: in frame arenas it would reserve its capacity twice for turn it never uses.
 ## Backing storage is plain global array, not runtime allocation.
 ##   Reserving block costs one line in binary's data segment, and every arena is exhausted
 ##   by `doAssert` rather than by growing.
@@ -49,7 +52,7 @@ type
       ##   `used` alone reads near zero wherever sampled, since carving and reset both
       ##   happen within one frame.
 
-  ArenaSwap* = object  ## Define two frame arenas and which of them this frame is writing.
+  ArenasFrame* = object  ## Define two frame arenas and which of them this frame is writing.
     ## Two-frame lifetime.
     ##   What frame carves stays readable through next frame as `previous`, reclaimed only
     ##   when its block comes round again.
@@ -58,8 +61,8 @@ type
     ## `swap` moves write cursor to other block and resets it, so frame always begins with
     ## arena holding nothing.
     ##   Reclaiming on way in leaves block written last frame intact until needed again.
-    arenas: array[2, Arena]
-    index_current: int  ## Which of `arenas` this frame carves from; other is last frame's.
+    blocks: array[2, Arena]
+    index_current: int  ## Which of `blocks` this frame carves from; other is last frame's.
 
 
 
@@ -91,7 +94,7 @@ func push*[T](arena: var Arena, count: int): ptr UncheckedArray[T] =
   ##   Never freed on its own; reclaimed only when `reset` reclaims whole arena.
   let bytes_needed = count * sizeof(T)
   doAssert arena.used + bytes_needed <= arena.capacity,
-    &"Arena holds {arena.capacity} bytes, raise whichever `--define:visualiser.capacity_arena_*` " &
+    &"Arena holds {arena.capacity} bytes, raise whichever `--define:visualiser.capacity_*` " &
     &"backs it; got `{arena.used + bytes_needed}` asked for."
   result = cast[ptr UncheckedArray[T]](addr arena.buffer[arena.used])
   arena.used += bytes_needed
@@ -99,44 +102,44 @@ func push*[T](arena: var Arena, count: int): ptr UncheckedArray[T] =
 
 
 
-#[ Frame Swap Pair ]#
+#[ Frame Arenas ]#
 
-func initArenaSwap*(backing_first, backing_second: var openArray[byte]): ArenaSwap =
-  ## Wrap two caller-owned blocks as swap pair, first of them current.
+func initArenasFrame*(backing_first, backing_second: var openArray[byte]): ArenasFrame =
+  ## Wrap two caller-owned blocks as frame arenas, first of them current.
   ##   Two blocks rather than one twice size: point is that last frame's bytes are still
   ##   there, which single arena reset in place cannot promise.
-  ArenaSwap(
-    arenas: [initArena(backing_first), initArena(backing_second)],
+  ArenasFrame(
+    blocks: [initArena(backing_first), initArena(backing_second)],
     index_current: 0,
   )
 
 
-func swap*(pair: var ArenaSwap) =
+func swap*(arenas: var ArenasFrame) =
   ## Begin new frame.
   ##   What was current becomes readable as `previous`, and block moved to is reclaimed so
   ##   this frame starts clean.
-  pair.index_current = 1 - pair.index_current
-  pair.arenas[pair.index_current].reset()
+  arenas.index_current = 1 - arenas.index_current
+  arenas.blocks[arenas.index_current].reset()
 
 
-func current*(pair: var ArenaSwap): var Arena = pair.arenas[pair.index_current]
+func current*(arenas: var ArenasFrame): var Arena = arenas.blocks[arenas.index_current]
   ## Reach arena this frame carves from.
 
-func previous*(pair: var ArenaSwap): var Arena = pair.arenas[1-pair.index_current]
+func previous*(arenas: var ArenasFrame): var Arena = arenas.blocks[1-arenas.index_current]
   ## Reach arena previous frame carved from, still holding what it wrote.
   ##   Read-only in spirit: carving from it takes memory this frame's `swap` is about to
   ##   reclaim, and nothing stops that; discipline is caller's.
 
-func usedSwap*(pair: ArenaSwap): int = pair.arenas[pair.index_current].used
+func used*(arenas: ArenasFrame): int = arenas.blocks[arenas.index_current].used
   ## Report bytes carved this frame.
 
-func capacitySwap*(pair: ArenaSwap): int = pair.arenas[0].capacity + pair.arenas[1].capacity
-  ## Report both blocks together, which is what pair reserves.
+func capacity*(arenas: ArenasFrame): int = arenas.blocks[0].capacity + arenas.blocks[1].capacity
+  ## Report both blocks together, which is what frame arenas reserve.
 
-func peakUsedSwap*(pair: ArenaSwap): int =
+func peakUsed*(arenas: ArenasFrame): int =
   ## Report most either block has ever held at once.
   ##   Larger of two rather than sum: they hold one frame's work each, not halves of one.
-  max(pair.arenas[0].peak_used, pair.arenas[1].peak_used)
+  max(arenas.blocks[0].peak_used, arenas.blocks[1].peak_used)
 
 
 
