@@ -75,7 +75,8 @@ type Wording* = enum
   TipApplyArity, TipApplyOperation, TipApplyFirst, TipApplySecond,
   TipViewMotor, TipViewAzimuth, TipViewElevation, TipViewDistance, TipViewSpeed, TipViewLens,
   TipDiagnosticsFrames, TipDiagnosticsVsync, TipDiagnosticsProgram, TipDiagnosticsFrameArena,
-  TipDiagnosticsPool, TipDiagnosticsScene,
+  TipDiagnosticsPool, TipDiagnosticsScene, TipDiagnosticsPga, TipDiagnosticsAlgebra,
+  TipDiagnosticsBoundary, TipDiagnosticsEuclidean,
   TipPickApply, TipPickOperation, TipPickBack, TipPickEdit, TipPickVisible, TipPickDelete,
   TipPickClose,
   TipMenuSceneFile, TipMenuImageFile, TipMenuSaveScene, TipMenuSaveImage, TipMenuLoadScene,
@@ -90,7 +91,8 @@ type Wording* = enum
   NameViewMotor, NameViewAzimuth, NameViewElevation, NameViewDistance, NameViewSpeed,
   NameViewLens,
   NameDiagnosticsFrame, NameDiagnosticsVsync, NameDiagnosticsMemory, NameDiagnosticsProgram,
-  NameDiagnosticsFrameArena, NameDiagnosticsPool, NameDiagnosticsTotal,
+  NameDiagnosticsFrameArena, NameDiagnosticsPool, NameDiagnosticsTotal, NameDiagnosticsShare,
+  NameDiagnosticsPga, NameDiagnosticsAlgebra, NameDiagnosticsBoundary, NameDiagnosticsEuclidean,
   NamePickApply, NamePickEdit, NamePickBack, NamePickHide, NamePickShow, NamePickDelete,
   NamePickClose,
   NameMenuSave, NameMenuSaveScene, NameMenuSaveImage, NameMenuLoad, NameMenuLoadScene,
@@ -100,6 +102,8 @@ type Wording* = enum
   NameTitle,
 
   NoteListEmpty, NoteListUnmatched, NoteCoefficientsNew, NoteCoefficientsEdit, NoteDiagnostics,
+  NoteDiagnosticsShareWaiting, NoteDiagnosticsShareLinux, NoteDiagnosticsShareFrames,
+  NoteDiagnosticsShareBrowser, NoteDiagnosticsSharePolicy,
   NoteSaveByHold, NoteSaveBlocked, NameSaveDismiss,
 
   NameTabDrag, NameTabSelect, NameTabMenu, NameTabPanel, NameTabCamera, NameTabKeys,
@@ -184,6 +188,19 @@ const LUT_TEXT_BY_WORDING: array[Wording, cstring] = [
   TipDiagnosticsScene:
     "Scene is one fixed block sized for every handle up front, not allocated one object at a " &
         "time: `allocated` is that whole block, `used` is however much of it carries an object.",
+  TipDiagnosticsPga:
+    "Share of this build's busy time over the last 20 seconds that ran " &
+        "inside PGA, the reference library, whatever called it. A sampling profiler counts " &
+        "it, so read it as about right rather than exact; n is how many samples it rests on.",
+  TipDiagnosticsAlgebra:
+    "Share of the same busy time that ran in this project's algebra outside PGA: its motors, " &
+        "its projections, and its incidence questions, which compose PGA's operators.",
+  TipDiagnosticsBoundary:
+    "Share of the same busy time that ran in the boundary, which lifts positions, directions " &
+        "and motors into the algebra and reads them back out.",
+  TipDiagnosticsEuclidean:
+    "Share of the same busy time that ran on the Euclidean side, which holds positions and " &
+        "directions and builds vertices, and never names a multivector.",
 
   # Menu that opens over whatever is picked.
   TipPickApply:
@@ -260,6 +277,11 @@ const LUT_TEXT_BY_WORDING: array[Wording, cstring] = [
   NameDiagnosticsFrameArena: "frame arena",
   NameDiagnosticsPool: "object pool",
   NameDiagnosticsTotal: "total",
+  NameDiagnosticsShare: "pga share",
+  NameDiagnosticsPga: "pga",
+  NameDiagnosticsAlgebra: "algebra",
+  NameDiagnosticsBoundary: "boundary",
+  NameDiagnosticsEuclidean: "euclidean",
 
   # Menu that opens over whatever is picked.
   NamePickApply: "apply",
@@ -309,6 +331,13 @@ const LUT_TEXT_BY_WORDING: array[Wording, cstring] = [
     "The 16 numbers of this object's own multivector, in the library's basis order, " &
         "stacked one row per grade. The object itself only moves when you save.",
   NoteDiagnostics: "Live cost of this build, updated every frame.",
+  # PGA share in place of its figure: none sampled yet, or no way to sample here.
+  NoteDiagnosticsShareWaiting: "No samples yet.",
+  NoteDiagnosticsShareLinux: "Unavailable: this build samples on Linux alone.",
+  NoteDiagnosticsShareFrames: "Unavailable: this build keeps no stack frames to sample.",
+  NoteDiagnosticsShareBrowser: "Unavailable: this browser has no sampling profiler.",
+  NoteDiagnosticsSharePolicy:
+    "Unavailable: this page was not served with Document-Policy: js-profiling.",
   # Sentence rather than fragment: it stands in its own line under link, not after it.
   NoteSaveByHold: "Or press and hold the image to save it.",
   NoteSaveBlocked:
