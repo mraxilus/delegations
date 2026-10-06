@@ -10,7 +10,7 @@ import { settleCamera } from './camera';
 import { clearTheGlass } from './gestures';
 import { waitFrames } from './frame';
 import { report } from './report';
-import { pixelOf } from './wheel';
+import { handleAlone, pixelOf } from './wheel';
 
 /** Drive orbit sweeping objects past pointer, which must highlight none.
  *
@@ -184,5 +184,55 @@ export async function driveChipRowFits(page: Page): Promise<void> {
     'the chip row fits at every width, and its toggles are reachable wherever they sit',
     fitted && reachable,
     swept.join('; '),
+  );
+}
+
+
+/** Drive mouse with no button down onto object and off it, which hover must follow.
+ *
+ *  As found (repository issue 566): plain mouse move returned before marking hover stale, so
+ *  ring moved only on press, wheel or drag. Every other hover check calls `nimUpdateHover`
+ *  itself, so none saw it. Here only pointer events reach page, and frame refreshes hover.
+ *  Domain: entering object from empty sky, and leaving it for empty sky again.
+ */
+export async function driveHoverFollowsMouse(page: Page): Promise<void> {
+  await page.keyboard.press('Home');
+  await settleCamera(page);
+  await clearTheGlass(page);
+  const handle = await handleAlone(page);
+  const pixel = handle < 0 ? null : await pixelOf(page, handle);
+  if (pixel === null) {
+    report('an object stands on screen to hover', false, `handle ${handle}`);
+    return;
+  }
+  // Find empty sky by asking bridge directly: setup only, never verdict.
+  const corners = await page.evaluate(() => [
+    { x: 6, y: window.innerHeight - 6 }, { x: window.innerWidth - 6, y: window.innerHeight - 6 },
+    { x: 6, y: 6 }, { x: window.innerWidth - 6, y: 6 },
+  ]);
+  let empty: { x: number; y: number } | null = null;
+  for (const corner of corners) {
+    await page.mouse.move(corner.x, corner.y);
+    await page.evaluate(() => nimUpdateHover(window.innerWidth, window.innerHeight));
+    if (await page.evaluate(() => nimHoverHandle()) < 0) {
+      empty = corner;
+      break;
+    }
+  }
+  if (empty === null) {
+    report('a corner of empty sky stands to start from', false, 'every corner hovers');
+    return;
+  }
+
+  await page.mouse.move(pixel[0] ?? 0, pixel[1] ?? 0, { steps: 4 });
+  await waitFrames(page, 3);
+  const entered = await page.evaluate(() => nimHoverHandle());
+  await page.mouse.move(empty.x, empty.y, { steps: 4 });
+  await waitFrames(page, 3);
+  const left = await page.evaluate(() => nimHoverHandle());
+  report(
+    'a mouse moved onto an object with no button down hovers it, and off it hovers nothing',
+    entered === handle && left < 0,
+    `hovering ${entered} over handle ${handle}, then ${left} over empty sky`,
   );
 }
