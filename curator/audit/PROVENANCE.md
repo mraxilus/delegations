@@ -244,9 +244,8 @@ own two. The audit runs `checkBanners` of knoller on each kind of Nim syntax.
 
 - X.2 gives no count for a banner that opens the file, or for a run that ends the file. It
   gives none between two banners either, unless they are a parent and its child.
-- Rejected: a lenient check beside the exact one, which took two blank lines before every banner.
-  The rule then stood twice. On the tree the exact check reported nothing, measured 2026-10-06, so
-  no project reddened when the lenient check went (CURATOR.md, duty 3).
+- Rejected: a lenient check beside the exact one, which takes two blank lines before every banner,
+  so the rule stands twice.
 - Verified by `suites/test_form.nim`: each count of the exact check reads through the static pass
   in `.nim`, `.nims` and `.nimble`, and cfg reads none. A banner at either end of a file, and a
   banner beside a banner, pass.
@@ -1446,7 +1445,7 @@ the static pass passes their words to the check. The jargon list of V.6 passes t
   both checks on each kind of Nim.
 - The rename fixers of V.6, V.1 and V.11 stay in the audit, because they plan through the semantic
   pass (`## Semantic pass`). They read the spellings that knoller gives, `respelled` and `cased`.
-  That move is the next step of D3 a of #548.
+  Issue #558 holds their move to knoller.
 - Verified by `suites/test_names.nim`. Each rule of names prints its article where its sentence
   ends, as koch prints it. A word that a glossary lists passes.
 
@@ -1463,9 +1462,8 @@ code.
   it out.
 - `tsconfig.json` sets its three flags to `true`, read as text, because TypeScript admits
   comments that `std/json` refuses.
-- Rejected: the idioms on `.nim` alone. A `.nims` or `.nimble` file then read none of them, though
-  bindings, pragmas and `return result` mean the same there. On the tree the wider pass reported
-  nothing, measured 2026-10-06, so no project reddened (CURATOR.md, duty 3).
+- Rejected: the idioms on `.nim` alone, which leave `.nims` and `.nimble` unread, though
+  bindings, pragmas and `return result` mean the same there.
 - Verified by `suites/test_idioms.nim` and `suites/test_audit.nim`. Each rule prints as koch prints
   it, and each kind of Nim takes the idioms of any Nim code.
 
@@ -1514,9 +1512,7 @@ before `; got `, or before the closing period. So `koch check` prints
   none of these messages.
 - The case of a name cites V.1, V.11 or V.12 by the kind of the name. So it takes three rules,
   `name-case`, `member-case` and `placeholder-letter`, and each cites one article.
-- A message of the static pass that cited no article before, such as `Line holds tab.`, cites one
-  now. A fixed wait cites `(IX.12)`, where it cited `(Article IX.12)`. On the tree no such finding
-  stands, so the output of `koch check-files` is the same.
+- Each message of the static pass cites its article, as `Line holds tab (X.1).` does.
 - Cost: a backtick in a sentence that no run of as many backticks closes pairs with the backtick of
   the value. The article then goes before the closing period. No message of knoller holds such a
   backtick, and reading holds that.
@@ -1626,11 +1622,10 @@ queues the wiring.
 
 **`checkFormatting` of knoller is the one list of checks that the next pull request wires.**
 `fixes.nim` reads it by kind. That pull request adds one call to its form for the tree in
-`auditTree`. The static pass reads `checkBanners` already, since no project breaks it. The list on
-every kind of Nim syntax:
+`auditTree`. The static pass reads `checkBanners`, so that pull request wires the rest of this
+list. The list on every kind of Nim syntax:
 
 - `checkComments`, the gap before a trailing comment (X.9);
-- `checkBanners`, the blank lines beside a banner (X.2);
 - `checkBlanks`, the blank lines beside a suite, a test (X.2) and a nested helper (STYLE.md §1);
 - `checkDocs`, the place of a one-line doc (STYLE.md §5);
 - `checkDefaults`, a type that a literal default gives (X.12);
