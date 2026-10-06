@@ -2473,7 +2473,7 @@ proc runInteractive(
       let reason = if IS_SAMPLER_BUILT: NoteDiagnosticsShareWaiting
         elif defined(linux): NoteDiagnosticsShareFrames
         else: NoteDiagnosticsShareLinux
-      echo &"  library share {wordingText(reason)}."
+      echo &"  library share: {wordingText(reason)}"
 
 
 proc runStoryboard(

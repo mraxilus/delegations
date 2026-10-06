@@ -324,12 +324,12 @@ const LUT_TEXT_BY_WORDING: array[Wording, cstring] = [
         "stacked one row per grade. The object itself only moves when you save.",
   NoteDiagnostics: "Live cost of this build, updated every frame.",
   # Library share in place of its figure: none sampled yet, or no way to sample here.
-  NoteDiagnosticsShareWaiting: "no samples yet",
-  NoteDiagnosticsShareLinux: "unavailable: this build samples on Linux alone",
-  NoteDiagnosticsShareFrames: "unavailable: this build keeps no stack frames to sample",
-  NoteDiagnosticsShareBrowser: "unavailable: this browser has no sampling profiler",
+  NoteDiagnosticsShareWaiting: "No samples yet.",
+  NoteDiagnosticsShareLinux: "Unavailable: this build samples on Linux alone.",
+  NoteDiagnosticsShareFrames: "Unavailable: this build keeps no stack frames to sample.",
+  NoteDiagnosticsShareBrowser: "Unavailable: this browser has no sampling profiler.",
   NoteDiagnosticsSharePolicy:
-    "unavailable: this page was not served with Document-Policy: js-profiling",
+    "Unavailable: this page was not served with Document-Policy: js-profiling.",
   # Sentence rather than fragment: it stands in its own line under link, not after it.
   NoteSaveByHold: "Or press and hold the image to save it.",
   NoteSaveBlocked:
