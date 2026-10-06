@@ -1542,7 +1542,8 @@ before `; got `, or before the closing period. So `koch check` prints
 
 **`koch fix` rewrites in place each finding that has one mechanical fix, and nothing else.** It is
 built from the checks. Each fixer sits beside its check. A fixer that reads the text of one file
-sits in knoller, and one that reads more sits in `names.nim`, `conversions.nim` or `checker.nim`.
+sits in knoller, with the fixer of conversions, and one that reads more sits in `names.nim` or
+`checker.nim`.
 Each reads the same spans, runs, predicates and constants. So each rule is written once (Article
 II.1), and a fixer cannot drift from the check that names its finding.
 
@@ -1652,9 +1653,8 @@ list. The list on every kind of Nim syntax:
 On `.nim` alone, as the idiom checks read it, the list adds `checkBracketsImport` (X.5),
 `checkLists` (X.10) and `checkProfiler` (STYLE.md §3). The move of a late `strictFuncs` needs no
 new check, because `checkIdioms` already reports it. `checkNegations` has no fixer, so a project
-clears it by hand before the wiring. The check of a type conversion needs the semantic pass. The
-static pass cannot run that pass, so `koch fix --dry-run` reports it, and the wiring decides its
-place.
+clears it by hand before the wiring. The check of a type conversion needs the semantic pass, so
+`koch check` and `koch test` run it after the restore, outside the static pass.
 
 **X.9 asks exactly two spaces, by the ruling of the Architect.** An aligned column breaks on a
 rename. One longer name moves every comment of the block. So a change of one line rewrites the
@@ -1871,57 +1871,20 @@ It fixed every Nim file of the tree on branch `main`, with the checkouts of `koc
 
 ## Semantic pass
 
-**Two rules ask what a name means, so `koch fix` asks the semantic pass of the compiler.** Text
-cannot tell a conversion `x.T` from a field or a module path, such as `rigid3.Point`. Text cannot
-find every use of a name across modules either. So `symbols.nim` asks `nimsuggest` of the
-toolchain that serves the pin of the project.
+**Two rules ask what a name means, so `koch` asks the semantic pass of knoller.** The lookup
+through `nimsuggest`, and the fixer of conversions, live in knoller, whose record holds them. The
+audit gives the lookup what its tree holds: the project of each file is its directory, whose
+nimble file names the pin, a root file takes the pin of the driver, and the includer of a file is
+read among the Nim files of the tree (`symbols.nim`).
 
-- One `nimsuggest --v3 --stdin` serves each entry: the file itself, or the file that includes it.
-  It runs in the project directory, so the `nim.cfg` of the project applies.
-- A run reads its commands from a file and writes its answers to a file, through the
-  redirection of the shell. A pipe holds 64 KiB, and a run whose answers fill it stops reading
-  commands. So a run fed through pipes, all commands first, waits forever on a large entry.
-  Verified by `suites/test_symbols.nim`, which passes 64 KiB each way.
-- `nimsuggest` waits 250 ms between two commands on its input, so each site costs a quarter of a
-  second at least. Measured on this container with 2.2.12, 2026-10-04: 300 sites of one small
-  file took 76 s, with 0.6 s of processor time.
-- Each file is checked first. A file that reports an error on the C backend is asked again on the
-  JavaScript backend. A file that fails both stays unresolved, and `koch fix` prints its first
-  error.
-- A routine that returns a value answers its own declared name with its implicit `result`. So that
-  answer reads as the routine declared at the site, where each use of it resolves. Both pins that
-  koch serves answer so (verified by hand, 2026-10-03).
-- Rejected: the compiler as a library inside koch. Every build of koch would compile the
-  compiler. Koch would also bind to one pin, and the `ronri` projects lex glyphs that only their
-  commit pin knows.
-- Rejected: `nim check --def` for each site, which compiles the project once for each site.
-  `nimsuggest` ships with each toolchain that koch serves, so the pass costs no build.
-- Cost, measured 2026-10-02 on this container: about 2 s for each entry of a curator module. A
-  front-end or a suite of `rga_visualiser` takes 5 to 9 s. Only a file with a candidate asks.
-- A site of an included file asks `dus`, whose answer opens on the same definition as `def`.
-  Verified by `suites/test_symbols.nim`, which resolves a use of an included file to its `let`.
-- On the commit pin, `def` in an included file recompiles the file that includes it for each
-  site, and `dus` recompiles only what is dirty. Read in `executeNoHooksV3` of `nimsuggest.nim`
-  at that pin. Measured on this container, 2026-10-04, over 20 sites of the shared suite of
-  `rga_visualiser` at `c5c65db`: `def` took 345 s and `dus` took 50 s.
-- A site of the entry itself keeps `def`, because `dus` lists every use of the symbol. Measured in
-  the same run: `dus` gave 182 use lines beside the 20 definitions. That the list grows long for a
-  common symbol such as `float` is inferred, and an included file pays that output alone.
-- Cost: a file that needs a checkout of `koch fetch-deps`, or a native library, stays unresolved
-  without it. A branch of `when` that the defines leave out resolves nothing.
-- Verified by `suites/test_symbols.nim`, against the `nimsuggest` of the running compiler.
-
-**A type conversion `x.T` becomes `T(x)` where the pass settles it (STYLE.md §5).** The candidate
-is a type-like name glued after a receiver. The name must resolve to a type, and the last name of
-the receiver to a value. A parenthesised receiver gives the call its parentheses, and a tuple
-keeps its own.
-
-- The edits apply once, before the chain, on the source as given. They move no line, so the fence
-  holds, and no edit lands on a fenced line.
-- A receiver that is a module the file imports, or a capitalised name, asks nothing. That keeps
-  the pass to the few files that hold a candidate.
-- The static pass compiles nothing, so it cannot run this check. `koch fix --dry-run` reports it.
-- Verified by `suites/test_conversions.nim` and `suites/test_fixes.nim`.
+- A file whose project pins no compiler, or whose pin no compiler serves, is answered unresolved
+  with its reason, and asks nothing.
+- `koch fix` fixes each conversion that the pass settles, and `koch check` and `koch test` report
+  each one (D1 a of #558). The two checks run the pass once the restore stands, since a file
+  compiles only with the checkouts of its lock. A file the pass cannot resolve prints one warning
+  with its reason, and the exit code holds.
+- Verified by `suites/test_symbols.nim`, against the `nimsuggest` of the running compiler, for a
+  file of the tree, a file it includes, and a file that compiles nowhere.
 
 **A coined abbreviation (V.6) is renamed to its full word at every use, or the rename is refused
 whole.** `names.nim` reads each declaration that the names check reports, and spells it out word

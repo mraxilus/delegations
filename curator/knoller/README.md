@@ -1,10 +1,11 @@
 # knoller
 
-The fixers and the checks of Nim source that read the text of one file alone. The checks are
-those that the fixers clear, and those of form, names, idioms, articles and fixed waits that the
-static pass of `curator/audit` reads. `koch fix` runs the fixers through `curator/audit`, which
-keeps each fixer that asks the compiler. `audit` imports knoller by a relative path. Knoller also
-runs alone, on a file or a directory of any repository.
+The fixers and the checks of Nim source that read the text of one file alone, and the fixer of
+type conversions, which asks the semantic pass of the compiler. The checks are those that the
+fixers clear, and those of form, names, idioms, articles and fixed waits that the static pass of
+`curator/audit` reads. `koch fix` runs the fixers through `curator/audit`, which keeps the fixers
+of renames. `audit` imports knoller by a relative path. Knoller also runs alone, on a file or a
+directory of any repository.
 
 Authority replicated: none. The rules are those of `CONSTITUTION.md` and `STYLE.md`.
 
@@ -49,6 +50,11 @@ knoller [--check] [--nim:path] path...
 - Where no compiler answers, knoller removes no parentheses in those files and prints one warning
   that says why. A pin that no compiler serves gives that warning, and so does a directory that
   holds more than one nimble file. Knoller never takes another compiler in silence.
+- A type conversion `x.T` becomes `T(x)` where the semantic pass of the compiler settles it.
+  Knoller asks `nimsuggest` only about a file that holds a candidate, so a clean tree costs no
+  compile. The pass runs in the nearest directory that holds a nimble file, with the compiler that
+  proves parentheses. A file that the pass cannot resolve keeps its conversions, and prints one
+  warning that says why.
 - Knoller has no style option. A fence, from a line `#!fix off` to a line `#!fix on`, keeps its
   lines as written. Each run prints one warning for each fence, which names each rule that breaks
   inside it. So you always see what the fence keeps, and knoller writes none of it.
@@ -61,6 +67,7 @@ path:line: <rule-id> fixed
 path: unsettled: <message>
 path:line: <rule-id> left: <message>
 path:line: fence-held warning: <message>
+path: type-conversion warning: <message>
 needless-parentheses warning: <message>
 N fixed.
 ```
@@ -96,7 +103,7 @@ the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, 
 
 | Id | Rule |
 |----|------|
-| `type-conversion` | A type conversion is a prefix call, `T(x)`, never `x.T`. The semantic pass of the compiler tells it from a field or a module. |
+| `type-conversion` | A type conversion is a prefix call, `T(x)`, and never `x.T`. |
 | `trailing-whitespace` | A line ends in no space, tab or carriage return. |
 | `file-ending` | A file ends in exactly one newline, so an empty file breaks it. |
 | `line-ending` | A line holds no carriage return. No fix reaches it. |
