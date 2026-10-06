@@ -2119,6 +2119,21 @@ that holds it. The events, each one a verb argument:
 - `start` prints the role, the read order, the carried list and the drift state, at the start
   and after each compaction.
 
+**A post holds one footer, as its last line, and the footer of the proxy serves as that
+footer.** The GitHub proxy appends a footer that links the delegate to each post that ends in
+none. An edit fetches a body, changes it, and sends it back, so the body holds the footer of
+the proxy. Where `body` asked for the plain footer there too, the edit added a second one, as
+the body of #574 shows. So `body` takes either footer as the footer, and refuses a second one
+anywhere, or one above the last line (D1 of #578).
+
+- A footer quoted in fenced code is no footer, so a post may show one as an example.
+- A pull request body asks for no footer, since the proxy appends one. It still holds one at most.
+- Verified by `suites/test_hooks.nim`, for the body of #574 as found. The suite also holds its
+  domain: the footer of the proxy alone, two plain footers, a footer above the last line, and a
+  quoted one.
+- Cost: the footer of the proxy is read by its opening and its closing, so a change to its
+  address reads as no footer. Then `body` asks for the plain one, and the proxy appends nothing.
+
 **`path`, `edit` and `bash` read the checkout that the call acts in, and never the primary
 checkout alone.** A subagent works in a worktree of its own, on a branch of its own
 (`GUIDE.md`, Work for subagents). The checkout of a write is the one that
