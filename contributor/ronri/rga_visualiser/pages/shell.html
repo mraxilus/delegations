@@ -991,6 +991,10 @@
     justify-content: space-between;
   }
   .diagnostic-line b { color: var(--ink); font-variant-numeric: tabular-nums; }
+  /* Label's line box set by its own size, not by every face it draws from: arrow of
+     crossing rows comes from maths face, whose taller box would stand its row 5 px above
+     others. */
+  .diagnostic-line > span { line-height: 1; }
   /* Parent row is button so it is reachable by keyboard and announced as one, and is
      otherwise same row: chevron and its rotation match section headers above,
      since both answer "there is more under here". */
