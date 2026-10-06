@@ -431,8 +431,9 @@ proc run(options: Options): int =
   of "test":
     if not options.isReadAll({Root, Base, All, Recent}, has_project = true):
       return options.refused
-    let tree = options.root.readTree
-    let jobs = options.jobsPlanned(tree)
+    let
+      tree = options.root.readTree
+      jobs = options.jobsPlanned(tree)
     found = runJobs(options.root, jobs)
     let (converted, unread) = checkConversions(options.root, tree, jobs.mapIt(it.directory))
     found.add converted
