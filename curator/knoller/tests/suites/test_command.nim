@@ -7,7 +7,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, os, sequtils, strutils, tables, tempfiles, unittest]
+import std/[options, os, osproc, sequtils, strutils, tables, tempfiles, unittest]
 import ../../src/knoller/[chain, command, proofs, reports, rules]
 import ./stubs
 
@@ -200,6 +200,26 @@ suite "Command line":
     let bare = listingOf("docs", "a.md\0", 0)
     check bare.files.len == 0
     check bare.refusal.startsWith("Directory holds no Nim file that git lists")
+
+
+  test "directory lists Nim files git writes on stdout alone, whatever it writes on stderr":
+    # Case held: `listed` ran git through `execCmdEx`, which joins stderr to stdout, so text git
+    #   wrote on stderr, as warning, stuck to first path (`command.nim`, #557); trace of git
+    #   stands in for warning, since both reach stderr alone. Domain is any text on stderr, with
+    #   exit code still deciding refusal.
+    let
+      root = createTempDir("knoller_", "_listed")
+      outside = createTempDir("knoller_", "_outside")
+    defer:
+      removeDir(root)
+      removeDir(outside)
+    root.writeTree([("b.nim", "x\n"), ("a.nim", "x\n"), ("c.md", "x\n")])
+    check execCmd("git -C " & root.quoteShell & " init -q") == 0
+    check execCmd("git -C " & root.quoteShell & " add -A") == 0
+    putEnv("GIT_TRACE", "1")
+    defer: delEnv("GIT_TRACE")
+    check root.listed == (@[root / "a.nim", root / "b.nim"], "")  # no trace glued to first
+    check outside.listed.refusal.startsWith("Directory lies outside git work tree")
 
 
   test "locked nimble file and file of no dialect are passed over":
