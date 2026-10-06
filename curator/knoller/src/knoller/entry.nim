@@ -114,6 +114,18 @@ func blockEntry*(source: string): BlockEntry =
       return
 
 
+func checkBlockEntry*(path, source: string): seq[Report] =
+  ## Report each binding entry block holds, its case unjudged (V.10); fix moves block that
+  ##   `blockEntry` refuses none, so finding after fix is block left to hand.
+  for (line, name) in source.blockEntry.bindings:
+    result.add initReport(
+      path,
+      line,
+      Rule.EntryBlock,
+      "Entry block holds no binding; move code that binds into `proc main`; got `" & name & "`.",
+    )
+
+
 func fixBlockEntry*(path, source: string): Fix =
   ## Move body of entry block into `proc main` above block, documented `TODO: Document.` (VI.1),
   ##   and leave block calling `main()` (V.10). Block whose move `blockEntry` refuses stays.

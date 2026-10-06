@@ -90,6 +90,16 @@ the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, 
 | `trailing-comment` | Two spaces stand before the marker of a trailing comment. |
 | `banner-spacing` | The blank lines beside a banner follow its tier. |
 | `entry-block` | An entry block holds no binding, so its body moves into `proc main`. |
+| `abbreviation` | A name coins no abbreviation, and its full word stands. |
+| `acronym` | An acronym in a name stays only where a glossary lists it. |
+| `action-verb` | An action is an imperative verb, and a property is the bare noun. |
+| `boolean-name` | A boolean opens `is_`, `as_`, `should_`, `found_` or `has_`, a predicate `is`. |
+| `lookup-table` | A lookup table reads `lut_<value>_by_<key>`. |
+| `name-case` | The case of a name follows its kind. |
+| `member-case` | A member of an enum is `PascalCase`, as its type is. |
+| `placeholder-letter` | A placeholder of a generic is one capital letter. |
+| `notation` | The notation of the source holds over case only for an immutable global. |
+| `global-word` | A global shares no word with a type. |
 | `article-in-comment` | A comment holds no article. |
 | `message-value` | A message echoes its value in backticks. |
 | `and-with-or` | A condition that mixes `and` with `or` puts each `and` in parentheses. |

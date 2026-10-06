@@ -9,7 +9,7 @@
 
 import std/[options, sequtils, strutils, tables, unittest]
 import ../../../knoller/src/knoller
-import ../../src/[findings, fixes, form, kinds, names, symbols, tree]
+import ../../src/[findings, fixes, form, kinds, symbols, tree]
 import ./fixtures
 
 
