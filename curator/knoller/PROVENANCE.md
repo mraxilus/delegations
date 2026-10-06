@@ -114,7 +114,7 @@ because the charter grants the fence (Article X.1).
 so each marker reads as a plain comment, and each line keeps its number. `heldOf` keeps each
 finding whose line falls inside a fence. So a fence counts what its lines report without the fence.
 A rule that a fixer clears and a rule left for the hand count alike, because a check names both.
-Each check that the static pass of `curator/audit` reads counts too, in each dialect.
+Each check of knoller that the static pass of `curator/audit` reads counts too, in each dialect.
 
 - Rejected: one warning for each break inside a fence. The Architect chose one line for each
   fence, so a large table in a fence costs one line.
@@ -181,17 +181,19 @@ left, where a file is unsettled, or where a change is due under `--check`.
   nothing. A run without a path, and a run with an unknown option, exited 2.
 
 **After the fix, every check of knoller reads the text that the fixers leave (`checkSource`).**
-Those are the checks of `checkFormatting`, off fenced lines, and the checks that the static pass of
-`curator/audit` reads, on every line. So a finding that no fixer clears prints as `left`, and the
-run exits 1.
+Those are the checks of `checkFormatting`, off fenced lines, and the checks of knoller that the
+static pass of `curator/audit` reads, on every line. So a finding that no fixer clears prints as
+`left`, and the run exits 1.
 
 - Rejected: the checks of `checkFormatting` alone, with the idiom checks on a file that holds a
   fence. That run exits 0 on a wide line that no wrap fits, a tab outside a string, a capital
   article or a refused entry block.
 - The names check takes no word as exempt beyond the jargon of V.6. The glossaries belong to a
-  repository, so the command line reads none, and `koch` passes the words of its own.
-- Verified by `suites/test_command.nim`, for each rule that the static pass reads and the fixers
-  can leave. A source of each, as the fixers leave it, exits 1 and names its rule.
+  repository, so the command line reads none, and `koch` passes the words of its own. The acronym
+  rule of V.9 needs a glossary, so the command line runs none (`## Names`).
+- Verified by `suites/test_command.nim`, for each rule of knoller that the static pass reads and
+  the fixers can leave. A source of each, as the fixers leave it, exits 1 and names its rule. A
+  file that declares `toJSON` beside a call of `parseJson` exits 0, in each dialect.
 - Verified by hand, 2026-10-06, with a debug build of `2595a5dc` and of `471007f`. `knoller
   --check` on `curator`, `rga_visualiser`, `pga_benchmark` and `dance_ontology` reports no finding
   left that `471007f` does not report.
@@ -990,17 +992,20 @@ member or a placeholder. `declared.nim` reads them after comments and strings ar
 binding comes from `let`, `var`, `const`, `for` or `except … as`. A word is a run between
 underscores and case changes. The table pairs each coined abbreviation with its one full word.
 
-An acronym is a run of two or more capitals inside a camel or Pascal name. It passes only where
-the caller lists it, and the jargon list of V.6 passes. `curator/audit` gives the words that its
-glossaries list. The command line gives none, since knoller reads no glossary of any repository.
-Verified by `suites/test_names.nim`.
+Knoller reads no glossary, because a glossary belongs to a repository, and knoller runs on any. So
+the acronym rule of V.9, which passes an acronym only where a glossary lists it, is a check of
+`curator/audit` (D2 of #572). The words that a name may take beyond the table are the words of the
+caller. `curator/audit` gives those that its glossaries list, and the command line gives none. The
+jargon list of V.6 always passes. Verified by `suites/test_names.nim`.
 
-- Each finding names a rule of its own: `abbreviation`, `acronym`, `action-verb`,
-  `boolean-name`, `lookup-table`, `name-case`, `member-case`, `placeholder-letter`, `notation` and
-  `global-word`. The case of a name takes three rules, because V.1, V.11 and V.12 state it by kind.
+- Each finding names a rule of its own: `abbreviation`, `action-verb`, `boolean-name`,
+  `lookup-table`, `name-case`, `member-case`, `placeholder-letter`, `notation` and `global-word`.
+  The case of a name takes three rules, because V.1, V.11 and V.12 state it by kind.
 - No fixer here. A rename reaches each use of a name, and only the semantic pass of the
   compiler finds each use. So `curator/audit` plans it from the spellings that this module gives
   (`respelled`, `cased`).
+- Rejected by the Architect: the acronym rule in knoller, with the words of the caller. The
+  command line then reports each acronym of another repository, which has no glossary to list it.
 
 **A foreign name keeps the spelling that foreign code reads.** A routine whose pragmas hold a word
 of `MARKS_FOREIGN`, such as `importc` or `exportc`, declares such a name, so it is skipped. By the
@@ -1082,8 +1087,6 @@ predicate:
 - V.3 is held as the first word of a routine of two words or more: never `get`, `compute` or
   `new`. V.5 is held as `_by_` once in a name that opens with `lut` and has more words. V.10
   is held as a global SCREAMING name that equals a type name without case or underscores.
-- A SCREAMING name is all capitals, so its acronyms cannot be told from words and hold by
-  reading.
 - Rejected: a parser, which costs a dependency and a compiler version. The scanner reads the
   line forms that this charter prescribes.
 - A name that a template substitutes declares nothing of that name. So `type name = object`
@@ -1097,8 +1100,8 @@ predicate:
   brackets, and a name that `{.inject.}` makes.
 - Cost: a boolean is read only where its declaration shows it, by the type `bool` or by the
   value `true` or `false`. A boolean that a call returns holds by reading.
-- Cost: a Pascal name of capitals alone, such as `ANTI`, reads as an acronym and passes. V.9
-  and reading hold it.
+- Cost: a Pascal name of capitals alone, such as `ANTI`, passes the case of a type. Reading holds
+  it.
 
 ## Idioms
 
