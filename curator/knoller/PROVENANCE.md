@@ -138,9 +138,10 @@ Each check of knoller that the static pass of `curator/audit` reads counts too, 
 
 **`knoller [--check] [--nim:path] path...` fixes each Nim file that the paths name.** A directory
 stands for the Nim files that `git ls-files` lists under it. A run writes only the files that
-change, and `--check` writes none. Each line of output names a path, a line and a rule id, and the
-count comes last. A clean run exits 0, and a usage error exits 2. A run exits 1 where a finding is
-left, where a file is unsettled, or where a change is due under `--check`.
+change, and `--check` writes none. Each finding names a path, a line and a rule id, an unsettled
+file names its path alone, and the count comes last. A clean run exits 0, and a usage error
+exits 2. A run exits 1 where a finding is left, where a file is unsettled, or where a change is due
+under `--check`.
 
 - No option sets a style. The rules are constants, and a fence is the only way to keep a layout.
 - `--nim` names the compiler whose parser proves each group of needless parentheses
@@ -152,8 +153,9 @@ left, where a file is unsettled, or where a change is due under `--check`.
 - A file that the fixers do not settle prints one line, `path: unsettled: <message>`, after the
   rewrites and before the findings left. The line has no line number and no rule id, because the
   fault is in the tool (`## Chain`). The run exits 1, because the file stays as written.
-- Verified by `suites/test_command.nim`, for an unsettled file alone and beside a file that
-  settles. The suite holds the line, its place in the output and the exit code.
+- Verified by `suites/test_command.nim`, through `joined` with parts built by hand, for an
+  unsettled file alone and beside a file that settles. The suite holds the line, its place in the
+  output and the exit code.
 - The module is `command.nim`, because a path spells its words in full (Article V.9), and no
   glossary lists the acronym CLI.
 - `outcomeOf` decides what a run writes and prints from text alone, so its suite needs no file.
@@ -844,7 +846,7 @@ wideners.
   other files too.
 - A list of rules holds the rules of style that source can break. A fixer that does not settle is
   a fault of the tool, so no rule names it (D1 a of #572). No article cites it either.
-- Rejected by the Architect: `unsettled` as a member of `Rule`. It then takes a row in the README
+- Rejected by the Architect: `unsettled` as a member of `Rule`. It would take a row in the README
   and an article in `CITATIONS`, as if the source broke a rule of style.
 - Rejected: a fixer that wraps its own line. `form.nim` and `wrapping.nim` would then import each
   other, and a later fixer could undo the wrap.
@@ -1005,7 +1007,7 @@ jargon list of V.6 always passes. Verified by `suites/test_names.nim`.
   compiler finds each use. So `curator/audit` plans it from the spellings that this module gives
   (`respelled`, `cased`).
 - Rejected by the Architect: the acronym rule in knoller, with the words of the caller. The
-  command line then reports each acronym of another repository, which has no glossary to list it.
+  command line would report each acronym of another repository, which has no glossary to list it.
 
 **A foreign name keeps the spelling that foreign code reads.** A routine whose pragmas hold a word
 of `MARKS_FOREIGN`, such as `importc` or `exportc`, declares such a name, so it is skipped. By the
