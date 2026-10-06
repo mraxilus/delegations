@@ -292,7 +292,10 @@ suite "Idiom fixes":
     check checkImportBrackets("a.nim", fix.source).len == 0
     check fixed(module("import std/[math]\n")).source == module("import std/math\n")
     check checkImportBrackets("a.nim", module("import std/[math]\n")).findingsOf[0].message ==
-      "Bracket of one module drops its bracket (X.5); got `std/[math]`."  # rule's one article
+      "Bracket of one module drops its bracket (STYLE.md §5); got `std/[math]`."  # own rule
+    check checkImportBrackets("a.nim", module("import std/[math]\n"))[0].rule ==
+      Rule.ModuleBracket
+    check fixed(module("import std/[math]\n")).fixed.mapIt(it.rule) == @[Rule.ModuleBracket]
 
 
   test "pragma list of declaration, export list and names after `from … import` are alphabetised":

@@ -57,6 +57,7 @@ suite "Findings":
       (Rule.ReturnResult, "return result (STYLE.md §5)"),
       (Rule.ImportRank, "import rank (X.5)"),
       (Rule.ImportBrackets, "import brackets (X.5)"),
+      (Rule.ModuleBracket, "module bracket (STYLE.md §5)"),
       (Rule.SingleBindings, "single bindings (X.5)"),
       (Rule.ProfilerImport, "profiler import (STYLE.md §3)"),
       (Rule.DocPosition, "doc position (STYLE.md §5)"),
@@ -161,13 +162,14 @@ suite "Findings":
       "comma (X.3); got `4` lines.",
       "Line fitting nowhere breaks after its operator of lowest precedence (STYLE.md §5); got " &
       "`101` runes.",
-      "Bracket of one module drops its bracket (X.5); got `std/[math]`.",
+      "Bracket of one module drops its bracket (STYLE.md §5); got `std/[math]`.",
     ]
     for (rule, article) in [
       (Rule.SignatureWrapping, "X.3"),
       (Rule.CallWrapping, "X.3"),
       (Rule.OperatorWrapping, "STYLE.md §5"),
       (Rule.ImportBrackets, "X.5"),
+      (Rule.ModuleBracket, "STYLE.md §5"),
     ]:
       check CITATIONS[rule] == article  # one article, which rewrite cites too
 

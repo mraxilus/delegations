@@ -31,6 +31,7 @@ type Rule* {.pure.} = enum  ## Define one rule knoller fixes or reports, in orde
   BracketImport = "bracket import"  ## Bracket import is alphabetised.
   ImportRank = "import rank"  ## Standard library, then packages, then local modules.
   ImportBrackets = "import brackets"  ## Adjacent imports of one directory share one bracket.
+  ModuleBracket = "module bracket"  ## Bracket of one module drops its bracket.
   SingleBindings = "single bindings"  ## Consecutive single bindings share one keyword.
   StrictFuncs = "strictFuncs"  ## Module carries `strictFuncs` before its imports.
   ProfilerImport = "profiler import"  ## Entry module imports profiler on one line.
