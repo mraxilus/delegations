@@ -205,7 +205,11 @@ canvas.addEventListener('pointermove', (e) => {
       return;
     }
     const prev = pointers.get(e.pointerId);
-    if (prev === undefined) return;
+    if (prev === undefined) {
+      // No button down: cursor alone moved, so hover reads it next frame; see `is_hover_stale`.
+      is_hover_stale = true;
+      return;
+    }
     const current = { x: e.clientX, y: e.clientY };
     pointers.set(e.pointerId, current);
     // Camera gesture is not hover, said at *move* rather than at press:

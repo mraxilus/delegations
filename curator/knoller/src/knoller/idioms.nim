@@ -660,9 +660,15 @@ func consolidations(lines, code: seq[string]): seq[Consolidation] =
   result = result.filterIt(not it.statement.isWide)
 
 
+func ruleOf(c: Consolidation): Rule =
+  ## Read rule of consolidation: imports of one directory merge (X.5), or bracket of one
+  ##   module drops (STYLE.md §5); two articles state two rewrites.
+  if c.lines.len > 1: Rule.ImportBrackets else: Rule.ModuleBracket
+
+
 func checkImportBrackets*(path, source: string): seq[Report] =
-  ## Report adjacent imports of one directory standing apart, and bracket of one module (X.5,
-  ##   STYLE.md §5).
+  ## Report adjacent imports of one directory standing apart (X.5), and bracket of one module
+  ##   (STYLE.md §5), each under rule of its own.
   ##   Named by its suite and `fixes.nim` alone until static pass calls it (`fixes.nim`).
   for c in consolidations(source.split('\n'), source.codeOnly.split('\n')):
     let message =
@@ -670,7 +676,7 @@ func checkImportBrackets*(path, source: string): seq[Report] =
         "Imports of one directory share one bracket; got `" & c.prefix & "` in `" &
           $c.lines.len & "` statements."
       else: "Bracket of one module drops its bracket; got `" & c.prefix & "[" & c.items[0] & "]`."
-    result.add initReport(path, c.lines[0] + 1, Rule.ImportBrackets, message)
+    result.add initReport(path, c.lines[0] + 1, c.ruleOf, message)
 
 
 func fixConsolidations(path, source: string): Fix =
@@ -684,7 +690,7 @@ func fixConsolidations(path, source: string): Fix =
     dropped: seq[int]
   for c in found:
     dropped.add c.lines[1 .. ^1]
-    result.fixed.add initReport(path, c.lines[0] + 1, Rule.ImportBrackets)
+    result.fixed.add initReport(path, c.lines[0] + 1, c.ruleOf)
   for i, line in lines:
     if i in dropped: continue
     var statement = line
