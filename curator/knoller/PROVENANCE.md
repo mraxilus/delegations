@@ -123,8 +123,9 @@ Each check that the static pass of `curator/audit` reads counts too, in each dia
   `not-over-binary`, which no fixer reaches.
 - Rejected: a fence as a finding that fails the run. A generated file would then fail every run,
   though its fence is allowed.
-- A fence keeps its lines from the fixers alone. Inside a fence, a finding of a check that the
-  static pass reads fails the run too. The static pass reads no fence, so it fails there too.
+- A fence keeps its lines from the fixers and from the checks of `checkFormatting`. It never keeps
+  them from a check that the static pass reads, since the static pass reads no fence. So a finding
+  of such a check inside a fence fails the run, as it fails the static pass.
 - A tab in a string counts as `tab`, since that check reads every tab, and `tab-in-string` names
   its fix alone.
 - Cost: a file with a fence takes the checks twice, once masked and once as given. A file with no
@@ -185,13 +186,13 @@ run exits 1.
   article or a refused entry block.
 - The names check takes no word as exempt beyond the jargon of V.6. The glossaries belong to a
   repository, so the command line reads none, and `koch` passes the words of its own.
-- Verified by `suites/test_command.nim`. One source for each rule that the static pass reads, as
-  the fixers leave it, exits 1 and names its rule.
-- Verified by hand, 2026-10-06, with a debug build of this head and of `471007f`. `knoller
+- Verified by `suites/test_command.nim`, for each rule that the static pass reads and the fixers
+  can leave. A source of each, as the fixers leave it, exits 1 and names its rule.
+- Verified by hand, 2026-10-06, with a debug build of `2595a5dc` and of `471007f`. `knoller
   --check` on `curator`, `rga_visualiser`, `pga_benchmark` and `dance_ontology` reports no finding
   left that `471007f` does not report.
-- Cost, measured on that run, two runs each. `rga_visualiser` took 35.8 s and 35.5 s, against
-  33.1 s and 33.7 s. `curator` took 21.0 s and 21.2 s, against 20.0 s and 19.5 s.
+- Cost, measured on that run, two runs each. `rga_visualiser` took 34.3 s and 34.6 s, against
+  32.7 s and 32.1 s. `curator` took 20.5 s and 19.8 s, against 19.1 s and 19.5 s.
 
 **The command lists a directory through `runGit`, which reads stdout and stderr of git apart.**
 Git ends a warning on stderr in a newline, while the paths end in NUL. So one stream that carries
@@ -200,7 +201,7 @@ procedure.
 
 - Rejected: `execCmdEx`, which joins stderr to stdout.
 - Verified by `suites/test_command.nim`. While the trace of git writes to stderr, each path stands
-  alone, and a directory outside a work tree is still refused.
+  alone, and a directory outside a work tree is refused.
 
 ## Compilers
 
@@ -967,8 +968,9 @@ whitespace-split, punctuation-stripped and lowercased, after the backtick spans 
 syntax passes its own lines to the same check. So `curator/audit` reports each kind in the same
 words.
 
-- Verified by hand, 2026-10-06, with a scratch program, on each of 352 Nim files of the tree.
-  `commentLines` gives the same line and text as the Nim scanner of `curator/audit`, 30,091 lines.
+- Verified by hand, 2026-10-06, with a scratch program, on each Nim file that `git ls-files
+  '*.nim'` lists. `commentLines` gives the same line and text as the Nim scanner of
+  `curator/audit`.
 - Verified by `suites/test_articles.nim`, with the Nim cases of the scanner of `curator/audit`.
 
 ## Names
@@ -1000,9 +1002,10 @@ signature, and the scanner joins it.
 - `MARKS_FOREIGN` is the one list of these words. `{.push.}` reads it too, and so do the rename
   fixers of `curator/audit` and the move of an entry block. Each reader takes the words among
   pragmas (`pragmaWords`), never a part of another name.
-- Rejected: a list for each reader. Three lists drifted apart. One read `{.importobjc.}` as ours,
-  and a substring read a parameter `dynlib_path` as a mark. Verified by `suites/test_names.nim`
-  and `suites/test_idioms.nim`, for each word of the list.
+- Rejected: a list for each reader, since copies drift apart, and a substring match, which reads
+  `dynlib_path` as a mark.
+- Verified by `suites/test_names.nim` and `suites/test_idioms.nim`, for each pragma of the list.
+  `JsRoot` is no pragma, and `suites/test_names.nim` of `curator/audit` verifies it.
 
 **The case of a name follows its kind (V.1, V.11, V.12).** A type and an enum member are
 Pascal, and a routine is camel. A local, a parameter and a field are snake, and a global is
@@ -1046,12 +1049,12 @@ its mutability (V.1). So `reachOf` of `declared.nim` reads the blocks that enclo
 **The entry block holds no binding (V.10), and that is the rule of the entry block alone.** Where
 a module runs as a program, code that binds goes in `proc main`, and the block calls it. A binding
 in the entry block reaches the whole module, because `when` opens no scope. A routine makes it a
-true local in every language. The Architect rejected the exception that made such a binding a
-local of its block.
+true local in every language.
 
 - By the ruling of the Architect, every binding in the entry block outside a routine is a
   finding, at any depth. The reason is that code that binds moves to `main`.
 - So a `for`, an `except … as`, and a `let` inside a loop of the block are findings too.
+- Rejected by the Architect: an exception that makes such a binding a local of its block.
 - Each binding there is one finding of `entry-block`, which `checkBlockEntry` reports beside the
   fixer of the block, and its case is not judged. A block of plain calls passes, and so does a
   routine inside it.
@@ -1075,9 +1078,10 @@ predicate:
 - Rejected: a parser, which costs a dependency and a compiler version. The scanner reads the
   line forms that this charter prescribes.
 - A name that a template substitutes declares nothing of that name. So `type name = object`
-  inside `template defineKind(name: untyped)` is no type, and its fields are read as before.
+  inside `template defineKind(name: untyped)` is no type, and the check reads its fields.
 - A `static` parameter of a generic is a placeholder, so it takes one capital letter, as V.12
-  says (`[N: static int]`). The Architect weighed snake case, and kept the text.
+  says (`[N: static int]`).
+- Rejected by the Architect: snake case for a `static` parameter, against the text of V.12.
 - Rejected: a capital letter that passes every kind. It would pass `N` as a local, which the
   Architect ruled a finding.
 - Cost: a declaration shape outside those forms is unread. Examples are a tuple type in
@@ -1113,9 +1117,9 @@ them, checks and fixers both. `strictFuncs`, import order and the keys and heade
 with a module. STYLE.md §2 asks `strictFuncs` of a module, koch runs testament over
 `tests/t*.nim`, and a script keeps its imports as written.
 
-- Rejected: the idioms on a module alone, which left a script and a package unread. On the tree
-  the wider check reported nothing, measured 2026-10-06, so no project reddened.
-- Cost: an import of a script stays unordered, as before.
+- Rejected: the idioms on a module alone, which leave a script and a package unread.
+- Verified by run, 2026-10-06: the wider check reports nothing on the tree.
+- Cost: the imports of a script stay unordered.
 - Verified by `suites/test_chain.nim`: each dialect reports and fixes the idioms of any Nim code,
   and `strictFuncs` reads in a module alone.
 
