@@ -226,7 +226,7 @@ and the shared allowance. This section adds only what differs for a curator.
    work it never did.
 
 9. **The weekly run and the ledger.** The weekly run of `check.yml` compiles the projects
-   whose code merged inside `RECENT_DAYS` (`plan.nim`). Its window is named twice, as that
+   whose code merged inside `DAYS_RECENT` (`plan.nim`). Its window is named twice, as that
    constant and as the cron, so change both together.
 
    `ledger.yml` is a different mechanism: a daily read of what GitHub records, into one issue
@@ -251,7 +251,7 @@ and the shared allowance. This section adds only what differs for a curator.
     `curator/audit/PROVENANCE.md` or to the log.
 
     A rule written in two prompts is a copy that drifts, so write it once and point at it.
-    `PROMPT_BYTES` guards runaway growth and nothing finer. Remember that `CONTRIBUTOR.md` is
+    `BYTES_PROMPT` guards runaway growth and nothing finer. Remember that `CONTRIBUTOR.md` is
     stamped: any edit, even a typo, re-stamps every project (duty 1).
 
 11. **Never** write code inside a contributor project, create a contributor project, or
