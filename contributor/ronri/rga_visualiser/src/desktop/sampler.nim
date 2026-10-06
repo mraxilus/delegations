@@ -81,10 +81,9 @@ static int samplerDisarm(void) {
     {.importc, nodecl.}
   proc samplerDisarm(): cint {.importc, nodecl.}
 
-  # Push no frame of its own: it walks frames that interrupted code pushed.
-  {.push stackTrace: off, lineTrace: off.}
-  proc onSample(signal: cint) {.noconv.} =
+  proc onSample(signal: cint) {.noconv, stackTrace: off.} =
     ## Name owner of stack this sample interrupted, and count it.
+    ##   Pushes no frame of its own: it walks frames that interrupted code pushed.
     ##   Library owns stack with any frame in it, so walk stops at first.
     var
       owner = Owner.Rest
@@ -93,7 +92,6 @@ static int samplerDisarm(void) {
       owner = max(owner, ownerOfPath(frame.filename))
       frame = frame.prev
     atomicInc(COUNTS_SAMPLED[owner])
-  {.pop.}
 
 
 var IS_SAMPLING = false  ## Say whether timer is armed.

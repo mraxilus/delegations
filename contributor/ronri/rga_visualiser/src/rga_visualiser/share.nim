@@ -87,10 +87,8 @@ const
 
 
 when not defined(js):
-  # Push no frame of their own: sampler's handler calls these over stack it is walking.
-  {.push stackTrace: off, lineTrace: off.}
-
-  func holds(text: cstring, part: string): bool =
+  # Each pushes no frame of its own: sampler's handler calls these over stack it is walking.
+  func isContaining(text: cstring, part: string): bool {.stackTrace: off.} =
     ## Say whether `text` holds `part` anywhere.
     ##   Reads and allocates nothing beyond both, so signal handler may call it.
     let (length_text, length_part) = (len(text), len(part))
@@ -101,8 +99,8 @@ when not defined(js):
     false
 
 
-  func holdsAtEnd(text: cstring, part: string): bool =
-    ## Say whether `text` ends with `part`; allocates nothing, as `holds`.
+  func isEndingWith(text: cstring, part: string): bool {.stackTrace: off.} =
+    ## Say whether `text` ends with `part`; allocates nothing, as `isContaining`.
     let (length_text, length_part) = (len(text), len(part))
     if length_part > length_text: return false
     for i in 0..<length_part:
@@ -110,16 +108,14 @@ when not defined(js):
     true
 
 
-  func ownerOfPath*(path: cstring): Owner =
+  func ownerOfPath*(path: cstring): Owner {.stackTrace: off.} =
     ## Name owner of one desktop frame, by file its code is in.
     ##   Allocates nothing, so sampler's signal handler calls it on each frame it walks.
     if path.isNil: return Owner.Rest
-    if path.holds(PATH_LIBRARY): return Owner.Library
+    if path.isContaining(PATH_LIBRARY): return Owner.Library
     for i in 0..<TAILS_ALGEBRA_PATH.len:
-      if path.holdsAtEnd(TAILS_ALGEBRA_PATH[i]): return Owner.Algebra
+      if path.isEndingWith(TAILS_ALGEBRA_PATH[i]): return Owner.Algebra
     Owner.Rest
-
-  {.pop.}
 
 
 func ownerOfName*(name: string): Owner =
