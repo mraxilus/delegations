@@ -1434,12 +1434,18 @@ issue, and the next failure opens a new one. The finding is the output from the 
 
 ## Names
 
-**The names check is knoller's, and the audit gives it the words that its glossaries admit.**
-The rules of names read one file alone, so knoller holds them, and its record gives their design
-under Names. An acronym passes only where the root or the project glossary lists it, as a symbol
-under `## Standards` or as a term. `exemptionsOf` reads those two glossaries for each path, and
-the static pass passes their words to the check. The jargon list of V.6 passes too.
+**The names check is knoller's, and the acronym check is the audit's, because it reads the
+glossaries.** The rules of names read one file alone, so knoller holds them, and its record gives
+their design under Names. A glossary belongs to this repository, and knoller runs on any, so the
+acronym rule of V.9 stays here (`checkAcronyms`, D2 of #572). An acronym is a run of two or more
+capitals inside a camel or Pascal name. It passes only where the root or the project glossary
+lists it, as a symbol under `## Standards` or as a term.
 
+- `exemptionsOf` reads those two glossaries for each path. The static pass gives their words to
+  the acronym check, and to the check of abbreviations of knoller (V.6). The jargon list of V.6
+  passes too.
+- A SCREAMING name is all capitals, so its acronyms cannot be told from words and hold by
+  reading.
 - The binding of an entry block is the rule of the entry block (V.10), which knoller checks
   beside its fixer. So the names check reports no second finding there, and the static pass runs
   both checks on each kind of Nim.
@@ -1448,6 +1454,8 @@ the static pass passes their words to the check. The jargon list of V.6 passes t
   Issue #558 holds their move to knoller.
 - Verified by `suites/test_names.nim`. Each rule of names prints its article where its sentence
   ends, as koch prints it. A word that a glossary lists passes.
+- Verified by `suites/test_audit.nim`: the static pass reads the root and the project glossary for
+  the acronyms of a module, a script and a package.
 
 ## Idioms
 
