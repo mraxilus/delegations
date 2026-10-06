@@ -232,6 +232,8 @@ proc staticOf(chain: Toolchain; library, directory: string; algebra: Algebra): (
 func functionsChanged*(before, after: JsonNode): JsonNode =
   ## Compare static documents function by function; keep those whose counts differ.
   ##   Function on one side only is JSON null on other, never nil, so document prints.
+  ##   Dense form changed build leaves out is no move: changed build omits dense forms, since
+  ##     change may rename tables they read, and pristine counts hold them.
 
   func countsOf(function: JsonNode): JsonNode =
     ## Build totals and movement evaluation reports for one function.
@@ -249,11 +251,17 @@ func functionsChanged*(before, after: JsonNode): JsonNode =
     was = before{"functions"}
     now = after{"functions"}
   if was.isNil or now.isNil: return
+  var forms_dense: seq[string]
+  if not before{"measurands"}.isNil:
+    for _, measurand in before{"measurands"}.pairs:
+      let name = measurand{"dense"}.getStr
+      if name.len > 0: forms_dense.add name
   var keys = was.keys.toSeq
   for key in now.keys:
     if key notin keys: keys.add key
   keys.sort
   for key in keys:
+    if key in forms_dense and not now.hasKey(key): continue
     let
       counts_before = if was.hasKey(key): countsOf(was[key]) else: newJNull()
       counts_after = if now.hasKey(key): countsOf(now[key]) else: newJNull()
