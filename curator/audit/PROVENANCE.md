@@ -1566,6 +1566,28 @@ The record of knoller holds the design of those fixers.
 - `findingOf` renders each report of knoller as a finding. A rewrite renders as its rule and the
   article that `CITATIONS` holds for it, so `koch fix` prints `expression spacing (X.9) fixed` as
   before. Verified by `suites/test_findings.nim`.
+
+**The audit cites the article of each message of knoller, where its sentence ends.** A message of
+a check of knoller names no article, and reads `<sentence>; got <value>.`, or `<sentence>.` where
+it gives no value (D2 a of #505). `findingOf` puts the article that `CITATIONS` holds for the rule
+before `; got `, or before the closing period. So `koch check` and `koch fix` print
+``Range operator takes no space (X.9); got `0 .. n`.``.
+
+- The articles belong to the charter of this repository, and knoller runs on any repository.
+  `CITATIONS` already holds the article of each rule for its rewrite, so one table serves both.
+- The sentence ends at the first `; got ` outside a code span, and a code span runs to the next
+  run of as many backticks. So the message of `message-value`, which quotes
+  ``…; got `{value}`.``, takes its article after the quote.
+- Verified by `suites/test_findings.nim`. Each message of knoller that koch prints renders through
+  its real check to the text that koch prints, article included. So do a fence warning, a fence
+  that fix cannot read, and a message with no value.
+- Cost: `CITATIONS` gives each rule one article, the one that its rewrite cites. So the message for
+  a bracket of one module cites X.5, though STYLE.md §5 states that rule. Signature and call
+  wrapping cite X.3 alone, and operator wrapping cites STYLE.md §5 alone, though X.1 states it too.
+  The static pass runs none of these four checks, so koch prints none of these messages.
+- Cost: a backtick in a sentence that no run of as many backticks closes pairs with the backtick of
+  the value. The article then goes before the closing period. No message of knoller holds such a
+  backtick, and reading holds that.
 - `fixes.nim` maps each kind of Nim onto a dialect of knoller, a module, a script or a package.
 - Knoller also reads the pin of a nimble file and serves the compiler of each pin. Audit imports
   both, and keeps the policy of duty 8 (`## Toolchain`).
