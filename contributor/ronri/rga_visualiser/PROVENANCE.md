@@ -1101,6 +1101,64 @@ and not what is drawn.
 Verified by a run: every scripted desktop run passes at 1/120 s, in 400 frames. Verified by a
 render: the curve of the page and the plot of the window, before and after, in the pull request.
 
+## Library share
+
+**The diagnostics show what share of the busy time of each front-end the reference library takes.**
+A sampling profiler counts it on both front-ends, while the diagnostics section is open. One
+rule, `share.nim`, names the owner of each sample. The library owns a sample with any frame in
+`pga` on its stack, since the library calls back into nothing of the project. The project's own
+algebra owns a sample with a frame in one of its four algebra modules, and none in the library.
+The Architect set this design on repository issue 553.
+
+**The four modules of the project's own algebra are those whose own work is algebra.** `motors`
+and `projections` carry operators that the library lacks. `objects` asks questions of incidence in
+the words of the algebra. `boundary` lifts into the algebra and reads back out. The other modules
+that import `pga` only call it, and their own work is drawing or picking.
+
+**The share is pooled over 20 seconds, and the count of samples stands beside it.** One frame
+holds few samples. The page samples every 10 ms at most, and the build of the opening scene gets
+about 4 samples each second. A window of 4 s then holds 11 to 17 samples, which read 35 to 64%.
+Only busy samples count. A wait for vsync, or a sample with no script of the page on its stack,
+has no owner here.
+
+**The desktop samples its main thread on the CPU clock of that thread, and walks the frames of
+Nim.** `sampler.nim` arms `timer_create` on `CLOCK_THREAD_CPUTIME_ID`, at 250 samples each busy
+second. The handler allocates nothing, names the owner of each frame through `share.ownerOfPath`,
+and adds one atomically. This runs on Linux alone, in a build that keeps stack frames, and
+elsewhere the rows say why. Rejected: the own profiler of Nim, which read 30 to 41% against 26%
+and made the frame 2.2 times slower.
+
+**The walk of the frames of Nim reads low against native unwinding.** A sample that lands in the
+push or pop of a small library proc, such as `[]`, misses its frame. On the same samples the walk
+read 17.9% against 19.0% at the opening scene, and 21.5% against 26.4% at the largest demo. The
+reference matched `backtrace()` stacks to the symbol table of the binary. Cost: none that a
+measurement found, at 4.515 against 4.506 ms and 4.250 against 4.232 ms for each frame.
+
+**The page samples with the own profiler of the browser, where the browser allows it.** Chromium
+alone has one, and only on a page whose own response carries `Document-Policy: js-profiling`. A
+page opened from a file is refused, and a `<meta>` copy of the policy changes nothing. The rows
+then say why, and give no figure. The profiler gives no interval under 10 ms. Each window of 2 s
+stops and hands in its trace, and the next starts at once, at a cost of 0.2 to 0.3 ms.
+
+**The two front-ends read different shares, because their busy time holds different work.** The
+busy time of the desktop holds the layout of its panel and the submission of its draws. The page
+leaves both to the browser, outside its script. At the largest demo the desktop read the library
+at 13.7% and the project algebra at 5.9%, of 4,033 busy samples. The page read them at 22.6 to
+29.6% and 6.7 to 10.9%, of 345 to 399.
+
+**The drive checks the figure of the page against the own profiler of the engine on every run.**
+It serves the built page with the policy, at an address that a route answers. Both profilers
+sample the largest demo for 12 s, and both name owners through `nimShareOwner`. The bound is four
+standard errors of the two counts, and 2 points of bias. Five runs read the library within -5.3
+to +2.2 points of the engine, and the project algebra within -1.8 to +1.1.
+
+*Checked.* Verified by `suites.nim`: the rule names the owner of names from the built page and
+of desktop paths, and the ring pools 20 s. On Linux, the sampler counts a loop of products as the
+library's, at 82 to 85% of about 100 samples. Verified by driven check: the page from a file says
+why it cannot sample, and the served page samples and agrees with the engine. Verified on
+2026-10-06 by `xvfb-run -a binaries/rga_visualiser --hidden --novsync --timings --frames:300
+--demo:5038`: the desktop figures above.
+
 ## Render paths
 
 **The directory that a module sits in is the render path that may reach it.**
