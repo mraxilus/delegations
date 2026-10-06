@@ -12,9 +12,9 @@ import std/strutils
 
 
 const
-  IDENT_CHARS = {'a' .. 'z', 'A' .. 'Z', '0' .. '9', '_'}
+  CHARS_IDENT = {'a' .. 'z', 'A' .. 'Z', '0' .. '9', '_'}
     ## ASCII characters identifier is built from; raw string prefix is one of them.
-  NAME_CHARS* = IDENT_CHARS + {'\x80' .. '\xFF'}
+  CHARS_NAME* = CHARS_IDENT + {'\x80' .. '\xFF'}
     ## Bytes declared name is built from: Nim reads every non-ASCII byte as letter.
 
 
@@ -58,7 +58,7 @@ func blanked(source: string, should_keep_comments: bool): string =
         while i < source.len and source[i] != '\n': comment(1)
       continue
     if c == '"':
-      let is_raw = i > 0 and source[i - 1] in IDENT_CHARS
+      let is_raw = i > 0 and source[i - 1] in CHARS_IDENT
       if i + 2 < source.len and source[i + 1] == '"' and source[i + 2] == '"':
         blank(3)
         while i < source.len:
@@ -110,7 +110,7 @@ func identifierAt*(text: string, start: int): string =
   var i = start
   while i < text.len and text[i] == ' ': inc i
   var j = i
-  while j < text.len and text[j] in NAME_CHARS: inc j
+  while j < text.len and text[j] in CHARS_NAME: inc j
   text[i ..< j]
 
 
@@ -119,7 +119,7 @@ func identity*(name: string): string =
   if name.len == 0: "" else: name[0] & name[1 .. ^1].replace("_", "").toLowerAscii
 
 
-func pragmaWords*(code: string): seq[string] =
+func wordsPragma*(code: string): seq[string] =
   ## Read every name inside each `{. .}` of code, values included, in order: `{.push importc,
   ##   header: H.}` gives `push`, `importc`, `header`, `H`; name outside them is never read.
   var at = 0

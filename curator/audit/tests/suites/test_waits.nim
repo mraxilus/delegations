@@ -10,13 +10,13 @@ import ../../src/[findings, kinds, waits]
 
 const
   DIRECTORIES = ["contributor/ronri/viewer"]
-  NIM_DRIVE = """
+  DRIVE_NIM = """
 proc settle(page: Page) {.async.} =
   sleep(50)
   # sleep(5) in comment is unread.
   await page.waitForTimeout(300)
 """
-  TYPESCRIPT_DRIVE = """
+  DRIVE_TYPESCRIPT = """
 // page.waitForTimeout(5) in comment is unread.
 await page.waitForTimeout(300);
 const sleep = (milliseconds: number) => new Promise((done) => setTimeout(done, milliseconds));
@@ -27,15 +27,15 @@ await sleep(50);
 
 suite "Internal":
   test "drive code is read under tests and tools of each project":
-    check "contributor/ronri/viewer/tests/test_view.nim".isDriveCode(DIRECTORIES)
-    check "contributor/ronri/viewer/tools/drive/main.ts".isDriveCode(DIRECTORIES)
-    check not "contributor/ronri/viewer/src/view.nim".isDriveCode(DIRECTORIES)
-    check not "contributor/ronri/viewer/design/shot.nim".isDriveCode(DIRECTORIES)
-    check not "contributor/ronri/other/tests/test_view.nim".isDriveCode(DIRECTORIES)
+    check "contributor/ronri/viewer/tests/test_view.nim".isCodeDrive(DIRECTORIES)
+    check "contributor/ronri/viewer/tools/drive/main.ts".isCodeDrive(DIRECTORIES)
+    check not "contributor/ronri/viewer/src/view.nim".isCodeDrive(DIRECTORIES)
+    check not "contributor/ronri/viewer/design/shot.nim".isCodeDrive(DIRECTORIES)
+    check not "contributor/ronri/other/tests/test_view.nim".isCodeDrive(DIRECTORIES)
 
 
   test "Nim fixed wait reads as koch prints it, article where sentence ends":
-    let found = checkWaits("viewer/tests/test_view.nim", NIM_DRIVE, Kind.Nim)
+    let found = checkWaits("viewer/tests/test_view.nim", DRIVE_NIM, Kind.Nim)
     check found.mapIt(it.line) == @[2, 4]  # comment unread
     check found.mapIt(it.message) == @[
       "Fixed wait reads real clock; wait on condition, or advance clock check moves (IX.12); " &
@@ -47,7 +47,7 @@ suite "Internal":
 
 
   test "TypeScript fixed wait reported, and drive's own sleep helper left alone":
-    let found = checkWaits("viewer/tools/drive/main.ts", TYPESCRIPT_DRIVE, Kind.TypeScript)
+    let found = checkWaits("viewer/tools/drive/main.ts", DRIVE_TYPESCRIPT, Kind.TypeScript)
     check found.mapIt(it.line) == @[2]  # line 1 is comment; line 4 helper rides page's clock
     check found[0].message == "Fixed wait reads real clock; wait on condition, or move page's " &
         "clock with `clock.runFor` (IX.12); got `waitForTimeout`."  # same words as Nim

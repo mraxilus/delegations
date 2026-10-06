@@ -4,14 +4,14 @@
 ##   project (owner's decision). `main` passes: pushes to main are merges owner approved.
 ##
 ##   That empty prefix is narrowed where it reaches contributor projects. Curator propagating
-##     rule writes their records, `PROJECT_FILES` from `layout.nim`, and nothing else: stamp
+##     rule writes their records, `FILES_PROJECT` from `layout.nim`, and nothing else: stamp
 ##     row, agreed terms, and prose rule invalidated, which is what propagation is. Source,
 ##     tests and nimble file stay contributor's, so duty 11 stops being prose alone.
 ##   Rules change reaching contributor code means changing rule or check, then letting
 ##     contributor apply it, which CURATOR.md duty 11 already says.
 ##   Content-preserving move is exempt, since registry is curator's and renaming domain or
 ##     project is registry change; moving file is consequence, never authorship. Only exact
-##     rename counts (`movedPaths`, 100% similarity), so edit disguised as move is caught.
+##     rename counts (`pathsMoved`, 100% similarity), so edit disguised as move is caught.
 ##
 ##   Held finding: curator branch whose check or rule reddens contributor project waits for
 ##     that project to fix (CURATOR.md, duty 3), and never fixes it itself. `koch check` holds
@@ -44,11 +44,11 @@ func checkPropagation(path: string): seq[Finding] =
   ##   write second one whenever domain is added. Only inside project does reach narrow.
   let parts = path.split('/')
   if parts.len <= 3: return
-  if parts.len == 4 and parts[3] in PROJECT_FILES: return
+  if parts.len == 4 and parts[3] in FILES_PROJECT: return
   result.add finding(
     path,
     0,
-    "Curator writes only " & PROJECT_FILES.join(", ") & " in contributor project; change " &
+    "Curator writes only " & FILES_PROJECT.join(", ") & " in contributor project; change " &
       "rule or check and let contributor apply it; got `" & path & "`.",
   )
 
@@ -67,12 +67,12 @@ func checkScope*(
     )]
   let
     prefix = parsed.get.prefix
-    is_curator_root = parsed.get.role == Role.Curator
+    is_root_curator = parsed.get.role == Role.Curator
     is_moved = moved.toHashSet
   for p in paths:
     if not p.startsWith(prefix):
       result.add finding(p, 0, "Path outside branch scope `" & prefix & "`.")
-    elif is_curator_root and p.startsWith(CONTRIBUTOR & "/") and p notin is_moved:
+    elif is_root_curator and p.startsWith(CONTRIBUTOR & "/") and p notin is_moved:
       result.add checkPropagation(p)
 
 

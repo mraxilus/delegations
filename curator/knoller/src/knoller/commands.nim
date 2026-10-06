@@ -30,9 +30,9 @@ type Command = object  ## Define one dotted call statement to write in command f
 
 
 const
-  ROUTINE_KEYWORDS = ["converter", "func", "iterator", "macro", "method", "proc", "template"]
+  KEYWORDS_ROUTINE = ["converter", "func", "iterator", "macro", "method", "proc", "template"]
     ## Keywords whose head line, ending on `=`, opens body of statements.
-  CONTINUING_KEYWORDS = [
+  KEYWORDS_CONTINUING = [
     "and", "as", "div", "in", "is", "isnot", "mod", "notin", "of", "or", "shl", "shr", "xor",
   ]
     ## Keyword operators line may end on, continuing expression on next line.
@@ -40,9 +40,9 @@ const
 
 func isLast(tokens: openArray[Token], k: int, source: string): bool =
   ## Decide whether token `k` ends its line, comment after it aside.
-  let line = tokens[k].lastLine(source)
+  let line = tokens[k].lineLast(source)
   k == tokens.high or tokens[k + 1].line > line or
-    (tokens[k + 1].kind == TokenKind.Comment and tokens[k + 1].lastLine(source) == line and
+    (tokens[k + 1].kind == KindToken.Comment and tokens[k + 1].lineLast(source) == line and
       (k + 1 == tokens.high or tokens[k + 2].line > line))
 
 
@@ -50,12 +50,12 @@ func isStatementStart(tokens: openArray[Token], k: int, source: string): bool =
   ## Decide whether line-first token `k` opens statement: code before it ends statement, ends
   ##   line on block `:`, or ends routine head on `=`.
   var j = k - 1
-  while j >= 0 and tokens[j].kind == TokenKind.Comment: dec j
+  while j >= 0 and tokens[j].kind == KindToken.Comment: dec j
   if j < 0: return true
   let text = tokens[j].spelling(source)
   case tokens[j].kind
-  of TokenKind.Comma, TokenKind.Open, TokenKind.Semicolon: false
-  of TokenKind.Operator:
+  of KindToken.Comma, KindToken.Open, KindToken.Semicolon: false
+  of KindToken.Operator:
     if text == ":": return true
     if text != "=": return false
 
@@ -63,8 +63,8 @@ func isStatementStart(tokens: openArray[Token], k: int, source: string): bool =
     var first = j
     while first > 0 and tokens[first - 1].line == tokens[j].line: dec first
     let head = tokens[first].spelling(source)
-    head in ROUTINE_KEYWORDS or head == ")"
-  of TokenKind.Word: text notin CONTINUING_KEYWORDS
+    head in KEYWORDS_ROUTINE or head == ")"
+  of KindToken.Word: text notin KEYWORDS_CONTINUING
   else: true
 
 
@@ -74,23 +74,23 @@ func commands(source: string): seq[Command] =
     tokens = source.tokens
     partners = tokens.partners
   for k, t in tokens:
-    let is_first = k == 0 or tokens[k - 1].lastLine(source) < t.line
-    if not is_first or t.kind != TokenKind.Word or t.isKeyword(source): continue
+    let is_first = k == 0 or tokens[k - 1].lineLast(source) < t.line
+    if not is_first or t.kind != KindToken.Word or t.isKeyword(source): continue
     if not tokens.isStatementStart(k, source): continue
 
     # Walk receiver chain while its tokens stay glued; last bracket group ends statement.
     var e = k
     while true:
-      if tokens[e].kind == TokenKind.Open:
+      if tokens[e].kind == KindToken.Open:
         if partners[e] < e: break
         e = partners[e]
       if e == tokens.high or tokens[e + 1].first != tokens[e].after: break
-      if tokens[e + 1].kind notin {TokenKind.Word, TokenKind.Open, TokenKind.Operator}: break
-      if tokens[e + 1].kind == TokenKind.Operator and tokens[e + 1].spelling(source) != ".": break
+      if tokens[e + 1].kind notin {KindToken.Word, KindToken.Open, KindToken.Operator}: break
+      if tokens[e + 1].kind == KindToken.Operator and tokens[e + 1].spelling(source) != ".": break
       inc e
     let o = partners[e]
     if tokens[e].spelling(source) != ")" or o < k + 3 or not tokens.isLast(e, source): continue
-    let is_dotted = tokens[o-1].kind == TokenKind.Word and tokens[o-2].spelling(source) == "." and
+    let is_dotted = tokens[o-1].kind == KindToken.Word and tokens[o-2].spelling(source) == "." and
       tokens[o-2].after == tokens[o-1].first and tokens[o-1].after == tokens[o].first
     if not is_dotted or not tokens.isCallOpen(partners, o, source): continue
 
@@ -103,7 +103,7 @@ func commands(source: string): seq[Command] =
     let is_group = inner == first
     if not is_group:
       let elements = elementsOf(tokens, partners, first, last, source)
-      if elements.len != 1 or elements[0].kind != ElementKind.Operand: continue
+      if elements.len != 1 or elements[0].kind != KindElement.Operand: continue
       if not tokens.isCallOpen(partners, inner, source): continue
     result.add Command(
       line: t.line,
@@ -121,7 +121,7 @@ func checkCommands*(path, source: string): seq[Report] =
     result.add initReport(
       path,
       command.line + 1,
-      Rule.DottedCommand,
+      Rule.CommandDotted,
       "Dotted call statement takes command form where its one argument is call or " &
         "parenthesised expression; got `" & command.got & "`.",
     )
@@ -135,4 +135,4 @@ func fixCommands*(path, source: string): Fix =
   for command in found.sortedByIt(-it.open):
     result.source = result.source[0 ..< command.open] & " " &
       result.source[command.open + 1 ..< command.close] & result.source[command.close + 1 .. ^1]
-  for command in found: result.fixed.add initReport(path, command.line + 1, Rule.DottedCommand)
+  for command in found: result.fixed.add initReport(path, command.line + 1, Rule.CommandDotted)

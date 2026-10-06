@@ -8,7 +8,7 @@
 ##   Source parser cannot read answers none, so every group stays.
 ##   Compiler is caller's: `koch fix` passes pin of each project; command line takes `--nim`,
 ##     else pin of nearest nimble file above each file, else `nim` on PATH (`command.nim`).
-##     Prover of each pin (`pinProvers`) resolves compiler serving it through one `Toolchains`
+##     Prover of each pin (`proversPin`) resolves compiler serving it through one `Toolchains`
 ##     where first source asks, so pin no source asks about is never fetched.
 ##   One run of compiler answers every source asked at once, in private temporary directory
 ##     removed after; output lines `knoller-proof s<k>.nim: <offsets>` carry answers.
@@ -135,7 +135,7 @@ func provingOf*(output: string, count: int): Proving =
       (if first.len > 0: first[0].strip else: "no output") & "`."
 
 
-proc compilerProver*(nim: string): Prover =
+proc proverCompiler*(nim: string): Prover =
   ## Build prover running compiler `nim` on probe in private temporary directory, removed after.
   result = proc (sources: seq[string]): Proving =
     if sources.len == 0: return Proving()
@@ -152,13 +152,13 @@ proc compilerProver*(nim: string): Prover =
     provingOf(output, sources.len)
 
 
-func failureProver*(failure: string): Prover =
+func proverFailure*(failure: string): Prover =
   ## Build prover answering none for each source, with failure, as compiler that cannot run.
   result = proc (sources: seq[string]): Proving =
     Proving(answers: newSeq[seq[int]](sources.len), failure: failure)
 
 
-proc pinProvers*(toolchains: Toolchains): ProverOf =
+proc proversPin*(toolchains: Toolchains): ProverOf =
   ## Build prover of each pin: parser of compiler `toolchains` serve it, resolved where first
   ##   source asks, once for each pin; pin nothing serves proves nothing, with reason naming it.
   var held = toolchains
@@ -167,8 +167,8 @@ proc pinProvers*(toolchains: Toolchains): ProverOf =
       let bin = held.binFor(pin)
       if bin.isNone:
         let failure = "Parser proved no removal, since no compiler serves pin; got `" & pin & "`."
-        return failureProver(failure)(sources)
-      compilerProver(if bin.get.len == 0: NIM else: bin.get / NIM)(sources)
+        return proverFailure(failure)(sources)
+      proverCompiler(if bin.get.len == 0: NIM else: bin.get / NIM)(sources)
 
 
 proc answered*(proofs: var Proofs; asked: openArray[string]; prover: Prover): string =

@@ -37,7 +37,7 @@ const
     "  cayley = CAYLEYS_WEDGE.base,\n" &
     ")\n"
     ## Article X example of declarative call, as written there.
-  LONG_NAME = "constructProductsAcrossEveryOrderOfGradeAndChirality"
+  NAME_LONG = "constructProductsAcrossEveryOrderOfGradeAndChirality"
     ## Name long enough to push signature or call past `LINE_MAX`.
 
 
@@ -61,7 +61,7 @@ func isSettled(source: string): bool =
 func operatorsOf(source: string): seq[string] =
   ## Read spelling of each operator token of source, in order.
   for t in source.tokens:
-    if t.kind == TokenKind.Operator: result.add t.spelling(source)
+    if t.kind == KindToken.Operator: result.add t.spelling(source)
 
 
 func isBrokenAlone(source: string): bool =
@@ -102,12 +102,12 @@ suite "Wrapping":
     let joined = "func f(\n    a: int, b: int\n): int =\n  a\n"
     check checkSignatures("a.nim", joined)[0].message.endsWith("got `3` lines.")
     check fixSignatures("a.nim", joined).source == "func f(a: int, b: int): int =\n  a\n"
-    check fixSignatures("a.nim", joined).fixed[0].rule == Rule.SignatureWrapping
+    check fixSignatures("a.nim", joined).fixed[0].rule == Rule.WrappingSignature
     let
       groups = ["alpha: Cayley1D", "beta: Spatial[Cayley2D]", "gamma: Chirality", "delta: Space",
                 "epsilon: Grade", "zeta: Order"]
-      wide = "func " & LONG_NAME & "(" & groups.join(", ") & "): int =\n  discard\n"
-    check wide.fixed == "func " & LONG_NAME & "(\n" & groups.mapIt("  " & it & ",\n").join &
+      wide = "func " & NAME_LONG & "(" & groups.join(", ") & "): int =\n  discard\n"
+    check wide.fixed == "func " & NAME_LONG & "(\n" & groups.mapIt("  " & it & ",\n").join &
       "): int =\n  discard\n"  # parameters fit no line of their own either
     check wide.fixed.isSettled
 
@@ -120,12 +120,12 @@ suite "Wrapping":
       "false) {.compileTime.} =\n  discard\n"
     check flat.fixed == EXAMPLE_PARAMETERS_LINE  # 102 runes on one line
     check EXAMPLE_GROUPS.isSettled
-    let group_lines = "func constructProductsTransitional(\n  complement, dual: Cayley1D;\n" &
+    let lines_group = "func constructProductsTransitional(\n  complement, dual: Cayley1D;\n" &
       "  wedges: Spatial[Cayley2D];\n  chirality: Chirality;\n  space: Space;\n" &
       "): array[Order, Cayley2D] {.compileTime.} =\n  discard\n"
-    check group_lines.fixed == EXAMPLE_GROUPS  # parameters line of 91 runes fits
-    let single = "proc " & LONG_NAME & "(parameter_named_at_length: Multivector): Multivector =\n"
-    check single.fixed == "proc " & LONG_NAME & "(\n  parameter_named_at_length: Multivector,\n" &
+    check lines_group.fixed == EXAMPLE_GROUPS  # parameters line of 91 runes fits
+    let single = "proc " & NAME_LONG & "(parameter_named_at_length: Multivector): Multivector =\n"
+    check single.fixed == "proc " & NAME_LONG & "(\n  parameter_named_at_length: Multivector,\n" &
       "): Multivector =\n"  # one item to line takes separator
     check single.fixed.isSettled
 
@@ -141,9 +141,9 @@ suite "Wrapping":
     check fixCalls("a.nim", "foo(\n  a,\n  b\n)\n").source == "foo(a, b)\n"  # no comma after last
     check fixCalls("a.nim", "x\nfoo(\n  a\n)\ny\n").fixed.mapIt(it.line) == @[2]  # line as given
     check "if foo(\n  a\n):\n  discard\n".fixed == "if foo(a):\n  discard\n"  # `:` of `if`
-    let wide = "  result.add " & LONG_NAME & "(path, line, \"message long enough to cross " &
+    let wide = "  result.add " & NAME_LONG & "(path, line, \"message long enough to cross " &
       "column one hundred\")\n"
-    check wide.fixed == "  result.add " & LONG_NAME & "(\n    path,\n    line,\n" &
+    check wide.fixed == "  result.add " & NAME_LONG & "(\n    path,\n    line,\n" &
       "    \"message long enough to cross column one hundred\",\n  )\n"
     let own_line = "  result.add finding(\n    path, 0, \"" & "x".repeat(84) & "\",\n  )\n"
     check own_line.fixed == "  result.add finding(\n    path,\n    0,\n    \"" & "x".repeat(84) &
@@ -160,7 +160,7 @@ suite "Wrapping":
     check bare.fixed == "  newEnum(ident\"Basis\", fields = vectors.map(b => " &
       "ident(b.toBasisName)), public = true, pure = true)\n"  # no comma after last: joins
     check bare.fixed.isSettled
-    let wide = "  result.add " & LONG_NAME & "(path, line, \"message long enough to cross " &
+    let wide = "  result.add " & NAME_LONG & "(path, line, \"message long enough to cross " &
       "column one hundred\")\n"
     check wide.fixed.isSettled  # its comma keeps it split on second run
     let hugged = "  result[a][b].add(BasisSigned(\n    basis: term.basis,\n" &
@@ -183,9 +183,9 @@ suite "Wrapping":
 
 
   test "outermost call crossing column splits first, then each line it leaves":
-    let nested = "let x = outer(first_argument_of_outer, " & LONG_NAME & "(inner_first, " &
+    let nested = "let x = outer(first_argument_of_outer, " & NAME_LONG & "(inner_first, " &
       "inner_second_argument))\n"
-    check nested.fixed == "let x = outer(\n  first_argument_of_outer,\n  " & LONG_NAME &
+    check nested.fixed == "let x = outer(\n  first_argument_of_outer,\n  " & NAME_LONG &
       "(inner_first, inner_second_argument),\n)\n"
     check nested.fixed.isSettled
 
@@ -207,7 +207,7 @@ suite "Wrapping":
       statement = "  let depth = " & sum & "\n"  # 101 runes
     check statement.fixed == "  let depth = offset_x * bounds.forward.x + offset_y * " &
         "bounds.forward.y +\n      offset_z * bounds.forward.z\n"  # `+` before `*`, second `+`
-    check checkCalls("a.nim", statement).mapIt(it.rule) == @[Rule.OperatorWrapping]
+    check checkCalls("a.nim", statement).mapIt(it.rule) == @[Rule.WrappingOperator]
     let mixed = "  check " & "a".repeat(40) & " + " & "b".repeat(20) & " and " &
         "c".repeat(30) & "\n"
     check mixed.fixed == "  check " & "a".repeat(40) & " + " & "b".repeat(20) & " and\n" &
@@ -356,8 +356,8 @@ suite "Wrapping":
       wide = "proc p() =\n  if check(a, first or\n    " & "b".repeat(45) & " + " & "c".repeat(45) &
         "):\n    discard\n"  # line 3 of 99 runes; four spaces past first, 101
       lifted = wide.replace("\n    b", "\n      b")
-    check WRAPPING_STEPS[3].run("a.nim", wide, Held()).source == lifted  # no line held: widens
-    check WRAPPING_STEPS[3].run("a.nim", wide, Held(lines: @[3])).source == wide  # its line held
+    check STEPS_WRAPPING[3].run("a.nim", wide, Held()).source == lifted  # no line held: widens
+    check STEPS_WRAPPING[3].run("a.nim", wide, Held(lines: @[3])).source == wide  # its line held
 
 
   test "call holding comment, long string spanning lines, or block stays":

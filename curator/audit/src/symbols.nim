@@ -82,13 +82,13 @@ type
 const
   NIMSUGGEST = "nimsuggest"  ## Tool every toolchain ships beside compiler.
   PARALLEL = 4  ## Entries running at once at most.
-  HEADER_MARKS = ["usage:", "type '"]  ## Openings of lines `nimsuggest` prints before answers.
-  ERROR_SEVERITY = "Error"  ## Severity of `chk` answer that leaves file unresolved.
+  MARKS_HEADER = ["usage:", "type '"]  ## Openings of lines `nimsuggest` prints before answers.
+  SEVERITY_ERROR = "Error"  ## Severity of `chk` answer that leaves file unresolved.
   BACKEND_JS = "--backend:js"  ## Option asking JavaScript backend, for file C rejects.
-  TESTING_DEFINE = "-d:testing"  ## Define stub's own `cmd` passes, read under `tests/`.
-  RESULT_KIND = "skResult"  ## Kind of routine's implicit `result`.
-  RESULT_SUFFIX = ".result"  ## Last part of qualified name of implicit `result`.
-  ROUTINE_KIND = "routine"  ## Kind given routine declared at site whose answer is its result.
+  DEFINE_TESTING = "-d:testing"  ## Define stub's own `cmd` passes, read under `tests/`.
+  KIND_RESULT = "skResult"  ## Kind of routine's implicit `result`.
+  SUFFIX_RESULT = ".result"  ## Last part of qualified name of implicit `result`.
+  KIND_ROUTINE = "routine"  ## Kind given routine declared at site whose answer is its result.
   COMMAND_SITE = "def"  ## Command resolving site of entry itself: its definition alone.
   COMMAND_INCLUDED = "dus"
     ## Command resolving site of included file: its definition first, then each use of it.
@@ -122,7 +122,7 @@ func blocksOf*(output: string): seq[seq[string]] =
     is_header = true
   let text = if output.endsWith("\n"): output[0 ..^ 2] else: output
   for line in text.splitLines:
-    if is_header and HEADER_MARKS.anyIt(line.startsWith(it)): continue
+    if is_header and MARKS_HEADER.anyIt(line.startsWith(it)): continue
     is_header = false
     if line.len == 0:
       result.add current
@@ -133,12 +133,12 @@ func blocksOf*(output: string): seq[seq[string]] =
 func declaredAt(symbol: Symbol, path: string, site: (int, int)): Symbol =
   ## Read symbol answered at site of file at repository-relative path: routine declared there
   ##   where answer is its implicit result on that line, else answer itself.
-  if symbol.kind != RESULT_KIND or not symbol.file.endsWith("/" & path) or
-      symbol.line != site[0] or not symbol.name.endsWith(RESULT_SUFFIX):
+  if symbol.kind != KIND_RESULT or not symbol.file.endsWith("/" & path) or
+      symbol.line != site[0] or not symbol.name.endsWith(SUFFIX_RESULT):
     return symbol
   Symbol(
-    kind: ROUTINE_KIND,
-    name: symbol.name[0 ..< ^RESULT_SUFFIX.len],
+    kind: KIND_ROUTINE,
+    name: symbol.name[0 ..< ^SUFFIX_RESULT.len],
     file: symbol.file,
     line: site[0],
     column: site[1],
@@ -167,7 +167,7 @@ func includerOf*(tree: Tree, path: string): string =
 
 func directoryOf(path: string): string =
   ## Read project directory of path; empty for file at root, such as `koch.nim`.
-  path.split('/').projectDirectory
+  path.split('/').directoryProject
 
 
 proc ask(entry: Entry, is_js: bool): Asked =
@@ -213,7 +213,7 @@ proc answersOf(entry: Entry, asked: Asked): seq[Answer] =
     if at < blocks.len:
       for line in blocks[at]:
         let fields = line.split('\t')
-        if fields.len > 7 and fields[3] == ERROR_SEVERITY and answer.reason.len == 0:
+        if fields.len > 7 and fields[3] == SEVERITY_ERROR and answer.reason.len == 0:
           answer.reason = fields[7].strip(chars = {'"'}) & " at line " & fields[5]
     else: answer.reason = "nimsuggest answered nothing"
     inc at
@@ -244,7 +244,7 @@ proc resolve*(root: string, tree: Tree, queries: openArray[Query]): seq[Answer] 
   for query in queries:
     let
       directory = query.path.directoryOf
-      pin = tree.pinOf(if directory.len == 0: DRIVER_DIRECTORY else: directory)
+      pin = tree.pinOf(if directory.len == 0: DIRECTORY_DRIVER else: directory)
     if pin.isNone:
       result.add Answer(path: query.path, reason: "project pins no compiler")
       continue
@@ -263,7 +263,7 @@ proc resolve*(root: string, tree: Tree, queries: openArray[Query]): seq[Answer] 
         file: file,
         bin: bin.get,
       )
-      if "/tests/" in "/" & query.path: entries[^1].defines.add TESTING_DEFINE
+      if "/tests/" in "/" & query.path: entries[^1].defines.add DEFINE_TESTING
       at = entries.high
     entries[at].queries.add query
 

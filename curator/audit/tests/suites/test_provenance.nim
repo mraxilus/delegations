@@ -20,13 +20,13 @@ suite "Article VIII":
 
 
   test "VIII.6 header fields parse from first table":
-    let fields = provenanceText("deadbeefdeadbeef").headerFields
+    let fields = textProvenance("deadbeefdeadbeef").fieldsHeader
     check fields.len == 6 and fields["Rules"] == "deadbeefdeadbeef"  # six rows read
-    check "# x\n\n| Other | Table |\n|---|---|\n| a | b |\n".headerFields.len == 0  # header row
+    check "# x\n\n| Other | Table |\n|---|---|\n| a | b |\n".fieldsHeader.len == 0  # header row
 
 
   test "VIII.6 missing field, bad date, stale stamp":
-    let good = provenanceText("deadbeefdeadbeef")
+    let good = textProvenance("deadbeefdeadbeef")
     check checkProvenance("p", good, "deadbeefdeadbeef").len == 0  # complete header passes
     check checkProvenance("p", "# x\n\nprose\n", "s").mapIt(it.message) ==
       @["Header table `| Field | Value |` missing or empty."]  # no table
@@ -44,22 +44,22 @@ suite "Article VIII":
 
   test "VIII.6 Rules row is rewritten in place, padding and neighbours kept":
     let
-      old = provenanceText("deadbeefdeadbeef")
-      written = old.withRulesRow("0123456789abcdef")
-    check written.headerFields["Rules"] == "0123456789abcdef"  # row carries new stamp
+      old = textProvenance("deadbeefdeadbeef")
+      written = old.rewriteRowRules("0123456789abcdef")
+    check written.fieldsHeader["Rules"] == "0123456789abcdef"  # row carries new stamp
     check written.replace("0123456789abcdef", "deadbeefdeadbeef") == old  # nothing else moved
-    check written.withRulesRow("0123456789abcdef") == written  # idempotent
+    check written.rewriteRowRules("0123456789abcdef") == written  # idempotent
     let padded = "| Field  | Value |\n|--------|-------|\n| Rules  | deadbeefdeadbeef |\n"
-    check padded.withRulesRow("0123456789abcdef") ==
+    check padded.rewriteRowRules("0123456789abcdef") ==
       "| Field  | Value |\n|--------|-------|\n| Rules  | 0123456789abcdef |\n"  # padding kept
-    check "# x\n\nprose\n".withRulesRow("0123456789abcdef") == "# x\n\nprose\n"  # no row
-    check "| Rules | a |\n| Rules | b |\n".withRulesRow("c") ==
-      "| Rules | c |\n| Rules | b |\n"  # first row only, as headerFields reads first
+    check "# x\n\nprose\n".rewriteRowRules("0123456789abcdef") == "# x\n\nprose\n"  # no row
+    check "| Rules | a |\n| Rules | b |\n".rewriteRowRules("c") ==
+      "| Rules | c |\n| Rules | b |\n"  # first row only, as fieldsHeader reads first
 
 
   test "VIII.6 ISO date grammar":
-    check "2026-09-05".isIsoDate and not "2026-9-5".isIsoDate  # zero-padded
-    check not "2026/09/05".isIsoDate and not "".isIsoDate  # separators
+    check "2026-09-05".isDateIso and not "2026-9-5".isDateIso  # zero-padded
+    check not "2026/09/05".isDateIso and not "".isDateIso  # separators
 
 
   test "VIII.6 claim citing test is checked to cite real one":

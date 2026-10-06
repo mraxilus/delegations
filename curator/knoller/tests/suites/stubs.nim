@@ -29,17 +29,17 @@ func stubbed*(source: string): seq[int] =
   source.candidatesOf.filterIt(it.got notin REJECTED).mapIt(it.opening[0])
 
 
-func stubProver*(sources: seq[string]): Proving =
+func proverStub*(sources: seq[string]): Proving =
   ## Answer each source as stub parser, as compiler would in one run.
   Proving(answers: sources.mapIt(it.stubbed))
 
 
-func failingProver*(sources: seq[string]): Proving =
+func proverFailing*(sources: seq[string]): Proving =
   ## Answer as compiler that does not run: none proven, with failure.
   Proving(answers: newSeq[seq[int]](sources.len), failure: "Compiler ran no probe; got `x`.")
 
 
-func stubProofs*(path, source: string; dialect: Dialect): Proofs =
+func proofsStub*(path, source: string; dialect: Dialect): Proofs =
   ## Answer source as given, and each source chain asks while it fixes source, by stub parser,
   ##   until chain asks nothing more.
   result.answers[source] = source.stubbed

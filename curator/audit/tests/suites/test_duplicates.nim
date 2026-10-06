@@ -8,7 +8,7 @@ import ../../src/duplicates
 
 const LONG = "one two three four five six seven eight nine ten eleven twelve thirteen " &
   "fourteen fifteen sixteen seventeen eighteen nineteen twenty one two three four five"
-  ## Paragraph of exactly `PARAGRAPH_WORDS` words.
+  ## Paragraph of exactly `WORDS_PARAGRAPH` words.
 
 
 
@@ -30,6 +30,6 @@ suite "Duty 10":
 
 
   test "short paragraph and reworded one pass":
-    let short = LONG.split(' ')[0 ..< PARAGRAPH_WORDS - 1].join(" ")
+    let short = LONG.split(' ')[0 ..< WORDS_PARAGRAPH - 1].join(" ")
     check checkDuplicates([("a.md", short & "\n"), ("b.md", short & "\n")]).len == 0
     check checkDuplicates([("a.md", LONG & "\n"), ("b.md", LONG & " more\n")]).len == 0

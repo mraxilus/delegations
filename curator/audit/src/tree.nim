@@ -21,7 +21,7 @@ import ./[commits, kinds, layout]
 export layout.Entry, layout.Tree
 
 
-proc gitFields*(root: string, arguments: openArray[string]): seq[string] =
+proc fieldsGit*(root: string, arguments: openArray[string]): seq[string] =
   ## Run git in root, return NUL-separated stdout fields; raise on non-zero exit.
   ##   Streams are read apart (`runGit`). Git writes warning to stderr, ending it in newline
   ##     rather than in NUL, so stream carrying both would leave warning glued to first field.
@@ -36,7 +36,7 @@ proc gitFields*(root: string, arguments: openArray[string]): seq[string] =
 
 proc listPaths*(root: string): seq[string] =
   ## List files git sees, i.e. cached plus others minus ignored, existing on disk, sorted.
-  gitFields(root, ["ls-files", "-z", "--cached", "--others", "--exclude-standard"])
+  fieldsGit(root, ["ls-files", "-z", "--cached", "--others", "--exclude-standard"])
     .filterIt(fileExists(root / it))
     .deduplicate
     .sorted
@@ -51,23 +51,23 @@ proc readTree*(root: string): Tree =
     result.add Entry(path: path, kind: kind, content: content)
 
 
-proc changedPaths*(root, base: string): seq[string] =
+proc pathsChanged*(root, base: string): seq[string] =
   ## List paths differing between merge base of `base` and HEAD; renames show as two paths.
-  gitFields(root, ["diff", "-z", "--name-only", "--no-renames", base & "...HEAD"])
+  fieldsGit(root, ["diff", "-z", "--name-only", "--no-renames", base & "...HEAD"])
 
 
 proc revBefore*(root: string, days: int): string =
   ## Read newest commit older than window; empty when no commit is that old.
   ##   Output is newline-terminated rather than NUL-separated, so field is stripped.
-  let fields = gitFields(root, ["rev-list", "-1", "--before=" & $days & " days ago", "HEAD"])
+  let fields = fieldsGit(root, ["rev-list", "-1", "--before=" & $days & " days ago", "HEAD"])
   if fields.len == 0: "" else: fields[0].strip
 
 
-proc movedPaths*(root, base: string): seq[string] =
+proc pathsMoved*(root, base: string): seq[string] =
   ## List paths on both sides of content-preserving rename, i.e. file moved and not edited.
   ##   `--name-status -M100%` reports `R100`, old path, new path; only exact renames count,
   ##   so edited file is never mistaken for moved one.
-  let fields = gitFields(
+  let fields = fieldsGit(
     root,
     ["diff", "-z", "--name-status", "--find-renames=100%", base & "...HEAD"],
   )
@@ -81,27 +81,27 @@ proc movedPaths*(root, base: string): seq[string] =
       i += 2
 
 
-proc gainedPaths*(root, base: string): seq[string] =
+proc pathsGained*(root, base: string): seq[string] =
   ## List paths base holds that branch does not, i.e. what base gained since branch forked.
-  ##   Mirror of `changedPaths`: same three-dot range, other way round.
-  gitFields(root, ["diff", "-z", "--name-only", "--no-renames", "HEAD..." & base])
+  ##   Mirror of `pathsChanged`: same three-dot range, other way round.
+  fieldsGit(root, ["diff", "-z", "--name-only", "--no-renames", "HEAD..." & base])
 
 
 proc subjects*(root, base: string): seq[string] =
   ## List commit subjects reachable from HEAD but not `base`, merges excluded.
-  gitFields(root, ["log", "-z", "--format=%s", "--no-merges", base & "..HEAD"])
+  fieldsGit(root, ["log", "-z", "--format=%s", "--no-merges", base & "..HEAD"])
 
 
-proc branchCommits*(root, base: string): seq[Commit] =
+proc commitsBranch*(root, base: string): seq[Commit] =
   ## Read commits reachable from HEAD but not `base`, newest first, merges excluded.
   ##   Paths come from `diff-tree` of each commit, so rename reads as both of its paths.
-  for hash in gitFields(root, ["log", "-z", "--format=%H", "--no-merges", base & "..HEAD"]):
+  for hash in fieldsGit(root, ["log", "-z", "--format=%H", "--no-merges", base & "..HEAD"]):
     let
       name = hash.strip
-      message = gitFields(root, ["log", "-1", "-z", "--format=%s%x1f%b", name])[0]
+      message = fieldsGit(root, ["log", "-1", "-z", "--format=%s%x1f%b", name])[0]
       parts = message.split('\x1f', 1)
     result.add Commit(
       subject: parts[0],
       body: (if parts.len > 1: parts[1] else: ""),
-      paths: gitFields(root, ["diff-tree", "-z", "--no-commit-id", "--name-only", "-r", name]),
+      paths: fieldsGit(root, ["diff-tree", "-z", "--no-commit-id", "--name-only", "-r", name]),
     )

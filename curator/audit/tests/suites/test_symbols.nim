@@ -50,7 +50,7 @@ suite "Internal: Symbols":
   test "site resolves to symbol through nimsuggest of pin; file that fails resolves none":
     let
       root = createTempDir("delegations_", "_symbols")
-      pin = runningCompiler().version
+      pin = compilerRunning().version
       nimble = "version = \"0.1.0\"\nsrcDir = \"src\"\nrequires \"nim == " & pin & "\"\n"
       source = "let\n  x = 3\n  y = x.float\n\nfunc twice(n: int): int = n * 2\n\necho twice(x)\n"
       tree = @[
@@ -100,7 +100,7 @@ suite "Internal: Symbols":
     let
       root = createTempDir("delegations_", "_symbols")
       nimble = "version = \"0.1.0\"\nsrcDir = \"src\"\nrequires \"nim == " &
-        runningCompiler().version & "\"\n"
+        compilerRunning().version & "\"\n"
       tree = @[
         entry("curator/fixture/fixture.nimble", nimble),
         entry("curator/fixture/src/c.nim", "include \"d.nim\"\n"),

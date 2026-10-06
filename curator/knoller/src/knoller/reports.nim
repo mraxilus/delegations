@@ -21,8 +21,8 @@
 ##     takes; `idioms.nim` and `chain.nim` both read it, so it stands here, below both.
 ##   Path fixer reads is `/` separated: repository-relative from `koch`, absolute from command
 ##     line (`command.layoutOf`). Rule reading layout from it reads test file and stub here
-##     alone, both from last directory `tests` (`testsPart`), so each meaning is written once;
-##     drive file, where command line reads fixed waits, too (`isDriveFile`).
+##     alone, both from last directory `tests` (`partTests`), so each meaning is written once;
+##     drive file, where command line reads fixed waits, too (`isFileDrive`).
 ##
 ##   Cost: line `0` marks whole-file report, so `0` never means first line.
 ##   Cost: absolute path reads directories above repository too, so file under directory
@@ -72,16 +72,16 @@ type
   Proven* = proc (path, source: string; proofs: Proofs): Fix {.nimcall, noSideEffect.}
     ## Define fixer whose rewrite parser must prove: writes what proofs answer, asks for rest.
 
-  StepKind* {.pure.} = enum  ## Define how step reads lines held and answers of parser.
+  KindStep* {.pure.} = enum  ## Define how step reads lines held and answers of parser.
     Guarded  ## Fixer guarded on every line.
     Widening  ## Widener, off held lines.
     Proving  ## Fixer writing what parser proves, guarded on every line.
 
   Step* = object  ## Define one fixer of chain, of one kind.
-    case kind*: StepKind
-    of StepKind.Guarded: fixer*: Fixer
-    of StepKind.Widening: widener*: Widener
-    of StepKind.Proving: proven*: Proven
+    case kind*: KindStep
+    of KindStep.Guarded: fixer*: Fixer
+    of KindStep.Widening: widener*: Widener
+    of KindStep.Proving: proven*: Proven
 
   Dialect* {.pure.} = enum  ## Define which Nim source file holds, which decides fixers it takes.
     Module  ## `.nim`, which module's idiom checks and fixers read too.
@@ -91,7 +91,7 @@ type
 
 const
   EVERY* = Held(is_every: true)  ## Held of every line, as each widener's two-argument form.
-  DRIVE_DIRECTORIES = ["tests", "tools"]  ## Directories whose files command line reads as drive.
+  DIRECTORIES_DRIVE = ["tests", "tools"]  ## Directories whose files command line reads as drive.
   EXTENSIONS*: array[Dialect, string] = [".nim", ".nims", ".nimble"]
     ## Extension of file of each dialect.
 
@@ -101,53 +101,53 @@ func initReport*(path: string, line: int, rule: Rule, message = ""): Report =
   Report(path: path, line: line, rule: rule, message: message)
 
 
-func testsPart(path: string): seq[string] =
+func partTests(path: string): seq[string] =
   ## Read names of path below its last directory `tests`; empty where no directory is so named.
   let parts = path.split('/')
   for k in countdown(parts.high - 1, 0):
     if parts[k] == "tests": return parts[k + 1 .. ^1]
 
 
-func isTestFile*(path: string): bool =
+func isFileTest*(path: string): bool =
   ## Decide whether path lies under directory `tests`, at any depth.
-  path.testsPart.len > 0
+  path.partTests.len > 0
 
 
 func isStub*(path: string): bool =
   ## Decide whether path is testament stub: `test_*`, directly under directory `tests`.
-  let part = path.testsPart
+  let part = path.partTests
   part.len == 1 and part[0].startsWith("test_")
 
 
-func isDriveFile*(path: string): bool =
+func isFileDrive*(path: string): bool =
   ## Decide whether path lies under directory `tests` or `tools`, at any depth: drive code, where
   ##   command line reads fixed waits.
   let parts = path.split('/')
-  parts[0 ..< parts.high].anyIt(it in DRIVE_DIRECTORIES)
+  parts[0 ..< parts.high].anyIt(it in DIRECTORIES_DRIVE)
 
 
 func guarded*(fixer: Fixer): Step =
   ## Construct step of fixer guarded on every line.
-  Step(kind: StepKind.Guarded, fixer: fixer)
+  Step(kind: KindStep.Guarded, fixer: fixer)
 
 
 func widening*(widener: Widener): Step =
   ## Construct step of widener, which reads held lines.
-  Step(kind: StepKind.Widening, widener: widener)
+  Step(kind: KindStep.Widening, widener: widener)
 
 
 func proving*(proven: Proven): Step =
   ## Construct step of fixer whose rewrite parser proves, which reads answers.
-  Step(kind: StepKind.Proving, proven: proven)
+  Step(kind: KindStep.Proving, proven: proven)
 
 
 func run*(step: Step; path, source: string; held: Held; proofs = Proofs()): Fix =
   ## Run step on source: widener reads held lines, prover step reads answers, guarded fixer
   ##   reads neither.
   case step.kind
-  of StepKind.Guarded: step.fixer(path, source)
-  of StepKind.Widening: step.widener(path, source, held)
-  of StepKind.Proving: step.proven(path, source, proofs)
+  of KindStep.Guarded: step.fixer(path, source)
+  of KindStep.Widening: step.widener(path, source, held)
+  of KindStep.Proving: step.proven(path, source, proofs)
 
 
 func isHeld*(held: Held, line: int): bool =
@@ -166,9 +166,9 @@ func chain*(fix, step: Fix): Fix =
   result.source = step.source
   result.fixed = fix.fixed
   for f in step.fixed:
-    var traced_report = f
-    traced_report.line = fix.traced(f.line)
-    result.fixed.add traced_report
+    var report_traced = f
+    report_traced.line = fix.traced(f.line)
+    result.fixed.add report_traced
   result.unsettled = if step.unsettled.len > 0: step.unsettled else: fix.unsettled
   result.origin =
     if step.origin.len == 0: fix.origin

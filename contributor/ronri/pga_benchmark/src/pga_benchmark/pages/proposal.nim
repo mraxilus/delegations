@@ -86,10 +86,14 @@ func htmlProposal*(
         var names: seq[string]
         for name in claim{"algebras"}.getElems: names.add name.getStr
         names.join(", ")
+      let defined = block:
+        var names: seq[string]
+        for define in claim{"defines"}.getElems: names.add code(define.getStr)
+        if names.len == 0: "" else: ", with " & names.join(" and ")
       case claim{"kind"}.getStr
-      of "suites": "library's own suites pass on changed library"
+      of "suites": "library's own suites pass on changed library" & defined
       of "tables": $claim{"pairs"}.len & " tables equal pristine ones cell for cell at " & algebras
-      of "program": code(claim{"path"}.getStr) & " compiles and runs clean at " & algebras
+      of "program": code(claim{"path"}.getStr) & " compiles and runs clean at " & algebras & defined
       of "count": code(claim{"measurand"}.getStr) & " spends " & $claim{"value"}.getInt & " " &
           claim{"metric"}.getStr & " at " & claim{"algebra"}.getStr
       of "build":

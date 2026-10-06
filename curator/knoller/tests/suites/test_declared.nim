@@ -25,10 +25,10 @@ suite "Declarations":
     let kinds = SOURCE.declarations
     check kinds.filterIt(it.name == "ALGEBRA")[0].reach == Reach.Global
     check kinds.filterIt(it.name == "text")[0].reach == Reach.Local
-    check kinds.filterIt(it.name == "buf")[0].kind == NameKind.Parameter
-    check kinds.filterIt(it.name == "args")[0].kind == NameKind.Field
-    check kinds.filterIt(it.name == "Anti")[0].kind == NameKind.Member  # V.11
-    check kinds.filterIt(it.name == "T")[0].kind == NameKind.Placeholder  # V.12
+    check kinds.filterIt(it.name == "buf")[0].kind == KindName.Parameter
+    check kinds.filterIt(it.name == "args")[0].kind == KindName.Field
+    check kinds.filterIt(it.name == "Anti")[0].kind == KindName.Member  # V.11
+    check kinds.filterIt(it.name == "T")[0].kind == KindName.Placeholder  # V.12
 
 
   test "operator is backticked and never read as name":

@@ -3,13 +3,13 @@
 ##     one chain until source settles (`formatted`); this module selects files, applies fixers
 ##     that need more than one file's text, hands rest to knoller, and refuses any write outside
 ##     scope.
-##   Fix writes kind whose language has style guide alone (`KindRule.has_guide`): fixer
+##   Fix writes kind whose language has style guide alone (`RuleKind.has_guide`): fixer
 ##     applies guide, and STYLE.md is guide of Nim alone, so Nim, NimScript and nimble are
 ##     written and every other kind passes through. Checks read every kind still; finding in
 ##     Markdown, TypeScript, YAML or shell stays for hand. Each kind of Nim is dialect of
 ##     knoller: `.nim` module, `.nims` script, `.nimble` package.
 ##   Needless parentheses go where parser of project's own compiler proves it (X.4): knoller's
-##     chain asks (`Fix.asked`), `provenFix` runs compiler of each pin asked once on all its
+##     chain asks (`Fix.asked`), `fixProven` runs compiler of each pin asked once on all its
 ##     sources (`answered`), holds answers by path in `Context`, and fixes again each entry
 ##     that asked, at most `ASKS_MAX` times. Pin is that of project holding file, driver's for
 ##     root file, served as `resolve` of knoller serves it, so `ronri` projects read with commit
@@ -72,9 +72,9 @@ const ASKS_MAX = 8
   ## Rounds of asking parser at most, as knoller's command line takes (`command.nim`).
 
 
-func lockedNimbles*(tree: Tree): seq[string] =
+func nimblesLocked*(tree: Tree): seq[string] =
   ## Read path of each nimble file whose copy `atlas.lock` beside it holds.
-  lockedNimbles(tree.mapIt((it.path, it.content)))
+  nimblesLocked(tree.mapIt((it.path, it.content)))
 
 
 func checkFormatting*(path, source: string; kind: Kind): seq[Report] =
@@ -87,7 +87,7 @@ func checkFormatting*(path, source: string; kind: Kind): seq[Report] =
 func checkFormatting*(tree: Tree): seq[Finding] =
   ## Report each rule `koch fix` clears over every file of tree; nimble file whose copy
   ##   `atlas.lock` holds is read by none.
-  let locked = tree.lockedNimbles
+  let locked = tree.nimblesLocked
   for e in tree:
     if e.kind.isNone or e.path in locked: continue
     result.add checkFormatting(e.path, e.content, e.kind.get).findingsOf
@@ -112,7 +112,7 @@ func entriesNamed*(
       result.unknown.add finding(path, 0, "Name matches no file git lists; got `" & name & "`.")
 
 
-func isNimKind(e: Entry): bool =
+func isKindNim(e: Entry): bool =
   ## Decide whether entry is of kind fix writes: Nim, NimScript or nimble.
   e.kind.isSome and e.kind.get.rule.has_guide
 
@@ -120,11 +120,11 @@ func isNimKind(e: Entry): bool =
 func scopeOf(tree: Tree, rename: Rename): seq[(string, string)] =
   ## Read Nim files rename may reach: declaring file alone for local binding, which no other
   ##   module names; else its project, and root files, which import across projects (`koch.nim`).
-  let directory = rename.path.split('/').projectDirectory
+  let directory = rename.path.split('/').directoryProject
   for e in tree:
-    if not e.isNimKind: continue
+    if not e.isKindNim: continue
     if rename.is_local and e.path != rename.path: continue
-    if e.path.split('/').projectDirectory == directory or '/' notin e.path:
+    if e.path.split('/').directoryProject == directory or '/' notin e.path:
       result.add (e.path, e.content)
 
 
@@ -134,17 +134,17 @@ func renamesOf(
   ## Read rename of each declaration in entries, as names check reads it with words glossaries
   ##   admit, and refusal known before semantic pass: coined abbreviation (V.6), and case of
   ##   name's kind (V.1, V.11), which spells abbreviation out too and takes its place.
-  let directories = tree.projectDirectories
+  let directories = tree.directoriesProject
   var glossaries: seq[(string, string)]
   for e in tree:
-    if e.path == ROOT_GLOSSARY or directories.anyIt(e.path == it & "/" & ROOT_GLOSSARY):
+    if e.path == GLOSSARY_ROOT or directories.anyIt(e.path == it & "/" & GLOSSARY_ROOT):
       glossaries.add (e.path, e.content)
   for e in entries:
-    if not e.isNimKind or e.path in locked: continue
+    if not e.isKindNim or e.path in locked: continue
     let
       exempt = glossaries.exemptionsOf(e.path)
       recased = renamesCase(e.content, exempt)
-    for (line, column, name, renamed) in abbreviationRenames(e.content, exempt):
+    for (line, column, name, renamed) in renamesAbbreviation(e.content, exempt):
       if recased.anyIt(it.line == line and it.column == column): continue
       let rename = Rename(
         path: e.path,
@@ -168,7 +168,7 @@ func renamesOf(
       result.add (rename, r.refusal)
 
 
-func semanticQueries*(
+func queriesSemantic*(
   tree: Tree, entries: openArray[Entry], locked: openArray[string] = []
 ): seq[Query] =
   ## Build what fixers of entries ask semantic pass: each type conversion candidate (STYLE.md
@@ -177,7 +177,7 @@ func semanticQueries*(
   ##   nothing; one query holds all one file is asked.
   var asked: seq[Query]
   for e in entries:
-    if e.isNimKind and e.path notin locked: asked.add conversionQuery(e.path, e.content)
+    if e.isKindNim and e.path notin locked: asked.add queryConversion(e.path, e.content)
   for (rename, refusal) in renamesOf(tree, entries, locked):
     if refusal.len == 0: asked.add rename.queriesOf(tree.scopeOf(rename))
   for query in asked:
@@ -208,7 +208,7 @@ func contextOf*(
       paths.add e.path
       sources.add e.content
     if e.path.isCalling: suites.add e.content
-  result.dead = deadExports(paths, sources, suites).deduplicate
+  result.dead = exportsDead(paths, sources, suites).deduplicate
   for answer in answers: result.answers[answer.path] = answer
   let named = entries.mapIt(it.path)
   for (rename, refusal) in renamesOf(tree, entries, locked):
@@ -251,15 +251,15 @@ func fixSource(
   var base = source.applied(renamed)
   if path in context.answers:
     let (edits, reports) =
-      conversionEdits(path, source, context.answers[path], fence.lines, renamed)
+      editsConversion(path, source, context.answers[path], fence.lines, renamed)
     base = source.applied(renamed & edits)
     result.fixed.add reports
 
   # Drop `*` of dead export, fenced lines read as `FENCED`; fix moving them is skipped.
   let dead = context.dead.filterIt(it[0] == path).mapIt(it[1])
   if dead.len > 0:
-    let step = fixDeadExports(path, base.masked(fence), dead)
-    if step.source.fenceShape == base.masked(fence).fenceShape:
+    let step = fixExportsDead(path, base.masked(fence), dead)
+    if step.source.shapeFence == base.masked(fence).shapeFence:
       base = step.source.restored(base, fence)
       result.fixed.add step.fixed
 
@@ -278,7 +278,7 @@ func partOf(e: Entry; locked: openArray[string]; context: Context): Fixed =
     result.left.add finding(
       e.path,
       0,
-      "Nimble file whose copy `" & LOCK_FILE & "` holds stays as written; got its copy there.",
+      "Nimble file whose copy `" & FILE_LOCK & "` holds stays as written; got its copy there.",
     )
     return
   let fence = e.content.fenceOf
@@ -354,8 +354,8 @@ func fixEntries*(
 
 func pinFor(tree: Tree, path: string): string =
   ## Read pin of project holding path, driver's for file at root; empty where none is pinned.
-  let directory = path.split('/').projectDirectory
-  tree.pinOf(if directory.len == 0: DRIVER_DIRECTORY else: directory).get("")
+  let directory = path.split('/').directoryProject
+  tree.pinOf(if directory.len == 0: DIRECTORY_DRIVER else: directory).get("")
 
 
 proc answered*(
@@ -393,7 +393,7 @@ proc answered*(
     if proving.failure.len > 0 and proving.failure notin result: result.add proving.failure
 
 
-proc provenFix*(
+proc fixProven*(
   branch: string;
   tree: Tree;
   entries: openArray[Entry];
@@ -413,7 +413,7 @@ proc provenFix*(
     let asked = parts.mapIt(it.asked).concat
     if asked.len == 0: break
     for failure in known.answered(tree, asked, provers):
-      let line = Rule.NeedlessParentheses.id & ": " & failure
+      let line = Rule.ParenthesesNeedless.id & ": " & failure
       if line notin result.failures: result.failures.add line
     for k, e in entries:
       if parts[k].asked.len > 0: parts[k] = e.partOf(locked, known)

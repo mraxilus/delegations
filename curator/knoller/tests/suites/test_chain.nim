@@ -26,7 +26,7 @@ const
     "let y = @[\n  first_item_named_at_length_so_list_crosses_column,\n" &
     "  second_item_named_at_length_so_list_crosses_column\n]\necho h(q=1)\nexport y, x\n"
     ## Nim source breaking each layout rule `checkFormatting` holds.
-  FENCED_ROWS =
+  ROWS_FENCED =
     "let m = matrix(\n  #!fix off\n  1,  0,\n\n  0,  1,\n  #!fix on\n)\n" &
     "let n = matrix(1+2)\n"
     ## Nim source whose hand-shaped rows fence keeps, and whose call after fence fix reaches.
@@ -113,7 +113,7 @@ const
 
 func provenOf(source: string): Proofs =
   ## Answer module source and what chain asks of it by stub parser, as `koch fix` asks.
-  stubProofs("a.nim", source, Dialect.Module)
+  proofsStub("a.nim", source, Dialect.Module)
 
 
 func fixedOf(source: string): string =
@@ -131,7 +131,7 @@ func isSettled(source: string): bool =
 func operatorsOf(source: string): seq[string] =
   ## Read spelling of each operator token of source, in order.
   for t in source.tokens:
-    if t.kind == TokenKind.Operator: result.add t.spelling(source)
+    if t.kind == KindToken.Operator: result.add t.spelling(source)
 
 
 func toggled(path, source: string): Fix =
@@ -161,7 +161,7 @@ suite "Chain":
 
   test "dialect decides idiom fixers and checks: module reads them, script does not":
     let breach = "import std/os\nimport std/strutils\nlet a = b+c\n"
-    check checkFormatting("a.nims", breach, Dialect.Script).allIt(it.rule == Rule.ExpressionSpacing)
+    check checkFormatting("a.nims", breach, Dialect.Script).allIt(it.rule == Rule.SpacingExpression)
     check checkFormatting("a.nim", breach, Dialect.Module).len == 2  # brackets too
     check formatted("a.nims", breach, Dialect.Script).source ==
       "import std/os\nimport std/strutils\nlet a = b + c\n"  # imports left to module
@@ -177,20 +177,20 @@ suite "Chain":
       "let A = 1\nlet B = 2\n{.push inline.}\nproc f(): int =\n  return result\n{.pop.}\n"
     for dialect in Dialect:
       let rules = checkSource("a" & EXTENSIONS[dialect], breach, dialect).mapIt(it.rule)
-      check Rule.SingleBindings in rules and Rule.ReturnResult in rules  # fixer reaches both
+      check Rule.BindingsSingle in rules and Rule.ReturnResult in rules  # fixer reaches both
       check Rule.PushForeign in rules  # no fixer reaches it
       check (Rule.StrictFuncs in rules) == (dialect == Dialect.Module)  # STYLE.md §2: module
       check formatted("a" & EXTENSIONS[dialect], breach, dialect).source.contains(
         "let\n  A = 1\n  B = 2\n",
       )  # bindings share keyword in every dialect
     check checkSource("tests/a.nims", "echo x\n", Dialect.Script).mapIt(it.rule) ==
-      @[Rule.DebugOutput]  # test rules of any Nim code read script under `tests/`
+      @[Rule.OutputDebug]  # test rules of any Nim code read script under `tests/`
     check checkSource("tests/test_a.nims", "echo \"x\"\n", Dialect.Script).len == 0  # no stub
 
 
   test "fence keeps lines between its markers, and fix reaches every other line":
     let
-      source = "## Do.\n\n" & STRICT_FUNCS & "\n\n" & FENCED_ROWS
+      source = "## Do.\n\n" & STRICT_FUNCS & "\n\n" & ROWS_FENCED
       unfenced = source.replace("  " & FENCE_OFF & "\n", "").replace("  " & FENCE_ON & "\n", "")
     check checkFormatting("a.nim", unfenced, Dialect.Module).anyIt(it.line == 5)  # rows join
     check checkFormatting("a.nim", source, Dialect.Module).mapIt(it.line) == @[12]  # after fence
@@ -209,7 +209,7 @@ suite "Chain":
       "expression-spacing 2 times from line 3" &
       "; got lines `2` to `6`."  # rule left for hand and rule fixer clears alike
     check checkFormatting("a.nims", unfenced, Dialect.Script).mapIt((it.line, it.rule)).sorted ==
-      @[(3, Rule.ExpressionSpacing), (4, Rule.NotOverBinary), (5, Rule.ExpressionSpacing)]
+      @[(3, Rule.SpacingExpression), (4, Rule.NotOverBinary), (5, Rule.SpacingExpression)]
       # same lines report same unfenced
     check formatted("a.nims", source, Dialect.Script).source == source  # fenced lines unwritten
 
@@ -259,9 +259,9 @@ suite "Chain":
       ("p/alpha/alpha.nimble", "version = \"0.1.0\"\n"),
       ("p/beta/beta.nimble", "version = \"0.1.0\"\n"),
     ]
-    check lockedNimbles(files) == @["p/alpha/alpha.nimble"]  # lock names its copy
-    check lockedNimbles([("atlas.lock", LOCK)]) == @["alpha.nimble"]  # lock at root
-    check lockedNimbles([("p/alpha/atlas.lock", "{}\n")]).len == 0  # lock holding no copy
+    check nimblesLocked(files) == @["p/alpha/alpha.nimble"]  # lock names its copy
+    check nimblesLocked([("atlas.lock", LOCK)]) == @["alpha.nimble"]  # lock at root
+    check nimblesLocked([("p/alpha/atlas.lock", "{}\n")]).len == 0  # lock holding no copy
 
 
 
@@ -401,7 +401,7 @@ suite "Repair that widens its line":
     check checkFormatting("a.nim", source, Dialect.Module).len == 0  # no answer, no finding
     let proofs = source.provenOf
     check checkFormatting("a.nim", source, Dialect.Module, proofs).mapIt(it.rule) ==
-      @[Rule.NeedlessParentheses, Rule.NeedlessParentheses]
+      @[Rule.ParenthesesNeedless, Rule.ParenthesesNeedless]
     let fix = formatted("a.nim", source, Dialect.Module, proofs)
     check fix.source == HEAD & "  let c = ☆m ∧ n + ■k\n" and fix.asked.len == 0  # all answered
     let fenced = HEAD & "  #!fix off\n  let c = ☆(m) ∧ n + ■(k)\n  #!fix on\n"

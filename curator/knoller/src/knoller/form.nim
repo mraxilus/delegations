@@ -51,13 +51,13 @@ const
     ## Longest unbreakable token exemption covers, in runes.
     ##   Font and data URLs run to few hundred characters; minified markup runs to thousands,
     ##   and belongs under `build/`, never committed.
-  COMMENT_GAP* = 2  ## Spaces before trailing comment's marker (Article X.9).
-  TRAILING_WHITESPACE = {' ', '\t', '\r'}
+  GAP_COMMENT* = 2  ## Spaces before trailing comment's marker (Article X.9).
+  WHITESPACE_TRAILING = {' ', '\t', '\r'}
     ## Characters line never ends with (VIII.5); CR among them, so CRLF ending is one.
   LUT_BLANKS_BY_TIER: array[1 .. 2, int] = [3, 2]
     ## Blank lines banner of each tier takes before it (X.2).
   BLANKS_AFTER_BANNER = 1  ## Blank lines either banner takes after it (X.2).
-  LONG_QUOTE = "\"\"\""  ## Delimiter of long string, which reads backslash as itself.
+  QUOTE_LONG = "\"\"\""  ## Delimiter of long string, which reads backslash as itself.
 
 
 type
@@ -67,7 +67,7 @@ type
     at: int  ## Index of marker, i.e. first `#` after code.
     spaces: int  ## Spaces between last code character and marker.
 
-  BlankRun = object  ## Define run of blank lines beside banner whose count X.2 reads otherwise.
+  RunBlank = object  ## Define run of blank lines beside banner whose count X.2 reads otherwise.
     first: int  ## Zero-based line run opens on, i.e. line after one above it.
     count: int  ## Blank lines run holds.
     wanted: int  ## Blank lines X.2 asks.
@@ -102,7 +102,7 @@ func isWide*(line: string): bool =
 
 func isEndedInWhitespace(line: string): bool =
   ## Decide whether line ends with space, tab or CR (VIII.5).
-  line.len > 0 and line[^1] in TRAILING_WHITESPACE
+  line.len > 0 and line[^1] in WHITESPACE_TRAILING
 
 
 func checkForm*(path, source: string): seq[Report] =
@@ -122,7 +122,7 @@ func checkForm*(path, source: string): seq[Report] =
       result.add initReport(path, i + 1, Rule.LineEnding, "Line ends with CR; got CRLF.")
     if '\t' in line: result.add initReport(path, i + 1, Rule.Tab, "Line holds tab.")
     if line.isEndedInWhitespace:
-      result.add initReport(path, i + 1, Rule.TrailingWhitespace, "Line ends with whitespace.")
+      result.add initReport(path, i + 1, Rule.WhitespaceTrailing, "Line ends with whitespace.")
     if line.isWide:
       result.add initReport(
         path,
@@ -152,22 +152,22 @@ func checkComments*(path, source: string): seq[Report] =
   ## Report trailing comment without exactly two spaces before its marker (X.9).
   ##   Named by its suite alone until `checkForm` calls it; header says why.
   for gap in source.gaps:
-    if gap.spaces == COMMENT_GAP: continue
+    if gap.spaces == GAP_COMMENT: continue
     result.add initReport(
       path,
       gap.line + 1,
-      Rule.TrailingComment,
+      Rule.CommentTrailing,
       "Trailing comment takes two spaces before its marker; got `" & $gap.spaces & "`.",
     )
 
 
-func liftedComments(source: string): seq[Gap] =
+func commentsLifted(source: string): seq[Gap] =
   ## Find each plain `#` trailing comment of wide line whose comment fits own line above, at
   ##   indent of its line; line inside or closing token spanning lines has no line above to take.
   let lines = source.split('\n')
   var spanned = newSeq[bool](lines.len)
   for t in source.tokens:
-    for line in t.line + 1 .. t.lastLine(source): spanned[line] = true
+    for line in t.line + 1 .. t.lineLast(source): spanned[line] = true
   for gap in source.gaps:
     let
       line = lines[gap.line]
@@ -181,7 +181,7 @@ func liftedComments(source: string): seq[Gap] =
 
 func checkCommentsAbove*(path, source: string): seq[Report] =
   ## Report plain `#` trailing comment that widens its line past `LINE_MAX` and fits above it.
-  for gap in source.liftedComments:
+  for gap in source.commentsLifted:
     result.add initReport(
       path,
       gap.line + 1,
@@ -193,7 +193,7 @@ func checkCommentsAbove*(path, source: string): seq[Report] =
 
 func fixCommentsAbove*(path, source: string): Fix =
   ## Move each comment check reports to own line above, last first; both lines trace to its line.
-  let found = source.liftedComments
+  let found = source.commentsLifted
   var
     lines = source.split('\n')
     origin = toSeq(1 .. lines.len)
@@ -213,8 +213,8 @@ func fixWhitespace(path, source: string): Fix =
   var lines = source.split('\n')
   for i, line in lines.mpairs:
     if not line.isEndedInWhitespace: continue
-    line = line.strip(leading = false, chars = TRAILING_WHITESPACE)
-    result.fixed.add initReport(path, i + 1, Rule.TrailingWhitespace)
+    line = line.strip(leading = false, chars = WHITESPACE_TRAILING)
+    result.fixed.add initReport(path, i + 1, Rule.WhitespaceTrailing)
   result.source = lines.join("\n")
 
 
@@ -230,9 +230,9 @@ func tabsInStrings(source: string): seq[int] =
   ## Find byte offset of each tab inside one-line string that is neither raw nor long.
   ##   Raw string, i.e. one glued after identifier (`r"…"`, `fmt"…"`), reads backslash as itself.
   for t in source.tokens:
-    if t.kind != TokenKind.Text or t.lastLine(source) != t.line: continue
-    if source.continuesWith(LONG_QUOTE, t.first): continue
-    if t.first > 0 and source[t.first - 1] in NAME_CHARS: continue
+    if t.kind != KindToken.Text or t.lineLast(source) != t.line: continue
+    if source.continuesWith(QUOTE_LONG, t.first): continue
+    if t.first > 0 and source[t.first - 1] in CHARS_NAME: continue
     for k in t.first ..< t.after:
       if source[k] == '\t': result.add k
 
@@ -261,17 +261,17 @@ func fixComments*(path, source: string; held: Held): Fix =
   ## Set two spaces before each trailing comment's marker, unless held line would then be wide.
   var lines = source.split('\n')
   for gap in source.gaps:
-    if gap.spaces == COMMENT_GAP: continue
+    if gap.spaces == GAP_COMMENT: continue
     let
       line = lines[gap.line]
-      spaced = line[0 ..< gap.at - gap.spaces] & ' '.repeat(COMMENT_GAP) & line[gap.at .. ^1]
+      spaced = line[0 ..< gap.at - gap.spaces] & ' '.repeat(GAP_COMMENT) & line[gap.at .. ^1]
     if held.isHeld(gap.line + 1) and spaced.isWide and not line.isWide: continue
     lines[gap.line] = spaced
-    result.fixed.add initReport(path, gap.line + 1, Rule.TrailingComment)
+    result.fixed.add initReport(path, gap.line + 1, Rule.CommentTrailing)
   result.source = lines.join("\n")
 
 
-func blankRuns(lines: seq[string]): seq[BlankRun] =
+func runsBlank(lines: seq[string]): seq[RunBlank] =
   ## Find each run of blank lines beside banner whose count breaks X.2, run between two lines
   ##   of text; banner after banner other than parent and child gets no count from X.2.
   var above = -1
@@ -279,7 +279,7 @@ func blankRuns(lines: seq[string]): seq[BlankRun] =
     if line.len == 0: continue
     if above >= 0:
       let (upper, lower) = (lines[above].tierOfBanner, line.tierOfBanner)
-      var run = BlankRun(first: above + 1, count: i - above - 1, wanted: -1)
+      var run = RunBlank(first: above + 1, count: i - above - 1, wanted: -1)
       if lower > 0 and (upper == 0 or (upper == 1 and lower == 2)):
         run.wanted = LUT_BLANKS_BY_TIER[lower]
         run.banner = i
@@ -297,7 +297,7 @@ func checkBanners*(path, source: string): seq[Report] =
   ## Report blank lines beside banner other than X.2 asks: three before first tier, two before
   ##   second, one after either.
   ##   Named by its suite and `fixes.nim` alone until static pass calls it (`fixes.nim`).
-  let runs = source.split('\n').blankRuns
+  let runs = source.split('\n').runsBlank
   for run in runs:
     let message =
       if not run.is_before: "Banner takes one blank line after it"
@@ -306,7 +306,7 @@ func checkBanners*(path, source: string): seq[Report] =
     result.add initReport(
       path,
       run.banner + 1,
-      Rule.BannerSpacing,
+      Rule.SpacingBanner,
       message & "; got `" & $run.count & "`.",
     )
 
@@ -316,7 +316,7 @@ func fixBanners(path, source: string): Fix =
   var
     lines = source.split('\n')
     origin = toSeq(1 .. lines.len)
-  let runs = lines.blankRuns
+  let runs = lines.runsBlank
   for run in runs.reversed:
     let
       after = run.first + run.count
@@ -325,11 +325,11 @@ func fixBanners(path, source: string): Fix =
     lines = lines[0 ..< run.first] & newSeq[string](run.wanted) & lines[after .. ^1]
     origin = origin[0 ..< run.first] & kept & inserted & origin[after .. ^1]
   result.source = lines.join("\n")
-  for run in runs: result.fixed.add initReport(path, run.banner + 1, Rule.BannerSpacing)
+  for run in runs: result.fixed.add initReport(path, run.banner + 1, Rule.SpacingBanner)
   if runs.len > 0: result.origin = origin
 
 
-const FORM_STEPS*: array[5, Step] = [
+const STEPS_FORM*: array[5, Step] = [
   guarded(fixWhitespace),
   guarded(fixEnding),
   widening(fixTabs),

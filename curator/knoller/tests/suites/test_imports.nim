@@ -10,7 +10,7 @@ import std/[os, sequtils, strutils, unittest]
 
 
 const
-  SOURCE_DIRECTORY = currentSourcePath().parentDir.parentDir.parentDir / "src"
+  DIRECTORY_SOURCE = currentSourcePath().parentDir.parentDir.parentDir / "src"
     ## Package sources every import stays inside.
   KEYWORDS_IMPORT = ["import ", "include ", "from "]  ## Words opening import statement.
 
@@ -51,7 +51,7 @@ func pathsOf(statement: string): seq[string] =
       if inner.strip.len > 0: result.add prefix & inner.strip
 
 
-func importedPaths(source: string): seq[string] =
+func pathsImported(source: string): seq[string] =
   ## Read each module path source imports or includes, in order.
   var
     statement = ""
@@ -77,29 +77,29 @@ func importedPaths(source: string): seq[string] =
 
 suite "Imports":
   test "import paths read from statement, bracket group expanded":
-    check importedPaths("import std/[os, strutils]\n") == @["std/os", "std/strutils"]
-    check importedPaths("import ./[a {.all.}, b]\n") == @["./a", "./b"]  # pragma dropped
-    check importedPaths("import ./[\n  a,\n  b,\n]\n") == @["./a", "./b"]  # spread group
-    check importedPaths("from ./a import b, c\n") == @["./a"]
-    check importedPaths("import std/os except getEnv\n") == @["std/os"]
-    check importedPaths("include \"suites.nim\"\n") == @["suites.nim"]
-    check importedPaths("when compileOption(\"profiler\"): import std/nimprof\n") ==
+    check pathsImported("import std/[os, strutils]\n") == @["std/os", "std/strutils"]
+    check pathsImported("import ./[a {.all.}, b]\n") == @["./a", "./b"]  # pragma dropped
+    check pathsImported("import ./[\n  a,\n  b,\n]\n") == @["./a", "./b"]  # spread group
+    check pathsImported("from ./a import b, c\n") == @["./a"]
+    check pathsImported("import std/os except getEnv\n") == @["std/os"]
+    check pathsImported("include \"suites.nim\"\n") == @["suites.nim"]
+    check pathsImported("when compileOption(\"profiler\"): import std/nimprof\n") ==
       @["std/nimprof"]
 
 
   test "import inside string or block names nothing":
-    check importedPaths("const s = \"\"\"\nimport ./a\n\"\"\"\n").len == 0  # string
-    check importedPaths("proc f() =\n  import ./a\n").len == 0  # indented, unread
+    check pathsImported("const s = \"\"\"\nimport ./a\n\"\"\"\n").len == 0  # string
+    check pathsImported("proc f() =\n  import ./a\n").len == 0  # indented, unread
 
 
   test "every import is standard library or module inside src":
     var count = 0
-    for path in walkDirRec(SOURCE_DIRECTORY):
+    for path in walkDirRec(DIRECTORY_SOURCE):
       if not path.endsWith(".nim"): continue
-      for imported in readFile(path).importedPaths:
+      for imported in readFile(path).pathsImported:
         inc count
         if imported.startsWith("std/"): continue
         let module = (path.parentDir / imported).normalizedPath
-        check module.startsWith(SOURCE_DIRECTORY & "/")  # leaves package otherwise
+        check module.startsWith(DIRECTORY_SOURCE & "/")  # leaves package otherwise
         check fileExists(if module.endsWith(".nim"): module else: module & ".nim")
     check count > 0  # walk read imports, so check above is not vacuous

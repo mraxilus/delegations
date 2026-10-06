@@ -14,7 +14,7 @@
 ##   reaches by that token's grant, which no block here sets, so its `gh` marks are skipped.
 ##   Written when `draft.yml` left run token, since it cannot convert pull request to draft.
 ##   Weekly window: workflow passing `--recent` runs on `cron` whose interval is
-##     `RECENT_DAYS` (CURATOR.md, duty 9), since both name one window. Interval is read for
+##     `DAYS_RECENT` (CURATOR.md, duty 9), since both name one window. Interval is read for
 ##     two shapes alone, one weekday (7) and every day (1); other shape reads as 0 and fails,
 ##     so new shape is taught here first.
 ##   Cost: marks below are text, so step reaching same endpoint by other spelling goes unseen.
@@ -27,40 +27,40 @@ import ./findings
 
 
 const
-  WORKFLOW_DIRECTORY* = ".github/workflows/"  ## Directory every workflow lives in.
-  PERMISSIONS_KEY* = "permissions:"
+  DIRECTORY_WORKFLOW* = ".github/workflows/"  ## Directory every workflow lives in.
+  KEY_PERMISSIONS* = "permissions:"
     ## Line opening grant, at column zero; job-level block is indented and left to its job.
-  CHECKOUT_MARK* = "actions/checkout"
+  MARK_CHECKOUT* = "actions/checkout"
     ## Step that takes run token by default, whatever `GH_TOKEN` env says.
-  SCOPE_MARKS* = [
+  MARKS_SCOPE* = [
     ("actions", "/actions/"),
     ("actions", "gh run "),
     ("issues", "gh issue "),
     ("pull-requests", "gh pr "),
-    ("contents", CHECKOUT_MARK),
+    ("contents", MARK_CHECKOUT),
   ]
     ## Text step uses scope by, paired with scope it then needs. Endpoint path is what `gh api`
     ## spells; `gh run`, `gh issue` and `gh pr` are same reach through subcommand.
     ## `pull-requests` arrived late: no workflow read pull requests until sweep did, so gap
     ## sat unseen behind check written to stop exactly it.
-  TOKEN_RUN_MARKS* = ["${{ github.token }}", "secrets.GITHUB_TOKEN"]
+  MARKS_TOKEN_RUN* = ["${{ github.token }}", "secrets.GITHUB_TOKEN"]
     ## Text that hands run token to step.
-  TOKEN_KEY* = "GH_TOKEN: ${{"
-    ## Text that hands `gh` some token; which one, `TOKEN_RUN_MARKS` tells.
+  KEY_TOKEN* = "GH_TOKEN: ${{"
+    ## Text that hands `gh` some token; which one, `MARKS_TOKEN_RUN` tells.
 
 
 func isTokenRunUsed(workflow: string): bool =
-  ## Whether some step of workflow holds run token, by text of `TOKEN_RUN_MARKS`.
-  for mark in TOKEN_RUN_MARKS:
+  ## Whether some step of workflow holds run token, by text of `MARKS_TOKEN_RUN`.
+  for mark in MARKS_TOKEN_RUN:
     if mark in workflow: return true
 
 
 func isTokenOtherHanded*(workflow: string): bool =
   ## Whether `gh` holds token other than run token in every step, so block binds no `gh` mark.
-  TOKEN_KEY in workflow and not workflow.isTokenRunUsed
+  KEY_TOKEN in workflow and not workflow.isTokenRunUsed
 
 
-func permissionScopes*(workflow: string): Option[seq[string]] =
+func scopesPermission*(workflow: string): Option[seq[string]] =
   ## Read scopes workflow's own top-level `permissions` block names; `none` when it has none.
   ##   Absent block and empty block differ: absent takes repository default, empty grants
   ##   nothing, and only first is left alone.
@@ -68,7 +68,7 @@ func permissionScopes*(workflow: string): Option[seq[string]] =
     scopes: seq[string]
     is_inside = false
   for line in workflow.splitLines:
-    if line.startsWith(PERMISSIONS_KEY):
+    if line.startsWith(KEY_PERMISSIONS):
       is_inside = true
       continue
     if not is_inside: continue
@@ -82,13 +82,13 @@ func permissionScopes*(workflow: string): Option[seq[string]] =
 
 func checkScopes*(path, workflow: string): seq[Finding] =
   ## Report scope workflow's steps use that its own `permissions` block leaves out.
-  let granted = workflow.permissionScopes
+  let granted = workflow.scopesPermission
   if granted.isNone: return
   let is_token_other = workflow.isTokenOtherHanded
   var reported: seq[string]
-  for (scope, mark) in SCOPE_MARKS:
+  for (scope, mark) in MARKS_SCOPE:
     if mark notin workflow or scope in granted.get or scope in reported: continue
-    if mark != CHECKOUT_MARK and is_token_other: continue  # `gh` reaches by its own token
+    if mark != MARK_CHECKOUT and is_token_other: continue  # `gh` reaches by its own token
     reported.add scope
     result.add finding(
       path,
@@ -99,7 +99,7 @@ func checkScopes*(path, workflow: string): seq[Finding] =
     )
 
 
-func cronDays*(workflow: string): int =
+func daysCron*(workflow: string): int =
   ## Read days between runs of workflow's `cron`: 7 for one weekday, 1 for every day, else 0.
   for line in workflow.splitLines:
     let at = line.find("cron:")
@@ -112,13 +112,13 @@ func cronDays*(workflow: string): int =
 
 
 func checkWindow*(path, workflow: string; days: int): seq[Finding] =
-  ## Report workflow passing `--recent` whose `cron` interval is not `RECENT_DAYS`.
+  ## Report workflow passing `--recent` whose `cron` interval is not `DAYS_RECENT`.
   if "--recent" notin workflow: return
-  let read = workflow.cronDays
+  let read = workflow.daysCron
   if read != days:
     result.add finding(
       path,
       0,
-      "Schedule and `RECENT_DAYS` name one window; change both together (CURATOR.md, duty 9); " &
+      "Schedule and `DAYS_RECENT` name one window; change both together (CURATOR.md, duty 9); " &
         "got `" & $read & "` days against `" & $days & "`.",
     )

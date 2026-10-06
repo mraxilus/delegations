@@ -61,8 +61,8 @@ import ./findings
 
 
 const
-  ASSETS_KEY* = "KOCH_ASSETS_DIR"  ## Environment name overriding where assets are stored.
-  ASSETS_DIRECTORY* = ".cache/koch/assets"
+  KEY_ASSETS* = "KOCH_ASSETS_DIR"  ## Environment name overriding where assets are stored.
+  DIRECTORY_ASSETS* = ".cache/koch/assets"
     ## Default store, under home and outside checkout, in koch's own directory.
   FONTSOURCE = "https://cdn.jsdelivr.net/npm/"
     ## Host serving `woff2` subsets packaged by `@fontsource`.
@@ -197,9 +197,9 @@ const
     ##   without them fails suite.
 
 
-func storeRoot*(override: string): string =
+func rootStore*(override: string): string =
   ## Read directory assets are stored under, override winning when set.
-  if override.len > 0: override else: getHomeDir() / ASSETS_DIRECTORY
+  if override.len > 0: override else: getHomeDir() / DIRECTORY_ASSETS
 
 
 func addressOf*(file: string): string =
@@ -209,7 +209,7 @@ func addressOf*(file: string): string =
   ""
 
 
-func declaredDigest*(file: string): string =
+func digestDeclared*(file: string): string =
   ## Read digest declared for asset; empty when store declares no such asset.
   for (name, _, digest, _) in ASSETS:
     if name == file: return digest
@@ -244,7 +244,7 @@ func pathOf*(root, file: string): string =
   ## Read path asset takes in store, which is its digest; empty when none is declared.
   ##   Digest names file rather than its name doing so, since two projects asking for one
   ##   asset then share one entry, and moved pin is different entry rather than stale one.
-  let digest = file.declaredDigest
+  let digest = file.digestDeclared
   if digest.len == 0: "" else: root / digest
 
 
@@ -261,7 +261,7 @@ proc fetchAsset(root, file: string): bool =
   ## Fetch asset into store and keep it only when its bytes carry declared digest.
   ##   Downloaded beside destination and moved in once checked, so half-written file is never
   ##   read as verified one.
-  let (address, digest) = (file.addressOf, file.declaredDigest)
+  let (address, digest) = (file.addressOf, file.digestDeclared)
   if address.len == 0 or digest.len == 0: return false
   createDir(root)
   let landing = root / digest & ".fetching"

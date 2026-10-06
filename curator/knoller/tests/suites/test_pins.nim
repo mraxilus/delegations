@@ -10,7 +10,7 @@ const
   PIN = "2.2.4"  ## Compiler version nimble text pins.
   COMMIT = "295bafc0d7e9a0c9a3ba0d9b39b5b0b6a4c1d2e3"
     ## Compiler commit, forty lowercase hex, standing where nimble text pins commit.
-  NIMBLE_TEXT = "version = \"0.1.0\"\nsrcDir = \"src\"\n\nrequires \"nim == " & PIN & "\"\n"
+  TEXT_NIMBLE = "version = \"0.1.0\"\nsrcDir = \"src\"\n\nrequires \"nim == " & PIN & "\"\n"
     ## Nimble text pinning compiler exactly and requiring no package.
 
 
@@ -36,41 +36,41 @@ suite "Pins":
 
 
   test "package name ends at version, hash or space":
-    check packageName("malebolgia") == "malebolgia"  # bare
-    check packageName("malebolgia >= 1.0") == "malebolgia"  # version
-    check packageName("pkg#head") == "pkg"  # hash
-    check packageName("https://github.com/x/y@1.0") == "https://github.com/x/y"  # url at tag
+    check namePackage("malebolgia") == "malebolgia"  # bare
+    check namePackage("malebolgia >= 1.0") == "malebolgia"  # version
+    check namePackage("pkg#head") == "pkg"  # hash
+    check namePackage("https://github.com/x/y@1.0") == "https://github.com/x/y"  # url at tag
 
 
   test "pin is read only when exact":
-    check NIMBLE_TEXT.nimPin == some(PIN)  # fixture pins exactly
-    check nimPin("requires \"nim == 2.2.6\"\n") == some("2.2.6")  # spaced
-    check nimPin("requires \"nim==2.2.6\"\n") == some("2.2.6")  # unspaced
-    check nimPin("requires \"Nim == 2.2.6\"\n") == some("2.2.6")  # case-insensitive
-    check nimPin("requires \"nim >= 2.2.4\"\n").isNone  # lower bound is not pin
-    check nimPin("requires \"nim\"\n").isNone  # bare name names no version
-    check nimPin("requires \"malebolgia\"\n").isNone  # no compiler requirement
-    check nimPin("requires \"nim == " & COMMIT & "\"\n") == some(COMMIT)  # devel dependency
-    check nimPin("requires \"nim == devel\"\n").isNone  # label, not pin
+    check TEXT_NIMBLE.pinNim == some(PIN)  # fixture pins exactly
+    check pinNim("requires \"nim == 2.2.6\"\n") == some("2.2.6")  # spaced
+    check pinNim("requires \"nim==2.2.6\"\n") == some("2.2.6")  # unspaced
+    check pinNim("requires \"Nim == 2.2.6\"\n") == some("2.2.6")  # case-insensitive
+    check pinNim("requires \"nim >= 2.2.4\"\n").isNone  # lower bound is not pin
+    check pinNim("requires \"nim\"\n").isNone  # bare name names no version
+    check pinNim("requires \"malebolgia\"\n").isNone  # no compiler requirement
+    check pinNim("requires \"nim == " & COMMIT & "\"\n") == some(COMMIT)  # devel dependency
+    check pinNim("requires \"nim == devel\"\n").isNone  # label, not pin
 
 
   test "commit pin reads as `nim == <commit>` or `nim#<commit>`, and nothing looser does":
-    check nimPin("requires \"nim == 2.2.12\"\n") == some("2.2.12")  # release
-    check nimPin("requires \"nim == " & COMMIT & "\"\n") == some(COMMIT)  # commit, exact form
-    check nimPin("requires \"nim#" & COMMIT & "\"\n") == some(COMMIT)  # commit, as nimble writes
-    check nimPin("requires \"Nim#" & COMMIT & "\"\n") == some(COMMIT)  # case-insensitive name
-    check nimPin("requires \"nim >= 2.0\"\n").isNone  # lower bound
-    check nimPin("requires \"nim >= 2.0 & < 3.0\"\n").isNone  # range
-    check nimPin("requires \"nim#295bafc\"\n").isNone  # short commit names many
-    check nimPin("requires \"nim == 295bafc\"\n").isNone  # short commit, exact form
-    check nimPin("requires \"nim#devel\"\n").isNone  # branch moves
-    check nimPin("requires \"nim#v2.2.12\"\n").isNone  # tag is no commit
-    check nimPin("requires \"nim#" & COMMIT.toUpperAscii & "\"\n").isNone  # not as git writes
+    check pinNim("requires \"nim == 2.2.12\"\n") == some("2.2.12")  # release
+    check pinNim("requires \"nim == " & COMMIT & "\"\n") == some(COMMIT)  # commit, exact form
+    check pinNim("requires \"nim#" & COMMIT & "\"\n") == some(COMMIT)  # commit, as nimble writes
+    check pinNim("requires \"Nim#" & COMMIT & "\"\n") == some(COMMIT)  # case-insensitive name
+    check pinNim("requires \"nim >= 2.0\"\n").isNone  # lower bound
+    check pinNim("requires \"nim >= 2.0 & < 3.0\"\n").isNone  # range
+    check pinNim("requires \"nim#295bafc\"\n").isNone  # short commit names many
+    check pinNim("requires \"nim == 295bafc\"\n").isNone  # short commit, exact form
+    check pinNim("requires \"nim#devel\"\n").isNone  # branch moves
+    check pinNim("requires \"nim#v2.2.12\"\n").isNone  # tag is no commit
+    check pinNim("requires \"nim#" & COMMIT.toUpperAscii & "\"\n").isNone  # not as git writes
 
 
   test "requirement of compiler reads as written after `nim`, first one alone":
-    check nimRequirement("requires \"nim == 2.2.12\"\n") == some("== 2.2.12")
-    check nimRequirement("requires \"nim#" & COMMIT & "\"\n") == some("#" & COMMIT)
-    check nimRequirement("requires \"malebolgia\"\n").isNone  # no compiler named
-    check nimRequirement("requires \"nim >= 2.0\"\nrequires \"nim == 2.2.12\"\n") ==
-        some(">= 2.0")  # first wins, as `nimPin` reads it
+    check requirementNim("requires \"nim == 2.2.12\"\n") == some("== 2.2.12")
+    check requirementNim("requires \"nim#" & COMMIT & "\"\n") == some("#" & COMMIT)
+    check requirementNim("requires \"malebolgia\"\n").isNone  # no compiler named
+    check requirementNim("requires \"nim >= 2.0\"\nrequires \"nim == 2.2.12\"\n") ==
+        some(">= 2.0")  # first wins, as `pinNim` reads it

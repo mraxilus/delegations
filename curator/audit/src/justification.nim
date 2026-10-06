@@ -39,7 +39,7 @@ func header*(found: seq[Comment]): string =
   texts.join(" ")
 
 
-func checkJustification*(path, source: string; rule: KindRule): seq[Finding] =
+func checkJustification*(path, source: string; rule: RuleKind): seq[Finding] =
   ## Report file of gated kind whose header carries no justification marker.
   if not rule.is_gated: return
   if MARKER in comments(source, rule.syntax).header: return

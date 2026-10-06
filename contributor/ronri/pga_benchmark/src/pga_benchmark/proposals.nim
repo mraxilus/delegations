@@ -23,6 +23,8 @@
 ##     algebras), `count` (one measurand's function spends stated value of one metric),
 ##     `build` (compiling library alone costs at most stated share of pristine build, in peak
 ##     memory or seconds compiler reports).
+##   `suites` or `program` claim may name `defines`, each `name=value`, and its builds pass each
+##     as `-d:`, so claim holds at build option other than library's default.
 ##
 ##   Figure is paragraph of one image alone, as `![Derivation map](../../pages/map.svg)`: path
 ##     resolves against proposal's directory, and page embeds SVG it names. SVG lives under
@@ -65,6 +67,7 @@ type
 const
   KINDS_CLAIM* = ["suites", "tables", "program", "count", "build"]
     ## Claim kinds evaluation knows how to check.
+  KINDS_DEFINED = ["suites", "program"]  ## Claim kinds whose builds take defines of their own.
   WIDTH_NUMBER = 2  ## Digits number is written with, zero-padded, in path and citation.
   WORDS_STATUS = ["proposed", "implemented", "withdrawn"]
     ## Status as `claims.json` spells it, in `StatusProposal` order.
@@ -192,8 +195,22 @@ func parseProposal*(
         message: "Claim kind unknown; got `" & kind & "`.",
       )
       continue
+    let defines = claim{"defines"}
+    if not defines.isNil and (kind notin KINDS_DEFINED or defines.kind != JArray or
+        defines.getElems.anyIt(it.kind != JString or '=' notin it.getStr)):
+      findings.add Finding(
+        path: directory & "/claims.json",
+        message: "Defines need `suites` or `program` claim, and `name=value` strings; got `" &
+            $defines & "`.",
+      )
+      continue
     proposal.claims.add claim
   (proposal, findings)
+
+
+func definesOf*(claim: JsonNode): seq[string] =
+  ## Spell defines claim names as compiler flags, in order; none where it names none.
+  for define in claim{"defines"}.getElems: result.add "-d:" & define.getStr
 
 
 func programsOf*(proposal: Proposal): seq[string] =

@@ -10,7 +10,7 @@ import std/[os, sequtils, strutils, unittest]
 import ../../src/knoller/[blanks, chain, declarations, fences, reports, rules, tokens]
 
 
-const SOURCE_DIRECTORY = currentSourcePath().parentDir.parentDir.parentDir / "src"
+const DIRECTORY_SOURCE = currentSourcePath().parentDir.parentDir.parentDir / "src"
   ## Package sources whose every string literal names no article.
 
 
@@ -27,8 +27,8 @@ func isCiting(text: string): bool =
 
 suite "Rules":
   test "id is slug of name: lowercase words joined by hyphen":
-    check Rule.ExpressionSpacing.id == "expression-spacing"  # space becomes hyphen
-    check Rule.TargetSubject.id == "to-target-subject-first"  # bracket run folds into one
+    check Rule.SpacingExpression.id == "expression-spacing"  # space becomes hyphen
+    check Rule.SubjectTarget.id == "to-target-subject-first"  # bracket run folds into one
     check Rule.StrictFuncs.id == "strictfuncs"  # case folds
     check Rule.Fence.id == "fence"  # one word stays
     check Rule.FenceHeld.id == "fence-held"
@@ -63,7 +63,7 @@ suite "Rules":
       found =
           checkBlanks("tests/test_a.nim", suites) & checkDefaults("a.nim", defaults) &
           heldOf("a.nims", fenced, Dialect.Script)
-    check found.mapIt(it.rule) == @[Rule.TestBlankLines, Rule.LiteralDefault, Rule.FenceHeld]
+    check found.mapIt(it.rule) == @[Rule.LinesBlankTest, Rule.DefaultLiteral, Rule.FenceHeld]
     check found.mapIt(it.message) == @[
       "Suite takes three blank lines before it; got `0`.",  # `blanks.nim:237`
       # `declarations.nim:278`
@@ -74,11 +74,11 @@ suite "Rules":
     var
       cited: seq[string]
       count = 0
-    for path in walkDirRec(SOURCE_DIRECTORY):
+    for path in walkDirRec(DIRECTORY_SOURCE):
       if not path.endsWith(".nim"): continue
       let source = readFile(path)
       for t in source.tokens:
-        if t.kind != TokenKind.Text: continue
+        if t.kind != KindToken.Text: continue
         inc count
         if t.spelling(source).isCiting: cited.add path.extractFilename & ":" & $(t.line + 1)
     check cited == newSeq[string]()  # every string literal of every module

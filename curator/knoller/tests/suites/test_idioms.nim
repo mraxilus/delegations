@@ -8,7 +8,7 @@ import std/[sequtils, strutils, unittest]
 import ../../src/knoller/[idioms, reports]
 
 
-const HEAD_LINES = 4  ## Lines `module` puts before body: doc, blank, pragma, blank.
+const LINES_HEAD = 4  ## Lines `module` puts before body: doc, blank, pragma, blank.
 
 
 func module(body: string): string =
@@ -30,9 +30,9 @@ func reported(path, source: string): seq[(Rule, string)] =
 suite "Idioms":
   test "STYLE.md §2 used pragma carries comment naming its consumer":
     check reported("a.nim", module("func f() {.used.} = discard\n")) == @[
-      (Rule.UsedConsumer, "`{.used.}` carries comment naming its consumer; got none."),
+      (Rule.ConsumerUsed, "`{.used.}` carries comment naming its consumer; got none."),
     ]
-    check checkIdioms("a.nim", module("func f() {.used.} = discard\n"))[0].line == HEAD_LINES + 1
+    check checkIdioms("a.nim", module("func f() {.used.} = discard\n"))[0].line == LINES_HEAD + 1
     check reported("a.nim", module("func f() {.used.} = discard  # Used in b.nim.\n")).len == 0
     check reported("a.nim", module("{.used.}\n")).len == 0  # module pragma, not symbol
     check reported("a.nim", module("let s = \"{.used.}\"\n")).len == 0  # string unread
@@ -68,7 +68,7 @@ suite "Idioms":
   test "STYLE.md §6 suite importing std/random seeds it":
     let unseeded = module("import std/[random, unittest]\n\nlet x = rand(1)\n")
     check reported("tests/suites/test_x.nim", unseeded) == @[
-      (Rule.RandomSeed, "Suite seeds `std/random`, as `randomize(0)` does; got no seed."),
+      (Rule.SeedRandom, "Suite seeds `std/random`, as `randomize(0)` does; got no seed."),
     ]
     check checkIdioms("tests/suites/test_x.nim", unseeded)[0].line == 0  # whole file
     check reported("tests/suites/test_x.nim", unseeded.replace("let x", "randomize(0)\nlet x"))
@@ -82,7 +82,7 @@ suite "Idioms":
     let header = "discard \"\"\"\naction: run\ncmd: \"nim c $options $file\"\n\"\"\"\n"
     check reported("tests/test_x.nim", header & module("include \"suites.nim\"\n")).len == 0
     check reported("tests/test_x.nim", module("include \"suites.nim\"\n")) ==
-      @[(Rule.StubHeader, "Test stub carries testament header; got none.")]
+      @[(Rule.HeaderStub, "Test stub carries testament header; got none.")]
     check reported("tests/suites/test_x.nim", module("")).len == 0  # suite is not stub
     check reported("src/test_x.nim", module("")).len == 0  # outside `tests/`, no stub
 
@@ -91,12 +91,12 @@ suite "Idioms":
     let debug = module("test \"a\":\n  echo x\n")
     check reported("tests/suites/test_x.nim", debug) == @[
       (
-        Rule.DebugOutput,
+        Rule.OutputDebug,
         "Test leaves no debug output; label report, or print under failing condition; got " &
           "`echo x`.",
       ),
     ]
-    check checkIdioms("tests/suites/test_x.nim", debug)[0].line == HEAD_LINES + 2
+    check checkIdioms("tests/suites/test_x.nim", debug)[0].line == LINES_HEAD + 2
     check reported("tests/suites/test_x.nim", module("test \"a\":\n  echo \"x: \", x\n")).len == 0
     let diagnostic = module("test \"a\":\n  if x > 1:\n    echo x\n")
     check reported("tests/suites/test_x.nim", diagnostic).len == 0
@@ -107,12 +107,12 @@ suite "Idioms":
     let breach = "import std/[strutils, os]\nlet a = 1\nlet b = 2\nfunc f(): int =\n" &
       "  return result\n{.push inline.}\n{.pop.}\necho a\n"
     check checkIdioms("a.nim", breach).mapIt(it.rule) == @[
-      Rule.StrictFuncs, Rule.BracketImport, Rule.SingleBindings, Rule.PushForeign,
+      Rule.StrictFuncs, Rule.ImportBracket, Rule.BindingsSingle, Rule.PushForeign,
       Rule.ReturnResult,
     ]  # order of static pass: fixers reach first five, then none
     check checkIdioms("tests/test_a.nim", breach).mapIt(it.rule) == @[
-      Rule.StrictFuncs, Rule.BracketImport, Rule.SingleBindings, Rule.PushForeign,
-      Rule.ReturnResult, Rule.StubHeader, Rule.DebugOutput,
+      Rule.StrictFuncs, Rule.ImportBracket, Rule.BindingsSingle, Rule.PushForeign,
+      Rule.ReturnResult, Rule.HeaderStub, Rule.OutputDebug,
     ]  # stub adds header and debug output
 
 
@@ -131,7 +131,7 @@ suite "Idiom fixes":
   test "report after deleted line names line of source as given":
     let body = "func f(): int =\n  result = 1\n  return result\n\nlet a = 1\nlet b = 2\n"
     check fixed(module(body)).fixed.mapIt(it.line) ==
-      @[HEAD_LINES + 3, HEAD_LINES + 5]  # traced past deleted line
+      @[LINES_HEAD + 3, LINES_HEAD + 5]  # traced past deleted line
 
 
   test "import with except, as, other pragma, comment, or apart from block stays":
@@ -144,7 +144,7 @@ suite "Idiom fixes":
       "from std/os import getEnv\nimport std/strutils\n",
       "import ./a\nimport ../b\n",
     ]:
-      check checkImportBrackets("a.nim", module(kept)).len == 0
+      check checkBracketsImport("a.nim", module(kept)).len == 0
       check fixed(module(kept)).source == module(kept)
 
 

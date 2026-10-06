@@ -13,7 +13,7 @@ const
     ## Same file saying nothing about why it is not Nim.
 
 
-func ts(): KindRule =
+func ts(): RuleKind =
   ## Read rule of gated kind tests drive.
   Kind.TypeScript.rule
 

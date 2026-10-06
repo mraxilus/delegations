@@ -36,7 +36,7 @@ const
     ## Header rows every PROVENANCE.md carries.
   CITATION* = "verified by `"
     ## Opening of claim naming test that repeats it; matched without case.
-  NIM_EXT* = ".nim"  ## Extension citation must carry to be read as file rather than command.
+  EXT_NIM* = ".nim"  ## Extension citation must carry to be read as file rather than command.
   FNV_OFFSET = 0xcbf29ce484222325'u64
   FNV_PRIME = 0x100000001b3'u64
 
@@ -56,17 +56,17 @@ func stamp*(rules: openArray[string]): string =
   rules.digest.toHex(16).toLowerAscii
 
 
-func headerFields*(source: string): Table[string, string] =
+func fieldsHeader*(source: string): Table[string, string] =
   ## Read first pipe table as field to value; empty when header row is absent.
-  let rows = source.tableRows
+  let rows = source.rowsTable
   if rows.len == 0 or rows[0] != @["Field", "Value"]: return
   for row in rows[1 .. ^1]:
     if row.len == 2 and row[0] notin result: result[row[0]] = row[1]
 
 
-func withRulesRow*(source, stamp_new: string): string =
+func rewriteRowRules*(source, stamp_new: string): string =
   ## Rewrite first `Rules` row's value to stamp, keeping every other byte; source unchanged
-  ##   when no such row exists. Row is found as `headerFields` finds it, by its first cell,
+  ##   when no such row exists. Row is found as `fieldsHeader` finds it, by its first cell,
   ##   so what `koch stamp --write` sets is what check then reads.
   var is_done = false
   for line in source.splitLines(keepEol = true):
@@ -81,7 +81,7 @@ func withRulesRow*(source, stamp_new: string): string =
     result.add line
 
 
-func isIsoDate*(s: string): bool =
+func isDateIso*(s: string): bool =
   ## Decide whether `s` is `YYYY-MM-DD`.
   s.len == 10 and s[4] == '-' and s[7] == '-' and
     (s[0 .. 3] & s[5 .. 6] & s[8 .. 9]).allCharsInSet(Digits)
@@ -99,14 +99,14 @@ func citations*(source: string): seq[string] =
       close = source.find('`', open)
     if close < 0: break
     let name = source[open ..< close]
-    if name.endsWith(NIM_EXT): result.add name
+    if name.endsWith(EXT_NIM): result.add name
     i = close + 1
 
 
-func checkCitations*(path, source, tests_prefix: string; paths: HashSet[string]): seq[Finding] =
+func checkCitations*(path, source, prefix_tests: string; paths: HashSet[string]): seq[Finding] =
   ## Report cited test absent from project's tests directory.
   for name in source.citations:
-    if tests_prefix & name notin paths:
+    if prefix_tests & name notin paths:
       result.add finding(
         path,
         0,
@@ -117,13 +117,13 @@ func checkCitations*(path, source, tests_prefix: string; paths: HashSet[string])
 
 func checkProvenance*(path, source, stamp_expected: string): seq[Finding] =
   ## Report missing header fields, malformed date, and stale rules stamp.
-  let fields = source.headerFields
+  let fields = source.fieldsHeader
   if fields.len == 0:
     return @[finding(path, 0, "Header table `| Field | Value |` missing or empty.")]
   for f in FIELDS:
     if f notin fields or fields[f].len == 0:
       result.add finding(path, 0, "Header lacks field; got `" & f & "`.")
-  if "Date" in fields and not fields["Date"].isIsoDate:
+  if "Date" in fields and not fields["Date"].isDateIso:
     result.add finding(path, 0, "Date must be `YYYY-MM-DD`; got `" & fields["Date"] & "`.")
   if "Rules" in fields and fields["Rules"] != stamp_expected:
     result.add finding(
