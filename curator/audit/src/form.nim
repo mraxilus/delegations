@@ -1,7 +1,9 @@
 ## Enforce form of source (Article X.1, X.9, VIII.5): width, whitespace, endings, banners.
 ##   Per line: no CR; no tab; no trailing whitespace; at most `LINE_MAX` characters counted
-##   as Unicode runes, not bytes, where breaking can fix it (`isWide`, knoller's `form.nim`).
-##   Per file: non-empty; ends with exactly one newline.
+##   as Unicode runes, not bytes, where breaking can fix it. Per file: non-empty; ends with
+##   exactly one newline. Knoller holds these rules (`form.checkForm` there), which read text
+##   alone, so every kind takes one copy of them; this module adds width exemption of this
+##   repository, and renders each report with its article (`findingOf`).
 ##   Per Nim banner, first tier `#[ Title ]#` or second tier `#[[ Title ]]#`: two blank lines
 ##     before, exactly one after (X.2). First-tier banner followed at once by second-tier
 ##     banner leaves spacing between them to child's own two-before check. Three blank lines
@@ -24,7 +26,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[strutils, unicode]
+import std/[sequtils, strutils]
 import ../../knoller/src/knoller
 import ./[findings, kinds]
 
@@ -58,31 +60,19 @@ func checkBanner(path: string, lines: seq[string], i: int): seq[Finding] =
 
 
 func checkForm*(path, source: string; rule: KindRule): seq[Finding] =
-  ## Report form violations of source under kind rule.
-  if source.len == 0: return @[finding(path, 0, "File is empty.")]
-  if not source.endsWith("\n"): result.add finding(path, 0, "File lacks final newline.")
-  elif source.endsWith("\n\n"): result.add finding(path, 0, "File ends with blank line.")
+  ## Report form violations of source under kind rule: knoller's form of text, width aside on
+  ##   path exempt from it, then banners of Nim syntax.
+  let is_width_exempt = path in WIDTH_EXEMPT
+  result = checkForm(path, source).filterIt(
+    not (is_width_exempt and it.rule == Rule.LineWidth),
+  ).findingsOf
+  if source.len == 0 or rule.syntax != Syntax.Nim: return
 
-  # Split on LF only so CR survives for detection; drop phantom line after final newline.
+  # Split on LF only, as knoller reads lines; drop phantom line after final newline.
   var lines = source.split('\n')
   if source.endsWith("\n"): lines.setLen(lines.len - 1)
-  let is_width_exempt = path in WIDTH_EXEMPT
-
   for i, line in lines:
-    let number = i + 1
-    if line.contains('\r'):
-      result.add finding(path, number, "Line ends with CR; got CRLF.")
-    if line.contains('\t'): result.add finding(path, number, "Line holds tab.")
-    if line.isEndedInWhitespace:
-      result.add finding(path, number, "Line ends with whitespace.")
-    if not is_width_exempt and line.isWide:
-      result.add finding(
-        path,
-        number,
-        "Line exceeds " & $LINE_MAX & " characters; got `" & $line.runeLen & "`.",
-      )
-    if rule.syntax == Syntax.Nim and line.tierOfBanner > 0:
-      result.add checkBanner(path, lines, i)
+    if line.tierOfBanner > 0: result.add checkBanner(path, lines, i)
 
 
 func formSteps(rule: KindRule): seq[Step] =

@@ -1,4 +1,5 @@
-## Fix form of Nim source (Article X.1, X.2, X.9, VIII.5), and read width each fixer guards.
+## Check form of text, fix form of Nim source (Article X.1, X.2, X.9, VIII.5), and read width
+##   each fixer guards.
 ##   Width: line holds at most `LINE_MAX` runes, not bytes. Line over width passes only when
 ##     breaking cannot fix it: one whitespace-free token with its indent already exceeds limit,
 ##     that token is no longer than `TOKEN_MAX`, and rest of line fits without it. URL has no
@@ -12,8 +13,10 @@
 ##     exactly two, either exactly one after; second tier following its parent at once keeps its
 ##     own two. Banner opening file, run ending file, and banner after banner other than parent
 ##     and child stand outside rule, since X.2 gives no count there.
-##   Checks of whitespace, ending, tab and width read every kind, so they are caller's
-##     (`curator/audit`, `form.nim`); fixers here are Nim's.
+##   Checks of whitespace, line ending, file ending, tab and width read text alone, never Nim
+##     (`checkForm`): line splits on LF only, so CR survives to be read, and line after final
+##     newline is none. So they serve every kind of text, and `curator/audit` runs them on each
+##     kind it reads; fixers here are Nim's.
 ##
 ##   Fixers share each check's own predicate, so each rule is written once (Article II.1):
 ##     trailing whitespace is cut, CR of CRLF ending among it; ending becomes exactly one
@@ -99,9 +102,36 @@ func isWide*(line: string): bool =
   line.runeLen > LINE_MAX and not line.isUnbreakable
 
 
-func isEndedInWhitespace*(line: string): bool =
+func isEndedInWhitespace(line: string): bool =
   ## Decide whether line ends with space, tab or CR (VIII.5).
   line.len > 0 and line[^1] in TRAILING_WHITESPACE
+
+
+func checkForm*(path, source: string): seq[Report] =
+  ## Report text that breaks form: empty file, ending other than one newline, CR, tab, trailing
+  ##   whitespace, and width break can fix (X.1, VIII.5).
+  if source.len == 0: return @[initReport(path, 0, Rule.FileEnding, "File is empty.")]
+  if not source.endsWith("\n"):
+    result.add initReport(path, 0, Rule.FileEnding, "File lacks final newline.")
+  elif source.endsWith("\n\n"):
+    result.add initReport(path, 0, Rule.FileEnding, "File ends with blank line.")
+
+  # Split on LF only so CR survives for detection; drop phantom line after final newline.
+  var lines = source.split('\n')
+  if source.endsWith("\n"): lines.setLen(lines.len - 1)
+  for i, line in lines:
+    if '\r' in line:
+      result.add initReport(path, i + 1, Rule.LineEnding, "Line ends with CR; got CRLF.")
+    if '\t' in line: result.add initReport(path, i + 1, Rule.Tab, "Line holds tab.")
+    if line.isEndedInWhitespace:
+      result.add initReport(path, i + 1, Rule.TrailingWhitespace, "Line ends with whitespace.")
+    if line.isWide:
+      result.add initReport(
+        path,
+        i + 1,
+        Rule.LineWidth,
+        "Line exceeds " & $LINE_MAX & " characters; got `" & $line.runeLen & "`.",
+      )
 
 
 func gaps(source: string): seq[Gap] =

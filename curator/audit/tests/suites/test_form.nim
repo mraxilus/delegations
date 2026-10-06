@@ -19,35 +19,31 @@ func fixed(source: string, kind = Kind.Nim): Fix =
 
 
 suite "Article X":
-  test "X.1 width counts runes, not bytes":
+  test "X.1 width reads as koch prints it, in runes, and `LICENSE.md` is exempt":
     check messages("a.nim", "é ".repeat(49) & "éé\n", Kind.Nim).len == 0  # 100 runes pass
     check messages("a.nim", "é ".repeat(49) & "ééé\n", Kind.Nim) ==
-      @["Line exceeds 100 characters; got `101`."]  # 101 runes fail, breakable
+      @["Line exceeds 100 characters (X.1); got `101`."]  # 101 runes fail, breakable
     check messages("a.nim", "é".repeat(101) & "\n", Kind.Nim).len ==
       0  # one 101-rune token has no whitespace to break at
     check messages("LICENSE.md", "x".repeat(400) & "\n", Kind.Markdown).len == 0  # exempt
+    check messages("README.md", "x ".repeat(60) & "y\n", Kind.Markdown).len == 1  # path alone
 
 
-  test "X.1 line over limit passes only when breaking cannot fix it":
+  test "X.1 line over limit passes only when breaking cannot fix it, in every kind":
     let
       url = "https://fonts.googleapis.com/css2?family=" & "x".repeat(150)
       link = "<link rel=\"stylesheet\" href=\"" & url & "\">"
-    check link.len > LINE_MAX and link.isUnbreakable  # one token, rest fits without it
     check messages("pages/x.html", link & "\n", Kind.Html).len == 0  # URL has no whitespace
     check messages("pages/x.html", "<p>" & "word ".repeat(40) & "</p>\n", Kind.Html) ==
-      @["Line exceeds 100 characters; got `207`."]  # prose always breaks
+      @["Line exceeds 100 characters (X.1); got `207`."]  # prose always breaks
     check messages("pages/x.svg", "<svg>" & "<circle/>".repeat(200) & "</svg>\n", Kind.Svg)
       .len == 1  # minified markup runs past TOKEN_MAX
-    check not ("x".repeat(TOKEN_MAX + 1)).isUnbreakable  # machine output, not URL
-    check ("x".repeat(TOKEN_MAX)).isUnbreakable  # longest token exemption covers
-    check not ("x".repeat(60) & " " & "y".repeat(45)).isUnbreakable  # both fit once split
-    check not ("  " & "x".repeat(90) & " " & "y".repeat(20)).isUnbreakable  # reflow fixes it
 
 
   test "X.1 tabs rejected in every kind":
-    check messages("a.nim", "\tx\n", Kind.Nim) == @["Line holds tab."]  # no tabs
+    check messages("a.nim", "\tx\n", Kind.Nim) == @["Line holds tab (X.1)."]  # no tabs
     check messages("nim.cfg", "hints:off\t# x\n", Kind.Configuration) ==
-      @["Line holds tab."]  # cfg too
+      @["Line holds tab (X.1)."]  # cfg too
 
 
   test "X.2 banner spacing":
@@ -101,13 +97,14 @@ suite "Article X":
 
 
 suite "Article VIII":
-  test "VIII.5 whitespace and endings":
-    check messages("a.nim", "x = 1 \n", Kind.Nim) == @["Line ends with whitespace."]  # trailing
+  test "VIII.5 whitespace and endings read as koch prints them":
+    check messages("a.nim", "x = 1 \n", Kind.Nim) ==
+      @["Line ends with whitespace (VIII.5)."]  # trailing
     check messages("a.nim", "x = 1\r\n", Kind.Nim) ==
-      @["Line ends with CR; got CRLF.", "Line ends with whitespace."]  # CRLF
-    check messages("a.nim", "x = 1", Kind.Nim) == @["File lacks final newline."]  # ending
-    check messages("a.nim", "x = 1\n\n", Kind.Nim) == @["File ends with blank line."]  # ending
-    check messages("a.nim", "", Kind.Nim) == @["File is empty."]  # empty
+      @["Line ends with CR (VIII.5); got CRLF.", "Line ends with whitespace (VIII.5)."]  # CRLF
+    check messages("a.nim", "x = 1", Kind.Nim) == @["File lacks final newline (VIII.5)."]
+    check messages("a.yml", "x: 1\n\n", Kind.Yaml) == @["File ends with blank line (VIII.5)."]
+    check messages("a.md", "", Kind.Markdown) == @["File is empty (VIII.5)."]  # every kind
     check checkForm("a.nim", "x\ny \n", Kind.Nim.rule)[0].line == 2  # line numbers one-based
 
 
@@ -175,7 +172,7 @@ suite "Fixes":
       "\tlet s = 1\n",  # indent: width is guess
     ]:
       check fixed(kept).source == kept
-      check messages("a.nim", kept, Kind.Nim) == @["Line holds tab."]  # finding stays
+      check messages("a.nim", kept, Kind.Nim) == @["Line holds tab (X.1)."]  # finding stays
     let configuration = fixed("let s = \"a\tb\"\n", Kind.Configuration).source
     check configuration == "let s = \"a\tb\"\n"  # Nim alone
 

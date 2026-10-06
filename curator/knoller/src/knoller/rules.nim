@@ -4,9 +4,9 @@
 ##     for tool reading output.
 ##   Article citing each rule is caller's: `curator/audit` holds `CITATIONS`, indexed by
 ##     `Rule`, so rule without citation fails to compile there.
-##   Rule with no fixer names check alone: `NotOverBinary`, `Fence` for fence fix cannot read,
-##     `FenceHeld` for lines fence keeps as written, which run reports as warning, and
-##     `Unsettled` for file fixers do not settle.
+##   Rule with no fixer names check alone: `LineEnding`, `Tab`, `LineWidth`, `NotOverBinary`,
+##     `Fence` for fence fix cannot read, `FenceHeld` for lines fence keeps as written, which
+##     run reports as warning, and `Unsettled` for file fixers do not settle.
 
 {.experimental: "strictFuncs".}
 
@@ -15,8 +15,11 @@ import std/strutils
 
 type Rule* {.pure.} = enum  ## Define one rule knoller fixes or reports, in order chain runs.
   TrailingWhitespace = "trailing whitespace"  ## Line ends in space, tab or CR.
-  FileEnding = "file ending"  ## File ends in exactly one newline.
+  FileEnding = "file ending"  ## File ends in exactly one newline, so empty file breaks it.
+  LineEnding = "line ending"  ## Line holds no CR, so each line ends in LF alone.
   TabInString = "tab in string"  ## Tab inside one-line plain string is written `\t`.
+  Tab = "tab"  ## Line holds no tab.
+  LineWidth = "line width"  ## Line holds at most `LINE_MAX` runes, where break can fix it.
   TrailingComment = "trailing comment"  ## Two spaces stand before trailing comment's marker.
   BannerSpacing = "banner spacing"  ## Blank lines beside banner follow its tier.
   EntryBlock = "entry block"  ## Entry block holds no binding; body moves into `proc main`.

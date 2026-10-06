@@ -1,4 +1,5 @@
-## Replicate Article X.2 and X.9 checks of knoller's form, and its fixers, on Nim source.
+## Replicate Article X.1, X.2, X.9 and VIII.5 checks of knoller's form, and its fixers: form of
+##   text of any kind, and gaps, banners and fixes of Nim source.
 
 {.experimental: "strictFuncs".}
 
@@ -22,8 +23,43 @@ func gapMessages(source: string): seq[string] =
   checkComments("a.nim", source).mapIt(it.message)
 
 
+func formOf(source: string): seq[(Rule, string)] =
+  ## Read rule and message of each form finding of text.
+  checkForm("a.txt", source).mapIt((it.rule, it.message))
+
+
 
 suite "Article X":
+  test "X.1 width counts runes, not bytes":
+    check formOf("é ".repeat(49) & "éé\n").len == 0  # 100 runes pass
+    check formOf("é ".repeat(49) & "ééé\n") ==
+      @[(Rule.LineWidth, "Line exceeds 100 characters; got `101`.")]  # 101 runes, breakable
+    check formOf("é".repeat(101) & "\n").len == 0  # one 101-rune token: no whitespace to break
+
+
+  test "X.1 line over limit passes only when breaking cannot fix it":
+    let
+      url = "https://fonts.googleapis.com/css2?family=" & "x".repeat(150)
+      link = "<link rel=\"stylesheet\" href=\"" & url & "\">"
+    check link.len > LINE_MAX and link.isUnbreakable  # one token, rest fits without it
+    check formOf(link & "\n").len == 0  # URL has no whitespace
+    check formOf("<p>" & "word ".repeat(40) & "</p>\n") ==
+      @[(Rule.LineWidth, "Line exceeds 100 characters; got `207`.")]  # prose always breaks
+    check formOf("<svg>" & "<circle/>".repeat(200) & "</svg>\n").len == 1  # past `TOKEN_MAX`
+    check not ("x".repeat(TOKEN_MAX + 1)).isUnbreakable  # machine output, not URL
+    check ("x".repeat(TOKEN_MAX)).isUnbreakable  # longest token exemption covers
+    check not ("x".repeat(60) & " " & "y".repeat(45)).isUnbreakable  # both fit once split
+    check not ("  " & "x".repeat(90) & " " & "y".repeat(20)).isUnbreakable  # reflow fixes it
+
+
+  test "X.1 tab is finding in any text, string and comment among it":
+    check formOf("\tx\n") == @[(Rule.Tab, "Line holds tab.")]  # indent
+    check formOf("hints:off\t# x\n") == @[(Rule.Tab, "Line holds tab.")]  # text of any kind
+    check formOf("let s = \"a\tb\"\n") == @[(Rule.Tab, "Line holds tab.")]  # fixer's own case
+    check checkForm("a.txt", "x\n\ty\n")[0].line == 2  # line numbers one-based
+
+
+
   test "X.9 trailing comment takes exactly two spaces before its marker":
     check gapMessages("let a = 1  # Two.\n").len == 0  # two pass
     check gapMessages("let a = 1 # One.\n") == @[gapMessage(1)]  # one fails
@@ -54,6 +90,24 @@ suite "Article X":
       "Banner takes one blank line after it; got `0`."
     check checkBanners("a.nim", "#[ Opening ]#\n\nx\n").len == 0  # nothing above: no count
     check checkBanners("a.nim", "x\n\n\n\n#[ A ]#\n\n\n\n#[ B ]#\n\ny\n").len == 0  # no count
+
+
+
+suite "Article VIII":
+  test "VIII.5 whitespace, line ending and file ending":
+    check formOf("x = 1 \n") == @[(Rule.TrailingWhitespace, "Line ends with whitespace.")]
+    check formOf("x = 1\r\n") == @[
+      (Rule.LineEnding, "Line ends with CR; got CRLF."),
+      (Rule.TrailingWhitespace, "Line ends with whitespace."),
+    ]  # CRLF: CR read, and CR is whitespace
+    check formOf("x = 1\ty\t\n") ==
+      @[(Rule.Tab, "Line holds tab."), (Rule.TrailingWhitespace, "Line ends with whitespace.")]
+    check formOf("x = 1") == @[(Rule.FileEnding, "File lacks final newline.")]
+    check formOf("x = 1\n\n") == @[(Rule.FileEnding, "File ends with blank line.")]
+    check formOf("") == @[(Rule.FileEnding, "File is empty.")]  # no fix reaches it
+    check checkForm("a.txt", "x\ny \n")[0].line == 2  # line numbers one-based
+    check checkForm("a.txt", "x")[0].line == 0  # whole file
+    check formOf("x\n").len == 0 and formOf("## Do.\n\nlet a = 1  # Two.\n").len == 0
 
 
 

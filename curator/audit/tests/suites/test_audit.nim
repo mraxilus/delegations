@@ -45,5 +45,7 @@ suite "Audit":
   test "form and prose findings reach umbrella":
     let messy =
       goodTree() & @[entry(ALPHA_DIRECTORY & "/src/x.nim", "# the trap \n\n" & STRICT_FUNCS & "\n")]
-    check messy.auditTree.mapIt(it.message) ==
-      @["Line ends with whitespace.", "Comment holds article; got `the`."]  # both checks ran
+    check messy.auditTree.mapIt(it.message) == @[
+      "Line ends with whitespace (VIII.5).",
+      "Comment holds article; got `the`.",
+    ]  # both checks ran

@@ -82,8 +82,11 @@ the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, 
 | Id | Rule |
 |----|------|
 | `trailing-whitespace` | A line ends in no space, tab or carriage return. |
-| `file-ending` | A file ends in exactly one newline. |
+| `file-ending` | A file ends in exactly one newline, so an empty file breaks it. |
+| `line-ending` | A line holds no carriage return. No fix reaches it. |
 | `tab-in-string` | A tab inside a plain string on one line is written `\t`. |
+| `tab` | A line holds no tab. A fix reaches a tab in a plain string alone. |
+| `line-width` | A line holds at most 100 characters, where a break can fix it. |
 | `trailing-comment` | Two spaces stand before the marker of a trailing comment. |
 | `banner-spacing` | The blank lines beside a banner follow its tier. |
 | `entry-block` | An entry block holds no binding, so its body moves into `proc main`. |
