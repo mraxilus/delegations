@@ -298,11 +298,14 @@ var
   ARENA_SCRATCH_EXPORT = initArena(SCRATCH_EXPORT.toOpenArray(0, CAPACITY_SCRATCH_EXPORT - 1))
     ## Carve export's buffers from `SCRATCH_EXPORT`, reset as each export begins.
 
-# Pool PGA share over `share.SECONDS_SHARE` for panel, and over whole `--timings` run.
-#   Filled from `sampler` in each frame's snapshot; see `renderFrame`.
+# Pool PGA share, and values crossing boundary, over `share.SECONDS_SHARE` for panel, and
+#   over whole `--timings` run.
+#   Filled from `sampler` and `boundary` in each frame's snapshot; see `renderFrame`.
 var
-  RING_SHARE = initRingShare()
+  RING_SHARE = initRingShare[CountsShare]()
   COUNTS_SHARE_RUN: CountsShare
+  RING_CROSSING = initRingShare[CountsCrossing]()
+  COUNTS_CROSSING_RUN: CountsCrossing
 
 # Hold timing buffer at module scope as `MESHES` is.
 #   Too large for stack, touched only by `--timings` run.
@@ -1129,6 +1132,11 @@ proc renderFrame(
   RING_SHARE.add(second_now, counts_drained)
   for owner in Owner: COUNTS_SHARE_RUN[owner] += counts_drained[owner]
   panel.counts_share = RING_SHARE.pooled(second_now)
+  # Take values that crossed boundary since last frame, as this frame's, likewise.
+  let crossings_drained = drainCrossings()
+  RING_CROSSING.add(second_now, crossings_drained)
+  for way in Crossing: COUNTS_CROSSING_RUN[way] += crossings_drained[way]
+  panel.counts_crossing = RING_CROSSING.pooled(second_now)
 
   gui.frameBegin()
   # Consume step requests before layout.
@@ -2412,6 +2420,7 @@ proc runInteractive(
     let is_share_read = options.is_timed or panel.is_diagnostics_open
     if is_share_read and not isSampling(): discard startSampling()
     elif not is_share_read and isSampling(): stopSampling()
+    setCountingCrossings(is_share_read)
 
     # Change swap interval only when checkbox flips, not every frame.
     if panel.is_vsync_enabled != is_vsync_active:
@@ -2476,6 +2485,11 @@ proc runInteractive(
         elif defined(linux): NoteDiagnosticsShareFrames
         else: NoteDiagnosticsShareLinux
       echo &"  PGA share: {wordingText(reason)}"
+    if COUNTS_CROSSING_RUN[Crossing.Frames] > 0:
+      echo &"  Values per frame: euclidean → algebra " &
+          &"{COUNTS_CROSSING_RUN.perFrame(Crossing.ToAlgebra):.1f}, algebra → euclidean " &
+          &"{COUNTS_CROSSING_RUN.perFrame(Crossing.ToEuclidean):.1f}, " &
+          &"over {COUNTS_CROSSING_RUN[Crossing.Frames]} frames."
 
 
 proc runStoryboard(

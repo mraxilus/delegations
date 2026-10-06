@@ -1181,6 +1181,33 @@ function tickShare(is_shown: boolean) {
   }
 }
 
+// **Values crossing algebra boundary: `boundary`'s own tally, open while section is shown.**
+//   Bridge drains tally once each frame build and pools it over `share.SECONDS_SHARE`, so each
+//   row reads mean for each frame. Counting needs no profiler, so rows stand in every browser.
+// One row for each way, by its `boundary.Crossing` ordinal; ordinal 0 counts frames.
+const rows_crossing = ([
+  [1, 'diagnostic-crossing-to-algebra', Wording.TipDiagnosticsToAlgebra],
+  [2, 'diagnostic-crossing-to-euclidean', Wording.TipDiagnosticsToEuclidean],
+] as const).map(([way, id, tip]) => ({ way, element: elementById(id), tip }));
+for (const row of rows_crossing) row.element.parentElement!.title = nimWording(row.tip);
+let is_counting_crossings = false; // Whether bridge's tally is open, as last told.
+
+// Open tally while section is shown and close it after, then write both rows.
+function tickCrossings(is_shown: boolean) {
+  if (is_shown !== is_counting_crossings) {
+    is_counting_crossings = is_shown;
+    nimSetCountingCrossings(is_shown);
+  }
+  if (!is_shown) return;
+  const pooled = nimCrossingsPooled();
+  const frames = pooled[0] ?? 0;
+  for (const row of rows_crossing) {
+    writeText(row.element, frames === 0
+      ? nimWording(Wording.NoteDiagnosticsCrossingWaiting)
+      : ((pooled[row.way] ?? 0) / frames).toFixed(1) + ', n ' + frames);
+  }
+}
+
 function refreshDiagnostics() {
   // **Nothing here is worth millisecond while drawer is shut.** Every figure this.
   //   writes is inside it, and with drawer closed whole refresh was still running
@@ -1199,6 +1226,7 @@ function refreshDiagnostics() {
   //   genuinely open.
   // PGA share samples while section is shown, and stops when it is not.
   tickShare(isDiagnosticsShown());
+  tickCrossings(isDiagnosticsShown());
   if (!isDiagnosticsShown()) { is_diagnostics_shown_last = false; return; }
   // Which slow-pass job this tick asks for; see `TICKS_DISTRIBUTION` and `askSlowPass`.
   //   Numeric rows below run every tick, here on frame.

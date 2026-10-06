@@ -9,7 +9,7 @@
 import type { Page } from '@playwright/test';
 import { closeDiagnostics, openDiagnostics } from './diagnostics';
 import { loadDemo, objectsLargest } from './demo';
-import { waitUntil } from './clock';
+import { advanceFrames, waitUntil } from './clock';
 import { report } from './report';
 
 /** Busy samples page pools before both profilers stop, at largest demo.
@@ -18,6 +18,12 @@ import { report } from './report';
  *  `PROVENANCE.md`. Count rather than span, so slow runner samples as long as it needs.
  */
 const SAMPLES_SHARE_COMPARED = 350;
+
+/** Frames page pools before its crossing rows are read. */
+const FRAMES_CROSSING_COUNTED = 30;
+
+/** Frames run after diagnostics close: first to let page shut its tally, then to watch it. */
+const FRAMES_CROSSING_SHUT = 30;
 
 /** Engine's sampling interval, in microseconds: ten times page's, so its error is small. */
 const MICROSECONDS_SAMPLE_ENGINE = 1000;
@@ -161,4 +167,45 @@ export async function driveShareAgrees(page: Page): Promise<void> {
     );
   }
   await engine.detach();
+}
+
+/** Assert page counts values crossing boundary each way while diagnostics show, and stops after.
+ *
+ *  Placement reads one value out of algebra for each object on every frame, so values that
+ *  leave it for each frame are at least objects in scene. Camera's stance enters algebra on
+ *  every frame, so at least one value enters it.
+ *  Shut tally counts no frame, so frames pooled may fall as window moves on, and never rise.
+ */
+export async function driveCrossingsCounted(page: Page): Promise<void> {
+  const was = await openDiagnostics(page);
+  await waitUntil(
+    page, (given) => (nimCrossingsPooled()[0] ?? 0) >= given, FRAMES_CROSSING_COUNTED,
+  );
+  const reading = await page.evaluate(() => ({
+    pooled: nimCrossingsPooled(),
+    objects: nimSceneCount(),
+    rows: ['diagnostic-crossing-to-algebra', 'diagnostic-crossing-to-euclidean']
+      .map((id) => document.getElementById(id)?.textContent ?? ''),
+  }));
+  const frames = Math.max(reading.pooled[0] ?? 0, 1);
+  const [into, out] = [(reading.pooled[1] ?? 0) / frames, (reading.pooled[2] ?? 0) / frames];
+  const is_row = (row: string | undefined) => /^\d+\.\d, n \d+$/.test(row ?? '');
+  report(
+    'the page counts values that enter the algebra each frame',
+    into >= 1 && is_row(reading.rows[0]), `${reading.rows[0]}, ${into.toFixed(1)} per frame`,
+  );
+  report(
+    'the page counts at least one value leaving the algebra for each object, each frame',
+    out >= reading.objects && is_row(reading.rows[1]),
+    `${reading.rows[1]}, ${out.toFixed(1)} per frame for ${reading.objects} objects`,
+  );
+  await closeDiagnostics(page, was);
+  await advanceFrames(page, FRAMES_CROSSING_SHUT);
+  const frames_shut = await page.evaluate(() => nimCrossingsPooled()[0] ?? 0);
+  await advanceFrames(page, FRAMES_CROSSING_SHUT);
+  const frames_later = await page.evaluate(() => nimCrossingsPooled()[0] ?? 0);
+  report(
+    'the page stops counting crossings once diagnostics close',
+    frames_later <= frames_shut, `${frames_shut} frames pooled, then ${frames_later}`,
+  );
 }

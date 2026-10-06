@@ -572,12 +572,7 @@ func eyeCarried(motion, motion_reversed: Multivector): Position =
 
 func borne(motion, motion_reversed: Multivector; d: Direction): Direction =
   ## Carry reference direction through lifted motion, and read back weightless result.
-  let carried_direction = d.toMultivector.carried(motion, motion_reversed)
-  Direction(
-    x: carried_direction[Basis.E1],
-    y: carried_direction[Basis.E2],
-    z: carried_direction[Basis.E3],
-  )
+  d.toMultivector.carried(motion, motion_reversed).directionFrom
 
 
 func frameCarried(motion, motion_reversed: Multivector): FrameCamera =
