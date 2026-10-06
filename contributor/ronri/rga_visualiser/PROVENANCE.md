@@ -1103,17 +1103,23 @@ render: the curve of the page and the plot of the window, before and after, in t
 
 ## PGA share
 
-**The diagnostics show the PGA share: what share of the busy time of each front-end PGA takes.** A
-sampling profiler counts it on both front-ends, while the diagnostics section is open. One rule,
-`share.nim`, names the owner of each sample. PGA, the reference library, owns a sample with any
-frame in `pga` on its stack, since PGA calls back into nothing of the project. The project's own
-algebra owns a sample with a frame in one of its four algebra modules, and none in PGA. The
-Architect set this design on repository issue 553.
+**The diagnostics show the PGA share, and the share of each side of the algebra boundary.** A
+sampling profiler counts them on both front-ends, while the diagnostics section is open. One rule,
+`share.nim`, names the owner of each sample: the side whose code the sample was running. That is the
+owner of the innermost frame on its stack that has one. The Architect set the PGA share on
+repository issue 553, and the four sides on pull request 574.
 
-**The four modules of the project's own algebra are those whose own work is algebra.** `motors` and
-`projections` carry operators that the library lacks. `objects` asks questions of incidence in the
-words of the algebra. `boundary` lifts into the algebra and reads back out. The other modules that
-import `pga` only call it, and their own work is drawing or picking.
+**PGA owns the time in its own operators, whoever called them.** PGA calls back into nothing of the
+project, so a frame in `pga` is the innermost owned frame wherever it stands. The algebra side owns
+`motors`, `projections` and `objects`, which compose the operators of PGA. The boundary owns
+`boundary`, which lifts into the algebra and reads back out. The Euclidean side owns `euclid` and
+`mesh`, which never name a multivector. A frame that no side owns, such as a copy in `system`,
+belongs to the owned frame that called it.
+
+**Not the highest owner on the stack, and not the module that composes PGA.** The highest owner
+counted the calls of `boundary` into `euclid` as the boundary's time. To count a module that only
+composes as PGA counted its own frames as PGA's: its copies and calls, not the operators of PGA. The
+other modules consume all four sides, and their own work is Rest.
 
 **The share is pooled over 20 seconds, and the count of samples stands beside it.** One frame holds
 few samples. The page samples every 10 ms at most, and the build of the opening scene gets about 4
@@ -1123,10 +1129,10 @@ here.
 
 **The desktop samples its main thread on the CPU clock of that thread, and walks the frames of
 Nim.** `sampler.nim` arms `timer_create` on `CLOCK_THREAD_CPUTIME_ID`, at 250 samples each busy
-second. The handler allocates nothing, names the owner of each frame through `share.ownerOfPath`,
-and adds one atomically. This runs on Linux alone, in a build that keeps stack frames, and elsewhere
-the rows say why. Rejected: the own profiler of Nim, which read 30 to 41% against 26% and made the
-frame 2.2 times slower.
+second. The handler allocates nothing. It walks out from the innermost frame to the first that
+`share.ownerOfPath` names a side for, and adds one atomically. This runs on Linux alone, in a build
+that keeps stack frames, and elsewhere the rows say why. Rejected: the own profiler of Nim, which
+read 30 to 41% against 26% and made the frame 2.2 times slower.
 
 **The walk of the frames of Nim reads low against native unwinding.** A sample that lands in the
 push or pop of a small library proc, such as `[]`, misses its frame. On the same samples the walk
@@ -1142,22 +1148,28 @@ hands in its trace, and the next starts at once, at a cost of 0.2 to 0.3 ms.
 
 **The two front-ends read different shares, because their busy time holds different work.** The busy
 time of the desktop holds the layout of its panel and the submission of its draws. The page leaves
-both to the browser, outside its script. At the largest demo the desktop read PGA at 13.7% and the
-project algebra at 5.9%, of 4,033 busy samples. The page read them at 22.6 to 29.6% and 6.7 to
-10.9%, of 345 to 405.
+both to the browser, outside its script. On the page, about a third of the boundary's samples are
+copies that the JS backend makes: 252 of 701 at the largest demo. The table below gives each side
+at the largest demo.
 
 **The drive checks the figure of the page against the own profiler of the engine on every run.** It
 serves the built page with the policy, at an address that a route answers. Both profilers sample the
 largest demo until the page holds 350 busy samples, about 12 s. Both name owners through
-`nimShareOwner`. The bound is four standard errors of the two counts, and 2 points of bias. Seven
-runs read PGA within -5.3 to +2.2 points of the engine, and the project algebra within -1.8 to +1.1.
+`nimShareOwner`, and take the innermost owned frame. The bound is four standard errors of the two
+counts, and 2 points of bias. The last row gives the page less the engine over seven runs.
+
+| Largest demo | PGA | Algebra side | Boundary | Euclidean side | Busy samples |
+|--------------|-----|--------------|----------|----------------|--------------|
+| Desktop, 2 runs | 13.9 to 14.1% | 4.0 to 5.3% | 0.8 to 1.0% | 0.4 to 0.5% | about 5,800 |
+| Page, 7 runs | 22.3 to 31.4% | 0.8 to 2.0% | 4.8 to 8.9% | 1.5 to 3.4% | 355 to 404 |
+| Page less engine | -2.5 to +4.3 | -0.9 to +0.4 | -2.7 to +1.6 | -1.3 to +0.5 | |
 
 *Checked.* Verified by `suites.nim`: the rule names the owner of names from the built page and of
-desktop paths, and the ring pools 20 s. On Linux, the sampler counts a loop of products as PGA's, at
-82 to 85% of about 100 samples. Verified by driven check: the page from a file says why it cannot
-sample, and the served page samples and agrees with the engine. Verified on 2026-10-06 by `xvfb-run
--a binaries/rga_visualiser --hidden --novsync --timings --frames:300 --demo:5038`: the desktop
-figures above.
+desktop paths. It names a stack by its innermost owned frame, and the ring pools 20 s. On Linux, the
+sampler counts a loop of products as PGA's, at 82 to 85% of about 100 samples. Verified by driven
+check: the page from a file says why it cannot sample, and the served page agrees with the engine on
+each side. Verified on 2026-10-06 by `xvfb-run -a binaries/rga_visualiser --hidden --novsync
+--timings --frames:300 --demo:5038`: the desktop figures above.
 
 ## Render paths
 

@@ -219,8 +219,3 @@ _Avoid_: budget, threshold, target, goal
 The share of a front-end's busy time that runs inside PGA, the reference library, as a sampling
 profiler counts it.
 _Avoid_: library share, reference share, library cost, profile
-
-**Project algebra**:
-The four modules of this project whose own work is algebra: motors, projections, objects and
-boundary.
-_Avoid_: wrappers, glue, own algebra
