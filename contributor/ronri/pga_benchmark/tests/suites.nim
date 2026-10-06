@@ -1569,6 +1569,18 @@ suite "Internal: Evaluations":
     check pretty(moved).len > 0  # prints, where nil node crashed
 
 
+  test "dense form changed build leaves out is no moved function, where one it holds still is":
+    let
+      counts = %*{"total": {"multiplies": 3}, "movement": {"bytes_moved": 8}}
+      other = %*{"total": {"multiplies": 4}, "movement": {"bytes_moved": 8}}
+      before = %*{"functions": {"f(M)": counts, "denseF(M)": counts},
+        "measurands": {"f": {"library": "f(M)", "dense": "denseF(M)"}}}
+      left_out = %*{"functions": {"f(M)": counts}}
+      held = %*{"functions": {"f(M)": counts, "denseF(M)": other}}
+    check functionsChanged(before, left_out).len == 0  # built without dense forms by design
+    check functionsChanged(before, held).len == 1  # dense form built and moved
+
+
   test "digest moves with edits, claims and programs, and never with prose":
     let
       edit = Edit(path: "pga/a.nim", quote: "x", replacement: "y")

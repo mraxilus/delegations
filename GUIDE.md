@@ -306,6 +306,13 @@ its item already, so its `Where` cell may hold the number alone, still as a link
 link keeps a line short: write `[#456]`, and give its address once, on a line of its own above
 the sign-off.
 
+**Paraphrase the Architect in a comment, an issue or a pull request, and never quote.** Say in
+your own words what the Architect ruled or asked. Keep the whole meaning: each condition, each
+limit and each exception. A paraphrase that drops a condition changes the ruling, so read it
+against the words before you post. The issue of a brief is the one exception. There the
+coordinator quotes the words exactly, as `COORDINATOR.md` asks, so that a delegate can verify
+where the work comes from.
+
 **Cite each article and duty by a short description and its reference**, such as
 `names read head first (V.2)` or `a check that reddens a project (duty 3)`. The Architect does
 not hold the charter by number, so a reference alone sends the reader to look it up. A duty
@@ -346,6 +353,10 @@ instead. The line opens `**Working:**`, then names what runs and what wakes you:
 ```
 
 The `stop` hook refuses a turn that pushed or posted and closes with neither.
+
+**Where the `stop` hook refuses a message, reply with the corrected lines alone.** The hook reads
+the message once it is on screen, and the message stands there. A message sent again in full reads
+twice, so never send it, or its sign-off, again.
 
 **A wake that changes nothing needs no message.** The echo of your own act is such a wake, as
 the notice that the pull request you marked ready is ready. So is an event that leaves each

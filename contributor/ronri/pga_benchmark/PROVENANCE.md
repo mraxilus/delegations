@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-29 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | ae3641e673d6524d |
+| Rules   | 859d296146fdacdb |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 | Pruned  | de53b987e9686537ecae415d637952640dafb9ce |
 
@@ -626,6 +626,11 @@ lands on both.
 A dense form reads tables by their names at pin, and a change may rename them, as
 `cayley-derivation` does. The evaluation compares the library with the pin, so it needs no
 dense form.
+
+The pristine counts are the baseline, which holds the dense forms. So a dense form that the changed
+build leaves out is no moved function. At rga4d, P01 moves 2 functions, and `multivector-align`
+moves none. So an evaluation of a change that moves no function reads as quiet, and the pages take
+their spread from it.
 
 **A build claim compiles the library alone**, from an entry that holds `import pga` and nothing
 else. At rga6d the library with P01 peaks at 170.8 MiB against 235.0 MiB at the pin, ×0.73

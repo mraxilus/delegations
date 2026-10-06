@@ -249,6 +249,16 @@ suite "Hooks":
       .messages.anyIt("stands alone" in it)
 
 
+  test "stop hook asks for corrected lines alone, never whole message again":
+    # Message stands on screen once hook reads it, so resent message reads twice (D1 of #570).
+    let reason = stopReason(checkEndTurn("Pushed.\n", BRANCH) & checkNumbersBare("See #12.\n"))
+    check reason.startsWith("Mend message that ends this turn (GUIDE.md, Output contract).")
+    check "Reply with corrected lines alone" in reason
+    check "never send it or its sign-off again" in reason
+    check reason.splitLines.len == 3  # reason line, then one line for each finding
+    check "got neither" in reason.splitLines[1]
+
+
   test "turn ends with sign-off once delegate stops, else with working line":
     # Sign-off only when done, blocked or waiting; working line while work runs (GUIDE.md).
     const working = "Pushed.\n\n**Working:** run 890 of `check`, whose result wakes me.\n"

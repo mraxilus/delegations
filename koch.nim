@@ -309,8 +309,7 @@ proc runHook(root, event, input: string): int =
       found.add checkReferencesBare(turn.text)
       if turn.calls.isTurnWriting: found.add checkEndTurn(turn.text, branch)
       if found.len == 0: return 0
-      echo %*{"decision": "block", "reason": "Mend message that ends this turn (GUIDE.md, " &
-        "Output contract):\n" & found.mapIt(it.message).join("\n")}
+      echo %*{"decision": "block", "reason": found.stopReason}
       0
   of "start":
     var drift: seq[Finding]
