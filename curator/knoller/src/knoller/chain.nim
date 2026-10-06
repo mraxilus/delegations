@@ -73,20 +73,22 @@ import ./[
 ]
 
 
+type Dialect* {.pure.} = enum  ## Define which Nim source file holds, which decides fixers it takes.
+  Module  ## `.nim`, which idiom fixers read too.
+  Script  ## `.nims`.
+  Package  ## `.nimble`.
+
+
 const
   ROUNDS_MAX = 3
     ## Rounds of whole chain at most; tree settles in two (`curator/audit/PROVENANCE.md`, Fixes).
   ATTEMPTS_MAX = 4
     ## Attempts of rounds at most, last holding every line; tree settles in two
     ##   (`PROVENANCE.md`, Wraps).
+  EXTENSIONS*: array[Dialect, string] = [".nim", ".nims", ".nimble"]
+    ## Extension of file of each dialect.
   LOCK_FILE* = "atlas.lock"  ## Lock holding copy of project's nimble file.
   NIMBLE_KEY = "\"nimbleFile\""  ## Key of lock's copy of nimble file, whose `filename` names it.
-
-
-type Dialect* {.pure.} = enum  ## Define which Nim source file holds, which decides fixers it takes.
-  Module  ## `.nim`, which idiom fixers read too.
-  Script  ## `.nims`.
-  Package  ## `.nimble`.
 
 
 func stepsOf(dialect: Dialect): seq[Step] =

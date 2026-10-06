@@ -15,7 +15,7 @@
 when compileOption("profiler"): import std/nimprof
 
 import std/[options, os, sequtils, sets, strutils]
-from ../../knoller/src/knoller import checkIdioms
+import ../../knoller/src/knoller
 import ./[
   checker, coverage, dependencies, domains, duplicates, english, faces, findings, form, glossary,
   idioms, justification, kinds, layout, names, plan, prompts, prose, provenance, record,

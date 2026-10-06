@@ -58,8 +58,6 @@ const
     ## Blank lines banner of each tier takes before it (X.2).
   BLANKS_AFTER_BANNER = 1  ## Blank lines either banner takes after it (X.2).
   LONG_QUOTE = "\"\"\""  ## Delimiter of long string, which reads backslash as itself.
-  IDENTIFIER_CHARS = {'a' .. 'z', 'A' .. 'Z', '0' .. '9', '_', '\x80' .. '\xFF'}
-    ## Characters whose glue before quote makes string raw (`r"…"`, `fmt"…"`).
 
 
 type
@@ -234,7 +232,7 @@ func tabsInStrings(source: string): seq[int] =
   for t in source.tokens:
     if t.kind != TokenKind.Text or t.lastLine(source) != t.line: continue
     if source.continuesWith(LONG_QUOTE, t.first): continue
-    if t.first > 0 and source[t.first - 1] in IDENTIFIER_CHARS: continue
+    if t.first > 0 and source[t.first - 1] in NAME_CHARS: continue
     for k in t.first ..< t.after:
       if source[k] == '\t': result.add k
 

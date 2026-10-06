@@ -64,9 +64,6 @@ Options:
               compiler of pin of nearest nimble file above each file, else `nim`
 """
     ## Text printed on usage error.
-  EXTENSIONS: array[Dialect, string] = [".nim", ".nims", ".nimble"]
-    ## Extension of file of each dialect.
-  NIM_DEFAULT = "nim"  ## Compiler proving removals where none is named and no pin found.
   ASKS_MAX = 8
     ## Rounds of asking parser at most; each answers sources chain asked, and tree settles in
     ##   three (`PROVENANCE.md`, Content fixes).
@@ -316,7 +313,7 @@ proc batchesOf*(paths: openArray[string]; nim, directory: string; provers: Prove
               "pin is trusted; got `" & pinning.refusal & "`.",
             )
           elif pinning.pin.isSome: provers(pinning.pin.get)
-          else: compilerProver(NIM_DEFAULT),
+          else: compilerProver(NIM),
       )
       k = keys.high
     result[k].paths.add path

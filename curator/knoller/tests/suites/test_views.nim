@@ -32,4 +32,6 @@ suite "Views":
     check "(a)".identifierAt(0).len == 0  # none opens there
     check "is_Wide".identity == "iswide" and "isWide".identity == "iswide"  # case and `_` fold
     check "Wide".identity != "wide".identity  # first character exact
+    check "ctxFoo".identity == "ctx_foo".identity and "ctx".identity == "cTX".identity
+    check "Ctx".identity != "ctx".identity  # rename planner of `curator/audit` compares so
     check "    x".indentOf == 4 and "x".indentOf == 0
