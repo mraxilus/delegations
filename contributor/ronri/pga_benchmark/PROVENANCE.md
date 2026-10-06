@@ -513,9 +513,14 @@ also covers the verdict and evidence of every cause, the rendered width, and run
 
 `tools/build.nim` dispatches every verb from `case paramStr(1)`, so koch reads the verbs itself.
 The header table of the driver says what each verb does. `sweep` compiles the bench at two to six
-dimensions, rigid metric, and prints the medians of the general measurands. It never runs in CI.
-It records the medians in `baseline/sweep.json`, stamped as `bench` stamps its own, and `drive`
-holds that stamp to the pin.
+dimensions, rigid metric, and prints the medians of the general measurands. It runs each dimension
+in turn, five times, as `bench` runs the algebras, and keeps the median of the run medians. It
+never runs in CI. It records the medians in `baseline/sweep.json`, stamped as `bench` stamps its
+own, and `drive` holds that stamp to the pin.
+
+Rejected: one run of each dimension. The drift of the host then lands on one dimension alone. Two
+such sweeps on 2026-10-04 differ by ×1.05 at the median cell, and three sweeps of five runs differ
+by ×1.002 to ×1.004 there. Cost: four runs more add about 4 s to a sweep of about 80 s.
 
 Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Guard`. A grown total is one
 finding. With the fixture path of the suite, it renders so:
@@ -972,8 +977,8 @@ under `taken`, and at the pin they are from 2026-10-03 on `linux amd64, 4 cores`
 the machine code of one function. The figures of each proposal before and after its edits are
 in `evaluations/<name>.json`, and its page shows them. Allocation is zero on every measurand in
 every implementation, with the gauge live, as the runtime baselines record. Scaling across
-dimensions is in `baseline/sweep.json`, from `sweep`, by hand: one run of each algebra from rga2d
-to rga6d, 40 rounds over 1024 objects.
+dimensions is in `baseline/sweep.json`, from `sweep`, by hand. It holds five alternating runs of
+each algebra from rga2d to rga6d, each 40 rounds over 1024 objects.
 
 **Generated operators write each zero element, and hand-written functions leave theirs to the
 default fill.** A generated operator writes every element as a straight statement, zeros included,
@@ -1031,10 +1036,11 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
   what would say so. A loop whose bound is a variable counts once.
 - 32-bit floats and SIMD forms are unmeasured, and the SSE paths of Terathon were not
   compared.
-- `sweep` is hand-run only, and times one run of each algebra. Two sweeps at `d9be8ae` on
-  2026-10-04 differ by ×1.05 at the median cell, and by up to ×1.57 in one cell. So one cell of
-  one sweep is weak evidence alone. The growth from 2D to 6D holds better: `wedge_dot` grows ×472
-  in one sweep and ×425 in the other.
+- `sweep` is hand-run only. Three sweeps of five runs at `edb0c9d`, on `linux amd64, 4 cores` on
+  2026-10-05 and 2026-10-06, differ by ×1.002 to ×1.004 at the median cell. At the 90th
+  percentile they differ by ×1.025 to ×1.030. Five of 319 cells differ by more than ×1.10. The
+  widest is `wedge_dot_anti` at rga2d, ×1.62 at 3 to 4 ns, so one fast cell is weak evidence
+  alone. The growth from 2D to 6D holds: `wedge_dot` grows ×601 to ×616.
 - A change to the bench outside a measurand moves the time of that measurand. Ten alternating
   runs with and without `noinit`, on `linux amd64, 4 cores` on 2026-10-02, keep the median ratio of
   each implementation at ×0.99 to ×1.00. Single measurands move steadily from ×0.80 (`scale`)
