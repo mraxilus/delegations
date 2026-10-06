@@ -51,7 +51,7 @@ suite "Article X":
     #   pass took two blank lines before first tier, where X.2 asks three (#557); domain is each
     #   count exact check reads, in each kind of Nim syntax, and kind of other syntax reads none.
     for (path, kind) in [
-      ("a.nim", Kind.Nim), ("a.nims", Kind.NimScript), ("a.nimble", Kind.Nimble),
+      ("a.nim", Kind.Nim), ("a.nims", Kind.NimScript), ("a.nimble", Kind.Nimble)
     ]:
       check messages(path, "x = 1\n\n\n#[ Section ]#\n\ny = 2\n", kind) ==
         @["First-tier banner takes three blank lines before it (X.2); got `2`."]
@@ -63,15 +63,15 @@ suite "Article X":
     check messages("nim.cfg", "x\n\n#[ Section ]#\ny\n", Kind.Configuration).len == 0
 
 
-  test "X.2 banner spacing":
+  test "X.2 banner spacing reads as koch prints it":
     let good = "x = 1\n\n\n\n#[ Section ]#\n\ny = 2\n"
     check messages("a.nim", good, Kind.Nim).len == 0  # three before, one after
     check messages("a.nim", "x = 1\n\n#[ Section ]#\n\ny = 2\n", Kind.Nim) ==
-      @["Banner lacks two blank lines before it."]  # one before
-    check messages("a.nim", "x = 1\n\n\n#[ Section ]#\ny = 2\n", Kind.Nim) ==
-      @["Banner lacks exactly one blank line after it."]  # none after
-    check messages("a.nim", "x = 1\n\n\n#[ Section ]#\n\n\ny = 2\n", Kind.Nim) ==
-      @["Banner lacks exactly one blank line after it."]  # two after
+      @["First-tier banner takes three blank lines before it (X.2); got `1`."]  # one before
+    check messages("a.nim", "x = 1\n\n\n\n#[ Section ]#\ny = 2\n", Kind.Nim) ==
+      @["Banner takes one blank line after it (X.2); got `0`."]  # none after
+    check messages("a.nim", "x = 1\n\n\n\n#[ Section ]#\n\n\ny = 2\n", Kind.Nim) ==
+      @["Banner takes one blank line after it (X.2); got `2`."]  # two after
     check messages("nim.cfg", "#[ Section ]#\n", Kind.Configuration).len == 0  # Nim only
 
 
@@ -80,15 +80,15 @@ suite "Article X":
     check messages("a.nim", nested, Kind.Nim).len == 0  # child follows parent at once
     check messages("a.nim", "x = 1\n\n\n#[[ Child ]]#\n\ny = 2\n", Kind.Nim).len == 0  # two before
     check messages("a.nim", "x = 1\n\n#[[ Child ]]#\n\ny = 2\n", Kind.Nim) ==
-      @["Banner lacks two blank lines before it."]  # second tier checked too
+      @["Second-tier banner takes two blank lines before it (X.2); got `1`."]  # tier read
     check messages("a.nim", "x = 1\n\n\n#[[ Child ]]#\n\n\ny = 2\n", Kind.Nim) ==
-      @["Banner lacks exactly one blank line after it."]  # two after, no child
+      @["Banner takes one blank line after it (X.2); got `2`."]  # two after, no child
     check messages("a.nim", "x = 1\n\n\n\n#[ Parent ]#\n\n#[[ Child ]]#\n\ny = 2\n", Kind.Nim) ==
-      @["Banner lacks two blank lines before it."]  # child keeps its own two
-    check messages("a.nim", "x = 1\n\n\n#[ A ]#\n\n\n#[ B ]#\n\ny = 2\n", Kind.Nim).len == 0
+      @["Second-tier banner takes two blank lines before it (X.2); got `1`."]  # child keeps two
+    check messages("a.nim", "x = 1\n\n\n\n#[ A ]#\n\n\n#[ B ]#\n\ny = 2\n", Kind.Nim).len == 0
 
 
-  test "X.2 lenient check reads no side exact check gives no count, so it accepts every fix":
+  test "X.2 side that X.2 gives no count goes unread, and fixer agrees":
     for unread in [
       "#[ Opening ]#\n\nx = 1\n",  # nothing above
       "x = 1\n\n\n\n#[ Closing ]#\n",  # nothing below
@@ -99,13 +99,9 @@ suite "Article X":
       check fixForm("a.nim", unread, Kind.Nim.rule).source == unread  # exact fixer agrees
 
 
-  test "X.2 lenient check accepts each count exact check asks":
+  test "X.2 static pass accepts each count fixer writes":
     let exact = "x = 1\n\n\n\n#[ Parent ]#\n\n\n#[[ Child ]]#\n\ny = 2\n\n\n#[[ Sibling ]]#\n\nz\n"
-    check messages("a.nim", exact, Kind.Nim).len == 0  # lenient check accepts three before
-
-
-  test "X.2 exact waits outside static pass until projects clear it through koch fix":
-    check messages("a.nim", "x = 1\n\n\n#[ Section ]#\n\ny = 2\n", Kind.Nim).len == 0
+    check messages("a.nim", exact, Kind.Nim).len == 0  # three before first tier, two before second
 
 
   test "X.9 waits outside static pass until projects clear it through koch fix":

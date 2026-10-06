@@ -76,7 +76,7 @@ type
     is_before: bool  ## Run stands before banner, else after it.
 
 
-func tierOfBanner*(line: string): int =
+func tierOfBanner(line: string): int =
   ## Read tier of section banner alone on line: 1 for `#[ Title ]#`, 2 for `#[[ Title ]]#`.
   ##   Zero for any other line.
   if line.len > 8 and line.startsWith("#[[ ") and line.endsWith(" ]]#"): 2

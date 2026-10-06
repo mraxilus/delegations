@@ -28,8 +28,8 @@
 ##     change of package.
 ##   `checkFormatting` holds every check whose findings these fixers clear and static pass
 ##     does not run yet; pull request after projects run `koch fix` wires its tree form
-##     (CURATOR.md, duty 3), one line in `auditTree`, and drops lenient banner check
-##     `checkForm` runs.
+##     (CURATOR.md, duty 3), one line in `auditTree`; exact banners it holds, static pass reads
+##     already (`form.nim`), since no project breaks them.
 ##   Scope: every path fix would write goes through `scope.checkScope` for branch. One path
 ##     outside refuses every write, so run writes all it planned or nothing. Curator branch
 ##     thus never writes contributor code (`checkPropagation`), as CURATOR.md duty 11 asks.

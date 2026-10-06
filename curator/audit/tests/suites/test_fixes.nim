@@ -27,7 +27,7 @@ const
     "let x = foo(\n  1,\n  2\n)\necho x\n" &
     "let y = @[\n  first_item_named_at_length_so_list_crosses_column,\n" &
     "  second_item_named_at_length_so_list_crosses_column\n]\necho h(q=1)\nexport y, x\n"
-    ## Nim source breaking each layout rule `checkFormatting` holds, and no wired check.
+    ## Nim source breaking each layout rule `checkFormatting` holds; static pass reads X.2 alone.
   FENCED_ROWS =
     "let m = matrix(\n  #!fix off\n  1,  0,\n\n  0,  1,\n  #!fix on\n)\n" &
     "let n = matrix(1+2)\n"
@@ -120,7 +120,8 @@ suite "Fixes":
 
   test "layout checks wait outside static pass, and fix clears every one in one run":
     let path = "curator/audit/src/a.nim"
-    check checkForm(path, LAYOUT, Kind.Nim.rule).len == 0  # static pass reads none of them
+    check checkForm(path, LAYOUT, Kind.Nim.rule).mapIt(it.message) ==
+      @["First-tier banner takes three blank lines before it (X.2); got `2`."]  # X.2 alone wired
     check checkIdioms(path, LAYOUT).len == 0
     let found = checkFormatting(path, LAYOUT, Kind.Nim).findingsOf
     for rule in ["(X.2)", "(X.9)", "(STYLE.md §5)", "Signature", "Call", "trailing separator",
