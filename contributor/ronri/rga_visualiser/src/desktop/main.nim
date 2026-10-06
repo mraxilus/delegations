@@ -103,7 +103,7 @@
 
 when compileOption("profiler"): import std/nimprof
 
-import std/[algorithm, math, monotimes, options, os, parseopt, strformat, strutils]
+import std/[algorithm, math, monotimes, options, os, parseopt, strformat, strutils, typetraits]
 
 import pga
 import ../rga_visualiser/[
@@ -198,11 +198,14 @@ const
     ## Set frame arena's size.
     ##   PNG's filtered scanlines or one GIF frame's quantized indices and LZW output,
     ##   reclaimed once that unit of work is written out.
-  CAPACITY_ARENA_SWAP* {.define: "visualiser.capacity_arena_swap".} = 256 * 1024
+  CAPACITY_ARENA_SWAP* {.define: "visualiser.capacity_arena_swap".} =
+      OBJECTS_MAX * sizeof(Placement) + 256 * 1024
     ## Set each half of frame swap pair.
     ##   Two blocks: pair's promise is that last frame's bytes are still there to read.
-    ##   Sized from loops that carve it: largest is lattice's, bounded by
-    ##   `mesh.LINES_GRID_MAX` chords, well under one half; figures in `PROVENANCE.md`.
+    ##   Frame's placements carve first, one for each handle: 645,120 bytes at shipped
+    ##   5040 handles, `sizeof(Placement)` reading 128.
+    ##   Draw scratch carves after them, in 256 KiB of its own: largest is lattice's, bounded by
+    ##   `mesh.LINES_GRID_MAX` chords, well under that; figures in `PROVENANCE.md`.
   FRAMES_DRIVEN* {.define: "visualiser.frames_driven".} = 400
     ## Draw this many frames for scripted run given no `--frames` of its own.
     ##   Bound for every drive rather than for longest: keys is longest script, and each drive
@@ -223,12 +226,12 @@ const
   BYTES_MEMORY_TOTAL* =
       CAPACITY_ARENA_PERMANENT + CAPACITY_ARENA_FRAME + 2 * CAPACITY_ARENA_SWAP +
       2 * sizeof(MeshSet) + sizeof(Scene) + sizeof(History) + sizeof(Panel) +
-      FRAMES_TIMING_MAX * sizeof(float32) + OBJECTS_MAX * sizeof(Placement)
+      FRAMES_TIMING_MAX * sizeof(float32)
     ## Sum every fixed-size reservation this binary makes.
     ##   Both arenas at full capacity, committed in data segment regardless of use; both
     ##   mesh sets; object pool; undo timeline, `history.CAPACITY_HISTORY` whole copies of
     ##   that pool; panel's state; `--timings` buffer.
-    ##   Placing side of every handle, placed each frame for every walk of it to read.
+    ##   Placing side of every handle sits inside frame pair, so pair's term counts it.
     ##   Excludes anything Dear ImGui, SDL or driver allocate.
     ##   Timeline is largest term at capacity; figure omitting its biggest entry is worse
     ##   than none.
@@ -239,6 +242,13 @@ static:
   doAssert PIXELS_WIDTH <= WIDTH_EXPORT_MAX and PIXELS_HEIGHT <= HEIGHT_EXPORT_MAX,
     &"Window must fit within the {WIDTH_EXPORT_MAX}x{HEIGHT_EXPORT_MAX} export bound; " &
     &"raise `--define:visualiser.width_export_max` or `...height_export_max`."
+  # Carved memory is uninitialised bytes, and never traced: placement holding GC'd field
+  #   would then hold garbage reference.
+  doAssert supportsCopyMem(Placement),
+    &"Placements carve from frame pair, so they must hold plain values; got `{$Placement}`."
+  doAssert CAPACITY_ARENA_SWAP >= OBJECTS_MAX * sizeof(Placement) + sizeof(DrawScratch),
+    &"Each half of frame pair must hold placement for each handle and draw scratch; got " &
+    &"`{CAPACITY_ARENA_SWAP}` for `visualiser.capacity_arena_swap`."
 
 # Hold vertex storage at module scope, far too large for stack frame.
 var
@@ -289,9 +299,17 @@ var TIMINGS_FRAME_MILLISECONDS: array[FRAMES_TIMING_MAX, float32]
 # Placing side for every live handle, placed by every frame as browser places it; see
 #   `framing.placeEvery`.
 #   Read by every walk of that frame: reach, local scale, cull, emission, hover pick.
-#   Costs `OBJECTS_MAX` placements of fixed reservation, counted by `BYTES_MEMORY_TOTAL`.
+#   Carved first from frame pair at each turn, so frame before stays readable; see
+#   `turnFrame`. Pair's capacity counts it.
 var
-  PLACEMENTS: array[OBJECTS_MAX, Placement]
+  PLACEMENTS = ARENA_SWAP_DRAW.current.push[:Placement](OBJECTS_MAX)
+    ## Hold this frame's placements, by handle, in block frame pair carves now.
+    ##   Between two frames still last frame's, which is what event handler reads.
+    ##   Carved here once before first frame, so handler before it reads zeroed block: kind
+    ##   `Nothing` for every handle.
+  PLACEMENTS_PREVIOUS = PLACEMENTS
+    ## Hold frame before's placements, by handle, in block frame pair carved then.
+    ##   Readable until next turn reclaims it; read through `placementsPrevious`.
   REVISION_PLACED = 0  ## Scene revision `PLACEMENTS` stand for; see `placeEdited`.
   REACH_SCENE = 0.0
     ## Scene's reach from origin, measured from frame's placements, so far clip follows.
@@ -301,11 +319,29 @@ var
     ##   Moves with camera as well as with scene, so it is read once for each frame.
 
 
+template placements: untyped = PLACEMENTS.toOpenArray(0, OBJECTS_MAX - 1)
+  ## Read this frame's placements whole, by handle; between two frames, last frame's.
+
+template placementsPrevious: untyped = PLACEMENTS_PREVIOUS.toOpenArray(0, OBJECTS_MAX - 1)
+  ## Read frame before's placements whole, by handle, for what reckons across two frames.
+  ##   Handle dead or newly born in that frame holds nothing meaningful there.
+
+
+proc turnFrame() =
+  ## Turn frame pair over, and carve this frame's placements first from block it reclaims.
+  ##   What last frame placed stays readable as `placementsPrevious` until next turn.
+  ##   Every path that turns pair places straight after, through `renderFrame`: interactive
+  ##   loop and storyboard's capture alike.
+  PLACEMENTS_PREVIOUS = PLACEMENTS
+  ARENA_SWAP_DRAW.swap()
+  PLACEMENTS = ARENA_SWAP_DRAW.current.push[:Placement](OBJECTS_MAX)
+
+
 proc placeScene(scene: Scene) =
   ## Place every live handle, and measure scene's reach from those places.
   ##   Frame's first step, on every frame; see `framing.placeEvery`.
-  PLACEMENTS.placeEvery(scene)
-  REACH_SCENE = reachOf(PLACEMENTS, scene)
+  placements.placeEvery(scene)
+  REACH_SCENE = reachOf(placements, scene)
   REVISION_PLACED = scene.revision
 
 
@@ -313,8 +349,8 @@ proc placeEdited(scene: Scene) =
   ## Place handles edited since this frame placed scene: menu edit lands mid-frame.
   ##   Hover pick and emission then read scene as it now stands; see `framing.placeStamped`.
   if REVISION_PLACED == scene.revision: return
-  PLACEMENTS.placeStamped(scene, REVISION_PLACED)
-  REACH_SCENE = reachOf(PLACEMENTS, scene)
+  placements.placeStamped(scene, REVISION_PLACED)
+  REACH_SCENE = reachOf(placements, scene)
   REVISION_PLACED = scene.revision
 
 
@@ -523,7 +559,7 @@ proc assembleMeshes(
   ##     Empty for interactive rendering, filled by storyboard's rolling emphasis alone.
   ##   Assembles alone: where camera should look is `offerCameraAim`'s job.
   ##   `eye` and `frame` are read off camera's stance once for frame, by `renderFrame`.
-  ##   Emits frame's own placements, `PLACEMENTS`, which `renderFrame` filled.
+  ##   Emits frame's own placements, `placements`, which `renderFrame` filled.
   ##   Furniture and scene are built every frame, still or moving.
   let ticks_start = getMonoTime().ticks
   # Carve where grid assembles pieces before emitting, from frame pair.
@@ -548,24 +584,24 @@ proc assembleMeshes(
   #   ordinary plane's fill blends over it whatever handle either occupies.
   #   Placement already answered sky or not, as browser's walk reads it.
   for handle, one in scene.pairs:
-    if not one.isVisible or PLACEMENTS[handle].kind != Case.PlaneEverywhere or
+    if not one.isVisible or placements[handle].kind != Case.PlaneEverywhere or
         MARKS_PICKED[handle]:
       continue
     let
       progress = animationProgress(now, one.born)
       tint = if are_dimmed[handle]: muted(one.ink.colour) else: one.ink.colour
-    discard MESHES.emitObject(PLACEMENTS[handle], tint, scale, progress)
+    discard MESHES.emitObject(placements[handle], tint, scale, progress)
 
   for handle, one in scene.pairs:
-    if not one.isVisible or PLACEMENTS[handle].kind == Case.PlaneEverywhere or
+    if not one.isVisible or placements[handle].kind == Case.PlaneEverywhere or
         MARKS_PICKED[handle]:
       continue
     # Skip point outside view before it costs emitting; see `tessellate.isPointInView`.
-    if not isPointInView(PLACEMENTS[handle], one.radius, bounds): continue
+    if not isPointInView(placements[handle], one.radius, bounds): continue
     let
       progress = animationProgress(now, one.born)
       tint = if are_dimmed[handle]: muted(one.ink.colour) else: one.ink.colour
-    discard MESHES.emitObject(PLACEMENTS[handle], tint, scale, progress, one.radius)
+    discard MESHES.emitObject(placements[handle], tint, scale, progress, one.radius)
 
   # Emit open edit session's staged multivector, through same dispatch real object uses.
   #   Composing then shows exactly what saving gives.
@@ -606,11 +642,11 @@ proc assembleMeshes(
     let handle = panel.selection.at(position)
     if not scene.isAlive(handle) or not scene[handle].isVisible: continue
     let one = scene[handle]
-    if not isPointInView(PLACEMENTS[handle], one.radius, bounds): continue
+    if not isPointInView(placements[handle], one.radius, bounds): continue
     let
       progress = animationProgress(now, one.born)
       tint = if are_dimmed[handle]: muted(one.ink.colour) else: one.ink.colour
-    discard MESHES.emitObject(PLACEMENTS[handle], tint, scale, progress, one.radius)
+    discard MESHES.emitObject(placements[handle], tint, scale, progress, one.radius)
 
   panel.microseconds_tessellate = float(getMonoTime().ticks - ticks_start) / 1000.0
   # Count per record what its shader emits: vertices drawn, not floats carried.
@@ -1102,7 +1138,7 @@ proc renderFrame(
   #   `camera.drawExtentFor`.
   var (eye, frame) = camera.moveOriginView
   # Read local scale once for this frame, before extent reads clip planes off it.
-  REACH_NEAR = reachNearOf(PLACEMENTS, scene, camera.originView, eye, frame.forward)
+  REACH_NEAR = reachNearOf(placements, scene, camera.originView, eye, frame.forward)
   camera.reach_near = REACH_NEAR
 
   # Derive extent aim reads, and keep motor before aim, so hold it makes is seen below.
@@ -1131,7 +1167,7 @@ proc renderFrame(
   # Menu may have edited scene since it was placed; hover and meshes read it as it stands.
   placeEdited(scene)
   interaction.updateHover(
-    scene, camera, scale, view_projection, int(width), int(height), PLACEMENTS
+    scene, camera, scale, view_projection, int(width), int(height), placements
   )
   interaction.pruneFocus(scene)
   interaction.updateDrag(scene, now)
@@ -2220,11 +2256,9 @@ proc runInteractive(
     #   Draw loop's scratch is swap pair below; `exportFrame` may use this and leaves it
     #   reset.
     ARENA_FRAME.reset()
-    # Turn frame pair over.
-    #   This frame carves into block reclaimed here, while previous frame's block stays
-    #   readable until next swap.
-    ARENA_SWAP_DRAW.swap()
-    # Turn frame's measurements over with it, on same two-frame lifetime; see `timings`.
+    # Turn frame's measurements over, on two-frame lifetime frame pair keeps; see `timings`.
+    #   Pair itself turns just before frame draws, so events below read last frame's
+    #   placements; see `turnFrame`.
     openFrameTimings()
 
     # Take one reading per frame, shared by every drag completing this frame and by render.
@@ -2310,6 +2344,11 @@ proc runInteractive(
       interaction.driveHeld(camera, seconds_frame, panel.selection.len > 0)
       panel.tween_camera.abandon()
 
+    # Turn frame pair over, after every event and before frame places scene.
+    #   This frame carves into block reclaimed here, while previous frame's block stays
+    #   readable until next turn. Events above read last frame's placements, which they
+    #   picked against.
+    turnFrame()
     let (width, height) =
       renderFrame(
         window,
@@ -2415,9 +2454,9 @@ proc runStoryboard(
 
   template renderAt(now: float): (int, int) =
     # Turn frame pair over here as interactive loop turns it.
-    #   Each render carves its own `DrawScratch`, and capture run that never swaps
-    #   overflows arena within few sub-frames.
-    ARENA_SWAP_DRAW.swap()
+    #   Each render carves its own `DrawScratch`, and capture run that never turns overflows
+    #   arena within few sub-frames. Turn carves placements render places into.
+    turnFrame()
     renderFrame(window, renderer, panel, scene, camera, interaction_disabled, now, are_dimmed)
 
   template captureGif(now: float) =

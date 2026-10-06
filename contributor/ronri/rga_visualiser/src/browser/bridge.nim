@@ -324,11 +324,17 @@ var
     ## No storyboard-capture mode to switch them off for.
   POINTER_PICK: Option[PointerPick]  ## Pick made by pointer since camera was last offered.
     ## Consumed by `framing.offerAim` in `nimBuildFrame`; see `nimPickByPointer`.
-  PLACEMENTS: array[OBJECTS_MAX, Placement]  ## What algebra says about each live handle.
+  PLACEMENTS_PAIR: array[2, array[OBJECTS_MAX, Placement]]
+    ## Hold what algebra says about each live handle, for this frame and frame before.
+    ## Two-frame lifetime desktop's frame pair gives, in two typed blocks: JS backend cannot
+    ## carve typed slices from bytes, so no arena stands here.
+    ##   `turnPlacements` flips which block is current as each frame build opens, and
+    ##   allocates nothing; read through `placements` and `placementsPrevious`.
     ## Every handle placed by every frame build; see `placeScene`.
     ## Scene's handles only: preview and drag preview are placed where drawn.
     ## Dead handles hold whatever last occupant left; every walk skips them.
-  REVISION_PLACED = 0  ## Scene revision `PLACEMENTS` stand for.
+  INDEX_PLACEMENTS = 0  ## Which block of `PLACEMENTS_PAIR` frame build places into.
+  REVISION_PLACED = 0  ## Scene revision `placements` stand for.
     ## Frame build places at scene's revision; edit between two frames moves past it,
     ## and `placeEdited` brings reader there.
   BORN_LAST = 0.0  ## Latest birth stamp `stampBorn` has written.
@@ -1137,15 +1143,30 @@ proc nimOverlayMetrics(): seq[float32] {.exportc.} =
   ]
 
 
+template placements: untyped = PLACEMENTS_PAIR[INDEX_PLACEMENTS]
+  ## Read this frame's placements, by handle; between two frame builds, last frame's.
+  ##   Indexed in place at each use, never bound: `let` deep-copies on JS backend.
+
+template placementsPrevious: untyped = PLACEMENTS_PAIR[1-INDEX_PLACEMENTS]
+  ## Read frame before's placements, by handle, for what reckons across two frames.
+  ##   Handle dead or newly born in that frame holds nothing meaningful there.
+
+
+proc turnPlacements() =
+  ## Turn placement pair over as frame build opens, so frame before stays readable.
+  ##   Block turned to holds frame before last until `placeScene` places every handle.
+  INDEX_PLACEMENTS = 1 - INDEX_PLACEMENTS
+
+
 proc placeScene() =
   ## Place every live handle, and measure scene's reach from those places.
   ##   Frame build's first step, on every frame; see `framing.placeEvery`.
   ##   Readers between two frames read these; see `placeEdited`.
-  PLACEMENTS.placeEvery(SCENE_PAGE)
+  placements.placeEvery(SCENE_PAGE)
   # Scene's reach moves with same placements, so far clip follows; see `camera.distanceFar`.
   #   Passed to each extent, never kept in camera: `home` and every path replacing camera
   #   value would drop it.
-  REACH_SCENE = reachOf(PLACEMENTS, SCENE_PAGE)
+  REACH_SCENE = reachOf(placements, SCENE_PAGE)
   REVISION_PLACED = SCENE_PAGE.revision
 
 
@@ -1154,8 +1175,8 @@ proc placeEdited() =
   ##   Pointer event after edit picks scene as it now stands, before next frame places it;
   ##   see `framing.placeStamped`.
   if REVISION_PLACED == SCENE_PAGE.revision: return
-  PLACEMENTS.placeStamped(SCENE_PAGE, REVISION_PLACED)
-  REACH_SCENE = reachOf(PLACEMENTS, SCENE_PAGE)
+  placements.placeStamped(SCENE_PAGE, REVISION_PLACED)
+  REACH_SCENE = reachOf(placements, SCENE_PAGE)
   REVISION_PLACED = SCENE_PAGE.revision
 
 
@@ -1265,7 +1286,7 @@ proc nimCameraDollyCentred(factor: cfloat; width, height: cint) {.exportc.} =
     int(width),
     int(height),
     SELECTION_PAGE.len > 0,
-    PLACEMENTS,
+    placements,
   )
 
 
@@ -1290,7 +1311,7 @@ proc nimCameraDollyAt(factor: cfloat; width, height: cint) {.exportc.} =
     int(width),
     int(height),
     SELECTION_PAGE.len > 0,
-    PLACEMENTS,
+    placements,
   )
 
 
@@ -1511,7 +1532,7 @@ proc nimUpdateHover(width, height: cint) {.exportc.} =
     VIEW_PROJECTION_OVERLAY,
     int(width),
     int(height),
-    PLACEMENTS,
+    placements,
   )
   recordThisFrame().ms_hover_pick += nowMilliseconds() - ms_entered_hover
 
@@ -2540,7 +2561,9 @@ proc nimBuildFrame(
   TWEEN_CAMERA.advance(CAMERA_PAGE, float(now), easeOutCubic)
   # Place every object first, so scene's reach is this frame's before extent reads far clip.
   #   Clocked as phase of its own: whole scene's placing side, beside which camera's is small.
+  #   Into block pair turns to, so last frame's placements stay readable beside them.
   let ms_before_place = performanceNow()
+  turnPlacements()
   placeScene()
   let ms_place = performanceNow() - ms_before_place
   # Move view origin to eye, after ease moved camera, and read eye and frame about it once.
@@ -2551,7 +2574,7 @@ proc nimBuildFrame(
   var (eye, frame) = CAMERA_PAGE.moveOriginView
   # Read local scale once for this frame, before extent reads clip planes off it.
   #   Walks every placement, so here rather than in `ensureViewOverlay`; see `REACH_NEAR`.
-  REACH_NEAR = reachNearOf(PLACEMENTS, SCENE_PAGE, CAMERA_PAGE.originView, eye, frame.forward)
+  REACH_NEAR = reachNearOf(placements, SCENE_PAGE, CAMERA_PAGE.originView, eye, frame.forward)
   CAMERA_PAGE.reach_near = REACH_NEAR
   # Take framebuffer's height, not window's.
   #   Ribbon's width is measured in pixels drawn, and this build renders at
@@ -2623,25 +2646,25 @@ proc nimBuildFrame(
   #   by value, so constructing one per live handle copies entire scene.
   #   To watermark, not capacity: `scene.bound` is high-water mark, which only rises;
   #   sibling walk below takes same bound.
-  #   Placement already answered sky or not, so walks sort on `PLACEMENTS[handle].kind`
+  #   Placement already answered sky or not, so walks sort on `placements[handle].kind`
   #   rather than reading multivector per handle per walk.
   for handle in 0..<SCENE_PAGE.bound:
     if not SCENE_PAGE.isAlive(handle) or MARKS_PICKED[handle]: continue
     if SCENE_PAGE.isVisible(handle):
       # Index in place, never bind to local; see `emitObject`.
-      #   `let placed = PLACEMENTS[handle]` is deep copy under JS backend, once per object
+      #   `let placed = placements[handle]` is deep copy under JS backend, once per object
       #   per frame.
-      if PLACEMENTS[handle].kind == Case.PlaneEverywhere:
+      if placements[handle].kind == Case.PlaneEverywhere:
         let progress = animationProgress(float(now), BORNS[handle])
         discard emitObject(
           MESHES,
-          PLACEMENTS[handle],
+          placements[handle],
           SCENE_PAGE.inkAt(handle).colour,
           scale,
           progress,
         )
         cost.chargeTally(
-          PLACEMENTS[handle].kind,
+          placements[handle].kind,
           is_sky = true,
           is_preview = false,
           is_selected = false,
@@ -2650,23 +2673,23 @@ proc nimBuildFrame(
   for handle in 0..<SCENE_PAGE.bound:
     if not SCENE_PAGE.isAlive(handle) or MARKS_PICKED[handle]: continue
     if SCENE_PAGE.isVisible(handle):
-      if PLACEMENTS[handle].kind != Case.PlaneEverywhere:
+      if placements[handle].kind != Case.PlaneEverywhere:
         # Skip point outside view before it costs emitting, flatten and upload.
         if IS_CULLING and
-            not isPointInView(PLACEMENTS[handle], SCENE_PAGE.radiusAt(handle), bounds):
+            not isPointInView(placements[handle], SCENE_PAGE.radiusAt(handle), bounds):
           cost.chargeCulled()
           continue
         let progress = animationProgress(float(now), BORNS[handle])
         discard emitObject(
           MESHES,
-          PLACEMENTS[handle],
+          placements[handle],
           SCENE_PAGE.inkAt(handle).colour,
           scale,
           progress,
           SCENE_PAGE.radiusAt(handle),
         )
         cost.chargeTally(
-          PLACEMENTS[handle].kind,
+          placements[handle].kind,
           is_sky = false,
           is_preview = false,
           is_selected = false,
@@ -2706,20 +2729,20 @@ proc nimBuildFrame(
   for position in 0..<SELECTION_PAGE.len:
     let handle = SELECTION_PAGE.at(position)
     if not SCENE_PAGE.isAlive(handle) or not SCENE_PAGE.isVisible(handle): continue
-    if IS_CULLING and not isPointInView(PLACEMENTS[handle], SCENE_PAGE.radiusAt(handle), bounds):
+    if IS_CULLING and not isPointInView(placements[handle], SCENE_PAGE.radiusAt(handle), bounds):
       cost.chargeCulled()
       continue
     let progress = animationProgress(float(now), BORNS[handle])
     discard emitObject(
       MESHES,
-      PLACEMENTS[handle],
+      placements[handle],
       SCENE_PAGE.inkAt(handle).colour,
       scale,
       progress,
       SCENE_PAGE.radiusAt(handle),
     )
     cost.chargeTally(
-      PLACEMENTS[handle].kind, is_sky = false, is_preview = false, is_selected = true
+      placements[handle].kind, is_sky = false, is_preview = false, is_selected = true
     )
 
   let ms_after_scene = performanceNow()

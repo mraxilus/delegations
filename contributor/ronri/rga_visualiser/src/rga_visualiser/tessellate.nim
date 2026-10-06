@@ -67,7 +67,9 @@ type
     ##   `frame`, `spanPerpendicular`) is pure function of multivector, so one answer serves
     ##   every reader of its frame at that frame's camera.
     ##   Each frame places every object once, and its walks read that answer: reach, cull,
-    ##   emission, pick. Nothing placed is kept for frame after.
+    ##   emission, pick. Next frame places every object again, and never reads these as its
+    ##   own; each front-end keeps them one frame more, as frame before's
+    ##   (`placementsPrevious`), for what reckons across two frames.
     ## Flat rather than variant object.
     ##   Copied per handle into `array[OBJECTS_MAX, Placement]`, and case object's tag would buy
     ##   nothing but narrower read. Which fields carry meaning is `kind`'s to say.
