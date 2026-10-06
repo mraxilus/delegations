@@ -7,8 +7,9 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, os, osproc, sequtils, strutils, tables, tempfiles, unittest]
+import std/[importutils, options, os, osproc, sequtils, strutils, tables, tempfiles, unittest]
 import ../../src/knoller/[command, proofs, reports, rules]
+from ../../src/knoller/command {.all.} import joined, Part
 import ./stubs
 
 
@@ -32,6 +33,9 @@ const
   COMMIT = "27763495bcfe265507ca98aedc1c7064bf1e0e4d"  ## Commit pin of `ronri` projects.
   UNSERVED = "Parser proved no removal, since no compiler serves pin; got `"
     ## Opening of warning of pin no compiler serves, as `pinProvers` writes it.
+  UNSETTLED =
+    "File still changes after 3 rounds of fixers, so fix leaves it as written; got `3` rounds."
+    ## Message of file fixers do not settle, as `chain.nim` writes it.
 
 
 proc writeTree(root: string, files: openArray[(string, string)]) =
@@ -121,6 +125,31 @@ suite "Command line":
     check outcome.lines[0].startsWith("a.nims:2: fence left: Fence closes outside bracket")
     check outcome.lines[^1] == "0 fixed."
     check outcome.code == 1
+
+
+  test "file fixers do not settle prints by path alone with no rule, before findings, and exits 1":
+    # Domain: unsettled file alone, and beside file that settles, under fix and `--check`. No
+    #   source of suite leaves chain unsettled, so part stands for what `partOf` gives.
+    privateAccess(Part)
+    let
+      alone = [Part(path: "b.nim", unsettled: UNSETTLED)]
+      tab = initReport("b.nim", 2, Rule.Tab, "Line holds tab.")
+      beside = [
+        Part(path: "b.nim", unsettled: UNSETTLED, left: @[tab]),
+        Part(path: "a.nim", fixed: @[initReport("a.nim", 1, Rule.ExpressionSpacing)]),
+      ]
+    for is_check in [false, true]:
+      let outcome = if is_check: " to fix" else: " fixed"
+      check alone.joined(is_check, []).lines ==
+          @["b.nim: unsettled: " & UNSETTLED, "0" & outcome & "."]
+      check alone.joined(is_check, []).code == 1  # unsettled file alone fails run
+      check beside.joined(is_check, []).lines == @[
+        "a.nim:1: expression-spacing" & outcome,
+        "b.nim: unsettled: " & UNSETTLED,
+        "b.nim:2: tab left: Line holds tab.",
+        "1" & outcome & ".",
+      ]  # after rewrites, before findings left
+      check beside.joined(is_check, []).code == 1
 
 
   test "finding left prints at its line in file as given, as each rewrite does":

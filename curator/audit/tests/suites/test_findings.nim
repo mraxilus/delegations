@@ -73,14 +73,10 @@ suite "Findings":
       found = initReport("a.nim", 2, Rule.TrailingComment, "Comment gap; got `1`.")
       bare = initReport("a.nim", 0, Rule.FileEnding, "File ends in one newline.")
       quoting = initReport("a.nim", 1, Rule.MessageValue, "Ends as ``a; got `b`.``; got `c`.")
-      sentence = "File still changes after 3 rounds of fixers, so fix leaves it as written"
-      unsettled = initReport("a.nim", 0, Rule.Unsettled, sentence & "; got `3` rounds.")
     check found.findingOf == finding("a.nim", 2, "Comment gap (X.9); got `1`.")
     check not found.findingOf.is_propagation  # whoever owns path fixes it
     check bare.findingOf.message == "File ends in one newline (VIII.5)."  # sentence echoes none
     check quoting.findingOf.message == "Ends as ``a; got `b`.`` (IV.4); got `c`."  # span quotes
-    # Sentence `chain.nim` gives source that never settles; suite knows no such source.
-    check unsettled.findingOf.message == sentence & " (STYLE.md §5); got `3` rounds."
     let reports = @[found, initReport("b.nim", 0, Rule.FileEnding)]
     check reports.findingsOf.mapIt(it.path) == @["a.nim", "b.nim"]  # order kept
 

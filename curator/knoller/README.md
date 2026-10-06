@@ -56,6 +56,7 @@ Each line of output names a path, a line and a rule id, and the output is sorted
 
 ```text
 path:line: <rule-id> fixed
+path: unsettled: <message>
 path:line: <rule-id> left: <message>
 path:line: fence-held warning: <message>
 needless-parentheses warning: <message>
@@ -63,6 +64,10 @@ N fixed.
 ```
 
 With `--check`, each `fixed` reads `to fix`. A finding that no fix clears is `left`.
+
+A file that the fixers still change after their last round stays as written, and its line reads
+`unsettled` after the path alone. That line names no rule, because the fault is in the tool, and
+the source breaks no rule of style there. So `koch fix` prints it as a warning, with no article.
 
 Each line number is a line of the file as given, for a finding left too. A line that the fix
 inserts has no such number. So a finding there prints with the path alone, as a finding of the
@@ -77,7 +82,7 @@ that a fixer clears and a rule left for the hand count alike.
 A warning changes no exit code. The exit codes are these:
 
 - 0 for a clean run;
-- 1 where a finding is left, or where a change is due under `--check`;
+- 1 where a finding is left, where a file is unsettled, or where a change is due under `--check`;
 - 2 for a usage error.
 
 ## Rules
@@ -146,7 +151,6 @@ the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, 
 | `comment-above` | A trailing comment that does not fit moves to its own line above. |
 | `fence` | A fence closes inside the bracket, string or comment it opens in. No fix reaches it. |
 | `fence-held` | A fence keeps its lines as written, and each run names what breaks inside it. |
-| `unsettled` | A file that the fixers still change after their last round stays as written. |
 
 ## Build and test
 

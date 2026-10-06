@@ -428,9 +428,9 @@ suite "Repair that widens its line":
   test "file that does not settle stays as written, and its fix says why":
     let fix = formattedBy("a.nim", "a\n", [guarded(toggled)])
     check fix.source == "a\n" and fix.fixed.len == 0  # half-settled file never written
-    check fix.left.mapIt(it.rule) == @[Rule.Unsettled]
-    check fix.left[0].message.endsWith("got `3` rounds.")
-    check formattedBy("a.nim", "a\n", [guarded(toggled), guarded(toggled)]).left.len == 0
+    check fix.unsettled == "File still changes after 3 rounds of fixers, so fix leaves it as " &
+        "written; got `3` rounds."  # message of its own, which no rule names
+    check formattedBy("a.nim", "a\n", [guarded(toggled), guarded(toggled)]).unsettled.len == 0
 
 
   test "output agrees whatever order files come in, and on second run":

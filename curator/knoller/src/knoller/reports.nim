@@ -50,7 +50,9 @@ type
     source*: string  ## Text after fix; input itself where nothing broke rule.
     fixed*: seq[Report]  ## Path and line of input rewritten, with rule fixed.
     origin*: seq[int]  ## Input line of each output line, `0` where inserted; empty if none moved.
-    left*: seq[Report]  ## Finding fix leaves for hand, with its message; empty where none.
+    unsettled*: string
+      ## Why fix leaves source as written, as fixers still change it after last round; empty
+      ##   where it settles. No rule names it, since fault is tool's.
     asked*: seq[string]  ## Source whose rewrite parser must prove and no answer holds yet.
 
   Held* = object  ## Define lines whose width guard holds: every line, or lines listed.
@@ -159,18 +161,15 @@ func traced*(fix: Fix, line: int): int =
 
 
 func chain*(fix, step: Fix): Fix =
-  ## Chain fixer's step after fix: step's source, reports of both traced to fix's input.
+  ## Chain fixer's step after fix: step's source, reports of both traced to fix's input, and
+  ##   why fix leaves source as written, step's else fix's.
   result.source = step.source
   result.fixed = fix.fixed
   for f in step.fixed:
     var traced_report = f
     traced_report.line = fix.traced(f.line)
     result.fixed.add traced_report
-  result.left = fix.left
-  for f in step.left:
-    var traced_report = f
-    traced_report.line = fix.traced(f.line)
-    result.left.add traced_report
+  result.unsettled = if step.unsettled.len > 0: step.unsettled else: fix.unsettled
   result.origin =
     if step.origin.len == 0: fix.origin
     else: step.origin.mapIt(fix.traced(it))

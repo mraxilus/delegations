@@ -207,10 +207,11 @@ suite "Fixes":
     check plan.written[0].content == source.replace("1+2", "1 + 2")  # rows kept, blank line too
     check checkFormatting(path, plan.written[0].content, Kind.Nim).len == 0
     check fixEntries(CURATOR_BRANCH, plan.written).written.len == 0
-    check plan.held.len == 1 and plan.held[0].render == path & ":6: Fence keeps its lines as " &
-      "written, and inside them expression-spacing breaks 2 times from line 7 (X.1); got lines " &
-      "`6` to `10`."  # what breaks inside fence, by rule
-    check fixEntries(CURATOR_BRANCH, [entry(path, unfenced)]).held.len == 0  # no fence, no warning
+    check plan.warned.mapIt(it.render) == @[
+      path & ":6: Fence keeps its lines as written, and inside them expression-spacing breaks 2 " &
+        "times from line 7 (X.1); got lines `6` to `10`.",
+    ]  # what breaks inside fence, by rule
+    check fixEntries(CURATOR_BRANCH, [entry(path, unfenced)]).warned.len == 0  # no fence, none
 
 
   test "fence left open runs to end of file; marker inside string fences nothing":
@@ -229,10 +230,20 @@ suite "Fixes":
       crossing = "let a = 1+2\nlet m = f(\n  " & FENCE_OFF & "\n  1,  0,\n)\n" & FENCE_ON & "\n"
       plan = fixEntries(CURATOR_BRANCH, [entry(path, crossing)])
     check plan.written.len == 0 and plan.left.mapIt(it.line) == @[2]
-    check plan.held.len == 0  # fence it cannot read is finding, and no warning
+    check plan.warned.len == 0  # fence it cannot read is finding, and no warning
     check checkFormatting(path, crossing, Kind.NimScript).mapIt(it.line) == @[2]
     let literal = "let a = 1+2\n#!fix fenced\n"  # would be read back as fenced line
     check fixEntries(CURATOR_BRANCH, [entry(path, literal)]).left.mapIt(it.line) == @[2]
+
+
+  test "file knoller's fixers do not settle warns by path alone, with no article":
+    # Domain: fix that does not settle, and fix that does. No source of suite leaves chain
+    #   unsettled, so fix stands for what `formatted` gives.
+    const unsettled =
+      "File still changes after 3 rounds of fixers, so fix leaves it as written; got `3` rounds."
+    check unsettledOf("a.nim", Fix(source: "a\n", unsettled: unsettled)).mapIt(it.render) ==
+        @["a.nim: " & unsettled]  # `koch fix` prints it after `warning:`, as it is
+    check unsettledOf("a.nim", Fix(source: "a\n")).len == 0  # settled source warns of nothing
 
 
   test "fixer that would move fenced lines is skipped, and its finding stays for hand":
@@ -528,7 +539,7 @@ suite "Fixes":
         (proven.fix.fixed, reference.fix.fixed),
         (proven.fix.refused, reference.fix.refused),
         (proven.fix.left, reference.fix.left),
-        (proven.fix.held, reference.fix.held),
+        (proven.fix.warned, reference.fix.warned),
       ]:
         check fast.mapIt(it.render) == every.mapIt(it.render)
       check proven.fix.asked == reference.fix.asked

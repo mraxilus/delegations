@@ -46,7 +46,8 @@
 ##     again, since widener keeps guard there and no other fixer or wrap writes wide line, so
 ##     held lines grow each attempt; inserted line left wide holds every line at once.
 ##   File whose last attempt still changes after `ROUNDS_MAX` rounds stays as written, and its
-##     fix reports why (`Rule.Unsettled`), so half-settled file is never written.
+##     fix says why (`Fix.unsettled`), so half-settled file is never written. Message names no
+##     rule: fault is tool's, and no source breaks rule of style there, so no article cites it.
 ##   Nimble file whose copy `atlas.lock` holds (`nimbleFile`, `lockedNimbles`) is left to
 ##     caller, which writes none of it and checks none of it: rewrite would leave lock's copy
 ##     stale, and Atlas reads that as change of package.
@@ -243,14 +244,9 @@ func formattedBy(path, source: string; steps: openArray[Step]; proofs = Proofs()
   if fence.fault >= 0: return Fix(source: source)
   let (fix, _, asked) = attempted(path, source.masked(fence), steps, proofs)
   if fix.isNone:
-    let report = initReport(
-      path,
-      0,
-      Rule.Unsettled,
-      "File still changes after " & $ROUNDS_MAX & " rounds of fixers, so fix leaves it as " &
-          "written; got `" & $ROUNDS_MAX & "` rounds.",
-    )
-    return Fix(source: source, left: @[report], asked: asked)
+    let unsettled = "File still changes after " & $ROUNDS_MAX & " rounds of fixers, so fix " &
+        "leaves it as written; got `" & $ROUNDS_MAX & "` rounds."
+    return Fix(source: source, unsettled: unsettled, asked: asked)
   result = fix.get
   result.source = result.source.restored(source, fence)
   result.asked = asked
@@ -260,7 +256,7 @@ func formatted*(path, source: string; dialect: Dialect; proofs = Proofs()): Fix 
   ## Run on source each fixer dialect takes, in order header gives, until source settles;
   ##   fenced lines read as `FENCED`, and fixer that would move them is skipped. Source whose
   ##   fence cannot be read stays as written, and `checkFormatting` reports why; source that does
-  ##   not settle stays as written too, and its fix reports why (`Fix.left`).
+  ##   not settle stays as written too, and its fix says why (`Fix.unsettled`).
   ##   Needless parentheses go where `proofs` prove them; each source no answer reaches is in
   ##   `Fix.asked`, for caller to ask parser and run again.
   formattedBy(path, source, dialect.stepsOf, proofs)

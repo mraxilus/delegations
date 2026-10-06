@@ -5,8 +5,10 @@
 ##   Article citing each rule is caller's: `curator/audit` holds `CITATIONS`, indexed by
 ##     `Rule`, so rule without citation fails to compile there.
 ##   Rule with no fixer names check alone: `LineEnding`, `Tab`, `LineWidth`, `NotOverBinary`,
-##     `Fence` for fence fix cannot read, `FenceHeld` for lines fence keeps as written, which
-##     run reports as warning, and `Unsettled` for file fixers do not settle.
+##     `Fence` for fence fix cannot read, and `FenceHeld` for lines fence keeps as written, which
+##     run reports as warning.
+##   List holds rules of style source can break, alone. Fixers that do not settle are fault of
+##     tool, so their fix carries message of its own (`Fix.unsettled`), and no article cites it.
 
 {.experimental: "strictFuncs".}
 
@@ -71,7 +73,6 @@ type Rule* {.pure.} = enum  ## Define one rule knoller fixes or reports, in orde
   CommentAbove = "comment above"  ## Trailing comment that does not fit takes own line above.
   Fence = "fence"  ## Fence closes inside bracket, string or comment it opens in.
   FenceHeld = "fence held"  ## Fence keeps its lines as written; run warns of each fence.
-  Unsettled = "unsettled"  ## File fixers still change after their last round stays as written.
 
 
 func id*(rule: Rule): string =
