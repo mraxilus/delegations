@@ -335,13 +335,15 @@ func listingOf*(directory, output: string; code: int): tuple[files: seq[string],
     result.refusal = "Directory holds no Nim file that git lists; got `" & directory & "`."
 
 
-proc runGit(
+proc runGit*(
   directory: string, arguments: openArray[string]
 ): tuple[output, failure: string, code: int] =
   ## Run git in directory as direct process with argument list, never through shell, and read
   ##   stdout and stderr apart: output, what git says on stderr, and exit code.
   ##   Git ends warning on stderr in newline rather than NUL, so stream carrying both would glue
   ##     warning to first field of `-z` output.
+  ##   Umbrella exports none of command line, so `tree.nim` of `curator/audit` reaches this proc
+  ##     here, and reads git through it too.
   ##   Both pipes are drained before exit is waited on, since child blocks where pipe fills.
   let process = startProcess(
     "git",
