@@ -11,11 +11,12 @@
 ##   | Top bar     | Start new object, toggle world furniture, save or load scene.           |
 ##   | Apply       | Apply any library operation of chosen arity to picked operands, both of |
 ##   |             | which current selection fills in.                                       |
-##   | Diagnostics | Live frame time, vsync, memory use of program arena, frame arenas and     |
-##   |             | object pool, and all else this binary reserves for itself, added up.      |
+##   | Diagnostics | Live frame time, vsync, library share, memory use of program arena,     |
+##   |             | frame arenas and object pool, and all else this binary reserves for     |
+##   |             | itself, added up.                                                       |
 ##   | Objects     | Select, show, hide, remove; edit any object's label, colour and         |
 ##   |             | coefficients through one staged session, shared with composing new one. |
-##   | View        | Orbit, pivot, lens, PNG export.                                        |
+##   | View        | Orbit, pivot, lens, PNG export.                                         |
 ##   |-------------|-------------------------------------------------------------------------|
 ##
 ## Every panel except top bar is collapsing header.
@@ -40,10 +41,10 @@
 import std/[options, strformat]
 
 import pga
-import ./gui
+import ./[gui, sampler]
 import ../rga_visualiser/[
   boundary, camera, format, framing, help, history, message, orrery, picking,
-  scene, selection, tessellate, timings, wording,
+  scene, selection, share, tessellate, timings, wording,
 ]
 
 
@@ -281,6 +282,9 @@ type
     bytes_memory_total*: int  ## Sum of every fixed reservation this binary makes.
       ## Computed where every piece is visible, since `panel` cannot see arenas' backing
       ## storage.
+    counts_share*: CountsShare  ## Snapshot of samples pooled over `share.SECONDS_SHARE`.
+    is_diagnostics_open*: bool  ## Say whether diagnostics section was open last frame.
+      ## Sampler runs only while it is, so share costs nothing nobody reads.
 
 
 func initPanel*(path_export: string): Panel =
@@ -1118,6 +1122,36 @@ proc layoutDiagnosticsFrameTime(panel: var Panel) =
   gui.monoPop()
 
 
+proc layoutDiagnosticsShare(panel: Panel) =
+  ## Lay out "library share" section: library's and project algebra's share of busy samples.
+  ##   Build that cannot sample says why, in place of both figures.
+  gui.separatorText wordingText(NameDiagnosticsShare)
+  when not defined(linux):
+    gui.textWrapped wordingText(NoteDiagnosticsShareLinux)
+  elif not IS_SAMPLER_BUILT:
+    gui.textWrapped wordingText(NoteDiagnosticsShareFrames)
+  else:
+    let rows = [
+      (Owner.Library, NameDiagnosticsLibrary, TipDiagnosticsLibrary),
+      (Owner.Algebra, NameDiagnosticsAlgebra, TipDiagnosticsAlgebra),
+    ]
+    for (owner, name, tip) in rows:
+      gui.textTinted(wordingText(name), INK_LABEL.red, INK_LABEL.green, INK_LABEL.blue)
+      gui.sameLine()
+      var line: array[WIDTH_OVERLAY_TEXT, char]
+      let text_share =
+        if panel.counts_share.busy == 0: wordingText(NoteDiagnosticsShareWaiting)
+        else:
+          buildChars(line):
+            appendFixed(line, cursor, panel.counts_share.percentOf(owner), 1)
+            appendChars(line, cursor, "%, n ")
+            appendInt(line, cursor, panel.counts_share.busy)
+      gui.monoPush()
+      gui.text(text_share)
+      gui.monoPop()
+      gui.tooltip wordingText(tip)
+
+
 proc layoutDiagnosticsMemory(panel: Panel) =
   ## Lay out "memory" section: program arena's and frame arenas' usage bars.
   gui.separatorText wordingText(NameDiagnosticsMemory)
@@ -1253,8 +1287,9 @@ proc layoutDiagnosticsTotal(panel: Panel) =
   #   Depth is read from `CAPACITY_HISTORY` and tooltip is still `cstring` pointing at
   #   static text.
   const tooltip_total =
-      "Every fixed reservation this binary makes for itself, added up: both arenas at " &
-      "their full capacity (committed whether or not they're ever filled), the object " &
+      "Every fixed reservation this binary makes for itself, added up: the program arena " &
+      "and both frame arenas at their full capacity (committed whether or not they're ever " &
+      "filled), the object " &
       "pool above, the undo timeline -- which is " & $CAPACITY_HISTORY & " more whole " &
       "copies of that pool, and the largest single entry here -- tessellation storage, " &
       "and the panel's own state. Excludes whatever Dear ImGui, SDL, or the graphics " &
@@ -1266,7 +1301,8 @@ proc layoutDiagnostics*(panel: var Panel, scene: Scene) =
   ## Lay out live performance and memory readouts.
   ##   Closed by default, since nothing here is needed to use visualiser, only to
   ##   understand what using it costs.
-  if not gui.header(wordingText(NameHeadDiagnostics), is_open_first = false): return
+  panel.is_diagnostics_open = gui.header(wordingText(NameHeadDiagnostics), is_open_first = false)
+  if not panel.is_diagnostics_open: return
   gui.text wordingText(NoteDiagnostics)
   gui.sameLine()
   gui.helpMarker(
@@ -1275,6 +1311,7 @@ proc layoutDiagnostics*(panel: var Panel, scene: Scene) =
   )
 
   layoutDiagnosticsFrameTime(panel)
+  layoutDiagnosticsShare(panel)
   layoutDiagnosticsMemory(panel)
   layoutDiagnosticsObjectPool(scene)
   layoutDiagnosticsTotal(panel)

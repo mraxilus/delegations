@@ -35,7 +35,7 @@ import std/[options, strformat]
 import pga
 import ../rga_visualiser/[
   boundary, camera, format, framing, help, history,
-  interaction, marker, message, orrery, picking, ramp, scene, selection, shown,
+  interaction, marker, message, orrery, picking, ramp, scene, selection, share, shown,
   storyboard, tessellate, timings, wording,
 ]
 
@@ -1079,6 +1079,27 @@ proc nimFramesHistory(): cint {.exportc.} = cint(FRAMES_HISTORY)
 
 proc nimFramesExceedance(): cint {.exportc.} = cint(FRAMES_EXCEEDANCE)
   ## Report how many recent frames page's exceedance curve summarises.
+
+
+var RING_SHARE_PAGE = initRingShare()
+  ## Pool page's library share over `share.SECONDS_SHARE`, as desktop's `main.RING_SHARE` does.
+  ##   Browser's profiler hands page its samples; `share` names their owners and pools them.
+
+proc nimShareOwner(name: cstring): cint {.exportc.} = cint(ord(ownerOfName($name)))
+  ## Name owner of one function profiler sampled, by name JS backend gave it; see `share`.
+  ##   As ordinal of `share.Owner`: 0 rest, 1 project algebra, 2 library.
+
+proc nimShareAdd(rest, algebra, library: cint) {.exportc.} =
+  ## Count one profiler window's busy samples by owner, into whole second it closed in.
+  RING_SHARE_PAGE.add(
+    int(nowMilliseconds() / 1000.0),
+    [Owner.Rest: int(rest), Owner.Algebra: int(algebra), Owner.Library: int(library)],
+  )
+
+proc nimSharePooled(): seq[cint] {.exportc.} =
+  ## Report busy samples pooled over `share.SECONDS_SHARE`, by owner: rest, algebra, library.
+  let pooled = RING_SHARE_PAGE.pooled(int(nowMilliseconds() / 1000.0))
+  for owner in Owner: result.add cint(pooled[owner])
 
 
 proc nimShadeAmbient(): cfloat {.exportc.} = cfloat(FRACTION_AMBIENT_SHADE)

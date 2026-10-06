@@ -75,7 +75,7 @@ type Wording* = enum
   TipApplyArity, TipApplyOperation, TipApplyFirst, TipApplySecond,
   TipViewMotor, TipViewAzimuth, TipViewElevation, TipViewDistance, TipViewSpeed, TipViewLens,
   TipDiagnosticsFrames, TipDiagnosticsVsync, TipDiagnosticsProgram, TipDiagnosticsFrameArena,
-  TipDiagnosticsPool, TipDiagnosticsScene,
+  TipDiagnosticsPool, TipDiagnosticsScene, TipDiagnosticsLibrary, TipDiagnosticsAlgebra,
   TipPickApply, TipPickOperation, TipPickBack, TipPickEdit, TipPickVisible, TipPickDelete,
   TipPickClose,
   TipMenuSceneFile, TipMenuImageFile, TipMenuSaveScene, TipMenuSaveImage, TipMenuLoadScene,
@@ -90,7 +90,8 @@ type Wording* = enum
   NameViewMotor, NameViewAzimuth, NameViewElevation, NameViewDistance, NameViewSpeed,
   NameViewLens,
   NameDiagnosticsFrame, NameDiagnosticsVsync, NameDiagnosticsMemory, NameDiagnosticsProgram,
-  NameDiagnosticsFrameArena, NameDiagnosticsPool, NameDiagnosticsTotal,
+  NameDiagnosticsFrameArena, NameDiagnosticsPool, NameDiagnosticsTotal, NameDiagnosticsShare,
+  NameDiagnosticsLibrary, NameDiagnosticsAlgebra,
   NamePickApply, NamePickEdit, NamePickBack, NamePickHide, NamePickShow, NamePickDelete,
   NamePickClose,
   NameMenuSave, NameMenuSaveScene, NameMenuSaveImage, NameMenuLoad, NameMenuLoadScene,
@@ -100,6 +101,8 @@ type Wording* = enum
   NameTitle,
 
   NoteListEmpty, NoteListUnmatched, NoteCoefficientsNew, NoteCoefficientsEdit, NoteDiagnostics,
+  NoteDiagnosticsShareWaiting, NoteDiagnosticsShareLinux, NoteDiagnosticsShareFrames,
+  NoteDiagnosticsShareBrowser, NoteDiagnosticsSharePolicy,
   NoteSaveByHold, NoteSaveBlocked, NameSaveDismiss,
 
   NameTabDrag, NameTabSelect, NameTabMenu, NameTabPanel, NameTabCamera, NameTabKeys,
@@ -184,6 +187,14 @@ const LUT_TEXT_BY_WORDING: array[Wording, cstring] = [
   TipDiagnosticsScene:
     "Scene is one fixed block sized for every handle up front, not allocated one object at a " &
         "time: `allocated` is that whole block, `used` is however much of it carries an object.",
+  TipDiagnosticsLibrary:
+    "Share of this build's busy time over the last 20 seconds that ran " &
+        "inside the reference library, pga. A sampling profiler counts it, so read it as about " &
+        "right rather than exact; n is how many samples it rests on.",
+  TipDiagnosticsAlgebra:
+    "Share of the same busy time that ran in this project's own algebra, outside the library: " &
+        "its motors and projections, its incidence questions, and the boundary that lifts into " &
+        "the algebra and reads back out.",
 
   # Menu that opens over whatever is picked.
   TipPickApply:
@@ -260,6 +271,9 @@ const LUT_TEXT_BY_WORDING: array[Wording, cstring] = [
   NameDiagnosticsFrameArena: "frame arena",
   NameDiagnosticsPool: "object pool",
   NameDiagnosticsTotal: "total",
+  NameDiagnosticsShare: "library share",
+  NameDiagnosticsLibrary: "library",
+  NameDiagnosticsAlgebra: "project algebra",
 
   # Menu that opens over whatever is picked.
   NamePickApply: "apply",
@@ -309,6 +323,13 @@ const LUT_TEXT_BY_WORDING: array[Wording, cstring] = [
     "The 16 numbers of this object's own multivector, in the library's basis order, " &
         "stacked one row per grade. The object itself only moves when you save.",
   NoteDiagnostics: "Live cost of this build, updated every frame.",
+  # Library share in place of its figure: none sampled yet, or no way to sample here.
+  NoteDiagnosticsShareWaiting: "no samples yet",
+  NoteDiagnosticsShareLinux: "unavailable: this build samples on Linux alone",
+  NoteDiagnosticsShareFrames: "unavailable: this build keeps no stack frames to sample",
+  NoteDiagnosticsShareBrowser: "unavailable: this browser has no sampling profiler",
+  NoteDiagnosticsSharePolicy:
+    "unavailable: this page was not served with Document-Policy: js-profiling",
   # Sentence rather than fragment: it stands in its own line under link, not after it.
   NoteSaveByHold: "Or press and hold the image to save it.",
   NoteSaveBlocked:

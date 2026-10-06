@@ -1054,6 +1054,127 @@ function drawSparkline() {
   context_sparkline.stroke();
 }
 
+// **Library share: browser's own sampling profiler, run while section is shown.**
+//   Each sample is stack of calls; bridge names owner of each function by name JS backend
+//   gave it, and pools counts over `share.SECONDS_SHARE`, as desktop's sampler is pooled.
+//   Busy samples alone count: sample with no stack is browser waiting or working outside
+//   page's script, which neither library nor project owns.
+//   Profiler exists in Chromium alone, and only on page whose own response carries
+//   `Document-Policy: js-profiling`; page opened from file is refused. There rows say why,
+//   rather than guess figure.
+//   One profiler for each `MILLISECONDS_WINDOW_SHARE`: trace arrives only on `stop`, and
+//   new one starts at once, so section keeps sampling. Restart measured at 0.2 to 0.3 ms.
+type TraceShare = {
+  frames: { name: string }[];
+  stacks: { parentId?: number; frameId: number }[];
+  samples: { stackId?: number }[];
+};
+type ProfilerShare = { stop(): Promise<TraceShare> };
+type ConstructorProfilerShare =
+  new (options: { sampleInterval: number; maxBufferSize: number }) => ProfilerShare;
+const ProfilerOffered =
+  (globalThis as { Profiler?: ConstructorProfilerShare }).Profiler;
+const MILLISECONDS_WINDOW_SHARE = 2000; // Span of one profiler, whose trace is counted at its end.
+const MILLISECONDS_SAMPLE_SHARE = 10; // Interval asked of profiler; Chromium gives no finer.
+// Room for one window's samples at that interval, with margin for late stop.
+const SAMPLES_WINDOW_SHARE = 2 * MILLISECONDS_WINDOW_SHARE / MILLISECONDS_SAMPLE_SHARE;
+const diagnostic_share_library = elementById('diagnostic-share-library');
+const diagnostic_share_algebra = elementById('diagnostic-share-algebra');
+diagnostic_share_library.parentElement!.title = nimWording(Wording.TipDiagnosticsLibrary);
+diagnostic_share_algebra.parentElement!.title = nimWording(Wording.TipDiagnosticsAlgebra);
+let profiler_share: ProfilerShare | null = null; // Profiler sampling now, if any.
+let ms_profiler_share_opened = 0; // When it began, on page's clock.
+let reason_share: Wording | null = null; // Why page cannot sample, once known.
+// Owner of each function name already asked of bridge, as `share.Owner` ordinal.
+//   Few hundred names recur in every trace, so each crosses into bridge once.
+const owner_by_name_share = new Map<string, number>();
+
+// Count one trace's busy samples by owner: rest, project algebra, library.
+//   Stack's owner is highest owner of any frame on it, as `share` rules.
+function countTraceShare(trace: TraceShare): [number, number, number] {
+  const owner_frame = trace.frames.map((frame) => {
+    let owner = owner_by_name_share.get(frame.name);
+    if (owner === undefined) {
+      owner = nimShareOwner(frame.name);
+      owner_by_name_share.set(frame.name, owner);
+    }
+    return owner;
+  });
+  // Stack's owner, filled from its parent's, walked up to first stack already known.
+  const owner_stack = new Int8Array(trace.stacks.length).fill(-1);
+  const pending: number[] = [];
+  function ownerOfStack(id: number): number {
+    let at: number | undefined = id;
+    while (at !== undefined && owner_stack[at] === -1) {
+      pending.push(at);
+      at = trace.stacks[at]?.parentId;
+    }
+    let owner = at === undefined ? 0 : owner_stack[at] ?? 0;
+    while (pending.length > 0) {
+      const next = pending.pop()!;
+      owner = Math.max(owner, owner_frame[trace.stacks[next]?.frameId ?? -1] ?? 0);
+      owner_stack[next] = owner;
+    }
+    return owner;
+  }
+  const counts = [0, 0, 0];
+  for (const sample of trace.samples) {
+    if (sample.stackId === undefined) continue;
+    const owner = ownerOfStack(sample.stackId);
+    counts[owner] = (counts[owner] ?? 0) + 1;
+  }
+  return [counts[0] ?? 0, counts[1] ?? 0, counts[2] ?? 0];
+}
+
+// Stop profiler sampling now, and count its trace once it arrives.
+function closeProfilerShare() {
+  if (profiler_share === null) return;
+  const closing = profiler_share;
+  profiler_share = null;
+  void closing.stop().then((trace) => {
+    const [rest, algebra, library] = countTraceShare(trace);
+    nimShareAdd(rest, algebra, library);
+  });
+}
+
+// Start profiler, or learn why page cannot: no profiler here, or page not allowed one.
+function openProfilerShare() {
+  if (ProfilerOffered === undefined) { reason_share = Wording.NoteDiagnosticsShareBrowser; return; }
+  try {
+    profiler_share = new ProfilerOffered(
+      { sampleInterval: MILLISECONDS_SAMPLE_SHARE, maxBufferSize: SAMPLES_WINDOW_SHARE },
+    );
+    ms_profiler_share_opened = performance.now();
+  } catch {
+    reason_share = Wording.NoteDiagnosticsSharePolicy;
+  }
+}
+
+// Keep profiler running while section is shown, turn it each window, and write both rows.
+function tickShare(is_shown: boolean) {
+  if (!is_shown) { closeProfilerShare(); return; }
+  if (reason_share === null) {
+    if (profiler_share !== null &&
+        performance.now() - ms_profiler_share_opened >= MILLISECONDS_WINDOW_SHARE) {
+      closeProfilerShare();
+    }
+    if (profiler_share === null) openProfilerShare();
+  }
+  if (reason_share !== null) {
+    const reason = nimWording(reason_share);
+    writeText(diagnostic_share_library, reason);
+    writeText(diagnostic_share_algebra, reason);
+    return;
+  }
+  const [rest, algebra, library] = nimSharePooled();
+  const busy = (rest ?? 0) + (algebra ?? 0) + (library ?? 0);
+  const textOf = (count: number) => busy === 0
+    ? nimWording(Wording.NoteDiagnosticsShareWaiting)
+    : (100 * count / busy).toFixed(1) + '%, n ' + busy;
+  writeText(diagnostic_share_library, textOf(library ?? 0));
+  writeText(diagnostic_share_algebra, textOf(algebra ?? 0));
+}
+
 function refreshDiagnostics() {
   // **Nothing here is worth millisecond while drawer is shut.** Every figure this.
   //   writes is inside it, and with drawer closed whole refresh was still running
@@ -1070,6 +1191,8 @@ function refreshDiagnostics() {
   //   so they fell back to 300 pixels and drew, five times second, for reader looking
   //   at objects list. Drawer guard above did not catch it because drawer is
   //   genuinely open.
+  // Library share samples while section is shown, and stops when it is not.
+  tickShare(isDiagnosticsShown());
   if (!isDiagnosticsShown()) { is_diagnostics_shown_last = false; return; }
   // Which slow-pass job this tick asks for; see `TICKS_DISTRIBUTION` and `askSlowPass`.
   //   Numeric rows below run every tick, here on frame.

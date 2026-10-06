@@ -88,9 +88,9 @@
 ##   `--screenshot:PATH` writes one PNG, `--frames:N` exits after N frames, `--hidden`
 ##   never maps window, `--storyboard:DIR` writes one frame per scripted construction step
 ##   and quits.
-##   `--timings` reports frame-time statistics (mean, percentiles, tessellation cost) over
-##   `--frames:N` run; `--novsync` disables vsync from startup, `--fill` tops scene up to
-##   capacity first.
+##   `--timings` reports frame-time statistics (mean, percentiles, tessellation cost) and
+##   library share over `--frames:N` run; `--novsync` disables vsync from startup, `--fill`
+##   tops scene up to capacity first.
 ##   `--drive-drag` scripts construction drag through SDL's event queue, so headless run
 ##   can be caught mid-gesture with choice menu open.
 ##   `--drive-keys` scripts run of view keys and reports what camera and focus did.
@@ -108,9 +108,9 @@ import std/[algorithm, math, monotimes, options, os, parseopt, strformat, struti
 import pga
 import ../rga_visualiser/[
   boundary, camera, format, framing, help, history, interaction, marker, message,
-  orrery, picking, scene, selection, shown, storyboard, tessellate, timings, wording,
+  orrery, picking, scene, selection, share, shown, storyboard, tessellate, timings, wording,
 ]
-import ./[arena, gif, gui, image, opengl as gl, panel, renderer, sdl3]
+import ./[arena, gif, gui, image, opengl as gl, panel, renderer, sampler, sdl3]
 
 
 
@@ -297,6 +297,12 @@ var
   SCRATCH_EXPORT = push[byte](ARENA_PROGRAM, CAPACITY_SCRATCH_EXPORT)
   ARENA_SCRATCH_EXPORT = initArena(SCRATCH_EXPORT.toOpenArray(0, CAPACITY_SCRATCH_EXPORT - 1))
     ## Carve export's buffers from `SCRATCH_EXPORT`, reset as each export begins.
+
+# Pool library share over `share.SECONDS_SHARE` for panel, and over whole `--timings` run.
+#   Filled from `sampler` in each frame's snapshot; see `renderFrame`.
+var
+  RING_SHARE = initRingShare()
+  COUNTS_SHARE_RUN: CountsShare
 
 # Hold timing buffer at module scope as `MESHES` is.
 #   Too large for stack, touched only by `--timings` run.
@@ -1115,6 +1121,14 @@ proc renderFrame(
   panel.bytes_arena_frame_peak = ARENAS_FRAME.peakUsed
   panel.bytes_arena_frame_capacity = CAPACITY_ARENA_FRAME
   panel.bytes_memory_total = BYTES_MEMORY_TOTAL
+  # Take samples since last frame into share's ring, and snapshot what ring pools.
+  #   Drained every frame, sampling or not: three atomic exchanges, and nothing waits.
+  let
+    second_now = int(secondsNow())
+    counts_drained = drainSamples()
+  RING_SHARE.add(second_now, counts_drained)
+  for owner in Owner: COUNTS_SHARE_RUN[owner] += counts_drained[owner]
+  panel.counts_share = RING_SHARE.pooled(second_now)
 
   gui.frameBegin()
   # Consume step requests before layout.
@@ -2394,6 +2408,11 @@ proc runInteractive(
       total_tessellate_microseconds += panel.microseconds_tessellate
       total_vertices += panel.count_vertices
 
+    # Sample only while someone reads share: diagnostics open, or `--timings` run.
+    let is_share_read = options.is_timed or panel.is_diagnostics_open
+    if is_share_read and not isSampling(): discard startSampling()
+    elif not is_share_read and isSampling(): stopSampling()
+
     # Change swap interval only when checkbox flips, not every frame.
     if panel.is_vsync_enabled != is_vsync_active:
       is_vsync_active = panel.is_vsync_enabled
@@ -2446,6 +2465,15 @@ proc runInteractive(
     echo &"  tessellate mean {total_tessellate_microseconds/float(count_drawn):.1f}us, " &
         &"{total_vertices div count_drawn} vertices/frame " &
         &"(both this run's own CPU-side cost, not the rasterizer's)."
+    let busy = COUNTS_SHARE_RUN.busy
+    if busy > 0:
+      echo &"  library share {COUNTS_SHARE_RUN.percentOf(Owner.Library):.1f}%, project " &
+          &"algebra {COUNTS_SHARE_RUN.percentOf(Owner.Algebra):.1f}%, of {busy} busy samples."
+    else:
+      let reason = if IS_SAMPLER_BUILT: NoteDiagnosticsShareWaiting
+        elif defined(linux): NoteDiagnosticsShareFrames
+        else: NoteDiagnosticsShareLinux
+      echo &"  library share {wordingText(reason)}."
 
 
 proc runStoryboard(
