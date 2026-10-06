@@ -72,30 +72,26 @@ suite "Findings":
       found = initReport("a.nim", 2, Rule.TrailingComment, "Comment gap; got `1`.")
       bare = initReport("a.nim", 0, Rule.FileEnding, "File ends in one newline.")
       quoting = initReport("a.nim", 1, Rule.MessageValue, "Ends as ``a; got `b`.``; got `c`.")
-      unsettled = initReport("a.nim", 0, Rule.Unsettled, "File still changes; got `3` rounds.")
+      sentence = "File still changes after 3 rounds of fixers, so fix leaves it as written"
+      unsettled = initReport("a.nim", 0, Rule.Unsettled, sentence & "; got `3` rounds.")
     check found.findingOf == finding("a.nim", 2, "Comment gap (X.9); got `1`.")
     check not found.findingOf.is_propagation  # whoever owns path fixes it
     check bare.findingOf.message == "File ends in one newline (VIII.5)."  # sentence echoes none
     check quoting.findingOf.message == "Ends as ``a; got `b`.`` (IV.4); got `c`."  # span quotes
-    check unsettled.findingOf.message == "File still changes (STYLE.md §5); got `3` rounds."
+    # Sentence `chain.nim` gives source that never settles; suite knows no such source.
+    check unsettled.findingOf.message == sentence & " (STYLE.md §5); got `3` rounds."
     let reports = @[found, initReport("b.nim", 0, Rule.FileEnding)]
     check reports.findingsOf.mapIt(it.path) == @["a.nim", "b.nim"]  # order kept
 
 
-  test "finding of knoller's check reads as koch printed it, article where sentence ends":
+  test "finding of knoller's check reads as koch prints it, article where sentence ends":
     let
-      tail = "let m = \"Over \" & $LIMIT & \" bytes; got \" & $count & \".\"\n"
       fenced = "let a = 1\n" & FENCE_OFF & "\nlet b = 1+2\n" & FENCE_ON & "\n"
       crossing = "let m = f(\n  " & FENCE_OFF & "\n  1,\n)\n" & FENCE_ON & "\n"
       late = "import std/os\n" & STRICT_FUNCS & "\n"
       stub = "discard \"\"\"\naction: run\ncmd: \"nim c -r $file\"\njoinable: false\n\"\"\"\n"
       found =
-          checkBanners("a.nim", "x = 1\n\n\n#[ Section ]#\n\ny = 2\n") &
-          checkBanners("a.nim", "x = 1\n\n\n\n#[[ Child ]]#\n\ny = 2\n") &
-          checkBanners("a.nim", "x = 1\n\n\n\n#[ Section ]#\ny = 2\n") &
-          checkComments("a.nim", "let a = 1 # One.\n") & checkMessages("a.nim", tail) &
           heldOf("a.nims", fenced, Dialect.Script) & faultOf("a.nim", crossing.fenceOf) &
-          checkSpacing("a.nim", "let r = 0 .. n\n") &
           checkStrictFuncs("a.nim", @["import std/os"], @["import std/os"]) &
           checkStrictFuncs("a.nim", late.splitLines, late.codeOnly.splitLines) &
           checkImports("a.nim", @["import std/[strutils, os]", "import ./a", "import std/math"]) &
@@ -103,16 +99,10 @@ suite "Findings":
           checkReturns("a.nim", @["proc f(): int =", "  return result"]) &
           checkStubKeys("tests/test_a.nim", stub)
     check found.findingsOf.mapIt(it.message) == @[
-      "First-tier banner takes three blank lines before it (X.2); got `2`.",
-      "Second-tier banner takes two blank lines before it (X.2); got `3`.",
-      "Banner takes one blank line after it (X.2); got `0`.",
-      "Trailing comment takes two spaces before its marker (X.9); got `1`.",
-      "Message ends echoing value in backticks, as ``…; got `{value}`.`` (IV.4); got `$count`.",
       "Fence keeps its lines as written, and inside them expression-spacing breaks once at " &
       "line 3 (X.1); got lines `2` to `4`.",  # fence warning
       "Fence closes outside bracket, string or comment it opens in, so fix leaves file as " &
       "written (X.1); got `#!fix off` and `#!fix on` either side.",
-      "Range operator takes no space (X.9); got `0 .. n`.",
       "Module carries `" & STRICT_FUNCS & "` before its imports (STYLE.md §2); got none.",
       "Module carries `" & STRICT_FUNCS & "` before its imports (STYLE.md §2); got it after.",
       "Bracket import is alphabetised (X.5); got `strutils, os`.",
@@ -122,7 +112,26 @@ suite "Findings":
       "§5); got `return result`.",
       "Stub `cmd` leaves out `-r`, since testament runs binary itself (STYLE.md §6); got `-r`.",
       "Stub leaves out keys `testament pattern` never reads (STYLE.md §6); got `joinable`.",
-    ]  # bytes koch printed
+    ]  # text koch prints: static pass, and `koch fix` for fence
+
+
+  test "finding of knoller's check no pass of koch runs yet reads as koch would print it":
+    let
+      tail = "let m = \"Over \" & $LIMIT & \" bytes; got \" & $count & \".\"\n"
+      found =
+          checkBanners("a.nim", "x = 1\n\n\n#[ Section ]#\n\ny = 2\n") &
+          checkBanners("a.nim", "x = 1\n\n\n\n#[[ Child ]]#\n\ny = 2\n") &
+          checkBanners("a.nim", "x = 1\n\n\n\n#[ Section ]#\ny = 2\n") &
+          checkComments("a.nim", "let a = 1 # One.\n") & checkMessages("a.nim", tail) &
+          checkSpacing("a.nim", "let r = 0 .. n\n")
+    check found.findingsOf.mapIt(it.message) == @[
+      "First-tier banner takes three blank lines before it (X.2); got `2`.",
+      "Second-tier banner takes two blank lines before it (X.2); got `3`.",
+      "Banner takes one blank line after it (X.2); got `0`.",
+      "Trailing comment takes two spaces before its marker (X.9); got `1`.",
+      "Message ends echoing value in backticks, as ``…; got `{value}`.`` (IV.4); got `$count`.",
+      "Range operator takes no space (X.9); got `0 .. n`.",
+    ]  # text koch would print, once static pass runs these checks
 
 
   test "finding of rule whose checks state two articles cites rule's one, as its rewrite does":
