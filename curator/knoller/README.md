@@ -1,9 +1,10 @@
 # knoller
 
-The fixers of Nim source that read the text of one file alone, and the checks that those
-fixers clear. `koch fix` runs them through `curator/audit`, which keeps each fixer that asks the
-compiler. `audit` imports knoller by a relative path. Knoller also runs alone, on a file or a
-directory of any repository.
+The fixers and the checks of Nim source that read the text of one file alone. The checks are
+those that the fixers clear, and those of form, names, idioms, articles and fixed waits that the
+static pass of `curator/audit` reads. `koch fix` runs the fixers through `curator/audit`, which
+keeps each fixer that asks the compiler. `audit` imports knoller by a relative path. Knoller also
+runs alone, on a file or a directory of any repository.
 
 Authority replicated: none. The rules are those of `CONSTITUTION.md` and `STYLE.md`.
 
@@ -14,13 +15,18 @@ knoller [--check] [--nim:path] path...
 ```
 
 - A path names a file or a directory. A directory stands for the `.nim`, `.nims` and `.nimble`
-  files that `git ls-files` lists under it.
+  files that `git ls-files` lists under it. What git writes on stderr never reaches a path.
 - A directory that gives no Nim file is a usage error. Its message says why: the directory is
   outside a git work tree, or git lists no Nim file under it.
 - Knoller reads each path whole, from the directory where you run it. So a test file, a stub and
   an umbrella get the same rules from any directory. The output prints each path as you name it.
 - Knoller writes only the files that change. With `--check`, it writes no file and reports each
   change that is due.
+- After the fix, every check reads the text that the fixers leave. Each finding there is `left`,
+  and fails the run. A fence keeps its lines from the fixers, and never from these findings.
+- The names check takes no word as exempt beyond the jargon of V.6. A caller such as `koch` adds
+  the words that its glossaries list. The check of fixed waits reads each file under a directory
+  `tests` or `tools`, at any depth.
 - Knoller passes over a nimble file whose copy `atlas.lock` holds, because a rewrite would leave
   that copy stale.
 - A group of needless parentheses goes only where the parser of the compiler reads the same tree
@@ -157,6 +163,6 @@ None. Knoller publishes no page.
 
 ## Status
 
-The fixers that read one file alone live here, with the command line, and the compiler that
-serves each pin. A test that also reads a check of `audit` stays in the suites of `audit`.
+The fixers and the checks that read one file alone live here, with the command line, and the
+compiler that serves each pin. A test that also reads a check of `audit` stays in its suites.
 Unreviewed by a human.
