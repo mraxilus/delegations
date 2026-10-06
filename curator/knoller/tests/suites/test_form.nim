@@ -14,7 +14,7 @@ func fixed(source: string): Fix =
 
 func gapMessage(spaces: int): string =
   ## Render X.9 finding message for gap of given spaces.
-  "Trailing comment takes two spaces before its marker (X.9); got `" & $spaces & "`."
+  "Trailing comment takes two spaces before its marker; got `" & $spaces & "`."
 
 
 func gapMessages(source: string): seq[string] =
@@ -47,11 +47,11 @@ suite "Article X":
     let exact = "x = 1\n\n\n\n#[ Parent ]#\n\n\n#[[ Child ]]#\n\ny = 2\n\n\n#[[ Sibling ]]#\n\nz\n"
     check checkBanners("a.nim", exact).len == 0
     check checkBanners("a.nim", "x = 1\n\n\n#[ Section ]#\n\ny = 2\n").mapIt(it.message) ==
-      @["First-tier banner takes three blank lines before it (X.2); got `2`."]
+      @["First-tier banner takes three blank lines before it; got `2`."]
     check checkBanners("a.nim", "x = 1\n\n\n\n#[[ Child ]]#\n\ny = 2\n")[0].message ==
-      "Second-tier banner takes two blank lines before it (X.2); got `3`."  # exactly two
+      "Second-tier banner takes two blank lines before it; got `3`."  # exactly two
     check checkBanners("a.nim", "x = 1\n\n\n\n#[ Section ]#\ny = 2\n")[0].message ==
-      "Banner takes one blank line after it (X.2); got `0`."
+      "Banner takes one blank line after it; got `0`."
     check checkBanners("a.nim", "#[ Opening ]#\n\nx\n").len == 0  # nothing above: no count
     check checkBanners("a.nim", "x\n\n\n\n#[ A ]#\n\n\n\n#[ B ]#\n\ny\n").len == 0  # no count
 

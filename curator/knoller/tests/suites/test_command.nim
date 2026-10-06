@@ -136,7 +136,7 @@ suite "Command line":
       outcome = outcomeOf([("a.nims", fenced)], [], is_check = true)
     check outcome.lines == @[
       "a.nims:2: fence-held warning: Fence keeps its lines as written, and inside them " &
-        "expression-spacing breaks once at line 3 (X.1); got lines `2` to `4`.",
+        "expression-spacing breaks once at line 3; got lines `2` to `4`.",
       "0 to fix.",
     ]
     check outcome.code == 0  # break inside fence alone fails nothing

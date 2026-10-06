@@ -123,7 +123,7 @@ func checkCommands*(path, source: string): seq[Report] =
       command.line + 1,
       Rule.DottedCommand,
       "Dotted call statement takes command form where its one argument is call or " &
-        "parenthesised expression (STYLE.md §5); got `" & command.got & "`.",
+        "parenthesised expression; got `" & command.got & "`.",
     )
 
 

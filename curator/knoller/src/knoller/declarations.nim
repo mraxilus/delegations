@@ -173,12 +173,11 @@ func checkDocs*(path, source: string): seq[Report] =
     let message =
       case move.shape
       of Shape.Join:
-        "One-line doc stands on its declaration's line where it fits (STYLE.md §5); got it on " &
-          "next line."
+        "One-line doc stands on its declaration's line where it fits; got it on next line."
       of Shape.Split:
-        "Doc widening its line past `" & $LINE_MAX & "` takes next line (STYLE.md §5); got it " &
-          "on declaration's line."
-      of Shape.Indent: "Doc on next line stands one level in (STYLE.md §5); got indent `" &
+        "Doc widening its line past `" & $LINE_MAX & "` takes next line; got it on " &
+          "declaration's line."
+      of Shape.Indent: "Doc on next line stands one level in; got indent `" &
         $source.split('\n')[move.line + 1].indentOf & "`."
     result.add initReport(path, move.line + 1, Rule.DocPosition, message)
 
@@ -275,7 +274,7 @@ func checkDefaults*(path, source: string): seq[Report] =
       path,
       d.line + 1,
       Rule.LiteralDefault,
-      "Parameter states its type only where default does not fix it (X.12); got `" & d.got & "`.",
+      "Parameter states its type only where default does not fix it; got `" & d.got & "`.",
     )
 
 

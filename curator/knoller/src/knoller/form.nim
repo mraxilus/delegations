@@ -129,7 +129,7 @@ func checkComments*(path, source: string): seq[Report] =
       path,
       gap.line + 1,
       Rule.TrailingComment,
-      "Trailing comment takes two spaces before its marker (X.9); got `" & $gap.spaces & "`.",
+      "Trailing comment takes two spaces before its marker; got `" & $gap.spaces & "`.",
     )
 
 
@@ -158,8 +158,8 @@ func checkCommentsAbove*(path, source: string): seq[Report] =
       path,
       gap.line + 1,
       Rule.CommentAbove,
-      "Trailing comment widening line past `" & $LINE_MAX & "` takes own line above (X.1); " &
-          "got `" & $source.split('\n')[gap.line].runeLen & "` runes.",
+      "Trailing comment widening line past `" & $LINE_MAX & "` takes own line above; got `" &
+          $source.split('\n')[gap.line].runeLen & "` runes.",
     )
 
 
@@ -272,9 +272,9 @@ func checkBanners*(path, source: string): seq[Report] =
   let runs = source.split('\n').blankRuns
   for run in runs:
     let message =
-      if not run.is_before: "Banner takes one blank line after it (X.2)"
-      elif run.tier == 1: "First-tier banner takes three blank lines before it (X.2)"
-      else: "Second-tier banner takes two blank lines before it (X.2)"
+      if not run.is_before: "Banner takes one blank line after it"
+      elif run.tier == 1: "First-tier banner takes three blank lines before it"
+      else: "Second-tier banner takes two blank lines before it"
     result.add initReport(
       path,
       run.banner + 1,
