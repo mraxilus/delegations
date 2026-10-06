@@ -44,7 +44,7 @@
 #   here writes.
 #   Branch names and event kind reach koch through environment, never interpolated into
 #   script. Weekly run compiles projects whose code merged inside its window and nothing in
-#   week nobody merged code, because rot arrives with merges. Cron here and `RECENT_DAYS` in
+#   week nobody merged code, because rot arrives with merges. Cron here and `DAYS_RECENT` in
 #   `plan.nim` are one window named twice: change both together.
 
 name: check
