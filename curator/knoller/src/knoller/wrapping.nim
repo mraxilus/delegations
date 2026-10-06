@@ -281,15 +281,15 @@ func checkSeparators*(path, source: string): seq[Report] =
       path,
       s.tokens[k].line + 1,
       Rule.ParameterSeparators,
-      "Parameters take `;` between groups where one group shares its type, and `,` otherwise " &
-        "(STYLE.md §5); got `" & s.spelling(k) & "`.",
+      "Parameters take `;` between groups where one group shares its type, and `,` " &
+        "otherwise; got `" & s.spelling(k) & "`.",
     )
   for k in s.tupleSeparators:
     result.add initReport(
       path,
       s.tokens[k].line + 1,
       Rule.TupleSeparators,
-      "Tuple type takes `,` between fields (STYLE.md §5); got `;`.",
+      "Tuple type takes `,` between fields; got `;`.",
     )
 
 
@@ -377,7 +377,7 @@ func checkSignatures*(path, source: string): seq[Report] =
       rewrite.first + 1,
       Rule.SignatureWrapping,
       "Signature stays on one line where it fits, else wraps its parameters onto one line of " &
-        "their own, else one group to line (X.3, STYLE.md §5); got `" &
+        "their own, else one group to line; got `" &
         $(rewrite.last - rewrite.first + 1) & "` lines.",
     )
 
@@ -858,11 +858,11 @@ func checkCalls*(path, source: string): seq[Report] =
   for rewrite in s.callRewrites:
     let message =
       if rewrite.rule == Rule.OperatorWrapping:
-        "Line fitting nowhere breaks after its operator of lowest precedence (X.1, STYLE.md " &
-            "§5); got `" & $s.lines[rewrite.first].runeLen & "` runes."
+        "Line fitting nowhere breaks after its operator of lowest precedence; got `" &
+            $s.lines[rewrite.first].runeLen & "` runes."
       else:
         "Call stays on its line where it fits, else takes one argument to line with trailing " &
-            "comma (X.3, STYLE.md §5); got `" & $(rewrite.last - rewrite.first + 1) & "` lines."
+            "comma; got `" & $(rewrite.last - rewrite.first + 1) & "` lines."
     result.add initReport(path, rewrite.first + 1, rewrite.rule, message)
 
 
@@ -1083,7 +1083,7 @@ func checkContinuations*(path, source: string): seq[Report] =
       line + 1,
       Rule.ContinuationIndent,
       "Line of block head right above its body takes " & $CONTINUATION_STEP & " spaces more " &
-          "than head's first line, so it stands apart from body (STYLE.md §5); got `" &
+          "than head's first line, so it stands apart from body; got `" &
           $(s.lines[line].indentOf - lift.base) & "`.",
     )
   for shift in shifts:
@@ -1093,10 +1093,10 @@ func checkContinuations*(path, source: string): seq[Report] =
       message =
         if shift.step == 0:
           "Line of expression whose first piece opens its own line takes no spaces more than " &
-              "that line (STYLE.md §5); got `" & $relative & "`."
+              "that line; got `" & $relative & "`."
         else:
           "Line of expression past its statement line takes " & $CONTINUATION_STEP & " spaces " &
-              "more than that line (STYLE.md §5); got `" & $relative & "`."
+              "more than that line; got `" & $relative & "`."
     result.add initReport(path, line + 1, Rule.ContinuationIndent, message)
 
 
@@ -1187,7 +1187,7 @@ func checkTrailing*(path, source: string): seq[Report] =
       path,
       insert.line + 1,
       Rule.TrailingSeparator,
-      "List written one item to line takes trailing separator (X.3); got none, where `" &
+      "List written one item to line takes trailing separator; got none, where `" &
         insert.separator & "` stands.",
     )
 

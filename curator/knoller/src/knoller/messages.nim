@@ -26,7 +26,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, sequtils, strutils, unicode]
+import std/[algorithm, sequtils, strutils]
 import ./[form, precedence, reports, tokens]
 
 
@@ -199,7 +199,7 @@ func checkMessages*(path, source: string): seq[Report] =
       path,
       value.line + 1,
       Rule.MessageValue,
-      "Message ends echoing value in backticks, as ``…; got `{value}`.`` (IV.4); got `" &
+      "Message ends echoing value in backticks, as ``…; got `{value}`.``; got `" &
         value.text & "`.",
     )
 

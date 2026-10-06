@@ -277,7 +277,7 @@ func checkMixtures*(path, source: string): seq[Report] =
       path,
       tokens[mixture.runs[0][0]].line + 1,
       Rule.AndWithOr,
-      "Condition mixing `and` with `or` parenthesises each `and` (X.4); got `" & mixture.got & "`.",
+      "Condition mixing `and` with `or` parenthesises each `and`; got `" & mixture.got & "`.",
     )
 
 
@@ -338,5 +338,5 @@ func checkNegations*(path, source: string): seq[Report] =
       negation.line + 1,
       Rule.NotOverBinary,
       "`not` over binary expression takes parentheses, since Nim reads `not a == b` as " &
-        "`(not a) == b` (X.4); got `" & negation.got & "`.",
+        "`(not a) == b`; got `" & negation.got & "`.",
     )

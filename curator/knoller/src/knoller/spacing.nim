@@ -447,30 +447,29 @@ func checkSpacing*(path, source: string): seq[Report] =
   for spacing in source.respacings:
     let message =
       case spacing.placement
-      of Placement.Binary: "Binary operator takes one space on each side (X.9)"
-      of Placement.Ending: "Operator ending its line takes one space before it (X.9)"
-      of Placement.Range: "Range operator takes no space (X.9)"
+      of Placement.Binary: "Binary operator takes one space on each side"
+      of Placement.Ending: "Operator ending its line takes one space before it"
+      of Placement.Range: "Range operator takes no space"
       of Placement.RangeApart:
         "Range operator takes one space on each side where piece beside it binds tighter, or " &
-          "where glued tokens would merge (X.9)"
+          "where glued tokens would merge"
       of Placement.Power:
-        "Power operator takes no space, since spaced it reads as operator on bits (X.9)"
+        "Power operator takes no space, since spaced it reads as operator on bits"
       of Placement.PowerWrapped:
-        "Power operator takes no space, and exponent that would merge with it takes " &
-          "parentheses (X.9)"
+        "Power operator takes no space, and exponent that would merge with it takes parentheses"
       of Placement.Selector:
-        "Symbol operator inside bracket glued to operand takes no space (X.9)"
+        "Symbol operator inside bracket glued to operand takes no space"
       of Placement.SelectorApart:
         "Symbol operator inside bracket glued to operand keeps one space on each side where " &
-          "glued tokens would merge (X.9)"
-      of Placement.Prefix: "Prefix operator is glued to its operand (X.9)"
+          "glued tokens would merge"
+      of Placement.Prefix: "Prefix operator is glued to its operand"
       of Placement.Apart:
-        "Prefix operator takes one space before operand it would merge with (X.9)"
-      of Placement.Equals: "`=` takes one space on each side (X.9)"
-      of Placement.Comma: "Comma takes no space before it and one after (X.9)"
-      of Placement.Semicolon: "Semicolon takes no space before it and one after (X.9)"
-      of Placement.Colon: "Colon takes no space before it and one after (X.9)"
-      of Placement.Inner: "Bracket holds no space inside it (X.9)"
+        "Prefix operator takes one space before operand it would merge with"
+      of Placement.Equals: "`=` takes one space on each side"
+      of Placement.Comma: "Comma takes no space before it and one after"
+      of Placement.Semicolon: "Semicolon takes no space before it and one after"
+      of Placement.Colon: "Colon takes no space before it and one after"
+      of Placement.Inner: "Bracket holds no space inside it"
     result.add initReport(
       path,
       spacing.line + 1,
