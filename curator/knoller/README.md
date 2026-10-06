@@ -23,9 +23,9 @@ knoller [--check] [--nim:path] path...
 - Knoller writes only the files that change. With `--check`, it writes no file and reports each
   change that is due.
 - After the fix, every check reads the text that the fixers leave. Each finding there is `left`,
-  and fails the run. A fence keeps its lines from the fixers and from the checks of layout that
-  the fixers clear. It never keeps them from a check that the static pass of `koch` reads, such as
-  width, names or idioms.
+  and fails the run. A fence keeps its lines from the fixers, and from the checks of layout that
+  `koch fix` clears, with `not-over-binary`. It never keeps them from a check that the static pass
+  of `koch` reads, such as width, names or idioms.
 - The names check takes no word as exempt beyond the jargon of V.6. A caller such as `koch` adds
   the words that its glossaries list. The check of fixed waits reads each file under a directory
   `tests` or `tools`, at any depth.
