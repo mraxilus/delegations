@@ -11,8 +11,8 @@
 ##   | Top bar     | Start new object, toggle world furniture, save or load scene.           |
 ##   | Apply       | Apply any library operation of chosen arity to picked operands, both of |
 ##   |             | which current selection fills in.                                       |
-##   | Diagnostics | Live frame time, vsync, memory use of both arenas, object pool, and     |
-##   |             | everything else this binary reserves for itself, added up.              |
+##   | Diagnostics | Live frame time, vsync, memory use of program arena, frame arenas and     |
+##   |             | object pool, and all else this binary reserves for itself, added up.      |
 ##   | Objects     | Select, show, hide, remove; edit any object's label, colour and         |
 ##   |             | coefficients through one staged session, shared with composing new one. |
 ##   | View        | Orbit, pivot, lens, PNG export.                                        |
@@ -274,10 +274,10 @@ type
       ## times.
       ## Oldest to newest by `index_history`; nothing outside panel reads it.
     index_history*: int  ## Next handle in `milliseconds_history` fresh reading overwrites.
-    bytes_arena_permanent_used*: int  ## Snapshot of permanent arena's `used`.
-    bytes_arena_permanent_capacity*: int  ## Snapshot of permanent arena's `capacity`.
-    bytes_arena_frame_peak*: int  ## Snapshot of frame arena's `peakUsed`.
-    bytes_arena_frame_capacity*: int  ## Snapshot of frame arena's `capacity`.
+    bytes_arena_program_used*: int  ## Snapshot of program arena's `used`.
+    bytes_arena_program_capacity*: int  ## Snapshot of program arena's `capacity`.
+    bytes_arena_frame_peak*: int  ## Snapshot of frame arenas' `peakUsed`: most either held.
+    bytes_arena_frame_capacity*: int  ## Snapshot of one frame arena's capacity.
     bytes_memory_total*: int  ## Sum of every fixed reservation this binary makes.
       ## Computed where every piece is visible, since `panel` cannot see arenas' backing
       ## storage.
@@ -1119,12 +1119,12 @@ proc layoutDiagnosticsFrameTime(panel: var Panel) =
 
 
 proc layoutDiagnosticsMemory(panel: Panel) =
-  ## Lay out "memory" section: permanent and per-frame arena usage bars.
+  ## Lay out "memory" section: program arena's and frame arenas' usage bars.
   gui.separatorText wordingText(NameDiagnosticsMemory)
   block:
     let
-      mib_used = float(panel.bytes_arena_permanent_used) / (1024.0 * 1024.0)
-      mib_capacity = float(panel.bytes_arena_permanent_capacity) / (1024.0 * 1024.0)
+      mib_used = float(panel.bytes_arena_program_used) / (1024.0 * 1024.0)
+      mib_capacity = float(panel.bytes_arena_program_capacity) / (1024.0 * 1024.0)
     var text: array[WIDTH_OVERLAY_TEXT, char]
     let overlay_text = buildChars(text):
       appendFixed(text, cursor, mib_used, 1)
@@ -1132,7 +1132,7 @@ proc layoutDiagnosticsMemory(panel: Panel) =
       appendFixed(text, cursor, mib_capacity, 0)
       appendChars(text, cursor, " MiB")
     gui.textTinted(
-      wordingText(NameDiagnosticsPermanent), INK_LABEL.red, INK_LABEL.green, INK_LABEL.blue
+      wordingText(NameDiagnosticsProgram), INK_LABEL.red, INK_LABEL.green, INK_LABEL.blue
     )
     gui.progressBar(
       cfloat(mib_used / max(mib_capacity, 1.0)),
@@ -1146,19 +1146,19 @@ proc layoutDiagnosticsMemory(panel: Panel) =
       0.15,
       0.18,
     )
-    gui.tooltip wordingText(TipDiagnosticsPermanent)
+    gui.tooltip wordingText(TipDiagnosticsProgram)
 
   block:
     let
       kib_peak = float(panel.bytes_arena_frame_peak) / 1024.0
-      mib_capacity = float(panel.bytes_arena_frame_capacity) / (1024.0 * 1024.0)
+      kib_capacity = float(panel.bytes_arena_frame_capacity) / 1024.0
     var text: array[WIDTH_OVERLAY_TEXT, char]
     let overlay_text = buildChars(text):
       appendChars(text, cursor, "peak ")
       appendFixed(text, cursor, kib_peak, 0)
       appendChars(text, cursor, " KiB / ")
-      appendFixed(text, cursor, mib_capacity, 0)
-      appendChars(text, cursor, " MiB")
+      appendFixed(text, cursor, kib_capacity, 0)
+      appendChars(text, cursor, " KiB")
     gui.textTinted(
       wordingText(NameDiagnosticsFrameArena), INK_LABEL.red, INK_LABEL.green, INK_LABEL.blue
     )
@@ -1177,7 +1177,7 @@ proc layoutDiagnosticsMemory(panel: Panel) =
       0.15,
       0.18,
     )
-    gui.tooltip wordingText(TipDiagnosticsFrame)
+    gui.tooltip wordingText(TipDiagnosticsFrameArena)
 
 
 func sizePoolCell(width: cfloat): cfloat =

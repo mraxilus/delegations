@@ -215,9 +215,20 @@ func positionAnchor*(m: Multivector): Option[Position] =
   ## Choose point of object to build its drawing around.
   ##   Support point where object misses origin, origin itself where it does not.
   ##   None where object lies in horizon, as it then has no finite point at all.
+  ##   Tests horizon only where support is none; twin below takes answer caller holds.
   let support = positionSupport(m)
   if support.isSome: return support
   if m.isHorizon: return
+  some(Position(x: 0, y: 0, z: 0))
+
+
+func positionAnchor*(m: Multivector, is_horizon: bool): Option[Position] =
+  ## Choose point of object to build its drawing around, given whether it lies in horizon.
+  ##   For caller holding `isHorizon(m)` already, as placing does: one test serves each read.
+  ##   Same rule as twin above, which tests horizon itself.
+  let support = positionSupport(m)
+  if support.isSome: return support
+  if is_horizon: return
   some(Position(x: 0, y: 0, z: 0))
 
 
@@ -225,40 +236,62 @@ func positionAnchor*(m: Multivector): Option[Position] =
 #   Default zero refuses only no direction at all: object read as it stands, at own scale.
 #   Caller that built `m` on spot passes its factors' scales multiplied, and direction no
 #   more than `TOLERANCE_ABS` of that reads none: pair that runs parallel names none.
-func direction*(m: Multivector, scale = 0.0): Option[Direction] =
+# Each has twin taking `is_horizon`, `isHorizon(m)` caller holds already; plain reader tests
+#   it and forwards. Placing tests once and hands answer to every read (repository issue 556).
+func direction*(m: Multivector, is_horizon: bool, scale = 0.0): Option[Direction] =
   ## Read unit direction line extends along.
   ##   None where line lies in horizon (`isHorizon`), as its attitude then vanishes.
-  if m.isHorizon: return
+  if is_horizon: return
   let attitude = ⊖m
   normalize(Direction(x: attitude[Basis.E1], y: attitude[Basis.E2], z: attitude[Basis.E3]), scale)
 
 
-func directionHorizon*(m: Multivector, scale = 0.0): Option[Direction] =
+func direction*(m: Multivector, scale = 0.0): Option[Direction] =
+  ## Read unit direction line extends along, testing horizon itself.
+  direction(m, m.isHorizon, scale)
+
+
+func directionHorizon*(m: Multivector, is_horizon: bool, scale = 0.0): Option[Direction] =
   ## Read unit direction horizon point stands for.
   ##   None where point has weight, as it then names place rather than direction.
-  if not m.isHorizon: return
+  if not is_horizon: return
   normalize(Direction(x: m[Basis.E1], y: m[Basis.E2], z: m[Basis.E3]), scale)
 
 
-func directionNormalHorizon*(m: Multivector, scale = 0.0): Option[Direction] =
+func directionHorizon*(m: Multivector, scale = 0.0): Option[Direction] =
+  ## Read unit direction horizon point stands for, testing horizon itself.
+  directionHorizon(m, m.isHorizon, scale)
+
+
+func directionNormalHorizon*(m: Multivector, is_horizon: bool, scale = 0.0): Option[Direction] =
   ## Read unit direction normal to pencil of directions horizon line stands for.
   ##   Line's weight lives in `E41`/`E42`/`E43`; `E23`/`E31`/`E12` survive in horizon and
   ##   carry same normal finite plane's attitude would leave there, unnormalized.
   ##     Confirmed component for component against `(⊖ plane)[E23], [E31], [E12]`.
   ##   None where line has weight, as it then runs along direction, not perpendicular to
   ##   pencil of them.
-  if not m.isHorizon: return
+  if not is_horizon: return
   normalize(Direction(x: m[Basis.E23], y: m[Basis.E31], z: m[Basis.E12]), scale)
 
 
-func directionNormal*(m: Multivector, scale = 0.0): Option[Direction] =
+func directionNormalHorizon*(m: Multivector, scale = 0.0): Option[Direction] =
+  ## Read unit direction normal to horizon line's pencil, testing horizon itself.
+  directionNormalHorizon(m, m.isHorizon, scale)
+
+
+func directionNormal*(m: Multivector, is_horizon: bool, scale = 0.0): Option[Direction] =
   ## Read unit direction perpendicular to plane.
   ##   Antidual is negated so normal runs along plane's own weight gˣ, gʸ, gᶻ.
   ##   None where plane lies in horizon (`isHorizon`), as horizon has no normal in
   ##   Euclidean space.
-  if m.isHorizon: return
+  if is_horizon: return
   let normal = -(☆m)
   normalize(Direction(x: normal[Basis.E1], y: normal[Basis.E2], z: normal[Basis.E3]), scale)
+
+
+func directionNormal*(m: Multivector, scale = 0.0): Option[Direction] =
+  ## Read unit direction perpendicular to plane, testing horizon itself.
+  directionNormal(m, m.isHorizon, scale)
 
 
 
@@ -302,6 +335,16 @@ func spanPerpendicular*(anchor: Position, normal: Direction): Option[(Direction,
   some((axis_first.get, axis_second.get))
 
 
+func frame*(anchor: Position, normal: Direction): Option[FramePlane] =
+  ## Derive orthonormal pair of directions inside plane through `anchor` normal to `normal`.
+  ##   For caller holding plane's anchor and normal already, as placing does.
+  ##   None only where `spanPerpendicular` gives none.
+  let axes = spanPerpendicular(anchor, normal)
+  if axes.isNone: return
+  let (axis_first, axis_second) = axes.get
+  some(FramePlane(axis_first: axis_first, axis_second: axis_second, normal: normal))
+
+
 func frame*(m: Multivector): Option[FramePlane] =
   ## Derive orthonormal pair of directions lying inside plane.
   ##   Pair is arbitrary up to rotation about normal; only plane it spans is meaningful.
@@ -310,10 +353,7 @@ func frame*(m: Multivector): Option[FramePlane] =
     normal = directionNormal(m)
     anchor = positionAnchor(m)
   if normal.isNone or anchor.isNone: return
-  let axes = spanPerpendicular(anchor.get, normal.get)
-  if axes.isNone: return
-  let (axis_first, axis_second) = axes.get
-  some(FramePlane(axis_first: axis_first, axis_second: axis_second, normal: normal.get))
+  frame(anchor.get, normal.get)
 
 
 func pointFrom*(m: Multivector): Position =

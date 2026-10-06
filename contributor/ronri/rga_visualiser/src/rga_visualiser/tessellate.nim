@@ -67,7 +67,9 @@ type
     ##   `frame`, `spanPerpendicular`) is pure function of multivector, so one answer serves
     ##   every reader of its frame at that frame's camera.
     ##   Each frame places every object once, and its walks read that answer: reach, cull,
-    ##   emission, pick. Nothing placed is kept for frame after.
+    ##   emission, pick. Next frame places every object again, and never reads these as its
+    ##   own; each front-end keeps them one frame more, as frame before's
+    ##   (`placementsPrevious`), for what reckons across two frames.
     ## Flat rather than variant object.
     ##   Copied per handle into `array[OBJECTS_MAX, Placement]`, and case object's tag would buy
     ##   nothing but narrower read. Which fields carry meaning is `kind`'s to say.
@@ -158,7 +160,8 @@ func algebraFilled*(scale: DrawExtent): DrawExtent =
 func anchorWorld*(m: Multivector): Option[Position] =
   ## Resolve one finite point standing for `m`, as world position.
   ##   Point's own place, and line's or plane's support point, what mesh anchors on.
-  ##   For what stays world's, as camera's aim does; frame reads `anchorFor` instead.
+  ##   For `anchorFor` reading multivector, which reads it about view origin; placement holds
+  ##   same place as `Placement.at`.
   ##   None in horizon, and where `m` carries no drawable geometry.
   let kind = kindOf(m)
   if kind.isNone: return
@@ -200,6 +203,22 @@ func anchorFor*(
   if anchor_override.isSome and kindOf(m) == some(Kind.Plane):
     return some(anchor_override.get.toView(scale.origin))
   anchorFor(m, scale)
+
+
+func anchorFor*(placed: Placement, scale: DrawExtent): Option[Position] =
+  ## Resolve one point standing for placed object as it is drawn, about view origin.
+  ##   Frame's twin of `anchorFor(m, anchor_override, scale)`, for every reader holding
+  ##   frame's placement: it holds plane's override applied, point's place or heading, and
+  ##   line's support, so nothing is classified or read out of algebra again.
+  ##   Star stands about eye, which moves with camera, so it is read off heading as
+  ##   emission reads it: eye plus `radius_horizon` along it.
+  ##   None for horizon line, horizon plane and no geometry, as for multivector.
+  ##   `placed` read in place, never copied (read in emitted JS).
+  case placed.kind
+  of Case.PointAt, Case.LineThrough, Case.PlaneOn: some(placed.at.toView(scale.origin))
+  of Case.PointToward:
+    position(add(scale.eye_point, wedge(scale.radiusHorizon, placed.toward.toMultivector)))
+  of Case.LineAcross, Case.PlaneEverywhere, Case.Nothing: none(Position)
 
 
 
@@ -451,14 +470,31 @@ proc addLattice*(
   ##   Nothing for plane in horizon, which has no finite point to rule about.
   ##   `plane` is world's, as scene stores it; lattice is laid about view origin, from
   ##   plane's anchor read about it and its own normal.
-  let
-    axes = frame(plane)
-    anchor_world = positionAnchor(plane)
-  if axes.isNone or anchor_world.isNone: return
+  ##   Frame is spanned here from multivector; twin below takes placement's.
+  let axes = frame(plane)
+  if axes.isNone: return
+  meshes.addLattice(scratch, extent, scale, plane, axes.get)
+
+
+proc addLattice*(
+  meshes: var MeshSet,
+  scratch: var DrawScratch,
+  extent: float,
+  scale: DrawExtent,
+  plane: Multivector,
+  axes: FramePlane,
+) =
+  ## Append lattice on finite `plane`, on frame `axes` its placement holds; see twin above.
+  ##   For frame's walk of selection, which read plane as placed: frame is not spanned
+  ##   again, and plane is known finite.
+  ##   Support is read here, since placement holds disc's centre, which creation anchor
+  ##   can move off it.
+  let anchor_world = positionAnchor(plane, is_horizon = false)
+  if anchor_world.isNone: return
   let
     anchor = anchor_world.get.toView(scale.origin)
     reach = radiusOnPlaneFor(
-      extent, scale, planeThrough(anchor.toMultivector, axes.get.normal.toMultivector)
+      extent, scale, planeThrough(anchor.toMultivector, axes.normal.toMultivector)
     )
   if reach.isNone: return
   let
@@ -466,7 +502,7 @@ proc addLattice*(
     tint = base.fade(base.alpha * ALPHA_GRID)
     radius = reach.get
     size_cell = sizeCellGridFor(radius)
-    (first, second) = (axes.get.axis_first, axes.get.axis_second)
+    (first, second) = (axes.axis_first, axes.axis_second)
   # Lay one family at time through one scratch.
   #   Buffer is sized for larger family rather than both.
   meshes.addGridFamily(
@@ -494,76 +530,100 @@ proc addLattice*(
 
 #[ Object Tessellation ]#
 
-proc placeInto*(placed: var Placement, geometry: Multivector, anchor_override: Option[Position]) =
-  ## Ask algebra what object is and where, into `placed`: whole placing side, none of emitting.
-  ##   Split from `addObject` so frame places once and reads answer in each walk.
-  ##     Nothing here reads camera; see `Placement`.
+func placeUntimed(placed: var Placement, geometry: Multivector, anchor_override: Option[Position]) =
+  ## Ask algebra what object is and where, into `placed`: derivation `placeInto` times.
+  ##   Nothing here reads camera; see `Placement`.
   ##   `anchor_override` centres plane's disc there instead of on support; ignored for
   ##   point or line.
   ##   Plane whose support or frame algebra cannot give lands on `PlaneEverywhere`, what
   ##   infinite plane is: sky.
+  ##   Tests horizon at most once, and hands answer to every read that asks it; suite holds
+  ##   each exit to one test and to answers reads standing alone give.
   ##   Written field by field, never assigned whole: frame places every object, and
   ##   `Placement` or `Option` built and assigned is copy on JS backend (read in emitted JS).
   ##     Coordinates go one by one (`euclid.setTo`), so `placed` shares no storage with any
   ##     input. Fields `kind` leaves meaningless keep whatever they held.
-  ##   Each answer leaves by `break answered`: `timed` refuses `return`; see `timings.timed`.
-  timed(Side.Placing):
-    block answered:
-      var kind = Kind.Point
-      if not geometry.kindInto(kind):
-        placed.kind = Case.Nothing
-        break answered
-      case kind
-      of Kind.Point:
-        if geometry.positionInto(placed.at):
-          placed.kind = Case.PointAt
-          break answered
-        let heading = directionHorizon(geometry)
-        if heading.isSome:
-          placed.kind = Case.PointToward
-          placed.toward.setTo(heading.get)
-          break answered
-      of Kind.Line:
-        let
-          anchor = positionAnchor(geometry)
-          axis = direction(geometry)
-        if anchor.isSome and axis.isSome:
-          placed.kind = Case.LineThrough
-          placed.at.setTo(anchor.get)
-          placed.toward.setTo(axis.get)
-          break answered
-        let normal = directionNormalHorizon(geometry)
-        if normal.isSome:
-          # Span great circle's plane at origin.
-          #   Which plane depends on line, not eye, so circle is centred on eye when drawn
-          #   rather than when placed.
-          let spanned = spanPerpendicular(ORIGIN_WORLD, normal.get)
-          if spanned.isSome:
-            placed.kind = Case.LineAcross
-            placed.axes.axis_first.setTo(spanned.get[0])
-            placed.axes.axis_second.setTo(spanned.get[1])
-            placed.axes.normal.setTo(normal.get)
-            break answered
-      of Kind.Plane:
-        let
-          anchor = if anchor_override.isSome: anchor_override else: positionAnchor(geometry)
-          axes = frame(geometry)
-        if anchor.isNone or axes.isNone:
-          placed.kind = Case.PlaneEverywhere
-          break answered
-        placed.kind = Case.PlaneOn
-        placed.at.setTo(anchor.get)
-        placed.axes.axis_first.setTo(axes.get.axis_first)
-        placed.axes.axis_second.setTo(axes.get.axis_second)
-        placed.axes.normal.setTo(axes.get.normal)
-        break answered
-      placed.kind = Case.Nothing
+  var kind = Kind.Point
+  if not geometry.kindInto(kind):
+    placed.kind = Case.Nothing
+    return
+  case kind
+  of Kind.Point:
+    # Place point where weight allows; horizon test only where it does not.
+    if geometry.positionInto(placed.at):
+      placed.kind = Case.PointAt
+      return
+    let heading = directionHorizon(geometry, is_horizon = geometry.isHorizon)
+    if heading.isSome:
+      placed.kind = Case.PointToward
+      placed.toward.setTo(heading.get)
+      return
+  of Kind.Line:
+    # Test horizon once, and hand answer to each read.
+    let
+      is_horizon = geometry.isHorizon
+      anchor = positionAnchor(geometry, is_horizon = is_horizon)
+      axis = direction(geometry, is_horizon = is_horizon)
+    if anchor.isSome and axis.isSome:
+      placed.kind = Case.LineThrough
+      placed.at.setTo(anchor.get)
+      placed.toward.setTo(axis.get)
+      return
+    let normal = directionNormalHorizon(geometry, is_horizon = is_horizon)
+    if normal.isSome:
+      # Span great circle's plane at origin.
+      #   Which plane depends on line, not eye, so circle is centred on eye when drawn
+      #   rather than when placed.
+      let spanned = spanPerpendicular(ORIGIN_WORLD, normal.get)
+      if spanned.isSome:
+        placed.kind = Case.LineAcross
+        placed.axes.axis_first.setTo(spanned.get[0])
+        placed.axes.axis_second.setTo(spanned.get[1])
+        placed.axes.normal.setTo(normal.get)
+        return
+  of Kind.Plane:
+    # Test horizon once, and read support once: frame spans about it, and override moves
+    #   only disc's centre.
+    #   Sky where support, normal or span is none, as where frame itself gave none.
+    let
+      is_horizon = geometry.isHorizon
+      support = positionAnchor(geometry, is_horizon = is_horizon)
+      normal = directionNormal(geometry, is_horizon = is_horizon)
+    if support.isNone or normal.isNone:
+      placed.kind = Case.PlaneEverywhere
+      return
+    let axes = frame(support.get, normal.get)
+    if axes.isNone:
+      placed.kind = Case.PlaneEverywhere
+      return
+    placed.kind = Case.PlaneOn
+    placed.at.setTo(if anchor_override.isSome: anchor_override.get else: support.get)
+    placed.axes.axis_first.setTo(axes.get.axis_first)
+    placed.axes.axis_second.setTo(axes.get.axis_second)
+    placed.axes.normal.setTo(axes.get.normal)
+    return
+  placed.kind = Case.Nothing
+
+
+proc placeInto*(placed: var Placement, geometry: Multivector, anchor_override: Option[Position]) =
+  ## Ask algebra what object is and where, into `placed`: whole placing side, none of emitting.
+  ##   Split from `addObject` so frame places once and reads answer in each walk.
+  ##   Derivation is `placeUntimed`'s, one call inside stretch, so each answer it leaves by
+  ##   is charged: `timed` refuses `return`; see `timings.timed`.
+  timed(Side.Placing): placed.placeUntimed(geometry, anchor_override)
 
 
 proc placeObject*(geometry: Multivector, anchor_override = none(Position)): Placement =
   ## Ask algebra what object is and where, as fresh answer; see `placeInto`.
   ##   For caller placing one object where it draws it: preview, `addObject`, suite.
   result.placeInto(geometry, anchor_override)
+
+
+func placementOf*(geometry: Multivector, anchor_override = none(Position)): Placement =
+  ## Ask algebra what object is and where, as fresh answer charged to no timing side.
+  ##   For `func` reading object outside any frame's placements, which cannot read clock:
+  ##   camera's aim at staged preview, and caller handing no frame's placements.
+  result.placeUntimed(geometry, anchor_override)
 
 
 func isPointInView*(placed: Placement, radius: float, bounds: ViewBounds): bool =

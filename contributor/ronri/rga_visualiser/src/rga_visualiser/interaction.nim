@@ -730,6 +730,7 @@ proc updateHover*(
         width,
         height,
         interaction.cursor,
+        placed,
       )
       # Depth along sight, not distance: speed curve travels forward, and that is what
       #   forward has to cross.
@@ -742,7 +743,7 @@ proc updateHover*(
   # Note backdrop here, where scene is in hand; see `is_hover_backdrop`.
   interaction.is_hover_backdrop =
       interaction.index_hover.isSome and
-      isBackdropUnder(scene, interaction.index_hover.get, scale, width, height)
+      isBackdropUnder(scene, interaction.index_hover.get, scale, width, height, placed)
 
 
 
