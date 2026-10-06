@@ -936,7 +936,7 @@ that indent on the lines that the hand wrote too.
 **The four spaces keep the head of a block apart from its body (STYLE.md §5).** Two spaces would
 put a continuation line of a head on the indent of the body below it. So where the line right
 above a body stands at the indent of the body, every continuation line of that head moves
-(`headLifts`). A chain that opens mid-line inside a call takes the layout of one level of that
+(`liftsHead`). A chain that opens mid-line inside a call takes the layout of one level of that
 call. Such a head would otherwise keep its last line on the body.
 
 - A head opens its line with a keyword of a block and ends on `:` at its own depth. The keywords

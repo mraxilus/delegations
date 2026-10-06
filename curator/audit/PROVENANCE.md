@@ -66,13 +66,13 @@ glued to the first field, because the split never cuts at a newline.
 ordinary: a branch merges `main`, and `main` later takes another branch that merged it
 elsewhere. A glued field then opens with `warning:` rather than with a path. The scope check
 then reads a file of the branch as outside its own scope. `ls-files` and `log` warn on their
-own occasions, so every caller of `gitFields` reads the two streams apart.
+own occasions, so every caller of `fieldsGit` reads the two streams apart.
 
 Stderr is kept rather than dropped, because it is where git says why it failed, and the
 `IOError` carries it. Both pipes are drained before the exit is waited on, since a child blocks
 where one fills while the other is read.
 
-`gitFields` runs git through `runGit` of knoller, which the command line of knoller lists a
+`fieldsGit` runs git through `runGit` of knoller, which the command line of knoller lists a
 directory with too. So the two streams part in one place. The umbrella of knoller exports none of
 its command line, so `tree.nim` imports `command.nim` of knoller for this one procedure.
 
@@ -334,7 +334,7 @@ curator-only edit touches no project.
   sensitivity, and CRLF invariance. Verified by `suites/test_audit.nim`: one byte in any rules
   document goes stale in every project, and one byte in CURATOR.md in none.
 
-**`koch stamp --write` sets the `Rules` row of every provenance file itself.** `withRulesRow`
+**`koch stamp --write` sets the `Rules` row of every provenance file itself.** `rewriteRowRules`
 rewrites the row in place, and finds it as `fieldsHeader` finds it, so what is written is what
 the check then reads. A provenance file already current is not touched, and each path that
 moved is printed. So duty 1 takes one verb for the rows, and no hand edit (CURATOR.md, duty
@@ -687,7 +687,7 @@ them, most of them renames that the record cites. A rename and its record then t
 **The opening line of a pull request and its labels are the role that its branch names.** The
 runner holds it to that before the merge. The role line says who speaks, and the label says
 whose work it is. On a pull request both are the role of the branch itself. So `parseBranch`
-derives one string through `roleName`, and the check is equality rather than presence.
+derives one string through `nameRole`, and the check is equality rather than presence.
 
 **The body comes from the event payload, and the labels come from the API.** The job passes
 the body as `ROLE_BODY`, and the label names as `ROLE_LABELS`, a JSON array. `gh pr view` with
@@ -1334,8 +1334,8 @@ nothing else, because what a check needs differs for each project, while the nam
   it rests on: this holds only while a `types` verb compiles no project code. One that did
   would need its pin, and would become a matrix job.
 - **Scoped as `test` is, though with no matrix.** The scope lives in the verb, which takes
-  the projects that one change asks for, by the `testSet` rule. `--recent` scopes it to the window
-  of the weekly run.
+  the projects that one change asks for, by the `projectsTest` rule. `--recent` scopes it to the
+  window of the weekly run.
 - **Absent npm is a finding that names it, and never a skip.** A check that quietly does
   nothing reports green for work it never did.
 - Verified by hand against the regression it exists for, 2026-09-07. A rename of
@@ -1966,7 +1966,7 @@ by word, in its own case. `rewrites.nim` plans the rename from what the pass res
 
 **The rename has its proof on commit `c5c65db` of `main`, because the tree at `de0c1899` holds no
 V.6 finding, by `nim r koch check-files`.** Verified by hand, 2026-10-03, with a scratch program
-over `abbreviationRenames`, `planRename` and `resolve`. It applied the planned renames alone to a
+over `renamesAbbreviation`, `planRename` and `resolve`. It applied the planned renames alone to a
 copy of that tree, with the checkouts of `koch fetch-deps`.
 
 - The names check gave 105 renames to plan. The semantic pass read 43 of the files in 155 s.
@@ -2039,7 +2039,7 @@ moved nothing.
 
 **`koch fix` proves each group of needless parentheses with the parser of the compiler that the
 project pins (X.4).** The chain of knoller asks for each source whose groups it cannot prove yet
-(`Fix.asked`). `provenFix` gives every source of one pin to one run of that compiler, holds the
+(`Fix.asked`). `fixProven` gives every source of one pin to one run of that compiler, holds the
 answers by path, and fixes again each entry that asked. The rule and its probe are in the record
 of knoller, under Content fixes.
 
@@ -2459,9 +2459,9 @@ before somebody opens it. The runner confirms, and it never discovers.
 - Cost: a branch whose change spans projects on several pins needs each pinned compiler, which
   resolution provides. A driven project also needs npm, a browser and its declared packages,
   which resolution does not provide.
-- `ciJobs` resolves the pins once, restores once, runs the suites, and then drives the
+- `runJobsCi` resolves the pins once, restores once, runs the suites, and then drives the
   projects that carry driven checks. A failed restore stops the driving alone.
-- Rejected: a restore in each of `runJobs` and `drivenJobs`. The second restore is Atlas
+- Rejected: a restore in each of `runJobs` and `runJobsDriven`. The second restore is Atlas
   confirming that nothing moved, which is seconds for each project in each run.
 
 Traps of the merge process:
