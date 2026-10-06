@@ -829,7 +829,7 @@ func topmostOnCircle*(
 
 
 func markerRing(
-  geometry: Multivector;
+  placed: Placement;
   radius: float;
   scale: DrawExtent;
   view_projection: Matrix4;
@@ -845,7 +845,8 @@ func markerRing(
   ##   pixels that spans at point's depth, so it hugs wide disc and dot alike.
   ##   `progress` sweeps ring rather than growing it: ring growing outward reads as point
   ##   swelling, inward collides with it.
-  let anchor = anchorFor(geometry, scale)
+  ##   Drawn point is placement's place, or its star about eye; see `tessellate.anchorFor`.
+  let anchor = anchorFor(placed, scale)
   if anchor.isNone: return
   let centre = projectToScreen(view_projection, width, height, anchor.get)
   if not centre.isInFront: return
@@ -1011,7 +1012,7 @@ func apartWidest(walks: array[2, array[3, Option[ScreenPosition]]]): float =
 
 
 func markerRails(
-  geometry: Multivector;
+  placed: Placement;
   scale: DrawExtent;
   view_projection: Matrix4;
   width, height: int;
@@ -1041,13 +1042,13 @@ func markerRails(
   ##     through support to near one, so line wears one comet rather than four.
   ##     Measured from support, lapped against shorter rail, so camera restretching
   ##     rails does not move comet, and pair cannot drift apart. None leaves rails still.
-  ##   None in horizon, and none where line collapses to point on screen.
-  let (anchor_world, axis) = (positionAnchor(geometry), direction(geometry))
-  if anchor_world.isNone or axis.isNone: return
+  ##   None where line collapses to point on screen.
+  ##   Support and direction are placement's; each read in place (`placed.toward`), since
+  ##   `let` deep-copies on JS backend.
   # Read support about view origin, and join eye with line through it.
   let
-    anchor = anchor_world.get.toView(scale.origin)
-    across = directionAcross(anchor.toMultivector ∧ axis.get.toMultivector, scale.eye)
+    anchor = placed.at.toView(scale.origin)
+    across = directionAcross(anchor.toMultivector ∧ placed.toward.toMultivector, scale.eye)
   if across.isNone: return
 
   marker = Marker(kind: MarkerKind.Rails)
@@ -1063,7 +1064,7 @@ func markerRails(
   #   sideways.
   railsAt(
     anchor,
-    axis.get,
+    placed.toward,
     across.get,
     offset_stated,
     scale,
@@ -1090,7 +1091,7 @@ func markerRails(
     offset = offset * ceiling / widest
     railsAt(
       anchor,
-      axis.get,
+      placed.toward,
       across.get,
       offset,
       scale,
@@ -1106,7 +1107,7 @@ func markerRails(
   if progress < 1.0:
     railsAt(
       anchor,
-      axis.get,
+      placed.toward,
       across.get,
       offset,
       scale,
@@ -1137,7 +1138,7 @@ func markerRails(
       )
 
   # Label beside line on its own left, anchored at support clamped into view.
-  marker.placeLabelBesideLine(anchor, axis.get, scale, view_projection, width, height)
+  marker.placeLabelBesideLine(anchor, placed.toward, scale, view_projection, width, height)
 
   if travel.isSome:
     # Lap both rails against one shared reach either way; see `shared`.
@@ -1208,8 +1209,7 @@ proc positionsMarkerLoop*(
 
 
 proc markerLoop(
-  geometry: Multivector;
-  anchor_override: Option[Position];
+  placed: Placement;
   scale: DrawExtent;
   placement: Camera;
   view_projection: Matrix4;
@@ -1219,8 +1219,8 @@ proc markerLoop(
   marker: var Marker;
 ): bool =
   ## Build plane's marker circle, concentric with disc actually drawn.
-  ##   Reads `anchor_override` as `tessellate.addPlane` does, so marker is concentric
-  ##   with drawn disc rather than plane's support.
+  ##   Centred on placement's place, override applied as `tessellate.emitObject` reads it,
+  ##   so marker is concentric with drawn disc rather than plane's support.
   ##   Cuts circle to what stays in front of eye and reports remainder as arc.
   ##     Camera close to large plane puts part of rim behind eye, exactly when selection
   ##     needs saying.
@@ -1230,17 +1230,13 @@ proc markerLoop(
   ##   normal points at eye.
   ##     Points are generated around plane's frame, and projection answers which way
   ##     that order reads. None leaves circle still.
-  ##   None in horizon, where plane draws as dome fixed to eye.
-  let
-    anchor_world = if anchor_override.isSome: anchor_override else: positionAnchor(geometry)
-    axes = frame(geometry)
-  if anchor_world.isNone or axes.isNone: return
+  ##   Frame is placement's (`placed.axes`), read in place.
   # Read anchor about view origin, as transform reads it.
-  let anchor = anchor_world.get.toView(scale.origin)
+  let anchor = placed.at.toView(scale.origin)
 
   let
     radius_loop = progress * radiusMarkerLoop(anchor, scale, placement, height, clearance)
-    positions = positionsMarkerLoop(anchor, axes.get, radius_loop)
+    positions = positionsMarkerLoop(anchor, placed.axes, radius_loop)
   var
     ring: array[SEGMENTS_MARKER_LOOP, ScreenPosition]
     are_in_front: array[SEGMENTS_MARKER_LOOP, bool]
@@ -1277,8 +1273,8 @@ proc markerLoop(
   let
     top = topmostOnCircle(
       anchor,
-      radius_loop * axes.get.axis_first,
-      radius_loop * axes.get.axis_second,
+      radius_loop * placed.axes.axis_first,
+      radius_loop * placed.axes.axis_second,
       view_projection,
       width,
       height,
@@ -1352,7 +1348,7 @@ func runShownLongest*(ring: openArray[ScreenPosition], are_shown: openArray[bool
 
 
 proc markerBands(
-  geometry: Multivector;
+  placed: Placement;
   scale: DrawExtent;
   view_projection: Matrix4;
   width, height: int;
@@ -1364,20 +1360,15 @@ proc markerBands(
   ##   Each band is *small* circle of same sphere, centre stepped along great circle's
   ##   normal, radius shrunk to stay on sphere: what parallel to great circle means
   ##   there.
-  ##     Built from `directionNormalHorizon` and `spanPerpendicular`, same pair
-  ##     `tessellate.addLine` builds great circle from.
+  ##     Built from placement's normal and arms (`placed.axes`), same pair great circle is
+  ##     drawn from.
   ##   Cuts each band to what stays in front of eye and inside viewport, reporting
   ##   remainder as arc: half sky is behind camera at all times.
   ##     Second cut is what `fractionLeavingView` does for rail: uncut band laps in
   ##     hundreds of times pixels on screen, comet visible few frames in thousand.
   ##   `travel` places pulse round both bands, sense from great circle's normal as
   ##   `markerLoop`'s from plane's. Both bands, or one still reads as broken.
-  let normal = directionNormalHorizon(geometry)
-  if normal.isNone: return
-  let axes = spanPerpendicular(ORIGIN_WORLD, normal.get)
-  if axes.isNone: return
   let
-    (axis_first, axis_second) = axes.get
     angle = angleMarkerBands(scale, progress, clearance)
     radius = scale.radiusHorizon * cos(angle)
     offset = scale.radiusHorizon * sin(angle)
@@ -1386,9 +1377,9 @@ proc markerBands(
   # Place each band's centre through algebra, eye stepped along normal, and ring off table.
   #   Two rings of multivector sums per frame was cost before.
   let
-    normal_point = normal.get.toMultivector
-    arm_first = radius * axis_first
-    arm_second = radius * axis_second
+    normal_point = placed.axes.normal.toMultivector
+    arm_first = radius * placed.axes.axis_first
+    arm_second = radius * placed.axes.axis_second
   for side in 0..1:
     let centre = pointFrom(add(
       scale.eye_point, wedge((if side == 0: offset else: -offset), normal_point)
@@ -1571,8 +1562,7 @@ proc countShaped*(): int = COUNT_SHAPED
 #[ Marker Dispatch ]#
 
 proc markerFor*(
-  geometry: Multivector;
-  anchor_override: Option[Position];
+  placed: Placement;
   radius: float;
   scale: DrawExtent;
   placement: Camera;
@@ -1584,13 +1574,15 @@ proc markerFor*(
   travel = none(float);
   swell = 0.0;
 ): bool =
-  ## Kind marker for one object, dispatching on its grade and whether it lies in horizon.
+  ## Kind marker for one placed object, dispatching on what its placement says it is.
   ##   Fills caller's `marker` and reports whether one was shaped, not `Option[Marker]`.
   ##     `Marker` reserves every kind's fixed arrays, and on JS backend each return, `get`
   ##     and assignment walked all of it through `nimCopy` (Art. VII.1).
   ##     On `false` storage holds nothing readable.
-  ##   `anchor_override` is object's stored creation anchor, used for plane and ignored
-  ##   otherwise, as `tessellate.addObject` treats it.
+  ##   `placed` is frame's placement of object, plane's creation anchor applied, as
+  ##   `tessellate.emitObject` draws it: what object is and where was settled once in frame,
+  ##   and marker classifies nothing and reads no anchor out of algebra again.
+  ##     Read in place, never copied (read in emitted JS).
   ##   `radius` is object's drawn radius, used for point and ignored otherwise, likewise.
   ##   `progress` draws marker part-built, for press maturing into selection; 1 is
   ##   finished marker.
@@ -1606,54 +1598,84 @@ proc markerFor*(
   ##   None only where object has no drawable geometry. Every drawn shape has marker.
   ##   Tallied while driven check counts; see `setCountingShaped`.
   if IS_COUNTING_SHAPED: inc COUNT_SHAPED
-  let shape = kindOf(geometry)
-  if shape.isNone: return
-  let
-    is_horizon = geometry.isHorizon
-    clearance = clearanceTouch(swell, is_touch)
-  case shape.get
+  let clearance = clearanceTouch(swell, is_touch)
+  case placed.kind
+  of Case.Nothing: false
   # Ring horizon point about fixed star `anchorFor` places, so it needs no branch.
-  #   Two below are drawn as great circle and whole sky with no anchor.
-  of Kind.Point:
-    markerRing(geometry, radius, scale, view_projection, width, height, progress, clearance, marker)
-  of Kind.Line:
-    if is_horizon:
-      markerBands(
-        geometry,
-        scale,
-        view_projection,
-        width,
-        height,
-        progress,
-        clearance,
-        travel,
-        marker,
-      )
-    else:
-      markerRails(
-        geometry,
-        scale,
-        view_projection,
-        width,
-        height,
-        progress,
-        clearance,
-        travel,
-        marker,
-      )
-  of Kind.Plane:
-    if is_horizon: markerFrame(width, height, progress, clearance, marker)
-    else:
-      markerLoop(
-        geometry,
-        anchor_override,
-        scale,
-        placement,
-        view_projection,
-        width,
-        height,
-        progress,
-        clearance,
-        travel,
-        marker,
-      )
+  #   Great circle and whole sky are drawn with no anchor.
+  of Case.PointAt, Case.PointToward:
+    markerRing(placed, radius, scale, view_projection, width, height, progress, clearance, marker)
+  of Case.LineThrough:
+    markerRails(
+      placed,
+      scale,
+      view_projection,
+      width,
+      height,
+      progress,
+      clearance,
+      travel,
+      marker,
+    )
+  of Case.LineAcross:
+    markerBands(
+      placed,
+      scale,
+      view_projection,
+      width,
+      height,
+      progress,
+      clearance,
+      travel,
+      marker,
+    )
+  of Case.PlaneOn:
+    markerLoop(
+      placed,
+      scale,
+      placement,
+      view_projection,
+      width,
+      height,
+      progress,
+      clearance,
+      travel,
+      marker,
+    )
+  of Case.PlaneEverywhere: markerFrame(width, height, progress, clearance, marker)
+
+
+proc markerFor*(
+  geometry: Multivector;
+  anchor_override: Option[Position];
+  radius: float;
+  scale: DrawExtent;
+  placement: Camera;
+  view_projection: Matrix4;
+  width, height: int;
+  marker: var Marker;
+  progress = 1.0;
+  is_touch = false;
+  travel = none(float);
+  swell = 0.0;
+): bool =
+  ## Kind marker for object standing outside any frame's placements, placing it first.
+  ##   For caller holding multivector alone: preview, and suite. Frame's readers hand
+  ##   placement over instead; see twin above.
+  ##   `anchor_override` is object's stored creation anchor, used for plane and ignored
+  ##   otherwise, as `tessellate.placeObject` treats it.
+  let placed = placeObject(geometry, anchor_override)
+  markerFor(
+    placed,
+    radius,
+    scale,
+    placement,
+    view_projection,
+    width,
+    height,
+    marker,
+    progress,
+    is_touch,
+    travel,
+    swell,
+  )

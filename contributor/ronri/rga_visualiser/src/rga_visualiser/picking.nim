@@ -335,11 +335,15 @@ func scaleCrossing(ray, plane: Multivector): float =
 
 
 func positionOnObjectUnder(
-  geometry, ray, plane_eye, point_eye: Multivector; origin: Position
+  placed: Placement; geometry, ray, plane_eye, point_eye: Multivector; origin: Position
 ): Option[Position] =
   ## Solve point of one object cursor's sight `ray` is over, about view origin `origin`.
   ##   Point stands where it stands, plane is met where ray crosses it, line is read at
   ##   nearest point to ray; see `positionOnLineNearest`.
+  ##   `placed` is object's placement, which says what it is, which way line runs and
+  ##   plane faces: nothing is classified, or tested for horizon, again.
+  ##   Anchor is support of `geometry`, read once, as hit has always been reckoned: support
+  ##   of point differs from its place by rounding, and plane's disc centre is not support.
   ##   `geometry` is world's, so its anchor is read about `origin`, and plane is met as
   ##   plane through that anchor along its own normal: ray met with world plane far out
   ##   lands on world's step.
@@ -351,30 +355,27 @@ func positionOnObjectUnder(
   ##     Behind is judged against hit's own reach from `point_eye`: depth no more than
   ##     `TOLERANCE_ABS` of it stands in eye's plane. Never against fixed millionth,
   ##     which camera standing hundredth of millionth off object stands well under.
-  if geometry.isHorizon: return
-  let
-    shaped = kindOf(geometry)
-    heading = direction(ray)
-  if shaped.isNone or heading.isNone: return
-  let anchor_world = positionAnchor(geometry)
+  case placed.kind
+  of Case.PointAt, Case.LineThrough, Case.PlaneOn: discard
+  of Case.Nothing, Case.PointToward, Case.LineAcross, Case.PlaneEverywhere: return
+  let heading = direction(ray)
+  if heading.isNone: return
+  let anchor_world = positionAnchor(geometry, is_horizon = false)
   if anchor_world.isNone: return
   let anchor = anchor_world.get.toView(origin)
   var found = none(Position)
-  case shaped.get
-  of Kind.Point: found = some(anchor)
-  of Kind.Line:
-    let axis = direction(geometry)
-    if axis.isSome:
-      # Read ray's two defining elements off ray multivector.
-      #   Nearest-point question is then asked of exactly ray that was cast.
-      let ray_from = positionSupport(ray)
-      if ray_from.isSome:
-        found = positionOnLineNearest(anchor, axis.get, ray_from.get, heading.get)
-  of Kind.Plane:
-    let normal = directionNormal(geometry)
-    if normal.isSome:
-      let plane = planeThrough(anchor.toMultivector, normal.get.toMultivector)
-      found = position(ray ∨ plane, scale = scaleCrossing(ray, plane))
+  case placed.kind
+  of Case.PointAt: found = some(anchor)
+  of Case.LineThrough:
+    # Read ray's two defining elements off ray multivector.
+    #   Nearest-point question is then asked of exactly ray that was cast.
+    let ray_from = positionSupport(ray)
+    if ray_from.isSome:
+      found = positionOnLineNearest(anchor, placed.toward, ray_from.get, heading.get)
+  of Case.PlaneOn:
+    let plane = planeThrough(anchor.toMultivector, placed.axes.normal.toMultivector)
+    found = position(ray ∨ plane, scale = scaleCrossing(ray, plane))
+  of Case.Nothing, Case.PointToward, Case.LineAcross, Case.PlaneEverywhere: discard
   if found.isNone: return
   let hit = found.get.toMultivector
   if depthAgainst(plane_eye, hit) <= TOLERANCE_ABS * distanceBetween(hit, point_eye): return
@@ -812,23 +813,59 @@ func depthFilling*(radius: float; scale: DrawExtent; width, height: int): float 
       (scale.tangentHalfView * hypot(float(width), float(height)))
 
 
-func isBackdropUnder*(scene: Scene; handle: int; scale: DrawExtent; width, height: int): bool =
+func isWhole*(placed: openArray[Placement]): bool = placed.len >= OBJECTS_MAX
+  ## Report whether caller handed frame's placements whole, by handle.
+  ##   Partial array is none: frame's placements are whole answer or not one.
+
+
+func placementAt*(placed: openArray[Placement], scene: Scene, handle: int): Placement =
+  ## Read handle's placement: frame's where caller handed them whole, else placed here.
+  ##   Copy of one, for reader of one handle; walk of many reads frame's in place.
+  if placed.isWhole: placed[handle]
+  else: placementOf(scene.geometryOf(handle), scene.anchorOverrideAt(handle))
+
+
+func isBackdropPlaced(
+  placed: Placement; radius: float; scale: DrawExtent; width, height: int
+): bool =
+  ## Report whether placed object is backdrop; see `isBackdropUnder`.
+  ##   `radius` is point's drawn radius; every other kind ignores it.
+  case placed.kind
+  of Case.PlaneEverywhere: true
+  of Case.PlaneOn:
+    isCoveringView(placed.at.toView(scale.origin), EXTENT_PLANE_F, scale, width, height)
+  of Case.PointAt, Case.PointToward:
+    let anchor = anchorFor(placed, scale)
+    anchor.isSome and isCoveringView(
+      anchor.get, radiusDrawnAt(radius, anchor.get, scale.scale), scale, width, height
+    )
+  of Case.Nothing, Case.LineThrough, Case.LineAcross: false
+
+
+func isBackdropUnder*(
+  scene: Scene;
+  handle: int;
+  scale: DrawExtent;
+  width, height: int;
+  placed: openArray[Placement] = [];
+): bool =
   ## Report whether hovered object is backdrop: horizon plane, or plane or point filling view.
   ##   Backdrop is click and hold pivot, never drag handle: press on it falls through to
   ##   camera, or view cannot be moved while plane fills every pixel.
   ##   Point fills view as reader zooms into it, and then left no glass to press: drag
   ##   armed on it, and view could come no nearer. Judged by sphere drawn, as plane is by
   ##   disc; see `mesh.radiusDrawnAt`.
-  let geometry = scene.geometryOf(handle)
-  if geometry.isHorizonPlane: return true
-  let shaped = kindOf(geometry)
-  if shaped != some(Kind.Plane) and shaped != some(Kind.Point): return false
-  let anchor = anchorFor(geometry, scene.anchorOverrideAt(handle), scale)
-  if anchor.isNone: return false
-  let radius =
-    if shaped == some(Kind.Plane): EXTENT_PLANE_F
-    else: radiusDrawnAt(scene.radiusAt(handle), anchor.get, scale.scale)
-  isCoveringView(anchor.get, radius, scale, width, height)
+  ##   `placed` is frame's placements, where caller has them, read in place; pass nothing and
+  ##   object is placed here.
+  if placed.isWhole:
+    return isBackdropPlaced(placed[handle], scene.radiusAt(handle), scale, width, height)
+  isBackdropPlaced(
+    placementOf(scene.geometryOf(handle), scene.anchorOverrideAt(handle)),
+    scene.radiusAt(handle),
+    scale,
+    width,
+    height,
+  )
 
 
 func isAnchorNear(anchor: Position, camera: Camera, scale: DrawExtent): bool =
@@ -844,17 +881,29 @@ func positionUnderPointerOn*(
   scale: DrawExtent;
   width, height: int;
   cursor: ScreenPosition;
+  placed: openArray[Placement] = [];
 ): Option[Position] =
   ## Solve where one object stands under `cursor`, about view origin.
   ##   Point at its place, line at its point nearest sight ray, plane where ray crosses it.
   ##   For zoom's anchor and for pointer pick's aim, both holding that place on its pixel.
   ##   None for horizon shapes and hits behind eye; see `positionOnObjectUnder`.
   ##   No nearness filter: caller wanting one applies `isAnchorNear`.
+  ##   `placed` is frame's placements, where caller has them, read in place; pass nothing and
+  ##   object is placed here.
   let
     frame_camera = camera.frame
     ray = castRay(camera, scale.eye, frame_camera, width, height, cursor)
+  if placed.isWhole:
+    return positionOnObjectUnder(
+      placed[handle], scene.geometryOf(handle), ray, scale.plane_eye, scale.eye_point, scale.origin
+    )
   positionOnObjectUnder(
-    scene.geometryOf(handle), ray, scale.plane_eye, scale.eye_point, scale.origin
+    placementOf(scene.geometryOf(handle), scene.anchorOverrideAt(handle)),
+    scene.geometryOf(handle),
+    ray,
+    scale.plane_eye,
+    scale.eye_point,
+    scale.origin,
   )
 
 
@@ -900,16 +949,19 @@ proc anchorZoomAt*(
     width,
     height,
     cursor,
+    placed,
   )
   if found.isNone or not isAnchorNear(found.get, camera, scale): return
+  # Read kind off placement, frame's where caller brought them: hit stands only on finite
+  #   point, line or plane.
   let
-    shaped = kindOf(scene.geometryOf(handle.get))
+    kind = placementAt(placed, scene, handle.get).kind
     radius = scene.radiusAt(handle.get)
     # Fill is depth along sight, and floor is reach: eye moving on its line to anchor
     #   scales both alike, so fill read as reach is fill times their ratio. Off middle,
     #   reach runs longer than depth.
     filling =
-      if shaped != some(Kind.Point): radius
+      if kind != Case.PointAt: radius
       else:
         depthFilling(radius, scale, width, height) *
             distanceBetween(scale.eye.toMultivector, found.get.toMultivector) /
@@ -917,7 +969,7 @@ proc anchorZoomAt*(
   some(AnchorZoom(
     at: found.get,
     floor_reach: max(radius, filling),
-    is_standing: shaped != some(Kind.Plane),
+    is_standing: kind != Case.PlaneOn,
   ))
 
 

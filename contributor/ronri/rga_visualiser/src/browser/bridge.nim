@@ -1920,15 +1920,12 @@ proc nimDragComet(width, height: cint): FlatBuffer {.exportc.} =
   ##   Empty where no drag is in flight, source's anchor is behind eye, or cursor rests on
   ##   anchor.
   if not INTERACTION_PAGE.is_dragging: return FLAT_COMET.emptied
-  # Read through frame's overlay extent and by-handle readers.
-  #   Runs per frame of every drag; fresh extent and matrix plus whole-scene copy through
-  #   `SCENE_PAGE[handle]` would be paid each time.
+  # Read through frame's overlay extent and frame's placement of source.
+  #   Runs per frame of every drag; fresh extent and matrix, or placing again, would be paid
+  #   each time. `placeEdited` first, for edit landing since frame.
+  placeEdited()
   ensureViewOverlay(int(width), int(height))
-  let anchor = anchorFor(
-    SCENE_PAGE.geometryOf(INTERACTION_PAGE.index_source),
-    SCENE_PAGE.anchorOverrideAt(INTERACTION_PAGE.index_source),
-    SCALE_OVERLAY,
-  )
+  let anchor = anchorFor(placements[INTERACTION_PAGE.index_source], SCALE_OVERLAY)
   if anchor.isNone: return FLAT_COMET.emptied
   let screen = projectToScreen(VIEW_PROJECTION_OVERLAY, int(width), int(height), anchor.get)
   if not screen.isInFront: return FLAT_COMET.emptied
@@ -2082,15 +2079,14 @@ proc nimAnchorScreen(handle, width, height: cint): FlatBuffer {.exportc.} =
   ##   Horizon plane reports middle of view: it has no place in scene, so menu goes to
   ##   centre of frame `marker.markerFrame` draws around it.
   ##   Duplicated by constraint in `main.anchorOfSelection`; fix both or neither.
+  ##   Reads frame's placement, classified and anchored once in frame; see `placements`.
   if not SCENE_PAGE.isAlive(int(handle)): return FLAT_ANCHOR.fill3(0.0'f32, 0.0'f32, 0.0'f32)
-  if SCENE_PAGE.geometryOf(int(handle)).isHorizonPlane:
+  # Place edit landing since frame, so placement read is scene as it stands.
+  placeEdited()
+  if placements[int(handle)].kind == Case.PlaneEverywhere:
     return FLAT_ANCHOR.fill3(0.5'f32 * float32(width), 0.5'f32 * float32(height), 1.0'f32)
   ensureViewOverlay(int(width), int(height))
-  # Read by handle, never `SCENE_PAGE[handle]`.
-  #   `Object` holds `Scene` by value on JS backend, so constructing one copies whole scene.
-  let anchor = anchorFor(
-    SCENE_PAGE.geometryOf(int(handle)), SCENE_PAGE.anchorOverrideAt(int(handle)), SCALE_OVERLAY
-  )
+  let anchor = anchorFor(placements[int(handle)], SCALE_OVERLAY)
   if anchor.isNone: return FLAT_ANCHOR.fill3(0.0'f32, 0.0'f32, 0.0'f32)
   let screen = projectToScreen(VIEW_PROJECTION_OVERLAY, int(width), int(height), anchor.get)
   FLAT_ANCHOR.fill3(
@@ -2103,12 +2099,11 @@ proc nimAnchorWorld(handle: cint): FlatBuffer {.exportc.} =
   ##   Same point `nimAnchorScreen` projects, before projection; driven checks read
   ##   depth of zoomed-onto object off it. `is_placed` 0 for dead handle and for plane at
   ##   horizon, which stands nowhere.
-  if not SCENE_PAGE.isAlive(int(handle)) or SCENE_PAGE.geometryOf(int(handle)).isHorizonPlane:
-    return FLAT_ANCHOR_WORLD.fill3(0.0'f32, 0.0'f32, 0.0'f32)
+  if not SCENE_PAGE.isAlive(int(handle)): return FLAT_ANCHOR_WORLD.fill3(0.0'f32, 0.0'f32, 0.0'f32)
   placeEdited()
-  let anchor = anchorFor(
-    SCENE_PAGE.geometryOf(int(handle)), SCENE_PAGE.anchorOverrideAt(int(handle)), SCALE_OVERLAY
-  )
+  if placements[int(handle)].kind == Case.PlaneEverywhere:
+    return FLAT_ANCHOR_WORLD.fill3(0.0'f32, 0.0'f32, 0.0'f32)
+  let anchor = anchorFor(placements[int(handle)], SCALE_OVERLAY)
   if anchor.isNone: return FLAT_ANCHOR_WORLD.fill3(0.0'f32, 0.0'f32, 0.0'f32)
   # Read back about world origin: anchor is about overlay's view origin.
   let world = anchor.get.toWorld(SCALE_OVERLAY.origin)
@@ -2140,7 +2135,10 @@ proc nimSelectionMarker(
   ##     What partial marker looks like is `marker.markerFor`'s decision.
   ##   Empty where nothing to draw: dead handle, or geometry with no shape.
   ##     Callers read handle carried across frames, so any can go stale when object is removed.
+  ##   Shaped from frame's placement, classified and anchored once in frame; see `placements`.
   if not SCENE_PAGE.isAlive(int(handle)): return
+  # Place edit landing since frame, so marker shapes scene as it stands.
+  placeEdited()
   ensureViewOverlay(int(width), int(height))
   # Kind with handle's current travel, though this call reports no pulse.
   #   Outline is identical either way, and shaping whole marker once lets
@@ -2150,8 +2148,7 @@ proc nimSelectionMarker(
   # Kind straight into shared box pulse call reads back.
   #   Nothing allocates or copies `Marker`.
   if not markerFor(
-    SCENE_PAGE.geometryOf(int(handle)),
-    SCENE_PAGE.anchorOverrideAt(int(handle)),
+    placements[int(handle)],
     SCENE_PAGE.radiusAt(int(handle)),
     SCALE_OVERLAY,
     CAMERA_PAGE,
@@ -2225,6 +2222,7 @@ proc nimSelectionLabelAt(handle, width, height: cint): FlatBuffer {.exportc.} =
   ##   `marker.Marker.is_label_beside`.
   if not SCENE_PAGE.isAlive(int(handle)):
     return FLAT_LABEL.fill6(0.0'f32, 0.0'f32, 0.0'f32, 0.0'f32, 0.0'f32, 0.0'f32)
+  placeEdited()
   ensureViewOverlay(int(width), int(height))
   let at = int(handle)  ## Handle as scene indexes it, read once for every reader below.
   var held = (ref Marker)(nil)
@@ -2237,8 +2235,7 @@ proc nimSelectionLabelAt(handle, width, height: cint): FlatBuffer {.exportc.} =
     MARKER_SHAPED = none(ShapedMarker)
     held = BOX_MARKER
     if not markerFor(
-      SCENE_PAGE.geometryOf(at),
-      SCENE_PAGE.anchorOverrideAt(at),
+      placements[at],
       SCENE_PAGE.radiusAt(at),
       SCALE_OVERLAY,
       CAMERA_PAGE,
@@ -2296,6 +2293,7 @@ proc nimSelectionPulse(
   ##     Plane's loop is closed and wraps, so only lines would stall.
   ##   Mirrors `main.drawSelectionMarker`.
   if not SCENE_PAGE.isAlive(int(handle)): return
+  placeEdited()
   ensureViewOverlay(int(width), int(height))
   let
     travel = CLOCK_PULSE.travelAt(int(handle))
@@ -2313,8 +2311,7 @@ proc nimSelectionPulse(
     MARKER_SHAPED = none(ShapedMarker)
     held = BOX_MARKER
     if not markerFor(
-      SCENE_PAGE.geometryOf(at),
-      SCENE_PAGE.anchorOverrideAt(at),
+      placements[at],
       SCENE_PAGE.radiusAt(at),
       SCALE_OVERLAY,
       CAMERA_PAGE,
@@ -2615,6 +2612,7 @@ proc nimBuildFrame(
     ANIMATION_SECONDS,
     POINTER_PICK,
     INTERACTION_PAGE.isMovingCamera,
+    placements,
   )
   # Read both again only where aim's hold moved camera, so transform draws where it stands.
   if CAMERA_PAGE.motor != motor_offered: (eye, frame) = CAMERA_PAGE.sight
@@ -2627,7 +2625,7 @@ proc nimBuildFrame(
   #   reaches on each plane picked.
   let ms_before_grid = performanceNow()
   if is_grid_shown:
-    addLatticesPicked(MESHES_FURNITURE, SCRATCH, scale, SCENE_PAGE, SELECTION_PAGE)
+    addLatticesPicked(MESHES_FURNITURE, SCRATCH, scale, SCENE_PAGE, SELECTION_PAGE, placements)
   # Count between two, so figure is lattice's own; see `mesh.addSegmentAcross`.
   let
     count_grid_segments = MESHES_FURNITURE.ribbons.count

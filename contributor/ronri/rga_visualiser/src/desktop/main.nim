@@ -520,10 +520,12 @@ func offerCameraAim(
   now: float;
   width, height: int;
   is_moving_camera: bool;
+  placed: openArray[Placement];
 ) =
   ## Offer camera whatever is being worked on to frame, from one rule.
   ##   Rule is `framing.offerAim`, shared with browser.
-  ##     This hands it panel's staged session and selection, and frame's pixel dimensions.
+  ##     This hands it panel's staged session and selection, frame's pixel dimensions, and
+  ##     frame's placements, which it reads each object watched from.
   ##   Every construction path leaves new object selected, so all frame result without
   ##   knowing about camera.
   ##   Pointer pick recorded since last frame goes with it, and is spent here.
@@ -539,6 +541,7 @@ func offerCameraAim(
     ANIMATION_SECONDS,
     panel.pointer_pick,
     is_moving_camera,
+    placed,
   )
 
 
@@ -571,7 +574,7 @@ proc assembleMeshes(
     camera.viewBoundsFor(eye, frame, scale, float(width) / float(max(height, 1)), REACH_SCENE)
   MESHES_FURNITURE.clearMeshes
   if panel.is_grid_shown:
-    MESHES_FURNITURE.addLatticesPicked(scratch[0], scale, scene, panel.selection)
+    MESHES_FURNITURE.addLatticesPicked(scratch[0], scale, scene, panel.selection, placements)
   if panel.is_axes_shown:
     MESHES_FURNITURE.addAxes(scratch[0], scale.extentFurniture, scale)
 
@@ -777,7 +780,8 @@ proc drawSelectionMarker(
   seconds_step: float;
 ): int {.discardable.} =
   ## Draw one marker per selected object onto foreground layer; report how many were drawn.
-  ##   Shaped by `marker.markerFor` and tinted `Ink.Outline`.
+  ##   Shaped by `marker.markerFor` from frame's placement, and tinted `Ink.Outline`.
+  ##     Placement holds kind and anchor, so marker classifies nothing again.
   ##   One per selected handle: operation reads two operands, and selection that cannot be
   ##   seen is not worth much.
   ##     Count lets test assert what was drawn without reading pixels.
@@ -792,8 +796,7 @@ proc drawSelectionMarker(
     #   Places orientation pulse; hover and focus pass none, so motion means selected.
     var marker: Marker
     if not markerFor(
-      one.geometry,
-      one.anchorOverride,
+      placements[handle],
       one.radius,
       scale,
       camera,
@@ -995,12 +998,10 @@ proc drawInteractionOverlay(
   #   already built and tested.
   for index in [interaction.index_hover, interaction.index_focus]:
     if index.isNone or not scene.isAlive(index.get): continue
-    let one = scene[index.get]
     var marker: Marker
     if markerFor(
-      one.geometry,
-      one.anchorOverride,
-      one.radius,
+      placements[index.get],
+      scene.radiusAt(index.get),
       scale,
       camera,
       view_projection,
@@ -1011,11 +1012,10 @@ proc drawInteractionOverlay(
       drawMarker(marker, Ink.Outline.colour, ALPHA_MARKER_HOVER)
 
   if interaction.is_dragging:
-    let source = scene[interaction.index_source]
-    # Start band from where source is drawn.
+    # Start band from where source is drawn, as frame placed it.
     #   Plane's disc is centred on creation anchor, and band leaving support leaves from
     #   point nowhere on circle.
-    let anchor = anchorFor(source.geometry, source.anchorOverride, scale)
+    let anchor = anchorFor(placements[interaction.index_source], scale)
     if anchor.isSome:
       let screen = projectToScreen(view_projection, width, height, anchor.get)
       if screen.isInFront:
@@ -1053,7 +1053,12 @@ proc drawInteractionOverlay(
 
 
 func anchorOfSelection(
-  panel: Panel; scene: Scene; view_projection: Matrix4; width, height: int; scale: DrawExtent
+  panel: Panel;
+  scene: Scene;
+  view_projection: Matrix4;
+  width, height: int;
+  scale: DrawExtent;
+  placed: openArray[Placement];
 ): Option[tuple[x, y: cfloat]] =
   ## Say where most recently picked object sits on screen, for selection menu to follow.
   ##   Most recent rather than middle of them all, which would jump as membership changes.
@@ -1064,12 +1069,13 @@ func anchorOfSelection(
   ##   Plane at horizon goes to middle of view: it has no place in scene, so its menu goes
   ##   to centre of frame `marker.markerFrame` draws around it.
   ##   Duplicated by constraint in `browser_bridge.nimAnchorScreen`; fix both or neither.
+  ##   `placed` is frame's placements, which hold kind and anchor: nothing is classified again.
   if panel.selection.len == 0: return none(tuple[x, y: cfloat])
   let handle = panel.selection.at(panel.selection.len - 1)
   if not scene.isAlive(handle): return none(tuple[x, y: cfloat])
-  if scene[handle].geometry.isHorizonPlane:
+  if placed[handle].kind == Case.PlaneEverywhere:
     return some((x: cfloat(0.5 * float(width)), y: cfloat(0.5 * float(height))))
-  let anchor = anchorFor(scene[handle].geometry, scene[handle].anchorOverride, scale)
+  let anchor = anchorFor(placed[handle], scale)
   if anchor.isNone: return none(tuple[x, y: cfloat])
   let screen = projectToScreen(view_projection, width, height, anchor.get)
   if not screen.isInFront: return none(tuple[x, y: cfloat])
@@ -1146,7 +1152,15 @@ proc renderFrame(
     scale = camera.drawExtentFor(eye, frame, int(height), REACH_SCENE)
     motor_offered = camera.motor
   offerCameraAim(
-    panel, scene, camera, scale, now, int(width), int(height), interaction.isMovingCamera
+    panel,
+    scene,
+    camera,
+    scale,
+    now,
+    int(width),
+    int(height),
+    interaction.isMovingCamera,
+    placements,
   )
   # Read both again only where aim's hold moved camera, so transforms draw where it stands.
   if camera.motor != motor_offered: (eye, frame) = camera.sight
@@ -1161,7 +1175,7 @@ proc renderFrame(
     scene,
     camera,
     HISTORY_DESKTOP,
-    anchorOfSelection(panel, scene, view_projection, int(width), int(height), scale),
+    anchorOfSelection(panel, scene, view_projection, int(width), int(height), scale, placements),
     now,
   )
   # Menu may have edited scene since it was placed; hover and meshes read it as it stands.
@@ -1479,6 +1493,8 @@ proc handleEvent(
     panel.tween_camera.halt()  # Zoom lands pivot on what cursor is over; see `halt`.
     # Zoom toward whatever cursor is over; see `interaction.dollyAtCursor`.
     #   Frame's size is passed because sight ray needs it before frame reports it again.
+    #   Pick reads last frame's placements, as hover does, with any edit since placed first.
+    placeEdited(scene)
     interaction.dollyAtCursor(
       camera,
       scene,
@@ -1488,6 +1504,7 @@ proc handleEvent(
       width_frame,
       height_frame,
       panel.selection.len > 0,
+      placements,
     )
   of uint32(EventKind.MouseMotion):
     interaction.updateCursor(float(event.motion.x), float(event.motion.y))
