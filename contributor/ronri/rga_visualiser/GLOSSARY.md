@@ -172,6 +172,23 @@ _Avoid_: argument, input, parameter, source
 How many operands an operation consumes.
 _Avoid_: count, degree, valence
 
+### Memory
+
+**Program arena**:
+The one arena that lives as long as the program, and is never reclaimed. The scratch of an
+export is one stretch of it, which each export overwrites.
+_Avoid_: permanent arena, global arena, static arena, export arena
+
+**Frame arena**:
+One of two arenas that take turns, one for each frame, so that what the frame before computed
+stays readable. A frame computes each placement once into its frame arena, and reads it there.
+_Avoid_: swap pair, double buffer, ping-pong buffer, cache
+
+**Object pool**:
+The arena with a free list that holds every object, by its handle. Removing an object puts its
+handle on the free list, and nothing moves.
+_Avoid_: object store, slot map, object table, heap
+
 ### The demo, and the diagnostics
 
 **Orrery**:

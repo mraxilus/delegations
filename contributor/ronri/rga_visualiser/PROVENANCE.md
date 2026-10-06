@@ -1190,16 +1190,16 @@ object in each frame, and placed each object twice. Rejected: readers that class
 again. The overlay did so for each selected object on each call, with no cap (repository issue
 556).
 
-**The placements of a frame live in the swap pair of the frame.** The desktop carves them first from
-`ARENA_SWAP_DRAW` at each turn (`turnFrame`), and draw scratch after them. The page keeps two typed
-blocks (`PLACEMENTS_PAIR`), and turns them as each build opens, because the JS backend cannot carve
-typed memory. Both read the frame through `placements`, and the frame before through
-`placementsPrevious`, for work across two frames. A handle dead or newly born in that frame holds
+**The placements of a frame live in its frame arena.** The desktop carves them first from
+`ARENAS_FRAME` at each turn (`turnFrame`), and draw scratch after them. The page turns two typed
+blocks (`PLACEMENTS_FRAME`) as each build opens, because the JS backend cannot carve typed memory.
+Both read the frame through `placements`, and the frame before through `placementsPrevious`, for
+work across two frames. A handle dead or newly born in that frame holds
 nothing meaningful there. The Architect set this design on repository issue 556.
 
-The desktop turns its pair after the events and before the frame places. So a handler between two
-frames reads the placements of the last frame, which it picks against. Every path that turns the
-pair places straight after, the capture of the storyboard included. Rejected: one fixed array,
+The desktop turns its frame arenas after the events and before the frame places. So a handler
+between two frames reads the placements of the last frame, which it picks against. Every path that
+turns them places straight after, the capture of the storyboard included. Rejected: one fixed array,
 which the next frame overwrites, so that nothing of the frame before stays to read. Cost: a second
 block of placements on each front-end, which is 645,120 bytes on the desktop (Memory and
 allocation).
@@ -1230,7 +1230,7 @@ builds, which its SVG elements and labels spend.
 
 With nothing selected, each of six pairs reads 300 frames. The build read 7.9 to 8.1 ms before and
 7.9 to 8.4 ms after. This design read 0.1 to 0.5 ms more in five pairs, and 0.2 ms less in one. The
-swap pair alone, `8271aab1`, read 8.0 to 8.1 ms beside them. The cause of that difference is
+frame arenas alone, `8271aab1`, read 8.0 to 8.1 ms beside them. The cause of that difference is
 unmeasured.
 
 **A placement is written into its slot field by field** (`tessellate.placeInto`). On the JS
@@ -1372,13 +1372,13 @@ still uses `strformat`. That happens once for each click, and the result must be
 for `addObject` in any case.
 
 `arena.nim` holds a plain `array[N, byte]`, which `push[T]` carves and `reset` reclaims. The
-desktop entry point holds three instances:
+desktop holds its memory in three regions, which the Architect set on pull request 565:
 
-| Arena | Capacity | Backs | Reset |
+| Region | Capacity | Backs | Reclaimed |
 |---|---|---|---|
-| permanent | `CAPACITY_ARENA_PERMANENT` 160 MiB | pixel readback, every GIF frame | never |
-| frame | `CAPACITY_ARENA_FRAME` 64 MiB | one PNG's scanlines, one GIF frame's scratch | per unit |
-| swap pair | `CAPACITY_ARENA_SWAP` 886 KiB × 2 | placements, then `DrawScratch` | per frame |
+| program arena | `CAPACITY_ARENA_PROGRAM` 224 MiB | readback, GIF frames, export scratch | never |
+| frame arenas | `CAPACITY_ARENA_FRAME` 886 KiB × 2 | placements, then `DrawScratch` | in turn |
+| object pool | `sizeof(Scene)` 1.15 MiB | each object, by its handle | by handle |
 
 **Every byte count that a reader sees is in KiB and MiB, as IEC 80000-13 names them.** Each one
 divides by 1024 or by 1048576. That holds for the memory rows and the pool line of the window, and
@@ -1386,20 +1386,29 @@ for the heap row of the page. A `KB` or `MB` there reads as thousands, which the
 pool line puts its figure for each handle on a line of its own. The longer unit then stays inside
 the panel at a full pool.
 
-The storyboard run sizes the permanent capacity from its own `arena.used + bytes_needed`, and
-not from a round number. The **swap pair** reclaims on the way *in*. What one frame assembled
-stays readable through the next, while the block that it moves to starts empty. Each frame carves
-its placements first, so those of the frame before stay readable until the next turn (Render paths).
+The storyboard run sizes the program capacity from its own `arena.used + bytes_needed`, and not
+from a round number. The **frame arenas** reclaim on the way *in*. What one frame assembled stays
+readable through the next, while the block that it moves to starts empty. Each frame carves its
+placements first, so those of the frame before stay readable until the next turn (Render paths).
 
-A separate pair is better than a larger frame arena. The scratch of an export is tens of
-megabytes on a keypress. A frame carves 666,728 bytes sixty times a second: 645,120 of placements
-and 21,608 of `DrawScratch`, as `sizeof` reads them. That is also the peak of each half, since a
-frame carves each once. The largest carver of `DrawScratch` is the `LINES_GRID_MAX` chords of one
-lattice family. The capture loop of the storyboard turns the pair over in its own `renderAt`.
+**The scratch of an export is one stretch of the program arena.** It is carved once, and each
+export overwrites it from its start. At most one export runs in a frame, and each one finishes
+inside its own call. Rejected: an arena for exports alone, which adds a fourth region for no gain.
+Rejected: the scratch in the frame arenas. It is 64 MiB, and each of the two would reserve it for a
+turn that an export never uses.
 
-Each half is one placement for each handle and 256 KiB for the scratch, which is 907,264 bytes at
-5040 handles. A static check holds that both fit, and that a placement holds no reference, since
-carved memory is never traced. Before the placements moved in, each half was 256 KiB.
+A frame carves 666,728 bytes sixty times a second: 645,120 of placements and 21,608 of
+`DrawScratch`, as `sizeof` reads them. That is also the peak of each frame arena, since a frame
+carves each once. The largest carver of `DrawScratch` is the `LINES_GRID_MAX` chords of one lattice
+family. The capture loop of the storyboard turns the frame arenas over in its own `renderAt`.
+
+Each frame arena is one placement for each handle and 256 KiB for the scratch, which is 907,264
+bytes at 5040 handles. A static check holds that both fit, and that a placement holds no reference,
+since carved memory is never traced.
+
+**The object pool is an arena with a free list.** `Scene` holds a fixed array for each field, with
+one entry for each handle. Removing an object puts its handle on the free list, and nothing moves.
+The next object added takes the handle that was freed last.
 
 **The undo timeline is the largest reservation that the binary makes.** A `Scene` at 5040 handles is
 1.15 MiB as a C struct, which `sizeof` reports as 1,204,616 bytes on the release compiler. A `Step`
@@ -1409,7 +1418,7 @@ is a `Scene` beside a `Camera` of twelve floats, eight of them the motor, and `C
 The placing side of every handle stands twice on both front-ends: for this frame, and for the frame
 before. Each frame places every handle there, and every reader of that frame reads it. It is 128
 bytes for each of 5040 handles, which is 645,120 bytes for each block. On the desktop both blocks
-sit inside the swap pair, and `BYTES_MEMORY_TOTAL` counts them through it.
+sit inside the frame arenas, and `BYTES_MEMORY_TOTAL` counts them there.
 
 In the browser the same timeline is about 105 MB of JS heap. The live page measured 85 MB at
 load, before the placing stamps for each handle were added, and nothing has measured it again
@@ -1419,12 +1428,12 @@ of JS heap for each step. `BYTES_MEMORY_TOTAL` counts it, because a figure that 
 own largest term is worse than no figure.
 
 The LZW dictionary of GIF is a fixed open-addressed hash table, with `CAPACITY_DICTIONARY` at 8192
-and multiplicative hashing after Knuth. It is not a third arena, because it probes at random within
+and multiplicative hashing after Knuth. It is not an arena, because it probes at random within
 a frame rather than appends by bump alone. **LZW early change**: the format widens the code size one
 symbol earlier on a decode than on an encode. A decoder written from scratch in the suite
 round-trips a real frame past the point of growth.
 
-*Checked.* Verified by `suites.nim`: the swap pair keeps the bytes of the last frame, and the GIF
+*Checked.* Verified by `suites.nim`: the frame arenas keep the bytes of the last frame, and the GIF
 round-trip holds. Verified by `sizeof`: the sizes of the struct and of the timeline. Verified by
 `sizeof` on 2026-10-06: 128 bytes for a placement and 21,608 for `DrawScratch`. Assumed: the
 JS heap figure for each step, which is extrapolated from one measurement of the earlier layout
