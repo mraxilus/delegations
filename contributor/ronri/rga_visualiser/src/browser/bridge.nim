@@ -2346,6 +2346,12 @@ proc nimSetCountingShaped(is_counting: bool) {.exportc.} = setCountingShaped(is_
 proc nimCountShaped(): cint {.exportc.} = cint(countShaped())
   ## Report how many markers were shaped since tally last opened; see `marker.countShaped`.
 
+proc nimSetCountingKinds(is_counting: bool) {.exportc.} = setCountingKinds(is_counting)
+  ## Open or close tally of classifications, for driven checks; see `objects.setCountingKinds`.
+
+proc nimCountKinds(): cint {.exportc.} = cint(countKinds())
+  ## Report classifications made since tally last opened; see `objects.countKinds`.
+
 
 
 #[ Objects Search ]#

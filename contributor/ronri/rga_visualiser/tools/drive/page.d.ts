@@ -27,6 +27,12 @@ declare function refreshSelectionMenu(position_local: null): void;
 /** Shut selection menu, which standing open swallows pointer events over canvas. */
 declare function hideSelectionMenu(): void;
 
+/** Read Nim's selection into page's own snapshot, which overlay marks each object of. */
+declare function refreshSelectionSnapshot(): void;
+
+/** Keep selection menu beside last object picked, as frame loop does after its overlay. */
+declare function updateSelectionMenuPosition(): void;
+
 /** Run diagnostics tick now, rather than waiting for its own slower cadence. */
 declare function refreshDiagnostics(): void;
 

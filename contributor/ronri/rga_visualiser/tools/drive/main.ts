@@ -51,6 +51,7 @@ import {
 } from './objects';
 import { driveComet } from './comet';
 import { driveMarkerShapedOnce } from './marker';
+import { driveClassifiedOnce } from './classified';
 import { driveShadedFromAbove } from './shade';
 import { driveStyleDeclared } from './style';
 import { driveSurfacesFilled } from './surface';
@@ -262,6 +263,8 @@ async function driveSimulated(browser: Browser): Promise<void> {
   await driveFrameLabelCorner(page);
   await driveZoomLoaded(page);
   await driveFarOrbit(page);
+  // After far orbit, which sends camera home: every state below is counted against largest demo.
+  await driveClassifiedOnce(page);
   await driveUndoDrawn(page);
   await driveFullRefused(page, errors_page);
   await driveObjectsList(page, objects_largest);
