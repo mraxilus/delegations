@@ -34,7 +34,7 @@ suite "Article IV":
   test "IV.4 operand after `got` takes backtick at end of literal before, and start of one after":
     let source = "let m = \"Prompt over \" & $LIMIT & \" bytes; got \" & $count & \".\"\n"
     check checkMessages("a.nim", source).mapIt(it.message) ==
-      @["Message ends echoing value in backticks, as ``…; got `{value}`.`` (IV.4); got " &
+      @["Message ends echoing value in backticks, as ``…; got `{value}`.``; got " &
         "`$count`."]  # value before tail is no echo
     check source.fixed ==
       "let m = \"Prompt over \" & $LIMIT & \" bytes; got `\" & $count & \"`.\"\n"

@@ -281,7 +281,7 @@ suite "Idiom fixes":
       apart =
         module("import std/strutils\nimport std/[os, algorithm]\nimport ./b\nimport ./a {.all.}\n")
       fix = fixed(apart)
-    check checkImportBrackets("a.nim", apart).mapIt(it.message) == @[
+    check checkImportBrackets("a.nim", apart).findingsOf.mapIt(it.message) == @[
       "Imports of one directory share one bracket (X.5); got `std/` in `2` statements.",
       "Imports of one directory share one bracket (X.5); got `./` in `2` statements.",
     ]
@@ -291,8 +291,8 @@ suite "Idiom fixes":
     check fix.source.isSettled
     check checkImportBrackets("a.nim", fix.source).len == 0
     check fixed(module("import std/[math]\n")).source == module("import std/math\n")
-    check checkImportBrackets("a.nim", module("import std/[math]\n"))[0].message ==
-      "Bracket of one module drops its bracket (STYLE.md §5); got `std/[math]`."
+    check checkImportBrackets("a.nim", module("import std/[math]\n")).findingsOf[0].message ==
+      "Bracket of one module drops its bracket (X.5); got `std/[math]`."  # rule's one article
 
 
   test "pragma list of declaration, export list and names after `from … import` are alphabetised":
