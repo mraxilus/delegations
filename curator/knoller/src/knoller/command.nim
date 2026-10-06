@@ -4,7 +4,8 @@
 ##     ls-files` lists under it, sorted. Named file of other extension is passed over; path
 ##     naming nothing is usage error, and so is directory naming no Nim file, which says why:
 ##     it lies outside git work tree, or git lists no Nim file under it (`listingOf`). Silent
-##     `0 to fix.` would read as clean run over files never read.
+##     `0 to fix.` would read as clean run over files never read. Git runs as direct process,
+##     its stderr read apart from paths, so warning never glues to first of them (`runGit`).
 ##   Nimble file whose copy `atlas.lock` beside it holds is passed over (`lockedNimbles`).
 ##   Fix writes only file that changes; `--check` writes none, and reports each change due.
 ##   Output, sorted by path, line, then rule id: `path:line: <rule-id> fixed`, or `to fix`
@@ -49,7 +50,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, options, os, osproc, parseopt, sequtils, strutils, tables]
+import std/[algorithm, options, os, osproc, parseopt, sequtils, streams, strutils, tables]
 import ./[chain, compilers, fences, parentheses, pins, proofs, reports]
 
 
@@ -334,9 +335,29 @@ func listingOf*(directory, output: string; code: int): tuple[files: seq[string],
     result.refusal = "Directory holds no Nim file that git lists; got `" & directory & "`."
 
 
+proc runGit(
+  directory: string, arguments: openArray[string]
+): tuple[output, failure: string, code: int] =
+  ## Run git in directory as direct process with argument list, never through shell, and read
+  ##   stdout and stderr apart: output, what git says on stderr, and exit code.
+  ##   Git ends warning on stderr in newline rather than NUL, so stream carrying both would glue
+  ##     warning to first field of `-z` output.
+  ##   Both pipes are drained before exit is waited on, since child blocks where pipe fills.
+  let process = startProcess(
+    "git",
+    args = @["-C", directory] & @arguments,
+    options = {poUsePath},
+  )
+  defer: process.close
+  result.output = process.outputStream.readAll
+  result.failure = process.errorStream.readAll
+  result.code = process.waitForExit
+
+
 proc listed*(directory: string): tuple[files: seq[string], refusal: string] =
-  ## Read Nim files git lists under directory, sorted, or why it names none.
-  let (output, code) = execCmdEx("git -C " & directory.quoteShell & " ls-files -z")
+  ## Read Nim files git lists under directory, sorted, or why it names none; what git writes on
+  ##   stderr never reaches path (`runGit`).
+  let (output, _, code) = runGit(directory, ["ls-files", "-z"])
   listingOf(directory, output, code)
 
 
