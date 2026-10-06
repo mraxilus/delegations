@@ -21,6 +21,14 @@
 ##     `checkProfiler`, outside static pass until projects run fix.
 ##   - Stub `tests/test_*.nim` (`reports.isStub`) leaves `-r`, `batchable` and `joinable` out of
 ##     its testament header (§6).
+##   Rules no fixer reaches, since each needs knowledge text does not hold (`checkPragmas`,
+##     `checkTests`):
+##   - `{.used.}` carries trailing comment naming its consumer (§2).
+##   - `{.push.}` stands only over block of foreign bindings, which `{.pop.}` closes (§2).
+##   - Under `tests/` (`reports.isTestFile`): suite importing `std/random` seeds it, and stub
+##     carries testament header (§6); `echo` of value without label, outside condition, is
+##     debug output (VIII.5).
+##   `checkIdioms` reads every idiom static pass of `curator/audit` reads.
 ##
 ##   Fixers read same spans, runs and constants their checks read, so each rule is written
 ##     once (Article II.1), and each rewrites only lines its check reports:
@@ -141,6 +149,10 @@ const
   CLOSERS = {')', ']', '}'}  ## Brackets closing such span.
   ALL_PRAGMA = "{.all.}"
     ## Pragma bracket item may carry (STYLE.md §5); any other keeps its import apart.
+  CONDITIONS = ["case", "elif", "else", "except", "if", "of", "when"]
+    ## Openers making `echo` beneath them conditional, i.e. failure diagnostic.
+  FOREIGN_MARKS = ["dynlib", "header:", "importc", "importcpp", "importjs"]
+    ## Pragmas marking foreign bindings, which alone may stand under `{.push.}`.
   PRAGMAS_BUILT_IN = [
     "acyclic", "align", "asmnostackframe", "base", "bitsize", "booldefine", "borrow", "bycopy",
     "byref", "callsite", "cdecl", "closure", "codegendecl", "compilerproc", "compiletime",
@@ -188,7 +200,7 @@ func itemName(item: string): string =
   item.strip.split(' ')[0]
 
 
-func bracketItems*(text: string): seq[string] =
+func bracketItems(text: string): seq[string] =
   ## Read module names inside brackets of `prefix/[a, b {.all.}]`, pragma dropped.
   let
     open = text.find('[')
@@ -349,6 +361,113 @@ func checkReturns*(path: string, code: seq[string]): seq[Report] =
       "Bare `return` exits early with `result`, and routine ends on value " &
         "itself; got `return result`.",
     )
+
+
+func pragmaNames(code: string): seq[string] =
+  ## Read names inside every `{. .}` of code line: `{.borrow, used.}` gives `borrow`, `used`.
+  var at = 0
+  while true:
+    let open = code.find("{.", at)
+    if open < 0: break
+    let close = code.find(".}", open + 2)
+    if close < 0: break
+    for p in code[open + 2 ..< close].split(','):
+      let name = p.strip.split({':', ' ', '['})[0]
+      if name.len > 0: result.add name
+    at = close + 2
+
+
+func checkPragmas(path: string; lines, code: seq[string]): seq[Report] =
+  ## Report `{.used.}` without comment, and `{.push.}` over block holding no foreign binding (§2).
+  for i, c in code:
+    let s = c.strip
+    if "used" in c.pragmaNames and s != "{.used.}" and
+        lines[i].find('#', c.strip(leading = false).len) < 0:
+      result.add initReport(
+        path,
+        i + 1,
+        Rule.UsedConsumer,
+        "`{.used.}` carries comment naming its consumer; got none.",
+      )
+    if s.startsWith("{.push"):
+      var
+        j = i
+        text = ""
+      while j < code.len:
+        text.add code[j]
+        if j > i and code[j].strip.startsWith("{.pop"): break
+        inc j
+      if not FOREIGN_MARKS.anyIt(it in text):
+        result.add initReport(
+          path,
+          i + 1,
+          Rule.PushForeign,
+          "`{.push.}` stands only over foreign bindings, which `{.pop.}` closes; got `" & s & "`.",
+        )
+
+
+func isUnderCondition(code: seq[string], i: int): bool =
+  ## Decide whether nearest line enclosing line `i` opens condition.
+  let indent = code[i].indentOf
+  var k = i - 1
+  while k >= 0:
+    if code[k].strip.len > 0 and code[k].indentOf < indent:
+      return code[k].firstWord in CONDITIONS
+    dec k
+
+
+func isRandomImported(code: seq[string]): bool =
+  ## Decide whether code imports `std/random`, alone or in bracket.
+  for c in code:
+    if c.startsWith(IMPORT_MARK) and
+        ("std/random" in c or (c.startsWith("import std/[") and "random" in c.bracketItems)):
+      return true
+
+
+func isSeeded(code: string): bool =
+  ## Decide whether code seeds generator: `initRand(<seed>)`, or `randomize(<seed>)`.
+  let at = code.find("randomize(")
+  "initRand(" in code or (at >= 0 and at + 10 < code.len and code[at + 10] != ')')
+
+
+func checkTests(path, source: string; lines, code: seq[string]): seq[Report] =
+  ## Report, in test file, unseeded random suite, stub lacking testament header, and `echo` of
+  ##   debug shape (§6, VIII.5); file outside `tests/` reports none.
+  if not path.isTestFile: return
+  if code.isRandomImported and not code.join("\n").isSeeded:
+    result.add initReport(
+      path,
+      0,
+      Rule.RandomSeed,
+      "Suite seeds `std/random`, as `randomize(0)` does; got no seed.",
+    )
+  if path.isStub and source.find(TESTAMENT_HEADER) < 0:
+    result.add initReport(path, 0, Rule.StubHeader, "Test stub carries testament header; got none.")
+  for i, c in code:
+    if c.firstWord == "echo" and '"' notin lines[i] and not code.isUnderCondition(i):
+      result.add initReport(
+        path,
+        i + 1,
+        Rule.DebugOutput,
+        "Test leaves no debug output; label report, or print under failing condition; got `" &
+          c.strip & "`.",
+      )
+
+
+func checkIdioms*(path, source: string): seq[Report] =
+  ## Report Nim source breaking one-line idiom of STYLE.md or Article X.5, as static pass reads
+  ##   them: those fixers reach, then those none reaches; test file adds its own.
+  let
+    lines = source.splitLines
+    code = source.codeOnly.splitLines
+  result = checkStrictFuncs(path, lines, code)
+  result.add checkImports(path, code)
+  result.add checkBindings(path, code)
+  result.add checkPragmas(path, lines, code)
+  result.add checkReturns(path, code)
+  if path.isTestFile:
+    result.add checkTests(path, source, lines, code)
+    result.add checkStubKeys(path, source)
 
 
 func placeOf(lines, code: seq[string]; i: int): ReturnPlace =

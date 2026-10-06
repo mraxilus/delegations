@@ -105,6 +105,11 @@ the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, 
 | `strictfuncs` | A module carries `strictFuncs` before its imports. |
 | `profiler-import` | An entry module imports the profiler on one line. |
 | `stub-keys` | A test stub leaves out `-r`, `batchable` and `joinable`. |
+| `used-consumer` | A `{.used.}` carries a comment that names its consumer. No fix reaches it. |
+| `push-foreign` | A `{.push.}` stands over foreign bindings alone. No fix reaches it. |
+| `random-seed` | A suite that imports `std/random` seeds it. No fix reaches it. |
+| `stub-header` | A test stub carries a testament header. No fix reaches it. |
+| `debug-output` | A test prints no value without a label, outside a condition. No fix reaches it. |
 | `unordered-list` | A list that the language leaves unordered is in alphabetical order. |
 | `test-blank-lines` | The blank lines beside a suite or a test follow its tier. |
 | `helper-blank-lines` | A nested helper takes one blank line each side; one-line routines stack. |
