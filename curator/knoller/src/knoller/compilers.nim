@@ -99,7 +99,7 @@ proc compilerAt(nim_path: string): Compiler =
 
 proc runningCompiler*(): Compiler =
   ## Read compiler on PATH, i.e. one caller itself was invoked through.
-  compilerAt("nim")
+  compilerAt(NIM)
 
 
 func platformOf*(os_name, cpu: string): string =

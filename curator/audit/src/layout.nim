@@ -30,6 +30,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, options, os, sequtils, strutils, tables]
+import ../../knoller/src/knoller
 import ./[dependencies, domains, findings, kinds, markdown, toolchain]
 
 
@@ -73,7 +74,7 @@ func projectName*(directory: string): string =
 
 func nimblePath*(directory: string): string =
   ## Read path of project's nimble file, which is named after its folder.
-  directory & "/" & directory.projectName & NIMBLE_EXT
+  directory & "/" & directory.projectName & EXTENSIONS[Dialect.Package]
 
 
 func directoryOf(path: string): string =
@@ -201,7 +202,8 @@ func checkProject(tree: Tree, paths: Table[string, int], directory: string): seq
   let nimble = directory.nimblePath
   if nimble notin paths: result.add finding(nimble, 0, "Project nimble file missing.")
   for e in tree:
-    if e.path.directoryOf == directory and e.path.endsWith(NIMBLE_EXT) and e.path != nimble:
+    let is_nimble = e.path.endsWith(EXTENSIONS[Dialect.Package])
+    if e.path.directoryOf == directory and is_nimble and e.path != nimble:
       result.add finding(
         e.path,
         0,

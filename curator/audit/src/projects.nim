@@ -20,6 +20,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[os, osproc, streams, strtabs, strutils]
+from ../../knoller/src/knoller import NIM
 import ./findings
 
 
@@ -77,7 +78,7 @@ proc toolIn*(bin, tool: string): string =
 
 proc nimOf*(bin: string): string =
   ## Read compiler path testament must be told, absolute so any cwd resolves it.
-  if bin.len == 0: findExe("nim") else: bin / "nim"
+  if bin.len == 0: findExe(NIM) else: bin / NIM
 
 
 proc childEnv(bin: string): StringTableRef =

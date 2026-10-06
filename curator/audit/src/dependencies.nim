@@ -32,8 +32,6 @@ import ./[findings, projects]
 
 
 const
-  NIMBLE_EXT* = ".nimble"  ## Extension of package description file.
-  LOCK_FILE* = "atlas.lock"  ## Atlas lock file name.
   DEPS_DIRECTORY* = "deps"  ## Directory Atlas restores into when `atlas.config` names none.
   ATLAS_CONFIG* = "atlas.config"  ## Where project names its checkout directory, under `deps`.
   NODE_MANIFEST* = "package.json"  ## Node manifest, naming tools project type-checks with.
@@ -45,7 +43,7 @@ const
 func requirements*(nimble: string): seq[string] =
   ## Collect required packages from nimble text, `nim` excluded.
   for requirement in nimble.requireLiterals:
-    if requirement.packageName.toLowerAscii != "nim": result.add requirement
+    if requirement.packageName.toLowerAscii != NIM: result.add requirement
 
 
 proc lockDirectories*(lock: string, deps_directory = DEPS_DIRECTORY): seq[string] =

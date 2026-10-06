@@ -28,8 +28,8 @@
 ##     change of package.
 ##   `checkFormatting` holds every check whose findings these fixers clear and static pass
 ##     does not run yet; pull request after projects run `koch fix` wires its tree form
-##     (CURATOR.md, duty 3), one line in `auditTree`, and drops lenient banner check
-##     `checkForm` runs.
+##     (CURATOR.md, duty 3), one line in `auditTree`; exact banners it holds, static pass reads
+##     already (`form.nim`), since no project breaks them.
 ##   Scope: every path fix would write goes through `scope.checkScope` for branch. One path
 ##     outside refuses every write, so run writes all it planned or nothing. Curator branch
 ##     thus never writes contributor code (`checkPropagation`), as CURATOR.md duty 11 asks.
@@ -63,20 +63,13 @@ type
   Fixed* = tuple
     ## Define what fix of entries writes and reports, and what it asks parser.
     written: seq[Entry]  ## Entry to write, with new text.
-    fixed, refused, left, held: seq[Finding]  ## Rewrite, scope finding, finding left, fence.
+    fixed, refused, left: seq[Finding]  ## Rewrite, scope finding, finding left.
+    warned: seq[Finding]  ## Warning: fence that keeps its lines, or file fixers do not settle.
     asked: seq[(string, string)]  ## Path and source chain asks parser, no answer held yet.
 
 
 const ASKS_MAX = 8
   ## Rounds of asking parser at most, as knoller's command line takes (`command.nim`).
-
-
-func dialectOf(kind: Kind): Dialect =
-  ## Read dialect of knoller kind of Nim source is: module, script or package.
-  case kind
-  of Kind.NimScript: Dialect.Script
-  of Kind.Nimble: Dialect.Package
-  else: Dialect.Module
 
 
 func lockedNimbles*(tree: Tree): seq[string] =
@@ -233,13 +226,20 @@ func contextOf*(
     result.plans.add plan
 
 
+func unsettledOf*(path: string, fix: Fix): seq[Finding] =
+  ## Warn that knoller's fixers leave source as written, since they do not settle it: message
+  ##   knoller gives (`Fix.unsettled`), whole file, and no article, since fault is tool's and
+  ##   no rule of style; none where source settles. `koch fix` prints it after `warning:`.
+  if fix.unsettled.len > 0: result.add finding(path, 0, fix.unsettled)
+
+
 func fixSource(
   path, source: string; kind: Kind; fence: Fence; context: Context
-): tuple[source: string, fixed, left: seq[Finding], asked: seq[string]] =
+): tuple[source: string, fixed, warned: seq[Finding], asked: seq[string]] =
   ## Write edits semantic pass and tree settle, off fenced lines, then fix rest by knoller
   ##   (`formatted`); none of those edits moves line, so every report names line of source as
-  ##   given. Source knoller cannot settle keeps those edits alone, with finding left, since
-  ##   rename planned whole reaches other files too.
+  ##   given. Source knoller cannot settle keeps those edits alone, with warning that says why
+  ##   (`unsettledOf`), since rename planned whole reaches other files too.
 
   # Write edits semantic pass settles, off fenced lines; no line moves, so fence holds.
   var renamed: seq[Edit]
@@ -268,7 +268,7 @@ func fixSource(
   result.source = fix.source
   result.asked = fix.asked
   result.fixed.add fix.fixed.findingsOf
-  result.left = fix.left.findingsOf
+  result.warned = path.unsettledOf(fix)
 
 
 func partOf(e: Entry; locked: openArray[string]; context: Context): Fixed =
@@ -286,7 +286,7 @@ func partOf(e: Entry; locked: openArray[string]; context: Context): Fixed =
     result.left.add faultOf(e.path, fence).findingsOf
     return
   let proofs = context.proofs.getOrDefault(e.path)
-  result.held.add heldOf(e.path, e.content, e.kind.get.dialectOf, proofs).findingsOf
+  result.warned.add heldOf(e.path, e.content, e.kind.get.dialectOf, proofs).findingsOf
   if fence.lines.len > 0:
     for source in e.content.questionsOf(proofs): result.asked.add (e.path, source)
   for plan in context.plans:
@@ -316,7 +316,7 @@ func partOf(e: Entry; locked: openArray[string]; context: Context): Fixed =
   let fix = fixSource(e.path, e.content, e.kind.get, fence, context)
   for source in fix.asked:
     if (e.path, source) notin result.asked: result.asked.add (e.path, source)
-  result.left.add fix.left
+  result.warned.add fix.warned
   if fix.source == e.content: return
   result.written.add Entry(path: e.path, kind: e.kind, content: fix.source)
   result.fixed.add fix.fixed
@@ -329,7 +329,7 @@ func scoped(branch: string; parts: openArray[Fixed]): Fixed =
     result.written.add part.written
     result.fixed.add part.fixed
     result.left.add part.left
-    result.held.add part.held
+    result.warned.add part.warned
     result.asked.add part.asked
   if result.written.len == 0: return
   result.refused = checkScope(branch, result.written.mapIt(it.path))
@@ -344,9 +344,10 @@ func fixEntries*(
   ## Fix each entry: entries to write, one report per rewrite, scope findings, files left as
   ##   written with reason (nimble file `locked` names, fence fix cannot read), and one warning
   ##   for each fence, which keeps its lines as written, naming each rule broken among them
-  ##   (`heldOf`). `context` carries what tree tells fixers across modules (`contextOf`), and
-  ##   answers of parser; each source chain asks and no answer holds is in `asked`, source as
-  ##   given too where fence holds lines, since its warning reads it.
+  ##   (`heldOf`), and for each file knoller's fixers do not settle (`unsettledOf`). `context`
+  ##   carries what tree tells fixers across modules (`contextOf`), and answers of parser; each
+  ##   source chain asks and no answer holds is in `asked`, source as given too where fence
+  ##   holds lines, since its warning reads it.
   ##   Where any path to write lies outside branch scope, nothing is written or reported fixed.
   scoped(branch, entries.mapIt(it.partOf(locked, context)))
 

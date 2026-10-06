@@ -10,8 +10,9 @@
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: a curator project, from the brief of the Architect. It holds the fixers of `koch fix`
-that read the text of one file and nothing else, and the compiler that serves each pin. The fixers
-that ask the compiler stay in `curator/audit`. There is no vendored source.
+that read the text of one file and nothing else, and the compiler that serves each pin. It holds
+the checks of one Nim file too, which the static pass of `curator/audit` calls. The fixers that ask
+the compiler stay in `curator/audit`. There is no vendored source.
 
 ## Package
 
@@ -78,16 +79,15 @@ so a new rule without a citation does not compile there.
   message would cite the charter of this repository wherever knoller runs.
 - Cost: no suite of knoller holds the text that `koch` prints. The suite `test_findings.nim` of
   `curator/audit` holds it, article included, through the real check of each message that `koch`
-  prints. The one exception is `unsettled`, whose test builds the report from the sentence of
-  `chain.nim`, since no source in the suite leaves the fixers unsettled.
+  prints.
 
 ## Chain
 
 **One chain runs every fixer in one order until the source settles.** `formatted` reads the
 fence, masks it, runs the fixers of the dialect, and writes the fenced lines back.
 `checkFormatting` reports each rule that the fixers clear, on the same masked view. A dialect is a
-module (`.nim`), a script (`.nims`) or a package (`.nimble`). Only a module takes the idiom fixers
-and their checks.
+module (`.nim`), a script (`.nims`) or a package (`.nimble`). A module takes every idiom fixer and
+check, and a script or a package takes those of any Nim code (`## Idioms`).
 
 - `curator/audit` maps each kind of Nim onto a dialect. It applies the fixers that need more than
   one file, then gives the source to `formatted`.
@@ -113,8 +113,8 @@ because the charter grants the fence (Article X.1).
 **The warning runs the checks as a dry run, on the source as given.** No mask hides a fenced line,
 so each marker reads as a plain comment, and each line keeps its number. `heldOf` keeps each
 finding whose line falls inside a fence. So a fence counts what its lines report without the fence.
-A rule that a fixer clears and a rule left for the hand count alike, because a check names both. A
-module also takes the idiom checks that the static pass runs, such as `return-result`.
+A rule that a fixer clears and a rule left for the hand count alike, because a check names both.
+Each check of knoller that the static pass of `curator/audit` reads counts too, in each dialect.
 
 - Rejected: one warning for each break inside a fence. The Architect chose one line for each
   fence, so a large table in a fence costs one line.
@@ -122,9 +122,11 @@ module also takes the idiom checks that the static pass runs, such as `return-re
   `not-over-binary`, which no fixer reaches.
 - Rejected: a fence as a finding that fails the run. A generated file would then fail every run,
   though its fence is allowed.
-- Cost: a rule that knoller fixes and does not check goes uncounted. Those rules are
-  `trailing-whitespace`, `file-ending`, `tab-in-string`, `entry-block` and `article-in-comment`.
-  The static pass of `audit` holds a check of each of them, and reads no fence.
+- A fence keeps its lines from the fixers and from the checks of `checkFormatting`. It never keeps
+  them from a check that the static pass reads, since the static pass reads no fence. So a finding
+  of such a check inside a fence fails the run, as it fails the static pass.
+- A tab in a string counts as `tab`, since that check reads every tab, and `tab-in-string` names
+  its fix alone.
 - Cost: a file with a fence takes the checks twice, once masked and once as given. A file with no
   fence takes them once. A delegate measured the cost on 2026-10-04, with a debug build and two
   runs of each. `knoller --check` on `starfield.nim` of `rga_visualiser` took 11 s, against 4 s
@@ -136,9 +138,10 @@ module also takes the idiom checks that the static pass runs, such as `return-re
 
 **`knoller [--check] [--nim:path] path...` fixes each Nim file that the paths name.** A directory
 stands for the Nim files that `git ls-files` lists under it. A run writes only the files that
-change, and `--check` writes none. Each line of output names a path, a line and a rule id, and the
-count comes last. A clean run exits 0, and a usage error exits 2. A run exits 1 where a finding is
-left, or where a change is due under `--check`.
+change, and `--check` writes none. Each finding names a path, a line and a rule id, an unsettled
+file names its path alone, and the count comes last. A clean run exits 0, and a usage error
+exits 2. A run exits 1 where a finding is left, where a file is unsettled, or where a change is due
+under `--check`.
 
 - No option sets a style. The rules are constants, and a fence is the only way to keep a layout.
 - `--nim` names the compiler whose parser proves each group of needless parentheses
@@ -147,6 +150,12 @@ left, or where a change is due under `--check`.
   comes before the count, and the exit code stays.
 - A nimble file whose copy `atlas.lock` holds is passed over, because a rewrite would leave the
   copy stale.
+- A file that the fixers do not settle prints one line, `path: unsettled: <message>`, after the
+  rewrites and before the findings left. The line has no line number and no rule id, because the
+  fault is in the tool (`## Chain`). The run exits 1, because the file stays as written.
+- Verified by `suites/test_command.nim`, through `joined` with parts built by hand, for an
+  unsettled file alone and beside a file that settles. The suite holds the line, its place in the
+  output and the exit code.
 - The module is `command.nim`, because a path spells its words in full (Article V.9), and no
   glossary lists the acronym CLI.
 - `outcomeOf` decides what a run writes and prints from text alone, so its suite needs no file.
@@ -172,6 +181,35 @@ left, or where a change is due under `--check`.
   parent each gave 73 changes, with the same lines.
 - Verified by hand, 2026-10-04: the built binary fixed a scratch file, and a second run wrote
   nothing. A run without a path, and a run with an unknown option, exited 2.
+
+**After the fix, every check of knoller reads the text that the fixers leave (`checkSource`).**
+Those are the checks of `checkFormatting`, off fenced lines, and the checks of knoller that the
+static pass of `curator/audit` reads, on every line. So a finding that no fixer clears prints as
+`left`, and the run exits 1.
+
+- Rejected: the checks of `checkFormatting` alone, with the idiom checks on a file that holds a
+  fence. That run exits 0 on a wide line that no wrap fits, a tab outside a string, a capital
+  article or a refused entry block.
+- The names check takes no word as exempt beyond the jargon of V.6. The glossaries belong to a
+  repository, so the command line reads none, and `koch` passes the words of its own. The acronym
+  rule of V.9 needs a glossary, so the command line runs none (`## Names`).
+- Verified by `suites/test_command.nim`, for each rule of knoller that the static pass reads and
+  the fixers can leave. A source of each, as the fixers leave it, exits 1 and names its rule. A
+  file that declares `toJSON` beside a call of `parseJson` exits 0, in each dialect.
+- Verified by hand, 2026-10-06, with a debug build of `2595a5dc` and of `471007f`. `knoller
+  --check` on `curator`, `rga_visualiser`, `pga_benchmark` and `dance_ontology` reports no finding
+  left that `471007f` does not report.
+- Cost, measured on that run, two runs each. `rga_visualiser` took 34.3 s and 34.6 s, against
+  32.7 s and 32.1 s. `curator` took 20.5 s and 19.8 s, against 19.1 s and 19.5 s.
+
+**The command lists a directory through `runGit`, which reads stdout and stderr of git apart.**
+Git ends a warning on stderr in a newline, while the paths end in NUL. So one stream that carries
+both glues the warning to the first path. `tree.nim` of `curator/audit` reads git through the same
+procedure.
+
+- Rejected: `execCmdEx`, which joins stderr to stdout.
+- Verified by `suites/test_command.nim`. While the trace of git writes to stderr, each path stands
+  alone, and a directory outside a work tree is refused.
 
 ## Compilers
 
@@ -279,6 +317,10 @@ holds that a fixer of knoller clears what a check of audit reports, so it needs 
 test that reads knoller alone sits here. A fixture that both suites read is copied, and each copy
 names the other.
 
+**A source that several suites read stands once, in `suites/sources.nim`.** That module holds
+the declarations of every kind, the operators and the entry blocks, as `suites/stubs.nim` holds
+the stub parser. So no suite of knoller holds a copy of another.
+
 **Each case that the review of the PGA library or a delegate report found stands as a regression
 test, end to end (`suites/test_regressions.nim`).** The Architect asked for this on 2026-10-05.
 Each case quotes the source as found and names where it came from. It runs through `formatted`,
@@ -311,6 +353,15 @@ operator. A `-` before a digit opens a number after a space or an opening bracke
   each Nim file outside whitespace lies in one token, and each bracket finds its partner.
 
 ## Form
+
+**Each check of form reads text alone, so it serves every kind (`checkForm`).** A line holds no
+CR, no tab and no trailing whitespace, and at most 100 runes where a break can fix it. A file ends
+in exactly one newline, so an empty file breaks that rule too. The static pass of `curator/audit`
+runs these checks on every kind it reads, and the command line on each Nim file.
+
+- Each finding names its rule: `trailing-whitespace`, `line-ending`, `tab`, `line-width` or
+  `file-ending`. A fixer reaches trailing whitespace, the file ending, and a tab in a plain string.
+- Verified by `suites/test_form.nim`.
 
 **A trailing comment in Nim takes exactly two spaces before its marker (X.9).** The marker is the
 first `#` after the code of a line. The check reads it on the code-only view and on a
@@ -789,9 +840,14 @@ wideners.
   holds every line at once.
 - The held lines are a sorted `seq`, and each fixer is a function under `strictFuncs`. So the
   output depends on the source alone.
-- A file that still changes after its last round stays as written. Its fix reports the rule
-  `unsettled` in `Fix.left`, so the chain never writes a file half settled. `curator/audit` keeps
-  its semantic edits for such a file, since a rename planned whole reaches other files too.
+- A file that still changes after its last round stays as written, so the chain never writes a
+  file half settled. Its fix says why in `Fix.unsettled`, a message that names no rule.
+  `curator/audit` keeps its semantic edits for such a file, since a rename planned whole reaches
+  other files too.
+- A list of rules holds the rules of style that source can break. A fixer that does not settle is
+  a fault of the tool, so no rule names it (D1 a of #572). No article cites it either.
+- Rejected by the Architect: `unsettled` as a member of `Rule`. It would take a row in the README
+  and an article in `CITATIONS`, as if the source broke a rule of style.
 - Rejected: a fixer that wraps its own line. `form.nim` and `wrapping.nim` would then import each
   other, and a later fixer could undo the wrap.
 - Rejected: one pass of wraps at the end. It can leave a wide line, and nothing then holds the
@@ -799,7 +855,7 @@ wideners.
 - Cost: a line broken at an operator stays broken where it later fits, as a break of the hand does.
 - Verified by `suites/test_chain.nim`. Each case of the tree wraps to its exact output, and a
   second run writes nothing. A line that no wrap fits keeps its finding, held the second time. A
-  file that never settles stays as written, with its finding.
+  file that never settles stays as written, and its fix holds the message.
 
 **The whole-tree proof of the wraps: no fix changes what code means.** Verified by hand,
 2026-10-04, with the scratch programs `prove.nim` and `trees.nim`. They ran `formatted` over every
@@ -919,11 +975,201 @@ whitespace-split, punctuation-stripped and lowercased, after the backtick spans 
   sampled corpus in this project, and that seed is why its verdict does not vary (CONTRIBUTOR.md,
   "Tests are paramount").
 
+**The check of articles reads the comments of Nim from tokens, as the fixer reads them.**
+`commentLines` gives the text of each line that a comment holds, with its markers left out, and
+`checkArticles` reports each line that holds an article. A caller that reads comments of another
+syntax passes its own lines to the same check. So `curator/audit` reports each kind in the same
+words.
+
+- Verified by hand, 2026-10-06, with a scratch program, on each Nim file that `git ls-files
+  '*.nim'` lists. `commentLines` gives the same line and text as the Nim scanner of
+  `curator/audit`.
+- Verified by `suites/test_articles.nim`, with the Nim cases of the scanner of `curator/audit`.
+
+## Names
+
+**Every declared name in Nim is read, and its words are held to the table and to the words the
+caller gives.** A declaration is a binding, a routine, a type, a field, a parameter, an enum
+member or a placeholder. `declared.nim` reads them after comments and strings are blanked. A
+binding comes from `let`, `var`, `const`, `for` or `except … as`. A word is a run between
+underscores and case changes. The table pairs each coined abbreviation with its one full word.
+
+Knoller reads no glossary, because a glossary belongs to a repository, and knoller runs on any. So
+the acronym rule of V.9, which passes an acronym only where a glossary lists it, is a check of
+`curator/audit` (D2 of #572). The words that a name may take beyond the table are the words of the
+caller. `curator/audit` gives those that its glossaries list, and the command line gives none. The
+jargon list of V.6 always passes. Verified by `suites/test_names.nim`.
+
+- Each finding names a rule of its own: `abbreviation`, `action-verb`, `boolean-name`,
+  `lookup-table`, `name-case`, `member-case`, `placeholder-letter`, `notation` and `global-word`.
+  The case of a name takes three rules, because V.1, V.11 and V.12 state it by kind.
+- No fixer here. A rename reaches each use of a name, and only the semantic pass of the
+  compiler finds each use. So `curator/audit` plans it from the spellings that this module gives
+  (`respelled`, `cased`).
+- Rejected by the Architect: the acronym rule in knoller, with the words of the caller. The
+  command line would report each acronym of another repository, which has no glossary to list it.
+
+**A foreign name keeps the spelling that foreign code reads.** A routine whose pragmas hold a word
+of `MARKS_FOREIGN`, such as `importc` or `exportc`, declares such a name, so it is skipped. By the
+ruling of the Architect, its parameters are ours, and they are read. So `wake: bool` takes a
+boolean prefix like any other parameter. The pragma block may stand on its own line after the
+signature, and the scanner joins it.
+
+- `MARKS_FOREIGN` is the one list of these words. `{.push.}` reads it too, and so do the rename
+  fixers of `curator/audit` and the move of an entry block. Each reader takes the words among
+  pragmas (`pragmaWords`), never a part of another name.
+- Rejected: a list for each reader, since copies drift apart, and a substring match, which reads
+  `dynlib_path` as a mark.
+- Verified by `suites/test_names.nim` and `suites/test_idioms.nim`, for each pragma of the list.
+  `JsRoot` is no pragma, and `suites/test_names.nim` of `curator/audit` verifies it.
+
+**The case of a name follows its kind (V.1, V.11, V.12).** A type and an enum member are
+Pascal, and a routine is camel. A local, a parameter and a field are snake, and a global is
+SCREAMING. A placeholder in generic brackets, or after `concept`, is one capital letter. Each
+case is a fact about letters, so the check needs no list of words:
+
+- Pascal opens on a capital and holds no underscore. Camel opens on no capital and holds no
+  underscore.
+- Snake holds no capital. SCREAMING holds no lowercase letter.
+- One letter fits by its own case. A capital passes a type, a global and a placeholder. A
+  lowercase letter passes a routine, a local, a parameter and a field.
+
+**A variable in the notation of its source keeps that notation (III.5).** A binding, field or
+parameter whose name holds a non-ASCII letter is notation, such as `𝐦`, `𝐮` or `𝐌`. At any
+scope, notation holds over the case of V.1, so the check does not read its case. At module
+scope, notation holds only for an immutable global. So a mutable global in notation is one
+finding, of the rule `notation`.
+
+- A type, a routine, an enum member and a placeholder are no variable, so their case is read.
+  `std/unicode` gives no case to the mathematical alphanumeric letters. So `letterCase` reads
+  them by their block, where each style runs its capitals first.
+- An operator is backticked, so it is never read as a name.
+
+**A one-letter capital local is a finding, by the ruling of the Architect.** Plain ASCII is
+never notation. So `N` or `M` as a local, a parameter or a field takes the snake case of V.1.
+
+**A parameter that holds a type is a parameter, by the ruling of the Architect.** So
+`t: typedesc` takes the snake case of V.1. The one capital of V.12 is for a placeholder in
+brackets, as `scalar*[I: Basis](t: typedesc[I])` shows. `STYLE.md` spells its borrow template
+that way.
+
+**One function decides the reach of a binding.** The case of a binding marks its reach, and not
+its mutability (V.1). So `reachOf` of `declared.nim` reads the blocks that enclose the binding:
+
+- A routine makes it local.
+- The entry block, which is a top-level `when isMainModule:`, makes it an entry binding.
+- A binding that opens its own scope, such as `for` or `except … as`, is local.
+- It is global where every enclosing block opens no scope. Those blocks are a `when` chain, and
+  a bare `let`, `var`, `const` or `type`. Any other block makes it local.
+
+**The entry block holds no binding (V.10), and that is the rule of the entry block alone.** Where
+a module runs as a program, code that binds goes in `proc main`, and the block calls it. A binding
+in the entry block reaches the whole module, because `when` opens no scope. A routine makes it a
+true local in every language.
+
+- By the ruling of the Architect, every binding in the entry block outside a routine is a
+  finding, at any depth. The reason is that code that binds moves to `main`.
+- So a `for`, an `except … as`, and a `let` inside a loop of the block are findings too.
+- Rejected by the Architect: an exception that makes such a binding a local of its block.
+- Each binding there is one finding of `entry-block`, which `checkBlockEntry` reports beside the
+  fixer of the block, and its case is not judged. A block of plain calls passes, and so does a
+  routine inside it.
+- Rejected: a finding of the names check beside it. The rule would stand twice, under two names.
+  Verified by `suites/test_entry.nim` and `suites/test_names.nim`.
+
+**A boolean is a proposition or a mode (V.4).** A boolean binding, field or parameter opens
+with `is`, `as`, `should`, `found` or `has`, and a word follows it. A `func` that returns `bool`
+is a predicate, and its name opens with `is`. The Architect ruled on the routines that are no
+predicate:
+
+- A `proc` that returns `bool` reports the success of an action (V.3), so it is unread.
+- A `func` that writes a `var` parameter and returns `bool` is an action too, so it is unread.
+- `contains` keeps its name, because `in` and `notin` call it by that spelling.
+
+- V.3 is held as the first word of a routine of two words or more: never `get`, `compute` or
+  `new`. V.5 is held as `_by_` once in a name that opens with `lut` and has more words. V.10
+  is held as a global SCREAMING name that equals a type name without case or underscores.
+- Rejected: a parser, which costs a dependency and a compiler version. The scanner reads the
+  line forms that this charter prescribes.
+- A name that a template substitutes declares nothing of that name. So `type name = object`
+  inside `template defineKind(name: untyped)` is no type, and the check reads its fields.
+- A `static` parameter of a generic is a placeholder, so it takes one capital letter, as V.12
+  says (`[N: static int]`).
+- Rejected by the Architect: snake case for a `static` parameter, against the text of V.12.
+- Rejected: a capital letter that passes every kind. It would pass `N` as a local, which the
+  Architect ruled a finding.
+- Cost: a declaration shape outside those forms is unread. Examples are a tuple type in
+  brackets, and a name that `{.inject.}` makes.
+- Cost: a boolean is read only where its declaration shows it, by the type `bool` or by the
+  value `true` or `false`. A boolean that a call returns holds by reading.
+- Cost: a Pascal name of capitals alone, such as `ANTI`, passes the case of a type. Reading holds
+  it.
+
+## Idioms
+
+**Each idiom of STYLE.md and Article X.5 that one line shows is read on the code-only view.** So a
+string or a comment never trips it, and a page template held in a string reads as text. The module
+states each rule in its header, and the list here gives the reasons. `checkIdioms` reads each
+idiom that the static pass of `curator/audit` reads.
+
+- `strictFuncs` stands in its exact form before the first import, in every module.
+- A bracket import is alphabetised in dictionary order (X.10), and the standard library comes
+  before packages, then local modules. A bracket that spans lines is read whole.
+- Two consecutive single bindings of one keyword share it, reported once for each run. A `let`
+  beside a `var` passes, because they cannot share one keyword.
+- A `{.used.}` carries a comment that names its consumer. A `{.push.}` stands only over foreign
+  bindings, where a word of `MARKS_FOREIGN` stands among the pragmas of the block. `return
+  result` never appears, because a bare `return` exits with `result`.
+- Under `tests/`, a suite that imports `std/random` seeds it, and a stub carries its testament
+  header, without `-r`, `batchable` or `joinable`.
+- No fixer reaches `{.used.}`, `{.push.}`, the seed, the header of a stub or debug output. Each
+  needs knowledge that the text does not hold.
+
+**A module takes every idiom, and a script or a package takes those of any Nim code.** Bindings,
+pragmas, `return result` and the rules of a test read any Nim code, so `.nims` and `.nimble` take
+them, checks and fixers both. `strictFuncs`, import order and the keys and header of a stub stay
+with a module. STYLE.md §2 asks `strictFuncs` of a module, koch runs testament over
+`tests/t*.nim`, and a script keeps its imports as written.
+
+- Rejected: the idioms on a module alone, which leave a script and a package unread.
+- Verified by run, 2026-10-06: the wider check reports nothing on the tree.
+- Cost: the imports of a script stay unordered.
+- Verified by `suites/test_chain.nim`: each dialect reports and fixes the idioms of any Nim code,
+  and `strictFuncs` reads in a module alone.
+
+**Debug output is told from a report by its shape alone.** An `echo` in a test that prints a
+value with no label, outside a condition, is the shape that debug output takes. A labelled
+`echo` passes as the report of a measured figure, and one under a condition passes as a failure
+diagnostic.
+
+- Rejected: every `echo` in a test, which reports a deliberate measurement as debug output.
+- Cost: labelled debug output passes, and reading holds it. A seeded `initRand` passes as
+  `randomize(0)` does, because both fix the sequence.
+- Verified by `suites/test_idioms.nim`, each rule by its breach and by its form.
+
+## Fixed waits
+
+**A fixed wait in drive code is a finding, and the caller decides which file is drive code.** The
+names are `sleep` and `sleepAsync` of Nim, and `waitForTimeout` of Playwright, each with what
+replaces it (`checkWaits`). The rule comes from IX.12 alone, so knoller holds the names. The
+paths of drive code belong to a layout, so the caller gives them.
+
+- `curator/audit` reads `tests/` and `tools/` of each project. The command line reads each file
+  under a directory `tests` or `tools`, at any depth (`isDriveFile`).
+- Nim names compare as the compiler compares them (`identity`), so `sleep_async` is `sleepAsync`.
+  Nim source is read with comments and strings blanked.
+- A caller that reads another kind passes the identifiers of each line, less those of its
+  comments. Only the name of Playwright reads there, exactly, since `sleep` of TypeScript is the
+  helper of a drive.
+- Cost: the command line knows no project, so it reads a file that the static pass passes over,
+  such as `src/tests/a.nim`.
+- Verified by `suites/test_waits.nim`.
+
 ## Open questions
 
 - Install by git URL needs the `?subdir=curator/knoller` form of nimble. It is not verified with
   the nimble that 2.2.12 ships.
-- Some rules read paths in the layout of this repository: `tests/`, a test stub, and the umbrella
-  `<project>/src/<project>.nim`. They read the whole path, so the spelling of a path changes
-  nothing. In another repository they would need to read paths relative to the nearest nimble
-  file.
+- Some rules read paths in the layout of this repository: `tests/`, a test stub, a drive file
+  under `tests` or `tools`, and the umbrella `<project>/src/<project>.nim`. They read the whole
+  path, so the spelling of a path changes nothing. In another repository they would need to read
+  paths relative to the nearest nimble file.

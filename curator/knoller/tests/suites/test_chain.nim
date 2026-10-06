@@ -169,6 +169,25 @@ suite "Chain":
       "\n\nimport std/[os, strutils]\nlet a = b + c\n"  # pragma and bracket too
 
 
+  test "idioms of any Nim code reach script and package, checks and fixers, module's do not":
+    # Case held: static pass of `curator/audit` ran idiom checks on `.nim` alone, and chain took
+    #   idiom fixers in module alone (`audit.nim`, `stepsOf`), so script and package read none
+    #   (#557); domain is each dialect, idioms of any Nim code in each, module's in module alone.
+    let breach =
+      "let A = 1\nlet B = 2\n{.push inline.}\nproc f(): int =\n  return result\n{.pop.}\n"
+    for dialect in Dialect:
+      let rules = checkSource("a" & EXTENSIONS[dialect], breach, dialect).mapIt(it.rule)
+      check Rule.SingleBindings in rules and Rule.ReturnResult in rules  # fixer reaches both
+      check Rule.PushForeign in rules  # no fixer reaches it
+      check (Rule.StrictFuncs in rules) == (dialect == Dialect.Module)  # STYLE.md §2: module
+      check formatted("a" & EXTENSIONS[dialect], breach, dialect).source.contains(
+        "let\n  A = 1\n  B = 2\n",
+      )  # bindings share keyword in every dialect
+    check checkSource("tests/a.nims", "echo x\n", Dialect.Script).mapIt(it.rule) ==
+      @[Rule.DebugOutput]  # test rules of any Nim code read script under `tests/`
+    check checkSource("tests/test_a.nims", "echo \"x\"\n", Dialect.Script).len == 0  # no stub
+
+
   test "fence keeps lines between its markers, and fix reaches every other line":
     let
       source = "## Do.\n\n" & STRICT_FUNCS & "\n\n" & FENCED_ROWS
@@ -180,13 +199,14 @@ suite "Chain":
 
   test "fence names each rule broken inside, by count and first line, in order of `Rule`":
     let
-      source = "let a = 1\n" & FENCE_OFF & "\nlet b = 1+2\nlet c = not a == b\nlet d = 3*4\n" &
+      source = "let A = 1\n" & FENCE_OFF & "\nlet B = 1+2\nlet C = not A == B\nlet D = 3*4\n" &
         FENCE_ON & "\n"
       unfenced = source.replace(FENCE_OFF, "# Rows.").replace(FENCE_ON, "# Rows.")
       held = heldOf("a.nims", source, Dialect.Script)
     check held.len == 1 and held[0].line == 2 and held[0].rule == Rule.FenceHeld  # at marker
     check held[0].message == "Fence keeps its lines as written, and inside them " &
-      "not-over-binary breaks once at line 4 and expression-spacing 2 times from line 3" &
+      "not-over-binary breaks once at line 4, single-bindings once at line 3 and " &
+      "expression-spacing 2 times from line 3" &
       "; got lines `2` to `6`."  # rule left for hand and rule fixer clears alike
     check checkFormatting("a.nims", unfenced, Dialect.Script).mapIt((it.line, it.rule)).sorted ==
       @[(3, Rule.ExpressionSpacing), (4, Rule.NotOverBinary), (5, Rule.ExpressionSpacing)]
@@ -196,8 +216,8 @@ suite "Chain":
 
   test "each fence gives one line: clean one breaks nothing, and open one runs to last line":
     let
-      source = "let a = 1+2\n" & FENCE_OFF & "\nlet b = 1+2\n" & FENCE_ON & "\nlet c = 3\n" &
-        FENCE_OFF & "\nlet d = 4\n"
+      source = "let A = 1+2\n" & FENCE_OFF & "\nlet B = 1+2\n" & FENCE_ON & "\nlet C = 3\n" &
+        FENCE_OFF & "\nlet D = 4\n"
       held = heldOf("a.nims", source, Dialect.Script)
     check held.mapIt(it.line) == @[2, 6]  # one for each fence
     check held[0].message.contains(" expression-spacing breaks once at line 3; got")  # 1 outside
@@ -206,12 +226,17 @@ suite "Chain":
     check heldOf("a.nims", "let a = 1+2\n", Dialect.Script).len == 0  # no fence, no line
 
 
-  test "fence of module counts idiom checks too, and script reads none":
-    let source = FENCE_OFF & "\nlet a = 1\nlet b = 2\nproc f(): int =\n  return result\n"
+  test "fence counts idioms of its dialect, and module's own in module alone":
+    let source =
+      FENCE_OFF & "\nimport std/[strutils, os]\nlet A = 1\nlet B = 2\nproc f(): int =\n" &
+        "  return result\n"
     check heldOf("a.nim", source, Dialect.Module)[0].message.contains(
-      "inside them return-result breaks once at line 5 and single-bindings once at line 2; got",
+      "inside them return-result breaks once at line 6, bracket-import once at line 2 and " &
+        "single-bindings once at line 3; got",
     )
-    check heldOf("a.nims", source, Dialect.Script)[0].message.contains("nothing inside breaks")
+    check heldOf("a.nims", source, Dialect.Script)[0].message.contains(
+      "inside them return-result breaks once at line 6 and single-bindings once at line 3; got",
+    )  # script keeps its imports
 
 
   test "fence crossing bracket leaves source as written, and is its one finding":
@@ -403,9 +428,9 @@ suite "Repair that widens its line":
   test "file that does not settle stays as written, and its fix says why":
     let fix = formattedBy("a.nim", "a\n", [guarded(toggled)])
     check fix.source == "a\n" and fix.fixed.len == 0  # half-settled file never written
-    check fix.left.mapIt(it.rule) == @[Rule.Unsettled]
-    check fix.left[0].message.endsWith("got `3` rounds.")
-    check formattedBy("a.nim", "a\n", [guarded(toggled), guarded(toggled)]).left.len == 0
+    check fix.unsettled == "File still changes after 3 rounds of fixers, so fix leaves it as " &
+        "written; got `3` rounds."  # message of its own, which no rule names
+    check formattedBy("a.nim", "a\n", [guarded(toggled), guarded(toggled)]).unsettled.len == 0
 
 
   test "output agrees whatever order files come in, and on second run":

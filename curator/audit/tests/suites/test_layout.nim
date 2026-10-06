@@ -3,7 +3,8 @@
 {.experimental: "strictFuncs".}
 
 import std/[sequtils, strutils, unittest]
-import ../../src/[dependencies, domains, layout]
+import ../../../knoller/src/knoller
+import ../../src/[domains, layout]
 import ./fixtures
 
 
@@ -85,7 +86,7 @@ suite "Layout":
         check goodTree().without(path).paths == @[path]  # each missing file is one finding
       check goodTree().without(directory & "/tests/tall.nim").paths ==
         @[directory & "/tests"]  # tests
-      let nimble = directory & "/" & directory.projectName & NIMBLE_EXT
+      let nimble = directory & "/" & directory.projectName & EXTENSIONS[Dialect.Package]
       check goodTree().without(nimble).paths == @[nimble]  # nimble file required
 
 

@@ -72,7 +72,12 @@ Stderr is kept rather than dropped, because it is where git says why it failed, 
 `IOError` carries it. Both pipes are drained before the exit is waited on, since a child blocks
 where one fills while the other is read.
 
-- Rejected: `execCmdEx`, which reads by line and appends a newline to NUL-separated output.
+`gitFields` runs git through `runGit` of knoller, which the command line of knoller lists a
+directory with too. So the two streams part in one place. The umbrella of knoller exports none of
+its command line, so `tree.nim` imports `command.nim` of knoller for this one procedure.
+
+- Rejected: `execCmdEx`, which reads by line, appends a newline to NUL-separated output, and
+  joins stderr to stdout.
 - Cost: no warning of git is reported anywhere. Git writes it for a person to read, and this
   check reads no person's stream.
 - Cost: git must be on `PATH`.
@@ -156,9 +161,14 @@ Whitespace runs collapse, so texts compare stably.
 
 ## Prose
 
-**The prose check reads each comment of each kind, and knoller finds the articles in it.** The
-rule, its data and its fixer are in the record of knoller, under Articles. Verified by
-`suites/test_prose.nim`: a line that holds an article is reported, with the article named.
+**The prose check reads each comment of each kind, and knoller finds the articles in it.** Nim
+source takes the check of knoller whole, which reads its comments as the fixer of articles reads
+them. The comments of every other kind are read here, and their lines go to that same check. So
+each kind reports in the same words, and each finding cites VI.5. The rule, its data and its fixer
+are in the record of knoller, under Articles.
+
+- Verified by `suites/test_prose.nim`: a line that holds an article is reported in Nim, in cfg and
+  in TypeScript. Each finding names the article, and cites VI.5 where koch prints it.
 
 ## English
 
@@ -216,25 +226,29 @@ whitespace-free token, with the indent of the line, already overruns. That token
 `TOKEN_MAX` (400 runes), and the rest fits once it is removed. A font URL has no whitespace to
 break at, prose always does, and minified markup is one run far past the bound.
 
-Lines split on LF only, so a CR survives. The syntax of a Nim banner marks its tier:
-`#[ Title ]#` is the first tier, and `#[[ Title ]]#` is the second. The wired check demands two
-blank lines before every banner, and one after. Where a second-tier banner follows its parent at
-once, the child's own check governs the space between them.
+**Knoller holds these rules, and the audit runs them on every kind.** They read text alone, so
+knoller holds one copy of them (`checkForm` there), and its record gives them under Form. The
+audit keeps the exemption of `LICENSE.md` from width, which names a path of this repository. Each
+finding prints its article where its sentence ends, as `Line holds tab (X.1).` does.
 
-**`checkBanners` holds X.2 exactly, outside the static pass for now.** A first tier takes three
-blank lines before it, a second tier two, and either one after. A second tier that follows its
-parent at once keeps its own two. The wired check accepts three, so the two checks agree on what
-the fixer writes. The pull request that wires the exact check drops the lenient one, after each
-project runs `koch fix` (CURATOR.md, duty 3).
+- Rejected: a copy for Nim in knoller beside a copy for each other kind here. The rule would stand
+  twice, and the two copies would drift.
+- Verified by `suites/test_form.nim`: each message prints as koch prints it, in Nim, Markdown,
+  YAML, HTML, SVG and cfg, and `LICENSE.md` alone takes no width rule.
+
+**The static pass holds X.2 exactly, as knoller reads it and `koch fix` writes it.** Lines split
+on LF only, so a CR survives. The syntax of a Nim banner marks its tier: `#[ Title ]#` is the
+first tier, and `#[[ Title ]]#` is the second. A first tier takes three blank lines before it, a
+second tier two, and either one after. A second tier that follows its parent at once keeps its
+own two. The audit runs `checkBanners` of knoller on each kind of Nim syntax.
 
 - X.2 gives no count for a banner that opens the file, or for a run that ends the file. It
   gives none between two banners either, unless they are a parent and its child.
-- The wired check reads no side of a banner where the exact check gives no count. So each
-  layout that the fixer writes passes it, and the wired check reports no finding that it did
-  not report before.
-- Verified by `suites/test_form.nim`: the lenient check passes three blank lines before a first
-  tier, and the exact check reports two. A fix writes the exact counts, and a second fix writes
-  nothing. A banner at either end of a file, and a banner beside a banner, pass both checks.
+- Rejected: a lenient check beside the exact one, which takes two blank lines before every banner,
+  so the rule stands twice.
+- Verified by `suites/test_form.nim`: each count of the exact check reads through the static pass
+  in `.nim`, `.nims` and `.nimble`, and cfg reads none. A banner at either end of a file, and a
+  banner beside a banner, pass.
 
 - Rejected: an exemption for URLs by pattern, which guesses at intent. Rejected: an exemption
   for any single-token line, which admits machine output of any length. Rejected:
@@ -1420,153 +1434,65 @@ issue, and the next failure opens a new one. The finding is the output from the 
 
 ## Names
 
-**Every declared name in Nim is read, and its words are held to the table and the
-glossaries.** A declaration is a binding, a routine, a type, a field, a parameter, an enum
-member or a placeholder. A text scanner reads them after comments and strings are blanked. A
-binding comes from `let`, `var`, `const`, `for` or `except … as`. A word is a run between
-underscores and case changes. The table pairs each coined abbreviation with its one full word,
-as the English check pairs a word with its approved one.
+**The names check is knoller's, and the acronym check is the audit's, because it reads the
+glossaries.** The rules of names read one file alone, so knoller holds them, and its record gives
+their design under Names. A glossary belongs to this repository, and knoller runs on any, so the
+acronym rule of V.9 stays here (`checkAcronyms`, D2 of #572). An acronym is a run of two or more
+capitals inside a camel or Pascal name. It passes only where the root or the project glossary
+lists it, as a symbol under `## Standards` or as a term.
 
-An acronym is a run of two or more capitals inside a camel or Pascal name. It passes only where
-the root or the project glossary lists it, as a symbol under `## Standards` or as a term. The
-jargon list of V.6 passes. Verified by `suites/test_names.nim`.
-
-**A foreign binding keeps the library's name.** A routine carrying `importc`, `importcpp`,
-`importjs` or `dynlib` declares a name that the library chose, so it is skipped. By the ruling
-of the Architect, its parameters are ours, and they are read. So `wake: bool` takes a boolean
-prefix like any other parameter. The pragma block may stand on its own line after the
-signature, and the scanner joins it.
-
-**The case of a name follows its kind (V.1, V.11, V.12).** A type and an enum member are
-Pascal, and a routine is camel. A local, a parameter and a field are snake, and a global is
-SCREAMING. A placeholder in generic brackets, or after `concept`, is one capital letter. Each
-case is a fact about letters, so the check needs no list of words:
-
-- Pascal opens on a capital and holds no underscore. Camel opens on no capital and holds no
-  underscore.
-- Snake holds no capital. SCREAMING holds no lowercase letter.
-- One letter fits by its own case. A capital passes a type, a global and a placeholder. A
-  lowercase letter passes a routine, a local, a parameter and a field.
-
-**A variable in the notation of its source keeps that notation (III.5).** A binding, field or
-parameter whose name holds a non-ASCII letter is notation, such as `𝐦`, `𝐮` or `𝐌`. At any
-scope, notation holds over the case of V.1, so the check does not read its case. At module
-scope, notation holds only for an immutable global. So a mutable global in notation is one
-finding, which cites III.5.
-
-- A type, a routine, an enum member and a placeholder are no variable, so their case is read.
-  `std/unicode` gives no case to the mathematical alphanumeric letters. So `letterCase` reads
-  them by their block, where each style runs its capitals first.
-- An operator is backticked, so it is never read as a name.
-
-**A one-letter capital local is a finding, by the ruling of the Architect.** Plain ASCII is
-never notation. So `N` or `M` as a local, a parameter or a field takes the snake case of V.1.
-
-**A parameter that holds a type is a parameter, by the ruling of the Architect.** So
-`t: typedesc` takes the snake case of V.1. The one capital of V.12 is for a placeholder in
-brackets, as `scalar*[I: Basis](t: typedesc[I])` shows. `STYLE.md` spells its borrow template
-that way.
-
-**One function decides the reach of a binding.** The case of a binding marks its reach, and not
-its mutability (V.1). So `reachOf` reads the blocks that enclose the binding:
-
-- A routine makes it local.
-- The entry block, which is a top-level `when isMainModule:`, makes it an entry binding.
-- A binding that opens its own scope, such as `for` or `except … as`, is local.
-- It is global where every enclosing block opens no scope. Those blocks are a `when` chain, and
-  a bare `let`, `var`, `const` or `type`. Any other block makes it local.
-
-**The entry block holds no binding (V.10).** Where a module runs as a program, code that binds
-goes in `proc main`, and the block calls it. A binding in the entry block reaches the whole
-module, because `when` opens no scope. A routine makes it a true local in every language. The
-Architect rejected the exception that made such a binding a local of its block.
-
-- By the ruling of the Architect, every binding in the entry block outside a routine is a
-  finding, at any depth. The reason is that code that binds moves to `main`.
-- So a `for`, an `except … as`, and a `let` inside a loop of the block are findings too.
-- Each binding there is one finding, and its case is not judged. A block of plain calls
-  passes, and so does a routine inside it.
-
-**A boolean is a proposition or a mode (V.4).** A boolean binding, field or parameter opens
-with `is`, `as`, `should`, `found` or `has`, and a word follows it. A `func` that returns `bool`
-is a predicate, and its name opens with `is`. The Architect ruled on the routines that are no
-predicate:
-
-- A `proc` that returns `bool` reports the success of an action (V.3), so it is unread.
-- A `func` that writes a `var` parameter and returns `bool` is an action too, so it is unread.
-- `contains` keeps its name, because `in` and `notin` call it by that spelling.
-
-- V.3 is held as the first word of a routine of two words or more: never `get`, `compute` or
-  `new`. V.5 is held as `_by_` once in a name that opens with `lut` and has more words. V.10
-  is held as a global SCREAMING name that equals a type name without case or underscores.
+- `exemptionsOf` reads those two glossaries for each path. The static pass gives their words to
+  the acronym check, and to the check of abbreviations of knoller (V.6). The jargon list of V.6
+  passes too.
 - A SCREAMING name is all capitals, so its acronyms cannot be told from words and hold by
   reading.
-- Rejected: a parser, which costs a dependency and a compiler version. The scanner reads the
-  line forms that this charter prescribes.
-- V.6 has a fixer, which renames through the semantic pass (`## Semantic pass`). The check and
-  the fixer share one reading of the words and of the exemptions of the glossaries.
-- V.1 and V.11 have a fixer through the same pass, which reads the case as the check reads it
-  (`## Semantic pass`). V.10 has a fixer that moves the entry block into `proc main`
-  (`## Content fixes`).
-- A name that a template substitutes declares nothing of that name. So `type name = object`
-  inside `template defineKind(name: untyped)` is no type, and its fields are read as before.
-- A `static` parameter of a generic is a placeholder, so it takes one capital letter, as V.12
-  says (`[N: static int]`). The Architect weighed snake case, and kept the text.
-- Rejected: a capital letter that passes every kind. It would pass `N` as a local, which the
-  Architect ruled a finding.
-- Cost: a declaration shape outside those forms is unread. Examples are a tuple type in
-  brackets, and a name that `{.inject.}` makes.
-- Cost: a boolean is read only where its declaration shows it, by the type `bool` or by the
-  value `true` or `false`. A boolean that a call returns holds by reading.
-- Cost: a Pascal name of capitals alone, such as `ANTI`, reads as an acronym and passes. V.9
-  and reading hold it.
+- The binding of an entry block is the rule of the entry block (V.10), which knoller checks
+  beside its fixer. So the names check reports no second finding there, and the static pass runs
+  both checks on each kind of Nim.
+- The rename fixers of V.6, V.1 and V.11 stay in the audit, because they plan through the semantic
+  pass (`## Semantic pass`). They read the spellings that knoller gives, `respelled` and `cased`.
+  Issue #558 holds their move to knoller.
+- Verified by `suites/test_names.nim`. Each rule of names prints its article where its sentence
+  ends, as koch prints it. A word that a glossary lists passes.
+- Verified by `suites/test_audit.nim`: the static pass reads the root and the project glossary for
+  the acronyms of a module, a script and a package.
 
 ## Idioms
 
-**Each idiom of STYLE.md and Article X.5 that one line shows is read on the code-only view of
-the names check.** So a string or a comment never trips it, and a page template held in a string
-reads as text. The module states each rule in its header, and the list here gives the reasons.
+**The idioms of STYLE.md and Article X.5 are knoller's, and the audit keeps two of its own.**
+Knoller reads each idiom that one line or one header shows (`checkIdioms` there), and its record
+gives them under Idioms. The static pass runs that check on each kind of Nim, with the dialect of
+its kind. A module takes every idiom, and a script or a package takes those that read any Nim
+code.
 
-- `strictFuncs` stands in its exact form before the first import, in every module.
-- A bracket import is alphabetised in dictionary order (X.10), and the standard library comes
-  before packages, then local modules. A bracket that spans lines is read whole.
-- Adjacent imports of one directory share one bracket, and a bracket of one module drops its
-  bracket (X.5, STYLE.md §5). `checkImportBrackets` holds this, outside the static pass for now.
-- A pragma list of a declaration, an `export` list and the names after `from … import` are
-  alphabetised, bare pragmas first (X.10). `checkLists` reads tokens, and stays outside the
-  static pass for now.
-- Two consecutive single bindings of one keyword share it, reported once for each run. A `let`
-  beside a `var` passes, because they cannot share one keyword.
-- A `{.used.}` carries a comment that names its consumer. A `{.push.}` stands only over foreign
-  bindings. `return result` never appears, because a bare `return` exits with `result`.
-- Under `tests/`, a suite that imports `std/random` seeds it, and a stub carries its testament
-  header, without `-r`, `batchable` or `joinable`.
-- A path of one machine is a finding in every kind but Markdown. The checker names such paths
-  as fixtures, so its own project is left out, as the faces check leaves it out.
+- A path of one machine is a finding in every kind but Markdown (CONTRIBUTOR.md, System). The
+  checker names such paths as fixtures, so its own project is left out, as the faces check leaves
+  it out.
 - `tsconfig.json` sets its three flags to `true`, read as text, because TypeScript admits
   comments that `std/json` refuses.
-
-**Debug output is told from a report by its shape alone.** An `echo` in a test that prints a
-value with no label, outside a condition, is the shape that debug output takes. A labelled
-`echo` passes as the report of a measured figure, and one under a condition passes as a failure
-diagnostic.
-
-- Rejected: every `echo` in a test, which reports a deliberate measurement as debug output.
-- Cost: labelled debug output passes, and reading holds it. A seeded `initRand` passes as
-  `randomize(0)` does, because both fix the sequence.
-- Verified by `suites/test_idioms.nim`, each rule by its breach and by its form.
+- Rejected: the idioms on `.nim` alone, which leave `.nims` and `.nimble` unread, though
+  bindings, pragmas and `return result` mean the same there.
+- Verified by `suites/test_idioms.nim` and `suites/test_audit.nim`. Each rule prints as koch prints
+  it, and each kind of Nim takes the idioms of any Nim code.
 
 ## Knoller
 
-**The fixers that read the text of one file alone are a project of their own, `curator/knoller`.**
-Each module of audit that needs one imports the umbrella of knoller by a relative path, as
-`koch.nim` imports audit. A sibling imported by its path is not a package, so it needs no lock.
-The record of knoller holds the design of those fixers.
+**The fixers and the checks that read the text of one file alone are a project of their own,
+`curator/knoller`.** Each module of audit that needs one imports the umbrella of knoller by a
+relative path, as `koch.nim` imports audit. A sibling imported by its path is not a package, so it
+needs no lock. The record of knoller holds the design of those fixers and checks.
 
+- The checks of form, articles, names, idioms and fixed waits read one Nim file, and their rules
+  come from `CONSTITUTION.md` and `STYLE.md` alone. So knoller holds them, as D3 a of #548 rules,
+  and `knoller --check` reports them on any repository. The static pass calls each of them.
+- Each of those checks names a rule of knoller with an id of its own, and `CITATIONS` holds its
+  article. What reads this repository stays here: the glossaries, the paths of drive code, the
+  exemption of `LICENSE.md`, machine paths and `tsconfig.json`.
 - `findingOf` renders each report of knoller as a finding. A rewrite renders as its rule and the
   article that `CITATIONS` holds for it, so `koch fix` prints `expression spacing (X.9) fixed`.
   Verified by `suites/test_findings.nim`.
-- `fixes.nim` maps each kind of Nim onto a dialect of knoller, a module, a script or a package.
+- `kinds.nim` maps each kind of Nim onto a dialect of knoller, a module, a script or a package
+  (`dialectOf`). `fixes.nim` and the static pass both read that map.
 - Knoller also reads the pin of a nimble file and serves the compiler of each pin. Audit imports
   both, and keeps the policy of duty 8 (`## Toolchain`).
 - Rejected: knoller copied first and audit switched later. The code would stand twice, and the
@@ -1585,13 +1511,15 @@ before `; got `, or before the closing period. So `koch check` prints
   ``…; got `{value}`.``, takes its article after the quote.
 - Verified by `suites/test_findings.nim`. Each message of knoller that the static pass or
   `koch fix` prints renders through its real check to the text that koch prints, article included.
-  The test of `unsettled` builds its report from the sentence of `chain.nim`, since no source in
-  the suite leaves the fixers unsettled. The messages of checks that no pass of koch runs yet
-  render through their checks too, and so does a message with no value.
+  The messages of checks that no pass of koch runs yet render through their checks too, and so
+  does a message with no value.
 - Cost: `CITATIONS` gives each rule one article, the one that its rewrite cites. Signature and call
   wrapping cite X.3 alone, though STYLE.md §5 states them too. Operator wrapping cites STYLE.md §5
   alone, though X.1 states it too. The static pass runs none of these three checks, so koch prints
   none of these messages.
+- The case of a name cites V.1, V.11 or V.12 by the kind of the name. So it takes three rules,
+  `name-case`, `member-case` and `placeholder-letter`, and each cites one article.
+- Each message of the static pass cites its article, as `Line holds tab (X.1).` does.
 - Cost: a backtick in a sentence that no run of as many backticks closes pairs with the backtick of
   the value. The article then goes before the closing period. No message of knoller holds such a
   backtick, and reading holds that.
@@ -1687,6 +1615,11 @@ groups with the separator it reads, and a trailing separator goes only where no 
 - A second round catches what a first round enabled, such as a doc that a widened gap pushed
   past `LINE_MAX`. `ROUNDS_MAX` is three, and the tree settles in two. Knoller runs the rounds
   again where a line stays wide, and holds each line that no wrap fits (`## Wraps` of its record).
+- A source that the fixers do not settle keeps the edits of the semantic pass and of the dead
+  exports alone. `koch fix` prints a warning with the message of knoller (`unsettledOf`). It cites
+  no article, because the fault is in the tool (D1 a of #572). `suites/test_fixes.nim` holds the
+  warning of `unsettledOf` for a fix built by hand, since no source in the suite leaves the fixers
+  unsettled.
 - Verified by `suites/test_fixes.nim`: one source that breaks each layout rule settles in one
   run. Every check then reports none of it, and a second run writes nothing.
 
@@ -1701,11 +1634,10 @@ queues the wiring.
 
 **`checkFormatting` of knoller is the one list of checks that the next pull request wires.**
 `fixes.nim` reads it by kind. That pull request adds one call to its form for the tree in
-`auditTree`. It drops the lenient
-banner check of `checkForm`, which `checkBanners` replaces. The list on every kind of Nim syntax:
+`auditTree`. The static pass reads `checkBanners`, so that pull request wires the rest of this
+list. The list on every kind of Nim syntax:
 
 - `checkComments`, the gap before a trailing comment (X.9);
-- `checkBanners`, the blank lines beside a banner (X.2);
 - `checkBlanks`, the blank lines beside a suite, a test (X.2) and a nested helper (STYLE.md §1);
 - `checkDocs`, the place of a one-line doc (STYLE.md §5);
 - `checkDefaults`, a type that a literal default gives (X.12);
@@ -2145,6 +2077,11 @@ The check reads `tests/` and `tools/` of every project, with no exemption, becau
 check samples a count and never sleeps (Article IX.12). Each name carries its replacement, as
 the English check does. Verified by `suites/test_waits.nim`.
 
+**Knoller holds the names and reads Nim, and the audit decides what is drive code.** The rule
+comes from the charter alone, so knoller holds its names and their replacements (`checkWaits`
+there). Nim source takes that check whole. The identifiers of each line of every other kind,
+less those that its comments hold, go to the same check. So each kind reports in the same words.
+
 **A timer is unread, because one name is both clocks.** Inside a page under the clock of
 Playwright, `setTimeout` and `performance.now` are simulated reads. A check over them would
 report every correctness drive of `rga_visualiser`, where each `setTimeout` sits inside
@@ -2552,6 +2489,9 @@ the runner rather than by a curator who reads.
   whitespace words, because `tree.auditTree` is a call exactly as `auditTree(tree)` is.
 - Each source is counted once, and every export reads those counts. A scan of every source for
   each export took half of the static pass (Figures).
+- A routine opens with any keyword of a routine, `method` among them (`ROUTINES`). Verified by
+  `suites/test_checker.nim`: an exported routine of each keyword reads, and its `*` drops where
+  its own module calls it.
 - **Missing suite**: a check module without `tests/suites/test_<module>.nim`.
 - **Verb mismatch**: one set named three times. The names are the verbs that koch dispatches,
   the verbs that its usage lists, and the rows of the checks table in CURATOR.md. Usage lists

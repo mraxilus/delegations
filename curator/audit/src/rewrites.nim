@@ -68,8 +68,6 @@ type
 
 
 const
-  NAME_CHARS = {'a' .. 'z', 'A' .. 'Z', '0' .. '9', '_', '\x80' .. '\xFF'}
-    ## Bytes name token is built from: Nim reads every non-ASCII byte as letter.
   RESULT_NAME = "result"  ## Name compiler declares in each routine returning value.
   KIND_MEMBER = "skEnumField"  ## Kind of enum member, which bare name reaches unless enum is pure.
   INTERPOLATORS = ["&", "fmt"]  ## Prefixes of string strformat interpolates (`&"…{x}…"`).
@@ -105,7 +103,7 @@ func interpolatedLines(source, name: string): seq[int] =
       if depth > 0 and c in NAME_CHARS:
         word.add c
         continue
-      is_named = is_named or word.isSameName(name)
+      is_named = is_named or word.identity == name.identity
       word = ""
     if is_named: result.add t.line
 
@@ -127,7 +125,7 @@ func sitesOf(source, name: string): seq[(int, int)] =
   ## Read one-based line and zero-based byte column of each name token Nim reads as `name`.
   let starts = source.lineStarts
   for t in source.tokens:
-    if t.kind == TokenKind.Word and t.spelling(source).isSameName(name):
+    if t.kind == TokenKind.Word and t.spelling(source).identity == name.identity:
       result.add (t.line + 1, t.first - starts[t.line])
 
 
@@ -190,7 +188,7 @@ func planRename*(
 
   result.rename = rename
   if rename.renamed.isKeyword: refuse "`" & rename.renamed & "` is keyword"
-  if rename.renamed.isSameName(RESULT_NAME):
+  if rename.renamed.identity == RESULT_NAME.identity:
     refuse "`" & rename.renamed & "` names implicit result of routine"
   if rename.path notin answers or answers[rename.path].reason.len > 0:
     refuse "declaring file does not compile on its pin"
@@ -202,7 +200,7 @@ func planRename*(
     shadowed = declaring.globals.getOrDefault(rename.renamed).filterIt(
       it.isReached and not it.isIdentical(declared),
     )
-    is_respelled = rename.name.isSameName(rename.renamed)
+    is_respelled = rename.name.identity == rename.renamed.identity
   if not declared.file.endsWith("/" & rename.path) or declared.line != rename.line or
       declared.column != rename.column:
     refuse "`" & rename.path & ":" & $rename.line & "` names symbol declared elsewhere"
@@ -228,7 +226,7 @@ func planRename*(
       if site in answers[path].symbols:
         # Answer naming other identifier is call compiler placed on name: `items` of `for`.
         symbol = answers[path].symbols[site]
-        if not symbol.name.split('.')[^1].isSameName(rename.name):
+        if symbol.name.split('.')[^1].identity != rename.name.identity:
           refuse "`" & path & ":" & $site[0] & "` resolves to `" & symbol.name &
             "`, which its token does not name"
       else:

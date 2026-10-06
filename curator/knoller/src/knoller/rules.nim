@@ -4,9 +4,11 @@
 ##     for tool reading output.
 ##   Article citing each rule is caller's: `curator/audit` holds `CITATIONS`, indexed by
 ##     `Rule`, so rule without citation fails to compile there.
-##   Rule with no fixer names check alone: `NotOverBinary`, `Fence` for fence fix cannot read,
-##     `FenceHeld` for lines fence keeps as written, which run reports as warning, and
-##     `Unsettled` for file fixers do not settle.
+##   Rule with no fixer names check alone: `LineEnding`, `Tab`, `LineWidth`, `NotOverBinary`,
+##     `Fence` for fence fix cannot read, and `FenceHeld` for lines fence keeps as written, which
+##     run reports as warning.
+##   List holds rules of style source can break, alone. Fixers that do not settle are fault of
+##     tool, so their fix carries message of its own (`Fix.unsettled`), and no article cites it.
 
 {.experimental: "strictFuncs".}
 
@@ -15,11 +17,23 @@ import std/strutils
 
 type Rule* {.pure.} = enum  ## Define one rule knoller fixes or reports, in order chain runs.
   TrailingWhitespace = "trailing whitespace"  ## Line ends in space, tab or CR.
-  FileEnding = "file ending"  ## File ends in exactly one newline.
+  FileEnding = "file ending"  ## File ends in exactly one newline, so empty file breaks it.
+  LineEnding = "line ending"  ## Line holds no CR, so each line ends in LF alone.
   TabInString = "tab in string"  ## Tab inside one-line plain string is written `\t`.
+  Tab = "tab"  ## Line holds no tab.
+  LineWidth = "line width"  ## Line holds at most `LINE_MAX` runes, where break can fix it.
   TrailingComment = "trailing comment"  ## Two spaces stand before trailing comment's marker.
   BannerSpacing = "banner spacing"  ## Blank lines beside banner follow its tier.
   EntryBlock = "entry block"  ## Entry block holds no binding; body moves into `proc main`.
+  Abbreviation = "abbreviation"  ## Name coins no abbreviation; its full word stands.
+  ActionVerb = "action verb"  ## Action is imperative verb, and property is bare noun.
+  BooleanName = "boolean name"  ## Boolean opens `is_` or its siblings; predicate opens `is`.
+  LookupTable = "lookup table"  ## Lookup table reads `lut_<value>_by_<key>`.
+  NameCase = "name case"  ## Case of name follows its kind.
+  MemberCase = "member case"  ## Member of enum is `PascalCase`, as its type is.
+  PlaceholderLetter = "placeholder letter"  ## Placeholder of generic is one capital letter.
+  Notation = "notation"  ## Notation of source holds over case only for immutable global.
+  GlobalWord = "global word"  ## Global shares no word with type.
   ArticleInComment = "article in comment"  ## Comment drops its articles.
   MessageValue = "message value"  ## Message echoes its value in backticks.
   AndWithOr = "and with or"  ## Condition mixing `and` with `or` parenthesises each `and`.
@@ -36,6 +50,12 @@ type Rule* {.pure.} = enum  ## Define one rule knoller fixes or reports, in orde
   StrictFuncs = "strictFuncs"  ## Module carries `strictFuncs` before its imports.
   ProfilerImport = "profiler import"  ## Entry module imports profiler on one line.
   StubKeys = "stub keys"  ## Test stub leaves out `-r`, `batchable` and `joinable`.
+  UsedConsumer = "used consumer"  ## `{.used.}` carries comment naming its consumer.
+  PushForeign = "push foreign"  ## `{.push.}` stands only over foreign bindings `{.pop.}` closes.
+  RandomSeed = "random seed"  ## Suite importing `std/random` seeds it.
+  StubHeader = "stub header"  ## Test stub carries testament header.
+  DebugOutput = "debug output"  ## Test leaves no unlabelled `echo` outside condition.
+  FixedWait = "fixed wait"  ## Drive code waits on condition or clock, never span of real time.
   UnorderedList = "unordered list"  ## List language leaves unordered is alphabetised.
   TestBlankLines = "test blank lines"  ## Blank lines beside suite and test follow tier.
   HelperBlankLines = "helper blank lines"  ## Nested helper takes one blank line each side.
@@ -52,7 +72,6 @@ type Rule* {.pure.} = enum  ## Define one rule knoller fixes or reports, in orde
   CommentAbove = "comment above"  ## Trailing comment that does not fit takes own line above.
   Fence = "fence"  ## Fence closes inside bracket, string or comment it opens in.
   FenceHeld = "fence held"  ## Fence keeps its lines as written; run warns of each fence.
-  Unsettled = "unsettled"  ## File fixers still change after their last round stays as written.
 
 
 func id*(rule: Rule): string =

@@ -1,4 +1,5 @@
-## Replicate Article X.2 and X.9 checks of knoller's form, and its fixers, on Nim source.
+## Replicate Article X.1, X.2, X.9 and VIII.5 checks of knoller's form, and its fixers: form of
+##   text of any kind, and gaps, banners and fixes of Nim source.
 
 {.experimental: "strictFuncs".}
 
@@ -22,8 +23,42 @@ func gapMessages(source: string): seq[string] =
   checkComments("a.nim", source).mapIt(it.message)
 
 
+func formOf(source: string): seq[(Rule, string)] =
+  ## Read rule and message of each form finding of text.
+  checkForm("a.txt", source).mapIt (it.rule, it.message)
+
+
 
 suite "Article X":
+  test "X.1 width counts runes, not bytes":
+    check formOf("é ".repeat(49) & "éé\n").len == 0  # 100 runes pass
+    check formOf("é ".repeat(49) & "ééé\n") ==
+      @[(Rule.LineWidth, "Line exceeds 100 characters; got `101`.")]  # 101 runes, breakable
+    check formOf("é".repeat(101) & "\n").len == 0  # one 101-rune token: no whitespace to break
+
+
+  test "X.1 line over limit passes only when breaking cannot fix it":
+    let
+      url = "https://fonts.googleapis.com/css2?family=" & "x".repeat(150)
+      link = "<link rel=\"stylesheet\" href=\"" & url & "\">"
+    check link.len > LINE_MAX and link.isUnbreakable  # one token, rest fits without it
+    check formOf(link & "\n").len == 0  # URL has no whitespace
+    check formOf("<p>" & "word ".repeat(40) & "</p>\n") ==
+      @[(Rule.LineWidth, "Line exceeds 100 characters; got `207`.")]  # prose always breaks
+    check formOf("<svg>" & "<circle/>".repeat(200) & "</svg>\n").len == 1  # past `TOKEN_MAX`
+    check not ("x".repeat(TOKEN_MAX + 1)).isUnbreakable  # machine output, not URL
+    check ("x".repeat(TOKEN_MAX)).isUnbreakable  # longest token exemption covers
+    check not ("x".repeat(60) & " " & "y".repeat(45)).isUnbreakable  # both fit once split
+    check not ("  " & "x".repeat(90) & " " & "y".repeat(20)).isUnbreakable  # reflow fixes it
+
+
+  test "X.1 tab is finding in any text, string and comment among it":
+    check formOf("\tx\n") == @[(Rule.Tab, "Line holds tab.")]  # indent
+    check formOf("hints:off\t# x\n") == @[(Rule.Tab, "Line holds tab.")]  # text of any kind
+    check formOf("let s = \"a\tb\"\n") == @[(Rule.Tab, "Line holds tab.")]  # fixer's own case
+    check checkForm("a.txt", "x\n\ty\n")[0].line == 2  # line numbers one-based
+
+
   test "X.9 trailing comment takes exactly two spaces before its marker":
     check gapMessages("let a = 1  # Two.\n").len == 0  # two pass
     check gapMessages("let a = 1 # One.\n") == @[gapMessage(1)]  # one fails
@@ -57,7 +92,95 @@ suite "Article X":
 
 
 
+suite "Article VIII":
+  test "VIII.5 whitespace, line ending and file ending":
+    check formOf("x = 1 \n") == @[(Rule.TrailingWhitespace, "Line ends with whitespace.")]
+    check formOf("x = 1\r\n") == @[
+      (Rule.LineEnding, "Line ends with CR; got CRLF."),
+      (Rule.TrailingWhitespace, "Line ends with whitespace."),
+    ]  # CRLF: CR read, and CR is whitespace
+    check formOf("x = 1\ty\t\n") ==
+      @[(Rule.Tab, "Line holds tab."), (Rule.TrailingWhitespace, "Line ends with whitespace.")]
+    check formOf("x = 1") == @[(Rule.FileEnding, "File lacks final newline.")]
+    check formOf("x = 1\n\n") == @[(Rule.FileEnding, "File ends with blank line.")]
+    check formOf("") == @[(Rule.FileEnding, "File is empty.")]  # no fix reaches it
+    check checkForm("a.txt", "x\ny \n")[0].line == 2  # line numbers one-based
+    check checkForm("a.txt", "x")[0].line == 0  # whole file
+    check formOf("x\n").len == 0 and formOf("## Do.\n\nlet a = 1  # Two.\n").len == 0
+
+
+
 suite "Fixes":
+  test "trailing whitespace is cut, CR of CRLF ending among it, and nothing else":
+    let fix = fixed("a = 1 \nb = 2\r\nc = 3\t\n  # Keep  this.\nd = \" \"\n")
+    check fix.source == "a = 1\nb = 2\nc = 3\n  # Keep  this.\nd = \" \"\n"  # those three alone
+    check fix.fixed.mapIt(it.line) == @[1, 2, 3]  # one report per line
+    check fix.fixed[0].rule == Rule.TrailingWhitespace  # rule named
+    check checkForm("a.nim", fix.source).len == 0  # check reports none
+    check fixed(fix.source).source == fix.source and fixed(fix.source).fixed.len == 0  # idempotent
+
+
+  test "ending becomes exactly one newline; empty file has no one fix":
+    for dirty in ["a = 1\nb = 2", "a = 1\nb = 2\n\n\n"]:  # lacking, then blank lines
+      let fix = fixed(dirty)
+      check fix.source == "a = 1\nb = 2\n"  # body kept
+      check fix.fixed.mapIt(it.line) == @[0]  # whole file
+      check checkForm("a.nim", fix.source).len == 0  # check reports none
+      check fixed(fix.source).fixed.len == 0  # idempotent
+    check fixed("").source == "" and fixed("").fixed.len == 0  # empty stays, finding and all
+    check checkForm("a.nim", "").mapIt(it.rule) == @[Rule.FileEnding]
+
+
+  test "X.9 gap becomes two spaces, and code, string and comment text stay":
+    let
+      dirty = "let a = \"# x\" # One.\nlet b = 2     ## Aligned.\nlet c = 3  # Two.\n" &
+        "# Whole  line.\nlet d = 4#Glued.\n"
+      fix = fixed(dirty)
+    check fix.source == "let a = \"# x\"  # One.\nlet b = 2  ## Aligned.\nlet c = 3  # Two.\n" &
+      "# Whole  line.\nlet d = 4  #Glued.\n"  # gaps alone move
+    check fix.fixed.mapIt(it.line) == @[1, 2, 5]  # one report per line
+    check checkComments("a.nim", fix.source).len == 0  # check reports none
+    check checkForm("a.nim", fix.source).len == 0  # nor does rest of form
+    check fixed(fix.source).source == fix.source  # idempotent
+
+
+  test "X.2 run beside banner takes count exact check reads, and nothing else moves":
+    let
+      dirty = "x = 1\n#[ Parent ]#\n#[[ Child ]]#\n\n\n\ny = 2\n\n\n\n\n#[[ Sibling ]]#\nz\n"
+      fix = fixed(dirty)
+    check fix.source ==
+      "x = 1\n\n\n\n#[ Parent ]#\n\n\n#[[ Child ]]#\n\ny = 2\n\n\n#[[ Sibling ]]#\n\nz\n"
+    check fix.fixed.mapIt(it.line) == @[2, 3, 3, 12, 12]  # banner each run stands beside
+    check checkBanners("a.nim", fix.source).len == 0
+    check fixed(fix.source).source == fix.source  # idempotent
+    for unread in [
+      "#[ Opening ]#\n\nx = 1\n",  # nothing above
+      "x = 1\n\n\n\n#[ Closing ]#\n",  # nothing below
+      "x = 1\n\n\n\n#[ A ]#\n#[ B ]#\n\ny = 2\n",  # banner beside banner, no parent and child
+      "x = 1\n\n\n#[[ A ]]#\n\n#[ B ]#\n\ny = 2\n",
+    ]:
+      check fixed(unread).source == unread and checkBanners("a.nim", unread).len == 0  # no count
+
+
+  test "X.1 tab in one-line string that is neither raw nor long is written `\\t`, and no other":
+    let
+      plain = "let s = \"a\tb\"\nlet c = &\"x\t{y}\"\n"
+      fix = fixed(plain)
+    check fix.source == "let s = \"a\\tb\"\nlet c = &\"x\\t{y}\"\n"  # escape reads same byte
+    check fix.fixed.mapIt(it.rule) == @[Rule.TabInString, Rule.TabInString]
+    check checkForm("a.nim", fix.source).len == 0  # check reports none after fix
+    check fixed(fix.source).fixed.len == 0  # second fix writes nothing
+    for kept in [
+      "let s = r\"a\tb\"\n",  # raw: `\\t` reads as two characters
+      "let s = fmt\"a\tb\"\n",  # generalised raw
+      "let s = \"\"\"a\tb\"\"\"\n",  # long string
+      "let s = 1  # a\tb\n",  # comment
+      "\tlet s = 1\n",  # indent: width is guess
+    ]:
+      check fixed(kept).source == kept
+      check checkForm("a.nim", kept).mapIt(it.rule) == @[Rule.Tab]  # finding stays
+
+
   test "fix never writes line width check reports":
     let near = "x".repeat(LINE_MAX - 4) & " # c\n"  # 100 runes; two-space gap makes 101
     check fixed(near).source == near  # left to hand
