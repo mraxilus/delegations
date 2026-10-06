@@ -31,8 +31,8 @@ suite "Article X":
     check messages("pages/x.html", link & "\n", Kind.Html).len == 0  # URL has no whitespace
     check messages("pages/x.html", "<p>" & "word ".repeat(40) & "</p>\n", Kind.Html) ==
       @["Line exceeds 100 characters (X.1); got `207`."]  # prose always breaks
-    check messages("pages/x.svg", "<svg>" & "<circle/>".repeat(200) & "</svg>\n", Kind.Svg)
-      .len == 1  # minified markup runs past TOKEN_MAX
+    check messages("pages/x.svg", "<svg>" & "<circle/>".repeat(200) & "</svg>\n", Kind.Svg) ==
+      @["Line exceeds 100 characters (X.1); got `1811`."]  # minified markup runs past TOKEN_MAX
 
 
   test "X.1 tabs rejected in every kind":

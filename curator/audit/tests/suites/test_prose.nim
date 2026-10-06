@@ -18,7 +18,8 @@ suite "Article VI":
     ]  # IV.4 echo value, article where sentence ends
     check checkProse("nim.cfg", "hints:off  # the trap\n", Syntax.Hash).mapIt(it.message) ==
       @["Comment holds article (VI.5); got `the`."]  # other syntax, same words
-    check checkProse("a.ts", "// A row.\nlet a = 1\n", Syntax.Slash).mapIt(it.line) == @[1]
+    check checkProse("a.ts", "// A row.\nlet a = 1\n", Syntax.Slash).mapIt((it.line, it.message)) ==
+      @[(1, "Comment holds article (VI.5); got `a`.")]  # TypeScript, same words
     check checkProse("README.md", "The row.\n", Syntax.None).len == 0  # prose keeps articles
 
 

@@ -124,6 +124,9 @@ suite "Names":
       ("do_x_y", "`doXY` reads `XY` as acronym (V.9)"),
     ]  # V.1, V.11; placeholder `Key` (V.12) has no rename
     check renamesCase("when isMainModule:\n  var COUNT {.global.} = 0\n", []).len == 0  # V.10
+    const node = "type Node = ref object of JsRoot\n  Child_count: int\n"
+    check renamesCase(node, []).mapIt((it.name, it.refusal)) ==
+      @[("Child_count", "foreign code reads name through `JsRoot`")]  # root of JavaScript object
 
 
   test "exemptions are jargon, root glossary and glossary of path's own project":
