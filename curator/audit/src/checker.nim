@@ -51,7 +51,7 @@ const
     ## Modules of package checker imports by path, held to dead-export rule as checker is.
   KNOLLER_SUITE_DIRECTORY = KNOLLER_DIRECTORY & "/tests/suites/"  ## Where knoller's suites live.
   NIM_EXT* = ".nim"  ## Extension of module and suite alike.
-  ROUTINES* = ["func", "proc", "template", "macro", "iterator", "converter"]
+  ROUTINES* = ["converter", "func", "iterator", "macro", "method", "proc", "template"]
     ## Keywords opening routine definition; exported one ends its name with asterisk.
   USAGE_MARK* = "Usage: koch"  ## Opening of driver's usage text.
   VERBS_MARK* = "Verbs:"
