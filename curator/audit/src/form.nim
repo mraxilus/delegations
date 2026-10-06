@@ -8,6 +8,8 @@
 ##     knoller reads it (`checkBanners`) and its fixer writes it: three blank lines before first
 ##     tier, two before second, one after either, and second tier following its parent at once
 ##     keeps its own two. Kind of other syntax takes no banner rule.
+##   Fixers of these rules are knoller's (`form.nim`, `FORM_STEPS` there), which `koch fix` runs
+##     on Nim source alone, through knoller's chain.
 ##   Static pass runs no X.9 yet, which knoller holds (`checkComments`): `koch fix` lands first,
 ##     so each project clears its gaps by one command on its own branch, and pull request after
 ##     it wires `fixes.checkFormatting` into static pass (CURATOR.md, duty 3).
@@ -37,16 +39,3 @@ func checkForm*(path, source: string; rule: KindRule): seq[Finding] =
     not (is_width_exempt and it.rule == Rule.LineWidth),
   ).findingsOf
   if rule.syntax == Syntax.Nim: result.add checkBanners(path, source).findingsOf
-
-
-func formSteps(rule: KindRule): seq[Step] =
-  ## List form fixers kind rule names, in order they run: Nim syntax takes every fixer of
-  ##   knoller's form, i.e. tabs in strings, comments and banners besides line ends and ending.
-  if rule.syntax == Syntax.Nim: @FORM_STEPS else: @[guarded(fixWhitespace), guarded(fixEnding)]
-
-
-func fixForm*(path, source: string; rule: KindRule): Fix =
-  ## Rewrite source so each form check with one mechanical fix holds; report each rewrite.
-  ##   Every line is held, so no fixer writes line width check reports.
-  result.source = source
-  for step in rule.formSteps: result = result.chain(step.run(path, result.source, EVERY))

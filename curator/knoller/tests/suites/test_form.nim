@@ -112,6 +112,76 @@ suite "Article VIII":
 
 
 suite "Fixes":
+  test "trailing whitespace is cut, CR of CRLF ending among it, and nothing else":
+    let fix = fixed("a = 1 \nb = 2\r\nc = 3\t\n  # Keep  this.\nd = \" \"\n")
+    check fix.source == "a = 1\nb = 2\nc = 3\n  # Keep  this.\nd = \" \"\n"  # those three alone
+    check fix.fixed.mapIt(it.line) == @[1, 2, 3]  # one report per line
+    check fix.fixed[0].rule == Rule.TrailingWhitespace  # rule named
+    check checkForm("a.nim", fix.source).len == 0  # check reports none
+    check fixed(fix.source).source == fix.source and fixed(fix.source).fixed.len == 0  # idempotent
+
+
+  test "ending becomes exactly one newline; empty file has no one fix":
+    for dirty in ["a = 1\nb = 2", "a = 1\nb = 2\n\n\n"]:  # lacking, then blank lines
+      let fix = fixed(dirty)
+      check fix.source == "a = 1\nb = 2\n"  # body kept
+      check fix.fixed.mapIt(it.line) == @[0]  # whole file
+      check checkForm("a.nim", fix.source).len == 0  # check reports none
+      check fixed(fix.source).fixed.len == 0  # idempotent
+    check fixed("").source == "" and fixed("").fixed.len == 0  # empty stays, finding and all
+    check checkForm("a.nim", "").mapIt(it.rule) == @[Rule.FileEnding]
+
+
+  test "X.9 gap becomes two spaces, and code, string and comment text stay":
+    let
+      dirty = "let a = \"# x\" # One.\nlet b = 2     ## Aligned.\nlet c = 3  # Two.\n" &
+        "# Whole  line.\nlet d = 4#Glued.\n"
+      fix = fixed(dirty)
+    check fix.source == "let a = \"# x\"  # One.\nlet b = 2  ## Aligned.\nlet c = 3  # Two.\n" &
+      "# Whole  line.\nlet d = 4  #Glued.\n"  # gaps alone move
+    check fix.fixed.mapIt(it.line) == @[1, 2, 5]  # one report per line
+    check checkComments("a.nim", fix.source).len == 0  # check reports none
+    check checkForm("a.nim", fix.source).len == 0  # nor does rest of form
+    check fixed(fix.source).source == fix.source  # idempotent
+
+
+  test "X.2 run beside banner takes count exact check reads, and nothing else moves":
+    let
+      dirty = "x = 1\n#[ Parent ]#\n#[[ Child ]]#\n\n\n\ny = 2\n\n\n\n\n#[[ Sibling ]]#\nz\n"
+      fix = fixed(dirty)
+    check fix.source ==
+      "x = 1\n\n\n\n#[ Parent ]#\n\n\n#[[ Child ]]#\n\ny = 2\n\n\n#[[ Sibling ]]#\n\nz\n"
+    check fix.fixed.mapIt(it.line) == @[2, 3, 3, 12, 12]  # banner each run stands beside
+    check checkBanners("a.nim", fix.source).len == 0
+    check fixed(fix.source).source == fix.source  # idempotent
+    for unread in [
+      "#[ Opening ]#\n\nx = 1\n",  # nothing above
+      "x = 1\n\n\n\n#[ Closing ]#\n",  # nothing below
+      "x = 1\n\n\n\n#[ A ]#\n#[ B ]#\n\ny = 2\n",  # banner beside banner, no parent and child
+      "x = 1\n\n\n#[[ A ]]#\n\n#[ B ]#\n\ny = 2\n",
+    ]:
+      check fixed(unread).source == unread and checkBanners("a.nim", unread).len == 0  # no count
+
+
+  test "X.1 tab in one-line string that is neither raw nor long is written `\\t`, and no other":
+    let
+      plain = "let s = \"a\tb\"\nlet c = &\"x\t{y}\"\n"
+      fix = fixed(plain)
+    check fix.source == "let s = \"a\\tb\"\nlet c = &\"x\\t{y}\"\n"  # escape reads same byte
+    check fix.fixed.mapIt(it.rule) == @[Rule.TabInString, Rule.TabInString]
+    check checkForm("a.nim", fix.source).len == 0  # check reports none after fix
+    check fixed(fix.source).fixed.len == 0  # second fix writes nothing
+    for kept in [
+      "let s = r\"a\tb\"\n",  # raw: `\\t` reads as two characters
+      "let s = fmt\"a\tb\"\n",  # generalised raw
+      "let s = \"\"\"a\tb\"\"\"\n",  # long string
+      "let s = 1  # a\tb\n",  # comment
+      "\tlet s = 1\n",  # indent: width is guess
+    ]:
+      check fixed(kept).source == kept
+      check checkForm("a.nim", kept).mapIt(it.rule) == @[Rule.Tab]  # finding stays
+
+
   test "fix never writes line width check reports":
     let near = "x".repeat(LINE_MAX - 4) & " # c\n"  # 100 runes; two-space gap makes 101
     check fixed(near).source == near  # left to hand

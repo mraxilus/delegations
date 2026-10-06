@@ -208,7 +208,7 @@ func fixCommentsAbove*(path, source: string): Fix =
   if found.len > 0: result.origin = origin
 
 
-func fixWhitespace*(path, source: string): Fix =
+func fixWhitespace(path, source: string): Fix =
   ## Cut whitespace each line ends with, CR of CRLF ending included.
   var lines = source.split('\n')
   for i, line in lines.mpairs:
@@ -218,7 +218,7 @@ func fixWhitespace*(path, source: string): Fix =
   result.source = lines.join("\n")
 
 
-func fixEnding*(path, source: string): Fix =
+func fixEnding(path, source: string): Fix =
   ## End non-empty source with exactly one newline; empty source has no one fix.
   result.source = source
   if source.len == 0 or (source.endsWith("\n") and not source.endsWith("\n\n")): return
