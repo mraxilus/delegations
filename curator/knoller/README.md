@@ -1,11 +1,11 @@
 # knoller
 
-The fixers and the checks of Nim source that read the text of one file alone, and the fixer of
-type conversions, which asks the semantic pass of the compiler. The checks are those that the
-fixers clear, and those of form, names, idioms, articles and fixed waits that the static pass of
-`curator/audit` reads. `koch fix` runs the fixers through `curator/audit`, which keeps the fixers
-of renames. `audit` imports knoller by a relative path. Knoller also runs alone, on a file or a
-directory of any repository.
+The fixers and the checks of Nim source that read the text of one file alone. Knoller also holds
+the fixer of type conversions, which asks the semantic pass of the compiler. The checks are those
+that the fixers clear, and those of form, names, idioms, articles and fixed waits that the static
+pass of `curator/audit` reads. `koch fix` runs the fixers through `curator/audit`, which keeps the
+fixers of renames. `audit` imports knoller by a relative path. Knoller also runs alone, on a file
+or a directory of any repository.
 
 Authority replicated: none. The rules are those of `CONSTITUTION.md` and `STYLE.md`.
 

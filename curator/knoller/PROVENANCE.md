@@ -353,7 +353,7 @@ toolchain that serves the pin of the project.
 - On the commit pin, `def` in an included file recompiles the file that includes it for each
   site, and `dus` recompiles only what is dirty. Read in `executeNoHooksV3` of `nimsuggest.nim`
   at that pin. Measured on the container of the curator, 2026-10-04, over 20 sites of the shared
-  suite of `rga_visualiser` at `c5c65db`: `def` took 345 s and `dus` took 50 s.
+  suite of `rga_visualiser` at `c5c65db`. There `def` took 345 s and `dus` took 50 s.
 - A site of the entry itself keeps `def`, because `dus` lists every use of the symbol. Measured in
   the same run: `dus` gave 182 use lines beside the 20 definitions. That the list grows long for a
   common symbol such as `float` is inferred, and an included file pays that output alone.
@@ -372,8 +372,9 @@ keeps its own.
 - `knoller --check` runs the pass on each file that holds a candidate, and reports each
   conversion as due (D1 a of #558). A file that holds none asks nothing, so a run on a clean tree
   compiles nothing more. At `da2edae` no file of the four projects held one.
-- A file the pass cannot resolve keeps each conversion, and prints one warning with the reason:
-  its compile error, a pin that no compiler serves, or a directory with two nimble files.
+- A file the pass cannot resolve keeps each conversion, and prints one warning with the reason.
+  The reason is its compile error, a pin that no compiler serves, or two nimble files in one
+  directory.
 - Verified by `suites/test_conversions.nim`, and by `suites/test_command.nim`, which runs the pass
   on a fresh repository and reads the conversion it reports.
 

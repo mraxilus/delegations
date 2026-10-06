@@ -1541,11 +1541,10 @@ before `; got `, or before the closing period. So `koch check` prints
 ## Fixes
 
 **`koch fix` rewrites in place each finding that has one mechanical fix, and nothing else.** It is
-built from the checks. Each fixer sits beside its check. A fixer that reads the text of one file
-sits in knoller, with the fixer of conversions, and one that reads more sits in `names.nim` or
-`checker.nim`.
-Each reads the same spans, runs, predicates and constants. So each rule is written once (Article
-II.1), and a fixer cannot drift from the check that names its finding.
+built from the checks. Each fixer sits beside its check, and reads the same spans, runs,
+predicates and constants. A fixer that reads the text of one file sits in knoller, and so does the
+fixer of conversions. One that reads more sits in `names.nim` or `checker.nim`. So each rule is
+written once (Article II.1), and a fixer cannot drift from the check that names its finding.
 
 Each rewrite prints as `path:line: <rule> fixed`, at the line that the check names, and the run
 ends with the count. With the layout rules below, `koch fix` replaces nimpretty.
@@ -1873,9 +1872,9 @@ It fixed every Nim file of the tree on branch `main`, with the checkouts of `koc
 
 **Two rules ask what a name means, so `koch` asks the semantic pass of knoller.** The lookup
 through `nimsuggest`, and the fixer of conversions, live in knoller, whose record holds them. The
-audit gives the lookup what its tree holds: the project of each file is its directory, whose
-nimble file names the pin, a root file takes the pin of the driver, and the includer of a file is
-read among the Nim files of the tree (`symbols.nim`).
+audit gives the lookup what its tree holds (`symbols.nim`). The project of each file is its
+directory, whose nimble file names the pin, and a root file takes the pin of the driver. The
+includer of a file is read among the Nim files of the tree.
 
 - A file whose project pins no compiler, or whose pin no compiler serves, is answered unresolved
   with its reason, and asks nothing.
@@ -1883,8 +1882,8 @@ read among the Nim files of the tree (`symbols.nim`).
   each one (D1 a of #558). The two checks run the pass once the restore stands, since a file
   compiles only with the checkouts of its lock. A file the pass cannot resolve prints one warning
   with its reason, and the exit code holds.
-- Verified by `suites/test_symbols.nim`, against the `nimsuggest` of the running compiler, for a
-  file of the tree, a file it includes, and a file that compiles nowhere.
+- Verified by `suites/test_symbols.nim`, against the `nimsuggest` of the running compiler. It
+  holds a file of the tree, a file it includes, and a file that compiles nowhere.
 
 **A coined abbreviation (V.6) is renamed to its full word at every use, or the rename is refused
 whole.** `names.nim` reads each declaration that the names check reports, and spells it out word
