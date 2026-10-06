@@ -83,7 +83,7 @@
 ##   `?` in bottom-right corner says all of this, from `help.nim`, which browser's help
 ##   panel reads too.
 ##   Every panel is collapsing header; `diagnostics` starts closed and holds live frame
-##   time, memory use of both arenas, and object pool.
+##   time, memory use of program arena, frame arenas and object pool.
 ## Command line, for validating build without sitting in front of it:
 ##   `--screenshot:PATH` writes one PNG, `--frames:N` exits after N frames, `--hidden`
 ##   never maps window, `--storyboard:DIR` writes one frame per scripted construction step
@@ -189,19 +189,20 @@ const
   WIDTH_EXPORT_MAX* {.define: "visualiser.width_export_max".} = 3840
     ## Bound largest window pixel readback or PNG export is ever asked to cover.
   HEIGHT_EXPORT_MAX* {.define: "visualiser.height_export_max".} = 2160
-  CAPACITY_ARENA_PERMANENT* {.define: "visualiser.capacity_arena_permanent".} = 160 * 1024 * 1024
-    ## Set permanent arena's size.
-    ##   Pixel readback buffer and every storyboard GIF frame live here for whole process.
+  CAPACITY_SCRATCH_EXPORT* {.define: "visualiser.capacity_scratch_export".} = 64 * 1024 * 1024
+    ## Set export's scratch, carved once from program arena and overwritten by each export.
+    ##   PNG's filtered scanlines, or GIF's quantized indices and LZW output.
+  CAPACITY_ARENA_PROGRAM* {.define: "visualiser.capacity_arena_program".} =
+      160 * 1024 * 1024 + CAPACITY_SCRATCH_EXPORT
+    ## Set program arena's size, one arena for program's whole life.
+    ##   Pixel readback buffer, every storyboard GIF frame and export's scratch live here.
     ##   Sized for `STRIDE_GIF`'s downsample plus `WIDTH_EXPORT_MAX`x`HEIGHT_EXPORT_MAX`
-    ##   readback, with headroom; GIF storage scales with `STEPS`.
-  CAPACITY_ARENA_FRAME* {.define: "visualiser.capacity_arena_frame".} = 64 * 1024 * 1024
-    ## Set frame arena's size.
-    ##   PNG's filtered scanlines or one GIF frame's quantized indices and LZW output,
-    ##   reclaimed once that unit of work is written out.
-  CAPACITY_ARENA_SWAP* {.define: "visualiser.capacity_arena_swap".} =
+    ##   readback, with headroom, and for `CAPACITY_SCRATCH_EXPORT`; GIF storage scales with
+    ##   `STEPS`.
+  CAPACITY_ARENA_FRAME* {.define: "visualiser.capacity_arena_frame".} =
       OBJECTS_MAX * sizeof(Placement) + 256 * 1024
-    ## Set each half of frame swap pair.
-    ##   Two blocks: pair's promise is that last frame's bytes are still there to read.
+    ## Set each frame arena's size.
+    ##   Two of them: last frame's bytes are still there to read; see `arena.ArenasFrame`.
     ##   Frame's placements carve first, one for each handle: 645,120 bytes at shipped
     ##   5040 handles, `sizeof(Placement)` reading 128.
     ##   Draw scratch carves after them, in 256 KiB of its own: largest is lattice's, bounded by
@@ -224,14 +225,14 @@ const
     ## Bound how many per-frame timings `--timings` can record.
     ##   Independent of arenas, since benchmark run is not interactive draw loop.
   BYTES_MEMORY_TOTAL* =
-      CAPACITY_ARENA_PERMANENT + CAPACITY_ARENA_FRAME + 2 * CAPACITY_ARENA_SWAP +
+      CAPACITY_ARENA_PROGRAM + 2 * CAPACITY_ARENA_FRAME +
       2 * sizeof(MeshSet) + sizeof(Scene) + sizeof(History) + sizeof(Panel) +
       FRAMES_TIMING_MAX * sizeof(float32)
     ## Sum every fixed-size reservation this binary makes.
-    ##   Both arenas at full capacity, committed in data segment regardless of use; both
-    ##   mesh sets; object pool; undo timeline, `history.CAPACITY_HISTORY` whole copies of
-    ##   that pool; panel's state; `--timings` buffer.
-    ##   Placing side of every handle sits inside frame pair, so pair's term counts it.
+    ##   Program arena and both frame arenas at full capacity, in data segment regardless of
+    ##   use; both mesh sets; object pool; undo timeline, `history.CAPACITY_HISTORY` whole
+    ##   copies of that pool; panel's state; `--timings` buffer.
+    ##   Placing side of every handle sits inside frame arenas, so their term counts it.
     ##   Excludes anything Dear ImGui, SDL or driver allocate.
     ##   Timeline is largest term at capacity; figure omitting its biggest entry is worse
     ##   than none.
@@ -245,10 +246,10 @@ static:
   # Carved memory is uninitialised bytes, and never traced: placement holding GC'd field
   #   would then hold garbage reference.
   doAssert supportsCopyMem(Placement),
-    &"Placements carve from frame pair, so they must hold plain values; got `{$Placement}`."
-  doAssert CAPACITY_ARENA_SWAP >= OBJECTS_MAX * sizeof(Placement) + sizeof(DrawScratch),
-    &"Each half of frame pair must hold placement for each handle and draw scratch; got " &
-    &"`{CAPACITY_ARENA_SWAP}` for `visualiser.capacity_arena_swap`."
+    &"Placements carve from frame arenas, so they must hold plain values; got `{$Placement}`."
+  doAssert CAPACITY_ARENA_FRAME >= OBJECTS_MAX * sizeof(Placement) + sizeof(DrawScratch),
+    &"Each frame arena must hold placement for each handle and draw scratch; got " &
+    &"`{CAPACITY_ARENA_FRAME}` for `visualiser.capacity_arena_frame`."
 
 # Hold vertex storage at module scope, far too large for stack frame.
 var
@@ -268,30 +269,34 @@ var
     ## built.
 
 
-# Reserve two arenas, one permanent and one reset after each throwaway unit of work.
-#   See `arena.nim` for why interactive draw loop needs neither.
+# Reserve one program arena for program's whole life, and two frame arenas turned each frame.
+#   What one frame carved is still readable through next; see `arena.ArenasFrame`.
+#   Third region, object pool, is `Scene`'s own; see `arena`.
 var
-  BUFFER_ARENA_PERMANENT: array[CAPACITY_ARENA_PERMANENT, byte]
-  ARENA_PERMANENT = initArena(BUFFER_ARENA_PERMANENT)
-  BUFFER_ARENA_FRAME: array[CAPACITY_ARENA_FRAME, byte]
-  ARENA_FRAME = initArena(BUFFER_ARENA_FRAME)
-  # Reserve draw loop's scratch, two blocks swapped each frame.
-  #   What one frame assembled is still readable through next; see `arena.ArenaSwap`.
-  BUFFER_ARENA_SWAP_FIRST: array[CAPACITY_ARENA_SWAP, byte]
-  BUFFER_ARENA_SWAP_SECOND: array[CAPACITY_ARENA_SWAP, byte]
-  ARENA_SWAP_DRAW = initArenaSwap(BUFFER_ARENA_SWAP_FIRST, BUFFER_ARENA_SWAP_SECOND)
+  BUFFER_ARENA_PROGRAM: array[CAPACITY_ARENA_PROGRAM, byte]
+  ARENA_PROGRAM = initArena(BUFFER_ARENA_PROGRAM)
+  BUFFER_ARENA_FRAME_FIRST: array[CAPACITY_ARENA_FRAME, byte]
+  BUFFER_ARENA_FRAME_SECOND: array[CAPACITY_ARENA_FRAME, byte]
+  ARENAS_FRAME = initArenasFrame(BUFFER_ARENA_FRAME_FIRST, BUFFER_ARENA_FRAME_SECOND)
 
-# Carve pixel readback every export reuses, once, from permanent arena.
-var PIXELS_READBACK = push[uint8](ARENA_PERMANENT, WIDTH_EXPORT_MAX * HEIGHT_EXPORT_MAX * 3)
+# Carve pixel readback every export reuses, once, from program arena.
+var PIXELS_READBACK = push[uint8](ARENA_PROGRAM, WIDTH_EXPORT_MAX * HEIGHT_EXPORT_MAX * 3)
 
-# Carve every GIF frame storyboard run collects, once, from permanent arena.
+# Carve every GIF frame storyboard run collects, once, from program arena.
 #   Back to back, before `writeGif` reads them all at end.
 const
   WIDTH_GIF_MAX = PIXELS_WIDTH div STRIDE_GIF
   HEIGHT_GIF_MAX = PIXELS_HEIGHT div STRIDE_GIF
   COUNT_GIF_FRAMES_MAX = (len(STEPS) + 1) * (FRAMES_GIF_GROW + FRAMES_GIF_HOLD)
 var GIF_FRAMES =
-  push[uint8](ARENA_PERMANENT, COUNT_GIF_FRAMES_MAX * WIDTH_GIF_MAX * HEIGHT_GIF_MAX * 3)
+  push[uint8](ARENA_PROGRAM, COUNT_GIF_FRAMES_MAX * WIDTH_GIF_MAX * HEIGHT_GIF_MAX * 3)
+
+# Carve export's scratch once from program arena; each export overwrites it from start.
+#   At most one export runs in frame, and each finishes inside its own call.
+var
+  SCRATCH_EXPORT = push[byte](ARENA_PROGRAM, CAPACITY_SCRATCH_EXPORT)
+  ARENA_SCRATCH_EXPORT = initArena(SCRATCH_EXPORT.toOpenArray(0, CAPACITY_SCRATCH_EXPORT - 1))
+    ## Carve export's buffers from `SCRATCH_EXPORT`, reset as each export begins.
 
 # Hold timing buffer at module scope as `MESHES` is.
 #   Too large for stack, touched only by `--timings` run.
@@ -299,16 +304,16 @@ var TIMINGS_FRAME_MILLISECONDS: array[FRAMES_TIMING_MAX, float32]
 # Placing side for every live handle, placed by every frame as browser places it; see
 #   `framing.placeEvery`.
 #   Read by every walk of that frame: reach, local scale, cull, emission, hover pick.
-#   Carved first from frame pair at each turn, so frame before stays readable; see
-#   `turnFrame`. Pair's capacity counts it.
+#   Carved first from frame arena at each turn, so frame before stays readable; see
+#   `turnFrame`. Frame arenas' capacity counts it.
 var
-  PLACEMENTS = ARENA_SWAP_DRAW.current.push[:Placement](OBJECTS_MAX)
-    ## Hold this frame's placements, by handle, in block frame pair carves now.
+  PLACEMENTS = ARENAS_FRAME.current.push[:Placement](OBJECTS_MAX)
+    ## Hold this frame's placements, by handle, in frame arena this frame carves.
     ##   Between two frames still last frame's, which is what event handler reads.
     ##   Carved here once before first frame, so handler before it reads zeroed block: kind
     ##   `Nothing` for every handle.
   PLACEMENTS_PREVIOUS = PLACEMENTS
-    ## Hold frame before's placements, by handle, in block frame pair carved then.
+    ## Hold frame before's placements, by handle, in frame arena that frame carved.
     ##   Readable until next turn reclaims it; read through `placementsPrevious`.
   REVISION_PLACED = 0  ## Scene revision `PLACEMENTS` stand for; see `placeEdited`.
   REACH_SCENE = 0.0
@@ -328,13 +333,13 @@ template placementsPrevious: untyped = PLACEMENTS_PREVIOUS.toOpenArray(0, OBJECT
 
 
 proc turnFrame() =
-  ## Turn frame pair over, and carve this frame's placements first from block it reclaims.
+  ## Turn frame arenas over, and carve this frame's placements first from one it reclaims.
   ##   What last frame placed stays readable as `placementsPrevious` until next turn.
-  ##   Every path that turns pair places straight after, through `renderFrame`: interactive
+  ##   Every path that turns them places straight after, through `renderFrame`: interactive
   ##   loop and storyboard's capture alike.
   PLACEMENTS_PREVIOUS = PLACEMENTS
-  ARENA_SWAP_DRAW.swap()
-  PLACEMENTS = ARENA_SWAP_DRAW.current.push[:Placement](OBJECTS_MAX)
+  ARENAS_FRAME.swap()
+  PLACEMENTS = ARENAS_FRAME.current.push[:Placement](OBJECTS_MAX)
 
 
 proc placeScene(scene: Scene) =
@@ -565,10 +570,10 @@ proc assembleMeshes(
   ##   Emits frame's own placements, `placements`, which `renderFrame` filled.
   ##   Furniture and scene are built every frame, still or moving.
   let ticks_start = getMonoTime().ticks
-  # Carve where grid assembles pieces before emitting, from frame pair.
+  # Carve where grid assembles pieces before emitting, from frame arena.
   #   Per-frame scratch that arena was waiting for, handed back clean at top of every
   #   frame.
-  let scratch = ARENA_SWAP_DRAW.current.push[:DrawScratch](1)
+  let scratch = ARENAS_FRAME.current.push[:DrawScratch](1)
   # Derive frustum once, for cull of every point below; see `tessellate.isPointInView`.
   let bounds =
     camera.viewBoundsFor(eye, frame, scale, float(width) / float(max(height, 1)), REACH_SCENE)
@@ -1103,12 +1108,12 @@ proc renderFrame(
   var (width, height) = (cint(PIXELS_WIDTH), cint(PIXELS_HEIGHT))
   sdl3.getWindowSizeInPixels(window, addr width, addr height)
 
-  # Snapshot both arenas before panel reading them draws, so it shows this frame's state.
-  #   Shared by both run modes.
-  panel.bytes_arena_permanent_used = ARENA_PERMANENT.used
-  panel.bytes_arena_permanent_capacity = ARENA_PERMANENT.capacity
-  panel.bytes_arena_frame_peak = ARENA_FRAME.peakUsed
-  panel.bytes_arena_frame_capacity = ARENA_FRAME.capacity
+  # Snapshot program arena and frame arenas before panel reading them draws, so it shows
+  #   this frame's state. Shared by both run modes.
+  panel.bytes_arena_program_used = ARENA_PROGRAM.used
+  panel.bytes_arena_program_capacity = ARENA_PROGRAM.capacity
+  panel.bytes_arena_frame_peak = ARENAS_FRAME.peakUsed
+  panel.bytes_arena_frame_capacity = CAPACITY_ARENA_FRAME
   panel.bytes_memory_total = BYTES_MEMORY_TOTAL
 
   gui.frameBegin()
@@ -1232,16 +1237,16 @@ proc renderFrame(
 proc exportFrame(path: string; width, height: int): string =
   ## Read framebuffer back and write it out as PNG, reporting what happened.
   ##   Must run before buffers are swapped, as back buffer is what was drawn into.
-  ##   Reads into permanent arena's pixel buffer, writes through frame arena, reset on
-  ##   close.
+  ##   Reads into program arena's pixel buffer, and writes through export's scratch, which
+  ##   it overwrites from start.
   if len(path) == 0: return "Export path is empty; nothing written."
   doAssert width <= WIDTH_EXPORT_MAX and height <= HEIGHT_EXPORT_MAX,
     &"Window must fit the {WIDTH_EXPORT_MAX}x{HEIGHT_EXPORT_MAX} export bound, raise " &
     &"`--define:visualiser.width_export_max` or `...height_export_max`; got `{width}x{height}`."
   let count = width * height * 3
   capturePixels(width, height, PIXELS_READBACK.toOpenArray(0, count - 1))
-  writePng(ARENA_FRAME, path, width, height, PIXELS_READBACK.toOpenArray(0, count - 1))
-  ARENA_FRAME.reset()
+  ARENA_SCRATCH_EXPORT.reset()
+  writePng(ARENA_SCRATCH_EXPORT, path, width, height, PIXELS_READBACK.toOpenArray(0, count - 1))
   &"Wrote {width}x{height} frame to `{path}`."
 
 
@@ -2269,13 +2274,9 @@ proc runInteractive(
     count_settled = count_opened
 
   while is_running:
-    # Start export arena empty every frame.
-    #   Draw loop's scratch is swap pair below; `exportFrame` may use this and leaves it
-    #   reset.
-    ARENA_FRAME.reset()
-    # Turn frame's measurements over, on two-frame lifetime frame pair keeps; see `timings`.
-    #   Pair itself turns just before frame draws, so events below read last frame's
-    #   placements; see `turnFrame`.
+    # Turn frame's measurements over, on two-frame lifetime frame arenas keep; see `timings`.
+    #   Frame arenas themselves turn just before frame draws, so events below read last
+    #   frame's placements; see `turnFrame`.
     openFrameTimings()
 
     # Take one reading per frame, shared by every drag completing this frame and by render.
@@ -2361,7 +2362,7 @@ proc runInteractive(
       interaction.driveHeld(camera, seconds_frame, panel.selection.len > 0)
       panel.tween_camera.abandon()
 
-    # Turn frame pair over, after every event and before frame places scene.
+    # Turn frame arenas over, after every event and before frame places scene.
     #   This frame carves into block reclaimed here, while previous frame's block stays
     #   readable until next turn. Events above read last frame's placements, which they
     #   picked against.
@@ -2470,7 +2471,7 @@ proc runStoryboard(
       ## Right for seeds-only frame captured below.
 
   template renderAt(now: float): (int, int) =
-    # Turn frame pair over here as interactive loop turns it.
+    # Turn frame arenas over here as interactive loop turns them.
     #   Each render carves its own `DrawScratch`, and capture run that never turns overflows
     #   arena within few sub-frames. Turn carves placements render places into.
     turnFrame()
@@ -2478,8 +2479,8 @@ proc runStoryboard(
 
   template captureGif(now: float) =
     ## Render one frame at `now`, downsample it, and append it to GIF's frames.
-    ##   Frames collect in permanent arena, since all must survive to single `writeGif`.
-    ##   Only throwaway readback comes from frame arena.
+    ##   Frames collect in program arena, since all must survive to single `writeGif`.
+    ##   Readback there too, overwritten by each capture.
     block:
       let (width, height) = renderAt(now)
       doAssert width == PIXELS_WIDTH and height == PIXELS_HEIGHT,
@@ -2571,8 +2572,9 @@ proc runStoryboard(
   let
     path_gif = directory / "storyboard.gif"
     frame_size_gif = dims_gif[0] * dims_gif[1] * 3
+  ARENA_SCRATCH_EXPORT.reset()
   writeGif(
-    ARENA_FRAME,
+    ARENA_SCRATCH_EXPORT,
     path_gif,
     dims_gif[0],
     dims_gif[1],
@@ -2580,7 +2582,6 @@ proc runStoryboard(
     count_frames_gif,
     CENTISECONDS_GIF_DELAY,
   )
-  ARENA_FRAME.reset()
   echo &"Wrote {count_frames_gif} frames to `{path_gif}`."
   echo &"Wrote {len(STEPS) + 1} frames to `{directory}`."
 

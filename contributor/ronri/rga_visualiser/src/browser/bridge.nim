@@ -324,16 +324,16 @@ var
     ## No storyboard-capture mode to switch them off for.
   POINTER_PICK: Option[PointerPick]  ## Pick made by pointer since camera was last offered.
     ## Consumed by `framing.offerAim` in `nimBuildFrame`; see `nimPickByPointer`.
-  PLACEMENTS_PAIR: array[2, array[OBJECTS_MAX, Placement]]
+  PLACEMENTS_FRAME: array[2, array[OBJECTS_MAX, Placement]]
     ## Hold what algebra says about each live handle, for this frame and frame before.
-    ## Two-frame lifetime desktop's frame pair gives, in two typed blocks: JS backend cannot
-    ## carve typed slices from bytes, so no arena stands here.
-    ##   `turnPlacements` flips which block is current as each frame build opens, and
-    ##   allocates nothing; read through `placements` and `placementsPrevious`.
+    ## Page's frame arenas: two-frame lifetime desktop's frame arenas give, in two typed
+    ## blocks, since JS backend cannot carve typed slices from bytes.
+    ##   `turnFrame` flips which block is current as each frame build opens, and allocates
+    ##   nothing; read through `placements` and `placementsPrevious`.
     ## Every handle placed by every frame build; see `placeScene`.
     ## Scene's handles only: preview and drag preview are placed where drawn.
     ## Dead handles hold whatever last occupant left; every walk skips them.
-  INDEX_PLACEMENTS = 0  ## Which block of `PLACEMENTS_PAIR` frame build places into.
+  INDEX_FRAME = 0  ## Which block of `PLACEMENTS_FRAME` frame build places into.
   REVISION_PLACED = 0  ## Scene revision `placements` stand for.
     ## Frame build places at scene's revision; edit between two frames moves past it,
     ## and `placeEdited` brings reader there.
@@ -1143,19 +1143,19 @@ proc nimOverlayMetrics(): seq[float32] {.exportc.} =
   ]
 
 
-template placements: untyped = PLACEMENTS_PAIR[INDEX_PLACEMENTS]
+template placements: untyped = PLACEMENTS_FRAME[INDEX_FRAME]
   ## Read this frame's placements, by handle; between two frame builds, last frame's.
   ##   Indexed in place at each use, never bound: `let` deep-copies on JS backend.
 
-template placementsPrevious: untyped = PLACEMENTS_PAIR[1-INDEX_PLACEMENTS]
+template placementsPrevious: untyped = PLACEMENTS_FRAME[1-INDEX_FRAME]
   ## Read frame before's placements, by handle, for what reckons across two frames.
   ##   Handle dead or newly born in that frame holds nothing meaningful there.
 
 
-proc turnPlacements() =
-  ## Turn placement pair over as frame build opens, so frame before stays readable.
+proc turnFrame() =
+  ## Turn page's frame arenas over as frame build opens, so frame before stays readable.
   ##   Block turned to holds frame before last until `placeScene` places every handle.
-  INDEX_PLACEMENTS = 1 - INDEX_PLACEMENTS
+  INDEX_FRAME = 1 - INDEX_FRAME
 
 
 proc placeScene() =
@@ -2564,9 +2564,9 @@ proc nimBuildFrame(
   TWEEN_CAMERA.advance(CAMERA_PAGE, float(now), easeOutCubic)
   # Place every object first, so scene's reach is this frame's before extent reads far clip.
   #   Clocked as phase of its own: whole scene's placing side, beside which camera's is small.
-  #   Into block pair turns to, so last frame's placements stay readable beside them.
+  #   Into block frame arenas turn to, so last frame's placements stay readable beside them.
   let ms_before_place = performanceNow()
-  turnPlacements()
+  turnFrame()
   placeScene()
   let ms_place = performanceNow() - ms_before_place
   # Move view origin to eye, after ease moved camera, and read eye and frame about it once.

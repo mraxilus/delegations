@@ -51,7 +51,7 @@ import ./format
 const RUNES_LABEL_MOST* = 24
   ## Bound how long word on control may be, in runes.
   ##   Not layout limit but kind limit: it is what separates label from prose that wandered
-  ##   into `Name` key. Longest today is "permanent arena", at fifteen.
+  ##   into `Name` key. Longest today is "search by label or kind", at twenty-three.
 
 
 
@@ -74,7 +74,7 @@ type Wording* = enum
   TipListSearch, TipListSelect,
   TipApplyArity, TipApplyOperation, TipApplyFirst, TipApplySecond,
   TipViewMotor, TipViewAzimuth, TipViewElevation, TipViewDistance, TipViewSpeed, TipViewLens,
-  TipDiagnosticsFrames, TipDiagnosticsVsync, TipDiagnosticsPermanent, TipDiagnosticsFrame,
+  TipDiagnosticsFrames, TipDiagnosticsVsync, TipDiagnosticsProgram, TipDiagnosticsFrameArena,
   TipDiagnosticsPool, TipDiagnosticsScene,
   TipPickApply, TipPickOperation, TipPickBack, TipPickEdit, TipPickVisible, TipPickDelete,
   TipPickClose,
@@ -89,7 +89,7 @@ type Wording* = enum
   NameApplySecond, NameApplyAct,
   NameViewMotor, NameViewAzimuth, NameViewElevation, NameViewDistance, NameViewSpeed,
   NameViewLens,
-  NameDiagnosticsFrame, NameDiagnosticsVsync, NameDiagnosticsMemory, NameDiagnosticsPermanent,
+  NameDiagnosticsFrame, NameDiagnosticsVsync, NameDiagnosticsMemory, NameDiagnosticsProgram,
   NameDiagnosticsFrameArena, NameDiagnosticsPool, NameDiagnosticsTotal,
   NamePickApply, NamePickEdit, NamePickBack, NamePickHide, NamePickShow, NamePickDelete,
   NamePickClose,
@@ -170,12 +170,14 @@ const LUT_TEXT_BY_WORDING: array[Wording, cstring] = [
   TipDiagnosticsVsync:
     "Uncheck to see this build's own uncapped cost rather than the display's own refresh " &
         "rate; the reading below settles over about a second after any change.",
-  TipDiagnosticsPermanent:
+  TipDiagnosticsProgram:
     "Never freed until the process exits: the pixel-export buffer, sized for the largest " &
-        "frame this build allows, and every frame of a storyboard's own GIF.",
-  TipDiagnosticsFrame:
-    "Reset after every PNG or GIF frame it backs, so it reads empty almost any time you " &
-        "would look here; the bar instead holds the largest single expansion it has served.",
+        "frame this build allows, every frame of a storyboard's own GIF, and the scratch " &
+        "that each export overwrites.",
+  TipDiagnosticsFrameArena:
+    "Two of these take turns, one per frame, so the frame before stays readable. Each holds " &
+        "its frame's placements, then the draw loop's scratch; the bar holds the most either " &
+        "has held, against the size of one.",
   TipDiagnosticsPool:
     "One cell per object handle, in the colour of whatever object holds it; dark means it's " &
         "free and will be handed to the next one you add, most recently freed first.",
@@ -254,7 +256,7 @@ const LUT_TEXT_BY_WORDING: array[Wording, cstring] = [
   NameDiagnosticsFrame: "frame time",
   NameDiagnosticsVsync: "vsync",
   NameDiagnosticsMemory: "memory",
-  NameDiagnosticsPermanent: "permanent arena",
+  NameDiagnosticsProgram: "program arena",
   NameDiagnosticsFrameArena: "frame arena",
   NameDiagnosticsPool: "object pool",
   NameDiagnosticsTotal: "total",

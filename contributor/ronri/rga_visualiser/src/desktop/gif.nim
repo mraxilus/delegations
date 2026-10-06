@@ -20,7 +20,7 @@
 ##
 ## Rows arrive bottom-up, as OpenGL reads them, and are flipped while being quantized.
 ##   As `image.nim` flips them while filtering, so no separate copy exists.
-## Every scratch buffer comes from caller-owned frame arena, or is fixed-capacity table
+## Every scratch buffer comes from caller-owned arena, or is fixed-capacity table
 ## reset per call.
 ##   Quantized indices, LZW dictionary, packed output; nothing calls allocator.
 ##
