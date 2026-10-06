@@ -47,22 +47,22 @@ suite "Findings":
 
 
   test "rewrite of knoller renders as its rule and article, as koch fix prints it":
-    check initReport("a.nim", 3, Rule.ExpressionSpacing).findingOf ==
+    check initReport("a.nim", 3, Rule.SpacingExpression).findingOf ==
       finding("a.nim", 3, "expression spacing (X.9)")
     let rendered = [
-      (Rule.TrailingWhitespace, "trailing whitespace (VIII.5)"),
+      (Rule.WhitespaceTrailing, "trailing whitespace (VIII.5)"),
       (Rule.TabInString, "tab in string (X.1)"),
       (Rule.ArticleInComment, "article in comment (VI.5)"),
-      (Rule.TargetSubject, "to<Target> subject first (STYLE.md §5)"),
+      (Rule.SubjectTarget, "to<Target> subject first (STYLE.md §5)"),
       (Rule.ReturnResult, "return result (STYLE.md §5)"),
-      (Rule.ImportRank, "import rank (X.5)"),
-      (Rule.ImportBrackets, "import brackets (X.5)"),
-      (Rule.ModuleBracket, "module bracket (STYLE.md §5)"),
-      (Rule.SingleBindings, "single bindings (X.5)"),
-      (Rule.ProfilerImport, "profiler import (STYLE.md §3)"),
-      (Rule.DocPosition, "doc position (STYLE.md §5)"),
-      (Rule.LiteralDefault, "literal default (X.12)"),
-      (Rule.SignatureWrapping, "signature wrapping (X.3)"),
+      (Rule.RankImport, "import rank (X.5)"),
+      (Rule.BracketsImport, "import brackets (X.5)"),
+      (Rule.BracketModule, "module bracket (STYLE.md §5)"),
+      (Rule.BindingsSingle, "single bindings (X.5)"),
+      (Rule.ImportProfiler, "profiler import (STYLE.md §3)"),
+      (Rule.PositionDoc, "doc position (STYLE.md §5)"),
+      (Rule.DefaultLiteral, "literal default (X.12)"),
+      (Rule.WrappingSignature, "signature wrapping (X.3)"),
     ]
     for (rule, message) in rendered:
       check initReport("a.nim", 1, rule).findingOf.message == message  # bytes koch printed
@@ -70,9 +70,9 @@ suite "Findings":
 
   test "finding of knoller's check cites article where sentence ends, never propagation":
     let
-      found = initReport("a.nim", 2, Rule.TrailingComment, "Comment gap; got `1`.")
+      found = initReport("a.nim", 2, Rule.CommentTrailing, "Comment gap; got `1`.")
       bare = initReport("a.nim", 0, Rule.FileEnding, "File ends in one newline.")
-      quoting = initReport("a.nim", 1, Rule.MessageValue, "Ends as ``a; got `b`.``; got `c`.")
+      quoting = initReport("a.nim", 1, Rule.ValueMessage, "Ends as ``a; got `b`.``; got `c`.")
     check found.findingOf == finding("a.nim", 2, "Comment gap (X.9); got `1`.")
     check not found.findingOf.is_propagation  # whoever owns path fixes it
     check bare.findingOf.message == "File ends in one newline (VIII.5)."  # sentence echoes none
@@ -82,7 +82,7 @@ suite "Findings":
 
 
   test "value quoting `; got ` inside code span leaves article where sentence ends":
-    let quoted = initReport("a.nim", 2, Rule.TrailingComment, "Sentence; got `a; got b`.")
+    let quoted = initReport("a.nim", 2, Rule.CommentTrailing, "Sentence; got `a; got b`.")
     check quoted.findingOf.message == "Sentence (X.9); got `a; got b`."  # first mark outside span
 
 
@@ -161,11 +161,11 @@ suite "Findings":
       "Bracket of one module drops its bracket (STYLE.md §5); got `std/[math]`.",
     ]
     for (rule, article) in [
-      (Rule.SignatureWrapping, "X.3"),
-      (Rule.CallWrapping, "X.3"),
-      (Rule.OperatorWrapping, "STYLE.md §5"),
-      (Rule.ImportBrackets, "X.5"),
-      (Rule.ModuleBracket, "STYLE.md §5"),
+      (Rule.WrappingSignature, "X.3"),
+      (Rule.WrappingCall, "X.3"),
+      (Rule.WrappingOperator, "STYLE.md §5"),
+      (Rule.BracketsImport, "X.5"),
+      (Rule.BracketModule, "STYLE.md §5"),
     ]:
       check CITATIONS[rule] == article  # one article, which rewrite cites too
 

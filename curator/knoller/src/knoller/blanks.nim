@@ -243,8 +243,8 @@ func checkBlanks*(path, source: string): seq[Report] =
         "One-line routine after owner's head, its doc or another one-line routine takes no " &
           "blank line before it"
     let rule =
-      if run.target in {Target.Helper, Target.Stacked}: Rule.HelperBlankLines
-      else: Rule.TestBlankLines
+      if run.target in {Target.Helper, Target.Stacked}: Rule.LinesBlankHelper
+      else: Rule.LinesBlankTest
     result.add initReport(path, run.line + 1, rule, message & "; got `" & $run.count & "`.")
 
 
@@ -264,7 +264,7 @@ func fixBlanks*(path, source: string): Fix =
   result.source = lines.join("\n")
   for run in found:
     let rule =
-      if run.target in {Target.Helper, Target.Stacked}: Rule.HelperBlankLines
-      else: Rule.TestBlankLines
+      if run.target in {Target.Helper, Target.Stacked}: Rule.LinesBlankHelper
+      else: Rule.LinesBlankTest
     result.fixed.add initReport(path, run.line + 1, rule)
   if found.len > 0: result.origin = origin

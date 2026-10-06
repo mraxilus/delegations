@@ -94,13 +94,13 @@ suite "Article X":
 
 suite "Article VIII":
   test "VIII.5 whitespace, line ending and file ending":
-    check formOf("x = 1 \n") == @[(Rule.TrailingWhitespace, "Line ends with whitespace.")]
+    check formOf("x = 1 \n") == @[(Rule.WhitespaceTrailing, "Line ends with whitespace.")]
     check formOf("x = 1\r\n") == @[
       (Rule.LineEnding, "Line ends with CR; got CRLF."),
-      (Rule.TrailingWhitespace, "Line ends with whitespace."),
+      (Rule.WhitespaceTrailing, "Line ends with whitespace."),
     ]  # CRLF: CR read, and CR is whitespace
     check formOf("x = 1\ty\t\n") ==
-      @[(Rule.Tab, "Line holds tab."), (Rule.TrailingWhitespace, "Line ends with whitespace.")]
+      @[(Rule.Tab, "Line holds tab."), (Rule.WhitespaceTrailing, "Line ends with whitespace.")]
     check formOf("x = 1") == @[(Rule.FileEnding, "File lacks final newline.")]
     check formOf("x = 1\n\n") == @[(Rule.FileEnding, "File ends with blank line.")]
     check formOf("") == @[(Rule.FileEnding, "File is empty.")]  # no fix reaches it
@@ -115,7 +115,7 @@ suite "Fixes":
     let fix = fixed("a = 1 \nb = 2\r\nc = 3\t\n  # Keep  this.\nd = \" \"\n")
     check fix.source == "a = 1\nb = 2\nc = 3\n  # Keep  this.\nd = \" \"\n"  # those three alone
     check fix.fixed.mapIt(it.line) == @[1, 2, 3]  # one report per line
-    check fix.fixed[0].rule == Rule.TrailingWhitespace  # rule named
+    check fix.fixed[0].rule == Rule.WhitespaceTrailing  # rule named
     check checkForm("a.nim", fix.source).len == 0  # check reports none
     check fixed(fix.source).source == fix.source and fixed(fix.source).fixed.len == 0  # idempotent
 

@@ -221,14 +221,14 @@ func checkNames*(path, source: string; exempt: openArray[string]): seq[Report] =
       result.add initReport(
         path,
         d.line,
-        Rule.ActionVerb,
+        Rule.VerbAction,
         "Action is imperative verb and property is bare noun; got `" & d.name & "`.",
       )
     if parts.len > 1 and parts[0].toLowerAscii == "lut" and d.name.toLowerAscii.count("_by_") != 1:
       result.add initReport(
         path,
         d.line,
-        Rule.LookupTable,
+        Rule.TableLookup,
         "Lookup table reads `lut_<value>_by_<key>`; got `" & d.name & "`.",
       )
 
@@ -238,14 +238,14 @@ func checkNames*(path, source: string; exempt: openArray[string]): seq[Report] =
         result.add initReport(
           path,
           d.line,
-          Rule.BooleanName,
+          Rule.NameBoolean,
           "Predicate `func` is `is…` in camel case; got `" & d.name & "`.",
         )
     elif d.is_boolean and (parts.len < 2 or parts[0].toLowerAscii notin PREFIXES_BOOLEAN):
       result.add initReport(
         path,
         d.line,
-        Rule.BooleanName,
+        Rule.NameBoolean,
         "Boolean opens `is_`, `as_`, `should_`, `found_` or `has_`; got `" & d.name & "`.",
       )
 
@@ -264,9 +264,9 @@ func checkNames*(path, source: string; exempt: openArray[string]): seq[Report] =
     elif d.isMiscased:
       let
         rule =
-          if d.kind == KindName.Member: Rule.MemberCase
-          elif casing == Casing.Letter: Rule.PlaceholderLetter
-          else: Rule.NameCase
+          if d.kind == KindName.Member: Rule.CaseMember
+          elif casing == Casing.Letter: Rule.LetterPlaceholder
+          else: Rule.CaseName
         subject = if d.kind == KindName.Binding: $d.reach else: $d.kind
       result.add initReport(
         path,
@@ -279,7 +279,7 @@ func checkNames*(path, source: string; exempt: openArray[string]): seq[Report] =
       result.add initReport(
         path,
         d.line,
-        Rule.GlobalWord,
+        Rule.WordGlobal,
         "Global never shares its word with type; got `" & d.name & "`.",
       )
 

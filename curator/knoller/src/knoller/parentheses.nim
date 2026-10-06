@@ -139,7 +139,7 @@ func checkParentheses*(path, source: string; proofs: Proofs): seq[Report] =
     result.add initReport(
       path,
       group.line + 1,
-      Rule.NeedlessParentheses,
+      Rule.ParenthesesNeedless,
       "Parentheses grouping what parser groups anyway go: prefix term or plain operand beside " &
         "operator, as parser of code's compiler proves; got `" & group.got & "`.",
     )
@@ -152,6 +152,6 @@ func fixParentheses*(path, source: string; proofs: Proofs): Fix =
   var spans: seq[(int, int)]
   for group in source.provenOf(proofs):
     spans.add @[group.opening, group.closing]
-    result.fixed.add initReport(path, group.line + 1, Rule.NeedlessParentheses)
+    result.fixed.add initReport(path, group.line + 1, Rule.ParenthesesNeedless)
   for (a, b) in spans.sortedByIt(-it[0]):
     result.source = result.source[0 ..< a] & result.source[b .. ^1]

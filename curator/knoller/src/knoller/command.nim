@@ -192,7 +192,7 @@ func joined(parts: openArray[Part], is_check: bool, failures: openArray[string])
   for report in left.sorted: result.lines.add report.located & " left: " & report.message
   for report in held.sorted: result.lines.add report.located & " warning: " & report.message
   for failure in failures:
-    if failure.len > 0: result.lines.add Rule.NeedlessParentheses.id & " warning: " & failure
+    if failure.len > 0: result.lines.add Rule.ParenthesesNeedless.id & " warning: " & failure
   result.lines.add $fixed.len & outcome & "."
   result.code = if left.len + unsettled.len > 0 or (is_check and fixed.len > 0): 1 else: 0
   result.asked = result.asked.deduplicate
@@ -290,7 +290,7 @@ proc pinningOf(directory: string, seen: var Table[string, Pinning]): Pinning =
   let parent = directory.parentDir
   result =
     if nimbles.len > 1: Pinning(refusal: directory)
-    elif nimbles.len == 1: Pinning(pin: readFile(nimbles[0]).nimPin)
+    elif nimbles.len == 1: Pinning(pin: readFile(nimbles[0]).pinNim)
     elif parent.len == 0 or parent == directory: Pinning()
     else: pinningOf(parent, seen)
   seen[directory] = result

@@ -31,13 +31,13 @@
 ##     token spanning lines, stays. Operator break follows same rule.
 ##   Block head: where line right above body of `if`, `for`, `of` and other heads, or of routine
 ##     signature, stands at body's indent, every continuation line of head moves by one step, so
-##     shallowest takes `STEP_CONTINUATION` past head's first line (`headLifts`).
+##     shallowest takes `STEP_CONTINUATION` past head's first line (`liftsHead`).
 ##   Trailing separator: list written one item to line ends its last item with separator, where
 ##     it would not fit joined: call, parameters, array, seq, set, table, tuple of several items,
 ##     constructor, import bracket. List that fits joined takes none, since comma marks split
 ##     hand wants (X.3): call joins, and other list keeps rows hand gave it.
-##   Checks and fixers share one reading (`separators`, `signatureRewrites`, `callRewrites`,
-##     `continuationShifts`, `trailingInserts`), so each rule is written once (Article II.1).
+##   Checks and fixers share one reading (`separators`, `rewritesSignature`, `rewritesCall`,
+##     `shiftsContinuation`, `insertsTrailing`), so each rule is written once (Article II.1).
 ##
 ##   Left as written, check silent: parameter group without type or default, where `;` ends
 ##     group; signature or call holding comment, long string spanning lines, or block (keyword
@@ -280,7 +280,7 @@ func checkSeparators*(path, source: string): seq[Report] =
     result.add initReport(
       path,
       s.tokens[k].line + 1,
-      Rule.ParameterSeparators,
+      Rule.SeparatorsParameter,
       "Parameters take `;` between groups where one group shares its type, and `,` " &
         "otherwise; got `" & s.spelling(k) & "`.",
     )
@@ -288,7 +288,7 @@ func checkSeparators*(path, source: string): seq[Report] =
     result.add initReport(
       path,
       s.tokens[k].line + 1,
-      Rule.TupleSeparators,
+      Rule.SeparatorsTuple,
       "Tuple type takes `,` between fields; got `;`.",
     )
 
@@ -299,16 +299,16 @@ func fixSeparators*(path, source: string): Fix =
   result.source = source
   for k in s.separators:
     result.source[s.tokens[k].first] = if s.spelling(k) == ",": ';' else: ','
-    result.fixed.add initReport(path, s.tokens[k].line + 1, Rule.ParameterSeparators)
+    result.fixed.add initReport(path, s.tokens[k].line + 1, Rule.SeparatorsParameter)
   for k in s.separatorsTuple:
     result.source[s.tokens[k].first] = ','
-    result.fixed.add initReport(path, s.tokens[k].line + 1, Rule.TupleSeparators)
+    result.fixed.add initReport(path, s.tokens[k].line + 1, Rule.SeparatorsTuple)
 
 
 
 #[ Signature Wrapping ]#
 
-func signatureRewrites(s: Scan): seq[Rewrite] =
+func rewritesSignature(s: Scan): seq[Rewrite] =
   ## Lay out each routine signature as X.3 wraps it, one rewrite to each it changes.
   for o in 0 ..< s.tokens.len:
     let keyword = s.tokens.signatureOf(s.partners, o, s.source)
@@ -364,18 +364,18 @@ func signatureRewrites(s: Scan): seq[Rewrite] =
         first: line_first,
         last: line_last,
         lines: canonical,
-        rule: Rule.SignatureWrapping,
+        rule: Rule.WrappingSignature,
       )
 
 
 func checkSignatures*(path, source: string): seq[Report] =
   ## Report signature laid out against X.3 and STYLE.md §5.
   ##   Named by its suite and `fixes.nim` alone until static pass calls it (`fixes.nim`).
-  for rewrite in source.scan.signatureRewrites:
+  for rewrite in source.scan.rewritesSignature:
     result.add initReport(
       path,
       rewrite.first + 1,
-      Rule.SignatureWrapping,
+      Rule.WrappingSignature,
       "Signature stays on one line where it fits, else wraps its parameters onto one line of " &
         "their own, else one group to line; got `" &
         $(rewrite.last - rewrite.first + 1) & "` lines.",
@@ -384,7 +384,7 @@ func checkSignatures*(path, source: string): seq[Report] =
 
 func fixSignatures*(path, source: string): Fix =
   ## Rewrite each signature check reports into its layout.
-  applied(path, source, source.scan.signatureRewrites)
+  applied(path, source, source.scan.rewritesSignature)
 
 
 
@@ -601,7 +601,7 @@ func broken(s: Scan; lead: string; a, b: int; trail: string; indent: int): Optio
   ##   Continuation lines take `STEP_CONTINUATION` beyond indent, or indent itself where line
   ##     continues expression already, opens value after `=`, or opens with first piece after
   ##     bracket or comma (`isOwnLine`), so every line of one expression past its statement
-  ##     line aligns, as `continuationShifts` reads it.
+  ##     line aligns, as `shiftsContinuation` reads it.
   if s.tokens[a].line != s.lasts[b]: return none(seq[string])
   for k in a .. b:
     let t = s.tokens[k]
@@ -654,10 +654,10 @@ func broken(s: Scan; lead: string; a, b: int; trail: string; indent: int): Optio
 func fallback(s: Scan; lead: string; a, b: int; trail: string; indent: int): Option[Laid] =
   ## Keep line breaks hand gave tokens `a` to `b`, else break their one line after operator.
   let hand = s.kept(lead, a, b, trail)
-  if hand.isSome: return some(Laid(lines: hand.get, rule: Rule.CallWrapping))
+  if hand.isSome: return some(Laid(lines: hand.get, rule: Rule.WrappingCall))
   let operator = s.broken(lead, a, b, trail, indent)
   if operator.isNone: none(Laid)
-  else: some(Laid(lines: operator.get, rule: Rule.OperatorWrapping))
+  else: some(Laid(lines: operator.get, rule: Rule.WrappingOperator))
 
 
 func isTrailed(s: Scan, o: int): bool =
@@ -734,9 +734,9 @@ func layout(
       flat = s.flatten(a, b)
       one = lead & flat.text & trail
       start = lead.runeLen
-    if not one.isWide: return some(Laid(lines: @[one], rule: Rule.CallWrapping))
+    if not one.isWide: return some(Laid(lines: @[one], rule: Rule.WrappingCall))
     let hand = s.linesHand(lead, a, b, trail)
-    if hand.isSome: return some(Laid(lines: hand.get, rule: Rule.CallWrapping))
+    if hand.isSome: return some(Laid(lines: hand.get, rule: Rule.WrappingCall))
 
     # Find outermost bracket crossing `LINE_MAX`, else last one before it ending line.
     var
@@ -806,15 +806,15 @@ func layout(
       if rest.isNone: break split
       lines.add rest.get.lines
     if lines.anyIt(it.isWide): break split
-    return some(Laid(lines: lines, rule: Rule.CallWrapping))
+    return some(Laid(lines: lines, rule: Rule.WrappingCall))
 
   # Break at operator where split fits no line.
   let operator = s.broken(lead, a, b, trail, indent)
-  if operator.isSome: some(Laid(lines: operator.get, rule: Rule.OperatorWrapping))
+  if operator.isSome: some(Laid(lines: operator.get, rule: Rule.WrappingOperator))
   else: none(Laid)
 
 
-func callRewrites(s: Scan): seq[Rewrite] =
+func rewritesCall(s: Scan): seq[Rewrite] =
   ## Lay out each region calls span: line call opens on to line it closes on, or one wide line.
   ##   Region rewritten is passed whole; region kept or left is read again from its next line,
   ##   so call inside hand-shaped list or inside call left as written is still read.
@@ -855,9 +855,9 @@ func checkCalls*(path, source: string): seq[Report] =
   ##   after operator.
   ##   Named by its suite and `fixes.nim` alone until static pass calls it (`fixes.nim`).
   let s = source.scan
-  for rewrite in s.callRewrites:
+  for rewrite in s.rewritesCall:
     let message =
-      if rewrite.rule == Rule.OperatorWrapping:
+      if rewrite.rule == Rule.WrappingOperator:
         "Line fitting nowhere breaks after its operator of lowest precedence; got `" &
             $s.lines[rewrite.first].runeLen & "` runes."
       else:
@@ -871,7 +871,7 @@ func fixCalls*(path, source: string): Fix =
   ##   left.
   result.source = source
   for pass in 1 .. PASSES_MAX:
-    let rewrites = result.source.scan.callRewrites
+    let rewrites = result.source.scan.rewritesCall
     if rewrites.len == 0: break
     result = result.chain(applied(path, result.source, rewrites))
 
@@ -887,7 +887,7 @@ func isOpening(s: Scan, k: int): bool =
   j < 0 or s.lasts[j] == s.tokens[k].line or not s.isContinuing(j)
 
 
-func continuationShifts(s: Scan, held: Held): seq[Shift] =
+func shiftsContinuation(s: Scan, held: Held): seq[Shift] =
   ## Re-indent each line of expression past its statement line to `STEP_CONTINUATION` beyond
   ##   that line, all alike, one rewrite to each line; expression holding line whose indent
   ##   would widen held line is left whole, so lines of one expression never part.
@@ -983,7 +983,7 @@ func continuationShifts(s: Scan, held: Held): seq[Shift] =
       let
         text = s.lines[line]
         shaped = ' '.repeat(indent) & text[text.indentOf .. ^1]
-        rewrite = Rewrite(first: line, last: line, lines: @[shaped], rule: Rule.ContinuationIndent)
+        rewrite = Rewrite(first: line, last: line, lines: @[shaped], rule: Rule.IndentContinuation)
       if shaped == text: continue
       if held.isHeld(line + 1) and shaped.isWide and not text.isWide:
         shifts.setLen(0)
@@ -992,7 +992,7 @@ func continuationShifts(s: Scan, held: Held): seq[Shift] =
     result.add shifts
 
 
-func headLifts(s: Scan, held: Held): seq[Lift] =
+func liftsHead(s: Scan, held: Held): seq[Lift] =
   ## Re-indent continuation lines of each block head whose line right above its body stands at
   ##   body's indent, so head reads apart from body (STYLE.md §5). Every such line moves by one
   ##   step, so shallowest takes `STEP_CONTINUATION` past head's first line and hand's shape of
@@ -1058,7 +1058,7 @@ func headLifts(s: Scan, held: Held): seq[Lift] =
       let
         text = s.lines[line]
         shaped = ' '.repeat(text.indentOf + step) & text[text.indentOf .. ^1]
-        rewrite = Rewrite(first: line, last: line, lines: @[shaped], rule: Rule.ContinuationIndent)
+        rewrite = Rewrite(first: line, last: line, lines: @[shaped], rule: Rule.IndentContinuation)
       if held.isHeld(line + 1) and shaped.isWide and not text.isWide:
         lifts.setLen(0)
         break
@@ -1069,19 +1069,19 @@ func headLifts(s: Scan, held: Held): seq[Lift] =
 func checkContinuations*(path, source: string): seq[Report] =
   ## Report line of expression past its statement line at other indent than STYLE.md §5 gives,
   ##   one whose indent would widen it among them, so finding stays where fixer holds line; and
-  ##   line of block head that continuations leave at body's indent (`headLifts`).
+  ##   line of block head that continuations leave at body's indent (`liftsHead`).
   let
     s = source.scan
-    shifts = s.continuationShifts(Held())
+    shifts = s.shiftsContinuation(Held())
     moved = applied(path, source, shifts.mapIt(it.rewrite)).source.scan
     reported = shifts.mapIt(it.rewrite.first)
-  for lift in moved.headLifts(Held()):
+  for lift in moved.liftsHead(Held()):
     let line = lift.rewrite.first
     if line in reported: continue
     result.add initReport(
       path,
       line + 1,
-      Rule.ContinuationIndent,
+      Rule.IndentContinuation,
       "Line of block head right above its body takes " & $STEP_CONTINUATION & " spaces more " &
           "than head's first line, so it stands apart from body; got `" &
           $(s.lines[line].indentOf - lift.base) & "`.",
@@ -1097,15 +1097,15 @@ func checkContinuations*(path, source: string): seq[Report] =
         else:
           "Line of expression past its statement line takes " & $STEP_CONTINUATION & " spaces " &
               "more than that line; got `" & $relative & "`."
-    result.add initReport(path, line + 1, Rule.ContinuationIndent, message)
+    result.add initReport(path, line + 1, Rule.IndentContinuation, message)
 
 
 func fixContinuations(path, source: string; held: Held): Fix =
   ## Re-indent each line check reports, but held line its indent would widen: continuations
   ##   first, then block heads of text they leave, so head reads indent continuation gave it.
   ##   Each rewrite keeps its line, so held lines keep their numbers between both stages.
-  result = applied(path, source, source.scan.continuationShifts(held).mapIt(it.rewrite))
-  result = result.chain(applied(path, result.source, result.source.scan.headLifts(held).mapIt(
+  result = applied(path, source, source.scan.shiftsContinuation(held).mapIt(it.rewrite))
+  result = result.chain(applied(path, result.source, result.source.scan.liftsHead(held).mapIt(
     it.rewrite
   )))
 
@@ -1140,7 +1140,7 @@ func isFittingJoined(s: Scan, o: int): bool =
   not (head & s.flatten(o, c).text & tail).isWide
 
 
-func trailingInserts(s: Scan, held: Held): seq[Insert] =
+func insertsTrailing(s: Scan, held: Held): seq[Insert] =
   ## Find each list written one item to line whose last item lacks trailing separator, where
   ##   list would not fit joined (`isFittingJoined`); one whose separator would widen held line
   ##   is left. List that fits joined takes none: call joins, and hand keeps rows of other list.
@@ -1182,11 +1182,11 @@ func trailingInserts(s: Scan, held: Held): seq[Insert] =
 func checkTrailing*(path, source: string): seq[Report] =
   ## Report list written one item to line without trailing separator (X.3).
   ##   Named by its suite and `fixes.nim` alone until static pass calls it (`fixes.nim`).
-  for insert in source.scan.trailingInserts(EVERY):
+  for insert in source.scan.insertsTrailing(EVERY):
     result.add initReport(
       path,
       insert.line + 1,
-      Rule.TrailingSeparator,
+      Rule.SeparatorTrailing,
       "List written one item to line takes trailing separator; got none, where `" &
         insert.separator & "` stands.",
     )
@@ -1196,11 +1196,11 @@ func fixTrailing*(path, source: string; held: Held): Fix =
   ## Insert each trailing separator check reports, or that widens line off held lines, last
   ##   first, so earlier offsets hold.
   result.source = source
-  let inserts = source.scan.trailingInserts(held)
+  let inserts = source.scan.insertsTrailing(held)
   for insert in inserts.reversed:
     result.source.insert(insert.separator, insert.at)
   for insert in inserts:
-    result.fixed.add initReport(path, insert.line + 1, Rule.TrailingSeparator)
+    result.fixed.add initReport(path, insert.line + 1, Rule.SeparatorTrailing)
 
 
 func fixTrailing*(path, source: string): Fix =

@@ -56,7 +56,7 @@ proc everyFix(
   for ask in 1..ASKS_MAX:
     if result.fix.asked.len == 0: break
     for failure in known.answered(tree, result.fix.asked, provers):
-      let line = Rule.NeedlessParentheses.id & ": " & failure
+      let line = Rule.ParenthesesNeedless.id & ": " & failure
       if line notin result.failures: result.failures.add line
     result.fix = fixEntries(branch, entries, locked, known)
 

@@ -102,7 +102,7 @@ suite "Wrapping":
     let joined = "func f(\n    a: int, b: int\n): int =\n  a\n"
     check checkSignatures("a.nim", joined)[0].message.endsWith("got `3` lines.")
     check fixSignatures("a.nim", joined).source == "func f(a: int, b: int): int =\n  a\n"
-    check fixSignatures("a.nim", joined).fixed[0].rule == Rule.SignatureWrapping
+    check fixSignatures("a.nim", joined).fixed[0].rule == Rule.WrappingSignature
     let
       groups = ["alpha: Cayley1D", "beta: Spatial[Cayley2D]", "gamma: Chirality", "delta: Space",
                 "epsilon: Grade", "zeta: Order"]
@@ -207,7 +207,7 @@ suite "Wrapping":
       statement = "  let depth = " & sum & "\n"  # 101 runes
     check statement.fixed == "  let depth = offset_x * bounds.forward.x + offset_y * " &
         "bounds.forward.y +\n      offset_z * bounds.forward.z\n"  # `+` before `*`, second `+`
-    check checkCalls("a.nim", statement).mapIt(it.rule) == @[Rule.OperatorWrapping]
+    check checkCalls("a.nim", statement).mapIt(it.rule) == @[Rule.WrappingOperator]
     let mixed = "  check " & "a".repeat(40) & " + " & "b".repeat(20) & " and " &
         "c".repeat(30) & "\n"
     check mixed.fixed == "  check " & "a".repeat(40) & " + " & "b".repeat(20) & " and\n" &

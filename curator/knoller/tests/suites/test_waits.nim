@@ -27,7 +27,7 @@ suite "Article IX":
   test "IX.12 Nim fixed wait reported in every call form, as Nim compares names":
     let found = checkWaits("viewer/tests/test_view.nim", DRIVE_NIM)
     check found.mapIt(it.line) == @[4, 5, 6, 9]  # comment, string and `sleeper` unread
-    check found.allIt(it.rule == Rule.FixedWait)
+    check found.allIt(it.rule == Rule.WaitFixed)
     check found.mapIt(it.message) == @[
       "Fixed wait reads real clock; wait on condition, or advance clock check moves; got `sleep`.",
       "Fixed wait reads real clock; wait on condition, or advance clock check moves; got `sleep`.",
@@ -42,6 +42,6 @@ suite "Article IX":
   test "IX.12 lines other syntax passes read Playwright's name alone, exactly":
     let found = checkWaits("main.ts", @[@["await", "page", "waitForTimeout"], @["sleep"]],
       is_nim = false)
-    check found.mapIt((it.line, it.rule)) == @[(1, Rule.FixedWait)]  # drive's own `sleep` unread
+    check found.mapIt((it.line, it.rule)) == @[(1, Rule.WaitFixed)]  # drive's own `sleep` unread
     check checkWaits("main.ts", @[@["wait_for_timeout"]], is_nim = false).len == 0  # exact
     check checkWaits("a.nim", @[@["wait_for_timeout"]], is_nim = true).len == 1  # Nim compares

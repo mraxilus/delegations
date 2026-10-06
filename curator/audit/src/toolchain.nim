@@ -52,7 +52,7 @@ func checkPin*(path, nimble: string): seq[Finding] =
   ##   `nim#<commit>`, which knoller reads as pin too, is finding here: repository writes pin in
   ##   one form, which CONTRIBUTOR.md (Toolchain) names and `.claude/hooks.sh` reads as text.
   let is_exact = nimble.requirementNim.get("").startsWith(EXACT)
-  if nimble.nimPin.isNone or not is_exact:
+  if nimble.pinNim.isNone or not is_exact:
     result.add finding(
       path,
       0,

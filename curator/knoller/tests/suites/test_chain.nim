@@ -161,7 +161,7 @@ suite "Chain":
 
   test "dialect decides idiom fixers and checks: module reads them, script does not":
     let breach = "import std/os\nimport std/strutils\nlet a = b+c\n"
-    check checkFormatting("a.nims", breach, Dialect.Script).allIt(it.rule == Rule.ExpressionSpacing)
+    check checkFormatting("a.nims", breach, Dialect.Script).allIt(it.rule == Rule.SpacingExpression)
     check checkFormatting("a.nim", breach, Dialect.Module).len == 2  # brackets too
     check formatted("a.nims", breach, Dialect.Script).source ==
       "import std/os\nimport std/strutils\nlet a = b + c\n"  # imports left to module
@@ -177,14 +177,14 @@ suite "Chain":
       "let A = 1\nlet B = 2\n{.push inline.}\nproc f(): int =\n  return result\n{.pop.}\n"
     for dialect in Dialect:
       let rules = checkSource("a" & EXTENSIONS[dialect], breach, dialect).mapIt(it.rule)
-      check Rule.SingleBindings in rules and Rule.ReturnResult in rules  # fixer reaches both
+      check Rule.BindingsSingle in rules and Rule.ReturnResult in rules  # fixer reaches both
       check Rule.PushForeign in rules  # no fixer reaches it
       check (Rule.StrictFuncs in rules) == (dialect == Dialect.Module)  # STYLE.md §2: module
       check formatted("a" & EXTENSIONS[dialect], breach, dialect).source.contains(
         "let\n  A = 1\n  B = 2\n",
       )  # bindings share keyword in every dialect
     check checkSource("tests/a.nims", "echo x\n", Dialect.Script).mapIt(it.rule) ==
-      @[Rule.DebugOutput]  # test rules of any Nim code read script under `tests/`
+      @[Rule.OutputDebug]  # test rules of any Nim code read script under `tests/`
     check checkSource("tests/test_a.nims", "echo \"x\"\n", Dialect.Script).len == 0  # no stub
 
 
@@ -209,7 +209,7 @@ suite "Chain":
       "expression-spacing 2 times from line 3" &
       "; got lines `2` to `6`."  # rule left for hand and rule fixer clears alike
     check checkFormatting("a.nims", unfenced, Dialect.Script).mapIt((it.line, it.rule)).sorted ==
-      @[(3, Rule.ExpressionSpacing), (4, Rule.NotOverBinary), (5, Rule.ExpressionSpacing)]
+      @[(3, Rule.SpacingExpression), (4, Rule.NotOverBinary), (5, Rule.SpacingExpression)]
       # same lines report same unfenced
     check formatted("a.nims", source, Dialect.Script).source == source  # fenced lines unwritten
 
@@ -401,7 +401,7 @@ suite "Repair that widens its line":
     check checkFormatting("a.nim", source, Dialect.Module).len == 0  # no answer, no finding
     let proofs = source.provenOf
     check checkFormatting("a.nim", source, Dialect.Module, proofs).mapIt(it.rule) ==
-      @[Rule.NeedlessParentheses, Rule.NeedlessParentheses]
+      @[Rule.ParenthesesNeedless, Rule.ParenthesesNeedless]
     let fix = formatted("a.nim", source, Dialect.Module, proofs)
     check fix.source == HEAD & "  let c = ☆m ∧ n + ■k\n" and fix.asked.len == 0  # all answered
     let fenced = HEAD & "  #!fix off\n  let c = ☆(m) ∧ n + ■(k)\n  #!fix on\n"

@@ -27,8 +27,8 @@ func isCiting(text: string): bool =
 
 suite "Rules":
   test "id is slug of name: lowercase words joined by hyphen":
-    check Rule.ExpressionSpacing.id == "expression-spacing"  # space becomes hyphen
-    check Rule.TargetSubject.id == "to-target-subject-first"  # bracket run folds into one
+    check Rule.SpacingExpression.id == "expression-spacing"  # space becomes hyphen
+    check Rule.SubjectTarget.id == "to-target-subject-first"  # bracket run folds into one
     check Rule.StrictFuncs.id == "strictfuncs"  # case folds
     check Rule.Fence.id == "fence"  # one word stays
     check Rule.FenceHeld.id == "fence-held"
@@ -63,7 +63,7 @@ suite "Rules":
       found =
           checkBlanks("tests/test_a.nim", suites) & checkDefaults("a.nim", defaults) &
           heldOf("a.nims", fenced, Dialect.Script)
-    check found.mapIt(it.rule) == @[Rule.TestBlankLines, Rule.LiteralDefault, Rule.FenceHeld]
+    check found.mapIt(it.rule) == @[Rule.LinesBlankTest, Rule.DefaultLiteral, Rule.FenceHeld]
     check found.mapIt(it.message) == @[
       "Suite takes three blank lines before it; got `0`.",  # `blanks.nim:237`
       # `declarations.nim:278`

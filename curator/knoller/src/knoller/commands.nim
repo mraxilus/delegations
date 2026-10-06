@@ -121,7 +121,7 @@ func checkCommands*(path, source: string): seq[Report] =
     result.add initReport(
       path,
       command.line + 1,
-      Rule.DottedCommand,
+      Rule.CommandDotted,
       "Dotted call statement takes command form where its one argument is call or " &
         "parenthesised expression; got `" & command.got & "`.",
     )
@@ -135,4 +135,4 @@ func fixCommands*(path, source: string): Fix =
   for command in found.sortedByIt(-it.open):
     result.source = result.source[0 ..< command.open] & " " &
       result.source[command.open + 1 ..< command.close] & result.source[command.close + 1 .. ^1]
-  for command in found: result.fixed.add initReport(path, command.line + 1, Rule.DottedCommand)
+  for command in found: result.fixed.add initReport(path, command.line + 1, Rule.CommandDotted)

@@ -86,7 +86,7 @@ func checkTargets*(path, source: string): seq[Report] =
     result.add initReport(
       path,
       target.line + 1,
-      Rule.TargetSubject,
+      Rule.SubjectTarget,
       "`to<Target>` takes its plain subject first, as `b.toDigits`; got `" & target.got & "`.",
     )
 
@@ -104,7 +104,7 @@ func fixTargets*(path, source: string): Fix =
     for target in found.sortedByIt(-it.first):
       if found.anyIt(it.first > target.first and it.after <= target.after): continue
       shaped = shaped[0 ..< target.first] & target.shaped & shaped[target.after .. ^1]
-      step.fixed.add initReport(path, target.line + 1, Rule.TargetSubject)
+      step.fixed.add initReport(path, target.line + 1, Rule.SubjectTarget)
     step.source = shaped
     step.fixed.reverse
     result = result.chain(step)

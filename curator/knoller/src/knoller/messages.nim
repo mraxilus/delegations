@@ -198,7 +198,7 @@ func checkMessages*(path, source: string): seq[Report] =
     result.add initReport(
       path,
       value.line + 1,
-      Rule.MessageValue,
+      Rule.ValueMessage,
       "Message ends echoing value in backticks, as ``…; got `{value}`.``; got `" &
         value.text & "`.",
     )
@@ -233,7 +233,7 @@ func fixMessages*(path, source: string; held: Held): Fix =
       if not touched[k].anyIt(it in widened): kept.add value
     values = kept
   result.source = shaped.join("\n")
-  for value in values: result.fixed.add initReport(path, value.line + 1, Rule.MessageValue)
+  for value in values: result.fixed.add initReport(path, value.line + 1, Rule.ValueMessage)
 
 
 func fixMessages*(path, source: string): Fix =

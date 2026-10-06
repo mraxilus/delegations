@@ -146,7 +146,7 @@ suite "Idioms":
         "{.warning[UnusedImport]: off.}\n\n" & STRICT_FUNCS & "\n"
       stub = fixIdioms("tests/test_x.nim", header & "include \"suites.nim\"\n")
     check stub.source == header & "\n" & IMPORT_PROFILER & "\n\ninclude \"suites.nim\"\n"
-    check stub.fixed.mapIt(it.rule) == @[Rule.ProfilerImport]
+    check stub.fixed.mapIt(it.rule) == @[Rule.ImportProfiler]
     check fixIdioms("tests/test_x.nim", stub.source).fixed.len == 0  # second fix writes nothing
 
 
@@ -224,7 +224,7 @@ suite "Idiom fixes":
   test "adjacent import lines are ordered by rank, and rank split by other lines stays":
     let fix = fixed(module("import ./a\nimport pkg/x\nimport std/os\n"))
     check fix.source == module("import std/os\nimport pkg/x\nimport ./a\n")
-    check fix.fixed.mapIt(it.rule) == @[Rule.ImportRank, Rule.ImportRank]
+    check fix.fixed.mapIt(it.rule) == @[Rule.RankImport, Rule.RankImport]
     check fix.source.isSettled
     let apart = module("import ./a\n\nimport std/os\n")
     check fixed(apart).source == apart  # where it lands is choice: left to hand
@@ -235,7 +235,7 @@ suite "Idiom fixes":
     check consts.source ==
       module("const\n  A = 1  # One.\n  B = 2\n    ## Doc of B.\n\nlet c = 3\n")
     check consts.fixed.mapIt(it.line) == @[LINES_HEAD + 1]  # one report per run
-    check consts.fixed[0].rule == Rule.SingleBindings
+    check consts.fixed[0].rule == Rule.BindingsSingle
     check consts.source.isSettled
     let wrapped = fixed(module("proc f() =\n  let a = 1\n  let b = g(\n    2,\n  )\n  echo a\n"))
     check wrapped.source ==
@@ -295,7 +295,7 @@ suite "Idiom fixes":
       "Imports of one directory share one bracket (X.5); got `./` in `2` statements.",
     ]
     check fix.source == module("import std/[algorithm, os, strutils]\nimport ./[a {.all.}, b]\n")
-    check fix.fixed.filterIt(it.rule == Rule.ImportBrackets).mapIt(it.line) ==
+    check fix.fixed.filterIt(it.rule == Rule.BracketsImport).mapIt(it.line) ==
       @[LINES_HEAD + 1, LINES_HEAD + 3]  # one report to merge, at first statement
     check fix.source.isSettled
     check checkBracketsImport("a.nim", fix.source).len == 0
@@ -303,8 +303,8 @@ suite "Idiom fixes":
     check checkBracketsImport("a.nim", module("import std/[math]\n")).findingsOf[0].message ==
       "Bracket of one module drops its bracket (STYLE.md §5); got `std/[math]`."  # own rule
     check checkBracketsImport("a.nim", module("import std/[math]\n"))[0].rule ==
-      Rule.ModuleBracket
-    check fixed(module("import std/[math]\n")).fixed.mapIt(it.rule) == @[Rule.ModuleBracket]
+      Rule.BracketModule
+    check fixed(module("import std/[math]\n")).fixed.mapIt(it.rule) == @[Rule.BracketModule]
 
 
   test "pragma list of declaration, export list and names after `from … import` are alphabetised":

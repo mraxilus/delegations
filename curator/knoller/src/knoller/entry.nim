@@ -119,7 +119,7 @@ func checkBlockEntry*(path, source: string): seq[Report] =
     result.add initReport(
       path,
       line,
-      Rule.EntryBlock,
+      Rule.BlockEntry,
       "Entry block holds no binding; move code that binds into `proc main`; got `" & name & "`.",
     )
 
@@ -154,4 +154,4 @@ func fixBlockEntry*(path, source: string): Fix =
   insert margin & ROUTINE_ENTRY & "()"
   for i in entry.last + 1 ..< lines.len: keep(i)
   result.source = shaped.join("\n")
-  for (line, _) in entry.bindings: result.fixed.add initReport(path, line, Rule.EntryBlock)
+  for (line, _) in entry.bindings: result.fixed.add initReport(path, line, Rule.BlockEntry)

@@ -43,7 +43,7 @@ const
 func requirements*(nimble: string): seq[string] =
   ## Collect required packages from nimble text, `nim` excluded.
   for requirement in nimble.requireLiterals:
-    if requirement.packageName.toLowerAscii != NIM: result.add requirement
+    if requirement.namePackage.toLowerAscii != NIM: result.add requirement
 
 
 proc directoriesLock*(lock: string, directory_deps = DIRECTORY_DEPS): seq[string] =

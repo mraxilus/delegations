@@ -117,7 +117,7 @@ func checkArticles*(path, source: string): seq[Report] =
   checkArticles(path, source.linesComment)
 
 
-func articleCuts(source: string): seq[(int, int)] =
+func cutsArticle(source: string): seq[(int, int)] =
   ## Find byte span of each lowercase article fixer deletes, with spaces after it, in Nim
   ##   comments; outside backtick spans and double quotes, before word opening noun phrase.
   for t in source.tokens:
@@ -161,8 +161,8 @@ func articleCuts(source: string): seq[(int, int)] =
 
 
 func fixArticles*(path, source: string): Fix =
-  ## Delete each article `articleCuts` finds, last first, so earlier offsets hold.
-  let cuts = source.articleCuts
+  ## Delete each article `cutsArticle` finds, last first, so earlier offsets hold.
+  let cuts = source.cutsArticle
   result.source = source
   var reported: seq[int]
   for (first, after) in cuts.reversed:

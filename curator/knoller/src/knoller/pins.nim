@@ -49,7 +49,7 @@ func isPin*(s: string): bool =
   s.isCommit or s.isVersion
 
 
-func packageName*(requirement: string): string =
+func namePackage*(requirement: string): string =
   ## Read package name from requirement, i.e. text before version, hash or space.
   for i, c in requirement:
     if c in NAME_END: return requirement[0..<i]
@@ -79,12 +79,12 @@ func requirementNim*(nimble: string): Option[string] =
   ## Read what follows `nim` in first requirement of compiler nimble text names, e.g. `== 2.2.12`;
   ##   `none` where it names none.
   for requirement in nimble.requireLiterals:
-    if requirement.packageName.toLowerAscii != NIM: continue
-    return some(requirement[requirement.packageName.len .. ^1].strip)
+    if requirement.namePackage.toLowerAscii != NIM: continue
+    return some(requirement[requirement.namePackage.len .. ^1].strip)
   none(string)
 
 
-func nimPin*(nimble: string): Option[string] =
+func pinNim*(nimble: string): Option[string] =
   ## Read exact Nim pin of nimble text, as `nim == <pin>` or `nim#<commit>`; `none` when absent
   ##   or inexact.
   let rest = nimble.requirementNim.get("")

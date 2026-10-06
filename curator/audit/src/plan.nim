@@ -171,7 +171,7 @@ func nimbleOf(tree: Tree, directory: string): string =
 
 func pinOf*(tree: Tree, directory: string): Option[string] =
   ## Read exact Nim pin project declares; `none` when nimble file or pin is absent.
-  tree.nimbleOf(directory).nimPin
+  tree.nimbleOf(directory).pinNim
 
 
 func jobsFor*(tree: Tree, directories: openArray[string]): seq[Job] =

@@ -45,7 +45,7 @@ proc writeTree(root: string, files: openArray[(string, string)]) =
     writeFile(root / path, text)
 
 
-proc everyOutcome(
+proc outcomeEvery(
   files: openArray[(string, string)],
   locked: openArray[string],
   is_check: bool,
@@ -136,7 +136,7 @@ suite "Command line":
       tab = initReport("b.nim", 2, Rule.Tab, "Line holds tab.")
       beside = [
         Part(path: "b.nim", unsettled: UNSETTLED, left: @[tab]),
-        Part(path: "a.nim", fixed: @[initReport("a.nim", 1, Rule.ExpressionSpacing)]),
+        Part(path: "a.nim", fixed: @[initReport("a.nim", 1, Rule.SpacingExpression)]),
       ]
     for is_check in [false, true]:
       let outcome = if is_check: " to fix" else: " fixed"
@@ -172,26 +172,26 @@ suite "Command line":
       ("a.nim", module & "discard 1\r# Lone CR.\n", Rule.LineEnding),
       ("a.nims", "", Rule.FileEnding),  # empty file
       ("a.nim", module & "# The end.\n", Rule.ArticleInComment),  # capital article stays
-      ("a.nim", module & "when isMainModule:\n  var count {.global.} = 0\n", Rule.EntryBlock),
+      ("a.nim", module & "when isMainModule:\n  var count {.global.} = 0\n", Rule.BlockEntry),
       ("a.nim", module & "func f(): int =\n  return result\n", Rule.ReturnResult),
-      ("a.nim", module & "proc getX() = discard\n", Rule.ActionVerb),
-      ("a.nim", module & "type Space = enum\n  base, Anti\n", Rule.MemberCase),
+      ("a.nim", module & "proc getX() = discard\n", Rule.VerbAction),
+      ("a.nim", module & "type Space = enum\n  base, Anti\n", Rule.CaseMember),
       ("a.nim", module & "{.push inline.}\nproc f() = discard\n{.pop.}\n", Rule.PushForeign),
-      ("tests/test_a.nim", module & "include \"suites.nim\"\n", Rule.StubHeader),
-      ("tests/suites/test_a.nim", module & "echo x\n", Rule.DebugOutput),
-      ("tests/suites/test_a.nim", module & "sleep(1)\n", Rule.FixedWait),
+      ("tests/test_a.nim", module & "include \"suites.nim\"\n", Rule.HeaderStub),
+      ("tests/suites/test_a.nim", module & "echo x\n", Rule.OutputDebug),
+      ("tests/suites/test_a.nim", module & "sleep(1)\n", Rule.WaitFixed),
       ("a.nim", module & "proc f(ctx: int) = discard\n", Rule.Abbreviation),
-      ("a.nim", module & "proc f(quiet: bool) = discard\n", Rule.BooleanName),
-      ("a.nim", module & "const LUT_GRADE = 1\n", Rule.LookupTable),
-      ("a.nim", module & "type basis_digits = int\n", Rule.NameCase),
-      ("a.nim", module & "type Pair[Key, V] = object\n", Rule.PlaceholderLetter),
+      ("a.nim", module & "proc f(quiet: bool) = discard\n", Rule.NameBoolean),
+      ("a.nim", module & "const LUT_GRADE = 1\n", Rule.TableLookup),
+      ("a.nim", module & "type basis_digits = int\n", Rule.CaseName),
+      ("a.nim", module & "type Pair[Key, V] = object\n", Rule.LetterPlaceholder),
       ("a.nim", module & "var 𝐧 = 2\n", Rule.Notation),
-      ("a.nim", module & "type Algebra = int\nconst ALGEBRA = 1\n", Rule.GlobalWord),
-      ("a.nim", module & "func f() {.used.} = discard\n", Rule.UsedConsumer),
-      ("tests/suites/test_a.nim", module & "import std/random\n", Rule.RandomSeed),
-      ("a.nim", module & "import ./[\n  b,  # Why.\n  a,\n]\n", Rule.BracketImport),  # comment
-      ("a.nim", module & "import ./a\n\nimport std/os\n", Rule.ImportRank),  # blank line apart
-      ("a.nim", module & "const A = 1\nconst B = \"\"\"\ntext\n\"\"\"\n", Rule.SingleBindings),
+      ("a.nim", module & "type Algebra = int\nconst ALGEBRA = 1\n", Rule.WordGlobal),
+      ("a.nim", module & "func f() {.used.} = discard\n", Rule.ConsumerUsed),
+      ("tests/suites/test_a.nim", module & "import std/random\n", Rule.SeedRandom),
+      ("a.nim", module & "import ./[\n  b,  # Why.\n  a,\n]\n", Rule.ImportBracket),  # comment
+      ("a.nim", module & "import ./a\n\nimport std/os\n", Rule.RankImport),  # blank line apart
+      ("a.nim", module & "const A = 1\nconst B = \"\"\"\ntext\n\"\"\"\n", Rule.BindingsSingle),
     ]:
       let outcome = outcomeOf([(path, source)], [], is_check = true)
       check outcome.code == 1  # violation fails run
@@ -461,7 +461,7 @@ suite "Command line":
       for (fast, every) in pairs:
         let
           proven = outcomeProven(files, ["p/p.nimble"], is_check, "/", fast)
-          reference = everyOutcome(files, ["p/p.nimble"], is_check, "/", every)
+          reference = outcomeEvery(files, ["p/p.nimble"], is_check, "/", every)
         check proven.written == reference.written
         check proven.lines == reference.lines
         check proven.code == reference.code

@@ -122,7 +122,7 @@ func checkForm*(path, source: string): seq[Report] =
       result.add initReport(path, i + 1, Rule.LineEnding, "Line ends with CR; got CRLF.")
     if '\t' in line: result.add initReport(path, i + 1, Rule.Tab, "Line holds tab.")
     if line.isEndedInWhitespace:
-      result.add initReport(path, i + 1, Rule.TrailingWhitespace, "Line ends with whitespace.")
+      result.add initReport(path, i + 1, Rule.WhitespaceTrailing, "Line ends with whitespace.")
     if line.isWide:
       result.add initReport(
         path,
@@ -156,7 +156,7 @@ func checkComments*(path, source: string): seq[Report] =
     result.add initReport(
       path,
       gap.line + 1,
-      Rule.TrailingComment,
+      Rule.CommentTrailing,
       "Trailing comment takes two spaces before its marker; got `" & $gap.spaces & "`.",
     )
 
@@ -214,7 +214,7 @@ func fixWhitespace(path, source: string): Fix =
   for i, line in lines.mpairs:
     if not line.isEndedInWhitespace: continue
     line = line.strip(leading = false, chars = WHITESPACE_TRAILING)
-    result.fixed.add initReport(path, i + 1, Rule.TrailingWhitespace)
+    result.fixed.add initReport(path, i + 1, Rule.WhitespaceTrailing)
   result.source = lines.join("\n")
 
 
@@ -267,11 +267,11 @@ func fixComments*(path, source: string; held: Held): Fix =
       spaced = line[0 ..< gap.at - gap.spaces] & ' '.repeat(GAP_COMMENT) & line[gap.at .. ^1]
     if held.isHeld(gap.line + 1) and spaced.isWide and not line.isWide: continue
     lines[gap.line] = spaced
-    result.fixed.add initReport(path, gap.line + 1, Rule.TrailingComment)
+    result.fixed.add initReport(path, gap.line + 1, Rule.CommentTrailing)
   result.source = lines.join("\n")
 
 
-func blankRuns(lines: seq[string]): seq[RunBlank] =
+func runsBlank(lines: seq[string]): seq[RunBlank] =
   ## Find each run of blank lines beside banner whose count breaks X.2, run between two lines
   ##   of text; banner after banner other than parent and child gets no count from X.2.
   var above = -1
@@ -297,7 +297,7 @@ func checkBanners*(path, source: string): seq[Report] =
   ## Report blank lines beside banner other than X.2 asks: three before first tier, two before
   ##   second, one after either.
   ##   Named by its suite and `fixes.nim` alone until static pass calls it (`fixes.nim`).
-  let runs = source.split('\n').blankRuns
+  let runs = source.split('\n').runsBlank
   for run in runs:
     let message =
       if not run.is_before: "Banner takes one blank line after it"
@@ -306,7 +306,7 @@ func checkBanners*(path, source: string): seq[Report] =
     result.add initReport(
       path,
       run.banner + 1,
-      Rule.BannerSpacing,
+      Rule.SpacingBanner,
       message & "; got `" & $run.count & "`.",
     )
 
@@ -316,7 +316,7 @@ func fixBanners(path, source: string): Fix =
   var
     lines = source.split('\n')
     origin = toSeq(1 .. lines.len)
-  let runs = lines.blankRuns
+  let runs = lines.runsBlank
   for run in runs.reversed:
     let
       after = run.first + run.count
@@ -325,7 +325,7 @@ func fixBanners(path, source: string): Fix =
     lines = lines[0 ..< run.first] & newSeq[string](run.wanted) & lines[after .. ^1]
     origin = origin[0 ..< run.first] & kept & inserted & origin[after .. ^1]
   result.source = lines.join("\n")
-  for run in runs: result.fixed.add initReport(path, run.banner + 1, Rule.BannerSpacing)
+  for run in runs: result.fixed.add initReport(path, run.banner + 1, Rule.SpacingBanner)
   if runs.len > 0: result.origin = origin
 
 

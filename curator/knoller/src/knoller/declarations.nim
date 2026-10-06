@@ -14,7 +14,7 @@
 ##     there literal fixes another type, or none.
 ##   Default read in routine, routine type and lambda; template and macro stay, since their
 ##     parameter without type reads otherwise.
-##   Checks and fixers share one reading (`docMoves`, `defaults`), so each rule is written once
+##   Checks and fixers share one reading (`movesDoc`, `defaults`), so each rule is written once
 ##     (Article II.1).
 ##
 ##   Cost: scanner, never parser (`tokens.nim`); declaration it cannot place surely stays.
@@ -75,7 +75,7 @@ func isDoc(code, kept: string): bool =
   code.strip.len == 0 and text.startsWith("##") and not text.startsWith("##[")
 
 
-func docMoves(source: string): seq[MoveDoc] =
+func movesDoc(source: string): seq[MoveDoc] =
   ## Find each one-line doc of declaration standing where rule puts it not.
   let
     lines = source.split('\n')
@@ -169,7 +169,7 @@ func docMoves(source: string): seq[MoveDoc] =
 func checkDocs*(path, source: string): seq[Report] =
   ## Report one-line doc of type, field, binding or enum member out of its position.
   ##   Named by its suite and `fixes.nim` alone until static pass calls it (`fixes.nim`).
-  for move in source.docMoves:
+  for move in source.movesDoc:
     let message =
       case move.shape
       of Shape.Join:
@@ -179,12 +179,12 @@ func checkDocs*(path, source: string): seq[Report] =
           "declaration's line."
       of Shape.Indent: "Doc on next line stands one level in; got indent `" &
         $source.split('\n')[move.line + 1].indentOf & "`."
-    result.add initReport(path, move.line + 1, Rule.DocPosition, message)
+    result.add initReport(path, move.line + 1, Rule.PositionDoc, message)
 
 
 func fixDocs*(path, source: string): Fix =
   ## Move each doc check reports, last first; each new line traces to line it replaced.
-  let moves = source.docMoves
+  let moves = source.movesDoc
   var
     lines = source.split('\n')
     origin = toSeq(1 .. lines.len)
@@ -193,7 +193,7 @@ func fixDocs*(path, source: string): Fix =
     lines = lines[0 ..< move.line] & move.lines & lines[move.last + 1 .. ^1]
     origin = origin[0 ..< move.line] & traced & origin[move.last + 1 .. ^1]
   result.source = lines.join("\n")
-  for move in moves: result.fixed.add initReport(path, move.line + 1, Rule.DocPosition)
+  for move in moves: result.fixed.add initReport(path, move.line + 1, Rule.PositionDoc)
   if moves.len > 0: result.origin = origin
 
 
@@ -273,7 +273,7 @@ func checkDefaults*(path, source: string): seq[Report] =
     result.add initReport(
       path,
       d.line + 1,
-      Rule.LiteralDefault,
+      Rule.DefaultLiteral,
       "Parameter states its type only where default does not fix it; got `" & d.got & "`.",
     )
 
@@ -284,4 +284,4 @@ func fixDefaults*(path, source: string): Fix =
   result.source = source
   for d in found.reversed:
     result.source = result.source[0 ..< d.first] & " " & result.source[d.after .. ^1]
-  for d in found: result.fixed.add initReport(path, d.line + 1, Rule.LiteralDefault)
+  for d in found: result.fixed.add initReport(path, d.line + 1, Rule.DefaultLiteral)

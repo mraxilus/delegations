@@ -21,7 +21,7 @@
 ##     takes; `idioms.nim` and `chain.nim` both read it, so it stands here, below both.
 ##   Path fixer reads is `/` separated: repository-relative from `koch`, absolute from command
 ##     line (`command.layoutOf`). Rule reading layout from it reads test file and stub here
-##     alone, both from last directory `tests` (`testsPart`), so each meaning is written once;
+##     alone, both from last directory `tests` (`partTests`), so each meaning is written once;
 ##     drive file, where command line reads fixed waits, too (`isFileDrive`).
 ##
 ##   Cost: line `0` marks whole-file report, so `0` never means first line.
@@ -101,7 +101,7 @@ func initReport*(path: string, line: int, rule: Rule, message = ""): Report =
   Report(path: path, line: line, rule: rule, message: message)
 
 
-func testsPart(path: string): seq[string] =
+func partTests(path: string): seq[string] =
   ## Read names of path below its last directory `tests`; empty where no directory is so named.
   let parts = path.split('/')
   for k in countdown(parts.high - 1, 0):
@@ -110,12 +110,12 @@ func testsPart(path: string): seq[string] =
 
 func isFileTest*(path: string): bool =
   ## Decide whether path lies under directory `tests`, at any depth.
-  path.testsPart.len > 0
+  path.partTests.len > 0
 
 
 func isStub*(path: string): bool =
   ## Decide whether path is testament stub: `test_*`, directly under directory `tests`.
-  let part = path.testsPart
+  let part = path.partTests
   part.len == 1 and part[0].startsWith("test_")
 
 

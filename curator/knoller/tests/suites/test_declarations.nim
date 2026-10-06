@@ -31,7 +31,7 @@ suite "Declarations":
       "    B = 2  ## Second.\n\n  Obj* = object  ## Holder.\n    x*: int  ## Count.\n\n" &
       "const\n  N* = 3  ## Size.\nlet m = 1  ## Mass.\n"
     check breach.fixed.isSettled
-    check fixDocs("a.nim", breach).fixed[0].rule == Rule.DocPosition
+    check fixDocs("a.nim", breach).fixed[0].rule == Rule.PositionDoc
 
 
   test "doc that cannot join takes next line, one level in; trailing doc too wide moves there":
@@ -66,7 +66,7 @@ suite "Declarations":
     check breach.fixed == "proc f(now = 0.0, on = false, s = \"a\", c = 'x', n = -1) = discard\n" &
       "proc g(a = default(Foo), b = none(int), p, q = 0x1F) = discard\n"
     check breach.fixed.isSettled
-    check fixDefaults("a.nim", breach).fixed[0].rule == Rule.LiteralDefault
+    check fixDefaults("a.nim", breach).fixed[0].rule == Rule.DefaultLiteral
 
 
   test "default of other type, named constant, template, macro and field stay":

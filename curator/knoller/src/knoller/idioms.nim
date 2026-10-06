@@ -189,14 +189,14 @@ func keyDictionary(name: string): (string, string) =
   (name.toLowerAscii.replace("_", ""), name)
 
 
-func importRank(target: string): int =
+func rankImport(target: string): int =
   ## Rank import for order: standard library, then packages, then local modules.
   if target.startsWith("std/"): 0
   elif target.startsWith("./") or target.startsWith("../"): 2
   else: 1
 
 
-func itemName(item: string): string =
+func nameItem(item: string): string =
   ## Read module name of bracket item, pragma dropped: `b {.all.}` gives `b`.
   item.strip.split(' ')[0]
 
@@ -208,7 +208,7 @@ func itemsBracket(text: string): seq[string] =
     close = text.rfind(']')
   if open < 0 or close < open: return
   for item in text[open + 1 ..< close].split(','):
-    let name = item.itemName
+    let name = item.nameItem
     if name.len > 0: result.add name
 
 
@@ -237,15 +237,15 @@ func checkImports*(path: string, code: seq[string]): seq[Report] =
       result.add initReport(
         path,
         span.first + 1,
-        Rule.BracketImport,
+        Rule.ImportBracket,
         "Bracket import is alphabetised; got `" & items.join(", ") & "`.",
       )
-    let r = span.target.importRank
+    let r = span.target.rankImport
     if r < rank:
       result.add initReport(
         path,
         span.first + 1,
-        Rule.ImportRank,
+        Rule.RankImport,
         "Standard library comes first, then packages, then local modules; got `" &
           span.target.split('[')[0] & "`.",
       )
@@ -258,7 +258,7 @@ func isBindingSingle(line: string): bool =
   word in KEYWORDS_BINDING and line.strip.len > word.len and line.strip[word.len] == ' '
 
 
-func bindingRuns(code: seq[string]): seq[RunBinding] =
+func runsBinding(code: seq[string]): seq[RunBinding] =
   ## Find each run of two or more consecutive single bindings of one keyword at one indent.
   var i = 0
   while i + 1 < code.len:
@@ -278,11 +278,11 @@ func bindingRuns(code: seq[string]): seq[RunBinding] =
 
 func checkBindings*(path: string, code: seq[string]): seq[Report] =
   ## Report run of consecutive single bindings of one keyword at one indent, once per run.
-  for run in code.bindingRuns:
+  for run in code.runsBinding:
     result.add initReport(
       path,
       run.first + 1,
-      Rule.SingleBindings,
+      Rule.BindingsSingle,
       "Consecutive single bindings share one keyword; got `" & run.keyword & "` twice.",
     )
 
@@ -322,10 +322,10 @@ func checkKeysStub*(path, source: string): seq[Report] =
         "Stub `cmd` leaves out `-r`, since testament runs binary itself; got `-r`."
       else:
         "Stub leaves out keys `testament pattern` never reads; got `" & stub.key & "`."
-    result.add initReport(path, stub.line + 1, Rule.StubKeys, message)
+    result.add initReport(path, stub.line + 1, Rule.KeysStub, message)
 
 
-func firstImport(code: seq[string]): int =
+func importFirst(code: seq[string]): int =
   ## Find zero-based line of first `import`, `include` or `from` at module level; `-1` if none.
   for i, c in code:
     if c.startsWith(MARK_IMPORT) or c.startsWith("include ") or c.startsWith("from "): return i
@@ -334,7 +334,7 @@ func firstImport(code: seq[string]): int =
 
 func checkStrictFuncs*(path: string; lines, code: seq[string]): seq[Report] =
   ## Report module lacking `strictFuncs` in exact form before its imports (STYLE.md §2).
-  let (strict_at, import_at) = (lines.find(STRICT_FUNCS), code.firstImport)
+  let (strict_at, import_at) = (lines.find(STRICT_FUNCS), code.importFirst)
   if strict_at < 0:
     result.add initReport(
       path,
@@ -387,7 +387,7 @@ func checkPragmas(path: string; lines, code: seq[string]): seq[Report] =
       result.add initReport(
         path,
         i + 1,
-        Rule.UsedConsumer,
+        Rule.ConsumerUsed,
         "`{.used.}` carries comment naming its consumer; got none.",
       )
     if s.startsWith("{.push"):
@@ -440,17 +440,17 @@ func checkTests(path, source: string; lines, code: seq[string]; dialect: Dialect
     result.add initReport(
       path,
       0,
-      Rule.RandomSeed,
+      Rule.SeedRandom,
       "Suite seeds `std/random`, as `randomize(0)` does; got no seed.",
     )
   if dialect == Dialect.Module and path.isStub and source.find(HEADER_TESTAMENT) < 0:
-    result.add initReport(path, 0, Rule.StubHeader, "Test stub carries testament header; got none.")
+    result.add initReport(path, 0, Rule.HeaderStub, "Test stub carries testament header; got none.")
   for i, c in code:
     if c.wordFirst == "echo" and '"' notin lines[i] and not code.isUnderCondition(i):
       result.add initReport(
         path,
         i + 1,
-        Rule.DebugOutput,
+        Rule.OutputDebug,
         "Test leaves no debug output; label report, or print under failing condition; got `" &
           c.strip & "`.",
       )
@@ -545,7 +545,7 @@ func bracketSorted(statement: string): string =
     close = statement.rfind(']')
     slots = statement[open + 1 ..< close].split(',')
   var items = slots.mapIt(it.strip).filterIt(it.len > 0)
-  items = items.sortedByIt(it.itemName.keyDictionary)
+  items = items.sortedByIt(it.nameItem.keyDictionary)
   var
     k = 0
     filled: seq[string]
@@ -575,7 +575,7 @@ func fixImports(path, source: string): Fix =
     if lines_sorted.countIt(it.isWide) > lines[span.first .. span.last].countIt(it.isWide):
       continue
     for k, line in lines_sorted: lines[span.first + k] = line
-    result.fixed.add initReport(path, span.first + 1, Rule.BracketImport)
+    result.fixed.add initReport(path, span.first + 1, Rule.ImportBracket)
 
   # Reorder each block of adjacent import statements by rank, stable within rank.
   let spans = code.spansImport
@@ -585,15 +585,15 @@ func fixImports(path, source: string): Fix =
     while j + 1 < spans.len and spans[j + 1].first == spans[j].last + 1: inc j
     let
       spans_block = spans[i .. j]
-      ranked = spans_block.sortedByIt(it.target.importRank)
+      ranked = spans_block.sortedByIt(it.target.rankImport)
     if ranked != spans_block:
       var
         rank = -1
         reordered: seq[string]
       for span in spans_block:
-        let r = span.target.importRank
+        let r = span.target.rankImport
         if r < rank:
-          result.fixed.add initReport(path, span.first + 1, Rule.ImportRank)
+          result.fixed.add initReport(path, span.first + 1, Rule.RankImport)
         rank = max(rank, r)
       for span in ranked: reordered.add lines[span.first .. span.last]
       for k, line in reordered: lines[spans[i].first + k] = line
@@ -612,7 +612,7 @@ func partsImport(target: string): tuple[prefix: string, items: seq[string]] =
     (prefix, body) = (target[0 ..< open], target[open + 1 ..< target.high])
   else:
     let
-      path = target.itemName
+      path = target.nameItem
       slash = path.rfind('/')
     if slash < 0: return
     (prefix, body) = (path[0 .. slash], path[slash + 1 .. ^1] & target[path.len .. ^1])
@@ -620,8 +620,8 @@ func partsImport(target: string): tuple[prefix: string, items: seq[string]] =
   for item in body.split(','):
     let core = item.strip
     if core.len == 0: continue
-    let rest = core[core.itemName.len .. ^1].strip
-    if '/' in core.itemName or (rest.len > 0 and rest != PRAGMA_ALL): return
+    let rest = core[core.nameItem.len .. ^1].strip
+    if '/' in core.nameItem or (rest.len > 0 and rest != PRAGMA_ALL): return
     result.items.add core
   if result.items.len > 0: result.prefix = prefix
 
@@ -654,7 +654,7 @@ func consolidations(lines, code: seq[string]): seq[Consolidation] =
   # Keep those whose statement changes and fits its line.
   result = result.filterIt(it.lines.len > 1 or (it.items.len == 1 and '[' in lines[it.lines[0]]))
   for c in result.mitems:
-    c.items = c.items.sortedByIt(it.itemName.keyDictionary)
+    c.items = c.items.sortedByIt(it.nameItem.keyDictionary)
     c.statement = MARK_IMPORT & c.prefix &
       (if c.items.len == 1: c.items[0] else: "[" & c.items.join(", ") & "]")
   result = result.filterIt(not it.statement.isWide)
@@ -663,7 +663,7 @@ func consolidations(lines, code: seq[string]): seq[Consolidation] =
 func ruleOf(c: Consolidation): Rule =
   ## Read rule of consolidation: imports of one directory merge (X.5), or bracket of one
   ##   module drops (STYLE.md §5); two articles state two rewrites.
-  if c.lines.len > 1: Rule.ImportBrackets else: Rule.ModuleBracket
+  if c.lines.len > 1: Rule.BracketsImport else: Rule.BracketModule
 
 
 func checkBracketsImport*(path, source: string): seq[Report] =
@@ -734,7 +734,7 @@ func fixBindings(path, source: string): Fix =
   ##   Last run goes first: run nested in continuation of earlier one is then rewritten before
   ##   that continuation moves, and every earlier run keeps its lines.
   result.source = source
-  let runs = source.codeOnly.split('\n').bindingRuns
+  let runs = source.codeOnly.split('\n').runsBinding
   var origin = toSeq(1 .. source.count('\n') + 1)
   for run in runs.reversed:
     let
@@ -759,7 +759,7 @@ func fixBindings(path, source: string): Fix =
     if is_string_long or is_widened: continue
     result.source = (lines[0 ..< run.first] & shaped & lines[last + 1 .. ^1]).join("\n")
     origin = origin[0 ..< run.first] & @[0] & origin[run.first .. ^1]  # Keyword line inserted.
-    result.fixed.insert(initReport(path, run.first + 1, Rule.SingleBindings), 0)
+    result.fixed.insert(initReport(path, run.first + 1, Rule.BindingsSingle), 0)
   if result.fixed.len > 0: result.origin = origin
 
 
@@ -775,7 +775,7 @@ func fixStrictFuncs(path, source: string): Fix =
     reported = 0
   let present = lines.find(STRICT_FUNCS)
   if present >= 0:
-    let import_at = source.codeOnly.split('\n').firstImport
+    let import_at = source.codeOnly.split('\n').importFirst
     if import_at < 0 or present < import_at: return
     var first = present
     if present + 1 < lines.len and lines[present + 1].len == 0:
@@ -849,14 +849,14 @@ func checkProfiler*(path, source: string): seq[Report] =
     result.add initReport(
       path,
       i + 1,
-      Rule.ProfilerImport,
+      Rule.ImportProfiler,
       "Profiler import stands on one line, `" & IMPORT_PROFILER & "`; got `2` lines.",
     )
   if profiler.is_entry and not profiler.is_present:
     result.add initReport(
       path,
       0,
-      Rule.ProfilerImport,
+      Rule.ImportProfiler,
       "Entry module, library umbrella and test stub import profiler right after pragmas; got none.",
     )
 
@@ -882,8 +882,8 @@ func fixProfiler(path, source: string): Fix =
         shaped.add ""
         result.origin.add 0
   result.source = shaped.join("\n")
-  for i in profiler.pairs: result.fixed.add initReport(path, i + 1, Rule.ProfilerImport)
-  if not profiler.is_present: result.fixed.add initReport(path, 0, Rule.ProfilerImport)
+  for i in profiler.pairs: result.fixed.add initReport(path, i + 1, Rule.ImportProfiler)
+  if not profiler.is_present: result.fixed.add initReport(path, 0, Rule.ImportProfiler)
 
 
 func fixKeysStub(path, source: string): Fix =
@@ -904,7 +904,7 @@ func fixKeysStub(path, source: string): Fix =
     result.origin.add i + 1
   result.source = shaped.join("\n")
   if dropped.len == 0: result.origin.setLen(0)
-  for stub in found: result.fixed.add initReport(path, stub.line + 1, Rule.StubKeys)
+  for stub in found: result.fixed.add initReport(path, stub.line + 1, Rule.KeysStub)
 
 
 func disorders(source: string): seq[Disorder] =
@@ -980,7 +980,7 @@ func checkLists*(path, source: string): seq[Report] =
     result.add initReport(
       path,
       d.line + 1,
-      Rule.UnorderedList,
+      Rule.ListUnordered,
       "List language leaves unordered is alphabetised, bare pragmas first; got `" & d.got & "`.",
     )
 
@@ -991,7 +991,7 @@ func fixLists(path, source: string): Fix =
   result.source = source
   for d in found.reversed:
     result.source = result.source[0 ..< d.first] & d.sorted & result.source[d.after .. ^1]
-  for d in found: result.fixed.add initReport(path, d.line + 1, Rule.UnorderedList)
+  for d in found: result.fixed.add initReport(path, d.line + 1, Rule.ListUnordered)
 
 
 const FIXERS_IDIOM: array[8, Fixer] = [

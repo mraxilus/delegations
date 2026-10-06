@@ -62,7 +62,7 @@ func checkWaits*(path: string, lines: openArray[seq[string]], is_nim: bool): seq
       result.add initReport(
         path,
         i + 1,
-        Rule.FixedWait,
+        Rule.WaitFixed,
         "Fixed wait reads real clock; " & replacement & "; got `" & identifier & "`.",
       )
 

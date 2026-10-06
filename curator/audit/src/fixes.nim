@@ -413,7 +413,7 @@ proc provenFix*(
     let asked = parts.mapIt(it.asked).concat
     if asked.len == 0: break
     for failure in known.answered(tree, asked, provers):
-      let line = Rule.NeedlessParentheses.id & ": " & failure
+      let line = Rule.ParenthesesNeedless.id & ": " & failure
       if line notin result.failures: result.failures.add line
     for k, e in entries:
       if parts[k].asked.len > 0: parts[k] = e.partOf(locked, known)

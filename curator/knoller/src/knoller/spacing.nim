@@ -473,7 +473,7 @@ func checkSpacing*(path, source: string): seq[Report] =
     result.add initReport(
       path,
       spacing.line + 1,
-      Rule.ExpressionSpacing,
+      Rule.SpacingExpression,
       message & "; got `" & spacing.got & "`.",
     )
 
@@ -508,7 +508,7 @@ func fixSpacing*(path, source: string; held: Held): Fix =
       done = e.first
     if not held.isHeld(line + 1) or not shaped.isWide or lines[line].isWide:
       lines[line] = shaped
-      for m in k ..< j: result.fixed.add initReport(path, line + 1, Rule.ExpressionSpacing)
+      for m in k ..< j: result.fixed.add initReport(path, line + 1, Rule.SpacingExpression)
     k = j
   result.source = lines.join("\n")
 
