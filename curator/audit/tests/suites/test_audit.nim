@@ -47,5 +47,5 @@ suite "Audit":
       goodTree() & @[entry(ALPHA_DIRECTORY & "/src/x.nim", "# the trap \n\n" & STRICT_FUNCS & "\n")]
     check messy.auditTree.mapIt(it.message) == @[
       "Line ends with whitespace (VIII.5).",
-      "Comment holds article; got `the`.",
+      "Comment holds article (VI.5); got `the`.",
     ]  # both checks ran
