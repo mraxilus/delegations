@@ -1035,7 +1035,9 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
   same C differently. The suite that holds the reader to the nimcache of the test binary is
   what would say so. A loop whose bound is a variable counts once.
 - 32-bit floats and SIMD forms are unmeasured, and the SSE paths of Terathon were not
-  compared.
+  compared. The Architect ruled on 2026-10-06 that they stay unmeasured while the library holds
+  64-bit floats alone. A SIMD form may come as a proposal that keeps 64-bit floats, after a
+  proposal that makes the width of the float configurable.
 - `sweep` is hand-run only. Three sweeps of five runs at `edb0c9d`, on `linux amd64, 4 cores` on
   2026-10-05 and 2026-10-06, differ by ×1.002 to ×1.004 at the median cell. At the 90th
   percentile they differ by ×1.025 to ×1.030. Five of 319 cells differ by more than ×1.10. The
