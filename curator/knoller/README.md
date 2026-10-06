@@ -98,6 +98,7 @@ the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, 
 | `bracket-import` | A bracket import is in alphabetical order. |
 | `import-rank` | The standard library comes first, then packages, then local modules. |
 | `import-brackets` | Adjacent imports of one directory share one bracket. |
+| `module-bracket` | A bracket of one module drops its bracket. |
 | `single-bindings` | Two or more single bindings share one keyword. |
 | `strictfuncs` | A module carries `strictFuncs` before its imports. |
 | `profiler-import` | An entry module imports the profiler on one line. |

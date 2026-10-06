@@ -52,6 +52,7 @@ const CITATIONS*: array[Rule, string] = [
   Rule.BracketImport: "X.5",
   Rule.ImportRank: "X.5",
   Rule.ImportBrackets: "X.5",
+  Rule.ModuleBracket: "STYLE.md §5",
   Rule.SingleBindings: "X.5",
   Rule.StrictFuncs: "STYLE.md §2",
   Rule.ProfilerImport: "STYLE.md §3",
