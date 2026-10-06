@@ -212,7 +212,7 @@ proc dirsScopedOf(options: Options, tree: Tree): seq[string] =
   else: projectsTest(tree.directoriesProject, pathsChanged(options.root, options.baseOrDefault))
 
 
-proc markFile(root: string): string =
+proc fileMark(root: string): string =
   ## Read path of check mark, in git dir git names for this checkout.
   pathMark(root, fieldsGit(root, ["rev-parse", "--git-dir"])[0].strip)
 
@@ -326,7 +326,7 @@ proc runHook(root, event, input: string): int =
     0
   of "push":
     let
-      mark = root.markFile
+      mark = root.fileMark
       recorded = if fileExists(mark): readFile(mark) else: ""
     var found: seq[Finding]
     for line in input.splitLines:
@@ -378,7 +378,7 @@ proc run(options: Options): int =
     #   pushed commit; dirty tree records nothing, since no commit holds exactly what passed.
     if found.len == 0:
       if fieldsGit(options.root, ["status", "--porcelain"]).len == 0:
-        writeFile(options.root.markFile, fieldsGit(options.root, ["rev-parse", "HEAD^{tree}"])[0])
+        writeFile(options.root.fileMark, fieldsGit(options.root, ["rev-parse", "HEAD^{tree}"])[0])
         echo "Tree hash recorded for pre-push hook."
       else: echo "Working tree not clean; nothing recorded for pre-push hook."
   of "check-files":
