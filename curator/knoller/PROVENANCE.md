@@ -47,9 +47,18 @@ compile there.
 - The id of a rule is the slug of its name, such as `expression-spacing`. The id is stable, so a
   tool can read the output of the command line. Verified by `suites/test_rules.nim`: each rule
   has an id of its own.
-- A finding of a check keeps its whole message, with its article. The messages share no one shape
-  from which a citation could be built again, so each message moved as it was.
-- Cost: the messages of the checks still cite the articles of the charter of this repository.
+- A message of a check names no article. It reads `<sentence>; got <value>.`, or `<sentence>.`
+  where it gives no value. The Architect chose this shape (D2 a of #505). Knoller runs on any
+  repository, whose charter need not be this one, and the README lists the id that each line
+  names. The one shape lets a caller find where the sentence ends, and `koch` cites the article of
+  the rule there.
+- Verified by `suites/test_rules.nim`. The messages of three checks hold no article, and no string
+  literal under `src/` holds `§`, or `(` before a Roman numeral and a dot. The three are the cases
+  as found, `blanks.nim:237`, `declarations.nim:278` and `chain.nim:292`.
+- Rejected: the article written into each message. `CITATIONS` would then stand twice, and each
+  message would cite the charter of this repository wherever knoller runs.
+- Cost: no suite of knoller holds the text that `koch` prints. The suite `test_findings.nim` of
+  `curator/audit` holds it, article included, for each message that `koch` prints.
 
 ## Chain
 
