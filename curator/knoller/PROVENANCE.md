@@ -35,6 +35,21 @@ leaves `src/` reaches a sibling project, which an install of the package does no
 Verified by `suites/test_imports.nim`, which reads each import of each module under `src/`. Each
 path must name the standard library or a file inside `src/`.
 
+**Each build of knoller fails on an unused import.** `nim.cfg` at the root of the package makes
+the warning `UnusedImport` an error. The compiler reads `nim.cfg` in each directory above its
+project file. So the flag reaches the suite that testament runs, one suite that runs alone, and the
+command line built from the root of the repository.
+
+- Rejected: the flag in the `cmd` of the stub. It reaches the build that testament runs, and no
+  other.
+- Verified by hand, 2026-10-06, with Nim 2.2.12. `nim c` of `tests/test_suites.nim` failed on the
+  unread `unicode` of `src/knoller/messages.nim`, and on the unread `options` of `test_chain.nim`.
+  `nim c` of `src/knoller.nim` failed on the first. With both imports gone, the stub, each suite
+  alone and `src/knoller.nim` built.
+- Cost: a build of `koch` and the suites of `curator/audit` read no configuration here. So an
+  unused import in knoller fails the suite of knoller alone, which `koch check` runs whenever
+  knoller changes.
+
 ## Reports and rules
 
 **Each report names a rule, and the caller cites its article.** A rewrite reports its path, its
