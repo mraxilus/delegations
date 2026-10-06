@@ -1418,15 +1418,15 @@ suite "Internal: Proposals":
   test "suites or program claim builds with its defines, and defines elsewhere are findings":
     let
       defined = %*{"status": "proposed", "builds_on": [], "claims": [
-        {"kind": "suites", "defines": ["pga.float=32"]},
+        {"kind": "suites", "defines": ["pga.float_width=32"]},
         {"kind": "program", "path": "p.nim", "algebras": ["rga4d"], "defines": ["a=1", "b=2"]}]}
       (proposal, findings) = parseProposal(record_sign, "", defined, directory_sign)
       misplaced = %*{"status": "proposed", "builds_on": [], "claims": [
         {"kind": "tables", "pairs": [], "algebras": ["rga4d"], "defines": ["a=1"]}]}
       unformed = %*{"status": "proposed", "builds_on": [], "claims": [
-        {"kind": "suites", "defines": ["pga.float"]}, {"kind": "suites", "defines": "a=1"}]}
+        {"kind": "suites", "defines": ["pga.float_width"]}, {"kind": "suites", "defines": "a=1"}]}
     check findings.len == 0 and proposal.claims.len == 2  # both kinds take defines
-    check definesOf(proposal.claims[0]) == @["-d:pga.float=32"]  # spelled as flag
+    check definesOf(proposal.claims[0]) == @["-d:pga.float_width=32"]  # spelled as flag
     check definesOf(proposal.claims[1]) == @["-d:a=1", "-d:b=2"]  # in order named
     check definesOf(%*{"kind": "suites"}).len == 0  # claim naming none builds as default
     check parseProposal(record_sign, "", misplaced, directory_sign)[1].len == 1  # other kind
@@ -1631,7 +1631,7 @@ suite "Internal: Figures":
       record = Proposal(number: 1, name: "p", directory: "proposals/01-p", title: "P",
         claims: newJArray())
       evaluation = %*{"algebras": {}, "claims": [
-        {"kind": "suites", "defines": ["pga.float=32"], "passed": true, "detail": []},
+        {"kind": "suites", "defines": ["pga.float_width=32"], "passed": true, "detail": []},
         {"kind": "program", "path": "w.nim", "algebras": ["rga4d"], "passed": true,
           "detail": []}]}
       body = bodyProposal(
@@ -1646,7 +1646,7 @@ suite "Internal: Figures":
         "bd6b23c590d7",
         "",
       )
-    check ("changed library, with " & code("pga.float=32")) in body  # define named
+    check ("changed library, with " & code("pga.float_width=32")) in body  # define named
     check ("runs clean at rga4d</td>") in body  # claim naming none reads as before
 
 
