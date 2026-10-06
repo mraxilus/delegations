@@ -250,7 +250,7 @@ suite "Hooks":
 
 
   test "stop hook asks for corrected lines alone, never whole message again":
-    # Message stands on screen once hook reads it, so resent message reads twice (D1 a, #570).
+    # Message stands on screen once hook reads it, so resent message reads twice (D1 of #570).
     let reason = stopReason(checkEndTurn("Pushed.\n", BRANCH) & checkNumbersBare("See #12.\n"))
     check reason.startsWith("Mend message that ends this turn (GUIDE.md, Output contract).")
     check "Reply with corrected lines alone" in reason

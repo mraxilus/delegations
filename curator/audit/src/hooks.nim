@@ -1056,7 +1056,7 @@ func checkEndTurn*(message, branch: string): seq[Finding] =
 func stopReason*(found: openArray[Finding]): string =
   ## Render why `stop` hook refuses message ending turn, one finding to line.
   ##   Message is on screen once hook reads it, so delegate replies with corrected lines
-  ##     alone; whole message sent again reads twice (D1 a on #570).
+  ##     alone; whole message sent again reads twice (D1 of #570).
   "Mend message that ends this turn (GUIDE.md, Output contract). Reply with corrected lines " &
     "alone; message stands above them, so never send it or its sign-off again:\n" &
     found.mapIt(it.message).join("\n")
