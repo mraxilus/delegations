@@ -10,15 +10,15 @@ import ../../src/knoller/[form, reports]
 func fixed(source: string): Fix =
   ## Fix form of Nim source, as `koch fix` does, each line held.
   result.source = source
-  for step in FORM_STEPS: result = result.chain(step.run("a.nim", result.source, EVERY))
+  for step in STEPS_FORM: result = result.chain(step.run("a.nim", result.source, EVERY))
 
 
-func gapMessage(spaces: int): string =
+func messageGap(spaces: int): string =
   ## Render X.9 finding message for gap of given spaces.
   "Trailing comment takes two spaces before its marker; got `" & $spaces & "`."
 
 
-func gapMessages(source: string): seq[string] =
+func messagesGap(source: string): seq[string] =
   ## Read X.9 finding messages of Nim source.
   checkComments("a.nim", source).mapIt(it.message)
 
@@ -60,22 +60,22 @@ suite "Article X":
 
 
   test "X.9 trailing comment takes exactly two spaces before its marker":
-    check gapMessages("let a = 1  # Two.\n").len == 0  # two pass
-    check gapMessages("let a = 1 # One.\n") == @[gapMessage(1)]  # one fails
-    check gapMessages("let a = 1# None.\n") == @[gapMessage(0)]  # glued fails
-    check gapMessages("  a: int     ## Field.\n") == @[gapMessage(5)]  # aligned column fails
-    check gapMessages("let a = \"x\" # One.\n") == @[gapMessage(1)]  # after string
+    check messagesGap("let a = 1  # Two.\n").len == 0  # two pass
+    check messagesGap("let a = 1 # One.\n") == @[messageGap(1)]  # one fails
+    check messagesGap("let a = 1# None.\n") == @[messageGap(0)]  # glued fails
+    check messagesGap("  a: int     ## Field.\n") == @[messageGap(5)]  # aligned column fails
+    check messagesGap("let a = \"x\" # One.\n") == @[messageGap(1)]  # after string
     check checkComments("a.nim", "a = 1\nb = 2 # c\n")[0].line == 2  # line named
-    check COMMENT_GAP == 2  # X.9 count, stated once
+    check GAP_COMMENT == 2  # X.9 count, stated once
 
 
   test "X.9 reads code alone: string, whole comment and block hold no trailing comment":
-    check gapMessages("let a = \"x # y\"\n").len == 0  # `#` inside string
-    check gapMessages("let a = '#'\n").len == 0  # `#` as char
-    check gapMessages("# Whole line.\n  ## Doc line.\n").len == 0  # no code
-    check gapMessages("#[ a\nb # c\n]#\n").len == 0  # inside block comment
-    check gapMessages("let a = \"\"\"\nb # c\n\"\"\"\n").len == 0  # long string
-    check gapMessages("{.used.}  # Used in b.nim.\n").len == 0  # pragma
+    check messagesGap("let a = \"x # y\"\n").len == 0  # `#` inside string
+    check messagesGap("let a = '#'\n").len == 0  # `#` as char
+    check messagesGap("# Whole line.\n  ## Doc line.\n").len == 0  # no code
+    check messagesGap("#[ a\nb # c\n]#\n").len == 0  # inside block comment
+    check messagesGap("let a = \"\"\"\nb # c\n\"\"\"\n").len == 0  # long string
+    check messagesGap("{.used.}  # Used in b.nim.\n").len == 0  # pragma
 
 
   test "X.2 exact: three blank lines before first tier, two before second, one after either":
@@ -184,7 +184,7 @@ suite "Fixes":
   test "fix never writes line width check reports":
     let near = "x".repeat(LINE_MAX - 4) & " # c\n"  # 100 runes; two-space gap makes 101
     check fixed(near).source == near  # left to hand
-    check gapMessages(near) == @[gapMessage(1)]  # finding stays
+    check messagesGap(near) == @[messageGap(1)]  # finding stays
 
 
   test "fix held on no line widens it, and keeps width guard on held line":
@@ -192,14 +192,14 @@ suite "Fixes":
       near = "x".repeat(LINE_MAX - 4) & " # c\n"  # 100 runes; two-space gap makes 101
       spaced = "x".repeat(LINE_MAX - 4) & "  # c\n"
       tab = "let s = \"" & "x".repeat(LINE_MAX - 12) & "\t\"\n"  # 99 runes; escaped, 100
-      wide_tab = "let s = \"" & "x".repeat(LINE_MAX - 11) & "\t\"\n"  # 100 runes; escaped, 101
+      tab_wide = "let s = \"" & "x".repeat(LINE_MAX - 11) & "\t\"\n"  # 100 runes; escaped, 101
     check fixComments("a.nim", near, Held()).source == spaced  # no line held: widens
     check fixComments("a.nim", near, Held(lines: @[1])).source == near  # its line held
     check fixComments("a.nim", near, EVERY).source == near  # every line held
-    var step = Fix(source: wide_tab)
-    for each in FORM_STEPS: step = step.chain(each.run("a.nim", step.source, Held()))
-    check step.source == wide_tab.replace("\t", "\\t")  # tab escape widens off held lines
-    check fixed(wide_tab).source == wide_tab  # and stays where every line is held
+    var step = Fix(source: tab_wide)
+    for each in STEPS_FORM: step = step.chain(each.run("a.nim", step.source, Held()))
+    check step.source == tab_wide.replace("\t", "\\t")  # tab escape widens off held lines
+    check fixed(tab_wide).source == tab_wide  # and stays where every line is held
     check fixed(tab).source == tab.replace("\t", "\\t")  # escape that fits is written
 
 

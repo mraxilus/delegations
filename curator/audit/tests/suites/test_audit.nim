@@ -61,7 +61,7 @@ suite "Audit":
         ALPHA_DIRECTORY & "/src/a.nim"),
       (goodTree().with(entry(ALPHA_DIRECTORY & "/config.nims", breach)),
         ALPHA_DIRECTORY & "/config.nims"),
-      (goodTree().replaced(nimble, NIMBLE_TEXT & breach), nimble),
+      (goodTree().replaced(nimble, TEXT_NIMBLE & breach), nimble),
     ]:
       check tree.auditTree.filterIt(it.path == path).mapIt(it.message).sorted == found.sorted
     let script = goodTree().with(entry(ALPHA_DIRECTORY & "/tests/helpers.nims", "echo x\n"))
@@ -89,7 +89,7 @@ suite "Audit":
     for (tree, path) in [
       (listed.with(entry(module, STRICT_FUNCS & "\n\n" & source)), module),
       (listed.with(entry(script, source)), script),
-      (listed.replaced(nimble, NIMBLE_TEXT & source), nimble),
+      (listed.replaced(nimble, TEXT_NIMBLE & source), nimble),
     ]:
       check tree.auditTree.mapIt((it.path, it.message)) ==
           @[(path, "Acronym stays only where glossary lists it (V.9); got `XML` in `toXML`.")]

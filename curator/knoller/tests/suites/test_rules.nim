@@ -10,7 +10,7 @@ import std/[os, sequtils, strutils, unittest]
 import ../../src/knoller/[blanks, chain, declarations, fences, reports, rules, tokens]
 
 
-const SOURCE_DIRECTORY = currentSourcePath().parentDir.parentDir.parentDir / "src"
+const DIRECTORY_SOURCE = currentSourcePath().parentDir.parentDir.parentDir / "src"
   ## Package sources whose every string literal names no article.
 
 
@@ -74,11 +74,11 @@ suite "Rules":
     var
       cited: seq[string]
       count = 0
-    for path in walkDirRec(SOURCE_DIRECTORY):
+    for path in walkDirRec(DIRECTORY_SOURCE):
       if not path.endsWith(".nim"): continue
       let source = readFile(path)
       for t in source.tokens:
-        if t.kind != TokenKind.Text: continue
+        if t.kind != KindToken.Text: continue
         inc count
         if t.spelling(source).isCiting: cited.add path.extractFilename & ":" & $(t.line + 1)
     check cited == newSeq[string]()  # every string literal of every module

@@ -40,7 +40,7 @@ type Group* = object  ## Define parentheses to remove: span of each bracket with
   got*: string  ## Group as written.
 
 
-const OPERAND_KEYWORDS = ["false", "nil", "true"]  ## Keywords standing as plain operands.
+const KEYWORDS_OPERAND = ["false", "nil", "true"]  ## Keywords standing as plain operands.
 
 
 func isPlain(tokens: openArray[Token], k: int, source: string): bool =
@@ -48,8 +48,8 @@ func isPlain(tokens: openArray[Token], k: int, source: string): bool =
   ##   glued after it joining it as element.
   let t = tokens[k]
   case t.kind
-  of TokenKind.Quoted, TokenKind.Number, TokenKind.Text, TokenKind.Character: true
-  of TokenKind.Word: not t.isKeyword(source) or t.spelling(source) in OPERAND_KEYWORDS
+  of KindToken.Quoted, KindToken.Number, KindToken.Text, KindToken.Character: true
+  of KindToken.Word: not t.isKeyword(source) or t.spelling(source) in KEYWORDS_OPERAND
   else: false
 
 
@@ -60,16 +60,16 @@ func windowOf(tokens: openArray[Token], partners: openArray[int], o: int): (int,
   var first = o - 1
   while first >= 0 and tokens[first].line == line:
     let p = partners[first]
-    if tokens[first].kind == TokenKind.Close and p >= 0 and tokens[p].line == line:
+    if tokens[first].kind == KindToken.Close and p >= 0 and tokens[p].line == line:
       first = p - 1
-    elif tokens[first].kind in {TokenKind.Open, TokenKind.Close, TokenKind.Comment}: break
+    elif tokens[first].kind in {KindToken.Open, KindToken.Close, KindToken.Comment}: break
     else: dec first
   var last = partners[o] + 1
   while last < tokens.len and tokens[last].line == line:
     let p = partners[last]
-    if tokens[last].kind == TokenKind.Open and p > last and tokens[p].line == line:
+    if tokens[last].kind == KindToken.Open and p > last and tokens[p].line == line:
       last = p + 1
-    elif tokens[last].kind in {TokenKind.Open, TokenKind.Close, TokenKind.Comment}: break
+    elif tokens[last].kind in {KindToken.Open, KindToken.Close, KindToken.Comment}: break
     else: inc last
   (first + 1, last - 1)
 
@@ -82,9 +82,9 @@ func candidatesOf*(source: string): seq[Group] =
     partners = tokens.partners
   for o, t in tokens:
     let c = partners[o]
-    if t.kind != TokenKind.Open or t.spelling(source) != "(" or c < o + 2: continue
-    if tokens[c].line != t.line or tokens[c].lastLine(source) != t.line: continue
-    if toSeq(o + 1 ..< c).anyIt(tokens[it].kind == TokenKind.Comment): continue
+    if t.kind != KindToken.Open or t.spelling(source) != "(" or c < o + 2: continue
+    if tokens[c].line != t.line or tokens[c].lineLast(source) != t.line: continue
+    if toSeq(o + 1 ..< c).anyIt(tokens[it].kind == KindToken.Comment): continue
 
     # Group opens element of its own, so no callee glues to it; suffix may follow, parser reads.
     let
@@ -94,22 +94,22 @@ func candidatesOf*(source: string): seq[Group] =
     if at < 0: continue
     let
       inner = elementsOf(tokens, partners, o + 1, c - 1, source)
-      before = if at > 0: elements[at - 1].kind else: ElementKind.Delimiter
-      after = if at < elements.high: elements[at + 1].kind else: ElementKind.Delimiter
-      is_symbol_prefix = before == ElementKind.Prefix and
-        tokens[elements[at - 1].first].kind == TokenKind.Operator
-      is_side = before == ElementKind.Binary or
-        (after == ElementKind.Binary and before != ElementKind.Prefix)
-      is_plain = inner.len == 1 and inner[0].kind == ElementKind.Operand and
+      before = if at > 0: elements[at - 1].kind else: KindElement.Delimiter
+      after = if at < elements.high: elements[at + 1].kind else: KindElement.Delimiter
+      is_prefix_symbol = before == KindElement.Prefix and
+        tokens[elements[at - 1].first].kind == KindToken.Operator
+      is_side = before == KindElement.Binary or
+        (after == KindElement.Binary and before != KindElement.Prefix)
+      is_plain = inner.len == 1 and inner[0].kind == KindElement.Operand and
         tokens.isPlain(inner[0].first, source)
-      is_term = inner.len >= 2 and inner[^1].kind == ElementKind.Operand and
+      is_term = inner.len >= 2 and inner[^1].kind == KindElement.Operand and
         inner[0 ..< ^1].allIt(
-          it.kind == ElementKind.Prefix and tokens[it.first].kind == TokenKind.Operator,
+          it.kind == KindElement.Prefix and tokens[it.first].kind == KindToken.Operator,
         )
-    if not ((is_term and is_side) or (is_plain and (is_symbol_prefix or is_side))): continue
+    if not ((is_term and is_side) or (is_plain and (is_prefix_symbol or is_side))): continue
 
     # Exponent of `^` glued into operator stays, since spacing glues `^` and wraps it (X.9).
-    let is_power = before == ElementKind.Binary and tokens[o - 1].spelling(source) == "^"
+    let is_power = before == KindElement.Binary and tokens[o - 1].spelling(source) == "^"
     if is_power and source.isMerging([tokens[o - 1], tokens[o + 1]]): continue
     result.add Group(
       line: t.line,

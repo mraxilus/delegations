@@ -7,7 +7,7 @@ import std/[sequtils, unittest]
 import ../../src/knoller/[reports, waits]
 
 
-const NIM_DRIVE = """
+const DRIVE_NIM = """
 import std/[asyncdispatch, os]
 
 proc settle(page: Page) {.async.} =
@@ -25,7 +25,7 @@ proc settle(page: Page) {.async.} =
 
 suite "Article IX":
   test "IX.12 Nim fixed wait reported in every call form, as Nim compares names":
-    let found = checkWaits("viewer/tests/test_view.nim", NIM_DRIVE)
+    let found = checkWaits("viewer/tests/test_view.nim", DRIVE_NIM)
     check found.mapIt(it.line) == @[4, 5, 6, 9]  # comment, string and `sleeper` unread
     check found.allIt(it.rule == Rule.FixedWait)
     check found.mapIt(it.message) == @[

@@ -55,9 +55,9 @@ suite "Article VI":
 
 
   test "VI.5 comment lines drop markers, hide hashes of literals, and nest blocks":
-    check "x = 1 # note\n## doc\n### deep\n".commentLines ==
+    check "x = 1 # note\n## doc\n### deep\n".linesComment ==
       @[(1, "note"), (2, "doc"), (3, "deep")]  # marker runs stripped
-    check "x = 1 # note\n\n## doc\n".commentLines.mapIt(it[0]) == @[1, 3]  # one-based lines
+    check "x = 1 # note\n\n## doc\n".linesComment.mapIt(it[0]) == @[1, 3]  # one-based lines
     for (source, line) in [
       ("a = \"# not\" # yes\n", 1),  # plain string
       ("a = r\"x\\#\"\"\" # yes\n", 1),  # raw string with "", backslash before hash
@@ -66,13 +66,13 @@ suite "Article VI":
       ("a = '\\n' # yes\n", 1),  # escaped char literal
       ("a = 1'i32 # yes\n", 1),  # numeric suffix quote
     ]:
-      check source.commentLines == @[(line, "yes")]
-    check "discard \"\"\"\naction: run\n\"\"\"\n# after\n".commentLines == @[(4, "after")]
-    check "#[ Basis Conversion ]#\n".commentLines == @[(1, "Basis Conversion")]  # banner
-    check "#[ one\n two #[ inner ]# tail\n three ]# x = 1 # four\n".commentLines ==
+      check source.linesComment == @[(line, "yes")]
+    check "discard \"\"\"\naction: run\n\"\"\"\n# after\n".linesComment == @[(4, "after")]
+    check "#[ Basis Conversion ]#\n".linesComment == @[(1, "Basis Conversion")]  # banner
+    check "#[ one\n two #[ inner ]# tail\n three ]# x = 1 # four\n".linesComment ==
       @[(1, "one"), (2, "two inner tail"), (3, "three four")]  # nested, line by line
-    check "##[ doc block ]##\n".commentLines == @[(1, "doc block")]  # doc block
-    check "# `#[ x ]#` in line comment\n".commentLines ==
+    check "##[ doc block ]##\n".linesComment == @[(1, "doc block")]  # doc block
+    check "# `#[ x ]#` in line comment\n".linesComment ==
       @[(1, "`#[ x ]#` in line comment")]  # markers of line comment are its text
 
 

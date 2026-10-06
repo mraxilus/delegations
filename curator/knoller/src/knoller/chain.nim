@@ -4,7 +4,7 @@
 ##   Built from checks (Article II.1): each fixer sits beside its check and reads that check's
 ##     own data, so each rule is written once.
 ##   Fixer runs where its check runs: idiom fixers of module (`.nim`) alone, those of any Nim code
-##     (return, bindings) and every other fixer in every dialect (`idiomFixers`). Order keeps each
+##     (return, bindings) and every other fixer in every dialect (`fixersIdiom`). Order keeps each
 ##     fixer from undoing one before it:
 ##   - form first (whitespace, ending, tab in string, trailing comment, banner), so later
 ##     fixers read clean line ends and final comment gaps, which wrapping counts in width;
@@ -48,7 +48,7 @@
 ##   File whose last attempt still changes after `ROUNDS_MAX` rounds stays as written, and its
 ##     fix says why (`Fix.unsettled`), so half-settled file is never written. Message names no
 ##     rule: fault is tool's, and no source breaks rule of style there, so no article cites it.
-##   Nimble file whose copy `atlas.lock` holds (`nimbleFile`, `lockedNimbles`) is left to
+##   Nimble file whose copy `atlas.lock` holds (`nimbleFile`, `nimblesLocked`) is left to
 ##     caller, which writes none of it and checks none of it: rewrite would leave lock's copy
 ##     stale, and Atlas reads that as change of package.
 ##   Command line checks what fixers leave by every check knoller holds (`checkSource`): those
@@ -86,36 +86,36 @@ const
   ATTEMPTS_MAX = 4
     ## Attempts of rounds at most, last holding every line; tree settles in two
     ##   (`PROVENANCE.md`, Wraps).
-  LOCK_FILE* = "atlas.lock"  ## Lock holding copy of project's nimble file.
-  NIMBLE_KEY = "\"nimbleFile\""  ## Key of lock's copy of nimble file, whose `filename` names it.
+  FILE_LOCK* = "atlas.lock"  ## Lock holding copy of project's nimble file.
+  KEY_NIMBLE = "\"nimbleFile\""  ## Key of lock's copy of nimble file, whose `filename` names it.
 
 
 func stepsOf(dialect: Dialect): seq[Step] =
   ## List steps dialect takes, in order header gives.
-  result = @FORM_STEPS
+  result = @STEPS_FORM
   result.add @[
     guarded(fixBlockEntry), guarded(fixArticles), widening(fixMessages),
     widening(fixMixtures), guarded(fixTargets), guarded(fixCommands), proving(fixParentheses),
   ]
-  for fixer in dialect.idiomFixers: result.add guarded(fixer)
+  for fixer in dialect.fixersIdiom: result.add guarded(fixer)
   result.add @[guarded(fixBlanks), guarded(fixDocs), guarded(fixDefaults), widening(fixSpacing)]
-  result.add WRAPPING_STEPS
+  result.add STEPS_WRAPPING
   result.add guarded(fixCommentsAbove)
 
 
-func lockedNimbles*(files: openArray[(string, string)]): seq[string] =
+func nimblesLocked*(files: openArray[(string, string)]): seq[string] =
   ## Read path of each nimble file whose copy `atlas.lock` beside it holds, from path and text
   ##   of each file; file of another name is passed over.
   for (path, content) in files:
-    if not path.endsWith("/" & LOCK_FILE) and path != LOCK_FILE: continue
-    let at = content.find(NIMBLE_KEY)
+    if not path.endsWith("/" & FILE_LOCK) and path != FILE_LOCK: continue
+    let at = content.find(KEY_NIMBLE)
     if at < 0: continue
     let
       key = content.find("\"filename\"", at)
       open = if key < 0: -1 else: content.find('"', content.find(':', key) + 1)
       close = if open < 0: -1 else: content.find('"', open + 1)
     if close < 0: continue
-    result.add path[0 ..< path.len - LOCK_FILE.len] & content[open + 1 ..< close]
+    result.add path[0 ..< path.len - FILE_LOCK.len] & content[open + 1 ..< close]
 
 
 func checksOf(path, view: string; dialect: Dialect; proofs: Proofs): seq[Report] =
@@ -129,7 +129,7 @@ func checksOf(path, view: string; dialect: Dialect; proofs: Proofs): seq[Report]
   for check in checks: result.add check(path, view)
   result.add checkParentheses(path, view, proofs)
   if dialect == Dialect.Module:
-    result.add checkImportBrackets(path, view) & checkLists(path, view) & checkProfiler(path, view)
+    result.add checkBracketsImport(path, view) & checkLists(path, view) & checkProfiler(path, view)
 
 
 func checkFormatting*(path, source: string; dialect: Dialect; proofs = Proofs()): seq[Report] =
@@ -150,11 +150,11 @@ func checkFormatting*(path, source: string; dialect: Dialect; proofs = Proofs())
 func staticOf(path, source: string; dialect: Dialect): seq[Report] =
   ## Run on source as given each check static pass of `curator/audit` reads on Nim source: form,
   ##   articles, entry block, names with no word exempt beyond `JARGON`, idioms of dialect, and
-  ##   fixed waits of drive file (`isDriveFile`). Fence keeps no line from them.
+  ##   fixed waits of drive file (`isFileDrive`). Fence keeps no line from them.
   result = checkForm(path, source) & checkArticles(path, source)
   result.add checkBlockEntry(path, source) & checkNames(path, source, [])
   result.add checkIdioms(path, source, dialect)
-  if path.isDriveFile: result.add checkWaits(path, source)
+  if path.isFileDrive: result.add checkWaits(path, source)
 
 
 func checkSource*(path, source: string; dialect: Dialect; proofs = Proofs()): seq[Report] =
@@ -180,7 +180,7 @@ func settled(
   ## Run steps over view until round changes nothing, at most `ROUNDS_MAX` rounds, wideners off
   ##   held lines, prover step reading proofs; fixer that would move fenced line is skipped.
   ##   `none` where last round changes; what any round asks parser stands either way.
-  let shape = view.fenceShape
+  let shape = view.shapeFence
   var fix = Fix(source: view)
   for round in 1 .. ROUNDS_MAX:
     var step = Fix(source: fix.source)
@@ -188,7 +188,7 @@ func settled(
       let next = each.run(path, step.source, held.heldThrough(fix, step), proofs)
       for asked in next.asked:
         if asked notin result.asked: result.asked.add asked
-      if next.source.fenceShape != shape: continue
+      if next.source.shapeFence != shape: continue
       step = step.chain(next)
     if step.source == fix.source:
       fix.asked = result.asked

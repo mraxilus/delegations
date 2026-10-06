@@ -76,9 +76,9 @@ const
   VERB_CHARS = {'a' .. 'z', '-'}  ## Characters verb is spelled with.
   TABLE_HEADING* = "## Checks reference"
     ## Heading above table naming verbs; other tables in same document name other things.
-  IDENT_CHARS = {'a' .. 'z', 'A' .. 'Z', '0' .. '9', '_'}
+  CHARS_IDENT = {'a' .. 'z', 'A' .. 'Z', '0' .. '9', '_'}
     ## Characters Nim identifier is built from.
-  OPTION_CHARS = IDENT_CHARS + {'-'}
+  OPTION_CHARS = CHARS_IDENT + {'-'}
     ## Characters option name is built from, as `--dry-run` spells it.
 
 
@@ -90,7 +90,7 @@ func exportedRoutines*(source: string): seq[string] =
     let words = line.splitWhitespace
     if words.len < 2 or words[0] notin ROUTINES: continue
     let name = words[1].split({'*', '(', '[', ':', ','})[0]
-    if name.len == 0 or not name.allCharsInSet(IDENT_CHARS): continue
+    if name.len == 0 or not name.allCharsInSet(CHARS_IDENT): continue
     if words[1].len > name.len and words[1][name.len] == '*': result.add name
 
 
@@ -100,11 +100,11 @@ func identifiers(source: string): CountTable[string] =
   ##   `auditTree(tree)` and word would hide first form.
   var i = 0
   while i < source.len:
-    if source[i] notin IDENT_CHARS:
+    if source[i] notin CHARS_IDENT:
       inc i
       continue
     var j = i
-    while j < source.len and source[j] in IDENT_CHARS: inc j
+    while j < source.len and source[j] in CHARS_IDENT: inc j
     result.inc source[i ..< j]
     i = j
 
@@ -158,7 +158,7 @@ func fixDeadExports*(
     for i, line in lines:
       let words = line.splitWhitespace
       if words.len >= 2 and words[0] in ROUTINES and words[1].startsWith(name & "*"): declared.add i
-    let named = source.tokens.countIt(it.kind == TokenKind.Word and it.spelling(source) == name)
+    let named = source.tokens.countIt(it.kind == KindToken.Word and it.spelling(source) == name)
     if declared.len == 0 or named <= declared.len: continue
     for i in declared:
       let at = lines[i].find(name & "*")

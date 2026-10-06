@@ -9,7 +9,7 @@
 ##     writes commit as `nim#<commit>`, so pin reads that form too; `#` of branch or tag, such as
 ##     `nim#devel`, moves, and reads as no pin.
 ##   Policy of one form is caller's: `curator/audit` demands `nim == <pin>` (CURATOR.md duty 8),
-##     and reads what follows `nim` through `nimRequirement`.
+##     and reads what follows `nim` through `requirementNim`.
 ##
 ##   Cost: parser reads `requires` lines only; `when` branches count as unconditional, and every
 ##     literal on line is taken.
@@ -23,8 +23,8 @@ const
   NIM* = "nim"  ## Requirement name pin carries, and name of compiler in its `bin`.
   EXACT* = "=="  ## Operator exact pin uses; ranges are rejected.
   MARK_COMMIT = "#"  ## Mark opening commit nimble names after package, as `nim#<commit>`.
-  VERSION_CHARS = Digits + {'.'}  ## Characters version string is built from.
-  COMMIT_CHARS = {'0'..'9', 'a'..'f'}  ## Characters commit pin is built from; lowercase hex only.
+  CHARS_VERSION = Digits + {'.'}  ## Characters version string is built from.
+  CHARS_COMMIT = {'0'..'9', 'a'..'f'}  ## Characters commit pin is built from; lowercase hex only.
   COMMIT_LEN* = 40  ## Length of full git commit, which is what pin carries.
   NAME_END = {' ', '#', '@', '>', '<', '=', '~', '^'}
     ## Characters ending package name inside requirement.
@@ -32,7 +32,7 @@ const
 
 func isVersion*(s: string): bool =
   ## Decide whether `s` is dotted version, i.e. digit runs separated by single dots.
-  if s.len == 0 or not s.allCharsInSet(VERSION_CHARS): return false
+  if s.len == 0 or not s.allCharsInSet(CHARS_VERSION): return false
   for part in s.split('.'):
     if part.len == 0: return false
   true
@@ -40,7 +40,7 @@ func isVersion*(s: string): bool =
 
 func isCommit*(s: string): bool =
   ## Decide whether `s` is full lowercase git commit.
-  s.len == COMMIT_LEN and s.allCharsInSet(COMMIT_CHARS)
+  s.len == COMMIT_LEN and s.allCharsInSet(CHARS_COMMIT)
 
 
 func isPin*(s: string): bool =
@@ -75,7 +75,7 @@ func requireLiterals*(nimble: string): seq[string] =
       i = close + 1
 
 
-func nimRequirement*(nimble: string): Option[string] =
+func requirementNim*(nimble: string): Option[string] =
   ## Read what follows `nim` in first requirement of compiler nimble text names, e.g. `== 2.2.12`;
   ##   `none` where it names none.
   for requirement in nimble.requireLiterals:
@@ -87,7 +87,7 @@ func nimRequirement*(nimble: string): Option[string] =
 func nimPin*(nimble: string): Option[string] =
   ## Read exact Nim pin of nimble text, as `nim == <pin>` or `nim#<commit>`; `none` when absent
   ##   or inexact.
-  let rest = nimble.nimRequirement.get("")
+  let rest = nimble.requirementNim.get("")
   if rest.startsWith(EXACT):
     let pin = rest[EXACT.len .. ^1].strip
     if pin.isPin: return some(pin)

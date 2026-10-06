@@ -45,9 +45,9 @@ type
 
 const
   MARKER = "; got "  ## Text message's tail follows.
-  LONG_QUOTE = "\"\"\""  ## Delimiter of long literal.
+  QUOTE_LONG = "\"\"\""  ## Delimiter of long literal.
   INTERPOLATORS = ["&", "fmt"]  ## Prefix glued before literal that makes `{…}` value.
-  ENDING_KEYWORDS = [
+  KEYWORDS_ENDING = [
     "and", "do", "elif", "else", "if", "in", "of", "or", "return", "then", "when", "while",
   ]
     ## Keywords ending expression operand of concatenation.
@@ -59,7 +59,7 @@ const
 
 func contentOf(t: Token, source: string): (int, int) =
   ## Read byte span of literal's content, quotes left out.
-  if source.continuesWith(LONG_QUOTE, t.first): (t.first + 3, t.after - 3)
+  if source.continuesWith(QUOTE_LONG, t.first): (t.first + 3, t.after - 3)
   else: (t.first + 1, t.after - 1)
 
 
@@ -67,22 +67,22 @@ func pieceAt(tokens: openArray[Token], partners: openArray[int], k: int, source:
   ## Read operand opening at token `k`: literal, prefixed literal, or expression running to
   ##   next `&` outside brackets, separator, closing bracket or line end `&` does not continue.
   let t = tokens[k]
-  if t.kind == TokenKind.Text: return Piece(first: k, last: k, literal: k)
+  if t.kind == KindToken.Text: return Piece(first: k, last: k, literal: k)
   let text = t.spelling(source)
-  if k + 1 < tokens.len and tokens[k + 1].kind == TokenKind.Text and
-      tokens[k + 1].first == t.after and t.kind in {TokenKind.Operator, TokenKind.Word}:
+  if k + 1 < tokens.len and tokens[k + 1].kind == KindToken.Text and
+      tokens[k + 1].first == t.after and t.kind in {KindToken.Operator, KindToken.Word}:
     return Piece(first: k, last: k + 1, literal: k + 1, is_interpolated: text in INTERPOLATORS)
   result = Piece(first: k, last: k, literal: -1)
   var j = k
   while j < tokens.len:
     let u = tokens[j]
-    if u.kind == TokenKind.Open and partners[j] > j: j = partners[j]
-    elif u.kind in {TokenKind.Comma, TokenKind.Semicolon, TokenKind.Close, TokenKind.Comment}:
+    if u.kind == KindToken.Open and partners[j] > j: j = partners[j]
+    elif u.kind in {KindToken.Comma, KindToken.Semicolon, KindToken.Close, KindToken.Comment}:
       break
-    elif u.kind == TokenKind.Operator and u.spelling(source) in ["&", ":", "="] and j > k:
+    elif u.kind == KindToken.Operator and u.spelling(source) in ["&", ":", "="] and j > k:
       break
-    elif u.kind == TokenKind.Word and u.spelling(source) in ENDING_KEYWORDS: break
-    elif j > k and tokens[j - 1].lastLine(source) < u.line: break
+    elif u.kind == KindToken.Word and u.spelling(source) in KEYWORDS_ENDING: break
+    elif j > k and tokens[j - 1].lineLast(source) < u.line: break
     result.last = j
     inc j
 
@@ -98,7 +98,7 @@ func chainFrom(
     result[0].is_interpolated = true
   var at = k + 1
   while at + 1 < tokens.len:
-    while at < tokens.len and tokens[at].kind == TokenKind.Comment: inc at
+    while at < tokens.len and tokens[at].kind == KindToken.Comment: inc at
     if at + 1 >= tokens.len or tokens[at].spelling(source) != "&": break
     let piece = pieceAt(tokens, partners, at + 1, source)
     if piece.last < piece.first: break
@@ -112,8 +112,8 @@ func isShapeable(
   ## Decide whether value may end message in shape: each operator of it binds tighter than `&`,
   ##   so literal appended after it joins concatenation, never value.
   elementsOf(tokens, partners, piece.first, piece.last, source).allIt(
-    it.kind in {ElementKind.Operand, ElementKind.Prefix} or
-        (it.kind == ElementKind.Binary and it.precedence > PRECEDENCE_CONCATENATION)
+    it.kind in {KindElement.Operand, KindElement.Prefix} or
+        (it.kind == KindElement.Binary and it.precedence > PRECEDENCE_CONCATENATION)
   )
 
 
@@ -182,7 +182,7 @@ func tails(source: string): seq[Value] =
     partners = tokens.partners
   var seen: seq[int]
   for k, t in tokens:
-    if t.kind != TokenKind.Text or k in seen: continue
+    if t.kind != KindToken.Text or k in seen: continue
     let at = source[t.first ..< t.after].rfind(MARKER)
     if at < 0: continue
     let chain = chainFrom(tokens, partners, k, source)

@@ -18,7 +18,7 @@ import ./[declared, reports, tokens, views]
 
 
 const
-  MAIN_GUARD* = "when isMainModule:"  ## Block that makes module entry of program (STYLE.md §1).
+  GUARD_MAIN* = "when isMainModule:"  ## Block that makes module entry of program (STYLE.md §1).
   PRAGMAS_MODULE = @MARKS_FOREIGN & @["global", "threadvar"]
     ## Pragmas binding name at module level alone, or across foreign boundary (`MARKS_FOREIGN`),
     ##   never in routine.
@@ -46,7 +46,7 @@ func blockEntry*(source: string): BlockEntry =
   ##   Block binding nothing reads no refusal, since nothing moves.
   result.head = -1
   for d in source.declarations:
-    if d.kind == NameKind.Binding and d.reach == Reach.Entry: result.bindings.add (d.line, d.name)
+    if d.kind == KindName.Binding and d.reach == Reach.Entry: result.bindings.add (d.line, d.name)
   if result.bindings.len == 0: return
   let
     lines = source.split('\n')
@@ -62,7 +62,7 @@ func blockEntry*(source: string): BlockEntry =
     result.refusal = "module holds `" & $heads.len & "` entry blocks"
     return
   result.head = heads[0]
-  if code[result.head].strip != MAIN_GUARD:
+  if code[result.head].strip != GUARD_MAIN:
     result.refusal = "`" & code[result.head].strip & "` guards more than `isMainModule`"
     return
 
@@ -73,8 +73,8 @@ func blockEntry*(source: string): BlockEntry =
   while lines[result.first].strip.len == 0: inc result.first
   for t in tokens:
     if t.line <= result.head or t.line >= stop: continue
-    if t.kind == TokenKind.Comment and t.first == starts[t.line]: continue
-    result.last = max(result.last, t.lastLine(source))
+    if t.kind == KindToken.Comment and t.first == starts[t.line]: continue
+    result.last = max(result.last, t.lineLast(source))
   for i in result.first .. result.last:
     if code[i].strip.len == 0: continue
     result.indent = code[i].indentOf
@@ -83,14 +83,14 @@ func blockEntry*(source: string): BlockEntry =
   # Refuse what routine cannot hold, or would read otherwise than block.
   for k, t in tokens:
     if t.line < result.first or t.line > result.last: continue
-    if t.kind == TokenKind.Open and t.spelling(source) == "{." and partners[k] > k:
+    if t.kind == KindToken.Open and t.spelling(source) == "{." and partners[k] > k:
       for m in k + 1 ..< partners[k]:
         let word = tokens[m].spelling(source)
-        if tokens[m].kind == TokenKind.Word and word in PRAGMAS_MODULE:
+        if tokens[m].kind == KindToken.Word and word in PRAGMAS_MODULE:
           result.refusal = "`{." & word & ".}` binds at module level alone"
           return
-    let is_marker = t.kind == TokenKind.Operator and t.spelling(source) == "*" and k > 0 and
-      tokens[k - 1].kind == TokenKind.Word and tokens[k - 1].after == t.first
+    let is_marker = t.kind == KindToken.Operator and t.spelling(source) == "*" and k > 0 and
+      tokens[k - 1].kind == KindToken.Word and tokens[k - 1].after == t.first
     if is_marker:
       result.refusal = "export marker of `" & tokens[k - 1].spelling(source) &
         "` stands at module level alone"
@@ -107,7 +107,7 @@ func blockEntry*(source: string): BlockEntry =
       result.refusal = "`quit` at block's own indent returns value, which `quit main()` would carry"
       return
   for t in tokens:
-    if t.kind == TokenKind.Word and t.spelling(source).identity == ROUTINE_ENTRY:
+    if t.kind == KindToken.Word and t.spelling(source).identity == ROUTINE_ENTRY:
       result.refusal = "`" & t.spelling(source) & "` stands in module already"
       return
 

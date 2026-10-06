@@ -1,6 +1,6 @@
 ## Replicate command line of `command.nim` header: what `knoller [--check] [--nim:path] path...`
 ##   reads, writes, prints and exits with, driven through `outcomeOf` on text alone, and through
-##   `provenOutcome` with parser stubbed (`stubs.nim`).
+##   `outcomeProven` with parser stubbed (`stubs.nim`).
 ##   Compiler of each file (`batchesOf`) is driven over real files, with real parser where it is
 ##   cheap: `--nim` and `nim` on `PATH`. Prover of pin is stubbed, since serving pin may fetch;
 ##   `test_compilers.nim` holds real prover of pin.
@@ -32,7 +32,7 @@ const
   NIM = getCurrentCompilerExe()  ## Compiler building suite, 2.2.12, whose parser answers.
   COMMIT = "27763495bcfe265507ca98aedc1c7064bf1e0e4d"  ## Commit pin of `ronri` projects.
   UNSERVED = "Parser proved no removal, since no compiler serves pin; got `"
-    ## Opening of warning of pin no compiler serves, as `pinProvers` writes it.
+    ## Opening of warning of pin no compiler serves, as `proversPin` writes it.
   UNSETTLED =
     "File still changes after 3 rounds of fixers, so fix leaves it as written; got `3` rounds."
     ## Message of file fixers do not settle, as `chain.nim` writes it.
@@ -52,7 +52,7 @@ proc everyOutcome(
   directory: string,
   prover: Prover,
 ): Outcome =
-  ## Fix every file again each round of asking: reference that loop of `provenOutcome`, fixing
+  ## Fix every file again each round of asking: reference that loop of `outcomeProven`, fixing
   ##   files that asked alone, is held equal to (Article IX.2).
   var
     proofs = Proofs()
@@ -296,22 +296,22 @@ suite "Command line":
   test "parentheses go where parser proves it, after one more run, and second run writes none":
     let unanswered = outcomeOf([("a.nim", GROUPED)], [], is_check = false)
     check unanswered.written.len == 0 and unanswered.asked == @[GROUPED]  # waits for parser
-    let outcome = provenOutcome([("a.nim", GROUPED)], [], false, "/", stubProver)
+    let outcome = outcomeProven([("a.nim", GROUPED)], [], false, "/", proverStub)
     check outcome.written == @[("a.nim", GROUPED.replace("@(x) +", "@x +"))]
     check outcome.lines == @["a.nim:3: needless-parentheses fixed", "1 fixed."]
     check outcome.asked.len == 0 and outcome.code == 0
-    let again = provenOutcome(outcome.written, [], false, "/", stubProver)
+    let again = outcomeProven(outcome.written, [], false, "/", proverStub)
     check again.written.len == 0 and again.lines == @["0 fixed."]  # second run writes nothing
 
 
   test "where no compiler answers, nothing goes, one warning says why, and exit code holds":
-    for prover in [failingProver, compilerProver("/nonexistent/nim")]:
-      let outcome = provenOutcome([("a.nim", GROUPED), ("b.nim", CLEAN)], [], true, "/", prover)
+    for prover in [proverFailing, proverCompiler("/nonexistent/nim")]:
+      let outcome = outcomeProven([("a.nim", GROUPED), ("b.nim", CLEAN)], [], true, "/", prover)
       check outcome.written.len == 0 and outcome.code == 0  # nothing due, nothing left
       check outcome.lines.len == 2 and outcome.lines[^1] == "0 to fix."
       check outcome.lines[0].startsWith("needless-parentheses warning: ")  # one line, before count
     let dirty =
-      provenOutcome([("a.nim", DIRTY & "let S = @(x) + 1\n")], [], true, "/", failingProver)
+      outcomeProven([("a.nim", DIRTY & "let S = @(x) + 1\n")], [], true, "/", proverFailing)
     check dirty.code == 1 and dirty.lines[^1] == "4 to fix."  # other rules still due
     check dirty.lines[^2] == "needless-parentheses warning: Compiler ran no probe; got `x`."
 
@@ -323,10 +323,10 @@ suite "Command line":
     var pins: seq[string]
     let provers = proc (pin: string): Prover =
       pins.add pin
-      failureProver("Prover of pin ran; got `" & pin & "`.")
+      proverFailure("Prover of pin ran; got `" & pin & "`.")
     let batches = batchesOf(["p/a.nim"], NIM, root, provers)
     check batches.mapIt(it.paths) == @[@["p/a.nim"]]
-    let outcome = provenOutcome([("p/a.nim", GROUPED)], [], false, root, batches)
+    let outcome = outcomeProven([("p/a.nim", GROUPED)], [], false, root, batches)
     check pins.len == 0  # pin is never resolved, so never fetched
     check outcome.written == @[("p/a.nim", GROUPED.replace("@(x) +", "@x +"))]  # real parser
     check outcome.lines == @["p/a.nim:3: needless-parentheses fixed", "1 fixed."]
@@ -347,11 +347,11 @@ suite "Command line":
     let provers = proc (pin: string): Prover =
       result = proc (sources: seq[string]): Proving =
         asked.add (pin, sources)
-        stubProver(sources)
+        proverStub(sources)
     let batches = batchesOf(paths, "", root, provers)
     check batches.mapIt(it.paths) ==
         @[@["p/src/a.nim", "p/src/deep/c.nim"], @["q/b.nim"], @["r/d.nim"]]  # nearest decides
-    let outcome = provenOutcome(zip(paths, sources), [], true, root, batches)
+    let outcome = outcomeProven(zip(paths, sources), [], true, root, batches)
     check asked.mapIt(it[0]) == @["9.9.1", COMMIT]  # one run for each pin, `nim#` read too
     check asked[0][1].allIt("@(a)" in it or "@(c)" in it)  # pin's own files alone
     check asked[1][1].allIt("@(b)" in it)
@@ -372,9 +372,9 @@ suite "Command line":
       sources = [GROUPED, GROUPED.replace("@(x) + @(x[0])", "@(y) + @(y[0])")]
     root.writeTree(@[("p/p.nimble", "requires \"nim == 0.0.1\"\n")] & zip(paths, sources))
     let
-      provers = proc (pin: string): Prover = failureProver(UNSERVED & pin & "`.")
+      provers = proc (pin: string): Prover = proverFailure(UNSERVED & pin & "`.")
       outcome =
-        provenOutcome(zip(paths, sources), [], true, root, batchesOf(paths, "", root, provers))
+        outcomeProven(zip(paths, sources), [], true, root, batchesOf(paths, "", root, provers))
     check outcome.written.len == 0 and outcome.code == 0  # exit code holds
     check outcome.lines == @["needless-parentheses warning: " & UNSERVED & "0.0.1`.", "0 to fix."]
 
@@ -393,9 +393,9 @@ suite "Command line":
     var pins: seq[string]
     let provers = proc (pin: string): Prover =
       pins.add pin
-      failureProver("Prover of pin ran; got `" & pin & "`.")
+      proverFailure("Prover of pin ran; got `" & pin & "`.")
     let outcome =
-      provenOutcome(zip(paths, sources), [], true, root, batchesOf(paths, "", root, provers))
+      outcomeProven(zip(paths, sources), [], true, root, batchesOf(paths, "", root, provers))
     check pins.len == 0  # neither pin is trusted, as nimble refuses such directory
     check outcome.written.len == 0 and outcome.code == 0
     check outcome.lines == @[
@@ -415,10 +415,10 @@ suite "Command line":
     var pins: seq[string]
     let provers = proc (pin: string): Prover =
       pins.add pin
-      failureProver("Prover of pin ran; got `" & pin & "`.")
+      proverFailure("Prover of pin ran; got `" & pin & "`.")
     let batches = batchesOf(paths, "", root, provers)
     check batches.mapIt(it.paths) == @[@paths]  # one batch: `nim` on PATH
-    let outcome = provenOutcome(zip(paths, sources), [], true, root, batches)
+    let outcome = outcomeProven(zip(paths, sources), [], true, root, batches)
     check pins.len == 0  # range names no pin
     check outcome.lines == @[
       "p/a.nim:3: needless-parentheses to fix",
@@ -447,20 +447,20 @@ suite "Command line":
       let
         counted = proc (sources: seq[string]): Proving =
           inc calls
-          stubProver(sources)
+          proverStub(sources)
         failing_later = proc (): Prover =
           var count = 0
           result = proc (sources: seq[string]): Proving =
             inc count
-            if count == 1: stubProver(sources) else: failingProver(sources)
+            if count == 1: proverStub(sources) else: proverFailing(sources)
       let pairs: array[3, (Prover, Prover)] = [
         (counted, counted),
-        (failingProver, failingProver),
+        (proverFailing, proverFailing),
         (failing_later(), failing_later()),
       ]
       for (fast, every) in pairs:
         let
-          proven = provenOutcome(files, ["p/p.nimble"], is_check, "/", fast)
+          proven = outcomeProven(files, ["p/p.nimble"], is_check, "/", fast)
           reference = everyOutcome(files, ["p/p.nimble"], is_check, "/", every)
         check proven.written == reference.written
         check proven.lines == reference.lines

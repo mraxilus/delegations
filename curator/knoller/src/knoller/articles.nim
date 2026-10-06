@@ -2,7 +2,7 @@
 ##   Rule is data: `ARTICLES` lists banned words. Tokeniser is whitespace split with
 ##   surrounding punctuation stripped, so `(a` and `the.` are caught while `2.2a` and URLs
 ##   pass. Backtick spans are removed first, so quoted identifiers `a` and `the` pass.
-##   Check reads comments of Nim source from tokens, as fixer reads them (`commentLines`), one
+##   Check reads comments of Nim source from tokens, as fixer reads them (`linesComment`), one
 ##     finding to line; caller reading comments of other syntax passes its lines, so every
 ##     kind reports in same words (`curator/audit`, `prose.nim`).
 ##   Fixer deletes lowercase article, with space after it, in comment of Nim syntax, outside
@@ -30,7 +30,7 @@ const
   }
     ## Characters stripped from token ends before comparison.
   OPENERS = {'(', '['}  ## Brackets article may follow glued, which cut keeps.
-  FUNCTION_WORDS = [
+  WORDS_FUNCTION = [
     "a", "an", "and", "are", "as", "at", "be", "been", "but", "by", "for", "from", "if", "in",
     "into", "is", "it", "its", "nor", "not", "of", "on", "onto", "or", "so", "than", "that",
     "the", "then", "this", "to", "was", "were", "when", "where", "which", "while", "with",
@@ -38,7 +38,7 @@ const
     ## Words no noun phrase opens with, so article before one is likely name of value.
 
 
-func stripCodeSpans(text: string): string =
+func stripSpansCode(text: string): string =
   ## Remove backtick-delimited spans, leaving space so neighbours stay separate.
   var is_code = false
   for c in text:
@@ -51,12 +51,12 @@ func stripCodeSpans(text: string): string =
 
 func findArticles*(text: string): seq[string] =
   ## Collect article tokens present in comment text, in order of appearance.
-  for word in text.stripCodeSpans.splitWhitespace:
+  for word in text.stripSpansCode.splitWhitespace:
     let bare = word.strip(chars = PUNCTUATION).toLowerAscii
     if bare in ARTICLES: result.add bare
 
 
-func commentLines*(source: string): seq[(int, string)] =
+func linesComment*(source: string): seq[(int, string)] =
   ## Read text comments of Nim source hold on each line, as one-based line and text: markers
   ##   stripped, comments of one line joined, whitespace runs collapsed, line of no text left out.
   ##   Line comment drops its run of `#`; block comment drops `#[`, `##[` and each nested
@@ -69,7 +69,7 @@ func commentLines*(source: string): seq[(int, string)] =
 
   # Read text of each comment line by line; block comment leaves its markers out.
   for t in source.tokens:
-    if t.kind != TokenKind.Comment: continue
+    if t.kind != KindToken.Comment: continue
     let is_block = source.continuesWith("#[", t.first) or source.continuesWith("##[", t.first)
     var
       k = t.first
@@ -114,14 +114,14 @@ func checkArticles*(path: string, lines: openArray[(int, string)]): seq[Report] 
 
 func checkArticles*(path, source: string): seq[Report] =
   ## Report each line whose comments in Nim source hold article (VI.5).
-  checkArticles(path, source.commentLines)
+  checkArticles(path, source.linesComment)
 
 
 func articleCuts(source: string): seq[(int, int)] =
   ## Find byte span of each lowercase article fixer deletes, with spaces after it, in Nim
   ##   comments; outside backtick spans and double quotes, before word opening noun phrase.
   for t in source.tokens:
-    if t.kind != TokenKind.Comment: continue
+    if t.kind != KindToken.Comment: continue
     var
       k = t.first
       is_code = false
@@ -156,7 +156,7 @@ func articleCuts(source: string): seq[(int, int)] =
       while stop < t.after and source[stop] notin Whitespace: inc stop
       let word = source[next ..< stop].strip(chars = PUNCTUATION)
       if source[next] notin {'a' .. 'z', 'A' .. 'Z', '0' .. '9', '`'}: continue
-      if word.len <= 1 or word.toLowerAscii in FUNCTION_WORDS: continue
+      if word.len <= 1 or word.toLowerAscii in WORDS_FUNCTION: continue
       result.add (opening, next)
 
 

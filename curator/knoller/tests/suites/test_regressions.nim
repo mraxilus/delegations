@@ -295,7 +295,7 @@ proc fixedBy(source: string; prover: Prover): Fix =
     discard KNOWN.answered(result.asked, prover)
 
 
-template holds(found, mended: string; prover: Prover = compilerProver(NIM)) =
+template holds(found, mended: string; prover: Prover = proverCompiler(NIM)) =
   ## Check that found fixes to mended, and that mended fixes to itself, reporting nothing.
   block:
     check fixedBy(found, prover).source == mended
@@ -310,7 +310,7 @@ suite "Regressions":
       "(|∙ ⊖(𝐦 ∧ 𝐧)) div (|∙ (⊖𝐦 ∧ ⊖𝐧))", "|∙ ⊖(𝐦 ∧ 𝐧) div |∙(⊖𝐦 ∧ ⊖𝐧)",
     ).replace(
       "(|∙ ⊖(𝐦 ∧ 𝐧)) + (|∘ (𝐦 ∧ ⊖𝐧))", "|∙ ⊖(𝐦 ∧ 𝐧) + |∘(𝐦 ∧ ⊖𝐧)",
-    ), stubProver  # `|∙⊖` would lex one operator, so space stays; stub as commit pin
+    ), proverStub  # `|∙⊖` would lex one operator, so space stays; stub as commit pin
     holds HEAD & "let x = - -y\n", HEAD & "let x = - -y\n"  # `- -x` of #521; `--` one token
     holds HEAD & "let y = - 1\n", HEAD & "let y = - 1\n"  # `-1` would lex one literal (#521)
 
@@ -365,7 +365,7 @@ suite "Regressions":
 
 
   test "9. parentheses go where parser proves it, three kinds, and stay where it does not":
-    holds WEDGES, WEDGES.replace("■(𝐧) + □(𝐧)", "■𝐧 + □𝐧"), stubProver  # after prefix
+    holds WEDGES, WEDGES.replace("■(𝐧) + □(𝐧)", "■𝐧 + □𝐧"), proverStub  # after prefix
     holds MASK, MASK.replace("2'u^(DIMENSIONS)", "2'u^DIMENSIONS")  # beside binary operator
     holds LINKS, LINKS  # `@PAIRS[task.pair][0]` reads `(@PAIRS)[task.pair][0]` (#539)
     holds SIGILS, SIGILS.replace("@(x)\n", "@x\n")  # bare operand alone goes
@@ -373,14 +373,14 @@ suite "Regressions":
       "(i-1)", "(i - 1)",
     ).replace("toBasisFlags(flags)", "flags.toBasisFlags")  # `1'u shl (i-1)` group stays
     holds HEAD & "let x = b + -(1)\n", HEAD & "let x = b + -(1)\n"  # literal `-1` (ruling 11)
-    holds COMPLEMENTS, COMPLEMENTS, stubProver  # `\/` would lex one operator
-    holds NORMALIZED, NORMALIZED.replace("𝐬/𝑡", "𝐬 / 𝑡"), stubProver  # `^(|𝐦)` stays
+    holds COMPLEMENTS, COMPLEMENTS, proverStub  # `\/` would lex one operator
+    holds NORMALIZED, NORMALIZED.replace("𝐬/𝑡", "𝐬 / 𝑡"), proverStub  # `^(|𝐦)` stays
     holds HEAD & "let z = a - (-b) -1\n", HEAD & "let z = a - (-b) -1\n"  # callee of command
 
 
   test "10. power operator is tight, and exponent that would merge takes parentheses (ruling 12)":
     holds POWERS, HEAD & "let\n  p = -1^k\n  q = -1^(a * b)\n  r = a^(-b)\n"
-    holds ANTISCALAR, ANTISCALAR, stubProver  # `float(-1^(int(b.grade) * int(b.gradeAnti)))`
+    holds ANTISCALAR, ANTISCALAR, proverStub  # `float(-1^(int(b.grade) * int(b.gradeAnti)))`
 
 
   test "11. each report prints at its line in file as given (#521)":

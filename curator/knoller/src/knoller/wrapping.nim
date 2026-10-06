@@ -20,7 +20,7 @@
 ##     reads next line on (`optPar`), so tree stays. `in`, `notin`, `is`, `isnot`, `of` and `as`
 ##     never break, nor operator glued on either side. Line holding comment, `;`, block keyword
 ##     after its head, or `:` before code other than type of binding, stays.
-##   Continuation: each line of expression past its statement line takes `CONTINUATION_STEP`
+##   Continuation: each line of expression past its statement line takes `STEP_CONTINUATION`
 ##     spaces more than that line, every such line alike (STYLE.md §5). Statement line is line
 ##     expression opens on, or, for chain opening on line after `=` of binding or assignment,
 ##     line of that `=`, so chain takes step too, first line included; other value there keeps
@@ -31,7 +31,7 @@
 ##     token spanning lines, stays. Operator break follows same rule.
 ##   Block head: where line right above body of `if`, `for`, `of` and other heads, or of routine
 ##     signature, stands at body's indent, every continuation line of head moves by one step, so
-##     shallowest takes `CONTINUATION_STEP` past head's first line (`headLifts`).
+##     shallowest takes `STEP_CONTINUATION` past head's first line (`headLifts`).
 ##   Trailing separator: list written one item to line ends its last item with separator, where
 ##     it would not fit joined: call, parameters, array, seq, set, table, tuple of several items,
 ##     constructor, import bracket. List that fits joined takes none, since comma marks split
@@ -106,7 +106,7 @@ type
 
   Shift = object  ## Define continuation line to re-indent, and spaces it takes past its base.
     rewrite: Rewrite
-    step: int  ## `CONTINUATION_STEP` past statement line, or none past line first piece opens.
+    step: int  ## `STEP_CONTINUATION` past statement line, or none past line first piece opens.
 
   Lift = object  ## Define continuation line of block head to re-indent, and indent of head.
     rewrite: Rewrite
@@ -114,33 +114,33 @@ type
 
 
 const
-  BLOCK_KEYWORDS = [
+  KEYWORDS_BLOCK = [
     "block", "case", "converter", "do", "for", "func", "if", "iterator", "macro", "method",
     "proc", "template", "try", "when", "while",
   ]
     ## Keywords opening block; call or list holding one is left as written.
-  CONDITION_KEYWORDS = ["case", "elif", "except", "for", "if", "of", "when", "while"]
+  KEYWORDS_CONDITION = ["case", "elif", "except", "for", "if", "of", "when", "while"]
     ## Keywords whose `:` ends line after call they hold, so `:` opens no block argument.
-  CONTINUING_KEYWORDS = [
+  KEYWORDS_CONTINUING = [
     "and", "div", "in", "is", "isnot", "mod", "notin", "of", "or", "shl", "shr", "xor",
   ]
     ## Keyword operators line may end on, continuing expression on next line.
-  TYPE_KEYWORDS = ["static", "tuple"]  ## Keywords whose `[` opens type, never constructor.
-  INDENT_STEP = 2  ## Spaces one level of wrapping indents (Article X.1).
-  CONTINUATION_STEP = 4
+  KEYWORDS_TYPE = ["static", "tuple"]  ## Keywords whose `[` opens type, never constructor.
+  STEP_INDENT = 2  ## Spaces one level of wrapping indents (Article X.1).
+  STEP_CONTINUATION = 4
     ## Spaces line continuing expression after operator takes beyond line opening it (STYLE.md
     ##   §5), so continuation reads apart from block body one level in; none where first piece
     ##   opens its own line, since bracket or comma before it already sets it apart.
-  UNBROKEN_KEYWORDS = ["as", "in", "is", "isnot", "notin", "of"]
+  KEYWORDS_UNBROKEN = ["as", "in", "is", "isnot", "notin", "of"]
     ## Keyword operators no break follows: membership, type test and conversion read as one.
-  NAMING_KEYWORDS = ["const", "let", "var"]  ## Keywords whose name's `:` types binding.
-  HEAD_KEYWORDS = [
+  KEYWORDS_NAMING = ["const", "let", "var"]  ## Keywords whose name's `:` types binding.
+  KEYWORDS_HEAD = [
     "block", "case", "elif", "except", "for", "if", "of", "try", "when", "while",
   ]
     ## Keywords opening block head whose `:` ending line opens body on next line.
-  SIGNATURE_KEYWORDS = ["converter", "func", "iterator", "macro", "method", "proc", "template"]
+  KEYWORDS_SIGNATURE = ["converter", "func", "iterator", "macro", "method", "proc", "template"]
     ## Keywords opening routine signature whose `=` ending line opens body on next line.
-  IGNORED_OPERATORS = [".", ":", "::", "="]
+  OPERATORS_IGNORED = [".", ":", "::", "="]
     ## Operator tokens ending line that continue no expression: field, type, assignment.
   PASSES_MAX = 16
     ## Passes call fixer takes at most; one rewrite can let call sharing its line be read.
@@ -155,7 +155,7 @@ func scan(source: string): Scan =
     tokens: source.tokens,
   )
   result.partners = result.tokens.partners
-  for t in result.tokens: result.lasts.add t.lastLine(source)
+  for t in result.tokens: result.lasts.add t.lineLast(source)
 
 
 func spelling(s: Scan, k: int): string =
@@ -176,7 +176,7 @@ func isLineFirst(s: Scan, k: int): bool =
 func isLineLast(s: Scan, k: int): bool =
   ## Decide whether token `k` ends its line, comment after it aside.
   k == s.tokens.high or s.tokens[k + 1].line > s.lasts[k] or
-    (s.tokens[k + 1].kind == TokenKind.Comment and s.isLineLast(k + 1))
+    (s.tokens[k + 1].kind == KindToken.Comment and s.isLineLast(k + 1))
 
 
 func isMultiline(s: Scan, k: int): bool =
@@ -191,14 +191,14 @@ func items(s: Scan, o: int): seq[Item] =
     item = Item(first: -1, last: -1, separator: -1)
   while k < s.partners[o]:
     case s.tokens[k].kind
-    of TokenKind.Comma, TokenKind.Semicolon:
+    of KindToken.Comma, KindToken.Semicolon:
       item.separator = k
       if item.first >= 0: result.add item
       item = Item(first: -1, last: -1, separator: -1)
-    of TokenKind.Comment: discard
+    of KindToken.Comment: discard
     else:
       if item.first < 0: item.first = k
-      if s.tokens[k].kind == TokenKind.Open and s.partners[k] > k: k = s.partners[k]
+      if s.tokens[k].kind == KindToken.Open and s.partners[k] > k: k = s.partners[k]
       item.last = k
     inc k
   if item.first >= 0: result.add item
@@ -209,7 +209,7 @@ func isHolding(s: Scan, item: Item, spellings: openArray[string]): bool =
   var k = item.first
   while k <= item.last:
     if s.spelling(k) in spellings: return true
-    if s.tokens[k].kind == TokenKind.Open and s.partners[k] > k: k = s.partners[k]
+    if s.tokens[k].kind == KindToken.Open and s.partners[k] > k: k = s.partners[k]
     inc k
 
 
@@ -239,7 +239,7 @@ func groupsOf(s: Scan, items: openArray[Item]): seq[seq[Item]] =
   for item in items:
     group.add item
     let is_typed = s.isHolding(item, [":", "="])
-    if is_typed or (item.separator >= 0 and s.tokens[item.separator].kind == TokenKind.Semicolon):
+    if is_typed or (item.separator >= 0 and s.tokens[item.separator].kind == KindToken.Semicolon):
       if not is_typed: return @[]
       result.add group
       group = @[]
@@ -263,12 +263,12 @@ func separators(s: Scan): seq[int] =
       if separator >= 0 and s.spelling(separator) != wanted: result.add separator
 
 
-func tupleSeparators(s: Scan): seq[int] =
+func separatorsTuple(s: Scan): seq[int] =
   ## Find each `;` between fields of tuple type, which takes `,` (STYLE.md §5).
   for o in 1 ..< s.tokens.len:
     if s.spelling(o) != "[" or s.spelling(o - 1) != "tuple" or s.partners[o] < o: continue
     for item in s.items(o):
-      if item.separator >= 0 and s.tokens[item.separator].kind == TokenKind.Semicolon:
+      if item.separator >= 0 and s.tokens[item.separator].kind == KindToken.Semicolon:
         result.add item.separator
 
 
@@ -284,7 +284,7 @@ func checkSeparators*(path, source: string): seq[Report] =
       "Parameters take `;` between groups where one group shares its type, and `,` " &
         "otherwise; got `" & s.spelling(k) & "`.",
     )
-  for k in s.tupleSeparators:
+  for k in s.separatorsTuple:
     result.add initReport(
       path,
       s.tokens[k].line + 1,
@@ -300,7 +300,7 @@ func fixSeparators*(path, source: string): Fix =
   for k in s.separators:
     result.source[s.tokens[k].first] = if s.spelling(k) == ",": ';' else: ','
     result.fixed.add initReport(path, s.tokens[k].line + 1, Rule.ParameterSeparators)
-  for k in s.tupleSeparators:
+  for k in s.separatorsTuple:
     result.source[s.tokens[k].first] = ','
     result.fixed.add initReport(path, s.tokens[k].line + 1, Rule.TupleSeparators)
 
@@ -315,18 +315,18 @@ func signatureRewrites(s: Scan): seq[Rewrite] =
     if keyword < 0 or keyword == o - 1 or not s.isLineFirst(keyword): continue
     let c = s.partners[o]
     if c < o or s.tokens[keyword].line != s.tokens[o].line: continue
-    let (first_line, last_line) = (s.tokens[keyword].line, s.tokens[c].line)
+    let (line_first, line_last) = (s.tokens[keyword].line, s.tokens[c].line)
 
     # Read closing line through `=` and body after it; leave what spans lines or holds comment.
     var
       k = keyword
       is_unread = false
       equals = -1
-    while k < s.tokens.len and s.tokens[k].line <= last_line:
+    while k < s.tokens.len and s.tokens[k].line <= line_last:
       let t = s.tokens[k]
-      if t.kind == TokenKind.Comment or s.lasts[k] > t.line: is_unread = true
-      if k > c and t.kind == TokenKind.Open:
-        if s.partners[k] < 0 or s.tokens[s.partners[k]].line != last_line: is_unread = true
+      if t.kind == KindToken.Comment or s.lasts[k] > t.line: is_unread = true
+      if k > c and t.kind == KindToken.Open:
+        if s.partners[k] < 0 or s.tokens[s.partners[k]].line != line_last: is_unread = true
         else: k = s.partners[k]
       elif k > c and equals < 0 and s.spelling(k) == "=": equals = k
       inc k
@@ -338,31 +338,31 @@ func signatureRewrites(s: Scan): seq[Rewrite] =
 
     # Build each layout from head, groups and tail as written.
     let
-      line = s.lines[first_line]
-      closing = s.lines[last_line]
+      line = s.lines[line_first]
+      closing = s.lines[line_last]
       head = line[0 ..< s.offset(o) + 1]
       tail = closing[s.offset(c) .. ^1]
-      tail_signature = if equals < 0: tail else: closing[s.offset(c) .. s.offset(equals)]
+      signature_tail = if equals < 0: tail else: closing[s.offset(c) .. s.offset(equals)]
       texts = groups.mapIt(s.source[s.tokens[it[0].first].first ..< s.tokens[it[^1].last].after])
       separator = groups.separatorOf
       joined = texts.join(separator & " ")
       margin = ' '.repeat(line.indentOf)
-      inner = ' '.repeat(line.indentOf + INDENT_STEP)
+      inner = ' '.repeat(line.indentOf + STEP_INDENT)
       one = head & joined & tail
-      parameters_line = @[head, inner & joined, margin & tail]
-      group_lines = @[head] & texts.mapIt(inner & it & separator) & @[margin & tail]
+      line_parameters = @[head, inner & joined, margin & tail]
+      lines_group = @[head] & texts.mapIt(inner & it & separator) & @[margin & tail]
     var canonical: seq[string]
     if not one.isWide: canonical = @[one]
-    elif tail_signature != tail and not (head & joined & tail_signature).isWide: continue
-    elif not parameters_line.anyIt(it.isWide):
+    elif signature_tail != tail and not (head & joined & signature_tail).isWide: continue
+    elif not line_parameters.anyIt(it.isWide):
       # One name on its line is list written one item to line, which takes separator (X.3).
-      canonical = if items.len == 1: group_lines else: parameters_line
-    elif not group_lines.anyIt(it.isWide): canonical = group_lines
+      canonical = if items.len == 1: lines_group else: line_parameters
+    elif not lines_group.anyIt(it.isWide): canonical = lines_group
     else: continue
-    if canonical != s.lines[first_line .. last_line]:
+    if canonical != s.lines[line_first .. line_last]:
       result.add Rewrite(
-        first: first_line,
-        last: last_line,
+        first: line_first,
+        last: line_last,
         lines: canonical,
         rule: Rule.SignatureWrapping,
       )
@@ -390,15 +390,15 @@ func fixSignatures*(path, source: string): Fix =
 
 #[ Call Wrapping ]#
 
-func isEligibleCall(s: Scan, o: int): bool =
+func isCallEligible(s: Scan, o: int): bool =
   ## Decide whether `(` at `o` opens call wrapping reads: no comment, long string spanning lines
   ##   or block among arguments, and no block argument after it.
   if not s.tokens.isCallOpen(s.partners, o, s.source) or s.partners[o] < o: return false
   let c = s.partners[o]
   for k in o + 1 ..< c:
     let t = s.tokens[k]
-    if t.kind in {TokenKind.Comment, TokenKind.Semicolon} or s.lasts[k] > t.line: return false
-    if t.kind == TokenKind.Word and s.spelling(k) in BLOCK_KEYWORDS: return false
+    if t.kind in {KindToken.Comment, KindToken.Semicolon} or s.lasts[k] > t.line: return false
+    if t.kind == KindToken.Word and s.spelling(k) in KEYWORDS_BLOCK: return false
     if s.spelling(k) == ":" and s.isLineLast(k): return false
   if c == s.tokens.high or s.tokens[c + 1].line > s.lasts[c]: return true
   let after = s.spelling(c + 1)
@@ -408,7 +408,7 @@ func isEligibleCall(s: Scan, o: int): bool =
   # `:` ends condition of keyword opening line, or opens block argument of call.
   var first = o
   while not s.isLineFirst(first): dec first
-  s.spelling(first) in CONDITION_KEYWORDS
+  s.spelling(first) in KEYWORDS_CONDITION
 
 
 func isFlattenable(s: Scan; a, b: int): bool =
@@ -417,15 +417,15 @@ func isFlattenable(s: Scan; a, b: int): bool =
   ##   closing bracket, so joining moves no reading.
   for k in a .. b:
     let t = s.tokens[k]
-    if t.kind == TokenKind.Comment or s.lasts[k] > t.line: return false
-    if t.kind == TokenKind.Open and s.isMultiline(k) and not s.isEligibleCall(k): return false
+    if t.kind == KindToken.Comment or s.lasts[k] > t.line: return false
+    if t.kind == KindToken.Open and s.isMultiline(k) and not s.isCallEligible(k): return false
     if k == a or t.line == s.lasts[k - 1]: continue
     let
       previous = s.tokens[k - 1]
-      is_continued = previous.kind == TokenKind.Operator or
-        (previous.kind == TokenKind.Word and s.spelling(k - 1) in CONTINUING_KEYWORDS)
-    if t.kind == TokenKind.Close or previous.kind in {TokenKind.Open, TokenKind.Comma}: continue
-    if not is_continued or t.kind == TokenKind.Operator: return false
+      is_continued = previous.kind == KindToken.Operator or
+        (previous.kind == KindToken.Word and s.spelling(k - 1) in KEYWORDS_CONTINUING)
+    if t.kind == KindToken.Close or previous.kind in {KindToken.Open, KindToken.Comma}: continue
+    if not is_continued or t.kind == KindToken.Operator: return false
   true
 
 
@@ -439,8 +439,8 @@ func flatten(s: Scan; a, b: int): Flat =
   for k in a .. b:
     let
       t = s.tokens[k]
-      is_trailing = t.kind == TokenKind.Comma and k < b and
-        s.tokens[k + 1].kind == TokenKind.Close and s.tokens[k + 1].line > t.line
+      is_trailing = t.kind == KindToken.Comma and k < b and
+        s.tokens[k + 1].kind == KindToken.Close and s.tokens[k + 1].line > t.line
     if is_trailing:
       result.opens.add runes
       result.closes.add runes
@@ -448,7 +448,7 @@ func flatten(s: Scan; a, b: int): Flat =
     if previous >= 0:
       let gap =
         if t.line == s.lasts[previous]: s.source[s.tokens[previous].after ..< t.first]
-        elif s.tokens[previous].kind == TokenKind.Open or t.kind == TokenKind.Close: ""
+        elif s.tokens[previous].kind == KindToken.Open or t.kind == KindToken.Close: ""
         else: " "
       result.text.add gap
       runes += gap.runeLen
@@ -462,23 +462,23 @@ func flatten(s: Scan; a, b: int): Flat =
 func kept(s: Scan; lead: string; a, b: int; trail: string): Option[seq[string]] =
   ## Keep line breaks hand gave tokens `a` to `b`, re-indented as their first line moves.
   ##   `none` where they span one line, or hold call spanning lines, which rule lays out.
-  let (first_line, last_line) = (s.tokens[a].line, s.lasts[b])
-  if first_line == last_line: return none(seq[string])
+  let (line_first, line_last) = (s.tokens[a].line, s.lasts[b])
+  if line_first == line_last: return none(seq[string])
   for k in a .. b:
     let t = s.tokens[k]
-    if t.kind == TokenKind.Comment or (t.kind == TokenKind.Text and s.lasts[k] > t.line):
+    if t.kind == KindToken.Comment or (t.kind == KindToken.Text and s.lasts[k] > t.line):
       return none(seq[string])
-    if t.kind == TokenKind.Open and s.isMultiline(k) and
+    if t.kind == KindToken.Open and s.isMultiline(k) and
         s.tokens.isCallOpen(s.partners, k, s.source):
       return none(seq[string])
-    if k > a and t.line > s.lasts[k - 1] and t.kind == TokenKind.Operator:
+    if k > a and t.line > s.lasts[k - 1] and t.kind == KindToken.Operator:
       return none(seq[string])
-  let shift = lead.len - s.lines[first_line].indentOf
-  var shaped = @[lead & s.lines[first_line][s.offset(a) .. ^1]]
-  for line in first_line + 1 .. last_line:
+  let shift = lead.len - s.lines[line_first].indentOf
+  var shaped = @[lead & s.lines[line_first][s.offset(a) .. ^1]]
+  for line in line_first + 1 .. line_last:
     let
       text = s.lines[line]
-      stop = if line == last_line: s.tokens[b].after - s.starts[line] else: text.len
+      stop = if line == line_last: s.tokens[b].after - s.starts[line] else: text.len
       indent = text.indentOf + shift
     if indent < 0: return none(seq[string])
     shaped.add ' '.repeat(indent) & text[text.indentOf ..< stop]
@@ -486,15 +486,15 @@ func kept(s: Scan; lead: string; a, b: int; trail: string): Option[seq[string]] 
   some(shaped)
 
 
-func isClosingRun(s: Scan; a, b: int): bool =
+func isRunClosing(s: Scan; a, b: int): bool =
   ## Decide whether tokens `a` to `b` are closing brackets, separators and `:` alone.
   toSeq(a .. b).allIt(
-    s.tokens[it].kind in {TokenKind.Close, TokenKind.Comma, TokenKind.Semicolon} or
+    s.tokens[it].kind in {KindToken.Close, KindToken.Comma, KindToken.Semicolon} or
       s.spelling(it) == ":",
   )
 
 
-func isWholeCall(s: Scan; a, b: int): bool =
+func isCallWhole(s: Scan; a, b: int): bool =
   ## Decide whether tokens `a` to `b` are one call with its callee chain, named where argument
   ##   or field names it (`name = f(…)`, `name: f(…)`): no other operator outside brackets but
   ##   `.`. Argument of other shape has no one split.
@@ -502,10 +502,10 @@ func isWholeCall(s: Scan; a, b: int): bool =
   while k <= b:
     let
       t = s.tokens[k]
-      is_naming = k == a + 1 and s.spelling(k) in ["=", ":"] and s.tokens[a].kind == TokenKind.Word
-    if t.kind == TokenKind.Operator and s.spelling(k) != "." and not is_naming: return false
-    if t.kind == TokenKind.Word and s.spelling(k) in CONTINUING_KEYWORDS: return false
-    if t.kind == TokenKind.Open and s.partners[k] > k: k = s.partners[k]
+      is_naming = k == a + 1 and s.spelling(k) in ["=", ":"] and s.tokens[a].kind == KindToken.Word
+    if t.kind == KindToken.Operator and s.spelling(k) != "." and not is_naming: return false
+    if t.kind == KindToken.Word and s.spelling(k) in KEYWORDS_CONTINUING: return false
+    if t.kind == KindToken.Open and s.partners[k] > k: k = s.partners[k]
     inc k
   true
 
@@ -514,17 +514,17 @@ func isContinuing(s: Scan, k: int): bool =
   ## Decide whether token `k`, ending its line, is binary operator, so next line continues it.
   let text = s.spelling(k)
   if k == 0 or not s.tokens.isOperandEnd(k - 1, s.source): return false
-  if s.tokens[k].kind == TokenKind.Word: text in CONTINUING_KEYWORDS
-  else: s.tokens[k].kind == TokenKind.Operator and text notin IGNORED_OPERATORS
+  if s.tokens[k].kind == KindToken.Word: text in KEYWORDS_CONTINUING
+  else: s.tokens[k].kind == KindToken.Operator and text notin OPERATORS_IGNORED
 
 
 func continued(s: Scan, k: int): int =
   ## Read index of operator line-first token `k` continues, on line right above it, comment
   ##   after operator aside; `-1` where none, where `k` is comment, or where comment line
   ##   stands between.
-  if k == 0 or not s.isLineFirst(k) or s.tokens[k].kind == TokenKind.Comment: return -1
+  if k == 0 or not s.isLineFirst(k) or s.tokens[k].kind == KindToken.Comment: return -1
   var j = k - 1
-  if s.tokens[j].kind == TokenKind.Comment and j > 0 and s.tokens[j].line == s.lasts[j - 1] and
+  if s.tokens[j].kind == KindToken.Comment and j > 0 and s.tokens[j].line == s.lasts[j - 1] and
       s.lasts[j] == s.tokens[j].line:
     dec j
   if s.lasts[j] + 1 != s.tokens[k].line or not s.isContinuing(j): -1 else: j
@@ -535,9 +535,9 @@ func bindingOpened(s: Scan, k: int): int =
   ##   binding of `const`, `let` or `var`, or assignment; `-1` where line before ends otherwise,
   ##   statement stands inside bracket, as named argument does, `=` stands inside one, or keyword
   ##   other than section's stands before it, as head of routine, lambda or `type` does.
-  if k == 0 or not s.isLineFirst(k) or s.tokens[k].kind == TokenKind.Comment: return -1
+  if k == 0 or not s.isLineFirst(k) or s.tokens[k].kind == KindToken.Comment: return -1
   var j = k - 1
-  if s.tokens[j].kind == TokenKind.Comment and j > 0 and s.tokens[j].line == s.lasts[j - 1] and
+  if s.tokens[j].kind == KindToken.Comment and j > 0 and s.tokens[j].line == s.lasts[j - 1] and
       s.lasts[j] == s.tokens[j].line:
     dec j
   if s.spelling(j) != "=" or s.lasts[j] + 1 != s.tokens[k].line: return -1
@@ -549,14 +549,14 @@ func bindingOpened(s: Scan, k: int): int =
     depth = 0
   while not s.isLineFirst(first): dec first
   for m in 0 ..< first:
-    if s.tokens[m].kind == TokenKind.Open: inc depth
-    elif s.tokens[m].kind == TokenKind.Close: depth = max(depth - 1, 0)
+    if s.tokens[m].kind == KindToken.Open: inc depth
+    elif s.tokens[m].kind == KindToken.Close: depth = max(depth - 1, 0)
   if depth != 0: return -1
   for m in first ..< j:
     let t = s.tokens[m]
-    if t.kind == TokenKind.Open: inc depth
-    elif t.kind == TokenKind.Close: dec depth
-    if t.isKeyword(s.source) and not (m == first and s.spelling(m) in NAMING_KEYWORDS):
+    if t.kind == KindToken.Open: inc depth
+    elif t.kind == KindToken.Close: dec depth
+    if t.isKeyword(s.source) and not (m == first and s.spelling(m) in KEYWORDS_NAMING):
       return -1
   if depth != 0: return -1
 
@@ -566,7 +566,7 @@ func bindingOpened(s: Scan, k: int): int =
     indent = s.lines[line].indentOf
   var parent = first - 1
   while parent >= 0 and not (s.isLineFirst(parent) and
-      s.tokens[parent].kind != TokenKind.Comment and
+      s.tokens[parent].kind != KindToken.Comment and
       s.lines[s.tokens[parent].line].indentOf < indent):
     dec parent
   if parent >= 0 and s.spelling(parent) == "type": -1 else: line
@@ -578,18 +578,18 @@ func isOwnLine(s: Scan; a, b: int): bool =
   ##   at their depth no delimiter (`=`, `:`, separator, keyword) and no command head, i.e. two
   ##   operands apart by space with no operator between.
   var j = a - 1
-  while j >= 0 and s.tokens[j].kind == TokenKind.Comment: dec j
-  if j < 0 or not (s.tokens[j].kind == TokenKind.Comma or s.spelling(j) in ["(", "[", "{"]):
+  while j >= 0 and s.tokens[j].kind == KindToken.Comment: dec j
+  if j < 0 or not (s.tokens[j].kind == KindToken.Comma or s.spelling(j) in ["(", "[", "{"]):
     return false
   let elements = elementsOf(s.tokens, s.partners, a, b, s.source)
   for m, e in elements:
-    if e.kind == ElementKind.Delimiter: return false
+    if e.kind == KindElement.Delimiter: return false
     if m == 0: continue
     let
       before = elements[m - 1]
       is_spaced = s.tokens[before.last].after < s.tokens[e.first].first
-    if before.kind == ElementKind.Operand and is_spaced and
-        e.kind in {ElementKind.Operand, ElementKind.Prefix}:
+    if before.kind == KindElement.Operand and is_spaced and
+        e.kind in {KindElement.Operand, KindElement.Prefix}:
       return false
   true
 
@@ -598,15 +598,15 @@ func broken(s: Scan; lead: string; a, b: int; trail: string; indent: int): Optio
   ## Break tokens `a` to `b`, which stand on one line, after binary operators of lowest
   ##   precedence at their depth, each line taking latest one that fits, between lead and
   ##   trail; `none` where line holds what operator break leaves, or piece fits no line.
-  ##   Continuation lines take `CONTINUATION_STEP` beyond indent, or indent itself where line
+  ##   Continuation lines take `STEP_CONTINUATION` beyond indent, or indent itself where line
   ##     continues expression already, opens value after `=`, or opens with first piece after
   ##     bracket or comma (`isOwnLine`), so every line of one expression past its statement
   ##     line aligns, as `continuationShifts` reads it.
   if s.tokens[a].line != s.lasts[b]: return none(seq[string])
   for k in a .. b:
     let t = s.tokens[k]
-    if t.kind in {TokenKind.Comment, TokenKind.Semicolon}: return none(seq[string])
-    if k > a and t.kind == TokenKind.Word and s.spelling(k) in BLOCK_KEYWORDS:
+    if t.kind in {KindToken.Comment, KindToken.Semicolon}: return none(seq[string])
+    if k > a and t.kind == KindToken.Word and s.spelling(k) in KEYWORDS_BLOCK:
       return none(seq[string])
 
   # Read operators of one depth; `:` before code passes only as type of name it follows.
@@ -615,11 +615,11 @@ func broken(s: Scan; lead: string; a, b: int; trail: string; indent: int): Optio
   for e in elements:
     let k = e.first
     if s.spelling(k) == ":" and k < b:
-      let is_typing = s.tokens[k - 1].kind == TokenKind.Word and
+      let is_typing = s.tokens[k - 1].kind == KindToken.Word and
           not s.tokens[k - 1].isKeyword(s.source) and
-          (k - 1 == a or (k - 2 == a and s.spelling(a) in NAMING_KEYWORDS))
+          (k - 1 == a or (k - 2 == a and s.spelling(a) in KEYWORDS_NAMING))
       if not is_typing: return none(seq[string])
-    if e.kind != ElementKind.Binary or e.last >= b or s.spelling(k) in UNBROKEN_KEYWORDS: continue
+    if e.kind != KindElement.Binary or e.last >= b or s.spelling(k) in KEYWORDS_UNBROKEN: continue
     if s.tokens[k - 1].after == s.tokens[k].first or s.tokens[k].after == s.tokens[k + 1].first:
       continue
     breaks.add e
@@ -629,7 +629,7 @@ func broken(s: Scan; lead: string; a, b: int; trail: string; indent: int): Optio
     stops = breaks.filterIt(it.precedence == lowest).mapIt(it.first)
     is_continuing = s.continued(a) >= 0 or s.bindingOpened(a) >= 0 or
       (lead.strip.len == 0 and s.isOwnLine(a, b))
-    margin = ' '.repeat(if is_continuing: indent else: indent + CONTINUATION_STEP)
+    margin = ' '.repeat(if is_continuing: indent else: indent + STEP_CONTINUATION)
 
   # Fill each line up to latest operator that fits; rest goes on next line.
   var
@@ -663,7 +663,7 @@ func fallback(s: Scan; lead: string; a, b: int; trail: string; indent: int): Opt
 func isTrailed(s: Scan, o: int): bool =
   ## Decide whether call `(` at `o` spans lines with comma after its last argument, on line
   ##   before its `)`: mark of split hand wants (X.3), so call keeps one argument to line.
-  if not s.isMultiline(o) or not s.isEligibleCall(o): return false
+  if not s.isMultiline(o) or not s.isCallEligible(o): return false
   let items = s.items(o)
   items.len > 0 and items[^1].separator >= 0 and
     s.tokens[s.partners[o]].line > s.tokens[items[^1].separator].line
@@ -679,27 +679,27 @@ func isHug(s: Scan, o: int): bool =
     inner = s.partners[last]
   s.tokens[first].first == s.tokens[o].after and
     s.tokens[last].after == s.tokens[s.partners[o]].first and inner > first and
-    s.isMultiline(inner) and s.isEligibleCall(inner) and s.isWholeCall(first, last)
+    s.isMultiline(inner) and s.isCallEligible(inner) and s.isCallWhole(first, last)
 
 
-func handLines(s: Scan; lead: string; a, b: int; trail: string): Option[seq[string]] =
+func linesHand(s: Scan; lead: string; a, b: int; trail: string): Option[seq[string]] =
   ## Keep line breaks hand gave call of tokens `a` to `b`, each line moved as indent of its first
   ##   moves; `none` where they span one line, hold comment or token spanning lines, hold bracket
   ##   spanning lines other than one call, or where line would cross `LINE_MAX`.
-  let (first_line, last_line) = (s.tokens[a].line, s.lasts[b])
-  if first_line == last_line: return none(seq[string])
+  let (line_first, line_last) = (s.tokens[a].line, s.lasts[b])
+  if line_first == line_last: return none(seq[string])
   var spanning: seq[int]
   for k in a..b:
     let t = s.tokens[k]
-    if t.kind == TokenKind.Comment or s.lasts[k] > t.line: return none(seq[string])
-    if t.kind == TokenKind.Open and s.isMultiline(k): spanning.add k
-  if spanning.len != 1 or not s.isEligibleCall(spanning[0]): return none(seq[string])
-  let shift = lead.indentOf - s.lines[first_line].indentOf
-  var shaped = @[lead & s.lines[first_line][s.offset(a)..^1]]
-  for line in first_line + 1 .. last_line:
+    if t.kind == KindToken.Comment or s.lasts[k] > t.line: return none(seq[string])
+    if t.kind == KindToken.Open and s.isMultiline(k): spanning.add k
+  if spanning.len != 1 or not s.isCallEligible(spanning[0]): return none(seq[string])
+  let shift = lead.indentOf - s.lines[line_first].indentOf
+  var shaped = @[lead & s.lines[line_first][s.offset(a)..^1]]
+  for line in line_first + 1 .. line_last:
     let
       text = s.lines[line]
-      stop = if line == last_line: s.tokens[b].after - s.starts[line] else: text.len
+      stop = if line == line_last: s.tokens[b].after - s.starts[line] else: text.len
       indent = text.indentOf + shift
     if indent < 0: return none(seq[string])
     shaped.add ' '.repeat(indent) & text[text.indentOf ..< stop]
@@ -713,7 +713,7 @@ func layout(
   ## Lay out tokens `a` to `b` between lead and trail as X.3 wraps calls; `none` where rule
   ##   leaves them as written.
   ##   One line where they fit; else line breaks hand gave call stay, where each line fits and
-  ##     only that call spans lines (`handLines`); else outermost call crossing `LINE_MAX` splits,
+  ##     only that call spans lines (`linesHand`); else outermost call crossing `LINE_MAX` splits,
   ##     one argument to line, each laid out again; else wrapping hand gave stays, re-indented;
   ##     else line breaks after operator, which split that fits no line falls back on too.
   ##   Call spanning lines with comma after its last argument is never joined (`isTrailed`):
@@ -728,45 +728,45 @@ func layout(
     target = -1
     is_trailed = false
   for k in a..b:
-    if s.tokens[k].kind == TokenKind.Open and s.isTrailed(k): is_trailed = true
+    if s.tokens[k].kind == KindToken.Open and s.isTrailed(k): is_trailed = true
   if s.isFlattenable(a, b) and not is_trailed:
     let
       flat = s.flatten(a, b)
       one = lead & flat.text & trail
       start = lead.runeLen
     if not one.isWide: return some(Laid(lines: @[one], rule: Rule.CallWrapping))
-    let hand = s.handLines(lead, a, b, trail)
+    let hand = s.linesHand(lead, a, b, trail)
     if hand.isSome: return some(Laid(lines: hand.get, rule: Rule.CallWrapping))
 
     # Find outermost bracket crossing `LINE_MAX`, else last one before it ending line.
     var
       k = a
-      last_open = -1
+      open_last = -1
     while k <= b:
       let p = s.partners[k]
-      if s.tokens[k].kind == TokenKind.Open and p > k and p <= b:
+      if s.tokens[k].kind == KindToken.Open and p > k and p <= b:
         if start + flat.opens[k - a] < LINE_MAX:
-          last_open = k
+          open_last = k
           if start + flat.closes[p - a] > LINE_MAX:
             target = k
             break
         k = p
       inc k
-    if target < 0 and last_open >= 0 and
-        (s.partners[last_open] == b or s.isClosingRun(s.partners[last_open] + 1, b)):
-      target = last_open
+    if target < 0 and open_last >= 0 and
+        (s.partners[open_last] == b or s.isRunClosing(s.partners[open_last] + 1, b)):
+      target = open_last
   else:
     var k = a
     while k <= b:
-      if s.tokens[k].kind == TokenKind.Open and s.partners[k] > k and s.partners[k] <= b:
+      if s.tokens[k].kind == KindToken.Open and s.partners[k] > k and s.partners[k] <= b:
         if s.isMultiline(k):
           target = k
           break
         k = s.partners[k]
       inc k
-  if target < 0 or not s.isEligibleCall(target) or not s.isFlattenable(a, target):
+  if target < 0 or not s.isCallEligible(target) or not s.isFlattenable(a, target):
     return s.fallback(lead, a, b, trail, indent)
-  if is_argument and not s.isWholeCall(a, b): return s.fallback(lead, a, b, trail, indent)
+  if is_argument and not s.isCallWhole(a, b): return s.fallback(lead, a, b, trail, indent)
 
   # Split call: head through `(`, one argument to line, `)` opening closing line.
   block split:
@@ -788,11 +788,11 @@ func layout(
     var lines = @[lead & s.flatten(a, target).text]
     for item in arguments:
       let argument = s.layout(
-        ' '.repeat(indent + INDENT_STEP),
+        ' '.repeat(indent + STEP_INDENT),
         item.first,
         item.last,
         ",",
-        indent + INDENT_STEP,
+        indent + STEP_INDENT,
         is_argument = true,
       )
       if argument.isNone: break split
@@ -831,22 +831,22 @@ func callRewrites(s: Scan): seq[Rewrite] =
 
     # Region reaches last line every bracket and token opened inside it reaches.
     var
-      last_line = line
+      line_last = line
       k = first
-    while k < s.tokens.len and s.tokens[k].line <= last_line:
-      last_line = max(last_line, s.lasts[k])
-      if s.tokens[k].kind == TokenKind.Open and s.partners[k] > k:
-        last_line = max(last_line, s.tokens[s.partners[k]].line)
+    while k < s.tokens.len and s.tokens[k].line <= line_last:
+      line_last = max(line_last, s.lasts[k])
+      if s.tokens[k].kind == KindToken.Open and s.partners[k] > k:
+        line_last = max(line_last, s.tokens[s.partners[k]].line)
       inc k
-    if last_line == line and not s.lines[line].isWide:
+    if line_last == line and not s.lines[line].isWide:
       inc line
       continue
     let
       indent = s.lines[line].indentOf
       laid = s.layout(' '.repeat(indent), first, k - 1, "", indent, is_argument = false)
-    if laid.isSome and laid.get.lines != s.lines[line .. last_line]:
-      result.add Rewrite(first: line, last: last_line, lines: laid.get.lines, rule: laid.get.rule)
-      line = last_line + 1
+    if laid.isSome and laid.get.lines != s.lines[line .. line_last]:
+      result.add Rewrite(first: line, last: line_last, lines: laid.get.lines, rule: laid.get.rule)
+      line = line_last + 1
     else: inc line
 
 
@@ -883,12 +883,12 @@ func isOpening(s: Scan, k: int): bool =
   ## Decide whether line-first token `k` opens expression: code token before it, comments
   ##   aside, ends no line on operator.
   var j = k - 1
-  while j >= 0 and s.tokens[j].kind == TokenKind.Comment: dec j
+  while j >= 0 and s.tokens[j].kind == KindToken.Comment: dec j
   j < 0 or s.lasts[j] == s.tokens[k].line or not s.isContinuing(j)
 
 
 func continuationShifts(s: Scan, held: Held): seq[Shift] =
-  ## Re-indent each line of expression past its statement line to `CONTINUATION_STEP` beyond
+  ## Re-indent each line of expression past its statement line to `STEP_CONTINUATION` beyond
   ##   that line, all alike, one rewrite to each line; expression holding line whose indent
   ##   would widen held line is left whole, so lines of one expression never part.
   ##   Expression whose first piece opens statement line after bracket or comma (`isOwnLine`)
@@ -906,11 +906,11 @@ func continuationShifts(s: Scan, held: Held): seq[Shift] =
     depth = 0
   for k, t in s.tokens:
     if s.isLineFirst(k) and firsts[t.line] < 0: firsts[t.line] = k
-    if t.kind == TokenKind.Open: inc depth
-    elif t.kind == TokenKind.Close: depth = max(depth - 1, 0)
+    if t.kind == KindToken.Open: inc depth
+    elif t.kind == KindToken.Close: depth = max(depth - 1, 0)
     opened.add depth
   for k, t in s.tokens:
-    if firsts[t.line] != k or t.kind == TokenKind.Comment or not s.isOpening(k): continue
+    if firsts[t.line] != k or t.kind == KindToken.Comment or not s.isOpening(k): continue
 
     # Walk lines while each next one continues; read run whole.
     var run = @[k]
@@ -936,7 +936,7 @@ func continuationShifts(s: Scan, held: Held): seq[Shift] =
     #   line `=` ends.
     var
       planned: seq[(int, int)]  # Line and its indent.
-      step = CONTINUATION_STEP
+      step = STEP_CONTINUATION
     if statement < 0:
       if s.isOwnLine(k, s.continued(run[1])): step = 0
       let wanted = s.lines[t.line].indentOf + step
@@ -944,7 +944,7 @@ func continuationShifts(s: Scan, held: Held): seq[Shift] =
     else:
       # Value runs down while code opens line at its own indent or deeper; chain must be all of it.
       let
-        wanted = s.lines[statement].indentOf + CONTINUATION_STEP
+        wanted = s.lines[statement].indentOf + STEP_CONTINUATION
         base = s.lines[t.line].indentOf
       var
         last = t.line
@@ -959,11 +959,11 @@ func continuationShifts(s: Scan, held: Held): seq[Shift] =
           inc line
           continue
         if s.lines[line].indentOf < base: break
-        if s.tokens[first].kind == TokenKind.Comment:
+        if s.tokens[first].kind == KindToken.Comment:
           # Comment ends value, unless code at its depth follows.
           var next = line
           while next < s.lines.len and
-              (firsts[next] < 0 or s.tokens[firsts[next]].kind == TokenKind.Comment):
+              (firsts[next] < 0 or s.tokens[firsts[next]].kind == KindToken.Comment):
             inc next
           if next < s.lines.len and s.lines[next].indentOf >= base: is_read = false
           break
@@ -995,9 +995,9 @@ func continuationShifts(s: Scan, held: Held): seq[Shift] =
 func headLifts(s: Scan, held: Held): seq[Lift] =
   ## Re-indent continuation lines of each block head whose line right above its body stands at
   ##   body's indent, so head reads apart from body (STYLE.md §5). Every such line moves by one
-  ##   step, so shallowest takes `CONTINUATION_STEP` past head's first line and hand's shape of
+  ##   step, so shallowest takes `STEP_CONTINUATION` past head's first line and hand's shape of
   ##   rest stays; head whose line would widen held line is left whole.
-  ##   Head opens line with `HEAD_KEYWORDS`, ending on `:`, or `SIGNATURE_KEYWORDS`, ending on
+  ##   Head opens line with `KEYWORDS_HEAD`, ending on `:`, or `KEYWORDS_SIGNATURE`, ending on
   ##     `=`, at depth it opens at; each line before ends inside bracket, or on binary operator or
   ##     comma. Body is next code line, deeper than head. Head holding comment line or token
   ##     spanning lines stays.
@@ -1008,8 +1008,8 @@ func headLifts(s: Scan, held: Held): seq[Lift] =
     if firsts[t.line] != k: continue
     let
       word = s.spelling(k)
-      is_signature = word in SIGNATURE_KEYWORDS
-    if word notin HEAD_KEYWORDS and not is_signature: continue
+      is_signature = word in KEYWORDS_SIGNATURE
+    if word notin KEYWORDS_HEAD and not is_signature: continue
 
     # Walk head to its line-ending `:` or `=` at depth it opens at; anything else ends no head.
     var
@@ -1018,26 +1018,26 @@ func headLifts(s: Scan, held: Held): seq[Lift] =
       last = -1  # Last line of head.
     while m < s.tokens.len:
       let tm = s.tokens[m]
-      if tm.kind == TokenKind.Comment:
+      if tm.kind == KindToken.Comment:
         inc m
         continue
       if s.lasts[m] > tm.line: break
-      if tm.kind == TokenKind.Open: inc depth
-      elif tm.kind == TokenKind.Close: dec depth
+      if tm.kind == KindToken.Open: inc depth
+      elif tm.kind == KindToken.Close: dec depth
       if depth < 0: break
       if s.isLineLast(m) and depth == 0:
         let text = s.spelling(m)
         if (is_signature and text == "=") or (not is_signature and text == ":"):
           last = tm.line
           break
-        if tm.kind != TokenKind.Comma and not s.isContinuing(m): break
+        if tm.kind != KindToken.Comma and not s.isContinuing(m): break
       inc m
     if last <= t.line: continue
 
     # Body: next code line, deeper than head; head's last line at its indent lifts.
     var body = last + 1
     while body < s.lines.len and
-        (firsts[body] < 0 or s.tokens[firsts[body]].kind == TokenKind.Comment):
+        (firsts[body] < 0 or s.tokens[firsts[body]].kind == KindToken.Comment):
       if firsts[body] < 0 and s.lines[body].strip.len > 0: break
       inc body
     if body >= s.lines.len or firsts[body] < 0: continue
@@ -1045,11 +1045,11 @@ func headLifts(s: Scan, held: Held): seq[Lift] =
     if deep <= base or s.lines[last].indentOf != deep: continue
     var shallowest = high(int)
     for line in t.line + 1 .. last:
-      if firsts[line] < 0 or s.tokens[firsts[line]].kind == TokenKind.Comment:
+      if firsts[line] < 0 or s.tokens[firsts[line]].kind == KindToken.Comment:
         shallowest = -1
         break
       shallowest = min(shallowest, s.lines[line].indentOf)
-    let step = base + CONTINUATION_STEP - shallowest
+    let step = base + STEP_CONTINUATION - shallowest
     if shallowest < 0 or step <= 0: continue
 
     # Move each line by one step, or none where held line would widen.
@@ -1082,7 +1082,7 @@ func checkContinuations*(path, source: string): seq[Report] =
       path,
       line + 1,
       Rule.ContinuationIndent,
-      "Line of block head right above its body takes " & $CONTINUATION_STEP & " spaces more " &
+      "Line of block head right above its body takes " & $STEP_CONTINUATION & " spaces more " &
           "than head's first line, so it stands apart from body; got `" &
           $(s.lines[line].indentOf - lift.base) & "`.",
     )
@@ -1095,7 +1095,7 @@ func checkContinuations*(path, source: string): seq[Report] =
           "Line of expression whose first piece opens its own line takes no spaces more than " &
               "that line; got `" & $relative & "`."
         else:
-          "Line of expression past its statement line takes " & $CONTINUATION_STEP & " spaces " &
+          "Line of expression past its statement line takes " & $STEP_CONTINUATION & " spaces " &
               "more than that line; got `" & $relative & "`."
     result.add initReport(path, line + 1, Rule.ContinuationIndent, message)
 
@@ -1122,7 +1122,7 @@ func isConstructorOpen(s: Scan, o: int): bool =
   if o > 0:
     let is_glued = s.tokens[o - 1].after == s.tokens[o].first
     if is_glued and s.tokens.isOperandEnd(o - 1, s.source): return false
-    if s.spelling(o - 1) in TYPE_KEYWORDS: return false
+    if s.spelling(o - 1) in KEYWORDS_TYPE: return false
   text != "(" or s.tokens.signatureOf(s.partners, o, s.source) < 0
 
 
@@ -1132,11 +1132,11 @@ func isFittingJoined(s: Scan, o: int): bool =
   ##   lines never joins.
   let c = s.partners[o]
   for k in o..c:
-    if s.tokens[k].kind == TokenKind.Comment or s.lasts[k] > s.tokens[k].line: return false
+    if s.tokens[k].kind == KindToken.Comment or s.lasts[k] > s.tokens[k].line: return false
   let
-    (open_line, close_line) = (s.tokens[o].line, s.tokens[c].line)
-    head = s.lines[open_line][0 ..< s.tokens[o].first - s.starts[open_line]]
-    tail = s.lines[close_line][s.tokens[c].after - s.starts[close_line]..^1]
+    (line_open, line_close) = (s.tokens[o].line, s.tokens[c].line)
+    head = s.lines[line_open][0 ..< s.tokens[o].first - s.starts[line_open]]
+    tail = s.lines[line_close][s.tokens[c].after - s.starts[line_close]..^1]
   not (head & s.flatten(o, c).text & tail).isWide
 
 
@@ -1145,7 +1145,7 @@ func trailingInserts(s: Scan, held: Held): seq[Insert] =
   ##   list would not fit joined (`isFittingJoined`); one whose separator would widen held line
   ##   is left. List that fits joined takes none: call joins, and hand keeps rows of other list.
   for o in 0 ..< s.tokens.len:
-    if s.tokens[o].kind != TokenKind.Open or s.partners[o] < o: continue
+    if s.tokens[o].kind != KindToken.Open or s.partners[o] < o: continue
     let c = s.partners[o]
     if not s.isLineLast(o) or not s.isLineFirst(c): continue
     let
@@ -1159,7 +1159,7 @@ func trailingInserts(s: Scan, held: Held): seq[Insert] =
     if s.isFittingJoined(o): continue
     let last = items[^1]
     if toSeq(last.first .. last.last).anyIt(
-      s.spelling(it) in BLOCK_KEYWORDS or (s.spelling(it) == ":" and s.isLineLast(it)),
+      s.spelling(it) in KEYWORDS_BLOCK or (s.spelling(it) == ":" and s.isLineLast(it)),
     ):
       continue
     var separator = ","
@@ -1208,7 +1208,7 @@ func fixTrailing*(path, source: string): Fix =
   fixTrailing(path, source, EVERY)
 
 
-const WRAPPING_STEPS*: array[5, Step] = [
+const STEPS_WRAPPING*: array[5, Step] = [
   guarded(fixSeparators),
   guarded(fixSignatures),
   guarded(fixCalls),
@@ -1225,4 +1225,4 @@ func fixWrapping*(path, source: string): Fix =
   ## Rewrite separators, signatures, calls, continuations, then trailing separators, each line
   ##   held.
   result.source = source
-  for step in WRAPPING_STEPS: result = result.chain(step.run(path, result.source, EVERY))
+  for step in STEPS_WRAPPING: result = result.chain(step.run(path, result.source, EVERY))

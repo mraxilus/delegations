@@ -6,7 +6,7 @@
 ##     correctness drive.
 ##   Caller decides which file is drive code, and passes it alone: `curator/audit` reads `tests/`
 ##     and `tools/` of each project, and command line each file under directory `tests` or
-##     `tools` (`reports.isDriveFile`).
+##     `tools` (`reports.isFileDrive`).
 ##   Nim names compare as Nim compares them (`identity`), so `sleep_async` is `sleepAsync`, and
 ##     Playwright's name reads in Nim binding too. Nim source is read with comments and strings
 ##     blanked, so suite holding its fixtures as strings reports nothing.

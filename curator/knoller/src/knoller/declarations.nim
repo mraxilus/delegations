@@ -32,7 +32,7 @@ type
     Split  ## Trailing doc widening line takes next line.
     Indent  ## Next-line doc that cannot join takes indent one level in.
 
-  DocMove = object
+  MoveDoc = object
     ## Define one doc to move: declaration line, shape, lines replacing declaration and doc.
     line: int  ## Zero-based line of declaration.
     shape: Shape
@@ -48,20 +48,20 @@ type
 
 
 const
-  SECTION_KEYWORDS = ["const", "let", "type", "var"]
+  KEYWORDS_SECTION = ["const", "let", "type", "var"]
     ## Keywords opening section whose lines declare.
-  ROUTINE_KEYWORDS = ["converter", "func", "iterator", "macro", "method", "proc", "template"]
+  KEYWORDS_ROUTINE = ["converter", "func", "iterator", "macro", "method", "proc", "template"]
     ## Keywords declaring routine, whose doc keeps routine's own position.
-  DEFAULTED_ROUTINES = ["converter", "func", "iterator", "method", "proc"]
+  ROUTINES_DEFAULTED = ["converter", "func", "iterator", "method", "proc"]
     ## Keywords whose parameter without type takes type of its default.
-  CONTINUING_KEYWORDS = [
+  KEYWORDS_CONTINUING = [
     "and", "div", "in", "is", "isnot", "mod", "notin", "of", "or", "shl", "shr", "xor",
   ]
     ## Keyword operators line may end on, continuing expression on next line.
-  INDENT_STEP = 2  ## Spaces one level indents (Article X.1).
+  STEP_INDENT = 2  ## Spaces one level indents (Article X.1).
 
 
-func firstWord(code: string): string =
+func wordFirst(code: string): string =
   ## Read leading identifier of code line.
   let s = code.strip
   var k = 0
@@ -75,7 +75,7 @@ func isDoc(code, kept: string): bool =
   code.strip.len == 0 and text.startsWith("##") and not text.startsWith("##[")
 
 
-func docMoves(source: string): seq[DocMove] =
+func docMoves(source: string): seq[MoveDoc] =
   ## Find each one-line doc of declaration standing where rule puts it not.
   let
     lines = source.split('\n')
@@ -89,50 +89,50 @@ func docMoves(source: string): seq[DocMove] =
     spanned = newSeq[bool](lines.len)  # Line inside or opening token spanning lines.
     depth = 0
   for k, t in tokens:
-    let last = t.lastLine(source)
-    if firsts[t.line] < 0 and (k == 0 or tokens[k - 1].lastLine(source) < t.line):
+    let last = t.lineLast(source)
+    if firsts[t.line] < 0 and (k == 0 or tokens[k - 1].lineLast(source) < t.line):
       firsts[t.line] = k
       depths[t.line] = depth
     if last > t.line:
       for line in t.line .. last: spanned[line] = true
-    if t.kind != TokenKind.Comment: lasts[last] = k
-    if t.kind == TokenKind.Open: inc depth
-    elif t.kind == TokenKind.Close: depth = max(depth - 1, 0)
+    if t.kind != KindToken.Comment: lasts[last] = k
+    if t.kind == KindToken.Open: inc depth
+    elif t.kind == KindToken.Close: depth = max(depth - 1, 0)
 
   for d in 0 ..< lines.len:
     let first = firsts[d]
     if first < 0 or code[d].strip.len == 0 or spanned[d] or depths[d] > 0 or lasts[d] < 0:
       continue
     let
-      word = code[d].firstWord
+      word = code[d].wordFirst
       stripped = code[d].strip
       ending = tokens[lasts[d]]
-      ending_text = ending.spelling(source)
-    if word in ROUTINE_KEYWORDS or stripped in SECTION_KEYWORDS or stripped.startsWith("{"):
+      text_ending = ending.spelling(source)
+    if word in KEYWORDS_ROUTINE or stripped in KEYWORDS_SECTION or stripped.startsWith("{"):
       continue
-    if ending.kind in {TokenKind.Open, TokenKind.Comma, TokenKind.Operator} or
-        ending_text in CONTINUING_KEYWORDS:
+    if ending.kind in {KindToken.Open, KindToken.Comma, KindToken.Operator} or
+        text_ending in KEYWORDS_CONTINUING:
       continue
     if first > 0:
       var previous = first - 1
-      while previous > 0 and tokens[previous].kind == TokenKind.Comment: dec previous
+      while previous > 0 and tokens[previous].kind == KindToken.Comment: dec previous
       let before = tokens[previous]
-      if before.kind in {TokenKind.Open, TokenKind.Comma} or
-          (before.kind == TokenKind.Operator and before.spelling(source) != ":") or
-          before.spelling(source) in CONTINUING_KEYWORDS:
+      if before.kind in {KindToken.Open, KindToken.Comma} or
+          (before.kind == KindToken.Operator and before.spelling(source) != ":") or
+          before.spelling(source) in KEYWORDS_CONTINUING:
         continue
 
     # Declaration context: section keyword on line, or above it through enclosing lines.
     var
-      is_declared = word in SECTION_KEYWORDS
+      is_declared = word in KEYWORDS_SECTION
       parent = d
     while not is_declared and code[parent].indentOf > 0:
       let indent = code[parent].indentOf
       dec parent
       while parent >= 0 and (code[parent].strip.len == 0 or code[parent].indentOf >= indent):
         dec parent
-      if parent < 0 or code[parent].firstWord in ROUTINE_KEYWORDS: break
-      is_declared = code[parent].firstWord in SECTION_KEYWORDS
+      if parent < 0 or code[parent].wordFirst in KEYWORDS_ROUTINE: break
+      is_declared = code[parent].wordFirst in KEYWORDS_SECTION
     if not is_declared: continue
 
     # Count doc lines below at deeper indent; read trailing comment on declaration's line.
@@ -144,21 +144,21 @@ func docMoves(source: string): seq[DocMove] =
     let
       docs = below - d - 1
       marker = kept[d].find('#', code[d].strip(leading = false).len)
-      inner = ' '.repeat(indent + INDENT_STEP)
+      inner = ' '.repeat(indent + STEP_INDENT)
     if marker < 0 and docs == 1:
       let
         doc = lines[d + 1].strip
-        joined = lines[d] & ' '.repeat(COMMENT_GAP) & doc
+        joined = lines[d] & ' '.repeat(GAP_COMMENT) & doc
       if not joined.isWide:
-        result.add DocMove(line: d, shape: Shape.Join, last: d + 1, lines: @[joined])
-      elif lines[d + 1].indentOf != indent + INDENT_STEP:
+        result.add MoveDoc(line: d, shape: Shape.Join, last: d + 1, lines: @[joined])
+      elif lines[d + 1].indentOf != indent + STEP_INDENT:
         let shaped = @[lines[d], inner & doc]
-        result.add DocMove(line: d, shape: Shape.Indent, last: d + 1, lines: shaped)
+        result.add MoveDoc(line: d, shape: Shape.Indent, last: d + 1, lines: shaped)
     elif marker >= 0 and docs == 0 and kept[d][marker .. ^1].startsWith("##") and
         lines[d].isWide:
       let declared = lines[d][0 ..< marker].strip(leading = false)
       if declared.isWide: continue
-      result.add DocMove(
+      result.add MoveDoc(
         line: d,
         shape: Shape.Split,
         last: d,
@@ -197,24 +197,24 @@ func fixDocs*(path, source: string): Fix =
   if moves.len > 0: result.origin = origin
 
 
-func literalType(tokens: openArray[Token]; a, b: int; source: string): string =
+func typeLiteral(tokens: openArray[Token]; a, b: int; source: string): string =
   ## Read type literal default of tokens `a` to `b` gives exactly; empty where none, or not one.
   if a != b: return
   let
     t = tokens[a]
     text = t.spelling(source)
   case t.kind
-  of TokenKind.Number:
+  of KindToken.Number:
     if '\'' in text: return
     let digits = text.strip(chars = {'-'})
     if digits.len > 1 and digits[0] == '0' and digits[1] in {'x', 'X', 'o', 'O', 'b', 'B'}:
       return "int"
     if '.' in text or 'e' in text or 'E' in text: "float" else: "int"
-  of TokenKind.Text:
-    if a > 0 and tokens[a - 1].after == t.first and tokens[a - 1].kind == TokenKind.Word: ""
+  of KindToken.Text:
+    if a > 0 and tokens[a - 1].after == t.first and tokens[a - 1].kind == KindToken.Word: ""
     else: "string"
-  of TokenKind.Character: "char"
-  of TokenKind.Word:
+  of KindToken.Character: "char"
+  of KindToken.Word:
     if text in ["true", "false"]: "bool" else: ""
   else: ""
 
@@ -227,27 +227,27 @@ func defaults(source: string): seq[Default] =
   for o, t in tokens:
     let keyword = tokens.signatureOf(partners, o, source)
     if keyword < 0 or partners[o] < o: continue
-    if tokens[keyword].spelling(source) notin DEFAULTED_ROUTINES: continue
+    if tokens[keyword].spelling(source) notin ROUTINES_DEFAULTED: continue
 
     # Split parameters at separators outside nested brackets.
     var k = o + 1
     while k < partners[o]:
       let first = k
       var (colon, equals) = (-1, -1)
-      while k < partners[o] and tokens[k].kind notin {TokenKind.Comma, TokenKind.Semicolon}:
+      while k < partners[o] and tokens[k].kind notin {KindToken.Comma, KindToken.Semicolon}:
         let text = tokens[k].spelling(source)
         if text == ":" and colon < 0: colon = k
         elif text == "=" and equals < 0: equals = k
-        if tokens[k].kind == TokenKind.Open and partners[k] > k: k = partners[k]
+        if tokens[k].kind == KindToken.Open and partners[k] > k: k = partners[k]
         inc k
       let last = k - 1
       inc k
       if colon <= first or equals < colon + 2 or equals >= last: continue
-      if (first .. last).toSeq.anyIt(tokens[it].kind == TokenKind.Comment): continue
+      if (first .. last).toSeq.anyIt(tokens[it].kind == KindToken.Comment): continue
       let
         declared = source[tokens[colon + 1].first ..< tokens[equals - 1].after]
         value = source[tokens[equals + 1].first ..< tokens[last].after]
-        literal = literalType(tokens, equals + 1, last, source)
+        literal = typeLiteral(tokens, equals + 1, last, source)
         callee = tokens[equals + 1].spelling(source)
         argument =
           if equals + 2 <= last and tokens[equals + 2].spelling(source) == "(" and

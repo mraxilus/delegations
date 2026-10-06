@@ -26,7 +26,7 @@ const
     "let y = @[\n  first_item_named_at_length_so_list_crosses_column,\n" &
     "  second_item_named_at_length_so_list_crosses_column\n]\necho h(q=1)\nexport y, x\n"
     ## Nim source breaking each layout rule `checkFormatting` holds.
-  FENCED_ROWS =
+  ROWS_FENCED =
     "let m = matrix(\n  #!fix off\n  1,  0,\n\n  0,  1,\n  #!fix on\n)\n" &
     "let n = matrix(1+2)\n"
     ## Nim source whose hand-shaped rows fence keeps, and whose call after fence fix reaches.
@@ -113,7 +113,7 @@ const
 
 func provenOf(source: string): Proofs =
   ## Answer module source and what chain asks of it by stub parser, as `koch fix` asks.
-  stubProofs("a.nim", source, Dialect.Module)
+  proofsStub("a.nim", source, Dialect.Module)
 
 
 func fixedOf(source: string): string =
@@ -131,7 +131,7 @@ func isSettled(source: string): bool =
 func operatorsOf(source: string): seq[string] =
   ## Read spelling of each operator token of source, in order.
   for t in source.tokens:
-    if t.kind == TokenKind.Operator: result.add t.spelling(source)
+    if t.kind == KindToken.Operator: result.add t.spelling(source)
 
 
 func toggled(path, source: string): Fix =
@@ -190,7 +190,7 @@ suite "Chain":
 
   test "fence keeps lines between its markers, and fix reaches every other line":
     let
-      source = "## Do.\n\n" & STRICT_FUNCS & "\n\n" & FENCED_ROWS
+      source = "## Do.\n\n" & STRICT_FUNCS & "\n\n" & ROWS_FENCED
       unfenced = source.replace("  " & FENCE_OFF & "\n", "").replace("  " & FENCE_ON & "\n", "")
     check checkFormatting("a.nim", unfenced, Dialect.Module).anyIt(it.line == 5)  # rows join
     check checkFormatting("a.nim", source, Dialect.Module).mapIt(it.line) == @[12]  # after fence
@@ -259,9 +259,9 @@ suite "Chain":
       ("p/alpha/alpha.nimble", "version = \"0.1.0\"\n"),
       ("p/beta/beta.nimble", "version = \"0.1.0\"\n"),
     ]
-    check lockedNimbles(files) == @["p/alpha/alpha.nimble"]  # lock names its copy
-    check lockedNimbles([("atlas.lock", LOCK)]) == @["alpha.nimble"]  # lock at root
-    check lockedNimbles([("p/alpha/atlas.lock", "{}\n")]).len == 0  # lock holding no copy
+    check nimblesLocked(files) == @["p/alpha/alpha.nimble"]  # lock names its copy
+    check nimblesLocked([("atlas.lock", LOCK)]) == @["alpha.nimble"]  # lock at root
+    check nimblesLocked([("p/alpha/atlas.lock", "{}\n")]).len == 0  # lock holding no copy
 
 
 

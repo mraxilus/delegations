@@ -462,7 +462,7 @@ proc run(options: Options): int =
       unknown.report
       return 1
     let
-      locked = tree.lockedNimbles
+      locked = tree.nimblesLocked
       answers = resolve(options.root, tree, semanticQueries(tree, entries, locked))
       (fix, failures) = provenFix(
         options.branchOrDefault,
@@ -470,7 +470,7 @@ proc run(options: Options): int =
         entries,
         locked,
         tree.contextOf(entries, answers, locked),
-        pinProvers(initToolchains()),
+        proversPin(initToolchains()),
       )
       (written, fixed, refused, left, warned, _) = fix
     for f in left.sorted: echo f.render

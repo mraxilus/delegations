@@ -1,7 +1,7 @@
 ## Hold `koch fix` to its contract: after fix, checks report none of what it fixed; second fix
 ##   writes nothing; any path outside branch scope refuses every write (CURATOR.md, duty 11);
 ##   kind without style guide passes through unwritten, its findings kept for hand.
-##   `LAYOUT`, `FENCED_ROWS` and `LOCK` are copied in knoller's `tests/suites/test_chain.nim`,
+##   `LAYOUT`, `ROWS_FENCED` and `LOCK` are copied in knoller's `tests/suites/test_chain.nim`,
 ##     which drives same chain without `koch fix`; fix to one is finished only when other is
 ##     checked.
 
@@ -28,7 +28,7 @@ const
     "let y = @[\n  first_item_named_at_length_so_list_crosses_column,\n" &
     "  second_item_named_at_length_so_list_crosses_column\n]\necho h(q=1)\nexport y, x\n"
     ## Nim source breaking each layout rule `checkFormatting` holds; static pass reads X.2 alone.
-  FENCED_ROWS =
+  ROWS_FENCED =
     "let m = matrix(\n  #!fix off\n  1,  0,\n\n  0,  1,\n  #!fix on\n)\n" &
     "let n = matrix(1+2)\n"
     ## Nim source whose hand-shaped rows fence keeps, and whose call after fence fix reaches.
@@ -199,7 +199,7 @@ suite "Fixes":
   test "fence keeps lines between its markers; fix and layout checks reach every other line":
     let
       path = "curator/audit/src/a.nim"
-      source = "## Do.\n\n" & STRICT_FUNCS & "\n\n" & FENCED_ROWS
+      source = "## Do.\n\n" & STRICT_FUNCS & "\n\n" & ROWS_FENCED
       unfenced = source.replace("  " & FENCE_OFF & "\n", "").replace("  " & FENCE_ON & "\n", "")
     check checkFormatting(path, unfenced, Kind.Nim).anyIt(it.line == 5)  # rows join unfenced
     check checkFormatting(path, source, Kind.Nim).mapIt(it.line) == @[12]  # after fence alone
@@ -322,7 +322,7 @@ suite "Fixes":
   test "entry block moves into `proc main` through fix, or stays for hand with its reason":
     let
       path = "curator/audit/src/a.nim"
-      head = "## Do.\n\n" & STRICT_FUNCS & "\n\n" & PROFILER_IMPORT & "\n\n"
+      head = "## Do.\n\n" & STRICT_FUNCS & "\n\n" & IMPORT_PROFILER & "\n\n"
       plan = fixEntries(
         CURATOR_BRANCH,
         [entry(path, head & "when isMainModule:\n  let count = 1\n  echo count\n")],
@@ -350,7 +350,7 @@ suite "Fixes":
       a = entry("curator/audit/src/a.nim", head & "proc Run_all*(): int = 1\nconst COUNT* = 2\n")
       b = entry(
         "curator/audit/src/b.nim",
-        head & PROFILER_IMPORT & "\n\nimport ./a\n\nwhen isMainModule:\n" &
+        head & IMPORT_PROFILER & "\n\nimport ./a\n\nwhen isMainModule:\n" &
           "  let COUNT = Run_all()\n  echo COUNT\n",
       )
       tree = @[a, b]
@@ -372,7 +372,7 @@ suite "Fixes":
     let plan = fixEntries(CURATOR_BRANCH, tree, context = tree.contextOf(tree, answers))
     check plan.written.mapIt(it.content) == @[
       head & "proc runAll*(): int = 1\nconst COUNT* = 2\n",
-      head & PROFILER_IMPORT & "\n\nimport ./a\n\nproc main() =\n  ## TODO: Document.\n" &
+      head & IMPORT_PROFILER & "\n\nimport ./a\n\nproc main() =\n  ## TODO: Document.\n" &
         "  let count = runAll()\n  echo count\n\n\nwhen isMainModule:\n  main()\n",
     ]  # V.1, V.10
     check plan.fixed.mapIt((it.path, it.line, it.message)) == @[
@@ -435,7 +435,7 @@ suite "Fixes":
     let
       other = GROUPED.replace("@(x) + @(x[0])", "@(y) + @(y[0])")
       tree = goodTree().with(
-        entry("curator/beta/beta.nimble", NIMBLE_TEXT.replace(PIN, COMMIT)),
+        entry("curator/beta/beta.nimble", TEXT_NIMBLE.replace(PIN, COMMIT)),
         entry(AUDIT_DIRECTORY & "/src/a.nim", GROUPED),
         entry(AUDIT_DIRECTORY & "/src/b.nim", other),
         entry("curator/beta/src/a.nim", GROUPED),
@@ -486,8 +486,8 @@ suite "Fixes":
     let
       nimble = entry(ALPHA_DIRECTORY & "/alpha.nimble", "version = \"0.1.0\" \nlet a = 1+2\n")
       tree = @[nimble, entry(ALPHA_DIRECTORY & "/atlas.lock", LOCK)]
-    check tree.lockedNimbles == @[nimble.path]
-    let plan = fixEntries(CONTRIBUTOR_BRANCH, [nimble], tree.lockedNimbles)
+    check tree.nimblesLocked == @[nimble.path]
+    let plan = fixEntries(CONTRIBUTOR_BRANCH, [nimble], tree.nimblesLocked)
     check plan.written.len == 0 and plan.left.len == 1 and "atlas.lock" in plan.left[0].message
     check checkFormatting(tree).len == 0  # silent on it
     check checkFormatting(@[nimble]).len == 1  # read where no lock holds its copy
@@ -501,7 +501,7 @@ suite "Fixes":
       other = GROUPED.replace("@(x) + @(x[0])", "@(y) + @(y[0])")
       fenced = "## Do.\n\n" & STRICT_FUNCS & "\n\n#!fix off\nlet b = @(x) + 1\n#!fix on\n"
       tree = goodTree().with(
-        entry("curator/beta/beta.nimble", NIMBLE_TEXT.replace(PIN, COMMIT)),
+        entry("curator/beta/beta.nimble", TEXT_NIMBLE.replace(PIN, COMMIT)),
         entry(AUDIT_DIRECTORY & "/src/a.nim", GROUPED),
         entry(AUDIT_DIRECTORY & "/src/b.nim", DIRTY),
         entry("curator/beta/src/c.nim", other & "let t = a+b\n"),

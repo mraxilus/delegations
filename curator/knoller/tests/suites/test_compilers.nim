@@ -74,7 +74,7 @@ suite "Compilers":
 
 
   test "release is fetched as tarball, and everything else is built":
-    check releaseUrl("2.2.4", "linux_x64") ==
+    check urlRelease("2.2.4", "linux_x64") ==
         "https://nim-lang.org/download/nim-2.2.4-linux_x64.tar.xz"
     check isBuilt(COMMIT, "linux_x64")  # commit is never published
     check isBuilt("2.2.4", "")  # unpublished platform builds from source
@@ -82,27 +82,27 @@ suite "Compilers":
 
 
   test "digest is published beside tarball, at same address plus suffix":
-    check digestUrl("2.2.12", "linux_x64") ==
+    check urlDigest("2.2.12", "linux_x64") ==
         "https://nim-lang.org/download/nim-2.2.12-linux_x64.tar.xz.sha256"
     # Digest belongs to tarball, so it is only asked for where tarball is.
-    check digestUrl("2.2.12", "linux_x64").startsWith(releaseUrl("2.2.12", "linux_x64"))
+    check urlDigest("2.2.12", "linux_x64").startsWith(urlRelease("2.2.12", "linux_x64"))
 
 
   test "digest is read from sidecar, and anything that is not one reads as nothing":
     # What nim-lang.org serves, verbatim: `sha256sum` output, digest then two spaces.
     const served = "7df1611449a6842af69322aa2c1206942982650a5f6bc0d37bc8ec109932f638" &
         "  nim-2.2.12-linux_x64.tar.xz\n"
-    check pinnedDigest(served) ==
+    check digestPinned(served) ==
         "7df1611449a6842af69322aa2c1206942982650a5f6bc0d37bc8ec109932f638"
-    check pinnedDigest(served).len == 64
+    check digestPinned(served).len == 64
     # Proven by breaking it: text that is not digest reads as none rather than as digest
     #   that cannot match, since mismatch and nothing published are different reports.
-    check pinnedDigest("").len == 0  # nothing served
-    check pinnedDigest("<html><body>404</body></html>").len == 0  # error document
-    check pinnedDigest("7df16114  nim.tar.xz").len == 0  # truncated digest
-    check pinnedDigest("7DF1611449A6842AF69322AA2C1206942982650A5F6BC0D37BC8EC109932F638" &
+    check digestPinned("").len == 0  # nothing served
+    check digestPinned("<html><body>404</body></html>").len == 0  # error document
+    check digestPinned("7df16114  nim.tar.xz").len == 0  # truncated digest
+    check digestPinned("7DF1611449A6842AF69322AA2C1206942982650A5F6BC0D37BC8EC109932F638" &
       "  nim.tar.xz").len == 0  # upper case is not what sha256sum writes
-    check pinnedDigest("zzz1611449a6842af69322aa2c1206942982650a5f6bc0d37bc8ec109932f638" &
+    check digestPinned("zzz1611449a6842af69322aa2c1206942982650a5f6bc0d37bc8ec109932f638" &
       "  nim.tar.xz").len == 0  # right length, not hex
 
 
@@ -116,7 +116,7 @@ suite "Compilers":
     file.close
     let whole = path.digestOf
     check whole.len == 64  # `sha256sum` ran, and its output parsed
-    check whole == pinnedDigest(whole & "  " & path)  # same reader as sidecar's
+    check whole == digestPinned(whole & "  " & path)  # same reader as sidecar's
     writeFile(path, "nim tarball, or something standing for onf")  # one byte
     check path.digestOf != whole
     check path.digestOf.len == 64  # still digest, just not that one
@@ -125,7 +125,7 @@ suite "Compilers":
 
 
   test "cache lies outside repository, keyed by pin":
-    let root = cacheRoot("/h/.cache/knoller/nim")
+    let root = rootCache("/h/.cache/knoller/nim")
     check root == "/h/.cache/knoller/nim"
     check binOf(root, PIN) == "/h/.cache/knoller/nim/2.2.4/bin"
     # Audit reads untracked files, so toolchain inside checkout would be audited.
@@ -133,14 +133,14 @@ suite "Compilers":
 
 
   test "cache is knoller's, under home, and `$KNOLLER_NIM_DIR` moves it for koch too":
-    check cacheRoot("") == getHomeDir() / ".cache/knoller/nim"  # one cache, whichever tool asks
-    let (is_set, moved) = (existsEnv(CACHE_KEY), getEnv(CACHE_KEY))
+    check rootCache("") == getHomeDir() / ".cache/knoller/nim"  # one cache, whichever tool asks
+    let (is_set, moved) = (existsEnv(KEY_CACHE), getEnv(KEY_CACHE))
     defer:
-      if is_set: putEnv(CACHE_KEY, moved) else: delEnv(CACHE_KEY)
-    putEnv(CACHE_KEY, "/h/toolchains")
-    check CACHE_KEY == "KNOLLER_NIM_DIR"
+      if is_set: putEnv(KEY_CACHE, moved) else: delEnv(KEY_CACHE)
+    putEnv(KEY_CACHE, "/h/toolchains")
+    check KEY_CACHE == "KNOLLER_NIM_DIR"
     check initToolchains().root == "/h/toolchains"  # table koch and knoller hold reads it
-    putEnv(CACHE_KEY, "")
+    putEnv(KEY_CACHE, "")
     check initToolchains().root == getHomeDir() / ".cache/knoller/nim"  # empty moves nothing
 
 
@@ -202,7 +202,7 @@ suite "Compilers":
     let path = getEnv("PATH")
     putEnv("PATH", directory / "tools" & PathSep & path)
     defer: putEnv("PATH", path)
-    let provers = pinProvers(initToolchains(directory / "cache", some(Compiler(version: "9.9.8"))))
+    let provers = proversPin(initToolchains(directory / "cache", some(Compiler(version: "9.9.8"))))
     var provings: seq[Proving]
     let streams = streamsOf(proc () =
       for pin in ["9.9.9", "0.0.1"]: provings.add provers(pin)(@[GROUPED])

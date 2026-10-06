@@ -10,7 +10,7 @@ const
   PIN = "2.2.4"  ## Compiler version nimble text pins.
   COMMIT = "295bafc0d7e9a0c9a3ba0d9b39b5b0b6a4c1d2e3"
     ## Compiler commit, forty lowercase hex, standing where nimble text pins commit.
-  NIMBLE_TEXT = "version = \"0.1.0\"\nsrcDir = \"src\"\n\nrequires \"nim == " & PIN & "\"\n"
+  TEXT_NIMBLE = "version = \"0.1.0\"\nsrcDir = \"src\"\n\nrequires \"nim == " & PIN & "\"\n"
     ## Nimble text pinning compiler exactly and requiring no package.
 
 
@@ -43,7 +43,7 @@ suite "Pins":
 
 
   test "pin is read only when exact":
-    check NIMBLE_TEXT.nimPin == some(PIN)  # fixture pins exactly
+    check TEXT_NIMBLE.nimPin == some(PIN)  # fixture pins exactly
     check nimPin("requires \"nim == 2.2.6\"\n") == some("2.2.6")  # spaced
     check nimPin("requires \"nim==2.2.6\"\n") == some("2.2.6")  # unspaced
     check nimPin("requires \"Nim == 2.2.6\"\n") == some("2.2.6")  # case-insensitive
@@ -69,8 +69,8 @@ suite "Pins":
 
 
   test "requirement of compiler reads as written after `nim`, first one alone":
-    check nimRequirement("requires \"nim == 2.2.12\"\n") == some("== 2.2.12")
-    check nimRequirement("requires \"nim#" & COMMIT & "\"\n") == some("#" & COMMIT)
-    check nimRequirement("requires \"malebolgia\"\n").isNone  # no compiler named
-    check nimRequirement("requires \"nim >= 2.0\"\nrequires \"nim == 2.2.12\"\n") ==
+    check requirementNim("requires \"nim == 2.2.12\"\n") == some("== 2.2.12")
+    check requirementNim("requires \"nim#" & COMMIT & "\"\n") == some("#" & COMMIT)
+    check requirementNim("requires \"malebolgia\"\n").isNone  # no compiler named
+    check requirementNim("requires \"nim >= 2.0\"\nrequires \"nim == 2.2.12\"\n") ==
         some(">= 2.0")  # first wins, as `nimPin` reads it

@@ -15,7 +15,7 @@
 
 import std/[dynlib, math, os, sequtils, strutils, unittest]
 import ../../src/assets
-from ../../../knoller/src/knoller import CACHE_DIRECTORY
+from ../../../knoller/src/knoller import DIRECTORY_CACHE
 
 
 type DecodeBrotli = proc (
@@ -208,7 +208,7 @@ suite "Assets":
     # Audit reads untracked files, so store inside checkout would be audited.
     check not storeRoot("").startsWith(".")
     check ASSETS_DIRECTORY.parentDir == ".cache/koch"  # store is koch's own
-    check CACHE_DIRECTORY.parentDir == ".cache/knoller"  # compiler cache is knoller's, koch uses it
+    check DIRECTORY_CACHE.parentDir == ".cache/knoller"  # compiler cache is knoller's, koch uses it
 
 
   test "asset is stored under its digest, never under its name":

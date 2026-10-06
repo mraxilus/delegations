@@ -6,7 +6,7 @@
 ##     it lies outside git work tree, or git lists no Nim file under it (`listingOf`). Silent
 ##     `0 to fix.` would read as clean run over files never read. Git runs as direct process,
 ##     its stderr read apart from paths, so warning never glues to first of them (`runGit`).
-##   Nimble file whose copy `atlas.lock` beside it holds is passed over (`lockedNimbles`).
+##   Nimble file whose copy `atlas.lock` beside it holds is passed over (`nimblesLocked`).
 ##   Fix writes only file that changes; `--check` writes none, and reports each change due.
 ##   Output, sorted by path, line, then rule id: `path:line: <rule-id> fixed`, or `to fix`
 ##     with `--check`; `path: unsettled: <message>` for file fixers do not settle, which stays
@@ -218,7 +218,7 @@ func outcomeOf*(
   parts.joined(is_check, [failure])
 
 
-proc provenOutcome*(
+proc outcomeProven*(
   files: openArray[(string, string)],
   locked: openArray[string],
   is_check: bool,
@@ -266,7 +266,7 @@ proc provenOutcome*(
   parts.joined(is_check, failures)
 
 
-proc provenOutcome*(
+proc outcomeProven*(
   files: openArray[(string, string)],
   locked: openArray[string],
   is_check: bool,
@@ -275,7 +275,7 @@ proc provenOutcome*(
 ): Outcome =
   ## Fix files as batch form does, every file proven by one prover, as `--nim` names it.
   let batch = Batch(paths: files.mapIt(it[0]), prover: prover)
-  provenOutcome(files, locked, is_check, directory, [batch])
+  outcomeProven(files, locked, is_check, directory, [batch])
 
 
 proc pinningOf(directory: string, seen: var Table[string, Pinning]): Pinning =
@@ -303,7 +303,7 @@ proc batchesOf*(paths: openArray[string]; nim, directory: string; provers: Prove
   ##   files trusts no pin, so its files take prover answering none, with warning naming it.
   ##   Paths read from directory they are named from (`layoutOf`); batch keeps order of first
   ##   path.
-  if nim.len > 0: return @[Batch(paths: @paths, prover: compilerProver(nim))]
+  if nim.len > 0: return @[Batch(paths: @paths, prover: proverCompiler(nim))]
   var
     keys: seq[string]
     seen = initTable[string, Pinning]()
@@ -320,12 +320,12 @@ proc batchesOf*(paths: openArray[string]; nim, directory: string; provers: Prove
       result.add Batch(
         prover:
           if pinning.refusal.len > 0:
-            failureProver(
+            proverFailure(
               "Parser proved no removal, since directory holds several nimble files, so no " &
               "pin is trusted; got `" & pinning.refusal & "`.",
             )
           elif pinning.pin.isSome: provers(pinning.pin.get)
-          else: compilerProver(NIM),
+          else: proverCompiler(NIM),
       )
       k = keys.high
     result[k].paths.add path
@@ -380,9 +380,9 @@ proc lockedOf(paths: openArray[string]): seq[string] =
     if path.dialectOf != some(Dialect.Package): continue
     let
       directory = path.parentDir
-      lock = if directory.len == 0: LOCK_FILE else: directory & "/" & LOCK_FILE
+      lock = if directory.len == 0: FILE_LOCK else: directory & "/" & FILE_LOCK
     if fileExists(lock): locks.add (lock, readFile(lock))
-  lockedNimbles(locks)
+  nimblesLocked(locks)
 
 
 proc main*(): int =
@@ -410,8 +410,8 @@ proc main*(): int =
   # Group files by compiler proving their groups, then fix them, each batch asking its own.
   let
     directory = getCurrentDir()
-    batches = paths.batchesOf(options.get.nim, directory, pinProvers(initToolchains()))
-    outcome = provenOutcome(
+    batches = paths.batchesOf(options.get.nim, directory, proversPin(initToolchains()))
+    outcome = outcomeProven(
       paths.mapIt((it, readFile(it))),
       paths.lockedOf,
       options.get.is_check,

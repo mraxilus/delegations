@@ -32,7 +32,7 @@ const
     ## Compiler version fixture projects pin, and driver version fixture workflow states.
   COMMIT* = "295bafc0d7e9a0c9a3ba0d9b39b5b0b6a4c1d2e3"
     ## Compiler commit, forty lowercase hex, standing where test pins commit, not version.
-  NIMBLE_TEXT* = "# Package description; requirements live here.\n\nversion = \"0.1.0\"\n" &
+  TEXT_NIMBLE* = "# Package description; requirements live here.\n\nversion = \"0.1.0\"\n" &
     "srcDir = \"src\"\n\nrequires \"nim == " & PIN & "\"\n"
     ## Minimal nimble file pinning compiler exactly and requiring no package.
   WORKFLOW_TEXT* = "# Run checks.\nname: check\n\nenv:\n  NIM_VERSION: '" & PIN & "'\n"
@@ -72,7 +72,7 @@ func projectEntries*(directory: string, stamp: string): seq[Entry] =
     entry(directory & "/README.md", "# Project\n\nPurpose.\n"),
     entry(directory & "/PROVENANCE.md", provenanceText(stamp)),
     entry(directory & "/GLOSSARY.md", GLOSSARY_TEXT),
-    entry(directory & "/" & directory.projectName & EXTENSIONS[Dialect.Package], NIMBLE_TEXT),
+    entry(directory & "/" & directory.projectName & EXTENSIONS[Dialect.Package], TEXT_NIMBLE),
     entry(
       directory & "/tests/tall.nim",
       "## Test everything.\n\n" & STRICT_FUNCS & "\n\ndiscard\n",

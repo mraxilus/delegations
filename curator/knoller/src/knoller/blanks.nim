@@ -1,6 +1,6 @@
 ## Enforce blank lines beside suites, tests and nested helpers in Nim source (Article X.2;
 ##   STYLE.md §1), and fix them (`koch fix`).
-##   Under `tests/` (`reports.isTestFile`): suite is first tier and takes three blank lines
+##   Under `tests/` (`reports.isFileTest`): suite is first tier and takes three blank lines
 ##     before it; test is second tier and takes two. First child follows its opener at once,
 ##     i.e. test opening suite and suite opening `when` body: no blank line. Suite or test right
 ##     after banner takes banner's one.
@@ -55,7 +55,7 @@ type
 
 const
   LUT_BLANKS_BY_TARGET: array[Target, int] = [3, 2, 0, 1, 1, 0]  ## Blank lines each target takes.
-  ROUTINE_KEYWORDS = ["converter", "func", "iterator", "macro", "method", "proc", "template"]
+  KEYWORDS_ROUTINE = ["converter", "func", "iterator", "macro", "method", "proc", "template"]
     ## Keywords declaring routine.
 
 
@@ -68,7 +68,7 @@ func viewOf(source: string): View =
   )
   result.inside = newSeq[bool](result.lines.len)
   for t in source.tokens:
-    for line in t.line + 1 .. t.lastLine(source): result.inside[line] = true
+    for line in t.line + 1 .. t.lineLast(source): result.inside[line] = true
 
 
 func isText(v: View, i: int): bool =
@@ -95,7 +95,7 @@ func isBanner(v: View, i: int): bool =
     (line.startsWith("#[[ ") and line.endsWith(" ]]#"))
 
 
-func firstWord(code: string): string =
+func wordFirst(code: string): string =
   ## Read leading identifier of code line.
   let s = code.strip
   var k = 0
@@ -137,7 +137,7 @@ func ownerOf(v: View, i: int): int =
     while signature >= 0 and
         (not v.isCode(signature) or v.code[signature].indentOf > v.code[parent].indentOf):
       dec signature
-  if signature >= 0 and v.code[signature].firstWord in ROUTINE_KEYWORDS: signature else: -1
+  if signature >= 0 and v.code[signature].wordFirst in KEYWORDS_ROUTINE: signature else: -1
 
 
 func lastOf(v: View, i: int): int =
@@ -159,40 +159,40 @@ func lastOf(v: View, i: int): int =
     inc j
 
 
-func isRoutineHead(v: View, i: int): bool =
+func isHeadRoutine(v: View, i: int): bool =
   ## Decide whether code line `i` declares named routine: keyword, space, then name.
   if not v.isCode(i) or v.inside[i]: return false
   let
-    word = v.code[i].firstWord
+    word = v.code[i].wordFirst
     after = v.code[i].strip[word.len .. ^1]
-  word in ROUTINE_KEYWORDS and after.startsWith(" ") and after.strip.len > 0 and
+  word in KEYWORDS_ROUTINE and after.startsWith(" ") and after.strip.len > 0 and
     after.strip[0] != '('
 
 
 func isOneLine(v: View; i, indent: int): bool =
   ## Decide whether line `i` declares, at indent, routine whose definition stands on that line
   ##   alone: `{.borrow.}` with no body, or body on line of its signature, no doc after it.
-  v.isRoutineHead(i) and v.code[i].indentOf == indent and v.lastOf(i) == i
+  v.isHeadRoutine(i) and v.code[i].indentOf == indent and v.lastOf(i) == i
 
 
 func runs(path, source: string): seq[Run] =
   ## Find each run of blank lines beside suite, test or nested helper whose count breaks rule.
   let
     v = source.viewOf
-    is_test_file = path.isTestFile
+    is_file_test = path.isFileTest
   var found: seq[Run]
   for i in 0 ..< v.lines.len:
     if not v.isCode(i) or v.inside[i]: continue
-    let word = v.code[i].firstWord
+    let word = v.code[i].wordFirst
     var after = v.lines[i].strip[word.len .. ^1].strip(trailing = false)
-    if is_test_file and word in ["suite", "test"] and after.startsWith("\""):
+    if is_file_test and word in ["suite", "test"] and after.startsWith("\""):
       let (first, count, upper) = v.runBefore(i)
       if upper < 0: continue
       var target = if word == "suite": Target.Suite else: Target.Test
       if v.isBanner(upper): target = Target.Banner
       elif v.isOpenerAbove(upper, i): target = Target.Child
       found.add Run(first: first, count: count, target: target, line: i)
-    elif v.isRoutineHead(i) and v.code[i].indentOf > 0 and v.ownerOf(i) >= 0:
+    elif v.isHeadRoutine(i) and v.code[i].indentOf > 0 and v.ownerOf(i) >= 0:
       let last = v.lastOf(i)
       if word == "template" and last == i: continue
 

@@ -213,7 +213,7 @@ func checkProject(tree: Tree, paths: Table[string, int], directory: string): seq
     result.add checkPin(nimble, tree[paths[nimble]].content)
     let
       required = tree[paths[nimble]].content.requirements
-      lock = directory & "/" & LOCK_FILE
+      lock = directory & "/" & FILE_LOCK
     if required.len > 0 and lock notin paths:
       result.add finding(
         lock,

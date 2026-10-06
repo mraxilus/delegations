@@ -72,9 +72,9 @@ const ASKS_MAX = 8
   ## Rounds of asking parser at most, as knoller's command line takes (`command.nim`).
 
 
-func lockedNimbles*(tree: Tree): seq[string] =
+func nimblesLocked*(tree: Tree): seq[string] =
   ## Read path of each nimble file whose copy `atlas.lock` beside it holds.
-  lockedNimbles(tree.mapIt((it.path, it.content)))
+  nimblesLocked(tree.mapIt((it.path, it.content)))
 
 
 func checkFormatting*(path, source: string; kind: Kind): seq[Report] =
@@ -87,7 +87,7 @@ func checkFormatting*(path, source: string; kind: Kind): seq[Report] =
 func checkFormatting*(tree: Tree): seq[Finding] =
   ## Report each rule `koch fix` clears over every file of tree; nimble file whose copy
   ##   `atlas.lock` holds is read by none.
-  let locked = tree.lockedNimbles
+  let locked = tree.nimblesLocked
   for e in tree:
     if e.kind.isNone or e.path in locked: continue
     result.add checkFormatting(e.path, e.content, e.kind.get).findingsOf
@@ -259,7 +259,7 @@ func fixSource(
   let dead = context.dead.filterIt(it[0] == path).mapIt(it[1])
   if dead.len > 0:
     let step = fixDeadExports(path, base.masked(fence), dead)
-    if step.source.fenceShape == base.masked(fence).fenceShape:
+    if step.source.shapeFence == base.masked(fence).shapeFence:
       base = step.source.restored(base, fence)
       result.fixed.add step.fixed
 
@@ -278,7 +278,7 @@ func partOf(e: Entry; locked: openArray[string]; context: Context): Fixed =
     result.left.add finding(
       e.path,
       0,
-      "Nimble file whose copy `" & LOCK_FILE & "` holds stays as written; got its copy there.",
+      "Nimble file whose copy `" & FILE_LOCK & "` holds stays as written; got its copy there.",
     )
     return
   let fence = e.content.fenceOf

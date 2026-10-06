@@ -23,7 +23,7 @@ func spellings(source: string): seq[string] =
   source.tokens.mapIt(it.spelling(source))
 
 
-func kinds(source: string): seq[TokenKind] =
+func kinds(source: string): seq[KindToken] =
   ## Read kind of each token of source.
   source.tokens.mapIt(it.kind)
 
@@ -41,10 +41,10 @@ suite "Tokens":
 
 
   test "string, character and comment forms read whole, as lexer reads them":
-    check "r\"a\"\"b\"".kinds == @[TokenKind.Word, TokenKind.Text]  # `""` escapes raw quote
+    check "r\"a\"\"b\"".kinds == @[KindToken.Word, KindToken.Text]  # `""` escapes raw quote
     check "fmt\"{x}\\n\"".spellings == @["fmt", "\"{x}\\n\""]  # generalized raw, `\` kept
-    check "\"c\\\"d\"".kinds == @[TokenKind.Text]  # escaped quote stays inside
-    check "'\\'' '\\x41' 'a'".kinds == TokenKind.Character.repeat(3)  # escapes read whole
+    check "\"c\\\"d\"".kinds == @[KindToken.Text]  # escaped quote stays inside
+    check "'\\'' '\\x41' 'a'".kinds == KindToken.Character.repeat(3)  # escapes read whole
     check "#[ a #[ b ]# c ]# x".spellings == @["#[ a #[ b ]# c ]#", "x"]  # block nests
     check "##[ a ]## x".spellings == @["##[ a ]##", "x"]  # doc block closes on `]##`
     check "\"\"\"a\"\"\"\" x".spellings == @["\"\"\"a\"\"\"\"", "x"]  # last quote of run closes
@@ -59,7 +59,7 @@ suite "Tokens":
 
 
   test "minus before digit opens number after whitespace or opening, never after operand":
-    check "f -1".kinds == @[TokenKind.Word, TokenKind.Number]  # command call of literal
+    check "f -1".kinds == @[KindToken.Word, KindToken.Number]  # command call of literal
     check "(-1, -2)".spellings == @["(", "-1", ",", "-2", ")"]
     check "a-1".spellings == @["a", "-", "1"]  # binary minus
     check "1.5e-3 0x1F'u8".spellings == @["1.5e-3", "0x1F'u8"]  # exponent and suffix
@@ -106,6 +106,6 @@ suite "Tokens":
 
   test "token spanning lines reports line it closes on":
     let found = SAMPLE.tokens
-    check found.anyIt(it.lastLine(SAMPLE) > it.line)  # long string spans lines
-    check found.allIt(it.lastLine(SAMPLE) >= it.line)
+    check found.anyIt(it.lineLast(SAMPLE) > it.line)  # long string spans lines
+    check found.allIt(it.lineLast(SAMPLE) >= it.line)
     check "a\nbc\n".lineStarts == @[0, 2, 5]  # line after final newline opens empty

@@ -87,7 +87,7 @@ proc lockFindings(tree: Tree, directories: openArray[string]): seq[Finding] =
   for directory in directories:
     let
       nimble_path = directory.nimblePath
-      lock_path = directory & "/" & LOCK_FILE
+      lock_path = directory & "/" & FILE_LOCK
     var
       nimble, lock: string
       found_lock = false

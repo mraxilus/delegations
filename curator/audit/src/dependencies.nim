@@ -116,7 +116,7 @@ proc checkLockNimble*(nimble_path, lock_path, lock, nimble: string): seq[Finding
 proc checkCheckouts*(root, directory: string): seq[Finding] =
   ## Report checkout lock names that is absent on disk, and lock that will not parse.
   let
-    lock_path = directory & "/" & LOCK_FILE
+    lock_path = directory & "/" & FILE_LOCK
     config_path = root / directory / ATLAS_CONFIG
     deps_directory =
       if fileExists(config_path): readFile(config_path).depsDirectoryOf else: DEPS_DIRECTORY
@@ -141,7 +141,7 @@ proc restoreDependencies(root: string, target: Target): seq[Finding] =
   let code = runIn(root / target.directory, atlas, ["changed"], target.bin)
   if code != 0:
     result.add finding(
-      target.directory & "/" & LOCK_FILE,
+      target.directory & "/" & FILE_LOCK,
       0,
       "Checkouts differ from lock; got exit `" & $code & "`.",
     )
@@ -150,7 +150,7 @@ proc restoreDependencies(root: string, target: Target): seq[Finding] =
 proc restoreAll*(root: string, targets: openArray[Target]): seq[Finding] =
   ## Restore every project holding lock file; projects without one need no network.
   for target in targets:
-    if fileExists(root / target.directory / LOCK_FILE):
+    if fileExists(root / target.directory / FILE_LOCK):
       result.add restoreDependencies(root, target)
 
 

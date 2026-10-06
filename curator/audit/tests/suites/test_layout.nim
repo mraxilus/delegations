@@ -103,11 +103,11 @@ suite "Layout":
 
   test "nimble file is named after project and packages demand lock":
     let other = ALPHA_DIRECTORY & "/other.nimble"
-    check (goodTree() & @[entry(other, NIMBLE_TEXT)]).messages ==
+    check (goodTree() & @[entry(other, TEXT_NIMBLE)]).messages ==
       @["Nimble file not named after project; expected `" & ALPHA_DIRECTORY & "/alpha.nimble`."]
     let
       nimble = ALPHA_DIRECTORY & "/alpha.nimble"
-      requiring = goodTree().replaced(nimble, NIMBLE_TEXT & "requires \"malebolgia\"\n")
+      requiring = goodTree().replaced(nimble, TEXT_NIMBLE & "requires \"malebolgia\"\n")
     check requiring.paths == @[ALPHA_DIRECTORY & "/atlas.lock"]  # lock demanded
     check requiring.messages[0].endsWith("got `malebolgia`.")  # package named
     check (requiring & @[entry(ALPHA_DIRECTORY & "/atlas.lock", "{}\n")]).checkLayout.len == 0  # ok

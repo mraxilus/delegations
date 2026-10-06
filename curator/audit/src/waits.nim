@@ -17,7 +17,7 @@ import ./[comments, findings, kinds]
 
 
 const
-  DRIVE_DIRECTORIES* = ["tests", "tools"]
+  DIRECTORIES_DRIVE* = ["tests", "tools"]
     ## Project directories holding drive code, where fixed wait is read.
   NIM_KINDS = [Kind.Nim, Kind.NimScript, Kind.Nimble]
     ## Kinds Nim compiler reads, whose names compare as Nim compares them.
@@ -28,7 +28,7 @@ const
 func isDriveCode*(path: string, directories: openArray[string]): bool =
   ## Decide whether path lies under `tests/` or `tools/` of one of directories.
   for directory in directories:
-    for drive in DRIVE_DIRECTORIES:
+    for drive in DIRECTORIES_DRIVE:
       if path.startsWith(directory & "/" & drive & "/"): return true
 
 

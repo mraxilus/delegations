@@ -60,8 +60,8 @@ func importedNames(
 ): HashSet[string] =
   ## Collect names standing in `import`, `include`, `from` and `export` statements: modules
   ##   file may qualify name with.
-  for k in tokens.pathTokens(partners, source):
-    if tokens[k].kind == TokenKind.Word: result.incl tokens[k].spelling(source)
+  for k in tokens.tokensPath(partners, source):
+    if tokens[k].kind == KindToken.Word: result.incl tokens[k].spelling(source)
 
 
 func receiverOf(tokens: openArray[Token], partners: openArray[int], dot: int, source: string): int =
@@ -70,17 +70,17 @@ func receiverOf(tokens: openArray[Token], partners: openArray[int], dot: int, so
   var j = dot - 1
   while j >= 0:
     let t = tokens[j]
-    if t.kind == TokenKind.Close and partners[j] >= 0:
+    if t.kind == KindToken.Close and partners[j] >= 0:
       let open = partners[j]
       if open > 0 and tokens[open - 1].after == tokens[open].first and
-          tokens[open - 1].kind in {TokenKind.Word, TokenKind.Quoted, TokenKind.Close} and
+          tokens[open - 1].kind in {KindToken.Word, KindToken.Quoted, KindToken.Close} and
           not tokens[open - 1].isKeyword(source):
         j = open - 1
         continue
       return (if tokens[open].spelling(source) in ["(", "["]: open else: -1)
-    if t.kind in {TokenKind.Word, TokenKind.Quoted} and t.isKeyword(source): return -1
-    if t.kind notin {TokenKind.Word, TokenKind.Quoted, TokenKind.Number, TokenKind.Text,
-                     TokenKind.Character}:
+    if t.kind in {KindToken.Word, KindToken.Quoted} and t.isKeyword(source): return -1
+    if t.kind notin {KindToken.Word, KindToken.Quoted, KindToken.Number, KindToken.Text,
+                     KindToken.Character}:
       return -1
     if j >= 2 and tokens[j - 1].spelling(source) == "." and tokens[j - 1].after == t.first and
         tokens[j - 2].after == tokens[j - 1].first:
@@ -95,24 +95,24 @@ func candidates(source: string): seq[Candidate] =
   let
     tokens = source.tokens
     partners = tokens.partners
-    skipped = tokens.pathTokens(partners, source)
+    skipped = tokens.tokensPath(partners, source)
     modules = importedNames(tokens, partners, source)
   for k in 1 ..< tokens.len - 1:
     let t = tokens[k]
-    if t.kind != TokenKind.Operator or t.spelling(source) != "." or k in skipped: continue
+    if t.kind != KindToken.Operator or t.spelling(source) != "." or k in skipped: continue
     let name = tokens[k + 1]
     if tokens[k - 1].after != t.first or name.first != t.after: continue
-    if name.kind != TokenKind.Word or name.isKeyword(source): continue
+    if name.kind != KindToken.Word or name.isKeyword(source): continue
     let text = name.spelling(source)
     if text notin BUILTIN_TYPES and text[0] notin {'A' .. 'Z'}: continue
     if k + 2 < tokens.len and tokens[k + 2].first == name.after and
-        tokens[k + 2].kind == TokenKind.Open:
+        tokens[k + 2].kind == KindToken.Open:
       continue
     let
       last = tokens[k - 1]
       first = receiverOf(tokens, partners, k, source)
     if first < 0 or tokens[first].line != name.line: continue
-    if last.kind == TokenKind.Word and
+    if last.kind == KindToken.Word and
         (last.spelling(source)[0] in {'A' .. 'Z'} or last.spelling(source) in modules):
       continue
     result.add Candidate(first: first, last: k - 1, dot: k, name: k + 1)
@@ -127,7 +127,7 @@ func conversionQuery*(path, source: string): Query =
     starts = source.lineStarts
   for c in source.candidates:
     for k in [c.name, c.last]:
-      if tokens[k].kind != TokenKind.Word: continue
+      if tokens[k].kind != KindToken.Word: continue
       let site = (tokens[k].line + 1, tokens[k].first - starts[tokens[k].line])
       if site notin result.sites: result.sites.add site
 
@@ -141,9 +141,9 @@ func isGroup(
     return false
   var k = first + 1
   while k < last:
-    if tokens[k].kind in {TokenKind.Comma, TokenKind.Semicolon}: return false
+    if tokens[k].kind in {KindToken.Comma, KindToken.Semicolon}: return false
     if tokens[k].spelling(source) == ":": return false
-    if tokens[k].kind == TokenKind.Open and partners[k] > k: k = partners[k]
+    if tokens[k].kind == KindToken.Open and partners[k] > k: k = partners[k]
     inc k
   true
 
@@ -163,7 +163,7 @@ func conversions(source: string, answer: Answer): seq[Conversion] =
   var converted: seq[int]  # Name token of each conversion so far; its call is value too.
   for c in source.candidates.sortedByIt(it.name):
     if kindAt(c.name) notin TYPE_KINDS: continue
-    if tokens[c.last].kind == TokenKind.Word and kindAt(c.last) notin VALUE_KINDS and
+    if tokens[c.last].kind == KindToken.Word and kindAt(c.last) notin VALUE_KINDS and
         c.last notin converted:
       continue
     converted.add c.name

@@ -14,7 +14,7 @@ const OTHER_PATH = ".github/workflows/role.yml"
 
 suite "Toolchain":
   test "project without exact pin is finding, naming what it holds":
-    check checkPin("p/p.nimble", NIMBLE_TEXT).len == 0  # exact pin passes
+    check checkPin("p/p.nimble", TEXT_NIMBLE).len == 0  # exact pin passes
     let found = checkPin("p/p.nimble", "requires \"nim >= 2.2.4\"\n")
     check found.len == 1
     check found[0].path == "p/p.nimble"

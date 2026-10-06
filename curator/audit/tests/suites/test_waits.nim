@@ -10,7 +10,7 @@ import ../../src/[findings, kinds, waits]
 
 const
   DIRECTORIES = ["contributor/ronri/viewer"]
-  NIM_DRIVE = """
+  DRIVE_NIM = """
 proc settle(page: Page) {.async.} =
   sleep(50)
   # sleep(5) in comment is unread.
@@ -35,7 +35,7 @@ suite "Internal":
 
 
   test "Nim fixed wait reads as koch prints it, article where sentence ends":
-    let found = checkWaits("viewer/tests/test_view.nim", NIM_DRIVE, Kind.Nim)
+    let found = checkWaits("viewer/tests/test_view.nim", DRIVE_NIM, Kind.Nim)
     check found.mapIt(it.line) == @[2, 4]  # comment unread
     check found.mapIt(it.message) == @[
       "Fixed wait reads real clock; wait on condition, or advance clock check moves (IX.12); " &

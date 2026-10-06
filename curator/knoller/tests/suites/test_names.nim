@@ -258,7 +258,7 @@ suite "Names":
       (Rule.NameCase, "Parameter is `snake_case`; got `T`."),
       (Rule.PlaceholderLetter, "Placeholder is one capital letter; got `Element`."),
     ]  # V.1, V.12
-    check PLACEHOLDERS.declarations.filterIt(it.name == "t")[0].kind == NameKind.Parameter
+    check PLACEHOLDERS.declarations.filterIt(it.name == "t")[0].kind == KindName.Parameter
 
 
   test "V.4 boolean is proposition or mode, and predicate func is `is…`":
@@ -269,7 +269,7 @@ suite "Names":
     check (Rule.BooleanName, "Predicate `func` is `is…` in camel case; got `mixed`.") in found
     check found.len == 5  # V.4: `proc`, `func` writing `var`, and `contains` are unread
     check "inferred" in BOOLEANS.names and not found.anyIt("inferred" in it[1])  # value unread
-    check BOOLEAN_PREFIXES.allIt(("proc run() =\n  let " & it & "_set = true\n").breaches.len == 0)
+    check PREFIXES_BOOLEAN.allIt(("proc run() =\n  let " & it & "_set = true\n").breaches.len == 0)
 
 
   test "III.5 notation holds over case at any scope, but at module scope only for immutable global":
@@ -285,15 +285,15 @@ suite "Names":
 
 
   test "casing follows kind and reach":
-    check Declared(kind: NameKind.Binding, reach: Reach.Global).casingOf == Casing.Screaming
-    check Declared(kind: NameKind.Binding, reach: Reach.Local).casingOf == Casing.Snake
-    check Declared(kind: NameKind.Member).casingOf == Casing.Pascal  # V.11
-    check Declared(kind: NameKind.Placeholder).casingOf == Casing.Letter  # V.12
+    check Declared(kind: KindName.Binding, reach: Reach.Global).casingOf == Casing.Screaming
+    check Declared(kind: KindName.Binding, reach: Reach.Local).casingOf == Casing.Snake
+    check Declared(kind: KindName.Member).casingOf == Casing.Pascal  # V.11
+    check Declared(kind: KindName.Placeholder).casingOf == Casing.Letter  # V.12
     check "isMixed".isCased(Casing.Camel) and not "is_mixed".isCased(Casing.Camel)  # V.1
     check "E1".isCased(Casing.Pascal) and "x2".isCased(Casing.Snake)  # V.1, digits carry none
-    check Declared(name: "Width", kind: NameKind.Field).isMiscased  # V.1
-    check not Declared(name: "VERB", kind: NameKind.Binding, reach: Reach.Entry).isMiscased
-    check not Declared(name: "𝐌", kind: NameKind.Binding, reach: Reach.Local).isMiscased
+    check Declared(name: "Width", kind: KindName.Field).isMiscased  # V.1
+    check not Declared(name: "VERB", kind: KindName.Binding, reach: Reach.Entry).isMiscased
+    check not Declared(name: "𝐌", kind: KindName.Binding, reach: Reach.Local).isMiscased
 
 
   test "name that template substitutes declares nothing of that name":
@@ -306,7 +306,7 @@ suite "Names":
         "  let name_value = count\n"
     check substituted.breaches.len == 0  # V.1
     check substituted.declarations.filterIt(it.name == "name").mapIt(it.kind) ==
-        @[NameKind.Parameter]  # template parameter alone, no type
+        @[KindName.Parameter]  # template parameter alone, no type
     check "elements" in substituted.names and "name_value" in substituted.names
 
 
