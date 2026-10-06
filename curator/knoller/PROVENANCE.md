@@ -79,8 +79,7 @@ so a new rule without a citation does not compile there.
   message would cite the charter of this repository wherever knoller runs.
 - Cost: no suite of knoller holds the text that `koch` prints. The suite `test_findings.nim` of
   `curator/audit` holds it, article included, through the real check of each message that `koch`
-  prints. The one exception is `unsettled`, whose test builds the report from the sentence of
-  `chain.nim`, since no source in the suite leaves the fixers unsettled.
+  prints.
 
 ## Chain
 
@@ -141,7 +140,7 @@ Each check that the static pass of `curator/audit` reads counts too, in each dia
 stands for the Nim files that `git ls-files` lists under it. A run writes only the files that
 change, and `--check` writes none. Each line of output names a path, a line and a rule id, and the
 count comes last. A clean run exits 0, and a usage error exits 2. A run exits 1 where a finding is
-left, or where a change is due under `--check`.
+left, where a file is unsettled, or where a change is due under `--check`.
 
 - No option sets a style. The rules are constants, and a fence is the only way to keep a layout.
 - `--nim` names the compiler whose parser proves each group of needless parentheses
@@ -150,6 +149,11 @@ left, or where a change is due under `--check`.
   comes before the count, and the exit code stays.
 - A nimble file whose copy `atlas.lock` holds is passed over, because a rewrite would leave the
   copy stale.
+- A file that the fixers do not settle prints one line, `path: unsettled: <message>`, after the
+  rewrites and before the findings left. The line has no line number and no rule id, because the
+  fault is in the tool (`## Chain`). The run exits 1, because the file stays as written.
+- Verified by `suites/test_command.nim`, for an unsettled file alone and beside a file that
+  settles. The suite holds the line, its place in the output and the exit code.
 - The module is `command.nim`, because a path spells its words in full (Article V.9), and no
   glossary lists the acronym CLI.
 - `outcomeOf` decides what a run writes and prints from text alone, so its suite needs no file.
@@ -832,9 +836,14 @@ wideners.
   holds every line at once.
 - The held lines are a sorted `seq`, and each fixer is a function under `strictFuncs`. So the
   output depends on the source alone.
-- A file that still changes after its last round stays as written. Its fix reports the rule
-  `unsettled` in `Fix.left`, so the chain never writes a file half settled. `curator/audit` keeps
-  its semantic edits for such a file, since a rename planned whole reaches other files too.
+- A file that still changes after its last round stays as written, so the chain never writes a
+  file half settled. Its fix says why in `Fix.unsettled`, a message that names no rule.
+  `curator/audit` keeps its semantic edits for such a file, since a rename planned whole reaches
+  other files too.
+- A list of rules holds the rules of style that source can break. A fixer that does not settle is
+  a fault of the tool, so no rule names it (D1 a of #572). No article cites it either.
+- Rejected by the Architect: `unsettled` as a member of `Rule`. It then takes a row in the README
+  and an article in `CITATIONS`, as if the source broke a rule of style.
 - Rejected: a fixer that wraps its own line. `form.nim` and `wrapping.nim` would then import each
   other, and a later fixer could undo the wrap.
 - Rejected: one pass of wraps at the end. It can leave a wide line, and nothing then holds the
@@ -842,7 +851,7 @@ wideners.
 - Cost: a line broken at an operator stays broken where it later fits, as a break of the hand does.
 - Verified by `suites/test_chain.nim`. Each case of the tree wraps to its exact output, and a
   second run writes nothing. A line that no wrap fits keeps its finding, held the second time. A
-  file that never settles stays as written, with its finding.
+  file that never settles stays as written, and its fix holds the message.
 
 **The whole-tree proof of the wraps: no fix changes what code means.** Verified by hand,
 2026-10-04, with the scratch programs `prove.nim` and `trees.nim`. They ran `formatted` over every
