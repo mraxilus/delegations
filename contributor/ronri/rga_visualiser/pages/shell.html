@@ -1403,6 +1403,18 @@
             ><button id="toggle-overlay" class="diagnostic-toggle on" type="button"
               aria-label="SVG overlay">overlay</button
           ></span></div>
+        <!-- Share of page's busy time that ran inside PGA, reference library, and on each
+             side of algebra boundary, pooled over last 20 seconds by browser's own sampling
+             profiler; see `tickShare`. Desktop shows same four rows, from its own sampler. -->
+        <div class="diagnostic-legend"><span>@WORD:NameDiagnosticsShare@</span></div>
+        <div class="diagnostic-line"><span>@WORD:NameDiagnosticsPga@</span
+          ><b id="diagnostic-share-pga">&mdash;</b></div>
+        <div class="diagnostic-line"><span>@WORD:NameDiagnosticsAlgebra@</span
+          ><b id="diagnostic-share-algebra">&mdash;</b></div>
+        <div class="diagnostic-line"><span>@WORD:NameDiagnosticsBoundary@</span
+          ><b id="diagnostic-share-boundary">&mdash;</b></div>
+        <div class="diagnostic-line"><span>@WORD:NameDiagnosticsEuclidean@</span
+          ><b id="diagnostic-share-euclidean">&mdash;</b></div>
         <!-- Each step of drawing process, as `mean over last 200 ms (median over
              whole ring)` in ms, so reader can see where frame went rather than one
              opaque total. Short mean is what to watch while changing something and

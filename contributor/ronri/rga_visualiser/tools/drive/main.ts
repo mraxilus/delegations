@@ -7,7 +7,7 @@
 //   here are not this machine's GPU.
 
 import { chromium, type Browser, type Page } from '@playwright/test';
-import { accessSync, constants, existsSync } from 'node:fs';
+import { accessSync, constants, existsSync, readFileSync } from 'node:fs';
 import { delimiter, join } from 'node:path';
 import { countFailed, countRun, report } from './report';
 import { focusCanvas } from './gestures';
@@ -58,6 +58,7 @@ import { driveShadedFromAbove } from './shade';
 import { driveStyleDeclared } from './style';
 import { driveSurfacesFilled } from './surface';
 import { driveHeapUnit, drivePhaseSums, driveTree } from './diagnostics';
+import { driveShareAgrees, driveShareRefused } from './share';
 import { driveAxis, driveAxisGlide, driveCurve, driveScaleSwitch } from './exceedance';
 import { driveSums, driveTint, openEveryBranch } from './ramp';
 import {
@@ -93,6 +94,8 @@ const SIZE_VIEW = { width: 1200, height: 900 };
 
 /** Assembled page, as `tools/build.nim web` writes it. */
 const PATH_PAGE = join(__dirname, '..', '..', 'build', 'rga_visualiser.html');
+/** Address served page stands at; route answers it, and no server stands behind it. */
+const URL_SERVED = 'http://visualiser.test/';
 
 /** Chromium to drive, in order of what pins each candidate.
  *
@@ -307,6 +310,7 @@ async function driveMeasured(browser: Browser): Promise<void> {
   await driveAntialias(page, true);
 
   await driveFrameWork(page);
+  await driveShareRefused(page);
   await drivePhaseSums(page);
   await driveTree(page);
   await driveTint(page);
@@ -334,6 +338,28 @@ async function driveMeasured(browser: Browser): Promise<void> {
   await page.close();
 }
 
+/** Drive PGA share on page served as browser's profiler needs, on real clock.
+ *
+ *  Page of its own: profiler runs only where page's own response carries
+ *  `Document-Policy: js-profiling`, which no page opened from file has. Route serves built
+ *  page so, at address no server stands behind.
+ */
+async function driveServed(browser: Browser): Promise<void> {
+  const page = await browser.newPage({ viewport: SIZE_VIEW, hasTouch: true });
+  const errors_page: string[] = [];
+  page.on('pageerror', (error) => errors_page.push(error.message));
+  const html = readFileSync(PATH_PAGE);
+  await page.route(URL_SERVED, (route) => route.fulfill({
+    status: 200, contentType: 'text/html',
+    headers: { 'Document-Policy': 'js-profiling' }, body: html,
+  }));
+  await page.goto(URL_SERVED);
+  await waitScene(page);
+  await driveShareAgrees(page);
+  report('the served page raised no error', errors_page.length === 0, errors_page.join(' | '));
+  await page.close();
+}
+
 async function main(): Promise<void> {
   const executable = chromiumChosen();
   const browser = await chromium.launch({
@@ -343,6 +369,7 @@ async function main(): Promise<void> {
 
   await driveSimulated(browser);
   await driveMeasured(browser);
+  await driveServed(browser);
   // Page of its own, since host it stands in has to be there before page's script runs.
   await driveHostSave(browser, `file://${PATH_PAGE}`, SIZE_VIEW);
 
