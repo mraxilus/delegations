@@ -7,14 +7,14 @@ import ../../src/toolchain
 import ./fixtures
 
 
-const OTHER_PATH = ".github/workflows/role.yml"
-  ## Second workflow installing compiler; driver's own is `WORKFLOW_PATH`.
+const PATH_OTHER = ".github/workflows/role.yml"
+  ## Second workflow installing compiler; driver's own is `PATH_WORKFLOW`.
 
 
 
 suite "Toolchain":
   test "project without exact pin is finding, naming what it holds":
-    check checkPin("p/p.nimble", NIMBLE_TEXT).len == 0  # exact pin passes
+    check checkPin("p/p.nimble", TEXT_NIMBLE).len == 0  # exact pin passes
     let found = checkPin("p/p.nimble", "requires \"nim >= 2.2.4\"\n")
     check found.len == 1
     check found[0].path == "p/p.nimble"
@@ -30,32 +30,32 @@ suite "Toolchain":
 
 
   test "driver version is read from workflow, quotes either way":
-    check WORKFLOW_TEXT.workflowVersion == some(PIN)  # single quotes
-    check workflowVersion("  NIM_VERSION: \"2.2.6\"\n") == some("2.2.6")  # double quotes
-    check workflowVersion("  NIM_VERSION: 2.2.6\n") == some("2.2.6")  # bare
-    check workflowVersion("name: check\n").isNone  # absent
+    check TEXT_WORKFLOW.versionWorkflow == some(PIN)  # single quotes
+    check versionWorkflow("  NIM_VERSION: \"2.2.6\"\n") == some("2.2.6")  # double quotes
+    check versionWorkflow("  NIM_VERSION: 2.2.6\n") == some("2.2.6")  # bare
+    check versionWorkflow("name: check\n").isNone  # absent
 
 
   test "driver pins version, never commit":
-    let found = checkDriver(WORKFLOW_PATH, WORKFLOW_TEXT, COMMIT)
+    let found = checkDriver(PATH_WORKFLOW, TEXT_WORKFLOW, COMMIT)
     check found.len == 1  # setup action installs releases; every job waits on driver
     check found[0].message.endsWith("got `" & COMMIT & "`.")
-    check checkDriver(OTHER_PATH, WORKFLOW_TEXT, COMMIT).len == 0  # named once, not per file
+    check checkDriver(PATH_OTHER, TEXT_WORKFLOW, COMMIT).len == 0  # named once, not per file
 
 
   test "every workflow stating version must equal driver project pin":
-    for path in [WORKFLOW_PATH, OTHER_PATH]:  # driver's own, and second installing compiler
-      check checkDriver(path, WORKFLOW_TEXT, PIN).len == 0  # agreement
-      let drifted = checkDriver(path, WORKFLOW_TEXT, "2.2.6")
+    for path in [PATH_WORKFLOW, PATH_OTHER]:  # driver's own, and second installing compiler
+      check checkDriver(path, TEXT_WORKFLOW, PIN).len == 0  # agreement
+      let drifted = checkDriver(path, TEXT_WORKFLOW, "2.2.6")
       check drifted.len == 1  # drift
       check drifted[0].path == path  # points at file that drifted
     # Absent key: driver's own must state version; workflow installing no compiler states none.
-    check checkDriver(WORKFLOW_PATH, "name: check\n", PIN).len == 1  # unstated
-    check checkDriver(OTHER_PATH, "name: role\n", PIN).len == 0  # left alone
+    check checkDriver(PATH_WORKFLOW, "name: check\n", PIN).len == 1  # unstated
+    check checkDriver(PATH_OTHER, "name: role\n", PIN).len == 0  # left alone
 
 
   test "knoller pins driver version, since koch compiles it":
-    const path = KNOLLER_DIRECTORY & "/knoller.nimble"
+    const path = DIRECTORY_KNOLLER & "/knoller.nimble"
     check checkKnoller(path, some(PIN), some(PIN)).len == 0  # agreement
     let drifted = checkKnoller(path, some("2.2.6"), some(PIN))
     check drifted.len == 1  # drift

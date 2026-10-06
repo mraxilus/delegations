@@ -54,15 +54,15 @@ suite "Article IX":
     let root = createTempDir("delegations_", "_verb")
     defer: removeDir(root)
     root.writeInto(
-      "contributor/ronri/lags/" & DRIVER_FILE,
+      "contributor/ronri/lags/" & FILE_DRIVER,
       "import std/os\n" &
       "case paramStr(1)\n" &
-      "of \"" & HEAD_VERB & "\": quit(\"pin `a` lags reference `b`\", 1)\n" &
+      "of \"" & VERB_HEAD & "\": quit(\"pin `a` lags reference `b`\", 1)\n" &
       "else: quit(2)\n",
     )
     let found = runHead(root, [Target(directory: "contributor/ronri/lags")])
     check found.len == 1  # reference moved
-    check found[0].path == "contributor/ronri/lags/" & DRIVER_FILE
+    check found[0].path == "contributor/ronri/lags/" & FILE_DRIVER
     check found[0].message.endsWith("got exit `1`.")  # verb's own code, unchanged
     check runHead(root, newSeq[Target]()).len == 0  # no project carries verb
 

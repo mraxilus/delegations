@@ -100,9 +100,9 @@ suite "Article XI":
 
 
   test "record travels in commit of its own":
-    check checkRecordCommit("docs(a): record", ["c/d/a/PROVENANCE.md", "c/d/a/README.md"]).len == 0
-    check checkRecordCommit("feat(a): add", ["c/d/a/src/a.nim"]).len == 0
-    let mixed = checkRecordCommit("feat(a): add", ["c/d/a/PROVENANCE.md", "c/d/a/src/a.nim"])
+    check checkCommitRecord("docs(a): record", ["c/d/a/PROVENANCE.md", "c/d/a/README.md"]).len == 0
+    check checkCommitRecord("feat(a): add", ["c/d/a/src/a.nim"]).len == 0
+    let mixed = checkCommitRecord("feat(a): add", ["c/d/a/PROVENANCE.md", "c/d/a/src/a.nim"])
     check mixed.len == 1 and "got `c/d/a/src/a.nim` beside it" in mixed[0].message
 
 

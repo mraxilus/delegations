@@ -19,14 +19,14 @@ const
 
 suite "Role":
   test "role line is first non-blank line, without its trailing comment":
-    check "**Role:** curator\n\n## Intent\n".roleLine == "**Role:** curator"
-    check "\n\n**Role:** curator\n".roleLine == "**Role:** curator"  # blank lines skipped
-    check "  **Role:** curator  \n".roleLine == "**Role:** curator"  # surrounding space
-    check "**Role:** <!-- curator, or contributor -->\n".roleLine ==
+    check "**Role:** curator\n\n## Intent\n".lineRole == "**Role:** curator"
+    check "\n\n**Role:** curator\n".lineRole == "**Role:** curator"  # blank lines skipped
+    check "  **Role:** curator  \n".lineRole == "**Role:** curator"  # surrounding space
+    check "**Role:** <!-- curator, or contributor -->\n".lineRole ==
       "**Role:**"  # unfilled template keeps key alone
-    check "**Role:** curator <!-- copied -->\n".roleLine == "**Role:** curator"
-    check "".roleLine == ""
-    check "\n \n".roleLine == ""
+    check "**Role:** curator <!-- copied -->\n".lineRole == "**Role:** curator"
+    check "".lineRole == ""
+    check "\n \n".lineRole == ""
 
 
   test "body below attribution block reads as body alone, so thread's pull request passes":
@@ -36,9 +36,9 @@ suite "Role":
         "**Role:** <!-- curator, or contributor -->\n", "## Intent\n", "",
       ]:
         let attributed = attribution & body
-        check attributed.roleLine == body.roleLine
-        check attributed.replace("\n", "\r\n").roleLine == body.roleLine  # edited on GitHub
-    check (MARKER & "\n**Role:** curator\n").roleLine == "**Role:** curator"  # credit left out
+        check attributed.lineRole == body.lineRole
+        check attributed.replace("\n", "\r\n").lineRole == body.lineRole  # edited on GitHub
+    check (MARKER & "\n**Role:** curator\n").lineRole == "**Role:** curator"  # credit left out
     let thread = MARKER & "\n" & CREDIT & "\n\n**Role:** curator\n\n## Intent\n"
     check checkRole("curator/mend-it", thread, ["curator"]).len == 0
     let wrong = checkRole(
@@ -61,7 +61,7 @@ suite "Role":
       (MARKER & " **Role:** curator\n", ""),  # marker not whole line
       ("<!-- note -->\n**Role:** curator\n", ""),  # other comment reads as before
     ]:
-      check body.roleLine == opening
+      check body.lineRole == opening
 
 
   test "echoed opening is cut, since body may open with whole paragraph":

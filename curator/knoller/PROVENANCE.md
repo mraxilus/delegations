@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-10-04 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 859d296146fdacdb |
+| Rules   | cece22607540de43 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: a curator project, from the brief of the Architect. It holds the fixers of `koch fix`
@@ -405,7 +405,7 @@ indents one level, and the closing line opens with `)`.
 
 **A call that fits stays on its line, and one that does not keeps the line breaks of the hand
 while each line fits (X.3).** A wrapped call that would fit is joined. Otherwise the line breaks
-that the hand gave it stay, its arguments on one line of their own among them (`handLines`). Only
+that the hand gave it stay, its arguments on one line of their own among them (`linesHand`). Only
 where a line would cross `LINE_MAX` does it take one argument to a line, with a trailing comma.
 The outermost call that crosses `LINE_MAX` splits first, and each line it leaves is read again.
 An argument splits its own call only where that call is the whole argument.
@@ -480,7 +480,7 @@ or a test after a banner takes the one blank line of the banner. The rule reads 
 - A test file has a directory `tests` in its path, at any depth. A stub is a `test_*` file
   directly in that directory. `reports.nim` holds both readings, from the names below the last
   directory `tests`, so the blank-line rule and the stub rules read one definition.
-- `isTestFile` holds exactly where `/tests/` stands in the path with a `/` before it. `isStub`
+- `isFileTest` holds exactly where `/tests/` stands in the path with a `/` before it. `isStub`
   holds exactly where the parent of a `test_*` file is `tests`. Verified by
   `suites/test_blanks.nim`, which holds both readings to a table of paths. Verified by hand,
   2026-10-04, over each path that git lists in this repository, relative and absolute.
@@ -634,7 +634,7 @@ Verified by `suites/test_spacing.nim`, with each example of the ruling.
   So `array[N+1, int]` and `range[0..3]` take the form too.
 - An array literal that stands alone, such as `[a + b, c]` or `@[a + b]`, keeps its spaces.
 - The generic list that a routine or a type declares after its name is a declaration. It selects
-  nothing, so it keeps its spaces, export marker or not (`isDeclaredList`). That covers
+  nothing, so it keeps its spaces, export marker or not (`isListDeclared`). That covers
   `func scalar*[I: Basis | Grade]`, `func pick[I: Basis | Grade]` and `Foo[T: A | B] = object`.
   Its head is a routine keyword or `type` on the line of the name. An entry of a `type` section
   counts too, read from the nearest line above at a smaller indent. Verified by
@@ -936,7 +936,7 @@ that indent on the lines that the hand wrote too.
 **The four spaces keep the head of a block apart from its body (STYLE.md §5).** Two spaces would
 put a continuation line of a head on the indent of the body below it. So where the line right
 above a body stands at the indent of the body, every continuation line of that head moves
-(`headLifts`). A chain that opens mid-line inside a call takes the layout of one level of that
+(`liftsHead`). A chain that opens mid-line inside a call takes the layout of one level of that
 call. Such a head would otherwise keep its last line on the body.
 
 - A head opens its line with a keyword of a block and ends on `:` at its own depth. The keywords
@@ -976,13 +976,13 @@ whitespace-split, punctuation-stripped and lowercased, after the backtick spans 
   "Tests are paramount").
 
 **The check of articles reads the comments of Nim from tokens, as the fixer reads them.**
-`commentLines` gives the text of each line that a comment holds, with its markers left out, and
+`linesComment` gives the text of each line that a comment holds, with its markers left out, and
 `checkArticles` reports each line that holds an article. A caller that reads comments of another
 syntax passes its own lines to the same check. So `curator/audit` reports each kind in the same
 words.
 
 - Verified by hand, 2026-10-06, with a scratch program, on each Nim file that `git ls-files
-  '*.nim'` lists. `commentLines` gives the same line and text as the Nim scanner of
+  '*.nim'` lists. `linesComment` gives the same line and text as the Nim scanner of
   `curator/audit`.
 - Verified by `suites/test_articles.nim`, with the Nim cases of the scanner of `curator/audit`.
 
@@ -1017,7 +1017,7 @@ signature, and the scanner joins it.
 
 - `MARKS_FOREIGN` is the one list of these words. `{.push.}` reads it too, and so do the rename
   fixers of `curator/audit` and the move of an entry block. Each reader takes the words among
-  pragmas (`pragmaWords`), never a part of another name.
+  pragmas (`wordsPragma`), never a part of another name.
 - Rejected: a list for each reader, since copies drift apart, and a substring match, which reads
   `dynlib_path` as a mark.
 - Verified by `suites/test_names.nim` and `suites/test_idioms.nim`, for each pragma of the list.
@@ -1041,7 +1041,7 @@ scope, notation holds only for an immutable global. So a mutable global in notat
 finding, of the rule `notation`.
 
 - A type, a routine, an enum member and a placeholder are no variable, so their case is read.
-  `std/unicode` gives no case to the mathematical alphanumeric letters. So `letterCase` reads
+  `std/unicode` gives no case to the mathematical alphanumeric letters. So `caseLetter` reads
   them by their block, where each style runs its capitals first.
 - An operator is backticked, so it is never read as a name.
 
@@ -1155,7 +1155,7 @@ replaces it (`checkWaits`). The rule comes from IX.12 alone, so knoller holds th
 paths of drive code belong to a layout, so the caller gives them.
 
 - `curator/audit` reads `tests/` and `tools/` of each project. The command line reads each file
-  under a directory `tests` or `tools`, at any depth (`isDriveFile`).
+  under a directory `tests` or `tools`, at any depth (`isFileDrive`).
 - Nim names compare as the compiler compares them (`identity`), so `sleep_async` is `sleepAsync`.
   Nim source is read with comments and strings blanked.
 - A caller that reads another kind passes the identifiers of each line, less those of its

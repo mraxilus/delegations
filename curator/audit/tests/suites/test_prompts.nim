@@ -9,16 +9,16 @@ import ../../src/prompts
 
 suite "Duty 10":
   test "diary reference is date, #N, issue N, pull request N or run N, outside code":
-    check diaryReference("Merged on 2026-09-06, then reverted.") == "2026-09-06"
-    check diaryReference("See #140 for the shape.") == "#140"
-    check diaryReference("Issue 25 asked twice.") == "Issue 25"
-    check diaryReference("after pull request 152 merged") == "pull request 152"
-    check diaryReference("ready after run 238 green") == "run 238"
-    check diaryReference("`#140 opened draft, ready after run 238 green`").len == 0  # code
-    check diaryReference("Article II.9 binds; duty 10 says so.").len == 0  # numbers alone
-    check diaryReference("Runs 3 configurations.") == "Runs 3"  # plural, capital
-    check diaryReference("Overrun 3 times").len == 0  # word bounded
-    check diaryReference("Nim 2.2.12 and 2026 alone").len == 0  # no whole date
+    check referenceDiary("Merged on 2026-09-06, then reverted.") == "2026-09-06"
+    check referenceDiary("See #140 for the shape.") == "#140"
+    check referenceDiary("Issue 25 asked twice.") == "Issue 25"
+    check referenceDiary("after pull request 152 merged") == "pull request 152"
+    check referenceDiary("ready after run 238 green") == "run 238"
+    check referenceDiary("`#140 opened draft, ready after run 238 green`").len == 0  # code
+    check referenceDiary("Article II.9 binds; duty 10 says so.").len == 0  # numbers alone
+    check referenceDiary("Runs 3 configurations.") == "Runs 3"  # plural, capital
+    check referenceDiary("Overrun 3 times").len == 0  # word bounded
+    check referenceDiary("Nim 2.2.12 and 2026 alone").len == 0  # no whole date
 
 
   test "prompt lines naming incidents are findings, fences pass":
@@ -30,14 +30,14 @@ suite "Duty 10":
 
 
   test "every file that opens delegate is prompt, coordinator's too":
-    check PROMPT_PATHS == ["CONTRIBUTOR.md", "COORDINATOR.md", "CURATOR.md"]
+    check PATHS_PROMPT == ["CONTRIBUTOR.md", "COORDINATOR.md", "CURATOR.md"]
 
 
   test "prompt over its byte ceiling is finding naming size":
     let
-      long = "# P\n\n" & "x".repeat(PROMPT_BYTES)
+      long = "# P\n\n" & "x".repeat(BYTES_PROMPT)
       found = checkPrompt("CONTRIBUTOR.md", long)
     check found.len == 1
-    check found[0].message == "Prompt over " & $PROMPT_BYTES & " bytes; prune before adding " &
+    check found[0].message == "Prompt over " & $BYTES_PROMPT & " bytes; prune before adding " &
       "(duty 10); got `" & $long.len & "`."
-    check checkPrompt("CONTRIBUTOR.md", "x".repeat(PROMPT_BYTES)).len == 0  # at ceiling
+    check checkPrompt("CONTRIBUTOR.md", "x".repeat(BYTES_PROMPT)).len == 0  # at ceiling

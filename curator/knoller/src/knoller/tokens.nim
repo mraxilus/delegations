@@ -24,7 +24,7 @@ import ./views
 
 
 type
-  TokenKind* {.pure.} = enum  ## Define what one token is, as layout rules tell tokens apart.
+  KindToken* {.pure.} = enum  ## Define what one token is, as layout rules tell tokens apart.
     Word  ## Identifier or keyword, e.g. `proc`, `x`.
     Quoted  ## Name in backticks, e.g. `` `+` ``.
     Number  ## Numeric literal, sign and suffix included, e.g. `-1`, `0xFF'u8`.
@@ -38,18 +38,18 @@ type
     Semicolon  ## Separator `;`.
 
   Token* = object  ## Define one token: kind, byte span in source, line it opens on.
-    kind*: TokenKind
+    kind*: KindToken
     first*: int  ## Byte offset of first character.
     after*: int  ## Byte offset after last character.
     line*: int  ## Zero-based line token opens on.
 
 
 const
-  OPERATOR_CHARS = {
+  CHARS_OPERATOR = {
     '!', '$', '%', '&', '*', '+', '-', '.', '/', ':', '<', '=', '>', '?', '@', '\\', '^', '|', '~',
   }
     ## Characters operator is built from (`OpChars`).
-  OPERATOR_GLYPHS = [
+  GLYPHS_OPERATOR = [
     "±", "×", "∘", "∙", "∧", "∨", "∩", "∪", "⊓", "⊔", "⊕", "⊖", "⊗", "⊘", "⊙", "⊛", "⊞", "⊟", "⊠",
     "⊡", "■", "□", "★", "☆", "⟇", "⟑", "⩓", "⩔",
   ]
@@ -65,13 +65,13 @@ const
     "static", "template", "try", "tuple", "type", "using", "var", "when", "while", "xor", "yield",
   ]
     ## Words lexer reads as keywords (`TokType`), never as identifiers.
-  ROUTINE_KEYWORDS = ["converter", "func", "iterator", "macro", "method", "proc", "template"]
+  KEYWORDS_ROUTINE = ["converter", "func", "iterator", "macro", "method", "proc", "template"]
     ## Keywords opening routine, its type, or lambda.
 
 
 func glyphLength(source: string, at: int): int =
   ## Count bytes of operator glyph opening at offset; zero where none opens there.
-  for glyph in OPERATOR_GLYPHS:
+  for glyph in GLYPHS_OPERATOR:
     if source.continuesWith(glyph, at): return glyph.len
 
 
@@ -113,7 +113,7 @@ func textAfter(source: string, at: int): int =
         return k + 3
       inc k
     return source.len
-  let is_raw = at > 0 and source[at - 1] in NAME_CHARS
+  let is_raw = at > 0 and source[at - 1] in CHARS_NAME
   var k = at + 1
   while k < source.len and source[k] != '\n':
     if source[k] == '\\' and not is_raw: k += 2
@@ -157,7 +157,7 @@ func numberAfter(source: string, at: int): int =
 func wordAfter(source: string, at: int): int =
   ## Find offset after identifier opening at `at`; operator glyph ends it.
   var k = at
-  while k < source.len and source[k] in NAME_CHARS:
+  while k < source.len and source[k] in CHARS_NAME:
     if k > at and source.glyphLength(k) > 0: break
     inc k
   k
@@ -167,7 +167,7 @@ func operatorAfter(source: string, at: int): int =
   ## Find offset after run of operator characters and glyphs opening at `at`.
   var k = at
   while k < source.len:
-    if source[k] in OPERATOR_CHARS: inc k
+    if source[k] in CHARS_OPERATOR: inc k
     else:
       let glyph = source.glyphLength(k)
       if glyph == 0: break
@@ -190,38 +190,38 @@ func tokens*(source: string): seq[Token] =
       inc i
       continue
     var
-      kind = TokenKind.Operator
+      kind = KindToken.Operator
       after = i + 1
     let next = if i + 1 < source.len: source[i + 1] else: '\0'
     case c
-    of '#': (kind, after) = (TokenKind.Comment, source.commentAfter(i))
-    of '"': (kind, after) = (TokenKind.Text, source.textAfter(i))
-    of '\'': (kind, after) = (TokenKind.Character, source.characterAfter(i))
+    of '#': (kind, after) = (KindToken.Comment, source.commentAfter(i))
+    of '"': (kind, after) = (KindToken.Text, source.textAfter(i))
+    of '\'': (kind, after) = (KindToken.Character, source.characterAfter(i))
     of '`':
-      kind = TokenKind.Quoted
+      kind = KindToken.Quoted
       while after < source.len and source[after] notin {'`', '\n'}: inc after
       if after < source.len and source[after] == '`': inc after
-    of '0' .. '9': (kind, after) = (TokenKind.Number, source.numberAfter(i))
+    of '0' .. '9': (kind, after) = (KindToken.Number, source.numberAfter(i))
     of '(', '[', '{':
-      kind = TokenKind.Open
+      kind = KindToken.Open
       let is_dotted = next == '.' and (i + 2 >= source.len or source[i + 2] != '.')
       if is_dotted or (c == '[' and next == ':'): after = i + 2
-    of ')', ']', '}': kind = TokenKind.Close
-    of ',': kind = TokenKind.Comma
-    of ';': kind = TokenKind.Semicolon
+    of ')', ']', '}': kind = KindToken.Close
+    of ',': kind = KindToken.Comma
+    of ';': kind = KindToken.Semicolon
     of '.':
-      if next in {')', ']', '}'}: (kind, after) = (TokenKind.Close, i + 2)
+      if next in {')', ']', '}'}: (kind, after) = (KindToken.Close, i + 2)
       else: after = source.operatorAfter(i)
     of '*':
-      let is_lone = next == ':' and (i + 2 >= source.len or source[i + 2] notin OPERATOR_CHARS)
+      let is_lone = next == ':' and (i + 2 >= source.len or source[i + 2] notin CHARS_OPERATOR)
       if not is_lone: after = source.operatorAfter(i)
     of '-':
       let is_negative = source.isDigit(i + 1) and (i == 0 or source[i - 1] in NEGATION_AFTER)
-      if is_negative: (kind, after) = (TokenKind.Number, source.numberAfter(i))
+      if is_negative: (kind, after) = (KindToken.Number, source.numberAfter(i))
       else: after = source.operatorAfter(i)
     else:
-      if c in OPERATOR_CHARS or source.glyphLength(i) > 0: after = source.operatorAfter(i)
-      elif c in NAME_CHARS: (kind, after) = (TokenKind.Word, source.wordAfter(i))
+      if c in CHARS_OPERATOR or source.glyphLength(i) > 0: after = source.operatorAfter(i)
+      elif c in CHARS_NAME: (kind, after) = (KindToken.Word, source.wordAfter(i))
     result.add Token(kind: kind, first: i, after: after, line: line)
     for k in i ..< after:
       if source[k] == '\n': inc line
@@ -235,8 +235,8 @@ func partners*(tokens: openArray[Token]): seq[int] =
   for k, t in tokens:
     result[k] = -1
     case t.kind
-    of TokenKind.Open: opened.add k
-    of TokenKind.Close:
+    of KindToken.Open: opened.add k
+    of KindToken.Close:
       if opened.len == 0: continue
       let o = opened.pop
       result[k] = o
@@ -244,7 +244,7 @@ func partners*(tokens: openArray[Token]): seq[int] =
     else: discard
 
 
-func lastLine*(t: Token, source: string): int =
+func lineLast*(t: Token, source: string): int =
   ## Read zero-based line token closes on; long string and block comment span several.
   result = t.line
   for k in t.first ..< t.after:
@@ -258,7 +258,7 @@ func spelling*(t: Token, source: string): string =
 
 func isKeyword*(t: Token, source: string): bool =
   ## Decide whether token is keyword, never identifier.
-  t.kind == TokenKind.Word and t.spelling(source) in KEYWORDS
+  t.kind == KindToken.Word and t.spelling(source) in KEYWORDS
 
 
 func isKeyword*(name: string): bool =
@@ -271,9 +271,9 @@ func isOperandEnd*(tokens: openArray[Token], k: int, source: string): bool =
   ##   Keyword ends none but `nil`, or one after `.` that names field, as `x.type`.
   let t = tokens[k]
   case t.kind
-  of TokenKind.Quoted, TokenKind.Number, TokenKind.Text, TokenKind.Character: true
-  of TokenKind.Close: t.spelling(source) in [")", "]", "}"]
-  of TokenKind.Word:
+  of KindToken.Quoted, KindToken.Number, KindToken.Text, KindToken.Character: true
+  of KindToken.Close: t.spelling(source) in [")", "]", "}"]
+  of KindToken.Word:
     let is_field = k > 0 and tokens[k - 1].spelling(source) == "." and
       tokens[k - 1].after == t.first
     not t.isKeyword(source) or t.spelling(source) == "nil" or is_field
@@ -286,11 +286,11 @@ func signatureOf*(tokens: openArray[Token], partners: openArray[int], k: int, so
   ##   `proc(` open parameters of routine type or lambda.
   if tokens[k].spelling(source) != "(" or k == 0: return -1
   var j = k - 1
-  if tokens[j].spelling(source) in ROUTINE_KEYWORDS: return j
+  if tokens[j].spelling(source) in KEYWORDS_ROUTINE: return j
   if tokens[j].spelling(source) == "]" and partners[j] > 0: j = partners[j] - 1
   if j >= 0 and tokens[j].spelling(source) == "*": dec j
-  if j < 1 or tokens[j].kind notin {TokenKind.Word, TokenKind.Quoted}: return -1
-  if tokens[j - 1].spelling(source) in ROUTINE_KEYWORDS: j - 1 else: -1
+  if j < 1 or tokens[j].kind notin {KindToken.Word, KindToken.Quoted}: return -1
+  if tokens[j - 1].spelling(source) in KEYWORDS_ROUTINE: j - 1 else: -1
 
 
 func isCallOpen*(tokens: openArray[Token], partners: openArray[int], k: int, source: string): bool =
@@ -300,7 +300,7 @@ func isCallOpen*(tokens: openArray[Token], partners: openArray[int], k: int, sou
   if tokens[k].spelling(source) != "(" or k == 0 or tokens[k - 1].after != tokens[k].first:
     return false
   let callee = tokens[k - 1]
-  if callee.kind notin {TokenKind.Word, TokenKind.Quoted, TokenKind.Close}: return false
+  if callee.kind notin {KindToken.Word, KindToken.Quoted, KindToken.Close}: return false
   if not tokens.isOperandEnd(k - 1, source): return false
   if callee.spelling(source) == "]" and partners[k - 1] > 0 and
       tokens[partners[k - 1] - 1].isKeyword(source):

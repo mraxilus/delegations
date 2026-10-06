@@ -15,7 +15,7 @@ func messages(source: string): seq[string] =
 
 suite "Glossary":
   test "minimal glossary passes, with or without terms":
-    check messages(GLOSSARY_TEXT).len == 0  # heading, description, Standards, Language, term
+    check messages(TEXT_GLOSSARY).len == 0  # heading, description, Standards, Language, term
     check messages("# Empty\n\nNone yet.\n\n## Standards\n\n## Language\n").len == 0  # lazy
 
 
@@ -40,9 +40,9 @@ suite "Glossary":
     check messages(head & "- SI, BIPM: `s`." & tail).len == 1  # no bold name
     check messages(head & "None yet." & tail & "\n- a list\n").len == 0  # prose and list outside
     check good.standardsIn == @[(5, "SI")]  # line and name
-    check "- **SI**, BIPM, 9th edition: `s`.".isStandardLine
-    check not "- **SI** BIPM: `s`.".isStandardLine  # comma after name required
-    check not "- **SI**, BIPM".isStandardLine  # colon required
+    check "- **SI**, BIPM, 9th edition: `s`.".isLineStandard
+    check not "- **SI** BIPM: `s`.".isLineStandard  # comma after name required
+    check not "- **SI**, BIPM".isLineStandard  # colon required
 
 
   test "standard shared by projects, or repeated from root, is finding at later place":
@@ -74,17 +74,17 @@ suite "Glossary":
 
 
   test "term line grammar":
-    check "**Order**:".isTermLine and not "**Order**".isTermLine  # colon required
-    check not "**:".isTermLine and not "Order:".isTermLine  # bold and content required
+    check "**Order**:".isLineTerm and not "**Order**".isLineTerm  # colon required
+    check not "**:".isLineTerm and not "Order:".isLineTerm  # bold and content required
 
 
   test "people words glossary avoids stay out of governed prose":
-    check peopleWordsIn("The owner merges by hand.") == @["owner"]
-    check peopleWordsIn("Sessions end; each session carries its own.") == @["Sessions", "session"]
-    check peopleWordsIn("Run `git config user.name` first.").len == 0  # code span
-    check peopleWordsIn("The Architect and the delegate.").len == 0  # agreed terms
-    check peopleWordsIn("The browser is used by many.").len == 0  # `used` is not `user`
-    check peopleWordsIn("assets, agents").len == 1  # plural read as its word
-    let found = checkPeopleWords("CURATOR.md", "# T\n\nowner\n| Author | x |\n```\nbot\n```\n")
+    check wordsPeopleIn("The owner merges by hand.") == @["owner"]
+    check wordsPeopleIn("Sessions end; each session carries its own.") == @["Sessions", "session"]
+    check wordsPeopleIn("Run `git config user.name` first.").len == 0  # code span
+    check wordsPeopleIn("The Architect and the delegate.").len == 0  # agreed terms
+    check wordsPeopleIn("The browser is used by many.").len == 0  # `used` is not `user`
+    check wordsPeopleIn("assets, agents").len == 1  # plural read as its word
+    let found = checkWordsPeople("CURATOR.md", "# T\n\nowner\n| Author | x |\n```\nbot\n```\n")
     check found.mapIt(it.line) == @[3]  # table row and fence skipped
     check found[0].message.endsWith("got `owner`.")

@@ -38,4 +38,4 @@ suite "Fences":
     check view.splitLines[3] == view.splitLines[1].strip  # blank line reads at no indent
     check view.splitLines[2].startsWith("  #")  # indent kept
     check view.restored(source, fence) == source  # round trip
-    check view.fenceShape.len == 4  # each fenced line, blank one among them
+    check view.shapeFence.len == 4  # each fenced line, blank one among them

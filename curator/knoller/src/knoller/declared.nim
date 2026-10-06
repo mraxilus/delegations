@@ -24,25 +24,25 @@ import ./views
 
 
 const
-  ROUTINE_KEYWORDS = ["proc", "func", "iterator", "template", "macro", "converter", "method"]
+  KEYWORDS_ROUTINE = ["proc", "func", "iterator", "template", "macro", "converter", "method"]
     ## Keywords opening routine declaration.
-  BINDING_KEYWORDS = ["let", "var", "const"]  ## Keywords opening binding, single or section.
-  SECTION_KEYWORDS = ["let", "var", "const", "type"]
+  KEYWORDS_BINDING = ["let", "var", "const"]  ## Keywords opening binding, single or section.
+  KEYWORDS_SECTION = ["let", "var", "const", "type"]
     ## Keywords that, alone on line, open section and no scope.
-  CHAIN_WORDS = ["when", "elif", "else"]  ## Words opening branch of `when` chain.
-  CONCEPT_MODIFIERS = ["var", "ref", "ptr", "type"]  ## Words standing before concept placeholder.
+  WORDS_CHAIN = ["when", "elif", "else"]  ## Words opening branch of `when` chain.
+  MODIFIERS_CONCEPT = ["var", "ref", "ptr", "type"]  ## Words standing before concept placeholder.
   MARKS_FOREIGN* = [
     "dynlib", "exportc", "exportcpp", "extern", "header", "importc", "importcpp", "importjs",
     "importobjc", "JsRoot",
   ]
     ## Words marking name foreign code reads by its spelling: pragma, or root of JavaScript object.
-    ##   Read as words among pragmas (`pragmaWords`), never inside other name: routine they mark
+    ##   Read as words among pragmas (`wordsPragma`), never inside other name: routine they mark
     ##     declares no name of ours (`declarations`), `{.push.}` stands over bindings they mark
     ##     (`idioms.nim`), and `curator/audit` renames no name they mark, nor `entry.nim` moves it.
 
 
 type
-  NameKind* {.pure.} = enum  ## Define what declaration introduces name.
+  KindName* {.pure.} = enum  ## Define what declaration introduces name.
     Binding, Routine, Type, Field, Parameter, Member, Placeholder
 
   Reach* {.pure.} = enum  ## Define how far binding reaches, which fixes its case (V.1, V.10).
@@ -53,7 +53,7 @@ type
   Declared* = object  ## Define one declared name with its place.
     name*: string
     line*: int
-    kind*: NameKind
+    kind*: KindName
     reach*: Reach  ## Binding's reach; `Local` for every other kind.
     is_mutable*: bool  ## Binding by `var`, which notation never excuses (III.5).
     is_boolean*: bool  ## Shows `bool` by type or literal value, or `func` returns it (V.4).
@@ -86,7 +86,7 @@ func splitTop(text: string, separators: set[char]): seq[string] =
   result.add piece
 
 
-func topIndex(text: string, mark: char, start = 0): int =
+func indexTop(text: string, mark: char, start = 0): int =
   ## Find first `mark` outside brackets from index on; `-1` where none.
   var depth = 0
   for k in start ..< text.len:
@@ -108,30 +108,30 @@ func closing*(text: string, open: int): int =
   -1
 
 
-func bindingSide(text: string): string =
+func sideBinding(text: string): string =
   ## Cut binding text at its first `=` outside brackets, so value never reads as name.
-  let at = text.topIndex('=')
+  let at = text.indexTop('=')
   if at < 0: text else: text[0 ..< at]
 
 
 func isBooleanShown(text: string): bool =
   ## Decide whether declaration shows boolean: type `bool`, or value literal `true` or `false`.
   let
-    at = text.topIndex('=')
-    side = text.bindingSide
-    colon = side.topIndex(':')
+    at = text.indexTop('=')
+    side = text.sideBinding
+    colon = side.indexTop(':')
     value = if at < 0: "" else: text[at + 1 .. ^1].strip
   (colon >= 0 and side[colon + 1 .. ^1].strip == "bool") or value in ["true", "false"]
 
 
-func bindingNames(text: string): seq[string] =
+func namesBinding(text: string): seq[string] =
   ## Read names text binds: `a`, `a, b: T`, `(a, b) = v`, `a {.used.} = v`.
-  for piece in text.bindingSide.strip(chars = {' ', '(', ')'}).splitTop({','}):
+  for piece in text.sideBinding.strip(chars = {' ', '(', ')'}).splitTop({','}):
     let name = piece.strip(chars = {' ', '(', ')'}).nameOf
     if name.len > 0 and name != "_": result.add name
 
 
-func parameterNames(signature: string): seq[(string, bool)] =
+func namesParameter(signature: string): seq[(string, bool)] =
   ## Read parameters of text between parentheses, each with whether it shows boolean.
   ##   `x, y: T; z = false` gives `x`, `y` and `z`, which is boolean; group shares its type.
   let pieces = signature.splitTop({',', ';'})
@@ -148,45 +148,45 @@ func parameterNames(signature: string): seq[(string, bool)] =
 func isWriting(signature: string): bool =
   ## Decide whether text between parentheses takes `var` parameter, which routine writes.
   for piece in signature.splitTop({',', ';'}):
-    let at = piece.topIndex(':')
+    let at = piece.indexTop(':')
     if at >= 0 and piece[at + 1 .. ^1].identifierAt(0) == "var": return true
   false
 
 
-func placeholderNames(text: string): seq[string] =
+func namesPlaceholder(text: string): seq[string] =
   ## Read placeholders of generic brackets or concept: `T`, `A, B: X`, `var C`, `N: static int`.
   for piece in text.splitTop({',', ';'}):
     var words = piece.strip.splitWhitespace
-    while words.len > 1 and words[0] in CONCEPT_MODIFIERS: words.delete(0)
+    while words.len > 1 and words[0] in MODIFIERS_CONCEPT: words.delete(0)
     if words.len == 0: continue
     let name = words.join(" ").nameOf
     if name.len > 0: result.add name
 
 
-func readType(text: string, line: int, names: var seq[Declared]): NameKind =
+func readType(text: string, line: int, names: var seq[Declared]): KindName =
   ## Read type's name and placeholders, and enum's members on its line; give kind lines below
   ##   declare: `Member` under enum, `Field` under object or alias, `Placeholder` under concept.
   let name = text.identifierAt(0)
-  if name.len == 0: return NameKind.Field
-  names.add Declared(name: name, line: line, kind: NameKind.Type)
+  if name.len == 0: return KindName.Field
+  names.add Declared(name: name, line: line, kind: KindName.Type)
   var k = name.len
   if k < text.len and text[k] == '*': inc k
   if k < text.len and text[k] == '[' and text.closing(k) > k:
-    for p in text[k + 1 ..< text.closing(k)].placeholderNames:
-      names.add Declared(name: p, line: line, kind: NameKind.Placeholder)
+    for p in text[k + 1 ..< text.closing(k)].namesPlaceholder:
+      names.add Declared(name: p, line: line, kind: KindName.Placeholder)
   let
-    at = text.topIndex('=')
+    at = text.indexTop('=')
     value = if at < 0: "" else: text[at + 1 .. ^1].strip
     head = value.identifierAt(0)
   if head == "enum":
     for m in value[head.len .. ^1].splitTop({','}):
-      if m.nameOf.len > 0: names.add Declared(name: m.nameOf, line: line, kind: NameKind.Member)
-    return NameKind.Member
+      if m.nameOf.len > 0: names.add Declared(name: m.nameOf, line: line, kind: KindName.Member)
+    return KindName.Member
   if head == "concept":
-    for p in value[head.len .. ^1].placeholderNames:
-      names.add Declared(name: p, line: line, kind: NameKind.Placeholder)
-    return NameKind.Placeholder
-  NameKind.Field
+    for p in value[head.len .. ^1].namesPlaceholder:
+      names.add Declared(name: p, line: line, kind: KindName.Placeholder)
+    return KindName.Placeholder
+  KindName.Field
 
 
 func isOpening(lines: openArray[string], i: int): bool =
@@ -205,7 +205,7 @@ func reachOf(openers: openArray[Opener], is_scoped = false): Reach =
   ## Decide reach of binding under enclosing blocks, outermost first (V.1, V.10).
   ##   Routine makes local, entry block makes entry, and so does binding opening own scope
   ##     there (`for`, `except … as`). Global needs every enclosing block to open no scope.
-  if openers.anyIt(it.head in ROUTINE_KEYWORDS): return Reach.Local
+  if openers.anyIt(it.head in KEYWORDS_ROUTINE): return Reach.Local
   if openers.anyIt(it.is_entry): return Reach.Entry
   if is_scoped or not openers.allIt(it.is_scope_free): return Reach.Local
   Reach.Global
@@ -216,12 +216,12 @@ func declarations*(source: string): seq[Declared] =
   let lines = source.codeOnly.splitLines
   var
     openers: seq[Opener]
-    section_indent = -1
+    indent_section = -1
     section_child = -1
     is_section_mutable = false
-    type_indent = -1
-    object_indent = -1
-    enum_indent = -1
+    indent_type = -1
+    indent_object = -1
+    indent_enum = -1
     i = 0
   while i < lines.len:
     let
@@ -238,21 +238,21 @@ func declarations*(source: string): seq[Declared] =
     while openers.len > 0 and openers[^1].indent >= indent:
       let top = openers.pop
       if top.indent == indent: closed = top
-    if section_indent >= 0 and indent <= section_indent:
-      section_indent = -1
+    if indent_section >= 0 and indent <= indent_section:
+      indent_section = -1
       section_child = -1
-    if type_indent >= 0 and indent <= type_indent: type_indent = -1
-    if object_indent >= 0 and indent <= object_indent: object_indent = -1
-    if enum_indent >= 0 and indent <= enum_indent: enum_indent = -1
+    if indent_type >= 0 and indent <= indent_type: indent_type = -1
+    if indent_object >= 0 and indent <= indent_object: indent_object = -1
+    if indent_enum >= 0 and indent <= indent_enum: indent_enum = -1
     let
       word = s.identifierAt(0)
       rest = s[word.len .. ^1]
       is_chain = word in ["elif", "else"] and closed.indent == indent and
-        closed.is_scope_free and closed.head in CHAIN_WORDS
+        closed.is_scope_free and closed.head in WORDS_CHAIN
       opener = Opener(
         indent: indent,
         head: word,
-        is_scope_free: word == "when" or is_chain or (s == word and word in SECTION_KEYWORDS),
+        is_scope_free: word == "when" or is_chain or (s == word and word in KEYWORDS_SECTION),
         is_entry: indent == 0 and word == "when" and "isMainModule" in s,
       )
       is_opening = lines.isOpening(i)
@@ -261,7 +261,7 @@ func declarations*(source: string): seq[Declared] =
       substituted: seq[string]
 
     block reading:
-      if word in ROUTINE_KEYWORDS and rest.len > 0 and rest[0] == ' ':
+      if word in KEYWORDS_ROUTINE and rest.len > 0 and rest[0] == ' ':
         # Signature runs to matching parenthesis, across lines; pragmas follow it on same line.
         var
           text = s
@@ -287,19 +287,19 @@ func declarations*(source: string): seq[Declared] =
           k += name.len
         if k < text.len and text[k] == '*': inc k
         if k < text.len and text[k] == '[' and text.closing(k) > k:
-          for p in text[k + 1 ..< text.closing(k)].placeholderNames:
-            result.add Declared(name: p, line: one, kind: NameKind.Placeholder)
+          for p in text[k + 1 ..< text.closing(k)].namesPlaceholder:
+            result.add Declared(name: p, line: one, kind: KindName.Placeholder)
           k = text.closing(k) + 1
         while k < text.len and text[k] == ' ': inc k
         var is_writing = false
         if k < text.len and text[k] == '(' and text.closing(k) > k:
           let signature = text[k + 1 ..< text.closing(k)]
-          for (p, is_boolean) in signature.parameterNames:
+          for (p, is_boolean) in signature.namesParameter:
             if word == "template": substituted.add p
             result.add Declared(
               name: p,
               line: one,
-              kind: NameKind.Parameter,
+              kind: KindName.Parameter,
               is_boolean: is_boolean,
             )
           is_writing = signature.isWriting
@@ -310,77 +310,77 @@ func declarations*(source: string): seq[Declared] =
           tail = text[min(k, text.len) .. ^1].strip
           is_predicate = word == "func" and not is_writing and tail.startsWith(":") and
             tail.identifierAt(1) == "bool"
-          is_foreign = text.pragmaWords.anyIt(it in MARKS_FOREIGN)
+          is_foreign = text.wordsPragma.anyIt(it in MARKS_FOREIGN)
         if name.len > 0 and not is_foreign:
           result.add Declared(
             name: name,
             line: one,
-            kind: NameKind.Routine,
+            kind: KindName.Routine,
             is_boolean: is_predicate,
           )
         break reading
 
       if word == "type" and rest.strip.len == 0:
-        type_indent = indent
+        indent_type = indent
         break reading
-      if word == "type" or (type_indent >= 0 and indent == type_indent + 2):
+      if word == "type" or (indent_type >= 0 and indent == indent_type + 2):
         if "=" in s:
           var read: seq[Declared]
           let below = (if word == "type": rest.strip else: s).readType(one, read)
           result.add read.filterIt(
-            not (it.kind == NameKind.Type and openers.isSubstituted(it.name)),
+            not (it.kind == KindName.Type and openers.isSubstituted(it.name)),
           )
-          if below == NameKind.Member: enum_indent = indent
-          elif below == NameKind.Field: object_indent = indent
+          if below == KindName.Member: indent_enum = indent
+          elif below == KindName.Field: indent_object = indent
         break reading
 
-      if enum_indent >= 0 and indent > enum_indent:
+      if indent_enum >= 0 and indent > indent_enum:
         for m in s.splitTop({','}):
           if m.nameOf.len > 0:
-            result.add Declared(name: m.nameOf, line: one, kind: NameKind.Member)
+            result.add Declared(name: m.nameOf, line: one, kind: KindName.Member)
         break reading
 
-      if object_indent >= 0 and indent > object_indent:
+      if indent_object >= 0 and indent > indent_object:
         # Field side runs to its type; `case` names variant's discriminator.
         let text = if word == "case": rest else: s
-        if word notin ["of", "else", "elif", "when"] and text.topIndex(':') > 0:
-          for name in text[0 ..< text.topIndex(':')].splitTop({','}):
+        if word notin ["of", "else", "elif", "when"] and text.indexTop(':') > 0:
+          for name in text[0 ..< text.indexTop(':')].splitTop({','}):
             if name.nameOf.len > 0:
               result.add Declared(
                 name: name.nameOf,
                 line: one,
-                kind: NameKind.Field,
+                kind: KindName.Field,
                 is_boolean: text.isBooleanShown,
               )
         break reading
 
-      if word in BINDING_KEYWORDS:
+      if word in KEYWORDS_BINDING:
         if rest.strip.len == 0:
-          section_indent = indent
+          indent_section = indent
           is_section_mutable = word == "var"
         else:
-          for name in rest.bindingNames:
+          for name in rest.namesBinding:
             if openers.isSubstituted(name): continue
             result.add Declared(
               name: name,
               line: one,
-              kind: NameKind.Binding,
+              kind: KindName.Binding,
               reach: openers.reachOf,
               is_mutable: word == "var",
               is_boolean: rest.isBooleanShown,
             )
         break reading
 
-      if section_indent >= 0 and indent > section_indent:
+      if indent_section >= 0 and indent > indent_section:
         # First line under keyword fixes child indent; deeper line continues value above it.
         if section_child < 0: section_child = indent
-        if indent == section_child and (s.topIndex(':') > 0 or s.topIndex('=') > 0):
-          for name in s.bindingNames:
+        if indent == section_child and (s.indexTop(':') > 0 or s.indexTop('=') > 0):
+          for name in s.namesBinding:
             if openers.isSubstituted(name): continue
             result.add Declared(
               name: name,
               line: one,
-              kind: NameKind.Binding,
+              kind: KindName.Binding,
               reach: openers.reachOf,
               is_mutable: is_section_mutable,
               is_boolean: s.isBooleanShown,
@@ -390,11 +390,11 @@ func declarations*(source: string): seq[Declared] =
       if word == "for":
         let at = rest.find(" in ")
         if at > 0:
-          for name in rest[0 ..< at].bindingNames:
+          for name in rest[0 ..< at].namesBinding:
             result.add Declared(
               name: name,
               line: one,
-              kind: NameKind.Binding,
+              kind: KindName.Binding,
               reach: openers.reachOf(is_scoped = true),
             )
         break reading
@@ -407,7 +407,7 @@ func declarations*(source: string): seq[Declared] =
             result.add Declared(
               name: name,
               line: one,
-              kind: NameKind.Binding,
+              kind: KindName.Binding,
               reach: openers.reachOf(is_scoped = true),
             )
 

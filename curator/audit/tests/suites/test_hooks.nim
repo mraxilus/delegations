@@ -82,27 +82,27 @@ func citedBare(message: string): seq[string] =
 
 suite "Hooks":
   test "role string grammar":
-    check "curator".isRoleString and "curator/audit".isRoleString
-    check "coordinator".isRoleString  # role with no branch
-    check not "coordinator/library".isRoleString  # its own thread holds coordinator
-    check "contributor/ronri/pga_benchmark".isRoleString
-    check not "contributor/nowhere/x".isRoleString and not "owner".isRoleString
-    check not "contributor/ronri/pga_benchmark/gap-list".isRoleString  # branch, not role
+    check "curator".isStringRole and "curator/audit".isStringRole
+    check "coordinator".isStringRole  # role with no branch
+    check not "coordinator/library".isStringRole  # its own thread holds coordinator
+    check "contributor/ronri/pga_benchmark".isStringRole
+    check not "contributor/nowhere/x".isStringRole and not "owner".isStringRole
+    check not "contributor/ronri/pga_benchmark/gap-list".isStringRole  # branch, not role
 
 
   test "path relative to root, and write outside scope refused":
     check insideRoot("/home/u/repo", "/home/u/repo/src/a.nim") == "src/a.nim"
     check insideRoot("/home/u/repo/", "/tmp/x") == "/tmp/x"
-    check checkEditPath(BRANCH, "contributor/ronri/pga_benchmark/src/a.nim").len == 0
-    check checkEditPath(BRANCH, "CONSTITUTION.md").len == 1  # outside project
-    check checkEditPath("curator/x", "contributor/ronri/pga_benchmark/src/a.nim").len == 1
-    check checkEditPath("curator/x", "contributor/ronri/pga_benchmark/GLOSSARY.md").len == 0
+    check checkPathEdit(BRANCH, "contributor/ronri/pga_benchmark/src/a.nim").len == 0
+    check checkPathEdit(BRANCH, "CONSTITUTION.md").len == 1  # outside project
+    check checkPathEdit("curator/x", "contributor/ronri/pga_benchmark/src/a.nim").len == 1
+    check checkPathEdit("curator/x", "contributor/ronri/pga_benchmark/GLOSSARY.md").len == 0
 
 
   test "git commands read through shell operators and options":
-    check gitCommands("git -c a=b push -u origin x && echo ok") == @[@["push", "-u", "origin", "x"]]
-    check gitCommands("cd x; git commit -m 'a' | cat") == @[@["commit", "-m", "'a'"]]
-    check gitCommands("ls -la").len == 0
+    check commandsGit("git -c a=b push -u origin x && echo ok") == @[@["push", "-u", "origin", "x"]]
+    check commandsGit("cd x; git commit -m 'a' | cat") == @[@["commit", "-m", "'a'"]]
+    check commandsGit("ls -la").len == 0
 
 
   test "bash refusals":
@@ -251,7 +251,7 @@ suite "Hooks":
 
   test "stop hook asks for corrected lines alone, never whole message again":
     # Message stands on screen once hook reads it, so resent message reads twice (D1 of #570).
-    let reason = stopReason(checkEndTurn("Pushed.\n", BRANCH) & checkNumbersBare("See #12.\n"))
+    let reason = reasonStop(checkEndTurn("Pushed.\n", BRANCH) & checkNumbersBare("See #12.\n"))
     check reason.startsWith("Mend message that ends this turn (GUIDE.md, Output contract).")
     check "Reply with corrected lines alone" in reason
     check "never send it or its sign-off again" in reason
@@ -374,8 +374,8 @@ suite "Hooks":
   test "push and commit message":
     check checkPush("abc\n", "abc").len == 0
     check checkPush("abc", "def").messages[0].contains("exact commit")
-    check markPath("/repo", ".git") == "/repo/.git/koch-check"
-    check markPath("/repo/wt", "/repo/.git/worktrees/wt") ==
+    check pathMark("/repo", ".git") == "/repo/.git/koch-check"
+    check pathMark("/repo/wt", "/repo/.git/worktrees/wt") ==
       "/repo/.git/worktrees/wt/koch-check"  # worktree's own dir, where `.git` is file
     check checkMessage(BRANCH, "feat(pga_benchmark): add gaps\n\nBody.\n", [], []).len == 0
     check checkMessage(BRANCH, "Add gaps", [], []).len == 1  # not conventional
@@ -406,12 +406,12 @@ suite "Hooks":
 
 
   test "git command reads checkout it acts in, so worktree holds its own branch":
-    check commandDirectory("git commit -m x", "/work/tree") == "/work/tree"
-    check commandDirectory("git -C /other commit", "/work/tree") == "/other"
-    check commandDirectory("git -C sub commit", "/work/tree") == "/work/tree/sub"
-    check commandDirectory("cd /other && git push", "/work/tree") == "/other"
-    check commandDirectory("cd \"sub\" && git -C deeper push", "/work") == "/work/sub/deeper"
-    check commandDirectory("ls && git status", "/work") == "/work"
+    check directoryCommand("git commit -m x", "/work/tree") == "/work/tree"
+    check directoryCommand("git -C /other commit", "/work/tree") == "/other"
+    check directoryCommand("git -C sub commit", "/work/tree") == "/work/tree/sub"
+    check directoryCommand("cd /other && git push", "/work/tree") == "/other"
+    check directoryCommand("cd \"sub\" && git -C deeper push", "/work") == "/work/sub/deeper"
+    check directoryCommand("ls && git status", "/work") == "/work"
 
 
   test "gh api write reads as tool whose rules it shares":
@@ -526,11 +526,11 @@ suite "Hooks":
 
 
   test "start context and turn writes":
-    let text = startContext(BRANCH, "## List\n\n1. one\n\n## Next\n", "## List", @[])
+    let text = contextStart(BRANCH, "## List\n\n1. one\n\n## Next\n", "## List", @[])
     check "Role: contributor/ronri/pga_benchmark" in text and "CONTRIBUTOR.md" in text
     check "1. one" in text and "## Sign-off" in text and "**Working:**" in text
-    check "outside grammar" in startContext("claude/x", "", "## List", @[])
-    check "re-stamp" in startContext("curator/x", "", "## List", @[finding("", 0, "d")])
+    check "outside grammar" in contextStart("claude/x", "", "## List", @[])
+    check "re-stamp" in contextStart("curator/x", "", "## List", @[finding("", 0, "d")])
     check isTurnWriting([Call(name: "Bash", command: "git push -u origin x")])
     check isTurnWriting([Call(name: "mcp__github__issue_write", has_body: true)])
     check not isTurnWriting([Call(name: "mcp__github__update_pull_request")])  # draft toggle
@@ -566,7 +566,7 @@ suite "Hooks":
       execCmdEx(command).output.strip
 
     const
-      script_hooks = staticRead("../../../../.claude/hooks.sh")
+      hooks_script = staticRead("../../../../.claude/hooks.sh")
       stub_nim = "#!/bin/sh\n" &
         "echo \"$*\" >> \"$LOG_BUILDS\"\n" &
         "for a in \"$@\"; do case \"$a\" in -o:*) out=\"${a#-o:}\" ;; esac; done\n" &
@@ -575,13 +575,13 @@ suite "Hooks":
         "printf '#!/bin/sh\\necho \"built from %s\"\\n' \"$(cat koch.nim)\" > \"$out\"\n" &
         "chmod +x \"$out\"\n"
     let
-      root = tempRepo()
+      root = repoTemp()
       toolchain = createTempDir("delegations_", "_nim")
     defer: removeDir(root)
     defer: removeDir(toolchain)
     toolchain.writeInto("0.0.1/bin/nim", stub_nim)
     inclFilePermissions(toolchain / "0.0.1" / "bin" / "nim", {fpUserExec})
-    root.writeInto(".claude/hooks.sh", script_hooks)
+    root.writeInto(".claude/hooks.sh", hooks_script)
     root.writeInto("curator/audit/audit.nimble", "requires \"nim == 0.0.1\"\n")
     root.writeInto("curator/audit/src/checks.nim", "discard\n")
     root.writeInto("koch.nim.cfg", "")

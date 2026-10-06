@@ -158,18 +158,18 @@ suite "Names":
                          ("arguments", "args")]:
       check (Rule.Abbreviation, "Name coins abbreviation; write `" & full & "`; got `" & name &
         "`.") in found  # V.6
-    check (Rule.ActionVerb, "Action is imperative verb and property is bare noun; got " &
+    check (Rule.VerbAction, "Action is imperative verb and property is bare noun; got " &
       "`getGrade`.") in found  # V.3
-    check (Rule.GlobalWord, "Global never shares its word with type; got `ALGEBRA`.") in
+    check (Rule.WordGlobal, "Global never shares its word with type; got `ALGEBRA`.") in
         found  # V.10, shares word with type `Algebra`
     check not found.anyIt("JSON" in it[1])  # V.9 needs glossary, so it is caller's
     check not found.anyIt("`lut`" in it[1])  # jargon
     check not found.anyIt("constructTable" in it[1])
-    check (Rule.NameCase, "Global is `SCREAMING_SNAKE_CASE`; got `tmp_count`.") in found  # V.1
+    check (Rule.CaseName, "Global is `SCREAMING_SNAKE_CASE`; got `tmp_count`.") in found  # V.1
     check found.len == 9  # V.1, V.3, V.6, V.10: each break once
     check "func toJSON() = discard\nfunc parseJson() = discard\n".breaches.len == 0  # V.9 caller's
     check "const LUT_GRADE = 1\n".breaches ==
-        @[(Rule.LookupTable, "Lookup table reads `lut_<value>_by_<key>`; got `LUT_GRADE`.")]
+        @[(Rule.TableLookup, "Lookup table reads `lut_<value>_by_<key>`; got `LUT_GRADE`.")]
     check "const LUT_GRADE_BY_BASIS = 1\n".breaches.len == 0  # V.5
     check "proc get*(x: int) = x\n".breaches.len == 0  # one word is noun
     check "proc f(ctx: int) = discard\n".breaches.len == 1  # V.6, exempt word aside
@@ -197,8 +197,8 @@ suite "Names":
       check ("proc getView*() {." & mark & ": \"view\".}\n").breaches.len == 0  # library's name
       check "getView" notin ("proc getView*() {.inline, " & mark & ".}\n").names
     check "proc getValue(dynlib_path: string) = discard\n".breaches.mapIt(it[0]) ==
-        @[Rule.ActionVerb]  # parameter named like mark marks nothing
-    check "proc getHeader*(header: string) = discard\n".breaches.mapIt(it[0]) == @[Rule.ActionVerb]
+        @[Rule.VerbAction]  # parameter named like mark marks nothing
+    check "proc getHeader*(header: string) = discard\n".breaches.mapIt(it[0]) == @[Rule.VerbAction]
 
 
   test "reach is global under blocks opening no scope, and local under any other":
@@ -228,48 +228,48 @@ suite "Names":
     let found = CASES_BROKEN.breaches
     check found.len == 8  # V.1, V.11
     for finding in [
-      (Rule.NameCase, "Type is `PascalCase`; got `basis_digits`."),
-      (Rule.NameCase, "Field is `snake_case`; got `Width`."),
-      (Rule.MemberCase, "Member is `PascalCase`; got `base`."),
-      (Rule.MemberCase, "Member is `PascalCase`; got `Anti_Side`."),
-      (Rule.NameCase, "Global is `SCREAMING_SNAKE_CASE`; got `lowerGlobal`."),
-      (Rule.NameCase, "Routine is `lowerCamelCase`; got `Construct_table`."),
-      (Rule.NameCase, "Parameter is `snake_case`; got `Count`."),
-      (Rule.NameCase, "Local is `snake_case`; got `Local_value`."),
+      (Rule.CaseName, "Type is `PascalCase`; got `basis_digits`."),
+      (Rule.CaseName, "Field is `snake_case`; got `Width`."),
+      (Rule.CaseMember, "Member is `PascalCase`; got `base`."),
+      (Rule.CaseMember, "Member is `PascalCase`; got `Anti_Side`."),
+      (Rule.CaseName, "Global is `SCREAMING_SNAKE_CASE`; got `lowerGlobal`."),
+      (Rule.CaseName, "Routine is `lowerCamelCase`; got `Construct_table`."),
+      (Rule.CaseName, "Parameter is `snake_case`; got `Count`."),
+      (Rule.CaseName, "Local is `snake_case`; got `Local_value`."),
     ]:
       check finding in found
-    check (Rule.MemberCase, "Member is `PascalCase`; got `Str_Raw`.") in OPERATORS.breaches
+    check (Rule.CaseMember, "Member is `PascalCase`; got `Str_Raw`.") in OPERATORS.breaches
 
 
   test "V.1 one letter fits by its own case, and capital local is finding":
     # Architect's ruling: plain ASCII is no notation, so `N` and `M` take local case.
     check LETTERS.breaches == @[
-      (Rule.NameCase, "Global is `SCREAMING_SNAKE_CASE`; got `g`."),
-      (Rule.NameCase, "Parameter is `snake_case`; got `N`."),
-      (Rule.NameCase, "Local is `snake_case`; got `M`."),
+      (Rule.CaseName, "Global is `SCREAMING_SNAKE_CASE`; got `g`."),
+      (Rule.CaseName, "Parameter is `snake_case`; got `N`."),
+      (Rule.CaseName, "Local is `snake_case`; got `M`."),
     ]  # V.1, V.6
 
 
   test "V.12 placeholder is one capital letter, and parameter holding type is snake":
     # Architect's ruling: `typedesc` parameter is parameter (V.1), never placeholder (V.12).
     check PLACEHOLDERS.breaches == @[
-      (Rule.PlaceholderLetter, "Placeholder is one capital letter; got `Key`."),
-      (Rule.PlaceholderLetter, "Placeholder is one capital letter; got `a`."),
-      (Rule.NameCase, "Parameter is `snake_case`; got `T`."),
-      (Rule.PlaceholderLetter, "Placeholder is one capital letter; got `Element`."),
+      (Rule.LetterPlaceholder, "Placeholder is one capital letter; got `Key`."),
+      (Rule.LetterPlaceholder, "Placeholder is one capital letter; got `a`."),
+      (Rule.CaseName, "Parameter is `snake_case`; got `T`."),
+      (Rule.LetterPlaceholder, "Placeholder is one capital letter; got `Element`."),
     ]  # V.1, V.12
-    check PLACEHOLDERS.declarations.filterIt(it.name == "t")[0].kind == NameKind.Parameter
+    check PLACEHOLDERS.declarations.filterIt(it.name == "t")[0].kind == KindName.Parameter
 
 
   test "V.4 boolean is proposition or mode, and predicate func is `is…`":
     let found = BOOLEANS.breaches
     for name in ["gated", "done", "ready", "quiet"]:
-      check (Rule.BooleanName, "Boolean opens `is_`, `as_`, `should_`, `found_` or `has_`; got `" &
+      check (Rule.NameBoolean, "Boolean opens `is_`, `as_`, `should_`, `found_` or `has_`; got `" &
         name & "`.") in found  # V.4
-    check (Rule.BooleanName, "Predicate `func` is `is…` in camel case; got `mixed`.") in found
+    check (Rule.NameBoolean, "Predicate `func` is `is…` in camel case; got `mixed`.") in found
     check found.len == 5  # V.4: `proc`, `func` writing `var`, and `contains` are unread
     check "inferred" in BOOLEANS.names and not found.anyIt("inferred" in it[1])  # value unread
-    check BOOLEAN_PREFIXES.allIt(("proc run() =\n  let " & it & "_set = true\n").breaches.len == 0)
+    check PREFIXES_BOOLEAN.allIt(("proc run() =\n  let " & it & "_set = true\n").breaches.len == 0)
 
 
   test "III.5 notation holds over case at any scope, but at module scope only for immutable global":
@@ -285,15 +285,15 @@ suite "Names":
 
 
   test "casing follows kind and reach":
-    check Declared(kind: NameKind.Binding, reach: Reach.Global).casingOf == Casing.Screaming
-    check Declared(kind: NameKind.Binding, reach: Reach.Local).casingOf == Casing.Snake
-    check Declared(kind: NameKind.Member).casingOf == Casing.Pascal  # V.11
-    check Declared(kind: NameKind.Placeholder).casingOf == Casing.Letter  # V.12
+    check Declared(kind: KindName.Binding, reach: Reach.Global).casingOf == Casing.Screaming
+    check Declared(kind: KindName.Binding, reach: Reach.Local).casingOf == Casing.Snake
+    check Declared(kind: KindName.Member).casingOf == Casing.Pascal  # V.11
+    check Declared(kind: KindName.Placeholder).casingOf == Casing.Letter  # V.12
     check "isMixed".isCased(Casing.Camel) and not "is_mixed".isCased(Casing.Camel)  # V.1
     check "E1".isCased(Casing.Pascal) and "x2".isCased(Casing.Snake)  # V.1, digits carry none
-    check Declared(name: "Width", kind: NameKind.Field).isMiscased  # V.1
-    check not Declared(name: "VERB", kind: NameKind.Binding, reach: Reach.Entry).isMiscased
-    check not Declared(name: "𝐌", kind: NameKind.Binding, reach: Reach.Local).isMiscased
+    check Declared(name: "Width", kind: KindName.Field).isMiscased  # V.1
+    check not Declared(name: "VERB", kind: KindName.Binding, reach: Reach.Entry).isMiscased
+    check not Declared(name: "𝐌", kind: KindName.Binding, reach: Reach.Local).isMiscased
 
 
   test "name that template substitutes declares nothing of that name":
@@ -306,7 +306,7 @@ suite "Names":
         "  let name_value = count\n"
     check substituted.breaches.len == 0  # V.1
     check substituted.declarations.filterIt(it.name == "name").mapIt(it.kind) ==
-        @[NameKind.Parameter]  # template parameter alone, no type
+        @[KindName.Parameter]  # template parameter alone, no type
     check "elements" in substituted.names and "name_value" in substituted.names
 
 

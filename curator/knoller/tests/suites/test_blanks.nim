@@ -8,16 +8,16 @@ import std/[sequtils, strutils, unittest]
 import ../../src/knoller/[blanks, reports]
 
 
-const TEST_PATH = "curator/audit/tests/suites/test_a.nim"
+const PATH_TEST = "curator/audit/tests/suites/test_a.nim"
   ## Path under `tests/`, where suite and test rules hold.
 
 
-func fixed(source: string, path = TEST_PATH): string =
+func fixed(source: string, path = PATH_TEST): string =
   ## Fix blank lines of source, as `koch fix` does.
   fixBlanks(path, source).source
 
 
-func isSettled(source: string, path = TEST_PATH): bool =
+func isSettled(source: string, path = PATH_TEST): bool =
   ## Decide whether source reports no blank-line finding and fixes to itself again.
   checkBlanks(path, source).len == 0 and fixBlanks(path, source).source == source and
     fixBlanks(path, source).fixed.len == 0
@@ -28,7 +28,7 @@ suite "Blanks":
   test "suite takes three blank lines before it, test two, first child none":
     let breach = "import std/unittest\n\nsuite \"A\":\n  test \"a\":\n    check true\n\n" &
       "  test \"b\":\n    check true\n\nsuite \"B\":\n\n  test \"c\":\n    check true\n"
-    check checkBlanks(TEST_PATH, breach).mapIt(it.message.split(";")[0]) == @[
+    check checkBlanks(PATH_TEST, breach).mapIt(it.message.split(";")[0]) == @[
       "Suite takes three blank lines before it", "Test takes two blank lines before it",
       "Suite takes three blank lines before it", "First child follows its opener at once",
     ]
@@ -40,7 +40,7 @@ suite "Blanks":
 
 
   test "test file lies under directory `tests`, and stub is its child `test_*`, one reading":
-    for (path, is_test_file, is_stub) in [
+    for (path, is_file_test, is_stub) in [
       ("tests/test_a.nim", true, true),
       ("/p/tests/test_a.nim", true, true),  # absolute, as command line reads it
       ("tests/suites/test_a.nim", true, false),  # suite module of one stub
@@ -50,7 +50,7 @@ suite "Blanks":
       ("tests", false, false),  # file named `tests`
       ("test_a.nim", false, false),
     ]:
-      check path.isTestFile == is_test_file
+      check path.isFileTest == is_file_test
       check path.isStub == is_stub
 
 

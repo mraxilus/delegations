@@ -65,29 +65,29 @@ type
     Nim, NimScript, Nimble, Configuration, Markdown, Yaml, GitIgnore, GitAttributes, TypeScript,
     Cpp, C, Html, Svg, Json, Shell
 
-  KindRule* = object  ## Define how one kind is read.
+  RuleKind* = object  ## Define how one kind is read.
     syntax*: Syntax  ## Comment syntax scanner applies.
     is_prose*: bool  ## Telegraphic check applies to comments.
     is_gated*: bool  ## Language admitted only where Nim cannot serve, so header must argue.
     has_guide*: bool  ## Language has style guide, so `koch fix` writes kind.
 
 
-const LUT_RULE_BY_KIND*: array[Kind, KindRule] = [
-  Kind.Nim: KindRule(syntax: Syntax.Nim, is_prose: true, has_guide: true),
-  Kind.NimScript: KindRule(syntax: Syntax.Nim, is_prose: true, has_guide: true),
-  Kind.Nimble: KindRule(syntax: Syntax.Nim, is_prose: true, has_guide: true),
-  Kind.Configuration: KindRule(syntax: Syntax.Hash, is_prose: true),
-  Kind.Markdown: KindRule(syntax: Syntax.None),
-  Kind.Yaml: KindRule(syntax: Syntax.HashSpaced, is_prose: true),
-  Kind.GitIgnore: KindRule(syntax: Syntax.HashLeading, is_prose: true),
-  Kind.GitAttributes: KindRule(syntax: Syntax.HashLeading, is_prose: true),
-  Kind.TypeScript: KindRule(syntax: Syntax.Slash, is_prose: true, is_gated: true),
-  Kind.Cpp: KindRule(syntax: Syntax.Slash, is_prose: true, is_gated: true),
-  Kind.C: KindRule(syntax: Syntax.Slash, is_prose: true, is_gated: true),
-  Kind.Html: KindRule(syntax: Syntax.Xml, is_prose: true),
-  Kind.Svg: KindRule(syntax: Syntax.Xml, is_prose: true),
-  Kind.Json: KindRule(syntax: Syntax.None),
-  Kind.Shell: KindRule(syntax: Syntax.Hash, is_prose: true, is_gated: true),
+const LUT_RULE_BY_KIND*: array[Kind, RuleKind] = [
+  Kind.Nim: RuleKind(syntax: Syntax.Nim, is_prose: true, has_guide: true),
+  Kind.NimScript: RuleKind(syntax: Syntax.Nim, is_prose: true, has_guide: true),
+  Kind.Nimble: RuleKind(syntax: Syntax.Nim, is_prose: true, has_guide: true),
+  Kind.Configuration: RuleKind(syntax: Syntax.Hash, is_prose: true),
+  Kind.Markdown: RuleKind(syntax: Syntax.None),
+  Kind.Yaml: RuleKind(syntax: Syntax.HashSpaced, is_prose: true),
+  Kind.GitIgnore: RuleKind(syntax: Syntax.HashLeading, is_prose: true),
+  Kind.GitAttributes: RuleKind(syntax: Syntax.HashLeading, is_prose: true),
+  Kind.TypeScript: RuleKind(syntax: Syntax.Slash, is_prose: true, is_gated: true),
+  Kind.Cpp: RuleKind(syntax: Syntax.Slash, is_prose: true, is_gated: true),
+  Kind.C: RuleKind(syntax: Syntax.Slash, is_prose: true, is_gated: true),
+  Kind.Html: RuleKind(syntax: Syntax.Xml, is_prose: true),
+  Kind.Svg: RuleKind(syntax: Syntax.Xml, is_prose: true),
+  Kind.Json: RuleKind(syntax: Syntax.None),
+  Kind.Shell: RuleKind(syntax: Syntax.Hash, is_prose: true, is_gated: true),
 ]
   ## Map kind to its rule; header table is derived view of this array.
 
@@ -118,7 +118,7 @@ func kindOf*(path: string): Option[Kind] =
   else: none(Kind)
 
 
-func rule*(kind: Kind): lent KindRule =
+func rule*(kind: Kind): lent RuleKind =
   ## Read rule of kind.
   LUT_RULE_BY_KIND[kind]
 

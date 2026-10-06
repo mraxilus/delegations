@@ -16,7 +16,7 @@ const
 
 proc provenBy(sources: openArray[string]): seq[seq[int]] =
   ## Answer each source by parser of `NIM`, in one run; empty where compiler fails.
-  let proving = compilerProver(NIM)(@sources)
+  let proving = proverCompiler(NIM)(@sources)
   check proving.failure.len == 0
   proving.answers
 
@@ -28,7 +28,7 @@ proc fixedBy(source: string): string =
   for ask in 1 .. 8:
     let fix = formatted("a.nim", source, Dialect.Module, proofs)
     if fix.asked.len == 0: return fix.source
-    check proofs.answered(fix.asked, compilerProver(NIM)).len == 0
+    check proofs.answered(fix.asked, proverCompiler(NIM)).len == 0
   formatted("a.nim", source, Dialect.Module, proofs).source
 
 
@@ -115,10 +115,10 @@ suite "Proofs":
 
 
   test "compiler that does not run proves nothing, and says why":
-    let proving = compilerProver("/nonexistent/nim")(@["let s = @(x)\n"])
+    let proving = proverCompiler("/nonexistent/nim")(@["let s = @(x)\n"])
     check proving.answers == @[newSeq[int]()]
     check proving.failure.startsWith("Parser proved no removal, since compiler ran no probe; got `")
-    check compilerProver("/nonexistent/nim")(@[]).failure.len == 0  # nothing asked, none run
+    check proverCompiler("/nonexistent/nim")(@[]).failure.len == 0  # nothing asked, none run
 
 
   test "answers held by source, so each is asked once, and failure holds none proven":
@@ -132,5 +132,5 @@ suite "Proofs":
     check runs == 1 and proofs.answers["let s = @(x)\n"] == @[9]
     discard proofs.answered(["let s = @(x)\n"], counted)
     check runs == 1  # answered source asks none
-    let failure = proofs.answered(["let t = @(y)\n"], compilerProver("/nonexistent/nim"))
+    let failure = proofs.answered(["let t = @(y)\n"], proverCompiler("/nonexistent/nim"))
     check failure.len > 0 and proofs.answers["let t = @(y)\n"].len == 0

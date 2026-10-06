@@ -28,7 +28,7 @@ type
     comments: seq[Comment]
 
 
-const IDENT_CHARS = {'a' .. 'z', 'A' .. 'Z', '0' .. '9', '_'}
+const CHARS_IDENT = {'a' .. 'z', 'A' .. 'Z', '0' .. '9', '_'}
   ## Characters that may precede quote in Nim generalized raw string literal.
 
 
@@ -85,8 +85,8 @@ func scanNim(source: string): seq[Comment] =
           state = State.StrTriple
           i += 3
           continue
-        state = if i > 0 and source[i - 1] in IDENT_CHARS: State.StrRaw else: State.Str
-      elif c == '\'' and not (i > 0 and source[i - 1] in IDENT_CHARS):
+        state = if i > 0 and source[i - 1] in CHARS_IDENT: State.StrRaw else: State.Str
+      elif c == '\'' and not (i > 0 and source[i - 1] in CHARS_IDENT):
         # Skip char literal when closing quote sits within short window; else treat as code.
         var j = i + 1
         if at(j) == '\\': inc j

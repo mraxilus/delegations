@@ -15,7 +15,7 @@
 
 import std/[dynlib, math, os, sequtils, strutils, unittest]
 import ../../src/assets
-from ../../../knoller/src/knoller import CACHE_DIRECTORY
+from ../../../knoller/src/knoller import DIRECTORY_CACHE
 
 
 type DecodeBrotli = proc (
@@ -25,7 +25,7 @@ type DecodeBrotli = proc (
 
 
 const
-  BROTLI_LIBRARY = "libbrotlidec.so(|.1)"  ## Library `libbrotli1` installs, as `dynlib` names it.
+  LIBRARY_BROTLI = "libbrotlidec.so(|.1)"  ## Library `libbrotli1` installs, as `dynlib` names it.
   SIGNATURE_WOFF2 = "wOF2"  ## Bytes `woff2` file opens with; OpenType and TrueType open otherwise.
   FLAG_CMAP = 0  ## Known-tag index `woff2` directory gives `cmap`.
   FLAG_HMTX = 3  ## Known-tag index of `hmtx`, transformed at version `1`.
@@ -48,12 +48,12 @@ func uint32At(bytes: string, at: int): int =
 
 proc decodeBrotli(encoded: string, size: int): string =
   ## Decode Brotli stream into exactly `size` bytes through `libbrotlidec`, loaded at run.
-  let library = loadLibPattern(BROTLI_LIBRARY)
+  let library = loadLibPattern(LIBRARY_BROTLI)
   if library.isNil:
     raise newException(
       IOError,
       "Suite decodes `woff2` through `libbrotlidec`; install `libbrotli1`; got `" &
-        BROTLI_LIBRARY & "` unloadable.",
+        LIBRARY_BROTLI & "` unloadable.",
     )
   defer: library.unloadLib
   let decode = cast[DecodeBrotli](library.symAddr("BrotliDecoderDecompress"))
@@ -203,19 +203,19 @@ func toText(ranges: seq[Slice[int]]): string =
 
 suite "Assets":
   test "store lies outside repository, and override wins":
-    check storeRoot("/tmp/assets") == "/tmp/assets"
-    check storeRoot("").endsWith(ASSETS_DIRECTORY)
+    check rootStore("/tmp/assets") == "/tmp/assets"
+    check rootStore("").endsWith(DIRECTORY_ASSETS)
     # Audit reads untracked files, so store inside checkout would be audited.
-    check not storeRoot("").startsWith(".")
-    check ASSETS_DIRECTORY.parentDir == ".cache/koch"  # store is koch's own
-    check CACHE_DIRECTORY.parentDir == ".cache/knoller"  # compiler cache is knoller's, koch uses it
+    check not rootStore("").startsWith(".")
+    check DIRECTORY_ASSETS.parentDir == ".cache/koch"  # store is koch's own
+    check DIRECTORY_CACHE.parentDir == ".cache/knoller"  # compiler cache is knoller's, koch uses it
 
 
   test "asset is stored under its digest, never under its name":
     # Two projects asking for one face share one entry by construction, and moved pin is
     #   different entry rather than stale one.
     const face = "NotoSans-Regular.ttf"
-    let digest = face.declaredDigest
+    let digest = face.digestDeclared
     check pathOf("/s", face) == "/s" / digest
     check face notin pathOf("/s", face)  # name is nowhere in path
     check pathOf("/s", "not-a-face.woff2").len == 0  # undeclared face has no path
@@ -258,10 +258,10 @@ suite "Assets":
       "commit-mono-latin-400-normal.woff2", "NotoSans-Regular.ttf", "NotoSans-SemiBold.ttf",
       "NotoSansMath-Regular.ttf", "NotoSerif-SemiBold.ttf",
     ]:
-      check file.declaredDigest.len == 64
+      check file.digestDeclared.len == 64
     # And what only one of them wants, so none loses face by sharing one table.
-    check "NotoSerif-Italic.ttf".declaredDigest.len == 64  # dance_ontology alone
-    check "CommitMonoV142-400Regular.otf".declaredDigest.len == 64  # rga_visualiser alone
+    check "NotoSerif-Italic.ttf".digestDeclared.len == 64  # dance_ontology alone
+    check "CommitMonoV142-400Regular.otf".digestDeclared.len == 64  # rga_visualiser alone
 
 
   test "each Noto face a page draws is declared whole (Article X.8)":
@@ -272,7 +272,7 @@ suite "Assets":
       "NotoSansSymbols2-Regular.ttf", "NotoSerif-Italic.ttf", "NotoSerif-Regular.ttf",
       "NotoSerif-SemiBold.ttf",
     ]:
-      check file.declaredDigest.len == 64
+      check file.digestDeclared.len == 64
 
 
   test "no row declares Noto subset, while Commit Mono keeps its own (Article X.8)":
@@ -283,7 +283,7 @@ suite "Assets":
         check file.endsWith(".ttf")  # whole TrueType, never `woff2` subset (Article X.8)
         check "notofonts" in prefix  # Noto's own release, never `@fontsource` (Article X.8)
     for file in ["commit-mono-latin-400-normal.woff2", "commit-mono-latin-700-normal.woff2"]:
-      check file.declaredDigest.len == 64  # X.8 binds Noto alone (Article X.8)
+      check file.digestDeclared.len == 64  # X.8 binds Noto alone (Article X.8)
 
 
   test "asset nobody declared is finding naming what was asked for":
@@ -302,7 +302,7 @@ suite "Assets":
       let parts = row.split(' ')
       check parts.len == 2  # neither column holds space, so `split` is enough
       check parts[1].len == 64  # digest, rendered whole
-      check parts[1] == parts[0].declaredDigest  # column two is what store declares for column one
+      check parts[1] == parts[0].digestDeclared  # column two is what store declares for column one
       check parts[0].addressOf.len > 0  # column one names row store knows
     # Ends in newline, so appending or piping row-wise needs no special case.
     check declaration().endsWith("\n")
@@ -324,7 +324,7 @@ suite "Assets":
   test "each face row carries codepoints its file maps, read from its bytes (Article X.8)":
     # Coverage check reads rows and never bytes, so rows say what bytes hold. Face store lacks
     #   is fetched once; store keeps it under its digest, and later run reads it in place.
-    let root = storeRoot(getEnv(ASSETS_KEY))
+    let root = rootStore(getEnv(KEY_ASSETS))
     for (file, _, _, ranges) in ASSETS:
       let path = assetIn(root, file)
       check path.len > 0  # fetched, and digest held

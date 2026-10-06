@@ -12,16 +12,16 @@ suite "Base":
     for rule in RULES: check rule.isGoverning  # constitution, style, contributor
     check "koch.nim".isGoverning
     check "koch.nim.cfg".isGoverning
-    check (CHECKER_DIRECTORY & "/layout.nim").isGoverning
-    check (KNOLLER_FILES[0] & "/knoller/tokens.nim").isGoverning  # checker imports it by path
-    check (KNOLLER_FILES[1]).isGoverning  # its nimble file
+    check (DIRECTORY_CHECKER & "/layout.nim").isGoverning
+    check (FILES_KNOLLER[0] & "/knoller/tokens.nim").isGoverning  # checker imports it by path
+    check (FILES_KNOLLER[1]).isGoverning  # its nimble file
     check not "curator/knoller/tests/suites/test_tokens.nim".isGoverning  # its suites do not
     # Project's own code, records and suites do not.
     check not "contributor/ronri/alpha/src/alpha.nim".isGoverning
     check not "contributor/ronri/alpha/PROVENANCE.md".isGoverning
     check not "CURATOR.md".isGoverning  # curator-only, never stamped
     check not "README.md".isGoverning
-    check not (CHECKER_DIRECTORY.replace("/src", "") & "/tests/test_layout.nim").isGoverning
+    check not (DIRECTORY_CHECKER.replace("/src", "") & "/tests/test_layout.nim").isGoverning
 
 
   test "branch predating rules or checker is one finding naming what it lacks":

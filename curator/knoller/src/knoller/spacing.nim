@@ -12,7 +12,7 @@
 ##     any depth: `prev[i-1]`, `digits[i+1..<n]`, `a[f(x, y+1)]`; word operator keeps one each
 ##     side, which tokeniser demands, and glued tokens that would merge keep one; array literal
 ##     standing alone is no such bracket, nor generic list routine or type declares after its
-##     name, export marker or not (`func pick[I: A | B]`, `isDeclaredList`);
+##     name, export marker or not (`func pick[I: A | B]`, `isListDeclared`);
 ##   - prefix operator is glued to its operand, unless tokeniser demands one space (X.9);
 ##   - comma and semicolon take none before them and one after; colon of type, field or branch
 ##     likewise;
@@ -103,31 +103,31 @@ type
 
 
 const
-  KEYWORD_OPERATORS = [
+  OPERATORS_KEYWORD = [
     "and", "div", "in", "is", "isnot", "mod", "notin", "of", "or", "shl", "shr", "xor",
   ]
     ## Keywords lexer reads as binary operators (`isOperator`); `not` and `as` stand otherwise.
-  RANGE_OPERATORS = ["..", "..<", "..^"]  ## Range operators, glued unless apart (X.9).
-  POWER_OPERATOR = "^"  ## Power operator, glued unless tokens merge (X.9); never `^=` or `..^`.
-  IGNORED_OPERATORS = ["::", ":", "."]
+  OPERATORS_RANGE = ["..", "..<", "..^"]  ## Range operators, glued unless apart (X.9).
+  OPERATOR_POWER = "^"  ## Power operator, glued unless tokens merge (X.9); never `^=` or `..^`.
+  OPERATORS_IGNORED = ["::", ":", "."]
     ## Operator tokens of type, field and access, never spaced as operators.
-  STATEMENT_KEYWORDS = ["export", "from", "import", "include"]
+  KEYWORDS_STATEMENT = ["export", "from", "import", "include"]
     ## Keywords opening statement whose operators spell module paths.
-  DECLARATION_KEYWORDS = [
+  KEYWORDS_DECLARATION = [
     "const", "converter", "func", "iterator", "let", "macro", "method", "proc", "template", "type",
     "using", "var",
   ]
     ## Keywords whose next name declares, so `*` glued after it marks export.
-  GENERIC_HEADS = [
+  HEADS_GENERIC = [
     "converter", "func", "iterator", "macro", "method", "proc", "template", "type",
   ]
     ## Keywords whose head declares generic list after its name: declaration, never selector.
-  PLAIN_BRACKETS = ["(", "[", "{"]
+  BRACKETS_PLAIN = ["(", "[", "{"]
     ## Brackets that glue to dot or colon after them into one token, or before them from dot.
-  EXCERPT_RUNES = 12  ## Runes of each neighbour echoed beside breach.
+  RUNES_EXCERPT = 12  ## Runes of each neighbour echoed beside breach.
 
 
-func pathTokens*(tokens: openArray[Token], partners: openArray[int], source: string): HashSet[int] =
+func tokensPath*(tokens: openArray[Token], partners: openArray[int], source: string): HashSet[int] =
   ## Collect tokens of `import`, `include`, `from` and `export` statements: brackets, and lines
   ##   indented under statement's own, included.
   var indents: seq[int]
@@ -137,32 +137,32 @@ func pathTokens*(tokens: openArray[Token], partners: openArray[int], source: str
     let
       t = tokens[k]
       is_opening = k == 0 or tokens[k - 1].line < t.line or tokens[k - 1].spelling(source) == ":"
-    if not (is_opening and t.spelling(source) in STATEMENT_KEYWORDS):
+    if not (is_opening and t.spelling(source) in KEYWORDS_STATEMENT):
       inc k
       continue
     var j = k
     while j < tokens.len and
         (tokens[j].line == t.line or indents[tokens[j].line] > indents[t.line]):
       result.incl j
-      if tokens[j].kind == TokenKind.Open and partners[j] > j:
+      if tokens[j].kind == KindToken.Open and partners[j] > j:
         for m in j .. partners[j]: result.incl m
         j = partners[j]
       inc j
     k = j
 
 
-func isExportMarker(tokens: openArray[Token], k: int, lasts: openArray[int], source: string): bool =
+func isMarkerExport(tokens: openArray[Token], k: int, lasts: openArray[int], source: string): bool =
   ## Decide whether `*` at `k` stands where export marker may: glued after name that opens its
   ##   line, follows declaration keyword, or follows comma after name so marked.
   ##   Name inside expression declares nothing, so `*` after it multiplies.
   if tokens[k].spelling(source) != "*" or k == 0: return false
   let name = tokens[k - 1]
-  if name.kind notin {TokenKind.Word, TokenKind.Quoted} or name.after != tokens[k].first:
+  if name.kind notin {KindToken.Word, KindToken.Quoted} or name.after != tokens[k].first:
     return false
   if k == 1 or lasts[k - 2] < name.line: return true
   let before = tokens[k - 2].spelling(source)
-  if before in DECLARATION_KEYWORDS: return true
-  before == "," and k >= 3 and tokens.isExportMarker(k - 3, lasts, source)
+  if before in KEYWORDS_DECLARATION: return true
+  before == "," and k >= 3 and tokens.isMarkerExport(k - 3, lasts, source)
 
 
 func isMerging*(source: string, run: openArray[Token]): bool =
@@ -180,8 +180,8 @@ func isMerging*(source: string, run: openArray[Token]): bool =
 func excerpt(source: string; before, after: Token): string =
   ## Echo what stands between two tokens, with few runes of each.
   let
-    left = source[before.first ..< before.after].runeSubStr(-EXCERPT_RUNES)
-    right = source[after.first ..< after.after].runeSubStr(0, EXCERPT_RUNES)
+    left = source[before.first ..< before.after].runeSubStr(-RUNES_EXCERPT)
+    right = source[after.first ..< after.after].runeSubStr(0, RUNES_EXCERPT)
   left & source[before.after ..< after.first] & right
 
 
@@ -193,7 +193,7 @@ func around(source: string, tokens: openArray[Token], k: int, spaces: int): seq[
   ]
 
 
-func gapRespacing(tokens: openArray[Token], k: int, source: string): Respacing =
+func respacingGap(tokens: openArray[Token], k: int, source: string): Respacing =
   ## Read rule of list holding gap between tokens `k - 1` and `k`, where gap breaks it; edits
   ##   empty where no rule reads gap or gap holds it.
   let
@@ -201,20 +201,20 @@ func gapRespacing(tokens: openArray[Token], k: int, source: string): Respacing =
     (left, right) = (a.spelling(source), b.spelling(source))
     gap = b.first - a.after
   var wanted = -1
-  if a.kind == TokenKind.Open:
-    let is_merging = (left in PLAIN_BRACKETS and right.startsWith(".")) or
+  if a.kind == KindToken.Open:
+    let is_merging = (left in BRACKETS_PLAIN and right.startsWith(".")) or
       (left == "[" and right.startsWith(":"))
     if not is_merging: (wanted, result.placement) = (0, Placement.Inner)
-  elif b.kind == TokenKind.Close:
+  elif b.kind == KindToken.Close:
     if not (left.endsWith(".") and right in [")", "]", "}"]):
       (wanted, result.placement) = (0, Placement.Inner)
-  elif a.kind == TokenKind.Comma: (wanted, result.placement) = (1, Placement.Comma)
-  elif b.kind == TokenKind.Comma: (wanted, result.placement) = (0, Placement.Comma)
-  elif a.kind == TokenKind.Semicolon: (wanted, result.placement) = (1, Placement.Semicolon)
-  elif b.kind == TokenKind.Semicolon: (wanted, result.placement) = (0, Placement.Semicolon)
-  elif a.kind == TokenKind.Operator and left == ":":
+  elif a.kind == KindToken.Comma: (wanted, result.placement) = (1, Placement.Comma)
+  elif b.kind == KindToken.Comma: (wanted, result.placement) = (0, Placement.Comma)
+  elif a.kind == KindToken.Semicolon: (wanted, result.placement) = (1, Placement.Semicolon)
+  elif b.kind == KindToken.Semicolon: (wanted, result.placement) = (0, Placement.Semicolon)
+  elif a.kind == KindToken.Operator and left == ":":
     (wanted, result.placement) = (1, Placement.Colon)
-  elif b.kind == TokenKind.Operator and right == ":" and a.kind != TokenKind.Operator:
+  elif b.kind == KindToken.Operator and right == ":" and a.kind != KindToken.Operator:
     (wanted, result.placement) = (0, Placement.Colon)
   if wanted < 0 or gap == wanted: return
   result.line = b.line
@@ -229,30 +229,30 @@ func columnOf(source: string, at: int): int =
   at - k
 
 
-func isDeclaredList(tokens: openArray[Token], k: int, source: string): bool =
+func isListDeclared(tokens: openArray[Token], k: int, source: string): bool =
   ## Decide whether `[` at `k` opens generic list that declaration names: after name, export
   ##   marker optional, that routine keyword or `type` heads on its line, or that opens entry
   ##   line of `type` section, i.e. nearest line above at smaller indent opens with `type`.
   var j = k - 1
   if j > 0 and tokens[j].spelling(source) == "*" and tokens[j - 1].after == tokens[j].first:
     dec j
-  if tokens[j].kind notin {TokenKind.Word, TokenKind.Quoted}: return false
-  if j > 0 and tokens[j - 1].lastLine(source) == tokens[j].line:
-    return tokens[j - 1].spelling(source) in GENERIC_HEADS
+  if tokens[j].kind notin {KindToken.Word, KindToken.Quoted}: return false
+  if j > 0 and tokens[j - 1].lineLast(source) == tokens[j].line:
+    return tokens[j - 1].spelling(source) in HEADS_GENERIC
 
   # Name opens its line: read keyword of nearest line above at smaller indent.
   let indent = source.columnOf(tokens[j].first)
   var m = j - 1
   while m >= 0:
-    let is_first = m == 0 or tokens[m - 1].lastLine(source) < tokens[m].line
-    if is_first and tokens[m].kind != TokenKind.Comment and
+    let is_first = m == 0 or tokens[m - 1].lineLast(source) < tokens[m].line
+    if is_first and tokens[m].kind != KindToken.Comment and
         source.columnOf(tokens[m].first) < indent:
       return tokens[m].spelling(source) == "type"
     dec m
   false
 
 
-func lineElements(
+func elementsLine(
   tokens: openArray[Token]; partners: openArray[int]; k: int; source: string
 ): (seq[Element], int) =
   ## Read elements around token `k` on its line, at its depth, with index of element opening at
@@ -262,16 +262,16 @@ func lineElements(
   var first = k - 1
   while first >= 0 and tokens[first].line == line:
     let p = partners[first]
-    if tokens[first].kind == TokenKind.Close and p >= 0 and tokens[p].line == line:
+    if tokens[first].kind == KindToken.Close and p >= 0 and tokens[p].line == line:
       first = p - 1
-    elif tokens[first].kind in {TokenKind.Open, TokenKind.Close, TokenKind.Comment}: break
+    elif tokens[first].kind in {KindToken.Open, KindToken.Close, KindToken.Comment}: break
     else: dec first
   var last = k + 1
   while last < tokens.len and tokens[last].line == line:
     let p = partners[last]
-    if tokens[last].kind == TokenKind.Open and p > last and tokens[p].line == line:
+    if tokens[last].kind == KindToken.Open and p > last and tokens[p].line == line:
       last = p + 1
-    elif tokens[last].kind in {TokenKind.Open, TokenKind.Close, TokenKind.Comment}: break
+    elif tokens[last].kind in {KindToken.Open, KindToken.Close, KindToken.Comment}: break
     else: inc last
   let elements = elementsOf(tokens, partners, first + 1, last - 1, source)
   (elements, elements.mapIt(it.first).find(k))
@@ -283,8 +283,8 @@ func isRangeApart(
   ## Decide whether piece on either side of range at `k` holds binary operator binding tighter
   ##   than range. Piece is read on range's line, at its depth: bracket group is operand, and
   ##   looser operator, delimiter, bracket around it or command head ends it.
-  let (elements, at) = tokens.lineElements(partners, k, source)
-  if at < 0 or elements[at].kind != ElementKind.Binary: return false
+  let (elements, at) = tokens.elementsLine(partners, k, source)
+  if at < 0 or elements[at].kind != KindElement.Binary: return false
 
   # Walk out from range each way; first binary operator met inside piece decides.
   for direction in [-1, 1]:
@@ -293,11 +293,11 @@ func isRangeApart(
       let
         e = elements[m]
         (outer, inner) = if direction < 0: (e, elements[m+1]) else: (elements[m-1], e)
-        is_head = outer.kind == ElementKind.Operand and
-          inner.kind in {ElementKind.Operand, ElementKind.Prefix} and
+        is_head = outer.kind == KindElement.Operand and
+          inner.kind in {KindElement.Operand, KindElement.Prefix} and
           tokens[outer.last].after < tokens[inner.first].first
-      if is_head or e.kind == ElementKind.Delimiter: break
-      if e.kind == ElementKind.Binary:
+      if is_head or e.kind == KindElement.Delimiter: break
+      if e.kind == KindElement.Binary:
         if e.precedence > elements[at].precedence: return true
         break
       m += direction
@@ -310,13 +310,13 @@ func exponentLast(
   ## Read last token of exponent of power operator at `k`: prefix operators, then one operand
   ##   with call, index or field glued after it, on line of `k`; `-1` where exponent reads
   ##   otherwise, or runs past line.
-  let (elements, at) = tokens.lineElements(partners, k, source)
-  if at < 0 or elements[at].kind != ElementKind.Binary: return -1
+  let (elements, at) = tokens.elementsLine(partners, k, source)
+  if at < 0 or elements[at].kind != KindElement.Binary: return -1
   var m = at + 1
-  while m < elements.len and elements[m].kind == ElementKind.Prefix: inc m
-  if m >= elements.len or elements[m].kind != ElementKind.Operand: return -1
+  while m < elements.len and elements[m].kind == KindElement.Prefix: inc m
+  if m >= elements.len or elements[m].kind != KindElement.Operand: return -1
   let last = elements[m].last
-  if tokens[last].kind == TokenKind.Open: -1 else: last
+  if tokens[last].kind == KindToken.Open: -1 else: last
 
 
 
@@ -325,32 +325,32 @@ func respacings(source: string): seq[Respacing] =
   let
     tokens = source.tokens
     partners = tokens.partners
-    skipped = tokens.pathTokens(partners, source)
+    skipped = tokens.tokensPath(partners, source)
   var
     lasts = newSeq[int](tokens.len)
     selected = newSeq[bool](tokens.len)  # Inside bracket glued to operand before it.
   for k, t in tokens:
-    lasts[k] = t.lastLine(source)
+    lasts[k] = t.lineLast(source)
     let p = partners[k]
     if t.spelling(source) != "[" or k == 0 or p < k or tokens[k-1].after != t.first: continue
-    if tokens.isOperandEnd(k - 1, source) and not tokens.isDeclaredList(k, source):
+    if tokens.isOperandEnd(k - 1, source) and not tokens.isListDeclared(k, source):
       for m in k + 1 ..< p: selected[m] = true
   for k, t in tokens:
     if k == 0 or lasts[k - 1] < t.line: continue
-    if tokens[k - 1].kind == TokenKind.Comment or t.kind == TokenKind.Comment: continue
+    if tokens[k - 1].kind == KindToken.Comment or t.kind == KindToken.Comment: continue
 
     # Comma, colon and bracket: gap before token, read wherever it stands.
-    let gap = tokens.gapRespacing(k, source)
+    let gap = tokens.respacingGap(k, source)
     if gap.edits.len > 0: result.add gap
     if k in skipped: continue
     let
       text = t.spelling(source)
       is_line_end = k == tokens.high or tokens[k + 1].line > lasts[k] or
-        tokens[k + 1].kind == TokenKind.Comment
+        tokens[k + 1].kind == KindToken.Comment
       before = tokens[k - 1]
       left = t.first - before.after
-      is_keyword_operator = t.kind == TokenKind.Word and text in KEYWORD_OPERATORS
-    if t.kind != TokenKind.Operator and not is_keyword_operator: continue
+      is_operator_keyword = t.kind == KindToken.Word and text in OPERATORS_KEYWORD
+    if t.kind != KindToken.Operator and not is_operator_keyword: continue
     var spacing = Respacing(line: t.line)
 
     # Space `=` one each side, wherever it stands; lexer reads no spacing of it.
@@ -365,17 +365,17 @@ func respacings(source: string): seq[Respacing] =
           next = tokens[k + 1]
           right = next.first - t.after
         if left == 1 and right == 1: continue
-        if before.kind == TokenKind.Open or next.kind in {TokenKind.Close, TokenKind.Comma}:
+        if before.kind == KindToken.Open or next.kind in {KindToken.Close, KindToken.Comma}:
           continue
         spacing.edits = source.around(tokens, k, 1)
         spacing.got = source.excerpt(before, tokens[k + 1])
       result.add spacing
       continue
-    if text in IGNORED_OPERATORS or (text.len > 1 and text[0] == '.' and text[1] != '.'):
+    if text in OPERATORS_IGNORED or (text.len > 1 and text[0] == '.' and text[1] != '.'):
       continue
     if not tokens.isOperandEnd(k - 1, source):
       # Glue prefix operator to its operand; one space stays where glued pair would merge.
-      if is_keyword_operator or is_line_end or text in RANGE_OPERATORS: continue
+      if is_operator_keyword or is_line_end or text in OPERATORS_RANGE: continue
       let next = tokens[k + 1]
       if next.first == t.after or next.isKeyword(source): continue
       let wanted = if source.isMerging([t, next]): 1 else: 0
@@ -383,21 +383,21 @@ func respacings(source: string): seq[Respacing] =
       spacing.placement = if wanted == 0: Placement.Prefix else: Placement.Apart
       spacing.edits = @[Edit(first: t.after, after: next.first, spaces: wanted)]
       var last = k + 1  # Echo through operand that operator run after gap opens.
-      while tokens[last].kind == TokenKind.Operator and last < lasts.high and
+      while tokens[last].kind == KindToken.Operator and last < lasts.high and
           tokens[last + 1].line == lasts[last]:
         inc last
-      spacing.got = source[t.first ..< tokens[last].after].runeSubStr(0, 2 * EXCERPT_RUNES)
+      spacing.got = source[t.first ..< tokens[last].after].runeSubStr(0, 2 * RUNES_EXCERPT)
       result.add spacing
       continue
-    if tokens.isExportMarker(k, lasts, source):
+    if tokens.isMarkerExport(k, lasts, source):
       let is_operand_next = not is_line_end and tokens[k + 1].first == t.after and
-        tokens[k + 1].kind in {TokenKind.Word, TokenKind.Number, TokenKind.Text,
-                               TokenKind.Character, TokenKind.Quoted}
+        tokens[k + 1].kind in {KindToken.Word, KindToken.Number, KindToken.Text,
+                               KindToken.Character, KindToken.Quoted}
       if not is_operand_next: continue
 
     # Space binary operator one each side, and glue range unless it stands apart, and power unless
     #   glued tokens merge; one ending its line takes one before.
-    let (is_range, is_power) = (text in RANGE_OPERATORS, text == POWER_OPERATOR)
+    let (is_range, is_power) = (text in OPERATORS_RANGE, text == OPERATOR_POWER)
     if is_line_end:
       if left == 1: continue
       spacing.placement = if is_range or is_power: Placement.Ending else: Placement.Binary
@@ -411,7 +411,7 @@ func respacings(source: string): seq[Respacing] =
     if (left == 0) != (right == 0): continue
     var wanted = 1
     spacing.placement = Placement.Binary
-    if selected[k] and not is_keyword_operator:
+    if selected[k] and not is_operator_keyword:
       if source.isMerging([before, t, next]): spacing.placement = Placement.SelectorApart
       else: (wanted, spacing.placement) = (0, Placement.Selector)
     elif is_range:
@@ -473,7 +473,7 @@ func checkSpacing*(path, source: string): seq[Report] =
     result.add initReport(
       path,
       spacing.line + 1,
-      Rule.ExpressionSpacing,
+      Rule.SpacingExpression,
       message & "; got `" & spacing.got & "`.",
     )
 
@@ -508,7 +508,7 @@ func fixSpacing*(path, source: string; held: Held): Fix =
       done = e.first
     if not held.isHeld(line + 1) or not shaped.isWide or lines[line].isWide:
       lines[line] = shaped
-      for m in k ..< j: result.fixed.add initReport(path, line + 1, Rule.ExpressionSpacing)
+      for m in k ..< j: result.fixed.add initReport(path, line + 1, Rule.SpacingExpression)
     k = j
   result.source = lines.join("\n")
 

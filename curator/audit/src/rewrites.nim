@@ -68,7 +68,7 @@ type
 
 
 const
-  RESULT_NAME = "result"  ## Name compiler declares in each routine returning value.
+  NAME_RESULT = "result"  ## Name compiler declares in each routine returning value.
   KIND_MEMBER = "skEnumField"  ## Kind of enum member, which bare name reaches unless enum is pure.
   INTERPOLATORS = ["&", "fmt"]  ## Prefixes of string strformat interpolates (`&"…{x}…"`).
 
@@ -86,12 +86,12 @@ func isIdentical(a, b: Symbol): bool =
   a.file == b.file and a.line == b.line and a.column == b.column
 
 
-func interpolatedLines(source, name: string): seq[int] =
+func linesInterpolated(source, name: string): seq[int] =
   ## Read zero-based line of each interpolated string naming `name` inside its braces, i.e.
   ##   `&"…{x}…"` or `fmt"…{x}…"`: strformat parses it from text, so no name token stands there.
   let tokens = source.tokens
   for k, t in tokens:
-    if t.kind != TokenKind.Text or k == 0 or tokens[k - 1].after != t.first: continue
+    if t.kind != KindToken.Text or k == 0 or tokens[k - 1].after != t.first: continue
     if tokens[k - 1].spelling(source) notin INTERPOLATORS: continue
     var
       depth = 0
@@ -100,7 +100,7 @@ func interpolatedLines(source, name: string): seq[int] =
     for c in t.spelling(source) & " ":
       if c == '{': inc depth
       elif c == '}' and depth > 0: dec depth
-      if depth > 0 and c in NAME_CHARS:
+      if depth > 0 and c in CHARS_NAME:
         word.add c
         continue
       is_named = is_named or word.identity == name.identity
@@ -118,14 +118,14 @@ func nameAfter(source: string, first: int): int =
   ## Read byte offset after name token opening at offset; its spelling may differ from declared
   ##   name's in case and underscores, which Nim ignores past first character.
   result = first
-  while result < source.len and source[result] in NAME_CHARS: inc result
+  while result < source.len and source[result] in CHARS_NAME: inc result
 
 
 func sitesOf(source, name: string): seq[(int, int)] =
   ## Read one-based line and zero-based byte column of each name token Nim reads as `name`.
   let starts = source.lineStarts
   for t in source.tokens:
-    if t.kind == TokenKind.Word and t.spelling(source).identity == name.identity:
+    if t.kind == KindToken.Word and t.spelling(source).identity == name.identity:
       result.add (t.line + 1, t.first - starts[t.line])
 
 
@@ -141,9 +141,9 @@ func calleeOf(source: string, site: (int, int)): (int, int) =
   while k >= 0 and (tokens[k].line + 1, tokens[k].first - starts[tokens[k].line]) != site: dec k
   if k < 1 or k + 1 >= tokens.len or tokens[k + 1].spelling(source) notin ["=", ":"]:
     return (0, 0)
-  if tokens[k - 1].kind notin {TokenKind.Open, TokenKind.Comma}: return (0, 0)
+  if tokens[k - 1].kind notin {KindToken.Open, KindToken.Comma}: return (0, 0)
   var open = k - 1
-  while open >= 0 and not (tokens[open].kind == TokenKind.Open and partners[open] > k):
+  while open >= 0 and not (tokens[open].kind == KindToken.Open and partners[open] > k):
     dec open
   if open < 1 or tokens[open].spelling(source) != "(" or
       tokens[open - 1].after != tokens[open].first:
@@ -151,7 +151,7 @@ func calleeOf(source: string, site: (int, int)): (int, int) =
   var callee = open - 1
   if tokens[callee].spelling(source) == "]" and partners[callee] > 0:
     callee = partners[callee] - 1
-  if callee < 0 or tokens[callee].kind != TokenKind.Word: return (0, 0)
+  if callee < 0 or tokens[callee].kind != KindToken.Word: return (0, 0)
   (tokens[callee].line + 1, tokens[callee].first - starts[tokens[callee].line])
 
 
@@ -188,7 +188,7 @@ func planRename*(
 
   result.rename = rename
   if rename.renamed.isKeyword: refuse "`" & rename.renamed & "` is keyword"
-  if rename.renamed.identity == RESULT_NAME.identity:
+  if rename.renamed.identity == NAME_RESULT.identity:
     refuse "`" & rename.renamed & "` names implicit result of routine"
   if rename.path notin answers or answers[rename.path].reason.len > 0:
     refuse "declaring file does not compile on its pin"
@@ -209,7 +209,7 @@ func planRename*(
 
   # Classify each site of old name; any site unresolved refuses rename whole.
   for (path, source) in files:
-    let interpolated = source.interpolatedLines(rename.name)
+    let interpolated = source.linesInterpolated(rename.name)
     if interpolated.len > 0:
       refuse "`" & path & ":" & $(interpolated[0] + 1) & "` names `" & rename.name &
         "` inside interpolated string"
@@ -254,7 +254,7 @@ func planRename*(
     if is_every:
       let quoted = "`" & rename.name & "`"
       for t in source.tokens:
-        if t.kind != TokenKind.Comment: continue
+        if t.kind != KindToken.Comment: continue
         var at = source.find(quoted, t.first)
         while at >= 0 and at + quoted.len <= t.after:
           edits.add Edit(first: at + 1, after: at + 1 + rename.name.len, text: rename.renamed)

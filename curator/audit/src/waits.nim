@@ -17,18 +17,18 @@ import ./[comments, findings, kinds]
 
 
 const
-  DRIVE_DIRECTORIES* = ["tests", "tools"]
+  DIRECTORIES_DRIVE* = ["tests", "tools"]
     ## Project directories holding drive code, where fixed wait is read.
-  NIM_KINDS = [Kind.Nim, Kind.NimScript, Kind.Nimble]
+  KINDS_NIM = [Kind.Nim, Kind.NimScript, Kind.Nimble]
     ## Kinds Nim compiler reads, whose names compare as Nim compares them.
-  IDENTIFIER_CHARS = {'a' .. 'z', 'A' .. 'Z', '0' .. '9', '_'}
+  CHARS_IDENTIFIER = {'a' .. 'z', 'A' .. 'Z', '0' .. '9', '_'}
     ## Characters identifier of other kind is built from.
 
 
-func isDriveCode*(path: string, directories: openArray[string]): bool =
+func isCodeDrive*(path: string, directories: openArray[string]): bool =
   ## Decide whether path lies under `tests/` or `tools/` of one of directories.
   for directory in directories:
-    for drive in DRIVE_DIRECTORIES:
+    for drive in DIRECTORIES_DRIVE:
       if path.startsWith(directory & "/" & drive & "/"): return true
 
 
@@ -36,9 +36,9 @@ func identifiers(line: string): seq[string] =
   ## Read every identifier of line, in order.
   var i = 0
   while i < line.len:
-    if line[i] in IDENTIFIER_CHARS:
+    if line[i] in CHARS_IDENTIFIER:
       let start = i
-      while i < line.len and line[i] in IDENTIFIER_CHARS: inc i
+      while i < line.len and line[i] in CHARS_IDENTIFIER: inc i
       result.add line[start ..< i]
     else: inc i
 
@@ -46,7 +46,7 @@ func identifiers(line: string): seq[string] =
 func checkWaits*(path, source: string; kind: Kind): seq[Finding] =
   ## Report fixed wait in drive source, line by line, with its replacement.
   if kind.rule.syntax == Syntax.None: return
-  if kind in NIM_KINDS: return checkWaits(path, source).findingsOf
+  if kind in KINDS_NIM: return checkWaits(path, source).findingsOf
 
   # Drop each identifier comment text of its line holds, once for each time it holds it.
   let lines = source.splitLines

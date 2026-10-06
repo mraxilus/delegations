@@ -13,17 +13,17 @@ import ./findings
 
 
 const
-  MACHINE_PATHS* = ["/home/", "/Users/", "C:\\"]
+  PATHS_MACHINE* = ["/home/", "/Users/", "C:\\"]
     ## Prefixes naming paths of one machine (CONTRIBUTOR.md, System).
-  TYPESCRIPT_FLAGS* = ["exactOptionalPropertyTypes", "noUncheckedIndexedAccess", "strict"]
+  FLAGS_TYPESCRIPT* = ["exactOptionalPropertyTypes", "noUncheckedIndexedAccess", "strict"]
     ## Compiler options `tsconfig.json` sets to `true` (CONTRIBUTOR.md, TypeScript).
 
 
-func checkMachinePaths*(path, source: string): seq[Finding] =
+func checkPathsMachine*(path, source: string): seq[Finding] =
   ## Report line naming path of one machine (CONTRIBUTOR.md, System).
   let lines = source.splitLines
   for i, line in lines:
-    for prefix in MACHINE_PATHS:
+    for prefix in PATHS_MACHINE:
       if prefix in line:
         result.add finding(
           path,
@@ -44,7 +44,7 @@ func isFlagSet(config, flag: string): bool =
 
 func checkTsconfig*(path, config: string): seq[Finding] =
   ## Report flag `tsconfig.json` leaves unset (CONTRIBUTOR.md, TypeScript).
-  for flag in TYPESCRIPT_FLAGS:
+  for flag in FLAGS_TYPESCRIPT:
     if not config.isFlagSet(flag):
       result.add finding(
         path,

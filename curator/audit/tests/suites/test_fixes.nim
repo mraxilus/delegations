@@ -1,7 +1,7 @@
 ## Hold `koch fix` to its contract: after fix, checks report none of what it fixed; second fix
 ##   writes nothing; any path outside branch scope refuses every write (CURATOR.md, duty 11);
 ##   kind without style guide passes through unwritten, its findings kept for hand.
-##   `LAYOUT`, `FENCED_ROWS` and `LOCK` are copied in knoller's `tests/suites/test_chain.nim`,
+##   `LAYOUT`, `ROWS_FENCED` and `LOCK` are copied in knoller's `tests/suites/test_chain.nim`,
 ##     which drives same chain without `koch fix`; fix to one is finished only when other is
 ##     checked.
 
@@ -14,9 +14,9 @@ import ./fixtures
 
 
 const
-  CURATOR_BRANCH = "curator/rules"  ## Curator root branch: every path but contributor code.
-  CONTRIBUTOR_BRANCH = "contributor/ronri/alpha/work"
-    ## Contributor branch confined to `ALPHA_DIRECTORY`.
+  BRANCH_CURATOR = "curator/rules"  ## Curator root branch: every path but contributor code.
+  BRANCH_CONTRIBUTOR = "contributor/ronri/alpha/work"
+    ## Contributor branch confined to `DIRECTORY_ALPHA`.
   DIRTY = "## Do.\nimport ./[b, a]\nimport std/os \n\nlet x = 1 # One.\nlet y = 2\n\n\n"
     ## Nim source breaking every rule with fixer: import, bindings, pragma, gap, ending.
   LAYOUT =
@@ -28,7 +28,7 @@ const
     "let y = @[\n  first_item_named_at_length_so_list_crosses_column,\n" &
     "  second_item_named_at_length_so_list_crosses_column\n]\necho h(q=1)\nexport y, x\n"
     ## Nim source breaking each layout rule `checkFormatting` holds; static pass reads X.2 alone.
-  FENCED_ROWS =
+  ROWS_FENCED =
     "let m = matrix(\n  #!fix off\n  1,  0,\n\n  0,  1,\n  #!fix on\n)\n" &
     "let n = matrix(1+2)\n"
     ## Nim source whose hand-shaped rows fence keeps, and whose call after fence fix reaches.
@@ -41,7 +41,7 @@ const
   ASKS_MAX = 8  ## Rounds of asking parser at most, as `fixes.nim` takes.
 
 
-proc everyFix(
+proc fixEvery(
   branch: string,
   tree: Tree,
   entries: openArray[Entry],
@@ -49,14 +49,14 @@ proc everyFix(
   context: Context,
   provers: ProverOf,
 ): tuple[fix: Fixed, failures: seq[string]] =
-  ## Fix every entry again each round of asking: reference that loop of `provenFix`, fixing
+  ## Fix every entry again each round of asking: reference that loop of `fixProven`, fixing
   ##   entries that asked alone, is held equal to (Article IX.2).
   var known = context
   result.fix = fixEntries(branch, entries, locked, known)
   for ask in 1..ASKS_MAX:
     if result.fix.asked.len == 0: break
     for failure in known.answered(tree, result.fix.asked, provers):
-      let line = Rule.NeedlessParentheses.id & ": " & failure
+      let line = Rule.ParenthesesNeedless.id & ": " & failure
       if line notin result.failures: result.failures.add line
     result.fix = fixEntries(branch, entries, locked, known)
 
@@ -83,7 +83,7 @@ suite "Fixes":
   test "after fix, form and idiom checks report nothing, and second fix writes nothing":
     let
       path = "curator/audit/src/a.nim"
-      (written, fixed, refused, _, _, _) = fixEntries(CURATOR_BRANCH, [entry(path, DIRTY)])
+      (written, fixed, refused, _, _, _) = fixEntries(BRANCH_CURATOR, [entry(path, DIRTY)])
     check refused.len == 0 and written.len == 1
     let source = written[0].content
     check checkForm(path, source, Kind.Nim.rule).len == 0  # form checks report none
@@ -93,29 +93,29 @@ suite "Fixes":
                  "single bindings", "strictFuncs"]:
       check fixed.anyIt(it.message.startsWith(rule))  # each fixer reported
     check fixed.allIt(it.path == path and it.message.endsWith(")"))  # rule alone, cited
-    check fixEntries(CURATOR_BRANCH, written).written.len == 0  # idempotent
+    check fixEntries(BRANCH_CURATOR, written).written.len == 0  # idempotent
 
 
   test "curator branch never writes contributor code; one path outside refuses every write":
     let
       inside = entry("curator/audit/src/a.nim", DIRTY)
-      outside = entry(ALPHA_DIRECTORY & "/src/a.nim", DIRTY)
-      both = fixEntries(CURATOR_BRANCH, [inside, outside])
+      outside = entry(DIRECTORY_ALPHA & "/src/a.nim", DIRTY)
+      both = fixEntries(BRANCH_CURATOR, [inside, outside])
     check both.written.len == 0 and both.fixed.len == 0  # nothing written, nothing fixed
     check both.refused.mapIt(it.path) == @[outside.path]  # outside path named
     check "Curator writes only" in both.refused[0].message  # `checkPropagation` reached
-    check fixEntries(CURATOR_BRANCH, [inside]).written.len == 1  # inside alone writes
-    let confined = fixEntries(CONTRIBUTOR_BRANCH, [inside, outside])
+    check fixEntries(BRANCH_CURATOR, [inside]).written.len == 1  # inside alone writes
+    let confined = fixEntries(BRANCH_CONTRIBUTOR, [inside, outside])
     check confined.refused.mapIt(it.path) == @[inside.path]  # contributor confined too
     check fixEntries("claude/setup", [inside]).refused[0].path.len == 0  # branch outside grammar
 
 
   test "clean entries write nothing and meet no scope, wherever they lie":
     let
-      clean = entry(ALPHA_DIRECTORY & "/src/a.nim", "## Do.\n\n" & STRICT_FUNCS & "\n")
-      plan = fixEntries(CURATOR_BRANCH, [clean])
+      clean = entry(DIRECTORY_ALPHA & "/src/a.nim", "## Do.\n\n" & STRICT_FUNCS & "\n")
+      plan = fixEntries(BRANCH_CURATOR, [clean])
     check plan.written.len == 0 and plan.fixed.len == 0 and plan.refused.len == 0
-    check fixEntries(CURATOR_BRANCH, [entry("a.bin", "x \n")]).written.len == 0  # kind unread
+    check fixEntries(BRANCH_CURATOR, [entry("a.bin", "x \n")]).written.len == 0  # kind unread
 
 
   test "layout checks wait outside static pass, and fix clears every one in one run":
@@ -127,12 +127,12 @@ suite "Fixes":
     for rule in ["(X.2)", "(X.9)", "(STYLE.md §5)", "Signature", "Call", "trailing separator",
                  "share one bracket", "alphabetised", "`=` takes"]:
       check found.anyIt(rule in it.message)  # each rule reported
-    let (written, fixed, refused, _, _, _) = fixEntries(CURATOR_BRANCH, [entry(path, LAYOUT)])
+    let (written, fixed, refused, _, _, _) = fixEntries(BRANCH_CURATOR, [entry(path, LAYOUT)])
     check refused.len == 0 and written.len == 1
     check checkFormatting(path, written[0].content, Kind.Nim).len == 0  # all cleared
     check checkForm(path, written[0].content, Kind.Nim.rule).len == 0  # nothing new
     check checkIdioms(path, written[0].content).len == 0
-    check fixEntries(CURATOR_BRANCH, written).written.len == 0  # second run writes nothing
+    check fixEntries(BRANCH_CURATOR, written).written.len == 0  # second run writes nothing
     check written[0].content == "## Do.\n\n" & STRICT_FUNCS & "\n\nimport std/[os, strutils]\n" &
       "\n\n\n#[ Section ]#\n\n" &
       "proc f(a: int, b: string): int {.inline, noSideEffect.} = a + b.len\n" &
@@ -160,17 +160,17 @@ suite "Fixes":
         "b".repeat(26) & ")\nf(\n  s[0..<n],\n  t[1 .. ^1]\n)\nproc h(" &
         "a".repeat(20) & ": range[0..9], " & "b".repeat(24) &
         ": array[0..<4, int], c: int): int = c\n"
-    check fixEntries(CURATOR_BRANCH, [entry(path, ranged)]).written.len == 0  # in X.9 form
+    check fixEntries(BRANCH_CURATOR, [entry(path, ranged)]).written.len == 0  # in X.9 form
     let spaced = ranged.replace("0..<n", "0 ..< n").replace("1..^2", "1 ..^ 2")
       .replace("'a'..'z'", "'a' .. 'z'")
-    check fixEntries(CURATOR_BRANCH, [entry(path, spaced)]).written[0].content == ranged
-    let (written, fixed, _, _, _, _) = fixEntries(CURATOR_BRANCH, [entry(path, wide)])
+    check fixEntries(BRANCH_CURATOR, [entry(path, spaced)]).written[0].content == ranged
+    let (written, fixed, _, _, _, _) = fixEntries(BRANCH_CURATOR, [entry(path, wide)])
     check written[0].content == head & "let x = foo(\n  s[0..<n],\n  t[1 .. ^1],\n  " &
       "a".repeat(40) & ",\n  " & "b".repeat(26) & ",\n)\nf(s[0..<n], t[1 .. ^1])\n" &
       "proc h(\n  " & "a".repeat(20) & ": range[0..9], " & "b".repeat(24) &
       ": array[0..<4, int], c: int\n): int = c\n"  # split, joined and wrapped, ranges kept
     check not fixed.anyIt(it.message.startsWith("expression spacing"))  # no range respaced
-    check fixEntries(CURATOR_BRANCH, written).written.len == 0  # second run writes nothing
+    check fixEntries(BRANCH_CURATOR, written).written.len == 0  # second run writes nothing
 
 
   test "fix writes Nim kinds alone, the one language with guide; checks read every kind":
@@ -185,7 +185,7 @@ suite "Fixes":
         entry("curator/audit/nim.cfg", "# Do. \n"),
         entry("curator/audit/a.sh", "# Do. \n"),
       ]
-      plan = fixEntries(CURATOR_BRANCH, @[nim, script] & @others)
+      plan = fixEntries(BRANCH_CURATOR, @[nim, script] & @others)
     check plan.written.mapIt(it.path) == @[nim.path, script.path]  # Nim and nimble alone
     for other in others:
       let rule = other.kind.get.rule
@@ -193,32 +193,32 @@ suite "Fixes":
       check checkForm(other.path, other.content, rule).len > 0  # check reports it still
       check not plan.fixed.anyIt(it.path == other.path)  # and fix reports no rewrite of it
     let clean = entry("curator/audit/README.md", "# Text.\n")
-    check fixEntries(CURATOR_BRANCH, @[clean]).fixed.len == 0  # clean Markdown passes unchanged
+    check fixEntries(BRANCH_CURATOR, @[clean]).fixed.len == 0  # clean Markdown passes unchanged
 
 
   test "fence keeps lines between its markers; fix and layout checks reach every other line":
     let
       path = "curator/audit/src/a.nim"
-      source = "## Do.\n\n" & STRICT_FUNCS & "\n\n" & FENCED_ROWS
+      source = "## Do.\n\n" & STRICT_FUNCS & "\n\n" & ROWS_FENCED
       unfenced = source.replace("  " & FENCE_OFF & "\n", "").replace("  " & FENCE_ON & "\n", "")
     check checkFormatting(path, unfenced, Kind.Nim).anyIt(it.line == 5)  # rows join unfenced
     check checkFormatting(path, source, Kind.Nim).mapIt(it.line) == @[12]  # after fence alone
-    let plan = fixEntries(CURATOR_BRANCH, [entry(path, source)])
+    let plan = fixEntries(BRANCH_CURATOR, [entry(path, source)])
     check plan.written[0].content == source.replace("1+2", "1 + 2")  # rows kept, blank line too
     check checkFormatting(path, plan.written[0].content, Kind.Nim).len == 0
-    check fixEntries(CURATOR_BRANCH, plan.written).written.len == 0
+    check fixEntries(BRANCH_CURATOR, plan.written).written.len == 0
     check plan.warned.mapIt(it.render) == @[
       path & ":6: Fence keeps its lines as written, and inside them expression-spacing breaks 2 " &
         "times from line 7 (X.1); got lines `6` to `10`.",
     ]  # what breaks inside fence, by rule
-    check fixEntries(CURATOR_BRANCH, [entry(path, unfenced)]).warned.len == 0  # no fence, none
+    check fixEntries(BRANCH_CURATOR, [entry(path, unfenced)]).warned.len == 0  # no fence, none
 
 
   test "fence left open runs to end of file; marker inside string fences nothing":
     let
       path = "curator/audit/a.nims"
       tail = "let a = 1+2\n" & FENCE_OFF & "\nlet b = 1+2\n"
-    check fixEntries(CURATOR_BRANCH, [entry(path, tail)]).written[0].content ==
+    check fixEntries(BRANCH_CURATOR, [entry(path, tail)]).written[0].content ==
       "let a = 1 + 2\n" & FENCE_OFF & "\nlet b = 1+2\n"
     let quoted = "let s = \"\"\"\n" & FENCE_OFF & "\n\"\"\"\nlet b = 1+2\n"
     check checkFormatting(path, quoted, Kind.NimScript).mapIt(it.line) == @[4]
@@ -228,12 +228,12 @@ suite "Fixes":
     let
       path = "curator/audit/a.nims"
       crossing = "let a = 1+2\nlet m = f(\n  " & FENCE_OFF & "\n  1,  0,\n)\n" & FENCE_ON & "\n"
-      plan = fixEntries(CURATOR_BRANCH, [entry(path, crossing)])
+      plan = fixEntries(BRANCH_CURATOR, [entry(path, crossing)])
     check plan.written.len == 0 and plan.left.mapIt(it.line) == @[2]
     check plan.warned.len == 0  # fence it cannot read is finding, and no warning
     check checkFormatting(path, crossing, Kind.NimScript).mapIt(it.line) == @[2]
     let literal = "let a = 1+2\n#!fix fenced\n"  # would be read back as fenced line
-    check fixEntries(CURATOR_BRANCH, [entry(path, literal)]).left.mapIt(it.line) == @[2]
+    check fixEntries(BRANCH_CURATOR, [entry(path, literal)]).left.mapIt(it.line) == @[2]
 
 
   test "file knoller's fixers do not settle warns by path alone, with no article":
@@ -251,7 +251,7 @@ suite "Fixes":
       path = "curator/audit/src/a.nim"
       source = "## Do.\n\n" & STRICT_FUNCS & "\n\nlet a = 1\nlet b = f(\n  " & FENCE_OFF &
         "\n  1,  0,\n  " & FENCE_ON & "\n)\n"
-    check fixEntries(CURATOR_BRANCH, [entry(path, source)]).written.len == 0  # would re-indent
+    check fixEntries(BRANCH_CURATOR, [entry(path, source)]).written.len == 0  # would re-indent
     check checkIdioms(path, source).len == 1  # bindings finding left
 
 
@@ -261,32 +261,32 @@ suite "Fixes":
       module = "## Do.\n\n" & STRICT_FUNCS & "\n\nfunc f*(): int = 1\n\nlet x = f()\n"
       tree = @[entry(path, module), entry("curator/audit/src/b.nim", "## Do.\n")]
       context = tree.contextOf
-      plan = fixEntries(CURATOR_BRANCH, [tree[0]], context = context)
+      plan = fixEntries(BRANCH_CURATOR, [tree[0]], context = context)
     check plan.written[0].content == module.replace("f*()", "f()")
     check plan.fixed.mapIt(it.line) == @[5]
-    check fixEntries(CURATOR_BRANCH, [tree[0]]).written.len == 0  # no context: nothing known
+    check fixEntries(BRANCH_CURATOR, [tree[0]]).written.len == 0  # no context: nothing known
     let again = @[plan.written[0], tree[1]]
-    check fixEntries(CURATOR_BRANCH, [again[0]], context = again.contextOf).written.len == 0
+    check fixEntries(BRANCH_CURATOR, [again[0]], context = again.contextOf).written.len == 0
 
 
   test "semantic pass settles conversion first; file compiling nowhere is left with its error":
     let
       path = "curator/audit/src/a.nim"
       module = "## Do.\n\n" & STRICT_FUNCS & "\n\nlet Y = x.float\n"
-      queries = semanticQueries(@[entry(path, module)], [entry(path, module)])
+      queries = queriesSemantic(@[entry(path, module)], [entry(path, module)])
     check queries.len == 1 and queries[0].sites == @[(5, 10), (5, 8)]
     var answer = Answer(path: path)
     answer.symbols[(5, 10)] = Symbol(kind: "skType")
     answer.symbols[(5, 8)] = Symbol(kind: "skLet")
     let
       tree = @[entry(path, module)]
-      plan = fixEntries(CURATOR_BRANCH, tree, context = tree.contextOf(tree, [answer]))
+      plan = fixEntries(BRANCH_CURATOR, tree, context = tree.contextOf(tree, [answer]))
     check plan.written[0].content == module.replace("x.float", "float(x)")
     check plan.fixed.mapIt(it.message) == @["type conversion (STYLE.md §5)"]
-    check fixEntries(CURATOR_BRANCH, plan.written).written.len == 0  # second fix writes nothing
+    check fixEntries(BRANCH_CURATOR, plan.written).written.len == 0  # second fix writes nothing
     let
       failed = Answer(path: path, reason: "undeclared identifier: 'x'")
-      left = fixEntries(CURATOR_BRANCH, tree, context = tree.contextOf(tree, [failed]))
+      left = fixEntries(BRANCH_CURATOR, tree, context = tree.contextOf(tree, [failed]))
     check left.written.len == 0
     check left.left[0].message.endsWith("got `undeclared identifier: 'x'`.")
 
@@ -297,7 +297,7 @@ suite "Fixes":
       a = entry("curator/audit/src/a.nim", head & "let CTX* = 1\n")
       b = entry("curator/audit/src/b.nim", head & "import ./a\n\nlet Y = CTX\n")
       tree = @[a, b]
-      queries = semanticQueries(tree, tree)
+      queries = queriesSemantic(tree, tree)
     check queries.len == 2
     check queries[0].sites == @[(5, 4)] and queries[0].names == @["CONTEXT"]
     check queries[1].sites == @[(7, 8)]
@@ -307,12 +307,12 @@ suite "Fixes":
     answers[0].symbols[(5, 4)] = declared
     answers[0].globals["CONTEXT"] = @[]
     answers[1].symbols[(7, 8)] = declared
-    let plan = fixEntries(CURATOR_BRANCH, tree, context = tree.contextOf(tree, answers))
+    let plan = fixEntries(BRANCH_CURATOR, tree, context = tree.contextOf(tree, answers))
     check plan.written.len == 2
     check plan.written[0].content == head & "let CONTEXT* = 1\n"
     check plan.written[1].content == head & "import ./a\n\nlet Y = CONTEXT\n"
     check plan.fixed.filterIt(it.message == "abbreviation (V.6)").len == 2
-    let alone = fixEntries(CURATOR_BRANCH, [a], context = tree.contextOf([a], answers))
+    let alone = fixEntries(BRANCH_CURATOR, [a], context = tree.contextOf([a], answers))
     check alone.written.len == 0  # rename would write `b.nim`, which fix leaves alone
     check "refused: it would write `" & b.path & "`, which this fix leaves alone" in
       alone.left[0].message
@@ -322,9 +322,9 @@ suite "Fixes":
   test "entry block moves into `proc main` through fix, or stays for hand with its reason":
     let
       path = "curator/audit/src/a.nim"
-      head = "## Do.\n\n" & STRICT_FUNCS & "\n\n" & PROFILER_IMPORT & "\n\n"
+      head = "## Do.\n\n" & STRICT_FUNCS & "\n\n" & IMPORT_PROFILER & "\n\n"
       plan = fixEntries(
-        CURATOR_BRANCH,
+        BRANCH_CURATOR,
         [entry(path, head & "when isMainModule:\n  let count = 1\n  echo count\n")],
       )
     check plan.written.mapIt(it.content) == @[
@@ -332,9 +332,9 @@ suite "Fixes":
         "when isMainModule:\n  main()\n",
     ]  # V.10
     check plan.fixed.mapIt((it.line, it.message)) == @[(8, "entry block (V.10)")]
-    check fixEntries(CURATOR_BRANCH, plan.written).written.len == 0  # second fix writes nothing
+    check fixEntries(BRANCH_CURATOR, plan.written).written.len == 0  # second fix writes nothing
     let held = fixEntries(
-      CURATOR_BRANCH,
+      BRANCH_CURATOR,
       [entry(path, head & "when isMainModule:\n  var count {.global.} = 0\n")],
     )
     check held.written.len == 0
@@ -350,11 +350,11 @@ suite "Fixes":
       a = entry("curator/audit/src/a.nim", head & "proc Run_all*(): int = 1\nconst COUNT* = 2\n")
       b = entry(
         "curator/audit/src/b.nim",
-        head & PROFILER_IMPORT & "\n\nimport ./a\n\nwhen isMainModule:\n" &
+        head & IMPORT_PROFILER & "\n\nimport ./a\n\nwhen isMainModule:\n" &
           "  let COUNT = Run_all()\n  echo COUNT\n",
       )
       tree = @[a, b]
-      queries = semanticQueries(tree, tree)
+      queries = queriesSemantic(tree, tree)
     check queries.mapIt((it.path, it.sites, it.names)) == @[
       (a.path, @[(5, 5)], @["runAll"]),  # local `COUNT` of `b.nim` asks no other file
       (b.path, @[(10, 14), (10, 6), (11, 7)], @["count"]),
@@ -369,10 +369,10 @@ suite "Fixes":
     answers[1].symbols[(10, 14)] = routine
     for site in [(10, 6), (11, 7)]: answers[1].symbols[site] = binding
     answers[1].globals["count"] = @[]
-    let plan = fixEntries(CURATOR_BRANCH, tree, context = tree.contextOf(tree, answers))
+    let plan = fixEntries(BRANCH_CURATOR, tree, context = tree.contextOf(tree, answers))
     check plan.written.mapIt(it.content) == @[
       head & "proc runAll*(): int = 1\nconst COUNT* = 2\n",
-      head & PROFILER_IMPORT & "\n\nimport ./a\n\nproc main() =\n  ## TODO: Document.\n" &
+      head & IMPORT_PROFILER & "\n\nimport ./a\n\nproc main() =\n  ## TODO: Document.\n" &
         "  let count = runAll()\n  echo count\n\n\nwhen isMainModule:\n  main()\n",
     ]  # V.1, V.10
     check plan.fixed.mapIt((it.path, it.line, it.message)) == @[
@@ -385,8 +385,8 @@ suite "Fixes":
     check plan.left.len == 0
     let again = plan.written
     check again.mapIt(checkNames(it.path, it.content, []).len) == @[0, 0]  # V.1, V.10: none left
-    check semanticQueries(again, again).len == 0  # no rename left for second run to ask
-    check fixEntries(CURATOR_BRANCH, again, context = again.contextOf(again)).written.len == 0
+    check queriesSemantic(again, again).len == 0  # no rename left for second run to ask
+    check fixEntries(BRANCH_CURATOR, again, context = again.contextOf(again)).written.len == 0
 
 
   test "global breaking case and coining abbreviation takes one rename that settles both rules":
@@ -395,7 +395,7 @@ suite "Fixes":
       a = entry("curator/audit/src/a.nim", head & "let tmp_dir* = \"a\"\n")
       b = entry("curator/audit/src/b.nim", head & "import ./a\n\nlet PATH_HOME = tmp_dir\n")
       tree = @[a, b]
-    check semanticQueries(tree, tree).mapIt((it.path, it.sites, it.names)) == @[
+    check queriesSemantic(tree, tree).mapIt((it.path, it.sites, it.names)) == @[
       (a.path, @[(5, 4)], @["TEMPORARY_DIRECTORY"]),
       (b.path, @[(7, 16)], newSeq[string]()),
     ]  # one rename asked, never V.6 spelling `temporary_directory` beside it
@@ -405,7 +405,7 @@ suite "Fixes":
     answers[0].symbols[(5, 4)] = declared
     answers[0].globals["TEMPORARY_DIRECTORY"] = @[]
     answers[1].symbols[(7, 16)] = declared
-    let plan = fixEntries(CURATOR_BRANCH, tree, context = tree.contextOf(tree, answers))
+    let plan = fixEntries(BRANCH_CURATOR, tree, context = tree.contextOf(tree, answers))
     check plan.written.mapIt(it.content) == @[
       head & "let TEMPORARY_DIRECTORY* = \"a\"\n",
       head & "import ./a\n\nlet PATH_HOME = TEMPORARY_DIRECTORY\n",
@@ -421,8 +421,8 @@ suite "Fixes":
       source = "## Do.\n\n" & STRICT_FUNCS & "\n\ntype Def {.importc: \"b3Def\".} = object\n" &
         "  enableSleep {.importc.}: bool\n"
       tree = @[entry(path, source)]
-      plan = fixEntries(CURATOR_BRANCH, tree, context = tree.contextOf(tree))
-    check semanticQueries(tree, tree).len == 0  # refused already, so nothing asked
+      plan = fixEntries(BRANCH_CURATOR, tree, context = tree.contextOf(tree))
+    check queriesSemantic(tree, tree).len == 0  # refused already, so nothing asked
     check plan.written.len == 0
     check plan.left.mapIt((it.line, it.message)) == @[
       (6, "Field case (V.1) stays for hand, since rename to `enable_sleep` is refused: " &
@@ -434,10 +434,10 @@ suite "Fixes":
     var pins: seq[string]
     let
       other = GROUPED.replace("@(x) + @(x[0])", "@(y) + @(y[0])")
-      tree = goodTree().with(
-        entry("curator/beta/beta.nimble", NIMBLE_TEXT.replace(PIN, COMMIT)),
-        entry(AUDIT_DIRECTORY & "/src/a.nim", GROUPED),
-        entry(AUDIT_DIRECTORY & "/src/b.nim", other),
+      tree = treeGood().with(
+        entry("curator/beta/beta.nimble", TEXT_NIMBLE.replace(PIN, COMMIT)),
+        entry(DIRECTORY_AUDIT & "/src/a.nim", GROUPED),
+        entry(DIRECTORY_AUDIT & "/src/b.nim", other),
         entry("curator/beta/src/a.nim", GROUPED),
       )
       entries = tree[^3 .. ^1]
@@ -446,10 +446,10 @@ suite "Fixes":
         result = proc (sources: seq[string]): Proving =
           Proving(answers: sources.mapIt(it.candidatesOf.filterIt(it.got notin
             ["(x[0])", "(y[0])"]).mapIt(it.opening[0])))
-    let unanswered = fixEntries(CURATOR_BRANCH, entries)
+    let unanswered = fixEntries(BRANCH_CURATOR, entries)
     check unanswered.written.len == 0  # nothing proven, nothing written
     check unanswered.asked.mapIt(it[0]) == entries.mapIt(it.path)  # each source asks
-    let (fix, failures) = provenFix(CURATOR_BRANCH, tree, entries, [], tree.contextOf, stub)
+    let (fix, failures) = fixProven(BRANCH_CURATOR, tree, entries, [], tree.contextOf, stub)
     check failures.len == 0
     check pins[0 .. 1] == @[PIN, COMMIT]  # first round: one run for each pin, project's own
     check fix.written.mapIt(it.content) == @[
@@ -458,23 +458,23 @@ suite "Fixes":
     ]  # group parser refuses stays
     check fix.fixed.filterIt("needless parentheses" in it.message).len == 3
     check fix.asked.len == 0
-    let again = provenFix(CURATOR_BRANCH, tree, fix.written, [], tree.contextOf, stub)
+    let again = fixProven(BRANCH_CURATOR, tree, fix.written, [], tree.contextOf, stub)
     check again.fix.written.len == 0  # second fix writes nothing
 
 
   test "where no compiler serves pin, nothing goes, and one warning says why":
     let
-      tree = goodTree().with(entry("tools/a.nim", GROUPED))
+      tree = treeGood().with(entry("tools/a.nim", GROUPED))
       broken = proc (pin: string): Prover =
         result = proc (sources: seq[string]): Proving =
           Proving(answers: newSeq[seq[int]](sources.len), failure: "Compiler failed; got `x`.")
-    let (fix, failures) = provenFix(CURATOR_BRANCH, tree, [tree[^1]], [], tree.contextOf, broken)
+    let (fix, failures) = fixProven(BRANCH_CURATOR, tree, [tree[^1]], [], tree.contextOf, broken)
     check fix.written.len == 0 and fix.fixed.len == 0
     check failures == @["needless-parentheses: Compiler failed; got `x`."]  # driver pin asked
-    let unpinned = goodTree().without(AUDIT_DIRECTORY & "/audit.nimble").with(
+    let unpinned = treeGood().without(DIRECTORY_AUDIT & "/audit.nimble").with(
       entry("koch2.nim", GROUPED),
     )
-    let alone = provenFix(CURATOR_BRANCH, unpinned, [unpinned[^1]], [], unpinned.contextOf, broken)
+    let alone = fixProven(BRANCH_CURATOR, unpinned, [unpinned[^1]], [], unpinned.contextOf, broken)
     check alone.fix.written.len == 0
     check alone.failures == @[
       "needless-parentheses: Parser proved no removal, since project pins no compiler; got " &
@@ -484,14 +484,14 @@ suite "Fixes":
 
   test "nimble file whose copy `atlas.lock` holds is never written, and read by no layout check":
     let
-      nimble = entry(ALPHA_DIRECTORY & "/alpha.nimble", "version = \"0.1.0\" \nlet a = 1+2\n")
-      tree = @[nimble, entry(ALPHA_DIRECTORY & "/atlas.lock", LOCK)]
-    check tree.lockedNimbles == @[nimble.path]
-    let plan = fixEntries(CONTRIBUTOR_BRANCH, [nimble], tree.lockedNimbles)
+      nimble = entry(DIRECTORY_ALPHA & "/alpha.nimble", "version = \"0.1.0\" \nlet a = 1+2\n")
+      tree = @[nimble, entry(DIRECTORY_ALPHA & "/atlas.lock", LOCK)]
+    check tree.nimblesLocked == @[nimble.path]
+    let plan = fixEntries(BRANCH_CONTRIBUTOR, [nimble], tree.nimblesLocked)
     check plan.written.len == 0 and plan.left.len == 1 and "atlas.lock" in plan.left[0].message
     check checkFormatting(tree).len == 0  # silent on it
     check checkFormatting(@[nimble]).len == 1  # read where no lock holds its copy
-    check fixEntries(CONTRIBUTOR_BRANCH, [nimble]).written.len == 1
+    check fixEntries(BRANCH_CONTRIBUTOR, [nimble]).written.len == 1
 
 
   test "fix of entries that asked alone gives same fix as fix of every entry, each round":
@@ -500,19 +500,19 @@ suite "Fixes":
     let
       other = GROUPED.replace("@(x) + @(x[0])", "@(y) + @(y[0])")
       fenced = "## Do.\n\n" & STRICT_FUNCS & "\n\n#!fix off\nlet b = @(x) + 1\n#!fix on\n"
-      tree = goodTree().with(
-        entry("curator/beta/beta.nimble", NIMBLE_TEXT.replace(PIN, COMMIT)),
-        entry(AUDIT_DIRECTORY & "/src/a.nim", GROUPED),
-        entry(AUDIT_DIRECTORY & "/src/b.nim", DIRTY),
+      tree = treeGood().with(
+        entry("curator/beta/beta.nimble", TEXT_NIMBLE.replace(PIN, COMMIT)),
+        entry(DIRECTORY_AUDIT & "/src/a.nim", GROUPED),
+        entry(DIRECTORY_AUDIT & "/src/b.nim", DIRTY),
         entry("curator/beta/src/c.nim", other & "let t = a+b\n"),
         entry("curator/beta/src/d.nim", fenced),
         entry("curator/beta/src/e.nim", "## Do.\n\n" & STRICT_FUNCS & "\n\nlet z = 1\n"),
         entry("curator/beta/README.md", "# Beta\n"),
       )
       entries = tree[^6 .. ^1]
-      asking = entries.filterIt(fixEntries(CURATOR_BRANCH, [it]).asked.len > 0)
+      asking = entries.filterIt(fixEntries(BRANCH_CURATOR, [it]).asked.len > 0)
     check asking.mapIt(it.path) == @[
-      AUDIT_DIRECTORY & "/src/a.nim", "curator/beta/src/c.nim", "curator/beta/src/d.nim",
+      DIRECTORY_AUDIT & "/src/a.nim", "curator/beta/src/c.nim", "curator/beta/src/d.nim",
     ]  # some entries ask, and some do not
     var calls = 0
     let
@@ -531,8 +531,8 @@ suite "Fixes":
         if pin == COMMIT: broken(pin) else: counted(pin)
     for provers in [counted, broken, commit_broken]:
       let
-        proven = provenFix(CURATOR_BRANCH, tree, entries, [], tree.contextOf, provers)
-        reference = everyFix(CURATOR_BRANCH, tree, entries, [], tree.contextOf, provers)
+        proven = fixProven(BRANCH_CURATOR, tree, entries, [], tree.contextOf, provers)
+        reference = fixEvery(BRANCH_CURATOR, tree, entries, [], tree.contextOf, provers)
       check proven.fix.written.mapIt((it.path, it.content)) ==
           reference.fix.written.mapIt((it.path, it.content))
       for (fast, every) in [
