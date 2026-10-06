@@ -14,6 +14,9 @@ const
     ## One answer line of `def`, as `nimsuggest --v3` prints it.
   OUTPUT = "usage: sug|con|def\ntype 'quit' to quit\n\n" & LINE_ANSWER & "\n\n\n"
     ## Output of three commands: empty answer, one answer, empty answer.
+  USES_PIPE = 800
+    ## Uses of one symbol, so answer of `dus` listing them passes 64 KiB, pipe's capacity.
+  NAME_PIPE = 70_000  ## Length of name asked, so command asking it passes 64 KiB too.
 
 
 proc writeInto(root, path, content: string) =
@@ -79,3 +82,26 @@ suite "Internal: Symbols":
     check answers["src/b.nim"].reason.contains("undeclared")  # no backend compiles it
     let d = answers["src/d.nim"]  # through its includer, `c.nim`
     check d.reason.len == 0 and d.symbols[(3, 7)].kind == "skLet"
+
+
+  test "run asked past pipe capacity both ways answers every command, neither side waiting":
+    let
+      root = createTempDir("knoller_", "_symbols")
+      files = @[
+        ("fixture.nimble", "version = \"0.1.0\"\nsrcDir = \"src\"\n"),
+        ("src/c.nim", "include \"d.nim\"\n"),
+        ("src/d.nim", "let w = 1\n" & "discard w\n".repeat(USES_PIPE)),
+      ]
+      name = 'n'.repeat(NAME_PIPE)
+    defer: removeDir(root)
+    for (path, content) in files: writeInto(root, path, content)
+    let answers = resolve([Request(
+      query: Query(path: "src/d.nim", sites: @[(2, 8)], names: @[name, "w"]),
+      root: root,
+      directory: root,
+      includer: files.includerOf("src/d.nim"),
+    )])
+    check answers.len == 1 and answers[0].reason.len == 0
+    check answers[0].symbols[(2, 8)].kind == "skLet" and answers[0].symbols[(2, 8)].line == 1
+    check answers[0].globals[name].len == 0  # no symbol takes long name
+    check answers[0].globals["w"].len == 1  # last block, after long command, so every answer read

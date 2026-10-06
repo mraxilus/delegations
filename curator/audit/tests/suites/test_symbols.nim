@@ -1,21 +1,14 @@
 ## Hold tree's ask of semantic pass to its contract: included file resolves through file of
 ##   tree including it; site resolves to symbol pin's own `nimsuggest` reads there, and file
-##   that compiles nowhere is answered unresolved. Knoller's suite holds answer lines and
-##   blocks (`test_symbols.nim` there).
+##   that compiles nowhere is answered unresolved. Knoller's suite holds answer lines, blocks
+##   and pipe capacity (`test_symbols.nim` there).
 
 {.experimental: "strictFuncs".}
 
-import std/[options, os, strutils, tables, tempfiles, unittest]
+import std/[os, strutils, tables, tempfiles, unittest]
 import ../../../knoller/src/knoller
 import ../../src/symbols
 import ./fixtures
-
-
-const
-  USES_PIPE = 800
-    ## Uses of one symbol, so answer of `dus` listing them passes 64 KiB, pipe's capacity.
-  NAME_PIPE = 70_000  ## Length of name asked, so command asking it passes 64 KiB too.
-
 
 
 suite "Internal: Symbols":
@@ -77,24 +70,3 @@ suite "Internal: Symbols":
     check d.reason.len == 0
     check d.symbols[(3, 7)].kind == "skLet" and d.symbols[(3, 7)].line == 2
     check d.symbols[(3, 7)] == d.symbols[(2, 6)]  # use and declaration name one symbol
-
-
-  test "run asked past pipe capacity both ways answers every command, neither side waiting":
-    let
-      root = createTempDir("delegations_", "_symbols")
-      nimble = "version = \"0.1.0\"\nsrcDir = \"src\"\nrequires \"nim == " &
-        compilerRunning().version & "\"\n"
-      tree = @[
-        entry("curator/fixture/fixture.nimble", nimble),
-        entry("curator/fixture/src/c.nim", "include \"d.nim\"\n"),
-        entry("curator/fixture/src/d.nim", "let w = 1\n" & "discard w\n".repeat(USES_PIPE)),
-      ]
-      name = 'n'.repeat(NAME_PIPE)
-    defer: removeDir(root)
-    for e in tree: writeInto(root, e.path, e.content)
-    let answers =
-      resolve(root, tree, [Query(path: tree[2].path, sites: @[(2, 8)], names: @[name, "w"])])
-    check answers.len == 1 and answers[0].reason.len == 0
-    check answers[0].symbols[(2, 8)].kind == "skLet" and answers[0].symbols[(2, 8)].line == 1
-    check answers[0].globals[name].len == 0  # no symbol takes long name
-    check answers[0].globals["w"].len == 1  # last block, after long command, so every answer read
