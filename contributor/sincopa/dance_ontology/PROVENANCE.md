@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | ae3641e673d6524d |
+| Rules   | dd2ccd483be7a69b |
 | Pruned  | bba4c7f8fc306df2a89d81ea3e8e42620d235486 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
