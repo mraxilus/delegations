@@ -334,7 +334,7 @@ func listingOf*(directory, output: string; code: int): tuple[files: seq[string],
     result.refusal = "Directory holds no Nim file that git lists; got `" & directory & "`."
 
 
-proc listed(directory: string): tuple[files: seq[string], refusal: string] =
+proc listed*(directory: string): tuple[files: seq[string], refusal: string] =
   ## Read Nim files git lists under directory, sorted, or why it names none.
   let (output, code) = execCmdEx("git -C " & directory.quoteShell & " ls-files -z")
   listingOf(directory, output, code)
