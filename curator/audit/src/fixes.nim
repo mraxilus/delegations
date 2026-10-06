@@ -44,8 +44,7 @@
 import std/[options, sequtils, sets, strutils, tables]
 import ../../knoller/src/knoller
 import ./[
-  checker, conversions, findings, glossary, kinds, layout, names, plan, rewrites, scope, symbols,
-  toolchain,
+  checker, findings, glossary, kinds, layout, names, plan, rewrites, scope, symbols, toolchain,
 ]
 
 
@@ -253,7 +252,7 @@ func fixSource(
     let (edits, reports) =
       editsConversion(path, source, context.answers[path], fence.lines, renamed)
     base = source.applied(renamed & edits)
-    result.fixed.add reports
+    result.fixed.add reports.findingsOf
 
   # Drop `*` of dead export, fenced lines read as `FENCED`; fix moving them is skipped.
   let dead = context.dead.filterIt(it[0] == path).mapIt(it[1])

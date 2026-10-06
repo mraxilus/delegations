@@ -1,6 +1,7 @@
-## Hold semantic pass to its contract: answer lines read as symbols, one block per command;
-##   included file resolves through file including it; site resolves to symbol pin's own
-##   `nimsuggest` reads there, and file that compiles nowhere is answered unresolved.
+## Hold tree's ask of semantic pass to its contract: included file resolves through file of
+##   tree including it; site resolves to symbol pin's own `nimsuggest` reads there, and file
+##   that compiles nowhere is answered unresolved. Knoller's suite holds answer lines and
+##   blocks (`test_symbols.nim` there).
 
 {.experimental: "strictFuncs".}
 
@@ -11,10 +12,6 @@ import ./fixtures
 
 
 const
-  ANSWER = "def\tskType\tsystem.float\tfloat\t/lib/system/basic_types.nim\t15\t2\t\"\"\t100"
-    ## One answer line of `def`, as `nimsuggest --v3` prints it.
-  OUTPUT = "usage: sug|con|def\ntype 'quit' to quit\n\n" & ANSWER & "\n\n\n"
-    ## Output of three commands: empty answer, one answer, empty answer.
   USES_PIPE = 800
     ## Uses of one symbol, so answer of `dus` listing them passes 64 KiB, pipe's capacity.
   NAME_PIPE = 70_000  ## Length of name asked, so command asking it passes 64 KiB too.
@@ -22,20 +19,6 @@ const
 
 
 suite "Internal: Symbols":
-  test "answer line reads as symbol; malformed one reads as none":
-    let symbol = ANSWER.symbolOf.get
-    check symbol.kind == "skType" and symbol.name == "system.float"
-    check symbol.file == "/lib/system/basic_types.nim" and symbol.line == 15
-    check symbol.column == 2
-    check "def\tskType".symbolOf.isNone
-
-
-  test "output splits into one block per command, header dropped, empty answer kept":
-    let blocks = OUTPUT.blocksOf
-    check blocks.len == 3
-    check blocks[0].len == 0 and blocks[1] == @[ANSWER] and blocks[2].len == 0
-
-
   test "included file resolves through file including it, followed to top":
     let tree = @[
       entry("p/tests/test_a.nim", "include \"suites.nim\"\n"),
@@ -62,7 +45,7 @@ suite "Internal: Symbols":
       ]
     defer: removeDir(root)
     for e in tree: writeInto(root, e.path, e.content)
-    var answers = initTable[string, symbols.Answer]()  # `ANSWER` is one name with `Answer`
+    var answers = initTable[string, Answer]()
     for answer in resolve(
       root,
       tree,

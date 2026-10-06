@@ -96,6 +96,7 @@ the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, 
 
 | Id | Rule |
 |----|------|
+| `type-conversion` | A type conversion is a prefix call, `T(x)`, never `x.T`. The semantic pass of the compiler tells it from a field or a module. |
 | `trailing-whitespace` | A line ends in no space, tab or carriage return. |
 | `file-ending` | A file ends in exactly one newline, so an empty file breaks it. |
 | `line-ending` | A line holds no carriage return. No fix reaches it. |
