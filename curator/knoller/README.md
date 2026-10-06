@@ -53,7 +53,8 @@ knoller [--check] [--nim:path] path...
   lines as written. Each run prints one warning for each fence, which names each rule that breaks
   inside it. So you always see what the fence keeps, and knoller writes none of it.
 
-Each line of output names a path, a line and a rule id, and the output is sorted in that order:
+Each finding names a path, a line and a rule id, and the output is sorted in that order. An
+unsettled file names its path alone:
 
 ```text
 path:line: <rule-id> fixed
