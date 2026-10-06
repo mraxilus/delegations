@@ -130,6 +130,35 @@ suite "Command line":
     check outcome.lines[2].startsWith("a.nim:2: not-over-binary left: ")  # fix moves it to 5
 
 
+  test "check exits 1 on each finding fixers leave, fence or none, and fence counts it":
+    # Case held: `knoller --check` ran idiom checks of static pass on file holding fence alone
+    #   (`chain.nim`, `heldOf` against `checkFormatting`), and checks of form, articles, entry
+    #   block, names and waits never, so it exited 0 on each source below (#557); domain is each
+    #   rule static pass of `curator/audit` reads, as fixers leave it.
+    let module = "{.experimental: \"strictFuncs\".}\n\n"
+    for (path, source, rule) in [
+      ("a.nim", module & "const TEXT = \"" & "word ".repeat(24) & "\"\n", Rule.LineWidth),
+      ("a.nim", module & "discard 1  # Tab\there.\n", Rule.Tab),  # tab outside string
+      ("a.nim", module & "discard 1\r# Lone CR.\n", Rule.LineEnding),
+      ("a.nims", "", Rule.FileEnding),  # empty file
+      ("a.nim", module & "# The end.\n", Rule.ArticleInComment),  # capital article stays
+      ("a.nim", module & "when isMainModule:\n  var count {.global.} = 0\n", Rule.EntryBlock),
+      ("a.nim", module & "func f(): int =\n  return result\n", Rule.ReturnResult),
+      ("a.nim", module & "proc getX() = discard\n", Rule.ActionVerb),
+      ("a.nim", module & "type Space = enum\n  base, Anti\n", Rule.MemberCase),
+      ("a.nim", module & "{.push inline.}\nproc f() = discard\n{.pop.}\n", Rule.PushForeign),
+      ("tests/test_a.nim", module & "include \"suites.nim\"\n", Rule.StubHeader),
+      ("tests/suites/test_a.nim", module & "echo x\n", Rule.DebugOutput),
+      ("tests/suites/test_a.nim", module & "sleep(1)\n", Rule.FixedWait),
+    ]:
+      let outcome = outcomeOf([(path, source)], [], is_check = true)
+      check outcome.code == 1  # violation fails run
+      check outcome.lines.anyIt(it.startsWith(path) and (" " & rule.id & " left: ") in it)
+    let fenced = outcomeOf([("a.nims", "#!fix off\nlet a = 1 \n#!fix on\n")], [], is_check = true)
+    check fenced.lines.anyIt("inside them trailing-whitespace breaks once at line 2" in it)
+    check fenced.code == 1  # fence keeps line from fixer, never from finding
+
+
   test "each fence prints as warning naming what breaks inside it, and changes no exit code":
     let
       fenced = "let a = 1\n#!fix off\nlet b = 1+2\n#!fix on\n"
