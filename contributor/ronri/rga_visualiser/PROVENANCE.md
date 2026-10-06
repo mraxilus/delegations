@@ -3115,12 +3115,12 @@ held at the fill stands one ulp short of it, and a bare `>=` reads the point the
 the selection. A tap still treats it as empty space. A tap on empty space is the only way a finger
 has to dismiss a selection. Touch reaches the sky by a long press.
 
-**The pick runs once for each frame, and not for each input event.** A pick walks every live
-handle, which is linear in the scene. Pointer motion marks hover stale, and the frame loop picks
-once after `nimDriveHeld`. The wheel sums its notches and the loop applies one dolly, which is the
-same zoom, because `exp(k·Σdelta)` is the product of the notches. Six notches a frame cost 83.8 ms
-of picking. Three paths pick inside their handler because they must answer before it returns:
-`pointerdown`, a touch-down and `handleTap`.
+**The pick runs once for each frame, and not for each input event.** A pick walks every live handle,
+which is linear in the scene. Each pointer move marks hover stale, that of a mouse with no button
+down included, and the frame loop picks once after `nimDriveHeld`. The wheel sums its notches and
+the loop applies one dolly, which is the same zoom, because `exp(k·Σdelta)` is the product of the
+notches. Six notches a frame cost 83.8 ms of picking. Three paths pick inside their handler because
+they must answer before it returns: `pointerdown`, a touch-down and `handleTap`.
 
 **The pick ranks what was drawn.** It takes the placements of the frame and dispatches on
 `Placement.kind`, rather than asks `position`, `direction`, `frame` and `spanPerpendicular` again
@@ -3174,6 +3174,9 @@ by driven checks on both builds: a drag of bare sky turns the view and builds no
 on it selects it. The camera was dropped onto the ground plane, and a left-drag orbited without
 building. On the page, a point picked alone reads as backdrop at its fill, and as a handle one
 notch out. A right drag of 180 px on it moves the view and builds nothing.
+
+Verified by driven check on the page, through pointer events alone (`driveHoverFollowsMouse`). A
+mouse moved onto an object with no button down hovers it, and moved off it hovers nothing.
 
 Measured then, and not since: one pick went from 11.4 to 3.9 ms p50 at 1,024, and from 15.4 to
 4.7 ms at 10,000. A hover pick is 0.7, 1.6 and 3.5 ms at 60, 360 and 5,038.

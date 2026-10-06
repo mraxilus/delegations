@@ -29,7 +29,9 @@ import {
   driveFrameLabelCorner, driveLabelFirstFrame, driveLabelGlide, driveLabelHeldInView,
   driveLabelWorn,
 } from './label';
-import { driveChipRowFits, driveHelp, driveHoverDuringGesture } from './chrome';
+import {
+  driveChipRowFits, driveHelp, driveHoverDuringGesture, driveHoverFollowsMouse,
+} from './chrome';
 import { driveTypeDrawn, driveTypeLigatures, driveTypeRoles } from './type';
 import { driveFacesCovered } from './faces';
 import { driveCreep, drivePlaneBuilt, driveRuler } from './finger';
@@ -205,6 +207,7 @@ async function driveSimulated(browser: Browser): Promise<void> {
   await driveViewSection(page);
 
   await driveHoverDuringGesture(page, SIZE_VIEW.width, SIZE_VIEW.height);
+  await driveHoverFollowsMouse(page);
   await driveHelp(page, SIZE_VIEW.width, SIZE_VIEW.height);
   // Sweeps viewport and puts it back; kept beside other chrome checks rather than among
   //   drawer's, since what it reads is row above drawer and not drawer itself.

@@ -62,6 +62,10 @@ so a new rule without a citation does not compile there.
 - The id of a rule is the slug of its name, such as `expression-spacing`. The id is stable, so a
   tool can read the output of the command line. Verified by `suites/test_rules.nim`: each rule
   has an id of its own.
+- A rule states one rewrite, so the caller cites one article for it. One check that makes two
+  rewrites, which two articles state, reports each under a rule of its own (D1 c of #563). So
+  `import-brackets` joins the imports of one directory (X.5), and `module-bracket` drops the
+  bracket of one module (STYLE.md §5).
 - A message of a check names no article. It reads `<sentence>; got <value>.`, or `<sentence>.`
   where it gives no value. The Architect chose this shape (D2 a of #505). Knoller runs on any
   repository, whose charter need not be this one, and the README lists the id that each line
