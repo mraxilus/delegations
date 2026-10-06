@@ -2,10 +2,11 @@
 
 Curator projects: one folder for each project directly under this one, with any name that
 matches `[a-z][a-z0-9_]*`. `audit` is the tooling that checks the whole repository. `probe`
-is the domain-neutral test project that exercises every mechanism the audit enforces.
-`knoller` holds the fixers of `koch fix` that read the text of one file alone, and the compiler
-that serves each pin. `audit` imports it by a relative path. Each project carries README.md,
-PROVENANCE.md, GLOSSARY.md, `<project>.nimble` and `tests/`.
+is the domain-neutral test project that exercises every mechanism the audit enforces. Each
+project carries README.md, PROVENANCE.md, GLOSSARY.md, `<project>.nimble` and `tests/`.
+
+`knoller` holds the fixers of `koch fix` and the checks of the static pass that read one file
+alone. It holds the compiler that serves each pin too. `audit` imports it by a relative path.
 
 Work on a project from branch `curator/<project>/<name>`. Work on the rules and the root
 files from `curator/<name>`. See [CURATOR.md](../CURATOR.md).

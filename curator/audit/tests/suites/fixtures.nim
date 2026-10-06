@@ -9,7 +9,7 @@
 
 import std/[json, os, osproc, strutils, tempfiles]
 import ../../../knoller/src/knoller
-import ../../src/[dependencies, domains, kinds, layout, markdown, provenance]
+import ../../src/[domains, kinds, layout, markdown, provenance]
 
 
 func entry*(path, content: string): Entry =
@@ -72,7 +72,7 @@ func projectEntries*(directory: string, stamp: string): seq[Entry] =
     entry(directory & "/README.md", "# Project\n\nPurpose.\n"),
     entry(directory & "/PROVENANCE.md", provenanceText(stamp)),
     entry(directory & "/GLOSSARY.md", GLOSSARY_TEXT),
-    entry(directory & "/" & directory.projectName & NIMBLE_EXT, NIMBLE_TEXT),
+    entry(directory & "/" & directory.projectName & EXTENSIONS[Dialect.Package], NIMBLE_TEXT),
     entry(
       directory & "/tests/tall.nim",
       "## Test everything.\n\n" & STRICT_FUNCS & "\n\ndiscard\n",
@@ -158,6 +158,6 @@ proc lockWith*(nimble: string): string =
   pretty(
     %*{
       "items": newJObject(),
-      "nimbleFile": {"filename": "probe" & NIMBLE_EXT, "content": lines},
+      "nimbleFile": {"filename": "probe" & EXTENSIONS[Dialect.Package], "content": lines},
     },
   ) & "\n"

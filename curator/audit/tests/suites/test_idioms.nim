@@ -18,7 +18,7 @@ func module(body: string): string =
 
 func messages(path, source: string): seq[string] =
   ## Collect messages idioms check reports over source.
-  checkIdioms(path, source).mapIt(it.message)
+  checkIdioms(path, source).findingsOf.mapIt(it.message)
 
 
 func fixed(source: string): Fix =
@@ -62,14 +62,18 @@ suite "Idioms":
 
 
   test "used pragma carries comment naming its consumer":
-    check "got none" in messages("a.nim", module("func f() {.used.} = discard\n"))[0]
+    check messages("a.nim", module("func f() {.used.} = discard\n")) ==
+      @["`{.used.}` carries comment naming its consumer (STYLE.md §2); got none."]  # koch's text
     check messages("a.nim", module("func f() {.used.} = discard  # Used in b.nim.\n")).len == 0
     check messages("a.nim", module("{.used.}\n")).len == 0  # module pragma, not symbol
 
 
   test "push stands only over foreign bindings":
     let ordinary = module("{.push inline.}\nfunc f() = discard\n{.pop.}\n")
-    check "got `{.push inline.}`" in messages("a.nim", ordinary)[0]
+    check messages("a.nim", ordinary) == @[
+      "`{.push.}` stands only over foreign bindings, which `{.pop.}` closes (STYLE.md §2); " &
+        "got `{.push inline.}`.",
+    ]  # text koch prints
     let foreign = module("{.push importc, header: \"<x.h>\".}\nproc f()\n{.pop.}\n")
     check messages("a.nim", foreign).len == 0
 
@@ -82,7 +86,8 @@ suite "Idioms":
 
   test "suite importing std/random seeds it":
     let unseeded = module("import std/[random, unittest]\n\nlet x = rand(1)\n")
-    check "got no seed" in messages("tests/suites/test_x.nim", unseeded)[0]
+    check messages("tests/suites/test_x.nim", unseeded) ==
+      @["Suite seeds `std/random`, as `randomize(0)` does (STYLE.md §6); got no seed."]
     let seeded = unseeded.replace("let x", "randomize(0)\nlet x")
     check messages("tests/suites/test_x.nim", seeded).len == 0
     check messages("tests/suites/test_x.nim", unseeded.replace("rand(1)", "initRand(7)")).len == 0
@@ -92,7 +97,8 @@ suite "Idioms":
   test "stub carries testament header without -r, batchable or joinable":
     let header = "discard \"\"\"\naction: run\ncmd: \"nim c $options $file\"\n\"\"\"\n"
     check messages("tests/test_x.nim", header & module("include \"suites.nim\"\n")).len == 0
-    check "got none" in messages("tests/test_x.nim", module("include \"suites.nim\"\n"))[0]
+    check messages("tests/test_x.nim", module("include \"suites.nim\"\n")) ==
+      @["Test stub carries testament header (STYLE.md §6); got none."]  # text koch prints
     let with_run = header.replace("nim c ", "nim c -r ") & module("")
     check "got `-r`" in messages("tests/test_x.nim", with_run)[0]
     let batched = header.replace("action: run", "action: run\nbatchable: false") & module("")
@@ -146,7 +152,10 @@ suite "Idioms":
 
   test "test echo of unlabelled value is debug output; label or condition passes":
     let debug = module("test \"a\":\n  echo x\n")
-    check "got `echo x`" in messages("tests/suites/test_x.nim", debug)[0]
+    check messages("tests/suites/test_x.nim", debug) == @[
+      "Test leaves no debug output; label report, or print under failing condition (VIII.5); " &
+        "got `echo x`.",
+    ]  # text koch prints
     check messages("tests/suites/test_x.nim", module("test \"a\":\n  echo \"x: \", x\n")).len == 0
     let diagnostic = module("test \"a\":\n  if x > 1:\n    echo x\n")
     check messages("tests/suites/test_x.nim", diagnostic).len == 0

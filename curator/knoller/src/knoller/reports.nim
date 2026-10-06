@@ -17,13 +17,19 @@
 ##     step reads answer for source it sees, and where none is held, writes nothing and asks
 ##     (`Fix.asked`). Caller runs compiler on what is asked and runs chain again, so chain stays
 ##     pure, and same answers give same output.
+##   Dialect of Nim file, module, script or package, decides which idiom checks and fixers it
+##     takes; `idioms.nim` and `chain.nim` both read it, so it stands here, below both.
 ##   Path fixer reads is `/` separated: repository-relative from `koch`, absolute from command
 ##     line (`command.layoutOf`). Rule reading layout from it reads test file and stub here
-##     alone, both from last directory `tests` (`testsPart`), so each meaning is written once.
+##     alone, both from last directory `tests` (`testsPart`), so each meaning is written once;
+##     drive file, where command line reads fixed waits, too (`isDriveFile`).
 ##
 ##   Cost: line `0` marks whole-file report, so `0` never means first line.
 ##   Cost: absolute path reads directories above repository too, so file under directory
 ##     `tests` there reads as test file from command line.
+##   Cost: drive file is file under directory `tests` or `tools` at any depth, wider than
+##     `curator/audit` reads it (those of each project alone), since command line knows no
+##     project; so command line reports fixed wait static pass passes over.
 
 {.experimental: "strictFuncs".}
 
@@ -44,7 +50,9 @@ type
     source*: string  ## Text after fix; input itself where nothing broke rule.
     fixed*: seq[Report]  ## Path and line of input rewritten, with rule fixed.
     origin*: seq[int]  ## Input line of each output line, `0` where inserted; empty if none moved.
-    left*: seq[Report]  ## Finding fix leaves for hand, with its message; empty where none.
+    unsettled*: string
+      ## Why fix leaves source as written, as fixers still change it after last round; empty
+      ##   where it settles. No rule names it, since fault is tool's.
     asked*: seq[string]  ## Source whose rewrite parser must prove and no answer holds yet.
 
   Held* = object  ## Define lines whose width guard holds: every line, or lines listed.
@@ -75,8 +83,17 @@ type
     of StepKind.Widening: widener*: Widener
     of StepKind.Proving: proven*: Proven
 
+  Dialect* {.pure.} = enum  ## Define which Nim source file holds, which decides fixers it takes.
+    Module  ## `.nim`, which module's idiom checks and fixers read too.
+    Script  ## `.nims`.
+    Package  ## `.nimble`.
 
-const EVERY* = Held(is_every: true)  ## Held of every line, as each widener's two-argument form.
+
+const
+  EVERY* = Held(is_every: true)  ## Held of every line, as each widener's two-argument form.
+  DRIVE_DIRECTORIES = ["tests", "tools"]  ## Directories whose files command line reads as drive.
+  EXTENSIONS*: array[Dialect, string] = [".nim", ".nims", ".nimble"]
+    ## Extension of file of each dialect.
 
 
 func initReport*(path: string, line: int, rule: Rule, message = ""): Report =
@@ -100,6 +117,13 @@ func isStub*(path: string): bool =
   ## Decide whether path is testament stub: `test_*`, directly under directory `tests`.
   let part = path.testsPart
   part.len == 1 and part[0].startsWith("test_")
+
+
+func isDriveFile*(path: string): bool =
+  ## Decide whether path lies under directory `tests` or `tools`, at any depth: drive code, where
+  ##   command line reads fixed waits.
+  let parts = path.split('/')
+  parts[0 ..< parts.high].anyIt(it in DRIVE_DIRECTORIES)
 
 
 func guarded*(fixer: Fixer): Step =
@@ -137,18 +161,15 @@ func traced*(fix: Fix, line: int): int =
 
 
 func chain*(fix, step: Fix): Fix =
-  ## Chain fixer's step after fix: step's source, reports of both traced to fix's input.
+  ## Chain fixer's step after fix: step's source, reports of both traced to fix's input, and
+  ##   why fix leaves source as written, step's else fix's.
   result.source = step.source
   result.fixed = fix.fixed
   for f in step.fixed:
     var traced_report = f
     traced_report.line = fix.traced(f.line)
     result.fixed.add traced_report
-  result.left = fix.left
-  for f in step.left:
-    var traced_report = f
-    traced_report.line = fix.traced(f.line)
-    result.left.add traced_report
+  result.unsettled = if step.unsettled.len > 0: step.unsettled else: fix.unsettled
   result.origin =
     if step.origin.len == 0: fix.origin
     else: step.origin.mapIt(fix.traced(it))

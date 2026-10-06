@@ -2,6 +2,9 @@
 ##   Rule is data: `ARTICLES` lists banned words. Tokeniser is whitespace split with
 ##   surrounding punctuation stripped, so `(a` and `the.` are caught while `2.2a` and URLs
 ##   pass. Backtick spans are removed first, so quoted identifiers `a` and `the` pass.
+##   Check reads comments of Nim source from tokens, as fixer reads them (`commentLines`), one
+##     finding to line; caller reading comments of other syntax passes its lines, so every
+##     kind reports in same words (`curator/audit`, `prose.nim`).
 ##   Fixer deletes lowercase article, with space after it, in comment of Nim syntax, outside
 ##     backticks and double quotes, where word after it can open noun phrase: it starts with
 ##     letter, digit or backtick, is not one letter, and is no function word (`and`, `to`,
@@ -15,7 +18,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, strutils]
+import std/[algorithm, sequtils, strutils]
 import ./[reports, tokens]
 
 
@@ -51,6 +54,67 @@ func findArticles*(text: string): seq[string] =
   for word in text.stripCodeSpans.splitWhitespace:
     let bare = word.strip(chars = PUNCTUATION).toLowerAscii
     if bare in ARTICLES: result.add bare
+
+
+func commentLines*(source: string): seq[(int, string)] =
+  ## Read text comments of Nim source hold on each line, as one-based line and text: markers
+  ##   stripped, comments of one line joined, whitespace runs collapsed, line of no text left out.
+  ##   Line comment drops its run of `#`; block comment drops `#[`, `##[` and each nested
+  ##   opener, and `]#` with run of `#` after it, as lexer pairs them (`tokens.nim`).
+
+  template keep(line: int, text: string) =
+    ## Add text to entry of its line, joined to comment before it there.
+    if result.len > 0 and result[^1][0] == line: result[^1][1].add " " & text
+    else: result.add (line, text)
+
+  # Read text of each comment line by line; block comment leaves its markers out.
+  for t in source.tokens:
+    if t.kind != TokenKind.Comment: continue
+    let is_block = source.continuesWith("#[", t.first) or source.continuesWith("##[", t.first)
+    var
+      k = t.first
+      line = t.line
+      text = ""
+    if source.continuesWith("##[", k): k += 3
+    elif is_block: k += 2
+    else:
+      while k < t.after and source[k] == '#': inc k
+    while k < t.after:
+      if source[k] == '\n':
+        keep(line + 1, text)
+        text = ""
+        inc line
+        inc k
+      elif is_block and source.continuesWith("#[", k): k += 2
+      elif is_block and source.continuesWith("]#", k):
+        k += 2
+        while k < t.after and source[k] == '#': inc k
+      else:
+        text.add source[k]
+        inc k
+    keep(line + 1, text)
+
+  # Collapse whitespace runs, and leave out line of no text.
+  result = result.mapIt((it[0], it[1].splitWhitespace.join(" "))).filterIt(it[1].len > 0)
+
+
+func checkArticles*(path: string, lines: openArray[(int, string)]): seq[Report] =
+  ## Report each comment line holding article, from one-based line and text of each (VI.5), so
+  ##   caller reading comments of other syntax reports in same words.
+  for (line, text) in lines:
+    let found = text.findArticles
+    if found.len == 0: continue
+    result.add initReport(
+      path,
+      line,
+      Rule.ArticleInComment,
+      "Comment holds article; got `" & found.join(", ") & "`.",
+    )
+
+
+func checkArticles*(path, source: string): seq[Report] =
+  ## Report each line whose comments in Nim source hold article (VI.5).
+  checkArticles(path, source.commentLines)
 
 
 func articleCuts(source: string): seq[(int, int)] =

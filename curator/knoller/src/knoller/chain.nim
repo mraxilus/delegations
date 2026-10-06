@@ -3,8 +3,9 @@
 ##   (`heldOf`).
 ##   Built from checks (Article II.1): each fixer sits beside its check and reads that check's
 ##     own data, so each rule is written once.
-##   Fixer runs where its check runs: idiom fixers on module (`.nim`) alone, every other fixer
-##     in every dialect. Order keeps each fixer from undoing one before it:
+##   Fixer runs where its check runs: idiom fixers of module (`.nim`) alone, those of any Nim code
+##     (return, bindings) and every other fixer in every dialect (`idiomFixers`). Order keeps each
+##     fixer from undoing one before it:
 ##   - form first (whitespace, ending, tab in string, trailing comment, banner), so later
 ##     fixers read clean line ends and final comment gaps, which wrapping counts in width;
 ##   - entry block next, whose body moves into `proc main` (V.10): it moves lines and widens
@@ -45,15 +46,21 @@
 ##     again, since widener keeps guard there and no other fixer or wrap writes wide line, so
 ##     held lines grow each attempt; inserted line left wide holds every line at once.
 ##   File whose last attempt still changes after `ROUNDS_MAX` rounds stays as written, and its
-##     fix reports why (`Rule.Unsettled`), so half-settled file is never written.
+##     fix says why (`Fix.unsettled`), so half-settled file is never written. Message names no
+##     rule: fault is tool's, and no source breaks rule of style there, so no article cites it.
 ##   Nimble file whose copy `atlas.lock` holds (`nimbleFile`, `lockedNimbles`) is left to
 ##     caller, which writes none of it and checks none of it: rewrite would leave lock's copy
 ##     stale, and Atlas reads that as change of package.
+##   Command line checks what fixers leave by every check knoller holds (`checkSource`): those
+##     `checkFormatting` holds, off fenced lines, and those static pass of `curator/audit` reads
+##     on Nim source (`staticOf`): form, articles, entry block, names, idioms of dialect, and
+##     fixed waits of drive file. Fence keeps its lines from fixers alone, as static pass reads
+##     every line, so finding there fails command line as it fails static pass.
 ##   Fence's warning runs checks as dry run: same checks on source unmasked, where each marker
 ##     reads as plain comment and each line keeps its number, so warning counts what same lines
-##     report unfenced. Finding fixer clears and finding left for hand count alike; module adds
-##     idiom checks static pass runs (`checkStrictFuncs` and siblings). Fixer writes no fenced
-##     line still, and warning changes no exit code.
+##     report unfenced. Finding fixer clears and finding left for hand count alike, and so does
+##     each check static pass reads. Fixer writes no fenced line still, and warning changes no
+##     exit code.
 ##
 ##   Rejected: nimpretty, which sets one space before trailing comment where X.9 asks two,
 ##     and `;` between parameters where STYLE.md §5 asks `,`; fork of nimpretty's layouter,
@@ -68,8 +75,8 @@
 
 import std/[algorithm, options, sequtils, strutils]
 import ./[
-  articles, blanks, commands, declarations, entry, fences, form, idioms, messages, parentheses,
-  precedence, reports, spacing, targets, views, wrapping,
+  articles, blanks, commands, declarations, entry, fences, form, idioms, messages, names,
+  parentheses, precedence, reports, spacing, targets, waits, wrapping,
 ]
 
 
@@ -83,12 +90,6 @@ const
   NIMBLE_KEY = "\"nimbleFile\""  ## Key of lock's copy of nimble file, whose `filename` names it.
 
 
-type Dialect* {.pure.} = enum  ## Define which Nim source file holds, which decides fixers it takes.
-  Module  ## `.nim`, which idiom fixers read too.
-  Script  ## `.nims`.
-  Package  ## `.nimble`.
-
-
 func stepsOf(dialect: Dialect): seq[Step] =
   ## List steps dialect takes, in order header gives.
   result = @FORM_STEPS
@@ -96,8 +97,7 @@ func stepsOf(dialect: Dialect): seq[Step] =
     guarded(fixBlockEntry), guarded(fixArticles), widening(fixMessages),
     widening(fixMixtures), guarded(fixTargets), guarded(fixCommands), proving(fixParentheses),
   ]
-  if dialect == Dialect.Module:
-    for fixer in IDIOM_FIXERS: result.add guarded(fixer)
+  for fixer in dialect.idiomFixers: result.add guarded(fixer)
   result.add @[guarded(fixBlanks), guarded(fixDocs), guarded(fixDefaults), widening(fixSpacing)]
   result.add WRAPPING_STEPS
   result.add guarded(fixCommentsAbove)
@@ -146,6 +146,23 @@ func checkFormatting*(path, source: string; dialect: Dialect; proofs = Proofs())
   let fence = source.fenceOf
   if fence.fault >= 0: return faultOf(path, fence)
   checksOf(path, source.masked(fence), dialect, proofs).filterIt(it.line - 1 notin fence.lines)
+
+func staticOf(path, source: string; dialect: Dialect): seq[Report] =
+  ## Run on source as given each check static pass of `curator/audit` reads on Nim source: form,
+  ##   articles, entry block, names with no word exempt beyond `JARGON`, idioms of dialect, and
+  ##   fixed waits of drive file (`isDriveFile`). Fence keeps no line from them.
+  result = checkForm(path, source) & checkArticles(path, source)
+  result.add checkBlockEntry(path, source) & checkNames(path, source, [])
+  result.add checkIdioms(path, source, dialect)
+  if path.isDriveFile: result.add checkWaits(path, source)
+
+
+func checkSource*(path, source: string; dialect: Dialect; proofs = Proofs()): seq[Report] =
+  ## Report each rule knoller reads in source: those `checkFormatting` holds, off fenced lines,
+  ##   and those static pass of `curator/audit` reads (`staticOf`), on every line, so finding
+  ##   fixers leave, or fence keeps from them, fails command line as it fails static pass.
+  checkFormatting(path, source, dialect, proofs) & staticOf(path, source, dialect)
+
 
 
 func heldThrough(held: Held; fix, step: Fix): Held =
@@ -227,14 +244,9 @@ func formattedBy(path, source: string; steps: openArray[Step]; proofs = Proofs()
   if fence.fault >= 0: return Fix(source: source)
   let (fix, _, asked) = attempted(path, source.masked(fence), steps, proofs)
   if fix.isNone:
-    let report = initReport(
-      path,
-      0,
-      Rule.Unsettled,
-      "File still changes after " & $ROUNDS_MAX & " rounds of fixers, so fix leaves it as " &
-          "written; got `" & $ROUNDS_MAX & "` rounds.",
-    )
-    return Fix(source: source, left: @[report], asked: asked)
+    let unsettled = "File still changes after " & $ROUNDS_MAX & " rounds of fixers, so fix " &
+        "leaves it as written; got `" & $ROUNDS_MAX & "` rounds."
+    return Fix(source: source, unsettled: unsettled, asked: asked)
   result = fix.get
   result.source = result.source.restored(source, fence)
   result.asked = asked
@@ -244,7 +256,7 @@ func formatted*(path, source: string; dialect: Dialect; proofs = Proofs()): Fix 
   ## Run on source each fixer dialect takes, in order header gives, until source settles;
   ##   fenced lines read as `FENCED`, and fixer that would move them is skipped. Source whose
   ##   fence cannot be read stays as written, and `checkFormatting` reports why; source that does
-  ##   not settle stays as written too, and its fix reports why (`Fix.left`).
+  ##   not settle stays as written too, and its fix says why (`Fix.unsettled`).
   ##   Needless parentheses go where `proofs` prove them; each source no answer reaches is in
   ##   `Fix.asked`, for caller to ask parser and run again.
   formattedBy(path, source, dialect.stepsOf, proofs)
@@ -256,15 +268,12 @@ func heldOf*(path, source: string; dialect: Dialect; proofs = Proofs()): seq[Rep
   ##   sees what fence keeps. Fence fix cannot read gives none, since `checkFormatting` reports
   ##   it alone.
   ##   Checks read source unmasked, so marker reads as plain comment and each line keeps its
-  ##     number; module reads idiom checks static pass runs too. Source with no fence runs none.
-  ##     Needless parentheses count where `proofs` answer for source as given (`questionsOf`).
+  ##     number: each check `checkSource` holds, those static pass reads among them. Source with
+  ##     no fence runs none. Needless parentheses count where `proofs` answer for source as given
+  ##     (`questionsOf`).
   let fence = source.fenceOf
   if fence.fault >= 0 or fence.lines.len == 0: return
-  var found = checksOf(path, source, dialect, proofs)
-  if dialect == Dialect.Module:
-    let (lines, code) = (source.splitLines, source.codeOnly.splitLines)
-    found.add checkStrictFuncs(path, lines, code) & checkImports(path, code) &
-      checkBindings(path, code) & checkReturns(path, code) & checkStubKeys(path, source)
+  let found = checksOf(path, source, dialect, proofs) & staticOf(path, source, dialect)
 
   # Count each rule broken inside each run, keep its first line, and name each in `Rule` order.
   for run in fence.runsOf:

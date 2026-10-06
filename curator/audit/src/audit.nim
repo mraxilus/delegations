@@ -15,6 +15,7 @@
 when compileOption("profiler"): import std/nimprof
 
 import std/[options, os, sequtils, sets, strutils]
+import ../../knoller/src/knoller
 import ./[
   checker, coverage, dependencies, domains, duplicates, english, faces, findings, form, glossary,
   idioms, justification, kinds, layout, names, plan, prompts, prose, provenance, record,
@@ -170,7 +171,8 @@ proc auditTree*(tree: Tree): seq[Finding] =
     if not e.path.startsWith(DRIVER_DIRECTORY & "/"):
       result.add checkFaces(e.path, e.content)
       if e.kind.get != Kind.Markdown: result.add checkMachinePaths(e.path, e.content)
-    if e.kind.get == Kind.Nim: result.add checkIdioms(e.path, e.content)
+    if e.kind.get.rule.has_guide:
+      result.add checkIdioms(e.path, e.content, e.kind.get.dialectOf).findingsOf
     for directory in directories:
       if e.path == directory & "/PROVENANCE.md":
         result.add checkProvenance(e.path, e.content, stamp_now)
@@ -205,10 +207,14 @@ proc auditTree*(tree: Tree): seq[Finding] =
           "TypeScript); got none.",
       )
 
-  # Names: every Nim file is held to words glossaries admit, root and its own project.
+  # Names: every Nim file is held to words glossaries admit, root and its own project, acronyms
+  #   among them, which knoller reads no glossary for; binding of entry block is its own rule.
   for e in tree:
     if e.kind.isNone or e.kind.get notin [Kind.Nim, Kind.NimScript, Kind.Nimble]: continue
-    result.add checkNames(e.path, e.content, glossaries.exemptionsOf(e.path))
+    let exempt = glossaries.exemptionsOf(e.path)
+    result.add findingsOf(checkNames(e.path, e.content, exempt))
+    result.add findingsOf(checkBlockEntry(e.path, e.content))
+    result.add checkAcronyms(e.path, e.content, exempt)
 
   # Fixed waits: drive code of every project, checker's own included, since its suite holds
   #   names as strings, which Nim source is read without.

@@ -145,13 +145,6 @@ func declaredAt(symbol: Symbol, path: string, site: (int, int)): Symbol =
   )
 
 
-func isSameName*(a, b: string): bool =
-  ## Decide whether two identifiers are one to Nim: first character exact, rest compared
-  ##   without case and underscores.
-  a.len > 0 and b.len > 0 and a[0] == b[0] and
-    a[1 .. ^1].replace("_", "").toLowerAscii == b[1 .. ^1].replace("_", "").toLowerAscii
-
-
 func includerOf*(tree: Tree, path: string): string =
   ## Read file whose `include` names path, followed up to file nothing includes; path itself
   ##   where nothing includes it.
@@ -234,7 +227,7 @@ proc answersOf(entry: Entry, asked: Asked): seq[Answer] =
       if at < blocks.len:
         for line in blocks[at]:
           let symbol = line.symbolOf
-          if symbol.isSome and symbol.get.name.split('.')[^1].isSameName(name):
+          if symbol.isSome and symbol.get.name.split('.')[^1].identity == name.identity:
             found.add symbol.get
       answer.globals[name] = found
       inc at

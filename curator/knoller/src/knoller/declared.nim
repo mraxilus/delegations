@@ -1,8 +1,9 @@
 ## Read each name Nim source declares, with its kind and reach (Article V.1, V.10, V.11).
 ##   Reads declarations alone: binding (`let`, `var`, `const`, `for`, `except … as`), routine,
 ##     type, field, parameter, enum member and placeholder in generic brackets. Foreign binding,
-##     i.e. routine carrying `importc`, `importcpp`, `importjs` or `dynlib`, declares library's
-##     own name and is skipped; its parameters are ours and are read.
+##     i.e. routine whose pragmas hold word of `MARKS_FOREIGN`, as `importc` or `exportc`,
+##     declares name foreign code reads by its spelling, so it is skipped; its parameters are ours
+##     and are read.
 ##   Reach of binding is decided in `reachOf` alone. Global where every enclosing block opens no
 ##     scope (`when` chain, bare `let`, `var`, `const` or `type`); local under routine or any
 ##     other block; entry inside top-level `when isMainModule:` and outside routine.
@@ -30,8 +31,14 @@ const
     ## Keywords that, alone on line, open section and no scope.
   CHAIN_WORDS = ["when", "elif", "else"]  ## Words opening branch of `when` chain.
   CONCEPT_MODIFIERS = ["var", "ref", "ptr", "type"]  ## Words standing before concept placeholder.
-  FOREIGN_PRAGMAS = ["importc", "importcpp", "importjs", "dynlib"]
-    ## Pragmas marking routine as binding of library's own name.
+  MARKS_FOREIGN* = [
+    "dynlib", "exportc", "exportcpp", "extern", "header", "importc", "importcpp", "importjs",
+    "importobjc", "JsRoot",
+  ]
+    ## Words marking name foreign code reads by its spelling: pragma, or root of JavaScript object.
+    ##   Read as words among pragmas (`pragmaWords`), never inside other name: routine they mark
+    ##     declares no name of ours (`declarations`), `{.push.}` stands over bindings they mark
+    ##     (`idioms.nim`), and `curator/audit` renames no name they mark, nor `entry.nim` moves it.
 
 
 type
@@ -303,7 +310,7 @@ func declarations*(source: string): seq[Declared] =
           tail = text[min(k, text.len) .. ^1].strip
           is_predicate = word == "func" and not is_writing and tail.startsWith(":") and
             tail.identifierAt(1) == "bool"
-          is_foreign = FOREIGN_PRAGMAS.anyIt(it in text)
+          is_foreign = text.pragmaWords.anyIt(it in MARKS_FOREIGN)
         if name.len > 0 and not is_foreign:
           result.add Declared(
             name: name,
