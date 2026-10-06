@@ -19,8 +19,11 @@ suite "Share":
       ("wedge_u12__OOZOOZdependenciesZreplicationsOmraxilusOgitlabOcomZlengyelZ" &
         "projective95geometric95algebra95illuminatedZpga", Owner.Pga),
       ("kindOf_u3__OOZrga95visualiserZobjects", Owner.Algebra),
-      ("motorBetween_u7__OOZrga95visualiserZmotors", Owner.Algebra),
-      ("liftPoint_u2__OOZrga95visualiserZboundary", Owner.Algebra),
+      ("carried_u1__OOZrga95visualiserZmotors", Owner.Algebra),
+      ("toMultivector_u1__OOZrga95visualiserZboundary", Owner.Boundary),
+      ("normalize_u0__OOZrga95visualiserZeuclid", Owner.Euclidean),
+      ("addDome_u0__OOZrga95visualiserZmesh", Owner.Euclidean),
+      ("placeEvery_u0__OOZrga95visualiserZframing", Owner.Rest),
       ("placeInto_u9__OOZrga95visualiserZtessellate", Owner.Rest),
       ("nimBuildFrame", Owner.Rest),
       ("(program)", Owner.Rest),
@@ -40,6 +43,9 @@ suite "Share":
           "projective_geometric_algebra_illuminated/pga.nim", Owner.Pga),
         ("/c/rga_visualiser/src/rga_visualiser/objects.nim", Owner.Algebra),
         ("/c/rga_visualiser/src/rga_visualiser/projections.nim", Owner.Algebra),
+        ("/c/rga_visualiser/src/rga_visualiser/boundary.nim", Owner.Boundary),
+        ("/c/rga_visualiser/src/rga_visualiser/euclid.nim", Owner.Euclidean),
+        ("/c/rga_visualiser/src/rga_visualiser/mesh.nim", Owner.Euclidean),
         ("/c/rga_visualiser/src/rga_visualiser/tessellate.nim", Owner.Rest),
         ("/root/.cache/koch/nim/lib/pure/options.nim", Owner.Rest),
       ]
@@ -49,6 +55,31 @@ suite "Share":
       check ownerOfPath(nil) == Owner.Rest
 
 
+    test "a desktop stack is owned by its innermost frame that has an owner":
+      # Outermost first, chained through `prev` as Nim's frames are; walk starts at last.
+      const
+        framing = "/c/rga_visualiser/src/rga_visualiser/framing.nim"
+        boundary = "/c/rga_visualiser/src/rga_visualiser/boundary.nim"
+        objects = "/c/rga_visualiser/src/rga_visualiser/objects.nim"
+        multivectors = "/c/rga_visualiser/dependencies/replications.mraxilus.gitlab.com/" &
+            "lengyel/projective_geometric_algebra_illuminated/pga/multivectors.nim"
+      let stacks = [
+        (@[framing, boundary, "/c/rga_visualiser/src/rga_visualiser/euclid.nim"],
+          Owner.Euclidean),
+        (@[framing, boundary, "/root/.cache/koch/nim/lib/system.nim"], Owner.Boundary),
+        (@[framing, boundary, objects, multivectors], Owner.Pga),
+        (@[framing, objects], Owner.Algebra),
+        (@[framing, "/c/rga_visualiser/src/rga_visualiser/tessellate.nim"], Owner.Rest),
+      ]
+      for (paths, owner) in stacks:
+        var frames = newSeq[TFrame](paths.len)
+        for i, path in paths:
+          frames[i].filename = cstring(path)
+          if i > 0: frames[i].prev = addr frames[i-1]
+        checkpoint $paths
+        check ownerOfFrames(addr frames[^1]) == owner
+
+
   test "the tooltip names the span the ring pools over":
     # Catalogue holds literal text alone, so span is written there twice and held equal here.
     check ($SECONDS_SHARE & " seconds") in $wordingText(TipDiagnosticsPga)
@@ -56,18 +87,36 @@ suite "Share":
 
   test "the ring pools the last twenty seconds, and forgets a second that left them":
     var ring = initRingShare()
-    ring.add(100, [Owner.Rest: 6, Owner.Algebra: 1, Owner.Pga: 3])
-    ring.add(100, [Owner.Rest: 4, Owner.Algebra: 1, Owner.Pga: 5])
-    ring.add(110, [Owner.Rest: 10, Owner.Algebra: 0, Owner.Pga: 10])
+    ring.add(
+      100,
+      [Owner.Rest: 6, Owner.Pga: 3, Owner.Algebra: 1, Owner.Boundary: 0,
+        Owner.Euclidean: 0],
+    )
+    ring.add(
+      100,
+      [Owner.Rest: 2, Owner.Pga: 5, Owner.Algebra: 1, Owner.Boundary: 1,
+        Owner.Euclidean: 1],
+    )
+    ring.add(
+      110,
+      [Owner.Rest: 10, Owner.Pga: 10, Owner.Algebra: 0, Owner.Boundary: 0,
+        Owner.Euclidean: 0],
+    )
     let pooled = ring.pooled(110)
-    check pooled == [Owner.Rest: 20, Owner.Algebra: 2, Owner.Pga: 18]
+    check pooled == [Owner.Rest: 18, Owner.Pga: 18, Owner.Algebra: 2, Owner.Boundary: 1,
+      Owner.Euclidean: 1]
     check pooled.busy == 40
     check pooled.percentOf(Owner.Pga) == 45.0
     # Second 100 left window at 120; its bucket is counted again from nothing at 120.
     check ring.pooled(119)[Owner.Pga] == 18
     check ring.pooled(120)[Owner.Pga] == 10
-    ring.add(120, [Owner.Rest: 1, Owner.Algebra: 0, Owner.Pga: 0])
-    check ring.pooled(120) == [Owner.Rest: 11, Owner.Algebra: 0, Owner.Pga: 10]
+    ring.add(
+      120,
+      [Owner.Rest: 1, Owner.Pga: 0, Owner.Algebra: 0, Owner.Boundary: 0,
+        Owner.Euclidean: 0],
+    )
+    check ring.pooled(120) == [Owner.Rest: 11, Owner.Pga: 10, Owner.Algebra: 0,
+      Owner.Boundary: 0, Owner.Euclidean: 0]
     check initRingShare().pooled(0).percentOf(Owner.Pga) == 0.0
 
 

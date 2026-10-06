@@ -12,7 +12,8 @@
 ##   Sample landing in frame push or pop of tiny library proc, as `[]`, misses its frame, so
 ##   share reads low against native unwinding; figures in `PROVENANCE.md`.
 ## Handler allocates nothing and takes no lock.
-##   It walks frames, names each owner through `share.ownerOfPath`, and adds one atomically.
+##   It walks frames from innermost out to first one `share.ownerOfPath` names side for, as
+##   `share` rules, and adds one to that side atomically.
 ##   Main thread drains counts by atomic exchange, so no sample is lost or counted twice.
 
 {.experimental: "strictFuncs".}
@@ -34,6 +35,17 @@ const
 var COUNTS_SAMPLED: CountsShare
   ## Count samples by owner since last `drainSamples`.
   ##   Written by signal handler, drained by main thread, both atomically.
+
+
+proc ownerOfFrames*(innermost: PFrame): Owner {.stackTrace: off.} =
+  ## Name owner of stack whose innermost frame is `innermost`: first frame out that has one.
+  ##   Reads and allocates nothing beyond frames, so signal handler may call it.
+  var frame = innermost
+  while frame != nil:
+    let owner = ownerOfPath(frame.filename)
+    if owner != Owner.Rest: return owner
+    frame = frame.prev
+  Owner.Rest
 
 when IS_SAMPLER_BUILT:
   {.emit: """
@@ -84,14 +96,7 @@ static int samplerDisarm(void) {
   proc onSample(signal: cint) {.noconv, stackTrace: off.} =
     ## Name owner of stack this sample interrupted, and count it.
     ##   Pushes no frame of its own: it walks frames that interrupted code pushed.
-    ##   PGA owns stack with any frame in it, so walk stops at first.
-    var
-      owner = Owner.Rest
-      frame = getFrame()
-    while frame != nil and owner != Owner.Pga:
-      owner = max(owner, ownerOfPath(frame.filename))
-      frame = frame.prev
-    atomicInc(COUNTS_SAMPLED[owner])
+    atomicInc(COUNTS_SAMPLED[ownerOfFrames(getFrame())])
 
 
 var IS_SAMPLING = false  ## Say whether timer is armed.

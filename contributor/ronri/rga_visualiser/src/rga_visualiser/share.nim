@@ -1,10 +1,16 @@
-## Read PGA share of front-end's busy time, and share of project's own algebra.
+## Read PGA share of front-end's busy time, and share of each side of algebra boundary.
 ##
 ## Sampling profiler answers it: each sample is one stack of calls, and one rule names its owner.
-##   PGA, reference library, owns sample with any frame inside `pga`.
-##     PGA calls back into nothing of project's, so whatever runs under it is its own.
-##   Project's own algebra owns sample with frame in one of `MODULES_ALGEBRA`, and none in PGA.
-##   Rest is everything else: drawing, panel, browser's or driver's own work.
+##   Sample belongs to side whose code it was running: owner of innermost frame that has one.
+##     PGA owns time in its own operators, whoever called them.
+##     Algebra owns `motors`, `projections` and `objects`, which compose PGA's operators.
+##     Boundary owns `boundary`, which lifts into algebra and reads back out.
+##     Euclidean owns `euclid` and `mesh`, which never name multivector.
+##   Rest is everything else: consumers' own work, panel, browser's or driver's own work.
+##   Innermost, not outermost: `boundary` calling `euclid.normalize` spends Euclidean time.
+##     PGA calls back into nothing of project's, so frame in PGA is innermost owned one
+##     wherever it stands, and PGA share is time in its operators from any caller.
+##     Frame no side owns, as `system`'s copy, belongs to owned frame that called it.
 ## Each front-end samples its own way, and both read their stacks through this one rule.
 ##   Desktop: timer on main thread's CPU clock, walking Nim's frames; see `desktop/sampler`.
 ##   Page: browser's own sampling profiler, where browser allows it; see `diagnostics.ts`.
@@ -29,10 +35,12 @@ const SECONDS_SHARE* = 20
 #[ Type Definitions ]#
 
 type
-  Owner* {.pure.} = enum  ## Define who owns one sample's time, in rule's order of precedence.
-    Rest,  ## Neither PGA nor project's algebra: drawing, panel, browser, driver.
-    Algebra,  ## Project's own algebra, one of `MODULES_ALGEBRA`.
-    Pga  ## PGA, reference library: module `pga` and every module under it.
+  Owner* {.pure.} = enum  ## Define who owns one sample's time: side whose code it was running.
+    Rest,  ## No side: consumers' own work, panel, browser, driver.
+    Pga,  ## PGA, reference library: module `pga` and every module under it.
+    Algebra,  ## Project's algebra side, outside PGA; see `MODULES_SIDE`.
+    Boundary,  ## Crossing between algebra and Euclidean values; see `MODULES_SIDE`.
+    Euclidean  ## Project's Euclidean side; see `MODULES_SIDE`.
 
   CountsShare* = array[Owner, int]  ## Count busy samples by owner.
 
@@ -50,11 +58,15 @@ type
 const
   PATH_PGA = "/projective_geometric_algebra_illuminated/pga"
     ## Name reference library by tail of its path: module `pga` and every module under it.
-  MODULES_ALGEBRA* = ["motors", "projections", "objects", "boundary"]
-    ## Name project's modules whose own work is algebra.
-    ##   `motors` and `projections` carry operators library lacks; `objects` asks incidence
-    ##   questions in algebra's words; `boundary` lifts into algebra and reads back out.
-    ##   Others that import `pga` only call it, and their own work is drawing or picking.
+  MODULES_SIDE* = [
+    ("motors", Owner.Algebra), ("projections", Owner.Algebra), ("objects", Owner.Algebra),
+    ("boundary", Owner.Boundary),
+    ("euclid", Owner.Euclidean), ("mesh", Owner.Euclidean),
+  ]
+    ## Name side each of project's modules on either side of algebra boundary belongs to.
+    ##   Algebra: stand-ins for operators library lacks, and incidence in algebra's words.
+    ##   Boundary: lift and read-out, by coefficient. Euclidean: positions, directions and
+    ##   vertices. Every other module consumes these, and its own work is Rest.
   DIRECTORY_PROJECT = "rga_visualiser/"
     ## Name directory project's own modules sit in, under `src`.
 
@@ -70,20 +82,26 @@ func mangled(path: string): string {.compileTime.} =
     else: result.add character
 
 
-func tailsAlgebraPath(): array[MODULES_ALGEBRA.len, string] {.compileTime.} =
-  ## End path of each project algebra module, as desktop frame names its file.
-  for i, module in MODULES_ALGEBRA: result[i] = DIRECTORY_PROJECT & module & ".nim"
+func tailsSidePath(): array[MODULES_SIDE.len, string] {.compileTime.} =
+  ## End path of each sided module, as desktop frame names its file.
+  for i, (module, _) in MODULES_SIDE: result[i] = DIRECTORY_PROJECT & module & ".nim"
 
 
-func tailsAlgebraName(): array[MODULES_ALGEBRA.len, string] {.compileTime.} =
-  ## End function name JS backend gives inside each project algebra module.
-  for i, module in MODULES_ALGEBRA: result[i] = mangled(DIRECTORY_PROJECT & module)
+func tailsSideName(): array[MODULES_SIDE.len, string] {.compileTime.} =
+  ## End function name JS backend gives inside each sided module.
+  for i, (module, _) in MODULES_SIDE: result[i] = mangled(DIRECTORY_PROJECT & module)
+
+
+func ownersSide(): array[MODULES_SIDE.len, Owner] {.compileTime.} =
+  ## Side of each sided module, apart from its name.
+  for i, (_, owner) in MODULES_SIDE: result[i] = owner
 
 
 const
   MARK_NAME_PGA = mangled(PATH_PGA)  ## Mark function name JS backend gives inside library.
-  TAILS_ALGEBRA_PATH = tailsAlgebraPath()  ## End path of each project algebra module's file.
-  TAILS_ALGEBRA_NAME = tailsAlgebraName()  ## End name of each project algebra module's function.
+  TAILS_SIDE_PATH = tailsSidePath()  ## End path of each sided module's file.
+  TAILS_SIDE_NAME = tailsSideName()  ## End name of each sided module's function.
+  OWNERS_SIDE = ownersSide()  ## Side of each, by same index.
 
 
 when not defined(js):
@@ -113,8 +131,8 @@ when not defined(js):
     ##   Allocates nothing, so sampler's signal handler calls it on each frame it walks.
     if path.isNil: return Owner.Rest
     if path.isContaining(PATH_PGA): return Owner.Pga
-    for i in 0..<TAILS_ALGEBRA_PATH.len:
-      if path.isEndingWith(TAILS_ALGEBRA_PATH[i]): return Owner.Algebra
+    for i in 0..<TAILS_SIDE_PATH.len:
+      if path.isEndingWith(TAILS_SIDE_PATH[i]): return OWNERS_SIDE[i]
     Owner.Rest
 
 
@@ -125,8 +143,8 @@ func ownerOfName*(name: string): Owner =
   if at < 0: return Owner.Rest
   let module = name[at+2 .. ^1]
   if MARK_NAME_PGA in module: return Owner.Pga
-  for tail in TAILS_ALGEBRA_NAME:
-    if module.endsWith(tail): return Owner.Algebra
+  for i, tail in TAILS_SIDE_NAME:
+    if module.endsWith(tail): return OWNERS_SIDE[i]
   Owner.Rest
 
 

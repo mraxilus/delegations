@@ -1123,8 +1123,8 @@ proc layoutDiagnosticsFrameTime(panel: var Panel) =
 
 
 proc layoutDiagnosticsShare(panel: Panel) =
-  ## Lay out "PGA share" section: PGA's and project algebra's share of busy samples.
-  ##   Build that cannot sample says why, in place of both figures.
+  ## Lay out "PGA share" section: share of busy samples in PGA and on each side of boundary.
+  ##   Build that cannot sample says why, in place of every figure.
   gui.separatorText wordingText(NameDiagnosticsShare)
   when not defined(linux):
     gui.textWrapped wordingText(NoteDiagnosticsShareLinux)
@@ -1134,6 +1134,8 @@ proc layoutDiagnosticsShare(panel: Panel) =
     let rows = [
       (Owner.Pga, NameDiagnosticsPga, TipDiagnosticsPga),
       (Owner.Algebra, NameDiagnosticsAlgebra, TipDiagnosticsAlgebra),
+      (Owner.Boundary, NameDiagnosticsBoundary, TipDiagnosticsBoundary),
+      (Owner.Euclidean, NameDiagnosticsEuclidean, TipDiagnosticsEuclidean),
     ]
     for (owner, name, tip) in rows:
       gui.textTinted(wordingText(name), INK_LABEL.red, INK_LABEL.green, INK_LABEL.blue)

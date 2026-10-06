@@ -2467,8 +2467,10 @@ proc runInteractive(
         &"(both this run's own CPU-side cost, not the rasterizer's)."
     let busy = COUNTS_SHARE_RUN.busy
     if busy > 0:
-      echo &"  PGA share {COUNTS_SHARE_RUN.percentOf(Owner.Pga):.1f}%, project " &
-          &"algebra {COUNTS_SHARE_RUN.percentOf(Owner.Algebra):.1f}%, of {busy} busy samples."
+      echo &"  PGA share {COUNTS_SHARE_RUN.percentOf(Owner.Pga):.1f}%, algebra " &
+          &"{COUNTS_SHARE_RUN.percentOf(Owner.Algebra):.1f}%, boundary " &
+          &"{COUNTS_SHARE_RUN.percentOf(Owner.Boundary):.1f}%, euclidean " &
+          &"{COUNTS_SHARE_RUN.percentOf(Owner.Euclidean):.1f}%, of {busy} busy samples."
     else:
       let reason = if IS_SAMPLER_BUILT: NoteDiagnosticsShareWaiting
         elif defined(linux): NoteDiagnosticsShareFrames

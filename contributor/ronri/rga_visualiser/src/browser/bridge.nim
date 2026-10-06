@@ -1087,17 +1087,18 @@ var RING_SHARE_PAGE = initRingShare()
 
 proc nimShareOwner(name: cstring): cint {.exportc.} = cint(ord(ownerOfName($name)))
   ## Name owner of one function profiler sampled, by name JS backend gave it; see `share`.
-  ##   As ordinal of `share.Owner`: 0 rest, 1 project algebra, 2 PGA.
+  ##   As ordinal of `share.Owner`: 0 rest, 1 PGA, 2 algebra, 3 boundary, 4 Euclidean.
 
-proc nimShareAdd(rest, algebra, pga: cint) {.exportc.} =
+proc nimShareAdd(rest, pga, algebra, boundary, euclidean: cint) {.exportc.} =
   ## Count one profiler window's busy samples by owner, into whole second it closed in.
   RING_SHARE_PAGE.add(
     int(nowMilliseconds() / 1000.0),
-    [Owner.Rest: int(rest), Owner.Algebra: int(algebra), Owner.Pga: int(pga)],
+    [Owner.Rest: int(rest), Owner.Pga: int(pga), Owner.Algebra: int(algebra),
+      Owner.Boundary: int(boundary), Owner.Euclidean: int(euclidean)],
   )
 
 proc nimSharePooled(): seq[cint] {.exportc.} =
-  ## Report busy samples pooled over `share.SECONDS_SHARE`, by owner: rest, algebra, PGA.
+  ## Report busy samples pooled over `share.SECONDS_SHARE`, in `share.Owner` order.
   let pooled = RING_SHARE_PAGE.pooled(int(nowMilliseconds() / 1000.0))
   for owner in Owner: result.add cint(pooled[owner])
 

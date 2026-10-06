@@ -1058,7 +1058,7 @@ function drawSparkline() {
 //   Each sample is stack of calls; bridge names owner of each function by name JS backend
 //   gave it, and pools counts over `share.SECONDS_SHARE`, as desktop's sampler is pooled.
 //   Busy samples alone count: sample with no stack is browser waiting or working outside
-//   page's script, which neither PGA nor project owns.
+//   page's script, which no side owns.
 //   Profiler exists in Chromium alone, and only on page whose own response carries
 //   `Document-Policy: js-profiling`; page opened from file is refused. There rows say why,
 //   rather than guess figure.
@@ -1078,10 +1078,16 @@ const MILLISECONDS_WINDOW_SHARE = 2000; // Span of one profiler, whose trace is 
 const MILLISECONDS_SAMPLE_SHARE = 10; // Interval asked of profiler; Chromium gives no finer.
 // Room for one window's samples at that interval, with margin for late stop.
 const SAMPLES_WINDOW_SHARE = 2 * MILLISECONDS_WINDOW_SHARE / MILLISECONDS_SAMPLE_SHARE;
-const diagnostic_share_pga = elementById('diagnostic-share-pga');
-const diagnostic_share_algebra = elementById('diagnostic-share-algebra');
-diagnostic_share_pga.parentElement!.title = nimWording(Wording.TipDiagnosticsPga);
-diagnostic_share_algebra.parentElement!.title = nimWording(Wording.TipDiagnosticsAlgebra);
+// Owners `share.Owner` names, rest first; each row below reads one by its ordinal.
+const OWNERS_SHARE = 5;
+// One row for each side, by its `share.Owner` ordinal: PGA, algebra, boundary, Euclidean.
+const rows_share = ([
+  [1, 'diagnostic-share-pga', Wording.TipDiagnosticsPga],
+  [2, 'diagnostic-share-algebra', Wording.TipDiagnosticsAlgebra],
+  [3, 'diagnostic-share-boundary', Wording.TipDiagnosticsBoundary],
+  [4, 'diagnostic-share-euclidean', Wording.TipDiagnosticsEuclidean],
+] as const).map(([owner, id, tip]) => ({ owner, element: elementById(id), tip }));
+for (const row of rows_share) row.element.parentElement!.title = nimWording(row.tip);
 let profiler_share: ProfilerShare | null = null; // Profiler sampling now, if any.
 let ms_profiler_share_opened = 0; // When it began, on page's clock.
 let reason_share: Wording | null = null; // Why page cannot sample, once known.
@@ -1089,9 +1095,9 @@ let reason_share: Wording | null = null; // Why page cannot sample, once known.
 //   Few hundred names recur in every trace, so each crosses into bridge once.
 const owner_by_name_share = new Map<string, number>();
 
-// Count one trace's busy samples by owner: rest, project algebra, PGA.
-//   Stack's owner is highest owner of any frame on it, as `share` rules.
-function countTraceShare(trace: TraceShare): [number, number, number] {
+// Count one trace's busy samples by owner, in `share.Owner` order.
+//   Stack's owner is owner of its innermost frame that has one, as `share` rules.
+function countTraceShare(trace: TraceShare): number[] {
   const owner_frame = trace.frames.map((frame) => {
     let owner = owner_by_name_share.get(frame.name);
     if (owner === undefined) {
@@ -1101,6 +1107,7 @@ function countTraceShare(trace: TraceShare): [number, number, number] {
     return owner;
   });
   // Stack's owner, filled from its parent's, walked up to first stack already known.
+  //   Frame with owner of its own decides; frame with none leaves its caller's.
   const owner_stack = new Int8Array(trace.stacks.length).fill(-1);
   const pending: number[] = [];
   function ownerOfStack(id: number): number {
@@ -1112,18 +1119,18 @@ function countTraceShare(trace: TraceShare): [number, number, number] {
     let owner = at === undefined ? 0 : owner_stack[at] ?? 0;
     while (pending.length > 0) {
       const next = pending.pop()!;
-      owner = Math.max(owner, owner_frame[trace.stacks[next]?.frameId ?? -1] ?? 0);
+      owner = owner_frame[trace.stacks[next]?.frameId ?? -1] || owner;
       owner_stack[next] = owner;
     }
     return owner;
   }
-  const counts = [0, 0, 0];
+  const counts = new Array<number>(OWNERS_SHARE).fill(0);
   for (const sample of trace.samples) {
     if (sample.stackId === undefined) continue;
     const owner = ownerOfStack(sample.stackId);
     counts[owner] = (counts[owner] ?? 0) + 1;
   }
-  return [counts[0] ?? 0, counts[1] ?? 0, counts[2] ?? 0];
+  return counts;
 }
 
 // Stop profiler sampling now, and count its trace once it arrives.
@@ -1132,8 +1139,8 @@ function closeProfilerShare() {
   const closing = profiler_share;
   profiler_share = null;
   void closing.stop().then((trace) => {
-    const [rest, algebra, pga] = countTraceShare(trace);
-    nimShareAdd(rest, algebra, pga);
+    const [rest, pga, algebra, boundary, euclidean] = countTraceShare(trace);
+    nimShareAdd(rest ?? 0, pga ?? 0, algebra ?? 0, boundary ?? 0, euclidean ?? 0);
   });
 }
 
@@ -1150,7 +1157,7 @@ function openProfilerShare() {
   }
 }
 
-// Keep profiler running while section is shown, turn it each window, and write both rows.
+// Keep profiler running while section is shown, turn it each window, and write every row.
 function tickShare(is_shown: boolean) {
   if (!is_shown) { closeProfilerShare(); return; }
   if (reason_share === null) {
@@ -1162,17 +1169,16 @@ function tickShare(is_shown: boolean) {
   }
   if (reason_share !== null) {
     const reason = nimWording(reason_share);
-    writeText(diagnostic_share_pga, reason);
-    writeText(diagnostic_share_algebra, reason);
+    for (const row of rows_share) writeText(row.element, reason);
     return;
   }
-  const [rest, algebra, pga] = nimSharePooled();
-  const busy = (rest ?? 0) + (algebra ?? 0) + (pga ?? 0);
-  const textOf = (count: number) => busy === 0
-    ? nimWording(Wording.NoteDiagnosticsShareWaiting)
-    : (100 * count / busy).toFixed(1) + '%, n ' + busy;
-  writeText(diagnostic_share_pga, textOf(pga ?? 0));
-  writeText(diagnostic_share_algebra, textOf(algebra ?? 0));
+  const pooled = nimSharePooled();
+  const busy = pooled.reduce((sum, count) => sum + count, 0);
+  for (const row of rows_share) {
+    writeText(row.element, busy === 0
+      ? nimWording(Wording.NoteDiagnosticsShareWaiting)
+      : (100 * (pooled[row.owner] ?? 0) / busy).toFixed(1) + '%, n ' + busy);
+  }
 }
 
 function refreshDiagnostics() {

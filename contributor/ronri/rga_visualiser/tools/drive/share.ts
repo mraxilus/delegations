@@ -39,10 +39,21 @@ interface NodeProfile {
   children?: number[];
 }
 
-/** Busy samples by owner, `share.Owner` order: rest, project algebra, PGA. */
-type CountsShare = [number, number, number];
+/** Busy samples by owner, `share.Owner` order: rest, PGA, algebra, boundary, Euclidean. */
+type CountsShare = number[];
 
-/** Count engine's busy samples by owner, each stack owned by highest owner on it. */
+/** Owners `share.Owner` names, rest first. */
+const OWNERS_SHARE = 5;
+
+/** Each side's row on page and its name in report, by `share.Owner` ordinal. */
+const SIDES_SHARE = [
+  { owner: 1, id: 'diagnostic-share-pga', name: 'PGA' },
+  { owner: 2, id: 'diagnostic-share-algebra', name: 'algebra' },
+  { owner: 3, id: 'diagnostic-share-boundary', name: 'boundary' },
+  { owner: 4, id: 'diagnostic-share-euclidean', name: 'Euclidean' },
+];
+
+/** Count engine's busy samples by owner, each stack owned by its innermost owned frame. */
 async function countEngine(
   page: Page, nodes: NodeProfile[], samples: number[],
 ): Promise<CountsShare> {
@@ -54,29 +65,27 @@ async function countEngine(
     (given) => given.map((name) => nimShareOwner(name)), names,
   );
   const owner_of_name = new Map(names.map((name, i) => [name, owners[i] ?? 0]));
-  const counts: CountsShare = [0, 0, 0];
+  const counts: CountsShare = new Array<number>(OWNERS_SHARE).fill(0);
   for (const id of samples) {
     const name = by_id.get(id)?.callFrame.functionName ?? '(idle)';
     if (NAMES_NOT_BUSY.has(name)) continue;
     let owner = 0;
-    for (let at: number | undefined = id; at !== undefined; at = parent.get(at)) {
-      owner = Math.max(owner, owner_of_name.get(by_id.get(at)?.callFrame.functionName ?? '') ?? 0);
+    for (let at: number | undefined = id; at !== undefined && owner === 0; at = parent.get(at)) {
+      owner = owner_of_name.get(by_id.get(at)?.callFrame.functionName ?? '') ?? 0;
     }
-    if (owner === 2) counts[2] += 1;
-    else if (owner === 1) counts[1] += 1;
-    else counts[0] += 1;
+    counts[owner] = (counts[owner] ?? 0) + 1;
   }
   return counts;
 }
 
 /** Report one owner's share on both profilers, and whether they agree within sampling error. */
 function reportAgreed(
-  name: string, owner: 1 | 2, page_counts: CountsShare, engine_counts: CountsShare,
+  name: string, owner: number, page_counts: CountsShare, engine_counts: CountsShare,
 ): void {
-  const busy_page = page_counts[0] + page_counts[1] + page_counts[2];
-  const busy_engine = engine_counts[0] + engine_counts[1] + engine_counts[2];
-  const share_page = 100 * page_counts[owner] / Math.max(busy_page, 1);
-  const share_engine = 100 * engine_counts[owner] / Math.max(busy_engine, 1);
+  const busy_page = page_counts.reduce((sum, count) => sum + count, 0);
+  const busy_engine = engine_counts.reduce((sum, count) => sum + count, 0);
+  const share_page = 100 * (page_counts[owner] ?? 0) / Math.max(busy_page, 1);
+  const share_engine = 100 * (engine_counts[owner] ?? 0) / Math.max(busy_engine, 1);
   const p = share_engine / 100;
   const error = 100 * Math.sqrt(p * (1 - p) * (1 / Math.max(busy_page, 1) + 1 / busy_engine));
   const bound = ERRORS_SHARE_AGREED * error + POINTS_SHARE_BIAS;
@@ -87,7 +96,7 @@ function reportAgreed(
   );
 }
 
-/** Assert page served without policy says why it cannot sample, in both rows.
+/** Assert page served without policy says why it cannot sample, in every row.
  *
  *  Domain: page opened from file, as reader opens downloaded copy; browser has profiler,
  *  and refuses it to that page.
@@ -99,10 +108,10 @@ export async function driveShareRefused(page: Page): Promise<void> {
     (given) => document.getElementById('diagnostic-share-pga')?.textContent === given,
     reason,
   ).catch(() => undefined);
-  const rows = await page.evaluate(() => [
-    document.getElementById('diagnostic-share-pga')?.textContent ?? '',
-    document.getElementById('diagnostic-share-algebra')?.textContent ?? '',
-  ]);
+  const rows = await page.evaluate(
+    (ids) => ids.map((id) => document.getElementById(id)?.textContent ?? ''),
+    SIDES_SHARE.map((side) => side.id),
+  );
   report(
     'the page says why it cannot sample its PGA share, where the browser refuses',
     rows.every((row) => row === reason), rows.join(' | '),
@@ -110,7 +119,7 @@ export async function driveShareRefused(page: Page): Promise<void> {
   await closeDiagnostics(page, was);
 }
 
-/** Assert page's PGA share, and its project algebra's, agree with engine's profiler.
+/** Assert page's share on each side, PGA's first, agrees with engine's profiler.
  *
  *  Page given here must be served with `Document-Policy: js-profiling`. Largest demo, every
  *  object placed every frame, nothing selected: steady load, so one span of each profiler
@@ -132,7 +141,8 @@ export async function driveShareAgrees(page: Page): Promise<void> {
   );
   const { profile } = await engine.send('Profiler.stop');
   const pooled = await page.evaluate(() => nimSharePooled());
-  const page_counts: CountsShare = [pooled[0] ?? 0, pooled[1] ?? 0, pooled[2] ?? 0];
+  const page_counts: CountsShare =
+    Array.from({ length: OWNERS_SHARE }, (_, owner) => pooled[owner] ?? 0);
   const engine_counts = await countEngine(
     page, profile.nodes as NodeProfile[], profile.samples ?? [],
   );
@@ -141,16 +151,14 @@ export async function driveShareAgrees(page: Page): Promise<void> {
   );
   report(
     'the page samples its PGA share where the browser allows it',
-    /^\d+\.\d%, n \d+$/.test(row) && page_counts[0] + page_counts[1] + page_counts[2] >= 100,
+    /^\d+\.\d%, n \d+$/.test(row) && page_counts.reduce((sum, count) => sum + count, 0) >= 100,
     `${row}, pooled ${page_counts.join(' ')}`,
   );
-  reportAgreed(
-    'the page\'s PGA share agrees with the engine\'s own profiler', 2, page_counts,
-    engine_counts,
-  );
-  reportAgreed(
-    'the page\'s project algebra share agrees with the engine\'s own profiler', 1,
-    page_counts, engine_counts,
-  );
+  for (const side of SIDES_SHARE) {
+    reportAgreed(
+      `the page's ${side.name} share agrees with the engine's own profiler`, side.owner,
+      page_counts, engine_counts,
+    );
+  }
   await engine.detach();
 }
