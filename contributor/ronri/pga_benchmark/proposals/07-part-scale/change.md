@@ -2,10 +2,12 @@
 
 With P06, `=~` weighs the difference of each coefficient against max(1, |x|, |y|) of that
 coefficient alone, and `grade` counts a coefficient at or under the tolerance as zero. This
-change weighs each difference against the largest magnitude of its part, bulk or weight, in
-either multivector. A conformal algebra splits each part into round and flat. `grade` counts a
-coefficient as zero under the same bound. The scalar comparison goes, since `m =~ s` now
-compares with the scalar multivector of s.
+change weighs each difference against the largest magnitude of its part in either multivector.
+The parts are those of `CAYLEYS_PARTS`, which bulk and weight extraction read: bulk and weight,
+each round and flat in a conformal algebra. Both loops walk the fields of `CAYLEYS_PARTS`, so a
+rigid build holds no flat part. A macro spells the bases of a part, so each loop reads that part
+alone. `grade` counts a coefficient as zero under the same bound. The scalar comparison goes,
+since `m =~ s` now compares with the scalar multivector of s.
 
 ## Edit `pga/multivectors.nim`
 
@@ -49,53 +51,28 @@ func `=~`*(m, n: Multivector): bool =
 ```
 
 ```nim
-type Part {.pure.} = enum
-  ## Define part of multivector that bulk and weight extraction keeps each basis in.
-  BulkRound, WeightRound, BulkFlat, WeightFlat
-
-const PARTS: array[Basis, Part] = block:
-  ## Map each basis to its part, so comparison weighs it against scale of that part alone.
-  var parts: array[Basis, Part]
+macro bases(part: static Cayley1D): untyped =
+  ## Spell bases that part holds as array literal, so loop over it unrolls.
+  result = nnkBracket.newTree()
   for b in Basis:
-    parts[b] =
-      when IS_CONFORMAL:
-        if CAYLEYS_PARTS.bulk.flat[b].len > 0: Part.BulkFlat
-        elif CAYLEYS_PARTS.weight.flat[b].len > 0: Part.WeightFlat
-        elif CAYLEYS_PARTS.bulk.round[b].len > 0: Part.BulkRound
-        else: Part.WeightRound
-      else:
-        if CAYLEYS_PARTS.bulk.round[b].len > 0: Part.BulkRound else: Part.WeightRound
-  parts
+    if part[b].len > 0: result.add newLit(b)
 
 
-macro scaleOf(m: Multivector, part: static Part): Coefficient =
-  ## Spell largest magnitude in part of multivector, and at least one, as one chain of `max`.
-  result = newCall(ident"Coefficient", newLit(1))
-  for b in Basis:
-    if PARTS[b] == part:
-      let coefficient = nnkBracketExpr.newTree(m, newLit(b))
-      result = newCall(ident"max", result, newCall(ident"abs", coefficient))
-
-
-func scale(m: Multivector, part: Part): Coefficient =
+func scale(m: Multivector, part: static Cayley1D): Coefficient =
   ## Get largest magnitude in part of multivector, and at least one.
-  case part
-  of Part.BulkRound: m.scaleOf(Part.BulkRound)
-  of Part.WeightRound: m.scaleOf(Part.WeightRound)
-  of Part.BulkFlat: m.scaleOf(Part.BulkFlat)
-  of Part.WeightFlat: m.scaleOf(Part.WeightFlat)
+  result = 1
+  for b in part.bases: result = max(result, abs(m[b]))
 
 
 func `=~`*(m, n: Multivector): bool =
   ## Compare approximate equality between multivectors, i.e. 𝐦 ≈ 𝐧.
-  ##   Weigh each difference against largest magnitude of its part, bulk or weight, in either.
-  ##   Bound of own coefficient is never above it, so pass that first and read part only after.
-  var scales: array[Part, Coefficient]  # Zero until read.
-  for b in Basis:
-    let difference = abs(m[b] - n[b])
-    if difference <= TOLERANCE_ABS * max(1, max(abs(m[b]), abs(n[b]))): continue
-    if scales[PARTS[b]] == 0: scales[PARTS[b]] = max(m.scale(PARTS[b]), n.scale(PARTS[b]))
-    if difference > TOLERANCE_ABS * scales[PARTS[b]]: return false
+  ##   Weigh each difference against largest magnitude of its part in either, as
+  ##   `CAYLEYS_PARTS` splits parts.
+  for forms in CAYLEYS_PARTS.fields:
+    for part in forms.fields:
+      let bound = TOLERANCE_ABS * max(m.scale(part), n.scale(part))
+      for b in part.bases:
+        if abs(m[b] - n[b]) > bound: return false
   true
 
 
@@ -116,16 +93,26 @@ template `=~`*(s: Coefficient, m: Multivector): bool =
   var found_grade = false
   for b in Basis:
     if abs(m[b]) <= TOLERANCE_ABS: continue
+
+    if result.isNone:
+      found_grade = true
+      result = some(b.grade)
+    elif result.get != b.grade:  # Detect mixed grade.
+      return none[Grade]()
 ```
 
 ```nim
   ## Get grade of multivector, if k-vector.
   ##   Count coefficient as zero within tolerance of largest magnitude of its part.
-  var
-    scales: array[Part, Coefficient]  # Zero until read.
-    found_grade = false
-  for b in Basis:
-    if abs(m[b]) <= TOLERANCE_ABS: continue
-    if scales[PARTS[b]] == 0: scales[PARTS[b]] = m.scale(PARTS[b])
-    if abs(m[b]) <= TOLERANCE_ABS * scales[PARTS[b]]: continue
+  var found_grade = false
+  for forms in CAYLEYS_PARTS.fields:
+    for part in forms.fields:
+      let bound = TOLERANCE_ABS * m.scale(part)
+      for b in part.bases:
+        if abs(m[b]) <= bound: discard  # Count as zero; `fields` loop refuses `continue`.
+        elif result.isNone:
+          found_grade = true
+          result = some(b.grade)
+        elif result.get != b.grade:  # Detect mixed grade.
+          return none[Grade]()
 ```

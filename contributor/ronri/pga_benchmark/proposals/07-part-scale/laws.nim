@@ -15,7 +15,7 @@
 
 when compileOption("profiler"): import std/nimprof
 
-import std/[math, options, random, strformat, strutils]
+import std/[math, options, random, strformat]
 
 import pga
 
@@ -35,11 +35,6 @@ func moved(x, motor: Multivector): Multivector =
   (motor ⟇ x) ⟇ ~∘motor
 
 
-func isWeight(basis: Basis): bool =
-  ## Tell whether basis holds origin, so belongs to weight of rigid object.
-  $DIMENSIONS in $basis
-
-
 func noiseNow(a, b: Multivector): float =
   ## Weigh largest difference against max(1, |x|, |y|) of its own coefficient, as pin does.
   for basis in Basis:
@@ -48,14 +43,11 @@ func noiseNow(a, b: Multivector): float =
 
 
 func noisePart(a, b: Multivector): float =
-  ## Weigh largest difference against largest magnitude of its part in either object.
-  var bulk, weight = 1.0
-  for basis in Basis:
-    let size = max(abs(float(a[basis])), abs(float(b[basis])))
-    if basis.isWeight: weight = max(weight, size) else: bulk = max(bulk, size)
-  for basis in Basis:
-    let difference = abs(float(a[basis]) - float(b[basis]))
-    result = max(result, difference / (if basis.isWeight: weight else: bulk))
+  ## Weigh largest difference against largest magnitude of its part, bulk or weight, in either.
+  for (x, y) in [(∙a, ∙b), (∘a, ∘b)]:
+    var scale = 1.0
+    for basis in Basis: scale = max(scale, max(abs(float(x[basis])), abs(float(y[basis]))))
+    for basis in Basis: result = max(result, abs(float(x[basis]) - float(y[basis])) / scale)
 
 
 func isPointNow(m: Multivector): bool =

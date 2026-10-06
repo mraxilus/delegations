@@ -13,19 +13,19 @@ objects too.
 
 ## What it is
 
-- **Parts.** `PARTS` maps each basis to its part at compile time, as `CAYLEYS_PARTS` keeps it. A
-  rigid algebra has bulk and weight. A conformal algebra has round bulk, round weight, flat bulk
-  and flat weight. The scale of a part is its largest magnitude, and at least one. A macro spells
-  it as one chain of `max` over the bases of that part alone.
-- **Comparison.** `=~` passes each difference within the bound of its own coefficient first, as
-  at pin. Only a difference past that bound reads the scale of its part in both objects, once a
-  part, and fails past the tolerance times that scale.
+- **Parts.** The parts are those of `CAYLEYS_PARTS`, which the bulk and weight extractors read. A
+  rigid algebra has bulk and weight. A conformal algebra splits each into round and flat. The
+  comparison walks the fields of `CAYLEYS_PARTS`, so it adds no type or table of its own.
+- **Scale.** The scale of a part is its largest magnitude, and at least one. A macro spells the
+  bases of a part as an array, so a loop over it reads that part alone and unrolls.
+- **Comparison.** `=~` takes each part in turn. It fails when a difference in that part is past
+  the tolerance times the larger scale of that part in the two objects.
 - **Scalar comparison.** `m =~ s` compares m with the scalar multivector of s, so one rule holds.
-- **Grade.** `grade` counts a coefficient as zero at or under the tolerance, or at or under the
-  tolerance times the scale of its part.
+- **Grade.** `grade` counts a coefficient as zero at or under the tolerance times the scale of its
+  part.
 
-The scale of a part is never under the magnitude of one of its coefficients. So every pair equal
-at pin stays equal, and every coefficient zero at pin stays zero.
+The scale of a part is never under one, nor under the magnitude of one of its coefficients. So
+every pair equal at pin stays equal, and every coefficient zero at pin stays zero.
 
 ## What it gains
 
@@ -78,24 +78,26 @@ is the median of 41 rounds over 1024 pairs, in nanoseconds per pair, on one core
 
 | Case | Pin, 64 | Part, 64 | Pin, 32 | Part, 32 |
 |------|---------|----------|---------|----------|
-| Equal pair | 58.2 | 65.1 | 57.2 | 64.2 |
-| Pair that differs in its scalar | 3.1 | 19.6 | 2.3 | 18.3 |
-| Point 1000 units out, beside one with a stray | 18.3 | 39.6 | 17.1 | 41.4 |
-| `grade` of mixed multivector | 2.2 | 12.6 | 2.2 | 12.7 |
-| `grade` of point 1000 units out | 7.2 | 38.7 | 7.3 | 38.8 |
+| Equal pair | 55.8 | 37.4 | 53.1 | 37.4 |
+| Pair that differs in its scalar | 2.1 | 17.9 | 3.5 | 18.0 |
+| Point 1000 units out, beside one with a stray | 18.7 | 37.3 | 19.3 | 37.3 |
+| `grade` of mixed multivector | 2.7 | 6.6 | 2.8 | 7.5 |
+| `grade` of point 1000 units out | 7.9 | 21.0 | 8.1 | 21.8 |
 
-Two later runs give ratios within a fifth of these. An equal pair costs about a tenth more, since
-every difference passes the bound of its own coefficient. An unequal pair, or a coefficient past
-that bound, costs one read of its part in both objects. At pin the pair with a stray is unequal,
-and the comparison stops there. `grade` reads each part that holds a coefficient past the
-tolerance, so a point costs about 31 ns more.
+Two later runs give ratios within a fifth of these. An equal pair costs about a third less than at
+pin. Pin takes max(1, |x|, |y|) and a product for each coefficient, and this rule takes one bound
+for each part. An unequal pair reads the scale of its first part in both objects before it stops.
+At pin the pair with a stray is unequal, and the comparison stops there. `grade` reads the scale
+of each part, so a point costs about 13 ns more.
 
 At cga5d each part holds 8 of 32 bases. By hand on one core, over blades of grades one to four,
-`grade` took 18 to 36 ns at pin and 48 to 104 ns here. The partner `⊛` calls `grade` for its
-sign, so the evaluation moves it at cga4d and cga5d. It times the partner at ×1.15 to ×1.33 of
-pin at cga5d, and at ×1.23 to ×1.32 at cga4d, over its kinds of operand. P03 folds that sign into
-the first table of the partner, so with P03 the partner calls no `grade`. A loop over every basis
-for each part cost twice the chain of `max` for `grade`, so the scale of each part is that chain.
+the median of three runs of `grade` took 20 to 23 ns at pin and 44 to 56 ns here. At cga4d it took
+14 to 19 ns at pin and 18 to 25 ns here. The partner `⊛` calls `grade` for its sign, so the
+evaluation moves it at cga4d and cga5d. It times the partner at ×1.06 to ×1.20 of pin at cga5d, and
+at ×1.07 to ×1.10 at cga4d, over its kinds of operand. P03 folds that sign into the first table of
+the partner, so with P03 the partner calls no `grade`. A loop over every basis that tests the part
+of each cost two to three times as much as a loop over the bases of a part alone. So a macro
+spells those bases.
 
 These costs fall on the dense `Multivector` alone. A typed object knows its grade from its type
 when it compiles, so `grade` costs nothing there under either rule. It knows its parts too, so the
