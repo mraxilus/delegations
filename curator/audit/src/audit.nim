@@ -207,12 +207,14 @@ proc auditTree*(tree: Tree): seq[Finding] =
           "TypeScript); got none.",
       )
 
-  # Names: every Nim file is held to words glossaries admit, root and its own project; binding
-  #   of entry block is entry block's rule.
+  # Names: every Nim file is held to words glossaries admit, root and its own project, acronyms
+  #   among them, which knoller reads no glossary for; binding of entry block is its own rule.
   for e in tree:
     if e.kind.isNone or e.kind.get notin [Kind.Nim, Kind.NimScript, Kind.Nimble]: continue
-    let names = checkNames(e.path, e.content, glossaries.exemptionsOf(e.path))
-    result.add findingsOf(names & checkBlockEntry(e.path, e.content))
+    let exempt = glossaries.exemptionsOf(e.path)
+    result.add findingsOf(checkNames(e.path, e.content, exempt))
+    result.add findingsOf(checkBlockEntry(e.path, e.content))
+    result.add checkAcronyms(e.path, e.content, exempt)
 
   # Fixed waits: drive code of every project, checker's own included, since its suite holds
   #   names as strings, which Nim source is read without.

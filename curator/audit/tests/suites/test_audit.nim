@@ -71,6 +71,32 @@ suite "Audit":
     ]  # test rules of any Nim code read script under `tests/` too
 
 
+  test "acronym check reads glossary of root and of project, in each kind of Nim":
+    # Domain: acronym root glossary lists, acronym project glossary lists, and acronym neither
+    #   lists, in module, script and package. V.9 is audit's, since knoller reads no glossary.
+    let
+      heading = "## Standards\n"
+      root = GLOSSARY_TEXT.replace(heading, heading & "\n- **Acronyms**, Architect: `JSON`.\n")
+      project = GLOSSARY_TEXT.replace(heading, heading & "\n- **Graphics**, Khronos: `GL`.\n")
+      source = "func toJSON*() = discard\nfunc toGL*() = discard\nfunc toXML*() = discard\n"
+      module = ALPHA_DIRECTORY & "/src/a.nim"
+      script = ALPHA_DIRECTORY & "/config.nims"
+      nimble = ALPHA_DIRECTORY & "/alpha.nimble"
+      listed = goodTree().replaced("GLOSSARY.md", root).replaced(
+        ALPHA_DIRECTORY & "/GLOSSARY.md",
+        project,
+      )
+    for (tree, path) in [
+      (listed.with(entry(module, STRICT_FUNCS & "\n\n" & source)), module),
+      (listed.with(entry(script, source)), script),
+      (listed.replaced(nimble, NIMBLE_TEXT & source), nimble),
+    ]:
+      check tree.auditTree.mapIt((it.path, it.message)) ==
+          @[(path, "Acronym stays only where glossary lists it (V.9); got `XML` in `toXML`.")]
+    let unlisted = goodTree().with(entry(module, STRICT_FUNCS & "\n\n" & source))
+    check unlisted.auditTree.mapIt(it.message).filterIt("Acronym" in it).len == 3  # none listed
+
+
   test "form and prose findings reach umbrella":
     let messy =
       goodTree() & @[entry(ALPHA_DIRECTORY & "/src/x.nim", "# the trap \n\n" & STRICT_FUNCS & "\n")]

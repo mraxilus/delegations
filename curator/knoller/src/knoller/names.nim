@@ -1,16 +1,17 @@
-## Enforce declared names (Article III.5, V.1, V.3-V.6, V.9, V.11, V.12; V.10 globals), from text
-##   of one file.
+## Enforce declared names (Article III.5, V.1, V.3-V.6, V.11, V.12; V.10 globals), from text of
+##   one file.
 ##   Reads declarations alone, as `declared.nim` reads them: binding, routine, type, field,
 ##     parameter, enum member and placeholder. Name library owns reaches code only at use site,
-##     which is never read, so library clause of V.9 holds by construction. Foreign binding
-##     declares library's own name and is skipped for same reason; its parameters are ours.
-##   Word is run between `_` and case changes; acronym is run of two or more capitals inside
-##     camel or Pascal name. SCREAMING name is all capitals, so its acronyms cannot be told
-##     from words and hold by reading.
+##     which is never read. Foreign binding declares library's own name, so it is skipped; its
+##     parameters are ours.
+##   Word is run between `_` and case changes.
 ##   Table `ABBREVIATIONS` gives each banned word its one replacement; word outside table
 ##     passes, and reading catches rest. `JARGON` is closed list of V.6. Words name may take
 ##     beyond them are caller's (`exempt`): `curator/audit` reads them from its glossaries
 ##     (`glossaryExemptions` there), and command line passes none.
+##   V.9 is no rule here: acronym stays only where glossary lists it, and glossary belongs to
+##     repository, so knoller, which runs on any repository, reads none. `curator/audit` checks
+##     acronyms (`checkAcronyms` there), from words of its glossaries (D2 of #572).
 ##   V.1, V.11, V.12: case follows kind. Type and enum member are Pascal, routine camel, local,
 ##     parameter and field snake, global SCREAMING, placeholder one capital. Pascal opens on
 ##     capital, camel and snake on none; Pascal and camel hold no `_`, snake no capital,
@@ -42,9 +43,9 @@
 ##   Cost: boolean is read only where declaration shows it: type `bool`, or value literal
 ##     `true` or `false`. Boolean from call or expression holds by reading.
 ##   Cost: `in` calls `contains` by spelling, so predicate of that name keeps host's name.
-##   Cost: Pascal name of capitals alone, e.g. `ANTI`, reads as acronym and passes; V.9 and
-##     reading hold it. Letter outside `std/unicode` case tables and mathematical block carries
-##     no case, so it fits every casing.
+##   Cost: Pascal name of capitals alone, e.g. `ANTI`, passes case of type; reading holds it.
+##     Letter outside `std/unicode` case tables and mathematical block carries no case, so it
+##     fits every casing.
 ##   Cost: word table is short list; `english.nim` of `curator/audit` pays same cost.
 
 {.experimental: "strictFuncs".}
@@ -195,26 +196,10 @@ func isMiscased*(d: Declared): bool =
   not d.name.isCased(d.casingOf)
 
 
-func acronyms*(name: string): seq[string] =
-  ## Read runs of two or more capitals, digits attached, inside camel or Pascal name.
-  if name.isCased(Casing.Screaming) or '_' in name: return
-  var run = ""
-  let text = name & " "
-  for k in 0 ..< text.len - 1:
-    let
-      c = text[k]
-      opens_word = c in {'A'..'Z'} and text[k+1] in {'a'..'z'}
-    if (c in {'A'..'Z'} and not opens_word) or (run.len > 0 and c in {'0'..'9'}): run.add c
-    else:
-      if run.count({'A'..'Z'}) >= 2: result.add run
-      run = ""
-  if run.count({'A'..'Z'}) >= 2: result.add run
-
-
 func checkNames*(path, source: string; exempt: openArray[string]): seq[Report] =
-  ## Report declared name that coins abbreviation, carries acronym `exempt` does not list,
-  ##   opens routine with banned verb, misnames lookup table or boolean, breaks case of its
-  ##   kind, or shares its word with type as global; binding of entry block is entry block's.
+  ## Report declared name that coins abbreviation `exempt` does not list, opens routine with
+  ##   banned verb, misnames lookup table or boolean, breaks case of its kind, or shares its word
+  ##   with type as global; binding of entry block is entry block's. Acronym is caller's (V.9).
   let
     lower_exempt = exempt.mapIt(it.toLowerAscii)
     declared = source.declarations
@@ -231,14 +216,6 @@ func checkNames*(path, source: string; exempt: openArray[string]): seq[Report] =
         d.line,
         Rule.Abbreviation,
         "Name coins abbreviation; write `" & full & "`; got `" & d.name & "`.",
-      )
-    for a in d.name.acronyms:
-      if a.toLowerAscii in lower_exempt: continue
-      result.add initReport(
-        path,
-        d.line,
-        Rule.Acronym,
-        "Acronym stays only where glossary lists it; got `" & a & "` in `" & d.name & "`.",
       )
     if d.kind == NameKind.Routine and parts.len > 1 and parts[0] in VERBS_BANNED:
       result.add initReport(

@@ -163,7 +163,7 @@ suite "Command line":
     # Case held: `knoller --check` ran idiom checks of static pass on file holding fence alone
     #   (`chain.nim`, `heldOf` against `checkFormatting`), and checks of form, articles, entry
     #   block, names and waits never, so it exited 0 on each source below (#557); domain is each
-    #   rule static pass of `curator/audit` reads that fixers can leave, as fixers leave it.
+    #   rule of knoller static pass of `curator/audit` reads that fixers can leave, as left.
     #   Rule fixers always clear (trailing whitespace, banners, `strictFuncs`, stub keys) is none.
     let module = "{.experimental: \"strictFuncs\".}\n\n"
     for (path, source, rule) in [
@@ -181,7 +181,6 @@ suite "Command line":
       ("tests/suites/test_a.nim", module & "echo x\n", Rule.DebugOutput),
       ("tests/suites/test_a.nim", module & "sleep(1)\n", Rule.FixedWait),
       ("a.nim", module & "proc f(ctx: int) = discard\n", Rule.Abbreviation),
-      ("a.nim", module & "func toJSON() = discard\n", Rule.Acronym),
       ("a.nim", module & "proc f(quiet: bool) = discard\n", Rule.BooleanName),
       ("a.nim", module & "const LUT_GRADE = 1\n", Rule.LookupTable),
       ("a.nim", module & "type basis_digits = int\n", Rule.NameCase),
@@ -200,6 +199,21 @@ suite "Command line":
     let fenced = outcomeOf([("a.nims", "#!fix off\nlet a = 1 \n#!fix on\n")], [], is_check = true)
     check fenced.lines.anyIt("inside them trailing-whitespace breaks once at line 2" in it)
     check fenced.code == 1  # fence keeps line from fixer, never from finding
+
+
+  test "check reads no glossary, so acronym in name of another repository passes":
+    # Domain: acronym in camel and Pascal names, in each dialect, as library of `replications`
+    #   spells them, beside use of `parseJson`. V.9 needs glossary, which belongs to repository
+    #   (D2 of #572).
+    let source =
+        "import std/json\n\nfunc toJSON*(text: string): JsonNode = parseJson(text)\n" &
+        "type GLContext* = object\n"
+    for path in ["a.nim", "a.nims", "a.nimble"]:
+      let
+        given = if path.endsWith(".nim"): "{.experimental: \"strictFuncs\".}\n\n" & source
+          else: source
+        outcome = outcomeOf([(path, given)], [], is_check = true)
+      check outcome.lines == @["0 to fix."] and outcome.code == 0
 
 
   test "each fence prints as warning naming what breaks inside it, and changes no exit code":

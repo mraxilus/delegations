@@ -26,9 +26,10 @@ knoller [--check] [--nim:path] path...
   and fails the run. A fence keeps its lines from the fixers, and from the checks of layout that
   `koch fix` clears, with `not-over-binary`. It never keeps them from a check that the static pass
   of `koch` reads, such as width, names or idioms.
-- The names check takes no word as exempt beyond the jargon of V.6. A caller such as `koch` adds
-  the words that its glossaries list. The check of fixed waits reads each file under a directory
-  `tests` or `tools`, at any depth.
+- Knoller reads no glossary, since a glossary belongs to a repository. So it runs no rule that
+  needs one, and the acronym rule of V.9 stays with `koch`. The names check takes no word as exempt
+  beyond the jargon of V.6. A caller such as `koch` adds the words that its glossaries list.
+- The check of fixed waits reads each file under a directory `tests` or `tools`, at any depth.
 - Knoller passes over a nimble file whose copy `atlas.lock` holds, because a rewrite would leave
   that copy stale.
 - A group of needless parentheses goes only where the parser of the compiler reads the same tree
@@ -104,7 +105,6 @@ the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, 
 | `banner-spacing` | The blank lines beside a banner follow its tier. |
 | `entry-block` | An entry block holds no binding, so its body moves into `proc main`. |
 | `abbreviation` | A name coins no abbreviation, and its full word stands. |
-| `acronym` | An acronym in a name stays only where a glossary lists it. |
 | `action-verb` | An action is an imperative verb, and a property is the bare noun. |
 | `boolean-name` | A boolean opens `is_`, `as_`, `should_`, `found_` or `has_`, a predicate `is`. |
 | `lookup-table` | A lookup table reads `lut_<value>_by_<key>`. |

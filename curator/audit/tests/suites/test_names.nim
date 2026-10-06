@@ -2,6 +2,7 @@
 ##   admit; and renames that names check asks of `koch fix`.
 ##   Check itself is knoller's, and its cases are held in `curator/knoller/tests/suites/
 ##     test_names.nim`; here each rule renders through `findingsOf`, as static pass prints it.
+##   Acronym check (V.9) is audit's, since it reads glossaries, so its cases are held here.
 
 {.experimental: "strictFuncs".}
 
@@ -27,14 +28,22 @@ proc Construct_table(Count: int) =
 
 
 func breaches(source: string, exempt: seq[string] = @[]): seq[string] =
-  ## Read each message static pass prints for names of source: names check, then entry block.
-  findingsOf(checkNames("x.nim", source, exempt) & checkBlockEntry("x.nim", source)).mapIt(
-    it.message,
-  )
+  ## Read each message static pass prints for names of source: names check, entry block, then
+  ##   acronyms.
+  let found = findingsOf(checkNames("x.nim", source, exempt) & checkBlockEntry("x.nim", source))
+  (found & checkAcronyms("x.nim", source, exempt)).mapIt(it.message)
 
 
 
 suite "Names":
+  test "acronyms are capital runs inside camel or Pascal names":
+    check "toJSON".acronyms == @["JSON"]
+    check "SDL3Window".acronyms == @["SDL3"]
+    check "Chiral".acronyms.len == 0 and "isMixed".acronyms.len == 0
+    check "DIRECTORY_SDL3".acronyms.len == 0  # screaming holds by reading
+    check "rga_visualiser".acronyms.len == 0
+
+
   test "glossary gives exemptions from standards spans and terms":
     const glossary = "# d\n\n## Standards\n\n- **SI**, BIPM, 9th: `s` and `m` (Table 2), so " &
         "`ms`.\n- **Acronyms**, Architect: `3D`, `JSON` and `fps`.\n\n## Language\n\n" &

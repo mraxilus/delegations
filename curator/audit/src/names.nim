@@ -1,7 +1,13 @@
-## Read words names may take from glossaries, and plan renames that names check of knoller asks
-##   (Article V.1, V.6, V.11; GUIDE.md, Names).
+## Read words names may take from glossaries, check acronyms against them, and plan renames that
+##   names check of knoller asks (Article V.1, V.6, V.9, V.11; GUIDE.md, Names).
 ##   Check is knoller's (`names.nim` there, `checkNames`), whose rules read one file alone; this
-##     module holds what reads more: words glossaries admit, and renames each use of name needs.
+##     module holds what reads more: words glossaries admit, acronyms they list, and renames each
+##     use of name needs.
+##   V.9: acronym, i.e. run of two or more capitals inside camel or Pascal name, stays only where
+##     glossary lists it (`checkAcronyms`). Glossary belongs to this repository, and knoller runs
+##     on any, so check is here (D2 of #572). SCREAMING name is all capitals, so its acronyms
+##     cannot be told from words and hold by reading. Declarations alone are read, so name library
+##     owns, which reaches code only at use site, passes by construction.
 ##   `JARGON` is closed list of V.6. Caller adds symbols glossaries list under `## Standards` as
 ##     code spans, and their `**Term**` names, through `glossaryExemptions`; `exemptionsOf`
 ##     reads root glossary and glossary of path's own project, and static pass gives them to
@@ -28,7 +34,7 @@
 
 import std/[sequtils, strutils]
 import ../../knoller/src/knoller
-import ./glossary
+import ./[findings, glossary]
 
 
 type RenameCase* = object
@@ -68,6 +74,35 @@ func exemptionsOf*(glossaries: openArray[(string, string)], path: string): seq[s
     let directory = glossary[0 ..< glossary.len - ROOT_GLOSSARY.len]
     if glossary == ROOT_GLOSSARY or path.startsWith(directory):
       result.add source.glossaryExemptions
+
+
+func acronyms*(name: string): seq[string] =
+  ## Read runs of two or more capitals, digits attached, inside camel or Pascal name.
+  if name.isCased(Casing.Screaming) or '_' in name: return
+  var run = ""
+  let text = name & " "
+  for k in 0 ..< text.len - 1:
+    let
+      c = text[k]
+      opens_word = c in {'A'..'Z'} and text[k+1] in {'a'..'z'}
+    if (c in {'A'..'Z'} and not opens_word) or (run.len > 0 and c in {'0'..'9'}): run.add c
+    else:
+      if run.count({'A'..'Z'}) >= 2: result.add run
+      run = ""
+  if run.count({'A'..'Z'}) >= 2: result.add run
+
+
+func checkAcronyms*(path, source: string; exempt: openArray[string]): seq[Finding] =
+  ## Report each acronym of declared name that `exempt` does not list (V.9), case aside.
+  let lower_exempt = exempt.mapIt(it.toLowerAscii)
+  for d in source.declarations:
+    for a in d.name.acronyms:
+      if a.toLowerAscii in lower_exempt: continue
+      result.add finding(
+        path,
+        d.line,
+        "Acronym stays only where glossary lists it (V.9); got `" & a & "` in `" & d.name & "`.",
+      )
 
 
 func abbreviationRenames*(

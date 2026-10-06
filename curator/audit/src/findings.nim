@@ -45,7 +45,6 @@ const CITATIONS*: array[Rule, string] = [
   Rule.BannerSpacing: "X.2",
   Rule.EntryBlock: "V.10",
   Rule.Abbreviation: "V.6",
-  Rule.Acronym: "V.9",
   Rule.ActionVerb: "V.3",
   Rule.BooleanName: "V.4",
   Rule.LookupTable: "V.5",

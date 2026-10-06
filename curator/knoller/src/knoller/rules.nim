@@ -26,7 +26,6 @@ type Rule* {.pure.} = enum  ## Define one rule knoller fixes or reports, in orde
   BannerSpacing = "banner spacing"  ## Blank lines beside banner follow its tier.
   EntryBlock = "entry block"  ## Entry block holds no binding; body moves into `proc main`.
   Abbreviation = "abbreviation"  ## Name coins no abbreviation; its full word stands.
-  Acronym = "acronym"  ## Acronym in name stays only where glossary lists it.
   ActionVerb = "action verb"  ## Action is imperative verb, and property is bare noun.
   BooleanName = "boolean name"  ## Boolean opens `is_` or its siblings; predicate opens `is`.
   LookupTable = "lookup table"  ## Lookup table reads `lut_<value>_by_<key>`.

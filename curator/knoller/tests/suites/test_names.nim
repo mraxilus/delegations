@@ -148,16 +148,8 @@ suite "Names":
     check "DIRECTORY_SDL3".words == @["DIRECTORY", "SDL3"]
 
 
-  test "acronyms are capital runs inside camel or Pascal names":
-    check "toJSON".acronyms == @["JSON"]
-    check "SDL3Window".acronyms == @["SDL3"]
-    check "Chiral".acronyms.len == 0 and "isMixed".acronyms.len == 0
-    check "DIRECTORY_SDL3".acronyms.len == 0  # screaming holds by reading
-    check "rga_visualiser".acronyms.len == 0
-
-
-  test "V.6 V.9 V.3 V.5 V.10 abbreviation, acronym, verb, lookup and global findings":
-    let found = checkNames("x.nim", SOURCE, ["JSON"]).mapIt((it.rule, it.message))
+  test "V.6 V.3 V.5 V.10 abbreviation, verb, lookup and global findings, and no acronym":
+    let found = checkNames("x.nim", SOURCE, []).mapIt((it.rule, it.message))
     check (Rule.Abbreviation, "Name coins abbreviation; write `directory`; got `dir_hint`.") in
         found  # V.6
     check (Rule.Abbreviation, "Name coins abbreviation; write `temporary`; got `tmp_count`.") in
@@ -170,13 +162,12 @@ suite "Names":
       "`getGrade`.") in found  # V.3
     check (Rule.GlobalWord, "Global never shares its word with type; got `ALGEBRA`.") in
         found  # V.10, shares word with type `Algebra`
-    check not found.anyIt("JSON" in it[1])  # exempt
+    check not found.anyIt("JSON" in it[1])  # V.9 needs glossary, so it is caller's
     check not found.anyIt("`lut`" in it[1])  # jargon
     check not found.anyIt("constructTable" in it[1])
     check (Rule.NameCase, "Global is `SCREAMING_SNAKE_CASE`; got `tmp_count`.") in found  # V.1
     check found.len == 9  # V.1, V.3, V.6, V.10: each break once
-    check SOURCE.breaches.filterIt(it[0] == Rule.Acronym) ==
-        @[(Rule.Acronym, "Acronym stays only where glossary lists it; got `JSON` in `toJSON`.")]
+    check "func toJSON() = discard\nfunc parseJson() = discard\n".breaches.len == 0  # V.9 caller's
     check "const LUT_GRADE = 1\n".breaches ==
         @[(Rule.LookupTable, "Lookup table reads `lut_<value>_by_<key>`; got `LUT_GRADE`.")]
     check "const LUT_GRADE_BY_BASIS = 1\n".breaches.len == 0  # V.5
