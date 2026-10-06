@@ -41,9 +41,9 @@ import ./pins
 
 
 const
-  HASH_KEY = "git hash:"  ## Line `nim --version` reports its commit under.
-  CACHE_KEY* = "KNOLLER_NIM_DIR"  ## Environment name overriding where toolchains are cached.
-  CACHE_DIRECTORY* = ".cache/knoller/nim"
+  KEY_HASH = "git hash:"  ## Line `nim --version` reports its commit under.
+  KEY_CACHE* = "KNOLLER_NIM_DIR"  ## Environment name overriding where toolchains are cached.
+  DIRECTORY_CACHE* = ".cache/knoller/nim"
     ## Default cache, under home and beside Nim's own `~/.cache/nim`.
   DOWNLOAD* = "https://nim-lang.org/download/nim-"  ## Prefix of published release tarball.
   DIGEST* = ".sha256"
@@ -78,11 +78,11 @@ func isServedBy*(pin: string, compiler: Compiler): bool =
   pin == (if pin.isCommit: compiler.commit else: compiler.version)
 
 
-proc compilerAt(nim_path: string): Compiler =
+proc compilerAt(path_nim: string): Compiler =
   ## Read version and commit compiler at path reports; empty record when it will not run.
   ##   Commit comes from `git hash:` line, which release tarballs carry as well as builds
   ##   made from source, so commit pin is checkable either way.
-  let (output, code) = execCmdEx(nim_path.quoteShell & " --version")
+  let (output, code) = execCmdEx(path_nim.quoteShell & " --version")
   if code != 0: return
   let lines = output.splitLines
   for word in lines[0].splitWhitespace:
@@ -91,21 +91,21 @@ proc compilerAt(nim_path: string): Compiler =
       break
   for line in lines:
     let s = line.strip
-    if not s.startsWith(HASH_KEY): continue
-    let hash = s[HASH_KEY.len .. ^1].strip
+    if not s.startsWith(KEY_HASH): continue
+    let hash = s[KEY_HASH.len .. ^1].strip
     if hash.isCommit: result.commit = hash
     break
 
 
-proc runningCompiler*(): Compiler =
+proc compilerRunning*(): Compiler =
   ## Read compiler on PATH, i.e. one caller itself was invoked through.
   compilerAt(NIM)
 
 
-func platformOf*(os_name, cpu: string): string =
+func platformOf*(name_os, cpu: string): string =
   ## Read tarball name nim-lang.org publishes for platform; empty when it publishes none.
   for (name, arch, tarball) in PLATFORMS:
-    if name == os_name and arch == cpu: return tarball
+    if name == name_os and arch == cpu: return tarball
   ""
 
 
@@ -115,17 +115,17 @@ func isBuilt*(pin, platform: string): bool =
   pin.isCommit or platform.len == 0
 
 
-func releaseUrl*(version, platform: string): string =
+func urlRelease*(version, platform: string): string =
   ## Read address of published tarball for release on platform.
   DOWNLOAD & version & "-" & platform & ".tar.xz"
 
 
-func digestUrl*(version, platform: string): string =
+func urlDigest*(version, platform: string): string =
   ## Read address of digest published beside that tarball.
-  releaseUrl(version, platform) & DIGEST
+  urlRelease(version, platform) & DIGEST
 
 
-func pinnedDigest*(published: string): string =
+func digestPinned*(published: string): string =
   ## Read digest out of what that address serves; empty when text is not one.
   ##   Sidecar is `sha256sum` output, so digest is first field and name is second. Only
   ##   first field is read, and only when it is exactly sixty-four lowercase hex digits:
@@ -141,9 +141,9 @@ func pinnedDigest*(published: string): string =
   candidate
 
 
-func cacheRoot*(override: string): string =
+func rootCache*(override: string): string =
   ## Read cache directory toolchains live under, override winning when set.
-  if override.len > 0: override else: getHomeDir() / CACHE_DIRECTORY
+  if override.len > 0: override else: getHomeDir() / DIRECTORY_CACHE
 
 
 func binOf*(root, pin: string): string =
@@ -158,7 +158,7 @@ proc digestOf*(path: string): string =
   ##   package this project does not take (knoller is standard library alone).
   let (written, code) = execCmdEx("sha256sum " & quoteShell(path))
   if code != 0: return ""
-  pinnedDigest(written)
+  digestPinned(written)
 
 
 proc runAside(directory, program: string; arguments: openArray[string]): int =
@@ -190,14 +190,14 @@ proc fetchRelease(version, platform, directory: string): bool =
   createDir(work)
   defer: removeDir(work)
   let archive = work / "nim.tar.xz"
-  if runAside(work, "curl", ["-sSLf", "-o", archive, releaseUrl(version, platform)]) != 0:
+  if runAside(work, "curl", ["-sSLf", "-o", archive, urlRelease(version, platform)]) != 0:
     return false
   let sidecar = work / "nim.tar.xz.sha256"
-  if runAside(work, "curl", ["-sSLf", "-o", sidecar, digestUrl(version, platform)]) != 0:
+  if runAside(work, "curl", ["-sSLf", "-o", sidecar, urlDigest(version, platform)]) != 0:
     stderr.writeLine "No digest published beside tarball, so it is refused; got `" &
-        digestUrl(version, platform) & "`."
+        urlDigest(version, platform) & "`."
     return false
-  let (wanted, got) = (pinnedDigest(readFile(sidecar)), archive.digestOf)
+  let (wanted, got) = (digestPinned(readFile(sidecar)), archive.digestOf)
   if wanted.len == 0 or wanted != got:
     stderr.writeLine "Digest of tarball does not match published one; wanted `" & wanted &
         "`, got `" & got & "`."
@@ -253,7 +253,7 @@ proc resolve*(pin: string, running: Compiler, root: string): Option[string] =
 
 
 proc initToolchains*(
-  root: string = cacheRoot(getEnv(CACHE_KEY)), running = none(Compiler)
+  root: string = rootCache(getEnv(KEY_CACHE)), running = none(Compiler)
 ): Toolchains =
   ## Construct toolchains of none resolved yet, under cache `root`; compiler on PATH is read
   ##   where first pin asks, unless `running` names it.
@@ -264,6 +264,6 @@ proc binFor*(toolchains: var Toolchains, pin: string): Option[string] =
   ## Read `bin` of toolchain serving pin, resolving it on first ask alone: `some("")` names PATH,
   ##   `none` failure, which no later ask tries again.
   if pin notin toolchains.bins:
-    if toolchains.running.isNone: toolchains.running = some(runningCompiler())
+    if toolchains.running.isNone: toolchains.running = some(compilerRunning())
     toolchains.bins[pin] = resolve(pin, toolchains.running.get, toolchains.root)
   toolchains.bins[pin]

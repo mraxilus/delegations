@@ -32,10 +32,10 @@ import ./[findings, projects]
 
 
 const
-  DEPS_DIRECTORY* = "deps"  ## Directory Atlas restores into when `atlas.config` names none.
+  DIRECTORY_DEPS* = "deps"  ## Directory Atlas restores into when `atlas.config` names none.
   ATLAS_CONFIG* = "atlas.config"  ## Where project names its checkout directory, under `deps`.
-  NODE_MANIFEST* = "package.json"  ## Node manifest, naming tools project type-checks with.
-  NODE_LOCK* = "package-lock.json"  ## Node lock, pinning every one of those to exact version.
+  MANIFEST_NODE* = "package.json"  ## Node manifest, naming tools project type-checks with.
+  LOCK_NODE* = "package-lock.json"  ## Node lock, pinning every one of those to exact version.
   UNREADABLE = "Lock unreadable as JSON; got `"
     ## Opening of finding both lock readers report when JSON will not parse.
 
@@ -43,28 +43,28 @@ const
 func requirements*(nimble: string): seq[string] =
   ## Collect required packages from nimble text, `nim` excluded.
   for requirement in nimble.requireLiterals:
-    if requirement.packageName.toLowerAscii != NIM: result.add requirement
+    if requirement.namePackage.toLowerAscii != NIM: result.add requirement
 
 
-proc lockDirectories*(lock: string, deps_directory = DEPS_DIRECTORY): seq[string] =
+proc directoriesLock*(lock: string, directory_deps = DIRECTORY_DEPS): seq[string] =
   ## Read checkout directories lock names, `$deps` resolved to project-relative directory.
   let node = parseJson(lock)
   if "items" notin node: return
   for _, item in node["items"]:
     if "dir" notin item: continue
-    result.add item["dir"].getStr.replace("$deps", deps_directory)
+    result.add item["dir"].getStr.replace("$deps", directory_deps)
 
 
-proc depsDirectoryOf*(config: string): string =
+proc directoryDepsOf*(config: string): string =
   ## Read directory `atlas.config` restores into, i.e. its `deps` key; default when absent.
   ##   Project names it in full (`dependencies`, Article V.9) or keeps Atlas default `deps`.
   let node = parseJson(config)
-  if "deps" notin node: return DEPS_DIRECTORY
+  if "deps" notin node: return DIRECTORY_DEPS
   let named = node["deps"].getStr
-  if named.len == 0: DEPS_DIRECTORY else: named
+  if named.len == 0: DIRECTORY_DEPS else: named
 
 
-proc lockNimble*(lock: string): Option[string] =
+proc nimbleLock*(lock: string): Option[string] =
   ## Read nimble copy lock stores, i.e. text `atlas rep` writes back over project's file.
   ##   Copy is array of lines; joining on newline reproduces original file exactly, since
   ##   final empty element carries its trailing newline.
@@ -77,7 +77,7 @@ proc lockNimble*(lock: string): Option[string] =
   some(lines.join("\n"))
 
 
-func firstDifference(stored, nimble: string): int =
+func differenceFirst(stored, nimble: string): int =
   ## Read one-based line where two texts first differ; `0` when they are identical.
   let
     held = stored.split('\n')
@@ -90,23 +90,23 @@ func firstDifference(stored, nimble: string): int =
   0
 
 
-proc checkLockNimble*(nimble_path, lock_path, lock, nimble: string): seq[Finding] =
+proc checkNimbleLock*(path_nimble, path_lock, lock, nimble: string): seq[Finding] =
   ## Report lock's stored nimble differing from committed one, naming line about to be lost.
   ##   Finding points at nimble file rather than at lock: that is file restore overwrites,
   ##   and its line numbers are real, while numbers inside stored copy resolve nowhere.
   var stored: Option[string]
   try:
-    stored = lock.lockNimble
+    stored = lock.nimbleLock
   except CatchableError as e:
-    return @[finding(lock_path, 0, UNREADABLE & e.msg & "`.")]
+    return @[finding(path_lock, 0, UNREADABLE & e.msg & "`.")]
   if stored.isNone: return
-  let line = firstDifference(stored.get, nimble)
+  let line = differenceFirst(stored.get, nimble)
   if line == 0: return
   let
     committed = nimble.split('\n')
     held = if line <= committed.len: committed[line - 1] else: ""
   result.add finding(
-    nimble_path,
+    path_nimble,
     line,
     "Lock's stored nimble differs here, and `atlas rep` writes it back over this file; " &
       "regenerate lock, or make its stored copy match; got `" & held & "`.",
@@ -116,18 +116,18 @@ proc checkLockNimble*(nimble_path, lock_path, lock, nimble: string): seq[Finding
 proc checkCheckouts*(root, directory: string): seq[Finding] =
   ## Report checkout lock names that is absent on disk, and lock that will not parse.
   let
-    lock_path = directory & "/" & LOCK_FILE
-    config_path = root / directory / ATLAS_CONFIG
-    deps_directory =
-      if fileExists(config_path): readFile(config_path).depsDirectoryOf else: DEPS_DIRECTORY
+    path_lock = directory & "/" & FILE_LOCK
+    path_config = root / directory / ATLAS_CONFIG
+    directory_deps =
+      if fileExists(path_config): readFile(path_config).directoryDepsOf else: DIRECTORY_DEPS
   var directories: seq[string]
   try:
-    directories = readFile(root / lock_path).lockDirectories(deps_directory)
+    directories = readFile(root / path_lock).directoriesLock(directory_deps)
   except CatchableError as e:
-    return @[finding(lock_path, 0, UNREADABLE & e.msg & "`.")]
+    return @[finding(path_lock, 0, UNREADABLE & e.msg & "`.")]
   for checkout in directories:
     if not dirExists(root / directory / checkout):
-      result.add finding(lock_path, 0, "Checkout absent after restore; got `" & checkout & "`.")
+      result.add finding(path_lock, 0, "Checkout absent after restore; got `" & checkout & "`.")
 
 
 proc restoreDependencies(root: string, target: Target): seq[Finding] =
@@ -141,7 +141,7 @@ proc restoreDependencies(root: string, target: Target): seq[Finding] =
   let code = runIn(root / target.directory, atlas, ["changed"], target.bin)
   if code != 0:
     result.add finding(
-      target.directory & "/" & LOCK_FILE,
+      target.directory & "/" & FILE_LOCK,
       0,
       "Checkouts differ from lock; got exit `" & $code & "`.",
     )
@@ -150,7 +150,7 @@ proc restoreDependencies(root: string, target: Target): seq[Finding] =
 proc restoreAll*(root: string, targets: openArray[Target]): seq[Finding] =
   ## Restore every project holding lock file; projects without one need no network.
   for target in targets:
-    if fileExists(root / target.directory / LOCK_FILE):
+    if fileExists(root / target.directory / FILE_LOCK):
       result.add restoreDependencies(root, target)
 
 
@@ -163,14 +163,14 @@ proc restoreNode*(root: string, target: Target): seq[Finding] =
   echo "== " & target.directory
   if findExe("npm").len == 0:
     return @[finding(
-      target.directory & "/" & NODE_MANIFEST, 0,
+      target.directory & "/" & MANIFEST_NODE, 0,
       "Type check needs npm on `PATH`; install node, or drop this project's manifest; " &
         "got nothing.",
     )]
   let code = runIn(root / target.directory, "npm", ["ci", "--no-audit", "--no-fund"], target.bin)
   if code != 0:
     result.add finding(
-      target.directory & "/" & NODE_LOCK,
+      target.directory & "/" & LOCK_NODE,
       0,
       "Node restore failed; got exit `" & $code & "`.",
     )

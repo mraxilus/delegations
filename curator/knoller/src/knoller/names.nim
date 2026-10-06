@@ -8,7 +8,7 @@
 ##   Table `ABBREVIATIONS` gives each banned word its one replacement; word outside table
 ##     passes, and reading catches rest. `JARGON` is closed list of V.6. Words name may take
 ##     beyond them are caller's (`exempt`): `curator/audit` reads them from its glossaries
-##     (`glossaryExemptions` there), and command line passes none.
+##     (`exemptionsGlossary` there), and command line passes none.
 ##   V.9 is no rule here: acronym stays only where glossary lists it, and glossary belongs to
 ##     repository, so knoller, which runs on any repository, reads none. `curator/audit` checks
 ##     acronyms (`checkAcronyms` there), from words of its glossaries (D2 of #572).
@@ -22,7 +22,7 @@
 ##     parameter. It holds over case at any scope, so its case is unread; at module scope it
 ##     holds only for immutable global, so mutable global in notation is finding. Type,
 ##     routine, member and placeholder are no variable, and their case is read; mathematical
-##     letters carry no case in `std/unicode`, so `letterCase` reads them by block. Operator is
+##     letters carry no case in `std/unicode`, so `caseLetter` reads them by block. Operator is
 ##     backticked, so it is never read as name.
 ##   V.10: binding of entry block is entry block's rule (`entry.nim`, `checkBlockEntry`), so it
 ##     takes no finding here, its case unjudged. Global shares no word with type, compared
@@ -59,7 +59,7 @@ type
   Casing* {.pure.} = enum  ## Define case one kind of name takes (V.1, V.11, V.12).
     Pascal, Camel, Snake, Screaming, Letter
 
-  LetterCase {.pure.} = enum  ## Define case of one letter; digit and symbol carry none.
+  CaseLetter {.pure.} = enum  ## Define case of one letter; digit and symbol carry none.
     None, Lower, Upper
 
 
@@ -73,20 +73,20 @@ const
   JARGON* = ["lut", "min", "max", "src", "prev", "curr", "len"]
     ## Closed list of V.6, which Architect alone extends.
   VERBS_BANNED* = ["get", "compute", "new"]  ## First words routine never takes (V.3).
-  BOOLEAN_PREFIXES* = ["is", "as", "should", "found", "has"]
+  PREFIXES_BOOLEAN* = ["is", "as", "should", "found", "has"]
     ## First words boolean takes: state, interpretation, policy, search outcome, possession (V.4).
-  VARIABLE_KINDS = {NameKind.Binding, NameKind.Field, NameKind.Parameter}
+  KINDS_VARIABLE = {KindName.Binding, KindName.Field, KindName.Parameter}
     ## Kinds naming variable, which source's notation may name at any scope (III.5).
-  HOST_PREDICATES = ["contains"]
+  PREDICATES_HOST = ["contains"]
     ## Predicates host calls by spelling: `in` and `notin` call `contains`.
-  CASE_RULES*: array[Casing, string] = [
+  RULES_CASE*: array[Casing, string] = [
     "is `PascalCase`", "is `lowerCamelCase`", "is `snake_case`", "is `SCREAMING_SNAKE_CASE`",
     "is one capital letter",
   ]
     ## Predicate of each casing, as finding states it.
 
 
-func wordSpans(name: string): seq[(int, int)] =
+func spansWord(name: string): seq[(int, int)] =
   ## Read span of each word of name, split at `_` and at case changes.
   var first = -1  # Index current word opens at; `-1` between words.
   for k, c in name:
@@ -110,14 +110,14 @@ func wordSpans(name: string): seq[(int, int)] =
 
 func words*(name: string): seq[string] =
   ## Split name at `_` and at case changes: `lut_grade`, `wedgeAnti`, `JSONData` give words.
-  name.wordSpans.mapIt(name[it[0]..<it[1]])
+  name.spansWord.mapIt(name[it[0]..<it[1]])
 
 
-func fullWordOf(word: string, lower_exempt: openArray[string]): string =
+func wordFullOf(word: string, exempt_lower: openArray[string]): string =
   ## Read full word `ABBREVIATIONS` gives coined abbreviation, in word's own case; empty where
   ##   word is none, or exempt.
   let lower = word.toLowerAscii
-  if lower in lower_exempt or lower in JARGON: return
+  if lower in exempt_lower or lower in JARGON: return
   for (short, full) in ABBREVIATIONS:
     if lower != short: continue
     if word == lower: return full
@@ -128,28 +128,28 @@ func fullWordOf(word: string, lower_exempt: openArray[string]): string =
 func respelled*(name: string, exempt: openArray[string]): string =
   ## Spell name with each coined abbreviation written out, case kept (V.6): `ctx_dir` gives
   ##   `context_directory`, `bufSize` gives `bufferSize`. Same name where it coins none.
-  let lower_exempt = exempt.mapIt(it.toLowerAscii)
+  let exempt_lower = exempt.mapIt(it.toLowerAscii)
   result = name
-  for (first, after) in name.wordSpans.reversed:
-    let full = name[first..<after].fullWordOf(lower_exempt)
+  for (first, after) in name.spansWord.reversed:
+    let full = name[first..<after].wordFullOf(exempt_lower)
     if full.len > 0: result = result[0..<first] & full & result[after .. ^1]
 
 
-func letterCase(r: Rune): LetterCase =
+func caseLetter(r: Rune): CaseLetter =
   ## Read case of letter, mathematical alphanumerics by block, since `std/unicode` maps none.
   ##   Latin styles run 52 letters, 26 capitals first; Greek styles run 58, 25 capitals first,
   ##     then nabla, 25 small, partial differential and 6 small variants.
   let c = int(r)
   if c in 0x1D400..0x1D6A3:
-    return (if (c - 0x1D400) mod 52 < 26: LetterCase.Upper else: LetterCase.Lower)
+    return (if (c - 0x1D400) mod 52 < 26: CaseLetter.Upper else: CaseLetter.Lower)
   if c in 0x1D6A8..0x1D7C9:
     let k = (c - 0x1D6A8) mod 58
-    if k < 25: return LetterCase.Upper
-    if k in [25, 51]: return LetterCase.None
-    return LetterCase.Lower
-  if r.isUpper: LetterCase.Upper
-  elif r.isLower: LetterCase.Lower
-  else: LetterCase.None
+    if k < 25: return CaseLetter.Upper
+    if k in [25, 51]: return CaseLetter.None
+    return CaseLetter.Lower
+  if r.isUpper: CaseLetter.Upper
+  elif r.isLower: CaseLetter.Lower
+  else: CaseLetter.None
 
 
 func isNotation*(name: string): bool =
@@ -160,39 +160,39 @@ func isNotation*(name: string): bool =
 func isCased*(name: string, casing: Casing): bool =
   ## Decide whether name is written in casing; first letter and every letter decide it.
   var
-    first = LetterCase.None
+    first = CaseLetter.None
     count = 0
     has_upper = false
     has_lower = false
   for r in name.runes:
-    let c = r.letterCase
+    let c = r.caseLetter
     if count == 0: first = c
     inc count
-    has_upper = has_upper or c == LetterCase.Upper
-    has_lower = has_lower or c == LetterCase.Lower
+    has_upper = has_upper or c == CaseLetter.Upper
+    has_lower = has_lower or c == CaseLetter.Lower
   case casing
-  of Casing.Pascal: first == LetterCase.Upper and '_' notin name
-  of Casing.Camel: first != LetterCase.Upper and '_' notin name
+  of Casing.Pascal: first == CaseLetter.Upper and '_' notin name
+  of Casing.Camel: first != CaseLetter.Upper and '_' notin name
   of Casing.Snake: not has_upper
   of Casing.Screaming: not has_lower
-  of Casing.Letter: count == 1 and first == LetterCase.Upper
+  of Casing.Letter: count == 1 and first == CaseLetter.Upper
 
 
 func casingOf*(d: Declared): Casing =
   ## Read casing declared name takes by its kind and reach (V.1, V.11, V.12).
   case d.kind
-  of NameKind.Type, NameKind.Member: Casing.Pascal
-  of NameKind.Routine: Casing.Camel
-  of NameKind.Field, NameKind.Parameter: Casing.Snake
-  of NameKind.Placeholder: Casing.Letter
-  of NameKind.Binding: (if d.reach == Reach.Global: Casing.Screaming else: Casing.Snake)
+  of KindName.Type, KindName.Member: Casing.Pascal
+  of KindName.Routine: Casing.Camel
+  of KindName.Field, KindName.Parameter: Casing.Snake
+  of KindName.Placeholder: Casing.Letter
+  of KindName.Binding: (if d.reach == Reach.Global: Casing.Screaming else: Casing.Snake)
 
 
 func isMiscased*(d: Declared): bool =
   ## Decide whether name breaks case of its kind, as `checkNames` reads it (V.1, V.11, V.12);
   ##   binding of entry block and variable in source's notation carry no case to read.
-  if d.kind == NameKind.Binding and d.reach == Reach.Entry: return false
-  if d.kind in VARIABLE_KINDS and d.name.isNotation: return false
+  if d.kind == KindName.Binding and d.reach == Reach.Entry: return false
+  if d.kind in KINDS_VARIABLE and d.name.isNotation: return false
   not d.name.isCased(d.casingOf)
 
 
@@ -201,15 +201,15 @@ func checkNames*(path, source: string; exempt: openArray[string]): seq[Report] =
   ##   banned verb, misnames lookup table or boolean, breaks case of its kind, or shares its word
   ##   with type as global; binding of entry block is entry block's. Acronym is caller's (V.9).
   let
-    lower_exempt = exempt.mapIt(it.toLowerAscii)
+    exempt_lower = exempt.mapIt(it.toLowerAscii)
     declared = source.declarations
-  var type_keys: seq[string]
+  var keys_type: seq[string]
   for d in declared:
-    if d.kind == NameKind.Type: type_keys.add d.name.toLowerAscii.replace("_", "")
+    if d.kind == KindName.Type: keys_type.add d.name.toLowerAscii.replace("_", "")
   for d in declared:
     let parts = d.name.words
     for w in parts:
-      let full = w.fullWordOf(lower_exempt).toLowerAscii
+      let full = w.wordFullOf(exempt_lower).toLowerAscii
       if full.len == 0: continue
       result.add initReport(
         path,
@@ -217,43 +217,43 @@ func checkNames*(path, source: string; exempt: openArray[string]): seq[Report] =
         Rule.Abbreviation,
         "Name coins abbreviation; write `" & full & "`; got `" & d.name & "`.",
       )
-    if d.kind == NameKind.Routine and parts.len > 1 and parts[0] in VERBS_BANNED:
+    if d.kind == KindName.Routine and parts.len > 1 and parts[0] in VERBS_BANNED:
       result.add initReport(
         path,
         d.line,
-        Rule.ActionVerb,
+        Rule.VerbAction,
         "Action is imperative verb and property is bare noun; got `" & d.name & "`.",
       )
     if parts.len > 1 and parts[0].toLowerAscii == "lut" and d.name.toLowerAscii.count("_by_") != 1:
       result.add initReport(
         path,
         d.line,
-        Rule.LookupTable,
+        Rule.TableLookup,
         "Lookup table reads `lut_<value>_by_<key>`; got `" & d.name & "`.",
       )
 
     # Boolean is proposition or mode; predicate `func` is `is…` (V.4).
-    if d.is_boolean and d.kind == NameKind.Routine:
-      if (parts.len < 2 or parts[0] != "is") and d.name notin HOST_PREDICATES:
+    if d.is_boolean and d.kind == KindName.Routine:
+      if (parts.len < 2 or parts[0] != "is") and d.name notin PREDICATES_HOST:
         result.add initReport(
           path,
           d.line,
-          Rule.BooleanName,
+          Rule.NameBoolean,
           "Predicate `func` is `is…` in camel case; got `" & d.name & "`.",
         )
-    elif d.is_boolean and (parts.len < 2 or parts[0].toLowerAscii notin BOOLEAN_PREFIXES):
+    elif d.is_boolean and (parts.len < 2 or parts[0].toLowerAscii notin PREFIXES_BOOLEAN):
       result.add initReport(
         path,
         d.line,
-        Rule.BooleanName,
+        Rule.NameBoolean,
         "Boolean opens `is_`, `as_`, `should_`, `found_` or `has_`; got `" & d.name & "`.",
       )
 
     # Case follows kind; entry binding is entry block's, and notation excuses immutable global.
-    if d.kind == NameKind.Binding and d.reach == Reach.Entry: continue
+    if d.kind == KindName.Binding and d.reach == Reach.Entry: continue
     let
       casing = d.casingOf
-      is_notation = d.kind in VARIABLE_KINDS and d.name.isNotation
+      is_notation = d.kind in KINDS_VARIABLE and d.name.isNotation
     if is_notation and d.reach == Reach.Global and d.is_mutable:
       result.add initReport(
         path,
@@ -264,22 +264,22 @@ func checkNames*(path, source: string; exempt: openArray[string]): seq[Report] =
     elif d.isMiscased:
       let
         rule =
-          if d.kind == NameKind.Member: Rule.MemberCase
-          elif casing == Casing.Letter: Rule.PlaceholderLetter
-          else: Rule.NameCase
-        subject = if d.kind == NameKind.Binding: $d.reach else: $d.kind
+          if d.kind == KindName.Member: Rule.CaseMember
+          elif casing == Casing.Letter: Rule.LetterPlaceholder
+          else: Rule.CaseName
+        subject = if d.kind == KindName.Binding: $d.reach else: $d.kind
       result.add initReport(
         path,
         d.line,
         rule,
-        subject & " " & CASE_RULES[casing] & "; got `" & d.name & "`.",
+        subject & " " & RULES_CASE[casing] & "; got `" & d.name & "`.",
       )
-    if d.kind == NameKind.Binding and d.reach == Reach.Global and
-        d.name.isCased(Casing.Screaming) and d.name.toLowerAscii.replace("_", "") in type_keys:
+    if d.kind == KindName.Binding and d.reach == Reach.Global and
+        d.name.isCased(Casing.Screaming) and d.name.toLowerAscii.replace("_", "") in keys_type:
       result.add initReport(
         path,
         d.line,
-        Rule.GlobalWord,
+        Rule.WordGlobal,
         "Global never shares its word with type; got `" & d.name & "`.",
       )
 

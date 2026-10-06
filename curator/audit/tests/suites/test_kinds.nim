@@ -7,7 +7,7 @@ import ../../src/kinds
 import ./fixtures
 
 
-const TABLE = staticRead("../../src/kinds.nim").headerTable
+const TABLE = staticRead("../../src/kinds.nim").tableHeader
   ## Heading row, then one row per kind, as `kinds.nim` header holds them.
 
 

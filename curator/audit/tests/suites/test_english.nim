@@ -39,7 +39,7 @@ suite "Article VI.8":
 
   test "quotation is skipped whole":
     check "> One quoted line.\n> And second.".blocks.len == 0  # another author's words
-    let cited = "> " & "word ".repeat(SENTENCE_WORDS + 1) & "end."
+    let cited = "> " & "word ".repeat(WORDS_SENTENCE + 1) & "end."
     check checkEnglish("GUIDE.md", cited).len == 0
     check checkEnglish("GUIDE.md", "> Ensure it passes.").len == 0
     check checkEnglish("GUIDE.md", "Ensure it passes.").len == 1  # same words, unquoted
@@ -51,14 +51,14 @@ suite "Article VI.8":
 
 
   test "long sentence, long paragraph and unapproved word are findings":
-    let long_sentence = "word ".repeat(SENTENCE_WORDS + 1) & "end."
-    var found = checkEnglish("GUIDE.md", long_sentence)
+    let sentence_long = "word ".repeat(WORDS_SENTENCE + 1) & "end."
+    var found = checkEnglish("GUIDE.md", sentence_long)
     check found.len == 1
     check found[0].message.startsWith("Sentence must hold at most")
-    let long_paragraph = "Stop. ".repeat(PARAGRAPH_SENTENCES + 1)
-    found = checkEnglish("GUIDE.md", long_paragraph)
+    let paragraph_long = "Stop. ".repeat(SENTENCES_PARAGRAPH + 1)
+    found = checkEnglish("GUIDE.md", paragraph_long)
     check found.len == 1
-    check found[0].message.endsWith("got `" & $(PARAGRAPH_SENTENCES + 1) & "`.")
+    check found[0].message.endsWith("got `" & $(SENTENCES_PARAGRAPH + 1) & "`.")
     found = checkEnglish("GUIDE.md", "Ensure it passes.")
     check found.len == 1
     check found[0].message == "Word is outside approved dictionary; write `make sure` " &
@@ -99,7 +99,7 @@ suite "Article VI.8":
 
 
   test "derived path is read, and not merely listed":
-    let prose = "Ensure " & "word ".repeat(SENTENCE_WORDS + 1) & "end."
+    let prose = "Ensure " & "word ".repeat(WORDS_SENTENCE + 1) & "end."
     check checkEnglish("curator/README.md", prose).len == 2  # word, then sentence
     check checkEnglish("contributor/abstand/newcomer/README.md", prose).len == 2
     check checkEnglish("contributor/sincopa/dance_ontology/sim/README.md", prose).len == 0

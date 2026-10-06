@@ -9,11 +9,11 @@
 ##     cannot be told from words and hold by reading. Declarations alone are read, so name library
 ##     owns, which reaches code only at use site, passes by construction.
 ##   `JARGON` is closed list of V.6. Caller adds symbols glossaries list under `## Standards` as
-##     code spans, and their `**Term**` names, through `glossaryExemptions`; `exemptionsOf`
+##     code spans, and their `**Term**` names, through `exemptionsGlossary`; `exemptionsOf`
 ##     reads root glossary and glossary of path's own project, and static pass gives them to
 ##     knoller's check.
 ##
-##   V.6 has fixer (`koch fix`): `abbreviationRenames` reads each declaration coining
+##   V.6 has fixer (`koch fix`): `renamesAbbreviation` reads each declaration coining
 ##     abbreviation and its full spelling, case kept, as check reads it, and rename planner of
 ##     `rewrites.nim` renames it at every use through semantic pass, or refuses with reason.
 ##   V.1 and V.11 have fixer: `renamesCase` reads each declaration whose case check reports, and
@@ -37,7 +37,7 @@ import ../../knoller/src/knoller
 import ./[findings, glossary]
 
 
-type RenameCase* = object
+type CaseRename* = object
   ## Define rename case of declaration's kind asks (V.1, V.11), or why fix leaves it to hand.
   line*: int  ## One-based line of declared name.
   column*: int  ## Zero-based byte column of declared name.
@@ -48,11 +48,11 @@ type RenameCase* = object
   is_local*: bool  ## Binding no other module can name: local, or binding of entry block.
 
 
-func glossaryExemptions*(glossary: string): seq[string] =
+func exemptionsGlossary*(glossary: string): seq[string] =
   ## Collect code spans under `## Standards` and names of terms, as words name may take.
   var is_standards = false
   for line in glossary.splitLines:
-    if line.startsWith("#"): is_standards = line == STANDARDS_HEADING
+    if line.startsWith("#"): is_standards = line == HEADING_STANDARDS
     if is_standards:
       var i = 0
       while true:
@@ -63,17 +63,17 @@ func glossaryExemptions*(glossary: string): seq[string] =
         for w in line[open + 1 ..< close].split({' ', ','}):
           if w.len > 0: result.add w
         i = close + 1
-    if line.isTermLine: result.add line[2 ..< line.len - 3]
+    if line.isLineTerm: result.add line[2 ..< line.len - 3]
 
 
 func exemptionsOf*(glossaries: openArray[(string, string)], path: string): seq[string] =
   ## Read words name in path may take beyond table: jargon of V.6, and what root glossary and
-  ##   glossary of path's own project list (`glossaryExemptions`).
+  ##   glossary of path's own project list (`exemptionsGlossary`).
   result = JARGON.toSeq
   for (glossary, source) in glossaries:
-    let directory = glossary[0 ..< glossary.len - ROOT_GLOSSARY.len]
-    if glossary == ROOT_GLOSSARY or path.startsWith(directory):
-      result.add source.glossaryExemptions
+    let directory = glossary[0 ..< glossary.len - GLOSSARY_ROOT.len]
+    if glossary == GLOSSARY_ROOT or path.startsWith(directory):
+      result.add source.exemptionsGlossary
 
 
 func acronyms*(name: string): seq[string] =
@@ -94,10 +94,10 @@ func acronyms*(name: string): seq[string] =
 
 func checkAcronyms*(path, source: string; exempt: openArray[string]): seq[Finding] =
   ## Report each acronym of declared name that `exempt` does not list (V.9), case aside.
-  let lower_exempt = exempt.mapIt(it.toLowerAscii)
+  let exempt_lower = exempt.mapIt(it.toLowerAscii)
   for d in source.declarations:
     for a in d.name.acronyms:
-      if a.toLowerAscii in lower_exempt: continue
+      if a.toLowerAscii in exempt_lower: continue
       result.add finding(
         path,
         d.line,
@@ -105,7 +105,7 @@ func checkAcronyms*(path, source: string; exempt: openArray[string]): seq[Findin
       )
 
 
-func abbreviationRenames*(
+func renamesAbbreviation*(
   source: string, exempt: openArray[string]
 ): seq[(int, int, string, string)] =
   ## Read one-based line, zero-based byte column, name and full spelling of each declared name
@@ -117,7 +117,7 @@ func abbreviationRenames*(
     let renamed = d.name.respelled(exempt)
     if renamed == d.name: continue
     for t in tokens:
-      if t.line == d.line - 1 and t.kind == TokenKind.Word and t.spelling(source) == d.name:
+      if t.line == d.line - 1 and t.kind == KindToken.Word and t.spelling(source) == d.name:
         result.add (d.line, t.first - starts[t.line], d.name, renamed)
         break
 
@@ -126,18 +126,18 @@ func wordsOf(line: string): seq[string] =
   ## Read identifiers of one line of code view.
   var word = ""
   for c in line & " ":
-    if c in NAME_CHARS: word.add c
+    if c in CHARS_NAME: word.add c
     elif word.len > 0:
       result.add word
       word = ""
 
 
-func foreignMark(code: openArray[string], line: int, kind: NameKind): string =
+func markForeign(code: openArray[string], line: int, kind: KindName): string =
   ## Read word marking name declared at zero-based line as one foreign code reads by spelling
   ##   (`MARKS_FOREIGN`): on its signature or line, on each line enclosing field or member, or on
   ##   `{.push.}` over it, which stands over foreign bindings alone (STYLE.md §2). Empty where
   ##   none; parameter crosses no boundary by name, since foreign call passes arguments by place.
-  if kind == NameKind.Parameter: return
+  if kind == KindName.Parameter: return
   var pushed = ""
   for i in 0 ..< line:
     let s = code[i].strip
@@ -154,10 +154,10 @@ func foreignMark(code: openArray[string], line: int, kind: NameKind): string =
   while text.count('(') > text.count(')') and read[^1] + 1 < code.len:
     read.add read[^1] + 1
     text.add code[read[^1]]
-  if kind == NameKind.Routine and read[^1] + 1 < code.len and
+  if kind == KindName.Routine and read[^1] + 1 < code.len and
       code[read[^1] + 1].strip.startsWith("{."):
     read.add read[^1] + 1
-  if kind in {NameKind.Field, NameKind.Member}:
+  if kind in {KindName.Field, KindName.Member}:
     var indent = code[line].indentOf
     for i in countdown(line - 1, 0):
       if code[i].strip.len == 0 or code[i].indentOf >= indent: continue
@@ -176,12 +176,12 @@ func isMemberSpelled(
   ##   `A = "a"` or `A = (0, "a")`.
   if k + 2 >= tokens.len or tokens[k + 1].spelling(source) != "=": return false
   let value = tokens[k + 2]
-  if value.kind == TokenKind.Text: return true
+  if value.kind == KindToken.Text: return true
   if value.spelling(source) != "(" or partners[k + 2] < 0: return false
-  toSeq(k + 3 ..< partners[k + 2]).anyIt(tokens[it].kind == TokenKind.Text)
+  toSeq(k + 3 ..< partners[k + 2]).anyIt(tokens[it].kind == KindToken.Text)
 
 
-func renamesCase*(source: string, exempt: openArray[string]): seq[RenameCase] =
+func renamesCase*(source: string, exempt: openArray[string]): seq[CaseRename] =
   ## Read rename each declaration needs to take case of its kind, as `checkNames` reports case
   ##   (V.1, V.11), each coined abbreviation spelled out too (V.6). Binding of entry block that
   ##   fix moves into `proc main` takes case of local, as it reads there.
@@ -195,10 +195,10 @@ func renamesCase*(source: string, exempt: openArray[string]): seq[RenameCase] =
     code = source.codeOnly.split('\n')
     entry = source.blockEntry
     declared = source.declarations
-    lower_exempt = exempt.mapIt(it.toLowerAscii)
+    exempt_lower = exempt.mapIt(it.toLowerAscii)
   for d in declared:
     var subject = d
-    if d.kind == NameKind.Binding and d.reach == Reach.Entry:
+    if d.kind == KindName.Binding and d.reach == Reach.Entry:
       if entry.refusal.len > 0: continue
       subject.reach = Reach.Local
     let casing = subject.casingOf
@@ -208,25 +208,25 @@ func renamesCase*(source: string, exempt: openArray[string]): seq[RenameCase] =
     let
       respelled = d.name.respelled(exempt)
       renamed = respelled.cased(casing)
-      rule_case =
-        if d.kind == NameKind.Member: "member case (V.11)"
-        elif d.kind == NameKind.Binding and subject.reach == Reach.Local and
+      case_rule =
+        if d.kind == KindName.Member: "member case (V.11)"
+        elif d.kind == KindName.Binding and subject.reach == Reach.Local and
             d.name.isCased(Casing.Screaming):
           "local constant case (V.1)"
-        elif d.kind == NameKind.Binding: ($subject.reach).toLowerAscii & " case (V.1)"
+        elif d.kind == KindName.Binding: ($subject.reach).toLowerAscii & " case (V.1)"
         else: ($d.kind).toLowerAscii & " case (V.1)"
-    var rename = RenameCase(
+    var rename = CaseRename(
       line: d.line,
       name: d.name,
       renamed: renamed,
-      rule: if respelled == d.name: rule_case else: "abbreviation (V.6) and " & rule_case,
-      is_local: d.kind == NameKind.Binding and subject.reach == Reach.Local,
+      rule: if respelled == d.name: case_rule else: "abbreviation (V.6) and " & case_rule,
+      is_local: d.kind == KindName.Binding and subject.reach == Reach.Local,
     )
 
     # Find declared name's token from declaration's first line on, where multi-line signature
     #   places parameter below.
     var k = 0
-    while k < tokens.len and (tokens[k].line < d.line - 1 or tokens[k].kind != TokenKind.Word or
+    while k < tokens.len and (tokens[k].line < d.line - 1 or tokens[k].kind != KindToken.Word or
         tokens[k].spelling(source) != d.name):
       inc k
     if k == tokens.len: continue
@@ -235,18 +235,18 @@ func renamesCase*(source: string, exempt: openArray[string]): seq[RenameCase] =
 
     # Refuse rename that no planner can prove keeps meaning.
     let
-      mark = code.foreignMark(tokens[k].line, d.kind)
+      mark = code.markForeign(tokens[k].line, d.kind)
       acronyms = renamed.acronyms.filterIt(
-        it notin d.name.acronyms and it.toLowerAscii notin lower_exempt,
+        it notin d.name.acronyms and it.toLowerAscii notin exempt_lower,
       )
     if declared.countIt(it.line == d.line and it.name == d.name) > 1:
       rename.refusal = "line declares `" & d.name & "` twice"
     elif d.name.isNotation: rename.refusal = "`" & d.name & "` holds letter outside ASCII"
     elif mark.len > 0: rename.refusal = "foreign code reads name through `" & mark & "`"
-    elif d.kind == NameKind.Member and not tokens.isMemberSpelled(partners, k, source):
+    elif d.kind == KindName.Member and not tokens.isMemberSpelled(partners, k, source):
       rename.refusal = "`$` of member reads its name"
     elif not renamed.isCased(casing):
-      rename.refusal = "`" & renamed & "` " & CASE_RULES[casing].replace("is ", "is no ")
+      rename.refusal = "`" & renamed & "` " & RULES_CASE[casing].replace("is ", "is no ")
     elif acronyms.len > 0:
       rename.refusal = "`" & renamed & "` reads `" & acronyms[0] & "` as acronym (V.9)"
     elif d.reach == Reach.Entry and renamed.identity == ROUTINE_ENTRY:

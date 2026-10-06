@@ -8,7 +8,7 @@ import ../../../knoller/src/knoller
 import ../../src/[findings, idioms]
 
 
-const HEAD_LINES = 4  ## Lines `module` puts before body: doc, blank, pragma, blank.
+const LINES_HEAD = 4  ## Lines `module` puts before body: doc, blank, pragma, blank.
 
 
 func module(body: string): string =
@@ -110,7 +110,7 @@ suite "Idioms":
     let
       header = "discard \"\"\"\naction: run\nbatchable: false\n" &
         "cmd: \"nim c -r --hints:off -run $options $file\"\njoinable: true\n\"\"\"\n"
-      body = PROFILER_IMPORT & "\n\ninclude \"suites.nim\"\n"
+      body = IMPORT_PROFILER & "\n\ninclude \"suites.nim\"\n"
       stub = header & module(body)
       fix = fixIdioms("tests/test_x.nim", stub)
     check checkIdioms("tests/test_x.nim", stub).mapIt(it.line) == @[3, 4, 5]  # line of each key
@@ -129,13 +129,13 @@ suite "Idioms":
     let
       guard = "when compileOption(\"profiler\"):\n  import std/nimprof\n"
       two = module(guard & "\nimport std/os\n")
-    check checkProfiler("a.nim", two).mapIt(it.line) == @[HEAD_LINES + 1]
-    check fixed(two).source == module(PROFILER_IMPORT & "\n\nimport std/os\n")
+    check checkProfiler("a.nim", two).mapIt(it.line) == @[LINES_HEAD + 1]
+    check fixed(two).source == module(IMPORT_PROFILER & "\n\nimport std/os\n")
     check checkProfiler("a.nim", fixed(two).source).len == 0
     let entry = module("import std/os\n\nwhen isMainModule:\n  echo 1\n")
     check checkProfiler("a.nim", entry)[0].message.endsWith("got none.")
     check fixed(entry).source ==
-      module(PROFILER_IMPORT & "\n\nimport std/os\n\nwhen isMainModule:\n  echo 1\n")
+      module(IMPORT_PROFILER & "\n\nimport std/os\n\nwhen isMainModule:\n  echo 1\n")
     check fixed(entry).source.isSettled and checkProfiler("a.nim", fixed(entry).source).len == 0
     let library = module("import std/os\n")
     check checkProfiler("curator/probe/src/probe.nim", library).len == 1  # umbrella
@@ -145,8 +145,8 @@ suite "Idioms":
       header = "discard \"\"\"\naction: run\n\"\"\"\n## Do.\n\n" &
         "{.warning[UnusedImport]: off.}\n\n" & STRICT_FUNCS & "\n"
       stub = fixIdioms("tests/test_x.nim", header & "include \"suites.nim\"\n")
-    check stub.source == header & "\n" & PROFILER_IMPORT & "\n\ninclude \"suites.nim\"\n"
-    check stub.fixed.mapIt(it.rule) == @[Rule.ProfilerImport]
+    check stub.source == header & "\n" & IMPORT_PROFILER & "\n\ninclude \"suites.nim\"\n"
+    check stub.fixed.mapIt(it.rule) == @[Rule.ImportProfiler]
     check fixIdioms("tests/test_x.nim", stub.source).fixed.len == 0  # second fix writes nothing
 
 
@@ -163,9 +163,9 @@ suite "Idioms":
 
 
   test "machine path is finding in any kind but Markdown":
-    check checkMachinePaths("a.nim", "let p = \"/home/me/data\"\n")[0].line == 1
-    check checkMachinePaths("a.yml", "run: cd /Users/me\n").len == 1
-    check checkMachinePaths("a.nim", "let p = getEnv(\"HOME\")\n").len == 0
+    check checkPathsMachine("a.nim", "let p = \"/home/me/data\"\n")[0].line == 1
+    check checkPathsMachine("a.yml", "run: cd /Users/me\n").len == 1
+    check checkPathsMachine("a.nim", "let p = getEnv(\"HOME\")\n").len == 0
 
 
   test "tsconfig sets every flag to true, read as text":
@@ -177,7 +177,7 @@ suite "Idioms":
     check checkTsconfig("tsconfig.json", all_set).len == 0
     let one_off = all_set.replace("\"strict\": true", "\"strict\": false")
     check checkTsconfig("tsconfig.json", one_off).mapIt(it.message).anyIt("`strict`" in it)
-    check checkTsconfig("tsconfig.json", "{}").len == TYPESCRIPT_FLAGS.len
+    check checkTsconfig("tsconfig.json", "{}").len == FLAGS_TYPESCRIPT.len
 
 
 
@@ -185,7 +185,7 @@ suite "Idiom fixes":
   test "return result inside branch, or with body after it, becomes bare return":
     let fix = fixed(module("func f(): int =\n  if true:\n    return result  # Early.\n  1\n"))
     check fix.source == module("func f(): int =\n  if true:\n    return  # Early.\n  1\n")
-    check fix.fixed.mapIt(it.line) == @[HEAD_LINES + 3]  # line check names
+    check fix.fixed.mapIt(it.line) == @[LINES_HEAD + 3]  # line check names
     check fix.fixed[0].rule == Rule.ReturnResult  # rule named
     check fix.source.isSettled  # check reports none, and second fix changes nothing
     let followed = fixed(module("proc f(): int =\n  return result\n  echo 1\n"))
@@ -196,7 +196,7 @@ suite "Idiom fixes":
   test "return result ending routine goes, with blank line opening its paragraph":
     let ending = fixed(module("func f(): int =\n  result = 1\n  return result\n"))
     check ending.source == module("func f(): int =\n  result = 1\n")  # line deleted
-    check ending.fixed.mapIt(it.line) == @[HEAD_LINES + 3]
+    check ending.fixed.mapIt(it.line) == @[LINES_HEAD + 3]
     check ending.source.isSettled
     let spaced = "func f(): int =\n  result = 1\n\n  return result\n\n\nfunc g() = discard\n"
     check fixed(module(spaced)).source ==
@@ -209,7 +209,7 @@ suite "Idiom fixes":
   test "bracket items are sorted into slots they held, so layout stays":
     let one_line = fixed(module("import std/[strutils, os]\nimport ./[b {.all.}, a]\n"))
     check one_line.source == module("import std/[os, strutils]\nimport ./[a, b {.all.}]\n")
-    check one_line.fixed.mapIt(it.line) == @[HEAD_LINES + 1, HEAD_LINES + 2]  # one per bracket
+    check one_line.fixed.mapIt(it.line) == @[LINES_HEAD + 1, LINES_HEAD + 2]  # one per bracket
     check one_line.source.isSettled
     let each_line = fixed(module("import ./[\n  c,\n  a,\n  b,\n]\n"))
     check each_line.source == module("import ./[\n  a,\n  b,\n  c,\n]\n")  # one item per line
@@ -224,7 +224,7 @@ suite "Idiom fixes":
   test "adjacent import lines are ordered by rank, and rank split by other lines stays":
     let fix = fixed(module("import ./a\nimport pkg/x\nimport std/os\n"))
     check fix.source == module("import std/os\nimport pkg/x\nimport ./a\n")
-    check fix.fixed.mapIt(it.rule) == @[Rule.ImportRank, Rule.ImportRank]
+    check fix.fixed.mapIt(it.rule) == @[Rule.RankImport, Rule.RankImport]
     check fix.source.isSettled
     let apart = module("import ./a\n\nimport std/os\n")
     check fixed(apart).source == apart  # where it lands is choice: left to hand
@@ -234,8 +234,8 @@ suite "Idiom fixes":
     let consts = fixed(module("const A = 1  # One.\nconst B = 2\n  ## Doc of B.\n\nlet c = 3\n"))
     check consts.source ==
       module("const\n  A = 1  # One.\n  B = 2\n    ## Doc of B.\n\nlet c = 3\n")
-    check consts.fixed.mapIt(it.line) == @[HEAD_LINES + 1]  # one report per run
-    check consts.fixed[0].rule == Rule.SingleBindings
+    check consts.fixed.mapIt(it.line) == @[LINES_HEAD + 1]  # one report per run
+    check consts.fixed[0].rule == Rule.BindingsSingle
     check consts.source.isSettled
     let wrapped = fixed(module("proc f() =\n  let a = 1\n  let b = g(\n    2,\n  )\n  echo a\n"))
     check wrapped.source ==
@@ -246,15 +246,15 @@ suite "Idiom fixes":
       "let\n  a = 1\n  b = block:\n    let\n      c = 2\n      d = 3\n    c + d\n",
     )  # inner run first, then outer carries it
     check nested.source.isSettled
-    let long_string = module("const A = 1\nconst B = \"\"\"\ntext\n\"\"\"\n")
-    check fixed(long_string).source == long_string  # indent would change string: left to hand
+    let string_long = module("const A = 1\nconst B = \"\"\"\ntext\n\"\"\"\n")
+    check fixed(string_long).source == string_long  # indent would change string: left to hand
 
 
   test "missing strictFuncs goes where X.6 puts directives":
     let
       strict = "\n" & STRICT_FUNCS & "\n\n"
       plain = fixed("## Do.\n\nimport std/os\n")
-      profiled = PROFILER_IMPORT & "\n"
+      profiled = IMPORT_PROFILER & "\n"
     check plain.source == "## Do.\n" & strict & "import std/os\n"  # after header docs
     check plain.fixed.mapIt(it.line) == @[0]  # whole file, as check names it
     check plain.source.isSettled
@@ -290,21 +290,21 @@ suite "Idiom fixes":
       apart =
         module("import std/strutils\nimport std/[os, algorithm]\nimport ./b\nimport ./a {.all.}\n")
       fix = fixed(apart)
-    check checkImportBrackets("a.nim", apart).findingsOf.mapIt(it.message) == @[
+    check checkBracketsImport("a.nim", apart).findingsOf.mapIt(it.message) == @[
       "Imports of one directory share one bracket (X.5); got `std/` in `2` statements.",
       "Imports of one directory share one bracket (X.5); got `./` in `2` statements.",
     ]
     check fix.source == module("import std/[algorithm, os, strutils]\nimport ./[a {.all.}, b]\n")
-    check fix.fixed.filterIt(it.rule == Rule.ImportBrackets).mapIt(it.line) ==
-      @[HEAD_LINES + 1, HEAD_LINES + 3]  # one report to merge, at first statement
+    check fix.fixed.filterIt(it.rule == Rule.BracketsImport).mapIt(it.line) ==
+      @[LINES_HEAD + 1, LINES_HEAD + 3]  # one report to merge, at first statement
     check fix.source.isSettled
-    check checkImportBrackets("a.nim", fix.source).len == 0
+    check checkBracketsImport("a.nim", fix.source).len == 0
     check fixed(module("import std/[math]\n")).source == module("import std/math\n")
-    check checkImportBrackets("a.nim", module("import std/[math]\n")).findingsOf[0].message ==
+    check checkBracketsImport("a.nim", module("import std/[math]\n")).findingsOf[0].message ==
       "Bracket of one module drops its bracket (STYLE.md §5); got `std/[math]`."  # own rule
-    check checkImportBrackets("a.nim", module("import std/[math]\n"))[0].rule ==
-      Rule.ModuleBracket
-    check fixed(module("import std/[math]\n")).fixed.mapIt(it.rule) == @[Rule.ModuleBracket]
+    check checkBracketsImport("a.nim", module("import std/[math]\n"))[0].rule ==
+      Rule.BracketModule
+    check fixed(module("import std/[math]\n")).fixed.mapIt(it.rule) == @[Rule.BracketModule]
 
 
   test "pragma list of declaration, export list and names after `from … import` are alphabetised":

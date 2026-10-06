@@ -1,7 +1,7 @@
 ## Report Markdown paragraph written twice, in one file or across files (duty 10).
 ##   Two copies of one rule drift, and prompts drifted that way: rule kept in both prompts
 ##     with hand rule that change to either belongs in both (curator review, C6). Paragraph
-##     of `PARAGRAPH_WORDS` or more, whitespace collapsed, seen again is finding at its
+##     of `WORDS_PARAGRAPH` or more, whitespace collapsed, seen again is finding at its
 ##     later place naming its first.
 ##   Fenced code, table rows and headings pass: example is quoted on purpose, table is data,
 ##     and heading twice is record check's own finding.
@@ -14,7 +14,7 @@ import std/[strutils, tables]
 import ./[findings, markdown]
 
 
-const PARAGRAPH_WORDS* = 25
+const WORDS_PARAGRAPH* = 25
   ## Words paragraph must hold before second copy is finding; shorter one is phrase.
 
 
@@ -47,7 +47,7 @@ func checkDuplicates*(documents: openArray[(string, string)]): seq[Finding] =
   var first = initTable[string, string]()
   for (path, content) in documents:
     for p in content.paragraphs:
-      if p.text.count(' ') + 1 < PARAGRAPH_WORDS: continue
+      if p.text.count(' ') + 1 < WORDS_PARAGRAPH: continue
       if p.text in first:
         result.add finding(
           path,

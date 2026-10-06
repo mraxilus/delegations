@@ -8,7 +8,7 @@
 ##     knoller reads it (`checkBanners`) and its fixer writes it: three blank lines before first
 ##     tier, two before second, one after either, and second tier following its parent at once
 ##     keeps its own two. Kind of other syntax takes no banner rule.
-##   Fixers of these rules are knoller's (`form.nim`, `FORM_STEPS` there), which `koch fix` runs
+##   Fixers of these rules are knoller's (`form.nim`, `STEPS_FORM` there), which `koch fix` runs
 ##     on Nim source alone, through knoller's chain.
 ##   Static pass runs no X.9 yet, which knoller holds (`checkComments`): `koch fix` lands first,
 ##     so each project clears its gaps by one command on its own branch, and pull request after
@@ -31,7 +31,7 @@ const WIDTH_EXEMPT = ["LICENSE.md"]
 
 
 
-func checkForm*(path, source: string; rule: KindRule): seq[Finding] =
+func checkForm*(path, source: string; rule: RuleKind): seq[Finding] =
   ## Report form violations of source under kind rule: knoller's form of text, width aside on
   ##   path exempt from it, then banners of Nim syntax, exactly.
   let is_width_exempt = path in WIDTH_EXEMPT

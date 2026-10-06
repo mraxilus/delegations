@@ -21,7 +21,7 @@
 ##     Trailer block, i.e. last paragraph of `Key: value` lines, is skipped, as is fenced or
 ##     indented code. List marker is read past, so list item is held as sentence too.
 ##   Record travels in `docs` commit of its own (CONTRIBUTOR.md, Branch): commit touching
-##     `RECORD_FILE` and any file but Markdown together is finding.
+##     `FILE_RECORD` and any file but Markdown together is finding.
 ##
 ##   Cost: imperative mood unverified; check sees lowercase first letter and no final period.
 ##   Cost: sentence boundary is `.`, `!` or `?` then space then capital outside code span, so
@@ -59,7 +59,7 @@ const
     ## Commit types accepted, alphabetical.
   SUBJECT_MAX* = LINE_MAX
     ## Widest commit subject allowed, in runes: same limit as line of source (Article XI.1).
-  RECORD_FILE* = "PROVENANCE.md"  ## Record that travels in commit of its own.
+  FILE_RECORD* = "PROVENANCE.md"  ## Record that travels in commit of its own.
   TERMINALS = {'.', '!', '?', ':'}
     ## Characters body line may end on: sentence end, or colon opening list.
 
@@ -80,7 +80,7 @@ func parseSubject*(subject: string): Option[Subject] =
     summary = rest[2 .. ^1]
     is_summary = summary.len > 0 and summary[0] in {'a' .. 'z', '0' .. '9'} and
       not summary.endsWith(".")
-  if kind notin TYPES or not (scope == CURATOR or scope.isProjectName) or not is_summary:
+  if kind notin TYPES or not (scope == CURATOR or scope.isNameProject) or not is_summary:
     return none(Subject)
   some(Subject(kind: kind, scope: scope, summary: summary))
 
@@ -139,7 +139,7 @@ func isTrailer(line: string): bool =
     line[0 ..< colon].allCharsInSet({'A' .. 'Z', 'a' .. 'z', '0' .. '9', '-'})
 
 
-func sentenceLines(body: string): seq[string] =
+func linesSentence(body: string): seq[string] =
   ## Read body lines held to XI.4: trailer block, blank, fenced and indented lines dropped.
   var paragraphs: seq[seq[string]] = @[@[]]
   for line in body.splitLines:
@@ -161,7 +161,7 @@ func sentenceLines(body: string): seq[string] =
 
 func checkBody*(subject, body: string): seq[Finding] =
   ## Report body line outside sentence case, or holding other than one sentence (XI.4).
-  for line in body.sentenceLines:
+  for line in body.linesSentence:
     var text = line.strip
     for marker in ["- ", "* "]:
       if text.startsWith(marker): text = text[marker.len .. ^1]
@@ -196,10 +196,10 @@ func checkBody*(subject, body: string): seq[Finding] =
         break
 
 
-func checkRecordCommit*(subject: string, paths: openArray[string]): seq[Finding] =
+func checkCommitRecord*(subject: string, paths: openArray[string]): seq[Finding] =
   ## Report commit touching record and code together (CONTRIBUTOR.md, Branch).
   let
-    has_record = paths.anyIt(it == RECORD_FILE or it.endsWith("/" & RECORD_FILE))
+    has_record = paths.anyIt(it == FILE_RECORD or it.endsWith("/" & FILE_RECORD))
     code = paths.filterIt(not it.endsWith(".md"))
   if has_record and code.len > 0:
     result.add finding(
@@ -215,4 +215,4 @@ func checkHistory*(branch: string, commits: openArray[Commit]): seq[Finding] =
   result = checkCommits(branch, commits.mapIt(it.subject))
   for c in commits:
     result.add checkBody(c.subject, c.body)
-    result.add checkRecordCommit(c.subject, c.paths)
+    result.add checkCommitRecord(c.subject, c.paths)

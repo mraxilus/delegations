@@ -6,7 +6,7 @@
 ##   - Bracket import is alphabetised, and standard library comes before packages, which
 ##     come before local modules (X.5, §5).
 ##   - Adjacent imports of one directory share one bracket, and bracket of one module drops
-##     it (X.5, §5): `checkImportBrackets`, outside static pass until projects run fix.
+##     it (X.5, §5): `checkBracketsImport`, outside static pass until projects run fix.
 ##   - Pragma list of declaration, `export` list and names after `from … import` are
 ##     alphabetised (X.10): `checkLists`, read on tokens (`tokens.nim`), outside static pass
 ##     until projects run fix. Pragma list holds bare pragmas first, then pragmas with argument
@@ -26,12 +26,12 @@
 ##   - `{.used.}` carries trailing comment naming its consumer (§2).
 ##   - `{.push.}` stands only over block of foreign bindings, which `{.pop.}` closes (§2): word of
 ##     `MARKS_FOREIGN` stands among pragmas of block (`declared.nim`).
-##   - Under `tests/` (`reports.isTestFile`): suite importing `std/random` seeds it, and stub
+##   - Under `tests/` (`reports.isFileTest`): suite importing `std/random` seeds it, and stub
 ##     carries testament header (§6); `echo` of value without label, outside condition, is
 ##     debug output (VIII.5).
 ##   `checkIdioms` reads every idiom static pass of `curator/audit` reads, by dialect: module
 ##     each, script and package those of any Nim code, i.e. bindings, pragmas, return and test
-##     rules but stub; `strictFuncs`, import order and stub keys are module's (`idiomFixers` too).
+##     rules but stub; `strictFuncs`, import order and stub keys are module's (`fixersIdiom` too).
 ##
 ##   Fixers read same spans, runs and constants their checks read, so each rule is written
 ##     once (Article II.1), and each rewrites only lines its check reports:
@@ -82,19 +82,19 @@ import ./[declared, entry, form, reports, tokens, views]
 
 
 type
-  ImportSpan = object
+  SpanImport = object
     ## Define one import statement as code view holds it: lines it spans, what it imports.
     first: int  ## Zero-based line `import` opens.
     last: int  ## Zero-based line statement closes on; bracket spanning lines is read whole.
     target: string  ## Text after `import`, lines joined.
 
-  BindingRun = object  ## Define run of consecutive single bindings sharing keyword and indent.
+  RunBinding = object  ## Define run of consecutive single bindings sharing keyword and indent.
     first: int  ## Zero-based line of first binding.
     last: int  ## Zero-based line of last binding.
     keyword: string  ## Keyword each binding repeats.
     indent: int  ## Indent each binding stands at.
 
-  ReturnPlace {.pure.} = enum  ## Define where `return result` stands, which decides its one fix.
+  PlaceReturn {.pure.} = enum  ## Define where `return result` stands, which decides its one fix.
     Ending  ## Last statement of routine holding `result`, at its body's own indent: line goes.
     Early  ## Inside branch, or with more body after it: bare `return` exits with same value.
     Unread  ## Place scanner cannot name, or whose fix is not one: line stays.
@@ -106,7 +106,7 @@ type
     items: seq[string]  ## Modules, pragma kept, alphabetised once all are read.
     statement: string  ## Statement standing in their place.
 
-  StubKey = object
+  KeyStub = object
     ## Define testament key STYLE.md §6 leaves out of stub: line, and span of `-r` to cut.
     line: int  ## Zero-based line of header.
     key: string  ## `-r`, `batchable` or `joinable`.
@@ -131,26 +131,26 @@ type
 const
   STRICT_FUNCS* = "{.experimental: \"strictFuncs\".}"
     ## Pragma line every module carries, in this exact form (STYLE.md §2).
-  BINDING_KEYWORDS = ["const", "let", "var"]  ## Keywords opening binding.
-  STUB_KEYS = ["batchable", "joinable"]
+  KEYWORDS_BINDING = ["const", "let", "var"]  ## Keywords opening binding.
+  KEYS_STUB = ["batchable", "joinable"]
     ## Testament keys `testament pattern` never reads (STYLE.md §6).
-  RUN_FLAG = " -r"  ## Flag stub's `cmd` leaves out, with space before it (STYLE.md §6).
-  PROFILER_IMPORT* = "when compileOption(\"profiler\"): import std/nimprof"
+  FLAG_RUN = " -r"  ## Flag stub's `cmd` leaves out, with space before it (STYLE.md §6).
+  IMPORT_PROFILER* = "when compileOption(\"profiler\"): import std/nimprof"
     ## Profiler import every entry module, umbrella and stub carries, one line (STYLE.md §3).
-  PROFILER_GUARD = "when compileOption(\"profiler\"):"
+  GUARD_PROFILER = "when compileOption(\"profiler\"):"
     ## First line of profiler import written on two lines.
-  PROFILER_MODULE = "import std/nimprof"  ## Second line of that form, indented under first.
-  IMPORT_MARK* = "import "  ## Opening of import statement at module level.
+  MODULE_PROFILER = "import std/nimprof"  ## Second line of that form, indented under first.
+  MARK_IMPORT* = "import "  ## Opening of import statement at module level.
   RETURN_RESULT = "return result"
     ## Statement STYLE.md §5 bans, since bare `return` exits with `result`.
-  RESULT_ROUTINES = ["converter", "func", "method", "proc"]
+  ROUTINES_RESULT = ["converter", "func", "method", "proc"]
     ## Routines holding implicit `result`; template and macro return from their caller.
-  TESTAMENT_HEADER* = "discard \"\"\""
+  HEADER_TESTAMENT* = "discard \"\"\""
     ## Opening of stub's testament header, which stands before module's header docs.
-  LONG_STRING = "\"\"\""  ## Delimiter of string spanning lines.
+  STRING_LONG = "\"\"\""  ## Delimiter of string spanning lines.
   OPENERS = {'(', '[', '{'}  ## Brackets opening span that continues line.
   CLOSERS = {')', ']', '}'}  ## Brackets closing such span.
-  ALL_PRAGMA = "{.all.}"
+  PRAGMA_ALL = "{.all.}"
     ## Pragma bracket item may carry (STYLE.md §5); any other keeps its import apart.
   CONDITIONS = ["case", "elif", "else", "except", "if", "of", "when"]
     ## Openers making `echo` beneath them conditional, i.e. failure diagnostic.
@@ -176,7 +176,7 @@ const
     ##   Cost: pragma missing here reads as user pragma, and its list stays as written.
 
 
-func firstWord*(text: string): string =
+func wordFirst*(text: string): string =
   ## Read leading identifier of stripped text.
   let s = text.strip
   var k = 0
@@ -184,39 +184,39 @@ func firstWord*(text: string): string =
   s[0 ..< k]
 
 
-func dictionaryKey(name: string): (string, string) =
+func keyDictionary(name: string): (string, string) =
   ## Read key of dictionary order: case and `_` ignored, tie to code point (`Facing`, `facing`).
   (name.toLowerAscii.replace("_", ""), name)
 
 
-func importRank(target: string): int =
+func rankImport(target: string): int =
   ## Rank import for order: standard library, then packages, then local modules.
   if target.startsWith("std/"): 0
   elif target.startsWith("./") or target.startsWith("../"): 2
   else: 1
 
 
-func itemName(item: string): string =
+func nameItem(item: string): string =
   ## Read module name of bracket item, pragma dropped: `b {.all.}` gives `b`.
   item.strip.split(' ')[0]
 
 
-func bracketItems(text: string): seq[string] =
+func itemsBracket(text: string): seq[string] =
   ## Read module names inside brackets of `prefix/[a, b {.all.}]`, pragma dropped.
   let
     open = text.find('[')
     close = text.rfind(']')
   if open < 0 or close < open: return
   for item in text[open + 1 ..< close].split(','):
-    let name = item.itemName
+    let name = item.nameItem
     if name.len > 0: result.add name
 
 
-func importSpans(code: seq[string]): seq[ImportSpan] =
+func spansImport(code: seq[string]): seq[SpanImport] =
   ## Read each import statement of code view, bracket spanning lines read whole.
   var i = 0
   while i < code.len:
-    if not code[i].startsWith(IMPORT_MARK):
+    if not code[i].startsWith(MARK_IMPORT):
       inc i
       continue
     let first = i
@@ -224,117 +224,117 @@ func importSpans(code: seq[string]): seq[ImportSpan] =
     while text.count('[') > text.count(']') and i + 1 < code.len:
       inc i
       text.add code[i]
-    result.add ImportSpan(first: first, last: i, target: text[IMPORT_MARK.len .. ^1].strip)
+    result.add SpanImport(first: first, last: i, target: text[MARK_IMPORT.len .. ^1].strip)
     inc i
 
 
 func checkImports*(path: string, code: seq[string]): seq[Report] =
   ## Report bracket import out of order, and import ranked below one before it.
   var rank = -1
-  for span in code.importSpans:
-    let items = span.target.bracketItems
-    if items != items.sortedByIt(it.dictionaryKey):
+  for span in code.spansImport:
+    let items = span.target.itemsBracket
+    if items != items.sortedByIt(it.keyDictionary):
       result.add initReport(
         path,
         span.first + 1,
-        Rule.BracketImport,
+        Rule.ImportBracket,
         "Bracket import is alphabetised; got `" & items.join(", ") & "`.",
       )
-    let r = span.target.importRank
+    let r = span.target.rankImport
     if r < rank:
       result.add initReport(
         path,
         span.first + 1,
-        Rule.ImportRank,
+        Rule.RankImport,
         "Standard library comes first, then packages, then local modules; got `" &
           span.target.split('[')[0] & "`.",
       )
     rank = max(rank, r)
 
 
-func isSingleBinding(line: string): bool =
+func isBindingSingle(line: string): bool =
   ## Decide whether line opens binding naming value on same line, e.g. `let x = 1`.
-  let word = line.firstWord
-  word in BINDING_KEYWORDS and line.strip.len > word.len and line.strip[word.len] == ' '
+  let word = line.wordFirst
+  word in KEYWORDS_BINDING and line.strip.len > word.len and line.strip[word.len] == ' '
 
 
-func bindingRuns(code: seq[string]): seq[BindingRun] =
+func runsBinding(code: seq[string]): seq[RunBinding] =
   ## Find each run of two or more consecutive single bindings of one keyword at one indent.
   var i = 0
   while i + 1 < code.len:
     let
       a = code[i]
       b = code[i + 1]
-    if a.isSingleBinding and b.isSingleBinding and a.firstWord == b.firstWord and
+    if a.isBindingSingle and b.isBindingSingle and a.wordFirst == b.wordFirst and
         a.indentOf == b.indentOf:
       var j = i + 1
-      while j + 1 < code.len and code[j + 1].isSingleBinding and
-          code[j + 1].firstWord == a.firstWord and code[j + 1].indentOf == a.indentOf:
+      while j + 1 < code.len and code[j + 1].isBindingSingle and
+          code[j + 1].wordFirst == a.wordFirst and code[j + 1].indentOf == a.indentOf:
         inc j
-      result.add BindingRun(first: i, last: j, keyword: a.firstWord, indent: a.indentOf)
+      result.add RunBinding(first: i, last: j, keyword: a.wordFirst, indent: a.indentOf)
       i = j + 1
     else: inc i
 
 
 func checkBindings*(path: string, code: seq[string]): seq[Report] =
   ## Report run of consecutive single bindings of one keyword at one indent, once per run.
-  for run in code.bindingRuns:
+  for run in code.runsBinding:
     result.add initReport(
       path,
       run.first + 1,
-      Rule.SingleBindings,
+      Rule.BindingsSingle,
       "Consecutive single bindings share one keyword; got `" & run.keyword & "` twice.",
     )
 
 
-func headerLines(source: string): Slice[int] =
+func linesHeader(source: string): Slice[int] =
   ## Read zero-based lines inside stub's testament header; empty slice where none closes.
-  let open = source.find(TESTAMENT_HEADER)
+  let open = source.find(HEADER_TESTAMENT)
   if open < 0: return 1 .. 0
-  let close = source.find(LONG_STRING, open + TESTAMENT_HEADER.len)
+  let close = source.find(STRING_LONG, open + HEADER_TESTAMENT.len)
   if close < 0: return 1 .. 0
   source[0 ..< open].count('\n') + 1 .. source[0 ..< close].count('\n') - 1
 
 
-func stubKeys(path, source: string): seq[StubKey] =
+func keysStub(path, source: string): seq[KeyStub] =
   ## Find each key §6 leaves out of stub's testament header: `-r` in `cmd`, whole line of
   ##   `batchable` or `joinable`. `-r` is flag alone, so space, quote or line end follows it.
   if not path.isStub: return
   let lines = source.split('\n')
-  for i in source.headerLines:
+  for i in source.linesHeader:
     let s = lines[i].strip
     if s.startsWith("cmd:"):
-      var at = lines[i].find(RUN_FLAG)
+      var at = lines[i].find(FLAG_RUN)
       while at >= 0:
-        let after = at + RUN_FLAG.len
+        let after = at + FLAG_RUN.len
         if after == lines[i].len or lines[i][after] in {' ', '"'}:
-          result.add StubKey(line: i, key: RUN_FLAG.strip, first: at, after: after)
-        at = lines[i].find(RUN_FLAG, after)
-    for key in STUB_KEYS:
-      if s.startsWith(key & ":"): result.add StubKey(line: i, key: key, first: -1, after: -1)
+          result.add KeyStub(line: i, key: FLAG_RUN.strip, first: at, after: after)
+        at = lines[i].find(FLAG_RUN, after)
+    for key in KEYS_STUB:
+      if s.startsWith(key & ":"): result.add KeyStub(line: i, key: key, first: -1, after: -1)
 
 
-func checkStubKeys*(path, source: string): seq[Report] =
+func checkKeysStub*(path, source: string): seq[Report] =
   ## Report key stub's testament header leaves out: `-r` in `cmd`, `batchable`, `joinable` (§6).
-  for stub in stubKeys(path, source):
+  for stub in keysStub(path, source):
     let message =
       if stub.first >= 0:
         "Stub `cmd` leaves out `-r`, since testament runs binary itself; got `-r`."
       else:
         "Stub leaves out keys `testament pattern` never reads; got `" & stub.key & "`."
-    result.add initReport(path, stub.line + 1, Rule.StubKeys, message)
+    result.add initReport(path, stub.line + 1, Rule.KeysStub, message)
 
 
-func firstImport(code: seq[string]): int =
+func importFirst(code: seq[string]): int =
   ## Find zero-based line of first `import`, `include` or `from` at module level; `-1` if none.
   for i, c in code:
-    if c.startsWith(IMPORT_MARK) or c.startsWith("include ") or c.startsWith("from "): return i
+    if c.startsWith(MARK_IMPORT) or c.startsWith("include ") or c.startsWith("from "): return i
   -1
 
 
 func checkStrictFuncs*(path: string; lines, code: seq[string]): seq[Report] =
   ## Report module lacking `strictFuncs` in exact form before its imports (STYLE.md §2).
-  let (strict_at, import_at) = (lines.find(STRICT_FUNCS), code.firstImport)
+  let (strict_at, import_at) = (lines.find(STRICT_FUNCS), code.importFirst)
   if strict_at < 0:
     result.add initReport(
       path,
@@ -364,7 +364,7 @@ func checkReturns*(path: string, code: seq[string]): seq[Report] =
     )
 
 
-func pragmaNames(code: string): seq[string] =
+func namesPragma(code: string): seq[string] =
   ## Read names inside every `{. .}` of code line: `{.borrow, used.}` gives `borrow`, `used`.
   var at = 0
   while true:
@@ -382,12 +382,12 @@ func checkPragmas(path: string; lines, code: seq[string]): seq[Report] =
   ## Report `{.used.}` without comment, and `{.push.}` over block holding no foreign binding (§2).
   for i, c in code:
     let s = c.strip
-    if "used" in c.pragmaNames and s != "{.used.}" and
+    if "used" in c.namesPragma and s != "{.used.}" and
         lines[i].find('#', c.strip(leading = false).len) < 0:
       result.add initReport(
         path,
         i + 1,
-        Rule.UsedConsumer,
+        Rule.ConsumerUsed,
         "`{.used.}` carries comment naming its consumer; got none.",
       )
     if s.startsWith("{.push"):
@@ -395,7 +395,7 @@ func checkPragmas(path: string; lines, code: seq[string]): seq[Report] =
         j = i
         words: seq[string]  # Words among pragmas of block, push to pop.
       while j < code.len:
-        words.add code[j].pragmaWords
+        words.add code[j].wordsPragma
         if j > i and code[j].strip.startsWith("{.pop"): break
         inc j
       if not words.anyIt(it in MARKS_FOREIGN):
@@ -413,15 +413,15 @@ func isUnderCondition(code: seq[string], i: int): bool =
   var k = i - 1
   while k >= 0:
     if code[k].strip.len > 0 and code[k].indentOf < indent:
-      return code[k].firstWord in CONDITIONS
+      return code[k].wordFirst in CONDITIONS
     dec k
 
 
 func isRandomImported(code: seq[string]): bool =
   ## Decide whether code imports `std/random`, alone or in bracket.
   for c in code:
-    if c.startsWith(IMPORT_MARK) and
-        ("std/random" in c or (c.startsWith("import std/[") and "random" in c.bracketItems)):
+    if c.startsWith(MARK_IMPORT) and
+        ("std/random" in c or (c.startsWith("import std/[") and "random" in c.itemsBracket)):
       return true
 
 
@@ -435,22 +435,22 @@ func checkTests(path, source: string; lines, code: seq[string]; dialect: Dialect
   ## Report, in test file, unseeded random suite, stub lacking testament header, and `echo` of
   ##   debug shape (§6, VIII.5); file outside `tests/` reports none, and stub is module alone,
   ##   since koch runs testament over `tests/t*.nim`.
-  if not path.isTestFile: return
+  if not path.isFileTest: return
   if code.isRandomImported and not code.join("\n").isSeeded:
     result.add initReport(
       path,
       0,
-      Rule.RandomSeed,
+      Rule.SeedRandom,
       "Suite seeds `std/random`, as `randomize(0)` does; got no seed.",
     )
-  if dialect == Dialect.Module and path.isStub and source.find(TESTAMENT_HEADER) < 0:
-    result.add initReport(path, 0, Rule.StubHeader, "Test stub carries testament header; got none.")
+  if dialect == Dialect.Module and path.isStub and source.find(HEADER_TESTAMENT) < 0:
+    result.add initReport(path, 0, Rule.HeaderStub, "Test stub carries testament header; got none.")
   for i, c in code:
-    if c.firstWord == "echo" and '"' notin lines[i] and not code.isUnderCondition(i):
+    if c.wordFirst == "echo" and '"' notin lines[i] and not code.isUnderCondition(i):
       result.add initReport(
         path,
         i + 1,
-        Rule.DebugOutput,
+        Rule.OutputDebug,
         "Test leaves no debug output; label report, or print under failing condition; got `" &
           c.strip & "`.",
       )
@@ -471,12 +471,12 @@ func checkIdioms*(path, source: string; dialect: Dialect = Dialect.Module): seq[
   result.add checkBindings(path, code)
   result.add checkPragmas(path, lines, code)
   result.add checkReturns(path, code)
-  if path.isTestFile:
+  if path.isFileTest:
     result.add checkTests(path, source, lines, code, dialect)
-    if is_module: result.add checkStubKeys(path, source)
+    if is_module: result.add checkKeysStub(path, source)
 
 
-func placeOf(lines, code: seq[string]; i: int): ReturnPlace =
+func placeOf(lines, code: seq[string]; i: int): PlaceReturn =
   ## Read where `return result` on line `i` stands, from line opening its block.
   ##   Opener is nearest code line above at smaller indent. `:` opens branch; `=` opens
   ##   routine body where routine keyword stands on that line, or on line opening signature
@@ -485,29 +485,29 @@ func placeOf(lines, code: seq[string]; i: int): ReturnPlace =
   var opener = i - 1
   while opener >= 0 and (code[opener].strip.len == 0 or code[opener].indentOf >= indent):
     dec opener
-  if opener < 0: return ReturnPlace.Unread
+  if opener < 0: return PlaceReturn.Unread
   let head = code[opener].strip
-  if head.endsWith(":"): return ReturnPlace.Early
-  if not head.endsWith("="): return ReturnPlace.Unread
+  if head.endsWith(":"): return PlaceReturn.Early
+  if not head.endsWith("="): return PlaceReturn.Unread
   var signature = opener
   if head.startsWith(")"):
     signature = opener - 1
     while signature >= 0 and
         (code[signature].strip.len == 0 or code[signature].indentOf > code[opener].indentOf):
       dec signature
-  if signature < 0 or code[signature].firstWord notin RESULT_ROUTINES:
-    return ReturnPlace.Unread
+  if signature < 0 or code[signature].wordFirst notin ROUTINES_RESULT:
+    return PlaceReturn.Unread
 
   # Read what follows in body, and what ending line would leave behind.
   var after = i + 1
   while after < code.len and code[after].strip.len == 0: inc after
-  if after < code.len and code[after].indentOf >= indent: return ReturnPlace.Early
+  if after < code.len and code[after].indentOf >= indent: return PlaceReturn.Early
   let
     has_statement = (opener + 1 ..< i).toSeq.anyIt(code[it].strip.len > 0)
     has_comment = lines[i].strip != RETURN_RESULT
     is_after_comment = lines[i - 1].strip.len > 0 and code[i - 1].strip.len == 0
-  if not has_statement or has_comment or is_after_comment: ReturnPlace.Unread
-  else: ReturnPlace.Ending
+  if not has_statement or has_comment or is_after_comment: PlaceReturn.Unread
+  else: PlaceReturn.Ending
 
 
 func fixReturnResult(path, source: string): Fix =
@@ -518,18 +518,18 @@ func fixReturnResult(path, source: string): Fix =
     code = source.codeOnly.split('\n')
   var shaped: seq[string]
   for i, line in lines:
-    let place = if code[i].strip == RETURN_RESULT: placeOf(lines, code, i) else: ReturnPlace.Unread
+    let place = if code[i].strip == RETURN_RESULT: placeOf(lines, code, i) else: PlaceReturn.Unread
     case place
-    of ReturnPlace.Unread:
+    of PlaceReturn.Unread:
       shaped.add line
       result.origin.add i + 1
       continue
-    of ReturnPlace.Ending:
+    of PlaceReturn.Ending:
       # Blank lines opening its paragraph go with it.
       while shaped.len > 0 and shaped[^1].len == 0:
         shaped.setLen(shaped.len - 1)
         result.origin.setLen(result.origin.len - 1)
-    of ReturnPlace.Early:
+    of PlaceReturn.Early:
       let at = code[i].find(RETURN_RESULT)
       shaped.add line[0 ..< at] & "return" & line[at + RETURN_RESULT.len .. ^1]
       result.origin.add i + 1
@@ -538,14 +538,14 @@ func fixReturnResult(path, source: string): Fix =
   if result.origin.len == lines.len: result.origin.setLen(0)
 
 
-func sortedBracket(statement: string): string =
+func bracketSorted(statement: string): string =
   ## Sort items of bracket into slots they held, so whitespace and commas stay in place.
   let
     open = statement.find('[')
     close = statement.rfind(']')
     slots = statement[open + 1 ..< close].split(',')
   var items = slots.mapIt(it.strip).filterIt(it.len > 0)
-  items = items.sortedByIt(it.itemName.dictionaryKey)
+  items = items.sortedByIt(it.nameItem.keyDictionary)
   var
     k = 0
     filled: seq[string]
@@ -566,34 +566,34 @@ func fixImports(path, source: string): Fix =
   let code = source.codeOnly.split('\n')
 
   # Sort items in place, leaving bracket holding comment or wide result to hand.
-  for span in code.importSpans:
-    let items = span.target.bracketItems
-    if items == items.sortedByIt(it.dictionaryKey): continue
+  for span in code.spansImport:
+    let items = span.target.itemsBracket
+    if items == items.sortedByIt(it.keyDictionary): continue
     let statement = lines[span.first .. span.last].join("\n")
     if statement != code[span.first .. span.last].join("\n"): continue
-    let sorted_lines = statement.sortedBracket.split('\n')
-    if sorted_lines.countIt(it.isWide) > lines[span.first .. span.last].countIt(it.isWide):
+    let lines_sorted = statement.bracketSorted.split('\n')
+    if lines_sorted.countIt(it.isWide) > lines[span.first .. span.last].countIt(it.isWide):
       continue
-    for k, line in sorted_lines: lines[span.first + k] = line
-    result.fixed.add initReport(path, span.first + 1, Rule.BracketImport)
+    for k, line in lines_sorted: lines[span.first + k] = line
+    result.fixed.add initReport(path, span.first + 1, Rule.ImportBracket)
 
   # Reorder each block of adjacent import statements by rank, stable within rank.
-  let spans = code.importSpans
+  let spans = code.spansImport
   var i = 0
   while i < spans.len:
     var j = i
     while j + 1 < spans.len and spans[j + 1].first == spans[j].last + 1: inc j
     let
-      block_spans = spans[i .. j]
-      ranked = block_spans.sortedByIt(it.target.importRank)
-    if ranked != block_spans:
+      spans_block = spans[i .. j]
+      ranked = spans_block.sortedByIt(it.target.rankImport)
+    if ranked != spans_block:
       var
         rank = -1
         reordered: seq[string]
-      for span in block_spans:
-        let r = span.target.importRank
+      for span in spans_block:
+        let r = span.target.rankImport
         if r < rank:
-          result.fixed.add initReport(path, span.first + 1, Rule.ImportRank)
+          result.fixed.add initReport(path, span.first + 1, Rule.RankImport)
         rank = max(rank, r)
       for span in ranked: reordered.add lines[span.first .. span.last]
       for k, line in reordered: lines[spans[i].first + k] = line
@@ -601,7 +601,7 @@ func fixImports(path, source: string): Fix =
   result.source = lines.join("\n")
 
 
-func importParts(target: string): tuple[prefix: string, items: seq[string]] =
+func partsImport(target: string): tuple[prefix: string, items: seq[string]] =
   ## Split import target into directory and items: `std/os` gives `std/` and `os`, and
   ##   `./[a, b {.all.}]` gives `./` and both items, pragma kept. Empty where target names no
   ##   directory, holds `except`, `as` or second target, or item carries pragma but `{.all.}`.
@@ -612,7 +612,7 @@ func importParts(target: string): tuple[prefix: string, items: seq[string]] =
     (prefix, body) = (target[0 ..< open], target[open + 1 ..< target.high])
   else:
     let
-      path = target.itemName
+      path = target.nameItem
       slash = path.rfind('/')
     if slash < 0: return
     (prefix, body) = (path[0 .. slash], path[slash + 1 .. ^1] & target[path.len .. ^1])
@@ -620,8 +620,8 @@ func importParts(target: string): tuple[prefix: string, items: seq[string]] =
   for item in body.split(','):
     let core = item.strip
     if core.len == 0: continue
-    let rest = core[core.itemName.len .. ^1].strip
-    if '/' in core.itemName or (rest.len > 0 and rest != ALL_PRAGMA): return
+    let rest = core[core.nameItem.len .. ^1].strip
+    if '/' in core.nameItem or (rest.len > 0 and rest != PRAGMA_ALL): return
     result.items.add core
   if result.items.len > 0: result.prefix = prefix
 
@@ -630,7 +630,7 @@ func consolidations(lines, code: seq[string]): seq[Consolidation] =
   ## Find each set of adjacent imports of one directory, and each bracket of one module.
   ##   Imports are read in blocks of adjacent statements, as rank reads them; statement
   ##   spanning lines, or holding comment or string, stays apart.
-  let spans = code.importSpans
+  let spans = code.spansImport
   var i = 0
   while i < spans.len:
     var j = i
@@ -638,7 +638,7 @@ func consolidations(lines, code: seq[string]): seq[Consolidation] =
     var prefixes: seq[string]
     for span in spans[i .. j]:
       if span.first != span.last or lines[span.first] != code[span.first]: continue
-      let (prefix, items) = span.target.importParts
+      let (prefix, items) = span.target.partsImport
       if prefix.len == 0: continue
       let at = prefixes.find(prefix)
       if at < 0:
@@ -654,8 +654,8 @@ func consolidations(lines, code: seq[string]): seq[Consolidation] =
   # Keep those whose statement changes and fits its line.
   result = result.filterIt(it.lines.len > 1 or (it.items.len == 1 and '[' in lines[it.lines[0]]))
   for c in result.mitems:
-    c.items = c.items.sortedByIt(it.itemName.dictionaryKey)
-    c.statement = IMPORT_MARK & c.prefix &
+    c.items = c.items.sortedByIt(it.nameItem.keyDictionary)
+    c.statement = MARK_IMPORT & c.prefix &
       (if c.items.len == 1: c.items[0] else: "[" & c.items.join(", ") & "]")
   result = result.filterIt(not it.statement.isWide)
 
@@ -663,10 +663,10 @@ func consolidations(lines, code: seq[string]): seq[Consolidation] =
 func ruleOf(c: Consolidation): Rule =
   ## Read rule of consolidation: imports of one directory merge (X.5), or bracket of one
   ##   module drops (STYLE.md §5); two articles state two rewrites.
-  if c.lines.len > 1: Rule.ImportBrackets else: Rule.ModuleBracket
+  if c.lines.len > 1: Rule.BracketsImport else: Rule.BracketModule
 
 
-func checkImportBrackets*(path, source: string): seq[Report] =
+func checkBracketsImport*(path, source: string): seq[Report] =
   ## Report adjacent imports of one directory standing apart (X.5), and bracket of one module
   ##   (STYLE.md §5), each under rule of its own.
   ##   Named by its suite and `fixes.nim` alone until static pass calls it (`fixes.nim`).
@@ -709,7 +709,7 @@ func depthOf(code: string): int =
     elif c in CLOSERS: dec result
 
 
-func continuationOf(run: BindingRun; lines, code: seq[string]): int =
+func continuationOf(run: RunBinding; lines, code: seq[string]): int =
   ## Find last line continuing run's last binding: open bracket, deeper indent, doc under it.
   ##   Blank line counts only where line after it continues too.
   result = run.last
@@ -734,7 +734,7 @@ func fixBindings(path, source: string): Fix =
   ##   Last run goes first: run nested in continuation of earlier one is then rewritten before
   ##   that continuation moves, and every earlier run keeps its lines.
   result.source = source
-  let runs = source.codeOnly.split('\n').bindingRuns
+  let runs = source.codeOnly.split('\n').runsBinding
   var origin = toSeq(1 .. source.count('\n') + 1)
   for run in runs.reversed:
     let
@@ -751,15 +751,15 @@ func fixBindings(path, source: string): Fix =
       shaped.add(if lines[k].len == 0: "" else: "  " & lines[k])
 
     # Leave run to hand where its lines hold long string, or reshaping makes line wide.
-    var is_long_string = false
+    var is_string_long = false
     for k in run.first .. last:
-      let at = lines[k].find(LONG_STRING)
-      if at >= 0 and kept[k][at] == ' ': is_long_string = true
+      let at = lines[k].find(STRING_LONG)
+      if at >= 0 and kept[k][at] == ' ': is_string_long = true
     let is_widened = shaped.countIt(it.isWide) > lines[run.first .. last].countIt(it.isWide)
-    if is_long_string or is_widened: continue
+    if is_string_long or is_widened: continue
     result.source = (lines[0 ..< run.first] & shaped & lines[last + 1 .. ^1]).join("\n")
     origin = origin[0 ..< run.first] & @[0] & origin[run.first .. ^1]  # Keyword line inserted.
-    result.fixed.insert(initReport(path, run.first + 1, Rule.SingleBindings), 0)
+    result.fixed.insert(initReport(path, run.first + 1, Rule.BindingsSingle), 0)
   if result.fixed.len > 0: result.origin = origin
 
 
@@ -775,7 +775,7 @@ func fixStrictFuncs(path, source: string): Fix =
     reported = 0
   let present = lines.find(STRICT_FUNCS)
   if present >= 0:
-    let import_at = source.codeOnly.split('\n').firstImport
+    let import_at = source.codeOnly.split('\n').importFirst
     if import_at < 0 or present < import_at: return
     var first = present
     if present + 1 < lines.len and lines[present + 1].len == 0:
@@ -788,7 +788,7 @@ func fixStrictFuncs(path, source: string): Fix =
   for i, c in code:
     # Skip text, directives and testament header; `{.push.}` opens body of foreign bindings.
     let is_directive = c.startsWith("{.") and not c.startsWith("{.push")
-    if c.strip.len == 0 or is_directive or lines[i].startsWith(TESTAMENT_HEADER): continue
+    if c.strip.len == 0 or is_directive or lines[i].startsWith(HEADER_TESTAMENT): continue
     at = i
     break
 
@@ -819,14 +819,14 @@ func profilerOf(path, source: string): Profiler =
   let
     lines = source.split('\n')
     code = source.codeOnly.split('\n')
-    header = source.headerLines
+    header = source.linesHeader
   result.anchor = -1
   result.is_entry = path.isStub or path.isUmbrella
   for i, line in lines:
     if code[i].strip.len == 0: continue
-    if line.startsWith(MAIN_GUARD): result.is_entry = true
-    if line == PROFILER_IMPORT: result.is_present = true
-    if line == PROFILER_GUARD and i + 1 < lines.len and lines[i + 1].strip == PROFILER_MODULE and
+    if line.startsWith(GUARD_MAIN): result.is_entry = true
+    if line == IMPORT_PROFILER: result.is_present = true
+    if line == GUARD_PROFILER and i + 1 < lines.len and lines[i + 1].strip == MODULE_PROFILER and
         lines[i + 1].indentOf > 0:
       result.is_present = true
       result.pairs.add i
@@ -835,7 +835,7 @@ func profilerOf(path, source: string): Profiler =
   var is_opening = true
   for i, line in lines:
     if not is_opening: break
-    if code[i].strip.len == 0 or i in header or line.startsWith(TESTAMENT_HEADER): continue
+    if code[i].strip.len == 0 or i in header or line.startsWith(HEADER_TESTAMENT): continue
     if line.startsWith("{.") and not line.startsWith("{.push"): result.anchor = i
     else: is_opening = false
 
@@ -849,14 +849,14 @@ func checkProfiler*(path, source: string): seq[Report] =
     result.add initReport(
       path,
       i + 1,
-      Rule.ProfilerImport,
-      "Profiler import stands on one line, `" & PROFILER_IMPORT & "`; got `2` lines.",
+      Rule.ImportProfiler,
+      "Profiler import stands on one line, `" & IMPORT_PROFILER & "`; got `2` lines.",
     )
   if profiler.is_entry and not profiler.is_present:
     result.add initReport(
       path,
       0,
-      Rule.ProfilerImport,
+      Rule.ImportProfiler,
       "Entry module, library umbrella and test stub import profiler right after pragmas; got none.",
     )
 
@@ -873,22 +873,22 @@ func fixProfiler(path, source: string): Fix =
   var shaped: seq[string]
   for i, line in lines:
     if i - 1 in profiler.pairs: continue
-    shaped.add(if i in profiler.pairs: PROFILER_IMPORT else: line)
+    shaped.add(if i in profiler.pairs: IMPORT_PROFILER else: line)
     result.origin.add i + 1
     if i == profiler.anchor and not profiler.is_present:
-      shaped.add ["", PROFILER_IMPORT]
+      shaped.add ["", IMPORT_PROFILER]
       result.origin.add [0, 0]
       if i + 1 < lines.len and lines[i + 1].strip.len > 0:
         shaped.add ""
         result.origin.add 0
   result.source = shaped.join("\n")
-  for i in profiler.pairs: result.fixed.add initReport(path, i + 1, Rule.ProfilerImport)
-  if not profiler.is_present: result.fixed.add initReport(path, 0, Rule.ProfilerImport)
+  for i in profiler.pairs: result.fixed.add initReport(path, i + 1, Rule.ImportProfiler)
+  if not profiler.is_present: result.fixed.add initReport(path, 0, Rule.ImportProfiler)
 
 
-func fixStubKeys(path, source: string): Fix =
+func fixKeysStub(path, source: string): Fix =
   ## Cut `-r` from stub's `cmd`, and delete line of `batchable` or `joinable`, as check reads them.
-  let found = stubKeys(path, source)
+  let found = keysStub(path, source)
   result.source = source
   if found.len == 0: return
   var
@@ -904,7 +904,7 @@ func fixStubKeys(path, source: string): Fix =
     result.origin.add i + 1
   result.source = shaped.join("\n")
   if dropped.len == 0: result.origin.setLen(0)
-  for stub in found: result.fixed.add initReport(path, stub.line + 1, Rule.StubKeys)
+  for stub in found: result.fixed.add initReport(path, stub.line + 1, Rule.KeysStub)
 
 
 func disorders(source: string): seq[Disorder] =
@@ -917,7 +917,7 @@ func disorders(source: string): seq[Disorder] =
     partners = tokens.partners
   for k, t in tokens:
     let
-      is_line_first = k == 0 or tokens[k - 1].lastLine(source) < t.line
+      is_line_first = k == 0 or tokens[k - 1].lineLast(source) < t.line
       is_pragma = t.spelling(source) == "{."
     var
       spans: seq[(int, int)]
@@ -928,9 +928,9 @@ func disorders(source: string): seq[Disorder] =
     elif t.spelling(source) in ["export", "from"] and is_line_first:
       stop = k + 1
       while stop < tokens.len and tokens[stop].line == t.line and
-          tokens[stop].kind != TokenKind.Comment:
+          tokens[stop].kind != KindToken.Comment:
         inc stop
-      if tokens[stop - 1].kind == TokenKind.Comma: continue
+      if tokens[stop - 1].kind == KindToken.Comma: continue
       if t.spelling(source) == "from":
         while first < stop and tokens[first].spelling(source) != "import": inc first
         inc first
@@ -940,8 +940,8 @@ func disorders(source: string): seq[Disorder] =
     var m = first
     while m < stop:
       let opening = m
-      while m < stop and tokens[m].kind != TokenKind.Comma:
-        if tokens[m].kind == TokenKind.Open and partners[m] > m: m = partners[m]
+      while m < stop and tokens[m].kind != KindToken.Comma:
+        if tokens[m].kind == KindToken.Open and partners[m] > m: m = partners[m]
         inc m
       spans.add (opening, m - 1)
       inc m
@@ -956,7 +956,7 @@ func disorders(source: string): seq[Disorder] =
       texts = spans.mapIt(source[tokens[it[0]].first ..< tokens[it[1]].after])
       keys = if is_pragma: names else: texts
       order = toSeq(0 ..< texts.len).sortedByIt(
-        (is_pragma and spans[it][1] > spans[it][0], keys[it].dictionaryKey, it),
+        (is_pragma and spans[it][1] > spans[it][0], keys[it].keyDictionary, it),
       )
     if order == toSeq(0 ..< texts.len): continue
     var sorted = texts[order[0]]
@@ -980,7 +980,7 @@ func checkLists*(path, source: string): seq[Report] =
     result.add initReport(
       path,
       d.line + 1,
-      Rule.UnorderedList,
+      Rule.ListUnordered,
       "List language leaves unordered is alphabetised, bare pragmas first; got `" & d.got & "`.",
     )
 
@@ -991,12 +991,12 @@ func fixLists(path, source: string): Fix =
   result.source = source
   for d in found.reversed:
     result.source = result.source[0 ..< d.first] & d.sorted & result.source[d.after .. ^1]
-  for d in found: result.fixed.add initReport(path, d.line + 1, Rule.UnorderedList)
+  for d in found: result.fixed.add initReport(path, d.line + 1, Rule.ListUnordered)
 
 
-const IDIOM_FIXERS: array[8, Fixer] = [
+const FIXERS_IDIOM: array[8, Fixer] = [
   fixReturnResult,
-  fixStubKeys,
+  fixKeysStub,
   fixImports,
   fixConsolidations,
   fixBindings,
@@ -1009,14 +1009,14 @@ const IDIOM_FIXERS: array[8, Fixer] = [
   ##   fixer places.
 
 
-func idiomFixers*(dialect: Dialect): seq[Fixer] =
+func fixersIdiom*(dialect: Dialect): seq[Fixer] =
   ## List idiom fixers dialect takes, in order they run: module takes each, script and package
   ##   those whose check reads any Nim code (`checkIdioms`), i.e. return and bindings.
-  if dialect == Dialect.Module: @IDIOM_FIXERS else: @[fixReturnResult, fixBindings]
+  if dialect == Dialect.Module: @FIXERS_IDIOM else: @[fixReturnResult, fixBindings]
 
 
 func fixIdioms*(path, source: string): Fix =
   ## Rewrite Nim source so each idiom with one mechanical fix holds; report each rewrite.
   ##   `chain` traces each report through lines earlier fixers moved, to source as given.
   result.source = source
-  for fixer in IDIOM_FIXERS: result = result.chain(fixer(path, result.source))
+  for fixer in FIXERS_IDIOM: result = result.chain(fixer(path, result.source))

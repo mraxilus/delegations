@@ -80,18 +80,18 @@ suite "Faces":
 
 
   test "first family is read unquoted, whatever quoting stack uses":
-    check firstFamily("\"Noto Sans\", Arial") == "Noto Sans"
-    check firstFamily("'Noto Sans', Arial") == "Noto Sans"
-    check firstFamily("  Noto Sans , Arial") == "Noto Sans"
-    check firstFamily("").len == 0
+    check familyFirst("\"Noto Sans\", Arial") == "Noto Sans"
+    check familyFirst("'Noto Sans', Arial") == "Noto Sans"
+    check familyFirst("  Noto Sans , Arial") == "Noto Sans"
+    check familyFirst("").len == 0
 
 
   test "heading taking family other than serif is reported":
-    const sans_heading = """
+    const heading_sans = """
   :root { --sans: "Noto Sans", sans-serif; --serif: "Noto Serif", serif; }
   h1 { font-family: var(--sans); }
 """
-    let found = checkFaces("p.html", sans_heading)
+    let found = checkFaces("p.html", heading_sans)
     check found.len == 1
     check found[0].message.endsWith("got `Noto Sans`.")
     # Serif heading passes, and so does non-heading element taking sans.
@@ -178,7 +178,7 @@ suite "Faces":
     #   declaring its stack correctly becomes finding.
     const one_line =
       """  :root { --mono: "Commit Mono", monospace; --serif: "Noto Serif", serif; }"""
-    let held = one_line.propertyValues
+    let held = one_line.valuesProperty
     check held.len == 2
     check held[0][0] == "--mono"
     check held[1][0] == "--serif"
@@ -204,11 +204,11 @@ suite "Faces":
   test "font shorthand names family last, and is read as stack":
     # `design/page.nim` writes every stack this way, so check reading `font-family` alone
     #   misses whole page.
-    check shorthandFamilies("16px/1.6 var(--sans)") == "var(--sans)"
-    check shorthandFamilies("500 0.7rem/1 var(--mono)") == "var(--mono)"
-    check shorthandFamilies("italic bold 12px/30px Georgia, serif") == "Georgia, serif"
-    check shorthandFamilies("0.66rem/1.4 \"Noto Sans\"") == "\"Noto Sans\""
-    check shorthandFamilies("caption").len == 0  # names system font, no family list
+    check familiesShorthand("16px/1.6 var(--sans)") == "var(--sans)"
+    check familiesShorthand("500 0.7rem/1 var(--mono)") == "var(--mono)"
+    check familiesShorthand("italic bold 12px/30px Georgia, serif") == "Georgia, serif"
+    check familiesShorthand("0.66rem/1.4 \"Noto Sans\"") == "\"Noto Sans\""
+    check familiesShorthand("caption").len == 0  # names system font, no family list
     let found = checkFaces(
       "page.nim",
       "  body { font: 16px/1.6 ui-sans-serif; }\n  x { font-family: \"Noto Sans\"; }\n",

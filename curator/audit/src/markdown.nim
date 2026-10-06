@@ -10,22 +10,22 @@
 import std/[sequtils, strutils]
 
 
-func isSeparatorRow(cells: seq[string]): bool =
+func isRowSeparator(cells: seq[string]): bool =
   ## Decide whether row is `|---|---|` rule under header.
   cells.len > 0 and cells.allIt(it.len > 0 and it.allCharsInSet({'-', ':'}))
 
 
-func tableRows*(markdown: string): seq[seq[string]] =
+func rowsTable*(markdown: string): seq[seq[string]] =
   ## Read every pipe-table row as stripped cells, separator rows dropped.
   for line in markdown.splitLines:
     let s = line.strip
     if not (s.startsWith("|") and s.endsWith("|")) or s.len < 2: continue
     let cells = s[1 ..< s.high].split('|').mapIt(it.strip)
-    if cells.isSeparatorRow: continue
+    if cells.isRowSeparator: continue
     result.add cells
 
 
-func headingLines*(markdown: string): seq[string] =
+func linesHeading*(markdown: string): seq[string] =
   ## Collect ATX heading lines, i.e. lines opening with `#`.
   for line in markdown.splitLines:
     if line.startsWith("#"): result.add line

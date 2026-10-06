@@ -43,8 +43,8 @@ func fenceOf*(source: string): Fence =
     count = if source.endsWith("\n"): lines.len - 1 else: lines.len
   var markers = newSeq[string](lines.len)
   for k, t in tokens:
-    if t.kind != TokenKind.Comment: continue
-    if k == 0 or tokens[k - 1].lastLine(source) < t.line:
+    if t.kind != KindToken.Comment: continue
+    if k == 0 or tokens[k - 1].lineLast(source) < t.line:
       markers[t.line] = t.spelling(source).strip
   var
     fences = newSeqWith(lines.len, -1)  # Fence each line lies in, by count; `-1` outside.
@@ -64,7 +64,7 @@ func fenceOf*(source: string): Fence =
   for k, t in tokens:
     let crossed =
       if partners[k] > k: fences[tokens[partners[k]].line] != fences[t.line]
-      else: toSeq(t.line .. t.lastLine(source)).anyIt(fences[it] != fences[t.line])
+      else: toSeq(t.line .. t.lineLast(source)).anyIt(fences[it] != fences[t.line])
     if crossed:
       result.fault = if result.fault < 0: t.line else: min(result.fault, t.line)
       return
@@ -78,7 +78,7 @@ func masked*(source: string, fence: Fence): string =
   lines.join("\n")
 
 
-func fenceShape*(source: string): seq[(int, bool)] =
+func shapeFence*(source: string): seq[(int, bool)] =
   ## Read indent of each `FENCED` line, and whether one stands right above it.
   let lines = source.split('\n')
   for i, line in lines:

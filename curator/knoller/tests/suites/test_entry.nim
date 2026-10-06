@@ -38,7 +38,7 @@ suite "Entry block":
   test "V.10 entry block holds no binding, each one finding, and block of calls passes":
     let found = checkBlockEntry("a.nim", ENTRY_BINDS)
     check found.mapIt((it.line, it.rule)) == @[
-      (6, Rule.EntryBlock), (7, Rule.EntryBlock), (8, Rule.EntryBlock), (10, Rule.EntryBlock),
+      (6, Rule.BlockEntry), (7, Rule.BlockEntry), (8, Rule.BlockEntry), (10, Rule.BlockEntry),
     ]  # `let`, `for`, `let` under it, `except … as`; routine inside block is local
     for (name, report) in zip(["verb", "path", "shown", "error"], found):
       check report.message ==
