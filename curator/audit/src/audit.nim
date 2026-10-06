@@ -25,7 +25,7 @@ import ./[
 export layout.Entry, layout.directoriesProject, layout.Tree
 
 
-func rulesStamp*(tree: Tree): string =
+func stampRules*(tree: Tree): string =
   ## Compute stamp of rules documents as tree holds them; missing document digests empty.
   var contents: seq[string]
   for rule in RULES:
@@ -40,12 +40,12 @@ proc writeRowsRules*(root: string, tree: Tree): seq[string] =
   ## Rewrite every project record's `Rules` row to tree's stamp; return paths that changed.
   ##   Record is read from tree, as checks read it, and written back only when row moves, so
   ##   diff is that row alone and duty 1's hand step is one verb.
-  let stamp_now = tree.rulesStamp
+  let stamp_now = tree.stampRules
   for directory in tree.directoriesProject:
     let path = directory & "/PROVENANCE.md"
     for e in tree:
       if e.path != path: continue
-      let written = e.content.withRulesRow(stamp_now)
+      let written = e.content.rewriteRowRules(stamp_now)
       if written != e.content:
         writeFile(root / path, written)
         result.add path
@@ -63,7 +63,7 @@ proc findingsPruned*(root: string, tree: Tree): seq[Finding] =
       if e.path != path: continue
       let named = e.content.prunedOf
       if not named.isIdCommit: continue
-      let touched = gitFields(root, ["log", "-z", "--format=%H", "--", path])
+      let touched = fieldsGit(root, ["log", "-z", "--format=%H", "--", path])
       if not touched.anyIt(it.strip.startsWith(named)):
         result.add finding(
           path,
@@ -141,7 +141,7 @@ proc auditTree*(tree: Tree): seq[Finding] =
         result.add checkMentions(e.path, e.content, verbs)
 
   let
-    stamp_now = tree.rulesStamp
+    stamp_now = tree.stampRules
     directories = tree.directoriesProject
   result.add tree.findingsLock(directories)
   var paths = initHashSet[string]()

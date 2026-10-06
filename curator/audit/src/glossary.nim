@@ -107,7 +107,7 @@ func checkStandardsAcross*(glossaries: openArray[(string, string)]): seq[Finding
   for (path, source) in glossaries:
     if path == GLOSSARY_ROOT:
       for (_, name) in source.standardsIn: names_root.add name
-  var first_seen = initTable[string, string]()
+  var lut_path_by_name = initTable[string, string]()
   for (path, source) in glossaries:
     if path == GLOSSARY_ROOT: continue
     for (line, name) in source.standardsIn:
@@ -119,15 +119,15 @@ func checkStandardsAcross*(glossaries: openArray[(string, string)]): seq[Finding
             name & "`.",
           is_propagation = true,
         )
-      elif name in first_seen:
+      elif name in lut_path_by_name:
         result.add finding(
           path,
           line,
           "Standard two projects list belongs in root glossary; got `" & name &
-            "`, also in `" & first_seen[name] & "`.",
+            "`, also in `" & lut_path_by_name[name] & "`.",
           is_propagation = true,
         )
-      else: first_seen[name] = path
+      else: lut_path_by_name[name] = path
 
 
 func withoutCode(line: string): string =

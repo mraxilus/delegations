@@ -165,7 +165,7 @@ const
     ## Headings pull request template gives.
   MARK_CHECK* = "koch-check"
     ## File in git dir where `koch check` writes tree hash it passed on, which `pre-push`
-    ##   reads; `markPath` places it.
+    ##   reads; `pathMark` places it.
   WORD_ROLE = "Role:"  ## Word after bold marker in sign-off role line.
 
 
@@ -463,7 +463,7 @@ func isPost*(request: Request): bool =
   isPost(request.tool, request.has_body)
 
 
-func outsideComments(text: string): string =
+func blankComments(text: string): string =
   ## Blank every HTML comment, so template left unfilled reads as empty.
   var rest = text
   while true:
@@ -483,7 +483,7 @@ func checkBody*(
   ## Report post that breaks what every post keeps, before it lands.
   let parsed = branch.parseBranch
   if parsed.isSome:
-    let expected = KEY_ROLE & " " & parsed.get.roleName
+    let expected = KEY_ROLE & " " & parsed.get.nameRole
     if body.lineRole != expected:
       result.add finding(
         "",
@@ -512,7 +512,7 @@ func checkBody*(
     for h in HEADINGS_PULL:
       if h notin headings:
         result.add finding("", 0, "Pull request body must carry `" & h & "`; got none.")
-    let shown = body.section(HEADINGS_PULL[2]).outsideComments.strip
+    let shown = body.section(HEADINGS_PULL[2]).blankComments.strip
     if HEADINGS_PULL[2] in headings and shown.len == 0:
       result.add finding("", 0, "Verification must show change; got template comment alone.")
 
@@ -794,11 +794,11 @@ func checkSignoff*(message, branch: string): seq[Finding] =
     parsed = branch.parseBranch
     word_state = Part.State.rest.split({',', ' '})[0]
     decisions = decisionsIn(after[starts[Part.Decisions] + 1 ..< starts[Part.Next]])
-  if parsed.isSome and text_role != parsed.get.roleName:
+  if parsed.isSome and text_role != parsed.get.nameRole:
     result.add finding(
       "",
       0,
-      "Sign-off role must be `" & parsed.get.roleName & "`; got `" & text_role & "`.",
+      "Sign-off role must be `" & parsed.get.nameRole & "`; got `" & text_role & "`.",
     )
   if word_state notin STATES_SIGNOFF:
     result.add finding(
@@ -862,7 +862,7 @@ func labelDefined(line: string): string =
   s[1 ..< close].toLowerAscii
 
 
-func codeSpansOut(line: string): string =
+func blankSpansCode(line: string): string =
   ## Blank each code span of line: run of backticks opens it, next run of same length closes
   ##   it, and run left open stays text, as CommonMark reads it.
   var i = 0
@@ -938,7 +938,7 @@ func checkNumbersBare*(message: string): seq[Finding] =
     if label.len > 0: labels.add label
   for line in lines:
     if line.labelDefined.len > 0: continue
-    let text = line.codeSpansOut.linksOut(labels)
+    let text = line.blankSpansCode.linksOut(labels)
     var i = 0
     while i < text.len:
       let is_number = text[i] == '#' and i + 1 < text.len and text[i + 1] in Digits and
@@ -1018,7 +1018,7 @@ func checkReferencesBare*(message: string): seq[Finding] =
     if label.len > 0: labels.add label
   for line in lines:
     if line.labelDefined.len > 0: continue
-    let text = line.codeSpansOut.linksOut(labels)
+    let text = line.blankSpansCode.linksOut(labels)
     var i = 0
     while i < text.len:
       let after = text.referenceEnd(i)
@@ -1062,7 +1062,7 @@ func reasonStop*(found: openArray[Finding]): string =
     found.mapIt(it.message).join("\n")
 
 
-func markPath*(root, directory_git: string): string =
+func pathMark*(root, directory_git: string): string =
   ## Place check mark in git directory, as `git rev-parse --git-dir` names it from root.
   ##   Literal `.git/` fails in worktree, where `.git` is file naming directory under main
   ##     checkout's `.git/worktrees/`. Git names directory relative in main checkout and
@@ -1116,7 +1116,7 @@ func checkMessage*(
   result.add checkCommitRecord(subject, staged)
 
 
-func startContext*(branch, contributor, heading_carried: string; drift: seq[Finding]): string =
+func contextStart*(branch, contributor, heading_carried: string; drift: seq[Finding]): string =
   ## Compose text `start` adds to context: role, read order, grammar warning, drift, list.
   let parsed = branch.parseBranch
   var lines: seq[string]
@@ -1125,7 +1125,7 @@ func startContext*(branch, contributor, heading_carried: string; drift: seq[Find
       "`curator/<project>/<name>` or `contributor/<domain>/<project>/<name>` (CLAUDE.md)."
   else:
     let prompt = if parsed.get.role == Role.Contributor: "CONTRIBUTOR.md" else: "CURATOR.md"
-    lines.add "Role: " & parsed.get.roleName & ", on branch `" & branch & "`."
+    lines.add "Role: " & parsed.get.nameRole & ", on branch `" & branch & "`."
     lines.add "Read first: CONSTITUTION.md, STYLE.md, GLOSSARY.md, then " & prompt &
       ", then GUIDE.md."
   if drift.len > 0:

@@ -41,7 +41,7 @@ const
   ASKS_MAX = 8  ## Rounds of asking parser at most, as `fixes.nim` takes.
 
 
-proc everyFix(
+proc fixEvery(
   branch: string,
   tree: Tree,
   entries: openArray[Entry],
@@ -49,7 +49,7 @@ proc everyFix(
   context: Context,
   provers: ProverOf,
 ): tuple[fix: Fixed, failures: seq[string]] =
-  ## Fix every entry again each round of asking: reference that loop of `provenFix`, fixing
+  ## Fix every entry again each round of asking: reference that loop of `fixProven`, fixing
   ##   entries that asked alone, is held equal to (Article IX.2).
   var known = context
   result.fix = fixEntries(branch, entries, locked, known)
@@ -449,7 +449,7 @@ suite "Fixes":
     let unanswered = fixEntries(BRANCH_CURATOR, entries)
     check unanswered.written.len == 0  # nothing proven, nothing written
     check unanswered.asked.mapIt(it[0]) == entries.mapIt(it.path)  # each source asks
-    let (fix, failures) = provenFix(BRANCH_CURATOR, tree, entries, [], tree.contextOf, stub)
+    let (fix, failures) = fixProven(BRANCH_CURATOR, tree, entries, [], tree.contextOf, stub)
     check failures.len == 0
     check pins[0 .. 1] == @[PIN, COMMIT]  # first round: one run for each pin, project's own
     check fix.written.mapIt(it.content) == @[
@@ -458,7 +458,7 @@ suite "Fixes":
     ]  # group parser refuses stays
     check fix.fixed.filterIt("needless parentheses" in it.message).len == 3
     check fix.asked.len == 0
-    let again = provenFix(BRANCH_CURATOR, tree, fix.written, [], tree.contextOf, stub)
+    let again = fixProven(BRANCH_CURATOR, tree, fix.written, [], tree.contextOf, stub)
     check again.fix.written.len == 0  # second fix writes nothing
 
 
@@ -468,13 +468,13 @@ suite "Fixes":
       broken = proc (pin: string): Prover =
         result = proc (sources: seq[string]): Proving =
           Proving(answers: newSeq[seq[int]](sources.len), failure: "Compiler failed; got `x`.")
-    let (fix, failures) = provenFix(BRANCH_CURATOR, tree, [tree[^1]], [], tree.contextOf, broken)
+    let (fix, failures) = fixProven(BRANCH_CURATOR, tree, [tree[^1]], [], tree.contextOf, broken)
     check fix.written.len == 0 and fix.fixed.len == 0
     check failures == @["needless-parentheses: Compiler failed; got `x`."]  # driver pin asked
     let unpinned = treeGood().without(DIRECTORY_AUDIT & "/audit.nimble").with(
       entry("koch2.nim", GROUPED),
     )
-    let alone = provenFix(BRANCH_CURATOR, unpinned, [unpinned[^1]], [], unpinned.contextOf, broken)
+    let alone = fixProven(BRANCH_CURATOR, unpinned, [unpinned[^1]], [], unpinned.contextOf, broken)
     check alone.fix.written.len == 0
     check alone.failures == @[
       "needless-parentheses: Parser proved no removal, since project pins no compiler; got " &
@@ -531,8 +531,8 @@ suite "Fixes":
         if pin == COMMIT: broken(pin) else: counted(pin)
     for provers in [counted, broken, commit_broken]:
       let
-        proven = provenFix(BRANCH_CURATOR, tree, entries, [], tree.contextOf, provers)
-        reference = everyFix(BRANCH_CURATOR, tree, entries, [], tree.contextOf, provers)
+        proven = fixProven(BRANCH_CURATOR, tree, entries, [], tree.contextOf, provers)
+        reference = fixEvery(BRANCH_CURATOR, tree, entries, [], tree.contextOf, provers)
       check proven.fix.written.mapIt((it.path, it.content)) ==
           reference.fix.written.mapIt((it.path, it.content))
       for (fast, every) in [

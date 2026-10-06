@@ -374,8 +374,8 @@ suite "Hooks":
   test "push and commit message":
     check checkPush("abc\n", "abc").len == 0
     check checkPush("abc", "def").messages[0].contains("exact commit")
-    check markPath("/repo", ".git") == "/repo/.git/koch-check"
-    check markPath("/repo/wt", "/repo/.git/worktrees/wt") ==
+    check pathMark("/repo", ".git") == "/repo/.git/koch-check"
+    check pathMark("/repo/wt", "/repo/.git/worktrees/wt") ==
       "/repo/.git/worktrees/wt/koch-check"  # worktree's own dir, where `.git` is file
     check checkMessage(BRANCH, "feat(pga_benchmark): add gaps\n\nBody.\n", [], []).len == 0
     check checkMessage(BRANCH, "Add gaps", [], []).len == 1  # not conventional
@@ -526,11 +526,11 @@ suite "Hooks":
 
 
   test "start context and turn writes":
-    let text = startContext(BRANCH, "## List\n\n1. one\n\n## Next\n", "## List", @[])
+    let text = contextStart(BRANCH, "## List\n\n1. one\n\n## Next\n", "## List", @[])
     check "Role: contributor/ronri/pga_benchmark" in text and "CONTRIBUTOR.md" in text
     check "1. one" in text and "## Sign-off" in text and "**Working:**" in text
-    check "outside grammar" in startContext("claude/x", "", "## List", @[])
-    check "re-stamp" in startContext("curator/x", "", "## List", @[finding("", 0, "d")])
+    check "outside grammar" in contextStart("claude/x", "", "## List", @[])
+    check "re-stamp" in contextStart("curator/x", "", "## List", @[finding("", 0, "d")])
     check isTurnWriting([Call(name: "Bash", command: "git push -u origin x")])
     check isTurnWriting([Call(name: "mcp__github__issue_write", has_body: true)])
     check not isTurnWriting([Call(name: "mcp__github__update_pull_request")])  # draft toggle

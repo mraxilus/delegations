@@ -67,14 +67,14 @@ const
   KINDS_PATH = "curator/audit/src/kinds.nim"  ## Registry named in finding for unregistered kind.
 
 
-func projectName*(directory: string): string =
+func nameProject*(directory: string): string =
   ## Read project folder name, i.e. last segment of project directory.
   directory.split('/')[^1]
 
 
 func pathNimble*(directory: string): string =
   ## Read path of project's nimble file, which is named after its folder.
-  directory & "/" & directory.projectName & EXTENSIONS[Dialect.Package]
+  directory & "/" & directory.nameProject & EXTENSIONS[Dialect.Package]
 
 
 func directoryOf(path: string): string =

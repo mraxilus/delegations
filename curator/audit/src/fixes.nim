@@ -9,7 +9,7 @@
 ##     Markdown, TypeScript, YAML or shell stays for hand. Each kind of Nim is dialect of
 ##     knoller: `.nim` module, `.nims` script, `.nimble` package.
 ##   Needless parentheses go where parser of project's own compiler proves it (X.4): knoller's
-##     chain asks (`Fix.asked`), `provenFix` runs compiler of each pin asked once on all its
+##     chain asks (`Fix.asked`), `fixProven` runs compiler of each pin asked once on all its
 ##     sources (`answered`), holds answers by path in `Context`, and fixes again each entry
 ##     that asked, at most `ASKS_MAX` times. Pin is that of project holding file, driver's for
 ##     root file, served as `resolve` of knoller serves it, so `ronri` projects read with commit
@@ -144,7 +144,7 @@ func renamesOf(
     let
       exempt = glossaries.exemptionsOf(e.path)
       recased = renamesCase(e.content, exempt)
-    for (line, column, name, renamed) in abbreviationRenames(e.content, exempt):
+    for (line, column, name, renamed) in renamesAbbreviation(e.content, exempt):
       if recased.anyIt(it.line == line and it.column == column): continue
       let rename = Rename(
         path: e.path,
@@ -251,7 +251,7 @@ func fixSource(
   var base = source.applied(renamed)
   if path in context.answers:
     let (edits, reports) =
-      conversionEdits(path, source, context.answers[path], fence.lines, renamed)
+      editsConversion(path, source, context.answers[path], fence.lines, renamed)
     base = source.applied(renamed & edits)
     result.fixed.add reports
 
@@ -393,7 +393,7 @@ proc answered*(
     if proving.failure.len > 0 and proving.failure notin result: result.add proving.failure
 
 
-proc provenFix*(
+proc fixProven*(
   branch: string;
   tree: Tree;
   entries: openArray[Entry];

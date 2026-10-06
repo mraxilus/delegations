@@ -19,15 +19,15 @@ suite "Style §5":
     for site in [(2, 8), (3, 14), (4, 13), (5, 9), (5, 15), (6, 13)]:
       answer.symbols[site] = Symbol(kind: "skType")  # module `rigid3` resolves to none
     for site in [(2, 6), (5, 7)]: answer.symbols[site] = Symbol(kind: "skLet")
-    let (edits, reports) = conversionEdits("a.nim", source, answer, [])
+    let (edits, reports) = editsConversion("a.nim", source, answer, [])
     check source.applied(edits) ==
       "let\n  y = float(x)\n  z = int(a + b)\n  w = rigid3.Point\n  v = -int(float(x))\n" &
         "  t = T((a, b))\n"  # group gives call its parentheses, tuple keeps its own
     check reports.mapIt(it.line) == @[2, 3, 5, 5, 6]
     check checkConversions("a.nim", source, answer).len == 5
     check checkConversions("a.nim", source, answer)[0].message.endsWith("got `x.float`.")
-    check conversionEdits("a.nim", source, answer, [2])[1].len == 4  # fenced line stays
-    check conversionEdits("a.nim", source, Answer(reason: "error"), [])[0].len == 0  # unresolved
+    check editsConversion("a.nim", source, answer, [2])[1].len == 4  # fenced line stays
+    check editsConversion("a.nim", source, Answer(reason: "error"), [])[0].len == 0  # unresolved
 
 
   test "type conversion followed by call, receiver module or type, and template stay":

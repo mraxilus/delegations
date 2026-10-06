@@ -86,7 +86,7 @@ suite "Layout":
         check treeGood().without(path).paths == @[path]  # each missing file is one finding
       check treeGood().without(directory & "/tests/tall.nim").paths ==
         @[directory & "/tests"]  # tests
-      let nimble = directory & "/" & directory.projectName & EXTENSIONS[Dialect.Package]
+      let nimble = directory & "/" & directory.nameProject & EXTENSIONS[Dialect.Package]
       check treeGood().without(nimble).paths == @[nimble]  # nimble file required
 
 

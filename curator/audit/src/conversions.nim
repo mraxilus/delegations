@@ -210,7 +210,7 @@ func isTouching(a, b: Edit): bool =
   else: a.first < b.after and b.first < a.after
 
 
-func conversionEdits*(
+func editsConversion*(
   path, source: string; answer: Answer; fenced: openArray[int]; held: openArray[Edit] = []
 ): (seq[Edit], seq[Finding]) =
   ## Read edits writing each conversion check reports, and one report per conversion. Fenced

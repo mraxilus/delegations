@@ -111,11 +111,11 @@ suite "Tree":
 
 
   test "git failure raises with output":
-    expect IOError: discard gitFields("/nonexistent_delegations", ["status"])  # non-zero exit
+    expect IOError: discard fieldsGit("/nonexistent_delegations", ["status"])  # non-zero exit
     let root = repoTemp()
     defer: removeDir(root)
     try:
-      discard gitFields(root, ["cat-file", "-p", "0123456789abcdef0123456789abcdef01234567"])
+      discard fieldsGit(root, ["cat-file", "-p", "0123456789abcdef0123456789abcdef01234567"])
       check false  # unreachable: missing object exits non-zero
     except IOError as failure:
       check failure.msg.contains("Not a valid object name")  # git's own reason, from stderr

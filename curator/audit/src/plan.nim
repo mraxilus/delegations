@@ -73,7 +73,7 @@ func isCode(directory, path: string): bool =
   path[directory.len + 1 .. ^1] notin FILES_PROJECT
 
 
-func testSet*(directories, paths: openArray[string]): seq[string] =
+func projectsTest*(directories, paths: openArray[string]): seq[string] =
   ## Select projects one change asks to compile, sorted: each whose code changed, and
   ##   driver's project when driver's root files or knoller did, since its suites read them.
   for directory in directories:
@@ -143,7 +143,7 @@ proc systemRepository*(root: string, tree: Tree, directories: openArray[string])
   names.sorted
 
 
-proc typeJobs*(root: string, tree: Tree, directories: openArray[string]): seq[Finding] =
+proc runJobsType*(root: string, tree: Tree, directories: openArray[string]): seq[Finding] =
   ## Restore node tools and type-check every project carrying them.
   ##   No pin is resolved and no toolchain fetched: `tools/build.nim` compiles no project
   ##   code, deriving declarations by reading source as text, so project's own pin buys
@@ -184,7 +184,7 @@ func jobsFor*(tree: Tree, directories: openArray[string]): seq[Job] =
 
 func jobs*(tree: Tree, paths: openArray[string]): seq[Job] =
   ## Build jobs for projects one change asks to compile.
-  tree.jobsFor(testSet(tree.directoriesProject, paths))
+  tree.jobsFor(projectsTest(tree.directoriesProject, paths))
 
 
 func jobsAll*(tree: Tree): seq[Job] =
@@ -257,12 +257,12 @@ func drivenOnly*(tree: Tree, jobs: openArray[Job]): seq[Job] =
   tree.carryingOnly(jobs, VERB_DRIVEN)
 
 
-proc drivenJobs*(root: string, tree: Tree, jobs: openArray[Job]): seq[Finding] =
+proc runJobsDriven*(root: string, tree: Tree, jobs: openArray[Job]): seq[Finding] =
   ## Restore and drive each planned project carrying driven checks, on its own pin.
-  ##   Pin is resolved as `runJobs` resolves it, not skipped as `typeJobs` skips it, because
+  ##   Pin is resolved as `runJobs` resolves it, not skipped as `runJobsType` skips it, because
   ##   driven verb compiles project code: it builds page through JS backend, so project
   ##   following its dependency onto compiler commit cannot be driven by driver's own. That
-  ##   is exactly cost `typeJobs` records against itself, arriving.
+  ##   is exactly cost `runJobsType` records against itself, arriving.
   ##   Node restore joins Atlas restore for project carrying manifest, since harness runs
   ##   under node. Either restore failing short-circuits: driving without installed tools
   ##   fails again for second reason and reports neither clearly.
@@ -279,10 +279,10 @@ proc drivenJobs*(root: string, tree: Tree, jobs: openArray[Job]): seq[Finding] =
 
 proc jobsHead*(root: string, tree: Tree, jobs: openArray[Job]): seq[Finding] =
   ## Restore and run `head` of each planned project carrying it, on its own pin.
-  ##   Pin is resolved as `drivenJobs` resolves it, since verb compiles project code; restore
+  ##   Pin is resolved as `runJobsDriven` resolves it, since verb compiles project code; restore
   ##   failing short-circuits for reason it does there. No node restore: verb reads reference,
   ##   and builds no page.
-  ##   `check` and `ciJobs` never call this. Verdict varies with reference rather than with
+  ##   `check` and `runJobsCi` never call this. Verdict varies with reference rather than with
   ##   code, so only `head.yml` runs it, daily, off every path merge waits on.
   let held = tree.carryingOnly(jobs, VERB_HEAD)
   if held.len == 0: return
@@ -293,12 +293,12 @@ proc jobsHead*(root: string, tree: Tree, jobs: openArray[Job]): seq[Finding] =
   result.add runHead(root, targets)
 
 
-proc ciJobs*(root: string, tree: Tree, jobs: openArray[Job]): seq[Finding] =
+proc runJobsCi*(root: string, tree: Tree, jobs: openArray[Job]): seq[Finding] =
   ## Restore each planned project once, test it, then drive those carrying driven checks.
-  ##   One restore serves both, rather than `runJobs` then `drivenJobs` each restoring driven
+  ##   One restore serves both, rather than `runJobs` then `runJobsDriven` each restoring driven
   ##   project: second restore is Atlas confirming nothing moved, seconds per project, and
   ##   work nobody asked for is still work. Restore failing stops driving alone, as
-  ##   `drivenJobs` stops, since driving unrestored project fails again for second reason.
+  ##   `runJobsDriven` stops, since driving unrestored project fails again for second reason.
   let (targets, found) = jobs.targetsFor
   result = found
   let restored = restoreAll(root, targets)
@@ -309,8 +309,8 @@ proc ciJobs*(root: string, tree: Tree, jobs: openArray[Job]): seq[Finding] =
     for target in targets:
       if target.directory == job.directory: driven.add target
   if driven.len == 0 or found.len > 0 or restored.len > 0: return
-  var node_found: seq[Finding]
+  var findings_node: seq[Finding]
   for target in driven:
-    if tree.directoriesNode([target.directory]).len > 0: node_found.add restoreNode(root, target)
-  result.add node_found
-  if node_found.len == 0: result.add runDriven(root, driven)
+    if tree.directoriesNode([target.directory]).len > 0: findings_node.add restoreNode(root, target)
+  result.add findings_node
+  if findings_node.len == 0: result.add runDriven(root, driven)

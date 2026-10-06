@@ -77,7 +77,7 @@ func checkRole*(branch, body: string; labels: openArray[string]): seq[Finding] =
   let parsed = branch.parseBranch
   if parsed.isNone: return
   let
-    expected = parsed.get.roleName
+    expected = parsed.get.nameRole
     opening = body.lineRole
   if opening != KEY_ROLE & " " & expected:
     result.add finding(

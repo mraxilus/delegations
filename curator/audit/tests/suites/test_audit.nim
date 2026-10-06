@@ -15,8 +15,8 @@ suite "Audit":
 
 
   test "rules stamp derives from tree contents in RULES order":
-    check treeGood().rulesStamp == stamp(TEXT_RULES)  # same digest as fixture
-    check treeGood().without("STYLE.md").rulesStamp ==
+    check treeGood().stampRules == stamp(TEXT_RULES)  # same digest as fixture
+    check treeGood().without("STYLE.md").stampRules ==
       stamp([TEXT_RULES[0], "", TEXT_RULES[2], TEXT_RULES[3], TEXT_RULES[4]])  # missing is empty
 
 

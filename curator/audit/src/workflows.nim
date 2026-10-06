@@ -45,7 +45,7 @@ const
     ## sat unseen behind check written to stop exactly it.
   MARKS_TOKEN_RUN* = ["${{ github.token }}", "secrets.GITHUB_TOKEN"]
     ## Text that hands run token to step.
-  TOKEN_KEY* = "GH_TOKEN: ${{"
+  KEY_TOKEN* = "GH_TOKEN: ${{"
     ## Text that hands `gh` some token; which one, `MARKS_TOKEN_RUN` tells.
 
 
@@ -57,7 +57,7 @@ func isTokenRunUsed(workflow: string): bool =
 
 func isTokenOtherHanded*(workflow: string): bool =
   ## Whether `gh` holds token other than run token in every step, so block binds no `gh` mark.
-  TOKEN_KEY in workflow and not workflow.isTokenRunUsed
+  KEY_TOKEN in workflow and not workflow.isTokenRunUsed
 
 
 func scopesPermission*(workflow: string): Option[seq[string]] =

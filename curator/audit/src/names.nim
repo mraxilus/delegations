@@ -13,7 +13,7 @@
 ##     reads root glossary and glossary of path's own project, and static pass gives them to
 ##     knoller's check.
 ##
-##   V.6 has fixer (`koch fix`): `abbreviationRenames` reads each declaration coining
+##   V.6 has fixer (`koch fix`): `renamesAbbreviation` reads each declaration coining
 ##     abbreviation and its full spelling, case kept, as check reads it, and rename planner of
 ##     `rewrites.nim` renames it at every use through semantic pass, or refuses with reason.
 ##   V.1 and V.11 have fixer: `renamesCase` reads each declaration whose case check reports, and
@@ -105,7 +105,7 @@ func checkAcronyms*(path, source: string; exempt: openArray[string]): seq[Findin
       )
 
 
-func abbreviationRenames*(
+func renamesAbbreviation*(
   source: string, exempt: openArray[string]
 ): seq[(int, int, string, string)] =
   ## Read one-based line, zero-based byte column, name and full spelling of each declared name
@@ -132,7 +132,7 @@ func wordsOf(line: string): seq[string] =
       word = ""
 
 
-func foreignMark(code: openArray[string], line: int, kind: KindName): string =
+func markForeign(code: openArray[string], line: int, kind: KindName): string =
   ## Read word marking name declared at zero-based line as one foreign code reads by spelling
   ##   (`MARKS_FOREIGN`): on its signature or line, on each line enclosing field or member, or on
   ##   `{.push.}` over it, which stands over foreign bindings alone (STYLE.md §2). Empty where
@@ -235,7 +235,7 @@ func renamesCase*(source: string, exempt: openArray[string]): seq[CaseRename] =
 
     # Refuse rename that no planner can prove keeps meaning.
     let
-      mark = code.foreignMark(tokens[k].line, d.kind)
+      mark = code.markForeign(tokens[k].line, d.kind)
       acronyms = renamed.acronyms.filterIt(
         it notin d.name.acronyms and it.toLowerAscii notin exempt_lower,
       )

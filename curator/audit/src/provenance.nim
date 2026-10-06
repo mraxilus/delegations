@@ -64,7 +64,7 @@ func fieldsHeader*(source: string): Table[string, string] =
     if row.len == 2 and row[0] notin result: result[row[0]] = row[1]
 
 
-func withRulesRow*(source, stamp_new: string): string =
+func rewriteRowRules*(source, stamp_new: string): string =
   ## Rewrite first `Rules` row's value to stamp, keeping every other byte; source unchanged
   ##   when no such row exists. Row is found as `fieldsHeader` finds it, by its first cell,
   ##   so what `koch stamp --write` sets is what check then reads.

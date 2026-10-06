@@ -182,7 +182,7 @@ proc branchOrDefault(options: Options): string =
   ## Read branch from option, else env `BRANCH`, else current git branch.
   if options.branch.len > 0: return options.branch
   if existsEnv("BRANCH"): return getEnv("BRANCH")
-  gitFields(options.root, ["rev-parse", "--abbrev-ref", "HEAD"])[0].strip
+  fieldsGit(options.root, ["rev-parse", "--abbrev-ref", "HEAD"])[0].strip
 
 
 proc baseOrDefault(options: Options): string =
@@ -209,12 +209,12 @@ proc dirsScopedOf(options: Options, tree: Tree): seq[string] =
   if options.project.len > 0: @[options.project.strip(chars = {'/'})]
   elif options.is_recent: recentFor(options.root, tree, DAYS_RECENT).mapIt(it.directory)
   elif options.is_all: tree.directoriesProject
-  else: testSet(tree.directoriesProject, pathsChanged(options.root, options.baseOrDefault))
+  else: projectsTest(tree.directoriesProject, pathsChanged(options.root, options.baseOrDefault))
 
 
 proc markFile(root: string): string =
   ## Read path of check mark, in git dir git names for this checkout.
-  markPath(root, gitFields(root, ["rev-parse", "--git-dir"])[0].strip)
+  pathMark(root, fieldsGit(root, ["rev-parse", "--git-dir"])[0].strip)
 
 
 proc checkoutAt(root, directory: string): string =
@@ -226,15 +226,15 @@ proc checkoutAt(root, directory: string): string =
   while at.len > 1 and not dirExists(at): at = at.parentDir
   const common = ["rev-parse", "--path-format=absolute", "--git-common-dir"]
   try:
-    if gitFields(at, common)[0].strip == gitFields(root, common)[0].strip:
-      return gitFields(at, ["rev-parse", "--show-toplevel"])[0].strip
+    if fieldsGit(at, common)[0].strip == fieldsGit(root, common)[0].strip:
+      return fieldsGit(at, ["rev-parse", "--show-toplevel"])[0].strip
   except IOError: discard
   root
 
 
 proc branchOf(checkout: string): string =
   ## Read branch checked out in checkout.
-  gitFields(checkout, ["rev-parse", "--abbrev-ref", "HEAD"])[0].strip
+  fieldsGit(checkout, ["rev-parse", "--abbrev-ref", "HEAD"])[0].strip
 
 
 proc refuse(found: seq[Finding], code: int): int =
@@ -266,7 +266,7 @@ proc runHook(root, event, input: string): int =
       let
         command = data{"tool_input", "command"}.getStr
         checkout = checkoutAt(root, directoryCommand(command, directory))
-        is_pushed = gitFields(checkout, ["branch", "-r", "--contains", "HEAD"]).len > 0
+        is_pushed = fieldsGit(checkout, ["branch", "-r", "--contains", "HEAD"]).len > 0
       # Post through `gh api` speaks for delegate, so role line reads root's branch, as `body` does.
       var found = checkBash(checkout.branchOf, command, is_pushed)
       found.add checkPosts(branch, command, directory)
@@ -314,10 +314,10 @@ proc runHook(root, event, input: string): int =
   of "start":
     var drift: seq[Finding]
     try:
-      discard gitFields(root, ["fetch", "-q", "origin", MAIN])
+      discard fieldsGit(root, ["fetch", "-q", "origin", MAIN])
       drift = checkBase(pathsGained(root, "origin/" & MAIN))
     except CatchableError: discard
-    echo startContext(
+    echo contextStart(
       branch,
       readFile(root / "CONTRIBUTOR.md"),
       "## Carry the unchecked list in the open",
@@ -332,12 +332,12 @@ proc runHook(root, event, input: string): int =
     for line in input.splitLines:
       let fields = line.splitWhitespace
       if fields.len < 2 or fields[1].allCharsInSet({'0'}): continue
-      found.add checkPush(recorded, gitFields(root, ["rev-parse", fields[1] & "^{tree}"])[0])
+      found.add checkPush(recorded, fieldsGit(root, ["rev-parse", fields[1] & "^{tree}"])[0])
     refuse(found, 1)
   of "msg":
     let
       earlier = subjects(root, getEnv("BASE", "origin/" & MAIN))
-      staged = gitFields(root, ["diff", "--cached", "-z", "--name-only"])
+      staged = fieldsGit(root, ["diff", "--cached", "-z", "--name-only"])
     refuse(checkMessage(branch, input, earlier, staged), 1)
   else:
     stderr.write "koch hook: unknown event `" & event & "`.\n"
@@ -353,7 +353,7 @@ proc run(options: Options): int =
     #   types, suites and drive, which cost minutes and run again once finding is fixed.
     #   Cost: suite failure shows only after static pass is clean.
     if not options.isReadAll({Root, Branch, Base}): return options.refused
-    discard gitFields(options.root, ["fetch", "-q", "origin", MAIN])
+    discard fieldsGit(options.root, ["fetch", "-q", "origin", MAIN])
     let
       tree = options.root.readTree
       (branch, base) = (options.branchOrDefault, options.baseOrDefault)
@@ -372,13 +372,13 @@ proc run(options: Options): int =
       echo "Held for their projects (CURATOR.md, duty 3); runner stays red until they fix:"
       held.report
     found = own
-    found.add typeJobs(options.root, tree, options.dirsScopedOf(tree))
-    found.add ciJobs(options.root, tree, tree.jobs(pathsChanged(options.root, base)))
+    found.add runJobsType(options.root, tree, options.dirsScopedOf(tree))
+    found.add runJobsCi(options.root, tree, tree.jobs(pathsChanged(options.root, base)))
     # Green run on clean tree records tree hash, which `pre-push` hook compares against
     #   pushed commit; dirty tree records nothing, since no commit holds exactly what passed.
     if found.len == 0:
-      if gitFields(options.root, ["status", "--porcelain"]).len == 0:
-        writeFile(options.root.markFile, gitFields(options.root, ["rev-parse", "HEAD^{tree}"])[0])
+      if fieldsGit(options.root, ["status", "--porcelain"]).len == 0:
+        writeFile(options.root.markFile, fieldsGit(options.root, ["rev-parse", "HEAD^{tree}"])[0])
         echo "Tree hash recorded for pre-push hook."
       else: echo "Working tree not clean; nothing recorded for pre-push hook."
   of "check-files":
@@ -390,7 +390,7 @@ proc run(options: Options): int =
     if not options.isReadAll({Root, Base, All, Recent}, has_project = true):
       return options.refused
     let tree = options.root.readTree
-    found = typeJobs(options.root, tree, options.dirsScopedOf(tree))
+    found = runJobsType(options.root, tree, options.dirsScopedOf(tree))
   of "check-scope":
     if not options.isReadAll({Root, Branch, Base}): return options.refused
     let base = options.baseOrDefault
@@ -432,7 +432,7 @@ proc run(options: Options): int =
     if not options.isReadAll({Root, Base, All, Recent}, has_project = true):
       return options.refused
     let tree = options.root.readTree
-    found = drivenJobs(options.root, tree, options.jobsPlanned(tree))
+    found = runJobsDriven(options.root, tree, options.jobsPlanned(tree))
   of "head":
     if not options.isReadAll({Root, Base, All, Recent}, has_project = true):
       return options.refused
@@ -448,7 +448,7 @@ proc run(options: Options): int =
     #   stay in view; so does each file knoller's fixers do not settle, with no article, since
     #   fault is tool's. Exit code ignores warnings.
     #   Semantic pass runs first, on files holding candidate text cannot settle (`symbols.nim`).
-    #   Parser of each project's pin proves each needless group (`fixes.provenFix`); run that
+    #   Parser of each project's pin proves each needless group (`fixes.fixProven`); run that
     #   proved nothing prints one warning saying why.
     if not options.isReadAll({Root, Branch, Base, All, Recent, DryRun}, has_project = true):
       return options.refused
@@ -464,7 +464,7 @@ proc run(options: Options): int =
     let
       locked = tree.nimblesLocked
       answers = resolve(options.root, tree, queriesSemantic(tree, entries, locked))
-      (fix, failures) = provenFix(
+      (fix, failures) = fixProven(
         options.branchOrDefault,
         tree,
         entries,
@@ -542,7 +542,7 @@ proc run(options: Options): int =
     let tree = options.root.readTree
     if options.is_write:
       for path in writeRowsRules(options.root, tree): echo path
-    else: echo tree.rulesStamp
+    else: echo tree.stampRules
     return 0
   else:
     stderr.write USAGE

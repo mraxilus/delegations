@@ -57,8 +57,8 @@ suite "Dependencies":
 
 
   test "lock stores copy of nimble, read back whole":
-    check lockNimble(lockWith(TEXT_NIMBLE)) == some(TEXT_NIMBLE)  # round trip
-    check lockNimble(TEXT_LOCK).isNone  # lock storing no copy names none
+    check nimbleLock(lockWith(TEXT_NIMBLE)) == some(TEXT_NIMBLE)  # round trip
+    check nimbleLock(TEXT_LOCK).isNone  # lock storing no copy names none
 
 
   test "stored nimble differing from committed one is finding, naming line about to be lost":

@@ -85,7 +85,7 @@ suite "Names":
   test "V.6 rename target is each declaration check reports, at its name's column":
     let
       source = "proc f(ctx: int, b: int) =\n  let tmp = ctx\n  echo tmp\n"
-      renames = abbreviationRenames(source, [])
+      renames = renamesAbbreviation(source, [])
     check renames == @[(1, 7, "ctx", "context"), (2, 6, "tmp", "temporary")]
     check checkNames("a.nim", source, JARGON).len == renames.len  # check reads same set
 
@@ -93,7 +93,7 @@ suite "Names":
   test "tuple binding declares names before `=` alone, never global its value names":
     const binding = "let (source, destination) = (paths[i], DIR_FONTS / face)\n"
     check binding.declarations.mapIt(it.name) == @["source", "destination"]  # V.6
-    check abbreviationRenames(binding, []).len == 0  # V.6, `DIR_FONTS` is use, never declaration
+    check renamesAbbreviation(binding, []).len == 0  # V.6, `DIR_FONTS` is use, never declaration
 
 
   test "V.1 and V.11 rename target is each case finding, and refusal names what fix cannot prove":

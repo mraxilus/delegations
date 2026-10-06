@@ -64,7 +64,7 @@ proc directoryDepsOf*(config: string): string =
   if named.len == 0: DIRECTORY_DEPS else: named
 
 
-proc lockNimble*(lock: string): Option[string] =
+proc nimbleLock*(lock: string): Option[string] =
   ## Read nimble copy lock stores, i.e. text `atlas rep` writes back over project's file.
   ##   Copy is array of lines; joining on newline reproduces original file exactly, since
   ##   final empty element carries its trailing newline.
@@ -96,7 +96,7 @@ proc checkNimbleLock*(path_nimble, path_lock, lock, nimble: string): seq[Finding
   ##   and its line numbers are real, while numbers inside stored copy resolve nowhere.
   var stored: Option[string]
   try:
-    stored = lock.lockNimble
+    stored = lock.nimbleLock
   except CatchableError as e:
     return @[finding(path_lock, 0, UNREADABLE & e.msg & "`.")]
   if stored.isNone: return

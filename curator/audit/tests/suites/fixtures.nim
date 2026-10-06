@@ -72,7 +72,7 @@ func entriesProject*(directory: string, stamp: string): seq[Entry] =
     entry(directory & "/README.md", "# Project\n\nPurpose.\n"),
     entry(directory & "/PROVENANCE.md", textProvenance(stamp)),
     entry(directory & "/GLOSSARY.md", TEXT_GLOSSARY),
-    entry(directory & "/" & directory.projectName & EXTENSIONS[Dialect.Package], TEXT_NIMBLE),
+    entry(directory & "/" & directory.nameProject & EXTENSIONS[Dialect.Package], TEXT_NIMBLE),
     entry(
       directory & "/tests/tall.nim",
       "## Test everything.\n\n" & STRICT_FUNCS & "\n\ndiscard\n",

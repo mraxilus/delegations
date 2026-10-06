@@ -15,26 +15,26 @@ const DIRECTORIES = [DIRECTORY_ALPHA, DIRECTORY_AUDIT]
 
 suite "Plan":
   test "code change selects its project alone":
-    check testSet(DIRECTORIES, [DIRECTORY_ALPHA & "/src/alpha.nim"]) == @[DIRECTORY_ALPHA]  # source
-    check testSet(DIRECTORIES, [DIRECTORY_ALPHA & "/tests/tall.nim"]) == @[DIRECTORY_ALPHA]  # test
-    check testSet(DIRECTORIES, [DIRECTORY_ALPHA & "/alpha.nimble"]) ==
+    check projectsTest(DIRECTORIES, [DIRECTORY_ALPHA & "/src/alpha.nim"]) == @[DIRECTORY_ALPHA]  # source
+    check projectsTest(DIRECTORIES, [DIRECTORY_ALPHA & "/tests/tall.nim"]) == @[DIRECTORY_ALPHA]  # test
+    check projectsTest(DIRECTORIES, [DIRECTORY_ALPHA & "/alpha.nimble"]) ==
       @[DIRECTORY_ALPHA]  # requirements
-    check testSet(DIRECTORIES, [DIRECTORY_ALPHA & "/pages/index.html"]) ==
+    check projectsTest(DIRECTORIES, [DIRECTORY_ALPHA & "/pages/index.html"]) ==
       @[DIRECTORY_ALPHA]  # page
 
 
   test "record change alone selects nothing, so rules propagation compiles nothing":
-    check testSet(DIRECTORIES, [DIRECTORY_ALPHA & "/PROVENANCE.md"]).len == 0  # stamp only
-    check testSet(DIRECTORIES, [DIRECTORY_ALPHA & "/GLOSSARY.md"]).len == 0  # terms only
-    check testSet(DIRECTORIES, [DIRECTORY_ALPHA & "/README.md"]).len == 0  # README runs nothing
+    check projectsTest(DIRECTORIES, [DIRECTORY_ALPHA & "/PROVENANCE.md"]).len == 0  # stamp only
+    check projectsTest(DIRECTORIES, [DIRECTORY_ALPHA & "/GLOSSARY.md"]).len == 0  # terms only
+    check projectsTest(DIRECTORIES, [DIRECTORY_ALPHA & "/README.md"]).len == 0  # README runs nothing
     # Nested README is code: only project's own three records describe project.
-    check testSet(DIRECTORIES, [DIRECTORY_ALPHA & "/design/README.md"]) == @[DIRECTORY_ALPHA]
+    check projectsTest(DIRECTORIES, [DIRECTORY_ALPHA & "/design/README.md"]) == @[DIRECTORY_ALPHA]
     for directory in DIRECTORIES:
       let records = [directory & "/PROVENANCE.md", directory & "/GLOSSARY.md"]
-      check testSet(DIRECTORIES, records).len == 0
+      check projectsTest(DIRECTORIES, records).len == 0
     # Record beside code still selects, since code changed.
     let mixed = [DIRECTORY_ALPHA & "/PROVENANCE.md", DIRECTORY_ALPHA & "/src/a.nim"]
-    check testSet(DIRECTORIES, mixed) == @[DIRECTORY_ALPHA]
+    check projectsTest(DIRECTORIES, mixed) == @[DIRECTORY_ALPHA]
 
 
   test "project gains type check by carrying node manifest and its lock":
@@ -56,10 +56,10 @@ suite "Plan":
       entry(DIRECTORY_ALPHA & "/package-lock.json", "{}\n"),
     )
     # `check` narrows to changed projects first, then to node ones.
-    check both.directoriesNode(testSet(DIRECTORIES, [DIRECTORY_ALPHA & "/src/alpha.nim"])) ==
+    check both.directoriesNode(projectsTest(DIRECTORIES, [DIRECTORY_ALPHA & "/src/alpha.nim"])) ==
       @[DIRECTORY_ALPHA]
     # Change to other project selects that project alone, and it carries no manifest.
-    let given = testSet(DIRECTORIES, [DIRECTORY_AUDIT & "/tests/taudit.nim"])
+    let given = projectsTest(DIRECTORIES, [DIRECTORY_AUDIT & "/tests/taudit.nim"])
     check both.directoriesNode(given).len == 0  # given only
 
 
@@ -130,31 +130,31 @@ suite "Plan":
 
 
   test "checker change selects the driver's project alone, never every project":
-    check testSet(DIRECTORIES, ["koch.nim"]) == @[DIRECTORY_AUDIT]  # driver's suites read it
-    check testSet(DIRECTORIES, ["koch.nim.cfg"]) == @[DIRECTORY_AUDIT]  # driver flags
-    check testSet(DIRECTORIES, [DIRECTORY_CHECKER & "/layout.nim"]) ==
+    check projectsTest(DIRECTORIES, ["koch.nim"]) == @[DIRECTORY_AUDIT]  # driver's suites read it
+    check projectsTest(DIRECTORIES, ["koch.nim.cfg"]) == @[DIRECTORY_AUDIT]  # driver flags
+    check projectsTest(DIRECTORIES, [DIRECTORY_CHECKER & "/layout.nim"]) ==
       @[DIRECTORY_AUDIT]  # code of that project
-    check testSet(DIRECTORIES, ["koch.nim", DIRECTORY_CHECKER & "/plan.nim"]) ==
+    check projectsTest(DIRECTORIES, ["koch.nim", DIRECTORY_CHECKER & "/plan.nim"]) ==
       @[DIRECTORY_AUDIT]  # once
 
 
   test "knoller source selects driver's project, which imports it, and knoller itself":
     let directories = [DIRECTORY_ALPHA, DIRECTORY_AUDIT, DIRECTORY_KNOLLER]
-    check testSet(directories, [FILES_KNOLLER[0] & "/knoller/tokens.nim"]) ==
+    check projectsTest(directories, [FILES_KNOLLER[0] & "/knoller/tokens.nim"]) ==
       @[DIRECTORY_AUDIT, DIRECTORY_KNOLLER]  # source both read
-    check testSet(directories, [FILES_KNOLLER[1]]) ==
+    check projectsTest(directories, [FILES_KNOLLER[1]]) ==
       @[DIRECTORY_AUDIT, DIRECTORY_KNOLLER]  # nimble file names pin
-    check testSet(directories, [DIRECTORY_KNOLLER & "/tests/suites/test_tokens.nim"]) ==
+    check projectsTest(directories, [DIRECTORY_KNOLLER & "/tests/suites/test_tokens.nim"]) ==
       @[DIRECTORY_KNOLLER]  # knoller's suite alone, which driver never reads
-    check testSet(directories, [DIRECTORY_KNOLLER & "/PROVENANCE.md"]).len == 0  # record
-    check testSet(directories, [DIRECTORY_KNOLLER & "/srcs/x.nim"]) ==
+    check projectsTest(directories, [DIRECTORY_KNOLLER & "/PROVENANCE.md"]).len == 0  # record
+    check projectsTest(directories, [DIRECTORY_KNOLLER & "/srcs/x.nim"]) ==
       @[DIRECTORY_KNOLLER]  # folder sharing prefix is no source
 
 
   test "path inside no project selects nothing by itself":
-    check testSet(DIRECTORIES, ["CONSTITUTION.md"]).len == 0  # rules reach projects by stamp
-    check testSet(DIRECTORIES, ["README.md", "LICENSE.md"]).len == 0  # root prose
-    check testSet(DIRECTORIES, newSeq[string]()).len == 0  # empty change
+    check projectsTest(DIRECTORIES, ["CONSTITUTION.md"]).len == 0  # rules reach projects by stamp
+    check projectsTest(DIRECTORIES, ["README.md", "LICENSE.md"]).len == 0  # root prose
+    check projectsTest(DIRECTORIES, newSeq[string]()).len == 0  # empty change
 
 
   test "jobs carry each project's own pin, and skip project pinning none":
