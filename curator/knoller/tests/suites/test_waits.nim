@@ -32,9 +32,9 @@ suite "Article IX":
       "Fixed wait reads real clock; wait on condition, or advance clock check moves; got `sleep`.",
       "Fixed wait reads real clock; wait on condition, or advance clock check moves; got `sleep`.",
       "Fixed wait reads real clock; wait on condition, or advance clock check moves; got " &
-        "`sleep_async`.",
+      "`sleep_async`.",
       "Fixed wait reads real clock; wait on condition, or move page's clock with " &
-        "`clock.runFor`; got `waitForTimeout`.",
+      "`clock.runFor`; got `waitForTimeout`.",
     ]  # value echoed as written, replacement of name it compares to
     check checkWaits("a.nim", "let sléep = 1\nlet x = Sleep\n").len == 0  # other names
 

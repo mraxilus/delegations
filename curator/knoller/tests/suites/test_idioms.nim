@@ -23,7 +23,7 @@ func fixed(source: string): Fix =
 
 func reported(path, source: string): seq[(Rule, string)] =
   ## Read rule and message of each idiom check reports over source.
-  checkIdioms(path, source).mapIt((it.rule, it.message))
+  checkIdioms(path, source).mapIt (it.rule, it.message)
 
 
 

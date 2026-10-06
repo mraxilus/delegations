@@ -52,7 +52,7 @@ func replacementOf(identifier: string, is_nim: bool): string =
     if not is_nim and name notin WAITS_NIM and identifier == name: return replacement
 
 
-func checkWaits*(path: string; lines: openArray[seq[string]]; is_nim: bool): seq[Report] =
+func checkWaits*(path: string, lines: openArray[seq[string]], is_nim: bool): seq[Report] =
   ## Report fixed wait named by identifiers of each line, with its replacement; Nim's names read
   ##   where `is_nim`, as Nim compares them, else Playwright's alone, exactly.
   for i, line in lines:

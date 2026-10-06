@@ -26,7 +26,7 @@ proc Construct_table(Count: int) =
   ##     it; fix to one is finished only when other is checked.
 
 
-func breaches(source: string; exempt: seq[string] = @[]): seq[string] =
+func breaches(source: string, exempt: seq[string] = @[]): seq[string] =
   ## Read each message static pass prints for names of source: names check, then entry block.
   findingsOf(checkNames("x.nim", source, exempt) & checkBlockEntry("x.nim", source)).mapIt(
     it.message,
@@ -37,8 +37,8 @@ func breaches(source: string; exempt: seq[string] = @[]): seq[string] =
 suite "Names":
   test "glossary gives exemptions from standards spans and terms":
     const glossary = "# d\n\n## Standards\n\n- **SI**, BIPM, 9th: `s` and `m` (Table 2), so " &
-      "`ms`.\n- **Acronyms**, Architect: `3D`, `JSON` and `fps`.\n\n## Language\n\n" &
-      "**Measurand**:\nOne.\n"
+        "`ms`.\n- **Acronyms**, Architect: `3D`, `JSON` and `fps`.\n\n## Language\n\n" &
+        "**Measurand**:\nOne.\n"
     let exempt = glossary.glossaryExemptions
     for w in ["s", "m", "ms", "3D", "JSON", "fps", "Measurand"]: check w in exempt
     check "BIPM" notin exempt  # owner, not symbol
@@ -104,16 +104,16 @@ suite "Names":
       "`$` of member reads its name", "`$` of member reads its name"]  # V.11
     check renames[5].line == 8 and renames[5].column == 21  # parameter's own token
     const local = "proc run() =\n  const WIDE = 2\n  let TMP_DIR = \"a\"\n" &
-      "when isMainModule:\n  let VERB = paramStr(1)\n"
+        "when isMainModule:\n  let VERB = paramStr(1)\n"
     check renamesCase(local, []).mapIt((it.renamed, it.rule)) == @[
       ("wide", "local constant case (V.1)"),
       ("temporary_directory", "abbreviation (V.6) and local constant case (V.1)"),
       ("verb", "local constant case (V.1)"),
     ]  # V.1, V.6; entry binding takes case of local, where fix moves it (V.10)
     const foreign = "type Def {.importc: \"b3Def\".} = object\n  enableSleep {.importc.}: bool\n" &
-      "var counter {.exportc.}: cint\nproc pushAt(Body_id: cint) {.importc: \"b3Push\".}\n" &
-      "type Side = enum\n  left = \"left\", Right\nproc Count(Count: int) = discard\n" &
-      "proc do_x_y() = discard\nproc f[Key](k: Key) = discard\n"
+        "var counter {.exportc.}: cint\nproc pushAt(Body_id: cint) {.importc: \"b3Push\".}\n" &
+        "type Side = enum\n  left = \"left\", Right\nproc Count(Count: int) = discard\n" &
+        "proc do_x_y() = discard\nproc f[Key](k: Key) = discard\n"
     check renamesCase(foreign, []).mapIt((it.name, it.refusal)) == @[
       ("enableSleep", "foreign code reads name through `importc`"),
       ("counter", "foreign code reads name through `exportc`"),

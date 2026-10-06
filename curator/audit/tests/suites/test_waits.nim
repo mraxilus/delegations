@@ -39,9 +39,9 @@ suite "Internal":
     check found.mapIt(it.line) == @[2, 4]  # comment unread
     check found.mapIt(it.message) == @[
       "Fixed wait reads real clock; wait on condition, or advance clock check moves (IX.12); " &
-        "got `sleep`.",
+      "got `sleep`.",
       "Fixed wait reads real clock; wait on condition, or move page's clock with " &
-        "`clock.runFor` (IX.12); got `waitForTimeout`.",
+      "`clock.runFor` (IX.12); got `waitForTimeout`.",
     ]
     check checkWaits("viewer/tests/a.nims", "sleep(1)\n", Kind.NimScript).len == 1  # every Nim
 
@@ -50,7 +50,7 @@ suite "Internal":
     let found = checkWaits("viewer/tools/drive/main.ts", TYPESCRIPT_DRIVE, Kind.TypeScript)
     check found.mapIt(it.line) == @[2]  # line 1 is comment; line 4 helper rides page's clock
     check found[0].message == "Fixed wait reads real clock; wait on condition, or move page's " &
-      "clock with `clock.runFor` (IX.12); got `waitForTimeout`."  # same words as Nim
+        "clock with `clock.runFor` (IX.12); got `waitForTimeout`."  # same words as Nim
 
 
   test "document is never read":

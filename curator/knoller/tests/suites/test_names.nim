@@ -124,7 +124,7 @@ func names(source: string): seq[string] =
 
 func breaches(source: string): seq[(Rule, string)] =
   ## Read rule and message of each finding names check reports on source, with no exemption.
-  checkNames("x.nim", source, []).mapIt((it.rule, it.message))
+  checkNames("x.nim", source, []).mapIt (it.rule, it.message)
 
 
 func messages(source: string): seq[string] =
@@ -159,9 +159,9 @@ suite "Names":
   test "V.6 V.9 V.3 V.5 V.10 abbreviation, acronym, verb, lookup and global findings":
     let found = checkNames("x.nim", SOURCE, ["JSON"]).mapIt((it.rule, it.message))
     check (Rule.Abbreviation, "Name coins abbreviation; write `directory`; got `dir_hint`.") in
-      found  # V.6
+        found  # V.6
     check (Rule.Abbreviation, "Name coins abbreviation; write `temporary`; got `tmp_count`.") in
-      found  # V.6
+        found  # V.6
     for (full, name) in [("buffer", "buf"), ("error", "err"), ("destination", "dest"),
                          ("arguments", "args")]:
       check (Rule.Abbreviation, "Name coins abbreviation; write `" & full & "`; got `" & name &
@@ -169,16 +169,16 @@ suite "Names":
     check (Rule.ActionVerb, "Action is imperative verb and property is bare noun; got " &
       "`getGrade`.") in found  # V.3
     check (Rule.GlobalWord, "Global never shares its word with type; got `ALGEBRA`.") in
-      found  # V.10, shares word with type `Algebra`
+        found  # V.10, shares word with type `Algebra`
     check not found.anyIt("JSON" in it[1])  # exempt
     check not found.anyIt("`lut`" in it[1])  # jargon
     check not found.anyIt("constructTable" in it[1])
     check (Rule.NameCase, "Global is `SCREAMING_SNAKE_CASE`; got `tmp_count`.") in found  # V.1
     check found.len == 9  # V.1, V.3, V.6, V.10: each break once
     check SOURCE.breaches.filterIt(it[0] == Rule.Acronym) ==
-      @[(Rule.Acronym, "Acronym stays only where glossary lists it; got `JSON` in `toJSON`.")]
+        @[(Rule.Acronym, "Acronym stays only where glossary lists it; got `JSON` in `toJSON`.")]
     check "const LUT_GRADE = 1\n".breaches ==
-      @[(Rule.LookupTable, "Lookup table reads `lut_<value>_by_<key>`; got `LUT_GRADE`.")]
+        @[(Rule.LookupTable, "Lookup table reads `lut_<value>_by_<key>`; got `LUT_GRADE`.")]
     check "const LUT_GRADE_BY_BASIS = 1\n".breaches.len == 0  # V.5
     check "proc get*(x: int) = x\n".breaches.len == 0  # one word is noun
     check "proc f(ctx: int) = discard\n".breaches.len == 1  # V.6, exempt word aside
@@ -187,8 +187,8 @@ suite "Names":
 
   test "foreign binding keeps library's name, and its parameters are read":
     const foreign = "proc getError*(): cstring {.importc: \"SDL_GetError\".}\n" &
-      "proc glGetString*(name: GLenum, buf: pointer) {.importc, dynlib: \"GL\".}\n" &
-      "proc getShaderiv*(shader: Uint)\n  {.importc: \"glGetShaderiv\", header: H.}\n"
+        "proc glGetString*(name: GLenum, buf: pointer) {.importc, dynlib: \"GL\".}\n" &
+        "proc getShaderiv*(shader: Uint)\n  {.importc: \"glGetShaderiv\", header: H.}\n"
     let found = foreign.messages
     check not found.anyIt("getError" in it) and not found.anyIt("glGetString" in it)
     check not found.anyIt("getShaderiv" in it)  # pragma on its own line
@@ -206,7 +206,7 @@ suite "Names":
       check ("proc getView*() {." & mark & ": \"view\".}\n").breaches.len == 0  # library's name
       check "getView" notin ("proc getView*() {.inline, " & mark & ".}\n").names
     check "proc getValue(dynlib_path: string) = discard\n".breaches.mapIt(it[0]) ==
-      @[Rule.ActionVerb]  # parameter named like mark marks nothing
+        @[Rule.ActionVerb]  # parameter named like mark marks nothing
     check "proc getHeader*(header: string) = discard\n".breaches.mapIt(it[0]) == @[Rule.ActionVerb]
 
 
@@ -309,13 +309,13 @@ suite "Names":
     # `type name = object` inside `template defineKind(name: untyped)` declares parameter's
     #   argument at expansion, never type `name` (P05 of `pga_benchmark`).
     const substituted =
-      "template defineKind(name: untyped; count: static int) =\n" &
-      "  type name = object\n" &
-      "    elements: array[count, float]\n" &
-      "  let name_value = count\n"
+        "template defineKind(name: untyped; count: static int) =\n" &
+        "  type name = object\n" &
+        "    elements: array[count, float]\n" &
+        "  let name_value = count\n"
     check substituted.breaches.len == 0  # V.1
     check substituted.declarations.filterIt(it.name == "name").mapIt(it.kind) ==
-      @[NameKind.Parameter]  # template parameter alone, no type
+        @[NameKind.Parameter]  # template parameter alone, no type
     check "elements" in substituted.names and "name_value" in substituted.names
 
 

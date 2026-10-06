@@ -96,12 +96,12 @@ func wordSpans(name: string): seq[(int, int)] =
     if first < 0:
       first = k
       continue
-    let is_boundary = (c in {'A' .. 'Z'} and name[k - 1] in {'a' .. 'z', '0' .. '9'}) or
-      (c in {'a' .. 'z'} and k - first > 1 and name[k - 1] in {'A' .. 'Z'} and
-        name[k - 2] in {'A' .. 'Z'})
+    let is_boundary = (c in {'A'..'Z'} and name[k-1] in {'a'..'z', '0'..'9'}) or
+      (c in {'a'..'z'} and k - first > 1 and name[k-1] in {'A'..'Z'} and
+        name[k-2] in {'A'..'Z'})
     if not is_boundary: continue
     # Capital before lowercase starts new word: `JSONData` is JSON, Data.
-    let cut = if c in {'a' .. 'z'}: k - 1 else: k
+    let cut = if c in {'a'..'z'}: k - 1 else: k
     result.add (first, cut)
     first = cut
   if first >= 0: result.add (first, name.len)
@@ -109,7 +109,7 @@ func wordSpans(name: string): seq[(int, int)] =
 
 func words*(name: string): seq[string] =
   ## Split name at `_` and at case changes: `lut_grade`, `wedgeAnti`, `JSONData` give words.
-  name.wordSpans.mapIt(name[it[0] ..< it[1]])
+  name.wordSpans.mapIt(name[it[0]..<it[1]])
 
 
 func fullWordOf(word: string, lower_exempt: openArray[string]): string =
@@ -130,8 +130,8 @@ func respelled*(name: string, exempt: openArray[string]): string =
   let lower_exempt = exempt.mapIt(it.toLowerAscii)
   result = name
   for (first, after) in name.wordSpans.reversed:
-    let full = name[first ..< after].fullWordOf(lower_exempt)
-    if full.len > 0: result = result[0 ..< first] & full & result[after .. ^1]
+    let full = name[first..<after].fullWordOf(lower_exempt)
+    if full.len > 0: result = result[0..<first] & full & result[after .. ^1]
 
 
 func letterCase(r: Rune): LetterCase =
@@ -139,9 +139,9 @@ func letterCase(r: Rune): LetterCase =
   ##   Latin styles run 52 letters, 26 capitals first; Greek styles run 58, 25 capitals first,
   ##     then nabla, 25 small, partial differential and 6 small variants.
   let c = int(r)
-  if c in 0x1D400 .. 0x1D6A3:
+  if c in 0x1D400..0x1D6A3:
     return (if (c - 0x1D400) mod 52 < 26: LetterCase.Upper else: LetterCase.Lower)
-  if c in 0x1D6A8 .. 0x1D7C9:
+  if c in 0x1D6A8..0x1D7C9:
     let k = (c - 0x1D6A8) mod 58
     if k < 25: return LetterCase.Upper
     if k in [25, 51]: return LetterCase.None
@@ -203,12 +203,12 @@ func acronyms*(name: string): seq[string] =
   for k in 0 ..< text.len - 1:
     let
       c = text[k]
-      opens_word = c in {'A' .. 'Z'} and text[k + 1] in {'a' .. 'z'}
-    if (c in {'A' .. 'Z'} and not opens_word) or (run.len > 0 and c in {'0' .. '9'}): run.add c
+      opens_word = c in {'A'..'Z'} and text[k+1] in {'a'..'z'}
+    if (c in {'A'..'Z'} and not opens_word) or (run.len > 0 and c in {'0'..'9'}): run.add c
     else:
-      if run.count({'A' .. 'Z'}) >= 2: result.add run
+      if run.count({'A'..'Z'}) >= 2: result.add run
       run = ""
-  if run.count({'A' .. 'Z'}) >= 2: result.add run
+  if run.count({'A'..'Z'}) >= 2: result.add run
 
 
 func checkNames*(path, source: string; exempt: openArray[string]): seq[Report] =

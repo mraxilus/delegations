@@ -25,7 +25,7 @@ func gapMessages(source: string): seq[string] =
 
 func formOf(source: string): seq[(Rule, string)] =
   ## Read rule and message of each form finding of text.
-  checkForm("a.txt", source).mapIt((it.rule, it.message))
+  checkForm("a.txt", source).mapIt (it.rule, it.message)
 
 
 
@@ -57,7 +57,6 @@ suite "Article X":
     check formOf("hints:off\t# x\n") == @[(Rule.Tab, "Line holds tab.")]  # text of any kind
     check formOf("let s = \"a\tb\"\n") == @[(Rule.Tab, "Line holds tab.")]  # fixer's own case
     check checkForm("a.txt", "x\n\ty\n")[0].line == 2  # line numbers one-based
-
 
 
   test "X.9 trailing comment takes exactly two spaces before its marker":
