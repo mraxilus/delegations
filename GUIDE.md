@@ -354,6 +354,10 @@ instead. The line opens `**Working:**`, then names what runs and what wakes you:
 
 The `stop` hook refuses a turn that pushed or posted and closes with neither.
 
+**Where the `stop` hook refuses a message, reply with the corrected lines alone.** The hook reads
+the message once it is on screen, and the message stands there. A message sent again in full reads
+twice, so never send it, or its sign-off, again.
+
 **A wake that changes nothing needs no message.** The echo of your own act is such a wake, as
 the notice that the pull request you marked ready is ready. So is an event that leaves each
 state as it was. Where that turn pushed and posted nothing, and your working line would read as
