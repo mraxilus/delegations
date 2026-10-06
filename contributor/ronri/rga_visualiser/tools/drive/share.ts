@@ -186,6 +186,9 @@ export async function driveCrossingsCounted(page: Page): Promise<void> {
     objects: nimSceneCount(),
     rows: ['diagnostic-crossing-to-algebra', 'diagnostic-crossing-to-euclidean']
       .map((id) => document.getElementById(id)?.textContent ?? ''),
+    heights: ['diagnostic-frametime', 'diagnostic-crossing-to-algebra',
+      'diagnostic-crossing-to-euclidean']
+      .map((id) => document.getElementById(id)?.parentElement?.getBoundingClientRect().height ?? 0),
   }));
   const frames = Math.max(reading.pooled[0] ?? 0, 1);
   const [into, out] = [(reading.pooled[1] ?? 0) / frames, (reading.pooled[2] ?? 0) / frames];
@@ -198,6 +201,12 @@ export async function driveCrossingsCounted(page: Page): Promise<void> {
     'the page counts at least one value leaving the algebra for each object, each frame',
     out >= reading.objects && is_row(reading.rows[1]),
     `${reading.rows[1]}, ${out.toFixed(1)} per frame for ${reading.objects} objects`,
+  );
+  // Arrow in each label comes from maths face, whose own line box stands taller than text's.
+  report(
+    'each crossing row stands as tall as the frame time row, arrow and all',
+    reading.heights.every((height) => height === reading.heights[0]),
+    `${reading.heights.join(', ')} px`,
   );
   await closeDiagnostics(page, was);
   await advanceFrames(page, FRAMES_CROSSING_SHUT);
