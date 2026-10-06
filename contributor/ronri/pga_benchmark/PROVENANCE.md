@@ -879,14 +879,26 @@ taken before digests existed took the digest of its builds at its own pin, on 20
 bench at the commit of the runtime baselines emits the same C as the bench of that day, file for
 file. The Architect chose this rule on 2026-10-05, for a head that moved only comments and form.
 
+**The digest reads C alone, at any path.** Nim folds the path of a module into the hash in the
+name of each type. The digest names each run of 20 to 32 letters and digits after `__` by its
+order of first appearance. A full build also writes the command of the C compiler, with absolute
+paths, at the head of each file. The digest leaves that header out, and a build that stops at C
+writes none. So any checkout takes one digest, from either build.
+
+The body of each type stays in the digest, so a type that changes shape still moves it. A copy of
+the tree at a second path emits 181 such runs in the bench at rga4d. Some are module names, such
+as `pureZcollectionsZtables`, which read the same at each path. Read with names by order, the C of
+the copy matches the first, file for file. The sweep, built in full, takes the digest of its C
+alone at each of five dimensions.
+
 Rejected: a new timing of each record at such a head. The binaries are the same, so new times
 would record the drift of this host alone, ×1.19 to ×1.27 between days at rga4d. Cost: `restamp`
 compiles each evaluation at each algebra, and runs its suites and claims again.
 
 Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Head`. It holds the order of
-files, and the commit left out of the digest. It holds a move on equal digests alone, a digest
-taken at its own pin, and the first commit timed at. Suite `Internal: Gaps` holds the list to name
-that commit.
+files, and the commit left out of the digest. It holds a type hash and the header of a full build,
+which move no digest. It holds a move on equal digests alone, a digest taken at its own pin, and
+the first commit timed at. Suite `Internal: Gaps` holds the list to name that commit.
 
 **`drive` holds the checkout to the pin.** Any edit under the library directory of the
 checkout is a finding. The checkout is under `dependencies/`, which git ignores, so a tool
@@ -1033,10 +1045,6 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
   load, add and store, and the dense form groups its loads first. Of the 66 rows that spend the
   same counts in both, the median reads ×1.00, and light rows stray to ×0.65 at cga5d. Why order
   moves time is unmeasured, since this container offers no hardware counters.
-
-- `restamp` reads C, and the C names types by hashes of the paths of their modules. A second
-  checkout of one tree, at another path, emitted 11 C files that differ from the first. So
-  `restamp` runs in the checkout whose builds took the digests.
 
 ## Open questions
 
