@@ -77,7 +77,7 @@ A warning changes no exit code. The exit codes are these:
 Each rule id is stable, so a tool can read the output. Each line names its rule by the id, and a
 message names no article of a charter. A message reads `<sentence>; got <value>.`, or
 `<sentence>.` where it gives no value. A caller such as `koch` adds the article of each rule where
-the sentence ends, as in ``Range operator takes no space (X.9); got `0 .. n`.``.
+the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, os`.``.
 
 | Id | Rule |
 |----|------|
