@@ -27,7 +27,7 @@
 ##   Refusal names its reason, and rule's finding stays for hand. Rule choosing new name is
 ##     `names.nim`'s: V.6 abbreviation, and V.1 and V.11 case of each kind.
 ##
-##   Cost: scope is caller's: command line reads project of nearest nimble file (D2 a of #558),
+##   Cost: scope is caller's: command line reads project of nearest nimble file (D2 of #558),
 ##     and `koch` adds root files that import across projects (`koch.nim`). Use in other
 ##     project's file is not read.
 ##   Cost: collision test is by name presence, so rename that would compile may be refused.

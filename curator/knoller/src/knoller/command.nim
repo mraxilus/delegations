@@ -458,7 +458,9 @@ proc binOf(
   (served.get, "")
 
 
-proc listingOf(project: string; listings: var Table[string, seq[(string, string)]]): seq[(string, string)] =
+proc listingOf(
+  project: string; listings: var Table[string, seq[(string, string)]]
+): seq[(string, string)] =
   ## Read path, relative to project, and text of each Nim file git lists under project, once.
   if project notin listings:
     let (listed, _) = project.listed
@@ -517,7 +519,7 @@ proc plansOf*(
   ##   of Nim dialect, as `names.nim` reads it with jargon alone exempt, since knoller reads no
   ##   glossary. Rename reads every Nim file git lists in project of declaring file, nearest
   ##   directory holding nimble file, and is refused where it would write file not named
-  ##   (D2 a of #558); local binding reads its own file alone. Plan's paths are paths as named.
+  ##   (D2 of #558); local binding reads its own file alone. Plan's paths are paths as named.
   ##   Rename refused before semantic pass, as `renamesCase` refuses it, is plan with reason.
   var
     seen = initTable[string, Pinning]()
