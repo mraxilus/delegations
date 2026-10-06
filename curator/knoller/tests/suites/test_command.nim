@@ -134,7 +134,8 @@ suite "Command line":
     # Case held: `knoller --check` ran idiom checks of static pass on file holding fence alone
     #   (`chain.nim`, `heldOf` against `checkFormatting`), and checks of form, articles, entry
     #   block, names and waits never, so it exited 0 on each source below (#557); domain is each
-    #   rule static pass of `curator/audit` reads, as fixers leave it.
+    #   rule static pass of `curator/audit` reads that fixers can leave, as fixers leave it.
+    #   Rule fixers always clear (trailing whitespace, banners, `strictFuncs`, stub keys) is none.
     let module = "{.experimental: \"strictFuncs\".}\n\n"
     for (path, source, rule) in [
       ("a.nim", module & "const TEXT = \"" & "word ".repeat(24) & "\"\n", Rule.LineWidth),
@@ -150,6 +151,19 @@ suite "Command line":
       ("tests/test_a.nim", module & "include \"suites.nim\"\n", Rule.StubHeader),
       ("tests/suites/test_a.nim", module & "echo x\n", Rule.DebugOutput),
       ("tests/suites/test_a.nim", module & "sleep(1)\n", Rule.FixedWait),
+      ("a.nim", module & "proc f(ctx: int) = discard\n", Rule.Abbreviation),
+      ("a.nim", module & "func toJSON() = discard\n", Rule.Acronym),
+      ("a.nim", module & "proc f(quiet: bool) = discard\n", Rule.BooleanName),
+      ("a.nim", module & "const LUT_GRADE = 1\n", Rule.LookupTable),
+      ("a.nim", module & "type basis_digits = int\n", Rule.NameCase),
+      ("a.nim", module & "type Pair[Key, V] = object\n", Rule.PlaceholderLetter),
+      ("a.nim", module & "var 𝐧 = 2\n", Rule.Notation),
+      ("a.nim", module & "type Algebra = int\nconst ALGEBRA = 1\n", Rule.GlobalWord),
+      ("a.nim", module & "func f() {.used.} = discard\n", Rule.UsedConsumer),
+      ("tests/suites/test_a.nim", module & "import std/random\n", Rule.RandomSeed),
+      ("a.nim", module & "import ./[\n  b,  # Why.\n  a,\n]\n", Rule.BracketImport),  # comment
+      ("a.nim", module & "import ./a\n\nimport std/os\n", Rule.ImportRank),  # blank line apart
+      ("a.nim", module & "const A = 1\nconst B = \"\"\"\ntext\n\"\"\"\n", Rule.SingleBindings),
     ]:
       let outcome = outcomeOf([(path, source)], [], is_check = true)
       check outcome.code == 1  # violation fails run
