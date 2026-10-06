@@ -589,6 +589,12 @@ that commit.
 A program claim names its program relative to its proposal, so a new directory name moves no
 digest.
 
+**A suites or program claim may name `defines`**, each `name=value`, and each of its builds
+passes them as `-d:`. So a proposal can hold the library at a build option other than its
+default, as P06 holds its own suites at 32 bits. The defines are part of the claim, so they move
+the digest of the evaluation. The page names each define beside its claim. Rejected: a config
+file beside each program. It would reach programs alone, and the digest would not read it.
+
 **Proposals build on each other as a graph without cycles,** as the Architect ruled on
 2026-10-04. The Architect decides each proposal on its own. So each one lists in `builds_on` the
 proposals whose changes it needs, and an empty list says that it needs none. Rejected: one base
@@ -662,11 +668,12 @@ weak evidence alone. Counts are exact, and carry the verdicts.
 `cayley-derivation` at rga3d, rga4d, cga4d and cga5d.
 
 Verified by `test_rga4d.nim` and the other stubs, suites `Internal: Markdown`, `Internal: Changes`,
-`Internal: Proposals`, `Internal: Evaluations` and `Internal: Cells`. They cover parse, quote and
-digest rules, and claim kinds. They cover proposal numbers taken twice or skipped, and the status
-that freezes a proposal. They also cover pairing of runs, NaN shares, the success line of the
-compiler, and the table serialiser at pin. They cover the algebras that an evaluation measures, with
-the flag and without it. A digest moves with edits, and never with prose.
+`Internal: Proposals`, `Internal: Evaluations`, `Internal: Cells` and `Internal: Figures`. They
+cover parse, quote and digest rules, and claim kinds, with the defines a claim may name and the page
+names. They cover proposal numbers taken twice or skipped, and the status that freezes a proposal.
+They also cover pairing of runs, NaN shares, the success line of the compiler, and the table
+serialiser at pin. They cover the algebras that an evaluation measures, with the flag and without
+it. A digest moves with edits, and never with prose.
 
 ## Notes
 
