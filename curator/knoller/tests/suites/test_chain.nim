@@ -143,8 +143,8 @@ func toggled(path, source: string): Fix =
 suite "Chain":
   test "every layout rule settles in one run, and second run writes nothing":
     let found = checkFormatting("a.nim", LAYOUT, Dialect.Module)
-    for rule in ["(X.2)", "(X.9)", "(STYLE.md §5)", "Signature", "Call", "trailing separator",
-                 "share one bracket", "alphabetised", "`=` takes"]:
+    for rule in ["First-tier banner", "Binary operator", "Parameters take", "Signature", "Call",
+                 "trailing separator", "share one bracket", "alphabetised", "`=` takes"]:
       check found.anyIt(rule in it.message)  # each rule reported
     let fix = formatted("a.nim", LAYOUT, Dialect.Module)
     check fix.source == "## Do.\n\n" & STRICT_FUNCS & "\n\nimport std/[os, strutils]\n" &
@@ -161,7 +161,7 @@ suite "Chain":
 
   test "dialect decides idiom fixers and checks: module reads them, script does not":
     let breach = "import std/os\nimport std/strutils\nlet a = b+c\n"
-    check checkFormatting("a.nims", breach, Dialect.Script).mapIt(it.message).allIt("X.9" in it)
+    check checkFormatting("a.nims", breach, Dialect.Script).allIt(it.rule == Rule.ExpressionSpacing)
     check checkFormatting("a.nim", breach, Dialect.Module).len == 2  # brackets too
     check formatted("a.nims", breach, Dialect.Script).source ==
       "import std/os\nimport std/strutils\nlet a = b + c\n"  # imports left to module
@@ -186,8 +186,8 @@ suite "Chain":
       held = heldOf("a.nims", source, Dialect.Script)
     check held.len == 1 and held[0].line == 2 and held[0].rule == Rule.FenceHeld  # at marker
     check held[0].message == "Fence keeps its lines as written, and inside them " &
-      "not-over-binary breaks once at line 4 and expression-spacing 2 times from line 3 " &
-      "(X.1); got lines `2` to `6`."  # rule left for hand and rule fixer clears alike
+      "not-over-binary breaks once at line 4 and expression-spacing 2 times from line 3" &
+      "; got lines `2` to `6`."  # rule left for hand and rule fixer clears alike
     check checkFormatting("a.nims", unfenced, Dialect.Script).mapIt((it.line, it.rule)).sorted ==
       @[(3, Rule.ExpressionSpacing), (4, Rule.NotOverBinary), (5, Rule.ExpressionSpacing)]
       # same lines report same unfenced
@@ -200,16 +200,16 @@ suite "Chain":
         FENCE_OFF & "\nlet d = 4\n"
       held = heldOf("a.nims", source, Dialect.Script)
     check held.mapIt(it.line) == @[2, 6]  # one for each fence
-    check held[0].message.contains(" expression-spacing breaks once at line 3 (X.1)")  # 1 outside
+    check held[0].message.contains(" expression-spacing breaks once at line 3; got")  # 1 outside
     check held[1].message == "Fence keeps its lines as written, and nothing inside breaks a " &
-      "rule (X.1); got lines `6` to `7`."
+      "rule; got lines `6` to `7`."
     check heldOf("a.nims", "let a = 1+2\n", Dialect.Script).len == 0  # no fence, no line
 
 
   test "fence of module counts idiom checks too, and script reads none":
     let source = FENCE_OFF & "\nlet a = 1\nlet b = 2\nproc f(): int =\n  return result\n"
     check heldOf("a.nim", source, Dialect.Module)[0].message.contains(
-      "inside them return-result breaks once at line 5 and single-bindings once at line 2 (X.1)",
+      "inside them return-result breaks once at line 5 and single-bindings once at line 2; got",
     )
     check heldOf("a.nims", source, Dialect.Script)[0].message.contains("nothing inside breaks")
 
