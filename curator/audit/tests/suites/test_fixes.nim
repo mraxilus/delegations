@@ -192,6 +192,8 @@ suite "Fixes":
       check not rule.has_guide  # no guide, so passes through unwritten
       check checkForm(other.path, other.content, rule).len > 0  # check reports it still
       check not plan.fixed.anyIt(it.path == other.path)  # and fix reports no rewrite of it
+    let clean = entry("curator/audit/README.md", "# Text.\n")
+    check fixEntries(CURATOR_BRANCH, @[clean]).fixed.len == 0  # clean Markdown passes unchanged
 
 
   test "fence keeps lines between its markers; fix and layout checks reach every other line":
