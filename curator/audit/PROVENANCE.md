@@ -1503,9 +1503,8 @@ before `; got `, or before the closing period. So `koch check` prints
   ``…; got `{value}`.``, takes its article after the quote.
 - Verified by `suites/test_findings.nim`. Each message of knoller that the static pass or
   `koch fix` prints renders through its real check to the text that koch prints, article included.
-  The test of `unsettled` builds its report from the sentence of `chain.nim`, since no source in
-  the suite leaves the fixers unsettled. The messages of checks that no pass of koch runs yet
-  render through their checks too, and so does a message with no value.
+  The messages of checks that no pass of koch runs yet render through their checks too, and so
+  does a message with no value.
 - Cost: `CITATIONS` gives each rule one article, the one that its rewrite cites. Signature and call
   wrapping cite X.3 alone, though STYLE.md §5 states them too. Operator wrapping cites STYLE.md §5
   alone, though X.1 states it too. The static pass runs none of these three checks, so koch prints
@@ -1608,6 +1607,9 @@ groups with the separator it reads, and a trailing separator goes only where no 
 - A second round catches what a first round enabled, such as a doc that a widened gap pushed
   past `LINE_MAX`. `ROUNDS_MAX` is three, and the tree settles in two. Knoller runs the rounds
   again where a line stays wide, and holds each line that no wrap fits (`## Wraps` of its record).
+- A source that the fixers do not settle keeps the edits of the semantic pass alone. `koch fix`
+  prints a warning with the message of knoller (`unsettledOf`). It cites no article, because the
+  fault is in the tool (D1 a of #572). Verified by `suites/test_fixes.nim`.
 - Verified by `suites/test_fixes.nim`: one source that breaks each layout rule settles in one
   run. Every check then reports none of it, and a second run writes nothing.
 
