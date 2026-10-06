@@ -232,7 +232,7 @@ func formattedBy(path, source: string; steps: openArray[Step]; proofs = Proofs()
       0,
       Rule.Unsettled,
       "File still changes after " & $ROUNDS_MAX & " rounds of fixers, so fix leaves it as " &
-          "written (STYLE.md §5); got `" & $ROUNDS_MAX & "` rounds.",
+          "written; got `" & $ROUNDS_MAX & "` rounds.",
     )
     return Fix(source: source, left: @[report], asked: asked)
   result = fix.get
@@ -289,6 +289,6 @@ func heldOf*(path, source: string; dialect: Dialect; proofs = Proofs()): seq[Rep
       path,
       run.a + 1,
       Rule.FenceHeld,
-      "Fence keeps its lines as written, and " & inside & " (X.1); got lines `" & $(run.a + 1) &
+      "Fence keeps its lines as written, and " & inside & "; got lines `" & $(run.a + 1) &
         "` to `" & $(run.b + 1) & "`.",
     )

@@ -234,14 +234,14 @@ func checkBlanks*(path, source: string): seq[Report] =
   for run in runs(path, source):
     let message =
       case run.target
-      of Target.Suite: "Suite takes three blank lines before it (X.2)"
-      of Target.Test: "Test takes two blank lines before it (X.2)"
-      of Target.Child: "First child follows its opener at once (X.2)"
-      of Target.Banner: "Suite or test after banner takes banner's one blank line (X.2)"
-      of Target.Helper: "Nested helper takes one blank line on each side (STYLE.md §1)"
+      of Target.Suite: "Suite takes three blank lines before it"
+      of Target.Test: "Test takes two blank lines before it"
+      of Target.Child: "First child follows its opener at once"
+      of Target.Banner: "Suite or test after banner takes banner's one blank line"
+      of Target.Helper: "Nested helper takes one blank line on each side"
       of Target.Stacked:
         "One-line routine after owner's head, its doc or another one-line routine takes no " &
-          "blank line before it (STYLE.md §1)"
+          "blank line before it"
     let rule =
       if run.target in {Target.Helper, Target.Stacked}: Rule.HelperBlankLines
       else: Rule.TestBlankLines

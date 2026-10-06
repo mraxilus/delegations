@@ -225,7 +225,7 @@ func checkImports*(path: string, code: seq[string]): seq[Report] =
         path,
         span.first + 1,
         Rule.BracketImport,
-        "Bracket import is alphabetised (X.5); got `" & items.join(", ") & "`.",
+        "Bracket import is alphabetised; got `" & items.join(", ") & "`.",
       )
     let r = span.target.importRank
     if r < rank:
@@ -233,7 +233,7 @@ func checkImports*(path: string, code: seq[string]): seq[Report] =
         path,
         span.first + 1,
         Rule.ImportRank,
-        "Standard library comes first, then packages, then local modules (X.5); got `" &
+        "Standard library comes first, then packages, then local modules; got `" &
           span.target.split('[')[0] & "`.",
       )
     rank = max(rank, r)
@@ -270,7 +270,7 @@ func checkBindings*(path: string, code: seq[string]): seq[Report] =
       path,
       run.first + 1,
       Rule.SingleBindings,
-      "Consecutive single bindings share one keyword (X.5); got `" & run.keyword & "` twice.",
+      "Consecutive single bindings share one keyword; got `" & run.keyword & "` twice.",
     )
 
 
@@ -306,10 +306,9 @@ func checkStubKeys*(path, source: string): seq[Report] =
   for stub in stubKeys(path, source):
     let message =
       if stub.first >= 0:
-        "Stub `cmd` leaves out `-r`, since testament runs binary itself (STYLE.md §6); got `-r`."
+        "Stub `cmd` leaves out `-r`, since testament runs binary itself; got `-r`."
       else:
-        "Stub leaves out keys `testament pattern` never reads (STYLE.md §6); got `" & stub.key &
-          "`."
+        "Stub leaves out keys `testament pattern` never reads; got `" & stub.key & "`."
     result.add initReport(path, stub.line + 1, Rule.StubKeys, message)
 
 
@@ -328,14 +327,14 @@ func checkStrictFuncs*(path: string; lines, code: seq[string]): seq[Report] =
       path,
       0,
       Rule.StrictFuncs,
-      "Module carries `" & STRICT_FUNCS & "` before its imports (STYLE.md §2); got none.",
+      "Module carries `" & STRICT_FUNCS & "` before its imports; got none.",
     )
   elif import_at >= 0 and strict_at > import_at:
     result.add initReport(
       path,
       strict_at + 1,
       Rule.StrictFuncs,
-      "Module carries `" & STRICT_FUNCS & "` before its imports (STYLE.md §2); got it after.",
+      "Module carries `" & STRICT_FUNCS & "` before its imports; got it after.",
     )
 
 
@@ -347,8 +346,8 @@ func checkReturns*(path: string, code: seq[string]): seq[Report] =
       path,
       i + 1,
       Rule.ReturnResult,
-      "Bare `return` exits early with `result`, and routine ends on value itself " &
-        "(STYLE.md §5); got `return result`.",
+      "Bare `return` exits early with `result`, and routine ends on value " &
+        "itself; got `return result`.",
     )
 
 
@@ -543,10 +542,9 @@ func checkImportBrackets*(path, source: string): seq[Report] =
   for c in consolidations(source.split('\n'), source.codeOnly.split('\n')):
     let message =
       if c.lines.len > 1:
-        "Imports of one directory share one bracket (X.5); got `" & c.prefix & "` in `" &
+        "Imports of one directory share one bracket; got `" & c.prefix & "` in `" &
           $c.lines.len & "` statements."
-      else: "Bracket of one module drops its bracket (STYLE.md §5); got `" & c.prefix & "[" &
-        c.items[0] & "]`."
+      else: "Bracket of one module drops its bracket; got `" & c.prefix & "[" & c.items[0] & "]`."
     result.add initReport(path, c.lines[0] + 1, Rule.ImportBrackets, message)
 
 
@@ -721,15 +719,14 @@ func checkProfiler*(path, source: string): seq[Report] =
       path,
       i + 1,
       Rule.ProfilerImport,
-      "Profiler import stands on one line, `" & PROFILER_IMPORT & "` (STYLE.md §3); got `2` lines.",
+      "Profiler import stands on one line, `" & PROFILER_IMPORT & "`; got `2` lines.",
     )
   if profiler.is_entry and not profiler.is_present:
     result.add initReport(
       path,
       0,
       Rule.ProfilerImport,
-      "Entry module, library umbrella and test stub import profiler right after pragmas " &
-        "(STYLE.md §3); got none.",
+      "Entry module, library umbrella and test stub import profiler right after pragmas; got none.",
     )
 
 
@@ -853,8 +850,7 @@ func checkLists*(path, source: string): seq[Report] =
       path,
       d.line + 1,
       Rule.UnorderedList,
-      "List language leaves unordered is alphabetised, bare pragmas first (X.10); got `" &
-        d.got & "`.",
+      "List language leaves unordered is alphabetised, bare pragmas first; got `" & d.got & "`.",
     )
 
 

@@ -115,5 +115,5 @@ func faultOf*(path: string, fence: Fence): seq[Report] =
     fence.fault + 1,
     Rule.Fence,
     "Fence closes outside bracket, string or comment it opens in, so fix leaves file as " &
-      "written (X.1); got `" & FENCE_OFF & "` and `" & FENCE_ON & "` either side.",
+      "written; got `" & FENCE_OFF & "` and `" & FENCE_ON & "` either side.",
   )

@@ -35,21 +35,47 @@ leaves `src/` reaches a sibling project, which an install of the package does no
 Verified by `suites/test_imports.nim`, which reads each import of each module under `src/`. Each
 path must name the standard library or a file inside `src/`.
 
+**Each build of knoller fails on an unused import.** `nim.cfg` at the root of the package makes
+the warning `UnusedImport` an error. The compiler reads `nim.cfg` in each directory above its
+project file. So the flag reaches the suite that testament runs, one suite that runs alone, and the
+command line built from the root of the repository.
+
+- Rejected: the flag in the `cmd` of the stub. It reaches the build that testament runs, and no
+  other.
+- Verified by hand, 2026-10-06, with Nim 2.2.12. An unread import in a module of `src/` fails
+  `nim c` of `tests/test_suites.nim`, of one suite alone that imports the module, and of
+  `src/knoller.nim`. An unread import in a suite fails `nim c` of the stub and of that suite.
+  Through `koch test`, testament reads the flag too.
+- Cost: a build of `koch` and the suites of `curator/audit` read no configuration here. So an
+  unused import in knoller fails the suite of knoller alone, which `koch check` runs whenever
+  knoller changes.
+
 ## Reports and rules
 
 **Each report names a rule, and the caller cites its article.** A rewrite reports its path, its
 line and its `Rule`. A finding of a check also reports its message, which ends with the value it
 got (Article IV.4). The name of a rule is the string of its enum member, such as `expression
-spacing`. So `koch fix` prints the same text as before the split. `curator/audit` holds the
-article of each rule in `CITATIONS`, indexed by `Rule`, so a new rule without a citation does not
-compile there.
+spacing`. So `koch fix` prints the name of the rule with its article, as in `expression spacing
+(X.9) fixed`. `curator/audit` holds the article of each rule in `CITATIONS`, indexed by `Rule`,
+so a new rule without a citation does not compile there.
 
 - The id of a rule is the slug of its name, such as `expression-spacing`. The id is stable, so a
   tool can read the output of the command line. Verified by `suites/test_rules.nim`: each rule
   has an id of its own.
-- A finding of a check keeps its whole message, with its article. The messages share no one shape
-  from which a citation could be built again, so each message moved as it was.
-- Cost: the messages of the checks still cite the articles of the charter of this repository.
+- A message of a check names no article. It reads `<sentence>; got <value>.`, or `<sentence>.`
+  where it gives no value. The Architect chose this shape (D2 a of #505). Knoller runs on any
+  repository, whose charter need not be this one, and the README lists the id that each line
+  names. The one shape lets a caller find where the sentence ends, and `koch` cites the article of
+  the rule there.
+- Verified by `suites/test_rules.nim`. The messages of `checkBlanks`, `checkDefaults` and `heldOf`
+  hold no article. No string literal under `src/` holds `§`, or `(` before a Roman numeral and a
+  dot.
+- Rejected: the article written into each message. `CITATIONS` would then stand twice, and each
+  message would cite the charter of this repository wherever knoller runs.
+- Cost: no suite of knoller holds the text that `koch` prints. The suite `test_findings.nim` of
+  `curator/audit` holds it, article included, through the real check of each message that `koch`
+  prints. The one exception is `unsettled`, whose test builds the report from the sentence of
+  `chain.nim`, since no source in the suite leaves the fixers unsettled.
 
 ## Chain
 

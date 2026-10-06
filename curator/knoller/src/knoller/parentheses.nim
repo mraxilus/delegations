@@ -141,7 +141,7 @@ func checkParentheses*(path, source: string; proofs: Proofs): seq[Report] =
       group.line + 1,
       Rule.NeedlessParentheses,
       "Parentheses grouping what parser groups anyway go: prefix term or plain operand beside " &
-        "operator, as parser of code's compiler proves (X.4); got `" & group.got & "`.",
+        "operator, as parser of code's compiler proves; got `" & group.got & "`.",
     )
 
 

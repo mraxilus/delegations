@@ -122,7 +122,7 @@ suite "Fixes":
     let path = "curator/audit/src/a.nim"
     check checkForm(path, LAYOUT, Kind.Nim.rule).len == 0  # static pass reads none of them
     check checkIdioms(path, LAYOUT).len == 0
-    let found = checkFormatting(path, LAYOUT, Kind.Nim)
+    let found = checkFormatting(path, LAYOUT, Kind.Nim).findingsOf
     for rule in ["(X.2)", "(X.9)", "(STYLE.md §5)", "Signature", "Call", "trailing separator",
                  "share one bracket", "alphabetised", "`=` takes"]:
       check found.anyIt(rule in it.message)  # each rule reported
@@ -144,7 +144,7 @@ suite "Fixes":
 
   test "layout checks read Nim syntax; import and list checks read `.nim` alone":
     let breach = "import std/os\nimport std/strutils\nlet a = b+c\n"
-    check checkFormatting("a.nims", breach, Kind.NimScript).mapIt(it.message).allIt("X.9" in it)
+    check checkFormatting("a.nims", breach, Kind.NimScript).findingsOf.allIt("X.9" in it.message)
     check checkFormatting("a.nim", breach, Kind.Nim).len == 2  # brackets too
     check checkFormatting("a.md", breach, Kind.Markdown).len == 0
 

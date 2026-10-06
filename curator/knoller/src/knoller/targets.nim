@@ -87,8 +87,7 @@ func checkTargets*(path, source: string): seq[Report] =
       path,
       target.line + 1,
       Rule.TargetSubject,
-      "`to<Target>` takes its plain subject first, as `b.toDigits` (STYLE.md §5); got `" &
-        target.got & "`.",
+      "`to<Target>` takes its plain subject first, as `b.toDigits`; got `" & target.got & "`.",
     )
 
 

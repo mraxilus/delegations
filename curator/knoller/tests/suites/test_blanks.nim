@@ -28,7 +28,7 @@ suite "Blanks":
   test "suite takes three blank lines before it, test two, first child none":
     let breach = "import std/unittest\n\nsuite \"A\":\n  test \"a\":\n    check true\n\n" &
       "  test \"b\":\n    check true\n\nsuite \"B\":\n\n  test \"c\":\n    check true\n"
-    check checkBlanks(TEST_PATH, breach).mapIt(it.message.split(" (")[0]) == @[
+    check checkBlanks(TEST_PATH, breach).mapIt(it.message.split(";")[0]) == @[
       "Suite takes three blank lines before it", "Test takes two blank lines before it",
       "Suite takes three blank lines before it", "First child follows its opener at once",
     ]

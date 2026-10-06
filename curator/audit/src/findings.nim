@@ -6,8 +6,16 @@
 ##     indexed by `Rule`, so rule knoller adds without citation fails to compile here.
 ##     Rewrite renders as `<rule> (<article>)`, so `koch fix` prints `path:line: <rule> fixed`
 ##     through `render`, as check prints its own, and its dry run prints `path:line: <rule> to
-##     fix` from same report. Finding of knoller's check renders its message as written.
+##     fix` from same report.
+##     Message of knoller's check reads `<sentence>; got <value>.`, or `<sentence>.`, and names
+##       no article (ruling D2 of #505); finding takes article where sentence ends, as
+##       `<sentence> (<article>); got <value>.`, which `koch check` and `koch fix` print.
+##     Sentence ends at first `; got ` outside code span, span running to next run of as many
+##       backticks, so sentence quoting ``…; got `{value}`.`` ends after quote.
 ##
+##   Cost: rule takes one article, so finding of rule two articles state cites one, as its
+##     rewrite does: bracket of one module cites X.5, though STYLE.md §5 states it; signature
+##     and call wrapping cite X.3, and operator wrapping STYLE.md §5, though X.1 states it too.
 ##   Cost: line `0` marks whole-file findings, so `0` never means first line.
 ##   Cost: empty path marks branch-level findings (scope, commits) with no file to open.
 ##   Propagation flag marks finding that rules change leaves for curator wherever it lands,
@@ -15,7 +23,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, sequtils]
+import std/[algorithm, sequtils, strutils]
 import ../../knoller/src/knoller
 
 
@@ -75,12 +83,36 @@ func finding*(path: string, line: int, message: string, is_propagation = false):
 
 
 func findingOf*(report: Report): Finding =
-  ## Render report of knoller as finding: check's message as written, or rewrite as its rule
-  ##   and article, i.e. `expression spacing (X.9)`.
-  let message =
-    if report.message.len > 0: report.message
-    else: $report.rule & " (" & CITATIONS[report.rule] & ")"
-  finding(report.path, report.line, message)
+  ## Render report of knoller as finding, citing article of its rule: rewrite as rule and
+  ##   article, i.e. `expression spacing (X.9)`; check's message with article where sentence
+  ##   ends, i.e. ``Range operator takes no space (X.9); got `0 .. n`.``.
+
+  func sentenceEnd(message: string): int =
+    ## Find offset where sentence of message ends: first `; got ` outside code span, else its
+    ##   closing `.`, else its end.
+
+    func backticksAt(at: int): int =
+      ## Count backticks of run opening at offset of message.
+      while at + result < message.len and message[at+result] == '`': inc result
+
+    var k = 0
+    while k < message.len:
+      let run = backticksAt(k)
+      if run > 0:
+        # Skip code span to next run of as many backticks; run none closes is plain text.
+        var close = k + run
+        while close < message.len and backticksAt(close) != run:
+          close += max(1, backticksAt(close))
+        k = if close < message.len: close + run else: k + run
+      elif message.continuesWith("; got ", k): return k
+      else: inc k
+    if message.endsWith('.'): message.high else: message.len
+
+  # Cite article after rule of rewrite, or where sentence of check's message ends.
+  let article = " (" & CITATIONS[report.rule] & ")"
+  if report.message.len == 0: return finding(report.path, report.line, $report.rule & article)
+  let at = report.message.sentenceEnd
+  finding(report.path, report.line, report.message[0..<at] & article & report.message[at .. ^1])
 
 
 func findingsOf*(reports: openArray[Report]): seq[Finding] =
