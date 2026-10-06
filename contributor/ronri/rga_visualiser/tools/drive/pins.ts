@@ -66,7 +66,8 @@ export async function drivePinPick(page: Page): Promise<void> {
 
 /** Time anchor lookup, which must stay projection rather than copy.
  *
- *  Overlay view cache hands out no extent-and-matrix value pair, and object is read by handle.
+ *  Overlay's shared extent hands out no extent-and-matrix value pair, and object is read by
+ *  handle.
  *  Warm batch first and untimed: first batch on page read dearest of all, every time.
  */
 export async function drivePinAnchor(page: Page): Promise<void> {

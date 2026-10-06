@@ -247,7 +247,8 @@ type
       ##   `handleEvent` has no `History`, and routing button and key through one call
       ##   stops them drifting.
     is_vsync_enabled*: bool  ## Whether swap waits for display refresh before returning.
-    microseconds_tessellate*: float  ## Cost of rebuilding vertex storage, last frame.
+    microseconds_tessellate*: float  ## Cost of placing every object and rebuilding vertex
+      ## storage, last frame.
     count_vertices*: int  ## Vertices assembled, last frame.
     path_export*: array[PATH_MAX, char]  ## Where exported frame is written.
     path_scene*: array[PATH_MAX, char]  ## Where scene is saved to and loaded from.
@@ -1022,8 +1023,9 @@ proc layoutView*(panel: var Panel, camera: var Camera, speed: float) =
   gui.textTinted(wordingText(NameViewMotor), INK_LABEL.red, INK_LABEL.green, INK_LABEL.blue)
   gui.tooltip wordingText(TipViewMotor)
   # Changed coefficient alone is written into live motor; fields hold doubles, as motor does.
+  #   Motor about world origin, as every reading is; see `camera.stanceWorld`.
   var
-    typed = camera.motor.toMultivector
+    typed = camera.stanceWorld.motor.toMultivector
     staged: array[Basis, float]
   for b in Basis: staged[b] = typed[b]
   let changed = layoutCoefficientGrid(staged)

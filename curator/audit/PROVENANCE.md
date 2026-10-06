@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | ed5c4c748d0f0435 |
+| Rules   | ae3641e673d6524d |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 | Pruned  | ab8fb063b62bb03ba9fd7f2964a1866b3862909b |
 
@@ -816,8 +816,9 @@ a copy from two different faces.
 - **Keyed by digest, and never by name.** Two projects that ask for one face share one entry
   by construction, and a moved pin is a different entry rather than a stale one. `check.yml`
   gets the same property from a cache keyed on the file that holds the digests, one layer
-  down. The store sits at `~/.cache/koch/assets`, beside `~/.cache/koch/nim` and outside the
-  checkout, because the audit reads untracked files.
+  down. The store sits at `~/.cache/koch/assets`, outside the checkout, because the audit reads
+  untracked files. It is the store of koch, while the cache of compilers, `~/.cache/knoller/nim`,
+  belongs to knoller and koch uses it.
 - **Pages and the desktop atlas embed whole Noto faces, from the Noto release (Article X.8).**
   Noto was chosen so that no character of a page falls outside its faces, and a subset undoes
   that. The rows hold each whole face that a page draws, as TrueType, which `@fontsource` does
@@ -830,7 +831,7 @@ a copy from two different faces.
 - Cost: a whole face is 610 to 780 KB of TrueType, where its Latin subset is about 13 KB. A page
   that inlines it as base64 carries about a third more again.
 - One digest reader serves both fetches. `fetchAsset` reads the bytes that it fetched through
-  `compilers.digestOf`, so the parse that `test_compilers.nim` tests also guards the store.
+  `digestOf` of knoller, so the parse that the suites of knoller test also guards the store.
 - Verified by `suites/test_assets.nim`. Verified by hand with the built `binaries/koch
   fetch-assets` on 2026-10-04, in the cloud container of Claude Code, into an empty store.
   Three whole faces, 2.0 MB, fill it in **1.5 s**. The same call warm takes **0.002 s**, and
@@ -838,17 +839,17 @@ a copy from two different faces.
 - Verified by a break of it, on 2026-09-10. A face that nobody declares is a finding, which
   names the table to add a row to. Alter one declared digest in its last character, and the
   fetch refuses the bytes and **leaves the store empty** rather than keeps them.
-- Cost: the store grows and nothing prunes it. A face is less than 1 MB, where a compiler is
-  about 300 MB. So what is unbounded is the number of pins the repository has ever held, and
-  not the bytes.
+- Cost: the store grows and nothing prunes it. A face is less than 1 MB, where a fetched compiler
+  is about 140 MB and a built one about 2.4 GB. So what is unbounded is the number of pins the
+  repository has ever held, and not the bytes.
 - Cost: an upstream that moves bytes under one address fails every project at once, rather
   than one. That is the same failure that a digest exists to make loud, and it is louder
   shared.
 - **The Nim tarball is deliberately not here.** It is fetched and checksummed too, but its
   digest comes from the sidecar of upstream at fetch time, rather than from this table. It is
   stored *unpacked by pin*, because the rest of koch resolves toolchains by pin. The trust
-  model and the key both differ, so `compilers.nim` keeps it, rather than this table pretends
-  that one shape serves both.
+  model and the key both differ, so `compilers.nim` of knoller keeps it, rather than this table
+  pretends that one shape serves both.
 - **The declaration is published, so no consumer parses this source.** `koch fetch-assets` that
   names no file writes every row as `<file> <digest>`, one to a line. Rejected: a consumer that
   reads `assets.nim` as text, which is a second parser for a format that only this module owns.
@@ -1016,9 +1017,9 @@ label would show a stale queue.
 
 **Each project pins its own compiler, and there is no Nim for the whole repository.**
 `requires "nim == <version>"` sits in the nimble file of the project. It is read through the
-same `requireLiterals` scan that `dependencies.nim` uses, so requirements are parsed in one
-place. No single version serves every project, because `rga_visualiser` and `pga_benchmark`
-pin a compiler commit that no release carries.
+`requireLiterals` scan of knoller (`pins.nim`), which `dependencies.nim` imports too, so
+requirements are parsed in one place. No single version serves every project, because
+`rga_visualiser` and `pga_benchmark` pin a compiler commit that no release carries.
 
 - Rejected: one pin for the repository, which cannot hold a commit pin and a release pin at
   once. Rejected: `>=`, which cannot express an upper bound, and cannot say which compiler a
@@ -1065,57 +1066,38 @@ The curator projects pin 2.2.12 for that reason.
 - Cost: the modules of koch compile under every pin in the tree, because the job of every
   project installs its own. The matrix proves that, and not this paragraph.
 
-**Koch resolves each pin to its own compiler, and fetches one it lacks.** It takes `PATH`
-where that already serves, then `~/.cache/koch/nim/<pin>/bin`, then a fetch. A release comes
-as a tarball. A commit comes from a clone of `nim-lang/Nim` and a run of `sh build_all.sh`,
-which is the recipe that `check.yml` uses. So does any platform that nim-lang.org publishes no
-build for. The cache sits outside the checkout, because the audit reads untracked files, and
-`$KOCH_NIM_DIR` moves it.
+**Koch runs each project on the compiler of its pin, and knoller serves that compiler.** Koch
+imports the resolution of knoller: `PATH` where that already serves, then
+`~/.cache/knoller/nim/<pin>/bin`, then a fetch. `$KNOLLER_NIM_DIR` moves the cache. The record
+of knoller holds that design, under Compilers. `plan.nim`, `symbols.nim` and `koch fix` each
+hold one `Toolchains` of knoller, which resolves each pin once.
 
-So `nim r koch check` stays green as one command over a changed set that spans pins. These traps
-hold here.
+So `nim r koch check` stays green as one command over a changed set that spans pins. These
+points hold here.
 
-- **A half-built toolchain lies.** A probe of `bin/nim` before the `boot` step of Nim's own
-  `koch` finishes returns the csources bootstrap binary, which answers `--version` with an
-  unrelated commit. So a source build completes beside its destination, and moves in only when
-  it is done, as a tarball does.
+- What stays in audit is the policy of this repository (CURATOR.md duty 8). That is
+  `checkPin`, `checkDriver`, `checkKnoller` and `workflowVersion`, with the constants of the
+  driver and of the workflow. `missing` stays too, because it returns the `Finding` of audit, and
+  knoller returns none.
+- Resolution lives in knoller, because the `knoller` command takes the compiler of a pin as
+  well. Audit imports knoller, and never the reverse (D3 of #548). Rejected: a copy in each
+  project. The umbrella of knoller exports everything, so a name in both makes each call
+  ambiguous.
+- `checkPin` demands the form `nim == <pin>`, though knoller also reads `nim#<commit>` as a pin.
+  The repository writes one form, which CONTRIBUTOR.md names and `.claude/hooks.sh` reads as
+  text. Verified by `suites/test_toolchain.nim`.
 - **To name a tool by path is not enough.** Atlas resolves `nim` through `PATH`, so an Atlas
   named by path alone reads whichever compiler `PATH` holds, and warns `environment mismatch`.
   Children run with the `bin` of the toolchain leading `PATH`. A tool absent from a toolchain
   falls back to `PATH` rather than raises, because the tools that Nim's own `koch` builds move
   between Nim versions.
-- Rejected: a directory that a delegate populates by hand, which leaves the defect for anyone
-  who has not. Rejected: the layout of `choosenim`, a second convention that cannot serve a
-  commit pin at all.
-- Costs: the checker reaches the network, and may build a compiler. That is seconds for a
-  release and minutes for a commit, once for each pin. Each cached toolchain is a few hundred
-  megabytes, and nothing prunes them.
 - On CI, the installed compiler of every job already satisfies its pin, so resolution stops at
   `PATH` and never fetches.
-
-**The fetched tarball is checked against the digest published beside it.**
-`<tarball url>.sha256` is exactly the output of `sha256sum`, for every release checked.
-`fetchRelease` fetches it, and refuses a tarball whose bytes differ.
-
-- What it defends against, stated rather than overclaimed: the digest comes from the same host
-  over the same TLS as the tarball. So it catches a truncated, mirrored or swapped file, and
-  **not a compromised nim-lang.org**. A signature would answer that, and none is published.
-  `.asc` beside these tarballs is a 404, read rather than assumed.
-- Text that is not a digest reads as *nothing*, rather than as a digest that cannot match. So
-  an error document or an empty answer reports "none published" instead of "mismatch". The two
-  are different failures, and say different things to whoever reads the line.
-- Verified by a break of it, and not by a fetch that happened to pass. `test_compilers.nim` digests
-  a temporary file, changes one byte, and checks that the digest moves. The parse is
-  mutation-tested: drop its hex validation and the suite reddens.
-- Verified by hand, 2026-09-10: `2.2.2`, which nothing on the machine served, fetched,
-  digest-checked and unpacked.
-- Honest limit of that test: the exit-code check of `sha256sum` is belt-and-braces, because
-  the parse already rejects the error text, so no test distinguishes it. It is kept for saying
-  what it means.
-- Verified by `suites/test_toolchain.nim`, `test_compilers.nim` and `test_projects.nim`. Verified by
-  hand, 2026-09-06: `curator/probe`, pinned to a release that nothing local served, fetched the
-  tarball and ran. One command over projects on two pins gave **0 findings**, and its log held no
-  Atlas mismatch warning.
+- Verified by `suites/test_toolchain.nim` and `test_projects.nim` here, and by the suites
+  `test_pins.nim` and `test_compilers.nim` of knoller. Verified by hand, 2026-09-06:
+  `curator/probe`, pinned to a release that nothing local served, fetched the tarball and ran.
+  One command over projects on two pins gave **0 findings**, and its log held no Atlas mismatch
+  warning.
 - A pin that nothing can serve is one finding, which names the pin and the cache it tried, and
   not a crash. Cost, unmeasured on the current pin: the time of a cold fetch.
 
@@ -1265,10 +1247,10 @@ command answers what a machine needs before any of this runs. To name a project 
 meaning for each job that the runner asks for.
 
 Nim is deliberately absent. It is the toolchain that koch runs under, rather than a package
-that a machine installs, and `compilers.nim` resolves each pin itself. npm is absent because it
-belongs to the project that carries a node manifest, and `restoreNode` reports its absence by
-name. The root `README.md` points at the verb rather than names packages, so the declaration
-is the only statement and nothing can drift from it.
+that a machine installs, and `compilers.nim` of knoller resolves each pin itself. npm is absent
+because it belongs to the project that carries a node manifest, and `restoreNode` reports its
+absence by name. The root `README.md` points at the verb rather than names packages, so the
+declaration is the only statement and nothing can drift from it.
 
 - Rejected: an exemption stated in `CONTRIBUTOR.md`, which leaves the rule true and the
   repository still answering its own question in prose.
@@ -1585,6 +1567,8 @@ The record of knoller holds the design of those fixers.
   article that `CITATIONS` holds for it, so `koch fix` prints `expression spacing (X.9) fixed` as
   before. Verified by `suites/test_findings.nim`.
 - `fixes.nim` maps each kind of Nim onto a dialect of knoller, a module, a script or a package.
+- Knoller also reads the pin of a nimble file and serves the compiler of each pin. Audit imports
+  both, and keeps the policy of duty 8 (`## Toolchain`).
 - Rejected: knoller copied first and audit switched later. The code would stand twice, and the
   paragraphs of the records copied word for word would trip the check of copies.
 
@@ -2094,6 +2078,40 @@ Verified by hand, 2026-10-04, with the same program and the engine of `dance_ont
 block moved, and the parser read each written file to the same tree once its body returns under
 its block. `nim check` gave each written file the same result before and after, and a second run
 moved nothing.
+
+## Parser proof
+
+**`koch fix` proves each group of needless parentheses with the parser of the compiler that the
+project pins (X.4).** The chain of knoller asks for each source whose groups it cannot prove yet
+(`Fix.asked`). `provenFix` gives every source of one pin to one run of that compiler, holds the
+answers by path, and fixes again each entry that asked. The rule and its probe are in the record
+of knoller, under Content fixes.
+
+- The pin is that of the project that holds the file, and that of `curator/audit` for a file at
+  the root. `pinProvers` of knoller serves it, through a `Toolchains` of its own.
+  So the `ronri` projects read with their commit pin, whose glyph operators 2.2.12 lexes as names.
+- Where no compiler serves a pin, or a project pins none, no group goes. `koch fix` then prints
+  one line `warning: needless-parentheses: <message>`, and the exit code stays.
+- An entry that asked nothing read only sources that hold an answer, and an answer never changes
+  once held. So each round fixes again only the entries that asked, and the scope check reads all
+  parts joined.
+- Verified by `suites/test_fixes.nim`, with the prover of each pin stubbed. One run serves each
+  pin, the group that the parser refuses stays, and a second fix writes nothing.
+- Verified by hand, 2026-10-05, with `koch fix --dry-run --branch:main` at `main` and at this
+  head, and the dependencies that `koch fetch-deps` restored:
+  - `rga_visualiser`: 0 to fix on both, in 29.1 s and 28.9 s;
+  - `pga_benchmark`: 263 and 264, in 7.6 s and 9.8 s. The one more is `(⊛m)` at line 35 of
+    `proposals/03-partner-sign/laws.nim`, which the guard on the head of a command keeps at `main`;
+  - `dance_ontology`: 1121 and 1119, in 18.1 s and 20.2 s. The two fewer are
+    `@(PAIRS[task.pair][0])` at lines 79 and 228 of `tests/test_read.nim` (#539);
+  - `curator`: 1308 and 1345, in 13.9 s and 15.3 s. Outside the files that hold the proof, each
+    line is the same, so the new lines are code that waits for its own fix.
+- Verified by hand, 2026-10-05: koch built at `80954e6` gives the same output as koch built at
+  `6e5140d`, byte for byte. Each ran
+  `koch fix --dry-run --branch:main`, with no checkout that `koch fetch-deps` restores:
+  - `rga_visualiser`: 0 to fix on both, in 29.1 s and 30.4 s;
+  - `pga_benchmark`: 1 to fix on both, in 6.1 s and 6.0 s;
+  - `dance_ontology`: 1 to fix on both, in 12.2 s and 11.8 s.
 
 ## Fixed waits
 

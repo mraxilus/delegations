@@ -300,7 +300,11 @@ type
       ## Taken when drag begins, by `grabPan`, on sphere left drag's orbit holds.
       ##   Kept, not asked again at each step: zoom resizes that sphere, so point asked
       ##   again is other point, and zoom would turn on how many steps pointer sent.
+      ## About `origin_pan`, view origin it was taken about; read through `pointPanNow`.
       ## None in free flight.
+    origin_pan*: Position  ## View origin `point_pan` is held about, as world position.
+      ## View origin follows camera every frame while drag moves it, and point held about
+      ## world origin would land on world's step far out.
     seconds_travelling*: float  ## How long current travel hold has lasted, in seconds.
       ## Speed climbs with this, and resets to zero on frame no travel key is held; see
       ## `driveHeld`.
@@ -919,12 +923,20 @@ func grabPan*(
   interaction.point_pan = none(Position)
   if not has_selection: return
   let (eye, frame) = camera.sight
+  interaction.origin_pan = camera.originView
   interaction.point_pan = some(pointHeld(
     eye,
     camera.pivot,
     camera.headingThrough(frame, width, height, interaction.cursor),
     camera.radiusHeld(width, height, reach_selection),
   ))
+
+
+func pointPanNow*(interaction: Interaction, camera: Camera): Option[Position] =
+  ## Read point right drag holds, about camera's view origin as it stands now.
+  ##   Rebased from origin it was taken about, so nearby pair cancels exactly.
+  if interaction.point_pan.isNone: return
+  some(interaction.point_pan.get.rebased(interaction.origin_pan, camera.originView))
 
 
 func stretchAcross(

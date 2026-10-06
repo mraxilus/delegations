@@ -7,12 +7,6 @@ import ./fixtures
 
 
 suite "Camera Aim":
-  let scale_aim = DrawExtent(scale: DrawScale(
-    extent_furniture: 100.0,
-    eye: ORIGIN,
-    radius_horizon: 90.0,
-  ))  ## No ribbon fields: nothing here tessellates anything, it only aims camera.
-
   const
     (width_aim, height_aim) = (1440, 900)  ## Frame centred box is measured in.
     out_to_aim = [
@@ -89,7 +83,7 @@ suite "Camera Aim":
 
   proc framedFor(scene: Scene, picked: Selection, camera: Camera): CameraStance =
     ## Resolve where framing rule puts camera for whole selection.
-    let aim = aimFor(scene, picked, none(Preview), camera.drawExtentFor(height_aim, 0.0))
+    let aim = aimFor(scene, picked, none(Preview))
     check aim.isSome
     stanceFor(aim.get, camera, width_aim, height_aim)
 
@@ -250,7 +244,7 @@ suite "Camera Aim":
     for out_to in out_to_aim:
         let
           camera = stanceAim(out_to)
-          aim = aimFor(scene, Selection(), staged, camera.drawExtentFor(height_aim, 0.0))
+          aim = aimFor(scene, Selection(), staged)
           framed = camera.placed(stanceFor(aim.get, camera, width_aim, height_aim))
         check isShownAll(scene, Selection(), staged, framed, width_aim, height_aim)
         # Each operand by name, not merely "everything watched" -- that is property.
@@ -270,7 +264,7 @@ suite "Camera Aim":
     let
       alone = some(previewStaging(scene.geometryOf(handle_first), RADIUS_OBJECT_DEFAULT))
       camera = stanceAim(Direction(x: 12, y: 10, z: 3))
-      aim = aimFor(scene, Selection(), alone, camera.drawExtentFor(height_aim, 0.0))
+      aim = aimFor(scene, Selection(), alone)
       framed = camera.placed(stanceFor(aim.get, camera, width_aim, height_aim))
     check isShownAll(scene, Selection(), alone, framed, width_aim, height_aim)
     check framed.distance == camera.distance
@@ -690,7 +684,7 @@ suite "Camera Aim":
         # ... and not one step further than rule in force demands. Judged against that
         #   rule, and not against pixels: sphere criterion is what framing solves, and it
         #   is stricter than what each shape's own pixels would accept.
-        let aim = aimFor(scene, picked, none(Preview), camera.drawExtentFor(height_aim, 0.0))
+        let aim = aimFor(scene, picked, none(Preview))
         check aim.isSome
         check aim.get.isFramed(camera.placed(framed), width_aim, height_aim)
         let short = camera.stanceOf.toward(framed, 0.999)
@@ -730,7 +724,7 @@ suite "Camera Aim":
         Position(x: -3.0, y: 5.0, z: -2.0).toMultivector,
       )
       opening = stanceAim(Direction(x: 13, y: 11, z: 6))
-      aim = aimFor(scene, picked, none(Preview), opening.drawExtentFor(tall, 0.0)).get
+      aim = aimFor(scene, picked, none(Preview)).get
       centre = aim.sphere.get.centre
       reach = distanceFitting(aim.sphere.get.radius, opening, wide, tall, INSET_POINT_SHOWN)
     # Framed, then flown well inside: rule is broken and floor answers.
@@ -784,7 +778,7 @@ suite "Camera Aim":
     var camera = stanceAim(Direction(x: 13, y: 11, z: 6))
     camera.dollyTo(3.0)
     let
-      aim = aimFor(scene, picked, none(Preview), camera.drawExtentFor(tall, 0.0)).get
+      aim = aimFor(scene, picked, none(Preview)).get
       middle = aim.centroid.get
     check norm(aim.sphere.get.centre - middle) > 0.5  # What this case is about.
     camera = camera.placed(stanceFor(aim, camera, wide, tall))
@@ -843,7 +837,7 @@ suite "Camera Aim":
     #   moment its dot fits -- no dolly toward that distant support, ever.
     let
       (scene, picked) = sceneOf(point, line)
-      aim = aimFor(scene, picked, none(Preview), camera.drawExtentFor(height_aim, 0.0))
+      aim = aimFor(scene, picked, none(Preview))
     check aim.get.is_bound_by_fitted
     check aim.get.sphere.get.radius =~ 0.0
     let framed = framedFor(scene, picked, camera)
@@ -863,9 +857,7 @@ suite "Camera Aim":
       )
       (scene_star, picked_star) = sceneOf(star)
       opening = stanceAim(Direction(x: 9, y: 5, z: 2))
-      aim_star = aimFor(
-        scene_star, picked_star, none(Preview), opening.drawExtentFor(tall, 0.0)
-      ).get
+      aim_star = aimFor(scene_star, picked_star, none(Preview)).get
     check aim_star.heading.isSome
     check aim_star.normal_crossing.isNone
     # Faced, then turned well off: bound breaks, and least turn brings it back on screen.
@@ -901,9 +893,7 @@ suite "Camera Aim":
     check kindOf(along) == some(Kind.Line)
     let
       (scene_line, picked_line) = sceneOf(along)
-      aim_line = aimFor(
-        scene_line, picked_line, none(Preview), opening.drawExtentFor(tall, 0.0)
-      ).get
+      aim_line = aimFor(scene_line, picked_line, none(Preview)).get
     check aim_line.heading.isNone
     check aim_line.normal_crossing.isSome
     # Sight turned onto that circle's own normal is as far off as it gets.
@@ -920,9 +910,7 @@ suite "Camera Aim":
     # Anything finite wins outright: horizon demand goes unmet rather than fighting it.
     let (scene_both, picked_both) =
       sceneOf(star, Position(x: 3.0, y: -2.0, z: 1.0).toMultivector)
-    let aim_both = aimFor(
-      scene_both, picked_both, none(Preview), opening.drawExtentFor(tall, 0.0)
-    ).get
+    let aim_both = aimFor(scene_both, picked_both, none(Preview)).get
     check aim_both.sphere.isSome and aim_both.heading.isSome
     var pair = opening
     pair.look(2.6, 0.0)  # Star well behind reader now.
@@ -951,9 +939,7 @@ suite "Camera Aim":
       check framed.distance =~ camera.distance
       # Turn lands on star's own heading, rather than being searched toward it:
       #   least turn names that turn outright, so there is no fraction of it to find.
-      let aim = aimFor(
-        scene_star, picked_star, none(Preview), camera.drawExtentFor(height_aim, 0.0)
-      )
+      let aim = aimFor(scene_star, picked_star, none(Preview))
       check aim.isSome and aim.get.heading.isSome
       check camera.placed(framed).frame.forward =~ aim.get.heading.get
 
@@ -962,9 +948,7 @@ suite "Camera Aim":
     #   stands aside inside it. Re-centring one already in view pulled whole view about.
     let opening = stanceAim(out_to_aim_raised[0])
     var faced = opening.placed(framedFor(scene_star, picked_star, opening))
-    let aim_faced = aimFor(
-      scene_star, picked_star, none(Preview), faced.drawExtentFor(height_aim, 0.0)
-    ).get
+    let aim_faced = aimFor(scene_star, picked_star, none(Preview)).get
     check aim_faced.isBounded(faced, width_aim, height_aim)
     faced.look(0.03, 0.0)  # Star stays on screen, so bound still holds.
     check aim_faced.isBounded(faced, width_aim, height_aim)
@@ -1617,7 +1601,7 @@ suite "Camera Aim":
         Position(x: -3.0, y: 5.0, z: -2.0).toMultivector,
       )
       opening = stanceAim(Direction(x: 13, y: 11, z: 6))
-      aim = aimFor(scene, picked, none(Preview), opening.drawExtentFor(tall, 0.0)).get
+      aim = aimFor(scene, picked, none(Preview)).get
     var
       tween: CameraTween
       pointer = none(PointerPick)
@@ -1680,16 +1664,16 @@ suite "Camera Aim":
   test "an aim widens by exactly the objects folded into it":
     let
       (a, b) = (Position(x: 3.0, y: 0.0, z: 0.0), Position(x: -3.0, y: 0.0, z: 0.0))
-      aim_one = none(CameraAim).aimIncluding(a.toMultivector, scale_aim)
+      aim_one = none(CameraAim).aimIncluding(a.toMultivector)
     check aim_one.get.sphere.get.centre =~ a
     check aim_one.get.sphere.get.radius =~ 0.0
 
-    let aim_two = aim_one.aimIncluding(b.toMultivector, scale_aim)
+    let aim_two = aim_one.aimIncluding(b.toMultivector)
     check aim_two.get.sphere.get.centre =~ ORIGIN
     check aim_two.get.sphere.get.radius =~ 3.0
     # Bound cannot be widened by ball it already holds, so folding one in twice leaves.
     #   it exactly as it was: as *bound*, aim is set and not tally.
-    check aim_two.aimIncluding(a.toMultivector, scale_aim).get.sphere.get ==
+    check aim_two.aimIncluding(a.toMultivector).get.sphere.get ==
         aim_two.get.sphere.get
     # Its **middle** is tally, because middle is: fold `a` again and mean of.
     #   three leans back toward it. That is why `framing.watched` yields each object once
@@ -1697,20 +1681,20 @@ suite "Camera Aim":
     check aim_two.get.centroid.get =~ ORIGIN
     # Sum's weight is count -- which is what lets one field say both.
     check aim_two.get.centroid_sum.get[Basis.E4] =~ 2.0
-    let aim_thrice = aim_two.aimIncluding(a.toMultivector, scale_aim)
+    let aim_thrice = aim_two.aimIncluding(a.toMultivector)
     check aim_thrice.get.centroid.get =~ Position(x: 1.0, y: 0.0, z: 0.0)
     check aim_thrice.get.centroid_sum.get[Basis.E4] =~ 3.0
 
     let horizon = attitude(LINES[0])  # Line's attitude is horizon point.
     check isHorizon(horizon)
-    let aim_star = none(CameraAim).aimIncluding(horizon, scale_aim)
+    let aim_star = none(CameraAim).aimIncluding(horizon)
     check aim_star.get.heading.isSome
     check aim_star.get.sphere.isNone  # Star is nowhere, so it widens nothing.
 
 
   test "an object that draws nothing aims at nothing":
     var empty: Multivector
-    check aimFor(empty, scale_aim).isNone
+    check aimFor(empty).isNone
 
 
   proc aimOn(centre: Position, radius = 0.0): CameraAim =

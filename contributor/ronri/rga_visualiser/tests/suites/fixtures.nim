@@ -155,8 +155,10 @@ func `=~`*(d, e: Direction): bool =
 func `=~`*(a, b: CameraStance): bool =
   ## Compare approximate equality between stances, coefficient by coefficient.
   ##   Pivot is read off sight, so stance slid onto pivot it stands at moves by rounding.
+  ##   Origin too: coefficients about two origins name two stances.
   let (m, n) = (a.motor, b.motor)
-  m.turn_x =~ n.turn_x and m.turn_y =~ n.turn_y and m.turn_z =~ n.turn_z and
+  a.origin =~ b.origin and
+      m.turn_x =~ n.turn_x and m.turn_y =~ n.turn_y and m.turn_z =~ n.turn_z and
       m.slide_x =~ n.slide_x and m.slide_y =~ n.slide_y and m.slide_z =~ n.slide_z and
       m.scalar =~ n.scalar and m.antiscalar =~ n.antiscalar and a.distance =~ b.distance
 

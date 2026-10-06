@@ -3,6 +3,8 @@
 #   not Nim because hook command is what puts compiler on PATH before any Nim can run, and
 #   git runs its hooks as executable scripts (`.githooks/`), which call back into this file.
 #   Pin is read from audit's nimble file, so it is stated once (CURATOR.md duty 8).
+#   Toolchain lands in cache knoller resolves each pin from (`compilers.nim` there), so hook,
+#     koch and knoller share one toolchain for each pin.
 #   Tarball is linux_x64; other platform with `nim` already on PATH falls through, and one
 #   without it fails loudly at build rather than silently at every hook.
 #   `binaries/` is ignored by git, so built koch never reaches audit or repository.
@@ -24,7 +26,7 @@ set -eu
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PIN="$(sed -n 's/.*requires "nim == \(.*\)".*/\1/p' "$ROOT/curator/audit/audit.nimble")"
-CACHE="${KOCH_NIM_DIR:-$HOME/.cache/koch/nim}/$PIN"
+CACHE="${KNOLLER_NIM_DIR:-$HOME/.cache/knoller/nim}/$PIN"
 export PATH="$CACHE/bin:$PATH"
 BINARY="$ROOT/binaries/koch"
 KEY="$(git -C "$ROOT" rev-parse HEAD:koch.nim HEAD:koch.nim.cfg \

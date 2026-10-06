@@ -31,10 +31,10 @@
 ##     per project in nimble files, Atlas checkouts per project, npm per project, each
 ##     deliberately. Bytes of file are not toolchain: they are same bytes whoever fetches.
 ##
-##   Store is `$KOCH_ASSETS_DIR`, else `~/.cache/koch/assets`, beside `~/.cache/koch/nim` that
-##     `compilers.nim` keeps and for same reasons: never inside checkout, since audit reads
-##     untracked files; keyed by what pins it, so entry cannot serve bytes pin would not have
-##     fetched.
+##   Store is `$KOCH_ASSETS_DIR`, else `~/.cache/koch/assets`: repository's own, so koch's, while
+##     compiler cache `~/.cache/knoller/nim` is knoller's, which koch uses too. Both stay outside
+##     checkout for one reason, since audit reads untracked files; store is keyed by what pins
+##     it, so entry cannot serve bytes pin would not have fetched.
 ##   Keyed by digest rather than by name: two projects asking for one asset share one file by
 ##     construction, and changed pin is different path rather than stale one. Same property
 ##     `check.yml` gets from keying cache on file holding digests, one layer down.
@@ -42,27 +42,28 @@
 ##     download is never mistaken for verified one -- same shape `fetchRelease` uses.
 ##
 ##   Cost: `sha256sum` and `curl` are shelled out to; `koch list-packages` declares both. Digest is
-##     read by `compilers.digestOf`, not copied here, so one reader serves both fetches and
-##     store imports compiler module for it.
+##     read by `digestOf` of knoller, not copied here, so one reader serves both fetches and
+##     store imports knoller for it.
 ##   Nim tarball is not here, deliberately: its digest comes from upstream sidecar at fetch
 ##     time rather than from table here, and it is stored unpacked by pin because rest of koch
-##     resolves toolchains by pin. Different trust and different key, so `compilers.nim` keeps
-##     it rather than this pretending one shape serves both.
-##   Cost: store grows and nothing prunes it. Face is under 1 MB where compiler is ~300 MB, so
-##     what is unbounded here is number of pins repository has ever held, not bytes.
+##     resolves toolchains by pin. Different trust and different key, so knoller's `compilers.nim`
+##     keeps it rather than this pretending one shape serves both.
+##   Cost: store grows and nothing prunes it. Face is under 1 MB where compiler is 140 MB to
+##     2.4 GB, so what is unbounded here is number of pins repository has ever held, not bytes.
 ##   Cost: upstream that moves bytes under one address fails every project at once rather
 ##     than one. That is same failure one digest exists to make loud, and it is louder shared.
 
 {.experimental: "strictFuncs".}
 
 import std/[os, osproc, strutils]
-import ./[compilers, findings]
+import ../../knoller/src/knoller
+import ./findings
 
 
 const
   ASSETS_KEY* = "KOCH_ASSETS_DIR"  ## Environment name overriding where assets are stored.
   ASSETS_DIRECTORY* = ".cache/koch/assets"
-    ## Default store, under home and beside `~/.cache/koch/nim`.
+    ## Default store, under home and outside checkout, in koch's own directory.
   FONTSOURCE = "https://cdn.jsdelivr.net/npm/"
     ## Host serving `woff2` subsets packaged by `@fontsource`.
   NOTOFONTS = "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io"

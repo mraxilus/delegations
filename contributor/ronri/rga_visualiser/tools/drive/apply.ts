@@ -74,8 +74,8 @@ export async function driveApply(page: Page): Promise<void> {
     `${filled.options} options, ${filled.objects} objects`,
   );
 
-  // Shut apply section again: open one keeps preview standing, which is one of three things
-  //   frame hold refuses to hold frame over, and later hold checks would break quietly.
+  // Shut apply section again: open one keeps preview standing, drawn into every frame later
+  //   checks read.
   await toggleSection(page, 'apply', false);
   await driveApplyPair(page);
 }

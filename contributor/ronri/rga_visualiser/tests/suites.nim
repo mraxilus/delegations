@@ -44,5 +44,6 @@ import ./suites/[
   test_picking,
   test_scene,
   test_selection,
+  test_timings,
   test_wording,
 ]

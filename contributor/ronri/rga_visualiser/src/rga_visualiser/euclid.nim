@@ -110,6 +110,47 @@ func `*`*(scale: float, d: Direction): Direction {.noinit.} =
   result.z = scale * d.z
 
 
+func toView*(place, origin: Position): Position {.noinit.} =
+  ## Read world `place` about view origin `origin`, as every calculation of frame reads it.
+  ##   Two doubles near each other subtract exactly, so place near eye keeps every bit.
+  result.x = place.x - origin.x
+  result.y = place.y - origin.y
+  result.z = place.z - origin.z
+
+
+func toWorld*(place, origin: Position): Position {.noinit.} =
+  ## Read `place`, held about view origin `origin`, about world origin, as storage holds it.
+  ##   Rounds to world's doubles: far out, remainder finer than their step is lost.
+  result.x = origin.x + place.x
+  result.y = origin.y + place.y
+  result.z = origin.z + place.z
+
+
+func rebased*(place: Position; origin_from, origin_to: Position): Position {.noinit.} =
+  ## Read `place`, held about `origin_from`, about `origin_to` instead.
+  ##   Origins' difference first: two near each other cancel exactly, so place keeps every
+  ##   bit it had where both origins stand near it.
+  result.x = (origin_from.x - origin_to.x) + place.x
+  result.y = (origin_from.y - origin_to.y) + place.y
+  result.z = (origin_from.z - origin_to.z) + place.z
+
+
+func setTo*(place: var Position, source: Position) =
+  ## Write `source`'s coordinates into `place`, one by one.
+  ##   Never assigned whole: on JS backend that is copy, or share of storage where source is
+  ##   call's answer, and `place` is written again in later frames.
+  place.x = source.x
+  place.y = source.y
+  place.z = source.z
+
+
+func setTo*(heading: var Direction, source: Direction) =
+  ## Write `source`'s components into `heading`, one by one; see `setTo` for position.
+  heading.x = source.x
+  heading.y = source.y
+  heading.z = source.z
+
+
 func dot*(d, e: Direction): float = d.x * e.x + d.y * e.y + d.z * e.z
   ## Get inner product of directions.
 

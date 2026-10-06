@@ -1,19 +1,13 @@
-// Checks for what drawer costs to keep up to date, and for held placements; not Nim because
-//   crossing forfeits check compiler makes over bodies naming `nimPoolCellColors` and
-//   `geometry_pool_drawn` -- derived or stated, never guessed.
-//   Placement check compares canvas through `canvas.readCanvas`, which reads what compositor
-//   shows and refuses blank reading; its earlier `readPixels` copy compared two readings of
-//   empty buffer and passed on them.
+// Checks for what drawer costs to keep up to date; not Nim because crossing forfeits check
+//   compiler makes over bodies naming `nimPoolCellColors` and `geometry_pool_drawn` -- derived
+//   or stated, never guessed.
 //   Every figure diagnostics refresh writes is inside drawer, and it used to run several
-//   times second regardless: milliseconds landing on one frame in twelve, against frame scene
-//   hold had taken down to about one. That is what stutter is made of.
+//   times second regardless: milliseconds landing on one frame in twelve, against frame of
+//   about one. That is what stutter is made of.
 
 import type { Page } from '@playwright/test';
 import { MILLISECONDS_FRAME, advance, evaluateOver } from './clock';
-import { settleCamera } from './camera';
-import { readCanvas } from './canvas';
-import { waitFrames } from './frame';
-import { holdKeys, settleDrawer } from './gestures';
+import { settleDrawer } from './gestures';
 import { report } from './report';
 
 declare global {
@@ -120,32 +114,4 @@ async function drivePoolGrid(page: Page): Promise<void> {
     }
   });
   await settleDrawer(page, false);
-}
-
-/** Assert placement held across camera move draws what fresh one draws.
- *
- *  Where object stands is question about object, so page asks algebra once per edit and reuses
- *  answer while camera orbits. Fault that buys is stale placement: object drawn where it used
- *  to be, or drawn as wrong kind, with nothing to say so. Driven by moving camera far, then
- *  bumping scene's revision *without changing anything reader could see* -- recolouring each
- *  object to ink it already wears -- which forces every placement to be derived again. Two
- *  frames must be pixel-identical; if held one had gone stale, they could not be.
- */
-export async function drivePlacementHeld(page: Page): Promise<void> {
-  await page.evaluate(() => { document.getElementById('gl')?.focus(); });
-  await holdKeys(page, ['ArrowRight'], 900);
-  await settleCamera(page);
-  const held = (await readCanvas(page)).mark;
-  await page.evaluate(() => {
-    // Scene's revision moves; not one pixel of scene does.
-    for (const one of nimSceneHandles()) nimSetInk(one, nimObjectInk(one));
-  });
-  await waitFrames(page, 2);
-  const fresh = (await readCanvas(page)).mark;
-  report(
-    'a placement held across a camera move draws what a fresh one draws',
-    held === fresh, `held ${held}, re-placed ${fresh}`,
-  );
-  await page.keyboard.press('Home');
-  await settleCamera(page);
 }

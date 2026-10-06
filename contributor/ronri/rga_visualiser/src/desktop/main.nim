@@ -228,7 +228,7 @@ const
     ##   Both arenas at full capacity, committed in data segment regardless of use; both
     ##   mesh sets; object pool; undo timeline, `history.CAPACITY_HISTORY` whole copies of
     ##   that pool; panel's state; `--timings` buffer.
-    ##   Placing side of every handle, held on edit for local scale to read.
+    ##   Placing side of every handle, placed each frame for every walk of it to read.
     ##   Excludes anything Dear ImGui, SDL or driver allocate.
     ##   Timeline is largest term at capacity; figure omitting its biggest entry is worse
     ##   than none.
@@ -245,9 +245,6 @@ var
   MESHES: MeshSet  ## Every scene object, excluding world furniture below.
   MARKS_PICKED: array[OBJECTS_MAX, bool]  ## Mark each picked handle while meshes assemble.
     ## Set and cleared around loops of `assembleMeshes`; see `selection.markOnto`.
-  SETTINGS_FURNITURE_HELD = none(SettingsFurniture)
-    ## Hold what `MESHES_FURNITURE` stands for, or none before first frame.
-    ##   Still camera then keeps grid it has rather than rebuilding it every frame.
   MESHES_FURNITURE: MeshSet  ## Lattices and world axes alone, drawn in own pass first.
     ## Every object's translucent veil then blends over reference marks.
     ## Thinner width (`mesh.WIDTH_LINE_FURNITURE`) is geometry, not draw setting; this
@@ -289,25 +286,36 @@ var GIF_FRAMES =
 # Hold timing buffer at module scope as `MESHES` is.
 #   Too large for stack, touched only by `--timings` run.
 var TIMINGS_FRAME_MILLISECONDS: array[FRAMES_TIMING_MAX, float32]
-# Scene revision camera's reach was last measured at, and reach itself; none before first.
-#   Reach is one placement per object, so it is measured on edit rather than per frame, and
-#   passed to each extent rather than kept in camera: `home` replaces camera value.
-var
-  REVISION_REACH = none(int)
-  REACH_SCENE = 0.0
-# Placing side for every live handle, held as browser holds it; see `bridge.ensurePlacement`.
-#   Filled on edit alone, beside `REACH_SCENE`, and read once per frame by `reachNearOf`.
-#   `assembleMeshes` still places as it emits: this holds no vertices and replaces no walk.
+# Placing side for every live handle, placed by every frame as browser places it; see
+#   `framing.placeEvery`.
+#   Read by every walk of that frame: reach, local scale, cull, emission, hover pick.
 #   Costs `OBJECTS_MAX` placements of fixed reservation, counted by `BYTES_MEMORY_TOTAL`.
 var
   PLACEMENTS: array[OBJECTS_MAX, Placement]
-  ORIGIN_VIEW = Position(x: 0.0, y: 0.0, z: 0.0)
-    ## Hold view origin, point every record is stored from; see `camera.originView`.
-    ##   One value for both mesh sets, because one transform draws them.
+  REVISION_PLACED = 0  ## Scene revision `PLACEMENTS` stand for; see `placeEdited`.
+  REACH_SCENE = 0.0
+    ## Scene's reach from origin, measured from frame's placements, so far clip follows.
+    ##   Passed to each extent rather than kept in camera: `home` replaces camera value.
   REACH_NEAR = 0.0
     ## Reach to nearest drawn object ahead of eye; see `camera.scaleLocal`.
-    ##   Moves with camera as well as with scene, so it is read once for each frame rather
-    ##   than on edit.
+    ##   Moves with camera as well as with scene, so it is read once for each frame.
+
+
+proc placeScene(scene: Scene) =
+  ## Place every live handle, and measure scene's reach from those places.
+  ##   Frame's first step, on every frame; see `framing.placeEvery`.
+  PLACEMENTS.placeEvery(scene)
+  REACH_SCENE = reachOf(PLACEMENTS, scene)
+  REVISION_PLACED = scene.revision
+
+
+proc placeEdited(scene: Scene) =
+  ## Place handles edited since this frame placed scene: menu edit lands mid-frame.
+  ##   Hover pick and emission then read scene as it now stands; see `framing.placeStamped`.
+  if REVISION_PLACED == scene.revision: return
+  PLACEMENTS.placeStamped(scene, REVISION_PLACED)
+  REACH_SCENE = reachOf(PLACEMENTS, scene)
+  REVISION_PLACED = scene.revision
 
 
 
@@ -515,64 +523,49 @@ proc assembleMeshes(
   ##     Empty for interactive rendering, filled by storyboard's rolling emphasis alone.
   ##   Assembles alone: where camera should look is `offerCameraAim`'s job.
   ##   `eye` and `frame` are read off camera's stance once for frame, by `renderFrame`.
+  ##   Emits frame's own placements, `PLACEMENTS`, which `renderFrame` filled.
+  ##   Furniture and scene are built every frame, still or moving.
   let ticks_start = getMonoTime().ticks
   # Carve where grid assembles pieces before emitting, from frame pair.
   #   Per-frame scratch that arena was waiting for, handed back clean at top of every
   #   frame.
   let scratch = ARENA_SWAP_DRAW.current.push[:DrawScratch](1)
   # Derive frustum once, for cull of every point below; see `tessellate.isPointInView`.
-  let bounds = some(
-    camera.viewBoundsFor(eye, frame, scale, float(width) / float(max(height, 1)), REACH_SCENE),
-  )
-  # Hold furniture on unchanged frames, by same rule and tuple as browser.
-  let settings_furniture = settingsFurnitureFor(
-    camera,
-    height,
-    REACH_SCENE,
-    panel.is_axes_shown,
-    panel.is_grid_shown,
-    scene.revision,
-    panel.selection.revision,
-  )
-  if SETTINGS_FURNITURE_HELD.isNone or SETTINGS_FURNITURE_HELD.get != settings_furniture:
-    SETTINGS_FURNITURE_HELD = some(settings_furniture)
-    MESHES_FURNITURE.clearMeshes(ORIGIN_VIEW)
-    if panel.is_grid_shown:
-      MESHES_FURNITURE.addLatticesPicked(scratch[0], scale, scene, panel.selection)
-    if panel.is_axes_shown:
-      MESHES_FURNITURE.addAxes(scratch[0], scale.extentFurniture, scale)
+  let bounds =
+    camera.viewBoundsFor(eye, frame, scale, float(width) / float(max(height, 1)), REACH_SCENE)
+  MESHES_FURNITURE.clearMeshes
+  if panel.is_grid_shown:
+    MESHES_FURNITURE.addLatticesPicked(scratch[0], scale, scene, panel.selection)
+  if panel.is_axes_shown:
+    MESHES_FURNITURE.addAxes(scratch[0], scale.extentFurniture, scale)
 
-  MESHES.clearMeshes(ORIGIN_VIEW)  # About view origin; see `ORIGIN_VIEW`.
+  MESHES.clearMeshes
   # Mark picks once and read mark per handle below; see `selection.markOnto`.
   panel.selection.markOnto(MARKS_PICKED)
   defer: panel.selection.markOnto(MARKS_PICKED, is_marked = false)
   # Emit horizon plane's dome first, before anything sharing translucent veil pass.
   #   Veil runs draw in append order, unsorted by depth, so dome first guarantees every
   #   ordinary plane's fill blends over it whatever handle either occupies.
+  #   Placement already answered sky or not, as browser's walk reads it.
   for handle, one in scene.pairs:
-    if not one.isVisible or not isHorizonPlane(one.geometry) or MARKS_PICKED[handle]:
+    if not one.isVisible or PLACEMENTS[handle].kind != Case.PlaneEverywhere or
+        MARKS_PICKED[handle]:
       continue
     let
       progress = animationProgress(now, one.born)
       tint = if are_dimmed[handle]: muted(one.ink.colour) else: one.ink.colour
-    discard MESHES.addObject(scratch[0], one.geometry, tint, scale, progress, one.anchorOverride)
+    discard MESHES.emitObject(PLACEMENTS[handle], tint, scale, progress)
 
   for handle, one in scene.pairs:
-    if not one.isVisible or isHorizonPlane(one.geometry) or MARKS_PICKED[handle]:
+    if not one.isVisible or PLACEMENTS[handle].kind == Case.PlaneEverywhere or
+        MARKS_PICKED[handle]:
       continue
+    # Skip point outside view before it costs emitting; see `tessellate.isPointInView`.
+    if not isPointInView(PLACEMENTS[handle], one.radius, bounds): continue
     let
       progress = animationProgress(now, one.born)
       tint = if are_dimmed[handle]: muted(one.ink.colour) else: one.ink.colour
-    discard MESHES.addObject(
-      scratch[0],
-      one.geometry,
-      tint,
-      scale,
-      progress,
-      one.anchorOverride,
-      bounds = bounds,
-      radius = one.radius,
-    )
+    discard MESHES.emitObject(PLACEMENTS[handle], tint, scale, progress, one.radius)
 
   # Emit open edit session's staged multivector, through same dispatch real object uses.
   #   Composing then shows exactly what saving gives.
@@ -612,20 +605,12 @@ proc assembleMeshes(
   for position in 0..<panel.selection.len:
     let handle = panel.selection.at(position)
     if not scene.isAlive(handle) or not scene[handle].isVisible: continue
+    let one = scene[handle]
+    if not isPointInView(PLACEMENTS[handle], one.radius, bounds): continue
     let
-      one = scene[handle]
       progress = animationProgress(now, one.born)
       tint = if are_dimmed[handle]: muted(one.ink.colour) else: one.ink.colour
-    discard MESHES.addObject(
-      scratch[0],
-      one.geometry,
-      tint,
-      scale,
-      progress,
-      one.anchorOverride,
-      bounds = bounds,
-      radius = one.radius,
-    )
+    discard MESHES.emitObject(PLACEMENTS[handle], tint, scale, progress, one.radius)
 
   panel.microseconds_tessellate = float(getMonoTime().ticks - ticks_start) / 1000.0
   # Count per record what its shader emits: vertices drawn, not floats carried.
@@ -1107,24 +1092,18 @@ proc renderFrame(
   #   `offerCameraAim` sets goal this advance consumes next frame, one frame later by
   #   design.
   panel.tween_camera.advance(camera, now, easeOutCubic)
-  # Measure scene's reach on edit, so far clip follows; see `camera.distanceFar`.
-  if REVISION_REACH != some(scene.revision):
-    REACH_SCENE = reachOf(scene)
-    for handle in 0..<scene.bound:
-      if scene.isAlive(handle):
-        PLACEMENTS[handle] = placeObject(
-          scene.geometryOf(handle),
-          scene.anchorOverrideAt(handle),
-        )
-    REVISION_REACH = some(scene.revision)
-  # Read eye and frame once for frame, after ease moved camera, and hand both to every reader.
-  #   Each `eye` or `frame` read lifts motor again; see `camera.drawExtentFor`.
-  var (eye, frame) = camera.sight
+  # Place every object first, so scene's reach is this frame's before extent reads far clip.
+  #   Clocked into tessellation's figure: placing and emitting together, as panel reads it.
+  let ticks_place = getMonoTime().ticks
+  placeScene(scene)
+  let microseconds_place = float(getMonoTime().ticks - ticks_place) / 1000.0
+  # Move view origin to eye, after ease moved camera, and read eye and frame about it once.
+  #   Hand both to every reader: each `eye` or `frame` read lifts motor again; see
+  #   `camera.drawExtentFor`.
+  var (eye, frame) = camera.moveOriginView
   # Read local scale once for this frame, before extent reads clip planes off it.
-  REACH_NEAR = reachNearOf(PLACEMENTS, scene, eye, frame.forward)
+  REACH_NEAR = reachNearOf(PLACEMENTS, scene, camera.originView, eye, frame.forward)
   camera.reach_near = REACH_NEAR
-  # Decide view origin after scale, since bound is read off near clip.
-  ORIGIN_VIEW = camera.originView(eye, ORIGIN_VIEW)
 
   # Derive extent aim reads, and keep motor before aim, so hold it makes is seen below.
   let
@@ -1149,7 +1128,11 @@ proc renderFrame(
     anchorOfSelection(panel, scene, view_projection, int(width), int(height), scale),
     now,
   )
-  interaction.updateHover(scene, camera, scale, view_projection, int(width), int(height))
+  # Menu may have edited scene since it was placed; hover and meshes read it as it stands.
+  placeEdited(scene)
+  interaction.updateHover(
+    scene, camera, scale, view_projection, int(width), int(height), PLACEMENTS
+  )
   interaction.pruneFocus(scene)
   interaction.updateDrag(scene, now)
   assembleMeshes(
@@ -1165,13 +1148,11 @@ proc renderFrame(
     int(height),
     are_dimmed,
   )
+  panel.microseconds_tessellate += microseconds_place
   clearFrame(int(width), int(height))
-  # GPU takes transform about view origin; `view_projection` above stays about world,
-  #   for hover, menu and markers, which read world coordinates.
-  let view_projection_drawn =
-    camera.initMatrixViewProjection(eye, frame, width / height, MESHES.origin)
-  renderer.drawMeshes(MESHES_FURNITURE, view_projection_drawn, scale, width / height)
-  renderer.drawMeshes(MESHES, view_projection_drawn, scale, width / height)
+  # GPU takes same transform hover, menu and markers read: all about view origin.
+  renderer.drawMeshes(MESHES_FURNITURE, view_projection, scale, width / height)
+  renderer.drawMeshes(MESHES, view_projection, scale, width / height)
 
   # Take one reading per frame, before any handle advances.
   #   Every selected object's comet then moves by same step.
@@ -1397,7 +1378,7 @@ proc handleEvent(
         width_frame,
         height_frame,
         panel.selection.len > 0,
-        panel.tween_camera.reachAimed(camera.pivot),
+        panel.tween_camera.reachAimed(camera),
       )
   of uint32(EventKind.MouseButtonUp):
     let is_shifted = (sdl3.getModState() and MODIFIER_SHIFT) != 0
@@ -1490,7 +1471,7 @@ proc handleEvent(
         width_frame,
         height_frame,
         panel.selection.len > 0,
-        panel.tween_camera.reachAimed(camera.pivot),
+        panel.tween_camera.reachAimed(camera),
       )
     if is_dragging_pan:
       panel.tween_camera.halt()  # Pan places pivot itself; see `halt`.
@@ -1507,8 +1488,8 @@ proc handleEvent(
         height_frame,
         panel.selection.len > 0,
         interaction.depth_pan,
-        interaction.point_pan,
-        panel.tween_camera.reachAimed(camera.pivot),
+        interaction.pointPanNow(camera),
+        panel.tween_camera.reachAimed(camera),
       )
   else: discard
 
@@ -2096,7 +2077,11 @@ proc verdictDriven(
     # Where pick put pivot is read off ease's own destination, not where slide started.
     #   First held key can land while ease still carries, and ease then finishes carrying
     #   pivot onto what was picked underneath orbit; see `camera.abandon`.
-    let pivot_picked = camera.placed(panel.tween_camera.destination).pivot
+    #   Read about camera's own view origin, since destination is held about its own.
+    let
+      destination = panel.tween_camera.destination
+      pivot_picked =
+        camera.placed(destination).pivot.rebased(destination.origin, camera.originView)
     report(
       "a held key orbited the view, and left the pivot where the pick put it",
       # Script selects before it holds anything, so every held key here orbits.
@@ -2378,7 +2363,8 @@ proc runInteractive(
     echo &"Keys: focus {interaction.index_focus}, selected {len(panel.selection)}, " &
         &"azimuth {camera.azimuth:.4f}, elevation {camera.elevation:.4f}, " &
         &"distance {camera.distance:.4f}, " &
-        &"pivot ({camera.pivot.x:.3f}, {camera.pivot.y:.3f}, {camera.pivot.z:.3f}), " &
+        &"pivot ({camera.pivotWorld.x:.3f}, {camera.pivotWorld.y:.3f}, " &
+        &"{camera.pivotWorld.z:.3f}), " &
         &"held {len(interaction.keys_held)}; " &
         &"gui.wantsKeys {gui.wantsKeys()}, nav enabled {gui.isNavEnabled()}."
   if options.isDriven:
@@ -2514,7 +2500,7 @@ proc runStoryboard(
     #   Representative point for line's great circle, since aiming along normal puts ring
     #   at frame's edge; plane at horizon needs no aiming; lens stays default.
     camera = camera.placed(stanceFacing(
-      camera.pivot + -camera.distance * heading_default, camera.pivot
+      camera.pivot + -camera.distance * heading_default, camera.pivot, camera.originView
     ))
     # Settle instantly, not eased: captured frame must never show half-finished pan.
     #   Same `framing` rule interactive path uses.

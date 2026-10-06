@@ -1088,13 +1088,10 @@ proc drawMeshes*(
   ##   Overlay is drawn against depth buffer cleared first, not with test off.
   ##     Nothing unselected is left to reject against, so selected object shows through
   ##     whatever stands before it; selected objects still reject one another by depth.
-  # Matrix as float32 once, and eye about records' own origin; see `mesh.clearMeshes`.
+  # Matrix as float32 once; eye is about view origin, as records are: its remainder.
   let
     flat = view_projection.flattened
-    eye = (
-      x: scale.eye.x - meshes.origin.x, y: scale.eye.y - meshes.origin.y,
-      z: scale.eye.z - meshes.origin.z,
-    )
+    eye = scale.eye
   gl.useProgram(renderer.program_ribbon)
   gl.uniformMatrix4fv(renderer.location_ribbon_view_projection, 1, gl.FALSE, unsafeAddr flat[0])
   gl.uniform3f(renderer.location_ribbon_eye, gl.Float(eye.x), gl.Float(eye.y), gl.Float(eye.z))

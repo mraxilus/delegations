@@ -172,42 +172,44 @@ suite "Mesh":
     check MESHES.veils.count == 0
 
 
-  test "every record is stored about the origin its frame was cleared with":
-    # Five writers, one rule: subtract `origin` at float32 write, so what camera looks at.
-    #   million units from world origin is stored exact; see `mesh.clearMeshes`.
+  test "every record is stored about the view origin its frame's extent names":
+    # Emission reads each world place about view origin once, and five writers store what
+    #   they are handed: what camera looks at million units from world origin is stored
+    #   exact. Point, line, plane and sky, each through `emitObject` as frame draws them.
     let origin = Position(x: 1.0e6, y: -2.0e6, z: 3.0e5)
-    MESHES.clearMeshes(origin)
-    check MESHES.origin =~ origin
-    let at = origin + Direction(x: 0.25, y: 0.5, z: -0.125)
-    MESHES.addMarker(at, RADIUS_OBJECT_DEFAULT, Ink.Rose.colour, 1.0)
+    var scale_far = scale_test
+    scale_far.scale.origin = origin
+    let
+      offset = Direction(x: 0.25, y: 0.5, z: -0.125)
+      at = origin + offset
+      point = at.toMultivector
+      line = at.toMultivector ∧ Direction(x: 1.0, y: 0.0, z: 0.0).toMultivector
+      plane = at.toMultivector ∧ Direction(x: 1.0, y: 0.0, z: 0.0).toMultivector ∧
+          Direction(x: 0.0, y: 1.0, z: 0.0).toMultivector
+    var placed = placeObject(point)
+    discard MESHES.emitObject(placed, Ink.Rose.colour, scale_far)
     let vertex = MESHES.points.vertices[0]
     check float(vertex.x) == 0.25 and float(vertex.y) == 0.5 and float(vertex.z) == -0.125
-    MESHES.addSegment(at, at + Direction(x: 1.0, y: 0.0, z: 0.0), Ink.Rose.colour, 1.0)
+    # Line's support is nearest world origin: on line through `at` along x, that is `at`
+    #   less its x.
+    placed = placeObject(line)
+    let support = placed.at.toView(origin)
+    discard MESHES.emitObject(placed, Ink.Rose.colour, scale_far)
     let ribbon = MESHES.ribbons.records[0]
-    check float(ribbon.tail_x) == 0.25 and float(ribbon.head_x) == 1.25
-    check float(ribbon.tail_z) == -0.125 and float(ribbon.head_z) == -0.125
-    MESHES.addDisc(
-      at,
-      Direction(x: 1.0, y: 0.0, z: 0.0),
-      Direction(x: 0.0, y: 1.0, z: 0.0),
-      1.0,
-      Ink.Rose.colour,
-    )
+    check float(ribbon.tail_y) == 0.5 and float(ribbon.tail_z) == -0.125
+    check float(ribbon.tail_x) == float32(support.x)
+    placed = placeObject(plane, some(at))
+    discard MESHES.emitObject(placed, Ink.Rose.colour, scale_far)
     check float(MESHES.discs.records[0].centre_y) == 0.5
-    MESHES.addRing(
-      at,
-      Direction(x: 1.0, y: 0.0, z: 0.0),
-      Direction(x: 0.0, y: 1.0, z: 0.0),
-      1.0,
-      Ink.Rose.colour,
-      1.0,
-    )
     check float(MESHES.rings.records[0].centre_z) == -0.125
-    MESHES.addDome(at, 5.0, Ink.Rose.colour)
-    check float(MESHES.domes.records[0].centre_x) == 0.25
-    # Cleared without one is world origin again: nothing stays relative by accident.
+    # Sky stands about eye, which extent already holds about view origin.
+    placed = Placement(kind: Case.PlaneEverywhere)
+    discard MESHES.emitObject(placed, Ink.Rose.colour, scale_far)
+    check float(MESHES.domes.records[0].centre_x) == float32(scale_far.eye.x)
+    # Writer stores what it is handed, and subtracts nothing of its own.
     MESHES.clearMeshes
-    check MESHES.origin =~ ORIGIN_WORLD
+    MESHES.addMarker(at, RADIUS_OBJECT_DEFAULT, Ink.Rose.colour, 1.0)
+    check float(MESHES.points.vertices[0].x) == float32(at.x)
 
 
   test "point becomes one marker where it stands":

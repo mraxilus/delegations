@@ -25,9 +25,12 @@
 ##     separator goes only where no layout wrote one.
 ##   - comment last: plain `#` trailing comment of line still wide moves to own line above,
 ##     since no wrap reads line holding comment; next round lays out line it leaves.
-##   Chain is list of steps: fixer guarded on every line, or widener (`reports.nim`), i.e. tab,
+##   Chain is list of steps: fixer guarded on every line, widener (`reports.nim`), i.e. tab,
 ##     comment, message, condition, spacing, continuation and trailing separator fixers, which
-##     read held lines.
+##     read held lines, or prover step, needless parentheses, which reads answers of parser.
+##   Chain stays pure: it takes answers parser gave (`Proofs`), and each source prover step
+##     read without answer is in `Fix.asked`, for caller to ask compiler and run chain again
+##     (`proofs.nim`). Same source and same answers give same output.
 ##     Idiom fixers stay guarded: import bracket has no wrap.
 ##   No fixer aligns comment table: width reader sees depends on font, so no check reads it,
 ##     and reading holds I.4 tables.
@@ -91,7 +94,7 @@ func stepsOf(dialect: Dialect): seq[Step] =
   result = @FORM_STEPS
   result.add @[
     guarded(fixBlockEntry), guarded(fixArticles), widening(fixMessages),
-    widening(fixMixtures), guarded(fixTargets), guarded(fixCommands), guarded(fixParentheses),
+    widening(fixMixtures), guarded(fixTargets), guarded(fixCommands), proving(fixParentheses),
   ]
   if dialect == Dialect.Module:
     for fixer in IDIOM_FIXERS: result.add guarded(fixer)
@@ -115,20 +118,21 @@ func lockedNimbles*(files: openArray[(string, string)]): seq[string] =
     result.add path[0 ..< path.len - LOCK_FILE.len] & content[open + 1 ..< close]
 
 
-func checksOf(path, view: string; dialect: Dialect): seq[Report] =
+func checksOf(path, view: string; dialect: Dialect; proofs: Proofs): seq[Report] =
   ## Run on view each check `checkFormatting` holds that dialect takes; fence is caller's.
+  ##   Parentheses check reads answers of parser, so it names only groups they prove.
   let checks = [
-    checkComments, checkBanners, checkMessages, checkMixtures, checkNegations, checkParentheses,
-    checkTargets, checkCommands, checkBlanks, checkDocs, checkDefaults, checkSpacing,
-    checkSeparators, checkSignatures, checkCalls, checkContinuations, checkTrailing,
-    checkCommentsAbove,
+    checkComments, checkBanners, checkMessages, checkMixtures, checkNegations, checkTargets,
+    checkCommands, checkBlanks, checkDocs, checkDefaults, checkSpacing, checkSeparators,
+    checkSignatures, checkCalls, checkContinuations, checkTrailing, checkCommentsAbove,
   ]
   for check in checks: result.add check(path, view)
+  result.add checkParentheses(path, view, proofs)
   if dialect == Dialect.Module:
     result.add checkImportBrackets(path, view) & checkLists(path, view) & checkProfiler(path, view)
 
 
-func checkFormatting*(path, source: string; dialect: Dialect): seq[Report] =
+func checkFormatting*(path, source: string; dialect: Dialect; proofs = Proofs()): seq[Report] =
   ## Report each rule `koch fix` clears in full that static pass leaves out until projects fix,
   ##   and X.4 `not` over binary expression, which waits with them and has no fixer.
   ##   In every dialect: X.9 trailing comments and spaces, X.2 banners, IV.4 messages, X.4
@@ -138,10 +142,10 @@ func checkFormatting*(path, source: string; dialect: Dialect): seq[Report] =
   ##   separators, and X.1 comments above.
   ##   On `.nim` alone, as idiom checks read it: X.5 import brackets, X.10 lists and STYLE.md
   ##   §3 profiler import. Fenced lines are read by none, and fence fix cannot read is reported
-  ##   alone.
+  ##   alone. Needless parentheses read `proofs`, so no answer reports none.
   let fence = source.fenceOf
   if fence.fault >= 0: return faultOf(path, fence)
-  checksOf(path, source.masked(fence), dialect).filterIt(it.line - 1 notin fence.lines)
+  checksOf(path, source.masked(fence), dialect, proofs).filterIt(it.line - 1 notin fence.lines)
 
 
 func heldThrough(held: Held; fix, step: Fix): Held =
@@ -153,20 +157,27 @@ func heldThrough(held: Held; fix, step: Fix): Held =
     if given > 0 and held.isHeld(given): result.lines.add line
 
 
-func settled(path, view: string; steps: openArray[Step]; held: Held): Option[Fix] =
+func settled(
+  path, view: string; steps: openArray[Step]; held: Held; proofs: Proofs
+): tuple[fix: Option[Fix], asked: seq[string]] =
   ## Run steps over view until round changes nothing, at most `ROUNDS_MAX` rounds, wideners off
-  ##   held lines; fixer that would move fenced line is skipped. `none` where last round changes.
+  ##   held lines, prover step reading proofs; fixer that would move fenced line is skipped.
+  ##   `none` where last round changes; what any round asks parser stands either way.
   let shape = view.fenceShape
   var fix = Fix(source: view)
   for round in 1 .. ROUNDS_MAX:
     var step = Fix(source: fix.source)
     for each in steps:
-      let next = each.run(path, step.source, held.heldThrough(fix, step))
+      let next = each.run(path, step.source, held.heldThrough(fix, step), proofs)
+      for asked in next.asked:
+        if asked notin result.asked: result.asked.add asked
       if next.source.fenceShape != shape: continue
       step = step.chain(next)
-    if step.source == fix.source: return some(fix)
+    if step.source == fix.source:
+      fix.asked = result.asked
+      result.fix = some(fix)
+      return
     fix = fix.chain(step)
-  none(Fix)
 
 
 func widened(view: string, fix: Fix): seq[int] =
@@ -182,31 +193,39 @@ func widened(view: string, fix: Fix): seq[int] =
 
 
 func attempted(
-  path, view: string; steps: openArray[Step]
-): tuple[fix: Option[Fix], attempts: int] =
+  path, view: string; steps: openArray[Step]; proofs = Proofs()
+): tuple[fix: Option[Fix], attempts: int, asked: seq[string]] =
   ## Settle view, each attempt holding every line attempts before left wide, until none is left;
   ##   last attempt holds every line. Attempt that does not settle, holds no new line, or leaves
-  ##   inserted line wide, goes to last at once; `none` where last does not settle.
+  ##   inserted line wide, goes to last at once; `none` where last does not settle. What any
+  ##   attempt asks parser stands.
   var held = Held()
   while result.attempts + 1 < ATTEMPTS_MAX:
     inc result.attempts
-    let fix = settled(path, view, steps, held)
+    let (fix, asked) = settled(path, view, steps, held, proofs)
+    for each in asked:
+      if each notin result.asked: result.asked.add each
     if fix.isNone: break
     let wide = view.widened(fix.get)
-    if wide.len == 0: return (fix, result.attempts)
+    if wide.len == 0:
+      result.fix = fix
+      return
     let grown = (held.lines & wide).sorted.deduplicate(isSorted = true)
     if 0 in wide or grown == held.lines: break
     held.lines = grown
   inc result.attempts
-  result.fix = settled(path, view, steps, EVERY)
+  let (fix, asked) = settled(path, view, steps, EVERY, proofs)
+  for each in asked:
+    if each notin result.asked: result.asked.add each
+  result.fix = fix
 
 
-func formattedBy(path, source: string; steps: openArray[Step]): Fix =
+func formattedBy(path, source: string; steps: openArray[Step]; proofs = Proofs()): Fix =
   ## Run steps on source until it settles, as `formatted` does; source that does not settle stays
-  ##   as written, and its fix reports why.
+  ##   as written, and its fix reports why. Fix carries what parser was asked, either way.
   let fence = source.fenceOf
   if fence.fault >= 0: return Fix(source: source)
-  let fix = attempted(path, source.masked(fence), steps).fix
+  let (fix, _, asked) = attempted(path, source.masked(fence), steps, proofs)
   if fix.isNone:
     let report = initReport(
       path,
@@ -215,29 +234,33 @@ func formattedBy(path, source: string; steps: openArray[Step]): Fix =
       "File still changes after " & $ROUNDS_MAX & " rounds of fixers, so fix leaves it as " &
           "written (STYLE.md §5); got `" & $ROUNDS_MAX & "` rounds.",
     )
-    return Fix(source: source, left: @[report])
+    return Fix(source: source, left: @[report], asked: asked)
   result = fix.get
   result.source = result.source.restored(source, fence)
+  result.asked = asked
 
 
-func formatted*(path, source: string; dialect: Dialect): Fix =
+func formatted*(path, source: string; dialect: Dialect; proofs = Proofs()): Fix =
   ## Run on source each fixer dialect takes, in order header gives, until source settles;
   ##   fenced lines read as `FENCED`, and fixer that would move them is skipped. Source whose
   ##   fence cannot be read stays as written, and `checkFormatting` reports why; source that does
   ##   not settle stays as written too, and its fix reports why (`Fix.left`).
-  formattedBy(path, source, dialect.stepsOf)
+  ##   Needless parentheses go where `proofs` prove them; each source no answer reaches is in
+  ##   `Fix.asked`, for caller to ask parser and run again.
+  formattedBy(path, source, dialect.stepsOf, proofs)
 
 
-func heldOf*(path, source: string; dialect: Dialect): seq[Report] =
+func heldOf*(path, source: string; dialect: Dialect; proofs = Proofs()): seq[Report] =
   ## Report each run of fenced lines, markers included, as one warning at its first line: each
   ##   rule broken inside it, in order of `Rule`, with count and first line, so whoever runs fix
   ##   sees what fence keeps. Fence fix cannot read gives none, since `checkFormatting` reports
   ##   it alone.
   ##   Checks read source unmasked, so marker reads as plain comment and each line keeps its
   ##     number; module reads idiom checks static pass runs too. Source with no fence runs none.
+  ##     Needless parentheses count where `proofs` answer for source as given (`questionsOf`).
   let fence = source.fenceOf
   if fence.fault >= 0 or fence.lines.len == 0: return
-  var found = checksOf(path, source, dialect)
+  var found = checksOf(path, source, dialect, proofs)
   if dialect == Dialect.Module:
     let (lines, code) = (source.splitLines, source.codeOnly.splitLines)
     found.add checkStrictFuncs(path, lines, code) & checkImports(path, code) &

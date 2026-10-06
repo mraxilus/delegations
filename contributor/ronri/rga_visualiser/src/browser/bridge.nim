@@ -64,13 +64,19 @@ type
     values: FlatBuffer
     used: int
 
-  # Read `SettingsFurniture` from `camera`, shared with desktop's hold.
   SettingsOverlay = tuple
     ## Define everything overlay's shared draw extent and view-projection depend on.
-    ##   Camera's whole placement and viewport asked about.
-    ##   Keyed on what camera holds, as `SettingsFurniture` is, and never on read-outs.
-    ##     `nimAnchorScreen` runs this for every overlay call, so key built from pivot and
+    ##   Camera's whole placement, and viewport asked about.
+    ##   Keyed on what camera holds, and never on read-outs.
+    ##     Motor and depth are stance itself, so two readings agreeing on them agree on eye,
+    ##     every axis, pivot and both angles.
+    ##     `nimAnchorScreen` builds this for every overlay call, so key built from pivot and
     ##     both angles cost more than derivation it skips: 488 us against 8 us repaired.
+    ##     View origin beside motor, since motor is held about it: three coordinates, since
+    ##     `Position` refuses exact comparison and this one must be exact.
+    ##   Flat, as one constructor: tuple nested or built by call is copied again on JS
+    ##   backend, at every overlay call.
+    origin_x, origin_y, origin_z: float
     motor: Motor
     distance, degrees_field_of_view, reach_near, reach_scene: float
     width, height: int
@@ -89,26 +95,6 @@ type
       ##   deep-copies every value assignment through `nimCopy`.
       ##   Stored by value, memo's store-and-read copies marker twice and costs as much as
       ##   shaping it replaces; behind ref, one copy at store, none at read.
-
-  SettingsScene = tuple
-    ## Define everything scene's own meshes are built from.
-    ##   `SettingsFurniture`'s rule, one layer out: two frames agreeing here draw same scene
-    ##   records, so second may keep first's.
-    ##   Furniture tuple is carried whole, since it names camera, framebuffer height and
-    ##   field of view: everything `drawExtentFor` reads.
-    ##     It also names two furniture toggles scene does not read; over-approximation
-    ##     costing one rebuilt frame when reader switches grid off.
-    ##   `aspect` is here because view-projection matrix reads it and furniture does not.
-    ##   `revision` is scene's own; see `scene.revision`.
-    ##   Two things are guards instead; see `nimBuildFrame`.
-    ##     Preview or drag preview standing (moves with pointer), appear animation running.
-    furniture: SettingsFurniture
-    aspect: float
-    revision: int
-    revision_selection: int  ## `selection.revision`, never selection itself.
-      ## Comparing and copying `OBJECTS_MAX` ints per frame is capacity-scaled work for scene
-      ## of five.
-    is_culling: bool  ## Whether points outside view are skipped; see `IS_CULLING`.
 
   OperationResult = object  ## Define what applying catalogue operation produced.
     created_handle: cint  ## Handle derived object was added at.
@@ -144,23 +130,15 @@ type
     furniture_ribbon_vertices: FlatBuffer  ## Lattices and world axes alone, drawn first.
       ## Built at own thinner width (`mesh.WIDTH_LINE_FURNITURE`), since ribbon carries
       ## width as geometry.
-      ## Empty where `is_furniture_held`, meaning "furniture you already have".
-    is_scene_held: bool  ## Whether scene records are unchanged from last frame.
-      ## Every buffer below then already holds what it should and none needs re-uploading.
-      ## See `SettingsScene` for what has to match and three states refusing hold.
-    is_furniture_held: bool  ## Whether furniture is unchanged from last frame.
-      ## Caller then keeps buffer it uploaded rather than reading empty `furniture_ribbon_vertices`
-      ## as empty world.
-      ## Furniture is function of camera alone, and camera is still for most frames of
-      ## ordinary session.
-      ##   Furniture is moving frame's largest phase on JS backend (diagnostics scenery row
-      ##   is live figure), so still frame skipping it does most of frame less work.
-    ms_build, ms_furniture, ms_scene, ms_flatten: float32
+    is_grown: bool  ## Whether every object has finished appearing by this frame.
+      ## Birth stamps are staggered on load, so this says when scene stops changing on its
+      ## own; see `BORN_LAST`.
+    ms_build, ms_place, ms_furniture, ms_scene, ms_flatten: float32
       ## Record what this frame's assembly cost, in milliseconds.
-      ##   Whole of `nimBuildFrame`, and its three phases: furniture, scene's objects (preview
-      ##   and preview included), and flatten of every mesh into arrays above.
+      ##   Whole of `nimBuildFrame`, and its four phases: placing every object through
+      ##   algebra, furniture, scene's objects (preview and preview included), and flatten
+      ##   of every mesh into arrays above.
       ##   Phases bridge cannot see (GL upload, SVG overlay) are timed by browser scripts.
-      ##   Held furniture frame reports near-zero furniture.
     camera_eye_x, camera_eye_y, camera_eye_z: float32
     camera_forward_x, camera_forward_y, camera_forward_z: float32
     camera_depth_near, camera_tangent_half_view, camera_height_pixels: float32
@@ -178,7 +156,8 @@ type
       ##   `mesh.fogFurnitureFor`'s answer for this frame's reach.
     ms_camera, ms_matrix, ms_unaccounted: float32
       ## Record three spans of `nimBuildFrame` that belong to no row.
-      ##   `ms_camera` is prologue: focus pruning, tween, `DrawExtent`, `framing.offerAim`.
+      ##   `ms_camera` is prologue, placing aside: focus pruning, tween, `DrawExtent`,
+      ##   `framing.offerAim`.
       ##   `ms_matrix` is view-projection build.
       ##   `ms_unaccounted` is whatever phases fail to cover, shown rather than inferred:
       ##   breakdown whose parts do not sum is worse than coarse one.
@@ -312,28 +291,26 @@ var
     ## As `nimBuildFrame` locals, each call reallocates and zero-fills whole fixed
     ## storage regardless of object count: `MeshSet` reserves it up front, and JS backend
     ## has no stack allocation.
-  SETTINGS_SCENE_HELD = none(SettingsScene)  ## What scene meshes standing in `MESHES` were
-    ## built from, or none before first build.
-    ## Furniture's hold, one layer out; see `SettingsScene` and `FrameData.is_scene_held`.
-  SETTINGS_FURNITURE_HELD = none(SettingsFurniture)  ## What furniture standing in
-    ## `MESHES_FURNITURE` was built from, or none before first build.
-    ## See `FrameData.is_furniture_held`.
-  COUNT_GRID_SEGMENTS = 0  ## How many ribbon segments picked planes' lattices were last built
-    ## from, axes' fixed share excluded.
-    ## Kept beside furniture rather than recounted: held frame draws grid it had and
-    ## should report that grid's count rather than zero.
-  SETTINGS_OVERLAY_HELD = none(SettingsOverlay)  ## What `SCALE_OVERLAY` and
-    ## `VIEW_PROJECTION_OVERLAY` were derived from, or none before first derivation.
+  SETTINGS_OVERLAY_FRAME = none(SettingsOverlay)  ## What `SCALE_OVERLAY` and
+    ## `VIEW_PROJECTION_OVERLAY` were derived from in this frame, or none before first
+    ## reader of frame.
+    ## Dropped by each frame build, so nothing derived survives into next frame.
   SCALE_OVERLAY: DrawExtent  ## Draw extent overlay calls share; see `ensureViewOverlay`.
   VIEW_PROJECTION_OVERLAY: Matrix4  ## View-projection those same calls share.
+  EXTENT_FRAME: DrawExtent  ## Draw extent frame build derived, at framebuffer height.
+  SIGHT_FRAME = none(SettingsOverlay)  ## Camera `EXTENT_FRAME` was derived from.
+    ## Overlay reading same camera in same frame takes that extent at its own height rather
+    ## than reading stance and deriving algebra twins again; see `ensureViewOverlay`.
+    ## Viewport fields name framebuffer and are never compared; see `isSameSight`.
   BOX_MARKER: ref Marker = new(Marker)  ## One box every shaping fills.
     ## Allocated once.
     ##   `Marker` reserves every marker kind's fixed arrays, so `new` per shaping is
     ##   kilobytes allocated and zeroed per selected object per frame.
     ## `markerFor` fills caller storage, so one box serves every call and
     ## `nimSelectionPulse` reads back what `nimSelectionMarker` filled.
-  MARKER_SHAPED = none(ShapedMarker)  ## Marker `nimSelectionMarker` last shaped, with
-    ## everything it was shaped from.
+  MARKER_SHAPED = none(ShapedMarker)  ## Marker `nimSelectionMarker` last shaped in this
+    ## frame, with everything it was shaped from.
+    ## Dropped by each frame build, as `SETTINGS_OVERLAY_FRAME` is.
     ## `nimSelectionPulse` asked same question in same frame reads answer instead of
     ## shaping again.
     ## Sound because overlay draws each handle marker-then-pulse back to back in one
@@ -348,20 +325,16 @@ var
   POINTER_PICK: Option[PointerPick]  ## Pick made by pointer since camera was last offered.
     ## Consumed by `framing.offerAim` in `nimBuildFrame`; see `nimPickByPointer`.
   PLACEMENTS: array[OBJECTS_MAX, Placement]  ## What algebra says about each live handle.
-    ## Placement once per edit, emitted every frame.
-    ##   Nothing in `tessellate.Placement` reads camera, so placement stays true while view
-    ##   orbits; recomputing every orbit frame is most of moving frame; figures in
-    ##   `PROVENANCE.md`.
-    ## Held for scene's handles only: preview and drag preview move with pointer, so both are
-    ## placed where drawn.
+    ## Every handle placed by every frame build; see `placeScene`.
+    ## Scene's handles only: preview and drag preview are placed where drawn.
     ## Dead handles hold whatever last occupant left; every walk skips them.
-  REVISION_PLACEMENT = none(int)  ## Scene revision `PLACEMENTS` was filled at, or none before
-    ## first fill.
+  REVISION_PLACED = 0  ## Scene revision `PLACEMENTS` stand for.
+    ## Frame build places at scene's revision; edit between two frames moves past it,
+    ## and `placeEdited` brings reader there.
   BORN_LAST = 0.0  ## Latest birth stamp `stampBorn` has written.
-    ## What says scene has stopped animating.
+    ## What says scene has stopped animating; see `FrameData.is_grown`.
     ##   Every object fades in over `mesh.ANIMATION_SECONDS` from its stamp, so frame past
-    ##   this plus window draws every object at full progress and next draws it identically:
-    ##   condition scene hold needs.
+    ##   this plus window draws every object at full progress.
     ## Watermark rather than scan of all `OBJECTS_MAX` stamps per frame; only rises.
   BORNS: array[OBJECTS_MAX, float]  ## Birth stamps, one per handle, moment object is added.
     ## Read by `nimBuildFrame` so it animates in as desktop's newly-added object does.
@@ -442,19 +415,10 @@ var
   FLAT_VIEW: seq[float32] = newSeq[float32](16)
   IS_CULLING = true  ## Whether points outside view are skipped before emitting.
     ## Off only through `nimSetCulling`, for check that culling changes no pixel.
-  REACH_SCENE = 0.0  ## Scene's reach from origin, refreshed with placements; see `ensurePlacement`.
-  ORIGIN_VIEW = Position(x: 0.0, y: 0.0, z: 0.0)
-    ## Hold view origin, point every record is stored from; see `camera.originView`.
-    ##   One value for both mesh sets, because one transform draws them.
-    ##   Decided once for each frame, and held across frames that keep their meshes: it
-    ##   moves only once travel has spent float32's precision about it.
+  REACH_SCENE = 0.0  ## Scene's reach from origin, measured with placements; see `placeScene`.
   REACH_NEAR = 0.0  ## Reach to nearest drawn object ahead of eye; see `camera.scaleLocal`.
-    ## Refreshed once for each frame, in frame build, because it reads every placement and
-    ## moves with camera as well as with scene.
-    ##   `ensureViewOverlay` runs many times over one frame, so refreshing it there put
-    ##   whole placement walk in hold that exists to skip one derivation.
-    ##   Overlay call landing between frames reads last frame's figure, as it reads last
-    ##   edit's `REACH_SCENE`.
+    ## Measured once for each frame, in frame build, from that frame's placements.
+    ##   Overlay call landing between frames reads that frame's figure.
 
 
 proc flattenRibbonsInto(ribbons: RibbonMesh, destination: var FlatFloats) =
@@ -554,7 +518,7 @@ proc flattenVeilRunsInto(veils: VeilRuns, destination: var FlatFloats) =
 proc stampBorn(handle: int, born: float) =
   ## Record when object in `handle` arrived, and carry watermark with it.
   ##   One door birth stamps go through, so `BORN_LAST` cannot fall behind stamp written
-  ##   directly, which would let scene hold engage over object still fading in.
+  ##   directly, which would report scene grown while object still fades in.
   BORNS[handle] = born
   BORN_LAST = max(BORN_LAST, born)
 
@@ -600,8 +564,7 @@ proc nimInit(now: cfloat; width, height: cint) {.exportc.} =
 
 proc nimSetCulling(is_on: bool) {.exportc.} =
   ## Turn culling of points outside view on or off.
-  ##   Instrument for driven check that culling changes no pixel. Part of scene's hold
-  ##   key, so next frame rebuilds either way.
+  ##   Instrument for driven check that culling changes no pixel; next frame reads it.
   IS_CULLING = is_on
 
 
@@ -1174,51 +1137,72 @@ proc nimOverlayMetrics(): seq[float32] {.exportc.} =
   ]
 
 
-proc ensurePlacement() =
-  ## Refresh `PLACEMENTS`, whole placing side for every live handle, where scene has moved.
-  ##   Placing side reads no camera, so camera move never reaches this; only edit does.
-  ##   Called by frame build and by hover pick, which can run before build on frame where
-  ##   scene has just changed, so whichever comes first fills it.
-  if REVISION_PLACEMENT == some(SCENE_PAGE.revision): return
-  # Re-place only handles stamped since last fill: one per edit, all after restore.
-  #   Re-placing every handle per edit is whole frame at capacity; figures in
-  #   `PROVENANCE.md`.
-  for handle in 0..<SCENE_PAGE.bound:
-    let is_stale = REVISION_PLACEMENT.isNone or
-        SCENE_PAGE.revisionPlacingAt(handle) > REVISION_PLACEMENT.get
-    if SCENE_PAGE.isAlive(handle) and is_stale:
-      PLACEMENTS[handle] = placeObject(
-        SCENE_PAGE.geometryOf(handle),
-        SCENE_PAGE.anchorOverrideAt(handle),
-      )
-  # Scene's reach moves with same edits, so far clip follows; see `camera.distanceFar`.
-  #   Held here and passed to each extent, never kept in camera: `home` and every path
-  #   replacing camera value would drop it.
+proc placeScene() =
+  ## Place every live handle, and measure scene's reach from those places.
+  ##   Frame build's first step, on every frame; see `framing.placeEvery`.
+  ##   Readers between two frames read these; see `placeEdited`.
+  PLACEMENTS.placeEvery(SCENE_PAGE)
+  # Scene's reach moves with same placements, so far clip follows; see `camera.distanceFar`.
+  #   Passed to each extent, never kept in camera: `home` and every path replacing camera
+  #   value would drop it.
   REACH_SCENE = reachOf(PLACEMENTS, SCENE_PAGE)
-  REVISION_PLACEMENT = some(SCENE_PAGE.revision)
+  REVISION_PLACED = SCENE_PAGE.revision
+
+
+proc placeEdited() =
+  ## Place handles edited since this frame placed scene, for reader landing between frames.
+  ##   Pointer event after edit picks scene as it now stands, before next frame places it;
+  ##   see `framing.placeStamped`.
+  if REVISION_PLACED == SCENE_PAGE.revision: return
+  PLACEMENTS.placeStamped(SCENE_PAGE, REVISION_PLACED)
+  REACH_SCENE = reachOf(PLACEMENTS, SCENE_PAGE)
+  REVISION_PLACED = SCENE_PAGE.revision
+
+
+func isSameSight(a, b: SettingsOverlay): bool =
+  ## Report whether two keys name same camera, viewport aside, field by field.
+  a.origin_x == b.origin_x and a.origin_y == b.origin_y and a.origin_z == b.origin_z and
+      a.motor == b.motor and a.distance == b.distance and
+      a.degrees_field_of_view == b.degrees_field_of_view and a.reach_near == b.reach_near and
+      a.reach_scene == b.reach_scene
 
 
 proc ensureViewOverlay(width, height: int) =
-  ## Refresh draw extent and view-projection overlay calls share.
-  ##   `SCALE_OVERLAY` and `VIEW_PROJECTION_OVERLAY`, derived only when camera or viewport changed.
+  ## Derive draw extent and view-projection overlay calls share, once in frame.
+  ##   `SCALE_OVERLAY` and `VIEW_PROJECTION_OVERLAY`, derived anew where camera or viewport
+  ##   moved within frame, and by first reader of each frame.
   ##   Every overlay call (anchor, each marker, each pulse, hover ring) would otherwise
   ##   derive both for itself, each derivation running `camera.frame`'s joins twice.
   ##     Within one frame all are same answer: functions of placement and viewport alone,
-  ##     which is what key holds.
+  ##     which is what key holds. `nimAnchorScreen` runs this for every overlay call.
+  ##   Camera frame build drew is taken at overlay's height: stance is read and algebra
+  ##   twins are derived once in frame; see `SIGHT_FRAME`.
   ##   Callers read globals rather than copies: returning pair deep-copies `DrawExtent`
-  ##   full of multivectors per call on JS backend, cache hit or not.
+  ##   full of multivectors per call on JS backend.
   CAMERA_PAGE.reach_near = REACH_NEAR
-  let settings: SettingsOverlay = (
-    CAMERA_PAGE.motor, CAMERA_PAGE.distance, CAMERA_PAGE.degrees_field_of_view,
-    CAMERA_PAGE.reach_near, REACH_SCENE, width, height,
-  )
-  if SETTINGS_OVERLAY_HELD.isNone or SETTINGS_OVERLAY_HELD.get != settings:
-    SETTINGS_OVERLAY_HELD = some(settings)
+  let
+    origin = CAMERA_PAGE.originView
+    settings: SettingsOverlay = (
+      origin.x, origin.y, origin.z, CAMERA_PAGE.motor, CAMERA_PAGE.distance,
+      CAMERA_PAGE.degrees_field_of_view, CAMERA_PAGE.reach_near, REACH_SCENE, width, height,
+    )
+  if SETTINGS_OVERLAY_FRAME.isSome and SETTINGS_OVERLAY_FRAME.get == settings: return
+  SETTINGS_OVERLAY_FRAME = some(settings)
+  if SIGHT_FRAME.isSome and SIGHT_FRAME.get.isSameSight(settings):
+    SCALE_OVERLAY = EXTENT_FRAME.atHeight(height)
+  else:
     # Read eye and frame once for both; see `camera.drawExtentFor`.
     let (eye, frame) = CAMERA_PAGE.sight
     SCALE_OVERLAY = CAMERA_PAGE.drawExtentFor(eye, frame, height, REACH_SCENE)
-    VIEW_PROJECTION_OVERLAY =
-      CAMERA_PAGE.initMatrixViewProjection(eye, frame, float(width) / float(height))
+  VIEW_PROJECTION_OVERLAY = CAMERA_PAGE.initMatrixViewProjection(
+    SCALE_OVERLAY.eye,
+    FrameCamera(
+      axis_right: SCALE_OVERLAY.axisRight,
+      axis_up: SCALE_OVERLAY.axisUp,
+      forward: SCALE_OVERLAY.forward,
+    ),
+    float(width) / float(height),
+  )
 
 
 
@@ -1240,7 +1224,7 @@ proc nimCameraTurnAt(
     int(width),
     int(height),
     SELECTION_PAGE.len > 0,
-    TWEEN_CAMERA.reachAimed(CAMERA_PAGE.pivot),
+    TWEEN_CAMERA.reachAimed(CAMERA_PAGE),
   )
 
 
@@ -1268,10 +1252,10 @@ proc nimCameraDolly(factor: cfloat) {.exportc.} =
 
 proc nimCameraDollyCentred(factor: cfloat; width, height: cint) {.exportc.} =
   ## Scale camera's distance from pivot by factor, toward whatever frame's middle is over.
-  ##   Pinch's zoom; see `interaction.dollyAtCentre`. Reads caches as `nimCameraDollyAt`.
+  ##   Pinch's zoom; see `interaction.dollyAtCentre`. Reads frame's own as `nimCameraDollyAt`.
   TWEEN_CAMERA.halt()
+  placeEdited()
   ensureViewOverlay(int(width), int(height))
-  ensurePlacement()
   dollyAtCentre(
     CAMERA_PAGE,
     SCENE_PAGE,
@@ -1292,13 +1276,11 @@ proc nimCameraDollyAt(factor: cfloat; width, height: cint) {.exportc.} =
   ##   pointer, pinch at midpoint) says where by moving cursor there first, as picking
   ##   does.
   TWEEN_CAMERA.halt()
-  # Read through overlay cache.
-  #   Wheel arrives in bursts, and each notch would derive fresh extent and matrix for
-  #   camera that only changes as result of notch.
-  ensureViewOverlay(int(width), int(height))
   # Read through frame's placements.
   #   `dollyAtCursor` asks `anchorZoomAt` what cursor is over, which is full pick.
-  ensurePlacement()
+  placeEdited()
+  # Read through frame's overlay extent, shared with every overlay call at this camera.
+  ensureViewOverlay(int(width), int(height))
   INTERACTION_PAGE.dollyAtCursor(
     CAMERA_PAGE,
     SCENE_PAGE,
@@ -1321,7 +1303,7 @@ proc nimCameraPanGrab(width, height: cint) {.exportc.} =
     int(width),
     int(height),
     SELECTION_PAGE.len > 0,
-    TWEEN_CAMERA.reachAimed(CAMERA_PAGE.pivot),
+    TWEEN_CAMERA.reachAimed(CAMERA_PAGE),
   )
 
 
@@ -1340,8 +1322,8 @@ proc nimCameraPanAt(
     ScreenPosition(x: float(after_x), y: float(after_y)), int(width), int(height),
     SELECTION_PAGE.len > 0,
     if is_grabbed: INTERACTION_PAGE.depth_pan else: CAMERA_PAGE.distance,
-    if is_grabbed: INTERACTION_PAGE.point_pan else: none(Position),
-    TWEEN_CAMERA.reachAimed(CAMERA_PAGE.pivot),
+    if is_grabbed: INTERACTION_PAGE.pointPanNow(CAMERA_PAGE) else: none(Position),
+    TWEEN_CAMERA.reachAimed(CAMERA_PAGE),
   )
 
 
@@ -1350,12 +1332,13 @@ proc nimCameraPanHeldAt(width, height: cint): FlatBuffer {.exportc.} =
   ## `[x, y, is_in_front]`.
   ##   For checks, which ask whether drag kept it under pointer; see `nimCameraPanGrab`.
   ##   Zeros where none is held, as in free flight.
-  if INTERACTION_PAGE.point_pan.isNone: return FLAT_PAN_HELD.fill3(0.0'f32, 0.0'f32, 0.0'f32)
+  let held = INTERACTION_PAGE.pointPanNow(CAMERA_PAGE)
+  if held.isNone: return FLAT_PAN_HELD.fill3(0.0'f32, 0.0'f32, 0.0'f32)
   let screen = projectToScreen(
     CAMERA_PAGE.initMatrixViewProjection(float(width) / float(height)),
     int(width),
     int(height),
-    INTERACTION_PAGE.point_pan.get,
+    held.get,
   )
   FLAT_PAN_HELD.fill3(
     float32(screen.x), float32(screen.y), (if screen.isInFront: 1.0'f32 else: 0.0'f32)
@@ -1390,28 +1373,27 @@ proc nimCameraCarrying(): bool {.exportc.} =
   TWEEN_CAMERA.goal.isSome and not TWEEN_CAMERA.is_arrived
 
 proc nimCameraPivot(): FlatBuffer {.exportc.} =
-  ## Report point camera orbits around, as `[x, y, z]` view over `FLAT_PIVOT`.
+  ## Report point camera orbits around, in world, as `[x, y, z]` view over `FLAT_PIVOT`.
   ##   Refilled per call; camera fields' tick asks five times second and compares before
   ##   writing, so fresh sequence here was allocation per tick.
-  FLAT_PIVOT.fill3(
-    cfloat(CAMERA_PAGE.pivot.x),
-    cfloat(CAMERA_PAGE.pivot.y),
-    cfloat(CAMERA_PAGE.pivot.z),
-  )
+  ##   World's, as every reading is; see `camera.stanceWorld`.
+  let pivot = CAMERA_PAGE.pivotWorld
+  FLAT_PIVOT.fill3(cfloat(pivot.x), cfloat(pivot.y), cfloat(pivot.z))
 
 
 proc nimCameraEye(): FlatBuffer {.exportc.} =
-  ## Report where eye stands, as `[x, y, z]` view over `FLAT_EYE`.
+  ## Report where eye stands, in world, as `[x, y, z]` view over `FLAT_EYE`.
   ##   Driven checks read sight line off eye and pivot, to tell zoom along it from
   ##   slide across it; nothing on page asks.
-  let eye = CAMERA_PAGE.eye
+  let eye = CAMERA_PAGE.eyeWorld
   FLAT_EYE.fill3(cfloat(eye.x), cfloat(eye.y), cfloat(eye.z))
 
 
 proc nimCameraMotor(): FlatBuffer {.exportc.} =
   ## Report camera's motor as every basis coefficient in basis order, over `FLAT_MOTOR`.
   ##   Whole multivector, odd grades and all, since view shows it in grid objects use.
-  let m = CAMERA_PAGE.motor.toMultivector
+  ##   About world origin, as panel shows and takes it; see `camera.stanceWorld`.
+  let m = CAMERA_PAGE.stanceWorld.motor.toMultivector
   for b in Basis: FLAT_MOTOR[ord(b)] = cfloat(m[b])
   FLAT_MOTOR.used = ord(Basis.high) + 1
   FLAT_MOTOR.view
@@ -1422,7 +1404,8 @@ proc nimSetCameraMotorAt(basis: cint, value: cfloat): bool {.exportc.} =
   ##   One coefficient into live motor, not all sixteen from fields: field shows four
   ##   digits, and writing all back would round fifteen nobody touched.
   ##   Reports whether coefficients name motion; where not, camera stands.
-  var typed = CAMERA_PAGE.motor.toMultivector
+  ##   Motor is world's, as `nimCameraMotor` reports it.
+  var typed = CAMERA_PAGE.stanceWorld.motor.toMultivector
   typed[Basis(basis)] = float(value)
   let settled = motorRigid(typed)
   if settled.isNone: return false
@@ -1513,13 +1496,13 @@ proc nimUpdateHover(width, height: cint) {.exportc.} =
   #   Runs from event handler, so frame reporting it is next one.
   #   Accumulated: pointer can move many times between two frames.
   let ms_entered_hover = nowMilliseconds()
-  # Read through overlay cache.
+  # Read through frame's placements, so pick ranks what was drawn.
+  #   `placeEdited` first, since pick can land between edit and frame that places it.
+  placeEdited()
+  # Read through frame's overlay extent.
   #   Each move would rebuild view matrix for camera that cannot have changed, since
   #   hover skips while camera moves.
   ensureViewOverlay(int(width), int(height))
-  # Read through frame's placements, so pick ranks what was drawn.
-  #   `ensurePlacement` first, since pick can be first of two to run after edit.
-  ensurePlacement()
   interaction.updateHover(
     INTERACTION_PAGE,
     SCENE_PAGE,
@@ -1916,7 +1899,7 @@ proc nimDragComet(width, height: cint): FlatBuffer {.exportc.} =
   ##   Empty where no drag is in flight, source's anchor is behind eye, or cursor rests on
   ##   anchor.
   if not INTERACTION_PAGE.is_dragging: return FLAT_COMET.emptied
-  # Read through overlay cache and by-handle readers.
+  # Read through frame's overlay extent and by-handle readers.
   #   Runs per frame of every drag; fresh extent and matrix plus whole-scene copy through
   #   `SCENE_PAGE[handle]` would be paid each time.
   ensureViewOverlay(int(width), int(height))
@@ -2101,12 +2084,14 @@ proc nimAnchorWorld(handle: cint): FlatBuffer {.exportc.} =
   ##   horizon, which stands nowhere.
   if not SCENE_PAGE.isAlive(int(handle)) or SCENE_PAGE.geometryOf(int(handle)).isHorizonPlane:
     return FLAT_ANCHOR_WORLD.fill3(0.0'f32, 0.0'f32, 0.0'f32)
-  ensurePlacement()
+  placeEdited()
   let anchor = anchorFor(
     SCENE_PAGE.geometryOf(int(handle)), SCENE_PAGE.anchorOverrideAt(int(handle)), SCALE_OVERLAY
   )
   if anchor.isNone: return FLAT_ANCHOR_WORLD.fill3(0.0'f32, 0.0'f32, 0.0'f32)
-  FLAT_ANCHOR_WORLD.fill3(float32(anchor.get.x), float32(anchor.get.y), float32(anchor.get.z))
+  # Read back about world origin: anchor is about overlay's view origin.
+  let world = anchor.get.toWorld(SCALE_OVERLAY.origin)
+  FLAT_ANCHOR_WORLD.fill3(float32(world.x), float32(world.y), float32(world.z))
 
 
 proc nimSelectionMarker(
@@ -2165,7 +2150,7 @@ proc nimSelectionMarker(
   MARKER_SHAPED = some(
     (
       int(handle), int(width), int(height), float(progress), is_touch, float(swell),
-      travel, SETTINGS_OVERLAY_HELD.get, BOX_MARKER,
+      travel, SETTINGS_OVERLAY_FRAME.get, BOX_MARKER,
     ),
   )
   result = @[cfloat(ord(marker.kind)), 0.0'f32, 0.0'f32, 0.0'f32]
@@ -2300,7 +2285,7 @@ proc nimSelectionPulse(
     if stored.handle == at and stored.width == int(width) and
         stored.height == int(height) and stored.progress == float(progress) and
         stored.is_touch == is_touch and stored.swell == float(swell) and
-        stored.travel == travel and stored.settings == SETTINGS_OVERLAY_HELD.get:
+        stored.travel == travel and stored.settings == SETTINGS_OVERLAY_FRAME.get:
       held = stored.marker
   if held == nil:
     # Reuse shared box, dropping its entry: stale key must not outlive overwrite.
@@ -2460,12 +2445,6 @@ proc nimSceneAddRaw(
 
 #[ Frame Assembly ]#
 
-var COUNTS_SCENE: SceneCost  ## What scene meshes standing in `MESHES` are made of.
-  ## Only counts are read back, on held frame; times belong to frame that did work.
-  ##   Held frame draws what it had and should say what that is rather than report empty
-  ##   scene.
-  ## Here rather than in module's `var` block because `SceneCost` is declared just above.
-
 proc openTally(cost: var SceneCost) =
   ## Start tally's clock, so first object measures from here rather than from zero.
   ##   Only where breakdown is being read; see `timings.IS_TALLYING`.
@@ -2533,6 +2512,8 @@ proc nimBuildFrame(
   ##     Splitting packaging out would return partial results across extra boundary for no
   ##     reader benefit.
   ##   Draws `PREVIEW_EDIT` too, tinted `INK_PREVIEW` and muted; see that var.
+  ##   Every frame does same work, still or moving: places every object, builds furniture
+  ##   and scene records, and flattens all of them for upload.
   # Read one clock per phase boundary, so diagnostics tab shows each step.
   #   `performanceNow` is timing-only.
   let ms_entered = performanceNow()
@@ -2548,30 +2529,44 @@ proc nimBuildFrame(
   openFrameTimings()
   # Guard focus as selection is guarded: handle carried across frames may have died.
   INTERACTION_PAGE.pruneFocus(SCENE_PAGE)
+  # Open frame: what last frame derived for its overlay is not this frame's.
+  SETTINGS_OVERLAY_FRAME = none(SettingsOverlay)
+  MARKER_SHAPED = none(ShapedMarker)
 
   # Carry camera one frame further toward whatever is being worked on, then aim it again.
   #   From what this frame holds, same rule `main.assembleMeshes` applies.
   #   Advancing before `scale` is read keeps furniture extent consistent with where camera
   #   is.
   TWEEN_CAMERA.advance(CAMERA_PAGE, float(now), easeOutCubic)
+  # Place every object first, so scene's reach is this frame's before extent reads far clip.
+  #   Clocked as phase of its own: whole scene's placing side, beside which camera's is small.
+  let ms_before_place = performanceNow()
+  placeScene()
+  let ms_place = performanceNow() - ms_before_place
+  # Move view origin to eye, after ease moved camera, and read eye and frame about it once.
+  #   Hand both to every reader: each `eye` or `frame` read lifts motor again; see
+  #   `camera.drawExtentFor`.
+  #   Unpacked and handed on with no copy, and motor kept below is one copy of eight floats
+  #   (read in emitted JS).
+  var (eye, frame) = CAMERA_PAGE.moveOriginView
+  # Read local scale once for this frame, before extent reads clip planes off it.
+  #   Walks every placement, so here rather than in `ensureViewOverlay`; see `REACH_NEAR`.
+  REACH_NEAR = reachNearOf(PLACEMENTS, SCENE_PAGE, CAMERA_PAGE.originView, eye, frame.forward)
+  CAMERA_PAGE.reach_near = REACH_NEAR
   # Take framebuffer's height, not window's.
   #   Ribbon's width is measured in pixels drawn, and this build renders at
   #   device-pixel-ratio multiple.
-  # Place first, so scene's reach is this frame's before extent reads far clip.
-  ensurePlacement()
-  # Read eye and frame once for frame, after ease moved camera, and hand both to every reader.
-  #   Each `eye` or `frame` read lifts motor again; see `camera.drawExtentFor`.
-  #   Unpacked and handed on with no copy, and motor kept below is one copy of eight floats
-  #   (read in emitted JS).
-  var (eye, frame) = CAMERA_PAGE.sight
-  # Read local scale once for this frame, before extent reads clip planes off it.
-  #   Walks every placement, so here rather than in `ensureViewOverlay`; see `REACH_NEAR`.
-  REACH_NEAR = reachNearOf(PLACEMENTS, SCENE_PAGE, eye, frame.forward)
-  CAMERA_PAGE.reach_near = REACH_NEAR
-  # Decide view origin after scale, since bound is read off near clip.
-  #   Both holds carry motor, so frame moving this origin rebuilds both anyway.
-  ORIGIN_VIEW = CAMERA_PAGE.originView(eye, ORIGIN_VIEW)
-  let scale = CAMERA_PAGE.drawExtentFor(eye, frame, int(height_pixels), REACH_SCENE)
+  #   Kept with camera it was derived from, for overlay of this frame; see `SIGHT_FRAME`.
+  EXTENT_FRAME = CAMERA_PAGE.drawExtentFor(eye, frame, int(height_pixels), REACH_SCENE)
+  let
+    origin_view = CAMERA_PAGE.originView
+    sight: SettingsOverlay = (
+      origin_view.x, origin_view.y, origin_view.z, CAMERA_PAGE.motor, CAMERA_PAGE.distance,
+      CAMERA_PAGE.degrees_field_of_view, CAMERA_PAGE.reach_near, REACH_SCENE, 0,
+      int(height_pixels),
+    )
+  SIGHT_FRAME = some(sight)
+  template scale: DrawExtent = EXTENT_FRAME
   # Derive frustum once, for cull of every point below; see `isPointInView`.
   let bounds = CAMERA_PAGE.viewBoundsFor(eye, frame, scale, float(aspect), REACH_SCENE)
   # Recover width of centred box from aspect, since this build is handed that.
@@ -2595,204 +2590,142 @@ proc nimBuildFrame(
   # Read both again only where aim's hold moved camera, so transform draws where it stands.
   if CAMERA_PAGE.motor != motor_offered: (eye, frame) = CAMERA_PAGE.sight
 
-  # Hold furniture where settings match last frame's.
-  #   Everything `drawExtentFor` reads, and two toggles: frame whose settings match is
-  #   drawing same vertices and may keep them.
-  #   Compared exactly: question is "did anything move at all".
   let
-    settings_furniture = settingsFurnitureFor(
-      CAMERA_PAGE,
-      int(height_pixels),
-      REACH_SCENE,
-      is_axes_shown,
-      is_grid_shown,
-      SCENE_PAGE.revision,
-      SELECTION_PAGE.revision,
-    )
-    is_furniture_held =
-      SETTINGS_FURNITURE_HELD.isSome and SETTINGS_FURNITURE_HELD.get == settings_furniture
     ms_after_camera = performanceNow()
     ms_before_furniture = ms_after_camera
-  var
-    ms_grid = 0.0
-    ms_axes = 0.0
-  if not is_furniture_held:
-    SETTINGS_FURNITURE_HELD = some(settings_furniture)
-    clearMeshes(MESHES_FURNITURE, ORIGIN_VIEW)
-    # Clock lattice and axes apart: axes are three lines, lattice is however many fog
-    #   reaches on each plane picked.
-    let ms_before_grid = performanceNow()
-    if is_grid_shown:
-      addLatticesPicked(MESHES_FURNITURE, SCRATCH, scale, SCENE_PAGE, SELECTION_PAGE)
-    # Count between two, so figure is lattice's own; see `mesh.addSegmentAcross`.
-    COUNT_GRID_SEGMENTS = MESHES_FURNITURE.ribbons.count
-    let ms_before_axes = performanceNow()
-    if is_axes_shown:
-      addAxes(MESHES_FURNITURE, SCRATCH, scale.extentFurniture, scale)
+  clearMeshes(MESHES_FURNITURE)
+  # Clock lattice and axes apart: axes are three lines, lattice is however many fog
+  #   reaches on each plane picked.
+  let ms_before_grid = performanceNow()
+  if is_grid_shown:
+    addLatticesPicked(MESHES_FURNITURE, SCRATCH, scale, SCENE_PAGE, SELECTION_PAGE)
+  # Count between two, so figure is lattice's own; see `mesh.addSegmentAcross`.
+  let
+    count_grid_segments = MESHES_FURNITURE.ribbons.count
+    ms_before_axes = performanceNow()
+  if is_axes_shown:
+    addAxes(MESHES_FURNITURE, SCRATCH, scale.extentFurniture, scale)
+  let
     ms_grid = ms_before_axes - ms_before_grid
     ms_axes = performanceNow() - ms_before_axes
-  let ms_after_furniture = performanceNow()
+    ms_after_furniture = performanceNow()
 
-  # Hold scene where settings match last frame's, one layer out from furniture's hold.
-  #   Frame whose settings match tessellates same records, so keeps them, flattens and
-  #   uploads together: whole scene phase.
-  #   Two states refuse hold outright rather than being encoded: preview or preview
-  #   follows pointer; object inside appear animation is drawn differently every frame.
-  #   Cost of refusing is one rebuilt frame; cost of holding wrongly is frozen picture.
-  let settings_scene: SettingsScene = (
-    furniture: settings_furniture,
-    aspect: float(aspect),
-    revision: SCENE_PAGE.revision,
-    revision_selection: SELECTION_PAGE.revision,
-    is_culling: IS_CULLING,
-  )
-  let is_scene_settled =
-      preview.isNone and INTERACTION_PAGE.preview.isNone and
-      float(now) >= BORN_LAST + ANIMATION_SECONDS
-  let is_scene_held =
-    is_scene_settled and SETTINGS_SCENE_HELD.isSome and SETTINGS_SCENE_HELD.get == settings_scene
-  if not is_scene_held:
-    SETTINGS_SCENE_HELD = (if is_scene_settled: some(settings_scene) else: none(SettingsScene))
+  var cost: SceneCost
+  clearMeshes(MESHES)
+  cost.openTally()
+  # Mark picks once and read mark per handle below; see `selection.markOnto`.
+  SELECTION_PAGE.markOnto(MARKS_PICKED)
+  defer: SELECTION_PAGE.markOnto(MARKS_PICKED, is_marked = false)
+  # Emit horizon plane's dome first, before anything sharing translucent veil pass.
+  #   Veil runs draw in append order, unsorted by depth, so dome first guarantees every
+  #   ordinary plane's fill blends over it; see `main.assembleMeshes`.
+  #   By-handle "At" accessors rather than `pairs`: under JS backend `Object` holds `Scene`
+  #   by value, so constructing one per live handle copies entire scene.
+  #   To watermark, not capacity: `scene.bound` is high-water mark, which only rises;
+  #   sibling walk below takes same bound.
+  #   Placement already answered sky or not, so walks sort on `PLACEMENTS[handle].kind`
+  #   rather than reading multivector per handle per walk.
+  for handle in 0..<SCENE_PAGE.bound:
+    if not SCENE_PAGE.isAlive(handle) or MARKS_PICKED[handle]: continue
+    if SCENE_PAGE.isVisible(handle):
+      # Index in place, never bind to local; see `emitObject`.
+      #   `let placed = PLACEMENTS[handle]` is deep copy under JS backend, once per object
+      #   per frame.
+      if PLACEMENTS[handle].kind == Case.PlaneEverywhere:
+        let progress = animationProgress(float(now), BORNS[handle])
+        discard emitObject(
+          MESHES,
+          PLACEMENTS[handle],
+          SCENE_PAGE.inkAt(handle).colour,
+          scale,
+          progress,
+        )
+        cost.chargeTally(
+          PLACEMENTS[handle].kind,
+          is_sky = true,
+          is_preview = false,
+          is_selected = false,
+        )
 
-  # Declare tally out here because frame reports it either way.
-  #   On held frame times are zero and counts are last frame's, still what scene holds.
-  var
-    cost: SceneCost
-    ms_after_scene = ms_after_furniture
-  if is_scene_held:
-    cost.count_points = COUNTS_SCENE.count_points
-    cost.count_lines = COUNTS_SCENE.count_lines
-    cost.count_planes = COUNTS_SCENE.count_planes
-    cost.count_sky = COUNTS_SCENE.count_sky
-    cost.count_preview = COUNTS_SCENE.count_preview
-    cost.count_selected = COUNTS_SCENE.count_selected
-    cost.count_points_culled = COUNTS_SCENE.count_points_culled
-  # Refresh placement cache only where scene moved; see `ensurePlacement`.
-  ensurePlacement()
+  for handle in 0..<SCENE_PAGE.bound:
+    if not SCENE_PAGE.isAlive(handle) or MARKS_PICKED[handle]: continue
+    if SCENE_PAGE.isVisible(handle):
+      if PLACEMENTS[handle].kind != Case.PlaneEverywhere:
+        # Skip point outside view before it costs emitting, flatten and upload.
+        if IS_CULLING and
+            not isPointInView(PLACEMENTS[handle], SCENE_PAGE.radiusAt(handle), bounds):
+          cost.chargeCulled()
+          continue
+        let progress = animationProgress(float(now), BORNS[handle])
+        discard emitObject(
+          MESHES,
+          PLACEMENTS[handle],
+          SCENE_PAGE.inkAt(handle).colour,
+          scale,
+          progress,
+          SCENE_PAGE.radiusAt(handle),
+        )
+        cost.chargeTally(
+          PLACEMENTS[handle].kind,
+          is_sky = false,
+          is_preview = false,
+          is_selected = false,
+        )
 
-  if not is_scene_held:
-    # About view origin, as furniture is; see `ORIGIN_VIEW`.
-    clearMeshes(MESHES, ORIGIN_VIEW)
-    cost.openTally()
-    # Mark picks once and read mark per handle below; see `selection.markOnto`.
-    SELECTION_PAGE.markOnto(MARKS_PICKED)
-    defer: SELECTION_PAGE.markOnto(MARKS_PICKED, is_marked = false)
-    # Emit horizon plane's dome first, before anything sharing translucent veil pass.
-    #   Veil runs draw in append order, unsorted by depth, so dome first guarantees every
-    #   ordinary plane's fill blends over it; see `main.assembleMeshes`.
-    #   By-handle "At" accessors rather than `pairs`: under JS backend `Object` holds `Scene`
-    #   by value, so constructing one per live handle copies entire scene.
-    #   To watermark, not capacity: `scene.bound` is high-water mark, which only rises;
-    #   sibling walk below takes same bound.
-    #   Placement once, emitted every frame: placement already answered sky or not, so walks
-    #   sort on `PLACEMENTS[handle].kind` rather than reading multivector per handle per walk.
-    for handle in 0..<SCENE_PAGE.bound:
-      if not SCENE_PAGE.isAlive(handle) or MARKS_PICKED[handle]: continue
-      if SCENE_PAGE.isVisible(handle):
-        # Index in place, never bind to local; see `emitObject`.
-        #   `let placed = PLACEMENTS[handle]` is deep copy under JS backend, once per object
-        #   per frame.
-        if PLACEMENTS[handle].kind == Case.PlaneEverywhere:
-          let progress = animationProgress(float(now), BORNS[handle])
-          discard emitObject(
-            MESHES,
-            PLACEMENTS[handle],
-            SCENE_PAGE.inkAt(handle).colour,
-            scale,
-            progress,
-          )
-          cost.chargeTally(
-            PLACEMENTS[handle].kind,
-            is_sky = true,
-            is_preview = false,
-            is_selected = false,
-          )
+  # Emit open session's staged geometry, or apply control's preview where none.
+  #   One preview for both; `staged` decides order.
+  #   Centred on anchor commit stores, so previewed plane stays where previewed.
+  #   `preview` read once in prologue; nothing since has touched session.
+  if preview.isSome:
+    # Place here: preview is not handle, so `placeScene` never reaches it.
+    var placement_staged = placeObject(preview.get.geometry, preview.get.anchor)
+    discard emitObject(
+      MESHES,
+      placement_staged,
+      INK_PREVIEW.colour.muted(),
+      scale,
+      radius = preview.get.radius,
+    )
+    cost.chargeTally(placement_staged.kind, is_sky = false, is_preview = true, is_selected = false)
 
-    for handle in 0..<SCENE_PAGE.bound:
-      if not SCENE_PAGE.isAlive(handle) or MARKS_PICKED[handle]: continue
-      if SCENE_PAGE.isVisible(handle):
-        if PLACEMENTS[handle].kind != Case.PlaneEverywhere:
-          # Skip point outside view before it costs emitting, flatten and upload.
-          if IS_CULLING and
-              not isPointInView(PLACEMENTS[handle], SCENE_PAGE.radiusAt(handle), bounds):
-            cost.chargeCulled()
-            continue
-          let progress = animationProgress(float(now), BORNS[handle])
-          discard emitObject(
-            MESHES,
-            PLACEMENTS[handle],
-            SCENE_PAGE.inkAt(handle).colour,
-            scale,
-            progress,
-            SCENE_PAGE.radiusAt(handle),
-          )
-          cost.chargeTally(
-            PLACEMENTS[handle].kind,
-            is_sky = false,
-            is_preview = false,
-            is_selected = false,
-          )
+  # Emit what drag in progress would build, in same preview ink.
+  #   Reader learns one "not committed yet" appearance; mirrors
+  #   `main.assembleMeshes`.
+  if INTERACTION_PAGE.preview.isSome:
+    var placement_derived = placeObject(
+      INTERACTION_PAGE.preview.get.geometry,
+      INTERACTION_PAGE.preview.get.anchor,
+    )
+    discard emitObject(MESHES, placement_derived, INK_PREVIEW.colour.muted(), scale)
+    cost.chargeTally(placement_derived.kind, is_sky = false, is_preview = true, is_selected = false)
 
-    # Emit open session's staged geometry, or apply control's preview where none.
-    #   One preview for both; `staged` decides order.
-    #   Centred on anchor commit stores, so previewed plane stays where previewed.
-    #   `preview` read once in prologue; nothing since has touched session.
-    if preview.isSome:
-      # Place here rather than cache: preview is not handle and moves with pointer.
-      var placement_staged = placeObject(preview.get.geometry, preview.get.anchor)
-      discard emitObject(
-        MESHES,
-        placement_staged,
-        INK_PREVIEW.colour.muted(),
-        scale,
-        radius = preview.get.radius,
-      )
-      cost.chargeTally(
-        placement_staged.kind, is_sky = false, is_preview = true, is_selected = false
-      )
+  # Emit everything selected last, drawn over cleared depth.
+  #   Picked object is then never buried.
+  #   Mirrors `main.assembleMeshes`.
+  markOverlay(MESHES)
+  for position in 0..<SELECTION_PAGE.len:
+    let handle = SELECTION_PAGE.at(position)
+    if not SCENE_PAGE.isAlive(handle) or not SCENE_PAGE.isVisible(handle): continue
+    if IS_CULLING and not isPointInView(PLACEMENTS[handle], SCENE_PAGE.radiusAt(handle), bounds):
+      cost.chargeCulled()
+      continue
+    let progress = animationProgress(float(now), BORNS[handle])
+    discard emitObject(
+      MESHES,
+      PLACEMENTS[handle],
+      SCENE_PAGE.inkAt(handle).colour,
+      scale,
+      progress,
+      SCENE_PAGE.radiusAt(handle),
+    )
+    cost.chargeTally(
+      PLACEMENTS[handle].kind, is_sky = false, is_preview = false, is_selected = true
+    )
 
-    # Emit what drag in progress would build, in same preview ink.
-    #   Reader learns one "not committed yet" appearance; mirrors
-    #   `main.assembleMeshes`.
-    if INTERACTION_PAGE.preview.isSome:
-      var placement_derived = placeObject(
-        INTERACTION_PAGE.preview.get.geometry,
-        INTERACTION_PAGE.preview.get.anchor,
-      )
-      discard emitObject(MESHES, placement_derived, INK_PREVIEW.colour.muted(), scale)
-      cost.chargeTally(
-        placement_derived.kind, is_sky = false, is_preview = true, is_selected = false
-      )
+  let ms_after_scene = performanceNow()
 
-    # Emit everything selected last, drawn over cleared depth.
-    #   Picked object is then never buried.
-    #   Mirrors `main.assembleMeshes`.
-    markOverlay(MESHES)
-    for position in 0..<SELECTION_PAGE.len:
-      let handle = SELECTION_PAGE.at(position)
-      if not SCENE_PAGE.isAlive(handle) or not SCENE_PAGE.isVisible(handle): continue
-      if IS_CULLING and not isPointInView(PLACEMENTS[handle], SCENE_PAGE.radiusAt(handle), bounds):
-        cost.chargeCulled()
-        continue
-      let progress = animationProgress(float(now), BORNS[handle])
-      discard emitObject(
-        MESHES,
-        PLACEMENTS[handle],
-        SCENE_PAGE.inkAt(handle).colour,
-        scale,
-        progress,
-        SCENE_PAGE.radiusAt(handle),
-      )
-      cost.chargeTally(
-        PLACEMENTS[handle].kind, is_sky = false, is_preview = false, is_selected = true
-      )
-
-    ms_after_scene = performanceNow()
-    COUNTS_SCENE = cost
-
-  # About records' own origin; overlay's matrix stays about world, for picking.
-  let flat_view =
-    CAMERA_PAGE.initMatrixViewProjection(eye, frame, float(aspect), MESHES.origin).flattened
+  # About view origin, as records and overlay's own matrix are.
+  let flat_view = CAMERA_PAGE.initMatrixViewProjection(eye, frame, float(aspect)).flattened
   for index in 0..15: FLAT_VIEW[index] = flat_view[index]
 
   # Flatten into locals rather than in constructor.
@@ -2800,18 +2733,13 @@ proc nimBuildFrame(
   let
     ms_after_matrix = performanceNow()
     ms_before_flatten = ms_after_matrix
-  # Hold flatten with tessellation.
-  #   Records did not change, so flat buffers already hold exactly what rerun would
-  #   write; browser scripts skips uploads on same flag.
-  if not is_scene_held:
-    flattenDiscsInto(MESHES.discs, FLAT_DISC)
-    flattenRingsInto(MESHES.rings, FLAT_RING)
-    flattenDomesInto(MESHES.domes, FLAT_DOME)
-    flattenVeilRunsInto(MESHES.veils, FLAT_RUNS)
-    flattenRibbonsInto(MESHES.ribbons, FLAT_RIBBON)
-    flattenInto(MESHES.points, FLAT_POINT)
-  if is_furniture_held: FLAT_FURNITURE.used = 0
-  else: flattenRibbonsInto(MESHES_FURNITURE.ribbons, FLAT_FURNITURE)
+  flattenDiscsInto(MESHES.discs, FLAT_DISC)
+  flattenRingsInto(MESHES.rings, FLAT_RING)
+  flattenDomesInto(MESHES.domes, FLAT_DOME)
+  flattenVeilRunsInto(MESHES.veils, FLAT_RUNS)
+  flattenRibbonsInto(MESHES.ribbons, FLAT_RIBBON)
+  flattenInto(MESHES.points, FLAT_POINT)
+  flattenRibbonsInto(MESHES_FURNITURE.ribbons, FLAT_FURNITURE)
   let ms_done = performanceNow()
 
   var data = FrameData(
@@ -2823,12 +2751,11 @@ proc nimBuildFrame(
     point_vertices: FLAT_POINT.view,
     view_projection: FLAT_VIEW,
     furniture_ribbon_vertices: FLAT_FURNITURE.view,
-    is_scene_held: is_scene_held,
-    is_furniture_held: is_furniture_held,
-    # Eye about view origin, frame shaders measure depth in.
-    camera_eye_x: float32(scale.eye.x - MESHES.origin.x),
-    camera_eye_y: float32(scale.eye.y - MESHES.origin.y),
-    camera_eye_z: float32(scale.eye.z - MESHES.origin.z),
+    is_grown: float(now) >= BORN_LAST + ANIMATION_SECONDS,
+    # Eye about view origin, frame shaders measure depth in: its remainder, about zero.
+    camera_eye_x: float32(scale.eye.x),
+    camera_eye_y: float32(scale.eye.y),
+    camera_eye_z: float32(scale.eye.z),
     camera_forward_x: float32(scale.forward.x),
     camera_forward_y: float32(scale.forward.y),
     camera_forward_z: float32(scale.forward.z),
@@ -2846,7 +2773,7 @@ proc nimBuildFrame(
     fog_radius_gone: float32(fogFurnitureFor(scale.extentFurniture).radius_gone),
     ms_grid: float32(ms_grid),
     ms_axes: float32(ms_axes),
-    count_grid_segments: COUNT_GRID_SEGMENTS,
+    count_grid_segments: count_grid_segments,
     ms_points: float32(cost.ms_points),
     ms_lines: float32(cost.ms_lines),
     ms_planes: float32(cost.ms_planes),
@@ -2861,12 +2788,13 @@ proc nimBuildFrame(
     count_preview: cost.count_preview,
     count_selected: cost.count_selected,
     ms_build: float32(ms_done - ms_entered),
+    ms_place: float32(ms_place),
     ms_furniture: float32(ms_after_furniture - ms_before_furniture),
     # Take scene phase as everything between furniture and flatten.
     #   Clearing, both passes, preview and preview, overlay marking.
     ms_scene: float32(ms_after_scene - ms_after_furniture),
     ms_flatten: float32(ms_done - ms_before_flatten),
-    ms_camera: float32(ms_after_camera - ms_entered),
+    ms_camera: float32(ms_after_camera - ms_entered - ms_place),
     ms_matrix: float32(ms_after_matrix - ms_after_scene),
     # Report what named phases still do not cover.
     #   Never negative: clock going backwards is coarsened timer, not phase running for

@@ -3,6 +3,8 @@
 ##   copy lock holds.
 ##   Fixtures copy those of `curator/audit/tests/suites/test_fixes.nim`, which drives same chain
 ##     through `koch fix`; fix to one is finished only when other is checked.
+##   Parser of compiler is stub (`stubs.nim`), answering what chain asks as commit pin of `ronri`
+##     projects does, so needless parentheses go as `koch fix` removes them.
 ##   Cases of repair that widens its line are lines of tree as they stood before `koch fix` ran:
 ##     `picking.nim`, `gif.nim` and `tools/build.nim` of `rga_visualiser`, `verdicts.nim` of
 ##     `dance_ontology` and `test_camera_aim.nim` of `rga_visualiser`.
@@ -11,6 +13,7 @@
 
 import std/[algorithm, options, sequtils, strutils, unittest]
 import ../../src/knoller/[chain {.all.}, fences, idioms, reports, tokens]
+import ./stubs
 
 
 const
@@ -108,15 +111,21 @@ const
     ##   library writes it, and ASCII form; glued, each pair lexes one operator.
 
 
+func provenOf(source: string): Proofs =
+  ## Answer module source and what chain asks of it by stub parser, as `koch fix` asks.
+  stubProofs("a.nim", source, Dialect.Module)
+
+
 func fixedOf(source: string): string =
-  ## Fix module source by whole chain, as `koch fix` does.
-  formatted("a.nim", source, Dialect.Module).source
+  ## Fix module source by whole chain, parser answering, as `koch fix` does.
+  formatted("a.nim", source, Dialect.Module, source.provenOf).source
 
 
 func isSettled(source: string): bool =
   ## Decide whether chain reports nothing over source and fixes it to itself.
-  checkFormatting("a.nim", source, Dialect.Module).len == 0 and source.fixedOf == source and
-      formatted("a.nim", source, Dialect.Module).fixed.len == 0
+  let proofs = source.provenOf
+  checkFormatting("a.nim", source, Dialect.Module, proofs).len == 0 and
+    source.fixedOf == source and formatted("a.nim", source, Dialect.Module, proofs).fixed.len == 0
 
 
 func operatorsOf(source: string): seq[string] =
@@ -340,7 +349,7 @@ suite "Repair that widens its line":
   test "needless parentheses go, and spacing glues prefix operator they leave, in one round":
     let distances = HEAD & "  let distance_b = (|∙ ⊖(𝐦 ∧ 𝐧)) + (|∘ (𝐦 ∧ ⊖𝐧))\n"
     check distances.fixedOf == HEAD & "  let distance_b = |∙ ⊖(𝐦 ∧ 𝐧) + |∘(𝐦 ∧ ⊖𝐧)\n"
-    check attempted("a.nim", distances, Dialect.Module.stepsOf).attempts == 1
+    check attempted("a.nim", distances, Dialect.Module.stepsOf, distances.provenOf).attempts == 1
     check distances.fixedOf.isSettled
 
 
@@ -349,13 +358,32 @@ suite "Repair that widens its line":
     check wrapped.isSettled  # parentheses rule keeps group power operator needs
     for breach in [HEAD & "  let p = a ^ -b\n", HEAD & "  let p = a ^ (-b)\n"]:
       check breach.fixedOf == wrapped
-      check attempted("a.nim", breach, Dialect.Module.stepsOf).attempts == 1
+      check attempted("a.nim", breach, Dialect.Module.stepsOf, breach.provenOf).attempts == 1
     for (breach, mended) in [
       ("  let p = -1 ^ (k)\n", "  let p = -1^k\n"),  # group of one operand goes (X.4)
       ("  let p = -1 ^ (a * b)\n", "  let p = -1^(a * b)\n"),  # group of math stays
     ]:
       check (HEAD & breach).fixedOf == HEAD & mended
       check (HEAD & mended).isSettled
+
+
+  test "needless parentheses wait for parser: none goes unanswered, and chain asks for each":
+    let
+      source = HEAD & "  let c = ☆(m) ∧ n + ■(k)\n"
+      unanswered = formatted("a.nim", source, Dialect.Module)
+    check unanswered.source == source  # nothing else due, so nothing written
+    check unanswered.asked == @[source]  # source as parentheses step reads it
+    check checkFormatting("a.nim", source, Dialect.Module).len == 0  # no answer, no finding
+    let proofs = source.provenOf
+    check checkFormatting("a.nim", source, Dialect.Module, proofs).mapIt(it.rule) ==
+      @[Rule.NeedlessParentheses, Rule.NeedlessParentheses]
+    let fix = formatted("a.nim", source, Dialect.Module, proofs)
+    check fix.source == HEAD & "  let c = ☆m ∧ n + ■k\n" and fix.asked.len == 0  # all answered
+    let fenced = HEAD & "  #!fix off\n  let c = ☆(m) ∧ n + ■(k)\n  #!fix on\n"
+    check heldOf("a.nim", fenced, Dialect.Module)[0].message.contains("nothing inside breaks")
+    check heldOf("a.nim", fenced, Dialect.Module, fenced.provenOf)[0].message.contains(
+      "needless-parentheses breaks 2 times from line 5",
+    )  # answer for source as given counts its groups
 
 
   test "value after `=` that is no chain keeps one level under its statement":

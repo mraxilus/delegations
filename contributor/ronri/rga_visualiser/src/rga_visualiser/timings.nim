@@ -17,6 +17,8 @@
 
 {.experimental: "strictFuncs".}
 
+import std/macros
+
 when defined(js):
   proc nowMilliseconds*(): float {.sideEffect, importjs: "performance.now()".}
     ## Read page's monotonic clock, in milliseconds.
@@ -106,13 +108,57 @@ proc isTallying*(): bool = IS_TALLYING
   ## Report whether fine breakdowns are gathered this frame.
 
 
+func statementLeaving(body: NimNode, loops: int, labels: seq[string]): NimNode {.compileTime.} =
+  ## Find statement that leaves `body` before its end, or empty node where none does.
+  ##   `return` always leaves. `break` and `continue` leave unless loop or block inside
+  ##   `body` catches them: `loops` counts loops entered so far, `labels` names blocks.
+  ##     Unnamed block enters as empty name: it catches bare `break`, never named one.
+  ##   Routine declared inside is scope of its own: its `return` leaves it, not `body`.
+  case body.kind
+  of nnkReturnStmt:
+    return body
+  of nnkBreakStmt:
+    let is_caught =
+      if body[0].kind == nnkEmpty: loops > 0 or labels.len > 0
+      else: body[0].strVal in labels
+    return (if is_caught: newEmptyNode() else: body)
+  of nnkContinueStmt:
+    return (if loops > 0: newEmptyNode() else: body)
+  of RoutineNodes:
+    return newEmptyNode()
+  else:
+    discard
+  let loops_inner = loops + ord(body.kind in {nnkForStmt, nnkWhileStmt})
+  var labels_inner = labels
+  if body.kind in {nnkBlockStmt, nnkBlockExpr}:
+    labels_inner.add(if body[0].kind == nnkEmpty: "" else: body[0].strVal)
+  for child in body:
+    let leaving = statementLeaving(child, loops_inner, labels_inner)
+    if leaving.kind != nnkEmpty: return leaving
+  newEmptyNode()
+
+
+macro refuseLeaving(body: untyped): untyped =
+  ## Fail build where `body` of `timed` leaves before its end; expand to nothing otherwise.
+  ##   Leaving skips closing clock read: stretch is never charged, and nothing says so.
+  let leaving = statementLeaving(body, 0, @[])
+  if leaving.kind != nnkEmpty:
+    error("Leave timed stretch only at its end, or its time is never charged; got `" &
+      leaving.repr & "` in `timed`.", leaving)
+  newStmtList()
+
+
 template timed*(side: Side, body: untyped) =
   ## Charge whatever `body` does to one side of boundary.
   ##   Never nest two: inner stretch would be counted by both, undetectably.
   ##     Call sites bracket disjoint halves of one proc.
+  ##   Never leave before end: build refuses `return`, and `break` or `continue` no loop or
+  ##   block inside catches (`refuseLeaving`).
+  ##     Closing clock read is last statement, so stretch that leaves is never charged.
   ##   Body runs either way; only two clock reads are skipped.
   ##     One body with guarded pair, not two branches, so measured and unmeasured paths
   ##     cannot differ.
+  refuseLeaving(body)
   let ms_entered_timed = (if IS_TALLYING: nowMilliseconds() else: 0.0)
   body
   if IS_TALLYING: SPENT_SIDE[side] += nowMilliseconds() - ms_entered_timed

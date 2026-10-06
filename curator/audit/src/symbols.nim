@@ -41,7 +41,8 @@
 {.experimental: "strictFuncs".}
 
 import std/[options, os, osproc, sequtils, strutils, tables, tempfiles]
-import ./[compilers, layout, plan, toolchain]
+import ../../knoller/src/knoller
+import ./[layout, plan, toolchain]
 
 
 type
@@ -244,11 +245,8 @@ proc resolve*(root: string, tree: Tree, queries: openArray[Query]): seq[Answer] 
   ## Answer each query through `nimsuggest` of its project's pin; file whose pin nothing serves,
   ##   or which compiles on no backend, is answered unresolved with reason.
   if queries.len == 0: return
-  let
-    running = runningCompiler()
-    cache = cacheRoot(getEnv(CACHE_KEY))
   var
-    bins = initTable[string, Option[string]]()
+    toolchains = initToolchains()
     entries: seq[Entry]
   for query in queries:
     let
@@ -257,8 +255,8 @@ proc resolve*(root: string, tree: Tree, queries: openArray[Query]): seq[Answer] 
     if pin.isNone:
       result.add Answer(path: query.path, reason: "project pins no compiler")
       continue
-    if pin.get notin bins: bins[pin.get] = resolve(pin.get, running, cache)
-    if bins[pin.get].isNone:
+    let bin = toolchains.binFor(pin.get)
+    if bin.isNone:
       result.add Answer(path: query.path, reason: "no compiler serves pin `" & pin.get & "`")
       continue
     let
@@ -270,7 +268,7 @@ proc resolve*(root: string, tree: Tree, queries: openArray[Query]): seq[Answer] 
         root: absolute,
         directory: absolute / directory,
         file: file,
-        bin: bins[pin.get].get,
+        bin: bin.get,
       )
       if "/tests/" in "/" & query.path: entries[^1].defines.add TESTING_DEFINE
       at = entries.high

@@ -177,9 +177,9 @@ func motorOf*(m: Multivector): Motor =
 
 #[ Object Interrogation ]#
 
-func position*(m: Multivector, scale = 0.0): Option[Position] =
-  ## Read Euclidean position of point.
-  ##   None where point lies in horizon, as direction has no place: weight no more than
+func positionInto*(m: Multivector, place: var Position, scale = 0.0): bool =
+  ## Write Euclidean position of point into `place`, and report whether it has one.
+  ##   False where point lies in horizon, as direction has no place: weight no more than
   ##   `TOLERANCE_ABS` of bulk, as `isHorizon` judges it, whatever point's own scale.
   ##   `scale` is for caller that built `m` on spot: its factors' scales multiplied.
   ##     Weight no more than `TOLERANCE_ABS` of it reads none too, so meet whose operands
@@ -187,11 +187,22 @@ func position*(m: Multivector, scale = 0.0): Option[Position] =
   ##   Divides by signed weight rather than weight norm, so antipodal points stay distinct.
   ##   Bulk is read off coefficients, not library's norm: `placeObject` reads every point,
   ##   and `pointFrom` every marker point of every frame.
+  ##   Writes `place` field by field rather than building `Option`: every frame places every
+  ##   point, and each `Option` built is copy on JS backend (read in emitted JS).
   let
     weight = m[Basis.E4]
     bulk = sqrt(m[Basis.E1] * m[Basis.E1] + m[Basis.E2] * m[Basis.E2] + m[Basis.E3] * m[Basis.E3])
-  if abs(weight) <= TOLERANCE_ABS * max(bulk, scale): return
-  some(Position(x: m[Basis.E1] / weight, y: m[Basis.E2] / weight, z: m[Basis.E3] / weight))
+  if abs(weight) <= TOLERANCE_ABS * max(bulk, scale): return false
+  place.x = m[Basis.E1] / weight
+  place.y = m[Basis.E2] / weight
+  place.z = m[Basis.E3] / weight
+  true
+
+
+func position*(m: Multivector, scale = 0.0): Option[Position] =
+  ## Read Euclidean position of point; none where `positionInto` writes none.
+  var place: Position
+  if m.positionInto(place, scale): some(place) else: none(Position)
 
 
 func positionSupport*(m: Multivector): Option[Position] =

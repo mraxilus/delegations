@@ -6,12 +6,12 @@
 | Author  | Claude |
 | Date    | 2026-10-04 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | ed5c4c748d0f0435 |
+| Rules   | ae3641e673d6524d |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: a curator project, from the brief of the Architect. It holds the fixers of `koch fix`
-that read the text of one file and nothing else. The fixers that ask the compiler stay in
-`curator/audit`. There is no vendored source.
+that read the text of one file and nothing else, and the compiler that serves each pin. The fixers
+that ask the compiler stay in `curator/audit`. There is no vendored source.
 
 ## Package
 
@@ -104,13 +104,17 @@ module also takes the idiom checks that the static pass runs, such as `return-re
 
 ## Command line
 
-**`knoller [--check] path...` fixes each Nim file that the paths name.** A directory stands for
-the Nim files that `git ls-files` lists under it. A run writes only the files that change, and
-`--check` writes none. Each line of output names a path, a line and a rule id, and the count comes
-last. A clean run exits 0, and a usage error exits 2. A run exits 1 where a finding is left, or
-where a change is due under `--check`.
+**`knoller [--check] [--nim:path] path...` fixes each Nim file that the paths name.** A directory
+stands for the Nim files that `git ls-files` lists under it. A run writes only the files that
+change, and `--check` writes none. Each line of output names a path, a line and a rule id, and the
+count comes last. A clean run exits 0, and a usage error exits 2. A run exits 1 where a finding is
+left, or where a change is due under `--check`.
 
 - No option sets a style. The rules are constants, and a fence is the only way to keep a layout.
+- `--nim` names the compiler whose parser proves each group of needless parentheses
+  (`## Content fixes`). Without it, each file takes the compiler of the pin above it, else `nim`
+  on `PATH` (`## Compilers`). Where no compiler answers, one line `needless-parentheses warning:`
+  comes before the count, and the exit code stays.
 - A nimble file whose copy `atlas.lock` holds is passed over, because a rewrite would leave the
   copy stale.
 - The module is `command.nim`, because a path spells its words in full (Article V.9), and no
@@ -139,12 +143,132 @@ where a change is due under `--check`.
 - Verified by hand, 2026-10-04: the built binary fixed a scratch file, and a second run wrote
   nothing. A run without a path, and a run with an unknown option, exited 2.
 
+## Compilers
+
+**The command takes one compiler for each file, in a fixed order.** The compiler that `--nim`
+names comes first. Else knoller takes the compiler of the pin in the nearest nimble file at or
+above the directory of the file. Else it takes `nim` on `PATH`. This order (D1 of #548) lets a run
+by hand on the `ronri` projects take their commit pin with no option.
+
+- A pin is `requires "nim == <pin>"`, or `requires "nim#<commit>"` with a full commit, as nimble
+  writes a commit. A range, a branch, a tag and a short commit name no pin. A nimble file that
+  holds one of them gives `nim` on `PATH`. Verified by `suites/test_pins.nim`.
+- The nearest nimble file decides. A package inside another package, with no pin of its own,
+  takes `nim` on `PATH`, and never the pin of the outer package.
+- The files of one compiler form one batch. Each batch asks its own prover and holds its own
+  answers, because two compilers can read one source in two ways. So the files under two pins
+  get one prover for each pin.
+- A pin that no compiler serves proves nothing. The rule removes no group in its files, and the
+  run prints one warning that names the pin. No other compiler stands in (`GUIDE.md`,
+  Toolchain).
+- A directory that holds more than one nimble file has no pin that knoller can trust. Its files
+  prove nothing, and the run prints one warning that names the directory.
+- A warning changes no exit code.
+- A pin resolves when the first file under it asks the parser. So a pin that no file asks about
+  costs no fetch.
+- Verified by `suites/test_command.nim`. `--nim` wins over a pin, and a pin wins over `PATH`. A
+  file with no nimble file above, or under a nimble file of no pin, takes `PATH`. An unserved pin
+  and a directory of two nimble files each warn once, and remove nothing. Two pins get two
+  provers, and each is asked about the files of its own pin alone.
+- In that suite the parser is real for `--nim` and for `PATH`. It is a stub for a pin, because
+  to serve a pin can fetch a compiler.
+
+**Knoller resolves each pin to a compiler, and `curator/audit` imports that resolution.** It
+takes `PATH` where that already serves, then the cache, then a fetch. A release arrives as a
+tarball. A commit comes from a clone of `nim-lang/Nim` and a run of `sh build_all.sh`, which is
+the recipe of `check.yml`. A platform that nim-lang.org publishes no build for takes the same
+recipe.
+
+- Resolution lives in knoller, because the command needs it, and the audit imports knoller and
+  never the reverse (D3 of #548). One copy serves koch, the semantic pass of audit and the
+  command.
+- `Toolchains` holds the compiler of each pin asked so far, and resolves each pin once. It holds
+  a failure too, so a pin that nothing serves costs one try.
+- The cache is `~/.cache/knoller/nim/<pin>`, and `$KNOLLER_NIM_DIR` moves it (D4 of #548). Koch,
+  knoller and `.claude/hooks.sh` all use it, so a machine holds one toolchain for each pin. It
+  sits outside the checkout, because the audit reads untracked files.
+- Everything that resolution prints goes to stderr: its own line, and the output of curl, tar,
+  git and the build, line by line. So the stdout of knoller holds its sorted reports alone.
+- Verified by `suites/test_compilers.nim`. Stub tools that print on both streams leave stdout
+  empty. `PATH` serves its own version, and the cache serves next with no fetch. A failure is
+  held, and the prover of a pin runs the parser of the compiler that serves it.
+- **A half-built toolchain lies.** A probe of `bin/nim` before the `boot` step of the `koch` of
+  Nim finishes returns the bootstrap binary of csources. That binary answers `--version` with an
+  unrelated commit. So a build completes beside its destination, and moves in only when it is
+  done, as a tarball does.
+- Rejected: a directory that a delegate populates by hand, which leaves the defect for anyone
+  who has not. Rejected: the layout of `choosenim`, a second convention that cannot serve a
+  commit pin at all.
+- Cost: the first run on a pin that the machine lacks fetches a release in seconds, or builds a
+  commit in minutes, once. A fetched release takes about 140 MB, and a built commit about
+  2.4 GB, measured below. Nothing prunes them.
+- On CI, the installed compiler of each job serves its pin, so resolution stops at `PATH`.
+
+**The fetched tarball is checked against the digest published beside it.**
+`<tarball url>.sha256` is exactly the output of `sha256sum`, for every release checked.
+`fetchRelease` fetches it, and refuses a tarball whose bytes differ.
+
+- What it defends against, stated rather than overclaimed: the digest comes from the same host
+  over the same TLS as the tarball. So it catches a truncated, mirrored or swapped file, and
+  **not a compromised nim-lang.org**. A signature would answer that, and none is published.
+  `.asc` beside these tarballs is a 404, read rather than assumed.
+- Text that is not a digest reads as *nothing*, rather than as a digest that cannot match. So
+  an error document or an empty answer reports "none published" instead of "mismatch". The two
+  are different failures, and say different things to whoever reads the line.
+- Verified by a break of it, and not by a fetch that happened to pass. `suites/test_compilers.nim`
+  digests a temporary file, changes one byte, and checks that the digest moves. The parse is
+  mutation-tested: drop its hex validation and the suite reddens.
+- Honest limit of that test: the exit-code check of `sha256sum` is belt-and-braces, because the
+  parse already rejects the error text, so no test distinguishes it. It is kept for saying what
+  it means.
+- Verified by hand with koch, 2026-09-10: `2.2.2`, which nothing on the machine served, fetched,
+  digest-checked and unpacked.
+
+**The command takes the commit pin of `pga_benchmark` with no option.** Verified by hand,
+2026-10-05, with the binary built at `db2f90a`. It ran on a copy of `pga_benchmark` in a new git
+repository, with a private cache.
+
+- With no `--nim`, knoller took the pin `27763495b` from `pga_benchmark.nimble`. The cache held
+  no compiler for it, so knoller built one, and that first run took 603 s. A second run took
+  8.1 s, and a run with `--nim` naming the same compiler took 8.4 s.
+- The output of each run without `--nim` equals the output with `--nim`, byte for byte. Each
+  gives one group to fix, `(⊛m)` at line 35 of `proposals/03-partner-sign/laws.nim`. The build
+  printed 717 lines, all on stderr, and stdout held the report alone.
+- On a directory with no nimble file, knoller took `nim` on `PATH`. Its output equals the output
+  with `--nim` naming that compiler, byte for byte.
+- With the pin `0.0.99`, which no release serves, knoller printed one warning that names the pin,
+  and removed nothing. The exit code was 0. The fetch printed its line and the 404 of curl, on
+  stderr alone.
+- Cost, measured on that run: the built toolchain takes 2.4 GB, and its bootstrap tree
+  `csources_v3` takes 2.0 GB of that. The release 2.2.12, fetched, takes 140 MB.
+
 ## Tests
 
 **A test that also reads a check of `curator/audit` stays in the suites of audit.** Such a test
 holds that a fixer of knoller clears what a check of audit reports, so it needs both projects. A
 test that reads knoller alone sits here. A fixture that both suites read is copied, and each copy
 names the other.
+
+**Each case that the review of the PGA library or a delegate report found stands as a regression
+test, end to end (`suites/test_regressions.nim`).** The Architect asked for this on 2026-10-05.
+Each case quotes the source as found and names where it came from. It runs through `formatted`,
+as `koch fix` runs it, and holds the exact output and a second run that writes nothing.
+
+- The cases come from the PGA library at `d9be8ae`, from `dance_ontology` (#539), from
+  `rga_visualiser` (#521), and from the rulings of #533 and #526.
+- A case keeps its domain test in the suite of its rule, which holds the rule over many inputs.
+  The regression suite holds that the case as found is fixed. Neither one alone holds both.
+- A case that 2.2.12 reads rightly asks the parser of 2.2.12, which builds the suite. A case with
+  the glyph operators of the commit pin asks the stub (`suites/stubs.nim`), since the job of
+  knoller runs 2.2.12 alone. The stub gave the verdict of the commit pin on each such case,
+  verified by hand, 2026-10-05.
+- The case of `test_mesh.nim` (#521) leaves no finding under the present rules, because spacing
+  now fixes `)*radius`. So it holds that each report on its lines prints at its line as given.
+  `suites/test_command.nim` holds a finding left at its line as given.
+- Verified by hand, 2026-10-05: the suite ran against the parent of the commit that fixed each
+  case, with a shim that proves nothing. Each case that a commit fixed failed at its parent. A
+  case that holds a bound of its rule, such as `[1 .. ^1]`, passed there.
+- Cost: the suite asks the compiler for each case with candidates, about 6 s in all.
 
 ## Tokens
 
@@ -409,8 +533,8 @@ exception. Verified by `suites/test_spacing.nim`, with each example of the rulin
   a closing bracket. None of them joins an operator run, so no left operand merges with `^`.
   The fixer still passes over such a case, should one ever lex so.
 - The rule of needless parentheses reads a group after `^` as glued, so it keeps `a^(-b)`, and
-  `a ^ (-b)` settles on `a^(-b)` in one round. A group of one plain operand still goes, so
-  `-1 ^ (k)` becomes `-1^k` through the chain. A group that holds math stays, as in
+  `a ^ (-b)` settles on `a^(-b)` in one round. A group of one plain operand goes where the parser
+  proves it, so `-1 ^ (k)` becomes `-1^k` through the chain. A group that holds math stays, as in
   `-1^(int(b.grade) * int(b.gradeAnti))`. Verified by `suites/test_chain.nim`.
 - A `^` that ends its line takes one space before it, as a range does.
 - Spacing moves no parse tree, and the wrap adds one group around the exponent alone. Verified by
@@ -478,38 +602,98 @@ holds the expression after its head.
   `(not a) == b`, so the right parentheses depend on intent.
 - Verified by `suites/test_precedence.nim`. The tree holds no finding of either rule.
 
-**Parentheses that group what the parser groups anyway go, in three kinds alone (X.4).** The
-Architect chose the kinds. Parentheses go around a prefix term that stands as one side of a binary
-operator: `(|∙ ⊖(𝐦 ∧ 𝐧)) + (|∘ (𝐦 ∧ ⊖𝐧))` becomes `|∙ ⊖(𝐦 ∧ 𝐧) + |∘(𝐦 ∧ ⊖𝐧)`. They go
-around one plain operand after a prefix operator, as `■(𝐧)` becomes `■𝐧`. They go around one plain
+**A group of parentheses goes only where the parser of the code's own compiler reads the same
+tree without it (X.4).** The Architect ruled this on 2026-10-05, since a list of special cases
+cannot hold the rule (#539). The scan names candidates of three kinds alone, which the Architect
+chose. A group goes around a prefix term that stands as one side of a binary operator:
+`(|∙ ⊖(𝐦 ∧ 𝐧)) + (|∘ (𝐦 ∧ ⊖𝐧))` becomes `|∙ ⊖(𝐦 ∧ 𝐧) + |∘(𝐦 ∧ ⊖𝐧)`. A group goes around one
+plain operand after a prefix operator, as `■(𝐧)` becomes `■𝐧`. A group goes around one plain
 operand as one side of a binary operator, as `2'u^(DIMENSIONS)` becomes `2'u^DIMENSIONS`.
-Verified by `suites/test_parentheses.nim` and `suites/test_chain.nim`.
 
+- Verified by `suites/test_parentheses.nim`, `suites/test_proofs.nim` and `suites/test_chain.nim`.
 - A plain operand is a name or a literal, with any call, index or field glued after it. A prefix
   term is one or more symbol prefix operators, then one operand. The elements read as
   `precedence.nim` reads them, on the line of the group and inside the bracket around it.
-- A prefix operator binds tighter than any binary one, so `|∙ x + y` reads as `(|∙ x) + y`. So
-  the parse tree changes only by the `nkPar` around one node. Verified by hand, 2026-10-04, with
-  the parser of the commit pin of the `ronri` projects, on the PGA library as `koch fix` writes it.
-- A group around a binary expression stays, whatever its precedence, as the Architect ruled. So
-  `1'u shl (i-1)`, `(2'u^DIMENSIONS) - 1` and the parentheses of X.4 around `and` stay.
-- A group with a suffix glued after it stays, since `■𝐧.x` reads as `■(𝐧.x)`. So do a tuple, a
-  call, a signature and the argument of the command form, which hold a separator or glue to
-  their callee.
-- A group whose removal would glue two tokens into one stays, by the merge guard of
-  `spacing.nim`. That covers `\(/𝐮)`, `^(|𝐦)`, `/(∙𝐦)`, `☆( ⊟ m)` and `-(1)`, which would lex
-  as the literal `-1`.
-- A group after the power operator `^` reads as glued, since spacing always glues `^`. So the
-  guard keeps the wrapped exponent of `a^(-b)`, from `a ^ (-b)` too. Verified by
-  `suites/test_parentheses.nim`.
-- The guard reads the gaps as they stand. So where spacing sets a space beside a glued group,
-  the next round removes it: `back*(-heading)` becomes `back * -heading`, with the same tree.
-  Verified by hand, 2026-10-04, with `knoller --check` on `rga_visualiser`.
-- A prefix term after a command head stays, since `check |∙ x` reads `|∙` as a binary operator.
+- The parser decides each candidate. A probe, which the compiler of the code runs under `nim
+  check`, parses the source with `macros.parseStmt`. A candidate goes where the source without
+  it parses to the same tree, with each group of one child collapsed on both sides.
+- Then the probe removes every candidate that proved alone, together. Where that tree differs,
+  each candidate joins in source order while the set still proves, so the answer is the same on
+  each run. No pair of real groups was found that proves alone and not together: 39,032
+  statements with two candidates or more gave none under 2.2.12. Verified by hand, 2026-10-05,
+  with the scratch programs `gen.nim` and `run.nim`. `suites/test_proofs.nim` drives the fall
+  back with a group named twice.
+- A source that the parser cannot read keeps every group.
+- So `@(x[i])` stays, since the sigil `@` binds `x` before its index. The case as found is
+  `links = @(PAIRS[task.pair][0])`, line 79 of `tests/test_read.nim` of `dance_ontology`. The
+  scan of `main` removed it, and `@PAIRS[task.pair][0]` reads as `(@PAIRS)[task.pair][0]`. So do
+  `@(x.items)`, `@(f(a))` and `@@(x[0])`, and a bare `@(x)` goes.
+- The parser also keeps a group that the scan of `main` read wrongly. In `a - (-b) -1`, the
+  parser reads the group as the callee of the command `(-b) -1`. Without the group, `-` takes the
+  command `b -1`. No guard of the scan looked past `-1`, so `main` removes the group. Found with
+  the parser of 2.2.12, 2026-10-05, and held by `suites/test_proofs.nim`.
+- The proof drops three guards of the scan, since the parser decides their cases. One is the
+  merge guard of `spacing.nim`, as for `-(1)`, `\(/𝐮)` and `^(|𝐦)`. The others guard a glued
+  suffix, as in `(■m).x`, and the head of a command, as in `check (|∙ x)`. Each of those groups
+  still stays, as the parser of the commit pin answers.
+- The guard on the head of a command was too wide. In `doAssert (⊛m) =~ x`, the glued `⊛` reads
+  as a prefix operator, so the commit pin reads the same tree without the group. The group goes
+  now, at line 35 of `proposals/03-partner-sign/laws.nim` of `pga_benchmark`.
+- Two filters stay, and each one only saves runs of the probe. A group after the power operator
+  `^` whose removal would glue the exponent into the operator is no candidate. Spacing glues `^`
+  and wraps that exponent again (X.9), so `a^(-b)` and `a ^ (-b)` keep the group in one round.
+  A group that spans lines or holds a comment is no candidate either.
+- A group around a binary expression is never a candidate, whatever its precedence, as the
+  Architect ruled. So `1'u shl (i-1)`, `(2'u^DIMENSIONS) - 1` and the parentheses of X.4 around
+  `and` stay. A tuple, a call, a signature and the argument of the command form are never
+  candidates either. Each holds a separator or glues to its callee.
+- `checkParentheses` reports only the groups that the proof removes. A source with no answer
+  reports none, so a check never names a group that the fix keeps.
 - Cost: `not` and the other keyword prefix operators are not read. X.4 holds `not` apart, and
   `not(a)` glued would lex as one name.
 - The chain runs the rule before spacing, so `|∘ (` glues as `|∘(` in the same round.
 
+**The caller runs the compiler, so the chain stays pure.** The parentheses step writes what the
+answers in `Proofs` prove. Where no answer holds for the source that it reads, it writes nothing
+and asks (`Fix.asked`). The caller gives every source asked to one run of the compiler, holds the
+answers by source, and fixes again each file that asked. An answer never changes once held, so a
+file that asked nothing gives the same result again. The command line asks at most eight times.
+
+- `koch fix` does the same for each pin (`curator/audit`).
+- A fix of every file each round gives the same outcome (D2 of #548). Verified by
+  `suites/test_command.nim`, where a reference loop fixes every file again. On several files,
+  where some ask over two rounds, one asks through its fence and some ask nothing, both give the
+  same outcome. This holds for a stub parser, for a parser that fails, and for a parser that fails
+  from its second run.
+- The prover is a proc value (`Prover`), so the suites stub it (`suites/stubs.nim`). The stub
+  answers each case as the commit pin of the `ronri` projects answered it, 2026-10-05.
+  `suites/test_proofs.nim` runs the compiler that builds it, 2.2.12 in the job of knoller, and
+  holds the verdicts of the ASCII cases to the real parser.
+- The compiler is the caller's. `koch fix` passes the pin of each project. The command line takes
+  `--nim:path`, else the pin of the nearest nimble file, else `nim` on `PATH` (`## Compilers`).
+- Where the compiler does not run, the rule removes nothing, and the run prints one warning that
+  says why. The exit code stays. Verified by `suites/test_command.nim`.
+- Rejected: the parser of the compiler linked into knoller. The source of the commit pin does not
+  build under the standard library of 2.2.12 (`llstream.nim`: `readRawData`). Knoller builds with
+  2.2.12, and the parser of 2.2.12 lexes the glyph operators of the commit pin as names.
+- Cost: a wrong compiler can prove what the right one refuses. 2.2.12 reads `■m` as one name, so
+  it proves the group of `(■m).x + y`, and the commit pin reads `■m.x` as `■(m.x)`. So `koch fix`
+  and the command line each take the pin of the project. Verified by `suites/test_proofs.nim`.
+- Cost: each round of asking compiles the probe once, about 0.6 s to 0.8 s on this container.
+  Measured 2026-10-05 with `knoller --check`, this head against `main`: `rga_visualiser` took
+  6.0 s against 5.5 s, and `pga_benchmark` 3.1 s against 2.0 s. `dance_ontology` took 5.3 s
+  against 3.6 s, and `curator` 4.2 s against 3.1 s.
+
+**The proof on the PGA library: the parser removes what the scan removed, and nothing more.**
+Verified by hand, 2026-10-05, with the built binary and the commit pin of the `ronri` projects.
+
+- At `edb0c9d`, knoller at `main` and at this head each fix 84 rewrites. The counts by rule are
+  the same, and so is the output, byte for byte. The one group is `(DIMENSIONS)` of
+  `pga/algebra.nim:255`, and both remove it. A second run fixes none.
+- `nim check` reads each of 64 targets with the same result before and after, and `testament
+  all` passes 8 of 8, megatest output OK.
+- At `d9be8ae`, both fix 338 rewrites with the same output, and 49 of them are groups. A second
+  run fixes none.
 
 **A `to<Target>` call of a plain argument takes its subject first (STYLE.md §5).** A plain
 argument is a name, with any call, index or field glued after it. A compound argument, a literal,
