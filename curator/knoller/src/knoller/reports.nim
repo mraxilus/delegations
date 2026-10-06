@@ -2,7 +2,7 @@
 ##   Report names rule rewritten or broken, at path and line; finding of check carries its
 ##     message too, ending with echoed value (Article IV.4). Caller renders both:
 ##     `curator/audit` cites article of each rule, so `koch fix` prints `path:line: <rule>
-##     fixed` as it always has.
+##     (<article>) fixed`.
 ##   Message reads `<sentence>; got <value>.`, or `<sentence>.`, and names no article, since
 ##     knoller runs on any repository; caller cites article where sentence ends (`findingOf` of
 ##     `curator/audit`), and command line names rule by id.
