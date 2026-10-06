@@ -91,6 +91,8 @@ suite "Findings":
       stub = "discard \"\"\"\naction: run\ncmd: \"nim c -r $file\"\njoinable: false\n\"\"\"\n"
       found =
           checkBanners("a.nim", "x = 1\n\n\n#[ Section ]#\n\ny = 2\n") &
+          checkBanners("a.nim", "x = 1\n\n\n\n#[[ Child ]]#\n\ny = 2\n") &
+          checkBanners("a.nim", "x = 1\n\n\n\n#[ Section ]#\ny = 2\n") &
           checkComments("a.nim", "let a = 1 # One.\n") & checkMessages("a.nim", tail) &
           heldOf("a.nims", fenced, Dialect.Script) & faultOf("a.nim", crossing.fenceOf) &
           checkSpacing("a.nim", "let r = 0 .. n\n") &
@@ -102,6 +104,8 @@ suite "Findings":
           checkStubKeys("tests/test_a.nim", stub)
     check found.findingsOf.mapIt(it.message) == @[
       "First-tier banner takes three blank lines before it (X.2); got `2`.",
+      "Second-tier banner takes two blank lines before it (X.2); got `3`.",
+      "Banner takes one blank line after it (X.2); got `0`.",
       "Trailing comment takes two spaces before its marker (X.9); got `1`.",
       "Message ends echoing value in backticks, as ``…; got `{value}`.`` (IV.4); got `$count`.",
       "Fence keeps its lines as written, and inside them expression-spacing breaks once at " &
