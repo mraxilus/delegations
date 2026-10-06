@@ -9,20 +9,15 @@
 import type { Page } from '@playwright/test';
 import { closeDiagnostics, openDiagnostics } from './diagnostics';
 import { loadDemo, objectsLargest } from './demo';
+import { waitUntil } from './clock';
 import { report } from './report';
 
-/** Span both profilers sample over at largest demo, in milliseconds.
+/** Busy samples page pools before both profilers stop, at largest demo.
  *
- *  Page then rests on about 350 busy samples and engine on about 2,900; figures in
- *  `PROVENANCE.md`.
+ *  About 12 s of sampling there, against which engine rests on about 2,900; figures in
+ *  `PROVENANCE.md`. Count rather than span, so slow runner samples as long as it needs.
  */
-const MILLISECONDS_SHARE_COMPARED = 12000;
-
-/** Time for page's last profiler window to stop and hand its trace in, in milliseconds.
- *
- *  Window is 2 s, and trace arrives 12 to 66 ms after its stop; one window and margin.
- */
-const MILLISECONDS_SHARE_LANDED = 2500;
+const SAMPLES_SHARE_COMPARED = 350;
 
 /** Engine's sampling interval, in microseconds: ten times page's, so its error is small. */
 const MICROSECONDS_SAMPLE_ENGINE = 1000;
@@ -119,9 +114,9 @@ export async function driveShareRefused(page: Page): Promise<void> {
  *
  *  Page given here must be served with `Document-Policy: js-profiling`. Largest demo, every
  *  object placed every frame, nothing selected: steady load, so one span of each profiler
- *  reads same work. Both profilers run at once over `MILLISECONDS_SHARE_COMPARED`; page's
- *  last window lands after it. Bound is drawn from both sample counts, so agreement is read
- *  against sampling error rather than against fixed margin.
+ *  reads same work. Both run at once until page has pooled `SAMPLES_SHARE_COMPARED`, and
+ *  engine stops as window that reached it lands. Bound is drawn from both sample counts, so
+ *  agreement is read against sampling error rather than against fixed margin.
  */
 export async function driveShareAgrees(page: Page): Promise<void> {
   await loadDemo(page, await objectsLargest(page));
@@ -130,9 +125,12 @@ export async function driveShareAgrees(page: Page): Promise<void> {
   await engine.send('Profiler.setSamplingInterval', { interval: MICROSECONDS_SAMPLE_ENGINE });
   await openDiagnostics(page);
   await engine.send('Profiler.start');
-  await page.waitForTimeout(MILLISECONDS_SHARE_COMPARED);
+  // Page's count grows only as each window's trace lands, so it is read just after one has.
+  await waitUntil(
+    page, (given) => nimSharePooled().reduce((sum, count) => sum + count, 0) >= given,
+    SAMPLES_SHARE_COMPARED,
+  );
   const { profile } = await engine.send('Profiler.stop');
-  await page.waitForTimeout(MILLISECONDS_SHARE_LANDED);
   const pooled = await page.evaluate(() => nimSharePooled());
   const page_counts: CountsShare = [pooled[0] ?? 0, pooled[1] ?? 0, pooled[2] ?? 0];
   const engine_counts = await countEngine(
