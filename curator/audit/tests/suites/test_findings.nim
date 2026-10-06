@@ -84,6 +84,18 @@ suite "Findings":
     check reports.findingsOf.mapIt(it.path) == @["a.nim", "b.nim"]  # order kept
 
 
+  test "value quoting `; got ` inside code span leaves article where sentence ends":
+    let quoted = initReport("a.nim", 2, Rule.TrailingComment, "Sentence; got `a; got b`.")
+    check quoted.findingOf.message == "Sentence (X.9); got `a; got b`."  # first mark outside span
+
+
+  test "sentence ending in code span right before `; got ` takes article after span":
+    check checkNegations("a.nim", "let b = not a == 3\n").findingsOf.mapIt(it.message) == @[
+      "`not` over binary expression takes parentheses, since Nim reads `not a == b` as " &
+      "`(not a) == b` (X.4); got `not a == 3`.",
+    ]  # real message of `not-over-binary`, through its check
+
+
   test "finding of knoller's check reads as koch prints it, article where sentence ends":
     let
       fenced = "let a = 1\n" & FENCE_OFF & "\nlet b = 1+2\n" & FENCE_ON & "\n"
