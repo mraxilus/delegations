@@ -1615,9 +1615,11 @@ groups with the separator it reads, and a trailing separator goes only where no 
 - A second round catches what a first round enabled, such as a doc that a widened gap pushed
   past `LINE_MAX`. `ROUNDS_MAX` is three, and the tree settles in two. Knoller runs the rounds
   again where a line stays wide, and holds each line that no wrap fits (`## Wraps` of its record).
-- A source that the fixers do not settle keeps the edits of the semantic pass alone. `koch fix`
-  prints a warning with the message of knoller (`unsettledOf`). It cites no article, because the
-  fault is in the tool (D1 a of #572). Verified by `suites/test_fixes.nim`.
+- A source that the fixers do not settle keeps the edits of the semantic pass and of the dead
+  exports alone. `koch fix` prints a warning with the message of knoller (`unsettledOf`). It cites
+  no article, because the fault is in the tool (D1 a of #572). `suites/test_fixes.nim` holds the
+  warning of `unsettledOf` for a fix built by hand, since no source in the suite leaves the fixers
+  unsettled.
 - Verified by `suites/test_fixes.nim`: one source that breaks each layout rule settles in one
   run. Every check then reports none of it, and a second run writes nothing.
 
