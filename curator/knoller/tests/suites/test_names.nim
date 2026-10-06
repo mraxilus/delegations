@@ -196,6 +196,20 @@ suite "Names":
     check "getError" notin foreign.names and "buf" in foreign.names
 
 
+  test "routine carrying any foreign mark among its pragmas keeps its name, and no other does":
+    # Case held: marks stood three times, apart (`MARKS_FOREIGN` of `curator/audit` names, and
+    #   `FOREIGN_PRAGMAS` here, matched as substrings of signature): `{.importobjc.}` was read as
+    #   ours, and parameter `dynlib_path` made routine foreign (#557). Domain is each pragma of
+    #   one list, among pragmas of routine, and each name beside them that holds one.
+    for mark in ["dynlib", "exportc", "exportcpp", "extern", "header", "importc", "importcpp",
+                 "importjs", "importobjc"]:
+      check ("proc getView*() {." & mark & ": \"view\".}\n").breaches.len == 0  # library's name
+      check "getView" notin ("proc getView*() {.inline, " & mark & ".}\n").names
+    check "proc getValue(dynlib_path: string) = discard\n".breaches.mapIt(it[0]) ==
+      @[Rule.ActionVerb]  # parameter named like mark marks nothing
+    check "proc getHeader*(header: string) = discard\n".breaches.mapIt(it[0]) == @[Rule.ActionVerb]
+
+
   test "reach is global under blocks opening no scope, and local under any other":
     for name in ["TOP", "JS_ONLY", "NATIVE", "SECTION", "DEPENDENT", "CALL", "LEFT", "RIGHT"]:
       check BLOCKS.reachIn(name) == Reach.Global  # V.1

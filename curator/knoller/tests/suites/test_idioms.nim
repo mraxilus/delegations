@@ -53,6 +53,18 @@ suite "Idioms":
     check reported("a.nim", below).len == 0  # mark under push counts too
 
 
+  test "STYLE.md §2 push over any foreign mark of one list passes, and name holding one does not":
+    # Case held: marks stood three times, apart (`FOREIGN_MARKS` here matched as substrings of
+    #   block, beside `declared.nim` and `curator/audit` names): `{.push importobjc.}` was
+    #   finding, and routine named `importcount` passed push of `inline` (#557). Domain is each
+    #   pragma of one list, and each name beside pragmas that holds one.
+    for mark in ["dynlib", "exportc", "exportcpp", "extern", "header", "importc", "importcpp",
+                 "importjs", "importobjc"]:
+      check reported("a.nim", module("{.push " & mark & ".}\nproc f()\n{.pop.}\n")).len == 0
+    let named = module("{.push inline.}\nproc importcount() = discard\n{.pop.}\n")
+    check reported("a.nim", named).mapIt(it[0]) == @[Rule.PushForeign]  # name marks nothing
+
+
   test "STYLE.md §6 suite importing std/random seeds it":
     let unseeded = module("import std/[random, unittest]\n\nlet x = rand(1)\n")
     check reported("tests/suites/test_x.nim", unseeded) == @[
