@@ -2,21 +2,16 @@
 
 At pin, a multivector aligns to 8 bytes, as its floats do. A large `seq` of multivectors then
 starts 56 bytes into a 64-byte cache line, so each multivector touches one line more than it
-holds. This proposal adds `alignmentOf`, which gives the alignment of a count of bases from
-that count alone. It is the largest power of two that divides their bytes, and at most 64. So it
-pads no count. A multivector holds 2^D floats, so it aligns to `min(64, size)`, and from three
-dimensions up it fills whole lines.
+holds. A multivector holds 2^D floats, so this proposal aligns it to `min(64, size)`. From three
+dimensions up, it fills whole lines.
 
-This proposal applies at pin and builds on no other. The kinds of P04 hold any count of floats. Each
-kind takes `alignmentOf` of the size of its basis set when it lands, as the Architect ruled on
-2026-10-04. Their timings below are the evidence for that rule.
+This proposal applies at pin and builds on no other. The kinds of P04 hold any count of floats,
+and P04 holds the rule that aligns them.
 
 ## What it is
 
-- **Rule.** `alignmentOf(count)` in `pga/algebra.nim` gives the alignment of `count` bases. It
-  is `min(64, size and -size)`, where `size` is `8 * count`, the bytes of the floats.
-- **Multivector.** Its elements carry `{.align(alignmentOf(ord(Basis.high) + 1)).}`. That is 64
-  bytes at every algebra this project measures. Its size does not change.
+- **Multivector.** Its elements carry `{.align(min(64, sizeof(array[Basis, float])))}`. That is
+  64 bytes at every algebra this project measures. Its size does not change.
 - **Each storage.** The compiler at pin honours the alignment in a `seq`, a `ref`, a global and
   on the stack. `layout.nim` holds the size, the alignment and the address in each of them.
 - **Stack.** A function that keeps a multivector on its own stack aligns its frame to 64 bytes.
@@ -109,54 +104,6 @@ rga4d and cga4d under AVX2, nor on `m + n` and `-m` under AVX-512. An AVX build 
 than SSE2 at each operation: `m ⟑ n` at cga5d takes 259 ns with SSE2 and 346 ns with AVX2 at
 pin.
 
-## Kinds of P04
-
-A kind of P04 holds the count of floats of its bases. So at rga3d a vector holds 3, and
-at cga5d a vector holds 5. The same runs time kinds that hold each count, since they read no
-library. Each kind has its own sum and negation, which return by value, as the library writes
-its operators. On Cascade Lake, the median of 60 runs, time of each alignment over the natural
-one:
-
-| Floats | Natural | 16-byte, size | Sum | Negation | 64-byte, size | Sum | Negation |
-|--------|---------|---------------|-----|----------|---------------|-----|----------|
-| 3 | 24 B | 32 B | ×2.71 | ×4.54 | 64 B | ×2.98 | ×4.90 |
-| 4 | 32 B | 32 B | ×0.83 | ×0.90 | 64 B | ×1.49 | ×1.61 |
-| 5 | 40 B | 48 B | ×2.09 | ×2.20 | 64 B | ×2.13 | ×2.36 |
-| 6 | 48 B | 48 B | ×0.88 | ×0.90 | 64 B | ×0.92 | ×0.99 |
-| 8 | 64 B | 64 B | ×0.77 | ×0.83 | 64 B | ×0.74 | ×0.76 |
-| 10 | 80 B | 80 B | ×0.89 | ×0.89 | 128 B | ×1.18 | ×1.32 |
-| 16 | 128 B | 128 B | ×0.81 | ×0.89 | 128 B | ×0.78 | ×0.79 |
-
-On Cascade Lake, each kind that an alignment pads runs slower, except 6 floats at 64 bytes.
-Each kind that it does not pad runs faster. On Emerald Rapids, under SSE2, AVX2 and AVX-512, 3
-and 5 floats padded to 16 bytes run ×2.6 to ×5.6. There, a kind that an alignment does not pad
-runs at most ×1.11.
-
-At 16 bytes the cause is in the machine code. The copy of a padded result reads its last 16
-bytes in one load. That load spans two 8-byte stores, the last float and the zeroed padding,
-and the processor cannot forward it.
-
-So a kind takes the alignment that pads it at no count. `alignmentOf` gives it from the size of
-the basis set of the kind alone. Each range below is the sum and the negation, on Cascade Lake
-and on Emerald Rapids under SSE2, AVX2 and AVX-512:
-
-| Floats | Kinds | Bytes | `alignmentOf` | Time over natural |
-|--------|-------|-------|---------------|-------------------|
-| 3 | rga3d point and line | 24 | 8, natural | ×1 |
-| 4 | rga3d motor and flector, rga4d point and plane | 32 | 32 | ×0.85 to ×1.17, Emerald Rapids |
-| 5 | cga5d round point and sphere | 40 | 8, natural | ×1 |
-| 6 | rga4d line | 48 | 16 | ×0.86 to ×1.08 |
-| 8 | rga4d motor and flector | 64 | 64 | ×0.65 to ×1.11 |
-| 10 | cga5d dipole and circle | 80 | 16 | ×0.86 to ×1.00 |
-| 16 | cga5d even and odd parts | 128 | 64 | ×0.76 to ×0.97 |
-
-The kind of 4 floats is timed at 32 bytes on Emerald Rapids alone, on 2026-10-04: 20 executions
-under each of SSE2, AVX2 and AVX-512. It pads nothing there, and it gains nothing over 16 bytes,
-which reads ×0.86 to ×1.00 in the same runs. So 32 bytes is safe for that count, and not better.
-
-A kind of an odd count keeps 8 bytes, so it can still cross a line. Only padding would prevent
-that, and padding costs more than the line.
-
 ## Limits
 
 - Both machines are Intel Xeons. An AMD or an ARM core is not measured.
@@ -170,11 +117,6 @@ that, and padding costs more than the line.
 - `timing.nim` times 7 operations, each in a procedure of its own. With SSE2 and 64 bytes, the
   compiler realigns the stack in 2 or 3 of them, and at pin in none. With AVX2 or AVX-512 and
   64 bytes, it realigns all 7, and at pin 5 or 6. No timing isolates that cost.
-- Cascade Lake does not time the kind of 4 floats at 32 bytes. Under AVX2 its sum ranged ×0.86
-  to ×1.47 over 20 executions on Emerald Rapids.
-- At pin, `align` of an expression of a generic parameter stops the compiler. So the generic
-  kind of P04 chooses among 8, 16, 32 and 64 through `when`. The macro that names its kinds
-  knows each count when it runs, and writes the number.
 - `timing.nim` exits zero when it runs. Its figures never guard.
 
 ## Alternatives weighed
@@ -184,8 +126,6 @@ that, and padding costs more than the line.
 | Natural alignment, as pin | Large `seq` starts 56 bytes into a line; each element spans one more |
 | 16 bytes | Times as 64 bytes on large `seq`s, but finds a line start only through the header |
 | 32 bytes | Starts 32 bytes into a line, and gains nothing on `-m` at some algebras |
-| 64 bytes for each kind | Pads 3, 4, 5, 6 and 10 floats; most padded kinds ran slower |
-| `align` of an expression of `B` | Pinned compiler stops: "cannot generate code for: B" |
 
 ## Open decisions
 

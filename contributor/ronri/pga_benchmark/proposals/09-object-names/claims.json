@@ -1,0 +1,5 @@
+{
+  "status": "proposed",
+  "builds_on": ["exact-kinds"],
+  "claims": []
+}

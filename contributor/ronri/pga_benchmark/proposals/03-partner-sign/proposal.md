@@ -5,8 +5,8 @@ grade. This proposal folds that sign into the first table of the partner instead
 of each term. It also folds the carrier into the antiwedge that follows. So the partner is two
 generated tables in a chain, with no grade scan and no scale.
 
-This proposal builds on P01, `cayley-derivation`. It reads `applyMap`, `CAYLEY_CONTAINER` and
-`CAYLEY_CARRIER`, which P01 adds.
+This proposal builds on P01, `cayley-derivation`, and on P08, `compound-tables`. It reads
+`applyMap` of P01, `CAYLEY_CONTAINER` of P08, and `CAYLEY_CARRIER`, which the pin has.
 
 ## What it is
 
@@ -27,12 +27,13 @@ The partner at cga5d, as the inspector counts the C of the bench, at pin `312134
 | Build | Multiplies | Zero fills | Error checks | Lines | Bytes moved |
 |-------|------------|------------|--------------|-------|-------------|
 | Pin | 518 | 108 | 271 | 2710 | 30720 |
-| P01 alone | 437 | 104 | 268 | 2621 | 28672 |
-| P01 and this proposal | 324 | 3 | 2 | 83 | 2048 |
+| P01 and P08 | 437 | 104 | 268 | 2621 | 28672 |
+| P01, P08 and this proposal | 324 | 3 | 2 | 83 | 2048 |
 
 324 is the chain bound of the partner: 162 for each folded table. Five alternating runs on
-2026-10-02 time the partner at ×0.44 to ×0.53 of the pin, over every operand kind. P01 alone
-timed ×0.65 to ×0.72 on 2026-10-01. The same container took both.
+2026-10-02 time the partner at ×0.44 to ×0.53 of the pin, over every operand kind. P01 and P08
+timed ×0.65 to ×0.72 on 2026-10-01. The same container took both. P01 held the tables of P08
+until 2026-10-07, so its figures stand for both.
 
 ## Limits
 

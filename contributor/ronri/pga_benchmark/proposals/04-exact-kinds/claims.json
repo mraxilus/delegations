@@ -6,6 +6,16 @@
       "kind": "program",
       "path": "prototype.nim",
       "algebras": ["rga3d", "rga4d", "cga4d", "cga5d"]
+    },
+    {
+      "kind": "program",
+      "path": "align.nim",
+      "algebras": ["rga4d"]
+    },
+    {
+      "kind": "program",
+      "path": "timing.nim",
+      "algebras": ["rga4d"]
     }
   ]
 }

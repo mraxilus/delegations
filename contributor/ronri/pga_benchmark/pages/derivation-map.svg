@@ -82,9 +82,9 @@
   <text class="small" x="380" y="296" text-anchor="middle">over bases 𝐜 of one grade</text>
 </g>
 <g><rect class="box" x="528" y="240" width="208" height="72" rx="8"/>
-  <text class="strong" x="632" y="264" text-anchor="middle">Compound maps</text>
-  <text class="small" x="632" y="280" text-anchor="middle">⊖  ⊟  ⊞  ⊙  ⊡  ∩  ∪</text>
-  <text class="small" x="632" y="296" text-anchor="middle">applyConstant, applyMap</text>
+  <text class="strong" x="632" y="264" text-anchor="middle">Constant operands</text>
+  <text class="small" x="632" y="280" text-anchor="middle">⊖  ⊟</text>
+  <text class="small" x="632" y="296" text-anchor="middle">applyConstant</text>
 </g>
 <text class="quiet" x="136" y="334">filterGrades</text>
 <text class="quiet" x="388" y="334">signed sum</text>
