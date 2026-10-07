@@ -137,6 +137,7 @@ checked against.
 [docket]: https://claude.ai/artifact/XyT583x9RnTKixers2q4gT
 [marginalia]: https://claude.ai/artifact/6WwLfdHiisCtGWUcFxibBM
 [proposals]: https://claude.ai/artifact/CW9ZL5eotsVYrZPjMnTLoG
+
 [cayley-derivation]: https://claude.ai/artifact/2fi2hTpobqChXSTPq4vB6q
 [typed-multivectors]: https://claude.ai/artifact/V34TAWXNvrHBGN9fNBWYWX
 [partner-sign]: https://claude.ai/artifact/2fUYLonsQo7ejouCvCnpWf
