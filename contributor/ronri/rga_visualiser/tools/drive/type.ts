@@ -58,13 +58,17 @@ async function openDrawer(page: Page): Promise<void> {
  */
 export async function driveTypeRoles(page: Page): Promise<void> {
   await openDrawer(page);
-  const loaded = await page.evaluate((faces) => faces.map(
-    (face) => document.fonts.check(`13px "${face}"`),
-  ), [FACE_TITLE, FACE_BODY, FACE_CODE]);
+  // Each face asked its own status: `document.fonts.check` answers true where no face matches
+  //   at all, as where other set of faces in family wins weight asked.
+  const faces = await page.evaluate(() => [...document.fonts].map((face) => ({
+    name: `${face.family.replace(/"/g, '')} ${face.weight}`, status: face.status,
+  })));
+  const unloaded = faces.filter((face) => face.status !== 'loaded').map((face) => face.name);
   report(
     'every face the page embeds is loaded, not merely named',
-    loaded.every((is_there) => is_there),
-    `${FACE_TITLE} ${loaded[0]}, ${FACE_BODY} ${loaded[1]}, ${FACE_CODE} ${loaded[2]}`,
+    faces.length > 0 && unloaded.length === 0,
+    `${faces.length - unloaded.length} of ${faces.length} faces loaded; unloaded ` +
+      `${unloaded.length === 0 ? 'none' : unloaded.join(', ')}`,
   );
 
   const family_title = await familyOf(page, '.section-header');

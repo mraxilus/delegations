@@ -1081,7 +1081,7 @@ proc nimFramesExceedance(): cint {.exportc.} = cint(FRAMES_EXCEEDANCE)
   ## Report how many recent frames page's exceedance curve summarises.
 
 
-var RING_SHARE_PAGE = initRingShare()
+var RING_SHARE_PAGE = initRingShare[CountsShare]()
   ## Pool page's PGA share over `share.SECONDS_SHARE`, as desktop's `main.RING_SHARE` does.
   ##   Browser's profiler hands page its samples; `share` names their owners and pools them.
 
@@ -1101,6 +1101,20 @@ proc nimSharePooled(): seq[cint] {.exportc.} =
   ## Report busy samples pooled over `share.SECONDS_SHARE`, in `share.Owner` order.
   let pooled = RING_SHARE_PAGE.pooled(int(nowMilliseconds() / 1000.0))
   for owner in Owner: result.add cint(pooled[owner])
+
+
+var RING_CROSSING_PAGE = initRingShare[CountsCrossing]()
+  ## Pool values crossing boundary over `share.SECONDS_SHARE`, as desktop's
+  ##   `main.RING_CROSSING` does; `nimBuildFrame` drains `boundary`'s tally into it.
+
+proc nimSetCountingCrossings(is_counting: bool) {.exportc.} = setCountingCrossings(is_counting)
+  ## Open or close tally of values crossing boundary; page opens it while diagnostics show.
+
+proc nimCrossingsPooled(): seq[cint] {.exportc.} =
+  ## Report frames and values crossing each way, pooled over `share.SECONDS_SHARE`.
+  ##   In `boundary.Crossing` order: frames, euclidean to algebra, algebra to euclidean.
+  let pooled = RING_CROSSING_PAGE.pooled(int(nowMilliseconds() / 1000.0))
+  for way in Crossing: result.add cint(pooled[way])
 
 
 proc nimShadeAmbient(): cfloat {.exportc.} = cfloat(FRACTION_AMBIENT_SHADE)
@@ -2569,6 +2583,8 @@ proc nimBuildFrame(
   #   caller omitting it passes `undefined`, falsy, so natural way round would silently
   #   turn measurement off.
   setTallying(not is_tally_skipped)
+  # Take values that crossed boundary since last frame began, as that frame's.
+  RING_CROSSING_PAGE.add(int(nowMilliseconds() / 1000.0), drainCrossings())
   # Forget last frame's two sides, and turn record pair over.
   #   What was measured between frames (hover picking) is then readable while this frame
   #   reports it.

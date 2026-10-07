@@ -35,6 +35,7 @@ type Finding* = object  ## Define one rule violation located at path and line.
 
 
 const CITATIONS*: array[Rule, string] = [
+  Rule.Conversion: "STYLE.md §5",
   Rule.WhitespaceTrailing: "VIII.5",
   Rule.FileEnding: "VIII.5",
   Rule.LineEnding: "VIII.5",
