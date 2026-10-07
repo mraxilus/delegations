@@ -1,50 +1,50 @@
 {
   "docket": {
     "url": "https://claude.ai/artifact/XyT583x9RnTKixers2q4gT",
-    "digest": "77b1eb49bc2eb15b"
+    "digest": "4eb79698e9308db1"
   },
   "marginalia": {
     "url": "https://claude.ai/artifact/6WwLfdHiisCtGWUcFxibBM",
-    "digest": "1c3e9606878ed3d9"
+    "digest": "d7876af949a05a36"
   },
   "cayley-derivation": {
     "url": "https://claude.ai/artifact/2fi2hTpobqChXSTPq4vB6q",
-    "digest": "4f80ea584d06b896"
+    "digest": "426f4694b9775f82"
   },
   "typed-multivectors": {
     "url": "https://claude.ai/artifact/V34TAWXNvrHBGN9fNBWYWX",
-    "digest": "d107db8f229c497f"
+    "digest": "c5ac4f89bb5e6664"
   },
   "partner-sign": {
     "url": "https://claude.ai/artifact/2fUYLonsQo7ejouCvCnpWf",
-    "digest": "7044be000907c8c0"
+    "digest": "ee518cb3ebe6a8f6"
   },
   "exact-kinds": {
     "url": "https://claude.ai/artifact/UPfjVLGbsVLBz756DMkPJe",
-    "digest": "e9a10ce31c7d1946"
+    "digest": "d70b47a0d52ac1f9"
   },
   "multivector-align": {
     "url": "https://claude.ai/artifact/AB3BNtWPEzguWswwnx5ckh",
-    "digest": "7f1115bf53c4f93b"
+    "digest": "a981b92404e98409"
   },
   "proposals": {
     "url": "https://claude.ai/artifact/CW9ZL5eotsVYrZPjMnTLoG",
-    "digest": "ee2ec60c02a20278"
+    "digest": "0e5b49b0094f33bf"
   },
   "float-width": {
     "url": "https://claude.ai/artifact/Q3R1yz93Drk7Cwq5qhymDZ",
-    "digest": "be54a2ea71bbfd7c"
+    "digest": "57468f31e6c58555"
   },
   "part-scale": {
     "url": "https://claude.ai/artifact/6hW9rjiotnjdjBVwatW5Dj",
-    "digest": "1ac54be7c3e6eb27"
+    "digest": "8f5ccb1d1a615fb5"
   },
   "compound-tables": {
     "url": "https://claude.ai/artifact/TczTs551nkXVaWiyHzfVAn",
-    "digest": "b69a2fe103d41fab"
+    "digest": "25aa9fe850cd3c75"
   },
   "object-names": {
     "url": "https://claude.ai/artifact/XtPy7LToDTT2P8S1FfGauX",
-    "digest": "0307b150b7c77738"
+    "digest": "0a4a42e6c8f9e430"
   }
 }
