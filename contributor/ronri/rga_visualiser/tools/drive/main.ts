@@ -58,7 +58,7 @@ import { driveShadedFromAbove } from './shade';
 import { driveStyleDeclared } from './style';
 import { driveSurfacesFilled } from './surface';
 import { driveHeapUnit, drivePhaseSums, driveTree } from './diagnostics';
-import { driveShareAgrees, driveShareRefused } from './share';
+import { driveCrossingsCounted, driveShareAgrees, driveShareRefused } from './share';
 import { driveAxis, driveAxisGlide, driveCurve, driveScaleSwitch } from './exceedance';
 import { driveSums, driveTint, openEveryBranch } from './ramp';
 import {
@@ -311,6 +311,7 @@ async function driveMeasured(browser: Browser): Promise<void> {
 
   await driveFrameWork(page);
   await driveShareRefused(page);
+  await driveCrossingsCounted(page);
   await drivePhaseSums(page);
   await driveTree(page);
   await driveTint(page);

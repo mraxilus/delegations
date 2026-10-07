@@ -3,7 +3,7 @@
 {.experimental: "strictFuncs".}
 
 import ./fixtures
-import ../../src/rga_visualiser/share
+import ../../src/rga_visualiser/[boundary, share]
 when not defined(js):
   import std/times
   import ../../src/desktop/sampler
@@ -86,7 +86,7 @@ suite "Share":
 
 
   test "the ring pools the last twenty seconds, and forgets a second that left them":
-    var ring = initRingShare()
+    var ring = initRingShare[CountsShare]()
     ring.add(
       100,
       [Owner.Rest: 6, Owner.Pga: 3, Owner.Algebra: 1, Owner.Boundary: 0,
@@ -117,7 +117,35 @@ suite "Share":
     )
     check ring.pooled(120) == [Owner.Rest: 11, Owner.Pga: 10, Owner.Algebra: 0,
       Owner.Boundary: 0, Owner.Euclidean: 0]
-    check initRingShare().pooled(0).percentOf(Owner.Pga) == 0.0
+    check initRingShare[CountsShare]().pooled(0).percentOf(Owner.Pga) == 0.0
+
+
+  test "each value that crosses the boundary counts once, each way, while the tally is open":
+    # One drain is one frame, and frame counts only while tally is open.
+    discard drainCrossings()
+    discard Position(x: 1, y: 2, z: 3).toMultivector
+    check drainCrossings() == default(CountsCrossing)
+    setCountingCrossings(true)
+    let place = Position(x: 1, y: 2, z: 3).toMultivector
+    discard place.position
+    discard Motor().toMultivector.motorOf
+    discard Direction(x: 0, y: 2, z: 0).toMultivector.directionFrom
+    # Weightless point names no place, so read refuses and nothing leaves algebra.
+    discard Direction(x: 0, y: 0, z: 1).toMultivector.position
+    let counts = drainCrossings()
+    setCountingCrossings(false)
+    check counts == [Crossing.Frames: 1, Crossing.ToAlgebra: 4, Crossing.ToEuclidean: 3]
+    check drainCrossings() == default(CountsCrossing)
+
+
+  test "the ring pools crossings as it pools samples, as a mean for each frame":
+    var ring = initRingShare[CountsCrossing]()
+    ring.add(5, [Crossing.Frames: 1, Crossing.ToAlgebra: 10, Crossing.ToEuclidean: 30])
+    ring.add(5, [Crossing.Frames: 1, Crossing.ToAlgebra: 20, Crossing.ToEuclidean: 50])
+    let pooled = ring.pooled(5)
+    check pooled.perFrame(Crossing.ToAlgebra) == 15.0
+    check pooled.perFrame(Crossing.ToEuclidean) == 40.0
+    check initRingShare[CountsCrossing]().pooled(0).perFrame(Crossing.ToAlgebra) == 0.0
 
 
   when not defined(js):

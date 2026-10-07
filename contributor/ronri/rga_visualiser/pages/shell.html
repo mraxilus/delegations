@@ -991,6 +991,10 @@
     justify-content: space-between;
   }
   .diagnostic-line b { color: var(--ink); font-variant-numeric: tabular-nums; }
+  /* Label's line box set by its own size, not by every face it draws from: arrow of
+     crossing rows comes from maths face, whose taller box would stand its row 5 px above
+     others. */
+  .diagnostic-line > span { line-height: 1; }
   /* Parent row is button so it is reachable by keyboard and announced as one, and is
      otherwise same row: chevron and its rotation match section headers above,
      since both answer "there is more under here". */
@@ -1415,6 +1419,12 @@
           ><b id="diagnostic-share-boundary">&mdash;</b></div>
         <div class="diagnostic-line"><span>@WORD:NameDiagnosticsEuclidean@</span
           ><b id="diagnostic-share-euclidean">&mdash;</b></div>
+        <!-- Values crossing algebra boundary each way, as mean for each frame over same 20
+             seconds, counted by `boundary` itself; see `tickCrossings`. Desktop shows same. -->
+        <div class="diagnostic-line"><span>@WORD:NameDiagnosticsToAlgebra@</span
+          ><b id="diagnostic-crossing-to-algebra">&mdash;</b></div>
+        <div class="diagnostic-line"><span>@WORD:NameDiagnosticsToEuclidean@</span
+          ><b id="diagnostic-crossing-to-euclidean">&mdash;</b></div>
         <!-- Each step of drawing process, as `mean over last 200 ms (median over
              whole ring)` in ms, so reader can see where frame went rather than one
              opaque total. Short mean is what to watch while changing something and

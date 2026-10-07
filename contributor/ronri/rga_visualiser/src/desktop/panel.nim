@@ -283,6 +283,8 @@ type
       ## Computed where every piece is visible, since `panel` cannot see arenas' backing
       ## storage.
     counts_share*: CountsShare  ## Snapshot of samples pooled over `share.SECONDS_SHARE`.
+    counts_crossing*: CountsCrossing
+      ## Snapshot of values crossing boundary, pooled over same window.
     is_diagnostics_open*: bool  ## Say whether diagnostics section was open last frame.
       ## Sampler runs only while it is, so share costs nothing nobody reads.
 
@@ -1124,7 +1126,8 @@ proc layoutDiagnosticsFrameTime(panel: var Panel) =
 
 proc layoutDiagnosticsShare(panel: Panel) =
   ## Lay out "PGA share" section: share of busy samples in PGA and on each side of boundary.
-  ##   Build that cannot sample says why, in place of every figure.
+  ##   Build that cannot sample says why, in place of every share.
+  ##   Values crossing boundary each way follow, as mean for each frame over same window.
   gui.separatorText wordingText(NameDiagnosticsShare)
   when not defined(linux):
     gui.textWrapped wordingText(NoteDiagnosticsShareLinux)
@@ -1152,6 +1155,28 @@ proc layoutDiagnosticsShare(panel: Panel) =
       gui.text(text_share)
       gui.monoPop()
       gui.tooltip wordingText(tip)
+  # Values crossing boundary need no sampler, so they stand on every build.
+  let rows_crossing = [
+    (Crossing.ToAlgebra, NameDiagnosticsToAlgebra, TipDiagnosticsToAlgebra),
+    (Crossing.ToEuclidean, NameDiagnosticsToEuclidean, TipDiagnosticsToEuclidean),
+  ]
+  for (way, name, tip) in rows_crossing:
+    gui.textTinted(wordingText(name), INK_LABEL.red, INK_LABEL.green, INK_LABEL.blue)
+    gui.sameLine()
+    var line: array[WIDTH_OVERLAY_TEXT, char]
+    let
+      frames = panel.counts_crossing[Crossing.Frames]
+      text_crossing =
+        if frames == 0: wordingText(NoteDiagnosticsCrossingWaiting)
+        else:
+          buildChars(line):
+            appendFixed(line, cursor, panel.counts_crossing.perFrame(way), 1)
+            appendChars(line, cursor, ", n ")
+            appendInt(line, cursor, frames)
+    gui.monoPush()
+    gui.text(text_crossing)
+    gui.monoPop()
+    gui.tooltip wordingText(tip)
 
 
 proc layoutDiagnosticsMemory(panel: Panel) =
