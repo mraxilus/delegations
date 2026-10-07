@@ -1995,7 +1995,8 @@ On the desktop, each field holds a double, and never rounds to the four digits t
 
 Azimuth and elevation stand beside it as readings in degrees, and are never typed: two numbers name
 no roll. The separation shows only with a selection, which the frame rule measures it from. The
-speed of flight shows only without one, as a multiple of `SPEED_LIGHT` (`interaction.speedFlying`).
+ship's speed shows only without one, as a multiple of `SPEED_LIGHT` (`interaction.speedFlying`). It
+reads the speed that `+` and `-` set, whether a key is held or not.
 
 *Checked.* Verified by `suites.nim`:
 
@@ -2043,15 +2044,23 @@ readers one read of the stance, which no check counts.
 
 **The wheel zooms toward the object the pointer is over**, which is the map reading of a zoom.
 `picking.anchorZoomAt` answers that object alone, in both states. Where none answers, the wheel
-dollies about the middle of the frame, or travels the pointer's own ray in free flight. To point at
-something means *that thing, at the depth it stands at*. Rejected: the ground at `z = 0`, which
-the world does not have, and the level through the pivot, which names no place a reader points at.
+with a selection dollies about the middle of the frame. The wheel in free flight then does nothing,
+since it has nothing to come in to (repository issue 535). A pinch takes the same rule at the middle
+of the frame.
 
-**The object is taken only where its depth is within `FACTOR_ANCHOR_DEPTH` 2 of the orbit
-distance, either way.** An anchor on a star a thousand units off slides the eye 38% of the way
-toward it for each notch. Six off-centre notches carried the pivot 1,737 units, against 5 with the
-window. Horizon objects are refused, because they are at no place. The price is the jump: two
+To point at something means *that thing, at the depth it stands at*. Rejected: the ground at
+`z = 0`, which the world does not have, and the level through the pivot, which names no place a
+reader points at.
+
+**With a selection, the object is taken only where its depth is within `FACTOR_ANCHOR_DEPTH` 2 of
+the orbit distance, either way.** An anchor on a star a thousand units off slides the eye 38% of the
+way toward it for each notch. Six off-centre notches carried the pivot 1,737 units, against 5 with
+the window. Horizon objects are refused, because they are at no place. The price is the jump: two
 notches taken either side of the edge of an object converge on different depths.
+
+In free flight the object is taken at any depth. There the wheel refers to the object under the
+pointer, and a star under the pointer is that object. Key flight no longer changes the separation,
+so a band about it would refuse every object once a flight had moved on.
 
 **The zoom stops where a point fills the frame.** Nearer shows nothing more of it. There its
 sphere reaches every corner, and the point is backdrop; see Picking. `picking.depthFilling` solves
@@ -2112,52 +2121,52 @@ either verb as the selection comes and goes.
 The axes are the camera's own and never the world's, so there is no pole and no clamp. Eight pitches
 of a quarter radian compose to exactly two radians, which is past straight down.
 
-**The speed climbs toward a cap and never reaches it.** `speedTravelling` is the cap times
-`1 − e^(−t/τ)`. τ is `SECONDS_SPEED_RISE`, 0.6 s: 63 percent of the cap at one τ, and 95 percent at
-three.
+**The speed climbs toward the ship's own speed and never reaches it.** `speedTravelling` is that
+speed times `1 − e^(−t/τ)`. τ is `SECONDS_SPEED_RISE`, 0.6 s: 63 percent of it at one τ, and 95
+percent at three.
 
 `distanceTravelled` integrates that across a frame rather than sampling it. A 144 Hz reader and a
 60 Hz one then cover the same ground over the same hold. It is the rule that `FACTOR_DOLLY_SECOND`
 already compounds under.
 
-The cap is the smaller of a local scale and a fixed ceiling. The local scale is
-`FACTOR_SPEED_LOCAL`, 1.2 depths under the pointer for each second. That is the flat rate the ground
-slide ran at, so a long hold settles on the speed the build already had. A reader pointing at a moon
-crosses the moon's own distance in the time a reader pointing at a star crosses the star's.
+**The ship's speed is the camera's own, as a ship's is** (repository issue 535).
+`Interaction.speed_ship` is the speed key flight climbs toward. Nothing under the pointer sets it,
+and neither does the pivot. It opens at `camera.speedOpening`, the separation of the opening view
+for each second: 19 units on a wide frame. `home` leaves it, as it leaves the lens.
 
-Over empty sky the pointer reports no depth, and the camera's own scale answers instead. The ceiling
-alone there threw the reader out of the solar system in half a second. It covered 51 055 units
-against a band of 4 to 25. The ceiling bounds a local reading, and is no reading of its own.
+Held `+` and `-` scale it by `FACTOR_DOLLY_SECOND`, 4 for each second, as they scale the separation
+with a selection. With a selection, they still dolly. Nothing moves while they set the speed.
+
+Rejected: a cap of 1.2 depths under the pointer, with the separation over empty sky. Flight ahead
+spent the separation, so the cap ran down with it. In four spans of 10 s over empty sky, the eye
+moved 19.0, then 2.2e-4, then 2.3e-9, then 1.1e-12 units. The separation fell to 1e-13.
+Rejected: a speed read from the nearest object. A ship needs no other object to move.
 
 `SPEED_CEILING` is 300 000 units for each second. It crosses the reach of the star field, about 6.5
-million units, in about 22 seconds.
+million units, in about 22 seconds. `SPEED_FLOOR` is the near floor for each second. It keeps the
+speed off zero, so `+` climbs back from it by a factor, as it climbs from anywhere.
 
 `SPEED_LIGHT` is 1/499 units for each second, because light crosses an astronomical unit in 499
 seconds. It is a reporting unit and never a cap. The ceiling is about 1.5 × 10⁸ of it. A camera held
 to *c* would take two and a half hours to cross the opening view of 19 units.
 
-**The depth under the pointer is stamped in `updateHover`, and stamped through flight.**
-`Interaction.depth_pointer` is none where the pointer is over nothing. The pick runs while a travel
-key is held, as well as while the camera stands. The cap then follows the pointer rather than
-freezing where the key went down. The ring stays off while the camera moves. That costs one pick
-for each frame of flight, which is what a still frame already pays.
+**The depth under the pointer is stamped in `updateHover`, while the camera stands.**
+`Interaction.depth_pointer` is none where the pointer is over nothing. A right drag in free flight
+holds it as it begins. No speed reads it, so the pick does not run while a travel key is held, as
+it does not run under a drag.
 
 `seconds_travelling` is one age for the whole travel set, and not one for each key. Releasing `w`
 and pressing `s` keeps the speed up, which is what a reader means by turning round mid-flight.
 `releaseKey` drops it to zero once the last travel key is up, so a flight taken up again after a
 pause starts from rest.
 
-**Flight ahead spends the separation, and a strafe carries it along.** `flyAhead` slides the eye
-along the sight and holds the pivot where it stands, so the separation gives up exactly what the eye
-covered. The frustum and the furniture read that separation, so both track the flight.
+**Flight carries the pivot along, in every direction.** `travel` slides the whole camera, so the
+separation stays as it was. The frustum and the furniture read the nearest drawn object ahead, and
+not the separation. So flying at a planet draws its near clip in; see below.
 
-Sliding the whole camera instead keeps the separation. The near clip of the stance the reader set
-off from then eats a planet before the eye reaches it. The near plane is one four-hundredth of the
-separation. That is a fortieth of a unit at the opening stance, against a planet millionths of a
-unit wide.
-
-A strafe and a rise carry the pivot along instead. What stands ahead keeps its depth as the camera
-steps sideways.
+Rejected: flight ahead that held the pivot and spent the separation. It once kept the near clip on
+the scale of the flight, while the frustum read the separation. With the frustum on the nearest
+object, it only ran the speed down.
 
 **The frustum and the furniture read what stands ahead, and never the separation.**
 `Camera.reach_near` is the reach from the eye to the nearest drawn object ahead. `scaleLocal` hands
@@ -2171,8 +2180,8 @@ It is the object's own middle, with no drawn radius taken off. A camera at a pla
 reads that planet's radius rather than zero. A near clip of one four-hundredth of that still holds
 the whole planet.
 
-It is never the pointer's own depth, which `capTravelling` reads. A pointer figure would move the
-furniture at every pointer move, and the depth mapping too, while the camera stood still.
+It is never the pointer's own depth. A pointer figure would move the furniture at every pointer
+move, and the depth mapping too, while the camera stood still.
 
 **It is read once for each frame, and never for each overlay call.** `reachNearOf` walks every
 placement of the frame, and `ensureViewOverlay` runs many times over one frame: the anchor, each
@@ -2182,14 +2191,16 @@ the last frame, as it reads the reach of the scene that frame measured.
 Both front-ends place every handle in each frame, beside the reach of the scene, and
 `BYTES_MEMORY_TOTAL` counts one placement for each handle (Render paths).
 
-**The wheel travels the pointer's own ray in free flight.** `anchorZoomAt` answers the object under
-the pointer, as it does with a selection.
+**The wheel in free flight comes in to the object under the pointer, and does nothing without
+one.** `anchorZoomAt` answers that object, at any depth; see Zoom.
 
-Where an object stands under the pointer, `travelToward` carries the eye along its line to that
-object and holds it on its pixel. The floor is the object's drawn radius, so a run of notches stops
-at its surface. The floor of a point is further out, where its sphere fills the frame; see Zoom.
-Where nothing stands there, `headingThrough` gives the ray and the eye travels it. The separation
-then scales as the turntable's dolly scales it.
+`travelToward` carries the eye along its line to that object and holds it on its pixel. The floor is
+the object's drawn radius, so a run of notches stops at its surface. The floor of a point is further
+out, where its sphere fills the frame; see Zoom.
+
+Rejected: the pointer's own ray at the separation's scale where nothing stands there. Each notch
+scaled the separation by its factor, so 200 notches over empty sky took it to 1e-13. The nearest
+drawn object stood 0.256 ahead.
 
 *Checked.* Verified by `suites.nim`:
 
@@ -2201,24 +2212,34 @@ then scales as the turntable's dolly scales it.
 - the speed is monotone and under its cap over four seconds, at 0.6321 and 0.9502 of it after one
   and three time constants;
 - 120 frames of one span cover what one frame of it covers, at three spans;
-- the cap takes the depth under the pointer, the camera's own scale where there is none, and the
-  ceiling where either is large;
-- a held `w` with nothing selected lies along the sight, and spends the separation it covers;
+- flight steps at the ship's own speed, whatever the pointer is over and however small the
+  separation;
+- after its climb, a long flight at 19 covers 190.000 units in each 10 s span, and never stalls;
+- `+` and `-` scale the ship's speed by 4 for each second, within its bounds, and dolly with a
+  selection;
+- the ship opens at the separation of the opening view, and `home` leaves its speed;
+- a held `w` with nothing selected lies along the sight, and keeps the separation;
 - a strafe leaves that separation alone;
-- the wheel with nothing selected travels the ray under the pointer, and not the sight axis;
+- the wheel and the pinch with nothing selected do nothing over empty sky, over 200 notches;
+- free flight's wheel comes in to a point eight separations out, and the selection's dollies about
+  the pivot instead;
 - 40 notches onto a point stop where its sphere fills the frame, with the point held on its pixel;
 - the frustum takes its scale from the nearest drawn object, and hands it back at zero;
 - the far clip still reaches a scene 6.5 million units across, and both depth ends still land;
 - the nearest reach is read ahead of the eye, never behind it, and never from a hidden object.
 
-Verified by driven checks, in Chromium on 2026-09-26:
+Verified by driven checks, in Chromium on 2026-10-07:
 
-- 500 ms of `w` on the opening page moved the eye 5.020 units, 0.000000 across the sight line.
-  The separation gave up that same 5.020 of 19.000;
+- 500 ms of `w` on the opening page moved the eye 3.012 units, 0.000000 across the sight line.
+  The separation stayed at 19.0000;
+- a second hold of 2 s flew 27.0067 units, as the first had;
+- held `+` and `-` took the ship's speed from 19.000 to 37.790 and back to 19.000, and moved the
+  eye 0;
+- twenty notches over empty sky, with nothing selected, moved the eye 0;
 - eight notches low in the frame carried the separation from 19.00 to 4.14. They left the eye
   2.063 units off the sight axis, which a straight dolly cannot do;
-- the opening page reads a local scale of 14.6842, not the separation of 19.000, and 5.020 units
-  of flight drew it to 9.6647.
+- the opening page reads a local scale of 14.6842, not the separation of 19.000, and 3.012 units
+  of flight drew it to 11.6727.
 
 ## Drags
 
