@@ -44,8 +44,7 @@
 import std/[options, sequtils, sets, strutils, tables]
 import ../../knoller/src/knoller
 import ./[
-  checker, conversions, findings, glossary, kinds, layout, names, plan, rewrites, scope, symbols,
-  toolchain,
+  checker, findings, glossary, kinds, layout, names, plan, rewrites, scope, symbols, toolchain,
 ]
 
 
@@ -192,6 +191,27 @@ func queriesSemantic*(
       if name notin result[k].names: result[k].names.add name
 
 
+proc checkConversions*(
+  root: string, tree: Tree, directories: openArray[string]
+): tuple[found: seq[Finding], warned: seq[string]] =
+  ## Report each type conversion `x.T` in Nim files under directories, as semantic pass settles
+  ##   it (STYLE.md §5), so check reports what fix rewrites (D1 of #558). File holding no
+  ##   candidate asks nothing; file pass cannot resolve warns, with reason, and finds nothing.
+  var queries: seq[Query]
+  for e in tree:
+    if not e.isKindNim or not directories.anyIt(e.path.startsWith(it & "/")): continue
+    let query = queryConversion(e.path, e.content)
+    if query.sites.len > 0: queries.add query
+  for answer in resolve(root, tree, queries):
+    if answer.reason.len > 0:
+      result.warned.add answer.path & ": type conversion stays unread, since semantic pass " &
+        "resolved no name; got `" & answer.reason & "`."
+      continue
+    for e in tree:
+      if e.path == answer.path:
+        result.found.add checkConversions(e.path, e.content, answer).findingsOf
+
+
 func contextOf*(
   tree: Tree,
   entries: openArray[Entry] = [],
@@ -253,7 +273,7 @@ func fixSource(
     let (edits, reports) =
       editsConversion(path, source, context.answers[path], fence.lines, renamed)
     base = source.applied(renamed & edits)
-    result.fixed.add reports
+    result.fixed.add reports.findingsOf
 
   # Drop `*` of dead export, fenced lines read as `FENCED`; fix moving them is skipped.
   let dead = context.dead.filterIt(it[0] == path).mapIt(it[1])

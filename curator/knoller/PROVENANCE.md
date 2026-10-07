@@ -148,6 +148,9 @@ under `--check`.
   (`## Content fixes`). Without it, each file takes the compiler of the pin above it, else `nim`
   on `PATH` (`## Compilers`). Where no compiler answers, one line `needless-parentheses warning:`
   comes before the count, and the exit code stays.
+- A file that holds a type conversion candidate is asked of the semantic pass before the fix
+  (`## Semantic pass`). A file the pass cannot resolve prints one line `path: type-conversion
+  warning:` with the reason, and the exit code stays.
 - A nimble file whose copy `atlas.lock` holds is passed over, because a rewrite would leave the
   copy stale.
 - A file that the fixers do not settle prints one line, `path: unsettled: <message>`, after the
@@ -309,6 +312,71 @@ repository, with a private cache.
   stderr alone.
 - Cost, measured on that run: the built toolchain takes 2.4 GB, and its bootstrap tree
   `csources_v3` takes 2.0 GB of that. The release 2.2.12, fetched, takes 140 MB.
+
+## Semantic pass
+
+**Some rules ask what a name means, so knoller asks the semantic pass of the compiler.** Text
+cannot tell a conversion `x.T` from a field or a module path, such as `rigid3.Point`. Text cannot
+find every use of a name across modules either. So `symbols.nim` asks `nimsuggest` of the
+toolchain that serves the pin of the project.
+
+- The caller names three facts for each file it asks: the directory the run starts in, the file
+  that includes it, and the toolchain. The command line reads them from disk. The run starts in
+  the nearest directory that holds a nimble file, and the includer is read among the Nim files git
+  lists there. The toolchain is the one that proves parentheses (`batchesOf`). `koch` reads the
+  same facts from its tree instead.
+- One `nimsuggest --v3 --stdin` serves each entry: the file itself, or the file that includes it.
+  It runs in the project directory, so the `nim.cfg` of the project applies. A file under
+  `tests/` takes `-d:testing`, as the stub of STYLE.md §6 does.
+- A run reads its commands from a file and writes its answers to a file, through the
+  redirection of the shell. A pipe holds 64 KiB, and a run whose answers fill it stops reading
+  commands. So a run fed through pipes, all commands first, waits forever on a large entry.
+  Verified by `suites/test_symbols.nim`, which passes 64 KiB each way.
+- `nimsuggest` waits 250 ms between two commands on its input, so each site costs a quarter of a
+  second at least. Measured on the container of the curator with 2.2.12, 2026-10-04: 300 sites of
+  one small file took 76 s, with 0.6 s of processor time.
+- Each file is checked first. A file that reports an error on the C backend is asked again on the
+  JavaScript backend. A file that fails both stays unresolved, with its first error.
+- A routine that returns a value answers its own declared name with its implicit `result`. So that
+  answer reads as the routine declared at the site, where each use of it resolves. Both pins that
+  koch serves answer so (verified by hand, 2026-10-03).
+- Rejected: the compiler as a library inside knoller. Every build of knoller would compile the
+  compiler. Knoller would also bind to one pin, and the `ronri` projects lex glyphs that only
+  their commit pin knows.
+- Rejected: `nim check --def` for each site, which compiles the project once for each site.
+  `nimsuggest` ships with each toolchain that knoller serves, so the pass costs no build.
+- Cost, measured 2026-10-02 on the container of the curator: about 2 s for each entry of a
+  curator module. A front-end or a suite of `rga_visualiser` takes 5 to 9 s. Only a file with a
+  candidate asks.
+- A site of an included file asks `dus`, whose answer opens on the same definition as `def`.
+  Verified by `suites/test_symbols.nim`, which resolves a use of an included file to its `let`.
+- On the commit pin, `def` in an included file recompiles the file that includes it for each
+  site, and `dus` recompiles only what is dirty. Read in `executeNoHooksV3` of `nimsuggest.nim`
+  at that pin. Measured on the container of the curator, 2026-10-04, over 20 sites of the shared
+  suite of `rga_visualiser` at `c5c65db`. There `def` took 345 s and `dus` took 50 s.
+- A site of the entry itself keeps `def`, because `dus` lists every use of the symbol. Measured in
+  the same run: `dus` gave 182 use lines beside the 20 definitions. That the list grows long for a
+  common symbol such as `float` is inferred, and an included file pays that output alone.
+- Cost: a file that needs a checkout of its lock, or a native library, stays unresolved without
+  it. A branch of `when` that the defines leave out resolves nothing.
+
+**A type conversion `x.T` becomes `T(x)` where the pass settles it (STYLE.md §5).** The candidate
+is a type-like name glued after a receiver. The name must resolve to a type, and the last name of
+the receiver to a value. A parenthesised receiver gives the call its parentheses, and a tuple
+keeps its own.
+
+- The edits apply once, before the chain, on the source as given. They move no line, so the fence
+  holds, and no edit lands on a fenced line.
+- A receiver that is a module the file imports, or a capitalised name, asks nothing. That keeps
+  the pass to the few files that hold a candidate.
+- `knoller --check` runs the pass on each file that holds a candidate, and reports each
+  conversion as due (D1 a of #558). A file that holds none asks nothing, so a run on a clean tree
+  compiles nothing more. At `da2edae` no file of the four projects held one.
+- A file the pass cannot resolve keeps each conversion, and prints one warning with the reason.
+  The reason is its compile error, a pin that no compiler serves, or two nimble files in one
+  directory.
+- Verified by `suites/test_conversions.nim`, and by `suites/test_command.nim`, which runs the pass
+  on a fresh repository and reads the conversion it reports.
 
 ## Tests
 

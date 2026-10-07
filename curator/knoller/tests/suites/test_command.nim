@@ -8,7 +8,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[importutils, options, os, osproc, sequtils, strutils, tables, tempfiles, unittest]
-import ../../src/knoller/[command, proofs, reports, rules]
+import ../../src/knoller/[command, compilers, proofs, reports, rules, symbols]
 from ../../src/knoller/command {.all.} import joined, Part
 import ./stubs
 
@@ -291,6 +291,55 @@ suite "Command line":
   test "README lists every rule id output cites":
     let record = readFile(README)
     for rule in Rule: check ("`" & rule.id & "`") in record  # id named as code span
+
+
+  test "conversion semantic pass settles is fixed first, and pass that resolves none warns":
+    const source = "{.experimental: \"strictFuncs\".}\n\nfunc twice(x: int): float = x.float * 2\n"
+    var answer = Answer(path: "a.nim")
+    answer.symbols[(3, 30)] = Symbol(kind: "skType")
+    answer.symbols[(3, 28)] = Symbol(kind: "skParam")
+    let
+      answers = {"a.nim": answer}.toTable
+      fixed = outcomeOf([("a.nim", source)], [], is_check = false, answers = answers)
+      due = outcomeOf([("a.nim", source)], [], is_check = true, answers = answers)
+    check fixed.written == @[("a.nim", source.replace("x.float", "float(x)"))]
+    check fixed.lines == @["a.nim:3: type-conversion fixed", "1 fixed."]
+    check due.written.len == 0 and due.code == 1
+    check due.lines == @["a.nim:3: type-conversion to fix", "1 to fix."]
+    let unread = outcomeOf(
+      [("a.nim", source)],
+      [],
+      is_check = true,
+      answers = {"a.nim": Answer(path: "a.nim", reason: "no compiler serves pin 0.0.1")}.toTable,
+    )
+    check unread.lines == @[
+      "a.nim: type-conversion warning: Semantic pass resolved no name, so each type " &
+        "conversion stays as written; got `no compiler serves pin 0.0.1`.",
+      "0 to fix.",
+    ]
+    check unread.code == 0  # warning changes no exit code
+
+
+  test "file holding conversion candidate is resolved in its project, and none other is asked":
+    let root = createTempDir("knoller_", "_answers")
+    defer: removeDir(root)
+    root.writeTree([
+      ("p/p.nimble", "version = \"0.1.0\"\nsrcDir = \"src\"\n"),
+      ("p/src/a.nim", "let\n  x = 3\n  y = x.float\n"),
+      ("p/src/b.nim", "let z = 1\n"),
+    ])
+    check execCmd("git -C " & root.quoteShell & " init -q") == 0
+    check execCmd("git -C " & root.quoteShell & " add -A") == 0
+    var toolchains = initToolchains()
+    let
+      files = [("p/src/a.nim", readFile(root / "p/src/a.nim")),
+               ("p/src/b.nim", readFile(root / "p/src/b.nim"))]
+      answers = files.answersOf("", root, toolchains)
+    check answers.len == 1  # `b.nim` holds no candidate
+    check answers["p/src/a.nim"].reason.len == 0
+    check answers["p/src/a.nim"].symbols[(3, 8)].kind == "skType"
+    let outcome = outcomeOf(files, [], is_check = true, directory = root, answers = answers)
+    check "p/src/a.nim:3: type-conversion to fix" in outcome.lines
 
 
   test "parentheses go where parser proves it, after one more run, and second run writes none":

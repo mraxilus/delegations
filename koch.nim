@@ -373,7 +373,12 @@ proc run(options: Options): int =
       held.report
     found = own
     found.add runJobsType(options.root, tree, options.dirsScopedOf(tree))
-    found.add runJobsCi(options.root, tree, tree.jobs(pathsChanged(options.root, base)))
+    let jobs = tree.jobs(pathsChanged(options.root, base))
+    found.add runJobsCi(options.root, tree, jobs)
+    # Conversion asks semantic pass, so it runs once restore stands (D1 of #558).
+    let (converted, unread) = checkConversions(options.root, tree, jobs.mapIt(it.directory))
+    found.add converted
+    for warning in unread: echo "warning: " & warning
     # Green run on clean tree records tree hash, which `pre-push` hook compares against
     #   pushed commit; dirty tree records nothing, since no commit holds exactly what passed.
     if found.len == 0:
@@ -426,8 +431,13 @@ proc run(options: Options): int =
   of "test":
     if not options.isReadAll({Root, Base, All, Recent}, has_project = true):
       return options.refused
-    let tree = options.root.readTree
-    found = runJobs(options.root, options.jobsPlanned(tree))
+    let
+      tree = options.root.readTree
+      jobs = options.jobsPlanned(tree)
+    found = runJobs(options.root, jobs)
+    let (converted, unread) = checkConversions(options.root, tree, jobs.mapIt(it.directory))
+    found.add converted
+    for warning in unread: echo "warning: " & warning
   of "drive":
     if not options.isReadAll({Root, Base, All, Recent}, has_project = true):
       return options.refused

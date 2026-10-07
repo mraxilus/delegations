@@ -1,8 +1,5 @@
-## Rewrite source by edits that fixers resting on semantic pass plan (`symbols.nim`), and plan
-##   rename of symbol across files from what that pass resolves.
-##   Edit replaces byte span of source as given, or inserts where span is empty. Edits never
-##     overlap, but insertions may share offset; rank orders them, lower first, so wrapper
-##     planned outside another opens before it (`int(float(x))`).
+## Plan rename of symbol across files from what semantic pass resolves (`symbols.nim`), as edits
+##   of knoller (`edits.nim` there).
 ##   Rename is planned whole or refused whole, since part of rename breaks build:
 ##   - declaration must resolve, in file that compiles, to symbol declared at that very site;
 ##     name check's scanner may read use as declaration, and rename of it would repeat other;
@@ -45,12 +42,6 @@ import ./symbols
 
 
 type
-  Edit* = object  ## Define one edit: byte span of source as given, text replacing it, rank.
-    first*: int  ## Byte offset span opens at.
-    after*: int  ## Byte offset after span; equal to `first` for insertion.
-    text*: string
-    rank*: int  ## Order among insertions at one offset: lower first.
-
   Rename* = object  ## Define rename to plan: declaration site, old and new name, rule.
     path*: string  ## Repository-relative path of declaring file.
     line*: int  ## One-based line of declared name.
@@ -71,14 +62,6 @@ const
   NAME_RESULT = "result"  ## Name compiler declares in each routine returning value.
   KIND_MEMBER = "skEnumField"  ## Kind of enum member, which bare name reaches unless enum is pure.
   INTERPOLATORS = ["&", "fmt"]  ## Prefixes of string strformat interpolates (`&"…{x}…"`).
-
-
-func applied*(source: string, edits: openArray[Edit]): string =
-  ## Apply edits to source, last first, so earlier offsets hold; insertions at one offset in
-  ##   rank order.
-  result = source
-  for edit in edits.sortedByIt((-it.first, -(it.after - it.first), -it.rank)):
-    result = result[0 ..< edit.first] & edit.text & result[edit.after .. ^1]
 
 
 func isIdentical(a, b: Symbol): bool =

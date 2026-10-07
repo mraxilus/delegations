@@ -1,5 +1,5 @@
 ## Enforce type conversion as prefix call STYLE.md §5 gives (`Grade(x)`, never `x.Grade`), and
-##   fix it (`koch fix`) through semantic pass.
+##   fix it through semantic pass (`symbols.nim`); caller resolves what `queryConversion` asks.
 ##   `to<Target>` call, which takes its plain subject first, is knoller's (`targets.nim`).
 ##   Type conversion `x.T`: text cannot tell it from field or module path (`rigid3.Point`,
 ##     `Kind.Nim`), so compiler's semantic pass decides (`symbols.nim`). Candidate is name after
@@ -21,8 +21,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, sequtils, sets, strutils, tables]
-import ../../knoller/src/knoller
-import ./[findings, rewrites, symbols]
+import ./[edits, form, reports, rules, spacing, symbols, tokens]
 
 
 type
@@ -192,27 +191,20 @@ func conversions(source: string, answer: Answer): seq[Conversion] =
     result.add conversion
 
 
-func checkConversions*(path, source: string; answer: Answer): seq[Finding] =
+func checkConversions*(path, source: string; answer: Answer): seq[Report] =
   ## Report type conversion written `x.T`, as semantic pass settles it (STYLE.md §5).
-  ##   Static pass compiles nothing, so `koch fix --dry-run` is where it runs (`fixes.nim`).
   for conversion in conversions(source, answer):
-    result.add finding(
+    result.add initReport(
       path,
       conversion.line + 1,
-      "Type conversion is prefix call, as `Grade(x)` (STYLE.md §5); got `" & conversion.got & "`.",
+      Rule.Conversion,
+      "Type conversion is prefix call, as `Grade(x)`; got `" & conversion.got & "`.",
     )
-
-
-func isTouching(a, b: Edit): bool =
-  ## Decide whether two edits write one byte, or one inserts strictly inside other's span.
-  if a.first == a.after: b.first < a.first and a.first < b.after
-  elif b.first == b.after: a.first < b.first and b.first < a.after
-  else: a.first < b.after and b.first < a.after
 
 
 func editsConversion*(
   path, source: string; answer: Answer; fenced: openArray[int]; held: openArray[Edit] = []
-): (seq[Edit], seq[Finding]) =
+): (seq[Edit], seq[Report]) =
   ## Read edits writing each conversion check reports, and one report per conversion. Fenced
   ##   line (X.1), and line conversions would widen beside `held` edits of other fixers, keep
   ##   every conversion on them for hand; so does conversion touching span held edit writes.
@@ -226,5 +218,4 @@ func editsConversion*(
     if widened.len == 0: break
     found = found.filterIt(it.line notin widened)
   result[0] = found.mapIt(it.edits).concat
-  for conversion in found:
-    result[1].add finding(path, conversion.line + 1, "type conversion (STYLE.md §5)")
+  for conversion in found: result[1].add initReport(path, conversion.line + 1, Rule.Conversion)
