@@ -53,7 +53,10 @@
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, options, os, osproc, parseopt, sequtils, streams, strutils, tables]
-import ./[chain, compilers, fences, parentheses, pins, proofs, reports]
+import ./[
+  chain, compilers, conversions, edits, fences, names, parentheses, pins, proofs, reports, rewrites,
+  rules, symbols,
+]
 
 
 const
@@ -153,15 +156,55 @@ func `<`(a, b: Report): bool =
   a.message < b.message
 
 
-func partOf(path, source: string; is_check: bool; directory: string; proofs: Proofs): Part =
+func partOf(
+  path, source: string;
+  is_check: bool;
+  directory: string;
+  proofs: Proofs;
+  answer: Answer;
+  plans: openArray[Plan],
+): Part =
   ## Fix one file of Nim dialect, as `outcomeOf` does: what file writes and reports, and what it
-  ##   asks parser.
+  ##   asks parser. Renames planned whole across files, and conversion semantic pass settles,
+  ##   are written first, from source as given; file whose candidate pass could not resolve
+  ##   keeps each conversion, and rename refused warns where it is declared, each saying why.
   let
     dialect = path.dialectOf.get
     layout = path.layoutOf(directory)
+    fence = source.fenceOf
   result.held = heldOf(layout, source, dialect, proofs).shownAs(path)
-  if source.fenceOf.lines.len > 0: result.asked.add source.questionsOf(proofs)
-  let fix = formatted(layout, source, dialect, proofs)
+  if fence.lines.len > 0: result.asked.add source.questionsOf(proofs)
+  var
+    renamed: seq[Edit]
+    rewritten: seq[Report]
+  for plan in plans:
+    if plan.refusal.len > 0:
+      if plan.rename.path == path:
+        result.held.add initReport(
+          path,
+          plan.rename.line,
+          plan.rename.rule,
+          "Rename to `" & plan.rename.renamed & "` stays for hand, since it is refused: " &
+            plan.refusal & "; got `" & plan.rename.name & "`.",
+        )
+      continue
+    renamed.add plan.edits.getOrDefault(path)
+    for (file, line) in plan.lines:
+      if file == path: rewritten.add initReport(path, line, plan.rename.rule)
+  var base = source.applied(renamed)
+  if answer.reason.len > 0:
+    result.held.add initReport(
+      path,
+      0,
+      Rule.Conversion,
+      "Semantic pass resolved no name, so each type conversion stays as written; got `" &
+        answer.reason & "`.",
+    )
+  elif answer.symbols.len > 0:
+    let (edits, reports) = editsConversion(layout, source, answer, fence.lines, renamed)
+    base = source.applied(renamed & edits)
+    rewritten.add reports.shownAs(path)
+  let fix = formatted(layout, base, dialect, proofs)
   result.asked.add fix.asked
   var after = checkSource(layout, fix.source, dialect, proofs)
   for report in after.mitems: report.line = fix.traced(report.line)  # Line as given.
@@ -169,7 +212,7 @@ func partOf(path, source: string; is_check: bool; directory: string; proofs: Pro
   result.unsettled = fix.unsettled
   result.left = after.shownAs(path)
   if fix.source == source: return
-  result.fixed = fix.fixed.shownAs(path)
+  result.fixed = rewritten & fix.fixed.shownAs(path)
   if not is_check: result.written.add (path, fix.source)
 
 
@@ -204,17 +247,23 @@ func outcomeOf*(
   is_check: bool;
   directory = "/";
   proofs = Proofs();
-  failure = "",
+  failure = "";
+  answers = initTable[string, Answer]();
+  plans: openArray[Plan] = [],
 ): Outcome =
   ## Fix each file of Nim dialect, as path and text, and decide what run writes and prints;
   ##   file `locked` names, or of no dialect, is passed over. Fixers read each path whole from
   ##   directory it is named from (`layoutOf`). Parentheses go where `proofs` prove them, and
   ##   each source no answer reaches is in `Outcome.asked`, source as given too where fence
   ##   holds lines, since fence's warning reads it. Failure of prover prints as warning.
+  ##   Conversion goes where answer of semantic pass for path settles it (`answersOf`), and
+  ##   rename where its plan writes path (`plansOf`).
   var parts: seq[Part]
   for (path, source) in files:
     if path.dialectOf.isNone or path in locked: continue
-    parts.add partOf(path, source, is_check, directory, proofs)
+    parts.add partOf(
+      path, source, is_check, directory, proofs, answers.getOrDefault(path), plans
+    )
   parts.joined(is_check, [failure])
 
 
@@ -224,6 +273,8 @@ proc outcomeProven*(
   is_check: bool,
   directory: string,
   batches: openArray[Batch],
+  answers = initTable[string, Answer](),
+  plans: openArray[Plan] = [],
 ): Outcome =
   ## Fix files as `outcomeOf` does, ask prover of each batch what its files asked, and fix again
   ##   each file that asked, at most `ASKS_MAX` times; prover that fails is asked no more, and
@@ -245,7 +296,9 @@ proc outcomeProven*(
       if path in batch.paths: owner = b
     doAssert owner >= 0, "File reads in no batch; got `" & path & "`."
     owners.add owner
-    parts.add partOf(path, source, is_check, directory, proofs[owner])
+    parts.add partOf(
+      path, source, is_check, directory, proofs[owner], answers.getOrDefault(path), plans
+    )
 
   # Ask prover of each batch what its files asked, then fix again each file that asked.
   for ask in 1..ASKS_MAX:
@@ -262,7 +315,9 @@ proc outcomeProven*(
     if not is_asked: break
     for k, (path, source) in read:
       if parts[k].asked.len == 0: continue
-      parts[k] = partOf(path, source, is_check, directory, proofs[owners[k]])
+      parts[k] = partOf(
+        path, source, is_check, directory, proofs[owners[k]], answers.getOrDefault(path), plans
+      )
   parts.joined(is_check, failures)
 
 
@@ -373,6 +428,174 @@ proc listed*(directory: string): tuple[files: seq[string], refusal: string] =
   listingOf(directory, output, code)
 
 
+proc projectOf(directory: string): string =
+  ## Read nearest directory at or above directory holding nimble file, whose configuration
+  ##   compile of file there reads; directory itself where none stands above.
+  var at = directory
+  while true:
+    for kind, path in walkDir(at):
+      if kind in {pcFile, pcLinkToFile} and path.endsWith(EXTENSIONS[Dialect.Package]) and
+          path.extractFilename.len > EXTENSIONS[Dialect.Package].len:
+        return at
+    let parent = at.parentDir
+    if parent.len == 0 or parent == at: return directory
+    at = parent
+
+
+proc binOf(
+  absolute, nim: string; seen: var Table[string, Pinning]; toolchains: var Toolchains
+): tuple[bin, reason: string] =
+  ## Read toolchain semantic pass of file at absolute path takes: one `--nim` names, else that of
+  ##   pin of nearest nimble file, as parser's is (`batchesOf`), else `nim` on `PATH`, named by
+  ##   empty `bin`; reason says why none serves.
+  if nim.len > 0: return (nim.parentDir, "")
+  let pinning = pinningOf(absolute.parentDir, seen)
+  if pinning.refusal.len > 0:
+    return ("", "directory holds several nimble files, so no pin is trusted: " & pinning.refusal)
+  if pinning.pin.isNone: return ("", "")
+  let served = toolchains.binFor(pinning.pin.get)
+  if served.isNone: return ("", "no compiler serves pin " & pinning.pin.get)
+  (served.get, "")
+
+
+proc listingOf(
+  project: string; listings: var Table[string, seq[(string, string)]]
+): seq[(string, string)] =
+  ## Read path, relative to project, and text of each Nim file git lists under project, once.
+  if project notin listings:
+    let (listed, _) = project.listed
+    listings[project] = listed.mapIt((it.relativePath(project), readFile(it)))
+  listings[project]
+
+
+proc answersOf*(
+  files: openArray[(string, string)]; nim, directory: string; toolchains: var Toolchains
+): Table[string, Answer] =
+  ## Resolve, through semantic pass, each file of Nim dialect holding type conversion candidate
+  ##   (`queryConversion`), keyed by path as named; file holding none is asked nothing. Pass
+  ##   runs in project of file, nearest directory holding nimble file, and reads includer
+  ##   among Nim files git lists there, with toolchain `binOf` gives. Toolchain none serves
+  ##   answers file unresolved, with reason.
+  var
+    requests: seq[Request]
+    keys: seq[string]
+    seen = initTable[string, Pinning]()
+    listings = initTable[string, seq[(string, string)]]()
+  for (path, source) in files:
+    if path.dialectOf.isNone: continue
+    let
+      absolute = path.layoutOf(directory)
+      project = absolute.parentDir.projectOf
+      query = queryConversion(absolute.relativePath(project), source)
+    if query.sites.len == 0: continue
+    let (bin, reason) = binOf(absolute, nim, seen, toolchains)
+    if reason.len > 0:
+      result[path] = Answer(path: query.path, reason: reason)
+      continue
+    requests.add Request(
+      query: query,
+      root: project,
+      directory: project,
+      includer: project.listingOf(listings).includerOf(query.path),
+      bin: bin,
+    )
+    keys.add path
+
+  # Resolve each project apart, since path relative to project names one file within it alone.
+  for project in listings.keys:
+    let asked = toSeq(0 ..< requests.len).filterIt(requests[it].root == project)
+    for answer in resolve(asked.mapIt(requests[it])):
+      for k in asked:
+        if requests[k].query.path == answer.path: result[keys[k]] = answer
+
+
+proc plansOf*(
+  files: openArray[(string, string)];
+  locked: openArray[string];
+  nim, directory: string;
+  toolchains: var Toolchains,
+): seq[Plan] =
+  ## Plan each rename case of name's kind (V.1, V.11) or coined abbreviation (V.6) asks in files
+  ##   of Nim dialect, as `names.nim` reads it with jargon alone exempt, since knoller reads no
+  ##   glossary. Rename reads every Nim file git lists in project of declaring file, nearest
+  ##   directory holding nimble file, and is refused where it would write file not named
+  ##   (D2 of #558); local binding reads its own file alone. Plan's paths are paths as named.
+  ##   Rename refused before semantic pass, as `renamesCase` refuses it, is plan with reason.
+  var
+    seen = initTable[string, Pinning]()
+    listings = initTable[string, seq[(string, string)]]()
+  let named = files.mapIt(it[0].layoutOf(directory))
+  for (path, source) in files:
+    if path.dialectOf.isNone or path in locked: continue
+    let
+      absolute = path.layoutOf(directory)
+      project = absolute.parentDir.projectOf
+      relative = absolute.relativePath(project)
+      recased = renamesCase(source, JARGON)
+    var renames: seq[Rename]
+    for r in recased:
+      let rename = Rename(
+        path: relative,
+        line: r.line,
+        column: r.column,
+        name: r.name,
+        renamed: r.renamed,
+        rule: r.rule,
+        is_local: r.is_local,
+      )
+      if r.refusal.len > 0: result.add Plan(rename: rename, refusal: r.refusal)
+      else: renames.add rename
+    for (line, column, name, full) in renamesAbbreviation(source, JARGON):
+      if recased.anyIt(it.line == line and it.column == column): continue
+      renames.add Rename(
+        path: relative,
+        line: line,
+        column: column,
+        name: name,
+        renamed: full,
+        rule: Rule.Abbreviation,
+      )
+    if renames.len == 0: continue
+
+    # Read scope, ask semantic pass every site of it, then plan each rename whole.
+    let (bin, reason) = binOf(absolute, nim, seen, toolchains)
+    var scope = if relative in project.listingOf(listings).mapIt(it[0]): @[]
+                else: @[(relative, source)]
+    for (file, text) in project.listingOf(listings):
+      scope.add (file, if file == relative: source else: text)
+    for rename in renames:
+      var plan = Plan(rename: rename)
+      let reach = if rename.is_local: scope.filterIt(it[0] == relative) else: scope
+      if reason.len > 0: plan.refusal = reason
+      else:
+        let requests = rename.queriesOf(reach).mapIt(Request(
+          query: it,
+          root: project,
+          directory: project,
+          includer: reach.includerOf(it.path),
+          bin: bin,
+        ))
+        var
+          answers = initTable[string, Answer]()
+          fenced = initTable[string, seq[int]]()
+        for answer in resolve(requests): answers[answer.path] = answer
+        for (file, text) in reach: fenced[file] = text.fenceOf.lines
+        plan = planRename(rename, reach, answers, fenced)
+        let outside = toSeq(plan.edits.keys).filterIt((project / it) notin named)
+        if plan.refusal.len == 0 and outside.len > 0:
+          plan.refusal = "it would write `" & outside[0] & "`, which this run leaves alone"
+          plan.edits.clear
+          plan.lines.setLen(0)
+
+      # Name each path as command line names it.
+      plan.rename.path = path
+      var edits = initTable[string, seq[Edit]]()
+      for file, list in plan.edits: edits[files[named.find(project / file)][0]] = list
+      plan.edits = edits
+      plan.lines = plan.lines.mapIt((files[named.find(project / it[0])][0], it[1]))
+      result.add plan
+
+
 proc lockedOf(paths: openArray[string]): seq[string] =
   ## Read each nimble file of paths whose copy `atlas.lock` beside it holds.
   var locks: seq[(string, string)]
@@ -407,16 +630,23 @@ proc main*(): int =
       return 2
   paths = paths.deduplicate
 
-  # Group files by compiler proving their groups, then fix them, each batch asking its own.
+  # Resolve conversion candidates, plan renames, group files by compiler proving their groups,
+  #   then fix them, each batch asking its own.
+  var toolchains = initToolchains()
   let
     directory = getCurrentDir()
-    batches = paths.batchesOf(options.get.nim, directory, proversPin(initToolchains()))
+    files = paths.mapIt((it, readFile(it)))
+    answers = files.answersOf(options.get.nim, directory, toolchains)
+    plans = files.plansOf(paths.lockedOf, options.get.nim, directory, toolchains)
+    batches = paths.batchesOf(options.get.nim, directory, proversPin(toolchains))
     outcome = outcomeProven(
-      paths.mapIt((it, readFile(it))),
+      files,
       paths.lockedOf,
       options.get.is_check,
       directory,
       batches,
+      answers,
+      plans,
     )
   for (path, text) in outcome.written: writeFile(path, text)
   for line in outcome.lines: echo line

@@ -16,6 +16,8 @@ import std/strutils
 
 
 type Rule* {.pure.} = enum  ## Define one rule knoller fixes or reports, in order chain runs.
+  Conversion = "type conversion"
+    ## Type conversion is prefix call; semantic pass settles it before chain runs.
   WhitespaceTrailing = "trailing whitespace"  ## Line ends in space, tab or CR.
   FileEnding = "file ending"  ## File ends in exactly one newline, so empty file breaks it.
   LineEnding = "line ending"  ## Line holds no CR, so each line ends in LF alone.

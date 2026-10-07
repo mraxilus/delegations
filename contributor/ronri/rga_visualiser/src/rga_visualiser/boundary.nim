@@ -66,6 +66,13 @@ type
       ## Default of 1 rather than 0, so zeroed `Camera` carries motion that moves nothing.
       ##   Zeroed motor would carry no weight at all, which names no motion.
 
+  Crossing* {.pure.} = enum  ## Define what crossing tally counts, frames first.
+    Frames,  ## Frames drained while tally was open, one for each `drainCrossings`.
+    ToAlgebra,  ## Euclidean values lifted into algebra: positions, directions and motors.
+    ToEuclidean  ## Multivectors read back out as positions, directions and motors.
+
+  CountsCrossing* = array[Crossing, int]  ## Count frames, and values crossing each way.
+
 
 
 #[ Read Tally ]#
@@ -111,10 +118,49 @@ proc countLifts*(): int = COUNT_LIFTS
 
 
 
+#[ Crossing Tally ]#
+
+var
+  IS_COUNTING_CROSSINGS = false
+    ## Say whether anyone reads how many values cross boundary each way.
+    ##   Instrument, gated on its reader as `IS_COUNTING_POINTS_READ` is, at same closed cost.
+    ##   Front-ends open it while diagnostics are shown; desktop's `--timings` run does too.
+  TALLY_CROSSING: CountsCrossing  ## Count values crossing since last `drainCrossings`.
+
+
+proc setCountingCrossings*(is_counting: bool) =
+  ## Open or close tally of values crossing boundary; counts wait for `drainCrossings`.
+  IS_COUNTING_CROSSINGS = is_counting
+
+
+proc drainCrossings*(): CountsCrossing =
+  ## Take every value counted since last drain, as one frame's, and leave zero behind.
+  ##   Frame counts only while tally is open, so frames it was shut for never dilute mean.
+  result = TALLY_CROSSING
+  if IS_COUNTING_CROSSINGS: result[Crossing.Frames] = 1
+  TALLY_CROSSING = default(CountsCrossing)
+
+
+func perFrame*(counts: CountsCrossing, way: Crossing): float =
+  ## Report mean values crossing `way` for each frame; 0 where no frame was counted.
+  if counts[Crossing.Frames] == 0: 0.0
+  else: float(counts[way]) / float(counts[Crossing.Frames])
+
+
+template tallyCrossing(way: Crossing, is_crossed = true) =
+  ## Count one value crossing `way`, where `is_crossed` and reader counts.
+  ##   `is_crossed` is read only while tally is open, so closed tally pays one load and branch.
+  # Cast covers tally alone: instrument's own state, which no caller reads as result.
+  {.cast(noSideEffect).}:
+    if IS_COUNTING_CROSSINGS and is_crossed: inc TALLY_CROSSING[way]
+
+
+
 #[ Multivector Conversion ]#
 
 func toMultivector*(p: Position): Multivector =
   ## Convert Euclidean position to unit-weight grade-1 point.
+  tallyCrossing(Crossing.ToAlgebra)
   result[Basis.E1] = p.x
   result[Basis.E2] = p.y
   result[Basis.E3] = p.z
@@ -124,6 +170,7 @@ func toMultivector*(p: Position): Multivector =
 func toMultivector*(d: Direction): Multivector =
   ## Convert Euclidean direction to grade-1 horizon point.
   ##   Weight is 0, so point stands for direction rather than place.
+  tallyCrossing(Crossing.ToAlgebra)
   result[Basis.E1] = d.x
   result[Basis.E2] = d.y
   result[Basis.E3] = d.z
@@ -135,6 +182,7 @@ func toMultivector*(motor: Motor): Multivector =
   # Cast covers tally alone: instrument's own state, which no caller reads as result.
   {.cast(noSideEffect).}:
     if IS_COUNTING_LIFTS: inc COUNT_LIFTS
+  tallyCrossing(Crossing.ToAlgebra)
   result[Basis.E41] = motor.turn_x
   result[Basis.E42] = motor.turn_y
   result[Basis.E43] = motor.turn_z
@@ -162,6 +210,7 @@ func motorSliding*(offset: Multivector): Multivector =
 func motorOf*(m: Multivector): Motor =
   ## Read rigid motion back out of multivector, dropping every odd-grade coefficient.
   ##   Caller hands motor; odd grades are zero in one, so dropping them loses nothing.
+  tallyCrossing(Crossing.ToEuclidean)
   Motor(
     turn_x: m[Basis.E41],
     turn_y: m[Basis.E42],
@@ -196,6 +245,7 @@ func positionInto*(m: Multivector, place: var Position, scale = 0.0): bool =
   place.x = m[Basis.E1] / weight
   place.y = m[Basis.E2] / weight
   place.z = m[Basis.E3] / weight
+  tallyCrossing(Crossing.ToEuclidean)
   true
 
 
@@ -243,7 +293,9 @@ func direction*(m: Multivector, is_horizon: bool, scale = 0.0): Option[Direction
   ##   None where line lies in horizon (`isHorizon`), as its attitude then vanishes.
   if is_horizon: return
   let attitude = ⊖m
-  normalize(Direction(x: attitude[Basis.E1], y: attitude[Basis.E2], z: attitude[Basis.E3]), scale)
+  result =
+    normalize(Direction(x: attitude[Basis.E1], y: attitude[Basis.E2], z: attitude[Basis.E3]), scale)
+  tallyCrossing(Crossing.ToEuclidean, result.isSome)
 
 
 func direction*(m: Multivector, scale = 0.0): Option[Direction] =
@@ -255,7 +307,8 @@ func directionHorizon*(m: Multivector, is_horizon: bool, scale = 0.0): Option[Di
   ## Read unit direction horizon point stands for.
   ##   None where point has weight, as it then names place rather than direction.
   if not is_horizon: return
-  normalize(Direction(x: m[Basis.E1], y: m[Basis.E2], z: m[Basis.E3]), scale)
+  result = normalize(Direction(x: m[Basis.E1], y: m[Basis.E2], z: m[Basis.E3]), scale)
+  tallyCrossing(Crossing.ToEuclidean, result.isSome)
 
 
 func directionHorizon*(m: Multivector, scale = 0.0): Option[Direction] =
@@ -271,7 +324,8 @@ func directionNormalHorizon*(m: Multivector, is_horizon: bool, scale = 0.0): Opt
   ##   None where line has weight, as it then runs along direction, not perpendicular to
   ##   pencil of them.
   if not is_horizon: return
-  normalize(Direction(x: m[Basis.E23], y: m[Basis.E31], z: m[Basis.E12]), scale)
+  result = normalize(Direction(x: m[Basis.E23], y: m[Basis.E31], z: m[Basis.E12]), scale)
+  tallyCrossing(Crossing.ToEuclidean, result.isSome)
 
 
 func directionNormalHorizon*(m: Multivector, scale = 0.0): Option[Direction] =
@@ -286,7 +340,9 @@ func directionNormal*(m: Multivector, is_horizon: bool, scale = 0.0): Option[Dir
   ##   Euclidean space.
   if is_horizon: return
   let normal = -(☆m)
-  normalize(Direction(x: normal[Basis.E1], y: normal[Basis.E2], z: normal[Basis.E3]), scale)
+  result =
+    normalize(Direction(x: normal[Basis.E1], y: normal[Basis.E2], z: normal[Basis.E3]), scale)
+  tallyCrossing(Crossing.ToEuclidean, result.isSome)
 
 
 func directionNormal*(m: Multivector, scale = 0.0): Option[Direction] =
@@ -354,6 +410,14 @@ func frame*(m: Multivector): Option[FramePlane] =
     anchor = positionAnchor(m)
   if normal.isNone or anchor.isNone: return
   frame(anchor.get, normal.get)
+
+
+func directionFrom*(m: Multivector): Direction =
+  ## Read weightless point back out as direction, at its own length.
+  ##   For caller that carried direction through algebra and wants it whole, as camera's
+  ##   frame does: length is part of answer, so nothing normalizes and nothing refuses.
+  tallyCrossing(Crossing.ToEuclidean)
+  Direction(x: m[Basis.E1], y: m[Basis.E2], z: m[Basis.E3])
 
 
 func pointFrom*(m: Multivector): Position =

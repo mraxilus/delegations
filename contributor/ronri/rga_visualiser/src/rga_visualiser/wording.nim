@@ -76,7 +76,8 @@ type Wording* = enum
   TipViewMotor, TipViewAzimuth, TipViewElevation, TipViewDistance, TipViewSpeed, TipViewLens,
   TipDiagnosticsFrames, TipDiagnosticsVsync, TipDiagnosticsProgram, TipDiagnosticsFrameArena,
   TipDiagnosticsPool, TipDiagnosticsScene, TipDiagnosticsPga, TipDiagnosticsAlgebra,
-  TipDiagnosticsBoundary, TipDiagnosticsEuclidean,
+  TipDiagnosticsBoundary, TipDiagnosticsEuclidean, TipDiagnosticsToAlgebra,
+  TipDiagnosticsToEuclidean,
   TipPickApply, TipPickOperation, TipPickBack, TipPickEdit, TipPickVisible, TipPickDelete,
   TipPickClose,
   TipMenuSceneFile, TipMenuImageFile, TipMenuSaveScene, TipMenuSaveImage, TipMenuLoadScene,
@@ -93,6 +94,7 @@ type Wording* = enum
   NameDiagnosticsFrame, NameDiagnosticsVsync, NameDiagnosticsMemory, NameDiagnosticsProgram,
   NameDiagnosticsFrameArena, NameDiagnosticsPool, NameDiagnosticsTotal, NameDiagnosticsShare,
   NameDiagnosticsPga, NameDiagnosticsAlgebra, NameDiagnosticsBoundary, NameDiagnosticsEuclidean,
+  NameDiagnosticsToAlgebra, NameDiagnosticsToEuclidean,
   NamePickApply, NamePickEdit, NamePickBack, NamePickHide, NamePickShow, NamePickDelete,
   NamePickClose,
   NameMenuSave, NameMenuSaveScene, NameMenuSaveImage, NameMenuLoad, NameMenuLoadScene,
@@ -102,8 +104,8 @@ type Wording* = enum
   NameTitle,
 
   NoteListEmpty, NoteListUnmatched, NoteCoefficientsNew, NoteCoefficientsEdit, NoteDiagnostics,
-  NoteDiagnosticsShareWaiting, NoteDiagnosticsShareLinux, NoteDiagnosticsShareFrames,
-  NoteDiagnosticsShareBrowser, NoteDiagnosticsSharePolicy,
+  NoteDiagnosticsShareWaiting, NoteDiagnosticsCrossingWaiting, NoteDiagnosticsShareLinux,
+  NoteDiagnosticsShareFrames, NoteDiagnosticsShareBrowser, NoteDiagnosticsSharePolicy,
   NoteSaveByHold, NoteSaveBlocked, NameSaveDismiss,
 
   NameTabDrag, NameTabSelect, NameTabMenu, NameTabPanel, NameTabCamera, NameTabKeys,
@@ -201,6 +203,12 @@ const LUT_TEXT_BY_WORDING: array[Wording, cstring] = [
   TipDiagnosticsEuclidean:
     "Share of the same busy time that ran on the Euclidean side, which holds positions and " &
         "directions and builds vertices, and never names a multivector.",
+  TipDiagnosticsToAlgebra:
+    "Positions, directions and motors that entered the algebra each frame, as a mean over " &
+        "the last 20 seconds; n is how many frames it rests on.",
+  TipDiagnosticsToEuclidean:
+    "Positions, directions and motors read back out of the algebra each frame, as a mean " &
+        "over the last 20 seconds; n is how many frames it rests on.",
 
   # Menu that opens over whatever is picked.
   TipPickApply:
@@ -282,6 +290,8 @@ const LUT_TEXT_BY_WORDING: array[Wording, cstring] = [
   NameDiagnosticsAlgebra: "algebra",
   NameDiagnosticsBoundary: "boundary",
   NameDiagnosticsEuclidean: "euclidean",
+  NameDiagnosticsToAlgebra: "euclidean → algebra",
+  NameDiagnosticsToEuclidean: "algebra → euclidean",
 
   # Menu that opens over whatever is picked.
   NamePickApply: "apply",
@@ -333,6 +343,7 @@ const LUT_TEXT_BY_WORDING: array[Wording, cstring] = [
   NoteDiagnostics: "Live cost of this build, updated every frame.",
   # PGA share in place of its figure: none sampled yet, or no way to sample here.
   NoteDiagnosticsShareWaiting: "No samples yet.",
+  NoteDiagnosticsCrossingWaiting: "No frames yet.",
   NoteDiagnosticsShareLinux: "Unavailable: this build samples on Linux alone.",
   NoteDiagnosticsShareFrames: "Unavailable: this build keeps no stack frames to sample.",
   NoteDiagnosticsShareBrowser: "Unavailable: this browser has no sampling profiler.",

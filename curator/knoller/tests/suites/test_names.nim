@@ -1,11 +1,12 @@
 ## Replicate names check of `names.nim` header: words split, case and reach of each kind held,
 ##   and each finding named by its rule.
 ##   Text koch prints, article included, is held in `curator/audit/tests/suites/test_names.nim`.
+##   Renames each case and abbreviation asks, and acronyms of name, are held here too.
 
 {.experimental: "strictFuncs".}
 
 import std/[sequtils, strutils, unittest]
-import ../../src/knoller/[declared, entry, names, reports]
+import ../../src/knoller/[declared, entry, names, reports, rules]
 import ./sources
 
 
@@ -343,3 +344,65 @@ suite "Names":
   test "line of each finding is line of its declaration":
     check checkNames("x.nim", "const A = 1\nproc getX() = discard\n", []).mapIt(it.line) == @[2]
     check checkNames("x.nim", CASES_BROKEN, []).mapIt(it.line) == @[2, 4, 6, 6, 7, 8, 8, 9]
+
+
+  test "acronyms are capital runs inside camel or Pascal names":
+    check "toJSON".acronyms == @["JSON"]
+    check "SDL3Window".acronyms == @["SDL3"]
+    check "Chiral".acronyms.len == 0 and "isMixed".acronyms.len == 0
+    check "DIRECTORY_SDL3".acronyms.len == 0  # screaming holds by reading
+    check "rga_visualiser".acronyms.len == 0
+
+
+  test "V.6 rename target is each declaration check reports, at its name's column":
+    let
+      source = "proc f(ctx: int, b: int) =\n  let tmp = ctx\n  echo tmp\n"
+      renames = renamesAbbreviation(source, [])
+    check renames == @[(1, 7, "ctx", "context"), (2, 6, "tmp", "temporary")]
+    check checkNames("a.nim", source, JARGON).len == renames.len  # check reads same set
+
+
+  test "tuple binding declares names before `=` alone, never global its value names":
+    const binding = "let (source, destination) = (paths[i], DIR_FONTS / face)\n"
+    check binding.declarations.mapIt(it.name) == @["source", "destination"]  # V.6
+    check renamesAbbreviation(binding, []).len == 0  # V.6, `DIR_FONTS` is use, never declaration
+
+
+  test "V.1 and V.11 rename target is each case finding, and refusal names what fix cannot prove":
+    let renames = renamesCase(CASES_BROKEN, [])
+    check renames.len == checkNames("x.nim", CASES_BROKEN, []).len  # V.1, V.11: same set
+    check renames.mapIt((it.name, it.renamed, it.rule)) == @[
+      ("basis_digits", "BasisDigits", Rule.CaseName),
+      ("Width", "width", Rule.CaseName),
+      ("base", "Base", Rule.CaseMember),
+      ("Anti_Side", "AntiSide", Rule.CaseMember),
+      ("lowerGlobal", "LOWER_GLOBAL", Rule.CaseName),
+      ("Count", "count", Rule.CaseName),
+      ("Construct_table", "constructTable", Rule.CaseName),
+      ("Local_value", "local_value", Rule.CaseName),
+    ]  # V.1, V.11
+    check renames.filterIt(it.refusal.len > 0).mapIt(it.refusal) == @[
+      "`$` of member reads its name", "`$` of member reads its name"]  # V.11
+    check renames[5].line == 8 and renames[5].column == 21  # parameter's own token
+    const local = "proc run() =\n  const WIDE = 2\n  let TMP_DIR = \"a\"\n" &
+        "when isMainModule:\n  let VERB = paramStr(1)\n"
+    check renamesCase(local, []).mapIt((it.renamed, it.is_local)) == @[
+      ("wide", true), ("temporary_directory", true), ("verb", true)
+    ]  # V.1, V.6; entry binding takes case of local, where fix moves it (V.10)
+    const foreign = "type Def {.importc: \"b3Def\".} = object\n  enableSleep {.importc.}: bool\n" &
+        "var counter {.exportc.}: cint\nproc pushAt(Body_id: cint) {.importc: \"b3Push\".}\n" &
+        "type Side = enum\n  left = \"left\", Right\nproc Count(Count: int) = discard\n" &
+        "proc do_x_y() = discard\nproc f[Key](k: Key) = discard\n"
+    check renamesCase(foreign, []).mapIt((it.name, it.refusal)) == @[
+      ("enableSleep", "foreign code reads name through `importc`"),
+      ("counter", "foreign code reads name through `exportc`"),
+      ("Body_id", ""),  # parameter crosses by place
+      ("left", ""),  # member carries own string
+      ("Count", "line declares `Count` twice"),
+      ("Count", "line declares `Count` twice"),
+      ("do_x_y", "`doXY` reads `XY` as acronym"),
+    ]  # V.1, V.11; placeholder `Key` (V.12) has no rename
+    check renamesCase("when isMainModule:\n  var COUNT {.global.} = 0\n", []).len == 0  # V.10
+    const node = "type Node = ref object of JsRoot\n  Child_count: int\n"
+    check renamesCase(node, []).mapIt((it.name, it.refusal)) ==
+      @[("Child_count", "foreign code reads name through `JsRoot`")]  # root of JavaScript object

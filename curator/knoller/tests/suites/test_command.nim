@@ -8,7 +8,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[importutils, options, os, osproc, sequtils, strutils, tables, tempfiles, unittest]
-import ../../src/knoller/[command, proofs, reports, rules]
+import ../../src/knoller/[command, compilers, edits, proofs, reports, rewrites, rules, symbols]
 from ../../src/knoller/command {.all.} import joined, Part
 import ./stubs
 
@@ -291,6 +291,106 @@ suite "Command line":
   test "README lists every rule id output cites":
     let record = readFile(README)
     for rule in Rule: check ("`" & rule.id & "`") in record  # id named as code span
+
+
+  test "conversion semantic pass settles is fixed first, and pass that resolves none warns":
+    const source = "{.experimental: \"strictFuncs\".}\n\nfunc twice(x: int): float = x.float * 2\n"
+    var answer = Answer(path: "a.nim")
+    answer.symbols[(3, 30)] = Symbol(kind: "skType")
+    answer.symbols[(3, 28)] = Symbol(kind: "skParam")
+    let
+      answers = {"a.nim": answer}.toTable
+      fixed = outcomeOf([("a.nim", source)], [], is_check = false, answers = answers)
+      due = outcomeOf([("a.nim", source)], [], is_check = true, answers = answers)
+    check fixed.written == @[("a.nim", source.replace("x.float", "float(x)"))]
+    check fixed.lines == @["a.nim:3: type-conversion fixed", "1 fixed."]
+    check due.written.len == 0 and due.code == 1
+    check due.lines == @["a.nim:3: type-conversion to fix", "1 to fix."]
+    let unread = outcomeOf(
+      [("a.nim", source)],
+      [],
+      is_check = true,
+      answers = {"a.nim": Answer(path: "a.nim", reason: "no compiler serves pin 0.0.1")}.toTable,
+    )
+    check unread.lines == @[
+      "a.nim: type-conversion warning: Semantic pass resolved no name, so each type " &
+        "conversion stays as written; got `no compiler serves pin 0.0.1`.",
+      "0 to fix.",
+    ]
+    check unread.code == 0  # warning changes no exit code
+
+
+  test "file holding conversion candidate is resolved in its project, and none other is asked":
+    let root = createTempDir("knoller_", "_answers")
+    defer: removeDir(root)
+    root.writeTree([
+      ("p/p.nimble", "version = \"0.1.0\"\nsrcDir = \"src\"\n"),
+      ("p/src/a.nim", "let\n  x = 3\n  y = x.float\n"),
+      ("p/src/b.nim", "let z = 1\n"),
+    ])
+    check execCmd("git -C " & root.quoteShell & " init -q") == 0
+    check execCmd("git -C " & root.quoteShell & " add -A") == 0
+    var toolchains = initToolchains()
+    let
+      files = [("p/src/a.nim", readFile(root / "p/src/a.nim")),
+               ("p/src/b.nim", readFile(root / "p/src/b.nim"))]
+      answers = files.answersOf("", root, toolchains)
+    check answers.len == 1  # `b.nim` holds no candidate
+    check answers["p/src/a.nim"].reason.len == 0
+    check answers["p/src/a.nim"].symbols[(3, 8)].kind == "skType"
+    let outcome = outcomeOf(files, [], is_check = true, directory = root, answers = answers)
+    check "p/src/a.nim:3: type-conversion to fix" in outcome.lines
+
+
+  test "rename planned is written first, and rename refused warns where it is declared":
+    const source = "{.experimental: \"strictFuncs\".}\n\nfunc twice(Count: int): int = Count * 2\n"
+    let
+      rename = Rename(
+        path: "a.nim", line: 3, column: 11, name: "Count", renamed: "count", rule: Rule.CaseName
+      )
+      planned = Plan(
+        rename: rename,
+        edits: {"a.nim": @[Edit(first: 44, after: 49, text: "count"),
+                           Edit(first: 63, after: 68, text: "count")]}.toTable,
+        lines: @[("a.nim", 3), ("a.nim", 3)],
+      )
+      fixed = outcomeOf([("a.nim", source)], [], is_check = false, plans = [planned])
+      refused = outcomeOf(
+        [("a.nim", source)],
+        [],
+        is_check = true,
+        plans = [Plan(rename: rename, refusal: "declaring file does not compile on its pin")],
+      )
+    check fixed.written == @[("a.nim", source.replace("Count", "count"))]
+    check fixed.lines == @["a.nim:3: name-case fixed", "a.nim:3: name-case fixed", "2 fixed."]
+    check refused.lines[^2] == "a.nim:3: name-case warning: Rename to `count` stays for hand, " &
+      "since it is refused: declaring file does not compile on its pin; got `Count`."
+    check refused.lines.anyIt(it.startsWith("a.nim:3: name-case left:"))  # check still reports
+    check refused.code == 1
+
+
+  test "rename reads project of declaring file, and writes only files named (D2 a of #558)":
+    let root = createTempDir("knoller_", "_plans")
+    defer: removeDir(root)
+    root.writeTree([
+      ("p/p.nimble", "version = \"0.1.0\"\nsrcDir = \"src\"\n"),
+      ("p/src/a.nim", "func Count_up*(n: int): int = n + 1\n"),
+      ("p/src/b.nim", "import ./a\necho Count_up(1)\n"),
+    ])
+    check execCmd("git -C " & root.quoteShell & " init -q") == 0
+    check execCmd("git -C " & root.quoteShell & " add -A") == 0
+    var toolchains = initToolchains()
+    let
+      a = ("p/src/a.nim", readFile(root / "p/src/a.nim"))
+      b = ("p/src/b.nim", readFile(root / "p/src/b.nim"))
+      alone = [a].plansOf([], "", root, toolchains)
+      both = [a, b].plansOf([], "", root, toolchains)
+    check alone.len == 1
+    check alone[0].refusal == "it would write `src/b.nim`, which this run leaves alone"
+    check both.len == 1 and both[0].refusal.len == 0
+    let outcome = outcomeOf([a, b], [], is_check = false, directory = root, plans = both)
+    check outcome.written.mapIt(it[0]) == @["p/src/a.nim", "p/src/b.nim"]
+    check outcome.written.allIt("countUp" in it[1] and "Count_up" notin it[1])
 
 
   test "parentheses go where parser proves it, after one more run, and second run writes none":

@@ -732,10 +732,28 @@ cost is weight: the built page is 7,830,702 bytes, against 4,271,072 with the su
 2026-10-03 with `ls -l build/rga_visualiser.html`, at `main` and at this change. Rejected: a subset
 of Noto Sans cut for the two accents, which no store row could host without a release.
 
+**The maths and symbol faces each take a family of their own, after the text faces in every
+stack.** Within one family, the faces that declare one weight form a set. The engine picks one set
+for the weight asked, and asks only the faces of that set. The order of a stack is then the
+precedence, as the merge order is in the atlas of the desktop. The text face draws what it holds,
+and the maths and symbol faces draw the rest.
+
+Rejected: the maths and symbol faces under "Noto Sans UI", each by its unicode-range. Their set at
+400 to 600 wins both 400 and 600 from the text faces, so neither text face loads. Liberation Sans
+of the system then draws 1,156 glyphs of the open drawer. Rejected: each of them declared again at
+400 and at 600, to join the sets of the text faces. That embeds each file twice, 1,744,560 bytes
+more on a page of 7,718,414.
+
 **The maths and symbol faces are declared over 400 to 600.** Each ships one weight. Declared at 400
 alone, they match no semibold text, so a selected label or a chip at 600 takes its operators from
 the viewer's system. Over 400 to 600, the browser draws them as they are. The cost is regular
 operators beside semibold letters, which the desktop label also draws.
+
+**Each face is held to its own load status**, by `driveTypeRoles`. `document.fonts.check` answers
+true where no face matches at all, so it passes a text face that never loads. Verified by a run,
+2026-10-07, in Chrome for Testing 153: all six faces load. A read of `CSS.getPlatformFontsForNode`
+over every element of the open drawer finds no glyph from a face of the system. Noto Sans draws
+946 glyphs and its semibold 204.
 
 **Each element is held to the faces of the stack that the browser resolves for it**, by
 `driveFacesCovered` (`CONTRIBUTOR.md`, Pages and assets). The check reads the computed `font-family`
@@ -769,16 +787,19 @@ of its parent. Rejected: `var()` read from the custom properties of the root, wh
 that a rule under `@media` declares.
 
 So each stack in use, and each stack that a rule declares, must map every character that the page
-can write. That is why the mono and serif stacks name "Noto Sans UI" after their own face. The cost
-is that a stack for titles alone must map the operators too. A checkbox and a file field are not a
-stack in use, because they show no text that the page writes. Both resolve to Arial, and the button
-of a file field shows the words of the browser.
+can write. That is why every stack names the maths and symbol families after its own faces. The
+cost is that a stack for titles alone must map the operators too. A checkbox and a file field are
+not a stack in use, because they show no text that the page writes. Both resolve to Arial, and the
+button of a file field shows the words of the browser.
 
-The check reads each `@font-face` rule of the shell, and the `cmap` of its file. It matches the
-weight and the unicode-range of each face as CSS matching does, and tries the families of a stack in
-order. Rejected: the three stacks read from the text of the shell, which pass an element that takes
-a stack of its own. Rejected: `CSS.getPlatformFontsForNode`, which answers only for text that has a
-layout box now. A hidden panel has none, and text that a script writes later has none either.
+The check reads each `@font-face` rule of the shell, and the `cmap` of its file. Within a family,
+it picks the set of faces that declare the weight asked, as the engine does. Where two sets hold
+that weight, the pick is the engine's own. A character then counts only where each set, or a family
+after it, draws it. The check tries the families of a stack in order.
+
+Rejected: the three stacks read from the text of the shell, which pass an element that takes a stack
+of its own. Rejected: `CSS.getPlatformFontsForNode`, which answers only for text that has a layout
+box now. A hidden panel has none, and text that a script writes later has none either.
 
 Cost: a stack that no rule of the page declares counts only where an element resolves to it at the
 check. Such a stack is the browser's own for a form control, or a family that a script sets on an
@@ -810,6 +831,10 @@ With the maths and symbols declared at 400 alone, the check fails at 600. It nam
 `button#selection-menu-close` and U+25B6 in `#drawer span.chev`. In every stack in use, it names the
 operators, the bold operands and the chip symbols. Verified by a run, 2026-10-03: the other page
 checks pass with the whole faces.
+
+With the maths and symbols under "Noto Sans UI" at 400 to 600, both checks fail at 400 and at 600.
+They name the Latin text of each element in the sans stack, as `button#button-add at 600: U+0061`.
+Verified by a run, 2026-10-07. A model that asks each face that holds the weight passes that shell.
 
 **The serif ships at 600 alone, because 600 is the weight every title is set at.** A weight that
 nothing ships is a face that the browser of the reader invents (Article X.8). The check reads
@@ -1170,6 +1195,56 @@ sampler counts a loop of products as PGA's, at 82 to 85% of about 100 samples. V
 check: the page from a file says why it cannot sample, and the served page agrees with the engine on
 each side. Verified on 2026-10-06 by `xvfb-run -a binaries/rga_visualiser --hidden --novsync
 --timings --frames:300 --demo:5038`: the desktop figures above.
+
+## Values crossing the boundary
+
+**The diagnostics count the values that cross the algebra boundary in each frame, each way.**
+`euclidean → algebra` counts positions, directions and motors that `boundary` lifts into
+multivectors. `algebra → euclidean` counts multivectors that `boundary` reads back out as
+positions, directions and motors. Each row shows a mean for each frame over the window of the PGA
+share, and the frames it rests on. The Architect set this design and both labels on repository
+issue 581.
+
+**`boundary` counts each value itself, behind one gate.** Each lift and each reader adds one to
+its way while the gate is open. A read that refuses hands no value out, and adds nothing: a
+weightless point has no place. Each front-end drains the tally once in each frame, and a drain
+counts a frame only while the gate is open. Both open it while the diagnostics section is shown,
+and the `--timings` run of the desktop opens it too. Shut, each crossing pays one load and one
+branch.
+
+**The counts pool in the ring of the PGA share.** `share.RingShare` takes any array of counts,
+so both figures keep one window and one rule. A frame drained while the gate was shut counts
+nothing, so a mean never takes in frames that nobody read.
+
+**Values alone, in `boundary` alone.** A motor counts as one value, as a direction does, though
+it carries 8 coefficients against 3. The numbers that `objects` hands out, such as depths and
+distances, are not counted. Nor are the coordinates that `camera` reads for its bearing, or the
+norms that `framing` and `picking` read. These are plain numbers, not values of the Euclidean side.
+`camera` reads its carried direction through `boundary.directionFrom`, so that crossing counts.
+
+**The arrow of each label comes from the maths face, so the label sets its own line height.** The
+line box of that face stands taller than the box of the text face. With the line height of the
+text face, the two crossing rows stood 5 px above the others.
+
+| Front-end and scene | `euclidean → algebra` | `algebra → euclidean` |
+|---------------------|-----------------------|-----------------------|
+| Desktop, opening scene | 24.0 | 24.0 |
+| Desktop, largest demo | 529.2 | 5,356.0 |
+| Page, opening scene, still | 19.3 | 21.6 |
+| Page, opening scene, orbiting | 36.9 | 33.4 |
+| Page, largest demo, still | 367.7 | 5,269.1 |
+| Page, largest demo, orbiting | 384.7 | 5,279.9 |
+
+**At the largest demo, about 5,300 values leave the algebra in each frame, and placement reads
+most of them.** It reads one position for each object on every frame, still or moving. The
+desktop counts the same on every run, since a count does not move with load.
+
+*Checked.* Verified by `suites.nim`: each lift and read counts once each way while the tally is
+open, and a read that refuses counts nothing. The ring pools a mean for each frame. Verified by
+driven check: the page counts values that enter the algebra, and at least one value leaving it for
+each object. It stops once diagnostics close, and each crossing row stands as tall as the frame time
+row. Verified on 2026-10-06 by `xvfb-run -a binaries/rga_visualiser --hidden --novsync --timings
+--frames:300 --demo:5038`: the desktop figures above.
 
 ## Render paths
 

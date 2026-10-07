@@ -44,11 +44,13 @@ type
 
   CountsShare* = array[Owner, int]  ## Count busy samples by owner.
 
-  RingShare* = object
+  RingShare*[T] = object
     ## Pool counts over `SECONDS_SHARE`, one bucket for each whole second.
+    ##   `T` is array of counts, as `CountsShare` is: buckets add it element by element.
+    ##     `boundary.CountsCrossing` pools through same ring, so its window is share's.
     ##   Bucket whose second has passed out of window is skipped, never cleared ahead of time,
     ##   so second with no samples costs nothing.
-    counts: array[SECONDS_SHARE, CountsShare]
+    counts: array[SECONDS_SHARE, T]
     seconds: array[SECONDS_SHARE, int]  ## Whole second each bucket counts; -1 for none yet.
 
 
@@ -151,25 +153,25 @@ func ownerOfName*(name: string): Owner =
 
 #[ Pooling ]#
 
-func initRingShare*(): RingShare =
-  ## Construct ring holding no samples.
+func initRingShare*[T](): RingShare[T] =
+  ## Construct ring holding no counts.
   for i in 0..<SECONDS_SHARE: result.seconds[i] = -1
 
 
-func add*(ring: var RingShare, second: int, counts: CountsShare) =
+func add*[T](ring: var RingShare[T], second: int, counts: T) =
   ## Count `counts` into whole `second`'s bucket, starting it afresh where it held older second.
   let at = second mod SECONDS_SHARE
   if ring.seconds[at] != second:
     ring.seconds[at] = second
-    ring.counts[at] = default(CountsShare)
-  for owner in Owner: ring.counts[at][owner] += counts[owner]
+    ring.counts[at] = default(T)
+  for i in low(T)..high(T): ring.counts[at][i] += counts[i]
 
 
-func pooled*(ring: RingShare, second: int): CountsShare =
+func pooled*[T](ring: RingShare[T], second: int): T =
   ## Sum every bucket inside `SECONDS_SHARE` up to and including whole `second`.
   for at in 0..<SECONDS_SHARE:
     if ring.seconds[at] > second - SECONDS_SHARE and ring.seconds[at] <= second:
-      for owner in Owner: result[owner] += ring.counts[at][owner]
+      for i in low(T)..high(T): result[i] += ring.counts[at][i]
 
 
 func busy*(counts: CountsShare): int =
