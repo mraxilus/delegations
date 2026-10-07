@@ -1171,6 +1171,56 @@ check: the page from a file says why it cannot sample, and the served page agree
 each side. Verified on 2026-10-06 by `xvfb-run -a binaries/rga_visualiser --hidden --novsync
 --timings --frames:300 --demo:5038`: the desktop figures above.
 
+## Values crossing the boundary
+
+**The diagnostics count the values that cross the algebra boundary in each frame, each way.**
+`euclidean → algebra` counts positions, directions and motors that `boundary` lifts into
+multivectors. `algebra → euclidean` counts multivectors that `boundary` reads back out as
+positions, directions and motors. Each row shows a mean for each frame over the window of the PGA
+share, and the frames it rests on. The Architect set this design and both labels on repository
+issue 581.
+
+**`boundary` counts each value itself, behind one gate.** Each lift and each reader adds one to
+its way while the gate is open. A read that refuses hands no value out, and adds nothing: a
+weightless point has no place. Each front-end drains the tally once in each frame, and a drain
+counts a frame only while the gate is open. Both open it while the diagnostics section is shown,
+and the `--timings` run of the desktop opens it too. Shut, each crossing pays one load and one
+branch.
+
+**The counts pool in the ring of the PGA share.** `share.RingShare` takes any array of counts,
+so both figures keep one window and one rule. A frame drained while the gate was shut counts
+nothing, so a mean never takes in frames that nobody read.
+
+**Values alone, in `boundary` alone.** A motor counts as one value, as a direction does, though
+it carries 8 coefficients against 3. The numbers that `objects` hands out, such as depths and
+distances, are not counted. Nor are the coordinates that `camera` reads for its bearing, or the
+norms that `framing` and `picking` read. These are plain numbers, not values of the Euclidean side.
+`camera` reads its carried direction through `boundary.directionFrom`, so that crossing counts.
+
+**The arrow of each label comes from the maths face, so the label sets its own line height.** The
+line box of that face stands taller than the box of the text face. With the line height of the
+text face, the two crossing rows stood 5 px above the others.
+
+| Front-end and scene | `euclidean → algebra` | `algebra → euclidean` |
+|---------------------|-----------------------|-----------------------|
+| Desktop, opening scene | 24.0 | 24.0 |
+| Desktop, largest demo | 529.2 | 5,356.0 |
+| Page, opening scene, still | 19.3 | 21.6 |
+| Page, opening scene, orbiting | 36.9 | 33.4 |
+| Page, largest demo, still | 367.7 | 5,269.1 |
+| Page, largest demo, orbiting | 384.7 | 5,279.9 |
+
+**At the largest demo, about 5,300 values leave the algebra in each frame, and placement reads
+most of them.** It reads one position for each object on every frame, still or moving. The
+desktop counts the same on every run, since a count does not move with load.
+
+*Checked.* Verified by `suites.nim`: each lift and read counts once each way while the tally is
+open, and a read that refuses counts nothing. The ring pools a mean for each frame. Verified by
+driven check: the page counts values that enter the algebra, and at least one value leaving it for
+each object. It stops once diagnostics close, and each crossing row stands as tall as the frame time
+row. Verified on 2026-10-06 by `xvfb-run -a binaries/rga_visualiser --hidden --novsync --timings
+--frames:300 --demo:5038`: the desktop figures above.
+
 ## Render paths
 
 **The directory that a module sits in is the render path that may reach it.**
