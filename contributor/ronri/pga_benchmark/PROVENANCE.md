@@ -639,11 +639,11 @@ moves none. So an evaluation of a change that moves no function reads as quiet, 
 their spread from it.
 
 **A build claim compiles the library alone**, from an entry that holds `import pga` and nothing
-else. At rga6d the library with P01 peaks at 170.8 MiB against 235.0 MiB at the pin, ×0.73
-(`evaluations/cayley-derivation.json`, 2026-10-04, `linux amd64, 4 cores`). The claim of P01
-holds ×0.75 at most, as the Architect ruled on 2026-10-04, so P01 saves 64.2 MiB within its
-claim. The pin builds most anti tables with `constructAnti`, as P01 does, which is why the
-claim is not ×0.70. Which part of the cost the two share is not isolated.
+else. It compares the peak memory that the compiler reports for the pin and for the changed
+library. No proposal makes one at `749fecf`. P01 made one, and the Architect ruled to drop it,
+since head now holds the saving that it measured. At rga6d head peaks at 195.8 MiB and P01 at
+200.3 MiB, ×1.02 (`evaluations/cayley-derivation.json` at `b9ed6685`, 2026-10-07,
+`linux amd64, 4 cores`).
 
 Rejected: the bench entry, which puts the harness in the measured build. With the library
 fixed at `bd6b23c`, one change to `inspector.nim` alone moved the P01 side from 211.7 MiB to
