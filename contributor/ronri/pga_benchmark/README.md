@@ -28,6 +28,7 @@ ASCII. A control page beside them proves that the render sees.
 | [P04 Exact kinds][exact-kinds] | proposal | product returns exactly bases it reaches |
 | [P05 Multivector align][multivector-align] | proposal | multivector aligned to one cache line |
 | [P06 Float width][float-width] | proposal | width of each float as a build option |
+| [P07 Part scale][part-scale] | proposal | each part compared at its own scale |
 
 A **monitoring** page shows the library as it is. A **proposal** page shows a future state of
 the library, argued in its `proposal.md` and checked by its evaluation. Each proposal has the
@@ -140,3 +141,4 @@ checked against.
 [exact-kinds]: https://claude.ai/artifact/UPfjVLGbsVLBz756DMkPJe
 [multivector-align]: https://claude.ai/artifact/AB3BNtWPEzguWswwnx5ckh
 [float-width]: https://claude.ai/artifact/Q3R1yz93Drk7Cwq5qhymDZ
+[part-scale]: https://claude.ai/artifact/6hW9rjiotnjdjBVwatW5Dj
