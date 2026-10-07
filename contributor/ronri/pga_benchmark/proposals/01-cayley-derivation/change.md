@@ -321,7 +321,7 @@ func constructMetricExomorphism(metric: Cayley1D): Cayley1D {.compileTime, noini
 
   for operand in Basis:
     if operand.grade < Grade(2): continue
-    var 
+    var
       bases: seq[BasisSigned]
       is_degenerate = false
 
@@ -354,7 +354,7 @@ func constructProductExterior(
       let product = case spatiality
         of Spatiality.Base: multiplyExterior(m.toSigned, n.toSigned)
         of Spatiality.Anti: multiplyExterior(
-          complements.right[m].toSigned, 
+          complements.right[m].toSigned,
           complements.right[n].toSigned
         )
       if product.is_degenerate: continue
@@ -633,7 +633,7 @@ func filterBases(
 
       # Filter by product.
       for b in cayley[m][n]:
-        if (products.len != 0 and b.basis notin products) or 
+        if (products.len != 0 and b.basis notin products) or
             (as_exclusions and b.basis in products):
           cayley[m][n] = @[] # TODO: Remove only matching elements.
           break
@@ -801,13 +801,13 @@ func isNegatedFromOrderLexicographic(b: Basis): bool {.compileTime.} =
 func isNegatedByJoinLexicographic(a, b: BasisFlags): bool {.compileTime.} =
   ## Determine if joining two lexicographically ordered bases negates result.
   let a_flags = uint(a)
-  var 
+  var
     b_flags_remaining = uint(b)
     swaps = 0
 
   # Count `a` flags greater than each `b` flag (i.e. requires swap).
   while b_flags_remaining != 0:
-    let 
+    let
       offset_b_flags_min = countTrailingZeroBits(b_flags_remaining)
       count_flags_where_a_greater = countSetBits(a_flags shr (offset_b_flags_min + 1))
     swaps += count_flags_where_a_greater
