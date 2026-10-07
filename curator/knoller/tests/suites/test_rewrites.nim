@@ -5,8 +5,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, strutils, tables, unittest]
-import ../../../knoller/src/knoller
-import ../../src/[rewrites, symbols]
+import ../../src/knoller/[edits, rewrites, rules, symbols, tokens]
 
 
 const
@@ -20,7 +19,7 @@ const
     column: 8,
     name: "ctx",
     renamed: "context",
-    rule: "abbreviation (V.6)",
+    rule: Rule.Abbreviation,
   )
     ## Rename of parameter `ctx` to `context`.
 
@@ -112,7 +111,7 @@ suite "Internal: Rewrites":
         column: 8,
         name: "tmp_dir",
         renamed: "temporary_directory",
-        rule: "abbreviation (V.6)",
+        rule: Rule.Abbreviation,
       )
       parameter =
         Symbol(kind: "skParam", name: "a.f.tmp_dir", file: "/r/p/a.nim", line: 1, column: 8)
@@ -136,7 +135,7 @@ suite "Internal: Rewrites":
         column: 8,
         name: "localValue",
         renamed: "local_value",
-        rule: "parameter case (V.1)",
+        rule: Rule.CaseName,
       )
       parameter =
         Symbol(kind: "skParam", name: "a.f.localValue", file: "/r/p/a.nim", line: 1, column: 8)
@@ -208,7 +207,7 @@ suite "Internal: Rewrites":
     check planOf(answers = shadowing).refusal == "`context` would shadow `m.context`"
     let present = DECLARING & "let context = 1\n"
     check planOf(present).refusal == "`context` already stands in `p/a.nim`"
-    check planOf(fenced = {"p/a.nim": @[2]}.toTable).refusal == "`p/a.nim:3` is fenced (X.1)"
+    check planOf(fenced = {"p/a.nim": @[2]}.toTable).refusal == "`p/a.nim:3` is fenced"
     let wide = DECLARING.replace("  ctx + 1", "  ctx + " & "1".repeat(92))
     check planOf(wide).refusal.endsWith("would cross 100 characters")
     check planOf(wide).edits.len == 0  # nothing planned in part

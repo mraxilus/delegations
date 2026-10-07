@@ -1,11 +1,11 @@
 # knoller
 
 The fixers and the checks of Nim source that read the text of one file alone. Knoller also holds
-the fixer of type conversions, which asks the semantic pass of the compiler. The checks are those
-that the fixers clear, and those of form, names, idioms, articles and fixed waits that the static
-pass of `curator/audit` reads. `koch fix` runs the fixers through `curator/audit`, which keeps the
-fixers of renames. `audit` imports knoller by a relative path. Knoller also runs alone, on a file
-or a directory of any repository.
+the fixers of type conversions and of renames, which ask the semantic pass of the compiler. The
+checks are those that the fixers clear, and those of form, names, idioms, articles and fixed waits
+that the static pass of `curator/audit` reads. `koch fix` runs the fixers through `curator/audit`,
+which gives the words that its glossaries admit. `audit` imports knoller by a relative path.
+Knoller also runs alone, on a file or a directory of any repository.
 
 Authority replicated: none. The rules are those of `CONSTITUTION.md` and `STYLE.md`.
 
@@ -55,6 +55,11 @@ knoller [--check] [--nim:path] path...
   compile. The pass runs in the nearest directory that holds a nimble file, with the compiler that
   proves parentheses. A file that the pass cannot resolve keeps its conversions, and prints one
   warning that says why.
+- A name in the case of another kind (V.1, V.11), or one that coins an abbreviation (V.6), is
+  renamed at every use. Knoller reads each Nim file that git lists under the nearest directory
+  that holds a nimble file, and writes only the files you name. A rename that would write another
+  file stays as written, and prints one warning at its declaration that says why. Run knoller on
+  `.` at the root of a project to let such a rename write every file it reaches.
 - Knoller has no style option. A fence, from a line `#!fix off` to a line `#!fix on`, keeps its
   lines as written. Each run prints one warning for each fence, which names each rule that breaks
   inside it. So you always see what the fence keeps, and knoller writes none of it.
@@ -68,6 +73,7 @@ path: unsettled: <message>
 path:line: <rule-id> left: <message>
 path:line: fence-held warning: <message>
 path: type-conversion warning: <message>
+path:line: name-case warning: <message>
 needless-parentheses warning: <message>
 N fixed.
 ```

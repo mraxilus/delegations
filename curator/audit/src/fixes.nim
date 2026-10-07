@@ -43,9 +43,7 @@
 
 import std/[options, sequtils, sets, strutils, tables]
 import ../../knoller/src/knoller
-import ./[
-  checker, findings, glossary, kinds, layout, names, plan, rewrites, scope, symbols, toolchain,
-]
+import ./[checker, findings, glossary, kinds, layout, names, plan, scope, symbols, toolchain]
 
 
 
@@ -151,7 +149,7 @@ func renamesOf(
         column: column,
         name: name,
         renamed: renamed,
-        rule: "abbreviation (V.6)",
+        rule: Rule.Abbreviation,
       )
       result.add (rename, "")
     for r in recased:
@@ -267,7 +265,7 @@ func fixSource(
     if plan.refusal.len > 0 or path notin plan.edits: continue
     renamed.add plan.edits[path]
     for (file, line) in plan.lines:
-      if file == path: result.fixed.add finding(path, line, plan.rename.rule)
+      if file == path: result.fixed.add initReport(path, line, plan.rename.rule).findingOf
   var base = source.applied(renamed)
   if path in context.answers:
     let (edits, reports) =
@@ -314,7 +312,8 @@ func partOf(e: Entry; locked: openArray[string]; context: Context): Fixed =
     result.left.add finding(
       e.path,
       plan.rename.line,
-      plan.rename.rule.capitalizeAscii & " stays for hand, since rename to `" &
+      ($plan.rename.rule).capitalizeAscii & " (" & CITATIONS[plan.rename.rule] &
+        ") stays for hand, since rename to `" &
         plan.rename.renamed & "` is refused: " & plan.refusal & "; got `" & plan.rename.name &
         "`.",
     )
