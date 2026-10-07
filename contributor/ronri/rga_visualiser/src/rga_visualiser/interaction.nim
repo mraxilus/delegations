@@ -206,7 +206,7 @@ type
     Forward, Back, Left, Right, Down, Up,
     RollLeft, RollRight,
     OrbitLeft, OrbitRight, OrbitUp, OrbitDown,
-    DollyIn, DollyOut
+    DollyIn, DollyOut  ## Dolly with selection, and quicken or slow ship's speed without.
 
   KeyAction* {.pure.} = enum  ## Define what one press of key does to view.
     FocusPrevious, FocusNext,
@@ -289,10 +289,9 @@ type
       ##   Each render path owns its drag state and says so here.
       ## Distinct from `is_dragging`, construction drag that keeps hovering.
     depth_pointer*: Option[float]  ## Depth of what pointer is over, from eye along sight.
-      ## Local scale free flight caps its speed by; see `camera.capTravelling`.
-      ##   None where pointer is over nothing, which leaves fixed ceiling alone.
-      ## Stamped in `updateHover`, where scene is in hand, and stamped while travel key is
-      ## held as well as while camera stands, so cap follows pointer through flight.
+      ## Depth right drag holds in free flight as it begins; see `grabPan`.
+      ##   None where pointer is over nothing.
+      ## Stamped in `updateHover`, where scene is in hand, while camera stands.
     depth_pan*: float  ## Depth right drag holds under pointer, from eye along sight.
       ## Taken when drag begins, by `grabPan`: hover is off while camera moves, so
       ## `depth_pointer` is gone by second step.
@@ -305,6 +304,10 @@ type
     origin_pan*: Position  ## View origin `point_pan` is held about, as world position.
       ## View origin follows camera every frame while drag moves it, and point held about
       ## world origin would land on world's step far out.
+    speed_ship*: float  ## Ship's own speed key flight climbs toward, in units per second.
+      ## Camera's alone, as ship's is: no object, no pointer and no pivot sets it
+      ## (repository issue 535). Opens at `camera.speedOpening`; only plus and minus
+      ## change it, within `SPEED_FLOOR` and `SPEED_CEILING`; see `driveHeld`.
     seconds_travelling*: float  ## How long current travel hold has lasted, in seconds.
       ## Speed climbs with this, and resets to zero on frame no travel key is held; see
       ## `driveHeld`.
@@ -701,13 +704,7 @@ proc updateHover*(
   ##     Hover is recomputed every frame, so pan drag would highlight across every object
   ##     it sweeps, and held W would light up whatever slides under still cursor.
   ##     Ring comes back frame move ends.
-  ##   Pick still runs while travel key is held, and its answer is kept as depth alone.
-  ##     Free flight caps its speed by depth under pointer, and cap follows pointer
-  ##     through flight rather than freezing where key went down.
-  ##     Costs one pick per frame of flight, which is what still frame already pays.
-  ##     Ring stays off, so reader sees no highlight sweeping past.
-  let is_standing = not interaction.isMovingCamera
-  if interaction.is_enabled and (is_standing or interaction.isTravelling):
+  if interaction.is_enabled and not interaction.isMovingCamera:
     let report = pickAt(
       scene,
       camera,
@@ -718,8 +715,8 @@ proc updateHover*(
       interaction.cursor,
       placed,
     )
-    interaction.index_hover = if is_standing: report.handle else: none(int)
-    interaction.count_hover_rivals = if is_standing: report.count_rivals else: 0
+    interaction.index_hover = report.handle
+    interaction.count_hover_rivals = report.count_rivals
     interaction.depth_pointer = none(float)
     if report.handle.isSome:
       let found = positionUnderPointerOn(
@@ -732,8 +729,8 @@ proc updateHover*(
         interaction.cursor,
         placed,
       )
-      # Depth along sight, not distance: speed curve travels forward, and that is what
-      #   forward has to cross.
+      # Depth along sight, not distance: right drag slides square to sight, and what it
+      #   holds keeps that depth.
       if found.isSome:
         interaction.depth_pointer = some(depthAlong(scale.eye, scale.forward, found.get))
   else:
@@ -764,11 +761,15 @@ proc dollyAt*(
   ##   Cursor is parameter so pinch, which has no cursor, aims at frame's middle through
   ##   same rule; see `dollyAtCentre`.
   ##   Two states, as `driveHeld` has.
-  ##     Free flight travels pointer's own ray, always. Object under pointer is what eye
-  ##     comes in to, floored at that object's drawn radius; ray itself carries eye where
-  ##     nothing stands there.
-  ##     Selection keeps turntable's dolly, toward object under pointer where one
-  ##     stands there, and about middle of frame where none does.
+  ##     Free flight comes in to object under pointer, at whatever depth it stands,
+  ##     floored at that object's drawn radius. Over nothing it does nothing: wheel refers
+  ##     to object, and with none there it has nothing to come in to (repository issue
+  ##     535).
+  ##       Not pointer's ray at camera's own scale: that scale was separation, which each
+  ##       notch scaled down, and wheel over empty sky took it to near floor.
+  ##     Selection keeps turntable's dolly, toward object under pointer where one stands
+  ##     there within `FACTOR_ANCHOR_DEPTH` of separation, and about middle of frame where
+  ##     none does.
   # Take caller's extent and matrix, not fresh derivations per notch; see
   #   `picking.anchorZoomAt`.
   let anchor = anchorZoomAt(
@@ -780,27 +781,18 @@ proc dollyAt*(
     height,
     cursor,
     placed,
+    is_banded = has_selection,
   )
   if not has_selection:
-    if anchor.isSome:
-      camera.travelToward(factor, anchor.get.at, anchor.get.floor_reach)
-      # Separation follows anchor's own depth, so frustum's scale tracks flight.
-      #   Crossing as well as standing object: free flight has no orbit for pivot to
-      #   anchor, so depth here is scale and nothing else.
-      let
-        (eye, frame) = camera.sight
-        depth = depthAlong(eye, frame.forward, anchor.get.at)
-      if depth > 0.0: camera.repivotToDepth(depth)
-      return
-    # Nothing under pointer: same ray carries eye, at camera's own scale, and separation
-    #   scales with it exactly as `dolly` scales it.
-    let heading = headingThrough(camera, camera.frame, width, height, cursor)
-    # Length of heading is bulk norm of weightless point it lifts to.
-    let reach = (|∙heading.toMultivector)[Basis.scalar]
-    if reach <= 0.0: return
-    let settled = distanceHeld(camera.distance * factor)
-    camera.travelAlong((camera.distance - settled) / reach, heading)
-    camera.repivotToDepth(settled)
+    if anchor.isNone: return
+    camera.travelToward(factor, anchor.get.at, anchor.get.floor_reach)
+    # Separation follows anchor's own depth, so frustum's scale tracks flight.
+    #   Crossing as well as standing object: free flight has no orbit for pivot to
+    #   anchor, so depth here is scale and nothing else.
+    let
+      (eye, frame) = camera.sight
+      depth = depthAlong(eye, frame.forward, anchor.get.at)
+    if depth > 0.0: camera.repivotToDepth(depth)
     return
   if anchor.isNone:
     camera.dolly(factor)
@@ -1054,15 +1046,12 @@ func releaseKeysAll*(interaction: var Interaction) =
   interaction.seconds_travelling = 0.0
 
 
-func speedFlying*(interaction: Interaction, camera: Camera): float =
-  ## Read speed free flight carries camera at right now, in units per second.
-  ##   Panel's reading: same cap and same age `driveHeld` steps by, so figure shown is
-  ##   figure flown. Zero while no travel key is held, since age is.
+func speedFlying*(interaction: Interaction): float =
+  ## Read ship's own speed key flight climbs toward, in units per second.
+  ##   Panel's reading: speed `driveHeld` steps toward, haste included while shift is
+  ##   held, so figure shown is figure plus and minus set.
   let haste = if Key.Shift in interaction.keys_held: FACTOR_HASTE else: 1.0
-  speedTravelling(
-    interaction.seconds_travelling,
-    capTravelling(interaction.depth_pointer, camera.distance, haste),
-  )
+  interaction.speed_ship * haste
 
 
 func driveHeld*(
@@ -1078,7 +1067,12 @@ func driveHeld*(
   ##     Travel integrates its own speed curve; see `camera.distanceTravelled`.
   ##     Shift multiplies every rate by `FACTOR_HASTE`.
   ##   Two states, and `has_selection` picks between them.
-  ##     Empty selection flies: travel and turn are about camera's own axes.
+  ##     Empty selection flies as ship does: travel and turn are about camera's own axes,
+  ##     and travel climbs toward ship's own speed, `speed_ship`. Plus and minus scale
+  ##     that speed as they scale separation with selection, and nothing else sets it.
+  ##       Not depth under pointer, nor separation over empty sky: separation ran down
+  ##       with each step ahead, and flight stalled short of pivot (repository issue 535).
+  ##       Travel carries pivot along, so separation stays as it was.
   ##     Selection orbits centroid instead. W and space rise over it, S and control fall,
   ##     and sideways keys swing round it; frame rule holds eye clear either way.
   ##       Slide across ground stood here, and it had no reading once camera stopped being
@@ -1099,18 +1093,16 @@ func driveHeld*(
     dolly = pow(FACTOR_DOLLY_SECOND, haste * seconds)
     # One step for this frame, integrated across hold's own two ages.
     step = distanceTravelled(
-      age_before,
-      interaction.seconds_travelling,
-      capTravelling(interaction.depth_pointer, camera.distance, haste),
+      age_before, interaction.seconds_travelling, interaction.speed_ship * haste
     )
   for key in interaction.keys_held:
     let motion = motionFor(key)
     if motion.isNone: continue
     case motion.get
     of Motion.Forward:
-      if has_selection: camera.orbit(0.0, rise) else: camera.flyAhead(step)
+      if has_selection: camera.orbit(0.0, rise) else: camera.travel(step, 0.0, 0.0)
     of Motion.Back:
-      if has_selection: camera.orbit(0.0, -rise) else: camera.flyAhead(-step)
+      if has_selection: camera.orbit(0.0, -rise) else: camera.travel(-step, 0.0, 0.0)
     of Motion.Left:
       if has_selection: camera.orbit(-turn, 0.0) else: camera.travel(0.0, -step, 0.0)
     of Motion.Right:
@@ -1130,8 +1122,14 @@ func driveHeld*(
       if has_selection: camera.orbit(0.0, rise) else: camera.look(0.0, rise)
     of Motion.OrbitDown:
       if has_selection: camera.orbit(0.0, -rise) else: camera.look(0.0, -rise)
-    of Motion.DollyIn: camera.dolly(1.0 / dolly)
-    of Motion.DollyOut: camera.dolly(dolly)
+    of Motion.DollyIn:
+      if has_selection: camera.dolly(1.0 / dolly)
+      else: interaction.speed_ship =
+          clamp(interaction.speed_ship * dolly, SPEED_FLOOR, SPEED_CEILING)
+    of Motion.DollyOut:
+      if has_selection: camera.dolly(dolly)
+      else: interaction.speed_ship =
+          clamp(interaction.speed_ship / dolly, SPEED_FLOOR, SPEED_CEILING)
 
 
 func applyAction*(

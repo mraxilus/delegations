@@ -5,6 +5,13 @@
 import ./fixtures
 
 
+func comeIn(camera: var Camera, step: float) =
+  ## Carry eye `step` units along sight toward pivot, which stands; back out where negative.
+  ##   Through `dolly`, for checks that place camera inside or outside fit: key flight now
+  ##   carries pivot along, and these want it held.
+  camera.dolly((camera.distance - step) / camera.distance)
+
+
 
 suite "Camera Aim":
   const
@@ -731,7 +738,7 @@ suite "Camera Aim":
     var camera = opening.placed(stanceFor(aim, opening, wide, tall))
     check aim.isFramed(camera, wide, tall)
     let axes_before = camera.frame
-    camera.flyAhead(0.8 * reach)
+    camera.comeIn(0.8 * reach)
     check not aim.isFramed(camera, wide, tall)
     let bearing_inside = (1.0 / norm(camera.eye - centre)) * (camera.eye - centre)
     camera.holdFramed(aim, wide, tall)
@@ -748,7 +755,7 @@ suite "Camera Aim":
         TOLERANCE_TEST
     # Standing further out is left alone: floor, not fit.
     var far = camera
-    far.flyAhead(-3.0 * reach)
+    far.comeIn(-3.0 * reach)
     let eye_far = far.eye
     far.holdFramed(aim, wide, tall)
     check far.eye =~ eye_far
@@ -1607,7 +1614,7 @@ suite "Camera Aim":
       pointer = none(PointerPick)
     # Framed from further out than fit asks: nothing moves it.
     var camera = opening.placed(stanceFor(aim, opening, wide, tall))
-    camera.flyAhead(-5.0)
+    camera.comeIn(-5.0)
     let stance_far = camera.stanceOf
     check aim.isFramed(camera, wide, tall)
     tween.adoptNext()
@@ -1626,7 +1633,7 @@ suite "Camera Aim":
     check tween.is_arrived
     check camera.stanceOf == stance_far
     # Restored well inside fit: rule is broken, so ease backs camera out to it.
-    camera.flyAhead(12.0)
+    camera.comeIn(12.0)
     check not aim.isFramed(camera, wide, tall)
     tween.adoptNext()
     tween.offerAim(

@@ -1150,7 +1150,7 @@ proc renderFrame(
     #   either button greys out where its side of timeline is empty.
     if not stepHistory(panel, scene, camera, HISTORY_DESKTOP, is_undo):
       panel.say(stepMessage(is_undo), now)
-  layoutPanel(panel, scene, camera, HISTORY_DESKTOP, interaction.speedFlying(camera), now)
+  layoutPanel(panel, scene, camera, HISTORY_DESKTOP, interaction.speedFlying, now)
   # Row of constant controls floats over scene beside panel, as browser's chip row does.
   layoutChipRow(panel, scene, camera, HISTORY_DESKTOP, now)
   layoutHelp(panel, path_help)
@@ -2256,7 +2256,9 @@ proc runInteractive(
   ##     Splitting would pass most by `var` across new boundary, trading readable loop for
   ##     indirection.
   var
-    interaction = Interaction(is_enabled: true)
+    interaction = Interaction(
+      is_enabled: true, speed_ship: speedOpening(PIXELS_WIDTH, PIXELS_HEIGHT)
+    )
     button_dragging = none(uint8)
     is_running = true
     is_dragging_orbit = false

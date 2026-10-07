@@ -19,7 +19,7 @@ suite "Picking":
     cameraAround(Position(x: 0, y: 0, z: 0), distance, Direction(x: 1, y: 0, z: 0))
 
 
-  test "a zoom anchors on what is under the cursor only near the depth being looked at":
+  test "a zoom with a selection anchors only near the depth looked at, and free flight at any":
     # Camera tilted down at origin from ten units.
     #   Point on sight line at one and half orbit distances is anchor; point eight off is
     #   passed over, and nothing else answers: world has no ground to fall back on.
@@ -52,6 +52,19 @@ suite "Picking":
       centre,
     )
     check anchor_far.isNone
+    # Free flight takes it where it stands: wheel there refers to object under pointer, and
+    #   band about separation would leave it nothing once flight moved on.
+    let anchor_free = anchorZoomAt(
+      far,
+      camera,
+      scale,
+      view_projection,
+      width_pick,
+      height_pick,
+      centre,
+      is_banded = false,
+    )
+    check anchor_free.isSome and abs(anchor_free.get.at.z + 7.0 * eye.z) < 1.0e-6
 
 
   test "a point drawn wide is picked anywhere on its disc, over the plane behind it":

@@ -444,25 +444,6 @@ suite "Camera":
     check abs(distanceTravelled(0.0, 20.0, cap) - cap * (20.0 - SECONDS_SPEED_RISE)) < 1.0e-6
 
 
-  test "the speed cap is the smaller of the local scale and the ceiling":
-    # Pointer over something takes that depth as its scale.
-    check capTravelling(some(19.0), 999.0, 1.0) =~ FACTOR_SPEED_LOCAL * 19.0
-    # Pointer over empty sky falls back to camera's own scale, never to ceiling.
-    #   Ceiling alone there crossed solar system in half second.
-    check capTravelling(none(float), 19.0, 1.0) =~ FACTOR_SPEED_LOCAL * 19.0
-    # Close work is slow, so reader inside moon's orbit is not thrown across it.
-    check capTravelling(some(0.001), 19.0, 1.0) =~ FACTOR_SPEED_LOCAL * 0.001
-    # Far work is held at ceiling rather than scaled past it.
-    check capTravelling(some(1.0e9), 1.0, 1.0) =~ SPEED_CEILING
-    check capTravelling(none(float), 1.0e9, 1.0) =~ SPEED_CEILING
-    # Haste multiplies both figures, so shift stays one multiplier on every rate.
-    check capTravelling(some(2.0), 1.0, FACTOR_HASTE) =~
-        FACTOR_SPEED_LOCAL * 2.0 * FACTOR_HASTE
-    check capTravelling(some(1.0e9), 1.0, FACTOR_HASTE) =~ SPEED_CEILING * FACTOR_HASTE
-    # Depth behind eye is refused rather than freezing camera at zero.
-    check capTravelling(some(-5.0), 19.0, 1.0) =~ 0.0
-
-
   test "the far clip reaches the scene's farthest object however close the orbit is":
     var camera = cameraAround(Position(x: 0, y: 0, z: 0), 10.0, Direction(x: 1, y: 0, z: 0))
     check abs(camera.distanceFar(0.0) - 10.0 * FACTOR_CLIP_FAR) < 1.0e-9
@@ -940,18 +921,31 @@ suite "Camera":
     check camera.pivot =~ ORIGIN
 
 
-  test "with no selection the wheel travels the pointer's own ray":
-    # Free flight has no pivot to dolly about, so wheel carries eye along ray under
-    #   pointer, whether or not anything stands there.
+  test "with no selection the wheel and the pinch over empty sky do nothing":
+    # Fault: wheel carried eye along pointer's ray at camera's own scale, which was
+    #   separation, and scaled it by each notch: 200 notches over empty sky took it to near
+    #   floor while nearest object stood 0.26 ahead (repository issue 535). Wheel refers to
+    #   object under pointer, and with none there it has nothing to come in to.
     const (wide, tall) = (1440, 900)
     let cursor = ScreenPosition(x: 260.0, y: 720.0)
     var camera = cameraAround(ORIGIN, 12.0, Direction(x: 11, y: 6, z: 4))
-    let
-      (eye_start, axes_start) = (camera.eye, camera.frame)
-      heading = headingThrough(camera, axes_start, wide, tall, cursor)
+    let stance = camera.stanceOf
     var interaction = Interaction(is_enabled: true)
     interaction.updateCursor(cursor.x, cursor.y)
-    interaction.dollyAtCursor(
+    for _ in 1..200:
+      interaction.dollyAtCursor(
+        camera,
+        initScene(),
+        0.5,
+        camera.drawExtentFor(tall, 0.0),
+        camera.initMatrixViewProjection(float(wide) / float(tall)),
+        wide,
+        tall,
+        has_selection = false,
+      )
+    check camera.stanceOf == stance
+    # Pinch aims through same rule at middle of frame, and finds nothing there either.
+    dollyAtCentre(
       camera,
       initScene(),
       0.5,
@@ -961,14 +955,50 @@ suite "Camera":
       tall,
       has_selection = false,
     )
-    # Step lies along that ray, and not along sight: cursor is well off middle.
-    let step = camera.eye - eye_start
-    check dot(step, (1.0 / norm(heading)) * heading) =~ norm(step)
-    check dot(step, axes_start.forward) < norm(step)
-    # Scale halves with factor, as it does under turntable's own dolly.
-    check camera.distance =~ 6.0
-    # Nothing turned: wheel travels and never turns.
-    check camera.frame.forward =~ axes_start.forward
+    check camera.stanceOf == stance
+
+
+  test "with no selection the wheel comes in to an object at any depth, and with one only near":
+    # Point on sight line eight separations out: outside band about separation that
+    #   selection's wheel keeps, and which free flight's wheel refers to regardless.
+    const (wide, tall) = (1440, 900)
+    let
+      opened = cameraAround(ORIGIN, 10.0, Direction(x: 10, y: 0, z: 3))
+      star = Position(x: -7.0 * opened.eye.x, y: 0.0, z: -7.0 * opened.eye.z)
+      middle = ScreenPosition(x: float(wide) / 2.0, y: float(tall) / 2.0)
+    var scene = initScene()
+    scene.addObject(star.toMultivector, "star", Ink.Rose)
+    var
+      flying = opened
+      interaction = Interaction(is_enabled: true)
+    interaction.updateCursor(middle.x, middle.y)
+    interaction.dollyAtCursor(
+      flying,
+      scene,
+      0.5,
+      flying.drawExtentFor(tall, 0.0),
+      flying.initMatrixViewProjection(float(wide) / float(tall)),
+      wide,
+      tall,
+      has_selection = false,
+    )
+    # Halfway to star, along its own line, and pivot at its depth.
+    check norm(flying.eye - star) =~ 0.5 * norm(opened.eye - star)
+    check flying.distance =~ norm(flying.eye - star)
+    # Selection keeps band: star is passed over, and zoom dollies about pivot instead.
+    var held = opened
+    interaction.dollyAtCursor(
+      held,
+      scene,
+      0.5,
+      held.drawExtentFor(tall, 0.0),
+      held.initMatrixViewProjection(float(wide) / float(tall)),
+      wide,
+      tall,
+      has_selection = true,
+    )
+    check held.distance =~ 5.0
+    check held.pivot =~ opened.pivot
 
 
   test "the wheel comes in to what the pointer is over, and stops where a point fills the frame":

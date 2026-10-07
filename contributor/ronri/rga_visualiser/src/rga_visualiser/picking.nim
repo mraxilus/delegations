@@ -48,11 +48,14 @@ import ./[boundary, camera, euclid, scene, tessellate]
 
 const
   FACTOR_ANCHOR_DEPTH* = 2.0
-    ## Take object as zoom anchor only within this factor of orbit distance.
+    ## Take object as zoom anchor with selection only within this factor of orbit distance.
     ##   Depth either way; otherwise nothing answers, and zoom keeps middle of frame.
     ##   Anchor at depth of what reader looks at is what map zoom means. Star field put
     ##   some star under every pixel, and anchoring on one thousand units off carried
     ##   eye across field in few notches and clipped scene away behind it.
+    ##   Free flight takes object at any depth: wheel there refers to object under pointer,
+    ##   and band about separation left it nothing to refer to once flight had moved on
+    ##   while separation stood (repository issue 535).
   SLACK_COVERED* = 1.0e-9
     ## Allow disc this fraction short of frame's corners, and still count as covering it.
     ##   Eye held on fill (`framing.holdFilled`) stands exactly at `depthFilling`, and bare
@@ -915,15 +918,17 @@ proc anchorZoomAt*(
   width, height: int;
   cursor: ScreenPosition;
   placed: openArray[Placement] = [];
+  is_banded = true;
 ): Option[AnchorZoom] =
   ## Solve which object cursor is over, and where on that object cursor stands.
   ##   Object alone. World has no ground, and level through pivot names no place reader
-  ##   points at: over empty sky wheel keeps middle of frame, or pointer's own ray in
-  ##   free flight.
+  ##   points at: over empty sky wheel with selection keeps middle of frame, and free
+  ##   flight's does nothing.
   ##   Reader pointing at object means that object at depth it stands at; zoom anchored
   ##   on plane through pivot crept past or short of it.
-  ##   None where nothing is under cursor, and where what is stands outside depth band;
-  ##   see `FACTOR_ANCHOR_DEPTH`.
+  ##   None where nothing is under cursor, and, where `is_banded`, where what is stands
+  ##   outside depth band; see `FACTOR_ANCHOR_DEPTH`. Selection's wheel bands, free
+  ##   flight's does not.
   ##   `pickNearest` ranks horizon plane last and matches it everywhere, so sky is under
   ##   cursor almost always; `positionOnObjectUnder` refuses horizon shapes for exactly
   ##   that reason.
@@ -951,7 +956,7 @@ proc anchorZoomAt*(
     cursor,
     placed,
   )
-  if found.isNone or not isAnchorNear(found.get, camera, scale): return
+  if found.isNone or (is_banded and not isAnchorNear(found.get, camera, scale)): return
   # Read kind off placement, frame's where caller brought them: hit stands only on finite
   #   point, line or plane.
   let

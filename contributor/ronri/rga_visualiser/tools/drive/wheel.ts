@@ -124,4 +124,29 @@ export async function driveWheel(page: Page): Promise<void> {
     off_eye < 1e-3 && off_pixel < 1,
     `eye off by ${off_eye.toFixed(4)} units, pixel off by ${off_pixel.toFixed(2)} px`,
   );
+
+  // Over empty sky, with nothing selected, wheel has nothing to come in to and does
+  //   nothing. Once it carried eye at separation's scale, and scaled separation by each
+  //   notch until near floor (repository issue 535).
+  await driveHome(page);
+  const sky = await page.evaluate(() => {
+    const canvas = document.getElementById('gl') as HTMLCanvasElement;
+    const rect = canvas.getBoundingClientRect();
+    const [x, y] = [rect.left + 0.5 * rect.width, rect.top + 0.15 * rect.height];
+    nimUpdateCursor(x - rect.left, y - rect.top);
+    nimUpdateHover(canvas.clientWidth, canvas.clientHeight);
+    return { x, y, hovered: nimHoverHandle(), selected: nimSelectionCount() };
+  });
+  const still = await readCamera(page);
+  await page.mouse.move(sky.x, sky.y);
+  await wheelBy(page, 20, -120);
+  const after_sky = await readCamera(page);
+  report(
+    'with nothing selected, twenty notches over empty sky move nothing',
+    sky.hovered === -1 && sky.selected === 0 && spanOf(still.eye, after_sky.eye) === 0 &&
+      after_sky.distance === still.distance,
+    `hover ${sky.hovered}, selected ${sky.selected}; eye moved ` +
+      `${spanOf(still.eye, after_sky.eye)}, separation ${still.distance.toFixed(4)} -> ` +
+      `${after_sky.distance.toFixed(4)}`,
+  );
 }

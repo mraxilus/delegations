@@ -1298,10 +1298,10 @@ suite "Interaction":
     # Fly reading of movement key rather than map one: forward dives where sight dives,
     #   and up is camera's own up, so rolled camera rises toward its own ceiling.
     var
-      interaction = Interaction(is_enabled: true, depth_pointer: some(20.0))
+      interaction = Interaction(is_enabled: true, speed_ship: 20.0)
       camera = cameraAround(ORIGIN, 20.0, Direction(x: 12, y: 5, z: 16))
     camera.roll(0.7)
-    let (eye_start, axes_start) = (camera.eye, camera.frame)
+    let (eye_start, axes_start, pivot_start) = (camera.eye, camera.frame, camera.pivot)
     interaction.holdKey(Key.W)
     interaction.driveHeld(camera, 1.0, has_selection = false)
     let step = camera.eye - eye_start
@@ -1311,12 +1311,11 @@ suite "Interaction":
     # Nothing turned: flight slides and never turns.
     check camera.frame.forward =~ axes_start.forward
     check camera.frame.axis_up =~ axes_start.axis_up
-    # Separation gives up exactly what eye covered, so pivot stands where it stood.
-    #   What keeps near clip and furniture's extent on scale reader flies into: near is
-    #   one four-hundredth of separation, and separation kept would hold that of stance
-    #   camera set off from.
-    check camera.distance =~ 20.0 - norm(step)
-    check camera.pivot =~ cameraAround(ORIGIN, 20.0, Direction(x: 12, y: 5, z: 16)).pivot
+    # Pivot rides along, so separation stays: flight is ship's, and spends no separation.
+    #   Spent, it ran down to near floor and flight stalled short of pivot (repository
+    #   issue 535). Near clip takes its scale from nearest drawn object ahead instead.
+    check camera.distance =~ 20.0
+    check camera.pivot =~ pivot_start + step
     check camera.distanceNear =~ camera.distance * FACTOR_CLIP_NEAR
 
     # Strafe carries pivot along instead: what stands ahead keeps its depth.
@@ -1340,10 +1339,10 @@ suite "Interaction":
     check abs(dot(lifted.eye - eye_lifted, UP_WORLD)) < norm(lifted.eye - eye_lifted)
 
 
-  test "flight climbs toward its cap, and the pointer's depth sets that cap":
+  test "flight climbs toward the ship's own speed, whatever the pointer or the pivot":
     # Two halves of one hold cover more ground than first half twice over, because speed
     #   is still climbing. What reads as spaceship rather than as constant rate.
-    var interaction = Interaction(is_enabled: true, depth_pointer: some(20.0))
+    var interaction = Interaction(is_enabled: true, speed_ship: 20.0, depth_pointer: some(20.0))
     interaction.holdKey(Key.W)
     var camera = cameraAround(ORIGIN, 20.0, Direction(x: 1, y: 0, z: 0))
     let eye_start = camera.eye
@@ -1354,19 +1353,97 @@ suite "Interaction":
     interaction.driveHeld(camera, 0.5, has_selection = false)
     let second = norm(camera.eye - eye_middle)
     check second > first
-    check first + second =~ distanceTravelled(0.0, 1.0, FACTOR_SPEED_LOCAL * 20.0)
+    check first + second =~ distanceTravelled(0.0, 1.0, 20.0)
 
-    # Pointer over something near caps speed low, which is what close work needs.
-    var near_work = Interaction(is_enabled: true, depth_pointer: some(0.002))
-    near_work.holdKey(Key.W)
-    var close = cameraAround(ORIGIN, 0.002, Direction(x: 1, y: 0, z: 0))
-    let eye_close = close.eye
-    near_work.driveHeld(close, 1.0, has_selection = false)
-    check norm(close.eye - eye_close) =~ distanceTravelled(0.0, 1.0, FACTOR_SPEED_LOCAL * 0.002)
+    # Ship's speed is camera's alone: pointer over something near, and separation at near
+    #   floor, leave step as it was. Both set speed once, and flight crawled near pivot.
+    for (depth, separation) in [(some(0.002), 20.0), (none(float), 1.0e-12)]:
+      var ship = Interaction(is_enabled: true, speed_ship: 20.0, depth_pointer: depth)
+      ship.holdKey(Key.W)
+      var other = cameraAround(ORIGIN, separation, Direction(x: 1, y: 0, z: 0))
+      let eye_other = other.eye
+      ship.driveHeld(other, 1.0, has_selection = false)
+      check norm(other.eye - eye_other) =~ distanceTravelled(0.0, 1.0, 20.0)
 
     # Letting go forgets speed reached, so flight taken up again starts from rest.
-    near_work.releaseKey(Key.W)
-    check near_work.seconds_travelling =~ 0.0
+    interaction.releaseKey(Key.W)
+    check interaction.seconds_travelling =~ 0.0
+
+
+  test "a long flight keeps its pace, and never stalls short of the pivot":
+    # Fault: flight ahead held pivot and spent separation, and separation capped speed, so
+    #   eye closed on pivot and stalled: 19 units in first ten seconds, then 2.2e-4, 2.3e-9
+    #   and 1.1e-12 (repository issue 535). Each later span now covers ship's speed times
+    #   its length.
+    var
+      interaction = Interaction(is_enabled: true, speed_ship: 19.0)
+      camera = cameraAround(ORIGIN, 19.0, Direction(x: 1, y: 2, z: 1))
+    interaction.holdKey(Key.W)
+    interaction.driveHeld(camera, 10.0, has_selection = false)
+    for _ in 1..3:
+      let eye_before = camera.eye
+      for _ in 1..600:
+        interaction.driveHeld(camera, 1.0 / 60.0, has_selection = false)
+      check abs(norm(camera.eye - eye_before) - 190.0) < 1.0e-3
+      check camera.distance =~ 19.0
+
+
+  test "plus and minus set the ship's speed with no selection, and dolly with one":
+    # Ship's speed is reader's alone, and these two keys are how reader sets it: each
+    #   second held scales it by `FACTOR_DOLLY_SECOND`, as each scales separation with
+    #   selection. Nothing moves while they set it.
+    var
+      interaction = Interaction(is_enabled: true, speed_ship: 19.0)
+      camera = cameraAround(ORIGIN, 19.0, Direction(x: 1, y: 2, z: 1))
+    let stance = camera.stanceOf
+    interaction.holdKey(Key.Plus)
+    interaction.driveHeld(camera, 1.0, has_selection = false)
+    check interaction.speed_ship =~ 19.0 * FACTOR_DOLLY_SECOND
+    check camera.stanceOf == stance
+    interaction.releaseKey(Key.Plus)
+    interaction.holdKey(Key.Minus)
+    interaction.driveHeld(camera, 2.0, has_selection = false)
+    check interaction.speed_ship =~ 19.0 / FACTOR_DOLLY_SECOND
+    # Shift hastens this rate as it does every other.
+    interaction.holdKey(Key.Shift)
+    interaction.driveHeld(camera, 0.25, has_selection = false)
+    check interaction.speed_ship =~ 19.0 / pow(FACTOR_DOLLY_SECOND, 2.0)
+    interaction.releaseKey(Key.Shift)
+    interaction.releaseKey(Key.Minus)
+
+    # Bounds hold however long either key is held.
+    interaction.speed_ship = SPEED_CEILING
+    interaction.holdKey(Key.Plus)
+    interaction.driveHeld(camera, 3.0, has_selection = false)
+    check interaction.speed_ship =~ SPEED_CEILING
+    interaction.releaseKey(Key.Plus)
+    interaction.speed_ship = SPEED_FLOOR
+    interaction.holdKey(Key.Minus)
+    interaction.driveHeld(camera, 3.0, has_selection = false)
+    check interaction.speed_ship =~ SPEED_FLOOR
+    interaction.releaseKey(Key.Minus)
+
+    # With selection same key dollies, and speed stands.
+    interaction.speed_ship = 19.0
+    interaction.holdKey(Key.Plus)
+    interaction.driveHeld(camera, 1.0, has_selection = true)
+    check camera.distance =~ 19.0 / FACTOR_DOLLY_SECOND
+    check interaction.speed_ship =~ 19.0
+
+
+  test "the ship opens at the opening's separation each second, and home leaves it":
+    # Read once, at open, off frame opening fits: phone opens farther out, so faster.
+    check speedOpening(WIDTH_OPENED, HEIGHT_OPENED) =~
+        initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED).distance
+    check speedOpening(390, 844) > speedOpening(WIDTH_OPENED, HEIGHT_OPENED)
+    # Home returns stance, and leaves speed reader set, as it leaves lens.
+    var
+      interaction = Interaction(is_enabled: true, speed_ship: 4.0)
+      camera = cameraAround(ORIGIN, 3.0, Direction(x: 1, y: 2, z: 1))
+    discard interaction.applyAction(
+      camera, initScene(), KeyAction.ViewHome, WIDTH_OPENED, HEIGHT_OPENED
+    )
+    check interaction.speed_ship =~ 4.0
 
 
   test "roll reaches the camera in either state, and free turning in one":
@@ -1852,14 +1929,13 @@ suite "Interaction":
     check not isHoldSpent(interaction, 1000.0 + 10.0)
 
 
-  test "the panel's speed is the one flight steps by, and none while nothing is held":
-    var interaction = Interaction(is_enabled: true)
-    let camera = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
-    check interaction.speedFlying(camera) == 0.0
+  test "the panel's speed is the ship's own, held or not, and haste multiplies it":
+    # Reader reads speed plus and minus set before flying, not only while flying.
+    var interaction = Interaction(is_enabled: true, speed_ship: 19.0)
+    check interaction.speedFlying =~ 19.0
     interaction.keys_held = {Key.W}
     interaction.seconds_travelling = SECONDS_SPEED_RISE
-    let cap = capTravelling(interaction.depth_pointer, camera.distance, 1.0)
-    check interaction.speedFlying(camera) =~ speedTravelling(SECONDS_SPEED_RISE, cap)
+    check interaction.speedFlying =~ 19.0
     # Shift is one multiplier on every rate, speed included.
     interaction.keys_held = {Key.W, Key.Shift}
-    check interaction.speedFlying(camera) =~ FACTOR_HASTE * speedTravelling(SECONDS_SPEED_RISE, cap)
+    check interaction.speedFlying =~ FACTOR_HASTE * 19.0

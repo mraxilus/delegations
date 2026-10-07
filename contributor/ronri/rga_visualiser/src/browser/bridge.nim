@@ -564,6 +564,7 @@ proc nimInit(now: cfloat; width, height: cint) {.exportc.} =
   ##   `width` x `height` is canvas's frame, which opening fits seed scene across.
   placeSeeds(float(now))
   CAMERA_PAGE = initCameraDefault(int(width), int(height))
+  INTERACTION_PAGE.speed_ship = speedOpening(int(width), int(height))
   SELECTION_PAGE.clear()
   HISTORY_PAGE.initHistory(SCENE_PAGE, CAMERA_PAGE)
 
@@ -1416,6 +1417,9 @@ proc nimCameraScaleLocal(): cfloat {.exportc.} = cfloat(CAMERA_PAGE.scaleLocal)
   ##   Reach to nearest drawn object ahead of eye, or separation where nothing is drawn
   ##   there; see `camera.scaleLocal`.
 
+proc nimSpeedShip(): cfloat {.exportc.} = cfloat(INTERACTION_PAGE.speed_ship)
+  ## Report ship's own speed key flight climbs toward, in world units per second.
+
 proc nimCameraFov(): cfloat {.exportc.} = cfloat(CAMERA_PAGE.degrees_field_of_view)
   ## Report vertical field of view, in degrees.
 
@@ -1494,9 +1498,9 @@ proc nimCameraElevationReading(): cstring {.exportc.} =
 
 
 proc nimCameraSpeedReading(): cstring {.exportc.} =
-  ## Report free flight's speed right now, as multiple of speed of light with its unit.
+  ## Report ship's own speed, as multiple of speed of light with its unit.
   readingText(proc(line: var openArray[char], cursor: var int) =
-    appendSpeedLight(line, cursor, INTERACTION_PAGE.speedFlying(CAMERA_PAGE) / SPEED_LIGHT))
+    appendSpeedLight(line, cursor, INTERACTION_PAGE.speedFlying / SPEED_LIGHT))
 
 
 proc nimPlaceCamera(eye_x, eye_y, eye_z, pivot_x, pivot_y, pivot_z: cfloat) {.exportc.} =
