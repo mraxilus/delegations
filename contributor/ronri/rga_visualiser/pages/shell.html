@@ -31,17 +31,20 @@
     --speed-good: #14a06e;
     --speed-fair: #bb8215;
     --speed-poor: #d03b3b;
-    /* "Noto Sans UI" sits in mono and serif stacks as well as being sans face:
-       maths and symbol faces are declared under that family by unicode-range, and
-       neither Commit Mono nor Noto Serif carries single one of those codepoints. Without
-       it bold operand or wedge in mono text falls through to whatever viewer's
-       system happens to have, which is one outcome embedding faces exists to rule
-       out -- and it renders fine on machine that has DejaVu, so it does not show up
-       locally. Listing family costs nothing: CSS falls back per character, and
+    /* Every stack names maths and symbol families after its text faces: none of Commit
+       Mono, Noto Serif and Noto Sans carries every operator and symbol page writes. Without
+       them bold operand or wedge falls through to whatever viewer's system happens to
+       have, which is one outcome embedding faces exists to rule out -- and it renders fine
+       on machine that has DejaVu, so it does not show up locally. "Noto Sans UI" follows
+       mono and serif faces too, so what neither carries draws in interface face before
+       maths. Listing family costs nothing: CSS falls back per character, and
        range-restricted faces only ever match characters they are declared for. */
-    --mono: "Commit Mono UI", "Noto Sans UI", ui-monospace, "SF Mono", Consolas, monospace;
-    --sans: "Noto Sans UI", -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-    --serif: "Noto Serif UI", "Noto Sans UI", Georgia, "Times New Roman", serif;
+    --mono: "Commit Mono UI", "Noto Sans UI", "Noto Sans Math UI", "Noto Sans Symbols UI",
+      ui-monospace, "SF Mono", Consolas, monospace;
+    --sans: "Noto Sans UI", "Noto Sans Math UI", "Noto Sans Symbols UI", -apple-system,
+      "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --serif: "Noto Serif UI", "Noto Sans UI", "Noto Sans Math UI", "Noto Sans Symbols UI",
+      Georgia, "Times New Roman", serif;
     /* **Three faces, three roles, and nothing else picks between them.**
          `--serif` draws titles: heading that names section or view, and application's own
        name. `--sans` draws everything reader reads or operates -- body, controls, labels,
@@ -84,14 +87,20 @@
   @font-face { font-family: "Noto Sans UI"; font-style: normal; font-weight: 600;
     font-display: block;
     src: url(@EMBED:NotoSans-SemiBold.ttf@) format("truetype"); }
-  /* Maths and symbols ship one weight each, declared over 400 to 600: semibold label or
-     chip then draws its operators from them, as they are, and never from face of viewer's
-     system. Not 400 alone, which matches no semibold text, so its operators fall through. */
-  @font-face { font-family: "Noto Sans UI"; font-style: normal; font-weight: 400 600;
+  /* Maths and symbols each take family of their own, which every stack names after text face.
+     Not under "Noto Sans UI" by unicode-range: faces of family that declare one weight form
+     one set, engine picks one set for weight asked, and set at 400 to 600 wins both 400 and
+     600 from text faces, which then never load, so Latin draws in viewer's face. Not
+     declared again at 400 and at 600 to join those sets, which embeds each file twice,
+     1.7 MB more. Order of stack is precedence, as merge order is in desktop's atlas: text
+     face draws what it holds, maths and symbols draw rest.
+       Each ships one weight, declared over 400 to 600: semibold label or chip then draws
+     its operators from them, as they are, and never from face of viewer's system. */
+  @font-face { font-family: "Noto Sans Math UI"; font-style: normal; font-weight: 400 600;
     font-display: block;
     unicode-range: U+2190-21FF, U+2200-22FF, U+2300-23FF, U+27C0-27EF, U+2A00-2AFF, U+1D400-1D7FF;
     src: url(@EMBED:NotoSansMath-Regular.ttf@) format("truetype"); }
-  @font-face { font-family: "Noto Sans UI"; font-style: normal; font-weight: 400 600;
+  @font-face { font-family: "Noto Sans Symbols UI"; font-style: normal; font-weight: 400 600;
     font-display: block;
     unicode-range: U+25A0-25FF, U+2600-26FF, U+2700-27BF;
     src: url(@EMBED:NotoSansSymbols2-Regular.ttf@) format("truetype"); }
