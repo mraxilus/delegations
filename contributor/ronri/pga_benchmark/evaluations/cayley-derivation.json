@@ -3,14 +3,15 @@
   "kind": "evaluation",
   "name": "cayley-derivation",
   "path": "proposals/01-cayley-derivation",
-  "edits_digest": "2a0c69982b209eff",
+  "edits_digest": "8fa0b2187af9d922",
   "taken": {
     "date": "2026-10-07",
     "machine": "linux amd64, 4 cores",
     "nim": "27763495bcfe265507ca98aedc1c7064bf1e0e4d",
-    "pga": "edb0c9d3a247185874b8825c9da4b120317b00cf",
+    "pga": "749fecf02811417b014622e40217ce082856ed56",
     "flags": "-d:release",
-    "runs": 5
+    "runs": 5,
+    "measured_at": "edb0c9d3a247185874b8825c9da4b120317b00cf"
   },
   "pin_suites": {
     "rga4d": {
@@ -2327,24 +2328,12 @@
       ],
       "pairs": [
         [
-          "CAYLEYS_COMPLEMENT.left",
-          "CAYLEYS_COMPLEMENT.left"
-        ],
-        [
-          "CAYLEYS_COMPLEMENT.right",
-          "CAYLEYS_COMPLEMENT.right"
-        ],
-        [
           "CAYLEYS_REVERSE.base",
           "CAYLEYS_REVERSE.base"
         ],
         [
           "CAYLEYS_REVERSE.anti",
           "CAYLEYS_REVERSE.anti"
-        ],
-        [
-          "CAYLEY_METRIC",
-          "CAYLEY_METRIC"
         ],
         [
           "CAYLEYS_METRIC_EXOMORPHISM.base",
@@ -2355,28 +2344,52 @@
           "CAYLEYS_METRIC_EXOMORPHISM.anti"
         ],
         [
-          "CAYLEYS_PARTS.bulk.round",
-          "CAYLEYS_PARTS.bulk.round"
-        ],
-        [
-          "CAYLEYS_PARTS.weight.round",
-          "CAYLEYS_PARTS.weight.round"
+          "CAYLEYS_DUAL.base.left",
+          "CAYLEYS_DUAL.base.left"
         ],
         [
           "CAYLEYS_DUAL.base.right",
-          "CAYLEYS_DUAL.base"
+          "CAYLEYS_DUAL.base.right"
+        ],
+        [
+          "CAYLEYS_DUAL.anti.left",
+          "CAYLEYS_DUAL.anti.left"
         ],
         [
           "CAYLEYS_DUAL.anti.right",
-          "CAYLEYS_DUAL.anti"
+          "CAYLEYS_DUAL.anti.right"
         ],
         [
-          "CAYLEYS_WEDGE.base",
-          "CAYLEYS_WEDGE.base"
+          "CAYLEYS_INTERIOR.base.bulk.left",
+          "CAYLEYS_INTERIOR.base.bulk.left"
         ],
         [
-          "CAYLEYS_WEDGE.anti",
-          "CAYLEYS_WEDGE.anti"
+          "CAYLEYS_INTERIOR.base.bulk.right",
+          "CAYLEYS_INTERIOR.base.bulk.right"
+        ],
+        [
+          "CAYLEYS_INTERIOR.base.weight.left",
+          "CAYLEYS_INTERIOR.base.weight.left"
+        ],
+        [
+          "CAYLEYS_INTERIOR.base.weight.right",
+          "CAYLEYS_INTERIOR.base.weight.right"
+        ],
+        [
+          "CAYLEYS_INTERIOR.anti.bulk.left",
+          "CAYLEYS_INTERIOR.anti.bulk.left"
+        ],
+        [
+          "CAYLEYS_INTERIOR.anti.bulk.right",
+          "CAYLEYS_INTERIOR.anti.bulk.right"
+        ],
+        [
+          "CAYLEYS_INTERIOR.anti.weight.left",
+          "CAYLEYS_INTERIOR.anti.weight.left"
+        ],
+        [
+          "CAYLEYS_INTERIOR.anti.weight.right",
+          "CAYLEYS_INTERIOR.anti.weight.right"
         ],
         [
           "CAYLEYS_DOT.base",
@@ -2387,36 +2400,20 @@
           "CAYLEYS_DOT.anti"
         ],
         [
-          "CAYLEYS_NORM_SQUARED.base",
-          "CAYLEYS_DOT.base"
-        ],
-        [
-          "CAYLEYS_NORM_SQUARED.anti",
-          "CAYLEYS_DOT.anti"
-        ],
-        [
-          "CAYLEYS_CONTRACT.right",
-          "CAYLEYS_CONTRACT.bulk"
-        ],
-        [
-          "CAYLEY_CONTRACT_WEIGHT_RIGHT",
-          "CAYLEYS_CONTRACT.weight"
-        ],
-        [
-          "CAYLEYS_EXPAND.right",
-          "CAYLEYS_EXPAND.weight"
-        ],
-        [
-          "CAYLEY_EXPAND_BULK_RIGHT",
-          "CAYLEYS_EXPAND.bulk"
-        ],
-        [
-          "CAYLEYS_WEDGE_DOT.base.right",
+          "CAYLEYS_WEDGE_DOT.base",
           "CAYLEYS_WEDGE_DOT.base"
         ],
         [
-          "CAYLEYS_WEDGE_DOT.anti.right",
+          "CAYLEYS_WEDGE_DOT.anti",
           "CAYLEYS_WEDGE_DOT.anti"
+        ],
+        [
+          "CAYLEYS_NORM_SQUARED.base",
+          "CAYLEYS_NORM_SQUARED.base"
+        ],
+        [
+          "CAYLEYS_NORM_SQUARED.anti",
+          "CAYLEYS_NORM_SQUARED.anti"
         ],
         [
           "CAYLEY_ATTITUDE",
@@ -2434,14 +2431,6 @@
       ],
       "pairs": [
         [
-          "CAYLEYS_PARTS.bulk.flat",
-          "CAYLEYS_PARTS.bulk.flat"
-        ],
-        [
-          "CAYLEYS_PARTS.weight.flat",
-          "CAYLEYS_PARTS.weight.flat"
-        ],
-        [
           "CAYLEY_CARRIER",
           "CAYLEY_CARRIER"
         ]
@@ -2454,9 +2443,9 @@
       "algebra": "rga6d",
       "metric": "peakmem",
       "at_most": 0.75,
-      "passed": true,
+      "passed": false,
       "detail": [
-        "rga6d peak 234.9 → 170.8 MiB, 7.50 → 5.68 s, ×0.73"
+        "rga6d peak 195.8 → 200.3 MiB, 6.93 → 6.77 s, ×1.02"
       ]
     }
   ]
