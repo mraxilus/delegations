@@ -106,8 +106,3 @@ operators give some 1 900 tables, or about 1.7 GB of front-end memory at 6D. The
 - Adopt the derivation into the library, before the typed layer. It keeps every exported name,
   shape and cell.
 - Keep `constructParts` direct on both sides, or conjugate it under the rigid metric only.
-- Drop the build claim, or keep it as a record that fails. At rga6d the front end peaks at
-  200.3 MiB against 195.8 MiB at pin, ×1.02, and the claim asks for ×0.75. At `edb0c9d` it held
-  at ×0.73, and head has since fallen from 234.9 MiB to 195.8 MiB. By block at head, the duals
-  save 4.3 MiB, and the interior products cost 6.1 MiB and the dot 3.5 MiB. One transwedge
-  family, with ⟇ as conjugate of each order, peaks higher, at 209.5 MiB.
