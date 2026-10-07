@@ -5,7 +5,8 @@ multivector between each step. The support `∩`, the antisupport `∪`, the coc
 center `⊙` and the container `⊡` are such chains. This proposal gives each one table, which the
 rules of P01 derive, so each runs as one product.
 
-This proposal builds on P01, `cayley-derivation`, and reads its `applyMap` and `applyConstant`.
+This proposal builds on P01, `cayley-derivation`. It reads `applyMap` of P01 and `applyConstant` of
+the library.
 It came out of P01 when the Architect ruled on 2026-10-07, so that P01 holds its derivation
 alone.
 

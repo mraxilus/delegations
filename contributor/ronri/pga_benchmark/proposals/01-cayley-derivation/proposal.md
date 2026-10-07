@@ -1,25 +1,25 @@
 # P01: Derive every Cayley table from three
 
 The library writes three tables by hand: the metric on vectors, the exterior product of bases,
-and the complement permutation. Four rules derive every other table, and each rule is used the
-same way everywhere. This proposal is that end state of `pga/cayleys.nim`, with the operators and
-suites that read it.
+and the complement permutation. Four rules derive the other tables, and each rule is used the
+same way everywhere. This proposal is that state of `pga/cayleys.nim`, with the suites that read
+it. Every exported table keeps its name, its shape and its cells, so no operator changes.
 
 ![Derivation map. The three accented tables are written by hand, and each arrow is one rule.
-Every anti side is `constructAnti` of its base, by the complement.](../../pages/derivation-map.svg)
+Each anti side but ⟇ is `constructAnti` of its base.](../../pages/derivation-map.svg)
 
 ## Four rules
 
 | Rule | Tables it builds |
 |------|------------------|
-| `constructAnti`: conjugate by complements | antiwedge, 𝔾, ☆, antireverse, antidot, ⟇ |
-| `applyConstant`, `applyMap`: fix or map operand | ★, ∨★ ∨☆ ∧★ ∧☆, attitude, carrier |
+| `constructAnti`: conjugate by complements | antiwedge, 𝔾, antireverse, antidot |
+| `applyConstant`, `applyMap`: fix or map operand | ★ ☆ ∨★ ∨☆ ∧★ ∧☆ each side, attitude, carrier |
 | `filterGrades`: keep one grade of product | ∙, as grade 0 of ∨★ |
-| Transwedge sum: wedge chains over one grade | ⟑ |
+| Transwedge sum: wedge chains over one grade | ⟑, and ⟇ from the anti family |
 
-Each anti side is the conjugate of its base side, so the anti side needs no second
-construction. Two constructors stay direct: `constructReverse`, and `constructParts`. The weight
-part is the conjugate of the bulk part under the rigid metric only.
+Two constructors stay direct: `constructReverse` for the base side alone, and `constructParts`.
+The weight part is the conjugate of the bulk part under the rigid metric only. Each dual is a
+complement after 𝐆 or 𝔾, on the left or on the right, as the library keeps both sides.
 
 A cell of `Cayley1D` is `seq[BasisSigned]` at pin, and the emitter reads its first term alone.
 Each map that these rules build holds at most one term in a cell, so the emitter stays as at pin.
@@ -27,16 +27,19 @@ Each map that these rules build holds at most one term in a cell, so the emitter
 
 ## Why
 
-- **Simplicity.** Three constructors go: `constructDual`, the anti path of
-  `constructProductExterior`, and the dual overload of `constructProductInterior`. At pin,
-  nothing calls the anti path.
-- **Consistency.** Every anti side comes from one rule, and every interior product is one dual
-  fed into one product. At pin, `constructAnti` gives the anti side of reverse, 𝐆, wedge, dual
-  and dot. The antiproduct and the expansions come from a second transwedge family.
+- **Simplicity.** Three constructors go: `constructDual` and both overloads of
+  `constructProductInterior`. Two notes at pin ask for this: the interior products derive from
+  base operators, and the dot filters a grade of bulk contraction.
+- **Consistency.** Each interior product is one dual fed into one product, by one rule. At pin,
+  `constructAnti` gives the anti side of 𝐆, wedge and dot. The antireverse, the duals and the
+  interior products each have a constructor of their own.
 
 ## Transwedge
 
-The build keeps one transwedge family, for ⟑ alone; ⟇ is its conjugate. Order k sums one term
+The library builds two transwedge families, one for ⟑ and one for ⟇, and this proposal keeps both.
+Under the conformal metric, an order of the anti family is not the conjugate of that order of the
+base family, although the two sums agree. So the families stay as the library exports them. Order
+k sums one term
 for each basis 𝐜 of grade k. The term strips 𝐜 from 𝐚 by its complement and from 𝐛 by its
 dual, and then joins the two results.
 
@@ -70,8 +73,8 @@ alone.
 Order 0 is zero under the rigid metric only. Under the conformal metric 𝔾 = −𝐆, so family 3 is
 −1 and family 7 is −5.
 
-Family 1 alone gives wedge, dot, geometric product and bulk contraction, so the build keeps it.
-The other products are cheaper as maps or conjugates. The identity at order gr 𝐚 stays as a
+Family 1 gives wedge, dot, geometric product and bulk contraction. The dot and the contraction
+are cheaper as maps, so the build takes them as maps. The identity at order gr 𝐚 stays as a
 suite, so the build and the transwedge cannot drift apart.
 
 ## Grade restriction
@@ -82,8 +85,8 @@ The tables stay whole, so the table count does not grow with the number of types
 
 The alternative filters a copy of each table for each pair of operand types. One copy of a 2D
 table costs 0.1 MB at 4D, 0.35 MB at 5D and 0.9 MB at 6D. About eight types and thirty binary
-operators give some 1 900 tables, or about 1.7 GB of front-end memory at 6D. So the 1D
-`filterGrades` goes, since nothing calls it. The 2D one stays, because it defines the dot.
+operators give some 1 900 tables, or about 1.7 GB of front-end memory at 6D. The 2D
+`filterGrades` defines the dot.
 
 ## Alternatives weighed
 
@@ -95,15 +98,11 @@ operators give some 1 900 tables, or about 1.7 GB of front-end memory at 6D. So 
 | Dot as scalar part of ⟑ | Checked; equal only up to (−1)^(k(k−1)/2) |
 | Blade products by bit operations | Weighed; second generator, against three tables |
 | `Option` cells in `Cayley1D` | Library before `3121342`; two cell shapes, and no sum of terms |
-| Separate `CAYLEYS_NORM_SQUARED` | Library at pin; equal to dot, cell for cell |
+| ⟇ as conjugate of ⟑, one family | Built; equal sum, but anti orders differ at cga4d and cga5d |
+| Drop `CAYLEYS_NORM_SQUARED` | Equal to dot, cell for cell; outside this idea, so it stays |
 
 ## Open decisions
 
-- Adopt the derivation into the library, before the typed layer. It removes three exported
-  names: `CAYLEY_EXPAND_BULK_RIGHT`, `CAYLEY_CONTRACT_WEIGHT_RIGHT` and `CAYLEYS_NORM_SQUARED`.
-  It changes the shape of five. `CAYLEYS_DUAL`, `CAYLEYS_WEDGE_DOT` and `CAYLEYS_WEDGES_TRANS`
-  lose their left and right sides. `CAYLEYS_CONTRACT` and `CAYLEYS_EXPAND` take bulk and weight
-  sides instead.
+- Adopt the derivation into the library, before the typed layer. It keeps every exported name,
+  shape and cell.
 - Keep `constructParts` direct on both sides, or conjugate it under the rigid metric only.
-- Decide whether the left-dual forms, such as 𝐚★ ∨ 𝐛, belong in the library. Neither the book
-  nor the library defines them.

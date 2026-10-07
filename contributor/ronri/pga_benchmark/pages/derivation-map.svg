@@ -61,8 +61,8 @@
 </g>
 <g><rect class="box" x="276" y="112" width="208" height="72" rx="8"/>
   <text class="strong" x="380" y="136" text-anchor="middle">★ · ☆</text>
-  <text class="small" x="380" y="152" text-anchor="middle">★ = right complement after 𝐆</text>
-  <text class="small" x="380" y="168" text-anchor="middle">☆ = constructAnti(★)</text>
+  <text class="small" x="380" y="152" text-anchor="middle">★ = complement after 𝐆</text>
+  <text class="small" x="380" y="168" text-anchor="middle">☆ = complement after 𝔾</text>
 </g>
 <g><rect class="box" x="528" y="112" width="208" height="72" rx="8"/>
   <text class="strong" x="632" y="136" text-anchor="middle">∧ · ∨</text>
@@ -96,12 +96,12 @@
 <g><rect class="box" x="276" y="352" width="208" height="72" rx="8"/>
   <text class="strong" x="380" y="376" text-anchor="middle">⟑ · ⟇</text>
   <text class="small" x="380" y="392" text-anchor="middle">⟑ = sum of orders, signed</text>
-  <text class="small" x="380" y="408" text-anchor="middle">⟇ = constructAnti(⟑)</text>
+  <text class="small" x="380" y="408" text-anchor="middle">⟇ = same sum, anti family</text>
 </g>
 <g><rect class="box direct" x="528" y="352" width="176" height="72" rx="8"/>
-  <text class="strong" x="616" y="376" text-anchor="middle">~ · ~∘ · parts, direct</text>
-  <text class="small" x="616" y="392" text-anchor="middle">constructReverse</text>
-  <text class="small" x="616" y="408" text-anchor="middle">constructParts</text>
+  <text class="strong" x="616" y="376" text-anchor="middle">~ · parts, direct</text>
+  <text class="small" x="616" y="392" text-anchor="middle">~∘ = constructAnti(~)</text>
+  <text class="small" x="616" y="408" text-anchor="middle">constructReverse, constructParts</text>
 </g>
 <g><rect class="emission" x="24" y="464" width="712" height="48" rx="8"/>
   <text x="380" y="493" text-anchor="middle">defineOperator emits each table over the

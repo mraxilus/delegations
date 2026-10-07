@@ -233,24 +233,26 @@ func recipeOf(emitter: var Emitter; id: string; m, n: Slots): Slots =
   case id
   of "wedge": emitter.product(m, n, CAYLEYS_WEDGE.base)
   of "wedge_anti": emitter.product(m, n, CAYLEYS_WEDGE.anti)
-  of "wedge_dot": emitter.product(m, n, CAYLEYS_WEDGE_DOT.base.right)
-  of "wedge_dot_anti": emitter.product(m, n, CAYLEYS_WEDGE_DOT.anti.right)
+  of "wedge_dot": emitter.product(m, n, CAYLEYS_WEDGE_DOT.base)
+  of "wedge_dot_anti": emitter.product(m, n, CAYLEYS_WEDGE_DOT.anti)
   of "dot": emitter.product(m, n, CAYLEYS_DOT.base)
   of "dot_anti": emitter.product(m, n, CAYLEYS_DOT.anti)
-  of "contract_bulk": emitter.product(m, n, CAYLEYS_CONTRACT.right)
-  of "contract_weight": emitter.product(m, n, CAYLEY_CONTRACT_WEIGHT_RIGHT)
-  of "expand_bulk": emitter.product(m, n, CAYLEY_EXPAND_BULK_RIGHT)
-  of "expand_weight": emitter.product(m, n, CAYLEYS_EXPAND.right)
+  of "contract_bulk": emitter.product(m, n, CAYLEYS_INTERIOR.anti.bulk.right)
+  of "contract_weight": emitter.product(m, n, CAYLEYS_INTERIOR.anti.weight.right)
+  of "expand_bulk": emitter.product(m, n, CAYLEYS_INTERIOR.base.bulk.right)
+  of "expand_weight": emitter.product(m, n, CAYLEYS_INTERIOR.base.weight.right)
   of "add": summed(m, n)
   of "subtract": summed(m, n, is_difference = true)
   of "project_central":
-    emitter.product(n, emitter.product(m, n, CAYLEY_EXPAND_BULK_RIGHT), CAYLEYS_WEDGE.anti)
+    emitter.product(n, emitter.product(m, n, CAYLEYS_INTERIOR.base.bulk.right), CAYLEYS_WEDGE.anti)
   of "project_central_anti":
-    emitter.product(n, emitter.product(m, n, CAYLEYS_CONTRACT.right), CAYLEYS_WEDGE.base)
+    emitter.product(n, emitter.product(m, n, CAYLEYS_INTERIOR.anti.bulk.right), CAYLEYS_WEDGE.base)
   of "project_orthogonal":
-    emitter.product(n, emitter.product(m, n, CAYLEYS_EXPAND.right), CAYLEYS_WEDGE.anti)
+    let expansion = emitter.product(m, n, CAYLEYS_INTERIOR.base.weight.right)
+    emitter.product(n, expansion, CAYLEYS_WEDGE.anti)
   of "project_orthogonal_anti":
-    emitter.product(n, emitter.product(m, n, CAYLEY_CONTRACT_WEIGHT_RIGHT), CAYLEYS_WEDGE.base)
+    let contraction = emitter.product(m, n, CAYLEYS_INTERIOR.anti.weight.right)
+    emitter.product(n, contraction, CAYLEYS_WEDGE.base)
   of "scale":
     var scale: Cayley2D
     for b in Basis: scale[Basis.scalar][b] = @[BasisSigned(basis: b)]
