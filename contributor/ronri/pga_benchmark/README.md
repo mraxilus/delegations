@@ -127,7 +127,7 @@ tests/                             suites, the testament stubs that run them, an
 
 ## Status
 
-Measured on the pinned compiler and on library head `edb0c9d`, which is the pin. Times were
+Measured on the pinned compiler and on library head `749fecf`, which is the pin. Times were
 taken at `d9be8ae`, whose builds emit the same C. The library
 stands above both lower bounds; `gaps.md` counts the gaps, and the docket shows each one.
 Unreviewed by a human. See `PROVENANCE.md` for the figures, and for what each subsystem was

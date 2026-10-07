@@ -122,17 +122,6 @@ when IS_RIGID:
 ## Edit `pga/cayleys.nim`
 
 ```nim
-func constructMetric(dimensions: int, is_conformal: bool): Cayley1D {.compileTime.} =
-```
-
-```nim
-func constructMetric(dimensions: int, is_conformal: bool): Cayley1D {.compileTime.} =
-  # NOTE: Only constructor taking configuration as arguments; siblings read globals.
-```
-
-## Edit `pga/cayleys.nim`
-
-```nim
   ## Get complement of basis (right by default).
 ```
 

@@ -235,7 +235,7 @@ ratio. The docket draws one tick for each of those ratios. Rejected: the spread 
 one run, because it misses drift between runs. That drift is the larger part on this machine.
 
 **The runtime baselines are from 2026-10-03 at all four algebras**, at `d9be8ae`, five runs each on
-`linux amd64, 4 cores`. `restamp` moved them to the pin `edb0c9d`, whose bench emits the same C. The
+`linux amd64, 4 cores`. `restamp` moved them to the pin `749fecf`, whose bench emits the same C. The
 bench of 2026-10-01, run at `3121342` on 2026-10-02 in turn with the baselines of that day, gives
 the drift between days. At rga4d its library runs ×1.19 to ×1.22 of its own times of 2026-10-01. Its
 reference runs ×1.26 to ×1.27, and its dense forms ×1.00 to ×1.01. The bench of 2026-10-02 runs
@@ -639,11 +639,11 @@ moves none. So an evaluation of a change that moves no function reads as quiet, 
 their spread from it.
 
 **A build claim compiles the library alone**, from an entry that holds `import pga` and nothing
-else. At rga6d the library with P01 peaks at 170.8 MiB against 235.0 MiB at the pin, ×0.73
-(`evaluations/cayley-derivation.json`, 2026-10-04, `linux amd64, 4 cores`). The claim of P01
-holds ×0.75 at most, as the Architect ruled on 2026-10-04, so P01 saves 64.2 MiB within its
-claim. The pin builds most anti tables with `constructAnti`, as P01 does, which is why the
-claim is not ×0.70. Which part of the cost the two share is not isolated.
+else. It compares the peak memory that the compiler reports for the pin and for the changed
+library. No proposal makes one at `749fecf`. P01 made one, and the Architect ruled to drop it,
+since head now holds the saving that it measured. At rga6d head peaks at 195.8 MiB and P01 at
+200.3 MiB, ×1.02 (`evaluations/cayley-derivation.json` at `b9ed6685`, 2026-10-07,
+`linux amd64, 4 cores`).
 
 Rejected: the bench entry, which puts the harness in the measured build. With the library
 fixed at `bd6b23c`, one change to `inspector.nim` alone moved the P01 side from 211.7 MiB to
@@ -943,10 +943,10 @@ to read no head, and the verb `head` to report what `checkHead` finds.
 **The PGA library is a pinned dependency, and never a copy.** It lives in [replications],
 which carries no nimble file and holds the library three directories inside it. So the
 requirement in `pga_benchmark.nimble` names the repository by URL and commit. `atlas.lock`
-records the resolved commit `edb0c9d3a247185874b8825c9da4b120317b00cf`, and `nim.cfg` names
+records the resolved commit `749fecf02811417b014622e40217ce082856ed56`, and `nim.cfg` names
 the subdirectory that Atlas restores it to.
 
-That commit is the head of the library on 2026-10-04, as the standing instruction of the
+That commit is the head of the library on 2026-10-07, as the standing instruction of the
 Architect asks. Both projects are under the Prosperity Public License 3.0.0. Rejected: a copy
 of the library in this tree, which Article XI.3 forbids.
 
@@ -1000,7 +1000,7 @@ norm, writes no zero. The Architect decided this, because the library is about P
 micro-optimisation.
 
 Each function that a Cayley table can express moves to generation, and so gets its zeros
-unrolled at no cost. At the pin `edb0c9d` the library works this way, and its attitude and
+unrolled at no cost. At the pin `749fecf` the library works this way, and its attitude and
 carrier are generated. Its hand-written `+` and `-` carry `noinit` and write each slot, so they
 fill nothing. The cost that stays is what the hand-written norms pay.
 
@@ -1008,8 +1008,9 @@ The cost is measured at `3121342` on `linux amd64, 4 cores`, an Intel Xeon at 2.
 2026-10-03. The harness calls each function through a volatile procedure pointer. So the body of
 each function compiles alone, and writes to memory that it cannot see. Each figure comes from two
 passes, and each pass is the median of nine runs of 41 rounds over 1024 objects. Nine in ten
-functions that did not change moved ×0.86 to ×1.02. The pins `d9be8ae` and `edb0c9d` change no
-norm and no generated operator, as their static baselines show, so these figures stand for them.
+functions that did not change moved ×0.86 to ×1.02. The pins `d9be8ae`, `edb0c9d` and `749fecf`
+change no norm and no generated operator, as their static baselines show, so these figures stand
+for them.
 
 For the norms, a cell gives nanoseconds with the default fill, then with straight stores that
 write the zeros first. The cell is the lower of the two passes:

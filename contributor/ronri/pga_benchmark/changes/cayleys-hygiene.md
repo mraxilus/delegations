@@ -9,35 +9,161 @@ constructors can call.
 ## Edit `pga/cayleys.nim`
 
 ```nim
-  CAYLEY_EXPAND_BULK_RIGHT* = constructProductInterior(
+  CAYLEYS_INTERIOR* = Spatial[Partial[Chiral[Cayley2D]]](
+    base: Partial[Chiral[Cayley2D]](  # Alias expansion.
+      bulk: Chiral[Cayley2D](
+        left: constructProductInterior(
+          CAYLEYS_DUAL,
+          CAYLEYS_WEDGE,
+          space_dual = Spatiality.Base,
+          space_wedge = Spatiality.Base,
+          Chirality.Left,
+        ),
+        right: constructProductInterior(
+          CAYLEYS_DUAL,
+          CAYLEYS_WEDGE,
+          space_dual = Spatiality.Base,
+          space_wedge = Spatiality.Base,
+          Chirality.Right,
+        ),
+      ),
+      weight: Chiral[Cayley2D](
+        left: constructProductInterior(
+          CAYLEYS_DUAL,
+          CAYLEYS_WEDGE,
+          space_dual = Spatiality.Anti,
+          space_wedge = Spatiality.Base,
+          Chirality.Left,
+        ),
+        right: constructProductInterior(
+          CAYLEYS_DUAL,
+          CAYLEYS_WEDGE,
+          space_dual = Spatiality.Anti,
+          space_wedge = Spatiality.Base,
+          Chirality.Right,
+        ),
+      ),
+    ),
+    anti: Partial[Chiral[Cayley2D]](  # Alias expansion.
+      bulk: Chiral[Cayley2D](
+        left: constructProductInterior(
+          CAYLEYS_DUAL,
+          CAYLEYS_WEDGE,
+          space_dual = Spatiality.Base,
+          space_wedge = Spatiality.Anti,
+          Chirality.Left,
+        ),
+        right: constructProductInterior(
+          CAYLEYS_DUAL,
+          CAYLEYS_WEDGE,
+          space_dual = Spatiality.Base,
+          space_wedge = Spatiality.Anti,
+          Chirality.Right,
+        ),
+      ),
+      weight: Chiral[Cayley2D](
+        left: constructProductInterior(
+          CAYLEYS_DUAL,
+          CAYLEYS_WEDGE,
+          space_dual = Spatiality.Anti,
+          space_wedge = Spatiality.Anti,
+          Chirality.Left,
+        ),
+        right: constructProductInterior(
+          CAYLEYS_DUAL,
+          CAYLEYS_WEDGE,
+          space_dual = Spatiality.Anti,
+          space_wedge = Spatiality.Anti,
+          Chirality.Right,
+        ),
+      ),
+    ),
+  )
 ```
 
 ```nim
-  CAYLEY_EXPAND_BULK_RIGHT* = constructProductInteriorFromDual(
+  CAYLEYS_INTERIOR* = Spatial[Partial[Chiral[Cayley2D]]](
+    base: Partial[Chiral[Cayley2D]](  # Alias expansion.
+      bulk: Chiral[Cayley2D](
+        left: constructProductInteriorFromDual(
+          CAYLEYS_DUAL,
+          CAYLEYS_WEDGE,
+          space_dual = Spatiality.Base,
+          space_wedge = Spatiality.Base,
+          Chirality.Left,
+        ),
+        right: constructProductInteriorFromDual(
+          CAYLEYS_DUAL,
+          CAYLEYS_WEDGE,
+          space_dual = Spatiality.Base,
+          space_wedge = Spatiality.Base,
+          Chirality.Right,
+        ),
+      ),
+      weight: Chiral[Cayley2D](
+        left: constructProductInteriorFromDual(
+          CAYLEYS_DUAL,
+          CAYLEYS_WEDGE,
+          space_dual = Spatiality.Anti,
+          space_wedge = Spatiality.Base,
+          Chirality.Left,
+        ),
+        right: constructProductInteriorFromDual(
+          CAYLEYS_DUAL,
+          CAYLEYS_WEDGE,
+          space_dual = Spatiality.Anti,
+          space_wedge = Spatiality.Base,
+          Chirality.Right,
+        ),
+      ),
+    ),
+    anti: Partial[Chiral[Cayley2D]](  # Alias expansion.
+      bulk: Chiral[Cayley2D](
+        left: constructProductInteriorFromDual(
+          CAYLEYS_DUAL,
+          CAYLEYS_WEDGE,
+          space_dual = Spatiality.Base,
+          space_wedge = Spatiality.Anti,
+          Chirality.Left,
+        ),
+        right: constructProductInteriorFromDual(
+          CAYLEYS_DUAL,
+          CAYLEYS_WEDGE,
+          space_dual = Spatiality.Base,
+          space_wedge = Spatiality.Anti,
+          Chirality.Right,
+        ),
+      ),
+      weight: Chiral[Cayley2D](
+        left: constructProductInteriorFromDual(
+          CAYLEYS_DUAL,
+          CAYLEYS_WEDGE,
+          space_dual = Spatiality.Anti,
+          space_wedge = Spatiality.Anti,
+          Chirality.Left,
+        ),
+        right: constructProductInteriorFromDual(
+          CAYLEYS_DUAL,
+          CAYLEYS_WEDGE,
+          space_dual = Spatiality.Anti,
+          space_wedge = Spatiality.Anti,
+          Chirality.Right,
+        ),
+      ),
+    ),
+  )
 ```
 
 ## Edit `pga/cayleys.nim`
 
 ```nim
-  CAYLEY_CONTRACT_WEIGHT_RIGHT* = constructProductInterior(
-```
-
-```nim
-  CAYLEY_CONTRACT_WEIGHT_RIGHT* = constructProductInteriorFromDual(
-```
-
-## Edit `pga/cayleys.nim`
-
-```nim
-
 func constructProductInterior(
-  dual: Cayley1D, exterior: Cayley2D, chirality: Chirality
+  duals: Spatial[Chiral[Cayley1D]],
 ```
 
 ```nim
-
 func constructProductInteriorFromDual(
-  dual: Cayley1D, exterior: Cayley2D, chirality: Chirality
+  duals: Spatial[Chiral[Cayley1D]],
 ```
 
 ## Edit `pga/cayleys.nim`

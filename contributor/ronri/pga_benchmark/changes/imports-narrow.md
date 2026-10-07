@@ -19,10 +19,9 @@ from ./algebra {.all.} import
   grade, gradeAnti, scalar, scalarAnti, origin, high, low, `==`
 from ./cayleys {.all.} import
   Cayley1D, Cayley2D, BasisSigned, Chiral, Formal, Partial, Spatial, complement,
-  CAYLEYS_COMPLEMENT, CAYLEYS_CONTRACT, CAYLEYS_DOT, CAYLEYS_DUAL, CAYLEYS_EXPAND,
-  CAYLEYS_PARTS, CAYLEYS_REVERSE, CAYLEYS_WEDGE, CAYLEYS_WEDGE_DOT,
-  CAYLEY_CONTRACT_WEIGHT_RIGHT, CAYLEY_EXPAND_BULK_RIGHT,
-  CAYLEYS_NORM_SQUARED, CAYLEY_ATTITUDE, horizon
+  CAYLEYS_COMPLEMENT, CAYLEYS_DOT, CAYLEYS_DUAL, CAYLEYS_INTERIOR, CAYLEYS_PARTS,
+  CAYLEYS_REVERSE, CAYLEYS_WEDGE, CAYLEYS_WEDGE_DOT, CAYLEYS_NORM_SQUARED, CAYLEY_ATTITUDE,
+  horizon
 when IS_CONFORMAL:
   from ./algebra {.all.} import infinity
   from ./cayleys {.all.} import CAYLEY_CARRIER
