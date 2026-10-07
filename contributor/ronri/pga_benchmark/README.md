@@ -29,6 +29,8 @@ ASCII. A control page beside them proves that the render sees.
 | [P05 Multivector align][multivector-align] | proposal | multivector aligned to one cache line |
 | [P06 Float width][float-width] | proposal | width of each float as a build option |
 | [P07 Part scale][part-scale] | proposal | each part compared at its own scale |
+| [P08 Compound tables][compound-tables] | proposal | one table for each compound operator |
+| [P09 Object names][object-names] | proposal | names of geometric objects over kinds of P04 |
 
 A **monitoring** page shows the library as it is. A **proposal** page shows a future state of
 the library, argued in its `proposal.md` and checked by its evaluation. Each proposal has the
@@ -135,6 +137,7 @@ checked against.
 [docket]: https://claude.ai/artifact/XyT583x9RnTKixers2q4gT
 [marginalia]: https://claude.ai/artifact/6WwLfdHiisCtGWUcFxibBM
 [proposals]: https://claude.ai/artifact/CW9ZL5eotsVYrZPjMnTLoG
+
 [cayley-derivation]: https://claude.ai/artifact/2fi2hTpobqChXSTPq4vB6q
 [typed-multivectors]: https://claude.ai/artifact/V34TAWXNvrHBGN9fNBWYWX
 [partner-sign]: https://claude.ai/artifact/2fUYLonsQo7ejouCvCnpWf
@@ -142,3 +145,5 @@ checked against.
 [multivector-align]: https://claude.ai/artifact/AB3BNtWPEzguWswwnx5ckh
 [float-width]: https://claude.ai/artifact/Q3R1yz93Drk7Cwq5qhymDZ
 [part-scale]: https://claude.ai/artifact/6hW9rjiotnjdjBVwatW5Dj
+[compound-tables]: https://claude.ai/artifact/TczTs551nkXVaWiyHzfVAn
+[object-names]: https://claude.ai/artifact/XtPy7LToDTT2P8S1FfGauX

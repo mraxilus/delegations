@@ -11,7 +11,6 @@ when compileOption("profiler"): import std/nimprof
 import std/[math, random]
 
 import pga
-import pga/algebra
 
 
 const
@@ -21,8 +20,7 @@ const
 
 proc sample(grade: Grade): Multivector =
   ## Draw multivector of one grade, every slot of that grade uniform in [-1, 1].
-  for basis in Basis:
-    if basis.grade == grade: result[basis] = rand(-1.0..1.0)
+  for basis in LUT_BASES_BY_GRADE[grade]: result[basis] = rand(-1.0..1.0)
 
 
 proc main(): int =

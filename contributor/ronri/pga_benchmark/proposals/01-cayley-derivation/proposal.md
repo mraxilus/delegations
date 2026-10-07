@@ -13,7 +13,7 @@ Every anti side is `constructAnti` of its base, by the complement.](../../pages/
 | Rule | Tables it builds |
 |------|------------------|
 | `constructAnti`: conjugate by complements | antiwedge, 𝔾, ☆, antireverse, antidot, ⟇ |
-| `applyConstant`, `applyMap`: fix or map operand | ★, ∨★ ∨☆ ∧★ ∧☆, attitude, carrier, ∩ ∪ ⊞ ⊙ ⊡ |
+| `applyConstant`, `applyMap`: fix or map operand | ★, ∨★ ∨☆ ∧★ ∧☆, attitude, carrier |
 | `filterGrades`: keep one grade of product | ∙, as grade 0 of ∨★ |
 | Transwedge sum: wedge chains over one grade | ⟑ |
 
@@ -22,13 +22,11 @@ construction. Two constructors stay direct: `constructReverse`, and `constructPa
 part is the conjugate of the bulk part under the rigid metric only.
 
 A cell of `Cayley1D` is `seq[BasisSigned]` at pin, and the emitter reads its first term alone.
-This proposal reads every term, so a map of several terms needs no second path. The cost is heap
-use at compile time only.
+Each map that these rules build holds at most one term in a cell, so the emitter stays as at pin.
+`slice` keeps its assertion of one term, so a map of two terms stops the build.
 
 ## Why
 
-- **Completeness.** Each compound operator of the book gets one table: `∩ ∪ ⊞ ⊙ ⊡`. At pin,
-  each is a chain of dense products at run time.
 - **Simplicity.** Three constructors go: `constructDual`, the anti path of
   `constructProductExterior`, and the dual overload of `constructProductInterior`. At pin,
   nothing calls the anti path.
@@ -97,12 +95,15 @@ operators give some 1 900 tables, or about 1.7 GB of front-end memory at 6D. So 
 | Dot as scalar part of ⟑ | Checked; equal only up to (−1)^(k(k−1)/2) |
 | Blade products by bit operations | Weighed; second generator, against three tables |
 | `Option` cells in `Cayley1D` | Library before `3121342`; two cell shapes, and no sum of terms |
-| Shared operand as table operation | Built; drops cross cells, since it is binding, `as_unary` |
 | Separate `CAYLEYS_NORM_SQUARED` | Library at pin; equal to dot, cell for cell |
 
 ## Open decisions
 
-- Adopt the derivation into the library, before the typed layer. It changes no exported name.
+- Adopt the derivation into the library, before the typed layer. It removes three exported
+  names: `CAYLEY_EXPAND_BULK_RIGHT`, `CAYLEY_CONTRACT_WEIGHT_RIGHT` and `CAYLEYS_NORM_SQUARED`.
+  It changes the shape of five. `CAYLEYS_DUAL`, `CAYLEYS_WEDGE_DOT` and `CAYLEYS_WEDGES_TRANS`
+  lose their left and right sides. `CAYLEYS_CONTRACT` and `CAYLEYS_EXPAND` take bulk and weight
+  sides instead.
 - Keep `constructParts` direct on both sides, or conjugate it under the rigid metric only.
 - Decide whether the left-dual forms, such as 𝐚★ ∨ 𝐛, belong in the library. Neither the book
   nor the library defines them.

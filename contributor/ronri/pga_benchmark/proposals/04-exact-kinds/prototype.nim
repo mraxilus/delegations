@@ -2,7 +2,7 @@
 ##   Evaluation compiles this against changed library at each algebra its claim names, and exit code
 ##     is verdict: every law below holds, or program stops on assertion.
 ##   One generic object holds coefficients of any set of bases, densely, in basis order. Named
-##     kinds are its aliases, one per grade and per parity, plus whole algebra. Product returns
+##     kinds are its aliases, one per grade and per parity. Product returns
 ##     kind of exactly bases its table reaches, so dot of whole multivectors is one slot, and
 ##     bulk of bivector is part of its grade.
 ##
@@ -31,12 +31,6 @@ const
 
 #[ Kinds ]#
 
-func basesOfGrade(grade: Grade): set[Basis] {.compileTime.} =
-  ## Get bases of one grade.
-  for basis in Basis:
-    if basis.grade == grade: result.incl basis
-
-
 func basesOfParity(is_even: bool): set[Basis] {.compileTime.} =
   ## Get bases of even or odd grade.
   for basis in Basis:
@@ -50,14 +44,14 @@ func literal(listed: set[Basis]): NimNode {.compileTime.} =
 
 
 macro defineKinds(): untyped =
-  ## Name kinds as aliases of exact kinds: grades, parities, and whole algebra.
+  ## Name kinds as aliases of exact kinds: grades and parities.
   result = newStmtList()
   var named: seq[(string, set[Basis])]
   for grade in Grade.low..Grade.high:
-    named.add ("Kvector" & $int(grade), basesOfGrade(grade))
+    let bases = LUT_BASES_BY_GRADE[grade]
+    named.add ("Kvector" & $int(grade), {bases.a .. bases.b})
   named.add ("MultivectorEven", basesOfParity(true))
   named.add ("MultivectorOdd", basesOfParity(false))
-  named.add ("MultivectorWhole", {Basis.low..Basis.high})
   for (name, listed) in named:
     let (kind, spelled) = (ident(name), literal(listed))
     result.add quote do:
@@ -216,7 +210,8 @@ proc main(): int =
   randomize(SEED)
   let
     (p, q) = (sample(Kvector1), sample(Kvector1))
-    (m, n) = (sample(MultivectorWhole), sample(MultivectorWhole))
+    (m, n) = (sample(MultivectorOf[{Basis.low..Basis.high}]),
+        sample(MultivectorOf[{Basis.low..Basis.high}]))
     bivector = sample(Kvector2)
   doAssert (p ∧ q) is Kvector2, "vector wedge vector must be bivector, named by its alias"
   doAssert (m ∙ n) is MultivectorOf[{Basis.scalar}], "dot of whole multivectors must be scalar slot"
@@ -229,7 +224,8 @@ proc main(): int =
   for _ in 1..SAMPLES:
     let
       (a, b) = (sample(Kvector1), sample(Kvector2))
-      (u, v) = (sample(MultivectorWhole), sample(MultivectorWhole))
+      (u, v) = (sample(MultivectorOf[{Basis.low..Basis.high}]),
+          sample(MultivectorOf[{Basis.low..Basis.high}]))
       motor = sample(MultivectorEven)
     doAssert (a ∧ b).toMultivector =~ (a.toMultivector ∧ b.toMultivector)
     doAssert ((motor ⟇ a) ⟇ motor).toMultivector =~

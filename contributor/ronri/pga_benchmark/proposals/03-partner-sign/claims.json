@@ -1,6 +1,6 @@
 {
   "status": "proposed",
-  "builds_on": ["cayley-derivation"],
+  "builds_on": ["cayley-derivation", "compound-tables"],
   "claims": [
     {
       "kind": "suites"

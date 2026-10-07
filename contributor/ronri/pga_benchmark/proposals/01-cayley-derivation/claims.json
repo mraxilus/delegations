@@ -45,20 +45,6 @@
       ]
     },
     {
-      "kind": "count",
-      "algebra": "rga4d",
-      "measurand": "support",
-      "metric": "multiplies",
-      "value": 54
-    },
-    {
-      "kind": "count",
-      "algebra": "rga4d",
-      "measurand": "support_anti",
-      "metric": "multiplies",
-      "value": 54
-    },
-    {
       "kind": "build",
       "algebra": "rga6d",
       "metric": "peakmem",

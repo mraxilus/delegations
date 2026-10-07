@@ -7,81 +7,6 @@ changes.
 ## Edit `pga/operators.nim`
 
 ```nim
-  # Determine mappings needed for each basis blade's coefficient assignment.
-  var mappings: array[Basis, Option[NimNode]]
-  for b in Basis:
-    if filter_operand.len != 0 and b.grade notin filter_operand: continue
-    if cayley[b].len == 0: continue
-
-    let destination = cayley[b][0]
-    if filter_product.len != 0 and destination.basis.grade notin filter_product: continue
-
-    let mapping = nnkBracketExpr.newTree(ident"m", ident($b))
-    doAssert mappings[destination.basis].isNone,
-      &"Attempt to write twice to 1D basis mapping; got `{mapping}` for `{destination}`" &
-      &"when `{mappings[destination.basis].get}` already present."
-    mappings[destination.basis] = (
-      if destination.is_negated: some(prefix(mapping, "-")) else: some(mapping)
-    )
-```
-
-```nim
-  # Determine reads needed for each basis blade's coefficient assignment.
-  var expressions: array[Basis, seq[NimNode]]
-  for b in Basis:
-    if filter_operand.len != 0 and b.grade notin filter_operand: continue
-
-    for destination in cayley[b]:
-      if filter_product.len != 0 and destination.basis.grade notin filter_product: continue
-
-      let read = nnkBracketExpr.newTree(ident"m", ident($b))
-      expressions[destination.basis].add(
-        if destination.is_negated: prefix(read, "-") else: read
-      )
-```
-
-## Edit `pga/operators.nim`
-
-```nim
-    if filter_product.len != 0 and b.grade notin filter_product: continue
-    let mapping =
-      if (filter_product.len == 0 or b.grade in filter_product) and mappings[b].isSome:
-        mappings[b]
-      else:
-        some(newFloatLitNode(0.0))
-
-    assignments.add newAssignment(
-```
-
-```nim
-    let terms =
-      if (filter_product.len == 0 or b.grade in filter_product) and expressions[b].len != 0:
-        expressions[b]
-      else:
-        @[newFloatLitNode(0.0)]
-
-    var expression = terms[0]
-    for term in terms[1 .. ^1]:
-      expression = infix(expression, "+", term)
-
-    assignments.add newAssignment(
-```
-
-## Edit `pga/operators.nim`
-
-```nim
-      mapping.get,
-    )
-```
-
-```nim
-      expression,
-    )
-```
-
-## Edit `pga/operators.nim`
-
-```nim
   cayley = CAYLEYS_DUAL.base.right,
 ```
 
@@ -187,70 +112,6 @@ changes.
   cayley = CAYLEYS_CONTRACT.weight,
 ```
 
-## Edit `pga/operators.nim`
-
-```nim
-  func `∩`*(m: Multivector): Multivector =
-    ## Get right support of multivector, i.e. 𝐦∩ = 𝐦 ∨ (𝐞ₙ ∧ 𝐦☆).
-    const 𝐞ₙ = initElement(Basis.origin)
-    m ∨ (𝐞ₙ ∧ ☆m)
-
-  func `∪`*(m: Multivector): Multivector =
-    ## Get right antisupport of multivector, i.e. 𝐦∪ = 𝐦 ∧ (𝐞̄ₙ ∨ 𝐦★).
-    const 𝐞̄ₙ = block:
-      let h = Basis.horizon
-      h.basis.initElement(if h.is_negated: -1 else: 1)
-    m ∧ (𝐞̄ₙ ∨ ★m)
-
-when IS_CONFORMAL:
-  func `⊞`*(m: Multivector): Multivector =
-    ## Get cocarrier of multivector, i.e. 𝐦☆ ∧ 𝐞ₙ.
-    const 𝐞ₙ = Basis.infinity.initElement()
-    ☆m ∧ 𝐞ₙ
-
-  func `⊙`*(m: Multivector): Multivector = ⊞m ∨ m
-    ## Get center of multivector, i.e. 𝐦⊞ ∨ 𝐦.
-
-  func `⊡`*(m: Multivector): Multivector = m ∧ ☆(⊟m)
-    ## Get container of multivector, i.e. 𝐦 ∧ (𝐦⊟)☆.
-
-```
-
-```nim
-  defineOperator(
-    symbols = "∩",
-    docs = "Get right support of multivector, i.e. 𝐦∩ = 𝐦 ∨ (𝐞ₙ ∧ 𝐦☆).",
-    cayley = CAYLEY_SUPPORT,
-    as_unary = true,
-  )
-  defineOperator(
-    symbols = "∪",
-    docs = "Get right antisupport of multivector, i.e. 𝐦∪ = 𝐦 ∧ (𝐞̄ₙ ∨ 𝐦★).",
-    cayley = CAYLEY_SUPPORT_ANTI,
-    as_unary = true,
-  )
-
-when IS_CONFORMAL:
-  defineOperator(
-    symbols = "⊞",
-    docs = "Get cocarrier of multivector, i.e. 𝐦☆ ∧ 𝐞ₙ.",
-    cayley = CAYLEY_CARRIER_CO,
-  )
-  defineOperator(
-    symbols = "⊙",
-    docs = "Get center of multivector, i.e. 𝐦⊞ ∨ 𝐦.",
-    cayley = CAYLEY_CENTER,
-    as_unary = true,
-  )
-  defineOperator(
-    symbols = "⊡",
-    docs = "Get container of multivector, i.e. 𝐦 ∧ (𝐦⊟)☆.",
-    cayley = CAYLEY_CONTAINER,
-    as_unary = true,
-  )
-
-```
-
 ## Edit `tests/suites.nim`
 
 ```nim
@@ -301,16 +162,14 @@ suite "Transwedge":
 ##     `constructAnti` conjugates table by complements, giving every anti-variant
 ##       (antiwedge, 𝔾, ☆, antireverse, antidot, antiproduct).
 ##     `applyConstant` and `applyMap` fix or map one operand of product
-##       (attitude, carrier, duals, interior products, compound products).
+##       (attitude, carrier, duals, interior products).
 ##     `filterGrades` keeps one grade of product (dot as scalar part of bulk contraction).
 ##     `constructProductsTransitional` sums wedge chains over one grade (geometric product).
-##   Cost of `seq` cell in 1D as in 2D: heap at compile time only; buys one cell shape for
-##     both orders, so sums of maps and constants of several terms need no second path.
 
 {.experimental: "codeReordering".}
 {.experimental: "strictFuncs".}
 
-import std/[bitops, sequtils, strformat]
+import std/[bitops, strformat]
 
 import ./algebra {.all.}
 
@@ -323,10 +182,11 @@ type  ## Define type definitions dependent on `Basis` needed for macros.
     basis*: Basis
     is_negated*: bool = false
   Cayley1D* =  ## Define data structure for constructing unary algebra operations (map).
-    array[Basis, seq[BasisSigned]]  # Empty cell is absence; several terms sum.
+    array[Basis, seq[BasisSigned]]
   Cayley2D* =  ## Define data structure for constructing binary algebra operations.
     array[Basis, array[Basis, seq[BasisSigned]]]  # Support conformal operators with `seq`.
     # TODO: Avoid seq as heap allocated, perhaps array with count custom type.
+    #   Applies especially for 1D which only uses singular slot.
 
 type  ## Define type definitions for algebraic distinctions.
   Chirality {.pure.} = enum Left, Right  ## Define distinction between PGA operation orientations.
@@ -417,32 +277,6 @@ when IS_CONFORMAL:
   const
     CAYLEY_CARRIER*: Cayley1D =  # 𝐦 ∧ 𝐞ₙ.
       CAYLEYS_WEDGE.base.applyConstant(Basis.infinity.toSigned, Chirality.Right)
-    CAYLEY_CARRIER_CO*: Cayley1D =  # 𝐦☆ ∧ 𝐞ₙ, i.e. dual, then carrier.
-      CAYLEY_CARRIER.applyMap(CAYLEYS_DUAL.anti)
-    CAYLEY_CENTER*: Cayley2D =  # 𝐦⊞ ∨ 𝐦, read with both operands 𝐦.
-      CAYLEYS_WEDGE.anti.applyMap(CAYLEY_CARRIER_CO, Chirality.Left)
-    CAYLEY_CONTAINER*: Cayley2D =  # 𝐦 ∧ (𝐦⊟)☆, read with both operands 𝐦.
-      CAYLEYS_WEDGE.base.applyMap(
-        CAYLEYS_DUAL.anti.applyMap(CAYLEY_CARRIER),
-        Chirality.Right,
-      )
-
-when IS_RIGID:
-  const
-    CAYLEY_SUPPORT*: Cayley2D =  # 𝐦 ∨ (𝐞ₙ ∧ 𝐦☆), read with both operands 𝐦.
-      CAYLEYS_WEDGE.anti.applyMap(
-        CAYLEYS_WEDGE.base
-          .applyConstant(Basis.origin.toSigned, Chirality.Left)
-          .applyMap(CAYLEYS_DUAL.anti),
-        Chirality.Right,
-      )
-    CAYLEY_SUPPORT_ANTI*: Cayley2D =  # 𝐦 ∧ (𝐞̄ₙ ∨ 𝐦★), read with both operands 𝐦.
-      CAYLEYS_WEDGE.base.applyMap(
-        CAYLEYS_WEDGE.anti
-          .applyConstant(Basis.horizon, Chirality.Left)
-          .applyMap(CAYLEYS_DUAL.base),
-        Chirality.Right,
-      )
 
 
 
@@ -656,14 +490,7 @@ func applyMap(cayley: Cayley2D, map: Cayley1D, chirality: Chirality): Cayley2D {
 func constructAnti(map: Cayley1D, complements: Chiral[Cayley1D]): Cayley1D {.compileTime.} =
   ## Construct anti-variant of map by conjugating with complements, i.e. (map 𝐦̲)̅.
   ##   Right complement into operand, left complement out of product.
-  for b in Basis:
-    let b_from = complements.right[b].toSigned
-    for b_map in map[b_from.basis]:
-      let b_to = complements.left[b_map.basis].toSigned
-      result[b].mergeTerm BasisSigned(
-        basis: b_to.basis,
-        is_negated: b_from.is_negated xor b_map.is_negated xor b_to.is_negated,
-      )
+  complements.left.applyMap(map.applyMap(complements.right))
 
 
 func constructAnti(cayley: Cayley2D, complements: Chiral[Cayley1D]): Cayley2D {.compileTime.} =
@@ -773,16 +600,22 @@ func merge(destination: var Cayley2D, source: Cayley2D, as_negated = false) {.co
 func negate(cayley: var Cayley1D) {.compileTime.} =
   ## Negate all signed basis of 1D cayley table in place.
   for b in Basis:
-    for term in cayley[b].mitems:
-      term.is_negated = not term.is_negated
+    if cayley[b].len == 0: continue
+    cayley[b][0].is_negated = not cayley[b][0].is_negated
 
 
-func slice(cayley: Cayley2D, operand: Basis, chirality: Chirality): Cayley1D {.compileTime.} =
-  ## Extract slice of 2D cayley at constant operand as 1D map.
+func slice(
+  cayley: Cayley2D, operand: Basis, chirality: Chirality
+): Cayley1D {.compileTime, noinit.} =
+  ## Extract vertical slice of 2D cayley as 1D map.
   for b in Basis:
-    result[b] = case chirality
+    let terms = case chirality
       of Chirality.Left: cayley[operand][b]
       of Chirality.Right: cayley[b][operand]
+    assert terms.len <= 1,
+      &"Attempt to convert 2D cayley to 1D with non-singleton product values;" &
+      &" got `{terms}` for `{chirality}` `{operand}`."
+    result[b] = if terms.len == 1: @[terms[0]] else: @[]
 
 
 func filterGrades(
@@ -790,18 +623,32 @@ func filterGrades(
   operands_m = default(seq[Grade]),
   operands_n = default(seq[Grade]),
   products = default(seq[Grade]),
-  as_exclusions = false,
+  as_exclusions = false;
 ) {.compileTime.} =
-  ## Filter out specific operands/products from 2D cayley table by grades.
-  ##   Empty selection keeps all; `as_exclusions` inverts selection.
+  ## Filter out specific operands/products from 2D cayley table by bases.
   for bm in Basis:
+
+    # Filter by m operands.
+    if (operands_m.len != 0 and bm.grade notin operands_m) or
+        (as_exclusions and bm.grade in operands_m):
+      for bn in Basis:
+        cayley[bm][bn] = @[]
+
     for bn in Basis:
-      if (operands_m.len != 0 and (bm.grade in operands_m) == as_exclusions) or
-          (operands_n.len != 0 and (bn.grade in operands_n) == as_exclusions):
+      if cayley[bm][bn].len == 0: continue
+
+      # Filter by n operands.
+      if (operands_n.len != 0 and bn.grade notin operands_n) or
+          (as_exclusions and bn.grade in operands_n):
         cayley[bm][bn] = @[]
         continue
-      if products.len != 0:
-        cayley[bm][bn].keepItIf((it.basis.grade in products) != as_exclusions)
+
+      # Filter by product.
+      for b in cayley[bm][bn]:
+        if (products.len != 0 and b.basis.grade notin products) or
+            (as_exclusions and b.basis.grade in products):
+          cayley[bm][bn] = @[] # TODO: Remove only matching elements.
+          break
 
 
 func filterFactors(
@@ -825,17 +672,6 @@ func filterFactors(
         break
     if should_filter:
       cayley[b] = @[]
-
-
-# func swap(cayley: var Cayley2D) {.compileTime.} =
-#   ## Swap order of operands, TODO: negating result due to anticommutivity.
-#   for bm in Basis:
-#     for bn in Basis:
-#       if bm == bn: continue
-#       let (a, b) = (cayley[bm][bn], cayley[bn][bm])
-#       cayley[bm][bn] = b
-#       cayley[bn][bm] = a
-
 
 
 #[ Basis Ordering ]#
