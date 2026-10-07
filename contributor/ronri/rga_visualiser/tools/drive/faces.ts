@@ -12,8 +12,9 @@
 //   Element script builds later takes its stack from rule that stands now, so every stack
 //   page's stylesheets declare joins them, read through CSSOM, matched now or not.
 //   Faces are read as browser reads them: shell's `@font-face` rules give family, weight and
-//   unicode-range, and each file's own `cmap` gives what it holds. Within family, faces at
-//   weight CSS matching picks are tried in turn; then next family of stack.
+//   unicode-range, and each file's own `cmap` gives what it holds. Within family, matching
+//   picks set of faces that declare one weight, and only its faces are tried; then next
+//   family of stack.
 //   Family past those page ships -- `-apple-system`, `Arial`, `monospace` -- is viewer's own,
 //   so character that reaches one is failure (Article X.8).
 
@@ -196,24 +197,37 @@ function familiesOf(stack: string): string[] {
     .filter((family) => family.length > 0);
 }
 
-/** Name face of stack that draws `codepoint` at `weight`, or none where viewer's own would. */
+/** Name face of stack that draws `codepoint` at `weight`, or none where viewer's own would.
+ *
+ *  Matching picks set of faces, never face: faces of family that declare same weight form one
+ *  set, and engine asks only faces of set it picks. Where two sets both hold weight asked --
+ *  face at 400 and faces at 400 to 600 -- which one it picks is engine's, so character counts
+ *  as drawn only where each such set, or family after it, draws it.
+ */
 function faceDrawing(faces: Face[], stack: string[], weight: number, codepoint: number):
     Face | undefined {
-  for (const family of stack) {
-    // Family names match without case, as CSS matches them.
-    const own = faces.filter((face) => face.family.toLowerCase() === family.toLowerCase());
-    if (own.length === 0) continue;
-    const declared = own.flatMap((face) => [face.weights[0], face.weights[1]]);
-    const matched = weightMatched(weight, declared);
-    // Later rule is asked first where ranges overlap, as CSS orders segmented faces.
-    for (const face of [...own].reverse()) {
-      if (matched < face.weights[0] || matched > face.weights[1]) continue;
-      const is_in_range = face.ranges.length === 0 ||
-        face.ranges.some(([start, end]) => codepoint >= start && codepoint <= end);
-      if (is_in_range && face.held.has(codepoint)) return face;
-    }
+  const [family, ...rest] = stack;
+  if (family === undefined) return undefined;
+  // Family names match without case, as CSS matches them.
+  const own = faces.filter((face) => face.family.toLowerCase() === family.toLowerCase());
+  if (own.length === 0) return faceDrawing(faces, rest, weight, codepoint);
+  const sets = new Map<string, Face[]>();
+  for (const face of own) {
+    const key = face.weights.join(' ');
+    sets.set(key, [...(sets.get(key) ?? []), face]);
   }
-  return undefined;
+  const isHolding = (set: Face[], at: number): boolean =>
+    at >= (set[0]?.weights[0] ?? 0) && at <= (set[0]?.weights[1] ?? 0);
+  const matched = [...sets.values()].some((set) => isHolding(set, weight)) ? weight :
+    weightMatched(weight, own.flatMap((face) => [face.weights[0], face.weights[1]]));
+  const drawing = [...sets.values()].filter((set) => isHolding(set, matched)).map((set) => {
+    // Later rule is asked first where ranges overlap, as CSS orders segmented faces.
+    const face = [...set].reverse().find((one) => one.held.has(codepoint) &&
+      (one.ranges.length === 0 ||
+        one.ranges.some(([start, end]) => codepoint >= start && codepoint <= end)));
+    return face ?? faceDrawing(faces, rest, weight, codepoint);
+  });
+  return drawing.every((face) => face !== undefined) ? drawing[0] : undefined;
 }
 
 /** Read every character beyond ASCII that strings of page's own scripts hold. */
