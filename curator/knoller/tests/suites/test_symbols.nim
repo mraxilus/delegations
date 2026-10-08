@@ -57,6 +57,12 @@ suite "Internal: Symbols":
       "< \"C:\\T\\c\" > \"C:\\T\\a\"\""
 
 
+  test "path reads with separator `/` on Windows, and `\\` stays name character on POSIX":
+    check slashed("C:\\r\\tests\\a\\t1.nim", '\\') == "C:/r/tests/a/t1.nim"  # joined on Windows
+    check slashed("/r/tests/a\\b.nim", '/') == "/r/tests/a\\b.nim"
+    check slashed("/r/x.nim") == "/r/x.nim"
+
+
   test "included file resolves through file including it, followed to top":
     let files = @[
       ("tests/test_a.nim", "include \"suites.nim\"\n"),

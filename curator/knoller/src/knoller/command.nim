@@ -130,8 +130,9 @@ func dialectOf*(path: string): Option[Dialect] =
 
 func layoutOf*(path, directory: string): string =
   ## Read path whole, as fixers read it: absolute, from directory it is named from, with `.` and
-  ##   `..` resolved.
-  if path.isAbsolute: path.normalizedPath else: normalizedPath(directory / path)
+  ##   `..` resolved, and each separator `/` on every platform (`slashed`), since rules split
+  ##   it there to find tests, stubs and drive code.
+  slashed(if path.isAbsolute: path.normalizedPath else: normalizedPath(directory / path))
 
 
 func shownAs(reports: openArray[Report], path: string): seq[Report] =
@@ -464,7 +465,7 @@ proc listingOf(
   ## Read path, relative to project, and text of each Nim file git lists under project, once.
   if project notin listings:
     let (listed, _) = project.listed
-    listings[project] = listed.mapIt((it.relativePath(project), readFile(it)))
+    listings[project] = listed.mapIt((it.relativePath(project, '/'), readFile(it)))
   listings[project]
 
 
@@ -486,7 +487,7 @@ proc answersOf*(
     let
       absolute = path.layoutOf(directory)
       project = absolute.parentDir.projectOf
-      query = queryConversion(absolute.relativePath(project), source)
+      query = queryConversion(absolute.relativePath(project, '/'), source)
     if query.sites.len == 0: continue
     let (bin, reason) = binOf(absolute, nim, seen, toolchains)
     if reason.len > 0:
@@ -530,7 +531,7 @@ proc plansOf*(
     let
       absolute = path.layoutOf(directory)
       project = absolute.parentDir.projectOf
-      relative = absolute.relativePath(project)
+      relative = absolute.relativePath(project, '/')
       recased = renamesCase(source, JARGON)
     var renames: seq[Rename]
     for r in recased:
@@ -581,7 +582,7 @@ proc plansOf*(
         for answer in resolve(requests): answers[answer.path] = answer
         for (file, text) in reach: fenced[file] = text.fenceOf.lines
         plan = planRename(rename, reach, answers, fenced)
-        let outside = toSeq(plan.edits.keys).filterIt((project / it) notin named)
+        let outside = toSeq(plan.edits.keys).filterIt(slashed(project / it) notin named)
         if plan.refusal.len == 0 and outside.len > 0:
           plan.refusal = "it would write `" & outside[0] & "`, which this run leaves alone"
           plan.edits.clear
@@ -590,9 +591,9 @@ proc plansOf*(
       # Name each path as command line names it.
       plan.rename.path = path
       var edits = initTable[string, seq[Edit]]()
-      for file, list in plan.edits: edits[files[named.find(project / file)][0]] = list
+      for file, list in plan.edits: edits[files[named.find(slashed(project / file))][0]] = list
       plan.edits = edits
-      plan.lines = plan.lines.mapIt((files[named.find(project / it[0])][0], it[1]))
+      plan.lines = plan.lines.mapIt((files[named.find(slashed(project / it[0]))][0], it[1]))
       result.add plan
 
 

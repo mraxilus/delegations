@@ -61,7 +61,7 @@ type
     kind*: string  ## Symbol kind, as compiler names it, e.g. `skType`; `routine` for routine
                    ##   whose own name pass answers with its result, kind unread.
     name*: string  ## Qualified name, e.g. `system.float`.
-    file*: string  ## Absolute path of definition.
+    file*: string  ## Absolute path of definition, separators written `/` (`slashed`).
     line*: int  ## One-based line of definition.
     column*: int  ## Zero-based byte column of definition.
 
@@ -116,6 +116,13 @@ const
   TEMP_ANSWERS = ".answers"  ## Extension of file run writes answers to.
 
 
+func slashed*(path: string; separator = DirSep): string =
+  ## Read path with each separator written `/`, as git and every rule here write it, so path
+  ##   compares and splits alike on Windows, where `/` joins with `\`. Separator `/` keeps
+  ##   path as given, since `\` is character of name there.
+  if separator == '/': path else: path.replace(separator, '/')
+
+
 func symbolOf*(line: string): Option[Symbol] =
   ## Read symbol of one answer line: section, kind, name, type, file, line, column, doc, ….
   let fields = line.split('\t')
@@ -125,7 +132,7 @@ func symbolOf*(line: string): Option[Symbol] =
       Symbol(
         kind: fields[1],
         name: fields[2],
-        file: fields[4],
+        file: fields[4].slashed,
         line: fields[5].parseInt,
         column: fields[6].parseInt,
       ),
@@ -178,7 +185,7 @@ func includerOf*(files: openArray[(string, string)], path: string): string =
         let
           named = s["include ".len .. ^1].strip(chars = {'"', ' '})
           target = file.parentDir / (if named.endsWith(".nim"): named else: named & ".nim")
-        if target.normalizedPath == result: found = file
+        if target.normalizedPath.slashed == result: found = file
       if found.len > 0: break
     if found.len == 0: return
     result = found
