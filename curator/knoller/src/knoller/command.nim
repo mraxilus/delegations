@@ -478,11 +478,12 @@ proc convertedOf*(paths: openArray[string]): HashSet[string] =
       at = groups.high
     groups[at][1].add path
   for (directory, group) in groups:
-    let names = group.mapIt(it.extractFilename)
-    let (listing, _, code) = runGit(
-      directory,
-      @["--literal-pathspecs", "ls-files", "--eol", "-z", "--cached", "--others", "--"] & names,
-    )
+    let
+      names = group.mapIt(it.extractFilename)
+      (listing, _, code) = runGit(
+        directory,
+        @["--literal-pathspecs", "ls-files", "--eol", "-z", "--cached", "--others", "--"] & names,
+      )
     if code != 0: continue
     let autocrlf = runGit(directory, ["config", "--get", "core.autocrlf"]).output
     for record in listing.split('\0'):

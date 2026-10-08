@@ -47,18 +47,18 @@ suite "Internal: Symbols":
     check lineRedirected("/t/nimsuggest", ["--v3", "/r/a b.nim"], "/tmp/c", "/tmp/a") ==
       "/t/nimsuggest --v3 '/r/a b.nim' < /tmp/c > /tmp/a"
     check lineRedirected(
-      "C:\\nim\\bin\\nimsuggest.exe",
-      ["--v3", "C:\\r\\a b.nim"],
-      "C:\\T\\c",
-      "C:\\T\\a",
-      cmd = "C:\\Windows\\system32\\cmd.exe",
-    ) == "\"C:\\Windows\\system32\\cmd.exe\" /d /v:off /s /c " &
-      "\"\"C:\\nim\\bin\\nimsuggest.exe\" \"--v3\" \"C:\\r\\a b.nim\" " &
-      "< \"C:\\T\\c\" > \"C:\\T\\a\"\""
+      "\\nim\\bin\\nimsuggest.exe",
+      ["--v3", "\\r\\a b.nim"],
+      "\\T\\c",
+      "\\T\\a",
+      cmd = "\\Windows\\system32\\cmd.exe",
+    ) == "\"\\Windows\\system32\\cmd.exe\" /d /v:off /s /c " &
+      "\"\"\\nim\\bin\\nimsuggest.exe\" \"--v3\" \"\\r\\a b.nim\" " &
+      "< \"\\T\\c\" > \"\\T\\a\"\""
 
 
   test "path reads with separator `/` on Windows, and `\\` stays name character on POSIX":
-    check slashed("C:\\r\\tests\\a\\t1.nim", '\\') == "C:/r/tests/a/t1.nim"  # joined on Windows
+    check slashed("\\r\\tests\\a\\t1.nim", '\\') == "/r/tests/a/t1.nim"  # joined on Windows
     check slashed("/r/tests/a\\b.nim", '/') == "/r/tests/a\\b.nim"
     check slashed("/r/x.nim") == "/r/x.nim"
 
@@ -108,7 +108,7 @@ suite "Internal: Symbols":
 
 
   test "toolchain with no nimsuggest leaves each file unresolved, and says so":
-    # Case as found: PATH held `nim` and no `nimsuggest`, and the two conversions of
+    # Case as found: PATH held `nim` and no `nimsuggest`, and two conversions of
     #   `pga/multivectors.nim:75` of PGA library (`749fecf`) stayed unfixed with no warning,
     #   since empty output read as one clean answer.
     let
