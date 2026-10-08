@@ -2219,8 +2219,8 @@ drawn object stood 0.256 ahead.
 - the ship opens at the separation of the opening view, and `home` leaves its speed;
 - a held `w` with nothing selected lies along the sight, and keeps the separation;
 - a strafe leaves that separation alone;
-- the wheel over empty sky with nothing selected does nothing over 200 notches, and nor does a
-  spread of two fingers there;
+- the wheel over empty sky with nothing selected does nothing over 200 notches, and a spread of
+  two fingers there keeps the separation;
 - free flight's wheel comes in to a point eight separations out, and the selection's dollies about
   the pivot instead;
 - 40 notches onto a point stop where its sphere fills the frame, with the point held on its pixel;
@@ -3556,35 +3556,67 @@ Assumed: that 0.75 s is the right dwell for any hand.
 
 ## Two fingers
 
-**Two fingers hold what each touched, as the mouse holds what it grabs** (repository issue 592).
-As the second finger lands, `interaction.gripFingers` takes a place for each finger. Each frame,
-`interaction.carryGrip` moves the camera so that both places stand under their fingers again.
-Spread, slide and twist are one motion of a hand, so one solve answers all three. Rejected: a zoom
-by the spread, a pan by the midpoint and a roll by the twist, each past a slop of its own.
+**Two fingers hold what each touched, as the mouse holds what it grabs, less a slop** (repository
+issue 592). As the second finger lands, `interaction.gripFingers` takes a place for each finger.
+Each frame, `interaction.carryGrip` moves the camera so that both places stand at the pixels that
+`interaction.fingersHeld` names.
 
-Each finger slipped off what it held by every pixel a slop swallowed. The roll turned about the
-middle of the frame, and not about the fingers.
+**Zoom and twist wait for their slop, as they did before the grip.** The gap between the fingers
+must change by `PIXELS_TAP_SLOP` 12 px, and their angle by `RADIANS_TWIST_SLOP` 0.21, which is
+twelve degrees. Until then, the held gap and angle stay as they landed, so two fingers carried
+together only slide. After that, each counts from the edge of its slop, so crossing it jumps
+nothing at any frame rate.
 
-**Four unknowns answer four pixel coordinates.** With nothing selected, the camera slides across,
-up and ahead, and rolls. The sight keeps its direction, and the pivot rides along at its depth. With
-a selection, the camera orbits the pivot by two turns, dollies and rolls, so the orbit stays on
-what is picked. The solve is Levenberg-Marquardt from the last frame's answer, with finite
-derivatives. It starts from the stance the fingers landed on, so fingers back where they landed put
-the camera back where it stood.
+Rejected: no slop. Two fingers carried together never hold their gap to a pixel or their angle to a
+degree, and every wobble zoomed and rolled the view. The cost is the slop's own. A finger slips off
+its place by the slop's share of the gap, and by twelve degrees of arc about the middle.
+
+**With nothing selected, four unknowns answer four pixel coordinates.** The camera slides across,
+up and ahead, and rolls, so the sight keeps its direction. The solve is Levenberg-Marquardt from
+the last frame's answer, with finite derivatives. It starts from the stance the fingers landed on,
+so its answer does not depend on the path the fingers took.
+
+**With a selection, the orbit stays on what is picked.** The middle of the fingers orbits as the
+drag of one finger does, and carries the point on the sphere about the pivot with it. A dolly then
+brings the gap of the two places to the held gap, and a roll brings their angle. The dolly scales
+about the pivot, so what the middle holds drifts toward the middle of the frame as the view zooms
+out.
+
+Rejected: one solve of four unknowns against both places. A turn foreshortens what it carries, and
+the solve spent the turn on the gap. A fivefold pinch off the middle turned the view 74 degrees and
+dollied in. On the page, such pinches zoomed out by 1.18 to 1.32.
 
 **A finger holds the place on its own ray, at the depth of the object under it.** That object is
 the one a tap there selects: at any depth with nothing selected, and inside the depth band with a
 selection. Rejected: the object's own point, which the pick finds up to 34 px off the finger. Two
 fingers on one star then held one point, and no spread could zoom.
 
-**A finger on empty sky holds the sky itself, with nothing selected.** No slide moves the sky, so
-a spread or a slide there moves nothing, and a twist rolls. With a selection, a finger on empty
-space holds the point on the orbit's sphere, as a left drag does.
+**With nothing selected, a finger over nothing holds a place at a depth the view is about.** That
+depth is the depth of the other finger's object, where that finger stands on one. Otherwise it is
+the depth of the object shown nearest the middle of the fingers. Only objects within
+`FACTOR_ANCHOR_DEPTH` 2 of the depth of the pivot count. Otherwise it is the depth of the pivot
+itself. Rejected:
+
+- the sky itself, which no slide moves: once a zoom out shrank the objects, both fingers landed on
+  sky, and no pinch moved anything;
+- the nearest object ahead: far out in the orrery, a star off to the side, so a pinch zoomed out by
+  1.14 about Sol;
+- the object shown nearest at any depth: a background star a thousand times deeper, so one pinch
+  threw the eye out 3,637 times.
+
+With a selection, a finger on empty space holds the point on the sphere of the orbit, as a left drag
+does.
+
+**Once the fingers zoom, the pivot stands at the depth of the nearer place held**, as the wheel's
+zoom lands it on an object. The next pinch then scales the same thing, so zoom out after zoom
+out grows by the ratio of the fingers. A slide alone carries the pivot along at its own depth.
+Places over nothing at all never draw the pivot in, so no pinch runs the separation down
+(repository issue 535).
 
 **An unknown that no finger can move stays where it stands.** The damping holds it there, and a
 correction counts only where it cuts the misses by more than a billionth of them
-(`FRACTION_GRIP_GAIN`). Rejected: any cut at all. A spread over sky then rolled the view by
-1.3e-9 radians, on rounding alone.
+(`FRACTION_GRIP_GAIN`). Rejected: any cut at all. A spread that asked no roll then rolled the view
+by 1.3e-9 radians, on rounding alone.
 
 **The floor of each place is a depth along the sight**, the fill where the wheel stops at that
 object. Past it, the fingers slip. Rejected: a floor on the reach. A place off the object's own ray
@@ -3597,22 +3629,40 @@ finger lifts, so a third finger lifting back to two takes no old grip.
 
 *Checked.* Verified by `suites.nim`:
 
-- two fingers on points at two depths hold both within 0.05 px, through a spread, a slide and a
-  twist;
-- fingers back where they landed put the eye back within 1e-4;
-- two fingers on empty sky slide and zoom nothing, and a twist about the middle rolls by the turn;
-- with a selection, the pivot moves less than 1e-9, and both places hold within 0.05 px;
+- two fingers on points at two depths hold both within 0.05 px of the held pixels, through a
+  spread, a slide and a twist;
+- the slop there costs its own share of the gap and the angle, and no more;
+- two fingers carried together, wobbling 10 px and 0.15 inside the slop, slide, and neither zoom
+  nor roll;
+- half a pixel past the slop of the gap moves the places by that half pixel's share alone;
+- a hundredth past the slop of the twist rolls the view by that hundredth alone;
+- with nothing drawn, two fingers on empty sky hold places at the depth of the pivot;
+- a spread there keeps the separation, and a twist about the middle rolls by what lies past the
+  slop;
+- places over nothing take the depth of the object shown nearest the fingers, near the pivot's
+  depth;
+- a nearer star aside, and a deeper star under the middle of the fingers, do not set that depth;
+- five pinches in over empty sky each zoom out by more than 4, about the point drawn there;
+- with a selection, the pivot moves less than 1e-9, and the gap and angle of both places hold
+  within 0.01 px and 1e-9;
+- with a selection, a fivefold pinch off the middle zooms out by more than 3;
 - a spread over one point stops the eye at its floor.
 
 Verified by driven checks, in Chromium on 2026-10-08:
 
-- fingers on points `a` and `c`, through a spread of 1.3, a twist of 0.25 and a slide, held both
-  0.00 px off their fingers;
+- fingers on `a` and `c`, through a spread of 1.3, a twist of 0.25 and a slide, held both 0.00 px
+  off the held pixels;
 - two fingers carried together 316 px held both points 0.00 px off, and left the separation at
   19.000;
-- a spread and a slide on empty sky moved the eye 0;
-- a twist of 0.300 on empty sky about the middle turned the picture 0.3000, and moved the eye 0;
-- with `o` selected, the pivot moved 1.2e-14 as the separation came from 19.000 to 15.551;
+- a spread and a slide on empty sky came 10.819 in, turned nothing, and drew the separation from
+  19.000 to 7.707;
+- two fingers carried together, wobbling inside the slop, slid 2.288, came 5.0e-6 in and turned
+  1.6e-7;
+- a twist of 0.300 on empty sky about the middle turned the picture 0.0900, and moved the eye
+  5.9e-6;
+- four pinches in with nothing selected zoomed out by 3.25, 3.70, 3.83 and 3.87;
+- with `o` selected, the pivot moved 2.2e-14 as the separation came from 19.000 to 13.763;
+- with `o` selected, four pinches in zoomed out by 3.10 to 3.28;
 - a pinch zooming with a selection standing, and the move not taken back.
 
 ## Undo/redo
