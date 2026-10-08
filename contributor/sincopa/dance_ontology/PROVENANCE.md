@@ -65,8 +65,9 @@ each have an entry, with the other words that they ruled on.
 
 Stance, moment and room are the method of the simulation rather than dance, and earn no entry.
 Neither does the `(led)` mark of the simulation, nor its point where the hands meet, because `Grip`
-names the manner of holding instead. The code still calls that point `grip`, and the joint that
-holds it `GRIP`. The work of the true hand (#440) renames them.
+names the manner of holding instead. The code calls that point the join, and the joint that holds
+it the tie (`TIE`), as ruling 7 of #226 asks. So Grip keeps its sense in the code too. The
+simulation models two grips, the palm grip and the finger grip (Body rig).
 
 **`Block` describes the code.** The term says that a turn stops where a body or a twist blocks it,
 where "no small move holds, and no reachable pose does". In the engine a small move is the engine
@@ -918,6 +919,38 @@ Hands are offered three bands, one for each level: low 1.00 to 1.35 m, high 1.40
 1.735 to 2.00. The code names them `Torso`, `Neck` and `Crown`. The band for above starts one radius
 of a limb over the head, so a hand carried there clears it by construction.
 
+**The hand has its true size (#440).** It is 0.19 m from the crease of the wrist to the fingertip,
+with a palm of 0.11 m. Both are ANSUR II midpoints: hand length 0.193 and 0.180 m, and palm length
+0.116 and 0.108 m.
+
+Its section is a stadium, a flat palm and back with round edges. The round of the hand, 0.20 m, and
+its breadth, 0.083 m, give a thickness of 0.030 m (`handThick`). Three capsules side by side across
+the breadth hold that section within 8 mm (`rigid.handCapsules`). Rejected: one capsule as thick as
+the hand, which is a third as broad as a hand. Rejected: a ball as broad as the hand, which is twice
+as thick.
+
+A palm grip joins two hands at the middle of the palm, 0.055 m past the wrist (`gripAtPalm`). A
+finger grip joins them at the end of the hand, 0.175 m past the wrist, where hooked fingers hold
+(`gripAtTips`). So the span of an arm with everything straight runs to the fingertips of a finger
+grip, 0.735 m. The fingers past the join curl round the hand of the partner, about one thickness of
+a hand deep. The capsules of a held hand end there (`handLong`).
+
+Two palms pressed together tilt off facing by up to 30 degrees, and the fingers turn off opposed by
+up to 60 degrees (`GRIP_CONE_PALM`, `GRIP_TWIST_PALM`). Held by the fingertips, two hands turn
+freely. Between the two, the freedom grows in step with the depth of the grip (`gripFreedom`).
+Assumed: both figures and the step between them, until a published source is found (#440).
+
+**A hand is carried at the centre of its grip, 0.08 m past the wrist, and each band is asked of
+that point (`carry`, `carriedOf`).** That is where the band was asked before the hand had its true
+size. So the true hand changes the shape of the hand, and not where a hand is carried.
+
+Measured 2026-10-08. Asked of the fingertips, where the hands meet, the band lets the wrist and
+elbow of the follow pass at head height. Left to right above then stops by swing at 0.40 to 0.42 of
+a turn, from every distance from 0.36 to 0.46 m. The arm of the follow is behind the head, at the
+end of its swing, and its walk leaps 244 mm in one moment. Asked of the middle of the palm, the
+same-name chain wound half a turn holds from no distance. Asked of the centre of the grip, both
+hold.
+
 **Each head carries a face, and every arm keeps clear of every face (#375).** The face is a sphere
 of 6 cm radius, half the length of a face from brow to chin (`rigid.faceCapsule`). Its centre sits 6
 cm ahead of the axis of the head. It sits 4 cm under the centre of the head, midway from brow to
@@ -1004,9 +1037,10 @@ The upper arm collides with the chest it hangs from. The engine lets bodies that
 pass through each other, unless told otherwise. Without that setting, an upper arm sinks 67 mm into
 its own head and nothing reports it.
 
-Every joint but the grip holds at the cap of the engine (`HOLD`, 480 hertz). The grip alone holds at
-thirty (`GRIP`), which makes it the softest thing in the couple. A hold forced past what arms can do
-then gives at the hands, in life as here. At fifteen it fixed one law and cost every still card.
+Every joint but the tie holds at the cap of the engine (`HOLD`, 480 hertz). The tie that joins two
+hands alone holds at thirty (`TIE`), which makes it the softest thing in the couple. A hold forced
+past what arms can do then gives at the hands, in life as here. At fifteen it fixed one law and cost
+every still card.
 
 An arm deeper than a centimetre (`THROUGH`) in a body or in another arm is a stop. That is read off
 the manifolds of the engine every moment.
@@ -1068,7 +1102,7 @@ lean.
   its rotation. At seven, three newton metres at the end of the ease was under what forty newtons of
   lift at full stretch puts on a shoulder. Joints then sat at their ends in most stills.
 - The elbow takes 15 (`ELBOW_LEAN`).
-- The wrist takes 6 (`WRIST_LEAN`), which rings at twelve hertz on a hand.
+- The wrist takes 6 (`WRIST_LEAN`), which rings at six hertz on a hand of true size.
 
 The last three are assumed.
 
@@ -1096,8 +1130,10 @@ mm off plumb.
 Verified by `test_rigid.nim`. A free couple wound half a turn either way hang every arm within ten
 degrees of plumb, and the hand within 0.2 m of it. Red first.
 
-The spring of the wrist itself is five hertz (`WRIST_EASE`), which is the passive stiffness of a
-wrist. At one hertz the wrists sat at their cone at rest, once the elbow was turned down.
+The spring of the wrist itself is five hertz (`WRIST_EASE`). The engine sizes it from the hand and
+the forearm that it joins. On the hand of true size, 0.376 kg, it is 0.89 newton metres per radian,
+which is about the passive stiffness of a wrist. At one hertz the wrists sat at their cone at
+rest, once the elbow was turned down.
 
 Friction where arm meets body is 0.2 (`FRICTION`), cloth on cloth. At the 0.6 of the engine, an arm
 lying over a head was dragged round with it as the follow turned under. That wound the shoulder of
@@ -1198,8 +1234,8 @@ twist. That rise is whole from the rest for a hold that rests Face-to-back.
 
 Verified by `test_rigid.nim`. `up` is nought face to face, and one from a quarter turn away, at
 every twist up to a turn and a half. The cross-name chain at rest and the same-name chain wound to
-face to face hold with every joined hand in the `Torso` band. A09 stands at 0.76 m, with every hand
-between 1.23 and 1.35 m. Red first.
+face to face hold with every joined hand in the `Torso` band. A09 stands at 0.84 m, with every hand
+at 1.35 m. Red first.
 
 Under this rule no diamond stands. With the hands asked to mid torso after a whole turn they hold at
 no distance. The turn gives at a wrist, a twist or a hand under the `Crown` band before it comes
@@ -1242,7 +1278,7 @@ What stops a turn is one thing, asked in order over every arm, held or free:
 
 Verified by `test_rigid.nim`. Hands that are joined stay joined. No joint goes past what the rig
 allows while the hold stands. Capsules move where the couple move. Between two moments, no point of
-any held arm leaps more than the length of an arm plus its own move. That is 193 mm on the corpus of
+any held arm leaps more than the length of an arm plus its own move. That is 195 mm on the corpus of
 the laws.
 
 ## Stance and strain
@@ -1402,7 +1438,8 @@ It reads *modelled* only once they have, by name in `CONFIRMED` beside `KEPT`.
 
 A confirmation is of one still, so a confirmed cell whose still moves comes out of the list. The
 badge sits outside every drawing and moves no fixture. What the simulation reaches today is
-counted off the built page, rather than written here.
+counted off the built page, rather than written here. The true hand moved every still, so no cell
+is confirmed until the Architect holds each still again (#440).
 
 **Each confirmed cell is held to the still it was confirmed on.** `design/confirmed-fixtures.json`
 holds a hash of the points of that still, in `rig.json`, for each ask of the cell. The build of the
@@ -1418,8 +1455,8 @@ Verified by `suites/test_marks.nim`, which builds the review page. Red first: an
 stops the build, and so does no fixture for B04.
 
 Two joined pairs of one still may stand close, and may touch. Only pairs that hook or tangle are
-connected or interlocked. So the Architect confirmed A10, where the two pairs almost meet over the
-head.
+connected or interlocked. So A10 stands, where the two pairs almost meet over the head, as the
+Architect ruled.
 
 Two readings of section A come apart at A09 and A11, which draw the same-name pair face to face.
 Rule 31 of the project itself says that this frame state has its connections lying through each
@@ -2516,10 +2553,12 @@ urgent.
   above in `design/rig.json`, the connection that C01 draws straight runs 2.61 times its line
   between the shoulders, and the other 1.26. In D01 they run 2.11 and 1.52, and C07 and D07 are
   their mirror images. Measured 2026-10-03.
-- **The model holds a palm at one point, and a hand holds along its length.** A hand is a normal
-  human hand of one size (#375). A straight connection holds anywhere from the fingertips to a full
-  handshake, and a curling one at the fingertips alone. The palm of the model is a ball 8 cm across,
-  and #440 holds the work.
+- **The figures of a palm grip are assumed.** How far two palms tilt off facing, 30 degrees, and how
+  far the fingers turn off opposed, 60 degrees, wait on a published source (#440).
+- **The same-name chain wound to face to face holds from few distances.** It holds from 2 of 33
+  distances, 0.82 and 0.84 m. Before the hand had its true size, it held from one, 0.74 m. At every
+  other distance, the arms of the follow cross above the elbow at about a third of the turn. Or the
+  hands stand over the band when the couple face. Measured 2026-10-08.
 - **Every still awaits the confirmation of the Architect against their own body.** They have said
   that many are wrong, and will say what is wrong with each, card by card on the viewer. The badges
   read *unconfirmed* until then.
@@ -2528,10 +2567,11 @@ urgent.
   disagree, the ruling is the Architect's. So is whether a hammerlock goes a whole turn, and what
   moves in the body when it does.
 - **The radius of the girdle, 60 mm, is an estimate and not tape.**
-- **Two one-moment flips in the cross-name turn held above.** They are 370 mm as the lead's arm
-  straightens over at 0.28, and 220 mm as the follow's arm turns over at 1.18. Weightless links with
-  springs this weak do that at no cost. The corpus of the leap law in `test_rigid.nim` leaves that
-  sweep out, so no law holds it to the bound of a leap.
+- **Two one-moment flips in the cross-name turn held above.** In `design/turns.json`, the elbow of
+  the follow moves 470 mm in one moment at 0.30 of the turn. The join of the lead moves 436 mm at
+  1.00. Weightless links with springs this weak do that at no cost. The corpus of
+  the leap law in `test_rigid.nim` leaves that sweep out, so no law holds it to the bound of a leap.
+  Measured 2026-10-08.
 
 **Open in the workbench, and on the side of the Architect.** Each one waits on a ruling, and the
 workbench draws the current reading meanwhile.
