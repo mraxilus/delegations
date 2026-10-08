@@ -25,7 +25,7 @@ import { advance } from './clock';
 import { readCamera, settleCamera, slideOf, spanOf } from './camera';
 import { waitFrames } from './frame';
 import { report } from './report';
-import { pixelOf } from './wheel';
+import { handleAlone, pixelOf } from './wheel';
 
 /** One finger's place on screen. */
 interface Finger {
@@ -241,17 +241,27 @@ export async function drivePinch(page: Page, devtools: CDPSession): Promise<void
   await page.keyboard.press('Home');
   await settleCamera(page);
 
-  // Pinch well off centre, which is where aimed zoom shows itself: midpoint never moves,
-  //   so pinch that also translated view would drag it toward that corner.
-  const mid = { x: 300, y: 300 };
+  // Pinch over point well off middle of frame, which is where aim shows itself.
+  //   Zoom comes in to what stands between fingers, so point keeps its pixel under them.
+  //   Zoom aimed at middle slid point off fingers, and over empty middle did nothing.
+  const point = await handleAlone(page, 'point');
+  const seat = await pixelOf(page, point);
+  const mid = { x: seat?.[0] ?? 0, y: seat?.[1] ?? 0 };
+  const place = await page.evaluate((one) => Array.from(nimAnchorWorld(one)), point);
+  const middle = await page.evaluate(() => [window.innerWidth / 2, window.innerHeight / 2]);
+  const off = Math.hypot(mid.x - (middle[0] ?? 0), mid.y - (middle[1] ?? 0));
   const before = await readCamera(page);
   await pinch(page, devtools, mid, mid, 40, 160);
   const after = await readCamera(page);
+  const held = await pixelOf(page, point);
+  const slip = held === null ? Infinity :
+    Math.hypot((held[0] ?? 0) - mid.x, (held[1] ?? 0) - mid.y);
 
   report(
-    'a pinch zooms',
-    after.distance < before.distance * 0.8,
-    `distance ${before.distance.toFixed(2)} -> ${after.distance.toFixed(2)}`,
+    'a pinch comes in to the point between the fingers, which keeps its pixel',
+    spanOf(after.eye, place) < 0.8 * spanOf(before.eye, place) && slip <= 0.5,
+    `reach ${spanOf(before.eye, place).toFixed(2)} -> ${spanOf(after.eye, place).toFixed(2)}, ` +
+      `point ${slip.toFixed(2)} px off the fingers, ${off.toFixed(0)} px off the middle`,
   );
   report(
     'a pinch leaves the orbit alone',
