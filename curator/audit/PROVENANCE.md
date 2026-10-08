@@ -2005,8 +2005,7 @@ anywhere, or one above the last line (D1 of #578).
 checkout alone.** A subagent works in a worktree of its own, on a branch of its own
 (`GUIDE.md`, Work for subagents). The checkout of a write is the one that
 holds the file. The checkout of a git command is the one that its `-C` or a `cd` before it
-names, else the working directory of the call. A directory outside this repository falls
-back to the primary checkout.
+names, else the working directory of the call.
 
 - A detached head in the primary checkout never decides the branch of a worktree. So it never
   refuses a subagent.
@@ -2015,8 +2014,14 @@ back to the primary checkout.
   outside it.
 - A path is read from the top of its checkout, and never from the working directory of the
   call, which may be a subdirectory.
-- Cost: a git command in another repository falls back to the primary checkout. A commit there
-  is held to the branch of the primary checkout (#380).
+- A call in another repository has no checkout here, so the three hooks pass it unread. That
+  repository keeps its own branch, and a hook holds this repository alone. A directory in no
+  repository, or a failure of git, reads as the primary checkout, so a failure still holds the
+  rule.
+- Verified by `suites/test_tree.nim`, for the commit in a scratch repository of #380 as found.
+  The suite also holds the root, a subdirectory, a path not yet written, a worktree and a
+  directory in no repository. Fake inputs to the built koch use a detached checkout as the
+  primary. They refuse a commit and a write there, and pass both in a scratch repository.
 - Cost: only the first git command of a shell line is read. A second one with another `-C`
   is held to the branch of the first.
 

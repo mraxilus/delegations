@@ -16,7 +16,7 @@
 ##
 ##   People words: root glossary names Architect, Delegate, Curator and Contributor and lists
 ##     synonyms to avoid under each; those for people are `WORDS_PEOPLE`, and root files and
-##     curator records are held to them outside code (curator review, C7). List is people only:
+##     curator records are held to them outside code (GUIDE.md, Language). List is people only:
 ##     full avoid list holds build, rules and version, which have plain senses everywhere.
 
 {.experimental: "strictFuncs".}

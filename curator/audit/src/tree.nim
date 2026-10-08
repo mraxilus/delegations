@@ -2,8 +2,8 @@
 ##   Git decides what exists: tracked plus untracked-unignored files, so build products
 ##   never reach checks and every file that would commit does. Paths arrive NUL-separated
 ##   (`-z`), so no path is ever quoted, whatever it holds.
-##   Same door serves branch context: changed paths, paths base gained, commit subjects since
-##   base, and oldest commit outside `--recent` window.
+##   Same door serves branch context: checkout holding directory, changed paths, paths base
+##   gained, commit subjects since base, and oldest commit outside `--recent` window.
 ##
 ##   Git runs as direct process with argument list, never through shell, through knoller's
 ##     `runGit`, which command line of knoller lists directory with too: no quoting, and
@@ -32,6 +32,22 @@ proc fieldsGit*(root: string, arguments: openArray[string]): seq[string] =
   let (output, failure, code) = runGit(root, arguments)
   if code != 0: raise newException(IOError, "git failed; got `" & failure.strip & "`.")
   output.split('\0').filterIt(it.len > 0)
+
+
+proc checkoutAt*(root, directory: string): Option[string] =
+  ## Read top of checkout of this repository holding directory; none where git places directory
+  ##   in other repository, which keeps its own branch, since hook holds this repository alone.
+  ##   Worktree shares root's git store, so both name one common directory. Directory in no
+  ##     repository, or git failing, reads as root, so failure still holds root's rule. Path not
+  ##     yet written is read from nearest directory that exists.
+  var at = directory
+  while at.len > 1 and not dirExists(at): at = at.parentDir
+  const common = ["rev-parse", "--path-format=absolute", "--git-common-dir"]
+  try:
+    if fieldsGit(at, common)[0].strip != fieldsGit(root, common)[0].strip: return none(string)
+    return some(fieldsGit(at, ["rev-parse", "--show-toplevel"])[0].strip)
+  except IOError: discard
+  some(root)
 
 
 proc listPaths*(root: string): seq[string] =

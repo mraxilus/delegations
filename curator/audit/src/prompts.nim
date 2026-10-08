@@ -2,7 +2,7 @@
 ##   Prompt is pasted into every delegate's first message, so every paragraph is read on every
 ##     start. Two forms are checked: size, against `BYTES_PROMPT`, and diary references,
 ##     i.e. date, `#N`, `issue N`, `pull request N` or `run N` in prose, since incident
-##     belongs in audit record or log and rule alone belongs here (curator review, C5, C12).
+##     belongs in audit record or log and rule alone belongs here (duty 10).
 ##   Code spans and fences pass, so carried-list example naming `#140` stays legal.
 ##
 ##   Cost: article numbers such as `II.9` and duty numbers pass by shape, and so does
