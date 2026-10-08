@@ -136,6 +136,29 @@ suite "Internal: Symbols":
     check "usage: sug|con|def\ntype 'quit' to quit\n".blocksOf.len == 0
 
 
+  test "project path holding colon resolves, as Windows drive does":
+    # Case found by survey of suites for Windows: each command names file unquoted, and
+    #   `nimsuggest` reads file up to first `:`, so drive `C:` of every path there split each
+    #   command. Directory name holds colon here, where POSIX allows it.
+    let
+      root = createTempDir("knoller_", when defined(windows): "_symbols" else: "_drive:c")
+      files = @[
+        ("fixture.nimble", "version = \"0.1.0\"\nsrcDir = \"src\"\n"),
+        ("src/a.nim", "let\n  x = 3\n  y = x.float\n"),
+      ]
+    defer: removeDir(root)
+    for (path, content) in files: writeInto(root, path, content)
+    check ':' in root
+    let answers = resolve([Request(
+      query: Query(path: "src/a.nim", sites: @[(3, 8)]),
+      root: root,
+      directory: root,
+      includer: "src/a.nim",
+    )])
+    check answers.len == 1 and answers[0].reason.len == 0
+    check answers[0].symbols[(3, 8)].name == "system.float"
+
+
   test "run asked past pipe capacity both ways answers every command, neither side waiting":
     let
       root = createTempDir("knoller_", "_symbols")
