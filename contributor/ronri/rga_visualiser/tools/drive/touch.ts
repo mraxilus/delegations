@@ -22,7 +22,7 @@
 
 import type { CDPSession, Page } from '@playwright/test';
 import { advance } from './clock';
-import { forwardOf, readCamera, settleCamera, spanOf } from './camera';
+import { depthOf, forwardOf, readCamera, settleCamera, slideOf, spanOf } from './camera';
 import { waitFrames } from './frame';
 import { report } from './report';
 import { pixelOf } from './wheel';
@@ -282,18 +282,56 @@ async function isSkyAt(page: Page, at: Finger): Promise<boolean> {
   }, at);
 }
 
-/** Drive two fingers, which hold what each touched, as mouse holds what it grabs.
+/** Place pixels grip holds what each finger took at: fingers as they stand, less slop.
+ *
+ *  Page's own rule, `interaction.fingersHeld`, read again here as oracle: middle is
+ *  fingers' own, and gap and angle count from slop's edge once fingers part, close or turn
+ *  past it. Gestures here part and turn one way only, so end alone says whether they crossed.
+ */
+function heldOf(
+  landed: [Finger, Finger], now: [Finger, Finger], slop_gap: number, slop_twist: number,
+): [Finger, Finger] {
+  const gapOf = (pair: [Finger, Finger]): number =>
+    Math.hypot(pair[1].x - pair[0].x, pair[1].y - pair[0].y);
+  const angleOf = (pair: [Finger, Finger]): number =>
+    Math.atan2(pair[1].y - pair[0].y, pair[1].x - pair[0].x);
+  const [gap_landed, gap] = [gapOf(landed), gapOf(now)];
+  let turned = angleOf(now) - angleOf(landed);
+  if (turned > Math.PI) turned -= 2 * Math.PI;
+  if (turned < -Math.PI) turned += 2 * Math.PI;
+  const gap_held = Math.abs(gap - gap_landed) > slop_gap
+    ? (gap_landed * Math.max(gap, 1)) / (gap_landed + Math.sign(gap - gap_landed) * slop_gap)
+    : gap_landed;
+  const angle_held = angleOf(landed) +
+    (Math.abs(turned) > slop_twist ? turned - Math.sign(turned) * slop_twist : 0);
+  const middle = { x: 0.5 * (now[0].x + now[1].x), y: 0.5 * (now[0].y + now[1].y) };
+  const across = 0.5 * gap_held * Math.cos(angle_held);
+  const down = 0.5 * gap_held * Math.sin(angle_held);
+  return [
+    { x: middle.x - across, y: middle.y - down }, { x: middle.x + across, y: middle.y + down },
+  ];
+}
+
+/** Read largest change in camera's turn, roll included: motor's rotation coefficients. */
+async function turnOf(page: Page, before: number[]): Promise<number> {
+  const after = await page.evaluate(() => Array.from(nimCameraMotor()));
+  return Math.max(...[5, 6, 7, 15].map((at) => Math.abs((after[at] ?? 0) - (before[at] ?? 0))));
+}
+
+/** Drive two fingers, which hold what each touched, less slop, as mouse holds what it grabs.
  *
  *  Ruled on repository issue 592: each finger stays on point it touched, and view moves to
- *  hold that. Sky stands infinitely far, so fingers there slide and zoom nothing; selection
- *  is orbited, so pivot stays on it.
+ *  hold that; selection is orbited, so pivot stays on it. Zoom and twist wait for slop, as
+ *  they did before grip, and count from its edge. Over empty sky in free flight, finger
+ *  holds place at frame's own scale, so zoom out goes on once objects shrink from under it.
  */
 export async function drivePinch(page: Page, devtools: CDPSession): Promise<void> {
+  const [slop_gap, slop_twist] = await page.evaluate(() => [nimTapSlop(), nimTwistSlop()]);
   await page.keyboard.press('Home');
   await settleCamera(page);
 
   // Fingers land on two points at two depths and move as one hand: spread, twist and slide
-  //   at once. Each point staying under its own finger is whole rule.
+  //   at once. Each point staying under pixel grip holds it at is whole rule.
   const first = await handleLabelled(page, 'a');
   const second = await handleLabelled(page, 'c');
   const landed: [Finger, Finger] = [await fingerOn(page, first), await fingerOn(page, second)];
@@ -302,13 +340,13 @@ export async function drivePinch(page: Page, devtools: CDPSession): Promise<void
   const before = await readCamera(page);
   await moveFingers(page, devtools, hand);
   const after = await readCamera(page);
-  const [end_first, end_second] = hand(1);
-  const slips = [await slipOf(page, first, end_first), await slipOf(page, second, end_second)];
+  const [held_first, held_second] = heldOf(landed, hand(1), slop_gap, slop_twist);
+  const slips = [await slipOf(page, first, held_first), await slipOf(page, second, held_second)];
   report(
-    'two fingers hold the points they touched, through a spread, a twist and a slide',
+    'two fingers hold the points they touched, less slop, through a spread, a twist and a slide',
     Math.max(...slips) <= 1 && spanOf(before.eye, after.eye) > 0.1,
-    `points ${slips.map((slip) => slip.toFixed(2)).join(' and ')} px off their fingers, ` +
-      `eye moved ${spanOf(before.eye, after.eye).toFixed(3)}`,
+    `points ${slips.map((slip) => slip.toFixed(2)).join(' and ')} px off where grip holds ` +
+      `them, eye moved ${spanOf(before.eye, after.eye).toFixed(3)}`,
   );
   // Sight read off eye and pivot through float32, so bound is float32's.
   report(
@@ -317,26 +355,53 @@ export async function drivePinch(page: Page, devtools: CDPSession): Promise<void
     `sight moved ${spanOf(forwardOf(before), forwardOf(after)).toExponential(2)}`,
   );
 
-  // Fingers on empty sky hold sky itself, which no slide moves: spread and slide there
-  //   move nothing.
+  // Fingers on empty sky hold places at depth of object shown nearest them, near pivot's
+  //   depth: spread flies eye toward them, slide carries it across, and pivot comes to
+  //   their depth, never short of it.
   await page.keyboard.press('Home');
   await settleCamera(page);
   const sky: [Finger, Finger] = [{ x: 300, y: 110 }, { x: 600, y: 110 }];
   const is_sky = (await isSkyAt(page, sky[0])) && (await isSkyAt(page, sky[1]));
   const stood = await readCamera(page);
+  const motor_stood = await page.evaluate(() => Array.from(nimCameraMotor()));
   await moveFingers(
     page, devtools, (along) => asHand(sky, 1 + 1.5 * along, 0, { x: 40 * along, y: 30 * along }),
   );
-  const still = await readCamera(page);
+  const flown = await readCamera(page);
+  const turn_sky = await turnOf(page, motor_stood);
   report(
-    'two fingers on empty sky spread and slide nothing',
-    is_sky && spanOf(stood.eye, still.eye) < 1e-9 &&
-      spanOf(forwardOf(stood), forwardOf(still)) < 1e-9,
-    `on sky ${is_sky}, eye moved ${spanOf(stood.eye, still.eye).toExponential(2)}`,
+    'two fingers on empty sky zoom and slide the view, and draw the pivot in with them',
+    is_sky && depthOf(stood, flown.eye) > 0.1 && turn_sky < 1e-6 &&
+      flown.distance < stood.distance && flown.distance > 0.2 * stood.distance,
+    `on sky ${is_sky}, eye came ${depthOf(stood, flown.eye).toFixed(3)} in, turned ` +
+      `${turn_sky.toExponential(2)}, separation ${stood.distance.toFixed(4)} -> ` +
+      `${flown.distance.toFixed(4)}`,
   );
 
-  // Twist on sky about middle of frame: roll alone holds both directions, so picture turns
-  //   with fingers, and eye moves nowhere.
+  // Fingers carried together wobble inside slop: they slide alone, and neither zoom nor roll.
+  await page.keyboard.press('Home');
+  await settleCamera(page);
+  const carried = await readCamera(page);
+  const motor_carried = await page.evaluate(() => Array.from(nimCameraMotor()));
+  await moveFingers(page, devtools, (along) => {
+    const wobble = Math.round(8 * along) % 2 === 0 ? 1 : -1;
+    return asHand(
+      sky, 1 + (along > 0 ? (wobble * 8) / 300 : 0), along > 0 ? wobble * 0.15 : 0,
+      { x: 120 * along, y: 60 * along },
+    );
+  });
+  const slid = await readCamera(page);
+  const turn_carried = await turnOf(page, motor_carried);
+  report(
+    'two fingers carried together, wobbling inside the slop, slide and neither zoom nor roll',
+    slideOf(carried, slid) > 0.1 && Math.abs(depthOf(carried, slid.eye)) < 1e-4 &&
+      turn_carried < 1e-6,
+    `slid ${slideOf(carried, slid).toFixed(3)}, came ` +
+      `${depthOf(carried, slid.eye).toExponential(2)} in, turned ${turn_carried.toExponential(2)}`,
+  );
+
+  // Twist on sky about middle of frame: roll alone holds both places, so picture turns
+  //   with fingers by what lies past slop, and eye moves nowhere.
   await page.keyboard.press('Home');
   await settleCamera(page);
   const across: [Finger, Finger] = [{ x: 300, y: 110 }, { x: 900, y: 790 }];
@@ -350,14 +415,36 @@ export async function drivePinch(page: Page, devtools: CDPSession): Promise<void
   const swung = await fingerOn(page, marked);
   const angleOf = (at: Finger): number =>
     Math.atan2(at.y - (centre[1] ?? 0), at.x - (centre[0] ?? 0));
-  let carried = angleOf(swung) - angleOf(start);
-  if (carried > Math.PI) carried -= 2 * Math.PI;
-  if (carried < -Math.PI) carried += 2 * Math.PI;
+  let turned = angleOf(swung) - angleOf(start);
+  if (turned > Math.PI) turned -= 2 * Math.PI;
+  if (turned < -Math.PI) turned += 2 * Math.PI;
   report(
-    'a twist on empty sky turns the picture with the fingers, and moves the eye nowhere',
-    is_across_sky && Math.abs(carried - 0.3) < 1e-3 && spanOf(upright.eye, rolled.eye) < 1e-9,
-    `on sky ${is_across_sky}, fingers turned +0.300, picture turned ${carried.toFixed(4)} ` +
+    'a twist on empty sky turns the picture by what lies past the slop, and moves the eye nowhere',
+    is_across_sky && Math.abs(turned - (0.3 - slop_twist)) < 1e-3 &&
+      spanOf(upright.eye, rolled.eye) < 1e-3,
+    `on sky ${is_across_sky}, fingers turned +0.300, picture turned ${turned.toFixed(4)} ` +
       `about the frame's middle, eye moved ${spanOf(upright.eye, rolled.eye).toExponential(2)}`,
+  );
+
+  // Pinched in four times away from middle, with nothing selected: each lands on sky once
+  //   objects shrink, and each still zooms out.
+  await page.keyboard.press('Home');
+  await settleCamera(page);
+  const apart: [Finger, Finger] = [{ x: 400, y: 250 }, { x: 800, y: 250 }];
+  const pinched = (along: number): [Finger, Finger] =>
+    asHand(apart, 1 - 0.75 * along, 0, { x: 0, y: 0 });
+  const centre_scene = await page.evaluate(() => Array.from(nimCameraPivot()));
+  const outward: number[] = [];
+  for (let time = 0; time < 4; time += 1) {
+    const out_from = await readCamera(page);
+    await moveFingers(page, devtools, pinched);
+    const out_to = await readCamera(page);
+    outward.push(spanOf(out_to.eye, centre_scene) / spanOf(out_from.eye, centre_scene));
+  }
+  report(
+    'four pinches in, with nothing selected, each zoom out',
+    outward.every((ratio) => ratio > 2),
+    `eye out from the opening pivot by ${outward.map((ratio) => ratio.toFixed(2)).join(', ')}`,
   );
 
   // With selection, two fingers orbit, dolly and roll about it, so pivot stays on it.
@@ -372,12 +459,28 @@ export async function drivePinch(page: Page, devtools: CDPSession): Promise<void
     asHand(around, 1 + 0.4 * along, -0.2 * along, { x: 20 * along, y: 10 * along });
   await moveFingers(page, devtools, orbit);
   const orbited = await readCamera(page);
-  await page.evaluate(() => clearSelection());
   report(
     'with a selection two fingers orbit about it, and the pivot stays on it',
     spanOf(framed.pivot, orbited.pivot) < 1e-6 && orbited.distance < framed.distance,
     `pivot moved ${spanOf(framed.pivot, orbited.pivot).toExponential(2)}, ` +
       `distance ${framed.distance.toFixed(3)} -> ${orbited.distance.toFixed(3)}`,
+  );
+  // Pinched in four times away from middle: dolly meets fingers' gap each time.
+  const dollied: number[] = [];
+  for (let time = 0; time < 4; time += 1) {
+    const out_from = await readCamera(page);
+    await moveFingers(page, devtools, pinched);
+    const out_to = await readCamera(page);
+    dollied.push(out_to.distance / out_from.distance);
+  }
+  const held_on = await readCamera(page);
+  await page.evaluate(() => clearSelection());
+  report(
+    'four pinches in, with a selection, each zoom out, and the pivot stays on it',
+    dollied.every((ratio) => ratio > 2) &&
+      spanOf(framed.pivot, held_on.pivot) < 1e-6 * held_on.distance,
+    `distance out by ${dollied.map((ratio) => ratio.toFixed(2)).join(', ')}, pivot moved ` +
+      `${spanOf(framed.pivot, held_on.pivot).toExponential(2)}`,
   );
 }
 

@@ -1969,9 +1969,44 @@ suite "Interaction":
     hypot(at.x - finger.x, at.y - finger.y)
 
 
-  test "two fingers hold the points they touched, through a spread, a slide and a twist":
+  func angleOf(fingers: array[2, ScreenPosition]): float =
+    ## Read angle of line from first finger to second, in radians.
+    arctan2(fingers[1].y - fingers[0].y, fingers[1].x - fingers[0].x)
+
+
+  func gapOf(fingers: array[2, ScreenPosition]): float =
+    ## Read pixels between two fingers.
+    hypot(fingers[1].x - fingers[0].x, fingers[1].y - fingers[0].y)
+
+
+  func seenOf(
+    camera: Camera; width, height: int; places: array[2, Position]
+  ): array[2, ScreenPosition] =
+    ## Project two world places onto screen pixels.
+    for index, place in places:
+      result[index] = projectToScreen(
+        camera.initMatrixViewProjection(float(width) / float(height)),
+        width,
+        height,
+        place.toView(camera.originView),
+      )
+
+
+  func rollBetween(before, after: Camera): float =
+    ## Measure angle camera's up axis turned through, in radians.
+    arccos(clamp(dot(before.frame.axis_up, after.frame.axis_up), -1.0, 1.0))
+
+
+  func depthHeld(camera: Camera, grip: GripFingers, index: int): float =
+    ## Read depth along sight of place finger `index` holds.
+    let (eye, frame) = camera.sight
+    depthAlong(eye, frame.forward, grip.fingers[index].place.toView(camera.originView))
+
+
+  test "two fingers hold the points they touched past slop, through a spread, a slide and a twist":
     # Ruling on repository issue 592: each finger stays on what it touched, as mouse does.
-    #   Points at two depths, so no slide alone holds both.
+    #   Points at two depths, so no slide alone holds both. Zoom and twist count from slop's
+    #   edge, so each point stands under pixel `fingersHeld` names.
     const (wide, tall) = (1200, 900)
     let
       opened = cameraAround(ORIGIN, 12.0, Direction(x: 10, y: 4, z: 3))
@@ -1998,23 +2033,32 @@ suite "Interaction":
         has_selection = false,
       )
       fingers = landed
-    check not grip.fingers[0].is_sky and not grip.fingers[1].is_sky
+    check grip.fingers[0].floor > 0.0 and grip.fingers[1].floor > 0.0
     for step in 1..10:
       let along = float(step) / 10.0
       fingers = movedAbout(
         landed, 1.0 + 0.5 * along, 0.3 * along, ScreenPosition(x: 40.0 * along, y: -25.0 * along)
       )
       grip.carryGrip(camera, fingers, wide, tall)
-    check missedBy(camera, wide, tall, near, fingers[0]) < 0.05
-    check missedBy(camera, wide, tall, far, fingers[1]) < 0.05
-    # Fingers back where they landed put camera back where it stood.
+    let held = grip.fingersHeld(fingers)
+    check missedBy(camera, wide, tall, near, held[0]) < 0.05
+    check missedBy(camera, wide, tall, far, held[1]) < 0.05
+    # Slop costs its own share and no more: gap scales from its edge, and angle turns from it.
+    check grip.gap_from.isSome and grip.angle_from.isSome
+    check gapOf(held) =~ gapOf(landed) * gapOf(fingers) / (gapOf(landed) + PIXELS_TAP_SLOP)
+    check abs(wrapAngle(angleOf(held) - angleOf(landed) - (0.3 - RADIANS_TWIST_SLOP))) < 1.0e-9
+    # Fingers back where they landed: zoom and twist still count from slop's edge.
     grip.carryGrip(camera, landed, wide, tall)
-    check norm(camera.eye - opened.eye) < 1.0e-4
-    check norm(camera.frame.axis_up + -opened.frame.axis_up) < 1.0e-5
+    let back = grip.fingersHeld(landed)
+    check missedBy(camera, wide, tall, near, back[0]) < 0.05
+    check missedBy(camera, wide, tall, far, back[1]) < 0.05
 
 
-  test "two fingers on empty sky in free flight slide and zoom nothing, and a twist rolls":
-    # Ruling on repository issue 592: sky stands infinitely far, so no slide moves it.
+  test "two fingers on empty sky in free flight hold places at pivot's depth, and keep separation":
+    # Fault: they held sky itself, which no slide moves, so spread and slide over it moved
+    #   nothing, and once zoom out shrank objects from under fingers no pinch moved anything.
+    #   Spread over nothing at all carries pivot along, so separation holds (repository
+    #   issue 535).
     const (wide, tall) = (1200, 900)
     let
       opened = cameraAround(ORIGIN, 12.0, Direction(x: 10, y: 4, z: 3))
@@ -2032,23 +2076,128 @@ suite "Interaction":
         landed,
         has_selection = false,
       )
-    check grip.fingers[0].is_sky and grip.fingers[1].is_sky
-    let spread = movedAbout(landed, 1.8, 0.0, ScreenPosition(x: 60.0, y: 30.0))
-    grip.carryGrip(camera, spread, wide, tall)
-    check norm(camera.eye - opened.eye) < 1.0e-12
-    check norm(camera.frame.forward + -opened.frame.forward) < 1.0e-12
-    # Turned about middle of frame, where they stand: roll alone holds both.
-    let turned = movedAbout(landed, 1.0, 0.4, ScreenPosition())
-    grip.carryGrip(camera, turned, wide, tall)
-    let (up_before, up_after) = (opened.frame.axis_up, camera.frame.axis_up)
-    check norm(camera.eye - opened.eye) < 1.0e-12
+      fingers = landed
+    # Nothing is drawn near pivot's depth, so places stand at it.
+    check grip.is_open
+    check abs(depthHeld(opened, grip, 0) - opened.distance) < 1.0e-9
+    check abs(depthHeld(opened, grip, 1) - opened.distance) < 1.0e-9
+    for step in 1..10:
+      let along = float(step) / 10.0
+      fingers = movedAbout(
+        landed, 1.0 + 0.8 * along, 0.0, ScreenPosition(x: 60.0 * along, y: 30.0 * along)
+      )
+      grip.carryGrip(camera, fingers, wide, tall)
+    let held = grip.fingersHeld(fingers)
+    check missedBy(camera, wide, tall, grip.fingers[0].place, held[0]) < 0.05
+    check missedBy(camera, wide, tall, grip.fingers[1].place, held[1]) < 0.05
+    # Places stand at one depth, square to sight, so their depth scales as gap held does.
+    let ratio = gapOf(held) / gapOf(landed)
+    check abs(depthHeld(camera, grip, 0) - opened.distance / ratio) < 1.0e-4
+    check camera.distance =~ opened.distance
+    # No twist asked, so sight neither turns nor rolls.
     check norm(camera.frame.forward + -opened.frame.forward) < 1.0e-9
-    check abs(arccos(clamp(dot(up_before, up_after), -1.0, 1.0)) - 0.4) < 1.0e-4
+    check norm(camera.frame.axis_up + -opened.frame.axis_up) < 1.0e-9
+    # Twist about middle of frame turns picture by what lies past slop, and moves eye
+    #   nowhere: roll alone holds both places.
+    var
+      turning = opened
+      twist = gripFingers(
+        turning,
+        initScene(),
+        turning.drawExtentFor(tall, 0.0),
+        turning.initMatrixViewProjection(aspect),
+        wide,
+        tall,
+        landed,
+        has_selection = false,
+      )
+    for step in 1..10:
+      twist.carryGrip(
+        turning, movedAbout(landed, 1.0, 0.04 * float(step), ScreenPosition()), wide, tall
+      )
+    check norm(turning.eye - opened.eye) < 1.0e-4
+    check abs(rollBetween(opened, turning) - (0.4 - RADIANS_TWIST_SLOP)) < 1.0e-4
+
+
+  test "two fingers carried together, wobbling inside slop, slide and neither zoom nor roll":
+    # Fault: grip without slop read every wobble of gap as zoom, and of angle as roll.
+    #   Places at one depth, square to sight, so slide alone holds both.
+    const (wide, tall) = (1200, 900)
+    let
+      opened = cameraAround(ORIGIN, 12.0, Direction(x: 10, y: 4, z: 3))
+      aspect = float(wide) / float(tall)
+      landed = [ScreenPosition(x: 420.0, y: 450.0), ScreenPosition(x: 780.0, y: 450.0)]
+    var
+      camera = opened
+      grip = gripFingers(
+        camera,
+        initScene(),
+        camera.drawExtentFor(tall, 0.0),
+        camera.initMatrixViewProjection(aspect),
+        wide,
+        tall,
+        landed,
+        has_selection = false,
+      )
+      fingers = landed
+    for step in 1..12:
+      let
+        along = float(step) / 12.0
+        wobble = if step mod 2 == 0: 1.0 else: -1.0
+      fingers = movedAbout(
+        landed,
+        1.0 + wobble * 10.0 / gapOf(landed),
+        wobble * 0.15,
+        ScreenPosition(x: 80.0 * along, y: -50.0 * along),
+      )
+      grip.carryGrip(camera, fingers, wide, tall)
+    check grip.gap_from.isNone and grip.angle_from.isNone
+    check norm(camera.eye - opened.eye) > 0.5
+    check abs(depthHeld(camera, grip, 0) - opened.distance) < 1.0e-6
+    check abs(depthHeld(camera, grip, 1) - opened.distance) < 1.0e-6
+    check norm(camera.frame.forward + -opened.frame.forward) < 1.0e-9
+    check norm(camera.frame.axis_up + -opened.frame.axis_up) < 1.0e-9
+    let held = grip.fingersHeld(fingers)
+    check missedBy(camera, wide, tall, grip.fingers[0].place, held[0]) < 0.05
+    check missedBy(camera, wide, tall, grip.fingers[1].place, held[1]) < 0.05
+
+
+  test "past slop, zoom and twist count from its edge, so crossing it jumps nothing":
+    const (wide, tall) = (1200, 900)
+    let
+      opened = cameraAround(ORIGIN, 12.0, Direction(x: 10, y: 4, z: 3))
+      aspect = float(wide) / float(tall)
+      landed = [ScreenPosition(x: 420.0, y: 450.0), ScreenPosition(x: 780.0, y: 450.0)]
+      edge = gapOf(landed) + PIXELS_TAP_SLOP
+      parted = (edge + 0.5) / gapOf(landed)
+    var
+      camera = opened
+      grip = gripFingers(
+        camera,
+        initScene(),
+        camera.drawExtentFor(tall, 0.0),
+        camera.initMatrixViewProjection(aspect),
+        wide,
+        tall,
+        landed,
+        has_selection = false,
+      )
+    # Half pixel past zoom's slop: places come nearer by that half pixel's share alone.
+    grip.carryGrip(camera, movedAbout(landed, parted, 0.0, ScreenPosition()), wide, tall)
+    check grip.gap_from.isSome and grip.angle_from.isNone
+    check abs(depthHeld(camera, grip, 0) - opened.distance * edge / (edge + 0.5)) < 1.0e-3
+    # Hundredth of radian past twist's slop: picture turns by that hundredth alone.
+    grip.carryGrip(
+      camera, movedAbout(landed, parted, RADIANS_TWIST_SLOP + 0.01, ScreenPosition()), wide, tall
+    )
+    check grip.angle_from.isSome
+    check abs(rollBetween(opened, camera) - 0.01) < 1.0e-4
 
 
   test "with a selection two fingers orbit, dolly and roll about it, and the pivot stays":
     # Ruling on repository issue 592: orbit stays on what is picked. Both fingers stand off
-    #   picked point, on sphere left drag's orbit holds.
+    #   picked point, on sphere left drag's orbit holds. Gap and angle of places follow
+    #   fingers exactly; dolly scales about pivot, so what middle holds drifts by zoom alone.
     const (wide, tall) = (1200, 900)
     let
       opened = cameraAround(ORIGIN, 12.0, Direction(x: 10, y: 4, z: 3))
@@ -2071,17 +2220,66 @@ suite "Interaction":
       )
       fingers = landed
     check grip.is_orbit
-    check not grip.fingers[0].is_sky and not grip.fingers[1].is_sky
+    check grip.fingers[0].floor == 0.0 and grip.fingers[1].floor == 0.0
     for step in 1..10:
       let along = float(step) / 10.0
       fingers = movedAbout(
         landed, 1.0 + 0.4 * along, -0.25 * along, ScreenPosition(x: 30.0 * along, y: 20.0 * along)
       )
       grip.carryGrip(camera, fingers, wide, tall)
+    let
+      held = grip.fingersHeld(fingers)
+      seen = seenOf(camera, wide, tall, [grip.fingers[0].place, grip.fingers[1].place])
+      ratio = gapOf(held) / gapOf(landed)
+      centre = ScreenPosition(x: 0.5 * float(wide), y: 0.5 * float(tall))
+      middle_held =
+        ScreenPosition(x: 0.5 * (held[0].x + held[1].x), y: 0.5 * (held[0].y + held[1].y))
+      middle_seen =
+        ScreenPosition(x: 0.5 * (seen[0].x + seen[1].x), y: 0.5 * (seen[0].y + seen[1].y))
     check norm(camera.pivot - opened.pivot) < 1.0e-9
     check camera.distance < opened.distance
-    check missedBy(camera, wide, tall, grip.fingers[0].place, fingers[0]) < 0.05
-    check missedBy(camera, wide, tall, grip.fingers[1].place, fingers[1]) < 0.05
+    check abs(gapOf(seen) - gapOf(held)) < 0.01
+    check abs(wrapAngle(angleOf(seen) - angleOf(held))) < 1.0e-9
+    check hypot(middle_seen.x - middle_held.x, middle_seen.y - middle_held.y) <=
+        (ratio - 1.0) * hypot(middle_held.x - centre.x, middle_held.y - centre.y) + 1.0
+
+
+  test "with a selection two fingers pinched in away from middle zoom out by their ratio":
+    # Fault: one solve of four unknowns against both places spent orbit's foreshortening on
+    #   gap: pinch fivefold away from middle zoomed out by 1.18 to 1.32 on page, or turned view
+    #   74 degrees and dollied in. Orbit follows middle's travel now, and dolly meets gap.
+    const (wide, tall) = (1200, 900)
+    let
+      opened = cameraAround(ORIGIN, 12.0, Direction(x: 10, y: 4, z: 3))
+      aspect = float(wide) / float(tall)
+      landed = [ScreenPosition(x: 700.0, y: 200.0), ScreenPosition(x: 1100.0, y: 200.0)]
+    var scene = initScene()
+    scene.addObject(ORIGIN.toMultivector, "picked", Ink.Rose)
+    var
+      camera = opened
+      grip = gripFingers(
+        camera,
+        scene,
+        camera.drawExtentFor(tall, 0.0),
+        camera.initMatrixViewProjection(aspect),
+        wide,
+        tall,
+        landed,
+        has_selection = true,
+        reach_selection = 2.0,
+      )
+      fingers = landed
+    for step in 1..10:
+      fingers = movedAbout(landed, 1.0 - 0.08 * float(step), 0.0, ScreenPosition())
+      grip.carryGrip(camera, fingers, wide, tall)
+    let
+      held = grip.fingersHeld(fingers)
+      seen = seenOf(camera, wide, tall, [grip.fingers[0].place, grip.fingers[1].place])
+    check abs(gapOf(seen) - gapOf(held)) < 0.01
+    check abs(wrapAngle(angleOf(seen) - angleOf(held))) < 1.0e-9
+    # Places stood nearer than pivot, so distance grows by less than gap shrinks.
+    check camera.distance > 3.0 * opened.distance
+    check norm(camera.pivot - opened.pivot) < 1.0e-6
 
 
   test "two fingers spread over one point stop the eye at its floor, and then slip":
@@ -2119,3 +2317,75 @@ suite "Interaction":
       depth = depthAlong(eye, frame.forward, grip.fingers[0].place.toView(camera.originView))
     check depth >= grip.fingers[0].floor * (1.0 - 1.0e-6)
     check depth < 1.01 * grip.fingers[0].floor
+
+
+  test "two fingers pinched in over empty sky zoom out every time, about what is drawn there":
+    # Fault: zoom out shrank objects from under fingers, so next pinch landed on sky, which
+    #   grip held still, and no pinch after it moved anything. Pivot follows depth held, so
+    #   point drawn there stays near pivot's depth for next pinch.
+    const (wide, tall) = (1200, 900)
+    let
+      opened = cameraAround(ORIGIN, 12.0, Direction(x: 10, y: 4, z: 3))
+      aspect = float(wide) / float(tall)
+      landed = [ScreenPosition(x: 400.0, y: 160.0), ScreenPosition(x: 800.0, y: 160.0)]
+    var scene = initScene()
+    scene.addObject(ORIGIN.toMultivector, "middle", Ink.Rose)
+    var camera = opened
+    for _ in 1..5:
+      let before = norm(camera.eye - ORIGIN.toView(camera.originView))
+      var grip = gripFingers(
+        camera,
+        scene,
+        camera.drawExtentFor(tall, 0.0),
+        camera.initMatrixViewProjection(aspect),
+        wide,
+        tall,
+        landed,
+        has_selection = false,
+      )
+      for step in 1..10:
+        grip.carryGrip(
+          camera, movedAbout(landed, 1.0 - 0.08 * float(step), 0.0, ScreenPosition()), wide, tall
+        )
+      check norm(camera.eye - ORIGIN.toView(camera.originView)) > 4.0 * before
+      check not grip.is_open
+      check abs(camera.distance - depthHeld(camera, grip, 0)) < 1.0e-9 * camera.distance
+
+
+  test "two fingers on empty sky hold depth of what is shown nearest them, near pivot's depth":
+    # Faults: places at nearest object ahead, which far out in orrery was star off to side,
+    #   zoomed out by 1.14 about solar system under fingers; places at object shown nearest
+    #   at any depth took background star, and one pinch carried eye out 3637 times.
+    const (wide, tall) = (1200, 900)
+    let
+      opened = cameraAround(ORIGIN, 12.0, Direction(x: 10, y: 4, z: 3))
+      aspect = float(wide) / float(tall)
+      (eye, frame) = opened.sight
+      aside = eye + 3.0 * frame.forward + 1.5 * frame.axis_right
+      behind = eye + 100.0 * frame.forward + 20.0 * frame.axis_right
+      middle = projectToScreen(opened.initMatrixViewProjection(aspect), wide, tall, behind)
+      landed = [
+        ScreenPosition(x: middle.x - 100.0, y: middle.y),
+        ScreenPosition(x: middle.x + 100.0, y: middle.y),
+      ]
+    var scene = initScene()
+    scene.addObject(ORIGIN.toMultivector, "cluster", Ink.Rose)
+    scene.addObject(aside.toMultivector, "near star", Ink.Jade)
+    scene.addObject(behind.toMultivector, "far star", Ink.Jade)
+    var camera = opened
+    # Frame stamps nearest reach ahead, which is near star aside.
+    camera.reach_near = depthAlong(eye, frame.forward, aside)
+    check camera.scaleLocal < 0.5 * opened.distance
+    let grip = gripFingers(
+      camera,
+      scene,
+      camera.drawExtentFor(tall, 0.0),
+      camera.initMatrixViewProjection(aspect),
+      wide,
+      tall,
+      landed,
+      has_selection = false,
+    )
+    check not grip.is_open
+    check abs(depthHeld(camera, grip, 0) - opened.distance) < 1.0e-9
+    check abs(depthHeld(camera, grip, 1) - opened.distance) < 1.0e-9

@@ -921,7 +921,7 @@ suite "Camera":
     check camera.pivot =~ ORIGIN
 
 
-  test "with no selection the wheel and the pinch over empty sky do nothing":
+  test "with no selection the wheel over empty sky does nothing, and a pinch keeps separation":
     # Fault: wheel carried eye along pointer's ray at camera's own scale, which was
     #   separation, and scaled it by each notch: 200 notches over empty sky took it to near
     #   floor while nearest object stood 0.26 ahead (repository issue 535). Wheel refers to
@@ -944,7 +944,9 @@ suite "Camera":
         has_selection = false,
       )
     check camera.stanceOf == stance
-    # Two fingers there hold sky itself, which no spread moves (repository issue 592).
+    # Two fingers there hold places at frame's own scale, and slide carries pivot along:
+    #   spread flies eye toward them, and separation holds however far it flies.
+    let facing = camera.frame
     var grip = gripFingers(
       camera,
       initScene(),
@@ -966,7 +968,14 @@ suite "Camera":
         wide,
         tall,
       )
-    check camera.stanceOf == stance
+    let (eye, frame) = camera.sight
+    check camera.distance =~ 12.0
+    check norm(frame.forward + -facing.forward) < 1.0e-9
+    # Gap held went from 200 to 600, counted from slop's edge at 212.
+    check abs(
+      depthAlong(eye, frame.forward, grip.fingers[0].place.toView(camera.originView)) -
+          12.0 * 212.0 / 600.0
+    ) < 1.0e-4
 
 
   test "with no selection the wheel comes in to an object at any depth, and with one only near":
