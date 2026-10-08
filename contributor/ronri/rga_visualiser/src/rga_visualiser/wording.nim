@@ -423,7 +423,7 @@ const LUT_TEXT_BY_WORDING: array[Wording, cstring] = [
   HelpMoveToward: "move toward or away from whatever you point at",
   HelpDragEmptyOrCrowd: "drag empty space, or a crowd of objects, with one finger",
   HelpPinch: "pinch",
-  HelpMoveCloser: "move toward or away from whatever is in the middle",
+  HelpMoveCloser: "move toward or away from whatever is between your fingers",
   HelpDragTwoFingers: "drag with two fingers",
   HelpTwistTwoFingers: "twist two fingers",
   HelpEscape: "escape",

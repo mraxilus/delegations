@@ -1308,13 +1308,14 @@ proc nimCameraDolly(factor: cfloat) {.exportc.} =
   camera.dolly(CAMERA_PAGE, float(factor))
 
 
-proc nimCameraDollyCentred(factor: cfloat; width, height: cint) {.exportc.} =
-  ## Scale camera's distance from pivot by factor, toward whatever frame's middle is over.
-  ##   Pinch's zoom; see `interaction.dollyAtCentre`. Reads frame's own as `nimCameraDollyAt`.
+proc nimCameraDollyAtPixel(factor, x, y: cfloat; width, height: cint) {.exportc.} =
+  ## Scale camera's distance from pivot by factor, toward whatever pixel `x`, `y` is over.
+  ##   Pinch's zoom, aimed at midpoint of its fingers; see `interaction.dollyAt`.
+  ##   Reads frame's own as `nimCameraDollyAt`.
   TWEEN_CAMERA.halt()
   placeEdited()
   ensureViewOverlay(int(width), int(height))
-  dollyAtCentre(
+  dollyAt(
     CAMERA_PAGE,
     SCENE_PAGE,
     float(factor),
@@ -1322,6 +1323,7 @@ proc nimCameraDollyCentred(factor: cfloat; width, height: cint) {.exportc.} =
     VIEW_PROJECTION_OVERLAY,
     int(width),
     int(height),
+    ScreenPosition(x: float(x), y: float(y)),
     SELECTION_PAGE.len > 0,
     placements,
   )
@@ -1330,9 +1332,8 @@ proc nimCameraDollyCentred(factor: cfloat; width, height: cint) {.exportc.} =
 proc nimCameraDollyAt(factor: cfloat; width, height: cint) {.exportc.} =
   ## Scale camera's distance from pivot by factor, toward whatever cursor is over.
   ##   See `interaction.dollyAtCursor`.
-  ##   Reads cursor this build tracks (`nimUpdateCursor`), so caller aiming zoom (wheel at
-  ##   pointer, pinch at midpoint) says where by moving cursor there first, as picking
-  ##   does.
+  ##   Wheel's zoom: reads cursor this build tracks (`nimUpdateCursor`), as picking does.
+  ##   Pinch names its own pixel; see `nimCameraDollyAtPixel`.
   TWEEN_CAMERA.halt()
   # Read through frame's placements.
   #   `dollyAtCursor` asks `anchorZoomAt` what cursor is over, which is full pick.

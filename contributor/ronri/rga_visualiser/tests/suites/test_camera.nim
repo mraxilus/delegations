@@ -944,8 +944,8 @@ suite "Camera":
         has_selection = false,
       )
     check camera.stanceOf == stance
-    # Pinch aims through same rule at middle of frame, and finds nothing there either.
-    dollyAtCentre(
+    # Pinch aims through same rule at midpoint of its fingers, and finds nothing there either.
+    dollyAt(
       camera,
       initScene(),
       0.5,
@@ -953,6 +953,7 @@ suite "Camera":
       camera.initMatrixViewProjection(float(wide) / float(tall)),
       wide,
       tall,
+      ScreenPosition(x: 1100.0, y: 240.0),
       has_selection = false,
     )
     check camera.stanceOf == stance
@@ -1149,12 +1150,12 @@ suite "Camera":
     let planet = Position(x: 3.0, y: 1.0, z: 0.0)
     var scene = initScene()
     scene.addObject(planet.toMultivector, "planet", Ink.Cobalt)
-    # Middle of frame over planet, camera aimed at it from afar: pinch's case.
+    # Middle of frame over planet, camera aimed at it from afar.
     let aimed = cameraAround(planet, 20.0, Direction(x: 12, y: 5, z: 7))
     # Eye twenty units off planet, pivot ten units past it.
     var camera = initCamera(eye = aimed.eye, pivot = planet + 10.0 * aimed.frame.forward)
     let eye_before = camera.eye
-    dollyAtCentre(
+    dollyAt(
       camera,
       scene,
       0.5,
@@ -1162,6 +1163,7 @@ suite "Camera":
       camera.initMatrixViewProjection(float(wide) / float(tall)),
       wide,
       tall,
+      ScreenPosition(x: float(wide) / 2.0, y: float(tall) / 2.0),
       has_selection = true,
     )
     # Eye moved halfway to planet, and pivot now stands on it.

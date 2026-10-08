@@ -758,8 +758,8 @@ proc dollyAt*(
   placed: openArray[Placement] = [];
 ) =
   ## Zoom camera by `factor` toward whatever `cursor` is over; see `dollyAtCursor`.
-  ##   Cursor is parameter so pinch, which has no cursor, aims at frame's middle through
-  ##   same rule; see `dollyAtCentre`.
+  ##   Cursor is parameter so pinch, which has no pointer, aims at midpoint of its fingers
+  ##   through same rule.
   ##   Two states, as `driveHeld` has.
   ##     Free flight comes in to object under pointer, at whatever depth it stands,
   ##     floored at that object's drawn radius. Over nothing it does nothing: wheel refers
@@ -811,34 +811,6 @@ proc dollyAt*(
       (eye, frame) = camera.sight
       depth = depthAlong(eye, frame.forward, anchor.get.at)
     if depth > 0.0: camera.repivotToDepth(depth)
-
-
-proc dollyAtCentre*(
-  camera: var Camera;
-  scene: Scene;
-  factor: float;
-  scale: DrawExtent;
-  view_projection: Matrix4;
-  width, height: int;
-  has_selection: bool;
-  placed: openArray[Placement] = [];
-) =
-  ## Zoom camera by `factor` toward whatever middle of frame is over; pinch's zoom.
-  ##   Pinch has two fingers and no pointer, and zooming at their midpoint translated
-  ##   view twice beside pan that carries same midpoint; middle of frame it is, aimed
-  ##   through `dollyAt` so pivot still lands on point or line there.
-  dollyAt(
-    camera,
-    scene,
-    factor,
-    scale,
-    view_projection,
-    width,
-    height,
-    ScreenPosition(x: float(width) / 2.0, y: float(height) / 2.0),
-    has_selection,
-    placed,
-  )
 
 
 proc dollyAtCursor*(

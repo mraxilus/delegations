@@ -296,23 +296,21 @@ function settleTwoFingers() {
   const points_flat = [...pointers.values()];
   const separation = pointerDist(points_flat);
   const mid = pointerMid(points_flat);
-  // Zoom at middle of frame, not aimed at pinch's own midpoint.
-  //   Pan below already moves view by that midpoint's own travel, so aiming zoom
-  //   there too translates view twice for one gesture, and pinch anywhere but dead
-  //   centre slides scene while it scales it.
-  //   Wheel has no pan beside it, which is why aiming at pointer is right there.
-  //   Through anchor at middle rather than plain dolly, so pivot lands on planet
-  //   pinch arrives at and orbit turns about it; plane or empty sky under middle leaves
-  //   pivot on sight line. See `interaction.dollyAtCentre`.
+  // Zoom toward whatever stands between fingers, as wheel zooms toward what pointer is over.
+  //   Aimed where fingers stood last step: zoom holds its anchor's pixel, and pan below
+  //   carries that pixel on to where they stand now, so what they hold stays under them.
+  //   Not middle of frame, whose zoom slid object under fingers off them, and with nothing
+  //   selected and nothing at middle did nothing. See `interaction.dollyAt`.
   if (separation_pinch_start !== null && !is_pinch_zooming &&
       Math.abs(separation - separation_pinch_start) > TAP_MAX_MOVE) {
     is_pinch_zooming = true;
     separation_pinch_start = separation;
   }
   if (is_pinch_zooming) {
-    nimCameraDollyCentred(
+    const aim = pan_last ?? mid;
+    nimCameraDollyAtPixel(
       (separation_pinch_start ?? separation) / Math.max(1, separation),
-      canvas.clientWidth, canvas.clientHeight,
+      aim.x - rect.left, aim.y - rect.top, canvas.clientWidth, canvas.clientHeight,
     );
     separation_pinch_start = separation;
   }
