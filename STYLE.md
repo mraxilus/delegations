@@ -81,12 +81,15 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
   borrow family once, through a documented template:
 
   ```nim
-  template borrowOperationsGrade(t: typedesc) =
-    func `+`*(g, h: t): t {.borrow.}
-    func `==`*(g, h: t): bool {.borrow.}
+  template borrowOperationsGrade(T: typedesc) =
+    func `+`*(g, h: T): T {.borrow.}
+    func `==`*(g, h: T): bool {.borrow.}
   borrowOperationsGrade(Grade)
   borrowOperationsGrade(GradeAnti)
   ```
+
+  A parameter of type `typedesc` alone stands for any type, as a generic does, so it is one
+  capital letter (V.12). `t: typedesc[I]` stays a parameter, since `I` is the placeholder.
 
 - `{.pure.}` on a small enum that carries a semantic axis. Always qualify the members
   (`Space.Base`).
