@@ -172,6 +172,17 @@ under `--check`.
 - Each fixer reads the path whole: absolute, with `.` and `..` resolved (`layoutOf`). So the
   test file, the stub and the umbrella read alike from any directory, and the output prints the
   path as named.
+- That path is `/` separated on every platform. A path join on Windows writes a backslash, so
+  `layoutOf` and the listing of a directory write each separator `/` (`slashed`). Each path
+  relative to a project reads with `/` too. So a rule finds `tests` on Windows as it does on
+  Linux, and one tree prints the same output on every platform.
+- Fixers read the text as a commit stores it. Git for Windows checks out CRLF by default, and a
+  commit turns it back into LF. Where `git ls-files --eol` reports such a checkout, knoller reads
+  LF and writes CRLF back (`isConverted`). So no CR reads as trailing whitespace, and no fix
+  rewrites line endings. CRLF that a commit keeps stays a finding.
+- Verified by `suites/test_command.nim`, on a real checkout with `core.autocrlf=true`. The suite
+  also holds each setting and attribute that decides the conversion. A demo checkout gave 3
+  findings, where it gave 7 before. Cost: one git call in each directory of the files named.
 - Cost: a directory named `tests` above the repository makes each file below it a test file,
   from the command line alone. `koch` gives paths from the root of the repository.
 - Each line of output is a line of the file as given. A finding left in the fixed text traces
@@ -253,6 +264,13 @@ tarball. A commit comes from a clone of `nim-lang/Nim` and a run of `sh build_al
 the recipe of `check.yml`. A platform that nim-lang.org publishes no build for takes the same
 recipe.
 
+- On Windows, knoller fetches and builds nothing. Nim-lang.org publishes no tarball for Windows
+  that this reads, and the build needs `sh`. So a pin comes from `PATH` or the cache alone there,
+  and one line on stderr names both places. Before, such a pin cloned Nim and then failed.
+- A compiler that will not start reads as none. On Windows no shell stands between, so the start
+  raises, where `sh` exits 127.
+- The root of the cache is a proc, since the home directory is an effect on Windows. As a func,
+  it kept knoller from compiling for any Windows target.
 - Resolution lives in knoller, because the command needs it, and the audit imports knoller and
   never the reverse (D3 of #548). One copy serves koch, the semantic pass of audit and the
   command.
@@ -328,13 +346,26 @@ toolchain that serves the pin of the project.
   the nearest directory that holds a nimble file, and the includer is read among the Nim files git
   lists there. The toolchain is the one that proves parentheses (`batchesOf`). `koch` reads the
   same facts from its tree instead.
-- One `nimsuggest --v3 --stdin` serves each entry: the file itself, or the file that includes it.
+- One `nimsuggest --v3 --tester` serves each entry: the file itself, or the file that includes it.
   It runs in the project directory, so the `nim.cfg` of the project applies. A file under
   `tests/` takes `-d:testing`, as the stub of STYLE.md §6 does.
+- Tester mode reads commands as `--stdin` does. It prints `!EOF!` once ready and after each
+  answer, with no help and no prompt. On Windows, `--stdin` prompts `> ` before each command,
+  which glues the prompt to the first line of each answer.
 - A run reads its commands from a file and writes its answers to a file, through the
   redirection of the shell. A pipe holds 64 KiB, and a run whose answers fill it stops reading
   commands. So a run fed through pipes, all commands first, waits forever on a large entry.
   Verified by `suites/test_symbols.nim`, which passes 64 KiB each way.
+- The shell is `sh` on POSIX and `cmd` on Windows. There `poEvalCommand` hands the line to
+  `CreateProcess` with no shell between, so nothing would read the redirection (`lineRedirected`).
+  Cost: `%` in a path expands in `cmd` where it names a variable.
+- Each command quotes its file. `nimsuggest` reads an unquoted file up to its first `:`, and each
+  Windows path holds one after its drive. Verified by `suites/test_symbols.nim`, through a colon
+  in the name of a directory on POSIX.
+- A toolchain with no `nimsuggest` starts no run, and each of its files stays unresolved with
+  that reason. Output that holds no answer reads as none. Before, empty output read as one clean
+  answer. So on the PGA library at `749fecf`, with no `nimsuggest` on `PATH`, the two conversions
+  of `pga/multivectors.nim:75` stayed with no warning. Verified by `suites/test_symbols.nim`.
 - `nimsuggest` waits 250 ms between two commands on its input, so each site costs a quarter of a
   second at least. Measured on the container of the curator with 2.2.12, 2026-10-04: 300 sites of
   one small file took 76 s, with 0.6 s of processor time.
@@ -1394,6 +1425,19 @@ paths of drive code belong to a layout, so the caller gives them.
 - Cost: the command line knows no project, so it reads a file that the static pass passes over,
   such as `src/tests/a.nim`.
 - Verified by `suites/test_waits.nim`.
+
+## Platforms
+
+**Knoller runs on Linux, macOS and Windows, and koch runs on Linux and macOS.** The Architect runs
+knoller on Windows, with Nim built from source on `PATH`. So `test-windows` of `check.yml` runs the
+suites of knoller on Windows, whenever a change names knoller.
+
+- The command line and its suites compile for Windows, which `nim c --os:windows --compileOnly`
+  shows on any host. Before this, knoller compiled for no Windows target.
+- Three tests skip on Windows, and each says why. `sha256sum` is no tool of Windows, and the stub
+  toolchain of two tests is a `sh` script. So a pin served from the cache, and its prover, are
+  proven on POSIX alone.
+- Cost: paths compare by case on Windows too, where the file system ignores case.
 
 ## Open questions
 

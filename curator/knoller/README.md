@@ -20,7 +20,11 @@ knoller [--check] [--nim:path] path...
 - A directory that gives no Nim file is a usage error. Its message says why: the directory is
   outside a git work tree, or git lists no Nim file under it.
 - Knoller reads each path whole, from the directory where you run it. So a test file, a stub and
-  an umbrella get the same rules from any directory. The output prints each path as you name it.
+  an umbrella get the same rules from any directory. The output prints each path as you name it,
+  and the files of a directory with `/`, on every platform.
+- Knoller runs on Linux, macOS and Windows. Where git checks a file out with CRLF and a commit
+  turns it back into LF, as Git for Windows does by default, knoller reads LF and writes CRLF
+  back. CRLF that a commit keeps stays a finding.
 - A stub is a file `tests/test_*.nim`, with or without a testament header. A file `t*.nim` in a
   testament category is a stub too, where a testament header opens it. That category is a folder
   directly under `tests`, and the file can stand at any depth inside it. Testament reads a
@@ -51,7 +55,8 @@ knoller [--check] [--nim:path] path...
   `~/.cache/knoller/nim/<pin>/`. Else it fetches a release, or builds a commit, into that cache.
   `$KNOLLER_NIM_DIR` moves the cache, for koch too. The first run on a new pin pays the fetch, in
   seconds, or the build, in minutes, once. What a fetch prints goes to stderr, so the output below
-  is all that stdout holds.
+  is all that stdout holds. On Windows, knoller fetches and builds nothing, so a pin comes from
+  `PATH` or the cache there, else it warns.
 - Where no compiler answers, knoller removes no parentheses in those files and prints one warning
   that says why. A pin that no compiler serves gives that warning, and so does a directory that
   holds more than one nimble file. Knoller never takes another compiler in silence.
@@ -59,7 +64,8 @@ knoller [--check] [--nim:path] path...
   Knoller asks `nimsuggest` only about a file that holds a candidate, so a clean tree costs no
   compile. The pass runs in the nearest directory that holds a nimble file, with the compiler that
   proves parentheses. A file that the pass cannot resolve keeps its conversions, and prints one
-  warning that says why.
+  warning that says why. A toolchain with no `nimsuggest` beside its compiler, or on `PATH`,
+  resolves no file, and the warning names the tool.
 - A name in the case of another kind (V.1, V.11), or one that coins an abbreviation (V.6), is
   renamed at every use. Knoller reads each Nim file that git lists under the nearest directory
   that holds a nimble file, and writes only the files you name. A rename that would write another
