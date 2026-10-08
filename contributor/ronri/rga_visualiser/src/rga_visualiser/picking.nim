@@ -596,16 +596,16 @@ proc pickWalk(
       # Pick direction point where its star is drawn.
       #   One part of point's anchor depending on eye, so not in placement. Matches
       #   `tessellate.anchorFor`.
-      let star = position(add(
-        scale.eye_point,
-        wedge(scale.radiusHorizon, place.toward.toMultivector),
-      ))
-      if star.isNone: continue
-      let distance = pixelsFromCursor(view_projection, width, height, star.get, cursor)
+      let
+        star = pointFrom(add(
+          scale.eye_point,
+          wedge(scale.radiusHorizon, place.toward.toMultivector),
+        ))
+        distance = pixelsFromCursor(view_projection, width, height, star, cursor)
       if distance > RADIUS_CROWD_TOUCH: continue
       # Star lies in horizon, deeper than any disc, and is dot cursor is never inside.
       if hiders_known.coverOf(
-        scale.radiusHorizon, projectToScreen(view_projection, width, height, star.get)
+        scale.radiusHorizon, projectToScreen(view_projection, width, height, star)
       ) >= RADIUS_PICK_POINT: continue
       if distance <= RADIUS_PICK_POINT: consider(0, distance, scale.radiusHorizon, false)
       crowd(0)
