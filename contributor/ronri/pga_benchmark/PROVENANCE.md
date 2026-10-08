@@ -1077,11 +1077,11 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
   the bases it reaches. At rga4d 16 measurands stand above the byte bound only because they
   write a whole multivector for one slot, and at cga5d 12 do. Each is a dot, an antidot or a
   squared norm, and under P04 each writes 8 bytes.
-- Whether the library takes P05, `multivector-align`. It adds `alignmentOf`, the largest power
-  of two that divides the bytes of a count of bases, at most 64. So it pads no count. Each
-  multivector takes it of its basis set, `min(64, size)`, one cache line from three dimensions
-  up. The kinds of P04 take it of their basis set when they land, as the Architect ruled
-  on 2026-10-04.
+- Whether the library takes P05, `multivector-align`. It aligns each multivector to
+  `min(64, size)`, one cache line from three dimensions up, so it pads no multivector. The kinds
+  of P04 take `alignmentOf` of their basis set instead, as the Architect ruled on 2026-10-04.
+  That is the largest power of two that divides their bytes, at most 64. P04 holds the rule,
+  and its prototype applies it.
 
   On two machines and three instruction sets, a caller that holds multivectors in a `seq` times
   `-m` at ×0.42 to ×0.93 of the pin. It times `m + n` at ×0.70 to ×0.88, at no cost in size. On

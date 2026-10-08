@@ -3,7 +3,8 @@
 ##     is verdict: every law below holds, or program stops on assertion.
 ##   `alignmentOf` gives alignment of any count of floats from count alone: largest power of two
 ##     dividing their bytes, at most one line, so it pads no count. Each kind takes it from size
-##     of its basis set when it lands, as Architect ruled on 2026-10-04; laws hold it at each count.
+##     of its basis set, as Architect ruled on 2026-10-04; laws hold it at each count.
+##   Prototype imports it, so rule its kinds take is rule these laws hold.
 
 {.experimental: "strictFuncs".}
 
@@ -16,7 +17,7 @@ const
     ## Count of floats of each kind, from rga3d to cga5d, and its alignment.
 
 
-func alignmentOf(count: int): int =
+func alignmentOf*(count: int): int =
   ## Align coefficients of `count` bases to largest power of two dividing their bytes, at most
   ##   one cache line. Alignment divides size, so it pads at no count.
   let size = sizeof(float) * count
@@ -37,4 +38,5 @@ proc main() =
   echo "exact-kinds: alignment laws hold at every count from 1 to 64"
 
 
-main()
+when isMainModule:
+  main()

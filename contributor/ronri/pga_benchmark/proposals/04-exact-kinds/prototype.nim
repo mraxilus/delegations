@@ -5,6 +5,7 @@
 ##     kinds are its aliases, one per grade and per parity. Product returns
 ##     kind of exactly bases its table reaches, so dot of whole multivectors is one slot, and
 ##     bulk of bivector is part of its grade.
+##   Each kind aligns to `alignmentOf` of its count of floats, from `align.nim`, so it pads none.
 ##
 ##   Cost: prototype generates `∧`, `⟇`, `∙`, `∘` and unary parts alone; record says so.
 
@@ -17,10 +18,21 @@ import std/[macros, random]
 import pga
 import pga/[algebra {.all.}, cayleys {.all.}]
 
+import ./align
+
 
 type MultivectorOf*[B: static set[Basis]] = object
   ## Define multivector of bases `B` alone, coefficients dense in basis order.
-  elements*: array[card(B), float]
+  ##   Aligned to `alignmentOf` of its count through `when`, since `align` of expression of `B`
+  ##     stops pinned compiler.
+  when alignmentOf(card(B)) == 64:
+    elements* {.align(64).}: array[card(B), float]
+  elif alignmentOf(card(B)) == 32:
+    elements* {.align(32).}: array[card(B), float]
+  elif alignmentOf(card(B)) == 16:
+    elements* {.align(16).}: array[card(B), float]
+  else:
+    elements*: array[card(B), float]
 
 
 const
@@ -45,17 +57,33 @@ func literal(listed: set[Basis]): NimNode {.compileTime.} =
 
 macro defineKinds(): untyped =
   ## Name kinds as aliases of exact kinds: grades and parities.
+  ##   Also define `holdLayouts`, which holds size and alignment of each named kind. Macro knows
+  ##     each count when it runs, so it writes both numbers.
   result = newStmtList()
-  var named: seq[(string, set[Basis])]
+  var
+    named: seq[(string, set[Basis])]
+    laws = newStmtList()
   for grade in Grade.low..Grade.high:
     let bases = LUT_BASES_BY_GRADE[grade]
     named.add ("Kvector" & $int(grade), {bases.a .. bases.b})
   named.add ("MultivectorEven", basesOfParity(true))
   named.add ("MultivectorOdd", basesOfParity(false))
   for (name, listed) in named:
-    let (kind, spelled) = (ident(name), literal(listed))
+    let
+      (kind, spelled) = (ident(name), literal(listed))
+      (count, alignment) = (card(listed), alignmentOf(card(listed)))
+      size = sizeof(float) * count
     result.add quote do:
       type `kind`* = MultivectorOf[`spelled`]
+    laws.add quote do:
+      doAssert sizeof(`kind`) == `size`, `name` & " must hold its floats unpadded"
+      doAssert alignof(`kind`) == `alignment`, `name` & " must align to alignmentOf of its count"
+      echo "exact-kinds: ", `name`, ", ", `count`, " floats, ", `size`, " bytes, aligned to ",
+        `alignment`
+  result.add quote do:
+    proc holdLayouts() =
+      ## Hold size and alignment of each named kind, as macro wrote them from its count.
+      `laws`
 
 
 defineKinds()
@@ -213,6 +241,9 @@ proc main(): int =
     (m, n) = (sample(MultivectorOf[{Basis.low..Basis.high}]),
         sample(MultivectorOf[{Basis.low..Basis.high}]))
     bivector = sample(Kvector2)
+  holdLayouts()
+  doAssert alignof(typeof(∙bivector)) == alignmentOf(card(basesOf(typeof(∙bivector)))),
+    "kind that product returns aligns by same rule as named kinds"
   doAssert (p ∧ q) is Kvector2, "vector wedge vector must be bivector, named by its alias"
   doAssert (m ∙ n) is MultivectorOf[{Basis.scalar}], "dot of whole multivectors must be scalar slot"
   doAssert sizeof(m ∙ n) == sizeof(float), "dot writes one slot, never whole multivector"
