@@ -5,10 +5,10 @@
 ##     `checker.nim` holds usage, dispatch and CURATOR.md table to one verb set, so no fourth
 ##     copy lives here.
 ##
-##   Verb names action and its object. `check` runs every check pull request runs, and each
-##     `check-<object>` runs one of them; other verbs act (`test`, `drive`, `fix`, `fetch-*`,
-##     `stamp`) or print (`list-*`). CI job running verb carries verb's name, so red job names
-##     command to run locally.
+##   Verb names action and its object. `check` runs every check pull request runs but
+##     `check-role`, and each `check-<object>` runs one of them; other verbs act (`test`,
+##     `drive`, `fix`, `fetch-*`, `stamp`) or print (`list-*`). CI job running verb carries
+##     verb's name, so red job names command to run locally.
 ##   Verb of one project is that project's own, in its `tools/build.nim`; koch names verb and
 ##     selects projects carrying it, and holds none of what it does. `check-types` runs
 ##     project's `types`, `drive` its `drive`, `head` its `head`, and `list-packages` its
@@ -71,7 +71,7 @@ const USAGE = """
 Usage: koch <verb> [project | file...] [options]
 
 Verbs:
-  check          every check pull request runs; quick ones first, stopping on own finding
+  check          every check of pull request but check-role; quick first, stopping on own finding
   check-files    static checks over every file git lists; compiles nothing
   check-types    npm ci, then project's own `types` verb, where node manifest sits
   check-scope    branch name, and every changed path inside branch's folder
