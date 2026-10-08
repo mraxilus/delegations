@@ -211,6 +211,8 @@ proc ask(entry: Entry, is_js: bool): Asked =
   ##   writing its answers to file, so neither process waits on pipe other leaves full.
   ##   Toolchain holding no `nimsuggest` starts none, and says so, so each file stays unresolved
   ##   with that reason rather than reading empty output as answer.
+  ##   Each command quotes its file, since `nimsuggest` reads unquoted file up to first `:`, and
+  ##   every path on Windows holds one after its drive.
   var arguments = @["--v3", "--tester"] & entry.defines
   if is_js: arguments.add BACKEND_JS
   arguments.add entry.file
@@ -225,9 +227,9 @@ proc ask(entry: Entry, is_js: bool): Asked =
     let
       file = entry.root / query.path
       command = if file == entry.file: COMMAND_SITE else: COMMAND_INCLUDED
-    commands.add "chkFile " & file & "\n"
+    commands.add "chkFile \"" & file & "\"\n"
     for (line, column) in query.sites:
-      commands.add command & " " & file & ":" & $line & ":" & $column & "\n"
+      commands.add command & " \"" & file & "\":" & $line & ":" & $column & "\n"
     for name in query.names: commands.add "globalSymbols " & name & "\n"
   commands.add "quit\n"
 
