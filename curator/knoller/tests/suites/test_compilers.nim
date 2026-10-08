@@ -5,7 +5,8 @@
 
 import std/[options, os, strutils, tempfiles, unittest]
 from std/posix import nil
-import ../../src/knoller/[compilers, proofs]
+import ../../src/knoller/compilers
+when not defined(windows): import ../../src/knoller/proofs  # prover of pin, on POSIX alone
 
 
 const
