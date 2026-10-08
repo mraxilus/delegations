@@ -15,8 +15,8 @@
 ##     so `Facing` comes before `facing`, and `is_x` beside `isX`.
 ##   - Two consecutive single bindings of one keyword share that keyword (X.5).
 ##   - `return result` never appears: bare `return` exits early with `result` (§5).
-##   - Profiler import stands on one line, `when compileOption("profiler"): import
-##     std/nimprof`; entry module (`when isMainModule:`), library umbrella
+##   - Profiler import stands on two lines, `import std/nimprof` indented under
+##     `when compileOption("profiler"):`; entry module (`when isMainModule:`), library umbrella
 ##     (`<project>/src/<project>.nim`) and stub carry it right after their pragmas (§3):
 ##     `checkProfiler`, outside static pass until projects run fix. Stub that includes file at
 ##     top level takes import from it, since include makes one module of both (§3, §6). Cost:
@@ -55,8 +55,8 @@
 ##     blank lines opening its paragraph; inside branch, or before more body, it becomes bare
 ##     `return`. Both exit with same value, and §5 keeps `return` for early exit alone.
 ##   - Stub's `-r` is cut from `cmd`, and line of `batchable` or `joinable` goes.
-##   - Profiler import on two lines joins onto one. Missing one goes after last pragma opening
-##     module, blank line each side; module opening with no pragma stays to hand.
+##   - Profiler import joined onto one line splits onto two. Missing one goes after last pragma
+##     opening module, blank line each side; module opening with no pragma stays to hand.
 ##   Fixer never writes line width check reports (`form.isWide`); rewrite that would leaves
 ##     its lines and finding for hand. Fixer moving lines records where each came from, so
 ##     `chain` reports every later rewrite at line of source as given.
@@ -118,9 +118,9 @@ type
     after: int  ## Byte offset in line after ` -r`; `-1` where whole line goes.
 
   Profiler = object
-    ## Define profiler import as module holds it: two-line forms, presence, and where one goes.
-    pairs: seq[int]  ## Zero-based line of `when` of each import written on two lines.
-    is_present: bool  ## Import stands at module level, on one line or two.
+    ## Define profiler import as module holds it: joined forms, presence, and where one goes.
+    lines_joined: seq[int]  ## Zero-based line of each import joined onto one line.
+    is_present: bool  ## Import stands at module level, on two lines or one.
     is_entry: bool  ## Module is entry, library umbrella or test stub, so carries import.
     anchor: int  ## Zero-based line of last pragma opening module, import goes after; `-1` none.
 
@@ -139,11 +139,12 @@ const
   KEYS_STUB = ["batchable", "joinable"]
     ## Testament keys `testament pattern` never reads (STYLE.md §6).
   FLAG_RUN = " -r"  ## Flag stub's `cmd` leaves out, with space before it (STYLE.md §6).
-  IMPORT_PROFILER* = "when compileOption(\"profiler\"): import std/nimprof"
-    ## Profiler import every entry module, umbrella and stub carries, one line (STYLE.md §3).
-  GUARD_PROFILER = "when compileOption(\"profiler\"):"
-    ## First line of profiler import written on two lines.
-  MODULE_PROFILER = "import std/nimprof"  ## Second line of that form, indented under first.
+  GUARD_PROFILER = "when compileOption(\"profiler\"):"  ## First line of profiler import.
+  MODULE_PROFILER = "import std/nimprof"  ## Second line of profiler import, indented under first.
+  IMPORT_PROFILER* = GUARD_PROFILER & "\n  " & MODULE_PROFILER
+    ## Profiler import every entry module, umbrella and stub carries, two lines (STYLE.md §3).
+  IMPORT_PROFILER_JOINED = GUARD_PROFILER & " " & MODULE_PROFILER
+    ## Same import joined onto one line, which fix splits.
   MARK_IMPORT* = "import "  ## Opening of import statement at module level.
   RETURN_RESULT = "return result"
     ## Statement STYLE.md §5 bans, since bare `return` exits with `result`.
@@ -820,7 +821,8 @@ func isIncluding(source: string): bool =
 
 
 func profilerOf(path, source: string): Profiler =
-  ## Read profiler import of module: forms on two lines, presence, and pragma it goes after.
+  ## Read profiler import of module: forms joined onto one line, presence, and pragma it goes
+  ##   after.
   ##   Module opens with header docs, notes and testament header; pragma lines after them, with
   ##   blank lines between, are its directives (X.6), and import goes after last one.
   let
@@ -832,11 +834,12 @@ func profilerOf(path, source: string): Profiler =
   for i, line in lines:
     if code[i].strip.len == 0: continue
     if line.startsWith(GUARD_MAIN): result.is_entry = true
-    if line == IMPORT_PROFILER: result.is_present = true
     if line == GUARD_PROFILER and i + 1 < lines.len and lines[i + 1].strip == MODULE_PROFILER and
         lines[i + 1].indentOf > 0:
       result.is_present = true
-      result.pairs.add i
+    if line == IMPORT_PROFILER_JOINED:
+      result.is_present = true
+      result.lines_joined.add i
 
   # Find last pragma line of directives opening module, past docs, notes and testament header.
   var is_opening = true
@@ -848,16 +851,17 @@ func profilerOf(path, source: string): Profiler =
 
 
 func checkProfiler*(path, source: string): seq[Report] =
-  ## Report profiler import on two lines, and entry module, umbrella or stub lacking it (STYLE.md
-  ##   §3).
+  ## Report profiler import joined onto one line, and entry module, umbrella or stub lacking it
+  ##   (STYLE.md §3).
   ##   Named by its suite and `fixes.nim` alone until static pass calls it (`fixes.nim`).
   let profiler = profilerOf(path, source)
-  for i in profiler.pairs:
+  for i in profiler.lines_joined:
     result.add initReport(
       path,
       i + 1,
       Rule.ImportProfiler,
-      "Profiler import stands on one line, `" & IMPORT_PROFILER & "`; got `2` lines.",
+      "Profiler import stands on two lines, `" & MODULE_PROFILER & "` under `" & GUARD_PROFILER &
+        "`; got `1` line.",
     )
   if profiler.is_entry and not profiler.is_present:
     result.add initReport(
@@ -870,27 +874,34 @@ func checkProfiler*(path, source: string): seq[Report] =
 
 
 func fixProfiler(path, source: string): Fix =
-  ## Join each two-line profiler import onto one line; insert one, after module's last opening
-  ##   pragma, where entry module, umbrella or stub lacks it. Module without such pragma stays.
+  ## Split each profiler import joined onto one line into two lines; insert one, after module's
+  ##   last opening pragma, where entry module, umbrella or stub lacks it. Module without such
+  ##   pragma stays.
+  ##   Both lines of split import trace to line it was joined on.
   let profiler = profilerOf(path, source)
   result.source = source
-  if profiler.pairs.len == 0 and (profiler.is_present or not profiler.is_entry or
+  if profiler.lines_joined.len == 0 and (profiler.is_present or not profiler.is_entry or
       profiler.anchor < 0):
     return
-  let lines = source.split('\n')
+  let
+    lines = source.split('\n')
+    lines_import = IMPORT_PROFILER.split('\n')
   var shaped: seq[string]
   for i, line in lines:
-    if i - 1 in profiler.pairs: continue
-    shaped.add(if i in profiler.pairs: IMPORT_PROFILER else: line)
-    result.origin.add i + 1
+    if i in profiler.lines_joined:
+      shaped.add lines_import
+      result.origin.add [i + 1, i + 1]
+    else:
+      shaped.add line
+      result.origin.add i + 1
     if i == profiler.anchor and not profiler.is_present:
-      shaped.add ["", IMPORT_PROFILER]
-      result.origin.add [0, 0]
+      shaped.add @[""] & lines_import
+      result.origin.add [0, 0, 0]
       if i + 1 < lines.len and lines[i + 1].strip.len > 0:
         shaped.add ""
         result.origin.add 0
   result.source = shaped.join("\n")
-  for i in profiler.pairs: result.fixed.add initReport(path, i + 1, Rule.ImportProfiler)
+  for i in profiler.lines_joined: result.fixed.add initReport(path, i + 1, Rule.ImportProfiler)
   if not profiler.is_present: result.fixed.add initReport(path, 0, Rule.ImportProfiler)
 
 

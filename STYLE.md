@@ -117,11 +117,17 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
 - Validate a static configuration in `static: doAssert`, with ``&"…; got `{X}`."``.
 - Write `{x=}` in a message where the value alone would not say which binding it is
   (`{digits=}`).
-- Put an expensive check under `when compileOption("assertions"):`. Put the profiler import
-  under `when compileOption("profiler"): import std/nimprof` in every entry module, library
-  umbrella and test entry alike, right after the pragmas. Then `--profiler:on` works with no
-  edit. A stub that includes its shared suite (§6) takes the import from that suite, since the
-  include makes one module of both.
+- Put an expensive check under `when compileOption("assertions"):`. Put the profiler import in
+  every entry module, library umbrella and test entry alike, right after the pragmas, on two
+  lines:
+
+  ```nim
+  when compileOption("profiler"):
+    import std/nimprof
+  ```
+
+  Then `--profiler:on` works with no edit. A stub that includes its shared suite (§6) takes the
+  import from that suite, since the include makes one module of both.
 - Use `when` for a configuration branch and a typedesc branch
   (`let g = when G is Grade: b.grade else: b.gradeAnti`). Never take a runtime branch on a
   distinction that is known statically.

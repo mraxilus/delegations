@@ -331,7 +331,7 @@ suite "Fixes":
       head & "proc main() =\n  ## TODO: Document.\n  let count = 1\n  echo count\n\n\n" &
         "when isMainModule:\n  main()\n",
     ]  # V.10
-    check plan.fixed.mapIt((it.line, it.message)) == @[(8, "entry block (V.10)")]
+    check plan.fixed.mapIt((it.line, it.message)) == @[(9, "entry block (V.10)")]
     check fixEntries(BRANCH_CURATOR, plan.written).written.len == 0  # second fix writes nothing
     let held = fixEntries(
       BRANCH_CURATOR,
@@ -339,7 +339,7 @@ suite "Fixes":
     )
     check held.written.len == 0
     check held.left.mapIt((it.line, it.message)) == @[
-      (8, "Entry block (V.10) stays for hand, since move into `proc main` is refused: " &
+      (9, "Entry block (V.10) stays for hand, since move into `proc main` is refused: " &
         "`{.global.}` binds at module level alone; got `count`."),
     ]  # V.10
 
@@ -357,17 +357,17 @@ suite "Fixes":
       queries = queriesSemantic(tree, tree)
     check queries.mapIt((it.path, it.sites, it.names)) == @[
       (a.path, @[(5, 5)], @["runAll"]),  # local `COUNT` of `b.nim` asks no other file
-      (b.path, @[(10, 14), (10, 6), (11, 7)], @["count"]),
+      (b.path, @[(11, 14), (11, 6), (12, 7)], @["count"]),
     ]
     let
       routine =
         Symbol(kind: "skProc", name: "a.Run_all", file: "/r/" & a.path, line: 5, column: 5)
-      binding = Symbol(kind: "skLet", name: "b.COUNT", file: "/r/" & b.path, line: 10, column: 6)
+      binding = Symbol(kind: "skLet", name: "b.COUNT", file: "/r/" & b.path, line: 11, column: 6)
     var answers = @[Answer(path: a.path), Answer(path: b.path)]
     answers[0].symbols[(5, 5)] = routine
     answers[0].globals["runAll"] = @[]
-    answers[1].symbols[(10, 14)] = routine
-    for site in [(10, 6), (11, 7)]: answers[1].symbols[site] = binding
+    answers[1].symbols[(11, 14)] = routine
+    for site in [(11, 6), (12, 7)]: answers[1].symbols[site] = binding
     answers[1].globals["count"] = @[]
     let plan = fixEntries(BRANCH_CURATOR, tree, context = tree.contextOf(tree, answers))
     check plan.written.mapIt(it.content) == @[
@@ -377,10 +377,10 @@ suite "Fixes":
     ]  # V.1, V.10
     check plan.fixed.mapIt((it.path, it.line, it.message)) == @[
       (a.path, 5, "name case (V.1)"),
-      (b.path, 10, "name case (V.1)"),
-      (b.path, 10, "name case (V.1)"),
       (b.path, 11, "name case (V.1)"),
-      (b.path, 10, "entry block (V.10)"),
+      (b.path, 11, "name case (V.1)"),
+      (b.path, 12, "name case (V.1)"),
+      (b.path, 11, "entry block (V.10)"),
     ]  # each report at line of source as given, by rule knoller's check names
     check plan.left.len == 0
     let again = plan.written
