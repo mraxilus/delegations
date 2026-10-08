@@ -48,7 +48,7 @@ initLock(LOCK_WORLDS)
 
 const
   HERTZ* = 240.0  ## Steps per second.  Arm is short and stiff; slower step lets
-                      ## grip joint stretch before solver catches it.
+                      ## tie stretch before solver catches it.
   SUBSTEPS* = cint(8)  ## Engine's own inner steps, where joint limits are met.
   DENSITY = 1000.0  ## Flesh is about water, so links weigh what arms weigh.
   DAMPING = 4.0  ## Linear and angular damping: arms settle, never ring.
@@ -79,7 +79,7 @@ const
                       ## at 0.6, at 1.46 at nought, and turns free at this.
   THROUGH* = 0.01  ## Overlap this deep, in metres, is arm through body: twice
                       ## engine's slop, where contact holding is never seen.
-  GRIP = 30.0  ## Hertz joined hands hold at: half engine's default, and
+  TIE = 30.0  ## Hertz joined hands hold at: half engine's default, and
                       ## and softest thing in couple after shoulder girdle, so
                       ## hold forced past what arms can do gives at hands, in
                       ## life as here, and parting is what says which joint was
@@ -89,7 +89,7 @@ const
                       ## its five centimetres first, wrist carried nine past its
                       ## cone; at this, nothing.  Held as stiffly as joints,
                       ## joints tore.
-  HOLD = 0.25 * HERTZ * float(SUBSTEPS)  ## Hertz every joint but grip holds at: engine's
+  HOLD = 0.25 * HERTZ * float(SUBSTEPS)  ## Hertz every joint but tie holds at: engine's
                       ## own cap, quarter of its substep rate, and above contact's,
                       ## so what gives first is contact and not joint.  At its
                       ## default of sixty, arm pressing own chest carried chest
@@ -164,8 +164,8 @@ type
     rest_tip: seq[array[2, float]]  ## Where each joined hand settled at rest, per
                                   ## connection and end, from which it rises.
     who: array[Body, Figure]
-    grip: seq[engine.JointId]
-    depth*: array[4, float]  ## How far past each wrist its grip sits, lead's left first.
+    ties: seq[engine.JointId]
+    depth*: array[4, float]  ## How far past each wrist its join sits, lead's left first.
     is_steered*: bool  ## Joints sprung to plan; carry's lift and draw left off.
     shapes*: seq[Shape]  ## Every capsule above, kept as it was handed to engine.
       ## Recorded rather than worked out again, so anything drawing couple draws
@@ -652,15 +652,15 @@ proc armOf(couple: var Couple, who: Body, arm: Arm, group: cint): ArmRig =
   shape_definition.filter.category_bits = 0'u64
   shape_definition.filter.mask_bits = 0'u64
   discard engine.createCapsule(result.collar, addr shape_definition, addr bone)
-  var grip_definition = engine.defaultBody()
-  grip_definition.kind = engine.BODY_DYNAMIC
-  grip_definition.position = asPlace(top)
-  grip_definition.rotation = trunk_turn
-  grip_definition.linear_damping = cfloat(DAMPING)
-  grip_definition.angular_damping = cfloat(DAMPING)
-  grip_definition.gravity_scale = 0.0
-  grip_definition.should_sleep = false
-  result.girdle = engine.createBody(couple.world, addr grip_definition)
+  var girdle_definition = engine.defaultBody()
+  girdle_definition.kind = engine.BODY_DYNAMIC
+  girdle_definition.position = asPlace(top)
+  girdle_definition.rotation = trunk_turn
+  girdle_definition.linear_damping = cfloat(DAMPING)
+  girdle_definition.angular_damping = cfloat(DAMPING)
+  girdle_definition.gravity_scale = 0.0
+  girdle_definition.should_sleep = false
+  result.girdle = engine.createBody(couple.world, addr girdle_definition)
   capsule(
     couple,
     result.girdle,
@@ -781,8 +781,8 @@ proc armOf(couple: var Couple, who: Body, arm: Arm, group: cint): ArmRig =
   cuff.base.constraint_hertz = cfloat(HOLD)
   result.wrist = engine.createBall(couple.world, addr cuff)
 
-func gripFrame(arm: Arm, depth: float, is_first: bool): engine.Frame =
-  ## Grip's frame on one hand, `depth` past wrist: z out of palm, x along fingers.
+func tieFrame(arm: Arm, depth: float, is_first: bool): engine.Frame =
+  ## Tie's frame on one hand, `depth` past wrist: z out of palm, x along fingers.
   ##   Palm faces in toward body at rest, which is link's negative x for right arm and its x
   ##     for left.  Second hand's frame is turned so two frames are one held palm to palm,
   ##     fingers opposed, which is where grip's cone and twist count from (`gripFreedom`).
@@ -800,7 +800,7 @@ func gripFrame(arm: Arm, depth: float, is_first: bool): engine.Frame =
 
 proc curl(couple: var Couple, who: Body, arm: Arm) =
   ## Reshape one held hand to reach as far as its grip lets it (`handLong`): fingers past
-  ## grip curl round partner's hand.  Left alone within two millimetres, since engine
+  ## join curl round partner's hand.  Left alone within two millimetres, since engine
   ## rebuilds every shape it reshapes.
   let long = handLong(couple.rig, couple.depth[2*ord(who)+ord(arm)])
   for shape in couple.shapes.mitems:
@@ -810,9 +810,9 @@ proc curl(couple: var Couple, who: Body, arm: Arm) =
     var capsule = engine.Capsule(center1: shape.a, center2: shape.z, radius: cfloat(shape.radius))
     engine.reshape(shape.id, addr capsule)
 
-proc holdGrip(couple: var Couple, i: int) =
-  ## Set connection `i` to grip at its hands' depths, with freedom that depth gives.
-  ##   Carried, connection nobody planned grips at fingertips, always (Architect,
+proc setTie(couple: var Couple, i: int) =
+  ## Set connection `i`'s tie at its hands' depths, with freedom their grip gives.
+  ##   Carried, connection nobody planned holds at fingertips, always (Architect,
   ##     2026-10-04), and hooked fingers turn as they will: no limit is set.  Steered, plan
   ##     has kept freedom, and engine holds it.  Engine's cone stops at quarter turn, so
   ##     wider cone is held by plan alone.
@@ -821,16 +821,16 @@ proc holdGrip(couple: var Couple, i: int) =
     depth_a = couple.depth[2*ord(link.ends[0].body)+ord(link.ends[0].arm)]
     depth_b = couple.depth[2*ord(link.ends[1].body)+ord(link.ends[1].arm)]
     (cone, twist) = gripFreedom(couple.rig, max(depth_a, depth_b))
-    grip = couple.grip[i]
+    tie = couple.ties[i]
   for hand in link.ends: couple.curl(hand.body, hand.arm)
-  engine.setFrameA(grip, gripFrame(link.ends[0].arm, depth_a, true))
-  engine.setFrameB(grip, gripFrame(link.ends[1].arm, depth_b, false))
+  engine.setFrameA(tie, tieFrame(link.ends[0].arm, depth_a, true))
+  engine.setFrameB(tie, tieFrame(link.ends[1].arm, depth_b, false))
   let is_cone = couple.is_steered and cone <= PI / 2.0
-  engine.limitCone(grip, is_cone)
-  if is_cone: engine.coneBall(grip, cfloat(cone))
+  engine.limitCone(tie, is_cone)
+  if is_cone: engine.coneBall(tie, cfloat(cone))
   let is_twist = couple.is_steered and twist < PI - 1e-6
-  engine.limitTwist(grip, is_twist)
-  if is_twist: engine.twistBall(grip, cfloat(-twist), cfloat(twist))
+  engine.limitTwist(tie, is_twist)
+  if is_twist: engine.twistBall(tie, cfloat(-twist), cfloat(twist))
 
 proc build*(
   rig: Rig,
@@ -877,14 +877,14 @@ proc build*(
       result.depth[2*ord(who)+ord(arm)] =
         (if result.isHeld(who, arm): gripAtTips(rig) else: rig.hand)
   for link in links:
-    var grip = engine.defaultBall()
-    grip.base.body_id_a = result.who[link.ends[0].body].arm[link.ends[0].arm].link[Limb.Palm]
-    grip.base.body_id_b = result.who[link.ends[1].body].arm[link.ends[1].arm].link[Limb.Palm]
-    grip.base.local_frame_a = gripFrame(link.ends[0].arm, gripAtPalm(rig), true)
-    grip.base.local_frame_b = gripFrame(link.ends[1].arm, gripAtPalm(rig), false)
-    grip.base.constraint_hertz = cfloat(GRIP)
-    result.grip.add engine.createBall(result.world, addr grip)
-  for i in 0..<links.len: holdGrip(result, i)
+    var tie = engine.defaultBall()
+    tie.base.body_id_a = result.who[link.ends[0].body].arm[link.ends[0].arm].link[Limb.Palm]
+    tie.base.body_id_b = result.who[link.ends[1].body].arm[link.ends[1].arm].link[Limb.Palm]
+    tie.base.local_frame_a = tieFrame(link.ends[0].arm, gripAtPalm(rig), true)
+    tie.base.local_frame_b = tieFrame(link.ends[1].arm, gripAtPalm(rig), false)
+    tie.base.constraint_hertz = cfloat(TIE)
+    result.ties.add engine.createBall(result.world, addr tie)
+  for i in 0..<links.len: setTie(result, i)
 
 proc partedAt*(couple: Couple, who: Body, arm: Arm): array[3, float] =
   ## How far shoulder, elbow and wrist of one arm have each been pulled apart,
@@ -931,7 +931,7 @@ const
     ## and draw are springs toward where hands are meant to be, and spring
     ## wanting more than this is force dancer does not have: uncapped, hand
     ## twenty centimetres under its rise pulled with eighty newtons, through
-    ## grip, on partner's shoulder, and every girdle sat at its rope's end
+    ## joined hands, on partner's shoulder, and every girdle sat at its rope's end
     ## before quarter turn.  Assumed.
   DRAW = [40.0, 40.0, 10.0]  ## Per band, newtons per metre hands are drawn toward
     ## where couple mean to carry them.  Weighted as old solver's `CENTRING` was,
@@ -1046,7 +1046,7 @@ func carriedOf(couple: Couple, who: Body, arm: Arm): Vector =
     ),
   )
 
-func gripOf(couple: Couple, who: Body, arm: Arm): Vector =
+func joinOf(couple: Couple, who: Body, arm: Arm): Vector =
   ## Grip: where hand holds, as deep as it holds.
   asWorld(
     engine.pointOf(
@@ -1091,7 +1091,7 @@ proc carry(couple: Couple) =
   ##     hand alone.  Hand alone levers wrist, which then sits at its cone while
   ##     shoulder and elbow do nothing -- dancer raising joined hands raises arm.
   ##   Hands are drawn toward point between two bodies as well as to their band.
-  ##     Without it grip floats off sideways and arms trail away behind, which
+  ##     Without it joined hands float off sideways and arms trail away behind, which
   ##     reads as shoulder giving out when it is only hands left unheld.
   let
     band = couple.bandNow
@@ -1314,12 +1314,12 @@ proc easeOff(couple: Couple) =
         wrist_point = asWorld(
           engine.pointOf(arm_rig.link[Limb.Fore], engine.initVector(0, 0, cfloat(couple.rig.fore))),
         )
-        grip_point = asWorld(
+        join_point = asWorld(
           engine.pointOf(arm_rig.link[Limb.Palm], engine.initVector(0, 0, cfloat(couple.rig.hand))),
         )
         upper_direction = unit(elbow_point - shoulder_point)
         fore_direction = unit(wrist_point - elbow_point)
-        hand_direction = unit(grip_point - wrist_point)
+        hand_direction = unit(join_point - wrist_point)
       # Twist, about arm's own line.  Rig states right arm's ends; left is same
       # joint mirrored, ends and eases swapped, as `read.tightest` has them.
       let
@@ -1416,7 +1416,8 @@ const MATRIX_REST {.used.}: Matrix =  # Used in `plan.nim`.
   ## Upper arm's frame at rest in body's terms, columns right, back, down (`restFrame`).
 
 const
-  GRIPS* = 40  ## Where plan holds each arm's grip depth, lead's left first: after waists and arms.
+  DEPTHS* = 40
+    ## Where plan holds each arm's depth of grip, lead's left first: after waists and arms.
   WRIST_STEER* = 3.0
   ## Wrist spring over every other joint's: palm is lightest link, and spring in hertz
   ## holds it by that, so hand at others' rate trails plan.
@@ -1451,9 +1452,9 @@ proc steer*(couple: var Couple, plan: openArray[float], hertz: float) =
       )
       engine.aimBall(arm_rig.wrist, wrist_turn)
       engine.stiffenBall(arm_rig.wrist, cfloat(hertz * WRIST_STEER))
-  if plan.len > GRIPS + 3:
-    for i in 0..3: couple.depth[i] = plan[GRIPS+i]
-  for i in 0..<couple.links.len: holdGrip(couple, i)
+  if plan.len > DEPTHS + 3:
+    for i in 0..3: couple.depth[i] = plan[DEPTHS+i]
+  for i in 0..<couple.links.len: setTie(couple, i)
 
 func turnVector(r: Matrix): array[3, float] =
   ## Turn's axis scaled by its angle: inverse of `turnAbout`.
@@ -1526,7 +1527,7 @@ proc poseVector*(couple: Couple): array[44, float] =
       for k in 0..2: result[base+2+k] = shoulder_vector[k]
       result[base+5] = float(engine.angleOf(arm_rig.elbow))
       for k in 0..2: result[base+6+k] = wrist_vector[k]
-  for i in 0..3: result[GRIPS+i] = couple.depth[i]
+  for i in 0..3: result[DEPTHS+i] = couple.depth[i]
 
 type ArmPlacing* = object  ## Where one arm's five bodies stand, in world.
   root*, shoulder*, elbow*, wrist*: Vector
@@ -1560,7 +1561,7 @@ proc placeBodies*(couple: var Couple, chests: array[Body, Stance], arms: array[4
       engine.place(arm_rig.link[Limb.Fore], asPlace(placing.elbow), turnOf(placing.fore))
       engine.place(arm_rig.link[Limb.Palm], asPlace(placing.wrist), turnOf(placing.palm))
       couple.depth[2*ord(who)+ord(arm)] = placing.depth
-  for i in 0..<couple.links.len: holdGrip(couple, i)
+  for i in 0..<couple.links.len: setTie(couple, i)
 
 proc standAt*(
   couple: var Couple,
@@ -1678,7 +1679,7 @@ proc armPoseOf*(couple: Couple, who: Body, arm: Arm): ArmPose =
     shoulder: asWorld(engine.pointOf(arm_rig.link[Limb.Upper], engine.initVector(0, 0, 0))),
     elbow: asWorld(engine.pointOf(arm_rig.link[Limb.Fore], engine.initVector(0, 0, 0))),
     wrist: asWorld(engine.pointOf(arm_rig.link[Limb.Palm], engine.initVector(0, 0, 0))),
-    grip: gripOf(couple, who, arm),
+    join: joinOf(couple, who, arm),
   )
 
 proc jointsOf*(
@@ -1707,7 +1708,7 @@ proc poseOf*(couple: Couple, i: int): Pose =
     result.twist[k] = float(engine.twistAngleOf(arm_rig.shoulder))
     result.bend[k] = float(engine.angleOf(arm_rig.elbow))
     result.wrist[k] = float(engine.coneAngleOf(arm_rig.wrist))
-  result.apart = float(engine.partedBy(couple.grip[i]))
+  result.apart = float(engine.partedBy(couple.ties[i]))
 
 func twistEnds*(rig: Rig, arm: Arm): tuple[lower, upper: float] =
   ## Humeral rotation's two ends for one arm.  Rig states them for right arm,

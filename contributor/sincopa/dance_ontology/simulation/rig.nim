@@ -230,19 +230,19 @@ func handThick*(rig: Rig): float = (rig.hand_round - 2.0 * rig.hand_broad) / (PI
   ##     and one circle of thickness, so tape's 0.20 and 0.083 give 0.030.
 
 func gripAtPalm*(rig: Rig): float = rig.palm / 2.0
-  ## How far past wrist grip sits held palm to palm: full handshake holds partner's hand
+  ## How far past wrist hands meet held palm to palm: full handshake holds partner's hand
   ## across middle of palm.
 
 func gripAtTips*(rig: Rig): float = rig.hand - handThick(rig) / 2.0
-  ## How far past wrist grip sits held by fingertips: hooked fingers hold at hand's end.
+  ## How far past wrist hands meet held by fingertips: hooked fingers hold at hand's end.
 
 func handLong*(rig: Rig, depth: float): float = min(rig.hand, depth + handThick(rig))
-  ## How far past wrist hand that holds `depth` deep reaches: fingers past grip curl round
+  ## How far past wrist hand that holds `depth` deep reaches: fingers past join curl round
   ## partner's hand, about one thickness deep.  Open hand, held at fingertips or not at all,
   ## is whole hand.
 
 func span*(rig: Rig): float = rig.upper + rig.fore + gripAtTips(rig)
-  ## Shoulder to grip with everything straight and hands held by fingertips: as far as
+  ## Shoulder to join with everything straight and hands held by fingertips: as far as
   ## hand goes.
 
 const
@@ -252,7 +252,7 @@ const
     ## How far two hands held palm to palm turn off fingers opposed.  Assumed.
 
 func gripFreedom*(rig: Rig, depth: float): tuple[cone, twist: float] =
-  ## How far two joined hands turn against each other, with grip this far past wrist.
+  ## How far two joined hands turn against each other, when they meet this far past wrist.
   ##   Palm to palm, hands lock; by fingertips, hooked fingers turn freely.  So straight
   ##     connection holds anywhere from fingertips to full handshake, and connection that
   ##     curls holds at fingertips alone (Architect, issue 375).  Between, freedom grows in

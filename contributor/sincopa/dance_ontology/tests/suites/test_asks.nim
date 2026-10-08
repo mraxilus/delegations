@@ -48,13 +48,13 @@ func apartOf(a, b: float): float =
 
 func armOf(still: JsonNode, who: Body, arm: Arm, link: int): ArmPose =
   ## One arm of connection `link` as recording keeps it, from engine's own capsules: each
-  ##   limb's capsule runs its radius in from both joints.  Grip is where connection holds,
-  ##   as deep as it holds (`seen.grips`).
+  ##   limb's capsule runs its radius in from both joints.  Join is where connection holds,
+  ##   as deep as it holds (`seen.joins`).
   let
     tags = still["tag"].getElems
     points = still["points"][^1].getElems
     radii = still["radii"].getElems
-    grips = still["grips"][^1].getElems
+    joins = still["joins"][^1].getElems
   var capsules: array[1..2, tuple[a, z: Vector, radius: float]]
   for i, tag in tags:
     let part = tag[2].getInt
@@ -70,8 +70,8 @@ func armOf(still: JsonNode, who: Body, arm: Arm, link: int): ArmPose =
   result.shoulder = upper.a - upward * upper.radius
   result.elbow = upper.z + upward * upper.radius
   result.wrist = fore.z + forward * fore.radius
-  result.grip = (grips[3*link].getFloat, grips[3*link+1].getFloat,
-                 grips[3*link+2].getFloat)
+  result.join = (joins[3*link].getFloat, joins[3*link+1].getFloat,
+                 joins[3*link+2].getFloat)
 
 func armsOf(still: JsonNode, links: seq[Link]): Arms =
   ## Every connection's two arms, lead's first, as recording keeps them.

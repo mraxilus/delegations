@@ -241,7 +241,7 @@ func reflected(capsule: Capsule): Capsule =
 func reflected(pose: ArmPose): ArmPose =
   ## Arm's four points seen in mirror: arm of other side.
   ArmPose(shoulder: mirrored(pose.shoulder), elbow: mirrored(pose.elbow),
-          wrist: mirrored(pose.wrist), grip: mirrored(pose.grip))
+          wrist: mirrored(pose.wrist), join: mirrored(pose.join))
 
 func reflected*(stance: Stance, rest: float): Stance =
   ## Stance seen in mirror: facing reflected about way body faces at rest, so turn wound

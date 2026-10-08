@@ -62,13 +62,13 @@ func lyingOn*(
     pose = arms[i][end_index]
     stance = stance[who]
     axes = axesOf(stance)
-    grip = toBody(axes, pose.grip)
+    join = toBody(axes, pose.join)
     elbow = toBody(axes, pose.elbow)
     own_side = side(hand.arm)
   var aspect: Aspect
-  if grip.y < -0.01:
+  if join.y < -0.01:
     aspect = Aspect.Aft
-  elif grip.x * own_side < -0.01 and grip.y < halfDepth(rig, Part.Torso) + 4.0 * rig.limb:
+  elif join.x * own_side < -0.01 and join.y < halfDepth(rig, Part.Torso) + 4.0 * rig.limb:
     aspect = Aspect.Fore
   else:
     return none(Lying)
@@ -76,18 +76,18 @@ func lyingOn*(
     Lying(
       aspect: aspect,
       band: band,
-      is_pressing: isPressingBody(rig, stance, (pose.elbow, pose.wrist, pose.grip)),
+      is_pressing: isPressingBody(rig, stance, (pose.elbow, pose.wrist, pose.join)),
       is_elbow_fore: elbow.y > 0.0,
     ),
   )
 
 
 func polyline*(arms: Arms, i: int): array[7, Vector] =
-  ## One connection as seven points: shoulder to shoulder through grip.
+  ## One connection as seven points: shoulder to shoulder through join.
   let
     arm_a = arms[i][0]
     arm_b = arms[i][1]
-  [arm_a.shoulder, arm_a.elbow, arm_a.wrist, arm_a.grip, arm_b.wrist, arm_b.elbow, arm_b.shoulder]
+  [arm_a.shoulder, arm_a.elbow, arm_a.wrist, arm_a.join, arm_b.wrist, arm_b.elbow, arm_b.shoulder]
 
 
 const ON_LINE = 1e-9

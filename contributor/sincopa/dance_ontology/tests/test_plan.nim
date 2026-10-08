@@ -49,15 +49,15 @@ func randomPlan(rig: Rig, generator: var Rand): Plan =
     for k in 2..4: result[base+k] = generator.rand(-1.5..1.5)
     result[base+5] = generator.rand(rig.range[Dof.Bend].lower..rig.range[Dof.Bend].upper)
     for k in 6..8: result[base+k] = generator.rand(-0.8..0.8)
-  for i in 0..3: result[GRIPS+i] = generator.rand(gripAtPalm(rig)..gripAtTips(rig))
+  for i in 0..3: result[DEPTHS+i] = generator.rand(gripAtPalm(rig)..gripAtTips(rig))
 
 func pointsOf(placed: ArmPlaced): array[4, Vector] =
-  ## Read four points of arm planner placed, shoulder to grip.
-  [placed.shoulder, placed.elbow, placed.wrist, placed.grip]
+  ## Read four points of arm planner placed, shoulder to join.
+  [placed.shoulder, placed.elbow, placed.wrist, placed.join]
 
 func pointsOf(pose: ArmPose): array[4, Vector] =
-  ## Read four points of posed arm, shoulder to grip.
-  [pose.shoulder, pose.elbow, pose.wrist, pose.grip]
+  ## Read four points of posed arm, shoulder to join.
+  [pose.shoulder, pose.elbow, pose.wrist, pose.join]
 
 func reflected(point: Vector): Vector = (-point.x, point.y, point.z)
   ## Point seen in mirror across couple's line.
@@ -75,8 +75,8 @@ proc plainCost(weighing: Weighing, plan: Plan): float =
   if problem.style.slack > 0.0: result += problem.style.slack * cramped(HUMAN, problem, placed)
   if problem.style.gather > 0.0 and problem.links.len == 2:
     let (one, two) = (problem.links[0].ends[0], problem.links[1].ends[0])
-    result += problem.style.gather * distance(placed.arms[armIndex(one.body, one.arm)].grip,
-                                              placed.arms[armIndex(two.body, two.arm)].grip)^2
+    result += problem.style.gather * distance(placed.arms[armIndex(one.body, one.arm)].join,
+                                              placed.arms[armIndex(two.body, two.arm)].join)^2
 
 
 
@@ -240,8 +240,8 @@ suite "Internal: Planned turn":
       for link in HAND_TO_HAND:
         let (one, two) = (link.ends[0], link.ends[1])
         check distance(
-          placed.arms[armIndex(one.body, one.arm)].grip,
-          placed.arms[armIndex(two.body, two.arm)].grip,
+          placed.arms[armIndex(one.body, one.arm)].join,
+          placed.arms[armIndex(two.body, two.arm)].join,
         ) < JOINED
       for (i, j) in pairsOf(path.problem):
         let

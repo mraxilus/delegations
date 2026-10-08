@@ -15,7 +15,7 @@ suite "Internal: Capsule on canvas":
     ## Sphere is capsule whose two ends are one point, and palm is one.  Stroke
     ## of no length with round caps is drawn as disc by one browser and as
     ## nothing by another: on Architect's phone every hand vanished, forearms
-    ## ending 118 mm short of grip they were joined at, measured 2026-09-18 on
+    ## ending 118 mm short of where they were joined, measured 2026-09-18 on
     ## A07.  Disc is drawn by every browser.
     let palm: Spot = (0.039, 0.211, 0.995)
     check drawnAs(palm, palm) == Drawn.Disc

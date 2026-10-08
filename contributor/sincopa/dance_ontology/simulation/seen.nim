@@ -43,7 +43,7 @@ type
     faces*: array[Body, Faces]
     bars*: seq[Bar]
     arms*: seq[Ache]
-    grips*: seq[Vector]  ## Where each pair of joined hands has got to.
+    joins*: seq[Vector]  ## Where each pair of joined hands has got to.
     apart*: seq[float]  ## And how far engine has pulled each pair apart.
 
   Shown* = object  ## Whole sweep, and what came of it.
@@ -100,7 +100,7 @@ proc stillOf(couple: Couple, at: float): Still =
       result.arms.add couple.acheOf(who, arm)
   for i in 0..<couple.links.len:
     let pose = couple.poseOf(i)
-    result.grips.add (pose.arms[0].grip + pose.arms[1].grip) * 0.5
+    result.joins.add (pose.arms[0].join + pose.arms[1].join) * 0.5
     result.apart.add pose.apart
 
 proc stillAsked(

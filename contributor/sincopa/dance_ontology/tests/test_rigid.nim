@@ -170,7 +170,7 @@ suite "Internal: Two dancers in rigid body engine":
       for k in 0..1:
         let
           arm = pose.arms[k]
-          drawn = angleBetween(unit(arm.wrist - arm.elbow), unit(arm.grip - arm.wrist))
+          drawn = angleBetween(unit(arm.wrist - arm.elbow), unit(arm.join - arm.wrist))
         check abs(pose.wrist[k] - drawn) < 0.01
       couple.free()
 
@@ -672,7 +672,7 @@ func leapIn(walk: Walk, links: seq[Link]): tuple[most, at: float] =
           (before.shoulder, after.shoulder),
           (before.elbow, after.elbow),
           (before.wrist, after.wrist),
-          (before.grip, after.grip),
+          (before.join, after.join),
         ]:
           if distance(joint_before, joint_after) > result.most:
             result = (distance(joint_before, joint_after), walk.moments[j].at)
@@ -1020,8 +1020,8 @@ suite "Internal: Every still stands at ease":
     ## of other dancer's arms.  Before this, hanging arms were twisted forty degrees and
     ## swung forward twenty by fixed elbow moment, forearms pointing at partner,
     ## and free couple at rest stood with arms crossed between them.
-    ##   Hand is read where it is carried (`carriedOf`): free hand is open, so its grip is
-    ##     fingertip.
+    ##   Hand is read where it is carried (`carriedOf`): free hand is open, and reaches
+    ##     to its fingertips.
     let (is_holding, couple) = stood(HUMAN, Band.Crown, FREE, 0.0, false, Body.Two, 0.36)
     check is_holding
     var nearest = Inf

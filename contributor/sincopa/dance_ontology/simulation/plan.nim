@@ -18,14 +18,14 @@ import std/[bitops, math]
 
 import ./[body, hold, rig, vector]
 from ./rigid {.all.} import ArmPlacing, ELBOW_END, ELBOWS_APART, faceCapsule, GIRDLE_RADIUS,
-  GRIPS, handCapsules, Matrix, MATRIX_REST, ON_UPPER, times, transposed, trunkCapsules, turnAbout
+  DEPTHS, handCapsules, Matrix, MATRIX_REST, ON_UPPER, times, transposed, trunkCapsules, turnAbout
 
 
 const
   PER_ARM* = 9  ## Freedoms of one arm: two of collarbone, three of shoulder, elbow, three of wrist.
   SIZE* = 4 + 4 * PER_ARM + 4
     ## Apart, sideways (held nought), two waists, four arms, and how deep each arm's hand
-    ## holds (`rigid.GRIPS`).
+    ## holds (`rigid.DEPTHS`).
   PER_ARM_CAPSULES = 6  ## Capsules of one arm: girdle, upper, fore and three of hand.
   ARM_CAPSULES = 4 * PER_ARM_CAPSULES  ## Capsules of four arms, after trunks.
 
@@ -112,7 +112,7 @@ func twistOf(turn: Matrix): float = arctan2(turn[1][0] - turn[0][1], turn[0][0] 
 
 type
   ArmPlaced* = object  ## One arm placed in world, and what its joints read.
-    shoulder*, elbow*, wrist*, grip*: Vector
+    shoulder*, elbow*, wrist*, join*: Vector
     carried*: Vector  ## Where hand is carried, which band is asked of (`limb.carriedOf`).
     palm*, fingers*: Vector  ## Unit out of palm, and unit along fingers.
     depth*: float  ## How far past wrist hand holds.
@@ -164,8 +164,8 @@ func placeArm(
   ##     placed from its girdle (nought), upper arm (one), forearm (two) or hand (three) on,
   ##     or from none (four) where body alone moved.  Each is reckoned by same steps from
   ##     same freedoms, so arm is same to last bit; every point is carried into world again.
-  ##   Hand holds as deep as plan's grip freedom says (`GRIPS`), and its capsules reach as
-  ##     far as that grip lets (`rig.handLong`).
+  ##   Hand holds as deep as plan's depth says (`DEPTHS`), and its capsules reach as far as
+  ##     that depth lets (`rig.handLong`).
   let
     neck = halfBreadth(rig, Part.Neck)
     base = 4 + PER_ARM * i
@@ -201,15 +201,15 @@ func placeArm(
   let
     (shoulder, elbow, wrist) = (result.joints[0], result.joints[1], result.joints[2])
     (upper, forearm, hand) = (result.turns[1], result.turns[2], result.turns[3])
-    depth = plan[GRIPS+i]
-    grip = wrist + column(hand, 2) * depth
+    depth = plan[DEPTHS+i]
+    join = wrist + column(hand, 2) * depth
     direction = column(upper, 2)
   result.shoulder = frame.world(shoulder)
   result.elbow = frame.world(elbow)
   result.wrist = frame.world(wrist)
-  result.grip = frame.world(grip)
+  result.join = frame.world(join)
   result.carried = frame.world(wrist + column(hand, 2) * rig.carry)
-  # Palm faces in toward body at rest: link's negative x for right arm (`rigid.gripFrame`).
+  # Palm faces in toward body at rest: link's negative x for right arm (`rigid.tieFrame`).
   result.palm = frame.toward(column(hand, 0) * -handedness)
   result.fingers = frame.toward(column(hand, 2))
   result.depth = depth
@@ -427,8 +427,8 @@ func violationOf(
   ## pairs nearer than clearance, joints past margin, then each arm capsule's leap.
   for link in problem.links:
     let
-      a = arms[armIndex(link.ends[0].body, link.ends[0].arm)].grip
-      b = arms[armIndex(link.ends[1].body, link.ends[1].arm)].grip
+      a = arms[armIndex(link.ends[0].body, link.ends[0].arm)].join
+      b = arms[armIndex(link.ends[1].body, link.ends[1].arm)].join
       apart = distance(a, b)
     result += apart * apart
     for hand in link.ends:
@@ -503,10 +503,10 @@ func boundsOf(rig: Rig, margin: float, links: seq[Link]): Bounds =
     result[base+1] = (up.lower, up.upper)
     for k in [2, 3, 4, 6, 7, 8]: result[base+k] = (-7.0, 7.0)
     result[base+5] = (rig.range[Dof.Bend].lower, rig.range[Dof.Bend].upper - margin)
-    result[GRIPS+i] = (rig.hand, rig.hand)
+    result[DEPTHS+i] = (rig.hand, rig.hand)
   for link in links:
     for hand in link.ends:
-      result[GRIPS+armIndex(hand.body, hand.arm)] = (gripAtPalm(rig), gripAtTips(rig))
+      result[DEPTHS+armIndex(hand.body, hand.arm)] = (gripAtPalm(rig), gripAtTips(rig))
 
 func clamped(plan: Plan, bounds: Bounds): Plan =
   ## Hold every freedom of plan inside its bounds.
@@ -608,18 +608,18 @@ func total(r: Reckoning, rig: Rig, weighing: Weighing, plan: Plan): float =
   if problem.style.gather > 0.0 and problem.links.len == 2:
     let
       (one, two) = (problem.links[0].ends[0], problem.links[1].ends[0])
-      first = r.placed.arms[armIndex(one.body, one.arm)].grip
-      second = r.placed.arms[armIndex(two.body, two.arm)].grip
+      first = r.placed.arms[armIndex(one.body, one.arm)].join
+      second = r.placed.arms[armIndex(two.body, two.arm)].join
     result += problem.style.gather * distance(first, second)^2
 
 func firstMoved(freedom: int): int =
   ## First link of its arm that arm freedom moves: collarbone moves girdle on, shoulder
-  ## upper arm on, elbow forearm on, wrist and grip hand alone.
-  if freedom >= GRIPS: 3 else: [0, 0, 1, 1, 1, 2, 3, 3, 3][(freedom-4) mod PER_ARM]
+  ## upper arm on, elbow forearm on, wrist and depth hand alone.
+  if freedom >= DEPTHS: 3 else: [0, 0, 1, 1, 1, 2, 3, 3, 3][(freedom-4) mod PER_ARM]
 
 func armMoved(freedom: int): int =
-  ## Arm that arm freedom belongs to: its own nine, or its hand's grip (`GRIPS`).
-  if freedom >= GRIPS: freedom - GRIPS else: (freedom - 4) div PER_ARM
+  ## Arm that arm freedom belongs to: its own nine, or its hand's depth (`DEPTHS`).
+  if freedom >= DEPTHS: freedom - DEPTHS else: (freedom - 4) div PER_ARM
 
 type Moving = object
   ## Pairs each step moves, listed once for every step of one solve.
@@ -1042,7 +1042,7 @@ proc restOf*(rig: Rig, problem: var Problem, tries = 8): tuple[plan: Plan, broke
   for k in 0..<tries:
     var start = hanging(0.45 + 0.06 * float((k + problem.style.seed) mod tries))
     # Deterministic spread of starting arms, by golden ratio.
-    for j in 4..<GRIPS:
+    for j in 4..<DEPTHS:
       start[j] += 0.4 *
           (spread(float(j * (k + 1 + 17 * problem.style.seed)) * 0.6180339887) - 0.5) *
           float(min(k + problem.style.seed, 1))
@@ -1113,7 +1113,7 @@ proc planPath*(
         problem.upper = upper_at
         for walk in 0..<12:
           var start = result.plans[^1]
-          for j in 4..<GRIPS:
+          for j in 4..<DEPTHS:
             start[j] += 0.3 * (spread(float(j * (walk + 5) + 31 * failures +
                                             17 * problem.style.seed) * 0.6180339887) - 0.5) * 2.0
           let
@@ -1135,7 +1135,7 @@ proc planPath*(
     problem.upper = upper_at
     for nudge in 0..<4:
       var start = result.plans[^1]
-      for j in 4..<GRIPS:
+      for j in 4..<DEPTHS:
         start[j] += 0.1 * sqrt(float(failures)) *
             (spread(float(j * (nudge + 7 * failures)) * 0.7548776662) - 0.5) * 2.0
       let
@@ -1144,7 +1144,7 @@ proc planPath*(
       if nudged.broken < KEPT:
         result.winds.add at
         result.plans.add nudged.plan
-    for j in 4..<GRIPS:
+    for j in 4..<DEPTHS:
       bias[j] = 0.02 * float(failures) *
                 (spread(float(j * (3 + 11 * failures + 13 * problem.style.seed)) *
                         0.5698402910) - 0.5) * 2.0
@@ -1196,7 +1196,7 @@ func mirrored*(plan: Plan): Plan =
     result[to_base+6] = plan[from_base+6]
     result[to_base+7] = -plan[from_base+7]
     result[to_base+8] = -plan[from_base+8]
-    result[GRIPS+(i xor 1)] = plan[GRIPS+i]
+    result[DEPTHS+(i xor 1)] = plan[DEPTHS+i]
 
 func mirrored*(link: Link): Link =
   ## One connection seen in mirror: each hand on other arm.
@@ -1274,5 +1274,5 @@ func placings*(rig: Rig, plan: Plan, wind: float, is_away: bool, turner = Body.T
         upper: times(world, upper),
         fore: times(world, forearm),
         palm: times(world, hand),
-        depth: plan[GRIPS+i],
+        depth: plan[DEPTHS+i],
       )

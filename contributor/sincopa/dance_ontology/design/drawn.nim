@@ -7,7 +7,7 @@
 ##     law, since browsers do not agree on what stroke of no length is: disc
 ##     with round caps in one, nothing in another.  Palm is sphere, capsule of
 ##     no length, and on Architect's phone every hand vanished, forearm ending
-##     118 mm short of grip it was joined at.
+##     118 mm short of where it was joined.
 ##   Projection is orthographic on purpose.  Under it capsule's outline is
 ##     exactly stadium -- round capped line from one end to other, as wide as
 ##     twice its radius -- so line drawn with round cap *is* shape, not likeness

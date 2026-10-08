@@ -120,7 +120,7 @@ suite "Internal: One arm, forward and back":
     for _ in 0..<SAMPLES_ELBOW:
       let
         shoulder_point = shoulder(HUMAN, stance, LEFT)
-        grip = shoulder_point + (
+        join_point = shoulder_point + (
           random.rand(-0.5..0.5),
           random.rand(-0.5..0.5),
           random.rand(-0.5..0.3),
@@ -134,14 +134,14 @@ suite "Internal: One arm, forward and back":
         )
         depth = random.rand(gripAtPalm(HUMAN)..gripAtTips(HUMAN))
         chain = posed(
-          HUMAN, shoulder_point, grip, hand_direction, depth, random.rand(0.0 .. 2.0 * PI)
+          HUMAN, shoulder_point, join_point, hand_direction, depth, random.rand(0.0 .. 2.0 * PI)
         )
       if chain.stretch <= HUMAN.upper + HUMAN.fore and
           chain.stretch >= abs(HUMAN.upper - HUMAN.fore):
         inc reached
         check distance(chain.pose.shoulder, chain.pose.elbow) =~ HUMAN.upper
         check distance(chain.pose.elbow, chain.pose.wrist) =~ HUMAN.fore
-      check distance(chain.pose.wrist, chain.pose.grip) =~ depth
+      check distance(chain.pose.wrist, chain.pose.join) =~ depth
     check reached >= FLOOR_ELBOW
 
 
