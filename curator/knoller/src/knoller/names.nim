@@ -27,8 +27,12 @@
 ##   V.10: binding of entry block is entry block's rule (`entry.nim`, `checkBlockEntry`), so it
 ##     takes no finding here, its case unjudged. Global shares no word with type, compared
 ##     without case and underscores, as Nim does.
-##   V.12: parameter typed `typedesc` is parameter, so snake (Architect's ruling); one capital
-##     is for placeholder in brackets after routine or type name, and after `concept`.
+##   V.12: placeholder in brackets after routine or type name, or after `concept`, is one capital.
+##     Generic parameter, i.e. of type `typedesc` alone (`declared.nim`), stands for any type as
+##     generic does, so it takes placeholder's letter (Architect's ruling, #443). Snake passes
+##     beside it until `pga_benchmark` renames its `kind`, since check reddening project cannot
+##     merge (CURATOR.md, duty 3). No rename of case touches either form. `typedesc[I]` holds
+##     placeholder `I`, so its parameter stays snake.
 ##   V.4: boolean binding, field or parameter opens `is`, `as`, `should`, `found` or `has`,
 ##     with word after it. `func` returning `bool` is predicate and opens `is`. `proc`
 ##     returning `bool` reports success of action (V.3), so it is unread (Architect's ruling);
@@ -43,6 +47,8 @@
 ##   Cost: boolean is read only where declaration shows it: type `bool`, or value literal
 ##     `true` or `false`. Boolean from call or expression holds by reading.
 ##   Cost: `in` calls `contains` by spelling, so predicate of that name keeps host's name.
+##   Cost: generic parameter passes in two cases until `pga_benchmark` renames its `kind`, so one
+##     file may spell two generic parameters two ways; reading holds it.
 ##   Cost: Pascal name of capitals alone, e.g. `ANTI`, passes case of type; reading holds it.
 ##     Letter outside `std/unicode` case tables and mathematical block carries no case, so it
 ##     fits every casing.
@@ -95,6 +101,9 @@ const
     "is one capital letter",
   ]
     ## Predicate of each casing, as finding states it.
+  RULE_GENERIC = "Parameter of type `typedesc` alone is one capital letter or `snake_case`"
+    ## Case generic parameter takes, as finding states it: placeholder's letter (V.12), or snake
+    ##   until `pga_benchmark` renames its `kind` (#443).
 
 
 func spansWord(name: string): seq[(int, int)] =
@@ -190,20 +199,24 @@ func isCased*(name: string, casing: Casing): bool =
 
 
 func casingOf*(d: Declared): Casing =
-  ## Read casing declared name takes by its kind and reach (V.1, V.11, V.12).
+  ## Read casing declared name takes by its kind and reach (V.1, V.11, V.12); generic parameter
+  ##   takes placeholder's.
   case d.kind
   of KindName.Type, KindName.Member: Casing.Pascal
   of KindName.Routine: Casing.Camel
-  of KindName.Field, KindName.Parameter: Casing.Snake
+  of KindName.Field: Casing.Snake
+  of KindName.Parameter: (if d.is_generic: Casing.Letter else: Casing.Snake)
   of KindName.Placeholder: Casing.Letter
   of KindName.Binding: (if d.reach == Reach.Global: Casing.Screaming else: Casing.Snake)
 
 
 func isMiscased*(d: Declared): bool =
   ## Decide whether name breaks case of its kind, as `checkNames` reads it (V.1, V.11, V.12);
-  ##   binding of entry block and variable in source's notation carry no case to read.
+  ##   binding of entry block and variable in source's notation carry no case to read, and
+  ##   generic parameter passes as snake too (`RULE_GENERIC`).
   if d.kind == KindName.Binding and d.reach == Reach.Entry: return false
   if d.kind in KINDS_VARIABLE and d.name.isNotation: return false
+  if d.is_generic and d.name.isCased(Casing.Snake): return false
   not d.name.isCased(d.casingOf)
 
 
@@ -279,11 +292,12 @@ func checkNames*(path, source: string; exempt: openArray[string]): seq[Report] =
           elif casing == Casing.Letter: Rule.LetterPlaceholder
           else: Rule.CaseName
         subject = if d.kind == KindName.Binding: $d.reach else: $d.kind
+        stated = if d.is_generic: RULE_GENERIC else: subject & " " & RULES_CASE[casing]
       result.add initReport(
         path,
         d.line,
         rule,
-        subject & " " & RULES_CASE[casing] & "; got `" & d.name & "`.",
+        stated & "; got `" & d.name & "`.",
       )
     if d.kind == KindName.Binding and d.reach == Reach.Global and
         d.name.isCased(Casing.Screaming) and d.name.toLowerAscii.replace("_", "") in keys_type:
@@ -412,7 +426,8 @@ func renamesCase*(source: string, exempt: openArray[string]): seq[CaseRename] =
   ##   fix moves into `proc main` takes case of local, as it reads there.
   ##   Rename fix leaves to hand carries refusal: name foreign code reads, member `$` reads, name
   ##     line declares twice, or new name that reads otherwise than rule asks.
-  ##   Placeholder (V.12) has none: its letter is initial of what it ranges over, which is choice.
+  ##   Placeholder (V.12) has none, nor generic parameter, which takes its letter: letter is
+  ##     initial of what it ranges over, which is choice.
   let
     tokens = source.tokens
     partners = tokens.partners
