@@ -49,6 +49,7 @@ func randomPlan(rig: Rig, generator: var Rand): Plan =
     for k in 2..4: result[base+k] = generator.rand(-1.5..1.5)
     result[base+5] = generator.rand(rig.range[Dof.Bend].lower..rig.range[Dof.Bend].upper)
     for k in 6..8: result[base+k] = generator.rand(-0.8..0.8)
+  for i in 0..3: result[GRIPS+i] = generator.rand(gripAtPalm(rig)..gripAtTips(rig))
 
 func pointsOf(placed: ArmPlaced): array[4, Vector] =
   ## Read four points of arm planner placed, shoulder to grip.
@@ -93,6 +94,31 @@ suite "Internal: Planner and engine are one rig":
       check abs(near.gap - 0.2) < MIRRORED
       check abs(near.t - 0.5) < MIRRORED
       check abs(back.gap - 0.2) < MIRRORED
+
+
+  test "joined hands turn against each other only as far as their grip lets":
+    ## Palm to palm, grip locks; by fingertips, it turns freely (`rig.gripFreedom`).  So
+    ##   palms turned off facing break plan held at handshake past its cone, and never held by
+    ##   fingertips.  Fingers turned off opposed, likewise past its twist.
+    for k in 0..SAMPLES:
+      let
+        angle = PI * float(k) / float(SAMPLES)
+        (cone, twist) = gripFreedom(HUMAN, gripAtPalm(HUMAN))
+      var a, b: ArmPlaced
+      a.palm = (1.0, 0.0, 0.0)
+      a.fingers = (0.0, 0.0, 1.0)
+      b.fingers = (0.0, 0.0, -1.0)
+      b.palm = (-cos(angle), sin(angle), 0.0)
+      for (depth, is_locked) in [(gripAtPalm(HUMAN), true), (gripAtTips(HUMAN), false)]:
+        a.depth = depth
+        b.depth = depth
+        check (gripBroken(HUMAN, a, b, 0.0) > 0.0) == (is_locked and angle > cone + 1e-9)
+      b.palm = (-1.0, 0.0, 0.0)
+      b.fingers = (0.0, sin(angle), -cos(angle))
+      for (depth, is_locked) in [(gripAtPalm(HUMAN), true), (gripAtTips(HUMAN), false)]:
+        a.depth = depth
+        b.depth = depth
+        check (gripBroken(HUMAN, a, b, 0.0) > 0.0) == (is_locked and angle > twist + 1e-9)
 
 
   test "engine stands every joint where plan places it, and reads plan back":
@@ -271,7 +297,7 @@ suite "Internal: Planner's cost":
           problem.style = style
           (problem.lower, problem.upper) = bandAt(HUMAN, 0.3, 1.0, is_away, style.room)
           let
-            bounds = boundsOf(HUMAN, style.margin)
+            bounds = boundsOf(HUMAN, style.margin, links)
             moving = movedPairs(HUMAN, problem)
           for sample in 0 ..< SAMPLES div 8:
             let wind = generator.rand(-1.0..1.0)
@@ -295,7 +321,7 @@ suite "Internal: Planner's cost":
               var stepped_plan = plan
               stepped_plan[k] += 1e-7
               check costs[k] == plainCost(weighing, stepped_plan)
-            check here.total(weighing, plan) == plainCost(weighing, plan)
+            check here.total(HUMAN, weighing, plan) == plainCost(weighing, plan)
             # Long step of each freedom carries pairs across every threshold, and back.
             for k in 0..<SIZE:
               if bounds[k][0] == bounds[k][1]: continue
@@ -304,11 +330,11 @@ suite "Internal: Planner's cost":
               if k < 4:
                 let moved = moving.bodies[bodyMoving(k)]
                 here.stepBody(held_body, HUMAN, problem, far_plan, wind, k, moved, weighing.before)
-                check here.total(weighing, far_plan) == plainCost(weighing, far_plan)
+                check here.total(HUMAN, weighing, far_plan) == plainCost(weighing, far_plan)
                 here.restoreBody(held_body, k, moved)
               else:
-                let moved = moving.arms[(k-4) div PER_ARM][firstMoved(k)]
+                let moved = moving.arms[armMoved(k)][firstMoved(k)]
                 here.stepArm(held, HUMAN, problem, far_plan, wind, k, moved, weighing.before)
-                check here.total(weighing, far_plan) == plainCost(weighing, far_plan)
+                check here.total(HUMAN, weighing, far_plan) == plainCost(weighing, far_plan)
                 here.restore(held, k, moved)
-              check here.total(weighing, plan) == plainCost(weighing, plan)
+              check here.total(HUMAN, weighing, plan) == plainCost(weighing, plan)

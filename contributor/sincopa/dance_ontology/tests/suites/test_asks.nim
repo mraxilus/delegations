@@ -46,35 +46,38 @@ func apartOf(a, b: float): float =
   let d = floorMod(a - b, 360.0)
   min(d, 360.0 - d)
 
-func armOf(still: JsonNode, who: Body, arm: Arm): ArmPose =
-  ## One arm as recording keeps it, from engine's own capsules: each limb's capsule runs
-  ##   its radius in from both joints, and palm's sphere sits half hand past wrist.
+func armOf(still: JsonNode, who: Body, arm: Arm, link: int): ArmPose =
+  ## One arm of connection `link` as recording keeps it, from engine's own capsules: each
+  ##   limb's capsule runs its radius in from both joints.  Grip is where connection holds,
+  ##   as deep as it holds (`seen.grips`).
   let
     tags = still["tag"].getElems
     points = still["points"][^1].getElems
     radii = still["radii"].getElems
-  var capsules: array[1..3, tuple[a, z: Vector, radius: float]]
+    grips = still["grips"][^1].getElems
+  var capsules: array[1..2, tuple[a, z: Vector, radius: float]]
   for i, tag in tags:
     let part = tag[2].getInt
-    if tag[0].getInt == ord(who) and tag[1].getInt == ord(arm) and part in 1..3:
+    if tag[0].getInt == ord(who) and tag[1].getInt == ord(arm) and part in 1..2:
       capsules[part] = ((points[6*i].getFloat, points[6*i+1].getFloat,
                          points[6*i+2].getFloat),
                         (points[6*i+3].getFloat, points[6*i+4].getFloat,
                          points[6*i+5].getFloat), radii[i].getFloat)
   let
-    (upper, fore, palm) = (capsules[1], capsules[2], capsules[3])
+    (upper, fore) = (capsules[1], capsules[2])
     upward = unit(upper.z - upper.a)
     forward = unit(fore.z - fore.a)
   result.shoulder = upper.a - upward * upper.radius
   result.elbow = upper.z + upward * upper.radius
   result.wrist = fore.z + forward * fore.radius
-  result.grip = palm.a * 2.0 - result.wrist
+  result.grip = (grips[3*link].getFloat, grips[3*link+1].getFloat,
+                 grips[3*link+2].getFloat)
 
 func armsOf(still: JsonNode, links: seq[Link]): Arms =
   ## Every connection's two arms, lead's first, as recording keeps them.
-  for link in links:
-    result.add [armOf(still, link.ends[0].body, link.ends[0].arm),
-                armOf(still, link.ends[1].body, link.ends[1].arm)]
+  for i, link in links:
+    result.add [armOf(still, link.ends[0].body, link.ends[0].arm, i),
+                armOf(still, link.ends[1].body, link.ends[1].arm, i)]
 
 func capsuleAt(frame: JsonNode, i: int): tuple[a, z: Vector] =
   ## Two ends of `i`th capsule of one recorded moment.

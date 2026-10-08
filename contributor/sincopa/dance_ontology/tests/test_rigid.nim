@@ -324,10 +324,10 @@ suite "Internal: Two dancers in rigid body engine":
   test "every capsule page draws is one engine was given":
     ## Page is debug view, so its honesty rests on this: list it draws from is
     ## list handed to engine, recorded as it was handed over rather than worked
-    ## out again afterwards.  Two trunks of four capsules and one face, four
-    ## shoulders of one, and four arms of three, is what `build` makes.
+    ## out again afterwards.  Two trunks of four capsules and one face, four shoulders
+    ## of one, and four arms of upper arm, forearm and hand of three, is what `build` makes.
     let couple = rest()
-    check couple.shapes.len == 2 * (4 + 1) + 4 + 4 * 3
+    check couple.shapes.len == 2 * (4 + 1) + 4 + 4 * (2 + 3)
     var trunks, faces, girdles, limbs = 0
     for shape in couple.shapes:
       check shape.radius > 0.0
@@ -339,22 +339,26 @@ suite "Internal: Two dancers in rigid body engine":
     check trunks == 8
     check faces == 2
     check girdles == 4
-    check limbs == 12
+    check limbs == 20
     couple.free()
 
 
-  test "arm's three capsules run end to end":
+  test "arm's three links run end to end":
     ## Drawing that lets links drift apart draws arm nobody has.  Far end of one
     ## link and near end of next are same joint, so they meet within what solver
-    ## lets joint separate.
+    ## lets joint separate.  Hand is read along its middle capsule (`rigid.handCapsules`).
     let couple = rest()
     for who in Body:
       for arm in Arm:
-        var run: seq[tuple[a, z: Vector]]
+        var
+          run: seq[tuple[a, z: Vector]]
+          hand: seq[tuple[a, z: Vector]]
         for shape in couple.shapes:
-          if shape.mark in {Mark.Upper, Mark.Fore, Mark.Palm} and shape.who == who and
-              shape.arm == arm:
-            run.add couple.endsOf(shape)
+          if shape.who != who or shape.arm != arm: continue
+          if shape.mark in {Mark.Upper, Mark.Fore}: run.add couple.endsOf(shape)
+          elif shape.mark == Mark.Palm: hand.add couple.endsOf(shape)
+        check hand.len == 3
+        if hand.len == 3: run.add hand[1]
         check run.len == 3
         for i in 0 ..< run.len - 1:
           check distance(run[i].z, run[i+1].a) < 2.0 * HUMAN.limb + 0.01
@@ -614,19 +618,15 @@ func between(a, b, c, d: Vector): float =
     s = clamp((first_dot_second - first_dot_offset) / max(first_squared, 1e-12), 0.0, 1.0)
   distance(a + first * s, c + second * t)
 
-func linkCapsules(rig: Rig, pose: ArmPose): seq[tuple[p, q: Vector, radius: float]] =
-  ## Arm's three links as engine holds them: capsule set in from each joint by
-  ## its radius, and hand too short for that as ball at its middle.
-  for (joint_a, joint_b, long) in [
-    (pose.shoulder, pose.elbow, rig.upper),
-    (pose.elbow, pose.wrist, rig.fore),
-    (pose.wrist, pose.grip, rig.hand),
-  ]:
+func linkCapsules(
+  rig: Rig, pose: ArmPose, hand: array[3, tuple[a, z: Vector, radius: float]]
+): seq[tuple[p, q: Vector, radius: float]] =
+  ## Arm's links as engine holds them: upper arm and forearm set in from each joint by
+  ## their radius, and hand's three capsules where engine has them (`walk.Moment.hands`).
+  for (joint_a, joint_b) in [(pose.shoulder, pose.elbow), (pose.elbow, pose.wrist)]:
     let direction = unit(joint_b - joint_a)
-    if long > 2.0 * rig.limb:
-      result.add (joint_a + direction * rig.limb, joint_b - direction * rig.limb, rig.limb)
-    else:
-      result.add ((joint_a + joint_b) * 0.5, (joint_a + joint_b) * 0.5, long / 2.0)
+    result.add (joint_a + direction * rig.limb, joint_b - direction * rig.limb, rig.limb)
+  for capsule in hand: result.add (capsule.a, capsule.z, capsule.radius)
 
 func deepestOf(walk: Walk, links: seq[Link]): float =
   ## Deepest any link of any held arm sits in any body, over every moment.
@@ -639,7 +639,9 @@ func deepestOf(walk: Walk, links: seq[Link]): float =
     for i in 0..<links.len:
       for k in 0..1:
         let hand = links[i].ends[k]
-        for (link_a, link_b, link_radius) in linkCapsules(HUMAN, moment.arms[i][k]):
+        for (link_a, link_b, link_radius) in linkCapsules(
+          HUMAN, moment.arms[i][k], moment.hands[i][k]
+        ):
           for who in Body:
             for (trunk_a, trunk_b, trunk_radius) in moment.trunks[who]:
               result = min(
@@ -872,7 +874,8 @@ suite "Internal: Arms move as arms do":
         found_pose = true
         for link in WOUND:
           for hand in link.ends:
-            check couple.armPoseOf(hand.body, hand.arm).grip.z >= HUMAN.band[Band.Crown].lower - SAG
+            let carried = carriedOf(HUMAN, couple.armPoseOf(hand.body, hand.arm))
+            check carried.z >= HUMAN.band[Band.Crown].lower - SAG
       couple.free()
       if found_pose: break
     check found_pose
@@ -1017,6 +1020,8 @@ suite "Internal: Every still stands at ease":
     ## of other dancer's arms.  Before this, hanging arms were twisted forty degrees and
     ## swung forward twenty by fixed elbow moment, forearms pointing at partner,
     ## and free couple at rest stood with arms crossed between them.
+    ##   Hand is read where it is carried (`carriedOf`): free hand is open, so its grip is
+    ##     fingertip.
     let (is_holding, couple) = stood(HUMAN, Band.Crown, FREE, 0.0, false, Body.Two, 0.36)
     check is_holding
     var nearest = Inf
@@ -1025,7 +1030,7 @@ suite "Internal: Every still stands at ease":
         let
           (swings, twist_angle, bend_angle, wrist_angle) = couple.jointsOf(who, arm)
           pose = couple.armPoseOf(who, arm)
-          hang = pose.grip - pose.shoulder
+          hang = carriedOf(HUMAN, pose) - pose.shoulder
         echo &"    {who} {arm}: extend {swings.extend * 180.0 / PI:.1f}, across " &
             &"{swings.across * 180.0 / PI:.1f}, twist {twist_angle * 180.0 / PI:.1f}, bend " &
             &"{bend_angle * 180.0 / PI:.1f}, wrist {wrist_angle * 180.0 / PI:.1f}, hand " &
@@ -1064,7 +1069,7 @@ suite "Internal: Every still stands at ease":
           let
             swings = couple.jointsOf(who, arm).swings
             pose = couple.armPoseOf(who, arm)
-            hang = pose.grip - pose.shoulder
+            hang = carriedOf(HUMAN, pose) - pose.shoulder
           echo &"    wound {turns:+.1f} {who} {arm}: extend {swings.extend * 180.0 / PI:.1f}, " &
               &"hand {sqrt(hang.x * hang.x + hang.y * hang.y) * 1000:.0f} mm off plumb"
           check abs(swings.extend) <= 10.0 * DEGREE
@@ -1100,7 +1105,8 @@ suite "Internal: Every still stands at ease":
     check holds
     for link in answers.CHAIN:
       for hand in link.ends:
-        check couple.armPoseOf(hand.body, hand.arm).grip.z >= HUMAN.band[Band.Crown].lower - SAG
+        let carried = carriedOf(HUMAN, couple.armPoseOf(hand.body, hand.arm))
+        check carried.z >= HUMAN.band[Band.Crown].lower - SAG
     couple.free()
 
 
@@ -1154,7 +1160,7 @@ suite "Internal: Every still stands at ease":
       check holds
       for link in links:
         for hand in link.ends:
-          let z = couple.armPoseOf(hand.body, hand.arm).grip.z
+          let z = carriedOf(HUMAN, couple.armPoseOf(hand.body, hand.arm)).z
           echo &"    {name}: {hand.body} {hand.arm} hand at {z:.2f} m, stood {where.apart:.2f}"
           check z >= HUMAN.band[Band.Torso].lower - SAG
           check z <= HUMAN.band[Band.Torso].upper + SAG

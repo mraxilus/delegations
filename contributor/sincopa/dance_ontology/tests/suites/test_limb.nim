@@ -21,6 +21,7 @@ const
   FLOOR_ELBOW = 125
     ## Least of those that arm reaches, so elbow's own checks run: 139 at seed 7, 2026-10-02.
   SAMPLES_CLIPPED = 300  ## Segments clipped law draws, seeded.
+  SAMPLES_GRIP = 50  ## Depths grip law reads freedom at, palm to fingertips evenly.
   FLOOR_CLIPPED = 200
     ## Least of those that meet torso band, so its wide error is read: 226 at seed 11, 2026-10-02.
 
@@ -39,13 +40,41 @@ suite "Internal: The rig":
     check halfDepth(HUMAN, Part.Torso) < halfBreadth(HUMAN, Part.Torso)
 
 
-  test "the span is the three links, and the bands are ordered":
-    check span(HUMAN) =~ 0.64
+  test "the span is the three links to hooked fingertips, and the bands are ordered":
+    check span(HUMAN) =~ HUMAN.upper + HUMAN.fore + gripAtTips(HUMAN)
+    check gripAtPalm(HUMAN) < gripAtTips(HUMAN)
+    check gripAtTips(HUMAN) < HUMAN.hand
     check HUMAN.band[Band.Torso].upper < HUMAN.band[Band.Neck].lower
     check HUMAN.band[Band.Neck].upper <= HUMAN.band[Band.Crown].lower
     check HUMAN.band[Band.Crown].lower >= HUMAN.top[Part.Head] + HUMAN.limb - 1e-9
     for part in Part:
       check rig.bottom(HUMAN, part) < HUMAN.top[part]
+
+
+  test "a hand's section is a stadium of the tape's round and breadth":
+    ## Flat palm and back with round edges: two flats and one circle of hand's thickness.
+    let thick = handThick(HUMAN)
+    check abs(2.0 * (HUMAN.hand_broad - thick) + PI * thick - HUMAN.hand_round) < 1e-9
+    check thick > 0.025 and thick < 0.035  # about three centimetres, as hand is
+
+
+  test "a grip locks palm to palm, frees at the fingertips, and frees more as it holds less deep":
+    ## Palm to palm, hands turn against each other only within cone and twist of a
+    ##   handshake; by fingertips, freely.  Between, both grow with depth past palm.
+    let
+      (palm_cone, palm_twist) = gripFreedom(HUMAN, gripAtPalm(HUMAN))
+      (tips_cone, tips_twist) = gripFreedom(HUMAN, gripAtTips(HUMAN))
+    check abs(palm_cone - GRIP_CONE_PALM) < 1e-9 and abs(palm_twist - GRIP_TWIST_PALM) < 1e-9
+    check abs(tips_cone - PI) < 1e-9 and abs(tips_twist - PI) < 1e-9
+    var last_cone, last_twist = -1.0
+    for k in 0..SAMPLES_GRIP:
+      let
+        depth = gripAtPalm(HUMAN) +
+            (gripAtTips(HUMAN) - gripAtPalm(HUMAN)) * float(k) / float(SAMPLES_GRIP)
+        (cone, twist) = gripFreedom(HUMAN, depth)
+      check cone > last_cone and twist > last_twist
+      last_cone = cone
+      last_twist = twist
 
 
   test "the shoulder stands outside its own torso, and a hanging arm clears it":
@@ -103,13 +132,16 @@ suite "Internal: One arm, forward and back":
             random.rand(-1.0..1.0),
           ),
         )
-        chain = posed(HUMAN, shoulder_point, grip, hand_direction, random.rand(0.0 .. 2.0 * PI))
+        depth = random.rand(gripAtPalm(HUMAN)..gripAtTips(HUMAN))
+        chain = posed(
+          HUMAN, shoulder_point, grip, hand_direction, depth, random.rand(0.0 .. 2.0 * PI)
+        )
       if chain.stretch <= HUMAN.upper + HUMAN.fore and
           chain.stretch >= abs(HUMAN.upper - HUMAN.fore):
         inc reached
         check distance(chain.pose.shoulder, chain.pose.elbow) =~ HUMAN.upper
         check distance(chain.pose.elbow, chain.pose.wrist) =~ HUMAN.fore
-      check distance(chain.pose.wrist, chain.pose.grip) =~ HUMAN.hand
+      check distance(chain.pose.wrist, chain.pose.grip) =~ depth
     check reached >= FLOOR_ELBOW
 
 
