@@ -59,7 +59,7 @@ suite "Internal: The rig":
 
 
   test "a grip locks palm to palm, frees at the fingertips, and frees more as it holds less deep":
-    ## Palm to palm, hands turn against each other only within cone and twist of a
+    ## Palm to palm, hands turn against each other only within cone and twist of
     ##   handshake; by fingertips, freely.  Between, both grow with depth past palm.
     let
       (palm_cone, palm_twist) = gripFreedom(HUMAN, gripAtPalm(HUMAN))
