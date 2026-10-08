@@ -22,13 +22,13 @@
 
 import type { CDPSession, Page } from '@playwright/test';
 import { advance } from './clock';
-import { readCamera, settleCamera, slideOf, spanOf } from './camera';
+import { forwardOf, readCamera, settleCamera, spanOf } from './camera';
 import { waitFrames } from './frame';
 import { report } from './report';
-import { handleAlone, pixelOf } from './wheel';
+import { pixelOf } from './wheel';
 
 /** One finger's place on screen. */
-interface Finger {
+export interface Finger {
   x: number;
   y: number;
 }
@@ -171,24 +171,6 @@ export async function pinch(
   await settleCamera(page);
 }
 
-/** Turn two fingers about their own midpoint, holding their separation. */
-export async function twist(
-  page: Page, devtools: CDPSession, mid: Finger, spread: number, radians: number,
-): Promise<void> {
-  await ensureLifted(page, 'a twist');
-  const at = (turn: number) => [
-    { x: mid.x - spread*Math.cos(turn), y: mid.y - spread*Math.sin(turn) },
-    { x: mid.x + spread*Math.cos(turn), y: mid.y + spread*Math.sin(turn) },
-  ];
-  await touchAt(devtools, 'touchStart', at(0));
-  for (let step = 1; step <= 8; step += 1) {
-    await touchAt(devtools, 'touchMove', at((radians*step)/8));
-    await waitFrames(page, 2);
-  }
-  await touchAt(devtools, 'touchEnd', []);
-  await settleCamera(page);
-}
-
 /** Put one finger down for however long, then lift it. */
 export async function tapAt(
   page: Page, devtools: CDPSession, x: number, y: number, milliseconds = 60,
@@ -236,84 +218,166 @@ export async function dragFinger(
   }
 }
 
-/** Drive pinch zoom, which is what finger has instead of wheel. */
+/** Place two fingers as one hand would carry them: spread and turned about their middle,
+ *  then slid. */
+export function asHand(
+  fingers: [Finger, Finger], spread: number, turn: number, slide: Finger,
+): [Finger, Finger] {
+  const [first, second] = fingers;
+  const middle = { x: 0.5 * (first.x + second.x), y: 0.5 * (first.y + second.y) };
+  const carried = (finger: Finger): Finger => {
+    const across = finger.x - middle.x;
+    const down = finger.y - middle.y;
+    return {
+      x: middle.x + slide.x + spread * (Math.cos(turn) * across - Math.sin(turn) * down),
+      y: middle.y + slide.y + spread * (Math.sin(turn) * across + Math.cos(turn) * down),
+    };
+  };
+  return [carried(first), carried(second)];
+}
+
+/** Put two fingers down where `at(0)` says, carry them through `at`, and lift at `at(1)`.
+ *
+ *  For gestures no one spread, slide or twist names: grip holds what fingers took whatever
+ *  path they take, so check names path and reads its end.
+ */
+export async function moveFingers(
+  page: Page, devtools: CDPSession, at: (along: number) => [Finger, Finger], steps = 8,
+): Promise<void> {
+  await ensureLifted(page, 'two fingers');
+  await touchAt(devtools, 'touchStart', at(0));
+  for (let step = 1; step <= steps; step += 1) {
+    await touchAt(devtools, 'touchMove', at(step / steps));
+    await waitFrames(page, 2);
+  }
+  await touchAt(devtools, 'touchEnd', []);
+  await settleCamera(page);
+}
+
+/** Find handle of object labelled `label`, or -1. */
+export async function handleLabelled(page: Page, label: string): Promise<number> {
+  return page.evaluate(
+    (name) => nimSceneHandles().find((one) => nimObjectLabel(one) === name) ?? -1, label,
+  );
+}
+
+/** Read pixel object `handle` is drawn at, as finger landing on it. */
+export async function fingerOn(page: Page, handle: number): Promise<Finger> {
+  const at = await pixelOf(page, handle);
+  return { x: at?.[0] ?? 0, y: at?.[1] ?? 0 };
+}
+
+/** Measure pixels between where object `handle` is drawn and where `finger` stands. */
+export async function slipOf(page: Page, handle: number, finger: Finger): Promise<number> {
+  const at = await pixelOf(page, handle);
+  return at === null ? Infinity : Math.hypot((at[0] ?? 0) - finger.x, (at[1] ?? 0) - finger.y);
+}
+
+/** Read whether finger landing at `at` would find empty sky: nothing under it but backdrop. */
+async function isSkyAt(page: Page, at: Finger): Promise<boolean> {
+  return page.evaluate(({ x, y }) => {
+    nimUpdateCursor(x, y);
+    nimUpdateHover(window.innerWidth, window.innerHeight);
+    return nimHoverHandle() < 0 || nimIsHoverBackdrop();
+  }, at);
+}
+
+/** Drive two fingers, which hold what each touched, as mouse holds what it grabs.
+ *
+ *  Ruled on repository issue 592: each finger stays on point it touched, and view moves to
+ *  hold that. Sky stands infinitely far, so fingers there slide and zoom nothing; selection
+ *  is orbited, so pivot stays on it.
+ */
 export async function drivePinch(page: Page, devtools: CDPSession): Promise<void> {
   await page.keyboard.press('Home');
   await settleCamera(page);
 
-  // Pinch over point well off middle of frame, which is where aim shows itself.
-  //   Zoom comes in to what stands between fingers, so point keeps its pixel under them.
-  //   Zoom aimed at middle slid point off fingers, and over empty middle did nothing.
-  const point = await handleAlone(page, 'point');
-  const seat = await pixelOf(page, point);
-  const mid = { x: seat?.[0] ?? 0, y: seat?.[1] ?? 0 };
-  const place = await page.evaluate((one) => Array.from(nimAnchorWorld(one)), point);
-  const middle = await page.evaluate(() => [window.innerWidth / 2, window.innerHeight / 2]);
-  const off = Math.hypot(mid.x - (middle[0] ?? 0), mid.y - (middle[1] ?? 0));
+  // Fingers land on two points at two depths and move as one hand: spread, twist and slide
+  //   at once. Each point staying under its own finger is whole rule.
+  const first = await handleLabelled(page, 'a');
+  const second = await handleLabelled(page, 'c');
+  const landed: [Finger, Finger] = [await fingerOn(page, first), await fingerOn(page, second)];
+  const hand = (along: number): [Finger, Finger] =>
+    asHand(landed, 1 + 0.3 * along, 0.25 * along, { x: 30 * along, y: 20 * along });
   const before = await readCamera(page);
-  await pinch(page, devtools, mid, mid, 40, 160);
+  await moveFingers(page, devtools, hand);
   const after = await readCamera(page);
-  const held = await pixelOf(page, point);
-  const slip = held === null ? Infinity :
-    Math.hypot((held[0] ?? 0) - mid.x, (held[1] ?? 0) - mid.y);
-
+  const [end_first, end_second] = hand(1);
+  const slips = [await slipOf(page, first, end_first), await slipOf(page, second, end_second)];
   report(
-    'a pinch comes in to the point between the fingers, which keeps its pixel',
-    spanOf(after.eye, place) < 0.8 * spanOf(before.eye, place) && slip <= 0.5,
-    `reach ${spanOf(before.eye, place).toFixed(2)} -> ${spanOf(after.eye, place).toFixed(2)}, ` +
-      `point ${slip.toFixed(2)} px off the fingers, ${off.toFixed(0)} px off the middle`,
+    'two fingers hold the points they touched, through a spread, a twist and a slide',
+    Math.max(...slips) <= 1 && spanOf(before.eye, after.eye) > 0.1,
+    `points ${slips.map((slip) => slip.toFixed(2)).join(' and ')} px off their fingers, ` +
+      `eye moved ${spanOf(before.eye, after.eye).toFixed(3)}`,
   );
+  // Sight read off eye and pivot through float32, so bound is float32's.
   report(
-    'a pinch leaves the orbit alone',
-    Math.abs(after.azimuth - before.azimuth) < 1e-3,
-    `azimuth ${before.azimuth.toFixed(4)} -> ${after.azimuth.toFixed(4)}`,
+    'and turn no sight with nothing selected, only slide and roll',
+    spanOf(forwardOf(before), forwardOf(after)) < 1e-6,
+    `sight moved ${spanOf(forwardOf(before), forwardOf(after)).toExponential(2)}`,
   );
 
-  // Twist rolls, which is sixth degree of freedom and has no keyboard beside it on touch.
-  //   Read against eye and sight, which roll leaves exactly alone.
+  // Fingers on empty sky hold sky itself, which no slide moves: spread and slide there
+  //   move nothing.
   await page.keyboard.press('Home');
   await settleCamera(page);
+  const sky: [Finger, Finger] = [{ x: 300, y: 110 }, { x: 600, y: 110 }];
+  const is_sky = (await isSkyAt(page, sky[0])) && (await isSkyAt(page, sky[1]));
+  const stood = await readCamera(page);
+  await moveFingers(
+    page, devtools, (along) => asHand(sky, 1 + 1.5 * along, 0, { x: 40 * along, y: 30 * along }),
+  );
+  const still = await readCamera(page);
+  report(
+    'two fingers on empty sky spread and slide nothing',
+    is_sky && spanOf(stood.eye, still.eye) < 1e-9 &&
+      spanOf(forwardOf(stood), forwardOf(still)) < 1e-9,
+    `on sky ${is_sky}, eye moved ${spanOf(stood.eye, still.eye).toExponential(2)}`,
+  );
+
+  // Twist on sky about middle of frame: roll alone holds both directions, so picture turns
+  //   with fingers, and eye moves nowhere.
+  await page.keyboard.press('Home');
+  await settleCamera(page);
+  const across: [Finger, Finger] = [{ x: 300, y: 110 }, { x: 900, y: 790 }];
+  const is_across_sky = (await isSkyAt(page, across[0])) && (await isSkyAt(page, across[1]));
+  const centre = await page.evaluate(() => [window.innerWidth / 2, window.innerHeight / 2]);
+  const marked = await handleLabelled(page, 'b');
   const upright = await readCamera(page);
-  await twist(page, devtools, { x: 400, y: 400 }, 120, 0.9);
+  const start = await fingerOn(page, marked);
+  await moveFingers(page, devtools, (along) => asHand(across, 1, 0.3 * along, { x: 0, y: 0 }));
   const rolled = await readCamera(page);
-  const across = slideOf(upright, rolled);
-  report(
-    'a twist rolls, and moves the eye no distance at all',
-    across < 1e-3 && spanOf(upright.eye, rolled.eye) < 1e-3 &&
-      Math.abs(rolled.distance - upright.distance) < 1e-6,
-    `eye moved ${spanOf(upright.eye, rolled.eye).toFixed(6)} units`,
-  );
-  report(
-    'and a twist leaves the sight where it was pointing',
-    Math.abs(rolled.azimuth - upright.azimuth) < 1e-3,
-    `azimuth ${upright.azimuth.toFixed(4)} -> ${rolled.azimuth.toFixed(4)}`,
-  );
-
-  // Direction, read off screen: picture must turn whichever way fingers turned, and
-  //   sign went through unturned, so twist rolled against them.
-  await page.keyboard.press('Home');
-  await settleCamera(page);
-  const handle = await page.evaluate(() => nimSceneHandles()[0] ?? 0);
-  const seen = async (): Promise<number[]> => page.evaluate((one) => Array.from(
-    nimAnchorScreen(one, window.innerWidth, window.innerHeight),
-  ), handle);
-  const centre = await page.evaluate(
-    () => [window.innerWidth / 2, window.innerHeight / 2],
-  );
-  const start = await seen();
-  // Fingers turned clockwise on screen, since y grows down and this angle grows.
-  await twist(page, devtools, { x: 400, y: 400 }, 120, 0.9);
-  const swung = await seen();
-  const angleOf = (at: number[]): number => Math.atan2(
-    (at[1] ?? 0) - (centre[1] ?? 0), (at[0] ?? 0) - (centre[0] ?? 0),
-  );
+  const swung = await fingerOn(page, marked);
+  const angleOf = (at: Finger): number =>
+    Math.atan2(at.y - (centre[1] ?? 0), at.x - (centre[0] ?? 0));
   let carried = angleOf(swung) - angleOf(start);
   if (carried > Math.PI) carried -= 2 * Math.PI;
   if (carried < -Math.PI) carried += 2 * Math.PI;
   report(
-    'and a twist carries the picture the way the fingers turned',
-    carried > 0.2,
-    `fingers turned +0.900, picture turned ${carried.toFixed(3)} about the frame's middle`,
+    'a twist on empty sky turns the picture with the fingers, and moves the eye nowhere',
+    is_across_sky && Math.abs(carried - 0.3) < 1e-3 && spanOf(upright.eye, rolled.eye) < 1e-9,
+    `on sky ${is_across_sky}, fingers turned +0.300, picture turned ${carried.toFixed(4)} ` +
+      `about the frame's middle, eye moved ${spanOf(upright.eye, rolled.eye).toExponential(2)}`,
+  );
+
+  // With selection, two fingers orbit, dolly and roll about it, so pivot stays on it.
+  await page.keyboard.press('Home');
+  await settleCamera(page);
+  const picked = await handleLabelled(page, 'o');
+  await page.evaluate((one) => nimSelectOnly(one), picked);
+  await settleCamera(page);
+  const framed = await readCamera(page);
+  const around: [Finger, Finger] = [{ x: 480, y: 470 }, { x: 730, y: 420 }];
+  const orbit = (along: number): [Finger, Finger] =>
+    asHand(around, 1 + 0.4 * along, -0.2 * along, { x: 20 * along, y: 10 * along });
+  await moveFingers(page, devtools, orbit);
+  const orbited = await readCamera(page);
+  await page.evaluate(() => clearSelection());
+  report(
+    'with a selection two fingers orbit about it, and the pivot stays on it',
+    spanOf(framed.pivot, orbited.pivot) < 1e-6 && orbited.distance < framed.distance,
+    `pivot moved ${spanOf(framed.pivot, orbited.pivot).toExponential(2)}, ` +
+      `distance ${framed.distance.toFixed(3)} -> ${orbited.distance.toFixed(3)}`,
   );
 }
 

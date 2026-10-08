@@ -16,35 +16,21 @@
 /*   there is no second button to force it with. Finger that presses       */
 /*   object and stays still selects it instead (long-press), so            */
 /*   first movement past `TAP_MAX_MOVE` is what decides between two.       */
-/*   Two fingers still pinch and pan, twist to roll, and cancel any drag. */
+/*   Two fingers hold what each touched, and cancel any drag.             */
 /* ---------------------------------------------------------------------- */
 
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
-// Live pointers by their own id, so pinch reads two at once.
+// Live pointers by their own id, so two fingers are read at once.
 const pointers = new Map<number, PointLocal>();
-let separation_pinch_start: number | null = null;
-// Whether two fingers have parted or closed further than tap slop since both came down.
-//   Until they have, gesture is pan and only pan: two fingers carried together never
-//   hold their separation to pixel, and every notch of that jitter went through zoom,
-//   which re-pivots turntable onto whatever middle of frame crossed. Slop itself is not
-//   zoomed once crossed; zoom starts from separation where it was crossed, without jump.
-let is_pinch_zooming = false;
-// Angle of two fingers' own line when twist was last read, or null before both came down.
-let angle_twist_last: number | null = null;
-// Whether two fingers have turned further than twist slop since both came down.
-//   Same reading pinch takes of separation: two fingers carried together never hold their
-//   angle to milliradian, and every notch of that jitter would roll view. Slop is
-//   not rolled once crossed; roll starts from angle where it was crossed.
-let is_twisting = false;
+// Ids of two fingers holding what they touched, in order they landed, or null.
+//   Order is grip's: each finger is solved against what it took; see `settleTwoFingers`.
+let ids_gripped: [number, number] | null = null;
 // Whether two fingers have moved since frame loop last read them.
-//   Each finger's move arrives as its own `pointermove`, so between two of them
-//   separation and midpoint are one finger new and other old: read there, every step of
-//   pan carried together was zoom in by one finger's step and out again by other's,
-//   and each of those went through re-pivot. Read once per frame instead, in
-//   `settleTwoFingers`, after both have reported.
+//   Each finger's move arrives as its own `pointermove`, so between two of them one
+//   finger is new and other old: grip solved there chased half of each step. Read once
+//   per frame instead, in `settleTwoFingers`, after both have reported.
 let is_two_fingers_pending = false;
-let pan_last: PointLocal | null = null;
 // Button held for camera orbit/pan fallback, while no operation drag is active.
 // Mouse button dragging object, or camera scheme press fell back to, or `null`.
 let button_mouse_drag: number | 'orbit' | 'pan' | null = null;
@@ -79,10 +65,6 @@ let is_touch_press_constructing = false;
 //   it decides which scheme gesture enters, which is rule about gesture, not
 //   presentation number. Tap *timeout* stays here -- that one really is local.
 const TAP_MAX_MS = 350, TAP_MAX_MOVE = nimTapSlop();
-// Turn two fingers further than this, in radians, and gesture becomes twist.
-//   Twelve degrees: pinch and pan both wander few degrees without meaning to, and
-//   reader who means to roll turns much further than that.
-const RADIANS_TWIST_SLOP = 0.21;
 // How finger's construction drag comes to offer wheel. Mouse reads this off.
 //   button it pressed; touch has no second button, so it names one arming that waits.
 const ARMING_DRAG_TOUCH = nimDragArmingOnDwell();
@@ -92,23 +74,6 @@ const ARMING_DRAG_TOUCH = nimDragArmingOnDwell();
 //   All that is left here is which button went down, which is this layer's own
 //   numbering.
 let button_mouse_down: number | null = null;
-
-function pointerDist(points_flat: PointLocal[]) {
-  const [a, b] = points_flat;
-  if (a === undefined || b === undefined) return 0;
-  return Math.hypot(a.x - b.x, a.y - b.y);
-}
-function pointerMid(points_flat: PointLocal[]): PointLocal {
-  const [a, b] = points_flat;
-  if (a === undefined || b === undefined) return { x: 0, y: 0 };
-  return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
-}
-// Angle of line joining two fingers, in radians, for twist to read its own change.
-function pointerAngle(points_flat: PointLocal[]) {
-  const [a, b] = points_flat;
-  if (a === undefined || b === undefined) return 0;
-  return Math.atan2(b.y - a.y, b.x - a.x);
-}
 
 canvas.addEventListener('pointerdown', (e) => {
   canvas.setPointerCapture(e.pointerId);
@@ -183,12 +148,18 @@ canvas.addEventListener('pointerdown', (e) => {
     is_touch_press_constructing = false;
   }
   if (pointers.size === 2) {
-    const points_flat = [...pointers.values()];
-    separation_pinch_start = pointerDist(points_flat);
-    is_pinch_zooming = false;
-    angle_twist_last = pointerAngle(points_flat);
-    is_twisting = false;
-    pan_last = pointerMid(points_flat);
+    // Each finger takes what lies under it, as mouse takes what it grabs, and holds it
+    //   until one lifts; see `interaction.gripFingers`.
+    const [id_first, id_second] = [...pointers.keys()];
+    const first = id_first === undefined ? undefined : pointers.get(id_first);
+    const second = id_second === undefined ? undefined : pointers.get(id_second);
+    if (id_first !== undefined && id_second !== undefined && first && second) {
+      ids_gripped = [id_first, id_second];
+      nimGripFingers(
+        first.x - rect.left, first.y - rect.top, second.x - rect.left, second.y - rect.top,
+        canvas.clientWidth, canvas.clientHeight,
+      );
+    }
   }
 });
 
@@ -227,7 +198,7 @@ canvas.addEventListener('pointermove', (e) => {
       nimCameraPanAt(
         prev.x - rect.left, prev.y - rect.top,
         current.x - rect.left, current.y - rect.top,
-        canvas.clientWidth, canvas.clientHeight, true,
+        canvas.clientWidth, canvas.clientHeight,
       );
     }
     is_hover_stale = true;
@@ -280,7 +251,7 @@ canvas.addEventListener('pointermove', (e) => {
       canvas.clientWidth, canvas.clientHeight,
     );
   } else if (pointers.size === 2) {
-    nimSetCameraDragging(true); // Two fingers pan and pinch; neither points at anything.
+    nimSetCameraDragging(true); // Two fingers move view; neither points at anything.
     is_two_fingers_pending = true; // Read by frame loop; see `settleTwoFingers`.
   }
 });
@@ -291,62 +262,20 @@ canvas.addEventListener('pointermove', (e) => {
 function settleTwoFingers() {
   if (!is_two_fingers_pending) return;
   is_two_fingers_pending = false;
-  if (pointers.size !== 2) return;
+  if (pointers.size !== 2 || ids_gripped === null) return;
+  const first = pointers.get(ids_gripped[0]);
+  const second = pointers.get(ids_gripped[1]);
+  if (first === undefined || second === undefined) return;
+  // Each finger stays on what it took as it landed, pixel for pixel: one solve moves
+  //   camera for spread, slide and twist at once; see `interaction.carryGrip`.
+  //   Not separate zoom, pan and roll, each past slop of its own: fingers slipped off
+  //   what they held for every pixel slop swallowed, and roll turned about middle of
+  //   frame rather than about fingers.
   const rect = canvas.getBoundingClientRect();
-  const points_flat = [...pointers.values()];
-  const separation = pointerDist(points_flat);
-  const mid = pointerMid(points_flat);
-  // Zoom toward whatever stands between fingers, as wheel zooms toward what pointer is over.
-  //   Aimed where fingers stood last step: zoom holds its anchor's pixel, and pan below
-  //   carries that pixel on to where they stand now, so what they hold stays under them.
-  //   Not middle of frame, whose zoom slid object under fingers off them, and with nothing
-  //   selected and nothing at middle did nothing. See `interaction.dollyAt`.
-  if (separation_pinch_start !== null && !is_pinch_zooming &&
-      Math.abs(separation - separation_pinch_start) > TAP_MAX_MOVE) {
-    is_pinch_zooming = true;
-    separation_pinch_start = separation;
-  }
-  if (is_pinch_zooming) {
-    const aim = pan_last ?? mid;
-    nimCameraDollyAtPixel(
-      (separation_pinch_start ?? separation) / Math.max(1, separation),
-      aim.x - rect.left, aim.y - rect.top, canvas.clientWidth, canvas.clientHeight,
-    );
-    separation_pinch_start = separation;
-  }
-
-  // Twist rolls, which is sixth degree of freedom and has no keyboard beside it here.
-  //   Read as change since last frame, so roll follows fingers rather than accumulating
-  //   from where they landed.
-  const angle = pointerAngle(points_flat);
-  if (angle_twist_last !== null) {
-    let turned = angle - angle_twist_last;
-    // Shortest way round: angle wraps at pi, and hair past it is next door.
-    if (turned > Math.PI) turned -= 2 * Math.PI;
-    if (turned < -Math.PI) turned += 2 * Math.PI;
-    if (!is_twisting && Math.abs(turned) > RADIANS_TWIST_SLOP) {
-      is_twisting = true;
-      angle_twist_last = angle;
-      turned = 0;
-    }
-    if (is_twisting) {
-      // Negated: screen angle grows clockwise, since y grows down, and positive roll
-      //   carries view anticlockwise. Fingers and picture must turn same way.
-      nimCameraRoll(-turned);
-      angle_twist_last = angle;
-    }
-  }
-
-  if (pan_last) {
-    // Carry two fingers' own midpoint by mouse's own rule, at pivot's depth.
-    //   Not depth taken at landing: fingers pinch as they pan, and zoom moves it.
-    nimCameraPanAt(
-      pan_last.x - rect.left, pan_last.y - rect.top,
-      mid.x - rect.left, mid.y - rect.top,
-      canvas.clientWidth, canvas.clientHeight, false,
-    );
-  }
-  pan_last = mid;
+  nimCarryGrip(
+    first.x - rect.left, first.y - rect.top, second.x - rect.left, second.y - rect.top,
+    canvas.clientWidth, canvas.clientHeight,
+  );
 }
 
 function endMouseDrag(e: PointerEvent) {
@@ -423,11 +352,11 @@ function releasePointer(e: PointerEvent) {
   handle_touch_down = -1;
   pointers.delete(e.pointerId);
   if (pointers.size < 2) {
-    separation_pinch_start = null; is_pinch_zooming = false; pan_last = null;
+    // Grip goes with either finger: one finger left turns view as one finger does, and
+    //   third lifting back to two would solve against grip two fingers ago took.
+    ids_gripped = null;
+    nimReleaseGrip();
     is_two_fingers_pending = false;
-    // Twist goes with them: angle held from two fingers ago is stale reading, and third
-    //   finger lifting back to two would roll view by whole of it in one frame.
-    angle_twist_last = null; is_twisting = false;
   }
   if (pointers.size === 0) nimSetCameraDragging(false);
   if (pointers.size === 0) nimClearHover(); // No finger left touching canvas -- there's

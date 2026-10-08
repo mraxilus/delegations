@@ -944,18 +944,28 @@ suite "Camera":
         has_selection = false,
       )
     check camera.stanceOf == stance
-    # Pinch aims through same rule at midpoint of its fingers, and finds nothing there either.
-    dollyAt(
+    # Two fingers there hold sky itself, which no spread moves (repository issue 592).
+    var grip = gripFingers(
       camera,
       initScene(),
-      0.5,
       camera.drawExtentFor(tall, 0.0),
       camera.initMatrixViewProjection(float(wide) / float(tall)),
       wide,
       tall,
-      ScreenPosition(x: 1100.0, y: 240.0),
+      [ScreenPosition(x: 1000.0, y: 240.0), ScreenPosition(x: 1200.0, y: 240.0)],
       has_selection = false,
     )
+    for step in 1..200:
+      let spread = 100.0 * (1.0 + 0.01 * float(step))
+      grip.carryGrip(
+        camera,
+        [
+          ScreenPosition(x: 1100.0 - spread, y: 240.0),
+          ScreenPosition(x: 1100.0 + spread, y: 240.0),
+        ],
+        wide,
+        tall,
+      )
     check camera.stanceOf == stance
 
 

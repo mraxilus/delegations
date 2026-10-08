@@ -1296,8 +1296,7 @@ proc nimCameraOrbit(turn, rise: cfloat) {.exportc.} =
 
 proc nimCameraRoll(radians: cfloat) {.exportc.} =
   ## Roll camera about its own sight axis by `radians`.
-  ##   Twist of two fingers, which has no keyboard beside it on touch; see
-  ##   `camera.roll`.
+  ##   Motion outright, for checks that roll view and ask what it rebuilt; see `camera.roll`.
   TWEEN_CAMERA.abandon()
   camera.roll(CAMERA_PAGE, float(radians))
 
@@ -1308,32 +1307,56 @@ proc nimCameraDolly(factor: cfloat) {.exportc.} =
   camera.dolly(CAMERA_PAGE, float(factor))
 
 
-proc nimCameraDollyAtPixel(factor, x, y: cfloat; width, height: cint) {.exportc.} =
-  ## Scale camera's distance from pivot by factor, toward whatever pixel `x`, `y` is over.
-  ##   Pinch's zoom, aimed at midpoint of its fingers; see `interaction.dollyAt`.
-  ##   Reads frame's own as `nimCameraDollyAt`.
+proc nimGripFingers(x_first, y_first, x_second, y_second: cfloat; width, height: cint) {.exportc.} =
+  ## Take what each of two fingers holds, as second lands; see `interaction.gripFingers`.
+  ##   Reads frame's own placements and overlay, as `nimCameraDollyAt` does: pick under each
+  ##   finger is full pick.
   TWEEN_CAMERA.halt()
   placeEdited()
   ensureViewOverlay(int(width), int(height))
-  dollyAt(
+  INTERACTION_PAGE.grip = some(gripFingers(
     CAMERA_PAGE,
     SCENE_PAGE,
-    float(factor),
     SCALE_OVERLAY,
     VIEW_PROJECTION_OVERLAY,
     int(width),
     int(height),
-    ScreenPosition(x: float(x), y: float(y)),
+    [
+      ScreenPosition(x: float(x_first), y: float(y_first)),
+      ScreenPosition(x: float(x_second), y: float(y_second)),
+    ],
     SELECTION_PAGE.len > 0,
     placements,
+    TWEEN_CAMERA.reachAimed(CAMERA_PAGE),
+  ))
+
+
+proc nimCarryGrip(x_first, y_first, x_second, y_second: cfloat; width, height: cint) {.exportc.} =
+  ## Move camera so each of two fingers stays on what it took; see `interaction.carryGrip`.
+  ##   Fingers in order they landed. Nothing where no grip is held.
+  if INTERACTION_PAGE.grip.isNone: return
+  TWEEN_CAMERA.halt()
+  carryGrip(
+    INTERACTION_PAGE.grip.get,
+    CAMERA_PAGE,
+    [
+      ScreenPosition(x: float(x_first), y: float(y_first)),
+      ScreenPosition(x: float(x_second), y: float(y_second)),
+    ],
+    int(width),
+    int(height),
   )
+
+
+proc nimReleaseGrip() {.exportc.} =
+  ## Drop two fingers' grip, as either lifts.
+  INTERACTION_PAGE.grip = none(GripFingers)
 
 
 proc nimCameraDollyAt(factor: cfloat; width, height: cint) {.exportc.} =
   ## Scale camera's distance from pivot by factor, toward whatever cursor is over.
   ##   See `interaction.dollyAtCursor`.
   ##   Wheel's zoom: reads cursor this build tracks (`nimUpdateCursor`), as picking does.
-  ##   Pinch names its own pixel; see `nimCameraDollyAtPixel`.
   TWEEN_CAMERA.halt()
   # Read through frame's placements.
   #   `dollyAtCursor` asks `anchorZoomAt` what cursor is over, which is full pick.
@@ -1366,22 +1389,17 @@ proc nimCameraPanGrab(width, height: cint) {.exportc.} =
   )
 
 
-proc nimCameraPanAt(
-  before_x, before_y, after_x, after_y: cfloat; width, height: cint; is_grabbed: bool
-) {.exportc.} =
-  ## Move view by right drag or two fingers, in whichever way its state reads.
+proc nimCameraPanAt(before_x, before_y, after_x, after_y: cfloat; width, height: cint) {.exportc.} =
+  ## Move view by right drag, in whichever way its state reads.
   ##   See `interaction.panAcross`. Both ends of step rather than its length: pan carries
-  ##   point between them.
-  ##   `is_grabbed` holds what `nimCameraPanGrab` took. Otherwise pivot's depth, or point
-  ##   under pixel step left, read at this step: two fingers pinch as they pan, and zoom
-  ##   moves anything taken at landing.
+  ##   point between them, which `nimCameraPanGrab` took.
   TWEEN_CAMERA.halt()
   panAcross(
     CAMERA_PAGE, ScreenPosition(x: float(before_x), y: float(before_y)),
     ScreenPosition(x: float(after_x), y: float(after_y)), int(width), int(height),
     SELECTION_PAGE.len > 0,
-    if is_grabbed: INTERACTION_PAGE.depth_pan else: CAMERA_PAGE.distance,
-    if is_grabbed: INTERACTION_PAGE.pointPanNow(CAMERA_PAGE) else: none(Position),
+    INTERACTION_PAGE.depth_pan,
+    INTERACTION_PAGE.pointPanNow(CAMERA_PAGE),
     TWEEN_CAMERA.reachAimed(CAMERA_PAGE),
   )
 

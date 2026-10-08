@@ -1939,3 +1939,183 @@ suite "Interaction":
     # Shift is one multiplier on every rate, speed included.
     interaction.keys_held = {Key.W, Key.Shift}
     check interaction.speedFlying =~ FACTOR_HASTE * 19.0
+
+
+  func movedAbout(
+    fingers: array[2, ScreenPosition]; spread, turn: float; slide: ScreenPosition
+  ): array[2, ScreenPosition] =
+    ## Move two fingers as one hand: spread and turn about their middle, then slide.
+    let
+      middle_x = 0.5 * (fingers[0].x + fingers[1].x)
+      middle_y = 0.5 * (fingers[0].y + fingers[1].y)
+    for index, finger in fingers:
+      let (across, down) = (finger.x - middle_x, finger.y - middle_y)
+      result[index] = ScreenPosition(
+        x: middle_x + slide.x + spread * (cos(turn) * across - sin(turn) * down),
+        y: middle_y + slide.y + spread * (sin(turn) * across + cos(turn) * down),
+      )
+
+
+  func missedBy(
+    camera: Camera; width, height: int; place: Position; finger: ScreenPosition
+  ): float =
+    ## Measure pixels between where camera shows world `place` and where finger stands.
+    let at = projectToScreen(
+      camera.initMatrixViewProjection(float(width) / float(height)),
+      width,
+      height,
+      place.toView(camera.originView),
+    )
+    hypot(at.x - finger.x, at.y - finger.y)
+
+
+  test "two fingers hold the points they touched, through a spread, a slide and a twist":
+    # Ruling on repository issue 592: each finger stays on what it touched, as mouse does.
+    #   Points at two depths, so no slide alone holds both.
+    const (wide, tall) = (1200, 900)
+    let
+      opened = cameraAround(ORIGIN, 12.0, Direction(x: 10, y: 4, z: 3))
+      aspect = float(wide) / float(tall)
+      near = Position(x: 2.0, y: -1.5, z: 0.5)
+      far = Position(x: -3.0, y: 2.0, z: -1.0)
+      landed = [
+        projectToScreen(opened.initMatrixViewProjection(aspect), wide, tall, near),
+        projectToScreen(opened.initMatrixViewProjection(aspect), wide, tall, far),
+      ]
+    var scene = initScene()
+    scene.addObject(near.toMultivector, "near", Ink.Rose)
+    scene.addObject(far.toMultivector, "far", Ink.Jade)
+    var
+      camera = opened
+      grip = gripFingers(
+        camera,
+        scene,
+        camera.drawExtentFor(tall, 0.0),
+        camera.initMatrixViewProjection(aspect),
+        wide,
+        tall,
+        landed,
+        has_selection = false,
+      )
+      fingers = landed
+    check not grip.fingers[0].is_sky and not grip.fingers[1].is_sky
+    for step in 1..10:
+      let along = float(step) / 10.0
+      fingers = movedAbout(
+        landed, 1.0 + 0.5 * along, 0.3 * along, ScreenPosition(x: 40.0 * along, y: -25.0 * along)
+      )
+      grip.carryGrip(camera, fingers, wide, tall)
+    check missedBy(camera, wide, tall, near, fingers[0]) < 0.05
+    check missedBy(camera, wide, tall, far, fingers[1]) < 0.05
+    # Fingers back where they landed put camera back where it stood.
+    grip.carryGrip(camera, landed, wide, tall)
+    check norm(camera.eye - opened.eye) < 1.0e-4
+    check norm(camera.frame.axis_up + -opened.frame.axis_up) < 1.0e-5
+
+
+  test "two fingers on empty sky in free flight slide and zoom nothing, and a twist rolls":
+    # Ruling on repository issue 592: sky stands infinitely far, so no slide moves it.
+    const (wide, tall) = (1200, 900)
+    let
+      opened = cameraAround(ORIGIN, 12.0, Direction(x: 10, y: 4, z: 3))
+      aspect = float(wide) / float(tall)
+      landed = [ScreenPosition(x: 420.0, y: 450.0), ScreenPosition(x: 780.0, y: 450.0)]
+    var
+      camera = opened
+      grip = gripFingers(
+        camera,
+        initScene(),
+        camera.drawExtentFor(tall, 0.0),
+        camera.initMatrixViewProjection(aspect),
+        wide,
+        tall,
+        landed,
+        has_selection = false,
+      )
+    check grip.fingers[0].is_sky and grip.fingers[1].is_sky
+    let spread = movedAbout(landed, 1.8, 0.0, ScreenPosition(x: 60.0, y: 30.0))
+    grip.carryGrip(camera, spread, wide, tall)
+    check norm(camera.eye - opened.eye) < 1.0e-12
+    check norm(camera.frame.forward + -opened.frame.forward) < 1.0e-12
+    # Turned about middle of frame, where they stand: roll alone holds both.
+    let turned = movedAbout(landed, 1.0, 0.4, ScreenPosition())
+    grip.carryGrip(camera, turned, wide, tall)
+    let (up_before, up_after) = (opened.frame.axis_up, camera.frame.axis_up)
+    check norm(camera.eye - opened.eye) < 1.0e-12
+    check norm(camera.frame.forward + -opened.frame.forward) < 1.0e-9
+    check abs(arccos(clamp(dot(up_before, up_after), -1.0, 1.0)) - 0.4) < 1.0e-4
+
+
+  test "with a selection two fingers orbit, dolly and roll about it, and the pivot stays":
+    # Ruling on repository issue 592: orbit stays on what is picked. Both fingers stand off
+    #   picked point, on sphere left drag's orbit holds.
+    const (wide, tall) = (1200, 900)
+    let
+      opened = cameraAround(ORIGIN, 12.0, Direction(x: 10, y: 4, z: 3))
+      aspect = float(wide) / float(tall)
+      landed = [ScreenPosition(x: 480.0, y: 470.0), ScreenPosition(x: 730.0, y: 420.0)]
+    var scene = initScene()
+    scene.addObject(ORIGIN.toMultivector, "picked", Ink.Rose)
+    var
+      camera = opened
+      grip = gripFingers(
+        camera,
+        scene,
+        camera.drawExtentFor(tall, 0.0),
+        camera.initMatrixViewProjection(aspect),
+        wide,
+        tall,
+        landed,
+        has_selection = true,
+        reach_selection = 2.0,
+      )
+      fingers = landed
+    check grip.is_orbit
+    check not grip.fingers[0].is_sky and not grip.fingers[1].is_sky
+    for step in 1..10:
+      let along = float(step) / 10.0
+      fingers = movedAbout(
+        landed, 1.0 + 0.4 * along, -0.25 * along, ScreenPosition(x: 30.0 * along, y: 20.0 * along)
+      )
+      grip.carryGrip(camera, fingers, wide, tall)
+    check norm(camera.pivot - opened.pivot) < 1.0e-9
+    check camera.distance < opened.distance
+    check missedBy(camera, wide, tall, grip.fingers[0].place, fingers[0]) < 0.05
+    check missedBy(camera, wide, tall, grip.fingers[1].place, fingers[1]) < 0.05
+
+
+  test "two fingers spread over one point stop the eye at its floor, and then slip":
+    # Wheel's floor holds for fingers too: nearer, point fills frame and shows no more.
+    #   Both fingers on one point hold two places at its depth, so spread zooms toward it.
+    const (wide, tall) = (1200, 900)
+    let
+      opened = cameraAround(ORIGIN, 12.0, Direction(x: 10, y: 4, z: 3))
+      aspect = float(wide) / float(tall)
+      middle = projectToScreen(opened.initMatrixViewProjection(aspect), wide, tall, ORIGIN)
+      landed = [
+        ScreenPosition(x: middle.x - 10.0, y: middle.y),
+        ScreenPosition(x: middle.x + 10.0, y: middle.y),
+      ]
+    var scene = initScene()
+    scene.addObject(ORIGIN.toMultivector, "point", Ink.Rose)
+    var
+      camera = opened
+      grip = gripFingers(
+        camera,
+        scene,
+        camera.drawExtentFor(tall, 0.0),
+        camera.initMatrixViewProjection(aspect),
+        wide,
+        tall,
+        landed,
+        has_selection = false,
+      )
+    check grip.fingers[0].floor > 0.0
+    for step in 1..40:
+      let spread = movedAbout(landed, 1.0 + 5.0 * float(step), 0.0, ScreenPosition())
+      grip.carryGrip(camera, spread, wide, tall)
+    let
+      (eye, frame) = camera.sight
+      depth = depthAlong(eye, frame.forward, grip.fingers[0].place.toView(camera.originView))
+    check depth >= grip.fingers[0].floor * (1.0 - 1.0e-6)
+    check depth < 1.01 * grip.fingers[0].floor

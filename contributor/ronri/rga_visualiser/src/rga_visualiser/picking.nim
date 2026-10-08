@@ -294,6 +294,25 @@ func headingThrough*(
   (ndc_x * half_width) * frame.axis_right + (ndc_y * half_height) * frame.axis_up + frame.forward
 
 
+func pixelThrough*(
+  camera: Camera; frame: FrameCamera; width, height: int; heading: Direction
+): Option[ScreenPosition] =
+  ## Solve pixel that `heading` from eye passes through; inverse of `headingThrough`.
+  ##   Any length: direction of sky and offset of place from eye read alike, so two fingers'
+  ##   grip projects both through one statement.
+  ##   None where heading runs behind eye, or along plane through it square to sight.
+  let depth = dot(heading, frame.forward)
+  if depth <= 0.0: return
+  let
+    half_height = tan(0.5 * degToRad(camera.degrees_field_of_view))
+    half_width = half_height * (float(width) / float(height))
+    ndc_x = dot(heading, frame.axis_right) / (depth * half_width)
+    ndc_y = dot(heading, frame.axis_up) / (depth * half_height)
+  some(ScreenPosition(
+    x: (ndc_x + 1.0) * 0.5 * float(width), y: (1.0 - ndc_y) * 0.5 * float(height), depth: depth
+  ))
+
+
 func castRay*(
   camera: Camera; eye: Position; frame: FrameCamera; width, height: int; cursor: ScreenPosition
 ): Multivector =
