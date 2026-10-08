@@ -26,8 +26,9 @@ proc streamsOf(action: proc ()): tuple[output, errors: string] =
   let
     saved = (posix.dup(1), posix.dup(2))
     files = (open(directory / "output", fmWrite), open(directory / "errors", fmWrite))
-  discard posix.dup2(files[0].getFileHandle, 1)
-  discard posix.dup2(files[1].getFileHandle, 2)
+  # File handle is descriptor of C library on every platform, though typed `int` on Windows.
+  discard posix.dup2(cint(files[0].getFileHandle), 1)
+  discard posix.dup2(cint(files[1].getFileHandle), 2)
   action()
   flushFile(stdout)
   flushFile(stderr)
