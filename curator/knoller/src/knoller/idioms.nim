@@ -19,16 +19,18 @@
 ##     std/nimprof`; entry module (`when isMainModule:`), library umbrella
 ##     (`<project>/src/<project>.nim`) and stub carry it right after their pragmas (§3):
 ##     `checkProfiler`, outside static pass until projects run fix.
-##   - Stub `tests/test_*.nim` (`reports.isStub`) leaves `-r`, `batchable` and `joinable` out of
-##     its testament header (§6).
+##   - Stub leaves `-r`, `batchable` and `joinable` out of its testament header (§6). Stub is
+##     `tests/test_*.nim`, or `t*.nim` at any depth inside directory directly under `tests`
+##     whose source opens with that header, as testament reads category (`reports.isStub`).
 ##   Rules no fixer reaches, since each needs knowledge text does not hold (`checkPragmas`,
 ##     `checkTests`):
 ##   - `{.used.}` carries trailing comment naming its consumer (§2).
 ##   - `{.push.}` stands only over block of foreign bindings, which `{.pop.}` closes (§2): word of
 ##     `MARKS_FOREIGN` stands among pragmas of block (`declared.nim`).
 ##   - Under `tests/` (`reports.isFileTest`): suite importing `std/random` seeds it, and stub
-##     carries testament header (§6); `echo` of value without label, outside condition, is
-##     debug output (VIII.5).
+##     carries testament header (§6), so only `tests/test_*.nim` can lack it, since header makes
+##     stub of category; `echo` of value without label, outside condition, is debug output
+##     (VIII.5).
 ##   `checkIdioms` reads every idiom static pass of `curator/audit` reads, by dialect: module
 ##     each, script and package those of any Nim code, i.e. bindings, pragmas, return and test
 ##     rules but stub; `strictFuncs`, import order and stub keys are module's (`fixersIdiom` too).
@@ -145,8 +147,6 @@ const
     ## Statement STYLE.md §5 bans, since bare `return` exits with `result`.
   ROUTINES_RESULT = ["converter", "func", "method", "proc"]
     ## Routines holding implicit `result`; template and macro return from their caller.
-  HEADER_TESTAMENT* = "discard \"\"\""
-    ## Opening of stub's testament header, which stands before module's header docs.
   STRING_LONG = "\"\"\""  ## Delimiter of string spanning lines.
   OPENERS = {'(', '[', '{'}  ## Brackets opening span that continues line.
   CLOSERS = {')', ']', '}'}  ## Brackets closing such span.
@@ -299,7 +299,7 @@ func linesHeader(source: string): Slice[int] =
 func keysStub(path, source: string): seq[KeyStub] =
   ## Find each key §6 leaves out of stub's testament header: `-r` in `cmd`, whole line of
   ##   `batchable` or `joinable`. `-r` is flag alone, so space, quote or line end follows it.
-  if not path.isStub: return
+  if not path.isStub(source): return
   let lines = source.split('\n')
   for i in source.linesHeader:
     let s = lines[i].strip
@@ -443,7 +443,7 @@ func checkTests(path, source: string; lines, code: seq[string]; dialect: Dialect
       Rule.SeedRandom,
       "Suite seeds `std/random`, as `randomize(0)` does; got no seed.",
     )
-  if dialect == Dialect.Module and path.isStub and source.find(HEADER_TESTAMENT) < 0:
+  if dialect == Dialect.Module and path.isStub(source) and source.find(HEADER_TESTAMENT) < 0:
     result.add initReport(path, 0, Rule.HeaderStub, "Test stub carries testament header; got none.")
   for i, c in code:
     if c.wordFirst == "echo" and '"' notin lines[i] and not code.isUnderCondition(i):
@@ -821,7 +821,7 @@ func profilerOf(path, source: string): Profiler =
     code = source.codeOnly.split('\n')
     header = source.linesHeader
   result.anchor = -1
-  result.is_entry = path.isStub or path.isUmbrella
+  result.is_entry = path.isStub(source) or path.isUmbrella
   for i, line in lines:
     if code[i].strip.len == 0: continue
     if line.startsWith(GUARD_MAIN): result.is_entry = true
