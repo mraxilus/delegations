@@ -18,7 +18,9 @@
 ##   - Profiler import stands on one line, `when compileOption("profiler"): import
 ##     std/nimprof`; entry module (`when isMainModule:`), library umbrella
 ##     (`<project>/src/<project>.nim`) and stub carry it right after their pragmas (§3):
-##     `checkProfiler`, outside static pass until projects run fix.
+##     `checkProfiler`, outside static pass until projects run fix. Stub that includes file at
+##     top level takes import from it, since include makes one module of both (§3, §6). Cost:
+##     included file is unread here, so its import is held by reading alone.
 ##   - Stub leaves `-r`, `batchable` and `joinable` out of its testament header (§6). Stub is
 ##     `tests/test_*.nim`, or `t*.nim` at any depth inside directory directly under `tests`
 ##     whose source opens with that header, as testament reads category (`reports.isStub`).
@@ -812,6 +814,11 @@ func isUmbrella(path: string): bool =
   parts.len >= 3 and parts[^2] == "src" and parts[^1] == parts[^3] & ".nim"
 
 
+func isIncluding(source: string): bool =
+  ## Decide whether module includes file at top level, so both compile as one module.
+  source.codeOnly.splitLines.anyIt(it.startsWith("include "))
+
+
 func profilerOf(path, source: string): Profiler =
   ## Read profiler import of module: forms on two lines, presence, and pragma it goes after.
   ##   Module opens with header docs, notes and testament header; pragma lines after them, with
@@ -821,7 +828,7 @@ func profilerOf(path, source: string): Profiler =
     code = source.codeOnly.split('\n')
     header = source.linesHeader
   result.anchor = -1
-  result.is_entry = path.isStub(source) or path.isUmbrella
+  result.is_entry = (path.isStub(source) and not source.isIncluding) or path.isUmbrella
   for i, line in lines:
     if code[i].strip.len == 0: continue
     if line.startsWith(GUARD_MAIN): result.is_entry = true
@@ -857,7 +864,8 @@ func checkProfiler*(path, source: string): seq[Report] =
       path,
       0,
       Rule.ImportProfiler,
-      "Entry module, library umbrella and test stub import profiler right after pragmas; got none.",
+      "Entry module, library umbrella and stub that includes no suite import profiler right " &
+        "after pragmas; got none.",
     )
 
 

@@ -145,10 +145,12 @@ suite "Idioms":
     let
       header = "discard \"\"\"\naction: run\n\"\"\"\n## Do.\n\n" &
         "{.warning[UnusedImport]: off.}\n\n" & STRICT_FUNCS & "\n"
-      stub = fixIdioms("tests/test_x.nim", header & "include \"suites.nim\"\n")
-    check stub.source == header & "\n" & IMPORT_PROFILER & "\n\ninclude \"suites.nim\"\n"
+      stub = fixIdioms("tests/test_x.nim", header & "import ./suites/test_a\n")
+    check stub.source == header & "\n" & IMPORT_PROFILER & "\n\nimport ./suites/test_a\n"
     check stub.fixed.mapIt(it.rule) == @[Rule.ImportProfiler]
     check fixIdioms("tests/test_x.nim", stub.source).fixed.len == 0  # second fix writes nothing
+    # Stub that includes its suite takes import from it (STYLE.md §3), so fix writes nothing.
+    check fixIdioms("tests/test_x.nim", header & "include \"suites.nim\"\n").fixed.len == 0
 
 
   test "test echo of unlabelled value is debug output; label or condition passes":
