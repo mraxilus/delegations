@@ -6,10 +6,13 @@
 ##     (`command.nim`).
 ##   Text cannot tell conversion `x.T` from field or module path (`rigid3.Point`), nor find every
 ##     use of name across modules; semantic pass of pin project runs on can, symbol by symbol.
-##   One `nimsuggest --v3 --stdin` serves each entry: file itself, or file including it, since
+##   One `nimsuggest --v3 --tester` serves each entry: file itself, or file including it, since
 ##     included file compiles inside includer alone. It runs in project directory, so project's
 ##     `nim.cfg` and `config.nims` apply, with `-d:testing` under `tests/` as stubs compile
 ##     (STYLE.md §6).
+##   Tester mode reads commands as `--stdin` does, and prints `!EOF!` once ready and after each
+##     answer, with no help and no prompt. `--stdin` prompts `> ` before each command on
+##     Windows, which glues prompt to first line of every answer there.
 ##   Each file is checked first (`chkFile`). File reporting error on C backend is asked again on
 ##     JavaScript backend, and file failing both stays unresolved with its first error, so
 ##     fixers leave it and their findings stay for hand.
@@ -30,6 +33,10 @@
 ##     Pipe holds 64 KiB: run whose answers fill it stops reading commands, so writing every
 ##     command first, through pipes, waits forever on entry of many sites. Cost: two temporary
 ##     files per run, removed once read.
+##   Shell is `sh` on POSIX, where `poEvalCommand` runs line through it, and `cmd` on Windows,
+##     where `poEvalCommand` hands line to `CreateProcess` with no shell between, so nothing
+##     there would read redirection (`lineRedirected`). Cost: `%` in path expands in `cmd`
+##     where it names variable, so such path reaches run changed.
 ##
 ##   Rejected: compiler as library inside knoller, which compiles compiler into every build of it
 ##     and binds it to one pin, where ronri projects lex glyphs only their commit pin knows.
@@ -94,7 +101,7 @@ type
 const
   NIMSUGGEST = "nimsuggest"  ## Tool every toolchain ships beside compiler.
   PARALLEL = 4  ## Entries running at once at most.
-  MARKS_HEADER = ["usage:", "type '"]  ## Openings of lines `nimsuggest` prints before answers.
+  MARK_END = "!EOF!"  ## Line tester mode prints once ready and after each answer.
   SEVERITY_ERROR = "Error"  ## Severity of `chk` answer that leaves file unresolved.
   BACKEND_JS = "--backend:js"  ## Option asking JavaScript backend, for file C rejects.
   DEFINE_TESTING = "-d:testing"  ## Define stub's own `cmd` passes, read under `tests/`.
@@ -127,21 +134,19 @@ func symbolOf*(line: string): Option[Symbol] =
 
 
 func blocksOf*(output: string): seq[seq[string]] =
-  ## Split `nimsuggest` output into one block of answer lines per command, header dropped.
-  ##   Each command ends its answer with empty line, so empty answer is empty line alone, and
-  ##   output holding no line holds no answer: run that never started writes none.
+  ## Split output of tester mode into one block of answer lines per command. Mark printed once
+  ##   ready opens first answer, and each answer ends at mark, so text before first mark is no
+  ##   answer, output with no mark holds none, and answer no mark closes was cut short and
+  ##   reads as none.
   var
     current: seq[string]
-    is_header = true
-  if output.len == 0: return
-  let text = if output.endsWith("\n"): output[0 ..^ 2] else: output
-  for line in text.splitLines:
-    if is_header and MARKS_HEADER.anyIt(line.startsWith(it)): continue
-    is_header = false
-    if line.len == 0:
-      result.add current
+    is_ready = false
+  for line in output.splitLines:
+    if line == MARK_END:
+      if is_ready: result.add current
       current = @[]
-    else: current.add line
+      is_ready = true
+    elif is_ready and line.len > 0: current.add line
 
 
 func declaredAt(symbol: Symbol, path: string, site: (int, int)): Symbol =
@@ -179,12 +184,27 @@ func includerOf*(files: openArray[(string, string)], path: string): string =
     result = found
 
 
+func lineRedirected*(
+  tool: string; arguments: openArray[string]; commands, answers: string; cmd = ""
+): string =
+  ## Render line running tool with arguments, reading commands from file and writing answers to
+  ##   file: through `sh` where `cmd` is empty, else through `cmd` at that path, as Windows
+  ##   needs. Every word is quoted there, since no path holds `"` on Windows; `/d` skips
+  ##   AutoRun commands, `/v:off` reads `!` as itself, and `/s` strips outer quotes alone.
+  if cmd.len == 0:
+    return (@[tool] & @arguments).mapIt(it.quoteShellPosix).join(" ") & " < " &
+      commands.quoteShellPosix & " > " & answers.quoteShellPosix
+  let inner = (@[tool] & @arguments).mapIt('"' & it & '"').join(" ") & " < \"" & commands &
+    "\" > \"" & answers & '"'
+  '"' & cmd & "\" /d /v:off /s /c \"" & inner & '"'
+
+
 proc ask(entry: Entry, is_js: bool): Asked =
   ## Start `nimsuggest` on entry, reading every command entry's queries make from file and
   ##   writing its answers to file, so neither process waits on pipe other leaves full.
   ##   Toolchain holding no `nimsuggest` starts none, and says so, so each file stays unresolved
   ##   with that reason rather than reading empty output as answer.
-  var arguments = @["--v3", "--stdin"] & entry.defines
+  var arguments = @["--v3", "--tester"] & entry.defines
   if is_js: arguments.add BACKEND_JS
   arguments.add entry.file
   let tool =
@@ -210,8 +230,9 @@ proc ask(entry: Entry, is_js: bool): Asked =
   written.close
   result.commands = path
   result.answers = path.changeFileExt(TEMP_ANSWERS)
-  let line = (@[tool] & arguments).mapIt(it.quoteShell).join(" ") & " < " &
-    result.commands.quoteShell & " > " & result.answers.quoteShell
+  let
+    cmd = when defined(windows): getEnv("ComSpec", "cmd.exe") else: ""
+    line = lineRedirected(tool, arguments, result.commands, result.answers, cmd)
   result.process = startProcess(line, workingDir = entry.directory, options = {poEvalCommand})
 
 

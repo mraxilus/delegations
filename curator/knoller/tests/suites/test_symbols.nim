@@ -12,8 +12,8 @@ import ../../src/knoller/symbols
 const
   LINE_ANSWER = "def\tskType\tsystem.float\tfloat\t/lib/system/basic_types.nim\t15\t2\t\"\"\t100"
     ## One answer line of `def`, as `nimsuggest --v3` prints it.
-  OUTPUT = "usage: sug|con|def\ntype 'quit' to quit\n\n" & LINE_ANSWER & "\n\n\n"
-    ## Output of three commands: empty answer, one answer, empty answer.
+  OUTPUT = "!EOF!\n!EOF!\n" & LINE_ANSWER & "\n!EOF!\n!EOF!\n"
+    ## Output of three commands in tester mode: empty answer, one answer, empty answer.
   USES_PIPE = 800
     ## Uses of one symbol, so answer of `dus` listing them passes 64 KiB, pipe's capacity.
   NAME_PIPE = 70_000  ## Length of name asked, so command asking it passes 64 KiB too.
@@ -34,10 +34,27 @@ suite "Internal: Symbols":
     check "def\tskType".symbolOf.isNone
 
 
-  test "output splits into one block per command, header dropped, empty answer kept":
+  test "output splits into one block per command, mark to mark, empty answer kept":
     let blocks = OUTPUT.blocksOf
     check blocks.len == 3
     check blocks[0].len == 0 and blocks[1] == @[LINE_ANSWER] and blocks[2].len == 0
+    check OUTPUT.replace("\n", "\r\n").blocksOf == blocks  # Windows ends lines in CRLF
+    check "!EOF!\n".blocksOf.len == 0  # ready, and asked nothing
+    check ("!EOF!\n" & LINE_ANSWER & "\n").blocksOf.len == 0  # answer cut short reads as none
+
+
+  test "run reads commands and writes answers through sh on POSIX and through cmd on Windows":
+    check lineRedirected("/t/nimsuggest", ["--v3", "/r/a b.nim"], "/tmp/c", "/tmp/a") ==
+      "/t/nimsuggest --v3 '/r/a b.nim' < /tmp/c > /tmp/a"
+    check lineRedirected(
+      "C:\\nim\\bin\\nimsuggest.exe",
+      ["--v3", "C:\\r\\a b.nim"],
+      "C:\\T\\c",
+      "C:\\T\\a",
+      cmd = "C:\\Windows\\system32\\cmd.exe",
+    ) == "\"C:\\Windows\\system32\\cmd.exe\" /d /v:off /s /c " &
+      "\"\"C:\\nim\\bin\\nimsuggest.exe\" \"--v3\" \"C:\\r\\a b.nim\" " &
+      "< \"C:\\T\\c\" > \"C:\\T\\a\"\""
 
 
   test "included file resolves through file including it, followed to top":
