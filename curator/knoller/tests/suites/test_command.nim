@@ -7,7 +7,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[importutils, options, os, osproc, sequtils, strutils, tables, tempfiles, unittest]
+import std/[importutils, options, os, osproc, sequtils, sets, strutils, tables, tempfiles, unittest]
 import ../../src/knoller/[command, compilers, edits, proofs, reports, rewrites, rules, symbols]
 from ../../src/knoller/command {.all.} import joined, Part
 import ./stubs
@@ -277,6 +277,53 @@ suite "Command line":
     defer: delEnv("GIT_TRACE")
     check root.listed == (@[root / "a.nim", root / "b.nim"], "")  # no trace glued to first
     check outside.listed.refusal.startsWith("Directory lies outside git work tree")
+
+
+  test "checkout git converts to CRLF reads as LF, and fix writes CRLF back":
+    # Git for Windows checks out CRLF by default (`core.autocrlf=true`), so every line of every
+    #   file read as trailing whitespace there, and fix rewrote its line endings. Domain: each
+    #   setting and attribute that decides whether commit turns CRLF back into LF.
+    let records = [
+      ("i/lf    w/crlf  attr/                 \ta.nim", "true\n", true),
+      ("i/lf    w/crlf  attr/                 \ta.nim", "input", true),
+      ("i/lf    w/crlf  attr/                 \ta.nim", "", false),  # commit keeps CRLF
+      ("i/lf    w/crlf  attr/text=auto        \ta.nim", "", true),
+      ("i/lf    w/crlf  attr/text eol=crlf    \ta.nim", "false", true),
+      ("i/lf    w/crlf  attr/-text            \ta.nim", "true", false),  # binary
+      ("i/crlf  w/crlf  attr/                 \ta.nim", "true", false),  # CRLF committed
+      ("i/      w/crlf  attr/                 \ta.nim", "true", true),  # not added yet
+      ("i/lf    w/mixed attr/                 \ta.nim", "true", true),
+      ("i/lf    w/lf    attr/                 \ta.nim", "true", false),
+    ]
+    for (record, autocrlf, is_converted) in records:
+      check record.isConverted(autocrlf) == is_converted
+    check "a\r\nb\r\n".judged(true) == "a\nb\n" and "a\r\nb\r\n".judged(false) == "a\r\nb\r\n"
+    check "a\nb\n".restored(true) == "a\r\nb\r\n" and "a\nb\n".restored(false) == "a\nb\n"
+
+    # Real checkout: git converts file committed with LF, and keeps file committed with CRLF.
+    let
+      root = createTempDir("knoller_", "_eol")
+      outside = createTempDir("knoller_", "_outside")
+      git = "git -c user.name=T -c user.email=t@example.invalid -c commit.gpgsign=false -C " &
+        root.quoteShell & " "
+    defer:
+      removeDir(root)
+      removeDir(outside)
+    root.writeTree([("a.nim", "let a = 1\n"), ("b.nim", "let b = 2\r\n")])
+    outside.writeTree([("c.nim", "let c = 3\r\n")])
+    check execCmd(git & "init -q") == 0
+    check execCmd(git & "config core.autocrlf false") == 0
+    check execCmd(git & "add -A") == 0
+    check execCmd(git & "commit -q -m init") == 0
+    check execCmd(git & "config core.autocrlf true") == 0
+    removeFile(root / "a.nim")
+    removeFile(root / "b.nim")
+    check execCmd(git & "checkout -- .") == 0
+    check readFile(root / "a.nim") == "let a = 1\r\n"  # checkout wrote CRLF
+    let converted = convertedOf([root / "a.nim", root / "b.nim", outside / "c.nim"])
+    check root / "a.nim" in converted
+    check root / "b.nim" notin converted  # commit keeps its CRLF, so finding stays
+    check outside / "c.nim" notin converted  # git knows nothing of it
 
 
   test "locked nimble file and file of no dialect are passed over":

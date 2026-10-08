@@ -38,6 +38,10 @@
 ##   Fixers read each path whole, absolute and with `.` and `..` resolved (`layoutOf`), so test
 ##     file, stub and umbrella read alike however command line names them; output prints path
 ##     as named.
+##   Fixers read text as commit stores it. Where checkout wrote CRLF that commit turns back into
+##     LF, as `core.autocrlf` does on Windows by default, run reads LF and writes CRLF back
+##     (`isConverted`), so no CR reads as trailing whitespace and no fix rewrites line endings.
+##     CRLF that commit keeps is read as written, and stays finding.
 ##   `outcomeOf` decides what run writes and prints from text alone, so suite drives it with
 ##     no file; `main` reads files, runs git, writes and prints.
 ##
@@ -52,7 +56,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, options, os, osproc, parseopt, sequtils, streams, strutils, tables]
+import std/[algorithm, options, os, osproc, parseopt, sequtils, sets, streams, strutils, tables]
 import ./[
   chain, compilers, conversions, edits, fences, names, parentheses, pins, proofs, reports, rewrites,
   rules, symbols,
@@ -401,6 +405,37 @@ func listingOf*(directory, output: string; code: int): tuple[files: seq[string],
     result.refusal = "Directory holds no Nim file that git lists; got `" & directory & "`."
 
 
+func isConverted*(record, autocrlf: string): bool =
+  ## Decide from one record of `git ls-files --eol`, and value of `core.autocrlf`, whether
+  ##   checkout wrote CRLF that commit turns back into LF: worktree holds CRLF, index holds LF
+  ##   or no file yet, and git normalizes file, by `core.autocrlf` or by `text` or `eol`
+  ##   attribute, which `-text` overrides.
+  let
+    info = record.split('\t')[0]
+    at = info.find("attr/")
+    attribute = if at < 0: "" else: info[at + "attr/".len .. ^1]
+    words = attribute.splitWhitespace
+  var index, worktree = ""
+  for word in info[0 ..< (if at < 0: info.len else: at)].splitWhitespace:
+    if word.startsWith("i/"): index = word["i/".len .. ^1]
+    elif word.startsWith("w/"): worktree = word["w/".len .. ^1]
+  let
+    is_binary = "-text" in words
+    is_text = words.anyIt(it == "text" or it.startsWith("text=") or it.startsWith("eol="))
+    is_normalized = not is_binary and (is_text or autocrlf.strip in ["true", "input"])
+  worktree in ["crlf", "mixed"] and index in ["", "lf", "none"] and is_normalized
+
+
+func judged*(text: string, is_converted: bool): string =
+  ## Read text as commit stores it: each CRLF turned LF where checkout converted file.
+  if is_converted: text.replace("\r\n", "\n") else: text
+
+
+func restored*(text: string, is_converted: bool): string =
+  ## Read text to write as checkout writes it: each LF turned CRLF where checkout converted file.
+  if is_converted: text.replace("\n", "\r\n") else: text
+
+
 proc runGit*(
   directory: string, arguments: openArray[string]
 ): tuple[output, failure: string, code: int] =
@@ -427,6 +462,32 @@ proc listed*(directory: string): tuple[files: seq[string], refusal: string] =
   ##   stderr never reaches path (`runGit`).
   let (output, _, code) = runGit(directory, ["ls-files", "-z"])
   listingOf(directory, output, code)
+
+
+proc convertedOf*(paths: openArray[string]): HashSet[string] =
+  ## Read each path whose checkout wrote CRLF that commit turns back into LF (`isConverted`),
+  ##   asking git once in each directory; path git knows nothing of is read as written.
+  var groups: seq[(string, seq[string])]
+  for path in paths:
+    let directory = path.parentDir
+    var at = groups.mapIt(it[0]).find(directory)
+    if at < 0:
+      groups.add (directory, @[])
+      at = groups.high
+    groups[at][1].add path
+  for (directory, group) in groups:
+    let names = group.mapIt(it.extractFilename)
+    let (listing, _, code) = runGit(
+      directory,
+      @["--literal-pathspecs", "ls-files", "--eol", "-z", "--cached", "--others", "--"] & names,
+    )
+    if code != 0: continue
+    let autocrlf = runGit(directory, ["config", "--get", "core.autocrlf"]).output
+    for record in listing.split('\0'):
+      let fields = record.split('\t')
+      if fields.len < 2: continue
+      let k = names.find(fields[1])
+      if k >= 0 and record.isConverted(autocrlf): result.incl group[k]
 
 
 proc projectOf(directory: string): string =
@@ -636,7 +697,8 @@ proc main*(): int =
   var toolchains = initToolchains()
   let
     directory = getCurrentDir()
-    files = paths.mapIt((it, readFile(it)))
+    converted = paths.convertedOf
+    files = paths.mapIt((it, readFile(it).judged(it in converted)))
     answers = files.answersOf(options.get.nim, directory, toolchains)
     plans = files.plansOf(paths.lockedOf, options.get.nim, directory, toolchains)
     batches = paths.batchesOf(options.get.nim, directory, proversPin(toolchains))
@@ -649,6 +711,6 @@ proc main*(): int =
       answers,
       plans,
     )
-  for (path, text) in outcome.written: writeFile(path, text)
+  for (path, text) in outcome.written: writeFile(path, text.restored(path in converted))
   for line in outcome.lines: echo line
   outcome.code
