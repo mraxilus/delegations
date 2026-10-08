@@ -50,6 +50,8 @@ type
     arms*: seq[array[2, ArmPose]]  ## One per connection.
     trunks*: array[Body, seq[Capsule]]  ## Every trunk capsule where engine has it.
     girdles*: array[Body, array[Arm, Capsule]]  ## And each shoulder's.
+    hands*: seq[array[2, array[3, Capsule]]]
+      ## Each joined hand's capsules, one pair per connection (`rigid.handCapsules`).
     room*: float  ## Least room any joint had here.
 
   Walk* = object  ## One sweep, one way.
@@ -255,6 +257,11 @@ func reflected(
   for k in 0..<order.len:
     let arms = moment.arms[order[k]]
     result.arms.add [reflected(arms[0]), reflected(arms[1])]
+    # Hand's three capsules lie side by side, so mirror turns their order about too.
+    var hands: array[2, array[3, Capsule]]
+    for e in 0..1:
+      for finger in 0..2: hands[e][2-finger] = reflected(moment.hands[order[k]][e][finger])
+    result.hands.add hands
   for who in Body:
     for t in 0..<moment.trunks[who].len:
       result.trunks[who].add reflected(moment.trunks[who][partners[t]])
@@ -349,6 +356,15 @@ proc momentOf(couple: Couple, at: float): tuple[moment: Moment, why: Stop, which
   for i in 0..<couple.links.len:
     let pose = couple.poseOf(i)
     result.moment.arms.add pose.arms
+    var hands: array[2, array[3, Capsule]]
+    for k, hand in couple.links[i].ends:
+      var finger = 0
+      for shape in couple.shapes:
+        if shape.mark == Mark.Palm and shape.who == hand.body and shape.arm == hand.arm:
+          let ends = couple.endsOf(shape)
+          hands[k][finger] = (ends.a, ends.z, shape.radius)
+          inc finger
+    result.moment.hands.add hands
     result.moment.room = min(result.moment.room, roomAt(couple, pose, i))
     if result.why == Stop.None:
       let (gave, end_index) = couple.stoppedBy(i)
@@ -677,6 +693,8 @@ proc isReaching*(
 
 func leapOf*(walk: Walk): float =
   ## Furthest any point of any held arm moves between two moments of walk.
+  ##   Hand is read at both ends of its capsules, fingertips among them.  Grip is not: it
+  ##     lies on hand, between ends that are read.
   for j in 1..<walk.moments.len:
     for i in 0..<walk.moments[j].arms.len:
       for k in 0..1:
@@ -687,9 +705,12 @@ func leapOf*(walk: Walk): float =
           (before.shoulder, after.shoulder),
           (before.elbow, after.elbow),
           (before.wrist, after.wrist),
-          (before.grip, after.grip),
         ]:
           result = max(result, distance(p, q))
+        for finger in 0..2:
+          let (was, now) = (walk.moments[j-1].hands[i][k][finger],
+                            walk.moments[j].hands[i][k][finger])
+          result = max(result, max(distance(was.a, now.a), distance(was.z, now.z)))
 
 func chosen*(walks: openArray[Carry]): int =
   ## Which of walked distances couple stand at, -1 for none: nearest carrying

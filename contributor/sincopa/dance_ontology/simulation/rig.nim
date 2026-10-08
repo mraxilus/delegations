@@ -12,8 +12,10 @@
 ##         with joint's centre two centimetres or so inside bone
 ##         -> shoulders 0.18 out from axis;  acromion to radiale 0.34 /
 ##         0.31 less that offset -> upper arm of 0.31;  radiale to stylion
-##         0.27 / 0.24 -> forearm of 0.25;  grip's centre about 0.08
-##         past wrist crease;  forearm round 0.27 -> limb radius 0.045.
+##         0.27 / 0.24 -> forearm of 0.25;  grip's centre about 0.08 past wrist
+##         crease;  hand length 0.193 / 0.180 -> hand of 0.19;  palm length 0.116 /
+##         0.108 -> 0.11;  hand breadth 0.088 / 0.078 -> 0.083;  hand round 0.212 /
+##         0.187 -> 0.20;  forearm round 0.27 -> limb radius 0.045.
 ##       Shoulder extension 50-60 degrees and horizontal abduction 40-45 are
 ##         held to 45 behind frontal plane; adduction across body to
 ##         45 past sagittal plane; humeral rotation 90 in and 105 out, with
@@ -82,7 +84,11 @@ type
     hip*: float  ## Where torso starts.
     shoulder_out*: float  ## Each shoulder joint from axis, sideways.
     shoulder_up*: float  ## And its height.
-    upper*, fore*, hand*: float  ## Shoulder to elbow, elbow to wrist, wrist to grip.
+    upper*, fore*, hand*: float  ## Shoulder to elbow, elbow to wrist, wrist to fingertip.
+    palm*: float  ## Wrist to knuckles.
+    carry*: float  ## Wrist to grip's centre: where hand is carried, which band is asked of.
+    hand_round*: float  ## Hand's girth round knuckles, thumb left out.
+    hand_broad*: float  ## Hand's breadth across knuckles.
     limb*: float  ## Half of arm's thickness.
     range*: array[Dof, Range]
     waist*: Range  ## Thoracic rotation: shoulders yawing on hips.
@@ -121,7 +127,11 @@ const HUMAN* = Rig(
   shoulder_up: 1.40,
   upper: 0.31,
   fore: 0.25,
-  hand: 0.08,
+  hand: 0.19,
+  palm: 0.11,
+  carry: 0.08,
+  hand_round: 0.20,
+  hand_broad: 0.083,
   limb: 0.045,
   range: [
     Range(
@@ -214,8 +224,43 @@ func bottom*(rig: Rig, part: Part): float =
   of Part.Neck: rig.top[Part.Torso]
   of Part.Head: rig.top[Part.Neck]
 
-func span*(rig: Rig): float = rig.upper + rig.fore + rig.hand
-  ## Shoulder to grip with everything straight: as far as hand goes.
+func handThick*(rig: Rig): float = (rig.hand_round - 2.0 * rig.hand_broad) / (PI - 2.0)
+  ## Hand's thickness, from its round and breadth.
+  ##   Hand's section is stadium: flat palm and back, round edges.  Its round is two flats
+  ##     and one circle of thickness, so tape's 0.20 and 0.083 give 0.030.
+
+func gripAtPalm*(rig: Rig): float = rig.palm / 2.0
+  ## How far past wrist grip sits held palm to palm: full handshake holds partner's hand
+  ## across middle of palm.
+
+func gripAtTips*(rig: Rig): float = rig.hand - handThick(rig) / 2.0
+  ## How far past wrist grip sits held by fingertips: hooked fingers hold at hand's end.
+
+func handLong*(rig: Rig, depth: float): float = min(rig.hand, depth + handThick(rig))
+  ## How far past wrist hand that holds `depth` deep reaches: fingers past grip curl round
+  ## partner's hand, about one thickness deep.  Open hand, held at fingertips or not at all,
+  ## is whole hand.
+
+func span*(rig: Rig): float = rig.upper + rig.fore + gripAtTips(rig)
+  ## Shoulder to grip with everything straight and hands held by fingertips: as far as
+  ## hand goes.
+
+const
+  GRIP_CONE_PALM* = toRadians(30)
+    ## How far two palms held palm to palm tilt off facing each other.  Assumed.
+  GRIP_TWIST_PALM* = toRadians(60)
+    ## How far two hands held palm to palm turn off fingers opposed.  Assumed.
+
+func gripFreedom*(rig: Rig, depth: float): tuple[cone, twist: float] =
+  ## How far two joined hands turn against each other, with grip this far past wrist.
+  ##   Palm to palm, hands lock; by fingertips, hooked fingers turn freely.  So straight
+  ##     connection holds anywhere from fingertips to full handshake, and connection that
+  ##     curls holds at fingertips alone (Architect, issue 375).  Between, freedom grows in
+  ##     step with depth.  Assumed.
+  let toward = clamp((depth - gripAtPalm(rig)) / (gripAtTips(rig) - gripAtPalm(rig)), 0.0, 1.0)
+  (GRIP_CONE_PALM + toward * (PI - GRIP_CONE_PALM),
+   GRIP_TWIST_PALM + toward * (PI - GRIP_TWIST_PALM))
+
 
 func touching*(rig: Rig): float = 2.0 * halfDepth(rig, Part.Torso)
   ## Closest two bodies stand: chest to chest.

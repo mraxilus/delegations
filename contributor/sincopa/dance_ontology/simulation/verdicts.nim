@@ -139,8 +139,10 @@ proc rigTable(): string =
   result.add &"| head round | {HUMAN.round[Part.Head]} m, radius " &
       &"{formatFloat(halfBreadth(HUMAN, Part.Head), ffDecimal, 3)}, to {HUMAN.top[Part.Head]} m |\n"
   result.add &"| shoulders | {HUMAN.shoulder_out} m out, {HUMAN.shoulder_up} m up |\n"
-  result.add &"| arm | upper {HUMAN.upper}, forearm {HUMAN.fore}, wrist to grip {HUMAN.hand}: " &
-      &"span {turns(span(HUMAN))} m; limb radius {HUMAN.limb} |\n"
+  result.add &"| arm | upper {HUMAN.upper}, forearm {HUMAN.fore}, hand {HUMAN.hand}, carried " &
+      &"{HUMAN.carry} and held {formatFloat(gripAtPalm(HUMAN), ffDecimal, 3)} to " &
+      &"{formatFloat(gripAtTips(HUMAN), ffDecimal, 3)} past wrist: span {turns(span(HUMAN))} m; " &
+      &"limb radius {HUMAN.limb} |\n"
   let
     behind = int(round(HUMAN.range[Dof.Extend].upper * 180.0 / PI))
     twist_in = int(round(-HUMAN.range[Dof.Twist].lower * 180.0 / PI))
