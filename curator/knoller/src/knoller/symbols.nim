@@ -85,9 +85,10 @@ type
     queries: seq[Query]
 
   Asked = object  ## Define `nimsuggest` run started: process, file of commands, file of answers.
-    process: Process
+    process: Process  ## Run itself; nil where `missing` says why none started.
     commands: string  ## Path of file process reads commands from.
     answers: string  ## Path of file process writes answers to.
+    missing: string  ## Why no run started, since toolchain holds no `nimsuggest`; empty if one did.
 
 
 const
@@ -127,10 +128,12 @@ func symbolOf*(line: string): Option[Symbol] =
 
 func blocksOf*(output: string): seq[seq[string]] =
   ## Split `nimsuggest` output into one block of answer lines per command, header dropped.
-  ##   Each command ends its answer with empty line, so empty answer is empty line alone.
+  ##   Each command ends its answer with empty line, so empty answer is empty line alone, and
+  ##   output holding no line holds no answer: run that never started writes none.
   var
     current: seq[string]
     is_header = true
+  if output.len == 0: return
   let text = if output.endsWith("\n"): output[0 ..^ 2] else: output
   for line in text.splitLines:
     if is_header and MARKS_HEADER.anyIt(line.startsWith(it)): continue
@@ -179,10 +182,17 @@ func includerOf*(files: openArray[(string, string)], path: string): string =
 proc ask(entry: Entry, is_js: bool): Asked =
   ## Start `nimsuggest` on entry, reading every command entry's queries make from file and
   ##   writing its answers to file, so neither process waits on pipe other leaves full.
+  ##   Toolchain holding no `nimsuggest` starts none, and says so, so each file stays unresolved
+  ##   with that reason rather than reading empty output as answer.
   var arguments = @["--v3", "--stdin"] & entry.defines
   if is_js: arguments.add BACKEND_JS
   arguments.add entry.file
-  let tool = if entry.bin.len == 0: findExe(NIMSUGGEST) else: entry.bin / NIMSUGGEST
+  let tool =
+    if entry.bin.len == 0: findExe(NIMSUGGEST) else: entry.bin / NIMSUGGEST.addFileExt(ExeExt)
+  if tool.len == 0 or not fileExists(tool):
+    result.missing =
+      if entry.bin.len == 0: "no nimsuggest on PATH" else: "no nimsuggest in " & entry.bin
+    return
   var commands = ""
   for query in entry.queries:
     let
@@ -207,11 +217,14 @@ proc ask(entry: Entry, is_js: bool): Asked =
 
 proc answersOf(entry: Entry, asked: Asked): seq[Answer] =
   ## Read answers of started run, in order commands went: check, sites, names of each file.
-  discard asked.process.waitForExit
-  asked.process.close
-  let output = if fileExists(asked.answers): readFile(asked.answers) else: ""
-  removeFile(asked.commands)
-  removeFile(asked.answers)
+  ##   Run that never started answers each file unresolved, with reason it gives.
+  var output = ""
+  if asked.missing.len == 0:
+    discard asked.process.waitForExit
+    asked.process.close
+    if fileExists(asked.answers): output = readFile(asked.answers)
+    removeFile(asked.commands)
+    removeFile(asked.answers)
   let blocks = output.blocksOf
   var at = 0
   for query in entry.queries:
@@ -221,6 +234,7 @@ proc answersOf(entry: Entry, asked: Asked): seq[Answer] =
         let fields = line.split('\t')
         if fields.len > 7 and fields[3] == SEVERITY_ERROR and answer.reason.len == 0:
           answer.reason = fields[7].strip(chars = {'"'}) & " at line " & fields[5]
+    elif asked.missing.len > 0: answer.reason = asked.missing
     else: answer.reason = "nimsuggest answered nothing"
     inc at
     for site in query.sites:
