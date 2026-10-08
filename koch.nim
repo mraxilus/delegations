@@ -217,21 +217,6 @@ proc fileMark(root: string): string =
   pathMark(root, fieldsGit(root, ["rev-parse", "--git-dir"])[0].strip)
 
 
-proc checkoutAt(root, directory: string): string =
-  ## Read top of checkout of this repository holding directory, else root.
-  ##   Worktree shares root's git store, so both name one common directory; other repository,
-  ##     or none, falls back to root, as before. Path not yet written is read from nearest
-  ##     directory that exists.
-  var at = directory
-  while at.len > 1 and not dirExists(at): at = at.parentDir
-  const common = ["rev-parse", "--path-format=absolute", "--git-common-dir"]
-  try:
-    if fieldsGit(at, common)[0].strip == fieldsGit(root, common)[0].strip:
-      return fieldsGit(at, ["rev-parse", "--show-toplevel"])[0].strip
-  except IOError: discard
-  root
-
-
 proc branchOf(checkout: string): string =
   ## Read branch checked out in checkout.
   fieldsGit(checkout, ["rev-parse", "--abbrev-ref", "HEAD"])[0].strip
@@ -260,12 +245,12 @@ proc runHook(root, event, input: string): int =
     case event
     of "path":
       if tool notin TOOLS_EDIT: return 0
-      let checkout = checkoutAt(root, file.parentDir)
+      let checkout = checkoutAt(root, file.parentDir).get
       refuse(checkPathEdit(checkout.branchOf, insideRoot(checkout, file)), 2)
     of "bash":
       let
         command = data{"tool_input", "command"}.getStr
-        checkout = checkoutAt(root, directoryCommand(command, directory))
+        checkout = checkoutAt(root, directoryCommand(command, directory)).get
         is_pushed = fieldsGit(checkout, ["branch", "-r", "--contains", "HEAD"]).len > 0
       # Post through `gh api` speaks for delegate, so role line reads root's branch, as `body` does.
       var found = checkBash(checkout.branchOf, command, is_pushed)
@@ -287,7 +272,7 @@ proc runHook(root, event, input: string): int =
       )
     of "edit":
       let
-        checkout = checkoutAt(root, file.parentDir)
+        checkout = checkoutAt(root, file.parentDir).get
         path = insideRoot(checkout, file)
         tree = checkout.readTree
       var found = tree.auditTree
