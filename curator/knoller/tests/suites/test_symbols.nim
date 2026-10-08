@@ -84,6 +84,35 @@ suite "Internal: Symbols":
     check d.reason.len == 0 and d.symbols[(3, 7)].kind == "skLet"
 
 
+  test "toolchain with no nimsuggest leaves each file unresolved, and says so":
+    # Case as found: PATH held `nim` and no `nimsuggest`, and the two conversions of
+    #   `pga/multivectors.nim:75` of PGA library (`749fecf`) stayed unfixed with no warning,
+    #   since empty output read as one clean answer.
+    let
+      root = createTempDir("knoller_", "_symbols")
+      bare = createTempDir("knoller_", "_bin")  # toolchain directory holding no `nimsuggest`
+      files = @[
+        ("fixture.nimble", "version = \"0.1.0\"\nsrcDir = \"src\"\n"),
+        ("src/a.nim", "let\n  x = 3\n  y = x.float\n"),
+      ]
+    defer: removeDir(root)
+    defer: removeDir(bare)
+    for (path, content) in files: writeInto(root, path, content)
+    let answers = resolve([Request(
+      query: Query(path: "src/a.nim", sites: @[(3, 8)]),
+      root: root,
+      directory: root,
+      includer: "src/a.nim",
+      bin: bare,
+    )])
+    check answers.len == 1 and answers[0].symbols.len == 0
+    check answers[0].reason.contains("nimsuggest")  # warning names tool missing
+
+    # Domain: output holding no answer reads as none, whatever header stands before it.
+    check "".blocksOf.len == 0
+    check "usage: sug|con|def\ntype 'quit' to quit\n".blocksOf.len == 0
+
+
   test "run asked past pipe capacity both ways answers every command, neither side waiting":
     let
       root = createTempDir("knoller_", "_symbols")
