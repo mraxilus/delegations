@@ -1789,9 +1789,9 @@ their findings with `koch fix` on its own branch (CURATOR.md, duty 3).
 
 **Every entry module, library umbrella and test stub imports the profiler on one line (STYLE.md
 §3).** An entry module holds a `when isMainModule:` block in its code. The umbrella is
-`<project>/src/<project>.nim`, and a stub is `tests/test_*.nim`. The fixer joins the form on two
-lines. It inserts the line after the last pragma that opens the module, with a blank line on each
-side.
+`<project>/src/<project>.nim`, and a stub is `tests/test_*.nim` or a file of a testament category
+that a header opens (#443). The fixer joins the form on two lines. It inserts the line after the
+last pragma that opens the module, with a blank line on each side.
 
 - A `when isMainModule:` inside a string is no code, so `test_checker.nim` is no entry module.
 - A stub that includes a suite with the import then imports the module twice. The compiler

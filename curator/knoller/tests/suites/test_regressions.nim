@@ -281,6 +281,15 @@ const
     "        offset_along = generator.rand(-1.5 .. 1.5)*radius\n"
     ## Lines 516 to 540 of `tests/suites/test_mesh.nim` of `rga_visualiser` at `a440fb8` (#521),
     ##   in routine; line 538 of file is line 27 here.
+  STUB =
+      "discard \"\"\"\n" &
+      "action: run\n" &
+      "cmd: \"nim c -r --hints:on -d:testing -d:nimUnittestAbortOnError:on $options $file\"\n" &
+      "matrix: \"-d:pga.dimensions=3 -d:pga.is_conformal=false\"\n" &
+      "\"\"\"\n" &
+      "include \"../suites.nim\""
+    ## Whole `tests/rga3d/test_rga3d.nim` of PGA library at `d9be8ae`, no newline after its last
+    ##   line (#443).
 
 
 var KNOWN = Proofs()  ## Answers of parser by source, held across cases, as one run holds them.
@@ -408,3 +417,21 @@ suite "Regressions":
     let written = outcomeOf([("tests/suites/test_mesh.nim", MESH)], [], is_check = false).written
     check written[0][1].splitLines[32].startsWith("          else: generator.rand(0.5..3.0)) * ")
     check outcomeOf(written, [], is_check = false).lines == @["0 fixed."]  # second run
+
+
+  test "12. stub inside category of `tests` takes stub rules, as testament reads it (#443)":
+    let mended = STUB.replace(" -r ", " ").replace(
+      "\"\"\"\ninclude",
+      "\"\"\"\n\n" & HEAD & "when compileOption(\"profiler\"): import std/nimprof\n\ninclude",
+    ) & "\n"
+    for path in ["tests/rga3d/test_rga3d.nim", "tests/test_rga3d.nim"]:
+      check outcomeOf([(path, STUB)], [], is_check = true).lines == @[
+        path & ": file-ending to fix",
+        path & ": profiler-import to fix",
+        path & ": strictfuncs to fix",
+        path & ":3: stub-keys to fix",
+        "4 to fix.",
+      ]  # stub of category reports as stub directly under `tests` does
+      let written = outcomeOf([(path, STUB)], [], is_check = false).written
+      check written == @[(path, mended)]
+      check outcomeOf(written, [], is_check = false).lines == @["0 fixed."]  # second run

@@ -87,6 +87,26 @@ suite "Idioms":
     check reported("src/test_x.nim", module("")).len == 0  # outside `tests/`, no stub
 
 
+  test "STYLE.md §6 stub of category opens with header, at any depth, and takes stub rules":
+    # Case held: stub one level down took no stub rule, as `isStub` read `tests/test_*.nim` alone
+    #   (`tests/rga3d/test_rga3d.nim` of PGA library, #443); `test_regressions.nim` holds it end
+    #   to end. Domain: depth, name and header of file inside category, beside flat stub.
+    let
+      header = "discard \"\"\"\naction: run\ncmd: \"nim c -r $options $file\"\n\"\"\"\n"
+      body = module("include \"../suites.nim\"\n")
+      rules_stub = @[Rule.KeysStub, Rule.ImportProfiler]
+    for (path, source, rules) in [
+      ("tests/rga3d/test_rga3d.nim", header & body, rules_stub),
+      ("tests/rga3d/deep/test_rga3d.nim", header & body, rules_stub),  # two levels down
+      ("tests/suites/test_names.nim", body, @[]),  # suite opens with no header, so no stub
+      ("tests/rga3d/rga3d.nim", header & body, @[]),  # name opens no `t`
+      ("tests/rga3d/test_rga3d.nim", "## Do.\n" & header & body, @[]),  # header below first line
+      ("tests/test_x.nim", header & body, rules_stub),  # child of `tests`
+      ("tests/test_x.nim", body, @[Rule.HeaderStub, Rule.ImportProfiler]),  # header or not
+    ]:
+      check (checkIdioms(path, source) & checkProfiler(path, source)).mapIt(it.rule) == rules
+
+
   test "VIII.5 test echo of unlabelled value is debug output; label or condition passes":
     let debug = module("test \"a\":\n  echo x\n")
     check reported("tests/suites/test_x.nim", debug) == @[

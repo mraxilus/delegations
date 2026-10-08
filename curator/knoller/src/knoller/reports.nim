@@ -23,8 +23,20 @@
 ##     line (`command.layoutOf`). Rule reading layout from it reads test file and stub here
 ##     alone, both from last directory `tests` (`partTests`), so each meaning is written once;
 ##     drive file, where command line reads fixed waits, too (`isFileDrive`).
+##   Stub is read as testament reads category (#443), i.e. directory directly under `tests`,
+##     whose tests are files `t*.nim` at any depth (`isTestFile`, `processCategory` of
+##     `testament/categories.nim`): file there is stub where its source opens with testament
+##     header, and suite module, which opens with none, stays suite. Stub `test_*` directly
+##     under `tests` holds with header or without, so its missing header stays finding. So
+##     `isStub` takes source beside path, and each caller passes source it holds.
+##   Rejected: path alone, which reads each suite module of category as stub, so missing header
+##     and profiler import would report on each, e.g. `tests/suites/test_names.nim`; header
+##     test at each caller, which writes category rule three times.
 ##
 ##   Cost: line `0` marks whole-file report, so `0` never means first line.
+##   Cost: header of category file reads at its first byte alone, where testament reads it
+##     anywhere in first ten lines with no space before it; file of category whose header stands
+##     lower is no stub, so it takes no stub rule. Stub of STYLE.md §6 opens with header.
 ##   Cost: absolute path reads directories above repository too, so file under directory
 ##     `tests` there reads as test file from command line.
 ##   Cost: drive file is file under directory `tests` or `tools` at any depth, wider than
@@ -94,6 +106,8 @@ const
   DIRECTORIES_DRIVE = ["tests", "tools"]  ## Directories whose files command line reads as drive.
   EXTENSIONS*: array[Dialect, string] = [".nim", ".nims", ".nimble"]
     ## Extension of file of each dialect.
+  HEADER_TESTAMENT* = "discard \"\"\""
+    ## Opening of stub's testament header, which stands before module's header docs.
 
 
 func initReport*(path: string, line: int, rule: Rule, message = ""): Report =
@@ -113,10 +127,13 @@ func isFileTest*(path: string): bool =
   path.partTests.len > 0
 
 
-func isStub*(path: string): bool =
-  ## Decide whether path is testament stub: `test_*`, directly under directory `tests`.
+func isStub*(path, source: string): bool =
+  ## Decide whether file is testament stub: `test_*` directly under directory `tests`, or
+  ##   `t*.nim` at any depth inside category whose source opens with testament header.
   let part = path.partTests
-  part.len == 1 and part[0].startsWith("test_")
+  if part.len == 1: return part[0].startsWith("test_")
+  part.len > 1 and part[^1].startsWith('t') and part[^1].endsWith(EXTENSIONS[Dialect.Module]) and
+      source.startsWith(HEADER_TESTAMENT)
 
 
 func isFileDrive*(path: string): bool =

@@ -505,7 +505,7 @@ Each case quotes the source as found and names where it came from. It runs throu
 as `koch fix` runs it, and holds the exact output and a second run that writes nothing.
 
 - The cases come from the PGA library at `d9be8ae`, from `dance_ontology` (#539), from
-  `rga_visualiser` (#521), and from the rulings of #533 and #526.
+  `rga_visualiser` (#521), and from the rulings of #533, #526 and #443.
 - A case keeps its domain test in the suite of its rule, which holds the rule over many inputs.
   The regression suite holds that the case as found is fixed. Neither one alone holds both.
 - A case that 2.2.12 reads rightly asks the parser of 2.2.12, which builds the suite. A case with
@@ -515,6 +515,9 @@ as `koch fix` runs it, and holds the exact output and a second run that writes n
 - The case of `test_mesh.nim` (#521) leaves no finding under the present rules, because spacing
   now fixes `)*radius`. So it holds that each report on its lines prints at its line as given.
   `suites/test_command.nim` holds a finding left at its line as given.
+- The case of the stub `tests/rga3d/test_rga3d.nim` (#443) depends on its path. So it runs
+  through `outcomeOf`, as the command line runs it, at that path and at `tests/test_rga3d.nim`.
+  Verified by hand, 2026-10-08: it fails at the parent of the commit that builds the ruling.
 - Verified by hand, 2026-10-05: the suite ran against the parent of the commit that fixed each
   case, with a shim that proves nothing. Each case that a commit fixed failed at its parent. A
   case that holds a bound of its rule, such as `[1 .. ^1]`, passed there.
@@ -655,16 +658,37 @@ opener at once, such as a test that opens a suite, or a suite that opens a `when
 or a test after a banner takes the one blank line of the banner. The rule reads files under
 `tests/` alone.
 
-- A test file has a directory `tests` in its path, at any depth. A stub is a `test_*` file
-  directly in that directory. `reports.nim` holds both readings, from the names below the last
-  directory `tests`, so the blank-line rule and the stub rules read one definition.
-- `isFileTest` holds exactly where `/tests/` stands in the path with a `/` before it. `isStub`
-  holds exactly where the parent of a `test_*` file is `tests`. Verified by
+- A test file has a directory `tests` in its path, at any depth. `reports.nim` holds this reading
+  and the reading of a stub, from the names below the last directory `tests`. So the blank-line
+  rule and the stub rules read one definition.
+- `isFileTest` holds exactly where `/tests/` stands in the path with a `/` before it. Verified by
   `suites/test_blanks.nim`, which holds both readings to a table of paths. Verified by hand,
   2026-10-04, over each path that git lists in this repository, relative and absolute.
-- Cost: a stub one level down, such as `tests/rga3d/test_rga3d.nim` of the PGA library, is a
-  test file and no stub. So it takes the blank-line rules, and not `stub-keys` or
-  `profiler-import`.
+
+**Knoller reads a stub as testament reads a category (#443).** A testament category is a folder
+directly under `tests`. Its tests are the files `t*.nim` at any depth inside it, as `isTestFile`
+and `processCategory` of `testament/categories.nim` read them. Such a file is a stub where a
+testament header opens it, that is, where the file opens with `discard """`. A file there that
+opens with no header is a suite module, and no rule of a stub reads it. A file `tests/test_*.nim`
+is a stub with or without a header, so a missing header there stays a `stub-header` finding.
+
+- `isStub` takes the source beside the path, since the header decides. Each caller holds the
+  source already: `keysStub`, `checkTests` and `profilerOf` of `idioms.nim`.
+- Rejected: the path alone, which reads each suite module of a category as a stub. Each one, such
+  as `tests/suites/test_names.nim` here, would then take `stub-header` and `profiler-import`.
+- Rejected: the header test at each of those callers, which writes the rule of a category three
+  times.
+- Cost: knoller reads the header of a file in a category at its first byte alone. Testament reads
+  a header anywhere in the first ten lines, where no space stands before it. So a file of a
+  category whose header stands lower is no stub here. The stub of STYLE.md §6 opens with its
+  header.
+- Verified by `suites/test_blanks.nim`, which holds `isStub` to a table of paths, each with a
+  header and without. Verified by `suites/test_idioms.nim`: a stub one and two levels down in a
+  category takes `stub-keys` and `profiler-import`, and a suite module takes neither.
+- Verified by `suites/test_regressions.nim`: the stub `tests/rga3d/test_rga3d.nim` of the PGA
+  library takes both rules, as the same text at `tests/test_rga3d.nim` does.
+- Verified by hand with `git ls-files`, 2026-10-08: no file of a category in this repository opens
+  with a header. So the rule adds no finding here.
 
 **A nested helper takes one blank line on each side (STYLE.md §1).** A helper is a routine that
 the body of a routine declares at its own level. The rule holds right after the doc of the

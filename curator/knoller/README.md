@@ -21,6 +21,11 @@ knoller [--check] [--nim:path] path...
   outside a git work tree, or git lists no Nim file under it.
 - Knoller reads each path whole, from the directory where you run it. So a test file, a stub and
   an umbrella get the same rules from any directory. The output prints each path as you name it.
+- A stub is a file `tests/test_*.nim`, with or without a testament header. A file `t*.nim` in a
+  testament category is a stub too, where a testament header opens it. That category is a folder
+  directly under `tests`, and the file can stand at any depth inside it. Testament reads a
+  category the same way. A file there that opens with no header is a suite, and no rule of a stub
+  reads it. The rules `stub-keys`, `stub-header` and `profiler-import` read a stub this way.
 - Knoller writes only the files that change. With `--check`, it writes no file and reports each
   change that is due.
 - After the fix, every check reads the text that the fixers leave. Each finding there is `left`,
@@ -142,12 +147,12 @@ the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, 
 | `module-bracket` | A bracket of one module drops its bracket. |
 | `single-bindings` | Two or more single bindings share one keyword. |
 | `strictfuncs` | A module carries `strictFuncs` before its imports. |
-| `profiler-import` | An entry module imports the profiler on one line. |
-| `stub-keys` | A test stub leaves out `-r`, `batchable` and `joinable`. |
+| `profiler-import` | An entry module, an umbrella or a stub imports the profiler on one line. |
+| `stub-keys` | A stub leaves out `-r`, `batchable` and `joinable`. |
 | `used-consumer` | A `{.used.}` carries a comment that names its consumer. No fix reaches it. |
 | `push-foreign` | A `{.push.}` stands over foreign bindings alone. No fix reaches it. |
 | `random-seed` | A suite that imports `std/random` seeds it. No fix reaches it. |
-| `stub-header` | A test stub carries a testament header. No fix reaches it. |
+| `stub-header` | A stub `tests/test_*.nim` carries a testament header. No fix reaches it. |
 | `debug-output` | A test prints no value without a label, outside a condition. No fix reaches it. |
 | `fixed-wait` | Drive code waits on a condition or a clock, and never sleeps. No fix reaches it. |
 | `unordered-list` | A list that the language leaves unordered is in alphabetical order. |
