@@ -35,16 +35,17 @@ proc fieldsGit*(root: string, arguments: openArray[string]): seq[string] =
 
 
 proc checkoutAt*(root, directory: string): Option[string] =
-  ## Read top of checkout of this repository holding directory, else root.
-  ##   Worktree shares root's git store, so both name one common directory; other repository,
-  ##     or none, falls back to root, as before. Path not yet written is read from nearest
-  ##     directory that exists.
+  ## Read top of checkout of this repository holding directory; none where git places directory
+  ##   in other repository, which keeps its own branch, since hook holds this repository alone.
+  ##   Worktree shares root's git store, so both name one common directory. Directory in no
+  ##     repository, or git failing, reads as root, so failure still holds root's rule. Path not
+  ##     yet written is read from nearest directory that exists.
   var at = directory
   while at.len > 1 and not dirExists(at): at = at.parentDir
   const common = ["rev-parse", "--path-format=absolute", "--git-common-dir"]
   try:
-    if fieldsGit(at, common)[0].strip == fieldsGit(root, common)[0].strip:
-      return some(fieldsGit(at, ["rev-parse", "--show-toplevel"])[0].strip)
+    if fieldsGit(at, common)[0].strip != fieldsGit(root, common)[0].strip: return none(string)
+    return some(fieldsGit(at, ["rev-parse", "--show-toplevel"])[0].strip)
   except IOError: discard
   some(root)
 

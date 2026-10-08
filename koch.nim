@@ -232,7 +232,8 @@ proc refuse(found: seq[Finding], code: int): int =
 proc runHook(root, event, input: string): int =
   ## Answer one hook event from its stdin facts; dispatch over event name.
   ##   `path`, `edit` and `bash` read checkout call acts in, never root alone: subagent works
-  ##     in worktree of its own, on branch of its own (GUIDE.md, Independent changes).
+  ##     in worktree of its own, on branch of its own (GUIDE.md, Independent changes). Call
+  ##     acting in other repository is that repository's, so these three pass it unread.
   let branch = root.branchOf
   case event
   of "path", "bash", "body", "edit", "stop":
@@ -245,15 +246,18 @@ proc runHook(root, event, input: string): int =
     case event
     of "path":
       if tool notin TOOLS_EDIT: return 0
-      let checkout = checkoutAt(root, file.parentDir).get
-      refuse(checkPathEdit(checkout.branchOf, insideRoot(checkout, file)), 2)
+      let checkout = checkoutAt(root, file.parentDir)
+      if checkout.isNone: return 0
+      refuse(checkPathEdit(checkout.get.branchOf, insideRoot(checkout.get, file)), 2)
     of "bash":
       let
         command = data{"tool_input", "command"}.getStr
-        checkout = checkoutAt(root, directoryCommand(command, directory)).get
-        is_pushed = fieldsGit(checkout, ["branch", "-r", "--contains", "HEAD"]).len > 0
+        checkout = checkoutAt(root, directoryCommand(command, directory))
+      var found: seq[Finding]
+      if checkout.isSome:
+        let is_pushed = fieldsGit(checkout.get, ["branch", "-r", "--contains", "HEAD"]).len > 0
+        found = checkBash(checkout.get.branchOf, command, is_pushed)
       # Post through `gh api` speaks for delegate, so role line reads root's branch, as `body` does.
-      var found = checkBash(checkout.branchOf, command, is_pushed)
       found.add checkPosts(branch, command, directory)
       refuse(found, 2)
     of "body":
@@ -271,12 +275,13 @@ proc runHook(root, event, input: string): int =
         2,
       )
     of "edit":
+      let checkout = checkoutAt(root, file.parentDir)
+      if checkout.isNone: return 0
       let
-        checkout = checkoutAt(root, file.parentDir).get
-        path = insideRoot(checkout, file)
-        tree = checkout.readTree
+        path = insideRoot(checkout.get, file)
+        tree = checkout.get.readTree
       var found = tree.auditTree
-      found.add findingsPruned(checkout, tree)
+      found.add findingsPruned(checkout.get, tree)
       let mine = found.filterIt(it.path == path)
       if mine.len == 0: return 0
       let lines = mine.mapIt(it.path & ":" & $it.line & ": " & it.message)
