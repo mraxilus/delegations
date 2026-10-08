@@ -85,7 +85,11 @@ proc compilerAt(path_nim: string): Compiler =
   ## Read version and commit compiler at path reports; empty record when it will not run.
   ##   Commit comes from `git hash:` line, which release tarballs carry as well as builds
   ##   made from source, so commit pin is checkable either way.
-  let (output, code) = execCmdEx(path_nim.quoteShell & " --version")
+  ##   Absent compiler is empty record on Windows too, where no shell stands between, so start
+  ##     raises rather than exits 127 as `sh` does.
+  let (output, code) =
+    try: execCmdEx(path_nim.quoteShell & " --version")
+    except OSError: ("", 1)
   if code != 0: return
   let lines = output.splitLines
   for word in lines[0].splitWhitespace:
