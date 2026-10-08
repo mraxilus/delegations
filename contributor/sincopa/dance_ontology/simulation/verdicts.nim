@@ -139,10 +139,11 @@ proc rigTable(): string =
   result.add &"| head round | {HUMAN.round[Part.Head]} m, radius " &
       &"{formatFloat(halfBreadth(HUMAN, Part.Head), ffDecimal, 3)}, to {HUMAN.top[Part.Head]} m |\n"
   result.add &"| shoulders | {HUMAN.shoulder_out} m out, {HUMAN.shoulder_up} m up |\n"
-  result.add &"| arm | upper {HUMAN.upper}, forearm {HUMAN.fore}, hand {HUMAN.hand}, carried " &
-      &"{HUMAN.carry} and held {formatFloat(gripAtPalm(HUMAN), ffDecimal, 3)} to " &
-      &"{formatFloat(gripAtTips(HUMAN), ffDecimal, 3)} past wrist: span {turns(span(HUMAN))} m; " &
-      &"limb radius {HUMAN.limb} |\n"
+  result.add &"| arm | upper {HUMAN.upper}, forearm {HUMAN.fore}, hand {HUMAN.hand}: " &
+      &"span {turns(span(HUMAN))} m; limb radius {HUMAN.limb} |\n"
+  result.add &"| hand | carried {HUMAN.carry} and held " &
+      &"{formatFloat(gripAtPalm(HUMAN), ffDecimal, 3)} to " &
+      &"{formatFloat(gripAtTips(HUMAN), ffDecimal, 3)} past wrist |\n"
   let
     behind = int(round(HUMAN.range[Dof.Extend].upper * 180.0 / PI))
     twist_in = int(round(-HUMAN.range[Dof.Twist].lower * 180.0 / PI))
@@ -234,7 +235,8 @@ proc pairHolds(): string =
         result.add "No pose holds at the rest.\n\n"
         continue
       result.add blocks(sweep)
-      result.add "| turn | follow's first arm | follow's second arm | crossings | strain |\n" &
+      result.add "| turn | follow's first arm | follow's second arm | over at each crossing | " &
+          "strain |\n" &
           "|---|---|---|---|---|\n"
       for i, half_turns in HALVES:
         let glance = sweep.glances[i]
@@ -244,7 +246,7 @@ proc pairHolds(): string =
         var cross = ""
         for crossing in 0..<min(glance.crossed, glance.over.len):
           cross.add (if cross.len > 0: ", " else: "") &
-              (if glance.over[crossing] == 0: "first over" else: "second over")
+              (if glance.over[crossing] == 0: "1" else: "2")
         if cross.len == 0: cross = "none"
         result.add &"| {half(half_turns)} | {said(glance.lies[0][Body.Two], band)} | " &
             &"{said(glance.lies[1][Body.Two], band)} | {cross} | {strainWord(glance.strain)} |\n"
