@@ -5,10 +5,10 @@
 ##     `checker.nim` holds usage, dispatch and CURATOR.md table to one verb set, so no fourth
 ##     copy lives here.
 ##
-##   Verb names action and its object. `check` runs every check pull request runs, and each
-##     `check-<object>` runs one of them; other verbs act (`test`, `drive`, `fix`, `fetch-*`,
-##     `stamp`) or print (`list-*`). CI job running verb carries verb's name, so red job names
-##     command to run locally.
+##   Verb names action and its object. `check` runs every check pull request runs but
+##     `check-role`, and each `check-<object>` runs one of them; other verbs act (`test`,
+##     `drive`, `fix`, `fetch-*`, `stamp`) or print (`list-*`). CI job running verb carries
+##     verb's name, so red job names command to run locally.
 ##   Verb of one project is that project's own, in its `tools/build.nim`; koch names verb and
 ##     selects projects carrying it, and holds none of what it does. `check-types` runs
 ##     project's `types`, `drive` its `drive`, `head` its `head`, and `list-packages` its
@@ -71,7 +71,7 @@ const USAGE = """
 Usage: koch <verb> [project | file...] [options]
 
 Verbs:
-  check          every check pull request runs; quick ones first, stopping on own finding
+  check          every check of pull request but check-role; quick first, stopping on own finding
   check-files    static checks over every file git lists; compiles nothing
   check-types    npm ci, then project's own `types` verb, where node manifest sits
   check-scope    branch name, and every changed path inside branch's folder
@@ -217,21 +217,6 @@ proc fileMark(root: string): string =
   pathMark(root, fieldsGit(root, ["rev-parse", "--git-dir"])[0].strip)
 
 
-proc checkoutAt(root, directory: string): string =
-  ## Read top of checkout of this repository holding directory, else root.
-  ##   Worktree shares root's git store, so both name one common directory; other repository,
-  ##     or none, falls back to root, as before. Path not yet written is read from nearest
-  ##     directory that exists.
-  var at = directory
-  while at.len > 1 and not dirExists(at): at = at.parentDir
-  const common = ["rev-parse", "--path-format=absolute", "--git-common-dir"]
-  try:
-    if fieldsGit(at, common)[0].strip == fieldsGit(root, common)[0].strip:
-      return fieldsGit(at, ["rev-parse", "--show-toplevel"])[0].strip
-  except IOError: discard
-  root
-
-
 proc branchOf(checkout: string): string =
   ## Read branch checked out in checkout.
   fieldsGit(checkout, ["rev-parse", "--abbrev-ref", "HEAD"])[0].strip
@@ -247,7 +232,8 @@ proc refuse(found: seq[Finding], code: int): int =
 proc runHook(root, event, input: string): int =
   ## Answer one hook event from its stdin facts; dispatch over event name.
   ##   `path`, `edit` and `bash` read checkout call acts in, never root alone: subagent works
-  ##     in worktree of its own, on branch of its own (GUIDE.md, Independent changes).
+  ##     in worktree of its own, on branch of its own (GUIDE.md, Independent changes). Call
+  ##     acting in other repository is that repository's, so these three pass it unread.
   let branch = root.branchOf
   case event
   of "path", "bash", "body", "edit", "stop":
@@ -261,14 +247,17 @@ proc runHook(root, event, input: string): int =
     of "path":
       if tool notin TOOLS_EDIT: return 0
       let checkout = checkoutAt(root, file.parentDir)
-      refuse(checkPathEdit(checkout.branchOf, insideRoot(checkout, file)), 2)
+      if checkout.isNone: return 0
+      refuse(checkPathEdit(checkout.get.branchOf, insideRoot(checkout.get, file)), 2)
     of "bash":
       let
         command = data{"tool_input", "command"}.getStr
         checkout = checkoutAt(root, directoryCommand(command, directory))
-        is_pushed = fieldsGit(checkout, ["branch", "-r", "--contains", "HEAD"]).len > 0
+      var found: seq[Finding]
+      if checkout.isSome:
+        let is_pushed = fieldsGit(checkout.get, ["branch", "-r", "--contains", "HEAD"]).len > 0
+        found = checkBash(checkout.get.branchOf, command, is_pushed)
       # Post through `gh api` speaks for delegate, so role line reads root's branch, as `body` does.
-      var found = checkBash(checkout.branchOf, command, is_pushed)
       found.add checkPosts(branch, command, directory)
       refuse(found, 2)
     of "body":
@@ -286,12 +275,13 @@ proc runHook(root, event, input: string): int =
         2,
       )
     of "edit":
+      let checkout = checkoutAt(root, file.parentDir)
+      if checkout.isNone: return 0
       let
-        checkout = checkoutAt(root, file.parentDir)
-        path = insideRoot(checkout, file)
-        tree = checkout.readTree
+        path = insideRoot(checkout.get, file)
+        tree = checkout.get.readTree
       var found = tree.auditTree
-      found.add findingsPruned(checkout, tree)
+      found.add findingsPruned(checkout.get, tree)
       let mine = found.filterIt(it.path == path)
       if mine.len == 0: return 0
       let lines = mine.mapIt(it.path & ":" & $it.line & ": " & it.message)

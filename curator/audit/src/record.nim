@@ -4,10 +4,11 @@
 ##     appears twice, and headings are ATX, since every reader here sees `#` lines only and
 ##     underlined title is invisible to all of them.
 ##   Length: record over `LINES_RECORD`, or `##` section over `LINES_SECTION`, is finding
-##     asking for prune to log (curator review, C8). Section catches narration that whole-file
-##     ceiling misses, since one long section hides inside short record. Header may carry
-##     `Pruned` row naming commit before last prune; its form is checked here and its existence
-##     by koch against file's own log, since git is outside pure check.
+##     asking for prune to log (provenance guide, "Prune, never narrate"). Section catches
+##     narration that whole-file ceiling misses, since one long section hides inside short
+##     record. Header may carry `Pruned` row naming commit before last prune; its form is
+##     checked here and its existence by koch against file's own log, since git is outside
+##     pure check.
 ##
 ##   Count: number before `files`, `suites`, `checks` or `tests` in prose is finding, since
 ##     count goes stale by next commit and nothing reads it again (provenance guide). Fenced

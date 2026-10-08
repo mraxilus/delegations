@@ -1,8 +1,7 @@
 ## Report Markdown paragraph written twice, in one file or across files (duty 10).
-##   Two copies of one rule drift, and prompts drifted that way: rule kept in both prompts
-##     with hand rule that change to either belongs in both (curator review, C6). Paragraph
-##     of `WORDS_PARAGRAPH` or more, whitespace collapsed, seen again is finding at its
-##     later place naming its first.
+##   Two copies of one rule drift, even under hand rule that change to either belongs in both,
+##     so rule is written once and pointed at (duty 10). Paragraph of `WORDS_PARAGRAPH` or
+##     more, whitespace collapsed, seen again is finding at its later place naming its first.
 ##   Fenced code, table rows and headings pass: example is quoted on purpose, table is data,
 ##     and heading twice is record check's own finding.
 ##
