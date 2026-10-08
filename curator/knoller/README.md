@@ -125,7 +125,7 @@ the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, 
 | `lookup-table` | A lookup table reads `lut_<value>_by_<key>`. |
 | `name-case` | The case of a name follows its kind. |
 | `member-case` | A member of an enum is `PascalCase`, as its type is. |
-| `placeholder-letter` | A placeholder of a generic is one capital letter. |
+| `placeholder-letter` | A placeholder, or a bare `typedesc` parameter, is one capital letter. |
 | `notation` | The notation of the source holds over case only for an immutable global. |
 | `global-word` | A global shares no word with a type. |
 | `article-in-comment` | A comment holds no article. |
@@ -166,6 +166,9 @@ the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, 
 | `comment-above` | A trailing comment that does not fit moves to its own line above. |
 | `fence` | A fence closes inside the bracket, string or comment it opens in. No fix reaches it. |
 | `fence-held` | A fence keeps its lines as written, and each run names what breaks inside it. |
+
+A bare `typedesc` parameter may also be in snake case, as `kind` is in
+`template time(kind: typedesc)`. A later step of #443 makes the letter its only form.
 
 ## Build and test
 

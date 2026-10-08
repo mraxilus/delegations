@@ -1181,9 +1181,9 @@ jargon list of V.6 always passes. Verified by `suites/test_names.nim`.
 - Each finding names a rule of its own: `abbreviation`, `action-verb`, `boolean-name`,
   `lookup-table`, `name-case`, `member-case`, `placeholder-letter`, `notation` and `global-word`.
   The case of a name takes three rules, because V.1, V.11 and V.12 state it by kind.
-- No fixer here. A rename reaches each use of a name, and only the semantic pass of the
-  compiler finds each use. So `curator/audit` plans it from the spellings that this module gives
-  (`respelled`, `cased`).
+- This module gives the rename that each rule asks (`renamesAbbreviation`, `renamesCase`). A
+  rename reaches each use of a name, and only the semantic pass of the compiler finds each use. So
+  `rewrites.nim` plans it, as Semantic pass describes.
 - Rejected by the Architect: the acronym rule in knoller, with the words of the caller. The
   command line would report each acronym of another repository, which has no glossary to list it.
 
