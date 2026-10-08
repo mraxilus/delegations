@@ -22,9 +22,9 @@ knoller [--check] [--nim:path] path...
 - Knoller reads each path whole, from the directory where you run it. So a test file, a stub and
   an umbrella get the same rules from any directory. The output prints each path as you name it,
   and the files of a directory with `/`, on every platform.
-- Knoller runs on Linux, macOS and Windows. Where git checks a file out with CRLF and a commit
-  turns it back into LF, as Git for Windows does by default, knoller reads LF and writes CRLF
-  back. CRLF that a commit keeps stays a finding.
+- Knoller runs on Linux, macOS and Windows. Where git checks a file out with CRLF that a commit
+  turns back into LF, knoller reads LF and writes CRLF back. Git for Windows does so by default.
+  CRLF that a commit keeps stays a finding.
 - A stub is a file `tests/test_*.nim`, with or without a testament header. A file `t*.nim` in a
   testament category is a stub too, where a testament header opens it. That category is a folder
   directly under `tests`, and the file can stand at any depth inside it. Testament reads a
