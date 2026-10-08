@@ -1517,8 +1517,9 @@ before `; got `, or before the closing period. So `koch check` prints
   wrapping cite X.3 alone, though STYLE.md §5 states them too. Operator wrapping cites STYLE.md §5
   alone, though X.1 states it too. The static pass runs none of these three checks, so koch prints
   none of these messages.
-- The case of a name cites V.1, V.11 or V.12 by the kind of the name. So it takes three rules,
-  `name-case`, `member-case` and `placeholder-letter`, and each cites one article.
+- The case of a name cites V.1, V.11 or V.12 by the kind of the name, and a bare `typedesc`
+  parameter cites V.12, as a placeholder does. So it takes three rules, `name-case`,
+  `member-case` and `placeholder-letter`, and each cites one article.
 - Each message of the static pass cites its article, as `Line holds tab (X.1).` does.
 - Cost: a backtick in a sentence that no run of as many backticks closes pairs with the backtick of
   the value. The article then goes before the closing period. No message of knoller holds such a
