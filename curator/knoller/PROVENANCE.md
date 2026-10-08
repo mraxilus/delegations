@@ -1432,8 +1432,11 @@ paths of drive code belong to a layout, so the caller gives them.
 knoller on Windows, with Nim built from source on `PATH`. So `test-windows` of `check.yml` runs the
 suites of knoller on Windows, whenever a change names knoller.
 
-- The command line and its suites compile for Windows, which `nim c --os:windows --compileOnly`
-  shows on any host. Before this, knoller compiled for no Windows target.
+- The command line compiles for Windows, which `nim c --os:windows --compileOnly` shows on any
+  host. Before this, knoller compiled for no Windows target.
+- Trap: the runner of the suites finds them by a walk at compile time, and that walk finds none
+  for another target. So a cross-compile of the runner proves nothing, and a file that imports
+  each suite by name stands in for it.
 - Three tests skip on Windows, and each says why. `sha256sum` is no tool of Windows, and the stub
   toolchain of two tests is a `sh` script. So a pin served from the cache, and its prover, are
   proven on POSIX alone.
