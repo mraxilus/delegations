@@ -1428,9 +1428,14 @@ paths of drive code belong to a layout, so the caller gives them.
 
 ## Platforms
 
-**Knoller runs on Linux, macOS and Windows, and koch runs on Linux and macOS.** The Architect runs
+**Runners hold knoller on Linux and on Windows, and koch on Linux alone.** The Architect runs
 knoller on Windows, with Nim built from source on `PATH`. So `test-windows` of `check.yml` runs the
-suites of knoller on Windows, whenever a change names knoller.
+suites of knoller on Windows, whenever a change names knoller. No runner holds macOS, so knoller
+there is unverified.
+
+- Verified on the runner, 2026-10-08: every suite of knoller passes on Windows. That includes the
+  semantic pass through `cmd`, the real compiler, and checkouts under the global
+  `core.autocrlf=true` of the runner.
 
 - The command line compiles for Windows, which `nim c --os:windows --compileOnly` shows on any
   host. Before this, knoller compiled for no Windows target.
