@@ -9,6 +9,9 @@
 ##     other block; entry inside top-level `when isMainModule:` and outside routine.
 ##   Name template substitutes, i.e. its parameter, declares nothing of that name in its body.
 ##   Operator is backticked, so it is never read as name.
+##   Parameter of type `typedesc` alone is generic (`is_generic`): it stands for any type, as
+##     placeholder does (V.12). `type` alone is same type to Nim, so it is generic too;
+##     `typedesc[I]` holds placeholder `I`, so its parameter is not generic.
 ##
 ##   Cost: text scanner, never parser. Comments and strings are blanked first; multi-line
 ##     signature is joined to its closing parenthesis; object variant branch is read as fields
@@ -16,6 +19,7 @@
 ##     unread.
 ##   Cost: boolean is read only where declaration shows it: type `bool`, or value literal
 ##     `true` or `false`. Boolean from call or expression holds by reading.
+##   Cost: generic is read from type as signature spells it, so alias of `typedesc` is unread.
 
 {.experimental: "strictFuncs".}
 
@@ -31,6 +35,8 @@ const
     ## Keywords that, alone on line, open section and no scope.
   WORDS_CHAIN = ["when", "elif", "else"]  ## Words opening branch of `when` chain.
   MODIFIERS_CONCEPT = ["var", "ref", "ptr", "type"]  ## Words standing before concept placeholder.
+  TYPES_GENERIC = ["typedesc", "type"]
+    ## Types that stand for any type alone on parameter, spelled as Nim compares names (V.12).
   MARKS_FOREIGN* = [
     "dynlib", "exportc", "exportcpp", "extern", "header", "importc", "importcpp", "importjs",
     "importobjc", "JsRoot",
@@ -57,6 +63,7 @@ type
     reach*: Reach  ## Binding's reach; `Local` for every other kind.
     is_mutable*: bool  ## Binding by `var`, which notation never excuses (III.5).
     is_boolean*: bool  ## Shows `bool` by type or literal value, or `func` returns it (V.4).
+    is_generic*: bool  ## Parameter of type `typedesc` alone, which stands for any type (V.12).
 
   Opener = object  ## Define block enclosing line, by its opening line.
     indent: int
@@ -124,6 +131,14 @@ func isBooleanShown(text: string): bool =
   (colon >= 0 and side[colon + 1 .. ^1].strip == "bool") or value in ["true", "false"]
 
 
+func isGenericShown(text: string): bool =
+  ## Decide whether parameter shows type of `TYPES_GENERIC` alone, so it stands for any type.
+  let
+    side = text.sideBinding
+    colon = side.indexTop(':')
+  colon >= 0 and side[colon+1 .. ^1].strip.identity in TYPES_GENERIC
+
+
 func namesBinding(text: string): seq[string] =
   ## Read names text binds: `a`, `a, b: T`, `(a, b) = v`, `a {.used.} = v`.
   for piece in text.sideBinding.strip(chars = {' ', '(', ')'}).splitTop({','}):
@@ -131,8 +146,9 @@ func namesBinding(text: string): seq[string] =
     if name.len > 0 and name != "_": result.add name
 
 
-func namesParameter(signature: string): seq[(string, bool)] =
-  ## Read parameters of text between parentheses, each with whether it shows boolean.
+func namesParameter(signature: string): seq[(string, bool, bool)] =
+  ## Read parameters of text between parentheses, each with whether it shows boolean, and
+  ##   whether it is generic.
   ##   `x, y: T; z = false` gives `x`, `y` and `z`, which is boolean; group shares its type.
   let pieces = signature.splitTop({',', ';'})
   var group: seq[string]
@@ -140,8 +156,8 @@ func namesParameter(signature: string): seq[(string, bool)] =
     let name = piece.nameOf
     if name.len > 0 and name != "_" and name != "var": group.add name
     if ':' in piece or '=' in piece or k == pieces.high:
-      let is_boolean = piece.isBooleanShown
-      for member in group: result.add (member, is_boolean)
+      let (is_boolean, is_generic) = (piece.isBooleanShown, piece.isGenericShown)
+      for member in group: result.add (member, is_boolean, is_generic)
       group = @[]
 
 
@@ -294,13 +310,14 @@ func declarations*(source: string): seq[Declared] =
         var is_writing = false
         if k < text.len and text[k] == '(' and text.closing(k) > k:
           let signature = text[k + 1 ..< text.closing(k)]
-          for (p, is_boolean) in signature.namesParameter:
+          for (p, is_boolean, is_generic) in signature.namesParameter:
             if word == "template": substituted.add p
             result.add Declared(
               name: p,
               line: one,
               kind: KindName.Parameter,
               is_boolean: is_boolean,
+              is_generic: is_generic,
             )
           is_writing = signature.isWriting
           k = text.closing(k) + 1

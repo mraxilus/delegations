@@ -1,4 +1,5 @@
-## Replicate declaration scanner of `declared.nim` header: kind and reach of each name read.
+## Replicate declaration scanner of `declared.nim` header: kind and reach of each name read, and
+##   which parameter is generic.
 
 {.experimental: "strictFuncs".}
 
@@ -37,3 +38,14 @@ suite "Declarations":
     check "m" in found and "n" in found and "b" in found  # parameters of operator are read
     check "i" notin found  # call in body of routine without parameters is no parameter
     check "Code" in found and "Str_Raw" in found  # V.11, enum on one line
+
+
+  test "parameter of type `typedesc` or `type` alone is generic, and its group shares it":
+    const signature = "proc f(A, b: typedesc; c: int, D: typedesc[I], e: type, G: type int,\n" &
+        "    h: typeDesc = int, k = int) = discard\n"
+    let parameters = signature.declarations.filterIt(it.kind == KindName.Parameter)
+    check parameters.mapIt((it.name, it.is_generic)) == @[
+      ("A", true), ("b", true), ("c", false), ("D", false), ("e", true), ("G", false),
+      ("h", true), ("k", false),
+    ]  # V.12: `typedesc[I]` and `type int` name their type, and default alone shows none
+    check SOURCE.declarations.allIt(not it.is_generic)  # V.12, no other declaration is generic

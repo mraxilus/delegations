@@ -2,7 +2,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, os, sequtils, strutils, unittest]
+import std/[options, os, sequtils, strutils, tempfiles, unittest]
 import ../../src/tree
 import ./fixtures
 
@@ -119,3 +119,30 @@ suite "Tree":
       check false  # unreachable: missing object exits non-zero
     except IOError as failure:
       check failure.msg.contains("Not a valid object name")  # git's own reason, from stderr
+
+
+  test "directory of other repository holds no checkout of root (#380)":
+    # Case as found: commit in scratch repository was held to branch of root, and refused while
+    #   root sat on detached head.
+    let
+      root = repoTemp()
+      other = repoTemp()
+      plain = createTempDir("delegations_", "_plain")
+      tree = root & "_worktree"
+    defer: removeDir(root)
+    defer: removeDir(other)
+    defer: removeDir(plain)
+    defer: removeDir(tree)
+    root.writeInto("sub/x.nim", "discard\n")
+    discard root.git("add -A")
+    discard root.git("commit -q -m 'feat(curator): add x'")
+    discard root.git("worktree add -q -b work " & tree.quoteShell)
+    discard root.git("checkout -q --detach")
+    check checkoutAt(root, other).isNone  # other repository keeps its own branch
+    check checkoutAt(root, other / "unwritten" / "deeper").isNone  # read from nearest that exists
+    # Domain: each checkout of this repository reads its own top, and no repository reads root.
+    check checkoutAt(root, root) == some(root)
+    check checkoutAt(root, root / "sub") == some(root)  # subdirectory reads top
+    check checkoutAt(root, root / "sub" / "unwritten") == some(root)
+    check checkoutAt(root, tree / "sub") == some(tree)  # worktree holds its own branch
+    check checkoutAt(root, plain) == some(root)  # git fails, so root's rule still holds

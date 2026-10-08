@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-10-04 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | cece22607540de43 |
+| Rules   | 518d95c29d36f97d |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: a curator project, from the brief of the Architect. It holds the fixers of `koch fix`
@@ -505,7 +505,7 @@ Each case quotes the source as found and names where it came from. It runs throu
 as `koch fix` runs it, and holds the exact output and a second run that writes nothing.
 
 - The cases come from the PGA library at `d9be8ae`, from `dance_ontology` (#539), from
-  `rga_visualiser` (#521), and from the rulings of #533 and #526.
+  `rga_visualiser` (#521), and from the rulings of #533, #526 and #443.
 - A case keeps its domain test in the suite of its rule, which holds the rule over many inputs.
   The regression suite holds that the case as found is fixed. Neither one alone holds both.
 - A case that 2.2.12 reads rightly asks the parser of 2.2.12, which builds the suite. A case with
@@ -515,6 +515,9 @@ as `koch fix` runs it, and holds the exact output and a second run that writes n
 - The case of `test_mesh.nim` (#521) leaves no finding under the present rules, because spacing
   now fixes `)*radius`. So it holds that each report on its lines prints at its line as given.
   `suites/test_command.nim` holds a finding left at its line as given.
+- The case of the stub `tests/rga3d/test_rga3d.nim` (#443) depends on its path. So it runs
+  through `outcomeOf`, as the command line runs it, at that path and at `tests/test_rga3d.nim`.
+  Verified by hand, 2026-10-08: it fails at the parent of the commit that builds the ruling.
 - Verified by hand, 2026-10-05: the suite ran against the parent of the commit that fixed each
   case, with a shim that proves nothing. Each case that a commit fixed failed at its parent. A
   case that holds a bound of its rule, such as `[1 .. ^1]`, passed there.
@@ -655,16 +658,37 @@ opener at once, such as a test that opens a suite, or a suite that opens a `when
 or a test after a banner takes the one blank line of the banner. The rule reads files under
 `tests/` alone.
 
-- A test file has a directory `tests` in its path, at any depth. A stub is a `test_*` file
-  directly in that directory. `reports.nim` holds both readings, from the names below the last
-  directory `tests`, so the blank-line rule and the stub rules read one definition.
-- `isFileTest` holds exactly where `/tests/` stands in the path with a `/` before it. `isStub`
-  holds exactly where the parent of a `test_*` file is `tests`. Verified by
+- A test file has a directory `tests` in its path, at any depth. `reports.nim` holds this reading
+  and the reading of a stub, from the names below the last directory `tests`. So the blank-line
+  rule and the stub rules read one definition.
+- `isFileTest` holds exactly where `/tests/` stands in the path with a `/` before it. Verified by
   `suites/test_blanks.nim`, which holds both readings to a table of paths. Verified by hand,
   2026-10-04, over each path that git lists in this repository, relative and absolute.
-- Cost: a stub one level down, such as `tests/rga3d/test_rga3d.nim` of the PGA library, is a
-  test file and no stub. So it takes the blank-line rules, and not `stub-keys` or
-  `profiler-import`.
+
+**Knoller reads a stub as testament reads a category (#443).** A testament category is a folder
+directly under `tests`. Its tests are the files `t*.nim` at any depth inside it, as `isTestFile`
+and `processCategory` of `testament/categories.nim` read them. Such a file is a stub where a
+testament header opens it, that is, where the file opens with `discard """`. A file there that
+opens with no header is a suite module, and no rule of a stub reads it. A file `tests/test_*.nim`
+is a stub with or without a header, so a missing header there stays a `stub-header` finding.
+
+- `isStub` takes the source beside the path, since the header decides. Each caller holds the
+  source already: `keysStub`, `checkTests` and `profilerOf` of `idioms.nim`.
+- Rejected: the path alone, which reads each suite module of a category as a stub. Each one, such
+  as `tests/suites/test_names.nim` here, would then take `stub-header` and `profiler-import`.
+- Rejected: the header test at each of those callers, which writes the rule of a category three
+  times.
+- Cost: knoller reads the header of a file in a category at its first byte alone. Testament reads
+  a header anywhere in the first ten lines, where no space stands before it. So a file of a
+  category whose header stands lower is no stub here. The stub of STYLE.md §6 opens with its
+  header.
+- Verified by `suites/test_blanks.nim`, which holds `isStub` to a table of paths, each with a
+  header and without. Verified by `suites/test_idioms.nim`: a stub one and two levels down in a
+  category takes `stub-keys` and `profiler-import`, and a suite module takes neither.
+- Verified by `suites/test_regressions.nim`: the stub `tests/rga3d/test_rga3d.nim` of the PGA
+  library takes both rules, as the same text at `tests/test_rga3d.nim` does.
+- Verified by hand with `git ls-files`, 2026-10-08: no file of a category in this repository opens
+  with a header. So the rule adds no finding here.
 
 **A nested helper takes one blank line on each side (STYLE.md §1).** A helper is a routine that
 the body of a routine declares at its own level. The rule holds right after the doc of the
@@ -1181,9 +1205,9 @@ jargon list of V.6 always passes. Verified by `suites/test_names.nim`.
 - Each finding names a rule of its own: `abbreviation`, `action-verb`, `boolean-name`,
   `lookup-table`, `name-case`, `member-case`, `placeholder-letter`, `notation` and `global-word`.
   The case of a name takes three rules, because V.1, V.11 and V.12 state it by kind.
-- No fixer here. A rename reaches each use of a name, and only the semantic pass of the
-  compiler finds each use. So `curator/audit` plans it from the spellings that this module gives
-  (`respelled`, `cased`).
+- This module gives the rename that each rule asks (`renamesAbbreviation`, `renamesCase`). A
+  rename reaches each use of a name, and only the semantic pass of the compiler finds each use. So
+  `rewrites.nim` plans it, as Semantic pass describes.
 - Rejected by the Architect: the acronym rule in knoller, with the words of the caller. The
   command line would report each acronym of another repository, which has no glossary to list it.
 
@@ -1226,10 +1250,38 @@ finding, of the rule `notation`.
 **A one-letter capital local is a finding, by the ruling of the Architect.** Plain ASCII is
 never notation. So `N` or `M` as a local, a parameter or a field takes the snake case of V.1.
 
-**A parameter that holds a type is a parameter, by the ruling of the Architect.** So
-`t: typedesc` takes the snake case of V.1. The one capital of V.12 is for a placeholder in
-brackets, as `scalar*[I: Basis](t: typedesc[I])` shows. `STYLE.md` spells its borrow template
-that way.
+**A parameter of type `typedesc` alone takes the one capital letter of a placeholder, by the
+ruling of the Architect on #443.** Such a parameter stands for any type, as a generic does, so
+V.12 binds it. `declared.nim` marks it as generic (`is_generic`), and `type` alone too, since Nim
+reads it as the same type. `casingOf` gives a generic parameter the letter of a placeholder. A
+parameter of `typedesc[I]` keeps the snake case of V.1, since `I` is its placeholder, as
+`scalar*[I: Basis](t: typedesc[I])` shows. `STYLE.md` spells its borrow template with `T`.
+
+**Snake case passes beside the letter, as step 1 of the ruling, until `pga_benchmark` renames its
+`kind`.** `timeKind` in `proposals/04-exact-kinds/timing.nim` of that project declares
+`kind: typedesc`. A check that reddens a contributor project cannot merge, and a curator never
+edits such a project (CURATOR.md, duties 3 and 11). So `isMiscased` passes a generic parameter in
+snake case too. An intended later step makes the letter the only form, once that project renames
+`kind`.
+
+**No rename of case touches a generic parameter.** The letter is the initial of what the
+parameter ranges over, which is a choice, and snake case passes beside it. So `renamesCase` gives
+none, as it gives none for a placeholder. A name in neither form, such as `Kind`, is one finding
+of `placeholder-letter`, and the hand renames it. Its message names both forms. A rename that
+spells out a coined abbreviation (V.6) still reaches it, as it reaches every kind.
+
+- Rejected: a kind of its own in `KindName`. Each reader of `KindName.Parameter` then has to
+  learn it, such as the foreign mark, the notation of III.5 and the subject of each message. A
+  flag on `Declared` reaches the casing alone.
+- Rejected: the letter as the only form now. It reddens `pga_benchmark`, whose code a curator
+  never edits.
+- Cost: a reader of the kind alone sees a parameter, so `casingOf` and `isMiscased` read the flag
+  beside it.
+- Cost: both forms pass, so one file may spell two generic parameters two ways. Reading holds it
+  until the rename.
+- Cost: the scanner reads the type as the signature spells it, so an alias of `typedesc` is
+  unread.
+- Verified by `suites/test_names.nim` and `suites/test_declared.nim`.
 
 **One function decides the reach of a binding.** The case of a binding marks its reach, and not
 its mutability (V.1). So `reachOf` of `declared.nim` reads the blocks that enclose the binding:

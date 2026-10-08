@@ -27,7 +27,8 @@ still names its basis.
 - **No fill.** A product reaches every slot of its kind. So each product is `noinit`, and
   writes each slot once.
 - **Alignment.** Each kind aligns to `alignmentOf` of its count of floats: the largest power of
-  two that divides their bytes, and at most 64. So it pads no count.
+  two that divides their bytes, and at most 64. So it pads no count. `MultivectorOf[B]` takes it
+  through `when`, so a named kind and a kind with no name follow one rule.
 
 Products stay generic, since one body for each pair of kinds costs too much. At 5D conformal
 that is some 6 000 bodies, and most are never called. A generic makes only the pairs that a
@@ -112,8 +113,9 @@ A kind of an odd count keeps 8 bytes, so it can still cross a line. Only padding
 that, and padding costs more than the line.
 
 `align.nim` holds `alignmentOf` at each count from 1 to 64, and at each count in the table above.
-Each kind takes it from the size of its basis set when it lands, as the Architect ruled on
-2026-10-04. The prototype does not apply it yet.
+Each kind takes it from the size of its basis set, as the Architect ruled on 2026-10-04. The
+prototype imports it, and its laws hold the size and the alignment of each named kind at rga3d,
+rga4d, cga4d and cga5d.
 
 ## Limits
 
@@ -131,8 +133,8 @@ Each kind takes it from the size of its basis set when it lands, as the Architec
 - Cascade Lake does not time the kind of 4 floats at 32 bytes. Under AVX2 its sum ranged ×0.86
   to ×1.47 over 20 executions on Emerald Rapids.
 - At pin, `align` of an expression of a generic parameter stops the compiler. So the generic
-  kind chooses among 8, 16, 32 and 64 through `when`. The macro that names its kinds knows each
-  count when it runs, and writes the number.
+  kind chooses among 8, 16, 32 and 64 through `when`. An alias holds no field of its own, so the
+  macro that names the kinds writes each number into their laws, and not into a type.
 - `timing.nim` exits zero when it runs. Its figures never guard.
 
 ## Names

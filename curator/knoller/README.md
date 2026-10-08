@@ -21,6 +21,11 @@ knoller [--check] [--nim:path] path...
   outside a git work tree, or git lists no Nim file under it.
 - Knoller reads each path whole, from the directory where you run it. So a test file, a stub and
   an umbrella get the same rules from any directory. The output prints each path as you name it.
+- A stub is a file `tests/test_*.nim`, with or without a testament header. A file `t*.nim` in a
+  testament category is a stub too, where a testament header opens it. That category is a folder
+  directly under `tests`, and the file can stand at any depth inside it. Testament reads a
+  category the same way. A file there that opens with no header is a suite, and no rule of a stub
+  reads it. The rules `stub-keys`, `stub-header` and `profiler-import` read a stub this way.
 - Knoller writes only the files that change. With `--check`, it writes no file and reports each
   change that is due.
 - After the fix, every check reads the text that the fixers leave. Each finding there is `left`,
@@ -125,7 +130,7 @@ the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, 
 | `lookup-table` | A lookup table reads `lut_<value>_by_<key>`. |
 | `name-case` | The case of a name follows its kind. |
 | `member-case` | A member of an enum is `PascalCase`, as its type is. |
-| `placeholder-letter` | A placeholder of a generic is one capital letter. |
+| `placeholder-letter` | A placeholder, or a bare `typedesc` parameter, is one capital letter. |
 | `notation` | The notation of the source holds over case only for an immutable global. |
 | `global-word` | A global shares no word with a type. |
 | `article-in-comment` | A comment holds no article. |
@@ -142,12 +147,12 @@ the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, 
 | `module-bracket` | A bracket of one module drops its bracket. |
 | `single-bindings` | Two or more single bindings share one keyword. |
 | `strictfuncs` | A module carries `strictFuncs` before its imports. |
-| `profiler-import` | An entry module imports the profiler on one line. |
-| `stub-keys` | A test stub leaves out `-r`, `batchable` and `joinable`. |
+| `profiler-import` | An entry module, an umbrella or a stub imports the profiler on one line. |
+| `stub-keys` | A stub leaves out `-r`, `batchable` and `joinable`. |
 | `used-consumer` | A `{.used.}` carries a comment that names its consumer. No fix reaches it. |
 | `push-foreign` | A `{.push.}` stands over foreign bindings alone. No fix reaches it. |
 | `random-seed` | A suite that imports `std/random` seeds it. No fix reaches it. |
-| `stub-header` | A test stub carries a testament header. No fix reaches it. |
+| `stub-header` | A stub `tests/test_*.nim` carries a testament header. No fix reaches it. |
 | `debug-output` | A test prints no value without a label, outside a condition. No fix reaches it. |
 | `fixed-wait` | Drive code waits on a condition or a clock, and never sleeps. No fix reaches it. |
 | `unordered-list` | A list that the language leaves unordered is in alphabetical order. |
@@ -166,6 +171,9 @@ the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, 
 | `comment-above` | A trailing comment that does not fit moves to its own line above. |
 | `fence` | A fence closes inside the bracket, string or comment it opens in. No fix reaches it. |
 | `fence-held` | A fence keeps its lines as written, and each run names what breaks inside it. |
+
+A bare `typedesc` parameter may also be in snake case, as `kind` is in
+`template time(kind: typedesc)`. A later step of #443 makes the letter its only form.
 
 ## Build and test
 

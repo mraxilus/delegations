@@ -39,19 +39,32 @@ suite "Blanks":
     check checkBlanks("curator/audit/src/a.nim", breach).len == 0  # tests alone
 
 
-  test "test file lies under directory `tests`, and stub is its child `test_*`, one reading":
-    for (path, is_file_test, is_stub) in [
-      ("tests/test_a.nim", true, true),
-      ("/p/tests/test_a.nim", true, true),  # absolute, as command line reads it
-      ("tests/suites/test_a.nim", true, false),  # suite module of one stub
-      ("tests/rga3d/test_rga3d.nim", true, false),  # one level down, as PGA library keeps it
-      ("tests/suites.nim", true, false),
-      ("src/tests.nim", false, false),
-      ("tests", false, false),  # file named `tests`
-      ("test_a.nim", false, false),
+  test "test file lies under `tests`; stub is its child `test_*`, or file of category with header":
+    # Category is directory under `tests`, and its file `t*.nim` at any depth is stub where
+    #   source opens with testament header, as testament reads it (#443); so each path reads
+    #   beside source with header and without.
+    let
+      headed = "discard \"\"\"\naction: run\n\"\"\"\ninclude \"suites.nim\"\n"
+      bare = "include \"suites.nim\"\n"
+    for (path, is_file_test, is_stub_headed, is_stub_bare) in [
+      ("tests/test_a.nim", true, true, true),  # header or not
+      ("/p/tests/test_a.nim", true, true, true),  # absolute, as command line reads it
+      ("tests/suites/test_a.nim", true, true, false),  # suite module, where no header opens it
+      ("tests/rga3d/test_rga3d.nim", true, true, false),  # one level down, as PGA library keeps it
+      ("tests/rga3d/deep/test_rga3d.nim", true, true, false),  # two levels down
+      ("tests/rga3d/tall.nim", true, true, false),  # `t*`, as testament reads category
+      ("tests/rga3d/rga3d.nim", true, false, false),  # name opens no `t`
+      ("tests/rga3d/test_rga3d.nims", true, false, false),  # script
+      ("tests/tall.nim", true, false, false),  # child of `tests` is stub as `test_*` alone
+      ("tests/suites.nim", true, false, false),
+      ("src/tests.nim", false, false, false),
+      ("src/rga3d/test_rga3d.nim", false, false, false),
+      ("tests", false, false, false),  # file named `tests`
+      ("test_a.nim", false, false, false),
     ]:
       check path.isFileTest == is_file_test
-      check path.isStub == is_stub
+      check path.isStub(headed) == is_stub_headed
+      check path.isStub(bare) == is_stub_bare
 
 
   test "suite opening `when` body follows it at once; suite after banner takes banner's one":

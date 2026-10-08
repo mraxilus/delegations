@@ -119,7 +119,8 @@ suite "Idioms":
     check fix.fixed.mapIt(it.line) == @[3, 4, 5]  # reports name lines as given
     check checkIdioms("tests/test_x.nim", fix.source).len == 0  # flag alone, so `-run` stays
     check fixIdioms("tests/test_x.nim", fix.source).fixed.len == 0  # second fix writes nothing
-    check fixIdioms("tests/suites/test_x.nim", stub).source == stub  # suite is no stub
+    check fixIdioms("tests/suites/test_x.nim", stub).source == fix.source  # stub of category (#443)
+    check fixIdioms("tests/suites/suites.nim", stub).source == stub  # name opens no `t`: no stub
     let tail = "discard \"\"\"\ncmd: \"nim c $options $file -r\"\n\"\"\"\n" & module(body)
     check fixIdioms("tests/test_x.nim", tail).source ==
       "discard \"\"\"\ncmd: \"nim c $options $file\"\n\"\"\"\n" & module(body)  # before quote

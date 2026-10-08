@@ -2,9 +2,8 @@
 ##   Block is whole grant rather than addition to default: scope left out of it is set to
 ##   `none`, not left alone. So workflow naming one scope silently loses every other, and
 ##   loss shows as `403` on runner rather than as anything readable here.
-##   Written after that happened: `watch.yml` named `contents` and `issues`, and its first
-##   firing failed reading run it was pointed at, because naming those two revoked
-##   `actions: read` it never mentioned.
+##   Example: `watch.yml` reads run it is pointed at, so its block names `actions: read` beside
+##   `contents` and `issues`; those two alone revoke it.
 ##
 ##   Check is deliberately narrow. It reads what steps call, not what they might, and reports
 ##   only scope that some step demonstrably uses and block leaves out. Workflow declaring no
@@ -12,7 +11,7 @@
 ##   rather than drift.
 ##   Workflow that hands `gh` token other than run token, stored secret or one minted in step,
 ##   reaches by that token's grant, which no block here sets, so its `gh` marks are skipped.
-##   Written when `draft.yml` left run token, since it cannot convert pull request to draft.
+##   `draft.yml` hands such token, since run token cannot convert pull request to draft.
 ##   Weekly window: workflow passing `--recent` runs on `cron` whose interval is
 ##     `DAYS_RECENT` (CURATOR.md, duty 9), since both name one window. Interval is read for
 ##     two shapes alone, one weekday (7) and every day (1); other shape reads as 0 and fails,
@@ -41,8 +40,7 @@ const
   ]
     ## Text step uses scope by, paired with scope it then needs. Endpoint path is what `gh api`
     ## spells; `gh run`, `gh issue` and `gh pr` are same reach through subcommand.
-    ## `pull-requests` arrived late: no workflow read pull requests until sweep did, so gap
-    ## sat unseen behind check written to stop exactly it.
+    ## Scope missing here goes unchecked, so step reaching new scope adds its mark here first.
   MARKS_TOKEN_RUN* = ["${{ github.token }}", "secrets.GITHUB_TOKEN"]
     ## Text that hands run token to step.
   KEY_TOKEN* = "GH_TOKEN: ${{"

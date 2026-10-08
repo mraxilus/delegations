@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | cece22607540de43 |
+| Rules   | 518d95c29d36f97d |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 | Pruned  | ab8fb063b62bb03ba9fd7f2964a1866b3862909b |
 
@@ -1517,8 +1517,9 @@ before `; got `, or before the closing period. So `koch check` prints
   wrapping cite X.3 alone, though STYLE.md §5 states them too. Operator wrapping cites STYLE.md §5
   alone, though X.1 states it too. The static pass runs none of these three checks, so koch prints
   none of these messages.
-- The case of a name cites V.1, V.11 or V.12 by the kind of the name. So it takes three rules,
-  `name-case`, `member-case` and `placeholder-letter`, and each cites one article.
+- The case of a name cites V.1, V.11 or V.12 by the kind of the name. A bare `typedesc`
+  parameter cites V.12, as a placeholder does. So the case takes three rules, `name-case`,
+  `member-case` and `placeholder-letter`, and each cites one article.
 - Each message of the static pass cites its article, as `Line holds tab (X.1).` does.
 - Cost: a backtick in a sentence that no run of as many backticks closes pairs with the backtick of
   the value. The article then goes before the closing period. No message of knoller holds such a
@@ -1788,9 +1789,9 @@ their findings with `koch fix` on its own branch (CURATOR.md, duty 3).
 
 **Every entry module, library umbrella and test stub imports the profiler on one line (STYLE.md
 §3).** An entry module holds a `when isMainModule:` block in its code. The umbrella is
-`<project>/src/<project>.nim`, and a stub is `tests/test_*.nim`. The fixer joins the form on two
-lines. It inserts the line after the last pragma that opens the module, with a blank line on each
-side.
+`<project>/src/<project>.nim`, and a stub is `tests/test_*.nim` or a file of a testament category
+that a header opens (#443). The fixer joins the form on two lines. It inserts the line after the
+last pragma that opens the module, with a blank line on each side.
 
 - A `when isMainModule:` inside a string is no code, so `test_checker.nim` is no entry module.
 - A stub that includes a suite with the import then imports the module twice. The compiler
@@ -2004,8 +2005,7 @@ anywhere, or one above the last line (D1 of #578).
 checkout alone.** A subagent works in a worktree of its own, on a branch of its own
 (`GUIDE.md`, Work for subagents). The checkout of a write is the one that
 holds the file. The checkout of a git command is the one that its `-C` or a `cd` before it
-names, else the working directory of the call. A directory outside this repository falls
-back to the primary checkout.
+names, else the working directory of the call.
 
 - A detached head in the primary checkout never decides the branch of a worktree. So it never
   refuses a subagent.
@@ -2014,8 +2014,14 @@ back to the primary checkout.
   outside it.
 - A path is read from the top of its checkout, and never from the working directory of the
   call, which may be a subdirectory.
-- Cost: a git command in another repository falls back to the primary checkout. A commit there
-  is held to the branch of the primary checkout (#380).
+- A call in another repository has no checkout here, so the three hooks pass it unread. That
+  repository keeps its own branch, and a hook holds this repository alone. A directory in no
+  repository, or a failure of git, reads as the primary checkout, so a failure still holds the
+  rule.
+- Verified by `suites/test_tree.nim`, for the commit in a scratch repository of #380 as found.
+  The suite also holds the root, a subdirectory, a path not yet written, a worktree and a
+  directory in no repository. Fake inputs to the built koch use a detached checkout as the
+  primary. They refuse a commit and a write there, and pass both in a scratch repository.
 - Cost: only the first git command of a shell line is read. A second one with another `-C`
   is held to the branch of the first.
 
