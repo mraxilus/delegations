@@ -2045,8 +2045,8 @@ readers one read of the stance, which no check counts.
 **The wheel zooms toward the object the pointer is over**, which is the map reading of a zoom.
 `picking.anchorZoomAt` answers that object alone, in both states. Where none answers, the wheel
 with a selection dollies about the middle of the frame. The wheel in free flight then does nothing,
-since it has nothing to come in to (repository issue 535). A pinch takes the same rule at the middle
-of the frame.
+since it has nothing to come in to (repository issue 535). A pinch takes the same rule at the
+midpoint of its fingers.
 
 To point at something means *that thing, at the depth it stands at*. Rejected: the ground at
 `z = 0`, which the world does not have, and the level through the pivot, which names no place a
@@ -2085,8 +2085,18 @@ one.
 `camera.dollyToward` moves the eye along its own line to the anchor, and scales the pivot toward
 the anchor by the same factor. The orbit centre then settles onto what the reader zooms into. The
 scale applied is read back from `distanceHeld`. So a zoom stopped by the floor of the orbit
-distance moves the eye by exactly what it was allowed. **A pinch stays centred**, because the
-two-finger gesture already pans by the travel of its midpoint.
+distance moves the eye by exactly what it was allowed.
+
+**A pinch aims at the midpoint of its fingers**, where they stood the step before. The zoom holds
+the pixel of its anchor. The pan of the two fingers then carries that pixel to where they stand
+now, so what they hold stays under them. Rejected: the middle of the frame. Its zoom slides a point
+227 px off the middle to 831 px off the fingers. With nothing selected and nothing at the middle,
+it does nothing.
+
+Where several drawn discs cover that midpoint, the pinch takes the disc nearest the eye, as a tap
+does. 4.0e7 units out over Sol in the largest demo, that is PM J01331+6958, 2.2 px off Sol and
+4.0e6 units in front of it. Which disc a pinch takes there waits on the Architect (repository
+issue 592).
 
 *Checked.* Verified by `suites.nim`:
 
@@ -2099,6 +2109,8 @@ Verified by driven checks:
 
 - an object under the pointer drifts 0.000 px across a 3.2× zoom, against 1.957 px with the
   pivot-level anchor;
+- a pinch over a point 227 px off the middle comes in to it, and holds it 0.00 px off the
+  fingers;
 - a wheel back out returns to distance 19.000 and pivot (0, 0, 1);
 - 40 notches onto a point picked alone stop at a depth of 0.115882196, against a fill of
   0.115882251 read through float32. Ten more notches move the eye 0.
@@ -2831,6 +2843,17 @@ no more than a billionth of its bulk norm. That is an object more than a billion
 `motors.turnAbout` refuses an axis by the same rule. The library does not change (see Algebra
 boundary).
 
+**An assembled point is read by its weight alone.** `pointFrom` reads a point that a caller builds
+as a unit point plus weightless directions. Its weight is exactly one, and its bulk says only how
+far out it stands. So `pointFrom` tests the weight against zero, and not against the bulk. The
+horizon stands at `FRACTION_HORIZON` 0.9 of the far bound from the eye. A camera 5.6e7 out puts it
+past a billion units, where a test against the bulk reads each of its points as a direction.
+
+Under the bulk test, the assert in `pointFrom` stops the frame loop there, and the page draws
+nothing more. The anchor and the pick of a star read through `pointFrom` too, since they build the
+same point. Under that test a star past a billion units has no place, and the pick passes it over.
+Rejected: a ceiling on the separation, which no reader is assumed to want (see Camera).
+
 **A product that a caller builds on the spot is judged against its factors.** Rounding of zero
 carries no scale of its own, so the product alone cannot show it. `euclid.normalize` and the four
 direction readers of `boundary` take a `scale`, and refuse a direction no more than `TOLERANCE_ABS`
@@ -2940,7 +2963,13 @@ object.
 - the catalogue's joins, meets and projections give what the library gives, near and far;
 - the catalogue runs about a local origin exactly the operations that commute with a slide;
 - a line a metre long prints the terms it carries, and no rounding beside them;
-- an eye standing on the line has no side to flank it from.
+- an eye standing on the line has no side to flank it from;
+- a line and a star drawn at a horizon of 4e9 land where the algebra puts them, and the star's
+  anchor reads its place;
+- a star stays pickable from a camera 1e8 out, whose horizon stands 1.8e9 off the eye.
+
+Verified by a probe that is not kept, on 2026-10-08. The wheel over Sol in the largest demo carries
+the separation to 6.8e9 with no page error. Under the bulk test, the page stops near 5.6e7.
 
 ## Motors
 
@@ -3416,7 +3445,7 @@ turntable revolving about a point far behind the planet arrived at.
 So `picking.anchorZoomAt` says whether its anchor is where a point or a line *stands*, or a
 crossing (`AnchorZoom.is_standing`). `interaction.dollyAt` re-pivots along the sight line to the
 depth of a standing anchor after the zoom, through `camera.repivotToDepth`, which leaves the
-picture unchanged. The pinch goes through the same rule, aimed at the middle of the frame.
+picture unchanged. The pinch goes through the same rule, aimed at the midpoint of its fingers.
 
 A plane is a crossing, and the map rule alone follows it. Its depth under the pointer is not its
 depth at the middle of the frame.
