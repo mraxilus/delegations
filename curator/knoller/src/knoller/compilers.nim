@@ -33,6 +33,9 @@
 ##     exists for these tarballs, read rather than assumed. `<url>.sha256` is exactly
 ##     `sha256sum` output, for every release checked.
 ##   Cost: cached toolchain is few hundred megabytes and nothing prunes them.
+##   Cost: on Windows nothing is fetched or built, since nim-lang.org publishes no tarball for it
+##     and build needs `sh`; pin is served from PATH or cache alone there, and one line on
+##     stderr names both places, so pin nothing serves warns as it does elsewhere.
 
 {.experimental: "strictFuncs".}
 
@@ -141,7 +144,7 @@ func digestPinned*(published: string): string =
   candidate
 
 
-func rootCache*(override: string): string =
+proc rootCache*(override: string): string =
   ## Read cache directory toolchains live under, override winning when set.
   if override.len > 0: override else: getHomeDir() / DIRECTORY_CACHE
 
@@ -238,18 +241,23 @@ proc resolve*(pin: string, running: Compiler, root: string): Option[string] =
   let bin = binOf(root, pin)
   if pin.isServedBy(compilerAt(bin / NIM)): return some(bin)
   let directory = root / pin
-  createDir(root)
-  stderr.writeLine "== fetching Nim " & pin
-  let
-    platform = platformOf(hostOS, hostCPU)
-    is_built =
-      if pin.isBuilt(platform): buildSource(pin, directory)
-      else: fetchRelease(pin, platform, directory)
+  when defined(windows):
+    stderr.writeLine "No toolchain serves Nim " & pin & " on PATH or in `" & directory &
+      "`, and knoller fetches none on Windows."
+    none(string)
+  else:
+    createDir(root)
+    stderr.writeLine "== fetching Nim " & pin
+    let
+      platform = platformOf(hostOS, hostCPU)
+      is_built =
+        if pin.isBuilt(platform): buildSource(pin, directory)
+        else: fetchRelease(pin, platform, directory)
 
-  # Fetched compiler is asked what it is: wrong tarball or half-built tree is not toolchain.
-  if is_built and pin.isServedBy(compilerAt(bin / NIM)): return some(bin)
-  removeDir(directory)
-  none(string)
+    # Fetched compiler is asked what it is: wrong tarball or half-built tree is not toolchain.
+    if is_built and pin.isServedBy(compilerAt(bin / NIM)): return some(bin)
+    removeDir(directory)
+    none(string)
 
 
 proc initToolchains*(
