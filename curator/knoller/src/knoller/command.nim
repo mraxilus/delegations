@@ -394,12 +394,14 @@ proc batchesOf*(paths: openArray[string]; nim, directory: string; provers: Prove
 func listingOf*(directory, output: string; code: int): tuple[files: seq[string], refusal: string] =
   ## Read Nim files git lists under directory, sorted, from output and exit code of `git ls-files
   ##   -z` run there; refusal says why directory names none, and is empty where it names some.
+  ##   Each path reads with separator `/` (`slashed`), as git lists it, so output of one tree is
+  ##   same on every platform.
   if code != 0:
     result.refusal = "Directory lies outside git work tree, so git lists no file under it; got `" &
         directory & "`."
     return
   for name in output.split('\0'):
-    if name.len > 0 and name.dialectOf.isSome: result.files.add directory / name
+    if name.len > 0 and name.dialectOf.isSome: result.files.add slashed(directory / name)
   result.files.sort
   if result.files.len == 0:
     result.refusal = "Directory holds no Nim file that git lists; got `" & directory & "`."

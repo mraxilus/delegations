@@ -275,7 +275,7 @@ suite "Command line":
     check execCmd("git -C " & root.quoteShell & " add -A") == 0
     putEnv("GIT_TRACE", "1")
     defer: delEnv("GIT_TRACE")
-    check root.listed == (@[root / "a.nim", root / "b.nim"], "")  # no trace glued to first
+    check root.listed == (@[slashed(root / "a.nim"), slashed(root / "b.nim")], "")  # no trace
     check outside.listed.refusal.startsWith("Directory lies outside git work tree")
 
 
