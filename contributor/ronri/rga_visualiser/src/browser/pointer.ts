@@ -266,11 +266,9 @@ function settleTwoFingers() {
   const first = pointers.get(ids_gripped[0]);
   const second = pointers.get(ids_gripped[1]);
   if (first === undefined || second === undefined) return;
-  // Each finger stays on what it took as it landed, pixel for pixel: one solve moves
-  //   camera for spread, slide and twist at once; see `interaction.carryGrip`.
-  //   Not separate zoom, pan and roll, each past slop of its own: fingers slipped off
-  //   what they held for every pixel slop swallowed, and roll turned about middle of
-  //   frame rather than about fingers.
+  // Each finger stays on what it took as it landed, less slop: one call moves camera for
+  //   spread, slide and twist at once, and zooms and rolls nothing until fingers part,
+  //   close or turn past slop; see `interaction.carryGrip`.
   const rect = canvas.getBoundingClientRect();
   nimCarryGrip(
     first.x - rect.left, first.y - rect.top, second.x - rect.left, second.y - rect.top,

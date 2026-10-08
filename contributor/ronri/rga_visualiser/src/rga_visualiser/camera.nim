@@ -806,7 +806,7 @@ func look*(camera: var Camera; turn, rise: float) =
   camera.motor = camera.turnedAboutEye(camera.frame.axis_right, -rise)
 
 
-func wrapAngle(radians: float): float =
+func wrapAngle*(radians: float): float =
   ## Bring angle into half-open turn about zero, so smaller of two turns reads smaller.
   floorMod(radians + PI, 2.0 * PI) - PI
 

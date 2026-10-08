@@ -1913,6 +1913,10 @@ proc nimFocusHandle(): cint {.exportc.} =
 proc nimTapSlop(): cfloat {.exportc.} = cfloat(PIXELS_TAP_SLOP)
   ## Report how far press may move and still be press; see `interaction.PIXELS_TAP_SLOP`.
 
+proc nimTwistSlop(): cfloat {.exportc.} = cfloat(RADIANS_TWIST_SLOP)
+  ## Report how far two fingers may turn before twist rolls; see
+  ## `interaction.RADIANS_TWIST_SLOP`.
+
 proc nimBeginPress(now: cfloat) {.exportc.} =
   ## Forward to `interaction.beginPress`; every press goes through it, camera ones too.
   interaction.beginPress(INTERACTION_PAGE, float(now))
