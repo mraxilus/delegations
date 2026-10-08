@@ -1226,10 +1226,38 @@ finding, of the rule `notation`.
 **A one-letter capital local is a finding, by the ruling of the Architect.** Plain ASCII is
 never notation. So `N` or `M` as a local, a parameter or a field takes the snake case of V.1.
 
-**A parameter that holds a type is a parameter, by the ruling of the Architect.** So
-`t: typedesc` takes the snake case of V.1. The one capital of V.12 is for a placeholder in
-brackets, as `scalar*[I: Basis](t: typedesc[I])` shows. `STYLE.md` spells its borrow template
-that way.
+**A parameter of type `typedesc` alone takes the one capital letter of a placeholder, by the
+ruling of the Architect on #443.** Such a parameter stands for any type, as a generic does, so
+V.12 binds it. `declared.nim` marks it as generic (`is_generic`), and `type` alone too, since Nim
+reads it as the same type. `casingOf` gives a generic parameter the letter of a placeholder. A
+parameter of `typedesc[I]` keeps the snake case of V.1, since `I` is its placeholder, as
+`scalar*[I: Basis](t: typedesc[I])` shows. `STYLE.md` spells its borrow template with `T`.
+
+**Snake case passes beside the letter, as step 1 of the ruling, until `pga_benchmark` renames its
+`kind`.** `timeKind` in `proposals/04-exact-kinds/timing.nim` of that project declares
+`kind: typedesc`. A check that reddens a contributor project cannot merge, and a curator never
+edits such a project (CURATOR.md, duties 3 and 11). So `isMiscased` passes a generic parameter in
+snake case too. An intended later step makes the letter the only form, once that project renames
+`kind`.
+
+**No rename of case touches a generic parameter.** The letter is the initial of what the
+parameter ranges over, which is a choice, and snake case passes beside it. So `renamesCase` gives
+none, as it gives none for a placeholder. A name in neither form, such as `Kind`, is one finding
+of `placeholder-letter`, and the hand renames it. Its message names both forms. A rename that
+spells out a coined abbreviation (V.6) still reaches it, as it reaches every kind.
+
+- Rejected: a kind of its own in `KindName`. Each reader of `KindName.Parameter` then has to
+  learn it, such as the foreign mark, the notation of III.5 and the subject of each message. A
+  flag on `Declared` reaches the casing alone.
+- Rejected: the letter as the only form now. It reddens `pga_benchmark`, whose code a curator
+  never edits.
+- Cost: a reader of the kind alone sees a parameter, so `casingOf` and `isMiscased` read the flag
+  beside it.
+- Cost: both forms pass, so one file may spell two generic parameters two ways. Reading holds it
+  until the rename.
+- Cost: the scanner reads the type as the signature spells it, so an alias of `typedesc` is
+  unread.
+- Verified by `suites/test_names.nim` and `suites/test_declared.nim`.
 
 **One function decides the reach of a binding.** The case of a binding marks its reach, and not
 its mutability (V.1). So `reachOf` of `declared.nim` reads the blocks that enclose the binding:
