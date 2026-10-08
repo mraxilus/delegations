@@ -39,9 +39,9 @@
 ##     `func` writing `var` parameter is action too, and is unread for same reason.
 ##   V.3: routine never opens with `get`, `compute` or `new`. V.5: name opening `lut` reads
 ##     `lut_<value>_by_<key>`.
-##   No fixer here: renames reach every use of name, which only semantic pass of compiler finds,
-##     so `curator/audit` plans them (`names.nim` and `rewrites.nim` there) from spellings this
-##     module gives (`respelled`, `cased`).
+##   Renames: `renamesAbbreviation` and `renamesCase` give rename each rule asks. Rename reaches
+##     every use of name, which only semantic pass of compiler finds, so `rewrites.nim` plans it,
+##     in scope caller gives (`command.nim`, or `curator/audit`).
 ##
 ##   Cost: text scanner, never parser (`declared.nim`).
 ##   Cost: boolean is read only where declaration shows it: type `bool`, or value literal
