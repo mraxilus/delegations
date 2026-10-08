@@ -46,15 +46,13 @@ func apartOf(a, b: float): float =
   let d = floorMod(a - b, 360.0)
   min(d, 360.0 - d)
 
-func armOf(still: JsonNode, who: Body, arm: Arm, link: int): ArmPose =
-  ## One arm of connection `link` as recording keeps it, from engine's own capsules: each
-  ##   limb's capsule runs its radius in from both joints.  Join is where connection holds,
-  ##   as deep as it holds (`seen.joins`).
+func armOf(still: JsonNode, who: Body, arm: Arm, join: Vector): ArmPose =
+  ## One arm as recording keeps it, from engine's own capsules, holding at `join`: each
+  ##   limb's capsule runs its radius in from both joints.
   let
     tags = still["tag"].getElems
     points = still["points"][^1].getElems
     radii = still["radii"].getElems
-    joins = still["joins"][^1].getElems
   var capsules: array[1..2, tuple[a, z: Vector, radius: float]]
   for i, tag in tags:
     let part = tag[2].getInt
@@ -70,14 +68,44 @@ func armOf(still: JsonNode, who: Body, arm: Arm, link: int): ArmPose =
   result.shoulder = upper.a - upward * upper.radius
   result.elbow = upper.z + upward * upper.radius
   result.wrist = fore.z + forward * fore.radius
-  result.join = (joins[3*link].getFloat, joins[3*link+1].getFloat,
-                 joins[3*link+2].getFloat)
+  result.join = join
+
+func handLineOf(still: JsonNode, who: Body, arm: Arm): tuple[a, z: Vector] =
+  ## Hand's own line as recording keeps it: middle of its three capsules (`rigid.handCapsules`).
+  let
+    tags = still["tag"].getElems
+    points = still["points"][^1].getElems
+  var seen = 0
+  for i, tag in tags:
+    if tag[0].getInt == ord(who) and tag[1].getInt == ord(arm) and tag[2].getInt == ord(Mark.Palm):
+      if seen == 1:
+        return ((points[6*i].getFloat, points[6*i+1].getFloat, points[6*i+2].getFloat),
+                (points[6*i+3].getFloat, points[6*i+4].getFloat, points[6*i+5].getFloat))
+      inc seen
+  raiseAssert "No hand of three capsules recorded for " & $who & " " & $arm & "."
 
 func armsOf(still: JsonNode, links: seq[Link]): Arms =
   ## Every connection's two arms, lead's first, as recording keeps them.
-  for i, link in links:
-    result.add [armOf(still, link.ends[0].body, link.ends[0].arm, i),
-                armOf(still, link.ends[1].body, link.ends[1].arm, i)]
+  ##   Join of each connection is found where it lies, on both its hands' lines: mirror twin
+  ##     keeps its twin's joins in its twin's order (`twins.mirrored`), so order names no
+  ##     connection.  Read by order, C06, which mirrors C02, laid its joins on other
+  ##     connection and crossed nothing, where C02 crosses twice, measured 2026-10-08.
+  let joins = still["joins"][^1].getElems
+  for link in links:
+    let
+      a = handLineOf(still, link.ends[0].body, link.ends[0].arm)
+      b = handLineOf(still, link.ends[1].body, link.ends[1].arm)
+    var
+      join: Vector
+      nearest = Inf
+    for j in 0 ..< joins.len div 3:
+      let
+        point: Vector = (joins[3*j].getFloat, joins[3*j+1].getFloat, joins[3*j+2].getFloat)
+        off = closest(point, point, a.a, a.z).gap + closest(point, point, b.a, b.z).gap
+      if off < nearest:
+        (join, nearest) = (point, off)
+    result.add [armOf(still, link.ends[0].body, link.ends[0].arm, join),
+                armOf(still, link.ends[1].body, link.ends[1].arm, join)]
 
 func capsuleAt(frame: JsonNode, i: int): tuple[a, z: Vector] =
   ## Two ends of `i`th capsule of one recorded moment.
