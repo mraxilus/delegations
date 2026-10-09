@@ -3,12 +3,12 @@
   "kind": "evaluation",
   "name": "partner-sign",
   "path": "proposals/03-partner-sign",
-  "edits_digest": "3571d78001d62c13",
+  "edits_digest": "93d12691021c4806",
   "taken": {
     "date": "2026-10-07",
     "machine": "linux amd64, 4 cores",
     "nim": "27763495bcfe265507ca98aedc1c7064bf1e0e4d",
-    "pga": "749fecf02811417b014622e40217ce082856ed56",
+    "pga": "e993419c1f90efba72848d146606f903e1cc141e",
     "flags": "-d:release",
     "runs": 5,
     "measured_at": "edb0c9d3a247185874b8825c9da4b120317b00cf"

@@ -3,12 +3,12 @@
   "kind": "evaluation",
   "name": "chapter-three",
   "path": "changes/chapter-three.md",
-  "edits_digest": "e10024610b8643b5",
+  "edits_digest": "6c29fc8b6071371f",
   "taken": {
     "date": "2026-10-04",
     "machine": "linux amd64, 4 cores",
     "nim": "27763495bcfe265507ca98aedc1c7064bf1e0e4d",
-    "pga": "749fecf02811417b014622e40217ce082856ed56",
+    "pga": "e993419c1f90efba72848d146606f903e1cc141e",
     "flags": "-d:release",
     "runs": 5,
     "measured_at": "d9be8aefc193f6ee0a7a3fead25cd4fe1d8f09cf"

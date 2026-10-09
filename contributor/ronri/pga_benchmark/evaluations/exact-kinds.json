@@ -3,14 +3,15 @@
   "kind": "evaluation",
   "name": "exact-kinds",
   "path": "proposals/04-exact-kinds",
-  "edits_digest": "ca0cec44f45f09e3",
+  "edits_digest": "aefdf3f1511e6365",
   "taken": {
     "date": "2026-10-07",
     "machine": "linux amd64, 4 cores",
     "nim": "27763495bcfe265507ca98aedc1c7064bf1e0e4d",
-    "pga": "749fecf02811417b014622e40217ce082856ed56",
+    "pga": "e993419c1f90efba72848d146606f903e1cc141e",
     "flags": "-d:release",
-    "runs": 5
+    "runs": 5,
+    "measured_at": "749fecf02811417b014622e40217ce082856ed56"
   },
   "pin_suites": {
     "rga4d": {
