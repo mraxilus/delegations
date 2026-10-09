@@ -848,9 +848,9 @@ suite "Camera":
     check isNear(clipped[1] / clipped[3], 0)
 
 
-  test "a zoom aimed at the cursor keeps what is under it under it":
-    # Map reading of wheel: reader points at something and arrives there, rather.
-    #   than zooming at middle of frame and panning afterwards. Checked where it
+  test "a travel aimed at the cursor keeps what is under it under it":
+    # Map reading of free flight's wheel: reader points at something and arrives there,
+    #   rather than zooming at middle of frame and panning afterwards. Checked where it
     #   has to hold -- in pixels, against transform frame is actually drawn with.
     const (width_zoom, height_zoom) = (1440, 900)
     for cursor in [
@@ -861,13 +861,14 @@ suite "Camera":
         var camera = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
         let
           anchor = pointOnRay(camera, width_zoom, height_zoom, cursor)
+          reach = norm(camera.eye - anchor)
           before = projectToScreen(
             camera.initMatrixViewProjection(float(width_zoom) / float(height_zoom)),
             width_zoom,
             height_zoom,
             anchor,
           )
-        camera.dollyToward(factor, anchor)
+        camera.travelToward(factor, anchor, 0.0)
         let after = projectToScreen(
           camera.initMatrixViewProjection(float(width_zoom) / float(height_zoom)),
           width_zoom,
@@ -877,25 +878,24 @@ suite "Camera":
         check after.isInFront
         check abs(after.x - before.x) <= 0.5  # Half pixel: what reader could not see.
         check abs(after.y - before.y) <= 0.5
-        check camera.distance =~ 19.0 * factor
-        # Angles are what keep anchor on its own ray; zoom must not turn.
+        check norm(camera.eye - anchor) =~ reach * factor
+        # Angles are what keep anchor on its own ray; travel must not turn.
         check camera.azimuth =~ initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED).azimuth
         check camera.elevation =~ initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED).elevation
 
 
-  test "zooming in and back out returns the camera exactly where it stood":
-    # Wheel notch each way has to be round trip, or reader who overshoots and corrects.
-    #   ends up somewhere they never chose -- and aimed zoom moves pivot as well as
-    #   distance, so there is more to come back to than there used to be.
+  test "travelling in and back out returns the camera exactly where it stood":
+    # Wheel notch each way has to be round trip, or reader who overshoots and corrects
+    #   ends up somewhere they never chose.
     var camera = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
     let
       opening = camera
       anchor = pointOnRay(camera, 1440, 900, ScreenPosition(x: 300.0, y: 640.0))
-    camera.dollyToward(0.5, anchor)
-    check not (camera.pivot =~ opening.pivot)  # It really did move view, not just in.
-    camera.dollyToward(2.0, anchor)
+    camera.travelToward(0.5, anchor, 0.0)
+    check not (camera.eye =~ opening.eye)  # It really did move view, not just in.
+    camera.travelToward(2.0, anchor, 0.0)
+    check camera.eye =~ opening.eye
     check camera.pivot =~ opening.pivot
-    check camera.distance =~ opening.distance
 
 
   test "a zoom with nothing under the cursor falls back to zooming at the middle":
@@ -978,9 +978,9 @@ suite "Camera":
     ) < 1.0e-4
 
 
-  test "with no selection the wheel comes in to an object at any depth, and with one only near":
-    # Point on sight line eight separations out: outside band about separation that
-    #   selection's wheel keeps, and which free flight's wheel refers to regardless.
+  test "with no selection the wheel comes in to an object at any depth, and with one dollies":
+    # Point on sight line eight separations out, which free flight's wheel comes in to.
+    #   Selection's wheel dollies about pivot, so orbit stays on what is picked.
     const (wide, tall) = (1440, 900)
     let
       opened = cameraAround(ORIGIN, 10.0, Direction(x: 10, y: 0, z: 3))
@@ -1005,7 +1005,7 @@ suite "Camera":
     # Halfway to star, along its own line, and pivot at its depth.
     check norm(flying.eye - star) =~ 0.5 * norm(opened.eye - star)
     check flying.distance =~ norm(flying.eye - star)
-    # Selection keeps band: star is passed over, and zoom dollies about pivot instead.
+    # Selection passes star over, and zoom dollies about pivot instead.
     var held = opened
     interaction.dollyAtCursor(
       held,
@@ -1083,8 +1083,8 @@ suite "Camera":
     check dot(camera.eye - planet, camera.frame.forward) < 0.0
 
 
-  test "a wheel with a selection stops where the point it aims at fills the frame":
-    # Fault: turntable's wheel had no floor, so notch after notch onto point under pointer
+  test "a wheel with a selection stops where the point in the middle fills the frame":
+    # Fault: turntable's wheel had no floor, so notch after notch onto point in middle
     #   carried eye into it, past where its sphere reached every corner.
     const (wide, tall) = (1440, 900)
     let planet = Position(x: 3.0, y: 1.0, z: 0.0)
@@ -1111,60 +1111,117 @@ suite "Camera":
     check norm(camera.eye - planet) =~ filling
 
 
-  test "a wheel onto a point off the middle stops at the depth where it fills the frame":
+  test "free flight's wheel onto a point off the middle stops at the depth where it fills":
     # Fault: floor was reach from eye, and fill is depth along sight. Off middle, reach runs
-    #   longer than depth, so wheel stopped nearer than fill; hold of point picked alone
-    #   then carried eye back along sight, off pointer's line.
+    #   longer than depth, so wheel stopped nearer than fill. Selection's wheel dollies about
+    #   pivot, wherever pointer stands, so this is free flight's alone.
     const (wide, tall) = (1440, 900)
     let planet = Position(x: 3.0, y: 1.0, z: 0.0)
     var scene = initScene()
     scene.addObject(planet.toMultivector, "planet", Ink.Cobalt)
-    for has_selection in [false, true]:
-      # Pivot 6 units across sight from planet, so planet stands 17 degrees off middle.
-      var
-        camera = cameraAround(
-          Position(x: 5.31, y: -4.54, z: 0.0), 20.0, Direction(x: 12, y: 5, z: 7)
-        )
-        interaction = Interaction(is_enabled: true)
-      let at = projectToScreen(
+    # Pivot 6 units across sight from planet, so planet stands 17 degrees off middle.
+    var
+      camera = cameraAround(
+        Position(x: 5.31, y: -4.54, z: 0.0), 20.0, Direction(x: 12, y: 5, z: 7)
+      )
+      interaction = Interaction(is_enabled: true)
+    let at = projectToScreen(
+      camera.initMatrixViewProjection(float(wide) / float(tall)),
+      wide,
+      tall,
+      planet,
+    )
+    interaction.updateCursor(at.x, at.y)
+    for _ in 1..40:
+      interaction.dollyAtCursor(
+        camera,
+        scene,
+        0.5,
+        camera.drawExtentFor(tall, 0.0),
+        camera.initMatrixViewProjection(float(wide) / float(tall)),
+        wide,
+        tall,
+        has_selection = false,
+      )
+    let
+      filling = scene.radiusAt(0) * float(tall) / (
+        tan(0.5 * degToRad(camera.degrees_field_of_view)) * hypot(float(wide), float(tall))
+      )
+      (eye, frame) = camera.sight
+      held = projectToScreen(
         camera.initMatrixViewProjection(float(wide) / float(tall)),
         wide,
         tall,
         planet,
       )
-      interaction.updateCursor(at.x, at.y)
-      for _ in 1..40:
+    check depthAlong(eye, frame.forward, planet) =~ filling
+    check norm(camera.eye - planet) > 1.04 * filling
+    check abs(held.x - at.x) <= 0.5
+    check abs(held.y - at.y) <= 0.5
+
+
+  test "with a selection the wheel dollies about the pivot, wherever the pointer stands":
+    # Fault: selection's wheel came in to object under pointer, so eye slid along its line to
+    #   it, and sight, with pivot on it, left what is picked. Notches in and out over scene
+    #   carried pivot off point picked.
+    const (wide, tall) = (1440, 900)
+    let
+      picked = Position(x: 3.0, y: 1.0, z: 0.0)
+      opened = cameraAround(picked, 20.0, Direction(x: 12, y: 5, z: 7))
+      aspect = float(wide) / float(tall)
+      other = picked + 4.0 * opened.frame.axis_right + 2.0 * opened.frame.axis_up
+      over_other = projectToScreen(opened.initMatrixViewProjection(aspect), wide, tall, other)
+    var scene = initScene()
+    scene.addObject(picked.toMultivector, "picked", Ink.Cobalt)
+    scene.addObject(other.toMultivector, "other", Ink.Rose)
+    var
+      camera = opened
+      interaction = Interaction(is_enabled: true)
+    # In over other object, out over sky, then in over other object again.
+    for (cursor, factor, notches) in [
+      (ScreenPosition(x: over_other.x, y: over_other.y), 0.8, 10),
+      (ScreenPosition(x: 100.0, y: 100.0), 1.25, 20),
+      (ScreenPosition(x: over_other.x, y: over_other.y), 0.8, 10),
+    ]:
+      interaction.updateCursor(cursor.x, cursor.y)
+      for _ in 1..notches:
         interaction.dollyAtCursor(
           camera,
           scene,
-          0.5,
+          factor,
           camera.drawExtentFor(tall, 0.0),
-          camera.initMatrixViewProjection(float(wide) / float(tall)),
+          camera.initMatrixViewProjection(aspect),
           wide,
           tall,
-          has_selection,
+          has_selection = true,
         )
-      let
-        filling = scene.radiusAt(0) * float(tall) / (
-          tan(0.5 * degToRad(camera.degrees_field_of_view)) * hypot(float(wide), float(tall))
-        )
-        (eye, frame) = camera.sight
-        held = projectToScreen(
-          camera.initMatrixViewProjection(float(wide) / float(tall)),
-          wide,
-          tall,
-          planet,
-        )
-      check depthAlong(eye, frame.forward, planet) =~ filling
-      check norm(camera.eye - planet) > 1.04 * filling
-      check abs(held.x - at.x) <= 0.5
-      check abs(held.y - at.y) <= 0.5
+      check camera.pivot =~ picked
+      check norm(camera.frame.forward + -opened.frame.forward) < 1.0e-12
+    check camera.distance =~ opened.distance
+    # Far in over other object stops where point in middle, which is point picked, fills frame.
+    interaction.updateCursor(over_other.x, over_other.y)
+    for _ in 1..40:
+      interaction.dollyAtCursor(
+        camera,
+        scene,
+        0.5,
+        camera.drawExtentFor(tall, 0.0),
+        camera.initMatrixViewProjection(aspect),
+        wide,
+        tall,
+        has_selection = true,
+      )
+    let filling = scene.radiusAt(0) * float(tall) / (
+      tan(0.5 * degToRad(camera.degrees_field_of_view)) * hypot(float(wide), float(tall))
+    )
+    check camera.pivot =~ picked
+    check camera.distance =~ filling
 
 
-  test "a zoom onto a point brings the pivot to its depth, and over nothing the pivot stands":
-    # Turntable follows what reader looks at: eye carried up to planet while pivot.
-    #   stayed far behind left every orbit swinging planet across frame. Over nothing
-    #   wheel dollies about middle of frame, which leaves pivot where it stands.
+  test "free flight's zoom onto a point brings the pivot to its depth, and a selection's stands":
+    # Free flight follows what reader looks at: eye carried up to planet while pivot stayed
+    #   far behind left scale of frame behind too. With selection, wheel dollies about
+    #   pivot, which leaves it where it stands.
     const (wide, tall) = (1440, 900)
     let planet = Position(x: 3.0, y: 1.0, z: 0.0)
     var scene = initScene()
@@ -1183,7 +1240,7 @@ suite "Camera":
       wide,
       tall,
       ScreenPosition(x: float(wide) / 2.0, y: float(tall) / 2.0),
-      has_selection = true,
+      has_selection = false,
     )
     # Eye moved halfway to planet, and pivot now stands on it.
     check camera.pivot =~ planet
@@ -1625,35 +1682,16 @@ suite "Camera":
     check camera.pivot =~ opening.pivot
 
 
-  test "an aimed zoom draws the pivot toward what it aimed at":
-    # `dollyToward` scales pivot toward anchor by exactly factor distance.
-    #   took, which is whole of why aimed zoom settles orbit centre onto what
-    #   reader is zooming into. Aimed at ground, pivot comes down onto it
-    #   rather than staying stranded on level it started at -- driven in shipped
-    #   browser, eight notches over ground carried it from z 1.00 to 0.32, where before
-    #   this it held at 1.00 however far in reader went.
-    var camera = cameraAround(Position(x: 0, y: 0, z: 4), 20.0, Direction(x: 16, y: 5, z: 9))
-    let
-      opening = camera
-      anchor = Position(x: 3.0, y: -2.0, z: 0.0)
-    camera.dollyToward(0.5, anchor)
-    let scale = camera.distance / opening.distance
-    check camera.pivot =~ anchor + scale * (opening.pivot - anchor)
-    check camera.pivot.z < opening.pivot.z
-    # And back out along same line, so reader who overshoots loses nothing.
-    camera.dollyToward(1.0 / scale, anchor)
-    check camera.pivot =~ opening.pivot
-    check camera.distance =~ opening.distance
-
-
-  test "an aimed zoom is held off the near floor, and stays a placement while it is":
-    # `dollyToward` reads back what `distanceHeld` allowed rather than assuming its own.
-    #   factor took, so zoom stopped by floor still describes where eye is.
+  test "a travel is held off the near floor, and stays a placement while it is":
+    # Floor of zero still leaves `DISTANCE_LIMIT_NEAR`, so eye never lands on anchor.
     var camera = cameraAround(ORIGIN, 0.1, Direction(x: 12, y: 5, z: 7))
     let anchor = pointOnRay(camera, 1440, 900, ScreenPosition(x: 400.0, y: 600.0))
     # Factor far past floor, which is tiny; see `DISTANCE_LIMIT_NEAR`.
-    camera.dollyToward(1.0e-12, anchor)
-    check camera.distance =~ DISTANCE_LIMIT_NEAR
+    #   Reach of 0.1 by 1e-15 is thousandth of floor, so floor alone stops it.
+    camera.travelToward(1.0e-15, anchor, 0.0)
+    # Ratio, not `=~`, whose absolute tolerance passes anything under it.
+    #   Rounding of eye 0.1 out is 5% of floor.
+    check abs(norm(camera.eye - anchor) / DISTANCE_LIMIT_NEAR - 1.0) < 0.1
     check norm(camera.eye - camera.pivot) =~ camera.distance
 
 

@@ -149,4 +149,37 @@ export async function driveWheel(page: Page): Promise<void> {
       `${spanOf(still.eye, after_sky.eye)}, separation ${still.distance.toFixed(4)} -> ` +
       `${after_sky.distance.toFixed(4)}`,
   );
+
+  // With point `b` selected, wheel dollies about pivot, which stands on it, wherever pointer
+  //   stands: in over another object, out over sky, and in over it again. Once it came in to
+  //   what pointer was over, and pivot left point picked.
+  await driveHome(page);
+  const picked = await page.evaluate(
+    () => nimSceneHandles().find((one) => nimObjectLabel(one) === 'b') ?? -1,
+  );
+  const other = await page.evaluate(
+    () => nimSceneHandles().find((one) => nimObjectLabel(one) === 'c') ?? -1,
+  );
+  await page.evaluate((one) => nimSelectOnly(one), picked);
+  await settleCamera(page);
+  const framed = await readCamera(page);
+  const world_picked = await page.evaluate((one) => Array.from(nimAnchorWorld(one)), picked);
+  const pixel_other = await pixelOf(page, other);
+  const pivots_off: number[] = [];
+  for (const [at, step, notches] of [
+    [pixel_other, -120, 10], [[sky.x, sky.y], 120, 20], [pixel_other, -120, 10],
+  ] as [number[] | null, number, number][]) {
+    await page.mouse.move(at?.[0] ?? 0, at?.[1] ?? 0);
+    await wheelBy(page, notches, step);
+    pivots_off.push(spanOf((await readCamera(page)).pivot, world_picked));
+  }
+  const held = await readCamera(page);
+  await page.evaluate(() => clearSelection());
+  report(
+    'with a point selected, the wheel in and out over other objects keeps the pivot on it',
+    pixel_other !== null && Math.max(...pivots_off) < 1e-4 &&
+      Math.abs(held.distance - framed.distance) < 1e-3 * framed.distance,
+    `pivot off the point by ${pivots_off.map((off) => off.toExponential(2)).join(', ')}; ` +
+      `distance ${framed.distance.toFixed(3)} -> ${held.distance.toFixed(3)}`,
+  );
 }
