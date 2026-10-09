@@ -182,4 +182,38 @@ export async function driveWheel(page: Page): Promise<void> {
     `pivot off the point by ${pivots_off.map((off) => off.toExponential(2)).join(', ')}; ` +
       `distance ${framed.distance.toFixed(3)} -> ${held.distance.toFixed(3)}`,
   );
+
+  // Notch, or right drag, inside ease of right-click pick of `b`. With selection both turn and
+  //   dolly about pivot it already has, so ease still lands pivot on `b`.
+  //   Not halt, which stops ease where it stands: pivot stayed short of `b`, and every zoom
+  //   after dollied about that.
+  const offs_eased: number[] = [];
+  for (const gesture of ['notch', 'drag']) {
+    await driveHome(page);
+    const at = (await pixelOf(page, picked)) ?? [0, 0];
+    await page.mouse.move(at[0] ?? 0, at[1] ?? 0);
+    await page.mouse.click(at[0] ?? 0, at[1] ?? 0, { button: 'right' });
+    await waitFrames(page, 2);
+    await page.mouse.move(sky.x, sky.y);
+    if (gesture === 'notch') {
+      await page.mouse.wheel(0, -120);
+      await waitFrames(page, 2);
+    } else {
+      await page.mouse.down({ button: 'right' });
+      for (let step = 1; step <= 3; step += 1) {
+        await page.mouse.move(sky.x, sky.y + 10 * step);
+        await waitFrames(page, 1);
+      }
+      await page.mouse.up({ button: 'right' });
+    }
+    await settleCamera(page);
+    offs_eased.push(spanOf((await readCamera(page)).pivot, world_picked));
+  }
+  await page.evaluate(() => clearSelection());
+  report(
+    'and a notch or a right drag inside the ease of a pick still lands the pivot on it',
+    Math.max(...offs_eased) < 1e-4,
+    `pivot off the point by ${(offs_eased[0] ?? 0).toExponential(2)} after a notch, and ` +
+      `${(offs_eased[1] ?? 0).toExponential(2)} after a drag`,
+  );
 }
