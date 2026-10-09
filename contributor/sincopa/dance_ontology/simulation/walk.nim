@@ -257,10 +257,11 @@ func reflected(
   for k in 0..<order.len:
     let arms = moment.arms[order[k]]
     result.arms.add [reflected(arms[0]), reflected(arms[1])]
-    # Hand's three capsules lie side by side, so mirror turns their order about too.
+    # Each capsule of hand is its own seen in mirror: hand's own terms mirror with it, so
+    # order across hand holds.
     var hands: array[2, array[3, Capsule]]
     for e in 0..1:
-      for finger in 0..2: hands[e][2-finger] = reflected(moment.hands[order[k]][e][finger])
+      for finger in 0..2: hands[e][finger] = reflected(moment.hands[order[k]][e][finger])
     result.hands.add hands
   for who in Body:
     for t in 0..<moment.trunks[who].len:
