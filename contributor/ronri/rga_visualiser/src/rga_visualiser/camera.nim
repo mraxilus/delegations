@@ -1631,7 +1631,8 @@ func release*(tween: var CameraTween) =
 func abandon*(tween: var CameraTween) =
   ## Hand camera to reader mid-ease, and let pivot alone finish arriving.
   ##   For path turning or scaling camera about pivot it already has: orbit, look, roll,
-  ##   plain dolly and keys. Reader wins way round and distance outright, and `advance`
+  ##   plain dolly, keys, and selection's wheel and right drag; see
+  ##   `interaction.yieldToWheelOrPan`. Reader wins way round and distance outright, and `advance`
   ##   carries pivot rest of its path underneath, so what they turn about is still what
   ##   was picked. Path placing pivot itself halts instead; see `halt`.
   ##     Stopping outright left pivot partway, and nothing aimed again: reader who added
@@ -1645,8 +1646,8 @@ func abandon*(tween: var CameraTween) =
 
 func halt*(tween: var CameraTween) =
   ## Stop carrying camera where it stands, and remember what it was carrying it toward.
-  ##   For path placing pivot itself: pan, zoom landing pivot on what pointer or frame's
-  ##   middle is over, figure typed into view fields, and placement undo restores. Pivot
+  ##   For path placing pivot itself: free flight's pan and its zoom landing pivot on what
+  ##   pointer is over, figure typed into view fields, and placement undo restores. Pivot
   ##   still arriving would slide camera off what reader set.
   ##   Not `release`, for reason `abandon` gives.
   if tween.goal.isSome: tween.is_arrived = true

@@ -1357,7 +1357,7 @@ proc nimCameraDollyAt(factor: cfloat; width, height: cint) {.exportc.} =
   ## Scale camera's distance from pivot by factor, toward whatever cursor is over.
   ##   See `interaction.dollyAtCursor`.
   ##   Wheel's zoom: reads cursor this build tracks (`nimUpdateCursor`), as picking does.
-  TWEEN_CAMERA.halt()
+  TWEEN_CAMERA.yieldToWheelOrPan(SELECTION_PAGE.len > 0)
   # Read through frame's placements.
   #   `dollyAtCursor` asks `anchorZoomAt` what cursor is over, which is full pick.
   placeEdited()
@@ -1393,7 +1393,7 @@ proc nimCameraPanAt(before_x, before_y, after_x, after_y: cfloat; width, height:
   ## Move view by right drag, in whichever way its state reads.
   ##   See `interaction.panAcross`. Both ends of step rather than its length: pan carries
   ##   point between them, which `nimCameraPanGrab` took.
-  TWEEN_CAMERA.halt()
+  TWEEN_CAMERA.yieldToWheelOrPan(SELECTION_PAGE.len > 0)
   panAcross(
     CAMERA_PAGE, ScreenPosition(x: float(before_x), y: float(before_y)),
     ScreenPosition(x: float(after_x), y: float(after_y)), int(width), int(height),
