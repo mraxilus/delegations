@@ -4278,6 +4278,13 @@ object and turns at once lands inside the 0.35 s ease. `CameraTween.abandon` giv
 reader, and the pivot still arrives, 0.000 units from the middle. Rejected: stopping the ease, which
 left the pivot 23.2 px off the middle of two points on a 390 by 844 phone.
 
+**A notch or a right drag inside the ease, with a selection, still lands the pivot on what is
+picked.** Both turn and dolly about the pivot the camera already has, so they yield as a turn does
+(`interaction.yieldToWheelOrPan`). In free flight both place the pivot, and stop the ease where the
+camera stands. Rejected: a halt in both states. Under it, a notch two frames into the ease of a
+right-click pick of `b` leaves the pivot 4.80 units off `b`. Every zoom after it dollies about that
+point.
+
 *Checked.* Verified by `suites.nim`:
 
 - a re-pick after `abandon` and a dolly re-arms;
@@ -4290,6 +4297,8 @@ left the pivot 23.2 px off the middle of two points on a 390 by 844 phone.
 - a turn at a fifth of the ease still lands the pivot on the middle of two points, and keeps the
   turn, as `settle` does;
 - a pan mid-ease halts it, and the pivot stays where the reader put it;
+- a notch or a right drag mid-ease with a selection still lands the pivot, and keeps the reader's
+  distance;
 - a frame narrowed to half its width asks for more room, and the same floor supplies it;
 - a still camera that a resize leaves out of frame eases back, though it holds its goal;
 - a stance that history restores stays while framed, and eases back where it is not;
@@ -4306,6 +4315,8 @@ Verified by driven check:
 - a finger adds a second point and turns as the ease is armed, with the pivot 1.500 short; it ends
   0.0000 from their middle;
 - a comet in view, picked, still pacing the screen at 35.1 px against a band of 5 to 60;
+- a notch and a right drag two frames into the ease of a right-click pick of `b` leave the pivot 0
+  off it. A halt leaves it 4.80 off;
 - a pick of the ground plane from 1.375° above lifts the elevation to 10.000°, and a pick from
   28.072° leaves it at 28.072° (`drivePlaneLifted`).
 
