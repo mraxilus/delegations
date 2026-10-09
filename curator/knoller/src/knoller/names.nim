@@ -39,11 +39,15 @@
 ##     `func` writing `var` parameter is action too, and is unread for same reason.
 ##   V.3: routine never opens with `get`, `compute` or `new`. V.5: name opening `lut` reads
 ##     `lut_<value>_by_<key>`.
-##   V.2: binding holding named value in another representation leads with that value, where
-##     its name holds it: `a_flags = a.basis.toFlags`, never `flags_a`. Both orders pass cut of
-##     V.2 there, so tie-breaker settles it, and syntax shows it: `$`, `to<Target>` call (V.3)
-##     or type conversion over chain of value's root and fields (`namesConverted`). Type rooting
-##     chain is no value. Cut itself, and property such as `grade_m`, hold by reading.
+##   V.2: binding holding named value in another representation leads with name of its chain,
+##     where its name holds one: `c_dual_flags = c.dual.toFlags`, never `flags_c`. Last name of
+##     chain describes value, so both orders pass cut of V.2, and tie-breaker settles it. Syntax
+##     shows it: `$`, `to<Target>` call (V.3) or type conversion over chain of steps from one
+##     root (`namesConverted`); step is field or call of one input, by dot or by prefix call.
+##     Step may keep root, as dual of `c` is `c` in dual space (Architect's ruling, #608), or
+##     make new thing, as `m.grade` does, and syntax cannot tell which; so finding lists each
+##     name of chain, and reading picks one that passes cut. Type rooting chain is no value.
+##     Cut itself, and property such as `grade_m`, hold by reading.
 ##   Renames: `renamesAbbreviation` and `renamesCase` give rename each rule asks. Rename reaches
 ##     every use of name, which only semantic pass of compiler finds, so `rewrites.nim` plans it,
 ##     in scope caller gives (`command.nim`, or `curator/audit`).
@@ -61,6 +65,8 @@
 ##   Cost: change of representation is read by spelling, so call of other routine named
 ##     `to<Target>` reads as one. V.2 finding renames nothing: name that puts value first may
 ##     still need reading, as `is_moved = moved.toHashSet` does.
+##   Cost: chain with index, call of second input, operator or literal reads as no chain, so
+##     its name holds by reading. Wrong name of chain at head passes, as `m_grade_int` does.
 
 {.experimental: "strictFuncs".}
 
@@ -243,36 +249,83 @@ func isType(word: string): bool =
   word.len > 0 and (word[0] in {'A'..'Z'} or word in TYPES_BUILTIN)
 
 
-func namesChain(text: string; is_converted: bool): seq[string] =
-  ## Read root and fields of chain of names joined by dots, each `to<Target>` call aside; chain
-  ##   not yet converted ends in such call. Type rooting chain is no value, so it is left out.
-  ##   Empty where text is no such chain.
-  var chain = text
-  chain.removeSuffix("()")
-  let segments = chain.split('.')
-  if segments.anyIt(it.len == 0 or it[0] in {'0'..'9'} or it.identifierAt(0) != it): return
-  if not is_converted and not segments[^1].isTarget: return
-  for k, s in segments:
-    if s.isTarget or (k == 0 and s.isType): continue
-    result.add s
+func opening(text: string, close: int): int =
+  ## Find bracket opening one that closes at index; `-1` where text starts first.
+  var depth = 0
+  for k in countdown(close, 0):
+    if text[k] in {')', ']', '}'}: inc depth
+    elif text[k] in {'(', '[', '{'}:
+      dec depth
+      if depth == 0: return k
+  -1
+
+
+func isSplitTop(text: string): bool =
+  ## Decide whether text holds `,` outside brackets, so it gives more than one input.
+  var depth = 0
+  for c in text:
+    if c in {'(', '[', '{'}: inc depth
+    elif c in {')', ']', '}'}: dec depth
+    elif c == ',' and depth == 0: return true
+  false
+
+
+func isName(text: string): bool =
+  ## Decide whether text is one name, never number.
+  text.len > 0 and text[0] notin {'0'..'9'} and text.identifierAt(0) == text
+
+
+type Chain = object  ## Define expression read as steps from one root (V.2).
+  is_read: bool  ## Expression reads as chain.
+  is_converted: bool  ## Last step changes representation: `to<Target>`, type conversion or `$`.
+  names: seq[string]  ## Root, then each step, `to<Target>` aside; type rooting chain left out.
+
+
+func chainOf(text: string): Chain =
+  ## Read expression as chain of steps from one root. Step is field or call of one input, by dot
+  ##   or by prefix call, so `dual(c)` reads as `c.dual`, and empty call reads as its name
+  ##   (`a.basis()`). Index, call of second input, operator and literal read as no chain.
+  let text = text.strip
+  if text.len == 0: return
+  if text[0] == '$':
+    result = text[1 .. ^1].chainOf
+    result.is_converted = result.is_read
+    return
+  if text[0] == '(' and text.closing(0) == text.high: return text[1 ..< text.high].chainOf
+  if text[^1] == ')':
+    let open = text.opening(text.high)
+    if open <= 0: return
+    let
+      callee = text[0 ..< open]
+      inner = text[open + 1 ..< text.high].strip
+    if '.' in callee:
+      if inner.len == 0: return callee.chainOf
+      return
+    if not callee.isName or inner.len == 0 or inner.isSplitTop: return
+    result = inner.chainOf
+    if not result.is_read: return
+    result.is_converted = callee.isTarget or callee.isType
+    if not result.is_converted: result.names.add callee
+    return
+  let dot = text.rfind('.')
+  if dot < 0:
+    if not text.isName: return
+    return Chain(is_read: true, names: if text.isType: @[] else: @[text])
+  let step = text[dot + 1 .. ^1]
+  if not step.isName: return
+  result = text[0 ..< dot].chainOf
+  if not result.is_read: return
+  result.is_converted = step.isTarget
+  if not result.is_converted: result.names.add step
 
 
 func namesConverted*(value: string): seq[string] =
-  ## Read names of value binding holds in another representation (V.2, V.3): root and fields
-  ##   under `$`, `to<Target>` call or type conversion. `a.basis.toFlags` gives `a` and `basis`,
-  ##   `uint(b)` and `$b` give `b`; `m.grade.get`, `dual[c].toFlags` and `toFlags(a + b)` give
-  ##   none, since no such change of named value holds them.
-  var text = value.strip
-  text.removeSuffix("()")
-  if text.startsWith("$"): return text[1 .. ^1].strip.namesChain(is_converted = true)
-  let open = text.find('(')
-  if open < 0: return text.namesChain(is_converted = false)
-  if text.closing(open) != text.high: return
-  let callee = text[0 ..< open]
-  if not (callee.isTarget or callee.isType): return
-  let operand = text[open + 1 ..< text.high].strip
-  result = operand.namesConverted
-  if result.len == 0: result = operand.namesChain(is_converted = true)
+  ## Read names of chain whose value binding holds in another representation (V.2, V.3): root,
+  ##   then each step, where chain ends in `$`, `to<Target>` call or type conversion.
+  ##   `a.basis.toFlags` gives `a` and `basis`, `toFlags(dual(c))` gives `c` and `dual`, `uint(b)`
+  ##   and `$b` give `b`; `m.grade.get`, `dual[c].toFlags` and `toFlags(a + b)` give none.
+  let chain = value.chainOf
+  if chain.is_read and chain.is_converted: chain.names.deduplicate else: @[]
 
 
 func indexRun(parts, run: openArray[string]): int =
@@ -285,15 +338,19 @@ func indexRun(parts, run: openArray[string]): int =
   -1
 
 
-func heldLater*(d: Declared): string =
-  ## Read name of value binding holds in another representation, where binding's name holds it
-  ##   after its head and nowhere first (V.2); empty where it leads, or name holds none.
-  var later = ""
-  for held in d.value.namesConverted:
-    let at = d.name.words.indexRun(held.words)
-    if at == 0: return ""
-    if at > 0 and later.len == 0: later = held
-  later
+func namesLater*(d: Declared): seq[string] =
+  ## Read names of chain whose value binding holds in another representation, where binding's
+  ##   name holds one of them after its head and none at its head (V.2); empty otherwise.
+  let
+    held = d.value.namesConverted
+    at = held.mapIt(d.name.words.indexRun(it.words))
+  if 0 notin at and at.anyIt(it > 0): held else: @[]
+
+
+func listed(names: openArray[string]): string =
+  ## Write names as code spans, commas between, `or` before last: `` `m`, `grade` or `get` ``.
+  let spans = names.mapIt("`" & it & "`")
+  if spans.len < 2: spans.join else: spans[0 .. ^2].join(", ") & " or " & spans[^1]
 
 
 func checkNames*(path, source: string; exempt: openArray[string]): seq[Report] =
@@ -331,14 +388,22 @@ func checkNames*(path, source: string; exempt: openArray[string]): seq[Report] =
         Rule.TableLookup,
         "Lookup table reads `lut_<value>_by_<key>`; got `" & d.name & "`.",
       )
-    let held = d.heldLater
-    if held.len > 0:
+    let held = d.namesLater
+    if held.len == 1:
       result.add initReport(
         path,
         d.line,
         Rule.HeadRepresentation,
-        "Name holding `" & held & "` in another representation leads with `" & held &
+        "Name holding `" & held[0] & "` in another representation leads with `" & held[0] &
           "`; got `" & d.name & "`.",
+      )
+    elif held.len > 1:
+      result.add initReport(
+        path,
+        d.line,
+        Rule.HeadRepresentation,
+        "Name holding value in another representation leads with a name of its chain, " &
+          held.listed & "; got `" & d.name & "`.",
       )
 
     # Boolean is proposition or mode; predicate `func` is `is…` (V.4).

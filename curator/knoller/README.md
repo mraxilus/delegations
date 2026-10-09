@@ -71,10 +71,12 @@ knoller [--check] [--nim:path] path...
   that holds a nimble file, and writes only the files you name. A rename that would write another
   file stays as written, and prints one warning at its declaration that says why. Run knoller on
   `.` at the root of a project to let such a rename write every file it reaches.
-- A name that holds a value in another representation leads with that value, where it holds the
-  name of the value (V.2): `a_flags = a.basis.toFlags`, never `flags_a`. A `to<Target>` call, a
-  type conversion or `$` over the value and its fields changes the representation. Knoller reports
-  such a name and renames nothing, since the new name can need a reading.
+- A name that holds a value in another representation leads with a name of its chain, where it
+  holds one (V.2): `c_dual_flags = c.dual.toFlags`, never `flags_c`. A `to<Target>` call, a type
+  conversion or `$` at the end of a chain of steps changes the representation. A step is a field
+  or a call of one input, by dot or by prefix call. A chain may run over lines that open `.`.
+  Where a step follows the root, the finding lists each name of the chain, since a step can make
+  a new thing, as `m.grade` does. Knoller renames nothing, since the new name can need a reading.
 - Knoller has no style option. A fence, from a line `#!fix off` to a line `#!fix on`, keeps its
   lines as written. Each run prints one warning for each fence, which names each rule that breaks
   inside it. So you always see what the fence keeps, and knoller writes none of it.

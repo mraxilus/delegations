@@ -21,8 +21,8 @@
 ##   Cost: boolean is read only where declaration shows it: type `bool`, or value literal
 ##     `true` or `false`. Boolean from call or expression holds by reading.
 ##   Cost: generic is read from type as signature spells it, so alias of `typedesc` is unread.
-##   Cost: binding's value is read on binding's own line alone, so value running past it is
-##     unread (`value`).
+##   Cost: binding's value is read on binding's own line, and lines below it opening `.` that
+##     continue its chain; value running past it otherwise is unread (`value`).
 
 {.experimental: "strictFuncs".}
 
@@ -68,8 +68,8 @@ type
     is_boolean*: bool  ## Shows `bool` by type or literal value, or `func` returns it (V.4).
     is_generic*: bool  ## Parameter of type `typedesc` alone, which stands for any type (V.12).
     value*: string
-      ## Value binding takes on its own line, its element where tuple gives one to each name;
-      ##   empty where line gives none, or value runs past line.
+      ## Value binding takes on its own line and lines below opening `.`, its element where tuple
+      ##   gives one to each name; empty where line gives none, or value runs past otherwise.
 
   Opener = object  ## Define block enclosing line, by its opening line.
     indent: int
@@ -236,6 +236,16 @@ func readType(text: string, line: int, names: var seq[Declared]): KindName =
       names.add Declared(name: p, line: line, kind: KindName.Placeholder)
     return KindName.Placeholder
   KindName.Field
+
+
+func continued(lines: openArray[string], i: int): string =
+  ## Read lines below line `i` that continue its value as steps of chain, each opening `.`,
+  ##   joined; empty where none.
+  var k = i + 1
+  while k < lines.len and lines[k].indentOf > lines[i].indentOf and
+      lines[k].strip.startsWith('.'):
+    result.add lines[k].strip
+    inc k
 
 
 func isOpening(lines: openArray[string], i: int): bool =
@@ -409,7 +419,7 @@ func declarations*(source: string): seq[Declared] =
           indent_section = indent
           is_section_mutable = word == "var"
         else:
-          for (name, value) in rest.pairsBinding:
+          for (name, value) in (rest & lines.continued(i)).pairsBinding:
             if openers.isSubstituted(name): continue
             result.add Declared(
               name: name,
@@ -426,7 +436,7 @@ func declarations*(source: string): seq[Declared] =
         # First line under keyword fixes child indent; deeper line continues value above it.
         if section_child < 0: section_child = indent
         if indent == section_child and (s.indexTop(':') > 0 or s.indexTop('=') > 0):
-          for (name, value) in s.pairsBinding:
+          for (name, value) in (s & lines.continued(i)).pairsBinding:
             if openers.isSubstituted(name): continue
             result.add Declared(
               name: name,
