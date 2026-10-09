@@ -137,16 +137,14 @@ type
 
   AnchorZoom* = object  ## Define what zoom holds still, and whether it stands somewhere.
     at*: Position  ## Point, about view origin, that keeps its pixel through zoom.
-    floor_reach*: float  ## How near wheel may come to `at`, in either state.
+    floor_reach*: float  ## How near wheel may come to `at`.
       ## Point's is reach at which its depth fills frame (`depthFilling`): nearer shows
       ## nothing more of it. Other object's is its drawn radius, so wheel stops at surface rather
       ## than carrying eye through it; see `camera.travelToward`.
     is_standing*: bool  ## Whether `at` is where point or line stands, not crossing of ray.
-      ## What stands somewhere is what reader looks at, so turntable's pivot follows its
-      ## depth (`camera.repivotToDepth`). Plane is crossing, met where ray happens to fall:
-      ## its depth under cursor is not its depth at middle of frame, and pivot lifted to it
-      ## stood off plane being zoomed onto. It is followed by map rule alone, pivot sliding
-      ## toward `at`; see `camera.dollyToward`.
+      ## What stands somewhere has surface to stop at, so selection's wheel floors at it;
+      ## see `interaction.dollyAbout`. Plane is crossing, met where ray happens to fall, and
+      ## its drawn radius spans its disc, so floor at it stops eye that far short of plane.
 
 
 func towards*(start, finish: ScreenPosition; fraction: float): ScreenPosition =

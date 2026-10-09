@@ -811,6 +811,46 @@ proc updateHover*(
 
 #[ Keyboard ]#
 
+proc dollyAbout*(
+  camera: var Camera;
+  scene: Scene;
+  factor: float;
+  scale: DrawExtent;
+  view_projection: Matrix4;
+  width, height: int;
+  placed: openArray[Placement] = [];
+) =
+  ## Zoom camera by `factor` about pivot, as selection's wheel does.
+  ##   Pivot stands on what is picked, so orbit stays on it however far wheel goes in or out.
+  ##     Not toward object under pointer: eye slid along its own line to that object, and
+  ##     sight, with pivot on it, left what is picked. Notch after notch in and out over
+  ##     scene then carried pivot off it.
+  ##   Stops where object standing in middle of frame fills frame, as free flight's wheel
+  ##   stops at object it comes in to; see `camera.travelToward`. Pivot stands on what is
+  ##   picked, so that object is mostly what is picked.
+  ##     Floor is reach, and object in middle stands on sight, where reach is depth.
+  ##     Floor never pushes eye out: eye already nearer stays, and only zooms out.
+  let anchor = anchorZoomAt(
+    scene,
+    camera,
+    scale,
+    view_projection,
+    width,
+    height,
+    ScreenPosition(x: 0.5 * float(width), y: 0.5 * float(height)),
+    placed,
+    is_banded = true,
+  )
+  var settled = factor
+  if anchor.isSome and anchor.get.is_standing and camera.distance > 0.0:
+    let
+      (eye, frame) = camera.sight
+      depth = depthAlong(eye, frame.forward, anchor.get.at)
+    if depth > 0.0:
+      settled = max(factor, min(1.0, 1.0 - (depth - anchor.get.floor_reach) / camera.distance))
+  camera.dolly(settled)
+
+
 proc dollyAt*(
   camera: var Camera;
   scene: Scene;
@@ -822,7 +862,7 @@ proc dollyAt*(
   has_selection: bool;
   placed: openArray[Placement] = [];
 ) =
-  ## Zoom camera by `factor` toward whatever `cursor` is over; see `dollyAtCursor`.
+  ## Zoom camera by `factor`, in whichever way its state reads; see `dollyAtCursor`.
   ##   Two states, as `driveHeld` has.
   ##     Free flight comes in to object under pointer, at whatever depth it stands,
   ##     floored at that object's drawn radius. Over nothing it does nothing: wheel refers
@@ -830,9 +870,11 @@ proc dollyAt*(
   ##     535).
   ##       Not pointer's ray at camera's own scale: that scale was separation, which each
   ##       notch scaled down, and wheel over empty sky took it to near floor.
-  ##     Selection keeps turntable's dolly, toward object under pointer where one stands
-  ##     there within `FACTOR_ANCHOR_DEPTH` of separation, and about middle of frame where
-  ##     none does.
+  ##     Selection dollies about pivot, which stands on what is picked, wherever pointer
+  ##     stands, so orbit stays on it; see `dollyAbout`.
+  if has_selection:
+    camera.dollyAbout(scene, factor, scale, view_projection, width, height, placed)
+    return
   # Take caller's extent and matrix, not fresh derivations per notch; see
   #   `picking.anchorZoomAt`.
   let anchor = anchorZoomAt(
@@ -844,36 +886,17 @@ proc dollyAt*(
     height,
     cursor,
     placed,
-    is_banded = has_selection,
+    is_banded = false,
   )
-  if not has_selection:
-    if anchor.isNone: return
-    camera.travelToward(factor, anchor.get.at, anchor.get.floor_reach)
-    # Separation follows anchor's own depth, so frustum's scale tracks flight.
-    #   Crossing as well as standing object: free flight has no orbit for pivot to
-    #   anchor, so depth here is scale and nothing else.
-    let
-      (eye, frame) = camera.sight
-      depth = depthAlong(eye, frame.forward, anchor.get.at)
-    if depth > 0.0: camera.repivotToDepth(depth)
-    return
-  if anchor.isNone:
-    camera.dolly(factor)
-    return
-  # Stop at anchor's floor, as free flight does; see `camera.travelToward`.
-  #   `dollyToward` scales eye's reach to anchor by factor, so floor bounds that factor.
-  #   Floor never pushes eye out: eye already nearer stays, and only zooms out.
-  let reach = distanceBetween(camera.eye.toMultivector, anchor.get.at.toMultivector)
-  if anchor.get.is_standing and reach > 0.0:
-    camera.dollyToward(max(factor, min(anchor.get.floor_reach, reach) / reach), anchor.get.at)
-  else:
-    camera.dollyToward(factor, anchor.get.at)
-  if anchor.get.is_standing:
-    # Depth from eye where it now stands, along sight direction zoom left unchanged.
-    let
-      (eye, frame) = camera.sight
-      depth = depthAlong(eye, frame.forward, anchor.get.at)
-    if depth > 0.0: camera.repivotToDepth(depth)
+  if anchor.isNone: return
+  camera.travelToward(factor, anchor.get.at, anchor.get.floor_reach)
+  # Separation follows anchor's own depth, so frustum's scale tracks flight.
+  #   Crossing as well as standing object: free flight has no orbit for pivot to
+  #   anchor, so depth here is scale and nothing else.
+  let
+    (eye, frame) = camera.sight
+    depth = depthAlong(eye, frame.forward, anchor.get.at)
+  if depth > 0.0: camera.repivotToDepth(depth)
 
 
 proc dollyAtCursor*(

@@ -731,29 +731,6 @@ func dollyTo*(camera: var Camera, distance: float) =
   camera.dolly(distanceHeld(distance) / camera.depth_pivot)
 
 
-func dollyToward*(camera: var Camera, factor: float, anchor: Position) =
-  ## Scale separation of eye from pivot by `factor`, moving eye along its line to `anchor`.
-  ##   Rather than straight in, so whatever stands there keeps its pixel: how map zooms,
-  ##   wheel taking reader toward what they point at, not middle of frame.
-  ##   Why anchor keeps pixel: angles do not change, so sight direction is fixed, and eye
-  ##   stays on line joining it to `anchor`; point on view ray through pixel is still on
-  ##   it afterwards.
-  ##   Scale applied is read back from `distanceHeld` rather than assumed, so zoom
-  ##   stopped by near floor moves eye by exactly as much as distance allowed.
-  ##   Pivot needs no arithmetic of its own: it is read off sight line at separation, so
-  ##   naming new separation lands it where old body assembled it by hand.
-  if camera.depth_pivot <= 0.0: return
-  let
-    distance_settled = distanceHeld(camera.depth_pivot * factor)
-    scale = distance_settled / camera.depth_pivot
-    # Step eye along its own line to anchor, as one multivector expression.
-    #   Difference of two unit-weight points is direction, and scaling one leaves it
-    #   direction, so this is weightless throughout.
-    step = wedge(scale - 1.0, subtract(camera.eye.toMultivector, anchor.toMultivector))
-  camera.slideBy(step)
-  camera.depth_pivot = distance_settled
-
-
 func repivotToDepth*(camera: var Camera, depth: float) =
   ## Move pivot along sight line to `depth` from eye, leaving picture unchanged.
   ##   Eye and sight direction stay; only separation moves, so nothing on screen shifts.
@@ -977,8 +954,8 @@ func travel*(camera: var Camera; ahead, across, rise: float) =
 
 func travelToward*(camera: var Camera, factor: float, anchor: Position, floor_reach: float) =
   ## Carry eye along its own line to `anchor`, scaling what separates them by `factor`.
-  ##   Whatever stands at `anchor` keeps its pixel, on same reading `dollyToward` holds:
-  ##   sight direction never moves, so point on view ray is still on it afterwards.
+  ##   Whatever stands at `anchor` keeps its pixel: sight direction never moves, and eye stays
+  ##   on its line to `anchor`, so point on view ray is still on it afterwards.
   ##   Floor is reach caller names, object's own drawn radius where object stands there,
   ##   so wheel stops at its surface rather than carrying eye through it.
   ##     Floor never pushes eye out: it applies only where eye is already further out.
