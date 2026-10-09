@@ -18,7 +18,8 @@ import std/[bitops, math]
 
 import ./[body, hold, rig, vector]
 from ./rigid {.all.} import ArmPlacing, ELBOW_END, ELBOWS_APART, faceCapsule, GIRDLE_RADIUS,
-  DEPTHS, handCapsules, Matrix, MATRIX_REST, ON_UPPER, times, transposed, trunkCapsules, turnAbout
+  DEPTHS, handCapsules, Matrix, MATRIX_REST, ON_UPPER, relaxedCapsules, times, transposed,
+  trunkCapsules, turnAbout
 
 
 const
@@ -218,7 +219,11 @@ func placeArm(
                         frame.world(shoulder + direction * (rig.upper - rig.limb)), rig.limb)
   result.capsules[2] = (frame.world(elbow + column(forearm, 2) * rig.limb),
                         frame.world(elbow + column(forearm, 2) * (rig.fore - rig.limb)), rig.limb)
-  for k, (a, z, radius) in handCapsules(rig, handLong(rig, depth)):
+  # Free hand holds nothing, and its depth is whole hand (`boundsOf`): it hangs relaxed.
+  let hand_capsules =
+    if depth >= rig.hand: relaxedCapsules(rig, handedness)
+    else: handCapsules(rig, handLong(rig, depth))
+  for k, (a, z, radius) in hand_capsules:
     result.capsules[3+k] = (frame.world(wrist + apply(hand, a)),
                               frame.world(wrist + apply(hand, z)), radius)
 

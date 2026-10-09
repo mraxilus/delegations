@@ -293,6 +293,20 @@ func handCapsules*(rig: Rig, long: float): array[3, tuple[a, z: Vector, radius: 
   for k, offset in [-spread, 0.0, spread]:
     result[k] = ((0.0, offset, radius), (0.0, offset, long - radius), radius)
 
+func relaxedCapsules*(rig: Rig, side: float): array[3, tuple[a, z: Vector, radius: float]] =
+  ## Free hand's three capsules in its link's own terms, laid as `handCapsules` lays them and
+  ## curled: each runs from wrist to fingertip, `rig.relaxed` away and `rig.curled` off hand's
+  ## line toward palm, which faces link's negative x for right arm (`side` one) and its x for
+  ## left (`tieFrame`).
+  ##   Free hand hangs relaxed, half curled, as hand at rest does (Architect, 2026-10-04).
+  let
+    radius = handThick(rig) / 2.0
+    spread = rig.hand_broad / 2.0 - radius
+    toward: Vector = (-side * sin(rig.curled), 0.0, cos(rig.curled))
+  for k, offset in [-spread, 0.0, spread]:
+    let across: Vector = (0.0, offset, 0.0)
+    result[k] = (across + toward * radius, across + toward * (rig.relaxed - radius), radius)
+
 const
   FACE_RADIUS* = 0.06  ## Metres of face's sphere: half face's length, brow to chin.
   FACE_FORE* = 0.06  ## Metres face's sphere sits ahead of head's axis.
@@ -810,6 +824,19 @@ proc curl(couple: var Couple, who: Body, arm: Arm) =
     var capsule = engine.Capsule(center1: shape.a, center2: shape.z, radius: cfloat(shape.radius))
     engine.reshape(shape.id, addr capsule)
 
+proc relax(couple: var Couple, who: Body, arm: Arm) =
+  ## Reshape one free hand to hang relaxed, its fingers curled toward its palm
+  ## (`relaxedCapsules`).
+  let curled = relaxedCapsules(couple.rig, side(arm))
+  var k = 0
+  for shape in couple.shapes.mitems:
+    if shape.mark != Mark.Palm or shape.who != who or shape.arm != arm: continue
+    shape.a = engine.initVector(curled[k].a.x, curled[k].a.y, curled[k].a.z)
+    shape.z = engine.initVector(curled[k].z.x, curled[k].z.y, curled[k].z.z)
+    var capsule = engine.Capsule(center1: shape.a, center2: shape.z, radius: cfloat(shape.radius))
+    engine.reshape(shape.id, addr capsule)
+    inc k
+
 proc setTie(couple: var Couple, i: int) =
   ## Set connection `i`'s tie at its hands' depths, with freedom their grip gives.
   ##   Carried, connection nobody planned holds at fingertips, always (Architect,
@@ -876,6 +903,7 @@ proc build*(
     for arm in Arm:
       result.depth[2*ord(who)+ord(arm)] =
         (if result.isHeld(who, arm): gripAtTips(rig) else: rig.hand)
+      if not result.isHeld(who, arm): result.relax(who, arm)
   for link in links:
     var tie = engine.defaultBall()
     tie.base.body_id_a = result.who[link.ends[0].body].arm[link.ends[0].arm].link[Limb.Palm]

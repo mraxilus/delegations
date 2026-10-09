@@ -16,6 +16,11 @@
 ##         crease;  hand length 0.193 / 0.180 -> hand of 0.19;  palm length 0.116 /
 ##         0.108 -> 0.11;  hand breadth 0.088 / 0.078 -> 0.083;  hand round 0.212 /
 ##         0.187 -> 0.20;  forearm round 0.27 -> limb radius 0.045.
+##       Relaxed hand: middle finger at rest with arm hanging, 32, 27 and 10 degrees at
+##         its three joints (Lee and Jung 2010, forty adults), curled further so hanging
+##         hand shortens to 0.77 of straight, as measured (Garrett 1971) -> fingertip 0.15
+##         from wrist crease, about 30 degrees toward palm.  Derived: no study measures
+##         that distance.
 ##       Shoulder extension 50-60 degrees and horizontal abduction 40-45 are
 ##         held to 45 behind frontal plane; adduction across body to
 ##         45 past sagittal plane; humeral rotation 90 in and 105 out, with
@@ -87,6 +92,8 @@ type
     upper*, fore*, hand*: float  ## Shoulder to elbow, elbow to wrist, wrist to fingertip.
     palm*: float  ## Wrist to knuckles.
     carry*: float  ## Wrist to grip's centre: where hand is carried, which band is asked of.
+    relaxed*: float  ## Wrist to fingertip of free hand, hanging relaxed with fingers half curled.
+    curled*: float  ## How far that fingertip lies off hand's own line toward palm, radians.
     hand_round*: float  ## Hand's girth round knuckles, thumb left out.
     hand_broad*: float  ## Hand's breadth across knuckles.
     limb*: float  ## Half of arm's thickness.
@@ -130,6 +137,8 @@ const HUMAN* = Rig(
   hand: 0.19,
   palm: 0.11,
   carry: 0.08,
+  relaxed: 0.15,
+  curled: toRadians(30),
   hand_round: 0.20,
   hand_broad: 0.083,
   limb: 0.045,
@@ -247,16 +256,21 @@ func span*(rig: Rig): float = rig.upper + rig.fore + gripAtTips(rig)
 
 const
   GRIP_CONE_PALM* = toRadians(30)
-    ## How far two palms held palm to palm tilt off facing each other.  Assumed.
+    ## How far two palms held palm to palm tilt off facing each other.  Derived, since no
+    ##   study measures it: slip limit of dry palm skin pressed flat, arctan of its friction
+    ##   of 0.5 to 0.62 (Derler and Gerhardt 2012; Zhang and Mak 1999), 27 to 32 degrees.
   GRIP_TWIST_PALM* = toRadians(60)
-    ## How far two hands held palm to palm turn off fingers opposed.  Assumed.
+    ## How far two hands held palm to palm turn off fingers opposed: stop, and not comfort.
+    ##   Derived, since no study measures it: top of what forearms, wrists and skin of both
+    ##   partners give (Kee and Karwowski 2001; Khan et al. 2009; du Bois de Dunilac et al.
+    ##   2023).  Each line of evidence ends comfort near 30 degrees.
 
 func gripFreedom*(rig: Rig, depth: float): tuple[cone, twist: float] =
   ## How far two joined hands turn against each other, when they meet this far past wrist.
   ##   Palm to palm, hands lock; by fingertips, hooked fingers turn freely.  So straight
   ##     connection holds anywhere from fingertips to full handshake, and connection that
   ##     curls holds at fingertips alone (Architect, issue 375).  Between, freedom grows in
-  ##     step with depth.  Assumed.
+  ##     step with depth.  Assumed: that step.
   let toward = clamp((depth - gripAtPalm(rig)) / (gripAtTips(rig) - gripAtPalm(rig)), 0.0, 1.0)
   (GRIP_CONE_PALM + toward * (PI - GRIP_CONE_PALM),
    GRIP_TWIST_PALM + toward * (PI - GRIP_TWIST_PALM))
