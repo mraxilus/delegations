@@ -97,7 +97,7 @@ The round bulk, round weight, flat bulk and flat weight norms each measure the s
 in Table 4.12. For each round object 𝐮 • 𝐮 = −r², in (4.44), and the radius norm is √(𝐮 ∘ 𝐮), in
 (4.45). So at pin, `|∙` and `|■` give NaN for each real round object. `|∘` and `|□` give the value
 of the radius norm, which `pga.nim` lists as `|⊘` and stubs, and neither gives a weight norm of the
-book. No change moves them to the four norms of the book yet.
+book. Change `conformal-norms` moves them to the four norms of the book, and fills `|⊙` and `|⊘`.
 
 ## Why five conformal law suites fail
 
