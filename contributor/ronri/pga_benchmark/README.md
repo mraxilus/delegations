@@ -148,3 +148,4 @@ checked against.
 [part-scale]: https://claude.ai/artifact/6hW9rjiotnjdjBVwatW5Dj
 [compound-tables]: https://claude.ai/artifact/TczTs551nkXVaWiyHzfVAn
 [object-names]: https://claude.ai/artifact/XtPy7LToDTT2P8S1FfGauX
+[magnitude]: https://claude.ai/artifact/5NwSv2YW9ZfDa5BbbVrv1D

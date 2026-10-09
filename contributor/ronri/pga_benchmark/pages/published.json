@@ -1,50 +1,54 @@
 {
   "docket": {
     "url": "https://claude.ai/artifact/XyT583x9RnTKixers2q4gT",
-    "digest": "1673043a46b0a0a1"
+    "digest": "3d9c8373c2fcad24"
   },
   "marginalia": {
     "url": "https://claude.ai/artifact/6WwLfdHiisCtGWUcFxibBM",
-    "digest": "6e76560a6b8a9fbc"
+    "digest": "0a9d46c1ec84321a"
   },
   "cayley-derivation": {
     "url": "https://claude.ai/artifact/2fi2hTpobqChXSTPq4vB6q",
-    "digest": "93365c3f42defaca"
+    "digest": "619e8986b9dbdcdf"
   },
   "typed-multivectors": {
     "url": "https://claude.ai/artifact/V34TAWXNvrHBGN9fNBWYWX",
-    "digest": "6b8e01dd8e10be4d"
+    "digest": "1b2495c042ec007b"
   },
   "partner-sign": {
     "url": "https://claude.ai/artifact/2fUYLonsQo7ejouCvCnpWf",
-    "digest": "5fe79e113aacca3e"
+    "digest": "be7c372faf907469"
   },
   "exact-kinds": {
     "url": "https://claude.ai/artifact/UPfjVLGbsVLBz756DMkPJe",
-    "digest": "88fee43403e7a51c"
+    "digest": "89d391206fd51b7d"
   },
   "multivector-align": {
     "url": "https://claude.ai/artifact/AB3BNtWPEzguWswwnx5ckh",
-    "digest": "884ef4189d32d2ca"
+    "digest": "a53aa0223a7024eb"
   },
   "proposals": {
     "url": "https://claude.ai/artifact/CW9ZL5eotsVYrZPjMnTLoG",
-    "digest": "dd1401f53891b77a"
+    "digest": "e5eeec1f9ee59f53"
   },
   "float-width": {
     "url": "https://claude.ai/artifact/Q3R1yz93Drk7Cwq5qhymDZ",
-    "digest": "90eed2dc0af75289"
+    "digest": "972092410caf599d"
   },
   "part-scale": {
     "url": "https://claude.ai/artifact/6hW9rjiotnjdjBVwatW5Dj",
-    "digest": "6219bba10fd300f7"
+    "digest": "8a0472ad7a7831c3"
   },
   "compound-tables": {
     "url": "https://claude.ai/artifact/TczTs551nkXVaWiyHzfVAn",
-    "digest": "afd8eaaa464cb08a"
+    "digest": "e534624109251296"
   },
   "object-names": {
     "url": "https://claude.ai/artifact/XtPy7LToDTT2P8S1FfGauX",
-    "digest": "a1476a0f65b44e5c"
+    "digest": "6f143e038174ebb9"
+  },
+  "magnitude": {
+    "url": "https://claude.ai/artifact/5NwSv2YW9ZfDa5BbbVrv1D",
+    "digest": "0a0793fe023becde"
   }
 }
