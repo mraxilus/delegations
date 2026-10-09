@@ -3,7 +3,7 @@
   "kind": "evaluation",
   "name": "exact-kinds",
   "path": "proposals/04-exact-kinds",
-  "edits_digest": "ae4fdcfba0bf951b",
+  "edits_digest": "ca0cec44f45f09e3",
   "taken": {
     "date": "2026-10-07",
     "machine": "linux amd64, 4 cores",
