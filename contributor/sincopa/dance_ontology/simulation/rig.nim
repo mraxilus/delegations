@@ -259,8 +259,8 @@ const
     ## How far two palms held palm to palm tilt off facing each other.  Derived, since no
     ##   study measures it: slip limit of dry palm skin pressed flat, arctan of its friction
     ##   of 0.5 to 0.62 (Derler and Gerhardt 2012; Zhang and Mak 1999), 27 to 32 degrees.
-    ##   That limit bounds angle of force to each palm, and is read here as angle between
-    ##   palms.
+    ##   Each hand presses along its own palm's normal onto partner's palm, so angle between
+    ##   palms is angle of that press.
   GRIP_TWIST_PALM* = toRadians(60)
     ## How far two hands held palm to palm turn off fingers opposed, where they meet: stop,
     ##   and not comfort.  Derived, since no study measures it.  Arms turn hands by their own
