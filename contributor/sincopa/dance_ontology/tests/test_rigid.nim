@@ -40,6 +40,9 @@ const
     ##   ways each kept and walked live.  Margin, not 10: recording moves which ways stop.
   GIVE_REST = 0.01  ## Metres shoulder may sit off tape at rest, girdle being on spring:
                    ## measured 6.3 mm, pushed by its own arm resting against torso.
+  SAME_SIDE = cos(30.0 * PI / 180.0)  ## Cosine between two lines that lie on one side of
+                                     ## hand: within thirty degrees, where other side is
+                                     ## near half turn away.
   SLACK = 3.0 * PI / 180.0  ## Engine's limits are solved, not clamped, so joint may
                            ## stand this far past its end for one step and come back.
   TWINS_SWEPT = 1  ## Pairs of `SWEEPS` that are each other's mirror twin: shake, and left
@@ -444,6 +447,27 @@ suite "Internal: Two dancers in rigid body engine":
     check abs(left_to_left_negative.at - right_to_right_positive.at) < STEP + 1e-9
     check left_to_left_positive.why == right_to_right_negative.why
     check left_to_left_negative.why == right_to_right_positive.why
+
+
+  test "mirror twin's hands are question's, capsule by capsule":
+    ## Twin answered in mirror (`walk.walked`) lays each side capsule of each hand on side
+    ## of hand where question walked raw lays it (`walk.walkedOf`).  Mirror keeps order of
+    ## capsules across hand, since hand's own terms are mirrored with it.
+    ##   Read as side of middle capsule, since engine is not exact in mirror: at rest,
+    ##     twin's wrist stands 34 mm from question's.  Red with order turned about: each side
+    ##     capsule on other side, measured 2026-10-09.
+    let
+      twin = walked(HUMAN, Band.Torso, RIGHT_TO_RIGHT, Body.Two, APART, STEP, STEP, false,
+                    Body.Two)
+      raw = walkedOf(HUMAN, Band.Torso, RIGHT_TO_RIGHT, Body.Two, APART, STEP, STEP, false,
+                     Body.Two)
+    check twinOf(RIGHT_TO_RIGHT, STEP, false).is_reflected
+    for e in 0..1:
+      let (seen, own) = (twin.moments[0].hands[0][e], raw.moments[0].hands[0][e])
+      for finger in [0, 2]:
+        let alike = dot(unit(seen[finger].a - seen[1].a), unit(own[finger].a - own[1].a))
+        checkpoint "end " & $e & ", capsule " & $finger & ": cosine " & $alike
+        check alike > SAME_SIDE
 
 
   test "kept sweep of mirror twin is its other twin's, ways swapped":
