@@ -1887,7 +1887,7 @@ collapses at the pole, so it needed a clamp, `ELEVATION_LIMIT`, that the motor n
 **Pivot and both angles are read out rather than stored, and that closes a hole.** Stored beside
 the stance, one could go stale against another, and a dolly left the pivot where no angle pointed.
 The dolly slides the eye and names the new separation, and the pivot follows. `repivotToDepth` is
-one assignment, and `dollyToward` needs no pivot arithmetic at all.
+one assignment, and `travelToward` needs no pivot arithmetic at all.
 
 **The azimuth reads back in (−π, π].** It comes off the sight direction through `arctan2`, which
 bounds it, and the panel's reading wraps there too. The ease is not affected, because `CameraTween`
@@ -2042,36 +2042,41 @@ readers one read of the stance, which no check counts.
 
 ## Zoom
 
-**The wheel zooms toward the object the pointer is over**, which is the map reading of a zoom.
-`picking.anchorZoomAt` answers that object alone, in both states. Where none answers, the wheel
-with a selection dollies about the middle of the frame. The wheel in free flight then does nothing,
-since it has nothing to come in to (repository issue 535). A pinch is no zoom of its own: its two
-fingers hold what each touched (see Two fingers).
+**In free flight, the wheel zooms toward the object the pointer is over**, which is the map reading
+of a zoom. `picking.anchorZoomAt` answers that object alone. Where none answers, the wheel does
+nothing, since it has nothing to come in to (repository issue 535). A pinch is no zoom of its own:
+its two fingers hold what each touched (see Two fingers).
 
 To point at something means *that thing, at the depth it stands at*. Rejected: the ground at
 `z = 0`, which the world does not have, and the level through the pivot, which names no place a
 reader points at.
 
-**With a selection, the object is taken only where its depth is within `FACTOR_ANCHOR_DEPTH` 2 of
-the orbit distance, either way.** An anchor on a star a thousand units off slides the eye 38% of the
-way toward it for each notch. Six off-centre notches carried the pivot 1,737 units, against 5 with
-the window. Horizon objects are refused, because they are at no place. The price is the jump: two
-notches taken either side of the edge of an object converge on different depths.
-
 In free flight the object is taken at any depth. There the wheel refers to the object under the
 pointer, and a star under the pointer is that object. Key flight no longer changes the separation,
 so a band about it would refuse every object once a flight had moved on.
 
+**With a selection, the wheel dollies about the pivot, wherever the pointer stands**
+(`interaction.dollyAbout`). The pivot stands on what is picked, so the orbit stays on it however far
+the wheel goes in or out. Rejected: a zoom toward the object under the pointer. It slides the eye
+along its own line to that object, so the sight, with the pivot on it, leaves what is picked. Under
+it, 10 notches in over `c`, 20 out over sky and 10 in again carry the pivot 6.07 units off `b`.
+
+**With a selection, an object counts only where its depth is within `FACTOR_ANCHOR_DEPTH` 2 of the
+orbit distance, either way.** The band holds for the floor of the wheel, and for what two fingers
+hold. Horizon objects are refused, because they are at no place.
+
 **The zoom stops where a point fills the frame.** Nearer shows nothing more of it. There its
 sphere reaches every corner, and the point is backdrop; see Picking. `picking.depthFilling` solves
-that depth, as the inverse of `isCoveringView`. The wheel takes it as the floor of a point in both
-states (`AnchorZoom.floor_reach`). `framing.holdFilled` holds it for a point picked alone under
-every other move: a drag, a key and a pinch.
+that depth, as the inverse of `isCoveringView`. Free flight floors at the point under the pointer,
+and a selection floors at the point in the middle of the frame (`AnchorZoom.floor_reach`).
+`framing.holdFilled` holds the fill for a point picked alone under every other move: a drag, a key
+and a pinch.
 
-The fill is a depth along the sight, and the wheel floors a reach. A move of the eye on its line to
-the anchor scales both by one factor. So the floor is the fill times the reach over the depth.
-Rejected: the fill as the reach. Under it, a point 17° off the middle stops 4% nearer than the
-fill. The hold then carries the eye back along its sight, off the line of the pointer.
+The fill is a depth along the sight, and free flight floors a reach. A move of the eye on its line
+to the anchor scales both by one factor. So the floor is the fill times the reach over the depth.
+Rejected: the fill as the reach, under which a point 17° off the middle stops 4% nearer than the
+fill. The hold then carries the eye back along its sight, off the line of the pointer. The point in
+the middle of the frame stands on the sight, where its reach is its depth.
 
 The hold takes a point picked alone. With more picked, the frame rule holds the group, and only
 the wheel stops at the fill of a point. Rejected: the drawn radius as the floor of a point. The
@@ -2082,16 +2087,14 @@ travel. Nothing is picked to hold, and the wheel and the pinch still stop at the
 floor on flight at the fill of the point ahead. Flight through a field of points would stop at each
 one.
 
-`camera.dollyToward` moves the eye along its own line to the anchor, and scales the pivot toward
-the anchor by the same factor. The orbit centre then settles onto what the reader zooms into. The
-scale applied is read back from `distanceHeld`. So a zoom stopped by the floor of the orbit
-distance moves the eye by exactly what it was allowed.
-
 *Checked.* Verified by `suites.nim`:
 
-- 40 notches with a selection onto a point stop where its sphere fills the frame;
-- off the middle, 40 notches stop at the depth of the fill in both states, with the point
-  0.5 px or less from the pointer;
+- 40 notches with a selection stop where the point in the middle fills the frame;
+- with a selection, notches in over another object and out over sky keep the pivot on the point
+  picked, and the sight unturned;
+- 10 notches in, 20 out and 10 in again bring the distance back to where it began;
+- in free flight, 40 notches onto a point off the middle stop at its fill, with the point 0.5 px
+  or less from the pointer;
 - a point picked alone is held at the fill from half of it, and left where it stands from 19.
 
 Verified by driven checks:
@@ -2100,7 +2103,10 @@ Verified by driven checks:
   pivot-level anchor;
 - a wheel back out returns to distance 19.000 and pivot (0, 0, 1);
 - 40 notches onto a point picked alone stop at a depth of 0.115882196, against a fill of
-  0.115882251 read through float32. Ten more notches move the eye 0.
+  0.115882251 read through float32. Ten more notches move the eye 0;
+- with `b` selected, 10 notches in over `c`, 20 out over sky and 10 in again leave the pivot 0
+  off `b`. The distance comes back to 19.000. A zoom toward the pointer leaves the pivot 6.07
+  units off, and the distance at 16.368.
 
 ## Free flight
 
@@ -2224,6 +2230,8 @@ drawn object stood 0.256 ahead.
 - free flight's wheel comes in to a point eight separations out, and the selection's dollies about
   the pivot instead;
 - 40 notches onto a point stop where its sphere fills the frame, with the point held on its pixel;
+- a travel toward three pixels holds what is under each within half a pixel, in and out;
+- a travel in and back out returns the eye, and a factor of 1e-15 stops at the near floor;
 - the frustum takes its scale from the nearest drawn object, and hands it back at zero;
 - the far clip still reaches a scene 6.5 million units across, and both depth ends still land;
 - the nearest reach is read ahead of the eye, never behind it, and never from a hidden object.
