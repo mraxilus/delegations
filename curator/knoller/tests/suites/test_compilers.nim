@@ -5,7 +5,8 @@
 
 import std/[options, os, strutils, tempfiles, unittest]
 from std/posix import nil
-import ../../src/knoller/[compilers, proofs]
+import ../../src/knoller/compilers
+when not defined(windows): import ../../src/knoller/proofs  # prover of pin, on POSIX alone
 
 
 const
@@ -26,8 +27,9 @@ proc streamsOf(action: proc ()): tuple[output, errors: string] =
   let
     saved = (posix.dup(1), posix.dup(2))
     files = (open(directory / "output", fmWrite), open(directory / "errors", fmWrite))
-  discard posix.dup2(files[0].getFileHandle, 1)
-  discard posix.dup2(files[1].getFileHandle, 2)
+  # File handle is descriptor of C library on every platform, though typed `int` on Windows.
+  discard posix.dup2(cint(files[0].getFileHandle), 1)
+  discard posix.dup2(cint(files[1].getFileHandle), 2)
   action()
   flushFile(stdout)
   flushFile(stderr)
@@ -107,27 +109,32 @@ suite "Compilers":
 
 
   test "digest of file changes when any byte of it does, which is what guard rests on":
-    # Proven by breaking it rather than by fetch that happened to succeed: guard compares
-    #   digest of what arrived against digest published for it, so what has to hold is that
-    #   one byte of difference is one digest of difference.
-    let (file, path) = createTempFile("knoller_", ".tar.xz")
-    defer: removeFile(path)
-    file.write("nim tarball, or something standing for one")
-    file.close
-    let whole = path.digestOf
-    check whole.len == 64  # `sha256sum` ran, and its output parsed
-    check whole == digestPinned(whole & "  " & path)  # same reader as sidecar's
-    writeFile(path, "nim tarball, or something standing for onf")  # one byte
-    check path.digestOf != whole
-    check path.digestOf.len == 64  # still digest, just not that one
-    # Absent file is nothing rather than digest, so it reports instead of matching.
-    check digestOf(path & ".absent").len == 0
+    when defined(windows):
+      # Gap: `sha256sum` is no tool of Windows, and fetch it guards never runs there
+      #   (`resolve`), so digest is read on POSIX alone.
+      skip()
+    else:
+      # Proven by breaking it rather than by fetch that happened to succeed: guard compares
+      #   digest of what arrived against digest published for it, so what has to hold is that
+      #   one byte of difference is one digest of difference.
+      let (file, path) = createTempFile("knoller_", ".tar.xz")
+      defer: removeFile(path)
+      file.write("nim tarball, or something standing for one")
+      file.close
+      let whole = path.digestOf
+      check whole.len == 64  # `sha256sum` ran, and its output parsed
+      check whole == digestPinned(whole & "  " & path)  # same reader as sidecar's
+      writeFile(path, "nim tarball, or something standing for onf")  # one byte
+      check path.digestOf != whole
+      check path.digestOf.len == 64  # still digest, just not that one
+      # Absent file is nothing rather than digest, so it reports instead of matching.
+      check digestOf(path & ".absent").len == 0
 
 
   test "cache lies outside repository, keyed by pin":
     let root = rootCache("/h/.cache/knoller/nim")
     check root == "/h/.cache/knoller/nim"
-    check binOf(root, PIN) == "/h/.cache/knoller/nim/2.2.4/bin"
+    check binOf(root, PIN) == "/h/.cache/knoller/nim" / "2.2.4" / "bin"  # joined natively
     # Audit reads untracked files, so toolchain inside checkout would be audited.
     check not binOf(root, PIN).startsWith(".")
 
@@ -167,48 +174,64 @@ suite "Compilers":
     )
     check bins == @[none(string), none(string)]  # stub serves neither
     check streams.output.len == 0  # stdout holds caller's product alone
-    for pin in [PIN, COMMIT]: check ("== fetching Nim " & pin) in streams.errors
-    check "git stub ran" in streams.errors and "git stub failed" in streams.errors  # commit builds
-    if platformOf(hostOS, hostCPU).len > 0:
-      check "curl stub ran" in streams.errors and "curl stub failed" in streams.errors  # fetch
+    when defined(windows):
+      # Nothing is fetched or built there, and one line names both places tried.
+      for pin in [PIN, COMMIT]: check ("No toolchain serves Nim " & pin) in streams.errors
+      check "stub ran" notin streams.errors
+    else:
+      for pin in [PIN, COMMIT]: check ("== fetching Nim " & pin) in streams.errors
+      check "git stub ran" in streams.errors and "git stub failed" in streams.errors  # build
+      if platformOf(hostOS, hostCPU).len > 0:
+        check "curl stub ran" in streams.errors and "curl stub failed" in streams.errors
 
 
   test "toolchains resolve each pin once: PATH where it serves, cache next, and failure held":
-    let directory = createTempDir("knoller_", "_toolchains")
-    defer: removeDir(directory)
-    writeTools(directory / "tools")
-    writeToolchain(directory / "cache", "9.9.9")
-    let path = getEnv("PATH")
-    putEnv("PATH", directory / "tools" & PathSep & path)
-    defer: putEnv("PATH", path)
-    var
-      toolchains = initToolchains(directory / "cache", some(Compiler(version: "9.9.8")))
-      bins: seq[Option[string]]
-    let streams = streamsOf(proc () =
-      for pin in ["9.9.8", "9.9.9", "0.0.1", "0.0.1"]: bins.add toolchains.binFor(pin)
-    )
-    check bins[0] == some("")  # compiler on PATH serves its own version
-    check bins[1] == some(directory / "cache" / "9.9.9" / "bin")  # cache serves, no fetch
-    check bins[2..3] == @[none(string), none(string)]  # nothing serves
-    check streams.errors.count("== fetching Nim ") == 1  # failure held, never tried again
-    check streams.output.len == 0
+    when defined(windows):
+      # Gap: stub toolchain is `sh` script, which Windows runs nowhere, so serving pin from
+      #   cache is proven on POSIX alone.
+      skip()
+    else:
+      let directory = createTempDir("knoller_", "_toolchains")
+      defer: removeDir(directory)
+      writeTools(directory / "tools")
+      writeToolchain(directory / "cache", "9.9.9")
+      let path = getEnv("PATH")
+      putEnv("PATH", directory / "tools" & PathSep & path)
+      defer: putEnv("PATH", path)
+      var
+        toolchains = initToolchains(directory / "cache", some(Compiler(version: "9.9.8")))
+        bins: seq[Option[string]]
+      let streams = streamsOf(proc () =
+        for pin in ["9.9.8", "9.9.9", "0.0.1", "0.0.1"]: bins.add toolchains.binFor(pin)
+      )
+      check bins[0] == some("")  # compiler on PATH serves its own version
+      check bins[1] == some(directory / "cache" / "9.9.9" / "bin")  # cache serves, no fetch
+      check bins[2..3] == @[none(string), none(string)]  # nothing serves
+      check streams.errors.count("== fetching Nim ") == 1  # failure held, never tried again
+      check streams.output.len == 0
 
 
   test "prover of pin is parser of compiler serving it; pin nothing serves names itself":
-    let directory = createTempDir("knoller_", "_provers")
-    defer: removeDir(directory)
-    writeTools(directory / "tools")
-    writeToolchain(directory / "cache", "9.9.9")
-    let path = getEnv("PATH")
-    putEnv("PATH", directory / "tools" & PathSep & path)
-    defer: putEnv("PATH", path)
-    let provers = proversPin(initToolchains(directory / "cache", some(Compiler(version: "9.9.8"))))
-    var provings: seq[Proving]
-    let streams = streamsOf(proc () =
-      for pin in ["9.9.9", "0.0.1"]: provings.add provers(pin)(@[GROUPED])
-    )
-    check provings[0].failure.len == 0 and provings[0].answers == @[@[9]]  # `@(x[0])` stays
-    check provings[1].answers == @[newSeq[int]()]  # nothing proven
-    check provings[1].failure ==
-        "Parser proved no removal, since no compiler serves pin; got `0.0.1`."
-    check streams.output.len == 0
+    when defined(windows):
+      # Gap: stub toolchain is `sh` script, which Windows runs nowhere, so prover of pin is
+      #   proven on POSIX alone; prover of `nim` on PATH runs there (`test_command.nim`).
+      skip()
+    else:
+      let directory = createTempDir("knoller_", "_provers")
+      defer: removeDir(directory)
+      writeTools(directory / "tools")
+      writeToolchain(directory / "cache", "9.9.9")
+      let path = getEnv("PATH")
+      putEnv("PATH", directory / "tools" & PathSep & path)
+      defer: putEnv("PATH", path)
+      let provers =
+        proversPin(initToolchains(directory / "cache", some(Compiler(version: "9.9.8"))))
+      var provings: seq[Proving]
+      let streams = streamsOf(proc () =
+        for pin in ["9.9.9", "0.0.1"]: provings.add provers(pin)(@[GROUPED])
+      )
+      check provings[0].failure.len == 0 and provings[0].answers == @[@[9]]  # `@(x[0])` stays
+      check provings[1].answers == @[newSeq[int]()]  # nothing proven
+      check provings[1].failure ==
+          "Parser proved no removal, since no compiler serves pin; got `0.0.1`."
+      check streams.output.len == 0

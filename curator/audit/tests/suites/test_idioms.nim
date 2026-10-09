@@ -126,13 +126,19 @@ suite "Idioms":
       "discard \"\"\"\ncmd: \"nim c $options $file\"\n\"\"\"\n" & module(body)  # before quote
 
 
-  test "profiler import stands on one line, after pragmas of entry, umbrella and stub":
+  test "profiler import stands on two lines, after pragmas of entry, umbrella and stub":
     let
-      guard = "when compileOption(\"profiler\"):\n  import std/nimprof\n"
-      two = module(guard & "\nimport std/os\n")
-    check checkProfiler("a.nim", two).mapIt(it.line) == @[LINES_HEAD + 1]
-    check fixed(two).source == module(IMPORT_PROFILER & "\n\nimport std/os\n")
-    check checkProfiler("a.nim", fixed(two).source).len == 0
+      joined = "when compileOption(\"profiler\"): import std/nimprof\n"
+      one = module(joined & "\nproc f() {.noSideEffect, inline.} = discard\n")
+    check checkProfiler("a.nim", one).mapIt(it.line) == @[LINES_HEAD + 1]
+    check checkProfiler("a.nim", one)[0].message.endsWith("got `1` line.")
+    check fixed(one).source ==
+      module(IMPORT_PROFILER & "\n\nproc f() {.inline, noSideEffect.} = discard\n")
+    check fixed(one).fixed.mapIt((it.line, it.rule)) == @[
+      (LINES_HEAD + 1, Rule.ImportProfiler),
+      (LINES_HEAD + 3, Rule.ListUnordered),
+    ]  # list fixed below split reports at its line as given
+    check fixed(one).source.isSettled and checkProfiler("a.nim", fixed(one).source).len == 0
     let entry = module("import std/os\n\nwhen isMainModule:\n  echo 1\n")
     check checkProfiler("a.nim", entry)[0].message.endsWith("got none.")
     check fixed(entry).source ==
@@ -145,10 +151,12 @@ suite "Idioms":
     let
       header = "discard \"\"\"\naction: run\n\"\"\"\n## Do.\n\n" &
         "{.warning[UnusedImport]: off.}\n\n" & STRICT_FUNCS & "\n"
-      stub = fixIdioms("tests/test_x.nim", header & "include \"suites.nim\"\n")
-    check stub.source == header & "\n" & IMPORT_PROFILER & "\n\ninclude \"suites.nim\"\n"
+      stub = fixIdioms("tests/test_x.nim", header & "import ./suites/test_a\n")
+    check stub.source == header & "\n" & IMPORT_PROFILER & "\n\nimport ./suites/test_a\n"
     check stub.fixed.mapIt(it.rule) == @[Rule.ImportProfiler]
     check fixIdioms("tests/test_x.nim", stub.source).fixed.len == 0  # second fix writes nothing
+    # Stub that includes its suite takes import from it (STYLE.md §3), so fix writes nothing.
+    check fixIdioms("tests/test_x.nim", header & "include \"suites.nim\"\n").fixed.len == 0
 
 
   test "test echo of unlabelled value is debug output; label or condition passes":
