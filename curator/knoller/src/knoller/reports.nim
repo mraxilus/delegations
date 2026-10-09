@@ -20,9 +20,9 @@
 ##   Dialect of Nim file, module, script or package, decides which idiom checks and fixers it
 ##     takes; `idioms.nim` and `chain.nim` both read it, so it stands here, below both.
 ##   Path fixer reads is `/` separated: repository-relative from `koch`, absolute from command
-##     line (`command.layoutOf`). Rule reading layout from it reads test file and stub here
-##     alone, both from last directory `tests` (`partTests`), so each meaning is written once;
-##     drive file, where command line reads fixed waits, too (`isFileDrive`).
+##     line on every platform (`command.layoutOf`). Rule reading layout from it reads test file
+##     and stub here alone, both from last directory `tests` (`partTests`), so each meaning is
+##     written once; drive file, where command line reads fixed waits, too (`isFileDrive`).
 ##   Stub is read as testament reads category (#443), i.e. directory directly under `tests`,
 ##     whose tests are files `t*.nim` at any depth (`isTestFile`, `processCategory` of
 ##     `testament/categories.nim`): file there is stub where its source opens with testament
