@@ -1376,19 +1376,35 @@ names leads. A change of representation always passes both ways, since `a_flags 
 a.basis.toFlags` holds `a`, and it holds flags. So the tie-breaker settles it, and syntax shows
 it.
 
-The check reads `$`, a `to<Target>` call (V.3) or a type conversion over a chain of names. It
-holds the root and the fields of that chain (`namesConverted`). Where the name holds one of them
-after its head, and none at its head, the rule `representation-head` reports it (`heldLater`).
+The check reads `$`, a `to<Target>` call (V.3) or a type conversion at the end of a chain of
+steps from one root (`namesConverted`). A step is a field, or a call of one input. It stands by
+dot or by prefix call, so `toFlags(dual(c))` reads as `c.dual.toFlags`. Where the name holds a
+name of the chain after its head, and none at its head, the rule `representation-head` reports
+it (`namesLater`).
 
+**Each step keeps the root in another representation, by the ruling of the Architect on #608.**
+The dual of `c` is `c` in the dual space. So `c_dual_flags = c.dual.toFlags` passes, and
+`flags_c` is reported. A step can also make a new thing, as `m.grade` makes a grade, and syntax
+cannot tell the two apart. So where a step follows the root, the finding lists each name of the
+chain. Reading picks the name that passes the cut, as `grade_m_int` for `int_m =
+m.grade.get.toInt`.
+
+- Rejected: the last name of the chain alone. It reports `c_dual_flags`, which the ruling keeps.
+- Rejected: a finding that names the root alone. For `point_camera =
+  camera.rig.target.toMultivector`, it asks for `camera` first, though a target is no camera.
 - A type that roots the chain is no value, so `Basis.scalarAnti.toFlags` holds `scalarAnti`
   alone.
 - A property, a lookup, a second input and a compound are no change of a named value:
-  `m.grade.get`, `dual[c].toFlags`, `toFlags(a, mask)` and `toFlags(a + b)`. The cut holds by
-  reading there, as it does for every other name.
+  `m.grade.get`, `dual[c].toFlags`, `toFlags(a, mask)` and `toFlags(a + b)`. An index and a call
+  of a second input end a chain too: `c.dual[0].toFlags` and `camera.eye(0).toMultivector`. The
+  cut holds by reading there, as it does for every other name.
+- A wrong name of the chain at the head passes. `m_grade_int` leads with `m`, though a grade is
+  no `m`, and reading holds it.
 - The check renames nothing. A name with the value first can still need a reading: `is_moved =
   moved.toHashSet` would read `moved_is`.
-- `declared.nim` keeps the value of each binding on its own line, and its element where a tuple
-  gives one to each name. A value that runs past its line is unread.
+- `declared.nim` keeps the value of each binding on its own line, with each line below it that
+  opens `.`. It keeps its element where a tuple gives one to each name. A value that runs past
+  its line otherwise is unread.
 - Rejected: a check of the cut itself, since "still describes the thing" asks what a word means.
 - Verified by `suites/test_names.nim` and `suites/test_declared.nim`.
 
