@@ -1236,7 +1236,8 @@ caller. `curator/audit` gives those that its glossaries list, and the command li
 jargon list of V.6 always passes. Verified by `suites/test_names.nim`.
 
 - Each finding names a rule of its own: `abbreviation`, `action-verb`, `boolean-name`,
-  `lookup-table`, `name-case`, `member-case`, `placeholder-letter`, `notation` and `global-word`.
+  `lookup-table`, `name-case`, `member-case`, `placeholder-letter`, `notation`, `global-word` and
+  `representation-head`.
   The case of a name takes three rules, because V.1, V.11 and V.12 state it by kind.
 - This module gives the rename that each rule asks (`renamesAbbreviation`, `renamesCase`). A
   rename reaches each use of a name, and only the semantic pass of the compiler finds each use. So
@@ -1367,6 +1368,29 @@ predicate:
   value `true` or `false`. A boolean that a call returns holds by reading.
 - Cost: a Pascal name of capitals alone, such as `ANTI`, passes the case of a type. Reading holds
   it.
+
+**A name that holds a value in another representation leads with that value (V.2), by the
+ruling of the Architect on #443.** V.2 asks that each cut of the last qualifier of a name still
+describes the thing, but more generally. Where both orders pass the cut, the value that the code
+names leads. A change of representation always passes both ways, since `a_flags =
+a.basis.toFlags` holds `a`, and it holds flags. So the tie-breaker settles it, and syntax shows
+it.
+
+The check reads `$`, a `to<Target>` call (V.3) or a type conversion over a chain of names. It
+holds the root and the fields of that chain (`namesConverted`). Where the name holds one of them
+after its head, and none at its head, the rule `representation-head` reports it (`heldLater`).
+
+- A type that roots the chain is no value, so `Basis.scalarAnti.toFlags` holds `scalarAnti`
+  alone.
+- A property, a lookup, a second input and a compound are no change of a named value:
+  `m.grade.get`, `dual[c].toFlags`, `toFlags(a, mask)` and `toFlags(a + b)`. The cut holds by
+  reading there, as it does for every other name.
+- The check renames nothing. A name with the value first can still need a reading: `is_moved =
+  moved.toHashSet` would read `moved_is`.
+- `declared.nim` keeps the value of each binding on its own line, and its element where a tuple
+  gives one to each name. A value that runs past its line is unread.
+- Rejected: a check of the cut itself, since "still describes the thing" asks what a word means.
+- Verified by `suites/test_names.nim` and `suites/test_declared.nim`.
 
 ## Idioms
 
