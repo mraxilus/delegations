@@ -1,5 +1,5 @@
 {
-  "stamp": "4790cd374fc0baac",
+  "stamp": "0f071731dba0e534",
   "sweeps": {
     "shake at torso": {
       "negative": {
@@ -13,7 +13,7 @@
         "is_holding": true,
         "apart": 0.35787780744861186,
         "is_stopped": true,
-        "at": 1.0400000000000005,
+        "at": 1.0200000000000005,
         "why": "Wrist"
       }
     },
@@ -102,7 +102,7 @@
         "is_holding": true,
         "apart": 0.35787780744861186,
         "is_stopped": true,
-        "at": 1.0400000000000005,
+        "at": 1.0200000000000005,
         "why": "Wrist"
       },
       "positive": {
@@ -422,7 +422,7 @@
         "apart": 0.35787780744861186,
         "is_holding": true,
         "is_stopped": true,
-        "at": 1.0400000000000005
+        "at": 1.0200000000000005
       },
       {
         "apart": 0.3778778074486119,
@@ -1079,7 +1079,7 @@
     },
     "right to left at half, either way": {
       "is_holding": true,
-      "apart": 0.3778778074486119,
+      "apart": 0.4178778074486119,
       "turns": -0.5
     }
   }
