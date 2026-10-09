@@ -677,11 +677,12 @@ holds its laws at the same four algebras, on the kinds of that prototype.
 Verified by `test_rga4d.nim` and the other stubs, suites `Internal: Markdown`, `Internal: Changes`,
 `Internal: Proposals`, `Internal: Evaluations`, `Internal: Cells` and `Internal: Figures`. They
 cover parse, quote and digest rules, and claim kinds, with the defines a claim may name and the page
-names. They cover the programs of a chain of proposals, base first. They cover proposal numbers
-taken twice or skipped, and the status that freezes a proposal. They also cover pairing of runs,
-NaN shares, the success line of the compiler, and the table serialiser at pin. They cover the
-algebras that an evaluation measures, with the flag and without it. A digest moves with edits, and
-never with prose.
+names. They cover the programs of a chain of proposals, base first.
+
+The same suites cover proposal numbers taken twice or skipped, and the status that freezes a
+proposal. They also cover pairing of runs, NaN shares, the success line of the compiler, and the
+table serialiser at pin. They cover the algebras that an evaluation measures, with the flag and
+without it. A digest moves with edits, and never with prose.
 
 ## Notes
 
