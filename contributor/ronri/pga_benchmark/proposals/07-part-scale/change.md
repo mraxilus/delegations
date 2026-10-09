@@ -31,7 +31,7 @@ func `=~`*(m: Multivector, s: Coefficient): bool =
   ## Compare approximate equality between multivector and scalar, i.e. 𝐦 ≈ 𝐬.
   if not (m[Basis.scalar] =~ s):
     return false
-  for b in Basis.scalar.succ .. Basis.scalarAnti:
+  for b in Basis.scalar.succ..Basis.scalarAnti:
     if not (m[b] =~ 0.0):
       return false
   true

@@ -13,7 +13,7 @@ their wedge plus their dot.
 
 ```nim
   test "Equation 3.30: reverse is involution":
-    for 𝐦, _, _ in randMultivectors():
+    for 𝐦, _, _ in sampleMultivectors():
       check ~(~𝐦) =~ 𝐦
       check ~∘(~∘𝐦) =~ 𝐦
 

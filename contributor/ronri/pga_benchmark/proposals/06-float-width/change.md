@@ -205,7 +205,7 @@ template `*`*(m: Multivector, s: Coefficient): Multivector =
 ## Edit `pga/operators.nim`
 
 ```nim
-    let sign = float(-1 ^ (int(m.grade.get) + 1))
+    let sign = float(-1^(int(m.grade.get) + 1))
 ```
 
 ```nim
@@ -295,7 +295,7 @@ func `div`*(m: Multivector, norm: Coefficient): Multivector =
 ## Edit `tests/suites.nim`
 
 ```nim
-      let sign = float(-1 ^ (int(b.grade) * int(c.grade)))
+      let sign = float(-1^(int(b.grade) * int(c.grade)))
 ```
 
 ```nim
@@ -315,7 +315,7 @@ func `div`*(m: Multivector, norm: Coefficient): Multivector =
 ## Edit `tests/suites.nim`
 
 ```nim
-      check /(/𝐮) =~ float(-1 ^ (int(b.grade) * int(b.gradeAnti))) ∧ 𝐮  # 2.23b
+      check /(/𝐮) =~ float(-1^(int(b.grade) * int(b.gradeAnti))) ∧ 𝐮  # 2.23b
 ```
 
 ```nim

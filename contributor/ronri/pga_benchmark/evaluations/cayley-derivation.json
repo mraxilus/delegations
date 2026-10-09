@@ -3,12 +3,12 @@
   "kind": "evaluation",
   "name": "cayley-derivation",
   "path": "proposals/01-cayley-derivation",
-  "edits_digest": "3457353aac4e92d5",
+  "edits_digest": "2a3101ae78a419ae",
   "taken": {
     "date": "2026-10-07",
     "machine": "linux amd64, 4 cores",
     "nim": "27763495bcfe265507ca98aedc1c7064bf1e0e4d",
-    "pga": "749fecf02811417b014622e40217ce082856ed56",
+    "pga": "e993419c1f90efba72848d146606f903e1cc141e",
     "flags": "-d:release",
     "runs": 5,
     "measured_at": "edb0c9d3a247185874b8825c9da4b120317b00cf"
@@ -2336,12 +2336,12 @@
           "CAYLEYS_REVERSE.anti"
         ],
         [
-          "CAYLEYS_METRIC_EXOMORPHISM.base",
-          "CAYLEYS_METRIC_EXOMORPHISM.base"
+          "CAYLEYS_EXOMORPHISM_METRIC.base",
+          "CAYLEYS_EXOMORPHISM_METRIC.base"
         ],
         [
-          "CAYLEYS_METRIC_EXOMORPHISM.anti",
-          "CAYLEYS_METRIC_EXOMORPHISM.anti"
+          "CAYLEYS_EXOMORPHISM_METRIC.anti",
+          "CAYLEYS_EXOMORPHISM_METRIC.anti"
         ],
         [
           "CAYLEYS_DUAL.base.left",
