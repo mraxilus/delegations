@@ -67,7 +67,7 @@ Stance, moment and room are the method of the simulation rather than dance, and 
 Neither does the `(led)` mark of the simulation, nor its point where the hands meet, because `Grip`
 names the manner of holding instead. The code calls that point the join, and the joint that holds
 it the tie (`TIE`), as ruling 7 of #226 asks. So Grip keeps its sense in the code too. The
-simulation models two grips, the palm grip and the finger grip (Body rig).
+simulation models every grip from the palm grip to the finger grip (Body rig).
 
 **`Block` describes the code.** The term says that a turn stops where a body or a twist blocks it,
 where "no small move holds, and no reachable pose does". In the engine a small move is the engine
@@ -925,9 +925,9 @@ with a palm of 0.11 m. Both are ANSUR II midpoints: hand length 0.193 and 0.180 
 
 Its section is a stadium, a flat palm and back with round edges. The round of the hand, 0.20 m, and
 its breadth, 0.083 m, give a thickness of 0.030 m (`handThick`). Three capsules side by side across
-the breadth hold that section within 8 mm (`rigid.handCapsules`). Rejected: one capsule as thick as
-the hand, which is a third as broad as a hand. Rejected: a ball as broad as the hand, which is twice
-as thick.
+the breadth hold that section within 8.2 mm (`rigid.handCapsules`). Rejected: one capsule as thick
+as the hand, which is a third as broad as a hand. Rejected: a ball as broad as the hand, which is 2.8
+times as thick.
 
 A palm grip joins two hands at the middle of the palm, 0.055 m past the wrist (`gripAtPalm`). A
 finger grip joins them at the end of the hand, 0.175 m past the wrist, where hooked fingers hold
@@ -941,12 +941,14 @@ freely. Between the two, the freedom grows in step with the depth of the grip (`
 
 No study measures either figure, so both are derived. The tilt is the slip limit of dry palm skin
 pressed flat. The arctan of its friction, 0.5 to 0.62, is 27 to 32 degrees (Derler and Gerhardt
-2012; Zhang and Mak 1999).
+2012; Zhang and Mak 1999). Each hand presses along its own palm onto the other, so the angle between
+the palms is the angle of that press.
 
-The turn of 60 degrees is a stop, the top of what the forearms, the wrists and the skin of both
-partners give. Every line of that evidence ends comfort near 30 degrees. The lines are the classes
-of Kee and Karwowski (2001) and the forearm studies of Khan (2009). A third is a finger pad twisted
-to slip (du Bois de Dunilac, 2023). Assumed: the step between the palm and the fingertips.
+The turn of 60 degrees is a stop where the two hands meet, and not the end of comfort. The arms turn
+the hands by their own joints, so the stop is that of the skin alone. A finger pad twisted on glass
+slips whole at 16 to 59 degrees, as the mean of each person (du Bois de Dunilac, 2023). The comfort
+of the forearm and the wrist ends near 30 degrees (Kee and Karwowski 2001; Khan 2009). Assumed: the
+step between the palm and the fingertips.
 
 **A free hand hangs relaxed, its fingers curled toward its palm (#440).** The Architect ruled so on
 2026-10-04. Its fingertip lies 0.15 m from the crease of the wrist, 30 degrees off the line of the
@@ -960,15 +962,16 @@ finger reaches 0.15 m. No study measures that distance, so it is derived, and th
 derivation is 0.14 to 0.16 m.
 
 **A hand is carried at the centre of its grip, 0.08 m past the wrist, and each band is asked of
-that point (`carry`, `carriedOf`).** That is where the band was asked before the hand had its true
-size. So the true hand changes the shape of the hand, and not where a hand is carried.
+that point (`carry`, `carriedOf`).** The tape gives that centre (`rig.nim`). It lies between the
+join of a palm grip and that of a finger grip, and neither join serves as that point.
 
 Measured 2026-10-08. Asked of the fingertips, where the hands meet, the band lets the wrist and
 elbow of the follow pass at head height. Left to right above then stops by swing at 0.40 to 0.42 of
-a turn, from every distance from 0.36 to 0.46 m. The arm of the follow is behind the head, at the
-end of its swing, and its walk leaps 244 mm in one moment. Asked of the middle of the palm, the
-same-name chain wound half a turn holds from no distance. Asked of the centre of the grip, both
-hold.
+a turn, from 0.36 to 0.46 m. From 0.48 m it turns free, with the arm of the follow behind the head,
+at the end of its swing. Left to right at the torso leaps 244 mm in one moment.
+
+Asked of the middle of the palm, the same-name chain wound half a turn holds from no distance. Asked
+of the centre of the grip, both hold.
 
 **Each head carries a face, and every arm keeps clear of every face (#375).** The face is a sphere
 of 6 cm radius, half the length of a face from brow to chin (`rigid.faceCapsule`). Its centre sits 6
@@ -1014,13 +1017,15 @@ the archive already stands.
 `simulation/engine.nim` is the binding, Nim throughout, so the gated-language rule is never engaged.
 It links the archive and declares what the rig needs. That is world, body, capsule with its surface
 material, ball, hinge, weld and distance joints, contact manifolds, step, world point and angular
-velocity. To import it builds the archive first, at compile time, so a suite that drives the engine
+velocity. A capsule can be read and laid again, and a joint can take new frames and a limit of its
+cone. To import it builds the archive first, at compile time, so a suite that drives the engine
 drives its build too (Article IX.6).
 
 Verified by `test_engine.nim`, which holds it to what the rig needs of it and no more. A body falls
 half g t squared, which catches a struct laid out wrong where linking would not. Two limb-thick
 capsules started inside one another part to at least two radii. Its law on the contacts of a body
-touched by many things is below.
+touched by many things is below. The capsule laid again, and the frames and cone of a tie, are held
+by `test_plan.nim` and `test_rigid.nim` (Planned grip, Body rig).
 
 **The engine stands Y up and this project stands Z up**, and the binding deliberately does not
 translate. Whatever calls it says which way is up, and `simulation/rigid.nim` is the one place that
@@ -1296,9 +1301,11 @@ What stops a turn is one thing, asked in order over every arm, held or free:
   (`SAG`, `Stop.Span`). A hold whose hands never rose is a hold at some other height.
 
 Verified by `test_rigid.nim`. Hands that are joined stay joined. No joint goes past what the rig
-allows while the hold stands. Capsules move where the couple move. Between two moments, no point of
-any held arm leaps more than the length of an arm plus its own move. That is 195 mm on the corpus of
-the laws.
+allows while the hold stands. Capsules move where the couple move.
+
+Between two moments, no joint of any held arm, nor its join, leaps more than the length of an arm
+plus its own move. That is 195 mm on the corpus of the laws. The breadth of the hand is not read,
+and in L-r low its edge moves 218 mm in one moment (#605).
 
 ## Stance and strain
 
@@ -1457,8 +1464,8 @@ It reads *modelled* only once they have, by name in `CONFIRMED` beside `KEPT`.
 
 A confirmation is of one still, so a confirmed cell whose still moves comes out of the list. The
 badge sits outside every drawing and moves no fixture. What the simulation reaches today is
-counted off the built page, rather than written here. The true hand moved every still, so no cell
-is confirmed until the Architect holds each still again (#440).
+counted off the built page, rather than written here. No cell is confirmed, and each waits for the
+Architect to hold its still again (#440).
 
 **Each confirmed cell is held to the still it was confirmed on.** `design/confirmed-fixtures.json`
 holds a hash of the points of that still, in `rig.json`, for each ask of the cell. The build of the
@@ -1471,7 +1478,8 @@ is confirmed. Cost: a change that moves a confirmed still fails the build until 
 that still again.
 
 Verified by `suites/test_marks.nim`, which builds the review page. Red first: another hash for A05
-stops the build, and so does no fixture for B04.
+stops the build, and so does no fixture for B04. With no cell confirmed, the check runs on none
+until the Architect confirms one.
 
 Two joined pairs of one still may stand close, and may touch. Only pairs that hook or tangle are
 connected or interlocked. So A10 stands, where the two pairs almost meet over the head, as the
@@ -1512,10 +1520,10 @@ The gradient runs square to each piece (`lightAcross`). Rejected: a gradient alo
 shows stripes on a torso where pieces meet. Rejected: a floor chevron or a shoulder line for facing,
 which the Architect rules noise. So facing is read from the body itself.
 
-A capsule of no length, such as a palm, which is a sphere, is filled as a disc. It is not stroked as
-a line of no length (`drawn`), because browsers disagree on what that is. Chromium draws the round
-caps as a disc, and WebKit draws nothing. Seen in WebKit on A07, on the phone of the Architect,
-2026-09-18.
+A capsule of no length, such as the face, which is a sphere, is filled as a disc. It is not stroked
+as a line of no length (`drawn`), because browsers disagree on what that is. Chromium draws the
+round caps as a disc, and WebKit draws nothing. Seen in WebKit on A07, on the phone of the
+Architect, 2026-09-18.
 
 Verified by `suites/test_drawn.nim`. A capsule of no length is a disc. An arm hanging beside a torso
 is painted behind it where it is behind. The front of each body is lighter than its back. Light runs
@@ -1585,7 +1593,7 @@ the swan at one point, one pair under the other. The two pairs of joined hands g
 over the crown that way winds the cross-name to 1.34, with the follow's collarbone at its end.
 
 Eight one-line changes on the lofted model were each measured on both swans at four distances, with
-five held stills as control. None stands a swan. A stiffer grip and a finer step carry the
+five held stills as control. None stands a swan. A stiffer tie and a finer step carry the
 cross-name furthest, to 1.16 and 1.32, with hands parting or the follow's wrist at its cone. A wider
 wrist cone and a firmer draw carry the same-name furthest, to 1.42 and 1.38, arm against arm. A
 softer collarbone, wider extension or a stronger loft lose a diamond.
@@ -1609,17 +1617,7 @@ each moment it takes the pose nearest to ease, close to the last pose, that keep
 The hands stay joined. Every capsule stays 20 mm clear of every other (`clearance`). Every joint
 stays six degrees inside its end (`margin`). The joined hands stay 30 mm inside their band
 (`room`). They turn against each other no further than their grip lets, with the same six degrees
-to spare (`gripBroken`).
-
-**The plan holds how far past the wrist each held hand grips, and the engine holds the same
-(#440).** Each held hand has one more freedom in the plan, the depth of its grip (`DEPTHS`). It
-runs from the middle of the palm to the fingertips. A free hand holds nothing, and it hangs
-relaxed (Body rig). The grip of the two that is held nearer the fingertips sets how far two joined
-hands turn (`rig.gripFreedom`).
-
-The engine sets each tie at the planned depths, with the same cone and twist (`rigid.setTie`). Its
-cone stops at a quarter turn, so the plan alone holds a wider cone. A connection that nobody
-planned holds at the fingertips, where two hands turn freely, so the engine sets no limit there.
+to spare (`gripBroken`, Planned grip).
 
 Each face is a capsule of the plan too. The arms and the girdles of the partner keep clear of it,
 as in the engine. Verified by `test_plan.nim`: the plan pairs each face with every capsule that the
@@ -1708,11 +1706,11 @@ Rejected: the first plan that holds. It stood C06 with the waist of the follow a
 short of ease tried every candidate.
 
 **The planner weighs a step of one freedom by what that step moves, and the cost is the same to the
-last bit.** The solver finds its gradient by a step of each free freedom in turn. They are 39 of
-the pose, and the depth of each held hand. In one plan of D03, its gradients were 99% of its 543,619
-weighings, measured 2026-10-04. A step of an arm freedom moves that arm alone, from the first link
-that the freedom moves. A step of how far apart the couple stand, or of either waist, moves one
-body and no other.
+last bit.** The solver finds its gradient by a step of each free freedom in turn. They are 39 of the
+pose, and the depth of each held hand. In one plan of D03 on 39 freedoms, its gradients were 99% of
+its 543,619 weighings, measured 2026-10-04. A step of an arm freedom moves that arm alone, from the
+first link that the freedom moves. A step of how far apart the couple stand, or of either waist,
+moves one body and no other.
 
 So the planner keeps every term of the pose (`Reckoning`). A step places again only what it moves.
 It reckons again only the pairs and joints that the moved capsules are in. Each sum then runs over
@@ -1732,7 +1730,8 @@ of each planned path. It ran on the tree before this planner and on the tree wit
 which holds this planner, every kept file was the bytes of those of `9bbf656`, apart from its stamp,
 verified 2026-10-04.
 
-The first plan of D03 took 10.73 s, and takes 0.87 s, measured 2026-10-04. In a run of four planned
+The first plan of D03 took 10.73 s, and 0.87 s with this planner on 39 freedoms, measured
+2026-10-04. In a run of four planned
 stills at once, rig D01 took 12,688 s with the plain cost on 2026-10-03. With this one, it took 544
 s on 2026-10-04.
 
@@ -1740,11 +1739,12 @@ Rejected: a gradient from the derivative of each term. Its speed is unmeasured. 
 difference that the solver finds now, so every plan would move, and the Architect would judge every
 card again.
 
-**The gap to a palm is read from the nearest point of each segment.** The planner holds each palm
-as a point with a radius, as the engine does. `vector.closest` read the gap from the start of the
-other segment when that segment was a point. So a plan of the drawn D01 kept 5.8 cm between a palm
-and a forearm, where the palm sat 5.4 cm inside it. The engine stood that palm 4.3 cm inside the
-forearm and gave. Verified by `test_plan.nim`, red first.
+**The gap to a point is read from the nearest point of each segment.** The planner holds each face
+as a point with a radius, as the engine does. Verified by `test_plan.nim`, red first.
+
+`vector.closest` read the gap from the start of the other segment when that segment was a point. A
+palm was a point then. A plan of the drawn D01 kept 5.8 cm between a palm and a forearm, where the
+palm sat 5.4 cm inside it. The engine stood that palm 4.3 cm inside the forearm and gave.
 
 Measured on 2026-10-03, on four cores. The planned turn answers each of the 32 cards that the walk
 does not, the four swans among them. Eight cost about 2240 s each: D01, D07, and the six moves of
@@ -1791,6 +1791,27 @@ turns, which put a point 1.25 m off the plan.
 
 Verified by `suites/test_asks.nim`: the simulation models every card that the reference draws. Red
 first, with 33 of 231 cards not modelled.
+
+## Planned grip
+
+**The plan holds how far past the wrist each held hand grips, and the engine stands each hand at
+that depth (#440).** Each held hand has one more freedom in the plan, the depth of its grip
+(`DEPTHS`). It runs from the middle of the palm to the fingertips. A free hand holds nothing, and it
+hangs relaxed (Body rig). The grip of the two that is held nearer the fingertips sets how far two
+joined hands turn (`rig.gripFreedom`).
+
+The engine sets each tie at the planned depths, and shortens each held hand to its grip
+(`rigid.setTie`). It holds the cone of the grip within a quarter turn, where its swing is the tilt
+of the plan to the last bit. The plan alone holds a wider cone, and the twist. The engine measures
+twist about the second palm after the swing, and the plan as the angle between the finger lines.
+With the palms tilted far apart, the two part by up to 35 degrees. A connection that nobody planned
+holds at the fingertips, where two hands turn freely, so the engine sets no limit there.
+
+Verified by `test_plan.nim`. Stood at each moment of the planned turn and sprung toward it for one
+moment of walk, the engine parts no tie. With the twist limited by the measure of the engine, it
+parted the joined hands by 0.84 mm. The engine shortens each held hand to the length of its grip,
+within 2 mm, and holds the capsule that the couple records. Two hands held at two depths turn as far
+as the one nearer the fingertips lets.
 
 ## Pages and build
 
@@ -2591,10 +2612,10 @@ urgent.
 - **A relaxed wrist rests at 16 degrees of extension, and the law of a free couple at rest holds it
   within 10.** Lee and Jung measured the 16 degrees with the arm hanging (2010). The wrist of a free
   hand stays straight until the Architect rules which one holds.
-- **The same-name chain wound to face to face holds from few distances.** It holds from 2 of 33
-  distances, 0.82 and 0.84 m. Before the hand had its true size, it held from one, 0.74 m. At every
-  other distance, the arms of the follow cross above the elbow at about a third of the turn. Or the
-  hands stand over the band when the couple face. Measured 2026-10-08.
+- **The same-name chain wound to face to face holds from few distances.** It holds from 2 of 50
+  distances, 0.82 and 0.84 m. Before the hand had its true size, it held from 1 of 50, 0.74 m. At
+  every other distance, the arms of the follow cross above the elbow at about a third of the turn.
+  Or the hands stand over the band when the couple face. Measured 2026-10-08.
 - **Every still awaits the confirmation of the Architect against their own body.** They have said
   that many are wrong, and will say what is wrong with each, card by card on the viewer. The badges
   read *unconfirmed* until then.
@@ -2603,18 +2624,21 @@ urgent.
   disagree, the ruling is the Architect's. So is whether a hammerlock goes a whole turn, and what
   moves in the body when it does.
 - **The radius of the girdle, 60 mm, is an estimate and not tape.**
-- **On the turns page, a point of a held arm can leap in one moment.** In `design/turns.json`,
-  measured 2026-10-09, 14 of 18 sweeps move some point further than the bound of a leap, 195 mm,
-  between two moments. The furthest is 662 mm, the join of the same-name turn held above, at 2.0 of
-  a turn. There the couple face each other, and the hands come down. Weightless links with springs
-  this weak do that at no cost. No law holds the page to the bound, because the leap law in
-  `test_rigid.nim` walks two sweeps to one turn alone.
+- **On the whole-cloth page, a point of a held arm can leap in one moment.** In
+  `design/turns.json`, measured 2026-10-09, 14 of 18 sweeps move some point further than the bound
+  of a leap, 195 mm, between two moments. The furthest is 662 mm, the join of the same-name turn
+  held above, at 2.0 of a turn. There the couple face each other, and the hands come down. The page
+  stands each sweep where it carries furthest, to two and a half turns. The leap law walks two
+  sweeps from the distances that the kept answers chose, to one turn, so no law reads the page.
+- **The breadth of the hand is not held to the bound of a leap (#605).** In L-r low, the arm of the
+  follow is pulled straight at 0.54 of a turn, and bends again in another plane by 0.58. The edge of
+  its hand then moves 218 mm in one moment, where the join moves 187.
 - **Left to left at the waist turns past the stops of the floor, until a stop by comfort is
   modelled (#601).** The floor stops the follow at half a turn into the wrap and a whole turn into
   the lock, because further is uncomfortable. The simulation stops each by a wrist, further on
-  (`simulation/verdicts.md`, L-l low). A turn stops where a joint leaves its comfortable range, as
-  a published share of that range. The readings of the shoulder of today do not give those two
-  stops, and #601 holds the measurement.
+  (`simulation/verdicts.md`, L-l low). #601 asks that a turn stop where a joint leaves its
+  comfortable range, as a published share of that range. The readings of the shoulder in the rig do
+  not give those two stops, and #601 holds the measurement.
 
 **Open in the workbench, and on the side of the Architect.** Each one waits on a ruling, and the
 workbench draws the current reading meanwhile.
