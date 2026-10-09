@@ -67,6 +67,8 @@ suite "Names":
       ("type Pair[Key, V] = object\n", "Placeholder is one capital letter (V.12); got `Key`."),
       ("type Algebra = int\nconst ALGEBRA = 1\n",
         "Global never shares its word with type (V.10); got `ALGEBRA`."),
+      ("proc f(a: Basis) =\n  let flags_a = a.toFlags\n",
+        "Name holding `a` in another representation leads with `a` (V.2); got `flags_a`."),
       ("when isMainModule:\n  let verb = paramStr(1)\n",
         "Entry block holds no binding; move code that binds into `proc main` (V.10); got " &
         "`verb`."),

@@ -1,4 +1,5 @@
-## Read each name Nim source declares, with its kind and reach (Article V.1, V.10, V.11).
+## Read each name Nim source declares, with its kind and reach (Article V.1, V.10, V.11), and
+##   value binding takes (V.2).
 ##   Reads declarations alone: binding (`let`, `var`, `const`, `for`, `except … as`), routine,
 ##     type, field, parameter, enum member and placeholder in generic brackets. Foreign binding,
 ##     i.e. routine whose pragmas hold word of `MARKS_FOREIGN`, as `importc` or `exportc`,
@@ -20,6 +21,8 @@
 ##   Cost: boolean is read only where declaration shows it: type `bool`, or value literal
 ##     `true` or `false`. Boolean from call or expression holds by reading.
 ##   Cost: generic is read from type as signature spells it, so alias of `typedesc` is unread.
+##   Cost: binding's value is read on binding's own line alone, so value running past it is
+##     unread (`value`).
 
 {.experimental: "strictFuncs".}
 
@@ -64,6 +67,9 @@ type
     is_mutable*: bool  ## Binding by `var`, which notation never excuses (III.5).
     is_boolean*: bool  ## Shows `bool` by type or literal value, or `func` returns it (V.4).
     is_generic*: bool  ## Parameter of type `typedesc` alone, which stands for any type (V.12).
+    value*: string
+      ## Value binding takes on its own line, its element where tuple gives one to each name;
+      ##   empty where line gives none, or value runs past line.
 
   Opener = object  ## Define block enclosing line, by its opening line.
     indent: int
@@ -139,11 +145,38 @@ func isGenericShown(text: string): bool =
   colon >= 0 and side[colon+1 .. ^1].strip.identity in TYPES_GENERIC
 
 
+func isBalanced(text: string): bool =
+  ## Decide whether every bracket text opens closes in it, so value ends on its line.
+  var depth = 0
+  for c in text:
+    if c in {'(', '[', '{'}: inc depth
+    elif c in {')', ']', '}'}: dec depth
+    if depth < 0: return false
+  depth == 0
+
+
+func pairsBinding(text: string): seq[(string, string)] =
+  ## Read names text binds, each with value it takes: `a = v` gives `v`, `(a, b) = (v, w)` gives
+  ##   `v` and `w`. Value is empty where text gives none, runs past line, or tuple gives no one
+  ##   value to each name.
+  let
+    at = text.indexTop('=')
+    value = if at < 0: "" else: text[at + 1 .. ^1].strip
+    pieces = text.sideBinding.strip(chars = {' ', '(', ')'}).splitTop({','})
+  var values = newSeq[string](pieces.len)
+  if value.isBalanced:
+    if pieces.len == 1: values[0] = value
+    elif value.len > 1 and value[0] == '(' and value.closing(0) == value.high:
+      let parts = value[1 ..< value.high].splitTop({','})
+      if parts.len == pieces.len: values = parts.mapIt(it.strip)
+  for k, piece in pieces:
+    let name = piece.strip(chars = {' ', '(', ')'}).nameOf
+    if name.len > 0 and name != "_": result.add (name, values[k])
+
+
 func namesBinding(text: string): seq[string] =
   ## Read names text binds: `a`, `a, b: T`, `(a, b) = v`, `a {.used.} = v`.
-  for piece in text.sideBinding.strip(chars = {' ', '(', ')'}).splitTop({','}):
-    let name = piece.strip(chars = {' ', '(', ')'}).nameOf
-    if name.len > 0 and name != "_": result.add name
+  text.pairsBinding.mapIt(it[0])
 
 
 func namesParameter(signature: string): seq[(string, bool, bool)] =
@@ -376,7 +409,7 @@ func declarations*(source: string): seq[Declared] =
           indent_section = indent
           is_section_mutable = word == "var"
         else:
-          for name in rest.namesBinding:
+          for (name, value) in rest.pairsBinding:
             if openers.isSubstituted(name): continue
             result.add Declared(
               name: name,
@@ -385,6 +418,7 @@ func declarations*(source: string): seq[Declared] =
               reach: openers.reachOf,
               is_mutable: word == "var",
               is_boolean: rest.isBooleanShown,
+              value: value,
             )
         break reading
 
@@ -392,7 +426,7 @@ func declarations*(source: string): seq[Declared] =
         # First line under keyword fixes child indent; deeper line continues value above it.
         if section_child < 0: section_child = indent
         if indent == section_child and (s.indexTop(':') > 0 or s.indexTop('=') > 0):
-          for name in s.namesBinding:
+          for (name, value) in s.pairsBinding:
             if openers.isSubstituted(name): continue
             result.add Declared(
               name: name,
@@ -401,6 +435,7 @@ func declarations*(source: string): seq[Declared] =
               reach: openers.reachOf,
               is_mutable: is_section_mutable,
               is_boolean: s.isBooleanShown,
+              value: value,
             )
         break reading
 

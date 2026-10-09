@@ -1,5 +1,5 @@
-## Enforce declared names (Article III.5, V.1, V.3-V.6, V.11, V.12; V.10 globals), from text of
-##   one file.
+## Enforce declared names (Article III.5, V.1-V.6, V.11, V.12; V.10 globals), from text of one
+##   file.
 ##   Reads declarations alone, as `declared.nim` reads them: binding, routine, type, field,
 ##     parameter, enum member and placeholder. Name library owns reaches code only at use site,
 ##     which is never read. Foreign binding declares library's own name, so it is skipped; its
@@ -39,6 +39,11 @@
 ##     `func` writing `var` parameter is action too, and is unread for same reason.
 ##   V.3: routine never opens with `get`, `compute` or `new`. V.5: name opening `lut` reads
 ##     `lut_<value>_by_<key>`.
+##   V.2: binding holding named value in another representation leads with that value, where
+##     its name holds it: `a_flags = a.basis.toFlags`, never `flags_a`. Both orders pass cut of
+##     V.2 there, so tie-breaker settles it, and syntax shows it: `$`, `to<Target>` call (V.3)
+##     or type conversion over chain of value's root and fields (`namesConverted`). Type rooting
+##     chain is no value. Cut itself, and property such as `grade_m`, hold by reading.
 ##   Renames: `renamesAbbreviation` and `renamesCase` give rename each rule asks. Rename reaches
 ##     every use of name, which only semantic pass of compiler finds, so `rewrites.nim` plans it,
 ##     in scope caller gives (`command.nim`, or `curator/audit`).
@@ -53,6 +58,9 @@
 ##     Letter outside `std/unicode` case tables and mathematical block carries no case, so it
 ##     fits every casing.
 ##   Cost: word table is short list; `english.nim` of `curator/audit` pays same cost.
+##   Cost: change of representation is read by spelling, so call of other routine named
+##     `to<Target>` reads as one. V.2 finding renames nothing: name that puts value first may
+##     still need reading, as `is_moved = moved.toHashSet` does.
 
 {.experimental: "strictFuncs".}
 
@@ -101,6 +109,11 @@ const
     "is one capital letter",
   ]
     ## Predicate of each casing, as finding states it.
+  TYPES_BUILTIN = [
+    "bool", "byte", "char", "cint", "cstring", "cuint", "float", "float32", "float64", "int",
+    "int16", "int32", "int64", "int8", "string", "uint", "uint16", "uint32", "uint64", "uint8",
+  ]
+    ## Types Nim spells in lowercase, which convert as prefix call `T(x)` does (STYLE.md §5).
   RULE_GENERIC = "Parameter of type `typedesc` alone is one capital letter or `snake_case`"
     ## Case generic parameter takes, as finding states it: placeholder's letter (V.12), or snake
     ##   until `pga_benchmark` renames its `kind` (#443).
@@ -220,6 +233,69 @@ func isMiscased*(d: Declared): bool =
   not d.name.isCased(d.casingOf)
 
 
+func isTarget(word: string): bool =
+  ## Decide whether word names change of representation, `to<Target>` (V.3).
+  word.len > 2 and word.startsWith("to") and word[2] in {'A'..'Z'}
+
+
+func isType(word: string): bool =
+  ## Decide whether word names type: Pascal (V.1), or lowercase type of Nim.
+  word.len > 0 and (word[0] in {'A'..'Z'} or word in TYPES_BUILTIN)
+
+
+func namesChain(text: string; is_converted: bool): seq[string] =
+  ## Read root and fields of chain of names joined by dots, each `to<Target>` call aside; chain
+  ##   not yet converted ends in such call. Type rooting chain is no value, so it is left out.
+  ##   Empty where text is no such chain.
+  var chain = text
+  chain.removeSuffix("()")
+  let segments = chain.split('.')
+  if segments.anyIt(it.len == 0 or it[0] in {'0'..'9'} or it.identifierAt(0) != it): return
+  if not is_converted and not segments[^1].isTarget: return
+  for k, s in segments:
+    if s.isTarget or (k == 0 and s.isType): continue
+    result.add s
+
+
+func namesConverted*(value: string): seq[string] =
+  ## Read names of value binding holds in another representation (V.2, V.3): root and fields
+  ##   under `$`, `to<Target>` call or type conversion. `a.basis.toFlags` gives `a` and `basis`,
+  ##   `uint(b)` and `$b` give `b`; `m.grade.get`, `dual[c].toFlags` and `toFlags(a + b)` give
+  ##   none, since no such change of named value holds them.
+  var text = value.strip
+  text.removeSuffix("()")
+  if text.startsWith("$"): return text[1 .. ^1].strip.namesChain(is_converted = true)
+  let open = text.find('(')
+  if open < 0: return text.namesChain(is_converted = false)
+  if text.closing(open) != text.high: return
+  let callee = text[0 ..< open]
+  if not (callee.isTarget or callee.isType): return
+  let operand = text[open + 1 ..< text.high].strip
+  result = operand.namesConverted
+  if result.len == 0: result = operand.namesChain(is_converted = true)
+
+
+func indexRun(parts, run: openArray[string]): int =
+  ## Find first index where words of run stand in parts in order, case aside; `-1` where none.
+  let
+    parts_lower = parts.mapIt(it.toLowerAscii)
+    run_lower = run.mapIt(it.toLowerAscii)
+  for k in 0 .. parts_lower.len - run_lower.len:
+    if parts_lower[k ..< k + run_lower.len] == run_lower: return k
+  -1
+
+
+func heldLater*(d: Declared): string =
+  ## Read name of value binding holds in another representation, where binding's name holds it
+  ##   after its head and nowhere first (V.2); empty where it leads, or name holds none.
+  var later = ""
+  for held in d.value.namesConverted:
+    let at = d.name.words.indexRun(held.words)
+    if at == 0: return ""
+    if at > 0 and later.len == 0: later = held
+  later
+
+
 func checkNames*(path, source: string; exempt: openArray[string]): seq[Report] =
   ## Report declared name that coins abbreviation `exempt` does not list, opens routine with
   ##   banned verb, misnames lookup table or boolean, breaks case of its kind, or shares its word
@@ -254,6 +330,15 @@ func checkNames*(path, source: string; exempt: openArray[string]): seq[Report] =
         d.line,
         Rule.TableLookup,
         "Lookup table reads `lut_<value>_by_<key>`; got `" & d.name & "`.",
+      )
+    let held = d.heldLater
+    if held.len > 0:
+      result.add initReport(
+        path,
+        d.line,
+        Rule.HeadRepresentation,
+        "Name holding `" & held & "` in another representation leads with `" & held &
+          "`; got `" & d.name & "`.",
       )
 
     # Boolean is proposition or mode; predicate `func` is `is…` (V.4).

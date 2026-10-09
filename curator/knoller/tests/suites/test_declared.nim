@@ -32,6 +32,25 @@ suite "Declarations":
     check kinds.filterIt(it.name == "T")[0].kind == KindName.Placeholder  # V.12
 
 
+  test "binding keeps value of its own line, its element where tuple gives one to each name":
+    const source = """
+let (a_flags, _, b_flags) = (a.toFlags, skipped, b.toFlags)
+let (left, right) = pair
+let
+  b_string = $b
+  call = run(
+    first = 1,
+  )
+var a, b: int = 0
+for k in keys: discard
+proc f(x = 1) = discard
+"""
+    check source.declarations.mapIt((it.name, it.value)) == @[
+      ("a_flags", "a.toFlags"), ("b_flags", "b.toFlags"), ("left", ""), ("right", ""),
+      ("b_string", "$b"), ("call", ""), ("a", ""), ("b", ""), ("k", ""), ("x", ""), ("f", ""),
+    ]  # tuple of no one value to each name, value past its line, shared value, no binding
+
+
   test "operator is backticked and never read as name":
     let found = OPERATORS.names
     check "∧" notin found and "[]" notin found  # III.5

@@ -116,6 +116,29 @@ proc wedge(𝐮: int): int =
   𝐌
 """
     ## Source's notation at module scope, mutable and not, and as field, parameter and local.
+  HEADS = """
+proc join(a, b: BasisSigned, operand: Basis, m: Multivector) =
+  let (a_flags, b_flags) = (a.basis.toFlags, b.basis.toFlags)
+  let (flags_a, flags_b) = (a.basis.toFlags, b.basis.toFlags)
+  let
+    b_string = $b
+    string_b = $b
+    a_count = uint(a)
+    count_a = uint(a)
+    grade_operand = Grade(operand)
+    basis_flags = a.basis.toFlags
+    flags_basis = toFlags(a.basis)
+    digits = operand.toDigits
+    flags_scalar_anti = Basis.scalarAnti.toFlags
+    m_grade = m.grade.get
+    flags_dual = dual[a].toFlags
+    flags_masked = toFlags(a, mask)
+    flags_sum = toFlags(a + b)
+    b_flags_remaining = uint(b)
+    m_signed = m.toDigits.toSigned
+"""
+    ## Bindings holding value in another representation, value first and last, beside values that
+    ##   are no such change: property, lookup, second input and compound (V.2).
 
 
 func names(source: string): seq[string] =
@@ -389,6 +412,37 @@ suite "Names":
       renames = renamesAbbreviation(source, [])
     check renames == @[(1, 7, "ctx", "context"), (2, 6, "tmp", "temporary")]
     check checkNames("a.nim", source, JARGON).len == renames.len  # check reads same set
+
+
+  test "V.2 name holding value in another representation leads with that value":
+    check HEADS.messages == @[
+      "Name holding `a` in another representation leads with `a`; got `flags_a`.",
+      "Name holding `b` in another representation leads with `b`; got `flags_b`.",
+      "Name holding `b` in another representation leads with `b`; got `string_b`.",
+      "Name holding `a` in another representation leads with `a`; got `count_a`.",
+      "Name holding `operand` in another representation leads with `operand`; got " &
+        "`grade_operand`.",
+      "Name holding `basis` in another representation leads with `basis`; got `flags_basis`.",
+      "Name holding `scalarAnti` in another representation leads with `scalarAnti`; got " &
+        "`flags_scalar_anti`.",
+    ]
+    check HEADS.breaches.allIt(it[0] == Rule.HeadRepresentation)
+    check HEADS.declarations.filterIt(it.heldLater.len > 0).mapIt(it.line) ==
+      @[3, 3, 6, 8, 9, 11, 13]  # line of each binding
+
+
+  test "V.2 change of representation is `$`, `to<Target>` or type conversion over one chain":
+    check "a.basis.toFlags".namesConverted == @["a", "basis"]  # root, then field
+    check "uint(b)".namesConverted == @["b"]
+    check "$b".namesConverted == @["b"]
+    check "a.toFlags()".namesConverted == @["a"]
+    check "Grade(x.toFlags)".namesConverted == @["x"]  # conversion over conversion
+    check "Basis.scalarAnti.toFlags".namesConverted == @["scalarAnti"]  # type is no value
+    check "m.grade.get".namesConverted.len == 0  # property
+    check "dual[c].toFlags".namesConverted.len == 0  # lookup, which no name holds
+    check "toFlags(a, mask)".namesConverted.len == 0  # second input
+    check "toFlags(a + b)".namesConverted.len == 0  # compound
+    check "2.toFloat".namesConverted.len == 0  # literal
 
 
   test "tuple binding declares names before `=` alone, never global its value names":
