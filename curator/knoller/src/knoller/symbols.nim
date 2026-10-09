@@ -6,10 +6,13 @@
 ##     (`command.nim`).
 ##   Text cannot tell conversion `x.T` from field or module path (`rigid3.Point`), nor find every
 ##     use of name across modules; semantic pass of pin project runs on can, symbol by symbol.
-##   One `nimsuggest --v3 --stdin` serves each entry: file itself, or file including it, since
+##   One `nimsuggest --v3 --tester` serves each entry: file itself, or file including it, since
 ##     included file compiles inside includer alone. It runs in project directory, so project's
 ##     `nim.cfg` and `config.nims` apply, with `-d:testing` under `tests/` as stubs compile
 ##     (STYLE.md §6).
+##   Tester mode reads commands as `--stdin` does, and prints `!EOF!` once ready and after each
+##     answer, with no help and no prompt. `--stdin` prompts `> ` before each command on
+##     Windows, which glues prompt to first line of every answer there.
 ##   Each file is checked first (`chkFile`). File reporting error on C backend is asked again on
 ##     JavaScript backend, and file failing both stays unresolved with its first error, so
 ##     fixers leave it and their findings stay for hand.
@@ -30,6 +33,10 @@
 ##     Pipe holds 64 KiB: run whose answers fill it stops reading commands, so writing every
 ##     command first, through pipes, waits forever on entry of many sites. Cost: two temporary
 ##     files per run, removed once read.
+##   Shell is `sh` on POSIX, where `poEvalCommand` runs line through it, and `cmd` on Windows,
+##     where `poEvalCommand` hands line to `CreateProcess` with no shell between, so nothing
+##     there would read redirection (`lineRedirected`). Cost: `%` in path expands in `cmd`
+##     where it names variable, so such path reaches run changed.
 ##
 ##   Rejected: compiler as library inside knoller, which compiles compiler into every build of it
 ##     and binds it to one pin, where ronri projects lex glyphs only their commit pin knows.
@@ -54,7 +61,7 @@ type
     kind*: string  ## Symbol kind, as compiler names it, e.g. `skType`; `routine` for routine
                    ##   whose own name pass answers with its result, kind unread.
     name*: string  ## Qualified name, e.g. `system.float`.
-    file*: string  ## Absolute path of definition.
+    file*: string  ## Absolute path of definition, separators written `/` (`slashed`).
     line*: int  ## One-based line of definition.
     column*: int  ## Zero-based byte column of definition.
 
@@ -85,15 +92,16 @@ type
     queries: seq[Query]
 
   Asked = object  ## Define `nimsuggest` run started: process, file of commands, file of answers.
-    process: Process
+    process: Process  ## Run itself; nil where `missing` says why none started.
     commands: string  ## Path of file process reads commands from.
     answers: string  ## Path of file process writes answers to.
+    missing: string  ## Why no run started, since toolchain holds no `nimsuggest`; empty if one did.
 
 
 const
   NIMSUGGEST = "nimsuggest"  ## Tool every toolchain ships beside compiler.
   PARALLEL = 4  ## Entries running at once at most.
-  MARKS_HEADER = ["usage:", "type '"]  ## Openings of lines `nimsuggest` prints before answers.
+  MARK_END = "!EOF!"  ## Line tester mode prints once ready and after each answer.
   SEVERITY_ERROR = "Error"  ## Severity of `chk` answer that leaves file unresolved.
   BACKEND_JS = "--backend:js"  ## Option asking JavaScript backend, for file C rejects.
   DEFINE_TESTING = "-d:testing"  ## Define stub's own `cmd` passes, read under `tests/`.
@@ -108,6 +116,13 @@ const
   TEMP_ANSWERS = ".answers"  ## Extension of file run writes answers to.
 
 
+func slashed*(path: string; separator = DirSep): string =
+  ## Read path with each separator written `/`, as git and every rule here write it, so path
+  ##   compares and splits alike on Windows, where `/` joins with `\`. Separator `/` keeps
+  ##   path as given, since `\` is character of name there.
+  if separator == '/': path else: path.replace(separator, '/')
+
+
 func symbolOf*(line: string): Option[Symbol] =
   ## Read symbol of one answer line: section, kind, name, type, file, line, column, doc, ….
   let fields = line.split('\t')
@@ -117,7 +132,7 @@ func symbolOf*(line: string): Option[Symbol] =
       Symbol(
         kind: fields[1],
         name: fields[2],
-        file: fields[4],
+        file: fields[4].slashed,
         line: fields[5].parseInt,
         column: fields[6].parseInt,
       ),
@@ -126,19 +141,19 @@ func symbolOf*(line: string): Option[Symbol] =
 
 
 func blocksOf*(output: string): seq[seq[string]] =
-  ## Split `nimsuggest` output into one block of answer lines per command, header dropped.
-  ##   Each command ends its answer with empty line, so empty answer is empty line alone.
+  ## Split output of tester mode into one block of answer lines per command. Mark printed once
+  ##   ready opens first answer, and each answer ends at mark, so text before first mark is no
+  ##   answer, output with no mark holds none, and answer no mark closes was cut short and
+  ##   reads as none.
   var
     current: seq[string]
-    is_header = true
-  let text = if output.endsWith("\n"): output[0 ..^ 2] else: output
-  for line in text.splitLines:
-    if is_header and MARKS_HEADER.anyIt(line.startsWith(it)): continue
-    is_header = false
-    if line.len == 0:
-      result.add current
+    is_ready = false
+  for line in output.splitLines:
+    if line == MARK_END:
+      if is_ready: result.add current
       current = @[]
-    else: current.add line
+      is_ready = true
+    elif is_ready and line.len > 0: current.add line
 
 
 func declaredAt(symbol: Symbol, path: string, site: (int, int)): Symbol =
@@ -170,27 +185,51 @@ func includerOf*(files: openArray[(string, string)], path: string): string =
         let
           named = s["include ".len .. ^1].strip(chars = {'"', ' '})
           target = file.parentDir / (if named.endsWith(".nim"): named else: named & ".nim")
-        if target.normalizedPath == result: found = file
+        if target.normalizedPath.slashed == result: found = file
       if found.len > 0: break
     if found.len == 0: return
     result = found
 
 
+func lineRedirected*(
+  tool: string; arguments: openArray[string]; commands, answers: string; cmd = ""
+): string =
+  ## Render line running tool with arguments, reading commands from file and writing answers to
+  ##   file: through `sh` where `cmd` is empty, else through `cmd` at that path, as Windows
+  ##   needs. Every word is quoted there, since no path holds `"` on Windows; `/d` skips
+  ##   AutoRun commands, `/v:off` reads `!` as itself, and `/s` strips outer quotes alone.
+  if cmd.len == 0:
+    return (@[tool] & @arguments).mapIt(it.quoteShellPosix).join(" ") & " < " &
+      commands.quoteShellPosix & " > " & answers.quoteShellPosix
+  let inner = (@[tool] & @arguments).mapIt('"' & it & '"').join(" ") & " < \"" & commands &
+    "\" > \"" & answers & '"'
+  '"' & cmd & "\" /d /v:off /s /c \"" & inner & '"'
+
+
 proc ask(entry: Entry, is_js: bool): Asked =
   ## Start `nimsuggest` on entry, reading every command entry's queries make from file and
   ##   writing its answers to file, so neither process waits on pipe other leaves full.
-  var arguments = @["--v3", "--stdin"] & entry.defines
+  ##   Toolchain holding no `nimsuggest` starts none, and says so, so each file stays unresolved
+  ##   with that reason rather than reading empty output as answer.
+  ##   Each command quotes its file, since `nimsuggest` reads unquoted file up to first `:`, and
+  ##   every path on Windows holds one after its drive.
+  var arguments = @["--v3", "--tester"] & entry.defines
   if is_js: arguments.add BACKEND_JS
   arguments.add entry.file
-  let tool = if entry.bin.len == 0: findExe(NIMSUGGEST) else: entry.bin / NIMSUGGEST
+  let tool =
+    if entry.bin.len == 0: findExe(NIMSUGGEST) else: entry.bin / NIMSUGGEST.addFileExt(ExeExt)
+  if tool.len == 0 or not fileExists(tool):
+    result.missing =
+      if entry.bin.len == 0: "no nimsuggest on PATH" else: "no nimsuggest in " & entry.bin
+    return
   var commands = ""
   for query in entry.queries:
     let
       file = entry.root / query.path
       command = if file == entry.file: COMMAND_SITE else: COMMAND_INCLUDED
-    commands.add "chkFile " & file & "\n"
+    commands.add "chkFile \"" & file & "\"\n"
     for (line, column) in query.sites:
-      commands.add command & " " & file & ":" & $line & ":" & $column & "\n"
+      commands.add command & " \"" & file & "\":" & $line & ":" & $column & "\n"
     for name in query.names: commands.add "globalSymbols " & name & "\n"
   commands.add "quit\n"
 
@@ -200,18 +239,22 @@ proc ask(entry: Entry, is_js: bool): Asked =
   written.close
   result.commands = path
   result.answers = path.changeFileExt(TEMP_ANSWERS)
-  let line = (@[tool] & arguments).mapIt(it.quoteShell).join(" ") & " < " &
-    result.commands.quoteShell & " > " & result.answers.quoteShell
+  let
+    cmd = when defined(windows): getEnv("ComSpec", "cmd.exe") else: ""
+    line = lineRedirected(tool, arguments, result.commands, result.answers, cmd)
   result.process = startProcess(line, workingDir = entry.directory, options = {poEvalCommand})
 
 
 proc answersOf(entry: Entry, asked: Asked): seq[Answer] =
   ## Read answers of started run, in order commands went: check, sites, names of each file.
-  discard asked.process.waitForExit
-  asked.process.close
-  let output = if fileExists(asked.answers): readFile(asked.answers) else: ""
-  removeFile(asked.commands)
-  removeFile(asked.answers)
+  ##   Run that never started answers each file unresolved, with reason it gives.
+  var output = ""
+  if asked.missing.len == 0:
+    discard asked.process.waitForExit
+    asked.process.close
+    if fileExists(asked.answers): output = readFile(asked.answers)
+    removeFile(asked.commands)
+    removeFile(asked.answers)
   let blocks = output.blocksOf
   var at = 0
   for query in entry.queries:
@@ -221,6 +264,7 @@ proc answersOf(entry: Entry, asked: Asked): seq[Answer] =
         let fields = line.split('\t')
         if fields.len > 7 and fields[3] == SEVERITY_ERROR and answer.reason.len == 0:
           answer.reason = fields[7].strip(chars = {'"'}) & " at line " & fields[5]
+    elif asked.missing.len > 0: answer.reason = asked.missing
     else: answer.reason = "nimsuggest answered nothing"
     inc at
     for site in query.sites:

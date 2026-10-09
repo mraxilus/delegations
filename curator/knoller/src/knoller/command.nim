@@ -38,6 +38,10 @@
 ##   Fixers read each path whole, absolute and with `.` and `..` resolved (`layoutOf`), so test
 ##     file, stub and umbrella read alike however command line names them; output prints path
 ##     as named.
+##   Fixers read text as commit stores it. Where checkout wrote CRLF that commit turns back into
+##     LF, as `core.autocrlf` does on Windows by default, run reads LF and writes CRLF back
+##     (`isConverted`), so no CR reads as trailing whitespace and no fix rewrites line endings.
+##     CRLF that commit keeps is read as written, and stays finding.
 ##   `outcomeOf` decides what run writes and prints from text alone, so suite drives it with
 ##     no file; `main` reads files, runs git, writes and prints.
 ##
@@ -52,7 +56,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, options, os, osproc, parseopt, sequtils, streams, strutils, tables]
+import std/[algorithm, options, os, osproc, parseopt, sequtils, sets, streams, strutils, tables]
 import ./[
   chain, compilers, conversions, edits, fences, names, parentheses, pins, proofs, reports, rewrites,
   rules, symbols,
@@ -130,8 +134,9 @@ func dialectOf*(path: string): Option[Dialect] =
 
 func layoutOf*(path, directory: string): string =
   ## Read path whole, as fixers read it: absolute, from directory it is named from, with `.` and
-  ##   `..` resolved.
-  if path.isAbsolute: path.normalizedPath else: normalizedPath(directory / path)
+  ##   `..` resolved, and each separator `/` on every platform (`slashed`), since rules split
+  ##   it there to find tests, stubs and drive code.
+  slashed(if path.isAbsolute: path.normalizedPath else: normalizedPath(directory / path))
 
 
 func shownAs(reports: openArray[Report], path: string): seq[Report] =
@@ -389,15 +394,48 @@ proc batchesOf*(paths: openArray[string]; nim, directory: string; provers: Prove
 func listingOf*(directory, output: string; code: int): tuple[files: seq[string], refusal: string] =
   ## Read Nim files git lists under directory, sorted, from output and exit code of `git ls-files
   ##   -z` run there; refusal says why directory names none, and is empty where it names some.
+  ##   Each path reads with separator `/` (`slashed`), as git lists it, so output of one tree is
+  ##   same on every platform.
   if code != 0:
     result.refusal = "Directory lies outside git work tree, so git lists no file under it; got `" &
         directory & "`."
     return
   for name in output.split('\0'):
-    if name.len > 0 and name.dialectOf.isSome: result.files.add directory / name
+    if name.len > 0 and name.dialectOf.isSome: result.files.add slashed(directory / name)
   result.files.sort
   if result.files.len == 0:
     result.refusal = "Directory holds no Nim file that git lists; got `" & directory & "`."
+
+
+func isConverted*(record, autocrlf: string): bool =
+  ## Decide from one record of `git ls-files --eol`, and value of `core.autocrlf`, whether
+  ##   checkout wrote CRLF that commit turns back into LF: worktree holds CRLF, index holds LF
+  ##   or no file yet, and git normalizes file, by `core.autocrlf` or by `text` or `eol`
+  ##   attribute, which `-text` overrides.
+  let
+    info = record.split('\t')[0]
+    at = info.find("attr/")
+    attribute = if at < 0: "" else: info[at + "attr/".len .. ^1]
+    words = attribute.splitWhitespace
+  var index, worktree = ""
+  for word in info[0 ..< (if at < 0: info.len else: at)].splitWhitespace:
+    if word.startsWith("i/"): index = word["i/".len .. ^1]
+    elif word.startsWith("w/"): worktree = word["w/".len .. ^1]
+  let
+    is_binary = "-text" in words
+    is_text = words.anyIt(it == "text" or it.startsWith("text=") or it.startsWith("eol="))
+    is_normalized = not is_binary and (is_text or autocrlf.strip in ["true", "input"])
+  worktree in ["crlf", "mixed"] and index in ["", "lf", "none"] and is_normalized
+
+
+func judged*(text: string, is_converted: bool): string =
+  ## Read text as commit stores it: each CRLF turned LF where checkout converted file.
+  if is_converted: text.replace("\r\n", "\n") else: text
+
+
+func restored*(text: string, is_converted: bool): string =
+  ## Read text to write as checkout writes it: each LF turned CRLF where checkout converted file.
+  if is_converted: text.replace("\n", "\r\n") else: text
 
 
 proc runGit*(
@@ -426,6 +464,33 @@ proc listed*(directory: string): tuple[files: seq[string], refusal: string] =
   ##   stderr never reaches path (`runGit`).
   let (output, _, code) = runGit(directory, ["ls-files", "-z"])
   listingOf(directory, output, code)
+
+
+proc convertedOf*(paths: openArray[string]): HashSet[string] =
+  ## Read each path whose checkout wrote CRLF that commit turns back into LF (`isConverted`),
+  ##   asking git once in each directory; path git knows nothing of is read as written.
+  var groups: seq[(string, seq[string])]
+  for path in paths:
+    let directory = path.parentDir
+    var at = groups.mapIt(it[0]).find(directory)
+    if at < 0:
+      groups.add (directory, @[])
+      at = groups.high
+    groups[at][1].add path
+  for (directory, group) in groups:
+    let
+      names = group.mapIt(it.extractFilename)
+      (listing, _, code) = runGit(
+        directory,
+        @["--literal-pathspecs", "ls-files", "--eol", "-z", "--cached", "--others", "--"] & names,
+      )
+    if code != 0: continue
+    let autocrlf = runGit(directory, ["config", "--get", "core.autocrlf"]).output
+    for record in listing.split('\0'):
+      let fields = record.split('\t')
+      if fields.len < 2: continue
+      let k = names.find(fields[1])
+      if k >= 0 and record.isConverted(autocrlf): result.incl group[k]
 
 
 proc projectOf(directory: string): string =
@@ -464,7 +529,7 @@ proc listingOf(
   ## Read path, relative to project, and text of each Nim file git lists under project, once.
   if project notin listings:
     let (listed, _) = project.listed
-    listings[project] = listed.mapIt((it.relativePath(project), readFile(it)))
+    listings[project] = listed.mapIt((it.relativePath(project, '/'), readFile(it)))
   listings[project]
 
 
@@ -486,7 +551,7 @@ proc answersOf*(
     let
       absolute = path.layoutOf(directory)
       project = absolute.parentDir.projectOf
-      query = queryConversion(absolute.relativePath(project), source)
+      query = queryConversion(absolute.relativePath(project, '/'), source)
     if query.sites.len == 0: continue
     let (bin, reason) = binOf(absolute, nim, seen, toolchains)
     if reason.len > 0:
@@ -530,7 +595,7 @@ proc plansOf*(
     let
       absolute = path.layoutOf(directory)
       project = absolute.parentDir.projectOf
-      relative = absolute.relativePath(project)
+      relative = absolute.relativePath(project, '/')
       recased = renamesCase(source, JARGON)
     var renames: seq[Rename]
     for r in recased:
@@ -581,7 +646,7 @@ proc plansOf*(
         for answer in resolve(requests): answers[answer.path] = answer
         for (file, text) in reach: fenced[file] = text.fenceOf.lines
         plan = planRename(rename, reach, answers, fenced)
-        let outside = toSeq(plan.edits.keys).filterIt((project / it) notin named)
+        let outside = toSeq(plan.edits.keys).filterIt(slashed(project / it) notin named)
         if plan.refusal.len == 0 and outside.len > 0:
           plan.refusal = "it would write `" & outside[0] & "`, which this run leaves alone"
           plan.edits.clear
@@ -590,9 +655,9 @@ proc plansOf*(
       # Name each path as command line names it.
       plan.rename.path = path
       var edits = initTable[string, seq[Edit]]()
-      for file, list in plan.edits: edits[files[named.find(project / file)][0]] = list
+      for file, list in plan.edits: edits[files[named.find(slashed(project / file))][0]] = list
       plan.edits = edits
-      plan.lines = plan.lines.mapIt((files[named.find(project / it[0])][0], it[1]))
+      plan.lines = plan.lines.mapIt((files[named.find(slashed(project / it[0]))][0], it[1]))
       result.add plan
 
 
@@ -635,7 +700,8 @@ proc main*(): int =
   var toolchains = initToolchains()
   let
     directory = getCurrentDir()
-    files = paths.mapIt((it, readFile(it)))
+    converted = paths.convertedOf
+    files = paths.mapIt((it, readFile(it).judged(it in converted)))
     answers = files.answersOf(options.get.nim, directory, toolchains)
     plans = files.plansOf(paths.lockedOf, options.get.nim, directory, toolchains)
     batches = paths.batchesOf(options.get.nim, directory, proversPin(toolchains))
@@ -648,6 +714,6 @@ proc main*(): int =
       answers,
       plans,
     )
-  for (path, text) in outcome.written: writeFile(path, text)
+  for (path, text) in outcome.written: writeFile(path, text.restored(path in converted))
   for line in outcome.lines: echo line
   outcome.code

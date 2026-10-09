@@ -2328,6 +2328,14 @@ mistake is easy to make and impossible to see afterwards.
   skipped, and the gate passes on a skipped dependency. The gate passes on `skipped`, and fails
   on `failure` or `cancelled`.
 
+**`test-windows` runs the suites of knoller on Windows, whenever `list-projects` names knoller.**
+Knoller runs on Windows and koch does not. So the job compiles and runs the suite file itself,
+with the options of its testament header, on the pin of `curator/audit`. The gate reads its
+verdict, and a run that names no knoller skips it.
+
+- Rejected: `koch test` on Windows, which would port koch as well, where knoller alone runs there.
+- Cost: the job runs no `koch check-files`, so a rule of the static pass is held on Linux alone.
+
 **`nim r koch test --all` runs every project, each on its own compiler.** Every verb that takes
 projects reads the one named, else `--recent`, else `--all`, else what a change touches. So one
 rule serves `test`, `drive`, `head`, `fix`, `check-types`, `fetch-deps` and `list-projects`.

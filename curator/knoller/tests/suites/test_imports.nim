@@ -100,6 +100,6 @@ suite "Imports":
         inc count
         if imported.startsWith("std/"): continue
         let module = (path.parentDir / imported).normalizedPath
-        check module.startsWith(DIRECTORY_SOURCE & "/")  # leaves package otherwise
+        check module.startsWith(DIRECTORY_SOURCE & DirSep)  # leaves package otherwise
         check fileExists(if module.endsWith(".nim"): module else: module & ".nim")
     check count > 0  # walk read imports, so check above is not vacuous
