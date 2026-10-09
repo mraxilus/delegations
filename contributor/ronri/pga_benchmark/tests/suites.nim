@@ -1397,6 +1397,8 @@ suite "Internal: Proposals":
     check proposal.citation == "P01" and not proposal.isFrozen  # cited as RFC is
     check proposal.builds_on == @["base"] and proposal.claims.len == 3  # bases and claims
     check proposal.programsOf == @["proposals/01-sign/p.nim"]  # program beside its proposal
+    check programsOf([proposal, proposal]) == proposal.programsOf & proposal.programsOf
+      # chain lists programs of each proposal in order, so digest reads programs of bases
 
 
   test "unknown claim, missing title and claims that are not JSON are findings":
