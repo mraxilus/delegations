@@ -49,7 +49,7 @@ to what a dancer will do without pain.
 | neck round | 0.37 m, radius 0.059, to 1.5 m |
 | head round | 0.56 m, radius 0.089, to 1.69 m |
 | shoulders | 0.18 m out, 1.4 m up |
-| arm | upper 0.31, forearm 0.25, hand 0.19: span 0.74 m; limb radius 0.045 |
+| arm | upper 0.31, forearm 0.25, hand 0.19: span 0.74 m to join of finger grip; limb radius 0.045 |
 | hand | carried 0.08 and held 0.055 to 0.175 past wrist |
 | shoulder | 45 degrees behind the frontal plane; across, trunk stops it; twist 90 in to 105 out |
 | elbow | 0 to 140 degrees |
