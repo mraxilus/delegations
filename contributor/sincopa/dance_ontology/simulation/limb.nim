@@ -166,14 +166,14 @@ func placed*(
 
 
 func carriedOf*(rig: Rig, pose: ArmPose): Vector =
-  ## Where hand is carried, which band is asked of: grip's centre (`rig.carry`), on hand's
-  ## own line from wrist through join.
-  ##   Where it was before hand had its true size, since true hand changes hand's shape and
-  ##     not where hand is carried.  Asked instead where hands meet, at fingertips, wrist and
-  ##     elbow passed under crown band at head's height: left to right over crown stopped
-  ##     by swing at 0.40 to 0.42 of turn from every distance from 0.36 to 0.46, follow's
-  ##     arm behind head, and its walk leapt 244 mm in one moment.  Asked at middle of palm,
-  ##     same-name chain wound half turn held from no distance.  Measured 2026-10-08.
+  ## Where hand is carried, which band is asked of: `rig.carry` past wrist, on hand's own
+  ## line from wrist through join.
+  ##   Between join of palm grip and that of finger grip, since neither serves.  Asked of
+  ##     fingertips, wrist and elbow passed under crown band at head's height: left to right
+  ##     over crown stopped by swing at 0.40 to 0.42 of turn from 0.36 to 0.46 m, and from
+  ##     0.48 m turned free with follow's arm behind head, at end of its swing.  Left to
+  ##     right at torso leapt 244 mm in one moment.  Asked at middle of palm, same-name
+  ##     chain wound half turn held from no distance.  Measured 2026-10-08.
   pose.wrist + unit(pose.join - pose.wrist) * rig.carry
 
 

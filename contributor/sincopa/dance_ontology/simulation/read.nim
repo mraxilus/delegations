@@ -108,17 +108,17 @@ func sideOf(a, b, p: Vector): int =
   if offset > ON_LINE: 1 elif offset < -ON_LINE: -1 else: 0
 
 func lifted(side: int): int =
-  ## Point on line counts as on its positive side.  One rule for every tie, so
-  ## vertex two segments share is counted for exactly one of them, and arm lying
+  ## Point on line counts as on its positive side.  One rule for every point on line,
+  ## so vertex two segments share is counted for exactly one of them, and arm lying
   ## along other crosses it once where it leaves to far side and never inside
-  ## overlap.  Simulation of simplicity, with tie set by `ON_LINE` rather than
-  ## by whichever way last bit fell.
+  ## overlap.  Simulation of simplicity, with point on line set by `ON_LINE` rather
+  ## than by whichever way last bit fell.
   if side == 0: 1 else: side
 
 func crossings*(arms: Arms): seq[Crossing] =
   ## Where two connections cross in plan, and which is over at each.
   ##   Two segments cross where each has other's ends on opposite sides of its
-  ##     line, sides read with ties lifted.  Read as parametric intersection
+  ##     line, sides read with points on line lifted.  Read as parametric intersection
   ##     alone, crossing at vertex of both polylines was counted four times and
   ##     once under any jitter, and arm laid along other read nought, one or two.
   if arms.len < 2:
@@ -140,8 +140,8 @@ func crossings*(arms: Arms): seq[Crossing] =
       let denominator = (b.x - a.x) * (d.y - c.y) - (b.y - a.y) * (d.x - c.x)
       var t, u: float
       if abs(denominator) < 1e-18:
-        # Sides differ only by tie: segments run along one another and one end
-        # sits on other's line.  Crossing is that end.
+        # Sides differ only where point sits on line: segments run along one another
+        # and one end sits on other's line.  Crossing is that end.
         if sideOf(a, b, c) == 0: u = 0.0 else: u = 1.0
         let
           end_point = (if u == 0.0: c else: d)

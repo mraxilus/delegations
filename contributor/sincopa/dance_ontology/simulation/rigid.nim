@@ -285,8 +285,8 @@ func handCapsules*(rig: Rig, long: float): array[3, tuple[a, z: Vector, radius: 
   ## Hand's three capsules in its link's own terms, reaching `long` past wrist (`handLong`):
   ## z from wrist along fingers, y across knuckles, palm facing along x.
   ##   Hand's section is stadium as thick as hand (`rig.handThick`).  Three capsules side by
-  ##     side across its breadth hold that within eight millimetres; one capsule as thick as
-  ##     hand is third as broad, and ball as broad as hand is twice as thick.
+  ##     side across its breadth hold that within 8.2 mm; one capsule as thick as hand is
+  ##     third as broad, and ball as broad as hand is near three times as thick.
   let
     radius = handThick(rig) / 2.0
     spread = rig.hand_broad / 2.0 - radius
@@ -1077,7 +1077,7 @@ func carriedOf(couple: Couple, who: Body, arm: Arm): Vector =
   )
 
 func joinOf(couple: Couple, who: Body, arm: Arm): Vector =
-  ## Grip: where hand holds, as deep as it holds.
+  ## Join: where hand holds, as deep as it holds.
   asWorld(
     engine.pointOf(
       couple.who[who].arm[arm].link[Limb.Palm],
@@ -1344,12 +1344,12 @@ proc easeOff(couple: Couple) =
         wrist_point = asWorld(
           engine.pointOf(arm_rig.link[Limb.Fore], engine.initVector(0, 0, cfloat(couple.rig.fore))),
         )
-        join_point = asWorld(
+        tip_point = asWorld(
           engine.pointOf(arm_rig.link[Limb.Palm], engine.initVector(0, 0, cfloat(couple.rig.hand))),
         )
         upper_direction = unit(elbow_point - shoulder_point)
         fore_direction = unit(wrist_point - elbow_point)
-        hand_direction = unit(join_point - wrist_point)
+        hand_direction = unit(tip_point - wrist_point)
       # Twist, about arm's own line.  Rig states right arm's ends; left is same
       # joint mirrored, ends and eases swapped, as `read.tightest` has them.
       let
@@ -1455,6 +1455,8 @@ const
 proc steer*(couple: var Couple, plan: openArray[float], hertz: float) =
   ## Spring every joint toward planned pose: waists, collarbones, shoulders,
   ## elbows, wrists.  Plan is waists then nine per arm, lead's left first.
+  ##   Plan's depths, after arms, set how deep each hand holds: each tie moves there, and
+  ##     each held hand reshapes to its grip (`setTie`).
   couple.is_steered = true
   for who in Body:
     engine.aimHinge(couple.who[who].waist, cfloat(plan[2+ord(who)]))
@@ -1522,7 +1524,8 @@ proc axesInBody(couple: Couple, who: Body, link: engine.BodyId): Matrix =
 
 proc poseVector*(couple: Couple): array[44, float] =
   ## Couple's pose read off engine in planner's own terms (`plan.Plan`): apart, sideways,
-  ## two waists, then each arm's collarbone, shoulder, elbow and wrist.
+  ## two waists, then each arm's collarbone, shoulder, elbow and wrist.  Depth each hand
+  ## holds follows, as last set, and not read off engine.
   let
     one = axesOf(couple.stance[Body.One]).origin
     two = axesOf(couple.stance[Body.Two]).origin

@@ -29,13 +29,13 @@ const
     ## over one; finer than that buys under twentieth of turn, which is below
     ## anything any card asks.
   ROOM* = 1.0  ## And how far out from clear air search looks.
-  SMOOTHER* = 2.0  ## Stance further out takes tie from nearer only for arms moving
-                  ## this many times less between moments.  Largest leap of walk is
-                  ## chaotic: seen in mirror it differs by up to fifth, and built
-                  ## from same source by another compiler by up to thirty five per
-                  ## cent, last bits amplified.  Tie broken within five millimetres
-                  ## chose stances two steps apart for one hold seen in mirror, and
-                  ## again for one hold built twice.
+  SMOOTHER* = 2.0  ## Stance further out is taken over nearer one that carries turn as
+                  ## far only for arms moving this many times less between moments.
+                  ## Largest leap of walk is chaotic: seen in mirror it differs by up
+                  ## to fifth, and built from same source by another compiler by up to
+                  ## thirty five per cent, last bits amplified.  Choosing between such
+                  ## stances within five millimetres chose stances two steps apart for
+                  ## one hold seen in mirror, and again for one hold built twice.
   LOOK* = 0.1  ## Metres further out looked once turn runs free, for stance
                  ## moving arms less: free way is not walked over whole `ROOM`,
                  ## fifty walks where one did.
@@ -576,14 +576,14 @@ proc standingOf(
   ##     holds.  First distance that held was taken before, and first is chest to
   ##     chest: couple asked Face-to-back there had follow's free arm crushed between two
   ##     torsos, shoulder at its rope's end, twist at its end, waist at forty,
-  ##     with nothing held -- couple would stand anywhere else.  Ties go to
-  ##     nearer distance, as before.
+  ##     with nothing held -- couple would stand anywhere else.  Of two equal
+  ##     distances, nearer is taken, as before.
   ##   Distance at ease outright ends search: no distance further out is nearer
-  ##     to ease than nought, and nearer distance keeps tie, so first at ease is
+  ##     to ease than nought, and of two equal, nearer is kept, so first at ease is
   ##     couple's choice.  Only still no distance eases pays for whole search.
   ##   Still that fixes no way about (`either`) is wound either way at every
-  ##     distance, and way asked keeps tie: card claims position, and couple
-  ##     take whichever way there sits easier.
+  ##     distance, and of two equal ways, way asked is kept: card claims position,
+  ##     and couple take whichever way there sits easier.
   ##   Distances and ways are stood on every core at once, batch by batch, and taken in
   ##     their order (`onEveryCore`).
   result = Stood(is_holding: false, strain: Strain(most: Inf))
@@ -694,7 +694,7 @@ proc isReaching*(
 
 func leapOf*(walk: Walk): float =
   ## Furthest any point of any held arm moves between two moments of walk.
-  ##   Hand is read at both ends of its capsules, fingertips among them.  Grip is not: it
+  ##   Hand is read at both ends of its capsules, fingertips among them.  Join is not: it
   ##     lies on hand, between ends that are read.
   for j in 1..<walk.moments.len:
     for i in 0..<walk.moments[j].arms.len:
@@ -1067,7 +1067,8 @@ proc plannedStill*(
   ##     `should_seek_ease`, every plan is tried and one nearest to ease is kept, as
   ##     `standing` keeps distance: first that held stood C06 with follow's waist at its
   ##     end, strain 1.00, where other path of same style held at 0.19, 2026-10-03.
-  ##   Plan at ease ends search, since nothing betters it; earlier plan keeps tie.
+  ##   Plan at ease ends search, since nothing betters it; earlier of two equal plans is
+  ##     kept.
   let ways = (if is_either_way: @[turns, -turns] else: @[turns])
   planAhead(rig, links, is_away, ways, who)
   for way in ways:

@@ -140,7 +140,7 @@ proc rigTable(): string =
       &"{formatFloat(halfBreadth(HUMAN, Part.Head), ffDecimal, 3)}, to {HUMAN.top[Part.Head]} m |\n"
   result.add &"| shoulders | {HUMAN.shoulder_out} m out, {HUMAN.shoulder_up} m up |\n"
   result.add &"| arm | upper {HUMAN.upper}, forearm {HUMAN.fore}, hand {HUMAN.hand}: " &
-      &"span {turns(span(HUMAN))} m; limb radius {HUMAN.limb} |\n"
+      &"span {turns(span(HUMAN))} m to join of finger grip; limb radius {HUMAN.limb} |\n"
   result.add &"| hand | carried {HUMAN.carry} and held " &
       &"{formatFloat(gripAtPalm(HUMAN), ffDecimal, 3)} to " &
       &"{formatFloat(gripAtTips(HUMAN), ffDecimal, 3)} past wrist |\n"

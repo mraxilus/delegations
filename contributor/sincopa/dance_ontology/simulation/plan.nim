@@ -493,8 +493,8 @@ type Bounds = array[SIZE, (float, float)]
 
 func boundsOf(rig: Rig, margin: float, links: seq[Link]): Bounds =
   ## Each freedom's ends: collarbones, waists and elbow at engine's own, sideways held nought.
-  ##   Held hand holds anywhere from palm to fingertips; free hand is open, whole hand long,
-  ##     as engine builds it (`rigid.build`).
+  ##   Held hand holds anywhere from palm to fingertips.  Free hand holds nothing, its depth
+  ##     whole hand, and hangs relaxed, as engine builds it (`rigid.build`).
   let near = touching(rig) + 0.10
   result[0] = (near, near + 1.0)
   result[1] = (0.0, 0.0)

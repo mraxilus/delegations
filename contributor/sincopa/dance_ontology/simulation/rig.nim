@@ -91,7 +91,7 @@ type
     shoulder_up*: float  ## And its height.
     upper*, fore*, hand*: float  ## Shoulder to elbow, elbow to wrist, wrist to fingertip.
     palm*: float  ## Wrist to knuckles.
-    carry*: float  ## Wrist to grip's centre: where hand is carried, which band is asked of.
+    carry*: float  ## Wrist to where hand is carried, which band is asked of.
     relaxed*: float  ## Wrist to fingertip of free hand, hanging relaxed with fingers half curled.
     curled*: float  ## How far that fingertip lies off hand's own line toward palm, radians.
     hand_round*: float  ## Hand's girth round knuckles, thumb left out.
@@ -247,8 +247,8 @@ func gripAtTips*(rig: Rig): float = rig.hand - handThick(rig) / 2.0
 
 func handLong*(rig: Rig, depth: float): float = min(rig.hand, depth + handThick(rig))
   ## How far past wrist hand that holds `depth` deep reaches: fingers past join curl round
-  ## partner's hand, about one thickness deep.  Open hand, held at fingertips or not at all,
-  ## is whole hand.
+  ## partner's hand, about one thickness deep.  Hand held at fingertips is whole hand.  Free
+  ## hand holds nothing, and hangs relaxed instead (`rigid.relaxedCapsules`).
 
 func span*(rig: Rig): float = rig.upper + rig.fore + gripAtTips(rig)
   ## Shoulder to join with everything straight and hands held by fingertips: as far as
@@ -259,11 +259,14 @@ const
     ## How far two palms held palm to palm tilt off facing each other.  Derived, since no
     ##   study measures it: slip limit of dry palm skin pressed flat, arctan of its friction
     ##   of 0.5 to 0.62 (Derler and Gerhardt 2012; Zhang and Mak 1999), 27 to 32 degrees.
+    ##   That limit bounds angle of force to each palm, and is read here as angle between
+    ##   palms.
   GRIP_TWIST_PALM* = toRadians(60)
-    ## How far two hands held palm to palm turn off fingers opposed: stop, and not comfort.
-    ##   Derived, since no study measures it: top of what forearms, wrists and skin of both
-    ##   partners give (Kee and Karwowski 2001; Khan et al. 2009; du Bois de Dunilac et al.
-    ##   2023).  Each line of evidence ends comfort near 30 degrees.
+    ## How far two hands held palm to palm turn off fingers opposed, where they meet: stop,
+    ##   and not comfort.  Derived, since no study measures it.  Arms turn hands by their own
+    ##   joints, so this is skin alone: finger pad twisted on glass slips whole at 16 to 59
+    ##   degrees, mean of each person (du Bois de Dunilac et al. 2023).  Comfort of forearm
+    ##   and wrist ends near 30 degrees (Kee and Karwowski 2001; Khan et al. 2009).
 
 func gripFreedom*(rig: Rig, depth: float): tuple[cone, twist: float] =
   ## How far two joined hands turn against each other, when they meet this far past wrist.
