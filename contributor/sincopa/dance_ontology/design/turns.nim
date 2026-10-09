@@ -93,8 +93,8 @@ func frame(moment: Moment, band: Band, links: seq[Link]): JsonNode =
       follow = moment.arms[i][armOf(links, i, Body.Two)]
     var connection = %*{
       "lead": [lead.shoulder.toMillimetres, lead.elbow.toMillimetres,
-               lead.wrist.toMillimetres, lead.grip.toMillimetres],
-      "follow": [follow.grip.toMillimetres, follow.wrist.toMillimetres,
+               lead.wrist.toMillimetres, lead.join.toMillimetres],
+      "follow": [follow.join.toMillimetres, follow.wrist.toMillimetres,
                  follow.elbow.toMillimetres, follow.shoulder.toMillimetres],
       "leadSays": said(lyingOn(HUMAN, band, links, moment.stance, moment.arms, i, Body.One), band),
       "followSays": said(

@@ -12,14 +12,14 @@ import ../fixtures
 
 suite "Internal: Capsule on canvas":
   test "capsule of no length is put down as disc, never as stroke of no length":
-    ## Sphere is capsule whose two ends are one point, and palm is one.  Stroke
+    ## Sphere is capsule whose two ends are one point, and face is one.  Stroke
     ## of no length with round caps is drawn as disc by one browser and as
     ## nothing by another: on Architect's phone every hand vanished, forearms
-    ## ending 118 mm short of grip they were joined at, measured 2026-09-18 on
-    ## A07.  Disc is drawn by every browser.
-    let palm: Spot = (0.039, 0.211, 0.995)
-    check drawnAs(palm, palm) == Drawn.Disc
-    check drawnAs(palm, (0.108, 0.244, 1.020)) == Drawn.Stroke
+    ## ending 118 mm short of where they were joined, measured 2026-09-18 on
+    ## A07, when palm was sphere too.  Disc is drawn by every browser.
+    let sphere: Spot = (0.039, 0.211, 0.995)
+    check drawnAs(sphere, sphere) == Drawn.Disc
+    check drawnAs(sphere, (0.108, 0.244, 1.020)) == Drawn.Stroke
 
 
   test "capsule hanging beside another is painted behind it where it is behind":

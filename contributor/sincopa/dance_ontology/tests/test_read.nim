@@ -136,11 +136,11 @@ suite "Internal: Two hands":
     ## figures and for thousand poses jittered by 1e-13, which is below anything
     ## pose carries, and count in exact terms is one in both.
     func armsOf(first, second: array[7, Vector]): Arms =
-      ## Two connections from their seven points each, grip in middle.
+      ## Two connections from their seven points each, join in middle.
 
-      func pose(shoulder_point, elbow_point, wrist_point, grip_point: Vector): ArmPose =
+      func pose(shoulder_point, elbow_point, wrist_point, join_point: Vector): ArmPose =
         ## Build arm pose from its four joints.
-        ArmPose(shoulder: shoulder_point, elbow: elbow_point, wrist: wrist_point, grip: grip_point)
+        ArmPose(shoulder: shoulder_point, elbow: elbow_point, wrist: wrist_point, join: join_point)
 
       @[
         [

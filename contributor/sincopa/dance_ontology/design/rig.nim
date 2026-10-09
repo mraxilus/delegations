@@ -132,9 +132,9 @@ func looking(moment: Still): seq[float] =
     result.add [moment.faces[who].at.x, moment.faces[who].at.y,
                 moment.faces[who].fore.x, moment.faces[who].fore.y]
 
-func gripped(moment: Still): seq[float] =
-  ## List every grip's three coordinates, one grip after another.
-  for grip in moment.grips: result.add [grip.x, grip.y, grip.z]
+func joined(moment: Still): seq[float] =
+  ## List every join's three coordinates, one join after another.
+  for join in moment.joins: result.add [join.x, join.y, join.z]
 
 
 proc bodyOfSweep(recording: Shown, key = "", mirror = ""): string =
@@ -180,18 +180,18 @@ proc bodyOfSweep(recording: Shown, key = "", mirror = ""): string =
   bits.add wrapped("\"arm\":[" & owner.join(",") & "]")
   bits.add wrapped("\"lower\":[" & lower.join(",") & "]")
   bits.add wrapped("\"upper\":[" & upper.join(",") & "]")
-  var at, points, angles, grips, apart, look: seq[string]
+  var at, points, angles, joins, apart, look: seq[string]
   for moment in recording.stills:
     at.add figure(moment.at)
     look.add jsonArray(moment.looking)
     points.add jsonArray(moment.flat)
     angles.add jsonArray(moment.angles)
-    grips.add jsonArray(moment.gripped)
+    joins.add jsonArray(moment.joined)
     apart.add jsonArray(moment.apart)
   bits.add wrapped("\"at\":[" & at.join(",") & "]")
   bits.add wrapped("\"points\":[" & points.join(",") & "]")
   bits.add wrapped("\"angles\":[" & angles.join(",") & "]")
-  bits.add wrapped("\"grips\":[" & grips.join(",") & "]")
+  bits.add wrapped("\"joins\":[" & joins.join(",") & "]")
   bits.add wrapped("\"gaps\":[" & apart.join(",") & "]")
   bits.add wrapped("\"faces\":[" & look.join(",") & "]")
   "{" & bits.join(",\n") & "}"
