@@ -12,8 +12,9 @@
 
 Origin: built from three sources.
 
-- The workbook of the Architect, `ontology.partnerwork.xlsx`, sheets `base` and `vocabulary`, held
-  as data in `src/dance_ontology/workbook.nim`.
+- The workbook of the Architect, `ontology.partnerwork.xlsx`, sheets `base` and `vocabulary`.
+  `src/dance_ontology/workbook.nim` holds the `base` sheet as data, and reads the words that the
+  `vocabulary` sheet gives for a move.
 - The drawing rules of the Architect as given, held as data in `design/rules.nim`.
 - For the body simulation, the ANSUR II medians with the AAOS and NASA-STD-3000 joint ranges, in
   `simulation/rig.nim`.
@@ -253,9 +254,9 @@ frames, which is 64 pairs, exhaustive. They cover validity, naming round trips, 
 mirror symmetry, one law for each move, and full connectivity.
 
 **The workbook is data, audited, and never trusted.** `workbook.nim` holds the states and cells of
-the `base` sheet, and the words of the `vocabulary` sheet, as constants. It derives findings by
-kind. A cell names a move the model lacks, or the model has a move the sheet lacks. A helper word
-differs, or a cell waits on the body.
+the `base` sheet as constants, and reads the words that the `vocabulary` sheet gives for a move. It
+derives findings by kind. A cell names a move the model lacks, or the model has a move the sheet
+lacks. A helper word differs, or a cell waits on the body.
 
 Verified by `suites/test_workbook.nim`. Eighteen of twenty-seven cells are checkable today, and all
 eighteen name the move that the model derives, with nothing missing and nothing spare. The nine
@@ -285,7 +286,8 @@ and colour say whose hand it is at any size, and no caption is needed.
 
 A connection meets at its middle in the inks of both hands. It goes **round** a body and never
 through one. It is a taut string that hugs the rim only where the straight way would cross a body.
-Only `above` runs straight, because it is over the head.
+Only `above` never hugs a rim, because it is over the head. It runs straight, unless the pair winds
+it (`route.wound`) or it bends past a mark (`route.clearedReach`).
 
 The way round of a move is settled once for the whole move (`oneWayRound`). No two animated frames
 can then disagree about which side of a body the line passes. Rejected: per-frame routing with a
@@ -376,9 +378,9 @@ Rejected: one width for the whole stretch, which is what a single `SWAN_SWING` i
 swan that keeps the count monotonic bows 14.1, against the 22 that the Architect had. In that shape,
 width and crossing placement are one number.
 
-Cost: the snake gains 0.16 of its swing over the last hundredth of a turn, which is 3.2 of line.
-Looked at frame by frame, 1.43 to 1.50, it reads as loops opening rather than as a jump. That was
-verified by looking, 2026-09-08, and not by test.
+Cost: the snake gains 0.26 of its swing (`windShare`) over the last hundredth of a turn, which is
+5.2 of line. Looked at frame by frame, 1.43 to 1.50, it reads as loops opening rather than as a
+jump. That was verified by looking, 2026-09-08, and not by test.
 
 Verified by `suites/test_marks.nim`, which drives the build. A gate walks the stretch every
 hundredth of a turn, and fails if the count ever falls, or rises other than once. Two more hold the
@@ -387,8 +389,8 @@ snake to drawing in before it opens. The swan bows 22 round its straight connect
 **The two connections keep clear of each other where they run alongside.** Where their middles come
 closer than the line width, 3.4, the ink merges. One connection then seems to run into the other,
 and not across it. The pinch keeps growing past a whole turn (`WIND_NIP_MORE`). Rejected: a cap on
-the pinch at one turn, which draws the winding as stopped. The snake pulls in to `SWAN_DRAW_IN` 0.65
-before it opens to `SWAN_SWING` 1.50.
+the pinch at one turn, which draws the winding as stopped. The snake pulls in toward `SWAN_DRAW_IN`
+0.65, and reaches 0.82 at 1.42 turns, before it opens to `SWAN_SWING` 1.50.
 
 **Measured** over the stretch every hundredth of a turn: at 1.37 the middles keep 6.51 apart. The
 tightest gap where they do not cross is 4.81. The shallowest crossing is 28.9°, which is well clear
@@ -456,7 +458,8 @@ of art in the hands it names. It writes the page and one SVG for each frame into
 clears first. A renamed frame can then leave no old picture behind.
 
 Rejected: to commit the generated page and hold it fresh by a test. This repository cannot do that,
-because it reads only registered file kinds. The page is a build product and cannot be stale, and
+because it keeps generated markup under the ignored `build/`, and a committed page only in `pages/`
+or `mockups/` (`curator/audit/src/layout.nim`). The page is a build product and cannot be stale, and
 the test drives the build instead (Article IX.6).
 
 Cost: nothing in the tree shows the history of the page. The published copy is not the record
@@ -569,9 +572,10 @@ references decoded. The fonts URL is held as its own constant, joined at compile
 `doAssert` gates of the workbench are the check, so its tests are a debug build.
 
 **To dress a page twice gives the same bytes as to dress it once.** `dress()` walks every page under
-`build/`, and not only the pages of the run. So a page that the run did not write is dressed again.
-`faceStyle` marks its block `<style data-faces>`, and `withFaces` removes an earlier block before it
-adds the new one. Rejected: to skip a dressed page, which keeps old faces after a face changes.
+`build/app`, `build/review` and `build/design`, and not only the pages of the run. So a page that
+the run did not write is dressed again. `faceStyle` marks its block `<style data-faces>`, and
+`withFaces` removes an earlier block before it adds the new one. Rejected: to skip a dressed page,
+which keeps old faces after a face changes.
 
 Verified by `suites/test_faces.nim`, test "dressing is not doubled where it runs twice", which
 dresses both shapes of page twice and demands the same bytes. Verified by hand on 2026-10-02: two
@@ -595,9 +599,9 @@ takes two cells in sections E and F of the review page. Those are the whole walk
 step by step, with a button for each step. Rejected: a cell for each edge, which gives 88 cells of
 animation to scroll past.
 
-`turnWalk` takes `steps` and `back`, so one builder makes three things. They are a single rocking
-edge, a whole round of four quarters, and a whole chain of six halves out and back. The round closes
-on itself and needs no return. The chain does need one, because it has ends.
+`turnWalk` takes `steps` and `has_return`, so one builder makes three things. They are a single
+rocking edge, a whole round of four quarters, and a whole chain of six halves out and back. The
+round closes on itself and needs no return. The chain does need one, because it has ends.
 
 The switching is a radio button and a sibling rule, so the page stays markup that a browser draws
 with nothing running. Rejected: script, which these pages have never needed.
@@ -622,7 +626,7 @@ hand-to-hand chains, and every animated edge of the last two. Each card carries 
 quote back, and whatever has been ruled on it.
 
 **Each identifier is the letter of its section and two digits, from A01 to G08.** So no identifier
-reads as a decision of a sign-off, which `GUIDE.md` numbers from D01. The Architect ruled this on
+reads as a decision of a sign-off, which `GUIDE.md` numbers from `D1`. The Architect ruled this on
 2026-10-04. The questions of sections A, C and D take the same names, because each question is keyed
 by its card. Verified by `suites/test_marks.nim`, which reads each identifier off the written page.
 It failed on 57 of 107 cards, which had one digit.
@@ -709,9 +713,9 @@ level. Assumed, and read by the simulation rather than by the workbench.
 
 **Rules 10 to 14 name a rotation page that the workbench does not draw.** Where a later rule
 replaces one of them, the README says which. Rule 11 stands on the turn pages, whose frame states
-are frames of the app in their four orientations. Rule 14 stands as far as nothing wraps a body
-at high. It draws no pigtail, because rule 16 lifts the limit that the pigtail marks. Both are
-verified by `checkSingleTurns`.
+are frames of the app in their four orientations. Rule 14 stands as far as nothing wraps a body, and
+rule 17 moves its level to above. It draws no pigtail, because rule 16 lifts the limit that the
+pigtail marks. Both are verified by `checkSingleTurns`.
 
 **A turn page shows each frame state it derives, and each move between two of them (rules 15
 and 16).** The counts are checked against the graph of states, and not against a number typed in. A
@@ -728,11 +732,11 @@ Then the picture turns back so that the lead faces up. A turn by the follow leav
 up already, so it needs one stage, and that is measured. Verified by `checkSingleTurns`.
 
 **Four manners of turn: each dancer turns on their own axis, or goes round the other (rule 19).** An
-orbit is marked by a dashed ring while it happens, and nothing else is dashed. An orbiter keeps
-their side to the centre (rule 32). So an orbit winds the pair as far as it carries them, and every
-manner steps one frame state for each half turn. Rule 32 replaces rule 20, under which an orbit
-wound nothing and two manners did not walk the chain at all. Verified by `checkSingleTurns` and
-`checkHandTurns`.
+orbit is marked by a dashed ring while it happens, and nothing else is dashed but the breaks of a
+moving reach. An orbiter keeps their side to the centre (rule 32). So an orbit winds the pair as far
+as it carries them, and every manner steps one frame state for each half turn. Rule 32 replaces rule
+20, under which an orbit wound nothing and two manners did not walk the chain at all. Verified by
+`checkSingleTurns` and `checkHandTurns`.
 
 An orbit lands where the axis turn of the other dancer lands. So the four manners walk two rounds of
 frame states, and not three. All four are drawn, because which dancer walked is a fact about the
@@ -742,7 +746,7 @@ move, and only a moving picture can show it.
 past both chevrons and every hand but its own two, bent round each and straight elsewhere. The gap
 is taken from what is drawn, with half the width of the line added. A moving reach may pass a mark,
 as the rule allows. Verified by `checkSingleTurns`, which checks both halves. The frame page does
-not follow rule 22 yet, because its figures do not pass `clear_marks`.
+not follow rule 22 yet, because its figures do not pass `should_clear_marks`.
 
 **A reach is judged on its length and its bends together (rule 23).** The shortest way past the
 marks weaves, and a reader must follow each change of way. So a bend costs `BEND_COST` of length,
@@ -767,9 +771,9 @@ The check on it is a backstop: the snake goes round something and stays inside i
 
 **The turn pages frame on the place of the lead (rule 25).** `canonicalise` turns the world about an
 `Anchor`, and the turn pages use `Anchor.Lead`. So the lead holds one spot, and an orbit by the
-follow needs no second stage. Only an orbit by the lead has anything to bring back. Verified by
-`checkSingleTurns`. The frame page still frames on the middle of the couple, and does not follow
-rule 25 yet.
+follow needs no second stage. Only an orbit by the lead takes them off that spot, and there the
+picture brings them back. Verified by `checkSingleTurns`. The frame page still frames on the middle
+of the couple, and does not follow rule 25 yet.
 
 **The turn back to the lead is quicker and quieter than the turn itself (rule 26).** A `Walk`
 carries the time each frame is due, and the markup says so in `keyTimes`. So how long a stage lasts
@@ -787,7 +791,8 @@ that a hatched mark moves nothing of its own.
 The seven are swan, diamond, cross, neutral, cross, diamond and swan. The chain has ends, and is not
 a cycle (rule 30). Hand to hand and the crossed pair walk the same chain, and differ only in the
 facing where the hold is unwound (rule 31). `parts.restOf` names that facing, and `parts.chainFor`
-lays the seven out from it. Verified by `checkHandTurns`.
+lays the seven out from it. Verified by `checkHandTurns`, which measures the chain of hand to hand
+alone.
 
 **The twist is measured from the pose, and is not told (rule 28).** Each held hand sits on the rim
 of its body, and both bodies stand on the axis of the pair. So the angle a hand makes with that axis
@@ -1830,9 +1835,11 @@ read it.
 the mock-up form and never the plain one. They assert it against the constant, rather than against a
 repeated literal. **Verified**, by a break of the constant, and a watch of both suites failing.
 
-Every title reads in title case, which `tests/suites/test_marks.nim` holds each page to. It reads
-the title that the page was written with, rather than a list. Red first, on a title in sentence
-case.
+Every title reads in title case. `tests/suites/test_marks.nim` holds each of the five pages of the
+workbench to it. It reads the title that the page was written with, rather than a list. It reads the
+title of the rig viewer from its constant (`rig_page.TITLE`). Red first, on a title in sentence
+case. No law holds the titles of the Reference, the review page and the whole-cloth mock-up to
+title case.
 
 Rejected: to agree a project term for the two categories. That would have overloaded the `Artifact`
 of the charter, which is a file a build writes under `build/`. It would otherwise have coined a word
@@ -1846,8 +1853,10 @@ places.
 Chromium through Playwright. Rejected: an absolute path for either in `design/shot.nim`, which pins
 a version in the least durable place there is (issue 62).
 
-`tools/build.nim` declares `nodejs` and `chromium` as data, with what each one is for. A `system`
-verb prints those names one to a line, for an installer.
+`tools/build.nim` declares `git`, `binutils`, `nodejs` and `chromium` as data, each with what it is
+for and whether an installer takes it (`SYSTEM`). A `system` verb prints those that an installer
+takes, one to a line: `git`, `binutils` and `nodejs`. The `shot` verb prints `chromium` as what the
+helper needs, since a person runs the helper by hand.
 
 `shot.nim` takes Playwright from `DANCE_PLAYWRIGHT`, or from the bare module name that node
 resolves. It takes the browser from `DANCE_CHROMIUM`, then from `chromium` beside the store of
@@ -1859,11 +1868,11 @@ rather than as a missing file.
 bare module name. So `shot` finds the pinned Playwright with no variable set.
 
 Cost, stated rather than implied: the system packages carry whatever version the machine has.
-Verified by a run of all four routes on this machine, 2026-09-08, Node 22 and Chromium 1194 of
-Playwright. Nothing set stops with the finding and exit 1. `DANCE_PLAYWRIGHT`, `NODE_PATH` and
-`DANCE_CHROMIUM` each write the screenshots of both themes. A path that names no browser fails
-loudly rather than silently. No test drives `shot`, since `drive` renders pages and takes no
-screenshot.
+Verified by a run of four routes on this machine, 2026-09-08, Node 22 and Chromium 1194 of
+Playwright. With nothing set and no Playwright in the project, `shot` stops with the finding and
+exit 1. `DANCE_PLAYWRIGHT`, `NODE_PATH` and `DANCE_CHROMIUM` each write the screenshots of both
+themes. A path that names no browser fails loudly rather than silently. No test drives `shot`, since
+`drive` renders pages and takes no screenshot.
 
 **URLs are listed once.** The URL of every published page is in the `README.md` of this project, in
 two tables that carry the same split. `design/README.md` and `simulation/README.md` point at it
@@ -1905,11 +1914,14 @@ holds the width directly. Cost: an edit that lengthens a line past 100 runes is 
 rather than repaired by a script.
 
 **The verbs of the project live in a compiled driver, and not in make.** `tools/build.nim` takes one
-command and runs it from the project directory. Each one is named and explained in the table at the
-head of the file. They are the pages and their assets, the engine, and the four recordings that
-rewrite committed data nothing else may edit (`modelled`, `rig`, `turns`, `verdicts`). They are also
-the fixtures, the screenshot helper, the system declaration, and `clean`. Koch drives the tests, and
-holds no verb for pages.
+command and runs it from the project directory. The table at the head of the file names and explains
+each one except `engine` and `system`.
+
+The verbs are the pages and their assets, the type check of the harness (`types`), and the check
+that renders every page (`drive`). They are also five recordings that rewrite committed data nothing
+else may edit (`modelled`, `rig`, `turns`, `verdicts`, `answers`), and `record`, which runs all
+five. The rest are the two fixtures (`fixtures`, `confirmed`), the engine, the screenshot helper,
+the system declaration, and `clean`. Koch drives the tests, and holds no verb for pages.
 
 Rejected: a nimble task, which would put build logic in the virtual machine of the compiler.
 Rejected: to ask koch for a verb specific to a project. Cost: the driver runs from the project
@@ -1936,7 +1948,9 @@ were read with fontconfig 2.15.0 on 2026-10-03, from the whole faces with the di
 
 The wiring is verified by `suites/test_faces.nim`, test "every stack falls back to faces that draw
 what its own face lacks". The coverage is verified by `drive`, below, on every page that `pages`
-writes.
+writes, except the Reference before `bundle` folds its script in. That page loads `app.js` from
+beside it, and its hosted copy finds none there. The bundled Reference, `app/artifact.html`, is the
+same page as published, and `drive` renders it.
 
 **`drive` proves the faces of every page, as `CONTRIBUTOR.md`, Pages and assets, asks.** It builds
 every page, and renders each one in Chromium as the publish host serves it. For each character
@@ -2007,7 +2021,7 @@ change the design.
 **A dressed page that declares no charset declares UTF-8.** The review page, the whole-cloth page
 and the bundled Reference are fragments, and publishing wraps each one in a document. Opened from a
 file, a fragment declares no charset, so the browser guesses one from the bytes before the first
-non-ASCII byte. The face block is half a megabyte of ASCII. Behind it, Chromium 141 reads an
+non-ASCII byte. The face block is 5,655,720 bytes of ASCII. Behind it, Chromium 141 reads an
 undeclared page as windows-1250.
 
 So `withFaces` puts `<meta charset="utf-8">` first in a page that declares none. Verified by
@@ -2019,19 +2033,24 @@ it). Commit Mono is no Noto, and keeps its Latin subset. Each rule declares the 
 format of its own file, which `formatOf` reads off its extension.
 
 Verified by `suites/test_faces.nim`, test "every Noto face ships whole, as TrueType of its own
-release". With the subsets of `main` back in its rows, that law fails on each of the six Noto
-faces. The test "each face declares media type and format of its own file" holds the formats.
+release". With the Noto subsets of `@fontsource` back in its rows, that law fails on each of the six
+Noto faces. The test "each face declares media type and format of its own file" holds the formats.
 
-**The hinted build of each Noto face ships, by the ruling of the Architect on 2026-10-03.** Hinting
-snaps each letter to the pixel grid at small sizes, so small text stays sharp on a screen of low
-density. The unhinted build of the same release holds the same characters, and lacks the tables
-`cvt`, `fpgm`, `prep` and `gasp`. It also lacks the instruction program in each glyph. So it is
-about 32 percent smaller: Noto Sans Regular is 610,392 bytes hinted and 418,820 unhinted.
-Rejected: the unhinted build, which would save about 1.5 MB on each page.
+**The hinted build of each face of Noto Sans and Noto Serif ships, by the ruling of the Architect on
+2026-10-03 (#428).** Hinting snaps each letter to the pixel grid at small sizes, so small text stays
+sharp on a screen of low density. The unhinted build of the same release holds the same characters,
+and lacks the tables `cvt`, `fpgm`, `prep` and `gasp`. It also lacks the instruction program in each
+glyph. So it is about 32 percent smaller: Noto Sans Regular is 610,392 bytes hinted and 418,820
+unhinted. Rejected: the unhinted build of these five faces, which would save about 1.5 MB on each
+page.
 
-Compared by hand on 2026-10-03, for Noto Sans Regular. fontconfig 2.15.0 reads the same charset
-from both builds. Their table directories differ in those four tables, in `glyf`, and in the
+Compared by hand on 2026-10-09, for Noto Sans Regular. fontconfig 2.15.0 reads the same charset from
+both builds. Their tables differ in those four, in `glyf`, `head`, `loca` and `maxp`, and in the
 version string of `name`.
+
+Noto Sans Math ships its unhinted build, the file that the store declares, and the ruling keeps the
+files of the store. From the Noto release 2.539, its hinted build is 966,008 bytes and its unhinted
+build 646,728, fetched 2026-10-08.
 
 Eight faces are fetched by the `assets` verb of `tools/build.nim` into `build/fonts`, and never
 committed. Each one is pinned by package or release version *and* SHA-256. The version is pinned
@@ -2439,9 +2458,10 @@ the count.
 law there reads those names off the file and holds them to `PAGES`, so a new page cannot go
 unbuilt. It failed when the law of one page was taken out.
 
-Test binaries inherit the working directory of testament. So `build/review`, `build/design` and
-the `tests/` of the review page's count resolve only from the project directory. The runner of
-koch runs testament there, and to run it from the repository root breaks them.
+Test binaries inherit the working directory of testament. So `build/suites/review`,
+`build/suites/design` and the `tests/` of the review page's count resolve only from the project
+directory. The runner of koch runs testament there, and to run it from the repository root breaks
+them.
 
 Cost: a model change that leaves a sweep with no moments crashes a danger build, rather than
 reddens a law.
@@ -2460,9 +2480,9 @@ reddens a law.
   2026-10-04. Rig and modelled alone took 6.3 h on 2026-10-03, with each still planned by the plain
   cost.
 
-- `tools/build.nim verdicts`, with its readings kept: 1.4 s after a change to words, compile
-  included, on 2026-09-26.
-- `tools/build.nim pages`, every page with faces from the shared store: 26 s wall, same day.
+- `tools/build.nim verdicts`, with its readings kept: 2.8 s to 3.9 s after a change to words,
+  compile included, on 2026-10-08.
+- `tools/build.nim pages`, every page with faces from the shared store: 26 s wall, on 2026-09-13.
 - `tools/build.nim engine`: 24 s cold, and at once where the archive stands.
 - `grep -c nimCopy` on the emitted `wholecloth_turns.js` gives 13, all of them the runtime's own,
   and none from module code. The binding shapes that the port rejected gave 35.
@@ -2472,7 +2492,8 @@ reddens a law.
 Declared unmet, so the Style row above stays true (Article VIII.1):
 
 - VI.1: some declarations in `simulation/verdicts.nim` carry no doc. Cost: a reader opens the body.
-- X.2: banner tiers are unmarked, and every banner is spaced as second tier.
+- X.2: many routines of several lines stand one blank line apart, where X.2 asks two. No check
+  counts those blank lines.
 - IV.5: `==` is not poisoned on floats. The floats of this project are plain `float`, and a
   distinct type for each measure reaches every module of the simulation and the drawing. The tests
   compare computed floats through `=~`. Cost: a routine of the library can compare two computed
@@ -2510,7 +2531,8 @@ and `i`. `Arm.Left` and `Arm.Right` keep the letters `L` and `R` as their text, 
 builds keys from them.
 
 The Architect ruled on the case of a lookup table too. At module level it is in
-SCREAMING_SNAKE_CASE, as V.1 says, and not in the lower case of the example in STYLE §3.
+SCREAMING_SNAKE_CASE, as V.1 says, and not in the lower case of the form in V.5. The example in
+STYLE §3 is in SCREAMING_SNAKE_CASE too (`LUT_GRADE_BY_BASIS`).
 
 **A global named after its own type is that type, in Nim.** Nim compares two names by the first
 letter exactly, and by the rest with no case and no underscore. So `DRAWING` is `Drawing`, and each
@@ -2539,7 +2561,8 @@ declares.
 reports a use in a format string at the start of the string. It reports an enum value after its type
 one column early. It reads a dynamic field of a browser object as a local of that name, and misses
 some fields in constructors. It sees no local inside the `suite` and `test` templates of `unittest`.
-A rename of case alone keeps the same name in Nim, so the compiler finds no missed use.
+A rename of case that keeps the first letter keeps the same name in Nim, so the compiler finds no
+missed use.
 
 **A rename in `simulation/` computes every kept file again.** Each stamp is a digest of source text,
 so a change of names alone computes the physics again. That is a full recording, which took 14 min
