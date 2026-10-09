@@ -938,7 +938,26 @@ a hand deep. The capsules of a held hand end there (`handLong`).
 Two palms pressed together tilt off facing by up to 30 degrees, and the fingers turn off opposed by
 up to 60 degrees (`GRIP_CONE_PALM`, `GRIP_TWIST_PALM`). Held by the fingertips, two hands turn
 freely. Between the two, the freedom grows in step with the depth of the grip (`gripFreedom`).
-Assumed: both figures and the step between them, until a published source is found (#440).
+
+No study measures either figure, so both are derived. The tilt is the slip limit of dry palm skin
+pressed flat. The arctan of its friction, 0.5 to 0.62, is 27 to 32 degrees (Derler and Gerhardt
+2012; Zhang and Mak 1999).
+
+The turn of 60 degrees is a stop, the top of what the forearms, the wrists and the skin of both
+partners give. Every line of that evidence ends comfort near 30 degrees. The lines are the classes
+of Kee and Karwowski (2001) and the forearm studies of Khan (2009). A third is a finger pad twisted
+to slip (du Bois de Dunilac, 2023). Assumed: the step between the palm and the fingertips.
+
+**A free hand hangs relaxed, its fingers curled toward its palm (#440).** The Architect ruled so on
+2026-10-04. Its fingertip lies 0.15 m from the crease of the wrist, 30 degrees off the line of the
+hand toward the palm (`relaxed`, `curled`, `rigid.relaxedCapsules`). The planner lays it the same
+way.
+
+Lee and Jung measured the resting middle finger of 40 adults with the arm hanging (2010). Its
+three joints rest at 32, 27 and 10 degrees. Garrett measured that a relaxed hanging hand
+shortens to 0.77 of its straight length (1971). Curled further to that length, the chain of the
+finger reaches 0.15 m. No study measures that distance, so it is derived, and the band of the
+derivation is 0.14 to 0.16 m.
 
 **A hand is carried at the centre of its grip, 0.08 m past the wrist, and each band is asked of
 that point (`carry`, `carriedOf`).** That is where the band was asked before the hand had its true
@@ -1307,10 +1326,10 @@ To one step, because a stop is decided at the moment something gives, and mirror
 moment apart from the same distance. Exact: L-l stood at 0.42 m for 1.00 of a turn held high, and
 R-r at 0.38 m for 0.98.
 
-Rejected: a tie broken toward the stance whose arms move least, within five millimetres. The
-largest leap of a walk is chaotic. Seen in mirror it differs by up to a fifth. Built from the same
-source by another compiler, it differs by up to thirty five per cent. That is 125 and 114 mm from
-one distance, and 121 and 163 from another.
+Rejected: of the stances that carry the turn as far, the one whose arms move least, within five
+millimetres. The largest leap of a walk is chaotic. Seen in mirror it differs by up to a fifth.
+Built from the same source by another compiler, it differs by up to thirty five per cent. That is
+125 and 114 mm from one distance, and 121 and 163 from another.
 
 The last bits of two binaries differ, and the engine amplifies them. Five millimetres stood L-l at
 0.44 m and R-r at 0.48 for one hold seen in mirror. That rule stands one hold two steps apart, built
@@ -1322,7 +1341,7 @@ reached differs by a step. The stance held above steps out from the pinned hands
 their leap. Red first.
 
 A still stands where its pose sits easiest. Every distance is wound to it, and the one nearest to
-ease is kept. A distance at ease outright ends the search, and the nearer one keeps a tie.
+ease is kept. A distance at ease outright ends the search, and of two equal ones the nearer is kept.
 
 Rejected: the first distance that holds. It is chest to chest, so a couple asked for `Face-to-back`
 crush the free arm of the follow between two torsos.
@@ -1585,9 +1604,22 @@ Every turn of the reference is led over the head (#375). Face to face at rest, t
 between the bodies.
 
 `simulation/plan.nim` plans the arms of both dancers a fiftieth of a turn at a time (`STRIDE`). At
-each moment it takes the pose nearest to ease, close to the last pose, that keeps four things. The
-hands stay joined. Every capsule stays 20 mm clear of every other (`clearance`). Every joint stays
-six degrees inside its end (`margin`). The joined hands stay 30 mm inside their band (`room`).
+each moment it takes the pose nearest to ease, close to the last pose, that keeps five things.
+
+The hands stay joined. Every capsule stays 20 mm clear of every other (`clearance`). Every joint
+stays six degrees inside its end (`margin`). The joined hands stay 30 mm inside their band
+(`room`). They turn against each other no further than their grip lets, with the same six degrees
+to spare (`gripBroken`).
+
+**The plan holds how far past the wrist each held hand grips, and the engine holds the same
+(#440).** Each held hand has one more freedom in the plan, the depth of its grip (`DEPTHS`). It
+runs from the middle of the palm to the fingertips. A free hand holds nothing, and it hangs
+relaxed (Body rig). The grip of the two that is held nearer the fingertips sets how far two joined
+hands turn (`rig.gripFreedom`).
+
+The engine sets each tie at the planned depths, with the same cone and twist (`rigid.setTie`). Its
+cone stops at a quarter turn, so the plan alone holds a wider cone. A connection that nobody
+planned holds at the fingertips, where two hands turn freely, so the engine sets no limit there.
 
 Each face is a capsule of the plan too. The arms and the girdles of the partner keep clear of it,
 as in the engine. Verified by `test_plan.nim`: the plan pairs each face with every capsule that the
@@ -1676,10 +1708,11 @@ Rejected: the first plan that holds. It stood C06 with the waist of the follow a
 short of ease tried every candidate.
 
 **The planner weighs a step of one freedom by what that step moves, and the cost is the same to the
-last bit.** The solver finds its gradient by a step of each free freedom in turn, 39 of them. In one
-plan of D03, its gradients were 99% of its 543,619 weighings, measured 2026-10-04. A step of an arm
-freedom moves that arm alone, from the first link that the freedom moves. A step of how far apart
-the couple stand, or of either waist, moves one body and no other.
+last bit.** The solver finds its gradient by a step of each free freedom in turn. They are 39 of
+the pose, and the depth of each held hand. In one plan of D03, its gradients were 99% of its 543,619
+weighings, measured 2026-10-04. A step of an arm freedom moves that arm alone, from the first link
+that the freedom moves. A step of how far apart the couple stand, or of either waist, moves one
+body and no other.
 
 So the planner keeps every term of the pose (`Reckoning`). A step places again only what it moves.
 It reckons again only the pairs and joints that the moved capsules are in. Each sum then runs over
@@ -2288,9 +2321,9 @@ both ways and six turns.
 
 **A planned card plans its paths on every core, and folds them in its own order.** `walk.planAhead`
 plans every path that the card may try, on every core, before the card tries them. The card then
-folds them as one thread would, so the earlier plan keeps a tie. Each thread passes over a path that
-another thread is planning, and the fold waits for it. Rig D01 and D07 ask the same 32 paths, so the
-threads of both plan them together.
+folds them as one thread would, so the earlier of two equal plans is kept. Each thread passes over a
+path that another thread is planning, and the fold waits for it. Rig D01 and D07 ask the same 32
+paths, so the threads of both plan them together.
 
 **A search walks its distances on the cores that no job holds.** A search of distances walks the
 next distance only when the last one did not give its answer. It walks a batch of distances at once,
@@ -2553,8 +2586,11 @@ urgent.
   above in `design/rig.json`, the connection that C01 draws straight runs 2.61 times its line
   between the shoulders, and the other 1.26. In D01 they run 2.11 and 1.52, and C07 and D07 are
   their mirror images. Measured 2026-10-03.
-- **The figures of a palm grip are assumed.** How far two palms tilt off facing, 30 degrees, and how
-  far the fingers turn off opposed, 60 degrees, wait on a published source (#440).
+- **The figures of a palm grip are derived, and not measured.** No study measures how far two palms
+  tilt or turn against each other (Body rig).
+- **A relaxed wrist rests at 16 degrees of extension, and the law of a free couple at rest holds it
+  within 10.** Lee and Jung measured the 16 degrees with the arm hanging (2010). The wrist of a free
+  hand stays straight until the Architect rules which one holds.
 - **The same-name chain wound to face to face holds from few distances.** It holds from 2 of 33
   distances, 0.82 and 0.84 m. Before the hand had its true size, it held from one, 0.74 m. At every
   other distance, the arms of the follow cross above the elbow at about a third of the turn. Or the
@@ -2567,11 +2603,18 @@ urgent.
   disagree, the ruling is the Architect's. So is whether a hammerlock goes a whole turn, and what
   moves in the body when it does.
 - **The radius of the girdle, 60 mm, is an estimate and not tape.**
-- **Two one-moment flips in the cross-name turn held above.** In `design/turns.json`, the elbow of
-  the follow moves 470 mm in one moment at 0.30 of the turn. The join of the lead moves 436 mm at
-  1.00. Weightless links with springs this weak do that at no cost. The corpus of
-  the leap law in `test_rigid.nim` leaves that sweep out, so no law holds it to the bound of a leap.
-  Measured 2026-10-08.
+- **On the turns page, a point of a held arm can leap in one moment.** In `design/turns.json`,
+  measured 2026-10-09, 14 of 18 sweeps move some point further than the bound of a leap, 195 mm,
+  between two moments. The furthest is 662 mm, the join of the same-name turn held above, at 2.0 of
+  a turn. There the couple face each other, and the hands come down. Weightless links with springs
+  this weak do that at no cost. No law holds the page to the bound, because the leap law in
+  `test_rigid.nim` walks two sweeps to one turn alone.
+- **Left to left at the waist turns past the stops of the floor, until a stop by comfort is
+  modelled (#601).** The floor stops the follow at half a turn into the wrap and a whole turn into
+  the lock, because further is uncomfortable. The simulation stops each by a wrist, further on
+  (`simulation/verdicts.md`, L-l low). A turn stops where a joint leaves its comfortable range, as
+  a published share of that range. The readings of the shoulder of today do not give those two
+  stops, and #601 holds the measurement.
 
 **Open in the workbench, and on the side of the Architect.** Each one waits on a ruling, and the
 workbench draws the current reading meanwhile.
