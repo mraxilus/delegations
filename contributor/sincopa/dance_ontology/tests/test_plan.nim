@@ -21,6 +21,7 @@ import std/[math, random, unittest]
 
 import ../simulation/[body, hold, limb, plan {.all.}, rig, rigid, vector, walk]
 import ./fixtures
+from ../simulation/engine import nil
 
 
 const
@@ -64,6 +65,10 @@ func pointsOf(pose: ArmPose): array[4, Vector] =
 func reflected(point: Vector): Vector = (-point.x, point.y, point.z)
   ## Point seen in mirror across couple's line.
 
+func asVector(vector: engine.Vector): Vector =
+  ## Engine's vector as this project's, in same body's own terms.
+  (float(vector.x), float(vector.y), float(vector.z))
+
 proc plainCost(weighing: Weighing, plan: Plan): float =
   ## Cost of pose as planner weighed it before it kept any term: every term reckoned whole
   ## from points, every pair's gap measured.
@@ -102,25 +107,33 @@ suite "Internal: Planner and engine are one rig":
     ## Palm to palm, grip locks; by fingertips, it turns freely (`rig.gripFreedom`).  So
     ##   palms turned off facing break plan held at handshake past its cone, and never held by
     ##   fingertips.  Fingers turned off opposed, likewise past its twist.
+    ##   Two hands that hold at two depths turn as far as one held nearer fingertips lets,
+    ##     and plan keeps its margin inside cone and twist alike.  Red with freedom set by
+    ##     hand held nearer palm, measured 2026-10-09.
+    const MARGIN = 6.0 * PI / 180.0
+    let (cone, twist) = gripFreedom(HUMAN, gripAtPalm(HUMAN))
     for k in 0..SAMPLES:
-      let
-        angle = PI * float(k) / float(SAMPLES)
-        (cone, twist) = gripFreedom(HUMAN, gripAtPalm(HUMAN))
+      let angle = PI * float(k) / float(SAMPLES)
       var a, b: ArmPlaced
       a.palm = (1.0, 0.0, 0.0)
       a.fingers = (0.0, 0.0, 1.0)
-      b.fingers = (0.0, 0.0, -1.0)
-      b.palm = (-cos(angle), sin(angle), 0.0)
-      for (depth, is_locked) in [(gripAtPalm(HUMAN), true), (gripAtTips(HUMAN), false)]:
-        a.depth = depth
-        b.depth = depth
-        check (gripBroken(HUMAN, a, b, 0.0) > 0.0) == (is_locked and angle > cone + 1e-9)
-      b.palm = (-1.0, 0.0, 0.0)
-      b.fingers = (0.0, sin(angle), -cos(angle))
-      for (depth, is_locked) in [(gripAtPalm(HUMAN), true), (gripAtTips(HUMAN), false)]:
-        a.depth = depth
-        b.depth = depth
-        check (gripBroken(HUMAN, a, b, 0.0) > 0.0) == (is_locked and angle > twist + 1e-9)
+      for (palm, fingers, limit) in [
+        ((-cos(angle), sin(angle), 0.0), (0.0, 0.0, -1.0), cone),
+        ((-1.0, 0.0, 0.0), (0.0, sin(angle), -cos(angle)), twist),
+      ]:
+        b.palm = palm
+        b.fingers = fingers
+        for (depth_a, depth_b, is_locked) in [
+          (gripAtPalm(HUMAN), gripAtPalm(HUMAN), true),
+          (gripAtTips(HUMAN), gripAtTips(HUMAN), false),
+          (gripAtPalm(HUMAN), gripAtTips(HUMAN), false),
+          (gripAtTips(HUMAN), gripAtPalm(HUMAN), false),
+        ]:
+          a.depth = depth_a
+          b.depth = depth_b
+          check (gripBroken(HUMAN, a, b, 0.0) > 0.0) == (is_locked and angle > limit + 1e-9)
+          check (gripBroken(HUMAN, a, b, MARGIN) > 0.0) ==
+              (is_locked and angle > limit - MARGIN + 1e-9)
 
 
   test "engine stands every joint where plan places it, and reads plan back":
@@ -171,6 +184,7 @@ suite "Internal: Planner and engine are one rig":
     ##   Its fingertip lies `rig.relaxed` from wrist and `rig.curled` off hand's own line,
     ##     toward palm; plan places each of its three capsules where engine holds them.
     ##   Free hand holds nothing, so its depth is whole hand, as `boundsOf` keeps it.
+    ##   Red with curl turned across knuckles, 30 degrees off line still, measured 2026-10-09.
     let
       single = @[Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Right)])]
       free_hands = [(Body.One, Arm.Right), (Body.Two, Arm.Left)]
@@ -192,7 +206,13 @@ suite "Internal: Planner and engine are one rig":
           tip = hand.capsules[4].z + finger * hand.capsules[4].radius
         check abs(distance(hand.wrist, tip) - HUMAN.relaxed) < 1e-9
         check abs(arccos(clamp(dot(finger, hand.fingers), -1.0, 1.0)) - HUMAN.curled) < 1e-9
-        check dot(finger, hand.palm) > 0.0
+        # Palm worked out here, from capsules across knuckles and hand's own line, and not
+        # read off plan: palm faces link's negative x for right arm (`rigid.tieFrame`).
+        let
+          across = unit(hand.capsules[5].a - hand.capsules[3].a)
+          palm = cross(across, hand.fingers) * -side(arm)
+          toward = hand.fingers * cos(HUMAN.curled) + palm * sin(HUMAN.curled)
+        check distance(finger, toward) < 1e-9
         var k = 0
         for shape in couple.shapes:
           if shape.mark == Mark.Palm and shape.who == who and shape.arm == arm:
@@ -204,6 +224,43 @@ suite "Internal: Planner and engine are one rig":
       couple.free()
     checkpoint "furthest end of free hand's capsule off plan: " & $worst
     check worst < PLACED
+
+
+  test "engine shortens each held hand to its grip, as plan does":
+    ## Hand that holds `depth` deep reaches `rig.handLong` past wrist: fingers past join curl
+    ## round partner's hand.  Engine reshapes each held hand so (`rigid.curl`), and holds
+    ## capsule that couple records of it.
+    ##   Within two millimetres of plan, since engine leaves hand that close alone.  Red with
+    ##     no hand reshaped: every hand stood whole hand long, measured 2026-10-09.
+    const CURLED = 0.002 + 1e-6
+    let single = @[Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Right)])]
+    var
+      generator = initRand(41)
+      worst = 0.0
+    for sample in 0..<SAMPLES:
+      let
+        plan = randomPlan(HUMAN, generator)
+        placed = place(HUMAN, plan, 0.0, false)
+        start = placings(HUMAN, plan, 0.0, false, Body.Two)
+      var couple = build(HUMAN, restStance(HUMAN, plan[0]), Band.Crown, single, Body.Two)
+      couple.placeBodies(start.chests, start.arms)
+      for hand in single[0].ends:
+        let
+          index = armIndex(hand.body, hand.arm)
+          long = handLong(HUMAN, plan[DEPTHS+index])
+        var k = 0
+        for shape in couple.shapes:
+          if shape.mark != Mark.Palm or shape.who != hand.body or shape.arm != hand.arm: continue
+          let held = engine.capsuleOf(shape.id)
+          check distance(asVector(held.center1), asVector(shape.a)) < 1e-6
+          check distance(asVector(held.center2), asVector(shape.z)) < 1e-6
+          worst = max(worst, abs(float(held.center2.z) + shape.radius - long))
+          worst = max(worst, distance(couple.endsOf(shape).z, placed.arms[index].capsules[3+k].z))
+          inc k
+        check k == 3
+      couple.free()
+    checkpoint "furthest held hand from its grip's length: " & $worst
+    check worst < CURLED
 
 
   test "mirror image of plan stands every point at its reflection":

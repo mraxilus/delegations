@@ -29,6 +29,12 @@ import std/[atomics, cpuinfo, math, os, random, strformat, strutils, tables, typ
 
 import ../simulation/[answers, body, hold, limb, read, rig, rigid, vector, walk]
 import ./fixtures
+from ../simulation/engine import nil
+
+
+func asVector(vector: engine.Vector): Vector =
+  ## Engine's vector as this project's, in same body's own terms.
+  (float(vector.x), float(vector.y), float(vector.z))
 
 
 const
@@ -350,21 +356,26 @@ suite "Internal: Two dancers in rigid body engine":
     ## Drawing that lets links drift apart draws arm nobody has.  Far end of one
     ## link and near end of next are same joint, so they meet within what solver
     ## lets joint separate.  Hand is read along its middle capsule (`rigid.handCapsules`).
+    ##   Each capsule is set in from its joints by its own radius, so two that meet at one
+    ##     joint end their two radii apart: forearm and hand, 60 mm, where elbow's two ends
+    ##     are 90.  Read against one bound of 100 mm for both, hand laid 30 mm off its
+    ##     wrist passed, measured 2026-10-09.
     let couple = rest()
     for who in Body:
       for arm in Arm:
         var
-          run: seq[tuple[a, z: Vector]]
-          hand: seq[tuple[a, z: Vector]]
+          run: seq[tuple[a, z: Vector, radius: float]]
+          hand: seq[tuple[a, z: Vector, radius: float]]
         for shape in couple.shapes:
           if shape.who != who or shape.arm != arm: continue
-          if shape.mark in {Mark.Upper, Mark.Fore}: run.add couple.endsOf(shape)
-          elif shape.mark == Mark.Palm: hand.add couple.endsOf(shape)
+          let (a, z) = couple.endsOf(shape)
+          if shape.mark in {Mark.Upper, Mark.Fore}: run.add (a, z, shape.radius)
+          elif shape.mark == Mark.Palm: hand.add (a, z, shape.radius)
         check hand.len == 3
         if hand.len == 3: run.add hand[1]
         check run.len == 3
         for i in 0 ..< run.len - 1:
-          check distance(run[i].z, run[i+1].a) < 2.0 * HUMAN.limb + 0.01
+          check distance(run[i].z, run[i+1].a) < run[i].radius + run[i+1].radius + 0.01
     couple.free()
 
 
@@ -1043,6 +1054,8 @@ suite "Internal: Every still stands at ease":
     ##     palm.  Read off engine's own capsules: middle one of three runs from wrist to
     ##     fingertip, and side ones lie across knuckles (`rigid.relaxedCapsules`).  Palm
     ##     faces link's negative x for right arm and its x for left (`rigid.tieFrame`).
+    ##   Red with curl turned across knuckles, 30 degrees off line still, and red with
+    ##     engine never told of curl, measured 2026-10-09.
     let (is_holding, couple) = stood(HUMAN, Band.Crown, FREE, 0.0, false, Body.Two, 0.36)
     check is_holding
     for who in Body:
@@ -1051,6 +1064,10 @@ suite "Internal: Every still stands at ease":
         for shape in couple.shapes:
           if shape.mark == Mark.Palm and shape.who == who and shape.arm == arm:
             hand.add couple.endsOf(shape)
+            # Engine's own capsule, and not only couple's record of what it was given.
+            let held = engine.capsuleOf(shape.id)
+            check distance(asVector(held.center1), asVector(shape.a)) < 1e-6
+            check distance(asVector(held.center2), asVector(shape.z)) < 1e-6
         check hand.len == 3
         if hand.len != 3: continue
         let
@@ -1065,7 +1082,7 @@ suite "Internal: Every still stands at ease":
             &"{curl * 180.0 / PI:.1f} degrees off hand's line"
         check abs(distance(pose.wrist, tip) - HUMAN.relaxed) < 0.002
         check abs(curl - HUMAN.curled) < 1.0 * DEGREE
-        check dot(finger, palm) > 0.0
+        check distance(finger, along * cos(HUMAN.curled) + palm * sin(HUMAN.curled)) < DEGREE
     couple.free()
 
 

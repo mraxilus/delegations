@@ -17,7 +17,7 @@ const
   APART = 0.40
   LEFT = Arm.Left
   RIGHT = Arm.Right
-  SAMPLES_ELBOW = 200  ## Grips and hands elbow law draws, seeded.
+  SAMPLES_ELBOW = 200  ## Joins and hands elbow law draws, seeded.
   FLOOR_ELBOW = 125
     ## Least of those that arm reaches, so elbow's own checks run: 139 at seed 7, 2026-10-02.
   SAMPLES_CLIPPED = 300  ## Segments clipped law draws, seeded.
@@ -41,6 +41,9 @@ suite "Internal: The rig":
 
 
   test "the span is the three links to hooked fingertips, and the bands are ordered":
+    ## Pinned to tape, 0.31 and 0.25 and fingertips hooked 0.175 past wrist: law that read
+    ## span's own sum back could not fail.
+    check abs(span(HUMAN) - 0.735) < 5e-4
     check span(HUMAN) =~ HUMAN.upper + HUMAN.fore + gripAtTips(HUMAN)
     check gripAtPalm(HUMAN) < gripAtTips(HUMAN)
     check gripAtTips(HUMAN) < HUMAN.hand
