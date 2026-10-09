@@ -841,13 +841,18 @@ proc setTie(couple: var Couple, i: int) =
   ## Set connection `i`'s tie at its hands' depths, with freedom their grip gives.
   ##   Carried, connection nobody planned holds at fingertips, always (Architect,
   ##     2026-10-04), and hooked fingers turn as they will: no limit is set.  Steered, plan
-  ##     has kept freedom, and engine holds it.  Engine's cone stops at quarter turn, so
-  ##     wider cone is held by plan alone.
+  ##     has kept freedom, and engine holds cone of it: its swing is plan's tilt of palms
+  ##     to last bit.  Engine's cone stops at quarter turn, so wider cone is held by plan
+  ##     alone, and so is twist.
+  ##   Twist is left to plan, since two measure it apart: engine about second palm after
+  ##     swing, plan as angle between finger lines.  With palms tilted far apart they part
+  ##     by up to 35 degrees.  Limited by engine's own measure, twist fought plan and parted
+  ##     joined hands up to 0.8 mm, measured 2026-10-09.
   let
     link = couple.links[i]
     depth_a = couple.depth[2*ord(link.ends[0].body)+ord(link.ends[0].arm)]
     depth_b = couple.depth[2*ord(link.ends[1].body)+ord(link.ends[1].arm)]
-    (cone, twist) = gripFreedom(couple.rig, max(depth_a, depth_b))
+    cone = gripFreedom(couple.rig, max(depth_a, depth_b)).cone
     tie = couple.ties[i]
   for hand in link.ends: couple.curl(hand.body, hand.arm)
   engine.setFrameA(tie, tieFrame(link.ends[0].arm, depth_a, true))
@@ -855,9 +860,6 @@ proc setTie(couple: var Couple, i: int) =
   let is_cone = couple.is_steered and cone <= PI / 2.0
   engine.limitCone(tie, is_cone)
   if is_cone: engine.coneBall(tie, cfloat(cone))
-  let is_twist = couple.is_steered and twist < PI - 1e-6
-  engine.limitTwist(tie, is_twist)
-  if is_twist: engine.twistBall(tie, cfloat(-twist), cfloat(twist))
 
 proc build*(
   rig: Rig,

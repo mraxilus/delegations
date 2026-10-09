@@ -207,10 +207,6 @@ proc setFrameA*(joint: JointId, frame: Frame) {.importc: "b3Joint_SetLocalFrameA
 proc setFrameB*(joint: JointId, frame: Frame) {.importc: "b3Joint_SetLocalFrameB".}
 proc limitCone*(joint: JointId, should_limit: bool) {.importc: "b3SphericalJoint_EnableConeLimit".}
 proc coneBall*(joint: JointId, angle: cfloat) {.importc: "b3SphericalJoint_SetConeLimit".}
-proc limitTwist*(
-  joint: JointId, should_limit: bool
-) {.importc: "b3SphericalJoint_EnableTwistLimit".}
-proc twistBall*(joint: JointId; lower, upper: cfloat) {.importc: "b3SphericalJoint_SetTwistLimits".}
 {.pop.}
 
 const
