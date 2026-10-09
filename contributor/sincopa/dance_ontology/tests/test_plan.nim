@@ -36,6 +36,8 @@ const
               ## and brings them down again facing.
   JOINED = 1e-3  ## Metres planned joined hands may sit apart: `plan.KEPT` is millimetre
                 ## squared over whole violation, so one pair is never further.
+  TIED = 1e-4  ## Metres engine may part tie of hands stood where plan joins them: tenth of
+              ## millimetre, which single precision holds over one metre.
 
 
 func randomPlan(rig: Rig, generator: var Rand): Plan =
@@ -314,6 +316,32 @@ suite "Internal: Planned turn":
     checkpoint "stopped by " & $followed.why & " at " & $followed.at
     check followed.is_holding
     check followed.at =~ CROSS
+
+
+  test "engine holds each planned moment with every tie whole":
+    ## Stood at each moment and sprung toward it for one moment of walk (`walk.BEATS`),
+    ## engine parts no tie: what engine holds of grip, it measures as plan does.
+    ##   Red with tie's twist limited by engine's own measure, twist about second palm after
+    ##     swing, where plan reads angle between finger lines: with palms tilted far apart
+    ##     the two part, and engine dragged joined hands up to 0.8 mm apart, at winds 0.12 to
+    ##     0.26, measured 2026-10-09.
+    var stance = restStance(HUMAN, path.plans[0][0], false)
+    stance[Body.Two].centre.x = path.plans[0][1]
+    var couple = build(HUMAN, stance, Band.Crown, HAND_TO_HAND, Body.Two, false)
+    var most = 0.0
+    for moment in 0..<path.plans.len:
+      var here = restStance(HUMAN, path.plans[moment][0], false)
+      here[Body.Two].centre.x = path.plans[moment][1]
+      here = turned(here, path.problem.turner, path.winds[moment])
+      let at = placings(HUMAN, path.plans[moment], path.winds[moment], false,
+                        path.problem.turner)
+      couple.standAt(here, at.chests, at.arms)
+      couple.steer(path.plans[moment], STEER)
+      couple.advance(BEATS)
+      for i in 0..<HAND_TO_HAND.len: most = max(most, couple.poseOf(i).apart)
+    couple.free()
+    checkpoint "ties parted by " & $(most * 1000.0) & " mm at most"
+    check most < TIED
 
 
 
