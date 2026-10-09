@@ -164,6 +164,46 @@ suite "Internal: Planner and engine are one rig":
     check worst < PLACED
 
 
+  test "plan curls each free hand toward its palm, where engine holds it":
+    ## Architect, 2026-10-04: free hand hangs relaxed, half curled, as hand at rest does.
+    ##   Its fingertip lies `rig.relaxed` from wrist and `rig.curled` off hand's own line,
+    ##     toward palm; plan places each of its three capsules where engine holds them.
+    ##   Free hand holds nothing, so its depth is whole hand, as `boundsOf` keeps it.
+    let
+      single = @[Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Right)])]
+      free_hands = [(Body.One, Arm.Right), (Body.Two, Arm.Left)]
+    var
+      generator = initRand(37)
+      worst = 0.0
+    for sample in 0..<SAMPLES:
+      var plan = randomPlan(HUMAN, generator)
+      for (who, arm) in free_hands: plan[DEPTHS+armIndex(who, arm)] = HUMAN.hand
+      let
+        placed = place(HUMAN, plan, 0.0, false)
+        start = placings(HUMAN, plan, 0.0, false, Body.Two)
+      var couple = build(HUMAN, restStance(HUMAN, plan[0]), Band.Crown, single, Body.Two)
+      couple.placeBodies(start.chests, start.arms)
+      for (who, arm) in free_hands:
+        let
+          hand = placed.arms[armIndex(who, arm)]
+          finger = unit(hand.capsules[4].z - hand.capsules[4].a)
+          tip = hand.capsules[4].z + finger * hand.capsules[4].radius
+        check abs(distance(hand.wrist, tip) - HUMAN.relaxed) < 1e-9
+        check abs(arccos(clamp(dot(finger, hand.fingers), -1.0, 1.0)) - HUMAN.curled) < 1e-9
+        check dot(finger, hand.palm) > 0.0
+        var k = 0
+        for shape in couple.shapes:
+          if shape.mark == Mark.Palm and shape.who == who and shape.arm == arm:
+            let ends = couple.endsOf(shape)
+            worst = max(worst, distance(ends.a, hand.capsules[3+k].a))
+            worst = max(worst, distance(ends.z, hand.capsules[3+k].z))
+            inc k
+        check k == 3
+      couple.free()
+    checkpoint "furthest end of free hand's capsule off plan: " & $worst
+    check worst < PLACED
+
+
   test "mirror image of plan stands every point at its reflection":
     ## Planner answers wind one way from plan of other way seen in mirror (`walk.pathsFor`),
     ## so every point of mirrored plan wound other way is reflection of one point of plan,

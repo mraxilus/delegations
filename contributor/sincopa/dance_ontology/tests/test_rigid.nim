@@ -1013,6 +1013,38 @@ suite "Internal: Every still stands at ease":
       check still.strain.most <= AT_EASE
 
 
+  test "free hand hangs relaxed, its fingers curled toward its palm":
+    ## Architect, 2026-10-04: free hand hangs relaxed, half curled, as hand at rest does.
+    ##   Fingertip lies `rig.relaxed` from wrist and `rig.curled` off hand's own line, toward
+    ##     palm.  Read off engine's own capsules: middle one of three runs from wrist to
+    ##     fingertip, and side ones lie across knuckles (`rigid.relaxedCapsules`).  Palm
+    ##     faces link's negative x for right arm and its x for left (`rigid.tieFrame`).
+    let (is_holding, couple) = stood(HUMAN, Band.Crown, FREE, 0.0, false, Body.Two, 0.36)
+    check is_holding
+    for who in Body:
+      for arm in Arm:
+        var hand: seq[tuple[a, z: Vector]]
+        for shape in couple.shapes:
+          if shape.mark == Mark.Palm and shape.who == who and shape.arm == arm:
+            hand.add couple.endsOf(shape)
+        check hand.len == 3
+        if hand.len != 3: continue
+        let
+          pose = couple.armPoseOf(who, arm)
+          along = unit(pose.join - pose.wrist)
+          across = unit(hand[2].a - hand[0].a)
+          palm = cross(across, along) * -side(arm)
+          finger = unit(hand[1].z - hand[1].a)
+          tip = hand[1].z + finger * (handThick(HUMAN) / 2.0)
+          curl = arccos(clamp(dot(finger, along), -1.0, 1.0))
+        echo &"    {who} {arm}: fingertip {distance(pose.wrist, tip) * 1000:.0f} mm from wrist, " &
+            &"{curl * 180.0 / PI:.1f} degrees off hand's line"
+        check abs(distance(pose.wrist, tip) - HUMAN.relaxed) < 0.002
+        check abs(curl - HUMAN.curled) < 1.0 * DEGREE
+        check dot(finger, palm) > 0.0
+    couple.free()
+
+
   test "free couple at rest hang their arms by their sides":
     ## Architect: with nothing held, arms are down by sides and look joined to
     ## nothing.  Every arm hangs near plumb, out by what its own flank pushes it,
