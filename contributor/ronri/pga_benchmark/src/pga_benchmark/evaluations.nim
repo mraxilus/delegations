@@ -48,7 +48,7 @@ type
     path*: string  ## Change file or proposal directory findings name.
     changes*: seq[Change]  ## Changes applied in order, base proposal first.
     programs*: seq[string]
-      ## Text of programs proposal's claims run, so digest moves when program does.
+      ## Text of programs claims of proposal and of its bases run, so digest moves when one does.
     claims*: JsonNode  ## Claims proposal makes; empty array for change.
 
 

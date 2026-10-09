@@ -1397,6 +1397,12 @@ suite "Internal: Proposals":
     check proposal.citation == "P01" and not proposal.isFrozen  # cited as RFC is
     check proposal.builds_on == @["base"] and proposal.claims.len == 3  # bases and claims
     check proposal.programsOf == @["proposals/01-sign/p.nim"]  # program beside its proposal
+    let
+      claims_base = %*{"status": "proposed", "builds_on": [], "claims": [
+        {"kind": "program", "path": "a.nim", "algebras": ["rga4d"]}]}
+      (base, _) = parseProposal("# P04: Base\n\nWhy.\n", "", claims_base, "proposals/04-base")
+    check programsOf([base, proposal]) ==
+      @["proposals/04-base/a.nim", "proposals/01-sign/p.nim"]  # base first, then own
 
 
   test "unknown claim, missing title and claims that are not JSON are findings":

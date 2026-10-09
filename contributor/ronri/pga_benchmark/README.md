@@ -31,6 +31,7 @@ ASCII. A control page beside them proves that the render sees.
 | [P07 Part scale][part-scale] | proposal | each part compared at its own scale |
 | [P08 Compound tables][compound-tables] | proposal | one table for each compound operator |
 | [P09 Object names][object-names] | proposal | names of geometric objects over kinds of P04 |
+| [P10 Magnitude][magnitude] | proposal | pair of scalar and antiscalar, with its own arithmetic |
 
 A **monitoring** page shows the library as it is. A **proposal** page shows a future state of
 the library, argued in its `proposal.md` and checked by its evaluation. Each proposal has the
@@ -147,3 +148,4 @@ checked against.
 [part-scale]: https://claude.ai/artifact/6hW9rjiotnjdjBVwatW5Dj
 [compound-tables]: https://claude.ai/artifact/TczTs551nkXVaWiyHzfVAn
 [object-names]: https://claude.ai/artifact/XtPy7LToDTT2P8S1FfGauX
+[magnitude]: https://claude.ai/artifact/5NwSv2YW9ZfDa5BbbVrv1D
