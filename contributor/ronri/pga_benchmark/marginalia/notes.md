@@ -202,7 +202,7 @@ Binary products also write every slot, with `noinit`. The same effect of the ben
 ```nim
   func `⊛`*(m: Multivector): Multivector =
     ## Get partner of multivector, i.e. (-1)^(grade(𝐦)+1) (𝐦☆)⊡ ∨ 𝐦⊟.
-    let sign = float(-1 ^ (int(m.grade.get) + 1))
+    let sign = float(-1^(int(m.grade.get) + 1))
     sign * ⊡(☆m) ∨ ⊟m
 ```
 
@@ -256,23 +256,3 @@ leaves the norm out, since the norm takes a root of a squared norm.
 `∩` is `m ∨ (𝐞ₙ ∧ ☆ m)`: a dual, a wedge with a constant basis element, and an antiwedge.
 The wedge with one basis element is a signed selection, not a full product. Proposal P01,
 `cayley-derivation`, generates `∩` and `∪` as one table each, through map operators.
-
-## Grade filters need a doc line
-
-`pga/operators.nim` · open
-
-```nim
-macro defineOperator(
-  symbols, docs: static[string];
-  cayley: static[Cayley1D];
-  filter_operand: static[seq[Grade]] = default(seq[Grade]);
-  filter_product: static[seq[Grade]] = default(seq[Grade]);
-): untyped =
-  ## Construct multivector mapping variant using provided Cayley table.
-```
-
-Both macros take `filter_*` parameters. Unused, they cost nothing: each test is
-`filter.len != 0` against a compile-time empty `seq`, and the macro evaluates it.
-
-Used, they are the mechanism a grade-typed representation needs. The doc comment should say
-both, because the next reader will ask what they are for.

@@ -354,13 +354,13 @@ type  ## Define type definitions for algebraic distinctions.
 ## Edit `pga/operators.nim`
 
 ```nim
-      if destination.is_negated: some(prefix(mapping, "-")) else: some(mapping)
-    )
+          if destination.is_negated: prefix(source, "-") else: source
+        )
 ```
 
 ```nim
-      if destination.is_negated: some(prefix(mapping, "-")) else: some(mapping)
-    )  # sign folded into read, so assignment below stays plain
+          if destination.is_negated: prefix(source, "-") else: source
+        )  # sign folded into read, so assignment below stays plain
 ```
 
 ## Edit `pga/operators.nim`

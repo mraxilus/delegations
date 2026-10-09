@@ -10,7 +10,7 @@ with it.
 ## Edit `pga/operators.nim`
 
 ```nim
-    let sign = float(-1 ^ (int(m.grade.get) + 1))
+    let sign = float(-1^(int(m.grade.get) + 1))
     sign * ⊡(☆m) ∨ ⊟m
 ```
 
