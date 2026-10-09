@@ -926,8 +926,8 @@ with a palm of 0.11 m. Both are ANSUR II midpoints: hand length 0.193 and 0.180 
 Its section is a stadium, a flat palm and back with round edges. The round of the hand, 0.20 m, and
 its breadth, 0.083 m, give a thickness of 0.030 m (`handThick`). Three capsules side by side across
 the breadth hold that section within 8.2 mm (`rigid.handCapsules`). Rejected: one capsule as thick
-as the hand, which is a third as broad as a hand. Rejected: a ball as broad as the hand, which is 2.8
-times as thick.
+as the hand, which is a third as broad as a hand. Rejected: a ball as broad as the hand, which is
+2.8 times as thick.
 
 A palm grip joins two hands at the middle of the palm, 0.055 m past the wrist (`gripAtPalm`). A
 finger grip joins them at the end of the hand, 0.175 m past the wrist, where hooked fingers hold
