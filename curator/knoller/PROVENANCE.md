@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-10-04 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 518d95c29d36f97d |
+| Rules   | aeb6bb8eae706e64 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: a curator project, from the brief of the Architect. It holds the fixers of `koch fix`
@@ -715,9 +715,11 @@ is a stub with or without a header, so a missing header there stays a `stub-head
   header.
 - Verified by `suites/test_blanks.nim`, which holds `isStub` to a table of paths, each with a
   header and without. Verified by `suites/test_idioms.nim`: a stub one and two levels down in a
-  category takes `stub-keys` and `profiler-import`, and a suite module takes neither.
+  category takes `stub-keys`, and a suite module takes neither. Each such stub includes its
+  suite, so it takes the profiler import from that suite (STYLE.md §3).
 - Verified by `suites/test_regressions.nim`: the stub `tests/rga3d/test_rga3d.nim` of the PGA
-  library takes both rules, as the same text at `tests/test_rga3d.nim` does.
+  library takes `stub-keys` and no `profiler-import`, as the same text at `tests/test_rga3d.nim`
+  does.
 - Verified by hand with `git ls-files`, 2026-10-08: no file of a category in this repository opens
   with a header. So the rule adds no finding here.
 

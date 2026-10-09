@@ -153,7 +153,7 @@ the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, 
 | `module-bracket` | A bracket of one module drops its bracket. |
 | `single-bindings` | Two or more single bindings share one keyword. |
 | `strictfuncs` | A module carries `strictFuncs` before its imports. |
-| `profiler-import` | An entry module, an umbrella or a stub imports the profiler on one line. |
+| `profiler-import` | Entry, umbrella and stub with no include import the profiler on two lines. |
 | `stub-keys` | A stub leaves out `-r`, `batchable` and `joinable`. |
 | `used-consumer` | A `{.used.}` carries a comment that names its consumer. No fix reaches it. |
 | `push-foreign` | A `{.push.}` stands over foreign bindings alone. No fix reaches it. |

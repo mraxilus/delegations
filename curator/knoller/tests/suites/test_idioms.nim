@@ -94,7 +94,7 @@ suite "Idioms":
     let
       header = "discard \"\"\"\naction: run\ncmd: \"nim c -r $options $file\"\n\"\"\"\n"
       body = module("include \"../suites.nim\"\n")
-      rules_stub = @[Rule.KeysStub, Rule.ImportProfiler]
+      rules_stub = @[Rule.KeysStub]  # stub takes profiler import from suite it includes (§3)
     for (path, source, rules) in [
       ("tests/rga3d/test_rga3d.nim", header & body, rules_stub),
       ("tests/rga3d/deep/test_rga3d.nim", header & body, rules_stub),  # two levels down
@@ -102,9 +102,23 @@ suite "Idioms":
       ("tests/rga3d/rga3d.nim", header & body, @[]),  # name opens no `t`
       ("tests/rga3d/test_rga3d.nim", "## Do.\n" & header & body, @[]),  # header below first line
       ("tests/test_x.nim", header & body, rules_stub),  # child of `tests`
-      ("tests/test_x.nim", body, @[Rule.HeaderStub, Rule.ImportProfiler]),  # header or not
+      ("tests/test_x.nim", body, @[Rule.HeaderStub]),  # header or not
     ]:
       check (checkIdioms(path, source) & checkProfiler(path, source)).mapIt(it.rule) == rules
+
+
+  test "STYLE.md §3 stub that includes its suite takes profiler import from it":
+    # Ruling on report of PGA library: each of eight stubs includes `tests/suites.nim`, which
+    #   carries import, so stub needs none. Domain: what makes one module of stub and suite.
+    let header = "discard \"\"\"\naction: run\n\"\"\"\n"
+    for (body, count) in [
+      ("include \"../suites.nim\"\n", 0),  # one module of both
+      ("include suites\n", 0),
+      ("import ./suites/test_a\n", 1),  # import compiles apart, so stub carries its own
+      ("when defined(x):\n  include \"suites.nim\"\n", 1),  # include of one configuration
+      ("# include \"suites.nim\"\n", 1),  # comment includes nothing
+    ]:
+      check checkProfiler("tests/rga3d/test_rga3d.nim", header & module(body)).len == count
 
 
   test "VIII.5 test echo of unlabelled value is debug output; label or condition passes":

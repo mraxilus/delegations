@@ -420,17 +420,16 @@ suite "Regressions":
 
 
   test "12. stub inside category of `tests` takes stub rules, as testament reads it (#443)":
-    let mended = STUB.replace(" -r ", " ").replace(
-      "\"\"\"\ninclude",
-      "\"\"\"\n\n" & HEAD & "when compileOption(\"profiler\"): import std/nimprof\n\ninclude",
-    ) & "\n"
+    # Stub takes profiler import from `tests/suites.nim`, which it includes and which carries
+    #   it, by ruling on report of PGA library (STYLE.md §3).
+    let mended =
+      STUB.replace(" -r ", " ").replace("\"\"\"\ninclude", "\"\"\"\n\n" & HEAD & "include") & "\n"
     for path in ["tests/rga3d/test_rga3d.nim", "tests/test_rga3d.nim"]:
       check outcomeOf([(path, STUB)], [], is_check = true).lines == @[
         path & ": file-ending to fix",
-        path & ": profiler-import to fix",
         path & ": strictfuncs to fix",
         path & ":3: stub-keys to fix",
-        "4 to fix.",
+        "3 to fix.",
       ]  # stub of category reports as stub directly under `tests` does
       let written = outcomeOf([(path, STUB)], [], is_check = false).written
       check written == @[(path, mended)]

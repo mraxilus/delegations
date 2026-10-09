@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 518d95c29d36f97d |
+| Rules   | aeb6bb8eae706e64 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 | Pruned  | ab8fb063b62bb03ba9fd7f2964a1866b3862909b |
 
@@ -1787,17 +1787,30 @@ rules are the IV.4 messages, the X.4 conditions, the profiler import and the `to
 The static pass does not run their checks yet, as with the layout checks. So a project clears
 their findings with `koch fix` on its own branch (CURATOR.md, duty 3).
 
-**Every entry module, library umbrella and test stub imports the profiler on one line (STYLE.md
-§3).** An entry module holds a `when isMainModule:` block in its code. The umbrella is
-`<project>/src/<project>.nim`, and a stub is `tests/test_*.nim` or a file of a testament category
-that a header opens (#443). The fixer joins the form on two lines. It inserts the line after the
-last pragma that opens the module, with a blank line on each side.
+**Every entry module, library umbrella and test stub imports the profiler on two lines (STYLE.md
+§3).** The import stands on its own line under its guard, by ruling of the Architect on the report
+of the PGA library. An entry module holds a `when isMainModule:` block in its code. The umbrella
+is `<project>/src/<project>.nim`, and a stub is `tests/test_*.nim` or a file of a testament
+category that a header opens (#443). The fixer splits the form on one line. It inserts the two
+lines after the last pragma that opens the module, with a blank line on each side.
 
 - A `when isMainModule:` inside a string is no code, so `test_checker.nim` is no entry module.
-- A stub that includes a suite with the import then imports the module twice. The compiler
-  accepts that, and `--profiler:on` still runs (verified by hand with 2.2.12, 2026-10-02). The
-  Architect accepts the duplicate, so that the fixer stays simple and reads no include.
-- Verified by `suites/test_idioms.nim`.
+- A stub that includes a file at top level takes the import from that file, since the include
+  makes one module of both. The Architect ruled so on the report of the PGA library, whose eight
+  stubs include `tests/suites.nim`, and that suite carries the import. The stub of STYLE.md §6
+  holds that form too.
+- Cost: the check reads no included file, so whether that file carries the import is held by
+  reading alone. An include inside a `when` branch serves one configuration alone, so it frees
+  no stub.
+- Rejected: the import in both the stub and its suite. The compiler accepts the duplicate, and
+  `--profiler:on` still runs (verified by hand with 2.2.12, 2026-10-02). The ruling keeps the
+  stub of STYLE.md §6 as it is written instead.
+- Both lines of a split import trace to the line of the form on one line. So a later fixer
+  reports at its line in the file as given.
+- Verified by hand with 2.2.12, 2026-10-08: `--profiler:on` builds and runs
+  `curator/probe/tests/test_modulus_4.nim`, whose import stands on two lines, and the run writes
+  `profile_results.txt`.
+- Verified by `suites/test_idioms.nim` here and in knoller.
 
 **Four rules that the static pass already holds gain a fixer.**
 

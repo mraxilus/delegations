@@ -17,7 +17,8 @@
 
 {.experimental: "strictFuncs".}
 
-when compileOption("profiler"): import std/nimprof
+when compileOption("profiler"):
+  import std/nimprof
 
 import ./knoller/[
   articles, blanks, chain, command, commands, compilers, conversions, declarations, declared, edits,

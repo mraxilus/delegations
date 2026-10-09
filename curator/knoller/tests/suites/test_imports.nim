@@ -1,8 +1,9 @@
 ## Hold every import of knoller to standard library or module inside `src/`.
 ##   Import leaving `src/` reaches sibling project, which install of package lacks; import of
 ##   package needs requirement and lock, and `knoller.nimble` requires compiler alone.
-##   Cost: statement is read by line, not by token: import opening line at column zero, or
-##     after `when …:` there, outside triple-quoted string. Import inside routine is unread.
+##   Cost: statement is read by line, not by token: import opening line at column zero, after
+##     `when …:` there, or two spaces deep in block of such `when`, outside triple-quoted string.
+##     Import inside routine is unread.
 
 {.experimental: "strictFuncs".}
 
@@ -57,13 +58,17 @@ func pathsImported(source: string): seq[string] =
     statement = ""
     depth = 0
     is_string = false
+    is_when = false  # inside block of `when` at column zero, whose imports are module's
   for line in source.splitLines:
     if line.count("\"\"\"") mod 2 == 1: is_string = not is_string
     if statement.len > 0:
       statement.add " " & line.strip
       depth += line.count('[') - line.count(']')
     else:
-      if is_string or line.len == 0 or line[0] == ' ': continue
+      if is_string or line.len == 0: continue
+      let indent = line.len - line.strip(trailing = false).len
+      if indent == 0: is_when = line.startsWith("when ") and line.endsWith(":")
+      elif not is_when or indent != 2: continue
       var text = line.strip
       if text.startsWith("when ") and ": import " in text: text = text[text.find(": ") + 2 .. ^1]
       if not KEYWORDS_IMPORT.anyIt(text.startsWith(it)): continue
@@ -85,11 +90,14 @@ suite "Imports":
     check pathsImported("include \"suites.nim\"\n") == @["suites.nim"]
     check pathsImported("when compileOption(\"profiler\"): import std/nimprof\n") ==
       @["std/nimprof"]
+    check pathsImported("when compileOption(\"profiler\"):\n  import std/nimprof\n") ==
+      @["std/nimprof"]  # block of `when` at module level
 
 
   test "import inside string or block names nothing":
     check pathsImported("const s = \"\"\"\nimport ./a\n\"\"\"\n").len == 0  # string
     check pathsImported("proc f() =\n  import ./a\n").len == 0  # indented, unread
+    check pathsImported("when x:\n  proc f() =\n    import ./a\n").len == 0  # routine in block
 
 
   test "every import is standard library or module inside src":
