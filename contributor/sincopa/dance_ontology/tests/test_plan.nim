@@ -88,11 +88,12 @@ proc plainCost(weighing: Weighing, plan: Plan): float =
 
 
 suite "Internal: Planner and engine are one rig":
-  test "gap to palm is read from nearest point of segment, wherever palm lies along it":
-    ## Planner holds each palm as point with radius (`plan.place`), so every gap it keeps to
-    ##   palm asks `vector.closest` of segment and point.  Read from segment's start, plan of
+  test "gap to point is read from nearest point of segment, wherever point lies along it":
+    ## Planner holds each face as point with radius (`plan.place`), so every gap it keeps to
+    ##   face asks `vector.closest` of segment and point.  Read from segment's start, plan of
     ##   drawn D01 kept 5.8 cm between palm and forearm where palm sat 5.4 cm inside it, and
-    ##   engine stood that palm 4.3 cm inside forearm, measured 2026-10-02.
+    ##   engine stood that palm 4.3 cm inside forearm, measured 2026-10-02, when palm was
+    ##   point too.
     let point: Vector = (0.5, 0.2, 0.0)
     for (a, b) in [((0.0, 0.0, 0.0), (1.0, 0.0, 0.0)), ((1.0, 0.0, 0.0), (0.0, 0.0, 0.0))]:
       let
@@ -110,7 +111,7 @@ suite "Internal: Planner and engine are one rig":
     ##   Two hands that hold at two depths turn as far as one held nearer fingertips lets,
     ##     and plan keeps its margin inside cone and twist alike.  Red with freedom set by
     ##     hand held nearer palm, measured 2026-10-09.
-    const MARGIN = 6.0 * PI / 180.0
+    const margin = 6.0 * PI / 180.0
     let (cone, twist) = gripFreedom(HUMAN, gripAtPalm(HUMAN))
     for k in 0..SAMPLES:
       let angle = PI * float(k) / float(SAMPLES)
@@ -132,8 +133,8 @@ suite "Internal: Planner and engine are one rig":
           a.depth = depth_a
           b.depth = depth_b
           check (gripBroken(HUMAN, a, b, 0.0) > 0.0) == (is_locked and angle > limit + 1e-9)
-          check (gripBroken(HUMAN, a, b, MARGIN) > 0.0) ==
-              (is_locked and angle > limit - MARGIN + 1e-9)
+          check (gripBroken(HUMAN, a, b, margin) > 0.0) ==
+              (is_locked and angle > limit - margin + 1e-9)
 
 
   test "engine stands every joint where plan places it, and reads plan back":
@@ -232,7 +233,7 @@ suite "Internal: Planner and engine are one rig":
     ## capsule that couple records of it.
     ##   Within two millimetres of plan, since engine leaves hand that close alone.  Red with
     ##     no hand reshaped: every hand stood whole hand long, measured 2026-10-09.
-    const CURLED = 0.002 + 1e-6
+    const reshaped = 0.002 + 1e-6
     let single = @[Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Right)])]
     var
       generator = initRand(41)
@@ -260,7 +261,7 @@ suite "Internal: Planner and engine are one rig":
         check k == 3
       couple.free()
     checkpoint "furthest held hand from its grip's length: " & $worst
-    check worst < CURLED
+    check worst < reshaped
 
 
   test "mirror image of plan stands every point at its reflection":
@@ -380,12 +381,13 @@ suite "Internal: Planned turn":
     ## engine parts no tie: what engine holds of grip, it measures as plan does.
     ##   Red with tie's twist limited by engine's own measure, twist about second palm after
     ##     swing, where plan reads angle between finger lines: with palms tilted far apart
-    ##     the two part, and engine dragged joined hands up to 0.8 mm apart, at winds 0.12 to
+    ##     those part, and engine dragged joined hands up to 0.8 mm apart, at winds 0.12 to
     ##     0.26, measured 2026-10-09.
     var stance = restStance(HUMAN, path.plans[0][0], false)
     stance[Body.Two].centre.x = path.plans[0][1]
-    var couple = build(HUMAN, stance, Band.Crown, HAND_TO_HAND, Body.Two, false)
-    var most = 0.0
+    var
+      couple = build(HUMAN, stance, Band.Crown, HAND_TO_HAND, Body.Two, false)
+      most = 0.0
     for moment in 0..<path.plans.len:
       var here = restStance(HUMAN, path.plans[moment][0], false)
       here[Body.Two].centre.x = path.plans[moment][1]

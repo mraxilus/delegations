@@ -241,7 +241,7 @@ suite "Internal: Two dancers in rigid body engine":
     ##   that never held counted as carrying.
     ##   To one step since 2026-09-18: stop is decided at moment something gives,
     ##   and search counts distances carrying within one step as carrying as far,
-    ##   nearest keeping tie (`chosen`).  Exact, this law would fail from noise
+    ##   nearest of them kept (`chosen`).  Exact, this law would fail from noise
     ##   fix was for: one build carries one step more from one distance than
     ##   another build does, and neither is wrong.
     ##   Both sides are kept answers: search's choice, and walk from every distance
@@ -430,15 +430,15 @@ suite "Internal: Two dancers in rigid body engine":
       right_to_right_negative = live("right to right at torso", false)
     ## Standing distance is chosen per way, so it is compared per way, as every
     ## other figure here is.  `Swept.apart` is whichever way went furthest, and
-    ## when both run free they tie and it takes positive way for both -- which
+    ## when both run free they are equal and it takes positive way for both -- which
     ## mirror does not equate, since positive way of one is negative way of
-    ## other.  Comparing it passed only while ways did not tie.
+    ## other.  Comparing it passed only while ways were not equal.
     ## Within one step of search grid, not exact.  Chest is dynamic and its yaw
     ## mirrors to two ten-thousandths of degree at rest and six thousandths at
     ## 0.60 metres, but at 0.40 it sits four centimetres from contact and
     ## engine's iteration order, which differs between mirror-image holds,
-    ## is amplified there to six tenths of degree.  Two distances that carry
-    ## equally far then tie one way for one hold and other way for its mirror.
+    ## is amplified there to six tenths of degree.  Of two distances that carry
+    ## equally far, one is then taken for one hold and other for its mirror.
     ## Turn reached and what stopped it are still held exact below, which is
     ## what caught torque mirrored as vector.
     ## Way that stood nowhere reads as not stopped at no turn, which matches its mirror
@@ -588,7 +588,7 @@ suite "Internal: Couple stand for sweep":
 
 
   test "stance chosen is same seen in mirror and built by another compiler":
-    ## Red: five millimetres broke tie between 0.44 and 0.48 for R-r, leaps 135
+    ## Red: five millimetres chose between equal 0.44 and 0.48 for R-r, leaps 135
     ## and 106, and held it for L-l, 125 and 126: stances two steps apart for
     ## one hold in mirror, and `rig is same seen in mirror` failed on this tree
     ## and not on last, nothing about rig having changed.
@@ -692,9 +692,11 @@ func deepestOf(walk: Walk, links: seq[Link]): float =
               )
 
 func leapIn(walk: Walk, links: seq[Link]): tuple[most, at: float] =
-  ## Furthest any point of any held arm moves between two moments, and where.
+  ## Furthest any joint or join of any held arm moves between two moments, and where.
   ##   Worked out here rather than borrowed from `walk.leapOf`, so law does not
-  ##     check simulation against itself.
+  ##     check simulation against itself.  `leapOf` reads breadth of hand too, and this
+  ##     does not: in L-r low, edge of follow's right hand moves 218 mm between 0.56 and
+  ##     0.58 of turn, past bound, where join moves 187 (issue 605).
   # One loop for each axis of data: moment, link, end, joint.
   # Split would hide its shape.
   for j in 1..<walk.moments.len:
@@ -943,7 +945,9 @@ suite "Internal: Arms move as arms do":
     check crossed(1.0) >= 2
 
 
-  test "no point of any arm leaps between two moments":
+  test "no joint of any arm, nor its join, leaps between two moments":
+    ## Reads shoulder, elbow, wrist and join of each held arm, and not breadth of hand
+    ## (`leapIn`, issue 605).
     for (name, band, links, went) in corpus():
       echo &"    {name}: furthest any point moves between moments {went.leap * 1000:.0f} mm, " &
           &"at {went.leap_at:.2f}"
@@ -1093,8 +1097,8 @@ suite "Internal: Every still stands at ease":
     ## of other dancer's arms.  Before this, hanging arms were twisted forty degrees and
     ## swung forward twenty by fixed elbow moment, forearms pointing at partner,
     ## and free couple at rest stood with arms crossed between them.
-    ##   Hand is read where it is carried (`carriedOf`): free hand is open, and reaches
-    ##     to its fingertips.
+    ##   Hand is read where it is carried (`carriedOf`), on hand's own line: free hand
+    ##     hangs relaxed, its fingers curled off that line.
     let (is_holding, couple) = stood(HUMAN, Band.Crown, FREE, 0.0, false, Body.Two, 0.36)
     check is_holding
     var nearest = Inf
