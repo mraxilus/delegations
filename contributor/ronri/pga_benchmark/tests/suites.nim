@@ -935,7 +935,7 @@ suite "Internal: Unitized":
         checkLayout(unitized.PointUnitized, i, j)
         checkLayout(unitized.PointPadded, i, j)
     else:
-      skip()  # forms of Lengyel's code are of 3D space, which rga4d alone models
+      skip()  # forms of Lengyel's code are of projective 3D space, which rga4d alone models
 
 
   test "each row of unitized record saves multiplies that C of its two forms differs by":
@@ -944,6 +944,7 @@ suite "Internal: Unitized":
     when IS_RIGID and DIMENSIONS == 4:
       const
         record = staticRead("../baseline/unitized.json")  ## Takes of `unitized`, as committed.
+        rows_recorded = 2 * 2 * 6  ## Rows record holds: two takes of two sizes, six operations.
         lut_forms_by_row = {
           "join two points": (
             "join(PointHomogeneous,PointHomogeneous,Line)",
@@ -983,9 +984,9 @@ suite "Internal: Unitized":
             check row["saved"].getInt == saved  # record states what C spares, sign included
             check multiplies[key_padded] == multiplies[key_unit]  # pad costs no arithmetic
             inc rows_read
-      check rows_read == 2 * 2 * lut_forms_by_row.len  # two takes of two sizes, every row
+      check rows_read == rows_recorded  # guard skipped no row
     else:
-      skip()  # forms of Lengyel's code are of 3D space, which rga4d alone models
+      skip()  # forms of Lengyel's code are of projective 3D space, which rga4d alone models
 
 
 
