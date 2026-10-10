@@ -935,11 +935,9 @@ same compiler and flags makes the same machine code, so the times stand.
 
 An evaluation is tried again with its times kept, so its suites, counts and claims are taken at
 the pin. The suites of the library hold line numbers in their C, so `restamp` cannot keep them. A
-record whose C differs is a finding, and `bench`, `sweep` or `evaluate` takes it again. A record
-taken before digests existed took the digest of its builds at its own pin, on 2026-10-05. The
-bench at the commit of the runtime baselines taken at `d9be8ae` emits the same C as the bench of
-that day, file for file. The Architect chose this rule on 2026-10-05, for a head that moved only
-comments and form.
+record whose C differs is a finding, and `bench`, `sweep` or `evaluate` takes it again. Each
+evaluation timed at `d9be8ae` predates digests, and carries the digest of its builds at its own
+pin. The Architect chose this rule for a head that moved only comments and form.
 
 **The digest reads C alone, at any path.** Nim folds the path of a module into the hash in the
 name of each type. The digest names each run of 20 to 32 letters and digits after `__` by its
