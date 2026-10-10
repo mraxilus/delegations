@@ -68,11 +68,11 @@ func checkScope*(
   let
     prefix = parsed.get.prefix
     is_root_curator = parsed.get.role == Role.Curator
-    is_moved = moved.toHashSet
+    moved_set = moved.toHashSet
   for p in paths:
     if not p.startsWith(prefix):
       result.add finding(p, 0, "Path outside branch scope `" & prefix & "`.")
-    elif is_root_curator and p.startsWith(CONTRIBUTOR & "/") and p notin is_moved:
+    elif is_root_curator and p.startsWith(CONTRIBUTOR & "/") and p notin moved_set:
       result.add checkPropagation(p)
 
 

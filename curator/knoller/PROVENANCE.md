@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-10-04 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | aeb6bb8eae706e64 |
+| Rules   | dc2f80918195f3c9 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: a curator project, from the brief of the Architect. It holds the fixers of `koch fix`
@@ -1236,7 +1236,8 @@ caller. `curator/audit` gives those that its glossaries list, and the command li
 jargon list of V.6 always passes. Verified by `suites/test_names.nim`.
 
 - Each finding names a rule of its own: `abbreviation`, `action-verb`, `boolean-name`,
-  `lookup-table`, `name-case`, `member-case`, `placeholder-letter`, `notation` and `global-word`.
+  `lookup-table`, `name-case`, `member-case`, `placeholder-letter`, `notation`, `global-word` and
+  `representation-head`.
   The case of a name takes three rules, because V.1, V.11 and V.12 state it by kind.
 - This module gives the rename that each rule asks (`renamesAbbreviation`, `renamesCase`). A
   rename reaches each use of a name, and only the semantic pass of the compiler finds each use. So
@@ -1367,6 +1368,45 @@ predicate:
   value `true` or `false`. A boolean that a call returns holds by reading.
 - Cost: a Pascal name of capitals alone, such as `ANTI`, passes the case of a type. Reading holds
   it.
+
+**A name that holds a value in another representation leads with that value (V.2), by the
+ruling of the Architect on #443.** V.2 asks that each cut of the last qualifier of a name still
+describes the thing, but more generally. Where both orders pass the cut, the value that the code
+names leads. A change of representation always passes both ways, since `a_flags =
+a.basis.toFlags` holds `a`, and it holds flags. So the tie-breaker settles it, and syntax shows
+it.
+
+The check reads `$`, a `to<Target>` call (V.3) or a type conversion at the end of a chain of
+steps from one root (`namesConverted`). A step is a field, or a call of one input. It stands by
+dot or by prefix call, so `toFlags(dual(c))` reads as `c.dual.toFlags`. Where the name holds a
+name of the chain after its head, and none at its head, the rule `representation-head` reports
+it (`namesLater`).
+
+**Each step keeps the root in another representation, by the ruling of the Architect on #608.**
+The dual of `c` is `c` in the dual space. So `c_dual_flags = c.dual.toFlags` passes, and
+`flags_c` is reported. A step can also make a new thing, as `m.grade` makes a grade, and syntax
+cannot tell the two apart. So where a step follows the root, the finding lists each name of the
+chain. Reading picks the name that passes the cut, as `grade_m_int` for `int_m =
+m.grade.get.toInt`.
+
+- Rejected: the last name of the chain alone. It reports `c_dual_flags`, which the ruling keeps.
+- Rejected: a finding that names the root alone. For `point_camera =
+  camera.rig.target.toMultivector`, it asks for `camera` first, though a target is no camera.
+- A type that roots the chain is no value, so `Basis.scalarAnti.toFlags` holds `scalarAnti`
+  alone.
+- A property, a lookup, a second input and a compound are no change of a named value:
+  `m.grade.get`, `dual[c].toFlags`, `toFlags(a, mask)` and `toFlags(a + b)`. An index and a call
+  of a second input end a chain too: `c.dual[0].toFlags` and `camera.eye(0).toMultivector`. The
+  cut holds by reading there, as it does for every other name.
+- A wrong name of the chain at the head passes. `m_grade_int` leads with `m`, though a grade is
+  no `m`, and reading holds it.
+- The check renames nothing. A name with the value first can still need a reading: `is_moved =
+  moved.toHashSet` would read `moved_is`.
+- `declared.nim` keeps the value of each binding on its own line, with each line below it that
+  opens `.`. It keeps its element where a tuple gives one to each name. A value that runs past
+  its line otherwise is unread.
+- Rejected: a check of the cut itself, since "still describes the thing" asks what a word means.
+- Verified by `suites/test_names.nim` and `suites/test_declared.nim`.
 
 ## Idioms
 
