@@ -326,5 +326,5 @@ two points runs ×2.2 to ×2.3 in both layouts. The homogeneous join likely vect
 multiplies, and the unitized one does not.
 
 From memory, three floats in place of four run the two joins at ×0.75 to ×0.84. Padded, they run
-×0.90 to ×1.09, about the spread of the null pair, so bytes carry that gain. The saving is small
-and selective, and only a typed point with an implicit weight reaches it.
+×0.90 to ×1.09, against ×0.96 to ×1.07 for the null pair, so bytes carry that gain. The saving is
+small and selective, and only a typed point with an implicit weight reaches it.
