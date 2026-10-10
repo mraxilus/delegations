@@ -132,9 +132,9 @@ func nodeSum(terms: seq[Term], is_scalar_m = false): NimNode =
   if terms.len == 0: return newLit(0.0)
   for index, term in terms:
     var product: NimNode = nil
-    let magnitude = abs(term.coefficient)
-    if abs(magnitude - 1.0) > TOLERANCE_COEFFICIENT or term.factors.len == 0:
-      product = newLit(magnitude)
+    let size = abs(term.coefficient)
+    if abs(size - 1.0) > TOLERANCE_COEFFICIENT or term.factors.len == 0:
+      product = newLit(size)
     for factor in term.factors:
       let node = nodeFactor(factor, is_scalar_m)
       product = if product.isNil: node else: infix(product, "*", node)
