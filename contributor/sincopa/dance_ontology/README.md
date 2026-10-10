@@ -73,11 +73,12 @@ The first two run from the repository root, and the rest from this directory. Th
 git, and the compiler that this project pins in `dance_ontology.nimble`. `drive` also needs node,
 with the tools of `package-lock.json` installed by `npm ci`.
 
-Hand-written pages are committed files. The shells and the prose of the review page live
-under `pages/`, and the one hand-drawn proposal under `mockups/`. `tools/build.nim pages`
-copies, fills and splices them under `build/`, beside the scripts compiled for them. What a
-build emits is never committed, because its lines run far past any width a file may have. To
-publish a page is to republish its built file to the URL it already has, listed below.
+Hand-written pages are committed files. The shell of the Reference lives under `pages/`. The prose
+of the review page and the one hand-drawn proposal live under `mockups/`, because both are
+explorations. `tools/build.nim pages` copies, fills and splices them under `build/`, beside the
+scripts compiled for them. What a build emits is never committed, because its lines run far past any
+width a file may have. To publish a page is to republish its built file to the URL it already has,
+listed below.
 
 ## Published pages
 
@@ -132,8 +133,9 @@ design/                            the mock-up workbench: rules first, pages aft
 simulation/                               the body simulation, standalone on purpose
 tools/audit.nim                    the same audit, printed
 pages/                             hand-written pages this project stands behind:
-                                   app shell, review page's prose
-mockups/                           wholecloth.html, hand-drawn proposal to react to
+                                   app shell
+mockups/                           explorations: wholecloth.html, hand-drawn proposal
+                                   to react to, and review.html, review page's prose
 tools/review.nim                   fills the review page's markers from the model
 tools/pages.nim, tools/bundle.nim  copy the shells in; fold a page into one file
 tools/build.nim                    this project's verbs: pages, assets, types, drive,
