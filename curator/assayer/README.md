@@ -61,7 +61,7 @@ nim c -d:release -o:binaries/assayer curator/assayer/src/assayer.nim  # command 
 
 This needs the compiler that the project pins in `assayer.nimble`, and git. Assayer imports
 `curator/knoller` by a relative path, so it builds from a checkout of this repository. The suites
-run real processes through a POSIX shell, so they run on Linux and macOS.
+run real processes through `/bin/sh`, so they need a POSIX system, and CI runs them on Linux.
 
 ## Published pages
 
