@@ -874,7 +874,7 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
 
 suite "Internal: Unitized":
   # Program `unitized` times Lengyel's code in homogeneous form against form whose point has
-  #   w = 1; suite holds each form to its pair.
+  #   w = 1; suite holds each form to its pair, and each row of its record to C of its forms.
 
   test "unitized form agrees with homogeneous form where weight is one":
     when IS_RIGID and DIMENSIONS == 4:
@@ -934,6 +934,56 @@ suite "Internal: Unitized":
         let j = (i * 7 + 3) mod OBJECTS  # pair slots as bench pairs them
         checkLayout(unitized.PointUnitized, i, j)
         checkLayout(unitized.PointPadded, i, j)
+    else:
+      skip()  # forms of Lengyel's code are of 3D space, which rga4d alone models
+
+
+  test "each row of unitized record saves multiplies that C of its two forms differs by":
+    # Case: record held `"saved": -1` on row `unitize, book against code`, from literal that
+    #   `pass` of `unitized.nim` passed; code's unitize spares one multiply, so row saves 1.
+    when IS_RIGID and DIMENSIONS == 4:
+      const
+        record = staticRead("../baseline/unitized.json")  ## Takes of `unitized`, as committed.
+        lut_forms_by_row = {
+          "join two points": (
+            "join(PointHomogeneous,PointHomogeneous,Line)",
+            "join(PointUnitized,PointUnitized,Line)",
+          ),
+          "join line and point":
+            ("join(Line,PointHomogeneous,Plane)", "join(Line,PointUnitized,Plane)"),
+          "meet point and plane": ("meet(PointHomogeneous,Plane)", "meet(PointUnitized,Plane)"),
+          "antisupport":
+            ("antisupport(PointHomogeneous,Plane)", "antisupport(PointUnitized,Plane)"),
+          "transform by motor": (
+            "transform(PointHomogeneous,Motor,PointHomogeneous)",
+            "transform(PointUnitized,Motor,PointUnitized)",
+          ),
+          "unitize, book against code": (
+            "unitizeBook(PointHomogeneous,PointHomogeneous)",
+            "unitizeCode(PointHomogeneous,PointUnitized)",
+          ),
+        }.toTable
+          ## Homogeneous form and unitized form each row times, keyed as inspector keys them.
+      var multiplies: Table[string, int]
+      for f in INSPECTED: multiplies[f.key] = count(f.body).multiplies
+      var rows_read = 0
+      for take in parseJson(record)["takes"]:
+        for size, timing in take:
+          for name, row in timing["rows"]:
+            checkpoint size & " objects: " & name
+            check name in lut_forms_by_row  # every row names its two forms
+            if name notin lut_forms_by_row: continue
+            let
+              (key_homogeneous, key_unit) = lut_forms_by_row[name]
+              key_padded = key_unit.replace("PointUnitized", "PointPadded")
+            for key in [key_homogeneous, key_unit, key_padded]:
+              check key in multiplies  # form reached from suite above, so its C is read
+            if [key_homogeneous, key_unit, key_padded].anyIt(it notin multiplies): continue
+            let saved = multiplies[key_homogeneous] - multiplies[key_unit]
+            check row["saved"].getInt == saved  # record states what C spares, sign included
+            check multiplies[key_padded] == multiplies[key_unit]  # pad costs no arithmetic
+            inc rows_read
+      check rows_read == 2 * 2 * lut_forms_by_row.len  # two takes of two sizes, every row
     else:
       skip()  # forms of Lengyel's code are of 3D space, which rga4d alone models
 
