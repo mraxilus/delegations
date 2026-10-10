@@ -1631,7 +1631,7 @@ func release*(tween: var CameraTween) =
 func abandon*(tween: var CameraTween) =
   ## Hand camera to reader mid-ease, and let pivot alone finish arriving.
   ##   For path turning or scaling camera about pivot it already has: orbit, look, roll,
-  ##   plain dolly, keys, and selection's wheel and right drag; see
+  ##   plain dolly, keys, and selection's wheel, right drag and two fingers; see
   ##   `interaction.yieldOrHalt`. Reader wins way round and distance outright, and `advance`
   ##   carries pivot rest of its path underneath, so what they turn about is still what
   ##   was picked. Path placing pivot itself halts instead; see `halt`.

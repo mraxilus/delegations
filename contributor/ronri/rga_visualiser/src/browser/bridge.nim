@@ -1311,7 +1311,7 @@ proc nimGripFingers(x_first, y_first, x_second, y_second: cfloat; width, height:
   ## Take what each of two fingers holds, as second lands; see `interaction.gripFingers`.
   ##   Reads frame's own placements and overlay, as `nimCameraDollyAt` does: pick under each
   ##   finger is full pick.
-  TWEEN_CAMERA.halt()
+  TWEEN_CAMERA.yieldOrHalt(SELECTION_PAGE.len > 0)
   placeEdited()
   ensureViewOverlay(int(width), int(height))
   INTERACTION_PAGE.grip = some(gripFingers(
@@ -1335,7 +1335,7 @@ proc nimCarryGrip(x_first, y_first, x_second, y_second: cfloat; width, height: c
   ## Move camera so each of two fingers stays on what it took; see `interaction.carryGrip`.
   ##   Fingers in order they landed. Nothing where no grip is held.
   if INTERACTION_PAGE.grip.isNone: return
-  TWEEN_CAMERA.halt()
+  TWEEN_CAMERA.yieldOrHalt(SELECTION_PAGE.len > 0)
   carryGrip(
     INTERACTION_PAGE.grip.get,
     CAMERA_PAGE,

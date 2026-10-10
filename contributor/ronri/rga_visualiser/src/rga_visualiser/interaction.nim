@@ -900,13 +900,13 @@ proc dollyAt*(
 
 
 func yieldOrHalt*(tween: var CameraTween; has_selection: bool) =
-  ## Give camera's ease up to wheel or right drag, in whichever way its state reads.
-  ##   Free flight's lands pivot on what pointer is over, so ease stops where camera stands;
-  ##   see `camera.halt`.
-  ##   Selection's turns and dollies about pivot it already has, so pivot finishes arriving on
-  ##   what is picked; see `camera.abandon`.
-  ##     Not halt there: notch two frames into pick's ease left pivot 4.80 units off point
-  ##     picked, and every zoom after dollied about that.
+  ## Give camera's ease up to wheel, right drag or two fingers, in whichever way state reads.
+  ##   Free flight's lands pivot on what pointer or fingers are over, so ease stops where camera
+  ##   stands; see `camera.halt`.
+  ##   Selection's turns, dollies and rolls about pivot it already has, so pivot finishes
+  ##   arriving on what is picked; see `camera.abandon`.
+  ##     Not halt there: notch or spread two frames into pick's ease left pivot 4.80 units off
+  ##     point picked, and every zoom and turn after went about that.
   ##   One statement for both front-ends, as `dollyAtCursor` is.
   if has_selection: tween.abandon() else: tween.halt()
 

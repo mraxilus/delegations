@@ -365,7 +365,8 @@ canvas.addEventListener('pointerup', releasePointer);
 canvas.addEventListener('pointercancel', releasePointer);
 canvas.addEventListener('pointerleave', (e) => { if (e.buttons === 0) releasePointer(e); });
 
-canvas.addEventListener('wheel', (e) => {
+/** Sum one wheel event for frame loop to apply, from canvas or from menu lying over it. */
+function sumWheel(e: WheelEvent): void {
   e.preventDefault();
   // Toward what pointer is over, way map zooms.
   //   Where that is comes from cursor this build already tracks, so wheel says it same way picking
@@ -379,7 +380,8 @@ canvas.addEventListener('wheel', (e) => {
   //   every answer but last was thrown away. Factor is `exp(k*delta)`, so summing
   //   deltas and exponentiating once is same zoom, not approximation of it.
   deltas_wheel += e.deltaY;
-}, { passive: false });
+}
+canvas.addEventListener('wheel', sumWheel, { passive: false });
 
 /* ---- Touch tap-to-toggle / mouse click-to-select ---- */
 /*   Long-pressing (touch) or plain-clicking (mouse) object selects it; further         */
@@ -411,6 +413,10 @@ function handleTap(position_local: PointLocal) {
 }
 
 const menu_selection = elementById('selection-menu');
+// Menu scrolls nothing, so wheel over it zooms view as over canvas.
+//   Without it, menu took wheel: pick clicked where menu then lands left wheel dead until
+//   pointer moved.
+menu_selection.addEventListener('wheel', sumWheel, { passive: false });
 const menu_selection_apply = elementById('selection-menu-apply');
 const menu_selection_edit = elementById('selection-menu-edit');
 const menu_selection_hide = elementById('selection-menu-hide');
