@@ -625,10 +625,10 @@ A program claim names its program relative to its proposal, so a new directory n
 digest.
 
 **A program may import a program of a proposal that it builds on,** by a path relative to its own
-directory. `proposals/10-magnitude/prototype.nim` imports the prototype of P04 this way, so the
-kinds have one copy. So the digest of an evaluation reads the programs of each base first, and
-then its own. A change to a program of a base moves the digest of each proposal on it. Rejected: a
-copy of the kinds in each proposal on P04, since two copies drift apart.
+directory. `proposals/10-homogeneous-scalar/prototype.nim` imports the prototype of P04 this way,
+so the kinds have one copy. So the digest of an evaluation reads the programs of each base first,
+and then its own. A change to a program of a base moves the digest of each proposal on it.
+Rejected: a copy of the kinds in each proposal on P04, since two copies drift apart.
 
 **A suites or program claim may name `defines`**, each `name=value`, and each of its builds
 passes them as `-d:`. So a proposal can hold the library at a build option other than its
@@ -706,8 +706,9 @@ Alternation does not cancel all drift of a shared machine, so the time of one ev
 weak evidence alone. Counts are exact, and carry the verdicts.
 
 `proposals/04-exact-kinds/prototype.nim` holds its laws against the change of
-`cayley-derivation` at rga3d, rga4d, cga4d and cga5d. `proposals/10-magnitude/prototype.nim`
-holds its laws at the same four algebras, on the kinds of that prototype.
+`cayley-derivation` at rga3d, rga4d, cga4d and cga5d.
+`proposals/10-homogeneous-scalar/prototype.nim` holds its laws at the same four algebras, on the
+kinds of that prototype.
 
 Verified by `test_rga4d.nim` and the other stubs, suites `Internal: Markdown`, `Internal: Changes`,
 `Internal: Proposals`, `Internal: Evaluations`, `Internal: Cells` and `Internal: Figures`. They
