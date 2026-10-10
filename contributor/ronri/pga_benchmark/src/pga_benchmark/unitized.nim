@@ -291,38 +291,44 @@ func median(figures: seq[float]): float =
 
 #[ Entry Point ]#
 
+proc take*(count, rounds, passes: int, sink: var float): JsonNode =
+  ## Time every pair at one size, print medians and ratios, and get them as JSON.
+  ##   Exported, so suites run one small take and read C of its timed loops.
+  var
+    pools = initPools(count)
+    rows: seq[Row]
+  for order in 0..<passes: pools.pass(count, rounds, order, rows)
+  echo &"{count} objects, {rounds} rounds, {passes} passes; median ns per object"
+  echo "operation                    saved  homog   null unitized padded  ×unit  ×pad ×null"
+  var named = newJObject()
+  for row in rows:
+    let
+      homogeneous = row.figures[Layout.Homogeneous].median
+      null = row.figures[Layout.Null].median
+      unitized = row.figures[Layout.Unitized].median
+      padded = row.figures[Layout.Padded].median
+    echo &"{row.name:<28} {row.saved:5} {homogeneous:6.2f} {null:6.2f} {unitized:8.2f} " &
+      &"{padded:6.2f} {unitized / homogeneous:6.2f} {padded / homogeneous:5.2f} " &
+      &"{null / homogeneous:5.2f}"
+    named[row.name] = %*{
+      "saved": row.saved, "homogeneous": homogeneous, "null": null, "unitized": unitized,
+      "padded": padded,
+    }
+  for i in 0..<count:
+    sink += pools.lines_out[i].vx + pools.planes_out[i].w + pools.distances[i] +
+      pools.homogeneous_out[i].x + pools.unitized_out[i].y + pools.padded_out[i].z
+  %*{"rounds": rounds, "rows": named}
+
+
 proc main(): int =
-  ## Time every pair at every size, print medians and ratios, write take as JSON, then sink.
+  ## Time every pair at every size, write takes as JSON, then print sink.
   randomize(SEED)
   var
     sink = 0.0
     sizes = newJObject()
   for count in SIZES:
-    var
-      pools = initPools(count)
-      rows: seq[Row]
     let rounds = max(ROUNDS_FEWEST, ROUNDS_FEWEST * SIZES[^1] div (count * 128))
-    for order in 0..<PASSES: pools.pass(count, rounds, order, rows)
-    echo &"{count} objects, {rounds} rounds, {PASSES} passes; median ns per object"
-    echo "operation                    saved  homog   null unitized padded  ×unit  ×pad ×null"
-    var named = newJObject()
-    for row in rows:
-      let
-        homogeneous = row.figures[Layout.Homogeneous].median
-        null = row.figures[Layout.Null].median
-        unitized = row.figures[Layout.Unitized].median
-        padded = row.figures[Layout.Padded].median
-      echo &"{row.name:<28} {row.saved:5} {homogeneous:6.2f} {null:6.2f} {unitized:8.2f} " &
-        &"{padded:6.2f} {unitized / homogeneous:6.2f} {padded / homogeneous:5.2f} " &
-        &"{null / homogeneous:5.2f}"
-      named[row.name] = %*{
-        "saved": row.saved, "homogeneous": homogeneous, "null": null, "unitized": unitized,
-        "padded": padded,
-      }
-    sizes[$count] = %*{"rounds": rounds, "rows": named}
-    for i in 0..<count:
-      sink += pools.lines_out[i].vx + pools.planes_out[i].w + pools.distances[i] +
-        pools.homogeneous_out[i].x + pools.unitized_out[i].y + pools.padded_out[i].z
+    sizes[$count] = take(count, rounds, PASSES, sink)
   echo &"sink {sink:.6f}"
   var taken = takenNow()
   taken.delete("pga")  # program imports no library code, so no library commit bears on it
