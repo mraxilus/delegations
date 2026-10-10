@@ -193,7 +193,8 @@ _Avoid_: carry, port, rebase, re-pin
 One measured setting, a dimension count and a metric, such as `rga4d`.
 _Avoid_: configuration, config, target, signature
 
-**Magnitude**:
-The pair x𝟏 + y𝟙 of a scalar and an antiscalar, as Lengyel's wiki names it. Under the rigid
-metric it is a dual number, and under the conformal metric a complex number.
-_Avoid_: dual number
+**Homogeneous scalar**:
+The pair x𝟏 + y𝟙 of a scalar and an antiscalar, which stands for the value x/y kept with its
+weight y, as a homogeneous point keeps a position with its weight. Under the rigid metric it is a
+dual number, and under the conformal metric a complex number.
+_Avoid_: magnitude, dual number, dual scalar
