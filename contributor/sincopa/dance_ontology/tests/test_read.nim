@@ -192,10 +192,10 @@ suite "Internal: Two hands":
     ## Read off same poses: whichever joint `tightest` names, no other joint of
     ## any held arm has less margin, and joint at its edge reads strain of one.
     ##   Poses are couples crossing law settles, and one single hold settled at rest.
-    ##   Every joint's margin is worked out here, left arm's twist read negated against
-    ##     rig's own range where reader mirrors range instead: same margin, other road.
+    ##   Every joint's margin is worked out here against rig's own range, as `joints`
+    ##     gives it: left arm is read in mirror there, so one range serves both arms.
     ##   Law is argument minimum itself, so reader that leaves out one end of each
-    ##     connection, or reads left arm's twist unmirrored, fails here.
+    ##     connection fails here.  Law below holds reader fair to both arms.
 
     func marginsOf(
       stance: array[Body, Stance], links: seq[Link], arms: Arms, tight: Tight
@@ -208,10 +208,7 @@ suite "Internal: Two hands":
             hand = links[i].ends[k]
             arm_joints = joints(stance[hand.body], hand.arm, arms[i][k])
           for dof in Dof:
-            let
-              measured = arm_joints.reading(dof)
-              value = (if dof == Dof.Twist and hand.arm == Arm.Left: -measured else: measured)
-              joint_margin = margin(HUMAN.range[dof], value)
+            let joint_margin = margin(HUMAN.range[dof], arm_joints.reading(dof))
             result.least = min(result.least, joint_margin)
             if dof == tight.dof and hand == tight.whose: result.named = joint_margin
 
@@ -238,3 +235,60 @@ suite "Internal: Two hands":
       check least =~ tight.room
     check strain(Tight(room: 0.0)) =~ 1.0
     check strain(Tight(room: 1.0)) =~ 0.0
+
+
+  test "pose and its mirror read same tightest joint, on mirrored arm":
+    ## Read off pose and its reflection across couple's line: `tightest` gives
+    ## same room and same freedom, of same body's other arm.
+    ##   Reflection turns plan's `x` over: centre `(x, y)` goes to `(-x, y)`, facing
+    ##     `f` to `PI - f`, each point of each arm likewise, and each hand is other
+    ##     arm of its body.  Read in body's own terms, both read same joints.
+    ##   One held arm's twist is swept past both ends of its range, where rig's ends
+    ##     are not symmetric: reader that judges one arm's twist against other's
+    ##     ends fails here, as reader that swapped left arm's ends did.
+
+    func inMirror(stance: array[Body, Stance]): array[Body, Stance] =
+      ## Couple's stance seen in mirror across their line.
+      for who in Body:
+        result[who] = Stance(
+          centre: (-stance[who].centre.x, stance[who].centre.y),
+          facing: PI - stance[who].facing,
+        )
+
+    func inMirror(point: Vector): Vector = (-point.x, point.y, point.z)
+      ## World point seen in same mirror.
+
+    func inMirror(pose: ArmPose): ArmPose =
+      ## Arm's four points seen in same mirror.
+      ArmPose(
+        shoulder: inMirror(pose.shoulder),
+        elbow: inMirror(pose.elbow),
+        wrist: inMirror(pose.wrist),
+        join: inMirror(pose.join),
+      )
+
+    func otherArm(hand: Hand): Hand = (hand.body, (if hand.arm == Arm.Left: Arm.Right else: Arm.Left))
+      ## Same body's other arm, which mirror makes of it.
+
+    let
+      stance = restStance(HUMAN, APART)
+      links = @[Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Right)])]
+      seen_links = @[Link(ends: [otherArm(links[0].ends[0]), otherArm(links[0].ends[1])])]
+      upper_direction = unit((0.3, 0.4, -0.8))
+    var swept = 0
+    for degrees in countup(-106, 106, 2):
+      let
+        arms: Arms = @[[
+          placed(HUMAN, stance[Body.One], Arm.Left, upper_direction, degToRad(float(degrees)),
+                 1.2, 0.3, 0.0),
+          placed(HUMAN, stance[Body.Two], Arm.Right, upper_direction, 0.0, 0.8, 0.2, 0.0),
+        ]]
+        seen: Arms = @[[inMirror(arms[0][0]), inMirror(arms[0][1])]]
+        tight = tightest(HUMAN, stance, links, arms)
+        seen_tight = tightest(HUMAN, inMirror(stance), seen_links, seen)
+      checkpoint &"twist {degrees}: room {tight.room}, in mirror {seen_tight.room}"
+      check seen_tight.room =~ tight.room
+      check seen_tight.dof == tight.dof
+      check seen_tight.whose == otherArm(tight.whose)
+      if tight.dof == Dof.Twist and tight.whose == links[0].ends[0]: inc swept
+    check swept > 0
