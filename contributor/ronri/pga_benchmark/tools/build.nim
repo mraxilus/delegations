@@ -44,6 +44,9 @@
 ##   | sweep     | time general measurands at two to six dimensions, rigid, in five     |
 ##   |           | alternating runs, and record their medians in `baseline/sweep.json`; |
 ##   |           | never in CI                                                          |
+##   | unitized  | time point operations of Lengyel's code, homogeneous against         |
+##   |           | unitized, in two takes, and record their medians in                  |
+##   |           | `baseline/unitized.json`; never in CI                                |
 ##   | system    | print system packages build needs, one per line, for caller          |
 ##   | clean     | remove `build`                                                       |
 ##   |-----------|----------------------------------------------------------------------|
@@ -79,7 +82,7 @@ const
     ##   Type-checker and Playwright are node packages, pinned by `package-lock.json`.
   USAGE = "Usage: nim r tools/build.nim " &
       "<inspect|bench|baseline|guard|evaluate|restamp|pages|types|published|drive|head|gaps|show|" &
-      "sweep|system|clean> [name|symbol] [url|algebra|--thorough]\n"
+      "sweep|unitized|system|clean> [name|symbol] [url|algebra|--thorough]\n"
     ## Text printed on usage error; trailing words serve `evaluate`, `published` and `show`.
   FLAG_THOROUGH = "--thorough"  ## Flag after `evaluate <name>` that measures 2D algebras too.
 
@@ -172,6 +175,7 @@ proc main(): int =
     of "head": return delegated()
     of "gaps": return delegated()
     of "sweep": return delegated()
+    of "unitized": return delegated()
     of "system": system()
     of "clean": return delegated()
     else:
