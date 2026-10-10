@@ -288,11 +288,12 @@ x = 1, y = 2 and z = 3 meet at (1, 2, 3, 1) as g1 ∨ g2 ∨ g3, and at (−1, �
 g2 ∨ g1 ∨ g3. `^` leaves both as they are.
 
 Lengyel's code fixes the sign where the weight is one coordinate. `Unitize` divides a point and a
-round point by the signed w, so w = 1, and returns `Point3D`, three floats with an implicit w. It
-multiplies a sphere by −1/u, so u = −1, since `Dual` of a round point with w = 1 is the sphere
-with u = −1 and the same center. Lines, planes, dipoles and circles keep their sign in both. The
-Architect chose the rule of the book on 2026-10-10, since `unitize` takes any multivector, and the
-sign of the code needs the type of the object. The typed reference here takes the same rule.
+round point by the signed w, so w = 1, and for a point it returns `Point3D`, three floats with an
+implicit w. It multiplies a sphere by −1/u, so u = −1, since `Dual` of a round point with w = 1 is
+the sphere with u = −1 and the same center. Lines, planes, dipoles and circles keep their sign in
+both. The Architect chose the rule of the book on 2026-10-10, since `unitize` takes any
+multivector, and the sign of the code needs the type of the object. The typed reference here takes
+the same rule.
 
 In 64-bit floats, a unitized point takes 24 bytes in place of 32, and it spends less:
 
