@@ -878,13 +878,13 @@ suite "Internal: Unitized":
 
   test "unitized form agrees with homogeneous form where weight is one":
     when IS_RIGID and DIMENSIONS == 4:
-      template checkLayout(Layout: typedesc, i, j: int) =
-        ## Hold every form of layout to its homogeneous form, on slots i and j of pools.
+      template checkLayout(U: typedesc, i, j: int) =
+        ## Hold every form of layout U to its homogeneous form, on slots i and j of pools.
         let
           (a, b) = (POOL_POINT[i], POOL_POINT[j])
           p = unitized.PointHomogeneous(x: a.x, y: a.y, z: a.z, w: 1.0)
           q = unitized.PointHomogeneous(x: b.x, y: b.y, z: b.z, w: 1.0)
-          (p_unit, q_unit) = (Layout(x: a.x, y: a.y, z: a.z), Layout(x: b.x, y: b.y, z: b.z))
+          (p_unit, q_unit) = (U(x: a.x, y: a.y, z: a.z), U(x: b.x, y: b.y, z: b.z))
           line = unitized.Line(
             vx: POOL_LINE[i].v.x, vy: POOL_LINE[i].v.y, vz: POOL_LINE[i].v.z,
             mx: POOL_LINE[i].m.x, my: POOL_LINE[i].m.y, mz: POOL_LINE[i].m.z,
@@ -900,7 +900,7 @@ suite "Internal: Unitized":
         var
           (line_homogeneous, line_unit) = (unitized.Line(), unitized.Line())
           (plane_homogeneous, plane_unit) = (unitized.Plane(), unitized.Plane())
-          (moved_homogeneous, moved_unit) = (unitized.PointHomogeneous(), Layout())
+          (moved_homogeneous, moved_unit) = (unitized.PointHomogeneous(), U())
         unitized.join(p, q, line_homogeneous)
         unitized.join(p_unit, q_unit, line_unit)
         check isNear(line_homogeneous, line_unit)  # w = 1 drops each product with w, nothing else
@@ -914,17 +914,17 @@ suite "Internal: Unitized":
         unitized.transform(p, motor, moved_homogeneous)
         unitized.transform(p_unit, motor, moved_unit)
         let moved_expected =
-          Layout(x: moved_homogeneous.x, y: moved_homogeneous.y, z: moved_homogeneous.z)
+          U(x: moved_homogeneous.x, y: moved_homogeneous.y, z: moved_homogeneous.z)
         check moved_homogeneous.w == 1.0  # motor keeps weight of point
         check isNear(moved_expected, moved_unit)  # w = 1 drops each product with w
         for weight in [a.w, -a.w]:
           let point = unitized.PointHomogeneous(x: a.x, y: a.y, z: a.z, w: weight)
           var
             unit_book = unitized.PointHomogeneous()
-            unit_code = Layout()
+            unit_code = U()
           unitized.unitizeBook(point, unit_book)
           unitized.unitizeCode(point, unit_code)
-          let unit_signed = Layout(
+          let unit_signed = U(
             x: unit_book.x * unit_book.w, y: unit_book.y * unit_book.w,
             z: unit_book.z * unit_book.w,
           )
