@@ -1,0 +1,205 @@
+{
+  "schema": 1,
+  "kind": "unitized",
+  "taken": {
+    "date": "2026-10-10",
+    "machine": "linux amd64, 4 cores",
+    "nim": "27763495bcfe265507ca98aedc1c7064bf1e0e4d",
+    "flags": "-d:release",
+    "passes": 7
+  },
+  "takes": [
+    {
+      "1024": {
+        "rounds": 40,
+        "rows": {
+          "join two points": {
+            "saved": 6,
+            "homogeneous": 4.388671875,
+            "null": 4.3916015625,
+            "unitized": 9.61328125,
+            "padded": 9.658203125
+          },
+          "join line and point": {
+            "saved": 3,
+            "homogeneous": 11.7763671875,
+            "null": 11.6865234375,
+            "unitized": 12.6923828125,
+            "padded": 12.6484375
+          },
+          "meet point and plane": {
+            "saved": 1,
+            "homogeneous": 3.23828125,
+            "null": 3.2373046875,
+            "unitized": 3.1220703125,
+            "padded": 3.1611328125
+          },
+          "antisupport": {
+            "saved": 3,
+            "homogeneous": 2.734375,
+            "null": 2.7197265625,
+            "unitized": 2.4609375,
+            "padded": 2.6923828125
+          },
+          "transform by motor": {
+            "saved": 4,
+            "homogeneous": 20.9658203125,
+            "null": 20.96875,
+            "unitized": 17.5966796875,
+            "padded": 17.87890625
+          },
+          "unitize, book against code": {
+            "saved": -1,
+            "homogeneous": 2.4091796875,
+            "null": 2.408203125,
+            "unitized": 2.564453125,
+            "padded": 2.5791015625
+          }
+        }
+      },
+      "1048576": {
+        "rounds": 5,
+        "rows": {
+          "join two points": {
+            "saved": 6,
+            "homogeneous": 26.141874313354492,
+            "null": 24.301918983459473,
+            "unitized": 23.06478786468506,
+            "padded": 27.040471076965332
+          },
+          "join line and point": {
+            "saved": 3,
+            "homogeneous": 33.910709381103516,
+            "null": 32.20958995819092,
+            "unitized": 26.87195873260498,
+            "padded": 32.71229934692383
+          },
+          "meet point and plane": {
+            "saved": 1,
+            "homogeneous": 19.515454292297363,
+            "null": 18.611414909362793,
+            "unitized": 18.004308700561523,
+            "padded": 18.581782341003418
+          },
+          "antisupport": {
+            "saved": 3,
+            "homogeneous": 6.9260149002075195,
+            "null": 6.81684684753418,
+            "unitized": 6.254661560058594,
+            "padded": 6.659113883972168
+          },
+          "transform by motor": {
+            "saved": 4,
+            "homogeneous": 65.60597705841064,
+            "null": 65.13793849945068,
+            "unitized": 65.06211471557617,
+            "padded": 68.12552261352539
+          },
+          "unitize, book against code": {
+            "saved": -1,
+            "homogeneous": 7.292255401611328,
+            "null": 7.574489593505859,
+            "unitized": 7.204258918762207,
+            "padded": 7.146352767944336
+          }
+        }
+      }
+    },
+    {
+      "1024": {
+        "rounds": 40,
+        "rows": {
+          "join two points": {
+            "saved": 6,
+            "homogeneous": 4.4453125,
+            "null": 4.447265625,
+            "unitized": 10.060546875,
+            "padded": 10.1025390625
+          },
+          "join line and point": {
+            "saved": 3,
+            "homogeneous": 11.4638671875,
+            "null": 11.4560546875,
+            "unitized": 12.205078125,
+            "padded": 12.2021484375
+          },
+          "meet point and plane": {
+            "saved": 1,
+            "homogeneous": 3.23828125,
+            "null": 3.2392578125,
+            "unitized": 3.1201171875,
+            "padded": 3.158203125
+          },
+          "antisupport": {
+            "saved": 3,
+            "homogeneous": 2.6943359375,
+            "null": 2.69140625,
+            "unitized": 2.4345703125,
+            "padded": 2.673828125
+          },
+          "transform by motor": {
+            "saved": 4,
+            "homogeneous": 20.953125,
+            "null": 21.001953125,
+            "unitized": 17.599609375,
+            "padded": 17.9111328125
+          },
+          "unitize, book against code": {
+            "saved": -1,
+            "homogeneous": 2.4052734375,
+            "null": 2.4033203125,
+            "unitized": 2.587890625,
+            "padded": 2.6083984375
+          }
+        }
+      },
+      "1048576": {
+        "rounds": 5,
+        "rows": {
+          "join two points": {
+            "saved": 6,
+            "homogeneous": 37.40083312988281,
+            "null": 31.524556159973145,
+            "unitized": 24.579923629760742,
+            "padded": 28.89917755126953
+          },
+          "join line and point": {
+            "saved": 3,
+            "homogeneous": 36.606266021728516,
+            "null": 35.879624366760254,
+            "unitized": 29.376065254211426,
+            "padded": 34.58936405181885
+          },
+          "meet point and plane": {
+            "saved": 1,
+            "homogeneous": 19.224492073059082,
+            "null": 20.87729549407959,
+            "unitized": 20.435606002807617,
+            "padded": 19.090298652648926
+          },
+          "antisupport": {
+            "saved": 3,
+            "homogeneous": 7.277738571166992,
+            "null": 7.081934928894043,
+            "unitized": 6.494537353515625,
+            "padded": 7.0762176513671875
+          },
+          "transform by motor": {
+            "saved": 4,
+            "homogeneous": 67.16084003448486,
+            "null": 65.27737045288086,
+            "unitized": 62.50297451019287,
+            "padded": 66.01059818267822
+          },
+          "unitize, book against code": {
+            "saved": -1,
+            "homogeneous": 7.095693588256836,
+            "null": 6.905416488647461,
+            "unitized": 6.731135368347168,
+            "padded": 7.416888236999512
+          }
+        }
+      }
+    }
+  ]
+}
