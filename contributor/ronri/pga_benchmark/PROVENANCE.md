@@ -549,13 +549,19 @@ stores that the callee just made. On `linux amd64, 4 cores` on 2026-10-10, that 
 unitized join of two points at ×4.4 in one build and ×1.0 in another. So it timed layout, and not
 arithmetic.
 
+Each timed call reads its operands in place. Operands and results lie in two objects, so Nim sees
+no alias between them. In one object, Nim copied each operand to a temporary before the call. The
+vectorised join then read 16 bytes across two stores of that copy, which no store forwards. On
+`linux amd64, 4 cores` on 2026-10-10, that put the unitized join of two points at ×2.2.
+
 The program imports no library code, so its record carries no library commit, and `drive` holds
 no stamp of it. Cost: the verb takes 55 s on `linux amd64, 4 cores` on 2026-10-10, and its pools
 hold 400 MB.
 
 Verified by `test_rga4d.nim`, suite `Internal: Unitized`. Where the weight is one, each unitized
 form equals its homogeneous form, in both layouts. Each row of `baseline/unitized.json` saves the
-multiplies that the C of its two forms differs by.
+multiplies that the C of its two forms differs by. Each timed call hands the slot of its pool to
+the form, and no temporary.
 
 Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Guard`. A grown total is one
 finding. With the fixture path of the suite, it renders so:
