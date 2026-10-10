@@ -10,7 +10,8 @@ This change builds the squared norms from `CAYLEYS_PARTS`: each basis of a part 
 lands on 𝟏 or 𝟙. Under the rigid metric that table equals the dot and antidot tables, cell for
 cell, so nothing changes there. It adds `|■²` and `|□²` for the flat parts. It fills the stubs of
 the center norm, (4.43), and of the radius norm, (4.45). The center norm lands on 𝟏, as a weighted
-distance, and the radius norm on 𝟙, as the antidot gives it.
+distance. The radius norm lands on 𝟙, since the book roots the antidot, 𝐮 ∘ 𝐮 = r²𝟙, and not the
+dot, so a real object has a real radius.
 
 Unitization divides by the round weight norm, as the book says for a round object. A flat object
 has no round weight, so its flat weight serves, as at pin, where `m ∘ m` of a flat object is the
