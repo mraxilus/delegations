@@ -75,7 +75,7 @@ func mirrored*(kept: JsonNode; key: string; marks, dofs: seq[string]): JsonNode 
   for trunk in trunks:
     if trunk.len >= 2: torsos.add (trunk[0], trunk[1])
   result["points"] = traded(flipped(kept["points"], 3, [0]), torsos)
-  result["grips"] = flipped(kept["grips"], 3, [0])
+  result["joins"] = flipped(kept["joins"], 3, [0])
   result["faces"] = flipped(kept["faces"], 2, [0])
   var at = newJArray()
   for turned in kept["at"]: at.add negated(turned)

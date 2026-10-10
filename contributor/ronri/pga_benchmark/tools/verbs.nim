@@ -372,7 +372,8 @@ proc candidatesOf(
 ): seq[Candidate] =
   ## Shape one evaluation candidate per change and per proposed proposal.
   ##   Proposal carries changes of what it builds on first, less any library already implements.
-  ##   Candidate's programs are program texts, so digest moves when program does.
+  ##   Candidate's programs are program texts, its bases' first, so digest moves when one does;
+  ##     program may import program of base.
   ##   Frozen proposal shapes none: library holds or dropped its edits, so they no longer apply.
   for (name, change) in changes:
     result.add Candidate(
@@ -392,6 +393,8 @@ proc candidatesOf(
     let (dependencies, why) = dependenciesOf(proposals, proposal)
     findings.add why
     var programs: seq[string]
+    for path in programsOf(dependencies):
+      if fileExists(path): programs.add readFile(path)
     for path in programsOf(proposal):
       if fileExists(path): programs.add readFile(path)
       else: findings.add Finding(

@@ -497,12 +497,12 @@ func applyOperation*(operation: Operation; m, n: Multivector): Multivector =
     scale_origin = 1.0
   if origin.isSome:
     let
-      point_origin = origin.get.toMultivector
-      slide = motorSliding(subtract(1.0.e4, point_origin))
+      origin_point = origin.get.toMultivector
+      slide = motorSliding(subtract(1.0.e4, origin_point))
       slide_reversed = ~∘slide
     m_model = slid(m, slide, slide_reversed)
     n_model = slid(n, slide, slide_reversed)
-    scale_origin = point_origin.coefficientLargest
+    scale_origin = origin_point.coefficientLargest
   result = operated(operation, m_model, n_model)
 
   # Answer zero where that is rounding of zero.

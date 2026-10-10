@@ -18,7 +18,7 @@
 
 import std/[algorithm, json, jsonutils, options, os, sequtils, tables]
 
-import ./[answers, body, hold, read, rig, rigid, walk]
+import ./[answers, body, hold, limb, read, rig, rigid, walk]
 
 
 const
@@ -36,7 +36,7 @@ type
     lies*: array[2, array[Body, Option[Lying]]]
       ## Where each connection's arm lies on its own body, by body.
     strain*: float  ## Of tightest joint (`tightest`).
-    hand_height*: float  ## Height of first connection's hand, metres.
+    hand_height*: float  ## Height first connection's hand is carried at (`carriedOf`), metres.
     crossed*: int  ## How many times connections cross in plan.
     over*: array[CROSSED, int]  ## Which connection is over, at each crossing.
 
@@ -118,7 +118,7 @@ func glanceOf(band: Band, links: seq[Link], moment: Moment): Glance =
     for who in Body:
       result.lies[k][who] = lyingOn(HUMAN, band, links, moment.stance, moment.arms, k, who)
   result.strain = tightest(HUMAN, moment.stance, links, moment.arms).strain
-  result.hand_height = moment.arms[0][0].grip.z
+  result.hand_height = carriedOf(HUMAN, moment.arms[0][0]).z
   for crossing in crossings(moment.arms):
     if result.crossed < CROSSED: result.over[result.crossed] = crossing.over
     inc result.crossed

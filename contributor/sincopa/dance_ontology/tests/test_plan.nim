@@ -21,6 +21,7 @@ import std/[math, random, unittest]
 
 import ../simulation/[body, hold, limb, plan {.all.}, rig, rigid, vector, walk]
 import ./fixtures
+from ../simulation/engine import nil
 
 
 const
@@ -36,6 +37,8 @@ const
               ## and brings them down again facing.
   JOINED = 1e-3  ## Metres planned joined hands may sit apart: `plan.KEPT` is millimetre
                 ## squared over whole violation, so one pair is never further.
+  TIED = 1e-4  ## Metres engine may part tie of hands stood where plan joins them: tenth of
+              ## millimetre, which single precision holds over one metre.
 
 
 func randomPlan(rig: Rig, generator: var Rand): Plan =
@@ -49,17 +52,22 @@ func randomPlan(rig: Rig, generator: var Rand): Plan =
     for k in 2..4: result[base+k] = generator.rand(-1.5..1.5)
     result[base+5] = generator.rand(rig.range[Dof.Bend].lower..rig.range[Dof.Bend].upper)
     for k in 6..8: result[base+k] = generator.rand(-0.8..0.8)
+  for i in 0..3: result[DEPTHS+i] = generator.rand(gripAtPalm(rig)..gripAtTips(rig))
 
 func pointsOf(placed: ArmPlaced): array[4, Vector] =
-  ## Read four points of arm planner placed, shoulder to grip.
-  [placed.shoulder, placed.elbow, placed.wrist, placed.grip]
+  ## Read four points of arm planner placed, shoulder to join.
+  [placed.shoulder, placed.elbow, placed.wrist, placed.join]
 
 func pointsOf(pose: ArmPose): array[4, Vector] =
-  ## Read four points of posed arm, shoulder to grip.
-  [pose.shoulder, pose.elbow, pose.wrist, pose.grip]
+  ## Read four points of posed arm, shoulder to join.
+  [pose.shoulder, pose.elbow, pose.wrist, pose.join]
 
 func reflected(point: Vector): Vector = (-point.x, point.y, point.z)
   ## Point seen in mirror across couple's line.
+
+func asVector(vector: engine.Vector): Vector =
+  ## Engine's vector as this project's, in same body's own terms.
+  (float(vector.x), float(vector.y), float(vector.z))
 
 proc plainCost(weighing: Weighing, plan: Plan): float =
   ## Cost of pose as planner weighed it before it kept any term: every term reckoned whole
@@ -74,17 +82,18 @@ proc plainCost(weighing: Weighing, plan: Plan): float =
   if problem.style.slack > 0.0: result += problem.style.slack * cramped(HUMAN, problem, placed)
   if problem.style.gather > 0.0 and problem.links.len == 2:
     let (one, two) = (problem.links[0].ends[0], problem.links[1].ends[0])
-    result += problem.style.gather * distance(placed.arms[armIndex(one.body, one.arm)].grip,
-                                              placed.arms[armIndex(two.body, two.arm)].grip)^2
+    result += problem.style.gather * distance(placed.arms[armIndex(one.body, one.arm)].join,
+                                              placed.arms[armIndex(two.body, two.arm)].join)^2
 
 
 
 suite "Internal: Planner and engine are one rig":
-  test "gap to palm is read from nearest point of segment, wherever palm lies along it":
-    ## Planner holds each palm as point with radius (`plan.place`), so every gap it keeps to
-    ##   palm asks `vector.closest` of segment and point.  Read from segment's start, plan of
+  test "gap to point is read from nearest point of segment, wherever point lies along it":
+    ## Planner holds each face as point with radius (`plan.place`), so every gap it keeps to
+    ##   face asks `vector.closest` of segment and point.  Read from segment's start, plan of
     ##   drawn D01 kept 5.8 cm between palm and forearm where palm sat 5.4 cm inside it, and
-    ##   engine stood that palm 4.3 cm inside forearm, measured 2026-10-02.
+    ##   engine stood that palm 4.3 cm inside forearm, measured 2026-10-02, when palm was
+    ##   point too.
     let point: Vector = (0.5, 0.2, 0.0)
     for (a, b) in [((0.0, 0.0, 0.0), (1.0, 0.0, 0.0)), ((1.0, 0.0, 0.0), (0.0, 0.0, 0.0))]:
       let
@@ -93,6 +102,39 @@ suite "Internal: Planner and engine are one rig":
       check abs(near.gap - 0.2) < MIRRORED
       check abs(near.t - 0.5) < MIRRORED
       check abs(back.gap - 0.2) < MIRRORED
+
+
+  test "joined hands turn against each other only as far as their grip lets":
+    ## Palm to palm, grip locks; by fingertips, it turns freely (`rig.gripFreedom`).  So
+    ##   palms turned off facing break plan held at handshake past its cone, and never held by
+    ##   fingertips.  Fingers turned off opposed, likewise past its twist.
+    ##   Two hands that hold at two depths turn as far as one held nearer fingertips lets,
+    ##     and plan keeps its margin inside cone and twist alike.  Red with freedom set by
+    ##     hand held nearer palm, measured 2026-10-09.
+    const margin = 6.0 * PI / 180.0
+    let (cone, twist) = gripFreedom(HUMAN, gripAtPalm(HUMAN))
+    for k in 0..SAMPLES:
+      let angle = PI * float(k) / float(SAMPLES)
+      var a, b: ArmPlaced
+      a.palm = (1.0, 0.0, 0.0)
+      a.fingers = (0.0, 0.0, 1.0)
+      for (palm, fingers, limit) in [
+        ((-cos(angle), sin(angle), 0.0), (0.0, 0.0, -1.0), cone),
+        ((-1.0, 0.0, 0.0), (0.0, sin(angle), -cos(angle)), twist),
+      ]:
+        b.palm = palm
+        b.fingers = fingers
+        for (depth_a, depth_b, is_locked) in [
+          (gripAtPalm(HUMAN), gripAtPalm(HUMAN), true),
+          (gripAtTips(HUMAN), gripAtTips(HUMAN), false),
+          (gripAtPalm(HUMAN), gripAtTips(HUMAN), false),
+          (gripAtTips(HUMAN), gripAtPalm(HUMAN), false),
+        ]:
+          a.depth = depth_a
+          b.depth = depth_b
+          check (gripBroken(HUMAN, a, b, 0.0) > 0.0) == (is_locked and angle > limit + 1e-9)
+          check (gripBroken(HUMAN, a, b, margin) > 0.0) ==
+              (is_locked and angle > limit - margin + 1e-9)
 
 
   test "engine stands every joint where plan places it, and reads plan back":
@@ -136,6 +178,90 @@ suite "Internal: Planner and engine are one rig":
         couple.free()
     checkpoint "furthest point off plan: " & $worst
     check worst < PLACED
+
+
+  test "plan curls each free hand toward its palm, where engine holds it":
+    ## Architect, 2026-10-04: free hand hangs relaxed, half curled, as hand at rest does.
+    ##   Its fingertip lies `rig.relaxed` from wrist and `rig.curled` off hand's own line,
+    ##     toward palm; plan places each of its three capsules where engine holds them.
+    ##   Free hand holds nothing, so its depth is whole hand, as `boundsOf` keeps it.
+    ##   Red with curl turned across knuckles, 30 degrees off line still, measured 2026-10-09.
+    let
+      single = @[Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Right)])]
+      free_hands = [(Body.One, Arm.Right), (Body.Two, Arm.Left)]
+    var
+      generator = initRand(37)
+      worst = 0.0
+    for sample in 0..<SAMPLES:
+      var plan = randomPlan(HUMAN, generator)
+      for (who, arm) in free_hands: plan[DEPTHS+armIndex(who, arm)] = HUMAN.hand
+      let
+        placed = place(HUMAN, plan, 0.0, false)
+        start = placings(HUMAN, plan, 0.0, false, Body.Two)
+      var couple = build(HUMAN, restStance(HUMAN, plan[0]), Band.Crown, single, Body.Two)
+      couple.placeBodies(start.chests, start.arms)
+      for (who, arm) in free_hands:
+        let
+          hand = placed.arms[armIndex(who, arm)]
+          finger = unit(hand.capsules[4].z - hand.capsules[4].a)
+          tip = hand.capsules[4].z + finger * hand.capsules[4].radius
+        check abs(distance(hand.wrist, tip) - HUMAN.relaxed) < 1e-9
+        check abs(arccos(clamp(dot(finger, hand.fingers), -1.0, 1.0)) - HUMAN.curled) < 1e-9
+        # Palm worked out here, from capsules across knuckles and hand's own line, and not
+        # read off plan: palm faces link's negative x for right arm (`rigid.tieFrame`).
+        let
+          across = unit(hand.capsules[5].a - hand.capsules[3].a)
+          palm = cross(across, hand.fingers) * -side(arm)
+          toward = hand.fingers * cos(HUMAN.curled) + palm * sin(HUMAN.curled)
+        check distance(finger, toward) < 1e-9
+        var k = 0
+        for shape in couple.shapes:
+          if shape.mark == Mark.Palm and shape.who == who and shape.arm == arm:
+            let ends = couple.endsOf(shape)
+            worst = max(worst, distance(ends.a, hand.capsules[3+k].a))
+            worst = max(worst, distance(ends.z, hand.capsules[3+k].z))
+            inc k
+        check k == 3
+      couple.free()
+    checkpoint "furthest end of free hand's capsule off plan: " & $worst
+    check worst < PLACED
+
+
+  test "engine shortens each held hand to its grip, as plan does":
+    ## Hand that holds `depth` deep reaches `rig.handLong` past wrist: fingers past join curl
+    ## round partner's hand.  Engine reshapes each held hand so (`rigid.curl`), and holds
+    ## capsule that couple records of it.
+    ##   Within two millimetres of plan, since engine leaves hand that close alone.  Red with
+    ##     no hand reshaped: every hand stood whole hand long, measured 2026-10-09.
+    const reshaped = 0.002 + 1e-6
+    let single = @[Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Right)])]
+    var
+      generator = initRand(41)
+      worst = 0.0
+    for sample in 0..<SAMPLES:
+      let
+        plan = randomPlan(HUMAN, generator)
+        placed = place(HUMAN, plan, 0.0, false)
+        start = placings(HUMAN, plan, 0.0, false, Body.Two)
+      var couple = build(HUMAN, restStance(HUMAN, plan[0]), Band.Crown, single, Body.Two)
+      couple.placeBodies(start.chests, start.arms)
+      for hand in single[0].ends:
+        let
+          index = armIndex(hand.body, hand.arm)
+          long = handLong(HUMAN, plan[DEPTHS+index])
+        var k = 0
+        for shape in couple.shapes:
+          if shape.mark != Mark.Palm or shape.who != hand.body or shape.arm != hand.arm: continue
+          let held = engine.capsuleOf(shape.id)
+          check distance(asVector(held.center1), asVector(shape.a)) < 1e-6
+          check distance(asVector(held.center2), asVector(shape.z)) < 1e-6
+          worst = max(worst, abs(float(held.center2.z) + shape.radius - long))
+          worst = max(worst, distance(couple.endsOf(shape).z, placed.arms[index].capsules[3+k].z))
+          inc k
+        check k == 3
+      couple.free()
+    checkpoint "furthest held hand from its grip's length: " & $worst
+    check worst < reshaped
 
 
   test "mirror image of plan stands every point at its reflection":
@@ -214,8 +340,8 @@ suite "Internal: Planned turn":
       for link in HAND_TO_HAND:
         let (one, two) = (link.ends[0], link.ends[1])
         check distance(
-          placed.arms[armIndex(one.body, one.arm)].grip,
-          placed.arms[armIndex(two.body, two.arm)].grip,
+          placed.arms[armIndex(one.body, one.arm)].join,
+          placed.arms[armIndex(two.body, two.arm)].join,
         ) < JOINED
       for (i, j) in pairsOf(path.problem):
         let
@@ -250,6 +376,33 @@ suite "Internal: Planned turn":
     check followed.at =~ CROSS
 
 
+  test "engine holds each planned moment with every tie whole":
+    ## Stood at each moment and sprung toward it for one moment of walk (`walk.BEATS`),
+    ## engine parts no tie: what engine holds of grip, it measures as plan does.
+    ##   Red with tie's twist limited by engine's own measure, twist about second palm after
+    ##     swing, where plan reads angle between finger lines: with palms tilted far apart
+    ##     those part, and engine dragged joined hands up to 0.8 mm apart, at winds 0.12 to
+    ##     0.26, measured 2026-10-09.
+    var stance = restStance(HUMAN, path.plans[0][0], false)
+    stance[Body.Two].centre.x = path.plans[0][1]
+    var
+      couple = build(HUMAN, stance, Band.Crown, HAND_TO_HAND, Body.Two, false)
+      most = 0.0
+    for moment in 0..<path.plans.len:
+      var here = restStance(HUMAN, path.plans[moment][0], false)
+      here[Body.Two].centre.x = path.plans[moment][1]
+      here = turned(here, path.problem.turner, path.winds[moment])
+      let at = placings(HUMAN, path.plans[moment], path.winds[moment], false,
+                        path.problem.turner)
+      couple.standAt(here, at.chests, at.arms)
+      couple.steer(path.plans[moment], STEER)
+      couple.advance(BEATS)
+      for i in 0..<HAND_TO_HAND.len: most = max(most, couple.poseOf(i).apart)
+    couple.free()
+    checkpoint "ties parted by " & $(most * 1000.0) & " mm at most"
+    check most < TIED
+
+
 
 suite "Internal: Planner's cost":
   test "cost of each freedom's step, from terms planner keeps, is plain cost to last bit":
@@ -271,7 +424,7 @@ suite "Internal: Planner's cost":
           problem.style = style
           (problem.lower, problem.upper) = bandAt(HUMAN, 0.3, 1.0, is_away, style.room)
           let
-            bounds = boundsOf(HUMAN, style.margin)
+            bounds = boundsOf(HUMAN, style.margin, links)
             moving = movedPairs(HUMAN, problem)
           for sample in 0 ..< SAMPLES div 8:
             let wind = generator.rand(-1.0..1.0)
@@ -295,7 +448,7 @@ suite "Internal: Planner's cost":
               var stepped_plan = plan
               stepped_plan[k] += 1e-7
               check costs[k] == plainCost(weighing, stepped_plan)
-            check here.total(weighing, plan) == plainCost(weighing, plan)
+            check here.total(HUMAN, weighing, plan) == plainCost(weighing, plan)
             # Long step of each freedom carries pairs across every threshold, and back.
             for k in 0..<SIZE:
               if bounds[k][0] == bounds[k][1]: continue
@@ -304,11 +457,11 @@ suite "Internal: Planner's cost":
               if k < 4:
                 let moved = moving.bodies[bodyMoving(k)]
                 here.stepBody(held_body, HUMAN, problem, far_plan, wind, k, moved, weighing.before)
-                check here.total(weighing, far_plan) == plainCost(weighing, far_plan)
+                check here.total(HUMAN, weighing, far_plan) == plainCost(weighing, far_plan)
                 here.restoreBody(held_body, k, moved)
               else:
-                let moved = moving.arms[(k-4) div PER_ARM][firstMoved(k)]
+                let moved = moving.arms[armMoved(k)][firstMoved(k)]
                 here.stepArm(held, HUMAN, problem, far_plan, wind, k, moved, weighing.before)
-                check here.total(weighing, far_plan) == plainCost(weighing, far_plan)
+                check here.total(HUMAN, weighing, far_plan) == plainCost(weighing, far_plan)
                 here.restore(held, k, moved)
-              check here.total(weighing, plan) == plainCost(weighing, plan)
+              check here.total(HUMAN, weighing, plan) == plainCost(weighing, plan)

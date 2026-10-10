@@ -202,6 +202,12 @@ proc aimBall*(joint: JointId, target: Quaternion) {.importc: "b3SphericalJoint_S
 proc stiffenBall*(joint: JointId, hertz: cfloat) {.importc: "b3SphericalJoint_SetSpringHertz".}
 proc aimHinge*(joint: JointId, target: cfloat) {.importc: "b3RevoluteJoint_SetTargetAngle".}
 proc stiffenHinge*(joint: JointId, hertz: cfloat) {.importc: "b3RevoluteJoint_SetSpringHertz".}
+proc reshape*(shape: ShapeId, capsule: ptr Capsule) {.importc: "b3Shape_SetCapsule".}
+proc capsuleOf*(shape: ShapeId): Capsule {.importc: "b3Shape_GetCapsule".}
+proc setFrameA*(joint: JointId, frame: Frame) {.importc: "b3Joint_SetLocalFrameA".}
+proc setFrameB*(joint: JointId, frame: Frame) {.importc: "b3Joint_SetLocalFrameB".}
+proc limitCone*(joint: JointId, should_limit: bool) {.importc: "b3SphericalJoint_EnableConeLimit".}
+proc coneBall*(joint: JointId, angle: cfloat) {.importc: "b3SphericalJoint_SetConeLimit".}
 {.pop.}
 
 const

@@ -589,6 +589,12 @@ that commit.
 A program claim names its program relative to its proposal, so a new directory name moves no
 digest.
 
+**A program may import a program of a proposal that it builds on,** by a path relative to its own
+directory. `proposals/10-magnitude/prototype.nim` imports the prototype of P04 this way, so the
+kinds have one copy. So the digest of an evaluation reads the programs of each base first, and
+then its own. A change to a program of a base moves the digest of each proposal on it. Rejected: a
+copy of the kinds in each proposal on P04, since two copies drift apart.
+
 **A suites or program claim may name `defines`**, each `name=value`, and each of its builds
 passes them as `-d:`. So a proposal can hold the library at a build option other than its
 default, as P06 holds its own suites at 32 bits. The defines are part of the claim, so they move
@@ -665,15 +671,18 @@ Alternation does not cancel all drift of a shared machine, so the time of one ev
 weak evidence alone. Counts are exact, and carry the verdicts.
 
 `proposals/04-exact-kinds/prototype.nim` holds its laws against the change of
-`cayley-derivation` at rga3d, rga4d, cga4d and cga5d.
+`cayley-derivation` at rga3d, rga4d, cga4d and cga5d. `proposals/10-magnitude/prototype.nim`
+holds its laws at the same four algebras, on the kinds of that prototype.
 
 Verified by `test_rga4d.nim` and the other stubs, suites `Internal: Markdown`, `Internal: Changes`,
 `Internal: Proposals`, `Internal: Evaluations`, `Internal: Cells` and `Internal: Figures`. They
 cover parse, quote and digest rules, and claim kinds, with the defines a claim may name and the page
-names. They cover proposal numbers taken twice or skipped, and the status that freezes a proposal.
-They also cover pairing of runs, NaN shares, the success line of the compiler, and the table
-serialiser at pin. They cover the algebras that an evaluation measures, with the flag and without
-it. A digest moves with edits, and never with prose.
+names. They cover the programs of a chain of proposals, base first.
+
+The same suites cover proposal numbers taken twice or skipped, and the status that freezes a
+proposal. They also cover pairing of runs, NaN shares, the success line of the compiler, and the
+table serialiser at pin. They cover the algebras that an evaluation measures, with the flag and
+without it. A digest moves with edits, and never with prose.
 
 ## Notes
 
@@ -1069,6 +1078,9 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
 
 ## Open questions
 
+- Whether the bulk norm takes a root under the geometric product, as Lengyel's `Sqrt` does. P10,
+  `magnitude`, roots the weight norm under the antiproduct, as the Architect chose on 2026-10-09.
+  Under the rigid metric a pure bulk has no root there, so the bulk norm keeps its float root.
 - Whether the library takes P03, `partner-sign`, and with it a partner that does not check the
   grade of its operand. At cga5d, P03 on P01 spends the chain bound of 324 multiplies, three
   zero fills and two error checks. P01 alone spends 437, 104 and 268. Both are the counts

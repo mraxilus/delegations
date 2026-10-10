@@ -914,16 +914,16 @@ func pointHeld*(eye, pivot: Position; heading: Direction; radius: float): Positi
   ##   through eye square to it, and `miss` is pivot's distance from its orthogonal
   ##   projection onto ray. Point held is eye plus weightless heading, scaled.
   let
-    place_eye = eye.toMultivector
-    place_pivot = pivot.toMultivector
+    eye_place = eye.toMultivector
+    pivot_place = pivot.toMultivector
     along = ^∙heading.toMultivector
-    ray = place_eye ∧ along
-    nearest = depthAgainst(planeThrough(place_eye, along), place_pivot)
-    miss = distanceBetween(^projectOrthogonal(place_pivot, ray), place_pivot)
+    ray = eye_place ∧ along
+    nearest = depthAgainst(planeThrough(eye_place, along), pivot_place)
+    miss = distanceBetween(^projectOrthogonal(pivot_place, ray), pivot_place)
     back =
       if miss <= radius / sqrt(2.0): sqrt(radius * radius - miss * miss)
       else: radius * radius / (2.0 * miss)
-  position(place_eye + (nearest - back) * along).get(eye)
+  position(eye_place + (nearest - back) * along).get(eye)
 
 
 func orbitCarrying*(camera: var Camera; held, under: Direction) =
@@ -987,12 +987,12 @@ func travelToward*(camera: var Camera, factor: float, anchor: Position, floor_re
   ##     Floor never pushes eye out: it applies only where eye is already further out.
   ##   Separation from pivot is left to caller, which knows anchor's own depth.
   let
-    (place_anchor, place_eye) = (anchor.toMultivector, camera.eye.toMultivector)
-    reach = distanceBetween(place_anchor, place_eye)
+    (anchor_place, eye_place) = (anchor.toMultivector, camera.eye.toMultivector)
+    reach = distanceBetween(anchor_place, eye_place)
   if reach <= 0.0: return
   let settled = max(reach * factor, min(max(floor_reach, DISTANCE_LIMIT_NEAR), reach))
   # Difference of two unit points is weightless point running from one to other.
-  camera.slideBy wedge((reach - settled) / reach, place_anchor - place_eye)
+  camera.slideBy wedge((reach - settled) / reach, anchor_place - eye_place)
 
 
 func flyAhead*(camera: var Camera, step: float) =
@@ -1435,9 +1435,9 @@ func stepOutTo*(eye, centre: Position; heading: Direction; reach: float): float 
   ##   Replaced bisection over `framing.isShownAll`, about 25 projections of every watched
   ##   object for each pick.
   let
-    (place_eye, place_centre) = (eye.toMultivector, centre.toMultivector)
-    along = depthAgainst(planeThrough(place_centre, heading.toMultivector), place_eye)
-    gap = distanceBetween(place_eye, place_centre)
+    (eye_place, centre_place) = (eye.toMultivector, centre.toMultivector)
+    along = depthAgainst(planeThrough(centre_place, heading.toMultivector), eye_place)
+    gap = distanceBetween(eye_place, centre_place)
     outside = gap * gap - reach * reach
   if outside >= 0.0: return 0.0
   sqrt(along * along - outside) - along

@@ -1,0 +1,11 @@
+{
+  "status": "proposed",
+  "builds_on": ["exact-kinds"],
+  "claims": [
+    {
+      "kind": "program",
+      "path": "prototype.nim",
+      "algebras": ["rga3d", "rga4d", "cga4d", "cga5d"]
+    }
+  ]
+}

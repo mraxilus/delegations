@@ -232,11 +232,11 @@ proc paintOn(
       discard context.fill()
 
   # Where hands are joined, and how far engine has pulled them apart.
-  let grip = recording.grips[at]
-  for k in 0 ..< count(grip) div 3:
-    let seen_grip = seen(
-      (x: grip[k*3].toFloat, y: grip[k*3+1].toFloat,
-                    z: grip[k*3+2].toFloat),
+  let joined = recording.joins[at]
+  for k in 0 ..< count(joined) div 3:
+    let seen_join = seen(
+      (x: joined[k*3].toFloat, y: joined[k*3+1].toFloat,
+                    z: joined[k*3+2].toFloat),
       azimuth,
       elevation,
       framing,
@@ -244,8 +244,8 @@ proc paintOn(
     context.fillStyle = styleOf("--ink").toJs
     discard context.beginPath()
     discard context.arc(
-      centre_x + seen_grip.x * scale,
-      centre_y + seen_grip.y * scale,
+      centre_x + seen_join.x * scale,
+      centre_y + seen_join.y * scale,
       3.0,
       0.0,
       2.0 * PI,

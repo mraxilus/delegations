@@ -81,8 +81,7 @@ _Avoid_: mirror pair, counterpart, opposite hold
 **Grip**:
 The manner in which the Lead holds the hand of the Follow, such as a palm grip or a finger
 grip. It is part of a frame position, but no frame state depends on it. Two frames that
-differ only in grip are one frame state. It is defined so that the word is not overloaded,
-and it is used for nothing here.
+differ only in grip are one frame state. It is defined so that the word is not overloaded.
 _Avoid_: hold, grasp, handhold, contact point
 
 **Free**:
