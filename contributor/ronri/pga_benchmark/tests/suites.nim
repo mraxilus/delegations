@@ -303,9 +303,10 @@ suite "Chapter 2":
       for p in POOL_POINT:
         var reversed = p
         reversed.w = -p.w  # weight below zero, as meet of operands in reverse order gives
-        check widen(unitize(reversed)) =~ ^widen(reversed)  # 2.89, sign of weight kept
+        check widen(unitize(reversed)) =~ ^widen(reversed)  # 2.89, as library unitizes
+        check unitize(reversed).w < 0.0  # 2.89, sign of weight kept
     else:
-      skip()
+      skip()  # conformal algebras hold no typed point
 
 
 checkReferencesWiki(CATALOGUE)
