@@ -5,6 +5,7 @@
 ##     book's rule, which keeps sign of weight, so this program measures what that rule forgoes.
 ##   Each pair transcribes scalar path of `TSRigid3D.h` and `TSMotor3D.cpp` into 64-bit floats,
 ##     as references here are; it copies no code, and counts in each doc are those of that path.
+##   Forms and their types are exported, so suites hold each form to its pair and read its C.
 ##   Three layouts: homogeneous point of four floats, his unitized point of three, and unitized
 ##     point padded to four, so saved arithmetic shows apart from smaller layout.
 ##   Two pool sizes: one that cache holds, and one that streams from memory.
@@ -35,25 +36,25 @@ const
 
 
 type
-  PointHomogeneous {.byref.} = object  ## Define point x e1 + y e2 + z e3 + w e4, as `FlatPoint3D`.
-    x, y, z, w: float
-  PointUnitized {.byref.} = object  ## Define point with implicit w = 1, as `Point3D`.
-    x, y, z: float
-  PointPadded {.byref.} = object  ## Define unitized point padded to four floats; pad unread.
-    x, y, z, pad: float
-  Line {.byref.} = object  ## Define line: direction v on e41 e42 e43, moment m on e23 e31 e12.
-    vx, vy, vz, mx, my, mz: float
-  Plane {.byref.} = object  ## Define plane x e423 + y e431 + z e412 + w e321.
-    x, y, z, w: float
-  Motor {.byref.} = object  ## Define motor: v on e41 e42 e43 𝟙, m on e23 e31 e12 𝟏.
-    vx, vy, vz, vw, mx, my, mz, mw: float
-  Unitized = PointUnitized | PointPadded  ## Define either layout of unitized point.
+  PointHomogeneous* {.byref.} = object  ## Define point x e1 + y e2 + z e3 + w e4, as `FlatPoint3D`.
+    x*, y*, z*, w*: float
+  PointUnitized* {.byref.} = object  ## Define point with implicit w = 1, as `Point3D`.
+    x*, y*, z*: float
+  PointPadded* {.byref.} = object  ## Define unitized point padded to four floats; pad unread.
+    x*, y*, z*, pad*: float
+  Line* {.byref.} = object  ## Define line: direction v on e41 e42 e43, moment m on e23 e31 e12.
+    vx*, vy*, vz*, mx*, my*, mz*: float
+  Plane* {.byref.} = object  ## Define plane x e423 + y e431 + z e412 + w e321.
+    x*, y*, z*, w*: float
+  Motor* {.byref.} = object  ## Define motor: v on e41 e42 e43 𝟙, m on e23 e31 e12 𝟏.
+    vx*, vy*, vz*, vw*, mx*, my*, mz*, mw*: float
+  Unitized* = PointUnitized | PointPadded  ## Define either layout of unitized point.
 
 
 
 #[ Operations ]#
 
-func join(p, q: PointHomogeneous, line: var Line) {.noinline.} =
+func join*(p, q: PointHomogeneous, line: var Line) {.noinline.} =
   ## Join two points into line, i.e. 𝐩 ∧ 𝐪; 12 mul, 6 sub.
   line = Line(
     vx: p.w * q.x - p.x * q.w, vy: p.w * q.y - p.y * q.w, vz: p.w * q.z - p.z * q.w,
@@ -61,7 +62,7 @@ func join(p, q: PointHomogeneous, line: var Line) {.noinline.} =
   )
 
 
-func join[U: Unitized](p, q: U, line: var Line) {.noinline.} =
+func join*[U: Unitized](p, q: U, line: var Line) {.noinline.} =
   ## Join two unitized points into line, i.e. 𝐩 ∧ 𝐪 with w = 1; 6 mul, 6 sub.
   line = Line(
     vx: q.x - p.x, vy: q.y - p.y, vz: q.z - p.z,
@@ -69,7 +70,7 @@ func join[U: Unitized](p, q: U, line: var Line) {.noinline.} =
   )
 
 
-func join(l: Line, p: PointHomogeneous, plane: var Plane) {.noinline.} =
+func join*(l: Line, p: PointHomogeneous, plane: var Plane) {.noinline.} =
   ## Join line and point into plane, i.e. 𝐥 ∧ 𝐩; 12 mul, 8 add.
   plane = Plane(
     x: l.vy * p.z - l.vz * p.y + l.mx * p.w,
@@ -79,7 +80,7 @@ func join(l: Line, p: PointHomogeneous, plane: var Plane) {.noinline.} =
   )
 
 
-func join[U: Unitized](l: Line, p: U, plane: var Plane) {.noinline.} =
+func join*[U: Unitized](l: Line, p: U, plane: var Plane) {.noinline.} =
   ## Join line and unitized point into plane, i.e. 𝐥 ∧ 𝐩 with w = 1; 9 mul, 8 add.
   plane = Plane(
     x: l.vy * p.z - l.vz * p.y + l.mx,
@@ -89,27 +90,27 @@ func join[U: Unitized](l: Line, p: U, plane: var Plane) {.noinline.} =
   )
 
 
-func meet(p: PointHomogeneous, g: Plane): float {.noinline.} =
+func meet*(p: PointHomogeneous, g: Plane): float {.noinline.} =
   ## Meet point and plane, i.e. 𝐩 ∨ 𝐠, weighted distance; 4 mul, 3 add.
   p.x * g.x + p.y * g.y + p.z * g.z + p.w * g.w
 
 
-func meet[U: Unitized](p: U, g: Plane): float {.noinline.} =
+func meet*[U: Unitized](p: U, g: Plane): float {.noinline.} =
   ## Meet unitized point and plane, i.e. 𝐩 ∨ 𝐠 with w = 1, signed distance; 3 mul, 3 add.
   p.x * g.x + p.y * g.y + p.z * g.z + g.w
 
 
-func antisupport(p: PointHomogeneous, plane: var Plane) {.noinline.} =
+func antisupport*(p: PointHomogeneous, plane: var Plane) {.noinline.} =
   ## Get plane through point, normal to its direction from origin; 6 mul, 2 add.
   plane = Plane(x: -p.x * p.w, y: -p.y * p.w, z: -p.z * p.w, w: p.x * p.x + p.y * p.y + p.z * p.z)
 
 
-func antisupport[U: Unitized](p: U, plane: var Plane) {.noinline.} =
+func antisupport*[U: Unitized](p: U, plane: var Plane) {.noinline.} =
   ## Get plane through unitized point, normal to its direction from origin; 3 mul, 2 add.
   plane = Plane(x: -p.x, y: -p.y, z: -p.z, w: p.x * p.x + p.y * p.y + p.z * p.z)
 
 
-func transform(p: PointHomogeneous, q: Motor, moved: var PointHomogeneous) {.noinline.} =
+func transform*(p: PointHomogeneous, q: Motor, moved: var PointHomogeneous) {.noinline.} =
   ## Move point by motor, i.e. 𝐐 ⟇ 𝐩 ⟇ 𝐐̰; 25 mul, 18 add.
   let
     ax = q.vy * p.z - q.vz * p.y + q.mx * p.w
@@ -122,7 +123,7 @@ func transform(p: PointHomogeneous, q: Motor, moved: var PointHomogeneous) {.noi
   moved = PointHomogeneous(x: p.x + 2 * ux, y: p.y + 2 * uy, z: p.z + 2 * uz, w: p.w)
 
 
-func transform[U: Unitized](p: U, q: Motor, moved: var U) {.noinline.} =
+func transform*[U: Unitized](p: U, q: Motor, moved: var U) {.noinline.} =
   ## Move unitized point by motor, i.e. 𝐐 ⟇ 𝐩 ⟇ 𝐐̰ with w = 1; 21 mul, 18 add.
   let
     ax = q.vy * p.z - q.vz * p.y + q.mx
@@ -136,13 +137,13 @@ func transform[U: Unitized](p: U, q: Motor, moved: var U) {.noinline.} =
   moved.z = p.z + 2 * uz
 
 
-func unitizeBook(p: PointHomogeneous, unit: var PointHomogeneous) {.noinline.} =
+func unitizeBook*(p: PointHomogeneous, unit: var PointHomogeneous) {.noinline.} =
   ## Unitize point by size of weight, as book does, so sign of w stays; 1 abs, 1 div, 4 mul.
   let n = 1 / abs(p.w)
   unit = PointHomogeneous(x: p.x * n, y: p.y * n, z: p.z * n, w: p.w * n)
 
 
-func unitizeCode[U: Unitized](p: PointHomogeneous, unit: var U) {.noinline.} =
+func unitizeCode*[U: Unitized](p: PointHomogeneous, unit: var U) {.noinline.} =
   ## Unitize point by signed weight, as Lengyel's code does, so w = 1 and drops; 1 div, 3 mul.
   let n = 1 / p.w
   unit.x = p.x * n
