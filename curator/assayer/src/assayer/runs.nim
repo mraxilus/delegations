@@ -19,7 +19,9 @@
 ##     - `run` passes where compile exits 0 printing no error, then program exits 0;
 ##     - `compile` passes where compile exits 0 printing no error;
 ##     - `reject` passes where compile exits 1, its last error naming test file.
-##     Error is line testament reads as one (`errorLast`).
+##     Error is line testament reads as one (`errorLast`). Reason of failure is lowercase with no
+##       period, as message after `error:` of rustc is, since report prints it after colon.
+##   Each step carries its duration, read on monotonic clock for report alone; no verdict reads it.
 ##   Outcomes arrive in any order, and each is released in plan order once every run before it has
 ##     one (`released`), so report prints same lines in same order every time.
 ##
@@ -28,7 +30,9 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[locks, options, os, osproc, parseutils, streams, strutils, typedthreads]
+import std/[
+  locks, monotimes, options, os, osproc, parseutils, streams, strutils, times, typedthreads,
+]
 import ./[headers, plans]
 
 
@@ -38,6 +42,7 @@ type
     output*: string  ## Its stdout and stderr together.
     code*: int  ## Its exit code.
     failure*: string  ## Why command could not start; empty where it started.
+    duration*: Duration  ## Time from start to exit, for report alone.
 
   Outcome* = object  ## Define what one run did.
     compile*: Step  ## Compile.
@@ -73,22 +78,29 @@ func failureOf*(run: Run, outcome: Outcome): string =
   let
     compile = outcome.compile
     error = compile.output.errorLast
-  if compile.failure.len > 0: return "Compile cannot start; got `" & compile.failure & "`."
+  if compile.failure.len > 0: return "compile cannot start: " & compile.failure
   if run.action == Action.Reject:
-    if compile.code != 1: return "Compile exits " & $compile.code & ", where rejection exits 1."
-    if error.isNone: return "Compile exits 1, printing no error."
-    if error.get.len == 0: return "Compile rejects with error naming no file."
+    if compile.code == 0: return "compiles, where the header asks for rejection"
+    if compile.code != 1: return "compile exits " & $compile.code & ", where rejection exits 1"
+    if error.isNone: return "compile exits 1 with no error line"
+    if error.get.len == 0: return "compile rejects with an error that names no file"
     if error.get != run.file.extractFilename:
-      return "Compile rejects in `" & error.get & "`, not in test file."
+      return "compile rejects in `" & error.get & "`, not in the test file"
     return ""
-  if compile.code != 0: return "Compile exits " & $compile.code & "."
-  if error.isSome: return "Compile exits 0, printing error."
+  if compile.code != 0: return "compile exits " & $compile.code
+  if error.isSome: return "compile exits 0, yet prints an error"
   if run.action == Action.Compile: return ""
-  if outcome.execution.isNone: return "Compile writes no program at `" & run.executable & "`."
+  if outcome.execution.isNone: return "compile writes no program at `" & run.executable & "`"
   let execution = outcome.execution.get
-  if execution.failure.len > 0: return "Program cannot start; got `" & execution.failure & "`."
-  if execution.code != 0: return "Program exits " & $execution.code & "."
+  if execution.failure.len > 0: return "program cannot start: " & execution.failure
+  if execution.code != 0: return "program exits " & $execution.code
   ""
+
+
+func durationOf*(outcome: Outcome): Duration =
+  ## Read time run took: compile, then program where it ran.
+  result = outcome.compile.duration
+  if outcome.execution.isSome: result += outcome.execution.get.duration
 
 
 proc captured(
@@ -97,6 +109,7 @@ proc captured(
   ## Run command, read its output to end, then wait for its exit code.
   ##   With `as_shell`, shell reads command and `arguments` is empty; otherwise command is program.
   result.command = if as_shell: command else: quoteShellCommand(@[command] & @arguments)
+  let started = getMonoTime()
   var process: Process
   try:
     withLock lock_pipes:
@@ -112,6 +125,7 @@ proc captured(
   try:
     result.output = process.outputStream.readAll
     result.code = process.waitForExit
+    result.duration = getMonoTime() - started
   finally:
     withLock lock_pipes: process.close
 

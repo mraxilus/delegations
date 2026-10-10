@@ -37,12 +37,12 @@ suite "Headers":
     let
       past = "\n".repeat(LINE_OPENING_MAX) & OPENING & "\n" & QUOTES & "\n"
       last = "\n".repeat(LINE_OPENING_MAX - 1) & OPENING & "\n" & QUOTES & "\n"
-    check past.textHeader.refusal == "Header opens past line `10`; got line `11`."  # line 11
+    check past.textHeader.refusal == "header opens on line 11, past line 10"  # line 11
     check last.textHeader.refusal == ""  # line 10 is last line header may open on
     check textHeader(headed("action: run") & OPENING & "\n" & QUOTES).refusal ==
-        "Header opens twice; got second opening on line `5`."  # second opening anywhere
+        "header opens twice, again on line 5"  # second opening anywhere
     check textHeader(OPENING & "\naction: run\n").refusal ==
-        "Header opens on line `1` and never closes."  # no closing quote
+        "header opens on line 1 and never closes"  # no closing quote
 
 
   test "absent key takes default of testament, and given key its value, in every combination":
@@ -83,19 +83,20 @@ suite "Headers":
 
 
   test "key outside four, key given twice, and value testament lacks are refusals":
-    check headed("exitcode: 1").headerOf.refusal ==
-        "Header gives key assayer does not read; got `exitcode`."  # testament honours it
-    check headed("output: \"1\"").headerOf.refusal ==
-        "Header gives key assayer does not read; got `output`."
+    check headed("exitcode: 1").headerOf.refusal == "header key `exitcode` is not read; " &
+        "assayer reads `action`, `cmd`, `matrix` and `targets`"  # testament honours it
+    check headed("output: \"1\"").headerOf.refusal.startsWith("header key `output` is not read")
     check headed("cmd: \"a\"", "CMD: \"b\"").headerOf.refusal ==
-        "Header gives key twice; got `CMD`."  # normalized alike
+        "header gives key `CMD` twice"  # normalized alike
     check headed("action: build").headerOf.refusal ==
-        "Header names action testament lacks; got `build`."
+        "header action `build` is none of `compile`, `reject` and `run`"
     check headed("targets: \"c wasm\"").headerOf.refusal ==
-        "Header names target testament lacks; got `wasm`."
-    check headed("[section]").headerOf.refusal == "Header opens section; got `[section]`."
-    check headed("--define: x").headerOf.refusal == "Header holds option; got `--define`."
-    check headed("action: : run").headerOf.refusal.startsWith("Header does not parse; got `")
+        "header target `wasm` is none of `c`, `cpp`, `c++`, `objc` and `js`"
+    check headed("[section]").headerOf.refusal ==
+        "header opens section `[section]`; testament ignores it"
+    check headed("--define: x").headerOf.refusal ==
+        "header holds option `--define`; testament ignores it"
+    check headed("action: : run").headerOf.refusal.startsWith("header does not parse: ")
 
 
   test "word names backend as testament names it, case aside, and other word names none":

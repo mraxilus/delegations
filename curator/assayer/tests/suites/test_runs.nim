@@ -3,7 +3,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, options, os, sequtils, strutils, tempfiles, unittest]
+import std/[algorithm, options, os, sequtils, strutils, tempfiles, times, unittest]
 import ../../src/assayer/[headers, plans, runs]
 
 
@@ -77,24 +77,35 @@ suite "Runs":
       run = Run(file: FILE, action: Action.Run, executable: "/work/program")
       reject = Run(file: FILE, action: Action.Reject)
       clean = Step(code: 0)
-    check Run(refusal: "No Node.js.").failureOf(Outcome()) == "No Node.js."  # refusal itself
+    check Run(refusal: "no Node.js").failureOf(Outcome()) == "no Node.js"  # refusal itself
     check run.failureOf(Outcome(compile: Step(failure: "no shell"))) ==
-        "Compile cannot start; got `no shell`."
-    check run.failureOf(Outcome(compile: Step(code: 1))) == "Compile exits 1."
+        "compile cannot start: no shell"
+    check run.failureOf(Outcome(compile: Step(code: 1))) == "compile exits 1"
     check run.failureOf(Outcome(compile: Step(output: "Error: x"))) ==
-        "Compile exits 0, printing error."
-    check run.failureOf(Outcome(compile: clean)) ==
-        "Compile writes no program at `/work/program`."
+        "compile exits 0, yet prints an error"
+    check run.failureOf(Outcome(compile: clean)) == "compile writes no program at `/work/program`"
     check run.failureOf(Outcome(compile: clean, execution: some(Step(code: 3)))) ==
-        "Program exits 3."
+        "program exits 3"
     check run.failureOf(Outcome(compile: clean, execution: some(Step(failure: "denied")))) ==
-        "Program cannot start; got `denied`."
-    check reject.failureOf(Outcome(compile: clean)) == "Compile exits 0, where rejection exits 1."
-    check reject.failureOf(Outcome(compile: Step(code: 1))) == "Compile exits 1, printing no error."
+        "program cannot start: denied"
+    check reject.failureOf(Outcome(compile: clean)) ==
+        "compiles, where the header asks for rejection"
+    check reject.failureOf(Outcome(compile: Step(code: 2))) ==
+        "compile exits 2, where rejection exits 1"
+    check reject.failureOf(Outcome(compile: Step(code: 1))) == "compile exits 1 with no error line"
     check reject.failureOf(Outcome(compile: Step(code: 1, output: "Error: x"))) ==
-        "Compile rejects with error naming no file."
+        "compile rejects with an error that names no file"
     check reject.failureOf(Outcome(compile: Step(code: 1, output: some("other.nim").outputOf))) ==
-        "Compile rejects in `other.nim`, not in test file."
+        "compile rejects in `other.nim`, not in the test file"
+
+
+  test "duration of run is compile, then program where it ran":
+    let
+      compile = Step(duration: initDuration(milliseconds = 1200))
+      program = Step(duration: initDuration(milliseconds = 300))
+    check Outcome(compile: compile).durationOf == initDuration(milliseconds = 1200)  # no program
+    check Outcome(compile: compile, execution: some(program)).durationOf ==
+        initDuration(milliseconds = 1500)  # both steps
 
 
   test "outcome releases in plan order as soon as every run before it has one, in every order":
@@ -136,7 +147,7 @@ suite "Runs":
       check outcome.execution.get.output == "out " & $place & "\n"  # its own output
       check outcome.execution.get.code == place  # its own exit code
       check plan[place].failureOf(outcome) ==
-          (if place == 0: "" else: "Program exits " & $place & ".")
+          (if place == 0: "" else: "program exits " & $place)
 
 
   test "output past pipe buffer reads whole, and blocks no thread":
@@ -160,8 +171,8 @@ suite "Runs":
     setFilePermissions(stale.executable, {fpUserExec, fpUserRead, fpUserWrite})
     let outcomes = @[stale, blocked].runAll(2) do (place: int, outcome: Outcome): discard
     check stale.failureOf(outcomes[0]) ==
-        "Compile writes no program at `" & stale.executable & "`."  # stale one deleted first
-    check blocked.failureOf(outcomes[1]).startsWith("Program cannot start; got `")  # not exec
+        "compile writes no program at `" & stale.executable & "`"  # stale one deleted first
+    check blocked.failureOf(outcomes[1]).startsWith("program cannot start: ")  # not exec
 
 
   test "compile and reject judge real compiler output, and refused run makes nothing":

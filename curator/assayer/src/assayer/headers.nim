@@ -25,6 +25,9 @@ const
   OPENING = "discard \"\"\""  ## Text opening header.
   QUOTES = "\"\"\""  ## Text closing header.
   LINE_OPENING_MAX* = 10  ## Last line header may open on, as testament has it.
+  KEYS = "`action`, `cmd`, `matrix` and `targets`"  ## Keys header may give, as messages list them.
+  ACTIONS = "`compile`, `reject` and `run`"  ## Actions testament reads, as messages list them.
+  TARGETS = "`c`, `cpp`, `c++`, `objc` and `js`"  ## Backend words testament reads, as listed.
   COMMAND_DEFAULT* =
     "nim $target --hints:on -d:testing --nimblePath:build/deps/pkgs2 $options $file"
     ## Compile command testament takes where header names none, word for word.
@@ -75,9 +78,9 @@ func textHeader*(source: string): tuple[text, refusal: string] =
   while i < source.len:
     if (i == 0 or source[i-1] != ' ') and source.continuesWith(OPENING, i):
       if first >= 0:
-        return ("", "Header opens twice; got second opening on line `" & $line & "`.")
+        return ("", "header opens twice, again on line " & $line)
       if line > LINE_OPENING_MAX:
-        return ("", "Header opens past line `" & $LINE_OPENING_MAX & "`; got line `" & $line & "`.")
+        return ("", "header opens on line " & $line & ", past line " & $LINE_OPENING_MAX)
       i += OPENING.len
       first = i
       line_opening = line
@@ -88,7 +91,7 @@ func textHeader*(source: string): tuple[text, refusal: string] =
       if source[i] == '\n': inc line
       inc i
   if first < 0: return ("", "")
-  if last < 0: return ("", "Header opens on line `" & $line_opening & "` and never closes.")
+  if last < 0: return ("", "header opens on line " & $line_opening & " and never closes")
   (source[first..<last].multiReplace(("'''", QUOTES), ("\\31", "\31")), "")
 
 
@@ -113,14 +116,14 @@ proc headerOf*(source: string): Header =
     case event.kind
     of cfgEof: break
     of cfgSectionStart:
-      return Header(refusal: "Header opens section; got `[" & event.section & "]`.")
+      return Header(refusal: "header opens section `[" & event.section & "]`; testament ignores it")
     of cfgOption:
-      return Header(refusal: "Header holds option; got `--" & event.key & "`.")
+      return Header(refusal: "header holds option `--" & event.key & "`; testament ignores it")
     of cfgError:
-      return Header(refusal: "Header does not parse; got `" & event.msg & "`.")
+      return Header(refusal: "header does not parse: " & event.msg)
     of cfgKeyValuePair:
       let key = event.key.normalize
-      if key in keys: return Header(refusal: "Header gives key twice; got `" & event.key & "`.")
+      if key in keys: return Header(refusal: "header gives key `" & event.key & "` twice")
       keys.add key
       case key
       of "action":
@@ -129,7 +132,7 @@ proc headerOf*(source: string): Header =
         of "reject": result.action = Action.Reject
         of "run": result.action = Action.Run
         else:
-          return Header(refusal: "Header names action testament lacks; got `" & event.value & "`.")
+          return Header(refusal: "header action `" & event.value & "` is none of " & ACTIONS)
       of "cmd": result.command = event.value
       of "matrix":
         for configuration in event.value.split(';'): matrix.add configuration.strip
@@ -137,9 +140,9 @@ proc headerOf*(source: string): Header =
         for word in event.value.splitWhitespace:
           let target = word.targetOf
           if target.isNone:
-            return Header(refusal: "Header names target testament lacks; got `" & word & "`.")
+            return Header(refusal: "header target `" & word & "` is none of " & TARGETS)
           targets.incl target.get
       else:
-        return Header(refusal: "Header gives key assayer does not read; got `" & event.key & "`.")
+        return Header(refusal: "header key `" & event.key & "` is not read; assayer reads " & KEYS)
   if matrix.len > 0: result.matrix = matrix
   if targets != {}: result.targets = targets

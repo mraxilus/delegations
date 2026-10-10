@@ -6,7 +6,7 @@
 ##     each its own compile, with its own cache.
 ##   Header reads as testament reads it (`headers.nim`), command builds as testament builds it
 ##     (`plans.nim`), and verdict falls as testament gives it (`runs.nim`), so file passing here
-##     passes there.
+##     passes there. Report reads as test runners that read well write theirs (`reports.nim`).
 ##   Compiler of each pin comes from toolchain of knoller (`compilers.nim`), which serves each pin
 ##     from PATH, cache or fetch; package imports knoller by relative path, as `curator/audit` does.
 ##   Command line, `assayer [--jobs:n] [--nim:path] file...`, lives in `command.nim`; umbrella
@@ -20,9 +20,9 @@
 when compileOption("profiler"):
   import std/nimprof
 
-import ./assayer/[command, headers, plans, runs]
+import ./assayer/[command, headers, plans, reports, runs]
 
-export headers, plans, runs
+export headers, plans, reports, runs
 
 
 when isMainModule:

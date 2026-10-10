@@ -51,7 +51,7 @@ suite "Plans":
         let runs = runsOf(FILE, headerWith(subset.setOf, count), COMPILER, NODE, ROOT)
         check runs.mapIt(it.executable.parentDir).toHashSet.card == runs.len  # distinct
         for run in runs:
-          check run.executable.startsWith(ROOT / DIRECTORY_RUNS / "test_k_")  # below root
+          check run.executable.startsWith(ROOT / DIRECTORY_RUNS / "tests/test_k/")  # its path
 
 
   test "command replaces leading `nim` and each name, options of run before configuration":
@@ -62,6 +62,8 @@ suite "Plans":
     check run.command == COMPILER & " c --nimCache:" & directory & " --out:" & run.executable &
         " -d:k=0 " & FILE  # configuration speaks last
     check run.execution == @[run.executable]  # program alone
+    check run.rerun == COMPILER & " c -d:k=0 " & FILE  # no cache or program of run, spaces joined
+    check run.logOf == directory / FILE_LOG  # log beside program
     check run.refusal == ""  # run can start
 
 
@@ -81,7 +83,7 @@ suite "Plans":
     check run.executable.endsWith("test_k.js")  # script, not program
     check run.execution == @[NODE, "--unhandled-rejections=strict", run.executable]  # as testament
     check runsOf(FILE, headerWith({Target.JavaScript}, 1), COMPILER, "", ROOT)[0].refusal ==
-        "No Node.js on PATH, which JavaScript run needs."  # refused before compile
+        "no Node.js on PATH for a JavaScript run"  # refused before compile
 
 
   test "backend configuration names moves run, last one winning, unknown one moving none":
@@ -94,10 +96,33 @@ suite "Plans":
     check run.target == Target.JavaScript and run.execution[0] == NODE  # moved run executes so
 
 
-  test "template naming nothing testament replaces refuses each run":
+  test "template naming what testament fills nothing for refuses, naming it":
+    check nameUnfilled("nim c $options $file") == ""  # names testament fills
+    check nameUnfilled("$nim ${target} $$HOME $filedir") == ""  # braces and escaped dollar
+    check nameUnfilled("nim c $flags $file") == "$flags"  # first name nothing fills
+    check nameUnfilled("nim c $1 $file") == "$1"  # no place by number
+    check nameUnfilled("nim c ${opts") == "${opts"  # brace never closed
+    check nameUnfilled("nim c $") == "$"  # lone dollar
+    check refusalTemplate("nim c $flags $file") ==
+        "header command names `$flags`, which testament does not fill"
+    check refusalTemplate(COMMAND_DEFAULT) == ""  # default of testament fills
     let runs = runsOf(FILE, Header(command: "nim c $flags $file"), COMPILER, NODE, ROOT)
-    check runs.len == 1 and runs[0].refusal ==
-        "Header command holds `$` naming nothing; got `nim c $flags $file`."
+    check runs.len == 1 and runs[0].refusal == refusalTemplate("nim c $flags $file")
+
+
+  test "rerun joins runs of spaces outside quotes, and keeps those inside":
+    check spacesJoined("nim c  --hints:on   tests/a.nim ") == "nim c --hints:on tests/a.nim"
+    check spacesJoined("nim c -d:m=\"a  b\"  x") == "nim c -d:m=\"a  b\" x"  # quoted kept
+    check spacesJoined("nim c '-d:a  b'  x") == "nim c '-d:a  b' x"  # single quotes too
+
+
+  test "directory of run reads as path of file, backend and place, counted from one":
+    check directoryOf(FILE, ROOT, Target.C, 0) == ROOT / DIRECTORY_RUNS / "tests/test_k/c_1"
+    check directoryOf(FILE, ROOT, Target.JavaScript, 2) ==
+        ROOT / DIRECTORY_RUNS / "tests/test_k/js_3"  # third configuration
+    let outside = directoryOf("/elsewhere/test_k.nim", ROOT, Target.C, 0)
+    check outside.startsWith(ROOT / DIRECTORY_RUNS / "test_k_")  # name and hash, never `..`
+    check outside.endsWith("/c_1") and ".." notin outside
 
 
   test "two paths naming one file share directory, and two files of one name part":
