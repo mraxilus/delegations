@@ -547,9 +547,15 @@ Article VII.9 asks, and records both takes in `baseline/unitized.json`. It never
 Rejected: a result returned by value. It passes through a temporary, and its copy reloads the
 stores that the callee just made. On `linux amd64, 4 cores` on 2026-10-10, that stall put the
 unitized join of two points at ×4.4 in one build and ×1.0 in another. So it timed layout, and not
-arithmetic. The program imports no
-library code, so its record carries no library commit, and `drive` holds no stamp of it. Cost:
-about 60 s and 400 MB of pools a run.
+arithmetic.
+
+The program imports no library code, so its record carries no library commit, and `drive` holds
+no stamp of it. Cost: the verb takes 55 s on `linux amd64, 4 cores` on 2026-10-10, and its pools
+hold 400 MB.
+
+Verified by `test_rga4d.nim`, suite `Internal: Unitized`. Where the weight is one, each unitized
+form equals its homogeneous form, in both layouts. Each row of `baseline/unitized.json` saves the
+multiplies that the C of its two forms differs by.
 
 Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Guard`. A grown total is one
 finding. With the fixture path of the suite, it renders so:
@@ -931,8 +937,9 @@ An evaluation is tried again with its times kept, so its suites, counts and clai
 the pin. The suites of the library hold line numbers in their C, so `restamp` cannot keep them. A
 record whose C differs is a finding, and `bench`, `sweep` or `evaluate` takes it again. A record
 taken before digests existed took the digest of its builds at its own pin, on 2026-10-05. The
-bench at the commit of the runtime baselines emits the same C as the bench of that day, file for
-file. The Architect chose this rule on 2026-10-05, for a head that moved only comments and form.
+bench at the commit of the runtime baselines taken at `d9be8ae` emits the same C as the bench of
+that day, file for file. The Architect chose this rule on 2026-10-05, for a head that moved only
+comments and form.
 
 **The digest reads C alone, at any path.** Nim folds the path of a module into the hash in the
 name of each type. The digest names each run of 20 to 32 letters and digits after `__` by its
@@ -1075,10 +1082,10 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
 
 - Evaluations time rga4d and cga5d unless `--thorough` asks for rga3d and cga4d too. Each
   evaluation committed now measures all four, from one run of `evaluate all --thorough`.
-- At rga3d and rga4d, each evaluation timed a bench whose typed reference unitized a point by
-  its signed weight. The reference is no part of what an evaluation times, so its figures stand.
-  The C of that bench moved, so `restamp` cannot carry those records to a new pin, and
-  `evaluate` takes them again there.
+- The evaluations at rga3d and rga4d carry the digest of C of a bench whose typed reference
+  divides a point by its signed weight. The reference is no part of what an evaluation times, so
+  their figures stand. `restamp` refuses those records at a new pin, and `evaluate` takes them
+  again.
 - The `build` claim reads the peak memory and seconds that the compiler reports of itself, for
   the library alone. It compares two builds on one machine, and is no measurement of the
   machine.
