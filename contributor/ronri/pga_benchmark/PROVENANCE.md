@@ -1078,9 +1078,6 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
 
 ## Open questions
 
-- Whether the bulk norm takes a root under the geometric product, as Lengyel's `Sqrt` does. P10,
-  `magnitude`, roots the weight norm under the antiproduct, as the Architect chose on 2026-10-09.
-  Under the rigid metric a pure bulk has no root there, so the bulk norm keeps its float root.
 - Whether the library takes P03, `partner-sign`, and with it a partner that does not check the
   grade of its operand. At cga5d, P03 on P01 spends the chain bound of 324 multiplies, three
   zero fills and two error checks. P01 alone spends 437, 104 and 268. Both are the counts
