@@ -1887,7 +1887,7 @@ collapses at the pole, so it needed a clamp, `ELEVATION_LIMIT`, that the motor n
 **Pivot and both angles are read out rather than stored, and that closes a hole.** Stored beside
 the stance, one could go stale against another, and a dolly left the pivot where no angle pointed.
 The dolly slides the eye and names the new separation, and the pivot follows. `repivotToDepth` is
-one assignment, and `dollyToward` needs no pivot arithmetic at all.
+one assignment, and `travelToward` needs no pivot arithmetic at all.
 
 **The azimuth reads back in (−π, π].** It comes off the sight direction through `arctan2`, which
 bounds it, and the panel's reading wraps there too. The ease is not affected, because `CameraTween`
@@ -1995,7 +1995,8 @@ On the desktop, each field holds a double, and never rounds to the four digits t
 
 Azimuth and elevation stand beside it as readings in degrees, and are never typed: two numbers name
 no roll. The separation shows only with a selection, which the frame rule measures it from. The
-speed of flight shows only without one, as a multiple of `SPEED_LIGHT` (`interaction.speedFlying`).
+ship's speed shows only without one, as a multiple of `SPEED_LIGHT` (`interaction.speedFlying`). It
+reads the speed that `+` and `-` set, whether a key is held or not.
 
 *Checked.* Verified by `suites.nim`:
 
@@ -2041,28 +2042,41 @@ readers one read of the stance, which no check counts.
 
 ## Zoom
 
-**The wheel zooms toward the object the pointer is over**, which is the map reading of a zoom.
-`picking.anchorZoomAt` answers that object alone, in both states. Where none answers, the wheel
-dollies about the middle of the frame, or travels the pointer's own ray in free flight. To point at
-something means *that thing, at the depth it stands at*. Rejected: the ground at `z = 0`, which
-the world does not have, and the level through the pivot, which names no place a reader points at.
+**In free flight, the wheel zooms toward the object the pointer is over**, which is the map reading
+of a zoom. `picking.anchorZoomAt` answers that object alone. Where none answers, the wheel does
+nothing, since it has nothing to come in to (repository issue 535). A pinch is no zoom of its own:
+its two fingers hold what each touched (see Two fingers).
 
-**The object is taken only where its depth is within `FACTOR_ANCHOR_DEPTH` 2 of the orbit
-distance, either way.** An anchor on a star a thousand units off slides the eye 38% of the way
-toward it for each notch. Six off-centre notches carried the pivot 1,737 units, against 5 with the
-window. Horizon objects are refused, because they are at no place. The price is the jump: two
-notches taken either side of the edge of an object converge on different depths.
+To point at something means *that thing, at the depth it stands at*. Rejected: the ground at
+`z = 0`, which the world does not have, and the level through the pivot, which names no place a
+reader points at.
+
+In free flight the object is taken at any depth. There the wheel refers to the object under the
+pointer, and a star under the pointer is that object. Key flight no longer changes the separation,
+so a band about it would refuse every object once a flight had moved on.
+
+**With a selection, the wheel dollies about the pivot, wherever the pointer stands**
+(`interaction.dollyAbout`). The pivot stands on what is picked, so the orbit stays on it however far
+the wheel goes in or out. Rejected: a zoom toward the object under the pointer. It slides the eye
+along its own line to that object, so the sight, with the pivot on it, leaves what is picked. Under
+it, 10 notches in over `c`, 20 out over sky and 10 in again carry the pivot 6.07 units off `b`.
+
+**With a selection, an object counts only where its depth is within `FACTOR_ANCHOR_DEPTH` 2 of the
+orbit distance, either way.** The band holds for the floor of the wheel, and for what two fingers
+hold. Horizon objects are refused, because they are at no place.
 
 **The zoom stops where a point fills the frame.** Nearer shows nothing more of it. There its
 sphere reaches every corner, and the point is backdrop; see Picking. `picking.depthFilling` solves
-that depth, as the inverse of `isCoveringView`. The wheel takes it as the floor of a point in both
-states (`AnchorZoom.floor_reach`). `framing.holdFilled` holds it for a point picked alone under
-every other move: a drag, a key and a pinch.
+that depth, as the inverse of `isCoveringView`. Free flight floors at the point under the pointer,
+and a selection floors at the point in the middle of the frame (`AnchorZoom.floor_reach`).
+`framing.holdFilled` holds the fill for a point picked alone under every other move: a drag, a key
+and a pinch.
 
-The fill is a depth along the sight, and the wheel floors a reach. A move of the eye on its line to
-the anchor scales both by one factor. So the floor is the fill times the reach over the depth.
-Rejected: the fill as the reach. Under it, a point 17° off the middle stops 4% nearer than the
-fill. The hold then carries the eye back along its sight, off the line of the pointer.
+The fill is a depth along the sight, and free flight floors a reach. A move of the eye on its line
+to the anchor scales both by one factor. So the floor is the fill times the reach over the depth.
+Rejected: the fill as the reach, under which a point 17° off the middle stops 4% nearer than the
+fill. The hold then carries the eye back along its sight, off the line of the pointer. The point in
+the middle of the frame stands on the sight, where its reach is its depth.
 
 The hold takes a point picked alone. With more picked, the frame rule holds the group, and only
 the wheel stops at the fill of a point. Rejected: the drawn radius as the floor of a point. The
@@ -2073,17 +2087,14 @@ travel. Nothing is picked to hold, and the wheel and the pinch still stop at the
 floor on flight at the fill of the point ahead. Flight through a field of points would stop at each
 one.
 
-`camera.dollyToward` moves the eye along its own line to the anchor, and scales the pivot toward
-the anchor by the same factor. The orbit centre then settles onto what the reader zooms into. The
-scale applied is read back from `distanceHeld`. So a zoom stopped by the floor of the orbit
-distance moves the eye by exactly what it was allowed. **A pinch stays centred**, because the
-two-finger gesture already pans by the travel of its midpoint.
-
 *Checked.* Verified by `suites.nim`:
 
-- 40 notches with a selection onto a point stop where its sphere fills the frame;
-- off the middle, 40 notches stop at the depth of the fill in both states, with the point
-  0.5 px or less from the pointer;
+- 40 notches with a selection stop where the point in the middle fills the frame;
+- with a selection, notches in over another object and out over sky keep the pivot on the point
+  picked, and the sight unturned;
+- 10 notches in, 20 out and 10 in again bring the distance back to where it began;
+- in free flight, 40 notches onto a point off the middle stop at its fill, with the point 0.5 px
+  or less from the pointer;
 - a point picked alone is held at the fill from half of it, and left where it stands from 19.
 
 Verified by driven checks:
@@ -2092,7 +2103,10 @@ Verified by driven checks:
   pivot-level anchor;
 - a wheel back out returns to distance 19.000 and pivot (0, 0, 1);
 - 40 notches onto a point picked alone stop at a depth of 0.115882196, against a fill of
-  0.115882251 read through float32. Ten more notches move the eye 0.
+  0.115882251 read through float32. Ten more notches move the eye 0;
+- with `b` selected, 10 notches in over `c`, 20 out over sky and 10 in again leave the pivot 0
+  off `b`. The distance comes back to 19.000. A zoom toward the pointer leaves the pivot 6.07
+  units off, and the distance at 16.368.
 
 ## Free flight
 
@@ -2112,52 +2126,52 @@ either verb as the selection comes and goes.
 The axes are the camera's own and never the world's, so there is no pole and no clamp. Eight pitches
 of a quarter radian compose to exactly two radians, which is past straight down.
 
-**The speed climbs toward a cap and never reaches it.** `speedTravelling` is the cap times
-`1 − e^(−t/τ)`. τ is `SECONDS_SPEED_RISE`, 0.6 s: 63 percent of the cap at one τ, and 95 percent at
-three.
+**The speed climbs toward the ship's own speed and never reaches it.** `speedTravelling` is that
+speed times `1 − e^(−t/τ)`. τ is `SECONDS_SPEED_RISE`, 0.6 s: 63 percent of it at one τ, and 95
+percent at three.
 
 `distanceTravelled` integrates that across a frame rather than sampling it. A 144 Hz reader and a
 60 Hz one then cover the same ground over the same hold. It is the rule that `FACTOR_DOLLY_SECOND`
 already compounds under.
 
-The cap is the smaller of a local scale and a fixed ceiling. The local scale is
-`FACTOR_SPEED_LOCAL`, 1.2 depths under the pointer for each second. That is the flat rate the ground
-slide ran at, so a long hold settles on the speed the build already had. A reader pointing at a moon
-crosses the moon's own distance in the time a reader pointing at a star crosses the star's.
+**The ship's speed is the camera's own, as a ship's is** (repository issue 535).
+`Interaction.speed_ship` is the speed key flight climbs toward. Nothing under the pointer sets it,
+and neither does the pivot. It opens at `camera.speedOpening`, the separation of the opening view
+for each second: 19 units on a wide frame. `home` leaves it, as it leaves the lens.
 
-Over empty sky the pointer reports no depth, and the camera's own scale answers instead. The ceiling
-alone there threw the reader out of the solar system in half a second. It covered 51 055 units
-against a band of 4 to 25. The ceiling bounds a local reading, and is no reading of its own.
+Held `+` and `-` scale it by `FACTOR_DOLLY_SECOND`, 4 for each second, as they scale the separation
+with a selection. With a selection, they still dolly. Nothing moves while they set the speed.
+
+Rejected: a cap of 1.2 depths under the pointer, with the separation over empty sky. Flight ahead
+spent the separation, so the cap ran down with it. In four spans of 10 s over empty sky, the eye
+moved 19.0, then 2.2e-4, then 2.3e-9, then 1.1e-12 units. The separation fell to 1e-13.
+Rejected: a speed read from the nearest object. A ship needs no other object to move.
 
 `SPEED_CEILING` is 300 000 units for each second. It crosses the reach of the star field, about 6.5
-million units, in about 22 seconds.
+million units, in about 22 seconds. `SPEED_FLOOR` is the near floor for each second. It keeps the
+speed off zero, so `+` climbs back from it by a factor, as it climbs from anywhere.
 
 `SPEED_LIGHT` is 1/499 units for each second, because light crosses an astronomical unit in 499
 seconds. It is a reporting unit and never a cap. The ceiling is about 1.5 × 10⁸ of it. A camera held
 to *c* would take two and a half hours to cross the opening view of 19 units.
 
-**The depth under the pointer is stamped in `updateHover`, and stamped through flight.**
-`Interaction.depth_pointer` is none where the pointer is over nothing. The pick runs while a travel
-key is held, as well as while the camera stands. The cap then follows the pointer rather than
-freezing where the key went down. The ring stays off while the camera moves. That costs one pick
-for each frame of flight, which is what a still frame already pays.
+**The depth under the pointer is stamped in `updateHover`, while the camera stands.**
+`Interaction.depth_pointer` is none where the pointer is over nothing. A right drag in free flight
+holds it as it begins. No speed reads it, so the pick does not run while a travel key is held, as
+it does not run under a drag.
 
 `seconds_travelling` is one age for the whole travel set, and not one for each key. Releasing `w`
 and pressing `s` keeps the speed up, which is what a reader means by turning round mid-flight.
 `releaseKey` drops it to zero once the last travel key is up, so a flight taken up again after a
 pause starts from rest.
 
-**Flight ahead spends the separation, and a strafe carries it along.** `flyAhead` slides the eye
-along the sight and holds the pivot where it stands, so the separation gives up exactly what the eye
-covered. The frustum and the furniture read that separation, so both track the flight.
+**Flight carries the pivot along, in every direction.** `travel` slides the whole camera, so the
+separation stays as it was. The frustum and the furniture read the nearest drawn object ahead, and
+not the separation. So flying at a planet draws its near clip in; see below.
 
-Sliding the whole camera instead keeps the separation. The near clip of the stance the reader set
-off from then eats a planet before the eye reaches it. The near plane is one four-hundredth of the
-separation. That is a fortieth of a unit at the opening stance, against a planet millionths of a
-unit wide.
-
-A strafe and a rise carry the pivot along instead. What stands ahead keeps its depth as the camera
-steps sideways.
+Rejected: flight ahead that held the pivot and spent the separation. It once kept the near clip on
+the scale of the flight, while the frustum read the separation. With the frustum on the nearest
+object, it only ran the speed down.
 
 **The frustum and the furniture read what stands ahead, and never the separation.**
 `Camera.reach_near` is the reach from the eye to the nearest drawn object ahead. `scaleLocal` hands
@@ -2171,8 +2185,8 @@ It is the object's own middle, with no drawn radius taken off. A camera at a pla
 reads that planet's radius rather than zero. A near clip of one four-hundredth of that still holds
 the whole planet.
 
-It is never the pointer's own depth, which `capTravelling` reads. A pointer figure would move the
-furniture at every pointer move, and the depth mapping too, while the camera stood still.
+It is never the pointer's own depth. A pointer figure would move the furniture at every pointer
+move, and the depth mapping too, while the camera stood still.
 
 **It is read once for each frame, and never for each overlay call.** `reachNearOf` walks every
 placement of the frame, and `ensureViewOverlay` runs many times over one frame: the anchor, each
@@ -2182,14 +2196,16 @@ the last frame, as it reads the reach of the scene that frame measured.
 Both front-ends place every handle in each frame, beside the reach of the scene, and
 `BYTES_MEMORY_TOTAL` counts one placement for each handle (Render paths).
 
-**The wheel travels the pointer's own ray in free flight.** `anchorZoomAt` answers the object under
-the pointer, as it does with a selection.
+**The wheel in free flight comes in to the object under the pointer, and does nothing without
+one.** `anchorZoomAt` answers that object, at any depth; see Zoom.
 
-Where an object stands under the pointer, `travelToward` carries the eye along its line to that
-object and holds it on its pixel. The floor is the object's drawn radius, so a run of notches stops
-at its surface. The floor of a point is further out, where its sphere fills the frame; see Zoom.
-Where nothing stands there, `headingThrough` gives the ray and the eye travels it. The separation
-then scales as the turntable's dolly scales it.
+`travelToward` carries the eye along its line to that object and holds it on its pixel. The floor is
+the object's drawn radius, so a run of notches stops at its surface. The floor of a point is further
+out, where its sphere fills the frame; see Zoom.
+
+Rejected: the pointer's own ray at the separation's scale where nothing stands there. Each notch
+scaled the separation by its factor, so 200 notches over empty sky took it to 1e-13. The nearest
+drawn object stood 0.256 ahead.
 
 *Checked.* Verified by `suites.nim`:
 
@@ -2201,24 +2217,37 @@ then scales as the turntable's dolly scales it.
 - the speed is monotone and under its cap over four seconds, at 0.6321 and 0.9502 of it after one
   and three time constants;
 - 120 frames of one span cover what one frame of it covers, at three spans;
-- the cap takes the depth under the pointer, the camera's own scale where there is none, and the
-  ceiling where either is large;
-- a held `w` with nothing selected lies along the sight, and spends the separation it covers;
+- flight steps at the ship's own speed, whatever the pointer is over and however small the
+  separation;
+- after its climb, a long flight at 19 covers 190.000 units in each 10 s span, and never stalls;
+- `+` and `-` scale the ship's speed by 4 for each second, within its bounds, and dolly with a
+  selection;
+- the ship opens at the separation of the opening view, and `home` leaves its speed;
+- a held `w` with nothing selected lies along the sight, and keeps the separation;
 - a strafe leaves that separation alone;
-- the wheel with nothing selected travels the ray under the pointer, and not the sight axis;
+- the wheel over empty sky with nothing selected does nothing over 200 notches, and a spread of
+  two fingers there keeps the separation;
+- free flight's wheel comes in to a point eight separations out, and the selection's dollies about
+  the pivot instead;
 - 40 notches onto a point stop where its sphere fills the frame, with the point held on its pixel;
+- a travel toward three pixels holds what is under each within half a pixel, in and out;
+- a travel in and back out returns the eye, and a factor of 1e-15 stops at the near floor;
 - the frustum takes its scale from the nearest drawn object, and hands it back at zero;
 - the far clip still reaches a scene 6.5 million units across, and both depth ends still land;
 - the nearest reach is read ahead of the eye, never behind it, and never from a hidden object.
 
-Verified by driven checks, in Chromium on 2026-09-26:
+Verified by driven checks, in Chromium on 2026-10-07:
 
-- 500 ms of `w` on the opening page moved the eye 5.020 units, 0.000000 across the sight line.
-  The separation gave up that same 5.020 of 19.000;
+- 500 ms of `w` on the opening page moved the eye 3.012 units, 0.000000 across the sight line.
+  The separation stayed at 19.0000;
+- a second hold of 2 s flew 27.0067 units, as the first had;
+- held `+` and `-` took the ship's speed from 19.000 to 37.790 and back to 19.000, and moved the
+  eye 0;
+- twenty notches over empty sky, with nothing selected, moved the eye 0;
 - eight notches low in the frame carried the separation from 19.00 to 4.14. They left the eye
   2.063 units off the sight axis, which a straight dolly cannot do;
-- the opening page reads a local scale of 14.6842, not the separation of 19.000, and 5.020 units
-  of flight drew it to 9.6647.
+- the opening page reads a local scale of 14.6842, not the separation of 19.000, and 3.012 units
+  of flight drew it to 11.6727.
 
 ## Drags
 
@@ -2263,9 +2292,8 @@ that depth at the press, while hover still reads what the pointer is over, or th
 nothing. `panAcross` slides the camera square to the sight, by what one pixel spans at that depth.
 A point at that depth then stays under the cursor, at any canvas height and field of view.
 
-Two fingers hold the pivot's depth, read at each step, because they pinch as they pan. A depth
-taken at landing goes stale with the zoom. Rejected: a fixed share of the separation for each pixel.
-It matched the cursor at one canvas height alone, and ran 1.74 times it on 900 px at 45 degrees.
+Rejected: a fixed share of the separation for each pixel. It matched the cursor at one canvas
+height alone, and ran 1.74 times it on 900 px at 45 degrees.
 
 **A right drag with a selection turns across as a left drag along the pivot's row.** The turn goes
 first, through `turnFollowing`, for the same travel along the pivot's row. So the turn for each
@@ -2294,8 +2322,7 @@ half the height, on any canvas. Inside the band the vertical does nothing, and t
 **The point is taken once, at the press.** Rejected: a point asked again at each step, which lies
 on a sphere that the zoom resizes. The zoom then turns on how many steps the pointer sends. A 130 px
 drag on the middle column ends at a separation of 11.73 in one step, and 10.98 in twelve. Taken
-once, both end at 11.73. Two fingers take the point under each step, because they pinch as they
-move.
+once, both end at 11.73.
 
 A slant drag out and back returns the sight exactly, since each step turns as the row's left drag
 turns. Its separation keeps a trace of dollies read at two depths: the eye ends 0.0017 off at a
@@ -2810,6 +2837,17 @@ no more than a billionth of its bulk norm. That is an object more than a billion
 `motors.turnAbout` refuses an axis by the same rule. The library does not change (see Algebra
 boundary).
 
+**An assembled point is read by its weight alone.** `pointFrom` reads a point that a caller builds
+as a unit point plus weightless directions. Its weight is exactly one, and its bulk says only how
+far out it stands. So `pointFrom` tests the weight against zero, and not against the bulk. The
+horizon stands at `FRACTION_HORIZON` 0.9 of the far bound from the eye. A camera 5.6e7 out puts it
+past a billion units, where a test against the bulk reads each of its points as a direction.
+
+Under the bulk test, the assert in `pointFrom` stops the frame loop there, and the page draws
+nothing more. The anchor and the pick of a star read through `pointFrom` too, since they build the
+same point. Under that test a star past a billion units has no place, and the pick passes it over.
+Rejected: a ceiling on the separation, which no reader is assumed to want (see Camera).
+
 **A product that a caller builds on the spot is judged against its factors.** Rounding of zero
 carries no scale of its own, so the product alone cannot show it. `euclid.normalize` and the four
 direction readers of `boundary` take a `scale`, and refuse a direction no more than `TOLERANCE_ABS`
@@ -2919,7 +2957,13 @@ object.
 - the catalogue's joins, meets and projections give what the library gives, near and far;
 - the catalogue runs about a local origin exactly the operations that commute with a slide;
 - a line a metre long prints the terms it carries, and no rounding beside them;
-- an eye standing on the line has no side to flank it from.
+- an eye standing on the line has no side to flank it from;
+- a line and a star drawn at a horizon of 4e9 land where the algebra puts them, and the star's
+  anchor reads its place;
+- a star stays pickable from a camera 1e8 out, whose horizon stands 1.8e9 off the eye.
+
+Verified by a probe that is not kept, on 2026-10-08. The wheel over Sol in the largest demo carries
+the separation to 6.8e9 with no page error. Under the bulk test, the page stops near 5.6e7.
 
 ## Motors
 
@@ -3355,6 +3399,12 @@ object. A pick carries its object to the middle of the frame, so the menu rides 
 beside the middle. It is not held back until the ease settles: a menu a third of a second after
 the click reads as a missed click. A menu opened with no pointer sits above the anchor.
 
+**A wheel over the selection menu zooms the view**, as a wheel over the view does (`sumWheel` in
+`pointer.ts`). The menu scrolls nothing, so it hands its wheel on. Rejected: a menu that keeps its
+wheel. Under it, a pick clicked where the menu then lands leaves the wheel dead until the pointer
+moves. That box spans 298 by 55 px, right of and below the middle. The desktop front-end keeps the
+wheel in its menu; see Known limitations.
+
 **A click has no time limit.** `isClick` is distance alone, at `PIXELS_CLICK_SLOP` 6 px. It is not
 the 12 px of `PIXELS_TAP_SLOP`. A mouse does not roll, and the allowance of a finger would swallow
 the short deliberate drags between two overlapping objects. A deadline of 0.35 s lost every click
@@ -3389,13 +3439,13 @@ on the ground would be a crowd.
 
 **The pivot of the turntable follows what the zoom lands on.** Every rate but the orbit is scaled
 by the orbit distance on purpose. A drag or a key hold then moves the view by the same fraction of
-what is seen at any zoom. A pinch that zooms straight in, with the pivot left on Sol, leaves the
+what is seen at any zoom. A zoom straight in, with the pivot left on Sol, leaves the
 turntable revolving about a point far behind the planet arrived at.
 
 So `picking.anchorZoomAt` says whether its anchor is where a point or a line *stands*, or a
 crossing (`AnchorZoom.is_standing`). `interaction.dollyAt` re-pivots along the sight line to the
 depth of a standing anchor after the zoom, through `camera.repivotToDepth`, which leaves the
-picture unchanged. The pinch goes through the same rule, aimed at the middle of the frame.
+picture unchanged.
 
 A plane is a crossing, and the map rule alone follows it. Its depth under the pointer is not its
 depth at the middle of the frame.
@@ -3476,7 +3526,7 @@ just named. A degenerate construction is **refused**, with the message naming wh
 and so is one on a full scene.
 
 **Touch.** A finger that presses an object constructs, and one that presses empty space moves the
-camera. Two fingers pinch, strafe and twist, and cancel any construction. A long press selects.
+camera. Two fingers hold what each touched, and cancel any construction. A long press selects.
 
 Once a selection exists, a tap (`TAP_MAX_MS` 350) toggles another in or out, and a tap on empty
 space clears. `nimClearHover` runs once the last finger lifts, or the last reading sits stale
@@ -3502,7 +3552,7 @@ drag off it. The listener for a tap outside excludes the canvas, the drawer and 
 - the anchor of the preview equal to that of the created object;
 - the ink cycle stepping on release and not on click;
 - the crowd count and the refusal;
-- the re-pivot rules under wheel, pinch and sky.
+- the re-pivot rules under the wheel and over sky.
 
 Verified by driven checks:
 
@@ -3513,6 +3563,8 @@ Verified by driven checks:
 - `more…` landing on `𝐦 ∧ 𝐧` on both builds;
 - the refusal on a full scene;
 - a right-click showing the menu two frames in, 14 by 12 px from the anchor, and so once settled;
+- three notches over the menu of a settled pick of `b` zoom the view from 18.097 to 11.749, with
+  the pivot 0 off `b`;
 - a pivot shift moving that anchor 84 px, with the menu holding the offset;
 - an emptied list, a deep handle edited, and its form in view.
 
@@ -3520,37 +3572,113 @@ Assumed: that 0.75 s is the right dwell for any hand.
 
 ## Two fingers
 
-**Two fingers are read once for each frame, and zoom only past the tap slop.** Each finger's move
-arrives as its own `pointermove`. Read there, a pan carried by two fingers zooms in by one finger's
-step and out by the other's, and each zoom moves the pivot.
+**Two fingers hold what each touched, as the mouse holds what it grabs, less a slop** (repository
+issue 592). As the second finger lands, `interaction.gripFingers` takes a place for each finger.
+Each frame, `interaction.carryGrip` moves the camera so that both places stand at the pixels that
+`interaction.fingersHeld` names.
 
-`glue.settleTwoFingers` reads both fingers once for each frame, from the frame loop. Two fingers
-carried together never hold their separation to the pixel. So a pinch zooms only once the
-separation has changed by more than `PIXELS_TAP_SLOP`. It measures from the separation where the
-slop was crossed, and without a jump.
+**Zoom and twist wait for their slop, as they did before the grip.** The gap between the fingers
+must change by `PIXELS_TAP_SLOP` 12 px, and their angle by `RADIANS_TWIST_SLOP` 0.21, which is
+twelve degrees. Until then, the held gap and angle stay as they landed, so two fingers carried
+together only slide. After that, each counts from the edge of its slop, so crossing it jumps
+nothing at any frame rate.
 
-**Two fingers turned about each other roll the view.** Roll is the sixth degree of freedom, and a
-touch has no Q and E beside it. The angle of the line through the two fingers is read once for each
-frame. Each reading is a change since the last frame, and it wraps the short way round at π.
+Rejected: no slop. Two fingers carried together never hold their gap to a pixel or their angle to a
+degree, and every wobble zoomed and rolled the view. The cost is the slop's own. A finger slips off
+its place by the slop's share of the gap, and by twelve degrees of arc about the middle.
 
-The slop is `RADIANS_TWIST_SLOP` 0.21, twelve degrees, and it is not rolled once it is crossed. It
-is the reading the pinch takes of the separation. Two fingers wander a few degrees without meaning
-to, and a reader who means to roll turns much further.
+**With nothing selected, four unknowns answer four pixel coordinates.** The camera slides across,
+up and ahead, and rolls, so the sight keeps its direction. The solve is Levenberg-Marquardt from
+the last frame's answer, with finite derivatives. It starts from the stance the fingers landed on,
+so its answer does not depend on the path the fingers took.
 
-**The angle is negated on its way in.** A screen angle grows clockwise, because y grows downward,
-and a positive roll carries the picture anticlockwise. Passed through unturned, the twist rolled
-against the fingers.
+**With a selection, the orbit stays on what is picked.** The middle of the fingers orbits as the
+drag of one finger does, and carries the point on the sphere about the pivot with it. A dolly then
+brings the gap of the two places to the held gap, and a roll brings their angle. The dolly scales
+about the pivot, so what the middle holds drifts toward the middle of the frame as the view zooms
+out.
 
-The reading is dropped whenever a finger lifts, as the pinch's separation is. An angle held from
-two fingers ago is stale. A third finger lifting back to two would roll the view by the whole of
-it in one frame.
+Rejected: one solve of four unknowns against both places. A turn foreshortens what it carries, and
+the solve spent the turn on the gap. A fivefold pinch off the middle turned the view 74 degrees and
+dollied in. On the page, such pinches zoomed out by 1.18 to 1.32.
 
-*Checked.* Verified by driven checks:
+**A finger holds the place on its own ray, at the depth of the object under it.** That object is
+the one a tap there selects: at any depth with nothing selected, and inside the depth band with a
+selection. Rejected: the object's own point, which the pick finds up to 34 px off the finger. Two
+fingers on one star then held one point, and no spread could zoom.
 
-- two fingers moving together carrying the eye wholly across the sight line, with the separation
-  unchanged and nothing turned;
-- two fingers turned rolling the view, with the eye moved 0.000000 units and the sight unmoved;
-- 0.900 of finger carrying the picture 0.675 the same way round, which is what the sign is for;
+**With nothing selected, a finger over nothing holds a place at a depth the view is about.** That
+depth is the depth of the other finger's object, where that finger stands on one. Otherwise it is
+the depth of the object shown nearest the middle of the fingers. Only objects within
+`FACTOR_ANCHOR_DEPTH` 2 of the depth of the pivot count. Otherwise it is the depth of the pivot
+itself. Rejected:
+
+- the sky itself, which no slide moves: once a zoom out shrank the objects, both fingers landed on
+  sky, and no pinch moved anything;
+- the nearest object ahead: far out in the orrery, a star off to the side, so a pinch zoomed out by
+  1.14 about Sol;
+- the object shown nearest at any depth: a background star a thousand times deeper, so one pinch
+  threw the eye out 3,637 times.
+
+With a selection, a finger on empty space holds the point on the sphere of the orbit, as a left drag
+does.
+
+**Once the fingers zoom, the pivot stands at the depth of the nearer place held**, as the wheel's
+zoom lands it on an object. The next pinch then scales the same thing, so zoom out after zoom
+out grows by the ratio of the fingers. A slide alone carries the pivot along at its own depth.
+Places over nothing at all never draw the pivot in, so no pinch runs the separation down
+(repository issue 535).
+
+**An unknown that no finger can move stays where it stands.** The damping holds it there, and a
+correction counts only where it cuts the misses by more than a billionth of them
+(`FRACTION_GRIP_GAIN`). Rejected: any cut at all. A spread that asked no roll then rolled the view
+by 1.3e-9 radians, on rounding alone.
+
+**The floor of each place is a depth along the sight**, the fill where the wheel stops at that
+object. Past it, the fingers slip. Rejected: a floor on the reach. A place off the object's own ray
+never came that near, and the eye went on past the fill.
+
+**Both fingers are read once for each frame.** Each finger's move arrives as its own
+`pointermove`. A solve read there chases one finger's new place and the other's old one.
+`glue.settleTwoFingers` reads both from the frame loop instead. The grip is dropped as either
+finger lifts, so a third finger lifting back to two takes no old grip.
+
+*Checked.* Verified by `suites.nim`:
+
+- two fingers on points at two depths hold both within 0.05 px of the held pixels, through a
+  spread, a slide and a twist;
+- the slop there costs its own share of the gap and the angle, and no more;
+- two fingers carried together, wobbling 10 px and 0.15 inside the slop, slide, and neither zoom
+  nor roll;
+- half a pixel past the slop of the gap moves the places by that half pixel's share alone;
+- a hundredth past the slop of the twist rolls the view by that hundredth alone;
+- with nothing drawn, two fingers on empty sky hold places at the depth of the pivot;
+- a spread there keeps the separation, and a twist about the middle rolls by what lies past the
+  slop;
+- places over nothing take the depth of the object shown nearest the fingers, near the pivot's
+  depth;
+- a nearer star aside, and a deeper star under the middle of the fingers, do not set that depth;
+- five pinches in over empty sky each zoom out by more than 4, about the point drawn there;
+- with a selection, the pivot moves less than 1e-9, and the gap and angle of both places hold
+  within 0.01 px and 1e-9;
+- with a selection, a fivefold pinch off the middle zooms out by more than 3;
+- a spread over one point stops the eye at its floor.
+
+Verified by driven checks, in Chromium on 2026-10-08:
+
+- fingers on `a` and `c`, through a spread of 1.3, a twist of 0.25 and a slide, held both 0.00 px
+  off the held pixels;
+- two fingers carried together 316 px held both points 0.00 px off, and left the separation at
+  19.000;
+- a spread and a slide on empty sky came 10.819 in, turned nothing, and drew the separation from
+  19.000 to 7.707;
+- two fingers carried together, wobbling inside the slop, slid 2.288, came 5.0e-6 in and turned
+  1.6e-7;
+- a twist of 0.300 on empty sky about the middle turned the picture 0.0900, and moved the eye
+  5.9e-6;
+- four pinches in with nothing selected zoomed out by 3.25, 3.70, 3.83 and 3.87;
+- with `o` selected, the pivot moved 2.2e-14 as the separation came from 19.000 to 13.763;
+- with `o` selected, four pinches in zoomed out by 3.10 to 3.28;
 - a pinch zooming with a selection standing, and the move not taken back.
 
 ## Undo/redo
@@ -4158,6 +4286,13 @@ object and turns at once lands inside the 0.35 s ease. `CameraTween.abandon` giv
 reader, and the pivot still arrives, 0.000 units from the middle. Rejected: stopping the ease, which
 left the pivot 23.2 px off the middle of two points on a 390 by 844 phone.
 
+**A notch, a right drag or two fingers inside the ease, with a selection, still land the pivot on
+what is picked.** Each turns, dollies or rolls about the pivot the camera already has, so each
+yields as a turn does (`interaction.yieldOrHalt`). In free flight each places the pivot, and stops
+the ease where the camera stands. Rejected: a halt in both states. Under it, a notch or a spread two
+frames after a right-click pick of `b` leaves the pivot 4.80 units off `b`. Every zoom and turn
+after it goes about that point.
+
 *Checked.* Verified by `suites.nim`:
 
 - a re-pick after `abandon` and a dolly re-arms;
@@ -4170,6 +4305,8 @@ left the pivot 23.2 px off the middle of two points on a 390 by 844 phone.
 - a turn at a fifth of the ease still lands the pivot on the middle of two points, and keeps the
   turn, as `settle` does;
 - a pan mid-ease halts it, and the pivot stays where the reader put it;
+- a notch or a right drag mid-ease with a selection still lands the pivot, and keeps the reader's
+  distance;
 - a frame narrowed to half its width asks for more room, and the same floor supplies it;
 - a still camera that a resize leaves out of frame eases back, though it holds its goal;
 - a stance that history restores stays while framed, and eases back where it is not;
@@ -4186,6 +4323,9 @@ Verified by driven check:
 - a finger adds a second point and turns as the ease is armed, with the pivot 1.500 short; it ends
   0.0000 from their middle;
 - a comet in view, picked, still pacing the screen at 35.1 px against a band of 5 to 60;
+- a notch and a right drag two frames into the ease of a right-click pick of `b` leave the pivot 0
+  off it. A halt leaves it 4.80 off;
+- a spread of two fingers at the same moment leaves it 0 off too, against 4.80 with a halt;
 - a pick of the ground plane from 1.375° above lifts the elevation to 10.000°, and a pick from
   28.072° leaves it at 28.072° (`drivePlaneLifted`).
 
@@ -4595,6 +4735,9 @@ passing proves that the runner carries that library. Assumed: nothing about the 
 ## Known limitations
 
 - Every result is software-rendered and machine-driven, and the page has run on one Android phone.
+- On the desktop front-end, a wheel over the selection menu still reaches the menu alone. Its wheel
+  handler returns whenever Dear ImGui holds the mouse, and the menu is a window of Dear ImGui (see
+  Interaction model).
 - Tab landing on a desktop widget is unverified (see Hold feedback, help and keys).
 - Two crossing translucent veils blend order-dependently.
 - A camera move is not undoable on its own.
@@ -4616,6 +4759,9 @@ passing proves that the runner carries that library. Assumed: nothing about the 
 - The aim of several objects is their middle as a world double, so far out it steps as storage does.
 - Two million units from the world origin, a double steps by 17 to 35 m, as at the demo's HD 222237
   b. A metre pair there is stored as one point (see Classification at any scale).
+- Far out in a dense field, each of two fingers holds the star a tap there selects, at that
+  star's own depth. 1.0e7 units out over Sol, fingers 40 px either side of it held stars 1.43e7
+  off. A spread of four then carried the eye past Sol (see Two fingers).
 - A line drawn with the camera inside the body that it frames stands a few pixels off the point
   that it joins. The error is 0.4 px at an orbit distance of 0.0001, and 3.2 px at 0.00001.
   Float32 holds about 0.06 of a unit at 530,000 units, and the record stores the vanishing point

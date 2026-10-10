@@ -48,11 +48,14 @@ import ./[boundary, camera, euclid, scene, tessellate]
 
 const
   FACTOR_ANCHOR_DEPTH* = 2.0
-    ## Take object as zoom anchor only within this factor of orbit distance.
+    ## Take object as zoom anchor with selection only within this factor of orbit distance.
     ##   Depth either way; otherwise nothing answers, and zoom keeps middle of frame.
     ##   Anchor at depth of what reader looks at is what map zoom means. Star field put
     ##   some star under every pixel, and anchoring on one thousand units off carried
     ##   eye across field in few notches and clipped scene away behind it.
+    ##   Free flight takes object at any depth: wheel there refers to object under pointer,
+    ##   and band about separation left it nothing to refer to once flight had moved on
+    ##   while separation stood (repository issue 535).
   SLACK_COVERED* = 1.0e-9
     ## Allow disc this fraction short of frame's corners, and still count as covering it.
     ##   Eye held on fill (`framing.holdFilled`) stands exactly at `depthFilling`, and bare
@@ -134,16 +137,14 @@ type
 
   AnchorZoom* = object  ## Define what zoom holds still, and whether it stands somewhere.
     at*: Position  ## Point, about view origin, that keeps its pixel through zoom.
-    floor_reach*: float  ## How near wheel may come to `at`, in either state.
+    floor_reach*: float  ## How near wheel may come to `at`.
       ## Point's is reach at which its depth fills frame (`depthFilling`): nearer shows
       ## nothing more of it. Other object's is its drawn radius, so wheel stops at surface rather
       ## than carrying eye through it; see `camera.travelToward`.
     is_standing*: bool  ## Whether `at` is where point or line stands, not crossing of ray.
-      ## What stands somewhere is what reader looks at, so turntable's pivot follows its
-      ## depth (`camera.repivotToDepth`). Plane is crossing, met where ray happens to fall:
-      ## its depth under cursor is not its depth at middle of frame, and pivot lifted to it
-      ## stood off plane being zoomed onto. It is followed by map rule alone, pivot sliding
-      ## toward `at`; see `camera.dollyToward`.
+      ## What stands somewhere has surface to stop at, so selection's wheel floors at it;
+      ## see `interaction.dollyAbout`. Plane is crossing, met where ray happens to fall, and
+      ## its drawn radius spans its disc, so floor at it stops eye that far short of plane.
 
 
 func towards*(start, finish: ScreenPosition; fraction: float): ScreenPosition =
@@ -289,6 +290,25 @@ func headingThrough*(
     ndc_x = (cursor.x / float(width)) * 2.0 - 1.0
     ndc_y = 1.0 - (cursor.y / float(height)) * 2.0
   (ndc_x * half_width) * frame.axis_right + (ndc_y * half_height) * frame.axis_up + frame.forward
+
+
+func pixelThrough*(
+  camera: Camera; frame: FrameCamera; width, height: int; heading: Direction
+): Option[ScreenPosition] =
+  ## Solve pixel that `heading` from eye passes through; inverse of `headingThrough`.
+  ##   Any length: direction of sky and offset of place from eye read alike, so two fingers'
+  ##   grip projects both through one statement.
+  ##   None where heading runs behind eye, or along plane through it square to sight.
+  let depth = dot(heading, frame.forward)
+  if depth <= 0.0: return
+  let
+    half_height = tan(0.5 * degToRad(camera.degrees_field_of_view))
+    half_width = half_height * (float(width) / float(height))
+    ndc_x = dot(heading, frame.axis_right) / (depth * half_width)
+    ndc_y = dot(heading, frame.axis_up) / (depth * half_height)
+  some(ScreenPosition(
+    x: (ndc_x + 1.0) * 0.5 * float(width), y: (1.0 - ndc_y) * 0.5 * float(height), depth: depth
+  ))
 
 
 func castRay*(
@@ -593,16 +613,16 @@ proc pickWalk(
       # Pick direction point where its star is drawn.
       #   One part of point's anchor depending on eye, so not in placement. Matches
       #   `tessellate.anchorFor`.
-      let star = position(add(
-        scale.eye_point,
-        wedge(scale.radiusHorizon, place.toward.toMultivector),
-      ))
-      if star.isNone: continue
-      let distance = pixelsFromCursor(view_projection, width, height, star.get, cursor)
+      let
+        star = pointFrom(add(
+          scale.eye_point,
+          wedge(scale.radiusHorizon, place.toward.toMultivector),
+        ))
+        distance = pixelsFromCursor(view_projection, width, height, star, cursor)
       if distance > RADIUS_CROWD_TOUCH: continue
       # Star lies in horizon, deeper than any disc, and is dot cursor is never inside.
       if hiders_known.coverOf(
-        scale.radiusHorizon, projectToScreen(view_projection, width, height, star.get)
+        scale.radiusHorizon, projectToScreen(view_projection, width, height, star)
       ) >= RADIUS_PICK_POINT: continue
       if distance <= RADIUS_PICK_POINT: consider(0, distance, scale.radiusHorizon, false)
       crowd(0)
@@ -915,15 +935,17 @@ proc anchorZoomAt*(
   width, height: int;
   cursor: ScreenPosition;
   placed: openArray[Placement] = [];
+  is_banded = true;
 ): Option[AnchorZoom] =
   ## Solve which object cursor is over, and where on that object cursor stands.
   ##   Object alone. World has no ground, and level through pivot names no place reader
-  ##   points at: over empty sky wheel keeps middle of frame, or pointer's own ray in
-  ##   free flight.
+  ##   points at: over empty sky wheel with selection keeps middle of frame, and free
+  ##   flight's does nothing.
   ##   Reader pointing at object means that object at depth it stands at; zoom anchored
   ##   on plane through pivot crept past or short of it.
-  ##   None where nothing is under cursor, and where what is stands outside depth band;
-  ##   see `FACTOR_ANCHOR_DEPTH`.
+  ##   None where nothing is under cursor, and, where `is_banded`, where what is stands
+  ##   outside depth band; see `FACTOR_ANCHOR_DEPTH`. Selection's wheel bands, free
+  ##   flight's does not.
   ##   `pickNearest` ranks horizon plane last and matches it everywhere, so sky is under
   ##   cursor almost always; `positionOnObjectUnder` refuses horizon shapes for exactly
   ##   that reason.
@@ -951,7 +973,7 @@ proc anchorZoomAt*(
     cursor,
     placed,
   )
-  if found.isNone or not isAnchorNear(found.get, camera, scale): return
+  if found.isNone or (is_banded and not isAnchorNear(found.get, camera, scale)): return
   # Read kind off placement, frame's where caller brought them: hit stands only on finite
   #   point, line or plane.
   let

@@ -124,4 +124,127 @@ export async function driveWheel(page: Page): Promise<void> {
     off_eye < 1e-3 && off_pixel < 1,
     `eye off by ${off_eye.toFixed(4)} units, pixel off by ${off_pixel.toFixed(2)} px`,
   );
+
+  // Over empty sky, with nothing selected, wheel has nothing to come in to and does
+  //   nothing. Once it carried eye at separation's scale, and scaled separation by each
+  //   notch until near floor (repository issue 535).
+  await driveHome(page);
+  const sky = await page.evaluate(() => {
+    const canvas = document.getElementById('gl') as HTMLCanvasElement;
+    const rect = canvas.getBoundingClientRect();
+    const [x, y] = [rect.left + 0.5 * rect.width, rect.top + 0.15 * rect.height];
+    nimUpdateCursor(x - rect.left, y - rect.top);
+    nimUpdateHover(canvas.clientWidth, canvas.clientHeight);
+    return { x, y, hovered: nimHoverHandle(), selected: nimSelectionCount() };
+  });
+  const still = await readCamera(page);
+  await page.mouse.move(sky.x, sky.y);
+  await wheelBy(page, 20, -120);
+  const after_sky = await readCamera(page);
+  report(
+    'with nothing selected, twenty notches over empty sky move nothing',
+    sky.hovered === -1 && sky.selected === 0 && spanOf(still.eye, after_sky.eye) === 0 &&
+      after_sky.distance === still.distance,
+    `hover ${sky.hovered}, selected ${sky.selected}; eye moved ` +
+      `${spanOf(still.eye, after_sky.eye)}, separation ${still.distance.toFixed(4)} -> ` +
+      `${after_sky.distance.toFixed(4)}`,
+  );
+
+  // With point `b` selected, wheel dollies about pivot, which stands on it, wherever pointer
+  //   stands: in over another object, out over sky, and in over it again. Once it came in to
+  //   what pointer was over, and pivot left point picked.
+  await driveHome(page);
+  const picked = await page.evaluate(
+    () => nimSceneHandles().find((one) => nimObjectLabel(one) === 'b') ?? -1,
+  );
+  const other = await page.evaluate(
+    () => nimSceneHandles().find((one) => nimObjectLabel(one) === 'c') ?? -1,
+  );
+  await page.evaluate((one) => nimSelectOnly(one), picked);
+  await settleCamera(page);
+  const framed = await readCamera(page);
+  const world_picked = await page.evaluate((one) => Array.from(nimAnchorWorld(one)), picked);
+  const pixel_other = await pixelOf(page, other);
+  const pivots_off: number[] = [];
+  for (const [at, step, notches] of [
+    [pixel_other, -120, 10], [[sky.x, sky.y], 120, 20], [pixel_other, -120, 10],
+  ] as [number[] | null, number, number][]) {
+    await page.mouse.move(at?.[0] ?? 0, at?.[1] ?? 0);
+    await wheelBy(page, notches, step);
+    pivots_off.push(spanOf((await readCamera(page)).pivot, world_picked));
+  }
+  const held = await readCamera(page);
+  await page.evaluate(() => clearSelection());
+  report(
+    'with a point selected, the wheel in and out over other objects keeps the pivot on it',
+    pixel_other !== null && Math.max(...pivots_off) < 1e-4 &&
+      Math.abs(held.distance - framed.distance) < 1e-3 * framed.distance,
+    `pivot off the point by ${pivots_off.map((off) => off.toExponential(2)).join(', ')}; ` +
+      `distance ${framed.distance.toFixed(3)} -> ${held.distance.toFixed(3)}`,
+  );
+
+  // Notch, or right drag, inside ease of right-click pick of `b`. With selection both turn and
+  //   dolly about pivot it already has, so ease still lands pivot on `b`.
+  //   Not halt, which stops ease where it stands: pivot stayed short of `b`, and every zoom
+  //   after dollied about that.
+  const offs_eased: number[] = [];
+  for (const gesture of ['notch', 'drag']) {
+    await driveHome(page);
+    const at = (await pixelOf(page, picked)) ?? [0, 0];
+    await page.mouse.move(at[0] ?? 0, at[1] ?? 0);
+    await page.mouse.click(at[0] ?? 0, at[1] ?? 0, { button: 'right' });
+    await waitFrames(page, 2);
+    await page.mouse.move(sky.x, sky.y);
+    if (gesture === 'notch') {
+      await page.mouse.wheel(0, -120);
+      await waitFrames(page, 2);
+    } else {
+      await page.mouse.down({ button: 'right' });
+      for (let step = 1; step <= 3; step += 1) {
+        await page.mouse.move(sky.x, sky.y + 10 * step);
+        await waitFrames(page, 1);
+      }
+      await page.mouse.up({ button: 'right' });
+    }
+    await settleCamera(page);
+    offs_eased.push(spanOf((await readCamera(page)).pivot, world_picked));
+  }
+  await page.evaluate(() => clearSelection());
+  report(
+    'and a notch or a right drag inside the ease of a pick still lands the pivot on it',
+    Math.max(...offs_eased) < 1e-4,
+    `pivot off the point by ${(offs_eased[0] ?? 0).toExponential(2)} after a notch, and ` +
+      `${(offs_eased[1] ?? 0).toExponential(2)} after a drag`,
+  );
+
+  // Notches over selection menu once pick of `b` has settled zoom view, as over view itself.
+  //   Menu lies over canvas, so wheel there reached nothing, and pick clicked where menu lands
+  //   left wheel dead until pointer moved.
+  await driveHome(page);
+  const at_menu = (await pixelOf(page, picked)) ?? [0, 0];
+  await page.mouse.move(at_menu[0] ?? 0, at_menu[1] ?? 0);
+  await page.mouse.click(at_menu[0] ?? 0, at_menu[1] ?? 0, { button: 'right' });
+  await settleCamera(page);
+  const menu = await page.evaluate(() => {
+    const rect = (document.getElementById('selection-menu') as HTMLElement)
+      .getBoundingClientRect();
+    const [x, y] = [rect.left + 0.5 * rect.width, rect.top + 0.5 * rect.height];
+    const under = document.elementFromPoint(x, y);
+    const is_over = under !== null &&
+      (document.getElementById('selection-menu') as HTMLElement).contains(under);
+    return { x, y, is_over };
+  });
+  const before_menu = await readCamera(page);
+  await page.mouse.move(menu.x, menu.y);
+  await wheelBy(page, 3, -120);
+  const after_menu = await readCamera(page);
+  await page.evaluate(() => clearSelection());
+  report(
+    'and a wheel over the selection menu zooms the view, about the point picked',
+    menu.is_over && after_menu.distance < 0.8 * before_menu.distance &&
+      spanOf(after_menu.pivot, world_picked) < 1e-4,
+    `pointer over menu ${menu.is_over}; distance ${before_menu.distance.toFixed(3)} -> ` +
+      `${after_menu.distance.toFixed(3)}, pivot off the point by ` +
+      `${spanOf(after_menu.pivot, world_picked).toExponential(2)}`,
+  );
 }

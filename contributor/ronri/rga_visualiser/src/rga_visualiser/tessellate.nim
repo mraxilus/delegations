@@ -185,7 +185,7 @@ func anchorFor*(m: Multivector, scale: DrawExtent): Option[Position] =
   if kindOf(m) != some(Kind.Point): return
   let heading = directionHorizon(m)
   if heading.isNone: return
-  position(add(scale.eye_point, wedge(scale.radiusHorizon, heading.get.toMultivector)))
+  some(pointFrom(add(scale.eye_point, wedge(scale.radiusHorizon, heading.get.toMultivector))))
 
 
 func anchorFor*(
@@ -217,7 +217,7 @@ func anchorFor*(placed: Placement, scale: DrawExtent): Option[Position] =
   case placed.kind
   of Case.PointAt, Case.LineThrough, Case.PlaneOn: some(placed.at.toView(scale.origin))
   of Case.PointToward:
-    position(add(scale.eye_point, wedge(scale.radiusHorizon, placed.toward.toMultivector)))
+    some(pointFrom(add(scale.eye_point, wedge(scale.radiusHorizon, placed.toward.toMultivector))))
   of Case.LineAcross, Case.PlaneEverywhere, Case.Nothing: none(Position)
 
 

@@ -124,7 +124,7 @@ type Wording* = enum
   HelpDragEmpty, HelpOrbit, HelpSlideSideways, HelpWheel, HelpMoveToward,
   HelpDragEmptyOrCrowd, HelpPinch, HelpMoveCloser, HelpDragTwoFingers, HelpTwistTwoFingers,
   HelpEscape, HelpBackOut, HelpUndoRedoKeys, HelpUndoRedo, HelpTab, HelpMoveFocus,
-  HelpTravel, HelpRoll, HelpRaiseLower, HelpFurtherCloser, HelpBackIntoView,
+  HelpTravel, HelpRoll, HelpRaiseLower, HelpSlowerFaster, HelpBackIntoView,
   HelpHighlightPrevNext, HelpSelectHighlighted, HelpCameraHome, HelpSearchKey, HelpSearchObjects
 
 
@@ -166,7 +166,9 @@ const LUT_TEXT_BY_WORDING: array[Wording, cstring] = [
   TipViewDistance:
     "How far the camera stands from the middle of the selection; it stays far enough out to " &
         "fit it.",
-  TipViewSpeed: "How fast the camera flies right now, as a multiple of the speed of light.",
+  TipViewSpeed:
+    "How fast the keys fly the camera, as a multiple of the speed of light; plus and minus " &
+        "change it.",
   TipViewLens: "Lens angle; smaller looks through a telephoto, larger through a wide angle.",
 
   # Diagnostics: what this frame cost and what storage it stands in.
@@ -421,7 +423,7 @@ const LUT_TEXT_BY_WORDING: array[Wording, cstring] = [
   HelpMoveToward: "move toward or away from whatever you point at",
   HelpDragEmptyOrCrowd: "drag empty space, or a crowd of objects, with one finger",
   HelpPinch: "pinch",
-  HelpMoveCloser: "move closer in or further out",
+  HelpMoveCloser: "zoom, with each finger kept on what it touched",
   HelpDragTwoFingers: "drag with two fingers",
   HelpTwistTwoFingers: "twist two fingers",
   HelpEscape: "escape",
@@ -433,7 +435,8 @@ const LUT_TEXT_BY_WORDING: array[Wording, cstring] = [
   HelpTravel: "fly the view, or orbit whatever is selected; hold shift to move faster",
   HelpRoll: "roll the view to either side",
   HelpRaiseLower: "raise or lower the view, or orbit whatever is selected",
-  HelpFurtherCloser: "move further out, or closer in",
+  HelpSlowerFaster:
+    "fly slower or faster, or move further out or closer in on whatever is selected",
   HelpBackIntoView: "bring whatever is selected back into view",
   HelpHighlightPrevNext: "move the highlight to the previous or next object",
   HelpSelectHighlighted: "select the highlighted object; hold shift to add it",

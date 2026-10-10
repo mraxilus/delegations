@@ -124,8 +124,8 @@ async function menuAndAnchor(page: Page, handle: number): Promise<MenuStanding> 
 
 /** Drive right-click pick from far out, which opens menu and brings camera in.
  *
- *  Wheel out six notches from `Home` so first pickable point is dot far off, then click
- *  6 px off its anchor. Menu is up two frames in and keeps its inset from that object's own
+ *  Wheel out six notches from `Home`, over first pickable point, so it is dot far off, then
+ *  click 6 px off its anchor. Menu is up two frames in and keeps its inset from that object's own
  *  anchor; object settles in middle of frame however far off it was clicked; distance fell;
  *  pivot is object itself. Glass is cleared first, since drawer open would take click.
  */
@@ -137,7 +137,14 @@ export async function drivePointerPick(page: Page): Promise<void> {
   const picked = points[0];
   if (picked === undefined) return;
 
-  await page.mouse.move(400, 300);
+  // Wheel out over point about to be picked: wheel in free flight refers to object under
+  //   pointer, and over empty sky does nothing (repository issue 535).
+  const start = await page.evaluate((one) => {
+    const rect = (document.getElementById('gl') as HTMLElement).getBoundingClientRect();
+    const at = Array.from(nimAnchorScreen(one, rect.width, rect.height));
+    return [rect.left + (at[0] ?? 0), rect.top + (at[1] ?? 0)];
+  }, picked);
+  await page.mouse.move(start[0] ?? 0, start[1] ?? 0);
   for (let notch = 0; notch < 6; notch += 1) {
     await page.mouse.wheel(0, 120);
     await waitFrames(page, 2);
@@ -257,8 +264,13 @@ function reportPointerPick(
 
 /** Pick same object again once wheel has taken reader out until it is dot once more.
  *
- *  Offer it holds is renewed, and camera comes in again. Wheel over object, so zoom stays
- *  anchored on it and it is still under pointer to be picked.
+ *  Offer it holds is renewed, and camera comes in again. Object is read again where wheel
+ *  left it, and picked there.
+ *  Wheel stands opposite object across middle of frame. Selection's wheel dollies about pivot
+ *  wherever pointer stands, and object off pivot draws in toward middle as wheel goes out,
+ *  with menu riding it.
+ *    Not over object: menu riding object comes under pointer held there, and takes wheel
+ *    from canvas.
  */
 async function drivePickAgain(page: Page, picked: number, near: Stance): Promise<void> {
   const anchorOf = (): Promise<{ x: number; y: number; is_in_front: boolean }> =>
@@ -272,7 +284,11 @@ async function drivePickAgain(page: Page, picked: number, near: Stance): Promise
     }, picked);
 
   const out = await anchorOf();
-  await page.mouse.move(out.x, out.y);
+  const middle = await page.evaluate(() => {
+    const rect = (document.getElementById('gl') as HTMLElement).getBoundingClientRect();
+    return { x: rect.left + 0.5 * rect.width, y: rect.top + 0.5 * rect.height };
+  });
+  await page.mouse.move(2 * middle.x - out.x, 2 * middle.y - out.y);
   // Wheel out past hundred units, well past thirty, where 0.08 of radius drops under floor
   //   dot's three pixels.
   for (let notch = 0; notch < 80; notch += 1) {

@@ -22,13 +22,13 @@
 
 import type { CDPSession, Page } from '@playwright/test';
 import { advance } from './clock';
-import { readCamera, settleCamera, slideOf, spanOf } from './camera';
+import { depthOf, forwardOf, readCamera, settleCamera, slideOf, spanOf } from './camera';
 import { waitFrames } from './frame';
 import { report } from './report';
 import { pixelOf } from './wheel';
 
 /** One finger's place on screen. */
-interface Finger {
+export interface Finger {
   x: number;
   y: number;
 }
@@ -171,24 +171,6 @@ export async function pinch(
   await settleCamera(page);
 }
 
-/** Turn two fingers about their own midpoint, holding their separation. */
-export async function twist(
-  page: Page, devtools: CDPSession, mid: Finger, spread: number, radians: number,
-): Promise<void> {
-  await ensureLifted(page, 'a twist');
-  const at = (turn: number) => [
-    { x: mid.x - spread*Math.cos(turn), y: mid.y - spread*Math.sin(turn) },
-    { x: mid.x + spread*Math.cos(turn), y: mid.y + spread*Math.sin(turn) },
-  ];
-  await touchAt(devtools, 'touchStart', at(0));
-  for (let step = 1; step <= 8; step += 1) {
-    await touchAt(devtools, 'touchMove', at((radians*step)/8));
-    await waitFrames(page, 2);
-  }
-  await touchAt(devtools, 'touchEnd', []);
-  await settleCamera(page);
-}
-
 /** Put one finger down for however long, then lift it. */
 export async function tapAt(
   page: Page, devtools: CDPSession, x: number, y: number, milliseconds = 60,
@@ -236,74 +218,293 @@ export async function dragFinger(
   }
 }
 
-/** Drive pinch zoom, which is what finger has instead of wheel. */
+/** Place two fingers as one hand would carry them: spread and turned about their middle,
+ *  then slid. */
+export function asHand(
+  fingers: [Finger, Finger], spread: number, turn: number, slide: Finger,
+): [Finger, Finger] {
+  const [first, second] = fingers;
+  const middle = { x: 0.5 * (first.x + second.x), y: 0.5 * (first.y + second.y) };
+  const carried = (finger: Finger): Finger => {
+    const across = finger.x - middle.x;
+    const down = finger.y - middle.y;
+    return {
+      x: middle.x + slide.x + spread * (Math.cos(turn) * across - Math.sin(turn) * down),
+      y: middle.y + slide.y + spread * (Math.sin(turn) * across + Math.cos(turn) * down),
+    };
+  };
+  return [carried(first), carried(second)];
+}
+
+/** Put two fingers down where `at(0)` says, carry them through `at`, and lift at `at(1)`.
+ *
+ *  For gestures no one spread, slide or twist names: grip holds what fingers took whatever
+ *  path they take, so check names path and reads its end.
+ */
+export async function moveFingers(
+  page: Page, devtools: CDPSession, at: (along: number) => [Finger, Finger], steps = 8,
+): Promise<void> {
+  await ensureLifted(page, 'two fingers');
+  await touchAt(devtools, 'touchStart', at(0));
+  for (let step = 1; step <= steps; step += 1) {
+    await touchAt(devtools, 'touchMove', at(step / steps));
+    await waitFrames(page, 2);
+  }
+  await touchAt(devtools, 'touchEnd', []);
+  await settleCamera(page);
+}
+
+/** Find handle of object labelled `label`, or -1. */
+export async function handleLabelled(page: Page, label: string): Promise<number> {
+  return page.evaluate(
+    (name) => nimSceneHandles().find((one) => nimObjectLabel(one) === name) ?? -1, label,
+  );
+}
+
+/** Read pixel object `handle` is drawn at, as finger landing on it. */
+export async function fingerOn(page: Page, handle: number): Promise<Finger> {
+  const at = await pixelOf(page, handle);
+  return { x: at?.[0] ?? 0, y: at?.[1] ?? 0 };
+}
+
+/** Measure pixels between where object `handle` is drawn and where `finger` stands. */
+export async function slipOf(page: Page, handle: number, finger: Finger): Promise<number> {
+  const at = await pixelOf(page, handle);
+  return at === null ? Infinity : Math.hypot((at[0] ?? 0) - finger.x, (at[1] ?? 0) - finger.y);
+}
+
+/** Read whether finger landing at `at` would find empty sky: nothing under it but backdrop. */
+async function isSkyAt(page: Page, at: Finger): Promise<boolean> {
+  return page.evaluate(({ x, y }) => {
+    nimUpdateCursor(x, y);
+    nimUpdateHover(window.innerWidth, window.innerHeight);
+    return nimHoverHandle() < 0 || nimIsHoverBackdrop();
+  }, at);
+}
+
+/** Place pixels grip holds what each finger took at: fingers as they stand, less slop.
+ *
+ *  Page's own rule, `interaction.fingersHeld`, read again here as oracle: middle is
+ *  fingers' own, and gap and angle count from slop's edge once fingers part, close or turn
+ *  past it. Gestures here part and turn one way only, so end alone says whether they crossed.
+ */
+function heldOf(
+  landed: [Finger, Finger], now: [Finger, Finger], slop_gap: number, slop_twist: number,
+): [Finger, Finger] {
+  const gapOf = (pair: [Finger, Finger]): number =>
+    Math.hypot(pair[1].x - pair[0].x, pair[1].y - pair[0].y);
+  const angleOf = (pair: [Finger, Finger]): number =>
+    Math.atan2(pair[1].y - pair[0].y, pair[1].x - pair[0].x);
+  const [gap_landed, gap] = [gapOf(landed), gapOf(now)];
+  let turned = angleOf(now) - angleOf(landed);
+  if (turned > Math.PI) turned -= 2 * Math.PI;
+  if (turned < -Math.PI) turned += 2 * Math.PI;
+  const gap_held = Math.abs(gap - gap_landed) > slop_gap
+    ? (gap_landed * Math.max(gap, 1)) / (gap_landed + Math.sign(gap - gap_landed) * slop_gap)
+    : gap_landed;
+  const angle_held = angleOf(landed) +
+    (Math.abs(turned) > slop_twist ? turned - Math.sign(turned) * slop_twist : 0);
+  const middle = { x: 0.5 * (now[0].x + now[1].x), y: 0.5 * (now[0].y + now[1].y) };
+  const across = 0.5 * gap_held * Math.cos(angle_held);
+  const down = 0.5 * gap_held * Math.sin(angle_held);
+  return [
+    { x: middle.x - across, y: middle.y - down }, { x: middle.x + across, y: middle.y + down },
+  ];
+}
+
+/** Read largest change in camera's turn, roll included: motor's rotation coefficients. */
+async function turnOf(page: Page, before: number[]): Promise<number> {
+  const after = await page.evaluate(() => Array.from(nimCameraMotor()));
+  return Math.max(...[5, 6, 7, 15].map((at) => Math.abs((after[at] ?? 0) - (before[at] ?? 0))));
+}
+
+/** Drive two fingers, which hold what each touched, less slop, as mouse holds what it grabs.
+ *
+ *  Ruled on repository issue 592: each finger stays on point it touched, and view moves to
+ *  hold that; selection is orbited, so pivot stays on it. Zoom and twist wait for slop, as
+ *  they did before grip, and count from its edge. Over empty sky in free flight, finger
+ *  holds place at frame's own scale, so zoom out goes on once objects shrink from under it.
+ */
 export async function drivePinch(page: Page, devtools: CDPSession): Promise<void> {
+  const [slop_gap, slop_twist] = await page.evaluate(() => [nimTapSlop(), nimTwistSlop()]);
   await page.keyboard.press('Home');
   await settleCamera(page);
 
-  // Pinch well off centre, which is where aimed zoom shows itself: midpoint never moves,
-  //   so pinch that also translated view would drag it toward that corner.
-  const mid = { x: 300, y: 300 };
+  // Fingers land on two points at two depths and move as one hand: spread, twist and slide
+  //   at once. Each point staying under pixel grip holds it at is whole rule.
+  const first = await handleLabelled(page, 'a');
+  const second = await handleLabelled(page, 'c');
+  const landed: [Finger, Finger] = [await fingerOn(page, first), await fingerOn(page, second)];
+  const hand = (along: number): [Finger, Finger] =>
+    asHand(landed, 1 + 0.3 * along, 0.25 * along, { x: 30 * along, y: 20 * along });
   const before = await readCamera(page);
-  await pinch(page, devtools, mid, mid, 40, 160);
+  await moveFingers(page, devtools, hand);
   const after = await readCamera(page);
-
+  const [held_first, held_second] = heldOf(landed, hand(1), slop_gap, slop_twist);
+  const slips = [await slipOf(page, first, held_first), await slipOf(page, second, held_second)];
   report(
-    'a pinch zooms',
-    after.distance < before.distance * 0.8,
-    `distance ${before.distance.toFixed(2)} -> ${after.distance.toFixed(2)}`,
+    'two fingers hold the points they touched, less slop, through a spread, a twist and a slide',
+    Math.max(...slips) <= 1 && spanOf(before.eye, after.eye) > 0.1,
+    `points ${slips.map((slip) => slip.toFixed(2)).join(' and ')} px off where grip holds ` +
+      `them, eye moved ${spanOf(before.eye, after.eye).toFixed(3)}`,
   );
+  // Sight read off eye and pivot through float32, so bound is float32's.
   report(
-    'a pinch leaves the orbit alone',
-    Math.abs(after.azimuth - before.azimuth) < 1e-3,
-    `azimuth ${before.azimuth.toFixed(4)} -> ${after.azimuth.toFixed(4)}`,
+    'and turn no sight with nothing selected, only slide and roll',
+    spanOf(forwardOf(before), forwardOf(after)) < 1e-6,
+    `sight moved ${spanOf(forwardOf(before), forwardOf(after)).toExponential(2)}`,
   );
 
-  // Twist rolls, which is sixth degree of freedom and has no keyboard beside it on touch.
-  //   Read against eye and sight, which roll leaves exactly alone.
+  // Fingers on empty sky hold places at depth of object shown nearest them, near pivot's
+  //   depth: spread flies eye toward them, slide carries it across, and pivot comes to
+  //   their depth, never short of it.
   await page.keyboard.press('Home');
   await settleCamera(page);
+  const sky: [Finger, Finger] = [{ x: 300, y: 110 }, { x: 600, y: 110 }];
+  const is_sky = (await isSkyAt(page, sky[0])) && (await isSkyAt(page, sky[1]));
+  const stood = await readCamera(page);
+  const motor_stood = await page.evaluate(() => Array.from(nimCameraMotor()));
+  await moveFingers(
+    page, devtools, (along) => asHand(sky, 1 + 1.5 * along, 0, { x: 40 * along, y: 30 * along }),
+  );
+  const flown = await readCamera(page);
+  const turn_sky = await turnOf(page, motor_stood);
+  report(
+    'two fingers on empty sky zoom and slide the view, and draw the pivot in with them',
+    is_sky && depthOf(stood, flown.eye) > 0.1 && turn_sky < 1e-6 &&
+      flown.distance < stood.distance && flown.distance > 0.2 * stood.distance,
+    `on sky ${is_sky}, eye came ${depthOf(stood, flown.eye).toFixed(3)} in, turned ` +
+      `${turn_sky.toExponential(2)}, separation ${stood.distance.toFixed(4)} -> ` +
+      `${flown.distance.toFixed(4)}`,
+  );
+
+  // Fingers carried together wobble inside slop: they slide alone, and neither zoom nor roll.
+  await page.keyboard.press('Home');
+  await settleCamera(page);
+  const carried = await readCamera(page);
+  const motor_carried = await page.evaluate(() => Array.from(nimCameraMotor()));
+  await moveFingers(page, devtools, (along) => {
+    const wobble = Math.round(8 * along) % 2 === 0 ? 1 : -1;
+    return asHand(
+      sky, 1 + (along > 0 ? (wobble * 8) / 300 : 0), along > 0 ? wobble * 0.15 : 0,
+      { x: 120 * along, y: 60 * along },
+    );
+  });
+  const slid = await readCamera(page);
+  const turn_carried = await turnOf(page, motor_carried);
+  report(
+    'two fingers carried together, wobbling inside the slop, slide and neither zoom nor roll',
+    slideOf(carried, slid) > 0.1 && Math.abs(depthOf(carried, slid.eye)) < 1e-4 &&
+      turn_carried < 1e-6,
+    `slid ${slideOf(carried, slid).toFixed(3)}, came ` +
+      `${depthOf(carried, slid.eye).toExponential(2)} in, turned ${turn_carried.toExponential(2)}`,
+  );
+
+  // Twist on sky about middle of frame: roll alone holds both places, so picture turns
+  //   with fingers by what lies past slop, and eye moves nowhere.
+  await page.keyboard.press('Home');
+  await settleCamera(page);
+  const across: [Finger, Finger] = [{ x: 300, y: 110 }, { x: 900, y: 790 }];
+  const is_across_sky = (await isSkyAt(page, across[0])) && (await isSkyAt(page, across[1]));
+  const centre = await page.evaluate(() => [window.innerWidth / 2, window.innerHeight / 2]);
+  const marked = await handleLabelled(page, 'b');
   const upright = await readCamera(page);
-  await twist(page, devtools, { x: 400, y: 400 }, 120, 0.9);
+  const start = await fingerOn(page, marked);
+  await moveFingers(page, devtools, (along) => asHand(across, 1, 0.3 * along, { x: 0, y: 0 }));
   const rolled = await readCamera(page);
-  const across = slideOf(upright, rolled);
+  const swung = await fingerOn(page, marked);
+  const angleOf = (at: Finger): number =>
+    Math.atan2(at.y - (centre[1] ?? 0), at.x - (centre[0] ?? 0));
+  let turned = angleOf(swung) - angleOf(start);
+  if (turned > Math.PI) turned -= 2 * Math.PI;
+  if (turned < -Math.PI) turned += 2 * Math.PI;
   report(
-    'a twist rolls, and moves the eye no distance at all',
-    across < 1e-3 && spanOf(upright.eye, rolled.eye) < 1e-3 &&
-      Math.abs(rolled.distance - upright.distance) < 1e-6,
-    `eye moved ${spanOf(upright.eye, rolled.eye).toFixed(6)} units`,
-  );
-  report(
-    'and a twist leaves the sight where it was pointing',
-    Math.abs(rolled.azimuth - upright.azimuth) < 1e-3,
-    `azimuth ${upright.azimuth.toFixed(4)} -> ${rolled.azimuth.toFixed(4)}`,
+    'a twist on empty sky turns the picture by what lies past the slop, and moves the eye nowhere',
+    is_across_sky && Math.abs(turned - (0.3 - slop_twist)) < 1e-3 &&
+      spanOf(upright.eye, rolled.eye) < 1e-3,
+    `on sky ${is_across_sky}, fingers turned +0.300, picture turned ${turned.toFixed(4)} ` +
+      `about the frame's middle, eye moved ${spanOf(upright.eye, rolled.eye).toExponential(2)}`,
   );
 
-  // Direction, read off screen: picture must turn whichever way fingers turned, and
-  //   sign went through unturned, so twist rolled against them.
+  // Pinched in four times away from middle, with nothing selected: each lands on sky once
+  //   objects shrink, and each still zooms out.
   await page.keyboard.press('Home');
   await settleCamera(page);
-  const handle = await page.evaluate(() => nimSceneHandles()[0] ?? 0);
-  const seen = async (): Promise<number[]> => page.evaluate((one) => Array.from(
-    nimAnchorScreen(one, window.innerWidth, window.innerHeight),
-  ), handle);
-  const centre = await page.evaluate(
-    () => [window.innerWidth / 2, window.innerHeight / 2],
-  );
-  const start = await seen();
-  // Fingers turned clockwise on screen, since y grows down and this angle grows.
-  await twist(page, devtools, { x: 400, y: 400 }, 120, 0.9);
-  const swung = await seen();
-  const angleOf = (at: number[]): number => Math.atan2(
-    (at[1] ?? 0) - (centre[1] ?? 0), (at[0] ?? 0) - (centre[0] ?? 0),
-  );
-  let carried = angleOf(swung) - angleOf(start);
-  if (carried > Math.PI) carried -= 2 * Math.PI;
-  if (carried < -Math.PI) carried += 2 * Math.PI;
+  const apart: [Finger, Finger] = [{ x: 400, y: 250 }, { x: 800, y: 250 }];
+  const pinched = (along: number): [Finger, Finger] =>
+    asHand(apart, 1 - 0.75 * along, 0, { x: 0, y: 0 });
+  const centre_scene = await page.evaluate(() => Array.from(nimCameraPivot()));
+  const outward: number[] = [];
+  for (let time = 0; time < 4; time += 1) {
+    const out_from = await readCamera(page);
+    await moveFingers(page, devtools, pinched);
+    const out_to = await readCamera(page);
+    outward.push(spanOf(out_to.eye, centre_scene) / spanOf(out_from.eye, centre_scene));
+  }
   report(
-    'and a twist carries the picture the way the fingers turned',
-    carried > 0.2,
-    `fingers turned +0.900, picture turned ${carried.toFixed(3)} about the frame's middle`,
+    'four pinches in, with nothing selected, each zoom out',
+    outward.every((ratio) => ratio > 2),
+    `eye out from the opening pivot by ${outward.map((ratio) => ratio.toFixed(2)).join(', ')}`,
+  );
+
+  // With selection, two fingers orbit, dolly and roll about it, so pivot stays on it.
+  await page.keyboard.press('Home');
+  await settleCamera(page);
+  const picked = await handleLabelled(page, 'o');
+  await page.evaluate((one) => nimSelectOnly(one), picked);
+  await settleCamera(page);
+  const framed = await readCamera(page);
+  const around: [Finger, Finger] = [{ x: 480, y: 470 }, { x: 730, y: 420 }];
+  const orbit = (along: number): [Finger, Finger] =>
+    asHand(around, 1 + 0.4 * along, -0.2 * along, { x: 20 * along, y: 10 * along });
+  await moveFingers(page, devtools, orbit);
+  const orbited = await readCamera(page);
+  report(
+    'with a selection two fingers orbit about it, and the pivot stays on it',
+    spanOf(framed.pivot, orbited.pivot) < 1e-6 && orbited.distance < framed.distance,
+    `pivot moved ${spanOf(framed.pivot, orbited.pivot).toExponential(2)}, ` +
+      `distance ${framed.distance.toFixed(3)} -> ${orbited.distance.toFixed(3)}`,
+  );
+  // Pinched in four times away from middle: dolly meets fingers' gap each time.
+  const dollied: number[] = [];
+  for (let time = 0; time < 4; time += 1) {
+    const out_from = await readCamera(page);
+    await moveFingers(page, devtools, pinched);
+    const out_to = await readCamera(page);
+    dollied.push(out_to.distance / out_from.distance);
+  }
+  const held_on = await readCamera(page);
+  await page.evaluate(() => clearSelection());
+  report(
+    'four pinches in, with a selection, each zoom out, and the pivot stays on it',
+    dollied.every((ratio) => ratio > 2) &&
+      spanOf(framed.pivot, held_on.pivot) < 1e-6 * held_on.distance,
+    `distance out by ${dollied.map((ratio) => ratio.toFixed(2)).join(', ')}, pivot moved ` +
+      `${spanOf(framed.pivot, held_on.pivot).toExponential(2)}`,
+  );
+
+  // Spread two frames into ease of right-click pick of `b`, over sky. With selection, two fingers
+  //   orbit, dolly and roll about pivot it already has, so ease still lands pivot on `b`.
+  //   Not halt, which stops ease where it stands: pivot stayed short of `b`, and every turn
+  //   after went about that.
+  await page.keyboard.press('Home');
+  await settleCamera(page);
+  const handle_b = await handleLabelled(page, 'b');
+  const world_b = await page.evaluate((one) => Array.from(nimAnchorWorld(one)), handle_b);
+  const on_b = await fingerOn(page, handle_b);
+  const over_sky = await page.evaluate(() => {
+    const rect = (document.getElementById('gl') as HTMLElement).getBoundingClientRect();
+    return { x: rect.left + 0.5 * rect.width, y: rect.top + 0.15 * rect.height };
+  });
+  await page.mouse.click(on_b.x, on_b.y, { button: 'right' });
+  await waitFrames(page, 2);
+  await pinch(page, devtools, over_sky, over_sky, 60, 90);
+  const spread = await readCamera(page);
+  await page.evaluate(() => clearSelection());
+  report(
+    'and a spread inside the ease of a pick still lands the pivot on it',
+    spanOf(spread.pivot, world_b) < 1e-4,
+    `pivot off the point by ${spanOf(spread.pivot, world_b).toExponential(2)}`,
   );
 }
 

@@ -90,6 +90,11 @@ const
     ##   not.
     ##   Sized for fingertip: finger rolls few pixels on contact even held still, and
     ##   threshold tight enough for mouse makes long-press unreachable on touchscreen.
+    ##   Two fingers zoom only once their gap has changed by more; see `fingersHeld`.
+  RADIANS_TWIST_SLOP* = 0.21
+    ## Turn two fingers further than this, in radians, and their twist begins to roll.
+    ##   Twelve degrees: pinch and pan both wander few degrees without meaning to, and
+    ##   reader who means to roll turns much further than that. See `fingersHeld`.
 
   PIXELS_CLICK_SLOP* = 6.0
     ## Move pointer press further than this and it stops being click.
@@ -156,6 +161,34 @@ const
     ##   High enough that dark chip still reads against dark scene.
 
 
+const
+  ITERATIONS_GRIP* = 12
+    ## Let one step of two fingers' grip try this many corrections; see `slideGripped`.
+    ##   Each step starts from last one's answer, which fingers moved little from, so one
+    ##   or two settle it; twelve bound frame when fingers jump.
+  PIXELS_GRIP_SETTLED* = 0.01  ## Stop grip's solve once each finger misses by less.
+  STEP_GRIP_DERIVATIVE = 1.0e-6
+    ## Step each of grip's four unknowns by this for its derivative.
+    ##   Unknowns are radians, log of dolly and slides in units of `GripFingers.reach`, so
+    ##   one step size serves all four.
+  DAMPING_GRIP_START = 1.0e-3  ## Damp grip's first correction of each step by this.
+  DAMPING_GRIP_LEAST = 1.0e-6  ## Damp no correction less: kept near Gauss-Newton.
+  DAMPING_GRIP_MOST = 1.0e8  ## Give up correction once damping passes this.
+  HALVINGS_GRIP_FLOOR = 20
+    ## Halve step this often to find how far grip may go before eye passes floor.
+  DOUBLINGS_GRIP_DOLLY = 6
+    ## Widen bracket on log of dolly this often at most, from one quarter: sixteen either way,
+    ##   tenfold seven times over, which no frame of fingers asks; see `orbitGripped`.
+  HALVINGS_GRIP_DOLLY = 48
+    ## Halve bracket on log of dolly this often to bring places' gap to fingers'.
+    ##   Bracket spans sixteen at most, so 48 halvings leave less than 1e-13 of it.
+  FRACTION_GRIP_GAIN = 1.0e-9
+    ## Take grip's correction only where it cuts misses by more than this part of them.
+    ##   Finite derivative of unknown fingers cannot move carries rounding, and correction
+    ##   it asked for cut nothing but rounding, and rolled view 1.3e-9 radians where fingers
+    ##   asked no roll.
+
+
 
 #[ Type Definitions ]#
 
@@ -206,7 +239,7 @@ type
     Forward, Back, Left, Right, Down, Up,
     RollLeft, RollRight,
     OrbitLeft, OrbitRight, OrbitUp, OrbitDown,
-    DollyIn, DollyOut
+    DollyIn, DollyOut  ## Dolly with selection, and quicken or slow ship's speed without.
 
   KeyAction* {.pure.} = enum  ## Define what one press of key does to view.
     FocusPrevious, FocusNext,
@@ -224,6 +257,36 @@ type
     released*: Option[float]  ## When finger lifted, if it has.
       ## Marker stays swollen while finger is down, and settles only once this says it may.
       ##   Swell as function of fill was back to true size exactly when selection landed.
+
+  GripFinger* = object  ## Define what one of two fingers holds, from landing to lift.
+    place*: Position  ## Place in world finger holds.
+      ## On finger's own ray, at depth of what stands under it, as right drag holds depth.
+      ##   Not object's own point, which pick finds up to its reach off finger: two fingers
+      ##   on one star then held one point, and no spread could zoom.
+      ##   Over nothing, where `gripFingers` says.
+    floor*: float  ## Least depth along sight place held may come to; zero over nothing.
+      ## Object's own, where wheel stops at it, and no nearer than place stood at landing.
+      ##   Depth, not reach: place off object's own ray stands beside it, so its reach
+      ##   never fell to object's and eye went on past fill.
+
+  GripFingers* = object  ## Define two fingers' grip on what each touched.
+    ## Taken as second finger lands. Free flight is solved afresh from `stance` at every
+    ## step, so fingers back where they landed put camera back where it stood.
+    stance*: Camera  ## Camera as second finger landed.
+    fingers*: array[2, GripFinger]  ## What each finger holds, in order they landed.
+    landed*: array[2, ScreenPosition]  ## Pixels fingers landed on, in order they landed.
+    gap_from*: Option[float]  ## Gap zoom counts from, once fingers part or close past slop.
+      ## Slop's edge, not gap read as it was crossed, so step crossing it zooms what lies
+      ## past it alone, at any frame rate; see `fingersHeld`.
+    angle_from*: Option[float]  ## Angle twist counts from, once fingers turn past slop.
+    is_orbit*: bool  ## Whether grip orbits selection, rather than slides camera.
+    is_open*: bool  ## Whether free flight's places stand at separation over nothing, with
+      ## no object under either finger nor near pivot's depth to name theirs.
+    reach_selection*: float  ## Selection's reach from pivot, which orbit's sphere takes.
+    middle_last*: ScreenPosition  ## Fingers' middle as orbit last carried it.
+    reach*: float  ## Length one unit of free flight's slide stands for: mean reach of
+      ## places held.
+    solution*: array[4, float]  ## Free flight's last answer, which next solve starts from.
 
   Interaction* = object  ## Define cursor, drag and press state held between frames.
     is_enabled*: bool  ## Whether picking and overlay run at all; off during storyboard capture.
@@ -289,10 +352,9 @@ type
       ##   Each render path owns its drag state and says so here.
       ## Distinct from `is_dragging`, construction drag that keeps hovering.
     depth_pointer*: Option[float]  ## Depth of what pointer is over, from eye along sight.
-      ## Local scale free flight caps its speed by; see `camera.capTravelling`.
-      ##   None where pointer is over nothing, which leaves fixed ceiling alone.
-      ## Stamped in `updateHover`, where scene is in hand, and stamped while travel key is
-      ## held as well as while camera stands, so cap follows pointer through flight.
+      ## Depth right drag holds in free flight as it begins; see `grabPan`.
+      ##   None where pointer is over nothing.
+      ## Stamped in `updateHover`, where scene is in hand, while camera stands.
     depth_pan*: float  ## Depth right drag holds under pointer, from eye along sight.
       ## Taken when drag begins, by `grabPan`: hover is off while camera moves, so
       ## `depth_pointer` is gone by second step.
@@ -302,9 +364,15 @@ type
       ##   again is other point, and zoom would turn on how many steps pointer sent.
       ## About `origin_pan`, view origin it was taken about; read through `pointPanNow`.
       ## None in free flight.
+    grip*: Option[GripFingers]  ## Two fingers' grip on what they touched, while both are down.
+      ## Taken by `gripFingers` as second lands, carried by `carryGrip`, dropped at lift.
     origin_pan*: Position  ## View origin `point_pan` is held about, as world position.
       ## View origin follows camera every frame while drag moves it, and point held about
       ## world origin would land on world's step far out.
+    speed_ship*: float  ## Ship's own speed key flight climbs toward, in units per second.
+      ## Camera's alone, as ship's is: no object, no pointer and no pivot sets it
+      ## (repository issue 535). Opens at `camera.speedOpening`; only plus and minus
+      ## change it, within `SPEED_FLOOR` and `SPEED_CEILING`; see `driveHeld`.
     seconds_travelling*: float  ## How long current travel hold has lasted, in seconds.
       ## Speed climbs with this, and resets to zero on frame no travel key is held; see
       ## `driveHeld`.
@@ -701,13 +769,7 @@ proc updateHover*(
   ##     Hover is recomputed every frame, so pan drag would highlight across every object
   ##     it sweeps, and held W would light up whatever slides under still cursor.
   ##     Ring comes back frame move ends.
-  ##   Pick still runs while travel key is held, and its answer is kept as depth alone.
-  ##     Free flight caps its speed by depth under pointer, and cap follows pointer
-  ##     through flight rather than freezing where key went down.
-  ##     Costs one pick per frame of flight, which is what still frame already pays.
-  ##     Ring stays off, so reader sees no highlight sweeping past.
-  let is_standing = not interaction.isMovingCamera
-  if interaction.is_enabled and (is_standing or interaction.isTravelling):
+  if interaction.is_enabled and not interaction.isMovingCamera:
     let report = pickAt(
       scene,
       camera,
@@ -718,8 +780,8 @@ proc updateHover*(
       interaction.cursor,
       placed,
     )
-    interaction.index_hover = if is_standing: report.handle else: none(int)
-    interaction.count_hover_rivals = if is_standing: report.count_rivals else: 0
+    interaction.index_hover = report.handle
+    interaction.count_hover_rivals = report.count_rivals
     interaction.depth_pointer = none(float)
     if report.handle.isSome:
       let found = positionUnderPointerOn(
@@ -732,8 +794,8 @@ proc updateHover*(
         interaction.cursor,
         placed,
       )
-      # Depth along sight, not distance: speed curve travels forward, and that is what
-      #   forward has to cross.
+      # Depth along sight, not distance: right drag slides square to sight, and what it
+      #   holds keeps that depth.
       if found.isSome:
         interaction.depth_pointer = some(depthAlong(scale.eye, scale.forward, found.get))
   else:
@@ -749,6 +811,46 @@ proc updateHover*(
 
 #[ Keyboard ]#
 
+proc dollyAbout*(
+  camera: var Camera;
+  scene: Scene;
+  factor: float;
+  scale: DrawExtent;
+  view_projection: Matrix4;
+  width, height: int;
+  placed: openArray[Placement] = [];
+) =
+  ## Zoom camera by `factor` about pivot, as selection's wheel does.
+  ##   Pivot stands on what is picked, so orbit stays on it however far wheel goes in or out.
+  ##     Not toward object under pointer: eye slid along its own line to that object, and
+  ##     sight, with pivot on it, left what is picked. Notch after notch in and out over
+  ##     scene then carried pivot off it.
+  ##   Stops where object standing in middle of frame fills frame, as free flight's wheel
+  ##   stops at object it comes in to; see `camera.travelToward`. Pivot stands on what is
+  ##   picked, so that object is mostly what is picked.
+  ##     Floor is reach, and object in middle stands on sight, where reach is depth.
+  ##     Floor never pushes eye out: eye already nearer stays, and only zooms out.
+  let anchor = anchorZoomAt(
+    scene,
+    camera,
+    scale,
+    view_projection,
+    width,
+    height,
+    ScreenPosition(x: 0.5 * float(width), y: 0.5 * float(height)),
+    placed,
+    is_banded = true,
+  )
+  var settled = factor
+  if anchor.isSome and anchor.get.is_standing and camera.distance > 0.0:
+    let
+      (eye, frame) = camera.sight
+      depth = depthAlong(eye, frame.forward, anchor.get.at)
+    if depth > 0.0:
+      settled = max(factor, min(1.0, 1.0 - (depth - anchor.get.floor_reach) / camera.distance))
+  camera.dolly(settled)
+
+
 proc dollyAt*(
   camera: var Camera;
   scene: Scene;
@@ -760,15 +862,19 @@ proc dollyAt*(
   has_selection: bool;
   placed: openArray[Placement] = [];
 ) =
-  ## Zoom camera by `factor` toward whatever `cursor` is over; see `dollyAtCursor`.
-  ##   Cursor is parameter so pinch, which has no cursor, aims at frame's middle through
-  ##   same rule; see `dollyAtCentre`.
+  ## Zoom camera by `factor`, in whichever way its state reads; see `dollyAtCursor`.
   ##   Two states, as `driveHeld` has.
-  ##     Free flight travels pointer's own ray, always. Object under pointer is what eye
-  ##     comes in to, floored at that object's drawn radius; ray itself carries eye where
-  ##     nothing stands there.
-  ##     Selection keeps turntable's dolly, toward object under pointer where one
-  ##     stands there, and about middle of frame where none does.
+  ##     Free flight comes in to object under pointer, at whatever depth it stands,
+  ##     floored at that object's drawn radius. Over nothing it does nothing: wheel refers
+  ##     to object, and with none there it has nothing to come in to (repository issue
+  ##     535).
+  ##       Not pointer's ray at camera's own scale: that scale was separation, which each
+  ##       notch scaled down, and wheel over empty sky took it to near floor.
+  ##     Selection dollies about pivot, which stands on what is picked, wherever pointer
+  ##     stands, so orbit stays on it; see `dollyAbout`.
+  if has_selection:
+    camera.dollyAbout(scene, factor, scale, view_projection, width, height, placed)
+    return
   # Take caller's extent and matrix, not fresh derivations per notch; see
   #   `picking.anchorZoomAt`.
   let anchor = anchorZoomAt(
@@ -780,73 +886,29 @@ proc dollyAt*(
     height,
     cursor,
     placed,
+    is_banded = false,
   )
-  if not has_selection:
-    if anchor.isSome:
-      camera.travelToward(factor, anchor.get.at, anchor.get.floor_reach)
-      # Separation follows anchor's own depth, so frustum's scale tracks flight.
-      #   Crossing as well as standing object: free flight has no orbit for pivot to
-      #   anchor, so depth here is scale and nothing else.
-      let
-        (eye, frame) = camera.sight
-        depth = depthAlong(eye, frame.forward, anchor.get.at)
-      if depth > 0.0: camera.repivotToDepth(depth)
-      return
-    # Nothing under pointer: same ray carries eye, at camera's own scale, and separation
-    #   scales with it exactly as `dolly` scales it.
-    let heading = headingThrough(camera, camera.frame, width, height, cursor)
-    # Length of heading is bulk norm of weightless point it lifts to.
-    let reach = (|∙heading.toMultivector)[Basis.scalar]
-    if reach <= 0.0: return
-    let settled = distanceHeld(camera.distance * factor)
-    camera.travelAlong((camera.distance - settled) / reach, heading)
-    camera.repivotToDepth(settled)
-    return
-  if anchor.isNone:
-    camera.dolly(factor)
-    return
-  # Stop at anchor's floor, as free flight does; see `camera.travelToward`.
-  #   `dollyToward` scales eye's reach to anchor by factor, so floor bounds that factor.
-  #   Floor never pushes eye out: eye already nearer stays, and only zooms out.
-  let reach = distanceBetween(camera.eye.toMultivector, anchor.get.at.toMultivector)
-  if anchor.get.is_standing and reach > 0.0:
-    camera.dollyToward(max(factor, min(anchor.get.floor_reach, reach) / reach), anchor.get.at)
-  else:
-    camera.dollyToward(factor, anchor.get.at)
-  if anchor.get.is_standing:
-    # Depth from eye where it now stands, along sight direction zoom left unchanged.
-    let
-      (eye, frame) = camera.sight
-      depth = depthAlong(eye, frame.forward, anchor.get.at)
-    if depth > 0.0: camera.repivotToDepth(depth)
+  if anchor.isNone: return
+  camera.travelToward(factor, anchor.get.at, anchor.get.floor_reach)
+  # Separation follows anchor's own depth, so frustum's scale tracks flight.
+  #   Crossing as well as standing object: free flight has no orbit for pivot to
+  #   anchor, so depth here is scale and nothing else.
+  let
+    (eye, frame) = camera.sight
+    depth = depthAlong(eye, frame.forward, anchor.get.at)
+  if depth > 0.0: camera.repivotToDepth(depth)
 
 
-proc dollyAtCentre*(
-  camera: var Camera;
-  scene: Scene;
-  factor: float;
-  scale: DrawExtent;
-  view_projection: Matrix4;
-  width, height: int;
-  has_selection: bool;
-  placed: openArray[Placement] = [];
-) =
-  ## Zoom camera by `factor` toward whatever middle of frame is over; pinch's zoom.
-  ##   Pinch has two fingers and no pointer, and zooming at their midpoint translated
-  ##   view twice beside pan that carries same midpoint; middle of frame it is, aimed
-  ##   through `dollyAt` so pivot still lands on point or line there.
-  dollyAt(
-    camera,
-    scene,
-    factor,
-    scale,
-    view_projection,
-    width,
-    height,
-    ScreenPosition(x: float(width) / 2.0, y: float(height) / 2.0),
-    has_selection,
-    placed,
-  )
+func yieldOrHalt*(tween: var CameraTween; has_selection: bool) =
+  ## Give camera's ease up to wheel, right drag or two fingers, in whichever way state reads.
+  ##   Free flight's lands pivot on what pointer or fingers are over, so ease stops where camera
+  ##   stands; see `camera.halt`.
+  ##   Selection's turns, dollies and rolls about pivot it already has, so pivot finishes
+  ##   arriving on what is picked; see `camera.abandon`.
+  ##     Not halt there: notch or spread two frames into pick's ease left pivot 4.80 units off
+  ##     point picked, and every zoom and turn after went about that.
+  ##   One statement for both front-ends, as `dollyAtCursor` is.
+  if has_selection: tween.abandon() else: tween.halt()
 
 
 proc dollyAtCursor*(
@@ -861,7 +923,7 @@ proc dollyAtCursor*(
   placed: openArray[Placement] = [];
 ) =
   ## Zoom camera by `factor`, toward whatever cursor is over.
-  ##   One statement of what wheel notch does, so both front-ends and pinch zoom same way.
+  ##   One statement of what wheel notch does, so both front-ends zoom same way.
   ##   `picking.anchorZoomAt` decides what "over" means: object under cursor, and nothing
   ##   else.
   ##   Falls back to plain `dolly` where none answers, cursor on empty sky above horizon.
@@ -962,8 +1024,7 @@ func stretchAcross(
   ##   Vertical drag turns nothing, and point drifts toward or from middle column as zoom
   ##   scales it. Not turn chasing pointer's column: near line above pivot it needs great
   ##   yaw, and spun view and levelled it.
-  ##   Point is one `grabPan` took, or one under pixel drag left where none was taken: two
-  ##   fingers pinch as they move.
+  ##   Point is one `grabPan` took, or one under pixel drag left where caller took none.
   let
     (eye, frame) = camera.sight
     aspect = float(width) / float(height)
@@ -1054,15 +1115,12 @@ func releaseKeysAll*(interaction: var Interaction) =
   interaction.seconds_travelling = 0.0
 
 
-func speedFlying*(interaction: Interaction, camera: Camera): float =
-  ## Read speed free flight carries camera at right now, in units per second.
-  ##   Panel's reading: same cap and same age `driveHeld` steps by, so figure shown is
-  ##   figure flown. Zero while no travel key is held, since age is.
+func speedFlying*(interaction: Interaction): float =
+  ## Read ship's own speed key flight climbs toward, in units per second.
+  ##   Panel's reading: speed `driveHeld` steps toward, haste included while shift is
+  ##   held, so figure shown is figure plus and minus set.
   let haste = if Key.Shift in interaction.keys_held: FACTOR_HASTE else: 1.0
-  speedTravelling(
-    interaction.seconds_travelling,
-    capTravelling(interaction.depth_pointer, camera.distance, haste),
-  )
+  interaction.speed_ship * haste
 
 
 func driveHeld*(
@@ -1078,7 +1136,12 @@ func driveHeld*(
   ##     Travel integrates its own speed curve; see `camera.distanceTravelled`.
   ##     Shift multiplies every rate by `FACTOR_HASTE`.
   ##   Two states, and `has_selection` picks between them.
-  ##     Empty selection flies: travel and turn are about camera's own axes.
+  ##     Empty selection flies as ship does: travel and turn are about camera's own axes,
+  ##     and travel climbs toward ship's own speed, `speed_ship`. Plus and minus scale
+  ##     that speed as they scale separation with selection, and nothing else sets it.
+  ##       Not depth under pointer, nor separation over empty sky: separation ran down
+  ##       with each step ahead, and flight stalled short of pivot (repository issue 535).
+  ##       Travel carries pivot along, so separation stays as it was.
   ##     Selection orbits centroid instead. W and space rise over it, S and control fall,
   ##     and sideways keys swing round it; frame rule holds eye clear either way.
   ##       Slide across ground stood here, and it had no reading once camera stopped being
@@ -1099,18 +1162,16 @@ func driveHeld*(
     dolly = pow(FACTOR_DOLLY_SECOND, haste * seconds)
     # One step for this frame, integrated across hold's own two ages.
     step = distanceTravelled(
-      age_before,
-      interaction.seconds_travelling,
-      capTravelling(interaction.depth_pointer, camera.distance, haste),
+      age_before, interaction.seconds_travelling, interaction.speed_ship * haste
     )
   for key in interaction.keys_held:
     let motion = motionFor(key)
     if motion.isNone: continue
     case motion.get
     of Motion.Forward:
-      if has_selection: camera.orbit(0.0, rise) else: camera.flyAhead(step)
+      if has_selection: camera.orbit(0.0, rise) else: camera.travel(step, 0.0, 0.0)
     of Motion.Back:
-      if has_selection: camera.orbit(0.0, -rise) else: camera.flyAhead(-step)
+      if has_selection: camera.orbit(0.0, -rise) else: camera.travel(-step, 0.0, 0.0)
     of Motion.Left:
       if has_selection: camera.orbit(-turn, 0.0) else: camera.travel(0.0, -step, 0.0)
     of Motion.Right:
@@ -1130,8 +1191,14 @@ func driveHeld*(
       if has_selection: camera.orbit(0.0, rise) else: camera.look(0.0, rise)
     of Motion.OrbitDown:
       if has_selection: camera.orbit(0.0, -rise) else: camera.look(0.0, -rise)
-    of Motion.DollyIn: camera.dolly(1.0 / dolly)
-    of Motion.DollyOut: camera.dolly(dolly)
+    of Motion.DollyIn:
+      if has_selection: camera.dolly(1.0 / dolly)
+      else: interaction.speed_ship =
+          clamp(interaction.speed_ship * dolly, SPEED_FLOOR, SPEED_CEILING)
+    of Motion.DollyOut:
+      if has_selection: camera.dolly(dolly)
+      else: interaction.speed_ship =
+          clamp(interaction.speed_ship / dolly, SPEED_FLOOR, SPEED_CEILING)
 
 
 func applyAction*(
@@ -1176,6 +1243,422 @@ func pruneFocus*(interaction: var Interaction, scene: Scene) =
   ##   pointing at dead one would have marker drawn off freed storage.
   if interaction.index_focus.isSome and not scene.isAlive(interaction.index_focus.get):
     interaction.index_focus = none(int)
+
+
+
+#[ Two Fingers ]#
+
+func stanceGripped(grip: GripFingers, solution: array[4, float]): Camera =
+  ## Build camera free flight's grip `solution` names, from stance fingers landed on.
+  ##   Slides across, up and ahead, in units of `reach`, and rolls (repository issue 592).
+  result = grip.stance
+  result.travel(grip.reach * solution[2], grip.reach * solution[0], grip.reach * solution[1])
+  result.roll(solution[3])
+
+
+func gapAndAngle(fingers: array[2, ScreenPosition]): (float, float) =
+  ## Read pixels between two fingers, and angle of line from first to second.
+  let (across, down) = (fingers[1].x - fingers[0].x, fingers[1].y - fingers[0].y)
+  (hypot(across, down), arctan2(down, across))
+
+
+func middleOf(fingers: array[2, ScreenPosition]): ScreenPosition =
+  ## Read pixel halfway between two fingers.
+  ScreenPosition(x: 0.5 * (fingers[0].x + fingers[1].x), y: 0.5 * (fingers[0].y + fingers[1].y))
+
+
+func noteSlop(grip: var GripFingers, fingers: array[2, ScreenPosition]) =
+  ## Note whether fingers have parted, closed or turned past slop since they landed.
+  ##   Edge of slop each crossed is what zoom and twist count from; see `fingersHeld`.
+  let
+    (gap_landed, angle_landed) = gapAndAngle(grip.landed)
+    (gap, angle) = gapAndAngle(fingers)
+    turned = wrapAngle(angle - angle_landed)
+  if grip.gap_from.isNone and abs(gap - gap_landed) > PIXELS_TAP_SLOP:
+    grip.gap_from = some(gap_landed + copySign(PIXELS_TAP_SLOP, gap - gap_landed))
+  if grip.angle_from.isNone and abs(turned) > RADIANS_TWIST_SLOP:
+    grip.angle_from = some(angle_landed + copySign(RADIANS_TWIST_SLOP, turned))
+
+
+func fingersHeld*(
+  grip: GripFingers, fingers: array[2, ScreenPosition]
+): array[2, ScreenPosition] =
+  ## Place pixels grip holds what each finger took at: fingers as they stand, less slop.
+  ##   Middle is fingers' own, so slide follows them from first pixel.
+  ##   Gap and angle stand as fingers landed until each passes its slop; see `noteSlop`.
+  ##   Then each counts from slop's edge, so slop itself neither zooms nor rolls, and
+  ##   crossing it jumps nothing.
+  ##     Two fingers carried together never hold gap to pixel or angle to degree, and grip
+  ##     without slop read every wobble as zoom and roll.
+  ##     Cost is slop's: finger slips off what it holds by slop's share of gap, and by
+  ##     twelve degrees of arc about fingers' middle.
+  let
+    (gap_landed, angle_landed) = gapAndAngle(grip.landed)
+    (gap, angle) = gapAndAngle(fingers)
+    gap_held =
+      if grip.gap_from.isNone: gap_landed
+      else: gap_landed * max(gap, 1.0) / grip.gap_from.get
+    angle_held =
+      if grip.angle_from.isNone: angle_landed
+      else: angle_landed + angle - grip.angle_from.get
+    (across, down) = (0.5 * gap_held * cos(angle_held), 0.5 * gap_held * sin(angle_held))
+    middle = middleOf(fingers)
+  [
+    ScreenPosition(x: middle.x - across, y: middle.y - down),
+    ScreenPosition(x: middle.x + across, y: middle.y + down),
+  ]
+
+
+func placesSeen(
+  grip: GripFingers; camera: Camera; width, height: int
+): Option[array[2, ScreenPosition]] =
+  ## Read pixels `camera` shows both places grip holds at.
+  ##   None where either stands behind eye: no motion may carry grip there.
+  let (eye, frame) = camera.sight
+  var seen: array[2, ScreenPosition]
+  for index, held in grip.fingers:
+    let at = camera.pixelThrough(
+      frame, width, height, held.place.toView(camera.originView) - eye
+    )
+    if at.isNone: return
+    seen[index] = at.get
+  some(seen)
+
+
+func missesGripped(
+  grip: GripFingers; camera: Camera; width, height: int; fingers: array[2, ScreenPosition]
+): Option[array[4, float]] =
+  ## Measure, in pixels, how far `camera` sees each held place from where its finger holds it.
+  let seen = grip.placesSeen(camera, width, height)
+  if seen.isNone: return
+  some([
+    seen.get[0].x - fingers[0].x,
+    seen.get[0].y - fingers[0].y,
+    seen.get[1].x - fingers[1].x,
+    seen.get[1].y - fingers[1].y,
+  ])
+
+
+func isClearOfFloors(grip: GripFingers, solution: array[4, float]): bool =
+  ## Report whether camera `solution` names sees no place held nearer than its floor.
+  let
+    camera = stanceGripped(grip, solution)
+    (eye, frame) = camera.sight
+  for held in grip.fingers:
+    if depthAlong(eye, frame.forward, held.place.toView(camera.originView)) < held.floor:
+      return false
+  true
+
+
+func sumSquares(misses: array[4, float]): float =
+  ## Sum squares of four misses, which grip's solve makes small.
+  for miss in misses: result += miss * miss
+
+
+func solveFour(matrix: array[4, array[4, float]], vector: array[4, float]): array[4, float] =
+  ## Solve four linear equations by elimination, largest pivot first.
+  ##   Caller damps diagonal, so no pivot is zero.
+  var
+    rows = matrix
+    sides = vector
+  for column in 0..3:
+    var pivot = column
+    for row in column + 1..3:
+      if abs(rows[row][column]) > abs(rows[pivot][column]): pivot = row
+    swap(rows[column], rows[pivot])
+    swap(sides[column], sides[pivot])
+    for row in column + 1..3:
+      let factor = rows[row][column] / rows[column][column]
+      for k in column..3: rows[row][k] -= factor * rows[column][k]
+      sides[row] -= factor * sides[column]
+  for row in countdown(3, 0):
+    var sum = sides[row]
+    for k in row + 1..3: sum -= rows[row][k] * result[k]
+    result[row] = sum / rows[row][row]
+
+
+func placeShownNearest(
+  scene: Scene;
+  camera: Camera;
+  width, height: int;
+  pixel: ScreenPosition;
+  placed: openArray[Placement] = [];
+): Option[tuple[depth, floor: float]] =
+  ## Read depth along sight, and drawn radius, of object shown nearest `pixel`, of those
+  ## standing within `FACTOR_ANCHOR_DEPTH` of pivot's depth.
+  ##   Finite kinds alone, at their own placement's point, as `framing.reachNearOf` reads
+  ##   them. Band about pivot, as selection's wheel keeps, so pinch scales what view is about.
+  ##     Not nearest ahead: far out in orrery, that was star off to side, and pinch zoomed
+  ##     out by 1.14 about solar system under fingers.
+  ##     Not nearest shown at any depth: that was background star thousand times deeper,
+  ##     and one pinch carried eye out by 3637 times its reach to Sol.
+  let
+    (eye, frame) = camera.sight
+    view_projection = camera.initMatrixViewProjection(float(width) / float(height))
+  var off_least = Inf
+  for handle in 0..<scene.bound:
+    if not scene.isAlive(handle) or not scene.isVisible(handle): continue
+    let place = placementAt(placed, scene, handle)
+    if place.kind notin {Case.PointAt, Case.LineThrough, Case.PlaneOn}: continue
+    let
+      at = place.at.toView(camera.originView)
+      depth = depthAlong(eye, frame.forward, at)
+    if depth < camera.distance / FACTOR_ANCHOR_DEPTH or
+        depth > camera.distance * FACTOR_ANCHOR_DEPTH:
+      continue
+    let
+      seen = projectToScreen(view_projection, width, height, at)
+      off = hypot(seen.x - pixel.x, seen.y - pixel.y)
+    if off < off_least:
+      off_least = off
+      result = some((depth: depth, floor: min(scene.radiusAt(handle), depth)))
+
+
+proc gripFingers*(
+  camera: Camera;
+  scene: Scene;
+  scale: DrawExtent;
+  view_projection: Matrix4;
+  width, height: int;
+  fingers: array[2, ScreenPosition];
+  has_selection: bool;
+  placed: openArray[Placement] = [];
+  reach_selection = 0.0;
+): GripFingers =
+  ## Take what each of two fingers holds, as second lands (repository issue 592).
+  ##   Place under finger at depth of object there, as wheel's anchor reads it: at any depth
+  ##   in free flight, inside selection's band with selection.
+  ##   Over nothing, selection holds point on sphere about pivot, as left drag's orbit does.
+  ##   Free flight holds place at depth of other finger's object; where neither finger
+  ##   stands on one, at depth of object shown nearest fingers' middle near pivot's depth,
+  ##   or at pivot's own depth where none stands there; see `placeShownNearest`.
+  ##     Not sky itself, which no slide moves: zoom out shrank objects from under fingers,
+  ##     and every pinch after it landed on sky and moved nothing.
+  ##     Pivot follows what fingers hold; see `slideGripped`.
+  ##   Every place stands on its finger's ray, so first step starts at no miss.
+  let (eye, frame) = camera.sight
+  result = GripFingers(
+    stance: camera,
+    landed: fingers,
+    is_orbit: has_selection,
+    reach_selection: reach_selection,
+    middle_last: middleOf(fingers),
+  )
+  var anchors: array[2, Option[AnchorZoom]]
+  for index, finger in fingers:
+    anchors[index] = anchorZoomAt(
+      scene,
+      camera,
+      scale,
+      view_projection,
+      width,
+      height,
+      finger,
+      placed,
+      is_banded = has_selection,
+    )
+  # Depth and floor fingers over nothing hold, in free flight.
+  var open = none(tuple[depth, floor: float])
+  for anchor in anchors:
+    if anchor.isSome:
+      let depth = depthAlong(eye, frame.forward, anchor.get.at)
+      open = some((depth: depth, floor: 0.0))
+      break
+  if open.isNone and not has_selection:
+    open = placeShownNearest(scene, camera, width, height, middleOf(fingers), placed)
+    result.is_open = open.isNone
+  var reaches = 0.0
+  for index, finger in fingers:
+    let heading = camera.headingThrough(frame, width, height, finger)
+    var place: Position
+    if anchors[index].isSome:
+      # Heading's forward part is one, so depth along sight scales it to place.
+      #   Anchor's floor is reach to anchor, so depth over reach turns it to depth.
+      let
+        anchor = anchors[index].get
+        depth = depthAlong(eye, frame.forward, anchor.at)
+      place = eye + depth * heading
+      result.fingers[index].floor =
+        min(anchor.floor_reach * depth / norm(anchor.at - eye), depth)
+    elif has_selection:
+      place = pointHeld(
+        eye, camera.pivot, heading, camera.radiusHeld(width, height, reach_selection)
+      )
+    else:
+      let held = open.get((depth: camera.distance, floor: 0.0))
+      place = eye + held.depth * heading
+      result.fingers[index].floor = held.floor
+    result.fingers[index].place = place.toWorld(camera.originView)
+    reaches += norm(place - eye)
+  result.reach = 0.5 * reaches
+
+
+func slideGripped(
+  grip: var GripFingers; camera: var Camera; held: array[2, ScreenPosition]; width, height: int
+) =
+  ## Slide and roll camera in free flight so each place stands under pixel `held` names.
+  ##   Four unknowns against four pixel coordinates; see `stanceGripped` for which four.
+  ##   Levenberg-Marquardt from last step's answer, with finite derivatives.
+  ##     Damped toward where it stands, so unknown no finger can move stays put.
+  ##     Where fingers ask for more than four unknowns reach, nearest fit stands.
+  ##   Eye stops at each place's floor, as wheel stops; past it, fingers slip.
+  ##   Once fingers zoom, pivot stands at depth of nearer place held, as wheel's zoom lands
+  ##   it on object, so next pinch scales same thing and repeated zoom out grows by fingers'
+  ##   ratio. Slide alone carries pivot along at its own depth.
+  ##     Places over nothing at all never draw pivot in: pinch in there carries it along,
+  ##     and no pinch runs separation down (repository issue 535).
+  ##   Camera's own nearest reach survives: frame that owns scene stamps it.
+  let start = grip.solution
+  var
+    solution = start
+    misses = missesGripped(grip, stanceGripped(grip, solution), width, height, held)
+  if misses.isNone: return
+  var
+    cost = sumSquares(misses.get)
+    damping = DAMPING_GRIP_START
+  for _ in 1..ITERATIONS_GRIP:
+    if cost <= PIXELS_GRIP_SETTLED * PIXELS_GRIP_SETTLED: break
+    var jacobian: array[4, array[4, float]]  # Rows are misses, columns unknowns.
+    for unknown in 0..3:
+      var stepped = solution
+      stepped[unknown] += STEP_GRIP_DERIVATIVE
+      let moved = missesGripped(grip, stanceGripped(grip, stepped), width, height, held)
+      if moved.isNone: continue
+      for row in 0..3:
+        jacobian[row][unknown] = (moved.get[row] - misses.get[row]) / STEP_GRIP_DERIVATIVE
+    var
+      normal: array[4, array[4, float]]
+      descent: array[4, float]
+    for i in 0..3:
+      for j in 0..3:
+        for row in 0..3: normal[i][j] += jacobian[row][i] * jacobian[row][j]
+      for row in 0..3: descent[i] -= jacobian[row][i] * misses.get[row]
+    var is_better = false
+    while damping <= DAMPING_GRIP_MOST:
+      var damped = normal
+      for i in 0..3: damped[i][i] += damping * (normal[i][i] + 1.0)
+      let correction = solveFour(damped, descent)
+      var tried = solution
+      for i in 0..3: tried[i] += correction[i]
+      let trial = missesGripped(grip, stanceGripped(grip, tried), width, height, held)
+      if trial.isSome and sumSquares(trial.get) < (1.0 - FRACTION_GRIP_GAIN) * cost:
+        (solution, misses, cost) = (tried, trial, sumSquares(trial.get))
+        damping = max(0.25 * damping, DAMPING_GRIP_LEAST)
+        is_better = true
+        break
+      damping *= 4.0
+    if not is_better: break
+  # Floor bounds step from last answer, which stood clear of every floor.
+  if not grip.isClearOfFloors(solution):
+    var (clear, past) = (0.0, 1.0)
+    for _ in 1..HALVINGS_GRIP_FLOOR:
+      let
+        middle = 0.5 * (clear + past)
+        tried = [
+          start[0] + middle * (solution[0] - start[0]),
+          start[1] + middle * (solution[1] - start[1]),
+          start[2] + middle * (solution[2] - start[2]),
+          start[3] + middle * (solution[3] - start[3]),
+        ]
+      if grip.isClearOfFloors(tried): clear = middle else: past = middle
+    for i in 0..3: solution[i] = start[i] + clear * (solution[i] - start[i])
+  # Step that moves nothing leaves camera as it stands, every field of it.
+  if solution == start: return
+  grip.solution = solution
+  let reach_near = camera.reach_near
+  camera = stanceGripped(grip, solution)
+  camera.reach_near = reach_near
+  if grip.gap_from.isNone: return
+  let (eye, frame) = camera.sight
+  var depth_held = Inf
+  for place in grip.fingers:
+    depth_held =
+      min(depth_held, depthAlong(eye, frame.forward, place.place.toView(camera.originView)))
+  if grip.is_open: depth_held = max(depth_held, grip.stance.distance)
+  if depth_held > 0.0 and depth_held < Inf: camera.repivotToDepth(depth_held)
+
+
+func gapDollied(grip: GripFingers; camera: Camera; width, height: int; along: float): float =
+  ## Read pixels between both places once `camera` dollies by `exp(along)`.
+  ##   Infinite where either stands behind eye, as eye past it sees it nearer than any.
+  var dollied = camera
+  dollied.dolly(exp(along))
+  let seen = grip.placesSeen(dollied, width, height)
+  if seen.isNone: Inf else: gapAndAngle(seen.get)[0]
+
+
+func orbitGripped(
+  grip: var GripFingers; camera: var Camera; held: array[2, ScreenPosition]; width, height: int
+) =
+  ## Orbit, dolly and roll about selection, so pivot stays on what is picked (repository
+  ## issue 592).
+  ##   Fingers' middle orbits as one finger's drag does: point on sphere about pivot under
+  ##   pixel it left comes under pixel it reached; see `turnFollowing`.
+  ##   Dolly then brings places' gap to `held`'s, and roll brings their angle.
+  ##     Not one solve of four unknowns against both places: turn foreshortens what it
+  ##     carries, and solve spent it on gap, so fivefold pinch away from middle turned view
+  ##     74 degrees and dollied in.
+  ##   Dolly scales about pivot, in middle of frame, so what fingers' middle holds drifts
+  ##   toward middle of frame as view zooms out, and away from it as view zooms in.
+  ##   Eye stops at each place's floor, as wheel stops; past it, fingers slip.
+  let middle = middleOf(held)
+  camera.turnFollowing(
+    grip.middle_last, middle, width, height, has_selection = true, grip.reach_selection
+  )
+  grip.middle_last = middle
+  # Dolly: gap falls as eye backs away, so bisect log of factor between reaches either side.
+  #   Floor bounds log from below: eye comes in by what separation gives up.
+  let (eye, frame) = camera.sight
+  var least = NegInf
+  for place in grip.fingers:
+    let rest = 1.0 - (depthAlong(eye, frame.forward, place.place.toView(camera.originView)) -
+        place.floor) / camera.distance
+    if rest > 0.0: least = max(least, ln(rest))
+  let wanted = gapAndAngle(held)[0]
+  var (nearer, farther) = (0.0, 0.0)
+  if grip.gapDollied(camera, width, height, 0.0) > wanted:
+    farther = 0.25
+    for _ in 1..DOUBLINGS_GRIP_DOLLY:
+      if grip.gapDollied(camera, width, height, farther) <= wanted: break
+      nearer = farther
+      farther *= 2.0
+  else:
+    nearer = max(-0.25, least)
+    for _ in 1..DOUBLINGS_GRIP_DOLLY:
+      if grip.gapDollied(camera, width, height, nearer) >= wanted or nearer <= least: break
+      farther = nearer
+      nearer = max(2.0 * nearer, least)
+  var along = 0.0
+  if grip.gapDollied(camera, width, height, nearer) < wanted: along = nearer
+  elif grip.gapDollied(camera, width, height, farther) > wanted: along = farther
+  else:
+    for _ in 1..HALVINGS_GRIP_DOLLY:
+      let middle_along = 0.5 * (nearer + farther)
+      if grip.gapDollied(camera, width, height, middle_along) > wanted: nearer = middle_along
+      else: farther = middle_along
+    along = 0.5 * (nearer + farther)
+  if along != 0.0: camera.dolly(exp(along))
+  # Roll turns picture about middle of frame, so line between places turns by it exactly.
+  #   Negated: screen angle grows clockwise, since y grows down, and positive roll carries
+  #   view anticlockwise.
+  let seen = grip.placesSeen(camera, width, height)
+  if seen.isNone: return
+  let turned = wrapAngle(gapAndAngle(held)[1] - gapAndAngle(seen.get)[1])
+  if turned != 0.0: camera.roll(-turned)
+
+
+func carryGrip*(
+  grip: var GripFingers; camera: var Camera; fingers: array[2, ScreenPosition]; width, height: int
+) =
+  ## Move camera so each of two fingers stays on what it took as it landed, less slop.
+  ##   Slop first: fingers carried together slide alone until they part, close or turn
+  ##   past it; see `fingersHeld`.
+  ##   Free flight slides and rolls, and selection orbits, dollies and rolls about pivot;
+  ##   see `slideGripped` and `orbitGripped`.
+  grip.noteSlop(fingers)
+  let held = grip.fingersHeld(fingers)
+  if grip.is_orbit: grip.orbitGripped(camera, held, width, height)
+  else: grip.slideGripped(camera, held, width, height)
 
 
 

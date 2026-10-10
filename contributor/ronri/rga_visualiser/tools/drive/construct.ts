@@ -6,13 +6,16 @@
 import type { CDPSession, Page } from '@playwright/test';
 import { MILLISECONDS_FRAME, advance, evaluateOver } from './clock';
 import {
-  depthOf, placeCamera, readCamera, readPlaced, settleCamera, slideOf, spanOf, spanPivot,
+  depthOf, forwardOf, placeCamera, readCamera, readPlaced, settleCamera, spanOf, spanPivot,
 } from './camera';
 import { waitFrames } from './frame';
 import { report } from './report';
 import { clearTheGlass } from './gestures';
 import { handleAlone, pixelOf } from './wheel';
-import { dragFinger, pointersDown, tapAt, pinch } from './touch';
+import {
+  asHand, dragFinger, fingerOn, handleLabelled, moveFingers, pointersDown, slipOf, tapAt,
+} from './touch';
+import type { Finger } from './touch';
 
 /** Put camera back where it opened and drop selection, so each check starts alike. */
 async function fromHome(page: Page): Promise<void> {
@@ -21,7 +24,11 @@ async function fromHome(page: Page): Promise<void> {
   await page.evaluate(() => nimSelectClear());
 }
 
-/** Drive two fingers moving together, which is pan and only pan. */
+/** Drive two fingers moving together, which carry what each touched with them.
+ *
+ *  Points stand at two depths, so no slide square to sight holds both: grip solves for
+ *  slide and roll together (repository issue 592).
+ */
 export async function driveTwoFingerPan(page: Page, devtools: CDPSession): Promise<void> {
   await page.keyboard.press('Home');
   await settleCamera(page);
@@ -32,25 +39,32 @@ export async function driveTwoFingerPan(page: Page, devtools: CDPSession): Promi
     'no pointer is still down from the gesture before',
     down.length === 0, `ids ${down.join(', ') || 'none'}`,
   );
+  const first = await handleLabelled(page, 'a');
+  const second = await handleLabelled(page, 'c');
+  const landed: [Finger, Finger] = [await fingerOn(page, first), await fingerOn(page, second)];
+  const hand = (along: number): [Finger, Finger] =>
+    asHand(landed, 1, 0, { x: 300 * along, y: 100 * along });
   const before = await readCamera(page);
-  await pinch(page, devtools, { x: 400, y: 400 }, { x: 700, y: 500 }, 80, 80);
+  await moveFingers(page, devtools, hand);
   const after = await readCamera(page);
+  const [end_first, end_second] = hand(1);
+  const slips = [await slipOf(page, first, end_first), await slipOf(page, second, end_second)];
 
   report(
-    'two fingers moving together strafe without zooming',
-    spanOf(before.eye, after.eye) > 0.5 &&
-      Math.abs(after.distance - before.distance) < 1e-6,
-    `eye moved ${spanOf(before.eye, after.eye).toFixed(3)}, ` +
-      `distance ${after.distance.toFixed(3)}`,
+    'two fingers moving together carry what they hold with them',
+    Math.max(...slips) <= 1 && spanOf(before.eye, after.eye) > 0.5,
+    `points ${slips.map((slip) => slip.toFixed(2)).join(' and ')} px off their fingers, ` +
+      `eye moved ${spanOf(before.eye, after.eye).toFixed(3)}`,
   );
-  // Nothing is selected here, so two fingers strafe along camera's own axes. Grab
-  //   of level under them went with plane it read.
+  // Nothing is selected here, so grip slides and rolls: sight keeps its direction, and
+  //   pivot rides along at its own depth. Sight read off eye and pivot through float32, so
+  //   bound is float32's.
   report(
-    'and wholly across the sight line, turning nothing',
-    Math.abs(slideOf(before, after) - spanOf(before.eye, after.eye)) < 1e-3 &&
-      Math.abs(after.azimuth - before.azimuth) < 1e-6,
-    `${slideOf(before, after).toFixed(3)} of ` +
-      `${spanOf(before.eye, after.eye).toFixed(3)} across the sight line`,
+    'and leave the sight and the separation as they were',
+    spanOf(forwardOf(before), forwardOf(after)) < 1e-6 &&
+      Math.abs(after.distance - before.distance) < 1e-9,
+    `sight moved ${spanOf(forwardOf(before), forwardOf(after)).toExponential(2)}, ` +
+      `distance ${before.distance.toFixed(3)} -> ${after.distance.toFixed(3)}`,
   );
 }
 

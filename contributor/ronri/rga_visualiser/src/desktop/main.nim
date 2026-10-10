@@ -1150,7 +1150,7 @@ proc renderFrame(
     #   either button greys out where its side of timeline is empty.
     if not stepHistory(panel, scene, camera, HISTORY_DESKTOP, is_undo):
       panel.say(stepMessage(is_undo), now)
-  layoutPanel(panel, scene, camera, HISTORY_DESKTOP, interaction.speedFlying(camera), now)
+  layoutPanel(panel, scene, camera, HISTORY_DESKTOP, interaction.speedFlying, now)
   # Row of constant controls floats over scene beside panel, as browser's chip row does.
   layoutChipRow(panel, scene, camera, HISTORY_DESKTOP, now)
   layoutHelp(panel, path_help)
@@ -1517,7 +1517,8 @@ proc handleEvent(
     if event.button.button == uint8(MouseButton.Right): is_dragging_pan = false
   of uint32(EventKind.MouseWheel):
     if gui.wantsMouse(): return
-    panel.tween_camera.halt()  # Zoom lands pivot on what cursor is over; see `halt`.
+    # Free flight's zoom lands pivot on what cursor is over; see `yieldOrHalt`.
+    panel.tween_camera.yieldOrHalt(panel.selection.len > 0)
     # Zoom toward whatever cursor is over; see `interaction.dollyAtCursor`.
     #   Frame's size is passed because sight ray needs it before frame reports it again.
     #   Pick reads last frame's placements, as hover does, with any edit since placed first.
@@ -1554,7 +1555,8 @@ proc handleEvent(
         panel.tween_camera.reachAimed(camera),
       )
     if is_dragging_pan:
-      panel.tween_camera.halt()  # Pan places pivot itself; see `halt`.
+      # Free flight's pan places pivot itself; see `yieldOrHalt`.
+      panel.tween_camera.yieldOrHalt(panel.selection.len > 0)
       # Pass where pointer was and is, rather than how far it moved.
       #   Pan carries point it grabbed between both ends of step; see
       #   `interaction.panAcross`.
@@ -2256,7 +2258,9 @@ proc runInteractive(
   ##     Splitting would pass most by `var` across new boundary, trading readable loop for
   ##     indirection.
   var
-    interaction = Interaction(is_enabled: true)
+    interaction = Interaction(
+      is_enabled: true, speed_ship: speedOpening(PIXELS_WIDTH, PIXELS_HEIGHT)
+    )
     button_dragging = none(uint8)
     is_running = true
     is_dragging_orbit = false

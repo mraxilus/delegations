@@ -5,6 +5,13 @@
 import ./fixtures
 
 
+func comeIn(camera: var Camera, step: float) =
+  ## Carry eye `step` units along sight toward pivot, which stands; back out where negative.
+  ##   Through `dolly`, for checks that place camera inside or outside fit: key flight now
+  ##   carries pivot along, and these want it held.
+  camera.dolly((camera.distance - step) / camera.distance)
+
+
 
 suite "Camera Aim":
   const
@@ -731,7 +738,7 @@ suite "Camera Aim":
     var camera = opening.placed(stanceFor(aim, opening, wide, tall))
     check aim.isFramed(camera, wide, tall)
     let axes_before = camera.frame
-    camera.flyAhead(0.8 * reach)
+    camera.comeIn(0.8 * reach)
     check not aim.isFramed(camera, wide, tall)
     let bearing_inside = (1.0 / norm(camera.eye - centre)) * (camera.eye - centre)
     camera.holdFramed(aim, wide, tall)
@@ -748,7 +755,7 @@ suite "Camera Aim":
         TOLERANCE_TEST
     # Standing further out is left alone: floor, not fit.
     var far = camera
-    far.flyAhead(-3.0 * reach)
+    far.comeIn(-3.0 * reach)
     let eye_far = far.eye
     far.holdFramed(aim, wide, tall)
     check far.eye =~ eye_far
@@ -1607,7 +1614,7 @@ suite "Camera Aim":
       pointer = none(PointerPick)
     # Framed from further out than fit asks: nothing moves it.
     var camera = opening.placed(stanceFor(aim, opening, wide, tall))
-    camera.flyAhead(-5.0)
+    camera.comeIn(-5.0)
     let stance_far = camera.stanceOf
     check aim.isFramed(camera, wide, tall)
     tween.adoptNext()
@@ -1626,7 +1633,7 @@ suite "Camera Aim":
     check tween.is_arrived
     check camera.stanceOf == stance_far
     # Restored well inside fit: rule is broken, so ease backs camera out to it.
-    camera.flyAhead(12.0)
+    camera.comeIn(12.0)
     check not aim.isFramed(camera, wide, tall)
     tween.adoptNext()
     tween.offerAim(
@@ -1877,6 +1884,46 @@ suite "Camera Aim":
       tween.aimAt(camera, goal, camera.placeOn(arrival), now, 0.35)
       tween.advance(camera, now, easeOutCubic)
     check camera.pivot =~ pivot_panned
+
+
+  test "a wheel or right drag inside the ease lands the pivot on what is picked, or stops it":
+    # Selection's wheel and right drag turn and dolly about pivot it already has, so pivot
+    #   finishes arriving. Halt there stood it where ease had carried it: notch two frames
+    #   into pick's ease left it 4.80 units off point picked, and every zoom after dollied
+    #   about that.
+    # Free flight's lands pivot on what pointer is over, so ease stops where camera stands.
+    var
+      camera = cameraAround(ORIGIN, 12.0, Direction(x: 7, y: 0, z: 3))
+      tween: CameraTween
+    let
+      arrival = Position(x: 4, y: 1, z: 2)
+      goal = aimOn(arrival)
+    tween.aimAt(camera, goal, camera.placeOn(arrival), 0.0, 0.35)
+    tween.advance(camera, 0.10, easeOutCubic)  # Mid-flight, nowhere near arrival.
+    check norm(camera.pivot - arrival) > 0.1
+    var
+      free = camera
+      tween_free = tween
+
+    tween.yieldOrHalt(has_selection = true)
+    camera.dolly(0.8)  # Selection's notch, about pivot.
+    let distance_dollied = camera.distance
+    for frame in 1..40:
+      let now = 0.10 + 0.016 * float(frame)
+      tween.aimAt(camera, goal, camera.placeOn(arrival), now, 0.35)
+      tween.advance(camera, now, easeOutCubic)
+    check tween.is_arrived
+    check camera.pivot =~ arrival
+    check camera.distance =~ distance_dollied  # Distance stays reader's.
+
+    tween_free.yieldOrHalt(has_selection = false)
+    free.travel(0.0, 3.0, 2.0)  # Free flight's pan, which places pivot itself.
+    let pivot_panned = free.pivot
+    for frame in 1..40:
+      let now = 0.10 + 0.016 * float(frame)
+      tween_free.aimAt(free, goal, free.placeOn(arrival), now, 0.35)
+      tween_free.advance(free, now, easeOutCubic)
+    check free.pivot =~ pivot_panned
 
 
   test "release lets the same goal aim the camera again":

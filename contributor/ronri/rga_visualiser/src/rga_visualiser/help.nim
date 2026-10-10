@@ -254,7 +254,7 @@ const HELP_ENTRIES* = block:
     namesJoined([nameOf(Key.Left), nameOf(Key.Right), nameOf(Key.Up), nameOf(Key.Down)]),
     HelpOrbit,
   )
-  add(HelpPath.Keys, namesJoined([nameOf(Key.Minus), nameOf(Key.Plus)]), HelpFurtherCloser)
+  add(HelpPath.Keys, namesJoined([nameOf(Key.Minus), nameOf(Key.Plus)]), HelpSlowerFaster)
   add(HelpPath.Keys, nameOf(Key.F), HelpBackIntoView)
   add(
     HelpPath.Keys,
