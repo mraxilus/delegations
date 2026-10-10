@@ -36,6 +36,8 @@ type Rule* {.pure.} = enum  ## Define one rule knoller fixes or reports, in orde
   LetterPlaceholder = "placeholder letter"  ## Placeholder of generic is one capital letter.
   Notation = "notation"  ## Notation of source holds over case only for immutable global.
   WordGlobal = "global word"  ## Global shares no word with type.
+  HeadRepresentation = "representation head"
+    ## Name holding value in another representation leads with that value.
   ArticleInComment = "article in comment"  ## Comment drops its articles.
   ValueMessage = "message value"  ## Message echoes its value in backticks.
   AndWithOr = "and with or"  ## Condition mixing `and` with `or` parenthesises each `and`.

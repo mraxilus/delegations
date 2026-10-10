@@ -882,9 +882,9 @@ func directionAcross(geometry: Multivector, eye: Position): Option[Direction] =
   ##   None where eye lies on line itself, edge-on with no side to flank: join is then
   ##   rounding of zero against line and eye (`isRoundingOf`), whatever line's own scale.
   let
-    point_eye = eye.toMultivector
-    plane = geometry ∧ point_eye
-  if plane.isRoundingOf(geometry.coefficientLargest * point_eye.coefficientLargest): return
+    eye_point = eye.toMultivector
+    plane = geometry ∧ eye_point
+  if plane.isRoundingOf(geometry.coefficientLargest * eye_point.coefficientLargest): return
   directionNormal(plane)
 
 

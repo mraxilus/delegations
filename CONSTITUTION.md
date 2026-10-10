@@ -221,10 +221,16 @@ for slot in 0..<pool.bound:  # Bound, never `HANDLES_MAX`.
 2. Compose a name head first, with the qualifiers last, from general to specific, so that
    families sort and align: `wedge`/`wedgeAnti`, `norm`/`normBulk`/`normWeight`,
    `parity_a`/`parity_b`, `b_from`/`b_to`. This holds even against the word order of the
-   domain (`carrierCo`, `scalarAnti`), and the doc keeps the spelling of the domain. The head
-   is the kind of value, so a word such as `PATH` or `MARKS` leads (`PATH_KOCH`, never
-   `KOCH_PATH`). An action keeps its verb first, and orders its object the same way
-   (`constructExomorphismMetric`).
+   domain (`carrierCo`, `scalarAnti`), and the doc keeps the spelling of the domain. An action
+   keeps its verb first, and orders its object the same way (`constructExomorphismMetric`).
+
+   The head is what the name refers to, and each qualifier narrows it. Cut the qualifiers from
+   the end, one at a time, and each shorter name still describes the thing, but more generally
+   (`b_flags_remaining`, `b_flags`, `b`). A cut takes a whole qualifier, which may be several
+   words, and a head may name a family (`wedgeAnti`). So a word such as `PATH` or `MARKS`
+   leads (`PATH_KOCH`, never `KOCH_PATH`), and so does a property (`parity_a`). Where both
+   orders pass, the value that the code names leads (`a_flags`, never `flags_a`), and where the
+   code names none, the kind leads.
 3. An action is an imperative verb (`constructTable`, `emitOperator`). A property is the bare
    domain noun (`grade`, `norm`, `centroid`), and never `getGrade` or `computeNorm`. A
    recurring kind of action keeps one verb:
@@ -578,7 +584,7 @@ defineOperator(
   cayley = CAYLEYS_WEDGE.base,
 )
 
-let (flags_a, flags_b) = (a.basis.toFlags, b.basis.toFlags)
+let (a_flags, b_flags) = (a.basis.toFlags, b.basis.toFlags)
 if product.is_degenerate: continue
 ```
 
