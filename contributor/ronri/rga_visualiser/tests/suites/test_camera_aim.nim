@@ -1905,7 +1905,7 @@ suite "Camera Aim":
       free = camera
       tween_free = tween
 
-    tween.yieldToWheelOrPan(has_selection = true)
+    tween.yieldOrHalt(has_selection = true)
     camera.dolly(0.8)  # Selection's notch, about pivot.
     let distance_dollied = camera.distance
     for frame in 1..40:
@@ -1916,7 +1916,7 @@ suite "Camera Aim":
     check camera.pivot =~ arrival
     check camera.distance =~ distance_dollied  # Distance stays reader's.
 
-    tween_free.yieldToWheelOrPan(has_selection = false)
+    tween_free.yieldOrHalt(has_selection = false)
     free.travel(0.0, 3.0, 2.0)  # Free flight's pan, which places pivot itself.
     let pivot_panned = free.pivot
     for frame in 1..40:

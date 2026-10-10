@@ -1517,8 +1517,8 @@ proc handleEvent(
     if event.button.button == uint8(MouseButton.Right): is_dragging_pan = false
   of uint32(EventKind.MouseWheel):
     if gui.wantsMouse(): return
-    # Free flight's zoom lands pivot on what cursor is over; see `yieldToWheelOrPan`.
-    panel.tween_camera.yieldToWheelOrPan(panel.selection.len > 0)
+    # Free flight's zoom lands pivot on what cursor is over; see `yieldOrHalt`.
+    panel.tween_camera.yieldOrHalt(panel.selection.len > 0)
     # Zoom toward whatever cursor is over; see `interaction.dollyAtCursor`.
     #   Frame's size is passed because sight ray needs it before frame reports it again.
     #   Pick reads last frame's placements, as hover does, with any edit since placed first.
@@ -1555,8 +1555,8 @@ proc handleEvent(
         panel.tween_camera.reachAimed(camera),
       )
     if is_dragging_pan:
-      # Free flight's pan places pivot itself; see `yieldToWheelOrPan`.
-      panel.tween_camera.yieldToWheelOrPan(panel.selection.len > 0)
+      # Free flight's pan places pivot itself; see `yieldOrHalt`.
+      panel.tween_camera.yieldOrHalt(panel.selection.len > 0)
       # Pass where pointer was and is, rather than how far it moved.
       #   Pan carries point it grabbed between both ends of step; see
       #   `interaction.panAcross`.

@@ -899,7 +899,7 @@ proc dollyAt*(
   if depth > 0.0: camera.repivotToDepth(depth)
 
 
-func yieldToWheelOrPan*(tween: var CameraTween; has_selection: bool) =
+func yieldOrHalt*(tween: var CameraTween; has_selection: bool) =
   ## Give camera's ease up to wheel or right drag, in whichever way its state reads.
   ##   Free flight's lands pivot on what pointer is over, so ease stops where camera stands;
   ##   see `camera.halt`.
