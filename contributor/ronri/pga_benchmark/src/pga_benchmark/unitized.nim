@@ -175,31 +175,47 @@ template `[]`[T](pool: Pool[T], index: int): var T =
 
 
 type
-  Pools = object  ## Define operands and results of every operation at one size.
-    homogeneous, homogeneous_out: Pool[PointHomogeneous]
-    unitized, unitized_out: Pool[PointUnitized]
-    padded, padded_out: Pool[PointPadded]
-    lines, lines_out: Pool[Line]
-    planes, planes_out: Pool[Plane]
+  Operands = object  ## Define operands of every operation at one size, which timed calls read.
+    homogeneous: Pool[PointHomogeneous]
+    unitized: Pool[PointUnitized]
+    padded: Pool[PointPadded]
+    lines: Pool[Line]
+    planes: Pool[Plane]
     motors: Pool[Motor]
+  Results = object
+    ## Define results of every operation at one size, which timed calls write.
+    ##   Apart from operands, so Nim sees no alias and passes each operand in place. In one
+    ##     object, it copied each operand to temporary, and vectorised form read across two
+    ##     stores of that copy, which no store forwards.
+    homogeneous: Pool[PointHomogeneous]
+    unitized: Pool[PointUnitized]
+    padded: Pool[PointPadded]
+    lines: Pool[Line]
+    planes: Pool[Plane]
     distances: Pool[float]
 
 
-proc initPools(count: int): Pools =
-  ## Draw operands: weight near one, as bench draws it, and same points in every layout.
-  result = Pools(
+proc initResults(count: int): Results =
+  ## Make room for results of every operation.
+  Results(
     homogeneous: initPool[PointHomogeneous](count),
-    homogeneous_out: initPool[PointHomogeneous](count),
     unitized: initPool[PointUnitized](count),
-    unitized_out: initPool[PointUnitized](count),
     padded: initPool[PointPadded](count),
-    padded_out: initPool[PointPadded](count),
     lines: initPool[Line](count),
-    lines_out: initPool[Line](count),
     planes: initPool[Plane](count),
-    planes_out: initPool[Plane](count),
-    motors: initPool[Motor](count),
     distances: initPool[float](count),
+  )
+
+
+proc initOperands(count: int): Operands =
+  ## Draw operands: weight near one, as bench draws it, and same points in every layout.
+  result = Operands(
+    homogeneous: initPool[PointHomogeneous](count),
+    unitized: initPool[PointUnitized](count),
+    padded: initPool[PointPadded](count),
+    lines: initPool[Line](count),
+    planes: initPool[Plane](count),
+    motors: initPool[Motor](count),
   )
   for i in 0..<count:
     let
@@ -245,7 +261,7 @@ template timed(count, rounds: int, body: untyped): float =
   float(spans[rounds div 2]) / float(count)
 
 
-proc pass(pools: var Pools, count, rounds, order: int, rows: var seq[Row]) =
+proc pass(operands: Operands, results: var Results, count, rounds, order: int, rows: var seq[Row]) =
   ## Time every operation once in each layout, layouts rotated by order.
   template each(index: int, name_row: string, saved_row: int, h, u, p: untyped) =
     if rows.len <= index: rows.add Row(name: name_row, saved: saved_row)
@@ -256,29 +272,29 @@ proc pass(pools: var Pools, count, rounds, order: int, rows: var seq[Row]) =
       of Layout.Unitized: rows[index].figures[Layout.Unitized].add timed(count, rounds, u)
       of Layout.Padded: rows[index].figures[Layout.Padded].add timed(count, rounds, p)
   each(0, "join two points", 6,
-    join(pools.homogeneous[i], pools.homogeneous[j], pools.lines_out[i]),
-    join(pools.unitized[i], pools.unitized[j], pools.lines_out[i]),
-    join(pools.padded[i], pools.padded[j], pools.lines_out[i]))
+    join(operands.homogeneous[i], operands.homogeneous[j], results.lines[i]),
+    join(operands.unitized[i], operands.unitized[j], results.lines[i]),
+    join(operands.padded[i], operands.padded[j], results.lines[i]))
   each(1, "join line and point", 3,
-    join(pools.lines[i], pools.homogeneous[j], pools.planes_out[i]),
-    join(pools.lines[i], pools.unitized[j], pools.planes_out[i]),
-    join(pools.lines[i], pools.padded[j], pools.planes_out[i]))
+    join(operands.lines[i], operands.homogeneous[j], results.planes[i]),
+    join(operands.lines[i], operands.unitized[j], results.planes[i]),
+    join(operands.lines[i], operands.padded[j], results.planes[i]))
   each(2, "meet point and plane", 1,
-    (pools.distances[i] = meet(pools.homogeneous[i], pools.planes[j])),
-    (pools.distances[i] = meet(pools.unitized[i], pools.planes[j])),
-    (pools.distances[i] = meet(pools.padded[i], pools.planes[j])))
+    (results.distances[i] = meet(operands.homogeneous[i], operands.planes[j])),
+    (results.distances[i] = meet(operands.unitized[i], operands.planes[j])),
+    (results.distances[i] = meet(operands.padded[i], operands.planes[j])))
   each(3, "antisupport", 3,
-    antisupport(pools.homogeneous[i], pools.planes_out[i]),
-    antisupport(pools.unitized[i], pools.planes_out[i]),
-    antisupport(pools.padded[i], pools.planes_out[i]))
+    antisupport(operands.homogeneous[i], results.planes[i]),
+    antisupport(operands.unitized[i], results.planes[i]),
+    antisupport(operands.padded[i], results.planes[i]))
   each(4, "transform by motor", 4,
-    transform(pools.homogeneous[i], pools.motors[j], pools.homogeneous_out[i]),
-    transform(pools.unitized[i], pools.motors[j], pools.unitized_out[i]),
-    transform(pools.padded[i], pools.motors[j], pools.padded_out[i]))
+    transform(operands.homogeneous[i], operands.motors[j], results.homogeneous[i]),
+    transform(operands.unitized[i], operands.motors[j], results.unitized[i]),
+    transform(operands.padded[i], operands.motors[j], results.padded[i]))
   each(5, "unitize, book against code", 1,
-    unitizeBook(pools.homogeneous[i], pools.homogeneous_out[i]),
-    unitizeCode(pools.homogeneous[i], pools.unitized_out[i]),
-    unitizeCode(pools.homogeneous[i], pools.padded_out[i]))
+    unitizeBook(operands.homogeneous[i], results.homogeneous[i]),
+    unitizeCode(operands.homogeneous[i], results.unitized[i]),
+    unitizeCode(operands.homogeneous[i], results.padded[i]))
 
 
 func median(figures: seq[float]): float =
@@ -294,10 +310,11 @@ func median(figures: seq[float]): float =
 proc take*(count, rounds, passes: int, sink: var float): JsonNode =
   ## Time every pair at one size, print medians and ratios, and get them as JSON.
   ##   Exported, so suites run one small take and read C of its timed loops.
+  let operands = initOperands(count)
   var
-    pools = initPools(count)
+    results = initResults(count)
     rows: seq[Row]
-  for order in 0..<passes: pools.pass(count, rounds, order, rows)
+  for order in 0..<passes: pass(operands, results, count, rounds, order, rows)
   echo &"{count} objects, {rounds} rounds, {passes} passes; median ns per object"
   echo "operation                    saved  homog   null unitized padded  ×unit  ×pad ×null"
   var named = newJObject()
@@ -315,8 +332,8 @@ proc take*(count, rounds, passes: int, sink: var float): JsonNode =
       "padded": padded,
     }
   for i in 0..<count:
-    sink += pools.lines_out[i].vx + pools.planes_out[i].w + pools.distances[i] +
-      pools.homogeneous_out[i].x + pools.unitized_out[i].y + pools.padded_out[i].z
+    sink += results.lines[i].vx + results.planes[i].w + results.distances[i] +
+      results.homogeneous[i].x + results.unitized[i].y + results.padded[i].z
   %*{"rounds": rounds, "rows": named}
 
 
