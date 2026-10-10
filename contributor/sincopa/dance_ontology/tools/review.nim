@@ -3,8 +3,9 @@
 ##   Page used to carry its own copy of frames and transitions, transcribed by hand from
 ##     audit.  Nothing kept that copy honest, which made it one part of work that could
 ##     quietly go wrong.
-##   Now prose lives in `pages/review/review.html` with marker wherever number or picture
-##     belongs, and everything marker stands for is derived here.
+##   Now prose lives in `mockups/review.html` with marker wherever number or picture
+##     belongs, and everything marker stands for is derived here.  Page is exploration,
+##     as its title says, so its prose lives where `CONTRIBUTOR.md` keeps explorations.
 ##     Prose was Nim string constant while repository read no markup kind; `Html` is
 ##       registered now, so page is committed file read at run time.
 ##       Cost: template path is relative to project directory, so renderer runs from there,
@@ -28,7 +29,7 @@ import ./title
 
 
 const
-  TEMPLATE_PATH = "pages" / "review" / "review.html"
+  TEMPLATE_PATH = "mockups" / "review.html"
     ## Committed page holding prose and one marker per derived number or picture.
   PAGE_NAME* = "review.html"  ## File page is written as, under output directory.
   DIRECTORY_FRAMES* = "frames"

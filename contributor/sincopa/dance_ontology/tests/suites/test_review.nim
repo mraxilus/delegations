@@ -63,6 +63,9 @@ suite "Internal: The review page":
     # Review page is exploration, not page project stands behind, and title says so.
     check "<title>" & MOCKUP & " — " in page
     check "<title>" & WORK & " — " notin page
+    # Its prose lives where `CONTRIBUTOR.md` keeps explorations, so folder and title agree.
+    check fileExists("mockups" / "review.html")
+    check not fileExists("pages" / "review" / "review.html")
 
 
   test "the page counts the laws of every suite a stub runs":
