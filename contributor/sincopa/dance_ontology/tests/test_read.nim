@@ -267,8 +267,9 @@ suite "Internal: Two hands":
         join: inMirror(pose.join),
       )
 
-    func otherArm(hand: Hand): Hand = (hand.body, (if hand.arm == Arm.Left: Arm.Right else: Arm.Left))
+    func otherArm(hand: Hand): Hand =
       ## Same body's other arm, which mirror makes of it.
+      (hand.body, (if hand.arm == Arm.Left: Arm.Right else: Arm.Left))
 
     let
       stance = restStance(HUMAN, APART)
