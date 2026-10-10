@@ -464,11 +464,11 @@ func stanceLifted*(stance: CameraStance, camera: Camera, normal: Direction): Cam
   ##   Held about stance's own origin, which its pivot is read about.
   let
     placed = camera.placed(stance)
-    (point_sight, point_normal) = (placed.frame.forward.toMultivector, normal.toMultivector)
-    cosine = innerOf(point_sight, point_normal)
+    (point_sight, normal_point) = (placed.frame.forward.toMultivector, normal.toMultivector)
+    cosine = innerOf(point_sight, normal_point)
   if abs(cosine) >= sin(ANGLE_PLANE_LEAST) - SLACK_FRAMED: return stance
   let level = direction(
-    (1.0.e4 ∧☆ (1.0.e4 ∧ point_normal)) ∨ (1.0.e4 ∧ point_sight ∧ point_normal), scale = 1.0
+    (1.0.e4 ∧☆ (1.0.e4 ∧ normal_point)) ∨ (1.0.e4 ∧ point_sight ∧ normal_point), scale = 1.0
   )
   if level.isNone: return stance
   let
@@ -476,10 +476,10 @@ func stanceLifted*(stance: CameraStance, camera: Camera, normal: Direction): Cam
       if innerOf(level.get.toMultivector, point_sight) < 0.0: -level.get else: level.get
     is_above =
       if abs(cosine) > SLACK_FRAMED: cosine < 0.0
-      else: innerOf(point_normal, UP_WORLD.toMultivector) >= 0.0
+      else: innerOf(normal_point, UP_WORLD.toMultivector) >= 0.0
     lean = if is_above: -sin(ANGLE_PLANE_LEAST) else: sin(ANGLE_PLANE_LEAST)
     lifted = directionHorizon(
-      add(wedge(cos(ANGLE_PLANE_LEAST), along.toMultivector), wedge(lean, point_normal)),
+      add(wedge(cos(ANGLE_PLANE_LEAST), along.toMultivector), wedge(lean, normal_point)),
       scale = 1.0,
     )
   if lifted.isNone: return stance

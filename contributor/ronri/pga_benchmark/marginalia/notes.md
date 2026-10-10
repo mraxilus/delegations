@@ -71,9 +71,9 @@ An emitter that returns `float`, for a table whose products all land in one slot
 Proposal P04, `exact-kinds`, returns the kind of exactly the bases that the result reaches,
 which here is one slot.
 
-## What the flat norms compute
+## What the conformal norms compute
 
-`pga/operators.nim` · decide
+`pga/operators.nim` · open
 
 ```nim
 when IS_CONFORMAL:
@@ -86,9 +86,18 @@ when IS_CONFORMAL:
     result[Basis.scalarAnti] = (m ∘ m)[Basis.scalarAnti].sqrt
 ```
 
-The round norms read the squared operators `|∙²` and `|∘²`. The flat norms compute `m ∙ m`
-and `m ∘ m` in full. Both give the same value, so the flat norms and the round norms cannot
-both be right. The correct formula is a question for the book.
+The round norms read the squared operators `|∙²` and `|∘²`, and the flat norms compute `m ∙ m`
+and `m ∘ m` in full. So all four take the dot or the antidot of the whole multivector. Under the
+conformal metric the antimetric is the negative of the metric, so `m ∘ m` is exactly `-(m ∙ m)`.
+One root of the two is then NaN for each nonzero multivector. Of the 256 seeded multivectors of
+P10, `|∘` gives NaN for 130 at cga5d and 124 at cga4d, and `|∙` gives NaN for each other one.
+
+The book splits a conformal object into four parts, by its factors of e4 and e5, in Section 4.3.
+The round bulk, round weight, flat bulk and flat weight norms each measure the size of one part,
+in Table 4.12. For each round object 𝐮 • 𝐮 = −r², in (4.44), and the radius norm is √(𝐮 ∘ 𝐮), in
+(4.45). So at pin, `|∙` and `|■` give NaN for each real round object. `|∘` and `|□` give the value
+of the radius norm, which `pga.nim` lists as `|⊘` and stubs, and neither gives a weight norm of the
+book. Change `conformal-norms` moves them to the four norms of the book, and fills `|⊙` and `|⊘`.
 
 ## Why five conformal law suites fail
 
@@ -202,7 +211,7 @@ Binary products also write every slot, with `noinit`. The same effect of the ben
 ```nim
   func `⊛`*(m: Multivector): Multivector =
     ## Get partner of multivector, i.e. (-1)^(grade(𝐦)+1) (𝐦☆)⊡ ∨ 𝐦⊟.
-    let sign = float(-1 ^ (int(m.grade.get) + 1))
+    let sign = float(-1^(int(m.grade.get) + 1))
     sign * ⊡(☆m) ∨ ⊟m
 ```
 
@@ -238,8 +247,8 @@ func norm*(m: Multivector): Multivector {.inline.} = |m
 ```
 
 The book writes ‖𝐦‖ = s𝟏 + t𝟙, and a `Multivector` result mirrors that exactly. The cost is
-movement: `|` fills and writes all 2^D slots to hand back two. Proposal P04, `exact-kinds`,
-leaves the norm out, since the norm takes a root of a squared norm.
+movement: `|` fills and writes all 2^D slots to hand back two. Proposal P10, `magnitude`, holds
+the pair as a kind of P04, `exact-kinds`, with a root and a division of its own.
 
 ## Support is three dense products
 
@@ -256,23 +265,3 @@ leaves the norm out, since the norm takes a root of a squared norm.
 `∩` is `m ∨ (𝐞ₙ ∧ ☆ m)`: a dual, a wedge with a constant basis element, and an antiwedge.
 The wedge with one basis element is a signed selection, not a full product. Proposal P01,
 `cayley-derivation`, generates `∩` and `∪` as one table each, through map operators.
-
-## Grade filters need a doc line
-
-`pga/operators.nim` · open
-
-```nim
-macro defineOperator(
-  symbols, docs: static[string];
-  cayley: static[Cayley1D];
-  filter_operand: static[seq[Grade]] = default(seq[Grade]);
-  filter_product: static[seq[Grade]] = default(seq[Grade]);
-): untyped =
-  ## Construct multivector mapping variant using provided Cayley table.
-```
-
-Both macros take `filter_*` parameters. Unused, they cost nothing: each test is
-`filter.len != 0` against a compile-time empty `seq`, and the macro evaluates it.
-
-Used, they are the mechanism a grade-typed representation needs. The doc comment should say
-both, because the next reader will ask what they are for.

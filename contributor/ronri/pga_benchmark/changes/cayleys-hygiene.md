@@ -10,7 +10,7 @@ constructors can call.
 
 ```nim
   CAYLEYS_INTERIOR* = Spatial[Partial[Chiral[Cayley2D]]](
-    base: Partial[Chiral[Cayley2D]](  # Alias expansion.
+    base: Partial[Chiral[Cayley2D]](
       bulk: Chiral[Cayley2D](
         left: constructProductInterior(
           CAYLEYS_DUAL,
@@ -44,7 +44,7 @@ constructors can call.
         ),
       ),
     ),
-    anti: Partial[Chiral[Cayley2D]](  # Alias expansion.
+    anti: Partial[Chiral[Cayley2D]](
       bulk: Chiral[Cayley2D](
         left: constructProductInterior(
           CAYLEYS_DUAL,
@@ -83,7 +83,7 @@ constructors can call.
 
 ```nim
   CAYLEYS_INTERIOR* = Spatial[Partial[Chiral[Cayley2D]]](
-    base: Partial[Chiral[Cayley2D]](  # Alias expansion.
+    base: Partial[Chiral[Cayley2D]](
       bulk: Chiral[Cayley2D](
         left: constructProductInteriorFromDual(
           CAYLEYS_DUAL,
@@ -117,7 +117,7 @@ constructors can call.
         ),
       ),
     ),
-    anti: Partial[Chiral[Cayley2D]](  # Alias expansion.
+    anti: Partial[Chiral[Cayley2D]](
       bulk: Chiral[Cayley2D](
         left: constructProductInteriorFromDual(
           CAYLEYS_DUAL,

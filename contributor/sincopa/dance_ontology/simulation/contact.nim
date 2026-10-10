@@ -112,7 +112,7 @@ func bodyGap*(rig: Rig; stance: Stance; a, b: Vector; is_own: bool): Touch =
 func armGap*(rig: Rig; a, b, c, d: Vector; meet: Vector; excuse: float): float =
   ## Clearance between two links of different arms; infinite where they
   ## come nearest within `excuse` of `meet`, which is how two arms holding
-  ## one grip are let converge on it.
+  ## one join are let converge on it.
   let near = closest(a, b, c, d)
   if excuse > 0.0:
     let
@@ -123,14 +123,14 @@ func armGap*(rig: Rig; a, b, c, d: Vector; meet: Vector; excuse: float): float =
   near.gap - 2.0 * rig.limb
 
 
-func isPressingBody*(rig: Rig, stance: Stance, pose: tuple[elbow, wrist, grip: Vector]): bool =
+func isPressingBody*(rig: Rig, stance: Stance, pose: tuple[elbow, wrist, join: Vector]): bool =
   ## Whether forearm or hand lies on its own torso or neck.
   ##   Upper arm always hangs against flank, so it is not asked;
   ##     what says arm is wound rather than merely led there is part
   ##     of it past elbow.
   const near = 0.01
   let shape = shapeOf(rig, stance)
-  for (a, b) in [(pose.elbow, pose.wrist), (pose.wrist, pose.grip)]:
+  for (a, b) in [(pose.elbow, pose.wrist), (pose.wrist, pose.join)]:
     for part in [Part.Torso, Part.Neck]:
       if partGap(shape.axes, shape.parts[part], a, b) < near:
         return true

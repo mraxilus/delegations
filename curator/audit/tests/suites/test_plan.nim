@@ -3,13 +3,16 @@
 {.experimental: "strictFuncs".}
 
 import std/[json, os, sequtils, unittest]
-import ../../src/[plan, projects, toolchain]
+import ../../src/[domains, plan, projects, toolchain]
 import ./fixtures
 
 
-const DIRECTORIES = [DIRECTORY_ALPHA, DIRECTORY_AUDIT]
-  ## Project directories fixture tree holds, in sorted order selection returns them:
-  ## `contributor` sorts before `curator`.
+const
+  DIRECTORIES = [DIRECTORY_ALPHA, DIRECTORY_AUDIT]
+    ## Project directories fixture tree holds, in sorted order selection returns them:
+    ## `contributor` sorts before `curator`.
+  DIRECTORY_IMPORTING = CURATOR & "/assayer"  ## Curator project importing knoller, besides driver.
+  DIRECTORY_PROBE = CURATOR & "/probe"  ## Curator project importing no knoller.
 
 
 
@@ -152,6 +155,28 @@ suite "Plan":
     check projectsTest(directories, [DIRECTORY_KNOLLER & "/PROVENANCE.md"]).len == 0  # record
     check projectsTest(directories, [DIRECTORY_KNOLLER & "/srcs/x.nim"]) ==
       @[DIRECTORY_KNOLLER]  # folder sharing prefix is no source
+
+
+  test "knoller source selects each project importing it by path, as its source reads":
+    let
+      directories = [DIRECTORY_IMPORTING, DIRECTORY_AUDIT, DIRECTORY_KNOLLER, DIRECTORY_PROBE]
+      tree = @[
+        entry(DIRECTORY_AUDIT & "/src/plan.nim", "import ../../knoller/src/knoller\n"),
+        entry(DIRECTORY_IMPORTING & "/src/assayer/command.nim",
+            "import ../../../knoller/src/knoller/[compilers, pins]\n"),
+        entry(DIRECTORY_KNOLLER & "/src/knoller.nim", "import ./knoller/[pins]\n"),
+        entry(DIRECTORY_PROBE & "/src/probe.nim", "## Names `knoller/src/knoller` in comment.\n"),
+      ]
+      importers = tree.directoriesImporting(directories)
+      from_import = @[entry(DIRECTORY_PROBE & "/src/probe.nim",
+          "from ../../knoller/src/knoller import NIM\n")]
+    check importers == @[DIRECTORY_IMPORTING, DIRECTORY_AUDIT]  # comment and own path import none
+    check from_import.directoriesImporting([DIRECTORY_PROBE]) == @[DIRECTORY_PROBE]  # `from` too
+    check projectsTest(directories, [FILES_KNOLLER[0] & "/knoller/pins.nim"], importers) ==
+        @[DIRECTORY_IMPORTING, DIRECTORY_AUDIT, DIRECTORY_KNOLLER]  # each importer, and knoller
+    check projectsTest(directories, [FILES_KNOLLER[1]], importers) ==
+        @[DIRECTORY_IMPORTING, DIRECTORY_AUDIT, DIRECTORY_KNOLLER]  # nimble file names pin
+    check projectsTest(directories, ["koch.nim"], importers) == @[DIRECTORY_AUDIT]  # driver alone
 
 
   test "path inside no project selects nothing by itself":

@@ -10,8 +10,9 @@
 ##     verifies every stamp; README describes project and runs nothing, by same reasoning.
 ##   Change to `koch.nim` or `koch.nim.cfg` selects driver's project, whose suites read them;
 ##     check sources are that project's code and select it as any code does. Change to
-##     sources or nimble file of knoller selects driver's project too, since its modules import
-##     knoller by path; knoller's own code selects knoller as any code does. Nothing selects
+##     sources or nimble file of knoller selects each project whose source imports knoller by
+##     relative path, driver's among them, since each compiles knoller (`directoriesImporting`);
+##     knoller's own code selects knoller as any code does. Nothing selects
 ##     every project: push run on `main` plans against push's own base and weekly run
 ##     against its window, so each compiles what changed and nothing else (CURATOR.md duty
 ##     11). Contributor suite is contributor's to run, and static pass reads every project
@@ -42,6 +43,8 @@ const
     ## of koch compiling exactly what it drives.
   FILES_KNOLLER* = [DIRECTORY_KNOLLER & "/src", DIRECTORY_KNOLLER & "/knoller.nimble"]
     ## Sources and nimble file of package driver imports by path; folder covers what it holds.
+  MARK_KNOLLER = "knoller/src/knoller"
+    ## Text each relative import of knoller holds, from whatever depth it climbs.
 
 
 type Job* = object  ## Define one project to compile, with compiler it pins.
@@ -73,13 +76,39 @@ func isCode(directory, path: string): bool =
   path[directory.len + 1 .. ^1] notin FILES_PROJECT
 
 
-func projectsTest*(directories, paths: openArray[string]): seq[string] =
-  ## Select projects one change asks to compile, sorted: each whose code changed, and
-  ##   driver's project when driver's root files or knoller did, since its suites read them.
+func isImportingKnoller(source: string): bool =
+  ## Decide whether Nim source imports knoller by relative path, by `import` or by `from`; comment
+  ##   naming that path imports nothing.
+  for line in source.splitLines:
+    let s = line.strip
+    if (s.startsWith("import ") or s.startsWith("from ")) and MARK_KNOLLER in s: return true
+  false
+
+
+func directoriesImporting*(tree: Tree, directories: openArray[string]): seq[string] =
+  ## Select projects whose Nim source imports knoller by relative path, so change to knoller
+  ##   compiles them too; read from source, so project gains it by its import alone.
+  for directory in directories:
+    for e in tree:
+      if e.path.startsWith(directory & "/") and e.path.endsWith(".nim") and
+          e.content.isImportingKnoller:
+        result.add directory
+        break
+
+
+func projectsTest*(
+  directories, paths: openArray[string]; importers: seq[string] = @[DIRECTORY_DRIVER]
+): seq[string] =
+  ## Select projects one change asks to compile, sorted: each whose code changed, driver's
+  ##   project when driver's root files did, and each project importing knoller when knoller did.
+  ##   `importers` defaults to driver's project alone; caller holding tree reads them from it
+  ##     (`directoriesImporting`).
   for directory in directories:
     for path in paths:
-      let is_driving = path in FILES_CHECKER or path.isKnoller
-      if isCode(directory, path) or (directory == DIRECTORY_DRIVER and is_driving):
+      let is_selected =
+          isCode(directory, path) or (directory == DIRECTORY_DRIVER and path in FILES_CHECKER) or
+          (directory in importers and path.isKnoller)
+      if is_selected:
         result.add directory
         break
   result.sort
@@ -184,7 +213,8 @@ func jobsFor*(tree: Tree, directories: openArray[string]): seq[Job] =
 
 func jobs*(tree: Tree, paths: openArray[string]): seq[Job] =
   ## Build jobs for projects one change asks to compile.
-  tree.jobsFor(projectsTest(tree.directoriesProject, paths))
+  let directories = tree.directoriesProject
+  tree.jobsFor projectsTest(directories, paths, tree.directoriesImporting(directories))
 
 
 func jobsAll*(tree: Tree): seq[Job] =

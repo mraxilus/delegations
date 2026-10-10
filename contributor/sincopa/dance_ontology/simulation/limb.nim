@@ -3,8 +3,8 @@
 ##   Arm is three rigid links -- upper arm, forearm, hand -- on shoulder
 ##     that swings and twists, elbow that bends, and wrist that bends any
 ##     way.  Forearm's own rotation is left free: it turns palm, and
-##     grip is one point.
-##   Given shoulder and grip, pose has three freedoms: which way
+##     join, where hand meets partner's, is one point.
+##   Given shoulder and join, pose has three freedoms: which way
 ##     hand points off wrist (two), and where elbow sits on
 ##     circle its two-link chain leaves it (one).  Everything else follows.  So
 ##     solver next door searches three numbers per arm, and every pose it
@@ -29,17 +29,18 @@ import ./[body, rig, vector]
 
 type
   ArmPose* = object  ## Four points of one arm, in world.
-    shoulder*, elbow*, wrist*, grip*: Vector  ## Shoulder, elbow, wrist, grip.
+    shoulder*, elbow*, wrist*, join*: Vector
+      ## Shoulder, elbow, wrist, and join: where hand meets partner's.
 
   Joints* = object  ## What each joint reads, radians, in body's own terms.
     extend*, across*, elevation*: float  ## Upper arm: behind, across, up.
     twist*, bend*, wrist*: float
 
-  Chain* = object  ## What laying out arm to grip found.
+  Chain* = object  ## What laying out arm to join found.
     pose*: ArmPose
     stretch*: float  ## Shoulder to wrist: over `upper + fore` is out of reach.
 
-  Circle* = object  ## Circle elbow can sit on for one grip and hand.
+  Circle* = object  ## Circle elbow can sit on for one join and hand.
     ##   Everything `posed` works out that does not depend on swivel, kept
     ##     so seed can try every swivel round it for price of one.
     shoulder*, wrist*: Vector  ## Shoulder and wrist.
@@ -64,11 +65,11 @@ func shoulderLocal*(rig: Rig): Vector = (rig.shoulder_out, 0.0, rig.shoulder_up)
   ## Shoulder in body's mirrored terms: always right arm here.
 
 
-func circleOf*(rig: Rig; shoulder_point, grip_point, hand_direction: Vector): Circle =
-  ## Elbow's circle for arm from shoulder `shoulder_point` to grip `grip_point` with
-  ## hand pointing along unit `hand_direction`.
+func circleOf*(rig: Rig; shoulder_point, join_point, hand_direction: Vector; depth: float): Circle =
+  ## Elbow's circle for arm from shoulder `shoulder_point` to join `join_point` with
+  ## hand pointing along unit `hand_direction`, holding `depth` past wrist.
   result.shoulder = shoulder_point
-  result.wrist = grip_point - hand_direction * rig.hand
+  result.wrist = join_point - hand_direction * depth
   result.stretch = distance(result.wrist, shoulder_point)
   if result.stretch < 1e-9:
     return
@@ -89,7 +90,7 @@ func circleOf*(rig: Rig; shoulder_point, grip_point, hand_direction: Vector): Ci
   result.side = cross(result.axis, down)
 
 func posedOn*(
-  rig: Rig; circle: Circle; grip_point: Vector; cosine_swivel, sine_swivel: float
+  rig: Rig; circle: Circle; join_point: Vector; cosine_swivel, sine_swivel: float
 ): Chain =
   ## Lay arm with its elbow on circle at swivel whose cosine and
   ## sine these are.
@@ -99,7 +100,7 @@ func posedOn*(
       shoulder: circle.shoulder,
       elbow: circle.shoulder + (0.0, 0.0, -rig.upper),
       wrist: circle.wrist,
-      grip: grip_point,
+      join: join_point,
     )
     return
   let elbow_point = circle.shoulder + circle.axis * circle.along +
@@ -108,20 +109,22 @@ func posedOn*(
     shoulder: circle.shoulder,
     elbow: elbow_point,
     wrist: circle.wrist,
-    grip: grip_point,
+    join: join_point,
   )
 
-func posed*(rig: Rig; shoulder_point, grip_point, hand_direction: Vector; swivel: float): Chain =
-  ## Lay arm from shoulder `shoulder_point` to grip `grip_point` with hand pointing along
-  ## unit `hand_direction` and elbow at `swivel` round its circle, nought being
-  ## lowest elbow can hang.
+func posed*(
+  rig: Rig; shoulder_point, join_point, hand_direction: Vector; depth, swivel: float
+): Chain =
+  ## Lay arm from shoulder `shoulder_point` to join `join_point` with hand pointing along
+  ## unit `hand_direction`, holding `depth` past wrist, and elbow at `swivel` round its
+  ## circle, nought being lowest elbow can hang.
   ##   Out of reach is not refused here: elbow goes as far as it can and
   ##     forearm is left too long, so that searcher minimising
   ##     overshoot has something smooth to descend.
   posedOn(
     rig,
-    circleOf(rig, shoulder_point, grip_point, hand_direction),
-    grip_point,
+    circleOf(rig, shoulder_point, join_point, hand_direction, depth),
+    join_point,
     cos(swivel),
     sin(swivel),
   )
@@ -133,6 +136,7 @@ func placed*(
   ## Build arm from its joints: upper arm along unit `upper_direction` in
   ## body's mirrored terms, twisted, bent at elbow, hand off
   ## forearm by `wrist` in direction `roll` turns it to.
+  ##   Hand holds palm to palm (`gripAtPalm`).
   ##   Forward kinematics, for laws: what `joints` reads must be what
   ##     was set here.
   let
@@ -143,22 +147,34 @@ func placed*(
     shoulder_point = shoulderLocal(rig)
     elbow_point = shoulder_point + upper_direction * rig.upper
     wrist_point = elbow_point + fore_direction * rig.fore
-    grip_point = wrist_point + hand_direction * rig.hand
+    join_point = wrist_point + hand_direction * gripAtPalm(rig)
     axes = axesOf(stance)
   if arm == Arm.Left:
     ArmPose(
       shoulder: toWorld(axes, mirrored(shoulder_point)),
       elbow: toWorld(axes, mirrored(elbow_point)),
       wrist: toWorld(axes, mirrored(wrist_point)),
-      grip: toWorld(axes, mirrored(grip_point)),
+      join: toWorld(axes, mirrored(join_point)),
     )
   else:
     ArmPose(
       shoulder: toWorld(axes, shoulder_point),
       elbow: toWorld(axes, elbow_point),
       wrist: toWorld(axes, wrist_point),
-      grip: toWorld(axes, grip_point),
+      join: toWorld(axes, join_point),
     )
+
+
+func carriedOf*(rig: Rig, pose: ArmPose): Vector =
+  ## Where hand is carried, which band is asked of: `rig.carry` past wrist, on hand's own
+  ## line from wrist through join.
+  ##   Between join of palm grip and that of finger grip, since neither serves.  Asked of
+  ##     fingertips, wrist and elbow passed under crown band at head's height: left to right
+  ##     over crown stopped by swing at 0.40 to 0.42 of turn from 0.36 to 0.46 m, and from
+  ##     0.48 m turned free with follow's arm behind head, at end of its swing.  Left to
+  ##     right at torso leapt 244 mm in one moment.  Asked at middle of palm, same-name
+  ##     chain wound half turn held from no distance.  Measured 2026-10-08.
+  pose.wrist + unit(pose.join - pose.wrist) * rig.carry
 
 
 func ownTerms*(axes: Axes, arm: Arm, point: Vector): Vector =
@@ -174,10 +190,10 @@ func swing*(axes: Axes, arm: Arm, pose: ArmPose): Swing =
     shoulder_point = ownTerms(axes, arm, pose.shoulder)
     elbow_point = ownTerms(axes, arm, pose.elbow)
     wrist_point = ownTerms(axes, arm, pose.wrist)
-    grip_point = ownTerms(axes, arm, pose.grip)
+    join_point = ownTerms(axes, arm, pose.join)
     upper_direction = unit(elbow_point - shoulder_point)
     fore_direction = unit(wrist_point - elbow_point)
-    hand_direction = unit(grip_point - wrist_point)
+    hand_direction = unit(join_point - wrist_point)
   result.upper = upper_direction
   result.fore = fore_direction
   result.joints.extend = arcsin(clamp(-upper_direction.y, -1.0, 1.0))

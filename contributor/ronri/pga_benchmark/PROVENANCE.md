@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-29 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | aeb6bb8eae706e64 |
+| Rules   | dc2f80918195f3c9 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 | Pruned  | de53b987e9686537ecae415d637952640dafb9ce |
 
@@ -235,7 +235,7 @@ ratio. The docket draws one tick for each of those ratios. Rejected: the spread 
 one run, because it misses drift between runs. That drift is the larger part on this machine.
 
 **The runtime baselines are from 2026-10-03 at all four algebras**, at `d9be8ae`, five runs each on
-`linux amd64, 4 cores`. `restamp` moved them to the pin `749fecf`, whose bench emits the same C. The
+`linux amd64, 4 cores`. `restamp` moved them to the pin `e993419`, whose bench emits the same C. The
 bench of 2026-10-01, run at `3121342` on 2026-10-02 in turn with the baselines of that day, gives
 the drift between days. At rga4d its library runs ×1.19 to ×1.22 of its own times of 2026-10-01. Its
 reference runs ×1.26 to ×1.27, and its dense forms ×1.00 to ×1.01. The bench of 2026-10-02 runs
@@ -589,6 +589,12 @@ that commit.
 A program claim names its program relative to its proposal, so a new directory name moves no
 digest.
 
+**A program may import a program of a proposal that it builds on,** by a path relative to its own
+directory. `proposals/10-magnitude/prototype.nim` imports the prototype of P04 this way, so the
+kinds have one copy. So the digest of an evaluation reads the programs of each base first, and
+then its own. A change to a program of a base moves the digest of each proposal on it. Rejected: a
+copy of the kinds in each proposal on P04, since two copies drift apart.
+
 **A suites or program claim may name `defines`**, each `name=value`, and each of its builds
 passes them as `-d:`. So a proposal can hold the library at a build option other than its
 default, as P06 holds its own suites at 32 bits. The defines are part of the claim, so they move
@@ -640,7 +646,7 @@ their spread from it.
 
 **A build claim compiles the library alone**, from an entry that holds `import pga` and nothing
 else. It compares the peak memory that the compiler reports for the pin and for the changed
-library. No proposal makes one at `749fecf`. P01 made one, and the Architect ruled to drop it,
+library. No proposal makes one at the pin. P01 made one, and the Architect ruled to drop it,
 since head now holds the saving that it measured. At rga6d head peaks at 195.8 MiB and P01 at
 200.3 MiB, ×1.02 (`evaluations/cayley-derivation.json` at `b9ed6685`, 2026-10-07,
 `linux amd64, 4 cores`).
@@ -665,15 +671,18 @@ Alternation does not cancel all drift of a shared machine, so the time of one ev
 weak evidence alone. Counts are exact, and carry the verdicts.
 
 `proposals/04-exact-kinds/prototype.nim` holds its laws against the change of
-`cayley-derivation` at rga3d, rga4d, cga4d and cga5d.
+`cayley-derivation` at rga3d, rga4d, cga4d and cga5d. `proposals/10-magnitude/prototype.nim`
+holds its laws at the same four algebras, on the kinds of that prototype.
 
 Verified by `test_rga4d.nim` and the other stubs, suites `Internal: Markdown`, `Internal: Changes`,
 `Internal: Proposals`, `Internal: Evaluations`, `Internal: Cells` and `Internal: Figures`. They
 cover parse, quote and digest rules, and claim kinds, with the defines a claim may name and the page
-names. They cover proposal numbers taken twice or skipped, and the status that freezes a proposal.
-They also cover pairing of runs, NaN shares, the success line of the compiler, and the table
-serialiser at pin. They cover the algebras that an evaluation measures, with the flag and without
-it. A digest moves with edits, and never with prose.
+names. They cover the programs of a chain of proposals, base first.
+
+The same suites cover proposal numbers taken twice or skipped, and the status that freezes a
+proposal. They also cover pairing of runs, NaN shares, the success line of the compiler, and the
+table serialiser at pin. They cover the algebras that an evaluation measures, with the flag and
+without it. A digest moves with edits, and never with prose.
 
 ## Notes
 
@@ -943,7 +952,7 @@ to read no head, and the verb `head` to report what `checkHead` finds.
 **The PGA library is a pinned dependency, and never a copy.** It lives in [replications],
 which carries no nimble file and holds the library three directories inside it. So the
 requirement in `pga_benchmark.nimble` names the repository by URL and commit. `atlas.lock`
-records the resolved commit `749fecf02811417b014622e40217ce082856ed56`, and `nim.cfg` names
+records the resolved commit `e993419c1f90efba72848d146606f903e1cc141e`, and `nim.cfg` names
 the subdirectory that Atlas restores it to.
 
 That commit is the head of the library on 2026-10-07, as the standing instruction of the
@@ -1000,7 +1009,7 @@ norm, writes no zero. The Architect decided this, because the library is about P
 micro-optimisation.
 
 Each function that a Cayley table can express moves to generation, and so gets its zeros
-unrolled at no cost. At the pin `749fecf` the library works this way, and its attitude and
+unrolled at no cost. At the pin `e993419` the library works this way, and its attitude and
 carrier are generated. Its hand-written `+` and `-` carry `noinit` and write each slot, so they
 fill nothing. The cost that stays is what the hand-written norms pay.
 
@@ -1008,7 +1017,7 @@ The cost is measured at `3121342` on `linux amd64, 4 cores`, an Intel Xeon at 2.
 2026-10-03. The harness calls each function through a volatile procedure pointer. So the body of
 each function compiles alone, and writes to memory that it cannot see. Each figure comes from two
 passes, and each pass is the median of nine runs of 41 rounds over 1024 objects. Nine in ten
-functions that did not change moved ×0.86 to ×1.02. The pins `d9be8ae`, `edb0c9d` and `749fecf`
+functions that did not change moved ×0.86 to ×1.02. The pins `d9be8ae` to `e993419`
 change no norm and no generated operator, as their static baselines show, so these figures stand
 for them.
 
@@ -1069,6 +1078,9 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
 
 ## Open questions
 
+- Whether the bulk norm takes a root under the geometric product, as Lengyel's `Sqrt` does. P10,
+  `magnitude`, roots the weight norm under the antiproduct, as the Architect chose on 2026-10-09.
+  Under the rigid metric a pure bulk has no root there, so the bulk norm keeps its float root.
 - Whether the library takes P03, `partner-sign`, and with it a partner that does not check the
   grade of its operand. At cga5d, P03 on P01 spends the chain bound of 324 multiplies, three
   zero fills and two error checks. P01 alone spends 437, 104 and 268. Both are the counts

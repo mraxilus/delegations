@@ -11,7 +11,7 @@ metric, where the library puts the horizon.
 
 ```nim
     let horizon = if IS_RIGID: 𝐞ₙ else: 𝐞ₙ₋₁
-    for 𝐦, _, _ in randMultivectors():
+    for 𝐦, _, _ in sampleMultivectors():
       check ⊖𝐦 =~ 𝐦 ∨ /horizon
 ```
 

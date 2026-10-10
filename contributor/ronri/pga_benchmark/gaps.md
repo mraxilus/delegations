@@ -67,8 +67,8 @@ between steps. Every other bound in these tables is derived from the axioms alon
 ## rga4d
 
 This algebra has 4 dimensions, a rigid metric and a 128-byte multivector. The inspector took the
-counts on 2026-10-07, on linux amd64, 4 cores, with nim `27763495bcfe265507ca98aedc1c7064bf1e0e4d`,
-pga `749fecf02811417b014622e40217ce082856ed56` and flags `-d:release`. The bench ran 5 times on
+counts on 2026-10-09, on linux amd64, 4 cores, with nim `27763495bcfe265507ca98aedc1c7064bf1e0e4d`,
+pga `e993419c1f90efba72848d146606f903e1cc141e` and flags `-d:release`. The bench ran 5 times on
 2026-10-03, on linux amd64, 4 cores, over 40 rounds of 1024 objects each. Each time is the median of
 those runs. It ran at pga `d9be8aefc193f6ee0a7a3fead25cd4fe1d8f09cf`, which emits the same C as the
 pin. The allocation gauge was live.
@@ -236,8 +236,8 @@ Gaps: 111. Over 85, met 26, unmeasured 0.
 ## cga5d
 
 This algebra has 5 dimensions, a conformal metric and a 256-byte multivector. The inspector took the
-counts on 2026-10-07, on linux amd64, 4 cores, with nim `27763495bcfe265507ca98aedc1c7064bf1e0e4d`,
-pga `749fecf02811417b014622e40217ce082856ed56` and flags `-d:release`. The bench ran 5 times on
+counts on 2026-10-09, on linux amd64, 4 cores, with nim `27763495bcfe265507ca98aedc1c7064bf1e0e4d`,
+pga `e993419c1f90efba72848d146606f903e1cc141e` and flags `-d:release`. The bench ran 5 times on
 2026-10-03, on linux amd64, 4 cores, over 40 rounds of 1024 objects each. Each time is the median of
 those runs. It ran at pga `d9be8aefc193f6ee0a7a3fead25cd4fe1d8f09cf`, which emits the same C as the
 pin. The allocation gauge was live.
@@ -431,8 +431,8 @@ Gaps: 131. Over 102, met 29, unmeasured 0.
 ## rga3d
 
 This algebra has 3 dimensions, a rigid metric and a 64-byte multivector. The inspector took the
-counts on 2026-10-07, on linux amd64, 4 cores, with nim `27763495bcfe265507ca98aedc1c7064bf1e0e4d`,
-pga `749fecf02811417b014622e40217ce082856ed56` and flags `-d:release`. The bench ran 5 times on
+counts on 2026-10-09, on linux amd64, 4 cores, with nim `27763495bcfe265507ca98aedc1c7064bf1e0e4d`,
+pga `e993419c1f90efba72848d146606f903e1cc141e` and flags `-d:release`. The bench ran 5 times on
 2026-10-03, on linux amd64, 4 cores, over 40 rounds of 1024 objects each. Each time is the median of
 those runs. It ran at pga `d9be8aefc193f6ee0a7a3fead25cd4fe1d8f09cf`, which emits the same C as the
 pin. The allocation gauge was live.
@@ -577,8 +577,8 @@ Gaps: 88. Over 62, met 26, unmeasured 0.
 ## cga4d
 
 This algebra has 4 dimensions, a conformal metric and a 128-byte multivector. The inspector took the
-counts on 2026-10-07, on linux amd64, 4 cores, with nim `27763495bcfe265507ca98aedc1c7064bf1e0e4d`,
-pga `749fecf02811417b014622e40217ce082856ed56` and flags `-d:release`. The bench ran 5 times on
+counts on 2026-10-09, on linux amd64, 4 cores, with nim `27763495bcfe265507ca98aedc1c7064bf1e0e4d`,
+pga `e993419c1f90efba72848d146606f903e1cc141e` and flags `-d:release`. The bench ran 5 times on
 2026-10-03, on linux amd64, 4 cores, over 40 rounds of 1024 objects each. Each time is the median of
 those runs. It ran at pga `d9be8aefc193f6ee0a7a3fead25cd4fe1d8f09cf`, which emits the same C as the
 pin. The allocation gauge was live.

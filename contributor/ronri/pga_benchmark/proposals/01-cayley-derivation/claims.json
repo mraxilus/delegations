@@ -11,8 +11,8 @@
       "pairs": [
         ["CAYLEYS_REVERSE.base", "CAYLEYS_REVERSE.base"],
         ["CAYLEYS_REVERSE.anti", "CAYLEYS_REVERSE.anti"],
-        ["CAYLEYS_METRIC_EXOMORPHISM.base", "CAYLEYS_METRIC_EXOMORPHISM.base"],
-        ["CAYLEYS_METRIC_EXOMORPHISM.anti", "CAYLEYS_METRIC_EXOMORPHISM.anti"],
+        ["CAYLEYS_EXOMORPHISM_METRIC.base", "CAYLEYS_EXOMORPHISM_METRIC.base"],
+        ["CAYLEYS_EXOMORPHISM_METRIC.anti", "CAYLEYS_EXOMORPHISM_METRIC.anti"],
         ["CAYLEYS_DUAL.base.left", "CAYLEYS_DUAL.base.left"],
         ["CAYLEYS_DUAL.base.right", "CAYLEYS_DUAL.base.right"],
         ["CAYLEYS_DUAL.anti.left", "CAYLEYS_DUAL.anti.left"],

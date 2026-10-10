@@ -121,7 +121,8 @@ rga4d, cga4d and cga5d.
 
 - The reach is what the table can produce, not what the algebra guarantees. A sandwich comes
   back as `MultivectorOdd` at 4D, although its value lies in grade 1. An operator that knows
-  better declares its product set, as `filter_product` does at pin.
+  better declares its product set. The emitter at pin takes no grade filter, so that set comes
+  from the table that the operator reads.
 - Where no alias fits, the importer reads `MultivectorOf[{E23, E31, E12}]`. P02 weighed that
   generic as the type an importer reads, and rejected it. Here it shows only where no name fits,
   and there it names the bases.

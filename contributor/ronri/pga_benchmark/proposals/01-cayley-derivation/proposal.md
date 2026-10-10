@@ -21,7 +21,7 @@ Two constructors stay direct: `constructReverse` for the base side alone, and `c
 The weight part is the conjugate of the bulk part under the rigid metric only. Each dual is a
 complement after 𝐆 or 𝔾, on the left or on the right, as the library keeps both sides.
 
-A cell of `Cayley1D` is `seq[BasisSigned]` at pin, and the emitter reads its first term alone.
+A cell of `Cayley1D` is `seq[BasisSigned]` at pin, and the emitter sums the terms of a cell.
 Each map that these rules build holds at most one term in a cell, so the emitter stays as at pin.
 `slice` keeps its assertion of one term, so a map of two terms stops the build.
 

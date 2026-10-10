@@ -26,7 +26,7 @@ const
     ## Repository's declaration of every file fetched at build time, from project directory.
   PATH_APP = "pages" / "app" / "index.html"
     ## Shell of Reference, whose style sheet sits in its head.
-  PATH_REVIEW = "pages" / "review" / "review.html"  ## Shell of review page.
+  PATH_REVIEW = "mockups" / "review.html"  ## Shell of review page.
   PATH_WHOLECLOTH = "mockups" / "wholecloth.html"  ## Whole-cloth proposal, drawn by hand.
 
 

@@ -36,14 +36,12 @@ generated tables, read in a chain, and no grade scan.
 ## Edit `pga/operators.nim`
 
 ```nim
-  filter_product: static[seq[Grade]] = default(seq[Grade]);
   as_unary: static[bool] = false;
 ): untyped =
   ## Construct multivector product variant using provided Cayley table.
 ```
 
 ```nim
-  filter_product: static[seq[Grade]] = default(seq[Grade]);
   as_unary: static[bool] = false;
   is_public: static[bool] = true;
 ): untyped =
@@ -80,7 +78,7 @@ generated tables, read in a chain, and no grade scan.
 ```nim
   func `⊛`*(m: Multivector): Multivector =
     ## Get partner of multivector, i.e. (-1)^(grade(𝐦)+1) (𝐦☆)⊡ ∨ 𝐦⊟.
-    let sign = float(-1 ^ (int(m.grade.get) + 1))
+    let sign = float(-1^(int(m.grade.get) + 1))
     sign * ⊡(☆m) ∨ ⊟m
 ```
 

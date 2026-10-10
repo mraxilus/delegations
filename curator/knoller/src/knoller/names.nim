@@ -1,5 +1,5 @@
-## Enforce declared names (Article III.5, V.1, V.3-V.6, V.11, V.12; V.10 globals), from text of
-##   one file.
+## Enforce declared names (Article III.5, V.1-V.6, V.11, V.12; V.10 globals), from text of one
+##   file.
 ##   Reads declarations alone, as `declared.nim` reads them: binding, routine, type, field,
 ##     parameter, enum member and placeholder. Name library owns reaches code only at use site,
 ##     which is never read. Foreign binding declares library's own name, so it is skipped; its
@@ -29,9 +29,8 @@
 ##     without case and underscores, as Nim does.
 ##   V.12: placeholder in brackets after routine or type name, or after `concept`, is one capital.
 ##     Generic parameter, i.e. of type `typedesc` alone (`declared.nim`), stands for any type as
-##     generic does, so it takes placeholder's letter (Architect's ruling, #443). Snake passes
-##     beside it until `pga_benchmark` renames its `kind`, since check reddening project cannot
-##     merge (CURATOR.md, duty 3). No rename of case touches either form. `typedesc[I]` holds
+##     generic does, so it takes placeholder's letter, and no other form (Architect's ruling,
+##     #443). No rename of case touches it, since letter is choice. `typedesc[I]` holds
 ##     placeholder `I`, so its parameter stays snake.
 ##   V.4: boolean binding, field or parameter opens `is`, `as`, `should`, `found` or `has`,
 ##     with word after it. `func` returning `bool` is predicate and opens `is`. `proc`
@@ -39,6 +38,15 @@
 ##     `func` writing `var` parameter is action too, and is unread for same reason.
 ##   V.3: routine never opens with `get`, `compute` or `new`. V.5: name opening `lut` reads
 ##     `lut_<value>_by_<key>`.
+##   V.2: binding holding named value in another representation leads with name of its chain,
+##     where its name holds one: `c_dual_flags = c.dual.toFlags`, never `flags_c`. Last name of
+##     chain describes value, so both orders pass cut of V.2, and tie-breaker settles it. Syntax
+##     shows it: `$`, `to<Target>` call (V.3) or type conversion over chain of steps from one
+##     root (`namesConverted`); step is field or call of one input, by dot or by prefix call.
+##     Step may keep root, as dual of `c` is `c` in dual space (Architect's ruling, #608), or
+##     make new thing, as `m.grade` does, and syntax cannot tell which; so finding lists each
+##     name of chain, and reading picks one that passes cut. Type rooting chain is no value.
+##     Cut itself, and property such as `grade_m`, hold by reading.
 ##   Renames: `renamesAbbreviation` and `renamesCase` give rename each rule asks. Rename reaches
 ##     every use of name, which only semantic pass of compiler finds, so `rewrites.nim` plans it,
 ##     in scope caller gives (`command.nim`, or `curator/audit`).
@@ -47,12 +55,15 @@
 ##   Cost: boolean is read only where declaration shows it: type `bool`, or value literal
 ##     `true` or `false`. Boolean from call or expression holds by reading.
 ##   Cost: `in` calls `contains` by spelling, so predicate of that name keeps host's name.
-##   Cost: generic parameter passes in two cases until `pga_benchmark` renames its `kind`, so one
-##     file may spell two generic parameters two ways; reading holds it.
 ##   Cost: Pascal name of capitals alone, e.g. `ANTI`, passes case of type; reading holds it.
 ##     Letter outside `std/unicode` case tables and mathematical block carries no case, so it
 ##     fits every casing.
 ##   Cost: word table is short list; `english.nim` of `curator/audit` pays same cost.
+##   Cost: change of representation is read by spelling, so call of other routine named
+##     `to<Target>` reads as one. V.2 finding renames nothing: name that puts value first may
+##     still need reading, as `is_moved = moved.toHashSet` does.
+##   Cost: chain with index, call of second input, operator or literal reads as no chain, so
+##     its name holds by reading. Wrong name of chain at head passes, as `m_grade_int` does.
 
 {.experimental: "strictFuncs".}
 
@@ -101,9 +112,13 @@ const
     "is one capital letter",
   ]
     ## Predicate of each casing, as finding states it.
-  RULE_GENERIC = "Parameter of type `typedesc` alone is one capital letter or `snake_case`"
-    ## Case generic parameter takes, as finding states it: placeholder's letter (V.12), or snake
-    ##   until `pga_benchmark` renames its `kind` (#443).
+  TYPES_BUILTIN = [
+    "bool", "byte", "char", "cint", "cstring", "cuint", "float", "float32", "float64", "int",
+    "int16", "int32", "int64", "int8", "string", "uint", "uint16", "uint32", "uint64", "uint8",
+  ]
+    ## Types Nim spells in lowercase, which convert as prefix call `T(x)` does (STYLE.md §5).
+  RULE_GENERIC = "Parameter of type `typedesc` alone is one capital letter"
+    ## Case generic parameter takes, as finding states it: placeholder's letter (V.12, #443).
 
 
 func spansWord(name: string): seq[(int, int)] =
@@ -212,12 +227,124 @@ func casingOf*(d: Declared): Casing =
 
 func isMiscased*(d: Declared): bool =
   ## Decide whether name breaks case of its kind, as `checkNames` reads it (V.1, V.11, V.12);
-  ##   binding of entry block and variable in source's notation carry no case to read, and
-  ##   generic parameter passes as snake too (`RULE_GENERIC`).
+  ##   binding of entry block and variable in source's notation carry no case to read.
   if d.kind == KindName.Binding and d.reach == Reach.Entry: return false
   if d.kind in KINDS_VARIABLE and d.name.isNotation: return false
-  if d.is_generic and d.name.isCased(Casing.Snake): return false
   not d.name.isCased(d.casingOf)
+
+
+func isTarget(word: string): bool =
+  ## Decide whether word names change of representation, `to<Target>` (V.3).
+  word.len > 2 and word.startsWith("to") and word[2] in {'A'..'Z'}
+
+
+func isType(word: string): bool =
+  ## Decide whether word names type: Pascal (V.1), or lowercase type of Nim.
+  word.len > 0 and (word[0] in {'A'..'Z'} or word in TYPES_BUILTIN)
+
+
+func opening(text: string, close: int): int =
+  ## Find bracket opening one that closes at index; `-1` where text starts first.
+  var depth = 0
+  for k in countdown(close, 0):
+    if text[k] in {')', ']', '}'}: inc depth
+    elif text[k] in {'(', '[', '{'}:
+      dec depth
+      if depth == 0: return k
+  -1
+
+
+func isSplitTop(text: string): bool =
+  ## Decide whether text holds `,` outside brackets, so it gives more than one input.
+  var depth = 0
+  for c in text:
+    if c in {'(', '[', '{'}: inc depth
+    elif c in {')', ']', '}'}: dec depth
+    elif c == ',' and depth == 0: return true
+  false
+
+
+func isName(text: string): bool =
+  ## Decide whether text is one name, never number.
+  text.len > 0 and text[0] notin {'0'..'9'} and text.identifierAt(0) == text
+
+
+type Chain = object  ## Define expression read as steps from one root (V.2).
+  is_read: bool  ## Expression reads as chain.
+  is_converted: bool  ## Last step changes representation: `to<Target>`, type conversion or `$`.
+  names: seq[string]  ## Root, then each step, `to<Target>` aside; type rooting chain left out.
+
+
+func chainOf(text: string): Chain =
+  ## Read expression as chain of steps from one root. Step is field or call of one input, by dot
+  ##   or by prefix call, so `dual(c)` reads as `c.dual`, and empty call reads as its name
+  ##   (`a.basis()`). Index, call of second input, operator and literal read as no chain.
+  let text = text.strip
+  if text.len == 0: return
+  if text[0] == '$':
+    result = text[1 .. ^1].chainOf
+    result.is_converted = result.is_read
+    return
+  if text[0] == '(' and text.closing(0) == text.high: return text[1 ..< text.high].chainOf
+  if text[^1] == ')':
+    let open = text.opening(text.high)
+    if open <= 0: return
+    let
+      callee = text[0 ..< open]
+      inner = text[open + 1 ..< text.high].strip
+    if '.' in callee:
+      if inner.len == 0: return callee.chainOf
+      return
+    if not callee.isName or inner.len == 0 or inner.isSplitTop: return
+    result = inner.chainOf
+    if not result.is_read: return
+    result.is_converted = callee.isTarget or callee.isType
+    if not result.is_converted: result.names.add callee
+    return
+  let dot = text.rfind('.')
+  if dot < 0:
+    if not text.isName: return
+    return Chain(is_read: true, names: if text.isType: @[] else: @[text])
+  let step = text[dot + 1 .. ^1]
+  if not step.isName: return
+  result = text[0 ..< dot].chainOf
+  if not result.is_read: return
+  result.is_converted = step.isTarget
+  if not result.is_converted: result.names.add step
+
+
+func namesConverted*(value: string): seq[string] =
+  ## Read names of chain whose value binding holds in another representation (V.2, V.3): root,
+  ##   then each step, where chain ends in `$`, `to<Target>` call or type conversion.
+  ##   `a.basis.toFlags` gives `a` and `basis`, `toFlags(dual(c))` gives `c` and `dual`, `uint(b)`
+  ##   and `$b` give `b`; `m.grade.get`, `dual[c].toFlags` and `toFlags(a + b)` give none.
+  let chain = value.chainOf
+  if chain.is_read and chain.is_converted: chain.names.deduplicate else: @[]
+
+
+func indexRun(parts, run: openArray[string]): int =
+  ## Find first index where words of run stand in parts in order, case aside; `-1` where none.
+  let
+    parts_lower = parts.mapIt(it.toLowerAscii)
+    run_lower = run.mapIt(it.toLowerAscii)
+  for k in 0 .. parts_lower.len - run_lower.len:
+    if parts_lower[k ..< k + run_lower.len] == run_lower: return k
+  -1
+
+
+func namesLater*(d: Declared): seq[string] =
+  ## Read names of chain whose value binding holds in another representation, where binding's
+  ##   name holds one of them after its head and none at its head (V.2); empty otherwise.
+  let
+    held = d.value.namesConverted
+    at = held.mapIt(d.name.words.indexRun(it.words))
+  if 0 notin at and at.anyIt(it > 0): held else: @[]
+
+
+func listed(names: openArray[string]): string =
+  ## Write names as code spans, commas between, `or` before last: `` `m`, `grade` or `get` ``.
+  let spans = names.mapIt("`" & it & "`")
+  if spans.len < 2: spans.join else: spans[0 .. ^2].join(", ") & " or " & spans[^1]
 
 
 func checkNames*(path, source: string; exempt: openArray[string]): seq[Report] =
@@ -254,6 +381,23 @@ func checkNames*(path, source: string; exempt: openArray[string]): seq[Report] =
         d.line,
         Rule.TableLookup,
         "Lookup table reads `lut_<value>_by_<key>`; got `" & d.name & "`.",
+      )
+    let held = d.namesLater
+    if held.len == 1:
+      result.add initReport(
+        path,
+        d.line,
+        Rule.HeadRepresentation,
+        "Name holding `" & held[0] & "` in another representation leads with `" & held[0] &
+          "`; got `" & d.name & "`.",
+      )
+    elif held.len > 1:
+      result.add initReport(
+        path,
+        d.line,
+        Rule.HeadRepresentation,
+        "Name holding value in another representation leads with a name of its chain, " &
+          held.listed & "; got `" & d.name & "`.",
       )
 
     # Boolean is proposition or mode; predicate `func` is `is…` (V.4).

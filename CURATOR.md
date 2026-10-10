@@ -88,6 +88,7 @@ Every rule below serves it:
 | `curator/audit/` | The checker: every check, tested against its own fixtures | curator |
 | `curator/probe/` | Domain-neutral worked example of the project shape | curator |
 | `curator/knoller/` | Fixers and checks of style, for any repository | curator |
+| `curator/assayer/` | Runner of each test file under each configuration, in parallel | curator |
 | `curator/<project>/` | Any other curator project, same shape | curator |
 | `contributor/README.md` | Contributor root index | curator |
 | `contributor/<domain>/README.md` | Domain name and theme | curator |

@@ -62,13 +62,13 @@ func lyingOn*(
     pose = arms[i][end_index]
     stance = stance[who]
     axes = axesOf(stance)
-    grip = toBody(axes, pose.grip)
+    join = toBody(axes, pose.join)
     elbow = toBody(axes, pose.elbow)
     own_side = side(hand.arm)
   var aspect: Aspect
-  if grip.y < -0.01:
+  if join.y < -0.01:
     aspect = Aspect.Aft
-  elif grip.x * own_side < -0.01 and grip.y < halfDepth(rig, Part.Torso) + 4.0 * rig.limb:
+  elif join.x * own_side < -0.01 and join.y < halfDepth(rig, Part.Torso) + 4.0 * rig.limb:
     aspect = Aspect.Fore
   else:
     return none(Lying)
@@ -76,18 +76,18 @@ func lyingOn*(
     Lying(
       aspect: aspect,
       band: band,
-      is_pressing: isPressingBody(rig, stance, (pose.elbow, pose.wrist, pose.grip)),
+      is_pressing: isPressingBody(rig, stance, (pose.elbow, pose.wrist, pose.join)),
       is_elbow_fore: elbow.y > 0.0,
     ),
   )
 
 
 func polyline*(arms: Arms, i: int): array[7, Vector] =
-  ## One connection as seven points: shoulder to shoulder through grip.
+  ## One connection as seven points: shoulder to shoulder through join.
   let
     arm_a = arms[i][0]
     arm_b = arms[i][1]
-  [arm_a.shoulder, arm_a.elbow, arm_a.wrist, arm_a.grip, arm_b.wrist, arm_b.elbow, arm_b.shoulder]
+  [arm_a.shoulder, arm_a.elbow, arm_a.wrist, arm_a.join, arm_b.wrist, arm_b.elbow, arm_b.shoulder]
 
 
 const ON_LINE = 1e-9
@@ -108,17 +108,17 @@ func sideOf(a, b, p: Vector): int =
   if offset > ON_LINE: 1 elif offset < -ON_LINE: -1 else: 0
 
 func lifted(side: int): int =
-  ## Point on line counts as on its positive side.  One rule for every tie, so
-  ## vertex two segments share is counted for exactly one of them, and arm lying
+  ## Point on line counts as on its positive side.  One rule for every point on line,
+  ## so vertex two segments share is counted for exactly one of them, and arm lying
   ## along other crosses it once where it leaves to far side and never inside
-  ## overlap.  Simulation of simplicity, with tie set by `ON_LINE` rather than
-  ## by whichever way last bit fell.
+  ## overlap.  Simulation of simplicity, with point on line set by `ON_LINE` rather
+  ## than by whichever way last bit fell.
   if side == 0: 1 else: side
 
 func crossings*(arms: Arms): seq[Crossing] =
   ## Where two connections cross in plan, and which is over at each.
   ##   Two segments cross where each has other's ends on opposite sides of its
-  ##     line, sides read with ties lifted.  Read as parametric intersection
+  ##     line, sides read with points on line lifted.  Read as parametric intersection
   ##     alone, crossing at vertex of both polylines was counted four times and
   ##     once under any jitter, and arm laid along other read nought, one or two.
   if arms.len < 2:
@@ -140,8 +140,8 @@ func crossings*(arms: Arms): seq[Crossing] =
       let denominator = (b.x - a.x) * (d.y - c.y) - (b.y - a.y) * (d.x - c.x)
       var t, u: float
       if abs(denominator) < 1e-18:
-        # Sides differ only by tie: segments run along one another and one end
-        # sits on other's line.  Crossing is that end.
+        # Sides differ only where point sits on line: segments run along one another
+        # and one end sits on other's line.  Crossing is that end.
         if sideOf(a, b, c) == 0: u = 0.0 else: u = 1.0
         let
           end_point = (if u == 0.0: c else: d)

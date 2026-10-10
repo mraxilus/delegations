@@ -376,15 +376,15 @@ func spanPerpendicular*(anchor: Position, normal: Direction): Option[(Direction,
   # Span plane through anchor holding both helper axis and normal.
   #   Its own normal is perpendicular to both, so it lies inside plane `normal` spans.
   let
-    point_anchor = anchor.toMultivector
-    point_normal = normal.toMultivector
-    plane_first = point_anchor ∧ axis_world.toMultivector ∧ point_normal
+    anchor_point = anchor.toMultivector
+    normal_point = normal.toMultivector
+    plane_first = anchor_point ∧ axis_world.toMultivector ∧ normal_point
     axis_first = directionNormal(plane_first)
   if axis_first.isNone: return
 
   # Repeat against first axis, to obtain second axis perpendicular to it inside plane.
   let
-    plane_second = point_anchor ∧ axis_first.get.toMultivector ∧ point_normal
+    plane_second = anchor_point ∧ axis_first.get.toMultivector ∧ normal_point
     axis_second = directionNormal(plane_second)
   if axis_second.isNone: return
 

@@ -44,7 +44,7 @@ suite "Transwedge":
 
 ```
 
-## Replace `pga/cayleys.nim` from `c7ad2e4fe4217e60`
+## Replace `pga/cayleys.nim` from `b3c1fb106271d009`
 
 ```nim
 ## Define and construct Cayley tables for any PGA.
@@ -129,8 +129,8 @@ const
 
 const
   CAYLEY_METRIC* = constructMetric()
-  CAYLEYS_METRIC_EXOMORPHISM* = block:
-    let base = constructMetricExomorphism(CAYLEY_METRIC)
+  CAYLEYS_EXOMORPHISM_METRIC* = block:
+    let base = constructExomorphismMetric(CAYLEY_METRIC)
     Spatial[Cayley1D](
       base: base,
       anti: base.constructAnti(CAYLEYS_COMPLEMENT),
@@ -145,38 +145,37 @@ const
 const
   CAYLEYS_DUAL* = Spatial[Chiral[Cayley1D]](  # Complement after exomorphism, e.g. 𝐦★ = (𝐆𝐦)̅.
     base: Chiral[Cayley1D](
-      left: CAYLEYS_COMPLEMENT.left.applyMap(CAYLEYS_METRIC_EXOMORPHISM.base),
-      right: CAYLEYS_COMPLEMENT.right.applyMap(CAYLEYS_METRIC_EXOMORPHISM.base),
+      left: CAYLEYS_COMPLEMENT.left.applyMap(CAYLEYS_EXOMORPHISM_METRIC.base),
+      right: CAYLEYS_COMPLEMENT.right.applyMap(CAYLEYS_EXOMORPHISM_METRIC.base),
     ),
     anti: Chiral[Cayley1D](
-      left: CAYLEYS_COMPLEMENT.left.applyMap(CAYLEYS_METRIC_EXOMORPHISM.anti),
-      right: CAYLEYS_COMPLEMENT.right.applyMap(CAYLEYS_METRIC_EXOMORPHISM.anti),
+      left: CAYLEYS_COMPLEMENT.left.applyMap(CAYLEYS_EXOMORPHISM_METRIC.anti),
+      right: CAYLEYS_COMPLEMENT.right.applyMap(CAYLEYS_EXOMORPHISM_METRIC.anti),
     ),
   )
 
 const
   CAYLEYS_WEDGES_TRANS* = Spatial[array[Order, Cayley2D]](
-      # TODO: Fully ignore chirality distinction as product outputs equivalent.
-      base: constructProductsTransitional(
-        CAYLEYS_COMPLEMENT.left,
-        CAYLEYS_DUAL.base.right,
-        CAYLEYS_WEDGE,
-        Chirality.Right,
-        Spatiality.Base,
-      ),
-      anti: constructProductsTransitional(
-        CAYLEYS_COMPLEMENT.left,
-        CAYLEYS_DUAL.anti.right,
-        CAYLEYS_WEDGE,
-        Chirality.Right,
-        Spatiality.Anti,
-      ),
-    )
+    base: constructProductsTransitional(
+      CAYLEYS_COMPLEMENT.left,
+      CAYLEYS_DUAL.base.right,
+      CAYLEYS_WEDGE,
+      Chirality.Right,
+      Spatiality.Base,
+    ),
+    anti: constructProductsTransitional(
+      CAYLEYS_COMPLEMENT.left,
+      CAYLEYS_DUAL.anti.right,
+      CAYLEYS_WEDGE,
+      Chirality.Right,
+      Spatiality.Anti,
+    ),
+  )
 
 
 const
   CAYLEYS_INTERIOR* = Spatial[Partial[Chiral[Cayley2D]]](  # Wedge with one operand dualized.
-    base: Partial[Chiral[Cayley2D]](  # Alias expansion.
+    base: Partial[Chiral[Cayley2D]](
       bulk: Chiral[Cayley2D](
         left: CAYLEYS_WEDGE.base.applyMap(CAYLEYS_DUAL.base.left, Chirality.Left),
         right: CAYLEYS_WEDGE.base.applyMap(CAYLEYS_DUAL.base.right, Chirality.Right),
@@ -186,7 +185,7 @@ const
         right: CAYLEYS_WEDGE.base.applyMap(CAYLEYS_DUAL.anti.right, Chirality.Right),
       ),
     ),
-    anti: Partial[Chiral[Cayley2D]](  # Alias expansion.
+    anti: Partial[Chiral[Cayley2D]](
       bulk: Chiral[Cayley2D](
         left: CAYLEYS_WEDGE.anti.applyMap(CAYLEYS_DUAL.base.left, Chirality.Left),
         right: CAYLEYS_WEDGE.anti.applyMap(CAYLEYS_DUAL.base.right, Chirality.Right),
@@ -311,7 +310,7 @@ func constructMetric(): Cayley1D {.compileTime.} =
     result[𝐞ₙ.pred] = @[BasisSigned(basis: 𝐞ₙ, is_negated: true)]
 
 
-func constructMetricExomorphism(metric: Cayley1D): Cayley1D {.compileTime, noinit.} =
+func constructExomorphismMetric(metric: Cayley1D): Cayley1D {.compileTime, noinit.} =
   ## Construct metric exomorphism 𝐆 from metric 𝖌 simplified as 1D cayley table.
   ##   𝖌 expands to 𝐆 via 𝐆(𝐦 ∧ 𝐧) = (𝐆𝐦) ∧ (𝐆𝐧).
   ##   Likewise with `constructAnti` applied on output:
@@ -338,7 +337,7 @@ func constructMetricExomorphism(metric: Cayley1D): Cayley1D {.compileTime, noini
     var product = multiplyExterior(bases[0], bases[1])
     assert not product.is_degenerate
     if len(bases) > 2:
-      for i in 2 ..< len(bases):
+      for i in 2..<bases.len:
         product = multiplyExterior(product.basis, bases[i])
 
     result[operand] = @[product.basis]
@@ -355,7 +354,7 @@ func constructProductExterior(
         of Spatiality.Base: multiplyExterior(m.toSigned, n.toSigned)
         of Spatiality.Anti: multiplyExterior(
           complements.right[m].toSigned,
-          complements.right[n].toSigned
+          complements.right[n].toSigned,
         )
       if product.is_degenerate: continue
 
@@ -531,6 +530,7 @@ func toSigned(product: seq[BasisSigned]): BasisSigned {.compileTime.} =
   product[0]
 
 
+
 #[ Cayley Transformations ]#
 
 func applyConstant(
@@ -635,7 +635,7 @@ func filterBases(
       for b in cayley[m][n]:
         if (products.len != 0 and b.basis notin products) or
             (as_exclusions and b.basis in products):
-          cayley[m][n] = @[] # TODO: Remove only matching elements.
+          cayley[m][n] = @[]  # TODO: Remove only matching elements.
           break
 
 
@@ -667,7 +667,7 @@ func filterGrades(
   operands_m = default(seq[Grade]),
   operands_n = default(seq[Grade]),
   products = default(seq[Grade]),
-  as_exclusions = false;
+  as_exclusions = false,
 ) {.compileTime.} =
   ## Filter out specific operands/products from 2D cayley table by bases.
   for m in Basis:
@@ -691,7 +691,7 @@ func filterGrades(
       for b in cayley[m][n]:
         if (products.len != 0 and b.basis.grade notin products) or
             (as_exclusions and b.basis.grade in products):
-          cayley[m][n] = @[] # TODO: Remove only matching elements.
+          cayley[m][n] = @[]  # TODO: Remove only matching elements.
           break
 
 

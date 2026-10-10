@@ -220,6 +220,11 @@ func programsOf*(proposal: Proposal): seq[string] =
       result.add proposal.directory & "/" & claim{"path"}.getStr
 
 
+func programsOf*(proposals: openArray[Proposal]): seq[string] =
+  ## List program paths claims of each proposal run, in order of proposals.
+  for proposal in proposals: result.add programsOf(proposal)
+
+
 func checkNumbers*(proposals: openArray[Proposal]): seq[Finding] =
   ## Hold numbers unique and gapless from one, so none is freed or taken twice.
   var seen: seq[int]
