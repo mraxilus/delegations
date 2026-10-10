@@ -71,6 +71,12 @@ knoller [--check] [--nim:path] path...
   that holds a nimble file, and writes only the files you name. A rename that would write another
   file stays as written, and prints one warning at its declaration that says why. Run knoller on
   `.` at the root of a project to let such a rename write every file it reaches.
+- A name that holds a value in another representation leads with a name of its chain, where it
+  holds one (V.2): `c_dual_flags = c.dual.toFlags`, never `flags_c`. A `to<Target>` call, a type
+  conversion or `$` at the end of a chain of steps changes the representation. A step is a field
+  or a call of one input, by dot or by prefix call. A chain may run over lines that open `.`.
+  Where a step follows the root, the finding lists each name of the chain, since a step can make
+  a new thing, as `m.grade` does. Knoller renames nothing, since the new name can need a reading.
 - Knoller has no style option. A fence, from a line `#!fix off` to a line `#!fix on`, keeps its
   lines as written. Each run prints one warning for each fence, which names each rule that breaks
   inside it. So you always see what the fence keeps, and knoller writes none of it.
@@ -139,6 +145,7 @@ the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, 
 | `placeholder-letter` | A placeholder, or a bare `typedesc` parameter, is one capital letter. |
 | `notation` | The notation of the source holds over case only for an immutable global. |
 | `global-word` | A global shares no word with a type. |
+| `representation-head` | A name holding a value in another representation leads with it. |
 | `article-in-comment` | A comment holds no article. |
 | `message-value` | A message echoes its value in backticks. |
 | `and-with-or` | A condition that mixes `and` with `or` puts each `and` in parentheses. |

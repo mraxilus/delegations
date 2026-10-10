@@ -116,6 +116,55 @@ proc wedge(𝐮: int): int =
   𝐌
 """
     ## Source's notation at module scope, mutable and not, and as field, parameter and local.
+  HEADS = """
+proc join(a, b: BasisSigned, operand: Basis, m: Multivector) =
+  let (a_flags, b_flags) = (a.basis.toFlags, b.basis.toFlags)
+  let (flags_a, flags_b) = (a.basis.toFlags, b.basis.toFlags)
+  let
+    b_string = $b
+    string_b = $b
+    a_count = uint(a)
+    count_a = uint(a)
+    grade_operand = Grade(operand)
+    basis_flags = a.basis.toFlags
+    flags_basis = toFlags(a.basis)
+    digits = operand.toDigits
+    flags_scalar_anti = Basis.scalarAnti.toFlags
+    m_grade = m.grade.get
+    flags_dual = dual[a].toFlags
+    flags_masked = toFlags(a, mask)
+    flags_sum = toFlags(a + b)
+    b_flags_remaining = uint(b)
+    m_signed = m.toDigits.toSigned
+"""
+    ## Bindings holding value in another representation, value first and last, beside values that
+    ##   are no such change: property, lookup, second input and compound (V.2).
+  CHAINS = """
+proc keep(c: Basis) =
+  let c_dual_flags = c.dual.toFlags
+proc behind(c: Basis) =
+  let flags_c = c.dual.toFlags
+proc prefix(c: Basis) =
+  let flags_c = toFlags(dual(c))
+proc split(c: Basis) =
+  let flags_c = c
+    .dual
+    .toFlags
+proc empty(a: BasisSigned) =
+  let flags_a = a.basis().toFlags
+proc property(m: Multivector) =
+  let
+    grade_m_int = m.grade.get.toInt
+    int_m = m.grade.get.toInt
+proc part(camera: Camera) =
+  let point_camera = camera.rig.target.toMultivector
+proc unread(c: Basis, camera: Camera) =
+  let
+    flags_c = c.dual[0].toFlags
+    point_camera = camera.eye(0).toMultivector
+"""
+    ## Chains of steps after root, by dot, prefix call, empty call and split line, with one name
+    ##   of chain at head and behind it; index and call of second input read as no chain (V.2).
 
 
 func names(source: string): seq[string] =
@@ -262,33 +311,32 @@ suite "Names":
     check PLACEHOLDERS.declarations.filterIt(it.name == "t")[0].kind == KindName.Parameter
 
 
-  test "V.12 generic parameter passes as one capital or snake, and no rename touches it":
-    # Ruling of #443, step 1: parameter of type `typedesc` alone stands for any type, as generic
-    #   does, so it takes placeholder's letter; snake passes too until `pga_benchmark` renames
-    #   `kind` of `timeKind` in its `timing.nim`, which first source quotes.
-    for name in ["T", "K", "kind", "kind_basis", "t"]:
+  test "V.12 generic parameter is one capital letter, and no rename touches it":
+    # Ruling of #443: parameter of type `typedesc` alone stands for any type, as generic does,
+    #   so it takes placeholder's letter and no other form.
+    for name in ["T", "K"]:
       for source in [
         "template timeKind(" & name & ": typedesc, label: string) =\n  discard\n",
         "proc sample(count: int; " & name & ": typedesc): int = count\n",
         "func pick(" & name & ", U: type) = discard\n",
         "macro emit(" & name & ": typeDesc = int) = discard\n",
       ]:
-        check source.breaches.len == 0  # V.12, and V.1 until step 3 of #443
+        check source.breaches.len == 0  # V.12
         check renamesCase(source, []).len == 0  # V.12, no rename of case
         check renamesAbbreviation(source, []).len == 0  # V.6, no rename of abbreviation either
-    for name in ["Kind", "kindBasis", "KIND"]:
+    for name in ["kind", "kind_basis", "t", "Kind", "kindBasis", "KIND"]:
       let
         source = "template timeKind(" & name & ": typedesc) = discard\n"
-        stated = "Parameter of type `typedesc` alone is one capital letter or " &
-            "`snake_case`; got `" & name & "`."
-      check source.breaches == @[(Rule.LetterPlaceholder, stated)]  # V.12, V.1 until step 3
+        stated = "Parameter of type `typedesc` alone is one capital letter; got `" & name & "`."
+      check source.breaches == @[(Rule.LetterPlaceholder, stated)]  # V.12, snake as well
       check renamesCase(source, []).len == 0  # V.12, letter is choice, so hand renames it
     const pick = "func pick[I: Grade](T: typedesc[I]): I = I.low\n"
     check pick.breaches == @[(Rule.CaseName, "Parameter is `snake_case`; got `T`.")]  # V.1
     check renamesCase(pick, []).mapIt((it.name, it.renamed)) == @[("T", "t")]  # V.1
     check pick.replace("(T:", "(t:").breaches.len == 0  # V.1, `I` is placeholder (V.12)
     check Declared(kind: KindName.Parameter, is_generic: true).casingOf == Casing.Letter  # V.12
-    check not Declared(name: "kind", kind: KindName.Parameter, is_generic: true).isMiscased  # V.1
+    check Declared(name: "kind", kind: KindName.Parameter, is_generic: true).isMiscased  # V.12
+    check not Declared(name: "K", kind: KindName.Parameter, is_generic: true).isMiscased  # V.12
 
 
   test "V.4 boolean is proposition or mode, and predicate func is `is…`":
@@ -389,6 +437,66 @@ suite "Names":
       renames = renamesAbbreviation(source, [])
     check renames == @[(1, 7, "ctx", "context"), (2, 6, "tmp", "temporary")]
     check checkNames("a.nim", source, JARGON).len == renames.len  # check reads same set
+
+
+  test "V.2 name holding value in another representation leads with that value":
+    check HEADS.messages == @[
+      "Name holding value in another representation leads with a name of its chain, `a` or " &
+        "`basis`; got `flags_a`.",
+      "Name holding value in another representation leads with a name of its chain, `b` or " &
+        "`basis`; got `flags_b`.",
+      "Name holding `b` in another representation leads with `b`; got `string_b`.",
+      "Name holding `a` in another representation leads with `a`; got `count_a`.",
+      "Name holding `operand` in another representation leads with `operand`; got " &
+        "`grade_operand`.",
+      "Name holding value in another representation leads with a name of its chain, `a` or " &
+        "`basis`; got `flags_basis`.",
+      "Name holding `scalarAnti` in another representation leads with `scalarAnti`; got " &
+        "`flags_scalar_anti`.",
+    ]
+    check HEADS.breaches.allIt(it[0] == Rule.HeadRepresentation)
+    check HEADS.declarations.filterIt(it.namesLater.len > 0).mapIt(it.line) ==
+      @[3, 3, 6, 8, 9, 11, 13]  # line of each binding
+
+
+  test "V.2 change of representation is `$`, `to<Target>` or type conversion over one chain":
+    check "a.basis.toFlags".namesConverted == @["a", "basis"]  # root, then field
+    check "uint(b)".namesConverted == @["b"]
+    check "$b".namesConverted == @["b"]
+    check "a.toFlags()".namesConverted == @["a"]
+    check "Grade(x.toFlags)".namesConverted == @["x"]  # conversion over conversion
+    check "Basis.scalarAnti.toFlags".namesConverted == @["scalarAnti"]  # type is no value
+    check "m.grade.get".namesConverted.len == 0  # property
+    check "dual[c].toFlags".namesConverted.len == 0  # lookup, which no name holds
+    check "toFlags(a, mask)".namesConverted.len == 0  # second input
+    check "toFlags(a + b)".namesConverted.len == 0  # compound
+    check "2.toFloat".namesConverted.len == 0  # literal
+    check "toFlags(dual(c))".namesConverted == @["c", "dual"]  # prefix call, as `c.dual`
+    check "a.basis().toFlags".namesConverted == @["a", "basis"]  # empty call, as `a.basis`
+    check "$(m.basis)".namesConverted == @["m", "basis"]
+    check "m.grade.get.toInt".namesConverted == @["m", "grade", "get"]
+    check "uint(a.basis.toFlags.countSetBits)".namesConverted == @["a", "basis", "countSetBits"]
+    check "c.dual[0].toFlags".namesConverted.len == 0  # index
+    check "camera.eye(0).toMultivector".namesConverted.len == 0  # call of second input
+
+
+  test "V.2 name of chain leads, through dot, prefix call, empty call and split line":
+    check CHAINS.messages == @[
+      "Name holding value in another representation leads with a name of its chain, `c` or " &
+        "`dual`; got `flags_c`.",
+      "Name holding value in another representation leads with a name of its chain, `c` or " &
+        "`dual`; got `flags_c`.",
+      "Name holding value in another representation leads with a name of its chain, `c` or " &
+        "`dual`; got `flags_c`.",
+      "Name holding value in another representation leads with a name of its chain, `a` or " &
+        "`basis`; got `flags_a`.",
+      "Name holding value in another representation leads with a name of its chain, `m`, " &
+        "`grade` or `get`; got `int_m`.",
+      "Name holding value in another representation leads with a name of its chain, `camera`, " &
+        "`rig` or `target`; got `point_camera`.",
+    ]  # behind, prefix, split, empty, property, part; keep and grade first pass, unread silent
+    check CHAINS.declarations.filterIt(it.namesLater.len > 0).mapIt(it.line) ==
+      @[4, 6, 8, 12, 16, 18]
 
 
   test "tuple binding declares names before `=` alone, never global its value names":
