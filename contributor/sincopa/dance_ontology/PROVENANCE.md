@@ -164,7 +164,7 @@ old name fails both of its laws. The step says a word the glossary rejects, and 
 the glossary agrees.
 
 Issue #235 holds a table, sweep by sweep, of where every arm reads open in the `design/turns.json`
-of 2026-09-23. Nine of its twelve rows do not match the recording that the tree holds.
+of 2026-09-23. Nine of its twelve rows do not match the recording at `e1dfe667`.
 
 **An avoid line cannot be held by matching the word.** The glossary rejects `wind` for the quantity
 that Twist names. The pages also use `wind` as a verb, where the arms wind, and that use is right.
@@ -495,9 +495,8 @@ panel is `wholecloth_turns.nim`, compiled to JavaScript, and `wholecloth.nim` sp
 sweeps of the simulation (`turns.nim`) and the panel into one page.
 
 Verified by `suites/test_marks.nim`, which drives the build of each page of `marks.PAGES` under
-testament. No law builds the whole-cloth page, but `drive` builds it, as it builds every page. The
-turns panel matches the inline script that it replaces in 707 driven states, under Playwright, on a
-date nobody recorded. The harness is not in the tree, so nobody can repeat it.
+testament. No law builds the whole-cloth page, but `drive` builds it, as it builds every page. No
+law and no harness in the tree holds the turns panel.
 
 **Every page says its prose in Simplified Technical English, and a hand-drawn figure claims nothing
 of the simulation.** The Architect requires the prose in the subset of the charter (`GUIDE.md`,
@@ -1030,8 +1029,8 @@ whose registry admits no second. Nothing in its sources needs one, because none 
 
 Cost, stated: the build flags are this project's, `-O2 -std=c17`, rather than those of upstream. On
 Linux, the release build of upstream sets `-O3 -DNDEBUG -std=gnu17 -ffp-contract=off` (its
-`CMakeLists.txt` and `CMakePresets.json` at the pinned commit). Measured: 24 s cold, and the verb
-returns at once where the archive already stands.
+`CMakeLists.txt` and `CMakePresets.json` at the pinned commit). Measured on four cores of a 2.8 GHz
+Xeon, 2026-10-10: 32 s cold, and 0.2 s where the archive already stands.
 
 `simulation/engine.nim` is the binding, Nim throughout, so the gated-language rule is never engaged.
 It links the archive and declares what the rig needs. That is world, body, capsule with its surface
@@ -1210,9 +1209,10 @@ Each shoulder is its own body. It is a capsule of radius 0.06 from the side of t
 joint, which is deltoid and trapezius. `GIRDLE_RADIUS` is an estimate, and not tape.
 
 It hangs on a collarbone, which is a body of its own at the side of the neck (`COLLAR_RADIUS`). Its
-capsule has the radius and the length of the girdle's, so the two weigh 2.35 kg each. At a
-fiftieth, both girdles stay on their hinges standing still. Each shoulder of a free couple at rest
-then rises 15 degrees, against 7. Measured 2026-10-09.
+capsule has the radius and the length of the girdle's, so the two weigh 2.35 kg each. With a
+collarbone of radius 0.01 m, a fiftieth of that mass, both girdles stay on their hinges standing
+still. But each shoulder of a free couple at rest then rises 15 degrees, against 7 at the full mass.
+Measured 2026-10-09 at `e1dfe667`.
 
 The collarbone is hinged to the chest about the up of the trunk, for protraction and retraction. It
 is hinged to the girdle about the fore of the trunk, for elevation and depression (`Collar`). The
@@ -2316,7 +2316,8 @@ each sweep and each rung that the report asks for into plain numbers. It keeps t
 say words or ask the questions of the laws (`LEAVING`). The report renders its words from the
 readings, and it asks for a reading by rendering. So the list of what it asks is written once.
 
-A change to words alone renders the report again in 2.8 s to 3.9 s, compile included, on 2026-10-08.
+A change to words alone renders the report again in 2.8 s to 3.9 s, compile included, on four cores
+on 2026-10-08.
 After a change to the physics, the recorder takes a new reading of each sweep and rung that the
 report lacks. Each one is a job (`design/record.nim`). Each job gives its reading as text, and the
 report reads each text back to the reading that it was written from.
@@ -2344,9 +2345,11 @@ stamp is read.
 and `design/rig.json` each carry one (`design/stamps.nim`), and `design/turns.json` carries none.
 Each stamp is a digest of the physics of the readings of the report, and of the source of its
 module, `design/rig.nim` or `design/modelled.nim`. A verb whose stamp is the same records nothing
-again. From no recording, the time of each verb alone is unmeasured, and Figures gives the time of
-all five recordings. With the stamp the same, each took 0.25 s to 0.33 s on 2026-10-08, or 2.8 s to
-3.9 s where it compiled first.
+again.
+
+From no recording, the time of each verb alone is unmeasured, and Figures gives the time of all five
+recordings. With the stamp the same, each took 0.25 s to 0.33 s on four cores on 2026-10-08. Where
+it compiled first, each took 2.8 s to 3.9 s.
 
 Each question that the verb asks goes into the stamp as text, and not the source of
 `design/asks.nim`. So a change to how the questions are listed that asks the same questions records
@@ -2541,9 +2544,11 @@ reddens a law.
   cost.
 
 - `tools/build.nim verdicts`, with its readings kept: 2.8 s to 3.9 s after a change to words,
-  compile included, on 2026-10-08.
-- `tools/build.nim pages`, every page with faces from the shared store: 26 s wall, on 2026-09-13.
-- `tools/build.nim engine`: 24 s cold, and at once where the archive stands.
+  compile included, on four cores on 2026-10-08.
+- `tools/build.nim pages`, every page with faces from the shared store: 46 s wall, on four cores of
+  a 2.8 GHz Xeon, 2026-10-10.
+- `tools/build.nim engine`: 32 s cold, and 0.2 s where the archive stands, on the same machine and
+  day.
 - `grep -c nimCopy` on the emitted `wholecloth_turns.js` gives 13, all of them the runtime's own,
   and none from module code. The binding shapes that the port rejected gave 35.
 
@@ -2687,8 +2692,8 @@ to tidy the line away shows up only as suites that fail to build. `result +=` on
   the right counts but draws an X. Anything that replaces the sine is drawn and looked at first.
 - **What the swan is in the body.** The reference draws the cross-name swans, C01 and C07, at
   `Face-to-back`, and the same-name swans, D01 and D07, at `Face-to-face`. All four hands are above
-  in both. Asked about a lock, the Architect described a low one. The arm goes down, the shoulder
-  rotates in as the hand goes behind the back, and the elbow bends behind to an L.
+  in both. The lock that the Architect describes is low. The arm goes down, the shoulder rotates in
+  as the hand goes behind the back, and the elbow bends behind to an L.
 - The model reaches the four swans by a planned turn, and each one waits for the Architect to hold
   it against their own body.
 - The drawing of the reference itself puts both joins at one point, with the right-over-left
@@ -2737,11 +2742,11 @@ to tidy the line away shows up only as suites that fail to build. `result +=` on
   the follow stands 0.21 m behind the frontal plane and 0.08 m past the midline, at 1.40 m. The rig
   holds extension and adduction each to its own end, so an arm that points back and across at once
   reads inside both. Measured 2026-10-09: the elbow of a held arm passes the midline behind the body
-  in 609 moments of the two recordings.
+  in 609 moments of `design/rig.json` and `design/turns.json`.
 - **The roll of a hand is free past the human range, and no page shows it (#612).** No range of the
   rig holds the roll of the forearm. In C01, the left forearm of the follow sits at 167 degrees of
-  supination. Three equal capsules draw that hand as one at 13 to 17 degrees of pronation, by three
-  measures of roll. Measured 2026-10-09.
+  supination. Three equal capsules draw that hand as one at 13 to 17 degrees of pronation, as #612
+  measures it. Measured 2026-10-09.
 - **The neck of the model pinches to a point where it meets the head (#613).** The neck capsule and
   the head capsule meet at one point, at 1.50 m. So a hand can sit 25 mm inside a neck of its own
   girth, and the engine reads no depth. Measured 2026-10-09, in the high cross-name chain.
