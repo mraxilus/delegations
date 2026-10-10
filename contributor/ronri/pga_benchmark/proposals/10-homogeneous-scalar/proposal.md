@@ -1,20 +1,25 @@
-# P10: Give magnitudes a division, a root and an exponential
+# P10: Give homogeneous scalars a division, a root and an exponential
 
 At pin, each norm takes a float root of one slot, and writes it into a whole multivector.
 Unitization divides by that float, and does nothing where it is zero. The library has no division
 by a multivector, no root and no exponential. The book treats the pair x𝟏 + y𝟙 as a dual number,
-and on a dual number these functions are well defined. This proposal names the pair `Magnitude`,
-as Lengyel's wiki does. It gives the pair an inverse, a root and an exponential under each
+and on a dual number these functions are well defined. This proposal names the pair a homogeneous
+scalar, `ScalarHomogeneous`. It gives the pair an inverse, a root and an exponential under each
 product, and a division, as Lengyel's `DualNum` has.
 
-This proposal builds on P04, `exact-kinds`, since `Magnitude` is one of its kinds. The Architect
-chose the name and a rule read from the table on 2026-10-09, and a form under each product on
-2026-10-10.
+This proposal builds on P04, `exact-kinds`, since `ScalarHomogeneous` is one of its kinds. The
+Architect chose a rule read from the table on 2026-10-09, and a form under each product and the
+name on 2026-10-10.
 
 ## What it is
 
-- **Kind.** `Magnitude` is `MultivectorOf[{Basis.scalar, Basis.scalarAnti}]`, two floats in each
-  algebra. Its bulk x lies on 𝟏, and its weight y on 𝟙.
+- **Kind.** `ScalarHomogeneous` is `MultivectorOf[{Basis.scalar, Basis.scalarAnti}]`, two floats
+  in each algebra. Its bulk x lies on 𝟏, and its weight y on 𝟙.
+- **Name.** The pair stands for the value x/y, kept with its weight y, as a homogeneous point keeps
+  a position with its weight. Lengyel's wiki calls it a magnitude. The library and the wiki also
+  use that word for the size of a quantity, so this proposal does not. Nor does it name the pair
+  dual. The pair is no dual number under the conformal metric, and the dual of a scalar is the
+  antiscalar alone.
 - **Products.** 𝟏 is the unit of the geometric product, and 𝟙 is the unit of the antiproduct. P04
   emits the antiproduct from the table of the library, and no geometric product.
 - **Squares.** `SQUARE_WEIGHT` reads the 𝟏 term of 𝟙 ⟑ 𝟙, and `SQUARE_BULK` reads the 𝟙 term of
@@ -45,10 +50,10 @@ library:
 | Dual form, 2𝟙 + 1𝟏 | 4𝟙 + 4𝟏 | 3𝟙 + 4𝟏 |
 | Complex form, 2.197𝟙 + 0.910𝟏 | 4.828𝟙 + 4𝟏 | 4𝟙 + 4𝟏 |
 
-Each form holds under its own metric alone. So `Magnitude` reads the square from the table, and
-each law below holds in all four algebras. The two forms agree on a pure weight above zero. They
-differ where both parts are nonzero, or where the weight is negative. Under the geometric product
-the same table holds, with 𝟏 and 𝟙 swapped.
+Each form holds under its own metric alone. So `ScalarHomogeneous` reads the square from the
+table, and each law below holds in all four algebras. The two forms agree on a pure weight above
+zero. They differ where both parts are nonzero, or where the weight is negative. Under the
+geometric product the same table holds, with 𝟏 and 𝟙 swapped.
 
 ## What it gains
 
@@ -60,11 +65,11 @@ the same table holds, with 𝟏 and 𝟙 swapped.
   Of 256 seeded multivectors with each coefficient in [−1, 1], a float root of it, as `|∘` takes,
   gives NaN for 114 at cga5d and 141 at cga4d. `normRadius` gives none, and its square equals
   𝐦 ∘ 𝐦 for each one.
-- **Division by a magnitude.** A geometric norm over its weight norm is d𝟏 + 𝟙, where d is the
-  distance, as the wiki unitizes a magnitude. `unitize` divides a multivector by its weight norm,
-  and equals `^` of the library under the rigid metric.
-- **Size.** A magnitude holds 16 bytes. Each norm of the library writes 128 bytes at rga4d and 256
-  at cga5d.
+- **Division by a homogeneous scalar.** A geometric norm over its weight norm is d𝟏 + 𝟙, where d
+  is the distance, as the wiki unitizes the pair. `unitize` divides a multivector by its weight
+  norm, and equals `^` of the library under the rigid metric.
+- **Size.** A homogeneous scalar holds 16 bytes. Each norm of the library writes 128 bytes at rga4d
+  and 256 at cga5d.
 
 ## Laws
 
@@ -72,7 +77,7 @@ the same table holds, with 𝟏 and 𝟙 swapped.
 compares against a product of the library on a whole `Multivector`. So no law tests the emission
 of P04 against itself.
 
-- The complement of a magnitude equals that of the library.
+- The complement of a homogeneous scalar equals that of the library.
 - 𝟏 is the unit of ⟑, and z ⟑ z⁻¹ = 𝟏. 𝟙 is the unit of ⟇, and z ⟇ z⁻¹ = 𝟙.
 - (y / z) ⟇ z = y.
 - √z ⟑ √z = z and √z ⟇ √z = z, for each z with a root. Under the rigid metric the unit part of z

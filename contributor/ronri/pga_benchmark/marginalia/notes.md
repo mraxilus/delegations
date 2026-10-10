@@ -248,8 +248,9 @@ func norm*(m: Multivector): Multivector {.inline.} = |m
 ```
 
 The book writes ‖𝐦‖ = s𝟏 + t𝟙, and a `Multivector` result mirrors that exactly. The cost is
-movement: `|` fills and writes all 2^D slots to hand back two. Proposal P10, `magnitude`, holds
-the pair as a kind of P04, `exact-kinds`, with a root and a division of its own.
+movement: `|` fills and writes all 2^D slots to hand back two. Proposal P10,
+`homogeneous-scalar`, holds the pair as a kind of P04, `exact-kinds`, with a root and a division
+of its own.
 
 ## Support is three dense products
 

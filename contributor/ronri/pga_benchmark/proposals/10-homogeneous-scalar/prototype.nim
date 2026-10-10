@@ -1,8 +1,10 @@
-## Prototype magnitude, pair of scalar and antiscalar, over exact kinds of P04 (`magnitude`).
+## Prototype homogeneous scalar, pair of scalar and antiscalar, over exact kinds of P04
+##   (`homogeneous-scalar`).
 ##   Evaluation compiles this against changed library at each algebra its claim names, and exit code
 ##     is verdict: every law below holds, or program stops on assertion.
-##   Magnitude is exact kind of 𝟏 and 𝟙. 𝟏 is unit of geometric product, and 𝟙 of antiproduct, as
-##     Lengyel's `DualNum` has `Sqrt` and `AntiSqrt`. Square of other part under each, read from
+##   Homogeneous scalar is exact kind of 𝟏 and 𝟙: value x/y, kept with its weight y, as homogeneous
+##     point keeps position with its weight. 𝟏 is unit of geometric product, and 𝟙 of antiproduct,
+##     as Lengyel's `DualNum` has `Sqrt` and `AntiSqrt`. Square of other part under each, read from
 ##     library's table, is 0 under rigid metric, so pair is dual number, and -1 under conformal
 ##     metric, so pair is complex number. Inverse, root and exponential under geometric product
 ##     follow from that square alone, and each anti form is their complement. Division is under
@@ -22,7 +24,7 @@ import pga/cayleys
 import "../04-exact-kinds/prototype" {.all.}
 
 
-type Magnitude* = MultivectorOf[{Basis.scalar, Basis.scalarAnti}]
+type ScalarHomogeneous* = MultivectorOf[{Basis.scalar, Basis.scalarAnti}]
   ## Define pair x𝟏 + y𝟙: bulk x on scalar, weight y on antiscalar.
 
 
@@ -50,105 +52,107 @@ static:
 
 #[ Arithmetic ]#
 
-func initMagnitude*(bulk, weight: float): Magnitude {.noinit.} =
-  ## Make magnitude bulk 𝟏 + weight 𝟙.
+func initScalarHomogeneous*(bulk, weight: float): ScalarHomogeneous {.noinit.} =
+  ## Make homogeneous scalar bulk 𝟏 + weight 𝟙.
   result[Basis.scalar] = bulk
   result[Basis.scalarAnti] = weight
 
 
-func `+`*(y, z: Magnitude): Magnitude =
-  ## Add magnitudes, part by part.
-  initMagnitude(y[Basis.scalar] + z[Basis.scalar], y[Basis.scalarAnti] + z[Basis.scalarAnti])
+func `+`*(y, z: ScalarHomogeneous): ScalarHomogeneous =
+  ## Add homogeneous scalars, part by part.
+  initScalarHomogeneous(
+    y[Basis.scalar] + z[Basis.scalar], y[Basis.scalarAnti] + z[Basis.scalarAnti],
+  )
 
 
-func complement(z: Magnitude): Magnitude =
-  ## Get complement of magnitude, i.e. z̅: swap parts, as 𝟏̅ = 𝟙 and 𝟙̅ = 𝟏.
-  initMagnitude(z[Basis.scalarAnti], z[Basis.scalar])
+func complement(z: ScalarHomogeneous): ScalarHomogeneous =
+  ## Get complement of homogeneous scalar, i.e. z̅: swap parts, as 𝟏̅ = 𝟙 and 𝟙̅ = 𝟏.
+  initScalarHomogeneous(z[Basis.scalarAnti], z[Basis.scalar])
 
 
-func inverse*(z: Magnitude): Magnitude =
+func inverse*(z: ScalarHomogeneous): ScalarHomogeneous =
   ## Get inverse under geometric product, i.e. z⁻¹ with z ⟑ z⁻¹ = 𝟏: conjugate over its square size.
   ##   None where bulk is zero under rigid metric, or where both parts are under conformal; there
   ##     result is infinite or NaN, as float division gives.
   let
     (bulk, weight) = (z[Basis.scalar], z[Basis.scalarAnti])
     size = bulk * bulk - float(SQUARE_WEIGHT) * weight * weight
-  initMagnitude(bulk / size, -weight / size)
+  initScalarHomogeneous(bulk / size, -weight / size)
 
 
-func sqrt*(z: Magnitude): Magnitude =
+func sqrt*(z: ScalarHomogeneous): ScalarHomogeneous =
   ## Get principal root under geometric product, i.e. w with w ⟑ w = z.
   ##   Dual number: √x 𝟏 + y / (2√x) 𝟙, real where bulk x is positive.
   ##   Complex number: root of x + y i, so negative bulk gives root on weight, as i.
   let (bulk, weight) = (z[Basis.scalar], z[Basis.scalarAnti])
   when SQUARE_WEIGHT == 0:
     let root = sqrt(bulk)
-    initMagnitude(root, weight / (2 * root))
+    initScalarHomogeneous(root, weight / (2 * root))
   else:
     let size = hypot(bulk, weight)
-    initMagnitude(sqrt((size + bulk) / 2), copySign(sqrt((size - bulk) / 2), weight))
+    initScalarHomogeneous(sqrt((size + bulk) / 2), copySign(sqrt((size - bulk) / 2), weight))
 
 
-func exp*(z: Magnitude): Magnitude =
-  ## Raise e to magnitude under geometric product, i.e. e^x (C 𝟏 + S 𝟙) for z = x𝟏 + y𝟙.
+func exp*(z: ScalarHomogeneous): ScalarHomogeneous =
+  ## Raise e to homogeneous scalar under geometric product, i.e. e^x (C 𝟏 + S 𝟙) for z = x𝟏 + y𝟙.
   ##   Dual number: C = 1, S = y. Complex number: C = cos y, S = sin y.
   let
     (bulk, weight) = (z[Basis.scalar], z[Basis.scalarAnti])
     scale = exp(bulk)
   when SQUARE_WEIGHT == 0:
-    initMagnitude(scale, scale * weight)
+    initScalarHomogeneous(scale, scale * weight)
   else:
-    initMagnitude(scale * cos(weight), scale * sin(weight))
+    initScalarHomogeneous(scale * cos(weight), scale * sin(weight))
 
 
-func inverseAnti*(z: Magnitude): Magnitude =
+func inverseAnti*(z: ScalarHomogeneous): ScalarHomogeneous =
   ## Get inverse under antiproduct, i.e. z⁻¹ with z ⟇ z⁻¹ = 𝟙, as complement of inverse of z̅.
   complement(inverse(complement(z)))
 
 
-func sqrtAnti*(z: Magnitude): Magnitude =
+func sqrtAnti*(z: ScalarHomogeneous): ScalarHomogeneous =
   ## Get principal root under antiproduct, i.e. w with w ⟇ w = z, as complement of root of z̅.
   ##   Real where weight is positive under rigid metric; negative weight gives root on bulk, as i,
   ##     under conformal metric.
   complement(sqrt(complement(z)))
 
 
-func expAnti*(z: Magnitude): Magnitude =
-  ## Raise e to magnitude under antiproduct, as complement of exponential of z̅.
+func expAnti*(z: ScalarHomogeneous): ScalarHomogeneous =
+  ## Raise e to homogeneous scalar under antiproduct, as complement of exponential of z̅.
   complement(exp(complement(z)))
 
 
-func `/`*(y, z: Magnitude): Magnitude =
+func `/`*(y, z: ScalarHomogeneous): ScalarHomogeneous =
   ## Divide under antiproduct, i.e. y ⟇ z⁻¹, as Lengyel's `DualNum` does.
   y ⟇ inverseAnti(z)
 
 
-func `/`*(m: Multivector, z: Magnitude): Multivector =
-  ## Divide multivector by magnitude under antiproduct, i.e. 𝐦 ⟇ z⁻¹.
+func `/`*(m: Multivector, z: ScalarHomogeneous): Multivector =
+  ## Divide multivector by homogeneous scalar under antiproduct, i.e. 𝐦 ⟇ z⁻¹.
   m ⟇ inverseAnti(z).toMultivector
 
 
 
 #[ Norms ]#
 
-func normBulk*(m: Multivector): Magnitude =
-  ## Get bulk norm as root of magnitude under geometric product, i.e. ‖𝐦‖∙ = √(𝐦∙𝐦), as at pin.
-  sqrt(initMagnitude((`|∙²`m)[Basis.scalar], 0))
+func normBulk*(m: Multivector): ScalarHomogeneous =
+  ## Get bulk norm as root under geometric product, i.e. ‖𝐦‖∙ = √(𝐦∙𝐦), as at pin.
+  sqrt(initScalarHomogeneous((`|∙²`m)[Basis.scalar], 0))
 
 
-func normWeight*(m: Multivector): Magnitude =
-  ## Get weight norm as root of magnitude under antiproduct, i.e. ‖𝐦‖∘ = √(𝐦∘𝐦), as at pin.
-  sqrtAnti(initMagnitude(0, (`|∘²`m)[Basis.scalarAnti]))
+func normWeight*(m: Multivector): ScalarHomogeneous =
+  ## Get weight norm as root under antiproduct, i.e. ‖𝐦‖∘ = √(𝐦∘𝐦), as at pin.
+  sqrtAnti(initScalarHomogeneous(0, (`|∘²`m)[Basis.scalarAnti]))
 
 
 when IS_CONFORMAL:
-  func normRadius*(m: Multivector): Magnitude =
-    ## Get radius norm as root of magnitude under antiproduct, i.e. ‖𝐦‖⊘ = √(𝐦∘𝐦), book's (4.45).
+  func normRadius*(m: Multivector): ScalarHomogeneous =
+    ## Get radius norm as root under antiproduct, i.e. ‖𝐦‖⊘ = √(𝐦∘𝐦), book's (4.45).
     ##   Real for real object, imaginary, on 𝟏, for imaginary one. `pga.nim` stubs `|⊘` at pin.
-    sqrtAnti(initMagnitude(0, (m ∘ m)[Basis.scalarAnti]))
+    sqrtAnti(initScalarHomogeneous(0, (m ∘ m)[Basis.scalarAnti]))
 
 
-func norm*(m: Multivector): Magnitude =
+func norm*(m: Multivector): ScalarHomogeneous =
   ## Get geometric norm, i.e. ‖𝐦‖ = ‖𝐦‖∙ + ‖𝐦‖∘.
   normBulk(m) + normWeight(m)
 
@@ -161,9 +165,10 @@ func unitize*(m: Multivector): Multivector =
 
 #[ Laws ]#
 
-proc sampleRooted(unit: static Basis): Magnitude =
-  ## Draw magnitude with real root: part on unit in (0, 1] under rigid metric, any under conformal.
-  result = sample(Magnitude)
+proc sampleRooted(unit: static Basis): ScalarHomogeneous =
+  ## Draw homogeneous scalar with real root.
+  ##   Part on unit lies in (0, 1] under rigid metric, and any part does under conformal metric.
+  result = sample(ScalarHomogeneous)
   when SQUARE_BULK == 0: result[unit] = 1.0 - rand(1.0)
 
 
@@ -172,7 +177,7 @@ proc sampleWhole(): Multivector =
   for basis in Basis: result[basis] = rand(-1.0..1.0)
 
 
-proc series(z: Magnitude; is_anti: static bool): Multivector =
+proc series(z: ScalarHomogeneous; is_anti: static bool): Multivector =
   ## Sum power series of exponential under library's product or antiproduct, independent of
   ##   closed form.
   var term = initElement(when is_anti: Basis.scalarAnti else: Basis.scalar)
@@ -209,8 +214,8 @@ proc main(): int =
   ## Hold laws on seeded samples; print where they hold, and exit zero.
   randomize(SEED)
   let (one, one_anti) = (initElement(Basis.scalar), initElement(Basis.scalarAnti))
-  doAssert sizeof(Magnitude) == 2 * sizeof(float) and alignof(Magnitude) == 2 * sizeof(float),
-    "magnitude holds two floats, unpadded"
+  doAssert sizeof(ScalarHomogeneous) == 2 * sizeof(float) and
+    alignof(ScalarHomogeneous) == 2 * sizeof(float), "homogeneous scalar holds two floats, unpadded"
   doAssert (one ⟇ one) =~ float(SQUARE_BULK) * one_anti,
     "table read agrees with library's antiproduct"
   doAssert (one_anti ⟑ one_anti) =~ float(SQUARE_WEIGHT) * one,
@@ -221,7 +226,7 @@ proc main(): int =
     var nan_float = 0  # float root of 𝐦∘𝐦 that gives NaN, as `|∘` takes it at pin
   for _ in 1..SAMPLES:
     let
-      (y, z) = (sample(Magnitude), sample(Magnitude))
+      (y, z) = (sample(ScalarHomogeneous), sample(ScalarHomogeneous))
       (rooted, rooted_anti) = (sampleRooted(Basis.scalar), sampleRooted(Basis.scalarAnti))
       m = sampleWhole()
       bulk = normBulk(m)
@@ -234,7 +239,8 @@ proc main(): int =
       "exp is its power series under geometric product"
     doAssert exp(y + z).toMultivector =~ (exp(y).toMultivector ⟑ exp(z).toMultivector),
       "exp(y + z) = exp(y) ⟑ exp(z)"
-    doAssert (y ⟇ z) is Magnitude, "antiproduct of magnitudes is magnitude, by table"
+    doAssert (y ⟇ z) is ScalarHomogeneous,
+      "antiproduct of homogeneous scalars is homogeneous scalar, by table"
     doAssert (z.toMultivector ⟇ one_anti) =~ z.toMultivector, "𝟙 is unit of antiproduct"
     doAssert (z.toMultivector ⟇ inverseAnti(z).toMultivector) =~ one_anti, "z ⟇ z⁻¹ = 𝟙"
     doAssert ((y / z).toMultivector ⟇ z.toMultivector) =~ y.toMultivector, "(y / z) ⟇ z = y"
@@ -257,8 +263,8 @@ proc main(): int =
       doAssert norm(m).toMultivector =~ |m, "geometric norm equals library's"
       let unitized = norm(m) / weight
       doAssert unitized.toMultivector =~
-          initMagnitude((|∙m)[Basis.scalar] / (|∘m)[Basis.scalarAnti], 1).toMultivector,
-        "magnitude unitizes to distance 𝟏 + 𝟙"
+          initScalarHomogeneous((|∙m)[Basis.scalar] / (|∘m)[Basis.scalarAnti], 1).toMultivector,
+        "homogeneous scalar unitizes to distance 𝟏 + 𝟙"
       doAssert unitize(m) =~ ^m, "unitize equals library's"
     else:
       let radius = normRadius(m)
@@ -268,10 +274,10 @@ proc main(): int =
       if sqrt((m ∘ m)[Basis.scalarAnti]).isNaN: inc nan_float
   when IS_CONFORMAL:
     holdRoundPoints()
-    echo "magnitude: laws hold at ", DIMENSIONS, "D conformal; float root of 𝐦∘𝐦 NaN ", nan_float,
-      " of ", SAMPLES, ", radius norm NaN 0"
+    echo "homogeneous-scalar: laws hold at ", DIMENSIONS, "D conformal; float root of 𝐦∘𝐦 NaN ",
+      nan_float, " of ", SAMPLES, ", radius norm NaN 0"
   else:
-    echo "magnitude: laws hold at ", DIMENSIONS, "D rigid"
+    echo "homogeneous-scalar: laws hold at ", DIMENSIONS, "D rigid"
   0
 
 
