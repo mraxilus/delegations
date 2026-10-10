@@ -210,7 +210,13 @@ proc dirsScopedOf(options: Options, tree: Tree): seq[string] =
   if options.project.len > 0: @[options.project.strip(chars = {'/'})]
   elif options.is_recent: recentFor(options.root, tree, DAYS_RECENT).mapIt(it.directory)
   elif options.is_all: tree.directoriesProject
-  else: projectsTest(tree.directoriesProject, pathsChanged(options.root, options.baseOrDefault))
+  else:
+    let directories = tree.directoriesProject
+    projectsTest(
+      directories,
+      pathsChanged(options.root, options.baseOrDefault),
+      tree.directoriesImporting(directories),
+    )
 
 
 proc fileMark(root: string): string =
