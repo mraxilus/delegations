@@ -275,7 +275,7 @@ proc pass(pools: var Pools, count, rounds, order: int, rows: var seq[Row]) =
     transform(pools.homogeneous[i], pools.motors[j], pools.homogeneous_out[i]),
     transform(pools.unitized[i], pools.motors[j], pools.unitized_out[i]),
     transform(pools.padded[i], pools.motors[j], pools.padded_out[i]))
-  each(5, "unitize, book against code", -1,
+  each(5, "unitize, book against code", 1,
     unitizeBook(pools.homogeneous[i], pools.homogeneous_out[i]),
     unitizeCode(pools.homogeneous[i], pools.unitized_out[i]),
     unitizeCode(pools.homogeneous[i], pools.padded_out[i]))
