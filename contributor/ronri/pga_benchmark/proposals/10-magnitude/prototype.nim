@@ -1,10 +1,12 @@
 ## Prototype magnitude, pair of scalar and antiscalar, over exact kinds of P04 (`magnitude`).
 ##   Evaluation compiles this against changed library at each algebra its claim names, and exit code
 ##     is verdict: every law below holds, or program stops on assertion.
-##   Magnitude is exact kind of 𝟏 and 𝟙, with antiproduct P04 emits from library's table, and 𝟙
-##     as its unit. Square of 𝟏 under it, read from same table, is 0 under rigid metric, so pair
-##     is dual number, and -1 under conformal metric, so pair is complex number with 𝟏 as i.
-##     Inverse, division, root and exponential follow from that square alone.
+##   Magnitude is exact kind of 𝟏 and 𝟙. 𝟏 is unit of geometric product, and 𝟙 of antiproduct, as
+##     Lengyel's `DualNum` has `Sqrt` and `AntiSqrt`. Square of other part under each, read from
+##     library's table, is 0 under rigid metric, so pair is dual number, and -1 under conformal
+##     metric, so pair is complex number. Inverse, root and exponential under geometric product
+##     follow from that square alone, and each anti form is their complement. Division is under
+##     antiproduct, as Lengyel's is.
 ##
 ##   Cost: norms read library's `Multivector`, since P04 emits no squared norm; record says so.
 
@@ -24,21 +26,25 @@ type Magnitude* = MultivectorOf[{Basis.scalar, Basis.scalarAnti}]
   ## Define pair x𝟏 + y𝟙: bulk x on scalar, weight y on antiscalar.
 
 
-func squareBulk(): int {.compileTime.} =
-  ## Read 𝟙 coefficient of 𝟏 ⟇ 𝟏 from library's antiproduct table.
-  for term in CAYLEYS_WEDGE_DOT.anti[Basis.scalar][Basis.scalar]:
-    doAssert term.basis == Basis.scalarAnti, "square of bulk lands on antiscalar alone"
+func square(cayleys: Cayley2D; part, unit: Basis): int {.compileTime.} =
+  ## Read coefficient of unit in part times part from library's table of product.
+  for term in cayleys[part][part]:
+    doAssert term.basis == unit, "square of part lands on unit alone"
     result += (if term.is_negated: -1 else: 1)
 
 
 const
-  SQUARE_BULK* = squareBulk()
+  SQUARE_BULK* = square(CAYLEYS_WEDGE_DOT.anti, Basis.scalar, Basis.scalarAnti)
     ## Square of 𝟏 under antiproduct, as multiple of 𝟙: 0 under rigid metric, -1 under conformal.
+  SQUARE_WEIGHT* = square(CAYLEYS_WEDGE_DOT.base, Basis.scalarAnti, Basis.scalar)
+    ## Square of 𝟙 under geometric product, as multiple of 𝟏.
   SAMPLES = 256  ## Seeded samples each law is checked on.
   SEED = 0  ## Seed of sample generator, so every run checks same samples.
   TERMS_SERIES = 30  ## Terms of power series exponential is checked against.
 
-static: doAssert SQUARE_BULK in [0, -1], "pair is dual or complex in every algebra of library"
+static:
+  doAssert SQUARE_BULK in [0, -1], "pair is dual or complex in every algebra of library"
+  doAssert SQUARE_WEIGHT == SQUARE_BULK, "complement carries geometric product to antiproduct"
 
 
 
@@ -55,71 +61,91 @@ func `+`*(y, z: Magnitude): Magnitude =
   initMagnitude(y[Basis.scalar] + z[Basis.scalar], y[Basis.scalarAnti] + z[Basis.scalarAnti])
 
 
+func complement(z: Magnitude): Magnitude =
+  ## Get complement of magnitude, i.e. z̅: swap parts, as 𝟏̅ = 𝟙 and 𝟙̅ = 𝟏.
+  initMagnitude(z[Basis.scalarAnti], z[Basis.scalar])
+
+
 func inverse*(z: Magnitude): Magnitude =
-  ## Get inverse under antiproduct, i.e. z⁻¹ with z ⟇ z⁻¹ = 𝟙: conjugate over its square size.
-  ##   None where weight is zero under rigid metric, or where both parts are under conformal; there
+  ## Get inverse under geometric product, i.e. z⁻¹ with z ⟑ z⁻¹ = 𝟏: conjugate over its square size.
+  ##   None where bulk is zero under rigid metric, or where both parts are under conformal; there
   ##     result is infinite or NaN, as float division gives.
   let
     (bulk, weight) = (z[Basis.scalar], z[Basis.scalarAnti])
-    size = weight * weight - float(SQUARE_BULK) * bulk * bulk
-  initMagnitude(-bulk / size, weight / size)
+    size = bulk * bulk - float(SQUARE_WEIGHT) * weight * weight
+  initMagnitude(bulk / size, -weight / size)
+
+
+func sqrt*(z: Magnitude): Magnitude =
+  ## Get principal root under geometric product, i.e. w with w ⟑ w = z.
+  ##   Dual number: √x 𝟏 + y / (2√x) 𝟙, real where bulk x is positive.
+  ##   Complex number: root of x + y i, so negative bulk gives root on weight, as i.
+  let (bulk, weight) = (z[Basis.scalar], z[Basis.scalarAnti])
+  when SQUARE_WEIGHT == 0:
+    let root = sqrt(bulk)
+    initMagnitude(root, weight / (2 * root))
+  else:
+    let size = hypot(bulk, weight)
+    initMagnitude(sqrt((size + bulk) / 2), copySign(sqrt((size - bulk) / 2), weight))
+
+
+func exp*(z: Magnitude): Magnitude =
+  ## Raise e to magnitude under geometric product, i.e. e^x (C 𝟏 + S 𝟙) for z = x𝟏 + y𝟙.
+  ##   Dual number: C = 1, S = y. Complex number: C = cos y, S = sin y.
+  let
+    (bulk, weight) = (z[Basis.scalar], z[Basis.scalarAnti])
+    scale = exp(bulk)
+  when SQUARE_WEIGHT == 0:
+    initMagnitude(scale, scale * weight)
+  else:
+    initMagnitude(scale * cos(weight), scale * sin(weight))
+
+
+func inverseAnti*(z: Magnitude): Magnitude =
+  ## Get inverse under antiproduct, i.e. z⁻¹ with z ⟇ z⁻¹ = 𝟙, as complement of inverse of z̅.
+  complement(inverse(complement(z)))
+
+
+func sqrtAnti*(z: Magnitude): Magnitude =
+  ## Get principal root under antiproduct, i.e. w with w ⟇ w = z, as complement of root of z̅.
+  ##   Real where weight is positive under rigid metric; negative weight gives root on bulk, as i,
+  ##     under conformal metric.
+  complement(sqrt(complement(z)))
+
+
+func expAnti*(z: Magnitude): Magnitude =
+  ## Raise e to magnitude under antiproduct, as complement of exponential of z̅.
+  complement(exp(complement(z)))
 
 
 func `/`*(y, z: Magnitude): Magnitude =
-  ## Divide under antiproduct, i.e. y ⟇ z⁻¹.
-  y ⟇ inverse(z)
+  ## Divide under antiproduct, i.e. y ⟇ z⁻¹, as Lengyel's `DualNum` does.
+  y ⟇ inverseAnti(z)
 
 
 func `/`*(m: Multivector, z: Magnitude): Multivector =
   ## Divide multivector by magnitude under antiproduct, i.e. 𝐦 ⟇ z⁻¹.
-  m ⟇ inverse(z).toMultivector
-
-
-func sqrt*(z: Magnitude): Magnitude =
-  ## Get principal root under antiproduct, i.e. w with w ⟇ w = z.
-  ##   Dual number: √y 𝟙 + x / (2√y) 𝟏, real where weight y is positive.
-  ##   Complex number: root of y + x i, so negative weight gives root on bulk, as i.
-  let (bulk, weight) = (z[Basis.scalar], z[Basis.scalarAnti])
-  when SQUARE_BULK == 0:
-    let root = sqrt(weight)
-    initMagnitude(bulk / (2 * root), root)
-  else:
-    let size = hypot(weight, bulk)
-    initMagnitude(copySign(sqrt((size - weight) / 2), bulk), sqrt((size + weight) / 2))
-
-
-func exp*(z: Magnitude): Magnitude =
-  ## Raise e to magnitude under antiproduct, i.e. e^y (C 𝟙 + S 𝟏) for z = x𝟏 + y𝟙.
-  ##   Dual number: C = 1, S = x. Complex number: C = cos x, S = sin x.
-  let
-    (bulk, weight) = (z[Basis.scalar], z[Basis.scalarAnti])
-    scale = exp(weight)
-  when SQUARE_BULK == 0:
-    initMagnitude(scale * bulk, scale)
-  else:
-    initMagnitude(scale * sin(bulk), scale * cos(bulk))
+  m ⟇ inverseAnti(z).toMultivector
 
 
 
 #[ Norms ]#
 
 func normBulk*(m: Multivector): Magnitude =
-  ## Get bulk norm as magnitude, i.e. ‖𝐦‖∙ = √(𝐦∙𝐦).
-  ##   Float root, as at pin: under rigid metric 𝟏 squares to zero, so pure bulk has no root under
-  ##     antiproduct.
-  initMagnitude(sqrt((`|∙²`m)[Basis.scalar]), 0)
+  ## Get bulk norm as root of magnitude under geometric product, i.e. ‖𝐦‖∙ = √(𝐦∙𝐦), as at pin.
+  sqrt(initMagnitude((`|∙²`m)[Basis.scalar], 0))
 
 
 func normWeight*(m: Multivector): Magnitude =
   ## Get weight norm as root of magnitude under antiproduct, i.e. ‖𝐦‖∘ = √(𝐦∘𝐦), as at pin.
-  sqrt(initMagnitude(0, (`|∘²`m)[Basis.scalarAnti]))
+  sqrtAnti(initMagnitude(0, (`|∘²`m)[Basis.scalarAnti]))
 
 
 when IS_CONFORMAL:
   func normRadius*(m: Multivector): Magnitude =
     ## Get radius norm as root of magnitude under antiproduct, i.e. ‖𝐦‖⊘ = √(𝐦∘𝐦), book's (4.45).
     ##   Real for real object, imaginary, on 𝟏, for imaginary one. `pga.nim` stubs `|⊘` at pin.
-    sqrt(initMagnitude(0, (m ∘ m)[Basis.scalarAnti]))
+    sqrtAnti(initMagnitude(0, (m ∘ m)[Basis.scalarAnti]))
 
 
 func norm*(m: Multivector): Magnitude =
@@ -135,10 +161,10 @@ func unitize*(m: Multivector): Multivector =
 
 #[ Laws ]#
 
-proc sampleWeighted(): Magnitude =
-  ## Draw magnitude with real root: weight in (0, 1] under rigid metric, any under conformal.
+proc sampleRooted(unit: static Basis): Magnitude =
+  ## Draw magnitude with real root: part on unit in (0, 1] under rigid metric, any under conformal.
   result = sample(Magnitude)
-  when SQUARE_BULK == 0: result[Basis.scalarAnti] = 1.0 - rand(1.0)
+  when SQUARE_BULK == 0: result[unit] = 1.0 - rand(1.0)
 
 
 proc sampleWhole(): Multivector =
@@ -146,12 +172,13 @@ proc sampleWhole(): Multivector =
   for basis in Basis: result[basis] = rand(-1.0..1.0)
 
 
-proc series(z: Magnitude): Multivector =
-  ## Sum power series of exponential under library's antiproduct, independent of closed form.
-  var term = initElement(Basis.scalarAnti)
+proc series(z: Magnitude; is_anti: static bool): Multivector =
+  ## Sum power series of exponential under library's product or antiproduct, independent of
+  ##   closed form.
+  var term = initElement(when is_anti: Basis.scalarAnti else: Basis.scalar)
   for k in 1..TERMS_SERIES:
     result = result + term
-    term = (term ⟇ z.toMultivector) * (1 / float(k))
+    term = (when is_anti: term ⟇ z.toMultivector else: term ⟑ z.toMultivector) * (1 / float(k))
 
 
 when IS_CONFORMAL:
@@ -186,6 +213,8 @@ proc main(): int =
     "magnitude holds two floats, unpadded"
   doAssert (one ⟇ one) =~ float(SQUARE_BULK) * one_anti,
     "table read agrees with library's antiproduct"
+  doAssert (one_anti ⟑ one_anti) =~ float(SQUARE_WEIGHT) * one,
+    "table read agrees with library's geometric product"
   doAssert SQUARE_BULK == (when IS_RIGID: 0 else: -1),
     "dual under rigid metric, complex under conformal"
   when IS_CONFORMAL:
@@ -193,20 +222,37 @@ proc main(): int =
   for _ in 1..SAMPLES:
     let
       (y, z) = (sample(Magnitude), sample(Magnitude))
-      rooted = sampleWeighted()
+      (rooted, rooted_anti) = (sampleRooted(Basis.scalar), sampleRooted(Basis.scalarAnti))
       m = sampleWhole()
-    doAssert (y ⟇ z) is Magnitude, "product of magnitudes is magnitude, by table"
-    doAssert (z.toMultivector ⟇ one_anti) =~ z.toMultivector, "𝟙 is unit"
-    doAssert (z.toMultivector ⟇ inverse(z).toMultivector) =~ one_anti, "z ⟇ z⁻¹ = 𝟙"
+      bulk = normBulk(m)
+    doAssert complement(z).toMultivector =~ /z.toMultivector, "complement equals library's"
+    doAssert (z.toMultivector ⟑ one) =~ z.toMultivector, "𝟏 is unit of geometric product"
+    doAssert (z.toMultivector ⟑ inverse(z).toMultivector) =~ one, "z ⟑ z⁻¹ = 𝟏"
+    doAssert (sqrt(rooted).toMultivector ⟑ sqrt(rooted).toMultivector) =~ rooted.toMultivector,
+      "√z ⟑ √z = z"
+    doAssert exp(z).toMultivector =~ series(z, is_anti = false),
+      "exp is its power series under geometric product"
+    doAssert exp(y + z).toMultivector =~ (exp(y).toMultivector ⟑ exp(z).toMultivector),
+      "exp(y + z) = exp(y) ⟑ exp(z)"
+    doAssert (y ⟇ z) is Magnitude, "antiproduct of magnitudes is magnitude, by table"
+    doAssert (z.toMultivector ⟇ one_anti) =~ z.toMultivector, "𝟙 is unit of antiproduct"
+    doAssert (z.toMultivector ⟇ inverseAnti(z).toMultivector) =~ one_anti, "z ⟇ z⁻¹ = 𝟙"
     doAssert ((y / z).toMultivector ⟇ z.toMultivector) =~ y.toMultivector, "(y / z) ⟇ z = y"
-    doAssert (sqrt(rooted).toMultivector ⟇ sqrt(rooted).toMultivector) =~ rooted.toMultivector,
+    doAssert (sqrtAnti(rooted_anti).toMultivector ⟇ sqrtAnti(rooted_anti).toMultivector) =~
+        rooted_anti.toMultivector,
       "√z ⟇ √z = z"
-    doAssert exp(z).toMultivector =~ series(z), "exp is its power series under antiproduct"
-    doAssert exp(y + z).toMultivector =~ (exp(y).toMultivector ⟇ exp(z).toMultivector),
+    doAssert expAnti(z).toMultivector =~ series(z, is_anti = true),
+      "exp is its power series under antiproduct"
+    doAssert expAnti(y + z).toMultivector =~
+        (expAnti(y).toMultivector ⟇ expAnti(z).toMultivector),
       "exp(y + z) = exp(y) ⟇ exp(z)"
+    doAssert not bulk[Basis.scalar].isNaN and not bulk[Basis.scalarAnti].isNaN,
+      "bulk norm is never NaN"
+    doAssert (bulk.toMultivector ⟑ bulk.toMultivector) =~ (m ∙ m), "‖𝐦‖∙ ⟑ ‖𝐦‖∙ = 𝐦∙𝐦"
     when IS_RIGID:
       let weight = normWeight(m)
       doAssert (weight.toMultivector ⟇ weight.toMultivector) =~ (m ∘ m), "‖𝐦‖∘ ⟇ ‖𝐦‖∘ = 𝐦∘𝐦"
+      doAssert bulk.toMultivector =~ |∙m, "bulk norm equals library's"
       doAssert weight.toMultivector =~ |∘m, "weight norm equals library's"
       doAssert norm(m).toMultivector =~ |m, "geometric norm equals library's"
       let unitized = norm(m) / weight
