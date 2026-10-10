@@ -97,10 +97,11 @@ and the form here is `f = gw² - v·v - g·m`, which the law suite confirms agai
 **A typed point unitizes by the size of its weight, as the book does.** The weight norm of a
 point is |w|, so the sign of w stays, as `^` of the library keeps it. Lengyel's code divides by the
 signed w, so w = 1, and the Architect chose the rule of the book on 2026-10-10. The form spends
-one absolute value and one multiply more than the code. Rejected: the signed w of the code, since
-`^` takes any multivector, where only the norm is defined, and the sign needs the type of the
-object. `marginalia/notes.md` gives what the code saves, under "Unitization keeps the sign of the
-weight".
+one absolute value and one multiply more than the code.
+
+Rejected: the signed w of the code. `^` takes any multivector, where only the norm is defined, and
+the sign needs the type of the object. `marginalia/notes.md` gives what the code saves, under
+"Unitization keeps the sign of the weight".
 
 Verified by `test_rga4d.nim` and `test_rga3d.nim`, suite `Chapter 2`: each point of the pool,
 with its weight negated, unitizes as the library unitizes it. The pools draw w near 1, so without
@@ -538,12 +539,15 @@ unitized form that skips each product with w. It takes three layouts: four float
 three padded to four, so the saved arithmetic shows apart from the smaller layout. It takes 1024
 points in cache and 1,048,576 streamed from memory. Each operation runs behind a call that the
 optimiser does not inline, and writes its result in place, as return value optimisation of C++
-does. A null pair times the homogeneous form against itself. The verb takes each pair twice, as
+does.
+
+A null pair times the homogeneous form against itself. The verb takes each pair twice, as
 Article VII.9 asks, and records both takes in `baseline/unitized.json`. It never runs in CI.
 
 Rejected: a result returned by value. It passes through a temporary, and its copy reloads the
-stores that the callee just made. On 2026-10-10 that stall put the unitized join of two points at
-×4.4 one build and ×1.0 another, so it timed layout and not arithmetic. The program imports no
+stores that the callee just made. On `linux amd64, 4 cores` on 2026-10-10, that stall put the
+unitized join of two points at ×4.4 in one build and ×1.0 in another. So it timed layout, and not
+arithmetic. The program imports no
 library code, so its record carries no library commit, and `drive` holds no stamp of it. Cost:
 about 60 s and 400 MB of pools a run.
 
