@@ -25,31 +25,75 @@ assayer [--jobs:n] [--nim:path] file...
 - A file without a header asks for the defaults of testament. They are the action `run`, the
   default command, one configuration with no options, and the C backend.
 - Each backend runs under each configuration. A run compiles into its own folder under
-  `nimcache/assayer` in the working directory, so no two runs share a cache. The next run of the
-  same configuration finds its cache again.
+  `nimcache/assayer` in the working directory, such as `tests/test_k/c_2` for the second
+  configuration of `tests/test_k.nim`. So no two runs share a cache, and the next run of the same
+  configuration finds its cache again.
 - `--jobs` sets how many runs go at once. The default is one run for each processor.
 - The compiler is the one that `--nim` names. If `--nim` names none, it is the compiler of the
   pin of the nearest nimble file above the file, which the toolchain of knoller serves. If no
   nimble file names a pin, it is `nim` on PATH.
 - A pin that no compiler serves refuses the file. No other compiler takes its place.
-- The output gives each refused file first, then each run in the order of the plan, then the
-  count. A failed run shows the command and the output of the step that failed, indented.
 - Exit 0 means that every run passed. Exit 1 means that a run failed, or that assayer refused a
-  file. Exit 2 is a usage error.
+  file. Exit 2 is a usage error, and `--help` prints the usage.
 
-The PGA library, with one test file that lists its 8 configurations, gives this report:
+## Output
+
+The report goes to stdout, in this order:
+
+1. An `error:` line for each refused file, with the reason.
+2. A line that says how many runs start, of how many files, and how many at once.
+3. A line for each run, in the order of the plan. The status `PASS` or `FAIL` comes first, then
+   the duration, the file, the backend and the configuration, each in its own column.
+4. A block for each failed run: the reason, an excerpt of the output, the command that runs the
+   failed step again, and the log.
+5. A line that counts the runs, the time, the passed runs, and the failed runs and refused files.
+
+- The excerpt drops compiler hints, progress dots, stack frames outside the working directory,
+  and the tests that passed or that the suite skipped. Then it keeps the last 20 lines. The log
+  beside the program holds the whole output of each step.
+- Each path below the working directory prints relative to it.
+- Color marks the status, the reasons and the count, on a terminal alone. `NO_COLOR` turns it
+  off and `FORCE_COLOR` turns it on, and the text reads the same without it.
+- A usage error prints its reason and the synopsis on stderr.
+
+The PGA library, with one test file that lists the 8 configurations of its stubs, gives this
+report:
 
 ```text
-tests/test_configurations.nim c `-d:pga.dimensions=2 -d:pga.is_conformal=false`: passed
-tests/test_configurations.nim c `-d:pga.dimensions=3 -d:pga.is_conformal=false`: passed
-tests/test_configurations.nim c `-d:pga.dimensions=4 -d:pga.is_conformal=false`: passed
-tests/test_configurations.nim c `-d:pga.dimensions=5 -d:pga.is_conformal=false`: passed
-tests/test_configurations.nim c `-d:pga.dimensions=3 -d:pga.is_conformal=true`: passed
-tests/test_configurations.nim c `-d:pga.dimensions=4 -d:pga.is_conformal=true`: passed
-tests/test_configurations.nim c `-d:pga.dimensions=5 -d:pga.is_conformal=true`: passed
-tests/test_configurations.nim c `-d:pga.dimensions=6 -d:pga.is_conformal=true`: passed
-8 runs: 8 passed, 0 failed.
+Starting 8 runs of 1 file, 4 at once
+PASS   3.9s  tests/test_configurations.nim  c  -d:pga.dimensions=2 -d:pga.is_conformal=false
+PASS   3.7s  tests/test_configurations.nim  c  -d:pga.dimensions=3 -d:pga.is_conformal=false
+PASS   4.7s  tests/test_configurations.nim  c  -d:pga.dimensions=4 -d:pga.is_conformal=false
+PASS   5.5s  tests/test_configurations.nim  c  -d:pga.dimensions=5 -d:pga.is_conformal=false
+PASS   3.7s  tests/test_configurations.nim  c  -d:pga.dimensions=3 -d:pga.is_conformal=true
+PASS   3.9s  tests/test_configurations.nim  c  -d:pga.dimensions=4 -d:pga.is_conformal=true
+PASS   5.1s  tests/test_configurations.nim  c  -d:pga.dimensions=5 -d:pga.is_conformal=true
+PASS  11.2s  tests/test_configurations.nim  c  -d:pga.dimensions=6 -d:pga.is_conformal=true
+
+8 runs in 16.8s: 8 passed
 ```
+
+A file with three configurations, where the second fails a check, gives this report:
+
+```text
+Starting 3 runs of 1 file, 3 at once
+PASS   1.8s  tests/test_matrix.nim  c  -d:k=1
+FAIL   1.8s  tests/test_matrix.nim  c  -d:k=2
+PASS   1.8s  tests/test_matrix.nim  c  -d:k=3
+
+FAIL tests/test_matrix.nim c -d:k=2: program exits 1
+    [Suite] Ring
+        tests/test_matrix.nim(10, 12): Check failed: k != 2
+        k was 2
+      [FAILED] k is not two
+  rerun: nimcache/assayer/tests/test_matrix/c_2/test_matrix
+  log: nimcache/assayer/tests/test_matrix/c_2/output.log
+
+3 runs in 1.8s: 2 passed, 1 failed
+```
+
+The report follows the patterns that test runners with a good name share, such as nextest, pytest
+and testament. `PROVENANCE.md`, Report, gives each pattern and its source.
 
 ## Build and test
 

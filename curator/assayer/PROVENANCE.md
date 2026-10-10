@@ -79,6 +79,15 @@ becomes the compiler. Then `$target`, `$options`, `$file`, `$filedir` and `$nim`
 values. Assayer quotes the compiler for the shell, where testament writes it bare. A `$` that
 names nothing else refuses the run. Verified by `suites/test_plans.nim`.
 
+**A `$` name that testament does not fill refuses the file before any run.** Each run of the
+file would fail the same way, so one line says it once, and it names the `$` name. `$$` is a
+dollar sign, and `${name}` reads as `$name`, as `strutils.%` reads them. Verified by
+`suites/test_plans.nim`.
+
+**The rerun of a compile is its command without the cache and the program of the run.** A
+person reruns one configuration by hand with it, and a run of spaces outside quotes becomes one
+space. The log keeps the command as it ran. Verified by `suites/test_plans.nim`.
+
 **The options of a run come before its configuration, so the configuration speaks last.** The
 options are the default of the backend, then `--nimCache` and `--out` of the run. The default of
 JavaScript is `-d:nodejs`, as in testament. A `--backend` or `-b` in a configuration moves the
@@ -88,10 +97,14 @@ run to that backend, as testament moves it. Verified by `suites/test_plans.nim`.
   cache. The run then cannot find the program, and fails with its path in the message.
 
 **Each run compiles into a folder of its own, so no two runs share a cache.** The folder is
-under `nimcache/assayer` in the working directory, and git ignores it. Its name holds the file
-name, the backend, the place of the configuration and a hash of the absolute path. So two files
-of one name in two folders stay apart, and the next run of a configuration finds its cache
-again. Verified by `suites/test_plans.nim`.
+under `nimcache/assayer` in the working directory, and git ignores it. Its path is the path of
+the file without its extension, then the backend and the place of the configuration. The place
+counts from one, so the second configuration of `tests/test_k.nim` is `tests/test_k/c_2`. The
+report shows a path that says what the folder holds, and the next run of a configuration finds
+its cache again. Verified by `suites/test_plans.nim`.
+
+A file outside the working directory takes its name and a hash of its absolute path, so no
+folder climbs out of `nimcache/assayer`. Verified by `suites/test_plans.nim`.
 
 - Rejected: one cache for each file and backend, as testament has it. Testament runs the
   configurations one after another, so no two write the cache at the same time. Here they do.
@@ -149,6 +162,10 @@ An error is a line that testament reads as one: `<file>(<line>, <column>) Error:
 that opens with `Error:`. Verified by `suites/test_runs.nim`, over every action, three exit
 codes of the compile, four kinds of error and three outcomes of the program.
 
+**Each step records its duration on a monotonic clock, for the report alone.** No verdict reads
+it, so no limit on time decides a run (Article IX.12). Verified by `suites/test_runs.nim` for the
+sum of the steps.
+
 **The outcomes arrive in any order, and the report releases them in the order of the plan.**
 Each outcome goes out as soon as every run before it has one. So the report prints the same
 lines in the same order each time. Verified by `suites/test_runs.nim`, over every order of
@@ -170,14 +187,60 @@ other compiler takes the place of the pin (`GUIDE.md`, Toolchain). Nimble refuse
 two nimble files, so no pin there can be trusted. Verified by `suites/test_command.nim` for the
 folder. A pin that nothing serves asks for a fetch, so no suite holds that refusal.
 
-**The report gives each refused file, then each run, then the count.** A run line names the
-file, the backend and the configuration. A failed run shows the command and the output of its
-failed step, indented. Exit 1 means that a run failed or that assayer refused a file, and exit 2
-is a usage error. Verified by `suites/test_command.nim`, which compiles three configurations
-with the compiler that built the suite.
+**A usage error says what is wrong, then the synopsis, on stderr, and exits 2.** The form is
+that of `clap`, the argument parser of cargo: an `error:` line, the synopsis, and a pointer to
+`--help`. `--help` prints the usage on stdout and exits 0. Exit 1 means that a run failed or
+that assayer refused a file. Verified by `suites/test_command.nim` for each message.
+
+**Color goes on where stdout is a terminal, unless `NO_COLOR` holds text.** `FORCE_COLOR` turns
+it on for a pipe, and `TERM=dumb` turns it off, in the order of no-color.org and
+force-color.org. Verified by `suites/test_command.nim`, over each combination of the four inputs.
 
 **A file named twice, by any path, runs once.** Two runs of one configuration would share one
 cache. Verified by `suites/test_command.nim`.
+
+## Report
+
+**The report follows the patterns that test runners with a good name share.** The sources are
+the guidelines at clig.dev, and the reports of cargo-nextest, pytest, Jest, gotestsum, RSpec and
+testament, read on 2026-10-10. Each choice below names its source.
+
+- **The status comes first, in a fixed column**, as in nextest, gotestsum, Jest and testament.
+  The eye scans the first column, and `FAIL` finds each failure in a log, as testament intends
+  its `FAIL:`. The status is a word and not a symbol, so the text reads the same without color.
+- **The duration, the file, the backend and the configuration align in columns.** The widths
+  come from the plan, so the columns align from the first line. Nextest and testament also pad
+  the duration.
+- **A line at the start says what starts**, as nextest prints `Starting`. Clig.dev asks for
+  output inside 100 ms.
+- **The detail of each failure comes after the list of runs**, as in pytest, Vitest and RSpec.
+  The list stays one line for each run, and what explains a failure stands last, where clig.dev
+  says the eye ends.
+- **The excerpt is short, and the log on disk is whole**, as in nextest, pytest and gotestsum.
+  The excerpt drops hints, progress dots, frames outside the working directory and tests that
+  passed, then keeps the last 20 lines.
+- **A failure gives the command that reruns its step**, as RSpec, cargo and nextest give one.
+- **One line closes the report with the counts and the total time**, as in nextest, pytest and
+  gotestsum.
+- **A message has the form of rustc**: `error:`, then lowercase words with no period.
+- **The lines keep the order of the plan**, as go keeps the order of its packages. So the same
+  run gives the same lines in the same order.
+
+Each line form is verified by `suites/test_reports.nim`, and the whole report by
+`suites/test_command.nim` on real runs.
+
+- Rejected: the detail of each failure under its run line, as nextest prints it by default.
+  Several failures break the list apart, and the end of the report holds only the last one.
+- Rejected: a list of failures before the count, as pytest prints one. The blocks of failure
+  already stand last.
+- Rejected: symbols such as a check mark for the status. A log without color, or a font without
+  the symbol, loses them.
+- Rejected: a progress bar, which needs a terminal and a timer. The start line and the lines in
+  plan order already show progress.
+- Cost: a slow early run holds back the lines of runs that end before it.
+- Cost: an excerpt of 20 lines can cut the first of several failed tests in a long output. The
+  excerpt says how many lines it cut, and the log holds them.
+- Cost: two reports of one run differ in their durations, and never in their verdicts.
 
 ## Tests
 
