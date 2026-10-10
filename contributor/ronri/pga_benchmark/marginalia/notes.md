@@ -313,16 +313,18 @@ bytes, so it shows the saved arithmetic apart from the smaller layout.
 
 | Operation | In cache | Padded, in cache | From memory | Padded, from memory |
 |-----------|----------|------------------|-------------|---------------------|
-| Join of two points | ×2.19 to ×2.26 | ×2.20 to ×2.27 | ×0.66 to ×0.88 | ×0.77 to ×1.03 |
-| Join of line and point | ×1.06 to ×1.08 | ×1.06 to ×1.07 | ×0.79 to ×0.80 | ×0.94 to ×0.96 |
-| Meet of point and plane | ×0.96 | ×0.98 | ×0.92 to ×1.06 | ×0.95 to ×0.99 |
-| Antisupport | ×0.90 | ×0.98 to ×0.99 | ×0.89 to ×0.90 | ×0.96 to ×0.97 |
-| Transform by motor | ×0.84 | ×0.85 | ×0.93 to ×0.99 | ×0.98 to ×1.04 |
-| Unitize, code against book | ×1.06 to ×1.08 | ×1.07 to ×1.08 | ×0.95 to ×0.99 | ×0.98 to ×1.05 |
+| Join of two points | ×2.19 to ×2.27 | ×2.20 to ×2.28 | ×0.83 to ×0.84 | ×0.98 to ×1.05 |
+| Join of line and point | ×1.06 to ×1.10 | ×1.06 to ×1.10 | ×0.75 to ×0.81 | ×0.90 to ×1.09 |
+| Meet of point and plane | ×0.96 | ×0.98 | ×0.88 to ×1.00 | ×1.03 to ×1.04 |
+| Antisupport | ×0.91 | ×0.98 to ×0.99 | ×0.83 to ×0.91 | ×0.93 to ×0.95 |
+| Transform by motor | ×0.84 | ×0.86 to ×0.88 | ×0.91 to ×0.92 | ×0.92 to ×0.97 |
+| Unitize, code against book | ×1.07 to ×1.08 | ×1.09 to ×1.10 | ×0.96 to ×0.97 | ×0.98 to ×1.01 |
 
-The null pair reads ×0.99 to ×1.00 in cache, and ×0.84 to ×1.09 from memory. In cache the
-transform gains a sixth in both layouts, so its saved multiplies show. The join of two points
-loses ×2.2 in both layouts, likely because the homogeneous join vectorises into packed
-multiplies and the unitized one does not. From memory, three floats in place of four save a fifth
-on the join of line and point, and padded they save almost nothing, so bytes carry that gain. The
-saving is small and selective, and only a typed point with an implicit weight reaches it.
+The null pair reads ×1.00 to ×1.03 in cache, and ×0.96 to ×1.07 from memory. In cache the
+transform runs ×0.84 unitized and ×0.86 to ×0.88 padded, so its saved multiplies show. The join of
+two points runs ×2.2 to ×2.3 in both layouts. The homogeneous join likely vectorises into packed
+multiplies, and the unitized one does not.
+
+From memory, three floats in place of four run the two joins at ×0.75 to ×0.84. Padded, they run
+×0.90 to ×1.09, about the spread of the null pair, so bytes carry that gain. The saving is small
+and selective, and only a typed point with an implicit weight reaches it.
