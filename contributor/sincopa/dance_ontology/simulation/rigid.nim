@@ -1350,8 +1350,8 @@ proc easeOff(couple: Couple) =
         upper_direction = unit(elbow_point - shoulder_point)
         fore_direction = unit(wrist_point - elbow_point)
         hand_direction = unit(tip_point - wrist_point)
-      # Twist, about arm's own line.  Rig states right arm's ends; left is same
-      # joint mirrored, ends and eases swapped, as `read.tightest` has them.
+      # Twist, about arm's own line, as engine reads it.  Rig states right arm's
+      # ends; left is same joint, not mirrored here, so ends and eases swap.
       let
         twist_range = couple.rig.range[Dof.Twist]
         (lower, upper, ease_lower, ease_upper) =
