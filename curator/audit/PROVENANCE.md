@@ -1531,8 +1531,10 @@ before `; got `, or before the closing period. So `koch check` prints
   rev-parse` prints the first path that HEAD lacks and then stops. So knoller comes last, its
   source before its nimble file, and an older branch keeps a stable key. Verified by
   `suites/test_hooks.nim`: a commit of the source of knoller alone builds the binary again.
-- A change to the source or the nimble file of knoller counts as checker for drift, and selects
-  audit for test as well as knoller. A change to a suite of knoller selects knoller alone.
+- A change to the source or the nimble file of knoller counts as checker for drift. It selects
+  for test knoller and each project whose source imports knoller by a relative path, audit
+  among them. The plan reads those imports from the source of each project, so a project that
+  adds one is selected from then on. A change to a suite of knoller selects knoller alone.
   Verified by `suites/test_plan.nim` and `suites/test_base.nim`.
 - Knoller pins the driver version, and `checkKnoller` reports a pin that differs. Verified by
   `suites/test_toolchain.nim`.
