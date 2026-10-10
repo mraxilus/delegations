@@ -989,6 +989,31 @@ suite "Internal: Unitized":
       skip()  # forms of Lengyel's code are of projective 3D space, which rga4d alone models
 
 
+  test "each timed call of unitized reads its operands in place, so no copy stalls a load":
+    # Case: `pass` copied each operand into temporary, as `T48_ = (*pools_p0).unitized.items[i_8]`,
+    #   since result shared root `pools`. Vectorised join read 16 bytes across two stores of that
+    #   copy, so no store forwarded, and record held unitized join at ×2.2 of homogeneous one.
+    when IS_RIGID and DIMENSIONS == 4:
+      const
+        forms = ["join", "meet", "antisupport", "transform", "unitizeBook", "unitizeCode"]
+          ## Forms that timed loops call, as C names them before overload index.
+        calls_timed = 6 * 4  ## Calls that timed loops make: six rows, four layouts each.
+      var sink = 0.0
+      let timing = unitized.take(16, 1, 1, sink)  # reaches `pass`, so its C is read
+      check timing["rows"].len == 6  # one row for each operation
+      var calls_read = 0
+      for f in INSPECTED:
+        if f.symbol != "pass" or not f.module.endsWith("unitized"): continue
+        for line in f.body.splitLines:
+          if not forms.anyIt((it & "_u") in line): continue
+          checkpoint line.strip
+          check "(&T" notin line  # operand read in place, never through copied temporary
+          inc calls_read
+      check calls_read == calls_timed  # every timed call read
+    else:
+      skip()  # forms of Lengyel's code are of projective 3D space, which rga4d alone models
+
+
 
 suite "Internal: Guard":
   const
