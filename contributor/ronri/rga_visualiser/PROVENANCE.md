@@ -3399,6 +3399,12 @@ object. A pick carries its object to the middle of the frame, so the menu rides 
 beside the middle. It is not held back until the ease settles: a menu a third of a second after
 the click reads as a missed click. A menu opened with no pointer sits above the anchor.
 
+**A wheel over the selection menu zooms the view**, as a wheel over the view does (`sumWheel` in
+`pointer.ts`). The menu scrolls nothing, so it hands its wheel on. Rejected: a menu that keeps its
+wheel. Under it, a pick clicked where the menu then lands leaves the wheel dead until the pointer
+moves. That box spans 298 by 55 px, right of and below the middle. The desktop front-end keeps the
+wheel in its menu; see Known limitations.
+
 **A click has no time limit.** `isClick` is distance alone, at `PIXELS_CLICK_SLOP` 6 px. It is not
 the 12 px of `PIXELS_TAP_SLOP`. A mouse does not roll, and the allowance of a finger would swallow
 the short deliberate drags between two overlapping objects. A deadline of 0.35 s lost every click
@@ -3557,6 +3563,8 @@ Verified by driven checks:
 - `more…` landing on `𝐦 ∧ 𝐧` on both builds;
 - the refusal on a full scene;
 - a right-click showing the menu two frames in, 14 by 12 px from the anchor, and so once settled;
+- three notches over the menu of a settled pick of `b` zoom the view from 18.097 to 11.749, with
+  the pivot 0 off `b`;
 - a pivot shift moving that anchor 84 px, with the menu holding the offset;
 - an emptied list, a deep handle edited, and its form in view.
 
@@ -4278,12 +4286,12 @@ object and turns at once lands inside the 0.35 s ease. `CameraTween.abandon` giv
 reader, and the pivot still arrives, 0.000 units from the middle. Rejected: stopping the ease, which
 left the pivot 23.2 px off the middle of two points on a 390 by 844 phone.
 
-**A notch or a right drag inside the ease, with a selection, still lands the pivot on what is
-picked.** Both turn and dolly about the pivot the camera already has, so they yield as a turn does
-(`interaction.yieldToWheelOrPan`). In free flight both place the pivot, and stop the ease where the
-camera stands. Rejected: a halt in both states. Under it, a notch two frames into the ease of a
-right-click pick of `b` leaves the pivot 4.80 units off `b`. Every zoom after it dollies about that
-point.
+**A notch, a right drag or two fingers inside the ease, with a selection, still land the pivot on
+what is picked.** Each turns, dollies or rolls about the pivot the camera already has, so each
+yields as a turn does (`interaction.yieldOrHalt`). In free flight each places the pivot, and stops
+the ease where the camera stands. Rejected: a halt in both states. Under it, a notch or a spread two
+frames after a right-click pick of `b` leaves the pivot 4.80 units off `b`. Every zoom and turn
+after it goes about that point.
 
 *Checked.* Verified by `suites.nim`:
 
@@ -4317,6 +4325,7 @@ Verified by driven check:
 - a comet in view, picked, still pacing the screen at 35.1 px against a band of 5 to 60;
 - a notch and a right drag two frames into the ease of a right-click pick of `b` leave the pivot 0
   off it. A halt leaves it 4.80 off;
+- a spread of two fingers at the same moment leaves it 0 off too, against 4.80 with a halt;
 - a pick of the ground plane from 1.375° above lifts the elevation to 10.000°, and a pick from
   28.072° leaves it at 28.072° (`drivePlaneLifted`).
 
@@ -4726,6 +4735,9 @@ passing proves that the runner carries that library. Assumed: nothing about the 
 ## Known limitations
 
 - Every result is software-rendered and machine-driven, and the page has run on one Android phone.
+- On the desktop front-end, a wheel over the selection menu still reaches the menu alone. Its wheel
+  handler returns whenever Dear ImGui holds the mouse, and the menu is a window of Dear ImGui (see
+  Interaction model).
 - Tab landing on a desktop widget is unverified (see Hold feedback, help and keys).
 - Two crossing translucent veils blend order-dependently.
 - A camera move is not undoable on its own.
