@@ -94,6 +94,18 @@ the opposite sign. The conformal antidot is the negated dot. The cocarrier of a 
 `LineFlat(v: -g.xyz, m: -c.v)`. The `Partner(Circle)` scalar of Terathon carries a sign typo,
 and the form here is `f = gw² - v·v - g·m`, which the law suite confirms against the library.
 
+**A typed point unitizes by the size of its weight, as the book does.** The weight norm of a
+point is |w|, so the sign of w stays, as `^` of the library keeps it. Lengyel's code divides by the
+signed w, so w = 1, and the Architect chose the rule of the book on 2026-10-10. The form spends
+one absolute value and one multiply more than the code. Rejected: the signed w of the code, since
+`^` takes any multivector, where only the norm is defined, and the sign needs the type of the
+object. `marginalia/notes.md` gives what the code saves, under "Unitization keeps the sign of the
+weight".
+
+Verified by `test_rga4d.nim` and `test_rga3d.nim`, suite `Chapter 2`: each point of the pool,
+with its weight negated, unitizes as the library unitizes it. The pools draw w near 1, so without
+the negation no measurand sees the sign.
+
 Every form is `{.inline.}`, so it lands in the same nimcache as the operators of the library, and
 the same reader counts it. Object construction goes through the `zero3` and `read3` templates,
 rather than `Vector3()` defaults and whole-object field copies. In C, a default zero-fills its field
@@ -234,19 +246,18 @@ One run times both implementations, so the runs pair by index, and each run give
 ratio. The docket draws one tick for each of those ratios. Rejected: the spread of rounds inside
 one run, because it misses drift between runs. That drift is the larger part on this machine.
 
-**The runtime baselines are from 2026-10-03 at all four algebras**, at `d9be8ae`, five runs each on
-`linux amd64, 4 cores`. `restamp` moved them to the pin `e993419`, whose bench emits the same C. The
-bench of 2026-10-01, run at `3121342` on 2026-10-02 in turn with the baselines of that day, gives
-the drift between days. At rga4d its library runs ×1.19 to ×1.22 of its own times of 2026-10-01. Its
-reference runs ×1.26 to ×1.27, and its dense forms ×1.00 to ×1.01. The bench of 2026-10-02 runs
-×0.99 to ×1.01 of it in the same runs.
+**The runtime baselines are from 2026-10-10 at all four algebras**, at the pin `e993419`, five runs
+each on `linux amd64, 4 cores`. The bench of 2026-10-01, run at `3121342` on 2026-10-02 in turn
+with the baselines of that day, gives the drift between days. At rga4d its library runs ×1.19 to
+×1.22 of its own times of 2026-10-01. Its reference runs ×1.26 to ×1.27, and its dense forms ×1.00
+to ×1.01. The bench of 2026-10-02 runs ×0.99 to ×1.01 of it in the same runs.
 
 So the machine moves between days, and not by one factor for each implementation. Times
 taken at different hours never compare, and ratios within one run do.
 
-Within these baselines, the least and greatest run ratios of the median measurand are ×1.10
-to ×1.12 apart at each algebra. The widest measurand spreads ×2.24, as `partner_circle` at
-cga4d does. Its reference takes about 1.4 ns, and in one run of five it takes 3.1 ns.
+Within these baselines, the least and greatest run ratios of the median measurand are ×1.07
+to ×1.23 apart at each algebra. The widest measurand spreads ×2.40, as `container_dipole` at
+cga4d does. Its library takes 39 to 70 ns across the five runs, and its reference 2.1 to 4.0 ns.
 
 So one run's time ratio is weak evidence, and the ticks on the docket say how weak.
 
@@ -467,13 +478,13 @@ first step leaves whole grades at zero, and the second step reads none of them. 
 bound is an estimate.
 
 **What the library spends in time against them.** The runtime baselines time each dense form
-beside the library, five alternating runs at `d9be8ae`, at four algebras, on `linux amd64, 4 cores`
-on 2026-10-03. The median general measurand runs ×1.00 to ×1.01 its dense form, since most
+beside the library, five alternating runs at the pin `e993419`, at four algebras, on `linux amd64,
+4 cores` on 2026-10-10. The median general measurand runs ×1.00 to ×1.02 its dense form, since most
 library operators are already one generated table. The compound operations are not. They run
-×2.1 to ×6.5 their dense forms, from the container at cga5d to the support at rga4d.
+×2.1 to ×6.7 their dense forms, from the container at cga5d to the support at rga4d.
 
-The antigrade selection runs ×2.4 to ×3.2, and the norms ×0.77 to ×2.1. Sum, difference and
-negation run ×0.65 to ×1.12, and the unitizes ×0.89 to ×1.14. So a dense form is a measure, and
+The antigrade selection runs ×2.4 to ×3.2, and the norms ×0.78 to ×2.1. Sum, difference and
+negation run ×0.66 to ×1.06, and the unitizes ×0.89 to ×1.39. So a dense form is a measure, and
 never a lower bound on time.
 
 Rejected: a dense form written by hand for each operation. There are 40 to 47 operations at
@@ -521,6 +532,20 @@ own, and `drive` holds that stamp to the pin.
 Rejected: one run of each dimension. The drift of the host then lands on one dimension alone. Two
 such sweeps on 2026-10-04 differ by ×1.05 at the median cell, and three sweeps of five runs differ
 by ×1.002 to ×1.004 there. Cost: four runs more add about 4 s to a sweep of about 80 s.
+
+`unitized` times six point operations of Lengyel's code, each in the homogeneous form and in the
+unitized form that skips each product with w. It takes three layouts: four floats, his three, and
+three padded to four, so the saved arithmetic shows apart from the smaller layout. It takes 1024
+points in cache and 1,048,576 streamed from memory. Each operation runs behind a call that the
+optimiser does not inline, and writes its result in place, as return value optimisation of C++
+does. A null pair times the homogeneous form against itself. The verb takes each pair twice, as
+Article VII.9 asks, and records both takes in `baseline/unitized.json`. It never runs in CI.
+
+Rejected: a result returned by value. It passes through a temporary, and its copy reloads the
+stores that the callee just made. On 2026-10-10 that stall put the unitized join of two points at
+×4.4 one build and ×1.0 another, so it timed layout and not arithmetic. The program imports no
+library code, so its record carries no library commit, and `drive` holds no stamp of it. Cost:
+about 60 s and 400 MB of pools a run.
 
 Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Guard`. A grown total is one
 finding. With the fixture path of the suite, it renders so:
@@ -992,11 +1017,12 @@ static counts are `baseline/static_<algebra>.json`, from `baseline`. They are ex
 compiler commit, with loop trips weighted. The runtime medians are
 `baseline/runtime_<algebra>.json`, from `bench`: five alternating runs of 40 rounds over 1024
 objects, in nanoseconds for each object. Each file names its date, machine, commits and flags
-under `taken`, and at the pin they are from 2026-10-03 on `linux amd64, 4 cores`.
+under `taken`, and at the pin they are from 2026-10-10 on `linux amd64, 4 cores`.
 
 `gaps.md` and the docket show each gap of the pin from those files, and `show` prints the C and
-the machine code of one function. The figures of each proposal before and after its edits are
-in `evaluations/<name>.json`, and its page shows them. Allocation is zero on every measurand in
+the machine code of one function. The times of the point forms of Lengyel's code are
+`baseline/unitized.json`, from `unitized`. The figures of each proposal before and after its edits
+are in `evaluations/<name>.json`, and its page shows them. Allocation is zero on every measurand in
 every implementation, with the gauge live, as the runtime baselines record. Scaling across
 dimensions is in `baseline/sweep.json`, from `sweep`, by hand. It holds five alternating runs of
 each algebra from rga2d to rga6d, each 40 rounds over 1024 objects.
@@ -1045,6 +1071,10 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
 
 - Evaluations time rga4d and cga5d unless `--thorough` asks for rga3d and cga4d too. Each
   evaluation committed now measures all four, from one run of `evaluate all --thorough`.
+- At rga3d and rga4d, each evaluation timed a bench whose typed reference unitized a point by
+  its signed weight. The reference is no part of what an evaluation times, so its figures stand.
+  The C of that bench moved, so `restamp` cannot carry those records to a new pin, and
+  `evaluate` takes them again there.
 - The `build` claim reads the peak memory and seconds that the compiler reports of itself, for
   the library alone. It compares two builds on one machine, and is no measurement of the
   machine.
