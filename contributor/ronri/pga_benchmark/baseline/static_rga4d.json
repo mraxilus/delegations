@@ -8,7 +8,7 @@
     "sizeof_multivector": 128
   },
   "taken": {
-    "date": "2026-10-09",
+    "date": "2026-10-10",
     "machine": "linux amd64, 4 cores",
     "nim": "27763495bcfe265507ca98aedc1c7064bf1e0e4d",
     "pga": "e993419c1f90efba72848d146606f903e1cc141e",
@@ -5024,7 +5024,7 @@
       "returns": "Point",
       "inline": true,
       "own": {
-        "multiplies": 3,
+        "multiplies": 4,
         "adds": 0,
         "subtractions": 0,
         "divides": 1,
@@ -5032,12 +5032,12 @@
         "intermediates": 0,
         "copies": 2,
         "checks": 0,
-        "calls": 0,
+        "calls": 1,
         "allocations": 0,
-        "lines": 19
+        "lines": 22
       },
       "total": {
-        "multiplies": 3,
+        "multiplies": 4,
         "adds": 0,
         "subtractions": 0,
         "divides": 1,
@@ -5045,9 +5045,9 @@
         "intermediates": 0,
         "copies": 2,
         "checks": 0,
-        "calls": 0,
+        "calls": 1,
         "allocations": 0,
-        "lines": 19
+        "lines": 26
       },
       "movement": {
         "bytes_read": 32,

@@ -67,7 +67,7 @@ between steps. Every other bound in these tables is derived from the axioms alon
 ## rga4d
 
 This algebra has 4 dimensions, a rigid metric and a 128-byte multivector. The inspector took the
-counts on 2026-10-09, on linux amd64, 4 cores, with nim `27763495bcfe265507ca98aedc1c7064bf1e0e4d`,
+counts on 2026-10-10, on linux amd64, 4 cores, with nim `27763495bcfe265507ca98aedc1c7064bf1e0e4d`,
 pga `e993419c1f90efba72848d146606f903e1cc141e` and flags `-d:release`. The bench ran 5 times on
 2026-10-03, on linux amd64, 4 cores, over 40 rounds of 1024 objects each. Each time is the median of
 those runs. It ran at pga `d9be8aefc193f6ee0a7a3fead25cd4fe1d8f09cf`, which emits the same C as the
@@ -157,7 +157,7 @@ Gaps: 111. Over 85, met 26, unmeasured 0.
 | G077 | norm_weight_point | 8/0 | 0/0 | 640/40 | 1/0 | 1/0 | 10.8/0.5 | over |
 | G318 | norm_bulk_squared_point | 8/3 | 0/0 | 256/40 | 0/0 | 0/0 | 5.8/0.8 | over |
 | G319 | norm_weight_squared_point | 8/– | 0/– | 256/– | 0/– | 0/– | 5.2/0.5 | over |
-| G078 | unitize_point | 24/3 | 1/1 | 512/128 | 1/0 | 1/0 | 7.0/1.2 | over |
+| G078 | unitize_point | 24/4 | 1/1 | 512/128 | 1/0 | 1/0 | 7.0/1.2 | over |
 | G079 | attitude_point | 0/0 | 0/0 | 256/40 | 0/0 | 0/0 | 2.7/0.6 | over |
 | G080 | complement_right_line | 0/0 | 0/0 | 256/144 | 0/0 | 0/0 | 4.1/1.7 | over |
 | G081 | complement_left_line | 0/0 | 0/0 | 256/144 | 0/0 | 0/0 | 6.0/1.7 | over |
@@ -236,7 +236,7 @@ Gaps: 111. Over 85, met 26, unmeasured 0.
 ## cga5d
 
 This algebra has 5 dimensions, a conformal metric and a 256-byte multivector. The inspector took the
-counts on 2026-10-09, on linux amd64, 4 cores, with nim `27763495bcfe265507ca98aedc1c7064bf1e0e4d`,
+counts on 2026-10-10, on linux amd64, 4 cores, with nim `27763495bcfe265507ca98aedc1c7064bf1e0e4d`,
 pga `e993419c1f90efba72848d146606f903e1cc141e` and flags `-d:release`. The bench ran 5 times on
 2026-10-03, on linux amd64, 4 cores, over 40 rounds of 1024 objects each. Each time is the median of
 those runs. It ran at pga `d9be8aefc193f6ee0a7a3fead25cd4fe1d8f09cf`, which emits the same C as the
@@ -431,7 +431,7 @@ Gaps: 131. Over 102, met 29, unmeasured 0.
 ## rga3d
 
 This algebra has 3 dimensions, a rigid metric and a 64-byte multivector. The inspector took the
-counts on 2026-10-09, on linux amd64, 4 cores, with nim `27763495bcfe265507ca98aedc1c7064bf1e0e4d`,
+counts on 2026-10-10, on linux amd64, 4 cores, with nim `27763495bcfe265507ca98aedc1c7064bf1e0e4d`,
 pga `e993419c1f90efba72848d146606f903e1cc141e` and flags `-d:release`. The bench ran 5 times on
 2026-10-03, on linux amd64, 4 cores, over 40 rounds of 1024 objects each. Each time is the median of
 those runs. It ran at pga `d9be8aefc193f6ee0a7a3fead25cd4fe1d8f09cf`, which emits the same C as the
@@ -512,7 +512,7 @@ Gaps: 88. Over 62, met 26, unmeasured 0.
 | G359 | norm_weight_point | 4/0 | 0/0 | 320/32 | 1/0 | 1/0 | 1.8/0.5 | over |
 | G360 | norm_bulk_squared_point | 4/2 | 0/0 | 128/32 | 0/0 | 0/0 | 1.9/0.6 | over |
 | G361 | norm_weight_squared_point | 4/– | 0/– | 128/– | 0/– | 0/– | 1.5/0.6 | over |
-| G362 | unitize_point | 12/2 | 1/1 | 256/48 | 1/0 | 1/0 | 3.5/1.2 | over |
+| G362 | unitize_point | 12/3 | 1/1 | 256/48 | 1/0 | 1/0 | 3.5/1.2 | over |
 | G363 | attitude_point | 0/0 | 0/0 | 128/32 | 0/0 | 0/0 | 1.5/0.4 | over |
 | G364 | complement_right_line | 0/0 | 0/0 | 128/48 | 0/0 | 0/0 | 2.4/0.7 | over |
 | G365 | complement_left_line | 0/0 | 0/0 | 128/48 | 0/0 | 0/0 | 2.4/0.7 | over |
@@ -577,7 +577,7 @@ Gaps: 88. Over 62, met 26, unmeasured 0.
 ## cga4d
 
 This algebra has 4 dimensions, a conformal metric and a 128-byte multivector. The inspector took the
-counts on 2026-10-09, on linux amd64, 4 cores, with nim `27763495bcfe265507ca98aedc1c7064bf1e0e4d`,
+counts on 2026-10-10, on linux amd64, 4 cores, with nim `27763495bcfe265507ca98aedc1c7064bf1e0e4d`,
 pga `e993419c1f90efba72848d146606f903e1cc141e` and flags `-d:release`. The bench ran 5 times on
 2026-10-03, on linux amd64, 4 cores, over 40 rounds of 1024 objects each. Each time is the median of
 those runs. It ran at pga `d9be8aefc193f6ee0a7a3fead25cd4fe1d8f09cf`, which emits the same C as the
