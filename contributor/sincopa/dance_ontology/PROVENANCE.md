@@ -451,7 +451,7 @@ from `tools/title.nim`, so that a gallery sorts the body of work together.
 ## Review page
 
 **Every number and picture on the page is a marker filled from the model.** The prose lives in the
-committed file `pages/review/review.html`. `tools/review.nim` fills the markers, and inks every term
+committed file `mockups/review.html`. `tools/review.nim` fills the markers, and inks every term
 of art in the hands it names. It writes the page and one SVG for each frame into a directory that it
 clears first. A renamed frame can then leave no old picture behind.
 
@@ -1872,8 +1872,10 @@ repository does not treat a published copy as its record, because the log does t
 not beside the subsystem that builds the page.
 
 **Hand-written pages are committed files, and everything a build emits is not.** The shell of the
-Reference is `pages/app/index.html`. The prose of the review page, with one marker for each derived
-figure, is `pages/review/review.html`. The hand-drawn proposal is `mockups/wholecloth.html`.
+Reference is `pages/app/index.html`, a page that the project stands behind. The review page and the
+hand-drawn proposal are explorations, as their titles say, so both live in `mockups/`. The prose of
+the review page, with one marker for each derived figure, is `mockups/review.html`. The proposal is
+`mockups/wholecloth.html`.
 
 `tools/build.nim pages` copies both shells into `build/`, and compiles the script of each page
 beside it. It folds each one into a single file with `tools/bundle.nim`. It fills the markers of
