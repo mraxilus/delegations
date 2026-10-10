@@ -86,6 +86,7 @@ nim r tools/build.nim evaluate all --thorough  # the same, at rga3d and cga4d as
 nim r tools/build.nim restamp       # move timed records to the pin where their C is the same
 nim r tools/build.nim pages         # build every page into build/<name>.html
 nim r tools/build.nim sweep         # five runs at two to six dimensions, into baseline/sweep.json
+nim r tools/build.nim unitized      # point forms of Lengyel's code, into baseline/unitized.json
 ```
 
 `drive` fetches the Chromium that Playwright pins. Set `PGA_CHROMIUM` to the path of a Chromium
