@@ -4,8 +4,8 @@ At pin, `=~` weighs the difference of each coefficient against max(1, |x|, |y|) 
 coefficient alone. `grade` counts a coefficient at or under the tolerance as zero. A product
 builds small coefficients, and stray ones outside the grade of its result, from terms as large as
 the scene. So their noise grows with the distance of the scene from the origin, and a fixed
-tolerance holds only near it. This proposal weighs each difference against the largest
-magnitude of its part, bulk or weight, in either object, and `grade` counts zero the same way.
+tolerance holds only near it. This proposal weighs each difference against the largest absolute
+value of its part, bulk or weight, in either object, and `grade` counts zero the same way.
 
 This proposal builds on P06, since its claims at 32 bits need the width that P06 makes
 configurable. The Architect chose it on 2026-10-06, after a check that the gain holds for typed
@@ -16,15 +16,15 @@ objects too.
 - **Parts.** The parts are those of `CAYLEYS_PARTS`, which the bulk and weight extractors read. A
   rigid algebra has bulk and weight. A conformal algebra splits each into round and flat. The
   comparison walks the fields of `CAYLEYS_PARTS`, so it adds no type or table of its own.
-- **Scale.** The scale of a part is its largest magnitude, and at least one. A macro spells the
-  bases of a part as an array, so a loop over it reads that part alone and unrolls.
+- **Scale.** The scale of a part is its largest absolute value, and at least one. A macro spells
+  the bases of a part as an array, so a loop over it reads that part alone and unrolls.
 - **Comparison.** `=~` takes each part in turn. It fails when a difference in that part is past
   the tolerance times the larger scale of that part in the two objects.
 - **Scalar comparison.** `m =~ s` compares m with the scalar multivector of s, so one rule holds.
 - **Grade.** `grade` counts a coefficient as zero at or under the tolerance times the scale of its
   part.
 
-The scale of a part is never under one, nor under the magnitude of one of its coefficients. So
+The scale of a part is never under one, nor under the absolute value of one of its coefficients. So
 every pair equal at pin stays equal, and every coefficient zero at pin stays zero.
 
 ## What it gains

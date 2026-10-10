@@ -7,7 +7,7 @@
 ##     plane whose normal turns by ten tolerances never equals plane it came from.
 ##   Figures it prints are evidence that never gates. Each is most decimal places one rule keeps
 ##     with no noise in any sample: "now" weighs coefficient against max(1, |x|, |y|), as pin
-##     does; "part" weighs it against largest magnitude of its part, bulk or weight, in either.
+##     does; "part" weighs it against largest absolute value of its part, bulk or weight, in either.
 ##   Scene sits at distance from origin: each coordinate and translation is Gaussian, with
 ##     deviation distance / sqrt(3).
 
@@ -43,7 +43,8 @@ func noiseNow(a, b: Multivector): float =
 
 
 func noisePart(a, b: Multivector): float =
-  ## Weigh largest difference against largest magnitude of its part, bulk or weight, in either.
+  ## Weigh largest difference against largest absolute value of its part, bulk or weight, in
+  ##   either.
   for (x, y) in [(∙a, ∙b), (∘a, ∘b)]:
     var scale = 1.0
     for basis in Basis: scale = max(scale, max(abs(float(x[basis])), abs(float(y[basis]))))

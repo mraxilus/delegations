@@ -21,6 +21,7 @@ import ../src/pga_benchmark/pages/[docket, evaluation, listing, proposal, render
 from ../src/pga_benchmark/evaluations import
   ENTRY_LIBRARY, algebrasEvaluated, digestEdits, functionsChanged, nanOf, readLibrary, successOf,
   timesOf
+from ../src/pga_benchmark/unitized import nil
 
 
 const
@@ -155,6 +156,13 @@ func isNear(got, expected: Multivector): bool =
 func isNear(got, expected: float): bool =
   ## Decide whether two scalars agree within library's tolerance.
   abs(got - expected) <= TOLERANCE_ABS * max(1.0, max(abs(got), abs(expected)))
+
+
+func isNear[T: object](got, expected: T): bool =
+  ## Decide whether every field of two objects of one type agrees within library's tolerance.
+  result = true
+  for field_got, field_expected in fields(got, expected):
+    result = result and isNear(field_got, field_expected)
 
 
 macro checkFormsDense(measurands: static seq[Measurand]): untyped =
@@ -297,6 +305,16 @@ suite "Internal: Catalogue":
 
 suite "Chapter 2":
   checkReferences(CATALOGUE, "2.")
+
+  test "unitize of point with negative weight keeps its sign  # 2.89":
+    when declared(POOL_POINT):
+      for p in POOL_POINT:
+        var reversed = p
+        reversed.w = -p.w  # weight below zero, as meet of operands in reverse order gives
+        check widen(unitize(reversed)) =~ ^widen(reversed)  # 2.89, as library unitizes
+        check unitize(reversed).w < 0.0  # 2.89, sign of weight kept
+    else:
+      skip()  # conformal algebras hold no typed point
 
 
 checkReferencesWiki(CATALOGUE)
@@ -851,6 +869,149 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
       for f in functions:
         if f.key == "wedge(Point,Point)":
           check count(f.body).multiplies == 6 and count(f.body).subtractions == 3  # as documented
+
+
+
+suite "Internal: Unitized":
+  # Program `unitized` times Lengyel's code in homogeneous form against form whose point has
+  #   w = 1; suite holds each form to its pair, and each row of its record to C of its forms.
+
+  test "unitized form agrees with homogeneous form where weight is one":
+    when IS_RIGID and DIMENSIONS == 4:
+      template checkLayout(U: typedesc, i, j: int) =
+        ## Hold every form of layout U to its homogeneous form, on slots i and j of pools.
+        let
+          (a, b) = (POOL_POINT[i], POOL_POINT[j])
+          p = unitized.PointHomogeneous(x: a.x, y: a.y, z: a.z, w: 1.0)
+          q = unitized.PointHomogeneous(x: b.x, y: b.y, z: b.z, w: 1.0)
+          (p_unit, q_unit) = (U(x: a.x, y: a.y, z: a.z), U(x: b.x, y: b.y, z: b.z))
+          line = unitized.Line(
+            vx: POOL_LINE[i].v.x, vy: POOL_LINE[i].v.y, vz: POOL_LINE[i].v.z,
+            mx: POOL_LINE[i].m.x, my: POOL_LINE[i].m.y, mz: POOL_LINE[i].m.z,
+          )
+          plane = unitized.Plane(
+            x: POOL_PLANE[j].x, y: POOL_PLANE[j].y, z: POOL_PLANE[j].z, w: POOL_PLANE[j].w,
+          )
+          motor = unitized.Motor(
+            vx: POOL_MOTOR[j].v.x, vy: POOL_MOTOR[j].v.y, vz: POOL_MOTOR[j].v.z,
+            vw: POOL_MOTOR[j].vw, mx: POOL_MOTOR[j].m.x, my: POOL_MOTOR[j].m.y,
+            mz: POOL_MOTOR[j].m.z, mw: POOL_MOTOR[j].mw,
+          )
+        var
+          (line_homogeneous, line_unit) = (unitized.Line(), unitized.Line())
+          (plane_homogeneous, plane_unit) = (unitized.Plane(), unitized.Plane())
+          (moved_homogeneous, moved_unit) = (unitized.PointHomogeneous(), U())
+        unitized.join(p, q, line_homogeneous)
+        unitized.join(p_unit, q_unit, line_unit)
+        check isNear(line_homogeneous, line_unit)  # w = 1 drops each product with w, nothing else
+        unitized.join(line, p, plane_homogeneous)
+        unitized.join(line, p_unit, plane_unit)
+        check isNear(plane_homogeneous, plane_unit)  # w = 1 drops each product of moment with w
+        check isNear(unitized.meet(p, plane), unitized.meet(p_unit, plane))  # drops w times g.w
+        unitized.antisupport(p, plane_homogeneous)
+        unitized.antisupport(p_unit, plane_unit)
+        check isNear(plane_homogeneous, plane_unit)  # w = 1 drops each product with w
+        unitized.transform(p, motor, moved_homogeneous)
+        unitized.transform(p_unit, motor, moved_unit)
+        let moved_expected =
+          U(x: moved_homogeneous.x, y: moved_homogeneous.y, z: moved_homogeneous.z)
+        check moved_homogeneous.w == 1.0  # motor keeps weight of point
+        check isNear(moved_expected, moved_unit)  # w = 1 drops each product with w
+        for weight in [a.w, -a.w]:
+          let point = unitized.PointHomogeneous(x: a.x, y: a.y, z: a.z, w: weight)
+          var
+            unit_book = unitized.PointHomogeneous()
+            unit_code = U()
+          unitized.unitizeBook(point, unit_book)
+          unitized.unitizeCode(point, unit_code)
+          let unit_signed = U(
+            x: unit_book.x * unit_book.w, y: unit_book.y * unit_book.w,
+            z: unit_book.z * unit_book.w,
+          )
+          check isNear(abs(unit_book.w), 1.0) and unit_book.w * weight > 0.0  # 2.89, sign kept
+          check isNear(unit_code, unit_signed)  # code divides by signed w, so differs by its sign
+      for i in 0..<OBJECTS:
+        let j = (i * 7 + 3) mod OBJECTS  # pair slots as bench pairs them
+        checkLayout(unitized.PointUnitized, i, j)
+        checkLayout(unitized.PointPadded, i, j)
+    else:
+      skip()  # forms of Lengyel's code are of projective 3D space, which rga4d alone models
+
+
+  test "each row of unitized record saves multiplies that C of its two forms differs by":
+    # Case: record held `"saved": -1` on row `unitize, book against code`, from literal that
+    #   `pass` of `unitized.nim` passed; code's unitize spares one multiply, so row saves 1.
+    when IS_RIGID and DIMENSIONS == 4:
+      const
+        record = staticRead("../baseline/unitized.json")  ## Takes of `unitized`, as committed.
+        rows_recorded = 2 * 2 * 6  ## Rows record holds: two takes of two sizes, six operations.
+        lut_forms_by_row = {
+          "join two points": (
+            "join(PointHomogeneous,PointHomogeneous,Line)",
+            "join(PointUnitized,PointUnitized,Line)",
+          ),
+          "join line and point":
+            ("join(Line,PointHomogeneous,Plane)", "join(Line,PointUnitized,Plane)"),
+          "meet point and plane": ("meet(PointHomogeneous,Plane)", "meet(PointUnitized,Plane)"),
+          "antisupport":
+            ("antisupport(PointHomogeneous,Plane)", "antisupport(PointUnitized,Plane)"),
+          "transform by motor": (
+            "transform(PointHomogeneous,Motor,PointHomogeneous)",
+            "transform(PointUnitized,Motor,PointUnitized)",
+          ),
+          "unitize, book against code": (
+            "unitizeBook(PointHomogeneous,PointHomogeneous)",
+            "unitizeCode(PointHomogeneous,PointUnitized)",
+          ),
+        }.toTable
+          ## Homogeneous form and unitized form each row times, keyed as inspector keys them.
+      var multiplies: Table[string, int]
+      for f in INSPECTED: multiplies[f.key] = count(f.body).multiplies
+      var rows_read = 0
+      for take in parseJson(record)["takes"]:
+        for size, timing in take:
+          for name, row in timing["rows"]:
+            checkpoint size & " objects: " & name
+            check name in lut_forms_by_row  # every row names its two forms
+            if name notin lut_forms_by_row: continue
+            let
+              (key_homogeneous, key_unit) = lut_forms_by_row[name]
+              key_padded = key_unit.replace("PointUnitized", "PointPadded")
+            for key in [key_homogeneous, key_unit, key_padded]:
+              check key in multiplies  # form reached from suite above, so its C is read
+            if [key_homogeneous, key_unit, key_padded].anyIt(it notin multiplies): continue
+            let saved = multiplies[key_homogeneous] - multiplies[key_unit]
+            check row["saved"].getInt == saved  # record states what C spares, sign included
+            check multiplies[key_padded] == multiplies[key_unit]  # pad costs no arithmetic
+            inc rows_read
+      check rows_read == rows_recorded  # guard skipped no row
+    else:
+      skip()  # forms of Lengyel's code are of projective 3D space, which rga4d alone models
+
+
+  test "each timed call of unitized reads its operands in place, so no copy stalls a load":
+    # Case: `pass` copied each operand into temporary, as `T48_ = (*pools_p0).unitized.items[i_8]`,
+    #   since result shared root `pools`. Vectorised join read 16 bytes across two stores of that
+    #   copy, so no store forwarded, and record held unitized join at ×2.2 of homogeneous one.
+    when IS_RIGID and DIMENSIONS == 4:
+      const
+        forms = ["join", "meet", "antisupport", "transform", "unitizeBook", "unitizeCode"]
+          ## Forms that timed loops call, as C names them before overload index.
+        calls_timed = 6 * 4  ## Calls that timed loops make: six rows, four layouts each.
+      var sink = 0.0
+      let timing = unitized.take(16, 1, 1, sink)  # reaches `pass`, so its C is read
+      check timing["rows"].len == 6  # one row for each operation
+      var calls_read = 0
+      for f in INSPECTED:
+        if f.symbol != "pass" or not f.module.endsWith("unitized"): continue
+        for line in f.body.splitLines:
+          if not forms.anyIt((it & "_u") in line): continue
+          checkpoint line.strip
+          check "(&T" notin line  # operand read in place, never through copied temporary
+          inc calls_read
+      check calls_read == calls_timed  # every timed call read
+    else:
+      skip()  # forms of Lengyel's code are of projective 3D space, which rga4d alone models
 
 
 
