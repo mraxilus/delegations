@@ -314,18 +314,19 @@ bytes, so it shows the saved arithmetic apart from the smaller layout.
 
 | Operation | In cache | Padded, in cache | From memory | Padded, from memory |
 |-----------|----------|------------------|-------------|---------------------|
-| Join of two points | ×2.19 to ×2.27 | ×2.20 to ×2.28 | ×0.83 to ×0.84 | ×0.98 to ×1.05 |
-| Join of line and point | ×1.06 to ×1.10 | ×1.06 to ×1.10 | ×0.75 to ×0.81 | ×0.90 to ×1.09 |
-| Meet of point and plane | ×0.96 | ×0.98 | ×0.88 to ×1.00 | ×1.03 to ×1.04 |
-| Antisupport | ×0.91 | ×0.98 to ×0.99 | ×0.83 to ×0.91 | ×0.93 to ×0.95 |
-| Transform by motor | ×0.84 | ×0.86 to ×0.88 | ×0.91 to ×0.92 | ×0.92 to ×0.97 |
-| Unitize, code against book | ×1.07 to ×1.08 | ×1.09 to ×1.10 | ×0.96 to ×0.97 | ×0.98 to ×1.01 |
+| Join of two points | ×0.93 to ×1.00 | ×0.96 to ×0.99 | ×0.63 to ×0.78 | ×0.87 to ×0.98 |
+| Join of line and point | ×0.90 to ×0.99 | ×0.98 to ×1.01 | ×0.82 to ×0.86 | ×1.06 to ×1.11 |
+| Meet of point and plane | ×0.86 to ×0.96 | ×0.92 to ×0.98 | ×0.86 to ×0.95 | ×0.83 to ×1.00 |
+| Antisupport | ×0.90 to ×0.91 | ×0.90 to ×0.91 | ×0.92 to ×0.94 | ×0.86 to ×0.97 |
+| Transform by motor | ×0.93 to ×1.09 | ×0.92 to ×1.04 | ×0.96 to ×0.97 | ×0.82 to ×0.95 |
+| Unitize, code against book | ×0.83 to ×1.03 | ×0.91 to ×1.05 | ×0.93 to ×0.94 | ×0.98 to ×1.11 |
 
-The null pair reads ×1.00 to ×1.03 in cache, and ×0.96 to ×1.07 from memory. In cache the
-transform runs ×0.84 unitized and ×0.86 to ×0.88 padded, so its saved multiplies show. The join of
-two points runs ×2.2 to ×2.3 in both layouts. The homogeneous join likely vectorises into packed
-multiplies, and the unitized one does not.
+The null pair reads ×1.00 in cache, and ×0.90 to ×1.04 from memory. In cache, the unitized joins,
+meet and antisupport run at or below ×1.00 in both takes, by up to a seventh. The transform and
+the unitize straddle ×1. The second take ran twice as slow in cache throughout, and some
+ratios moved by a sixth between takes, so a figure in cache is weak alone. A call costs more than
+the few multiplies that a form saves, so the saving shows little in cache.
 
-From memory, three floats in place of four run the two joins at ×0.75 to ×0.84. Padded, they run
-×0.90 to ×1.09, against ×0.96 to ×1.07 for the null pair, so bytes carry that gain. The saving is
-small and selective, and only a typed point with an implicit weight reaches it.
+From memory, three floats in place of four run the two joins at ×0.63 to ×0.86. Padded, they run
+×0.87 to ×1.11, against ×0.90 to ×1.04 for the null pair, so bytes carry most of that gain. The
+saving is small and selective, and only a typed point with an implicit weight reaches it.
