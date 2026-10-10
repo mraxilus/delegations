@@ -345,13 +345,10 @@ const
   COLLAR_LEAN = 40.0  ## Newton metres per radian collarbone is turned back once
                    ## into its ease: seven at ease's end.  Assumed.
   COLLAR_RADIUS = 0.06  ## Radius of collarbone's own capsule, which meets nothing:
-                   ## it gives collarbone half kilogram, fifth of girdle's, so
-                   ## solver holds chain of chest, collarbone and girdle.  At one
-                   ## centimetre, fiftieth of girdle, both girdles left their
-                   ## hinges by half metre standing still.
-                   ## Girdle weighs some two kilograms here, so this is 800 N/m:
-                   ## forty newtons, arm's weight, moves shoulder five
-                   ## centimetres, which is what scapula gives.  Architect: bodies
+                   ## girdle's own, so collarbone weighs what girdle does, 2.35 kg.
+                   ## At one centimetre, fiftieth of that, both girdles stay on
+                   ## their hinges, but each shoulder of free couple at rest rises
+                   ## 15 degrees, against 7.  Measured 2026-10-09.  Architect: bodies
                    ## are too rigid, arms get dislocated because of it -- shoulder
                    ## joint sat nine centimetres outside every capsule of its own
                    ## body, and nothing of it could give.
