@@ -192,3 +192,8 @@ _Avoid_: carry, port, rebase, re-pin
 **Algebra**:
 One measured setting, a dimension count and a metric, such as `rga4d`.
 _Avoid_: configuration, config, target, signature
+
+**Magnitude**:
+The pair x𝟏 + y𝟙 of a scalar and an antiscalar, as Lengyel's wiki names it. Under the rigid
+metric it is a dual number, and under the conformal metric a complex number.
+_Avoid_: dual number
