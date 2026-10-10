@@ -3903,8 +3903,8 @@
           "turn": -0.64,
           "ok": true,
           "reseed": false,
-          "strain": 0.09,
-          "worst": "follow's shoulder, twist",
+          "strain": 0.04,
+          "worst": "follow's shoulder, behind",
           "bodies": [
             {
               "centre": [
@@ -3976,8 +3976,8 @@
           "turn": -0.62,
           "ok": true,
           "reseed": false,
-          "strain": 0.19,
-          "worst": "follow's shoulder, twist",
+          "strain": 0.04,
+          "worst": "follow's shoulder, behind",
           "bodies": [
             {
               "centre": [
@@ -4049,8 +4049,8 @@
           "turn": -0.6,
           "ok": true,
           "reseed": false,
-          "strain": 0.28,
-          "worst": "follow's shoulder, twist",
+          "strain": 0.04,
+          "worst": "follow's shoulder, behind",
           "bodies": [
             {
               "centre": [
@@ -4122,8 +4122,8 @@
           "turn": -0.58,
           "ok": true,
           "reseed": false,
-          "strain": 0.36,
-          "worst": "follow's shoulder, twist",
+          "strain": 0.03,
+          "worst": "follow's shoulder, behind",
           "bodies": [
             {
               "centre": [
@@ -4195,8 +4195,8 @@
           "turn": -0.56,
           "ok": true,
           "reseed": false,
-          "strain": 0.42,
-          "worst": "follow's shoulder, twist",
+          "strain": 0.03,
+          "worst": "follow's shoulder, behind",
           "bodies": [
             {
               "centre": [
@@ -4268,8 +4268,8 @@
           "turn": -0.54,
           "ok": true,
           "reseed": false,
-          "strain": 0.49,
-          "worst": "follow's shoulder, twist",
+          "strain": 0.03,
+          "worst": "follow's shoulder, behind",
           "bodies": [
             {
               "centre": [
@@ -4341,8 +4341,8 @@
           "turn": -0.52,
           "ok": true,
           "reseed": false,
-          "strain": 0.63,
-          "worst": "follow's shoulder, twist",
+          "strain": 0.04,
+          "worst": "follow's shoulder, behind",
           "bodies": [
             {
               "centre": [
@@ -6459,7 +6459,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "lead's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -6532,7 +6532,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "lead's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -6605,7 +6605,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's wrist",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -6677,8 +6677,8 @@
           "turn": 0.12,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's wrist",
+          "strain": 0.02,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -6750,8 +6750,8 @@
           "turn": 0.14,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's wrist",
+          "strain": 0.04,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -6823,8 +6823,8 @@
           "turn": 0.16,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's wrist",
+          "strain": 0.04,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -6896,8 +6896,8 @@
           "turn": 0.18,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's wrist",
+          "strain": 0.05,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -6969,8 +6969,8 @@
           "turn": 0.2,
           "ok": true,
           "reseed": false,
-          "strain": 0.03,
-          "worst": "follow's wrist",
+          "strain": 0.06,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -7699,8 +7699,8 @@
           "turn": 0.4,
           "ok": true,
           "reseed": false,
-          "strain": 0.37,
-          "worst": "follow's wrist",
+          "strain": 0.47,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -7772,8 +7772,8 @@
           "turn": 0.42,
           "ok": true,
           "reseed": false,
-          "strain": 0.28,
-          "worst": "follow's wrist",
+          "strain": 0.6,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -7845,8 +7845,8 @@
           "turn": 0.44,
           "ok": true,
           "reseed": false,
-          "strain": 0.19,
-          "worst": "follow's wrist",
+          "strain": 0.71,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -7918,7 +7918,7 @@
           "turn": 0.46,
           "ok": true,
           "reseed": false,
-          "strain": 0.28,
+          "strain": 0.88,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -7991,7 +7991,7 @@
           "turn": 0.48,
           "ok": true,
           "reseed": false,
-          "strain": 0.52,
+          "strain": 1.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -8064,7 +8064,7 @@
           "turn": 0.5,
           "ok": true,
           "reseed": false,
-          "strain": 0.67,
+          "strain": 1.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -8137,8 +8137,8 @@
           "turn": 0.52,
           "ok": true,
           "reseed": false,
-          "strain": 0.4,
-          "worst": "follow's wrist",
+          "strain": 0.98,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -8210,8 +8210,8 @@
           "turn": 0.54,
           "ok": true,
           "reseed": false,
-          "strain": 0.47,
-          "worst": "lead's wrist",
+          "strain": 0.65,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -8721,8 +8721,8 @@
           "turn": 0.68,
           "ok": true,
           "reseed": false,
-          "strain": 0.48,
-          "worst": "follow's wrist",
+          "strain": 0.72,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -8794,8 +8794,8 @@
           "turn": 0.7,
           "ok": true,
           "reseed": false,
-          "strain": 0.46,
-          "worst": "follow's wrist",
+          "strain": 0.78,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -8867,8 +8867,8 @@
           "turn": 0.72,
           "ok": true,
           "reseed": false,
-          "strain": 0.39,
-          "worst": "follow's wrist",
+          "strain": 0.86,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -8940,7 +8940,7 @@
           "turn": 0.74,
           "ok": true,
           "reseed": false,
-          "strain": 0.5,
+          "strain": 1.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -9013,8 +9013,8 @@
           "turn": 0.76,
           "ok": true,
           "reseed": false,
-          "strain": 0.53,
-          "worst": "follow's wrist",
+          "strain": 1.0,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -9086,7 +9086,7 @@
           "turn": 0.78,
           "ok": true,
           "reseed": false,
-          "strain": 0.57,
+          "strain": 1.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -9159,8 +9159,8 @@
           "turn": 0.8,
           "ok": true,
           "reseed": false,
-          "strain": 0.69,
-          "worst": "follow's wrist",
+          "strain": 1.0,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -9232,8 +9232,8 @@
           "turn": 0.82,
           "ok": true,
           "reseed": false,
-          "strain": 0.78,
-          "worst": "follow's wrist",
+          "strain": 1.0,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -9305,8 +9305,8 @@
           "turn": 0.84,
           "ok": true,
           "reseed": false,
-          "strain": 0.91,
-          "worst": "follow's wrist",
+          "strain": 1.0,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -13847,7 +13847,7 @@
           "ok": true,
           "reseed": false,
           "strain": 1.0,
-          "worst": "follow's shoulder, twist",
+          "worst": "follow's wrist",
           "bodies": [
             {
               "centre": [
@@ -13920,7 +13920,7 @@
           "ok": true,
           "reseed": false,
           "strain": 1.0,
-          "worst": "follow's shoulder, twist",
+          "worst": "follow's wrist",
           "bodies": [
             {
               "centre": [
@@ -13993,7 +13993,7 @@
           "ok": true,
           "reseed": false,
           "strain": 1.0,
-          "worst": "follow's shoulder, twist",
+          "worst": "follow's elbow",
           "bodies": [
             {
               "centre": [
@@ -16766,8 +16766,8 @@
           "turn": 0.22,
           "ok": true,
           "reseed": false,
-          "strain": 0.32,
-          "worst": "lead's elbow",
+          "strain": 0.35,
+          "worst": "lead's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -16839,8 +16839,8 @@
           "turn": 0.24,
           "ok": true,
           "reseed": false,
-          "strain": 0.31,
-          "worst": "lead's elbow",
+          "strain": 0.45,
+          "worst": "lead's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -16912,8 +16912,8 @@
           "turn": 0.26,
           "ok": true,
           "reseed": false,
-          "strain": 0.28,
-          "worst": "lead's elbow",
+          "strain": 0.48,
+          "worst": "lead's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -16985,8 +16985,8 @@
           "turn": 0.28,
           "ok": true,
           "reseed": false,
-          "strain": 0.28,
-          "worst": "lead's elbow",
+          "strain": 0.49,
+          "worst": "lead's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -17058,8 +17058,8 @@
           "turn": 0.3,
           "ok": true,
           "reseed": false,
-          "strain": 0.28,
-          "worst": "lead's elbow",
+          "strain": 0.51,
+          "worst": "lead's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -17131,8 +17131,8 @@
           "turn": 0.32,
           "ok": true,
           "reseed": false,
-          "strain": 0.28,
-          "worst": "lead's elbow",
+          "strain": 0.49,
+          "worst": "lead's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -17204,8 +17204,8 @@
           "turn": 0.34,
           "ok": true,
           "reseed": false,
-          "strain": 0.26,
-          "worst": "lead's elbow",
+          "strain": 0.51,
+          "worst": "lead's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -17277,8 +17277,8 @@
           "turn": 0.36,
           "ok": true,
           "reseed": false,
-          "strain": 0.26,
-          "worst": "lead's elbow",
+          "strain": 0.49,
+          "worst": "lead's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -17350,8 +17350,8 @@
           "turn": 0.38,
           "ok": true,
           "reseed": false,
-          "strain": 0.26,
-          "worst": "lead's elbow",
+          "strain": 0.47,
+          "worst": "lead's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -17423,8 +17423,8 @@
           "turn": 0.4,
           "ok": true,
           "reseed": false,
-          "strain": 0.26,
-          "worst": "lead's elbow",
+          "strain": 0.43,
+          "worst": "lead's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -17496,8 +17496,8 @@
           "turn": 0.42,
           "ok": true,
           "reseed": false,
-          "strain": 0.3,
-          "worst": "follow's wrist",
+          "strain": 0.38,
+          "worst": "lead's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -17715,8 +17715,8 @@
           "turn": 0.48,
           "ok": true,
           "reseed": false,
-          "strain": 0.64,
-          "worst": "follow's wrist",
+          "strain": 0.66,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -17788,8 +17788,8 @@
           "turn": 0.5,
           "ok": true,
           "reseed": false,
-          "strain": 0.33,
-          "worst": "follow's wrist",
+          "strain": 0.56,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -17861,8 +17861,8 @@
           "turn": 0.52,
           "ok": true,
           "reseed": false,
-          "strain": 0.31,
-          "worst": "lead's wrist",
+          "strain": 0.6,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -17934,8 +17934,8 @@
           "turn": 0.54,
           "ok": true,
           "reseed": false,
-          "strain": 0.32,
-          "worst": "lead's wrist",
+          "strain": 0.61,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -18007,8 +18007,8 @@
           "turn": 0.56,
           "ok": true,
           "reseed": false,
-          "strain": 0.33,
-          "worst": "lead's wrist",
+          "strain": 0.62,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -18080,8 +18080,8 @@
           "turn": 0.58,
           "ok": true,
           "reseed": false,
-          "strain": 0.4,
-          "worst": "lead's wrist",
+          "strain": 0.61,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -18153,8 +18153,8 @@
           "turn": 0.6,
           "ok": true,
           "reseed": false,
-          "strain": 0.47,
-          "worst": "lead's wrist",
+          "strain": 0.62,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -18226,8 +18226,8 @@
           "turn": 0.62,
           "ok": true,
           "reseed": false,
-          "strain": 0.55,
-          "worst": "lead's wrist",
+          "strain": 0.64,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -18299,8 +18299,8 @@
           "turn": 0.64,
           "ok": true,
           "reseed": false,
-          "strain": 0.59,
-          "worst": "lead's wrist",
+          "strain": 0.66,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -18372,8 +18372,8 @@
           "turn": 0.66,
           "ok": true,
           "reseed": false,
-          "strain": 0.6,
-          "worst": "lead's wrist",
+          "strain": 0.65,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -18445,8 +18445,8 @@
           "turn": 0.68,
           "ok": true,
           "reseed": false,
-          "strain": 0.31,
-          "worst": "follow's elbow",
+          "strain": 0.54,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -18591,8 +18591,8 @@
           "turn": 0.72,
           "ok": true,
           "reseed": false,
-          "strain": 0.31,
-          "worst": "follow's elbow",
+          "strain": 0.55,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -18737,8 +18737,8 @@
           "turn": 0.76,
           "ok": true,
           "reseed": false,
-          "strain": 0.36,
-          "worst": "follow's elbow",
+          "strain": 0.43,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -18810,8 +18810,8 @@
           "turn": 0.78,
           "ok": true,
           "reseed": false,
-          "strain": 0.37,
-          "worst": "follow's elbow",
+          "strain": 0.52,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -18883,8 +18883,8 @@
           "turn": 0.8,
           "ok": true,
           "reseed": false,
-          "strain": 0.37,
-          "worst": "follow's elbow",
+          "strain": 0.59,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -18956,8 +18956,8 @@
           "turn": 0.82,
           "ok": true,
           "reseed": false,
-          "strain": 0.37,
-          "worst": "follow's elbow",
+          "strain": 0.64,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -19029,8 +19029,8 @@
           "turn": 0.84,
           "ok": true,
           "reseed": false,
-          "strain": 0.37,
-          "worst": "follow's elbow",
+          "strain": 0.64,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -19102,8 +19102,8 @@
           "turn": 0.86,
           "ok": true,
           "reseed": false,
-          "strain": 0.38,
-          "worst": "follow's elbow",
+          "strain": 0.68,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -19175,8 +19175,8 @@
           "turn": 0.88,
           "ok": true,
           "reseed": false,
-          "strain": 0.41,
-          "worst": "follow's elbow",
+          "strain": 0.73,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -19248,8 +19248,8 @@
           "turn": 0.9,
           "ok": true,
           "reseed": false,
-          "strain": 0.43,
-          "worst": "follow's elbow",
+          "strain": 0.86,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -19321,8 +19321,8 @@
           "turn": 0.92,
           "ok": true,
           "reseed": false,
-          "strain": 0.42,
-          "worst": "follow's elbow",
+          "strain": 1.0,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -19394,7 +19394,7 @@
           "turn": 0.94,
           "ok": true,
           "reseed": false,
-          "strain": 0.52,
+          "strain": 1.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -19467,8 +19467,8 @@
           "turn": 0.96,
           "ok": true,
           "reseed": false,
-          "strain": 0.45,
-          "worst": "lead's wrist",
+          "strain": 0.71,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -19540,8 +19540,8 @@
           "turn": 0.98,
           "ok": true,
           "reseed": false,
-          "strain": 0.45,
-          "worst": "lead's wrist",
+          "strain": 0.82,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -19613,8 +19613,8 @@
           "turn": 1.0,
           "ok": true,
           "reseed": false,
-          "strain": 0.5,
-          "worst": "lead's wrist",
+          "strain": 0.91,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -19686,8 +19686,8 @@
           "turn": 1.02,
           "ok": true,
           "reseed": false,
-          "strain": 0.55,
-          "worst": "lead's wrist",
+          "strain": 1.0,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -19759,8 +19759,8 @@
           "turn": 1.04,
           "ok": true,
           "reseed": false,
-          "strain": 0.62,
-          "worst": "lead's wrist",
+          "strain": 1.0,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -19832,8 +19832,8 @@
           "turn": 1.06,
           "ok": true,
           "reseed": false,
-          "strain": 0.7,
-          "worst": "lead's wrist",
+          "strain": 1.0,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -19905,8 +19905,8 @@
           "turn": 1.08,
           "ok": true,
           "reseed": false,
-          "strain": 0.79,
-          "worst": "lead's wrist",
+          "strain": 1.0,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -19978,8 +19978,8 @@
           "turn": 1.1,
           "ok": true,
           "reseed": false,
-          "strain": 0.88,
-          "worst": "lead's wrist",
+          "strain": 1.0,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -20051,8 +20051,8 @@
           "turn": 1.12,
           "ok": true,
           "reseed": false,
-          "strain": 0.96,
-          "worst": "lead's wrist",
+          "strain": 1.0,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -20124,8 +20124,8 @@
           "turn": 1.14,
           "ok": true,
           "reseed": false,
-          "strain": 0.98,
-          "worst": "lead's wrist",
+          "strain": 1.0,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -20198,7 +20198,7 @@
           "ok": true,
           "reseed": false,
           "strain": 1.0,
-          "worst": "lead's wrist",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -20796,7 +20796,7 @@
           "turn": -2.42,
           "ok": true,
           "reseed": false,
-          "strain": 0.76,
+          "strain": 0.16,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -20869,7 +20869,7 @@
           "turn": -2.4,
           "ok": true,
           "reseed": false,
-          "strain": 0.29,
+          "strain": 0.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -20942,7 +20942,7 @@
           "turn": -2.38,
           "ok": true,
           "reseed": false,
-          "strain": 0.41,
+          "strain": 0.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -21015,7 +21015,7 @@
           "turn": -2.36,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.54,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -21380,7 +21380,7 @@
           "turn": -2.26,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.75,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -21453,7 +21453,7 @@
           "turn": -2.24,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.78,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -21526,7 +21526,7 @@
           "turn": -2.22,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.63,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -21599,7 +21599,7 @@
           "turn": -2.2,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.5,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -22695,7 +22695,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -22768,7 +22768,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -22841,7 +22841,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -22914,7 +22914,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -22987,7 +22987,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -23060,7 +23060,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -23133,7 +23133,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -23206,7 +23206,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -23279,7 +23279,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -23352,7 +23352,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -23425,7 +23425,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -23498,7 +23498,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -23571,7 +23571,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -23644,7 +23644,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -23717,7 +23717,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -23790,7 +23790,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -23863,7 +23863,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -23936,7 +23936,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -24009,7 +24009,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -24082,7 +24082,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -24155,7 +24155,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -24228,7 +24228,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -24301,7 +24301,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -24374,7 +24374,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -24447,7 +24447,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -25030,7 +25030,7 @@
           "turn": -1.26,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.77,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -25103,7 +25103,7 @@
           "turn": -1.24,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.78,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -25176,7 +25176,7 @@
           "turn": -1.22,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.64,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -25249,7 +25249,7 @@
           "turn": -1.2,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.5,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -25322,8 +25322,8 @@
           "turn": -1.18,
           "ok": true,
           "reseed": false,
-          "strain": 0.37,
-          "worst": "follow's shoulder, twist",
+          "strain": 0.36,
+          "worst": "follow's elbow",
           "bodies": [
             {
               "centre": [
@@ -26272,7 +26272,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -26345,7 +26345,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -26491,7 +26491,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -26564,7 +26564,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -26637,7 +26637,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -26710,7 +26710,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -26783,7 +26783,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -26856,7 +26856,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -30506,7 +30506,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -30578,8 +30578,8 @@
           "turn": 0.26,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.02,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -30651,8 +30651,8 @@
           "turn": 0.28,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.06,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -30724,8 +30724,8 @@
           "turn": 0.3,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.1,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -30797,8 +30797,8 @@
           "turn": 0.32,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.12,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -30870,8 +30870,8 @@
           "turn": 0.34,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.11,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -30943,8 +30943,8 @@
           "turn": 0.36,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.1,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -31016,8 +31016,8 @@
           "turn": 0.38,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.09,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -31089,8 +31089,8 @@
           "turn": 0.4,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.07,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -31162,8 +31162,8 @@
           "turn": 0.42,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.05,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -31235,8 +31235,8 @@
           "turn": 0.44,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.01,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -31308,8 +31308,8 @@
           "turn": 0.46,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.04,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -31381,8 +31381,8 @@
           "turn": 0.48,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.03,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -31454,8 +31454,8 @@
           "turn": 0.5,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.05,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -31527,8 +31527,8 @@
           "turn": 0.52,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.08,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -31600,8 +31600,8 @@
           "turn": 0.54,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.09,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -31673,8 +31673,8 @@
           "turn": 0.56,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.1,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -31746,8 +31746,8 @@
           "turn": 0.58,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.13,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -31819,8 +31819,8 @@
           "turn": 0.6,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.04,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -31892,8 +31892,8 @@
           "turn": 0.62,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.14,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -31965,8 +31965,8 @@
           "turn": 0.64,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.11,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -32038,8 +32038,8 @@
           "turn": 0.66,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.12,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -32111,8 +32111,8 @@
           "turn": 0.68,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.14,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -32184,8 +32184,8 @@
           "turn": 0.7,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.14,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -32257,8 +32257,8 @@
           "turn": 0.72,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.12,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -32330,8 +32330,8 @@
           "turn": 0.74,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.12,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -32403,8 +32403,8 @@
           "turn": 0.76,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.1,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -32476,8 +32476,8 @@
           "turn": 0.78,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.14,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -32549,8 +32549,8 @@
           "turn": 0.8,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.1,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -32623,7 +32623,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -32696,7 +32696,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -32769,7 +32769,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -33353,7 +33353,7 @@
           "ok": true,
           "reseed": false,
           "strain": 1.0,
-          "worst": "lead's wrist",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -33426,7 +33426,7 @@
           "ok": true,
           "reseed": false,
           "strain": 1.0,
-          "worst": "lead's wrist",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -33499,7 +33499,7 @@
           "ok": true,
           "reseed": false,
           "strain": 1.0,
-          "worst": "lead's wrist",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -33571,8 +33571,8 @@
           "turn": 1.08,
           "ok": true,
           "reseed": false,
-          "strain": 0.37,
-          "worst": "lead's wrist",
+          "strain": 0.91,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -33644,8 +33644,8 @@
           "turn": 1.1,
           "ok": true,
           "reseed": false,
-          "strain": 0.53,
-          "worst": "lead's wrist",
+          "strain": 0.86,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -33717,8 +33717,8 @@
           "turn": 1.12,
           "ok": true,
           "reseed": false,
-          "strain": 0.71,
-          "worst": "lead's wrist",
+          "strain": 1.0,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -33790,8 +33790,8 @@
           "turn": 1.14,
           "ok": true,
           "reseed": false,
-          "strain": 0.68,
-          "worst": "lead's wrist",
+          "strain": 1.0,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -33863,7 +33863,7 @@
           "turn": 1.16,
           "ok": true,
           "reseed": false,
-          "strain": 0.59,
+          "strain": 1.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -33936,7 +33936,7 @@
           "turn": 1.18,
           "ok": true,
           "reseed": false,
-          "strain": 0.56,
+          "strain": 1.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -34009,7 +34009,7 @@
           "turn": 1.2,
           "ok": true,
           "reseed": false,
-          "strain": 0.58,
+          "strain": 1.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -34082,7 +34082,7 @@
           "turn": 1.22,
           "ok": true,
           "reseed": false,
-          "strain": 0.39,
+          "strain": 0.99,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -34155,7 +34155,7 @@
           "turn": 1.24,
           "ok": true,
           "reseed": false,
-          "strain": 0.16,
+          "strain": 0.76,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -34229,7 +34229,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -34302,7 +34302,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -34375,7 +34375,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -34447,8 +34447,8 @@
           "turn": 1.32,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.02,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -34520,8 +34520,8 @@
           "turn": 1.34,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.03,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -34593,8 +34593,8 @@
           "turn": 1.36,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.05,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -34666,8 +34666,8 @@
           "turn": 1.38,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.06,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -34739,8 +34739,8 @@
           "turn": 1.4,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.04,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -34812,8 +34812,8 @@
           "turn": 1.42,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.04,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -34885,8 +34885,8 @@
           "turn": 1.44,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.02,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -34958,8 +34958,8 @@
           "turn": 1.46,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.05,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -35031,8 +35031,8 @@
           "turn": 1.48,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.07,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -35104,8 +35104,8 @@
           "turn": 1.5,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.08,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -35177,8 +35177,8 @@
           "turn": 1.52,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.1,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -35250,8 +35250,8 @@
           "turn": 1.54,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.12,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -35323,8 +35323,8 @@
           "turn": 1.56,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.13,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -35396,8 +35396,8 @@
           "turn": 1.58,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.14,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -35469,8 +35469,8 @@
           "turn": 1.6,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.15,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -35542,8 +35542,8 @@
           "turn": 1.62,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.16,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -35615,8 +35615,8 @@
           "turn": 1.64,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.09,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -35688,8 +35688,8 @@
           "turn": 1.66,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.19,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -35761,8 +35761,8 @@
           "turn": 1.68,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.16,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -35834,8 +35834,8 @@
           "turn": 1.7,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.15,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -35907,8 +35907,8 @@
           "turn": 1.72,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.2,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -35980,8 +35980,8 @@
           "turn": 1.74,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.07,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -36053,8 +36053,8 @@
           "turn": 1.76,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.05,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -36127,7 +36127,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -36199,8 +36199,8 @@
           "turn": 1.8,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.01,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -36272,7 +36272,7 @@
           "turn": 1.82,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
+          "strain": 0.01,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -36419,7 +36419,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -36492,7 +36492,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -36565,7 +36565,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -37075,8 +37075,8 @@
           "turn": 2.04,
           "ok": true,
           "reseed": false,
-          "strain": 0.97,
-          "worst": "lead's wrist",
+          "strain": 1.0,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -37148,8 +37148,8 @@
           "turn": 2.06,
           "ok": true,
           "reseed": false,
-          "strain": 0.76,
-          "worst": "lead's wrist",
+          "strain": 1.0,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -37221,7 +37221,7 @@
           "turn": 2.08,
           "ok": true,
           "reseed": false,
-          "strain": 0.36,
+          "strain": 0.96,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -37294,8 +37294,8 @@
           "turn": 2.1,
           "ok": true,
           "reseed": false,
-          "strain": 0.56,
-          "worst": "lead's wrist",
+          "strain": 0.92,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -37367,8 +37367,8 @@
           "turn": 2.12,
           "ok": true,
           "reseed": false,
-          "strain": 0.76,
-          "worst": "lead's wrist",
+          "strain": 1.0,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -37440,8 +37440,8 @@
           "turn": 2.14,
           "ok": true,
           "reseed": false,
-          "strain": 0.7,
-          "worst": "lead's wrist",
+          "strain": 1.0,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -37513,8 +37513,8 @@
           "turn": 2.16,
           "ok": true,
           "reseed": false,
-          "strain": 0.61,
-          "worst": "lead's wrist",
+          "strain": 1.0,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -37586,7 +37586,7 @@
           "turn": 2.18,
           "ok": true,
           "reseed": false,
-          "strain": 0.59,
+          "strain": 1.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -37659,7 +37659,7 @@
           "turn": 2.2,
           "ok": true,
           "reseed": false,
-          "strain": 0.59,
+          "strain": 1.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -37732,7 +37732,7 @@
           "turn": 2.22,
           "ok": true,
           "reseed": false,
-          "strain": 0.41,
+          "strain": 1.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -37805,7 +37805,7 @@
           "turn": 2.24,
           "ok": true,
           "reseed": false,
-          "strain": 0.17,
+          "strain": 0.77,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -37879,7 +37879,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -37952,7 +37952,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -38024,8 +38024,8 @@
           "turn": 2.3,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.01,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -38097,8 +38097,8 @@
           "turn": 2.32,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.03,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -38170,8 +38170,8 @@
           "turn": 2.34,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.05,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -38243,8 +38243,8 @@
           "turn": 2.36,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.06,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -38316,8 +38316,8 @@
           "turn": 2.38,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.07,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -38389,8 +38389,8 @@
           "turn": 2.4,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.03,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -38462,8 +38462,8 @@
           "turn": 2.42,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.01,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -38535,8 +38535,8 @@
           "turn": 2.44,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.06,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -38608,8 +38608,8 @@
           "turn": 2.46,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.06,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -38681,8 +38681,8 @@
           "turn": 2.48,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.07,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -38754,8 +38754,8 @@
           "turn": 2.5,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.09,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -81009,7 +81009,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "lead's shoulder, twist",
+          "worst": "follow's wrist",
           "bodies": [
             {
               "centre": [
@@ -81227,7 +81227,7 @@
           "turn": -0.02,
           "ok": true,
           "reseed": false,
-          "strain": 0.03,
+          "strain": 0.0,
           "worst": "lead's shoulder, twist",
           "bodies": [
             {
@@ -81301,7 +81301,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "lead's shoulder, twist",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -81374,7 +81374,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "lead's shoulder, twist",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -81447,7 +81447,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "lead's shoulder, twist",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -84293,8 +84293,8 @@
           "turn": 0.82,
           "ok": true,
           "reseed": false,
-          "strain": 0.04,
-          "worst": "follow's shoulder, behind",
+          "strain": 0.3,
+          "worst": "lead's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -84950,8 +84950,8 @@
           "turn": 1.0,
           "ok": true,
           "reseed": false,
-          "strain": 0.03,
-          "worst": "follow's shoulder, behind",
+          "strain": 0.05,
+          "worst": "lead's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -91754,8 +91754,8 @@
           "turn": -0.04,
           "ok": true,
           "reseed": false,
-          "strain": 0.02,
-          "worst": "lead's shoulder, twist",
+          "strain": 0.0,
+          "worst": "lead's elbow",
           "bodies": [
             {
               "centre": [
@@ -91827,7 +91827,7 @@
           "turn": -0.02,
           "ok": true,
           "reseed": false,
-          "strain": 0.13,
+          "strain": 0.0,
           "worst": "lead's shoulder, twist",
           "bodies": [
             {
@@ -91901,7 +91901,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "lead's shoulder, twist",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -91974,7 +91974,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "lead's shoulder, twist",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -93798,8 +93798,8 @@
           "turn": 0.52,
           "ok": true,
           "reseed": false,
-          "strain": 0.22,
-          "worst": "lead's wrist",
+          "strain": 0.45,
+          "worst": "lead's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -106735,7 +106735,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "lead's shoulder, twist",
+          "worst": "lead's elbow",
           "bodies": [
             {
               "centre": [
@@ -106808,7 +106808,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "lead's shoulder, twist",
+          "worst": "lead's elbow",
           "bodies": [
             {
               "centre": [
@@ -106880,7 +106880,7 @@
           "turn": -0.04,
           "ok": true,
           "reseed": false,
-          "strain": 0.05,
+          "strain": 0.0,
           "worst": "lead's shoulder, twist",
           "bodies": [
             {
@@ -106953,7 +106953,7 @@
           "turn": -0.02,
           "ok": true,
           "reseed": false,
-          "strain": 0.08,
+          "strain": 0.0,
           "worst": "lead's shoulder, twist",
           "bodies": [
             {
@@ -107026,8 +107026,8 @@
           "turn": 0.0,
           "ok": true,
           "reseed": false,
-          "strain": 0.07,
-          "worst": "lead's shoulder, twist",
+          "strain": 0.0,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -107099,8 +107099,8 @@
           "turn": 0.02,
           "ok": true,
           "reseed": false,
-          "strain": 0.07,
-          "worst": "lead's shoulder, twist",
+          "strain": 0.0,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -107172,8 +107172,8 @@
           "turn": 0.04,
           "ok": true,
           "reseed": false,
-          "strain": 0.04,
-          "worst": "lead's shoulder, twist",
+          "strain": 0.01,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -107975,8 +107975,8 @@
           "turn": 0.26,
           "ok": true,
           "reseed": false,
-          "strain": 0.92,
-          "worst": "lead's shoulder, twist",
+          "strain": 0.9,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -120181,7 +120181,7 @@
           "turn": -0.42,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.93,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -120473,7 +120473,7 @@
           "turn": -0.34,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.95,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -120546,7 +120546,7 @@
           "turn": -0.32,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.81,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -120619,7 +120619,7 @@
           "turn": -0.3,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.73,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -120692,7 +120692,7 @@
           "turn": -0.28,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.67,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -120765,7 +120765,7 @@
           "turn": -0.26,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.67,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -120838,7 +120838,7 @@
           "turn": -0.24,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.61,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -120911,7 +120911,7 @@
           "turn": -0.22,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.45,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -120984,7 +120984,7 @@
           "turn": -0.2,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.47,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -121057,7 +121057,7 @@
           "turn": -0.18,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.53,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -121130,7 +121130,7 @@
           "turn": -0.16,
           "ok": true,
           "reseed": false,
-          "strain": 0.96,
+          "strain": 0.36,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -121203,7 +121203,7 @@
           "turn": -0.14,
           "ok": true,
           "reseed": false,
-          "strain": 0.77,
+          "strain": 0.17,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -121276,7 +121276,7 @@
           "turn": -0.12,
           "ok": true,
           "reseed": false,
-          "strain": 0.56,
+          "strain": 0.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -121349,7 +121349,7 @@
           "turn": -0.1,
           "ok": true,
           "reseed": false,
-          "strain": 0.38,
+          "strain": 0.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -121422,7 +121422,7 @@
           "turn": -0.08,
           "ok": true,
           "reseed": false,
-          "strain": 0.29,
+          "strain": 0.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -121495,7 +121495,7 @@
           "turn": -0.06,
           "ok": true,
           "reseed": false,
-          "strain": 0.19,
+          "strain": 0.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -121568,7 +121568,7 @@
           "turn": -0.04,
           "ok": true,
           "reseed": false,
-          "strain": 0.15,
+          "strain": 0.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -121641,7 +121641,7 @@
           "turn": -0.02,
           "ok": true,
           "reseed": false,
-          "strain": 0.01,
+          "strain": 0.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -121714,7 +121714,7 @@
           "turn": -0.0,
           "ok": true,
           "reseed": false,
-          "strain": 0.08,
+          "strain": 0.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -121788,7 +121788,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's shoulder, twist",
+          "worst": "lead's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -121861,7 +121861,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's shoulder, twist",
+          "worst": "lead's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -122591,7 +122591,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "lead's shoulder, behind",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -122664,7 +122664,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "lead's shoulder, behind",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -122737,7 +122737,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "lead's shoulder, behind",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -122810,7 +122810,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "lead's shoulder, behind",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -122883,7 +122883,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "lead's shoulder, behind",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -122956,7 +122956,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "lead's shoulder, behind",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -123029,7 +123029,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "lead's shoulder, behind",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -123102,7 +123102,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "lead's shoulder, behind",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -123175,7 +123175,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's wrist",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -123831,8 +123831,8 @@
           "turn": 0.58,
           "ok": true,
           "reseed": false,
-          "strain": 0.01,
-          "worst": "follow's wrist",
+          "strain": 0.12,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -123904,8 +123904,8 @@
           "turn": 0.6,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.17,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -123977,8 +123977,8 @@
           "turn": 0.62,
           "ok": true,
           "reseed": false,
-          "strain": 0.01,
-          "worst": "follow's wrist",
+          "strain": 0.25,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -124050,8 +124050,8 @@
           "turn": 0.64,
           "ok": true,
           "reseed": false,
-          "strain": 0.05,
-          "worst": "follow's wrist",
+          "strain": 0.32,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -124123,8 +124123,8 @@
           "turn": 0.66,
           "ok": true,
           "reseed": false,
-          "strain": 0.05,
-          "worst": "follow's wrist",
+          "strain": 0.38,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -124196,8 +124196,8 @@
           "turn": 0.68,
           "ok": true,
           "reseed": false,
-          "strain": 0.05,
-          "worst": "follow's wrist",
+          "strain": 0.4,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -124269,8 +124269,8 @@
           "turn": 0.7,
           "ok": true,
           "reseed": false,
-          "strain": 0.1,
-          "worst": "follow's wrist",
+          "strain": 0.47,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -124342,8 +124342,8 @@
           "turn": 0.72,
           "ok": true,
           "reseed": false,
-          "strain": 0.12,
-          "worst": "lead's wrist",
+          "strain": 0.58,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -124415,7 +124415,7 @@
           "turn": 0.74,
           "ok": true,
           "reseed": false,
-          "strain": 0.1,
+          "strain": 0.7,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -124488,7 +124488,7 @@
           "turn": 0.76,
           "ok": true,
           "reseed": false,
-          "strain": 0.15,
+          "strain": 0.75,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -124561,7 +124561,7 @@
           "turn": 0.78,
           "ok": true,
           "reseed": false,
-          "strain": 0.25,
+          "strain": 0.85,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -124634,7 +124634,7 @@
           "turn": 0.8,
           "ok": true,
           "reseed": false,
-          "strain": 0.28,
+          "strain": 0.88,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -124707,7 +124707,7 @@
           "turn": 0.82,
           "ok": true,
           "reseed": false,
-          "strain": 0.32,
+          "strain": 0.92,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -124780,8 +124780,8 @@
           "turn": 0.84,
           "ok": true,
           "reseed": false,
-          "strain": 0.42,
-          "worst": "lead's wrist",
+          "strain": 0.98,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -124853,8 +124853,8 @@
           "turn": 0.86,
           "ok": true,
           "reseed": false,
-          "strain": 0.57,
-          "worst": "lead's wrist",
+          "strain": 1.0,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -124926,8 +124926,8 @@
           "turn": 0.88,
           "ok": true,
           "reseed": false,
-          "strain": 0.64,
-          "worst": "lead's wrist",
+          "strain": 1.0,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -124999,7 +124999,7 @@
           "turn": 0.9,
           "ok": true,
           "reseed": false,
-          "strain": 0.61,
+          "strain": 1.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -125072,7 +125072,7 @@
           "turn": 0.92,
           "ok": true,
           "reseed": false,
-          "strain": 0.66,
+          "strain": 1.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -125145,7 +125145,7 @@
           "turn": 0.94,
           "ok": true,
           "reseed": false,
-          "strain": 0.65,
+          "strain": 1.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -125218,7 +125218,7 @@
           "turn": 0.96,
           "ok": true,
           "reseed": false,
-          "strain": 0.74,
+          "strain": 1.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -125291,7 +125291,7 @@
           "turn": 0.98,
           "ok": true,
           "reseed": false,
-          "strain": 0.87,
+          "strain": 1.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -129540,8 +129540,8 @@
           "turn": -0.5,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
-          "worst": "follow's shoulder, twist",
+          "strain": 0.86,
+          "worst": "lead's wrist",
           "bodies": [
             {
               "centre": [
@@ -130343,7 +130343,7 @@
           "turn": -0.28,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.85,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -130635,7 +130635,7 @@
           "turn": -0.2,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.94,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -130708,7 +130708,7 @@
           "turn": -0.18,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.77,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -130781,7 +130781,7 @@
           "turn": -0.16,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.64,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -130854,7 +130854,7 @@
           "turn": -0.14,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.4,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -130927,8 +130927,8 @@
           "turn": -0.12,
           "ok": true,
           "reseed": false,
-          "strain": 0.73,
-          "worst": "follow's shoulder, twist",
+          "strain": 0.27,
+          "worst": "follow's elbow",
           "bodies": [
             {
               "centre": [
@@ -131000,8 +131000,8 @@
           "turn": -0.1,
           "ok": true,
           "reseed": false,
-          "strain": 0.65,
-          "worst": "follow's shoulder, twist",
+          "strain": 0.21,
+          "worst": "follow's elbow",
           "bodies": [
             {
               "centre": [
@@ -131073,8 +131073,8 @@
           "turn": -0.08,
           "ok": true,
           "reseed": false,
-          "strain": 0.71,
-          "worst": "follow's shoulder, twist",
+          "strain": 0.16,
+          "worst": "follow's elbow",
           "bodies": [
             {
               "centre": [
@@ -131146,8 +131146,8 @@
           "turn": -0.06,
           "ok": true,
           "reseed": false,
-          "strain": 0.6,
-          "worst": "follow's shoulder, twist",
+          "strain": 0.02,
+          "worst": "follow's elbow",
           "bodies": [
             {
               "centre": [
@@ -131219,7 +131219,7 @@
           "turn": -0.04,
           "ok": true,
           "reseed": false,
-          "strain": 0.42,
+          "strain": 0.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -131292,7 +131292,7 @@
           "turn": -0.02,
           "ok": true,
           "reseed": false,
-          "strain": 0.18,
+          "strain": 0.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -131365,7 +131365,7 @@
           "turn": -0.0,
           "ok": true,
           "reseed": false,
-          "strain": 0.18,
+          "strain": 0.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -131439,7 +131439,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's shoulder, twist",
+          "worst": "lead's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -134577,8 +134577,8 @@
           "turn": 0.88,
           "ok": true,
           "reseed": false,
-          "strain": 0.4,
-          "worst": "follow's elbow",
+          "strain": 0.5,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -134650,8 +134650,8 @@
           "turn": 0.9,
           "ok": true,
           "reseed": false,
-          "strain": 0.4,
-          "worst": "follow's elbow",
+          "strain": 0.53,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -134723,8 +134723,8 @@
           "turn": 0.92,
           "ok": true,
           "reseed": false,
-          "strain": 0.39,
-          "worst": "follow's elbow",
+          "strain": 0.56,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -134796,8 +134796,8 @@
           "turn": 0.94,
           "ok": true,
           "reseed": false,
-          "strain": 0.38,
-          "worst": "follow's elbow",
+          "strain": 0.66,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -134869,8 +134869,8 @@
           "turn": 0.96,
           "ok": true,
           "reseed": false,
-          "strain": 0.38,
-          "worst": "follow's elbow",
+          "strain": 0.67,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -134942,8 +134942,8 @@
           "turn": 0.98,
           "ok": true,
           "reseed": false,
-          "strain": 0.37,
-          "worst": "follow's elbow",
+          "strain": 0.67,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -135015,8 +135015,8 @@
           "turn": 1.0,
           "ok": true,
           "reseed": false,
-          "strain": 0.37,
-          "worst": "follow's elbow",
+          "strain": 0.71,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -135088,8 +135088,8 @@
           "turn": 1.02,
           "ok": true,
           "reseed": false,
-          "strain": 0.38,
-          "worst": "follow's elbow",
+          "strain": 0.78,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -135161,8 +135161,8 @@
           "turn": 1.04,
           "ok": true,
           "reseed": false,
-          "strain": 0.41,
-          "worst": "follow's wrist",
+          "strain": 0.9,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -135234,7 +135234,7 @@
           "turn": 1.06,
           "ok": true,
           "reseed": false,
-          "strain": 0.44,
+          "strain": 1.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -135307,7 +135307,7 @@
           "turn": 1.08,
           "ok": true,
           "reseed": false,
-          "strain": 0.61,
+          "strain": 1.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -135380,7 +135380,7 @@
           "turn": 1.1,
           "ok": true,
           "reseed": false,
-          "strain": 0.72,
+          "strain": 1.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -135453,7 +135453,7 @@
           "turn": 1.12,
           "ok": true,
           "reseed": false,
-          "strain": 0.81,
+          "strain": 1.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -135599,7 +135599,7 @@
           "turn": 1.16,
           "ok": true,
           "reseed": false,
-          "strain": 0.69,
+          "strain": 1.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -135672,8 +135672,8 @@
           "turn": 1.18,
           "ok": true,
           "reseed": false,
-          "strain": 0.54,
-          "worst": "follow's wrist",
+          "strain": 1.0,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -135745,7 +135745,7 @@
           "turn": 1.2,
           "ok": true,
           "reseed": false,
-          "strain": 0.51,
+          "strain": 1.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -135818,8 +135818,8 @@
           "turn": 1.22,
           "ok": true,
           "reseed": false,
-          "strain": 0.63,
-          "worst": "lead's wrist",
+          "strain": 1.0,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -135891,8 +135891,8 @@
           "turn": 1.24,
           "ok": true,
           "reseed": false,
-          "strain": 0.72,
-          "worst": "lead's wrist",
+          "strain": 1.0,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -135964,8 +135964,8 @@
           "turn": 1.26,
           "ok": true,
           "reseed": false,
-          "strain": 0.76,
-          "worst": "lead's wrist",
+          "strain": 1.0,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -136037,8 +136037,8 @@
           "turn": 1.28,
           "ok": true,
           "reseed": false,
-          "strain": 0.81,
-          "worst": "lead's wrist",
+          "strain": 1.0,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -136110,7 +136110,7 @@
           "turn": 1.3,
           "ok": true,
           "reseed": false,
-          "strain": 0.91,
+          "strain": 1.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -136563,7 +136563,7 @@
           "turn": -2.48,
           "ok": true,
           "reseed": false,
-          "strain": 0.35,
+          "strain": 0.95,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -136709,7 +136709,7 @@
           "turn": -2.44,
           "ok": true,
           "reseed": false,
-          "strain": 0.18,
+          "strain": 0.78,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -136782,7 +136782,7 @@
           "turn": -2.42,
           "ok": true,
           "reseed": false,
-          "strain": 0.65,
+          "strain": 0.05,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -136855,7 +136855,7 @@
           "turn": -2.4,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
+          "strain": 0.36,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -136928,7 +136928,7 @@
           "turn": -2.38,
           "ok": true,
           "reseed": false,
-          "strain": 0.15,
+          "strain": 0.75,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -137731,7 +137731,7 @@
           "turn": -2.16,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.6,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -137804,8 +137804,8 @@
           "turn": -2.14,
           "ok": true,
           "reseed": false,
-          "strain": 0.22,
-          "worst": "follow's shoulder, twist",
+          "strain": 0.06,
+          "worst": "follow's wrist",
           "bodies": [
             {
               "centre": [
@@ -137877,8 +137877,8 @@
           "turn": -2.12,
           "ok": true,
           "reseed": false,
-          "strain": 0.84,
-          "worst": "follow's shoulder, twist",
+          "strain": 0.6,
+          "worst": "lead's wrist",
           "bodies": [
             {
               "centre": [
@@ -138023,8 +138023,8 @@
           "turn": -2.08,
           "ok": true,
           "reseed": false,
-          "strain": 0.67,
-          "worst": "follow's shoulder, twist",
+          "strain": 0.25,
+          "worst": "lead's wrist",
           "bodies": [
             {
               "centre": [
@@ -138096,7 +138096,7 @@
           "turn": -2.06,
           "ok": true,
           "reseed": false,
-          "strain": 0.96,
+          "strain": 0.36,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -138169,8 +138169,8 @@
           "turn": -2.04,
           "ok": true,
           "reseed": false,
-          "strain": 0.16,
-          "worst": "follow's shoulder, twist",
+          "strain": 0.03,
+          "worst": "follow's shoulder, behind",
           "bodies": [
             {
               "centre": [
@@ -138681,7 +138681,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -138754,7 +138754,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -138827,7 +138827,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -138900,7 +138900,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -138973,7 +138973,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -139046,7 +139046,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -139119,7 +139119,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -139192,7 +139192,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -139265,7 +139265,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -139338,7 +139338,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -139411,7 +139411,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -139484,7 +139484,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -139557,7 +139557,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -139630,7 +139630,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -139703,7 +139703,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -139776,7 +139776,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -139849,7 +139849,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -139922,7 +139922,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -139995,7 +139995,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -140068,7 +140068,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -140214,7 +140214,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's shoulder, behind",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -140287,7 +140287,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's shoulder, twist",
+          "worst": "follow's shoulder, behind",
           "bodies": [
             {
               "centre": [
@@ -140359,7 +140359,7 @@
           "turn": -1.44,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
+          "strain": 0.04,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -140432,7 +140432,7 @@
           "turn": -1.42,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
+          "strain": 0.25,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -140506,7 +140506,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's shoulder, behind",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -141381,8 +141381,8 @@
           "turn": -1.16,
           "ok": true,
           "reseed": false,
-          "strain": 0.48,
-          "worst": "follow's shoulder, twist",
+          "strain": 0.06,
+          "worst": "follow's shoulder, behind",
           "bodies": [
             {
               "centre": [
@@ -141454,7 +141454,7 @@
           "turn": -1.14,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.56,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -141673,7 +141673,7 @@
           "turn": -1.08,
           "ok": true,
           "reseed": false,
-          "strain": 0.8,
+          "strain": 0.2,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -141746,7 +141746,7 @@
           "turn": -1.06,
           "ok": true,
           "reseed": false,
-          "strain": 0.95,
+          "strain": 0.35,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -141819,8 +141819,8 @@
           "turn": -1.04,
           "ok": true,
           "reseed": false,
-          "strain": 0.17,
-          "worst": "follow's shoulder, twist",
+          "strain": 0.03,
+          "worst": "follow's shoulder, behind",
           "bodies": [
             {
               "centre": [
@@ -142331,7 +142331,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -142404,7 +142404,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -142477,7 +142477,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -142550,7 +142550,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -142623,7 +142623,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -142696,7 +142696,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -142769,7 +142769,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -142842,7 +142842,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -142915,7 +142915,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -142988,7 +142988,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -143061,7 +143061,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -143134,7 +143134,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -143207,7 +143207,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -143280,7 +143280,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -143353,7 +143353,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -143426,7 +143426,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -143499,7 +143499,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -143572,7 +143572,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's shoulder, behind",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -143644,7 +143644,7 @@
           "turn": -0.54,
           "ok": true,
           "reseed": false,
-          "strain": 0.18,
+          "strain": 0.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -143717,7 +143717,7 @@
           "turn": -0.52,
           "ok": true,
           "reseed": false,
-          "strain": 0.08,
+          "strain": 0.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -143863,7 +143863,7 @@
           "turn": -0.48,
           "ok": true,
           "reseed": false,
-          "strain": 0.15,
+          "strain": 0.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -143936,7 +143936,7 @@
           "turn": -0.46,
           "ok": true,
           "reseed": false,
-          "strain": 0.2,
+          "strain": 0.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -144009,7 +144009,7 @@
           "turn": -0.44,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.87,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -144082,7 +144082,7 @@
           "turn": -0.42,
           "ok": true,
           "reseed": false,
-          "strain": 0.98,
+          "strain": 1.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -144374,7 +144374,7 @@
           "turn": -0.34,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.82,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -144447,7 +144447,7 @@
           "turn": -0.32,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.69,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -144520,7 +144520,7 @@
           "turn": -0.3,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.83,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -144593,7 +144593,7 @@
           "turn": -0.28,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.93,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -144666,7 +144666,7 @@
           "turn": -0.26,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.9,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -144739,7 +144739,7 @@
           "turn": -0.24,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.86,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -144812,7 +144812,7 @@
           "turn": -0.22,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.8,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -144885,7 +144885,7 @@
           "turn": -0.2,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.57,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -144958,7 +144958,7 @@
           "turn": -0.18,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.6,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -145031,7 +145031,7 @@
           "turn": -0.16,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.54,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -145104,7 +145104,7 @@
           "turn": -0.14,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.48,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -145177,7 +145177,7 @@
           "turn": -0.12,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.44,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -145250,7 +145250,7 @@
           "turn": -0.1,
           "ok": true,
           "reseed": false,
-          "strain": 0.84,
+          "strain": 0.24,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -145323,7 +145323,7 @@
           "turn": -0.08,
           "ok": true,
           "reseed": false,
-          "strain": 0.76,
+          "strain": 0.16,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -145396,7 +145396,7 @@
           "turn": -0.06,
           "ok": true,
           "reseed": false,
-          "strain": 0.87,
+          "strain": 0.27,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -145469,7 +145469,7 @@
           "turn": -0.04,
           "ok": true,
           "reseed": false,
-          "strain": 0.61,
+          "strain": 0.01,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -145542,7 +145542,7 @@
           "turn": -0.02,
           "ok": true,
           "reseed": false,
-          "strain": 0.37,
+          "strain": 0.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -145615,7 +145615,7 @@
           "turn": -0.0,
           "ok": true,
           "reseed": false,
-          "strain": 0.08,
+          "strain": 0.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -145689,7 +145689,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's shoulder, twist",
+          "worst": "lead's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -145762,7 +145762,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's shoulder, twist",
+          "worst": "lead's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -147368,7 +147368,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -147441,7 +147441,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -147514,7 +147514,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -147586,8 +147586,8 @@
           "turn": 0.54,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.08,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -147659,8 +147659,8 @@
           "turn": 0.56,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.17,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -147732,8 +147732,8 @@
           "turn": 0.58,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.13,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -147805,8 +147805,8 @@
           "turn": 0.6,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.05,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -147878,8 +147878,8 @@
           "turn": 0.62,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.07,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -147951,8 +147951,8 @@
           "turn": 0.64,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.13,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -148024,8 +148024,8 @@
           "turn": 0.66,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.21,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -148097,8 +148097,8 @@
           "turn": 0.68,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.1,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -148170,8 +148170,8 @@
           "turn": 0.7,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.07,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -148243,7 +148243,7 @@
           "turn": 0.72,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
+          "strain": 0.33,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -148316,7 +148316,7 @@
           "turn": 0.74,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
+          "strain": 0.47,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -148389,7 +148389,7 @@
           "turn": 0.76,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
+          "strain": 0.53,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -148462,7 +148462,7 @@
           "turn": 0.78,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
+          "strain": 0.54,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -148535,7 +148535,7 @@
           "turn": 0.8,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
+          "strain": 0.52,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -148608,7 +148608,7 @@
           "turn": 0.82,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
+          "strain": 0.49,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -148681,7 +148681,7 @@
           "turn": 0.84,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
+          "strain": 0.43,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -148754,8 +148754,8 @@
           "turn": 0.86,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.33,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -148827,8 +148827,8 @@
           "turn": 0.88,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.22,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -148900,8 +148900,8 @@
           "turn": 0.9,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.11,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -148974,7 +148974,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -149995,8 +149995,8 @@
           "turn": 1.2,
           "ok": true,
           "reseed": false,
-          "strain": 0.12,
-          "worst": "lead's elbow",
+          "strain": 0.25,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -150068,8 +150068,8 @@
           "turn": 1.22,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "lead's elbow",
+          "strain": 0.34,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -150141,8 +150141,8 @@
           "turn": 1.24,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "lead's elbow",
+          "strain": 0.22,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -150214,7 +150214,7 @@
           "turn": 1.26,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
+          "strain": 0.15,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -150287,8 +150287,8 @@
           "turn": 1.28,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.15,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -150360,8 +150360,8 @@
           "turn": 1.3,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.16,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -150433,8 +150433,8 @@
           "turn": 1.32,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.19,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -150506,8 +150506,8 @@
           "turn": 1.34,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.01,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -150580,7 +150580,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -150653,7 +150653,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -150726,7 +150726,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -150799,7 +150799,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -150872,7 +150872,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -150944,8 +150944,8 @@
           "turn": 1.46,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.05,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -151017,8 +151017,8 @@
           "turn": 1.48,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.07,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -151090,8 +151090,8 @@
           "turn": 1.5,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.09,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -151163,8 +151163,8 @@
           "turn": 1.52,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.09,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -151236,8 +151236,8 @@
           "turn": 1.54,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.09,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -151309,8 +151309,8 @@
           "turn": 1.56,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.07,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -151382,8 +151382,8 @@
           "turn": 1.58,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.04,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -151455,8 +151455,8 @@
           "turn": 1.6,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.05,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -151528,8 +151528,8 @@
           "turn": 1.62,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.09,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -151601,8 +151601,8 @@
           "turn": 1.64,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.09,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -151674,8 +151674,8 @@
           "turn": 1.66,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.22,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -151747,8 +151747,8 @@
           "turn": 1.68,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.18,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -151820,8 +151820,8 @@
           "turn": 1.7,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.06,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -151893,7 +151893,7 @@
           "turn": 1.72,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
+          "strain": 0.31,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -151966,7 +151966,7 @@
           "turn": 1.74,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
+          "strain": 0.48,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -152039,7 +152039,7 @@
           "turn": 1.76,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
+          "strain": 0.53,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -152112,7 +152112,7 @@
           "turn": 1.78,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
+          "strain": 0.54,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -152185,7 +152185,7 @@
           "turn": 1.8,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
+          "strain": 0.52,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -152258,7 +152258,7 @@
           "turn": 1.82,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
+          "strain": 0.49,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -152331,7 +152331,7 @@
           "turn": 1.84,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
+          "strain": 0.43,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -152404,8 +152404,8 @@
           "turn": 1.86,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.33,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -152477,8 +152477,8 @@
           "turn": 1.88,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.25,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -152550,8 +152550,8 @@
           "turn": 1.9,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.13,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -152624,7 +152624,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -153645,8 +153645,8 @@
           "turn": 2.2,
           "ok": true,
           "reseed": false,
-          "strain": 0.12,
-          "worst": "lead's elbow",
+          "strain": 0.25,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -153718,8 +153718,8 @@
           "turn": 2.22,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "lead's elbow",
+          "strain": 0.35,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -153791,8 +153791,8 @@
           "turn": 2.24,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "lead's elbow",
+          "strain": 0.22,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -153864,7 +153864,7 @@
           "turn": 2.26,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
+          "strain": 0.15,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -153937,8 +153937,8 @@
           "turn": 2.28,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.16,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -154010,8 +154010,8 @@
           "turn": 2.3,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.16,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -154083,8 +154083,8 @@
           "turn": 2.32,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.23,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -154156,8 +154156,8 @@
           "turn": 2.34,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.02,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -154230,7 +154230,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -154303,7 +154303,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -154376,7 +154376,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -154449,7 +154449,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -154522,7 +154522,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -154594,8 +154594,8 @@
           "turn": 2.46,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.05,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -154667,8 +154667,8 @@
           "turn": 2.48,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.07,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -154740,8 +154740,8 @@
           "turn": 2.5,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.08,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -158641,8 +158641,8 @@
           "turn": -0.54,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
-          "worst": "follow's shoulder, twist",
+          "strain": 0.91,
+          "worst": "follow's wrist",
           "bodies": [
             {
               "centre": [
@@ -165175,8 +165175,8 @@
           "turn": 0.54,
           "ok": true,
           "reseed": false,
-          "strain": 0.02,
-          "worst": "follow's shoulder, behind",
+          "strain": 0.49,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -165297,7 +165297,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.06,
-          "worst": "follow's shoulder, behind",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -165417,8 +165417,8 @@
           "turn": 0.58,
           "ok": true,
           "reseed": false,
-          "strain": 0.05,
-          "worst": "follow's shoulder, behind",
+          "strain": 0.24,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -165538,8 +165538,8 @@
           "turn": 0.6,
           "ok": true,
           "reseed": false,
-          "strain": 0.04,
-          "worst": "follow's shoulder, behind",
+          "strain": 0.28,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -165659,8 +165659,8 @@
           "turn": 0.62,
           "ok": true,
           "reseed": false,
-          "strain": 0.03,
-          "worst": "follow's shoulder, behind",
+          "strain": 0.32,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -165780,8 +165780,8 @@
           "turn": 0.64,
           "ok": true,
           "reseed": false,
-          "strain": 0.03,
-          "worst": "follow's shoulder, behind",
+          "strain": 0.33,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -165901,8 +165901,8 @@
           "turn": 0.66,
           "ok": true,
           "reseed": false,
-          "strain": 0.02,
-          "worst": "follow's shoulder, behind",
+          "strain": 0.33,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -166022,8 +166022,8 @@
           "turn": 0.68,
           "ok": true,
           "reseed": false,
-          "strain": 0.03,
-          "worst": "follow's shoulder, behind",
+          "strain": 0.37,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -166143,8 +166143,8 @@
           "turn": 0.7,
           "ok": true,
           "reseed": false,
-          "strain": 0.03,
-          "worst": "follow's shoulder, behind",
+          "strain": 0.4,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -166264,8 +166264,8 @@
           "turn": 0.72,
           "ok": true,
           "reseed": false,
-          "strain": 0.04,
-          "worst": "follow's shoulder, behind",
+          "strain": 0.42,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -166385,8 +166385,8 @@
           "turn": 0.74,
           "ok": true,
           "reseed": false,
-          "strain": 0.05,
-          "worst": "follow's wrist",
+          "strain": 0.42,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -166506,8 +166506,8 @@
           "turn": 0.76,
           "ok": true,
           "reseed": false,
-          "strain": 0.04,
-          "worst": "follow's wrist",
+          "strain": 0.39,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -166643,8 +166643,8 @@
           "turn": 0.78,
           "ok": true,
           "reseed": false,
-          "strain": 0.07,
-          "worst": "follow's wrist",
+          "strain": 0.34,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -166780,8 +166780,8 @@
           "turn": 0.8,
           "ok": true,
           "reseed": false,
-          "strain": 0.07,
-          "worst": "follow's wrist",
+          "strain": 0.28,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -166917,8 +166917,8 @@
           "turn": 0.82,
           "ok": true,
           "reseed": false,
-          "strain": 0.1,
-          "worst": "follow's wrist",
+          "strain": 0.24,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -167054,8 +167054,8 @@
           "turn": 0.84,
           "ok": true,
           "reseed": false,
-          "strain": 0.12,
-          "worst": "follow's wrist",
+          "strain": 0.26,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -167191,8 +167191,8 @@
           "turn": 0.86,
           "ok": true,
           "reseed": false,
-          "strain": 0.22,
-          "worst": "follow's wrist",
+          "strain": 0.28,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -168425,7 +168425,7 @@
           "ok": true,
           "reseed": false,
           "strain": 1.0,
-          "worst": "follow's wrist",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -168562,7 +168562,7 @@
           "ok": true,
           "reseed": false,
           "strain": 1.0,
-          "worst": "follow's wrist",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -168699,7 +168699,7 @@
           "ok": true,
           "reseed": false,
           "strain": 1.0,
-          "worst": "follow's wrist",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -168836,7 +168836,7 @@
           "ok": true,
           "reseed": false,
           "strain": 1.0,
-          "worst": "follow's wrist",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -168973,7 +168973,7 @@
           "ok": true,
           "reseed": false,
           "strain": 1.0,
-          "worst": "follow's wrist",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -174401,8 +174401,8 @@
           "turn": -1.5,
           "ok": true,
           "reseed": false,
-          "strain": 0.44,
-          "worst": "follow's shoulder, twist",
+          "strain": 0.42,
+          "worst": "follow's wrist",
           "bodies": [
             {
               "centre": [
@@ -174545,8 +174545,8 @@
           "turn": -1.48,
           "ok": true,
           "reseed": false,
-          "strain": 0.93,
-          "worst": "follow's shoulder, twist",
+          "strain": 0.86,
+          "worst": "follow's wrist",
           "bodies": [
             {
               "centre": [
@@ -178226,7 +178226,7 @@
           "turn": -0.96,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.97,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -178514,7 +178514,7 @@
           "turn": -0.92,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.94,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -178946,7 +178946,7 @@
           "turn": -0.86,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.95,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -179090,7 +179090,7 @@
           "turn": -0.84,
           "ok": true,
           "reseed": false,
-          "strain": 0.91,
+          "strain": 0.77,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -181961,7 +181961,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -182091,7 +182091,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -182221,7 +182221,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -182350,7 +182350,7 @@
           "turn": -0.36,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
+          "strain": 0.28,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -182481,7 +182481,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's shoulder, behind",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -182611,7 +182611,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's shoulder, behind",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -182731,8 +182731,8 @@
           "turn": -0.3,
           "ok": true,
           "reseed": false,
-          "strain": 0.21,
-          "worst": "follow's wrist",
+          "strain": 0.34,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -182852,8 +182852,8 @@
           "turn": -0.28,
           "ok": true,
           "reseed": false,
-          "strain": 0.34,
-          "worst": "follow's wrist",
+          "strain": 0.78,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -188005,7 +188005,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -188914,8 +188914,8 @@
           "turn": 0.66,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.07,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -189044,8 +189044,8 @@
           "turn": 0.68,
           "ok": true,
           "reseed": false,
-          "strain": 0.05,
-          "worst": "follow's elbow",
+          "strain": 0.19,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -189188,8 +189188,8 @@
           "turn": 0.7,
           "ok": true,
           "reseed": false,
-          "strain": 0.01,
-          "worst": "follow's elbow",
+          "strain": 0.22,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -189332,8 +189332,8 @@
           "turn": 0.72,
           "ok": true,
           "reseed": false,
-          "strain": 0.03,
-          "worst": "follow's elbow",
+          "strain": 0.24,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -189476,8 +189476,8 @@
           "turn": 0.74,
           "ok": true,
           "reseed": false,
-          "strain": 0.07,
-          "worst": "follow's elbow",
+          "strain": 0.26,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -189620,8 +189620,8 @@
           "turn": 0.76,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.25,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -189764,8 +189764,8 @@
           "turn": 0.78,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.26,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -190313,7 +190313,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's wrist",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -190442,7 +190442,7 @@
           "turn": 0.88,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
+          "strain": 0.2,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -190572,7 +190572,7 @@
           "turn": 0.9,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
+          "strain": 0.07,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -190832,8 +190832,8 @@
           "turn": 0.94,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's wrist",
+          "strain": 0.16,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -190962,8 +190962,8 @@
           "turn": 0.96,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's wrist",
+          "strain": 0.15,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -191092,8 +191092,8 @@
           "turn": 0.98,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's wrist",
+          "strain": 0.15,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -191229,8 +191229,8 @@
           "turn": 1.0,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's wrist",
+          "strain": 0.2,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -191366,8 +191366,8 @@
           "turn": 1.02,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's wrist",
+          "strain": 0.25,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -191640,8 +191640,8 @@
           "turn": 1.06,
           "ok": true,
           "reseed": false,
-          "strain": 0.21,
-          "worst": "follow's wrist",
+          "strain": 0.36,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -192188,7 +192188,7 @@
           "turn": 1.14,
           "ok": true,
           "reseed": false,
-          "strain": 0.69,
+          "strain": 0.7,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -192325,7 +192325,7 @@
           "turn": 1.16,
           "ok": true,
           "reseed": false,
-          "strain": 0.7,
+          "strain": 0.71,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -192462,7 +192462,7 @@
           "turn": 1.18,
           "ok": true,
           "reseed": false,
-          "strain": 0.63,
+          "strain": 0.76,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -192599,7 +192599,7 @@
           "turn": 1.2,
           "ok": true,
           "reseed": false,
-          "strain": 0.59,
+          "strain": 0.74,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -192736,7 +192736,7 @@
           "turn": 1.22,
           "ok": true,
           "reseed": false,
-          "strain": 0.56,
+          "strain": 0.71,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -192901,7 +192901,7 @@
           "turn": 1.24,
           "ok": true,
           "reseed": false,
-          "strain": 0.13,
+          "strain": 0.55,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -201614,7 +201614,7 @@
           "turn": -0.32,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.95,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -201735,7 +201735,7 @@
           "turn": -0.3,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.93,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -201856,7 +201856,7 @@
           "turn": -0.28,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.9,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -201977,7 +201977,7 @@
           "turn": -0.26,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.76,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -202098,7 +202098,7 @@
           "turn": -0.24,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.7,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -202219,7 +202219,7 @@
           "turn": -0.22,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.47,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -202340,7 +202340,7 @@
           "turn": -0.2,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.48,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -202461,7 +202461,7 @@
           "turn": -0.18,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.52,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -202582,7 +202582,7 @@
           "turn": -0.16,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.47,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -202703,7 +202703,7 @@
           "turn": -0.14,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.44,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -202824,7 +202824,7 @@
           "turn": -0.12,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.4,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -202945,7 +202945,7 @@
           "turn": -0.1,
           "ok": true,
           "reseed": false,
-          "strain": 0.93,
+          "strain": 0.33,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -203066,7 +203066,7 @@
           "turn": -0.08,
           "ok": true,
           "reseed": false,
-          "strain": 0.86,
+          "strain": 0.26,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -203187,7 +203187,7 @@
           "turn": -0.06,
           "ok": true,
           "reseed": false,
-          "strain": 0.75,
+          "strain": 0.15,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -203308,7 +203308,7 @@
           "turn": -0.04,
           "ok": true,
           "reseed": false,
-          "strain": 0.58,
+          "strain": 0.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -203429,7 +203429,7 @@
           "turn": -0.02,
           "ok": true,
           "reseed": false,
-          "strain": 0.34,
+          "strain": 0.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -203550,7 +203550,7 @@
           "turn": 0.0,
           "ok": true,
           "reseed": false,
-          "strain": 0.09,
+          "strain": 0.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -203671,8 +203671,8 @@
           "turn": 0.02,
           "ok": true,
           "reseed": false,
-          "strain": 0.05,
-          "worst": "lead's shoulder, twist",
+          "strain": 0.0,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -207059,8 +207059,8 @@
           "turn": 0.58,
           "ok": true,
           "reseed": false,
-          "strain": 0.13,
-          "worst": "follow's wrist",
+          "strain": 0.17,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -207180,8 +207180,8 @@
           "turn": 0.6,
           "ok": true,
           "reseed": false,
-          "strain": 0.03,
-          "worst": "follow's wrist",
+          "strain": 0.28,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -207301,8 +207301,8 @@
           "turn": 0.62,
           "ok": true,
           "reseed": false,
-          "strain": 0.01,
-          "worst": "follow's shoulder, behind",
+          "strain": 0.32,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -207422,8 +207422,8 @@
           "turn": 0.64,
           "ok": true,
           "reseed": false,
-          "strain": 0.01,
-          "worst": "follow's shoulder, behind",
+          "strain": 0.34,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -207543,8 +207543,8 @@
           "turn": 0.66,
           "ok": true,
           "reseed": false,
-          "strain": 0.02,
-          "worst": "follow's wrist",
+          "strain": 0.34,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -207664,8 +207664,8 @@
           "turn": 0.68,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's wrist",
+          "strain": 0.36,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -207785,8 +207785,8 @@
           "turn": 0.7,
           "ok": true,
           "reseed": false,
-          "strain": 0.01,
-          "worst": "follow's wrist",
+          "strain": 0.38,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -207906,8 +207906,8 @@
           "turn": 0.72,
           "ok": true,
           "reseed": false,
-          "strain": 0.01,
-          "worst": "follow's wrist",
+          "strain": 0.38,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -208027,8 +208027,8 @@
           "turn": 0.74,
           "ok": true,
           "reseed": false,
-          "strain": 0.07,
-          "worst": "follow's wrist",
+          "strain": 0.41,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -208148,8 +208148,8 @@
           "turn": 0.76,
           "ok": true,
           "reseed": false,
-          "strain": 0.12,
-          "worst": "follow's wrist",
+          "strain": 0.52,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -208269,8 +208269,8 @@
           "turn": 0.78,
           "ok": true,
           "reseed": false,
-          "strain": 0.23,
-          "worst": "follow's wrist",
+          "strain": 0.83,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -208390,8 +208390,8 @@
           "turn": 0.8,
           "ok": true,
           "reseed": false,
-          "strain": 0.38,
-          "worst": "follow's wrist",
+          "strain": 0.87,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -208511,8 +208511,8 @@
           "turn": 0.82,
           "ok": true,
           "reseed": false,
-          "strain": 0.54,
-          "worst": "follow's wrist",
+          "strain": 0.98,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -208632,7 +208632,7 @@
           "turn": 0.84,
           "ok": true,
           "reseed": false,
-          "strain": 0.45,
+          "strain": 1.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -208753,8 +208753,8 @@
           "turn": 0.86,
           "ok": true,
           "reseed": false,
-          "strain": 0.48,
-          "worst": "lead's wrist",
+          "strain": 1.0,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -208874,7 +208874,7 @@
           "turn": 0.88,
           "ok": true,
           "reseed": false,
-          "strain": 0.54,
+          "strain": 1.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -208995,7 +208995,7 @@
           "turn": 0.9,
           "ok": true,
           "reseed": false,
-          "strain": 0.6,
+          "strain": 1.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -209116,7 +209116,7 @@
           "turn": 0.92,
           "ok": true,
           "reseed": false,
-          "strain": 0.54,
+          "strain": 1.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -209237,7 +209237,7 @@
           "turn": 0.94,
           "ok": true,
           "reseed": false,
-          "strain": 0.64,
+          "strain": 1.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -209374,7 +209374,7 @@
           "turn": 0.96,
           "ok": true,
           "reseed": false,
-          "strain": 0.71,
+          "strain": 1.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -209511,8 +209511,8 @@
           "turn": 0.98,
           "ok": true,
           "reseed": false,
-          "strain": 0.87,
-          "worst": "follow's wrist",
+          "strain": 1.0,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -209655,8 +209655,8 @@
           "turn": 1.0,
           "ok": true,
           "reseed": false,
-          "strain": 0.97,
-          "worst": "follow's wrist",
+          "strain": 1.0,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -212923,7 +212923,7 @@
           "ok": true,
           "reseed": false,
           "strain": 1.0,
-          "worst": "follow's shoulder, twist",
+          "worst": "lead's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -214855,7 +214855,7 @@
           "ok": true,
           "reseed": false,
           "strain": 1.0,
-          "worst": "follow's shoulder, twist",
+          "worst": "lead's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -214985,7 +214985,7 @@
           "ok": true,
           "reseed": false,
           "strain": 1.0,
-          "worst": "follow's shoulder, twist",
+          "worst": "lead's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -215114,8 +215114,8 @@
           "turn": -0.56,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
-          "worst": "follow's shoulder, twist",
+          "strain": 0.94,
+          "worst": "follow's wrist",
           "bodies": [
             {
               "centre": [
@@ -215244,7 +215244,7 @@
           "turn": -0.54,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.84,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -215374,7 +215374,7 @@
           "turn": -0.52,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.9,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -215504,7 +215504,7 @@
           "turn": -0.5,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.96,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -216974,7 +216974,7 @@
           "turn": -0.26,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.99,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -217579,7 +217579,7 @@
           "turn": -0.16,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.82,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -217700,7 +217700,7 @@
           "turn": -0.14,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.7,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -217821,7 +217821,7 @@
           "turn": -0.12,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.49,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -217942,7 +217942,7 @@
           "turn": -0.1,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.43,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -218063,8 +218063,8 @@
           "turn": -0.08,
           "ok": true,
           "reseed": false,
-          "strain": 0.71,
-          "worst": "follow's shoulder, twist",
+          "strain": 0.17,
+          "worst": "follow's elbow",
           "bodies": [
             {
               "centre": [
@@ -218184,8 +218184,8 @@
           "turn": -0.06,
           "ok": true,
           "reseed": false,
-          "strain": 0.58,
-          "worst": "follow's shoulder, twist",
+          "strain": 0.0,
+          "worst": "follow's elbow",
           "bodies": [
             {
               "centre": [
@@ -218305,7 +218305,7 @@
           "turn": -0.04,
           "ok": true,
           "reseed": false,
-          "strain": 0.61,
+          "strain": 0.01,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -218426,7 +218426,7 @@
           "turn": -0.02,
           "ok": true,
           "reseed": false,
-          "strain": 0.33,
+          "strain": 0.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -218547,8 +218547,8 @@
           "turn": 0.0,
           "ok": true,
           "reseed": false,
-          "strain": 0.08,
-          "worst": "follow's shoulder, twist",
+          "strain": 0.0,
+          "worst": "lead's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -218668,8 +218668,8 @@
           "turn": 0.02,
           "ok": true,
           "reseed": false,
-          "strain": 0.04,
-          "worst": "lead's shoulder, twist",
+          "strain": 0.0,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -222101,8 +222101,8 @@
           "turn": 0.58,
           "ok": true,
           "reseed": false,
-          "strain": 0.69,
-          "worst": "follow's shoulder, twist",
+          "strain": 1.0,
+          "worst": "lead's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -222231,8 +222231,8 @@
           "turn": 0.6,
           "ok": true,
           "reseed": false,
-          "strain": 0.6,
-          "worst": "follow's shoulder, twist",
+          "strain": 1.0,
+          "worst": "lead's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -222361,7 +222361,7 @@
           "turn": 0.62,
           "ok": true,
           "reseed": false,
-          "strain": 0.59,
+          "strain": 1.0,
           "worst": "lead's shoulder, twist",
           "bodies": [
             {
@@ -222491,7 +222491,7 @@
           "turn": 0.64,
           "ok": true,
           "reseed": false,
-          "strain": 0.68,
+          "strain": 1.0,
           "worst": "lead's shoulder, twist",
           "bodies": [
             {
@@ -222621,7 +222621,7 @@
           "turn": 0.66,
           "ok": true,
           "reseed": false,
-          "strain": 0.72,
+          "strain": 1.0,
           "worst": "lead's shoulder, twist",
           "bodies": [
             {
@@ -222751,7 +222751,7 @@
           "turn": 0.68,
           "ok": true,
           "reseed": false,
-          "strain": 0.76,
+          "strain": 1.0,
           "worst": "lead's shoulder, twist",
           "bodies": [
             {
@@ -222881,7 +222881,7 @@
           "turn": 0.7,
           "ok": true,
           "reseed": false,
-          "strain": 0.78,
+          "strain": 1.0,
           "worst": "lead's shoulder, twist",
           "bodies": [
             {
@@ -223011,7 +223011,7 @@
           "turn": 0.72,
           "ok": true,
           "reseed": false,
-          "strain": 0.83,
+          "strain": 1.0,
           "worst": "lead's shoulder, twist",
           "bodies": [
             {
@@ -223141,8 +223141,8 @@
           "turn": 0.74,
           "ok": true,
           "reseed": false,
-          "strain": 0.97,
-          "worst": "lead's wrist",
+          "strain": 1.0,
+          "worst": "lead's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -224293,8 +224293,8 @@
           "turn": 0.9,
           "ok": true,
           "reseed": false,
-          "strain": 0.48,
-          "worst": "follow's elbow",
+          "strain": 0.67,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -224437,8 +224437,8 @@
           "turn": 0.92,
           "ok": true,
           "reseed": false,
-          "strain": 0.47,
-          "worst": "follow's elbow",
+          "strain": 0.84,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -224581,8 +224581,8 @@
           "turn": 0.94,
           "ok": true,
           "reseed": false,
-          "strain": 0.46,
-          "worst": "follow's elbow",
+          "strain": 0.87,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -224739,8 +224739,8 @@
           "turn": 0.96,
           "ok": true,
           "reseed": false,
-          "strain": 0.46,
-          "worst": "follow's elbow",
+          "strain": 0.88,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -224897,8 +224897,8 @@
           "turn": 0.98,
           "ok": true,
           "reseed": false,
-          "strain": 0.47,
-          "worst": "follow's wrist",
+          "strain": 0.9,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -225041,8 +225041,8 @@
           "turn": 1.0,
           "ok": true,
           "reseed": false,
-          "strain": 0.5,
-          "worst": "follow's wrist",
+          "strain": 0.92,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -225185,8 +225185,8 @@
           "turn": 1.02,
           "ok": true,
           "reseed": false,
-          "strain": 0.64,
-          "worst": "follow's wrist",
+          "strain": 0.92,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -225329,8 +225329,8 @@
           "turn": 1.04,
           "ok": true,
           "reseed": false,
-          "strain": 0.71,
-          "worst": "follow's wrist",
+          "strain": 0.99,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -225487,8 +225487,8 @@
           "turn": 1.06,
           "ok": true,
           "reseed": false,
-          "strain": 0.83,
-          "worst": "follow's wrist",
+          "strain": 1.0,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -225645,8 +225645,8 @@
           "turn": 1.08,
           "ok": true,
           "reseed": false,
-          "strain": 0.9,
-          "worst": "follow's wrist",
+          "strain": 1.0,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -225789,8 +225789,8 @@
           "turn": 1.1,
           "ok": true,
           "reseed": false,
-          "strain": 0.94,
-          "worst": "follow's wrist",
+          "strain": 1.0,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -225933,8 +225933,8 @@
           "turn": 1.12,
           "ok": true,
           "reseed": false,
-          "strain": 0.97,
-          "worst": "follow's wrist",
+          "strain": 1.0,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -226078,7 +226078,7 @@
           "ok": true,
           "reseed": false,
           "strain": 1.0,
-          "worst": "follow's wrist",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -226222,7 +226222,7 @@
           "ok": true,
           "reseed": false,
           "strain": 1.0,
-          "worst": "follow's wrist",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -226366,7 +226366,7 @@
           "ok": true,
           "reseed": false,
           "strain": 1.0,
-          "worst": "follow's wrist",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -226510,7 +226510,7 @@
           "ok": true,
           "reseed": false,
           "strain": 1.0,
-          "worst": "follow's wrist",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -226654,7 +226654,7 @@
           "ok": true,
           "reseed": false,
           "strain": 1.0,
-          "worst": "follow's wrist",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -226798,7 +226798,7 @@
           "ok": true,
           "reseed": false,
           "strain": 1.0,
-          "worst": "follow's wrist",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -226942,7 +226942,7 @@
           "ok": true,
           "reseed": false,
           "strain": 1.0,
-          "worst": "follow's wrist",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -227086,7 +227086,7 @@
           "ok": true,
           "reseed": false,
           "strain": 1.0,
-          "worst": "follow's wrist",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -234055,7 +234055,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -234192,7 +234192,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -234329,7 +234329,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -234466,7 +234466,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -234603,7 +234603,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -234739,8 +234739,8 @@
           "turn": -0.82,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.07,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -234876,8 +234876,8 @@
           "turn": -0.8,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's wrist",
+          "strain": 0.28,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -235143,7 +235143,7 @@
           "turn": -0.76,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
+          "strain": 0.3,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -235273,8 +235273,8 @@
           "turn": -0.74,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's wrist",
+          "strain": 0.07,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -238178,7 +238178,7 @@
           "turn": -0.3,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.55,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -238315,8 +238315,8 @@
           "turn": -0.28,
           "ok": true,
           "reseed": false,
-          "strain": 0.36,
-          "worst": "follow's shoulder, twist",
+          "strain": 0.27,
+          "worst": "follow's wrist",
           "bodies": [
             {
               "centre": [
@@ -238452,8 +238452,8 @@
           "turn": -0.26,
           "ok": true,
           "reseed": false,
-          "strain": 0.25,
-          "worst": "follow's shoulder, twist",
+          "strain": 0.0,
+          "worst": "follow's elbow",
           "bodies": [
             {
               "centre": [
@@ -238573,7 +238573,7 @@
           "turn": -0.24,
           "ok": true,
           "reseed": false,
-          "strain": 0.9,
+          "strain": 0.3,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -238694,8 +238694,8 @@
           "turn": -0.22,
           "ok": true,
           "reseed": false,
-          "strain": 0.34,
-          "worst": "follow's shoulder, twist",
+          "strain": 0.29,
+          "worst": "lead's elbow",
           "bodies": [
             {
               "centre": [
@@ -238815,8 +238815,8 @@
           "turn": -0.2,
           "ok": true,
           "reseed": false,
-          "strain": 0.69,
-          "worst": "follow's shoulder, twist",
+          "strain": 0.2,
+          "worst": "lead's elbow",
           "bodies": [
             {
               "centre": [
@@ -238936,7 +238936,7 @@
           "turn": -0.18,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.62,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -239057,7 +239057,7 @@
           "turn": -0.16,
           "ok": true,
           "reseed": false,
-          "strain": 1.0,
+          "strain": 0.44,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -239178,7 +239178,7 @@
           "turn": -0.14,
           "ok": true,
           "reseed": false,
-          "strain": 0.74,
+          "strain": 0.14,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -239299,8 +239299,8 @@
           "turn": -0.12,
           "ok": true,
           "reseed": false,
-          "strain": 0.68,
-          "worst": "follow's shoulder, twist",
+          "strain": 0.1,
+          "worst": "follow's elbow",
           "bodies": [
             {
               "centre": [
@@ -239420,8 +239420,8 @@
           "turn": -0.1,
           "ok": true,
           "reseed": false,
-          "strain": 0.63,
-          "worst": "follow's shoulder, twist",
+          "strain": 0.05,
+          "worst": "follow's elbow",
           "bodies": [
             {
               "centre": [
@@ -239541,7 +239541,7 @@
           "turn": -0.08,
           "ok": true,
           "reseed": false,
-          "strain": 0.78,
+          "strain": 0.18,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -239662,7 +239662,7 @@
           "turn": -0.06,
           "ok": true,
           "reseed": false,
-          "strain": 0.52,
+          "strain": 0.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -239783,7 +239783,7 @@
           "turn": -0.04,
           "ok": true,
           "reseed": false,
-          "strain": 0.13,
+          "strain": 0.0,
           "worst": "follow's shoulder, twist",
           "bodies": [
             {
@@ -240026,7 +240026,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "lead's shoulder, twist",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -240147,7 +240147,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "lead's shoulder, twist",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -242115,7 +242115,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -242236,7 +242236,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -242372,8 +242372,8 @@
           "turn": 0.38,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's elbow",
+          "strain": 0.09,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -242510,7 +242510,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -242647,7 +242647,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -242784,7 +242784,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -242921,7 +242921,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -243180,8 +243180,8 @@
           "turn": 0.5,
           "ok": true,
           "reseed": false,
-          "strain": 0.19,
-          "worst": "follow's wrist",
+          "strain": 0.23,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -243317,8 +243317,8 @@
           "turn": 0.52,
           "ok": true,
           "reseed": false,
-          "strain": 0.14,
-          "worst": "follow's wrist",
+          "strain": 0.4,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -243454,8 +243454,8 @@
           "turn": 0.54,
           "ok": true,
           "reseed": false,
-          "strain": 0.14,
-          "worst": "follow's wrist",
+          "strain": 0.43,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -243584,8 +243584,8 @@
           "turn": 0.56,
           "ok": true,
           "reseed": false,
-          "strain": 0.14,
-          "worst": "follow's wrist",
+          "strain": 0.47,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -243714,8 +243714,8 @@
           "turn": 0.58,
           "ok": true,
           "reseed": false,
-          "strain": 0.15,
-          "worst": "follow's wrist",
+          "strain": 0.49,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -243844,8 +243844,8 @@
           "turn": 0.6,
           "ok": true,
           "reseed": false,
-          "strain": 0.16,
-          "worst": "follow's wrist",
+          "strain": 0.6,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -243974,8 +243974,8 @@
           "turn": 0.62,
           "ok": true,
           "reseed": false,
-          "strain": 0.16,
-          "worst": "follow's wrist",
+          "strain": 0.59,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -244104,8 +244104,8 @@
           "turn": 0.64,
           "ok": true,
           "reseed": false,
-          "strain": 0.25,
-          "worst": "follow's wrist",
+          "strain": 0.78,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -244234,8 +244234,8 @@
           "turn": 0.66,
           "ok": true,
           "reseed": false,
-          "strain": 0.28,
-          "worst": "follow's wrist",
+          "strain": 0.84,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -244364,8 +244364,8 @@
           "turn": 0.68,
           "ok": true,
           "reseed": false,
-          "strain": 0.26,
-          "worst": "follow's wrist",
+          "strain": 0.82,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -244509,7 +244509,7 @@
           "ok": true,
           "reseed": false,
           "strain": 0.0,
-          "worst": "follow's elbow",
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -246665,8 +246665,8 @@
           "turn": 1.02,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "lead's wrist",
+          "strain": 0.09,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
@@ -246802,8 +246802,8 @@
           "turn": 1.04,
           "ok": true,
           "reseed": false,
-          "strain": 0.0,
-          "worst": "follow's wrist",
+          "strain": 0.13,
+          "worst": "follow's shoulder, twist",
           "bodies": [
             {
               "centre": [
