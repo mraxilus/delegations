@@ -298,6 +298,15 @@ suite "Internal: Catalogue":
 suite "Chapter 2":
   checkReferences(CATALOGUE, "2.")
 
+  test "unitize of point with negative weight keeps its sign  # 2.89":
+    when declared(POOL_POINT):
+      for p in POOL_POINT:
+        var reversed = p
+        reversed.w = -p.w  # weight below zero, as meet of operands in reverse order gives
+        check widen(unitize(reversed)) =~ ^widen(reversed)  # 2.89, sign of weight kept
+    else:
+      skip()
+
 
 checkReferencesWiki(CATALOGUE)
 
