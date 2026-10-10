@@ -29,9 +29,8 @@
 ##     without case and underscores, as Nim does.
 ##   V.12: placeholder in brackets after routine or type name, or after `concept`, is one capital.
 ##     Generic parameter, i.e. of type `typedesc` alone (`declared.nim`), stands for any type as
-##     generic does, so it takes placeholder's letter (Architect's ruling, #443). Snake passes
-##     beside it until `pga_benchmark` renames its `kind`, since check reddening project cannot
-##     merge (CURATOR.md, duty 3). No rename of case touches either form. `typedesc[I]` holds
+##     generic does, so it takes placeholder's letter, and no other form (Architect's ruling,
+##     #443). No rename of case touches it, since letter is choice. `typedesc[I]` holds
 ##     placeholder `I`, so its parameter stays snake.
 ##   V.4: boolean binding, field or parameter opens `is`, `as`, `should`, `found` or `has`,
 ##     with word after it. `func` returning `bool` is predicate and opens `is`. `proc`
@@ -56,8 +55,6 @@
 ##   Cost: boolean is read only where declaration shows it: type `bool`, or value literal
 ##     `true` or `false`. Boolean from call or expression holds by reading.
 ##   Cost: `in` calls `contains` by spelling, so predicate of that name keeps host's name.
-##   Cost: generic parameter passes in two cases until `pga_benchmark` renames its `kind`, so one
-##     file may spell two generic parameters two ways; reading holds it.
 ##   Cost: Pascal name of capitals alone, e.g. `ANTI`, passes case of type; reading holds it.
 ##     Letter outside `std/unicode` case tables and mathematical block carries no case, so it
 ##     fits every casing.
@@ -120,9 +117,8 @@ const
     "int16", "int32", "int64", "int8", "string", "uint", "uint16", "uint32", "uint64", "uint8",
   ]
     ## Types Nim spells in lowercase, which convert as prefix call `T(x)` does (STYLE.md §5).
-  RULE_GENERIC = "Parameter of type `typedesc` alone is one capital letter or `snake_case`"
-    ## Case generic parameter takes, as finding states it: placeholder's letter (V.12), or snake
-    ##   until `pga_benchmark` renames its `kind` (#443).
+  RULE_GENERIC = "Parameter of type `typedesc` alone is one capital letter"
+    ## Case generic parameter takes, as finding states it: placeholder's letter (V.12, #443).
 
 
 func spansWord(name: string): seq[(int, int)] =
@@ -231,11 +227,9 @@ func casingOf*(d: Declared): Casing =
 
 func isMiscased*(d: Declared): bool =
   ## Decide whether name breaks case of its kind, as `checkNames` reads it (V.1, V.11, V.12);
-  ##   binding of entry block and variable in source's notation carry no case to read, and
-  ##   generic parameter passes as snake too (`RULE_GENERIC`).
+  ##   binding of entry block and variable in source's notation carry no case to read.
   if d.kind == KindName.Binding and d.reach == Reach.Entry: return false
   if d.kind in KINDS_VARIABLE and d.name.isNotation: return false
-  if d.is_generic and d.name.isCased(Casing.Snake): return false
   not d.name.isCased(d.casingOf)
 
 

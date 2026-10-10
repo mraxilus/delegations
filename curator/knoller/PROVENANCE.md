@@ -1291,24 +1291,19 @@ reads it as the same type. `casingOf` gives a generic parameter the letter of a 
 parameter of `typedesc[I]` keeps the snake case of V.1, since `I` is its placeholder, as
 `scalar*[I: Basis](t: typedesc[I])` shows. `STYLE.md` spells its borrow template with `T`.
 
-**Snake case passes beside the letter, as step 1 of the ruling, until `pga_benchmark` renames its
-`kind`.** `timeKind` in `proposals/04-exact-kinds/timing.nim` of that project declares
-`kind: typedesc`. A check that reddens a contributor project cannot merge, and a curator never
-edits such a project (CURATOR.md, duties 3 and 11). So `isMiscased` passes a generic parameter in
-snake case too. An intended later step makes the letter the only form, once that project renames
-`kind`.
+**The letter is the only form of a generic parameter.** Snake case fails as any other form
+does, so one file never spells two generic parameters two ways. Each project names such a
+parameter with one capital, as `timeKind(K: typedesc, …)` in `pga_benchmark` does.
 
 **No rename of case touches a generic parameter.** The letter is the initial of what the
-parameter ranges over, which is a choice, and snake case passes beside it. So `renamesCase` gives
-none, as it gives none for a placeholder. A name in neither form, such as `Kind`, is one finding
-of `placeholder-letter`, and the hand renames it. Its message names both forms. A rename that
-spells out a coined abbreviation (V.6) still reaches it, as it reaches every kind.
+parameter ranges over, which is a choice. So `renamesCase` gives none, as it gives none for a
+placeholder. A name in another form, such as `kind` or `Kind`, is one finding of
+`placeholder-letter`, and the hand renames it. A rename that spells out a coined abbreviation
+(V.6) still reaches it, as it reaches every kind.
 
 - Rejected: a kind of its own in `KindName`. Each reader of `KindName.Parameter` then has to
   learn it, such as the foreign mark, the notation of III.5 and the subject of each message. A
   flag on `Declared` reaches the casing alone.
-- Rejected: the letter as the only form now. It reddens `pga_benchmark`, whose code a curator
-  never edits.
 - Cost: a reader of the kind alone sees a parameter, so `casingOf` and `isMiscased` read the flag
   beside it.
 - Cost: both forms pass, so one file may spell two generic parameters two ways. Reading holds it
