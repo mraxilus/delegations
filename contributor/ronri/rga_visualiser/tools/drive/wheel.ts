@@ -216,4 +216,35 @@ export async function driveWheel(page: Page): Promise<void> {
     `pivot off the point by ${(offs_eased[0] ?? 0).toExponential(2)} after a notch, and ` +
       `${(offs_eased[1] ?? 0).toExponential(2)} after a drag`,
   );
+
+  // Notches over selection menu once pick of `b` has settled zoom view, as over view itself.
+  //   Menu lies over canvas, so wheel there reached nothing, and pick clicked where menu lands
+  //   left wheel dead until pointer moved.
+  await driveHome(page);
+  const at_menu = (await pixelOf(page, picked)) ?? [0, 0];
+  await page.mouse.move(at_menu[0] ?? 0, at_menu[1] ?? 0);
+  await page.mouse.click(at_menu[0] ?? 0, at_menu[1] ?? 0, { button: 'right' });
+  await settleCamera(page);
+  const menu = await page.evaluate(() => {
+    const rect = (document.getElementById('selection-menu') as HTMLElement)
+      .getBoundingClientRect();
+    const [x, y] = [rect.left + 0.5 * rect.width, rect.top + 0.5 * rect.height];
+    const under = document.elementFromPoint(x, y);
+    const is_over = under !== null &&
+      (document.getElementById('selection-menu') as HTMLElement).contains(under);
+    return { x, y, is_over };
+  });
+  const before_menu = await readCamera(page);
+  await page.mouse.move(menu.x, menu.y);
+  await wheelBy(page, 3, -120);
+  const after_menu = await readCamera(page);
+  await page.evaluate(() => clearSelection());
+  report(
+    'and a wheel over the selection menu zooms the view, about the point picked',
+    menu.is_over && after_menu.distance < 0.8 * before_menu.distance &&
+      spanOf(after_menu.pivot, world_picked) < 1e-4,
+    `pointer over menu ${menu.is_over}; distance ${before_menu.distance.toFixed(3)} -> ` +
+      `${after_menu.distance.toFixed(3)}, pivot off the point by ` +
+      `${spanOf(after_menu.pivot, world_picked).toExponential(2)}`,
+  );
 }

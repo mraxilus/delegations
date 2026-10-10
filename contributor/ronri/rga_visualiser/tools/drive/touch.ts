@@ -482,6 +482,30 @@ export async function drivePinch(page: Page, devtools: CDPSession): Promise<void
     `distance out by ${dollied.map((ratio) => ratio.toFixed(2)).join(', ')}, pivot moved ` +
       `${spanOf(framed.pivot, held_on.pivot).toExponential(2)}`,
   );
+
+  // Spread two frames into ease of right-click pick of `b`, over sky. With selection, two fingers
+  //   orbit, dolly and roll about pivot it already has, so ease still lands pivot on `b`.
+  //   Not halt, which stops ease where it stands: pivot stayed short of `b`, and every turn
+  //   after went about that.
+  await page.keyboard.press('Home');
+  await settleCamera(page);
+  const handle_b = await handleLabelled(page, 'b');
+  const world_b = await page.evaluate((one) => Array.from(nimAnchorWorld(one)), handle_b);
+  const on_b = await fingerOn(page, handle_b);
+  const over_sky = await page.evaluate(() => {
+    const rect = (document.getElementById('gl') as HTMLElement).getBoundingClientRect();
+    return { x: rect.left + 0.5 * rect.width, y: rect.top + 0.15 * rect.height };
+  });
+  await page.mouse.click(on_b.x, on_b.y, { button: 'right' });
+  await waitFrames(page, 2);
+  await pinch(page, devtools, over_sky, over_sky, 60, 90);
+  const spread = await readCamera(page);
+  await page.evaluate(() => clearSelection());
+  report(
+    'and a spread inside the ease of a pick still lands the pivot on it',
+    spanOf(spread.pivot, world_b) < 1e-4,
+    `pivot off the point by ${spanOf(spread.pivot, world_b).toExponential(2)}`,
+  );
 }
 
 /** Read whether finger landing at `at` would turn camera rather than start construction.
