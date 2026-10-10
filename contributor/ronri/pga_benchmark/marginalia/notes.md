@@ -281,7 +281,7 @@ func unitize*(m: Multivector): Multivector {.inline.} = ^m
 
 `^` divides by the weight norm, which is a root and so positive. So a negative weight stays
 negative, and w = −2 unitizes to w = −1. The book asks only that the round weight norm have unit
-magnitude, in Section 4.3, and the wiki asks only p_w² = 1 of a point. `unitize` projects into
+magnitude, in Section 4.3, and the wiki asks only w² = 1 of a point. `unitize` projects into
 Euclidean space only where the weight is positive. Elsewhere (x, y, z) holds the mirror image of
 the position, and a caller divides by w to read it. The order of operands sets the sign: planes
 x = 1, y = 2 and z = 3 meet at (1, 2, 3, 1) as g1 ∨ g2 ∨ g3, and at (−1, −2, −3, −1) as
