@@ -2733,6 +2733,21 @@ to tidy the line away shows up only as suites that fail to build. `result +=` on
   (`simulation/verdicts.md`, L-l low). #601 asks that a turn stop where a joint leaves its
   comfortable range, as a published share of that range. The readings of the shoulder in the rig do
   not give those two stops, and #601 holds the measurement.
+- **An upper arm can stand where no human shoulder takes it (#611).** In D01 and D07, the elbow of
+  the follow stands 0.21 m behind the frontal plane and 0.08 m past the midline, at 1.40 m. The rig
+  holds extension and adduction each to its own end, so an arm that points back and across at once
+  reads inside both. Measured 2026-10-09: the elbow of a held arm passes the midline behind the body
+  in 609 moments of the two recordings.
+- **The roll of a hand is free past the human range, and no page shows it (#612).** No range of the
+  rig holds the roll of the forearm. In C01, the left forearm of the follow sits at 167 degrees of
+  supination. Three equal capsules draw that hand as one at 13 to 17 degrees of pronation, by three
+  measures of roll. Measured 2026-10-09.
+- **The neck of the model pinches to a point where it meets the head (#613).** The neck capsule and
+  the head capsule meet at one point, at 1.50 m. So a hand can sit 25 mm inside a neck of its own
+  girth, and the engine reads no depth. Measured 2026-10-09, in the high cross-name chain.
+- **The pages read the twist of a left arm against swapped ends (#610).** `read.tightest` swaps the
+  ends of the twist of a left arm, which `limb.joints` already reads in mirror. So a twin and its
+  mirror twin can show different strains on the whole-cloth page and in the report (Mirror twins).
 
 **Open in the workbench, and on the side of the Architect.** Each one waits on a ruling, and the
 workbench draws the current reading meanwhile.
