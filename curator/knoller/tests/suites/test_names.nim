@@ -311,33 +311,32 @@ suite "Names":
     check PLACEHOLDERS.declarations.filterIt(it.name == "t")[0].kind == KindName.Parameter
 
 
-  test "V.12 generic parameter passes as one capital or snake, and no rename touches it":
-    # Ruling of #443, step 1: parameter of type `typedesc` alone stands for any type, as generic
-    #   does, so it takes placeholder's letter; snake passes too until `pga_benchmark` renames
-    #   `kind` of `timeKind` in its `timing.nim`, which first source quotes.
-    for name in ["T", "K", "kind", "kind_basis", "t"]:
+  test "V.12 generic parameter is one capital letter, and no rename touches it":
+    # Ruling of #443: parameter of type `typedesc` alone stands for any type, as generic does,
+    #   so it takes placeholder's letter and no other form.
+    for name in ["T", "K"]:
       for source in [
         "template timeKind(" & name & ": typedesc, label: string) =\n  discard\n",
         "proc sample(count: int; " & name & ": typedesc): int = count\n",
         "func pick(" & name & ", U: type) = discard\n",
         "macro emit(" & name & ": typeDesc = int) = discard\n",
       ]:
-        check source.breaches.len == 0  # V.12, and V.1 until step 3 of #443
+        check source.breaches.len == 0  # V.12
         check renamesCase(source, []).len == 0  # V.12, no rename of case
         check renamesAbbreviation(source, []).len == 0  # V.6, no rename of abbreviation either
-    for name in ["Kind", "kindBasis", "KIND"]:
+    for name in ["kind", "kind_basis", "t", "Kind", "kindBasis", "KIND"]:
       let
         source = "template timeKind(" & name & ": typedesc) = discard\n"
-        stated = "Parameter of type `typedesc` alone is one capital letter or " &
-            "`snake_case`; got `" & name & "`."
-      check source.breaches == @[(Rule.LetterPlaceholder, stated)]  # V.12, V.1 until step 3
+        stated = "Parameter of type `typedesc` alone is one capital letter; got `" & name & "`."
+      check source.breaches == @[(Rule.LetterPlaceholder, stated)]  # V.12, snake as well
       check renamesCase(source, []).len == 0  # V.12, letter is choice, so hand renames it
     const pick = "func pick[I: Grade](T: typedesc[I]): I = I.low\n"
     check pick.breaches == @[(Rule.CaseName, "Parameter is `snake_case`; got `T`.")]  # V.1
     check renamesCase(pick, []).mapIt((it.name, it.renamed)) == @[("T", "t")]  # V.1
     check pick.replace("(T:", "(t:").breaches.len == 0  # V.1, `I` is placeholder (V.12)
     check Declared(kind: KindName.Parameter, is_generic: true).casingOf == Casing.Letter  # V.12
-    check not Declared(name: "kind", kind: KindName.Parameter, is_generic: true).isMiscased  # V.1
+    check Declared(name: "kind", kind: KindName.Parameter, is_generic: true).isMiscased  # V.12
+    check not Declared(name: "K", kind: KindName.Parameter, is_generic: true).isMiscased  # V.12
 
 
   test "V.4 boolean is proposition or mode, and predicate func is `is…`":
