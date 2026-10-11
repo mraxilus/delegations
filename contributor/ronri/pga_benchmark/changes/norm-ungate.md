@@ -3,9 +3,10 @@
 At pin, each norm law skips under the conformal metric. This change removes each gate, so
 the suites show what fails there.
 
-Five suites fail: 2.87-89, 2.90-94, 2.97-98, 2.99 and 2.103. 2.88 and 2.89 compare against
-plain `sqrt`, which is NaN where the weight dot is negative. With a root that keeps the sign of
-its square, the same five fail, so the norms do not explain all of them.
+Five suites fail: 2.87-89, 2.90-94, 2.97-98, 2.99 and 2.103. They are laws of Chapter 2, which
+take each norm as the root of the whole dot or antidot. At pin each conformal norm is the size of
+one part, as Table 4.12 defines, so those laws do not hold there. 2.103 is `★𝐦 =~ /(∙𝐦)`, which
+is not a norm law.
 
 ## Edit `tests/suites.nim`
 
