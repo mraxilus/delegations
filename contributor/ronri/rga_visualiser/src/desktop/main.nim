@@ -1811,7 +1811,9 @@ proc driveEdit(panel: var Panel, scene: var Scene, camera: Camera, count_drawn: 
     saveSession(panel, scene, camera, HISTORY_DESKTOP, now)
 
 
-proc driveSelect(scene: Scene; camera: Camera; width, height, count_drawn: int; scale: DrawExtent) =
+proc driveSelect(
+  window: Window; scene: Scene; camera: Camera; width, height, count_drawn: int; scale: DrawExtent
+) =
   ## Script click, then two shift-clicks, on first three objects, then drag off menu's object.
   ##   Headless run then shows floating selection menu at each size and proves it does not
   ##   swallow next drag; for `--drive-select`.
@@ -1825,6 +1827,8 @@ proc driveSelect(scene: Scene; camera: Camera; width, height, count_drawn: int; 
   ##   press in same drain as its motion reads previous frame's pick.
   ##   Shift is set through `sdl3.setModState`: pushed event never reaches state
   ##   `getModState` reads.
+  ##   Motion names this window, so Dear ImGui reads pointer over menu, and menu can swallow;
+  ##   see `MouseMotionEvent`.
   ##   Shares `driveDrag`'s warning: look at capture; do not byte-compare.
   const
     frame_first = 2  # Past startup, so first frame's layout has settled.
@@ -1847,6 +1851,7 @@ proc driveSelect(scene: Scene; camera: Camera; width, height, count_drawn: int; 
 
   if not is_acting:
     var reach = Event(kind: uint32(EventKind.MouseMotion))
+    reach.motion.window_id = sdl3.windowId(window)
     reach.motion.x = cfloat(screen.x)
     reach.motion.y = cfloat(screen.y)
     sdl3.pushEvent(addr reach)
@@ -2474,7 +2479,7 @@ proc runInteractive(
           scale_driven,
         )
       elif options.is_select_driven:
-        driveSelect(scene, camera, PIXELS_WIDTH, PIXELS_HEIGHT, count_drawn, scale_driven)
+        driveSelect(window, scene, camera, PIXELS_WIDTH, PIXELS_HEIGHT, count_drawn, scale_driven)
       else:
         driveUndo(scene, camera, PIXELS_WIDTH, PIXELS_HEIGHT, count_drawn, scale_driven)
     if options.is_wheel_driven:
