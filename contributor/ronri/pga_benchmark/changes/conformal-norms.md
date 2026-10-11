@@ -2,8 +2,8 @@
 
 At pin, each of the four norms of the book measures the size of its own part, and the radius norm
 roots the antidot. The center norm, (4.43), is still a stub. This change fills it on 𝟏, as a
-weighted distance from the origin to the center. Chapter 4 gains two suites, from Tables 4.12
-and 4.13. How unitization treats a flat object is P11, which unitizes any element by one rule.
+weighted distance from the origin to the center. Chapter 4 gains two tests, from Tables 4.12
+and 4.13. Proposal P11, `unitize-general`, sets how unitization treats a flat object.
 
 ## Edit `pga/operators.nim`
 
