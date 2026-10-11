@@ -8,11 +8,11 @@ whole, since its tables and constructors change together.
 ## Edit `tests/suites.nim`
 
 ```nim
-import ../pga/[algebra {.all.}, multivectors {.all.}, operators {.all.}]
+import ../pga/[algebra {.all.}, multivectors {.all.}, operators]
 ```
 
 ```nim
-import ../pga/[algebra {.all.}, cayleys {.all.}, multivectors {.all.}, operators {.all.}]
+import ../pga/[algebra {.all.}, cayleys {.all.}, multivectors {.all.}, operators]
 ```
 
 ## Edit `tests/suites.nim`
@@ -44,7 +44,7 @@ suite "Transwedge":
 
 ```
 
-## Replace `pga/cayleys.nim` from `b3c1fb106271d009`
+## Replace `pga/cayleys.nim` from `4aa7a2507c537c06`
 
 ```nim
 ## Define and construct Cayley tables for any PGA.
@@ -63,7 +63,7 @@ suite "Transwedge":
 {.experimental: "codeReordering".}
 {.experimental: "strictFuncs".}
 
-import std/[bitops, options, strformat]
+import std/[bitops, strformat]
 
 import ./algebra {.all.}
 
@@ -102,7 +102,7 @@ type  ## Define type defintions for containers of algebraic distinctions.
 
 ## Define type definition for transwedge order.
 type Order = distinct range[0..DIMENSIONS]
-func `<=`(a, b: Order): bool {.borrow.}
+#func `<=`(a, b: Order): bool {.borrow.}
 func `==`(a, b: Order): bool {.borrow.}
 iterator items(t: typedesc[Order]): Order =
   for i in 0..DIMENSIONS: yield Order(i)
@@ -204,7 +204,6 @@ const
       anti: base.constructAnti(CAYLEYS_COMPLEMENT),
     )
 
-
 const
   CAYLEYS_WEDGE_DOT* = Spatial[Cayley2D](
     base: constructProductGeometric(CAYLEYS_WEDGES_TRANS.base),
@@ -212,11 +211,17 @@ const
   )
 
 const
-  CAYLEYS_NORM_SQUARED* = block:
-    var cayleys = CAYLEYS_DOT
-    cayleys.base.filterGrades(products = @[Grade.low])
-    cayleys.anti.filterGrades(products = @[Grade.high])
-    cayleys
+  CAYLEYS_NORM_SQUARED* = Partial[Formal[Cayley2D]](
+    bulk: constructNormsSquared(CAYLEYS_PARTS, Partiality.Bulk),
+    weight: constructNormsSquared(CAYLEYS_PARTS, Partiality.Weight),
+  )
+when IS_CONFORMAL:
+  const CAYLEYS_NORM_SQUARED_RADIUS* = block:
+    var cayley = CAYLEYS_DOT.anti
+    cayley.filterGrades(products = @[Grade.high])
+    cayley
+
+const
   CAYLEY_ATTITUDE*: Cayley1D = block:  # 𝐦 ∨ 𝐞̄ₙ.
     var cayley = CAYLEYS_WEDGE.anti
     cayley.applyConstant(Basis.horizon, Chirality.Right)
@@ -264,6 +269,34 @@ func constructParts(partiality: Partiality): Formal[Cayley1D] {.compileTime, noi
       flat: constructPart(inclusions & @[Basis.infinity], exclusions),
     )
 
+func constructNormsSquared(
+  parts: Partial[Formal[Cayley1D]],
+  partiality: Partiality,
+): Formal[Cayley2D] =
+  ## Construct unary 2D cayley tables for squared norms from parts.
+
+  func constructNormSquared(part: Cayley1D, partiality: Partiality): Cayley2D =
+    ## Construct unary 2D cayley table for squared norm from specific part.
+    let destination = case partiality:
+        of Partiality.Bulk: Basis.scalar
+        of Partiality.Weight: Basis.scalarAnti
+    for b in Basis:
+      if part[b].len == 0: continue
+      assert part[b].toSigned == b.toSigned,
+        &"Provided part that is not 1-1 mapping; got `{part[b]}` for `{b}`."
+      result[b][b].add(destination.toSigned)
+
+  let parts_partial = case partiality
+      of Partiality.Bulk: parts.bulk
+      of Partiality.Weight: parts.weight
+  when IS_RIGID:
+    Formal[Cayley2D](round: constructNormSquared(parts_partial.round, partiality))
+  else:
+    Formal[Cayley2D](
+      round: constructNormSquared(parts_partial.round, partiality),
+      flat: constructNormSquared(parts_partial.flat, partiality),
+    )
+
 
 func constructReverse(): Cayley1D {.compileTime, noinit.} =
   ## Construct Cayley table for reverse; antireverse conjugates it.
@@ -299,15 +332,17 @@ func constructAnti(cayley: Cayley2D, complements: Chiral[Cayley1D]): Cayley2D {.
 
 func constructMetric(): Cayley1D {.compileTime.} =
   ## Construct metric 𝖌 simplified as 1D cayley table.
-  let 𝐞ₙ = Basis(DIMENSIONS)
+  let
+    𝐞ₙ = Basis.vectorLast
+    𝐞ₙ₋₁ = 𝐞ₙ.pred
   for b in Basis:
-    if b.grade <= Grade(1) and b != 𝐞ₙ:
+    if b.grade <= Grade.vector and b != 𝐞ₙ:
       result[b] = @[b.toSigned]
 
   # Adjust metric to conformal structure if necessary.
   when IS_CONFORMAL:
-    result[𝐞ₙ] = @[BasisSigned(basis: 𝐞ₙ.pred, is_negated: true)]
-    result[𝐞ₙ.pred] = @[BasisSigned(basis: 𝐞ₙ, is_negated: true)]
+    result[𝐞ₙ] = @[BasisSigned(basis: 𝐞ₙ₋₁, is_negated: true)]
+    result[𝐞ₙ₋₁] = @[BasisSigned(basis: 𝐞ₙ, is_negated: true)]
 
 
 func constructExomorphismMetric(metric: Cayley1D): Cayley1D {.compileTime, noinit.} =
@@ -319,7 +354,7 @@ func constructExomorphismMetric(metric: Cayley1D): Cayley1D {.compileTime, noini
   result = metric
 
   for operand in Basis:
-    if operand.grade < Grade(2): continue
+    if operand.grade <= Grade.vector: continue
     var
       bases: seq[BasisSigned]
       is_degenerate = false
@@ -739,7 +774,7 @@ func merge(destination: var Cayley2D, source: Cayley2D, as_negated = false) {.co
         destination[m][n].mergeTerm(term, as_negated)
 
 
-func negate(cayley: var Cayley1D) {.compileTime.} =
+func negate(cayley: var Cayley1D) {.compileTime, used.} =  # Not used; provided for completion.
   ## Negate all signed basis of 1D cayley table in place.
   for operand in Basis:
     if cayley[operand].len == 0: continue
@@ -766,14 +801,6 @@ func slice(
       &"Attempt to convert 2D cayley to 1D with non-singleton product values;" &
       &" got `{terms}` for `{chirality}` `{operand}`."
     result[b] = if terms.len == 1: @[terms.toSigned] else: @[]
-
-
-func collapse(cayley: Cayley2D): Cayley1D {.compileTime.} =
-  ## Collapse 2D cayley to 1D map.
-  # TODO: Covert 1D cayley to seq as well so this is possible.
-  #   This will vastly simplify operator emission macros,
-  #     and also allow for simpler sandwiching.
-  discard
 
 
 

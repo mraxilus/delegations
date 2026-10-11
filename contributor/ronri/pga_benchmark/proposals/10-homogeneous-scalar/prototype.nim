@@ -136,19 +136,21 @@ func `/`*(m: Multivector, z: ScalarHomogeneous): Multivector =
 #[ Norms ]#
 
 func normBulk*(m: Multivector): ScalarHomogeneous =
-  ## Get bulk norm as root under geometric product, i.e. ‖𝐦‖∙ = √(𝐦∙𝐦), as at pin.
-  sqrt(initScalarHomogeneous((`|∙²`m)[Basis.scalar], 0))
+  ## Get bulk norm as root under geometric product, i.e. ‖𝐦‖∙ = √(𝐦∙𝐦), as wiki takes it.
+  ##   Reads whole dot, since `|∙²` at pin squares round bulk alone under conformal metric.
+  sqrt(initScalarHomogeneous((m ∙ m)[Basis.scalar], 0))
 
 
 func normWeight*(m: Multivector): ScalarHomogeneous =
-  ## Get weight norm as root under antiproduct, i.e. ‖𝐦‖∘ = √(𝐦∘𝐦), as at pin.
-  sqrtAnti(initScalarHomogeneous(0, (`|∘²`m)[Basis.scalarAnti]))
+  ## Get weight norm as root under antiproduct, i.e. ‖𝐦‖∘ = √(𝐦∘𝐦), as wiki takes it.
+  ##   Reads whole antidot, since `|∘²` at pin squares round weight alone under conformal metric.
+  sqrtAnti(initScalarHomogeneous(0, (m ∘ m)[Basis.scalarAnti]))
 
 
 when IS_CONFORMAL:
   func normRadius*(m: Multivector): ScalarHomogeneous =
     ## Get radius norm as root under antiproduct, i.e. ‖𝐦‖⊘ = √(𝐦∘𝐦), book's (4.45).
-    ##   Real for real object, imaginary, on 𝟏, for imaginary one. `pga.nim` stubs `|⊘` at pin.
+    ##   Real for real object, imaginary, on 𝟏, for imaginary one. `|⊘` at pin is NaN for latter.
     sqrtAnti(initScalarHomogeneous(0, (m ∘ m)[Basis.scalarAnti]))
 
 
@@ -223,7 +225,7 @@ proc main(): int =
   doAssert SQUARE_BULK == (when IS_RIGID: 0 else: -1),
     "dual under rigid metric, complex under conformal"
   when IS_CONFORMAL:
-    var nan_float = 0  # float root of 𝐦∘𝐦 that gives NaN, as `|∘` takes it at pin
+    var nan_float = 0  # float root of 𝐦∘𝐦 that gives NaN, as `|⊘` takes it at pin
   for _ in 1..SAMPLES:
     let
       (y, z) = (sample(ScalarHomogeneous), sample(ScalarHomogeneous))

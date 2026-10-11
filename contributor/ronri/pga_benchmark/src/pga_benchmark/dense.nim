@@ -266,24 +266,24 @@ func recipeOf(emitter: var Emitter; id: string; m, n: Slots): Slots =
   of "dual_bulk": m.mapped(CAYLEYS_DUAL.base.right)
   of "dual_weight": m.mapped(CAYLEYS_DUAL.anti.right)
   of "negate": m.negated
-  of "norm_bulk_squared": emitter.product(m, m, CAYLEYS_NORM_SQUARED.base)
-  of "norm_weight_squared": emitter.product(m, m, CAYLEYS_NORM_SQUARED.anti)
-  of "norm_bulk": emitter.norm(m, CAYLEYS_NORM_SQUARED.base, Basis.scalar)
-  of "norm_weight": emitter.norm(m, CAYLEYS_NORM_SQUARED.anti, Basis.scalarAnti)
+  of "norm_bulk_squared": emitter.product(m, m, CAYLEYS_NORM_SQUARED.bulk.round)
+  of "norm_weight_squared": emitter.product(m, m, CAYLEYS_NORM_SQUARED.weight.round)
+  of "norm_bulk": emitter.norm(m, CAYLEYS_NORM_SQUARED.bulk.round, Basis.scalar)
+  of "norm_weight": emitter.norm(m, CAYLEYS_NORM_SQUARED.weight.round, Basis.scalarAnti)
   of "norm":
     when IS_RIGID:
       summed(
-        emitter.norm(m, CAYLEYS_NORM_SQUARED.base, Basis.scalar),
-        emitter.norm(m, CAYLEYS_NORM_SQUARED.anti, Basis.scalarAnti),
+        emitter.norm(m, CAYLEYS_NORM_SQUARED.bulk.round, Basis.scalar),
+        emitter.norm(m, CAYLEYS_NORM_SQUARED.weight.round, Basis.scalarAnti),
       )
     else:
       summed(
-        emitter.norm(m, CAYLEYS_DOT.base, Basis.scalar),
-        emitter.norm(m, CAYLEYS_DOT.anti, Basis.scalarAnti),
+        emitter.norm(m, CAYLEYS_NORM_SQUARED.bulk.flat, Basis.scalar),
+        emitter.norm(m, CAYLEYS_NORM_SQUARED.weight.flat, Basis.scalarAnti),
       )
-  of "normalize_bulk": emitter.unitized(m, CAYLEYS_NORM_SQUARED.base, Basis.scalar)
+  of "normalize_bulk": emitter.unitized(m, CAYLEYS_NORM_SQUARED.bulk.round, Basis.scalar)
   of "normalize_weight", "unitize":
-    emitter.unitized(m, CAYLEYS_NORM_SQUARED.anti, Basis.scalarAnti)
+    emitter.unitized(m, CAYLEYS_NORM_SQUARED.weight.round, Basis.scalarAnti)
   of "attitude": m.mapped(CAYLEY_ATTITUDE)
   of "select_grade": m.selected(Grade(1))
   of "select_grade_anti": m.selected(GradeAnti(1).toBase)
@@ -310,8 +310,13 @@ func recipeOf(emitter: var Emitter; id: string; m, n: Slots): Slots =
       case id
       of "bulk_flat": m.mapped(CAYLEYS_PARTS.bulk.flat)
       of "weight_flat": m.mapped(CAYLEYS_PARTS.weight.flat)
-      of "norm_bulk_flat": emitter.norm(m, CAYLEYS_DOT.base, Basis.scalar)
-      of "norm_weight_flat": emitter.norm(m, CAYLEYS_DOT.anti, Basis.scalarAnti)
+      of "norm_bulk_flat": emitter.norm(m, CAYLEYS_NORM_SQUARED.bulk.flat, Basis.scalar)
+      of "norm_weight_flat":
+        emitter.norm(m, CAYLEYS_NORM_SQUARED.weight.flat, Basis.scalarAnti)
+      of "norm_bulk_flat_squared": emitter.product(m, m, CAYLEYS_NORM_SQUARED.bulk.flat)
+      of "norm_weight_flat_squared": emitter.product(m, m, CAYLEYS_NORM_SQUARED.weight.flat)
+      of "norm_radius": emitter.norm(m, CAYLEYS_NORM_SQUARED_RADIUS, Basis.scalarAnti)
+      of "norm_radius_squared": emitter.product(m, m, CAYLEYS_NORM_SQUARED_RADIUS)
       of "carrier": m.mapped(CAYLEY_CARRIER)
       of "carrier_co": emitter.cocarrier(m)
       of "center": emitter.product(emitter.cocarrier(m), m, CAYLEYS_WEDGE.anti)

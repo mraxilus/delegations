@@ -24,5 +24,5 @@ from ./cayleys {.all.} import
   horizon
 when IS_CONFORMAL:
   from ./algebra {.all.} import infinity
-  from ./cayleys {.all.} import CAYLEY_CARRIER
+  from ./cayleys {.all.} import CAYLEY_CARRIER, CAYLEYS_NORM_SQUARED_RADIUS
 ```

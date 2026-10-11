@@ -29,8 +29,8 @@
         ["CAYLEYS_DOT.anti", "CAYLEYS_DOT.anti"],
         ["CAYLEYS_WEDGE_DOT.base", "CAYLEYS_WEDGE_DOT.base"],
         ["CAYLEYS_WEDGE_DOT.anti", "CAYLEYS_WEDGE_DOT.anti"],
-        ["CAYLEYS_NORM_SQUARED.base", "CAYLEYS_NORM_SQUARED.base"],
-        ["CAYLEYS_NORM_SQUARED.anti", "CAYLEYS_NORM_SQUARED.anti"],
+        ["CAYLEYS_NORM_SQUARED.bulk.round", "CAYLEYS_NORM_SQUARED.bulk.round"],
+        ["CAYLEYS_NORM_SQUARED.weight.round", "CAYLEYS_NORM_SQUARED.weight.round"],
         ["CAYLEY_ATTITUDE", "CAYLEY_ATTITUDE"]
       ]
     },
@@ -38,7 +38,10 @@
       "kind": "tables",
       "algebras": ["cga4d", "cga5d"],
       "pairs": [
-        ["CAYLEY_CARRIER", "CAYLEY_CARRIER"]
+        ["CAYLEY_CARRIER", "CAYLEY_CARRIER"],
+        ["CAYLEYS_NORM_SQUARED.bulk.flat", "CAYLEYS_NORM_SQUARED.bulk.flat"],
+        ["CAYLEYS_NORM_SQUARED.weight.flat", "CAYLEYS_NORM_SQUARED.weight.flat"],
+        ["CAYLEYS_NORM_SQUARED_RADIUS", "CAYLEYS_NORM_SQUARED_RADIUS"]
       ]
     }
   ]

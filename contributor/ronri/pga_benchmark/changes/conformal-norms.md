@@ -1,148 +1,33 @@
-# Measure each conformal norm as the size of its own part
+# Fill the center norm, and unitize a flat object by its flat part
 
-At pin, the round norms read `|∙²` and `|∘²`, and the flat norms compute `m ∙ m` and `m ∘ m`.
-Each one takes the dot or the antidot of the whole multivector. Under the conformal metric the
-antimetric is the negative of the metric, so one of the two roots is NaN for each nonzero
-multivector. The book splits a conformal object into round bulk, round weight, flat bulk and flat
-weight, and each norm measures the size of one part, in Section 4.3 and Table 4.12.
+At pin, each of the four norms of the book measures the size of its own part, and the radius norm
+roots the antidot. The center norm, (4.43), is still a stub. Unitization divides by the round
+weight norm, which is zero for a flat object, so a flat object stays as it is.
 
-This change builds the squared norms from `CAYLEYS_PARTS`: each basis of a part times itself
-lands on 𝟏 or 𝟙. Under the rigid metric that table equals the dot and antidot tables, cell for
-cell, so nothing changes there. It adds `|■²` and `|□²` for the flat parts. It fills the stubs of
-the center norm, (4.43), and of the radius norm, (4.45). The center norm lands on 𝟏, as a weighted
-distance. The radius norm lands on 𝟙, since the book roots the antidot, 𝐮 ∘ 𝐮 = r²𝟙, and not the
-dot, so a real object has a real radius.
-
-Unitization divides by the round weight norm, as the book says for a round object. A flat object
-has no round weight, so its flat weight serves, as at pin, where `m ∘ m` of a flat object is the
-square of its flat weight. Chapter 4 gains three suites, from Tables 4.12 and 4.13 and Section 4.3.
-
-## Edit `pga/cayleys.nim`
-
-```nim
-  CAYLEYS_NORM_SQUARED* = block:
-    var cayleys = CAYLEYS_DOT
-    cayleys.base.filterGrades(products = @[Grade.low])
-    cayleys.anti.filterGrades(products = @[Grade.high])
-    cayleys
-```
-
-```nim
-  CAYLEYS_NORM_SQUARED* = Partial[Formal[Cayley2D]](
-    bulk: constructSizes(CAYLEYS_PARTS.bulk, Basis.scalar),
-    weight: constructSizes(CAYLEYS_PARTS.weight, Basis.scalarAnti),
-  )
-```
-
-## Edit `pga/cayleys.nim`
-
-```nim
-      round: constructPart(inclusions, exclusions & @[Basis.infinity]),
-      flat: constructPart(inclusions & @[Basis.infinity], exclusions),
-    )
-```
-
-```nim
-      round: constructPart(inclusions, exclusions & @[Basis.infinity]),
-      flat: constructPart(inclusions & @[Basis.infinity], exclusions),
-    )
-
-
-func constructSizes(parts: Formal[Cayley1D], basis: Basis): Formal[Cayley2D] {.compileTime.} =
-  ## Construct Cayley table for squared size of each (round/flat) part.
-  ##   Each basis of part times itself lands on given basis, i.e. sum of squares of part's
-  ##   coefficients, as book's conformal norms measure (Table 4.12).
-  ##   E.g. this is, in RGA, equal to dot table for bulk and antidot table for weight.
-
-  func constructSize(part: Cayley1D): Cayley2D {.compileTime.} =
-    ## Construct Cayley table for squared size of one part.
-    for b in Basis:
-      if part[b].len > 0:
-        result[b][b] = @[basis.toSigned]
-
-  when IS_RIGID:
-    Formal[Cayley2D](round: constructSize(parts.round))
-  else:
-    Formal[Cayley2D](round: constructSize(parts.round), flat: constructSize(parts.flat))
-```
+This change fills the center norm on 𝟏, as a weighted distance. Where the round weight is zero,
+unitization divides by the flat weight norm, as Section 4.3 says for a flat object. Bulk
+normalization likewise takes the flat bulk where the round bulk is zero. Chapter 4 gains three
+suites, from Tables 4.12 and 4.13 and Section 4.3.
 
 ## Edit `pga/operators.nim`
 
 ```nim
-  I.e. ‖𝐦‖∙² = 𝐦∙𝐦.""",
-  cayley = CAYLEYS_NORM_SQUARED.base,
-  as_unary = true,
-)
+  func `|⊘`*(m: Multivector): Multivector {.inline.} =
+    ## Get radius norm of multivector.
+    ##   Taken from antidot to avoid square root of negative.
+    result[Basis.scalarAnti] = (`|⊘²`m)[Basis.scalarAnti].sqrt
 ```
 
 ```nim
-  I.e. ‖𝐦‖∙² = 𝐦∙𝐦 in RGA, and sum of squares of round bulk components in CGA.""",
-  cayley = CAYLEYS_NORM_SQUARED.bulk.round,
-  as_unary = true,
-)
-```
-
-## Edit `pga/operators.nim`
-
-```nim
-  I.e. ‖𝐦‖∘² = 𝐦∘𝐦.""",
-  cayley = CAYLEYS_NORM_SQUARED.anti,
-  as_unary = true,
-)
-```
-
-```nim
-  I.e. ‖𝐦‖∘² = 𝐦∘𝐦 in RGA, and sum of squares of round weight components in CGA.""",
-  cayley = CAYLEYS_NORM_SQUARED.weight.round,
-  as_unary = true,
-)
-when IS_CONFORMAL:
-  defineOperator(
-    symbols = "|■²",
-    docs = """Get flat bulk squared norm of multivector,
-    as squared size of flat bulk components.""",
-    cayley = CAYLEYS_NORM_SQUARED.bulk.flat,
-    as_unary = true,
-  )
-  defineOperator(
-    symbols = "|□²",
-    docs = """Get flat weight squared norm of multivector,
-    as squared size of flat weight components.""",
-    cayley = CAYLEYS_NORM_SQUARED.weight.flat,
-    as_unary = true,
-  )
-```
-
-## Edit `pga/operators.nim`
-
-```nim
-  func `|■`*(m: Multivector): Multivector {.inline.} =
-    ## Get flat bulk norm of multivector as size of flat bulk components, i.e. ‖𝐦‖∙ = √(𝐦∙𝐦).
-    result[Basis.scalar] = (m ∙ m)[Basis.scalar].sqrt
-
-  func `|□`*(m: Multivector): Multivector {.inline.} =
-    ## Get flat weight norm of multivector as size of flat weight components, i.e. ‖𝐦‖∘ = √(𝐦∘𝐦).
-    result[Basis.scalarAnti] = (m ∘ m)[Basis.scalarAnti].sqrt
-```
-
-```nim
-  func `|■`*(m: Multivector): Multivector {.inline.} =
-    ## Get flat bulk norm of multivector as size of flat bulk components, i.e. ‖𝐦‖■.
-    result[Basis.scalar] = (`|■²`m)[Basis.scalar].sqrt
-
-  func `|□`*(m: Multivector): Multivector {.inline.} =
-    ## Get flat weight norm of multivector as size of flat weight components, i.e. ‖𝐦‖□.
-    result[Basis.scalarAnti] = (`|□²`m)[Basis.scalarAnti].sqrt
+  func `|⊘`*(m: Multivector): Multivector {.inline.} =
+    ## Get radius norm of multivector.
+    ##   Taken from antidot to avoid square root of negative.
+    result[Basis.scalarAnti] = (`|⊘²`m)[Basis.scalarAnti].sqrt
 
   func `|⊙`*(m: Multivector): Multivector {.inline.} =
     ## Get center norm of multivector, i.e. ‖𝐦‖⊙ = √(‖𝐦‖∙² + ‖𝐦‖□²) (4.43).
     ##   Weighted distance from origin to center; divide by round weight norm for distance.
     result[Basis.scalar] = sqrt((`|∙²`m)[Basis.scalar] + (`|□²`m)[Basis.scalarAnti])
-
-  func `|⊘`*(m: Multivector): Multivector {.inline.} =
-    ## Get radius norm of multivector, i.e. ‖𝐦‖⊘ = √(𝐦∘𝐦) (4.45).
-    ##   Weighted radius; NaN for imaginary object, whose 𝐦∘𝐦 is negative.
-    result[Basis.scalarAnti] = (m ∘ m)[Basis.scalarAnti].sqrt
 ```
 
 ## Edit `pga/operators.nim`
@@ -188,17 +73,11 @@ when IS_CONFORMAL:
 ```nim
   func normCenter*(m: Multivector): Multivector {.inline, error: "TODO:  |⊙m".}
     ## Get center norm of multivector.
-
-  func normRadius*(m: Multivector): Multivector {.inline, error: "TODO:  |⊘m".}
-    ## Get radius norm of multivector.
 ```
 
 ```nim
   func normCenter*(m: Multivector): Multivector {.inline.} = |⊙m
     ## Get center norm of multivector as weighted distance from origin to its center.
-
-  func normRadius*(m: Multivector): Multivector {.inline.} = |⊘m
-    ## Get radius norm of multivector as its weighted radius, NaN where it is imaginary.
 ```
 
 ## Edit `tests/suites.nim`

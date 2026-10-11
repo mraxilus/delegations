@@ -1,54 +1,54 @@
 {
   "docket": {
     "url": "https://claude.ai/artifact/XyT583x9RnTKixers2q4gT",
-    "digest": "6e2a17aad5fd17d3"
+    "digest": "e7c1348127f1de04"
   },
   "marginalia": {
     "url": "https://claude.ai/artifact/6WwLfdHiisCtGWUcFxibBM",
-    "digest": "6ee24502adb50e07"
+    "digest": "ad24743ca6f8458e"
   },
   "cayley-derivation": {
     "url": "https://claude.ai/artifact/2fi2hTpobqChXSTPq4vB6q",
-    "digest": "ebb87a020ae2ca89"
+    "digest": "6e98cf83a2615753"
   },
   "typed-multivectors": {
     "url": "https://claude.ai/artifact/V34TAWXNvrHBGN9fNBWYWX",
-    "digest": "17fc24e612400a32"
+    "digest": "80bf22f79e96b24e"
   },
   "partner-sign": {
     "url": "https://claude.ai/artifact/2fUYLonsQo7ejouCvCnpWf",
-    "digest": "24679785bf7352a3"
+    "digest": "d65079e741641008"
   },
   "exact-kinds": {
     "url": "https://claude.ai/artifact/UPfjVLGbsVLBz756DMkPJe",
-    "digest": "b9745bc127a35248"
+    "digest": "5a9c8fc42691444b"
   },
   "multivector-align": {
     "url": "https://claude.ai/artifact/AB3BNtWPEzguWswwnx5ckh",
-    "digest": "3a4f35788dcf7539"
+    "digest": "20680e551b2e078a"
   },
   "proposals": {
     "url": "https://claude.ai/artifact/CW9ZL5eotsVYrZPjMnTLoG",
-    "digest": "3ba4d24698079685"
+    "digest": "1351c446f1da82eb"
   },
   "float-width": {
     "url": "https://claude.ai/artifact/Q3R1yz93Drk7Cwq5qhymDZ",
-    "digest": "f65979ca646b25fb"
+    "digest": "5daedc7ff8281668"
   },
   "part-scale": {
     "url": "https://claude.ai/artifact/6hW9rjiotnjdjBVwatW5Dj",
-    "digest": "7fc1fd06ea5d6239"
+    "digest": "757efdede595fe99"
   },
   "compound-tables": {
     "url": "https://claude.ai/artifact/TczTs551nkXVaWiyHzfVAn",
-    "digest": "ebd235e3393291d7"
+    "digest": "833bdb60ec9af023"
   },
   "object-names": {
     "url": "https://claude.ai/artifact/XtPy7LToDTT2P8S1FfGauX",
-    "digest": "ea32674a5d739966"
+    "digest": "4c681fa0f6c23ddb"
   },
   "homogeneous-scalar": {
     "url": "https://claude.ai/artifact/5NwSv2YW9ZfDa5BbbVrv1D",
-    "digest": "69fd7de93c32279a"
+    "digest": "5a0c3a79a5905590"
   }
 }

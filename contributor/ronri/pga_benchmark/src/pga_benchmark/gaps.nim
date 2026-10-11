@@ -106,7 +106,7 @@ const CAUSES* = [
   Cause(
     id: "D07",
     rule: Rule.Nan,
-    title: "Conformal norms return NaN on real objects.",
+    title: "The radius norm returns NaN where 𝐦 ∘ 𝐦 is negative.",
     closes_when: "every bench measurement's NaN share is zero.",
   ),
   Cause(
@@ -118,7 +118,7 @@ const CAUSES* = [
   Cause(
     id: "D09",
     rule: Rule.Missing,
-    title: "The library refuses two norms that the reference carries.",
+    title: "The library refuses norms that the reference carries.",
     closes_when: "the catalogue's missing list is empty.",
   ),
   Cause(

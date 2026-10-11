@@ -8,10 +8,10 @@
     "sizeof_multivector": 256
   },
   "taken": {
-    "date": "2026-10-10",
+    "date": "2026-10-11",
     "machine": "linux amd64, 4 cores",
     "nim": "27763495bcfe265507ca98aedc1c7064bf1e0e4d",
-    "pga": "e993419c1f90efba72848d146606f903e1cc141e",
+    "pga": "28f4e1128e4efee47d3f2ad9543d8c1460a997c3",
     "flags": "-d:release"
   },
   "functions": {
@@ -2294,8 +2294,8 @@
       "returns": "Multivector",
       "inline": true,
       "own": {
-        "multiplies": 32,
-        "adds": 31,
+        "multiplies": 8,
+        "adds": 7,
         "subtractions": 0,
         "divides": 0,
         "fills_zero": 0,
@@ -2307,8 +2307,8 @@
         "lines": 32
       },
       "total": {
-        "multiplies": 32,
-        "adds": 31,
+        "multiplies": 8,
+        "adds": 7,
         "subtractions": 0,
         "divides": 0,
         "fills_zero": 0,
@@ -2350,8 +2350,8 @@
         "lines": 13
       },
       "total": {
-        "multiplies": 32,
-        "adds": 31,
+        "multiplies": 8,
+        "adds": 7,
         "subtractions": 0,
         "divides": 0,
         "fills_zero": 2,
@@ -2380,9 +2380,9 @@
       "returns": "Multivector",
       "inline": true,
       "own": {
-        "multiplies": 32,
-        "adds": 11,
-        "subtractions": 12,
+        "multiplies": 8,
+        "adds": 7,
+        "subtractions": 0,
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
@@ -2393,9 +2393,9 @@
         "lines": 34
       },
       "total": {
-        "multiplies": 32,
-        "adds": 11,
-        "subtractions": 12,
+        "multiplies": 8,
+        "adds": 7,
+        "subtractions": 0,
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
@@ -2423,8 +2423,8 @@
       "returns": "Multivector",
       "inline": true,
       "own": {
-        "multiplies": 32,
-        "adds": 31,
+        "multiplies": 8,
+        "adds": 7,
         "subtractions": 0,
         "divides": 0,
         "fills_zero": 0,
@@ -2436,8 +2436,8 @@
         "lines": 32
       },
       "total": {
-        "multiplies": 32,
-        "adds": 31,
+        "multiplies": 8,
+        "adds": 7,
         "subtractions": 0,
         "divides": 0,
         "fills_zero": 0,
@@ -2479,8 +2479,8 @@
         "lines": 13
       },
       "total": {
-        "multiplies": 32,
-        "adds": 31,
+        "multiplies": 8,
+        "adds": 7,
         "subtractions": 0,
         "divides": 0,
         "fills_zero": 2,
@@ -2509,9 +2509,9 @@
       "returns": "Multivector",
       "inline": true,
       "own": {
-        "multiplies": 32,
-        "adds": 12,
-        "subtractions": 11,
+        "multiplies": 8,
+        "adds": 7,
+        "subtractions": 0,
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
@@ -2522,9 +2522,9 @@
         "lines": 34
       },
       "total": {
-        "multiplies": 32,
-        "adds": 12,
-        "subtractions": 11,
+        "multiplies": 8,
+        "adds": 7,
+        "subtractions": 0,
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
@@ -2552,9 +2552,9 @@
       "returns": "Multivector",
       "inline": true,
       "own": {
-        "multiplies": 32,
-        "adds": 11,
-        "subtractions": 12,
+        "multiplies": 8,
+        "adds": 7,
+        "subtractions": 0,
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
@@ -2565,9 +2565,9 @@
         "lines": 32
       },
       "total": {
-        "multiplies": 32,
-        "adds": 11,
-        "subtractions": 12,
+        "multiplies": 8,
+        "adds": 7,
+        "subtractions": 0,
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
@@ -2595,9 +2595,9 @@
       "returns": "Multivector",
       "inline": true,
       "own": {
-        "multiplies": 32,
-        "adds": 12,
-        "subtractions": 11,
+        "multiplies": 8,
+        "adds": 7,
+        "subtractions": 0,
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
@@ -2608,9 +2608,52 @@
         "lines": 32
       },
       "total": {
-        "multiplies": 32,
-        "adds": 12,
-        "subtractions": 11,
+        "multiplies": 8,
+        "adds": 7,
+        "subtractions": 0,
+        "divides": 0,
+        "fills_zero": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
+    "|■²(Multivector)": {
+      "symbol": "|■²",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 8,
+        "adds": 7,
+        "subtractions": 0,
+        "divides": 0,
+        "fills_zero": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "total": {
+        "multiplies": 8,
+        "adds": 7,
+        "subtractions": 0,
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
@@ -2651,8 +2694,8 @@
         "lines": 13
       },
       "total": {
-        "multiplies": 32,
-        "adds": 31,
+        "multiplies": 8,
+        "adds": 7,
         "subtractions": 0,
         "divides": 0,
         "fills_zero": 2,
@@ -2670,6 +2713,49 @@
         "bytes_copied": 0,
         "bytes_intermediates": 256,
         "bytes_moved": 1280
+      }
+    },
+    "|□²(Multivector)": {
+      "symbol": "|□²",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 8,
+        "adds": 7,
+        "subtractions": 0,
+        "divides": 0,
+        "fills_zero": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "total": {
+        "multiplies": 8,
+        "adds": 7,
+        "subtractions": 0,
+        "divides": 0,
+        "fills_zero": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
       }
     },
     "|□(Multivector)": {
@@ -2694,8 +2780,8 @@
         "lines": 13
       },
       "total": {
-        "multiplies": 32,
-        "adds": 31,
+        "multiplies": 8,
+        "adds": 7,
         "subtractions": 0,
         "divides": 0,
         "fills_zero": 2,
@@ -2737,8 +2823,8 @@
         "lines": 20
       },
       "total": {
-        "multiplies": 64,
-        "adds": 62,
+        "multiplies": 16,
+        "adds": 14,
         "subtractions": 0,
         "divides": 0,
         "fills_zero": 7,
@@ -2767,9 +2853,9 @@
       "returns": "Multivector",
       "inline": true,
       "own": {
-        "multiplies": 64,
-        "adds": 23,
-        "subtractions": 23,
+        "multiplies": 16,
+        "adds": 14,
+        "subtractions": 0,
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
@@ -2780,9 +2866,9 @@
         "lines": 36
       },
       "total": {
-        "multiplies": 64,
-        "adds": 23,
-        "subtractions": 23,
+        "multiplies": 16,
+        "adds": 14,
+        "subtractions": 0,
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
@@ -2823,8 +2909,8 @@
         "lines": 59
       },
       "total": {
-        "multiplies": 64,
-        "adds": 31,
+        "multiplies": 40,
+        "adds": 7,
         "subtractions": 0,
         "divides": 1,
         "fills_zero": 1,
@@ -2853,9 +2939,9 @@
       "returns": "Multivector",
       "inline": true,
       "own": {
-        "multiplies": 64,
-        "adds": 11,
-        "subtractions": 12,
+        "multiplies": 40,
+        "adds": 7,
+        "subtractions": 0,
         "divides": 1,
         "fills_zero": 0,
         "intermediates": 0,
@@ -2866,9 +2952,9 @@
         "lines": 53
       },
       "total": {
-        "multiplies": 64,
-        "adds": 11,
-        "subtractions": 12,
+        "multiplies": 40,
+        "adds": 7,
+        "subtractions": 0,
         "divides": 1,
         "fills_zero": 0,
         "intermediates": 0,
@@ -2909,8 +2995,8 @@
         "lines": 59
       },
       "total": {
-        "multiplies": 64,
-        "adds": 31,
+        "multiplies": 40,
+        "adds": 7,
         "subtractions": 0,
         "divides": 1,
         "fills_zero": 1,
@@ -2939,9 +3025,9 @@
       "returns": "Multivector",
       "inline": true,
       "own": {
-        "multiplies": 64,
-        "adds": 12,
-        "subtractions": 11,
+        "multiplies": 40,
+        "adds": 7,
+        "subtractions": 0,
         "divides": 1,
         "fills_zero": 0,
         "intermediates": 0,
@@ -2952,9 +3038,9 @@
         "lines": 53
       },
       "total": {
-        "multiplies": 64,
-        "adds": 12,
-        "subtractions": 11,
+        "multiplies": 40,
+        "adds": 7,
+        "subtractions": 0,
         "divides": 1,
         "fills_zero": 0,
         "intermediates": 0,
@@ -2982,9 +3068,9 @@
       "returns": "Multivector",
       "inline": true,
       "own": {
-        "multiplies": 64,
-        "adds": 12,
-        "subtractions": 11,
+        "multiplies": 40,
+        "adds": 7,
+        "subtractions": 0,
         "divides": 1,
         "fills_zero": 0,
         "intermediates": 0,
@@ -2995,9 +3081,9 @@
         "lines": 53
       },
       "total": {
-        "multiplies": 64,
-        "adds": 12,
-        "subtractions": 11,
+        "multiplies": 40,
+        "adds": 7,
+        "subtractions": 0,
         "divides": 1,
         "fills_zero": 0,
         "intermediates": 0,
@@ -3412,9 +3498,9 @@
       "returns": "Multivector",
       "inline": true,
       "own": {
-        "multiplies": 32,
-        "adds": 11,
-        "subtractions": 12,
+        "multiplies": 8,
+        "adds": 7,
+        "subtractions": 0,
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
@@ -3425,9 +3511,9 @@
         "lines": 34
       },
       "total": {
-        "multiplies": 32,
-        "adds": 11,
-        "subtractions": 12,
+        "multiplies": 8,
+        "adds": 7,
+        "subtractions": 0,
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
@@ -3448,6 +3534,221 @@
     },
     "denseNormWeightFlat(Multivector)": {
       "symbol": "denseNormWeightFlat",
+      "module": "dense",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 8,
+        "adds": 7,
+        "subtractions": 0,
+        "divides": 0,
+        "fills_zero": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 34
+      },
+      "total": {
+        "multiplies": 8,
+        "adds": 7,
+        "subtractions": 0,
+        "divides": 0,
+        "fills_zero": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 34
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
+    "denseNormBulkFlatSquared(Multivector)": {
+      "symbol": "denseNormBulkFlatSquared",
+      "module": "dense",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 8,
+        "adds": 7,
+        "subtractions": 0,
+        "divides": 0,
+        "fills_zero": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "total": {
+        "multiplies": 8,
+        "adds": 7,
+        "subtractions": 0,
+        "divides": 0,
+        "fills_zero": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
+    "denseNormWeightFlatSquared(Multivector)": {
+      "symbol": "denseNormWeightFlatSquared",
+      "module": "dense",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 8,
+        "adds": 7,
+        "subtractions": 0,
+        "divides": 0,
+        "fills_zero": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "total": {
+        "multiplies": 8,
+        "adds": 7,
+        "subtractions": 0,
+        "divides": 0,
+        "fills_zero": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
+    "|⊘²(Multivector)": {
+      "symbol": "|⊘²",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 32,
+        "adds": 31,
+        "subtractions": 0,
+        "divides": 0,
+        "fills_zero": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "total": {
+        "multiplies": 32,
+        "adds": 31,
+        "subtractions": 0,
+        "divides": 0,
+        "fills_zero": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
+    "|⊘(Multivector)": {
+      "symbol": "|⊘",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subtractions": 0,
+        "divides": 0,
+        "fills_zero": 2,
+        "intermediates": 1,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 13
+      },
+      "total": {
+        "multiplies": 32,
+        "adds": 31,
+        "subtractions": 0,
+        "divides": 0,
+        "fills_zero": 2,
+        "intermediates": 1,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 45
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 512,
+        "bytes_copied": 0,
+        "bytes_intermediates": 256,
+        "bytes_moved": 1280
+      }
+    },
+    "denseNormRadius(Multivector)": {
+      "symbol": "denseNormRadius",
       "module": "dense",
       "params": [
         "Multivector"
@@ -3479,6 +3780,49 @@
         "calls": 0,
         "allocations": 0,
         "lines": 34
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
+    "denseNormRadiusSquared(Multivector)": {
+      "symbol": "denseNormRadiusSquared",
+      "module": "dense",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 32,
+        "adds": 12,
+        "subtractions": 11,
+        "divides": 0,
+        "fills_zero": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "total": {
+        "multiplies": 32,
+        "adds": 12,
+        "subtractions": 11,
+        "divides": 0,
+        "fills_zero": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
       },
       "movement": {
         "bytes_read": 256,
@@ -8570,11 +8914,11 @@
       "dense": "denseNormBulk(Multivector)",
       "cite": "2.87",
       "bound": {
-        "shape": "Norm",
+        "shape": "NormPart",
         "is_chain": false,
         "steps": [],
-        "multiplies": 32,
-        "adds": 31,
+        "multiplies": 8,
+        "adds": 7,
         "divides": 0,
         "roots": 1,
         "bytes_moved": 264
@@ -8590,11 +8934,11 @@
       "dense": "denseNormWeight(Multivector)",
       "cite": "2.88",
       "bound": {
-        "shape": "Norm",
+        "shape": "NormPart",
         "is_chain": false,
         "steps": [],
-        "multiplies": 32,
-        "adds": 31,
+        "multiplies": 8,
+        "adds": 7,
         "divides": 0,
         "roots": 1,
         "bytes_moved": 264
@@ -8610,11 +8954,11 @@
       "dense": "denseNormBulkSquared(Multivector)",
       "cite": "2.87",
       "bound": {
-        "shape": "NormSquared",
+        "shape": "NormPartSquared",
         "is_chain": false,
         "steps": [],
-        "multiplies": 32,
-        "adds": 31,
+        "multiplies": 8,
+        "adds": 7,
         "divides": 0,
         "roots": 0,
         "bytes_moved": 264
@@ -8630,11 +8974,11 @@
       "dense": "denseNormWeightSquared(Multivector)",
       "cite": "2.88",
       "bound": {
-        "shape": "NormSquared",
+        "shape": "NormPartSquared",
         "is_chain": false,
         "steps": [],
-        "multiplies": 32,
-        "adds": 31,
+        "multiplies": 8,
+        "adds": 7,
         "divides": 0,
         "roots": 0,
         "bytes_moved": 264
@@ -8650,14 +8994,14 @@
       "dense": "denseNorm(Multivector)",
       "cite": "2.90",
       "bound": {
-        "shape": "2 Norm",
+        "shape": "2 NormPart",
         "is_chain": true,
         "steps": [
-          "Norm",
-          "Norm"
+          "NormPart",
+          "NormPart"
         ],
-        "multiplies": 64,
-        "adds": 62,
+        "multiplies": 16,
+        "adds": 14,
         "divides": 0,
         "roots": 2,
         "bytes_moved": 264
@@ -8676,8 +9020,8 @@
         "shape": "Unitize",
         "is_chain": false,
         "steps": [],
-        "multiplies": 64,
-        "adds": 31,
+        "multiplies": 40,
+        "adds": 7,
         "divides": 1,
         "roots": 1,
         "bytes_moved": 512
@@ -8696,8 +9040,8 @@
         "shape": "Unitize",
         "is_chain": false,
         "steps": [],
-        "multiplies": 64,
-        "adds": 31,
+        "multiplies": 40,
+        "adds": 7,
         "divides": 1,
         "roots": 1,
         "bytes_moved": 512
@@ -8716,8 +9060,8 @@
         "shape": "Unitize",
         "is_chain": false,
         "steps": [],
-        "multiplies": 64,
-        "adds": 31,
+        "multiplies": 40,
+        "adds": 7,
         "divides": 1,
         "roots": 1,
         "bytes_moved": 512
@@ -8843,11 +9187,11 @@
       "dense": "denseNormBulkFlat(Multivector)",
       "cite": "wiki:Flat_bulk",
       "bound": {
-        "shape": "Norm",
+        "shape": "NormPart",
         "is_chain": false,
         "steps": [],
-        "multiplies": 32,
-        "adds": 31,
+        "multiplies": 8,
+        "adds": 7,
         "divides": 0,
         "roots": 1,
         "bytes_moved": 264
@@ -8863,6 +9207,66 @@
       "dense": "denseNormWeightFlat(Multivector)",
       "cite": "wiki:Flat_weight",
       "bound": {
+        "shape": "NormPart",
+        "is_chain": false,
+        "steps": [],
+        "multiplies": 8,
+        "adds": 7,
+        "divides": 0,
+        "roots": 1,
+        "bytes_moved": 264
+      }
+    },
+    "norm_bulk_flat_squared": {
+      "symbol": "|■²",
+      "alias": "",
+      "arity": 1,
+      "expression": "(`|■²`(m))",
+      "library": "|■²(Multivector)",
+      "reference": "",
+      "dense": "denseNormBulkFlatSquared(Multivector)",
+      "cite": "wiki:Flat_bulk",
+      "bound": {
+        "shape": "NormPartSquared",
+        "is_chain": false,
+        "steps": [],
+        "multiplies": 8,
+        "adds": 7,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 264
+      }
+    },
+    "norm_weight_flat_squared": {
+      "symbol": "|□²",
+      "alias": "",
+      "arity": 1,
+      "expression": "(`|□²`(m))",
+      "library": "|□²(Multivector)",
+      "reference": "",
+      "dense": "denseNormWeightFlatSquared(Multivector)",
+      "cite": "wiki:Flat_weight",
+      "bound": {
+        "shape": "NormPartSquared",
+        "is_chain": false,
+        "steps": [],
+        "multiplies": 8,
+        "adds": 7,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 264
+      }
+    },
+    "norm_radius": {
+      "symbol": "|⊘",
+      "alias": "normRadius",
+      "arity": 1,
+      "expression": "(|⊘ m)",
+      "library": "|⊘(Multivector)",
+      "reference": "",
+      "dense": "denseNormRadius(Multivector)",
+      "cite": "wiki:Radius_norm",
+      "bound": {
         "shape": "Norm",
         "is_chain": false,
         "steps": [],
@@ -8870,6 +9274,26 @@
         "adds": 31,
         "divides": 0,
         "roots": 1,
+        "bytes_moved": 264
+      }
+    },
+    "norm_radius_squared": {
+      "symbol": "|⊘²",
+      "alias": "",
+      "arity": 1,
+      "expression": "(`|⊘²`(m))",
+      "library": "|⊘²(Multivector)",
+      "reference": "",
+      "dense": "denseNormRadiusSquared(Multivector)",
+      "cite": "wiki:Radius_norm",
+      "bound": {
+        "shape": "NormSquared",
+        "is_chain": false,
+        "steps": [],
+        "multiplies": 32,
+        "adds": 31,
+        "divides": 0,
+        "roots": 0,
         "bytes_moved": 264
       }
     },
@@ -10679,11 +11103,6 @@
       "symbol": "|⊙",
       "alias": "normCenter",
       "cite": "wiki:Center_norm"
-    },
-    "norm_radius": {
-      "symbol": "|⊘",
-      "alias": "normRadius",
-      "cite": "wiki:Radius_norm"
     }
   }
 }
