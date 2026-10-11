@@ -102,18 +102,16 @@ changes.
 ## Edit `pga.nim`
 
 ```nim
-when compileOption("profiler"): import std/nimprof
+  import std/nimprof
 
-import std/math
+import ./pga/[algebra, cayleys, multivectors, operators]
 ```
 
 ```nim
-when compileOption("profiler"):
   import std/nimprof
   ## Driven by `nim c -d:release --profiler:on --stackTrace:on -r tests/rga/test_4d.nim`.
 
-import std/math
-export math  # re-export sqrt and friends, since norms return multivectors of them
+import ./pga/[algebra, cayleys, multivectors, operators]
 ```
 
 ## Edit `pga.nim`

@@ -439,6 +439,17 @@ suite "Internal: Lower bound":
     check b.divides == 1 and b.roots == 1  # one reciprocal over one root
 
 
+  test "part norm counts blades of one part, and radius norm counts whole form":
+    let
+      rigid = Metric(dimensions: 4, is_conformal: false)
+      conformal = Metric(dimensions: 5, is_conformal: true)
+    check boundLowerOf(Shape.NormPartSquared, rigid, 1).multiplies == 8  # 2.87, bulk of 16 slots
+    check boundLowerOf(Shape.NormPartSquared, conformal, 1).multiplies == 8  # Table 4.12
+    check boundLowerOf(Shape.NormPart, conformal, 1).roots == 1  # Table 4.12, one root
+    check boundLowerOf(Shape.NormSquared, conformal, 1).multiplies == 32  # 4.45, whole antidot
+    check boundLowerOf(Shape.Unitize, conformal, 1).multiplies == 8 + 32  # Section 4.3
+
+
   test "compound product folds its maps into one table, and bound counts that table":
     let
       rigid = Metric(dimensions: 4, is_conformal: false)

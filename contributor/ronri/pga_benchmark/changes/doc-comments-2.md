@@ -221,11 +221,11 @@ when IS_RIGID:
 ## Edit `tests/suites.nim`
 
 ```nim
-import ../pga/[algebra {.all.}, multivectors {.all.}, operators {.all.}]
+import ../pga/[algebra {.all.}, multivectors {.all.}, operators]
 ```
 
 ```nim
-import ../pga/[algebra {.all.}, multivectors {.all.}, operators {.all.}]
+import ../pga/[algebra {.all.}, multivectors {.all.}, operators]
   # Open imports reach private symbols; same narrowing as operators.nim would apply.
 ```
 

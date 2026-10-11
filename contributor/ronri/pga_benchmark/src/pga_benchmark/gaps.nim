@@ -118,7 +118,7 @@ const CAUSES* = [
   Cause(
     id: "D09",
     rule: Rule.Missing,
-    title: "The library refuses two norms that the reference carries.",
+    title: "The library refuses norms that the reference carries.",
     closes_when: "the catalogue's missing list is empty.",
   ),
   Cause(

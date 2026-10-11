@@ -99,7 +99,7 @@ operators give some 1 900 tables, or about 1.7 GB of front-end memory at 6D. The
 | Blade products by bit operations | Weighed; second generator, against three tables |
 | `Option` cells in `Cayley1D` | Library before `3121342`; two cell shapes, and no sum of terms |
 | ⟇ as conjugate of ⟑, one family | Built; equal sum, but anti orders differ at cga4d and cga5d |
-| Drop `CAYLEYS_NORM_SQUARED` | Equal to dot, cell for cell; outside this idea, so it stays |
+| Drop `CAYLEYS_NORM_SQUARED` | Built from parts at pin, not from dot; outside this idea, so it stays |
 
 ## Open decisions
 

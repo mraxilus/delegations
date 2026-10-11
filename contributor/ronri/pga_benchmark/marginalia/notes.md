@@ -41,19 +41,6 @@ not say so.
 
 The Architect decides: raise, return zero, or reject at compile time.
 
-## Whether `isMixed` is part of the surface
-
-`pga/multivectors.nim` · decide
-
-```nim
-template isMixed(m: Multivector): bool = m.grade.isNone
-  ## Determine if multivector is mixed grade.
-```
-
-`isMixed` is private, and the suites reach it through `{.all.}`. A private name that works
-only under `{.all.}` is the shape that once hid a broken grade table from the suites. Export it
-with the other grade predicates, or let the suites define their own.
-
 ## Scalar-valued products return a whole multivector
 
 `pga/operators.nim` · proposal
@@ -74,31 +61,21 @@ which here is one slot.
 
 ## What the conformal norms compute
 
-`pga/operators.nim` · open
+`pga.nim` · open
 
 ```nim
-when IS_CONFORMAL:
-  func `|■`*(m: Multivector): Multivector {.inline.} =
-    ## Get flat bulk norm of multivector as size of flat bulk components, i.e. ‖𝐦‖∙ = √(𝐦∙𝐦).
-    result[Basis.scalar] = (m ∙ m)[Basis.scalar].sqrt
-
-  func `|□`*(m: Multivector): Multivector {.inline.} =
-    ## Get flat weight norm of multivector as size of flat weight components, i.e. ‖𝐦‖∘ = √(𝐦∘𝐦).
-    result[Basis.scalarAnti] = (m ∘ m)[Basis.scalarAnti].sqrt
+  func normCenter*(m: Multivector): Multivector {.inline, error: "TODO:  |⊙m".}
+    ## Get center norm of multivector.
 ```
 
-The round norms read the squared operators `|∙²` and `|∘²`, and the flat norms compute `m ∙ m`
-and `m ∘ m` in full. So all four take the dot or the antidot of the whole multivector. Under the
-conformal metric the antimetric is the negative of the metric, so `m ∘ m` is exactly `-(m ∙ m)`.
-One root of the two is then NaN for each nonzero multivector. Of the 256 seeded multivectors of
-P10, `|∘` gives NaN for 114 at cga5d and 141 at cga4d, and `|∙` gives NaN for each other one.
+Each of the four norms of the book measures the size of its own part, from `CAYLEYS_PARTS`, as
+in Table 4.12. The radius norm takes a float root of 𝐦 ∘ 𝐦 on 𝟙, as in (4.45), so it is NaN for an
+imaginary object. Two parts of Section 4.3 are not in the library. The center norm, (4.43), is a
+stub. Unitization divides by the round weight norm, which is zero for a flat object, so a flat
+object stays as it is.
 
-The book splits a conformal object into four parts, by its factors of e4 and e5, in Section 4.3.
-The round bulk, round weight, flat bulk and flat weight norms each measure the size of one part,
-in Table 4.12. For each round object 𝐮 • 𝐮 = −r², in (4.44), and the radius norm is √(𝐮 ∘ 𝐮), in
-(4.45). So at pin, `|∙` and `|■` give NaN for each real round object. `|∘` and `|□` give the value
-of the radius norm, which `pga.nim` lists as `|⊘` and stubs, and neither gives a weight norm of the
-book. Change `conformal-norms` moves them to the four norms of the book, and fills `|⊙` and `|⊘`.
+Change `conformal-norms` fills `|⊙`. It also divides a flat object by its flat weight norm where
+the round weight is zero.
 
 ## Why five conformal law suites fail
 
@@ -132,19 +109,17 @@ for `operators.nim`.
 `pga/operators.nim` · decide
 
 ```nim
-defineOperator(
-  symbols = "|∙²",
-  docs = """Get (round) bulk squared norm of multivector,
-  as squared size of (round) bulk components.
-  I.e. ‖𝐦‖∙² = 𝐦∙𝐦.""",
-  cayley = CAYLEYS_NORM_SQUARED.base,
-  as_unary = true,
-)
+  defineOperator(
+    symbols = "|∙²",
+    docs = """Get bulk squared norm of multivector, i.e. ‖𝐦‖∙² = 𝐦∙𝐦.""",
+    cayley = CAYLEYS_NORM_SQUARED.bulk.round,
+    as_unary = true,
+  )
 ```
 
-`|∙²` and `|∘²` are useful in their own right. Neither has an alias or a row in the operator
-tables of `pga.nim`. `²` is not an operator character, so a caller must spell each in
-backticks.
+`|∙²` and `|∘²`, and under the conformal metric `|■²`, `|□²` and `|⊘²`, are useful in their own
+right. None has an alias or a row in the operator tables of `pga.nim`. `²` is not an operator
+character, so a caller must spell each in backticks.
 
 If they are public, they need aliases and table rows. If they only serve other operators,
 make them private.

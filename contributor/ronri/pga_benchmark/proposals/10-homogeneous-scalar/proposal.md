@@ -35,8 +35,8 @@ name on 2026-10-10.
 - **Norms.** `normBulk` is the root of 𝐦 ∙ 𝐦 under the geometric product, and `normWeight` is the
   root of 𝐦 ∘ 𝐦 under the antiproduct, as the wiki takes them. `norm` adds the two, and
   `unitize` divides a multivector by its weight norm. Under the conformal metric, `normRadius` is
-  the radius norm of the book. `pga.nim` lists that norm as `|⊘`, and at pin its body stops the
-  compiler.
+  the radius norm of the book. `pga.nim` lists that norm as `|⊘`, and at pin it takes a float
+  root, which is NaN for an imaginary object.
 
 ## Why the square decides
 
@@ -62,7 +62,7 @@ geometric product the same table holds, with 𝟏 and 𝟙 swapped.
   of radius r, with 2aʷaᵘ − |a|² = ±r² as Table 4.13 gives. `normRadius` returns r𝟙 where the point
   is real, and r𝟏, as i, where it is imaginary.
 - **No NaN.** Under the conformal metric, 𝐦 ∘ 𝐦 is negative for about half of all multivectors.
-  Of 256 seeded multivectors with each coefficient in [−1, 1], a float root of it, as `|∘` takes,
+  Of 256 seeded multivectors with each coefficient in [−1, 1], a float root of it, as `|⊘` takes,
   gives NaN for 114 at cga5d and 141 at cga4d. `normRadius` gives none, and its square equals
   𝐦 ∘ 𝐦 for each one.
 - **Division by a homogeneous scalar.** A geometric norm over its weight norm is d𝟏 + 𝟙, where d
@@ -95,12 +95,10 @@ the laws see the rule.
 
 ## What it leaves out
 
-- **The conformal norms keep their definitions at pin.** There `|∘` takes the root of the whole
-  antidot, which gives the value of the radius norm and not the round weight norm. The book
-  defines four norms, each the size of its own part, in Table 4.12. The change `conformal-norms`
-  moves the library to them, and the evaluation of P10 runs without it. At pin, `|∙` takes the
-  root of 𝐮 • 𝐮, which is −r² for each real round object, in (4.44). So the bulk norm, the weight
-  norm, `norm` and `unitize` match the book under the rigid metric alone.
+- **The four part norms of the library.** At pin each conformal norm of the library is the size of
+  its own part, as Table 4.12 defines. The bulk and weight norms here take the root of the whole
+  dot and antidot, as the wiki does. So the bulk norm, the weight norm, `norm` and `unitize` equal
+  those of the library under the rigid metric alone.
 - **Four functions.** Lengyel's `DualNum` also has an inverse root, a sine, a cosine and a tangent,
   each in both forms, and none is here.
 - **One program.** The kinds of P04 live in its prototype alone, so `prototype.nim` imports that
