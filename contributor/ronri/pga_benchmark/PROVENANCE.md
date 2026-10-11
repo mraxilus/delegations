@@ -721,7 +721,8 @@ weak evidence alone. Counts are exact, and carry the verdicts.
 `proposals/04-exact-kinds/prototype.nim` holds its laws against the change of
 `cayley-derivation` at rga3d, rga4d, cga4d and cga5d.
 `proposals/10-homogeneous-scalar/prototype.nim` holds its laws at the same four algebras, on the
-kinds of that prototype.
+kinds of that prototype. `proposals/11-unitize-general/laws.nim` holds the laws of its rule, and
+`limits.nim` its limits over long chains and frames, at the same four algebras.
 
 Verified by `test_rga4d.nim` and the other stubs, suites `Internal: Markdown`, `Internal: Changes`,
 `Internal: Proposals`, `Internal: Evaluations`, `Internal: Cells` and `Internal: Figures`. They
