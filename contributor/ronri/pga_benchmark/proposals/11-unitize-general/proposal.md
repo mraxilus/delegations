@@ -248,7 +248,28 @@ are; frames run at 60 each second.
 
 ## What it costs
 
-The evaluation times `^∘` with this change against pin at each algebra.
+The evaluation times unitize on the general pool with this change and at pin, in five alternating
+runs on linux amd64 with 4 cores, on 2026-10-11. It also counts the C of `^∘`.
+
+| Algebra | Unitize at pin | With this change | Ratio |
+| --- | --- | --- | --- |
+| `rga3d` | 3.67 ns | 3.66 ns | ×1.04 |
+| `rga4d` | 5.34 ns | 5.26 ns | ×0.95 |
+| `cga4d` | 4.67 ns | 21.12 ns | ×4.52 |
+| `cga5d` | 8.78 ns | 66.59 ns | ×6.98 |
+
+| Count in `^∘` at `cga5d` | At pin | With this change |
+| --- | --- | --- |
+| Multiplies | 40 | 105 |
+| Adds | 7 | 38 |
+| Calls | 1 | 163 |
+| Error checks | 1 | 66 |
+| Lines of C | 91 | 1,485 |
+
+The rigid algebras keep their cost, since their branch is the rule at pin. In the conformal
+algebras the rule adds the antidot, and a grade scan that runs only where the round weight
+passes, and stops at a second grade. Most of the rest is calls and error checks, which the
+library's operators carry everywhere, and which the gap list holds as design gaps.
 
 ## What it leaves out
 
