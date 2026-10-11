@@ -67,8 +67,9 @@ variable `PREVIEW` would shadow the type `Preview`. The variables are `PREVIEW_E
 belongs to that library. An ideal object does not sit *at* the horizon. It lies *in* it, so the kind
 words that a reader sees are `horizon point`, `horizon line` and `horizon plane`.
 
-*Checked.* Verified at every rename: every suite is unchanged, case for case, so no behaviour moved.
-`tsc` is clean after `bridge.d.ts` is derived, and both front-ends are built and driven.
+*Checked.* Verified after every rename: every suite is unchanged, case for case, so no behaviour
+moved. `tsc` is clean after `bridge.d.ts` is derived again. `koch check-files` reports 0 findings,
+and both front-ends are built and driven.
 
 ## Wording catalogue
 
@@ -167,8 +168,9 @@ and this file does not:
 **Accounting allows two frames of its sample to miss, as a count rather than a share.**
 `ceil(0.995n)` equals `n` for every `n` under 200, so a share demands every frame of the 49-frame
 sample of `loaded`. One definition is exported from `scenery` (repository issue 47). The scenery
-check takes the same allowance, because preemption missed one frame of 109, of 126 and of 127.
-Per-frame tolerances stay as they are, because a real accounting fault misses on every frame.
+check takes the same allowance. Preemption inside its bracket and outside both halves missed one
+frame of 109, of 126 and of 127. Per-frame tolerances stay as they are, because a real accounting
+fault misses on every frame.
 
 **Count the mechanism that the claim names.** The cadence check of the diagnostics section counts
 `askSlowPass`, the entry of the tick, where asks are `ceil(ticks/5)`. It does not count calls to
@@ -234,9 +236,9 @@ plane shows bare backdrop. A world axis in front of the veil hides it with no fa
 
 Rejected: spots of one reading compared with each other, which pass on a canvas with no veil. Cost:
 eight readings, about 6 s of the drive. Verified by a break on purpose, 2026-10-04, on the page
-without antialias. The low view fails with the veil draws skipped. It fails too with the floor of
-the box halfway between the vanishing line and the centre of the disc. The steep view passed that
-break, because the line stands far off it.
+without antialias. With the veil draws skipped, the low view read 4 of 1878 spots veiled. With the
+floor of the box halfway between the vanishing line and the centre of the disc, it read 1677
+of 1878. The steep view passed that break, because the line stands far off it.
 
 **The disc check holds the disc of the ecliptic under a camera that stands inside it.**
 `driveDiscUnderfoot` puts the eye 1.5 units off Sol over the largest demo, 0.3 rad up and then
@@ -291,7 +293,7 @@ The bound is stated in the check and in the page. A check that reads the window 
 passes whatever the page does. Time is never asserted, and on the simulated clock it reads 0 ms. The
 count of rows standing, 27 for 5,040 objects, holds on every machine. `driveEditFromMenu` opens the
 drawer onto the 41st object created, near the end of the list. It reads that row as standing before
-the call returns, under the pinned heading, with its form above the floor of the scroller.
+the call returns, under the pinned heading, with its whole form above the floor of the scroller.
 
 **A touch id is never reused across gestures.** Every gesture starts by asking the page whether any
 pointer is still down. The page keys live pointers by id. So an id reused from the gesture before
@@ -335,8 +337,8 @@ Three things that the clock does not reach are set on the simulated page:
   times fast, so no check waits on real time to see a transition end.
 - The idle callback of Playwright grants no time, so the slow pass of the diagnostics tree would
   wait for ever. The page is granted 50 ms, the longest idle period that a browser grants.
-- A page function that waits on its timers runs through `evaluateOver`. The clock moves a span that
-  covers its waits, and yields to the page between timers, so each await resolves in order.
+- A page function that waits on its timers runs through `evaluateOver`. The clock moves a fixed span
+  that covers its waits, and yields to the page between timers, so each await resolves in order.
 
 **The simulated page draws without antialias.** `driveSimulated` sets `should_antialias` to false by
 an init script, before the page loads. `gl.ts` reads that switch before it asks for its context, and
@@ -381,6 +383,9 @@ The still frame, the moving frame and the frame after an edit read a full build 
 the lock of the gate. They carry no runner reading. One run of the 20 is left out. It read the
 anchor at 23.5 µs and the loaded pick at 7.4 ms, each over its bound. That is load, not a fault.
 
+In 10 runs of `a1702384` beside them, frames that held their scene read 0.4 to 0.5 ms still. After
+an edit they read 1.5 to 2.4 ms.
+
 | Check | Bound | Runner | Delegates | Fault |
 |-------|-------|--------|-----------|-------|
 | Still frame, median | 2.1 ms | | 0.7 to 1.4 | |
@@ -423,7 +428,11 @@ scale unlike each other between machines, so no one reference normalises them al
 clock of the page ticks in steps of 100 µs, so a call of a few microseconds is timed in hundreds.
 One mean of 400 anchor lookups read 5.75 to 32 µs on one fresh page, and the first was dearest.
 After an untimed batch, the median of 15 batches of 200 read 6.0 to 7.0 µs in 12 trials. A
-collection or a preemption then spoils one batch, not the figure. The marker takes the same figure.
+collection or a preemption then spoils one batch, not the figure.
+
+The marker takes the same figure. Its worst mean of 30 pairs read 0.46 to 1.67 ms over 4 pages. Its
+worst median of 9 batches of 5 read 0.48 to 0.62 ms. Both were measured with each outline shaped
+twice.
 
 **Sustained load moves a median too.** On 2026-09-30, with three of four cores kept busy, 10 runs of
 the measured page read the anchor at 7.0 to 14.5 µs. Each check but the marker stayed inside its
@@ -431,23 +440,25 @@ bound. Ten such runs on 2026-10-04, with each outline shaped once, read the mark
 ms, inside its bound. The gate runs projects one at a time, so no gate run puts that load beside the
 drive. A delegate that shares its cores with other tenants can still.
 
-**A delegate can read a speed check over its bound with no fault present.** On 2026-10-01, nine
-measured pages on a fresh delegate read the marker at 0.72 to 2.64 ms, against its bound then of 1.7
-ms. They read the grid at 6.4 to 22.3 ms. Builds with and without the read tally of `boundary` read
-over the same range, and the 2.64 ms was the first page after a build. The counts hold each fault
-whatever the clock reads.
+**A delegate can read a speed check over its bound with no fault present.** With each outline shaped
+twice, nine pages on a fresh delegate read the marker at 0.72 to 2.64 ms, over a bound of 1.7 ms.
+They ran on 2026-10-01, and read the grid at 6.4 to 22.3 ms. Six pages ran the read tally of
+`boundary`, and three ran the build without it, over the same range. The 2.64 ms was the first page
+after a build. The counts hold each fault whatever the clock reads.
 
 **The rendering step of the browser runs on real frames, so each simulated frame waits for one.**
 Resize, scroll, media-query and resize-observer events fire in that step, whatever the clock says.
-Without the wait, a viewport change reached the page at any point of the frames after it. `runSpan`
-lets one real rendering step run before each simulated frame. What the last action or frame set off
-then reaches the page first, in the same order on every machine.
+Without the wait, a viewport change reached the page at any point of the frames after it. The sweep
+of the chip row read its toggles in the row at 394 px on one run, and in the menu on the next.
+`runSpan` lets one real rendering step run before each simulated frame. What the last action or
+frame set off then reaches the page first, in the same order on every machine.
 
 **A touch is waited on until the page holds the fingers where the harness put them.** The protocol
-answers before the page sees a touch move, which the browser holds for its next real frame.
-`touchAt` asks the page where it holds each finger, and time moves only when the answer matches. It
-compares places and not counts, because two fingers put down together arrive as two starts. The
-mouse of Playwright waits already.
+answers before the page sees a touch move, which the browser holds for its next real frame. Without
+the wait, the same pinch zoomed to 8.41 in four fresh pages and to 7.62 in the fifth. `touchAt` asks
+the page where it holds each finger, and time moves only when the answer matches. It compares places
+and not counts, because two fingers put down together arrive as two starts. The mouse of Playwright
+waits already.
 
 **A move inside the touch slop of the browser never arrives, so that wait ends after three real
 rendering steps.** A move of 3, 8 or 14 px from where the finger went down was dropped, and one of
@@ -645,8 +656,9 @@ to, and the operators render the same either way.
 **Each Noto face of the page ships whole** (Article X.8, as the Architect ruled it on 2026-10-03). A
 Latin subset leaves each character past its range to a face of the viewer's system. `ˍ` and `˷` of
 the notation are two (repository issue 411). The cost is weight: the built page is 7,830,702 bytes,
-against 4,271,072 with the subsets, by `ls -l build/rga_visualiser.html` on 2026-10-03. Rejected: a
-Noto Sans subset cut for the two accents, which no store row hosts without a release.
+against 4,271,072 with the subsets. Measured on 2026-10-03 with `ls -l build/rga_visualiser.html`,
+at `main` and at this change. Rejected: a Noto Sans subset cut for the two accents, which no store
+row hosts without a release.
 
 **The maths and symbol faces each take a family of their own, after the text faces in every stack.**
 Within one family, the faces that declare one weight form a set. The engine picks one set for the
@@ -706,21 +718,22 @@ text of the shell, which pass an element that takes a stack of its own. Rejected
 
 Cost: a stack that no rule declares counts only where an element resolves to it at the check. Such a
 stack is that of a form control, or a family that a script sets. A bare button resolves to Arial,
-and a bare text area to monospace. Verified by a run in Chrome for Testing 153 and a read of
-`src/browser` and the shell, 2026-10-04. Each button and field that a script builds matches a rule
-that declares a stack, and no script sets a family.
+and a bare text area to monospace. Verified by a run, 2026-10-04, in Chrome for Testing 153: each
+button and field that a script builds matches a rule that declares a stack. Verified by a read of
+`src/browser` and the shell, the same day: no script sets a family.
 
 *Checked.* Verified by a run of the check alone, 2026-10-04, in Chrome for Testing 153, with the
-drawer and help open: both checks pass, with `missing none`. Verified by breaks on purpose, the same
-day and the same way:
+drawer and help open: both checks pass, with `missing none`. The stacks that the rules declare are
+the stacks in use. Verified by breaks on purpose, the same day and the same way:
 
 - `#button-menu span { font-family: "Commit Mono UI", monospace; }` fails with `missing
   rga_visualiser.html #button-menu span at 400: U+2630`, which the three stacks of the shell pass;
 - `.later-panel { font-family: "Commit Mono UI", monospace; }` matches no element, and fails at 400,
   600 and 700 with `rule .later-panel` and each codepoint that Commit Mono does not map, U+2630
   among them. A check of the stacks in use alone passes it;
-- `font: 600 12px var(--later)` on `.later-panel` inside `@media (max-width: 10px)`, with `--later`
-  declared on `:root` inside `@media print`, fails the same way.
+- a rule for `.later-panel` sets `font: 600 12px var(--later)` inside `@media (max-width: 10px)`.
+  Inside `@media print`, `:root` declares `--later` as the same stack. The check fails it with the
+  same finding.
 
 With the maths and symbols declared at 400 alone, the check fails at 600, with U+2715 in
 `button#selection-menu-close` and U+25B6 in `#drawer span.chev`. In every stack in use it names the
@@ -996,7 +1009,7 @@ and not what is drawn.
 - three of the four band colours on a mixed window, since its feed holds no frame under 4.2 ms.
 
 Verified by a run: every scripted desktop run passes at 1/120 s, in 400 frames. Verified by a
-render: the curve of the page and the plot of the window, in the pull request that set them.
+render: the curve of the page and the plot of the window, before and after, in the pull request.
 
 ## PGA share
 
@@ -1157,11 +1170,12 @@ is a stress test of the reference library, so as the library gets faster, the pa
 Every frame runs the library for the whole scene, and no result of the library is kept across
 frames. A kept result hides what the library costs.
 
-The project adds no work beyond what the frame needs. Each library call runs once in a frame, and
-the own copies, conversions, allocations and glue stay lean. A speed-up of the own code is welcome
-where every frame pays the overhead it removes, and one that skips library work is rejected.
-Rejected: the scene hold, the furniture holds and the overlay hold, under which a still frame read
-cheaper than the work it stands for.
+The project adds no work beyond what the frame needs. Each library call runs once in a frame for
+what needs it, and the own copies, conversions, allocations and glue stay lean. A speed-up of the
+own code is welcome where every frame pays the overhead it removes, and one that skips library work
+is rejected. Rejected: the scene hold, the furniture holds and the overlay hold. Each keeps the
+records, the furniture or the extent of the overlay from an earlier frame where nothing moved. A
+still frame then reads cheaper than the work it stands for.
 
 The rule keeps sharing within one frame. The stance is read once and handed to every reader, each
 object is placed once, and every reader of the frame reads that placement. `MARKER_SHAPED` hands a
@@ -1188,8 +1202,8 @@ of the desktop reads them after `placeEdited`. A caller with no frame, such as a
 hands a multivector, and the reader places it first (`placementOf`).
 
 Rejected: a placement again in `addObject` and in the pick, which placed each object twice and ran
-`kindOf` three times for each. Rejected: readers that classify the multivector again, as the overlay
-did for each selected object on each call (repository issue 556).
+`kindOf` three times for each. Rejected: a reader that classifies the multivector again, which
+classifies each selected object on each call.
 
 **The placements of a frame live in its frame arena.** The desktop carves them first from
 `ARENAS_FRAME` at each turn (`turnFrame`), and draw scratch after them. The page turns two typed
@@ -1233,11 +1247,11 @@ With nothing selected, six pairs of 300 frames read 7.9 to 8.1 ms before and 7.9
 This design read 0.1 to 0.5 ms more in five pairs, and 0.2 ms less in one. The frame arenas alone,
 `8271aab1`, read 8.0 to 8.1 ms beside them. The cause of that difference is unmeasured.
 
-**What a frame costs, held and built.** The **frame bench** measured it on 2026-10-05 on one
-delegate, under the lock of the gate. That bench is a harness that is not kept. It drives the page
-at 1200 by 900 px under SwiftShader, with antialias, and times 6 s of frames for each scene. An
-orbit turns the camera 0.004 radians in each frame. Three pairs ran in turn, `a1702384`, which held
-a still frame, then this design, as ranges in ms of the frame callback:
+**What a frame costs, held and built.** Measured on 2026-10-05 on one delegate, under the lock of
+the gate, by a harness that is not kept. It drives the page at 1200 by 900 px under SwiftShader,
+with antialias, and times 6 s of frames for each scene. An orbit turns the camera 0.004 radians in
+each frame. Three pairs ran in turn: `a1702384`, which held a still frame, then this design. The
+figures are ranges over the three, in ms of the frame callback:
 
 | Scene | Median, held | Median, built | Slowest tenth, held | Slowest tenth, built |
 |-------|--------------|---------------|---------------------|----------------------|
@@ -1556,9 +1570,9 @@ framing all follow the drawn disc.
   builds nothing for each point.
 
   **Cost, under SwiftShader.** Every CPU phase is unchanged within noise against sprites. With the
-  cull off, the whole frame at the largest demo rose from 53 to 55 ms at p50 to 103 to 108 ms. The
-  hypothesis is overhead for each instance in the software rasteriser. **Unmeasured on a device**,
-  and the `render` row of the drawer is where it shows.
+  cull off, the p50 of the whole frame at the largest demo rose. It went from a range of 53 to 55 ms
+  to a range of 103 to 108 ms. The hypothesis is overhead for each instance in the software
+  rasteriser. **Unmeasured on a device**, and the `render` row of the drawer is where it shows.
 
 **Every point is shaded as a sphere lit from world-up.** The light is `camera.UP_WORLD`, one
 direction for every point. The vertex shader on both front-ends turns it into the basis of the
@@ -1741,8 +1755,8 @@ zero the eye coincides with its pivot, and every direction that `camera.frame` d
 It is tiny rather than small: 1.5 cm, so an object a metre wide fills the frame. The stance, the
 records and the transform are held about the view origin, near the eye. So doubles and float32 hold
 that close-up wherever the eye stands (Origins). The near clip is a four-hundredth of the local
-scale, and the logarithmic depth spans it out to a far bound millions of units off. A ceiling would
-read as a camera bounded to a region, and nothing downstream needs one.
+scale, and the logarithmic depth spans it out to a far bound millions of units off. There is no
+ceiling, which would read as a camera bounded to a region, and which nothing downstream needs.
 
 **One transform serves the GPU, the picks and markers, about the view origin.** Its translation is
 the remainder of the eye about that origin, under half a world step. `Matrix4` stays in doubles,
@@ -2056,7 +2070,7 @@ holds under the press. The dolly scales the height of that point over the row of
 pointer's height scales, from where the turn left it. That is a pinch with one finger on the pivot,
 so a drag away from the row zooms in either side of it. A vertical drag turns nothing and holds the
 point exactly at the pointer's height, and a level drag zooms nothing. Rejected, by the Architect's
-ruling: a zoom that keeps its direction wherever the press lands, so the point drifts.
+ruling: a zoom that keeps its direction wherever the press lands, which lets the point drift off.
 
 **A vertical drag lets the point drift across.** The dolly spreads the point from the middle, so it
 drifts toward the middle column or away as the zoom scales. Rejected: a turn that carries the point
@@ -2198,8 +2212,8 @@ the floor changes the opening scene and the steep view by less than that spread.
 scene the cost is the box of the sphere. From the opening stance the sphere of the ground spans 50°
 of height, and its disc 21°.
 
-The same bench measured the box of the rim without antialias, as the simulated page draws, each pair
-`eecc2b5c` then this design:
+The box of the rim was measured on 2026-10-04 by the same bench, without antialias, as the simulated
+page draws. Each pair is `eecc2b5c`, then this design, in ms of GPU work for each step:
 
 | View | Box of the rim, without antialias |
 |------|-----------------------------------|
@@ -2334,9 +2348,11 @@ The copy matters most in `framing.reachNearOf`, which subtracts two positions fo
 frame. Cost: one statement for each field, not one constructor. `fade` and `addRibbon` keep their
 constructors, because their copies read 1.7% and 0.3% of a moving frame at 5,038 objects.
 
-Measured on 2026-10-04 on one delegate, under the lock of the gate, by the frame bench (Render
-paths). It then profiles 6 s more through the DevTools protocol of Chromium. Each pair is
-`c4e7e1fd`, then this design, run in turn, in ms of the frame callback:
+Measured on 2026-10-04 on one delegate, under the lock of the gate, by a harness that is not kept.
+It drives the page at 1200 by 900 px under SwiftShader, with antialias. It times 6 s of frames for
+each scene, then profiles 6 s more through the DevTools protocol of Chromium. An orbit turns the
+camera 0.004 radians in each frame. Each pair is `c4e7e1fd`, then this design, run in turn, in ms of
+the frame callback:
 
 | Scene | Median | Slowest tenth |
 |-------|--------|---------------|
@@ -2348,7 +2364,8 @@ paths). It then profiles 6 s more through the DevTools protocol of Chromium. Eac
 At the opening scene the two builds overlap, as it holds five objects. At 5,038 objects the profile
 puts `nimCopy` at 39% of the script of a still frame on `c4e7e1fd`, and at 10% in place. The
 subtraction of `reachNearOf` alone is 31.5% of it. A moving frame reads 34% and 10%. With the
-operators alone in place, the copies of `addRing` and `addDisc` read 2.6% and 2.7% of it.
+operators alone in place, the copies of `addRing` and `addDisc` read 2.6% and 2.7% of a moving
+frame.
 
 **A count holds the design, as it holds a fault close to its speed bound** (Clocks of the driven
 checks). `driveCopiesStill` counts the outermost `nimCopy` calls over 3 still frames of the largest
@@ -2504,8 +2521,9 @@ out moved the eye 0 m. Here they move it 3,000 m, within 1.3e-11 of a move of th
 
 **Cost: none that the frame shows.** Each moving frame slides the motor once, and each object is
 read about the view origin by one subtraction. Measured on 2026-10-05 on one delegate, under the
-lock of the gate, by the frame bench (Render paths). Three interleaved pairs ran, `0fdcfcfc` first,
-as the median of the frame callback in ms:
+lock of the gate, in three interleaved pairs, `0fdcfcfc` first. The page runs at 1200 by 900 px
+under SwiftShader, with antialias, and times 6 s of frames for each scene, as Algebra boundary
+describes. Each figure is the median of the frame callback, in ms:
 
 | Scene | `0fdcfcfc` | View origin |
 |-------|------------|-------------|
@@ -2575,7 +2593,8 @@ of the first finite operand, its support, and else the world origin.
 A slide back adds `t × d` to a small moment, and cancels nothing, so the rounding is `ε` of the
 distance slid. That is 33 µm one unit out, and about a millimetre thirty units out. Each slide keeps
 only the grades that its multivector occupies. A rigid slide keeps every grade, so a coefficient on
-another grade is rounding of the sandwich, which would read as a mixed grade.
+another grade is rounding of the sandwich. A join a metre across one unit out reads that rounding as
+a mixed grade.
 
 Measured on 2026-10-05 by a probe that is not kept, over 2,000 random pairs one unit out, beside the
 earth of the demo. The line held both points within 47 µm, where about the world origin it stood 182
@@ -2630,7 +2649,8 @@ of the gate. Each probe places the largest demo, and each pair is `0d47eab3`, th
 
 Both front-ends place every object in each frame (Render paths), and the desktop also asks
 `isHorizon` of each row of its objects list. That second norm of `isHorizon`, and the second pass of
-`formatMultivector`, are most of what the desktop frame gained.
+`formatMultivector`, are most of what the desktop frame gained. The list gives no frame figure for
+the page, so the cost to the frame of the page is unmeasured.
 
 **Cost: three slides for each catalogue operation.** Measured on 2026-10-05 on one delegate in the
 lock of the gate: the median of 21 runs of 2,000 calls. Each pair is `7119f4cb`, then this design:
@@ -3047,6 +3067,9 @@ out. A right drag of 180 px on it moves the view and builds nothing.
 
 Verified by driven check on the page, through pointer events alone (`driveHoverFollowsMouse`). A
 mouse moved onto an object with no button down hovers it, and moved off it hovers nothing.
+
+Measured then, and not since: one pick went from 11.4 to 3.9 ms p50 at 1,024, and from 15.4 to 4.7
+ms at 10,000. A hover pick is 0.7, 1.6 and 3.5 ms at 60, 360 and 5,038.
 
 ## Interaction model
 
@@ -4052,8 +4075,8 @@ window gets from `ImGuiInputTextFlags_EscapeClearsAll`.
 **Cost.** On the page at 5,038 objects, one filter costs 14 to 18 ms, against 5 ms for a blank
 search. Most of it is the kind word of each object whose label misses the word. The handler, with
 the reconcile of rows, measured 13 to 32 ms for each keystroke. Rejected: a second copy of the kind
-vocabulary, to skip the kind word where no kind word could answer. It saves most of that cost, and
-is a second home for the words that `describeKind` holds.
+vocabulary, to skip the kind word where no kind word could answer. It would save most of the cost on
+the page, and it is a second home for the words that `describeKind` holds.
 
 The window filters only when the scene, the search, the kept row or, while a word is typed, the
 selection moves. One cache holds the result in creation order, so the window keeps no second order
