@@ -363,6 +363,12 @@ three raised to the dimensions, because each dimension stands in one of three st
 pair of blades. A geometric product loses one of four states for each null dimension. A
 bilinear form landing in one slot spends one term for each blade that carries an image.
 
+A norm of one part spends one term for each blade of that part. That is half the blades under
+the rigid metric, and a quarter under the conformal metric, since the four parts are of one size.
+A unitize spends the norm of one part, then one term for each slot. The radius norm squares the
+whole antidot, so it spends what a bilinear form spends. Under the rigid metric a part holds the
+blades that carry an image, so each norm counts as the bilinear form did.
+
 A product against the dual of its second operand spends what the grade of that operand
 allows. A permutation and a product against a one-component constant spend nothing. The
 carrier, the cocarrier and the attitude each take that last form, and so spend nothing.
@@ -403,7 +409,8 @@ reproduce 27 and 54 for the expansions, 16 for a scale and 24 for a unitize.
 
 The conformal metric is held to 1024 and to 32, and to 243 for each of the four dual
 products. A chain of an expansion and an exterior product is held to their sum, 486 at five
-dimensions.
+dimensions. At five dimensions a norm of one part is held to 8, the radius norm to 32 and a
+unitize to 40.
 
 The supports are held to 54 at four dimensions, and the centre and the container to 162 at
 five. The partner chain is held to 324, and to its mark as an estimate.
