@@ -261,8 +261,7 @@ type
   GripFinger* = object  ## Define what one of two fingers holds, from landing to lift.
     place*: Position  ## Place in world finger holds.
       ## On finger's own ray, at depth of what stands under it, as right drag holds depth.
-      ##   Not object's own point, which pick finds up to its reach off finger: two fingers
-      ##   on one star then held one point, and no spread could zoom.
+      ##   Not object's own point: two fingers on one star would hold one point, and no spread zoom.
       ##   Over nothing, where `gripFingers` says.
     floor*: float  ## Least depth along sight place held may come to; zero over nothing.
       ## Object's own, where wheel stops at it, and no nearer than place stood at landing.
@@ -822,9 +821,7 @@ proc dollyAbout*(
 ) =
   ## Zoom camera by `factor` about pivot, as selection's wheel does.
   ##   Pivot stands on what is picked, so orbit stays on it however far wheel goes in or out.
-  ##     Not toward object under pointer: eye slid along its own line to that object, and
-  ##     sight, with pivot on it, left what is picked. Notch after notch in and out over
-  ##     scene then carried pivot off it.
+  ##     Not toward object under pointer, which slides sight, and pivot on it, off what is picked.
   ##   Stops where object standing in middle of frame fills frame, as free flight's wheel
   ##   stops at object it comes in to; see `camera.travelToward`. Pivot stands on what is
   ##   picked, so that object is mostly what is picked.
@@ -868,8 +865,7 @@ proc dollyAt*(
   ##     floored at that object's drawn radius. Over nothing it does nothing: wheel refers
   ##     to object, and with none there it has nothing to come in to (repository issue
   ##     535).
-  ##       Not pointer's ray at camera's own scale: that scale was separation, which each
-  ##       notch scaled down, and wheel over empty sky took it to near floor.
+  ##       Not pointer's ray at separation, which each notch over empty sky scales toward floor.
   ##     Selection dollies about pivot, which stands on what is picked, wherever pointer
   ##     stands, so orbit stays on it; see `dollyAbout`.
   if has_selection:
@@ -905,8 +901,7 @@ func yieldOrHalt*(tween: var CameraTween; has_selection: bool) =
   ##   stands; see `camera.halt`.
   ##   Selection's turns, dollies and rolls about pivot it already has, so pivot finishes
   ##   arriving on what is picked; see `camera.abandon`.
-  ##     Not halt there: notch or spread two frames into pick's ease left pivot 4.80 units off
-  ##     point picked, and every zoom and turn after went about that.
+  ##     Not halt there, which leaves pivot short of point picked for every zoom and turn after.
   ##   One statement for both front-ends, as `dollyAtCursor` is.
   if has_selection: tween.abandon() else: tween.halt()
 
@@ -1012,8 +1007,7 @@ func stretchAcross(
   ## Move camera by right drag with selection: across turns, and up and down zooms.
   ##   Across turns as left drag along pivot's row turns, for same travel; see
   ##   `turnFollowing`. So turn per pixel is left drag's own, wherever press landed.
-  ##     Not point press took: taken near top of frame, it stands near line above pivot,
-  ##     where each pixel across asks for great yaw, and hand's drift spun view about up.
+  ##     Not point press took: above pivot, each pixel across asks great yaw, so drift spins view.
   ##   Up and down then dollies, so point held's height over pivot's row scales as
   ##   pointer's does: pinch with one finger fixed on pivot. Away from row zooms in, on
   ##   either side of it.
@@ -1074,12 +1068,11 @@ func panAcross*(
   ##   holds its own. See `grabPan`.
   ##     One pixel at that depth spans `2*depth*tan(half field)/height` of world, so camera
   ##     slides that far against drag. Slide is square to sight, so depth held stays held.
-  ##     Not rate: fraction of separation for each pixel matched cursor at one canvas height
-  ##     alone, and ran 1.74 times it on 900 px at opening 45 degrees.
+  ##     Not rate: fraction of separation for each pixel matches cursor at one canvas height alone.
   ##   Selection zooms on vertical and orbits on horizontal, so one drag reaches both
   ##   without asking for second button. It holds `point_held` as free flight holds depth;
   ##   see `stretchAcross`.
-  ##     Not rates: fixed angle and fixed factor for each pixel matched cursor nowhere.
+  ##     Not rates: fixed angle and fixed factor for each pixel match cursor nowhere.
   if has_selection:
     camera.stretchAcross(before, after, width, height, point_held, reach_selection)
     return
@@ -1139,8 +1132,7 @@ func driveHeld*(
   ##     Empty selection flies as ship does: travel and turn are about camera's own axes,
   ##     and travel climbs toward ship's own speed, `speed_ship`. Plus and minus scale
   ##     that speed as they scale separation with selection, and nothing else sets it.
-  ##       Not depth under pointer, nor separation over empty sky: separation ran down
-  ##       with each step ahead, and flight stalled short of pivot (repository issue 535).
+  ##       Not depth under pointer, nor separation, which runs down each step until flight stalls.
   ##       Travel carries pivot along, so separation stays as it was.
   ##     Selection orbits centroid instead. W and space rise over it, S and control fall,
   ##     and sideways keys swing round it; frame rule holds eye clear either way.
@@ -1388,10 +1380,8 @@ func placeShownNearest(
   ## standing within `FACTOR_ANCHOR_DEPTH` of pivot's depth.
   ##   Finite kinds alone, at their own placement's point, as `framing.reachNearOf` reads
   ##   them. Band about pivot, as selection's wheel keeps, so pinch scales what view is about.
-  ##     Not nearest ahead: far out in orrery, that was star off to side, and pinch zoomed
-  ##     out by 1.14 about solar system under fingers.
-  ##     Not nearest shown at any depth: that was background star thousand times deeper,
-  ##     and one pinch carried eye out by 3637 times its reach to Sol.
+  ##     Not nearest ahead, which far out is star off to side, not what fingers are on.
+  ##     Not nearest shown at any depth, which far out is background star thousand times deeper.
   let
     (eye, frame) = camera.sight
     view_projection = camera.initMatrixViewProjection(float(width) / float(height))
@@ -1432,8 +1422,7 @@ proc gripFingers*(
   ##   Free flight holds place at depth of other finger's object; where neither finger
   ##   stands on one, at depth of object shown nearest fingers' middle near pivot's depth,
   ##   or at pivot's own depth where none stands there; see `placeShownNearest`.
-  ##     Not sky itself, which no slide moves: zoom out shrank objects from under fingers,
-  ##     and every pinch after it landed on sky and moved nothing.
+  ##     Not sky itself, which no slide moves, so pinch on sky after zoom out moves nothing.
   ##     Pivot follows what fingers hold; see `slideGripped`.
   ##   Every place stands on its finger's ray, so first step starts at no miss.
   let (eye, frame) = camera.sight
@@ -1595,9 +1584,7 @@ func orbitGripped(
   ##   Fingers' middle orbits as one finger's drag does: point on sphere about pivot under
   ##   pixel it left comes under pixel it reached; see `turnFollowing`.
   ##   Dolly then brings places' gap to `held`'s, and roll brings their angle.
-  ##     Not one solve of four unknowns against both places: turn foreshortens what it
-  ##     carries, and solve spent it on gap, so fivefold pinch away from middle turned view
-  ##     74 degrees and dollied in.
+  ##     Not one solve of four unknowns: turn foreshortens, so solve spends it on gap and turns.
   ##   Dolly scales about pivot, in middle of frame, so what fingers' middle holds drifts
   ##   toward middle of frame as view zooms out, and away from it as view zooms in.
   ##   Eye stops at each place's floor, as wheel stops; past it, fingers slip.

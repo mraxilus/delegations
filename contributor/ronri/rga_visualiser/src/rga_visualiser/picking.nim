@@ -228,8 +228,7 @@ func isInFront*(screen: ScreenPosition): bool = screen.depth > DISTANCE_LIMIT_NE
   ## Report whether projected position stands in front of eye.
   ##   Where perspective divide and every pixel distance from it are meaningful.
   ##   Floor is camera's own, `DISTANCE_LIMIT_NEAR`: no separation camera holds reads behind.
-  ##     Not fixed millionth: pointer pick of star at least radius stands 2.4e-7 off it,
-  ##     and ring, label and pick all lost that star; suite case trips on it.
+  ##     Not fixed millionth, which reads star of least radius, picked 2.4e-7 off, as behind.
 
 
 
@@ -418,7 +417,7 @@ func isBeyondDisc(
   ##     projection, `d` being centre's depth and `f` focal length in pixels.
   ##     Never true with eye inside that sphere. Loose off-axis, which broad phase may be.
   ##     Checked numerically off screen as well as on; see `PROVENANCE.md`.
-  ##   Without it every plane's meet ran per hover, for cursor nowhere near most discs.
+  ##   Without it every plane's meet runs per hover, for cursor nowhere near most discs.
   let depth = float(view_projection.at(3, 0)) * centre.x +
       float(view_projection.at(3, 1)) * centre.y +
       float(view_projection.at(3, 2)) * centre.z + float(view_projection.at(3, 3))

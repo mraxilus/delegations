@@ -395,8 +395,7 @@ gl.bufferData(gl.ARRAY_BUFFER,
 //   Corner is box's middle plus corner scaled by half extents, turned back, so quad is box.
 //   Depth is fragment's own; without `EXT_frag_depth` disc rests at its centre's
 //   logarithmic depth.
-//   Not fan of corners on plane itself: corner behind eye left sliver for clipper that
-//   rasterised to nothing under grazing camera, and disc ended at hard chord.
+//   Not fan of corners on plane itself: clipper's sliver of corner behind eye grazes to nothing.
 const SOURCE_VERTEX_DISC = `
   attribute vec2 aCorner;
   attribute vec3 aCentre;
@@ -737,10 +736,9 @@ const STRIDE_RING = 14 * 4;
 //   mesh uploaded twice frame would be one real cost of that split.
 //   Bridge fills `Float32Array`s page owns and hands back views on them, so there is
 //   nothing to convert here and nothing to stage: driver reads very memory
-//   flatten wrote. Staging array used to sit here, refilled element by element from
-//   boxed `Array` `seq[float32]` is on JS backend -- see `bridge.FlatBuffer`
-//   for what that cost and why it is gone. Anything else reaching this is mistake worth
-//   hearing about rather than silently copying around.
+//   flatten wrote. Not staging array refilled from boxed `seq[float32]`; see `bridge.FlatBuffer`.
+//   Anything else reaching this is mistake worth hearing about rather than silently copying
+//   around.
 // Read attribute layout literal as triples of location, float count and byte offset.
 //   Array literal alone infers as list of unknown length, whose every read is possibly
 //   absent; this states shape once rather than guarding each read.

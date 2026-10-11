@@ -101,9 +101,7 @@ const
     ##   sends depth toward `1 - SLACK_CLIP_FAR` rather than 1, so nothing far clips.
     ##   Depth buffer takes fragment's logarithm (`depthOf`), so projective depth only
     ##   clips, and slack costs nothing.
-    ##   Not `(far + near)/(far - near)` with far at star field's reach: farthest stars and
-    ##   sky dome then sat within two float32 ulps of far plane, and Android GPU's rounding
-    ##   clipped them, points flickering as camera moved and dome drawn in patches.
+    ##   Not `(far + near)/(far - near)` at stars' reach: GPU rounding clips stars within two ulps.
     ##   Suite reads flattened float32 matrix for farthest star and dome at four orbit
     ##   distances and holds margin over half of this.
   FACTOR_CLIP_FAR* = 20.0
