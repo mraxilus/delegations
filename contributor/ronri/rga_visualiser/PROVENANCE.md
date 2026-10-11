@@ -992,9 +992,14 @@ multisampled visual, so thin lines alias.
 **The suites test the rules, `tools/drive/` tests the wiring of the browser, and this tests the
 wiring of the desktop.** The entry point carries scripted runs: `--drive-keys`, `--drive-sky`,
 `--drive-undo`, `--drive-select`, `--drive-drag`, `--drive-search`, `--drive-menu`, `--drive-faces`,
-`--drive-edit`, and `--drive-help:<tab>`, one for each tab. Each one pushes real events through the
-queue of SDL, except where no pointer can reach a button. There, `--drive-edit` opens and saves
-through the procs that the buttons call.
+`--drive-edit`, `--drive-wheel`, and `--drive-help:<tab>`, one for each tab. Each one pushes real
+events through the queue of SDL, except where no pointer can reach a button. There, `--drive-edit`
+opens and saves through the procs that the buttons call.
+
+**A run that reaches a window of Dear ImGui names that window on its motion.** The SDL3 backend of
+Dear ImGui drops motion that names no window of its own. `--drive-select` and `--drive-wheel` name
+it, so Dear ImGui reads the pointer over the menu as it reads a hand. Verified by a run, 2026-10-11:
+`--drive-wheel` with its motion unnamed reads the pointer off the menu, and fails.
 
 `driven` runs all of them and reports every failure, and not the first. It asks the binary which
 help tabs exist (`--help-tabs`), so `help.HelpPath` stays their one home (Article I.4). `drive`
@@ -1012,7 +1017,8 @@ chains it, here and on the runner (repository issue 91).
 - every codepoint that each role sets has a glyph in the face of that role;
 - a scene filled to capacity leaves what follows its list on the window;
 - the menu opens and offers the demo at every size that `orrery` has;
-- an edit opened far out and saved unchanged keeps every coefficient and its radius to the bit.
+- an edit opened far out and saved unchanged keeps every coefficient and its radius to the bit;
+- a wheel over the selection menu zooms the view about the pick, as on the page.
 
 **An absent face is a finding, and never an abort.** Dear ImGui asserts inside
 `AddFontFromFileTTF` where it cannot open a path, and an assertion is SIGABRT rather than a
@@ -3399,11 +3405,14 @@ object. A pick carries its object to the middle of the frame, so the menu rides 
 beside the middle. It is not held back until the ease settles: a menu a third of a second after
 the click reads as a missed click. A menu opened with no pointer sits above the anchor.
 
-**A wheel over the selection menu zooms the view**, as a wheel over the view does (`sumWheel` in
-`pointer.ts`). The menu scrolls nothing, so it hands its wheel on. Rejected: a menu that keeps its
-wheel. Under it, a pick clicked where the menu then lands leaves the wheel dead until the pointer
-moves. That box spans 298 by 55 px, right of and below the middle. The desktop front-end keeps the
-wheel in its menu; see Known limitations.
+**A wheel over the selection menu zooms the view on both front-ends**, as a wheel over the view
+does. The menu scrolls nothing, so it hands its wheel on. On the page, the menu passes its wheel to
+`sumWheel` in `pointer.ts`. On the desktop, the wheel goes on to the view while Dear ImGui reads the
+pointer over the menu (`is_menu_selection_hovered`). Each handler names the other, so a change to
+one reaches both (Article II.9).
+
+Rejected: a menu that keeps its wheel. Under it, a pick clicked where the menu then lands leaves the
+wheel dead until the pointer moves. That box spans 298 by 55 px, right of and below the middle.
 
 **A click has no time limit.** `isClick` is distance alone, at `PIXELS_CLICK_SLOP` 6 px. It is not
 the 12 px of `PIXELS_TAP_SLOP`. A mouse does not roll, and the allowance of a finger would swallow
@@ -3563,8 +3572,8 @@ Verified by driven checks:
 - `more…` landing on `𝐦 ∧ 𝐧` on both builds;
 - the refusal on a full scene;
 - a right-click showing the menu two frames in, 14 by 12 px from the anchor, and so once settled;
-- three notches over the menu of a settled pick of `b` zoom the view from 18.097 to 11.749, with
-  the pivot 0 off `b`;
+- three notches over the menu of a settled pick of `b` zoom the view, with the pivot 0 off `b`. The
+  distance goes from 18.097 to 11.749 on the page, and to 12.881 on the desktop;
 - a pivot shift moving that anchor 84 px, with the menu holding the offset;
 - an emptied list, a deep handle edited, and its form in view.
 
@@ -4735,9 +4744,6 @@ passing proves that the runner carries that library. Assumed: nothing about the 
 ## Known limitations
 
 - Every result is software-rendered and machine-driven, and the page has run on one Android phone.
-- On the desktop front-end, a wheel over the selection menu still reaches the menu alone. Its wheel
-  handler returns whenever Dear ImGui holds the mouse, and the menu is a window of Dear ImGui (see
-  Interaction model).
 - Tab landing on a desktop widget is unverified (see Hold feedback, help and keys).
 - Two crossing translucent veils blend order-dependently.
 - A camera move is not undoable on its own.
