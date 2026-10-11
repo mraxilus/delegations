@@ -74,8 +74,9 @@ imaginary object. Two parts of Section 4.3 are not in the library. The center no
 stub. Unitization divides by the round weight norm, which is zero for a flat object, so a flat
 object stays as it is.
 
-Change `conformal-norms` fills `|⊙`. It also divides a flat object by its flat weight norm where
-the round weight is zero.
+Change `conformal-norms` fills `|⊙`. P11 unitizes any element by one rule. A round object divides
+by its round weight norm, and any other element by √|𝐦 ∘ 𝐦|, which is the flat weight norm of a
+flat object.
 
 ## Why five conformal law suites fail
 

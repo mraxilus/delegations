@@ -1,13 +1,9 @@
-# Fill the center norm, and unitize a flat object by its flat part
+# Fill the center norm
 
 At pin, each of the four norms of the book measures the size of its own part, and the radius norm
-roots the antidot. The center norm, (4.43), is still a stub. Unitization divides by the round
-weight norm, which is zero for a flat object, so a flat object stays as it is.
-
-This change fills the center norm on 𝟏, as a weighted distance. Where the round weight is zero,
-unitization divides by the flat weight norm, as Section 4.3 says for a flat object. Bulk
-normalization likewise takes the flat bulk where the round bulk is zero. Chapter 4 gains three
-suites, from Tables 4.12 and 4.13 and Section 4.3.
+roots the antidot. The center norm, (4.43), is still a stub. This change fills it on 𝟏, as a
+weighted distance from the origin to the center. Chapter 4 gains two suites, from Tables 4.12
+and 4.13. How unitization treats a flat object is P11, which unitizes any element by one rule.
 
 ## Edit `pga/operators.nim`
 
@@ -28,44 +24,6 @@ suites, from Tables 4.12 and 4.13 and Section 4.3.
     ## Get center norm of multivector, i.e. ‖𝐦‖⊙ = √(‖𝐦‖∙² + ‖𝐦‖□²) (4.43).
     ##   Weighted distance from origin to center; divide by round weight norm for distance.
     result[Basis.scalar] = sqrt((`|∙²`m)[Basis.scalar] + (`|□²`m)[Basis.scalarAnti])
-```
-
-## Edit `pga/operators.nim`
-
-```nim
-  ##   Performs no-op where bulk norm is 0.
-  let
-    m_norm_bulk = (`|∙²`m)[Basis.scalar].sqrt
-```
-
-```nim
-  ##   Performs no-op where bulk norm is 0.
-  ##   In CGA, flat object has no round bulk, so its flat bulk norm serves.
-  let
-    m_norm_bulk = when IS_CONFORMAL:
-        let round = (`|∙²`m)[Basis.scalar]
-        (if round != 0: round else: (`|■²`m)[Basis.scalar]).sqrt
-      else:
-        (`|∙²`m)[Basis.scalar].sqrt
-```
-
-## Edit `pga/operators.nim`
-
-```nim
-  ##   Performs no-op where weight norm is 0.
-  let
-    m_norm_weight = (`|∘²`m)[Basis.scalarAnti].sqrt
-```
-
-```nim
-  ##   Performs no-op where weight norm is 0.
-  ##   In CGA, flat object has no round weight, so its flat weight norm serves (Section 4.3).
-  let
-    m_norm_weight = when IS_CONFORMAL:
-        let round = (`|∘²`m)[Basis.scalarAnti]
-        (if round != 0: round else: (`|□²`m)[Basis.scalarAnti]).sqrt
-      else:
-        (`|∘²`m)[Basis.scalarAnti].sqrt
 ```
 
 ## Edit `pga.nim`
@@ -144,17 +102,6 @@ suites, from Tables 4.12 and 4.13 and Section 4.3.
           check 𝐮 ∘ 𝐮 =~ initElement(Basis.scalarAnti, radii[i])  # 4.45, Table 4.13
           if radii[i] >= 0:
             check |⊘𝐮 =~ initElement(Basis.scalarAnti, radii[i].sqrt)  # 4.45, real object
-
-    else: skip()
-
-  test "Section 4.3: round object unitizes by round weight, flat object by flat weight":
-    when IS_CONFORMAL and DIMENSIONS == 5:
-      for _ in 1..SAMPLES:
-        var 𝐬, 𝐩: Multivector
-        for b in [E1234, E3215, E4235, E4315, E4125]: 𝐬[b] = gauss()
-        for b in [E15, E25, E35, E45]: 𝐩[b] = gauss()
-        check |∘(^𝐬) =~ 𝟙  # round weight norm of unitized sphere
-        check |□(^𝐩) =~ 𝟙  # flat weight norm of unitized flat point
 
     else: skip()
 ```
