@@ -3801,9 +3801,10 @@ turn, roll, plain dolly or key calls `abandon`. The reader then owns the way rou
 and `advance` carries the pivot the rest of its own path underneath. `slideOwed` reads the share of
 each frame off `toward`, so the pivot lands where the ease would have put it.
 
-Pan, wheel, pinch and typed view fields call `halt`, which marks the ease done where it stands. Each
-of those sets the pivot itself, and a pivot still arriving would slide the camera off it. Undo and
-redo call `adoptNext` (Undo/redo).
+Typed view fields call `halt`, which marks the ease done where it stands. Pan, wheel and two fingers
+call `yieldOrHalt`. In free flight it calls `halt`, since each of those sets the pivot itself, and a
+pivot still arriving would slide the camera off it. With a selection it calls `abandon`, so the
+pivot still lands on what is picked (Framing). Undo and redo call `adoptNext` (Undo/redo).
 
 ## Framing
 
