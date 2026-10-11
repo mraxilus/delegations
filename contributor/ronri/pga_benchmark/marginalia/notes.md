@@ -80,18 +80,21 @@ is the flat weight norm of a flat object.
 
 ## Why five conformal law suites fail
 
-`tests/suites.nim` · open
+`tests/suites.nim` · ruled
 
 ```nim
   test "Equation 2.87-89":
 ```
 
-Change `norm-ungate` removes the conformal gates, and five suites then fail: 2.87-89,
-2.90-94, 2.97-98, 2.99 and 2.103. They are laws of Chapter 2. 2.87 and 2.88 take each norm as
-the root of the whole dot or antidot, and 2.90 takes `|` as the sum of the round norms. Under the
+Each norm law of Chapter 2 skips under the conformal metric. With those gates removed at pin,
+five suites fail: 2.87-89, 2.90-94, 2.97-98, 2.99 and 2.103. 2.87 and 2.88 take each norm as the
+root of the whole dot or antidot, and 2.90 takes `|` as the sum of the round norms. Under the
 conformal metric each norm is the size of one part, as Table 4.12 defines, and `|` adds the flat
-norms. So those laws do not hold there, and the gates are correct. 2.89a holds, since `^` divides
-by `|∘`. 2.103 is `★𝐦 =~ /(∙𝐦)`, which is not a norm law.
+norms. So those laws do not hold there, and the gates are correct.
+
+2.89a holds, since `^` divides by `|∘`. 2.103 is `★𝐦 =~ /(∙𝐦)`, which is not a norm law. The
+gates stay, by a ruling of the Architect on 2026-10-11, so no change removes them. To test them
+again, remove the gates of these suites, and run the conformal stubs.
 
 ## Open import of `algebra.nim` in `cayleys.nim`
 
