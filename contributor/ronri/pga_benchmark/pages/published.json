@@ -5,54 +5,54 @@
   },
   "marginalia": {
     "url": "https://claude.ai/artifact/6WwLfdHiisCtGWUcFxibBM",
-    "digest": "37a5e3f7a430f66c"
+    "digest": "cd7d808bfe854b34"
   },
   "cayley-derivation": {
     "url": "https://claude.ai/artifact/2fi2hTpobqChXSTPq4vB6q",
-    "digest": "7eb5ad7e2e164696"
+    "digest": "2954660e33a3964e"
   },
   "typed-multivectors": {
     "url": "https://claude.ai/artifact/V34TAWXNvrHBGN9fNBWYWX",
-    "digest": "a4b5aef1d07a139d"
+    "digest": "6a0f060748fc14ad"
   },
   "partner-sign": {
     "url": "https://claude.ai/artifact/2fUYLonsQo7ejouCvCnpWf",
-    "digest": "b528fe2e4682e664"
+    "digest": "54dae01174e0c009"
   },
   "exact-kinds": {
     "url": "https://claude.ai/artifact/UPfjVLGbsVLBz756DMkPJe",
-    "digest": "a2334850b86cc19b"
+    "digest": "9f6013938de80448"
   },
   "multivector-align": {
     "url": "https://claude.ai/artifact/AB3BNtWPEzguWswwnx5ckh",
-    "digest": "d51c639535fc31c9"
+    "digest": "e9baf738c975f39a"
   },
   "proposals": {
     "url": "https://claude.ai/artifact/CW9ZL5eotsVYrZPjMnTLoG",
-    "digest": "cace657e358386b4"
+    "digest": "7b325703792bfbe5"
   },
   "float-width": {
     "url": "https://claude.ai/artifact/Q3R1yz93Drk7Cwq5qhymDZ",
-    "digest": "e0516f036c77be72"
+    "digest": "a9710bb0984eb2be"
   },
   "part-scale": {
     "url": "https://claude.ai/artifact/6hW9rjiotnjdjBVwatW5Dj",
-    "digest": "f8fedb5f175e8f8f"
+    "digest": "c5d313697bf15b1e"
   },
   "compound-tables": {
     "url": "https://claude.ai/artifact/TczTs551nkXVaWiyHzfVAn",
-    "digest": "60810101beaf1db0"
+    "digest": "d0a729a04977da97"
   },
   "object-names": {
     "url": "https://claude.ai/artifact/XtPy7LToDTT2P8S1FfGauX",
-    "digest": "ebbf9877ca7d23a2"
+    "digest": "7886a7feba2079a9"
   },
   "homogeneous-scalar": {
     "url": "https://claude.ai/artifact/5NwSv2YW9ZfDa5BbbVrv1D",
-    "digest": "7e8cdbb903830bca"
+    "digest": "b034f3b85f51057b"
   },
   "unitize-general": {
     "url": "https://claude.ai/artifact/3P9PNEcD7JyH3YAb5GuUqy",
-    "digest": "ca1966d7d7a8b1e9"
+    "digest": "0d68e4c607200002"
   }
 }
