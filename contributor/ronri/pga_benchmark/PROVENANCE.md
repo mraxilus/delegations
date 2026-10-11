@@ -1094,10 +1094,6 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
 
 - Evaluations time rga4d and cga5d unless `--thorough` asks for rga3d and cga4d too. Each
   evaluation committed now measures all four, from one run of `evaluate all --thorough`.
-- The evaluations at rga3d and rga4d carry the digest of C of a bench whose typed reference
-  divides a point by its signed weight. The reference is no part of what an evaluation times, so
-  their figures stand. `restamp` refuses those records at a new pin, and `evaluate` takes them
-  again.
 - The `build` claim reads the peak memory and seconds that the compiler reports of itself, for
   the library alone. It compares two builds on one machine, and is no measurement of the
   machine.
