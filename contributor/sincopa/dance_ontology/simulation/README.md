@@ -58,6 +58,7 @@ vector.nim   points, directions, and the two contact tests
 rig.nim      every measurement, with its source
 body.nim     two bodies standing and facing; where the shoulders are
 limb.nim     one arm: forward kinematics, inverse kinematics, joint readings
+shoulder.nim where a shoulder lets its upper arm point, as two studies measured it
 contact.nim  arms against bodies and against arms, as geometry
 hold.nim     what the couple is asked: which hands are joined, what may stop
 engine.nim   the rigid body engine, bound; nothing above it knows it is C
@@ -80,6 +81,8 @@ verdicts.md  what it said, translated once and generated, not edited
 ../tests/test_rigid.nim  the rig held to tape, geometry and the rows of the
              Architect's floor held above
 ../tests/suites/test_limb.nim  the tape's numbers and one arm's kinematics
+../tests/suites/test_shoulder.nim  the shoulder's edge held to Engin and Chen, and
+             to Haering
 ../tests/test_read.nim   crossings read off the drawn arms, not assumed
 ../tests/test_plan.nim   the plan held to the engine: one place for each body,
              the mirror, a turn that keeps what it claims, and the engine on it
