@@ -356,14 +356,16 @@ from radius zero.
 ## What it costs
 
 The evaluation times unitize on the general pool, with this change and at pin. It takes five
-alternating runs on linux amd64 with 4 cores, on 2026-10-11. It also counts the C of `^∘`.
+alternating runs on linux amd64 with 4 cores, on 2026-10-11. It also counts the C of `^∘`. Each
+ratio is the median of the ratios of the five runs. An evaluation of the same code on the same day
+gave 66.59 ns at `cga5d`, so the time of the change varies by about a third between evaluations.
 
 | Algebra | Unitize at pin | With this change | Ratio |
 | --- | --- | --- | --- |
-| `rga3d` | 3.67 ns | 3.66 ns | ×1.04 |
-| `rga4d` | 5.34 ns | 5.26 ns | ×0.95 |
-| `cga4d` | 4.67 ns | 21.12 ns | ×4.52 |
-| `cga5d` | 8.78 ns | 66.59 ns | ×6.98 |
+| `rga3d` | 4.31 ns | 3.81 ns | ×1.00 |
+| `rga4d` | 5.02 ns | 5.15 ns | ×1.04 |
+| `cga4d` | 4.50 ns | 20.60 ns | ×4.97 |
+| `cga5d` | 8.75 ns | 86.69 ns | ×8.78 |
 
 | Count in `^∘` at `cga5d` | At pin | With this change |
 | --- | --- | --- |
