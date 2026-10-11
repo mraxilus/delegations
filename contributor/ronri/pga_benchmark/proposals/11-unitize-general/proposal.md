@@ -1,11 +1,10 @@
 # P11: Unitize any element by one rule
 
-At pin, unitization divides every element by its round weight norm. In the conformal algebra a
-flat object has no round weight, so a flat point, a line or a plane stays as it is, with no
-signal. This proposal gives one rule for any element of either algebra. The rule divides an
-element by a divisor W(𝐮). For a round object in the conformal algebra, W(𝐮) is the round
-weight norm, which is the weight of its carrier. For any other element, W(𝐮) is √|𝐮 ∘ 𝐮|, as in
-Lengyel's rigid unitization.
+At pin, unitization divides every element by its round weight norm. In the conformal algebra a flat
+object has no round weight, so a flat point, a line or a plane stays as it is, silently. This
+proposal gives one rule for any element of either algebra. The rule divides an element by a divisor
+W(𝐮). For a round object in the conformal algebra, W(𝐮) is the round weight norm, which is the
+weight of its carrier. For any other element, W(𝐮) is √|𝐮 ∘ 𝐮|, as in Lengyel's rigid unitization.
 
 The Architect chose this rule on 2026-10-11, after a reanalysis against Lengyel's code, book
 and wikis. This page holds that reanalysis. Its figures come from `laws.nim` and `limits.nim`,
@@ -36,8 +35,9 @@ unitize(𝐮) = 𝐮 ÷ W(𝐮), and 𝐮 as it is where W(𝐮) is 0
 The rule divides a round object by the weight of its carrier. It divides any other element by
 √|𝐮 ∘ 𝐮|, with Lengyel's rigid formula.
 
-Change `conformal-norms` replaces the same placeholder test of Chapter 4. Applied together, its two
-tests and the test of this change stand side by side in that suite.
+This change puts its test at the head of suite Chapter 4, and keeps the placeholder test there.
+Change `conformal-norms` replaces that placeholder with its two tests. So the two apply in either
+order, and their three tests then stand side by side.
 
 ## Why one rule must choose
 
@@ -87,14 +87,19 @@ repository `Geometric-Algebra` at commit 473a801, and his two wikis. The code is
 | Rigid line, plane, motor, flector | √(𝐮 ∘ 𝐮) | same |
 | Conformal screw motor | flat weight | same |
 | Translation, rotation, transversion | nothing: unit as the wiki writes them | divisor 1 |
+| Transversion with some \|τᵢ\| of 2e9 or more | nothing: unit as the wiki writes it | ½\|τ\| |
 | Inversion | nothing: a sphere of round weight 1 | same |
 | Dilation | nothing: scaled to keep the operand's round weight | √σ |
 | Any other conformal element | no rule in any source | √\|𝐮 ∘ 𝐮\| |
 
+Apart from sign, the rule differs from Lengyel in two places alone. It rescales his dilation,
+and it divides a far transversion by ½|τ|, as the numerical concessions below show.
+
 The round objects are Terathon's `RoundPoint3D`, `Dipole3D`, `Circle3D` and `Sphere3D`, with the
 book's Table 4.12. The flats are its rigid `FlatPoint3D`, `Line3D` and `Plane3D`. The rigid
 operators are `Motor3D` and `Flector3D`. The screw motor and the inversion, `RoundSphere`, are in
-`Conformal-3D-Transforms.nb`. The other operators are on the conformal wiki.
+`Conformal-3D-Transforms.nb`. The other operators are on the conformal wiki. The 2D types of
+`TSConformal2D.h` follow the same pattern, and their round point and circle are signed.
 
 The table reads "up to sign" because the Architect ruled on 2026-10-10 that unitization keeps the
 sign of the weight. `laws.nim` holds each object kind, the motor and the flector at unit weight to
@@ -103,8 +108,10 @@ at `cga5d`, since the wiki writes them in that algebra.
 
 - **Dilation.** His wiki says "This dilation operator is scaled so that the round weight of u
   remains the same after the dilation is applied." Since 𝐃 ⟇ ~𝐃 = σ𝟙, this rule divides 𝐃 by
-  √σ, which gives the unit form of his exponential. No rule that this page tested keeps his
-  scale. His scale is a choice for one operator family.
+  √σ, which gives the unit form of his exponential. The sandwich holds 𝐃 twice, so a round
+  object of round weight 1 then leaves with round weight 1/σ, at the same place. So unitize
+  commutes with his 𝐃 on round objects, and with 𝐃 ÷ √σ on every other element. No one scale of
+  𝐃 serves both, and no rule that this page tested keeps his scale.
 - **What "unitized" means on his conformal wiki.** It says "A unitized dipole is equal to the meet
   of its carrier and container", and the same of a circle. That identity holds exactly when the
   round weight norm is 1, which is the object unit of this rule.
@@ -123,14 +130,19 @@ Each law has an algebraic argument, and `laws.nim` holds it on 2,000 samples at 
 | unitize(𝐌 ⟇ 𝐮 ⟇ ~𝐌) = 𝐌 ⟇ unitize(𝐮) ⟇ ~𝐌, for unit rigid motor 𝐌 | 3.6e-12 | 1.3e-15 |
 | Flat has 𝐮 ∘ 𝐮 = ‖𝐮‖□² | 0 | not applicable |
 | Unit versor keeps 𝐮 ∘ 𝐮 | 3.0e-15 | not applicable |
+| unitize(★𝐮) and unitize(☆𝐮) divide by W(𝐮) | 1.8e-13 | does not hold |
 
 - **Unit weight and unit versor.** The rule divides by that weight, and 𝐯 ∘ 𝐯 is the 𝟙 part of
   𝐯 ⟇ ~𝐯.
 - **Homogeneity.** Both divisors scale by |λ|, and both tests read ratios, so no branch changes.
+  In floating point, scaling can move only a coefficient within rounding of a tolerance across it.
 - **Rigid motion.** A rigid motor maps 𝐞∞ to ±𝐞∞, so it keeps the weight of the carrier. The 𝟙
   part of a product is cyclic, so a unit versor keeps 𝐮 ∘ 𝐮. This holds where the motion moves no
   coefficient across the grade tolerance, so that the branch stays. The last section names the
   case where a motion moves one.
+- **Duality.** In CGA, each dual maps every basis element to one basis element, up to sign. So
+  the grade test reads the same. Each dual also keeps the round weight norm, and negates 𝐮 ∘ 𝐮,
+  so both divisors stay. In RGA a dual swaps bulk and weight, so the law does not hold there.
 
 ### What is not true, and is not true of Lengyel's rule either
 
@@ -140,18 +152,27 @@ Each law has an algebraic argument, and `laws.nim` holds it on 2,000 samples at 
   Lengyel. His `Sphere3D::Unitize` divides by −u, which is 0 for a plane.
 - **It does not commute with transversion or inversion.** These change the round weight. Hestenes
   calls weight normalization "not Lorentz invariant" ([Old Wine in New Bottles][hestenes],
-  section 7). Mann calls it "the non-conformal step" ([AGACSE 2012][mann], page 2).
+  section 7). Mann calls it "the non-conformal step" ([AGACSE 2012][mann], page 2). With a
+  dilation, it commutes at one scale of 𝐃 for round objects, and at another for flats.
 
 ### What is a convention
 
-- A round object takes the object unit, not the versor unit. Lengyel's own inversion uses a
-  sphere of round weight 1, so the two agree on a lone sphere.
+- A round object takes the object unit, not the versor unit. Lengyel's own inversion,
+  `RoundSphere`, is a sphere of round weight 1, with 𝐬 ∘ 𝐬 = r². So the versor unit is not his
+  convention, and this rule agrees with him on a lone sphere. The conformal wiki has no Inversion
+  page. No test that reads the element alone can tell a sphere used as an object from the same
+  sphere used as an inversion.
 - Where 𝐮 ∘ 𝐮 is negative, the rule takes its absolute value. A product of reflections in a real
-  sphere and an imaginary sphere is a versor with 𝐮 ∘ 𝐮 < 0. A rule that leaves it as it is lets a
-  kept operator grow until it overflows. The absolute value is the standard normalization of a
-  versor. De Keninck and Roelfs write "one can get away with calculating |X X~|^(−1/2)"
-  ([arXiv 2206.07496][keninck], page 11). Hitzer gives the same ([arXiv 1306.1660][hitzer],
-  equation 29).
+  sphere and an imaginary sphere is a versor with 𝐮 ∘ 𝐮 < 0. Its root is NaN, which spreads to
+  every coefficient. A rule that leaves such a versor as it is leaves it at any scale it has, so
+  no product of such versors is unit. `laws.nim` draws such products, and unitizes each to
+  |𝐮 ∘ 𝐮| = 1.
+- The absolute value is the standard normalization of a versor. De Keninck and Roelfs write "one
+  can get away with calculating |X X~|^(−1/2)" ([arXiv 2206.07496][keninck], page 11). Hitzer
+  gives the same ([arXiv 1306.1660][hitzer], equation 29). It drops a sign that the book keeps on
+  purpose. The radius norm "produces real values for real objects and imaginary values for
+  imaginary objects" (page 198). A divisor must be real, so the rule keeps the size alone, and the
+  radius norm keeps its sign.
 - Where the divisor is 0, the element stays as it is, as at pin.
 - The scale of an operator is a choice for each operator family. Lengyel's dilation shows it.
 
@@ -166,19 +187,27 @@ you test, and exactly only where no scale is in hand." Each scale has a cost.
 
 | Test | `cga5d` at 1 | `cga5d` at 1e8 | `cga4d` at 1 | `cga4d` at 1e8 |
 | --- | --- | --- | --- | --- |
-| Exact grade scan | 0 | 0 | 3 | 1 |
-| Grade at pin, 1e-9 absolute | 256 | 0 | 256 | 1 |
-| Antiscalar part is zero | 145 | 141 | 175 | 193 |
-| Grade of P07, each part at its own scale | 256 | 128 | 256 | 74 |
+| Exact grade scan | 0 | 0 | 2 | 2 |
+| Grade at pin, 1e-9 absolute | 256 | 0 | 256 | 2 |
+| Antiscalar part is zero | 131 | 141 | 172 | 181 |
+| Grade of P07, each part at its own scale | 256 | 122 | 256 | 86 |
 | This rule, 1e-9 of largest coefficient | 256 | 256 | 256 | 256 |
 
+- **Exact grade scan.** It counts any residue as a second grade, so it reads almost no moved
+  object as round.
+- **Grade at pin.** Residue grows with the coefficients. At distance 1e8 a round point holds
+  about 1e16 on 𝐞∞, so its residue passes an absolute 1e-9.
+- **Antiscalar part is zero.** It reads an object as round only where its 𝟙 coefficient is
+  exactly 0. Rounding leaves residue there in about a third to a half of the moved objects.
 - **P07's grade.** P07 floors the scale of each part at 1. A sphere has no round bulk, and a round
   point has no flat weight. So their residue falls in an empty part, whose scale stays at 1. That
   is why P07 misreads them far from the origin. A circle uses all four parts.
 - **Round weight test.** The round weight counts as zero at or under 1e-9 times √|𝐮 ∘ 𝐮|. A plane
   sent through a sphere and back keeps residue in its round weight. An exact test then takes it
-  for a huge sphere: 9,950 of 10,000 planes at `cga5d`, and 9,579 at `cga4d`. This rule misreads
-  none.
+  for a huge sphere: 9,933 of 10,000 planes at `cga5d`, and 9,557 at `cga4d`. This rule misreads
+  none. Terathon's `Sphere3D::Unitize` divides by −u, so it would probably read such residue as a
+  huge sphere too, at a probability of 0.75 to 0.8. Terathon has no transversion, so nothing here
+  tests it.
 - **Its radius.** A round object of radius r and round weight w has √|𝐮 ∘ 𝐮| = rw. So the test
   passes it as round while r is under 1e9 units, and unitizes a larger sphere as a plane. A huge
   sphere and a plane differ only by that size, so every scale has such a radius.
@@ -200,11 +229,15 @@ the four round objects alone.
 
 The most likely reason is the jump above: no single continuous rule serves round and flat
 objects. This reason is an inference, at a probability of about 0.7, since he does not state it.
-His typed classes fix the branch when the code compiles, so a runtime test never arises.
+His typed classes fix the branch when the code compiles, so a runtime test never arises. Typing
+alone does not explain it, since his `Motor3D` and `Flector3D` and his rigid wiki apply one weight
+norm across grades.
 
 The sources checked are Terathon, the packages and notebooks at commit 473a801, book Section
 4.3, and the pages of both wikis read here. The probability that one of them holds a general
-conformal rule that this search missed is about 0.03.
+conformal rule that this search missed is about 0.03. The rigid wiki cites book Section 2.10.2,
+which this search did not see. The probability that it states the same general rule is about
+0.85.
 
 ## Whether it is pure
 
@@ -212,6 +245,7 @@ conformal rule that this search missed is about 0.03.
 | --- | --- |
 | Weight of the carrier, for a round object | Lengyel: book page 197; `RoundWeightNorm` |
 | √(𝐮 ∘ 𝐮), for any other element | Lengyel's rigid unitization, for any element |
+| √(𝐮 ∘ 𝐮) is flat weight, for a flat object | Lengyel: book page 197, as rigid weight |
 | \|𝐮 ∘ 𝐮\| where it is negative | standard versor normalization in the literature |
 | The test between the branches, and its two scales | new, see below |
 
@@ -225,10 +259,22 @@ code compiles. A library with one multivector type chooses it when it runs. Leng
 is no purer by one measure: it does not project an element onto the versors either. De Keninck
 and Roelfs add a correction term to do so.
 
+The rule has three defects, and none of them comes from Lengyel:
+
+- The jump at flats. Any rule that matches Lengyel has it.
+- The grade test depends on motion, as What it leaves out shows.
+- The scales of the two tests put an edge at a radius of 1e9 units, and at a transversion of 2e9.
+
+One impurity is smaller. In Lengyel's packages, `RoundWeightNorm` returns a multiple of 𝐞₁₂₃₄,
+and `RadiusNorm` a multiple of 𝟙. So the two branches divide by quantities of two kinds, which
+reduce to the same real number. This reading holds at a probability of about 0.8.
+
 Other ways to choose, and why this rule does not take them:
 
-- **Carrier is not zero, 𝐮 ∧ 𝐞∞ ≠ 0.** It agrees on every object. But it gives divisor 0 to a
-  scalar, to a Euclidean vector and to every dual of a flat.
+- **Carrier is not zero, 𝐮 ∧ 𝐞∞ ≠ 0.** It reads the book's own split of components into a round
+  part and a flat part (page 197). It agrees on every object. But it gives divisor 0 to a scalar, to
+  a Euclidean vector and to every dual of a flat. So an element and its dual can take different
+  divisors. This rule's test is the more natural choice, at a probability of about 0.8.
 - **√|𝐮 ∘ 𝐮| everywhere.** It is continuous, and every unit versor keeps it. But it divides a
   round object by its weighted radius, and a round point by 0.
 - **Flat weight for any element other than a round object.** It agrees on every object. But it
@@ -236,48 +282,81 @@ Other ways to choose, and why this rule does not take them:
 - **Round weight, or flat weight where the round weight is 0.** It fails on the transversion,
   which has round weight, and on every element moved near to flat.
 
+Under inversion or transversion, neither the carrier test nor this rule's test keeps its reading.
+Under motors and dilations, both keep it. No choice that this search examined is more algebraic.
+
 ## What users do
 
 One rule holds in all four algebras. A user need not know which algebra or which kind is in hand.
 
-1. Compose operators freely, while the squared coefficients stay inside the range of 64-bit floats.
+1. Compose operators freely, while the largest coefficient of the composed operator stays under
+   about 1e77.
 2. Apply each composed operator once to each object.
 3. Once each frame, after the last operation, unitize everything that is read or kept.
+4. Keep each operator from frame to frame as its source values, and compose it again each frame.
 
-`limits.nim` holds the rule. Each move is a product of two reflections 0.01 apart, as animation
-steps are. Frames run at 60 each second. In the rigid algebras the error is the change of distance
-between moved points. In the conformal algebras it is the drift of a moved round point from radius
-zero.
+`limits.nim` holds the rule. Each move of the chains and of the hour is a product of two reflections
+0.01 apart, as animation steps are. In the depth rows, each product is of two random reflections,
+which grows far faster. Frames run at 60 each second. In the rigid algebras the error is the change
+of distance between moved points. In the conformal algebras it is the drift of a moved round point
+from radius zero.
 
 | Measure | `rga4d` | `rga3d` | `cga5d` | `cga4d` |
 | --- | --- | --- | --- | --- |
-| One frame, depth 256, against step by step | 1.5e-14 | 3.6e-14 | 1.9e-14 | 1.1e-14 |
-| Largest coefficient of that composed operator | 1.4e1 | 7.6 | 2.1e62 | 1.4e68 |
-| Operator kept one hour, unitized each frame: error | 3.3e-16 | 1.0e-15 | 6.9e-16 | 1.7e-16 |
+| One frame, depth 256, against step by step | 1.5e-14 | 3.6e-14 | 1.3e-14 | 2.2e-14 |
+| Largest coefficient of that composed operator | 1.4e1 | 7.6 | 8.0e54 | 6.0e66 |
+| Operator kept one hour, unitized each frame: error | 3.3e-16 | 1.0e-15 | 5.2e-16 | 1.7e-16 |
+| Largest coefficient of that kept operator | 5.1 | 1.2e1 | 1.5e9 | 3.0e9 |
+| Its \|𝐯 ∘ 𝐯\| before each unitize, worst distance from 1 | 1.1e-15 | 1.1e-15 | 1.4e3 | 2.3e3 |
 | Same moves, never unitized: largest coefficient | 5.1 | 1.2e1 | 1.7e81 | 1.8e82 |
+| Half hour: points moved by the two operators differ by | 3.0e-13 | 1.8e-12 | 2.8e-15 | 5.6e-15 |
 
-- **Rigid algebras.** A unitization each frame is harmless and not needed, since a rigid motion
-  keeps weight.
-- **Conformal algebras.** A unitization each frame is needed. Without it, the kept operator
-  reaches 1.7e81 at `cga5d` and 1.8e82 at `cga4d` within the hour. That is about 1.4 orders of
-  magnitude each minute, if the growth is steady. Overflow then loses the points it moves.
+- **Every kept operator is unit.** Each move is unit, and a product of unit versors is a unit
+  versor. So in exact arithmetic a unitization of the kept operator divides it by 1, in all four
+  algebras.
+- **Rigid algebras.** A unit motor holds coefficients near the size of its translation. So the kept
+  motor stays small, and a unitization each frame is harmless and not needed.
+- **Conformal algebras.** The antidot is indefinite, so a unit operator can still hold large
+  coefficients. Never unitized, the kept operator reached 1.7e81 at `cga5d` and 1.8e82 at `cga4d`
+  within the hour, about 1.4 orders of magnitude each minute. That is its true size, not a drift
+  of its weight. Overflow then lost the points it moves.
+- **What a unitization each frame does there.** The terms of 𝐯 ∘ 𝐯 grow as the square of the
+  coefficients, and they cancel to ±1. Once the coefficients pass about 1e7 to 1e8, their
+  rounding is larger than 1, and |𝐯 ∘ 𝐯| read up to 2.3e3 before a unitize. So the rule divides
+  by rounding, which holds the operator near 1e9 and keeps it in range. The action of an operator
+  ignores its scale, so the points it moves stay the same, to 5.6e-15 at the half hour. The
+  operator is then not unit, and it stays in range through rounding alone.
+- **Why step 4.** A program that keeps each operator as its source values, such as positions,
+  angles and factors, composes it again each frame. Then the operator of each frame has the size
+  of the current pose alone, and no rule needs rounding to keep it in range. At 32 bits it also
+  stops the drift below. Near 1e9 a kept operator can also meet the far edge of the grade test.
+- **How deep to compose.** A sandwich multiplies the coefficients of an object by about the square
+  of those of the operator, and unitize squares them again. So the moved object overflows once
+  the operator passes about 1e77, the fourth root of the largest 64-bit float. The operator kept
+  one hour without a unitization lost its points by 1.7e81. In the depth rows, each product adds
+  about 0.21 orders of magnitude at `cga5d` and 0.26 at `cga4d`. At that rate a composed conformal
+  operator passes 1e77 near depth 360 at `cga5d` and 290 at `cga4d`, which nothing here measures.
+- **Deeper hierarchies.** A hierarchy deeper than about 250 random products scales its composed
+  operator down once on the way, for example by its largest coefficient. A unitization does that
+  only through rounding, as above. A rigid operator stayed under 15 at depth 256, so in practice
+  only a conformal hierarchy needs that step.
 - **Grade selection is not needed.** Over 1,000,000 moves, residue in other grades reached at most
-  1.1e-13 for rigid moves, and 2.1e-12 for conformal moves with a unitization after each. The
+  2.1e-15 for rigid moves, and 5.8e-12 for conformal moves with a unitization after each. The
   tolerance of the grade test is 1e-9. The rule does not remove residue, since it scales every
   coefficient alike. A grade selection after each move sets that residue to 0, and it changes no
   invariant that `limits.nim` measures.
 - **Composing costs little accuracy.** A composed operator touches the object once. After
-  1,000,000 moves, residue on that path reached at most 1.4e-13 in all four algebras. Step by step,
-  rigid moves reached at most 1.1e-13.
+  1,000,000 moves, residue on that path reached at most 9.4e-15 in all four algebras. Step by step,
+  rigid moves reached at most 2.1e-15.
 - **At 32 bits.** A rigid motor stored at 32 bits each frame drifts from its 64-bit twin by up to
-  1.2e-4 of the scene in six hours, with a unitization each frame or without. The rule cannot stop
-  rounding of stored state. So persistent state belongs at 64 bits, or the program rebuilds it
-  from its source values. P06 makes the width configurable.
+  1.2e-4 of the scene in six hours. That holds with a unitization each frame or without. The rule
+  cannot stop rounding of stored state. So persistent state belongs at 64 bits, or the program
+  rebuilds it from its source values, as step 4 does. P06 makes the width configurable.
 
 ## What it costs
 
-The evaluation times unitize on the general pool with this change and at pin, in five alternating
-runs on linux amd64 with 4 cores, on 2026-10-11. It also counts the C of `^∘`.
+The evaluation times unitize on the general pool, with this change and at pin. It takes five
+alternating runs on linux amd64 with 4 cores, on 2026-10-11. It also counts the C of `^∘`.
 
 | Algebra | Unitize at pin | With this change | Ratio |
 | --- | --- | --- | --- |
@@ -294,10 +373,10 @@ runs on linux amd64 with 4 cores, on 2026-10-11. It also counts the C of `^∘`.
 | Error checks | 1 | 66 |
 | Lines of C | 91 | 1,485 |
 
-The rigid algebras keep their cost, since their branch is the rule at pin. In the conformal
-algebras the rule adds the antidot, and a grade scan that runs only where the round weight
-passes, and stops at a second grade. Most of the rest is calls and error checks, which the
-library's operators carry everywhere, and which the gap list holds as design gaps.
+The rigid algebras keep their cost, since their branch is the rule at pin. In the conformal algebras
+the rule adds the antidot and a grade scan. The scan runs only where the round weight passes, and
+stops at a second grade. Most of the rest is calls and error checks, which the library's operators
+carry everywhere, and which the gap list holds as design gaps.
 
 ## What it leaves out
 
@@ -308,9 +387,12 @@ library's operators carry everywhere, and which the gap list holds as design gap
 - **Zero weight.** The element stays as it is. Lengyel's rigid wiki divides a point of zero weight
   by its bulk norm, as a direction ([Point][point]).
 - **A grade test that no motion changes.** The grade test reads the largest coefficient, and a
-  translation changes it. So a motion can change the branch for an element with a coefficient near
-  the tolerance. Whether a better test exists is open. The probability that a grade test exists
-  that no motor changes, and that keeps the results of this rule, is about 0.6. That figure is an
+  motion changes it. So a motion can move the branch of an element whose residue lies near the
+  tolerance. A round point at the origin with residue 2e-9 on 𝟙 divides by 2e-9. After a
+  translation by 10 it divides by 1, a factor of 5e8. Rotations about the origin alone moved the
+  branch of 15,198 of 20,000 round points with residue just past the tolerance.
+- **Whether a better test exists.** It is open. The probability that a grade test exists that no
+  motor changes, and that keeps the results of this rule, is about 0.6. That figure is an
   estimate, and nothing here measures it.
 
 [rigid]: https://rigidgeometricalgebra.org/wiki/index.php?title=Unitization
