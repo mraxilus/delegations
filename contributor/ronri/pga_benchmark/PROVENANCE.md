@@ -1068,7 +1068,9 @@ each function compiles alone, and writes to memory that it cannot see. Each figu
 passes, and each pass is the median of nine runs of 41 rounds over 1024 objects. Nine in ten
 functions that did not change moved ×0.86 to ×1.02. The pins `d9be8ae` to `e993419`
 change no norm and no generated operator, as their static baselines show, so these figures stand
-for them. At `28f4e11` each conformal norm reads one part, so its cells stand for `3121342` alone.
+for them.
+
+At `28f4e11` each conformal norm reads one part, so its cells stand for `3121342` alone.
 
 For the norms, a cell gives nanoseconds with the default fill, then with straight stores that
 write the zeros first. The cell is the lower of the two passes:
