@@ -932,6 +932,64 @@ dancer follows.
 The elbow goes to 140. The flexion and extension of the wrist are taken as one 60 degree cone. The
 rotation of the forearm can turn the plane it bends in.
 
+**The shoulder sets an edge on where its upper arm points, from two studies (#611).** The engine
+does not read it yet. `simulation/shoulder.nim` reads the direction from the moving shoulder joint
+to the elbow, in the terms of the chest. There x points out to the side of the arm, y fore and z up.
+It reads a left arm in mirror, so one edge serves both arms.
+
+The direction goes onto the mean joint axes of Engin and Chen 1987 (AAMRL-TR-87-011, Table 3.1). A
+direction is allowed where one of their ten men reached it by his own effort. That is the largest of
+the ten edges of Table 3.3 on its meridian (Equation 3.2.1). On the lower front quarter, from 180 to
+270 degrees of meridian, the arms of their men met the trunk (page 55).
+
+There a direction is also allowed where one of the 16 adults of Haering 2015 reached it (Figure
+15a). Nowhere else do the adults decide, as the Architect ruled in variant V2.
+
+The print of Table 3.3 has two faults. Printed rows 1 and 2 belong to men 2 and 1. Each row fits
+the edge of its own man in Table 3.2, carried onto the mean axes, and no other row does. The worst
+own fit is 0.555 degrees, and the nearest other fit is 3.867. C10 of man 10 prints -0.11297, and
+the printed mean and variance need -0.12297.
+
+The theta of subject 3 in Table 3.1 prints broken, and the printed mean and deviation need 81.61.
+Verified by `suites/test_shoulder.nim`, which holds each of these corrections to the print.
+
+**The edge of the adults comes from the outline of the figure, at compile time.** Step 1 of #611
+read the outline of Figure 15a, one degree of plane apart (`OUTLINE_ADULTS`). On each plane of
+elevation it gives the largest elevation of the union. The module traces each meridian out from the
+pole to where the run of the union ends. It closes each break narrower than 3 degrees, which is
+inside the reading error of the figure. Knots stand one degree apart, and a knot goes between two
+wherever their chord misses the trace by more than 0.01 degrees.
+
+So the edge keeps the jumps of the run, for example 5.5 degrees near 186.1 degrees of meridian.
+
+Rejected: a table of the run per half degree, joined straight. Between two rows it leaves the
+union by up to 5.5 degrees, from 186.08 to 186.49 degrees of meridian. Cost: about 0.7 s of compile
+time in each binary that imports the module. A small importer built in 2.46 s and 2.51 s, against
+1.72 s and 1.87 s with the table, on four cores on 2026-10-11. Verified by
+`suites/test_shoulder.nim`: a trace of its own, at every hundredth of a degree, lies within 0.05
+degrees of the edge.
+
+**The edge is hard, and its margin is polar.** Past the edge a direction is refused, and no ease
+leads up to it. The margin is theta less the edge on the same meridian, positive outside
+(`Outside.angle`). It is not the shortest arc to the edge. Of the recorded arms within 10 degrees of
+the edge, 67 in 100 have an arc less than 0.6 degrees shorter. Beside the seam at 270 degrees, the
+arc is up to 8.6 degrees shorter, measured 2026-10-11.
+
+The edge steps at the two seams of the quarter, by how far the adults went past the men there. The
+step is 42.1 degrees at 180 and 8.6 at 270. The arm straight up lies 5.16 degrees outside, by the
+edge of the men. The arm that hangs plumb lies on the seam at 180, because `y_jt` is horizontal. It
+is inside by the adults alone, and one degree behind plumb the men refuse it by about 10 degrees.
+Verified by `suites/test_shoulder.nim`.
+
+**A held arm may lie 2 degrees past the edge and still hold (`GIVE_EDGE`).** That is the give of
+the judge on swing, a tenth of the 20 degree ease at either end. An arm that leans on its wall sits
+that far past it, and slides along it. Assumed: that a hard edge keeps this give (Open questions).
+
+A law of `suites/test_shoulder.nim` holds every arm-moment of `design/rig.json`, and every held
+arm-moment of `design/turns.json`, to the edge within this give. It fails until the engine keeps
+every arm inside. Measured 2026-10-11: 2517 of 9896 arm-moments lie past the give, and 2837 lie past
+the edge. The twist of the upper arm is no part of this edge (#622).
+
 Hands are offered three bands, one for each level: low 1.00 to 1.35 m, high 1.40 to 1.50, and above
 1.735 to 2.00. The code names them `Torso`, `Neck` and `Crown`. The band for above starts one radius
 of a limb over the head, so a hand carried there clears it by construction.
@@ -1516,6 +1574,21 @@ that still again.
 Verified by `suites/test_marks.nim`, which builds the review page. Red first: another hash for A05
 stops the build, and so does no fixture for B04. With no cell confirmed, the check runs on none
 until the Architect confirms one.
+
+**The stills that the C cards show stand as they are, and a watch reports each move (#611).** The
+Architect kept C01 to C07 at a first look, and they are not confirmed. Every law holds their moments
+as it holds any other. `design/watched-fixtures.json` holds each capsule end of the still that each
+of these cards shows, as the rig page shows it. So a twin card holds the still that it names,
+mirrored, and a card that comes to show another still moves too.
+
+A move past 1 mm fails, and names the card, the capsule, the end, the move and the verb. A card
+whose still comes to hold no pose, or to hold one, is named the same way. `tools/build.nim watched`
+writes the fixture again, by hand, in the pull request that moves the stills. So its diff shows each
+end before and after, and it never runs to quiet the watch. Verified by `suites/test_asks.nim`.
+
+Cost: a still where no pose holds stops the build of the driver itself, because
+`design/review_page.nim` reads the points of every still at compile time. So the verb cannot write
+such a still until that changes.
 
 Two joined pairs of one still may stand close, and may touch. Only pairs that hook or tangle are
 connected or interlocked. So A10 stands, where the two pairs almost meet over the head, as the
@@ -2735,6 +2808,9 @@ to tidy the line away shows up only as suites that fail to build. `result +=` on
   disagree, the ruling is the Architect's. So is whether a hammerlock goes a whole turn, and what
   moves in the body when it does.
 - **The radius of the girdle, 60 mm, is an estimate and not tape.**
+- **Whether the hard edge of the shoulder keeps a give.** A held arm may lie 2 degrees past it, as
+  the judge lets swing do (Body rig). The Architect ruled the edge hard, and rules whether the give
+  stays.
 - **On the whole-cloth page, a point of a held arm can leap in one moment.** In
   `design/turns.json`, measured 2026-10-09, 14 of 18 sweeps move some point further than the bound
   of a leap, 195 mm, between two moments. The furthest is 662 mm, the join of the same-name turn
