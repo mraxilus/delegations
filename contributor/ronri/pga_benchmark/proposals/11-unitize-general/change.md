@@ -49,20 +49,24 @@ func `^∘`*(m: Multivector): Multivector {.inline, noinit.} =
     let
       m_norm_weight_round_squared = (`|∘²`m)[Basis.scalarAnti]
       m_norm_radius_squared = abs((`|⊘²`m)[Basis.scalarAnti])
-    var
-      scale = 0.0
-      grade_first = none(Grade)
-      is_grade_single = true
-    for b in Basis: scale = max(scale, abs(m[b]))
-    for b in Basis:
-      if abs(m[b]) <= TOLERANCE_ABS * scale: continue
-      if grade_first.isNone: grade_first = some(b.grade)
-      elif grade_first.get != b.grade: is_grade_single = false
-    let
-      is_round = is_grade_single and
-        m_norm_weight_round_squared > TOLERANCE_ABS^2 * m_norm_radius_squared
-      m_norm_weight =
-        (if is_round: m_norm_weight_round_squared else: m_norm_radius_squared).sqrt
+    var is_round =
+      m_norm_weight_round_squared > TOLERANCE_ABS * TOLERANCE_ABS * m_norm_radius_squared
+    if is_round:  # Scan grades only where round weight passes, and stop at second grade.
+      var
+        scale = 0.0
+        found_grade = false
+        grade_first = Grade.low
+      for b in Basis: scale = max(scale, abs(m[b]))
+      for b in Basis:
+        if abs(m[b]) <= TOLERANCE_ABS * scale: continue
+        if not found_grade:
+          found_grade = true
+          grade_first = b.grade
+        elif b.grade != grade_first:
+          is_round = false
+          break
+    let m_norm_weight =
+      (if is_round: m_norm_weight_round_squared else: m_norm_radius_squared).sqrt
   else:
     let m_norm_weight = (`|∘²`m)[Basis.scalarAnti].sqrt
   let reciprocal = if m_norm_weight != 0: 1.0 / m_norm_weight else: 1.0
