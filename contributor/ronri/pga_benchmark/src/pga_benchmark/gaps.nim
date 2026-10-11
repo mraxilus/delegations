@@ -106,7 +106,7 @@ const CAUSES* = [
   Cause(
     id: "D07",
     rule: Rule.Nan,
-    title: "Conformal norms return NaN on real objects.",
+    title: "The radius norm returns NaN where 𝐦 ∘ 𝐦 is negative.",
     closes_when: "every bench measurement's NaN share is zero.",
   ),
   Cause(

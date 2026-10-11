@@ -3,7 +3,7 @@
 ##   nanoseconds per object reported. Around every timed run, allocation counters are read
 ##   so any heap use shows as count, and every result is folded into one sink after timing
 ##   so nothing is optimised away; share of results carrying NaN is counted alongside, since
-##   library's conformal norms return NaN on real objects and that is measured, not stated.
+##   library's radius norm returns NaN where 𝐦 ∘ 𝐦 is negative and that is measured, not stated.
 ##   Operands are aliases into pools (template, never `let`), so loop reads pool slot and
 ##   writes result slot: what moves is operation's own traffic.
 ##   Result slots start uninitialised (`noinit`): array filled with zeros would let C compiler
