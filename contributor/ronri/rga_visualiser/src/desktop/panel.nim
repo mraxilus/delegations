@@ -228,6 +228,8 @@ type
       ## `refreshSelectionMenu`/`adoptConstructionSelection` pair does.
     is_menu_selection_picking*: bool  ## Whether that menu's operation picker is revealed.
       ## Its `apply` button opens it before committing.
+    is_menu_selection_hovered*: bool  ## Whether pointer was over that menu as last laid out.
+      ## Dear ImGui's own reading, as `gui.wantsMouse` is, so both name one frame.
     position_menu_selection*: array[2, cfloat]  ## Where that menu sits, in window pixels.
       ## Kept between frames.
       ##   Object it follows can pass behind camera, and menu that vanished for those
@@ -1457,6 +1459,7 @@ proc layoutSelectionMenu*(
   ##   menu where it last was.
   ##   Longer than sixty-line default: past `apply`, one run of buttons whose only shared
   ##   state is which is on line so far.
+  panel.is_menu_selection_hovered = false
   if not panel.is_menu_selection_shown or panel.selection.len == 0: return
   # Turn pointer's corner into offset from object once both are known.
   #   Menu then follows object at that offset; see `showSelectionMenu`.
@@ -1498,6 +1501,7 @@ proc layoutSelectionMenu*(
     pivot_x,
     pivot_y,
   ):
+    panel.is_menu_selection_hovered = gui.isWindowHovered()
     if count <= 2:
       layoutSelectionMenuApply(panel, scene, camera, history, now)
       is_line_started = true

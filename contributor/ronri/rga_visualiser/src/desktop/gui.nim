@@ -107,6 +107,9 @@ proc processEvent*(event: ptr Event): bool {.discardable, sideEffect, importc: "
 proc wantsMouse*(): bool {.sideEffect, importc: "guiWantsMouse".}
   ## Report whether pointer is over Dear ImGui window rather than 3D view.
 
+proc isWindowHovered*(): bool {.sideEffect, importc: "guiIsWindowHovered".}
+  ## Report whether pointer is over window being laid out; call between its begin and end.
+
 proc wantsKeyboard*(): bool {.sideEffect, importc: "guiWantsKeyboard".}
   ## Report Dear ImGui's own keyboard-capture flag; `wantsKeys` is guard used.
 

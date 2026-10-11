@@ -172,6 +172,10 @@ bool guiProcessEvent(const SDL_Event* event) { return ImGui_ImplSDL3_ProcessEven
 
 bool guiWantsMouse() { return ImGui::GetIO().WantCaptureMouse; }
 
+// Report whether pointer is over window being laid out; call between its begin and end.
+//   Default flags: popup open over it, as operation picker's list, takes pointer instead.
+bool guiIsWindowHovered() { return ImGui::IsWindowHovered(); }
+
 bool guiWantsKeyboard() { return ImGui::GetIO().WantCaptureKeyboard; }
 
 // Report whether keyboard navigation is actually in force.
