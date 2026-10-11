@@ -270,7 +270,7 @@ func constructParts(partiality: Partiality): Formal[Cayley1D] {.compileTime, noi
     )
 
 func constructNormsSquared(
-  parts: Partial[Formal[Cayley1D]], 
+  parts: Partial[Formal[Cayley1D]],
   partiality: Partiality,
 ): Formal[Cayley2D] =
   ## Construct unary 2D cayley tables for squared norms from parts.
@@ -282,10 +282,10 @@ func constructNormsSquared(
         of Partiality.Weight: Basis.scalarAnti
     for b in Basis:
       if part[b].len == 0: continue
-      assert part[b].toSigned == b.toSigned, 
+      assert part[b].toSigned == b.toSigned,
         &"Provided part that is not 1-1 mapping; got `{part[b]}` for `{b}`."
       result[b][b].add(destination.toSigned)
-  
+
   let parts_partial = case partiality
       of Partiality.Bulk: parts.bulk
       of Partiality.Weight: parts.weight
@@ -332,7 +332,7 @@ func constructAnti(cayley: Cayley2D, complements: Chiral[Cayley1D]): Cayley2D {.
 
 func constructMetric(): Cayley1D {.compileTime.} =
   ## Construct metric 𝖌 simplified as 1D cayley table.
-  let 
+  let
     𝐞ₙ = Basis.vectorLast
     𝐞ₙ₋₁ = 𝐞ₙ.pred
   for b in Basis:
