@@ -212,8 +212,7 @@ const
     ##   Bound for every drive rather than for longest: keys is longest script, and each drive
     ##   returns on step it does not recognise, so surplus frames cost nothing but let tween
     ##   and ease settle before verdict reads camera.
-    ##   Measured rather than guessed: every drive reaches its verdict inside this, and whole
-    ##   set of nineteen checks runs in about twenty seconds under software GL.
+    ##   Measured rather than guessed: every drive `driven` runs reaches its verdict inside this.
   SECONDS_FRAME_DRIVEN* = 1.0 / RATE_FRAME_LEAST
     ## Advance scripted run's clock by this much for each frame drawn, whatever machine takes.
     ##   One frame at `timings.RATE_FRAME_LEAST`, so scripted run shows what reader at that
