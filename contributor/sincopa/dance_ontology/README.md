@@ -139,8 +139,8 @@ mockups/                           explorations: wholecloth.html, hand-drawn pro
 tools/review.nim                   fills the review page's markers from the model
 tools/pages.nim, tools/bundle.nim  copy the shells in; fold a page into one file
 tools/build.nim                    this project's verbs: pages, assets, types, drive,
-                                   fixtures, confirmed, modelled, rig, record, turns,
-                                   verdicts, answers, engine, shot, system, clean
+                                   fixtures, confirmed, watched, modelled, rig, record,
+                                   turns, verdicts, answers, engine, shot, system, clean
 tools/drive/                       harness `drive` renders every page with, in TypeScript
 tests/                             the simulation's laws (test_rigid, test_read), the engine's
                                    (test_engine) and the planner's (test_plan); test_said, in

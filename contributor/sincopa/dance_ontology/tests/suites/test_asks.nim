@@ -5,7 +5,7 @@
 
 import std/[json, math, options, strformat, strutils, tables, unittest]
 
-import ../../design/[asks, modelled, parts, rig_page, twins]
+import ../../design/[asks, modelled, parts, rig_page, twins, watch]
 from ../../design/rig as recording import KEPT_RIG, rigStamp
 import ../../simulation/[body, hold, limb, read, rig, vector, words]
 from ../../simulation/plan import isMirrorSame
@@ -587,3 +587,66 @@ suite "Internal: Each recording is of tree it is kept in":
     for i, still in kept["stills"].getElems:
       check page["stills"][i] == shown[i]
       if not still.hasKey("mirror"): check page["stills"][i] == still
+
+
+
+suite "Internal: Stills C cards show, as they stand":
+  ## Architect left C01 to C07 standing, unconfirmed (issue 611): every law holds their moments as
+  ##   it holds any other, and this watch reports where one moved, judging none.
+  test "each still a C card shows stands within a millimetre of its fixture, as page shows it":
+    ## Move past `MOVE_WATCHED` fails, naming card, capsule, end and move, and verb that writes
+    ##   fixture again; that verb runs by hand, in pull request that moves still, and never to
+    ##   quiet this.  Twin card is read as page shows it, still it names mirrored
+    ##   (`design/twins`), so card that comes to show other still moves too.  Card whose still
+    ##   holds no pose, or comes to hold one, is named as moved.
+    let
+      kept = parseFile(KEPT_RIG)
+      fixture = parseFile(KEPT_WATCHED)
+      marks = kept["marks"].getElems
+    var shown: Table[string, JsonNode]
+    for still in stillsShown(kept): shown[still["key"].getStr] = still
+    var
+      moved: seq[string]
+      (ends, capsules_held) = (0, 0)
+    for card in WATCHED:
+      check card in shown
+      check fixture.hasKey(card)
+      if card notin shown or not fixture.hasKey(card): continue
+      let held = fixture[card].getElems
+      capsules_held += held.len
+      if not shown[card].hasKey("points"):
+        if held.len > 0: moved.add &"{card} holds no pose, where fixture holds {held.len} capsules"
+        continue
+      let
+        tags = shown[card]["tag"].getElems
+        points = shown[card]["points"][0].getElems
+      if tags.len != held.len:
+        moved.add &"{card} holds {tags.len} capsules, where fixture holds {held.len}"
+        continue
+      for i in 0..<tags.len:
+        var tag: seq[int]
+        for figure in tags[i]: tag.add figure.getInt
+        let was = @[held[i][0].getInt, held[i][1].getInt, held[i][2].getInt]
+        if tag != was:
+          moved.add &"{card} capsule {i} is {tag}, where fixture holds {was}"
+          continue
+        for (side, offset) in [("a", 0), ("z", 3)]:
+          let
+            now: Vector = (points[6*i+offset].getFloat, points[6*i+offset+1].getFloat,
+                           points[6*i+offset+2].getFloat)
+            was: Vector = (held[i][3+offset].getFloat, held[i][4+offset].getFloat,
+                           held[i][5+offset].getFloat)
+            move = distance(now, was)
+          inc ends
+          if move > MOVE_WATCHED:
+            let
+              who = (if tag[0] == ord(Body.One): "lead" else: "follow")
+              arm = (if tag[1] == ord(Arm.Left): "left" else: "right")
+            moved.add &"{card} capsule {i}, {who} {arm} {marks[tag[2]].getStr}, end {side} " &
+                &"moved {move * 1000.0:.1f} mm"
+    checkpoint &"`{moved.len}` changes, `{ends}` of `{2 * capsules_held}` ends compared, past " &
+        &"`{MOVE_WATCHED * 1000.0}` mm; where change is meant, write fixture again with " &
+        "`nim r tools/build.nim watched` in pull request that makes it:\n    " &
+        moved.join("\n    ")
+    check moved.len == 0
+    check ends == 2 * capsules_held

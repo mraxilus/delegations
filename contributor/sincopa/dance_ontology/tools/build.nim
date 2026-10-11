@@ -20,6 +20,8 @@
 ##   |          | Architect rules on cards, never to quiet check that says one moved    |
 ##   | confirmed| rewrite design/confirmed-fixtures.json from page just built: run when |
 ##   |          | Architect confirms stills, never to quiet check that says one moved   |
+##   | watched  | rewrite design/watched-fixtures.json from design/rig.json: run in     |
+##   |          | pull request that moves still C card shows, never to quiet watch      |
 ##   | modelled | rewrite design/modelled.json: which reference cards simulation        |
 ##   |          | reaches, stamped, and only where stamp changed                        |
 ##   | rig      | rewrite design/rig.json: sweeps rig viewer plays, and every still,    |
@@ -58,7 +60,7 @@ when compileOption("profiler"): import std/nimprof
 
 import std/[algorithm, json, os, osproc, strutils]
 
-import ../design/[faces, render, review_page]
+import ../design/[faces, render, review_page, watch]
 
 
 const
@@ -71,8 +73,8 @@ const
     ## Directory faces land in.  Never committed: fonts are unregistered kind, so
     ##   lock is committed and checkout is not, as Atlas does for packages.
   USAGE = "Usage: nim r tools/build.nim " &
-      "<pages|assets|types|drive|fixtures|confirmed|modelled|rig|record|turns|verdicts|answers|" &
-      "engine|shot|system|clean>\n"
+      "<pages|assets|types|drive|fixtures|confirmed|watched|modelled|rig|record|turns|verdicts|" &
+      "answers|engine|shot|system|clean>\n"
     ## Text printed on usage error.
   SYSTEM = [
     ("git", true, "clone engine's source at its pinned commit; `engine` shells out to it"),
@@ -91,7 +93,7 @@ const
     ##   Chromium that `drive` renders with is Playwright's own, which `drive` fetches at
     ##   revision lock pins, so runner installs no browser.  `chromium` here is `shot`'s, which
     ##   person runs by hand, and `shot` prints it where it builds.  `pages`, `fixtures`,
-    ##   `confirmed`, `verdicts` and `clean` need Nim alone.
+    ##   `confirmed`, `watched`, `verdicts` and `clean` need Nim alone.
   SOURCES = [
     ("box3d", "https://github.com/erincatto/box3d",
      "47d7f7cc7e091142c08d11dc7d2e493c5d34f536",
@@ -334,6 +336,19 @@ proc confirmed() =
   echo "wrote design/confirmed-fixtures.json"
 
 
+proc watched() =
+  ## Write every capsule end of still each C card shows, as page shows it, into
+  ## `design/watched-fixtures.json`, from `design/rig.json` (`design/watch`).
+  ##   Second step, as `fixtures` is, and for like reason: run by hand in pull request that
+  ##     moves those stills, so its diff shows each end before and after.  Run to quiet watch
+  ##     that says one moved, it would hide move nobody saw.
+  let recording = "design" / "rig.json"
+  if not fileExists(recording):
+    quit("No rig recording to read; run `rig` first: got `" & recording & "`.", 1)
+  writeFile(KEPT_WATCHED, watchedIn(parseFile(recording)))
+  echo "wrote design/watched-fixtures.json"
+
+
 proc modelled() =
   ## Rewrite `design/modelled.json`: which cards simulation reaches.
   ##   Second step, as `fixtures` is, and for like reason: badge saying model agrees
@@ -494,6 +509,7 @@ proc main(): int =
     of "drive": drive()
     of "fixtures": fixtures()
     of "confirmed": confirmed()
+    of "watched": watched()
     of "modelled": modelled()
     of "rig": rig()
     of "record": record()
