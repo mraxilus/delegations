@@ -6,9 +6,20 @@ algebra, W(𝐦) is the weight norm √(𝐦 ∘ 𝐦), as at pin. In the confor
 weight norm for a round object, and √|𝐦 ∘ 𝐦| for any other element.
 
 A round object holds one grade, and its round weight is not negligible beside √|𝐦 ∘ 𝐦|. The
-façade states the rule, and the doc of the weight norm says that √(𝐦 ∘ 𝐦) is that norm in the
-rigid algebra alone. Chapter 4 gains one test in place of its placeholder. Suite Internal gains one
-test for versors, moved elements, and a plane sent through a sphere and back.
+façade and the doc of `^` state the rule. The doc of the weight norm says that √(𝐦 ∘ 𝐦) is that
+norm in the rigid algebra alone. Chapter 4 gains one test at its head, and keeps its placeholder,
+which change `conformal-norms` replaces. Suite Internal gains one test for versors, moved elements,
+and a plane sent through a sphere and back.
+
+## Edit `pga.nim`
+
+```nim
+##   | ^∘  | normalizeWeight   | 𝐦 ÷ ‖𝐦‖∘    |
+```
+
+```nim
+##   | ^∘  | normalizeWeight   | 𝐦 ÷ W(𝐦)    |
+```
 
 ## Edit `pga.nim`
 
@@ -94,6 +105,20 @@ func `^∘`*(m: Multivector): Multivector {.inline, noinit.} =
     result[b] = m[b] * reciprocal
 ```
 
+## Edit `pga/operators.nim`
+
+```nim
+template `^`*(m: Multivector): Multivector = ^∘m
+  ## Normalize multivector so weight norm has unit antiscalar magnitude (𝟙).
+  ##   I.e. 𝐦̂ = 𝐦 ÷ ‖𝐦‖∘.
+```
+
+```nim
+template `^`*(m: Multivector): Multivector = ^∘m
+  ## Normalize multivector so its weight has unit antiscalar magnitude (𝟙).
+  ##   I.e. 𝐦̂ = 𝐦 ÷ W(𝐦); see `normalizeWeight`.
+```
+
 ## Edit `tests/suites.nim`
 
 ```nim
@@ -145,8 +170,6 @@ suite "Internal":
 
 ```nim
 suite "Chapter 4":
-  test "TODO: Add chapter 4 tests":
-    skip()
 ```
 
 ```nim
@@ -166,4 +189,5 @@ suite "Chapter 4":
           𝐮 = 𝐮 ∧ drawPoint()
 
     else: skip()
+
 ```

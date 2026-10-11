@@ -6,9 +6,10 @@
 ##   Each move is product of two nearby reflections, as animation steps: planes for rigid moves,
 ##     spheres or planes for conformal moves. Residue is largest coefficient outside grade of
 ##     object, over largest coefficient: rounding leaves it, and grade test must ignore it.
-##   Figures it prints are evidence that never gates: first move past each tolerance, residue
-##     with and without grade selection, composed operator against step by step, frames, and
-##     pose drift of motor stored at 32 bits.
+##   Figures it prints beyond those two gates are evidence: first move past each tolerance,
+##     residue with and without grade selection, composed operator against step by step, kept
+##     operator with its antidot square before each unitize, kept operator unitized each frame
+##     against same operator never unitized, and pose drift of motor stored at 32 bits.
 
 {.experimental: "strictFuncs".}
 
@@ -89,9 +90,12 @@ func versorUnit(versor: Multivector): Multivector =
 
 proc drawMove(as_rigid: bool, size: float): Multivector =
   ## Draw unit versor of two reflections at distance size: near identity where size is small.
+  ##   Rigid move keeps second reflector plane: in CGA, part without infinity stays zero.
   let first = versorUnit(drawReflector(as_plane = as_rigid))
   var second = first
   for b in Basis:
+    when IS_CONFORMAL:
+      if as_rigid and (b.initElement() ∧ Basis.infinity.initElement()).largest != 0: continue
     if b.grade == Grade.high.pred: second[b] += gauss() * size
   versorUnit(versorUnit(second) ⟇ first)
 
@@ -194,18 +198,23 @@ proc composeFrames() =
     echo &"{algebra}: one frame of depth {depth}: composed, applied once and unitized once, " &
       &"against step by step {error:.1e}, largest coefficient of composed {size:.1e}"
     doAssert error < 1e-6, &"one frame holds against step by step; got `{error}`."
+  var halves: array[bool, Multivector]  # Kept operator at half hour, by whether pass unitizes.
   for should_unitize in [true, false]:
     randomize(SEED + 1)  # Same moves in both passes, so pass differs in unitize alone.
     var
       operator: Multivector
       size_worst = 0.0
+      square_worst = 0.0
       frame_overflow = 0
     operator[Basis.scalarAnti] = 1
     for frame in 1..FRAMES_HOUR:
       operator = drawMove(as_rigid = not IS_CONFORMAL, size = STEP) ⟇ operator
-      if should_unitize: operator = ^operator
+      if should_unitize:
+        square_worst = max(square_worst, abs(abs(operator.dotAntiSelf) - 1))
+        operator = ^operator
       size_worst = max(size_worst, operator.largest)
       if frame_overflow == 0 and not (operator.largest < 1e300): frame_overflow = frame
+      if frame == FRAMES_HOUR div 2: halves[should_unitize] = operator
     var
       error = 0.0
       is_lost = false
@@ -226,7 +235,17 @@ proc composeFrames() =
         if is_lost: "points lost to overflow" else: &"error of points it moves {error:.1e}"
     echo &"{algebra}: operator carried one hour, {tag}: {found}, " &
       &"largest coefficient {size_worst:.1e}" &
-      (if frame_overflow > 0: &", past 1e300 at frame {frame_overflow}" else: "")
+      (if frame_overflow > 0: &", past 1e300 at frame {frame_overflow}" else: "") &
+      (if should_unitize: &", antidot square before unitize off 1 by {square_worst:.1e}" else: "")
+  var difference_half = 0.0
+  for point in points:
+    let (kept, raw) = (^point.moved(halves[true]), ^point.moved(halves[false]))
+    var difference = 0.0
+    for b in Basis: difference = max(difference, abs(kept[b] - raw[b]))
+    difference_half = max(difference_half, difference / raw.largest)
+  echo &"{algebra}: operator kept half hour, unitized each frame against never unitized: " &
+    &"points it moves differ by {difference_half:.1e}, never unitized largest coefficient " &
+    &"{halves[false].largest:.1e}"
 
 
 when not IS_CONFORMAL:

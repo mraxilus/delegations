@@ -5,11 +5,14 @@
 ##     its round weight norm instead, which is weight of its carrier 𝐮 ∧ 𝐞∞.
 ##   Laws: each kind Lengyel unitizes ends at unit weight; product of reflections ends at unit
 ##     versor; rule is homogeneous of degree one; rule commutes with rigid motion; flat has
-##     𝐮∘𝐮 = ‖𝐮‖□²; unit versor keeps 𝐮∘𝐮; sphere tends to plane through jump no rule escapes;
+##     𝐮∘𝐮 = ‖𝐮‖□²; unit versor keeps 𝐮∘𝐮; in CGA, element and each of its duals share divisor;
+##     sphere tends to plane through jump no rule escapes;
 ##     plane sent through sphere and back keeps flat weight; round object moved far from origin
-##     keeps round weight; Lengyel's operator forms keep scale he writes.
-##   Figures it prints are evidence that never gates: worst error of each law, and how each
-##     other test of round object fares on same moved objects.
+##     keeps round weight; each unit operator form of Lengyel's wiki divides by 1, and dilation by
+##     √σ.
+##   Figures it prints are evidence that never gates: worst error of each law, how each other
+##     test of round object fares on same moved objects, and how motion moves element whose
+##     residue lies near tolerance of grade test across it.
 
 {.experimental: "strictFuncs".}
 
@@ -50,6 +53,7 @@ const
   STEPS_FAMILY = [1.0, 1e-2, 1e-4, 1e-6, 1e-8, 0.0]  ## Weights of sphere in pencil toward plane.
   SIZES_SCENE = [1.0, 1e8]  ## Distances from origin of scenes whose objects move.
   SAMPLES_MOVED = 256  ## Moved round objects each test reads, at each distance.
+  SAMPLES_BAND = 20000  ## Rotated round points whose residue lies just past grade tolerance.
 
 
 func largest(m: Multivector): float =
@@ -280,6 +284,17 @@ when IS_CONFORMAL:
       &"unit versor keeps antidot; got `{result.error_versor}`."
 
 
+  proc holdDuality(): float =
+    ## Hold W(★𝐮) = W(☆𝐮) = W(𝐮): each dual permutes basis up to sign, and keeps both norms.
+    for _ in 1..SAMPLES:
+      for element in drawElements():
+        let found = element.divisor
+        for dual in [★element, ☆element]:
+          let error = abs(dual.divisor / found - 1)
+          result = max(result, error)
+          doAssert error < TOLERANCE_LAW, &"dual shares divisor of element; got `{error}`."
+
+
   proc countSelectors(): seq[tuple[selector: Selector, size: float, count: int]] =
     ## Count moved round objects each test unitizes to round weight one, near and far.
     for size in SIZES_SCENE:
@@ -329,13 +344,17 @@ when IS_CONFORMAL:
 
   when DIMENSIONS == 5:
     proc readOperators(): seq[tuple[name: string, found, expected: float]] =
-      ## Read divisor of Lengyel's operator forms from his wiki, against scale he writes.
-      let tau = [gauss(), gauss(), gauss()]
-      var translation, transversion, dilation: Multivector
+      ## Read divisor of Lengyel's operator forms from his wiki, against divisor rule must give.
+      let
+        tau = [gauss(), gauss(), gauss()]
+        angle = rand(2 * PI)
+      var translation, rotation, transversion, dilation: Multivector
       translation[Basis.E235] = tau[0] / 2
       translation[Basis.E315] = tau[1] / 2
       translation[Basis.E125] = tau[2] / 2
       translation[Basis.scalarAnti] = 1
+      rotation[Basis.E435] = sin(angle / 2)
+      rotation[Basis.scalarAnti] = cos(angle / 2)
       transversion[Basis.E423] = tau[0] / 2
       transversion[Basis.E431] = tau[1] / 2
       transversion[Basis.E412] = tau[2] / 2
@@ -356,7 +375,7 @@ when IS_CONFORMAL:
       transversion_far[Basis.scalarAnti] = 1
       result = @[
         ("translation", translation.divisor, 1.0),
-        ("rotation about plane pair", drawMotor().divisor, 1.0),
+        ("rotation about z axis", rotation.divisor, 1.0),
         ("transversion", transversion.divisor, 1.0),
         ("dilation, sigma 3", dilation.divisor, sqrt(sigma)),
         ("transversion, half tau 1e-9", transversion_near.divisor, 1.0),
@@ -365,6 +384,28 @@ when IS_CONFORMAL:
       ]
       for (name, found, expected) in result[0..5]:
         doAssert abs(found / expected - 1) < TOLERANCE_LAW, &"{name} divides by; got `{found}`."
+
+
+    proc readBand(): tuple[at_origin, translated: float, flips: int] =
+      ## Read divisor of round point at origin with residue 2e-9 on 𝟙, before and after
+      ##   translation by 10; count rotations about origin that move residue just past
+      ##   tolerance across it, as largest coefficient grows.
+      var point, translation, origin: Multivector
+      point[Basis.origin] = 1
+      point[Basis.scalarAnti] = 2e-9
+      translation[Basis.E235] = 10 / 2
+      translation[Basis.scalarAnti] = 1
+      result.at_origin = point.divisor
+      result.translated = point.moved(translation).divisor
+      origin[Basis.origin] = 1
+      for _ in 1..SAMPLES_BAND:
+        var planes: array[2, Multivector]
+        for plane in planes.mitems:
+          plane = origin ∧ drawPoint() ∧ drawPoint() ∧ Basis.infinity.initElement()
+        var element = drawPoint()
+        element[Basis.scalarAnti] = 1.0000001e-9 * element.largest
+        let rotated = element.moved(versorUnit(planes[0] ⟇ planes[1]))
+        if abs(rotated.divisor / element.divisor - 1) > TOLERANCE_LAW: inc result.flips
 
 
 proc main() =
@@ -379,6 +420,7 @@ proc main() =
     let (error_flat, error_versor) = holdIdentities()
     echo &"{algebra}: flat antidot against flat weight squared, worst error: {error_flat:.1e}"
     echo &"{algebra}: antidot kept by unit versor, worst error: {error_versor:.1e}"
+    echo &"{algebra}: duality, worst relative error of divisor: {holdDuality():.1e}"
     for (selector, size, count) in countSelectors():
       echo &"{algebra}: moved round objects at distance {size:.0e}, unitized right by " &
         &"{$selector}: {count} of {SAMPLES_MOVED}"
@@ -391,7 +433,12 @@ proc main() =
       &"exact test {count_exact}, of {REFLECTIONS_BACK}"
     when DIMENSIONS == 5:
       for (name, found, expected) in readOperators():
-        echo &"{algebra}: {name}, divisor {found:.6g}, scale written {expected:.6g}"
+        echo &"{algebra}: {name}, divisor {found:.6g}, expected {expected:.6g}"
+      let (at_origin, translated, flips) = readBand()
+      echo &"{algebra}: round point with residue 2e-9 on antiscalar, divisor at origin " &
+        &"{at_origin:.3g}, translated by 10 {translated:.3g}"
+      echo &"{algebra}: residue 1.0000001e-9 of largest coefficient, rotations about origin " &
+        &"that change branch: {flips} of {SAMPLES_BAND}"
 
 
 when isMainModule: main()
