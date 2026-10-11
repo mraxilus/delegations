@@ -1526,7 +1526,9 @@ proc handleEvent(
     if event.button.button == uint8(MouseButton.Left): is_dragging_orbit = false
     if event.button.button == uint8(MouseButton.Right): is_dragging_pan = false
   of uint32(EventKind.MouseWheel):
-    if gui.wantsMouse(): return
+    # Menu scrolls nothing, so wheel over it zooms view as over view itself.
+    #   Sibling of page's `sumWheel` in `pointer.ts`; change both together.
+    if gui.wantsMouse() and not panel.is_menu_selection_hovered: return
     # Free flight's zoom lands pivot on what cursor is over; see `yieldOrHalt`.
     panel.tween_camera.yieldOrHalt(panel.selection.len > 0)
     # Zoom toward whatever cursor is over; see `interaction.dollyAtCursor`.

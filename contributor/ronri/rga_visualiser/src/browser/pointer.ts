@@ -414,8 +414,7 @@ function handleTap(position_local: PointLocal) {
 
 const menu_selection = elementById('selection-menu');
 // Menu scrolls nothing, so wheel over it zooms view as over canvas.
-//   Without it, menu took wheel: pick clicked where menu then lands left wheel dead until
-//   pointer moved.
+//   Sibling of desktop's wheel in `main.handleEvent`, which passes menu's on; change both together.
 menu_selection.addEventListener('wheel', sumWheel, { passive: false });
 const menu_selection_apply = elementById('selection-menu-apply');
 const menu_selection_edit = elementById('selection-menu-edit');
