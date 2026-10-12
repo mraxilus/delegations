@@ -19,10 +19,11 @@ Every number is in `rig.nim`, with its source. Each body and each arm is a set o
 a rigid body engine that `tools/build.nim` clones at a fixed commit. There is no gravity, and the
 arms weigh nothing. The question is where arms can be, and not what they weigh.
 
-A joint resists as it comes near the end of its range, and does not stop at a wall. A turn is walked
-a fiftieth of a turn at a time, and the engine carries the arms on. So an arm that has gone round a
-body stays round it. Where the couple stand is chosen for each turn, and nothing is fixed except
-that the two bodies stay apart.
+A joint resists as it comes near the end of its range, and does not stop at a wall. The edge of the
+shoulder has no ease, because no source gives one, so a stiff wall holds every upper arm there, held
+or free. A turn is walked a fiftieth of a turn at a time, and the engine carries the arms on. So an
+arm that has gone round a body stays round it. Where the couple stand is chosen for each turn, and
+nothing is fixed except that the two bodies stay apart.
 
 Where the walk gives short, the turn is planned. The plan chooses every joint of both arms at each
 moment, and keeps every capsule clear and every joint in its range. The engine then follows the
@@ -63,7 +64,8 @@ contact.nim  arms against bodies and against arms, as geometry
 hold.nim     what the couple is asked: which hands are joined, what may stop
 engine.nim   the rigid body engine, bound; nothing above it knows it is C
 rigid.nim    two dancers in that engine: capsules, joints, their ranges,
-             and what stops a connection
+             the wall of the shoulder's edge, and what stops a connection or a
+             free arm
 walk.nim     a hold turned until something gives, from wherever the couple
              stand for that turn; whether a pose holds, whether a turn reaches;
              the engine steered along a planned turn
