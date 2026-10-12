@@ -5,11 +5,14 @@ coefficient alone. `grade` counts a coefficient at or under the tolerance as zer
 builds small coefficients, and stray ones outside the grade of its result, from terms as large as
 the scene. So their noise grows with the distance of the scene from the origin, and a fixed
 tolerance holds only near it. This proposal weighs each difference against the largest absolute
-value of its part, bulk or weight, in either object, and `grade` counts zero the same way.
+value of its part, bulk or weight, in either object, and `grade` counts zero the same way. In a
+conformal algebra, `grade` also counts a coefficient as zero within 16 rounding units of the
+largest coefficient, since a conformal product leaves rounding of its largest terms in parts far
+smaller than they are.
 
 This proposal builds on P06, since its claims at 32 bits need the width that P06 makes
 configurable. The Architect chose it on 2026-10-06, after a check that the gain holds for typed
-objects too.
+objects too. The Architect ruled the conformal bound of `grade` on 2026-10-12, as D4 e.
 
 ## What it is
 
@@ -22,7 +25,11 @@ objects too.
   the tolerance times the larger scale of that part in the two objects.
 - **Scalar comparison.** `m =~ s` compares m with the scalar multivector of s, so one rule holds.
 - **Grade.** `grade` counts a coefficient as zero at or under the tolerance times the scale of its
-  part.
+  part. `isMixed` reads `grade`, so it follows.
+- **Grade in a conformal algebra.** `grade` takes the larger of that bound and 16 rounding units of
+  the largest coefficient, 16ε times it. ε is the machine epsilon of the width, 2⁻⁵² at 64 bits
+  and 2⁻²³ at 32 bits. One scan before the parts finds the largest coefficient. The rigid
+  algebras keep the bound of the part alone.
 
 The scale of a part is never under one, nor under the absolute value of one of its coefficients. So
 every pair equal at pin stays equal, and every coefficient zero at pin stays zero.
@@ -62,6 +69,60 @@ ran the same laws by hand, since the reference holds 64 bits alone:
 | 1,000 | 3 | 4 | 12 | 12 |
 | 10,000 | 3 | 4 | 11 | 13 |
 | 1,000,000 | 0 | 5 | 10 | 13 |
+
+### In the conformal algebras
+
+`laws.nim` reads populations of 1,024 elements at `cga5d` and `cga4d`, at spreads from 1 to 1e8
+units. Some are mixed: motion operators of two flat planes, products of two of them, products of
+two spheres, and at `cga5d` transversions and dilations. The others hold one grade. These are
+round and flat objects moved once by a rigid motion operator, and round objects moved by a
+conformal one. Spheres of radius 1 to 1e6, objects moved 30 times, and k-vectors join them.
+
+Each cell counts the elements that a zero test misread, in this container on 2026-10-12. At 64
+bits the test read 180,224 elements at `cga5d` and 132,096 at `cga4d`. At 32 bits it read fewer,
+since it skips each element that overflows.
+
+| Zero test | `cga5d`, 64 | `cga4d`, 64 | `cga5d`, 32 | `cga4d`, 32 |
+|-----------|-------------|-------------|-------------|-------------|
+| Pin: the tolerance, absolute | 25,734 | 11,357 | 31,353 | 26,813 |
+| Part scale alone | 1,812 | 1,158 | 5,589 | 7,752 |
+| Tolerance of the largest coefficient | 132 | 157 | 5,520 | 9,500 |
+| This proposal | 0 | 0 | 1,071 | 4,086 |
+
+- **Part scale alone.** It misreads far round objects as mixed. At 1e8 units it misread 859 of
+  1,024 moved round points at `cga5d`, and 953 spheres. A round point that far holds about 5e15
+  on 𝐞∞. A product leaves rounding of that size in a part whose scale stays at 1.
+- **Largest coefficient alone.** It misreads far motion operators and products of two spheres as
+  one grade, 65 of 1,024 of each at 1e8 units at `cga5d`. Their 𝟙 part falls under 1e-9 of
+  their largest coefficient.
+- **This proposal.** Sixteen rounding units of the largest coefficient clear the residue of a far
+  round object. They stay far under the 𝟙 part of a far motion operator. So at 64 bits `grade`
+  reads every population right, and `laws.nim` holds that as a law.
+
+### At 32 bits
+
+No zero test that reads values alone reads every population right at 32 bits. At 5e4 units, the
+𝟙 part of a motion operator was 336 to 581 rounding units of its largest coefficient. The
+residue of an object moved 30 times reached about 1,000. So no bound keeps the one and clears the
+other. A run by hand measured both on 2026-10-12.
+
+This proposal misreads motion operators of two planes from 1e4 units: 15 of 1,024 at `cga5d`, and
+11 at `cga4d`. At `cga4d` that rises to 809 at 1e6 units, and to all of them at 1e8. It misreads
+every transversion of size 1e8 at `cga5d`. Products of two motion operators follow the same course
+at `cga4d`. Up to 1e3 units it misreads at most 2 of 1,024 in any population.
+
+### Why 16, and why only in the conformal algebras
+
+- **The multiple.** A run by hand on 2026-10-11 tried 16, 256 and 4,096 rounding units. Each read
+  every moved object right at 64 bits. At 32 bits at `cga5d`, 4,096 read a pure translation as
+  one grade from 1e4 units, and 256 from 1e5. 16 held to 1e6, so it serves farthest.
+- **The rigid algebras.** A run by hand on 2026-10-12 read the same kinds of population at `rga4d`
+  and `rga3d`. At 32 bits the part scale alone misread 2 and 1 of them. The bound of this
+  proposal misread 48 and 4,115, and the largest coefficient alone 1,434 and 9,426. At 64 bits
+  the part scale misread none. So the rigid algebras keep the bound of the part alone.
+- **P11's split.** P11 tells a round object by its round weight. A zero test can take the part
+  scale where P11's test reads flat, and the largest coefficient where it reads round. The run of
+  2026-10-12 found that it misread 140 elements at `cga5d` and 71 at `cga4d`, at 64 bits.
 
 ## What it keeps
 
@@ -110,5 +171,8 @@ scale of a part is a `max` over its own few slots, as three for the bulk of a po
 - A point on a line, `^(p ∧ q) ∧ r =~ 0`, compares with zero, so it has no scale to weigh against.
   It still loses two places a decade, at pin and here. A test of incidence by a distance in the
   units of the scene is outside this proposal.
-- Noise at a distance is measured at rga4d alone. The conformal algebras pass their suites at
-  both widths, and their noise at a distance is unmeasured.
+- Noise of `=~` at a distance is measured at rga4d alone. The conformal algebras pass their
+  suites at both widths, and the noise of their comparison at a distance is unmeasured. Their
+  `grade` is measured, as above.
+- At 32 bits a conformal `grade` misreads far motion operators, as above. A program that keeps
+  each motion operator as its source values, and composes it again each frame, keeps it small.
