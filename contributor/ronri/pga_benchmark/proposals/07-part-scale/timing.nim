@@ -101,7 +101,8 @@ proc main() =
   timeGrade("grade_mixed", left)
   var points = newSeq[Multivector](OBJECTS)
   for i in 0..<OBJECTS:
-    when IS_CONFORMAL: var distance_squared = 0.0
+    when IS_CONFORMAL:
+      var distance_squared = 0.0
     for basis in Basis.scalar.succ..Basis.origin.pred:
       let coordinate = gauss(0.0, 1000.0)
       points[i][basis] = Coefficient(coordinate)
