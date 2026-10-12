@@ -554,7 +554,7 @@ proc placeSeeds(now: float) =
   ##   Arrives as replay, like demo and loaded file: watching it build states that these
   ##   were placed one at time and everything else is derived from them.
   SCENE_PAGE.restoreFrom initScene()
-  constructSeeds(SCENE_PAGE, now)
+  addSeeds(SCENE_PAGE, now)
   SCENE_PAGE.replayFrom(now)
   for handle in 0..<SCENE_PAGE.len: stampBorn(handle, SCENE_PAGE.bornAt(handle))
 
@@ -2720,12 +2720,12 @@ proc nimBuildFrame(
   for handle in 0..<SCENE_PAGE.bound:
     if not SCENE_PAGE.isAlive(handle) or MARKS_PICKED[handle]: continue
     if SCENE_PAGE.isVisible(handle):
-      # Index in place, never bind to local; see `emitObject`.
+      # Index in place, never bind to local; see `tessellateObject`.
       #   `let placed = placements[handle]` is deep copy under JS backend, once per object
       #   per frame.
       if placements[handle].kind == Case.PlaneEverywhere:
         let progress = animationProgress(float(now), BORNS[handle])
-        discard emitObject(
+        discard tessellateObject(
           MESHES,
           placements[handle],
           SCENE_PAGE.inkAt(handle).colour,
@@ -2749,7 +2749,7 @@ proc nimBuildFrame(
           cost.chargeCulled()
           continue
         let progress = animationProgress(float(now), BORNS[handle])
-        discard emitObject(
+        discard tessellateObject(
           MESHES,
           placements[handle],
           SCENE_PAGE.inkAt(handle).colour,
@@ -2771,7 +2771,7 @@ proc nimBuildFrame(
   if preview.isSome:
     # Place here: preview is not handle, so `placeScene` never reaches it.
     var placement_staged = placeObject(preview.get.geometry, preview.get.anchor)
-    discard emitObject(
+    discard tessellateObject(
       MESHES,
       placement_staged,
       INK_PREVIEW.colour.muted(),
@@ -2788,7 +2788,7 @@ proc nimBuildFrame(
       INTERACTION_PAGE.preview.get.geometry,
       INTERACTION_PAGE.preview.get.anchor,
     )
-    discard emitObject(MESHES, placement_derived, INK_PREVIEW.colour.muted(), scale)
+    discard tessellateObject(MESHES, placement_derived, INK_PREVIEW.colour.muted(), scale)
     cost.chargeTally(placement_derived.kind, is_sky = false, is_preview = true, is_selected = false)
 
   # Emit everything selected last, drawn over cleared depth.
@@ -2802,7 +2802,7 @@ proc nimBuildFrame(
       cost.chargeCulled()
       continue
     let progress = animationProgress(float(now), BORNS[handle])
-    discard emitObject(
+    discard tessellateObject(
       MESHES,
       placements[handle],
       SCENE_PAGE.inkAt(handle).colour,

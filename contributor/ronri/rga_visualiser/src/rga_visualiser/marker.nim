@@ -1218,7 +1218,7 @@ proc markerLoop(
   marker: var Marker;
 ): bool =
   ## Build plane's marker circle, concentric with disc actually drawn.
-  ##   Centred on placement's place, override applied as `tessellate.emitObject` reads it,
+  ##   Centred on placement's place, override applied as `tessellate.tessellateObject` reads it,
   ##   so marker is concentric with drawn disc rather than plane's support.
   ##   Cuts circle to what stays in front of eye and reports remainder as arc.
   ##     Camera close to large plane puts part of rim behind eye, exactly when selection
@@ -1579,7 +1579,7 @@ proc markerFor*(
   ##     and assignment walked all of it through `nimCopy` (Art. VII.1).
   ##     On `false` storage holds nothing readable.
   ##   `placed` is frame's placement of object, plane's creation anchor applied, as
-  ##   `tessellate.emitObject` draws it: what object is and where was settled once in frame,
+  ##   `tessellate.tessellateObject` draws it: what object is and where was settled once in frame,
   ##   and marker classifies nothing and reads no anchor out of algebra again.
   ##     Read in place, never copied (read in emitted JS).
   ##   `radius` is object's drawn radius, used for point and ignored otherwise, likewise.
