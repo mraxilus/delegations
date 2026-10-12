@@ -743,10 +743,11 @@ suite "Internal: Simulation against reference":
     ##     something gave, and that one is not read; planned way keeps none (`heldMoments`).
     ##     Cost: viewer draws that moment, hands and all, under words of its stop; law of
     ##       shoulder's edge reads it (`test_shoulder.nim`), and Architect rules which holds.
-    ##     Cost: still holds band coming back from eighth of turn away (`rigid.height`), and this
-    ##       reads from quarter, as walk's judge does; Architect rules where face to face ends.
     ##     Law reads hands of moments walk holds, and not how far walk turns: law below holds
     ##       that each way turns as far as plan carries it with hands lifted.
+    ##   Architect, pull request 629, 2026-10-12, D2: joined hands must be above from quarter
+    ##     turn away from face to face, as walk's judge reads it (`rigid.up` whole), and this law
+    ##     keeps that reading.  Still holds band coming back from eighth too (`rigid.height`).
     ##   Each recording rounds its figures, so hand may read under engine's own by its rounding
     ##     (`roundedUnder`): hand gripped palm deep, nearest its wrist, turns most.
     ##   Regression of issue 611, as found on 2026-10-11, each card kept and its quoted hand read
