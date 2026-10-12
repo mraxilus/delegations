@@ -35,7 +35,7 @@ func toJSON*(x: int; dest: var string) = discard
 
 func constructTable(
   cayley: var int, factors: seq[int], as_exclusions = false
-) {.compileTime.} = discard
+): seq[int] {.compileTime.} = discard
 
 type Algebra = object
   args*: seq[string]
