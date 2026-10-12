@@ -233,11 +233,17 @@ for slot in 0..<pool.bound:  # Bound, never `HANDLES_MAX`.
    code names none, the kind leads.
 3. An action is an imperative verb (`constructTable`, `emitOperator`). A property is the bare
    domain noun (`grade`, `norm`, `centroid`), and never `getGrade` or `computeNorm`. A
-   recurring kind of action keeps one verb:
-   - `define…` names a macro that declares from data, and a template that declares a fixed
-     family is named for its act (`borrowOperationsGrade`);
-   - `construct…` names a table that is built and returned, and `emit…` a function that
-     returns AST;
+   recurring kind of action keeps one verb, and that verb fixes the kind of the routine. Three
+   verbs name the stages of generation (II.4), in the order that they run:
+   - `construct…` names a compile-time routine that builds and returns a data structure. A
+     macro usually reads it, and a constant that runtime code reads keeps the verb too;
+   - `define…` names a macro that takes a constructed data structure and produces generated
+     code, usually through `emit…` calls. A template that declares a fixed family is named
+     for its act (`borrowOperationsGrade`);
+   - `emit…` names a compile-time routine that returns a syntax tree, and never a macro.
+
+   The kind never forces the verb, so a macro or a helper of another kind is named for its
+   act. Code that builds a value at runtime takes another verb, and two of those recur:
    - `init…` names a constructor of a value, and `new…` never appears, because nothing is a
      reference (IV.6);
    - `to<Target>` names a change of representation, and takes its subject first. A
