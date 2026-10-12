@@ -12,12 +12,12 @@
     {
       "kind": "program",
       "path": "laws.nim",
-      "algebras": ["rga4d", "cga4d", "cga5d"]
+      "algebras": ["rga3d", "rga4d", "cga4d", "cga5d"]
     },
     {
       "kind": "program",
       "path": "laws.nim",
-      "algebras": ["rga4d", "cga4d", "cga5d"],
+      "algebras": ["rga3d", "rga4d", "cga4d", "cga5d"],
       "defines": ["pga.float_width=32"]
     },
     {
