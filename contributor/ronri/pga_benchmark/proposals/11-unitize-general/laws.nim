@@ -34,7 +34,7 @@ when IS_CONFORMAL:
     Exact = "exact grade scan"  ## Count any nonzero coefficient.
     AbsoluteAtPin = "grade at pin, 1e-9 absolute"  ## Count coefficient past 1e-9.
     Antiscalar = "antiscalar part is zero"  ## Read round object as one with no 𝟙 part.
-    PartScale = "grade of P07, each part at its own scale"  ## Scale each part, at least one.
+    PartScale = "each part at its own scale alone"  ## Scale each part, at least one, as P07 in RGA.
     Relative = "P11, 1e-9 of largest coefficient"  ## Scale by largest coefficient.
 
   type Part {.pure.} = enum  ## Define part of basis, by origin and infinity it holds.
@@ -52,7 +52,7 @@ const
   REFLECTIONS_BACK = 10000  ## Planes sent through sphere and back.
   STEPS_FAMILY = [1.0, 1e-2, 1e-4, 1e-6, 1e-8, 0.0]  ## Weights of sphere in pencil toward plane.
   SIZES_SCENE = [1.0, 1e8]  ## Deviation of each coordinate in scenes whose objects move.
-  SAMPLES_MOVED = 256  ## Moved round objects each test reads, at each distance.
+  SAMPLES_MOVED = 256  ## Moved round objects each test reads, at each deviation.
   SAMPLES_BAND = 20000  ## Rotated round points whose residue lies just past grade tolerance.
 
 

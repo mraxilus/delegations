@@ -77,7 +77,8 @@ func `=~`*(m, n: Multivector): bool =
   ## Compare approximate equality between multivectors, i.e. 𝐦 ≈ 𝐧.
   ##   Weigh each difference against largest absolute value of its part in either, as
   ##   `CAYLEYS_PARTS` splits parts.
-  ##   Coefficient not finite fails comparison, as at pin, so such multivector equals nothing.
+  ##   Coefficient not finite fails comparison, so such multivector equals nothing. At pin NaN
+  ##   fails too, but infinity equals any finite coefficient.
   for forms in CAYLEYS_PARTS.fields:
     for part in forms.fields:
       let bound = TOLERANCE_ABS * max(m.scale(part), n.scale(part))

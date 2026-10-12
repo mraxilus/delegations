@@ -367,8 +367,9 @@ func kinds(): seq[KindObject] =
 
 
 proc holdNonFinite() =
-  ## Hold that multivector with coefficient not finite equals nothing, itself included, as at
-  ##   pin; and that one with infinite coefficient holds no grade, wherever infinity lies.
+  ## Hold that multivector with coefficient not finite equals nothing, itself included, where at
+  ##   pin infinity equals any finite coefficient; and that one with infinite coefficient holds no
+  ##   grade, wherever infinity lies.
   for b in Basis:
     for value in [Inf, NaN]:
       var element = drawPoint(1)
