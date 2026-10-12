@@ -198,7 +198,7 @@ of what you test, and exactly only where no scale is in hand." Each scale has a 
 - **Exact grade scan.** It counts any residue as a second grade, so it reads almost no moved
   object as round.
 - **Grade at pin.** Residue grows with the coefficients. At a deviation of 1e8 units a round point
-  holds more than 1e16 on 𝐞∞, so its residue passes an absolute 1e-9.
+  holds about 1e16 on 𝐞∞, so its residue passes an absolute 1e-9.
 - **Antiscalar part is zero.** It reads an object as round only where its 𝟙 coefficient is
   exactly 0. Rounding leaves residue there in about a third to a half of the moved objects.
 - **Part scale alone.** It floors the scale of each part at 1. A sphere has no round bulk, and a
@@ -208,10 +208,9 @@ of what you test, and exactly only where no scale is in hand." Each scale has a 
   reads these objects right.
 - **Round weight test.** The round weight counts as zero at or under 1e-9 times √|𝐮 ∘ 𝐮|. A plane
   sent through a sphere and back keeps residue in its round weight. An exact test then takes it
-  for a huge sphere: 9,933 of 10,000 planes at `cga5d`, and 9,557 at `cga4d`, where this rule
-  misreads none. Terathon's `Sphere3D::Unitize` divides by −u, so it would probably read such
-  residue as a huge sphere too, at a probability of 0.75 to 0.8. Terathon has no transversion, so
-  nothing here tests it.
+  for a huge sphere: 9,933 of 10,000 planes at `cga5d`, and 9,557 at `cga4d`. This rule misreads
+  none at either. Terathon's `Sphere3D::Unitize` divides by −u, so it would probably read such
+  residue as a huge sphere too, at a probability of 0.75 to 0.8.
 - **Its radius.** A round object of radius r and round weight w has √|𝐮 ∘ 𝐮| = rw. So the test
   passes it as round while r is under 1e9 units, and unitizes a larger sphere as a plane. A huge
   sphere and a plane differ only by that size, so every scale has such a radius.
@@ -219,7 +218,7 @@ of what you test, and exactly only where no scale is in hand." Each scale has a 
   round weight is then negligible beside √|𝐮 ∘ 𝐮| too.
 - **Far from the identity.** At `cga5d`, a transversion with τ = (2.1e9, −1.05e9, 0), so that
   |τ| = 2.35e9, has its 𝟙 term under the grade tolerance. It divides by |τ| ÷ 2 = 1.17e9 in place
-  of 1.
+  of 1. Terathon has no transversion, so no comparison with it tests this.
 - **Range.** Results hold while the squared coefficients stay inside the range of 64-bit floats,
   as at pin.
 - **At 32 bits.** P06 sets the tolerance to 1e-4 at 32 bits, so both edges move in with it. The
