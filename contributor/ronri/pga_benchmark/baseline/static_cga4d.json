@@ -8,7 +8,7 @@
     "sizeof_multivector": 128
   },
   "taken": {
-    "date": "2026-10-09",
+    "date": "2026-10-10",
     "machine": "linux amd64, 4 cores",
     "nim": "27763495bcfe265507ca98aedc1c7064bf1e0e4d",
     "pga": "e993419c1f90efba72848d146606f903e1cc141e",

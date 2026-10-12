@@ -4,8 +4,8 @@ At pin, each norm law skips under the conformal metric. This change removes each
 the suites show what fails there.
 
 Five suites fail: 2.87-89, 2.90-94, 2.97-98, 2.99 and 2.103. 2.88 and 2.89 compare against
-plain `sqrt`, which is NaN where the weight dot is negative. With the signed root of
-`signed-sqrt`, the same five fail, so the norms do not explain all of them.
+plain `sqrt`, which is NaN where the weight dot is negative. With a root that keeps the sign of
+its square, the same five fail, so the norms do not explain all of them.
 
 ## Edit `tests/suites.nim`
 

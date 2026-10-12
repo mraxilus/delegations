@@ -223,11 +223,13 @@ func normWeight*(g: Line): Antiscalar {.inline.} =
 #[ Unitizations ]#
 
 func unitize*(p: Point): Point {.inline.} =
-  ## Unitize point so w = 1, i.e. 𝐩 / ‖𝐩‖∘; 1 div, 2 mul.
+  ## Unitize point so |w| = 1, i.e. 𝐩 / ‖𝐩‖∘; 1 abs, 1 div, 3 mul.
+  ##   Weight norm is size of w, so sign of w stays, as book's rule keeps it; Lengyel's code
+  ##     divides by signed w instead, and Architect chose book's rule on 2026-10-10.
   ##   No-op where weight is zero, as library's unitize is.
   if p.w == 0.0: return p
-  let n = 1.0 / p.w
-  Point(x: p.x * n, y: p.y * n, w: 1.0)
+  let n = 1.0 / abs(p.w)
+  Point(x: p.x * n, y: p.y * n, w: p.w * n)
 
 func unitize*(g: Line): Line {.inline.} =
   ## Unitize line so normal has unit length, i.e. 𝐠 / ‖𝐠‖∘; 2 mul, 1 add, 1 rsqrt, 3 mul.

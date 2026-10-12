@@ -31,7 +31,7 @@ ASCII. A control page beside them proves that the render sees.
 | [P07 Part scale][part-scale] | proposal | each part compared at its own scale |
 | [P08 Compound tables][compound-tables] | proposal | one table for each compound operator |
 | [P09 Object names][object-names] | proposal | names of geometric objects over kinds of P04 |
-| [P10 Magnitude][magnitude] | proposal | pair of scalar and antiscalar, with its own arithmetic |
+| [P10 Homogeneous scalar][homogeneous-scalar] | proposal | scalar kept with its weight |
 
 A **monitoring** page shows the library as it is. A **proposal** page shows a future state of
 the library, argued in its `proposal.md` and checked by its evaluation. Each proposal has the
@@ -86,6 +86,7 @@ nim r tools/build.nim evaluate all --thorough  # the same, at rga3d and cga4d as
 nim r tools/build.nim restamp       # move timed records to the pin where their C is the same
 nim r tools/build.nim pages         # build every page into build/<name>.html
 nim r tools/build.nim sweep         # five runs at two to six dimensions, into baseline/sweep.json
+nim r tools/build.nim unitized      # point forms of Lengyel's code, into baseline/unitized.json
 ```
 
 `drive` fetches the Chromium that Playwright pins. Set `PGA_CHROMIUM` to the path of a Chromium
@@ -128,8 +129,8 @@ tests/                             suites, the testament stubs that run them, an
 
 ## Status
 
-Measured on the pinned compiler and on library head `e993419`, which is the pin. Times were
-taken at `d9be8ae`, whose builds emit the same C. The library
+Measured on the pinned compiler and on library head `e993419`, which is the pin. The runtime
+baselines were timed at the pin, and each evaluation names the pin it was timed at. The library
 stands above both lower bounds; `gaps.md` counts the gaps, and the docket shows each one.
 Unreviewed by a human. See `PROVENANCE.md` for the figures, and for what each subsystem was
 checked against.
@@ -148,4 +149,4 @@ checked against.
 [part-scale]: https://claude.ai/artifact/6hW9rjiotnjdjBVwatW5Dj
 [compound-tables]: https://claude.ai/artifact/TczTs551nkXVaWiyHzfVAn
 [object-names]: https://claude.ai/artifact/XtPy7LToDTT2P8S1FfGauX
-[magnitude]: https://claude.ai/artifact/5NwSv2YW9ZfDa5BbbVrv1D
+[homogeneous-scalar]: https://claude.ai/artifact/5NwSv2YW9ZfDa5BbbVrv1D

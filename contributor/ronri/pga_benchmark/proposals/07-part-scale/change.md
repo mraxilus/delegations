@@ -2,7 +2,7 @@
 
 With P06, `=~` weighs the difference of each coefficient against max(1, |x|, |y|) of that
 coefficient alone, and `grade` counts a coefficient at or under the tolerance as zero. This
-change weighs each difference against the largest magnitude of its part in either multivector.
+change weighs each difference against the largest absolute value of its part in either multivector.
 The parts are those of `CAYLEYS_PARTS`, which bulk and weight extraction read: bulk and weight,
 each round and flat in a conformal algebra. Both loops walk the fields of `CAYLEYS_PARTS`, so a
 rigid build holds no flat part. A macro spells the bases of a part, so each loop reads that part
@@ -59,14 +59,14 @@ macro bases(part: static Cayley1D): untyped =
 
 
 func scale(m: Multivector, part: static Cayley1D): Coefficient =
-  ## Get largest magnitude in part of multivector, and at least one.
+  ## Get largest absolute value in part of multivector, and at least one.
   result = 1
   for b in part.bases: result = max(result, abs(m[b]))
 
 
 func `=~`*(m, n: Multivector): bool =
   ## Compare approximate equality between multivectors, i.e. 𝐦 ≈ 𝐧.
-  ##   Weigh each difference against largest magnitude of its part in either, as
+  ##   Weigh each difference against largest absolute value of its part in either, as
   ##   `CAYLEYS_PARTS` splits parts.
   for forms in CAYLEYS_PARTS.fields:
     for part in forms.fields:
@@ -103,7 +103,7 @@ template `=~`*(s: Coefficient, m: Multivector): bool =
 
 ```nim
   ## Get grade of multivector, if k-vector.
-  ##   Count coefficient as zero within tolerance of largest magnitude of its part.
+  ##   Count coefficient as zero within tolerance of largest absolute value of its part.
   var found_grade = false
   for forms in CAYLEYS_PARTS.fields:
     for part in forms.fields:
