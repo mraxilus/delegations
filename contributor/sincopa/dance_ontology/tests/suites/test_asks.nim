@@ -3,7 +3,8 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, json, math, options, os, sets, strformat, strutils, tables, unittest]
+import std/[algorithm, json, math, options, os, sequtils, sets, strformat, strutils, tables,
+          unittest]
 
 import ../../design/[asks, modelled, parts, rig_page, twins, watch]
 from ../../design/rig as recording import KEPT_RIG, rigStamp
@@ -37,6 +38,27 @@ const
     ##   early or carry it further; reader that loses its way, by wrong rest or wrong keys, reads
     ##   nearly none.
   FLOOR_AWAY_TURNS = 340  ## Same, from whole-cloth recording's six holds over crown: half of 680.
+  REASON_WHOLE = "lead's turn of same-name chain held above, from Face-to-back, to whole " &
+      "turn: no plan inside shoulder's edge passes 0.71 of turn, and no wall tried carries walk " &
+      "there but by chance"
+    ## Why shoulder's edge refuses whole turn of same-name chain held above.
+  REASON_HALF_MORE = "lead's turn of same-name chain held above, from Face-to-back, to turn " &
+      "and half: plans that reach it lift follow's upper arms behind head, up to 90 degrees past " &
+      "shoulder's edge, and none inside edge passes 0.71 of turn"
+    ## Why shoulder's edge refuses turn and half of same-name chain held above.
+  CARDS_REFUSED = [
+    (key: "pw_la_4", reason: REASON_WHOLE),
+    (key: "pw_fo_4", reason: REASON_WHOLE),
+    (key: "pc_la", reason: REASON_HALF_MORE),
+    (key: "pw_la_5", reason: REASON_HALF_MORE),
+    (key: "pc_fo", reason: REASON_HALF_MORE),
+    (key: "pw_fo_5", reason: REASON_HALF_MORE),
+  ]
+    ## Cards shoulder's edge refuses, each with its reason (Architect, issue 611, 2026-10-11,
+    ##   D1): first wall tried for two at whole turn, then each card still failing named here.
+    ##   `la` is lead's turn and `fo` follow's orbit, which asks same (`asks.turnerOf`).
+    ##   Measured 2026-10-11 and 2026-10-12 by probes outside tree (`PROVENANCE.md`, Planned
+    ##     turn, and Open questions).
 
 
 type Lifted = tuple[card: string, at: float, who: Body, arm: Arm, z: float]
@@ -759,18 +781,28 @@ suite "Internal: Simulation against reference":
     check crossed.len == 0
 
 
-  test "simulation models every card reference draws":
+  test "simulation models every card reference draws, but cards shoulder's edge refuses":
     ## Every position and movement reference draws is one dancers take with ease, so card
     ##   simulation cannot reach is fault of simulation, never of card.
     ##   Red with arms carried by pulls on hands alone: 33 of 231 cards unmodelled, all four
     ##     swans and every whole chain among them, measured 2026-10-02.
+    ##   Card shoulder's edge stops is refused (Architect, issue 611, 2026-10-11, D1): law names
+    ##     each with its reason (`CARDS_REFUSED`), and review page shows it not modelled.  Each
+    ##     stays unmodelled, so change that models one fails here and lifts its refusal.
     let answers = parseFile(KEPT_MODELLED)["answers"]
-    var unmodelled: seq[string]
+    var unmodelled, modelled_refused: seq[string]
     for key, answer in answers.pairs:
-      if not answer.getBool: unmodelled.add key
+      let is_refused = CARDS_REFUSED.anyIt(it.key == key)
+      if is_refused and answer.getBool: modelled_refused.add key
+      elif not is_refused and not answer.getBool: unmodelled.add key
     checkpoint "unmodelled: " & unmodelled.join(" ")
+    checkpoint "refused by shoulder's edge, yet modelled: " & modelled_refused.join(" ")
     check answers.len == questions().len
+    for refused in CARDS_REFUSED:
+      checkpoint &"`{refused.key}` refused: {refused.reason}"
+      check answers.hasKey(refused.key)
     check unmodelled.len == 0
+    check modelled_refused.len == 0
 
 
 
