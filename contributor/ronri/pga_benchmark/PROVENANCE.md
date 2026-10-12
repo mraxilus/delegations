@@ -169,7 +169,7 @@ through the widening, and suite `Internal: Measurements` runs every measurand ov
 
 ## Measurements
 
-`emitCatalogue` turns the catalogue into one timed loop for each measurand of each
+`defineCatalogue` turns the catalogue into one timed loop for each measurand of each
 implementation. Operands are template aliases into pool slots, and never copies, so the loop
 moves only the traffic of the operation itself. Every result is folded into one sink after
 the timing, so nothing is dead. The share of results that carry NaN is counted. The radius norm
