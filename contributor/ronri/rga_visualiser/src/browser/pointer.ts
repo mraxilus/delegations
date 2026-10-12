@@ -39,7 +39,7 @@ let cursor_last: PointLocal | null = null;
 //   both walk whole scene, and pointer or trackpad reports several times between two
 //   frames; see frame loop, which is where each of these is spent.
 let is_hover_stale = false;
-let deltas_wheel = 0; // Summed wheel travel awaiting one dolly; `wheel` says why.
+let notches_wheel = 0; // Summed wheel notches awaiting one dolly; `sumWheel` says why.
 
 // Touch long-press-to-select / tap-to-toggle / drag-to-construct state.
 let touch_down_at: number | null = null;
@@ -373,13 +373,12 @@ function sumWheel(e: WheelEvent): void {
   //   does.
   const rect = canvas.getBoundingClientRect();
   nimUpdateCursor(e.clientX - rect.left, e.clientY - rect.top);
-  // **Summed here, applied once by frame loop.** Trackpad reports several notches.
-  //   between two frames, and each dolly runs `picking.anchorZoomAt` to find what
-  //   cursor is over -- full pick over every live handle, 11.4 ms on 1,024-object demo.
-  //   Six notches frame measured 83.8 ms of picking on frame, for 136 ms gap, and
-  //   every answer but last was thrown away. Factor is `exp(k*delta)`, so summing
-  //   deltas and exponentiating once is same zoom, not approximation of it.
-  deltas_wheel += e.deltaY;
+  // **Summed here, applied once by frame loop.** Trackpad reports several notches between
+  //   two frames, and each dolly runs `picking.anchorZoomAt`, full pick over every live handle.
+  //   Notches compose (`interaction.factorWheel`), so one dolly of their sum is same zoom.
+  // Count notches by core's rule, as desktop counts SDL's; see `bridge.nimNotchesWheel`.
+  //   `deltaY` read before `deltaMode`: Firefox reports lines to page that reads mode first.
+  notches_wheel += nimNotchesWheel(e.deltaY, e.deltaMode);
 }
 canvas.addEventListener('wheel', sumWheel, { passive: false });
 

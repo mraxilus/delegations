@@ -1353,9 +1353,27 @@ proc nimReleaseGrip() {.exportc.} =
   INTERACTION_PAGE.grip = none(GripFingers)
 
 
-proc nimCameraDollyAt(factor: cfloat; width, height: cint) {.exportc.} =
-  ## Scale camera's distance from pivot by factor, toward whatever cursor is over.
-  ##   See `interaction.dollyAtCursor`.
+const
+  MODE_WHEEL_LINE = 1  ## DOM's `WheelEvent.DOM_DELTA_LINE`: travel counted in lines.
+  MODE_WHEEL_PAGE = 2  ## DOM's `WheelEvent.DOM_DELTA_PAGE`: travel counted in pages.
+
+
+proc nimNotchesWheel(travel: cfloat; mode: cint): cfloat {.exportc.} =
+  ## Count one wheel event's travel as notches turned away from reader, by core's notch.
+  ##   `mode` is event's `deltaMode`; page counts one page as one notch.
+  ##   Page counts travel toward reader, so sign turns.
+  ##   Sibling of desktop's wheel in `main.handleEvent`, which reads SDL's notches as they are;
+  ##   change both together, and see `interaction.factorWheel`.
+  let per_notch =
+    if int(mode) == MODE_WHEEL_LINE: LINES_NOTCH
+    elif int(mode) == MODE_WHEEL_PAGE: 1.0
+    else: PIXELS_NOTCH
+  cfloat(-float(travel) / per_notch)
+
+
+proc nimCameraDollyAt(notches: cfloat; width, height: cint) {.exportc.} =
+  ## Zoom camera by `notches` of wheel, toward whatever cursor is over.
+  ##   See `interaction.dollyAtCursor`; scale is `interaction.factorWheel`, as on desktop.
   ##   Wheel's zoom: reads cursor this build tracks (`nimUpdateCursor`), as picking does.
   TWEEN_CAMERA.yieldOrHalt(SELECTION_PAGE.len > 0)
   # Read through frame's placements.
@@ -1366,7 +1384,7 @@ proc nimCameraDollyAt(factor: cfloat; width, height: cint) {.exportc.} =
   INTERACTION_PAGE.dollyAtCursor(
     CAMERA_PAGE,
     SCENE_PAGE,
-    float(factor),
+    factorWheel(float(notches)),
     SCALE_OVERLAY,
     VIEW_PROJECTION_OVERLAY,
     int(width),

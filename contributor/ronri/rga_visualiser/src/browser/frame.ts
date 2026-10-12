@@ -286,11 +286,9 @@ function frame() {
   //     `pointerdown`, touch-down and `handleTap` each need hover reading before their
   //     own handler returns, since `nimBeginDrag`, `handle_touch_down` and selection are
   //     decided from it, so they pick on spot and are only paths that still do.
-  if (deltas_wheel !== 0) {
-    nimCameraDollyAt(
-      Math.exp(deltas_wheel * 0.0012), canvas.clientWidth, canvas.clientHeight,
-    );
-    deltas_wheel = 0;
+  if (notches_wheel !== 0) {
+    nimCameraDollyAt(notches_wheel, canvas.clientWidth, canvas.clientHeight);
+    notches_wheel = 0;
     is_hover_stale = true; // Camera moved under cursor that did not.
   }
   if (is_hover_stale) {

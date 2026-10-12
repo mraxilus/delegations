@@ -1530,6 +1530,7 @@ proc handleEvent(
     # Zoom toward whatever cursor is over; see `interaction.dollyAtCursor`.
     #   Frame's size is passed because sight ray needs it before frame reports it again.
     #   Pick reads last frame's placements, as hover does, with any edit since placed first.
+    #   Each of SDL's notches scales by core's rule, as page's `bridge.nimNotchesWheel` counts.
     placeEdited(scene)
     interaction.dollyAtCursor(
       camera,

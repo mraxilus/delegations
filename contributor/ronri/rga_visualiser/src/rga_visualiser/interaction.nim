@@ -113,6 +113,9 @@ const
     ##   Desktop reads whole notches from SDL; page reads pixels.
     ##   Expected, not measured: browsers report about this much for one notch of mouse wheel,
     ##   and no real wheel reaches this container.
+  LINES_NOTCH* = 3.0
+    ## Count this many lines of page's wheel travel as one notch, for browser counting lines.
+    ##   Expected, not measured, as `PIXELS_NOTCH` is: three lines is usual scroll of one notch.
 
   PIXELS_MENU_REACH* = 76.0
     ## Reach from menu's centre to centre of each of its four wedges.
@@ -917,8 +920,7 @@ func yieldOrHalt*(tween: var CameraTween; has_selection: bool) =
 func factorWheel*(notches: float): float =
   ## Scale separation for `notches` of wheel turned away from reader, i.e. `FACTOR_DOLLY_NOTCH⁻ⁿ`.
   ##   One rule for both front-ends, so one notch zooms same on page as on desktop.
-  ##     Desktop passes SDL's notches; page passes its travel over `PIXELS_NOTCH`, negated, since
-  ##     page counts travel toward reader.
+  ##     Desktop passes SDL's notches; page passes what `bridge.nimNotchesWheel` counts.
   pow(FACTOR_DOLLY_NOTCH, -notches)
 
 
