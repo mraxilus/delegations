@@ -143,10 +143,10 @@ template timeRounds(rounds: var array[ROUNDS, int64], loop: untyped) =
     rounds[r] = (getMonoTime() - started).inNanoseconds
 
 
-macro emitMeasurand(
+macro defineMeasurand(
   index: static int, implementation: static Implementation, measurand: static Measurand
 ): untyped =
-  ## Emit timed run of one measurand in one implementation.
+  ## Define timed run of one measurand in one implementation.
   ##   Result lands in `MEASUREMENTS[implementation][index]`.
   let expression =
     case implementation
@@ -210,8 +210,8 @@ macro emitMeasurand(
       )
 
 
-macro emitCatalogue(): untyped =
-  ## Emit one procedure per measurand per implementation, then `measureCatalogue` calling each.
+macro defineCatalogue(): untyped =
+  ## Define one procedure per measurand per implementation, then `measureCatalogue` calling each.
   ##   Calls follow catalogue order, and implementations of one measurand run back to back, so
   ##   machine drift lands on each alike.
   result = newStmtList()
@@ -221,7 +221,7 @@ macro emitCatalogue(): untyped =
       let
         name = ident("measure" & $index & $implementation)
         timed = newCall(
-          bindSym"emitMeasurand",
+          bindSym"defineMeasurand",
           newLit(index),
           newCall(ident"Implementation", newLit(ord(implementation))),
           newTree(nnkBracketExpr, ident"CATALOGUE", newLit(index)),
@@ -238,4 +238,4 @@ macro emitCatalogue(): untyped =
       `calls`
 
 
-emitCatalogue()
+defineCatalogue()

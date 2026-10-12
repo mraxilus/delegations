@@ -333,8 +333,8 @@ func recipeOf(emitter: var Emitter; id: string; m, n: Slots): Slots =
 
 #[ Functions ]#
 
-macro emitFormsDense*(): untyped =
-  ## Emit one dense form per general measurand, named by `nameDenseOf`.
+macro defineFormsDense*(): untyped =
+  ## Define one dense form per general measurand, named by `nameDenseOf`.
   ##   Partner carries sign of its operand's grade, as library's does; grade is read as
   ##   library reads it, from first component beyond tolerance, and sign flips, never scales.
   result = newStmtList()
@@ -390,4 +390,4 @@ macro emitFormsDense*(): untyped =
     )
 
 
-emitFormsDense()
+defineFormsDense()

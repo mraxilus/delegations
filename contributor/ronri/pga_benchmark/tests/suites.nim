@@ -54,8 +54,8 @@ const
     ##   `*` is template forwarding to scalar `∧`, which catalogue measures once as `scale`.
 
 
-macro emitChecksCompile(measurands: static seq[Measurand]): untyped =
-  ## Emit one `check compiles(expression)` per measurand, with `m` and `n` bound by operand kind.
+macro defineChecksCompile(measurands: static seq[Measurand]): untyped =
+  ## Define one `check compiles(expression)` per measurand, with `m` and `n` bound by operand kind.
   ##   Kinds without typed reference yet bind to library's own multivector.
   result = newStmtList()
   let (m, n) = (ident"m", ident"n")  # plain idents, so expression's own `m` and `n` bind
@@ -273,7 +273,7 @@ suite "Internal: Catalogue":
 
 
   test "every expression compiles against library":
-    emitChecksCompile(CATALOGUE)
+    defineChecksCompile(CATALOGUE)
 
 
   test "symbols match every operator library exports":

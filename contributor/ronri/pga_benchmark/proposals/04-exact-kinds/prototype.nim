@@ -151,10 +151,10 @@ func writesOf(sums: array[Basis, seq[NimNode]]): NimNode {.compileTime.} =
       result.add newAssignment(readOf(ident"result", basis), sumOf(sums[basis]))
 
 
-macro emitProduct(
+macro defineProduct(
   cayley: static Cayley2D; bases_m, bases_n: static set[Basis]; m, n: untyped
 ): untyped =
-  ## Emit product over operands' bases alone, into result of exact kind.
+  ## Define product over operands' bases alone, into result of exact kind.
   var sums: array[Basis, seq[NimNode]]
   for left in bases_m:
     for right in bases_n:
@@ -164,8 +164,8 @@ macro emitProduct(
   writesOf(sums)
 
 
-macro emitMap(cayley: static Cayley1D, bases_m: static set[Basis], m: untyped): untyped =
-  ## Emit map over operand's bases alone, into result of exact kind.
+macro defineMap(cayley: static Cayley1D, bases_m: static set[Basis], m: untyped): untyped =
+  ## Define map over operand's bases alone, into result of exact kind.
   var sums: array[Basis, seq[NimNode]]
   for basis in bases_m:
     for term in cayley[basis]:
@@ -178,42 +178,42 @@ func `∧`*[A, B: static set[Basis]](
   m: MultivectorOf[A], n: MultivectorOf[B]
 ): kindOf(CAYLEYS_WEDGE.base, A, B) {.noinit.} =
   ## Multiply through exterior product; result holds exactly bases reached.
-  emitProduct(CAYLEYS_WEDGE.base, A, B, m, n)
+  defineProduct(CAYLEYS_WEDGE.base, A, B, m, n)
 
 
 func `⟇`*[A, B: static set[Basis]](
   m: MultivectorOf[A], n: MultivectorOf[B]
 ): kindOf(CAYLEYS_WEDGE_DOT.anti, A, B) {.noinit.} =
   ## Multiply through geometric antiproduct; result holds exactly bases reached.
-  emitProduct(CAYLEYS_WEDGE_DOT.anti, A, B, m, n)
+  defineProduct(CAYLEYS_WEDGE_DOT.anti, A, B, m, n)
 
 
 func `∙`*[A, B: static set[Basis]](
   m: MultivectorOf[A], n: MultivectorOf[B]
 ): kindOf(CAYLEYS_DOT.base, A, B) {.noinit.} =
   ## Multiply through inner product; result holds scalar slot alone.
-  emitProduct(CAYLEYS_DOT.base, A, B, m, n)
+  defineProduct(CAYLEYS_DOT.base, A, B, m, n)
 
 
 func `∘`*[A, B: static set[Basis]](
   m: MultivectorOf[A], n: MultivectorOf[B]
 ): kindOf(CAYLEYS_DOT.anti, A, B) {.noinit.} =
   ## Multiply through inner antiproduct; result holds antiscalar slot alone.
-  emitProduct(CAYLEYS_DOT.anti, A, B, m, n)
+  defineProduct(CAYLEYS_DOT.anti, A, B, m, n)
 
 
 func `∙`*[A: static set[Basis]](
   m: MultivectorOf[A],
 ): kindOf(CAYLEYS_PARTS.bulk.round, A) {.noinit.} =
   ## Extract bulk; result holds exactly bulk bases of operand's kind.
-  emitMap(CAYLEYS_PARTS.bulk.round, A, m)
+  defineMap(CAYLEYS_PARTS.bulk.round, A, m)
 
 
 func `∘`*[A: static set[Basis]](
   m: MultivectorOf[A],
 ): kindOf(CAYLEYS_PARTS.weight.round, A) {.noinit.} =
   ## Extract weight; result holds exactly weight bases of operand's kind.
-  emitMap(CAYLEYS_PARTS.weight.round, A, m)
+  defineMap(CAYLEYS_PARTS.weight.round, A, m)
 
 
 func toMultivector*[B: static set[Basis]](m: MultivectorOf[B]): Multivector =
