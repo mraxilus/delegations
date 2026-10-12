@@ -1024,8 +1024,8 @@ a bracket stays too, because `y.toX(z)` and `y.toX[T]` read otherwise.
 name that opens `define` or `emit`, then a capital, after a `.` glued to it. The fixer moves the
 receiver into the call as its first argument, so `MESHES.emitObject(p)` becomes
 `emitObject(MESHES, p)`. A receiver is a name with any call, index or field glued after it, or a
-bracket group, which gives its parentheses to the call. A `construct…` call takes its subject by
-dot or not, as an `init…` call does.
+bracket group, which gives its parentheses to the call. A `construct…` call takes the subject
+test of STYLE.md §5, as every other call does.
 
 - The rule of type conversions reads a receiver the same way, and this rule reaches its readers.
 - A receiver that the file imports as a module qualifies the name, so `tessellate.emitObject`
