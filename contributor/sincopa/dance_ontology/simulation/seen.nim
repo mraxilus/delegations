@@ -12,6 +12,8 @@
 ##     sweep at every distance couple may stand at; carrying this much at each of
 ##     them would cost tens of times what answering costs.  So sweep is answered
 ##     first, and only one that won is recorded.
+##   Way over crown that walk stops short of planned turn is recorded as planned turn: its
+##     moments are stood again from plan, as walk stood them (`walk.plannedWalk`).
 
 {.experimental: "strictFuncs".}
 

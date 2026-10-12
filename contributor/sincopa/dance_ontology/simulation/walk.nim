@@ -17,6 +17,13 @@
 ##     Cost: cross-name chain held above is carried 1.26 of turn, from 0.54 m.  Without this,
 ##       wall with its slope at 270 carries it 1.60, from 0.86 m, with hands down to 1.594 m at
 ##       26 moments of rig's sweep and 44 of whole-cloth page, measured 2026-10-12.
+##   Where walk over crown stops short of planned turn, recordings keep planned turn: plan lifts
+##     hands walk lets sink (Architect, pull request 629, 2026-10-12, D1).  Engine stands each
+##     planned moment, and still's judge reads it (`plannedWalk`).  Every other sweep is walk
+##     alone (`swept`, `should_plan`).
+##     Cost: recording plans 64 paths over crown, both chains toward both ways in every style
+##       (`planAhead`).  Plan carries cross-name chain held above to 1.5275 of turn, where
+##       shoulder's edge forbids more, and same-name chain to 2.5 both ways, measured 2026-10-12.
 
 {.experimental: "strictFuncs".}
 

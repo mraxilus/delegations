@@ -10,6 +10,9 @@
 ##     and folded into page by `pages`.  Couple stand for turn, so each sweep
 ##     searches every distance they may stand at, and eighteen of them cost more
 ##     than every `pages` run should pay.
+##   Way over crown that walk stops short of planned turn is planned turn (`walk.swept`):
+##     couple stand where plan has them at each moment, and moment that plan poses again at
+##     one turn is marked so (`reseed`).
 ##   Words (wrap, lock, low, high) are put on by `simulation/words`, which `verdicts`
 ##     reads too.  Not because simulation speaks other language -- it reuses agreed
 ##     words -- but because here it measures what ontology asserts, and
