@@ -137,13 +137,13 @@ func `/`*(m: Multivector, z: ScalarHomogeneous): Multivector =
 
 func normBulk*(m: Multivector): ScalarHomogeneous =
   ## Get bulk norm as root under geometric product, i.e. ‖𝐦‖∙ = √(𝐦∙𝐦), as wiki takes it.
-  ##   Reads whole dot, since `|∙²` at pin squares round bulk alone under conformal metric.
+  ##   Reads whole dot, since `|∙²` at pin sums squares of round bulk alone, with no metric.
   sqrt(initScalarHomogeneous((m ∙ m)[Basis.scalar], 0))
 
 
 func normWeight*(m: Multivector): ScalarHomogeneous =
   ## Get weight norm as root under antiproduct, i.e. ‖𝐦‖∘ = √(𝐦∘𝐦), as wiki takes it.
-  ##   Reads whole antidot, since `|∘²` at pin squares round weight alone under conformal metric.
+  ##   Reads whole antidot, since `|∘²` at pin sums squares of round weight alone, with no metric.
   sqrtAnti(initScalarHomogeneous(0, (m ∘ m)[Basis.scalarAnti]))
 
 
