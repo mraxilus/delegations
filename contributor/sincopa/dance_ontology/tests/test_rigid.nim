@@ -368,7 +368,7 @@ suite "Internal: Two dancers in rigid body engine":
     ##     below walk anyway, so this walks nothing of its own.
     ##   Still that holds at no distance and in no plan is marked stopped and names no stop
     ##     (`seen.still`), and rig page says no pose holds there (`design/rig.nim`).  No
-    ##     law stands such still: every card reference draws is modelled
+    ##     law stands such still: every still card reference draws is modelled
     ##     (`suites/test_asks.nim`).
     var stops = 0
     let given = answered()
@@ -879,8 +879,8 @@ func leapIn(walk: Walk, links: seq[Link]): tuple[most, at: float] =
   ## Furthest any joint or join of any held arm moves between two moments, and where.
   ##   Worked out here rather than borrowed from `walk.leapOf`, so law does not
   ##     check simulation against itself.  `leapOf` reads breadth of hand too, and this
-  ##     does not: in L-r low, edge of follow's right hand moves 218 mm between 0.56 and
-  ##     0.58 of turn, past bound, where join moves 187 (issue 605).
+  ##     does not (issue 605): in L-r low, edge of held hand moves 150 mm at 0.38 of
+  ##     turn, where join moves 137, measured 2026-10-11.
   # One loop for each axis of data: moment, link, end, joint.
   # Split would hide its shape.
   for j in 1..<walk.moments.len:

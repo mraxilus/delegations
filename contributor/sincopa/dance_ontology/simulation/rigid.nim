@@ -13,14 +13,16 @@
 ##     z; revolute joint hinges about frame A's local z.  So every link is built with
 ##     its own length along its local z, which puts humeral rotation onto shoulder's
 ##     twist by construction.
-##   What each joint may do comes from `simulation/rig`, which is tape and clinical tables.
-##     Engine holds elbow's hinge and wrist's cone exactly.  Shoulder's swing it
-##     cannot: rig gives extension and adduction as two ranges of their own, engine
-##     offers one cone about rest.  Cone is left off rather than invented, and swing is
-##     read back off pose and judged against rig.  Leaving it off also leaves arm's
-##     elevation free, for which rig gives no range either.  Over crown, then, where
-##     arms are clear of both bodies and swing is nowhere near its ends, twist is only
-##     thing left to run out -- which is what Architect reports of dancing it.
+##   What each joint may do comes from `simulation/rig`, which is tape and clinical tables,
+##     and from `simulation/shoulder`, which is two studies.  Engine holds elbow's hinge and
+##     wrist's cone exactly.  Shoulder's swing it cannot: rig gives extension and adduction
+##     as two ranges of their own, and shoulder's edge bounds upper arm's direction on each
+##     meridian round its pole, past ninety degrees on most; engine offers one cone about
+##     rest, of ninety at most.  Cone is left off rather than invented.  Swing is read back
+##     off pose, held by torque (`holdSwing`), and judged against rig and edge, held arm and
+##     free (`stoppedBy`, `stoppedFree`).
+##   Over crown, where arms are clear of both bodies, twist and edge are left to run out.
+##     Edge refuses arm straight up by 5.2 degrees, so arm over crown leans fore or out.
 ##   Twist's ends are stated for right arm, in negative and out positive.  Left arm is
 ##     same joint seen in mirror, so its frame is not mirrored -- that would turn its
 ##     elbow backwards -- and its two ends are swapped instead.
@@ -970,8 +972,8 @@ const
     ## of turn where floor says it never blocks.
   SHOULDER_BACK = 200.0  ## Newton metres per radian arm is past its swing.
     ## Stiff, so arm pressed against its end stays within `GIVE` of it rather than
-    ## sinking through.  Upper arm's inertia is about 0.074, so this rings at some
-    ## eight hertz, well inside step of two hundred and forty.
+    ## sinking through.  Upper arm's inertia about shoulder is 0.0555 (`inertiaUpper`), so
+    ## this rings at about nine and half hertz, well inside step of two hundred and forty.
     ## Swing is only range engine was never given.  Judging it after each step and
     ## never resisting it let engine walk arm into places no shoulder goes and made
     ## hold read blocked where dancer would simply have put arm elsewhere.  Torque

@@ -18,9 +18,10 @@
 ##     Cost: polar margin is not shortest arc to edge.  Within ten degrees of edge, arc is
 ##       under 0.6 degrees shorter for 67 of 100 recorded arms, and up to 8.6 shorter beside
 ##       seam at 270.  Accepted -- Architect ruled polar, measured 2026-10-11.
-##   Held arm may still lie `GIVE_EDGE` past edge, as judge lets swing lie past its end.
-##     Question for Architect: does edge ruled hard keep this give, or none?  Suite reads it;
-##       engine does not yet.
+##   Arm, held or free, may still lie `GIVE_EDGE` past edge, as judge lets swing lie past its
+##     end: engine's wall holds arm there (`rigid.holdSwing`), and judge stops arm past it
+##     (`rigid.stoppedBy`, `rigid.stoppedFree`).
+##     Architect keeps this give on hard edge (issue 611, 2026-10-11, D3).
 ##   Trap: arm hanging plumb lies on seam at 180, since `y_jt` is horizontal.  It is 31.6 degrees
 ##     inside along its meridian, yet 0.007 from edge: hair behind plumb, men decide, and refuse
 ##     it by about ten.  Suite trips on it.
@@ -185,9 +186,9 @@ const
   NARROWEST_ADULTS = 1e-6
     ## Degrees of meridian no two knots are split under: width jump in edge is laid across.
   GIVE_EDGE* = toRadians(2.0)
-    ## Radians held arm may lie past edge and still hold: two degrees, as judge gives swing past
-    ## either end, `rigid.GIVE` of its twenty degree ease.  Same reason: arm leant on its wall
-    ## sits that far past it, under three degrees that flesh gives, and slides along it.
+    ## Radians arm, held or free, may lie past edge and still hold: two degrees, as judge gives
+    ## swing past either end, `rigid.GIVE` of its twenty degree ease.  Same reason: arm leant on
+    ## its wall sits that far past it, under three degrees that flesh gives, and slides along it.
 
 
 func axesJoint*(pole: tuple[φ, θ: float]): array[3, Vector] =

@@ -542,6 +542,9 @@ suite "Internal: Every upper arm the simulation recorded, against shoulder's edg
     ##     where card records any arm in range, quoted arm must be among them.
     ##   Red before its fix, read 2026-10-11: 2517 of 9896 arm-moments past edge by more than
     ##     give, 2837 past it at all, every quoted moment among them.
+    ##   Rig's sweeps record moment they stop at (`seen.shownAsked`), so sweep judge stops at edge
+    ##     records arm past give, and fails here.  Design allows that stop and this law does
+    ##     not; none stops so on 2026-10-11, and Architect rules which holds.
     let
       (rig, turns) = (parseFile(KEPT_RIG), parseFile(KEPT_TURNS))
       moments = armMomentsRig(rig) & armMomentsTurns(turns)

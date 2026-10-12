@@ -31,6 +31,9 @@
 ##         elbow flexion 140-150 held to 140; wrist flexion 75 and extension
 ##         70 taken as one 60 degree cone, since forearm's own rotation
 ##         can turn plane it bends in.
+##       Upper arm's direction is held to shoulder's edge as well, which two studies
+##         measured (`shoulder`): extension and adduction above stand beside it, and
+##         whichever binds first holds.  Edge has no ease; these ranges keep theirs.
 ##   Ranges are what dancer will do without pain, not what joint can
 ##     be forced to.  Past range is refused, and joint is named;
 ##     last stretch before it is reported as strain, so pose near its edge
