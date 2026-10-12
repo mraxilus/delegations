@@ -37,7 +37,8 @@ is mandatory. Where it does not hold, to use the mechanism is cargo cult.
    concept of the subject is named for what it does, and stays off the exported surface.
 3. Every module opens with a header. Its first line states the purpose, and the lines after
    it give the design decisions and the cost of each. A decision without its cost is
-   incomplete.
+   incomplete. A stub that includes its shared suite (IX.7) takes the header of that suite,
+   since the include makes one module of both.
 4. A module that implements an authority (a book, a paper, an RFC) carries aligned plain-text
    tables in its header. They map the code names to the notation of the authority, so that
    book and code read side by side. Its columns align by display width, as the eye reads them.
