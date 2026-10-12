@@ -32,6 +32,37 @@ suite "Declarations":
     check kinds.filterIt(it.name == "T")[0].kind == KindName.Placeholder  # V.12
 
 
+  test "routine keeps its keyword, type it returns before pragmas, and `compileTime` among them":
+    const source = """
+func constructTable(count: int): seq[int] {.compileTime.} = discard
+macro defineOperator(
+  symbols: static string
+): untyped =
+  discard
+proc emitObject*(meshes: var MeshSet): Outcome =
+  discard
+proc emitTestSkipped(): NimNode
+    {.compileTime.} =
+  discard
+template borrowOperationsGrade(T: typedesc) = discard
+func wedge*(m, n: Multivector): Multivector {.inline.} = m
+"""
+    let found = source.declarations
+    check found.filterIt(it.kind == KindName.Routine).mapIt(
+      (it.name, it.keyword, it.type_return, it.is_compile_time)
+    ) == @[
+      ("constructTable", "func", "seq[int]", true),
+      ("defineOperator", "macro", "untyped", false),  # signature across lines
+      ("emitObject", "proc", "Outcome", false),
+      ("emitTestSkipped", "proc", "NimNode", true),  # pragma on own line
+      ("borrowOperationsGrade", "template", "", false),  # returns none
+      ("wedge", "func", "Multivector", false),  # body on same line
+    ]
+    check found.filterIt(it.kind != KindName.Routine).allIt(
+      it.keyword.len == 0 and it.type_return.len == 0 and not it.is_compile_time
+    )  # parameter and placeholder read none
+
+
   test "binding keeps value of its own line and chain below, its element where tuple gives one":
     const source = """
 let (a_flags, _, b_flags) = (a.toFlags, skipped, b.toFlags)
