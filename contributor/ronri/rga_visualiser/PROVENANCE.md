@@ -26,6 +26,12 @@ front-end sits under `src/browser`, its page under `pages/`, and its harness und
 The desktop front-end sits under `src/desktop`, with the PNG and GIF encoders and the arena they
 write through. The suite runs in the configurations that Testing lists.
 
+**The two front-ends are one to one.** The same input does the same thing on the page and on the
+desktop. A value that decides what an input does lives once, in the core, and both front-ends read
+it. Where each front-end must hold a handler of its own, each handler names the other, so a change
+to one reaches both (Article II.9). That is intended, and not yet held for every input: Known
+limitations names each gap.
+
 **How claims are marked.** Each subsystem closes with a *Checked* block. *Verified* names the run
 that established the claim. *Assumed* means that the claim rests on reasoning alone. A figure with
 no *Verified* line beside it is unmeasured, and reads only as an estimate.
@@ -1853,6 +1859,17 @@ come in to (repository issue 535). A pinch is no zoom of its own: its two finger
 touched (Two fingers). Rejected: the ground at `z = 0`, which the world does not have, and the level
 through the pivot, which names no place a reader points at.
 
+**One notch zooms the same on both front-ends** (`interaction.factorWheel`). Each notch scales the
+separation by `FACTOR_DOLLY_NOTCH` 1.12. The desktop reads whole notches from SDL. The page counts
+`PIXELS_NOTCH` 100 px, or `LINES_NOTCH` 3 lines, as one notch (`bridge.nimNotchesWheel`). Both
+counts are expected and not measured, since no real wheel reaches this container.
+
+Rejected: a rate of its own on the page, `exp(0.0012 × travel)`, which drifted from the desktop by
+2% over three notches. Verified by driven check: three notches of 100 px scale the separation by
+0.711780248 on the page, and the desktop's `--drive-wheel` holds the same rule. Three lines scale
+the page as one notch does. Verified by `suites.nim`: notches compose, so a frame that sums them
+zooms as each notch would.
+
 **With a selection, the wheel dollies about the pivot, wherever the pointer stands**
 (`interaction.dollyAbout`). The pivot stands on what is picked, so the orbit stays on it however far
 the wheel goes. Rejected: a zoom toward the object under the pointer, which slides the eye along its
@@ -3013,7 +3030,7 @@ finger has to dismiss a selection. Touch reaches the sky by a long press.
 **The pick runs once for each frame, and not for each input event.** A pick walks every live handle,
 which is linear in the scene. Each pointer move marks hover stale, that of a mouse with no button
 down included, and the frame loop picks once after `nimDriveHeld`. The wheel sums its notches and
-the loop applies one dolly, the same zoom, because `exp(k·Σdelta)` is the product of the notches.
+the loop applies one dolly, the same zoom, because notches compose (`interaction.factorWheel`).
 Rejected: a pick for each notch, at 83.8 ms of picking for six notches a frame. Three paths pick in
 their handler, because they answer before it returns: `pointerdown`, a touch-down and `handleTap`.
 
@@ -4369,5 +4386,19 @@ that the runner carries that library. Assumed: nothing about the suite itself.
   it joins. The error is 0.4 px at an orbit distance of 0.0001, and 3.2 px at 0.00001. Float32 holds
   about 0.06 of a unit at 530,000 units, and the record stores the vanishing point in it. The near
   crossing is not the cause (Records and shaders).
+- The two front-ends still differ in these inputs. A read of the code on 2026-10-12 found them, and
+  no run has checked them yet:
+  - Escape clears or keeps a selection in another order on each front-end.
+  - Undo and redo follow the printed key on the page, and the place of the key on the desktop.
+  - With no pointer, the page hangs the selection menu from its corner, and the desktop centres it.
+  - `more…` opens its picker at the cursor on the page alone.
+  - Hide or delete of several objects takes one step of undo on the desktop, and one for each
+    object on the page.
+  - The field of view takes any value on the page, and 10 to 120 by drag on the desktop.
+  - An empty distance field reads 0.1 on the page, and the near limit on the desktop.
+  - Alt with a view key moves the camera on the desktop alone.
+  - While the camera moves, the page keeps hover on what slid under a still pointer.
+- Control does not descend while it is held, on either front-end. Its own key press carries the
+  modifier that both guards refuse. The same read of the code found this, and no run has checked it.
 
 [replications]: https://gitlab.com/mraxilus/replications
