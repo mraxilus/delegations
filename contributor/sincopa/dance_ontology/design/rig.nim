@@ -153,15 +153,18 @@ proc bodyOfSweep(recording: Shown, key = "", mirror = ""): string =
   bits.add &"\"why\":\"{recording.why}\""
   bits.add "\"says\":\"" & (if key.len > 0 and recording.stills.len == 0:
                              "no pose holds at any distance"
+                           elif recording.is_planned and recording.is_stopped and
+                               recording.why == Stop.None:
+                             "no plan carries the turn further"
                            else: recording.why.says) & "\""
   bits.add &"\"whose\":[{ord(recording.whose.body)},{ord(recording.whose.arm)}]"
   if recording.stills.len == 0:
     bits.add "\"stills\":[]"
     return "{" & bits.join(",\n") & "}"
+  bits.add &"\"planned\":" & (if recording.is_planned: "true" else: "false")
   if key.len > 0:
     var tried: seq[string]
     for strain in recording.tried: tried.add (if strain.isSome: figure(strain.get) else: "null")
-    bits.add &"\"planned\":" & (if recording.is_planned: "true" else: "false")
     bits.add &"\"strain\":{figure(recording.strain)}"
     bits.add wrapped("\"tried\":[" & tried.join(",") & "]")
   let first = recording.stills[0]

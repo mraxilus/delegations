@@ -69,13 +69,15 @@ func toMillimetres(point: Vector): JsonNode =
   ## Write point in whole millimetres.
   %*[int(round(point.x * 1000.0)), int(round(point.y * 1000.0)), int(round(point.z * 1000.0))]
 
-func frame(moment: Moment, band: Band, links: seq[Link]): JsonNode =
+func frame(moment: Moment, band: Band, links: seq[Link], is_reposed: bool): JsonNode =
   ## Record one moment as page draws it: arms, words and crossings.
+  ##   Moment at turn of one before it has arms posed again there (`reseed`), and page says so:
+  ##     planned turn stands several poses at one wind (`plan.planPath`), and page draws one.
   let tight = tightest(HUMAN, moment.stance, links, moment.arms)
   result = %*{
     "turn": round(moment.at * 1000.0) / 1000.0,
     "ok": true,
-    "reseed": false,
+    "reseed": is_reposed,
     "strain": round(tight.strain * 100.0) / 100.0,
     "worst": (if links.len == 0: "" else: whose(tight.whose) & " " & dofName(tight.dof)),
     "bodies": [
@@ -110,14 +112,19 @@ func frame(moment: Moment, band: Band, links: seq[Link]): JsonNode =
     result["connections"].add connection
 
 
+func isReposed(way: Walk, i: int): bool =
+  ## Whether moment `i` of way stands at turn of one before it.
+  ##   Same wind is one stored figure kept again (`plan.planPath`), so `==` is exact.
+  i > 0 and way.moments[i].at == way.moments[i-1].at
+
 func frames(sweep: Swept, band: Band, links: seq[Link]): JsonNode =
   ## Every moment of both ways, in order of turn, rest once.
   ##   Negative way was walked outward from rest, so it is read back to front.
   result = newJArray()
   for i in countdown(sweep.negative.moments.high, 1):
-    result.add frame(sweep.negative.moments[i], band, links)
-  for moment in sweep.positive.moments:
-    result.add frame(moment, band, links)
+    result.add frame(sweep.negative.moments[i], band, links, isReposed(sweep.negative, i))
+  for i, moment in sweep.positive.moments:
+    result.add frame(moment, band, links, isReposed(sweep.positive, i))
 
 func went(way: Walk): float =
   ## How far one way got: where it stopped, else as far as it was walked.
@@ -132,7 +139,14 @@ proc sweepJson(hold, word: string; band: Band): JsonNode =
   ## Sweep one hold at one band, and record every moment and where each way ran out.
   let
     links = linksOf(hold)
-    sweep = swept(HUMAN, band, links, most = MOST, is_away = isRestingAway(hold))
+    sweep = swept(
+      HUMAN,
+      band,
+      links,
+      most = MOST,
+      is_away = isRestingAway(hold),
+      should_plan = true,
+    )
   result = %*{
     "restHolds": sweep.found_rest,
     "negative": round(went(sweep.negative) * 1000.0) / 1000.0,

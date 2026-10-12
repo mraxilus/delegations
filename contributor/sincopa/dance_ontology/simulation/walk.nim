@@ -63,11 +63,14 @@ type
     found_rest*: bool  ## Whether hold stood at all where this was walked from.
     apart*: float  ## And how far apart couple stood to walk it.
     is_stopped*: bool
-    at*: float  ## Turns reached when something gave.
+    at*: float  ## Turns reached when something gave, or where planned walk's last moment stands.
     why*: Stop
     which*: int  ## Which connection gave.
     whose*: Hand  ## And whose hand, on which arm, it gave at.
     moments*: seq[Moment]
+    path*: Path
+      ## Planned turn engine stood for these moments, one plan for each (`plannedWalk`); empty
+      ## for carried walk.
 
   Swept* = object  ## Both ways from one rest.
     apart*: float
@@ -86,6 +89,10 @@ type
                    ## fixes neither.
     strain*: Strain  ## How near pose there is to any end.
     tried*: seq[Option[float]]  ## Strain of each distance and way tried, in order: none gave.
+
+
+func isPlanned*(walk: Walk): bool = walk.path.plans.len > 0
+  ## Whether walk's moments are planned turn engine stood, and not carried walk.
 
 
 
@@ -277,9 +284,11 @@ func reflected(walk: Walk, order: seq[int], rests: array[Body, float], partners:
     Walk =
   ## Walk of twin seen in mirror: walk of question it answers.
   ##   Hand that gave is named where walk stopped; otherwise it names none.
+  ##   Planned walk's path is seen in mirror too (`plan.mirrored`).
   result = Walk(found_rest: walk.found_rest, apart: walk.apart, is_stopped: walk.is_stopped,
-                at: walk.at, why: walk.why, which: walk.which, whose: walk.whose)
-  if walk.is_stopped:
+                at: walk.at, why: walk.why, which: walk.which, whose: walk.whose,
+                path: (if walk.isPlanned: mirrored(walk.path) else: walk.path))
+  if walk.is_stopped and walk.why != Stop.None:
     result.which = order.find(walk.which)
     result.whose = (walk.whose.body, otherArm(walk.whose.arm))
   for moment in walk.moments: result.moments.add reflected(moment, order, rests, partners)
@@ -794,6 +803,15 @@ proc furthest(
       first += batch.len
   if carries.len > 0: result = walks[chosen(carries)]
 
+func reachOf(walk: Walk): float =
+  ## Turns from rest of furthest moment walk holds; less than none where it holds no rest.
+  if not walk.found_rest or walk.moments.len == 0: -Inf else: abs(walk.moments[^1].at)
+
+# Forward: way of sweep asks planned walk, which planned turn's section defines.
+proc plannedWalk(
+  rig: Rig; band: Band; links: seq[Link]; who: Body; most, step: float; is_away: bool; head: Body
+): Walk
+
 proc waysOf(
   rig: Rig;
   band: Band;
@@ -802,7 +820,7 @@ proc waysOf(
   most, step, apart: float;
   is_away: bool;
   head: Body;
-  is_raw: bool;
+  is_raw, should_plan: bool;
 ): tuple[positive, negative: Walk] =
   ## Both ways of sweep, each from wherever that way carries furthest.
   ##   `who` turns; `head` is whose crown joined hands are carried over.  Callers
@@ -813,13 +831,22 @@ proc waysOf(
   ##     take either stand for that one.
   ##   Hold that is its own mirror walks way that turns positive, and other way is it
   ##     reflected (`twinOf`), unless it rests face to back or sweep is raw.
+  ##   Where `should_plan`, way over crown that walk stops short of planned turn is planned
+  ##     turn (`plannedWalk`): where walk alone lets joined hands sink, plan lifts them
+  ##     (Architect, pull request 629, 2026-10-12).
 
   proc way(towards: float): Walk =
-    ## One way, `towards` its own step: engine's own walk where raw.
-    if apart > 0.0 and is_raw:
-      walkedOf(rig, band, links, who, apart, most, towards, is_away, head)
-    elif apart > 0.0: walked(rig, band, links, who, apart, most, towards, is_away, head)
-    else: furthest(rig, band, links, who, most, towards, is_away, head, is_raw)
+    ## One way, `towards` its own step: engine's own walk where raw, and planned turn where
+    ##   `should_plan` and walk over crown stops short of it.
+    result =
+      if apart > 0.0 and is_raw:
+        walkedOf(rig, band, links, who, apart, most, towards, is_away, head)
+      elif apart > 0.0: walked(rig, band, links, who, apart, most, towards, is_away, head)
+      else: furthest(rig, band, links, who, most, towards, is_away, head, is_raw)
+    if not should_plan or band != Band.Crown or (result.found_rest and not result.is_stopped):
+      return
+    let planned = plannedWalk(rig, band, links, who, most, towards, is_away, head)
+    if reachOf(planned) > reachOf(result): result = planned
 
   if isMirrorSame(links) and not is_away and not is_raw:
     let
@@ -848,21 +875,26 @@ proc swept*(
   is_away = false,
   head = Body.Two,
   is_raw = false,
+  should_plan = false,
 ): Swept =
   ## Sweep both ways, each from wherever that way carries furthest (`waysOf`).
   ##   Twin's sweep reflected answers mirror image: its way that turns positive is other
   ##     one's that turns negative (`twinOf`).
   ##   Raw sweep is engine's own: it reflects no twin, and keeps nothing, so no other
   ##     sweep reads it.
+  ##   Where `should_plan`, way over crown that walk stops short of planned turn is planned
+  ##     turn: what recordings keep, where every other sweep is walk alone.
   if is_raw:
-    let (positive, negative) = waysOf(rig, band, links, who, most, step, apart, is_away, head, true)
+    let (positive, negative) =
+      waysOf(rig, band, links, who, most, step, apart, is_away, head, true, should_plan)
     return sweptOf(positive, negative)
   let twin = twinOf(links, 1.0, is_away)
   if twin.is_reflected and not isMirrorSame(links):
     let (positive, negative) = kept(
       SWEEPS,
-      keyOf(rig, twin.links, $band, $who, bits(most), bits(step), bits(apart), $is_away, $head),
-      waysOf(rig, band, twin.links, who, most, step, apart, is_away, head, false),
+      keyOf(rig, twin.links, $band, $who, bits(most), bits(step), bits(apart), $is_away, $head,
+            $should_plan),
+      waysOf(rig, band, twin.links, who, most, step, apart, is_away, head, false, should_plan),
     )
     let partners = partnersOf(rig)
     return sweptOf(
@@ -871,8 +903,9 @@ proc swept*(
     )
   let (positive, negative) = kept(
     SWEEPS,
-    keyOf(rig, links, $band, $who, bits(most), bits(step), bits(apart), $is_away, $head),
-    waysOf(rig, band, links, who, most, step, apart, is_away, head, false),
+    keyOf(rig, links, $band, $who, bits(most), bits(step), bits(apart), $is_away, $head,
+          $should_plan),
+    waysOf(rig, band, links, who, most, step, apart, is_away, head, false, should_plan),
   )
   sweptOf(positive, negative)
 
@@ -954,6 +987,24 @@ proc follow(
     said = (why == Stop.None, said.at, why, couple.strainOf)
   (said, couple)
 
+proc builtFor*(rig: Rig, band: Band, links: seq[Link], is_away: bool, head: Body, path: Path):
+    Couple =
+  ## Couple built where plan starts, for its moments to be stood in turn (`standMoment`).
+  var base = restStance(rig, path.plans[0][0], is_away)
+  base[Body.Two].centre.x = path.plans[0][1]
+  build(rig, base, band, links, head, is_away)
+
+proc standMoment*(couple: var Couple, path: Path, i: int, is_away: bool) =
+  ## Stand every body where plan has it at moment `i`, nothing moving, every joint aimed at
+  ## plan, and let engine find every contact (`STEPS_STAND`).
+  var stance = restStance(couple.rig, path.plans[i][0], is_away)
+  stance[Body.Two].centre.x = path.plans[i][1]
+  stance = turned(stance, path.problem.turner, path.winds[i])
+  let at = placings(couple.rig, path.plans[i], path.winds[i], is_away, path.problem.turner)
+  couple.standAt(stance, at.chests, at.arms)
+  couple.steer(path.plans[i], STEER)
+  couple.advance(STEPS_STAND)
+
 proc replay*(
   rig: Rig, band: Band, links: seq[Link], is_away: bool, head: Body, path: Path, should_stand: bool
 ): tuple[followed: Followed, couple: Couple] =
@@ -963,19 +1014,11 @@ proc replay*(
   ##     drift of engine's springs: sprung after plan instead, D01 and D07 held or not on last
   ##     bit of one sum, and lead's turn of same-name chain to its swan gave at 0.46 to 1.11
   ##     of turn in every style that reached it.
-  var base = restStance(rig, path.plans[0][0], is_away)
-  base[Body.Two].centre.x = path.plans[0][1]
   var
-    couple = build(rig, base, band, links, head, is_away)
+    couple = builtFor(rig, band, links, is_away, head, path)
     said: Followed
   for i in 0..<path.plans.len:
-    var stance = restStance(rig, path.plans[i][0], is_away)
-    stance[Body.Two].centre.x = path.plans[i][1]
-    stance = turned(stance, path.problem.turner, path.winds[i])
-    let at = placings(rig, path.plans[i], path.winds[i], is_away, path.problem.turner)
-    couple.standAt(stance, at.chests, at.arms)
-    couple.steer(path.plans[i], STEER)
-    couple.advance(STEPS_STAND)
+    couple.standMoment(path, i, is_away)
     let why = couple.gives
     said = (why == Stop.None, path.winds[i], why, couple.strainOf)
     if not said.is_holding: break
@@ -1163,3 +1206,46 @@ proc isPlannedReaching*(
     false
 
   kept(PLANNED_REACHES, keyOf(rig, links, $band, bits(turns), $is_away, $who, $head), asked())
+
+proc replayedWalk(
+  rig: Rig, band: Band, links: seq[Link], is_away: bool, head: Body, path: Path
+): Walk =
+  ## Walk of planned path as engine stands it, moment by moment (`replay`): each moment it
+  ## holds, to first that gives, which is left out, and path cut there.
+  ##   Judge is still's (`rigid.gives`), so every moment kept holds as still would: joined
+  ##     hands over crown from quarter turn away, and from eighth coming back.
+  if path.plans.len == 0: return
+  var couple = builtFor(rig, band, links, is_away, head, path)
+  result = Walk(apart: path.plans[0][0], why: Stop.None, which: -1)
+  result.path = Path(problem: path.problem, direction: path.direction)
+  for i in 0..<path.plans.len:
+    couple.standMoment(path, i, is_away)
+    if couple.gives != Stop.None: break
+    result.moments.add momentOf(couple, path.winds[i]).moment
+    result.path.winds.add path.winds[i]
+    result.path.plans.add path.plans[i]
+  couple.free()
+  result.found_rest = result.moments.len > 0
+  result.path.is_reached = path.is_reached and result.path.plans.len == path.plans.len
+
+proc plannedWalk(
+  rig: Rig; band: Band; links: seq[Link]; who: Body; most, step: float; is_away: bool; head: Body
+): Walk =
+  ## Furthest walk any style plans this way toward `most`, own path or its mirror's
+  ## (`pathsFor`), as engine stands it (`replayedWalk`); earlier of two as far is kept.
+  ##   Plan keeps joined hands inside band and every upper arm inside shoulder's edge, by its
+  ##     margins (`plan.bandAt`, `plan.marginOf`), and holds them so moment by moment.
+  ##   Couple stand where plan has them at each moment: distance is plan's own, and free.
+  ##   Way that ends short of `most` stops where its last moment stands, and names nothing that
+  ##     gave: no planned pose stands further on.
+  let turns = (if step >= 0.0: abs(most) else: -abs(most))
+  planAhead(rig, links, is_away, @[turns], who)
+  block search:
+    for style in STYLES:
+      for path in pathsFor(rig, links, is_away, turns, style, who):
+        let got = replayedWalk(rig, band, links, is_away, head, path)
+        if reachOf(got) > reachOf(result): result = got
+        if reachOf(result) >= abs(most) - 1e-9: break search
+  if not result.found_rest: return
+  result.at = reachOf(result)
+  result.is_stopped = result.at < abs(most) - 1e-9
