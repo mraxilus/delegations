@@ -51,7 +51,7 @@ const
   TOLERANCE_LAW = 1e-9  ## Largest relative error each law admits.
   REFLECTIONS_BACK = 10000  ## Planes sent through sphere and back.
   STEPS_FAMILY = [1.0, 1e-2, 1e-4, 1e-6, 1e-8, 0.0]  ## Weights of sphere in pencil toward plane.
-  SIZES_SCENE = [1.0, 1e8]  ## Distances from origin of scenes whose objects move.
+  SIZES_SCENE = [1.0, 1e8]  ## Deviation of each coordinate in scenes whose objects move.
   SAMPLES_MOVED = 256  ## Moved round objects each test reads, at each distance.
   SAMPLES_BAND = 20000  ## Rotated round points whose residue lies just past grade tolerance.
 
@@ -95,7 +95,7 @@ func moved(element, product: Multivector): Multivector =
 proc drawPoint(deviation = 1.0): Multivector =
   ## Draw point at random position: round point of radius zero in CGA, unit point in RGA.
   var distance_squared = 0.0
-  for b in Basis.scalar.succ .. Basis.origin.pred:
+  for b in Basis.scalar.succ..Basis.origin.pred:
     result[b] = gauss() * deviation
     distance_squared += result[b]^2
   result[Basis.origin] = 1
@@ -115,7 +115,7 @@ proc drawPlane(): Multivector =
     for _ in 2 ..< DIMENSIONS - 1: result = result ∧ drawPoint()
     result = result ∧ initElement(Basis.infinity)
   else:
-    for _ in 2 ..< DIMENSIONS: result = result ∧ drawPoint()
+    for _ in 2..<DIMENSIONS: result = result ∧ drawPoint()
 
 
 proc drawMotor(): Multivector =
@@ -126,7 +126,7 @@ proc drawMotor(): Multivector =
 proc drawObjects(): seq[tuple[name: string, element: Multivector, kind: KindObject]] =
   ## Draw one object of each kind Lengyel unitizes, with its name and kind.
   var element = drawPoint()
-  for grade in 1 ..< DIMENSIONS:
+  for grade in 1..<DIMENSIONS:
     when IS_CONFORMAL:
       result.add (&"round of grade {grade}", element, KindObject.Round)
       if grade < DIMENSIONS - 1:
@@ -318,7 +318,7 @@ when IS_CONFORMAL:
     ## Hold divisor of sphere 𝐬ₜ = t𝐬 + 𝐠 at |t|, and plane's at 1: divisor jumps at t = 0.
     let plane = unitizeAntidot(drawPlane())
     var sphere = drawPoint()
-    for _ in 2 ..< DIMENSIONS: sphere = sphere ∧ drawPoint()
+    for _ in 2..<DIMENSIONS: sphere = sphere ∧ drawPoint()
     sphere = ^sphere
     for step in STEPS_FAMILY:
       let found = (step * sphere + plane).divisor
@@ -333,7 +333,7 @@ when IS_CONFORMAL:
     for _ in 1..REFLECTIONS_BACK:
       let plane = unitizeAntidot(drawPlane())
       var sphere = drawPoint()
-      for _ in 2 ..< DIMENSIONS: sphere = sphere ∧ drawPoint()
+      for _ in 2..<DIMENSIONS: sphere = sphere ∧ drawPoint()
       let
         back = plane.moved(sphere).moved(sphere)
         flat = sqrt((`|□²`back)[Basis.scalarAnti])
@@ -425,7 +425,7 @@ proc main() =
     echo &"{algebra}: antidot kept by unit motion operator, worst error: {error_motion:.1e}"
     echo &"{algebra}: duality, worst relative error of divisor: {holdDuality():.1e}"
     for (selector, size, count) in countSelectors():
-      echo &"{algebra}: moved round objects at distance {size:.0e}, unitized right by " &
+      echo &"{algebra}: moved round objects at deviation {size:.0e}, unitized right by " &
         &"{$selector}: {count} of {SAMPLES_MOVED}"
     let pencil = holdPencil()
     for i, step in STEPS_FAMILY:

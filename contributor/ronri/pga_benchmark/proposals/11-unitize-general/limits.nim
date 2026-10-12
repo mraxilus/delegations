@@ -63,7 +63,7 @@ func selected(m: Multivector, grade: Grade): Multivector =
 proc drawPoint(deviation = 1.0): Multivector =
   ## Draw point at random position: round point of radius zero in CGA, unit point in RGA.
   var distance_squared = 0.0
-  for b in Basis.scalar.succ .. Basis.origin.pred:
+  for b in Basis.scalar.succ..Basis.origin.pred:
     result[b] = gauss() * deviation
     distance_squared += result[b]^2
   result[Basis.origin] = 1
@@ -78,7 +78,7 @@ proc drawReflector(as_plane: bool): Multivector =
       for _ in 2 ..< DIMENSIONS - 1: result = result ∧ drawPoint()
       result = result ∧ initElement(Basis.infinity)
     else:
-      for _ in 2 ..< DIMENSIONS: result = result ∧ drawPoint()
+      for _ in 2..<DIMENSIONS: result = result ∧ drawPoint()
   else:
     for b in Basis:
       if b.grade == Grade.high.pred: result[b] = gauss()
@@ -109,7 +109,7 @@ func moved(element, product: Multivector): Multivector =
 proc drawObjects(): seq[tuple[element: Multivector, grade: Grade]] =
   ## Draw point and largest object: sphere in CGA, plane in RGA, with grade of each.
   var object_largest = drawPoint()
-  for _ in 2 ..< DIMENSIONS: object_largest = object_largest ∧ drawPoint()
+  for _ in 2..<DIMENSIONS: object_largest = object_largest ∧ drawPoint()
   @[(drawPoint(), Grade.low.succ), (object_largest, Grade.high.pred)]
 
 
@@ -135,7 +135,7 @@ proc moveChains(as_rigid, should_unitize: bool) =
       let operator_motion = drawMove(as_rigid = as_rigid, size = STEP)
       composed = operator_motion ⟇ composed
       if should_unitize: composed = ^composed
-      for i in 0 ..< objects.len:
+      for i in 0..<objects.len:
         objects[i].element = objects[i].element.moved(operator_motion)
         objects_selected[i].element =
           objects_selected[i].element.moved(operator_motion).selected(objects[i].grade)
@@ -146,8 +146,8 @@ proc moveChains(as_rigid, should_unitize: bool) =
         residue_worst = max(residue_worst, found)
         for t, tolerance in TOLERANCES:
           if moves_found[t] == 0 and found > tolerance: moves_found[t] = move
-    for t in 0 ..< TOLERANCES.len: moves_first[t].add moves_found[t]
-    for i in 0 ..< objects.len:
+    for t in 0..<TOLERANCES.len: moves_first[t].add moves_found[t]
+    for i in 0..<objects.len:
       let once = objects_start[i].element.moved(composed)
       residue_composed = max(residue_composed, once.residue(objects[i].grade))
       residue_selected =
@@ -228,7 +228,7 @@ proc composeFrames() =
         error = max(error, a_moved.drift)
       else:
         var (distance, distance_start) = (0.0, 0.0)
-        for b in Basis.scalar.succ .. Basis.origin.pred:
+        for b in Basis.scalar.succ..Basis.origin.pred:
           distance += (a_moved[b] - b_moved[b])^2
           distance_start += (points[i][b] - points[i + 1][b])^2
         error = max(error, abs(sqrt(distance) / sqrt(distance_start) - 1))

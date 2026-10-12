@@ -3,12 +3,13 @@
 ##   Evaluation compiles this against changed library at rga4d, cga4d and cga5d, at default width
 ##     and at 32 bits; exit code says it ran, and figures it prints are evidence that never gates.
 ##   Rule of pin is copied here, since claim builds against changed library alone.
-##   Equal pairs read every coefficient under both rules. Unequal pairs differ in scalar, so
-##     both rules stop at first coefficient, where rule of change reads its part for scale.
-##   Points lie about 1000 units out: unit points in RGA, round points in CGA, whose grade under
-##     rule of change also scans for largest coefficient. Stray pairs, in RGA alone, are such
-##     points, one holding stray of 50 tolerances in its plane slot: rule of change calls them
-##     equal, and rule of pin stops there and does not.
+##   Equal pairs read every coefficient under both rules. Unequal pairs differ in scalar: rule of
+##     pin stops at first coefficient. Rule of change stops in part holding scalar, after it reads
+##     scale of that part; in CGA it first reads and compares whole of part that bulk flat holds.
+##   Points have Gaussian coordinates of deviation 1000 units: unit points in RGA, round points in
+##     CGA, whose grade under rule of change also scans for largest coefficient. Stray pairs, in
+##     RGA alone, are such points, one holding stray of 50 tolerances in its plane slot: rule of
+##     change calls them equal, and rule of pin stops there and does not.
 ##   Each timed loop sits in procedure of its own, so compiler estimates it hot, as caller's.
 ##
 ##   Cost: `seq` stands for caller's heap storage; 1024 pairs, 41 rounds, median nanoseconds
