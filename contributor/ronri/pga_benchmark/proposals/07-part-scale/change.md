@@ -11,8 +11,8 @@ alone.
 
 `grade` counts a coefficient as zero under the same bound. In a conformal algebra it also counts
 a coefficient as zero within 16 rounding units of the largest coefficient. A multivector with an
-infinite coefficient has no grade. The scalar comparison goes, since `m =~ s` now compares with
-the scalar multivector of s.
+infinite coefficient has no grade, and one with a coefficient that is not finite equals nothing.
+The scalar comparison goes, since `m =~ s` now compares with the scalar multivector of s.
 
 ## Edit `pga/multivectors.nim`
 
@@ -77,11 +77,13 @@ func `=~`*(m, n: Multivector): bool =
   ## Compare approximate equality between multivectors, i.e. 𝐦 ≈ 𝐧.
   ##   Weigh each difference against largest absolute value of its part in either, as
   ##   `CAYLEYS_PARTS` splits parts.
+  ##   Coefficient not finite fails comparison, as at pin, so such multivector equals nothing.
   for forms in CAYLEYS_PARTS.fields:
     for part in forms.fields:
       let bound = TOLERANCE_ABS * max(m.scale(part), n.scale(part))
+      if bound == Inf: return false
       for b in part.bases:
-        if abs(m[b] - n[b]) > bound: return false
+        if not (abs(m[b] - n[b]) <= bound): return false
   true
 
 
