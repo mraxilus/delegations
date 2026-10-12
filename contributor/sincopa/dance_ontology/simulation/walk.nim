@@ -12,6 +12,11 @@
 ##     collisions.  Chosen at rest instead -- wherever joints were freest standing
 ##     still -- couple walk straight out of it: measured, chain over crown stood at
 ##     0.96 and turned 0.22 where standing at 0.36 turns 1.12.
+##   Over crown, once couple are not face to face, joined hand under crown band stops walk as
+##     it stops still (`momentOf`), so couple stand where carry keeps hands up.
+##     Cost: cross-name chain held above is carried 1.26 of turn, from 0.54 m.  Without this,
+##       wall with its slope at 270 carries it 1.60, from 0.86 m, with hands down to 1.594 m at
+##       26 moments of rig's sweep and 44 of whole-cloth page, measured 2026-10-12.
 
 {.experimental: "strictFuncs".}
 
