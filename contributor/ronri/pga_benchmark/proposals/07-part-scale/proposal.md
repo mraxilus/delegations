@@ -214,10 +214,10 @@ last. A loop that tests the part of each basis cost two to three times as much a
 the bases of one part. So a macro spells those bases.
 
 The partner `⊛` calls `grade` for its sign, so the evaluation moves it at `cga4d` and `cga5d`.
-The evaluation of 2026-10-12 times the partner at ×1.22 to ×1.32 of pin at `cga5d`, and at ×1.08
-to ×1.26 at `cga4d`, over its kinds of operand. An evaluation earlier on the same day gave ×1.16
-to ×1.28 over both. P03 folds that sign into the first table of the partner, so with P03 the
-partner calls no `grade`.
+Over its kinds of operand, the evaluation of 2026-10-12 times the partner at ×1.19 to ×1.28 of
+pin at `cga5d`. At `cga4d` it gives ×1.18 to ×1.20. Two evaluations earlier on the same day gave
+×1.08 to ×1.32 over both. P03 folds that sign into the first table of the partner, so with P03
+the partner calls no `grade`.
 
 These costs fall on the dense `Multivector` alone. A typed object knows its grade from its type
 when it compiles, so `grade` costs nothing there under either rule. It knows its parts too. So
