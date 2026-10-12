@@ -198,3 +198,14 @@ The pair x𝟏 + y𝟙 of a scalar and an antiscalar. It stands for the value x/
 y, as a homogeneous point keeps a position with its weight. Under the rigid metric it is a dual
 number, and under the conformal metric a complex number.
 _Avoid_: magnitude, dual number, dual scalar
+
+**Motion operator**:
+An even product of reflections in planes or spheres, taken as one element and applied by the
+sandwich 𝐕 ⟇ 𝐮 ⟇ 𝐕̰. In the rigid algebra it is Lengyel's motor. In the conformal algebra it
+covers translation, rotation, transversion and dilation.
+_Avoid_: versor, even versor, rotor, spinor
+
+**Reflection operator**:
+An odd product of reflections in planes or spheres, applied the same way. In the rigid algebra
+it is Lengyel's flector. In the conformal algebra it covers the inversion `RoundSphere`.
+_Avoid_: versor, odd versor
