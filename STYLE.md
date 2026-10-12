@@ -265,11 +265,9 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
 - Use UFCS where the first argument is plainly the subject: a query, an accessor, or a
   `to<Target>` conversion, chained where it reads (`b.toDigits.toFlags`). A conversion of a
   compound argument stays a prefix call (`toMultivector(a + b)`), so that no parentheses hide
-  it. An `init…` call and a `construct…` call may take their subject the same way
-  (`b.initElement(1)`, `base.constructAnti(CAYLEYS_COMPLEMENT)`). Use a prefix call for
-  `define…` and `emit…`, for a type conversion (`Grade(x)`, never `x.Grade`), and wherever no
-  argument plainly dominates. Use backticks for an operator definition. Use a raw string
-  (`r"\"`) and a backtick-quoted call (`` m.`∧ ☆`n ``) where the tokeniser demands one.
+  it. Use a prefix call for `define…` and `emit…`, for a type conversion (`Grade(x)`, never
+  `x.Grade`), and wherever no argument plainly dominates. Use backticks for an operator
+  definition.
 - A dotted call that is a whole statement takes the command form where its one argument is a
   call or a parenthesised expression. So write `result.add BasisSigned(basis: b)` and
   `x.f (a, b)`, with no double bracket. Inside an expression the call form stays, since the
