@@ -25,8 +25,8 @@ unitize(𝐮) = 𝐮 ÷ W(𝐮), and 𝐮 as it is where W(𝐮) is 0
   𝐱 ∧ 𝐞₅, and his 𝐞₅ is 𝐞∞. The book says that the round weight "is equivalent to the weight of
   the carrier geometry for round objects" (page 197).
 - **Any other element.** Its divisor is Lengyel's rigid unitization. His wiki gives it for any
-  element: "Unitization is the process of scaling an element of a projective geometric algebra
-  so that its weight norm becomes the antiscalar". The formula is 𝐮 ÷ √(𝐮 ∘ 𝐮)
+  element. It says: "Unitization is the process of scaling an element of a projective geometric
+  algebra so that its weight norm becomes the antiscalar". The formula is 𝐮 ÷ √(𝐮 ∘ 𝐮)
   ([Unitization][rigid]).
   His rigid package has `WeightNorm[x_]:=Sqrt[AntidotProduct[x,x]]`.
 - **Rigid algebra.** There, 𝐮 ∘ 𝐮 is the weight norm squared for every element. So the rule is the
@@ -179,8 +179,8 @@ Each law has an algebraic argument, and `laws.nim` holds it on 2,000 samples at 
 
 ### What is a numerical concession
 
-Each test reads zero at a scale, as Article IV.5 asks: "Compare against zero at the scale of what
-you test, and exactly only where no scale is in hand." Each scale has a cost.
+Each test reads zero at a scale, as Article IV.5 asks. It says: "Compare against zero at the scale
+of what you test, and exactly only where no scale is in hand." Each scale has a cost.
 
 - **Grade test.** A coefficient at or under the tolerance times the largest coefficient counts as
   zero. The tolerance is 1e-9 at 64 bits.
@@ -197,21 +197,21 @@ you test, and exactly only where no scale is in hand." Each scale has a cost.
 
 - **Exact grade scan.** It counts any residue as a second grade, so it reads almost no moved
   object as round.
-- **Grade at pin.** Residue grows with the coefficients. At distance 1e8 a round point holds
-  about 1e16 on 𝐞∞, so its residue passes an absolute 1e-9.
+- **Grade at pin.** Residue grows with the coefficients. At a deviation of 1e8 units a round point
+  holds more than 1e16 on 𝐞∞, so its residue passes an absolute 1e-9.
 - **Antiscalar part is zero.** It reads an object as round only where its 𝟙 coefficient is
   exactly 0. Rounding leaves residue there in about a third to a half of the moved objects.
 - **Part scale alone.** It floors the scale of each part at 1. A sphere has no round bulk, and a
-  round point has no flat weight. So their residue falls in an empty part, whose scale stays at 1.
-  That is why the part scale alone misreads them far from the origin. A circle uses all four
-  parts. P07 also counts a coefficient as zero within 16 rounding units of the largest
-  coefficient, and so reads these objects right.
+  round point has no flat weight. So their residue falls in an empty part, whose scale stays at 1,
+  and the part scale alone misreads them far from the origin. A circle uses all four parts. P07
+  also counts a coefficient as zero within 16 rounding units of the largest coefficient, and so
+  reads these objects right.
 - **Round weight test.** The round weight counts as zero at or under 1e-9 times √|𝐮 ∘ 𝐮|. A plane
   sent through a sphere and back keeps residue in its round weight. An exact test then takes it
-  for a huge sphere: 9,933 of 10,000 planes at `cga5d`, and 9,557 at `cga4d`. This rule misreads
-  none. Terathon's `Sphere3D::Unitize` divides by −u, so it would probably read such residue as a
-  huge sphere too, at a probability of 0.75 to 0.8. Terathon has no transversion, so nothing here
-  tests it.
+  for a huge sphere: 9,933 of 10,000 planes at `cga5d`, and 9,557 at `cga4d`, where this rule
+  misreads none. Terathon's `Sphere3D::Unitize` divides by −u, so it would probably read such
+  residue as a huge sphere too, at a probability of 0.75 to 0.8. Terathon has no transversion, so
+  nothing here tests it.
 - **Its radius.** A round object of radius r and round weight w has √|𝐮 ∘ 𝐮| = rw. So the test
   passes it as round while r is under 1e9 units, and unitizes a larger sphere as a plane. A huge
   sphere and a plane differ only by that size, so every scale has such a radius.
@@ -351,8 +351,8 @@ from radius zero.
   once the motion operator passes about 1e77, the fourth root of the largest 64-bit float. The
   motion operator kept one hour without a unitization lost its points by 1.7e81. In the depth
   rows, each product adds about 0.21 orders of magnitude at `cga5d` and 0.26 at `cga4d`. At that
-  rate a composed conformal motion operator passes 1e77 near depth 360 at `cga5d` and 290 at
-  `cga4d`, which nothing here measures.
+  rate a composed conformal motion operator passes 1e77 near depth 360 at `cga5d` and about
+  300 at `cga4d`, which nothing here measures.
 - **Deeper hierarchies.** A hierarchy deeper than about 250 random products scales its composed
   motion operator down once on the way, for example by its largest coefficient. A unitization does
   that only through rounding, as above. A rigid motion operator stayed under 15 at depth 256, so in

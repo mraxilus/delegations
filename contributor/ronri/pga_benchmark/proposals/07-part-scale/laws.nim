@@ -417,7 +417,8 @@ proc holdPopulations() =
   for b in Basis: parts[b] = b.partOf
   echo "population: elements read, then misreads of each zero test"
 
-  # Tally mixed populations: motion operators, their products, and in CGA products of spheres.
+  # Tally mixed populations: motion operators and their products; in CGA products of spheres,
+  # and at cga5d transversions and dilations.
   for deviation in DEVIATIONS:
     tally(&"motion operator of two planes, deviation {deviation:.0e}", false,
       drawMotion(deviation))
