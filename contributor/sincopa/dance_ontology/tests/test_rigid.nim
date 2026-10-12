@@ -30,6 +30,7 @@ import std/[atomics, cpuinfo, math, os, random, strformat, strutils, tables, typ
 import ../simulation/[answers, body, hold, limb, read, rig, rigid, vector, walk]
 import ./fixtures
 from ../simulation/engine import nil
+from ../simulation/shoulder import edge, GIVE_EDGE, Polar, SPAN_ADULTS, toPolar
 
 
 func asVector(vector: engine.Vector): Vector =
@@ -41,6 +42,9 @@ const
   APART = 1.10  ## One distance laws below that do not care where couple stand use.
     ## Was where that hold left joints freest standing still, back when that was
     ## how standing was chosen.  It is now only place to build couple at.
+  FLOOR_CROSSINGS = 48
+    ## Least crossings of seam at 270 law at seam reads, so it reads some: 96 on 2026-10-11, in
+    ##   50 walks of left to left above.  Floor is half.
   FLOOR_STOPS = 4
     ## Least stopped walks law on stops reads, so it reads some: 10 on 2026-10-04, five
     ##   ways each kept and walked live.  Margin, not 10: recording moves which ways stop.
@@ -73,6 +77,10 @@ type
     ## distance, from `apart`.  Plain numbers, so threads share nothing but this list.
 
   Seen = tuple[name: string, band: Band, links: seq[Link], went: Went]
+
+  Crossed = tuple[is_holding: bool, crossings: int, past: seq[string]]
+    ## One walk's crossings of seam at 270 by any arm between two moments, and each that
+    ## landed past edge by more than its give, named.
 
   Posed = tuple[key: string, is_holding: bool, strain: Strain, depth: float, pair: string,
                      apart, parted: float]
@@ -130,6 +138,61 @@ func carried(walk: Walk): float =
 func carried(walk: Way | Walked | Went): float =
   ## How far kept walk went, counted as live one is.
   if not walk.is_holding: -Inf elif walk.is_stopped: walk.at else: Inf
+
+
+
+func askedSweep(key: string): SweepAsked =
+  ## Sweep of `SWEEPS` by its key.
+  for question in SWEEPS:
+    if question.key == key: return question
+  raiseAssert "No sweep asked by that key; got `" & key & "`."
+
+proc crossedFrom(apart: float): Crossed {.gcsafe, nimcall.} =
+  ## Walk left to left above from `apart`, positive way, as `walk.walkedOf` walks it, and read
+  ## every arm, held or free, at each moment: each crossing of seam at 270 from adults' side to
+  ## men's since moment before, and each that came from within edge's give and lands past it.
+  ##   Read here, not in walk: walk keeps no moment it stops at.
+  {.cast(gcsafe).}:
+    let
+      question = askedSweep("left to left over crown")
+      seam = SPAN_ADULTS.upper * PI / 180.0
+    var
+      couple = build(HUMAN, restStance(HUMAN, apart), question.band, question.links)
+      before: array[Body, array[Arm, Polar]]
+      at = 0.0
+    couple.settle()
+    while true:
+      # Read each arm's direction, and what judge says of moment.
+      var now: array[Body, array[Arm, Polar]]
+      for who in Body:
+        for arm in Arm:
+          let
+            axes = axesOf(couple.chestStance(who))
+            pose = couple.armPoseOf(who, arm)
+          now[who][arm] = toPolar(ownTerms(axes, arm, pose.elbow) -
+              ownTerms(axes, arm, pose.shoulder))
+      let why = couple.stoppedBy(0).why
+      if at == 0.0:
+        result.is_holding = why == Stop.None
+        if not result.is_holding: break
+      else:
+        # Count crossings since moment before, by shorter way round; name each past give.
+        for who in Body:
+          for arm in Arm:
+            let
+              (was, got) = (before[who][arm], now[who][arm])
+              turned = floorMod(got.φ - was.φ + PI, 2.0 * PI) - PI
+            if was.φ > seam or was.φ + turned <= seam: continue
+            inc result.crossings
+            let past = got.θ - edge(got.φ).θ
+            if was.θ - edge(was.φ).θ <= GIVE_EDGE and past > GIVE_EDGE:
+              result.past.add &"{apart:.2f} m, {who} {arm} at {at:.2f}: " &
+                  &"{radToDeg(was.φ):.1f} to {radToDeg(got.φ):.1f}, {radToDeg(past):.1f} past"
+      if why != Stop.None or at >= question.most - 1e-9: break
+      before = now
+      couple.turn(Body.Two, STEP, BEATS)
+      at += STEP
+    couple.free()
 
 
 
@@ -350,6 +413,33 @@ suite "Internal: Two dancers in rigid body engine":
     check girdles == 4
     check limbs == 20
     couple.free()
+
+
+  test "no arm carried across seam at 270 lands past edge's give":
+    ## Shoulder's edge steps down 8.6 degrees at 270 of meridian, from adults' to men's, where
+    ##   adults stop deciding (`shoulder.SPAN_ADULTS`).  Arm under adults' edge that crosses
+    ##   there lies past men's: wall holds it to men's edge before it crosses, so crossing
+    ##   lands within give and stops no walk.
+    ##   Found 2026-10-11: left to left above from 0.46 m stopped at 0.38 of turn, follow's left
+    ##     arm carried from 269.1 to 270.0 degrees of meridian between two moments, 6.9 degrees
+    ##     past men's edge (`rigid.holdSwing`, its cost).
+    ##   Domain: every arm, held or free, of that way of that hold from every distance couple
+    ##     may stand at, each moment to next: 96 crossings in 50 walks, 2026-10-11.
+    ##   Red with wall on shoulder's edge as it steps: 4 crossings landed 2.7 to 7.9 degrees past
+    ##     men's edge, each stopping its walk.
+    var aparts: seq[float]
+    for apart in stands(HUMAN): aparts.add apart
+    var
+      (walks, crossings) = (0, 0)
+      past: seq[string]
+    for got in onEveryCore(aparts, crossedFrom):
+      if not got.is_holding: continue
+      inc walks
+      crossings += got.crossings
+      past.add got.past
+    checkpoint &"`{crossings}` crossings in `{walks}` walks; past give: " & past.join("; ")
+    check crossings >= FLOOR_CROSSINGS
+    check past.len == 0
 
 
   test "arm's three links run end to end":

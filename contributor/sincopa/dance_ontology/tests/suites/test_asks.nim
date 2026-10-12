@@ -49,6 +49,9 @@ func apartOf(a, b: float): float =
 func armOf(still: JsonNode, who: Body, arm: Arm, join: Vector): ArmPose =
   ## One arm as recording keeps it, from engine's own capsules, holding at `join`: each
   ##   limb's capsule runs its radius in from both joints.
+  ##   Sibling: `test_shoulder.armMomentsRig` reads elbow at forearm link's origin instead, as
+  ##     judge does (`rigid.armPoseOf`).  Here it is upper arm's own end, as page draws it; two
+  ##     differ by elbow's parting, up to 7.8 mm in `One hand, same name · above`.
   let
     tags = still["tag"].getElems
     points = still["points"][^1].getElems

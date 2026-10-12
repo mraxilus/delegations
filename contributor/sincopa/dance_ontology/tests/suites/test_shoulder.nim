@@ -11,9 +11,11 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[math, options, random, strformat, strutils, unittest]
+import std/[algorithm, json, math, options, os, random, strformat, strutils, tables, unittest]
 
+from ../../design/rig as recording import KEPT_RIG
 import ../../simulation/[body, limb, rig, shoulder, vector]
+from ../../simulation/rigid import Mark
 import ../fixtures
 
 
@@ -55,6 +57,14 @@ const
   CONTINUOUS = 1e-6  ## Radians edge may move over that step: union of smooth and linear pieces.
   UP_OUTSIDE = 5.2  ## Degrees straight-up arm lies past edge: D3 of step 2's cost report.
   UP_PLACE = 0.05  ## Half of that figure's last place.
+  FLOOR_SWEEPS = 1246
+    ## Least arm-moments law reads from rig's sweeps: half of 2492 read 2026-10-11.  Fix may
+    ## stop sweep early and shed some; reader that loses its way sheds nearly all.
+  FLOOR_STILLS = 114  ## Least arm-moments law reads from rig's stills: half of 228, likewise.
+  FLOOR_TURNS = 3588
+    ## Least held arm-moments law reads from whole-cloth recording: half of 7176, likewise.
+  KEPT_TURNS = KEPT_RIG.parentDir / "turns.json"  ## Recording of whole-cloth page, beside rig's.
+  WORST_SHOWN = 12  ## Moments furthest past edge that failure lists.
 
   SUBJECTS: array[Man, tuple[φ, θ: float]] = [
     (57.37, 72.24), (56.52, 77.32), (55.51, 81.61), (59.72, 83.20), (58.82, 79.53),
@@ -93,6 +103,15 @@ const
   VARIANCE_SPACE_BASED = [0.03091, 0.00232, 0.01395, 0.02770, 0.04548,
                           0.04255, 0.01727, 0.08065, 0.04394, 0.09848]
     ## Unbiased sample variance of each coefficient, as printed (Table 3.3, p. 38).
+
+
+type ArmMoment = object  ## Define one arm at one moment of recording, as law reads it.
+  recording: string  ## `rig sweep`, `rig still` or `turns`.
+  card: string  ## Sweep, still or whole-cloth sweep it belongs to.
+  who: Body  ## Whose arm.
+  arm: Arm  ## Which of their two.
+  at: float  ## Turns from rest, signed.
+  reading: Outside  ## Upper arm against shoulder's edge.
 
 
 func degrees(radians: float): float = radians * 180.0 / PI
@@ -152,6 +171,99 @@ func edgeCrept(φ: float): float =
       stopped = none(float)
     elif θ - stopped.get >= BREAK_ADULTS: return stopped.get
   stopped.get(180.0)
+
+func armMomentsRig(kept: JsonNode): seq[ArmMoment] =
+  ## Read every arm of every moment of rig recording, sweeps and stills, all four arms.
+  ##   Shoulder and elbow are origins of upper arm's and forearm's links, as judge reads them
+  ##     (`rigid.armPoseOf`): each link's capsule run back its radius from its first end.
+  ##   Sibling: `test_asks.armOf` reads elbow off upper arm's capsule instead, as page draws
+  ##     it.  Two differ by elbow's parting, up to 7.8 mm in `One hand, same name · above`.
+  ##   Chest's stance is read off where each dancer faces, as recording keeps it.
+  func linkOrigin(points: JsonNode, i: int, radius: float): Vector =
+    let
+      a: Vector = (points[6*i].getFloat, points[6*i+1].getFloat, points[6*i+2].getFloat)
+      z: Vector = (points[6*i+3].getFloat, points[6*i+4].getFloat, points[6*i+5].getFloat)
+    a - unit(z - a) * radius
+
+  for (kind, items) in [("rig sweep", kept["sweeps"]), ("rig still", kept["stills"])]:
+    for item in items:
+      if not item.hasKey("at"): continue
+      let
+        card = (if kind == "rig still": item["key"].getStr
+                else: item["hold"].getStr & " · " & item["band"].getStr)
+        tags = item["tag"].getElems
+      for m, at in item["at"].getElems:
+        let (points, faces) = (item["points"][m], item["faces"][m])
+        for owner in item["arm"]:
+          let (who, arm) = (Body(owner[0].getInt), Arm(owner[1].getInt))
+          var link: array[Mark, int]
+          for i, tag in tags:
+            if tag[0].getInt == ord(who) and tag[1].getInt == ord(arm):
+              link[Mark(tag[2].getInt)] = i
+          let
+            (upper, fore) = (link[Mark.Upper], link[Mark.Fore])
+            stance = Stance(
+              centre: (faces[4*ord(who)].getFloat, faces[4*ord(who)+1].getFloat),
+              facing: arctan2(faces[4*ord(who)+3].getFloat, faces[4*ord(who)+2].getFloat),
+            )
+            pose = ArmPose(
+              shoulder: linkOrigin(points, upper, item["radii"][upper].getFloat),
+              elbow: linkOrigin(points, fore, item["radii"][fore].getFloat),
+            )
+          result.add ArmMoment(recording: kind, card: card, who: who, arm: arm, at: at.getFloat,
+                               reading: outside(axesOf(stance), arm, pose))
+
+func armMomentsTurns(kept: JsonNode): seq[ArmMoment] =
+  ## Read every held arm of every moment of whole-cloth recording: lead's points run shoulder
+  ## to join, and follow's join to shoulder, in whole millimetres (`design/turns`).
+  func pointOf(figures: JsonNode): Vector =
+    (figures[0].getFloat / 1000.0, figures[1].getFloat / 1000.0, figures[2].getFloat / 1000.0)
+
+  for key, sweep in kept["sweeps"].pairs:
+    let
+      hold = key.split('|')[0]
+      parts = hold.split('.')
+    for frame in sweep["frames"]:
+      var stances: array[Body, Stance]
+      for who in Body:
+        let body_kept = frame["bodies"][ord(who)]
+        stances[who] = Stance(
+          centre: (body_kept["centre"][0].getFloat / 1000.0,
+                   body_kept["centre"][1].getFloat / 1000.0),
+          facing: body_kept["facing"].getFloat,
+        )
+      for i, connection in frame["connections"].getElems:
+        let
+          lead_arm = (if parts[i][0] == 'L': Arm.Left else: Arm.Right)
+          follow_arm = (if parts[i][2] == 'l': Arm.Left else: Arm.Right)
+          lead = ArmPose(shoulder: pointOf(connection["lead"][0]),
+                         elbow: pointOf(connection["lead"][1]))
+          follow = ArmPose(shoulder: pointOf(connection["follow"][3]),
+                           elbow: pointOf(connection["follow"][2]))
+        result.add ArmMoment(recording: "turns", card: key.replace('|', ' '), who: Body.One,
+                             arm: lead_arm, at: frame["turn"].getFloat,
+                             reading: outside(axesOf(stances[Body.One]), lead_arm, lead))
+        result.add ArmMoment(recording: "turns", card: key.replace('|', ' '), who: Body.Two,
+                             arm: follow_arm, at: frame["turn"].getFloat,
+                             reading: outside(axesOf(stances[Body.Two]), follow_arm, follow))
+
+func cardsKept(rig, turns: JsonNode): tuple[cards, unheld: seq[string]] =
+  ## Name every sweep and still both recordings keep, as `ArmMoment.card` names it, and each
+  ## still that holds no pose: one that keeps no moment and mirrors no other still.
+  for sweep in rig["sweeps"]: result.cards.add sweep["hold"].getStr & " · " & sweep["band"].getStr
+  for still in rig["stills"]:
+    let key = still["key"].getStr
+    result.cards.add key
+    if not still.hasKey("at") and still{"mirror"}.getStr in ["", key]: result.unheld.add key
+  for key in turns["sweeps"].keys: result.cards.add key.replace('|', ' ')
+
+func named(moment: ArmMoment): string =
+  ## Name arm-moment as pages name it: card, whose arm, turns, and how far past edge.
+  let
+    who = (if moment.who == Body.One: "lead" else: "follow")
+    arm = (if moment.arm == Arm.Left: "left" else: "right")
+  &"{moment.card} {who} {arm} {moment.at:+.2f}: {degrees(moment.reading.angle):.1f} degrees, " &
+      &"{moment.reading.source}"
 
 func outsideApart(direction: Vector): tuple[angle: float, source: Source, near: float] =
   ## Read direction against edge by second path: pole from Table 3.1's mean, axes by cross
@@ -411,3 +523,84 @@ suite "Internal: Shoulder's edge as law reads it":
       check module_read.isInside == (apart.angle <= 0.0)
       if i >= structured: inc agreed
     check agreed >= FLOOR_AGREE
+
+
+
+suite "Internal: Every upper arm the simulation recorded, against shoulder's edge":
+  test "every arm-moment of both recordings points inside the edge, within the judge's give":
+    ## Regression of issue 611, each mistake as it found it:
+    ##   D01 and D07: follow's upper arm runs behind own neck, at 1.50 and -1.50 turns.
+    ##   `One hand, same name · above`: follow's right arm, which holds nothing, lies behind own
+    ##     neck from 0.58 turns to 2.50.
+    ##   C01: follow's right upper arm is raised past vertical, 29 degrees back, at 1.50 turns.
+    ##   Domain: every arm-moment of `design/rig.json`, all four arms of every sweep and still,
+    ##     and every held arm-moment of `design/turns.json`.  Each recording yields at least its
+    ##     floor; still that holds no pose yields none, and is named.
+    ##   Arm may lie past edge by `GIVE_EDGE` and still hold, as judge lets swing do.
+    ##   Quoted moment no longer recorded, since no pose holds there or sweep stops short of it,
+    ##     is answered: domain holds whatever card records.  Card itself must stay kept, and
+    ##     where card records any arm in range, quoted arm must be among them.
+    ##   Red before its fix, read 2026-10-11: 2517 of 9896 arm-moments past edge by more than
+    ##     give, 2837 past it at all, every quoted moment among them.
+    let
+      (rig, turns) = (parseFile(KEPT_RIG), parseFile(KEPT_TURNS))
+      moments = armMomentsRig(rig) & armMomentsTurns(turns)
+      kept = cardsKept(rig, turns)
+      quoted = [
+        (card: "D01", who: Body.Two, arm: Arm.Right, lower: 1.50, upper: 1.50),
+        (card: "D07", who: Body.Two, arm: Arm.Left, lower: -1.50, upper: -1.50),
+        (card: "One hand, same name · above", who: Body.Two, arm: Arm.Right, lower: 0.58,
+         upper: 2.50),
+        (card: "C01", who: Body.Two, arm: Arm.Right, lower: 1.50, upper: 1.50),
+      ]
+    var
+      past: seq[ArmMoment]
+      past_any = 0
+      read, by_recording, by_card: CountTable[string]
+    for moment in moments:
+      read.inc moment.recording
+      if moment.reading.angle > 0.0: inc past_any
+      if moment.reading.angle <= GIVE_EDGE: continue
+      past.add moment
+      by_recording.inc moment.recording
+      by_card.inc moment.card
+    past.sort(proc (a, b: ArmMoment): int = cmp(b.reading.angle, a.reading.angle))
+    by_recording.sort
+    by_card.sort
+    var cards: seq[string]
+    for card, count in by_card: cards.add &"{card} {count}"
+    var recordings: seq[string]
+    for kind, count in by_recording: recordings.add &"{kind} {count}"
+    var worst: seq[string]
+    for moment in past[0..<min(past.len, WORST_SHOWN)]: worst.add moment.named
+    checkpoint &"Arm-moments read: `{read[\"rig sweep\"]}` of rig's sweeps, " &
+        &"`{read[\"rig still\"]}` of its stills, `{read[\"turns\"]}` held in whole-cloth " &
+        &"recording.  Stills holding no pose: `{kept.unheld.join(\", \")}`."
+    check read["rig sweep"] >= FLOOR_SWEEPS
+    check read["rig still"] >= FLOOR_STILLS
+    check read["turns"] >= FLOOR_TURNS
+    checkpoint &"`{past.len}` of `{moments.len}` arm-moments lie past edge by more than " &
+        &"`{degrees(GIVE_EDGE):.1f}` degrees, and `{past_any}` past it at all.\n" &
+        "    By recording: " & recordings.join(", ") & ".\n" &
+        "    By card: " & cards.join(", ") & ".\n" &
+        "    Worst:\n      " & worst.join("\n      ")
+    var cases: seq[string]
+    for (card, who, arm, lower, upper) in quoted:
+      var
+        in_range, found, beyond = 0
+        worst_case = ArmMoment(reading: Outside(angle: -Inf))
+      for moment in moments:
+        if moment.card != card or moment.at < lower - 1e-9 or moment.at > upper + 1e-9: continue
+        inc in_range
+        if moment.who != who or moment.arm != arm: continue
+        inc found
+        if moment.reading.angle > GIVE_EDGE: inc beyond
+        if moment.reading.angle > worst_case.reading.angle: worst_case = moment
+      checkpoint &"Quoted: `{card}`, {who} {arm}, {lower:+.2f} to {upper:+.2f} turns: `{found}` " &
+          &"of `{in_range}` arm-moments recorded there."
+      check card in kept.cards
+      if in_range > 0: check found > 0
+      if beyond > 0: cases.add &"{beyond} of {found} past, worst {worst_case.named}"
+    checkpoint "Quoted by issue 611:\n      " & cases.join("\n      ")
+    check cases.len == 0
+    check past.len == 0
