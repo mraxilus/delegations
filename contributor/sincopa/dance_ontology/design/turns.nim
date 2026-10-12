@@ -58,12 +58,12 @@ func isSameName(hold: string): bool =
     if lead_arm != follow_arm: return false
   true
 
-func linksOf(hold: string): seq[Link] =
+func linksOf*(hold: string): seq[Link] =
   ## List hold's connections, lead's arm to follow's.
   for (lead_arm, follow_arm) in armsOf(hold):
     result.add Link(ends: [(Body.One, lead_arm), (Body.Two, follow_arm)])
 
-func isRestingAway(hold: string): bool =
+func isRestingAway*(hold: string): bool =
   ## Same-name pair is built Face-to-back; every other hold Face-to-face.
   hold.contains('.') and isSameName(hold)
 

@@ -810,12 +810,12 @@ proc furthest(
       first += batch.len
   if carries.len > 0: result = walks[chosen(carries)]
 
-func turnsHeld(walk: Walk): float =
+func turnsHeld*(walk: Walk): float =
   ## Turns from rest of furthest moment walk holds; less than none where it holds no rest.
   if not walk.found_rest or walk.moments.len == 0: -Inf else: abs(walk.moments[^1].at)
 
 # Forward: way of sweep asks planned way, which planned turn's section defines.
-proc plannedWay(
+proc plannedWay*(
   rig: Rig; band: Band; links: seq[Link]; who: Body; most, step: float; is_away: bool; head: Body
 ): Walk
 
@@ -1235,7 +1235,7 @@ proc replayedWay(
   result.found_rest = result.moments.len > 0
   result.path.is_reached = path.is_reached and result.path.plans.len == path.plans.len
 
-proc plannedWay(
+proc plannedWay*(
   rig: Rig; band: Band; links: seq[Link]; who: Body; most, step: float; is_away: bool; head: Body
 ): Walk =
   ## Furthest way any style plans toward `most`, own path or its mirror's

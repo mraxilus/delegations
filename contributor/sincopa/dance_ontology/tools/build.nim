@@ -33,6 +33,8 @@
 ##   | verdicts | instrument run, not build: answers land in simulation/verdicts.md     |
 ##   | answers  | rewrite simulation/answers.json: where couple stand for rig's laws,   |
 ##   |          | stamped                                                               |
+##   | floors   | instrument run, not build: how far plan carries each hold over crown  |
+##   |          | each way, printed as rows of floors law of planned sweep reads        |
 ##   | shot     | screenshot helper, for node and Playwright                            |
 ##   | clean    | remove binaries, build, nimcache, testresults and testament binaries  |
 ##   |----------|-----------------------------------------------------------------------|
@@ -74,7 +76,7 @@ const
     ##   lock is committed and checkout is not, as Atlas does for packages.
   USAGE = "Usage: nim r tools/build.nim " &
       "<pages|assets|types|drive|fixtures|confirmed|watched|modelled|rig|record|turns|verdicts|" &
-      "answers|engine|shot|system|clean>\n"
+      "answers|floors|engine|shot|system|clean>\n"
     ## Text printed on usage error.
   SYSTEM = [
     ("git", true, "clone engine's source at its pinned commit; `engine` shells out to it"),
@@ -393,6 +395,14 @@ proc answers() =
   nim(@["c", "-r"] & DANGER & @["--outdir:" & BINARIES, "design/record.nim", "answers"])
 
 
+proc floors() =
+  ## Print how far plan carries each hold over crown each way (`design/floors`): floors law of
+  ## planned sweep holds recordings to (`tests/suites/test_asks.TURNS_PLANNED`).
+  ##   Instrument run, not build: it writes nothing, and plans every style of every hold, which
+  ##     costs minutes.  Run where planner or engine moves, and paste rows it prints.
+  nim(@["c", "-r"] & DANGER & @["--outdir:" & BINARIES, "design/floors.nim"])
+
+
 func helpers(): seq[string] =
   ## Packages only hand-run helper needs, which runner is never asked to install.
   for (package, is_installed, _) in SYSTEM:
@@ -516,6 +526,7 @@ proc main(): int =
     of "turns": turns()
     of "verdicts": verdicts()
     of "answers": answers()
+    of "floors": floors()
     of "engine": engine()
     of "shot": shot()
     of "system": system()
