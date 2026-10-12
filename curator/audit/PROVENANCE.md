@@ -1449,6 +1449,9 @@ lists it, as a symbol under `## Standards` or as a term.
 - The binding of an entry block is the rule of the entry block (V.10), which knoller checks
   beside its fixer. So the names check reports no second finding there, and the static pass runs
   both checks on each kind of Nim.
+- The prefix call of a `define…` or `emit…` routine (STYLE.md §5) is a rule of knoller with a
+  fixer, as the entry block is. The static pass runs its check beside the names check, because
+  the Architect ruled it with the verbs of generation (V.3).
 - The rename fixers of V.6, V.1 and V.11 stay in the audit, because they plan through the semantic
   pass (`## Semantic pass`). They read the spellings that knoller gives, `respelled` and `cased`.
   Issue #558 holds their move to knoller.
