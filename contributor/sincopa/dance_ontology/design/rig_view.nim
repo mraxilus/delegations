@@ -292,18 +292,25 @@ proc readout() =
   document.getElementById("reads").innerHTML = html
 
 
+proc apartAt(recording: JsObject, at: int): float =
+  ## Metres between two dancers' axes at moment `at` of entry, as recording has each stand.
+  ##   Read off each moment, not off `apart`: planned sweep moves couple as plan has them
+  ##     (`walk.swept`), and its `apart` is where its path starts.
+  let look = recording.faces[at]
+  hypot(look[4].toFloat - look[0].toFloat, look[5].toFloat - look[1].toFloat)
+
 proc whereOf(recording: JsObject, at: int): cstring =
   ## Say where entry stands at moment `at`: its turns, and how far apart couple stand.
   ##   Markup returned and not written, so `test_said` reads it without document.
   if isStill(recording):
     if momentsOf(recording) > 0:
       cstring"<b>" & toFixed(recording.turns.toFloat, 2) & cstring"</b> turns · stood <b>" &
-          toFixed(recording.apart.toFloat, 2) & cstring"</b> m apart"
+          toFixed(apartAt(recording, 0), 2) & cstring"</b> m apart"
     else:
       cstring"<b>" & toFixed(recording.turns.toFloat, 2) & cstring"</b> turns · no pose holds"
   else:
     cstring"<b>" & toFixed(recording.at[at].toFloat, 2) & cstring"</b> turns · stood <b>" &
-        toFixed(recording.apart.toFloat, 2) & cstring"</b> m apart"
+        toFixed(apartAt(recording, at), 2) & cstring"</b> m apart"
 
 proc caption() =
   ## Say what entry shows: its turns and distance, or what stopped it.
