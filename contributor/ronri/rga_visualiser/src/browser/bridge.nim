@@ -1917,6 +1917,12 @@ proc nimTwistSlop(): cfloat {.exportc.} = cfloat(RADIANS_TWIST_SLOP)
   ## Report how far two fingers may turn before twist rolls; see
   ## `interaction.RADIANS_TWIST_SLOP`.
 
+proc nimPixelsNotch(): cfloat {.exportc.} = cfloat(PIXELS_NOTCH)
+  ## Report how much wheel travel page counts as one notch; see `interaction.PIXELS_NOTCH`.
+
+proc nimFactorDollyNotch(): cfloat {.exportc.} = cfloat(FACTOR_DOLLY_NOTCH)
+  ## Report how much one notch scales separation; see `interaction.FACTOR_DOLLY_NOTCH`.
+
 proc nimBeginPress(now: cfloat) {.exportc.} =
   ## Forward to `interaction.beginPress`; every press goes through it, camera ones too.
   interaction.beginPress(INTERACTION_PAGE, float(now))

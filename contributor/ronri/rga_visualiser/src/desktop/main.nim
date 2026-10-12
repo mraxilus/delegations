@@ -171,9 +171,6 @@ const
   PATH_EXPORT_DEFAULT* = "rga_visualiser.png"
 
 const
-  FACTOR_DOLLY = 1.12
-    ## Set how much one wheel notch scales orbit distance.
-    ##   Notch is aimed at cursor (`interaction.dollyAtCursor`).
   FRAMES_SETTLE = 2  ## Draw this many frames before capturing, so widget layout has settled.
   INK_PREVIEW = Ink.Guide
     ## Tint add panel's uncommitted multivector in this palette handle, muted.
@@ -1537,7 +1534,7 @@ proc handleEvent(
     interaction.dollyAtCursor(
       camera,
       scene,
-      pow(FACTOR_DOLLY, -float(event.wheel.y)),
+      factorWheel(float(event.wheel.y)),
       camera.drawExtentFor(height_frame, REACH_SCENE),
       camera.initMatrixViewProjection(float(width_frame) / float(height_frame)),
       width_frame,

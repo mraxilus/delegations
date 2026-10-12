@@ -106,6 +106,14 @@ const
   # Bound click by distance alone, never by time.
   #   Time bound dropped clicks hand lingered on; see `isClick`.
 
+  FACTOR_DOLLY_NOTCH* = 1.12
+    ## Scale separation by this for each notch of wheel, on both front-ends; see `factorWheel`.
+  PIXELS_NOTCH* = 100.0
+    ## Count this much of page's wheel travel as one notch, so page zooms as desktop does.
+    ##   Desktop reads whole notches from SDL; page reads pixels.
+    ##   Expected, not measured: browsers report about this much for one notch of mouse wheel,
+    ##   and no real wheel reaches this container.
+
   PIXELS_MENU_REACH* = 76.0
     ## Reach from menu's centre to centre of each of its four wedges.
     ##   Wide enough that wedge clears cursor and object under it, and each is past WCAG
@@ -904,6 +912,14 @@ func yieldOrHalt*(tween: var CameraTween; has_selection: bool) =
   ##     Not halt there, which leaves pivot short of point picked for every zoom and turn after.
   ##   One statement for both front-ends, as `dollyAtCursor` is.
   if has_selection: tween.abandon() else: tween.halt()
+
+
+func factorWheel*(notches: float): float =
+  ## Scale separation for `notches` of wheel turned away from reader, i.e. `FACTOR_DOLLY_NOTCH⁻ⁿ`.
+  ##   One rule for both front-ends, so one notch zooms same on page as on desktop.
+  ##     Desktop passes SDL's notches; page passes its travel over `PIXELS_NOTCH`, negated, since
+  ##     page counts travel toward reader.
+  pow(FACTOR_DOLLY_NOTCH, -notches)
 
 
 proc dollyAtCursor*(
