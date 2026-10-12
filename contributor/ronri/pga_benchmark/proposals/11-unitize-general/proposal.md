@@ -99,8 +99,8 @@ The round objects are Terathon's `RoundPoint3D`, `Dipole3D`, `Circle3D` and `Sph
 book's Table 4.12. The flats are its rigid `FlatPoint3D`, `Line3D` and `Plane3D`. The rigid
 motion and reflection operators are `Motor3D` and `Flector3D`. The screw motor and the inversion,
 `RoundSphere`, are in `Conformal-3D-Transforms.nb`. The other motion operators are on the
-conformal wiki. The 2D types of
-`TSConformal2D.h` follow the same pattern, and their round point and circle are signed.
+conformal wiki. The 2D types of `TSConformal2D.h` follow the same pattern, and their round point
+and circle are signed.
 
 The table reads "up to sign" because the Architect ruled on 2026-10-10 that unitization keeps the
 sign of the weight. `laws.nim` holds each object kind, the motor and the flector at unit weight to
@@ -182,7 +182,8 @@ Each law has an algebraic argument, and `laws.nim` holds it on 2,000 samples at 
 Each test reads zero at a scale, as Article IV.5 asks: "Compare against zero at the scale of what
 you test, and exactly only where no scale is in hand." Each scale has a cost.
 
-- **Grade test.** A coefficient at or under 1e-9 times the largest coefficient counts as zero.
+- **Grade test.** A coefficient at or under the tolerance times the largest coefficient counts as
+  zero. The tolerance is 1e-9 at 64 bits.
   Rounding leaves residue in other grades. Each round object below moved by three products of
   reflections, and each cell counts the objects that a test read right, of 256.
 
@@ -191,7 +192,7 @@ you test, and exactly only where no scale is in hand." Each scale has a cost.
 | Exact grade scan | 0 | 0 | 2 | 2 |
 | Grade at pin, 1e-9 absolute | 256 | 0 | 256 | 2 |
 | Antiscalar part is zero | 131 | 141 | 172 | 181 |
-| Grade of P07, each part at its own scale | 256 | 122 | 256 | 86 |
+| Each part at its own scale alone | 256 | 122 | 256 | 86 |
 | This rule, 1e-9 of largest coefficient | 256 | 256 | 256 | 256 |
 
 - **Exact grade scan.** It counts any residue as a second grade, so it reads almost no moved
@@ -200,9 +201,11 @@ you test, and exactly only where no scale is in hand." Each scale has a cost.
   about 1e16 on 𝐞∞, so its residue passes an absolute 1e-9.
 - **Antiscalar part is zero.** It reads an object as round only where its 𝟙 coefficient is
   exactly 0. Rounding leaves residue there in about a third to a half of the moved objects.
-- **P07's grade.** P07 floors the scale of each part at 1. A sphere has no round bulk, and a round
-  point has no flat weight. So their residue falls in an empty part, whose scale stays at 1. That
-  is why P07 misreads them far from the origin. A circle uses all four parts.
+- **Part scale alone.** It floors the scale of each part at 1. A sphere has no round bulk, and a
+  round point has no flat weight. So their residue falls in an empty part, whose scale stays at 1.
+  That is why the part scale alone misreads them far from the origin. A circle uses all four
+  parts. P07 also counts a coefficient as zero within 16 rounding units of the largest
+  coefficient, and so reads these objects right.
 - **Round weight test.** The round weight counts as zero at or under 1e-9 times √|𝐮 ∘ 𝐮|. A plane
   sent through a sphere and back keeps residue in its round weight. An exact test then takes it
   for a huge sphere: 9,933 of 10,000 planes at `cga5d`, and 9,557 at `cga4d`. This rule misreads
@@ -220,13 +223,15 @@ you test, and exactly only where no scale is in hand." Each scale has a cost.
 - **Range.** Results hold while the squared coefficients stay inside the range of 64-bit floats,
   as at pin.
 - **At 32 bits.** P06 sets the tolerance to 1e-4 at 32 bits, so both edges move in with it. The
-  radius edge falls to about 1e4 units, and the transversion edge to about 2e4. A run by hand at
-  `cga5d`, 32 bits, on 2026-10-12, unitized round objects at a spread of 1e4 units and then moved
-  them. The round test then failed on 563 of 1,024 point pairs, 923 circles and 1,006 spheres. It
-  failed on every point pair from 1e5. A near-exact build of the same run gave the same counts,
-  so the edge comes from the rule and not from rounding. Round points failed on 753 of 1,024 at
-  1e8, since a 32-bit point that far out is a sphere of radius about √ε times its distance. At
-  64 bits no round point failed.
+  radius edge falls to about 1e4 units, and the transversion edge to about 2e4.
+- **What a run at 32 bits shows.** A run by hand at `cga5d` on 2026-10-12 unitized round objects
+  with coordinates of deviation 1e4 units, and then moved them. The round test failed on 563 of
+  1,024 dipoles, 923 circles and 1,006 spheres. It failed on every dipole from 1e5. The same run
+  in 64-bit arithmetic, with each input rounded to 32 bits and the tolerance of 1e-4, gave the
+  same counts. So the edge comes from the tolerance, not from rounding.
+- **Far round points at 32 bits.** Round points failed on 753 of 1,024 at 1e8. A 32-bit point
+  that far out is a sphere of radius about √ε times its distance. At 64 bits no round point
+  failed.
 
 ## Why Lengyel wrote no conformal rule
 
@@ -319,7 +324,7 @@ from radius zero.
 | Largest coefficient of that kept motion operator | 5.1 | 1.2e1 | 1.5e9 | 3.0e9 |
 | Its \|𝐯 ∘ 𝐯\| before each unitize, worst distance from 1 | 1.1e-15 | 1.1e-15 | 1.4e3 | 2.3e3 |
 | Same moves, never unitized: largest coefficient | 5.1 | 1.2e1 | 1.7e81 | 1.8e82 |
-| Half hour: points moved by the two differ by | 3.0e-13 | 1.8e-12 | 2.8e-15 | 5.6e-15 |
+| Half hour: points, unitized against never, differ by | 3.0e-13 | 1.8e-12 | 2.8e-15 | 5.6e-15 |
 
 - **Every kept motion operator is unit.** Each move is unit, and a product of unit motion
   operators is a unit motion operator. So in exact arithmetic a unitization of the kept motion
@@ -368,16 +373,17 @@ from radius zero.
 ## What it costs
 
 The evaluation times unitize on the general pool, with this change and at pin. It takes five
-alternating runs on linux amd64 with 4 cores, on 2026-10-11. It also counts the C of `^∘`. Each
-ratio is the median of the ratios of the five runs. An evaluation of the same code on the same day
-gave 66.59 ns at `cga5d`, so the time of the change varies by about a third between evaluations.
+alternating runs on linux amd64 with 4 cores, on 2026-10-12. It also counts the C of `^∘`. Each
+ratio is the median of the ratios of the five runs. Evaluations of the same rule over two days
+gave from 66.59 ns to 86.69 ns at `cga5d`. So the time of the change varies by about a third
+between evaluations.
 
 | Algebra | Unitize at pin | With this change | Ratio |
 | --- | --- | --- | --- |
-| `rga3d` | 4.31 ns | 3.81 ns | ×1.00 |
-| `rga4d` | 5.02 ns | 5.15 ns | ×1.04 |
-| `cga4d` | 4.50 ns | 20.60 ns | ×4.97 |
-| `cga5d` | 8.75 ns | 86.69 ns | ×8.78 |
+| `rga3d` | 3.67 ns | 3.54 ns | ×1.00 |
+| `rga4d` | 5.27 ns | 5.34 ns | ×1.04 |
+| `cga4d` | 4.45 ns | 19.39 ns | ×4.52 |
+| `cga5d` | 8.85 ns | 69.30 ns | ×7.82 |
 
 | Count in `^∘` at `cga5d` | At pin | With this change |
 | --- | --- | --- |
@@ -398,7 +404,7 @@ carry everywhere, and which the gap list holds as design gaps.
   reads `grade`. The Architect ruled on 2026-10-12 that P07 takes their zero test. In the rigid
   algebras it keeps P07's scale of each part. In the conformal algebras it also counts a
   coefficient as zero within 16 rounding units of the largest coefficient. This rule keeps its
-  own grade scan at 1e-9 of the largest coefficient, since it does not build on P07.
+  own grade scan at the tolerance times the largest coefficient, since it does not build on P07.
 - **Bulk normalization.** `^∙` stays as it is. A sphere has no round bulk, so a fallback to the
   flat bulk would divide every sphere by its flat bulk. Nothing in Lengyel defines it.
 - **Zero weight.** The element stays as it is. Lengyel's rigid wiki divides a point of zero weight
