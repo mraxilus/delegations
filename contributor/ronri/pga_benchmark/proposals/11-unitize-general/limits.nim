@@ -7,9 +7,10 @@
 ##     spheres or planes for conformal moves. Residue is largest coefficient outside grade of
 ##     object, over largest coefficient: rounding leaves it, and grade test must ignore it.
 ##   Figures it prints beyond those two gates are evidence: first move past each tolerance,
-##     residue with and without grade selection, composed operator against step by step, kept
-##     operator with its antidot square before each unitize, kept operator unitized each frame
-##     against same operator never unitized, and pose drift of motor stored at 32 bits.
+##     residue with and without grade selection, composed motion operator against step by step,
+##     kept motion operator with its antidot square before each unitize, kept motion operator
+##     unitized each frame against same motion operator never unitized, and pose drift of motor
+##     stored at 32 bits.
 
 {.experimental: "strictFuncs".}
 
@@ -75,7 +76,7 @@ proc drawReflector(as_plane: bool): Multivector =
     result = drawPoint()
     when IS_CONFORMAL:
       for _ in 2 ..< DIMENSIONS - 1: result = result ∧ drawPoint()
-      result = result ∧ Basis.infinity.initElement()
+      result = result ∧ initElement(Basis.infinity)
     else:
       for _ in 2 ..< DIMENSIONS: result = result ∧ drawPoint()
   else:
@@ -83,26 +84,26 @@ proc drawReflector(as_plane: bool): Multivector =
       if b.grade == Grade.high.pred: result[b] = gauss()
 
 
-func versorUnit(versor: Multivector): Multivector =
-  ## Scale versor so that its antidot square is ±𝟙.
-  versor * (1 / sqrt(abs(versor.dotAntiSelf)))
+func unitizeOperator(product: Multivector): Multivector =
+  ## Scale motion or reflection operator so that its antidot square is ±𝟙.
+  product * (1 / sqrt(abs(product.dotAntiSelf)))
 
 
 proc drawMove(as_rigid: bool, size: float): Multivector =
-  ## Draw unit versor of two reflections at distance size: near identity where size is small.
+  ## Draw unit motion operator of two reflections size apart: near identity where size is small.
   ##   Rigid move keeps second reflector plane: in CGA, part without infinity stays zero.
-  let first = versorUnit(drawReflector(as_plane = as_rigid))
+  let first = unitizeOperator(drawReflector(as_plane = as_rigid))
   var second = first
   for b in Basis:
     when IS_CONFORMAL:
-      if as_rigid and (b.initElement() ∧ Basis.infinity.initElement()).largest != 0: continue
+      if as_rigid and (initElement(b) ∧ initElement(Basis.infinity)).largest != 0: continue
     if b.grade == Grade.high.pred: second[b] += gauss() * size
-  versorUnit(versorUnit(second) ⟇ first)
+  unitizeOperator(unitizeOperator(second) ⟇ first)
 
 
-func moved(element, versor: Multivector): Multivector =
-  ## Move element by versor, as antisandwich 𝐯 ⟇ 𝐮 ⟇ ~𝐯.
-  (versor ⟇ element) ⟇ ~∘versor
+func moved(element, product: Multivector): Multivector =
+  ## Move element by motion or reflection operator, as antisandwich 𝐯 ⟇ 𝐮 ⟇ ~𝐯.
+  (product ⟇ element) ⟇ ~∘product
 
 
 proc drawObjects(): seq[tuple[element: Multivector, grade: Grade]] =
@@ -131,13 +132,13 @@ proc moveChains(as_rigid, should_unitize: bool) =
       moves_found: array[TOLERANCES.len, int]
     composed[Basis.scalarAnti] = 1
     for move in 1..MOVES:
-      let versor = drawMove(as_rigid = as_rigid, size = STEP)
-      composed = versor ⟇ composed
+      let operator_motion = drawMove(as_rigid = as_rigid, size = STEP)
+      composed = operator_motion ⟇ composed
       if should_unitize: composed = ^composed
       for i in 0 ..< objects.len:
-        objects[i].element = objects[i].element.moved(versor)
+        objects[i].element = objects[i].element.moved(operator_motion)
         objects_selected[i].element =
-          objects_selected[i].element.moved(versor).selected(objects[i].grade)
+          objects_selected[i].element.moved(operator_motion).selected(objects[i].grade)
         if should_unitize:
           objects[i].element = ^objects[i].element
           objects_selected[i].element = ^objects_selected[i].element
@@ -172,7 +173,7 @@ proc moveChains(as_rigid, should_unitize: bool) =
 
 
 proc composeFrames() =
-  ## Compose hierarchy in one frame, apply once, unitize once; then carry operator one hour.
+  ## Compose hierarchy in one frame, apply once, unitize once; then carry motion operator one hour.
   let algebra = (if IS_CONFORMAL: "cga" else: "rga") & $DIMENSIONS & "d"
   var points: array[OBJECTS_FRAME, Multivector]
   for point in points.mitems: point = drawPoint(10)
@@ -180,46 +181,48 @@ proc composeFrames() =
     var
       error = 0.0
       size = 0.0
-      versors: seq[Multivector]
+      operators_motion: seq[Multivector]
       composed: Multivector
     composed[Basis.scalarAnti] = 1
     for _ in 1..depth:
-      versors.add versorUnit(drawReflector(as_plane = not IS_CONFORMAL) ⟇
+      operators_motion.add unitizeOperator(drawReflector(as_plane = not IS_CONFORMAL) ⟇
         drawReflector(as_plane = not IS_CONFORMAL))
-      composed = versors[^1] ⟇ composed
+      composed = operators_motion[^1] ⟇ composed
     size = composed.largest
     for point in points:
       let once = ^point.moved(composed)
       var stepped = point
-      for versor in versors: stepped = ^stepped.moved(versor)
+      for operator_motion in operators_motion: stepped = ^stepped.moved(operator_motion)
       var difference = 0.0
       for b in Basis: difference = max(difference, abs(once[b] - stepped[b]))
       error = max(error, difference / stepped.largest)
     echo &"{algebra}: one frame of depth {depth}: composed, applied once and unitized once, " &
       &"against step by step {error:.1e}, largest coefficient of composed {size:.1e}"
     doAssert error < 1e-6, &"one frame holds against step by step; got `{error}`."
-  var halves: array[bool, Multivector]  # Kept operator at half hour, by whether pass unitizes.
+  var halves: array[bool, Multivector]  # Kept at half hour, by whether pass unitizes.
   for should_unitize in [true, false]:
     randomize(SEED + 1)  # Same moves in both passes, so pass differs in unitize alone.
     var
-      operator: Multivector
+      operator_motion: Multivector
       size_worst = 0.0
       square_worst = 0.0
       frame_overflow = 0
-    operator[Basis.scalarAnti] = 1
+    operator_motion[Basis.scalarAnti] = 1
     for frame in 1..FRAMES_HOUR:
-      operator = drawMove(as_rigid = not IS_CONFORMAL, size = STEP) ⟇ operator
+      operator_motion = drawMove(as_rigid = not IS_CONFORMAL, size = STEP) ⟇ operator_motion
       if should_unitize:
-        square_worst = max(square_worst, abs(abs(operator.dotAntiSelf) - 1))
-        operator = ^operator
-      size_worst = max(size_worst, operator.largest)
-      if frame_overflow == 0 and not (operator.largest < 1e300): frame_overflow = frame
-      if frame == FRAMES_HOUR div 2: halves[should_unitize] = operator
+        square_worst = max(square_worst, abs(abs(operator_motion.dotAntiSelf) - 1))
+        operator_motion = ^operator_motion
+      size_worst = max(size_worst, operator_motion.largest)
+      if frame_overflow == 0 and not (operator_motion.largest < 1e300): frame_overflow = frame
+      if frame == FRAMES_HOUR div 2: halves[should_unitize] = operator_motion
     var
       error = 0.0
       is_lost = false
     for i in 0 ..< OBJECTS_FRAME - 1:
-      let (a_moved, b_moved) = (^points[i].moved(operator), ^points[i + 1].moved(operator))
+      let
+        a_moved = ^points[i].moved(operator_motion)
+        b_moved = ^points[i + 1].moved(operator_motion)
       if a_moved.largest in [0.0, Inf] or b_moved.largest in [0.0, Inf]: is_lost = true
       when IS_CONFORMAL:
         error = max(error, a_moved.drift)
@@ -233,7 +236,7 @@ proc composeFrames() =
       tag = (if should_unitize: "unitized each frame" else: "never unitized")
       found =
         if is_lost: "points lost to overflow" else: &"error of points it moves {error:.1e}"
-    echo &"{algebra}: operator carried one hour, {tag}: {found}, " &
+    echo &"{algebra}: motion operator carried one hour, {tag}: {found}, " &
       &"largest coefficient {size_worst:.1e}" &
       (if frame_overflow > 0: &", past 1e300 at frame {frame_overflow}" else: "") &
       (if should_unitize: &", antidot square before unitize off 1 by {square_worst:.1e}" else: "")
@@ -243,7 +246,7 @@ proc composeFrames() =
     var difference = 0.0
     for b in Basis: difference = max(difference, abs(kept[b] - raw[b]))
     difference_half = max(difference_half, difference / raw.largest)
-  echo &"{algebra}: operator kept half hour, unitized each frame against never unitized: " &
+  echo &"{algebra}: motion operator kept half hour, unitized each frame against never unitized: " &
     &"points it moves differ by {difference_half:.1e}, never unitized largest coefficient " &
     &"{halves[false].largest:.1e}"
 

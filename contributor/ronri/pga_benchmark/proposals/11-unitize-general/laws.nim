@@ -4,12 +4,11 @@
 ##   Rule: element divides by √|𝐮∘𝐮|, as rigid unitization does; in CGA, round object divides by
 ##     its round weight norm instead, which is weight of its carrier 𝐮 ∧ 𝐞∞.
 ##   Laws: each kind Lengyel unitizes ends at unit weight; product of reflections ends at unit
-##     versor; rule is homogeneous of degree one; rule commutes with rigid motion; flat has
-##     𝐮∘𝐮 = ‖𝐮‖□²; unit versor keeps 𝐮∘𝐮; in CGA, element and each of its duals share divisor;
-##     sphere tends to plane through jump no rule escapes;
-##     plane sent through sphere and back keeps flat weight; round object moved far from origin
-##     keeps round weight; each unit operator form of Lengyel's wiki divides by 1, and dilation by
-##     √σ.
+##     motion operator; rule is homogeneous of degree one; rule commutes with rigid motion; flat
+##     has 𝐮∘𝐮 = ‖𝐮‖□²; unit motion operator keeps 𝐮∘𝐮; in CGA, element and each of its duals
+##     share divisor; sphere tends to plane through jump no rule escapes; plane sent through
+##     sphere and back keeps flat weight; round object moved far from origin keeps round weight;
+##     each unit motion operator form of Lengyel's wiki divides by 1, and dilation by √σ.
 ##   Figures it prints are evidence that never gates: worst error of each law, how each other
 ##     test of round object fares on same moved objects, and how motion moves element whose
 ##     residue lies near tolerance of grade test across it.
@@ -27,7 +26,8 @@ import pga
 type KindObject {.pure.} = enum  ## Define kind of drawn object, as rule must treat it.
   Round  ## Round object, unitized by round weight in CGA.
   Flat  ## Flat object, unitized by flat weight in CGA and by weight in RGA.
-  Operator  ## Motor or flector, unitized as versor.
+  Motion  ## Motion operator, motor in RGA: unit where its antidot square is ±𝟙.
+  Reflection  ## Reflection operator, flector in RGA: unit where its antidot square is ±𝟙.
 
 when IS_CONFORMAL:
   type Selector {.pure.} = enum  ## Define test that tells round object from any other element.
@@ -82,14 +82,14 @@ func normWeightRound(m: Multivector): float =
   sqrt((`|∘²`m)[Basis.scalarAnti])
 
 
-func versorUnit(versor: Multivector): Multivector =
-  ## Scale versor so that its antidot square is ±𝟙.
-  versor * (1 / sqrt(abs(versor.dotAntiSelf)))
+func unitizeOperator(product: Multivector): Multivector =
+  ## Scale motion or reflection operator so that its antidot square is ±𝟙.
+  product * (1 / sqrt(abs(product.dotAntiSelf)))
 
 
-func moved(element, versor: Multivector): Multivector =
-  ## Move element by versor, as antisandwich 𝐯 ⟇ 𝐮 ⟇ ~𝐯.
-  (versor ⟇ element) ⟇ ~∘versor
+func moved(element, product: Multivector): Multivector =
+  ## Move element by motion or reflection operator, as antisandwich 𝐯 ⟇ 𝐮 ⟇ ~𝐯.
+  (product ⟇ element) ⟇ ~∘product
 
 
 proc drawPoint(spread = 1.0): Multivector =
@@ -113,14 +113,14 @@ proc drawPlane(): Multivector =
   result = drawPoint()
   when IS_CONFORMAL:
     for _ in 2 ..< DIMENSIONS - 1: result = result ∧ drawPoint()
-    result = result ∧ Basis.infinity.initElement()
+    result = result ∧ initElement(Basis.infinity)
   else:
     for _ in 2 ..< DIMENSIONS: result = result ∧ drawPoint()
 
 
 proc drawMotor(): Multivector =
   ## Draw unit rigid motor as product of two planes.
-  versorUnit(drawPlane() ⟇ drawPlane())
+  unitizeOperator(drawPlane() ⟇ drawPlane())
 
 
 proc drawObjects(): seq[tuple[name: string, element: Multivector, kind: KindObject]] =
@@ -130,17 +130,17 @@ proc drawObjects(): seq[tuple[name: string, element: Multivector, kind: KindObje
     when IS_CONFORMAL:
       result.add (&"round of grade {grade}", element, KindObject.Round)
       if grade < DIMENSIONS - 1:
-        result.add (&"flat of grade {grade + 1}", element ∧ Basis.infinity.initElement(),
+        result.add (&"flat of grade {grade + 1}", element ∧ initElement(Basis.infinity),
           KindObject.Flat)
     else:
       result.add (&"flat of grade {grade}", element, KindObject.Flat)
     element = element ∧ drawPoint()
-  result.add ("motor", drawPlane() ⟇ drawPlane(), KindObject.Operator)
-  result.add ("flector", drawPlane() ⟇ drawPlane() ⟇ drawPlane(), KindObject.Operator)
+  result.add ("motor", drawPlane() ⟇ drawPlane(), KindObject.Motion)
+  result.add ("flector", drawPlane() ⟇ drawPlane() ⟇ drawPlane(), KindObject.Reflection)
 
 
 proc drawElements(): seq[Multivector] =
-  ## Draw objects of every kind, versors, and general multivectors of every grade.
+  ## Draw objects of every kind, motion operator of two reflections, and general multivectors.
   for (_, element, _) in drawObjects(): result.add element
   result.add drawReflector() ⟇ drawReflector()
   var general: Multivector
@@ -156,7 +156,7 @@ proc holdKinds(): float =
       when IS_CONFORMAL:
         let weight = case kind
           of KindObject.Round: unit.normWeightRound
-          of KindObject.Operator: sqrt(abs(unit.dotAntiSelf))
+          of KindObject.Motion, KindObject.Reflection: sqrt(abs(unit.dotAntiSelf))
           of KindObject.Flat: sqrt((`|□²`unit)[Basis.scalarAnti])
       else:
         let weight = unit.normWeightRound
@@ -164,15 +164,15 @@ proc holdKinds(): float =
       doAssert abs(weight - 1) < TOLERANCE_LAW, &"{name} unitizes to weight; got `{weight}`."
 
 
-proc holdVersors(): float =
+proc holdOperatorsMotion(): float =
   ## Hold products of two and four reflections at unit antidot square after unitize.
   for _ in 1..SAMPLES:
     for count in [2, 4]:
-      var versor = drawReflector()
-      for _ in 2..count: versor = versor ⟇ drawReflector()
-      let square = abs((^(gauss() * 3 * versor)).dotAntiSelf)
+      var operator_motion = drawReflector()
+      for _ in 2..count: operator_motion = operator_motion ⟇ drawReflector()
+      let square = abs((^(gauss() * 3 * operator_motion)).dotAntiSelf)
       result = max(result, abs(square - 1))
-      doAssert abs(square - 1) < TOLERANCE_LAW, &"versor unitizes to unit; got `{square}`."
+      doAssert abs(square - 1) < TOLERANCE_LAW, &"motion operator unitizes to unit; got `{square}`."
 
 
 proc holdHomogeneity(): float =
@@ -200,12 +200,12 @@ proc holdCovariance(): float =
 when IS_CONFORMAL:
   func isHoldingInfinity(b: Basis): bool =
     ## Tell whether basis holds infinity, as its wedge with infinity vanishes.
-    (b.initElement() ∧ Basis.infinity.initElement()).largest == 0
+    (initElement(b) ∧ initElement(Basis.infinity)).largest == 0
 
 
   func isHoldingOrigin(b: Basis): bool =
     ## Tell whether basis holds origin, as its wedge with origin vanishes.
-    (b.initElement() ∧ Basis.origin.initElement()).largest == 0
+    (initElement(b) ∧ initElement(Basis.origin)).largest == 0
 
 
   func partOf(b: Basis): Part =
@@ -265,23 +265,23 @@ when IS_CONFORMAL:
     sqrt(if is_round: round else: radius)
 
 
-  proc holdIdentities(): tuple[error_flat, error_versor: float] =
-    ## Hold 𝐮∘𝐮 = ‖𝐮‖□² for flat 𝐮, and 𝐮∘𝐮 kept by unit versor 𝐯 for any 𝐮.
+  proc holdIdentities(): tuple[error_flat, error_motion: float] =
+    ## Hold 𝐮∘𝐮 = ‖𝐮‖□² for flat 𝐮, and 𝐮∘𝐮 kept by unit motion operator 𝐯 for any 𝐮.
     for _ in 1..SAMPLES:
       for (_, element, kind) in drawObjects():
         if kind != KindObject.Flat: continue
         let flat = (`|□²`element)[Basis.scalarAnti]
         result.error_flat = max(result.error_flat, abs(element.dotAntiSelf - flat) / flat)
-      let versor = versorUnit(drawReflector() ⟇ drawReflector())
+      let operator_motion = unitizeOperator(drawReflector() ⟇ drawReflector())
       var general: Multivector
       for b in Basis: general[b] = gauss()
-      let general_moved = general.moved(versor)
-      result.error_versor = max(result.error_versor,
+      let general_moved = general.moved(operator_motion)
+      result.error_motion = max(result.error_motion,
         abs(general_moved.dotAntiSelf - general.dotAntiSelf) / general_moved.largest^2)
     doAssert result.error_flat < TOLERANCE_LAW,
       &"flat has antidot of flat weight; got `{result.error_flat}`."
-    doAssert result.error_versor < TOLERANCE_LAW,
-      &"unit versor keeps antidot; got `{result.error_versor}`."
+    doAssert result.error_motion < TOLERANCE_LAW,
+      &"unit motion operator keeps antidot; got `{result.error_motion}`."
 
 
   proc holdDuality(): float =
@@ -300,11 +300,12 @@ when IS_CONFORMAL:
     for size in SIZES_SCENE:
       var counts: array[Selector, int]
       for _ in 1..SAMPLES_MOVED:
-        var versor = versorUnit(drawReflector() ⟇ drawReflector())
-        for _ in 1..2: versor = versorUnit(drawReflector() ⟇ drawReflector()) ⟇ versor
+        var operator_motion = unitizeOperator(drawReflector() ⟇ drawReflector())
+        for _ in 1..2:
+          operator_motion = unitizeOperator(drawReflector() ⟇ drawReflector()) ⟇ operator_motion
         var element = drawPoint(size)
         for _ in 2 .. 1 + rand(DIMENSIONS - 2): element = element ∧ drawPoint(size)
-        let element_moved = element.moved(versor)
+        let element_moved = element.moved(operator_motion)
         for selector in Selector:
           let weight = element_moved.normWeightRound / element_moved.divisorBy(selector)
           if abs(weight - 1) < TOLERANCE_LAW: inc counts[selector]
@@ -315,7 +316,7 @@ when IS_CONFORMAL:
 
   proc holdPencil(): seq[float] =
     ## Hold divisor of sphere 𝐬ₜ = t𝐬 + 𝐠 at |t|, and plane's at 1: divisor jumps at t = 0.
-    let plane = versorUnit(drawPlane())
+    let plane = unitizeOperator(drawPlane())
     var sphere = drawPoint()
     for _ in 2 ..< DIMENSIONS: sphere = sphere ∧ drawPoint()
     sphere = ^sphere
@@ -330,7 +331,7 @@ when IS_CONFORMAL:
   proc countReflectionsBack(): tuple[rule, exact: int] =
     ## Count planes sent through sphere and back that rule, and exact zero test, treat as round.
     for _ in 1..REFLECTIONS_BACK:
-      let plane = versorUnit(drawPlane())
+      let plane = unitizeOperator(drawPlane())
       var sphere = drawPoint()
       for _ in 2 ..< DIMENSIONS: sphere = sphere ∧ drawPoint()
       let
@@ -343,8 +344,9 @@ when IS_CONFORMAL:
 
 
   when DIMENSIONS == 5:
-    proc readOperators(): seq[tuple[name: string, found, expected: float]] =
-      ## Read divisor of Lengyel's operator forms from his wiki, against divisor rule must give.
+    proc readOperatorsMotion(): seq[tuple[name: string, found, expected: float]] =
+      ## Read divisor of Lengyel's motion operator forms from his wiki, against divisor rule must
+      ##   give.
       let
         tau = [gauss(), gauss(), gauss()]
         angle = rand(2 * PI)
@@ -401,10 +403,10 @@ when IS_CONFORMAL:
       for _ in 1..SAMPLES_BAND:
         var planes: array[2, Multivector]
         for plane in planes.mitems:
-          plane = origin ∧ drawPoint() ∧ drawPoint() ∧ Basis.infinity.initElement()
+          plane = origin ∧ drawPoint() ∧ drawPoint() ∧ initElement(Basis.infinity)
         var element = drawPoint()
         element[Basis.scalarAnti] = 1.0000001e-9 * element.largest
-        let rotated = element.moved(versorUnit(planes[0] ⟇ planes[1]))
+        let rotated = element.moved(unitizeOperator(planes[0] ⟇ planes[1]))
         if abs(rotated.divisor / element.divisor - 1) > TOLERANCE_LAW: inc result.flips
 
 
@@ -413,13 +415,14 @@ proc main() =
   randomize(SEED)
   let algebra = (if IS_CONFORMAL: "cga" else: "rga") & $DIMENSIONS & "d"
   echo &"{algebra}: kinds Lengyel unitizes, worst |weight - 1|: {holdKinds():.1e}"
-  echo &"{algebra}: products of reflections, worst |antidot square - 1|: {holdVersors():.1e}"
+  echo &"{algebra}: products of reflections, worst |antidot square - 1|: " &
+    &"{holdOperatorsMotion():.1e}"
   echo &"{algebra}: homogeneity, worst error: {holdHomogeneity():.1e}"
   echo &"{algebra}: covariance under rigid motion, worst error: {holdCovariance():.1e}"
   when IS_CONFORMAL:
-    let (error_flat, error_versor) = holdIdentities()
+    let (error_flat, error_motion) = holdIdentities()
     echo &"{algebra}: flat antidot against flat weight squared, worst error: {error_flat:.1e}"
-    echo &"{algebra}: antidot kept by unit versor, worst error: {error_versor:.1e}"
+    echo &"{algebra}: antidot kept by unit motion operator, worst error: {error_motion:.1e}"
     echo &"{algebra}: duality, worst relative error of divisor: {holdDuality():.1e}"
     for (selector, size, count) in countSelectors():
       echo &"{algebra}: moved round objects at distance {size:.0e}, unitized right by " &
@@ -432,7 +435,7 @@ proc main() =
     echo &"{algebra}: planes through sphere and back misread, rule {count_rule}, " &
       &"exact test {count_exact}, of {REFLECTIONS_BACK}"
     when DIMENSIONS == 5:
-      for (name, found, expected) in readOperators():
+      for (name, found, expected) in readOperatorsMotion():
         echo &"{algebra}: {name}, divisor {found:.6g}, expected {expected:.6g}"
       let (at_origin, translated, flips) = readBand()
       echo &"{algebra}: round point with residue 2e-9 on antiscalar, divisor at origin " &

@@ -8,8 +8,8 @@ weight norm for a round object, and √|𝐦 ∘ 𝐦| for any other element.
 A round object holds one grade, and its round weight is not negligible beside √|𝐦 ∘ 𝐦|. The
 façade and the doc of `^` state the rule. The doc of the weight norm says that √(𝐦 ∘ 𝐦) is that
 norm in the rigid algebra alone. Chapter 4 gains one test at its head, and keeps its placeholder,
-which change `conformal-norms` replaces. Suite Internal gains one test for versors, moved elements,
-and a plane sent through a sphere and back.
+which change `conformal-norms` replaces. Suite Internal gains one test for motion operators,
+moved elements, and a plane sent through a sphere and back.
 
 ## Edit `pga.nim`
 
@@ -146,10 +146,10 @@ when IS_CONFORMAL:
 suite "Internal":
   test "`^∘`(m: Multivector): Multivector":
     when IS_CONFORMAL:
-      const 𝐞∞ = Basis.infinity.initElement()
+      const 𝐞∞ = initElement(Basis.infinity)
       for _ in 1..SAMPLES div 8:
         let 𝐯 = ^(3 ∧ (drawReflector() ⟇ drawReflector()))
-        check abs((𝐯 ∘ 𝐯)[Basis.scalarAnti]) =~ 1  # Versor of two reflections ends unit.
+        check abs((𝐯 ∘ 𝐯)[Basis.scalarAnti]) =~ 1  # Motion operator of two reflections ends unit.
         let 𝐦 = 𝐯 ⟇ drawPoint() ⟇ ~∘𝐯
         check |∘(^𝐦) =~ 𝟙  # Moved round point keeps unit round weight.
 
@@ -176,7 +176,7 @@ suite "Chapter 4":
 suite "Chapter 4":
   test "Section 4.3: round object unitizes by round weight, flat object by flat weight":
     when IS_CONFORMAL:
-      const 𝐞∞ = Basis.infinity.initElement()
+      const 𝐞∞ = initElement(Basis.infinity)
       for _ in 1..SAMPLES div 8:
         let 𝐫 = drawPoint()
         check 𝐫 ∘ 𝐫 =~ 0  # 4.45

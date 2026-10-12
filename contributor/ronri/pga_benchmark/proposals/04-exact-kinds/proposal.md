@@ -146,7 +146,7 @@ bare noun (V.3).
 | Slot | Proposed | Options weighed |
 |------|----------|-----------------|
 | One grade | `Kvector1` to `KvectorN` | `Grade1` reads as a grade; `Vector1` collides with vector |
-| One parity | `MultivectorEven`, `MultivectorOdd` | `Even` says nothing in error; versor is wrong |
+| One parity | `MultivectorEven`, `MultivectorOdd` | Bare `Even` is vague; `Motion` names too few |
 | Conformal flats | `Kvector2Flat` and kin | Grade, then formality, the axis `Formal[T]` names |
 | Whole algebra | `Multivector` | A second name, `MultivectorWhole`, went on 2026-10-07 |
 | Any set of bases | `MultivectorOf[B]` | `Blades` is wrong, below |
