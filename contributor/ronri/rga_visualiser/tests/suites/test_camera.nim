@@ -921,6 +921,17 @@ suite "Camera":
     check camera.pivot =~ ORIGIN
 
 
+  test "one wheel notch scales separation by one rule on both front-ends, and notches compose":
+    # Fault: page zoomed by `exp(0.0012 × travel)`, 1.155 for 120 px, and desktop by 1.12 per notch.
+    #   Both front-ends now read `factorWheel`: desktop in SDL's notches, page in its travel
+    #   over `PIXELS_NOTCH`. Composition lets page sum frame's notches into one dolly.
+    check factorWheel(0.0) =~ 1.0
+    check factorWheel(1.0) =~ 1.0 / FACTOR_DOLLY_NOTCH
+    check factorWheel(-PIXELS_NOTCH / PIXELS_NOTCH) =~ FACTOR_DOLLY_NOTCH
+    for (a, b) in [(0.25, 0.75), (1.0, 2.0), (-3.0, 1.5), (0.1, -0.1)]:
+      check factorWheel(a + b) =~ factorWheel(a) * factorWheel(b)
+
+
   test "with no selection the wheel over empty sky does nothing, and a pinch keeps separation":
     # Fault: wheel carried eye along pointer's ray at camera's own scale, which was
     #   separation, and scaled it by each notch: 200 notches over empty sky took it to near

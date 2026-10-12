@@ -234,10 +234,26 @@ export async function driveWheel(page: Page): Promise<void> {
       (document.getElementById('selection-menu') as HTMLElement).contains(under);
     return { x, y, is_over };
   });
+  // Turn three notches of page's own size, as desktop's `--drive-wheel` turns three of SDL's.
+  const [pixels_notch, factor_notch] = await page.evaluate(
+    () => [nimPixelsNotch(), nimFactorDollyNotch()],
+  );
   const before_menu = await readCamera(page);
   await page.mouse.move(menu.x, menu.y);
-  await wheelBy(page, 3, -120);
+  await wheelBy(page, 3, -(pixels_notch ?? 0));
   const after_menu = await readCamera(page);
+
+  // One notch in lines, as browser counting lines reports it, zooms as one notch in pixels.
+  //   Page read `deltaY` alone, so three lines zoomed by `exp(0.0036)`.
+  const before_lines = await readCamera(page);
+  await page.evaluate(() => {
+    (document.getElementById('gl') as HTMLCanvasElement).dispatchEvent(new WheelEvent('wheel', {
+      deltaY: -3, deltaMode: WheelEvent.DOM_DELTA_LINE, bubbles: true, cancelable: true,
+    }));
+  });
+  await waitFrames(page, 2);
+  await settleCamera(page);
+  const after_lines = await readCamera(page);
   await page.evaluate(() => clearSelection());
   report(
     'and a wheel over the selection menu zooms the view, about the point picked',
@@ -246,5 +262,23 @@ export async function driveWheel(page: Page): Promise<void> {
     `pointer over menu ${menu.is_over}; distance ${before_menu.distance.toFixed(3)} -> ` +
       `${after_menu.distance.toFixed(3)}, pivot off the point by ` +
       `${spanOf(after_menu.pivot, world_picked).toExponential(2)}`,
+  );
+
+  // Three notches scale page's separation by what three scale desktop's, one rule for both.
+  //   Page zoomed by its own rate, `exp(0.0012 × travel)`, and desktop by 1.12 for each notch.
+  const ratio_page = after_menu.distance / before_menu.distance;
+  const ratio_desktop = (factor_notch ?? 0) ** -3;
+  report(
+    'and three notches zoom the page by what three notches zoom the desktop',
+    Math.abs(ratio_page / ratio_desktop - 1) < 1e-6,
+    `${pixels_notch} px a notch; separation scaled by ${ratio_page.toFixed(9)} on the page, ` +
+      `and ${ratio_desktop.toFixed(9)} on the desktop`,
+  );
+  const ratio_lines = after_lines.distance / before_lines.distance;
+  report(
+    'and a notch the browser reports in lines zooms as a notch in pixels does',
+    Math.abs(ratio_lines * (factor_notch ?? 0) - 1) < 1e-6,
+    `three lines scaled separation by ${ratio_lines.toFixed(9)}, ` +
+      `one notch by ${(1 / (factor_notch ?? 1)).toFixed(9)}`,
   );
 }

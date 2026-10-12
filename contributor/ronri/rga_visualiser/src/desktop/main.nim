@@ -2355,6 +2355,13 @@ proc verdictDriven(
       &"{wheel_drive.is_over_menu}; distance {before:.3f} -> {after:.3f}, " &
       &"pivot off the point by {off:.2e}",
     )
+    # Check three notches scale separation by core's rule, which page's `wheel.ts` holds too.
+    let ratio_rule = factorWheel(float(NOTCHES_WHEEL_DRIVEN))
+    report(
+      "and three notches zoom the desktop by the rule the page reads",
+      before > 0.0 and abs(after / before / ratio_rule - 1.0) < 1.0e-6,
+      &"separation scaled by {after / before:.9f}, rule {ratio_rule:.9f}",
+    )
   if options.path_help_driven.isSome:
     report(
       "the help tab asked for opened, with rows in it",
