@@ -387,6 +387,7 @@ design/
   asks.nim               what each reference card asks of the body simulation
   modelled.nim           which cards the simulation reaches: modelled.json
   turns.nim              every hold turning, asked of the simulation: turns.json
+  floors.nim             how far the plan carries each hold over the crown, printed
   rig.nim                the sweeps and stills the viewer plays: rig.json
   rig_page.nim           rig.html
   rig_view.nim           the viewer, which draws what the engine collides
