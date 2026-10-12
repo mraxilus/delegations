@@ -109,7 +109,7 @@ func kindOf(reach: set[Basis]): string {.compileTime.} =
 macro defineProduct(
   cayley: static Cayley2D; bases_m, bases_n: static set[Basis]; m, n: untyped
 ): untyped =
-  ## Emit block computing product over operands' bases alone, typed as smallest kind.
+  ## Define block computing product over operands' bases alone, typed as smallest kind.
   ##   Walks whole table and reads only cells both operands name, so no table is copied.
   var
     reach: set[Basis]

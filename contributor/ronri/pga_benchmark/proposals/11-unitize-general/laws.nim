@@ -82,13 +82,13 @@ func normWeightRound(m: Multivector): float =
   sqrt((`|∘²`m)[Basis.scalarAnti])
 
 
-func unitizeOperator(product: Multivector): Multivector =
-  ## Scale motion or reflection operator so that its antidot square is ±𝟙.
-  product * (1 / sqrt(abs(product.dotAntiSelf)))
+func unitizeAntidot(element: Multivector): Multivector =
+  ## Scale element so that its antidot square is ±𝟙: unit motion, reflection or flat weight.
+  element * (1 / sqrt(abs(element.dotAntiSelf)))
 
 
 func moved(element, product: Multivector): Multivector =
-  ## Move element by motion or reflection operator, as antisandwich 𝐯 ⟇ 𝐮 ⟇ ~𝐯.
+  ## Move element by motion or reflection operator, as antisandwich 𝐯 ⟇ 𝐮 ⟇ ~∘𝐯.
   (product ⟇ element) ⟇ ~∘product
 
 
@@ -120,7 +120,7 @@ proc drawPlane(): Multivector =
 
 proc drawMotor(): Multivector =
   ## Draw unit rigid motor as product of two planes.
-  unitizeOperator(drawPlane() ⟇ drawPlane())
+  unitizeAntidot(drawPlane() ⟇ drawPlane())
 
 
 proc drawObjects(): seq[tuple[name: string, element: Multivector, kind: KindObject]] =
@@ -188,7 +188,7 @@ proc holdHomogeneity(): float =
 
 
 proc holdCovariance(): float =
-  ## Hold unitize(𝐌 ⟇ 𝐮 ⟇ ~𝐌) = 𝐌 ⟇ unitize(𝐮) ⟇ ~𝐌 for unit rigid motor 𝐌.
+  ## Hold unitize(𝐌 ⟇ 𝐮 ⟇ ~∘𝐌) = 𝐌 ⟇ unitize(𝐮) ⟇ ~∘𝐌 for unit rigid motor 𝐌.
   for _ in 1..SAMPLES:
     let motor = drawMotor()
     for element in drawElements():
@@ -272,7 +272,7 @@ when IS_CONFORMAL:
         if kind != KindObject.Flat: continue
         let flat = (`|□²`element)[Basis.scalarAnti]
         result.error_flat = max(result.error_flat, abs(element.dotAntiSelf - flat) / flat)
-      let operator_motion = unitizeOperator(drawReflector() ⟇ drawReflector())
+      let operator_motion = unitizeAntidot(drawReflector() ⟇ drawReflector())
       var general: Multivector
       for b in Basis: general[b] = gauss()
       let general_moved = general.moved(operator_motion)
@@ -300,9 +300,9 @@ when IS_CONFORMAL:
     for size in SIZES_SCENE:
       var counts: array[Selector, int]
       for _ in 1..SAMPLES_MOVED:
-        var operator_motion = unitizeOperator(drawReflector() ⟇ drawReflector())
+        var operator_motion = unitizeAntidot(drawReflector() ⟇ drawReflector())
         for _ in 1..2:
-          operator_motion = unitizeOperator(drawReflector() ⟇ drawReflector()) ⟇ operator_motion
+          operator_motion = unitizeAntidot(drawReflector() ⟇ drawReflector()) ⟇ operator_motion
         var element = drawPoint(size)
         for _ in 2 .. 1 + rand(DIMENSIONS - 2): element = element ∧ drawPoint(size)
         let element_moved = element.moved(operator_motion)
@@ -316,7 +316,7 @@ when IS_CONFORMAL:
 
   proc holdPencil(): seq[float] =
     ## Hold divisor of sphere 𝐬ₜ = t𝐬 + 𝐠 at |t|, and plane's at 1: divisor jumps at t = 0.
-    let plane = unitizeOperator(drawPlane())
+    let plane = unitizeAntidot(drawPlane())
     var sphere = drawPoint()
     for _ in 2 ..< DIMENSIONS: sphere = sphere ∧ drawPoint()
     sphere = ^sphere
@@ -331,7 +331,7 @@ when IS_CONFORMAL:
   proc countReflectionsBack(): tuple[rule, exact: int] =
     ## Count planes sent through sphere and back that rule, and exact zero test, treat as round.
     for _ in 1..REFLECTIONS_BACK:
-      let plane = unitizeOperator(drawPlane())
+      let plane = unitizeAntidot(drawPlane())
       var sphere = drawPoint()
       for _ in 2 ..< DIMENSIONS: sphere = sphere ∧ drawPoint()
       let
@@ -406,7 +406,7 @@ when IS_CONFORMAL:
           plane = origin ∧ drawPoint() ∧ drawPoint() ∧ initElement(Basis.infinity)
         var element = drawPoint()
         element[Basis.scalarAnti] = 1.0000001e-9 * element.largest
-        let rotated = element.moved(unitizeOperator(planes[0] ⟇ planes[1]))
+        let rotated = element.moved(unitizeAntidot(planes[0] ⟇ planes[1]))
         if abs(rotated.divisor / element.divisor - 1) > TOLERANCE_LAW: inc result.flips
 
 

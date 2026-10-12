@@ -84,25 +84,25 @@ proc drawReflector(as_plane: bool): Multivector =
       if b.grade == Grade.high.pred: result[b] = gauss()
 
 
-func unitizeOperator(product: Multivector): Multivector =
-  ## Scale motion or reflection operator so that its antidot square is ±𝟙.
-  product * (1 / sqrt(abs(product.dotAntiSelf)))
+func unitizeAntidot(element: Multivector): Multivector =
+  ## Scale element so that its antidot square is ±𝟙: unit motion, reflection or flat weight.
+  element * (1 / sqrt(abs(element.dotAntiSelf)))
 
 
 proc drawMove(as_rigid: bool, size: float): Multivector =
   ## Draw unit motion operator of two reflections size apart: near identity where size is small.
   ##   Rigid move keeps second reflector plane: in CGA, part without infinity stays zero.
-  let first = unitizeOperator(drawReflector(as_plane = as_rigid))
+  let first = unitizeAntidot(drawReflector(as_plane = as_rigid))
   var second = first
   for b in Basis:
     when IS_CONFORMAL:
       if as_rigid and (initElement(b) ∧ initElement(Basis.infinity)).largest != 0: continue
     if b.grade == Grade.high.pred: second[b] += gauss() * size
-  unitizeOperator(unitizeOperator(second) ⟇ first)
+  unitizeAntidot(unitizeAntidot(second) ⟇ first)
 
 
 func moved(element, product: Multivector): Multivector =
-  ## Move element by motion or reflection operator, as antisandwich 𝐯 ⟇ 𝐮 ⟇ ~𝐯.
+  ## Move element by motion or reflection operator, as antisandwich 𝐯 ⟇ 𝐮 ⟇ ~∘𝐯.
   (product ⟇ element) ⟇ ~∘product
 
 
@@ -185,7 +185,7 @@ proc composeFrames() =
       composed: Multivector
     composed[Basis.scalarAnti] = 1
     for _ in 1..depth:
-      operators_motion.add unitizeOperator(drawReflector(as_plane = not IS_CONFORMAL) ⟇
+      operators_motion.add unitizeAntidot(drawReflector(as_plane = not IS_CONFORMAL) ⟇
         drawReflector(as_plane = not IS_CONFORMAL))
       composed = operators_motion[^1] ⟇ composed
     size = composed.largest
