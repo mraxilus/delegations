@@ -52,16 +52,17 @@ const
   ]
     ## Turns plan carries each hold over crown each way from rest, follow turning: furthest of
     ##   every style toward all sweep asks (`walk.MOST`), own path and its mirror's
-    ##   (`walk.pathsFor`), engine standing each moment (`walk.replay`, `rigid.gives`).
-    ##   Measured 2026-10-12 by probe outside tree, on physics of `bc656d30`, each path standing
-    ##     every moment it planned:
-    ##     L-l: style 0 to +2.5, style 11 to -2.5.  R-r: style 10 to +2.5, style 0 to -2.5.
-    ##     L-r: style 2 to +2.5, style 0 to -2.5.  R-l: style 0 to +2.5, style 11 to -2.5.
-    ##     L-l.R-r: style 4 to -2.5, and its mirror to +2.5.
-    ##     L-r.R-l: style 13 to +1.5275, and its mirror to -1.5275; furthest other path of 64 ends
-    ##       at 1.5238.  Shoulder's edge forbids more: with it left out of plan, 15 of 32 paths
-    ##       pass 1.5275, each laying upper arm past edge's give first, where engine stops it by
-    ##       swing.
+    ##   (`walk.pathsFor`), engine standing each moment (`walk.replayedWay`, `rigid.gives`).
+    ##   Measured by `nim r tools/build.nim floors`, which prints each row with style and start
+    ##     of each way's path, 2026-10-12, on physics of `6ef96eaf`:
+    ##     L-l: style 11 to -2.5, style 0 to +2.5.  R-r: style 0 to -2.5, style 10 to +2.5.
+    ##     L-r: style 0 to -2.5, style 2 to +2.5.  R-l: style 11 to -2.5, style 0 to +2.5.
+    ##     L-l.R-r: style 4 both ways, from 0.417 m.
+    ##     L-r.R-l: style 13 both ways, from 0.957 m, to 1.5275.
+    ##   Edge holds cross-name chain near there, its upper arm riding plan's six degrees inside:
+    ##     plan with edge's margin at 0 or 3 degrees, other margins kept, stands no path past
+    ##     1.540 or 1.526, and plan with no edge term none past 1.4475, engine stopping each by
+    ##     swing where upper arm passes edge's give.  Measured 2026-10-12 by probes outside tree.
   REASON_WHOLE = "lead's turn of same-name chain held above, from Face-to-back, to whole " &
       "turn: no plan inside shoulder's edge passes 0.71 of turn, and no wall tried carries walk " &
       "there but by chance"
