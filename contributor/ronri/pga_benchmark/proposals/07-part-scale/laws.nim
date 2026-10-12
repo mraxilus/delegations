@@ -6,22 +6,23 @@
 ##   Rigid laws, at rga4d: point moved twice equals point moved once by composed motor; join
 ##     moved equals join of moved points; meet moved equals meet of moved planes; moved point
 ##     keeps grade one; plane whose normal turns by ten tolerances never equals plane it came from.
-##   Laws of grade, in each algebra: multivector with infinite coefficient holds no grade; at 64
-##     bits, `grade` reads every population right, reads every element of it, and agrees with
-##     its twin here on each element. Twin is part scale in RGA, part scale or 16 rounding units
-##     of largest coefficient in CGA. Mixed populations: motion operators, products of two of
-##     them, general multivectors, and in CGA products of two spheres, transversions and
-##     dilations. One-grade populations: objects moved once or 30 times, k-vectors, and in CGA
-##     round objects moved by conformal motion operator and spheres of every radius.
+##   Laws of grade, in each algebra: multivector with coefficient not finite equals nothing, and
+##     one with infinite coefficient holds no grade. At 64 bits, `grade` reads every element of
+##     each population, reads it right, and agrees on it with its twin here. Twin is part scale
+##     in RGA, and in CGA part scale or 16 rounding units of largest coefficient.
+##   Mixed populations: motion operators, products of two of them, general multivectors; in CGA
+##     products of two spheres; at cga5d transversions and dilations. One-grade populations:
+##     objects moved once or 30 times, k-vectors; in CGA round objects moved by conformal motion
+##     operator, and spheres of every radius.
 ##   Figures it prints are evidence that never gates. Rigid figure is most decimal places one
 ##     rule keeps with no noise in any sample: "now" weighs coefficient against max(1, |x|, |y|),
 ##     as pin does; "part" weighs it against largest absolute value of its part, bulk or weight,
 ##     in either. Population figure is misreads of each zero test, as `Test` names each.
 ##   Rigid scene sits at distance from origin: each coordinate and translation is Gaussian, with
 ##     deviation distance / sqrt(3). Population scene draws each coordinate with deviation of its
-##     row, so its points lie about that deviation times sqrt(3) from origin.
-##   Helpers `largest`, `partOf` and `unitizeAntidot` match those of P11's `laws.nim`; this
-##     proposal does not build on P11, so it holds its own.
+##     row, so its points lie about that deviation times square root of coordinate count away.
+##   Helpers `largest`, `partOf` and `unitizeAntidot` serve as P11's `laws.nim` ones do; here
+##     `partOf` returns index of part, and RGA uses two. Proposal does not build on P11.
 
 {.experimental: "strictFuncs".}
 
@@ -42,10 +43,11 @@ const
   DEVIATIONS_KEPT = [1.0, 1e2, 1e4]  ## Deviations of objects moved from move to move.
   RADII = [1.0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6]  ## Radius of sphere about its center, in units.
   MOVES_KEPT = 30  ## Moves of object kept from move to move, unitized after each.
+  ALGEBRA = (if IS_CONFORMAL: "cga" else: "rga") & $DIMENSIONS & "d"  ## Name algebra of build.
 
 static:
   doAssert (IS_RIGID and DIMENSIONS in 3..4) or (IS_CONFORMAL and DIMENSIONS in 4..5),
-    &"Laws hold rga3d, rga4d, cga4d and cga5d; got {DIMENSIONS} dimensions."
+    &"Laws hold rga3d, rga4d, cga4d and cga5d; got `{ALGEBRA}`."
 
 
 func moved(x, product: Multivector): Multivector =
@@ -187,7 +189,8 @@ type
     Library = "grade"  ## Read `grade` of changed library.
 
   KindObject = tuple[name: string, count_points: int, is_flat: bool]
-    ## Define kind of object: points it wedges, and whether it wedges infinity too.
+    ## Define kind of object: points it wedges, and whether it is flat; in CGA flat one wedges
+    ##   infinity too.
 
 const TWIN = (when IS_CONFORMAL: Test.Rounding16 else: Test.ScalePart)
   ## Name test that `grade` of changed library must agree with on every element.
@@ -270,7 +273,7 @@ func pointAt(position: array[3, float]): Multivector =
 proc drawPoint(deviation: float): Multivector =
   ## Draw point whose coordinates are Gaussian with deviation.
   var position: array[3, float]
-  for i in 0..<ord(Basis.origin) - 1: position[i] = gauss() * deviation
+  for i in 0 ..< ord(Basis.origin) - 1: position[i] = gauss() * deviation
   pointAt(position)
 
 
@@ -304,10 +307,10 @@ when IS_CONFORMAL:
   proc drawDirection(): array[3, float] =
     ## Draw unit direction in space of algebra, Gaussian vector normalized.
     var length = 0.0
-    for i in 0..<DIMENSIONS - 2:
+    for i in 0 ..< DIMENSIONS - 2:
       result[i] = gauss()
       length += result[i]^2
-    for i in 0..<DIMENSIONS - 2: result[i] /= sqrt(length)
+    for i in 0 ..< DIMENSIONS - 2: result[i] /= sqrt(length)
 
 
   proc drawReflector(): Multivector =
@@ -328,7 +331,7 @@ when IS_CONFORMAL:
     for i in 1..<DIMENSIONS:
       let around = drawDirection()
       var position: array[3, float]
-      for j in 0..<DIMENSIONS - 2: position[j] = center * toward[j] + radius * around[j]
+      for j in 0 ..< DIMENSIONS - 2: position[j] = center * toward[j] + radius * around[j]
       result = (if i == 1: pointAt(position) else: result ∧ pointAt(position))
     result = result.unitized(("sphere", DIMENSIONS - 1, false))
 
@@ -358,18 +361,22 @@ func kinds(): seq[KindObject] =
   ## List objects of every grade: round then flat in CGA, flat in RGA.
   when IS_CONFORMAL:
     for count in 1..<DIMENSIONS: result.add (&"round of grade {count}", count, false)
-    for count in 1..<DIMENSIONS - 1: result.add (&"flat of grade {count + 1}", count, true)
+    for count in 1 ..< DIMENSIONS - 1: result.add (&"flat of grade {count + 1}", count, true)
   else:
     for count in 1..<DIMENSIONS: result.add (&"flat of grade {count}", count, true)
 
 
-proc holdOverflow() =
-  ## Hold that multivector with infinite coefficient holds no grade, wherever infinity lies.
+proc holdNonFinite() =
+  ## Hold that multivector with coefficient not finite equals nothing, itself included, as at
+  ##   pin; and that one with infinite coefficient holds no grade, wherever infinity lies.
   for b in Basis:
-    var element = drawPoint(1)
-    element[b] = Inf
-    doAssert element.grade.isNone,
-      &"Overflowed multivector holds no grade; got `{int(element.grade.get)}` at `{b}`."
+    for value in [Inf, NaN]:
+      var element = drawPoint(1)
+      element[b] = Coefficient(value)
+      doAssert not (element =~ element), &"Multivector holding `{value}` at `{b}` equals nothing."
+      if value == Inf:
+        doAssert element.grade.isNone,
+          &"Overflowed multivector holds no grade; got `{int(element.grade.get)}` at `{b}`."
 
 
 proc holdPopulations() =
@@ -410,7 +417,7 @@ proc holdPopulations() =
   for b in Basis: parts[b] = b.partOf
   echo "population: elements read, then misreads of each zero test"
 
-  # Mixed: motion operators, their products, and in CGA products of two spheres.
+  # Tally mixed populations: motion operators, their products, and in CGA products of spheres.
   for deviation in DEVIATIONS:
     tally(&"motion operator of two planes, deviation {deviation:.0e}", false,
       drawMotion(deviation))
@@ -428,7 +435,7 @@ proc holdPopulations() =
     for deviation in DEVIATIONS[1..^1]:
       tally(&"dilation, factor {deviation:.0e}", false, drawDilation(deviation))
 
-  # One grade: objects moved once, and in CGA moved conformally, and spheres of every radius.
+  # Tally one-grade populations: objects moved once, in CGA moved conformally, and spheres.
   for kind in kinds():
     for deviation in DEVIATIONS:
       tally(&"{kind.name} moved once, deviation {deviation:.0e}", true,
@@ -444,7 +451,7 @@ proc holdPopulations() =
         tally(&"sphere at distance {center:.0e}, radius {radius:.0e}", true,
           drawSphere(center, radius))
 
-  # Kept objects, then general multivectors and k-vectors.
+  # Tally kept objects, then general multivectors and k-vectors.
   for kind in kinds():
     for deviation in DEVIATIONS_KEPT:
       tally(&"{kind.name} moved {MOVES_KEPT} times, deviation {deviation:.0e}", true,
@@ -464,8 +471,8 @@ proc main() =
   randomize(SEED)
   echo "width ", FLOAT_WIDTH, " tolerance ", FLOAT_TOLERANCE
   when IS_RIGID and DIMENSIONS == 4: holdRigid()
-  holdOverflow()
   holdPopulations()
+  holdNonFinite()  # Last, so populations draw from seed alone.
 
 
 main()
