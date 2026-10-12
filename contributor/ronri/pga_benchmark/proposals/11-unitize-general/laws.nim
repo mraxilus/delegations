@@ -92,11 +92,11 @@ func moved(element, product: Multivector): Multivector =
   (product ⟇ element) ⟇ ~∘product
 
 
-proc drawPoint(spread = 1.0): Multivector =
+proc drawPoint(deviation = 1.0): Multivector =
   ## Draw point at random position: round point of radius zero in CGA, unit point in RGA.
   var distance_squared = 0.0
   for b in Basis.scalar.succ .. Basis.origin.pred:
-    result[b] = gauss() * spread
+    result[b] = gauss() * deviation
     distance_squared += result[b]^2
   result[Basis.origin] = 1
   when IS_CONFORMAL: result[Basis.infinity] = distance_squared / 2
