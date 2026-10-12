@@ -379,10 +379,10 @@ between evaluations.
 
 | Algebra | Unitize at pin | With this change | Ratio |
 | --- | --- | --- | --- |
-| `rga3d` | 3.79 ns | 3.79 ns | ×1.00 |
-| `rga4d` | 5.45 ns | 5.32 ns | ×0.98 |
-| `cga4d` | 4.62 ns | 20.93 ns | ×4.55 |
-| `cga5d` | 9.02 ns | 91.17 ns | ×8.14 |
+| `rga3d` | 3.78 ns | 3.55 ns | ×0.97 |
+| `rga4d` | 5.14 ns | 5.21 ns | ×1.04 |
+| `cga4d` | 4.31 ns | 20.38 ns | ×5.14 |
+| `cga5d` | 8.56 ns | 68.96 ns | ×7.88 |
 
 | Count in `^∘` at `cga5d` | At pin | With this change |
 | --- | --- | --- |
