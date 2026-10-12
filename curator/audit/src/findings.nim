@@ -61,6 +61,7 @@ const CITATIONS*: array[Rule, string] = [
   Rule.NotOverBinary: "X.4",
   Rule.ParenthesesNeedless: "X.4",
   Rule.SubjectTarget: "STYLE.md §5",
+  Rule.CallGeneration: "STYLE.md §5",
   Rule.CommandDotted: "STYLE.md §5",
   Rule.ReturnResult: "STYLE.md §5",
   Rule.ImportBracket: "X.5",
