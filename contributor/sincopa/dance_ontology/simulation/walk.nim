@@ -344,7 +344,14 @@ iterator stands*(rig: Rig): float =
 proc momentOf(couple: Couple, at: float): tuple[moment: Moment, why: Stop, which: int,
                                            whose: Hand] =
   ## Read every connection at this moment, and say what gave, if anything: connection, or
-  ## free arm, which names no connection (`rigid.stoppedFree`).
+  ## free arm, which names no connection (`rigid.stoppedFree`), or joined hand under crown.
+  ##   Over crown, once couple are not face to face, joined hands stay above heads in every
+  ##     moment of sweep, as in every still (Architect, issue 611, 2026-10-11): hand under
+  ##     crown band less its sag gives (`rigid.handUnder`), as still's does (`rigid.gives`).
+  ##     Not face to face is `rigid.up` whole, quarter turn away either side.  Still holds band
+  ##     coming back from eighth turn too (`rigid.height`); walk does not, since ruling holds
+  ##     hands up only while couple are not face to face.
+  ##     Stop names lowest hand (`Stop.Band`).
   result.moment = Moment(at: at, stance: couple.chestStances, room: Inf)
   for shape in couple.shapes:
     if shape.mark == Mark.Trunk:
@@ -377,6 +384,12 @@ proc momentOf(couple: Couple, at: float): tuple[moment: Moment, why: Stop, which
   # Free arm gives too, and no connection is it.
   if result.why == Stop.None:
     (result.why, result.whose) = couple.stoppedFree
+  # Joined hand under crown gives once couple are not face to face.
+  if result.why == Stop.None and couple.band == Band.Crown and couple.up >= 1.0:
+    let under = couple.handUnder(couple.bandNow.lower)
+    if under.isSome:
+      result.why = Stop.Band
+      (result.which, result.whose) = under.get
 
 proc walkedOf*(
   rig: Rig;

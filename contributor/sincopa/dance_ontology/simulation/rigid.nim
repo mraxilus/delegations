@@ -32,7 +32,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[locks, math]
+import std/[locks, math, options]
 
 import ./[body, hold, limb, rig, vector]
 from ./engine import nil
@@ -2049,6 +2049,17 @@ proc crossing*(couple: Couple): tuple[is_crossed: bool, whose: Hand] =
 proc crossed*(couple: Couple): bool = couple.crossing.is_crossed
   ## Whether arms cross above elbow anywhere.
 
+proc handUnder*(couple: Couple, lower: float): Option[tuple[which: int, whose: Hand]] =
+  ## Joined hand carried furthest under `lower` past `SAG`, and connection that holds it; none
+  ## where every joined hand is within.
+  ##   One rule for still (`gives`) and walk (`walk.momentOf`): carried point, as band is asked
+  ##     of it (`carriedOf`), and lift's own slack.
+  var lowest = lower - SAG
+  for i, link in couple.links:
+    for hand in link.ends:
+      let z = carriedOf(couple, hand.body, hand.arm).z
+      if z < lowest: (lowest, result) = (z, some((i, hand)))
+
 proc gives*(couple: Couple): Stop =
   ## What stops couple's pose here, if anything does: first connection that
   ## gives, free arm past shoulder's edge, any arm through body or arm, or joined hands
@@ -2059,7 +2070,7 @@ proc gives*(couple: Couple): Stop =
   ##   Hands under their band are hold at some other height, not this one:
   ##     before this, still whose hands never rose read as holding, and card
   ##     asked over crown was answered by hold at hip.  `SAG` is lift's own
-  ##     slack.
+  ##     slack.  Stop is `Stop.Band`, and not span: hands that sank have not pulled apart.
   for i in 0..<couple.links.len:
     let why = couple.stopOf(i)
     if why != Stop.None: return why
@@ -2071,13 +2082,13 @@ proc gives*(couple: Couple): Stop =
   let is_facing = couple.band == Band.Crown and couple.up <= FACING
   if couple.height >= 1.0 or is_facing:
     let band = couple.bandNow
-    for link in couple.links:
-      for hand in link.ends:
-        let z = carriedOf(couple, hand.body, hand.arm).z
-        if z < band.lower - SAG: return Stop.Span
-        # Facing, hands over crown are hold at some other height too: A09 stood
-        # facing with every hand at 1.90 m and read as holding.
-        if is_facing and z > band.upper + OVER: return Stop.Span
+    if couple.handUnder(band.lower).isSome: return Stop.Band
+    # Facing, hands over crown are hold at some other height too: A09 stood
+    # facing with every hand at 1.90 m and read as holding.
+    if is_facing:
+      for link in couple.links:
+        for hand in link.ends:
+          if carriedOf(couple, hand.body, hand.arm).z > band.upper + OVER: return Stop.Band
   Stop.None
 
 

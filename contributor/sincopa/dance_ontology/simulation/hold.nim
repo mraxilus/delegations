@@ -23,7 +23,8 @@ type
     Swing,  ## Upper arm too far behind or across body, or past shoulder's edge.
     Through,  ## Arm against body.
     Arms,  ## Arm against arm.
-    Crossed  ## Dancer's own arms cross above elbow: elbows out of order, or upper arm on arm.
+    Crossed,  ## Dancer's own arms cross above elbow: elbows out of order, or upper arm on arm.
+    Band  ## Joined hand off its band: under it once risen, or over it facing.
 
 
 func says*(stop: Stop): string =
@@ -38,3 +39,4 @@ func says*(stop: Stop): string =
   of Stop.Through: "arm meets body"
   of Stop.Arms: "arm meets arm"
   of Stop.Crossed: "arms cross above elbow"
+  of Stop.Band: "joined hands leave their band"
