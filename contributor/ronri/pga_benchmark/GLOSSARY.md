@@ -200,7 +200,7 @@ number, and under the conformal metric a complex number.
 _Avoid_: magnitude, dual number, dual scalar
 
 **Motion operator**:
-An even product of reflections in planes or spheres, taken as one element and applied by the
+An even product of reflections in planes or spheres, taken as one element. It acts by the
 sandwich 𝐕 ⟇ 𝐮 ⟇ 𝐕̰. In the rigid algebra it is Lengyel's motor. In the conformal algebra it
 covers translation, rotation, transversion and dilation.
 _Avoid_: versor, even versor, rotor, spinor
