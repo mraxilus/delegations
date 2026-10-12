@@ -191,8 +191,8 @@ suite "Internal: Planner and engine are one rig":
 
   test "judge stops at every arm stood past shoulder's edge, held or free, and names it":
     ## Upper arm past edge by more than `GIVE_EDGE` stops connection holding it, at that end, as
-    ## swing past its range does (`stoppedBy`, `Stop.Swing`).  Free arm past it stops couple
-    ## (`gives`).  Arm inside stops nothing by swing.
+    ## swing past its range does (`stoppedBy`, `Stop.Swing`).  Free arm past it stops couple,
+    ## named by its hand (`stoppedFree`, `gives`).  Arm inside stops nothing by swing.
     ##   Engine's wall keeps every recorded arm inside give, so no recording reaches judge:
     ##     poses here are seeded, and stood where plan places them, nothing stepped.
     ##   Red with no reading of edge in judge: arm past edge and inside both swing ranges
@@ -227,6 +227,7 @@ suite "Internal: Planner and engine are one rig":
         else:
           inc held_inside
           check got.why != Stop.Swing
+      check held_couple.stoppedFree.why == Stop.None
       held_couple.free()
       # Same pose, nothing held: every arm is free.
       var free_couple = build(HUMAN, restStance(HUMAN, plan[0]), Band.Crown, @[], Body.Two)
@@ -239,9 +240,11 @@ suite "Internal: Planner and engine are one rig":
       if past.len > 0:
         inc free_past
         check free_couple.gives == Stop.Swing
+        check free_couple.stoppedFree == (Stop.Swing, past[0])
       else:
         inc free_inside
         check free_couple.gives != Stop.Swing
+        check free_couple.stoppedFree.why == Stop.None
       free_couple.free()
     checkpoint &"held arm stopped by edge alone {held_past}, connection inside {held_inside}, " &
         &"free couple past {free_past}, inside {free_inside}"

@@ -34,6 +34,7 @@ import std/[locks, math]
 
 import ./[body, hold, limb, rig, vector]
 from ./engine import nil
+from ./shoulder import AXES_MEAN, edge, edgeMen, GIVE_EDGE, outside, SPAN_ADULTS, toPolar
 
 
 # Mutable: lock is state by nature.  Global, because every couple on every thread shares
@@ -1176,11 +1177,72 @@ proc carry(couple: Couple) =
         toward = (if want > MUSCLE: wanted * (MUSCLE / want) else: wanted)
       muscle(couple, arm_rig, toward)
 
+func inertiaUpper(rig: Rig): float =
+  ## Upper arm's inertia about shoulder, across its length, kilogram square metres: its
+  ## capsule (`limbOf`) at `DENSITY`, as engine weighs it.
+  ##   Cylinder and two half balls, each about capsule's middle, then carried to shoulder.
+  let
+    (r, h) = (rig.limb, rig.upper - 2.0 * rig.limb)
+    (cylinder, ball) = (DENSITY * PI * r * r * h, DENSITY * 4.0 / 3.0 * PI * r^3)
+    middle = cylinder * (3.0 * r * r + h * h) / 12.0 + 83.0 / 320.0 * ball * r * r +
+        ball * (h / 2.0 + 3.0 * r / 8.0)^2
+  middle + (cylinder + ball) * (rig.upper / 2.0)^2
+
+const SLOPE_SEAM = 1.0
+  ## Radians wall's edge climbs per radian of meridian, back into adults' span from seam at
+  ## 270: one degree for each degree.  Arm carried across seam then meets wall's whole hold
+  ## over `GIVE_EDGE` of its travel, as arm meeting edge head on does: 104 to 113 degrees from
+  ## pole, where step stands, degree of meridian is 0.92 to 0.97 of degree of arc.
+
+func edgeWall(φ: float): float =
+  ## Read edge wall holds arm to on meridian `φ`, radians: shoulder's (`shoulder.edge`), but no
+  ## further from pole than men's edge at seam at 270, climbing `SLOPE_SEAM` back from it.
+  ##   Shoulder's edge steps down there, 8.6 degrees, from adults' to men's.  Wall held to step
+  ##     meets arm carried across it only once it has crossed, past give at once, and judge
+  ##     stops walk at next moment.  Judge reads shoulder's edge as ruled (`isPastEdge`); this
+  ##     edge is wall's alone, and law reaches it (`tests/test_rigid.nim`).
+  let seam = SPAN_ADULTS.upper * PI / 180.0
+  result = edge(φ).θ
+  if φ <= seam: result = min(result, edgeMen(seam) + SLOPE_SEAM * (seam - φ))
+
 proc holdSwing(couple: Couple) =
-  ## Resist upper arm that has gone past extension or adduction.
+  ## Resist upper arm that has gone past extension or adduction, or past shoulder's edge.
   ##   Torque turns arm back toward range it left, about axis that carries its
   ##     own direction toward one it should not have passed.  Body's own terms
   ##     throughout, then back to world, then to engine.
+  ##   Past wall's edge (`edgeWall`), torque turns arm toward pole along its own meridian, by
+  ##     polar margin: every arm, held or free, steered or not.  It grows to what swing's end
+  ##     holds at its give, `GIVE_EDGE` past, about 84 newton metres, and holds that past it.
+  ##     Damper, critical on upper arm's own inertia (`inertiaUpper`), takes off what arm
+  ##     already moves back by.
+  ##     Cost: 2400 newton metres per radian, twelve times `SHOULDER_BACK`, since edge has no
+  ##       ease to lean through first.  At `SHOULDER_BACK` alone, carry and tie pushed arm past
+  ##       give: follow's arm, left to right above from 0.36 m, lay 6.3 degrees past at 0.42 of
+  ##       turn; at this it lies 1.5 past there, inside give, measured 2026-10-11.
+  ##     Cost: wall holds no more than that, so carry and tie can still press arm past give,
+  ##       and judge stops walk there: left to left low from 0.36 m, follow's held arm lay 4.8
+  ##       degrees past at -0.46 of turn, and free one 5.1 at +0.40, measured 2026-10-11.
+  ##     Cost: forearm and hand hang on upper arm, so whole arm is damped under critical: 0.34
+  ##       of it held straight, 0.43 with elbow at right angle, from engine's weighing of each
+  ##       link, 2026-10-11; how arm rings so is unmeasured.  Ratio of two, as engine damps its
+  ##       own limits, is unstable on upper arm alone, computed: torque put on once each step needs
+  ##       `(w h)^2 + 2 z w h` under four, and two gives 4.2.
+  ##   Shoulder's edge steps at seams of `shoulder.SPAN_ADULTS`, 42.1 degrees at 180 and 8.6 at
+  ##     270, and meridian runs along seam, so wall pushes along seam and never across it.
+  ##     Step at 270 is arm across chest at shoulder's height.  Wall's edge climbs back from it
+  ##       (`edgeWall`), so arm carried across seam is held to men's edge before it crosses: in
+  ##       50 walks of left to left above, 4 of 96 crossings landed past give with step, and none
+  ##       of 109 with slope, measured 2026-10-12.
+  ##       Cost: wall leans on arm inside shoulder's edge, on wedge beside seam 9.5 degrees of
+  ##         meridian wide and 8.6 deep at seam, measured 2026-10-12: law holds wedge's width,
+  ##         and its climb across it (`tests/test_rigid.nim`).
+  ##     Step at 180 is left as shoulder's edge has it.  It runs from plumb into trunk: free arm
+  ##       hangs about thirteen degrees out of plumb, against flank, and five inside men's edge,
+  ##       where wall never acts.  Of 300 walks of three holds at torso and 200 of two above,
+  ##       from every distance, none stops at arm just past seam at 180, measured 2026-10-12.
+  ##       Wall's edge climbing back from it at `SLOPE_SEAM` would lean on arms in front of plumb
+  ##       over up to 42 degrees of meridian, and would move holds at torso: so laid, left to
+  ##       right low leapt 180 mm where it leaps 137, measured 2026-10-11.
   for who in Body:
     let axes = axesOf(couple.chestStance(who))
     for arm in Arm:
@@ -1207,6 +1269,8 @@ proc holdSwing(couple: Couple) =
         lean_across = across - (across_range.upper - across_range.ease_upper)
         out_extend = extend - extend_range.upper
         out_across = across - across_range.upper
+        polar = toPolar(direction)
+        out_edge = polar.θ - edgeWall(polar.φ)
       # Lean through ease is comfort, which plan already holds when couple are steered;
       # wall past end is range, and holds always.
       if lean_extend > 0.0 and not couple.is_steered:
@@ -1217,6 +1281,29 @@ proc holdSwing(couple: Couple) =
         back = back + cross(direction, (0.0, 1.0, 0.0)) * (SHOULDER_BACK * out_extend)
       if out_across > 0.0:
         back = back + cross(direction, (1.0, 0.0, 0.0)) * (SHOULDER_BACK * out_across)
+      # Edge has no ease, since no source gives width of one: its wall holds at its give
+      # what swing's end holds at its own, ease and wall together, and no more past it, where
+      # judge has stopped walk.  Pole's far end lies on every meridian, and no way back from
+      # it is nearer; arm there is left to judge.
+      let
+        give_extend = GIVE * extend_range.ease_upper
+        held = SWING_LEAN * (extend_range.ease_upper + give_extend) + SHOULDER_BACK * give_extend
+        toward_pole = cross(direction, AXES_MEAN[2])
+      if out_edge > 0.0 and dot(toward_pole, toward_pole) > 1e-12:
+        # Damped critically on upper arm's own inertia, so arm meeting wall comes to rest on it
+        # and is not thrown back.  Angular velocity is pseudovector, so left arm's is mirrored as
+        # torque is below.
+        let
+          axis = unit(toward_pole)
+          spin_world = asWorld(engine.spinOf(arm_rig.link[Limb.Upper])) -
+              asWorld(engine.spinOf(couple.who[who].chest))
+          spin_body: Vector = (dot(spin_world, axes.right), dot(spin_world, axes.fore),
+                               spin_world.z)
+          spin: Vector = (if arm == Arm.Left: (x: spin_body.x, y: -spin_body.y, z: -spin_body.z)
+                          else: spin_body)
+          damping = 2.0 * sqrt(held / GIVE_EDGE * inertiaUpper(couple.rig))
+          push = held * min(1.0, out_edge / GIVE_EDGE) - damping * dot(spin, axis)
+        if push > 0.0: back = back + axis * push
       if back.x != 0.0 or back.y != 0.0 or back.z != 0.0:
         # Torque is pseudovector.  Mirrored frame is left handed, so cross product
         # worked out in it comes back negated: un-mirroring it as plain vector
@@ -1842,20 +1929,27 @@ func restStance*(rig: Rig, apart: float, is_away = false): array[Body, Stance] =
   result = facing(rig, apart)
   if is_away: result = turned(result, Body.Two, 0.5)
 
+func isPastEdge(stance: Stance, arm: Arm, pose: ArmPose): bool =
+  ## Decide whether upper arm lies past shoulder's edge by more than its give, `GIVE_EDGE`.
+  outside(axesOf(stance), arm, pose).angle > GIVE_EDGE
+
 proc stoppedBy*(couple: Couple, i: int): tuple[why: Stop, end_index: int] =
   ## What stops this connection here, if anything does, and at which of its two arms.
   ##   Swing is asked first and whatever hands are doing, because engine was never
   ##     given it: nothing else in model holds extension or adduction, so asking
   ##     only once hands had parted left them unheld through every hold that stood.
+  ##     Swing is also upper arm past shoulder's edge by more than its give (`shoulder`).
   ##   Everything else engine itself enforces, so it can only be reached by hands
   ##     coming apart, and then engine's own joints say which gave.
   let pose = poseOf(couple, i)
   for k in 0..1:
     let
       hand = couple.links[i].ends[k]
-      arm_joints = joints(couple.chestStance(hand.body), hand.arm, pose.arms[k])
+      stance = couple.chestStance(hand.body)
+      arm_joints = joints(stance, hand.arm, pose.arms[k])
     if margin(couple.rig.range[Dof.Extend], arm_joints.extend) < -GIVE or
-        margin(couple.rig.range[Dof.Across], arm_joints.across) < -GIVE:
+        margin(couple.rig.range[Dof.Across], arm_joints.across) < -GIVE or
+        isPastEdge(stance, hand.arm, pose.arms[k]):
       return (Stop.Swing, k)
   let deep = deepest(couple, i)
   if deep.depth > THROUGH:
@@ -1877,6 +1971,18 @@ proc stoppedBy*(couple: Couple, i: int): tuple[why: Stop, end_index: int] =
 
 proc stopOf*(couple: Couple, i: int): Stop = stoppedBy(couple, i).why
   ## What stops this connection here, if anything does.
+
+proc stoppedFree*(couple: Couple): tuple[why: Stop, whose: Hand] =
+  ## What stops couple at arm that holds nothing, if anything does, and whose: its upper arm
+  ## past shoulder's edge by more than its give, as `stoppedBy` asks of held arm.
+  ##   Free arm is arm as much as held one: wall holds it (`holdSwing`), and arm hanging
+  ##     where no shoulder takes it is pose no couple stand in.
+  for who in Body:
+    for arm in Arm:
+      if couple.isHeld(who, arm): continue
+      if isPastEdge(couple.chestStance(who), arm, couple.armPoseOf(who, arm)):
+        return (Stop.Swing, (who, arm))
+  (Stop.None, (Body.One, Arm.Left))
 
 const
   FACING* = 0.05  ## Of way up (`up`), within which couple count as facing and
@@ -1943,8 +2049,8 @@ proc crossed*(couple: Couple): bool = couple.crossing.is_crossed
 
 proc gives*(couple: Couple): Stop =
   ## What stops couple's pose here, if anything does: first connection that
-  ## gives, any arm through body or arm, or joined hands that never reached
-  ## their band once couple are no longer face to face.
+  ## gives, free arm past shoulder's edge, any arm through body or arm, or joined hands
+  ## that never reached their band once couple are no longer face to face.
   ##   Couple with nothing held were never asked: two free frames stood Face-to-back
   ##     chest to back with follow's arm crushed between two torsos, and read as
   ##     holding since no connection could give.
@@ -1955,6 +2061,8 @@ proc gives*(couple: Couple): Stop =
   for i in 0..<couple.links.len:
     let why = couple.stopOf(i)
     if why != Stop.None: return why
+  let free = couple.stoppedFree
+  if free.why != Stop.None: return free.why
   let deep = deepest(couple, -1)
   if deep.depth > THROUGH: return deep.met
   if couple.crossed: return Stop.Crossed

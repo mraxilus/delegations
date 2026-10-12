@@ -343,7 +343,8 @@ iterator stands*(rig: Rig): float =
 
 proc momentOf(couple: Couple, at: float): tuple[moment: Moment, why: Stop, which: int,
                                            whose: Hand] =
-  ## Read every connection at this moment, and say what gave, if anything.
+  ## Read every connection at this moment, and say what gave, if anything: connection, or
+  ## free arm, which names no connection (`rigid.stoppedFree`).
   result.moment = Moment(at: at, stance: couple.chestStances, room: Inf)
   for shape in couple.shapes:
     if shape.mark == Mark.Trunk:
@@ -373,6 +374,9 @@ proc momentOf(couple: Couple, at: float): tuple[moment: Moment, why: Stop, which
         result.why = gave
         result.which = i
         result.whose = couple.links[i].ends[end_index]
+  # Free arm gives too, and no connection is it.
+  if result.why == Stop.None:
+    (result.why, result.whose) = couple.stoppedFree
 
 proc walkedOf*(
   rig: Rig;

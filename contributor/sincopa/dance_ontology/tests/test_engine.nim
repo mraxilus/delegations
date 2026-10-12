@@ -91,6 +91,28 @@ suite "Internal: The engine this project turns couples with":
     check apart >= 2.0 * 0.045
 
 
+  test "body given angular velocity reads it back, and keeps it with nothing on it":
+    ## Wall of shoulder's edge damps upper arm by its angular velocity (`rigid.holdSwing`):
+    ##   read wrong, it damps arm toward nothing, or throws it.  About capsule's own length,
+    ##   axis it keeps steadily, capsule keeps angular velocity through step with no damping
+    ##   set.
+    let
+      world_id = world()
+      body = capsule(world_id, 0.0)
+      spin = initVector(0.5, -1.25, 2.0)
+    setSpin(body, spin)
+    let read = spinOf(body)
+    check abs(float(read.x - spin.x)) < 1e-6
+    check abs(float(read.y - spin.y)) < 1e-6
+    check abs(float(read.z - spin.z)) < 1e-6
+    setSpin(body, initVector(0, 1.5, 0))
+    step(world_id, cfloat(1.0 / 240.0), 8)
+    let kept = spinOf(body)
+    checkpoint("angular velocity after step " & $kept.x & ", " & $kept.y & ", " & $kept.z)
+    check abs(float(kept.y) - 1.5) < 1e-3
+    check abs(float(kept.x)) < 1e-6 and abs(float(kept.z)) < 1e-6
+
+
   test "body touched by more things than eight reports every one":
     ## Contacts are read into room caller gives, and rest are dropped unsaid.
     ##   Forearm wound into chain touches nine things at once, and asked with room
