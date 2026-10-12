@@ -1,54 +1,54 @@
 {
   "docket": {
     "url": "https://claude.ai/artifact/XyT583x9RnTKixers2q4gT",
-    "digest": "3d9c8373c2fcad24"
+    "digest": "6e2a17aad5fd17d3"
   },
   "marginalia": {
     "url": "https://claude.ai/artifact/6WwLfdHiisCtGWUcFxibBM",
-    "digest": "1134f8d78f1a9fe1"
+    "digest": "6ee24502adb50e07"
   },
   "cayley-derivation": {
     "url": "https://claude.ai/artifact/2fi2hTpobqChXSTPq4vB6q",
-    "digest": "619e8986b9dbdcdf"
+    "digest": "ebb87a020ae2ca89"
   },
   "typed-multivectors": {
     "url": "https://claude.ai/artifact/V34TAWXNvrHBGN9fNBWYWX",
-    "digest": "1b2495c042ec007b"
+    "digest": "17fc24e612400a32"
   },
   "partner-sign": {
     "url": "https://claude.ai/artifact/2fUYLonsQo7ejouCvCnpWf",
-    "digest": "be7c372faf907469"
+    "digest": "24679785bf7352a3"
   },
   "exact-kinds": {
     "url": "https://claude.ai/artifact/UPfjVLGbsVLBz756DMkPJe",
-    "digest": "89d391206fd51b7d"
+    "digest": "b9745bc127a35248"
   },
   "multivector-align": {
     "url": "https://claude.ai/artifact/AB3BNtWPEzguWswwnx5ckh",
-    "digest": "a53aa0223a7024eb"
+    "digest": "3a4f35788dcf7539"
   },
   "proposals": {
     "url": "https://claude.ai/artifact/CW9ZL5eotsVYrZPjMnTLoG",
-    "digest": "e5eeec1f9ee59f53"
+    "digest": "3ba4d24698079685"
   },
   "float-width": {
     "url": "https://claude.ai/artifact/Q3R1yz93Drk7Cwq5qhymDZ",
-    "digest": "972092410caf599d"
+    "digest": "f65979ca646b25fb"
   },
   "part-scale": {
     "url": "https://claude.ai/artifact/6hW9rjiotnjdjBVwatW5Dj",
-    "digest": "8a0472ad7a7831c3"
+    "digest": "7fc1fd06ea5d6239"
   },
   "compound-tables": {
     "url": "https://claude.ai/artifact/TczTs551nkXVaWiyHzfVAn",
-    "digest": "e534624109251296"
+    "digest": "ebd235e3393291d7"
   },
   "object-names": {
     "url": "https://claude.ai/artifact/XtPy7LToDTT2P8S1FfGauX",
-    "digest": "6f143e038174ebb9"
+    "digest": "ea32674a5d739966"
   },
-  "magnitude": {
+  "homogeneous-scalar": {
     "url": "https://claude.ai/artifact/5NwSv2YW9ZfDa5BbbVrv1D",
-    "digest": "0a0793fe023becde"
+    "digest": "69fd7de93c32279a"
   }
 }
