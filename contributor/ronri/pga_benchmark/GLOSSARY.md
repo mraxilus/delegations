@@ -193,6 +193,17 @@ _Avoid_: carry, port, rebase, re-pin
 One measured setting, a dimension count and a metric, such as `rga4d`.
 _Avoid_: configuration, config, target, signature
 
+**Basis-set type**:
+A type that holds the coefficients of one set of bases alone, dense in basis order, as
+`MultivectorOf[B]` of P04 does. A named one is an alias of a set, such as `Kvector2`. An exact
+one holds the bases that a product reaches.
+_Avoid_: kind, exact kind, named kind
+
+**Comparison tolerance**:
+The bound under which `=~` counts two coefficients equal and `grade` counts one as zero. It is
+1e-9 at 64 bits and 1e-4 at 32 bits, times a scale that each rule chooses.
+_Avoid_: tolerance, alone in this sense; places
+
 **Homogeneous scalar**:
 The pair x𝟏 + y𝟙 of a scalar and an antiscalar. It stands for the value x/y kept with its weight
 y, as a homogeneous point keeps a position with its weight. Under the rigid metric it is a dual
