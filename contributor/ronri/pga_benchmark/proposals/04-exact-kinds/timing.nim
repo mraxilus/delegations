@@ -36,8 +36,8 @@ template timeRounds(label: string, loop: untyped) =
   echo label, " ", formatFloat(rounds[ROUNDS div 2], ffDecimal, 3)
 
 
-template defineKind(name: untyped, count: static int, alignment: static int) =
-  ## Define kind of `count` floats at one of four alignments, with sum and negation.
+template declareKind(name: untyped, count: static int, alignment: static int) =
+  ## Declare kind of `count` floats at one of four alignments, with sum and negation.
   ##   Operators return by value and loop each slot, as library writes its own.
   when alignment == 8:
     type name = object
@@ -81,16 +81,16 @@ template timeKind(K: typedesc, label: string) =
     run(pool, results)
 
 
-defineKind(Kind3Natural, 3, 8); defineKind(Kind3Line16, 3, 16); defineKind(Kind3Line64, 3, 64)
-defineKind(Kind4Natural, 4, 8); defineKind(Kind4Line16, 4, 16); defineKind(Kind4Line64, 4, 64)
-defineKind(Kind4Line32, 4, 32)
-defineKind(Kind5Natural, 5, 8); defineKind(Kind5Line16, 5, 16); defineKind(Kind5Line64, 5, 64)
-defineKind(Kind6Natural, 6, 8); defineKind(Kind6Line16, 6, 16); defineKind(Kind6Line64, 6, 64)
-defineKind(Kind8Natural, 8, 8); defineKind(Kind8Line16, 8, 16); defineKind(Kind8Line64, 8, 64)
-defineKind(Kind10Natural, 10, 8); defineKind(Kind10Line16, 10, 16)
-defineKind(Kind10Line64, 10, 64)
-defineKind(Kind16Natural, 16, 8); defineKind(Kind16Line16, 16, 16)
-defineKind(Kind16Line64, 16, 64)
+declareKind(Kind3Natural, 3, 8); declareKind(Kind3Line16, 3, 16); declareKind(Kind3Line64, 3, 64)
+declareKind(Kind4Natural, 4, 8); declareKind(Kind4Line16, 4, 16); declareKind(Kind4Line64, 4, 64)
+declareKind(Kind4Line32, 4, 32)
+declareKind(Kind5Natural, 5, 8); declareKind(Kind5Line16, 5, 16); declareKind(Kind5Line64, 5, 64)
+declareKind(Kind6Natural, 6, 8); declareKind(Kind6Line16, 6, 16); declareKind(Kind6Line64, 6, 64)
+declareKind(Kind8Natural, 8, 8); declareKind(Kind8Line16, 8, 16); declareKind(Kind8Line64, 8, 64)
+declareKind(Kind10Natural, 10, 8); declareKind(Kind10Line16, 10, 16)
+declareKind(Kind10Line64, 10, 64)
+declareKind(Kind16Natural, 16, 8); declareKind(Kind16Line16, 16, 16)
+declareKind(Kind16Line64, 16, 64)
 
 
 proc main() =

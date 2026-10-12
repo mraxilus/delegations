@@ -106,7 +106,7 @@ func kindOf(reach: set[Basis]): string {.compileTime.} =
   "Multivector"
 
 
-macro emitProduct(
+macro defineProduct(
   cayley: static Cayley2D; bases_m, bases_n: static set[Basis]; m, n: untyped
 ): untyped =
   ## Emit block computing product over operands' bases alone, typed as smallest kind.
@@ -140,12 +140,12 @@ macro emitProduct(
 
 func `∧`*[M, N: SomeMultivector](m: M, n: N): auto =
   ## Multiply through exterior product; result is smallest kind holding reach.
-  emitProduct(CAYLEYS_WEDGE.base, bases(M), bases(N), m, n)
+  defineProduct(CAYLEYS_WEDGE.base, bases(M), bases(N), m, n)
 
 
 func `⟇`*[M, N: SomeMultivector](m: M, n: N): auto =
   ## Multiply through geometric antiproduct; result is smallest kind holding reach.
-  emitProduct(CAYLEYS_WEDGE_DOT.anti, bases(M), bases(N), m, n)
+  defineProduct(CAYLEYS_WEDGE_DOT.anti, bases(M), bases(N), m, n)
 
 
 func toMultivector*[T: SomeMultivector](m: T): Multivector =
