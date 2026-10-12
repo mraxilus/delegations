@@ -23,7 +23,8 @@ A joint resists as it comes near the end of its range, and does not stop at a wa
 shoulder has no ease, because no source gives one, so a stiff wall holds every upper arm there, held
 or free. A turn is walked a fiftieth of a turn at a time, and the engine carries the arms on. So an
 arm that has gone round a body stays round it. Where the couple stand is chosen for each turn, and
-nothing is fixed except that the two bodies stay apart.
+nothing is fixed except that the two bodies stay apart. Over the crown, a joined hand that sinks
+under the band stops the walk once the couple are not face to face.
 
 Where the walk gives short, the turn is planned. The plan chooses every joint of both arms at each
 moment, and keeps every capsule clear and every joint in its range. The engine then follows the
