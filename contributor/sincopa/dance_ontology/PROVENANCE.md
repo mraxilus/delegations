@@ -1580,9 +1580,13 @@ still. A joined hand that sinks under the `Crown` band by more than `SAG` stops 
 holds from a quarter turn away from face to face (`up` whole), at every wind.
 
 One rule serves the still and the walk (`handUnder`). It reads the point where each hand is
-carried, as the laws of the stills do, and not the join. On the way back, the still holds the band
-from an eighth of a turn away. The walk does not, because the ruling holds the hands up only while
-the couple are not face to face (Open questions).
+carried, as the laws of the stills do, and not the join.
+
+**Face to face ends a quarter of a turn away, as the judge of the walk reads it (pull request
+629, D2).** The Architect ruled on 2026-10-12. From a quarter turn away from face to face, the
+joined hands must be above, as the judge of the walk reads it. The law of the hands keeps that
+reading, and its doc says so. On the way back, the still holds the band from an eighth of a turn
+away (`height`), and the walk and the law do not.
 
 The stop has a name of its own, `Stop.Band`, which says that the joined hands leave their band.
 The still gives it too. Rejected: the name of a span, which says that the hands pull apart because
@@ -3131,14 +3135,7 @@ to tidy the line away shows up only as suites that fail to build. `result +=` on
   the lead at 1.680 m, also under the band. Measured 2026-10-12 in `design/rig.json`. Read with that
   moment, the law of the hands fails on it alone, of 824 moments.
 
-  The same law reads the hands from a quarter of a turn away from face to face, as the walk holds
-  them. On the way back, the still holds them from an eighth. Coming back between an eighth and a
-  quarter, 174 moments of the two recordings hold every joined hand in the band. Going out, the
-  hands still rise on their ramp there (`RAISE`), and 218 of 247 moments hold a hand under the
-  band. Measured 2026-10-12 by a probe outside the tree.
-
-  The Architect rules three things. Does a sweep keep the moment of its stop? Does each law read
-  it? Does face to face end an eighth or a quarter of a turn away?
+  The Architect rules two things. Does a sweep keep the moment of its stop? Does each law read it?
 - **Where the walk falls short over the crown, no plan carries the sweep (#611, D2).** The walk now
   keeps the joined hands over the crown (Walk and lift), and stops where a hand sinks. On the wall
   with its slope at 270, the cross-name chain held above then turns to 1.26, where it turned to 1.60
