@@ -3,14 +3,15 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[json, math, options, strformat, strutils, tables, unittest]
+import std/[algorithm, json, math, options, os, sets, strformat, strutils, tables, unittest]
 
 import ../../design/[asks, modelled, parts, rig_page, twins, watch]
 from ../../design/rig as recording import KEPT_RIG, rigStamp
 import ../../simulation/[body, hold, limb, read, rig, vector, words]
 from ../../simulation/plan import isMirrorSame
 from ../../simulation/rigid import ELBOW_END, ELBOWS_APART, faceCapsule, Mark, ON_UPPER,
-  restStance, trunkCapsules
+  restStance, SAG, trunkCapsules
+from ../../simulation/rigid {.all.} import RAISE
 from ../../simulation/walk import mirrored, stands, STYLES, twinOf
 import ../../src/dance_ontology/rotation
 from ../../src/dance_ontology/draw/pose import relative
@@ -26,6 +27,21 @@ const
                     ## 0.14 m by ANSUR II.  Estimate and not tape.
   FACE_SLOP = 0.005  ## Metres arm may sit inside face: engine's own linear slop, which it never
                     ## resolves (`test_rigid.SLOP`).
+  KEPT_TURNS = KEPT_RIG.parentDir / "turns.json"
+    ## Recording of whole-cloth page, beside rig's.  Sibling: `test_shoulder.KEPT_TURNS`.
+  PLACE_RIG = 1e-4  ## Metres rig's recording rounds every figure to (`design/rig.PLACE`).
+  PLACE_TURNS = 1e-3  ## Metres whole-cloth recording rounds every point to (`turns.toMillimetres`).
+  FLOOR_AWAY_RIG = 106
+    ## Least moments past face to face law on hands over crown reads from rig's sweeps over
+    ##   crown: half of 213 read 2026-10-12, on recording of wall on step.  Fix may stop sweep
+    ##   early or carry it further; reader that loses its way, by wrong rest or wrong keys, reads
+    ##   nearly none.
+  FLOOR_AWAY_TURNS = 340  ## Same, from whole-cloth recording's six holds over crown: half of 680.
+
+
+type Lifted = tuple[card: string, at: float, who: Body, arm: Arm, z: float]
+  ## One joined hand at one recorded moment past face to face: card, turns from rest, whose
+  ## hand, and height it is carried at (`limb.carriedOf`).
 
 
 func arranged(stance: array[Body, Stance]): tuple[axis, facing: float] =
@@ -180,6 +196,105 @@ func isCrossed(recording, frame: JsonNode): bool =
           (1.0 - met.t) * distance(upper.a, upper.z) > ELBOW_END:
         return true
   false
+
+
+func awayOf(at: float, is_away: bool): float =
+  ## How far couple are from face to face at `at` turns from rest, in turns, nought to half: hips'
+  ## wind, as `rigid.awayFrom` reads it, half turn more where rest is Face-to-back.
+  let turned = floorMod(at + (if is_away: 0.5 else: 0.0), 1.0)
+  min(turned, 1.0 - turned)
+
+func roundedUnder(place, line, along: float): float =
+  ## Metres point carried `along` past first of two recorded points, on their line, may read
+  ## under engine's own: each figure rounded to `place`, two points at least `line` apart.
+  ##   First point's own rounding, and turn of line by both points' rounding across it.
+  place / 2.0 + along * sqrt(3.0) * place / line
+
+func liftedRig(recording: JsonNode): tuple[hands: seq[Lifted], moments: int] =
+  ## Every joined hand of one rig sweep at every moment couple are `RAISE` or more from face to
+  ## face, where it is carried: middle of its hand's three capsules (`rigid.handCapsules`), run
+  ## back its radius to wrist, then `rig.carry` along it, as `limb.carriedOf` reads it.
+  ##   Joined hand is one of each dancer whose line passes nearest each join at rest.  Rest is
+  ##     Face-to-back where two chests face one way at nought.
+  ##   Sweep that stops keeps moment it stops at (`seen.shownAsked`), where walk gave: that one
+  ##     is left out, so moments read are those walk holds, as whole-cloth recording keeps them.
+  let
+    card = recording["hold"].getStr & " · " & recording["band"].getStr
+    tags = recording["tag"].getElems
+    (look, joins) = (recording["faces"][0], recording["joins"][0])
+    is_away = look[2].getFloat * look[6].getFloat + look[3].getFloat * look[7].getFloat > 0.0
+  var middle: array[Body, array[Arm, int]]
+  for who in Body:
+    for arm in Arm:
+      var seen = 0
+      for i, tag in tags:
+        if tag[0].getInt != ord(who) or tag[1].getInt != ord(arm) or
+            tag[2].getInt != ord(Mark.Palm): continue
+        if seen == 1: middle[who][arm] = i
+        inc seen
+  # Name each join's two hands at rest.
+  var held: seq[Hand]
+  for j in 0 ..< joins.len div 3:
+    let join: Vector = (joins[3*j].getFloat, joins[3*j+1].getFloat, joins[3*j+2].getFloat)
+    for who in Body:
+      var (nearest, gap) = (Arm.Left, Inf)
+      for arm in Arm:
+        let
+          line = capsuleAt(recording["points"][0], middle[who][arm])
+          off = closest(join, join, line.a, line.z).gap
+        if off < gap: (nearest, gap) = (arm, off)
+      held.add (who, nearest)
+  let held_moments = recording["at"].len - (if recording["stopped"].getBool: 1 else: 0)
+  for m in 0..<held_moments:
+    let at = recording["at"][m].getFloat
+    if awayOf(at, is_away) < RAISE: continue
+    inc result.moments
+    for hand in held:
+      let
+        i = middle[hand.body][hand.arm]
+        (a, z) = capsuleAt(recording["points"][m], i)
+        carried = a + unit(z - a) * (HUMAN.carry - recording["radii"][i].getFloat)
+      result.hands.add (card, at, hand.body, hand.arm, carried.z)
+
+func liftedTurns(kept: JsonNode): tuple[hands: seq[Lifted], moments: int] =
+  ## Every joined hand of each hold over crown of whole-cloth recording, both ways, at every
+  ## moment couple are `RAISE` or more from face to face, where it is carried: `rig.carry` past
+  ## wrist toward join (`limb.carriedOf`).  Lead's points run shoulder to join, and follow's
+  ## join to shoulder, in whole millimetres (`design/turns`).
+  ##   Rest is Face-to-back where two chests face one way at nought.
+  func pointOf(figures: JsonNode): Vector =
+    (figures[0].getFloat / 1000.0, figures[1].getFloat / 1000.0, figures[2].getFloat / 1000.0)
+
+  for key, sweep in kept["sweeps"].pairs:
+    if not key.endsWith("|above"): continue
+    let parts = key.split('|')[0].split('.')
+    var is_away = false
+    for frame in sweep["frames"]:
+      if frame["turn"].getFloat != 0.0: continue
+      let bodies = frame["bodies"]
+      is_away = cos(bodies[0]["facing"].getFloat - bodies[1]["facing"].getFloat) > 0.0
+    for frame in sweep["frames"]:
+      let at = frame["turn"].getFloat
+      if awayOf(at, is_away) < RAISE: continue
+      inc result.moments
+      for i, connection in frame["connections"].getElems:
+        let
+          lead_arm = (if parts[i][0] == 'L': Arm.Left else: Arm.Right)
+          follow_arm = (if parts[i][2] == 'l': Arm.Left else: Arm.Right)
+          lead = ArmPose(wrist: pointOf(connection["lead"][2]),
+                         join: pointOf(connection["lead"][3]))
+          follow = ArmPose(wrist: pointOf(connection["follow"][1]),
+                           join: pointOf(connection["follow"][0]))
+        result.hands.add (key.replace('|', ' '), at, Body.One, lead_arm, carriedOf(HUMAN, lead).z)
+        result.hands.add (key.replace('|', ' '), at, Body.Two, follow_arm,
+                          carriedOf(HUMAN, follow).z)
+
+func named(hand: Lifted): string =
+  ## Name joined hand at one moment as pages name it: card, whose hand, turns, and height.
+  let
+    who = (if hand.who == Body.One: "lead" else: "follow")
+    arm = (if hand.arm == Arm.Left: "left" else: "right")
+  &"{hand.card} {who} {arm} {hand.at:+.2f}: {hand.z:.3f} m"
 
 
 
@@ -530,6 +645,101 @@ suite "Internal: Simulation against reference":
         &"`{deepest}` m: " & inside[0..<min(inside.len, 12)].join(" ")
     check moments >= stillAsks().len
     check inside.len == 0
+
+
+  test "joined hands stay over crown in every moment walk holds past face to face":
+    ## Architect, issue 611, 2026-10-11: once couple are not face to face, hands stay above heads
+    ##   in every moment of sweep, and not in stills alone (`test_rigid.nim`, still laws).  Read as
+    ##   those read it: each joined hand carried no lower than crown band less `SAG`, once couple
+    ##   are `RAISE` of turn or more from face to face, where `rigid.up` is whole.  Hips' wind says
+    ##   so, as judge reads it, and chest, which waist turns off hips, does not.
+    ##   Carried point is read (`limb.carriedOf`), and not join: ruling quotes band, 1.735 to
+    ##     2.00 m, and join may sit under it while carried point is inside, as in stills.
+    ##   Domain: every moment of every sweep over crown both recordings keep, rig's four and six
+    ##     holds of whole-cloth page both ways, each yielding at least its floor.  Moments are
+    ##     those walk holds: rig's sweep keeps moment it stops at too (`seen.shownAsked`), where
+    ##     something gave, and that one is not read (`liftedRig`).
+    ##     Cost: viewer draws that moment, hands and all, under words of its stop; law of
+    ##       shoulder's edge reads it (`test_shoulder.nim`), and Architect rules which holds.
+    ##     Cost: still holds band coming back from eighth of turn away (`rigid.height`), and this
+    ##       reads from quarter, as walk's judge does; Architect rules where face to face ends.
+    ##     Cost: law reads hands of moments walk holds, and not how far walk turns, so sweep cut
+    ##       short where hand sinks passes as one carried on with hands lifted.
+    ##   Each recording rounds its figures, so hand may read under engine's own by its rounding
+    ##     (`roundedUnder`): hand gripped palm deep, nearest its wrist, turns most.
+    ##   Regression of issue 611, as found on 2026-10-11, each card kept and its quoted hand read
+    ##     wherever its moment is still recorded:
+    ##     L-l above at -0.40: follow's left hand at 1.363 m; R-r above at +0.40 is its mirror.
+    ##     L-r above at +1.42: follow's right hand at 1.405 m.
+    ##     `One hand, cross name · above` at +1.42: follow's right hand at 1.406 m.
+    ##     L-l.R-r above at -1.86: lead's right hand at 1.667 m.
+    ##     L-r.R-l above and `Chain, cross name · above` at +0.60: follow's left hand at 1.696 m.
+    ##   Red before its fix, read 2026-10-12 on recording of wall with slope at 270 alone: 205 of
+    ##     881 moments, 64 of rig's 212 and 141 of whole-cloth recording's 669, lowest hand at
+    ##     1.363 m.  On recording of wall on step, 137 of 893.
+    let
+      (rig, turns) = (parseFile(KEPT_RIG), parseFile(KEPT_TURNS))
+      floor_crown = HUMAN.band[Band.Crown].lower - SAG
+      under_rig = roundedUnder(PLACE_RIG, gripAtPalm(HUMAN), HUMAN.carry - handThick(HUMAN) / 2.0)
+      under_turns = roundedUnder(PLACE_TURNS, gripAtPalm(HUMAN), HUMAN.carry)
+      quoted = [
+        (card: "L-l above", at: -0.40, who: Body.Two, arm: Arm.Left),
+        (card: "R-r above", at: 0.40, who: Body.Two, arm: Arm.Right),
+        (card: "L-r above", at: 1.42, who: Body.Two, arm: Arm.Right),
+        (card: "One hand, cross name · above", at: 1.42, who: Body.Two, arm: Arm.Right),
+        (card: "L-l.R-r above", at: -1.86, who: Body.One, arm: Arm.Right),
+        (card: "L-r.R-l above", at: 0.60, who: Body.Two, arm: Arm.Left),
+        (card: "Chain, cross name · above", at: 0.60, who: Body.Two, arm: Arm.Left),
+      ]
+    var
+      cards: HashSet[string]
+      got_rig: tuple[hands: seq[Lifted], moments: int]
+    for sweep in rig["sweeps"]:
+      if sweep["band"].getStr != "above": continue
+      cards.incl sweep["hold"].getStr & " · above"
+      if not sweep.hasKey("at"): continue
+      let got = liftedRig(sweep)
+      got_rig.hands.add got.hands
+      got_rig.moments += got.moments
+    for key in turns["sweeps"].keys:
+      if key.endsWith("|above"): cards.incl key.replace('|', ' ')
+    let got_turns = liftedTurns(turns)
+    var
+      under: seq[Lifted]
+      moments_under: HashSet[(string, float)]
+      by_card: CountTable[string]
+    for (hands, bound) in [(got_rig.hands, floor_crown - under_rig),
+                           (got_turns.hands, floor_crown - under_turns)]:
+      for hand in hands:
+        if hand.z >= bound: continue
+        under.add hand
+        if (hand.card, hand.at) notin moments_under: by_card.inc hand.card
+        moments_under.incl (hand.card, hand.at)
+    under.sort(proc (a, b: Lifted): int = cmp(a.z, b.z))
+    by_card.sort
+    var shown: seq[string]
+    for card, count in by_card: shown.add &"{card} {count}"
+    var worst: seq[string]
+    for hand in under[0..<min(under.len, 12)]: worst.add hand.named
+    checkpoint &"Moments past face to face read: `{got_rig.moments}` of rig's sweeps over crown, " &
+        &"`{got_turns.moments}` of whole-cloth recording; hands read under `{floor_crown:.3f}` m " &
+        &"less `{under_rig * 1000.0:.2f}` and `{under_turns * 1000.0:.2f}` mm of rounding."
+    check got_rig.moments >= FLOOR_AWAY_RIG
+    check got_turns.moments >= FLOOR_AWAY_TURNS
+    checkpoint &"`{moments_under.len}` of `{got_rig.moments + got_turns.moments}` moments hold " &
+        "joined hand under crown band.\n    By card: " & shown.join(", ") & ".\n" &
+        "    Lowest:\n      " & worst.join("\n      ")
+    for (card, at, who, arm) in quoted:
+      var (in_range, found) = (0, 0)
+      for hand in got_rig.hands & got_turns.hands:
+        if hand.card != card or abs(hand.at - at) > 1e-9: continue
+        inc in_range
+        if hand.who == who and hand.arm == arm: inc found
+      checkpoint &"Quoted: `{card}`, {who} {arm} at {at:+.2f}: `{found}` of `{in_range}` " &
+          "joined hands read there."
+      check card in cards
+      if in_range > 0: check found > 0
+    check moments_under.len == 0
 
 
   test "every still crosses arms below elbow alone, in every moment":
