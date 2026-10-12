@@ -8,6 +8,8 @@ import std/[algorithm, json, math, options, os, sequtils, sets, strformat, strut
 
 import ../../design/[asks, modelled, parts, rig_page, twins, watch]
 from ../../design/rig as recording import KEPT_RIG, rigStamp
+from ../../design/rig {.all.} import SHOWN
+from ../../design/turns as whole_cloth import nil
 import ../../simulation/[body, hold, limb, read, rig, vector, words]
 from ../../simulation/plan import isMirrorSame
 from ../../simulation/rigid import ELBOW_END, ELBOWS_APART, faceCapsule, Mark, ON_UPPER,
@@ -38,6 +40,28 @@ const
     ##   early or carry it further; reader that loses its way, by wrong rest or wrong keys, reads
     ##   nearly none.
   FLOOR_AWAY_TURNS = 340  ## Same, from whole-cloth recording's six holds over crown: half of 680.
+  PLACE_TURN_RIG = 1e-4  ## Turns rig's recording rounds each moment's turn to (`design/rig.PLACE`).
+  PLACE_TURN_TURNS = 1e-3  ## Same, whole-cloth recording's (`design/turns.frame`).
+  REACHES_PLANNED = [
+    (hold: "L-l", negative: 2.5, positive: 2.5),
+    (hold: "R-r", negative: 2.5, positive: 2.5),
+    (hold: "L-r", negative: 2.5, positive: 2.5),
+    (hold: "R-l", negative: 2.5, positive: 2.5),
+    (hold: "L-l.R-r", negative: 2.5, positive: 2.5),
+    (hold: "L-r.R-l", negative: 1.5275, positive: 1.5275),
+  ]
+    ## Turns plan carries each hold over crown each way from rest, follow turning: furthest of
+    ##   every style toward 2.5 turns, own path and its mirror's (`walk.pathsFor`), engine standing
+    ##   each moment (`walk.replay`, `rigid.gives`).  2.5 is all sweep asks (`walk.MOST`).
+    ##   Measured 2026-10-12 by probe outside tree, on physics of `bc656d30`, each path standing
+    ##     every moment it planned:
+    ##     L-l: style 0 to +2.5, style 11 to -2.5.  R-r: style 10 to +2.5, style 0 to -2.5.
+    ##     L-r: style 2 to +2.5, style 0 to -2.5.  R-l: style 0 to +2.5, style 11 to -2.5.
+    ##     L-l.R-r: style 4 to -2.5, and its mirror to +2.5.
+    ##     L-r.R-l: style 13 to +1.5275, and its mirror to -1.5275; furthest other path of 64 ends
+    ##       at 1.5238.  Shoulder's edge forbids more: with it left out of plan, 15 of 32 paths
+    ##       pass 1.5275, each laying upper arm past edge's give first, where engine stops it by
+    ##       swing.
   REASON_WHOLE = "lead's turn of same-name chain held above, from Face-to-back, to whole " &
       "turn: no plan inside shoulder's edge passes 0.71 of turn, and no wall tried carries walk " &
       "there but by chance"
@@ -232,6 +256,12 @@ func roundedUnder(place, line, along: float): float =
   ##   First point's own rounding, and turn of line by both points' rounding across it.
   place / 2.0 + along * sqrt(3.0) * place / line
 
+func heldMoments(recording: JsonNode): int =
+  ## Moments one rig sweep holds: every moment it keeps but one it stops at, where walk gave
+  ## (`seen.shownAsked`).  Planned sweep keeps no such moment: its last stands.
+  recording["at"].len -
+      (if recording["stopped"].getBool and not recording{"planned"}.getBool: 1 else: 0)
+
 func liftedRig(recording: JsonNode): tuple[hands: seq[Lifted], moments: int] =
   ## Every joined hand of one rig sweep at every moment couple are `RAISE` or more from face to
   ## face, where it is carried: middle of its hand's three capsules (`rigid.handCapsules`), run
@@ -239,7 +269,8 @@ func liftedRig(recording: JsonNode): tuple[hands: seq[Lifted], moments: int] =
   ##   Joined hand is one of each dancer whose line passes nearest each join at rest.  Rest is
   ##     Face-to-back where two chests face one way at nought.
   ##   Sweep that stops keeps moment it stops at (`seen.shownAsked`), where walk gave: that one
-  ##     is left out, so moments read are those walk holds, as whole-cloth recording keeps them.
+  ##     is left out, so moments read are those walk holds, as whole-cloth recording keeps them
+  ##     (`heldMoments`).
   let
     card = recording["hold"].getStr & " · " & recording["band"].getStr
     tags = recording["tag"].getElems
@@ -266,8 +297,7 @@ func liftedRig(recording: JsonNode): tuple[hands: seq[Lifted], moments: int] =
           off = closest(join, join, line.a, line.z).gap
         if off < gap: (nearest, gap) = (arm, off)
       held.add (who, nearest)
-  let held_moments = recording["at"].len - (if recording["stopped"].getBool: 1 else: 0)
-  for m in 0..<held_moments:
+  for m in 0..<heldMoments(recording):
     let at = recording["at"][m].getFloat
     if awayOf(at, is_away) < RAISE: continue
     inc result.moments
@@ -317,6 +347,36 @@ func named(hand: Lifted): string =
     who = (if hand.who == Body.One: "lead" else: "follow")
     arm = (if hand.arm == Arm.Left: "left" else: "right")
   &"{hand.card} {who} {arm} {hand.at:+.2f}: {hand.z:.3f} m"
+
+
+func holdOf(arms: seq[(Arm, Arm)]): string =
+  ## Hold as whole-cloth recording names it: lead's hand in capitals, follow's in lower case.
+  var parts: seq[string]
+  for (lead_arm, follow_arm) in arms:
+    parts.add (if lead_arm == Arm.Left: "L" else: "R") & "-" &
+        (if follow_arm == Arm.Left: "l" else: "r")
+  parts.join(".")
+
+func reachesRig(kept: JsonNode): seq[tuple[card, hold: string, way: int, reach: float]] =
+  ## Turns from rest of furthest moment each rig sweep over crown holds, and its hold, as
+  ##   `design/rig.SHOWN` lists it.  Each sweep is its way that turns positive (`seen.shown`).
+  for i, sweep in kept["sweeps"].getElems:
+    if sweep["band"].getStr != "above": continue
+    var reach = 0.0
+    if sweep.hasKey("at"):
+      for m in 0..<heldMoments(sweep): reach = max(reach, abs(sweep["at"][m].getFloat))
+    result.add (sweep["hold"].getStr & " · above", holdOf(SHOWN[i].arms), 1, reach)
+
+func reachesTurns(kept: JsonNode): seq[tuple[card, hold: string, way: int, reach: float]] =
+  ## Turns from rest of furthest moment each way of each hold over crown of whole-cloth
+  ##   recording holds: it keeps no moment that gave (`design/turns.frames`).
+  for key, sweep in kept["sweeps"].pairs:
+    if not key.endsWith("|above"): continue
+    for way in [-1, 1]:
+      var reach = 0.0
+      for frame in sweep["frames"]:
+        reach = max(reach, float(way) * frame["turn"].getFloat)
+      result.add (key.replace('|', ' '), key.split('|')[0], way, reach)
 
 
 
@@ -680,13 +740,13 @@ suite "Internal: Simulation against reference":
     ##   Domain: every moment of every sweep over crown both recordings keep, rig's four and six
     ##     holds of whole-cloth page both ways, each yielding at least its floor.  Moments are
     ##     those walk holds: rig's sweep keeps moment it stops at too (`seen.shownAsked`), where
-    ##     something gave, and that one is not read (`liftedRig`).
+    ##     something gave, and that one is not read; planned way keeps none (`heldMoments`).
     ##     Cost: viewer draws that moment, hands and all, under words of its stop; law of
     ##       shoulder's edge reads it (`test_shoulder.nim`), and Architect rules which holds.
     ##     Cost: still holds band coming back from eighth of turn away (`rigid.height`), and this
     ##       reads from quarter, as walk's judge does; Architect rules where face to face ends.
-    ##     Cost: law reads hands of moments walk holds, and not how far walk turns, so sweep cut
-    ##       short where hand sinks passes as one carried on with hands lifted.
+    ##     Law reads hands of moments walk holds, and not how far walk turns: law below holds
+    ##       that each way turns as far as plan carries it with hands lifted.
     ##   Each recording rounds its figures, so hand may read under engine's own by its rounding
     ##     (`roundedUnder`): hand gripped palm deep, nearest its wrist, turns most.
     ##   Regression of issue 611, as found on 2026-10-11, each card kept and its quoted hand read
@@ -762,6 +822,49 @@ suite "Internal: Simulation against reference":
       check card in cards
       if in_range > 0: check found > 0
     check moments_under.len == 0
+
+
+  test "every way over crown of both recordings turns as far as plan carries it":
+    ## Architect, pull request 629, 2026-10-12, D1: where walk alone lets joined hands sink, plan
+    ##   lifts them, and recording keeps planned turn where walk falls short.  Plan keeps joined
+    ##   hands inside band and every upper arm inside shoulder's edge (`plan.bandAt`,
+    ##   `plan.marginOf`), so turn it carries is floor of each way (`REACHES_PLANNED`).
+    ##   Reach of way is turns from rest of furthest moment it holds: rig's sweep keeps moment it
+    ##     stops at, where walk gave, and that one is not read (`heldMoments`).
+    ##   Domain: every way over crown both recordings keep: way of each of rig's four sweeps that
+    ##     turns positive (`seen.shown`), and both ways of whole-cloth recording's six holds.
+    ##     Every hold read names its floor, and none is left unread.
+    ##   That plan's moments keep hands in band and arms inside edge is held where each moment
+    ##     is read: joined hands over crown (law above), and shoulder's edge (`test_shoulder.nim`).
+    ##   Each recording rounds turn of each moment, so way may read under its floor by half that.
+    ##   Regression of pull request 629, as found on 2026-10-12 in recordings of `bc656d30`:
+    ##     cross-name chain held above stops at 1.26 of turn either way, L-r.R-l above and `Chain,
+    ##     cross name · above`, where follow's joined hand leaves its band.
+    ##     Same-name chain held above stops at +1.80, L-l.R-r above and `Chain, same name · above`,
+    ##     by lead's wrist, and at -1.66, by arm through arm.
+    let
+      (by_rig, by_turns) = (reachesRig(parseFile(KEPT_RIG)), reachesTurns(parseFile(KEPT_TURNS)))
+      ways_rig = SHOWN.countIt(it.band == Band.Crown)
+      ways_turns = 2 * whole_cloth.sweeps().countIt(it.band == Band.Crown)
+    var short, unfloored: seq[string]
+    for (ways, place) in [(by_rig, PLACE_TURN_RIG), (by_turns, PLACE_TURN_TURNS)]:
+      for (card, hold, way, reach) in ways:
+        let named = card & (if way < 0: " negative" else: " positive")
+        var floor = NaN
+        for planned in REACHES_PLANNED:
+          if planned.hold == hold: floor = (if way < 0: planned.negative else: planned.positive)
+        if floor.isNaN:
+          unfloored.add named
+          continue
+        checkpoint &"`{named}`: holds to `{reach:.4f}` of turn, plan carries `{floor:.4f}`."
+        if reach + place / 2.0 < floor: short.add &"{named} {reach:.4f}"
+    checkpoint &"Ways read: `{by_rig.len}` of rig's sweeps over crown, `{by_turns.len}` of " &
+        &"whole-cloth recording.  Short of plan: `{short.join(\", \")}`.  With no floor: " &
+        &"`{unfloored.join(\", \")}`."
+    check by_rig.len == ways_rig
+    check by_turns.len == ways_turns
+    check unfloored.len == 0
+    check short.len == 0
 
 
   test "every still crosses arms below elbow alone, in every moment":
