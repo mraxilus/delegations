@@ -12,8 +12,9 @@
 ##     sweep at every distance couple may stand at; carrying this much at each of
 ##     them would cost tens of times what answering costs.  So sweep is answered
 ##     first, and only one that won is recorded.
-##   Way over crown that walk stops short of planned turn is recorded as planned turn: its
-##     moments are stood again from plan, as walk stood them (`walk.plannedWay`).
+##   Way over crown that walk stops short of all it asks, by whatever stopped it, is recorded as
+##     planned way where that holds further: its moments are stood again from plan, as
+##     `walk.plannedWay` stood them.
 
 {.experimental: "strictFuncs".}
 
@@ -59,7 +60,7 @@ type
     stills*: seq[Still]
     is_planned*: bool
       ## Whether planner stood it: still no distance of carried walk held, or sweep's way over
-      ## crown that walk stops short of planned turn (`walk.swept`).
+      ## crown that walk stops short of all it asks (`walk.swept`).
     strain*: float  ## Worst joint of still, nought at ease and one at end.
     tried*: seq[Option[float]]  ## Strain of each pose its search tried, in order: none gave.
 
@@ -175,9 +176,9 @@ proc shownAsked(
   ## Walk one way from wherever it carries furthest, keeping every moment whole.
   ##   Distance is asked of `walk.swept`, so page shows couple standing exactly
   ##     where model has them stand and not somewhere chosen for drawing.
-  ##   Way over crown that walk stops short of planned turn is planned turn, as `walk.swept`
-  ##     keeps it: each moment its walk keeps is stood again from plan (`walk.standMoment`), as
-  ##     walk stood it, and none past them.
+  ##   Way over crown that walk stops short of all it asks is planned way, as `walk.swept` keeps
+  ##     it: each moment it keeps is stood again from plan (`walk.standMoment`), as
+  ##     `walk.replayedWay` stood it, and none past them.
   let
     sweep = swept(
       rig,

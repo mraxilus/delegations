@@ -10,9 +10,9 @@
 ##     and folded into page by `pages`.  Couple stand for turn, so each sweep
 ##     searches every distance they may stand at, and eighteen of them cost more
 ##     than every `pages` run should pay.
-##   Way over crown that walk stops short of planned turn is planned turn (`walk.swept`):
-##     couple stand where plan has them at each moment, and moment that plan poses again at
-##     one turn is marked so (`reseed`).
+##   Way over crown that walk stops short of all it asks, by whatever stopped it, is planned way
+##     where that holds further (`walk.swept`): couple stand where plan has them at each moment,
+##     and moment that plan poses again at one turn is marked so (`reseed`).
 ##   Words (wrap, lock, low, high) are put on by `simulation/words`, which `verdicts`
 ##     reads too.  Not because simulation speaks other language -- it reuses agreed
 ##     words -- but because here it measures what ontology asserts, and
@@ -75,7 +75,8 @@ func toMillimetres(point: Vector): JsonNode =
 func frame(moment: Moment, band: Band, links: seq[Link], is_reposed: bool): JsonNode =
   ## Record one moment as page draws it: arms, words and crossings.
   ##   Moment at turn of one before it has arms posed again there (`reseed`), and page says so:
-  ##     planned turn stands several poses at one wind (`plan.planPath`), and page draws one.
+  ##     planned way stands several poses at one wind (`plan.planPath`).  Page draws two ends
+  ##     of them alone, and jumps from one to other at that turn (`wholecloth_turns.fillScene`).
   let tight = tightest(HUMAN, moment.stance, links, moment.arms)
   result = %*{
     "turn": round(moment.at * 1000.0) / 1000.0,
@@ -123,6 +124,13 @@ func isReposed(way: Walk, i: int): bool =
 func frames(sweep: Swept, band: Band, links: seq[Link]): JsonNode =
   ## Every moment of both ways, in order of turn, rest once.
   ##   Negative way was walked outward from rest, so it is read back to front.
+  # TODO: Should page show every pose planned way stands at one turn?  Page finds moment by turn
+  #   (`wholecloth_turns.fillScene`), so it eases toward pose at one end and then shows other:
+  #   492 mm in one jump on cross-name chain held above at 0.02 of turn, 2026-10-12.
+  #   Candidates: keep last pose at each turn alone, which page draws whole and laws still read,
+  #     but which hides how plan got there; or let page step through poses at one turn, which
+  #     changes how every sweep plays.
+  #   Evidence needed: Architect's ruling on which (`PROVENANCE.md`, Open questions).
   result = newJArray()
   for i in countdown(sweep.negative.moments.high, 1):
     result.add frame(sweep.negative.moments[i], band, links, isReposed(sweep.negative, i))

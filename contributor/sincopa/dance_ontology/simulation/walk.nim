@@ -17,13 +17,18 @@
 ##     Cost: cross-name chain held above is carried 1.26 of turn, from 0.54 m.  Without this,
 ##       wall with its slope at 270 carries it 1.60, from 0.86 m, with hands down to 1.594 m at
 ##       26 moments of rig's sweep and 44 of whole-cloth page, measured 2026-10-12.
-##   Where walk over crown stops short of planned turn, recordings keep planned turn: plan lifts
-##     hands walk lets sink (Architect, pull request 629, 2026-10-12, D1).  Engine stands each
-##     planned moment, and still's judge reads it (`plannedWay`).  Every other sweep is walk
-##     alone (`swept`, `should_plan`).
+##   Where walk over crown stops short of `MOST`, whatever stopped it, recordings keep planned
+##     way where it holds further: plan lifts hands walk lets sink (Architect, pull request 629,
+##     2026-10-12, D1).  Engine stands each planned moment, and still's judge reads it
+##     (`plannedWay`).  Every other sweep is walk alone (`swept`, `should_plan`).
+##     Ruling names hands that sink, and this plans every stop: same-name chain, which lead's
+##       wrist and arm through arm stop, is planned too.  Architect rules whether that holds.
 ##     Cost: recording plans 64 paths over crown, both chains toward both ways in every style
-##       (`planAhead`).  Plan carries cross-name chain held above to 1.5275 of turn, where
-##       shoulder's edge forbids more, and same-name chain to 2.5 both ways, measured 2026-10-12.
+##       (`planAhead`).  Plan carries same-name chain to 2.5 both ways, and cross-name chain to
+##       1.5275 of turn, its upper arm riding plan's six degrees inside shoulder's edge.  Edge
+##       holds it near there: plan with edge's margin at 0 or 3 degrees stands no path past 1.540
+##       or 1.526, and plan with no edge term stands none past 1.4475, engine stopping each by
+##       swing where upper arm passes edge, measured 2026-10-12.
 
 {.experimental: "strictFuncs".}
 
@@ -838,13 +843,15 @@ proc waysOf(
   ##     take either stand for that one.
   ##   Hold that is its own mirror walks way that turns positive, and other way is it
   ##     reflected (`twinOf`), unless it rests face to back or sweep is raw.
-  ##   Where `should_plan`, way over crown that walk stops short of planned turn is planned
-  ##     turn (`plannedWay`): where walk alone lets joined hands sink, plan lifts them
-  ##     (Architect, pull request 629, 2026-10-12).
+  ##   Where `should_plan`, way over crown that walk stops short of `most` is planned, whatever
+  ##     stopped walk, and planned way is kept where it holds further (`plannedWay`,
+  ##     `turnsHeld`): where walk alone lets joined hands sink, plan lifts them (Architect, pull
+  ##     request 629, 2026-10-12, D1).  Ruling names hands that sink; wrist, arm through arm
+  ##     and every other stop are planned too, and Architect rules whether that holds.
 
   proc way(towards: float): Walk =
-    ## One way, `towards` its own step: engine's own walk where raw, and planned turn where
-    ##   `should_plan` and walk over crown stops short of it.
+    ## One way, `towards` its own step: engine's own walk where raw, and planned way where
+    ##   `should_plan` and walk over crown stops short of `most`, by whatever stopped it.
     result =
       if apart > 0.0 and is_raw:
         walkedOf(rig, band, links, who, apart, most, towards, is_away, head)
@@ -889,8 +896,9 @@ proc swept*(
   ##     one's that turns negative (`twinOf`).
   ##   Raw sweep is engine's own: it reflects no twin, and keeps nothing, so no other
   ##     sweep reads it.
-  ##   Where `should_plan`, way over crown that walk stops short of planned turn is planned
-  ##     turn: what recordings keep, where every other sweep is walk alone.
+  ##   Where `should_plan`, way over crown that walk stops short of `most`, by whatever stopped
+  ##     it, is planned way where that holds further: what recordings keep, where every other
+  ##     sweep is walk alone (`waysOf`).
   if is_raw:
     let (positive, negative) =
       waysOf(rig, band, links, who, most, step, apart, is_away, head, true, should_plan)
@@ -1253,6 +1261,12 @@ proc plannedWay*(
         let got = replayedWay(rig, band, links, is_away, head, path)
         if turnsHeld(got) > turnsHeld(result): result = got
         if turnsHeld(result) >= abs(most) - 1e-9: break search
+  # TODO: Name what ends planned way short of `most`: `Stop.None` with `which` at -1 names
+  #   nothing, so `words.why` and `design/rig` each say in own words that no plan goes further.
+  #   Candidates: `Stop` member for plan that ends, which says only that it ends; or stop read
+  #     off plan's terms one solve past its end, which says which term gave, but that solve broke
+  #     several terms at once, each by about 1 mm, on cross-name chain, 2026-10-12.
+  #   Evidence needed: Architect's ruling on which (`PROVENANCE.md`, Open questions).
   if not result.found_rest: return
   result.at = turnsHeld(result)
   result.is_stopped = result.at < abs(most) - 1e-9
