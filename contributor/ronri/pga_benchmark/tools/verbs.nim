@@ -40,11 +40,15 @@ const
   PATH_GAPS = "gaps.md"  ## Rendered list, committed.
   PATH_DOCKET = BASELINE / "docket.json"  ## Identifier docket, committed.
   PATH_SWEEP = BASELINE / "sweep.json"  ## Medians of last sweep, committed and stamped with pin.
+  PATH_UNITIZED = BASELINE / "unitized.json"
+    ## Medians of last two takes of `unitized`, committed; stamped with no library commit.
   PATH_LOCK = "atlas.lock"  ## Lock naming library commit.
   ENTRY_BENCH = "src/pga_benchmark/bench.nim"
     ## Entry reaching every measurand; its cache is what inspect reads.
   ENTRY_INSPECT = "src/pga_benchmark/inspect.nim"
     ## Entry reading cache, compiled per algebra for its catalogue.
+  ENTRY_UNITIZED = "src/pga_benchmark/unitized.nim"
+    ## Program timing point operations of Lengyel's code, homogeneous against unitized.
   ENTRY_FIND = "src/pga_benchmark/pages/find.nim"
     ## Script of docket's search box, compiled to JavaScript for page.
   FLAGS = "-d:release"  ## Build flags every measured build carries; documents name them.
@@ -1114,6 +1118,30 @@ proc showFunction(symbol, algebra: string) =
     raise newException(ValueError, "No algebra named `" & algebra & "`.")
 
 
+proc unitized() =
+  ## Time point operations of Lengyel's code, homogeneous against unitized, in two takes, and
+  ##   record both in `PATH_UNITIZED`; Article VII.9 takes each pair twice.
+  ##   Program imports no library code, so record carries no library commit, and pin never
+  ##     moves it; it never runs in CI.
+  let
+    nim = commitNim()
+    pga = commitPga()
+    binary = BUILD / "unitized"
+  createDir BUILD
+  removeDir BUILD / "cache_unitized"
+  compile(ENTRY_UNITIZED, binary, BUILD / "cache_unitized", 4, false, nim, pga)
+  var takes: seq[JsonNode]
+  for index in 1..2:
+    let output = binary & "_" & $index & ".json"
+    run(binary, [output])
+    takes.add readDocument(output)
+  var sizes = newJArray()
+  for take in takes: sizes.add take{"sizes"}
+  let recorded = %*{"schema": 1, "kind": "unitized", "taken": takes[0]{"taken"}, "takes": sizes}
+  writeFile(PATH_UNITIZED, pretty(recorded) & "\n")
+  echo "Recorded ", PATH_UNITIZED
+
+
 proc clean() =
   ## Remove every product, leaving only what git holds.
   removeDir BUILD
@@ -1145,6 +1173,7 @@ proc main(): int =
     of "head": report(headChecked(commitPga()))
     of "gaps": gaps()
     of "sweep": sweep()
+    of "unitized": unitized()
     of "clean": clean()
     else:
       stderr.write USAGE
