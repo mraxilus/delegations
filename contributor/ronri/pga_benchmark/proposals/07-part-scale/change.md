@@ -6,16 +6,21 @@ change weighs each difference against the largest absolute value of its part in 
 The parts are those of `CAYLEYS_PARTS`, which bulk and weight extraction read: bulk and weight,
 each round and flat in a conformal algebra. Both loops walk the fields of `CAYLEYS_PARTS`, so a
 rigid build holds no flat part. A macro spells the bases of a part, so each loop reads that part
-alone. `grade` counts a coefficient as zero under the same bound. The scalar comparison goes,
-since `m =~ s` now compares with the scalar multivector of s.
+alone. `grade` counts a coefficient as zero under the same bound. In a conformal algebra it
+also counts a coefficient as zero within 16 rounding units of the largest coefficient. The
+scalar comparison goes, since `m =~ s` now compares with the scalar multivector of s.
 
 ## Edit `pga/multivectors.nim`
 
 ```nim
+import std/[macros, math, options, strformat, strutils, unicode]
+
 import ./[algebra, helpers]
 ```
 
 ```nim
+import std/[fenv, macros, math, options, strformat, strutils, unicode]
+
 import ./[algebra, cayleys, helpers]
 ```
 
@@ -103,11 +108,20 @@ template `=~`*(s: Coefficient, m: Multivector): bool =
 
 ```nim
   ## Get grade of multivector, if k-vector.
-  ##   Count coefficient as zero within tolerance of largest absolute value of its part.
+  ##   Count coefficient as zero within tolerance of largest absolute value of its part. In CGA,
+  ##   also count it as zero within 16 rounding units of largest coefficient: conformal product
+  ##   leaves rounding of its largest terms in parts far smaller than they are.
   var found_grade = false
+  when IS_CONFORMAL:
+    let rounding = block:
+      var largest: Coefficient = 0
+      for b in Basis:  # Branch, not `max`: its select makes each step wait on last.
+        if abs(m[b]) > largest: largest = abs(m[b])
+      16 * epsilon(Coefficient) * largest
   for forms in CAYLEYS_PARTS.fields:
     for part in forms.fields:
-      let bound = TOLERANCE_ABS * m.scale(part)
+      let bound = (when IS_CONFORMAL: max(TOLERANCE_ABS * m.scale(part), rounding)
+        else: TOLERANCE_ABS * m.scale(part))
       for b in part.bases:
         if abs(m[b]) <= bound: discard  # Count as zero; `fields` loop refuses `continue`.
         elif result.isNone:
