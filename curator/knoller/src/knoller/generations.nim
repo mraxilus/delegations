@@ -5,7 +5,7 @@
 ##     Receiver is name with calls, indexes and fields glued after it, or bracket group, as
 ##     conversion reads it (`conversions.nim`); bracket group gives its parentheses to call,
 ##     tuple aside (`(a + b).emitF(c)` becomes `emitF(a + b, c)`).
-##   `construct…` call takes its subject by dot or not, as `init…` call does (STYLE.md §5).
+##   `construct…` call takes subject test of STYLE.md §5, as every other call does.
 ##   Rewrite moves no reading: `x.emitF(y)` and `emitF(x, y)` are one call, and `.` binds
 ##     tighter than any prefix operator before it.
 ##   No fixer, check reports still: receiver on line above `.`, generic call or index after name
