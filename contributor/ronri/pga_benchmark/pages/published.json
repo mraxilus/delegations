@@ -29,7 +29,7 @@
   },
   "proposals": {
     "url": "https://claude.ai/artifact/CW9ZL5eotsVYrZPjMnTLoG",
-    "digest": "7f25faacb87b644d"
+    "digest": "9c172ee62b779d72"
   },
   "float-width": {
     "url": "https://claude.ai/artifact/Q3R1yz93Drk7Cwq5qhymDZ",
@@ -37,7 +37,7 @@
   },
   "part-scale": {
     "url": "https://claude.ai/artifact/6hW9rjiotnjdjBVwatW5Dj",
-    "digest": "cfc8d38dc4a63fc9"
+    "digest": "2dd1641bd603f921"
   },
   "compound-tables": {
     "url": "https://claude.ai/artifact/TczTs551nkXVaWiyHzfVAn",
@@ -53,6 +53,6 @@
   },
   "unitize-general": {
     "url": "https://claude.ai/artifact/3P9PNEcD7JyH3YAb5GuUqy",
-    "digest": "bab8e3f47194bbda"
+    "digest": "5cba9857dcf86b33"
   }
 }
