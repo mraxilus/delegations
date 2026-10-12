@@ -820,7 +820,7 @@ suite "Camera":
     #   ground's disc off both sides, point `a` with it.
     #   Six frames, upright phones through wide desktop; rim sampled as picking samples it.
     var scene = initScene()
-    constructSeeds(scene)
+    addSeeds(scene)
     for (width, height) in [
       (393, 852), (360, 780), (768, 1024), (1200, 800), (1920, 1080), (852, 393)
     ]:

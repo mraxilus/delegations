@@ -54,7 +54,7 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       #   shortest construction there is: add point, then join it to something.
       for scale in scales_held:
         var scene = initScene()
-        constructOrrery(scene, scale)
+        addOrrery(scene, scale)
         checkpoint(&"{scale}: {scene.len} objects, {OBJECTS_MAX - scene.len} free")
         check scene.len == objectsOf(scale)
         check not scene.isFull
@@ -66,7 +66,7 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       #   and renders nothing while scene still counts it. Seven objects did that across
       #   two earlier rounds, so this counts *shapes* rather than objects.
       var scene = initScene()
-      constructOrrery(scene)
+      addOrrery(scene)
       var without: seq[string] = @[]
       for handle in 0..<scene.bound:
         if not scene.isAlive(handle): continue
@@ -83,7 +83,7 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       var counted: array[ScaleOrrery, tuple[points, planes: int]]
       for scale in scales_held:
         var scene = initScene()
-        constructOrrery(scene, scale)
+        addOrrery(scene, scale)
         var
           tally: array[Kind, int]
           at_horizon: array[Kind, int]
@@ -134,7 +134,7 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       #   enough into catalogue for claim to be worth much.
       let scale = scales_held[^1]
       var scene = initScene()
-      constructOrrery(scene, scale)
+      addOrrery(scene, scale)
       let
         placed = placesOf(scene)
         sol = placed[SOL[0].name]
@@ -277,7 +277,7 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       #   million handle reads for same answer, and on JS backend each of those reads
       #   copies `Multivector` -- case stopped finishing at all.
       var scene = initScene()
-      constructOrrery(scene)
+      addOrrery(scene)
       var
         planes: seq[Multivector]
         lines: seq[Multivector]
@@ -316,7 +316,7 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       # Sizes are real, so what is pinned is conversion and nothing else: Sol over Earth
       #   is 109, as it is, and every body stays above what editor accepts.
       var scene = initScene()
-      constructOrrery(scene)
+      addOrrery(scene)
       var radii: Table[string, float]
       for handle in 0..<scene.bound:
         if not scene.isAlive(handle): continue
@@ -343,7 +343,7 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       #   radii ring is drawn at, unsquashed, and that ring lies in z = 0 ground grid is
       #   ruled on, which is what makes ecliptic ground.
       var scene = initScene()
-      constructOrrery(scene)
+      addOrrery(scene)
       let
         placed = placesOf(scene)
         sol = placed["sol"]
@@ -360,7 +360,7 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       #   Uranus's family is tipped nearly onto its side. Each pinned against
       #   `normalOfMoon`, and every moon's place pinned perpendicular to it.
       var scene = initScene()
-      constructOrrery(scene)
+      addOrrery(scene)
       let placed = placesOf(scene)
       var normals: Table[string, Direction]
       for moon in MOONS:
@@ -448,7 +448,7 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       #   reaches about 1e9 units for farthest star placed.
       let scale = scales_held[^1]
       var scene = initScene()
-      constructOrrery(scene, scale)
+      addOrrery(scene, scale)
       let
         placed = placesOf(scene)
         up = Direction(x: 0, y: 0, z: 1)
@@ -503,7 +503,7 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       #   Neighbour's plane is flat, stated: every placed planet shares its star's height.
       let scale = scales_held[^1]
       var scene = initScene()
-      constructOrrery(scene, scale)
+      addOrrery(scene, scale)
       let placed = placesOf(scene)
       var left_out, checked = 0
       for star in STARS:
@@ -535,7 +535,7 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       # Moon and planet are two identical dots and hue is only thing separating.
       #   them, so role collapsing onto another's handle is silent loss of their one signal.
       var scene = initScene()
-      constructOrrery(scene)
+      addOrrery(scene)
       for role in Role.Sun..Role.Derived:
         for other in Role.Sun..Role.Derived:
           if role != other: check LUT_INK_BY_ROLE[role] != LUT_INK_BY_ROLE[other]
@@ -564,7 +564,7 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       #   Asked geometrically, which lines pass through which bodies, so renaming
       #   something cannot make it pass.
       var scene = initScene()
-      constructOrrery(scene)
+      addOrrery(scene)
       var roles: Table[string, Role]
       for body in SOL: roles[body.name] = body.role
       for moon in MOONS: roles[moon.name] = Role.Moon
@@ -612,7 +612,7 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       #   line and spans plane with it. Both halves are checked, because whole
       #   construction turns on difference between them.
       var scene = initScene()
-      constructOrrery(scene)
+      addOrrery(scene)
       var at_horizon: Table[string, Multivector]
       for handle in 0..<scene.bound:
         if not scene.isAlive(handle): continue

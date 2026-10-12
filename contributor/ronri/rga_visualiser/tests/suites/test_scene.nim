@@ -15,7 +15,7 @@ suite "Scene":
     #   what categorical palette is for; hand-added object takes next hue, so these
     #   should too. `ground` and `o` keep hues reader learns to find them by.
     var scene = initScene()
-    constructSeeds(scene)
+    addSeeds(scene)
     var inks: seq[Ink]
     for handle in 0..<scene.len:
       case scene.labelAt(handle).toText
@@ -842,16 +842,16 @@ suite "Scene":
 
   test "the opening scene arrives as a replay rather than all at once":
     # Startup seeds are construction somebody else made, exactly as loaded file.
-    #   is, so both front-ends stagger them. `constructSeeds` itself deliberately does
+    #   is, so both front-ends stagger them. `addSeeds` itself deliberately does
     #   not: `runStoryboard` calls it too and sweeps each step on clock of its own.
     const clock = 4.0
     var placed = initScene()
-    constructSeeds(placed, clock)
+    addSeeds(placed, clock)
     for handle in 0..<placed.len:
       check placed.bornAt(handle) == clock  # Untouched by constructor itself.
 
     var opened = initScene()
-    constructSeeds(opened, clock)
+    addSeeds(opened, clock)
     opened.replayFrom(clock)
     check opened.len >= 2
     for handle in 1..<opened.len:
