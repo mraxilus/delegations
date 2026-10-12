@@ -2478,8 +2478,8 @@ ribbon traffic on 132 planes, and a 239 ms median frame under SwiftShader agains
 
 **Every position of a record is stored about the view origin** (see Origins). Emission reads each
 world place about it once, and the five record writers store what they are handed. The suite pins a
-point, a line, a plane and the sky, each through `emitObject`, against a view origin a million units
-off.
+point, a line, a plane and the sky, each through `tessellateObject`, against a view origin a
+million units off.
 
 **Veil order is kept, and not assumed away.** Two translucent veils still blend in scene order, so
 every append extends or opens a `VeilRun`, and both render paths walk the runs in sequence.
@@ -2638,11 +2638,11 @@ stand only the reading of catalogue angles into a direction, and the picture.
 **The tessellation assembles before it emits.** Each loop resolves its places through the algebra
 into a `DrawScratch`, and emits after. For the lattices and the axes the seam is between two procs.
 `placeObject` answers what a drawable is and where, from the multivector alone, so the answer
-holds while the camera moves. `emitObject(placeObject(...))` is what `addObject` is.
+holds while the camera moves. `tessellateObject(placeObject(...))` is what `addObject` is.
 
-Two steps stay on the placing side inside `emitObject`: the stand-off of a horizon marker, and the
-two vanishing points of a line. The cut that the panel reports is by kind of work, and not by
-proc. `tessellate` takes its scratch as a parameter. The desktop hands it swap arena memory, and
+Two steps stay on the placing side inside `tessellateObject`: the stand-off of a horizon marker,
+and the two vanishing points of a line. The cut that the panel reports is by kind of work, and not
+by proc. `tessellate` takes its scratch as a parameter. The desktop hands it swap arena memory, and
 the browser hands it a fixed buffer.
 
 **A timed stretch is charged at its end, so nothing leaves it early.** `timed` reads the clock on
@@ -3619,7 +3619,7 @@ the other stays selected.
 
 ## Storyboard and seeds
 
-`storyboard.constructSeeds` builds five seeds. They are `a`, `b`, `c` raised 2 units in z, `o` at
+`storyboard.addSeeds` builds five seeds. They are `a`, `b`, `c` raised 2 units in z, `o` at
 the origin, and `ground`, a plane joined from three points at `z = 0`. `o` must stay off `ground`,
 because one step projects it onto that plane. `STEPS` is eleven derived steps, and both entry
 points compute the seed count from `scene.len`. One step (`a ^ ground`) is a grade-4 volume, and
@@ -3630,7 +3630,7 @@ reached but not focal draws muted rather than hidden. Horizon steps aim the capt
 `azimuthElevationFor(heading)`, which is a closed-form inverse of the forward direction of the
 orbit camera.
 
-`constructSeeds` deliberately does not stagger the arrivals, because `runStoryboard` sweeps the
+`addSeeds` deliberately does not stagger the arrivals, because `runStoryboard` sweeps the
 animation of each step on a clock of its own. The startup paths call `replayFrom` after it. The
 GIF is `FRAMES_GIF_GROW` 6 plus `FRAMES_GIF_HOLD` 4 frames for each step, at `STRIDE_GIF` 2
 downsampling and `CENTISECONDS_GIF_DELAY` 8.
@@ -3783,7 +3783,7 @@ of its object.
 
 **The price is build time on the JS backend, once for each load.** The Architect keeps it, by the
 ruling on #459, so no star leaves the algebra. Each figure is the median of 15 builds of
-`constructOrrery`. They ran in Node 22, and in C with `-d:release`, in the Claude Code cloud
+`addOrrery`. They ran in Node 22, and in C with `-d:release`, in the Claude Code cloud
 container on 2026-10-04. Each pair was taken twice:
 
 | Size | JS before | JS after | C before | C after |

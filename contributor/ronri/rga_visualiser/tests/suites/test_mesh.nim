@@ -223,7 +223,7 @@ suite "Mesh":
   test "every record is stored about the view origin its frame's extent names":
     # Emission reads each world place about view origin once, and five writers store what
     #   they are handed: what camera looks at million units from world origin is stored
-    #   exact. Point, line, plane and sky, each through `emitObject` as frame draws them.
+    #   exact. Point, line, plane and sky, each through `tessellateObject` as frame draws them.
     let origin = Position(x: 1.0e6, y: -2.0e6, z: 3.0e5)
     var scale_far = scale_test
     scale_far.scale.origin = origin
@@ -235,24 +235,24 @@ suite "Mesh":
       plane = at.toMultivector ∧ Direction(x: 1.0, y: 0.0, z: 0.0).toMultivector ∧
           Direction(x: 0.0, y: 1.0, z: 0.0).toMultivector
     var placed = placeObject(point)
-    discard MESHES.emitObject(placed, Ink.Rose.colour, scale_far)
+    discard MESHES.tessellateObject(placed, Ink.Rose.colour, scale_far)
     let vertex = MESHES.points.vertices[0]
     check float(vertex.x) == 0.25 and float(vertex.y) == 0.5 and float(vertex.z) == -0.125
     # Line's support is nearest world origin: on line through `at` along x, that is `at`
     #   less its x.
     placed = placeObject(line)
     let support = placed.at.toView(origin)
-    discard MESHES.emitObject(placed, Ink.Rose.colour, scale_far)
+    discard MESHES.tessellateObject(placed, Ink.Rose.colour, scale_far)
     let ribbon = MESHES.ribbons.records[0]
     check float(ribbon.tail_y) == 0.5 and float(ribbon.tail_z) == -0.125
     check float(ribbon.tail_x) == float32(support.x)
     placed = placeObject(plane, some(at))
-    discard MESHES.emitObject(placed, Ink.Rose.colour, scale_far)
+    discard MESHES.tessellateObject(placed, Ink.Rose.colour, scale_far)
     check float(MESHES.discs.records[0].centre_y) == 0.5
     check float(MESHES.rings.records[0].centre_z) == -0.125
     # Sky stands about eye, which extent already holds about view origin.
     placed = Placement(kind: Case.PlaneEverywhere)
-    discard MESHES.emitObject(placed, Ink.Rose.colour, scale_far)
+    discard MESHES.tessellateObject(placed, Ink.Rose.colour, scale_far)
     check float(MESHES.domes.records[0].centre_x) == float32(scale_far.eye.x)
     # Writer stores what it is handed, and subtracts nothing of its own.
     MESHES.clearMeshes
