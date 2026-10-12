@@ -11,11 +11,11 @@ from ../../design/rig as recording import KEPT_RIG, rigStamp
 from ../../design/rig {.all.} import PLACE, SHOWN
 from ../../design/turns as whole_cloth import nil
 import ../../simulation/[body, hold, limb, read, rig, vector, words]
-from ../../simulation/plan import isMirrorSame
+from ../../simulation/plan import isMirrorSame, STRIDE
 from ../../simulation/rigid import ELBOW_END, ELBOWS_APART, faceCapsule, Mark, ON_UPPER,
   restStance, SAG, trunkCapsules
 from ../../simulation/rigid {.all.} import RAISE
-from ../../simulation/walk import mirrored, MOST, stands, STYLES, twinOf
+from ../../simulation/walk import mirrored, MOST, stands, STEP, STYLES, twinOf
 import ../../src/dance_ontology/rotation
 from ../../src/dance_ontology/draw/pose import relative
 from ../../src/dance_ontology/draw/route import overArm
@@ -872,6 +872,50 @@ suite "Internal: Simulation against reference":
     check by_turns.len == ways_turns
     check unfloored.len == 0
     check short.len == 0
+
+
+  test "every sweep of both recordings turns from rest one step at most between two moments":
+    ## Each way keeps every moment from rest to where it ends, each one step on from last, walked
+    ##   (`walk.STEP`) or planned (`plan.STRIDE`), or none where plan poses arms again at one turn.
+    ##   Moment left out of way leaves step of two.
+    ##   Law above reads how far each way turns, and laws of hands and edge read moments each way
+    ##     keeps, so none of them sees way that leaves out moments it could not hold.
+    ##   Domain: every moment of every sweep both recordings keep: each rig sweep, way that turns
+    ##     positive, from its first moment, which is rest (`seen.shown`); and each whole-cloth
+    ##     sweep, both ways in order of turn, through rest it draws once (`design/turns.frames`).
+    ##     Sweep that holds no rest keeps no moment; half of sweeps is floor read.
+    ##   Each recording rounds turn of each moment, so step may read long or back by that.
+    ##   Gap found 2026-10-12 in review of `cd9ec9a8`: with moments 0.80 to 1.20 of turn taken out
+    ##     of `Chain, cross name · above` and of L-r.R-l above, every law passed.
+    let
+      (rig_kept, turns_kept) = (parseFile(KEPT_RIG), parseFile(KEPT_TURNS))
+      step_most = max(STEP, STRIDE)
+      sweeps_least = (SHOWN.len + whole_cloth.sweeps().len) div 2
+    var
+      gaps: seq[string]
+      read = 0
+    for (kind, place) in [("rig", PLACE_RIG), ("turns", PLACE_TURN_TURNS)]:
+      var ways: seq[tuple[card: string, turns: seq[float]]]
+      if kind == "rig":
+        for sweep in rig_kept["sweeps"]:
+          if sweep.hasKey("at"):
+            ways.add (sweep["hold"].getStr & " · " & sweep["band"].getStr,
+                      sweep["at"].getElems.mapIt(it.getFloat))
+      else:
+        for key, sweep in turns_kept["sweeps"].pairs:
+          ways.add (key.replace('|', ' '), sweep["frames"].getElems.mapIt(it["turn"].getFloat))
+      for (card, turns) in ways:
+        if turns.len == 0: continue
+        inc read
+        let rest = (if kind == "rig": abs(turns[0]) else: turns.mapIt(abs(it)).min)
+        if rest > place / 2.0: gaps.add &"{card} rests at {rest:.4f}"
+        for m in 1..<turns.len:
+          let step = turns[m] - turns[m-1]
+          if step < -place or step > step_most + place:
+            gaps.add &"{card} {turns[m-1]:+.4f} to {turns[m]:+.4f}"
+    checkpoint &"Sweeps read: `{read}` of both recordings.  Gaps: `{gaps.join(\", \")}`."
+    check read >= sweeps_least
+    check gaps.len == 0
 
 
   test "every still crosses arms below elbow alone, in every moment":
