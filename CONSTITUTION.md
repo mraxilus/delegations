@@ -37,7 +37,8 @@ is mandatory. Where it does not hold, to use the mechanism is cargo cult.
    concept of the subject is named for what it does, and stays off the exported surface.
 3. Every module opens with a header. Its first line states the purpose, and the lines after
    it give the design decisions and the cost of each. A decision without its cost is
-   incomplete.
+   incomplete. A stub that includes its shared suite (IX.7) takes the header of that suite,
+   since the include makes one module of both.
 4. A module that implements an authority (a book, a paper, an RFC) carries aligned plain-text
    tables in its header. They map the code names to the notation of the authority, so that
    book and code read side by side. Its columns align by display width, as the eye reads them.
@@ -233,11 +234,17 @@ for slot in 0..<pool.bound:  # Bound, never `HANDLES_MAX`.
    code names none, the kind leads.
 3. An action is an imperative verb (`constructTable`, `emitOperator`). A property is the bare
    domain noun (`grade`, `norm`, `centroid`), and never `getGrade` or `computeNorm`. A
-   recurring kind of action keeps one verb:
-   - `define…` names a macro that declares from data, and a template that declares a fixed
-     family is named for its act (`borrowOperationsGrade`);
-   - `construct…` names a table that is built and returned, and `emit…` a function that
-     returns AST;
+   recurring kind of action keeps one verb, and that verb fixes the kind of the routine. Three
+   verbs name the stages of generation (II.4), in the order that they run:
+   - `construct…` names a compile-time routine that builds and returns a data structure. A
+     macro usually reads it, and a constant that runtime code reads keeps the verb too;
+   - `define…` names a macro that takes a constructed data structure and produces generated
+     code, usually through `emit…` calls. A template that declares a fixed family is named
+     for its act (`borrowOperationsGrade`);
+   - `emit…` names a compile-time routine that returns a syntax tree, and never a macro.
+
+   The kind never forces the verb, so a macro or a helper of another kind is named for its
+   act. Code that builds a value at runtime takes another verb, and two of those recur:
    - `init…` names a constructor of a value, and `new…` never appears, because nothing is a
      reference (IV.6);
    - `to<Target>` names a change of representation, and takes its subject first. A
