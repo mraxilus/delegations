@@ -116,7 +116,7 @@ func why*(walk: Walk): string =
   ## Say what refuses, in few words that table cell or page can show.
   ##   Short register.  `hold.says` answers same question in whole sentence,
   ##     for viewer that has room for one.
-  ##   Planned walk that stops names nothing that gave: no planned pose stands further on.
+  ##   Planned way that stops names nothing that gave: no planned pose stands further on.
   if not walk.is_stopped: return "no block"
   if walk.isPlanned and walk.why == Stop.None: return "no plan goes further"
   case walk.why

@@ -19,7 +19,7 @@
 ##       26 moments of rig's sweep and 44 of whole-cloth page, measured 2026-10-12.
 ##   Where walk over crown stops short of planned turn, recordings keep planned turn: plan lifts
 ##     hands walk lets sink (Architect, pull request 629, 2026-10-12, D1).  Engine stands each
-##     planned moment, and still's judge reads it (`plannedWalk`).  Every other sweep is walk
+##     planned moment, and still's judge reads it (`plannedWay`).  Every other sweep is walk
 ##     alone (`swept`, `should_plan`).
 ##     Cost: recording plans 64 paths over crown, both chains toward both ways in every style
 ##       (`planAhead`).  Plan carries cross-name chain held above to 1.5275 of turn, where
@@ -70,13 +70,13 @@ type
     found_rest*: bool  ## Whether hold stood at all where this was walked from.
     apart*: float  ## And how far apart couple stood to walk it.
     is_stopped*: bool
-    at*: float  ## Turns reached when something gave, or where planned walk's last moment stands.
+    at*: float  ## Turns reached when something gave, or where planned way's last moment stands.
     why*: Stop
     which*: int  ## Which connection gave.
     whose*: Hand  ## And whose hand, on which arm, it gave at.
     moments*: seq[Moment]
     path*: Path
-      ## Planned turn engine stood for these moments, one plan for each (`plannedWalk`); empty
+      ## Planned turn engine stood for these moments, one plan for each (`plannedWay`); empty
       ## for carried walk.
 
   Swept* = object  ## Both ways from one rest.
@@ -291,7 +291,7 @@ func reflected(walk: Walk, order: seq[int], rests: array[Body, float], partners:
     Walk =
   ## Walk of twin seen in mirror: walk of question it answers.
   ##   Hand that gave is named where walk stopped; otherwise it names none.
-  ##   Planned walk's path is seen in mirror too (`plan.mirrored`).
+  ##   Planned way's path is seen in mirror too (`plan.mirrored`).
   result = Walk(found_rest: walk.found_rest, apart: walk.apart, is_stopped: walk.is_stopped,
                 at: walk.at, why: walk.why, which: walk.which, whose: walk.whose,
                 path: (if walk.isPlanned: mirrored(walk.path) else: walk.path))
@@ -810,12 +810,12 @@ proc furthest(
       first += batch.len
   if carries.len > 0: result = walks[chosen(carries)]
 
-func reachOf(walk: Walk): float =
+func turnsHeld(walk: Walk): float =
   ## Turns from rest of furthest moment walk holds; less than none where it holds no rest.
   if not walk.found_rest or walk.moments.len == 0: -Inf else: abs(walk.moments[^1].at)
 
-# Forward: way of sweep asks planned walk, which planned turn's section defines.
-proc plannedWalk(
+# Forward: way of sweep asks planned way, which planned turn's section defines.
+proc plannedWay(
   rig: Rig; band: Band; links: seq[Link]; who: Body; most, step: float; is_away: bool; head: Body
 ): Walk
 
@@ -839,7 +839,7 @@ proc waysOf(
   ##   Hold that is its own mirror walks way that turns positive, and other way is it
   ##     reflected (`twinOf`), unless it rests face to back or sweep is raw.
   ##   Where `should_plan`, way over crown that walk stops short of planned turn is planned
-  ##     turn (`plannedWalk`): where walk alone lets joined hands sink, plan lifts them
+  ##     turn (`plannedWay`): where walk alone lets joined hands sink, plan lifts them
   ##     (Architect, pull request 629, 2026-10-12).
 
   proc way(towards: float): Walk =
@@ -852,8 +852,8 @@ proc waysOf(
       else: furthest(rig, band, links, who, most, towards, is_away, head, is_raw)
     if not should_plan or band != Band.Crown or (result.found_rest and not result.is_stopped):
       return
-    let planned = plannedWalk(rig, band, links, who, most, towards, is_away, head)
-    if reachOf(planned) > reachOf(result): result = planned
+    let planned = plannedWay(rig, band, links, who, most, towards, is_away, head)
+    if turnsHeld(planned) > turnsHeld(result): result = planned
 
   if isMirrorSame(links) and not is_away and not is_raw:
     let
@@ -1214,10 +1214,10 @@ proc isPlannedReaching*(
 
   kept(PLANNED_REACHES, keyOf(rig, links, $band, bits(turns), $is_away, $who, $head), asked())
 
-proc replayedWalk(
+proc replayedWay(
   rig: Rig, band: Band, links: seq[Link], is_away: bool, head: Body, path: Path
 ): Walk =
-  ## Walk of planned path as engine stands it, moment by moment (`replay`): each moment it
+  ## Way of planned path as engine stands it, moment by moment (`replay`): each moment it
   ## holds, to first that gives, which is left out, and path cut there.
   ##   Judge is still's (`rigid.gives`), so every moment kept holds as still would: joined
   ##     hands over crown from quarter turn away, and from eighth coming back.
@@ -1235,11 +1235,11 @@ proc replayedWalk(
   result.found_rest = result.moments.len > 0
   result.path.is_reached = path.is_reached and result.path.plans.len == path.plans.len
 
-proc plannedWalk(
+proc plannedWay(
   rig: Rig; band: Band; links: seq[Link]; who: Body; most, step: float; is_away: bool; head: Body
 ): Walk =
-  ## Furthest walk any style plans this way toward `most`, own path or its mirror's
-  ## (`pathsFor`), as engine stands it (`replayedWalk`); earlier of two as far is kept.
+  ## Furthest way any style plans toward `most`, own path or its mirror's
+  ## (`pathsFor`), as engine stands it (`replayedWay`); earlier of two as far is kept.
   ##   Plan keeps joined hands inside band and every upper arm inside shoulder's edge, by its
   ##     margins (`plan.bandAt`, `plan.marginOf`), and holds them so moment by moment.
   ##   Couple stand where plan has them at each moment: distance is plan's own, and free.
@@ -1250,9 +1250,9 @@ proc plannedWalk(
   block search:
     for style in STYLES:
       for path in pathsFor(rig, links, is_away, turns, style, who):
-        let got = replayedWalk(rig, band, links, is_away, head, path)
-        if reachOf(got) > reachOf(result): result = got
-        if reachOf(result) >= abs(most) - 1e-9: break search
+        let got = replayedWay(rig, band, links, is_away, head, path)
+        if turnsHeld(got) > turnsHeld(result): result = got
+        if turnsHeld(result) >= abs(most) - 1e-9: break search
   if not result.found_rest: return
-  result.at = reachOf(result)
+  result.at = turnsHeld(result)
   result.is_stopped = result.at < abs(most) - 1e-9
