@@ -688,9 +688,9 @@ A dense form reads tables by their names at pin, and a change may rename them, a
 dense form.
 
 The pristine counts are the baseline, which holds the dense forms. So a dense form that the changed
-build leaves out is no moved function. At rga4d, P01 moves 2 functions, and `multivector-align`
-moves none. So an evaluation of a change that moves no function reads as quiet, and the pages take
-their spread from it.
+build leaves out is no moved function. At rga4d, P08 moves 2 functions, and P01 and
+`multivector-align` move none. So an evaluation of a change that moves no function reads as
+quiet, and the pages take their spread from it.
 
 **A build claim compiles the library alone**, from an entry that holds `import pga` and nothing
 else. It compares the peak memory that the compiler reports for the pin and for the changed
@@ -718,8 +718,8 @@ each time they build, so the record states no figure of it.
 Alternation does not cancel all drift of a shared machine, so the time of one evaluation is
 weak evidence alone. Counts are exact, and carry the verdicts.
 
-`proposals/04-exact-kinds/prototype.nim` holds its laws against the change of
-`cayley-derivation` at rga3d, rga4d, cga4d and cga5d.
+`proposals/04-exact-kinds/prototype.nim` holds its laws against the library at pin, at rga3d,
+rga4d, cga4d and cga5d.
 `proposals/10-homogeneous-scalar/prototype.nim` holds its laws at the same four algebras, on the
 kinds of that prototype. `proposals/11-unitize-general/laws.nim` holds the laws of its rule, and
 `limits.nim` its limits over long chains and frames, at the same four algebras.
@@ -1131,9 +1131,9 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
 ## Open questions
 
 - Whether the library takes P03, `partner-sign`, and with it a partner that does not check the
-  grade of its operand. At cga5d, P03 on P01 spends the chain bound of 324 multiplies, three
-  zero fills and two error checks. P01 alone spends 437, 104 and 268. Both are the counts
-  after the edits in `evaluations/partner-sign.json` and `evaluations/cayley-derivation.json`.
+  grade of its operand. At cga5d, P03 on P01 and P08 spends the chain bound of 324 multiplies,
+  three zero fills and two error checks. P01 and P08 alone spend 437, 104 and 268. Both are the
+  counts after the edits in `evaluations/partner-sign.json` and `evaluations/compound-tables.json`.
 - Whether the library takes P04, `exact-kinds`, so that a product returns the exact basis-set
   type of the bases it reaches. At rga4d 16 measurands stand above the byte bound only because
   they write a whole multivector for one slot, and at cga5d 15 do. Each is a dot, an antidot or
