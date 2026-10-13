@@ -1,19 +1,21 @@
-## Prototype kinds of exact bases over library's derived tables (`exact-kinds`).
-##   Evaluation compiles this against changed library at each algebra its claim names, and exit code
-##     is verdict: every law below holds, or program stops on assertion.
+## Prototype basis-set types of exact bases over library's tables at pin (`exact-kinds`).
+##   Evaluation compiles this against library at pin, at each algebra its claim names, and exit
+##     code is verdict: every law below holds, or program stops on assertion.
 ##   One generic object holds coefficients of any set of bases, densely, in basis order. Named
-##     kinds are its aliases, one per grade and per parity. Product returns
-##     kind of exactly bases its table reaches, so dot of whole multivectors is one slot, and
+##     basis-set types are its aliases, one per grade and per parity. Product returns exact
+##     basis-set type of bases its table reaches, so dot of whole multivectors is one slot, and
 ##     bulk of bivector is part of its grade.
-##   Each kind aligns to `alignmentOf` of its count of floats, from `align.nim`, so it pads none.
+##   Each basis-set type aligns to `alignmentOf` of its count of floats, from `align.nim`, so it
+##     pads none.
 ##
-##   Cost: prototype generates `∧`, `⟇`, `∙`, `∘` and unary parts alone; record says so.
+##   Cost: prototype generates `∧`, `⟇`, `∙`, `∘` and round parts alone, and no squared norm,
+##     since library reads each squared norm from 2D table with one operand; proposal says so.
 
 {.experimental: "strictFuncs".}
 
 when compileOption("profiler"): import std/nimprof
 
-import std/[macros, random]
+import std/[macros, random, strutils]
 
 import pga
 import pga/[algebra {.all.}, cayleys {.all.}]
@@ -24,15 +26,15 @@ import ./align
 type MultivectorOf*[B: static set[Basis]] = object
   ## Define multivector of bases `B` alone, coefficients dense in basis order.
   ##   Aligned to `alignmentOf` of its count through `when`, since `align` of expression of `B`
-  ##     stops pinned compiler.
+  ##     stops pinned compiler. Field stays private, as library keeps it on `Multivector`.
   when alignmentOf(card(B)) == 64:
-    elements* {.align(64).}: array[card(B), float]
+    elements {.align(64).}: array[card(B), float]
   elif alignmentOf(card(B)) == 32:
-    elements* {.align(32).}: array[card(B), float]
+    elements {.align(32).}: array[card(B), float]
   elif alignmentOf(card(B)) == 16:
-    elements* {.align(16).}: array[card(B), float]
+    elements {.align(16).}: array[card(B), float]
   else:
-    elements*: array[card(B), float]
+    elements: array[card(B), float]
 
 
 const
@@ -41,7 +43,7 @@ const
 
 
 
-#[ Kinds ]#
+#[ Basis-Set Types ]#
 
 func basesOfParity(is_even: bool): set[Basis] {.compileTime.} =
   ## Get bases of even or odd grade.
@@ -55,9 +57,9 @@ func literal(listed: set[Basis]): NimNode {.compileTime.} =
   for basis in listed: result.add nnkDotExpr.newTree(ident"Basis", ident($basis))
 
 
-macro defineKinds(): untyped =
-  ## Name kinds as aliases of exact kinds: grades and parities.
-  ##   Also define `holdLayouts`, which holds size and alignment of each named kind. Macro knows
+macro defineMultivectors(): untyped =
+  ## Name basis-set types as aliases of exact ones: grades and parities.
+  ##   Also define `holdLayouts`, which holds size and alignment of each named one. Macro knows
   ##     each count when it runs, so it writes both numbers.
   result = newStmtList()
   var
@@ -82,11 +84,11 @@ macro defineKinds(): untyped =
         `alignment`
   result.add quote do:
     proc holdLayouts() =
-      ## Hold size and alignment of each named kind, as macro wrote them from its count.
+      ## Hold size and alignment of each named basis-set type, as macro wrote them from its count.
       `laws`
 
 
-defineKinds()
+defineMultivectors()
 
 
 func slotOf(listed: set[Basis], basis: Basis): int =
@@ -97,13 +99,28 @@ func slotOf(listed: set[Basis], basis: Basis): int =
 
 
 template `[]`*[B: static set[Basis]](m: MultivectorOf[B], basis: static Basis): float =
-  ## Read coefficient of basis from its dense slot.
+  ## Read coefficient of basis from its dense slot; basis outside `B` stops compile.
+  static: doAssert basis in B, "Basis must be among bases of type; got `" & $basis & "`."
   m.elements[static(slotOf(B, basis))]
 
 
 template `[]=`*[B: static set[Basis]](m: var MultivectorOf[B], basis: static Basis, value: float) =
-  ## Write coefficient of basis into its dense slot.
+  ## Write coefficient of basis into its dense slot; basis outside `B` stops compile.
+  static: doAssert basis in B, "Basis must be among bases of type; got `" & $basis & "`."
   m.elements[static(slotOf(B, basis))] = value
+
+
+func coefficient*[B: static set[Basis]](m: MultivectorOf[B], basis: Basis): float =
+  ## Read coefficient of basis known only at run time; basis outside `B` reads zero, its value.
+  const lut_slot_by_basis = block:
+    var lut: array[Basis, int]
+    for listed in B: lut[listed] = slotOf(B, listed)
+    lut
+  if basis in B: m.elements[lut_slot_by_basis[basis]] else: 0.0
+
+
+func bases[B: static set[Basis]](t: typedesc[MultivectorOf[B]]): set[Basis] = B
+  ## Get bases basis-set type holds.
 
 
 
@@ -134,17 +151,17 @@ func reachOf(cayley: Cayley1D, bases_m: set[Basis]): set[Basis] {.compileTime.} 
 
 
 macro kindOf(cayley: static Cayley2D; bases_m, bases_n: static set[Basis]): untyped =
-  ## Spell exact kind product reaches, as literal set, so it is same type as any alias of it.
+  ## Spell exact basis-set type product reaches, as literal set, so it is same type as any alias.
   nnkBracketExpr.newTree(ident"MultivectorOf", literal(reachOf(cayley, bases_m, bases_n)))
 
 
 macro kindOf(cayley: static Cayley1D, bases_m: static set[Basis]): untyped =
-  ## Spell exact kind map reaches, as literal set.
+  ## Spell exact basis-set type map reaches, as literal set.
   nnkBracketExpr.newTree(ident"MultivectorOf", literal(reachOf(cayley, bases_m)))
 
 
 func writesOf(sums: array[Basis, seq[NimNode]]): NimNode {.compileTime.} =
-  ## Write each reached slot of result once; every slot of exact kind is reached, so none fills.
+  ## Write each reached slot of result once; every slot of exact type is reached, so none fills.
   result = newStmtList()
   for basis in Basis:
     if sums[basis].len > 0:
@@ -154,7 +171,7 @@ func writesOf(sums: array[Basis, seq[NimNode]]): NimNode {.compileTime.} =
 macro defineProduct(
   cayley: static Cayley2D; bases_m, bases_n: static set[Basis]; m, n: untyped
 ): untyped =
-  ## Define product over operands' bases alone, into result of exact kind.
+  ## Define product over operands' bases alone, into result of exact basis-set type.
   var sums: array[Basis, seq[NimNode]]
   for left in bases_m:
     for right in bases_n:
@@ -165,7 +182,7 @@ macro defineProduct(
 
 
 macro defineMap(cayley: static Cayley1D, bases_m: static set[Basis], m: untyped): untyped =
-  ## Define map over operand's bases alone, into result of exact kind.
+  ## Define map over operand's bases alone, into result of exact basis-set type.
   var sums: array[Basis, seq[NimNode]]
   for basis in bases_m:
     for term in cayley[basis]:
@@ -205,53 +222,91 @@ func `∘`*[A, B: static set[Basis]](
 func `∙`*[A: static set[Basis]](
   m: MultivectorOf[A],
 ): kindOf(CAYLEYS_PARTS.bulk.round, A) {.noinit.} =
-  ## Extract bulk; result holds exactly bulk bases of operand's kind.
+  ## Extract bulk; result holds exactly bulk bases of operand's basis-set type.
   defineMap(CAYLEYS_PARTS.bulk.round, A, m)
 
 
 func `∘`*[A: static set[Basis]](
   m: MultivectorOf[A],
 ): kindOf(CAYLEYS_PARTS.weight.round, A) {.noinit.} =
-  ## Extract weight; result holds exactly weight bases of operand's kind.
+  ## Extract weight; result holds exactly weight bases of operand's basis-set type.
   defineMap(CAYLEYS_PARTS.weight.round, A, m)
 
 
 func toMultivector*[B: static set[Basis]](m: MultivectorOf[B]): Multivector =
-  ## Widen exact kind to library's multivector, same coefficients.
+  ## Widen basis-set type to library's multivector, same coefficients.
   for basis in B: result[basis] = m.elements[slotOf(B, basis)]
+
+
+func toMultivectorOf*[B: static set[Basis]](
+  m: Multivector, t: typedesc[MultivectorOf[B]]
+): MultivectorOf[B] =
+  ## Narrow library's multivector to basis-set type `t`.
+  ##   Each coefficient outside `B` must be zero within comparison tolerance, as `grade` tests it.
+  for basis in Basis:
+    if basis in B: result.elements[slotOf(B, basis)] = m[basis]
+    else:
+      doAssert abs(m[basis]) <= TOLERANCE_ABS,
+        "Coefficient outside bases of type must be zero; got `" & $m[basis] & "` at `" &
+        $basis & "`."
 
 
 
 #[ Laws ]#
 
 proc sample[B: static set[Basis]](kind: typedesc[MultivectorOf[B]]): MultivectorOf[B] =
-  ## Draw one kind with every slot uniform in [-1, 1].
+  ## Draw one basis-set type with every slot uniform in [-1, 1].
   for index in 0..<result.elements.len: result.elements[index] = rand(-1.0..1.0)
-
-
-func basesOf[B: static set[Basis]](kind: typedesc[MultivectorOf[B]]): set[Basis] = B
-  ## Get bases kind holds.
 
 
 proc main(): int =
   ## Hold laws on seeded samples; print where they hold, and exit zero.
   randomize(SEED)
+  var written = sample(Kvector1)
   let
     (p, q) = (sample(Kvector1), sample(Kvector1))
     (m, n) = (sample(MultivectorOf[{Basis.low..Basis.high}]),
         sample(MultivectorOf[{Basis.low..Basis.high}]))
     bivector = sample(Kvector2)
+    even = sample(MultivectorEven)
+    top = sample(MultivectorOf[{Basis.scalarAnti}])
   holdLayouts()
-  doAssert alignof(typeof(∙bivector)) == alignmentOf(card(basesOf(typeof(∙bivector)))),
-    "kind that product returns aligns by same rule as named kinds"
-  doAssert (p ∧ q) is Kvector2, "vector wedge vector must be bivector, named by its alias"
+  doAssert alignof(typeof(∙bivector)) == alignmentOf(card(bases(typeof(∙bivector)))),
+    "type that product returns aligns by same rule as named ones"
+  doAssert (p ∧ q) is Kvector2, "vector wedge vector must be bivector, equal to its alias"
+  doAssert ($typeof(p ∧ q)).startsWith("MultivectorOf[{"),
+    "alias adds no type, so type prints as generic with its bases"
+  echo "exact-kinds: vector wedge vector prints as ", $typeof(p ∧ q)
   doAssert (m ∙ n) is MultivectorOf[{Basis.scalar}], "dot of whole multivectors must be scalar slot"
   doAssert sizeof(m ∙ n) == sizeof(float), "dot writes one slot, never whole multivector"
   doAssert sizeof(m ∘ n) == sizeof(float), "antidot writes one slot, never whole multivector"
-  doAssert basesOf(typeof(∙bivector)) < basesOf(Kvector2), "bulk of bivector is part of grade"
+  doAssert sizeof(∘p) == sizeof(float), "weight of vector writes one slot"
+  doAssert sizeof(∙m) * (when IS_RIGID: 2 else: 4) == sizeof(Multivector),
+    "bulk of whole holds half of bases under rigid metric, and quarter under conformal metric"
+  doAssert ((even ⟇ p) ⟇ even) is MultivectorOdd,
+    "sandwich of vector reaches whole odd parity, as table can produce"
+  echo "exact-kinds: bytes of m ∙ n ", sizeof(m ∙ n), ", m ∘ n ", sizeof(m ∘ n), ", ∙ bivector ",
+    sizeof(∙bivector), ", ∘ vector ", sizeof(∘p), ", ∙ whole ", sizeof(∙m), ", sandwich ",
+    sizeof((even ⟇ p) ⟇ even), ", library ", sizeof(Multivector)
+  doAssert bases(typeof(∙bivector)) < bases(Kvector2), "bulk of bivector is part of grade"
   when IS_RIGID:
-    doAssert basesOf(typeof(∙bivector)) + basesOf(typeof(∘bivector)) == basesOf(Kvector2),
+    doAssert bases(typeof(∙bivector)) + bases(typeof(∘bivector)) == bases(Kvector2),
       "bulk and weight of bivector cover its grade, under rigid metric"
+  doAssert card(bases(typeof(top ∧ top))) == 0 and (top ∧ top).toMultivector =~ 0.0,
+    "product that reaches no basis holds no coefficient, and widens to zero"
+  doAssert not compiles(p[Basis.scalar]) and not compiles(written[Basis.scalar] = 1.0),
+    "basis outside bases of type must stop compile, never reach another slot"
+  var expected = written.toMultivector
+  written[Basis.vectorLast] = 1.0
+  expected[Basis.vectorLast] = 1.0
+  doAssert written.toMultivector =~ expected, "write reaches slot of its basis alone"
+  var read: Multivector
+  for basis in Basis: read[basis] = bivector.coefficient(basis)
+  doAssert read =~ bivector.toMultivector, "read at run time equals widened, and zero outside"
+  doAssert even.toMultivector.toMultivectorOf(MultivectorEven).toMultivector =~
+      even.toMultivector,
+    "narrow of widened returns same coefficients"
+  doAssertRaises(AssertionDefect): discard m.toMultivector.toMultivectorOf(Kvector1)
   for _ in 1..SAMPLES:
     let
       (a, b) = (sample(Kvector1), sample(Kvector2))

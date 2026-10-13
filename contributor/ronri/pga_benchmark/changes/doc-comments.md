@@ -8,6 +8,12 @@ It removes table rows for operators that the library does not define. It replace
 `TODO: Document.` header, and documents the projections and the squared norms. No count
 changes.
 
+Proposal P01, `cayley-derivation`, replaces `pga/cayleys.nim` whole from a digest, and this
+change edits that file too. Whichever lands second is quoted again against the first. If P01
+lands second, its Replace carries the text of this change under a new digest. The change
+`conformal-norms` edits nearby docs in `pga.nim` and `pga/operators.nim`. The two changes quote
+distinct lines, so they apply in either order.
+
 ## Edit `pga.nim`
 
 ```nim
@@ -134,7 +140,7 @@ import ./pga/[algebra, cayleys, multivectors, operators]
 
 ```nim
     ## Get radius norm of multivector.
-    ##   Not implemented; operator table above marks both center and radius norms so.
+    ##   Conformal only, as † marks in operator table above.
 ```
 
 ## Edit `pga.nim`

@@ -7,7 +7,8 @@
 ##     comparison holds while noise stays at or under `TOLERANCE_ABS`.
 ##   Scene sits at distance from origin: each coordinate and translation is Gaussian, with
 ##     deviation distance / sqrt(3).
-##   Places is count of decimal places tolerance may keep and still see no noise in any sample.
+##   Places is count of decimal places comparison tolerance may keep and still see no noise in
+##     any sample.
 
 {.experimental: "strictFuncs".}
 

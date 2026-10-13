@@ -15,9 +15,10 @@
 ##     objects moved once or 30 times, k-vectors; in CGA round objects moved by conformal motion
 ##     operator, and spheres of every radius.
 ##   Figures it prints are evidence that never gates. Rigid figure is most decimal places one
-##     rule keeps with no noise in any sample: "now" weighs coefficient against max(1, |x|, |y|),
-##     as pin does; "part" weighs it against largest absolute value of its part, bulk or weight,
-##     in either. Population figure is misreads of each zero test, as `Test` names each.
+##     rule keeps with no noise in any sample: "pin" weighs coefficient against max(1, |x|, |y|),
+##     as pin does and P06 alone does at 32 bits; "P07" weighs it against largest absolute value
+##     of its part, bulk or weight, in either. Population figure is misreads of each zero test, as
+##     `Test` names each.
 ##   Rigid scene sits at distance from origin: each coordinate and translation is Gaussian, with
 ##     deviation distance / sqrt(3). Population scene draws each coordinate with deviation of its
 ##     row, so its points lie about that deviation times square root of coordinate count away.
@@ -56,14 +57,14 @@ func moved(x, product: Multivector): Multivector =
 
 
 when IS_RIGID and DIMENSIONS == 4:
-  func noiseNow(a, b: Multivector): float =
+  func noisePin(a, b: Multivector): float =
     ## Weigh largest difference against max(1, |x|, |y|) of its own coefficient, as pin does.
     for basis in Basis:
       let (x, y) = (float(a[basis]), float(b[basis]))
       result = max(result, abs(x - y) / max(1.0, max(abs(x), abs(y))))
 
 
-  func noisePart(a, b: Multivector): float =
+  func noiseP07(a, b: Multivector): float =
     ## Weigh largest difference against largest absolute value of its part, bulk or weight, in
     ##   either.
     for (x, y) in [(∙a, ∙b), (∘a, ∘b)]:
@@ -72,7 +73,7 @@ when IS_RIGID and DIMENSIONS == 4:
       for basis in Basis: result = max(result, abs(float(x[basis]) - float(y[basis])) / scale)
 
 
-  func isPointNow(m: Multivector): bool =
+  func isPointPin(m: Multivector): bool =
     ## Tell whether grade of pin would read one: each slot outside point at most tolerance.
     for basis in Basis:
       if basis notin {Basis.E1, Basis.E2, Basis.E3, Basis.E4} and abs(m[basis]) > TOLERANCE_ABS:
@@ -150,7 +151,7 @@ when IS_RIGID and DIMENSIONS == 4:
   proc holdRigid() =
     ## Hold every rigid law at each distance, then print places each rule keeps, and grades pin
     ##   misreads.
-    echo "distance law now part"
+    echo "distance law pin P07"
     for distance in DISTANCES:
       var
         worst: array[LAWS.len, (float, float)]
@@ -166,16 +167,16 @@ when IS_RIGID and DIMENSIONS == 4:
           ]
         for k, (a, b) in pairs:
           doAssert a =~ b, &"Law {LAWS[k]} holds at distance {distance}."
-          worst[k] = (max(worst[k][0], noiseNow(a, b)), max(worst[k][1], noisePart(a, b)))
+          worst[k] = (max(worst[k][0], noisePin(a, b)), max(worst[k][1], noiseP07(a, b)))
         let point_moved = p.moved(first)
         doAssert point_moved.grade.isSome and int(point_moved.grade.get) == 1,
             &"Moved point keeps grade one at distance {distance}."
-        if not point_moved.isPointNow: inc misread
+        if not point_moved.isPointPin: inc misread
         doAssert not (g =~ g.tilted(10 * float(TOLERANCE_ABS))),
             &"Plane turned by ten tolerances differs at distance {distance}."
       for k, law in LAWS:
         echo distance, " ", law, " ", places(worst[k][0]), " ", places(worst[k][1])
-      echo distance, " grade_misread_now ", misread, " of ", SAMPLES
+      echo distance, " grade_misread_pin ", misread, " of ", SAMPLES
 
 
 type

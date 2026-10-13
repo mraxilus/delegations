@@ -1,9 +1,26 @@
 # Cayley derivation as edits at pin
 
-Duals, interior products, dot, antireverse and attitude read rules that the library has, in
-place of constructors of their own. Every exported table keeps its name, shape and cells. The
-suites hold the transwedge identity that the dot no longer reads. `cayleys.nim` is replaced
-whole, since its tables and constructors change together.
+Duals, interior products, dot, antireverse and attitude read three of the four rules, in place
+of constructors of their own. `constructAnti`, `applyConstant` and `filterGrades` are in the
+library at pin. This change adds `applyMap`, and `mergeTerm`, which both `applyMap` and `merge`
+call. Every exported table keeps its name, shape and cells. The suites hold the transwedge
+identity that the dot no longer reads. `cayleys.nim` is replaced whole, since its tables and
+constructors change together.
+
+### Order of edits
+
+Other edits of `pga/cayleys.nim` and `tests/suites.nim` land in this order against the edits
+below:
+
+- P08, `compound-tables`, quotes this file, so it lands after this proposal. P03,
+  `partner-sign`, quotes P08 and lands after it.
+- The change `cayleys-hygiene` renames an overload of `constructProductInterior`, which this
+  proposal deletes. So that change is void once this proposal lands.
+- The changes `doc-comments` and `doc-comments-2` edit `pga/cayleys.nim` too. Whichever lands
+  second is quoted again against the first. If this proposal lands second, its Replace carries
+  their text under a new digest.
+- `doc-comments-2` also edits the import line of `tests/suites.nim` that this proposal edits. The
+  second to land quotes that line again.
 
 ## Edit `tests/suites.nim`
 
@@ -56,8 +73,10 @@ suite "Transwedge":
 ##       (antiwedge, 𝔾, antireverse, antidot).
 ##     `applyConstant` and `applyMap` fix or map one operand of product
 ##       (attitude, carrier, duals, interior products).
+##       Each dual composes two maps: complement after 𝐆 or 𝔾.
 ##     `filterGrades` keeps one grade of product (dot as scalar part of bulk contraction).
-##     `constructProductsTransitional` sums wedge chains over one grade (geometric products).
+##     `constructProductsTransitional` sums wedge chains over one grade (transwedge orders).
+##       `constructProductGeometric` sums orders with sign (-1)^(k(k-1)/2) (geometric products).
 ##
 
 {.experimental: "codeReordering".}
@@ -781,7 +800,7 @@ func negate(cayley: var Cayley1D) {.compileTime, used.} =  # Not used; provided 
     cayley[operand][0].is_negated = not cayley[operand].toSigned.is_negated
 
 
-func negate(cayley: var Cayley2D) {.compileTime.} =
+func negate(cayley: var Cayley2D) {.compileTime, used.} =  # Not used; provided for completion.
   ## Negate all signed basis of 2D cayley table in place.
   for m in Basis:
     for n in Basis:

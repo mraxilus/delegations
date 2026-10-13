@@ -3,7 +3,13 @@
 At pin, each of the four norms of the book measures the size of its own part, and the radius norm
 roots the antidot. The center norm, (4.43), is still a stub. This change fills it on 𝟏, as a
 weighted distance from the origin to the center. Chapter 4 gains two tests, from Tables 4.12
-and 4.13. Proposal P11, `unitize-general`, sets how unitization treats a flat object.
+and 4.13. Both run at `cga5d` alone, since they name the bases of 5D.
+
+The doc of the radius norm states that its float root is NaN for an imaginary object. This change
+keeps `Multivector` as the return of each norm, as at pin. Proposal P10, `homogeneous-scalar`,
+proposes `ScalarHomogeneous` as the return of `normRadius`. Proposal P11, `unitize-general`, sets
+how unitization treats a flat object. The change `doc-comments` edits nearby docs in `pga.nim`.
+The two changes quote distinct lines, so they apply in either order.
 
 ## Edit `pga/operators.nim`
 
@@ -17,7 +23,7 @@ and 4.13. Proposal P11, `unitize-general`, sets how unitization treats a flat ob
 ```nim
   func `|⊘`*(m: Multivector): Multivector {.inline.} =
     ## Get radius norm of multivector.
-    ##   Taken from antidot to avoid square root of negative.
+    ##   Float root of antidot; NaN where 𝐦∘𝐦 < 0, as for imaginary object.
     result[Basis.scalarAnti] = (`|⊘²`m)[Basis.scalarAnti].sqrt
 
   func `|⊙`*(m: Multivector): Multivector {.inline.} =

@@ -1,16 +1,20 @@
-## Prototype homogeneous scalar, pair of scalar and antiscalar, over exact kinds of P04
+## Prototype homogeneous scalar, pair of scalar and antiscalar, over basis-set types of P04
 ##   (`homogeneous-scalar`).
-##   Evaluation compiles this against changed library at each algebra its claim names, and exit code
-##     is verdict: every law below holds, or program stops on assertion.
-##   Homogeneous scalar is exact kind of 𝟏 and 𝟙: value x/y, kept with its weight y, as homogeneous
-##     point keeps position with its weight. 𝟏 is unit of geometric product, and 𝟙 of antiproduct,
-##     as Lengyel's `DualNum` has `Sqrt` and `AntiSqrt`. Square of other part under each, read from
-##     library's table, is 0 under rigid metric, so pair is dual number, and -1 under conformal
-##     metric, so pair is complex number. Inverse, root and exponential under geometric product
-##     follow from that square alone, and each anti form is their complement. Division is under
-##     antiproduct, as Lengyel's is.
+##   Evaluation compiles this against library at pin, at each algebra its claim names, and exit
+##     code is verdict: every law below holds, or program stops on assertion.
+##   Homogeneous scalar is basis-set type of 𝟏 and 𝟙: value x/y, kept with its weight y, as
+##     homogeneous point keeps position with its weight. 𝟏 is unit of geometric product, and 𝟙 of
+##     antiproduct, as Lengyel's `DualNum` has `Sqrt` and `AntiSqrt`. Square of other part under
+##     each, read from library's table, is 0 under rigid metric, so pair is dual number, and -1
+##     under conformal metric, so pair is complex number. Inverse, root and exponential under
+##     geometric product follow from that square alone, and each anti form is their complement.
+##     Division is under antiproduct, as Lengyel's is.
+##   Bulk norm, weight norm, geometric norm and unitization stand under rigid metric alone, where
+##     they equal library's. Conformal algebras keep library's four part norms (Table 4.12) and
+##     unitization of P11 (`unitize-general`); there radius norm alone is homogeneous scalar.
 ##
-##   Cost: norms read library's `Multivector`, since P04 emits no squared norm; record says so.
+##   Cost: norms read library's `Multivector`, since prototype of P04 emits no squared norm: each
+##     is unary 2D table. Division of multivector is whole antiproduct of library. Record says so.
 
 {.experimental: "strictFuncs".}
 
@@ -135,16 +139,29 @@ func `/`*(m: Multivector, z: ScalarHomogeneous): Multivector =
 
 #[ Norms ]#
 
-func normBulk*(m: Multivector): ScalarHomogeneous =
-  ## Get bulk norm as root under geometric product, i.e. ‖𝐦‖∙ = √(𝐦∙𝐦), as wiki takes it.
-  ##   Reads whole dot, since `|∙²` at pin sums squares of round bulk alone, with no metric.
-  sqrt(initScalarHomogeneous((m ∙ m)[Basis.scalar], 0))
+when IS_RIGID:
+  func normBulk*(m: Multivector): ScalarHomogeneous =
+    ## Get bulk norm as root under geometric product, i.e. ‖𝐦‖∙ = √(𝐦∙𝐦), as wiki takes it.
+    ##   Reads library's whole dot, which equals `|∙²` under rigid metric.
+    sqrt(initScalarHomogeneous((m ∙ m)[Basis.scalar], 0))
 
 
-func normWeight*(m: Multivector): ScalarHomogeneous =
-  ## Get weight norm as root under antiproduct, i.e. ‖𝐦‖∘ = √(𝐦∘𝐦), as wiki takes it.
-  ##   Reads whole antidot, since `|∘²` at pin sums squares of round weight alone, with no metric.
-  sqrtAnti(initScalarHomogeneous(0, (m ∘ m)[Basis.scalarAnti]))
+  func normWeight*(m: Multivector): ScalarHomogeneous =
+    ## Get weight norm as root under antiproduct, i.e. ‖𝐦‖∘ = √(𝐦∘𝐦), as wiki takes it.
+    ##   Reads library's whole antidot, which equals `|∘²` under rigid metric.
+    sqrtAnti(initScalarHomogeneous(0, (m ∘ m)[Basis.scalarAnti]))
+
+
+  func norm*(m: Multivector): ScalarHomogeneous =
+    ## Get geometric norm, i.e. ‖𝐦‖ = ‖𝐦‖∙ + ‖𝐦‖∘.
+    normBulk(m) + normWeight(m)
+
+
+  func unitize*(m: Multivector): Multivector =
+    ## Unitize by division by weight norm, i.e. 𝐦̂ = 𝐦 ÷ ‖𝐦‖∘; equals library's `^` where weight
+    ##   is nonzero. Zero weight gives NaN, where `^` does nothing.
+    ##   Rigid metric alone: in conformal algebras library keeps `^∘` of P11 (`unitize-general`).
+    m / normWeight(m)
 
 
 when IS_CONFORMAL:
@@ -152,16 +169,6 @@ when IS_CONFORMAL:
     ## Get radius norm as root under antiproduct, i.e. ‖𝐦‖⊘ = √(𝐦∘𝐦), book's (4.45).
     ##   Real for real object, imaginary, on 𝟏, for imaginary one. `|⊘` at pin is NaN for latter.
     sqrtAnti(initScalarHomogeneous(0, (m ∘ m)[Basis.scalarAnti]))
-
-
-func norm*(m: Multivector): ScalarHomogeneous =
-  ## Get geometric norm, i.e. ‖𝐦‖ = ‖𝐦‖∙ + ‖𝐦‖∘.
-  normBulk(m) + normWeight(m)
-
-
-func unitize*(m: Multivector): Multivector =
-  ## Unitize by division by weight norm, i.e. 𝐦̂ = 𝐦 ÷ ‖𝐦‖∘.
-  m / normWeight(m)
 
 
 
@@ -231,7 +238,7 @@ proc main(): int =
       (y, z) = (sample(ScalarHomogeneous), sample(ScalarHomogeneous))
       (rooted, rooted_anti) = (sampleRooted(Basis.scalar), sampleRooted(Basis.scalarAnti))
       m = sampleWhole()
-      bulk = normBulk(m)
+      root_dot = sqrt(initScalarHomogeneous((m ∙ m)[Basis.scalar], 0))
     doAssert complement(z).toMultivector =~ /z.toMultivector, "complement equals library's"
     doAssert (z.toMultivector ⟑ one) =~ z.toMultivector, "𝟏 is unit of geometric product"
     doAssert (z.toMultivector ⟑ inverse(z).toMultivector) =~ one, "z ⟑ z⁻¹ = 𝟏"
@@ -254,11 +261,12 @@ proc main(): int =
     doAssert expAnti(y + z).toMultivector =~
         (expAnti(y).toMultivector ⟇ expAnti(z).toMultivector),
       "exp(y + z) = exp(y) ⟇ exp(z)"
-    doAssert not bulk[Basis.scalar].isNaN and not bulk[Basis.scalarAnti].isNaN,
-      "bulk norm is never NaN"
-    doAssert (bulk.toMultivector ⟑ bulk.toMultivector) =~ (m ∙ m), "‖𝐦‖∙ ⟑ ‖𝐦‖∙ = 𝐦∙𝐦"
+    doAssert not root_dot[Basis.scalar].isNaN and not root_dot[Basis.scalarAnti].isNaN,
+      "root of 𝐦∙𝐦 is never NaN"
+    doAssert (root_dot.toMultivector ⟑ root_dot.toMultivector) =~ (m ∙ m),
+      "√(𝐦∙𝐦) ⟑ √(𝐦∙𝐦) = 𝐦∙𝐦"
     when IS_RIGID:
-      let weight = normWeight(m)
+      let (bulk, weight) = (normBulk(m), normWeight(m))
       doAssert (weight.toMultivector ⟇ weight.toMultivector) =~ (m ∘ m), "‖𝐦‖∘ ⟇ ‖𝐦‖∘ = 𝐦∘𝐦"
       doAssert bulk.toMultivector =~ |∙m, "bulk norm equals library's"
       doAssert weight.toMultivector =~ |∘m, "weight norm equals library's"

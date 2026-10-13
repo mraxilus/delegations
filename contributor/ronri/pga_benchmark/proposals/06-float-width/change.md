@@ -4,8 +4,20 @@ At pin, each coefficient of a multivector is a 64-bit `float`, and no build opti
 This change adds the define `pga.float_width`, 64 by default or 32, and the type `Coefficient`
 that it selects. Each coefficient, scalar operand and comparison takes `Coefficient` in place of
 `float`. The define `pga.tolerance_places` becomes `pga.float_tolerance`, and its default
-follows the width. At 64 bits `Coefficient` and `float` name one type, so the library emits the
-same C as pin.
+follows the width. No alias keeps `TOLERANCE_PLACES`. At 64 bits `Coefficient` and `float` name
+one type, so the library emits the same C as pin.
+
+Four other edits quote lines of this change. Of this change and each of them, the second to land
+quotes the first:
+
+- P05, `multivector-align`, edits the `elements` field of `Multivector`. The merged line is
+  `elements {.align(min(64, sizeof(array[Basis, Coefficient]))).}: array[Basis, Coefficient]`.
+- P03, `partner-sign`, removes the sign line of `⊛`, so the edit of that line here is void once
+  P03 lands. If this change lands first, P03 quotes `Coefficient(...)` in place of `float(...)`.
+- The change `partner-guard` edits the same sign line, and is void once P03 lands. If this change
+  lands first, `partner-guard` keeps `Coefficient(...)`.
+- The change `algebra-hygiene` renames `TOLERANCE_ABS` to `TOLERANCE_REL`. The merged line keeps
+  both the new name and `Coefficient`.
 
 ## Edit `pga/algebra.nim`
 
