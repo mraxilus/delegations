@@ -6,9 +6,11 @@ proposal gives one rule for any element of either algebra. The rule divides an e
 W(𝐮). For a round object in the conformal algebra, W(𝐮) is the round weight norm, which is the
 weight of its carrier. For any other element, W(𝐮) is √|𝐮 ∘ 𝐮|, as in Lengyel's rigid unitization.
 
-The Architect chose this rule on 2026-10-11, after a reanalysis against Lengyel's code, book
-and wikis. This page holds that reanalysis. Its figures come from `laws.nim` and `limits.nim`,
-which ran in this container on 2026-10-11, at 64 bits, against the changed library.
+The rule stands as the Architect ruled on 2026-10-11, on a reanalysis against Lengyel's code,
+book and wikis. This page holds that reanalysis. Most of its figures come from `laws.nim` and
+`limits.nim`, which ran on this machine on 2026-10-11, at 64 bits, against the changed library.
+The costs come from the evaluation of 2026-10-12. Other figures come from runs by hand, and each
+section names its run.
 
 ## What it is
 
@@ -20,10 +22,10 @@ unitize(𝐮) = 𝐮 ÷ W(𝐮), and 𝐮 as it is where W(𝐮) is 0
 
 - **Round object.** The element holds one grade, and its round weight is not negligible beside
   √|𝐮 ∘ 𝐮|. These are Lengyel's round point, dipole, circle and sphere.
-- **Its divisor.** The round weight norm ‖𝐮‖∘ equals the weight norm of the carrier 𝐮 ∧ 𝐞∞.
-  Lengyel defines it so: `RoundWeightNorm` in `ConformalAlgebra3D.wl` is the antidot norm of
-  𝐱 ∧ 𝐞₅, and his 𝐞₅ is 𝐞∞. The book says that the round weight "is equivalent to the weight of
-  the carrier geometry for round objects" (page 197).
+-  **Its divisor.** The round weight norm ‖𝐮‖∘ equals the weight norm of 𝐮 ∧ 𝐞∞, its carrier.
+  Lengyel defines it so: `RoundWeightNorm` in `ConformalAlgebra3D.wl` is the antidot norm of 𝐱 ∧ 𝐞₅,
+  and his 𝐞₅ is the 𝐞∞ of the library. The book says that the round weight "is equivalent to the
+  weight of the carrier geometry for round objects" (page 197).
 - **Any other element.** Its divisor is Lengyel's rigid unitization. His wiki gives it for any
   element. It says: "Unitization is the process of scaling an element of a projective geometric
   algebra so that its weight norm becomes the antiscalar". The formula is 𝐮 ÷ √(𝐮 ∘ 𝐮)
@@ -35,9 +37,10 @@ unitize(𝐮) = 𝐮 ÷ W(𝐮), and 𝐮 as it is where W(𝐮) is 0
 The rule divides a round object by the weight of its carrier. It divides any other element by
 √|𝐮 ∘ 𝐮|, with Lengyel's rigid formula.
 
-This change puts its test at the head of suite Chapter 4, and keeps the placeholder test there.
-Change `conformal-norms` replaces that placeholder with its two tests. So the two apply in either
-order, and their three tests then stand side by side.
+This change puts one test at the head of suite Chapter 4, and keeps the placeholder test there.
+It also puts one test at the head of suite Internal. Change `conformal-norms` replaces that
+placeholder with its two tests. So the two apply in either order, and their three tests in
+Chapter 4 then stand side by side.
 
 ## Why one rule must choose
 
@@ -59,13 +62,13 @@ The rigid formula cannot serve round objects either. The library's antidot split
 𝐮∘ · 𝐮■ = u₄u₅ − (u₄₁u₁₅ + u₄₂u₂₅ + u₄₃u₃₅) + (u₄₂₃u₂₃₅ + u₄₃₁u₃₁₅ + u₄₁₂u₁₂₅) − u₁₂₃₄u₃₂₁₅
 ```
 
-The pairing 𝐮∘ · 𝐮■ matches each round weight blade with the flat bulk blade that has 𝐞₅ in place
-of 𝐞₄. A flat has no round part, so 𝐮 ∘ 𝐮 = ‖𝐮‖□² exactly, and `laws.nim` finds an error of 0 in
-both conformal algebras. A round object has round weight and flat bulk together. So 𝐮 ∘ 𝐮 is its
-radius squared, times its weight squared (4.45).
+The pairing 𝐮∘ · 𝐮■ matches each round weight blade with a flat bulk blade, which has 𝐞₅ in place of
+𝐞₄ in its factors. A flat has no round part, so 𝐮 ∘ 𝐮 = ‖𝐮‖□² exactly, and `laws.nim` finds an error
+of 0 in both conformal algebras. A round object has round weight and flat bulk together. So 𝐮 ∘ 𝐮 is
+its radius squared, times its weight squared (4.45).
 
 Two units therefore differ. The object unit makes the round weight 1. The unit of a motion or
-reflection operator makes |𝐮 ∘ 𝐮| equal to 1, so that 𝐮 ⟇ ~∘𝐮 = ±𝟙. A round point of real
+reflection operator makes |𝐮 ∘ 𝐮| equal to 1, so that 𝐮 ⟇ ~∘𝐮 = ±𝟙 holds. A round point of real
 position has radius 0. So it has no such unit at all, and only its round weight can unitize it.
 
 In the rigid algebra the two units are one, since 𝐮 ∘ 𝐮 is the weight norm squared for every
@@ -136,11 +139,12 @@ Each law has an algebraic argument, and `laws.nim` holds it on 2,000 samples at 
 - **Unit weight and unit motion operator.** The rule divides by that weight, and 𝐯 ∘ 𝐯 is the 𝟙
   part of 𝐯 ⟇ ~∘𝐯.
 - **Homogeneity.** Both divisors scale by |λ|, and both tests read ratios, so no branch changes.
-  In floating point, scaling can move only a coefficient within rounding of a tolerance across it.
-- **Rigid motion.** A rigid motor maps 𝐞∞ to ±𝐞∞, so it keeps the weight of the carrier. The 𝟙 part
-  of a product is cyclic, so a unit motion operator keeps 𝐮 ∘ 𝐮. This holds where the motion moves
-  no coefficient across the grade tolerance, so that the branch stays. The last section names the
-  case where a motion moves one.
+  In floating point, scaling can move only a coefficient within rounding of the comparison
+  tolerance across it.
+-  **Rigid motion.** A rigid motor maps 𝐞∞ to ±𝐞∞, so it keeps the weight of the carrier. The 𝟙 part
+  of a product is cyclic, so a unit motion operator keeps 𝐮 ∘ 𝐮 as it is. This holds where the
+  motion moves no coefficient across the grade tolerance, so that the branch stays. The last section
+  names the case where a motion moves one.
 - **Duality.** In CGA, each dual maps every basis element to one basis element, up to sign. So
   the grade test reads the same. Each dual also keeps the round weight norm, and negates 𝐮 ∘ 𝐮,
   so both divisors stay. In RGA a dual swaps bulk and weight, so the law does not hold there.
@@ -158,11 +162,11 @@ Each law has an algebraic argument, and `laws.nim` holds it on 2,000 samples at 
 
 ### What is a convention
 
-- A round object takes the object unit, not the unit of a motion or reflection operator. Lengyel's
-  own inversion, `RoundSphere`, is a sphere of round weight 1, with 𝐬 ∘ 𝐬 = r². So that unit is not
-  his convention, and this rule agrees with him on a lone sphere. The conformal wiki has no
-  Inversion page. No test that reads the element alone can tell a sphere used as an object from the
-  same sphere used as an inversion.
+-  A round object takes the object unit, not the unit of a motion or reflection operator. Lengyel's
+  own inversion, `RoundSphere`, is a sphere of round weight 1, and its 𝐬 ∘ 𝐬 is r squared. So that
+  unit is not his convention, and this rule agrees with him on a lone sphere. The conformal wiki has
+  no Inversion page. No test that reads the element alone can tell a sphere used as an object from
+  the same sphere used as an inversion.
 - Where 𝐮 ∘ 𝐮 is negative, the rule takes its absolute value. A product of reflections in a real
   sphere and an imaginary sphere is a motion operator with 𝐮 ∘ 𝐮 < 0. Its root is NaN, which spreads
   to every coefficient. A rule that leaves such a motion operator as it is leaves it at any scale it
@@ -182,8 +186,8 @@ Each law has an algebraic argument, and `laws.nim` holds it on 2,000 samples at 
 Each test reads zero at a scale, as Article IV.5 asks. It says: "Compare against zero at the scale
 of what you test, and exactly only where no scale is in hand." Each scale has a cost.
 
-- **Grade test.** A coefficient at or under the tolerance times the largest coefficient counts as
-  zero. The tolerance is 1e-9 at 64 bits.
+- **Grade test.** A coefficient at or under the comparison tolerance times the largest coefficient
+  counts as zero. The tolerance is 1e-9 at 64 bits.
   Rounding leaves residue in other grades. Each round object below moved by three products of
   reflections, and each cell counts the objects that a test read right, of 256.
 
@@ -193,7 +197,7 @@ of what you test, and exactly only where no scale is in hand." Each scale has a 
 | Grade at pin, 1e-9 absolute | 256 | 0 | 256 | 2 |
 | Antiscalar part is zero | 131 | 141 | 172 | 181 |
 | Each part at its own scale alone | 256 | 122 | 256 | 86 |
-| This rule, 1e-9 of largest coefficient | 256 | 256 | 256 | 256 |
+| P11, 1e-9 of largest coefficient | 256 | 256 | 256 | 256 |
 
 - **Exact grade scan.** It counts any residue as a second grade, so it reads almost no moved
   object as round.
@@ -206,11 +210,11 @@ of what you test, and exactly only where no scale is in hand." Each scale has a 
   and the part scale alone misreads them far from the origin. A circle uses all four parts. P07
   also counts a coefficient as zero within 16 rounding units of the largest coefficient, and so
   reads these objects right.
-- **Round weight test.** The round weight counts as zero at or under 1e-9 times √|𝐮 ∘ 𝐮|. A plane
-  sent through a sphere and back keeps residue in its round weight. An exact test then takes it
-  for a huge sphere: 9,933 of 10,000 planes at `cga5d`, and 9,557 at `cga4d`. This rule misreads
-  none at either. Terathon's `Sphere3D::Unitize` divides by −u, so it would probably read such
-  residue as a huge sphere too, at a probability of 0.75 to 0.8.
+-  **Round weight test.** The round weight counts as zero at or under 1e-9 times √|𝐮 ∘ 𝐮| of the
+  element. A plane sent through a sphere and back keeps residue in its round weight. An exact test
+  then takes it for a huge sphere: 9,933 of 10,000 planes at `cga5d`, and 9,557 at `cga4d`. This
+  rule misreads none at either. Terathon's `Sphere3D::Unitize` divides by −u, so it would probably
+  read such residue as a huge sphere too, at a probability of 0.75 to 0.8.
 - **Its radius.** A round object of radius r and round weight w has √|𝐮 ∘ 𝐮| = rw. So the test
   passes it as round while r is under 1e9 units, and unitizes a larger sphere as a plane. A huge
   sphere and a plane differ only by that size, so every scale has such a radius.
@@ -221,16 +225,25 @@ of what you test, and exactly only where no scale is in hand." Each scale has a 
   of 1. Terathon has no transversion, so no comparison with it tests this.
 - **Range.** Results hold while the squared coefficients stay inside the range of 64-bit floats,
   as at pin.
-- **At 32 bits.** P06 sets the tolerance to 1e-4 at 32 bits, so both edges move in with it. The
-  radius edge falls to about 1e4 units, and the transversion edge to about 2e4.
-- **What a run at 32 bits shows.** A run by hand at `cga5d` on 2026-10-12 unitized round objects
-  with coordinates of deviation 1e4 units, and then moved them. The round test failed on 563 of
-  1,024 dipoles, 923 circles and 1,006 spheres. It failed on every dipole from 1e5. The same run
-  in 64-bit arithmetic, with each input rounded to 32 bits and the tolerance of 1e-4, gave the
-  same counts. So the edge comes from the tolerance, not from rounding.
-- **Far round points at 32 bits.** Round points failed on 753 of 1,024 at 1e8. A 32-bit point
-  that far out is a sphere of radius about √ε times its distance. At 64 bits no round point
-  failed.
+
+### Outside the claims
+
+This change applies at pin, at 64 bits alone, and its claims run at 64 bits. So no claim checks
+the statements below. Under P06, `float-width`, the `scale` of the grade scan in `^∘` would be
+declared `Coefficient`.
+
+- **At 32 bits.** P06 sets the comparison tolerance to 1e-4 at 32 bits. A projection from that
+  tolerance moves both edges in with it. The radius edge falls to about 1e4 units, and the
+  transversion edge to about 2e4.
+- **What a run at 32 bits shows.** A run by hand at `cga5d` on 2026-10-12 used a copy of the
+  library with P06. It unitized round objects with coordinates of deviation 1e4 units, and then
+  moved them. The round test failed on 563 of 1,024 dipoles, 923 circles and 1,006 spheres, and
+  on every dipole from 1e5. The same run in 64-bit arithmetic, with each input rounded to 32 bits
+  and the tolerance of 1e-4, gave the same counts. So the edge comes from the tolerance, not from
+  rounding.
+- **Far round points at 32 bits.** In the same run, round points failed on 753 of 1,024 at 1e8.
+  A 32-bit point that far out is a sphere of radius about √ε times its distance. At 64 bits no
+  round point failed.
 
 ## Why Lengyel wrote no conformal rule
 
@@ -279,7 +292,7 @@ The rule has three defects, and none of them comes from Lengyel:
 - The scales of the two tests put an edge at a radius of 1e9 units, and at a transversion of 2e9.
 
 One impurity is smaller. In Lengyel's packages, `RoundWeightNorm` returns a multiple of 𝐞₁₂₃₄,
-and `RadiusNorm` a multiple of 𝟙. So the two branches divide by quantities of two kinds, which
+and `RadiusNorm` a multiple of 𝟙 alone. So the two branches divide by quantities of two kinds, which
 reduce to the same real number. This reading holds at a probability of about 0.8.
 
 Other ways to choose, and why this rule does not take them:
@@ -289,7 +302,10 @@ Other ways to choose, and why this rule does not take them:
   a Euclidean vector and to every dual of a flat. So an element and its dual can take different
   divisors. This rule's test is the more natural choice, at a probability of about 0.8.
 - **√|𝐮 ∘ 𝐮| everywhere.** It is continuous, and every unit motion operator keeps it. But it
-  divides a round object by its weighted radius, and a round point by 0.
+  divides a round object by its weighted radius, and a round point by 0. P10,
+  `homogeneous-scalar`, takes the complex root of 𝐮 ∘ 𝐮 under the conformal metric. So its
+  prototype gives a round point the divisor 0 too. Its `unitize` holds under the rigid metric
+  alone, and in the conformal algebras the library keeps `^∘` of this rule.
 - **Flat weight for any element other than a round object.** It agrees on every object. But it
   rescales a product of unit transversions and translations, which is already unit.
 - **Round weight, or flat weight where the round weight is 0.** It fails on the transversion,
@@ -358,24 +374,25 @@ from radius zero.
   practice only a conformal hierarchy needs that step.
 - **Grade selection is not needed.** Over 1,000,000 moves, residue in other grades reached at most
   2.1e-15 for rigid moves, and 5.8e-12 for conformal moves with a unitization after each. The
-  tolerance of the grade test is 1e-9. The rule does not remove residue, since it scales every
-  coefficient alike. A grade selection after each move sets that residue to 0, and it changes no
-  invariant that `limits.nim` measures.
+  comparison tolerance of the grade test is 1e-9. The rule does not remove residue, since it
+  scales every coefficient alike. A grade selection after each move sets that residue to 0, and
+  it changes no invariant that `limits.nim` measures.
 - **Composing costs little accuracy.** A composed motion operator touches the object once. After
   1,000,000 moves, residue on that path reached at most 9.4e-15 in all four algebras. Step by step,
   rigid moves reached at most 2.1e-15.
 - **At 32 bits.** A rigid motor stored at 32 bits each frame drifts from its 64-bit twin by up to
   1.2e-4 of the scene in six hours. That holds with a unitization each frame or without. The rule
   cannot stop rounding of stored state. So persistent state belongs at 64 bits, or the program
-  rebuilds it from its source values, as step 4 does. P06 makes the width configurable.
+  rebuilds it from its source values, as step 4 does. `limits.nim` rounds the motor to 32 bits
+  inside a 64-bit build, as 32-bit storage would, so this figure needs no P06.
 
 ## What it costs
 
 The evaluation times unitize on the general pool, with this change and at pin. It takes five
 alternating runs on linux amd64 with 4 cores, on 2026-10-12. It also counts the C of `^∘`. Each
-ratio is the median of the ratios of the five runs. Evaluations of the same rule over two days
-gave from 66.59 ns to 91.17 ns at `cga5d`. So the time of the change varies by up to about 40%
-between evaluations.
+ratio is the median of the ratios of the five runs. Two earlier evaluations of the same rule gave
+66.59 ns at `cga5d` on 2026-10-11, in commit a712559b, and 91.17 ns on 2026-10-12, in commit
+2f72917d. So the time of the change varies by up to about 40% between evaluations.
 
 | Algebra | Unitize at pin | With this change | Ratio |
 | --- | --- | --- | --- |
@@ -400,10 +417,16 @@ carry everywhere, and which the gap list holds as design gaps.
 ## What it leaves out
 
 - **The grade of the library.** This change leaves `grade` and `isMixed` as they are, and `⊛`
-  reads `grade`. The Architect ruled on 2026-10-12 that P07 takes their zero test. In the rigid
-  algebras it keeps P07's scale of each part. In the conformal algebras it also counts a
-  coefficient as zero within 16 rounding units of the largest coefficient. This rule keeps its
-  own grade scan at the tolerance times the largest coefficient, since it does not build on P07.
+  reads `grade`. P07, `part-scale`, takes their zero test, as the Architect ruled on 2026-10-12.
+  In the rigid algebras that test weighs each part at its own scale. In the conformal algebras it
+  also counts a coefficient as zero within 16 rounding units of the largest coefficient. This
+  rule keeps its own grade scan at the comparison tolerance times the largest coefficient, since
+  it does not build on P07.
+- **One zero test.** Once P07 lands, `grade` and `^∘` can read one element differently. On the
+  populations of P07 at 64 bits, the scan of `^∘` misread 157 elements at `cga4d` and 132 at
+  `cga5d`, read alone. The `grade` of P07 misread none there. P07 also measured a test split by
+  the round test of this rule, which misread 71 and 140. Whether `^∘` then reads `grade` is an
+  open decision.
 - **Bulk normalization.** `^∙` stays as it is. A sphere has no round bulk, so a fallback to the
   flat bulk would divide every sphere by its flat bulk. Nothing in Lengyel defines it.
 - **Zero weight.** The element stays as it is. Lengyel's rigid wiki divides a point of zero weight
@@ -416,6 +439,39 @@ carry everywhere, and which the gap list holds as design gaps.
 - **Whether a better test exists.** It is open. The probability that a grade test exists that no
   motor changes, and that keeps the results of this rule, is about 0.6. That figure is an
   estimate, and nothing here measures it.
+
+## Implementation
+
+`change.md` holds every edit, and applies at pin at 64 bits.
+
+- **Files.** `pga/operators.nim`: the body and doc of `^∘`, and the docs of `|∘` and `^`.
+  `pga.nim`: the row of `^∘` in the operator table, and the docs of `normalizeWeight` and
+  `unitize`. `tests/suites.nim`: one test at the head of suite Internal, one at the head of suite
+  Chapter 4, and the helpers `drawPoint` and `drawReflector` under `when IS_CONFORMAL`.
+- **Types and signatures.** None change.
+  `` func `^∘`*(m: Multivector): Multivector {.inline, noinit.} `` stays, and so do the template
+  `^`, `normalizeWeight` and `unitize`.
+-  **Functions.** Added and removed: none in the library. Changed: the body of `^∘` gains a branch
+  under `when IS_CONFORMAL`, and the rigid branch keeps the body of pin. The round branch divides by
+  the root of `|∘²` of pin, the sum of squares of the round weight. That sum is the weight norm
+  squared of the carrier 𝐮 ∧ 𝐞∞, as What it is states. The docs state W(𝐮).
+-  **Callers.** No caller changes its text, and in the library `^` and `^∘` reach callers through
+  `unitize` and `normalizeWeight` alone. In RGA every result stays as at pin. In CGA a flat object
+  divides by √|𝐮 ∘ 𝐮|, its flat weight, where pin leaves it as it is. A motion operator, a
+  reflection operator or a mixed element divides by √|𝐮 ∘ 𝐮| too, unless it reads as round. The
+  tests of pin call `^` only under `when IS_RIGID`, so each keeps its result.
+-  **Order of edits.** If P06 (`float-width`) lands first, `scale` in `^∘` takes `Coefficient`, and
+  no line here collides. The change `algebra-hygiene` renames `TOLERANCE_ABS`, which `^∘` names, so
+  the second to land carries the new name into `^∘`. The changes `doc-comments` and `doc-comments-2`
+  edit docs next to `unitize` and `^` through distinct quotes, so either order holds. So does the
+  change `conformal-norms`, which replaces the placeholder of Chapter 4 that this change keeps. P07
+  (`part-scale`) edits `=~` and `grade` in `pga/multivectors.nim` alone, and P10
+  (`homogeneous-scalar`) keeps `unitize` as `^m`, which then calls `^∘` of this change.
+
+## Open decisions
+
+- One zero test for `grade` and for `^∘` once P07 lands, or two tests as now. P07 holds the same
+  decision.
 
 [rigid]: https://rigidgeometricalgebra.org/wiki/index.php?title=Unitization
 [point]: https://rigidgeometricalgebra.org/wiki/index.php?title=Point

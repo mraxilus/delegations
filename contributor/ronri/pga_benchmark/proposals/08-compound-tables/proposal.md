@@ -1,14 +1,13 @@
-# P08: Give each compound operator one table
+# P08: Give each chain of the book one table
 
-At pin, each compound operator of the book runs as a chain of dense products, with a
-multivector between each step. The support `∩`, the antisupport `∪`, the cocarrier `⊞`, the
-center `⊙` and the container `⊡` are such chains. This proposal gives each one table, which the
-rules of P01 derive, so each runs as one product.
+At pin, five operators of the book each run as a chain of dense products, with an intermediate
+between each step. They are the support `∩`, the antisupport `∪`, the cocarrier `⊞`, the center
+`⊙` and the container `⊡`. This proposal gives each chain one table, which the rules of P01
+derive, so each runs as one product.
 
-This proposal builds on P01, `cayley-derivation`. It reads `applyMap` of P01 and `applyConstant` of
-the library.
-It came out of P01 when the Architect ruled on 2026-10-07, so that P01 holds its derivation
-alone.
+This proposal builds on P01, `cayley-derivation`. It reads `applyMap` of P01 and `applyConstant`
+of the library. It holds the tables of the chains apart from P01, so that P01 holds its
+derivation alone, as the Architect ruled on 2026-10-07.
 
 ## What it is
 
@@ -17,30 +16,73 @@ alone.
   folds a chain of maps and products of P01 when the library compiles.
 - **Operators.** `∩`, `∪`, `⊙` and `⊡` read their table with both operands 𝐦, through the
   `as_unary` argument of the emitter at pin. `⊞` reads a map of one operand.
+- **Laws.** `laws.nim` holds each operator to the chain that pin spells, on 256 seeded dense
+  samples at rga3d, rga4d, cga4d and cga5d. It spells each chain through operators that this
+  proposal leaves alone. It spells the center through `☆` and `∧`, since this proposal replaces
+  `⊞` too.
 
 ## What it buys
 
-The evaluation times each operator at pin, and with P01 and this proposal, in this container on
-2026-10-07. Each cell is nanoseconds for one operand of the whole algebra:
+The evaluation of 2026-10-11 times each operator at pin, and with P01 and this proposal, on
+this machine (linux amd64, 4 cores). Five runs alternate the two builds. Pin and Here are the
+median nanoseconds of the runs, for one operand of kind General. Each ratio is the median of the
+ratios of the runs, so it can differ from Here over Pin.
 
 | Operator | Algebra | Pin | Here | Ratio |
 |----------|---------|-----|------|-------|
-| `∩` support | rga4d | 87.1 | 13.9 | ×0.16 |
-| `∪` antisupport | rga4d | 56.4 | 13.6 | ×0.24 |
-| `∩` support | rga3d | 10.8 | 4.2 | ×0.38 |
-| `⊞` cocarrier | cga5d | 60.2 | 16.6 | ×0.27 |
-| `⊙` center | cga5d | 164.3 | 49.4 | ×0.30 |
-| `⊡` container | cga5d | 103.6 | 51.1 | ×0.48 |
+| `∩` support | rga3d | 9.37 | 3.98 | ×0.41 |
+| `∪` antisupport | rga3d | 9.72 | 4.38 | ×0.44 |
+| `∩` support | rga4d | 65.24 | 11.38 | ×0.17 |
+| `∪` antisupport | rga4d | 55.21 | 12.66 | ×0.23 |
+| `⊞` cocarrier | cga4d | 23.20 | 5.69 | ×0.24 |
+| `⊙` center | cga4d | 64.39 | 11.78 | ×0.18 |
+| `⊡` container | cga4d | 40.55 | 14.39 | ×0.35 |
+| `⊞` cocarrier | cga5d | 52.33 | 13.68 | ×0.26 |
+| `⊙` center | cga5d | 136.00 | 35.36 | ×0.26 |
+| `⊡` container | cga5d | 79.50 | 39.74 | ×0.50 |
 
-P01 alone moves none of these operators, so the gain belongs to this proposal. Both count
-claims hold: the support and the antisupport at rga4d each take 54 multiplies. The partner of
-P03 reads the container, so it gains too.
+P01 alone moves none of these operators: its evaluation of the same date times each at ×0.99 to
+×1.02 of pin. So the gain belongs to this proposal. Both count claims hold: the support and the
+antisupport at rga4d each take 54 multiplies. The partner at pin calls `⊡`, so with this
+proposal it takes ×0.68 to ×0.71 of pin at cga5d, and ×0.56 to ×0.58 at cga4d. P03 builds on
+this proposal and folds the partner further.
 
 ## Alternatives weighed
 
 | Option | How it was tried, and why it lost |
 |--------|-----------------------------------|
 | Shared operand as table operation | Built; drops cross cells, since it is binding, `as_unary` |
+
+## Implementation
+
+- **Files.** `pga/cayleys.nim` and `pga/operators.nim`, as P01 leaves them. The conformal
+  tables join a new const block after `CAYLEY_CARRIER`, and the rigid ones a `when IS_RIGID`
+  block after that. Each is an exported `const`, folded when the library compiles.
+- **Types and signatures.** `CAYLEY_CARRIER_CO` is a `Cayley1D`, and the other four are
+  `Cayley2D`. `CAYLEY_SUPPORT` is
+  `CAYLEYS_WEDGE.anti.applyMap(origin.applyMap(CAYLEYS_DUAL.anti.right), Chirality.Right)`, where
+  `origin` is `applyConstant` on a var copy of `CAYLEYS_WEDGE.base`, with `Basis.origin.toSigned`
+  on the left. `CAYLEY_SUPPORT_ANTI` is
+  `CAYLEYS_WEDGE.base.applyMap(horizon.applyMap(CAYLEYS_DUAL.base.right), Chirality.Right)`, where
+  `horizon` is `applyConstant` on a var copy of `CAYLEYS_WEDGE.anti`, with `Basis.horizon` on the
+  left. `CAYLEY_CARRIER_CO` is `CAYLEY_CARRIER.applyMap(CAYLEYS_DUAL.anti.right)`, and
+  `CAYLEY_CENTER` is `CAYLEYS_WEDGE.anti.applyMap(CAYLEY_CARRIER_CO, Chirality.Left)`.
+  `CAYLEY_CONTAINER` is
+  `CAYLEYS_WEDGE.base.applyMap(CAYLEYS_DUAL.anti.right.applyMap(CAYLEY_CARRIER), Chirality.Right)`.
+- **Functions.** Changed: the hand-written `∩`, `∪`, `⊞`, `⊙` and `⊡` of `pga/operators.nim`.
+  Each becomes one call of `defineOperator` on its table, under the same `when` guard as at pin.
+  `∩`, `∪`, `⊙` and `⊡` take the Cayley2D overload with `as_unary = true`, and `⊞` takes the
+  Cayley1D overload. Each emitted function is `{.inline, noinit.}`, as every generated operator
+  at pin is. Added and removed: none.
+- **Callers.** Each operator keeps the signature `(m: Multivector): Multivector`. So `support`,
+  `supportAnti`, `carrierCo`, `center` and `container` of `pga.nim` compile with no edit. At pin,
+  `⊛` calls `⊡`, so it reads the new table with no edit too.
+- **Order of edits.** P01 (`cayley-derivation`) lands first and this proposal next, since both
+  edits of `pga/cayleys.nim` quote its text and the tables read its `applyMap`. P03
+  (`partner-sign`) lands after it, since P03 quotes `CAYLEY_CONTAINER`. The change
+  `cayleys-hygiene` is void once P01 lands. The changes `doc-comments` and `doc-comments-2` edit
+  other lines of `pga/cayleys.nim`, and each is quoted again against P01 or carried in its text.
+  No other proposal or change edits the lines of `pga/operators.nim` that this proposal replaces.
 
 ## Open decisions
 
