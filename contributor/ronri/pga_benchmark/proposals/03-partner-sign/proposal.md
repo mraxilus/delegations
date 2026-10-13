@@ -32,13 +32,13 @@ The partner at cga5d, as the inspector counts the C of the bench, at pin `28f4e1
 | P01 and P08 | 437 | 104 | 268 | 2621 | 28672 |
 | P01, P08 and this proposal | 324 | 3 | 2 | 83 | 2048 |
 
-324 is the chain bound of the partner: 162 for each folded table. The evaluation of 2026-10-11
+324 is the chain bound of the partner: 162 for each folded table. The evaluation of 2026-10-13
 times the partner over every operand kind, in five runs that alternate the two builds. It ran on
-this machine (linux amd64, 4 cores). With this proposal, the partner takes ×0.44 to ×0.47 of
-pin at cga5d, and ×0.48 at cga4d.
+this machine (linux amd64, 4 cores). With this proposal, the partner takes ×0.46 to ×0.52 of
+pin at cga5d, and ×0.45 to ×0.50 at cga4d.
 
-The evaluation of P08, of the same date, times P01 and P08 alone. There the partner takes ×0.68 to
-×0.71 of pin at cga5d, and ×0.56 to ×0.58 at cga4d. Each ratio is the median of the ratios of the
+The evaluation of P08, of the same date, times P01 and P08 alone. There the partner takes ×0.66 to
+×0.86 of pin at cga5d, and ×0.56 to ×0.59 at cga4d. Each ratio is the median of the ratios of the
 runs.
 
 ## Limits

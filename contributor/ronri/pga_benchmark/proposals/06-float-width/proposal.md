@@ -41,26 +41,21 @@ The record also holds a digest of the C of each build, and the two digests diffe
 algebra. They also differ in the record of `exact-kinds`, which edits no library file. So the
 digests cannot show the same C, and the checks by hand do.
 
-The times still stray, though each evaluation ran the same C. Six evaluations of this C at pin
+The times still stray, though each evaluation ran the same C. Two evaluations of this C at pin
 `edb0c9d` on 2026-10-06 put these counts of times outside the spread of the pages on that date:
 
 | Evaluation | rga4d | cga5d | rga3d | cga4d |
 |------------|-------|-------|-------|-------|
-| First | 0 of 111 | 0 of 131 | 0 of 88 | 1 of 113 |
-| Second | 51 of 111 | 6 of 131 | 0 of 88 | 4 of 113 |
-| Third | 1 of 111 | 1 of 131 | 0 of 88 | 21 of 113 |
-| Fourth | 6 of 111 | 24 of 131 | 82 of 88 | 23 of 113 |
-| Fifth | 11 of 111 | 21 of 131 | 12 of 88 | 3 of 113 |
-| Sixth | 16 of 111 | 15 of 131 | 17 of 88 | 42 of 113 |
+| First | 1 of 111 | 1 of 131 | 0 of 88 | 21 of 113 |
+| Second | 16 of 111 | 15 of 131 | 17 of 88 | 41 of 113 |
 
-In the second, the pristine binary ran slow, as `norm_bulk_plane` read 16.18 ns against 10.34
-ns in the first. In the fourth, the compiler ran beside the pristine binary at rga3d, which ran
-×1.58 its time in the third. So a cluster of moved times at one algebra of one evaluation is the
-noise of this machine, and the counts carry the verdict.
+The first moved 21 of 113 times at cga4d, and at most 1 at each other algebra. So a cluster of
+moved times at one algebra of one evaluation is the noise of this machine, and the counts carry
+the verdict.
 
-The evaluation at pin `28f4e11` on 2026-10-11 timed 111, 135, 88 and 117 measurands at rga4d,
-cga5d, rga3d and cga4d. Against the spread that the pages read on 2026-10-13, ×0.94 to ×1.06, 0,
-1, 1 and 0 of those times moved.
+The evaluation at pin `28f4e11` on 2026-10-13 timed 111, 135, 88 and 117 measurands at rga4d,
+cga5d, rga3d and cga4d. Against the spread that the pages read on 2026-10-13, ×0.95 to ×1.04, 9,
+30, 4 and 19 of those times moved.
 
 ## What 32 bits buy
 

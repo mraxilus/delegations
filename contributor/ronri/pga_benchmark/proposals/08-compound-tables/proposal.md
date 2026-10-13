@@ -23,29 +23,29 @@ derivation alone, as the Architect ruled on 2026-10-07.
 
 ## What it buys
 
-The evaluation of 2026-10-11 times each operator at pin, and with P01 and this proposal, on
+The evaluation of 2026-10-13 times each operator at pin, and with P01 and this proposal, on
 this machine (linux amd64, 4 cores). Five runs alternate the two builds. Pin and Here are the
 median nanoseconds of the runs, for one operand of kind General. Each ratio is the median of the
 ratios of the runs, so it can differ from Here over Pin.
 
 | Operator | Algebra | Pin | Here | Ratio |
 |----------|---------|-----|------|-------|
-| `∩` support | rga3d | 9.37 | 3.98 | ×0.41 |
-| `∪` antisupport | rga3d | 9.72 | 4.38 | ×0.44 |
-| `∩` support | rga4d | 65.24 | 11.38 | ×0.17 |
-| `∪` antisupport | rga4d | 55.21 | 12.66 | ×0.23 |
-| `⊞` cocarrier | cga4d | 23.20 | 5.69 | ×0.24 |
-| `⊙` center | cga4d | 64.39 | 11.78 | ×0.18 |
-| `⊡` container | cga4d | 40.55 | 14.39 | ×0.35 |
-| `⊞` cocarrier | cga5d | 52.33 | 13.68 | ×0.26 |
-| `⊙` center | cga5d | 136.00 | 35.36 | ×0.26 |
-| `⊡` container | cga5d | 79.50 | 39.74 | ×0.50 |
+| `∩` support | rga3d | 9.36 | 3.84 | ×0.41 |
+| `∪` antisupport | rga3d | 9.72 | 4.23 | ×0.44 |
+| `∩` support | rga4d | 64.37 | 10.64 | ×0.17 |
+| `∪` antisupport | rga4d | 55.21 | 11.83 | ×0.21 |
+| `⊞` cocarrier | cga4d | 22.36 | 5.51 | ×0.25 |
+| `⊙` center | cga4d | 62.26 | 11.39 | ×0.18 |
+| `⊡` container | cga4d | 39.68 | 13.91 | ×0.35 |
+| `⊞` cocarrier | cga5d | 53.20 | 16.69 | ×0.26 |
+| `⊙` center | cga5d | 139.93 | 43.81 | ×0.27 |
+| `⊡` container | cga5d | 80.46 | 44.89 | ×0.50 |
 
-P01 alone moves none of these operators: its evaluation of the same date times each at ×0.99 to
-×1.02 of pin. So the gain belongs to this proposal. Both count claims hold: the support and the
-antisupport at rga4d each take 54 multiplies. The partner at pin calls `⊡`, so with this
-proposal it takes ×0.68 to ×0.71 of pin at cga5d, and ×0.56 to ×0.58 at cga4d. P03 builds on
-this proposal and folds the partner further.
+P01 alone changes no library function, and its evaluation of the same date times each of these
+operators at ×0.95 to ×1.01 of pin. So the gain belongs to this proposal. Both count claims hold:
+the support and the antisupport at rga4d each take 54 multiplies. The partner at pin calls `⊡`, so
+with this proposal it takes ×0.66 to ×0.86 of pin at cga5d, and ×0.56 to ×0.59 at cga4d. P03
+builds on this proposal and folds the partner further.
 
 ## Alternatives weighed
 
