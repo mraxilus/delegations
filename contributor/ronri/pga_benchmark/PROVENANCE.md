@@ -1126,7 +1126,7 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
   compile to the same 16 loads, 8 adds and 8 stores. The loop of the library interleaves each
   load, add and store, and the dense form groups its loads first. Of the 66 rows that spend the
   same counts in both, the median reads ×1.00, and light rows stray to ×0.65 at cga5d. Why order
-  moves time is unmeasured, since this container offers no hardware counters.
+  moves time is unmeasured, since this machine offers no hardware counters.
 
 ## Open questions
 
@@ -1134,13 +1134,14 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
   grade of its operand. At cga5d, P03 on P01 spends the chain bound of 324 multiplies, three
   zero fills and two error checks. P01 alone spends 437, 104 and 268. Both are the counts
   after the edits in `evaluations/partner-sign.json` and `evaluations/cayley-derivation.json`.
-- Whether the library takes P04, `exact-kinds`, so that a product returns a kind of exactly
-  the bases it reaches. At rga4d 16 measurands stand above the byte bound only because they
-  write a whole multivector for one slot, and at cga5d 12 do. Each is a dot, an antidot or a
-  squared norm, and under P04 each writes 8 bytes.
+- Whether the library takes P04, `exact-kinds`, so that a product returns the exact basis-set
+  type of the bases it reaches. At rga4d 16 measurands stand above the byte bound only because
+  they write a whole multivector for one slot, and at cga5d 15 do. Each is a dot, an antidot or
+  a squared norm. Under P04 each dot and antidot writes 8 bytes. The squared norms reach 8 bytes
+  only once the library emits them as exact basis-set types, which the prototype does not.
 - Whether the library takes P05, `multivector-align`. It aligns each multivector to
-  `min(64, size)`, one cache line from three dimensions up, so it pads no multivector. The kinds
-  of P04 take `alignmentOf` of their basis set instead, as the Architect ruled on 2026-10-04.
+  `min(64, size)`, one cache line from three dimensions up, so it pads no multivector. The basis-set
+  types of P04 take `alignmentOf` of their basis set instead, as the Architect ruled on 2026-10-04.
   That is the largest power of two that divides their bytes, at most 64. P04 holds the rule,
   and its prototype applies it.
 
