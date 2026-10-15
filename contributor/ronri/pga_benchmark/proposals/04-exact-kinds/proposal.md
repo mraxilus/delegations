@@ -46,8 +46,9 @@ its type still names its basis.
 - **Widen and narrow.** `toMultivector` widens a basis-set type to `Multivector`.
   `toMultivectorOf` narrows a `Multivector` to a basis-set type. It asserts that each other
   coefficient is zero within the comparison tolerance, which is the zero test of `grade` at pin.
-  Each walks the bases of `B` with a running slot. A slot counted for each basis took ×2 to ×15
-  as long, at rga4d, cga5d and rga6d on an Intel Xeon at 2.1 GHz with 4 cores, on 2026-10-15.
+  Each walks the bases of `B` with a running slot. A slot counted for each basis took ×1.05 to
+  ×16.5 as long, at rga4d, cga5d and rga6d on an Intel Xeon at 2.1 GHz with 4 cores, on
+  2026-10-15. The gain grows with the count of bases, and a vector gains least.
 - **Alignment.** Each basis-set type aligns to `alignment` of its count of floats: the largest
   power of two that divides their bytes, and at most 64. So it pads no count. The empty set
   keeps the alignment of a float.

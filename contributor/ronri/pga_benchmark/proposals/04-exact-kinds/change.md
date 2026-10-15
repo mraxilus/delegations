@@ -134,8 +134,8 @@ func bases*[B: static set[Basis]](t: typedesc[MultivectorOf[B]]): set[Basis] = B
 
 func toMultivector*[B: static set[Basis]](m: MultivectorOf[B]): Multivector =
   ## Widen basis-set type to multivector of every basis, same coefficients.
-  ##   Slot runs with walk over `B`: counting it per basis took ×2 to ×15 as long, measured at
-  ##     rga4d to rga6d on Xeon, 2026-10-15.
+  ##   Slot runs with walk over `B`: counting it per basis took ×1.05 to ×16.5 as long, measured
+  ##     at rga4d, cga5d and rga6d on 2.1 GHz Xeon, 2026-10-15.
   var index = 0
   for basis in B:
     result[basis] = m.elements[index]
