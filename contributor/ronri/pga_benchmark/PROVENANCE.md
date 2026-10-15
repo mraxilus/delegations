@@ -169,11 +169,11 @@ through the widening, and suite `Internal: Measurements` runs every measurand ov
 
 ## Measurements
 
-`emitCatalogue` turns the catalogue into one timed loop for each measurand of each
+`defineCatalogue` turns the catalogue into one timed loop for each measurand of each
 implementation. Operands are template aliases into pool slots, and never copies, so the loop
 moves only the traffic of the operation itself. Every result is folded into one sink after
-the timing, so nothing is dead. The share of results that carry NaN is counted. The conformal
-norms of the library return NaN on real objects, and that is measured rather than stated.
+the timing, so nothing is dead. The share of results that carry NaN is counted. The radius norm
+of the library returns NaN where 𝐦 ∘ 𝐦 is negative, and that is measured rather than stated.
 
 **Each timed loop has a procedure of its own**, one for each measurand of each implementation,
 as the function of a caller would call it. In one function that holds every loop, Nim puts an
@@ -247,7 +247,7 @@ One run times both implementations, so the runs pair by index, and each run give
 ratio. The docket draws one tick for each of those ratios. Rejected: the spread of rounds inside
 one run, because it misses drift between runs. That drift is the larger part on this machine.
 
-**The runtime baselines are from 2026-10-10 at all four algebras**, at the pin `e993419`, five runs
+**The runtime baselines are from 2026-10-11 at all four algebras**, at the pin `28f4e11`, five runs
 each on `linux amd64, 4 cores`. The bench of 2026-10-01, run at `3121342` on 2026-10-02 in turn
 with the baselines of that day, gives the drift between days. At rga4d its library runs ×1.19 to
 ×1.22 of its own times of 2026-10-01. Its reference runs ×1.26 to ×1.27, and its dense forms ×1.00
@@ -363,6 +363,12 @@ three raised to the dimensions, because each dimension stands in one of three st
 pair of blades. A geometric product loses one of four states for each null dimension. A
 bilinear form landing in one slot spends one term for each blade that carries an image.
 
+A norm of one part spends one term for each blade of that part. That is half the blades under
+the rigid metric, and a quarter under the conformal metric, since the four parts are of one size.
+A unitize spends the norm of one part, then one term for each slot. The radius norm squares the
+whole antidot, so it spends what a bilinear form spends. Under the rigid metric a part holds the
+blades that carry an image, so each norm counts as the bilinear form did.
+
 A product against the dual of its second operand spends what the grade of that operand
 allows. A permutation and a product against a one-component constant spend nothing. The
 carrier, the cocarrier and the attitude each take that last form, and so spend nothing.
@@ -403,7 +409,8 @@ reproduce 27 and 54 for the expansions, 16 for a scale and 24 for a unitize.
 
 The conformal metric is held to 1024 and to 32, and to 243 for each of the four dual
 products. A chain of an expansion and an exterior product is held to their sum, 486 at five
-dimensions.
+dimensions. At five dimensions a norm of one part is held to 8, the radius norm to 32 and a
+unitize to 40.
 
 The supports are held to 54 at four dimensions, and the centre and the container to 162 at
 five. The partner chain is held to 324, and to its mark as an estimate.
@@ -479,13 +486,13 @@ first step leaves whole grades at zero, and the second step reads none of them. 
 bound is an estimate.
 
 **What the library spends in time against them.** The runtime baselines time each dense form
-beside the library, five alternating runs at the pin `e993419`, at four algebras, on `linux amd64,
-4 cores` on 2026-10-10. The median general measurand runs ×1.00 to ×1.02 its dense form, since most
-library operators are already one generated table. The compound operations are not. They run
-×2.1 to ×6.7 their dense forms, from the container at cga5d to the support at rga4d.
+beside the library, five alternating runs at the pin `28f4e11`, at four algebras, on `linux amd64,
+4 cores` on 2026-10-11. The median general measurand runs ×1.00 its dense form at each algebra,
+since most library operators are already one generated table. The compound operations are not.
+They run ×2.0 to ×5.7 their dense forms, from the container at cga5d to the support at rga4d.
 
-The antigrade selection runs ×2.4 to ×3.2, and the norms ×0.78 to ×2.1. Sum, difference and
-negation run ×0.66 to ×1.06, and the unitizes ×0.89 to ×1.39. So a dense form is a measure, and
+The antigrade selection runs ×2.2 to ×3.1, and the norms ×0.98 to ×2.5. Sum, difference and
+negation run ×0.63 to ×1.11, and the unitizes ×0.59 to ×0.98. So a dense form is a measure, and
 never a lower bound on time.
 
 Rejected: a dense form written by hand for each operation. There are 40 to 47 operations at
@@ -681,9 +688,9 @@ A dense form reads tables by their names at pin, and a change may rename them, a
 dense form.
 
 The pristine counts are the baseline, which holds the dense forms. So a dense form that the changed
-build leaves out is no moved function. At rga4d, P01 moves 2 functions, and `multivector-align`
-moves none. So an evaluation of a change that moves no function reads as quiet, and the pages take
-their spread from it.
+build leaves out is no moved function. At rga4d, P08 moves 2 functions, and P01 and
+`multivector-align` move none. So an evaluation of a change that moves no function reads as
+quiet, and the pages take their spread from it.
 
 **A build claim compiles the library alone**, from an entry that holds `import pga` and nothing
 else. It compares the peak memory that the compiler reports for the pin and for the changed
@@ -711,10 +718,11 @@ each time they build, so the record states no figure of it.
 Alternation does not cancel all drift of a shared machine, so the time of one evaluation is
 weak evidence alone. Counts are exact, and carry the verdicts.
 
-`proposals/04-exact-kinds/prototype.nim` holds its laws against the change of
-`cayley-derivation` at rga3d, rga4d, cga4d and cga5d.
+`proposals/04-exact-kinds/prototype.nim` holds its laws against the library at pin, at rga3d,
+rga4d, cga4d and cga5d.
 `proposals/10-homogeneous-scalar/prototype.nim` holds its laws at the same four algebras, on the
-kinds of that prototype.
+kinds of that prototype. `proposals/11-unitize-general/laws.nim` holds the laws of its rule, and
+`limits.nim` its limits over long chains and frames, at the same four algebras.
 
 Verified by `test_rga4d.nim` and the other stubs, suites `Internal: Markdown`, `Internal: Changes`,
 `Internal: Proposals`, `Internal: Evaluations`, `Internal: Cells` and `Internal: Figures`. They
@@ -993,7 +1001,7 @@ to read no head, and the verb `head` to report what `checkHead` finds.
 **The PGA library is a pinned dependency, and never a copy.** It lives in [replications],
 which carries no nimble file and holds the library three directories inside it. So the
 requirement in `pga_benchmark.nimble` names the repository by URL and commit. `atlas.lock`
-records the resolved commit `e993419c1f90efba72848d146606f903e1cc141e`, and `nim.cfg` names
+records the resolved commit `28f4e1128e4efee47d3f2ad9543d8c1460a997c3`, and `nim.cfg` names
 the subdirectory that Atlas restores it to.
 
 That commit is the head of the library on 2026-10-07, as the standing instruction of the
@@ -1033,7 +1041,7 @@ static counts are `baseline/static_<algebra>.json`, from `baseline`. They are ex
 compiler commit, with loop trips weighted. The runtime medians are
 `baseline/runtime_<algebra>.json`, from `bench`: five alternating runs of 40 rounds over 1024
 objects, in nanoseconds for each object. Each file names its date, machine, commits and flags
-under `taken`, and at the pin they are from 2026-10-10 on `linux amd64, 4 cores`.
+under `taken`, and at the pin they are from 2026-10-11 on `linux amd64, 4 cores`.
 
 `gaps.md` and the docket show each gap of the pin from those files, and `show` prints the C and
 the machine code of one function. The times of the point forms of Lengyel's code are
@@ -1051,7 +1059,7 @@ norm, writes no zero. The Architect decided this, because the library is about P
 micro-optimisation.
 
 Each function that a Cayley table can express moves to generation, and so gets its zeros
-unrolled at no cost. At the pin `e993419` the library works this way, and its attitude and
+unrolled at no cost. At the pin `28f4e11` the library works this way, and its attitude and
 carrier are generated. Its hand-written `+` and `-` carry `noinit` and write each slot, so they
 fill nothing. The cost that stays is what the hand-written norms pay.
 
@@ -1062,6 +1070,8 @@ passes, and each pass is the median of nine runs of 41 rounds over 1024 objects.
 functions that did not change moved ×0.86 to ×1.02. The pins `d9be8ae` to `e993419`
 change no norm and no generated operator, as their static baselines show, so these figures stand
 for them.
+
+At `28f4e11` each conformal norm reads one part, so its cells stand for `3121342` alone.
 
 For the norms, a cell gives nanoseconds with the default fill, then with straight stores that
 write the zeros first. The cell is the lower of the two passes:
@@ -1087,10 +1097,6 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
 
 - Evaluations time rga4d and cga5d unless `--thorough` asks for rga3d and cga4d too. Each
   evaluation committed now measures all four, from one run of `evaluate all --thorough`.
-- The evaluations at rga3d and rga4d carry the digest of C of a bench whose typed reference
-  divides a point by its signed weight. The reference is no part of what an evaluation times, so
-  their figures stand. `restamp` refuses those records at a new pin, and `evaluate` takes them
-  again.
 - The `build` claim reads the peak memory and seconds that the compiler reports of itself, for
   the library alone. It compares two builds on one machine, and is no measurement of the
   machine.
@@ -1120,21 +1126,22 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
   compile to the same 16 loads, 8 adds and 8 stores. The loop of the library interleaves each
   load, add and store, and the dense form groups its loads first. Of the 66 rows that spend the
   same counts in both, the median reads ×1.00, and light rows stray to ×0.65 at cga5d. Why order
-  moves time is unmeasured, since this container offers no hardware counters.
+  moves time is unmeasured, since this machine offers no hardware counters.
 
 ## Open questions
 
 - Whether the library takes P03, `partner-sign`, and with it a partner that does not check the
-  grade of its operand. At cga5d, P03 on P01 spends the chain bound of 324 multiplies, three
-  zero fills and two error checks. P01 alone spends 437, 104 and 268. Both are the counts
-  after the edits in `evaluations/partner-sign.json` and `evaluations/cayley-derivation.json`.
-- Whether the library takes P04, `exact-kinds`, so that a product returns a kind of exactly
-  the bases it reaches. At rga4d 16 measurands stand above the byte bound only because they
-  write a whole multivector for one slot, and at cga5d 12 do. Each is a dot, an antidot or a
-  squared norm, and under P04 each writes 8 bytes.
+  grade of its operand. At cga5d, P03 on P01 and P08 spends the chain bound of 324 multiplies,
+  three zero fills and two error checks. P01 and P08 alone spend 437, 104 and 268. Both are the
+  counts after the edits in `evaluations/partner-sign.json` and `evaluations/compound-tables.json`.
+- Whether the library takes P04, `exact-kinds`, so that a product returns the exact basis-set
+  type of the bases it reaches. At rga4d 16 measurands stand above the byte bound only because
+  they write a whole multivector for one slot, and at cga5d 15 do. Each is a dot, an antidot or
+  a squared norm. Under P04 each dot and antidot writes 8 bytes. The squared norms reach 8 bytes
+  only once the library emits them as exact basis-set types, which the prototype does not.
 - Whether the library takes P05, `multivector-align`. It aligns each multivector to
-  `min(64, size)`, one cache line from three dimensions up, so it pads no multivector. The kinds
-  of P04 take `alignmentOf` of their basis set instead, as the Architect ruled on 2026-10-04.
+  `min(64, size)`, one cache line from three dimensions up, so it pads no multivector. The basis-set
+  types of P04 take `alignmentOf` of their basis set instead, as the Architect ruled on 2026-10-04.
   That is the largest power of two that divides their bytes, at most 64. P04 holds the rule,
   and its prototype applies it.
 

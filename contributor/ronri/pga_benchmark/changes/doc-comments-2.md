@@ -6,6 +6,12 @@ It states the invariant that the slice table rests on.
 It also states the real limit on dimensions. Each basis is one decimal digit, so 9D is the
 ceiling. No count changes.
 
+Proposal P01, `cayley-derivation`, replaces `pga/cayleys.nim` whole from a digest, and this
+change edits that file too. Whichever lands second is quoted again against the first. If P01
+lands second, its Replace carries the text of this change under a new digest. P01 also edits the
+import line of `tests/suites.nim` that this change quotes, so the second to land quotes that line
+again.
+
 ## Edit `pga.nim`
 
 ```nim
@@ -221,11 +227,11 @@ when IS_RIGID:
 ## Edit `tests/suites.nim`
 
 ```nim
-import ../pga/[algebra {.all.}, multivectors {.all.}, operators {.all.}]
+import ../pga/[algebra {.all.}, multivectors {.all.}, operators]
 ```
 
 ```nim
-import ../pga/[algebra {.all.}, multivectors {.all.}, operators {.all.}]
+import ../pga/[algebra {.all.}, multivectors {.all.}, operators]
   # Open imports reach private symbols; same narrowing as operators.nim would apply.
 ```
 

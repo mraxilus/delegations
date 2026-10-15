@@ -8,10 +8,10 @@
     "sizeof_multivector": 128
   },
   "taken": {
-    "date": "2026-10-10",
+    "date": "2026-10-11",
     "machine": "linux amd64, 4 cores",
     "nim": "27763495bcfe265507ca98aedc1c7064bf1e0e4d",
-    "pga": "e993419c1f90efba72848d146606f903e1cc141e",
+    "pga": "28f4e1128e4efee47d3f2ad9543d8c1460a997c3",
     "flags": "-d:release"
   },
   "functions": {
@@ -7196,7 +7196,7 @@
       "dense": "denseNormBulk(Multivector)",
       "cite": "2.87",
       "bound": {
-        "shape": "Norm",
+        "shape": "NormPart",
         "is_chain": false,
         "steps": [],
         "multiplies": 8,
@@ -7216,7 +7216,7 @@
       "dense": "denseNormWeight(Multivector)",
       "cite": "2.88",
       "bound": {
-        "shape": "Norm",
+        "shape": "NormPart",
         "is_chain": false,
         "steps": [],
         "multiplies": 8,
@@ -7236,7 +7236,7 @@
       "dense": "denseNormBulkSquared(Multivector)",
       "cite": "2.87",
       "bound": {
-        "shape": "NormSquared",
+        "shape": "NormPartSquared",
         "is_chain": false,
         "steps": [],
         "multiplies": 8,
@@ -7256,7 +7256,7 @@
       "dense": "denseNormWeightSquared(Multivector)",
       "cite": "2.88",
       "bound": {
-        "shape": "NormSquared",
+        "shape": "NormPartSquared",
         "is_chain": false,
         "steps": [],
         "multiplies": 8,
@@ -7276,11 +7276,11 @@
       "dense": "denseNorm(Multivector)",
       "cite": "2.90",
       "bound": {
-        "shape": "2 Norm",
+        "shape": "2 NormPart",
         "is_chain": true,
         "steps": [
-          "Norm",
-          "Norm"
+          "NormPart",
+          "NormPart"
         ],
         "multiplies": 16,
         "adds": 14,
@@ -8030,7 +8030,7 @@
       "dense": "",
       "cite": "wiki:Motor",
       "bound": {
-        "shape": "Norm",
+        "shape": "NormPart",
         "is_chain": false,
         "steps": [],
         "multiplies": 8,
@@ -8050,7 +8050,7 @@
       "dense": "",
       "cite": "wiki:Motor",
       "bound": {
-        "shape": "Norm",
+        "shape": "NormPart",
         "is_chain": false,
         "steps": [],
         "multiplies": 8,
@@ -8230,7 +8230,7 @@
       "dense": "",
       "cite": "2.87",
       "bound": {
-        "shape": "Norm",
+        "shape": "NormPart",
         "is_chain": false,
         "steps": [],
         "multiplies": 8,
@@ -8250,7 +8250,7 @@
       "dense": "",
       "cite": "2.88",
       "bound": {
-        "shape": "Norm",
+        "shape": "NormPart",
         "is_chain": false,
         "steps": [],
         "multiplies": 8,
@@ -8270,7 +8270,7 @@
       "dense": "",
       "cite": "2.87",
       "bound": {
-        "shape": "NormSquared",
+        "shape": "NormPartSquared",
         "is_chain": false,
         "steps": [],
         "multiplies": 8,
@@ -8290,7 +8290,7 @@
       "dense": "",
       "cite": "2.88",
       "bound": {
-        "shape": "NormSquared",
+        "shape": "NormPartSquared",
         "is_chain": false,
         "steps": [],
         "multiplies": 8,
@@ -8510,7 +8510,7 @@
       "dense": "",
       "cite": "2.87",
       "bound": {
-        "shape": "Norm",
+        "shape": "NormPart",
         "is_chain": false,
         "steps": [],
         "multiplies": 8,
@@ -8530,7 +8530,7 @@
       "dense": "",
       "cite": "2.88",
       "bound": {
-        "shape": "Norm",
+        "shape": "NormPart",
         "is_chain": false,
         "steps": [],
         "multiplies": 8,
@@ -8550,7 +8550,7 @@
       "dense": "",
       "cite": "2.87",
       "bound": {
-        "shape": "NormSquared",
+        "shape": "NormPartSquared",
         "is_chain": false,
         "steps": [],
         "multiplies": 8,
@@ -8570,7 +8570,7 @@
       "dense": "",
       "cite": "2.88",
       "bound": {
-        "shape": "NormSquared",
+        "shape": "NormPartSquared",
         "is_chain": false,
         "steps": [],
         "multiplies": 8,
@@ -8790,7 +8790,7 @@
       "dense": "",
       "cite": "2.87",
       "bound": {
-        "shape": "Norm",
+        "shape": "NormPart",
         "is_chain": false,
         "steps": [],
         "multiplies": 8,
@@ -8810,7 +8810,7 @@
       "dense": "",
       "cite": "2.88",
       "bound": {
-        "shape": "Norm",
+        "shape": "NormPart",
         "is_chain": false,
         "steps": [],
         "multiplies": 8,
@@ -8830,7 +8830,7 @@
       "dense": "",
       "cite": "2.87",
       "bound": {
-        "shape": "NormSquared",
+        "shape": "NormPartSquared",
         "is_chain": false,
         "steps": [],
         "multiplies": 8,
@@ -8850,7 +8850,7 @@
       "dense": "",
       "cite": "2.88",
       "bound": {
-        "shape": "NormSquared",
+        "shape": "NormPartSquared",
         "is_chain": false,
         "steps": [],
         "multiplies": 8,

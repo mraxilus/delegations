@@ -1,7 +1,7 @@
-# One table for each compound operator, as edits on P01
+# One table for each chain, as edits on P01
 
-Each compound operator of the book reads one table that P01's rules derive, so it runs as one
-product. At pin, each one is a chain of dense products, with a multivector between each step.
+Five chains of the book each read one table that P01's rules derive, so each runs as one
+product. At pin, each one runs as dense products, with an intermediate between each step.
 
 ## Edit `pga/cayleys.nim`
 
@@ -10,7 +10,7 @@ product. At pin, each one is a chain of dense products, with a multivector betwe
 ```
 
 ```nim
-##       (attitude, carrier, duals, interior products, compound products).
+##       (attitude, carrier, duals, interior products, chains folded to one table).
 ```
 
 ## Edit `pga/cayleys.nim`

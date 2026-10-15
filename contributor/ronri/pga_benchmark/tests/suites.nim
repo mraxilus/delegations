@@ -54,8 +54,8 @@ const
     ##   `*` is template forwarding to scalar `∧`, which catalogue measures once as `scale`.
 
 
-macro emitChecksCompile(measurands: static seq[Measurand]): untyped =
-  ## Emit one `check compiles(expression)` per measurand, with `m` and `n` bound by operand kind.
+macro defineChecksCompile(measurands: static seq[Measurand]): untyped =
+  ## Define one `check compiles(expression)` per measurand, with `m` and `n` bound by operand kind.
   ##   Kinds without typed reference yet bind to library's own multivector.
   result = newStmtList()
   let (m, n) = (ident"m", ident"n")  # plain idents, so expression's own `m` and `n` bind
@@ -273,7 +273,7 @@ suite "Internal: Catalogue":
 
 
   test "every expression compiles against library":
-    emitChecksCompile(CATALOGUE)
+    defineChecksCompile(CATALOGUE)
 
 
   test "symbols match every operator library exports":
@@ -437,6 +437,17 @@ suite "Internal: Lower bound":
       b = boundLowerOf(Shape.Unitize, m, 1)
     check b.multiplies == 8 + 16  # squared norm, then every slot
     check b.divides == 1 and b.roots == 1  # one reciprocal over one root
+
+
+  test "part norm counts blades of one part, and radius norm counts whole form":
+    let
+      rigid = Metric(dimensions: 4, is_conformal: false)
+      conformal = Metric(dimensions: 5, is_conformal: true)
+    check boundLowerOf(Shape.NormPartSquared, rigid, 1).multiplies == 8  # 2.87, bulk of 16 slots
+    check boundLowerOf(Shape.NormPartSquared, conformal, 1).multiplies == 8  # Table 4.12
+    check boundLowerOf(Shape.NormPart, conformal, 1).roots == 1  # Table 4.12, one root
+    check boundLowerOf(Shape.NormSquared, conformal, 1).multiplies == 32  # 4.45, whole antidot
+    check boundLowerOf(Shape.Unitize, conformal, 1).multiplies == 8 + 32  # Section 4.3
 
 
   test "compound product folds its maps into one table, and bound counts that table":

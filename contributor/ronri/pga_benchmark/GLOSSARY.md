@@ -193,8 +193,30 @@ _Avoid_: carry, port, rebase, re-pin
 One measured setting, a dimension count and a metric, such as `rga4d`.
 _Avoid_: configuration, config, target, signature
 
+**Basis-set type**:
+A type that holds the coefficients of one set of bases alone, dense in basis order, as
+`MultivectorOf[B]` of P04 does. A named one is an alias of a set, such as `Kvector2`. An exact
+one holds the bases that a product reaches.
+_Avoid_: kind, exact kind, named kind
+
+**Comparison tolerance**:
+The bound under which `=~` counts two coefficients equal and `grade` counts one as zero. It is
+1e-9 at 64 bits and 1e-4 at 32 bits, times a scale that each rule chooses.
+_Avoid_: tolerance, alone in this sense; places
+
 **Homogeneous scalar**:
 The pair x𝟏 + y𝟙 of a scalar and an antiscalar. It stands for the value x/y kept with its weight
 y, as a homogeneous point keeps a position with its weight. Under the rigid metric it is a dual
 number, and under the conformal metric a complex number.
 _Avoid_: magnitude, dual number, dual scalar
+
+**Motion operator**:
+An even product of reflections in planes or spheres, taken as one element. It acts by the
+sandwich 𝐕 ⟇ 𝐮 ⟇ 𝐕̰. In the rigid algebra it is Lengyel's motor. In the conformal algebra it
+covers translation, rotation, transversion and dilation.
+_Avoid_: versor, even versor, rotor, spinor
+
+**Reflection operator**:
+An odd product of reflections in planes or spheres, applied the same way. In the rigid algebra
+it is Lengyel's flector. In the conformal algebra it covers the inversion `RoundSphere`.
+_Avoid_: versor, odd versor
