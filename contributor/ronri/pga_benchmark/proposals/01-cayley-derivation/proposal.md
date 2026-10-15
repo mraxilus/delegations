@@ -88,7 +88,7 @@ suite, so the build and the transwedge cannot drift apart.
 
 - **Files.** `change.md` replaces `pga/cayleys.nim` whole, from the digest `4aa7a2507c537c06` of
   the file at pin. It also edits `tests/suites.nim`, which imports `cayleys {.all.}` and gains the
-  suite `Transwedge`. No other file changes.
+  suite `Internal: Transwedge`. No other file changes.
 - **Types and signatures.** Every exported type, table and cell stays as at pin. Two private
   signatures lose their `Spatiality` parameter: `constructReverse()` and `reverse(b: Basis)`.
   The antireverse is `constructAnti` of the reverse, so neither needs the parameter.
@@ -112,7 +112,7 @@ suite, so the build and the transwedge cannot drift apart.
   of `tests/suites.nim` that this proposal edits, so the second to land quotes that line again.
 
 ```nim
-func applyMap(cayley: Cayley1D, map: Cayley1D): Cayley1D {.compileTime.}
+func applyMap(cayley, map: Cayley1D): Cayley1D {.compileTime.}
 func applyMap(cayley: Cayley2D, map: Cayley1D, chirality: Chirality): Cayley2D {.compileTime.}
 func mergeTerm(cell: var seq[BasisSigned], term: BasisSigned, as_negated = false) {.compileTime.}
 ```
