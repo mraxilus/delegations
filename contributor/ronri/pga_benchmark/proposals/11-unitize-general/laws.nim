@@ -12,6 +12,9 @@
 ##   Figures it prints are evidence that never gates: worst error of each law, how each other
 ##     test of round object fares on same moved objects, and how motion moves element whose
 ##     residue lies near tolerance of grade test across it.
+##   Helpers `dotAntiSelf`, `moved`, `samplePoint` and `unitizeAntidot` mirror those of
+##     `limits.nim`, whose `largest` also reads NaN as infinity; fix to one reaches each.
+##     P07's `laws.nim` holds twins of `largest`, `partOf` and `unitizeAntidot`.
 
 {.experimental: "strictFuncs".}
 
@@ -23,7 +26,7 @@ import std/[math, random, strformat]
 import pga
 
 
-type KindObject {.pure.} = enum  ## Define kind of drawn object, as rule must treat it.
+type KindObject {.pure.} = enum  ## Define kind of sampled object, as rule must treat it.
   Round  ## Round object, unitized by round weight in CGA.
   Flat  ## Flat object, unitized by flat weight in CGA and by weight in RGA.
   Motion  ## Motion operator, motor in RGA: unit where its antidot square is ±𝟙.
@@ -48,12 +51,14 @@ const
   SAMPLES = 2000  ## Samples of each law.
   SEED = 0  ## Seed of sample generator, so every run reads same elements.
   SCALES = [1e-100, -1e-8, 3.0, -1e8, 1e100]  ## Factors homogeneity is checked under.
-  TOLERANCE_LAW = 1e-9  ## Largest relative error each law admits.
+  TOLERANCE_LAW = TOLERANCE_ABS  ## Largest relative error each law admits.
   REFLECTIONS_BACK = 10000  ## Planes sent through sphere and back.
   STEPS_FAMILY = [1.0, 1e-2, 1e-4, 1e-6, 1e-8, 0.0]  ## Weights of sphere in pencil toward plane.
   SIZES_SCENE = [1.0, 1e8]  ## Deviation of each coordinate in scenes whose objects move.
   SAMPLES_MOVED = 256  ## Moved round objects each test reads, at each deviation.
   SAMPLES_BAND = 20000  ## Rotated round points whose residue lies just past grade tolerance.
+  NAME_ALGEBRA = (when IS_CONFORMAL: "cga" else: "rga") & $DIMENSIONS & "d"
+    ## Name algebra of build.
 
 
 func largest(m: Multivector): float =
@@ -88,12 +93,12 @@ func unitizeAntidot(element: Multivector): Multivector =
 
 
 func moved(element, product: Multivector): Multivector =
-  ## Move element by motion or reflection operator, as antisandwich 𝐯 ⟇ 𝐮 ⟇ ~∘𝐯.
+  ## Move element by motion or reflection operator through antisandwich, i.e. 𝐯 ⟇ 𝐮 ⟇ ~∘𝐯.
   (product ⟇ element) ⟇ ~∘product
 
 
-proc drawPoint(deviation = 1.0): Multivector =
-  ## Draw point at random position: round point of radius zero in CGA, unit point in RGA.
+proc samplePoint(deviation = 1.0): Multivector =
+  ## Sample point at random position: round point of radius zero in CGA, unit point in RGA.
   var distance_squared = 0.0
   for b in Basis.scalar.succ..Basis.origin.pred:
     result[b] = gauss() * deviation
@@ -102,30 +107,30 @@ proc drawPoint(deviation = 1.0): Multivector =
   when IS_CONFORMAL: result[Basis.infinity] = distance_squared / 2
 
 
-proc drawReflector(): Multivector =
-  ## Draw random element of antigrade one: sphere or plane in CGA, plane in RGA.
+proc sampleReflector(): Multivector =
+  ## Sample random element of antigrade one: sphere or plane in CGA, plane in RGA.
   for b in Basis:
     if b.grade == Grade.high.pred: result[b] = gauss()
 
 
-proc drawPlane(): Multivector =
-  ## Draw plane through random points; plane is flat in CGA.
-  result = drawPoint()
+proc samplePlane(): Multivector =
+  ## Sample plane through random points; plane is flat in CGA.
+  result = samplePoint()
   when IS_CONFORMAL:
-    for _ in 2 ..< DIMENSIONS - 1: result = result ∧ drawPoint()
+    for _ in 2 ..< DIMENSIONS - 1: result = result ∧ samplePoint()
     result = result ∧ initElement(Basis.infinity)
   else:
-    for _ in 2..<DIMENSIONS: result = result ∧ drawPoint()
+    for _ in 2..<DIMENSIONS: result = result ∧ samplePoint()
 
 
-proc drawMotor(): Multivector =
-  ## Draw unit rigid motor as product of two planes.
-  unitizeAntidot(drawPlane() ⟇ drawPlane())
+proc sampleMotor(): Multivector =
+  ## Sample unit rigid motor as product of two planes.
+  unitizeAntidot(samplePlane() ⟇ samplePlane())
 
 
-proc drawObjects(): seq[tuple[name: string, element: Multivector, kind: KindObject]] =
-  ## Draw one object of each kind Lengyel unitizes, with its name and kind.
-  var element = drawPoint()
+proc sampleObjects(): seq[tuple[name: string, element: Multivector, kind: KindObject]] =
+  ## Sample one object of each kind Lengyel unitizes, with its name and kind.
+  var element = samplePoint()
   for grade in 1..<DIMENSIONS:
     when IS_CONFORMAL:
       result.add (&"round of grade {grade}", element, KindObject.Round)
@@ -134,15 +139,15 @@ proc drawObjects(): seq[tuple[name: string, element: Multivector, kind: KindObje
           KindObject.Flat)
     else:
       result.add (&"flat of grade {grade}", element, KindObject.Flat)
-    element = element ∧ drawPoint()
-  result.add ("motor", drawPlane() ⟇ drawPlane(), KindObject.Motion)
-  result.add ("flector", drawPlane() ⟇ drawPlane() ⟇ drawPlane(), KindObject.Reflection)
+    element = element ∧ samplePoint()
+  result.add ("motor", samplePlane() ⟇ samplePlane(), KindObject.Motion)
+  result.add ("flector", samplePlane() ⟇ samplePlane() ⟇ samplePlane(), KindObject.Reflection)
 
 
-proc drawElements(): seq[Multivector] =
-  ## Draw objects of every kind, motion operator of two reflections, and general multivectors.
-  for (_, element, _) in drawObjects(): result.add element
-  result.add drawReflector() ⟇ drawReflector()
+proc sampleElements(): seq[Multivector] =
+  ## Sample objects of every kind, motion operator of two reflections, and general multivectors.
+  for (_, element, _) in sampleObjects(): result.add element
+  result.add sampleReflector() ⟇ sampleReflector()
   var general: Multivector
   for b in Basis: general[b] = gauss()
   result.add general
@@ -151,7 +156,7 @@ proc drawElements(): seq[Multivector] =
 proc holdKinds(): float =
   ## Hold each kind at unit weight after unitize: round weight for round, flat weight for flat.
   for _ in 1..SAMPLES:
-    for (name, element, kind) in drawObjects():
+    for (name, element, kind) in sampleObjects():
       let unit = ^(gauss() * 3 * element)
       when IS_CONFORMAL:
         let weight = case kind
@@ -168,8 +173,8 @@ proc holdOperatorsMotion(): float =
   ## Hold products of two and four reflections at unit antidot square after unitize.
   for _ in 1..SAMPLES:
     for count in [2, 4]:
-      var operator_motion = drawReflector()
-      for _ in 2..count: operator_motion = operator_motion ⟇ drawReflector()
+      var operator_motion = sampleReflector()
+      for _ in 2..count: operator_motion = operator_motion ⟇ sampleReflector()
       let square = abs((^(gauss() * 3 * operator_motion)).dotAntiSelf)
       result = max(result, abs(square - 1))
       doAssert abs(square - 1) < TOLERANCE_LAW, &"motion operator unitizes to unit; got `{square}`."
@@ -178,7 +183,7 @@ proc holdOperatorsMotion(): float =
 proc holdHomogeneity(): float =
   ## Hold unitize(λ𝐮) = sign(λ) unitize(𝐮): divisor scales by |λ|, and branch stays.
   for _ in 1..SAMPLES:
-    for element in drawElements():
+    for element in sampleElements():
       when IS_CONFORMAL:
         if abs(element.dotAntiSelf) == 0 and element.normWeightRound == 0: continue
       for scale in SCALES:
@@ -190,9 +195,9 @@ proc holdHomogeneity(): float =
 proc holdCovariance(): float =
   ## Hold unitize(𝐌 ⟇ 𝐮 ⟇ ~∘𝐌) = 𝐌 ⟇ unitize(𝐮) ⟇ ~∘𝐌 for unit rigid motor 𝐌.
   for _ in 1..SAMPLES:
-    let motor = drawMotor()
-    for element in drawElements():
-      let error = difference(element.moved(motor).`^`, (^element).moved(motor))
+    let motor = sampleMotor()
+    for element in sampleElements():
+      let error = difference(^element.moved(motor), (^element).moved(motor))
       result = max(result, error)
       doAssert error < TOLERANCE_LAW, &"unitize commutes with rigid motion; got `{error}`."
 
@@ -268,11 +273,11 @@ when IS_CONFORMAL:
   proc holdIdentities(): tuple[error_flat, error_motion: float] =
     ## Hold 𝐮∘𝐮 = ‖𝐮‖□² for flat 𝐮, and 𝐮∘𝐮 kept by unit motion operator 𝐯 for any 𝐮.
     for _ in 1..SAMPLES:
-      for (_, element, kind) in drawObjects():
+      for (_, element, kind) in sampleObjects():
         if kind != KindObject.Flat: continue
         let flat = (`|□²`element)[Basis.scalarAnti]
         result.error_flat = max(result.error_flat, abs(element.dotAntiSelf - flat) / flat)
-      let operator_motion = unitizeAntidot(drawReflector() ⟇ drawReflector())
+      let operator_motion = unitizeAntidot(sampleReflector() ⟇ sampleReflector())
       var general: Multivector
       for b in Basis: general[b] = gauss()
       let general_moved = general.moved(operator_motion)
@@ -287,7 +292,7 @@ when IS_CONFORMAL:
   proc holdDuality(): float =
     ## Hold W(★𝐮) = W(☆𝐮) = W(𝐮): each dual permutes basis up to sign, and keeps both norms.
     for _ in 1..SAMPLES:
-      for element in drawElements():
+      for element in sampleElements():
         let found = element.divisor
         for dual in [★element, ☆element]:
           let error = abs(dual.divisor / found - 1)
@@ -300,11 +305,11 @@ when IS_CONFORMAL:
     for size in SIZES_SCENE:
       var counts: array[Selector, int]
       for _ in 1..SAMPLES_MOVED:
-        var operator_motion = unitizeAntidot(drawReflector() ⟇ drawReflector())
+        var operator_motion = unitizeAntidot(sampleReflector() ⟇ sampleReflector())
         for _ in 1..2:
-          operator_motion = unitizeAntidot(drawReflector() ⟇ drawReflector()) ⟇ operator_motion
-        var element = drawPoint(size)
-        for _ in 2 .. 1 + rand(DIMENSIONS - 2): element = element ∧ drawPoint(size)
+          operator_motion = unitizeAntidot(sampleReflector() ⟇ sampleReflector()) ⟇ operator_motion
+        var element = samplePoint(size)
+        for _ in 2 .. 1 + rand(DIMENSIONS - 2): element = element ∧ samplePoint(size)
         let element_moved = element.moved(operator_motion)
         for selector in Selector:
           let weight = element_moved.normWeightRound / element_moved.divisorBy(selector)
@@ -316,9 +321,9 @@ when IS_CONFORMAL:
 
   proc holdPencil(): seq[float] =
     ## Hold divisor of sphere 𝐬ₜ = t𝐬 + 𝐠 at |t|, and plane's at 1: divisor jumps at t = 0.
-    let plane = unitizeAntidot(drawPlane())
-    var sphere = drawPoint()
-    for _ in 2..<DIMENSIONS: sphere = sphere ∧ drawPoint()
+    let plane = unitizeAntidot(samplePlane())
+    var sphere = samplePoint()
+    for _ in 2..<DIMENSIONS: sphere = sphere ∧ samplePoint()
     sphere = ^sphere
     for step in STEPS_FAMILY:
       let found = (step * sphere + plane).divisor
@@ -331,9 +336,9 @@ when IS_CONFORMAL:
   proc countReflectionsBack(): tuple[rule, exact: int] =
     ## Count planes sent through sphere and back that rule, and exact zero test, treat as round.
     for _ in 1..REFLECTIONS_BACK:
-      let plane = unitizeAntidot(drawPlane())
-      var sphere = drawPoint()
-      for _ in 2..<DIMENSIONS: sphere = sphere ∧ drawPoint()
+      let plane = unitizeAntidot(samplePlane())
+      var sphere = samplePoint()
+      for _ in 2..<DIMENSIONS: sphere = sphere ∧ samplePoint()
       let
         back = plane.moved(sphere).moved(sphere)
         flat = sqrt((`|□²`back)[Basis.scalarAnti])
@@ -403,8 +408,8 @@ when IS_CONFORMAL:
       for _ in 1..SAMPLES_BAND:
         var planes: array[2, Multivector]
         for plane in planes.mitems:
-          plane = origin ∧ drawPoint() ∧ drawPoint() ∧ initElement(Basis.infinity)
-        var element = drawPoint()
+          plane = origin ∧ samplePoint() ∧ samplePoint() ∧ initElement(Basis.infinity)
+        var element = samplePoint()
         element[Basis.scalarAnti] = 1.0000001e-9 * element.largest
         let rotated = element.moved(unitizeAntidot(planes[0] ⟇ planes[1]))
         if abs(rotated.divisor / element.divisor - 1) > TOLERANCE_LAW: inc result.flips
@@ -413,35 +418,38 @@ when IS_CONFORMAL:
 proc main() =
   ## Check every law, then print worst error of each as evidence.
   randomize(SEED)
-  let algebra = (if IS_CONFORMAL: "cga" else: "rga") & $DIMENSIONS & "d"
-  echo &"{algebra}: kinds Lengyel unitizes, worst |weight - 1|: {holdKinds():.1e}"
-  echo &"{algebra}: products of reflections, worst |antidot square - 1|: " &
-    &"{holdOperatorsMotion():.1e}"
-  echo &"{algebra}: homogeneity, worst error: {holdHomogeneity():.1e}"
-  echo &"{algebra}: covariance under rigid motion, worst error: {holdCovariance():.1e}"
+  echo &"{NAME_ALGEBRA}: kinds Lengyel unitizes, worst |weight - 1|: {holdKinds():.1e}"
+  echo &"{NAME_ALGEBRA}: products of reflections, worst |antidot square - 1|: " &
+      &"{holdOperatorsMotion():.1e}"
+  echo &"{NAME_ALGEBRA}: homogeneity, worst error: {holdHomogeneity():.1e}"
+  echo &"{NAME_ALGEBRA}: covariance under rigid motion, worst error: {holdCovariance():.1e}"
   when IS_CONFORMAL:
     let (error_flat, error_motion) = holdIdentities()
-    echo &"{algebra}: flat antidot against flat weight squared, worst error: {error_flat:.1e}"
-    echo &"{algebra}: antidot kept by unit motion operator, worst error: {error_motion:.1e}"
-    echo &"{algebra}: duality, worst relative error of divisor: {holdDuality():.1e}"
+    echo &"{NAME_ALGEBRA}: flat antidot against flat weight squared, worst error: " &
+        &"{error_flat:.1e}"
+    echo &"{NAME_ALGEBRA}: antidot kept by unit motion operator, worst error: " &
+        &"{error_motion:.1e}"
+    echo &"{NAME_ALGEBRA}: duality, worst relative error of divisor: {holdDuality():.1e}"
     for (selector, size, count) in countSelectors():
-      echo &"{algebra}: moved round objects at deviation {size:.0e}, unitized right by " &
-        &"{$selector}: {count} of {SAMPLES_MOVED}"
+      echo &"{NAME_ALGEBRA}: moved round objects at deviation {size:.0e}, unitized right by " &
+          &"{$selector}: {count} of {SAMPLES_MOVED}"
     let pencil = holdPencil()
     for i, step in STEPS_FAMILY:
-      if step == 0: echo &"{algebra}: pencil t = 0, divisor: {pencil[i]:.6f}"
-      else: echo &"{algebra}: pencil t = {step:.0e}, divisor over |t|: {pencil[i] / step:.6f}"
+      if step == 0: echo &"{NAME_ALGEBRA}: pencil t = 0, divisor: {pencil[i]:.6f}"
+      else:
+        echo &"{NAME_ALGEBRA}: pencil t = {step:.0e}, divisor over |t|: " &
+            &"{pencil[i] / step:.6f}"
     let (count_rule, count_exact) = countReflectionsBack()
-    echo &"{algebra}: planes through sphere and back misread, rule {count_rule}, " &
-      &"exact test {count_exact}, of {REFLECTIONS_BACK}"
+    echo &"{NAME_ALGEBRA}: planes through sphere and back misread, rule {count_rule}, " &
+        &"exact test {count_exact}, of {REFLECTIONS_BACK}"
     when DIMENSIONS == 5:
       for (name, found, expected) in readOperatorsMotion():
-        echo &"{algebra}: {name}, divisor {found:.6g}, expected {expected:.6g}"
+        echo &"{NAME_ALGEBRA}: {name}, divisor {found:.6g}, expected {expected:.6g}"
       let (at_origin, translated, flips) = readBand()
-      echo &"{algebra}: round point with residue 2e-9 on antiscalar, divisor at origin " &
-        &"{at_origin:.3g}, translated by 10 {translated:.3g}"
-      echo &"{algebra}: residue 1.0000001e-9 of largest coefficient, rotations about origin " &
-        &"that change branch: {flips} of {SAMPLES_BAND}"
+      echo &"{NAME_ALGEBRA}: round point with residue 2e-9 on antiscalar, divisor at origin " &
+          &"{at_origin:.3g}, translated by 10 {translated:.3g}"
+      echo &"{NAME_ALGEBRA}: residue 1.0000001e-9 of largest coefficient, rotations about " &
+          &"origin that change branch: {flips} of {SAMPLES_BAND}"
 
 
 when isMainModule: main()

@@ -175,7 +175,10 @@ each part keeps a scale of its own.
 ## What it costs
 
 `timing.nim` times both rules, with the rule of pin copied into the program. As above, Pin names
-the rule of pin, P06 alone that rule at 32 bits, and P07 the rule of this proposal.
+the rule of pin, P06 alone that rule at 32 bits, and P07 the rule of this proposal. Its copy of
+the `grade` of pin spells the lines of pin. The pin columns of `grade` below come from an earlier
+copy, which tested a flag of its own in place of `result.isNone`. For the copy as it stands, those
+columns are unmeasured.
 
 Each cell is the median of three runs by hand on this machine on 2026-10-12. Each run takes the
 median of 41 rounds over 1024 pairs or objects, in nanoseconds per pair or per object, on one
@@ -297,6 +300,13 @@ for the bulk of a point.
   either change, the second to land quotes the first again, and the new code takes the name of
   `algebra-hygiene` where that lands first. P03 (`partner-sign`) and P11 (`unitize-general`)
   edit no line here.
+
+P11 edits no line of this proposal. But one test that P11 adds to suite Internal compares the
+antiscalar of 𝐯 ∘ 𝐯 with 1, and this proposal removes the private `=~` of two scalars. So that
+test compares two multivectors through the public `=~`, as
+`abs((𝐯 ∘ 𝐯)[Basis.scalarAnti]) ∧ 𝟙 =~ 𝟙`, and the two build together in either order. A run by
+hand on 2026-10-15 applied P06, this proposal and P11 to a copy of the library at pin. The suites
+passed at `rga4d`, `cga4d` and `cga5d` at 64 bits, and at `cga4d` and `cga5d` at 32 bits.
 
 ## Open decisions
 

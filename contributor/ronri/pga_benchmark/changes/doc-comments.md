@@ -27,6 +27,9 @@ to land drops or corrects that line:
   the doc of `partner` in `pga.nim`, is not true:
   `Requires single-grade multivector: grade is read at runtime and must be definite.`
 
+P11, `unitize-general`, drops `inline` from `^∘` and quotes no line here. This change writes that
+`^` and `normalizeWeight` cost no call. Once both land, that doc says that each costs one call.
+
 ## Edit `pga.nim`
 
 ```nim

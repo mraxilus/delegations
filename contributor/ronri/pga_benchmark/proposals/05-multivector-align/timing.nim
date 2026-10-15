@@ -3,13 +3,15 @@
 ##     says it ran, and figures it prints are evidence that never gates.
 ##   Built against pin and against changed library, one program gives each pair proposal reports.
 ##   Each timed loop sits in procedure of its own, so compiler estimates it hot, as caller's.
+##   Mirrors `timing.nim` of P06 and `timeRounds` of P07; fix to one reaches each.
 ##
 ##   Cost: `seq` stands for caller's heap storage, since layout of that storage is what is
 ##     measured; 1024 objects, 41 rounds, median nanoseconds per object.
 
 {.experimental: "strictFuncs".}
 
-when compileOption("profiler"): import std/nimprof
+when compileOption("profiler"):
+  import std/nimprof
 
 import std/[algorithm, monotimes, random, strutils, times]
 

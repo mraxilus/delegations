@@ -23,6 +23,5 @@ type
 type
   Multivector* = object  ## Define generalised multivector for n-dimensional PGA.
     elements {.align(min(64, sizeof(array[Basis, float]))).}: array[Basis, float]
-      ## Align to cache line, or to own size where smaller, so multivector starts on line and
-      ##   touches fewest lines.
+      ## Align to cache line, or to own size where smaller, so multivector touches fewest lines.
 ```

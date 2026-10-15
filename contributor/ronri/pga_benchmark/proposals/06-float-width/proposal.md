@@ -172,10 +172,14 @@ The Architect chose `Coefficient`, `pga.float_width` and `pga.float_tolerance` o
 - **Files.** `pga/algebra.nim`, `pga/multivectors.nim`, `pga/operators.nim` and `pga.nim`, and
   the library's own `tests/suites.nim`.
 - **Types and signatures.** Added: the constants `FLOAT_WIDTH*` and `FLOAT_TOLERANCE*`, and
-  `type Coefficient* = (when FLOAT_WIDTH == 32: float32 else: float64)`. `TOLERANCE_ABS*` keeps
-  its name and becomes a `Coefficient`. Removed: the constant `TOLERANCE_PLACES*` and the define
-  `pga.tolerance_places`, with no alias. The private field `elements` of `Multivector` becomes
-  `array[Basis, Coefficient]`. Each function below takes `Coefficient` where pin takes `float`.
+  the type `Coefficient* = (when FLOAT_WIDTH == 32: float32 else: float64)`. The two constants
+  stay in the one group of configuration constants at pin. `TOLERANCE_ABS*` keeps its name and
+  its place in that group, and becomes a `Coefficient`. `Coefficient` goes in the `type` block of
+  the types needed at runtime. The module reorders its code (`codeReordering`), so the group can
+  read a type that the file declares below it. Removed: the constant `TOLERANCE_PLACES*` and the
+  define `pga.tolerance_places`, with no alias. The private field `elements` of `Multivector`
+  becomes `array[Basis, Coefficient]`. Each function below takes `Coefficient` where pin takes
+  `float`.
 - **Functions.** Changed, with no change of body: both `[]`, `initElement`, and the generated
   constructor of each basis that takes a value. Also each `=~` with a scalar, the private one of
   two scalars included, and `+`, `-`, `∧` and `*` with a scalar on either side. Also
@@ -190,7 +194,8 @@ The Architect chose `Coefficient`, `pga.float_width` and `pga.float_tolerance` o
   does not compile, so there the caller takes `Coefficient`.
 - **Order of edits.** P07, `part-scale`, builds on this proposal, so it lands after it and quotes
   the signatures in `Coefficient`. P05, P03, `partner-guard` and `algebra-hygiene` quote lines
-  that this proposal edits, and the paragraphs below give the order of each.
+  that this proposal edits, and the paragraphs below give the order of each. The change
+  `doc-comments-2` and P11, `unitize-general`, read the width, and the last paragraphs give how.
 
 P05, `multivector-align`, edits the same line, the `elements` field of `Multivector`. Each of the
 two applies at pin, and the second to land quotes the first. The merged line is
@@ -210,3 +215,14 @@ A run by hand on 2026-10-13 compiled the suites of pin, with no edit, against th
 bits. They passed 33 of 33 at rga3d and rga4d, and 28 of 28 at cga4d and cga5d. So the edits of
 the suites keep one type, and no build needs them. Probes by hand on the same date hold the other
 statements on callers at 32 bits.
+
+The change `doc-comments-2` writes "128 bytes at 4D" under `Multivector`. That holds at 64 bits
+alone, since a multivector at 4D holds 64 bytes at 32 bits. Once both land, that doc names the
+width.
+
+P11, `unitize-general`, adds locals that start at the float `0.0`. One is in `^∘`, and one is in
+a helper of the suites. Nim converts between the two widths by itself, so each compiles at 32
+bits. But the suites then read in two types, against the statement on uses above. Once both land,
+the second to land declares those locals `Coefficient`. A run by hand on 2026-10-15 applied this
+proposal and P11 to a copy of the library at pin. The suites passed at 32 bits at rga4d, cga4d and
+cga5d.

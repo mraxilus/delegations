@@ -22,7 +22,7 @@ unitize(𝐮) = 𝐮 ÷ W(𝐮), and 𝐮 as it is where W(𝐮) is 0
 
 - **Round object.** The element holds one grade, and its round weight is not negligible beside
   √|𝐮 ∘ 𝐮|. These are Lengyel's round point, dipole, circle and sphere.
--  **Its divisor.** The round weight norm ‖𝐮‖∘ equals the weight norm of 𝐮 ∧ 𝐞∞, its carrier.
+- **Its divisor.** The round weight norm ‖𝐮‖∘ equals the weight norm of 𝐮 ∧ 𝐞∞, its carrier.
   Lengyel defines it so: `RoundWeightNorm` in `ConformalAlgebra3D.wl` is the antidot norm of 𝐱 ∧ 𝐞₅,
   and his 𝐞₅ is the 𝐞∞ of the library. The book says that the round weight "is equivalent to the
   weight of the carrier geometry for round objects" (page 197).
@@ -141,7 +141,7 @@ Each law has an algebraic argument, and `laws.nim` holds it on 2,000 samples at 
 - **Homogeneity.** Both divisors scale by |λ|, and both tests read ratios, so no branch changes.
   In floating point, scaling can move only a coefficient within rounding of the comparison
   tolerance across it.
--  **Rigid motion.** A rigid motor maps 𝐞∞ to ±𝐞∞, so it keeps the weight of the carrier. The 𝟙 part
+- **Rigid motion.** A rigid motor maps 𝐞∞ to ±𝐞∞, so it keeps the weight of the carrier. The 𝟙 part
   of a product is cyclic, so a unit motion operator keeps 𝐮 ∘ 𝐮 as it is. This holds where the
   motion moves no coefficient across the grade tolerance, so that the branch stays. The last section
   names the case where a motion moves one.
@@ -162,7 +162,7 @@ Each law has an algebraic argument, and `laws.nim` holds it on 2,000 samples at 
 
 ### What is a convention
 
--  A round object takes the object unit, not the unit of a motion or reflection operator. Lengyel's
+- A round object takes the object unit, not the unit of a motion or reflection operator. Lengyel's
   own inversion, `RoundSphere`, is a sphere of round weight 1, and its 𝐬 ∘ 𝐬 is r squared. So that
   unit is not his convention, and this rule agrees with him on a lone sphere. The conformal wiki has
   no Inversion page. No test that reads the element alone can tell a sphere used as an object from
@@ -210,7 +210,7 @@ of what you test, and exactly only where no scale is in hand." Each scale has a 
   and the part scale alone misreads them far from the origin. A circle uses all four parts. P07
   also counts a coefficient as zero within 16 rounding units of the largest coefficient, and so
   reads these objects right.
--  **Round weight test.** The round weight counts as zero at or under 1e-9 times √|𝐮 ∘ 𝐮| of the
+- **Round weight test.** The round weight counts as zero at or under 1e-9 times √|𝐮 ∘ 𝐮| of the
   element. A plane sent through a sphere and back keeps residue in its round weight. An exact test
   then takes it for a huge sphere: 9,933 of 10,000 planes at `cga5d`, and 9,557 at `cga4d`. This
   rule misreads none at either. Terathon's `Sphere3D::Unitize` divides by −u, so it would probably
@@ -229,8 +229,8 @@ of what you test, and exactly only where no scale is in hand." Each scale has a 
 ### Outside the claims
 
 This change applies at pin, at 64 bits alone, and its claims run at 64 bits. So no claim checks
-the statements below. Under P06, `float-width`, the `scale` of the grade scan in `^∘` would be
-declared `Coefficient`.
+the statements below. Under P06, `float-width`, the local `largest` of the grade scan in `^∘`
+would be declared `Coefficient`.
 
 - **At 32 bits.** P06 sets the comparison tolerance to 1e-4 at 32 bits. A projection from that
   tolerance moves both edges in with it. The radius edge falls to about 1e4 units, and the
@@ -414,8 +414,20 @@ the rule adds the antidot and a grade scan. The scan runs only where the round w
 stops at a second grade. Most of the rest is calls and error checks, which the library's operators
 carry everywhere, and which the gap list holds as design gaps.
 
+The evaluation above timed `^∘` as an inline function. This change drops `inline` from `^∘`,
+since its C at `cga5d` grows from 91 to 1,485 lines. The guide of the language inlines a large
+body only where a measurement shows the gain (`STYLE.md`, section 2), and no measurement here
+shows one. So each call to `unitize` or `normalizeWeight` calls `^∘`, in the rigid algebras too.
+No evaluation timed this form, so the times in the table above need a new evaluation.
+
 ## What it leaves out
 
+- **The suites at `cga3d`.** No claim names `cga3d`, and there the test of suite Internal fails.
+  At `cga3d` a sphere is a pair of points on a line, and two random points can lie close together.
+  A plane sent through such a sphere and back then holds only about four places. In the sample
+  that fails, its flat weight after unitize is 0.999924. A run by hand on 2026-10-15 found the
+  failure with this change alone, and with P06 and P07 too. A test that draws a sphere of a set
+  radius, or skips a small one against a floor, is an open decision.
 - **The grade of the library.** This change leaves `grade` and `isMixed` as they are, and `⊛`
   reads `grade`. P07, `part-scale`, takes their zero test, as the Architect ruled on 2026-10-12.
   In the rigid algebras that test weighs each part at its own scale. In the conformal algebras it
@@ -447,31 +459,44 @@ carry everywhere, and which the gap list holds as design gaps.
 - **Files.** `pga/operators.nim`: the body and doc of `^∘`, and the docs of `|∘` and `^`.
   `pga.nim`: the row of `^∘` in the operator table, and the docs of `normalizeWeight` and
   `unitize`. `tests/suites.nim`: one test at the head of suite Internal, one at the head of suite
-  Chapter 4, and the helpers `drawPoint` and `drawReflector` under `when IS_CONFORMAL`.
-- **Types and signatures.** None change.
-  `` func `^∘`*(m: Multivector): Multivector {.inline, noinit.} `` stays, and so do the template
-  `^`, `normalizeWeight` and `unitize`.
--  **Functions.** Added and removed: none in the library. Changed: the body of `^∘` gains a branch
+  Chapter 4, and the helpers `samplePoint` and `sampleReflector` under `when IS_CONFORMAL`.
+- **Types and signatures.** No type changes. `^∘` keeps its parameter and its result, and drops
+  `inline`, so it reads `` func `^∘`*(m: Multivector): Multivector {.noinit.} ``. The template
+  `^`, `normalizeWeight` and `unitize` stay as at pin.
+- **Functions.** Added and removed: none in the library. Changed: the body of `^∘` gains a branch
   under `when IS_CONFORMAL`, and the rigid branch keeps the body of pin. The round branch divides by
   the root of `|∘²` of pin, the sum of squares of the round weight. That sum is the weight norm
   squared of the carrier 𝐮 ∧ 𝐞∞, as What it is states. The docs state W(𝐮).
--  **Callers.** No caller changes its text, and in the library `^` and `^∘` reach callers through
+- **Callers.** No caller changes its text, and in the library `^` and `^∘` reach callers through
   `unitize` and `normalizeWeight` alone. In RGA every result stays as at pin. In CGA a flat object
   divides by √|𝐮 ∘ 𝐮|, its flat weight, where pin leaves it as it is. A motion operator, a
   reflection operator or a mixed element divides by √|𝐮 ∘ 𝐮| too, unless it reads as round. The
   tests of pin call `^` only under `when IS_RIGID`, so each keeps its result.
--  **Order of edits.** If P06 (`float-width`) lands first, `scale` in `^∘` takes `Coefficient`, and
-  no line here collides. The change `algebra-hygiene` renames `TOLERANCE_ABS`, which `^∘` names, so
-  the second to land carries the new name into `^∘`. The changes `doc-comments` and `doc-comments-2`
-  edit docs next to `unitize` and `^` through distinct quotes, so either order holds. So does the
-  change `conformal-norms`, which replaces the placeholder of Chapter 4 that this change keeps. P07
-  (`part-scale`) edits `=~` and `grade` in `pga/multivectors.nim` alone, and P10
-  (`homogeneous-scalar`) keeps `unitize` as `^m`, which then calls `^∘` of this change.
+- **Order of edits.** P06 (`float-width`) quotes no line here. Two locals start at the float
+  `0.0`, `largest` in `^∘` and `distance_squared` in `samplePoint`, and each compiles at 32 bits.
+  Once both land, the second to land declares them `Coefficient`. The change `algebra-hygiene`
+  renames `TOLERANCE_ABS`, which `^∘` names, so the second to land carries the new name into `^∘`.
+  The change `doc-comments` writes that `^` and `normalizeWeight` cost no call. With this change
+  `^∘` is not inline, so once both land, that doc says that each costs one call. The changes
+  `doc-comments` and `doc-comments-2` edit docs next to `unitize` and `^` through distinct quotes,
+  so either order holds. So does the change `conformal-norms`, which replaces the placeholder of
+  Chapter 4 that this change keeps. P10 (`homogeneous-scalar`) keeps `unitize` as `^m`, which
+  then calls `^∘` of this change.
+
+P07 (`part-scale`) edits `=~` and `grade` in `pga/multivectors.nim` alone, so no line collides.
+But P07 removes the private `=~` of two scalars, and the test that this change adds to suite
+Internal compares the antiscalar of 𝐯 ∘ 𝐯 with 1. So that test compares two multivectors through
+the public `=~`, as `abs((𝐯 ∘ 𝐯)[Basis.scalarAnti]) ∧ 𝟙 =~ 𝟙`, and the two build together in
+either order. A run by hand on 2026-10-15 applied this change alone to a copy of the library at
+pin, and the suites passed at `cga4d` and `cga5d`. A second run applied P06, P07 and this change.
+The suites passed at `rga4d`, `cga4d` and `cga5d` at 64 bits, and at `cga4d` and `cga5d` at 32
+bits.
 
 ## Open decisions
 
 - One zero test for `grade` and for `^∘` once P07 lands, or two tests as now. P07 holds the same
   decision.
+- How the test of suite Internal draws its sphere, so that it holds at `cga3d` too.
 
 [rigid]: https://rigidgeometricalgebra.org/wiki/index.php?title=Unitization
 [point]: https://rigidgeometricalgebra.org/wiki/index.php?title=Point

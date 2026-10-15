@@ -14,6 +14,18 @@ a coefficient as zero within 16 rounding units of the largest coefficient. A mul
 infinite coefficient has no grade, and one with a coefficient that is not finite equals nothing.
 The scalar comparison goes, since `m =~ s` now compares with the scalar multivector of s.
 
+This change builds on P06, `float-width`, and quotes its `Coefficient` signatures. Three other
+edits reach lines that this change quotes or removes:
+
+- The change `doc-comments-2` adds a doc line under the doc of `grade`, which the third edit
+  quotes. The second of the two to land quotes the first.
+- The change `algebra-hygiene` renames `TOLERANCE_ABS` to `TOLERANCE_REL` in the scalar `=~`,
+  which this change removes, and in the zero test of `grade`, which it replaces. The second to
+  land quotes the first, and the new code takes the new name where `algebra-hygiene` lands first.
+- P11, `unitize-general`, adds a test that compares two floats with the private `=~` of two
+  scalars, which this change removes. P11 compares two multivectors there instead, so the two
+  build together in either order.
+
 ## Edit `pga/multivectors.nim`
 
 ```nim
@@ -77,8 +89,7 @@ func `=~`*(m, n: Multivector): bool =
   ## Compare approximate equality between multivectors, i.e. 𝐦 ≈ 𝐧.
   ##   Weigh each difference against largest absolute value of its part in either, as
   ##   `CAYLEYS_PARTS` splits parts.
-  ##   Coefficient not finite fails comparison, so such multivector equals nothing. At pin NaN
-  ##   fails too, but infinity equals any finite coefficient.
+  ##   Coefficient not finite fails comparison, so such multivector equals nothing.
   for forms in CAYLEYS_PARTS.fields:
     for part in forms.fields:
       let bound = TOLERANCE_ABS * max(m.scale(part), n.scale(part))
@@ -115,15 +126,16 @@ template `=~`*(s: Coefficient, m: Multivector): bool =
 
 ```nim
   ## Get grade of multivector, if k-vector.
-  ##   Count coefficient as zero within tolerance of largest absolute value of its part. In CGA,
-  ##   also count it as zero within 16 rounding units of largest coefficient: conformal product
-  ##   leaves rounding of its largest terms in parts far smaller than they are.
-  ##   Infinite coefficient makes bound infinite, and overflowed multivector holds no grade.
+  ##   Count coefficient as zero within tolerance of largest absolute value of its part.
+  ##   In CGA, also count it as zero within 16 rounding units of largest coefficient.
+  ##     Conformal product leaves rounding of its largest terms in parts far smaller than they are.
+  ##   Infinite coefficient makes bound infinite, so overflowed multivector holds no grade.
   var found_grade = false
   when IS_CONFORMAL:
     let rounding = block:
       var largest: Coefficient = 0
-      for b in Basis:  # Branch, not `max`, which measured 2.7 times slower here.
+      # Branch, not `max`: `max` took `grade` 2.7 times as long at cga5d, measured 2026-10-12.
+      for b in Basis:
         if abs(m[b]) > largest: largest = abs(m[b])
       16 * epsilon(Coefficient) * largest
   for forms in CAYLEYS_PARTS.fields:
