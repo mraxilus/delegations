@@ -15,10 +15,13 @@ moved elements, and a plane sent through a sphere and back.
 
 ```nim
 ##   | ^∘  | normalizeWeight   | 𝐦 ÷ ‖𝐦‖∘    |
+##   |-----|-------------------|-------------|
 ```
 
 ```nim
 ##   | ^∘  | normalizeWeight   | 𝐦 ÷ W(𝐦)    |
+##   |-----|-------------------|-------------|
+##   W(𝐦): coined divisor, ‖𝐦‖∘ for round object in CGA, else √|𝐦∘𝐦|; Lengyel gives none.
 ```
 
 ## Edit `pga.nim`
