@@ -14,6 +14,19 @@ lands second, its Replace carries the text of this change under a new digest. Th
 `conformal-norms` edits nearby docs in `pga.nim` and `pga/operators.nim`. The two changes quote
 distinct lines, so they apply in either order.
 
+Once P01 lands, this change drops its edit that quotes `  CAYLEYS_DOT* = block:`. P01 gives the
+dot a doc on that line already. So that edit, applied after P01, gives a line of 136 characters
+with two docs that contradict each other.
+
+Two more proposals make a line of this change stale. Of this change and each of them, the second
+to land drops or corrects that line:
+
+- P08, `compound-tables`, generates the support from a table. Then the header of
+  `pga/operators.nim` that this change writes must not list `support` as written by hand.
+- P03, `partner-sign`, reads no grade in the partner. Then this line, which this change adds to
+  the doc of `partner` in `pga.nim`, is not true:
+  `Requires single-grade multivector: grade is read at runtime and must be definite.`
+
 ## Edit `pga.nim`
 
 ```nim

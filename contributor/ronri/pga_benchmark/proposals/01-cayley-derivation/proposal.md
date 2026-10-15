@@ -88,7 +88,7 @@ suite, so the build and the transwedge cannot drift apart.
 
 - **Files.** `change.md` replaces `pga/cayleys.nim` whole, from the digest `4aa7a2507c537c06` of
   the file at pin. It also edits `tests/suites.nim`, which imports `cayleys {.all.}` and gains the
-  suite `Transwedge`. No other file changes.
+  suite `Internal: Transwedge`. No other file changes.
 - **Types and signatures.** Every exported type, table and cell stays as at pin. Two private
   signatures lose their `Spatiality` parameter: `constructReverse()` and `reverse(b: Basis)`.
   The antireverse is `constructAnti` of the reverse, so neither needs the parameter.
@@ -103,16 +103,23 @@ suite, so the build and the transwedge cannot drift apart.
   `tables` claims compare 27 tables at pin with the same tables under this proposal. The removed
   and changed functions are private. `pga/operators.nim` and the modules of this project that
   import `cayleys {.all.}` call none of them.
-- **Order of edits.** P08, `compound-tables`, quotes this file, so it lands after this proposal,
-  and P03, `partner-sign`, lands after P08. The change `cayleys-hygiene` renames an overload of
-  `constructProductInterior`, which this proposal deletes, so that change is void once this
-  proposal lands. The changes `doc-comments` and `doc-comments-2` edit `pga/cayleys.nim` too,
-  and whichever lands second is quoted again against the first. If this proposal lands second,
-  its Replace carries their text under a new digest. `doc-comments-2` also edits the import line
-  of `tests/suites.nim` that this proposal edits, so the second to land quotes that line again.
+- **Order of edits.** P08, `compound-tables`, quotes a line of the header of this file and
+  reads `applyMap`, so it lands after this proposal, and P03, `partner-sign`, lands after P08.
+  The change `cayleys-hygiene` renames an overload of `constructProductInterior`, which this
+  proposal deletes, so the edits of that change are void once this proposal lands. Its other
+  idea still applies, because this proposal writes the parity k(k−1)/2 of the reverse twice, in
+  `reverse` and in `constructProductGeometric`. The changes `doc-comments` and `doc-comments-2`
+  edit `pga/cayleys.nim` too, and whichever lands second is quoted again against the first. If
+  this proposal lands second, its Replace carries their text under a new digest. `doc-comments-2`
+  also edits the import line of `tests/suites.nim` that this proposal edits, so the second to
+  land quotes that line again.
+- **Dropped edit.** Once this proposal lands, `doc-comments` drops its edit that quotes
+  `  CAYLEYS_DOT* = block:`. Applied after this proposal, that edit gives a line of 136
+  characters with two docs that contradict each other. This proposal gives the dot its doc on
+  that line already.
 
 ```nim
-func applyMap(cayley: Cayley1D, map: Cayley1D): Cayley1D {.compileTime.}
+func applyMap(cayley, map: Cayley1D): Cayley1D {.compileTime.}
 func applyMap(cayley: Cayley2D, map: Cayley1D, chirality: Chirality): Cayley2D {.compileTime.}
 func mergeTerm(cell: var seq[BasisSigned], term: BasisSigned, as_negated = false) {.compileTime.}
 ```
