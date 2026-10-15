@@ -6,10 +6,28 @@ algebra, W(𝐦) is the weight norm √(𝐦 ∘ 𝐦), as at pin. In the confor
 weight norm for a round object, and √|𝐦 ∘ 𝐦| for any other element.
 
 A round object holds one grade, and its round weight is not negligible beside √|𝐦 ∘ 𝐦|. The
-façade and the doc of `^` state the rule. The doc of the weight norm says that √(𝐦 ∘ 𝐦) is that
-norm in the rigid algebra alone. Chapter 4 gains one test at its head, and keeps its placeholder,
-which change `conformal-norms` replaces. Suite Internal gains one test for motion operators,
-moved elements, and a plane sent through a sphere and back.
+façade and the doc of `^` state the rule, and a line under the table of norm operators defines
+W(𝐦). The doc of the weight norm says that √(𝐦 ∘ 𝐦) is that norm in the rigid algebra alone.
+This change also drops `inline` from `^∘`, since its conformal body is large. Chapter 4 gains one
+test at its head, and keeps its placeholder, which change `conformal-norms` replaces. Suite
+Internal gains one test for motion operators, moved elements, and a plane sent through a sphere
+and back.
+
+This change applies at pin and builds on no other. Other edits reach code that this change
+touches:
+
+- P06, `float-width`, quotes no line of this change. Two locals here start at the float `0.0`:
+  `largest` in `^∘` and `distance_squared` in `samplePoint`. Each compiles at 32 bits. Once both
+  land, the second to land declares them `Coefficient`.
+- P07, `part-scale`, removes the private `=~` of two scalars. The test of suite Internal compares
+  two multivectors through the public `=~` instead, so the two build together in either order.
+- The change `algebra-hygiene` renames `TOLERANCE_ABS`, which `^∘` names. The second to land
+  carries the new name into `^∘`.
+- The change `doc-comments` writes that `^` and `normalizeWeight` cost no call. With this change
+  `^∘` is not inline, so each costs one. Once both land, that doc says so.
+- The changes `doc-comments` and `doc-comments-2` edit docs next to `unitize` and `^` through
+  quotes of their own, so either order holds. So does the change `conformal-norms`, which
+  replaces the placeholder of Chapter 4 that this change keeps.
 
 ## Edit `pga.nim`
 

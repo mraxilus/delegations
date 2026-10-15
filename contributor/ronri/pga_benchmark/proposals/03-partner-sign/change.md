@@ -5,6 +5,12 @@ change folds that sign into the left read of its first table instead, by the gra
 term. It also folds the carrier into the antiwedge that follows. So the partner is two
 generated tables, read in a chain, and no grade scan.
 
+This change removes the sign line of `⊛`. P06, `float-width`, edits that line, so its edit is
+void once this change lands. If P06 lands first, this change quotes `Coefficient(...)` in place
+of `float(...)`. The change `partner-guard` quotes the same lines of `⊛`, and it is void once this
+change lands. If `partner-guard` lands first, this change quotes its lines, and so removes its
+assert too.
+
 ## Edit `pga/cayleys.nim`
 
 ```nim

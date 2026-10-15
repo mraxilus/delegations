@@ -12,6 +12,12 @@ lands second, its Replace carries the text of this change under a new digest. P0
 import line of `tests/suites.nim` that this change quotes, so the second to land quotes that line
 again.
 
+Two proposals quote lines next to the docs that this change adds, so the second to land quotes the
+first. P05, `multivector-align`, quotes the line under `Multivector* = object`. P07, `part-scale`,
+quotes the doc of `grade`. P06, `float-width`, quotes no line here, but it makes the width of a
+coefficient a build option. Once both land, the doc of `Multivector` names the width, since a
+multivector at 4D holds 128 bytes at 64 bits and 64 bytes at 32 bits.
+
 ## Edit `pga.nim`
 
 ```nim

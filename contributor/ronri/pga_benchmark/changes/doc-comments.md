@@ -14,6 +14,9 @@ lands second, its Replace carries the text of this change under a new digest. Th
 `conformal-norms` edits nearby docs in `pga.nim` and `pga/operators.nim`. The two changes quote
 distinct lines, so they apply in either order.
 
+P11, `unitize-general`, drops `inline` from `^∘` and quotes no line here. This change writes that
+`^` and `normalizeWeight` cost no call. Once both land, that doc says that each costs one call.
+
 ## Edit `pga.nim`
 
 ```nim

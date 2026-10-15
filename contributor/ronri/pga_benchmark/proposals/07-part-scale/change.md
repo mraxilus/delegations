@@ -14,6 +14,18 @@ a coefficient as zero within 16 rounding units of the largest coefficient. A mul
 infinite coefficient has no grade, and one with a coefficient that is not finite equals nothing.
 The scalar comparison goes, since `m =~ s` now compares with the scalar multivector of s.
 
+This change builds on P06, `float-width`, and quotes its `Coefficient` signatures. Three other
+edits reach lines that this change quotes or removes:
+
+- The change `doc-comments-2` adds a doc line under the doc of `grade`, which the third edit
+  quotes. The second of the two to land quotes the first.
+- The change `algebra-hygiene` renames `TOLERANCE_ABS` to `TOLERANCE_REL` in the scalar `=~`,
+  which this change removes, and in the zero test of `grade`, which it replaces. The second to
+  land quotes the first, and the new code takes the new name where `algebra-hygiene` lands first.
+- P11, `unitize-general`, adds a test that compares two floats with the private `=~` of two
+  scalars, which this change removes. P11 compares two multivectors there instead, so the two
+  build together in either order.
+
 ## Edit `pga/multivectors.nim`
 
 ```nim

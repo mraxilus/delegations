@@ -19,6 +19,14 @@ quotes the first:
 - The change `algebra-hygiene` renames `TOLERANCE_ABS` to `TOLERANCE_REL`. The merged line keeps
   both the new name and `Coefficient`.
 
+Two other edits quote no line of this change, but read the width:
+
+- The change `doc-comments-2` writes "128 bytes at 4D" under `Multivector`. At 32 bits a
+  multivector at 4D holds 64 bytes. So once both land, that doc names the width.
+- P11, `unitize-general`, adds locals that start at the float `0.0`, in `^∘` and in a helper of
+  the suites. Each compiles at 32 bits. Once both land, the second to land declares them
+  `Coefficient`, so that each suite reads in one type.
+
 ## Edit `pga/algebra.nim`
 
 ```nim
