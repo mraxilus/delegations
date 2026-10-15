@@ -73,7 +73,7 @@ func `^∘`*(m: Multivector): Multivector {.inline, noinit.} =
 ```
 
 ```nim
-func `^∘`*(m: Multivector): Multivector {.inline, noinit.} =
+func `^∘`*(m: Multivector): Multivector {.noinit.} =
   ## Normalize multivector so its weight has unit antiscalar magnitude (𝟙), i.e. 𝐦 ÷ W(𝐦).
   ##   W(𝐦) is round weight norm for round object in CGA, else √|𝐦∘𝐦|; see `normalizeWeight`.
   ##   Performs no-op where W(𝐦) is 0.
