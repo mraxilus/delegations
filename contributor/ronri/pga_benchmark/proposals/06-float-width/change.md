@@ -32,12 +32,22 @@ quotes the first:
   FLOAT_WIDTH* {.define: "pga.float_width".} = 64
 
   # Avoid small-value comparison failures, in decimal places; 32-bit coefficient holds about seven.
-  FLOAT_TOLERANCE* {.define: "pga.float_tolerance".} = (when FLOAT_WIDTH == 32: 4 else: 9)
+  FLOAT_TOLERANCE* {.define: "pga.float_tolerance".} = when FLOAT_WIDTH == 32: 4 else: 9
+  TOLERANCE_ABS* = Coefficient(10.pow(-FLOAT_TOLERANCE.float))
+```
 
-type Coefficient* = (when FLOAT_WIDTH == 32: float32 else: float64)
-  ## Define each coefficient of every multivector, in as many bits as `FLOAT_WIDTH` says.
+## Edit `pga/algebra.nim`
 
-const TOLERANCE_ABS* = Coefficient(10.pow(-FLOAT_TOLERANCE.float))
+```nim
+type  ## Define independent type definitions needed at runtime.
+  Grade* = distinct int  ## Define grade selector for multivectors.
+```
+
+```nim
+type  ## Define independent type definitions needed at runtime.
+  Coefficient* = (when FLOAT_WIDTH == 32: float32 else: float64)
+    ## Define each coefficient of every multivector, in as many bits as `FLOAT_WIDTH` says.
+  Grade* = distinct int  ## Define grade selector for multivectors.
 ```
 
 ## Edit `pga/algebra.nim`
