@@ -21,7 +21,7 @@ func alignmentOf*(count: int): int =
   ## Align coefficients of `count` bases to largest power of two dividing their bytes, at most
   ##   one cache line. Alignment divides size, so it pads at no count.
   let size = sizeof(float) * count
-  min(LINE, size and -size)
+  max(sizeof(float), min(LINE, size and -size))  # Empty set keeps alignment of float.
 
 
 proc main() =
