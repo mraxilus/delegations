@@ -61,7 +61,10 @@ the verdict.
 
 The evaluation at pin `28f4e11` on 2026-10-13 timed 111, 135, 88 and 117 measurands at rga4d,
 cga5d, rga3d and cga4d. Against the spread that the pages read on 2026-10-13, ×0.95 to ×1.04, 9,
-30, 4 and 19 of those times moved.
+30, 4 and 19 of those times moved. The evaluation of 2026-10-15 timed the same measurands of the
+same C. Against the spread that the pages read on that date, ×0.91 to ×1.07, 6, 32, 80 and 72
+moved. Its times at rga3d read a median of ×0.73, and at cga4d of ×1.17, so the machine drifted
+during those runs. That evaluation is the one the page shows.
 
 ## What 32 bits buy
 
