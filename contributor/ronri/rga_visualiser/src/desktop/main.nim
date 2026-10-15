@@ -607,7 +607,7 @@ proc assembleMeshes(
     let
       progress = animationProgress(now, one.born)
       tint = if are_dimmed[handle]: muted(one.ink.colour) else: one.ink.colour
-    discard MESHES.emitObject(placements[handle], tint, scale, progress)
+    discard MESHES.tessellateObject(placements[handle], tint, scale, progress)
 
   for handle, one in scene.pairs:
     if not one.isVisible or placements[handle].kind == Case.PlaneEverywhere or
@@ -618,7 +618,7 @@ proc assembleMeshes(
     let
       progress = animationProgress(now, one.born)
       tint = if are_dimmed[handle]: muted(one.ink.colour) else: one.ink.colour
-    discard MESHES.emitObject(placements[handle], tint, scale, progress, one.radius)
+    discard MESHES.tessellateObject(placements[handle], tint, scale, progress, one.radius)
 
   # Emit open edit session's staged multivector, through same dispatch real object uses.
   #   Composing then shows exactly what saving gives.
@@ -663,7 +663,7 @@ proc assembleMeshes(
     let
       progress = animationProgress(now, one.born)
       tint = if are_dimmed[handle]: muted(one.ink.colour) else: one.ink.colour
-    discard MESHES.emitObject(placements[handle], tint, scale, progress, one.radius)
+    discard MESHES.tessellateObject(placements[handle], tint, scale, progress, one.radius)
 
   panel.microseconds_tessellate = float(getMonoTime().ticks - ticks_start) / 1000.0
   # Count per record what its shader emits: vertices drawn, not floats carried.
@@ -2567,7 +2567,7 @@ proc runStoryboard(
       sdl3.glSwapWindow(window)
 
   scene.restoreFrom initScene()
-  constructSeeds(scene, clock)
+  addSeeds(scene, clock)
   let count_seeds = scene.len
   panel.say("Seeds placed.", clock)
   captureStep("00_seeds")
@@ -2754,9 +2754,9 @@ proc main() =
     echo loadScene(scene, options.path_load_scene, now_startup)
   else:
     # Replay rather than place whole, as loaded scene and browser's opening are.
-    #   Not inside `constructSeeds`, because `runStoryboard` sweeps each step's animation
+    #   Not inside `addSeeds`, because `runStoryboard` sweeps each step's animation
     #   on clock of its own.
-    constructSeeds(scene, now_startup)
+    addSeeds(scene, now_startup)
     scene.replayFrom(now_startup)
   if options.is_filled: fillSceneForBenchmark(scene, now_startup)
   HISTORY_DESKTOP.initHistory(scene, camera)

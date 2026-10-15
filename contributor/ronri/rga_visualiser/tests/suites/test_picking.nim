@@ -63,7 +63,7 @@ suite "Picking":
       skip()
     else:
       var scene = initScene()
-      constructOrrery(scene, ScaleOrrery.Nearest)
+      addOrrery(scene, ScaleOrrery.Nearest)
       var handle_sol = -1
       for handle in 0..<scene.bound:
         if scene.isAlive(handle) and scene.labelAt(handle).toText == "sol": handle_sol = handle

@@ -662,7 +662,7 @@ func isPointInView*(placed: Placement, radius: float, bounds: ViewBounds): bool 
   abs(above) <= depth * bounds.bound_height + radius
 
 
-proc emitObject*(
+proc tessellateObject*(
   meshes: var MeshSet,
   placed: var Placement,
   tint: Rgba,
@@ -798,7 +798,7 @@ proc addObject*(
   ## Append object, dispatching on geometry its grade stands for.
   ##   Place then emit in one call, for caller with no other reader of placement: preview,
   ##   storyboard, suite.
-  ##     Frame that placed its scene already reads those placements and calls `emitObject`;
+  ##     Frame that placed its scene already reads those placements and calls `tessellateObject`;
   ##     see `placeObject`.
   ##   Empty where multivector carries no drawable geometry.
   ##   `progress` defaults to fully appeared, for caller with nothing to animate against.
@@ -806,8 +806,8 @@ proc addObject*(
   ##   `scratch` is taken for shape every other tessellation entry point has.
   ##   `bounds`, where given, skips point outside view before it costs emitting; Empty
   ##   then. See `isPointInView`.
-  ##   `radius` is point's drawn radius; see `emitObject`.
+  ##   `radius` is point's drawn radius; see `tessellateObject`.
   discard scratch
   var placed = placeObject(geometry, anchor_override)
   if bounds.isSome and not isPointInView(placed, radius, bounds.get): return Outcome.Empty
-  emitObject(meshes, placed, tint, scale, progress, radius)
+  tessellateObject(meshes, placed, tint, scale, progress, radius)

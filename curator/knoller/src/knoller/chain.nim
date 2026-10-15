@@ -11,9 +11,11 @@
 ##   - entry block next, whose body moves into `proc main` (V.10): it moves lines and widens
 ##     none, so every later fixer reads body where it stands;
 ##   - content next (articles in comments, backticks of IV.4 messages, parentheses of X.4
-##     conditions, `to<Target>` subject first, command form of dotted call statement, needless
-##     parentheses gone), since each changes width of its line; parentheses go before spacing,
-##     which glues prefix operator they leave in same round;
+##     conditions, `to<Target>` subject first, prefix call of `define…` and `emit…`, command
+##     form of dotted call statement, needless parentheses gone), since each changes width of
+##     its line; prefix call goes before command form, which then reads no dotted call of
+##     either; parentheses go before spacing, which glues prefix operator they leave in same
+##     round;
 ##   - idioms next (return, stub keys, import order, import brackets, bindings, `strictFuncs`,
 ##     profiler import, unordered lists), since bindings indent lines and every later width
 ##     reads that indent;
@@ -75,8 +77,8 @@
 
 import std/[algorithm, options, sequtils, strutils]
 import ./[
-  articles, blanks, commands, declarations, entry, fences, form, idioms, messages, names,
-  parentheses, precedence, reports, spacing, targets, waits, wrapping,
+  articles, blanks, commands, declarations, entry, fences, form, generations, idioms, messages,
+  names, parentheses, precedence, reports, spacing, targets, waits, wrapping,
 ]
 
 
@@ -95,7 +97,8 @@ func stepsOf(dialect: Dialect): seq[Step] =
   result = @STEPS_FORM
   result.add @[
     guarded(fixBlockEntry), guarded(fixArticles), widening(fixMessages),
-    widening(fixMixtures), guarded(fixTargets), guarded(fixCommands), proving(fixParentheses),
+    widening(fixMixtures), guarded(fixTargets), guarded(fixGenerations), guarded(fixCommands),
+    proving(fixParentheses),
   ]
   for fixer in dialect.fixersIdiom: result.add guarded(fixer)
   result.add @[guarded(fixBlanks), guarded(fixDocs), guarded(fixDefaults), widening(fixSpacing)]
@@ -149,10 +152,12 @@ func checkFormatting*(path, source: string; dialect: Dialect; proofs = Proofs())
 
 func staticOf(path, source: string; dialect: Dialect): seq[Report] =
   ## Run on source as given each check static pass of `curator/audit` reads on Nim source: form,
-  ##   articles, entry block, names with no word exempt beyond `JARGON`, idioms of dialect, and
-  ##   fixed waits of drive file (`isFileDrive`). Fence keeps no line from them.
+  ##   articles, entry block, names with no word exempt beyond `JARGON`, calls of `define…` and
+  ##   `emit…`, idioms of dialect, and fixed waits of drive file (`isFileDrive`). Fence keeps no
+  ##   line from them.
   result = checkForm(path, source) & checkArticles(path, source)
   result.add checkBlockEntry(path, source) & checkNames(path, source, [])
+  result.add checkGenerations(path, source)
   result.add checkIdioms(path, source, dialect)
   if path.isFileDrive: result.add checkWaits(path, source)
 

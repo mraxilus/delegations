@@ -47,7 +47,7 @@
 ##   ecliptic gives.
 ##   Luna's ring is tipped out of it by its real 5.16 degrees, so `att(earth ∧ luna)`
 ##   sits off that line and spans horizon plane with it. See horizon block in
-##   `constructOrrery`.
+##   `addOrrery`.
 ## `objectsOf(scale)` objects on nose at every size, asserted.
 ##   Walk passes over system too large for room left rather than stopping on it.
 ##   Only Sol's block and four in horizon are fixed; everything between is however many
@@ -270,7 +270,7 @@ const
   COUNT_OBJECT_HORIZON = 4
     ## Count objects closing block comes to.
     ##   Four, not three: two points in horizon, because one cannot make plane. See
-    ##   horizon block in `constructOrrery`.
+    ##   horizon block in `addOrrery`.
 
 const LUT_INK_BY_ROLE*: array[Role, Ink] = [
   Role.Sun: Ink.Copper,
@@ -607,7 +607,7 @@ const
     ##     in pixels about dot solve knows nothing about.
 
 
-func constructSol(scene: var Scene; now: float; ecliptic, orbit, tether: var Multivector) =
+func addSol(scene: var Scene; now: float; ecliptic, orbit, tether: var Multivector) =
   ## Build modelled solar system, handing back three objects horizon block takes attitudes of.
   ##   Planets ring Sol at their own real semi-major axes rather than one shared radius,
   ##   whole reason this is not generic template.
@@ -667,7 +667,7 @@ func constructSol(scene: var Scene; now: float; ecliptic, orbit, tether: var Mul
   addPlane(scene, ecliptic, "ecliptic sol", now, place_sol)
 
 
-func constructOrrery*(scene: var Scene, scale: ScaleOrrery = SCALE_ORRERY_DEFAULT, now = 0.0) =
+func addOrrery*(scene: var Scene, scale: ScaleOrrery = SCALE_ORRERY_DEFAULT, now = 0.0) =
   ## Fill scene with every system in turn, then four objects in horizon.
   ##   `scale` says how deep into catalogue to reach; see `ScaleOrrery`. Every size runs
   ##   same code.
@@ -682,7 +682,7 @@ func constructOrrery*(scene: var Scene, scale: ScaleOrrery = SCALE_ORRERY_DEFAUL
 
   # Build Sol first: nearest system, and horizon block takes attitudes of its objects.
   var ecliptic_sol, orbit_sol, tether_sol: Multivector
-  constructSol(scene, now, ecliptic_sol, orbit_sol, tether_sol)
+  addSol(scene, now, ecliptic_sol, orbit_sol, tether_sol)
 
   # Place every other star where it really stands, with planets archive records.
   #   Nothing invented: star earns ecliptic with two placed planets, and great majority
@@ -778,7 +778,7 @@ func showOrrery*(
   ##   Not here: anything either front-end keeps of own (born stamps, selection, undo
   ##   timeline), bookkeeping about scene rather than part of it.
   scene.restoreFrom initScene()
-  constructOrrery(scene, scale, now)
+  addOrrery(scene, scale, now)
   scene.replayFrom(now)
   # Stand eye on reader's own bearing: eye goes back along it, and up by `RISE_ORRERY_SHOWN`
   #   of each unit back. Bearing is meet of ground with plane holding sight and world up;
