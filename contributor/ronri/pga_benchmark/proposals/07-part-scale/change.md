@@ -77,8 +77,7 @@ func `=~`*(m, n: Multivector): bool =
   ## Compare approximate equality between multivectors, i.e. 𝐦 ≈ 𝐧.
   ##   Weigh each difference against largest absolute value of its part in either, as
   ##   `CAYLEYS_PARTS` splits parts.
-  ##   Coefficient not finite fails comparison, so such multivector equals nothing. At pin NaN
-  ##   fails too, but infinity equals any finite coefficient.
+  ##   Coefficient not finite fails comparison, so such multivector equals nothing.
   for forms in CAYLEYS_PARTS.fields:
     for part in forms.fields:
       let bound = TOLERANCE_ABS * max(m.scale(part), n.scale(part))
@@ -115,15 +114,16 @@ template `=~`*(s: Coefficient, m: Multivector): bool =
 
 ```nim
   ## Get grade of multivector, if k-vector.
-  ##   Count coefficient as zero within tolerance of largest absolute value of its part. In CGA,
-  ##   also count it as zero within 16 rounding units of largest coefficient: conformal product
-  ##   leaves rounding of its largest terms in parts far smaller than they are.
-  ##   Infinite coefficient makes bound infinite, and overflowed multivector holds no grade.
+  ##   Count coefficient as zero within tolerance of largest absolute value of its part.
+  ##   In CGA, also count it as zero within 16 rounding units of largest coefficient.
+  ##     Conformal product leaves rounding of its largest terms in parts far smaller than they are.
+  ##   Infinite coefficient makes bound infinite, so overflowed multivector holds no grade.
   var found_grade = false
   when IS_CONFORMAL:
     let rounding = block:
       var largest: Coefficient = 0
-      for b in Basis:  # Branch, not `max`, which measured 2.7 times slower here.
+      # Branch, not `max`: `max` took `grade` 2.7 times as long at cga5d, measured 2026-10-12.
+      for b in Basis:
         if abs(m[b]) > largest: largest = abs(m[b])
       16 * epsilon(Coefficient) * largest
   for forms in CAYLEYS_PARTS.fields:
