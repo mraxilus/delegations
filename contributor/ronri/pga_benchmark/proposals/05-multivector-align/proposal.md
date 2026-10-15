@@ -1,15 +1,23 @@
 # P05: Align each multivector to one cache line
 
-At pin, a multivector aligns to 8 bytes, as its floats do. A large `seq` of multivectors then
-starts 56 bytes into a 64-byte cache line, so each multivector touches one line more than it
-holds. A multivector holds 2^D floats, so this proposal aligns it to `min(64, size)`. From three
-dimensions up, it fills whole lines.
+**What it is.** One alignment pragma on the private array of coefficients makes each multivector
+start on a 64-byte cache line, or on its own size where that is smaller, `min(64, size)`. The size
+of a multivector and every signature stay as at pin.
+
+**What it is for.** At pin, a multivector aligns to 8 bytes, as its floats do. A large `seq` of
+multivectors then starts 56 bytes into a line, so each multivector touches one line more than it
+holds. Aligned, work that mostly moves data gains: in a `seq` on a Cascade Lake Xeon, `-m` runs at
+×0.42 to ×0.84 of pin and `m + n` at ×0.77 to ×0.84. The products hold near ×1.
+
+**What it costs.** A function that keeps a multivector on its own stack aligns its frame to 64
+bytes, which costs a few instructions for each call. On an Emerald Rapids Xeon at cga5d, five of
+seven operations ran ×1.07 to ×1.11 of pin.
 
 This proposal applies at pin and builds on no other. The basis-set types of P04 hold any count
-of floats, and P04 holds the rule that aligns them, `alignmentOf`. P06 edits the same line as this
+of floats, and P04 holds the rule that aligns them, `alignment`. P06 edits the same line as this
 proposal, and Implementation gives the order and the merged line.
 
-## What it is
+## How it works
 
 - **Multivector.** Its elements carry `{.align(min(64, sizeof(array[Basis, float]))).}`. That is
   64 bytes at every algebra of three dimensions or more, and 32 bytes at rga2d. Its size does
@@ -165,7 +173,7 @@ There `layout.nim` held at four algebras, at 64 and at 32 bits. At 32 bits a mul
 rga3d aligns to 32 bytes and holds 32. `layout.nim` reads the width of a coefficient from the
 library, so one program holds both the line of this change and the merged line.
 
-P04, `exact-kinds`, edits no line of this change. Its `alignmentOf` gives the whole basis set the
+P04, `exact-kinds`, edits no line of this change. Its `alignment` gives the whole basis set the
 same alignment as `min(64, size)`, since 2^D coefficients take a power of two bytes. So once both
 land, `Multivector` has the layout of the exact basis-set type of the whole set. At pin
 `Multivector` aligns to 8, and the two layouts differ.
@@ -173,5 +181,5 @@ land, `Multivector` has the layout of the exact basis-set type of the whole set.
 ## Open decisions
 
 - Whether the library takes this alignment of its multivector.
-- Whether the alignment reads `alignmentOf` of the count of bases once P04 lands, so one rule
+- Whether the alignment reads `alignment` of the count of bases once P04 lands, so one rule
   spells both. The two give the same value at every algebra.

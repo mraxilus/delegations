@@ -1,22 +1,26 @@
 # P07: Compare each part at its own scale
 
-At pin, `=~` weighs the difference of each coefficient against max(1, |x|, |y|) of that
-coefficient alone. `grade` counts a coefficient at or under the comparison tolerance as zero. A
-product builds small coefficients, and stray ones outside the grade of its result, from terms as
-large as the scene. So their noise grows with the distance of the scene from the origin, and a
-fixed tolerance holds only near it.
+**What it is.** `=~` and `grade` weigh each coefficient against the largest absolute value of its
+own part, bulk or weight, and no longer against 1. In a conformal algebra, `grade` also counts a
+coefficient as zero within 16 rounding units of the largest coefficient, since a conformal product
+leaves rounding of its largest terms in parts far smaller than they are.
 
-This proposal weighs each difference against the largest absolute value of its part, bulk or
-weight, in either object. `grade` counts zero the same way. In a conformal algebra, `grade` also
-counts a coefficient as zero within 16 rounding units of the largest coefficient. A conformal
-product leaves rounding of its largest terms in parts far smaller than they are.
+**What it is for.** A product builds small coefficients, and stray ones outside the grade of its
+result, from terms as large as the scene. At pin their noise grows with the distance from the
+origin, so a fixed tolerance holds only near it: one place goes per decade. With each part at its
+own scale, the places stay level, 13 to 14 at 64 bits out to 1,000,000 units, and 4 to 6 at 32
+bits. At 64 bits, `grade` misreads no element of any population.
+
+**What it costs.** An unequal pair costs about five times as long to compare, 3.7 against 19.2 ns
+at rga4d, and `grade` of a point about three times, 8.2 against 25.0 ns. A multivector with a
+coefficient that is not finite equals nothing, itself included.
 
 This proposal builds on P06. Its edits quote P06's `Coefficient` signatures in
 `pga/multivectors.nim`, and its 32-bit claims need the width that P06 makes configurable. Each
 part takes a scale of its own, as the Architect ruled on 2026-10-06, since the gain holds for
 typed objects too. The conformal bound of `grade` stands as the Architect ruled on 2026-10-12.
 
-## What it is
+## How it works
 
 - **Parts.** The parts are those of `CAYLEYS_PARTS`, which the bulk and weight extractors read. A
   rigid algebra has bulk and weight. A conformal algebra splits each into round and flat. The
@@ -267,7 +271,7 @@ for the bulk of a point.
   size of the pose. So a 32-bit program keeps its scene within about 1e3 units of the origin, or
   takes 64 bits.
 - This proposal gives no comparison and no `grade` for the basis-set types of P04,
-  `MultivectorOf[B]`. The prototype of P04 defines neither, and the typed reference above is no
+  `MultivectorOf[B]`. The change of P04 defines neither, and the typed reference above is no
   basis-set type.
 - P11, `unitize-general`, keeps its own grade scan in `^∘`, at the comparison tolerance times the
   largest coefficient. So once both land, `grade` and `^∘` can read one element differently. That

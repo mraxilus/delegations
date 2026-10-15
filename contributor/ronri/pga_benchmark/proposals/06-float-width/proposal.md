@@ -1,17 +1,23 @@
 # P06: Make the width of each float configurable
 
-At pin, each coefficient of a multivector is a 64-bit `float`, and no build option changes it.
-This proposal adds the define `pga.float_width`, 64 by default or 32, and the type `Coefficient`
-that it selects. Each coefficient, scalar operand and comparison takes `Coefficient` in place of
-`float`. The define `pga.tolerance_places` becomes `pga.float_tolerance`. At 64 bits the library
-emits the same C as pin, so the default costs nothing. At 32 bits each multivector takes half
-the bytes.
+**What it is.** A define, `pga.float_width`, 64 by default or 32, selects the type `Coefficient`.
+Each coefficient, scalar operand and comparison takes `Coefficient` in place of `float`, and the
+default comparison tolerance follows the width: 9 places at 64 bits, 4 at 32. The define
+`pga.tolerance_places` becomes `pga.float_tolerance`.
+
+**What it is for.** A caller can halve the bytes of every multivector. At 32 bits, operations that
+mostly move data run at ×0.25 to ×0.64 of pin, and the wedge holds near ×1. At 64 bits the
+library emits the same C as pin, so the default costs nothing.
+
+**What it costs.** Precision: at 32 bits the default of 4 places holds for every law within about
+10 units of the origin, and for moves, joins and meets within about 100. P07 keeps the places
+level at every distance. `★m` at rga3d runs at ×1.71 of pin at 32 bits.
 
 This proposal applies at pin and builds on no other. The Architect ruled on 2026-10-06 that
 32-bit floats and SIMD forms stay unmeasured while the library holds 64-bit floats alone. A
 SIMD form may come later as a proposal that keeps 64-bit floats, and this proposal comes first.
 
-## What it is
+## How it works
 
 - **Define.** `FLOAT_WIDTH` in `pga/algebra.nim` reads `pga.float_width`, 64 by default. A
   static assertion refuses any width other than 32 or 64.
@@ -164,7 +170,7 @@ The Architect chose `Coefficient`, `pga.float_width` and `pga.float_tolerance` o
 - `=~` keeps its floor of 1. P07, `part-scale`, weighs each part at its own scale, which keeps
   the places level. It also shows why a scale of the whole object does not serve.
 - The basis-set types of P04, `exact-kinds`, hold `float`. Under this proposal they would hold
-  `Coefficient`, and `alignmentOf` would read `sizeof(Coefficient)`. Whichever of P04 and this
+  `Coefficient`, and `alignment` would read `sizeof(Coefficient)`. Whichever of P04 and this
   proposal lands second writes them with `Coefficient`.
 
 ## Implementation

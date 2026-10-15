@@ -1,10 +1,18 @@
 # P11: Unitize any element by one rule
 
-At pin, unitization divides every element by its round weight norm. In the conformal algebra a flat
-object has no round weight, so a flat point, a line or a plane stays as it is, silently. This
-proposal gives one rule for any element of either algebra. The rule divides an element by a divisor
-W(𝐮). For a round object in the conformal algebra, W(𝐮) is the round weight norm, which is the
-weight of its carrier. For any other element, W(𝐮) is √|𝐮 ∘ 𝐮|, as in Lengyel's rigid unitization.
+**What it is.** One rule unitizes any element of either algebra: it divides the element by a
+divisor W(𝐮), which this proposal coins. For a round object of the conformal algebra, W(𝐮) is its
+round weight norm. For any other element, W(𝐮) is √|𝐮 ∘ 𝐮|, as in Lengyel's rigid unitization. A
+test at run time picks the branch, and the rigid algebras keep the rule of pin.
+
+**What it is for.** At pin, conformal unitization divides every element by its round weight norm.
+A flat point, a line or a plane has no round weight, so it comes back unscaled, with no sign of
+it. Here every element of both algebras comes back with unit weight.
+
+**What it costs.** Conformal unitize ran at ×5.14 of pin at cga4d and ×7.88 at cga5d in the
+evaluation of 2026-10-12, and the rigid algebras keep their cost. The test of a round object has
+edges, such as a sphere of radius 1e9 units or more, a far transversion and 32 bits, which the
+page states.
 
 The rule stands as the Architect ruled on 2026-10-11, on a reanalysis against Lengyel's code,
 book and wikis. This page holds that reanalysis. Most of its figures come from `laws.nim` and
@@ -12,7 +20,7 @@ book and wikis. This page holds that reanalysis. Most of its figures come from `
 The costs come from the evaluation of 2026-10-12. Other figures come from runs by hand, and each
 section names its run.
 
-## What it is
+## How it works
 
 ```
 W(𝐮) = ‖𝐮‖∘ = √((𝐮 ∧ 𝐞∞) ∘ (𝐮 ∧ 𝐞∞))   where 𝐮 is a round object, in CGA
