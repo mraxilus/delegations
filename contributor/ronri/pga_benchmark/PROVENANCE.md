@@ -612,11 +612,12 @@ own lines do. So a change that still applies at head still says what it meant.
 
 A section `## Add` holds a new file whole, and applies only where no file stands at its path. A
 file that head adds under the same path makes the addition stale, so it is a finding and never an
-overwrite. So a proposal that adds a module, as P04 adds `pga/basis_sets.nim` and P10 adds
-`pga/scalars.nim`, is a change of the library, and its laws import the library alone. Rejected: a
+overwrite. So a proposal that adds a module is a change of the library, and its laws import the
+library alone. P04 adds `pga/basis_sets.nim` this way, and P10 adds `pga/scalars.nim`. Rejected: a
 prototype beside the library, which P04 was. Each proposal on it then imported the prototype, and
-no evaluation built the library that the proposals described. Verified by `test_rga4d.nim`, suite
-`Internal: Changes`.
+no evaluation built the library that the proposals described.
+
+Verified by `test_rga4d.nim`, suite `Internal: Changes`.
 
 **A proposal is one directory, with one shape.** `proposal.md` argues the future state,
 `change.md` holds its candidate edits, and `claims.json` lists the proposals it builds on and the
@@ -726,10 +727,10 @@ each time they build, so the record states no figure of it.
 Alternation does not cancel all drift of a shared machine, so the time of one evaluation is
 weak evidence alone. Counts are exact, and carry the verdicts.
 
-`proposals/04-exact-kinds/laws.nim` and `proposals/10-homogeneous-scalar/laws.nim` hold their laws
-against the library with their changes applied, at each of the nine algebras of the library, from
-rga2d to rga6d and from cga3d to cga6d. The law of the empty basis set fails at rga2d and cga3d
-without its fix, and the law of the root of zero fails at rga2d to rga4d. Without its split-complex
+The laws of P04 and P10 hold against the library with their changes applied. They hold at each of
+the nine algebras of the library, from rga2d to rga6d and from cga3d to cga6d. Without its fix, the
+law of the empty basis set fails at rga2d and cga3d. Without its fix, the law of the root of zero
+fails at rga2d to rga4d. Without its split-complex
 form, P10 stops the build at cga3d and cga6d. `proposals/11-unitize-general/laws.nim` holds the
 laws of its rule, and `limits.nim` its limits over long chains and frames, at rga3d, rga4d, cga4d
 and cga5d.
@@ -875,14 +876,14 @@ The glyph source of release 2.539 gives `cbold-math` the `center` anchor alone. 
 sources alone, with no bold letter source, and `notofonts.github.io` publishes 2.539 as its last
 build. So whether a later release mends the anchors is unverified.
 
-**Every edit renders as a diff of lines, open, under a list of the files it touches**, as the
+**Every edit renders as a diff of lines, open, under a list of the files it touches.** The
 Architect asked for a clear diff on each proposal on 2026-10-15. This replaces the closed edit of
-quote and replacement side by side. Each removed and added line carries its number in the file
-as the edit finds it, with the bases of the proposal and the earlier edits applied. A run of
-unchanged lines longer than twice the context of 3 folds to its count. So a whole-file
+quote and replacement side by side. Each line carries its number in the file as the edit finds it.
+The bases of the proposal and the earlier edits apply first.
+
+A run of unchanged lines longer than twice the context of 3 folds to its count. So a whole-file
 replacement, as P01 makes, shows its hunks and not the whole file. The diff is a longest common
-subsequence over the lines between the head and tail that both sides share. P01, the largest,
-builds its page in about one second.
+subsequence over the lines between the head and tail that both sides share.
 
 The summary of each edit names the file and line, and the lines it removes and adds. It lists the
 signatures of the routines, tests and suites that the edit defines, with no body, pragma or
@@ -948,9 +949,9 @@ row, and the split of a typed id. It covers the words each row is found by, and 
 hides a row not found.
 
 Suite `Internal: Figures` covers the path a figure resolves, the SVG a page embeds, and every rule
-on the map. Suite `Internal: Edits` covers the diff with its numbers and folds, a new file, the
-class of the sign column, the signatures an edit defines or sits in, and a header that closes at
-its own indent. Suite `Internal: Figures` also covers the summary above the claims.
+on the map. It also covers the summary above the claims. Suite `Internal: Edits` covers the diff
+with its numbers and folds, a new file, and the class of the sign column. It also covers the
+signatures an edit defines or sits in, and a header that closes at its own indent.
 
 ## Library head
 

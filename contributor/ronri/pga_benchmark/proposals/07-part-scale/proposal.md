@@ -243,9 +243,9 @@ times as much as a loop over the bases of one part. So a macro spells those base
 
 The partner `⊛` calls `grade` for its sign, so the evaluation moves it at `cga4d` and `cga5d`.
 Over its kinds of operand, the evaluation of 2026-10-15 times the partner at ×1.14 to ×1.26 of
-pin at `cga5d`. At `cga4d` it gives ×1.20 to ×1.51. Five evaluations on 2026-10-12 and 2026-10-13
-gave ×1.08 to ×1.32 over both. P03 folds that sign into the first table of the partner, so with P03 the
-partner calls no `grade`.
+pin at `cga5d`. At `cga4d` it gives ×1.20 to ×1.51. Five evaluations on 2026-10-12 and
+2026-10-13 gave ×1.08 to ×1.32 over both. P03 folds that sign into the first table of the
+partner, so with P03 the partner calls no `grade`.
 
 At `rga4d` the evaluation moves no function, and its times read a median of ×1.00 of pin. The
 last of the four evaluations on 2026-10-12 timed the same C there, at a median of ×1.19 and up
