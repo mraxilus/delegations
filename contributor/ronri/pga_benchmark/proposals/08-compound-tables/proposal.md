@@ -1,15 +1,23 @@
 # P08: Give each chain of the book one table
 
-At pin, five operators of the book each run as a chain of dense products, with an intermediate
-between each step. They are the support `∩`, the antisupport `∪`, the cocarrier `⊞`, the center
-`⊙` and the container `⊡`. This proposal gives each chain one table, which the rules of P01
-derive, so each runs as one product.
+**What it is.** At pin, five operators of the book each run as a chain of two or three dense
+products: the support `∩`, the antisupport `∪`, the cocarrier `⊞`, the center `⊙` and the container
+`⊡`. This proposal folds each chain into one table as the library compiles, through `applyMap` of
+P01. So each operator runs as one product.
+
+**What it is for.** Each step of a chain at pin fills a whole intermediate multivector. With one
+table, each operator takes ×0.17 to ×0.50 of its time at pin, and `laws.nim` holds each result
+equal to its chain. The partner `⊛` calls `⊡`, so it takes ×0.56 to ×0.86 of pin too.
+
+**What it costs.** Each build of the library derives five more tables, and that cost in compile
+time is unmeasured. A caller sees no change, since each operator keeps its signature and its
+value.
 
 This proposal builds on P01, `cayley-derivation`. It reads `applyMap` of P01 and `applyConstant`
 of the library. It holds the tables of the chains apart from P01, so that P01 holds its
 derivation alone, as the Architect ruled on 2026-10-07.
 
-## What it is
+## How it works
 
 - **Tables.** `CAYLEY_SUPPORT` and `CAYLEY_SUPPORT_ANTI` under the rigid metric, and
   `CAYLEY_CARRIER_CO`, `CAYLEY_CENTER` and `CAYLEY_CONTAINER` under the conformal metric. Each

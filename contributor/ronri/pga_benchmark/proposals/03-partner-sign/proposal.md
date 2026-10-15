@@ -1,14 +1,22 @@
 # P03: Fold the sign of the partner into its first table
 
-The partner reads the grade of its operand at run time, and then scales by the sign of that
-grade. This proposal folds that sign into the first table of the partner instead, by the grade
-of each term. It also folds the carrier into the antiwedge that follows. So the partner is two
-generated tables in a chain, with no grade scan and no scale.
+**What it is.** The partner `⊛` of the conformal algebra is the same object with its squared
+radius of opposite sign, (−1)^(grade(𝐦) + 1) (𝐦☆)⊡ ∨ 𝐦⊟. At pin it reads the grade of its
+operand at run time, then scales by that sign. This proposal folds the sign into the first table
+of the partner, term by term by its grade, and folds the carrier into the antiwedge that follows.
+So the partner is two generated tables in a chain, with no grade scan and no scale.
+
+**What it is for.** At cga5d the partner then takes 324 multiplies where pin takes 518, and 3 zero
+fills where pin takes 108. It runs at ×0.46 to ×0.52 of pin at cga5d, and ×0.45 to ×0.50 at
+cga4d.
+
+**What it costs.** An operand of mixed grade has no defined partner. Pin stops on one, and this
+proposal returns a value that means nothing, with no check.
 
 This proposal builds on P01, `cayley-derivation`, and on P08, `compound-tables`. It reads
 `applyMap` of P01, `CAYLEY_CONTAINER` of P08, and `CAYLEY_CARRIER`, which the pin has.
 
-## What it is
+## How it works
 
 - **First table.** `CAYLEY_PARTNER_CONTAINER` is the container of the weight dual, read with
   𝐦 as both operands. The sign (-1)^(gr 𝐦 + 1) rides the left read alone, by the grade of each term.

@@ -1,10 +1,22 @@
 # P01: Derive every Cayley table from three
 
-The library writes three tables by hand: the metric on vectors, the exterior product of bases,
-and the complement permutation. Four rules derive most other tables, and each rule is used the
-same way everywhere. This proposal is that state of `pga/cayleys.nim`, with the suites that read
-it. Every exported table keeps its name, its shape and its cells, so no operator changes. P03,
-`partner-sign`, and P08, `compound-tables`, build on this proposal.
+**What it is.** `pga/cayleys.nim` writes three tables by hand: the metric on vectors, the exterior
+product of bases, and the complement permutation. Four rules derive the other tables from those
+three, and each rule works the same way everywhere. One of them, the new `applyMap`, puts a map
+into one operand of a table.
+
+**What it is for.** At pin, the antireverse, the duals and the interior products each have a
+constructor of their own. This proposal removes three constructors, so a reader follows one
+derivation from three tables. Every exported table keeps its name, its shape and its cells, so no
+operator changes and none runs faster. P08 and P03 use `applyMap` to fold chains of operators
+into one table each.
+
+**What it costs.** The change replaces `pga/cayleys.nim` whole, against the digest of that file at
+pin. So each change of that file at head needs the replacement written again. The library keeps
+two transwedge families, one for ⟑ and one for ⟇, since under the conformal metric the anti family
+is not the conjugate of the base one.
+
+P03, `partner-sign`, and P08, `compound-tables`, build on this proposal.
 
 ![Derivation map. The three accented tables are written by hand, and each arrow is one rule.
 Each anti side but ⟇, ☆, ∨★ and ∨☆ is `constructAnti` of its base.](../../pages/derivation-map.svg)
