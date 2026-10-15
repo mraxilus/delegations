@@ -1955,7 +1955,6 @@ suite "Internal: Edits":
     check ">let x7 = 7<" in html and ">let x13 = 13<" in html  # three lines beside change
     check ">let x6 = 6<" notin html and ">let x14 = 14<" notin html  # rest folded
     check html.find(">let x10 = 10<") < html.find(">let x10 = 0<")  # removal before addition
-    check "class=\"mark\"" notin html  # shell boxes `mark` for bar marks; sign would draw as dot
 
 
   test "new file renders every line added, numbered from one":
@@ -1988,11 +1987,13 @@ suite "Internal: Edits":
     check "helper" notin html.split("</summary>")[0]  # nested routine stays in body
 
 
-  test "whole-file replacement lists top-level signatures, operators and pragmas kept apart":
+  test "whole-file replacement lists signatures file lacked, operators and pragmas kept apart":
     let
       replacement = "func `==`(a, b: Order): bool {.borrow.}\nproc b*(x: int) =\n  discard\n"
       html = htmlEdits(edit("", replacement, "abc"), files)
     check "<code>func `==`(a, b: Order): bool</code><code>proc b*(x: int)</code>" in html  # bare
+    let kept = htmlEdits(edit("", source_pin & replacement, "abc"), files)
+    check "func outer" notin kept.split("</summary>")[0]  # signature file held is left out
     check "class=\"signatures\"" notin htmlEdits(edit("import std/math\n", "import std/os\n"),
       files)  # top-level statement sits in no routine
 

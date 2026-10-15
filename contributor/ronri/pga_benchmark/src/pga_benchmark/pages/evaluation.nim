@@ -456,10 +456,12 @@ func htmlEdits*(change: Change, files: Table[string, string]): string =
           htmlSignatures("defines", declared(edit.replacement)) & "</summary>"
     of KindEdit.Replace:
       lines = diffLines(linesOf(before), linesOf(edit.replacement), 1, 1)
+      let changed = block:  # Signatures absent from file it replaces: new or changed.
+        let kept = declared(before)
+        declared(edit.replacement).filterIt(it notin kept)
       sections.add "<details class=\"edit\" open><summary><span class=\"where\">replaces " &
           code(edit.path) & " whole, written against digest " & code(edit.digest) & " · " &
-          textCounts(lines) & "</span>" & htmlSignatures("defines", declared(edit.replacement)) &
-          "</summary>"
+          textCounts(lines) & "</span>" & htmlSignatures("defines", changed) & "</summary>"
     of KindEdit.Quote:
       let
         at = if is_applied: before.lineOf(edit.quote) else: 0
