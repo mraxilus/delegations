@@ -106,8 +106,9 @@ proc main(): int =
     &"Root of zero must be zero; got `{sqrt(zero).toMultivector}`."
   when IS_RIGID:
     for basis in Basis:
-      let element = initElement(basis)
-      let (bulk, weight) = (normBulk(element), normWeight(element))
+      let
+        element = initElement(basis)
+        (bulk, weight) = (normBulk(element), normWeight(element))
       doAssert bulk.toMultivector =~ |∙element,
         &"Bulk norm of basis element must equal library's; got `{bulk.toMultivector}`."
       doAssert weight.toMultivector =~ |∘element,
