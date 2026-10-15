@@ -21,7 +21,7 @@ generated tables, read in a chain, and no grade scan.
         CAYLEYS_DUAL.anti.right.applyMap(CAYLEY_CARRIER),
         Chirality.Right,
       )
-    CAYLEY_PARTNER_CONTAINER*: Cayley2D = block:  # (-1)^(gr 𝐦 + 1) (𝐦☆)⊡, read with both 𝐦.
+    CAYLEY_PARTNER_CONTAINER*: Cayley2D = block:  ## Partner step one, (-1)^(gr 𝐦 + 1) (𝐦☆)⊡.
       # Sign rides left read alone, by grade of its term. Container is quadratic, so sign on
       #   both reads would square away; on one, it is exact for single-grade operand.
       var sign: Cayley1D
@@ -29,8 +29,18 @@ generated tables, read in a chain, and no grade scan.
       CAYLEY_CONTAINER
         .applyMap(CAYLEYS_DUAL.anti.right.applyMap(sign), Chirality.Left)
         .applyMap(CAYLEYS_DUAL.anti.right, Chirality.Right)
-    CAYLEY_PARTNER_JOIN*: Cayley2D =  # 𝐭 ∨ 𝐦⊟, i.e. antiwedge against carrier of second.
+    CAYLEY_PARTNER_MEET*: Cayley2D =  ## Partner step two, i.e. 𝐭 ∨ 𝐦⊟, meet with carrier.
       CAYLEYS_WEDGE.anti.applyMap(CAYLEY_CARRIER, Chirality.Right)
+```
+
+## Edit `pga/operators.nim`
+
+```nim
+import std/[macros, math, options]
+```
+
+```nim
+import std/[macros, math]
 ```
 
 ## Edit `pga/operators.nim`
@@ -84,20 +94,20 @@ generated tables, read in a chain, and no grade scan.
 
 ```nim
   defineOperator(
-    symbols = "containPartner",
+    symbols = "partnerContainer",
     docs = "Get first step of partner, i.e. (-1)^(grade(𝐦)+1) (𝐦☆)⊡.",
     cayley = CAYLEY_PARTNER_CONTAINER,
     as_unary = true,
     is_public = false,
   )
   defineOperator(
-    symbols = "joinCarrier",
+    symbols = "partnerMeet",
     docs = "Get antiwedge of first operand with carrier of second, i.e. 𝐭 ∨ 𝐦⊟.",
-    cayley = CAYLEY_PARTNER_JOIN,
+    cayley = CAYLEY_PARTNER_MEET,
     is_public = false,
   )
 
-  func `⊛`*(m: Multivector): Multivector {.inline.} = joinCarrier(containPartner(m), m)
+  func `⊛`*(m: Multivector): Multivector {.inline.} = partnerMeet(partnerContainer(m), m)
     ## Get partner of multivector, i.e. (-1)^(grade(𝐦)+1) (𝐦☆)⊡ ∨ 𝐦⊟.
     ##   Sign rides each term by its own grade, so operand of one grade is required; mixed
     ##     grade has no defined partner, and gets no check.
