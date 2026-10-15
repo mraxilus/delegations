@@ -14,7 +14,8 @@
 
 import std/[math, options, random]
 
-import pga
+# Typed references name objects that P09, `object-names`, names in `pga`; reference wins.
+import pga except Circle, Dipole, Flector, Line, Motor, Plane, Point, PointRound, Sphere
 
 import ./[kinds, widening]
 
