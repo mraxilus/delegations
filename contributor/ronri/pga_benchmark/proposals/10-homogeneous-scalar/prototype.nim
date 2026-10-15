@@ -231,6 +231,17 @@ proc main(): int =
     "table read agrees with library's geometric product"
   doAssert SQUARE_BULK == (when IS_RIGID: 0 else: -1),
     "dual under rigid metric, complex under conformal"
+  let zero = initScalarHomogeneous(0, 0)
+  doAssert sqrt(zero).toMultivector =~ 0.0 and sqrtAnti(zero).toMultivector =~ 0.0,
+    "root of zero is zero, never NaN"
+  when IS_RIGID:
+    for basis in Basis:
+      let element = initElement(basis)
+      doAssert normBulk(element).toMultivector =~ |∙element,
+        "bulk norm of basis element equals library's, zero weight part included"
+      doAssert normWeight(element).toMultivector =~ |∘element,
+        "weight norm of basis element equals library's, zero bulk part included"
+      doAssert norm(element).toMultivector =~ |element, "geometric norm of basis element"
   when IS_CONFORMAL:
     var nan_float = 0  # float root of 𝐦∘𝐦 that gives NaN, as `|⊘` takes it at pin
   for _ in 1..SAMPLES:

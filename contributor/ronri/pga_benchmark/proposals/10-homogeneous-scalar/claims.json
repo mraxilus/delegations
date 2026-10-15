@@ -5,7 +5,7 @@
     {
       "kind": "program",
       "path": "prototype.nim",
-      "algebras": ["rga3d", "rga4d", "cga4d", "cga5d"]
+      "algebras": ["rga2d", "rga3d", "rga4d", "cga3d", "cga4d", "cga5d", "cga6d"]
     }
   ]
 }
