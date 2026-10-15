@@ -1164,7 +1164,7 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
   only once the library emits them as exact basis-set types, which the prototype does not.
 - Whether the library takes P05, `multivector-align`. It aligns each multivector to
   `min(64, size)`, one cache line from three dimensions up, so it pads no multivector. The basis-set
-  types of P04 take `alignmentOf` of their basis set instead, as the Architect ruled on 2026-10-04.
+  types of P04 take `alignment` of their basis set instead, as the Architect ruled on 2026-10-04.
   That is the largest power of two that divides their bytes, at most 64. P04 holds the rule,
   and its prototype applies it.
 
