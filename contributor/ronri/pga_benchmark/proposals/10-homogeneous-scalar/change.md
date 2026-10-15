@@ -47,7 +47,7 @@ const
     ## Square of 𝟙 under geometric product, as multiple of 𝟏.
 
 # Validate square of each unit part, which picks arithmetic of pair.
-#   Determinant of metric sets its sign under conformal metric, so each algebra takes one form.
+#   Sign is determinant of metric times sign of reverse of all vectors, so each algebra takes one.
 static:
   doAssert SQUARE_BULK in [-1, 0, 1],
     &"Square of 𝟏 under antiproduct must be -1, 0 or 1; got `{SQUARE_BULK}`."
