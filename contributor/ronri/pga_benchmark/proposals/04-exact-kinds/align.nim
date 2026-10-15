@@ -35,6 +35,7 @@ proc main() =
     doAssert alignment == LINE or size mod (2 * alignment) != 0  # largest that pads none
   for (count, alignment) in ALIGNMENTS_KIND:
     doAssert alignmentOf(count) == alignment  # basis-set types, as proposal tables them
+  doAssert alignmentOf(0) == sizeof(float)  # empty set, which product reaching no basis returns
   echo "exact-kinds: alignment laws hold at every count from 1 to 64"
 
 
