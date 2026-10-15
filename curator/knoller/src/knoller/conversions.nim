@@ -56,14 +56,16 @@ const
 
 func namesImported(
   tokens: openArray[Token], partners: openArray[int], source: string
-): HashSet[string] =
+): HashSet[string] {.used.} =  # Used in `generations.nim`.
   ## Collect names standing in `import`, `include`, `from` and `export` statements: modules
   ##   file may qualify name with.
   for k in tokens.tokensPath(partners, source):
     if tokens[k].kind == KindToken.Word: result.incl tokens[k].spelling(source)
 
 
-func receiverOf(tokens: openArray[Token], partners: openArray[int], dot: int, source: string): int =
+func receiverOf(
+  tokens: openArray[Token], partners: openArray[int], dot: int, source: string
+): int {.used.} =  # Used in `generations.nim`.
   ## Read index of first token of receiver ending before `.` at `dot`: name with calls, indexes
   ##   and fields glued after it, or bracket group; `-1` where none stands there.
   var j = dot - 1
@@ -133,7 +135,7 @@ func queryConversion*(path, source: string): Query =
 
 func isGroup(
   tokens: openArray[Token]; partners: openArray[int]; first, last: int; source: string
-): bool =
+): bool {.used.} =  # Used in `generations.nim`.
   ## Decide whether tokens `first` to `last` are one parenthesis holding one expression, no
   ##   tuple: no comma, semicolon or `:` at its own depth.
   if tokens[first].spelling(source) != "(" or partners[first] != last or last <= first + 1:

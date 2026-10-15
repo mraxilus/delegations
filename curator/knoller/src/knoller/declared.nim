@@ -67,6 +67,10 @@ type
     is_mutable*: bool  ## Binding by `var`, which notation never excuses (III.5).
     is_boolean*: bool  ## Shows `bool` by type or literal value, or `func` returns it (V.4).
     is_generic*: bool  ## Parameter of type `typedesc` alone, which stands for any type (V.12).
+    keyword*: string  ## Keyword declaring routine, as `macro`; empty for every other kind.
+    type_return*: string
+      ## Type routine returns, as signature spells it before its pragmas; empty where none.
+    is_compile_time*: bool  ## Routine whose pragmas hold `compileTime`.
     value*: string
       ## Value binding takes on its own line and lines below opening `.`, its element where tuple
       ##   gives one to each name; empty where line gives none, or value runs past otherwise.
@@ -108,6 +112,17 @@ func indexTop(text: string, mark: char, start = 0): int =
     elif c in {')', ']', '}'}: dec depth
     elif c == mark and depth == 0: return k
   -1
+
+
+func typeReturn(tail: string): string =
+  ## Read type routine returns from signature after its parameters: text after `:`, before
+  ##   pragmas or `=` opening body; empty where signature names none.
+  if not tail.startsWith(":"): return ""
+  var text = tail[1 .. ^1]
+  for mark in ["{.", " ="]:
+    let at = text.find(mark)
+    if at >= 0: text = text[0 ..< at]
+  text.strip
 
 
 func closing*(text: string, open: int): int =
@@ -370,13 +385,17 @@ func declarations*(source: string): seq[Declared] =
           tail = text[min(k, text.len) .. ^1].strip
           is_predicate = word == "func" and not is_writing and tail.startsWith(":") and
             tail.identifierAt(1) == "bool"
-          is_foreign = text.wordsPragma.anyIt(it in MARKS_FOREIGN)
+          pragmas = text.wordsPragma
+          is_foreign = pragmas.anyIt(it in MARKS_FOREIGN)
         if name.len > 0 and not is_foreign:
           result.add Declared(
             name: name,
             line: one,
             kind: KindName.Routine,
             is_boolean: is_predicate,
+            keyword: word,
+            type_return: tail.typeReturn,
+            is_compile_time: "compileTime" in pragmas,
           )
         break reading
 
