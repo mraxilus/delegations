@@ -1937,9 +1937,9 @@ suite "Internal: Edits":
     check "<code>pga/a.nim:5</code> · " & counts in html  # where, and how much
     check "inside</span><code>func outer*(a: int; b: int): int</code>" in html  # joined, bare
     check "<tr class=\"removed\"><td class=\"ln\">5</td><td class=\"ln\"></td>" &
-        "<td class=\"mark\">-</td><td class=\"text\">    result += x</td></tr>" in html  # before
+        "<td class=\"sign\">-</td><td class=\"text\">    result += x</td></tr>" in html  # before
     check "<tr class=\"added\"><td class=\"ln\"></td><td class=\"ln\">5</td>" &
-        "<td class=\"mark\">+</td><td class=\"text\">    result -= x</td></tr>" in html  # after
+        "<td class=\"sign\">+</td><td class=\"text\">    result -= x</td></tr>" in html  # after
 
 
   test "diff keeps context beside change and folds longer unchanged run to its count":
@@ -1955,6 +1955,7 @@ suite "Internal: Edits":
     check ">let x7 = 7<" in html and ">let x13 = 13<" in html  # three lines beside change
     check ">let x6 = 6<" notin html and ">let x14 = 14<" notin html  # rest folded
     check html.find(">let x10 = 10<") < html.find(">let x10 = 0<")  # removal before addition
+    check "class=\"mark\"" notin html  # shell boxes `mark` for bar marks; sign would draw as dot
 
 
   test "new file renders every line added, numbered from one":
@@ -1966,7 +1967,7 @@ suite "Internal: Edits":
       )
       html = htmlEdits(change, files)
     check "adds <code>pga/b.nim</code> · <span class=\"removed\">-0</span>" in html  # where
-    check "<td class=\"ln\"></td><td class=\"ln\">2</td><td class=\"mark\">+</td>" &
+    check "<td class=\"ln\"></td><td class=\"ln\">2</td><td class=\"sign\">+</td>" &
         "<td class=\"text\">let b = 2</td>" in html  # numbered after alone
 
 
