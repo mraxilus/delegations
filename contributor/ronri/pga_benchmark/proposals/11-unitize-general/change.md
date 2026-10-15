@@ -85,12 +85,12 @@ func `^∘`*(m: Multivector): Multivector {.noinit.} =
       m_norm_weight_round_squared > TOLERANCE_ABS * TOLERANCE_ABS * m_norm_radius_squared
     if is_round:  # Scan grades only where round weight passes, and stop at second grade.
       var
-        scale = 0.0
+        largest = 0.0
         found_grade = false
         grade_first = Grade.low
-      for b in Basis: scale = max(scale, abs(m[b]))
+      for b in Basis: largest = max(largest, abs(m[b]))
       for b in Basis:
-        if abs(m[b]) <= TOLERANCE_ABS * scale: continue
+        if abs(m[b]) <= TOLERANCE_ABS * largest: continue
         if not found_grade:
           found_grade = true
           grade_first = b.grade
@@ -122,47 +122,55 @@ template `^`*(m: Multivector): Multivector = ^∘m
 ## Edit `tests/suites.nim`
 
 ```nim
+  m div (norm[Basis.scalar] + norm[Basis.scalarAnti])
+
+
+
 suite "Internal":
 ```
 
 ```nim
+  m div (norm[Basis.scalar] + norm[Basis.scalarAnti])
+
+
 when IS_CONFORMAL:
-  proc drawPoint(): Multivector =
-    ## Draw round point at random position, of radius zero.
+  proc samplePoint(): Multivector =
+    ## Sample round point at random position, of radius zero.
     var distance_squared = 0.0
-    for b in Basis.scalar.succ .. Basis.origin.pred:
+    for b in Basis.scalar.succ..Basis.origin.pred:
       result[b] = gauss()
       distance_squared += result[b]^2
     result[Basis.origin] = 1
     result[Basis.infinity] = distance_squared / 2
 
 
-  proc drawReflector(): Multivector =
-    ## Draw random sphere or plane, any element of antigrade one.
+  proc sampleReflector(): Multivector =
+    ## Sample random sphere or plane, any element of antigrade one.
     for b in Basis:
       if b.grade == Grade.high.pred: result[b] = gauss()
 
 
+
 suite "Internal":
   test "`^∘`(m: Multivector): Multivector":
-    when IS_CONFORMAL:
+    when IS_RIGID: skip()  # Round and flat objects exist in CGA alone.
+    else:
       const 𝐞∞ = initElement(Basis.infinity)
-      for _ in 1..SAMPLES div 8:
-        let 𝐯 = ^(3 ∧ (drawReflector() ⟇ drawReflector()))
+      for _ in 1 .. SAMPLES div 8:
+        let 𝐯 = ^(3 ∧ (sampleReflector() ⟇ sampleReflector()))
         check abs((𝐯 ∘ 𝐯)[Basis.scalarAnti]) ∧ 𝟙 =~ 𝟙  # Product of two reflections ends unit.
-        let 𝐦 = 𝐯 ⟇ drawPoint() ⟇ ~∘𝐯
+        let 𝐦 = 𝐯 ⟇ samplePoint() ⟇ ~∘𝐯
         check |∘(^𝐦) =~ 𝟙  # Moved round point keeps unit round weight.
 
-        var 𝐬, 𝐠 = drawPoint()
+        var 𝐬, 𝐠 = samplePoint()
         for _ in 2 ..< DIMENSIONS - 1:
-          𝐬 = 𝐬 ∧ drawPoint()
-          𝐠 = 𝐠 ∧ drawPoint()
-        𝐬 = 𝐬 ∧ drawPoint()
+          𝐬 = 𝐬 ∧ samplePoint()
+          𝐠 = 𝐠 ∧ samplePoint()
+        𝐬 = 𝐬 ∧ samplePoint()
         𝐠 = 𝐠 ∧ 𝐞∞
         let 𝐠_back = 𝐬 ⟇ (𝐬 ⟇ 𝐠 ⟇ ~∘𝐬) ⟇ ~∘𝐬
         check |□(^𝐠_back) =~ 𝟙  # Plane through sphere and back keeps unit flat weight.
 
-    else: skip()
 
 ```
 
@@ -175,19 +183,19 @@ suite "Chapter 4":
 ```nim
 suite "Chapter 4":
   test "Section 4.3: round object unitizes by round weight, flat object by flat weight":
-    when IS_CONFORMAL:
+    when IS_RIGID: skip()  # Round and flat objects exist in CGA alone.
+    else:
       const 𝐞∞ = initElement(Basis.infinity)
-      for _ in 1..SAMPLES div 8:
-        let 𝐫 = drawPoint()
+      for _ in 1 .. SAMPLES div 8:
+        let 𝐫 = samplePoint()
         check 𝐫 ∘ 𝐫 =~ 0  # 4.45
         var 𝐮 = 𝐫
-        for grade in 1 ..< DIMENSIONS:
+        for grade in 1..<DIMENSIONS:
           let scale = 3 * gauss()
           check |∘(^(scale ∧ 𝐮)) =~ 𝟙  # Section 4.3, round object
           if grade < DIMENSIONS - 1:
             check |□(^(scale ∧ (𝐮 ∧ 𝐞∞))) =~ 𝟙  # Section 4.3, flat object
-          𝐮 = 𝐮 ∧ drawPoint()
+          𝐮 = 𝐮 ∧ samplePoint()
 
-    else: skip()
 
 ```
