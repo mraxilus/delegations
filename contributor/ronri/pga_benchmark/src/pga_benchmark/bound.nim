@@ -40,10 +40,12 @@ type
     FormScalar  ## Bilinear form landing in one slot, e.g. inner product.
     NormSquared  ## Bilinear form of operand with itself, landing in one slot.
     Norm  ## Squared norm and one root.
+    NormPartSquared  ## Sum of squares of one part's components, landing in one slot.
+    NormPart  ## Squared norm of one part and one root.
     Componentwise  ## Slot-by-slot sum or difference.
     Permutation  ## Sign and reorder only, i.e. no multiply and no add.
     Scale  ## Every slot times one scalar.
-    Unitize  ## Norm, one reciprocal, every slot scaled by it.
+    Unitize  ## Norm of one part, one reciprocal, every slot scaled by it.
     ProductConstant  ## Product against constant carrying one unit component, i.e. signed reads.
     ContractBulk  ## Antiwedge against bulk dual of second operand.
     ContractWeight  ## Antiwedge against weight dual of second operand.
@@ -141,6 +143,15 @@ func origin(m: Metric): Blade =
 func infinity(m: Metric): Blade =
   ## Read blade of vector at infinity, last in conformal algebra.
   Blade(1) shl (m.dimensions - 1)
+
+
+func termsPart*(m: Metric): int =
+  ## Count terms sum of squares over one part spends, i.e. blades of round bulk.
+  ##   Rigid part splits by origin; conformal part splits by origin and infinity. Every part
+  ##   holds as many blades, since toggling those factors maps one part onto other.
+  let excluded = if m.is_conformal: m.origin or m.infinity else: m.origin
+  for b in 0..<m.slots:
+    if (Blade(b) and excluded) == 0: inc result
 
 
 func bladeDual(m: Metric, b: Blade, as_weight: bool): Option[Blade] =
@@ -257,6 +268,15 @@ func boundLowerOf*(shape: Shape, m: Metric, arity: range[1..2]): BoundLower =
     result.adds = m.termsFormScalar - 1
     result.roots = 1
     result.bytes_written = 8
+  of Shape.NormPartSquared:
+    result.multiplies = m.termsPart
+    result.adds = m.termsPart - 1
+    result.bytes_written = 8
+  of Shape.NormPart:
+    result.multiplies = m.termsPart
+    result.adds = m.termsPart - 1
+    result.roots = 1
+    result.bytes_written = 8
   of Shape.Componentwise:
     result.adds = m.slots
   of Shape.Permutation:
@@ -265,9 +285,9 @@ func boundLowerOf*(shape: Shape, m: Metric, arity: range[1..2]): BoundLower =
     result.multiplies = m.slots
     result.bytes_read = size + 8
   of Shape.Unitize:
-    # Norm of operand, one reciprocal, then every slot times that reciprocal.
-    result.multiplies = m.termsFormScalar + m.slots
-    result.adds = m.termsFormScalar - 1
+    # Norm of one part, one reciprocal, then every slot times that reciprocal.
+    result.multiplies = m.termsPart + m.slots
+    result.adds = m.termsPart - 1
     result.roots = 1
     result.divides = 1
   of Shape.ProductConstant:

@@ -4,8 +4,10 @@
 This change asserts single grade, with a message. It also puts parentheses around both
 operands of `∨`, since `∨` binds looser than `*`.
 
-When the sign of the partner folds into its table, the grade scan goes, and this assert can go
-with it.
+P03, `partner-sign`, folds the sign of the partner into its first table. It removes these lines,
+with the grade scan and this assert, so this change is void once P03 lands. P06, `float-width`,
+edits the sign line too. If P06 lands first, this change quotes and keeps `Coefficient(...)` in
+place of `float(...)`. If this change lands first, P06 quotes its sign line.
 
 ## Edit `pga/operators.nim`
 

@@ -3,6 +3,8 @@
 ##     is verdict: every law below holds, or program stops on assertion.
 ##   Definition is spelled through exported operators, i.e. (-1)^(gr 𝐦 + 1) (𝐦☆)⊡ ∨ 𝐦⊟, with
 ##     sign read from grade sample was drawn at; partner reads no grade, so laws hold it to that.
+##   Here ⊡ is P08's table (`compound-tables`), not pin's chain; P08's `laws.nim` holds that
+##     table to pin's chain 𝐦 ∧ (𝐦⊟)☆, so this law reaches pin's partner through it.
 
 {.experimental: "strictFuncs".}
 

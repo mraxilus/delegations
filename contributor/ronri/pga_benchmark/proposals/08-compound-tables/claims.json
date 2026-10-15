@@ -6,6 +6,11 @@
       "kind": "suites"
     },
     {
+      "kind": "program",
+      "path": "laws.nim",
+      "algebras": ["rga3d", "rga4d", "cga4d", "cga5d"]
+    },
+    {
       "kind": "count",
       "algebra": "rga4d",
       "measurand": "support",

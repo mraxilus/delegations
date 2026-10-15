@@ -6,6 +6,9 @@ overload that derives from the dual gets its own name, `constructProductInterior
 The parity k(k−1)/2 of the reverse becomes one function, `reverseParity`, which other
 constructors can call.
 
+Proposal P01, `cayley-derivation`, replaces `pga/cayleys.nim` whole. It deletes both overloads of
+`constructProductInterior`, and it rewrites `reverse`. So this change is void once P01 lands.
+
 ## Edit `pga/cayleys.nim`
 
 ```nim
