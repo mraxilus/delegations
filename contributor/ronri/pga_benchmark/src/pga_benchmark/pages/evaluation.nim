@@ -297,12 +297,12 @@ func htmlDiff(lines: seq[LineDiffed]): string =
       result.add "<tr class=\"fold\"><td colspan=\"4\">" & $count & " unchanged lines</td></tr>"
       index = last + 1
       continue
-    let (line, mark) = case lines[index].kind
+    let (row, sign) = case lines[index].kind
       of KindLine.Kept: ("kept", " ")
       of KindLine.Removed: ("removed", "-")
       of KindLine.Added: ("added", "+")
-    result.add "<tr class=\"" & line & "\">" & cellOf(lines[index].number_before) &
-        cellOf(lines[index].number_after) & "<td class=\"mark\">" & mark &
+    result.add "<tr class=\"" & row & "\">" & cellOf(lines[index].number_before) &
+        cellOf(lines[index].number_after) & "<td class=\"sign\">" & sign &
         "</td><td class=\"text\">" & escapeHtml(lines[index].text) & "</td></tr>"
     inc index
   result.add "</table></div>"
