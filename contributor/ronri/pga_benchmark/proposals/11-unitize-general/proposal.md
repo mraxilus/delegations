@@ -426,8 +426,10 @@ carry everywhere, and which the gap list holds as design gaps.
 This change drops `inline` from `^∘`, since its C at `cga5d` grows from 91 to 1,485 lines. The
 guide of the language inlines a large body only where a measurement shows the gain (`STYLE.md`,
 section 2). So each call to `unitize` or `normalizeWeight` calls `^∘`, in the rigid algebras too.
-The table above times that form. Its 89.87 ns at `cga5d` lies inside the spread of the earlier
-evaluations of the inline form, so no measurement here shows a gain of `inline`.
+The table above times that form. Its 89.87 ns at `cga5d` lies inside the 66.59 to 91.17 ns of
+the six runs of the inline form. Its ratio, ×11.51, lies above their ×6.98 to ×8.78, since pin ran
+in 7.43 ns here and in 8.56 to 9.02 ns there. So no pair of runs here separates a gain of `inline`
+from the noise of this machine.
 
 ## What it leaves out
 
