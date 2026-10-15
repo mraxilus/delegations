@@ -1382,17 +1382,41 @@ suite "Internal: Changes":
     let
       fresh = Change(
         edits: @[
-          Edit(path: "pga/a.nim", replacement: "new\n", digest: digestOf(library)),
+          Edit(
+            kind: KindEdit.Replace,
+            path: "pga/a.nim",
+            replacement: "new\n",
+            digest: digestOf(library),
+          ),
         ],
       )
-      stale = Change(edits: @[Edit(path: "pga/a.nim", replacement: "new\n", digest: "0")])
+      stale = Change(
+        edits: @[
+          Edit(kind: KindEdit.Replace, path: "pga/a.nim", replacement: "new\n", digest: "0"),
+        ],
+      )
     check applyChange(files, stale, record).len == 1  # file moved on at head
     check applyChange(files, fresh, record).len == 0 and files["pga/a.nim"] == "new\n"  # replaced
 
 
-  test "section that is neither edit nor replace is finding":
+  test "new file is added where absent; file standing at its path is finding":
+    let (change, findings) = parseChange(
+      record,
+      "# Sign\n\n## Add `pga/b.nim`\n\nFENCEnim\nlet b = 1\nFENCE\n".replace("FENCE", "```"),
+    )
+    check findings.len == 0 and change.edits.len == 1  # well formed
+    check change.edits[0].kind == KindEdit.Add and change.edits[0].path == "pga/b.nim"  # new file
+    var files = {"pga/a.nim": library}.toTable
+    check applyChange(files, change, record).len == 0  # applies
+    check files["pga/b.nim"] == "let b = 1\n"  # added whole
+    check files["pga/a.nim"] == library  # other file untouched
+    let again = applyChange(files, change, record)
+    check again.len == 1 and "holds file already" in again[0].message  # never overwrite
+
+
+  test "section that is neither edit, replace nor add is finding":
     let (_, findings) = parseChange(record, "# Sign\n\n## Rename things\n")
-    check findings.len == 1 and "neither Edit nor Replace" in findings[0].message  # malformed
+    check findings.len == 1 and "neither Edit, Replace nor Add" in findings[0].message  # malformed
 
 
 
