@@ -2,8 +2,9 @@
 ##   Proposal page is future state of library, argued in `proposal.md` and checked by its
 ##     evaluation. Every proposal renders through this one shape, so next exploration reads as
 ##     last one did:
-##     claims first, since they say whether proposal holds; then argument; then what it changes and
-##     what that measured at pin.
+##     summary first, which is text of `proposal.md` above its first section: what proposal is,
+##     what it is for and what it costs; then claims, since they say whether proposal holds;
+##     then argument; then what it changes and what that measured at pin.
 ##   Header cites number and status. Frozen proposal shows pin its last evaluation was taken at,
 ##     since library has moved past it, and edits whose quote is gone show file alone.
 ##   Beneath header, proposal states what adopting it needs first and what rejecting it blocks,
@@ -31,6 +32,20 @@ func citeLinked*(proposal: Proposal, urls: Table[string, string]): string =
   let url = urls.getOrDefault(proposal.name)
   if url.len == 0: escapeHtml(proposal.citation)
   else: "<a href=\"" & escapeHtml(url) & "\">" & escapeHtml(proposal.citation) & "</a>"
+
+
+func htmlBlocks(
+  nodes: openArray[Block]; directory: string; figures: Table[string, string]; level: int
+): string =
+  ## Render blocks of argument, each figure paragraph as SVG it names where page holds it.
+  for node in nodes:
+    let figure = node.figureOf(directory)
+    if figure.isSome and figure.get.path in figures:
+      result.add "<figure class=\"figure\"><div class=\"figure-art\">" &
+          figures[figure.get.path] & "</div><figcaption>" & renderInline(figure.get.caption) &
+          "</figcaption></figure>"
+    else:
+      result.add renderBlock(node, level)
 
 
 func htmlDependencies*(
@@ -139,18 +154,19 @@ func htmlProposal*(
   result.add links & "</p><div class=\"chips\">" &
       chipsVerdict(evaluation, baselines, spread) & "</div>" &
       htmlDependencies(proposals, proposal, urls) & "</header>"
+
+  # Render summary above first section, then claims, then rest of argument.
+  var lead = 0
+  while lead < proposal.body.len and
+      not (proposal.body[lead].kind == KindBlock.Heading and proposal.body[lead].level == 2):
+    inc lead
+  if lead > 0:
+    result.add "<section class=\"block prose lead\">" &
+        htmlBlocks(proposal.body[0..<lead], proposal.directory, figures, level) & "</section>"
   result.add "<section class=\"block\"><" & section & ">Claims</" & section & ">" &
       htmlClaims(evaluation) & "</section>"
-  result.add "<section class=\"block prose\">"
-  for node in proposal.body:
-    let figure = node.figureOf(proposal.directory)
-    if figure.isSome and figure.get.path in figures:
-      result.add "<figure class=\"figure\"><div class=\"figure-art\">" &
-          figures[figure.get.path] & "</div><figcaption>" & renderInline(figure.get.caption) &
-          "</figcaption></figure>"
-    else:
-      result.add renderBlock(node, level)
-  result.add "</section>"
+  result.add "<section class=\"block prose\">" &
+      htmlBlocks(proposal.body[lead .. ^1], proposal.directory, figures, level) & "</section>"
   if proposal.change.edits.len > 0:
     var based = files
     for base in dependenciesOf(proposals, proposal)[0]:

@@ -1893,6 +1893,37 @@ suite "Internal: Figures":
     check "<figure" notin bare and "Map." in bare  # absent file renders as text
 
 
+  test "proposal page puts text above first section before claims, and rest after":
+    let
+      lead = Block(kind: KindBlock.Paragraph, lines: @["**What it is.** Summary."])
+      heading = Block(kind: KindBlock.Heading, level: 2, lines: @["Laws"])
+      rest = Block(kind: KindBlock.Paragraph, lines: @["Argument."])
+      record = Proposal(
+        number: 1,
+        name: "p",
+        directory: "proposals/01-p",
+        title: "P",
+        body: @[lead, heading, rest],
+        claims: newJArray(),
+      )
+      body = bodyProposal(
+        record,
+        [record],
+        nil,
+        initTable[string, string](),
+        initTable[string, string](),
+        initTable[string, JsonNode](),
+        Spread(),
+        initTable[string, string](),
+        "bd6b23c590d7",
+        "",
+      )
+    check "<section class=\"block prose lead\"><p><strong>What it is.</strong> Summary.</p>" &
+        "</section>" in body  # summary alone in lead
+    check body.find("Summary.") < body.find(">Claims<")  # summary before claims
+    check body.find(">Claims<") < body.find(">Laws<") and "Argument." in body  # rest after
+
+
   test "P01 figure names committed map that shows every rule of P01":
     const
       argument = staticRead("../proposals/01-cayley-derivation/proposal.md")
