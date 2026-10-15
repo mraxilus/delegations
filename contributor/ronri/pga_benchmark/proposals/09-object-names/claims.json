@@ -1,5 +1,11 @@
 {
   "status": "proposed",
   "builds_on": ["exact-kinds"],
-  "claims": []
+  "claims": [
+    {
+      "kind": "program",
+      "path": "laws.nim",
+      "algebras": ["rga4d", "cga5d"]
+    }
+  ]
 }

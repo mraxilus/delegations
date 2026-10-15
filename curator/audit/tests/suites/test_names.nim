@@ -28,9 +28,12 @@ proc Construct_table(Count: int) =
 
 
 func breaches(source: string, exempt: seq[string] = @[]): seq[string] =
-  ## Read each message static pass prints for names of source: names check, entry block, then
-  ##   acronyms.
-  let found = findingsOf(checkNames("x.nim", source, exempt) & checkBlockEntry("x.nim", source))
+  ## Read each message static pass prints for names of source: names check, entry block,
+  ##   generation calls, then acronyms.
+  let found = findingsOf(
+    checkNames("x.nim", source, exempt) & checkBlockEntry("x.nim", source) &
+      checkGenerations("x.nim", source)
+  )
   (found & checkAcronyms("x.nim", source, exempt)).mapIt(it.message)
 
 
@@ -55,6 +58,17 @@ suite "Names":
         "Acronym stays only where glossary lists it (V.9); got `JSON` in `toJSON`."),
       ("proc getGrade() = discard\n",
         "Action is imperative verb and property is bare noun (V.3); got `getGrade`."),
+      ("proc constructSeeds(scene: var Scene) = discard\n",
+        "`construct…` names compile-time routine returning data structure (V.3); got " &
+        "`proc constructSeeds`."),
+      ("template defineKind(name: untyped) = discard\n",
+        "`define…` names macro (V.3); got `template defineKind`."),
+      ("macro emitCatalogue(): untyped = discard\n",
+        "`emit…` names compile-time routine returning syntax tree, never macro (V.3); got " &
+        "`macro emitCatalogue`."),
+      ("discard MESHES.emitObject(placed)\n",
+        "Call of `define…` or `emit…` is prefix call, as `emitFunc(name, docs)` (STYLE.md §5); " &
+        "got `MESHES.emitObject`."),
       ("const LUT_GRADE = 1\n",
         "Lookup table reads `lut_<value>_by_<key>` (V.5); got `LUT_GRADE`."),
       ("func mixed(m: int): bool = true\n",

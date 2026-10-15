@@ -36,8 +36,13 @@
 ##     with word after it. `func` returning `bool` is predicate and opens `is`. `proc`
 ##     returning `bool` reports success of action (V.3), so it is unread (Architect's ruling);
 ##     `func` writing `var` parameter is action too, and is unread for same reason.
-##   V.3: routine never opens with `get`, `compute` or `new`. V.5: name opening `lut` reads
+##   V.3: routine never opens with `get`, `compute` or `new`. Verb of generation fixes kind of
+##     routine (`isKindOfVerb`): `construct…` is compile-time routine returning value, `define…`
+##     is macro, `emit…` returns `NimNode`. Kind never fixes verb, so other macro and helper
+##     building syntax tree keep names for their act. V.5: name opening `lut` reads
 ##     `lut_<value>_by_<key>`.
+##   Cost: compile time is read from routine's own `{.compileTime.}`, as STYLE.md §2 applies it
+##     across family; routine nested in compile-time one without it reads as runtime.
 ##   V.2: binding holding named value in another representation leads with name of its chain,
 ##     where its name holds one: `c_dual_flags = c.dual.toFlags`, never `flags_c`. Last name of
 ##     chain describes value, so both orders pass cut of V.2, and tie-breaker settles it. Syntax
@@ -101,6 +106,15 @@ const
   JARGON* = ["lut", "min", "max", "src", "prev", "curr", "len"]
     ## Closed list of V.6, which Architect alone extends.
   VERBS_BANNED* = ["get", "compute", "new"]  ## First words routine never takes (V.3).
+  KINDS_VERB_GENERATION = [
+    ("construct", "compile-time routine returning data structure"),
+    ("define", "macro"),
+    ("emit", "compile-time routine returning syntax tree, never macro"),
+  ]
+    ## Verb of each stage of generation, in order generation runs, and kind of routine it fixes,
+    ##   as finding states it (V.3); kind never fixes verb, so other routine is named for its act.
+  ROUTINES_CALLED = ["func", "proc"]
+    ## Keywords declaring routine that runs where called: neither macro, template nor iterator.
   PREFIXES_BOOLEAN* = ["is", "as", "should", "found", "has"]
     ## First words boolean takes: state, interpretation, policy, search outcome, possession (V.4).
   KINDS_VARIABLE = {KindName.Binding, KindName.Field, KindName.Parameter}
@@ -341,6 +355,17 @@ func namesLater*(d: Declared): seq[string] =
   if 0 notin at and at.anyIt(it > 0): held else: @[]
 
 
+func isKindOfVerb(d: Declared, verb: string): bool =
+  ## Decide whether routine is kind its verb of generation fixes (V.3): `construct…` is
+  ##   `{.compileTime.}` routine `ROUTINES_CALLED` lists returning value, `define…` is macro, and
+  ##   `emit…` is routine `ROUTINES_CALLED` lists returning `NimNode`; other verb fixes no kind.
+  case verb
+  of "construct": d.keyword in ROUTINES_CALLED and d.is_compile_time and d.type_return.len > 0
+  of "define": d.keyword == "macro"
+  of "emit": d.keyword in ROUTINES_CALLED and d.type_return == "NimNode"
+  else: true
+
+
 func listed(names: openArray[string]): string =
   ## Write names as code spans, commas between, `or` before last: `` `m`, `grade` or `get` ``.
   let spans = names.mapIt("`" & it & "`")
@@ -374,6 +399,15 @@ func checkNames*(path, source: string; exempt: openArray[string]): seq[Report] =
         d.line,
         Rule.VerbAction,
         "Action is imperative verb and property is bare noun; got `" & d.name & "`.",
+      )
+    for (verb, kind) in KINDS_VERB_GENERATION:
+      if d.kind != KindName.Routine or parts.len < 2 or parts[0] != verb: continue
+      if d.isKindOfVerb(verb): continue
+      result.add initReport(
+        path,
+        d.line,
+        Rule.VerbAction,
+        "`" & verb & "…` names " & kind & "; got `" & d.keyword & " " & d.name & "`.",
       )
     if parts.len > 1 and parts[0].toLowerAscii == "lut" and d.name.toLowerAscii.count("_by_") != 1:
       result.add initReport(

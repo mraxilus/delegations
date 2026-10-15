@@ -1,8 +1,10 @@
 ## Hold multivector to cache-line alignment at no cost in size (`multivector-align`).
 ##   Evaluation compiles this against changed library at each algebra its claim names, and exit code
 ##     is verdict: every law below holds, or program stops on assertion.
-##   Multivector holds 2^D floats, so it aligns to `min(64, size)` and starts on cache line in
-##     every storage caller holds.
+##   Multivector holds 2^D coefficients, so it aligns to `min(64, size)` and starts on cache line
+##     in every storage caller holds, from three dimensions up.
+##   Laws read width of coefficient from library, so they also hold where P06 (`float-width`)
+##     lands, with line merged as `min(64, sizeof(array[Basis, Coefficient]))`.
 
 {.experimental: "strictFuncs".}
 
@@ -13,7 +15,8 @@ import pga
 
 const
   LINE = 64  ## Bytes of one cache line.
-  SIZE = sizeof(float) * (ord(Basis.high) + 1)  ## Bytes of 2^D floats, multivector unpadded.
+  SIZE = sizeof(default(Multivector)[Basis.scalar]) * (ord(Basis.high) + 1)
+    ## Bytes of 2^D coefficients at width library gives them, multivector unpadded.
   ALIGNMENT = min(LINE, SIZE)  ## Alignment proposed: one line, or own size where smaller.
 
 

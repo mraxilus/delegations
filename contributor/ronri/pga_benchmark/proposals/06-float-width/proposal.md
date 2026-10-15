@@ -17,35 +17,45 @@ SIMD form may come later as a proposal that keeps 64-bit floats, and this propos
   static assertion refuses any width other than 32 or 64.
 - **Type.** `Coefficient` is `float32` at 32 bits and `float64` at 64 bits. `float64` is the type
   that `float` names, so at 64 bits each signature means what it meant at pin.
-- **Uses.** The coefficients of `Multivector`, its indexers, `=~`, each operator that takes a
-  scalar, and the sign of the conjugate take `Coefficient`. So do four signs in the library's own
-  suites, since a 64-bit sign does not convert to a 32-bit coefficient by itself.
-- **Tolerance.** `FLOAT_TOLERANCE` reads `pga.float_tolerance`, which takes the place of
-  `pga.tolerance_places` and still counts decimal places. It defaults to 9 at 64 bits, as at pin,
-  and to 4 at 32 bits. A 32-bit coefficient holds about seven places, so 9 places would fail.
+- **Uses.** The coefficients of `Multivector`, its indexers and `initElement` take `Coefficient`.
+  So do the generated constructors that take a value, `=~`, each operator that takes a scalar,
+  `selectPart`, and the sign of the partner `⊛`. The library's own suites take it for `div` and
+  four signs, so that each suite reads in one type.
+- **Literal constructors.** A constructor such as `e1"0.5"` still parses a `float`. Nim narrows
+  it to `Coefficient` by itself at 32 bits, so its line stays as at pin.
+- **Comparison tolerance.** `FLOAT_TOLERANCE` reads `pga.float_tolerance`, which takes the place
+  of `pga.tolerance_places` and still counts decimal places. It defaults to 9 at 64 bits, as at
+  pin, and to 4 at 32 bits. A 32-bit coefficient holds about seven places, so 9 places would fail.
+- **Laws.** `width.nim` holds the size of `Coefficient` and of `Multivector`, the default
+  comparison tolerance and the literal constructor. Two claims run it at four algebras, one
+  claim at each width.
 
 ## What it costs at 64 bits
 
-The bench at rga4d and at cga5d, built against pin and against the changed library from one
-path, emits the same C, file for file. The evaluation below moves no function at any of four
-algebras, so a caller who names no width pays nothing.
+A check by hand on 2026-10-13, at pin `28f4e11`, built the bench against pin and against the
+changed library from one path. The C was the same, file for file, at rga3d, rga4d, cga4d and
+cga5d. A check at pin `edb0c9d` on 2026-10-06 found the same at rga4d and cga5d. The record
+below moves no function at any of four algebras, so a caller who names no width pays nothing.
 
-Its times still stray, since the same C ran in each evaluation. Six evaluations of this C on
-2026-10-06 put these counts of times outside the spread of the pages:
+The record also holds a digest of the C of each build, and the two digests differ at every
+algebra. They also differ in the record of `exact-kinds`, which edits no library file. So the
+digests cannot show the same C, and the checks by hand do.
+
+The times still stray, though each evaluation ran the same C. Two evaluations of this C at pin
+`edb0c9d` on 2026-10-06 put these counts of times outside the spread of the pages on that date:
 
 | Evaluation | rga4d | cga5d | rga3d | cga4d |
 |------------|-------|-------|-------|-------|
-| First | 0 of 111 | 0 of 131 | 0 of 88 | 1 of 113 |
-| Second | 51 of 111 | 6 of 131 | 0 of 88 | 4 of 113 |
-| Third | 1 of 111 | 1 of 131 | 0 of 88 | 21 of 113 |
-| Fourth | 6 of 111 | 24 of 131 | 82 of 88 | 23 of 113 |
-| Fifth | 11 of 111 | 21 of 131 | 12 of 88 | 3 of 113 |
-| Sixth, below | 16 of 111 | 15 of 131 | 17 of 88 | 42 of 113 |
+| First | 1 of 111 | 1 of 131 | 0 of 88 | 21 of 113 |
+| Second | 16 of 111 | 15 of 131 | 17 of 88 | 41 of 113 |
 
-In the second, the pristine binary ran slow, as `norm_bulk_plane` read 16.18 ns against 10.34
-ns in the first. In the fourth, the compiler ran beside the pristine binary at rga3d, which ran
-×1.58 its time in the third. So a cluster of moved times at one algebra of one evaluation is the
-noise of this machine, and the counts carry the verdict.
+The first moved 21 of 113 times at cga4d, and at most 1 at each other algebra. So a cluster of
+moved times at one algebra of one evaluation is the noise of this machine, and the counts carry
+the verdict.
+
+The evaluation at pin `28f4e11` on 2026-10-13 timed 111, 135, 88 and 117 measurands at rga4d,
+cga5d, rga3d and cga4d. Against the spread that the pages read on 2026-10-13, ×0.95 to ×1.04, 9,
+30, 4 and 19 of those times moved.
 
 ## What 32 bits buy
 
@@ -53,7 +63,7 @@ noise of this machine, and the counts carry the verdict.
 Each operation times in a procedure of its own, 41 rounds, median nanoseconds per object. The
 program ran at each width in five alternating runs, pinned to one core. Each cell is the median
 over the runs of the ratio of 32 bits to 64 bits. The machine is an Intel Xeon at 2.80 GHz,
-`linux amd64, 4 cores`, SSE2, on 2026-10-06.
+`linux amd64, 4 cores`, SSE2, and the runs are by hand at pin `edb0c9d` on 2026-10-06.
 
 | Operation | rga3d | rga4d | cga4d | cga5d |
 |-----------|-------|-------|-------|-------|
@@ -66,20 +76,29 @@ over the runs of the ratio of 32 bits to 64 bits. The machine is an Intel Xeon a
 | `m ∧ n` | ×1.06 | ×1.03 | ×1.04 | ×0.98 |
 | `m ⟑ n` | ×1.00 | ×1.08 | ×1.08 | ×0.73 |
 
+The claims run `timing.nim` at the same four algebras and at both widths. They hold only that it
+runs, and its figures never guard.
+
 Operations that mostly move data gain most, since each multivector takes half the bytes. The
 products spend their time in arithmetic, and one scalar operation in 32 bits costs what one in
 64 bits costs. So the wedge and the geometric product hold near ×1.00. The geometric product at
 cga5d gains ×0.73, and why it alone gains is unmeasured.
 
+The bytes hold while no alignment larger than the multivector applies. P05,
+`multivector-align`, aligns it to `min(64, size)`. In the merged line that Implementation gives,
+the size reads `Coefficient`, so at 32 bits rga3d aligns to 32 bytes and holds 32. With `float`
+left in that rule, it pads to 64 bytes.
+
 `★m` at rga3d costs ×1.71. Its C is the same at both widths, apart from `0.0f` in place of
 `0.0`. In the machine code, the caller builds the dual on its stack with stores of 4 and 8
 bytes. It then copies the dual out with loads of 16 bytes, and each load spans two or more of
 those stores. A processor cannot forward such a load from its stores, so the load waits. That is
-the likely cause, since this container offers no hardware counters to confirm it.
+the likely cause, since this machine offers no hardware counters to confirm it.
 
-## Tolerance
+## Comparison tolerance
 
-The library's own suites ran at 32 bits at each algebra, at three tolerances:
+The library's own suites ran at 32 bits at each algebra, at three comparison tolerances. A run by
+hand at pin `28f4e11` on 2026-10-13 gave the same counts as the runs at pin `edb0c9d`:
 
 | Places | rga3d | rga4d | cga4d | cga5d |
 |--------|-------|-------|-------|-------|
@@ -89,8 +108,9 @@ The library's own suites ran at 32 bits at each algebra, at three tolerances:
 
 `noise.nim` measures the noise that `=~` sees among unitized points, lines, planes and motors at
 rga4d. Each law computes one object two ways that agree in exact arithmetic. The scene sits at a
-distance from the origin, in its own units. Each cell is the most places a tolerance may keep
-with no noise in 4096 samples, in this container on 2026-10-06.
+distance from the origin, in its own units. Each cell is the most places a comparison tolerance
+may keep with no noise in 4096 samples. The runs are on this machine, at pin `edb0c9d` on
+2026-10-06, and a run by hand at pin `28f4e11` on 2026-10-13 gave the same table.
 
 | Distance | 64 bits | 32 bits | Point on line, 64 bits | Point on line, 32 bits |
 |----------|---------|---------|------------------------|------------------------|
@@ -105,6 +125,10 @@ with no noise in 4096 samples, in this container on 2026-10-06.
 The first two columns take the worst of three laws: a point moved twice, a join moved, and a meet
 moved. Point on line tests `^(p ∧ q) ∧ r =~ 0`, where r lies on the line through p and q.
 
+P07, `part-scale`, runs the same three laws in its `laws.nim`, with the same seed. Its samples
+differ, since this program also draws a point on each line. So the rule of pin keeps 13 places at
+100 here, and 12 there.
+
 The noise lands in coefficients that should be zero or small, such as the `𝐞₃₂₁` part of a moved
 point. The products build them from terms as large as the scene. `=~` weighs such a coefficient
 against 1, so one place goes per decade of distance, and two for a point on a line.
@@ -116,7 +140,7 @@ bits stays 9, as at pin. It holds for every law within 1,000 units, and for move
 within 1,000,000.
 
 A 32-bit scene larger than that moves its origin near the camera, as engines do, or takes 64 bits.
-A caller who needs another tolerance names `pga.float_tolerance`.
+A caller who needs another comparison tolerance names `pga.float_tolerance`.
 
 ## Names
 
@@ -125,8 +149,8 @@ The Architect chose `Coefficient`, `pga.float_width` and `pga.float_tolerance` o
 - `Coefficient` is the word the library already uses for each slot of a multivector, as the
   docs of its indexers say.
 - `pga.float_width` takes a count of bits, as Nim names `float32` and `float64` by bits.
-- `pga.float_tolerance` sits beside it, since the tolerance follows the width. Both share the
-  prefix `float_`, so a reader finds the two together.
+- `pga.float_tolerance` sits beside it, since the comparison tolerance follows the width. Both
+  share the prefix `float_`, so a reader finds the two together.
 - Each constant is its define in capitals, as `DIMENSIONS` reads `pga.dimensions`.
 - `Real` names a number in mathematics, and not the slot that it fills.
 - `Scalar` is the element of grade zero in the book, so it would name two things.
@@ -137,5 +161,52 @@ The Architect chose `Coefficient`, `pga.float_width` and `pga.float_tolerance` o
 - The bench, the references and the gap list stay at 64 bits. They measure the library at its
   default, and the pin holds 64 bits alone.
 - No form packs coefficients into vector registers. That is the work of the later SIMD proposal.
-- `=~` keeps its floor of 1. A comparison against the largest coefficient of either object would
-  keep the places level at every distance, and it is outside this proposal.
+- `=~` keeps its floor of 1. P07, `part-scale`, weighs each part at its own scale, which keeps
+  the places level. It also shows why a scale of the whole object does not serve.
+- The basis-set types of P04, `exact-kinds`, hold `float`. Under this proposal they would hold
+  `Coefficient`, and `alignmentOf` would read `sizeof(Coefficient)`. Whichever of P04 and this
+  proposal lands second writes them with `Coefficient`.
+
+## Implementation
+
+- **Files.** `pga/algebra.nim`, `pga/multivectors.nim`, `pga/operators.nim` and `pga.nim`, and
+  the library's own `tests/suites.nim`.
+- **Types and signatures.** Added: the constants `FLOAT_WIDTH*` and `FLOAT_TOLERANCE*`, and
+  `type Coefficient* = (when FLOAT_WIDTH == 32: float32 else: float64)`. `TOLERANCE_ABS*` keeps
+  its name and becomes a `Coefficient`. Removed: the constant `TOLERANCE_PLACES*` and the define
+  `pga.tolerance_places`, with no alias. The private field `elements` of `Multivector` becomes
+  `array[Basis, Coefficient]`. Each function below takes `Coefficient` where pin takes `float`.
+- **Functions.** Changed, with no change of body: both `[]`, `initElement`, and the generated
+  constructor of each basis that takes a value. Also each `=~` with a scalar, the private one of
+  two scalars included, and `+`, `-`, `∧` and `*` with a scalar on either side. Also
+  `selectPart`, and `add`, `subtract` and `wedge` with a scalar on either side. The sign of `⊛`
+  and four signs in `tests/suites.nim` convert to `Coefficient`, and `div` there takes it. Added:
+  the static assertion of the width, and nothing is removed.
+- **Callers.** At 64 bits no caller must migrate, since `Coefficient` is `float` and the bench
+  emits the same C. A caller that names `pga.tolerance_places` names `pga.float_tolerance`, and
+  one that reads `TOLERANCE_PLACES` reads `FLOAT_TOLERANCE`. No caller in this repository names
+  either. At 32 bits Nim narrows a `float` to `Coefficient` by itself, in an argument and in an
+  assignment. A coefficient passed to a `var float` parameter, or put in an `openArray[float]`,
+  does not compile, so there the caller takes `Coefficient`.
+- **Order of edits.** P07, `part-scale`, builds on this proposal, so it lands after it and quotes
+  the signatures in `Coefficient`. P05, P03, `partner-guard` and `algebra-hygiene` quote lines
+  that this proposal edits, and the paragraphs below give the order of each.
+
+P05, `multivector-align`, edits the same line, the `elements` field of `Multivector`. Each of the
+two applies at pin, and the second to land quotes the first. The merged line is
+`elements {.align(min(64, sizeof(array[Basis, Coefficient]))).}: array[Basis, Coefficient]`.
+
+P03, `partner-sign`, removes the sign line of `⊛`, so the edit of that line here is void once P03
+lands. If this proposal lands first, P03 quotes `Coefficient(...)` in place of `float(...)`. The
+change `partner-guard` quotes the same line, and it is void once P03 lands. If this proposal lands
+first, `partner-guard` quotes and keeps `Coefficient(...)`. If `partner-guard` lands first, this
+proposal quotes its sign line.
+
+The change `algebra-hygiene` renames `TOLERANCE_ABS` to `TOLERANCE_REL`, on a line that this
+proposal replaces. Whichever of the two lands second quotes the first, and keeps both the new name
+and `Coefficient`.
+
+A run by hand on 2026-10-13 compiled the suites of pin, with no edit, against this proposal at 32
+bits. They passed 33 of 33 at rga3d and rga4d, and 28 of 28 at cga4d and cga5d. So the edits of
+the suites keep one type, and no build needs them. Probes by hand on the same date hold the other
+statements on callers at 32 bits.

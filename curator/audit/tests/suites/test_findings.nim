@@ -54,6 +54,7 @@ suite "Findings":
       (Rule.TabInString, "tab in string (X.1)"),
       (Rule.ArticleInComment, "article in comment (VI.5)"),
       (Rule.SubjectTarget, "to<Target> subject first (STYLE.md §5)"),
+      (Rule.CallGeneration, "generation call (STYLE.md §5)"),
       (Rule.ReturnResult, "return result (STYLE.md §5)"),
       (Rule.RankImport, "import rank (X.5)"),
       (Rule.BracketsImport, "import brackets (X.5)"),

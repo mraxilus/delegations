@@ -77,6 +77,14 @@ knoller [--check] [--nim:path] path...
   or a call of one input, by dot or by prefix call. A chain may run over lines that open `.`.
   Where a step follows the root, the finding lists each name of the chain, since a step can make
   a new thing, as `m.grade` does. Knoller renames nothing, since the new name can need a reading.
+- Each verb of generation fixes the kind of its routine (V.3). A `construct…` is a `func` or a
+  `proc` that carries `{.compileTime.}` and returns a value. A `define…` is a macro, and an
+  `emit…` is a `func` or a `proc` that returns `NimNode`. The kind never fixes the verb, so a
+  macro of another name passes. Knoller renames nothing here either.
+- A dotted call of a `define…` or `emit…` routine becomes a prefix call, with the receiver as the
+  first argument (STYLE.md §5). A module path, such as `tessellate.emitObject`, stays. Knoller
+  cannot rewrite four shapes in place, so each is a finding for hand. They are a receiver above
+  the dot, a generic call, a command call, and arguments that open below the bracket.
 - Knoller has no style option. A fence, from a line `#!fix off` to a line `#!fix on`, keeps its
   lines as written. Each run prints one warning for each fence, which names each rule that breaks
   inside it. So you always see what the fence keeps, and knoller writes none of it.
@@ -152,6 +160,7 @@ the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, 
 | `not-over-binary` | A `not` over a binary expression takes parentheses. No fix reaches it. |
 | `needless-parentheses` | Parentheses go where the parser of the compiler reads the same tree. |
 | `to-target-subject-first` | A `to<Target>` call takes its plain subject first. |
+| `generation-call` | A call of a `define…` or `emit…` routine is a prefix call. |
 | `dotted-command` | A dotted call statement of one call or group argument takes command form. |
 | `return-result` | A routine never ends on `return result`. |
 | `bracket-import` | A bracket import is in alphabetical order. |

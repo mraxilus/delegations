@@ -205,6 +205,10 @@ const CATALOGUE* = block:
       ("weight_flat", "□", "weightFlat", "(□ m)", 1, "wiki:Flat_weight"),
       ("norm_bulk_flat", "|■", "normBulkFlat", "(|■ m)", 1, "wiki:Flat_bulk"),
       ("norm_weight_flat", "|□", "normWeightFlat", "(|□ m)", 1, "wiki:Flat_weight"),
+      ("norm_bulk_flat_squared", "|■²", "", "(`|■²`(m))", 1, "wiki:Flat_bulk"),
+      ("norm_weight_flat_squared", "|□²", "", "(`|□²`(m))", 1, "wiki:Flat_weight"),
+      ("norm_radius", "|⊘", "normRadius", "(|⊘ m)", 1, "wiki:Radius_norm"),
+      ("norm_radius_squared", "|⊘²", "", "(`|⊘²`(m))", 1, "wiki:Radius_norm"),
       ("carrier", "⊟", "carrier", "(⊟ m)", 1, "wiki:Carrier"),
       ("carrier_co", "⊞", "carrierCo", "(⊞ m)", 1, "wiki:Cocarrier"),
       ("center", "⊙", "center", "(⊙ m)", 1, "wiki:Center"),
@@ -701,7 +705,6 @@ const MISSING* = block:
   when IS_CONFORMAL:
     missing.addGeneral [
       ("norm_center", "|⊙", "normCenter", "", 1, "wiki:Center_norm"),
-      ("norm_radius", "|⊘", "normRadius", "", 1, "wiki:Radius_norm"),
     ]
   missing
 
@@ -716,9 +719,11 @@ const SHAPES* = [
   ("∨★", Shape.ContractBulk), ("∨☆", Shape.ContractWeight),
   ("∧★", Shape.ExpandBulk), ("∧☆", Shape.ExpandWeight),
   ("+", Shape.Componentwise), ("-", Shape.Componentwise),
-  ("|∙²", Shape.NormSquared), ("|∘²", Shape.NormSquared),
-  ("|∙", Shape.Norm), ("|∘", Shape.Norm),
-  ("|■", Shape.Norm), ("|□", Shape.Norm),
+  ("|∙²", Shape.NormPartSquared), ("|∘²", Shape.NormPartSquared),
+  ("|■²", Shape.NormPartSquared), ("|□²", Shape.NormPartSquared),
+  ("|∙", Shape.NormPart), ("|∘", Shape.NormPart),
+  ("|■", Shape.NormPart), ("|□", Shape.NormPart),
+  ("|⊘²", Shape.NormSquared), ("|⊘", Shape.Norm),
   ("^∙", Shape.Unitize), ("^∘", Shape.Unitize), ("^", Shape.Unitize),
   ("⊖", Shape.ProductConstant),
   ("⊟", Shape.ProductConstant), ("⊞", Shape.ProductConstant),
@@ -737,8 +742,8 @@ const SHAPES* = [
 
 
 const CHAINS* = [
-  # Norm reads two slots, each one root over bilinear form, i.e. `‖m‖∙` then `‖m‖∘`.
-  ("(| m)", @[Shape.Norm, Shape.Norm]),
+  # Norm reads two slots, each one root over one part, i.e. `‖m‖∙` then `‖m‖∘`.
+  ("(| m)", @[Shape.NormPart, Shape.NormPart]),
   # Support, center and container fold their maps into one table (`Shape.Support` and
   #   siblings). Partner is cubic, so it stays chain: container of weight dual, then antiwedge
   #   against carrier, i.e. `(m☆)⊡ ∨ m⊟`, each step one folded table.

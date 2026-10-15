@@ -1,10 +1,11 @@
-## Time kinds as caller holding them in `seq` would, at each alignment (`exact-kinds`).
-##   Evaluation compiles this against changed library at each algebra its claim names; exit code
+## Time stand-ins of basis-set types as caller holding them in `seq` would (`exact-kinds`).
+##   Evaluation compiles this against library at pin, at each algebra its claim names; exit code
 ##     says it ran, and figures it prints are evidence that never gates.
-##   Kinds hold 3 to 16 floats, counts that kinds reach from rga3d to cga5d, under natural,
-##     16-byte and 64-byte alignment, so cost of each layout reads beside its padding. Kind of 4
-##     floats also takes 32 bytes, which `alignmentOf` gives that count. Kinds need no library.
-##   Kind is summed and negated through operator of its own, returned by value, as library
+##   Stand-ins hold 3 to 16 floats, counts that basis-set types reach from rga3d to cga5d, under
+##     natural, 16-byte and 64-byte alignment, so cost of each layout reads beside its padding.
+##     Stand-in of 4 floats also takes 32 bytes, which `alignmentOf` gives that count. Stand-ins
+##     need no library.
+##   Stand-in is summed and negated through operator of its own, returned by value, as library
 ##     writes its operators. Raw loop over slots of `var seq` parameter stays scalar, since
 ##     each store may alias `seq` itself, and so it shows no cost of layout.
 ##   Each timed loop sits in procedure of its own, so compiler estimates it hot, as caller's.
@@ -36,8 +37,8 @@ template timeRounds(label: string, loop: untyped) =
   echo label, " ", formatFloat(rounds[ROUNDS div 2], ffDecimal, 3)
 
 
-template defineKind(name: untyped, count: static int, alignment: static int) =
-  ## Define kind of `count` floats at one of four alignments, with sum and negation.
+template declareKind(name: untyped, count: static int, alignment: static int) =
+  ## Declare stand-in of `count` floats at one of four alignments, with sum and negation.
   ##   Operators return by value and loop each slot, as library writes its own.
   when alignment == 8:
     type name = object
@@ -62,7 +63,7 @@ template defineKind(name: untyped, count: static int, alignment: static int) =
 
 
 template timeKind(K: typedesc, label: string) =
-  ## Time sum and negation of kind `K` over `seq`, slot i paired with (7i + 3).
+  ## Time sum and negation of stand-in `K` over `seq`, slot i paired with (7i + 3).
   block:
     proc run(pool: seq[K], results: var seq[K]) {.noinline.} =
       ## Time both operations in procedure of their own.
@@ -81,20 +82,20 @@ template timeKind(K: typedesc, label: string) =
     run(pool, results)
 
 
-defineKind(Kind3Natural, 3, 8); defineKind(Kind3Line16, 3, 16); defineKind(Kind3Line64, 3, 64)
-defineKind(Kind4Natural, 4, 8); defineKind(Kind4Line16, 4, 16); defineKind(Kind4Line64, 4, 64)
-defineKind(Kind4Line32, 4, 32)
-defineKind(Kind5Natural, 5, 8); defineKind(Kind5Line16, 5, 16); defineKind(Kind5Line64, 5, 64)
-defineKind(Kind6Natural, 6, 8); defineKind(Kind6Line16, 6, 16); defineKind(Kind6Line64, 6, 64)
-defineKind(Kind8Natural, 8, 8); defineKind(Kind8Line16, 8, 16); defineKind(Kind8Line64, 8, 64)
-defineKind(Kind10Natural, 10, 8); defineKind(Kind10Line16, 10, 16)
-defineKind(Kind10Line64, 10, 64)
-defineKind(Kind16Natural, 16, 8); defineKind(Kind16Line16, 16, 16)
-defineKind(Kind16Line64, 16, 64)
+declareKind(Kind3Natural, 3, 8); declareKind(Kind3Line16, 3, 16); declareKind(Kind3Line64, 3, 64)
+declareKind(Kind4Natural, 4, 8); declareKind(Kind4Line16, 4, 16); declareKind(Kind4Line64, 4, 64)
+declareKind(Kind4Line32, 4, 32)
+declareKind(Kind5Natural, 5, 8); declareKind(Kind5Line16, 5, 16); declareKind(Kind5Line64, 5, 64)
+declareKind(Kind6Natural, 6, 8); declareKind(Kind6Line16, 6, 16); declareKind(Kind6Line64, 6, 64)
+declareKind(Kind8Natural, 8, 8); declareKind(Kind8Line16, 8, 16); declareKind(Kind8Line64, 8, 64)
+declareKind(Kind10Natural, 10, 8); declareKind(Kind10Line16, 10, 16)
+declareKind(Kind10Line64, 10, 64)
+declareKind(Kind16Natural, 16, 8); declareKind(Kind16Line16, 16, 16)
+declareKind(Kind16Line64, 16, 64)
 
 
 proc main() =
-  ## Time each kind at each alignment.
+  ## Time each stand-in at each alignment.
   randomize(SEED)
   timeKind(Kind3Natural, "3 natural"); timeKind(Kind3Line16, "3 align16")
   timeKind(Kind3Line64, "3 align64")
