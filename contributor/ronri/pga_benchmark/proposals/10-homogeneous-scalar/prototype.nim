@@ -5,9 +5,12 @@
 ##   Homogeneous scalar is basis-set type of 𝟏 and 𝟙: value x/y, kept with its weight y, as
 ##     homogeneous point keeps position with its weight. 𝟏 is unit of geometric product, and 𝟙 of
 ##     antiproduct, as Lengyel's `DualNum` has `Sqrt` and `AntiSqrt`. Square of other part under
-##     each, read from library's table, is 0 under rigid metric, so pair is dual number, and -1
-##     under conformal metric, so pair is complex number. Inverse, root and exponential under
-##     geometric product follow from that square alone, and each anti form is their complement.
+##     each, read from library's table, picks arithmetic of pair:
+##       0 under rigid metric, so pair is dual number;
+##       -1 at cga4d and cga5d, so pair is complex number;
+##       +1 at cga3d and cga6d, so pair is split-complex number.
+##     Inverse, root and exponential under geometric product follow from that square alone, and
+##     each anti form is their complement.
 ##     Division is under antiproduct, as Lengyel's is.
 ##   Bulk norm, weight norm, geometric norm and unitization stand under rigid metric alone, where
 ##     they equal library's. Conformal algebras keep library's four part norms (Table 4.12) and
@@ -41,7 +44,7 @@ func square(cayleys: Cayley2D; part, unit: Basis): int {.compileTime.} =
 
 const
   SQUARE_BULK* = square(CAYLEYS_WEDGE_DOT.anti, Basis.scalar, Basis.scalarAnti)
-    ## Square of 𝟏 under antiproduct, as multiple of 𝟙: 0 under rigid metric, -1 under conformal.
+    ## Square of 𝟏 under antiproduct, as multiple of 𝟙: 0 rigid, -1 at cga4d and cga5d, else +1.
   SQUARE_WEIGHT* = square(CAYLEYS_WEDGE_DOT.base, Basis.scalarAnti, Basis.scalar)
     ## Square of 𝟙 under geometric product, as multiple of 𝟏.
   SAMPLES = 256  ## Seeded samples each law is checked on.
@@ -49,7 +52,7 @@ const
   TERMS_SERIES = 30  ## Terms of power series exponential is checked against.
 
 static:
-  doAssert SQUARE_BULK in [0, -1], "pair is dual or complex in every algebra of library"
+  doAssert SQUARE_BULK in [-1, 0, 1], "pair is complex, dual or split-complex in every algebra"
   doAssert SQUARE_WEIGHT == SQUARE_BULK, "complement carries geometric product to antiproduct"
 
 
@@ -86,27 +89,35 @@ func inverse*(z: ScalarHomogeneous): ScalarHomogeneous =
 
 func sqrt*(z: ScalarHomogeneous): ScalarHomogeneous =
   ## Get principal root under geometric product, i.e. w with w ⟑ w = z.
-  ##   Dual number: √x 𝟏 + y / (2√x) 𝟙, real where bulk x is positive.
+  ##   Dual number: √x 𝟏 + y / (2√x) 𝟙, real where bulk x is positive, and 0 where z is 0.
   ##   Complex number: root of x + y i, so negative bulk gives root on weight, as i.
+  ##   Split-complex number: roots of x + y and x - y, its parts on each idempotent, real where
+  ##     bulk x is at least |y|.
   let (bulk, weight) = (z[Basis.scalar], z[Basis.scalarAnti])
   when SQUARE_WEIGHT == 0:
     let root = sqrt(bulk)
-    initScalarHomogeneous(root, weight / (2 * root))
-  else:
+    initScalarHomogeneous(root, if weight == 0: 0.0 else: weight / (2 * root))
+  elif SQUARE_WEIGHT == -1:
     let size = hypot(bulk, weight)
     initScalarHomogeneous(sqrt((size + bulk) / 2), copySign(sqrt((size - bulk) / 2), weight))
+  else:
+    let (root_plus, root_minus) = (sqrt(bulk + weight), sqrt(bulk - weight))
+    initScalarHomogeneous((root_plus + root_minus) / 2, (root_plus - root_minus) / 2)
 
 
 func exp*(z: ScalarHomogeneous): ScalarHomogeneous =
   ## Raise e to homogeneous scalar under geometric product, i.e. e^x (C 𝟏 + S 𝟙) for z = x𝟏 + y𝟙.
   ##   Dual number: C = 1, S = y. Complex number: C = cos y, S = sin y.
+  ##   Split-complex number: C = cosh y, S = sinh y.
   let
     (bulk, weight) = (z[Basis.scalar], z[Basis.scalarAnti])
     scale = exp(bulk)
   when SQUARE_WEIGHT == 0:
     initScalarHomogeneous(scale, scale * weight)
-  else:
+  elif SQUARE_WEIGHT == -1:
     initScalarHomogeneous(scale * cos(weight), scale * sin(weight))
+  else:
+    initScalarHomogeneous(scale * cosh(weight), scale * sinh(weight))
 
 
 func inverseAnti*(z: ScalarHomogeneous): ScalarHomogeneous =
@@ -116,8 +127,8 @@ func inverseAnti*(z: ScalarHomogeneous): ScalarHomogeneous =
 
 func sqrtAnti*(z: ScalarHomogeneous): ScalarHomogeneous =
   ## Get principal root under antiproduct, i.e. w with w ⟇ w = z, as complement of root of z̅.
-  ##   Real where weight is positive under rigid metric; negative weight gives root on bulk, as i,
-  ##     under conformal metric.
+  ##   Real where weight is positive under rigid metric, and where weight is at least |bulk| in
+  ##     split-complex algebra; negative weight gives root on bulk, as i, in complex one.
   complement(sqrt(complement(z)))
 
 
@@ -167,7 +178,8 @@ when IS_RIGID:
 when IS_CONFORMAL:
   func normRadius*(m: Multivector): ScalarHomogeneous =
     ## Get radius norm as root under antiproduct, i.e. ‖𝐦‖⊘ = √(𝐦∘𝐦), book's (4.45).
-    ##   Real for real object, imaginary, on 𝟏, for imaginary one. `|⊘` at pin is NaN for latter.
+    ##   Real for real object, on 𝟙. Imaginary object has root on 𝟏, as i, at cga4d and cga5d,
+    ##     where `|⊘` at pin is NaN; split-complex pair at cga3d and cga6d has none, so NaN stays.
     sqrtAnti(initScalarHomogeneous(0, (m ∘ m)[Basis.scalarAnti]))
 
 
@@ -176,9 +188,13 @@ when IS_CONFORMAL:
 
 proc sampleRooted(unit: static Basis): ScalarHomogeneous =
   ## Draw homogeneous scalar with real root.
-  ##   Part on unit lies in (0, 1] under rigid metric, and any part does under conformal metric.
+  ##   Part on unit lies in (0, 1] under rigid metric, any part does in complex algebra, and part
+  ##     on unit exceeds other part's size by (0, 1] in split-complex one.
   result = sample(ScalarHomogeneous)
   when SQUARE_BULK == 0: result[unit] = 1.0 - rand(1.0)
+  elif SQUARE_BULK == 1:
+    const other = if unit == Basis.scalar: Basis.scalarAnti else: Basis.scalar
+    result[unit] = abs(result[other]) + 1.0 - rand(1.0)
 
 
 proc sampleWhole(): Multivector =
@@ -214,9 +230,11 @@ when IS_CONFORMAL:
         if sign > 0:
           doAssert abs(root[Basis.scalarAnti] - radius) <= 1e-12 and root[Basis.scalar] == 0,
             "real radius norm lands on 𝟙"
-        else:
+        elif SQUARE_WEIGHT == -1:
           doAssert abs(root[Basis.scalar] - radius) <= 1e-12 and root[Basis.scalarAnti] == 0,
             "imaginary radius norm lands on 𝟏, as i"
+        else:
+          doAssert root[Basis.scalar].isNaN, "split-complex pair has no root of negative square"
 
 
 proc main(): int =
@@ -229,8 +247,7 @@ proc main(): int =
     "table read agrees with library's antiproduct"
   doAssert (one_anti ⟑ one_anti) =~ float(SQUARE_WEIGHT) * one,
     "table read agrees with library's geometric product"
-  doAssert SQUARE_BULK == (when IS_RIGID: 0 else: -1),
-    "dual under rigid metric, complex under conformal"
+  doAssert SQUARE_BULK == 0 xor IS_CONFORMAL, "dual under rigid metric alone"
   let zero = initScalarHomogeneous(0, 0)
   doAssert sqrt(zero).toMultivector =~ 0.0 and sqrtAnti(zero).toMultivector =~ 0.0,
     "root of zero is zero, never NaN"
@@ -243,7 +260,9 @@ proc main(): int =
         "weight norm of basis element equals library's, zero bulk part included"
       doAssert norm(element).toMultivector =~ |element, "geometric norm of basis element"
   when IS_CONFORMAL:
-    var nan_float = 0  # float root of 𝐦∘𝐦 that gives NaN, as `|⊘` takes it at pin
+    var
+      nan_float = 0  # float root of 𝐦∘𝐦 that gives NaN, as `|⊘` takes it at pin
+      nan_radius = 0  # radius norm that gives NaN, at split-complex algebras alone
   for _ in 1..SAMPLES:
     let
       (y, z) = (sample(ScalarHomogeneous), sample(ScalarHomogeneous))
@@ -272,10 +291,11 @@ proc main(): int =
     doAssert expAnti(y + z).toMultivector =~
         (expAnti(y).toMultivector ⟇ expAnti(z).toMultivector),
       "exp(y + z) = exp(y) ⟇ exp(z)"
-    doAssert not root_dot[Basis.scalar].isNaN and not root_dot[Basis.scalarAnti].isNaN,
-      "root of 𝐦∙𝐦 is never NaN"
-    doAssert (root_dot.toMultivector ⟑ root_dot.toMultivector) =~ (m ∙ m),
-      "√(𝐦∙𝐦) ⟑ √(𝐦∙𝐦) = 𝐦∙𝐦"
+    if SQUARE_WEIGHT != 1 or (m ∙ m)[Basis.scalar] >= 0:
+      doAssert not root_dot[Basis.scalar].isNaN and not root_dot[Basis.scalarAnti].isNaN,
+        "root of 𝐦∙𝐦 is never NaN, but where split-complex pair has none"
+      doAssert (root_dot.toMultivector ⟑ root_dot.toMultivector) =~ (m ∙ m),
+        "√(𝐦∙𝐦) ⟑ √(𝐦∙𝐦) = 𝐦∙𝐦"
     when IS_RIGID:
       let (bulk, weight) = (normBulk(m), normWeight(m))
       doAssert (weight.toMultivector ⟇ weight.toMultivector) =~ (m ∘ m), "‖𝐦‖∘ ⟇ ‖𝐦‖∘ = 𝐦∘𝐦"
@@ -289,14 +309,16 @@ proc main(): int =
       doAssert unitize(m) =~ ^m, "unitize equals library's"
     else:
       let radius = normRadius(m)
-      doAssert not radius[Basis.scalar].isNaN and not radius[Basis.scalarAnti].isNaN,
-        "radius norm is never NaN"
-      doAssert (radius.toMultivector ⟇ radius.toMultivector) =~ (m ∘ m), "‖𝐦‖⊘ ⟇ ‖𝐦‖⊘ = 𝐦∘𝐦"
       if sqrt((m ∘ m)[Basis.scalarAnti]).isNaN: inc nan_float
+      if radius[Basis.scalar].isNaN or radius[Basis.scalarAnti].isNaN:
+        doAssert SQUARE_WEIGHT == 1, "radius norm is never NaN in complex algebra"
+        inc nan_radius
+        continue
+      doAssert (radius.toMultivector ⟇ radius.toMultivector) =~ (m ∘ m), "‖𝐦‖⊘ ⟇ ‖𝐦‖⊘ = 𝐦∘𝐦"
   when IS_CONFORMAL:
     holdRoundPoints()
     echo "homogeneous-scalar: laws hold at ", DIMENSIONS, "D conformal; float root of 𝐦∘𝐦 NaN ",
-      nan_float, " of ", SAMPLES, ", radius norm NaN 0"
+      nan_float, " of ", SAMPLES, ", radius norm NaN ", nan_radius
   else:
     echo "homogeneous-scalar: laws hold at ", DIMENSIONS, "D rigid"
   0
