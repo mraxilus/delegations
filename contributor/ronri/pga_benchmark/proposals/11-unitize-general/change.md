@@ -149,7 +149,7 @@ suite "Internal":
       const 𝐞∞ = initElement(Basis.infinity)
       for _ in 1..SAMPLES div 8:
         let 𝐯 = ^(3 ∧ (drawReflector() ⟇ drawReflector()))
-        check abs((𝐯 ∘ 𝐯)[Basis.scalarAnti]) =~ 1  # Motion operator of two reflections ends unit.
+        check abs((𝐯 ∘ 𝐯)[Basis.scalarAnti]) ∧ 𝟙 =~ 𝟙  # Product of two reflections ends unit.
         let 𝐦 = 𝐯 ⟇ drawPoint() ⟇ ~∘𝐯
         check |∘(^𝐦) =~ 𝟙  # Moved round point keeps unit round weight.
 
