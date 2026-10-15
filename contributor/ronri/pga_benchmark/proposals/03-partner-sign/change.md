@@ -8,7 +8,7 @@ generated tables, read in a chain, and no grade scan.
 ## Edit `pga/cayleys.nim`
 
 ```nim
-    CAYLEY_CONTAINER*: Cayley2D =  # 𝐦 ∧ (𝐦⊟)☆, read with both operands 𝐦.
+    CAYLEY_CONTAINER*: Cayley2D =  ## Container, i.e. 𝐦 ∧ (𝐦⊟)☆, 𝐦 twice.
       CAYLEYS_WEDGE.base.applyMap(
         CAYLEYS_DUAL.anti.right.applyMap(CAYLEY_CARRIER),
         Chirality.Right,
@@ -16,7 +16,7 @@ generated tables, read in a chain, and no grade scan.
 ```
 
 ```nim
-    CAYLEY_CONTAINER*: Cayley2D =  # 𝐦 ∧ (𝐦⊟)☆, read with both operands 𝐦.
+    CAYLEY_CONTAINER*: Cayley2D =  ## Container, i.e. 𝐦 ∧ (𝐦⊟)☆, 𝐦 twice.
       CAYLEYS_WEDGE.base.applyMap(
         CAYLEYS_DUAL.anti.right.applyMap(CAYLEY_CARRIER),
         Chirality.Right,

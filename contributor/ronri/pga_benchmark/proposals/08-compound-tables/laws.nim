@@ -13,7 +13,7 @@
 when compileOption("profiler"):
   import std/nimprof
 
-import std/random
+import std/[random, strformat]
 
 import pga
 
@@ -24,11 +24,11 @@ const
 
 when IS_RIGID:
   const
-    ELEMENT_ORIGIN = initElement(Basis.origin)  ## 𝐞ₙ, as pin's `∩` reads it.
+    ELEMENT_ORIGIN = initElement(Basis.origin)  ## Origin 𝐞ₙ, as pin's `∩` reads it.
     ELEMENT_HORIZON = complementRight(ELEMENT_ORIGIN)
-      ## 𝐞̄ₙ, right complement of origin, as `horizon` of `cayleys.nim` derives it.
+      ## Horizon 𝐞̄ₙ, right complement of origin, as `horizon` of `cayleys.nim` derives it.
 else:
-  const ELEMENT_INFINITY = initElement(Basis.infinity)  ## 𝐞∞, as pin's `⊞` reads it.
+  const ELEMENT_INFINITY = initElement(Basis.infinity)  ## Infinity 𝐞∞, as pin's `⊞` reads it.
 
 
 proc sample(): Multivector =
@@ -42,12 +42,17 @@ proc main(): int =
   for _ in 1..SAMPLES:
     let m = sample()
     when IS_RIGID:
-      doAssert (∩m) =~ (m ∨ (ELEMENT_ORIGIN ∧ ☆m)), "support must equal its chain"
-      doAssert (∪m) =~ (m ∧ (ELEMENT_HORIZON ∨ ★m)), "antisupport must equal its chain"
+      doAssert ∩m =~ (m ∨ (ELEMENT_ORIGIN ∧ ☆m)),
+        &"Support must equal its chain; got `{∩m}` for `{m}`."
+      doAssert ∪m =~ (m ∧ (ELEMENT_HORIZON ∨ ★m)),
+        &"Antisupport must equal its chain; got `{∪m}` for `{m}`."
     else:
-      doAssert (⊞m) =~ (☆m ∧ ELEMENT_INFINITY), "cocarrier must equal its chain"
-      doAssert (⊙m) =~ ((☆m ∧ ELEMENT_INFINITY) ∨ m), "center must equal its chain"
-      doAssert (⊡m) =~ (m ∧ ☆(⊟m)), "container must equal its chain"
+      doAssert ⊞m =~ (☆m ∧ ELEMENT_INFINITY),
+        &"Cocarrier must equal its chain; got `{⊞m}` for `{m}`."
+      doAssert ⊙m =~ ((☆m ∧ ELEMENT_INFINITY) ∨ m),
+        &"Center must equal its chain; got `{⊙m}` for `{m}`."
+      doAssert ⊡m =~ (m ∧ ☆(⊟m)),
+        &"Container must equal its chain; got `{⊡m}` for `{m}`."
   echo "compound-tables: laws hold at ", DIMENSIONS, "D, conformal ", IS_CONFORMAL
   0
 

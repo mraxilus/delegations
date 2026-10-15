@@ -55,17 +55,18 @@ builds on this proposal and folds the partner further.
 
 ## Implementation
 
-- **Files.** `pga/cayleys.nim` and `pga/operators.nim`, as P01 leaves them. The conformal
-  tables join a new const block after `CAYLEY_CARRIER`, and the rigid ones a `when IS_RIGID`
-  block after that. Each is an exported `const`, folded when the library compiles.
+- **Files.** `pga/cayleys.nim` and `pga/operators.nim`, as P01 leaves them. The rigid tables
+  take a `when IS_RIGID` block of their own after `CAYLEY_ATTITUDE`. The conformal tables follow
+  in the const section of `CAYLEY_CARRIER`, which they read. So the rigid block comes first, as
+  everywhere in the library. Each table is an exported `const`, folded when the library compiles.
 - **Types and signatures.** `CAYLEY_CARRIER_CO` is a `Cayley1D`, and the other four are
-  `Cayley2D`. `CAYLEY_SUPPORT` is
-  `CAYLEYS_WEDGE.anti.applyMap(origin.applyMap(CAYLEYS_DUAL.anti.right), Chirality.Right)`, where
-  `origin` is `applyConstant` on a var copy of `CAYLEYS_WEDGE.base`, with `Basis.origin.toSigned`
-  on the left. `CAYLEY_SUPPORT_ANTI` is
-  `CAYLEYS_WEDGE.base.applyMap(horizon.applyMap(CAYLEYS_DUAL.base.right), Chirality.Right)`, where
-  `horizon` is `applyConstant` on a var copy of `CAYLEYS_WEDGE.anti`, with `Basis.horizon` on the
-  left. `CAYLEY_CARRIER_CO` is `CAYLEY_CARRIER.applyMap(CAYLEYS_DUAL.anti.right)`, and
+  `Cayley2D`. `CAYLEY_SUPPORT` reads the local `wedge_origin`, which is `applyConstant` on a var
+  copy of `CAYLEYS_WEDGE.base`, with `Basis.origin.toSigned` on the left. The support is then
+  `CAYLEYS_WEDGE.anti.applyMap(wedge_origin.applyMap(CAYLEYS_DUAL.anti.right), Chirality.Right)`.
+  `CAYLEY_SUPPORT_ANTI` reads the local `antiwedge_horizon`, which is `applyConstant` on a var
+  copy of `CAYLEYS_WEDGE.anti`, with `Basis.horizon` on the left. The antisupport is then
+  `CAYLEYS_WEDGE.base.applyMap` of `antiwedge_horizon.applyMap(CAYLEYS_DUAL.base.right)` on the
+  right. `CAYLEY_CARRIER_CO` is `CAYLEY_CARRIER.applyMap(CAYLEYS_DUAL.anti.right)`, and
   `CAYLEY_CENTER` is `CAYLEYS_WEDGE.anti.applyMap(CAYLEY_CARRIER_CO, Chirality.Left)`.
   `CAYLEY_CONTAINER` is
   `CAYLEYS_WEDGE.base.applyMap(CAYLEYS_DUAL.anti.right.applyMap(CAYLEY_CARRIER), Chirality.Right)`.
