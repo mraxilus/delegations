@@ -61,9 +61,11 @@ object name. Those names are evidence, and never guard.
   an object returns that object, since an alias is its type.
 - **Callers.** No function or test of the library names an object, so none migrates there. In this
   project, `src/pga_benchmark/widening.nim` imports `pga` and exports the typed references. Those
-  declare their own `Point`, `Line`, `Plane`, `Motor`, `Dipole`, `Circle` and `Sphere`. Where a
-  module of this project sees both, the bare name is ambiguous once this proposal lands. So each
-  use there names its module, as `rigid3.Point`.
+  declare their own `Point`, `Line`, `Plane`, `Motor`, `PointRound`, `Dipole`, `Circle` and
+  `Sphere`. A module of this project that sees both would read each bare name as ambiguous, and
+  the bench of the evaluation would not build. So `widening.nim`, `pools.nim` and
+  `measurements.nim` import `pga` except these names, and the typed references keep them. Nim
+  takes `except` of a name that the library lacks, so the same line builds at pin.
 - **Order of edits.** P04 lands first, since these names need `pga/basis_sets.nim`, which P04 adds
   and exports. The one quote of this change is the banner `#[ Extraction Operators ]#`, which no
   other proposal or change edits. So this proposal lands after P04 in any order with the rest, and
