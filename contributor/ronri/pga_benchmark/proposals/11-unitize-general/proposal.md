@@ -9,8 +9,8 @@ test at run time picks the branch, and the rigid algebras keep the rule of pin.
 A flat point, a line or a plane has no round weight, so it comes back unscaled, with no sign of
 it. Here every element of both algebras comes back with unit weight.
 
-**What it costs.** Conformal unitize ran at ×5.14 of pin at cga4d and ×7.88 at cga5d in the
-evaluation of 2026-10-12, and the rigid algebras keep their cost. The test of a round object has
+**What it costs.** Conformal unitize ran at ×7.75 of pin at cga4d and ×11.51 at cga5d in the
+evaluation of 2026-10-15, and the rigid algebras keep their cost. The test of a round object has
 edges, such as a sphere of radius 1e9 units or more, a far transversion and 32 bits, which the
 page states.
 
@@ -397,17 +397,18 @@ from radius zero.
 ## What it costs
 
 The evaluation times unitize on the general pool, with this change and at pin. It takes five
-alternating runs on linux amd64 with 4 cores, on 2026-10-12. It also counts the C of `^∘`. Each
-ratio is the median of the ratios of the five runs. Two earlier evaluations of the same rule gave
-66.59 ns at `cga5d` on 2026-10-11, in commit a712559b, and 91.17 ns on 2026-10-12, in commit
-2f72917d. So the time of the change varies by up to about 40% between evaluations.
+alternating runs on linux amd64 with 4 cores, on 2026-10-15. It also counts the C of `^∘`. Each
+ratio is the median of the ratios of the five runs. Earlier evaluations of the same rule, with
+`^∘` inline, gave 66.59 to 91.17 ns at `cga5d` in six runs on 2026-10-11 and 2026-10-12, from
+commit a712559b to commit 09e9579a. So the time of the change varies by up to about 40% between
+evaluations.
 
 | Algebra | Unitize at pin | With this change | Ratio |
 | --- | --- | --- | --- |
-| `rga3d` | 3.78 ns | 3.55 ns | ×0.97 |
-| `rga4d` | 5.14 ns | 5.21 ns | ×1.04 |
-| `cga4d` | 4.31 ns | 20.38 ns | ×5.14 |
-| `cga5d` | 8.56 ns | 68.96 ns | ×7.88 |
+| `rga3d` | 3.35 ns | 3.38 ns | ×1.01 |
+| `rga4d` | 6.00 ns | 4.95 ns | ×1.11 |
+| `cga4d` | 3.90 ns | 30.24 ns | ×7.75 |
+| `cga5d` | 7.43 ns | 89.87 ns | ×11.51 |
 
 | Count in `^∘` at `cga5d` | At pin | With this change |
 | --- | --- | --- |
@@ -422,11 +423,11 @@ the rule adds the antidot and a grade scan. The scan runs only where the round w
 stops at a second grade. Most of the rest is calls and error checks, which the library's operators
 carry everywhere, and which the gap list holds as design gaps.
 
-The evaluation above timed `^∘` as an inline function. This change drops `inline` from `^∘`,
-since its C at `cga5d` grows from 91 to 1,485 lines. The guide of the language inlines a large
-body only where a measurement shows the gain (`STYLE.md`, section 2), and no measurement here
-shows one. So each call to `unitize` or `normalizeWeight` calls `^∘`, in the rigid algebras too.
-No evaluation timed this form, so the times in the table above need a new evaluation.
+This change drops `inline` from `^∘`, since its C at `cga5d` grows from 91 to 1,485 lines. The
+guide of the language inlines a large body only where a measurement shows the gain (`STYLE.md`,
+section 2). So each call to `unitize` or `normalizeWeight` calls `^∘`, in the rigid algebras too.
+The table above times that form. Its 89.87 ns at `cga5d` lies inside the spread of the earlier
+evaluations of the inline form, so no measurement here shows a gain of `inline`.
 
 ## What it leaves out
 

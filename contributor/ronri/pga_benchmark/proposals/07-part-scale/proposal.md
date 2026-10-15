@@ -242,9 +242,9 @@ A run by hand on 2026-10-06 timed a loop that tests the part of each basis. It c
 times as much as a loop over the bases of one part. So a macro spells those bases.
 
 The partner `⊛` calls `grade` for its sign, so the evaluation moves it at `cga4d` and `cga5d`.
-Over its kinds of operand, the evaluation of 2026-10-13 times the partner at ×1.20 to ×1.30 of
-pin at `cga5d`. At `cga4d` it gives ×1.21 to ×1.24. Four evaluations on 2026-10-12 gave ×1.08 to
-×1.32 over both. P03 folds that sign into the first table of the partner, so with P03 the
+Over its kinds of operand, the evaluation of 2026-10-15 times the partner at ×1.14 to ×1.26 of
+pin at `cga5d`. At `cga4d` it gives ×1.20 to ×1.51. Five evaluations on 2026-10-12 and 2026-10-13
+gave ×1.08 to ×1.32 over both. P03 folds that sign into the first table of the partner, so with P03 the
 partner calls no `grade`.
 
 At `rga4d` the evaluation moves no function, and its times read a median of ×1.00 of pin. The
@@ -296,7 +296,7 @@ for the bulk of a point.
 - **Callers.** No caller changes its text, since no exported signature changes. `isMixed`,
   `gradeAnti` and `⊛` read `grade`, and each test that reads `=~` takes the new rule too. Where
   every coefficient is finite, no pair equal at pin becomes unequal. The suites pass at both widths
-  in all four algebras in the evaluation of 2026-10-13.
+  in all four algebras in the evaluation of 2026-10-15.
 - **Order of edits.** P06 (`float-width`) lands first, since these edits quote its `Coefficient`
   signatures. The change `doc-comments-2` adds a line under the doc of `grade`, which the third
   edit quotes. The change `algebra-hygiene` renames `TOLERANCE_ABS` to `TOLERANCE_REL` in the
