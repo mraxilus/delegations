@@ -44,8 +44,8 @@ Other edits land in this order against the edits below:
       var sign: Cayley1D
       for b in Basis: sign[b] = @[BasisSigned(basis: b, is_negated: int(b.grade) mod 2 == 0)]
       CAYLEY_CONTAINER
-        .applyMap(CAYLEYS_DUAL.anti.right.applyMap(sign), Chirality.Left)
-        .applyMap(CAYLEYS_DUAL.anti.right, Chirality.Right)
+          .applyMap(CAYLEYS_DUAL.anti.right.applyMap(sign), Chirality.Left)
+          .applyMap(CAYLEYS_DUAL.anti.right, Chirality.Right)
     CAYLEY_PARTNER_MEET*: Cayley2D =  ## Partner step two, i.e. 𝐭 ∨ 𝐦⊟, meet with carrier.
       CAYLEYS_WEDGE.anti.applyMap(CAYLEY_CARRIER, Chirality.Right)
 ```
