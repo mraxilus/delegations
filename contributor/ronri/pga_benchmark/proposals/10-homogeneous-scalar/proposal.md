@@ -1,18 +1,29 @@
 # P10: Give homogeneous scalars a division, a root and an exponential
 
-At pin, each norm takes a float root of one slot, and writes it into a whole multivector.
-Unitization divides by that float, and does nothing where it is zero. The library has no division
-by a multivector, no root and no exponential. The book treats the pair x𝟏 + y𝟙 as a dual number,
-and on a dual number these functions are well defined. This proposal names the pair a homogeneous
-scalar, `ScalarHomogeneous`. It gives the pair an inverse, a root and an exponential under each
-product, and a division, as Lengyel's `DualNum` has.
+**What it is.** A new module of the library, `pga/scalars.nim`, treats x𝟏 + y𝟙 as one value of
+two floats, the homogeneous scalar `ScalarHomogeneous`. It gives that value an inverse, a root and
+an exponential under each product, and a division, as Lengyel's `DualNum` has. The square of the
+unit part, read from the table of the library, picks the arithmetic as the program compiles. It is
+a dual number under the rigid metric, a complex number at cga4d and cga5d, and a split-complex
+number at cga3d and cga6d.
+
+**What it is for.** At pin, each norm takes a float root of one slot and writes it into a whole
+multivector of 128 bytes at rga4d or 256 at cga5d. Here the bulk, weight and geometric norms of the
+rigid algebras return 16 bytes, and keep a distance with its weight, d𝟏 + 𝟙. The radius norm of
+the book returns an imaginary radius on 𝟏 for an imaginary object at cga4d and cga5d, where the
+float root at pin gives NaN for about half of all multivectors.
+
+**What it costs.** The aliases `normBulk`, `normWeight`, `norm` and `normRadius` stop forwarding
+to `|∙`, `|∘`, `|` and `|⊘`, which keep `Multivector`. A caller that adds a norm to a multivector
+takes `.toMultivector`. At cga3d and cga6d a split-complex pair has no root of a negative square,
+so there the radius norm of an imaginary object stays NaN, as at pin.
 
 This proposal builds on P04, `exact-kinds`, since `ScalarHomogeneous` is one of its basis-set
 types. Its rule reads the square of each part from the table, as the Architect ruled on
 2026-10-09. Each function takes one form under each product, and the pair takes its name, as the
 Architect ruled on 2026-10-10.
 
-## What it is
+## How it works
 
 - **Basis-set type.** `ScalarHomogeneous` is `MultivectorOf[{Basis.scalar, Basis.scalarAnti}]`,
   two floats in each algebra. Its bulk x lies on 𝟏, and its weight y on 𝟙.
@@ -25,72 +36,88 @@ Architect ruled on 2026-10-10.
   emits the antiproduct from the table of the library, and no geometric product.
 - **Squares.** `SQUARE_WEIGHT` reads the 𝟏 term of 𝟙 ⟑ 𝟙 from the table of the geometric
   product. `SQUARE_BULK` reads the 𝟙 term of 𝟏 ⟇ 𝟏 from the table of the antiproduct. The two
-  are equal. Each is 0 under the rigid metric, so there the pair is a dual number. Each is −1
-  under the conformal metric, so there the pair is a complex number.
--  **Functions.** `inverse`, `sqrt` and `exp` work under the geometric product, as Lengyel's
-  `Inverse`, `Sqrt` and `Exp` do. A `when` on the square chooses the dual form or the complex form
-  as the program compiles. `inverseAnti`, `sqrtAnti` and `expAnti` work under the antiproduct, as
-  `AntiInverse`, `AntiSqrt` and `AntiExp` do. Each is the complement of its form under the geometric
-  product, since the complement swaps 𝟏 and 𝟙 with each other. Division is under the antiproduct, as
-  in Lengyel's `DualNum`.
+  are equal. Each is 0 under the rigid metric, so there the pair is a dual number. Each is −1 at
+  cga4d and cga5d, so there the pair is a complex number. Each is +1 at cga3d and cga6d, so there
+  the pair is a split-complex number.
+- **Functions.** `inverse`, `sqrt` and `exp` work under the geometric product, as Lengyel's
+  `Inverse`, `Sqrt` and `Exp` do. A `when` on the square chooses the dual, the complex or the
+  split-complex form as the program compiles. `inverseAnti`, `sqrtAnti` and `expAnti` work under the
+  antiproduct, as `AntiInverse`, `AntiSqrt` and `AntiExp` do. Each is the complement of its form
+  under the geometric product, since the complement swaps 𝟏 and 𝟙 with each other. Division is under
+  the antiproduct, as in Lengyel's `DualNum`.
 - **Norms.** Under the rigid metric, `normBulk` is the root of 𝐦 ∙ 𝐦 under the geometric product.
   `normWeight` is the root of 𝐦 ∘ 𝐦 under the antiproduct, as the wiki takes both. `norm` adds
-  the two, and `unitize` divides a multivector by its weight norm. Under the conformal metric,
+  the two, and a division by the weight norm unitizes a multivector. Under the conformal metric,
   `normRadius` is the radius norm of the book. `pga.nim` lists that norm as `|⊘`, and at pin it
   takes a float root, which is NaN for an imaginary object.
 
 ## Why the square decides
 
-The conformal metric has e4² = e5² = 0 and e4 · e5 = −1. Its determinant is −1, so 𝟙 ⟑ 𝟙 = −𝟏
-and 𝟏 ⟇ 𝟏 = −𝟙 hold. The book states the same fact as 𝔾 = −G, in Section 4.3. So one formula cannot
-serve both metrics. Two roots of z = 4𝟙 + 4𝟏, each squared again with the antiproduct of the
-library:
+The sign of 𝟙 ⟑ 𝟙 is the determinant of the metric on vectors, times (−1)^(n(n − 1)/2) for the
+reverse of n vectors. The rigid metric is degenerate, so there the square is 0. The conformal
+metric has two null vectors whose dot is −1, so its determinant is −1. The reverse gives +1 at
+cga4d and cga5d, and −1 at cga3d and cga6d. So 𝟙 ⟑ 𝟙 = −𝟏 at cga4d and cga5d, and +𝟏 at cga3d and
+cga6d. The table of the library gives the same sign at each algebra, and `laws.nim` holds the read
+of the table against the product of the library. So one formula cannot serve every metric. Two
+roots of z = 4𝟙 + 4𝟏, each squared again with the antiproduct of the library:
 
 | Root | Squared at rga4d | Squared at cga5d |
 |------|------------------|------------------|
 | Dual form, 2𝟙 + 1𝟏 | 4𝟙 + 4𝟏 | 3𝟙 + 4𝟏 |
 | Complex form, 2.197𝟙 + 0.910𝟏 | 4.828𝟙 + 4𝟏 | 4𝟙 + 4𝟏 |
 
-Each form holds under its own metric alone. So `ScalarHomogeneous` reads the square from the
-table, and each law below holds in all four algebras. The two forms agree on a pure weight above
-zero. They differ where both parts are nonzero, or where the weight is negative. Under the
-geometric product the same table holds, with 𝟏 and 𝟙 swapped.
+Each form holds under its own metric alone. At cga3d and cga6d the split-complex form holds alone in
+the same way. So `ScalarHomogeneous` reads the square from the table, and each law below holds in
+all nine algebras of the library. The forms agree on a pure weight above zero. They differ where
+both parts are nonzero, or where the weight is negative. Under the geometric product the same table
+holds, with 𝟏 and 𝟙 swapped.
 
 ## What it gains
 
 - **The radius norm of the book.** Section 4.3 defines the radius norm as √(𝐮 ∘ 𝐮), in (4.45). It
-  is real for a real object, and imaginary for an imaginary one. The prototype builds round points
+  is real for a real object, and imaginary for an imaginary one. `laws.nim` builds round points
   of radius r, with 2aʷaᵘ − |a|² = ±r² as Table 4.13 gives. `normRadius` returns r𝟙 where the point
-  is real, and r𝟏, as i, where it is imaginary.
-- **No NaN.** Under the conformal metric, 𝐦 ∘ 𝐦 is negative for about half of all multivectors.
-  The prototype draws 256 seeded multivectors, with each coefficient in [−1, 1]. A float root of
-  𝐦 ∘ 𝐦, as `|⊘` takes it, gives NaN for 114 of them at cga5d and for 141 at cga4d. `normRadius`
-  gives none, and its square equals 𝐦 ∘ 𝐦 for each one.
+  is real, and r𝟏, as i, where it is imaginary, at cga4d and cga5d.
+- **No NaN at cga4d and cga5d.** Under the conformal metric, 𝐦 ∘ 𝐦 is negative for about half of
+  all multivectors. `laws.nim` draws 256 seeded multivectors, with each coefficient in [−1, 1]. A
+  float root of 𝐦 ∘ 𝐦, as `|⊘` takes it, gives NaN for 114 of them at cga5d and for 141 at cga4d.
+  `normRadius` gives none there, and its square equals 𝐦 ∘ 𝐦 for each one. At cga3d and cga6d the
+  pair is split-complex, and a negative square has no root. There `normRadius` gives NaN for the
+  same 128 and 117 of 256 as the float root, so it gains nothing.
 - **Division by a homogeneous scalar.** A geometric norm over its weight norm is d𝟏 + 𝟙, where d
-  is the distance, as the wiki unitizes the pair. Under the rigid metric, `unitize` divides a
-  multivector by its weight norm, and equals `^` of the library. Where the weight norm is zero,
-  the division gives NaN, and `^` leaves the multivector as it is.
+  is the distance, as the wiki unitizes the pair. Under the rigid metric, a multivector divided by
+  its weight norm equals `^` of the library. Where the weight norm is zero, the division gives
+  NaN, and `^` leaves the multivector as it is.
 - **Size.** A homogeneous scalar holds 16 bytes. Each norm of the library writes 128 bytes at rga4d
   and 256 at cga5d.
 
 ## Laws
 
-`prototype.nim` holds each law on 256 seeded samples, at rga3d, rga4d, cga4d and cga5d. Each one
-compares against a product of the library on a whole `Multivector`. So no law tests the emission
-of P04 against itself.
+`laws.nim` holds each law on 256 seeded samples, at each of the nine algebras of the library, from
+rga2d to rga6d and from cga3d to cga6d. It imports the library with P04 and this change applied,
+and nothing else. Each law compares against a product of the library on a whole `Multivector`. So
+no law tests the emission of P04 against itself.
+
+- The root of zero is zero under each product. Under the rigid metric, the bulk norm, the weight
+  norm and the geometric norm of each basis element equal those of the library. There one part of
+  each root is zero, as for a point at the origin or a direction.
 
 - The complement of a homogeneous scalar equals that of the library.
 - 𝟏 is the unit of ⟑, and z ⟑ z⁻¹ = 𝟏. 𝟙 is the unit of ⟇, and z ⟇ z⁻¹ = 𝟙.
 - (y / z) ⟇ z = y.
 - √z ⟑ √z = z and √z ⟇ √z = z, for each z with a root. Under the rigid metric the unit part of z
-  is positive, and under the conformal one z is any.
+  is positive. In a complex algebra z is any. In a split-complex one the unit part is larger than
+  the size of the other part.
 - exp z equals its power series under each product, to 30 terms. exp(y + z) = exp y ⟑ exp z, and
   the same holds under ⟇.
-- The root of 𝐦 ∙ 𝐦 under ⟑ is never NaN, and its square under ⟑ is 𝐦 ∙ 𝐦.
+- The root of 𝐦 ∙ 𝐦 under ⟑ is not NaN where the pair has a root, and its square under ⟑ is
+  𝐦 ∙ 𝐦.
 - Under the rigid metric, the weight norm squared under ⟇ gives 𝐦 ∘ 𝐦 back. The bulk norm, the
-  weight norm, the geometric norm and `unitize` equal those of the library.
--  Under the conformal metric, the radius norm is never NaN, and its square gives 𝐦 ∘ 𝐦 back. The
-  radius norm of each round point is r𝟙 or r𝟏, as the point is real or imaginary.
+  weight norm and the geometric norm equal those of the library. A multivector divided by its
+  weight norm equals `^` of the library.
+- Under the conformal metric, the radius norm squared gives 𝐦 ∘ 𝐦 back. It is never NaN at cga4d
+  and cga5d. The radius norm of each round point is r𝟙 or r𝟏, as the point is real or imaginary.
+  At cga3d and cga6d, the radius norm of an imaginary round point is NaN.
 
 A copy that takes the dual form under the conformal metric fails the law of the root at cga5d. So
 the laws see the rule.
@@ -106,17 +133,16 @@ the laws see the rule.
   root of the whole dot and antidot, as the wiki does. Under the conformal metric those roots are
   no norm of the book. So `normBulk`, `normWeight` and `norm` stand under the rigid metric alone,
   as `normBulk` and `normWeight` do at pin. In the conformal algebras, `norm` stays that of pin.
--  **Unitization under the conformal metric.** P11, `unitize-general`, sets that rule. It divides a
+- **Unitization under the conformal metric.** P11, `unitize-general`, sets that rule. It divides a
   round object by its round weight norm, and any other element by √|𝐮 ∘ 𝐮| of that element. Under
-  the conformal metric, `sqrtAnti` of 𝐮 ∘ 𝐮 is a complex root, which is 0 for a round point. Where 𝐮
-  ∘ 𝐮 is negative, it lies on 𝟏, and a division by it does not scale the element. So `unitize` here
-  holds under the rigid metric alone, and in the conformal algebras the library keeps the `^∘` of
-  P11.
+  the conformal metric, `sqrtAnti` of 𝐮 ∘ 𝐮 is a complex root, which is 0 for a round point of zero
+  radius. Where 𝐮 ∘ 𝐮 is negative, it lies on 𝟏, and a division by it does not scale the element. So
+  `unitize` here holds under the rigid metric alone, and in the conformal algebras the library keeps
+  the `^∘` of P11.
 - **Four functions.** Lengyel's `DualNum` also has an inverse root, a sine, a cosine and a tangent,
   each in both forms, and none is here.
-- **One program.** The basis-set types of P04 live in its prototype alone, so `prototype.nim`
-  imports that prototype. Its norms read the `Multivector` of the library. The prototype of P04
-  emits no squared norm, since each squared norm is a unary 2D table.
+- **Squared norms of P04.** The norms read the dot and the antidot of the library on a whole
+  `Multivector`, since P04 emits no squared norm: each squared norm is a unary 2D table.
 - **No timing.** No record times a function of this proposal. Each function on a homogeneous
   scalar spends a few operations on two floats, where a norm of the library writes a whole
   multivector. The division of a multivector is a whole ⟇ of the library. By the static baseline
@@ -124,17 +150,17 @@ the laws see the rule.
 
 ## Implementation
 
-- **Files.** A new module, `pga/scalars.nim`, holds `ScalarHomogeneous` and its functions. It
-  imports `pga/basis_sets.nim`, which P04 adds, and `pga.nim` imports and exports it. The norms stay
-  in `pga.nim`, as at pin. This proposal has no `change.md`, since its basis-set type needs P04 in
-  the library.
+- **Files.** `change.md` adds a module, `pga/scalars.nim`, which holds `ScalarHomogeneous` and its
+  functions. It imports `pga/basis_sets.nim`, which P04 adds, and `pga.nim` imports and exports
+  it. The norms stay in `pga.nim`, as at pin. `laws.nim` holds the laws.
 - **Types and signatures.** The block below gives each exported signature. `SQUARE_BULK*` and
   `SQUARE_WEIGHT*` are `int` constants, each read from the table of its product. `complement`
-  stays private, as in the prototype.
+  stays private, and `laws.nim` reaches it through `{.all.}`.
 - **Functions.** Added: every function of `pga/scalars.nim`. Changed: under the rigid metric,
-  `normBulk`, `normWeight` and `norm` of `pga.nim` return `ScalarHomogeneous`, with the bodies of
-  the prototype. Under the conformal metric, `normRadius` does. Removed: none. Every other
-  function keeps its return, and `unitize` stays `^m` in every algebra.
+  `normBulk`, `normWeight` and `norm` of `pga.nim` return `ScalarHomogeneous`. Under the conformal
+  metric, `normRadius` does, and `norm` moves into the conformal block unchanged. Removed: none.
+  Every other function keeps its return, and `unitize` stays `^m` in every algebra. The four
+  aliases that change no longer forward to `|∙`, `|∘`, `|` and `|⊘`, which keep `Multivector`.
 - **Callers.** No function or test of the library calls the four norms that change. The tests
   call the operators, which keep `Multivector`. A caller that reads a norm by a static basis still
   compiles, since `ScalarHomogeneous` reads 𝟏 and 𝟙 that way. A caller that adds the norm to a
@@ -144,15 +170,15 @@ the laws see the rule.
   adds `basis_sets` to the import and export lines of `pga.nim`, and this proposal adds `scalars`.
   The changes `doc-comments` and `doc-comments-2` quote those lines too, so whichever lands later
   quotes them again. `doc-comments` also edits the doc of `normRadius`, which this proposal
-  replaces, and the second to land quotes the first. P11 and the change `conformal-norms` edit other
-  lines, so either order holds with them.
+  replaces, and the second to land quotes the first. P09, P11 and the change `conformal-norms`
+  edit other lines, so either order holds with them.
 - **Width.** If P06, `float-width`, lands first, each `float` below becomes `Coefficient`, as in
   the basis-set types of P04.
 
 The operators `|∙`, `|∘`, `|`, `|⊘`, `^∙` and `^∘` keep `Multivector`. So do `normalizeBulk`,
-`normalizeWeight`, the four part norms, `normCenter` and the conformal `norm`. The `unitize` of
-the prototype equals `^m` under the rigid metric. But it spends a whole ⟇, and gives NaN where the
-weight norm is zero, so the library does not take it.
+`normalizeWeight`, the four part norms, `normCenter` and the conformal `norm`. A division by the
+weight norm equals `^m` under the rigid metric. But it spends a whole ⟇, and gives NaN where the
+weight norm is zero, so `unitize` keeps `^m`.
 
 P11, `unitize-general`, edits `normalizeWeight` and `unitize` of `pga.nim`, and `|∘`, `^∘` and `^`
 of `pga/operators.nim`. The change `conformal-norms` edits `normCenter` of `pga.nim`, and `|⊘` of

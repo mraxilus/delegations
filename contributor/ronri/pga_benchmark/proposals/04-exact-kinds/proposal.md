@@ -1,20 +1,29 @@
 # P04: Return exactly the bases a product reaches
 
-One generic object holds the coefficients of any set of bases, dense in basis order. One macro
-call names a basis-set type for each grade and for both parities, from `DIMENSIONS` alone. Each
-named basis-set type is an alias of the generic one. A product returns the exact basis-set type
-of the bases that its table reaches. So a dot product writes one slot, and the bulk of a bivector
-writes only the part of its grade that it reaches.
+**What it is.** A new module of the library, `pga/basis_sets.nim`, holds one generic type,
+`MultivectorOf[B]`, for the coefficients of any set B of bases. It names one type for each grade,
+`Kvector0` to `KvectorN`, and one for each parity, `MultivectorEven` and `MultivectorOdd`. Each
+product of two such types reads the table of the library at compile time, finds the bases that its
+result can reach, and returns exactly that type.
 
-This proposal applies at pin. It reads the tables of the library, whole, by their names at pin.
-It holds the basis-set types of P02, `typed-multivectors`, and replaces their return rule, as the
-Architect ruled on 2026-10-04. P02 returned the smallest named basis-set type that holds a
-product, and P02 is withdrawn. P09, `object-names`, holds the names of objects that P02 proposed.
+**What it is for.** At pin, each product returns a whole `Multivector` of 2ⁿ floats, also where
+the result has one coefficient. A dot product writes 128 bytes at rga4d and 256 at cga5d to give
+one number. Here it writes 8 bytes, and the bulk of a bivector writes 24. The type also says what
+the result is. So P09 can name the objects of the book, and P10 can give each norm a type of two
+floats.
 
-A product whose terms all land in one slot returns a type of one slot, not a `float`. So its
-type still names its basis.
+**What it costs.** Each product is generic, so each pair of types that a program uses compiles a
+body of its own, and that cost is unmeasured. Only `∧`, `⟇`, `∙`, `∘` and the round parts take
+basis-set types, so any other operator needs a widen to `Multivector` first. `Multivector` and each
+of its operators stay, so no caller changes.
 
-## What it is
+This proposal holds the basis-set types of P02, `typed-multivectors`, and replaces their return
+rule, as the Architect ruled on 2026-10-04. P02 returned the smallest named basis-set type that
+holds a product, and P02 is withdrawn. P09, `object-names`, holds the names of objects that P02
+proposed. A product whose terms all land in one slot returns a type of one slot, not a `float`, so
+its type still names its basis.
+
+## How it works
 
 - **Basis-set types.** `MultivectorOf[B]`, with `B: static set[Basis]`, holds `card(B)` floats.
   Its field `elements` stays private, as pin keeps the field of `Multivector` private.
@@ -29,20 +38,23 @@ type still names its basis.
   whole algebra, so every line written against pin compiles.
 - **Products.** The emitter walks the whole table over the bases of the two operands, and finds
   the bases that the product can reach. The tables stay whole, so the count of tables does not
-  grow with the count of types. A type macro, `kindOf`, spells that set as a literal. A return
-  type that computes the set through a call is not the same type as its alias.
+  grow with the count of types. A type macro, `typeReached`, spells that set as a literal. A
+  return type that computes the set through a call is not the same type as its alias.
 - **No fill.** A product reaches every slot of its exact basis-set type. So each product is
   `noinit`, and writes each slot once. A product that reaches no basis returns
   `MultivectorOf[{}]`, which holds no coefficient and widens to zero.
 - **Widen and narrow.** `toMultivector` widens a basis-set type to `Multivector`.
   `toMultivectorOf` narrows a `Multivector` to a basis-set type. It asserts that each other
   coefficient is zero within the comparison tolerance, which is the zero test of `grade` at pin.
-- **Alignment.** Each basis-set type aligns to `alignmentOf` of its count of floats: the largest
-  power of two that divides their bytes, and at most 64. So it pads no count.
+  Each walks the bases of `B` with a running slot. A slot counted for each basis took ×2 to ×15
+  as long, at rga4d, cga5d and rga6d on an Intel Xeon at 2.1 GHz with 4 cores, on 2026-10-15.
+- **Alignment.** Each basis-set type aligns to `alignment` of its count of floats: the largest
+  power of two that divides their bytes, and at most 64. So it pads no count. The empty set
+  keeps the alignment of a float.
   `MultivectorOf[B]` takes it through `when`, so a named type and an unnamed type follow one
   rule.
 - **Coefficients.** The basis-set types hold `float`, as `Multivector` does at pin. Under P06,
-  `float-width`, they would hold `Coefficient`, and `alignmentOf` would read
+  `float-width`, they would hold `Coefficient`, and `alignment` would read
   `sizeof(Coefficient)`. P06 names them among what it leaves out.
 
 Products stay generic, since one body for each pair of basis-set types costs too much. At 5D
@@ -60,13 +72,12 @@ The terms that a motor sandwich on a point emits at 4D, as the prototype of P02 
 | Named basis-set types, as P02 | 20 | 28 | 48 |
 
 An exact basis-set type holds a subset of the bases of the smallest named type that holds it.
-So exact basis-set types spend at most those terms, and the prototype of this proposal does not
-count them.
+So exact basis-set types spend at most those terms. `laws.nim` of this proposal does not count
+them.
 
 The table gives the bytes that each result holds, at rga4d and then at cga5d. The library
 writes a whole `Multivector`. P02 writes the smallest named basis-set type, or `Multivector`
-where none holds the result. The prototype prints each exact size, and its laws hold the rule of
-each row:
+where none holds the result. `laws.nim` prints each exact size, and holds the rule of each row:
 
 | Product | Library | Smallest named, as P02 | Exact, rga4d | Exact, cga5d |
 |---------|---------|------------------------|--------------|--------------|
@@ -85,7 +96,7 @@ result of one slot writes 8 bytes, which meets the bound.
 
 P02 also returns one slot for a dot, as `Kvector0` or `KvectorN`. So this proposal gains over
 P02 on the parts, and not on the dots. For the squared norms, the 8 bytes are a claim of design
-alone. The prototype does not emit them, since the library reads each one from a 2D table with
+alone. This change does not emit them, since the library reads each one from a 2D table with
 one operand.
 
 ## Alignment of basis-set types
@@ -123,11 +134,11 @@ At 16 bytes the cause is in the machine code. The copy of a padded result reads 
 bytes in one load. That load spans two 8-byte stores, the last float and the zeroed padding,
 and the processor cannot forward it.
 
-So a basis-set type takes the alignment that pads it at no count. `alignmentOf` gives it from the
+So a basis-set type takes the alignment that pads it at no count. `alignment` gives it from the
 size of the basis set alone. Each range below spans the medians of the sum and the negation, on
 Cascade Lake and on Emerald Rapids under SSE2, AVX2 and AVX-512:
 
-| Floats | Objects | Bytes | `alignmentOf` | Time over natural |
+| Floats | Objects | Bytes | `alignment` | Time over natural |
 |--------|---------|-------|---------------|-------------------|
 | 3 | rga3d point and line | 24 | 8, natural | ×1 |
 | 4 | rga3d motor and flector, rga4d point and plane | 32 | 32 | ×0.85 to ×1.17, Emerald Rapids |
@@ -145,10 +156,10 @@ not better.
 A basis-set type of an odd count keeps 8 bytes, so it can still cross a line. Only padding would
 prevent that, and padding costs more than the line.
 
-`align.nim` holds `alignmentOf` at each count from 1 to 64, and at each count in the table above.
+`laws.nim` holds `alignment` at each count from 0 to 64, and at each count in the table above.
 Each basis-set type takes it from the size of its basis set, as the Architect ruled on
-2026-10-04. The prototype imports it, and its laws hold the size and the alignment of each named
-basis-set type at rga3d, rga4d, cga4d and cga5d.
+2026-10-04. The laws hold the size and the alignment of each named basis-set type at each of the
+nine algebras of the library.
 
 ## Limits
 
@@ -157,17 +168,17 @@ basis-set type at rga3d, rga4d, cga4d and cga5d.
   grade 1. An operator that knows better declares its product set. The emitter at pin takes no
   grade filter, so that set comes from the table that the operator reads.
 - An alias adds no type. So at rga4d, `$typeof(p ∧ q)` of two vectors prints the generic with
-  its bases, and not `Kvector2`, as the prototype prints:
+  its bases, and not `Kvector2`, as `laws.nim` prints:
   `MultivectorOf[{Basis.E41, Basis.E42, Basis.E43, Basis.E23, Basis.E31, Basis.E12}]`. A
   compiler message can print any name of the type. The alias serves where the importer writes a
   type in source.
 - A norm takes a root of a squared norm, so it is a scalar function, and this proposal does not
   cover it.
-- The prototype emits no squared norm. The library reads each one from a 2D table with one
+- The change emits no squared norm. The library reads each one from a 2D table with one
   operand, and `defineProduct` takes two. A call with one type and one operand twice would emit
   it, and no law holds that form.
-- The prototype generates `∧`, `⟇`, `∙`, `∘` and the round parts alone. It generates no flat
-  part and no flat basis-set type.
+- The change generates `∧`, `⟇`, `∙`, `∘` and the round parts alone. It generates no flat part
+  and no flat basis-set type.
 - The timings of basis-set types come from two Intel Xeons. An AMD or an ARM core is not
   measured.
 - Cascade Lake does not time the stand-in of 4 floats at 32 bytes. On Emerald Rapids under AVX2,
@@ -183,40 +194,42 @@ basis-set type at rga3d, rga4d, cga4d and cga5d.
 
 ## Implementation
 
-- **Files.** This proposal holds no `change.md`, since P09 and P10 import its prototype as the
-  evidence. A change of the library would declare each type a second time in their programs. Once
-  written, the change adds one module, `pga/basis_sets.nim`. It holds the code of `prototype.nim`
-  above its laws, and `alignmentOf` from `align.nim`. It also adds `basis_sets` to the import line
-  and the export line of `pga.nim`, and the laws become a suite in `tests/suites.nim`.
+- **Files.** `change.md` adds one module, `pga/basis_sets.nim`, and `pga.nim` imports and exports
+  it. `pga.nim` also gains the type in its bootstrap diagram, and one alias for each generic
+  operator, beside the alias of that operator on `Multivector`. Three TODOs of
+  `pga/multivectors.nim` asked for compact types, subsets of multivectors and even and odd bases,
+  so one TODO replaces them, for the question that stays open. `laws.nim` holds the laws, and
+  `timing.nim` times stand-ins of each count, with no library.
 - **Types and signatures.** Every type and signature at pin stays. `MultivectorOf` and its
-  aliases are new, and the new signatures are below. The library exports `bases`, which the
-  prototype keeps private. The constant `LINE` of `alignmentOf` stays private.
-- **Functions.** The change adds the functions below, and the private `slotOf`, `reachOf`,
-  `literal` and `basesOfParity`. It also adds the macros `defineMultivectors`, `kindOf`,
+  aliases are new, and the new signatures are below. The constant `ALIGNMENT_MAX` stays private.
+- **Functions.** The change adds the functions below, and the private `slot`, `emitSet`,
+  `emitRead` and `emitWrites`. It also adds the macros `defineMultivectors`, `typeReached`,
   `defineProduct` and `defineMap`. It removes and changes no function. `defineProduct` and
   `defineMap` read the same tables as `defineOperator`, but over the bases of the operands
   alone. `defineOperator` stays, and so does every operator on `Multivector`.
 - **Generic operators.** Only `∧`, `⟇`, the binary `∙` and `∘`, and the round parts are generic.
-  These stay on `Multivector` alone: `∨` and `⟑`, the duals, complements and reverses, and the
-  flat parts. So do the interior products, the squared norms and norms, `unitize`, the chains,
-  `+`, `-`, `=~`, `$` and `grade`.
+  Their aliases are `wedge`, `wedgeDotAnti`, `dot`, `dotAnti`, and `bulk` and `weight` under the
+  rigid metric, or `bulkRound` and `weightRound` under the conformal one. These stay on
+  `Multivector` alone: `∨` and `⟑`, the duals, complements and reverses, and the flat parts. So do
+  the interior products, the squared norms and norms, `unitize`, the chains, `+`, `-`, `=~`, `$`
+  and `grade`.
 - **Callers.** No caller must migrate, since `Multivector` and every operator at pin stay. A
   caller that takes basis-set types widens through `toMultivector` for each operator that stays
   on `Multivector`. It narrows the result through `toMultivectorOf`, which asserts that each
   other coefficient is zero within the comparison tolerance. A caller imports `pga` alone, and
-  it cannot reach `elements`. P09 (`laws.nim`) and P10 (`prototype.nim`) import the prototype
-  until the change lands.
-- **Order of edits.** The new module edits no line at pin, but the change `doc-comments` edits the
-  import line of `pga.nim`, and `doc-comments-2` edits its export line. Whichever of each pair
-  lands second quotes that line again. P06, `float-width`, turns `float` into `Coefficient`, so
-  whichever of P06 and this proposal lands second writes the new module with `Coefficient`. P05,
-  `multivector-align`, edits no line of this change. P09, `object-names`, and P10,
-  `homogeneous-scalar`, build on this proposal, so they land after it.
+  it cannot reach `elements`, so `laws.nim` samples each type through the narrow.
+- **Order of edits.** Every quote applies at pin. The changes `doc-comments` and `doc-comments-2`
+  edit the import and export lines of `pga.nim`, and `doc-comments` edits the TODOs of
+  `pga/multivectors.nim` too. Whichever of each pair lands second quotes those lines again. P06,
+  `float-width`, turns `float` into `Coefficient`, so whichever of P06 and this proposal lands
+  second writes the new module with `Coefficient`. No other proposal edits a line that this change
+  quotes. P09, `object-names`, and P10, `homogeneous-scalar`, build on this proposal, so they land
+  after it.
 
 ```nim
 type MultivectorOf*[B: static set[Basis]] = object  # private `elements`, `card(B)` floats
 type Kvector0* = MultivectorOf[{Basis.S}]  # likewise to KvectorN, MultivectorEven, MultivectorOdd
-func alignmentOf*(count: int): int
+func alignment*(count: int): int
 template `[]`*[B: static set[Basis]](m: MultivectorOf[B], basis: static Basis): float
 template `[]=`*[B: static set[Basis]](m: var MultivectorOf[B], basis: static Basis, value: float)
 func coefficient*[B: static set[Basis]](m: MultivectorOf[B], basis: Basis): float
@@ -225,12 +238,13 @@ func toMultivector*[B: static set[Basis]](m: MultivectorOf[B]): Multivector
 func toMultivectorOf*[B: static set[Basis]](
   m: Multivector, t: typedesc[MultivectorOf[B]]
 ): MultivectorOf[B]
+macro typeReached*(cayley: static Cayley2D; bases_m, bases_n: static set[Basis]): untyped
 func `∧`*[A, B: static set[Basis]](
   m: MultivectorOf[A], n: MultivectorOf[B]
-): kindOf(CAYLEYS_WEDGE.base, A, B) {.noinit.}  # and ⟇, ∙, ∘ on their tables
+): typeReached(CAYLEYS_WEDGE.base, A, B) {.noinit.}  # and ⟇, ∙, ∘ on their tables
 func `∙`*[A: static set[Basis]](
   m: MultivectorOf[A],
-): kindOf(CAYLEYS_PARTS.bulk.round, A) {.noinit.}  # and ∘ on weight table
+): typeReached(CAYLEYS_PARTS.bulk.round, A) {.noinit.}  # and ∘ on weight table
 ```
 
 ## Names
@@ -251,6 +265,8 @@ bare noun (V.3).
 | Widen | `toMultivector` | `to<Target>` names a change of representation (V.3) |
 | Narrow | `toMultivectorOf(m, Kvector2)` | `toKvector2` and kin, one name for each alias |
 | Read at run time | `coefficient(m, basis)` | `getCoefficient`: V.3 wants the bare noun |
+| Type a product reaches | `typeReached(cayley, A, B)` | `kindOf`: glossary keeps kind for operand |
+| Alignment of a count | `alignment(count)` | `alignmentOf`: V.3 wants the bare noun |
 
 Nim reads a name without case after its first letter, so the type `Motor` and the constant
 `MOTOR` are one identifier.
@@ -262,7 +278,7 @@ Nim reads a name without case after its first letter, so the type `Motor` and th
 | Smallest named basis-set type, as P02 | Bulk of a bivector holds zeros in half its slots |
 | Generic alone, with no alias | Built, equal at 3D, 4D, 5D; importer spells bases in source |
 | `float` for a product of one slot | Scalar and antiscalar become one type, and the basis is lost |
-| Return type `MultivectorOf[reachOf(...)]` | Built; it is not the same type as its alias |
+| Return type `MultivectorOf[reach(...)]` | Built; it is not the same type as its alias |
 | Name `Blades` for the generic | A blade factors into vectors, and a motor or a screw does not |
 | One named type for each set reached | The names would spell the bases, as the generic does |
 | Contiguous ranges, `array[E41 .. E12, float]` | Plan of pin's TODO; no range names motor |
@@ -290,4 +306,4 @@ tables stay whole, and the emitter reads only the cells of the bases of its oper
 - Whether the narrow takes the zero test that P07, `part-scale`, gives `grade`, or the one test
   that P07 and P11, `unitize-general`, leave open. At pin it takes the zero test of `grade`.
 - Whether `Multivector` becomes the alias of the whole set once P05 lands. At pin `Multivector`
-  aligns to 8, and `alignmentOf` gives the whole set 64, so their layouts differ.
+  aligns to 8, and `alignment` gives the whole set 64 from rga3d up, so their layouts differ.

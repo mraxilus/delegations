@@ -1,32 +1,35 @@
 # P02: Generate concrete k-vector types for any dimension
 
-**Withdrawn.** P04, `exact-kinds`, holds this proposal whole and replaces its return rule, as
-the Architect ruled on 2026-10-04. This page stays with its last evaluation, so a citation of
-P02 still leads to what was proposed and measured.
+**Withdrawn.** P04, `exact-kinds`, holds its basis-set types and replaces their return rule, as
+the Architect ruled on 2026-10-04. P09, `object-names`, holds its names of objects. This page stays
+with its last evaluation, so a citation of P02 still leads to what was proposed and measured.
 
-One macro call generates a concrete object type for each grade and for both parities, from
-`DIMENSIONS` alone. Each type stores only its own bases, densely. Products are generic over the
-closed set of these types, and return the smallest type that holds what the product can reach.
-An importer writes `p ∧ q` and reads `Kvector2`, never a generic.
+**What it was.** One macro call generates a concrete object type for each grade and for both
+parities, from `DIMENSIONS` alone. Each type stores only its own bases, densely. Products are
+generic over the closed set of these types, and return the smallest type that holds what the product
+can reach. An importer writes `p ∧ q` and reads `Kvector2`, never a generic.
+
+**What it was for.** A product returned the smallest of a few named types, so a motor sandwich on
+a point emitted 48 terms at 4D, where an untyped multivector emits 384.
 
 This proposal builds on P01, `cayley-derivation`. Grade restriction lives in the emission, so the
 tables stay whole, and the prototype reads the derived tables by their names in that proposal.
 
-## What it is
+## How it worked
 
-- **Kinds.** `Kvector0` to `KvectorN`, one for each grade, then `MultivectorEven` and
+- **Basis-set types.** `Kvector0` to `KvectorN`, one for each grade, then `MultivectorEven` and
   `MultivectorOdd`. `Multivector` stays the whole algebra, unchanged, so every line written
   today compiles.
 - **Slots.** The `Basis` enum keeps its grade-major order. A slot is the count of the bases of
-  the kind below the basis that is asked for. It folds at compile time wherever the basis is
+  the type below the basis that is asked for. It folds at compile time wherever the basis is
   static, which in an emitted body it always is.
 - **Products.** The emitter walks the whole table over the bases of the two operands. It finds
-  the bases the product can reach, and returns the smallest kind that holds them.
+  the bases the product can reach, and returns the smallest type that holds them.
 - **Names of objects.** `pga.nim` names the geometric objects, one alias for each line, gated on
   the algebra: `Point`, `Line`, `Plane`, `Motor` and their conformal kin. The library below
   knows no geometry.
 
-The signatures stay generic for cost. One emitted procedure for each pair of kinds at 5D
+The signatures stay generic for cost. One emitted procedure for each pair of types at 5D
 conformal is some 6 000 bodies, and most are never called. A generic instantiates only the
 pairs that a program uses.
 
@@ -38,15 +41,15 @@ The terms that a motor sandwich on a point emits at 4D:
 |--------|---------------|-------------------------|-------|
 | Untyped multivector | 192 | 192 | 384 |
 | Contiguous ranges, motor at full width | 40 | 56 | 96 |
-| Generated kinds over sets of bases | 20 | 28 | 48 |
+| Generated types over sets of bases | 20 | 28 | 48 |
 
 ## Limits
 
 The reach is what the table can produce, not what the algebra guarantees. A sandwich comes back
 as `MultivectorOdd` at 4D, although its value lies in grade 1. An operator that knows better
-declares its product set, as `filter_product` does at pin.
+declares its product set, as `filter_product` does at `d9be8ae`, the pin of its evaluation.
 
-The prototype generates `∧` and `⟇` only, and no conformal flat kinds.
+The prototype generates `∧` and `⟇` only, and no conformal flat types.
 
 ## Names
 
@@ -94,4 +97,4 @@ of grades, not a `set[Grade]`.
 
 - Name the typeclass: `SomeMultivector` or `MultivectorAny`.
 - Choose the operators that declare a product set, such as the sandwiches and projections.
-- Generate and test the conformal flat kinds.
+- Generate and test the conformal flat types.
