@@ -1,16 +1,23 @@
 ## Render what evaluation measured, and edits it tried, for marginalia and proposal pages alike.
 ##   Both pages show proposed change against pin, so both render it one way: suites beside
 ##     pin's own, functions whose counts moved, times of measurands those functions serve, and
-##     edits as quote and replacement at line quote stands on at pin.
-##   Every edit renders closed: its summary names file and line at pin, then signatures of
-##     routines, tests and suites edit defines, else of one it sits in at pin, so reader sees
-##     what changes before reading how. Body, pragmas and comments leave signature.
+##     edits as diff of lines against file each edit finds.
+##   Edits open under list of files they touch, each with lines removed and added. Each edit's
+##     summary names file and line, then signatures of routines, tests and suites edit defines,
+##     else of one it sits in, so reader sees what changes before reading how. Body, pragmas and
+##     comments leave signature.
+##   Diff numbers each line on side it stands on: before edit and after it, in file as edit finds
+##     it. Bases of proposal and earlier edits apply first, so number is one reader finds in
+##     library carrying them. Unchanged run longer than twice context folds to count of lines.
 ##   Spread is read from evaluations themselves: evaluation that changes no library function
 ##     moves no count, so range of its time ratios is range of machine, and page states it
 ##     beside figures it qualifies.
 ##
 ##   Cost: measurand counts as touched where its library function moved; measurand served by
 ##     composition of several functions is left out, as `timesOf` leaves it out of median.
+##   Cost: diff takes table of common lengths over lines between shared head and tail, so whole-
+##     file replacement of about thousand changed lines holds about million counts while page
+##     builds.
 
 {.experimental: "strictFuncs".}
 
@@ -20,14 +27,24 @@ import ../[changes, markdown]
 import ./shell
 
 
-type Spread* = object
-  ## Define range that holds 90% of time ratios in evaluations that change no library function.
-  low*, high*: float  ## Fifth and ninety-fifth percentile of ratio, each measurand alone.
-  count*: int  ## Ratios spread is read from; zero where spread is assumed.
+type
+  Spread* = object
+    ## Define range that holds 90% of time ratios in evaluations that change no library function.
+    low*, high*: float  ## Fifth and ninety-fifth percentile of ratio, each measurand alone.
+    count*: int  ## Ratios spread is read from; zero where spread is assumed.
+  KindLine {.pure.} = enum  ## Define what edit does to one line of diff.
+    Kept, Removed, Added
+  LineDiffed = object  ## Define one line of diff, numbered on each side it stands on.
+    kind: KindLine  ## Kept on both sides, removed from before, or added after.
+    text: string  ## Line as written.
+    number_before: int  ## Line in file before edit; zero where line is added.
+    number_after: int  ## Line in file after edit; zero where line is removed.
 
 
-const SPREAD_ASSUMED = Spread(low: 0.92, high: 1.08, count: 0)
-  ## Spread assumed where too few evaluations change nothing; page states it as assumed.
+const
+  SPREAD_ASSUMED = Spread(low: 0.92, high: 1.08, count: 0)
+    ## Spread assumed where too few evaluations change nothing; page states it as assumed.
+  CONTEXT = 3  ## Unchanged lines diff keeps beside each change; longer run folds.
 
 
 
@@ -183,10 +200,118 @@ func tableNan*(evaluation: JsonNode): string =
     result.add "</table></div>"
 
 
+func diffLines(before, after: seq[string]; first_before, first_after: int): seq[LineDiffed] =
+  ## Diff lines through longest common subsequence; removal stands before addition it pairs with.
+  ##   `first_before` and `first_after` number first line of each side; zero leaves side bare.
+
+  func numberOf(first, index: int): int =
+    ## Number line `index` of side opening at `first`; zero where side is bare.
+    if first > 0: first + index else: 0
+
+  # Trim head and tail both sides share, so table spans changed middle alone.
+  var head, tail = 0
+  while head < before.len and head < after.len and before[head] == after[head]: inc head
+  while tail < before.len - head and tail < after.len - head and
+      before[^(tail+1)] == after[^(tail+1)]:
+    inc tail
+  let
+    (count_before, count_after) = (before.len - head - tail, after.len - head - tail)
+    width = count_after + 1
+
+  # Count longest common subsequence of each pair of suffixes of middle.
+  var lengths = newSeq[int]((count_before + 1) * width)
+  for i in countdown(count_before - 1, 0):
+    for j in countdown(count_after - 1, 0):
+      lengths[i * width + j] =
+        if before[head+i] == after[head+j]: lengths[(i+1)*width+j+1] + 1
+        else: max(lengths[(i+1)*width+j], lengths[i*width+j+1])
+
+  # Walk from start: keep shared line, else remove or add toward longer common suffix.
+  for index in 0..<head:
+    result.add LineDiffed(
+      kind: KindLine.Kept,
+      text: before[index],
+      number_before: numberOf(first_before, index),
+      number_after: numberOf(first_after, index),
+    )
+  var (i, j) = (0, 0)
+  while i < count_before or j < count_after:
+    if i < count_before and j < count_after and before[head+i] == after[head+j]:
+      result.add LineDiffed(
+        kind: KindLine.Kept,
+        text: before[head+i],
+        number_before: numberOf(first_before, head + i),
+        number_after: numberOf(first_after, head + j),
+      )
+      inc i
+      inc j
+    elif i < count_before and
+        (j == count_after or lengths[(i+1)*width+j] >= lengths[i*width+j+1]):
+      result.add LineDiffed(
+        kind: KindLine.Removed,
+        text: before[head+i],
+        number_before: numberOf(first_before, head + i),
+      )
+      inc i
+    else:
+      result.add LineDiffed(
+        kind: KindLine.Added,
+        text: after[head+j],
+        number_after: numberOf(first_after, head + j),
+      )
+      inc j
+  for index in 0..<tail:
+    result.add LineDiffed(
+      kind: KindLine.Kept,
+      text: before[before.len-tail+index],
+      number_before: numberOf(first_before, before.len - tail + index),
+      number_after: numberOf(first_after, after.len - tail + index),
+    )
+
+
+func htmlDiff(lines: seq[LineDiffed]): string =
+  ## Render diff as numbered lines, each unchanged run past context folded to its count.
+
+  func cellOf(number: int): string =
+    ## Render line number, or empty cell where side holds no such line.
+    "<td class=\"ln\">" & (if number > 0: $number else: "") & "</td>"
+
+  # Show each change with context beside it; lone hidden line shows, since its fold is no shorter.
+  var is_shown = newSeq[bool](lines.len)
+  for index, line in lines:
+    if line.kind == KindLine.Kept: continue
+    for near in max(0, index - CONTEXT) .. min(lines.len - 1, index + CONTEXT):
+      is_shown[near] = true
+  for index in 0..<lines.len:
+    if (index == 0 or is_shown[index-1]) and (index == lines.len - 1 or is_shown[index+1]):
+      is_shown[index] = true
+
+  # Render rows, folding each hidden run.
+  result = "<div class=\"diff\"><table>"
+  var index = 0
+  while index < lines.len:
+    if not is_shown[index]:
+      var last = index
+      while last + 1 < lines.len and not is_shown[last+1]: inc last
+      let count = last - index + 1
+      result.add "<tr class=\"fold\"><td colspan=\"4\">" & $count & " unchanged lines</td></tr>"
+      index = last + 1
+      continue
+    let (line, mark) = case lines[index].kind
+      of KindLine.Kept: ("kept", " ")
+      of KindLine.Removed: ("removed", "-")
+      of KindLine.Added: ("added", "+")
+    result.add "<tr class=\"" & line & "\">" & cellOf(lines[index].number_before) &
+        cellOf(lines[index].number_after) & "<td class=\"mark\">" & mark &
+        "</td><td class=\"text\">" & escapeHtml(lines[index].text) & "</td></tr>"
+    inc index
+  result.add "</table></div>"
+
+
 func htmlEdits*(change: Change, files: Table[string, string]): string =
-  ## Render each edit closed, under summary naming where it lands.
+  ## Render files change touches, then each edit open as diff, under summary naming where it lands.
+  ##   `files` is library as change finds it: pin, with bases of proposal applied.
   ##   Summary names signatures edit defines or sits in.
-  ##   Opening edit shows quote then replacement, or whole file.
   const declarations = ["func ", "proc ", "iterator ", "template ", "macro ", "method ",
     "converter ", "suite ", "test "]
     ## Words opening declaration whose signature summary shows.
@@ -302,33 +427,60 @@ func htmlEdits*(change: Change, files: Table[string, string]): string =
     for found in signatures: result.add code(found)
     result.add "</span>"
 
+  func linesOf(text: string): seq[string] =
+    ## Split text into lines, one closing line break dropped; empty text holds none.
+    if text.len == 0: return
+    (if text.endsWith("\n"): text[0 .. ^2] else: text).splitLines
+
+  func textCounts(lines: seq[LineDiffed]): string =
+    ## Count lines removed and added, as `-2 +5`.
+    "<span class=\"removed\">-" & $lines.countIt(it.kind == KindLine.Removed) &
+        "</span> <span class=\"added\">+" & $lines.countIt(it.kind == KindLine.Added) & "</span>"
+
+  # Diff each edit against file as it finds it, earlier edits applied.
+  var
+    current = files
+    paths: seq[string]
+    diffs: Table[string, seq[LineDiffed]]
+    sections: seq[string]
   for edit in change.edits:
-    if edit.digest.len > 0:
-      let lines = edit.replacement.count('\n')
-      result.add "<details class=\"edit\"><summary><span class=\"where\">replaces " &
-          code(edit.path) & " whole, " & $lines & " lines, written against digest " &
-          code(edit.digest) & "</span>" & htmlSignatures("defines", declared(edit.replacement)) &
-          "</summary>" &
-          renderFence(edit.replacement.strip(leading = false).splitLines, "nim", 1) & "</details>"
-      continue
     let
-      source = files.getOrDefault(edit.path)
-      at = if source.len > 0: source.lineOf(edit.quote) else: 0
-      where = if at > 0: edit.path & ":" & $at else: edit.path  # quote gone from pin
-      count_quote = edit.quote.strip(leading = false).splitLines.len
-      count_replacement = edit.replacement.strip(leading = false).splitLines.len
-      defined = declared(edit.replacement)
-      context =
-        if defined.len > 0: htmlSignatures("defines", defined)
-        else:
-          let inside = enclosing(source, edit.quote, at)
-          if inside.isSome: htmlSignatures("inside", [inside.get]) else: ""
-    result.add "<details class=\"edit\"><summary><span class=\"where\">" & code(where) &
-        " · replaces " & $count_quote & (if count_quote == 1: " line" else: " lines") & " with " &
-        $count_replacement & "</span>" & context &
-        "</summary><div class=\"pair\"><div><p class=\"label\">at pin</p>" &
-        renderFence(edit.quote.splitLines, "nim", at) & "</div><div><p class=\"label\">" &
-        "proposed</p>" & renderFence(edit.replacement.splitLines, "nim") & "</div></div></details>"
+      before = current.getOrDefault(edit.path)
+      is_applied = applyChange(current, Change(edits: @[edit]), "").len == 0
+    var lines: seq[LineDiffed]
+    case edit.kind
+    of KindEdit.Add:
+      lines = diffLines(@[], linesOf(edit.replacement), 0, 1)
+      sections.add "<details class=\"edit\" open><summary><span class=\"where\">adds " &
+          code(edit.path) & " · " & textCounts(lines) & "</span>" &
+          htmlSignatures("defines", declared(edit.replacement)) & "</summary>"
+    of KindEdit.Replace:
+      lines = diffLines(linesOf(before), linesOf(edit.replacement), 1, 1)
+      sections.add "<details class=\"edit\" open><summary><span class=\"where\">replaces " &
+          code(edit.path) & " whole, written against digest " & code(edit.digest) & " · " &
+          textCounts(lines) & "</span>" & htmlSignatures("defines", declared(edit.replacement)) &
+          "</summary>"
+    of KindEdit.Quote:
+      let
+        at = if is_applied: before.lineOf(edit.quote) else: 0
+        where = if at > 0: edit.path & ":" & $at else: edit.path  # quote gone from file
+        defined = declared(edit.replacement)
+        context =
+          if defined.len > 0: htmlSignatures("defines", defined)
+          else:
+            let inside = enclosing(before, edit.quote, at)
+            if inside.isSome: htmlSignatures("inside", [inside.get]) else: ""
+      lines = diffLines(linesOf(edit.quote), linesOf(edit.replacement), at, at)
+      sections.add "<details class=\"edit\" open><summary><span class=\"where\">" & code(where) &
+          " · " & textCounts(lines) & "</span>" & context & "</summary>"
+    sections[^1].add htmlDiff(lines) & "</details>"
+    if edit.path notin diffs: paths.add edit.path
+    diffs.mgetOrPut(edit.path, @[]).add lines
+
+  # List files touched, each with lines removed and added, above edits.
+  result = "<ul class=\"files\">"
+  for path in paths: result.add "<li>" & code(path) & " " & textCounts(diffs[path]) & "</li>"
+  result.add "</ul>" & sections.join
 
 
 func textSpread*(spread: Spread): string =

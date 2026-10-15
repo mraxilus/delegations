@@ -12,14 +12,17 @@
 ##   Figure paragraph embeds SVG it names, whole, so figure takes page's colours and faces; one
 ##     whose file is absent renders as its text, and `drive` names it.
 ##
-##   Cost: every edit renders closed, with signatures it defines or sits in, since hundreds of
-##     lines would bury claims; reader opens edit to read its code.
+##   Edits render open as diffs against library carrying bases of proposal, so each line number is
+##     one reader finds there; summary of each names signatures it defines or sits in.
+##
+##   Cost: open diffs make long page where proposal edits much, as whole-file replacement does;
+##     unchanged runs fold, and reader closes edit to skip it.
 
 {.experimental: "strictFuncs".}
 
 import std/[json, options, sequtils, strutils, tables]
 
-import ../[markdown, proposals]
+import ../[changes, markdown, proposals]
 import ./[evaluation, shell]
 
 
@@ -149,8 +152,11 @@ func htmlProposal*(
       result.add renderBlock(node, level)
   result.add "</section>"
   if proposal.change.edits.len > 0:
+    var based = files
+    for base in dependenciesOf(proposals, proposal)[0]:
+      discard applyChange(based, base.change, base.directory)  # Misfit is `drive`'s finding.
     result.add "<section class=\"block\"><" & section & ">What it changes</" & section & ">" &
-        htmlEdits(proposal.change, files) & "</section>"
+        htmlEdits(proposal.change, based) & "</section>"
   if not evaluation.isNil:
     result.add "<section class=\"block\"><" & section & ">What it measured at pin</" & section &
         "><p class=\"note\">" & textSpread(spread) & "</p>" & tableFunctions(evaluation) &

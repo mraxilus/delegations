@@ -1919,19 +1919,55 @@ suite "Internal: Edits":
     ## Library file at pin: routine whose signature spans two lines, then top-level import.
 
   func edit(quote, replacement: string; digest = ""): Change =
-    ## Build change of one edit to `pga/a.nim`.
-    Change(edits: @[Edit(path: "pga/a.nim", quote: quote, replacement: replacement,
+    ## Build change of one edit to `pga/a.nim`: whole-file replacement where digest is given.
+    let kind = if digest.len > 0: KindEdit.Replace else: KindEdit.Quote
+    Change(edits: @[Edit(kind: kind, path: "pga/a.nim", quote: quote, replacement: replacement,
       digest: digest)])
 
   let files = {"pga/a.nim": source_pin}.toTable
     ## Library files edits read their line and context from.
 
 
-  test "edit renders closed, naming routine it sits in at pin":
-    let html = htmlEdits(edit("    result += x\n", "    result -= x\n"), files)
-    check html.startsWith("<details class=\"edit\"><summary>") and " open" notin html  # closed
-    check "<code>pga/a.nim:5</code> · replaces 1 line with 1" in html  # where, and how much
+  test "edit renders open as diff under list of files, naming routine it sits in at pin":
+    let
+      html = htmlEdits(edit("    result += x\n", "    result -= x\n"), files)
+      counts = "<span class=\"removed\">-1</span> <span class=\"added\">+1</span>"
+    check html.startsWith("<ul class=\"files\"><li><code>pga/a.nim</code> " & counts)  # files
+    check "<details class=\"edit\" open><summary>" in html  # open
+    check "<code>pga/a.nim:5</code> · " & counts in html  # where, and how much
     check "inside</span><code>func outer*(a: int; b: int): int</code>" in html  # joined, bare
+    check "<tr class=\"removed\"><td class=\"ln\">5</td><td class=\"ln\"></td>" &
+        "<td class=\"mark\">-</td><td class=\"text\">    result += x</td></tr>" in html  # before
+    check "<tr class=\"added\"><td class=\"ln\"></td><td class=\"ln\">5</td>" &
+        "<td class=\"mark\">+</td><td class=\"text\">    result -= x</td></tr>" in html  # after
+
+
+  test "diff keeps context beside change and folds longer unchanged run to its count":
+    var lines: seq[string]
+    for index in 1..20: lines.add "let x" & $index & " = " & $index
+    var changed = lines
+    changed[9] = "let x10 = 0"
+    let
+      quote = lines.join("\n")
+      html = htmlEdits(edit(quote, changed.join("\n")), {"pga/a.nim": quote & "\n"}.toTable)
+    check "<tr class=\"fold\"><td colspan=\"4\">6 unchanged lines</td></tr>" in html  # head
+    check "<tr class=\"fold\"><td colspan=\"4\">7 unchanged lines</td></tr>" in html  # tail
+    check ">let x7 = 7<" in html and ">let x13 = 13<" in html  # three lines beside change
+    check ">let x6 = 6<" notin html and ">let x14 = 14<" notin html  # rest folded
+    check html.find(">let x10 = 10<") < html.find(">let x10 = 0<")  # removal before addition
+
+
+  test "new file renders every line added, numbered from one":
+    let
+      change = Change(
+        edits: @[
+          Edit(kind: KindEdit.Add, path: "pga/b.nim", replacement: "let a = 1\nlet b = 2\n"),
+        ],
+      )
+      html = htmlEdits(change, files)
+    check "adds <code>pga/b.nim</code> · <span class=\"removed\">-0</span>" in html  # where
+    check "<td class=\"ln\"></td><td class=\"ln\">2</td><td class=\"mark\">+</td>" &
+        "<td class=\"text\">let b = 2</td>" in html  # numbered after alone
 
 
   test "edit inside routine whose header closes at its own indent names that routine":

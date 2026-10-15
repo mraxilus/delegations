@@ -25,6 +25,7 @@
   --code: #eef1f5; --library: #eb6834; --bound: #2a78d6; --reference: #1baf7a;
   --pass: #1f7a4d; --pass-wash: #e3f4ea; --fail: #b3303b; --fail-wash: #fbe9eb;
   --status: #5a4a9c; --status-wash: #ece9f8;
+  --added: #1f6f43; --added-wash: #e6f4ec; --removed: #a3303a; --removed-wash: #fbeaec;
   --serif: "Noto Serif", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Sans", Georgia, serif;
   --sans: "Noto Sans", "Noto Sans Math", "Noto Sans Symbols 2", system-ui, sans-serif;
   --mono: "Commit Mono", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Sans", ui-monospace,
@@ -38,6 +39,7 @@
     --code: #1f2731; --library: #d95926; --bound: #3987e5; --reference: #199e70;
     --pass: #6fcf97; --pass-wash: #1d3327; --fail: #ec7b86; --fail-wash: #3a2226;
     --status: #b3a6ec; --status-wash: #2a2540;
+    --added: #7fd4a2; --added-wash: #17301f; --removed: #f08a94; --removed-wash: #3a1f24;
   }
 }
 :root[data-theme="dark"] {
@@ -47,6 +49,7 @@
   --code: #1f2731; --library: #d95926; --bound: #3987e5; --reference: #199e70;
   --pass: #6fcf97; --pass-wash: #1d3327; --fail: #ec7b86; --fail-wash: #3a2226;
   --status: #b3a6ec; --status-wash: #2a2540;
+  --added: #7fd4a2; --added-wash: #17301f; --removed: #f08a94; --removed-wash: #3a1f24;
 }
 
 * { box-sizing: border-box; }
@@ -205,6 +208,22 @@ details.edit[open] > summary { margin-bottom: 6px; }
 .edit .signatures code { width: fit-content; max-width: 100%; overflow-wrap: anywhere; }
 .pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
 .pair .label { color: var(--muted); font-size: 0.74rem; text-transform: uppercase; }
+ul.files { list-style: none; margin: 0 0 4px; padding: 0; display: grid; gap: 2px;
+  grid-template-columns: minmax(0, 1fr); font-size: 0.88rem; }
+span.added { color: var(--added); font-family: var(--mono); }
+span.removed { color: var(--removed); font-family: var(--mono); }
+.diff { background: var(--code); border-radius: 6px; overflow-x: auto; }
+.diff table { border-collapse: collapse; width: 100%; font: 0.86rem/1.5 var(--mono); }
+.diff td { padding: 0 8px; border: 0; vertical-align: top; }
+.diff td.ln { width: 1%; text-align: right; color: var(--muted); user-select: none; }
+.diff td.mark { width: 1%; padding: 0 2px; user-select: none; }
+.diff td.text { white-space: pre; }
+.diff tr.added { background: var(--added-wash); }
+.diff tr.added td.mark { color: var(--added); }
+.diff tr.removed { background: var(--removed-wash); }
+.diff tr.removed td.mark { color: var(--removed); }
+.diff tr.fold td { color: var(--muted); font-family: var(--sans); font-size: 0.8rem;
+  padding: 2px 8px; border-block: 1px dashed var(--rule-strong); }
 .prose { display: grid; gap: 10px; grid-template-columns: minmax(0, 1fr); }
 .prose li { max-width: 78ch; }
 .prose ul, .prose ol { margin: 0; padding-left: 1.2rem; display: grid; gap: 4px;
