@@ -5,6 +5,23 @@ change folds that sign into the left read of its first table instead, by the gra
 term. It also folds the carrier into the antiwedge that follows. So the partner is two
 generated tables, read in a chain, and no grade scan.
 
+### Order of edits
+
+Other edits land in this order against the edits below:
+
+- P01, `cayley-derivation`, lands first and P08, `compound-tables`, second. The tables below
+  read `applyMap` of P01, and the first edit quotes `CAYLEY_CONTAINER` of P08.
+- P06, `float-width`, edits the sign line of `⊛`, which the last edit removes. So that edit of P06
+  is void once this change lands. If P06 lands first, this change quotes `Coefficient(...)` in
+  place of `float(...)`.
+- The change `partner-guard` quotes the same two lines of `⊛`, so it is void once this change
+  lands. If it lands first, this change quotes its lines, and so removes its assert too.
+- The change `doc-comments` writes a line in `pga.nim` that says `partner` reads grade at run
+  time. That line is stale once this change lands. Whichever of the two lands second drops it.
+- The change `imports-narrow` names each symbol that `pga/operators.nim` imports. Whichever of
+  the two lands second adds `CAYLEY_PARTNER_CONTAINER` and `CAYLEY_PARTNER_MEET` to the
+  conformal import of `cayleys`, and drops `grade` from the import of `algebra`.
+
 ## Edit `pga/cayleys.nim`
 
 ```nim

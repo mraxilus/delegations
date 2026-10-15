@@ -3,6 +3,23 @@
 Five chains of the book each read one table that P01's rules derive, so each runs as one
 product. At pin, each one runs as dense products, with an intermediate between each step.
 
+### Order of edits
+
+Other edits land in this order against the edits below:
+
+- P01, `cayley-derivation`, lands first. Only the first edit quotes text of P01, a line of its
+  header, and the block of `CAYLEY_CARRIER` is the same at pin. Every table reads `applyMap` of
+  P01, so no build holds these edits without P01.
+- P03, `partner-sign`, quotes `CAYLEY_CONTAINER` below, so it lands after this change.
+- The change `imports-narrow` names each symbol that `pga/operators.nim` imports. With both
+  applied, the build stops on `undeclared identifier: 'CAYLEY_SUPPORT'`. Whichever of the two
+  lands second adds `CAYLEY_SUPPORT` and `CAYLEY_SUPPORT_ANTI` in an import under
+  `when IS_RIGID:`, and `CAYLEY_CARRIER_CO`, `CAYLEY_CENTER` and `CAYLEY_CONTAINER` to the
+  conformal import. It drops `origin`, `horizon` and `infinity`, which no operator then reads.
+- The change `doc-comments` writes in the header of `pga/operators.nim` that the support is
+  written by hand. That line is stale once this change lands. Whichever of the two lands second
+  drops `support` from that line.
+
 ## Edit `pga/cayleys.nim`
 
 ```nim

@@ -83,15 +83,23 @@ runs.
   `⊡`, which here is the table of P08. The `laws.nim` of P08 holds that table to the chain of pin.
 - **Callers.** The signature of `⊛` stays, so `partner` of `pga.nim` and every other caller
   compiles with no edit. A caller that passes an operand of mixed grade no longer stops, and
-  gets a value that means nothing (Limits). The change `doc-comments` writes in `pga.nim` that
-  `partner` reads grade at run time, and that line goes once this proposal lands.
+  gets a value that means nothing (Limits).
 - **Order of edits.** P01 (`cayley-derivation`) lands first and P08 (`compound-tables`) second,
   since this proposal reads `applyMap` and quotes `CAYLEY_CONTAINER`. This proposal removes the
   sign line of `⊛`, so the edit of that line in P06 (`float-width`) is void once it lands. If
   P06 lands first, this proposal quotes `Coefficient(...)` in place of `float(...)`. The change
   `partner-guard` quotes the same two lines of `⊛` for a message on mixed grade, so it is void
-  once this proposal lands. If it lands first, this proposal quotes
-  its lines, and so removes its assert too.
+  once this proposal lands. If it lands first, this proposal quotes its lines, and so removes its
+  assert too.
+- **Stale doc.** The change `doc-comments` adds a line to the doc of `partner` in `pga.nim`:
+  `Requires single-grade multivector: grade is read at runtime and must be definite.` That line
+  is stale once this proposal lands. Whichever of the two lands second drops it.
+- **Import gap.** The change `imports-narrow` names each symbol that `pga/operators.nim`
+  imports. Whichever of the two lands second writes the merged import of P08, `compound-tables`.
+  It adds `CAYLEY_PARTNER_CONTAINER` and `CAYLEY_PARTNER_MEET` to the conformal import of
+  `cayleys`, and drops `grade` from the import of `algebra`. A run by hand on 2026-10-15 built
+  that import with P01, P08 and this proposal, and the suites passed at rga2d, rga3d, rga4d,
+  cga3d, cga4d and cga5d.
 
 ## Open decisions
 

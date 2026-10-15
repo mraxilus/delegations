@@ -12,13 +12,18 @@ constructors change together.
 Other edits of `pga/cayleys.nim` and `tests/suites.nim` land in this order against the edits
 below:
 
-- P08, `compound-tables`, quotes this file, so it lands after this proposal. P03,
-  `partner-sign`, quotes P08 and lands after it.
+- P08, `compound-tables`, quotes a line of the header of this file and reads `applyMap`, so it
+  lands after this proposal. P03, `partner-sign`, quotes P08 and lands after it.
 - The change `cayleys-hygiene` renames an overload of `constructProductInterior`, which this
-  proposal deletes. So that change is void once this proposal lands.
+  proposal deletes. So the edits of that change are void once this proposal lands. Its other
+  idea still applies: this proposal writes the parity k(k−1)/2 of the reverse twice, in
+  `reverse` and in `constructProductGeometric`. After this proposal, its edit quotes those lines.
 - The changes `doc-comments` and `doc-comments-2` edit `pga/cayleys.nim` too. Whichever lands
   second is quoted again against the first. If this proposal lands second, its Replace carries
   their text under a new digest.
+- Once this proposal lands, `doc-comments` drops its edit that quotes `  CAYLEYS_DOT* = block:`.
+  Applied after this proposal, that edit gives a line of 136 characters with two docs that
+  contradict each other. This proposal gives the dot its doc on that line already.
 - `doc-comments-2` also edits the import line of `tests/suites.nim` that this proposal edits. The
   second to land quotes that line again.
 

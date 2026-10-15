@@ -78,12 +78,42 @@ builds on this proposal and folds the partner further.
 - **Callers.** Each operator keeps the signature `(m: Multivector): Multivector`. So `support`,
   `supportAnti`, `carrierCo`, `center` and `container` of `pga.nim` compile with no edit. At pin,
   `⊛` calls `⊡`, so it reads the new table with no edit too.
-- **Order of edits.** P01 (`cayley-derivation`) lands first and this proposal next, since both
-  edits of `pga/cayleys.nim` quote its text and the tables read its `applyMap`. P03
-  (`partner-sign`) lands after it, since P03 quotes `CAYLEY_CONTAINER`. The change
-  `cayleys-hygiene` is void once P01 lands. The changes `doc-comments` and `doc-comments-2` edit
-  other lines of `pga/cayleys.nim`, and each is quoted again against P01 or carried in its text.
-  No other proposal or change edits the lines of `pga/operators.nim` that this proposal replaces.
+- **Order of edits.** P01 (`cayley-derivation`) lands first and this proposal next. Of the two
+  edits of `pga/cayleys.nim`, only the edit of the header line quotes text of P01. The block of
+  `CAYLEY_CARRIER` that the other edit quotes is the same at pin. So the hard dependency is
+  `applyMap` of P01, which every table reads. P03 (`partner-sign`) lands after this proposal,
+  since P03 quotes `CAYLEY_CONTAINER`. The edits of `cayleys-hygiene` are void once P01 lands.
+  The changes `doc-comments` and `doc-comments-2` edit other lines of `pga/cayleys.nim`, and each
+  is quoted again against P01 or carried in its text. No other proposal or change edits the
+  lines of `pga/operators.nim` that this proposal replaces.
+- **Import gap.** The change `imports-narrow` names each symbol that `pga/operators.nim`
+  imports. With both applied, in either order, the build stops on
+  `undeclared identifier: 'CAYLEY_SUPPORT'`. Whichever of the two lands second writes the merged
+  import below. It adds `CAYLEY_SUPPORT` and `CAYLEY_SUPPORT_ANTI` in an import under
+  `when IS_RIGID:`, and `CAYLEY_CARRIER_CO`, `CAYLEY_CENTER` and `CAYLEY_CONTAINER` to the
+  conformal import. It drops `origin`, `horizon` and `infinity`, which no operator reads once
+  this proposal lands. A run by hand on 2026-10-15 built the merged import with P01 and this
+  proposal, and the suites passed at rga2d, rga3d, rga4d, cga3d, cga4d and cga5d.
+- **Stale doc.** The change `doc-comments` writes in the header of `pga/operators.nim` that the
+  support is written by hand. That line is stale once this proposal lands, because a table then
+  generates the support. Whichever of the two lands second drops `support` from that line.
+
+```nim
+import ./[helpers, multivectors]
+from ./algebra {.all.} import
+  Basis, Grade, GradeAnti, DIMENSIONS, IS_CONFORMAL, IS_RIGID,
+  grade, gradeAnti, scalar, scalarAnti, high, low, `==`
+from ./cayleys {.all.} import
+  Cayley1D, Cayley2D, BasisSigned, Chiral, Formal, Partial, Spatial, complement,
+  CAYLEYS_COMPLEMENT, CAYLEYS_DOT, CAYLEYS_DUAL, CAYLEYS_INTERIOR, CAYLEYS_PARTS,
+  CAYLEYS_REVERSE, CAYLEYS_WEDGE, CAYLEYS_WEDGE_DOT, CAYLEYS_NORM_SQUARED, CAYLEY_ATTITUDE
+when IS_RIGID:
+  from ./cayleys {.all.} import CAYLEY_SUPPORT, CAYLEY_SUPPORT_ANTI
+when IS_CONFORMAL:
+  from ./cayleys {.all.} import
+    CAYLEY_CARRIER, CAYLEY_CARRIER_CO, CAYLEY_CENTER, CAYLEY_CONTAINER,
+    CAYLEYS_NORM_SQUARED_RADIUS
+```
 
 ## Open decisions
 
