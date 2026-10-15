@@ -9,7 +9,10 @@
 
 {.experimental: "strictFuncs".}
 
-when compileOption("profiler"): import std/nimprof
+when compileOption("profiler"):
+  import std/nimprof
+
+import std/strformat
 
 import pga
 
@@ -22,11 +25,16 @@ const
 
 proc main() =
   ## Hold width, size, comparison tolerance and literal constructor of this build, then print them.
-  doAssert sizeof(Coefficient) * 8 == FLOAT_WIDTH, "Coefficient is as wide as define names."
+  let literal = e1"0.5"
+  doAssert sizeof(Coefficient) * 8 == FLOAT_WIDTH,
+    &"Coefficient is `{FLOAT_WIDTH}` bits wide, as define names; got `{sizeof(Coefficient) * 8}`."
   doAssert sizeof(Multivector) == COUNT_BASES * sizeof(Coefficient),
-      "Multivector holds coefficients alone."
-  doAssert FLOAT_TOLERANCE == PLACES, "Comparison tolerance follows width by default."
-  doAssert e1"0.5" =~ initElement(Basis.E1, 0.5), "Literal constructor narrows to coefficient."
+    &"Multivector holds coefficients alone, `{COUNT_BASES * sizeof(Coefficient)}` bytes; " &
+    &"got `{sizeof(Multivector)}`."
+  doAssert FLOAT_TOLERANCE == PLACES,
+    &"Comparison tolerance follows width, `{PLACES}` places by default; got `{FLOAT_TOLERANCE}`."
+  doAssert literal =~ initElement(Basis.E1, 0.5),
+    &"Literal constructor narrows to coefficient; got `{literal}`."
   echo "width ", FLOAT_WIDTH, " size ", sizeof(Multivector), " tolerance ", FLOAT_TOLERANCE
 
 

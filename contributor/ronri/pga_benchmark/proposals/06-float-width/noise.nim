@@ -9,12 +9,16 @@
 ##     deviation distance / sqrt(3).
 ##   Places is count of decimal places comparison tolerance may keep and still see no noise in
 ##     any sample.
+##   Helpers `moved`, `sampleCoordinate`, `sampleDirection`, `samplePlane` and `sampleMotor`
+##     mirror those of P07's `laws.nim`, and `noise` mirrors `noisePin` there; fix to one reaches
+##     each. There `samplePoint` takes deviation of each coordinate in place of distance.
 
 {.experimental: "strictFuncs".}
 
-when compileOption("profiler"): import std/nimprof
+when compileOption("profiler"):
+  import std/nimprof
 
-import std/[algorithm, math, random, strutils]
+import std/[algorithm, math, random, strformat, strutils]
 
 import pga
 
@@ -25,11 +29,12 @@ const
   SEED = 0  ## Seed of sample generator, so every run reads same objects.
 
 static:
-  doAssert DIMENSIONS == 4 and IS_RIGID, "Noise measures rigid objects in four dimensions."
+  doAssert DIMENSIONS == 4 and IS_RIGID,
+    &"Noise measures rigid objects in four dimensions; got `{DIMENSIONS=}` and `{IS_RIGID=}`."
 
 
 func moved(x, motor: Multivector): Multivector =
-  ## Move object by unit motor, as antisandwich 𝐐 ⟇ 𝐱 ⟇ ~𝐐.
+  ## Move object by unit motor through antisandwich, i.e. 𝐐 ⟇ 𝐱 ⟇ ~∘𝐐.
   (motor ⟇ x) ⟇ ~∘motor
 
 
@@ -40,50 +45,50 @@ func noise(a, b: Multivector): float =
     result = max(result, abs(x - y) / max(1.0, max(abs(x), abs(y))))
 
 
-proc coordinate(distance: float): float =
-  ## Draw one coordinate of scene at distance from origin.
+proc sampleCoordinate(distance: float): float =
+  ## Sample one coordinate of scene at distance from origin.
   gauss(0.0, distance / sqrt(3.0))
 
 
-proc point(distance: float): Multivector =
-  ## Draw unitized point of scene at distance from origin.
-  result[Basis.E1] = Coefficient(coordinate(distance))
-  result[Basis.E2] = Coefficient(coordinate(distance))
-  result[Basis.E3] = Coefficient(coordinate(distance))
+proc samplePoint(distance: float): Multivector =
+  ## Sample unitized point of scene at distance from origin.
+  result[Basis.E1] = Coefficient(sampleCoordinate(distance))
+  result[Basis.E2] = Coefficient(sampleCoordinate(distance))
+  result[Basis.E3] = Coefficient(sampleCoordinate(distance))
   result[Basis.E4] = 1
 
 
-proc direction(): array[3, float] =
-  ## Draw unit direction, Gaussian vector normalized.
+proc sampleDirection(): array[3, float] =
+  ## Sample unit direction, Gaussian vector normalized.
   let
     (x, y, z) = (gauss(), gauss(), gauss())
     length = sqrt(x * x + y * y + z * z)
   [x / length, y / length, z / length]
 
 
-proc plane(distance: float): Multivector =
-  ## Draw unitized plane through point of scene at distance from origin.
+proc samplePlane(distance: float): Multivector =
+  ## Sample unitized plane through point of scene at distance from origin.
   let
-    normal = direction()
-    offset = normal[0] * coordinate(distance) + normal[1] * coordinate(distance) +
-        normal[2] * coordinate(distance)
+    normal = sampleDirection()
+    offset = normal[0] * sampleCoordinate(distance) + normal[1] * sampleCoordinate(distance) +
+        normal[2] * sampleCoordinate(distance)
   result[Basis.E423] = Coefficient(normal[0])
   result[Basis.E431] = Coefficient(normal[1])
   result[Basis.E412] = Coefficient(normal[2])
   result[Basis.E321] = Coefficient(-offset)
 
 
-proc motor(distance: float): Multivector =
-  ## Draw unit motor: rotation about Gaussian angle, then translation of scene at distance.
-  let (axis, angle) = (direction(), gauss(0.0, 1.5))
+proc sampleMotor(distance: float): Multivector =
+  ## Sample unit motor: rotation about Gaussian angle, then translation of scene at distance.
+  let (axis, angle) = (sampleDirection(), gauss(0.0, 1.5))
   var rotor, translator: Multivector
   rotor[Basis.E41] = Coefficient(axis[0] * sin(angle / 2))
   rotor[Basis.E42] = Coefficient(axis[1] * sin(angle / 2))
   rotor[Basis.E43] = Coefficient(axis[2] * sin(angle / 2))
   rotor[Basis.scalarAnti] = Coefficient(cos(angle / 2))
-  translator[Basis.E23] = Coefficient(coordinate(distance) / 2)
-  translator[Basis.E31] = Coefficient(coordinate(distance) / 2)
-  translator[Basis.E12] = Coefficient(coordinate(distance) / 2)
+  translator[Basis.E23] = Coefficient(sampleCoordinate(distance) / 2)
+  translator[Basis.E31] = Coefficient(sampleCoordinate(distance) / 2)
+  translator[Basis.E12] = Coefficient(sampleCoordinate(distance) / 2)
   translator[Basis.scalarAnti] = 1
   translator ⟇ rotor
 
@@ -106,8 +111,9 @@ proc main() =
     var twice, join, meet, incidence = newSeq[float](SAMPLES)
     for i in 0..<SAMPLES:
       let
-        (p, q, g, h) = (point(distance), point(distance), plane(distance), plane(distance))
-        (first, second) = (motor(distance), motor(distance))
+        (p, q) = (samplePoint(distance), samplePoint(distance))
+        (g, h) = (samplePlane(distance), samplePlane(distance))
+        (first, second) = (sampleMotor(distance), sampleMotor(distance))
       twice[i] = noise(p.moved(first).moved(second), p.moved(second ⟇ first))
       join[i] = noise((^(p ∧ q)).moved(first), ^(p.moved(first) ∧ q.moved(first)))
       meet[i] = noise((g ∨ h).moved(first), g.moved(first) ∨ h.moved(first))
