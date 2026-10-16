@@ -48,7 +48,8 @@ these seven aliases:
 ### Slots
 
 The `Basis` enum keeps its grade-major order. The slot of a basis is the count of the bases of `B`
-below it. It folds at compile time wherever the basis is static, which in an emitted body it
+below it. `slot` takes it from one set intersection, the bases of `B` up to the basis, less the
+basis itself. It folds at compile time wherever the basis is static, which in an emitted body it
 always is. So each read and each write uses a fixed offset. A static basis outside `B` stops the
 compile, so no read reaches another slot.
 
@@ -125,6 +126,7 @@ product, and it is withdrawn.
 | `BasisEven`, `BasisOdd` enums with converters | Second enum, and converters for each operator |
 | Basis order by parity first | Changes enum order and `succ`, which ranges use |
 | Type as list of grades | Two-level slot map for what one set gives |
+| Slot counted by a loop over `Basis` | The Architect ruled for the intersection on 2026-10-16 |
 | Composite of typed parts, as Lengyel's fields | Second level of emission |
 | Phantom grade set over full storage | Bytes moved stay at full width |
 | Grade mask at run time | Branches at run time; bodies not derived |
@@ -298,6 +300,21 @@ executions, and the medians lie inside the range of the table.
 
 `laws.nim` holds `alignment` at each count from 0 to 64, and at each count in the table above. It
 also holds the size and the alignment of each named basis-set type at each of the nine algebras.
+
+### Slot during compilation
+
+One compile at rga6d calls `slot` 2,282 times. Each figure is the cost of one call, the median of
+three runs of about 300,000 calls on 2026-10-15, with the forms run in turn. The noise was about
+±1.5 µs for each call.
+
+| Bases | Intersection | Loop over `Basis` |
+|-------|--------------|-------------------|
+| Vectors | 2.4 µs | 0.8 µs |
+| Even | 4.9 µs | 16.8 µs |
+| Whole | 9.8 µs | 6.5 µs |
+
+So the calls of one compile take at most about 22 ms with the intersection, and 38 ms with the
+loop. That compile takes 8.3 s, so each form costs under 0.5% of it.
 
 ### Running slot
 

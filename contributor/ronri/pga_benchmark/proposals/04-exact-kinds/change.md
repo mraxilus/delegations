@@ -101,10 +101,8 @@ defineMultivectors()
 #[ Basis-Set Accessors ]#
 
 func slot(listed: set[Basis], basis: Basis): int {.compileTime.} =
-  ## Get dense slot of basis among listed bases: count of listed bases below it.
-  for other in Basis:
-    if other == basis: return
-    if other in listed: inc result
+  ## Get dense slot of listed basis: count of listed bases up to it, less itself.
+  card(listed * {Basis.scalar .. basis}) - 1
 
 
 template `[]`*[B: static set[Basis]](m: MultivectorOf[B], basis: static Basis): float =
