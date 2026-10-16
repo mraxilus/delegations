@@ -1350,6 +1350,7 @@ suite "Internal: Markdown":
       let body = rule.split('{')
       if body.len < 2 or body[^2].strip != "pre.code .cl": continue
       check "display: block" notin body[^1]  # block line after newline doubles each line
+    check "pre.code code { padding: 0;" in shell_html  # inline pad would indent first line alone
 
 
   test "Nim fence marks keywords, declared name, doc comment, comment, literal and pragma":
