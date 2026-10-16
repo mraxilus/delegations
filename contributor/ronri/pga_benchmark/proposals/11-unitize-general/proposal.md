@@ -247,11 +247,6 @@ one, as Evidence states, so `^∘` drops `inline`.
 
 ### What it leaves out
 
-- **The suites at `cga3d`.** No claim names `cga3d`, and there the test of suite Internal fails.
-  At `cga3d` a sphere is a pair of points on a line, and two random points can lie close together.
-  A plane sent through such a sphere and back then holds only about four places. In the sample
-  that fails, its flat weight after unitize is 0.999924. A run by hand on 2026-10-15 found the
-  failure with this change alone, and with P06 and P07 too.
 - **The grade of the library.** This change leaves `grade` and `isMixed` as they are, and `⊛` reads
   `grade`. P07, `part-scale`, takes their zero test, as the Architect ruled on 2026-10-12. That
   test weighs each part at its own scale. In the conformal algebras it also counts a coefficient
@@ -289,8 +284,6 @@ One rule holds in all four algebras, so a user need not know which algebra or ki
 
 - One zero test for `grade` and for `^∘` once P07 lands, or two tests as now. P07 holds the same
   decision.
-- How the test of suite Internal draws its sphere, so that it holds at `cga3d` too. It can draw a
-  sphere of a set radius, or skip a small one against a floor.
 - Whether a grade test exists that no motor changes, and that keeps the results of this rule. The
   probability is about 0.6. That figure is an estimate, and nothing here measures it.
 
@@ -300,7 +293,7 @@ One rule holds in all four algebras, so a user need not know which algebra or ki
   the placeholder test there. `conformal-norms` replaces that placeholder with its two tests. So
   the two apply in either order, and their three tests in Chapter 4 then stand side by side.
 - **P06, `float-width`.** P06 quotes no line here. Two locals start at the float `0.0`: `largest`
-  in `^∘` and `distance_squared` in `samplePoint`. Each compiles at 32 bits. Once both land, the
+  in `^∘` and `distance_squared` in `toRoundPoint`. Each compiles at 32 bits. Once both land, the
   second to land declares them `Coefficient`.
 - **P07, `part-scale`.** P07 edits `=~` and `grade` in `pga/multivectors.nim` alone, so no line
   collides. But P07 removes the private `=~` of two scalars. So the test that this change adds to
@@ -313,6 +306,11 @@ One rule holds in all four algebras, so a user need not know which algebra or ki
 - **Changes `doc-comments` and `doc-comments-2`.** They edit docs next to `unitize` and `^` through
   distinct quotes, so either order holds. `doc-comments` writes that `^` and `normalizeWeight`
   cost no call. Once it and this change land, that doc says that each costs one call.
+- **Sphere of the test of suite Internal.** It has radius one about a random center, through a
+  point one unit along each axis and one unit back along the first. So no two of its points lie
+  close, as the Architect ruled on 2026-10-16. Random points can lie close, and at `cga3d` two
+  points 0.0037 apart sent a plane through and back to a flat weight of 0.999924. A run by hand on
+  2026-10-16 applied this change alone, and the suites passed at `cga3d` to `cga6d`.
 - **Runs by hand.** A run on 2026-10-15 applied P06, P07 and this change to a copy of the library
   at pin. The suites passed at `rga4d`, `cga4d` and `cga5d` at 64 bits, and at `cga4d` and
   `cga5d` at 32 bits.

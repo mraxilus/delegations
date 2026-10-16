@@ -155,14 +155,34 @@ suite "Internal":
 
 
 when IS_CONFORMAL:
-  proc samplePoint(): Multivector =
-    ## Sample round point at random position, of radius zero.
+  proc toRoundPoint(m: Multivector): Multivector =
+    ## Lift Euclidean part of multivector to round point of radius zero.
     var distance_squared = 0.0
     for b in Basis.scalar.succ..Basis.origin.pred:
-      result[b] = gauss()
-      distance_squared += result[b]^2
+      result[b] = m[b]
+      distance_squared += m[b]^2
     result[Basis.origin] = 1
     result[Basis.infinity] = distance_squared / 2
+
+
+  proc samplePoint(): Multivector =
+    ## Sample round point at random position, of radius zero.
+    var position: Multivector
+    for b in Basis.scalar.succ..Basis.origin.pred: position[b] = gauss()
+    position.toRoundPoint
+
+
+  proc sampleSphere(): Multivector =
+    ## Sample sphere of radius one about random center.
+    ##   Points lie one unit along each axis, and one unit back along first, so none lie close.
+    let center = samplePoint()
+    var position = center
+    position[Basis.scalar.succ] = position[Basis.scalar.succ] - 1
+    result = position.toRoundPoint
+    for b in Basis.scalar.succ..Basis.origin.pred:
+      position = center
+      position[b] = position[b] + 1
+      result = result ∧ position.toRoundPoint
 
 
   proc sampleReflector(): Multivector =
@@ -183,11 +203,9 @@ suite "Internal":
         let 𝐦 = 𝐯 ⟇ samplePoint() ⟇ ~∘𝐯
         check |∘(^𝐦) =~ 𝟙  # Moved round point keeps unit round weight.
 
-        var 𝐬, 𝐠 = samplePoint()
-        for _ in 2 ..< DIMENSIONS - 1:
-          𝐬 = 𝐬 ∧ samplePoint()
-          𝐠 = 𝐠 ∧ samplePoint()
-        𝐬 = 𝐬 ∧ samplePoint()
+        let 𝐬 = sampleSphere()
+        var 𝐠 = samplePoint()
+        for _ in 2 ..< DIMENSIONS - 1: 𝐠 = 𝐠 ∧ samplePoint()
         𝐠 = 𝐠 ∧ 𝐞∞
         let 𝐠_back = 𝐬 ⟇ (𝐬 ⟇ 𝐠 ⟇ ~∘𝐬) ⟇ ~∘𝐬
         check |□(^𝐠_back) =~ 𝟙  # Plane through sphere and back keeps unit flat weight.
