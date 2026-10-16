@@ -22,11 +22,11 @@ Lengyel names two in his figure 2.16.
 Every table derives from two inputs, as in Lengyel's figure 2.16: the metric and the orientation
 of the volume element 𝟙. The metric enters as 𝖌 on vectors, and the exomorphism builds 𝐆 from it.
 RGA makes 𝐞ₙ null. CGA pairs 𝐞ₙ₋₁ and 𝐞ₙ with 𝐞ₙ₋₁ ∙ 𝐞ₙ = −1, and names one of them origin and
-the other infinity.
+the other infinity. The parts split by these projective vectors in both algebras.
 
-![Derivation map, after Lengyel's figure 2.16, for RGA and CGA. Green boxes are inputs, and the
-dashed one exists in CGA alone. Blue boxes are fixed definitions and maps. Purple boxes conjugate
-their base by complements.](../../pages/derivation-map.svg)
+![Derivation map, after Lengyel's figure 2.16, for RGA and CGA. Green boxes are inputs. Blue boxes
+are fixed definitions and maps. Purple boxes conjugate their base by
+complements.](../../pages/derivation-map.svg)
 
 The figure shows RGA alone, and it predates the transwedge, by which Lengyel later unified the
 geometric product. The map adds both, and it names the code that builds each table.
@@ -45,8 +45,8 @@ geometric product. The map adds both, and it names the code that builds each tab
 | Duals | complement of 𝐆𝐮 or 𝔾𝐮 | same, `applyMap` |
 | ⟑ | from 𝐆 and ∧ | signed sum of transwedge orders |
 | ⟇ | conjugate of ⟑ | signed sum of anti orders, not conjugates of base orders in CGA |
-| Norms | √(𝐮 ∙ 𝐮) and √(𝐮 ∘ 𝐮) | from parts; RGA parts are 𝐆 and 𝔾 |
-| Origin, infinity | absent, since the figure is RGA | name the CGA parts and the carrier |
+| Norms | √(𝐮 ∙ 𝐮) and √(𝐮 ∘ 𝐮) | from parts, split by projective vectors |
+| Projective vectors | absent | split the parts, and give the carrier in CGA |
 
 ### Four rules
 
@@ -60,11 +60,11 @@ geometric product. The map adds both, and it names the code that builds each tab
 Each dual is a complement after 𝐆 or 𝔾, on the left or on the right, as the library keeps both
 sides. Each interior product is one dual fed into one product, by one rule.
 
-Direct constructors remain for the base reverse, for 𝐆 from 𝖌, for the dot and for the squared
-norms. The antireverse is `constructAnti` of the reverse, so `constructReverse` and `reverse` lose
-their `Spatiality` parameter. In RGA the parts are 𝐆 and 𝔾, since 𝐆 keeps exactly the bases
-without 𝐞ₙ. In CGA, 𝐆 keeps every basis, so `constructParts` splits round and flat by origin and
-infinity.
+Direct constructors remain for the base reverse, for 𝐆 from 𝖌, for the dot, for the parts and for
+the squared norms. The antireverse is `constructAnti` of the reverse, so `constructReverse` and
+`reverse` lose their `Spatiality` parameter. `constructParts` splits each part by the presence of
+the projective vectors. The origin splits bulk from weight, and in CGA infinity splits round from
+flat. In RGA, 𝐆 and 𝔾 give the same parts, but one rule holds in both algebras.
 
 ### Tables that change
 
@@ -78,7 +78,6 @@ The table below gives the new rule of each derived table that changes. In it, `s
 | `CAYLEYS_INTERIOR.s.bulk.side` | `CAYLEYS_WEDGE.s.applyMap(CAYLEYS_DUAL.base.side, side)` |
 | `CAYLEYS_INTERIOR.s.weight.side` | `CAYLEYS_WEDGE.s.applyMap(CAYLEYS_DUAL.anti.side, side)` |
 | `CAYLEYS_DOT.base` | `constructDot(CAYLEYS_EXOMORPHISM_METRIC.base)` |
-| `CAYLEYS_PARTS.p.round`, RGA | `CAYLEYS_EXOMORPHISM_METRIC.base` for bulk, `.anti` for weight |
 | `CAYLEY_ATTITUDE` | `CAYLEYS_WEDGE.anti`, with `applyConstant` of `Basis.horizon` on the right |
 
 ### Cells of one term
@@ -137,7 +136,7 @@ transwedge cannot drift apart.
 | Dot as scalar part of ⟑ | Checked; equal only up to (−1)^(k(k−1)/2) |
 | Blade products by bit operations | Weighed; second generator beside the derivation |
 | Dot as grade 0 of ∨★, as a note at pin asks | Built, equal; ruled for 𝐚ᵀ𝐆𝐛 on 2026-10-16 |
-| RGA parts direct, as in CGA | Built, equal; 𝐆 and 𝔾 hold them already |
+| RGA parts as 𝐆 and 𝔾 | Built, equal; ruled on 2026-10-16 for one rule in both algebras |
 | `Option` cells in `Cayley1D` | Library before `3121342`; two cell shapes, and no sum of terms |
 | ⟇ as conjugate of ⟑, one family | Built; equal sum, but anti orders differ at cga4d and cga5d |
 | Drop `CAYLEYS_NORM_SQUARED` | Built from parts at pin; outside this idea, so it stays |

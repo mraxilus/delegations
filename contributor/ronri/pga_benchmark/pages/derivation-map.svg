@@ -5,10 +5,10 @@
   aria-labelledby="map-title map-desc">
 <title id="map-title">Derivation map</title>
 <desc id="map-desc">Two inputs, the metric and the orientation of the volume element, fix every
-  table; CGA also names origin and infinity. Exterior product, exomorphism, dot, complements and
-  reverse are fixed definitions. Each anti table conjugates its base by complements. Maps build
-  duals, dual products, transwedge orders, geometric products, parts and norms, and the emitter
-  reads every table.</desc>
+  table; the projective vectors, origin and in CGA infinity, split the parts. Exterior product,
+  exomorphism, dot, complements and reverse are fixed definitions. Each anti table conjugates
+  its base by complements. Maps build duals, dual products, transwedge orders, geometric
+  products, parts and norms, and the emitter reads every table.</desc>
 <style>
 .map text { font-family: var(--sans, sans-serif); font-size: 12px; fill: var(--ink-2, #465262); }
 .map .title { font-size: 13.5px; fill: var(--ink, #16202c); }
@@ -18,7 +18,6 @@
 .map .fixed { fill: var(--hover, #eef2f6); stroke: var(--bound, #2a78d6); stroke-width: 1.25; }
 .map .anti { fill: var(--status-wash, #ece9f8); stroke: var(--status, #5a4a9c);
   stroke-width: 1.25; }
-.map .cga { stroke-dasharray: 5 3; }
 .map .emission { fill: var(--track, #edf0f4); stroke: var(--rule-strong, #c6ced8);
   stroke-width: 1.25; }
 .map .edge { fill: none; stroke: var(--muted, #667384); stroke-width: 1.25; }
@@ -68,10 +67,10 @@
   <text x="548" y="56" text-anchor="middle">orientation of</text>
   <text x="548" y="71" text-anchor="middle">antiscalar</text>
 </g>
-<g><rect class="input cga" x="668" y="16" width="192" height="64" rx="8"/>
-  <text class="title" x="764" y="38" text-anchor="middle">Origin · infinity</text>
-  <text x="764" y="56" text-anchor="middle">names in null pair</text>
-  <text x="764" y="71" text-anchor="middle">CGA alone</text>
+<g><rect class="input" x="668" y="16" width="192" height="64" rx="8"/>
+  <text class="title" x="764" y="38" text-anchor="middle">Projective vectors</text>
+  <text x="764" y="56" text-anchor="middle">RGA  origin 𝐞ₙ</text>
+  <text x="764" y="71" text-anchor="middle">CGA  origin, infinity</text>
 </g>
 <g><rect class="fixed" x="20" y="124" width="192" height="64" rx="8"/>
   <text class="title" x="116" y="146" text-anchor="middle">Exomorphism 𝐆</text>
@@ -131,8 +130,8 @@
 </g>
 <g><rect class="fixed" x="668" y="336" width="192" height="64" rx="8"/>
   <text class="title" x="764" y="358" text-anchor="middle">Parts</text>
-  <text x="764" y="376" text-anchor="middle">RGA  bulk 𝐆, weight 𝔾</text>
-  <text x="764" y="391" text-anchor="middle">CGA  <tspan class="code">constructParts</tspan></text>
+  <text x="764" y="376" text-anchor="middle">by projective vectors</text>
+  <text class="code" x="764" y="391" text-anchor="middle">constructParts</text>
 </g>
 <g><rect class="fixed" x="236" y="440" width="192" height="64" rx="8"/>
   <text class="title" x="332" y="462" text-anchor="middle">Dual products</text>
@@ -160,7 +159,5 @@
   <text class="quiet" x="142" y="613">fixed definition or map</text>
   <rect class="anti" x="320" y="602" width="14" height="14" rx="3"/>
   <text class="quiet" x="342" y="613">anti side, by De Morgan</text>
-  <rect class="input cga" x="520" y="602" width="14" height="14" rx="3"/>
-  <text class="quiet" x="542" y="613">CGA alone</text>
 </g>
 </svg>
