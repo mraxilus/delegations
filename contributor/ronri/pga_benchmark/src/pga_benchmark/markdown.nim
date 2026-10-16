@@ -271,8 +271,9 @@ func renderNim*(line: string): string =
       result.add span("st", line[i .. finish])
       i = finish + 1
     elif line.continuesWith("{.", i):
-      let close = line.find(".}", i + 2)
-      let finish = if close < 0: line.len - 1 else: close + 1
+      let
+        close = line.find(".}", i + 2)
+        finish = if close < 0: line.len - 1 else: close + 1
       result.add span("pr", line[i .. finish])
       i = finish + 1
     elif c == '`' and line.find('`', i + 1) > i:
@@ -312,8 +313,9 @@ func renderFence*(lines: seq[string], language: string, first = 0): string =
   ## Render fenced code, numbering lines from `first` where positive.
   result = "<pre class=\"code\" data-lang=\"" & escapeHtml(language) & "\"><code>"
   for i, line in lines:
-    let number = if first > 0: "<span class=\"ln\">" & $(first + i) & "</span>" else: ""
-    let text = if language == "nim": renderNim(line) else: escapeHtml(line)
+    let
+      number = if first > 0: "<span class=\"ln\">" & $(first + i) & "</span>" else: ""
+      text = if language == "nim": renderNim(line) else: escapeHtml(line)
     result.add "<span class=\"cl\">" & number & text & "</span>\n"
   result.add "</code></pre>"
 
