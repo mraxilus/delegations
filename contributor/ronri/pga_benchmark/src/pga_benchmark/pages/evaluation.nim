@@ -641,8 +641,11 @@ func htmlCode*(change: Change, files: Table[string, string]): string =
           htmlDiff(rest, "nim") & "</div>"
 
     var parts: seq[string]
-    for (count, word) in [(tally[1], "changed"), (tally[0], "added"), (tally[2], "removed")]:
-      if count > 0: parts.add $count & " " & word
+    if status == "added":
+      parts.add $tally[0] & (if tally[0] == 1: " definition" else: " definitions")
+    else:
+      for (count, word) in [(tally[1], "changed"), (tally[0], "added"), (tally[2], "removed")]:
+        if count > 0: parts.add $count & " " & word
     result.add "<details class=\"file\" open><summary>" & code(path) & " <span class=\"status\">" &
         status & "</span> <span class=\"tally\">" & parts.join(" · ") & "</span> " &
         textCounts(diffLines(lines_before, lines_after, 1, 1)) & "</summary>" &
