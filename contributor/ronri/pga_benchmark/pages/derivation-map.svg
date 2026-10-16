@@ -83,11 +83,11 @@
   <text class="code" x="332" y="179" text-anchor="middle">constructDot</text>
 </g>
 <g><rect class="fixed" x="452" y="124" width="192" height="64" rx="8"/>
-  <text class="title" x="548" y="146" text-anchor="middle">Complements</text>
-  <text x="548" y="164" text-anchor="middle"><tspan text-decoration="underline">𝐮</tspan><tspan
+  <text class="title" x="548" y="143" text-anchor="middle">Complements</text>
+  <text x="548" y="167" text-anchor="middle"><tspan text-decoration="underline">𝐮</tspan><tspan
     font-size="0">̱</tspan> ∧ 𝐮 = 𝟙 = 𝐮 ∧ <tspan text-decoration="overline">𝐮</tspan><tspan
     font-size="0">̄</tspan></text>
-  <text class="code" x="548" y="179" text-anchor="middle">constructComplement</text>
+  <text class="code" x="548" y="182" text-anchor="middle">constructComplement</text>
 </g>
 <g><rect class="fixed" x="668" y="124" width="192" height="64" rx="8"/>
   <text class="title" x="764" y="146" text-anchor="middle">Reverse ~</text>
