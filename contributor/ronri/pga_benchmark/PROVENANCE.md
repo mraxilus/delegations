@@ -876,10 +876,6 @@ The glyph source of release 2.539 gives `cbold-math` the `center` anchor alone. 
 sources alone, with no bold letter source, and `notofonts.github.io` publishes 2.539 as its last
 build. So whether a later release mends the anchors is unverified.
 
-**Each proposal page opens with its summary, above its claims.** The text of `proposal.md` above its
-first section says what the proposal is, what it is for and what it costs. So a reader meets the
-idea before the verdicts.
-
 **The docket draws each measure as one bar off its lower bound**, as the Architect chose.
 Multiplies, bytes moved and time each give one bar from ×1 to the library over the lower
 bound that the row is measured against. A typed row is measured against its reference, and a
@@ -939,12 +935,33 @@ on the map. It also covers the summary above the claims. Suite `Internal: Edits`
 with its numbers and folds, a new file, and the class of the sign column. It also covers the
 signatures an edit defines or sits in, and a header that closes at its own indent.
 
-## Code on pages
+## Proposal pages and code
 
-**Every edit renders as a diff of lines, open, under a list of the files it touches.** The
-Architect asked for a clear diff on each proposal on 2026-10-15. This replaces the closed edit of
-quote and replacement side by side. Each line carries its number in the file as the edit finds it.
-The bases of the proposal and the earlier edits apply first.
+**Every proposal page has one shape, argument first, as the Architect ordered on 2026-10-16.** A
+card opens it: what the proposal is, is for and costs, what it needs and blocks, and its verdicts.
+Then five numbered sections follow: Problem, Idea, Alternatives, Costs and Open decisions. An
+appendix holds Code and Evidence, so the reader meets the idea and its cost before what checks it.
+
+**Each fact stands once.** The page generates the dependencies, the verdicts, the code and the
+measurements, so `proposal.md` restates none of them. Its summary is three labelled paragraphs,
+and its sections are the five, then Landing and Evidence notes, each once, in order. `drive`
+names any file that departs from it. Rejected: free headings for each proposal, which read
+unorganised and said each figure up to three times.
+
+**Evidence condenses what the evaluation moved, as the docket draws it but static.** Per algebra,
+one row stands for each function that moved: its multiplies, bytes moved and time, each a bar of
+the proposal over pin. The axis runs from ×1/16 to ×16, so a bar left of the line is a gain. An
+operation within the spread is counted, and a helper that moved is named. The proposal stands
+with its bases applied, and the page says so.
+
+**A proposal shows its code one block per file, folded, as the Architect asked on 2026-10-16.**
+Inside, each definition that the change adds, removes or changes shows its signature and doc
+comment, and folds its body. A definition is a routine, a member of a section, an import, a test
+or a statement, at top level or under `when` and `suite`. Two versions pair definitions by
+context, kind and name, same head first. Lines in no definition follow as other lines.
+
+**Marginalia shows each edit as a diff of lines, open, under a list of the files it touches.** Each
+line carries its number in the file as the edit finds it. The earlier edits apply first.
 
 A run of unchanged lines longer than twice the context of 3 folds to its count. So a whole-file
 replacement, as P01 makes, shows its hunks and not the whole file. The diff is a longest common
