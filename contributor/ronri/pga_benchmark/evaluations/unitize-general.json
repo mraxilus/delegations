@@ -3,7 +3,7 @@
   "kind": "evaluation",
   "name": "unitize-general",
   "path": "proposals/11-unitize-general",
-  "edits_digest": "b549c8daa94b85d7",
+  "edits_digest": "bcbfb9dd40fd9dbc",
   "taken": {
     "date": "2026-10-15",
     "machine": "linux amd64, 4 cores",
