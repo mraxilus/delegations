@@ -26,6 +26,10 @@
 ##   `suites` or `program` claim may name `defines`, each `name=value`, and its builds pass each
 ##     as `-d:`, so claim holds at build option other than library's default.
 ##
+##   Argument has one shape, so every page reads in same order: summary of three labelled
+##     paragraphs, what it is, is for and costs; then sections Problem, Idea, Evidence, Costs,
+##     Alternatives, Landing and Open decisions, each once, in order. Each fact stands once:
+##     page generates verdicts, measurements, dependencies and code, so argument restates none.
 ##   Figure is paragraph of one image alone, as `![Derivation map](../../pages/map.svg)`: path
 ##     resolves against proposal's directory, and page embeds SVG it names. SVG lives under
 ##     `pages/`, since layout admits hand-written markup there alone.
@@ -71,6 +75,11 @@ const
   WIDTH_NUMBER = 2  ## Digits number is written with, zero-padded, in path and citation.
   WORDS_STATUS = ["proposed", "implemented", "withdrawn"]
     ## Status as `claims.json` spells it, in `StatusProposal` order.
+  LABELS_SUMMARY* = ["What it is", "What it is for", "What it costs"]
+    ## Labels of three paragraphs that open `proposal.md`, each in bold, in order.
+  SECTIONS_PROPOSAL* = [
+    "Problem", "Idea", "Evidence", "Costs", "Alternatives", "Landing", "Open decisions",
+  ]  ## Sections `proposal.md` holds after its summary, each once, in order.
 
 
 func figureOf*(node: Block, directory: string): Option[Figure] =
@@ -147,6 +156,39 @@ func parseProposal*(
             heading & "`.",
       )
     proposal.body = blocks[1 .. ^1]
+
+    # Summary is three labelled paragraphs, then each standard section once, in order.
+    var
+      labels: seq[string]
+      headings: seq[string]
+      line_first = 1
+    for node in proposal.body:
+      if node.kind == KindBlock.Heading and node.level == 2:
+        if headings.len == 0: line_first = node.line
+        headings.add node.lines[0]
+      elif headings.len == 0:
+        let
+          text = node.lines.join(" ")
+          close = text.find(".**")
+        labels.add(
+          if node.kind == KindBlock.Paragraph and text.startsWith("**") and close > 2:
+            text[2..<close]
+          else: "unlabelled " & ($node.kind).toLowerAscii
+        )
+    if labels != @LABELS_SUMMARY:
+      findings.add Finding(
+        path: directory & "/proposal.md",
+        line: 2,
+        message: "Summary must be paragraphs `" & LABELS_SUMMARY.join("`, `") & "`, each in " &
+            "bold, in order; got `" & labels.join("`, `") & "`.",
+      )
+    if headings != @SECTIONS_PROPOSAL:
+      findings.add Finding(
+        path: directory & "/proposal.md",
+        line: line_first,
+        message: "Sections must be `" & SECTIONS_PROPOSAL.join("`, `") & "`, each once, in " &
+            "order; got `" & headings.join("`, `") & "`.",
+      )
   if change.len > 0:
     let (parsed, why) = parseChange(directory & "/change.md", change)
     proposal.change = parsed

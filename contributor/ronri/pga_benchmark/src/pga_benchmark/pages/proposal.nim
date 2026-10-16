@@ -1,23 +1,32 @@
-## Render one proposal: claims and their verdicts, argument, candidate, measurements.
+## Render one proposal: summary card, then seven numbered sections, each fact once.
 ##   Proposal page is future state of library, argued in `proposal.md` and checked by its
-##     evaluation. Every proposal renders through this one shape, so next exploration reads as
-##     last one did:
-##     summary first, which is text of `proposal.md` above its first section: what proposal is,
-##     what it is for and what it costs; then claims, since they say whether proposal holds;
-##     then argument; then what it changes and what that measured at pin.
+##     evaluation. Every proposal renders through one shape, so next exploration reads as last
+##     one did, and each fact stands in one place:
+##
+##     ```
+##     header      title, status, pin and run; contents of seven sections
+##     card        what it is, is for and costs; what it needs and blocks; verdicts at pin
+##     1 Problem   what pin does, and why it falls short
+##     2 Idea      how proposal works
+##     3 Evidence  claims and verdicts, then argument, then measurements at pin
+##     4 Costs     what gets worse, and what it leaves out
+##     5 Alternatives   options weighed, and why each lost
+##     6 Code      how it lands, then each file, each definition with its body folded
+##     7 Open decisions
+##     footer      other pages
+##     ```
+##
+##   Page generates verdicts, measurements, dependencies and code, so argument restates none.
+##     Section outside standard set follows them, and `drive` names it (`proposals.nim`).
 ##   Header cites number and status. Frozen proposal shows pin its last evaluation was taken at,
-##     since library has moved past it, and edits whose quote is gone show file alone.
-##   Beneath header, proposal states what adopting it needs first and what rejecting it blocks,
-##     since Architect decides each proposal on its own (`proposals.nim`).
+##     since library has moved past it.
+##   Ids carry proposal's name, so list page holds every proposal and contents still lead home.
 ##
 ##   Figure paragraph embeds SVG it names, whole, so figure takes page's colours and faces; one
 ##     whose file is absent renders as its text, and `drive` names it.
 ##
-##   Edits render open as diffs against library carrying bases of proposal, so each line number is
-##     one reader finds there; summary of each names signatures it defines or sits in.
-##
-##   Cost: open diffs make long page where proposal edits much, as whole-file replacement does;
-##     unchanged runs fold, and reader closes edit to skip it.
+##   Cost: file block opens at rest, so proposal that edits many files makes long page; each
+##     body folds, and reader closes file to skip it.
 
 {.experimental: "strictFuncs".}
 
@@ -122,14 +131,16 @@ func htmlProposal*(
       else: escapeHtml(claim{"kind"}.getStr)
 
     if evaluation.isNil: return "<p class=\"note\">No evaluation yet; claims are unchecked.</p>"
-    result = "<div class=\"table\"><table><tr><th>Claim</th><th>Verdict</th><th>Detail</th></tr>"
+    let is_detailed = evaluation{"claims"}.getElems.anyIt(it{"detail"}.getElems.len > 0)
+    result = "<div class=\"table\"><table><tr><th>Claim</th><th>Verdict</th>" &
+        (if is_detailed: "<th>Detail</th>" else: "") & "</tr>"
     for claim in evaluation{"claims"}:
       let is_holding = claim{"passed"}.getBool
       var detail: seq[string]
       for line in claim{"detail"}.getElems: detail.add escapeHtml(line.getStr)
       result.add "<tr><td>" & textClaim(claim) & "</td><td>" &
-          chip(if is_holding: "holds" else: "fails", if is_holding: "pass" else: "fail") &
-          "</td><td>" & detail.join("<br>") & "</td></tr>"
+          chip(if is_holding: "holds" else: "fails", if is_holding: "pass" else: "fail") & "</td>" &
+          (if is_detailed: "<td>" & detail.join("<br>") & "</td>" else: "") & "</tr>"
     result.add "</table></div>"
 
   let
@@ -142,41 +153,107 @@ func htmlProposal*(
       )
       elif proposal.isFrozen: "withdrawn"
       else: "proposed"
-  let (title, section) = ("h" & $level, "h" & $(level + 1))
+  let
+    (title, section, part) = ("h" & $level, "h" & $(level + 1), "h" & $(level + 2))
+    anchor = proposal.name & "-"  # Ids stay apart where list page holds every proposal.
+
+  # Header: title, where proposal stands, then other pages.
   result = "<header><" & title & ">" & escapeHtml(proposal.citation) & ": " &
-      renderInline(proposal.title) & "</" & title & "><p class=\"meta\">" &
-      escapeHtml(proposal.citation) &
-      " " & code(proposal.name) & " · " & standing & " · pga " &
+      renderInline(proposal.title) & "</" & title & "><p class=\"meta\">" & standing & " · pga " &
       code(commit_shown[0..<min(7, commit_shown.len)])
   if not evaluation.isNil:
     result.add " · tried " & escapeHtml(evaluation{"taken", "date"}.getStr) &
         measuredAt(evaluation{"taken"}) & ", " & escapeHtml(evaluation{"taken", "machine"}.getStr)
-  result.add links & "</p><div class=\"chips\">" &
-      chipsVerdict(evaluation, baselines, spread) & "</div>" &
-      htmlDependencies(proposals, proposal, urls) & "</header>"
+  result.add "</p>"
 
-  # Render summary above first section, then claims, then rest of argument.
-  var lead = 0
+  # Split argument: summary above first section, then each section by its name.
+  var
+    lead = 0
+    sections: seq[(string, seq[Block])]
   while lead < proposal.body.len and
       not (proposal.body[lead].kind == KindBlock.Heading and proposal.body[lead].level == 2):
     inc lead
-  if lead > 0:
-    result.add "<section class=\"block prose lead\">" &
-        htmlBlocks(proposal.body[0..<lead], proposal.directory, figures, level) & "</section>"
-  result.add "<section class=\"block\"><" & section & ">Claims</" & section & ">" &
-      htmlClaims(evaluation) & "</section>"
-  result.add "<section class=\"block prose\">" &
-      htmlBlocks(proposal.body[lead .. ^1], proposal.directory, figures, level) & "</section>"
-  if proposal.change.edits.len > 0:
-    var based = files
-    for base in dependenciesOf(proposals, proposal)[0]:
-      discard applyChange(based, base.change, base.directory)  # Misfit is `drive`'s finding.
-    result.add "<section class=\"block\"><" & section & ">What it changes</" & section & ">" &
-        htmlEdits(proposal.change, based) & "</section>"
-  if not evaluation.isNil:
-    result.add "<section class=\"block\"><" & section & ">What it measured at pin</" & section &
-        "><p class=\"note\">" & textSpread(spread) & "</p>" & tableFunctions(evaluation) &
-        tableNan(evaluation) & tableTimes(evaluation, baselines, spread) & "</section>"
+  for node in proposal.body[lead .. ^1]:
+    if node.kind == KindBlock.Heading and node.level == 2: sections.add (node.lines[0], @[])
+    elif sections.len > 0: sections[^1][1].add node
+
+  func blocksOf(sections: seq[(string, seq[Block])], name: string): seq[Block] =
+    ## Get blocks of section of name; none where argument lacks it.
+    for (heading, nodes) in sections:
+      if heading == name: return nodes
+
+  # Contents, numbered as sections are.
+  const shown = ["Problem", "Idea", "Evidence", "Costs", "Alternatives", "Code", "Open decisions"]
+    ## Sections page shows, in order; code holds landing.
+  result.add "<nav class=\"contents\">"
+  for index, name in shown:
+    result.add "<a href=\"#" & anchor & name.toLowerAscii.replace(' ', '-') &
+        "\"><span class=\"num\">" & $(index + 1) & "</span> " & name & "</a>"
+  result.add "</nav></header>"
+
+  # Summary card: what it is, is for and costs, then what it needs and blocks, then verdicts.
+  result.add "<section class=\"glance\"><dl class=\"summary\">"
+  var rest: seq[Block]
+  for node in proposal.body[0..<lead]:
+    let text = node.lines.join(" ")
+    var is_labelled = false
+    if node.kind == KindBlock.Paragraph and text.startsWith("**"):
+      let close = text.find(".**")
+      if close > 2:
+        result.add "<div><dt>" & escapeHtml(text[2..<close]) & "</dt><dd>" &
+            renderInline(text[close+3 .. ^1].strip) & "</dd></div>"
+        is_labelled = true
+    if not is_labelled: rest.add node
+  result.add "</dl>"
+  if rest.len > 0:
+    result.add "<div class=\"prose\">" & htmlBlocks(rest, proposal.directory, figures, level) &
+        "</div>"
+  result.add htmlDependencies(proposals, proposal, urls) &
+      "<dl class=\"depends\"><div><dt>Tried at pin</dt><dd><div class=\"chips\">" &
+      chipsVerdict(evaluation, baselines, spread) & "</div></dd></div></dl></section>"
+
+  func opening(anchor, section, name: string, number: int): string =
+    ## Open numbered section of name, with id contents link to.
+    "<section class=\"block prose\" id=\"" & anchor & name.toLowerAscii.replace(' ', '-') &
+        "\"><" & section & "><span class=\"num\">" & $number & "</span> " & name & "</" &
+        section & ">"
+
+  for index, name in shown:
+    result.add opening(anchor, section, name, index + 1)
+    case name
+    of "Evidence":
+      result.add "<" & part & ">Claims</" & part & ">" & htmlClaims(evaluation) &
+          htmlBlocks(sections.blocksOf(name), proposal.directory, figures, level)
+      if not evaluation.isNil:
+        result.add "<" & part & ">Measured at pin</" & part & "><p class=\"note\">" &
+            textSpread(spread) & "</p>" & tableFunctions(evaluation) & tableNan(evaluation) &
+            tableTimes(evaluation, baselines, spread)
+    of "Code":
+      let landing = sections.blocksOf("Landing")
+      if landing.len > 0:
+        result.add "<" & part & ">How it lands</" & part & ">" &
+            htmlBlocks(landing, proposal.directory, figures, level)
+      if proposal.change.edits.len > 0:
+        var based = files
+        for base in dependenciesOf(proposals, proposal)[0]:
+          discard applyChange(based, base.change, base.directory)  # Misfit is `drive`'s finding.
+        result.add "<" & part & ">Files</" & part & ">" & htmlCode(proposal.change, based)
+      else:
+        result.add "<p class=\"note\">Proposal carries no change.</p>"
+    else:
+      result.add htmlBlocks(sections.blocksOf(name), proposal.directory, figures, level)
+    result.add "</section>"
+
+  # Section outside standard set stays on page, after it, and `drive` names it.
+  for (heading, nodes) in sections:
+    if heading notin SECTIONS_PROPOSAL:
+      result.add "<section class=\"block prose\"><" & section & ">" & renderInline(heading) & "</" &
+          section & ">" & htmlBlocks(nodes, proposal.directory, figures, level) & "</section>"
+
+  # Other pages close page, apart from what proposal says.
+  if links.len > 0:
+    result.add "<footer class=\"pages\">" & (if links.startsWith(" · "): links[" · ".len .. ^1]
+        else: links) & "</footer>"
 
 
 func bodyProposal*(

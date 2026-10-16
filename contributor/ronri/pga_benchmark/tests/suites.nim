@@ -1373,7 +1373,7 @@ suite "Internal: Markdown":
     check "<span class=\"kw\">func</span>" in renderFence(@["func a"], "nim")  # Nim marked
     check "class=\"kw\"" notin renderFence(@["func a"], "")  # other language stays plain
     for class in ["kw", "nm", "doc", "cm", "st", "pr"]:
-      check "pre.code ." & class & " {" in shell_html  # each mark drawn
+      check "pre.code ." & class & ", .diff ." & class & " {" in shell_html  # drawn, in diff too
 
 
 
@@ -1655,7 +1655,11 @@ suite "Internal: Head":
 suite "Internal: Proposals":
   const
     directory_sign = "proposals/01-sign"
-    record_sign = "# P01: Sign\n\nWhy.\n"
+    shape = "\n**What it is.** It.\n\n**What it is for.** For.\n\n**What it costs.** Cost.\n" &
+      "\n## Problem\n\n## Idea\n\n## Evidence\n\n## Costs\n\n## Alternatives\n\n## Landing\n" &
+      "\n## Open decisions\n"
+      ## Argument of standard shape, after its title.
+    record_sign = "# P01: Sign\n" & shape
 
   func numbered(number: int, status = "proposed", bases: seq[int] = @[]): Proposal =
     ## Read well-formed proposal at number, with status, building on proposals `bases` number.
@@ -1673,6 +1677,22 @@ suite "Internal: Proposals":
       },
       directory,
     )[0]
+
+
+  test "summary is three labelled paragraphs and sections are seven, in order, else finding":
+    let
+      claims = %*{"status": "proposed", "builds_on": [], "claims": []}
+      (_, loose) = parseProposal("# P01: Sign\n\nWhy.\n", "", claims, directory_sign)
+      (_, swapped) = parseProposal(
+        record_sign.replace("## Problem", "## Spare").replace("## Idea", "## Problem")
+          .replace("## Spare", "## Idea"),
+        "",
+        claims,
+        directory_sign,
+      )
+    check loose.len == 2 and "`unlabelled paragraph`" in loose[0].message  # summary needs labels
+    check "got ``" in loose[1].message  # sections absent
+    check swapped.len == 1 and "got `Idea`, `Problem`, `Evidence`" in swapped[0].message  # order
 
 
   test "proposal reads number, title, status, base proposals and claims of every known kind":
@@ -1732,7 +1752,7 @@ suite "Internal: Proposals":
     let
       claims = %*{"status": "proposed", "builds_on": [], "claims": []}
       (_, unnumbered) = parseProposal(record_sign, "", claims, "proposals/sign")
-      (_, uncited) = parseProposal("# Sign\n", "", claims, directory_sign)
+      (_, uncited) = parseProposal("# Sign\n" & shape, "", claims, directory_sign)
       (_, unplaced) =
         parseProposal(
           record_sign,
@@ -1986,17 +2006,16 @@ suite "Internal: Figures":
     check "<figure" notin bare and "Map." in bare  # absent file renders as text
 
 
-  test "proposal page puts text above first section before claims, and rest after":
+  test "proposal page opens with summary card, then seven numbered sections, code with landing":
     let
-      lead = Block(kind: KindBlock.Paragraph, lines: @["**What it is.** Summary."])
-      heading = Block(kind: KindBlock.Heading, level: 2, lines: @["Laws"])
-      rest = Block(kind: KindBlock.Paragraph, lines: @["Argument."])
       record = Proposal(
         number: 1,
         name: "p",
         directory: "proposals/01-p",
         title: "P",
-        body: @[lead, heading, rest],
+        body: parseBlocks("**What it is.** It.\n\n**What it is for.** For.\n\n" &
+          "**What it costs.** Cost.\n\n## Problem\n\nWhy.\n\n## Landing\n\nAfter P02.\n\n" &
+          "## Laws\n\nArgument.\n"),
         claims: newJArray(),
       )
       body = bodyProposal(
@@ -2009,12 +2028,19 @@ suite "Internal: Figures":
         Spread(),
         initTable[string, string](),
         "bd6b23c590d7",
-        "",
+        " · <a href=\"u\">docket</a>",
       )
-    check "<section class=\"block prose lead\"><p><strong>What it is.</strong> Summary.</p>" &
-        "</section>" in body  # summary alone in lead
-    check body.find("Summary.") < body.find(">Claims<")  # summary before claims
-    check body.find(">Claims<") < body.find(">Laws<") and "Argument." in body  # rest after
+    check "<dl class=\"summary\"><div><dt>What it is</dt><dd>It.</dd></div>" in body  # labelled
+    check body.find("</dl>") < body.find("id=\"p-problem\"")  # card before sections
+    var at = 0
+    for index, name in ["problem", "idea", "evidence", "costs", "alternatives", "code",
+        "open-decisions"]:
+      let found = body.find("id=\"p-" & name & "\"><h2><span class=\"num\">" & $(index + 1))
+      check found > at  # each section numbered, in order
+      at = found
+    check body.find("After P02.") > body.find("id=\"p-code\"")  # landing inside code
+    check body.find("Argument.") > body.find("id=\"p-open-decisions\"")  # other section last
+    check body.find("<footer class=\"pages\"><a href=\"u\">docket</a></footer>") > at  # links last
 
 
   test "P01 figure names committed map that shows every rule of P01":
@@ -2121,6 +2147,44 @@ suite "Internal: Edits":
     check "class=\"signatures\"" notin htmlEdits(edit("import std/math\n", "import std/os\n"),
       files)  # top-level statement sits in no routine
 
+
+
+  test "code opens each file, shows signature and doc of each change, and folds its body":
+    let
+      source = "func f*(): int =\n  ## Doc f.\n  1\n\nfunc h(): int = 3\n"
+      change = Change(edits: @[
+        Edit(kind: KindEdit.Quote, path: "pga/b.nim", quote: "  1\n", replacement: "  2\n"),
+        Edit(kind: KindEdit.Quote, path: "pga/b.nim", quote: "func h(): int = 3\n",
+          replacement: "func g(): int =\n  ## Doc g.\n  4\n"),
+      ])
+      html = htmlCode(change, {"pga/b.nim": source}.toTable)
+    check html.startsWith("<details class=\"file\" open><summary><code>pga/b.nim</code>")  # open
+    check "1 changed · 1 added · 1 removed" in html  # tally of definitions
+    check "<details class=\"body\"><summary>body · 1 line · " in html  # body folded, counted
+    check " open><summary>body" notin html  # every body closed at rest
+    check html.find("Doc f.") < html.find("<details class=\"body\">")  # doc above body
+    check html.find("badge removed") < html.find("badge added")  # removal before addition
+
+
+  test "added file names its status once, and runs bare lines as one block":
+    let
+      change = Change(edits: @[Edit(kind: KindEdit.Add, path: "pga/n.nim",
+        replacement: "import std/math\nimport std/strutils\n\nfunc k*(): int =\n" &
+          "  ## Doc k.\n  5\n")])
+      html = htmlCode(change, initTable[string, string]())
+    check "<span class=\"status\">added</span>" in html  # file says it is new
+    check "class=\"badge" notin html  # each definition says it no more
+    check html.count("<div class=\"definition added\">") == 2  # imports together, then routine
+
+
+  test "change outside every definition shows as other lines":
+    let html = htmlCode(
+      Change(edits: @[Edit(kind: KindEdit.Quote, path: "pga/c.nim", quote: "# TODO: one.\n",
+        replacement: "# TODO: two.\n")]),
+      {"pga/c.nim": "# TODO: one.\nfunc z(): int = 0\n"}.toTable,
+    )
+    check "other lines</span>" in html and "TODO: two." in html  # comment reaches page
+    check "definition changed" notin html  # routine beside it is unchanged
 
 
 suite "Internal: Search":
@@ -2523,7 +2587,7 @@ suite "Internal: Proposal list":
         # table row, close, and graph box where undecided
       check "body:has(#" & id & ":checked) [for=\"" & id & "\"]" in body  # labels mark choice
     check "\" checked" notin body and "checked=" notin body  # page opens with none selected
-    check "<h2>P02: Title 2</h2>" in body and "<h3>Claims</h3>" in body  # nested one level down
+    check "<h2>P02: Title 2</h2>" in body and "<h4>Claims</h4>" in body  # nested one level down
     check "<a href=\"https://example.org/p1\">its own page</a>" in body  # published page linked
     check "<button class=\"clear\" type=\"reset\">" in body  # one control clears all
 

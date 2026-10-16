@@ -2,10 +2,13 @@
 ##   Both pages show proposed change against pin, so both render it one way: suites beside
 ##     pin's own, functions whose counts moved, times of measurands those functions serve, and
 ##     edits as diff of lines against file each edit finds.
-##   Edits open under list of files they touch, each with lines removed and added. Each edit's
-##     summary names file and line, then signatures of routines, tests and suites edit defines,
-##     else of one it sits in, so reader sees what changes before reading how. Body, pragmas and
-##     comments leave signature.
+##   Proposal page shows code one block per file, open, under its status and counts. Inside,
+##     each definition change adds, removes or changes shows its signature and doc, and folds
+##     its body (`definitions.nim`). So reader sees what each definition is before how it works.
+##     Lines in no definition follow, diffed, as other lines.
+##   Marginalia shows edits under list of files they touch, each with lines removed and added.
+##     Each edit's summary names file and line, then signatures of routines, tests and suites
+##     edit defines, else of one it sits in. Body, pragmas and comments leave signature.
 ##   Diff numbers each line on side it stands on: before edit and after it, in file as edit finds
 ##     it. Bases of proposal and earlier edits apply first, so number is one reader finds in
 ##     library carrying them. Unchanged run longer than twice context folds to count of lines.
@@ -23,7 +26,7 @@
 
 import std/[algorithm, json, options, sequtils, strutils, tables]
 
-import ../[changes, markdown]
+import ../[changes, definitions, markdown]
 import ./shell
 
 
@@ -269,8 +272,26 @@ func diffLines(before, after: seq[string]; first_before, first_after: int): seq[
     )
 
 
-func htmlDiff(lines: seq[LineDiffed]): string =
+func linesOf(text: string): seq[string] =
+  ## Split text into lines, one closing line break dropped; empty text holds none.
+  if text.len == 0: return
+  (if text.endsWith("\n"): text[0 .. ^2] else: text).splitLines
+
+
+func textCounts(lines: seq[LineDiffed]): string =
+  ## Count lines removed and added, as `-2 +5`.
+  "<span class=\"removed\">-" & $lines.countIt(it.kind == KindLine.Removed) &
+      "</span> <span class=\"added\">+" & $lines.countIt(it.kind == KindLine.Added) & "</span>"
+
+
+func textLines(count: int): string =
+  ## Count lines in words, as `1 line` or `7 lines`.
+  $count & (if count == 1: " line" else: " lines")
+
+
+func htmlDiff(lines: seq[LineDiffed], language = ""): string =
   ## Render diff as numbered lines, each unchanged run past context folded to its count.
+  ##   Lines of Nim take marks of their tokens, as fenced Nim does.
 
   func cellOf(number: int): string =
     ## Render line number, or empty cell where side holds no such line.
@@ -303,7 +324,9 @@ func htmlDiff(lines: seq[LineDiffed]): string =
       of KindLine.Added: ("added", "+")
     result.add "<tr class=\"" & row & "\">" & cellOf(lines[index].number_before) &
         cellOf(lines[index].number_after) & "<td class=\"sign\">" & sign &
-        "</td><td class=\"text\">" & escapeHtml(lines[index].text) & "</td></tr>"
+        "</td><td class=\"text\">" &
+        (if language == "nim": renderNim(lines[index].text) else: escapeHtml(lines[index].text)) &
+        "</td></tr>"
     inc index
   result.add "</table></div>"
 
@@ -427,16 +450,6 @@ func htmlEdits*(change: Change, files: Table[string, string]): string =
     for found in signatures: result.add code(found)
     result.add "</span>"
 
-  func linesOf(text: string): seq[string] =
-    ## Split text into lines, one closing line break dropped; empty text holds none.
-    if text.len == 0: return
-    (if text.endsWith("\n"): text[0 .. ^2] else: text).splitLines
-
-  func textCounts(lines: seq[LineDiffed]): string =
-    ## Count lines removed and added, as `-2 +5`.
-    "<span class=\"removed\">-" & $lines.countIt(it.kind == KindLine.Removed) &
-        "</span> <span class=\"added\">+" & $lines.countIt(it.kind == KindLine.Added) & "</span>"
-
   # Diff each edit against file as it finds it, earlier edits applied.
   var
     current = files
@@ -483,6 +496,157 @@ func htmlEdits*(change: Change, files: Table[string, string]): string =
   result = "<ul class=\"files\">"
   for path in paths: result.add "<li>" & code(path) & " " & textCounts(diffs[path]) & "</li>"
   result.add "</ul>" & sections.join
+
+
+func htmlCode*(change: Change, files: Table[string, string]): string =
+  ## Render change one block per file, open, under its status and counts. Inside, each
+  ##   definition change adds, removes or changes shows signature and doc, and folds body.
+  ##   Lines in no definition follow, diffed, as other lines.
+  ##   `files` is library as change finds it: pin, with bases of proposal applied.
+  var after = files
+  discard applyChange(after, change, "")  # Misfit is `drive`'s finding.
+  var paths: seq[string]
+  for edit in change.edits:
+    if edit.path notin paths: paths.add edit.path
+
+  for path in paths:
+    let
+      lines_before = linesOf(files.getOrDefault(path))
+      lines_after = linesOf(after.getOrDefault(path))
+      before = definitionsOf(lines_before)
+      later = definitionsOf(lines_after)
+      status =
+        if path notin files: "added"
+        elif change.edits.anyIt(it.path == path and it.kind == KindEdit.Replace): "replaced"
+        else: "edited"
+    var
+      sections: seq[string]
+      tally: array[3, int]  # Added, changed, removed.
+      is_covered_before = newSeq[bool](lines_before.len)
+      is_covered_after = newSeq[bool](lines_after.len)
+    for definition in before:
+      for index in definition.first ..< definition.first + definition.head.len +
+          definition.doc.len + definition.body.len:
+        is_covered_before[index] = true
+    for definition in later:
+      for index in definition.first ..< definition.first + definition.head.len +
+          definition.doc.len + definition.body.len:
+        is_covered_after[index] = true
+
+    # Keep definitions that differ, each with how it changed.
+    var shown: seq[(string, Definition, Definition)]  # Kind of change, before, after.
+    for pair in pairDefinitions(before, later):
+      let
+        old = if pair.before >= 0: before[pair.before] else: Definition()
+        now = if pair.after >= 0: later[pair.after] else: Definition()
+      if pair.before >= 0 and pair.after >= 0 and old.head == now.head and old.doc == now.doc and
+          old.body == now.body:
+        continue
+      let kind =
+        if pair.before < 0: "added"
+        elif pair.after < 0: "removed"
+        else: "changed"
+      inc tally[["added", "changed", "removed"].find(kind)]
+      shown.add (kind, old, now)
+
+    func isBare(definition: Definition): bool =
+      ## Tell whether definition is one line of import or statement, with no doc or body.
+      definition.kind in ["import", "statement"] and definition.head.len == 1 and
+          definition.doc.len == 0 and definition.body.len == 0
+
+    var index = 0
+    while index < shown.len:
+      let (kind, old, now) = shown[index]
+      let
+        definition = if kind == "removed": old else: now
+        start_old = old.first + old.head.len + old.doc.len + 1  # Line body opens on.
+        start_now = now.first + now.head.len + now.doc.len + 1
+      var
+        section = "<div class=\"definition " & kind & "\">"
+        labels: seq[string]  # Change, where file holds more than additions, then context.
+      if status != "added": labels.add "<span class=\"badge " & kind & "\">" & kind & "</span>"
+
+      # Run of bare lines added or removed together shows as one block of its source lines.
+      var last = index
+      if kind != "changed" and definition.isBare:
+        while last + 1 < shown.len and shown[last+1][0] == kind and
+            (if kind == "added": shown[last+1][2] else: shown[last+1][1]).isBare and
+            (if kind == "added": shown[last+1][2] else: shown[last+1][1]).context ==
+                definition.context:
+          inc last
+      if definition.context.len > 0: labels.add "under " & code(definition.context)
+      if labels.len > 0: section.add "<p class=\"where\">" & labels.join(" ") & "</p>"
+      if last > index:
+        let
+          source = if kind == "added": lines_after else: lines_before
+          final = (if kind == "added": shown[last][2] else: shown[last][1]).first
+          lines = source[definition.first .. final]
+        section.add(
+          if kind == "added": renderFence(lines, "nim", definition.first + 1)
+          else: htmlDiff(diffLines(lines, @[], definition.first + 1, 0), "nim")
+        )
+        sections.add section & "</div>"
+        index = last + 1
+        continue
+
+      # Signature and doc: diffed where they changed, else as code.
+      if kind == "changed" and (old.head != now.head or old.doc != now.doc):
+        section.add htmlDiff(diffLines(old.head & old.doc, now.head & now.doc, old.first + 1,
+            now.first + 1), "nim")
+      elif kind == "removed":
+        section.add htmlDiff(diffLines(old.head & old.doc, @[], old.first + 1, 0), "nim")
+      else:
+        section.add renderFence(now.head & now.doc, "nim", now.first + 1)
+
+      # Body folds under count of its lines, and of lines it removes and adds.
+      if old.body.len > 0 or now.body.len > 0:
+        let (label, content) =
+          case kind
+          of "added": ("body · " & textLines(now.body.len), renderFence(now.body, "nim", start_now))
+          of "removed":
+            ("body · " & textLines(old.body.len),
+              htmlDiff(diffLines(old.body, @[], start_old, 0), "nim"))
+          elif old.body == now.body:
+            ("body · " & textLines(now.body.len) & ", unchanged",
+              renderFence(now.body, "nim", start_now))
+          else:
+            let lines = diffLines(old.body, now.body, start_old, start_now)
+            ((if now.body.len == 0: "body removed · " else: "body · " & textLines(now.body.len) &
+                " · ") & textCounts(lines), htmlDiff(lines, "nim"))
+        section.add "<details class=\"body\"><summary>" & label & "</summary>" & content &
+            "</details>"
+      sections.add section & "</div>"
+      inc index
+
+    # Lines in no definition: comments, markers and `when` lines, numbered where they stand.
+    var
+      rest_before, rest_after: seq[string]
+      numbers_before, numbers_after: seq[int]
+    for index, line in lines_before:
+      if not is_covered_before[index] and line.strip.len > 0:
+        rest_before.add line
+        numbers_before.add index + 1
+    for index, line in lines_after:
+      if not is_covered_after[index] and line.strip.len > 0:
+        rest_after.add line
+        numbers_after.add index + 1
+    var rest = diffLines(rest_before, rest_after, 1, 1)
+    for line in rest.mitems:
+      if line.number_before > 0: line.number_before = numbers_before[line.number_before - 1]
+      if line.number_after > 0: line.number_after = numbers_after[line.number_after - 1]
+    if rest.anyIt(it.kind != KindLine.Kept):
+      sections.add "<div class=\"definition other\"><p class=\"where\">" &
+          "<span class=\"badge\">other lines</span> comments, markers and " & code("when") &
+          " lines</p>" &
+          htmlDiff(rest, "nim") & "</div>"
+
+    var parts: seq[string]
+    for (count, word) in [(tally[1], "changed"), (tally[0], "added"), (tally[2], "removed")]:
+      if count > 0: parts.add $count & " " & word
+    result.add "<details class=\"file\" open><summary>" & code(path) & " <span class=\"status\">" &
+        status & "</span> <span class=\"tally\">" & parts.join(" · ") & "</span> " &
+        textCounts(diffLines(lines_before, lines_after, 1, 1)) & "</summary>" &
+        "<div class=\"definitions\">" & sections.join & "</div></details>"
 
 
 func textSpread*(spread: Spread): string =
