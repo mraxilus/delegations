@@ -26,6 +26,7 @@
   --pass: #1f7a4d; --pass-wash: #e3f4ea; --fail: #b3303b; --fail-wash: #fbe9eb;
   --status: #5a4a9c; --status-wash: #ece9f8;
   --added: #1f6f43; --added-wash: #e6f4ec; --removed: #a3303a; --removed-wash: #fbeaec;
+  --keyword: #5a4a9c; --name: #1d5fa8; --comment-doc: #3d6b4f; --literal: #8a4a12;
   --serif: "Noto Serif", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Sans", Georgia, serif;
   --sans: "Noto Sans", "Noto Sans Math", "Noto Sans Symbols 2", system-ui, sans-serif;
   --mono: "Commit Mono", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Sans", ui-monospace,
@@ -40,6 +41,7 @@
     --pass: #6fcf97; --pass-wash: #1d3327; --fail: #ec7b86; --fail-wash: #3a2226;
     --status: #b3a6ec; --status-wash: #2a2540;
     --added: #7fd4a2; --added-wash: #17301f; --removed: #f08a94; --removed-wash: #3a1f24;
+    --keyword: #b3a6ec; --name: #7db3f0; --comment-doc: #93c9a4; --literal: #e2ad74;
   }
 }
 :root[data-theme="dark"] {
@@ -50,6 +52,7 @@
   --pass: #6fcf97; --pass-wash: #1d3327; --fail: #ec7b86; --fail-wash: #3a2226;
   --status: #b3a6ec; --status-wash: #2a2540;
   --added: #7fd4a2; --added-wash: #17301f; --removed: #f08a94; --removed-wash: #3a1f24;
+  --keyword: #b3a6ec; --name: #7db3f0; --comment-doc: #93c9a4; --literal: #e2ad74;
 }
 
 * { box-sizing: border-box; }
@@ -198,6 +201,12 @@ pre.code { background: var(--code); border-radius: 6px; padding: 10px 12px; over
   line-height: 1.5; }
 pre.code .cl { white-space: pre; }
 pre.code .ln { display: inline-block; width: 3.2em; color: var(--muted); user-select: none; }
+pre.code .kw { color: var(--keyword); }
+pre.code .nm { color: var(--name); }
+pre.code .doc { color: var(--comment-doc); }
+pre.code .cm { color: var(--muted); }
+pre.code .st { color: var(--literal); }
+pre.code .pr { color: var(--ink-2); }
 .edit { display: grid; gap: 6px; grid-template-columns: minmax(0, 1fr); }
 .edit .where { color: var(--muted); font-size: 0.84rem; }
 details.edit > summary { cursor: pointer; }

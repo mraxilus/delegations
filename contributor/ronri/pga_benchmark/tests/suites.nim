@@ -1352,6 +1352,29 @@ suite "Internal: Markdown":
       check "display: block" notin body[^1]  # block line after newline doubles each line
 
 
+  test "Nim fence marks keywords, declared name, doc comment, comment, literal and pragma":
+    check renderNim("func `∧`*[A: static set[Basis]](m: Of[A]): int {.noinit.} =") ==
+        "<span class=\"kw\">func</span> <span class=\"nm\">`∧`</span>*[A: " &
+        "<span class=\"kw\">static</span> set[Basis]](m: Of[A]): int " &
+        "<span class=\"pr\">{.noinit.}</span> ="  # name after declaring keyword alone
+    check renderNim("  ## Read `B` < 2.") ==
+        "  <span class=\"doc\">## Read `B` &lt; 2.</span>"  # doc comment whole, escaped
+    check renderNim("let s = \"# no \\\" end\"  # yes") ==
+        "<span class=\"kw\">let</span> s = " &
+        "<span class=\"st\">&quot;# no \\&quot; end&quot;</span>  " &
+        "<span class=\"cm\"># yes</span>"  # hash in literal opens no comment
+    check renderNim("format(proc(m: K))") ==
+        "format(<span class=\"kw\">proc</span>(m: K))"  # keyword whole word, type names none
+
+
+  test "fence marks Nim alone, and shell colours each mark it makes":
+    const shell_html = staticRead("../pages/shell.html")
+    check "<span class=\"kw\">func</span>" in renderFence(@["func a"], "nim")  # Nim marked
+    check "class=\"kw\"" notin renderFence(@["func a"], "")  # other language stays plain
+    for class in ["kw", "nm", "doc", "cm", "st", "pr"]:
+      check "pre.code ." & class & " {" in shell_html  # each mark drawn
+
+
 
 suite "Internal: Changes":
   const
