@@ -1343,6 +1343,15 @@ suite "Internal: Markdown":
     check "<th>a</th>" in html and "<td>1</td>" in html and "---" notin html  # header split
 
 
+  test "fenced line takes one line: its newline breaks it, so its span flows inline":
+    const shell_html = staticRead("../pages/shell.html")
+    check "</span>\n<span class=\"cl\">" in renderFence(@["a", "b"], "")  # copy keeps newline
+    for rule in shell_html.split('}'):
+      let body = rule.split('{')
+      if body.len < 2 or body[^2].strip != "pre.code .cl": continue
+      check "display: block" notin body[^1]  # block line after newline doubles each line
+
+
 
 suite "Internal: Changes":
   const
