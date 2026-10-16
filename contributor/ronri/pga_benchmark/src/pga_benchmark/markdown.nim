@@ -6,11 +6,15 @@
 ##     paragraph text, escaped, so unknown syntax degrades to words rather than to markup.
 ##   Fence closes on run of backticks at least as long as one that opened it, so quoted code
 ##     holding shorter run stays whole.
+##   Fence of Nim marks its keywords, declared names, comments, literals and pragmas, so
+##     signature reads apart from its doc comment; shell colours each mark.
 ##
 ##   Cost: nested lists flatten to one level; files keep one level, and renderer says so
 ##     here rather than guessing indentation.
 ##   Cost: inline parse is left to right with no backtracking; unmatched marker renders as
 ##     itself.
+##   Cost: Nim marks line by line, so string or comment spanning lines, and char literal of `#`,
+##     mark wrongly; fences here hold neither.
 
 {.experimental: "strictFuncs".}
 
@@ -35,6 +39,17 @@ const
   LENGTH_FENCE_MIN = 3  ## Shortest run opening fence.
   MARK_TASK_OPEN = "[ ] "  ## Marker of open task item.
   MARK_TASK_DONE = "[x] "  ## Marker of done task item.
+  KEYWORDS_NIM = [
+    "addr", "and", "as", "asm", "bind", "block", "break", "case", "cast", "concept", "const",
+    "continue", "converter", "defer", "discard", "distinct", "div", "do", "elif", "else", "end",
+    "enum", "except", "export", "finally", "for", "from", "func", "if", "import", "in", "include",
+    "interface", "is", "isnot", "iterator", "let", "macro", "method", "mixin", "mod", "nil", "not",
+    "notin", "object", "of", "or", "out", "proc", "ptr", "raise", "ref", "return", "shl", "shr",
+    "static", "template", "try", "tuple", "type", "using", "var", "when", "while", "xor", "yield",
+  ]  ## Keywords of Nim, which fence of Nim marks.
+  KEYWORDS_DECLARING = [
+    "converter", "func", "iterator", "macro", "method", "proc", "template", "type",
+  ]  ## Keywords whose next name fence of Nim marks as declared.
 
 
 
@@ -230,6 +245,60 @@ func renderInline*(text: string): string =
 
 
 
+#[ Code Rendering ]#
+
+func renderNim*(line: string): string =
+  ## Render one line of Nim, marking keywords, declared name, comments, literals and pragmas.
+
+  func span(class, text: string): string =
+    ## Wrap escaped text in span of class.
+    "<span class=\"" & class & "\">" & escapeHtml(text) & "</span>"
+
+  var
+    i = 0
+    is_declaring = false
+  while i < line.len:
+    let c = line[i]
+    if c == '#':
+      result.add span(if line.continuesWith("##", i): "doc" else: "cm", line[i .. ^1])
+      break
+    elif c == '"':
+      var finish = i + 1
+      while finish < line.len and line[finish] != '"':
+        if line[finish] == '\\': inc finish
+        inc finish
+      finish = min(finish, line.len - 1)
+      result.add span("st", line[i .. finish])
+      i = finish + 1
+    elif line.continuesWith("{.", i):
+      let
+        close = line.find(".}", i + 2)
+        finish = if close < 0: line.len - 1 else: close + 1
+      result.add span("pr", line[i .. finish])
+      i = finish + 1
+    elif c == '`' and line.find('`', i + 1) > i:
+      let finish = line.find('`', i + 1)
+      result.add(if is_declaring: span("nm", line[i .. finish]) else: escapeHtml(line[i .. finish]))
+      is_declaring = false
+      i = finish + 1
+    elif c in IdentStartChars:
+      var finish = i
+      while finish + 1 < line.len and line[finish + 1] in IdentChars: inc finish
+      let word = line[i .. finish]
+      if word in KEYWORDS_NIM:
+        result.add span("kw", word)
+        is_declaring = word in KEYWORDS_DECLARING
+      else:
+        result.add(if is_declaring: span("nm", word) else: escapeHtml(word))
+        is_declaring = false
+      i = finish + 1
+    else:
+      if c != ' ': is_declaring = false
+      result.add escapeHtml($c)
+      inc i
+
+
+
 #[ Block Rendering ]#
 
 func cellsOf(row: string): seq[string] =
@@ -244,8 +313,10 @@ func renderFence*(lines: seq[string], language: string, first = 0): string =
   ## Render fenced code, numbering lines from `first` where positive.
   result = "<pre class=\"code\" data-lang=\"" & escapeHtml(language) & "\"><code>"
   for i, line in lines:
-    let number = if first > 0: "<span class=\"ln\">" & $(first + i) & "</span>" else: ""
-    result.add "<span class=\"cl\">" & number & escapeHtml(line) & "</span>\n"
+    let
+      number = if first > 0: "<span class=\"ln\">" & $(first + i) & "</span>" else: ""
+      text = if language == "nim": renderNim(line) else: escapeHtml(line)
+    result.add "<span class=\"cl\">" & number & text & "</span>\n"
   result.add "</code></pre>"
 
 

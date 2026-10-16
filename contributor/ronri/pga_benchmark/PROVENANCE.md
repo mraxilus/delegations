@@ -610,6 +610,15 @@ whole-file replacement carries the digest of the file it replaces instead. A quo
 once at pin. A line number moves with every library commit, and a quote moves only when its
 own lines do. So a change that still applies at head still says what it meant.
 
+A section `## Add` holds a new file whole, and applies only where no file stands at its path. A
+file that head adds under the same path makes the addition stale, so it is a finding and never an
+overwrite. So a proposal that adds a module is a change of the library, and its laws import the
+library alone. P04 adds `pga/basis_sets.nim` this way, and P10 adds `pga/scalars.nim`. Rejected: a
+prototype beside the library, which P04 was. Each proposal on it then imported the prototype, and
+no evaluation built the library that the proposals described.
+
+Verified by `test_rga4d.nim`, suite `Internal: Changes`.
+
 **A proposal is one directory, with one shape.** `proposal.md` argues the future state,
 `change.md` holds its candidate edits, and `claims.json` lists the proposals it builds on and the
 claims that its evaluation checks. A claim is data, so the page shows each verdict beside it. The
@@ -637,11 +646,11 @@ that commit.
 A program claim names its program relative to its proposal, so a new directory name moves no
 digest.
 
-**A program may import a program of a proposal that it builds on,** by a path relative to its own
-directory. `proposals/10-homogeneous-scalar/prototype.nim` imports the prototype of P04 this way,
-so the kinds have one copy. So the digest of an evaluation reads the programs of each base first,
-and then its own. A change to a program of a base moves the digest of each proposal on it.
-Rejected: a copy of the kinds in each proposal on P04, since two copies drift apart.
+**A program runs against the library with its bases applied.** So `laws.nim` of P09 and of P10
+imports `pga` alone, and reaches the basis-set types that the change of P04 adds. A program may
+still import a program of a base by a path relative to its own directory, and no proposal does so
+now. The digest of an evaluation reads the programs of each base first, and then its own. So a
+change to a program of a base moves the digest of each proposal on it.
 
 **A suites or program claim may name `defines`**, each `name=value`, and each of its builds
 passes them as `-d:`. So a proposal can hold the library at a build option other than its
@@ -718,11 +727,13 @@ each time they build, so the record states no figure of it.
 Alternation does not cancel all drift of a shared machine, so the time of one evaluation is
 weak evidence alone. Counts are exact, and carry the verdicts.
 
-`proposals/04-exact-kinds/prototype.nim` holds its laws against the library at pin, at rga3d,
-rga4d, cga4d and cga5d.
-`proposals/10-homogeneous-scalar/prototype.nim` holds its laws at the same four algebras, on the
-kinds of that prototype. `proposals/11-unitize-general/laws.nim` holds the laws of its rule, and
-`limits.nim` its limits over long chains and frames, at the same four algebras.
+The laws of P04 and P10 hold against the library with their changes applied. They hold at each of
+the nine algebras of the library, from rga2d to rga6d and from cga3d to cga6d. Without its fix, the
+law of the empty basis set fails at rga2d and cga3d. Without its fix, the law of the root of zero
+fails at rga2d to rga4d. Without its split-complex
+form, P10 stops the build at cga3d and cga6d. `proposals/11-unitize-general/laws.nim` holds the
+laws of its rule, and `limits.nim` its limits over long chains and frames, at rga3d, rga4d, cga4d
+and cga5d.
 
 Verified by `test_rga4d.nim` and the other stubs, suites `Internal: Markdown`, `Internal: Changes`,
 `Internal: Proposals`, `Internal: Evaluations`, `Internal: Cells` and `Internal: Figures`. They
@@ -865,12 +876,6 @@ The glyph source of release 2.539 gives `cbold-math` the `center` anchor alone. 
 sources alone, with no bold letter source, and `notofonts.github.io` publishes 2.539 as its last
 build. So whether a later release mends the anchors is unverified.
 
-**Every edit renders closed**, as the Architect asked. Its summary names the file and line at
-pin, and how many lines the edit replaces. It lists the signatures of the routines, tests and
-suites that the edit defines, with no body, pragma or comment. An edit that defines none names
-the routine that it sits in at pin, and an edit at top level names none. So a reader sees what
-changes before the edit opens.
-
 **The docket draws each measure as one bar off its lower bound**, as the Architect chose.
 Multiplies, bytes moved and time each give one bar from ×1 to the library over the lower
 bound that the row is measured against. A typed row is measured against its reference, and a
@@ -926,8 +931,55 @@ row, and the split of a typed id. It covers the words each row is found by, and 
 hides a row not found.
 
 Suite `Internal: Figures` covers the path a figure resolves, the SVG a page embeds, and every rule
-on the map. Suite `Internal: Edits` covers the closed edit, the signatures it defines or sits in,
-and a header that closes at its own indent.
+on the map. It also covers the summary above the claims. Suite `Internal: Edits` covers the diff
+with its numbers and folds, a new file, and the class of the sign column. It also covers the
+signatures an edit defines or sits in, and a header that closes at its own indent.
+
+## Proposal pages and code
+
+**Every proposal page has one shape, argument first, as the Architect ordered on 2026-10-16.** A
+card opens it: what the proposal is, is for and costs, what it needs and blocks, and its verdicts.
+Then five numbered sections follow: Problem, Idea, Alternatives, Costs and Open decisions. An
+appendix holds Code and Evidence, so the reader meets the idea and its cost before what checks it.
+
+**Each fact stands once.** The page generates the dependencies, the verdicts, the code and the
+measurements, so `proposal.md` restates none of them. Its summary is three labelled paragraphs,
+and its sections are the five, then Landing and Evidence notes, each once, in order. `drive`
+names any file that departs from it. Rejected: free headings for each proposal, which read
+unorganised and said each figure up to three times.
+
+**Evidence condenses what the evaluation moved, as the docket draws it but static.** Per algebra,
+one row stands for each function that moved: its multiplies, bytes moved and time, each a bar of
+the proposal over pin. The axis runs from ×1/16 to ×16, so a bar left of the line is a gain. An
+operation within the spread is counted, and a helper that moved is named. The proposal stands
+with its bases applied, and the page says so.
+
+**A proposal shows its code one block per file, folded, as the Architect asked on 2026-10-16.**
+Inside, each definition that the change adds, removes or changes shows its signature and doc
+comment, and folds its body. A definition is a routine, a member of a section, an import, a test
+or a statement, at top level or under `when` and `suite`. Two versions pair definitions by
+context, kind and name, same head first. Lines in no definition follow as other lines.
+
+**Marginalia shows each edit as a diff of lines, open, under a list of the files it touches.** Each
+line carries its number in the file as the edit finds it. The earlier edits apply first.
+
+A run of unchanged lines longer than twice the context of 3 folds to its count. So a whole-file
+replacement, as P01 makes, shows its hunks and not the whole file. The diff is a longest common
+subsequence over the lines between the head and tail that both sides share.
+
+The summary of each edit names the file and line, and the lines it removes and adds. It lists the
+signatures of the routines, tests and suites that the edit defines, with no body, pragma or
+comment. A whole-file replacement lists only the signatures that the file it replaces lacked. An
+edit that defines none names the routine that it sits in, and an edit at top level names none.
+
+**A fence of Nim marks its keywords, declared names, doc comments, comments, literals and
+pragmas.** So a signature reads apart from its doc comment. Keyword, name, doc comment and literal
+each take a colour token of their own. Each holds 5.4:1 or more on the code ground in both themes.
+A comment takes the muted ink, and a pragma takes the second ink.
+
+The marks read one line at a time, so a string or a comment that spans lines marks wrongly. No
+fence here holds one. Each fenced line flows inline and ends at its newline, so no line doubles
+and a copy keeps each line.
 
 ## Library head
 
@@ -1141,7 +1193,7 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
   only once the library emits them as exact basis-set types, which the prototype does not.
 - Whether the library takes P05, `multivector-align`. It aligns each multivector to
   `min(64, size)`, one cache line from three dimensions up, so it pads no multivector. The basis-set
-  types of P04 take `alignmentOf` of their basis set instead, as the Architect ruled on 2026-10-04.
+  types of P04 take `alignment` of their basis set instead, as the Architect ruled on 2026-10-04.
   That is the largest power of two that divides their bytes, at most 64. P04 holds the rule,
   and its prototype applies it.
 

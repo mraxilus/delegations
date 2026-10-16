@@ -8,9 +8,10 @@
 
 {.experimental: "strictFuncs".}
 
-when compileOption("profiler"): import std/nimprof
+when compileOption("profiler"):
+  import std/nimprof
 
-import std/[math, random]
+import std/[math, random, strformat]
 
 import pga
 
@@ -32,7 +33,8 @@ proc main(): int =
     let sign = float(-1^(int(grade) + 1))
     for _ in 1..SAMPLES:
       let m = sample(grade)
-      doAssert (⊛m) =~ ((sign * ⊡(☆m)) ∨ ⊟m), "partner must equal its definition"
+      doAssert ⊛m =~ ((sign * ⊡(☆m)) ∨ ⊟m),
+        &"Partner must equal its definition; got `{⊛m}` for `{m}`."
   echo "partner-sign: laws hold at ", DIMENSIONS, "D, conformal ", IS_CONFORMAL
   0
 

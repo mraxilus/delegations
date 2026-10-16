@@ -1,89 +1,108 @@
 # P08: Give each chain of the book one table
 
-At pin, five operators of the book each run as a chain of dense products, with an intermediate
-between each step. They are the support `∩`, the antisupport `∪`, the cocarrier `⊞`, the center
-`⊙` and the container `⊡`. This proposal gives each chain one table, which the rules of P01
-derive, so each runs as one product.
+**What it is.** Five operators of the book each read one table, which the library folds from their
+chain of products as it compiles. So each one runs as one product.
 
-This proposal builds on P01, `cayley-derivation`. It reads `applyMap` of P01 and `applyConstant`
-of the library. It holds the tables of the chains apart from P01, so that P01 holds its
-derivation alone, as the Architect ruled on 2026-10-07.
+**What it is for.** Each of the five runs with no intermediate multivector, so it runs faster. The
+partner `⊛` calls one of them, so it runs faster too.
 
-## What it is
+**What it costs.** Each build of the library derives five more tables, and their cost in compile
+time is unmeasured.
+
+## Problem
+
+At pin, five operators of the book each run as a chain of two or three dense products. They are
+the support `∩`, the antisupport `∪`, the cocarrier `⊞`, the center `⊙` and the container `⊡`.
+Each step of a chain fills a whole intermediate multivector. The partner `⊛` calls `⊡`, so it
+runs that chain too.
+
+## Idea
 
 - **Tables.** `CAYLEY_SUPPORT` and `CAYLEY_SUPPORT_ANTI` under the rigid metric, and
   `CAYLEY_CARRIER_CO`, `CAYLEY_CENTER` and `CAYLEY_CONTAINER` under the conformal metric. Each
-  folds a chain of maps and products of P01 when the library compiles.
+  folds the maps and products of its chain as the library compiles.
+- **Example.** `CAYLEY_CARRIER_CO` folds the weight dual `☆` into `CAYLEY_CARRIER` of pin, so
+  the cocarrier is one map. `CAYLEY_CENTER` then folds that map into the left read of `∨`. So the
+  center 𝐦⊞ ∨ 𝐦 is one product.
+- **Constants.** Each rigid table first fixes one operand of a product, through `applyConstant`
+  of the library. It fixes the origin on the left of `∧`, or the horizon on the left of `∨`. That
+  gives a map, which then folds in the same way.
 - **Operators.** `∩`, `∪`, `⊙` and `⊡` read their table with both operands 𝐦, through the
-  `as_unary` argument of the emitter at pin. `⊞` reads a map of one operand.
-- **Laws.** `laws.nim` holds each operator to the chain that pin spells, on 256 seeded dense
-  samples at rga3d, rga4d, cga4d and cga5d. It spells each chain through operators that this
-  proposal leaves alone. It spells the center through `☆` and `∧`, since this proposal replaces
-  `⊞` too.
+  `as_unary` argument of the emitter at pin. `⊞` reads a map of one operand. Each operator is one
+  call of `defineOperator`, under the same `when` guard as at pin. Each emitted function is
+  `{.inline, noinit.}`, as every generated operator at pin is.
+- **Place.** The rigid tables take a `when IS_RIGID` block of their own after `CAYLEY_ATTITUDE`.
+  The conformal tables join the const section of `CAYLEY_CARRIER`, since they read it. So the
+  rigid block comes first, as everywhere in the library.
 
-## What it buys
+## Alternatives
 
-The evaluation of 2026-10-13 times each operator at pin, and with P01 and this proposal, on
-this machine (linux amd64, 4 cores). Five runs alternate the two builds. Pin and Here are the
-median nanoseconds of the runs, for one operand of kind General. Each ratio is the median of the
-ratios of the runs, so it can differ from Here over Pin.
-
-| Operator | Algebra | Pin | Here | Ratio |
-|----------|---------|-----|------|-------|
-| `∩` support | rga3d | 9.36 | 3.84 | ×0.41 |
-| `∪` antisupport | rga3d | 9.72 | 4.23 | ×0.44 |
-| `∩` support | rga4d | 64.37 | 10.64 | ×0.17 |
-| `∪` antisupport | rga4d | 55.21 | 11.83 | ×0.21 |
-| `⊞` cocarrier | cga4d | 22.36 | 5.51 | ×0.25 |
-| `⊙` center | cga4d | 62.26 | 11.39 | ×0.18 |
-| `⊡` container | cga4d | 39.68 | 13.91 | ×0.35 |
-| `⊞` cocarrier | cga5d | 53.20 | 16.69 | ×0.26 |
-| `⊙` center | cga5d | 139.93 | 43.81 | ×0.27 |
-| `⊡` container | cga5d | 80.46 | 44.89 | ×0.50 |
-
-P01 alone changes no library function, and its evaluation of the same date times each of these
-operators at ×0.95 to ×1.01 of pin. So the gain belongs to this proposal. Both count claims hold:
-the support and the antisupport at rga4d each take 54 multiplies. The partner at pin calls `⊡`, so
-with this proposal it takes ×0.66 to ×0.86 of pin at cga5d, and ×0.56 to ×0.59 at cga4d. P03
-builds on this proposal and folds the partner further.
-
-## Alternatives weighed
-
-| Option | How it was tried, and why it lost |
-|--------|-----------------------------------|
+| Option | Why it lost |
+|--------|-------------|
 | Shared operand as table operation | Built; drops cross cells, since it is binding, `as_unary` |
 
-## Implementation
+## Costs
 
-- **Files.** `pga/cayleys.nim` and `pga/operators.nim`, as P01 leaves them. The conformal
-  tables join a new const block after `CAYLEY_CARRIER`, and the rigid ones a `when IS_RIGID`
-  block after that. Each is an exported `const`, folded when the library compiles.
-- **Types and signatures.** `CAYLEY_CARRIER_CO` is a `Cayley1D`, and the other four are
-  `Cayley2D`. `CAYLEY_SUPPORT` is
-  `CAYLEYS_WEDGE.anti.applyMap(origin.applyMap(CAYLEYS_DUAL.anti.right), Chirality.Right)`, where
-  `origin` is `applyConstant` on a var copy of `CAYLEYS_WEDGE.base`, with `Basis.origin.toSigned`
-  on the left. `CAYLEY_SUPPORT_ANTI` is
-  `CAYLEYS_WEDGE.base.applyMap(horizon.applyMap(CAYLEYS_DUAL.base.right), Chirality.Right)`, where
-  `horizon` is `applyConstant` on a var copy of `CAYLEYS_WEDGE.anti`, with `Basis.horizon` on the
-  left. `CAYLEY_CARRIER_CO` is `CAYLEY_CARRIER.applyMap(CAYLEYS_DUAL.anti.right)`, and
-  `CAYLEY_CENTER` is `CAYLEYS_WEDGE.anti.applyMap(CAYLEY_CARRIER_CO, Chirality.Left)`.
-  `CAYLEY_CONTAINER` is
-  `CAYLEYS_WEDGE.base.applyMap(CAYLEYS_DUAL.anti.right.applyMap(CAYLEY_CARRIER), Chirality.Right)`.
-- **Functions.** Changed: the hand-written `∩`, `∪`, `⊞`, `⊙` and `⊡` of `pga/operators.nim`.
-  Each becomes one call of `defineOperator` on its table, under the same `when` guard as at pin.
-  `∩`, `∪`, `⊙` and `⊡` take the Cayley2D overload with `as_unary = true`, and `⊞` takes the
-  Cayley1D overload. Each emitted function is `{.inline, noinit.}`, as every generated operator
-  at pin is. Added and removed: none.
-- **Callers.** Each operator keeps the signature `(m: Multivector): Multivector`. So `support`,
-  `supportAnti`, `carrierCo`, `center` and `container` of `pga.nim` compile with no edit. At pin,
-  `⊛` calls `⊡`, so it reads the new table with no edit too.
-- **Order of edits.** P01 (`cayley-derivation`) lands first and this proposal next, since both
-  edits of `pga/cayleys.nim` quote its text and the tables read its `applyMap`. P03
-  (`partner-sign`) lands after it, since P03 quotes `CAYLEY_CONTAINER`. The change
-  `cayleys-hygiene` is void once P01 lands. The changes `doc-comments` and `doc-comments-2` edit
-  other lines of `pga/cayleys.nim`, and each is quoted again against P01 or carried in its text.
-  No other proposal or change edits the lines of `pga/operators.nim` that this proposal replaces.
+- **Compile time.** Each build of the library derives five more tables. No evaluation measures
+  that cost.
+- **Callers.** Each operator keeps its signature `(m: Multivector): Multivector`, and its value.
+  So `support`, `supportAnti`, `carrierCo`, `center` and `container` of `pga.nim` compile with no
+  edit. `⊛` reads the new table with no edit too.
 
 ## Open decisions
 
 - Adopt the tables into the library with P01, or after it.
+
+## Landing
+
+- **Order.** P01, `cayley-derivation`, lands first, since every table reads its `applyMap`. This
+  proposal holds the tables apart from P01, so that P01 holds its derivation alone, as the
+  Architect ruled on 2026-10-07.
+- **Quotes.** Of the two edits of `pga/cayleys.nim`, only the edit of the header line quotes text
+  of P01. The other edit quotes the block of `CAYLEY_CARRIER`, which is the same at pin. No other
+  proposal or change edits the lines of `pga/operators.nim` that this proposal replaces.
+- **P03, `partner-sign`.** It quotes `CAYLEY_CONTAINER`, so it lands after this proposal. It then
+  folds the partner further.
+- **Change `cayleys-hygiene`.** Its edits are void once P01 lands.
+- **Changes `doc-comments` and `doc-comments-2`.** They edit other lines of `pga/cayleys.nim`, and
+  each is quoted again against P01 or carried in its text. `doc-comments` also writes in the
+  header of `pga/operators.nim` that the support is written by hand. That line is stale once this
+  proposal lands, since a table then generates the support. So whichever of `doc-comments` and
+  this proposal lands second drops `support` from that line.
+- **Change `imports-narrow`.** It names each symbol that `pga/operators.nim` imports, so with
+  both applied, in either order, the build stops on `undeclared identifier: 'CAYLEY_SUPPORT'`.
+  Whichever of the two lands second writes the merged import below, with the five tables. It
+  drops `origin`, `horizon` and `infinity`, which no operator reads once this proposal lands. A
+  run by hand on 2026-10-15 built that import with P01 and this proposal. The suites passed at
+  rga2d, rga3d, rga4d, cga3d, cga4d and cga5d.
+
+```nim
+import ./[helpers, multivectors]
+from ./algebra {.all.} import
+  Basis, Grade, GradeAnti, DIMENSIONS, IS_CONFORMAL, IS_RIGID,
+  grade, gradeAnti, scalar, scalarAnti, high, low, `==`
+from ./cayleys {.all.} import
+  Cayley1D, Cayley2D, BasisSigned, Chiral, Formal, Partial, Spatial, complement,
+  CAYLEYS_COMPLEMENT, CAYLEYS_DOT, CAYLEYS_DUAL, CAYLEYS_INTERIOR, CAYLEYS_PARTS,
+  CAYLEYS_REVERSE, CAYLEYS_WEDGE, CAYLEYS_WEDGE_DOT, CAYLEYS_NORM_SQUARED, CAYLEY_ATTITUDE
+when IS_RIGID:
+  from ./cayleys {.all.} import CAYLEY_SUPPORT, CAYLEY_SUPPORT_ANTI
+when IS_CONFORMAL:
+  from ./cayleys {.all.} import
+    CAYLEY_CARRIER, CAYLEY_CARRIER_CO, CAYLEY_CENTER, CAYLEY_CONTAINER,
+    CAYLEYS_NORM_SQUARED_RADIUS
+```
+
+## Evidence
+
+Each of the five operators takes ×0.17 to ×0.49 of its time at pin, for one operand of kind
+General. The partner takes ×0.66 to ×0.70 of pin at cga5d, and ×0.53 to ×0.60 at cga4d.
+
+P01 alone changes no library function, so the gain belongs to this proposal. Its evaluation of
+the same date times these operators at ×0.97 to ×1.02 of pin. The exceptions are the support at
+×1.10 and the antisupport at ×1.66 at rga3d. That run timed every measurand at rga3d at a median
+of ×1.10, so both are noise of the machine.
+
+`laws.nim` holds each operator equal to the chain that pin spells, on 256 seeded dense samples.
+It spells each chain through operators that this proposal leaves alone. So it spells the center
+through `☆` and `∧`, and not through `⊞`, which this proposal replaces too.

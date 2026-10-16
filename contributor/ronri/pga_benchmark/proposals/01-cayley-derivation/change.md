@@ -12,13 +12,18 @@ constructors change together.
 Other edits of `pga/cayleys.nim` and `tests/suites.nim` land in this order against the edits
 below:
 
-- P08, `compound-tables`, quotes this file, so it lands after this proposal. P03,
-  `partner-sign`, quotes P08 and lands after it.
+- P08, `compound-tables`, quotes a line of the header of this file and reads `applyMap`, so it
+  lands after this proposal. P03, `partner-sign`, quotes P08 and lands after it.
 - The change `cayleys-hygiene` renames an overload of `constructProductInterior`, which this
-  proposal deletes. So that change is void once this proposal lands.
+  proposal deletes. So the edits of that change are void once this proposal lands. Its other
+  idea still applies: this proposal writes the parity k(k−1)/2 of the reverse twice, in
+  `reverse` and in `constructProductGeometric`. After this proposal, its edit quotes those lines.
 - The changes `doc-comments` and `doc-comments-2` edit `pga/cayleys.nim` too. Whichever lands
   second is quoted again against the first. If this proposal lands second, its Replace carries
   their text under a new digest.
+- Once this proposal lands, `doc-comments` drops its edit that quotes `  CAYLEYS_DOT* = block:`.
+  Applied after this proposal, that edit gives a line of 136 characters with two docs that
+  contradict each other. This proposal gives the dot its doc on that line already.
 - `doc-comments-2` also edits the import line of `tests/suites.nim` that this proposal edits. The
   second to land quotes that line again.
 
@@ -44,21 +49,21 @@ import ../pga/[algebra {.all.}, cayleys {.all.}, multivectors {.all.}, operators
     skip()
 
 
-suite "Transwedge":
+
+suite "Internal: Transwedge":
   test "Order 0 is wedge, order gr(𝐚) is bulk contraction, equal grades give dot":
-    const REDUCTIONS = block:
-      var contract, dot: Cayley2D
+    const (contraction, dot) = block:
+      var contraction, dot: Cayley2D
       for k in Order:
         for a in Basis:
           if Order(a.grade) != k: continue
           for b in Basis:
-            contract[b][a].add(CAYLEYS_WEDGES_TRANS.base[k][a][b])
+            contraction[b][a].add(CAYLEYS_WEDGES_TRANS.base[k][a][b])
             if a.grade == b.grade: dot[a][b].add(CAYLEYS_WEDGES_TRANS.base[k][a][b])
-      (contract, dot)
-    check CAYLEYS_WEDGES_TRANS.base[Order(0)] == CAYLEYS_WEDGE.base  # 𝐚 ⩃₀ 𝐛 = 𝐚 ∧ 𝐛
-    check REDUCTIONS[0] == CAYLEYS_INTERIOR.anti.bulk.right  # 𝐚 ⩃ₖ 𝐛 at k = gr(𝐚) is 𝐛 ∨ 𝐚★
-    check REDUCTIONS[1] == CAYLEYS_DOT.base  # and at gr(𝐚) = gr(𝐛) is 𝐚 ∙ 𝐛
-
+      (contraction, dot)
+    check CAYLEYS_WEDGES_TRANS.base[Order.low] == CAYLEYS_WEDGE.base  # 𝐚 ⩃₀ 𝐛 = 𝐚 ∧ 𝐛
+    check contraction == CAYLEYS_INTERIOR.anti.bulk.right  # 𝐚 ⩃ₖ 𝐛 at k = gr(𝐚) is 𝐛 ∨ 𝐚★
+    check dot == CAYLEYS_DOT.base  # 𝐚 ⩃ₖ 𝐛 at gr(𝐚) = gr(𝐛) is 𝐚 ∙ 𝐛
 ```
 
 ## Replace `pga/cayleys.nim` from `4aa7a2507c537c06`
@@ -67,8 +72,9 @@ suite "Transwedge":
 ## Define and construct Cayley tables for any PGA.
 ##
 ## Cayleys exposed to importer so they can inspect algebra's definition.
-##   Three generators: metric 𝖌 on vectors, exterior product of bases, and complement.
-##   Tables derive through four rules:
+##
+## Derive tables from three generators: metric 𝖌 on vectors, exterior product, complement.
+##   Four rules derive other tables:
 ##     `constructAnti` conjugates table by complements, giving anti-variants
 ##       (antiwedge, 𝔾, antireverse, antidot).
 ##     `applyConstant` and `applyMap` fix or map one operand of product
@@ -77,6 +83,8 @@ suite "Transwedge":
 ##     `filterGrades` keeps one grade of product (dot as scalar part of bulk contraction).
 ##     `constructProductsTransitional` sums wedge chains over one grade (transwedge orders).
 ##       `constructProductGeometric` sums orders with sign (-1)^(k(k-1)/2) (geometric products).
+##   Cost: ⟑ and ⟇ keep two transwedge families, each N³ at compile time, since conformal anti
+##     orders are not conjugates of base orders; maps and filters walk N² cells.
 ##
 
 {.experimental: "codeReordering".}
@@ -139,7 +147,7 @@ const
     bulk: constructParts(Partiality.Bulk),
     weight: constructParts(Partiality.Weight),
   )
-  CAYLEYS_REVERSE* = block:  # Antireverse conjugates reverse by complements.
+  CAYLEYS_REVERSE* = block:  ## Reverse; antireverse conjugates it by complements.
     let base = constructReverse()
     Spatial[Cayley1D](
       base: base,
@@ -162,7 +170,7 @@ const
     )
 
 const
-  CAYLEYS_DUAL* = Spatial[Chiral[Cayley1D]](  # Complement after exomorphism, e.g. 𝐦★ = (𝐆𝐦)̅.
+  CAYLEYS_DUAL* = Spatial[Chiral[Cayley1D]](  ## Complement after exomorphism, e.g. 𝐦★ = (𝐆𝐦)̅.
     base: Chiral[Cayley1D](
       left: CAYLEYS_COMPLEMENT.left.applyMap(CAYLEYS_EXOMORPHISM_METRIC.base),
       right: CAYLEYS_COMPLEMENT.right.applyMap(CAYLEYS_EXOMORPHISM_METRIC.base),
@@ -193,7 +201,7 @@ const
 
 
 const
-  CAYLEYS_INTERIOR* = Spatial[Partial[Chiral[Cayley2D]]](  # Wedge with one operand dualized.
+  CAYLEYS_INTERIOR* = Spatial[Partial[Chiral[Cayley2D]]](  ## (Anti)wedge with one operand dualized.
     base: Partial[Chiral[Cayley2D]](
       bulk: Chiral[Cayley2D](
         left: CAYLEYS_WEDGE.base.applyMap(CAYLEYS_DUAL.base.left, Chirality.Left),
@@ -215,7 +223,7 @@ const
       ),
     ),
   )
-  CAYLEYS_DOT* = block:  # Dot is scalar part of bulk contraction; antidot conjugates it.
+  CAYLEYS_DOT* = block:  ## Dot as scalar part of bulk contraction; antidot conjugates it.
     var base = CAYLEYS_INTERIOR.anti.bulk.right
     base.filterGrades(products = @[Grade.low])
     Spatial[Cayley2D](
@@ -241,7 +249,7 @@ when IS_CONFORMAL:
     cayley
 
 const
-  CAYLEY_ATTITUDE*: Cayley1D = block:  # 𝐦 ∨ 𝐞̄ₙ.
+  CAYLEY_ATTITUDE*: Cayley1D = block:  ## Attitude as one map, i.e. 𝐦 ∨ 𝐞̄ₙ.
     var cayley = CAYLEYS_WEDGE.anti
     cayley.applyConstant(Basis.horizon, Chirality.Right)
 
@@ -325,7 +333,7 @@ func constructReverse(): Cayley1D {.compileTime, noinit.} =
 
 func constructAnti(cayley: Cayley1D, complements: Chiral[Cayley1D]): Cayley1D {.compileTime.} =
   ## Construct anti version of 1D cayley table by applying right (left) complement before (after).
-  complements.left.applyMap(cayley.applyMap(complements.right))
+  complements.left.applyMap cayley.applyMap(complements.right)
 
 
 func constructAnti(cayley: Cayley2D, complements: Chiral[Cayley1D]): Cayley2D {.compileTime.} =
@@ -609,7 +617,7 @@ func applyConstant(
     )]
 
 
-func applyMap(cayley: Cayley1D, map: Cayley1D): Cayley1D {.compileTime.} =
+func applyMap(cayley, map: Cayley1D): Cayley1D {.compileTime.} =
   ## Apply map to operand of 1D cayley, i.e. cayley(map(𝐦)).
   ##   Map runs first, cayley second; several terms distribute and opposing terms cancel.
   for operand in Basis:
@@ -626,14 +634,14 @@ func applyMap(cayley: Cayley2D, map: Cayley1D, chirality: Chirality): Cayley2D {
   ##   I.e. cayley(map(𝐦), 𝐧) for left and cayley(𝐦, map(𝐧)) for right.
   for m in Basis:
     for n in Basis:
-      let mapped = case chirality
+      let terms_map = case chirality
         of Chirality.Left: map[m]
         of Chirality.Right: map[n]
-      for term_map in mapped:
-        let product = case chirality
+      for term_map in terms_map:
+        let products = case chirality
           of Chirality.Left: cayley[term_map.basis][n]
           of Chirality.Right: cayley[m][term_map.basis]
-        for term in product:
+        for term in products:
           result[m][n].mergeTerm BasisSigned(
             basis: term.basis,
             is_negated: term_map.is_negated xor term.is_negated,

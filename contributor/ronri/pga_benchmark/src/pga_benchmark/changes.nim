@@ -1,11 +1,12 @@
 ## Read proposed change to library from its Markdown file, and apply it to library's files at pin.
 ##   Change is Markdown, so reader reads it and audit checks it: title, then why, then one
-##     section per edit. Edit is quote and replacement, or whole file with digest of what it
-##     replaces:
+##     section per edit. Edit is quote and replacement, whole file with digest of what it
+##     replaces, or new file:
 ##
 ##     ```
 ##     ## Edit `pga/operators.nim`           quote must occur once at pin; replacement follows
 ##     ## Replace `pga/cayleys.nim` from `9f3a...`   file at pin must hash to digest
+##     ## Add `pga/scalars.nim`             file must be absent at pin; one fence holds it whole
 ##     ```
 ##
 ##   Quote rather than line range: line numbers move with every library commit, quote moves
@@ -13,6 +14,8 @@
 ##     what it meant. Quote found nowhere, or twice, is finding, never guess.
 ##   Digest guards whole-file replacement, which carries no quote: file that changed at head
 ##     makes replacement stale, and staleness is finding rather than silent overwrite.
+##   New file guards itself by absence: file that head adds under same path makes addition
+##     stale, so it is finding rather than overwrite too.
 ##   Application is pure over map of path to text, so tests feed synthetic library and evaluation
 ##     runner feeds checkout.
 ##
@@ -27,12 +30,15 @@ import ./[guard, markdown]
 
 
 type
+  KindEdit* {.pure.} = enum  ## Define how edit reaches its file.
+    Quote, Replace, Add
   Edit* = object  ## Define one edit to one library file.
+    kind*: KindEdit  ## Quote replaced in place, whole file replaced, or file added.
     path*: string  ## Library-relative path, as `pga/operators.nim`.
-    quote*: string  ## Text at pin edit replaces; empty for whole-file replacement.
-    replacement*: string  ## Text put in its place, or whole new file.
+    quote*: string  ## Text at pin edit replaces; empty unless quote edit.
+    replacement*: string  ## Text put in its place, whole file in its place, or new file.
     digest*: string
-      ## Digest file at pin must have, for whole-file replacement; empty for quote edit.
+      ## Digest file at pin must have, for whole-file replacement; empty otherwise.
     line*: int  ## Line of change file edit's section opens on, for findings.
   Change* = object  ## Define one proposed change: title, why, and edits in order.
     title*: string  ## Heading of change file.
@@ -43,6 +49,7 @@ type
 const
   OPENING_EDIT = "Edit `"  ## Opening of heading naming quote edit.
   OPENING_REPLACE = "Replace `"  ## Opening of heading naming whole-file replacement.
+  OPENING_ADD = "Add `"  ## Opening of heading naming new file.
   SEPARATOR_DIGEST = "` from `"  ## Text between path and digest in replacement heading.
 
 
@@ -96,6 +103,7 @@ func parseChange*(path, source: string): (Change, seq[Finding]) =
       text = heading.lines[0]
       path_edit = text.pathBetween(OPENING_EDIT)
       path_replace = text.pathBetween(OPENING_REPLACE)
+      path_add = text.pathBetween(OPENING_ADD)
     if path_edit.len > 0:
       if fences.len != 2:
         findings.add Finding(
@@ -105,6 +113,7 @@ func parseChange*(path, source: string): (Change, seq[Finding]) =
         )
         continue
       change.edits.add Edit(
+        kind: KindEdit.Quote,
         path: path_edit,
         quote: fences[0].lines.join("\n"),
         replacement: fences[1].lines.join("\n"),
@@ -122,16 +131,31 @@ func parseChange*(path, source: string): (Change, seq[Finding]) =
         )
         continue
       change.edits.add Edit(
+        kind: KindEdit.Replace,
         path: path_replace,
         replacement: fences[0].lines.join("\n") & "\n",
         digest: digest,
+        line: heading.line,
+      )
+    elif path_add.len > 0:
+      if fences.len != 1:
+        findings.add Finding(
+          path: path,
+          line: heading.line,
+          message: "Add needs one fence; got `" & $fences.len & "`.",
+        )
+        continue
+      change.edits.add Edit(
+        kind: KindEdit.Add,
+        path: path_add,
+        replacement: fences[0].lines.join("\n") & "\n",
         line: heading.line,
       )
     else:
       findings.add Finding(
         path: path,
         line: heading.line,
-        message: "Section is neither Edit nor Replace; got `" & text & "`.",
+        message: "Section is neither Edit, Replace nor Add; got `" & text & "`.",
       )
   (change, findings)
 
@@ -141,8 +165,20 @@ func parseChange*(path, source: string): (Change, seq[Finding]) =
 
 func applyChange*(files: var Table[string, string], change: Change, source: string): seq[Finding] =
   ## Apply change to map of library path to text, in order; each misfit is finding.
-  ##   Quote must occur exactly once; whole-file digest must match text at pin.
+  ##   Quote must occur exactly once; whole-file digest must match text at pin; new file must be
+  ##     absent.
   for edit in change.edits:
+    # Add new file where none stands; any other edit needs file it reaches.
+    if edit.kind == KindEdit.Add:
+      if edit.path in files:
+        result.add Finding(
+          path: source,
+          line: edit.line,
+          message: "Library holds file already; got `" & edit.path & "`.",
+        )
+        continue
+      files[edit.path] = edit.replacement
+      continue
     if edit.path notin files:
       result.add Finding(
         path: source,
@@ -150,8 +186,10 @@ func applyChange*(files: var Table[string, string], change: Change, source: stri
         message: "Library holds no such file; got `" & edit.path & "`.",
       )
       continue
+
+    # Replace file whole where its digest still holds, or quote where it occurs once.
     let text = files[edit.path]
-    if edit.digest.len > 0:
+    if edit.kind == KindEdit.Replace:
       let digest = text.digestOf
       if digest != edit.digest:
         result.add Finding(

@@ -12,13 +12,15 @@
 ##     RGA alone, are such points, one holding stray of 50 tolerances in its plane slot: rule of
 ##     P07 calls them equal, and rule of pin stops there and does not.
 ##   Each timed loop sits in procedure of its own, so compiler estimates it hot, as caller's.
+##   Template `timeRounds` mirrors that of `timing.nim` in P05 and P06; fix to one reaches each.
 ##
 ##   Cost: `seq` stands for caller's heap storage; 1024 pairs, 41 rounds, median nanoseconds
 ##     per pair.
 
 {.experimental: "strictFuncs".}
 
-when compileOption("profiler"): import std/nimprof
+when compileOption("profiler"):
+  import std/nimprof
 
 import std/[algorithm, math, monotimes, options, random, strutils, times]
 
@@ -41,15 +43,15 @@ func isEqualPin(m, n: Multivector): bool =
 
 func gradePin(m: Multivector): Option[Grade] =
   ## Get grade as pin does: each coefficient at most tolerance counts as zero.
-  var is_found = false
+  var found_grade = false
   for basis in Basis:
     if abs(m[basis]) <= TOLERANCE_ABS: continue
-    if not is_found:
-      is_found = true
+    if result.isNone:
+      found_grade = true
       result = some(basis.grade)
-    elif int(result.get) != int(basis.grade):
-      return none(Grade)
-  if not is_found: result = some(Grade(0))
+    elif result.get != basis.grade:
+      return none[Grade]()
+  if not found_grade: result = some(Grade.low)
 
 
 template timeRounds(label: string, loop: untyped) =
