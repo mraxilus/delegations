@@ -876,20 +876,6 @@ The glyph source of release 2.539 gives `cbold-math` the `center` anchor alone. 
 sources alone, with no bold letter source, and `notofonts.github.io` publishes 2.539 as its last
 build. So whether a later release mends the anchors is unverified.
 
-**Every edit renders as a diff of lines, open, under a list of the files it touches.** The
-Architect asked for a clear diff on each proposal on 2026-10-15. This replaces the closed edit of
-quote and replacement side by side. Each line carries its number in the file as the edit finds it.
-The bases of the proposal and the earlier edits apply first.
-
-A run of unchanged lines longer than twice the context of 3 folds to its count. So a whole-file
-replacement, as P01 makes, shows its hunks and not the whole file. The diff is a longest common
-subsequence over the lines between the head and tail that both sides share.
-
-The summary of each edit names the file and line, and the lines it removes and adds. It lists the
-signatures of the routines, tests and suites that the edit defines, with no body, pragma or
-comment. A whole-file replacement lists only the signatures that the file it replaces lacked. An
-edit that defines none names the routine that it sits in, and an edit at top level names none.
-
 **Each proposal page opens with its summary, above its claims.** The text of `proposal.md` above its
 first section says what the proposal is, what it is for and what it costs. So a reader meets the
 idea before the verdicts.
@@ -952,6 +938,31 @@ Suite `Internal: Figures` covers the path a figure resolves, the SVG a page embe
 on the map. It also covers the summary above the claims. Suite `Internal: Edits` covers the diff
 with its numbers and folds, a new file, and the class of the sign column. It also covers the
 signatures an edit defines or sits in, and a header that closes at its own indent.
+
+## Code on pages
+
+**Every edit renders as a diff of lines, open, under a list of the files it touches.** The
+Architect asked for a clear diff on each proposal on 2026-10-15. This replaces the closed edit of
+quote and replacement side by side. Each line carries its number in the file as the edit finds it.
+The bases of the proposal and the earlier edits apply first.
+
+A run of unchanged lines longer than twice the context of 3 folds to its count. So a whole-file
+replacement, as P01 makes, shows its hunks and not the whole file. The diff is a longest common
+subsequence over the lines between the head and tail that both sides share.
+
+The summary of each edit names the file and line, and the lines it removes and adds. It lists the
+signatures of the routines, tests and suites that the edit defines, with no body, pragma or
+comment. A whole-file replacement lists only the signatures that the file it replaces lacked. An
+edit that defines none names the routine that it sits in, and an edit at top level names none.
+
+**A fence of Nim marks its keywords, declared names, doc comments, comments, literals and
+pragmas.** So a signature reads apart from its doc comment. Keyword, name, doc comment and literal
+each take a colour token of their own. Each holds 5.4:1 or more on the code ground in both themes.
+A comment takes the muted ink, and a pragma takes the second ink.
+
+The marks read one line at a time, so a string or a comment that spans lines marks wrongly. No
+fence here holds one. Each fenced line flows inline and ends at its newline, so no line doubles
+and a copy keeps each line.
 
 ## Library head
 
