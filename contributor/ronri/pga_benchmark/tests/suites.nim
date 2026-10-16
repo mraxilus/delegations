@@ -14,8 +14,8 @@ from std/unicode import runeLen
 
 import ../src/pga_benchmark
 import ../src/pga_benchmark/[
-  bound, cells, changes, dense, gaps, guard, head, inspector, markdown, measurements, model,
-  notes, proposals, report,
+  bound, cells, changes, definitions, dense, gaps, guard, head, inspector, markdown,
+  measurements, model, notes, proposals, report,
 ]
 import ../src/pga_benchmark/pages/[docket, evaluation, listing, proposal, render, search, shell]
 from ../src/pga_benchmark/evaluations import
@@ -1375,6 +1375,66 @@ suite "Internal: Markdown":
     for class in ["kw", "nm", "doc", "cm", "st", "pr"]:
       check "pre.code ." & class & " {" in shell_html  # each mark drawn
 
+
+
+suite "Internal: Definitions":
+  const source = """## Module doc.
+
+import std/strutils
+
+type  ## Kinds of thing.
+  Kind* = enum  ## Kinds.
+    A, B
+  Thing* = object
+    field: int
+
+const LIMIT = 3  ## Limit.
+
+func f*(x: int): int =
+  ## Double x.
+  x * 2
+
+when defined(fast):
+  func `+`(
+    a: int
+  ): int =
+    ## Triple a.
+    a * 3
+
+suite "S":
+  test "t":
+    check true
+
+defineIt(
+  name = "x",
+)"""
+
+
+  test "definitions split routines, members, imports and statements, under when and suite":
+    let found = definitionsOf(source.splitLines)
+    check found.mapIt(it.kind & " " & it.name) == @[
+      "doc module", "import ", "type Kind", "type Thing", "const LIMIT", "func f", "func +",
+      "test t", "statement defineIt( name = \"x\", )",
+    ]  # section members apart, operator unticked, statement named by its head
+    check found[5].head.len == 1 and found[5].doc == @["  ## Double x."] and
+        found[5].body == @["  x * 2"]  # head, doc and body apart
+    check found[6].head.len == 3 and found[6].context == "when defined(fast)"  # head spans lines
+    check found[7].context == "suite \"S\""  # test under its suite
+    check found[3].first == 7 and found[3].body == @["    field: int"]  # member keeps its fields
+
+
+  test "pairs by same head first, then in order, and removed stands after what it followed":
+    let
+      before = definitionsOf(@[
+        "func a(x: int): int = x", "func a(x: float): float = x", "func b(): int = 1",
+        "func d(): int = 2",
+      ])
+      after = definitionsOf(@[
+        "func a(x: float): float = -x", "func a(x: int): int = x", "func c(): int = 1",
+        "func d(): int = 2",
+      ])
+    check pairDefinitions(before, after).mapIt((it.before, it.after)) ==
+        @[(1, 0), (0, 1), (2, -1), (-1, 2), (3, 3)]  # overloads by head, rename as two
 
 
 suite "Internal: Changes":
