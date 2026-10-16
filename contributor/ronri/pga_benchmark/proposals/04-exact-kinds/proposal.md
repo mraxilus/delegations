@@ -201,13 +201,13 @@ nine algebras of the library.
   `pga/multivectors.nim` asked for compact types, subsets of multivectors and even and odd bases,
   so one TODO replaces them, for the question that stays open. `laws.nim` holds the laws, and
   `timing.nim` times stand-ins of each count, with no library.
-- **Types and signatures.** Every type and signature at pin stays. `MultivectorOf` and its
-  aliases are new, and the new signatures are below. The constant `ALIGNMENT_MAX` stays private.
-- **Functions.** The change adds the functions below, and the private `slot`, `emitSet`,
-  `emitRead` and `emitWrites`. It also adds the macros `defineMultivectors`, `typeReached`,
-  `defineProduct` and `defineMap`. It removes and changes no function. `defineProduct` and
-  `defineMap` read the same tables as `defineOperator`, but over the bases of the operands
-  alone. `defineOperator` stays, and so does every operator on `Multivector`.
+- **Types and signatures.** Every type and signature at pin stays. The new module declares one
+  type, its aliases, its accessors, the widen and the narrow, and the generic products. The
+  sections below list each declaration with its doc comment, grouped by what it does. The diff at
+  the foot of the page holds each body.
+- **Functions.** The change removes and changes no function. `defineProduct` and `defineMap` read
+  the same tables as `defineOperator`, but over the bases of the operands alone. `defineOperator`
+  stays, and so does every operator on `Multivector`.
 - **Generic operators.** Only `∧`, `⟇`, the binary `∙` and `∘`, and the round parts are generic.
   Their aliases are `wedge`, `wedgeDotAnti`, `dot`, `dotAnti`, and `bulk` and `weight` under the
   rigid metric, or `bulkRound` and `weightRound` under the conformal one. These stay on
@@ -227,26 +227,282 @@ nine algebras of the library.
   quotes. P09, `object-names`, and P10, `homogeneous-scalar`, build on this proposal, so they land
   after it.
 
+### One type for any set of bases
+
+`MultivectorOf[B]` holds the coefficients of the bases in `B` alone, in basis order. Its
+alignment follows from its size, so no count pads.
+
 ```nim
-type MultivectorOf*[B: static set[Basis]] = object  # private `elements`, `card(B)` floats
-type Kvector0* = MultivectorOf[{Basis.S}]  # likewise to KvectorN, MultivectorEven, MultivectorOdd
-func alignment*(count: int): int
-template `[]`*[B: static set[Basis]](m: MultivectorOf[B], basis: static Basis): float
-template `[]=`*[B: static set[Basis]](m: var MultivectorOf[B], basis: static Basis, value: float)
-func coefficient*[B: static set[Basis]](m: MultivectorOf[B], basis: Basis): float
-func bases*[B: static set[Basis]](t: typedesc[MultivectorOf[B]]): set[Basis]
-func toMultivector*[B: static set[Basis]](m: MultivectorOf[B]): Multivector
+type MultivectorOf*[B: static set[Basis]] = object
+  ## Define multivector of bases `B` alone, coefficients dense in basis order.
+  ##   Aligned to `alignment` of its count through `when`. Field stays private, as on `Multivector`.
+  when alignment(card(B)) == 64:
+    elements {.align(64).}: array[card(B), float]
+  elif alignment(card(B)) == 32:
+    elements {.align(32).}: array[card(B), float]
+  elif alignment(card(B)) == 16:
+    elements {.align(16).}: array[card(B), float]
+  else:
+    elements: array[card(B), float]
+
+
+const ALIGNMENT_MAX = 64  ## Cap alignment at bytes of one cache line.
+
+
+func alignment*(count: int): int =
+  ## Get alignment of `count` floats: largest power of two dividing their bytes, at most one line.
+  ##   Alignment divides size, so it pads no count; empty set keeps alignment of float.
+```
+
+### Names for each grade and each parity
+
+One macro names an alias for each grade and for each parity. An alias adds no type. So `Kvector2`
+and a product that reaches the bivectors alone are one type. `emitSet` spells each set, and the
+last section says why.
+
+```nim
+macro defineMultivectors(): untyped =
+  ## Name basis-set types of each grade and of each parity, as aliases of exact ones.
+
+  func basesOfParity(is_even: bool): set[Basis] =
+    ## Get bases of even or odd grade.
+    for basis in Basis:
+      if (int(basis.grade) mod 2 == 0) == is_even: result.incl basis
+
+  result = newStmtList()
+  for grade in Grade.low..Grade.high:
+    let
+      bases = LUT_BASES_BY_GRADE[grade]
+      (alias, spelled) = (ident("Kvector" & $int(grade)), emitSet({bases.a .. bases.b}))
+    result.add quote do:
+      type `alias`* = MultivectorOf[`spelled`]  ## Define basis-set type of one grade.
+  for (name, is_even) in [("MultivectorEven", true), ("MultivectorOdd", false)]:
+    let (alias, spelled) = (ident(name), emitSet(basesOfParity(is_even = is_even)))
+    result.add quote do:
+      type `alias`* = MultivectorOf[`spelled`]  ## Define basis-set type of one parity.
+```
+
+At `rga4d` the macro writes these seven aliases.
+
+| Alias | Bases at `rga4d` | Coefficients |
+|-------|------------------|-------------:|
+| `Kvector0` | `S` | 1 |
+| `Kvector1` | `E1`, `E2`, `E3`, `E4` | 4 |
+| `Kvector2` | `E41`, `E42`, `E43`, `E23`, `E31`, `E12` | 6 |
+| `Kvector3` | `E423`, `E431`, `E412`, `E321` | 4 |
+| `Kvector4` | `E1234` | 1 |
+| `MultivectorEven` | `S`, the six bivectors and `E1234` | 8 |
+| `MultivectorOdd` | the four vectors and the four trivectors | 8 |
+
+### One coefficient at a time
+
+`slot` counts the listed bases below a basis. It runs during compilation, so each read and each
+write uses a fixed offset. A basis outside the set stops the build. `coefficient` reads a basis
+that is known only at run time, through a table that the compiler builds.
+
+```nim
+func slot(listed: set[Basis], basis: Basis): int {.compileTime.} =
+  ## Get dense slot of basis among listed bases: count of listed bases below it.
+  for other in Basis:
+    if other == basis: return
+    if other in listed: inc result
+
+
+template `[]`*[B: static set[Basis]](m: MultivectorOf[B], basis: static Basis): float =
+  ## Read coefficient of basis from its dense slot; basis outside `B` stops compile.
+
+
+template `[]=`*[B: static set[Basis]](m: var MultivectorOf[B], basis: static Basis, value: float) =
+  ## Write coefficient of basis into its dense slot; basis outside `B` stops compile.
+
+
+func coefficient*[B: static set[Basis]](m: MultivectorOf[B], basis: Basis): float =
+  ## Read coefficient of basis known only at run time; basis outside `B` reads zero, its value.
+
+
+func bases*[B: static set[Basis]](t: typedesc[MultivectorOf[B]]): set[Basis] = B
+  ## Get bases basis-set type holds.
+```
+
+### Widen and narrow
+
+Every operator on `Multivector` stays. A caller widens a basis-set type to use one of them. It
+narrows the result back, and the narrow checks that each dropped coefficient is zero.
+
+```nim
+func toMultivector*[B: static set[Basis]](m: MultivectorOf[B]): Multivector =
+  ## Widen basis-set type to multivector of every basis, same coefficients.
+  ##   Slot runs with walk over `B`: counting it per basis took ×1.05 to ×16.5 as long, measured
+  ##     at rga4d, cga5d and rga6d on 2.1 GHz Xeon, 2026-10-15.
+
+
 func toMultivectorOf*[B: static set[Basis]](
   m: Multivector, t: typedesc[MultivectorOf[B]]
-): MultivectorOf[B]
-macro typeReached*(cayley: static Cayley2D; bases_m, bases_n: static set[Basis]): untyped
+): MultivectorOf[B] =
+  ## Narrow multivector to basis-set type `t`.
+  ##   Each coefficient outside `B` must be zero within comparison tolerance, as `grade` tests it.
+```
+
+### Products that return exactly the bases they reach
+
+Each generic product names its result type through `typeReached`, and fills it through
+`defineProduct` or `defineMap`. Both read the same table, so the type and the body agree.
+`pga.nim` adds a named alias beside each operator, such as `wedge`.
+
+```nim
+macro typeReached*(cayley: static Cayley2D; bases_m, bases_n: static set[Basis]): untyped =
+  ## Spell basis-set type product reaches, as literal set, so it is same type as any alias.
+
+
+macro typeReached*(cayley: static Cayley1D, bases_m: static set[Basis]): untyped =
+  ## Spell basis-set type map reaches, as literal set.
+
+
 func `∧`*[A, B: static set[Basis]](
   m: MultivectorOf[A], n: MultivectorOf[B]
-): typeReached(CAYLEYS_WEDGE.base, A, B) {.noinit.}  # and ⟇, ∙, ∘ on their tables
+): typeReached(CAYLEYS_WEDGE.base, A, B) {.noinit.} =
+  ## Multiply through exterior product, i.e. 𝐦 ∧ 𝐧; result holds exactly bases reached.
+
+
+func `⟇`*[A, B: static set[Basis]](
+  m: MultivectorOf[A], n: MultivectorOf[B]
+): typeReached(CAYLEYS_WEDGE_DOT.anti, A, B) {.noinit.} =
+  ## Multiply through geometric antiproduct, i.e. 𝐦 ⟇ 𝐧; result holds exactly bases reached.
+
+
+func `∙`*[A, B: static set[Basis]](
+  m: MultivectorOf[A], n: MultivectorOf[B]
+): typeReached(CAYLEYS_DOT.base, A, B) {.noinit.} =
+  ## Multiply through inner product, i.e. 𝐦 ∙ 𝐧; result holds scalar slot alone.
+
+
+func `∘`*[A, B: static set[Basis]](
+  m: MultivectorOf[A], n: MultivectorOf[B]
+): typeReached(CAYLEYS_DOT.anti, A, B) {.noinit.} =
+  ## Multiply through inner antiproduct, i.e. 𝐦 ∘ 𝐧; result holds antiscalar slot alone.
+
+
 func `∙`*[A: static set[Basis]](
   m: MultivectorOf[A],
-): typeReached(CAYLEYS_PARTS.bulk.round, A) {.noinit.}  # and ∘ on weight table
+): typeReached(CAYLEYS_PARTS.bulk.round, A) {.noinit.} =
+  ## Extract (round) bulk, i.e. 𝐦∙; result holds exactly bulk bases of operand's type.
+
+
+func `∘`*[A: static set[Basis]](
+  m: MultivectorOf[A],
+): typeReached(CAYLEYS_PARTS.weight.round, A) {.noinit.} =
+  ## Extract (round) weight, i.e. 𝐦∘; result holds exactly weight bases of operand's type.
+
+
+func wedge*[A, B: static set[Basis]](
+  m: MultivectorOf[A], n: MultivectorOf[B]
+): typeReached(CAYLEYS_WEDGE.base, A, B) {.inline.} = m ∧ n
+  ## Multiply basis-set types through exterior product, into exact basis-set type reached.
 ```
+
+### How a product is written
+
+These functions are private, and they run during compilation. They read the Cayley table of the
+library over the bases of the operands alone. Then they write one line for each slot that the
+product reaches. Each body is short, so it shows whole.
+
+```text
+m ∧ n, where m: MultivectorOf[A] and n: MultivectorOf[B]
+|
++-- result type: typeReached(table, A, B)
+|     reach = basis of each term of table[left][right], for left in A and right in B
+|     emitSet(reach)  ->  MultivectorOf[{Basis.E23, Basis.E31, Basis.E12}]
+|
++-- body: defineProduct(table, A, B, m, n)
+      sums[term.basis].add(+ or - emitRead(m, left) * emitRead(n, right))
+      emitWrites(sums)  ->  result[Basis.X] = t1 + t2 + ...
+```
+
+```nim
+func emitSet(listed: set[Basis]): NimNode {.compileTime.} =
+  ## Emit set of bases as literal, since `quote` cannot embed set value.
+  result = nnkCurly.newTree()
+  for basis in listed: result.add nnkDotExpr.newTree(ident"Basis", ident($basis))
+
+
+func emitRead(m: NimNode, basis: Basis): NimNode {.compileTime.} =
+  ## Emit read of one coefficient of operand.
+  nnkBracketExpr.newTree(m, nnkDotExpr.newTree(ident"Basis", ident($basis)))
+
+
+func emitWrites(sums: array[Basis, seq[NimNode]]): NimNode {.compileTime.} =
+  ## Emit write of each reached slot once; every slot of exact type is reached, so none fills.
+
+  func emitSum(terms: seq[NimNode]): NimNode =
+    ## Emit sum of terms, left to right.
+    result = terms[0]
+    for term in terms[1 .. ^1]: result = infix(result, "+", term)
+
+  result = newStmtList()
+  for basis in Basis:
+    if sums[basis].len > 0:
+      result.add newAssignment(emitRead(ident"result", basis), emitSum(sums[basis]))
+
+
+macro typeReached*(cayley: static Cayley2D; bases_m, bases_n: static set[Basis]): untyped =
+  ## Spell basis-set type product reaches, as literal set, so it is same type as any alias.
+
+  func reach(cayley: Cayley2D; bases_m, bases_n: set[Basis]): set[Basis] =
+    ## Get bases product reaches over operands' bases.
+    for left in bases_m:
+      for right in bases_n:
+        for term in cayley[left][right]: result.incl term.basis
+
+  nnkBracketExpr.newTree(ident"MultivectorOf", emitSet(reach(cayley, bases_m, bases_n)))
+
+
+macro defineProduct(
+  cayley: static Cayley2D; bases_m, bases_n: static set[Basis]; m, n: untyped
+): untyped =
+  ## Define product over operands' bases alone, into result of exact basis-set type.
+  var sums: array[Basis, seq[NimNode]]
+  for left in bases_m:
+    for right in bases_n:
+      for term in cayley[left][right]:
+        let product = infix(emitRead(m, left), "*", emitRead(n, right))
+        sums[term.basis].add(if term.is_negated: prefix(product, "-") else: product)
+  emitWrites(sums)
+
+
+macro defineMap(cayley: static Cayley1D, bases_m: static set[Basis], m: untyped): untyped =
+  ## Define map over operand's bases alone, into result of exact basis-set type.
+  var sums: array[Basis, seq[NimNode]]
+  for basis in bases_m:
+    for term in cayley[basis]:
+      let read = emitRead(m, basis)
+      sums[term.basis].add(if term.is_negated: prefix(read, "-") else: read)
+  emitWrites(sums)
+```
+
+`emitSet` spells a set one basis at a time, for two reasons. `quote` cannot embed a set value.
+And Nim reads the argument of a generic type as it is spelled. A sum typed `MultivectorOf[A + B]`
+came out as `{E1..E4}`, and Nim refused it where `{E1, E2, E3, E4}` was expected. Each alias
+and each result is spelled by `emitSet`, so each names the same type.
+
+For example, at `rga3d` the product `Kvector1 ∧ Kvector1` reaches `Kvector2`, and `defineProduct`
+writes three lines.
+
+```nim
+result[Basis.E23] = m[Basis.E2] * n[Basis.E3] + -(m[Basis.E3] * n[Basis.E2])
+result[Basis.E31] = -(m[Basis.E1] * n[Basis.E3]) + m[Basis.E3] * n[Basis.E1]
+result[Basis.E12] = m[Basis.E1] * n[Basis.E2] + -(m[Basis.E2] * n[Basis.E1])
+```
+
+The accessors then fold each basis to its slot, so the compiled body reads fixed offsets alone.
+
+```nim
+result.elements[0] = m.elements[1] * n.elements[2] + -(m.elements[2] * n.elements[1])
+result.elements[1] = -(m.elements[0] * n.elements[2]) + m.elements[2] * n.elements[0]
+result.elements[2] = m.elements[0] * n.elements[1] + -(m.elements[1] * n.elements[0])
+```
+
+No term that the table makes zero appears, such as `e2 ∧ e2`. The product holds no loop, no
+branch and no lookup. `(𝐞₁ + 2𝐞₂) ∧ (3𝐞₂ + 4𝐞₃)` gives `8𝐞₂₃ - 4𝐞₃₁ + 3𝐞₁₂`, as by hand.
 
 ## Names
 
