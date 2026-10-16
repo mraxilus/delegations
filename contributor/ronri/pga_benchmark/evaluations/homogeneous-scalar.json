@@ -3,7 +3,7 @@
   "kind": "evaluation",
   "name": "homogeneous-scalar",
   "path": "proposals/10-homogeneous-scalar",
-  "edits_digest": "86c8a7f12e525ef3",
+  "edits_digest": "4fc1876aefcfefa5",
   "taken": {
     "date": "2026-10-15",
     "machine": "linux amd64, 4 cores",

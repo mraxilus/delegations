@@ -3,7 +3,7 @@
   "kind": "evaluation",
   "name": "object-names",
   "path": "proposals/09-object-names",
-  "edits_digest": "634579ae913981e8",
+  "edits_digest": "ab6ca068dd02f7f3",
   "taken": {
     "date": "2026-10-15",
     "machine": "linux amd64, 4 cores",
