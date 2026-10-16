@@ -29,14 +29,14 @@ zeros first.
 The container is quadratic in its operand, so a sign on both reads would square away. On one
 read, the sign is exact when every term of the operand has the same grade.
 
-## Evidence
+## Alternatives
 
-The tables below count the partner at each algebra, pin then this proposal. At cga5d its 324
-multiplies are the bound of the chain: 162 for each folded table. Its error checks fall from 271
-to 2, and its lines of C from 2710 to 83.
-
-P01 and P08 alone, without this proposal, run the partner at ×0.66 to ×0.70 of pin at cga5d, and
-×0.53 to ×0.60 at cga4d. So the fold gives the rest of the gain that the times below show.
+| Option | Why it lost |
+|--------|-------------|
+| Sign on both reads of the container | Squares away, since the container is quadratic |
+| Sign on the right read of the second step | Exact and as cheap; one of the two must carry it |
+| Scan of grade, unrolled at build | What the dense form does; still a branch for each slot |
+| Assert of single grade in release | Costs the scan this proposal removes |
 
 ## Costs
 
@@ -48,14 +48,10 @@ P01 and P08 alone, without this proposal, run the partner at ×0.66 to ×0.70 of
 - **No table of three operands.** The partner is cubic, so no one table of two operands holds it.
   A table of three operands would, and the emitter reads none.
 
-## Alternatives
+## Open decisions
 
-| Option | Why it lost |
-|--------|-------------|
-| Sign on both reads of the container | Squares away, since the container is quadratic |
-| Sign on the right read of the second step | Exact and as cheap; one of the two must carry it |
-| Scan of grade, unrolled at build | What the dense form does; still a branch for each slot |
-| Assert of single grade in release | Costs the scan this proposal removes |
+- Keep a check of single grade under `-d:testing` alone, or none.
+- Export `partnerContainer` and `partnerMeet`, or keep them private as here.
 
 ## Landing
 
@@ -74,7 +70,10 @@ P01 and P08 alone, without this proposal, run the partner at ×0.66 to ×0.70 of
   2026-10-15 built that import with P01, P08 and this proposal, and the suites passed at rga2d,
   rga3d, rga4d, cga3d, cga4d and cga5d.
 
-## Open decisions
+## Evidence
 
-- Keep a check of single grade under `-d:testing` alone, or none.
-- Export `partnerContainer` and `partnerMeet`, or keep them private as here.
+At cga5d the 324 multiplies of the partner are the bound of its chain: 162 for each folded table.
+Its error checks fall from 271 to 2, and its lines of C from 2710 to 83.
+
+P01 and P08 alone run the partner at ×0.66 to ×0.70 of pin at cga5d, and ×0.53 to ×0.60 at
+cga4d. So the fold gives the rest of the gain on the partner.
