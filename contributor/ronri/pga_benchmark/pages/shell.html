@@ -276,6 +276,23 @@ span.removed { color: var(--removed); font-family: var(--mono); }
   letter-spacing: 0.05em; padding-top: 0.3em; }
 .summary dd { margin: 0; max-width: 72ch; }
 .glance .chip { flex: none; max-width: 100%; }
+.appendix { margin-top: 28px; padding-top: 18px; border-top: 2px solid var(--rule-strong); }
+.appendix::before { content: "Appendix"; display: block; margin-bottom: 8px; color: var(--muted);
+  font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; }
+.claims { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px;
+  grid-template-columns: minmax(0, 1fr); }
+.claims .detail { display: block; margin-left: 1rem; color: var(--muted); font-size: 0.84rem; }
+.evidence-algebra { --origin: 50%; --octaves: 8; display: grid; gap: 6px; margin-bottom: 14px;
+  grid-template-columns: minmax(0, 1fr); }
+.evidence-algebra .caption { margin: 0; }
+.evidence-algebra table { width: 100%; table-layout: fixed; }
+.evidence-algebra th:first-child { width: 34%; }
+.evidence-algebra td { min-width: 11rem; vertical-align: middle; }
+.evidence-algebra td:first-child { min-width: 0; }
+.evidence-algebra .serves { display: block; color: var(--muted); font-size: 0.78rem; }
+.axis i.gain { background: var(--pass); border-radius: 3px 0 0 3px; }
+.axis i.loss { background: var(--fail); }
+.axis i.flat { background: var(--muted); }
 .prose li { max-width: 78ch; }
 .prose ul, .prose ol { margin: 0; padding-left: 1.2rem; display: grid; gap: 4px;
   grid-template-columns: minmax(0, 1fr); }
@@ -302,7 +319,7 @@ figure.figure figcaption { color: var(--muted); font-size: 0.86rem; }
 .mark.over.tall::before { top: -0.053em; }
 .depends { display: grid; gap: 4px; margin: 0; grid-template-columns: minmax(0, 1fr);
   font-size: 0.9rem; }
-.depends div { display: grid; grid-template-columns: 10rem minmax(0, 1fr); gap: 10px;
+.depends > div { display: grid; grid-template-columns: 10rem minmax(0, 1fr); gap: 10px;
   align-items: baseline; }
 .depends dt { color: var(--muted); font-size: 0.74rem; text-transform: uppercase;
   letter-spacing: 0.06em; }
@@ -347,7 +364,7 @@ body:not(:has(#typed:checked)) details.row.typed { display: none; }
 @media (max-width: 860px) {
   .controls { position: static; }
   .summary, .aggregate, .pair { grid-template-columns: minmax(0, 1fr); }
-  .depends div { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .depends > div { grid-template-columns: minmax(0, 1fr); gap: 0; }
   .summary div { grid-template-columns: minmax(0, 1fr); gap: 0; }
   .head { grid-template-columns: minmax(0, 1fr); }
   .head > span:not(:nth-child(2)), .head .name { display: none; }

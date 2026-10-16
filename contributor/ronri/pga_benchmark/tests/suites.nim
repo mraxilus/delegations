@@ -1656,8 +1656,8 @@ suite "Internal: Proposals":
   const
     directory_sign = "proposals/01-sign"
     shape = "\n**What it is.** It.\n\n**What it is for.** For.\n\n**What it costs.** Cost.\n" &
-      "\n## Problem\n\n## Idea\n\n## Evidence\n\n## Costs\n\n## Alternatives\n\n## Landing\n" &
-      "\n## Open decisions\n"
+      "\n## Problem\n\n## Idea\n\n## Alternatives\n\n## Costs\n\n## Open decisions\n" &
+      "\n## Landing\n\n## Evidence\n"
       ## Argument of standard shape, after its title.
     record_sign = "# P01: Sign\n" & shape
 
@@ -1692,7 +1692,8 @@ suite "Internal: Proposals":
       )
     check loose.len == 2 and "`unlabelled paragraph`" in loose[0].message  # summary needs labels
     check "got ``" in loose[1].message  # sections absent
-    check swapped.len == 1 and "got `Idea`, `Problem`, `Evidence`" in swapped[0].message  # order
+    check swapped.len == 1 and "got `Idea`, `Problem`, `Alternatives`" in swapped[0].message
+      # order
 
 
   test "proposal reads number, title, status, base proposals and claims of every known kind":
@@ -1962,7 +1963,7 @@ suite "Internal: Figures":
         "",
       )
     check ("changed library, with " & code("pga.float_width=32")) in body  # define named
-    check ("runs clean at rga4d</td>") in body  # claim naming none reads as before
+    check ("runs clean at rga4d</li>") in body  # claim naming none reads as before
 
 
   test "proposal page embeds SVG figure names, with caption beneath":
@@ -2006,7 +2007,7 @@ suite "Internal: Figures":
     check "<figure" notin bare and "Map." in bare  # absent file renders as text
 
 
-  test "proposal page opens with summary card, then seven numbered sections, code with landing":
+  test "proposal page opens with summary card, then five sections, then code and evidence apart":
     let
       record = Proposal(
         number: 1,
@@ -2033,13 +2034,14 @@ suite "Internal: Figures":
     check "<dl class=\"summary\"><div><dt>What it is</dt><dd>It.</dd></div>" in body  # labelled
     check body.find("</dl>") < body.find("id=\"p-problem\"")  # card before sections
     var at = 0
-    for index, name in ["problem", "idea", "evidence", "costs", "alternatives", "code",
-        "open-decisions"]:
-      let found = body.find("id=\"p-" & name & "\"><h2><span class=\"num\">" & $(index + 1))
-      check found > at  # each section numbered, in order
+    for (mark, name) in [("1", "problem"), ("2", "idea"), ("3", "alternatives"), ("4", "costs"),
+        ("5", "open-decisions"), ("A", "code"), ("B", "evidence")]:
+      let found = body.find("id=\"p-" & name & "\"><h2><span class=\"num\">" & mark)
+      check found > at  # each section marked, in order
       at = found
+    check "<section class=\"block prose appendix\" id=\"p-code\">" in body  # appendix opens
     check body.find("After P02.") > body.find("id=\"p-code\"")  # landing inside code
-    check body.find("Argument.") > body.find("id=\"p-open-decisions\"")  # other section last
+    check body.find("Argument.") > body.find("id=\"p-evidence\"")  # other section last
     check body.find("<footer class=\"pages\"><a href=\"u\">docket</a></footer>") > at  # links last
 
 
@@ -2149,7 +2151,7 @@ suite "Internal: Edits":
 
 
 
-  test "code opens each file, shows signature and doc of each change, and folds its body":
+  test "code folds each file, shows signature and doc of each change, and folds its body":
     let
       source = "func f*(): int =\n  ## Doc f.\n  1\n\nfunc h(): int = 3\n"
       change = Change(edits: @[
@@ -2158,7 +2160,7 @@ suite "Internal: Edits":
           replacement: "func g(): int =\n  ## Doc g.\n  4\n"),
       ])
       html = htmlCode(change, {"pga/b.nim": source}.toTable)
-    check html.startsWith("<details class=\"file\" open><summary><code>pga/b.nim</code>")  # open
+    check html.startsWith("<details class=\"file\"><summary><code>pga/b.nim</code>")  # closed
     check "1 changed · 1 added · 1 removed" in html  # tally of definitions
     check "<details class=\"body\"><summary>body · 1 line · " in html  # body folded, counted
     check " open><summary>body" notin html  # every body closed at rest
@@ -2185,6 +2187,30 @@ suite "Internal: Edits":
     )
     check "other lines</span>" in html and "TODO: two." in html  # comment reaches page
     check "definition changed" notin html  # routine beside it is unchanged
+
+
+  test "evidence shows one row per function that moved, gains first, and counts rest":
+    let
+      baselines = {"rga4d": %*{"measurands": {
+        "a": {"library": "f(M)", "symbol": "∧"}, "b": {"library": "f(M)", "symbol": "∧"},
+        "c": {"library": "g(M)", "symbol": "∨"}, "d": {"library": "k(M)", "symbol": "∙"}}}}.toTable
+      counts = %*{"multiplies": 10, "bytes_moved": 100}
+      evaluation = %*{"pin_suites": {"rga4d": {"ok": 3, "failed": 0}}, "algebras": {"rga4d": {
+        "suites": {"ok": 3, "failed": 0},
+        "functions": {
+          "f(M)": {"before": counts, "after": {"multiplies": 5, "bytes_moved": 50}},
+          "g(M)": {"before": counts, "after": counts},
+          "k(M)": {"before": counts, "after": {"multiplies": 20, "bytes_moved": 100}},
+          "h(M)": {"before": counts, "after": counts}},
+        "times": {"a": [10.0, 5.0, 0.5], "b": [10.0, 6.0, 0.6], "c": [10.0, 10.0, 1.0],
+          "d": [10.0, 15.0, 1.5]}}}}
+      html = htmlEvidence(evaluation, baselines, Spread(low: 0.9, high: 1.1, count: 30))
+    check html.count("<tr><td>") == 2  # f and k; g stayed within spread
+    check html.find("<code>f(M)</code>") < html.find("<code>k(M)</code>")  # gain before loss
+    check "<span class=\"serves\">a, b</span>" in html  # operations f serves, named once
+    check "class=\"gain\"" in html and "class=\"loss\"" in html  # each side drawn
+    check "1 operation whose function moved stayed within spread." in html  # rest counted
+    check "Other functions moved: <code>h(M)</code>." in html  # helper named
 
 
 suite "Internal: Search":

@@ -1,18 +1,18 @@
-## Render one proposal: summary card, then seven numbered sections, each fact once.
+## Render one proposal: summary card, five numbered sections, then code and evidence apart.
 ##   Proposal page is future state of library, argued in `proposal.md` and checked by its
 ##     evaluation. Every proposal renders through one shape, so next exploration reads as last
 ##     one did, and each fact stands in one place:
 ##
 ##     ```
-##     header      title, status, pin and run; contents of seven sections
+##     header      title, status, pin and run; contents
 ##     card        what it is, is for and costs; what it needs and blocks; verdicts at pin
 ##     1 Problem   what pin does, and why it falls short
 ##     2 Idea      how proposal works
-##     3 Evidence  claims and verdicts, then argument, then measurements at pin
+##     3 Alternatives   options weighed, and why each lost
 ##     4 Costs     what gets worse, and what it leaves out
-##     5 Alternatives   options weighed, and why each lost
-##     6 Code      how it lands, then each file, each definition with its body folded
-##     7 Open decisions
+##     5 Open decisions
+##     appendix    Code: how it lands, then each file folded, each definition's body folded
+##     appendix    Evidence: claims, gains and losses at pin per function, then notes
 ##     footer      other pages
 ##     ```
 ##
@@ -25,8 +25,8 @@
 ##   Figure paragraph embeds SVG it names, whole, so figure takes page's colours and faces; one
 ##     whose file is absent renders as its text, and `drive` names it.
 ##
-##   Cost: file block opens at rest, so proposal that edits many files makes long page; each
-##     body folds, and reader closes file to skip it.
+##   Argument comes first, as Architect ordered on 2026-10-16: reader meets idea and its cost,
+##     and appendix holds what checks it.
 
 {.experimental: "strictFuncs".}
 
@@ -131,17 +131,18 @@ func htmlProposal*(
       else: escapeHtml(claim{"kind"}.getStr)
 
     if evaluation.isNil: return "<p class=\"note\">No evaluation yet; claims are unchecked.</p>"
-    let is_detailed = evaluation{"claims"}.getElems.anyIt(it{"detail"}.getElems.len > 0)
-    result = "<div class=\"table\"><table><tr><th>Claim</th><th>Verdict</th>" &
-        (if is_detailed: "<th>Detail</th>" else: "") & "</tr>"
+    result = "<ul class=\"claims\">"
     for claim in evaluation{"claims"}:
       let is_holding = claim{"passed"}.getBool
       var detail: seq[string]
       for line in claim{"detail"}.getElems: detail.add escapeHtml(line.getStr)
-      result.add "<tr><td>" & textClaim(claim) & "</td><td>" &
-          chip(if is_holding: "holds" else: "fails", if is_holding: "pass" else: "fail") & "</td>" &
-          (if is_detailed: "<td>" & detail.join("<br>") & "</td>" else: "") & "</tr>"
-    result.add "</table></div>"
+      result.add "<li>" &
+          chip(if is_holding: "holds" else: "fails", if is_holding: "pass" else: "fail") & " " &
+          textClaim(claim) &
+          (if detail.len > 0: "<span class=\"detail\">" & detail.join("<br>") & "</span>"
+            else: "") &
+          "</li>"
+    result.add "</ul>"
 
   let
     commit_shown =
@@ -183,12 +184,14 @@ func htmlProposal*(
       if heading == name: return nodes
 
   # Contents, numbered as sections are.
-  const shown = ["Problem", "Idea", "Evidence", "Costs", "Alternatives", "Code", "Open decisions"]
-    ## Sections page shows, in order; code holds landing.
+  const shown = [
+    ("1", "Problem"), ("2", "Idea"), ("3", "Alternatives"), ("4", "Costs"),
+    ("5", "Open decisions"), ("A", "Code"), ("B", "Evidence"),
+  ]  ## Sections page shows, in order, each with its mark; appendix is lettered.
   result.add "<nav class=\"contents\">"
-  for index, name in shown:
+  for (mark, name) in shown:
     result.add "<a href=\"#" & anchor & name.toLowerAscii.replace(' ', '-') &
-        "\"><span class=\"num\">" & $(index + 1) & "</span> " & name & "</a>"
+        "\"><span class=\"num\">" & mark & "</span> " & name & "</a>"
   result.add "</nav></header>"
 
   # Summary card: what it is, is for and costs, then what it needs and blocks, then verdicts.
@@ -212,22 +215,28 @@ func htmlProposal*(
       "<dl class=\"depends\"><div><dt>Tried at pin</dt><dd><div class=\"chips\">" &
       chipsVerdict(evaluation, baselines, spread) & "</div></dd></div></dl></section>"
 
-  func opening(anchor, section, name: string, number: int): string =
-    ## Open numbered section of name, with id contents link to.
-    "<section class=\"block prose\" id=\"" & anchor & name.toLowerAscii.replace(' ', '-') &
-        "\"><" & section & "><span class=\"num\">" & $number & "</span> " & name & "</" &
-        section & ">"
+  func opening(anchor, section, name, mark: string): string =
+    ## Open section of name under its mark, with id contents link to; appendix opens apart.
+    "<section class=\"block prose" & (if mark == "A": " appendix" else: "") & "\" id=\"" &
+        anchor & name.toLowerAscii.replace(' ', '-') & "\"><" & section & "><span class=\"num\">" &
+        mark & "</span> " & name & "</" & section & ">"
 
-  for index, name in shown:
-    result.add opening(anchor, section, name, index + 1)
+  for (mark, name) in shown:
+    result.add opening(anchor, section, name, mark)
     case name
     of "Evidence":
-      result.add "<" & part & ">Claims</" & part & ">" & htmlClaims(evaluation) &
-          htmlBlocks(sections.blocksOf(name), proposal.directory, figures, level)
-      if not evaluation.isNil:
-        result.add "<" & part & ">Measured at pin</" & part & "><p class=\"note\">" &
-            textSpread(spread) & "</p>" & tableFunctions(evaluation) & tableNan(evaluation) &
-            tableTimes(evaluation, baselines, spread)
+      result.add "<" & part & ">Claims</" & part & ">" & htmlClaims(evaluation) & "<" & part &
+          ">Gains and losses at pin</" & part & ">"
+      let bases = dependenciesOf(proposals, proposal)[0]
+      if bases.len > 0 and not evaluation.isNil:
+        result.add "<p class=\"note\">Proposal is measured with " &
+            bases.mapIt(citeLinked(it, urls)).join(", ") & " applied first, so its figures " &
+            "hold their gains too.</p>"
+      result.add htmlEvidence(evaluation, baselines, spread)
+      let notes = sections.blocksOf(name)
+      if notes.len > 0:
+        result.add "<" & part & ">Notes</" & part & ">" &
+            htmlBlocks(notes, proposal.directory, figures, level)
     of "Code":
       let landing = sections.blocksOf("Landing")
       if landing.len > 0:

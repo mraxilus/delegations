@@ -2,7 +2,7 @@
 ##   Both pages show proposed change against pin, so both render it one way: suites beside
 ##     pin's own, functions whose counts moved, times of measurands those functions serve, and
 ##     edits as diff of lines against file each edit finds.
-##   Proposal page shows code one block per file, open, under its status and counts. Inside,
+##   Proposal page shows code one block per file, closed, under its status and counts. Inside,
 ##     each definition change adds, removes or changes shows its signature and doc, and folds
 ##     its body (`definitions.nim`). So reader sees what each definition is before how it works.
 ##     Lines in no definition follow, diffed, as other lines.
@@ -12,6 +12,9 @@
 ##   Diff numbers each line on side it stands on: before edit and after it, in file as edit finds
 ##     it. Bases of proposal and earlier edits apply first, so number is one reader finds in
 ##     library carrying them. Unchanged run longer than twice context folds to count of lines.
+##   Proposal page condenses what evaluation measured, as docket draws it but static: per
+##     algebra, one row per function that moved, each count and its time as bar of proposal
+##     over pin on one log axis; operations within spread and helpers moved are counted.
 ##   Spread is read from evaluations themselves: evaluation that changes no library function
 ##     moves no count, so range of its time ratios is range of machine, and page states it
 ##     beside figures it qualifies.
@@ -24,7 +27,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, json, options, sequtils, strutils, tables]
+import std/[algorithm, json, math, options, sequtils, strutils, tables]
 
 import ../[changes, definitions, markdown]
 import ./shell
@@ -87,6 +90,29 @@ func spreadOf*(evaluations: openArray[JsonNode]): Spread =
 
 #[ Rendering ]#
 
+func textSuites(evaluation: JsonNode, algebra: string): string =
+  ## Render suites passed over run, with pin's beside where they differ.
+  let
+    suites = evaluation{"algebras", algebra, "suites"}
+    suites_pin = evaluation{"pin_suites", algebra}
+    run = suites{"ok"}.getInt + suites{"failed"}.getInt
+  result = $suites{"ok"}.getInt & "/" & $run
+  if suites_pin.isNil: return
+  if suites_pin{"ok"}.getInt != suites{"ok"}.getInt or
+      suites_pin{"failed"}.getInt != suites{"failed"}.getInt:
+    result.add " (pin " & $suites_pin{"ok"}.getInt & "/" &
+        $(suites_pin{"ok"}.getInt + suites_pin{"failed"}.getInt) & ")"
+
+
+func nanMoved(measured: JsonNode): (int, int) =
+  ## Count measurands whose NaN results evaluation removed, and those it introduced.
+  if measured{"nan"}.isNil: return
+  for _, shares in measured{"nan"}.pairs:
+    let (before, after) = (shares[0].getFloat, shares[1].getFloat)
+    if before > 0 and after == 0: inc result[0]
+    if before == 0 and after > 0: inc result[1]
+
+
 func chipsVerdict*(
   evaluation: JsonNode, baselines: Table[string, JsonNode], spread: Spread
 ): string =
@@ -104,26 +130,6 @@ func chipsVerdict*(
     ratios.sort
     if ratios.len mod 2 == 1: ratios[ratios.len div 2]
     else: (ratios[ratios.len div 2-1] + ratios[ratios.len div 2]) / 2.0
-
-  func textSuites(evaluation: JsonNode, algebra: string): string =
-    ## Render suites passed over run, with pin's beside where they differ.
-    let
-      suites = evaluation{"algebras", algebra, "suites"}
-      suites_pin = evaluation{"pin_suites", algebra}
-      run = suites{"ok"}.getInt + suites{"failed"}.getInt
-    result = $suites{"ok"}.getInt & "/" & $run
-    if suites_pin.isNil: return
-    if suites_pin{"ok"}.getInt != suites{"ok"}.getInt or
-        suites_pin{"failed"}.getInt != suites{"failed"}.getInt:
-      result.add " (pin " & $suites_pin{"ok"}.getInt & "/" &
-          $(suites_pin{"ok"}.getInt + suites_pin{"failed"}.getInt) & ")"
-
-  func nanMoved(measured: JsonNode): (int, int) =
-    ## Count measurands whose NaN results evaluation removed, and those it introduced.
-    for _, shares in measured{"nan"}.pairs:
-      let (before, after) = (shares[0].getFloat, shares[1].getFloat)
-      if before > 0 and after == 0: inc result[0]
-      if before == 0 and after > 0: inc result[1]
 
   if evaluation.isNil: return chip("no evaluation", "fail")
   for algebra, measured in evaluation{"algebras"}.pairs:
@@ -201,6 +207,113 @@ func tableNan*(evaluation: JsonNode): string =
       result.add "<tr><td>" & escapeHtml(id) & "</td><td>" & pair[0].getFloat.fixed(3) &
           "</td><td>" & pair[1].getFloat.fixed(3) & "</td></tr>"
     result.add "</table></div>"
+
+
+func htmlEvidence*(
+  evaluation: JsonNode, baselines: Table[string, JsonNode], spread: Spread
+): string =
+  ## Render what evaluation moved, condensed: per algebra, suites and functions moved, then each
+  ##   operation that gains or loses, as bars of proposal over pin on one log axis; rest counted.
+  ##   Axis spans ×1/16 to ×16 around pin, so bar left of line is gain and right is loss.
+  const (exponent_low, exponent_high) = (-4, 4)
+
+  func position(ratio: float): float =
+    ## Place ratio on axis, in percent of its width, clamped.
+    clamp(100.0 * (log2(ratio) - float(exponent_low)) / float(exponent_high - exponent_low),
+        0.0, 100.0)
+
+  func bar(ratio: float; label, tip: string): string =
+    ## Render one bar of proposal over pin, or label alone where no ratio reads.
+    if ratio <= 0:
+      return "<div class=\"deviation bare\" title=\"" & escapeHtml(tip) & "\">" &
+          "<div class=\"axis\"></div><span class=\"v\">" & label & "</span></div>"
+    let
+      (origin, at) = (position(1.0), position(ratio))
+      side = if ratio < 1.0: "gain" elif ratio > 1.0: "loss" else: "flat"
+    "<div class=\"deviation\" title=\"" & escapeHtml(tip) & "\"><div class=\"axis\"><i class=\"" &
+        side & "\" style=\"left:" & min(origin, at).fixed & "%;width:" & abs(at - origin).fixed &
+        "%\"></i></div><span class=\"v\">" & label & "</span></div>"
+
+  func count(pair: JsonNode, field: string): (float, string, string) =
+    ## Read one count of function: proposal over pin, label and tip; new or gone where one side
+    ##   lacks it. Count that falls to zero reads at end of axis.
+    let (before, after) = (pair{"before"}, pair{"after"})
+    if before.isNil or before.kind != JObject: return (0.0, "new", "function new")
+    if after.isNil or after.kind != JObject: return (0.0, "gone", "function gone")
+    let
+      (was, now) = (before{field}.getInt, after{field}.getInt)
+      tip = "pin " & grouped(was) & ", proposal " & grouped(now)
+    if was == 0: return (0.0, grouped(was) & " → " & grouped(now), tip)
+    if now == 0: return (pow(2.0, float(exponent_low)), grouped(was) & " → 0", tip)
+    (now / was, textRatio(now / was), tip)
+
+  func titleOf(algebra: string): string =
+    ## Title algebra, as `Conformal 5D` for `cga5d`.
+    (if algebra.startsWith("cga"): "Conformal " else: "Rigid ") & algebra[3 .. ^1].toUpperAscii
+
+  if evaluation.isNil: return "<p class=\"note\">No evaluation yet; nothing is measured.</p>"
+  result = "<p class=\"note\">Each bar is proposal over pin on log scale from ×1/16 to ×16: " &
+      "left of line is gain, right is loss. Times within " & textRatio(spread.low) & " to " &
+      textRatio(spread.high) & " count as unchanged.</p>"
+  for algebra, measured in evaluation{"algebras"}.pairs:
+    let
+      measurands = baselines.getOrDefault(algebra){"measurands"}
+      moved = if measured{"functions"}.isNil: newJObject() else: measured{"functions"}
+      (gone, came) = nanMoved(measured)
+    var facts = @["suites " & textSuites(evaluation, algebra), $moved.len & " functions moved"]
+    if gone > 0: facts.add "NaN gone in " & $gone
+    if came > 0: facts.add "NaN new in " & $came
+    result.add "<div class=\"evidence-algebra\"><p class=\"caption\"><strong>" & titleOf(algebra) &
+        "</strong> · " & facts.join(" · ") & "</p>"
+
+    # One row per function moved that serves operations, kept where any count or time moved.
+    var functions: OrderedTable[string, seq[string]]  # Function, operations it serves.
+    for id in touched(evaluation, baselines, algebra):
+      functions.mgetOrPut(measurands{id}{"library"}.getStr, @[]).add id
+    var
+      rows: seq[(float, string)]  # Time ratio, row.
+      flat = 0
+    for function, operations in functions.pairs:
+      let
+        pair = moved{function}
+        (multiplies, label_multiplies, tip_multiplies) = count(pair, "multiplies")
+        (bytes, label_bytes, tip_bytes) = count(pair, "bytes_moved")
+      var ratios: seq[float]
+      for id in operations:
+        let timing = measured{"times", id}
+        if not timing.isNil: ratios.add timing[2].getFloat
+      ratios.sort
+      let
+        time = if ratios.len == 0: 0.0 else: ratios[ratios.len div 2]
+        is_moved = multiplies != 1.0 or bytes != 1.0 or
+            (time > 0 and (time < spread.low or time > spread.high))
+      if not is_moved:
+        flat += operations.len
+        continue
+      rows.add (time, "<tr><td>" & code(function) & "<span class=\"serves\">" &
+          operations.mapIt(escapeHtml(it)).join(", ") & "</span></td><td>" &
+          bar(multiplies, label_multiplies, tip_multiplies) & "</td><td>" &
+          bar(bytes, label_bytes, tip_bytes) & "</td><td>" &
+          bar(time, if time > 0: textRatio(time) else: "untimed",
+            "median over " & $ratios.len & " operations") & "</td></tr>")
+    rows.sort(proc (a, b: (float, string)): int = cmp(a[0], b[0]))
+    if rows.len > 0:
+      result.add "<div class=\"table\"><table><tr><th>Function, and operations it serves</th>" &
+          "<th>Multiplies</th><th>Bytes moved</th><th>Time</th></tr>" & rows.mapIt(it[1]).join &
+          "</table></div>"
+    var notes: seq[string]
+    if rows.len == 0: notes.add "No operation moved beyond spread."
+    if flat > 0:
+      notes.add $flat & (if flat == 1: " operation" else: " operations") &
+          " whose function moved stayed within spread."
+    let others = block:
+      var names: seq[string]
+      for function, _ in moved.pairs:
+        if function notin functions: names.add code(function)
+      names
+    if others.len > 0: notes.add "Other functions moved: " & others.join(", ") & "."
+    if notes.len > 0: result.add "<p class=\"note\">" & notes.join(" ") & "</p>"
+    result.add "</div>"
 
 
 func diffLines(before, after: seq[string]; first_before, first_after: int): seq[LineDiffed] =
@@ -499,7 +612,7 @@ func htmlEdits*(change: Change, files: Table[string, string]): string =
 
 
 func htmlCode*(change: Change, files: Table[string, string]): string =
-  ## Render change one block per file, open, under its status and counts. Inside, each
+  ## Render change one block per file, closed, under its status and counts. Inside, each
   ##   definition change adds, removes or changes shows signature and doc, and folds body.
   ##   Lines in no definition follow, diffed, as other lines.
   ##   `files` is library as change finds it: pin, with bases of proposal applied.
@@ -646,7 +759,7 @@ func htmlCode*(change: Change, files: Table[string, string]): string =
     else:
       for (count, word) in [(tally[1], "changed"), (tally[0], "added"), (tally[2], "removed")]:
         if count > 0: parts.add $count & " " & word
-    result.add "<details class=\"file\" open><summary>" & code(path) & " <span class=\"status\">" &
+    result.add "<details class=\"file\"><summary>" & code(path) & " <span class=\"status\">" &
         status & "</span> <span class=\"tally\">" & parts.join(" · ") & "</span> " &
         textCounts(diffLines(lines_before, lines_after, 1, 1)) & "</summary>" &
         "<div class=\"definitions\">" & sections.join & "</div></details>"
