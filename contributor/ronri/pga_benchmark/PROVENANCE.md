@@ -943,18 +943,21 @@ bar over it. The tilde and the hat are spacing marks, ˜ and ˆ, since the face 
 mark beside its letter. Two advances, of the mark and of the letter, set each over or under its
 letter. The tilde under 𝐐 sits lower, to clear its tail.
 
-The map holds nine blocks, in the order of the groups of the code, and each anti table stands under
-its base. Each box holds a symbol alone, and the line into it carries its formula, as in Lengyel's
-figure. Under the line stands the function that builds the table. A box from elsewhere is a dashed
-box of its own colour, so that no line leaves its block. Brown text holds in RGA alone and blue
-text in CGA alone, so that no formula names its algebra. The two colours are shell tokens for code,
-so they follow the theme.
+The map holds ten blocks, in the order of the groups of the code, under its legend, and each anti
+table stands under its base. Each box holds a symbol alone, and the line into it carries its
+formula, as in Lengyel's figure. Under the line stands the function that builds the table. A box
+from elsewhere is a dashed box of its own colour, so that no line leaves its block. Brown text
+holds in RGA alone and blue text in CGA alone, so that no formula names its algebra. The two
+colours are shell tokens for code, so they follow the theme.
 
 Lines from several boxes meet on one bar at right angles, and one line leaves it. A second bar
 forks that line to each table that it feeds. The formulas take the form of the maths, as Lengyel
 writes them. So a unary operator, such as ★ in 𝐮★, stands after its operand. An interior product,
 such as 𝐚 ∨ 𝐛★, is a product with a dual. The code puts a unary operator first and spells ∨★ as
 one operator, as Nim needs.
+
+Each operator of a formula enters its box by a line, and each table takes only the inputs that it
+uses. The metric shows as its matrix in each algebra, with dots for the rows that repeat.
 
 The map gives every route to a box that holds at pin, and it fades each route that the code does
 not take. A faded box is an operator with no table, so the map shows what the tables serve. The
