@@ -669,20 +669,20 @@ unknown name, a withdrawn base or a `builds_on` that is not a list is a finding.
 library implements drops out, since the library holds its edits.
 
 **Each proposal page states its dependencies, and one page lists every proposal.** The page of a
-proposal names what it depends on and what its rejection blocks. Where a proposal is reached
-through another, the page names that one too, as `(through P02)`. The list page gives each
-proposal its standing, its claims that hold, its dependencies and what it blocks.
+proposal names what it depends on and what its rejection blocks. Where a proposal is reached through
+another, the page names that one too, as `(through P02)`. The proposals tab of the explorations page
+gives each proposal its standing, its claims that hold, its dependencies and what it blocks.
 
-Above the table, the list page draws the undecided proposals as a graph, in columns by depth and
-in rows by number. An arrow points from a proposal to one that it builds on, as `builds_on`
-reads. A decided proposal needs no choice, so the graph leaves it out, and the table keeps it.
+Above the table, the tab draws the undecided proposals as a graph, in columns by depth and in rows
+by number. An arrow points from a proposal to one that it builds on, as `builds_on` reads. A decided
+proposal needs no choice, so the graph leaves it out, and the table keeps it.
 
-**The list page shows each selected proposal in place,** as the Architect asked. Each box of the
+**The proposals tab shows each selected proposal in place,** as the Architect asked. Each box of the
 graph and each row of the table is a label of one checkbox for each proposal. A checked proposal
 shows whole under the table, as its own page renders it, one heading level down. A close label
-deselects one, and the reset of the form clears them all. One rule for each proposal ties its
-labels to its checkbox, so the page runs no script. The cost is weight: the list page carries
-each proposal, 4.5 MiB against 4.3 MiB without them, by `ls -l build` on 2026-10-04.
+deselects one, and the reset of the form clears them all. One rule for each proposal ties its labels
+to its checkbox, so the page runs no script. The cost is weight: the page carries each proposal, 4.5
+MiB against 4.3 MiB without them, by `ls -l build` on 2026-10-04.
 
 **An evaluation measures a copy of the library at pin.** It copies the checkout, applies the edits
 (what the proposal depends on first, in the order of `dependenciesOf`), and measures the copy
@@ -934,9 +934,47 @@ on the map. It also covers the summary above the claims. Suite `Internal: Edits`
 with its numbers and folds, a new file, and the class of the sign column. It also covers the
 signatures an edit defines or sits in, and a header that closes at its own indent.
 
+## Home and views
+
+**A home page and three views carry every page,** as the Architect proposed on 2026-10-17. The
+library map shows how complete the library is. The gap docket shows how far each operation stands
+from what it could spend. The explorations page shows what to change next. The home page gives each
+view a card with one figure, read from the files that the view reads. A bar on top of each page
+links the home page and the views, and it marks the view that the page belongs to.
+
+The card of the docket counts the operations at the multivector lower bound on multiplies, at the
+first algebra of the docket. One figure fits a card, and the docket opens on that algebra.
+
+**The marginalia are a tab of the explorations page,** as the Architect ruled on 2026-10-17. The
+changes and the notes record explorations, as the proposals do. The explorations page keeps the
+name and the URL of the list of proposals. No verb builds the marginalia page now, so
+`pages/published.json` does not name it.
+
+**The library map has a page of its own,** as the Architect ruled on 2026-10-17. It grows with the
+library, so it outlives P01, and P01 links to it. Each box of `pages/derivation-map.svg` names the
+catalogue ids that it stands for. A box of a table alone names its constant, as
+`CAYLEYS_WEDGES_TRANS.base`.
+
+**The state of each box is read from the library at pin and from the catalogue.** An operation has
+a table of its own where a call of `defineOperator` in `pga/operators.nim` names its symbol. A table
+alone has one where `pga/cayleys.nim` exports its constant. The library offers an operation that the
+catalogue holds at some algebra, as `baseline/static_<algebra>.json` records it. Any other box is
+missing, and the page gives it a dashed edge.
+
+**`drive` holds the map to the library at pin.** It fails where the map fades a box that has a table
+of its own, or draws solid a box that has none. It also fails where the library builds an operation
+from a table that no box stands for. A table that the library exports, and that no box and no
+operator names, fails too. A suite holds the committed map to the same rules, so `koch check` fails
+first.
+
+The SVG fades each box itself, so the map reads alone, and the check keeps each fade true. The cost:
+the table of an operation is read by its symbol, so the unary and the binary dot share one answer.
+At pin the library builds both from tables. Rejected: a fade that the page alone writes. A faded
+line is a route that the code does not take, and no file states which route a new table takes.
+
 ## Derivation map
 
-The figure of P01 draws its bars in its SVG, as an underline or an overline, with the mark at
+The library map draws its bars in its SVG, as an underline or an overline, with the mark at
 size zero. A bar over a group of signs, as in 𝐚 ∨ 𝐛 = 𝐮̱ where 𝐮 = 𝐚̄ ∧ 𝐛̄, is the decoration
 alone. The face sets an overline near its ascent, so no text stands just above a formula with a
 bar over it. The tilde and the hat are spacing marks, ˜ and ˆ, since the face puts a combining
@@ -1013,8 +1051,9 @@ comment, and folds its body. A definition is a routine, a member of a section, a
 or a statement, at top level or under `when` and `suite`. Two versions pair definitions by
 context, kind and name, same head first. Lines in no definition follow as other lines.
 
-**Marginalia shows each edit as a diff of lines, open, under a list of the files it touches.** Each
-line carries its number in the file as the edit finds it. The earlier edits apply first.
+**The marginalia tab shows each edit as a diff of lines, open, under a list of the files it
+touches.** Each line carries its number in the file as the edit finds it. The earlier edits apply
+first.
 
 A run of unchanged lines longer than twice the context of 3 folds to its count. So a whole-file
 replacement, as P01 makes, shows its hunks and not the whole file. The diff is a longest common
