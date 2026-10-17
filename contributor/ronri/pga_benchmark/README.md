@@ -22,7 +22,7 @@ ASCII. A control page beside them proves that the render sees.
 | [Gap docket][docket] | monitoring | every measurand at pin against both lower bounds |
 | [Marginalia][marginalia] | monitoring | library at pin: changes tried, and notes in its margin |
 | [Proposals][proposals] | list | every proposal, graph of what each blocks, each read in place |
-| [P01 Cayley derivation][cayley-derivation] | proposal | every Cayley table derived from three |
+| [P01 Cayley derivation][cayley-derivation] | proposal | every Cayley table from metric and 𝟙 |
 | [P02 Typed multivectors][typed-multivectors] | withdrawn | k-vector types, now P04 and P09 |
 | [P03 Partner sign][partner-sign] | proposal | sign of partner folded into its first table |
 | [P04 Exact kinds][exact-kinds] | proposal | product returns exactly bases it reaches |

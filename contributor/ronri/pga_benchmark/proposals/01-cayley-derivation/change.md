@@ -1,11 +1,12 @@
 # Cayley derivation as edits at pin
 
-Duals, interior products, dot, antireverse and attitude read three of the four rules, in place
-of constructors of their own. `constructAnti`, `applyConstant` and `filterGrades` are in the
-library at pin. This change adds `applyMap`, and `mergeTerm`, which both `applyMap` and `merge`
-call. Every exported table keeps its name, shape and cells. The suites hold the transwedge
-identity that the dot no longer reads. `cayleys.nim` is replaced whole, since its tables and
-constructors change together.
+Duals, interior products, antireverse and attitude read three of the four rules, in place of
+constructors of their own. The dot reads 𝐆 as 𝐚ᵀ𝐆𝐛, as in Lengyel's figure 2.16. The parts
+split by the projective vectors in both algebras. `constructAnti`, `applyConstant` and
+`filterGrades` are in the library at pin. This change adds `applyMap`, `constructDot`, and
+`mergeTerm`, which both `applyMap` and `merge` call. Every exported table keeps its name, shape
+and cells. The suites hold the transwedge identity that the dot no longer reads. `cayleys.nim` is
+replaced whole, since its tables and constructors change together.
 
 ### Order of edits
 
@@ -73,16 +74,19 @@ suite "Internal: Transwedge":
 ##
 ## Cayleys exposed to importer so they can inspect algebra's definition.
 ##
-## Derive tables from three generators: metric 𝖌 on vectors, exterior product, complement.
+## Derive tables from two inputs, as in Lengyel's figure 2.16: metric 𝖌 on vectors, and
+##   orientation of volume element 𝟙. Exterior product and reverse follow from basis alone;
+##   each complement solves 𝐮 ∧ 𝐮̄ = 𝟙. Projective vectors, origin and CGA infinity, are named.
 ##   Four rules derive other tables:
 ##     `constructAnti` conjugates table by complements, giving anti-variants
 ##       (antiwedge, 𝔾, antireverse, antidot).
 ##     `applyConstant` and `applyMap` fix or map one operand of product
 ##       (attitude, carrier, duals, interior products).
 ##       Each dual composes two maps: complement after 𝐆 or 𝔾.
-##     `filterGrades` keeps one grade of product (dot as scalar part of bulk contraction).
+##     `filterGrades` keeps one grade of product (squared radius norm, top grade of antidot).
 ##     `constructProductsTransitional` sums wedge chains over one grade (transwedge orders).
 ##       `constructProductGeometric` sums orders with sign (-1)^(k(k-1)/2) (geometric products).
+##   Dot reads 𝐆 as 𝐚ᵀ𝐆𝐛. Parts split by presence of origin and, in CGA, of infinity.
 ##   Cost: ⟑ and ⟇ keep two transwedge families, each N³ at compile time, since conformal anti
 ##     orders are not conjugates of base orders; maps and filters walk N² cells.
 ##
@@ -143,7 +147,7 @@ const
     left: constructComplement(Chirality.Left),
     right: constructComplement(Chirality.Right),
   )
-  CAYLEYS_PARTS* = Partial[Formal[Cayley1D]](
+  CAYLEYS_PARTS* = Partial[Formal[Cayley1D]](  ## Split by presence of projective vectors.
     bulk: constructParts(Partiality.Bulk),
     weight: constructParts(Partiality.Weight),
   )
@@ -164,6 +168,12 @@ const
     )
   CAYLEYS_WEDGE* = block:
     let base = constructProductExterior(CAYLEYS_COMPLEMENT, Spatiality.Base)
+    Spatial[Cayley2D](
+      base: base,
+      anti: base.constructAnti(CAYLEYS_COMPLEMENT),
+    )
+  CAYLEYS_DOT* = block:  ## Dot as 𝐚ᵀ𝐆𝐛; antidot conjugates it.
+    let base = constructDot(CAYLEYS_EXOMORPHISM_METRIC.base)
     Spatial[Cayley2D](
       base: base,
       anti: base.constructAnti(CAYLEYS_COMPLEMENT),
@@ -223,13 +233,6 @@ const
       ),
     ),
   )
-  CAYLEYS_DOT* = block:  ## Dot as scalar part of bulk contraction; antidot conjugates it.
-    var base = CAYLEYS_INTERIOR.anti.bulk.right
-    base.filterGrades(products = @[Grade.low])
-    Spatial[Cayley2D](
-      base: base,
-      anti: base.constructAnti(CAYLEYS_COMPLEMENT),
-    )
 
 const
   CAYLEYS_WEDGE_DOT* = Spatial[Cayley2D](
@@ -269,9 +272,9 @@ func constructComplement(chirality: Chirality): Cayley1D {.compileTime, noinit.}
 
 
 func constructParts(partiality: Partiality): Formal[Cayley1D] {.compileTime, noinit.} =
-  ## Construct Cayley table for (round/flat) bulk/weight.
-  ##   We can derive RGA parts from metric instead, however, CGA requires explicit construction.
-  ##   E.g. this is, in RGA, equivalent to applying exomporphism as 𝐆𝐦 or 𝔾𝐦.
+  ## Construct Cayley table for (round/flat) bulk/weight, by presence of projective vectors.
+  ##   Origin splits bulk from weight; in CGA, infinity splits round from flat.
+  ##   RGA parts equal 𝐆𝐦 and 𝔾𝐦, yet one rule serves both algebras.
 
   func constructPart(inclusions, exclusions: seq[Basis]): Cayley1D {.compileTime, noinit.} =
     ## Construct sub-slice of Cayley table respresenting identity map.
@@ -403,6 +406,13 @@ func constructExomorphismMetric(metric: Cayley1D): Cayley1D {.compileTime, noini
         product = multiplyExterior(product.basis, bases[i])
 
     result[operand] = @[product.basis]
+
+
+func constructDot(exomorphism: Cayley1D): Cayley2D {.compileTime.} =
+  ## Construct Cayley table for dot as 𝐚ᵀ𝐆𝐛: scalar wherever 𝐆 maps one basis onto other.
+  for n in Basis:
+    for term in exomorphism[n]:
+      result[term.basis][n].add BasisSigned(basis: Basis.scalar, is_negated: term.is_negated)
 
 
 func constructProductExterior(
