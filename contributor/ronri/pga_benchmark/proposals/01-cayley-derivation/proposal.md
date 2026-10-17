@@ -1,7 +1,7 @@
 # P01: Derive every Cayley table from the metric and the orientation of 𝟙
 
 **What it is.** `pga/cayleys.nim` derives every table from two inputs, as in Lengyel's figure
-2.16: the metric and the orientation of 𝟙. Fixed definitions and four rules build the rest. One
+2.16: the metric and the orientation of 𝟙. Fixed definitions and three rules build the rest. One
 rule, the new `applyMap`, puts a map into one operand of a table.
 
 **What it is for.** A reader follows one derivation that matches Lengyel's, with two constructors
@@ -25,13 +25,15 @@ RGA makes 𝐞ₙ null. CGA pairs 𝐞ₙ₋₁ and 𝐞ₙ with 𝐞ₙ₋₁ �
 the other infinity. The right complement of the origin, 𝐞̄ₙ in RGA and 𝐞̄ₙ₋₁ in CGA, is the horizon,
 which the attitude reads. The parts split by these projective vectors in both algebras.
 
-![Derivation map, after Lengyel's figure 2.16, for RGA and CGA. Green boxes are inputs. Blue boxes
-are fixed definitions and maps. Purple boxes conjugate their base by complements. Each box gives
-its formula and names the function that builds its table.](../../pages/derivation-map.svg)
+![Derivation map, after Lengyel's figure 2.16, in five blocks. Green boxes are inputs, blue boxes
+are fixed definitions and maps, and purple boxes conjugate their base by complements. A dashed box
+is a table from another block. Each line carries its formula, and under it the function that
+builds the table. Brown text holds in RGA alone, and blue text in CGA
+alone.](../../pages/derivation-map.svg)
 
 The figure shows RGA alone, and it predates the transwedge, by which Lengyel later unified the
 geometric product. The map adds both, and it names the code that builds each table. It takes the
-dot 𝐚 ∙ 𝐛 = 𝐚 ⩓ₖ 𝐛 at k = gr 𝐚 = gr 𝐛 from the transwedge, as at pin. So one product gives ∧ at
+dot 𝐚 ∙ 𝐛 = 𝐚 ⩓ₖ 𝐛 where k = gr 𝐚 = gr 𝐛 from the transwedge, as at pin. So one product gives ∧ at
 order 0, ∙ at equal grades, and ⟑ as a signed sum of its orders. A suite holds that this dot
 equals the 𝐚ᵀ𝐆𝐛 of the figure.
 
@@ -43,27 +45,27 @@ equals the 𝐚ᵀ𝐆𝐛 of the figure.
 | 𝟙 | input, by its orientation | 𝟙 = 𝐞₁ ∧ 𝐞₂ ∧ ⋯ ∧ 𝐞ₙ, the antiscalar basis |
 | ∧ | fixed | 𝐞ᵢ ∧ 𝐞ⱼ = −𝐞ⱼ ∧ 𝐞ᵢ, by `multiplyExterior` on basis factors |
 | Complements | from ∧ and 𝟙 | same, as 𝐮̱ ∧ 𝐮 = 𝟙 = 𝐮 ∧ 𝐮̄ |
-| Reverse | from ∧, sign by grade | same sign (−1)^(k(k−1)/2) at k = gr 𝐮, by grade alone |
-| 𝔾, ∨, ∘, antireverse | conjugate by complements | `constructAnti`: 𝐚 ∨ 𝐛 = 𝐮̱ for 𝐮 = 𝐚̄ ∧ 𝐛̄ |
+| Reverse | from ∧, sign by grade | same sign (−1)^(k(k−1)/2) where k = gr 𝐮, by grade alone |
+| 𝔾, ∨, ∘, antireverse | conjugate by complements | `constructAnti`: 𝐚 ∨ 𝐛 = 𝐮̱ where 𝐮 = 𝐚̄ ∧ 𝐛̄ |
 | Duals | complement of 𝐆𝐮 or 𝔾𝐮 | same, `applyMap` |
-| Transwedge | absent | 𝐚 ⩓ₖ 𝐛 = Σ (𝐜̱ ∨ 𝐚) ∧ (𝐛 ∨ 𝐜★) over 𝐜 of grade k |
-| ∙ | 𝐚ᵀ𝐆𝐛 | 𝐚 ⩓ₖ 𝐛 at k = gr 𝐚 = gr 𝐛, which a suite holds equal to 𝐚ᵀ𝐆𝐛 |
+| Transwedge | absent | 𝐚 ⩓ₖ 𝐛 = Σ (𝐜̱ ∨ 𝐚) ∧ (𝐛 ∨ 𝐜★) where gr 𝐜 = k |
+| ∙ | 𝐚ᵀ𝐆𝐛 | 𝐚 ⩓ₖ 𝐛 where k = gr 𝐚 = gr 𝐛, as a suite holds equal to 𝐚ᵀ𝐆𝐛 |
 | ⟑ | from 𝐆 and ∧ | 𝐚 ⟑ 𝐛 = Σ (−1)^(k(k−1)/2) 𝐚 ⩓ₖ 𝐛 |
 | ⟇ | conjugate of ⟑ | 𝐚 ⟇ 𝐛 = Σ (−1)^(k(k−1)/2) 𝐚 ⩔ₖ 𝐛, not conjugates of base orders in CGA |
-| Norms | √(𝐮 ∙ 𝐮) and √(𝐮 ∘ 𝐮) | ‖𝐮‖●² = 𝐮●ᵀ𝐮● for each part, split by projective vectors |
+| Norms | √(𝐮 ∙ 𝐮) and √(𝐮 ∘ 𝐮) | ‖𝐮‖●² = 𝐮●ᵀ𝐮● as for each part, and ‖𝐮‖⊘² = 𝐮 ∘ 𝐮 in CGA |
 | Projective vectors | absent | split the parts, and give the horizon and the CGA carrier |
 
-### Four rules
+### Three rules
 
 | Rule | Tables it builds |
 |------|------------------|
-| `constructAnti`: conjugate by complements, 𝐚 ∨ 𝐛 = 𝐮̱ for 𝐮 = 𝐚̄ ∧ 𝐛̄ | ∨, 𝔾, antireverse, ∘ |
+| `constructAnti`: conjugate by complements, 𝐚 ∨ 𝐛 = 𝐮̱ where 𝐮 = 𝐚̄ ∧ 𝐛̄ | ∨, 𝔾, antireverse, ∘ |
 | `applyConstant`, `applyMap`: fix or map operand | ★ ☆ ∨★ ∨☆ ∧★ ∧☆ each side, attitude, carrier |
-| `filterGrades`: keep one grade of product | ‖𝐦‖⊘², as top grade of ∘ |
-| Transwedge sum: Σ over 𝐜 of grade k | ⩓ₖ and ⩔ₖ, ∙ at equal grades, ⟑ and ⟇ by signed sums |
+| Transwedge sum: Σ where gr 𝐜 = k | ⩓ₖ and ⩔ₖ, ∙ at equal grades, ⟑ and ⟇ by signed sums |
 
 Each dual is a complement after 𝐆 or 𝔾, on the left or on the right, as the library keeps both
-sides. Each interior product is one dual fed into one product, by one rule.
+sides. Each interior product is one dual fed into one product, by one rule. The squared radius
+norm is the table of ∘ itself, so it needs no filter, and `filterGrades` leaves the file.
 
 Direct constructors remain for the base reverse, for 𝐆 from 𝖌, for the parts and for the squared
 norms. `constructDot` keeps the cells of 𝐚 ⩓ₖ 𝐛 where k = gr 𝐚 = gr 𝐛 holds. The antireverse is
@@ -85,6 +87,7 @@ The table below gives the new rule of each derived table that changes. In it, `s
 | `CAYLEYS_INTERIOR.s.weight.side` | `CAYLEYS_WEDGE.s.applyMap(CAYLEYS_DUAL.anti.side, side)` |
 | `CAYLEYS_DOT.base` | `constructDot(CAYLEYS_WEDGES_TRANS.base)` |
 | `CAYLEY_ATTITUDE` | `CAYLEYS_WEDGE.anti`, with `applyConstant` of `Basis.horizon` on the right |
+| `CAYLEYS_NORM_SQUARED_RADIUS` | `CAYLEYS_DOT.anti` |
 
 ### Cells of one term
 
@@ -95,8 +98,8 @@ map that these rules build holds at most one term in a cell, so the emitter stay
 
 ### Transwedge
 
-Order k of the transwedge, 𝐚 ⩓ₖ 𝐛, sums one term for each basis 𝐜 of grade k. The term strips 𝐜 from
-𝐚 by its complement and from 𝐛 by its dual, and then joins the two results.
+Order k of the transwedge, 𝐚 ⩓ₖ 𝐛, sums one term for each basis 𝐜 where gr 𝐜 = k. The term strips 𝐜
+from 𝐚 by its complement and from 𝐛 by its dual, and then joins the two results.
 
 The transwedge has 32 variants. Three choices matter: which product strips, which dual strips 𝐛,
 and whether the two complements are on opposed sides. Chirality changes no table, and grade order
@@ -143,6 +146,7 @@ transwedge cannot drift apart. The same suite holds that the dot equals 𝐚ᵀ�
 | Blade products by bit operations | Weighed; second generator beside the derivation |
 | Dot as 𝐚ᵀ𝐆𝐛 from 𝐆, as in figure 2.16 | Built, equal; ruled on 2026-10-17 for the transwedge |
 | Dot as grade 0 of ∨★, as a pin note asks | Built, equal; ruled on 2026-10-17 for the transwedge |
+| Radius norm by `filterGrades` of ∘ | Removes no cell; ruled on 2026-10-17 to read ∘ whole |
 | RGA parts as 𝐆 and 𝔾 | Built, equal; ruled on 2026-10-16 for one rule in both algebras |
 | `Option` cells in `Cayley1D` | Library before `3121342`; two cell shapes, and no sum of terms |
 | ⟇ as conjugate of ⟑, one family | Built; equal sum, but anti orders differ at cga4d and cga5d |

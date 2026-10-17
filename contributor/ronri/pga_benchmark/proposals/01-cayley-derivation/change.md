@@ -1,10 +1,10 @@
 # Cayley derivation as edits at pin
 
-Duals, interior products, antireverse and attitude read three of the four rules, in place of
-constructors of their own. The dot reads the transwedge 𝐚 ⩓ₖ 𝐛 at k = gr 𝐚 = gr 𝐛, as at pin.
-The parts split by the projective vectors in both algebras. `constructAnti`, `applyConstant` and
-`filterGrades` are in the library at pin. This change adds `applyMap`, `constructDot`, and
-`mergeTerm`, which both `applyMap` and `merge` call. Every exported table keeps its name, shape
+Duals, interior products, antireverse and attitude read two of the three rules, in place of
+constructors of their own. The dot reads the transwedge 𝐚 ⩓ₖ 𝐛 where k = gr 𝐚 = gr 𝐛, as at pin.
+The parts split by the projective vectors in both algebras. The radius norm reads ∘ whole, so
+`filterGrades` leaves the file. This change adds `applyMap`, `constructDot`, and `mergeTerm`,
+which both `applyMap` and `merge` call. Every exported table keeps its name, shape
 and cells. The suites hold that the dot equals 𝐚ᵀ𝐆𝐛, as in Lengyel's figure 2.16. `cayleys.nim`
 is replaced whole, since its tables and constructors change together.
 
@@ -65,8 +65,8 @@ suite "Internal: Transwedge":
           dot[term.basis][n].add BasisSigned(basis: Basis.scalar, is_negated: term.is_negated)
       (contraction, dot)
     check CAYLEYS_WEDGES_TRANS.base[Order.low] == CAYLEYS_WEDGE.base  # 𝐚 ⩓₀ 𝐛 = 𝐚 ∧ 𝐛
-    check contraction == CAYLEYS_INTERIOR.anti.bulk.right  # 𝐚 ⩓ₖ 𝐛 at k = gr(𝐚) is 𝐛 ∨ 𝐚★
-    check dot == CAYLEYS_DOT.base  # 𝐚 ⩓ₖ 𝐛 at gr(𝐚) = gr(𝐛) is 𝐚ᵀ𝐆𝐛
+    check contraction == CAYLEYS_INTERIOR.anti.bulk.right  # 𝐚 ⩓ₖ 𝐛 where k = gr(𝐚) is 𝐛 ∨ 𝐚★
+    check dot == CAYLEYS_DOT.base  # 𝐚 ⩓ₖ 𝐛 where k = gr(𝐚) = gr(𝐛) is 𝐚ᵀ𝐆𝐛
 ```
 
 ## Replace `pga/cayleys.nim` from `4aa7a2507c537c06`
@@ -79,17 +79,16 @@ suite "Internal: Transwedge":
 ## Derive tables from two inputs, as in Lengyel's figure 2.16: metric 𝖌 on vectors, and
 ##   orientation of volume element 𝟙. Exterior product and reverse follow from basis alone;
 ##   each complement solves 𝐮 ∧ 𝐮̄ = 𝟙. Projective vectors, origin and CGA infinity, are named.
-##   Four rules derive other tables:
+##   Three rules derive other tables:
 ##     `constructAnti` conjugates table by complements, giving anti-variants
 ##       (antiwedge, 𝔾, antireverse, antidot).
 ##     `applyConstant` and `applyMap` fix or map one operand of product
 ##       (attitude, carrier, duals, interior products).
 ##       Each dual composes two maps: complement after 𝐆 or 𝔾.
-##     `filterGrades` keeps one grade of product (squared radius norm, top grade of antidot).
 ##     `constructProductsTransitional` sums wedge chains over one grade (transwedge orders),
-##       i.e. 𝐚 ⩓ₖ 𝐛 = Σ (𝐜̲ ∨ 𝐚) ∧ (𝐛 ∨ 𝐜★) over 𝐜 of grade k; ⩔ₖ swaps ∧ for ∨, ★ for ☆.
+##       i.e. 𝐚 ⩓ₖ 𝐛 = Σ (𝐜̲ ∨ 𝐚) ∧ (𝐛 ∨ 𝐜★) where gr 𝐜 = k; ⩔ₖ swaps ∧ for ∨, ★ for ☆.
 ##       `constructProductGeometric` sums orders with sign, i.e. 𝐚 ⟑ 𝐛 = Σ (-1)^(k(k-1)/2) 𝐚 ⩓ₖ 𝐛.
-##   Dot reads transwedge at equal grades, i.e. 𝐚 ∙ 𝐛 = 𝐚 ⩓ₖ 𝐛 at k = gr 𝐚 = gr 𝐛.
+##   Dot reads transwedge at equal grades, i.e. 𝐚 ∙ 𝐛 = 𝐚 ⩓ₖ 𝐛 where k = gr 𝐚 = gr 𝐛.
 ##   Parts split by presence of origin and, in CGA, of infinity.
 ##   Cost: ⟑ and ⟇ keep two transwedge families, each N³ at compile time, since conformal anti
 ##     orders are not conjugates of base orders; maps and filters walk N² cells.
@@ -233,7 +232,7 @@ const
   )
 
 const
-  CAYLEYS_DOT* = block:  ## Dot as 𝐚 ⩓ₖ 𝐛 at k = gr 𝐚 = gr 𝐛; antidot conjugates it.
+  CAYLEYS_DOT* = block:  ## Dot as 𝐚 ⩓ₖ 𝐛 where k = gr 𝐚 = gr 𝐛; antidot conjugates it.
     let base = constructDot(CAYLEYS_WEDGES_TRANS.base)
     Spatial[Cayley2D](
       base: base,
@@ -250,10 +249,7 @@ const
     weight: constructNormsSquared(CAYLEYS_PARTS, Partiality.Weight),
   )
 when IS_CONFORMAL:
-  const CAYLEYS_NORM_SQUARED_RADIUS* = block:
-    var cayley = CAYLEYS_DOT.anti
-    cayley.filterGrades(products = @[Grade.high])
-    cayley
+  const CAYLEYS_NORM_SQUARED_RADIUS* = CAYLEYS_DOT.anti  ## Squared radius norm, i.e. 𝐦 ∘ 𝐦.
 
 const
   CAYLEY_ATTITUDE*: Cayley1D = block:  ## Attitude as one map, i.e. 𝐦 ∨ 𝐞̄ₙ.
@@ -440,7 +436,7 @@ func constructProductExterior(
 
 
 func constructDot(wedges_trans: array[Order, Cayley2D]): Cayley2D {.compileTime.} =
-  ## Construct Cayley table for dot as transwedge at equal grades, i.e. 𝐚 ⩓ₖ 𝐛 at k = gr 𝐚 = gr 𝐛.
+  ## Construct Cayley table for dot from transwedge, i.e. 𝐚 ⩓ₖ 𝐛 where k = gr 𝐚 = gr 𝐛.
   for a in Basis:
     for b in Basis:
       if a.grade == b.grade: result[a][b] = wedges_trans[Order(a.grade)][a][b]
@@ -711,62 +707,6 @@ func filterBases(
       for b in cayley[m][n]:
         if (products.len != 0 and b.basis notin products) or
             (as_exclusions and b.basis in products):
-          cayley[m][n] = @[]  # TODO: Remove only matching elements.
-          break
-
-
-func filterGrades(
-  cayley: var Cayley1D,
-  operands = default(seq[Grade]),
-  products = default(seq[Grade]),
-  as_exclusions = false,
-) {.compileTime.} =
-  ## Filter out specific operands/products from 1D cayley table by grades.
-  for operand in Basis:
-    if cayley[operand].len == 0: continue
-
-    # Filter by operand grade.
-    if (operands.len != 0 and operand.grade notin operands) or
-        (as_exclusions and operand.grade in operands):
-      cayley[operand] = @[]
-      continue
-
-    # Filter by product grade.
-    let product_signed = cayley[operand].toSigned
-    if (products.len != 0 and product_signed.basis.grade notin products) or
-        (as_exclusions and product_signed.basis.grade in products):
-      cayley[operand] = @[]
-
-
-func filterGrades(
-  cayley: var Cayley2D,
-  operands_m = default(seq[Grade]),
-  operands_n = default(seq[Grade]),
-  products = default(seq[Grade]),
-  as_exclusions = false,
-) {.compileTime.} =
-  ## Filter out specific operands/products from 2D cayley table by bases.
-  for m in Basis:
-
-    # Filter by m operands.
-    if (operands_m.len != 0 and m.grade notin operands_m) or
-        (as_exclusions and m.grade in operands_m):
-      for n in Basis:
-        cayley[m][n] = @[]
-
-    for n in Basis:
-      if cayley[m][n].len == 0: continue
-
-      # Filter by n operands.
-      if (operands_n.len != 0 and n.grade notin operands_n) or
-          (as_exclusions and n.grade in operands_n):
-        cayley[m][n] = @[]
-        continue
-
-      # Filter by product.
-      for b in cayley[m][n]:
-        if (products.len != 0 and b.basis.grade notin products) or
-            (as_exclusions and b.basis.grade in products):
           cayley[m][n] = @[]  # TODO: Remove only matching elements.
           break
 
