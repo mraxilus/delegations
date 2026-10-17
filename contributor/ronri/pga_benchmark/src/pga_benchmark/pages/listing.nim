@@ -1,4 +1,4 @@
-## Render proposal list: graph of undecided proposals, every proposal in table, and readings.
+## Render proposals tab of explorations: graph of undecided proposals, table, and readings.
 ##   Architect decides each proposal on its own, and proposals build on others as graph without
 ##     cycles (`proposals.nim`). List page shows that graph for those still proposed, so reader
 ##     sees what one decision blocks before opening any page; frozen ones are decided, so graph
@@ -85,7 +85,7 @@ func htmlGraph*(proposals: openArray[Proposal]): string =
   result.add "</div>"
 
 
-func bodyListing*(
+func htmlListing*(
   proposals: openArray[Proposal];
   evaluations: Table[string, JsonNode];
   files: Table[string, string];
@@ -93,9 +93,9 @@ func bodyListing*(
   baselines: Table[string, JsonNode];
   spread: Spread;
   urls: Table[string, string];
-  pin, links: string;
+  pin: string;
 ): string =
-  ## Render list page body: header, graph, table, then every proposal behind its checkbox.
+  ## Render proposals tab: graph, table, then every proposal behind its checkbox.
 
   func chipStanding(proposal: Proposal): string =
     ## Render where proposal stands as chip: proposed, implemented or withdrawn.
@@ -116,15 +116,11 @@ func bodyListing*(
     if cited.len == 0: "<span class=\"none\">none</span>"
     else: cited.mapIt(citeLinked(it, urls)).join(", ")
 
-  let
-    undecided = proposals.countIt(not it.isFrozen)
-    graph = htmlGraph(proposals)
-  result = "<div class=\"page\"><header><h1>Proposals</h1><p class=\"meta\">" &
-      $proposals.len & " proposals · " & $undecided & " undecided · pga " &
-      code(pin[0..<min(7, pin.len)]) & links & "</p><p>Each proposal is one future state of " &
-      "the library, argued and measured at the pin. The Architect decides each one on its own. " &
-      "A proposal needs each proposal that it depends on. A rejected proposal blocks each " &
-      "proposal that depends on it.</p></header><form class=\"picks\">"
+  let graph = htmlGraph(proposals)
+  result = "<p class=\"lead\">Each proposal is one future state of the library, argued and " &
+      "measured at the pin. The Architect decides each one on its own. A proposal needs each " &
+      "proposal that it depends on. A rejected proposal blocks each proposal that depends on " &
+      "it.</p><form class=\"picks\">"
   result.add "<section class=\"block\"><h2>Undecided proposals</h2>"
   if graph.len == 0:
     result.add "<p class=\"note\">No proposal waits on a decision.</p>"
@@ -172,4 +168,4 @@ func bodyListing*(
         "--pick-ring:var(--status);--pick-fill:var(--status-wash)}"
     rules.add "body:has(#" & id & ":focus-visible) [for=\"" & id & "\"]{outline:2px solid " &
         "var(--bound);outline-offset:2px}"
-  result.add "</section></form><style>" & rules.join("") & "</style></div>"
+  result.add "</section></form><style>" & rules.join("") & "</style>"

@@ -1,9 +1,9 @@
-## Render marginalia: library read at pin, with changes proposed to it and notes in its margin.
-##   Marginalia is second monitoring page. Changes are small edits, each tried at pin and shown
-##     with what its evaluation measured; notes are open questions and observations, each quoting
-##     lines of library it is about, located where those lines stand at pin.
-##   Larger explorations are proposals, with pages of their own; marginalia links them rather than
-##     restating them.
+## Render marginalia tab of explorations: changes tried on library at pin, and notes in its margin.
+##   Changes are small edits, each tried at pin and shown with what its evaluation measured; notes
+##     are open questions and observations, each quoting lines of library it is about, located
+##     where those lines stand at pin.
+##   Larger explorations are proposals, in tab beside this one and on pages of their own;
+##     marginalia links them rather than restating them.
 ##
 ##   Cost: change without evaluation renders with chip saying so; `drive` refuses that state before
 ##     page is published, so reader never meets it.
@@ -23,15 +23,14 @@ type ChangeEvaluated* = object
   evaluation*: JsonNode  ## Evaluation document; nil where none was run.
 
 
-func bodyMarginalia*(
+func htmlMarginalia*(
   changes_evaluated: openArray[ChangeEvaluated];
   notes: Notes;
   files: Table[string, string];
   baselines: Table[string, JsonNode];
   spread: Spread;
-  pin, links: string;
 ): string =
-  ## Render marginalia body: header, changes with evaluations and spread, then notes under lead.
+  ## Render marginalia tab: changes with evaluations and spread, then notes under lead.
   ##   Lead's own title is dropped, since section heading names notes already.
 
   func htmlChange(change_evaluated: ChangeEvaluated): string =
@@ -60,10 +59,9 @@ func bodyMarginalia*(
     result.add "</p>" & renderFence(note.quote.splitLines, "nim", at) &
         renderBlocks(note.body, 2) & "</article>"
 
-  result = "<div class=\"page\"><header><h1>PGA Marginalia</h1><p class=\"meta\">pga " &
-      code(pin[0..<7]) & " · every change tried at pin, every note located at pin" & links &
-      "</p></header>"
-  result.add "<section class=\"block\"><h2>Changes proposed</h2><p class=\"note\">" &
+  result = "<p class=\"lead\">Each change is a small edit to the library, tried at the pin. " &
+      "Each note is a question or an observation, located where its lines stand at the pin." &
+      "</p><section class=\"block\"><h2>Changes proposed</h2><p class=\"note\">" &
       textSpread(spread) & "</p>"
   for change_evaluated in changes_evaluated: result.add htmlChange(change_evaluated)
   result.add "</section><section class=\"block\"><h2>Notes in the margin</h2>"
@@ -71,4 +69,4 @@ func bodyMarginalia*(
   if lead.len > 0 and lead[0].kind == KindBlock.Heading and lead[0].level == 1: lead.delete(0)
   if lead.len > 0: result.add "<div class=\"prose\">" & renderBlocks(lead, 2) & "</div>"
   for note in notes.items: result.add htmlNote(note)
-  result.add "</section></div>"
+  result.add "</section>"
