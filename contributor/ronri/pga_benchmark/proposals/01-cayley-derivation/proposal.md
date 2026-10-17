@@ -25,17 +25,18 @@ RGA makes 𝐞ₙ null. CGA pairs 𝐞ₙ₋₁ and 𝐞ₙ with 𝐞ₙ₋₁ �
 the other infinity. The right complement of the origin, 𝐞̄ₙ in RGA and 𝐞̄ₙ₋₁ in CGA, is the horizon,
 which the attitude reads. The parts split by these projective vectors in both algebras.
 
-![Derivation map, after Lengyel's figure 2.16, in five blocks. Green boxes are inputs, blue boxes
-are fixed definitions and maps, and purple boxes conjugate their base by complements. A dashed box
-is a table from another block. Each line carries its formula, and under it the function that
-builds the table. Brown text holds in RGA alone, and blue text in CGA
-alone.](../../pages/derivation-map.svg)
+![Derivation map, after Lengyel's figure 2.16, in nine blocks in the order of the code. Green
+boxes are the two inputs, and grey boxes are basis and projective elements. Blue boxes are tables,
+and purple boxes are anti tables, each under its base. A dashed box is a table from another block.
+Each line carries its formula, and under it the function that builds the table. Brown text holds
+in RGA alone, and blue text in CGA alone.](../../pages/derivation-map.svg)
 
 The figure shows RGA alone, and it predates the transwedge, by which Lengyel later unified the
 geometric product. The map adds both, and it names the code that builds each table. It takes the
 dot 𝐚 ∙ 𝐛 = 𝐚 ⩓ₖ 𝐛 where k = gr 𝐚 = gr 𝐛 from the transwedge, as at pin. So one product gives ∧ at
 order 0, ∙ at equal grades, and ⟑ as a signed sum of its orders. A suite holds that this dot
-equals the 𝐚ᵀ𝐆𝐛 of the figure.
+equals the 𝐚ᵀ𝐆𝐛 of the figure. The blocks follow the groups of the code: bases, metric, parts,
+exterior product, interior products, transwedge, geometric products and norms.
 
 ### Against Lengyel's figure 2.16
 

@@ -90,6 +90,8 @@ suite "Internal: Transwedge":
 ##       `constructProductGeometric` sums orders with sign, i.e. 𝐚 ⟑ 𝐛 = Σ (-1)^(k(k-1)/2) 𝐚 ⩓ₖ 𝐛.
 ##   Dot reads transwedge at equal grades, i.e. 𝐚 ∙ 𝐛 = 𝐚 ⩓ₖ 𝐛 where k = gr 𝐚 = gr 𝐛.
 ##   Parts split by presence of origin and, in CGA, of infinity.
+##   Tables and constructors come in groups, in order of derivation: bases, metric, parts,
+##     exterior product, interior products, transwedge, geometric products, norms.
 ##   Cost: ⟑ and ⟇ keep two transwedge families, each N³ at compile time, since conformal anti
 ##     orders are not conjugates of base orders; maps and filters walk N² cells.
 ##
@@ -145,14 +147,10 @@ iterator items(t: typedesc[Order]): Order =
 
 #[ Cayley Definitions ]#
 
-const
+const  # Bases.
   CAYLEYS_COMPLEMENT* = Chiral[Cayley1D](
     left: constructComplement(Chirality.Left),
     right: constructComplement(Chirality.Right),
-  )
-  CAYLEYS_PARTS* = Partial[Formal[Cayley1D]](  ## Split by presence of projective vectors.
-    bulk: constructParts(Partiality.Bulk),
-    weight: constructParts(Partiality.Weight),
   )
   CAYLEYS_REVERSE* = block:  ## Reverse; antireverse conjugates it by complements.
     let base = constructReverse()
@@ -161,7 +159,7 @@ const
       anti: base.constructAnti(CAYLEYS_COMPLEMENT),
     )
 
-const
+const  # Metric.
   CAYLEY_METRIC* = constructMetric()
   CAYLEYS_EXOMORPHISM_METRIC* = block:
     let base = constructExomorphismMetric(CAYLEY_METRIC)
@@ -169,14 +167,6 @@ const
       base: base,
       anti: base.constructAnti(CAYLEYS_COMPLEMENT),
     )
-  CAYLEYS_WEDGE* = block:
-    let base = constructProductExterior(CAYLEYS_COMPLEMENT, Spatiality.Base)
-    Spatial[Cayley2D](
-      base: base,
-      anti: base.constructAnti(CAYLEYS_COMPLEMENT),
-    )
-
-const
   CAYLEYS_DUAL* = Spatial[Chiral[Cayley1D]](  ## Complement after exomorphism, e.g. 𝐦★ = (𝐆𝐦)̅.
     base: Chiral[Cayley1D](
       left: CAYLEYS_COMPLEMENT.left.applyMap(CAYLEYS_EXOMORPHISM_METRIC.base),
@@ -188,26 +178,29 @@ const
     ),
   )
 
-const
-  CAYLEYS_WEDGES_TRANS* = Spatial[array[Order, Cayley2D]](
-    base: constructProductsTransitional(
-      CAYLEYS_COMPLEMENT.left,
-      CAYLEYS_DUAL.base.right,
-      CAYLEYS_WEDGE,
-      Chirality.Right,
-      Spatiality.Base,
-    ),
-    anti: constructProductsTransitional(
-      CAYLEYS_COMPLEMENT.left,
-      CAYLEYS_DUAL.anti.right,
-      CAYLEYS_WEDGE,
-      Chirality.Right,
-      Spatiality.Anti,
-    ),
+const  # Parts.
+  CAYLEYS_PARTS* = Partial[Formal[Cayley1D]](  ## Split by presence of projective vectors.
+    bulk: constructParts(Partiality.Bulk),
+    weight: constructParts(Partiality.Weight),
   )
 
+const  # Exterior product.
+  CAYLEYS_WEDGE* = block:
+    let base = constructProductExterior(CAYLEYS_COMPLEMENT, Spatiality.Base)
+    Spatial[Cayley2D](
+      base: base,
+      anti: base.constructAnti(CAYLEYS_COMPLEMENT),
+    )
+  CAYLEY_ATTITUDE*: Cayley1D = block:  ## Attitude as one map, i.e. 𝐦 ∨ 𝐞̄ₙ.
+    var cayley = CAYLEYS_WEDGE.anti
+    cayley.applyConstant(Basis.horizon, Chirality.Right)
 
-const
+when IS_CONFORMAL:
+  const CAYLEY_CARRIER*: Cayley1D = block:
+    var cayley = CAYLEYS_WEDGE.base
+    cayley.applyConstant(Basis.infinity.toSigned, Chirality.Right)
+
+const  # Interior products.
   CAYLEYS_INTERIOR* = Spatial[Partial[Chiral[Cayley2D]]](  ## (Anti)wedge with one operand dualized.
     base: Partial[Chiral[Cayley2D]](
       bulk: Chiral[Cayley2D](
@@ -231,35 +224,43 @@ const
     ),
   )
 
-const
+const  # Transwedge.
+  CAYLEYS_WEDGES_TRANS* = Spatial[array[Order, Cayley2D]](
+    base: constructProductsTransitional(
+      CAYLEYS_COMPLEMENT.left,
+      CAYLEYS_DUAL.base.right,
+      CAYLEYS_WEDGE,
+      Chirality.Right,
+      Spatiality.Base,
+    ),
+    anti: constructProductsTransitional(
+      CAYLEYS_COMPLEMENT.left,
+      CAYLEYS_DUAL.anti.right,
+      CAYLEYS_WEDGE,
+      Chirality.Right,
+      Spatiality.Anti,
+    ),
+  )
   CAYLEYS_DOT* = block:  ## Dot as 𝐚 ⩓ₖ 𝐛 where k = gr 𝐚 = gr 𝐛; antidot conjugates it.
     let base = constructDot(CAYLEYS_WEDGES_TRANS.base)
     Spatial[Cayley2D](
       base: base,
       anti: base.constructAnti(CAYLEYS_COMPLEMENT),
     )
+
+const  # Geometric products.
   CAYLEYS_WEDGE_DOT* = Spatial[Cayley2D](
     base: constructProductGeometric(CAYLEYS_WEDGES_TRANS.base),
     anti: constructProductGeometric(CAYLEYS_WEDGES_TRANS.anti),
   )
 
-const
+const  # Norms.
   CAYLEYS_NORM_SQUARED* = Partial[Formal[Cayley2D]](
     bulk: constructNormsSquared(CAYLEYS_PARTS, Partiality.Bulk),
     weight: constructNormsSquared(CAYLEYS_PARTS, Partiality.Weight),
   )
 when IS_CONFORMAL:
   const CAYLEYS_NORM_SQUARED_RADIUS* = CAYLEYS_DOT.anti  ## Squared radius norm, i.e. 𝐦 ∘ 𝐦.
-
-const
-  CAYLEY_ATTITUDE*: Cayley1D = block:  ## Attitude as one map, i.e. 𝐦 ∨ 𝐞̄ₙ.
-    var cayley = CAYLEYS_WEDGE.anti
-    cayley.applyConstant(Basis.horizon, Chirality.Right)
-
-when IS_CONFORMAL:
-  const CAYLEY_CARRIER*: Cayley1D = block:
-    var cayley = CAYLEYS_WEDGE.base
-    cayley.applyConstant(Basis.infinity.toSigned, Chirality.Right)
 
 
 
@@ -269,63 +270,6 @@ func constructComplement(chirality: Chirality): Cayley1D {.compileTime, noinit.}
   ## Construct Cayley table for left and right complements.
   for b in Basis:
     result[b] = @[b.complement(chirality)]
-
-
-func constructParts(partiality: Partiality): Formal[Cayley1D] {.compileTime, noinit.} =
-  ## Construct Cayley table for (round/flat) bulk/weight, by presence of projective vectors.
-  ##   Origin splits bulk from weight; in CGA, infinity splits round from flat.
-  ##   RGA parts equal 𝐆𝐦 and 𝔾𝐦, yet one rule serves both algebras.
-
-  func constructPart(inclusions, exclusions: seq[Basis]): Cayley1D {.compileTime, noinit.} =
-    ## Construct sub-slice of Cayley table respresenting identity map.
-    for b in Basis:
-      result[b] = @[b.toSigned]
-    result.filterFactors(inclusions)
-    result.filterFactors(exclusions, as_exclusions = true)
-
-  let
-    inclusions = case partiality
-      of Partiality.Bulk: @[]
-      of Partiality.Weight: @[Basis.origin]
-    exclusions = case partiality
-      of Partiality.Bulk: @[Basis.origin]
-      of Partiality.Weight: @[]
-
-  when IS_RIGID:
-    Formal[Cayley1D](round: constructPart(inclusions, exclusions))
-  else:
-    Formal[Cayley1D](
-      round: constructPart(inclusions, exclusions & @[Basis.infinity]),
-      flat: constructPart(inclusions & @[Basis.infinity], exclusions),
-    )
-
-func constructNormsSquared(
-  parts: Partial[Formal[Cayley1D]],
-  partiality: Partiality,
-): Formal[Cayley2D] =
-  ## Construct unary 2D cayley tables for squared norms from parts.
-
-  func constructNormSquared(part: Cayley1D, partiality: Partiality): Cayley2D =
-    ## Construct unary 2D cayley table for squared norm from specific part.
-    let destination = case partiality:
-        of Partiality.Bulk: Basis.scalar
-        of Partiality.Weight: Basis.scalarAnti
-    for b in Basis:
-      if part[b].len == 0: continue
-      assert part[b].toSigned == b.toSigned,
-        &"Provided part that is not 1-1 mapping; got `{part[b]}` for `{b}`."
-      result[b][b].add(destination.toSigned)
-
-  let parts_partial = case partiality
-      of Partiality.Bulk: parts.bulk
-      of Partiality.Weight: parts.weight
-  when IS_RIGID:
-    Formal[Cayley2D](round: constructNormSquared(parts_partial.round, partiality))
-  else:
-    Formal[Cayley2D](
-      round: constructNormSquared(parts_partial.round, partiality),
-      flat: constructNormSquared(parts_partial.flat, partiality),
-    )
 
 
 func constructReverse(): Cayley1D {.compileTime, noinit.} =
@@ -408,6 +352,35 @@ func constructExomorphismMetric(metric: Cayley1D): Cayley1D {.compileTime, noini
     result[operand] = @[product.basis]
 
 
+func constructParts(partiality: Partiality): Formal[Cayley1D] {.compileTime, noinit.} =
+  ## Construct Cayley table for (round/flat) bulk/weight, by presence of projective vectors.
+  ##   Origin splits bulk from weight; in CGA, infinity splits round from flat.
+  ##   RGA parts equal 𝐆𝐦 and 𝔾𝐦, yet one rule serves both algebras.
+
+  func constructPart(inclusions, exclusions: seq[Basis]): Cayley1D {.compileTime, noinit.} =
+    ## Construct sub-slice of Cayley table respresenting identity map.
+    for b in Basis:
+      result[b] = @[b.toSigned]
+    result.filterFactors(inclusions)
+    result.filterFactors(exclusions, as_exclusions = true)
+
+  let
+    inclusions = case partiality
+      of Partiality.Bulk: @[]
+      of Partiality.Weight: @[Basis.origin]
+    exclusions = case partiality
+      of Partiality.Bulk: @[Basis.origin]
+      of Partiality.Weight: @[]
+
+  when IS_RIGID:
+    Formal[Cayley1D](round: constructPart(inclusions, exclusions))
+  else:
+    Formal[Cayley1D](
+      round: constructPart(inclusions, exclusions & @[Basis.infinity]),
+      flat: constructPart(inclusions & @[Basis.infinity], exclusions),
+    )
+
+
 func constructProductExterior(
   complements: Chiral[Cayley1D], spatiality: Spatiality
 ): Cayley2D {.compileTime.} =
@@ -433,22 +406,6 @@ func constructProductExterior(
             is_negated: product.basis.is_negated xor product_complement.is_negated,
           )
       )
-
-
-func constructDot(wedges_trans: array[Order, Cayley2D]): Cayley2D {.compileTime.} =
-  ## Construct Cayley table for dot from transwedge, i.e. 𝐚 ⩓ₖ 𝐛 where k = gr 𝐚 = gr 𝐛.
-  for a in Basis:
-    for b in Basis:
-      if a.grade == b.grade: result[a][b] = wedges_trans[Order(a.grade)][a][b]
-
-
-func constructProductGeometric(wedges_trans: array[Order, Cayley2D]): Cayley2D {.compileTime.} =
-  ## Construct Cayley table for specific geometric product.
-  for order in Order:
-    let
-      k = int(order)
-      is_negated = (k * (k - 1) div 2 and 1) == 1
-    result.merge(wedges_trans[order], as_negated = is_negated)
 
 
 func constructProductsTransitional(
@@ -538,6 +495,51 @@ func constructProductTransitional(
             product_right.is_negated
           )
         result[m][n].add BasisSigned(basis: product_center.basis, is_negated: is_negated)
+
+
+func constructDot(wedges_trans: array[Order, Cayley2D]): Cayley2D {.compileTime.} =
+  ## Construct Cayley table for dot from transwedge, i.e. 𝐚 ⩓ₖ 𝐛 where k = gr 𝐚 = gr 𝐛.
+  for a in Basis:
+    for b in Basis:
+      if a.grade == b.grade: result[a][b] = wedges_trans[Order(a.grade)][a][b]
+
+
+func constructProductGeometric(wedges_trans: array[Order, Cayley2D]): Cayley2D {.compileTime.} =
+  ## Construct Cayley table for specific geometric product.
+  for order in Order:
+    let
+      k = int(order)
+      is_negated = (k * (k - 1) div 2 and 1) == 1
+    result.merge(wedges_trans[order], as_negated = is_negated)
+
+
+func constructNormsSquared(
+  parts: Partial[Formal[Cayley1D]],
+  partiality: Partiality,
+): Formal[Cayley2D] =
+  ## Construct unary 2D cayley tables for squared norms from parts.
+
+  func constructNormSquared(part: Cayley1D, partiality: Partiality): Cayley2D =
+    ## Construct unary 2D cayley table for squared norm from specific part.
+    let destination = case partiality:
+        of Partiality.Bulk: Basis.scalar
+        of Partiality.Weight: Basis.scalarAnti
+    for b in Basis:
+      if part[b].len == 0: continue
+      assert part[b].toSigned == b.toSigned,
+        &"Provided part that is not 1-1 mapping; got `{part[b]}` for `{b}`."
+      result[b][b].add(destination.toSigned)
+
+  let parts_partial = case partiality
+      of Partiality.Bulk: parts.bulk
+      of Partiality.Weight: parts.weight
+  when IS_RIGID:
+    Formal[Cayley2D](round: constructNormSquared(parts_partial.round, partiality))
+  else:
+    Formal[Cayley2D](
+      round: constructNormSquared(parts_partial.round, partiality),
+      flat: constructNormSquared(parts_partial.flat, partiality),
+    )
 
 
 
