@@ -25,18 +25,18 @@ const
   FLOOR_MOMENTS = 1387
     ## Least moments read: half of 2775, every moment of eighteen sweeps, read 2026-10-17.
     ##   Reader that loses its way, by wrong file or wrong keys, reads nearly none.
-  REACH = 1.0
-    ## Furthest drawn joint may lie from its moment's, in millimetres: rounding alone.
+  REACH = 1.0  ## Furthest drawn joint may lie from its moment's, in millimetres: rounding alone.
 
 
 proc readText(path: cstring): cstring {.importjs: "require('fs').readFileSync(#, 'utf8')".}
   ## Read whole file as text, through node.
-func parsed(text: cstring): JsObject {.importjs: "JSON.parse(#)".}
+
+func toJsObject(text: cstring): JsObject {.importjs: "JSON.parse(#)".}
   ## Read JSON text as object, read in place as page reads it.
 
 
 func reach(scene: Scene, moment: JsObject): float =
-  ## Furthest any joint of `scene` lies from same joint of `moment`, in millimetres.
+  ## Measure furthest any joint of `scene` lies from same joint of `moment`, in millimetres.
   for i in 0..<scene.connection_count:
     let connection = moment.connections[i]
     for k in 0..<4:
@@ -55,7 +55,7 @@ suite "Internal: The whole-cloth page plays every recorded moment":
     ##   Regression of pull request 629, as found on 2026-10-12: page found moments by turn,
     ##     so at turn where plan poses arms again it drew first and last pose alone, and jumped
     ##     492 mm in no time in `L-r.R-l|above` at 0.02 of turn.
-    let sweeps = parsed(readText(cstring(KEPT_TURNS))).sweeps
+    let sweeps = readText(cstring(KEPT_TURNS)).toJsObject.sweeps
     var
       scene: Scene
       missed: seq[string]
@@ -74,6 +74,6 @@ suite "Internal: The whole-cloth page plays every recorded moment":
               formatFloat(away, ffDecimal, 0) & " mm)"
     checkpoint "Moments read: `" & $read & "`.  Not drawn: `" & $missed.len &
         "`, furthest: `" & formatFloat(worst, ffDecimal, 0) & " mm`, from: `" &
-        missed[0 ..< min(missed.len, 6)].join(", ") & "`."
+        missed[0..<min(missed.len, 6)].join(", ") & "`."
     check read >= FLOOR_MOMENTS
     check missed.len == 0
