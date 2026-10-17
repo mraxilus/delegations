@@ -865,11 +865,11 @@ bar over it. The tilde of the reverse and of the antireverse is a spacing ˜, no
 Two advances, of the tilde and of the letter, set it over or under the letter. The face puts a
 combining tilde beside the letter, as it does each bar mark.
 
-The map holds five blocks, one group of derivations each. A table from another block is a dashed
-box, so that no line leaves its block. Each line carries its formula, as in Lengyel's figure, and
-under it the function that builds the table. Brown text holds in RGA alone and blue text in CGA
-alone, so that no formula names its algebra. The two colours are shell tokens for code, so they
-follow the theme.
+The map holds nine blocks, in the order of the groups of the code, and each anti table stands under
+its base. A table from another block is a dashed box of its own colour, so that no line leaves its
+block. Each line carries its formula, as in Lengyel's figure, and under it the function that builds
+the table. Brown text holds in RGA alone and blue text in CGA alone, so that no formula names its
+algebra. The two colours are shell tokens for code, so they follow the theme.
 
 The map writes the origin as 𝐞ᵒ and infinity as 𝐞 with ∞ raised, so that neither reads as 𝐞₀ or
 as another basis vector. A comma or a word parts two formulas or two signs. So the one dot in the
