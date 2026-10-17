@@ -853,12 +853,17 @@ higher than the macron of the face, to clear the bold x-height.
 
 The mark stays in the text and a clip hides it, so copy and search read what the source says.
 Each word that holds such a letter stays on one line, because a box is a place where a line may
-break. Tags, attributes, and the content of `svg`, `script` and `style` pass as they are. The
-figure of P01 draws its bars in its SVG, as an underline or an overline, with the mark at size
-zero.
+break. Tags, attributes, and the content of `svg`, `script` and `style` pass as they are.
 Rejected: the marks as the face places them, since each sits after its letter and meets the next
 sign. Rejected: sans-serif bold letters, which carry all three anchors, since the letters change
 shape and the library code that a page quotes cannot change.
+
+The figure of P01 draws its bars in its SVG, as an underline or an overline, with the mark at
+size zero. A bar over a group of signs, as in 𝐚 ∨ 𝐛 = 𝐮̱ for 𝐮 = 𝐚̄ ∧ 𝐛̄, is the decoration alone.
+The face sets an overline near its ascent, so a line with a bar over it stands 22 units below the
+line above. The tilde of the reverse and of the antireverse is a spacing ˜, not a combining mark.
+Two advances, of the tilde and of the letter, set it over or under the letter. The face puts a
+combining tilde beside the letter, as it does each bar mark.
 
 In code, ★ comes from the math face as ☆ does, because the mono face draws ★ smaller.
 
