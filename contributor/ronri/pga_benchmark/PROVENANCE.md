@@ -859,11 +859,17 @@ sign. Rejected: sans-serif bold letters, which carry all three anchors, since th
 shape and the library code that a page quotes cannot change.
 
 The figure of P01 draws its bars in its SVG, as an underline or an overline, with the mark at
-size zero. A bar over a group of signs, as in 𝐚 ∨ 𝐛 = 𝐮̱ for 𝐮 = 𝐚̄ ∧ 𝐛̄, is the decoration alone.
-The face sets an overline near its ascent, so a line with a bar over it stands 22 units below the
-line above. The tilde of the reverse and of the antireverse is a spacing ˜, not a combining mark.
+size zero. A bar over a group of signs, as in 𝐚 ∨ 𝐛 = 𝐮̱ where 𝐮 = 𝐚̄ ∧ 𝐛̄, is the decoration
+alone. The face sets an overline near its ascent, so no text stands just above a formula with a
+bar over it. The tilde of the reverse and of the antireverse is a spacing ˜, not a combining mark.
 Two advances, of the tilde and of the letter, set it over or under the letter. The face puts a
 combining tilde beside the letter, as it does each bar mark.
+
+The map holds five blocks, one group of derivations each. A table from another block is a dashed
+box, so that no line leaves its block. Each line carries its formula, as in Lengyel's figure, and
+under it the function that builds the table. Brown text holds in RGA alone and blue text in CGA
+alone, so that no formula names its algebra. The two colours are shell tokens for code, so they
+follow the theme.
 
 The map writes the origin as 𝐞ᵒ and infinity as 𝐞 with ∞ raised, so that neither reads as 𝐞₀ or
 as another basis vector. A comma or a word parts two formulas or two signs. So the one dot in the
