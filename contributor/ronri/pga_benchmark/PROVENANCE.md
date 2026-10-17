@@ -858,23 +858,6 @@ Rejected: the marks as the face places them, since each sits after its letter an
 sign. Rejected: sans-serif bold letters, which carry all three anchors, since the letters change
 shape and the library code that a page quotes cannot change.
 
-The figure of P01 draws its bars in its SVG, as an underline or an overline, with the mark at
-size zero. A bar over a group of signs, as in 𝐚 ∨ 𝐛 = 𝐮̱ where 𝐮 = 𝐚̄ ∧ 𝐛̄, is the decoration
-alone. The face sets an overline near its ascent, so no text stands just above a formula with a
-bar over it. The tilde of the reverse and of the antireverse is a spacing ˜, not a combining mark.
-Two advances, of the tilde and of the letter, set it over or under the letter. The face puts a
-combining tilde beside the letter, as it does each bar mark.
-
-The map holds eight blocks, in the order of the groups of the code, and each anti table stands under
-its base. A table from another block is a dashed box of its own colour, so that no line leaves its
-block. Each line carries its formula, as in Lengyel's figure, and under it the function that builds
-the table. Brown text holds in RGA alone and blue text in CGA alone, so that no formula names its
-algebra. The two colours are shell tokens for code, so they follow the theme.
-
-The map writes the origin as 𝐞ᵒ and infinity as 𝐞 with ∞ raised, so that neither reads as 𝐞₀ or
-as another basis vector. A comma or a word parts two formulas or two signs. So the one dot in the
-map is the dot product.
-
 In code, ★ comes from the math face as ☆ does, because the mono face draws ★ smaller.
 
 The cause is in the face. In Noto Sans Math 2.539, the 52 letters of the bold block, U+1D400 to
@@ -950,6 +933,32 @@ Suite `Internal: Figures` covers the path a figure resolves, the SVG a page embe
 on the map. It also covers the summary above the claims. Suite `Internal: Edits` covers the diff
 with its numbers and folds, a new file, and the class of the sign column. It also covers the
 signatures an edit defines or sits in, and a header that closes at its own indent.
+
+## Derivation map
+
+The figure of P01 draws its bars in its SVG, as an underline or an overline, with the mark at
+size zero. A bar over a group of signs, as in 𝐚 ∨ 𝐛 = 𝐮̱ where 𝐮 = 𝐚̄ ∧ 𝐛̄, is the decoration
+alone. The face sets an overline near its ascent, so no text stands just above a formula with a
+bar over it. The tilde and the hat are spacing marks, ˜ and ˆ, since the face puts a combining
+mark beside its letter. Two advances, of the mark and of the letter, set each over or under its
+letter. The tilde under 𝐐 sits lower, to clear its tail.
+
+The map holds nine blocks, in the order of the groups of the code, and each anti table stands under
+its base. Each box holds a symbol alone, and the line into it carries its formula, as in Lengyel's
+figure. Under the line stands the function that builds the table. A box from elsewhere is a dashed
+box of its own colour, so that no line leaves its block. Brown text holds in RGA alone and blue
+text in CGA alone, so that no formula names its algebra. The two colours are shell tokens for code,
+so they follow the theme.
+
+The map gives every route to a box that holds at pin, and it fades each route that the code does
+not take. A faded box is an operator with no table, so the map shows what the tables serve. The
+center norm has no formula in the library, so its box has no line. A check by hand on 2026-10-17
+builds each faded route at rga3d, rga4d, cga4d and cga5d, and each gives the table it leads to. Two
+of them hold in RGA alone, so the map writes them in brown.
+
+The map writes the origin as 𝐞ᵒ and infinity as 𝐞 with ∞ raised, so that neither reads as 𝐞₀ or
+as another basis vector. A comma or a word parts two formulas or two signs. So the one dot in the
+map is the dot product.
 
 ## Proposal pages and code
 
