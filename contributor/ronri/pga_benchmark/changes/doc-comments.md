@@ -8,6 +8,28 @@ It removes table rows for operators that the library does not define. It replace
 `TODO: Document.` header, and documents the projections and the squared norms. No count
 changes.
 
+Proposal P01, `cayley-derivation`, replaces `pga/cayleys.nim` whole from a digest, and this
+change edits that file too. Whichever lands second is quoted again against the first. If P01
+lands second, its Replace carries the text of this change under a new digest. The change
+`conformal-norms` edits nearby docs in `pga.nim` and `pga/operators.nim`. The two changes quote
+distinct lines, so they apply in either order.
+
+Once P01 lands, this change drops its edit that quotes `  CAYLEYS_DOT* = block:`. P01 gives the
+dot a doc on that line already. So that edit, applied after P01, gives a line of 136 characters
+with two docs that contradict each other.
+
+Two more proposals make a line of this change stale. Of this change and each of them, the second
+to land drops or corrects that line:
+
+- P08, `compound-tables`, generates the support from a table. Then the header of
+  `pga/operators.nim` that this change writes must not list `support` as written by hand.
+- P03, `partner-sign`, reads no grade in the partner. Then this line, which this change adds to
+  the doc of `partner` in `pga.nim`, is not true:
+  `Requires single-grade multivector: grade is read at runtime and must be definite.`
+
+P11, `unitize-general`, drops `inline` from `^∘` and quotes no line here. This change writes that
+`^` and `normalizeWeight` cost no call. Once both land, that doc says that each costs one call.
+
 ## Edit `pga.nim`
 
 ```nim
@@ -102,18 +124,16 @@ changes.
 ## Edit `pga.nim`
 
 ```nim
-when compileOption("profiler"): import std/nimprof
+  import std/nimprof
 
-import std/math
+import ./pga/[algebra, cayleys, multivectors, operators]
 ```
 
 ```nim
-when compileOption("profiler"):
   import std/nimprof
   ## Driven by `nim c -d:release --profiler:on --stackTrace:on -r tests/rga/test_4d.nim`.
 
-import std/math
-export math  # re-export sqrt and friends, since norms return multivectors of them
+import ./pga/[algebra, cayleys, multivectors, operators]
 ```
 
 ## Edit `pga.nim`
@@ -136,7 +156,7 @@ export math  # re-export sqrt and friends, since norms return multivectors of th
 
 ```nim
     ## Get radius norm of multivector.
-    ##   Not implemented; operator table above marks both center and radius norms so.
+    ##   Conformal only, as † marks in operator table above.
 ```
 
 ## Edit `pga.nim`

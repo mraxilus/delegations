@@ -3,12 +3,15 @@
 ##     is verdict: every law below holds, or program stops on assertion.
 ##   Definition is spelled through exported operators, i.e. (-1)^(gr 𝐦 + 1) (𝐦☆)⊡ ∨ 𝐦⊟, with
 ##     sign read from grade sample was drawn at; partner reads no grade, so laws hold it to that.
+##   Here ⊡ is P08's table (`compound-tables`), not pin's chain; P08's `laws.nim` holds that
+##     table to pin's chain 𝐦 ∧ (𝐦⊟)☆, so this law reaches pin's partner through it.
 
 {.experimental: "strictFuncs".}
 
-when compileOption("profiler"): import std/nimprof
+when compileOption("profiler"):
+  import std/nimprof
 
-import std/[math, random]
+import std/[math, random, strformat]
 
 import pga
 
@@ -30,7 +33,8 @@ proc main(): int =
     let sign = float(-1^(int(grade) + 1))
     for _ in 1..SAMPLES:
       let m = sample(grade)
-      doAssert (⊛m) =~ ((sign * ⊡(☆m)) ∨ ⊟m), "partner must equal its definition"
+      doAssert ⊛m =~ ((sign * ⊡(☆m)) ∨ ⊟m),
+        &"Partner must equal its definition; got `{⊛m}` for `{m}`."
   echo "partner-sign: laws hold at ", DIMENSIONS, "D, conformal ", IS_CONFORMAL
   0
 

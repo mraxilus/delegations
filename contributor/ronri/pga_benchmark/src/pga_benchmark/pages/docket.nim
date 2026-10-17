@@ -139,7 +139,8 @@ func rowsOf(sheet: Sheet, ids: JsonNode): seq[Row] =
       bytes = bound{"bytes_moved"}.getInt
       (read, written) =
         if last == "Scale" and not is_chain: (width + 8, width)
-        elif last in ["FormScalar", "NormSquared", "Norm"]: (bytes - 8, 8)
+        elif last in ["FormScalar", "NormSquared", "Norm", "NormPartSquared", "NormPart"]:
+          (bytes - 8, 8)
         else: (bytes - width, width)
     some(
       FiguresBound(

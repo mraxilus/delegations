@@ -209,12 +209,14 @@ proc auditTree*(tree: Tree): seq[Finding] =
       )
 
   # Names: every Nim file is held to words glossaries admit, root and its own project, acronyms
-  #   among them, which knoller reads no glossary for; binding of entry block is its own rule.
+  #   among them, which knoller reads no glossary for; binding of entry block is its own rule,
+  #   and so is prefix call of verb of generation (V.3, STYLE.md §5).
   for e in tree:
     if e.kind.isNone or e.kind.get notin [Kind.Nim, Kind.NimScript, Kind.Nimble]: continue
     let exempt = glossaries.exemptionsOf(e.path)
     result.add findingsOf(checkNames(e.path, e.content, exempt))
     result.add findingsOf(checkBlockEntry(e.path, e.content))
+    result.add findingsOf(checkGenerations(e.path, e.content))
     result.add checkAcronyms(e.path, e.content, exempt)
 
   # Fixed waits: drive code of every project, checker's own included, since its suite holds

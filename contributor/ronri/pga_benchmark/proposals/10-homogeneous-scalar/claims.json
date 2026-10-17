@@ -3,9 +3,12 @@
   "builds_on": ["exact-kinds"],
   "claims": [
     {
+      "kind": "suites"
+    },
+    {
       "kind": "program",
-      "path": "prototype.nim",
-      "algebras": ["rga3d", "rga4d", "cga4d", "cga5d"]
+      "path": "laws.nim",
+      "algebras": ["rga2d", "rga3d", "rga4d", "rga5d", "rga6d", "cga3d", "cga4d", "cga5d", "cga6d"]
     }
   ]
 }

@@ -4,8 +4,28 @@ At pin, each coefficient of a multivector is a 64-bit `float`, and no build opti
 This change adds the define `pga.float_width`, 64 by default or 32, and the type `Coefficient`
 that it selects. Each coefficient, scalar operand and comparison takes `Coefficient` in place of
 `float`. The define `pga.tolerance_places` becomes `pga.float_tolerance`, and its default
-follows the width. At 64 bits `Coefficient` and `float` name one type, so the library emits the
-same C as pin.
+follows the width. No alias keeps `TOLERANCE_PLACES`. At 64 bits `Coefficient` and `float` name
+one type, so the library emits the same C as pin.
+
+Four other edits quote lines of this change. Of this change and each of them, the second to land
+quotes the first:
+
+- P05, `multivector-align`, edits the `elements` field of `Multivector`. The merged line is
+  `elements {.align(min(64, sizeof(array[Basis, Coefficient]))).}: array[Basis, Coefficient]`.
+- P03, `partner-sign`, removes the sign line of `⊛`, so the edit of that line here is void once
+  P03 lands. If this change lands first, P03 quotes `Coefficient(...)` in place of `float(...)`.
+- The change `partner-guard` edits the same sign line, and is void once P03 lands. If this change
+  lands first, `partner-guard` keeps `Coefficient(...)`.
+- The change `algebra-hygiene` renames `TOLERANCE_ABS` to `TOLERANCE_REL`. The merged line keeps
+  both the new name and `Coefficient`.
+
+Two other edits quote no line of this change, but read the width:
+
+- The change `doc-comments-2` writes "128 bytes at 4D" under `Multivector`. At 32 bits a
+  multivector at 4D holds 64 bytes. So once both land, that doc names the width.
+- P11, `unitize-general`, adds locals that start at the float `0.0`, in `^∘` and in a helper of
+  the suites. Each compiles at 32 bits. Once both land, the second to land declares them
+  `Coefficient`, so that each suite reads in one type.
 
 ## Edit `pga/algebra.nim`
 
@@ -20,12 +40,22 @@ same C as pin.
   FLOAT_WIDTH* {.define: "pga.float_width".} = 64
 
   # Avoid small-value comparison failures, in decimal places; 32-bit coefficient holds about seven.
-  FLOAT_TOLERANCE* {.define: "pga.float_tolerance".} = (when FLOAT_WIDTH == 32: 4 else: 9)
+  FLOAT_TOLERANCE* {.define: "pga.float_tolerance".} = when FLOAT_WIDTH == 32: 4 else: 9
+  TOLERANCE_ABS* = Coefficient(10.pow(-FLOAT_TOLERANCE.float))
+```
 
-type Coefficient* = (when FLOAT_WIDTH == 32: float32 else: float64)
-  ## Define each coefficient of every multivector, in as many bits as `FLOAT_WIDTH` says.
+## Edit `pga/algebra.nim`
 
-const TOLERANCE_ABS* = Coefficient(10.pow(-FLOAT_TOLERANCE.float))
+```nim
+type  ## Define independent type definitions needed at runtime.
+  Grade* = distinct int  ## Define grade selector for multivectors.
+```
+
+```nim
+type  ## Define independent type definitions needed at runtime.
+  Coefficient* = (when FLOAT_WIDTH == 32: float32 else: float64)
+    ## Define each coefficient of every multivector, in as many bits as `FLOAT_WIDTH` says.
+  Grade* = distinct int  ## Define grade selector for multivectors.
 ```
 
 ## Edit `pga/algebra.nim`

@@ -1,60 +1,79 @@
 # P03: Fold the sign of the partner into its first table
 
-The partner reads the grade of its operand at run time, and then scales by the sign of that
-grade. This proposal folds that sign into the first table of the partner instead, by the grade
-of each term. It also folds the carrier into the antiwedge that follows. So the partner is two
-generated tables in a chain, with no grade scan and no scale.
+**What it is.** The partner `⊛` folds its sign into the first of its two generated tables, so it
+reads no grade at run time and scales nothing.
 
-This proposal builds on P01, `cayley-derivation`, and on P08, `compound-tables`. It reads
-`applyMap` of P01, `CAYLEY_CONTAINER` of P08, and `CAYLEY_CARRIER`, which the pin has.
+**What it is for.** The partner of the conformal algebras runs as two generated tables alone, with
+no grade scan, no scale and almost no zero fill.
 
-## What it is
+**What it costs.** It drops the stop on an operand of mixed grade, which has no defined partner.
 
-- **First table.** `CAYLEY_PARTNER_CONTAINER` is the container of the weight dual, read with
-  both operands 𝐦. The sign (-1)^(gr 𝐦 + 1) rides the left read alone, by the grade of each term.
-- **Second table.** `CAYLEY_PARTNER_JOIN` is the antiwedge against the carrier of its second
-  operand, 𝐭 ∨ 𝐦⊟. The carrier folds in, so the product reads half the cells.
-- **Operator.** `⊛` reads `joinCarrier(containPartner(m), m)`. Both steps are private, through
-  a new `is_public` argument of `defineOperator`.
+## Problem
 
-The container is quadratic in its operand. A sign on both reads would square away. On one read,
-it is exact when every term of the operand has the same grade.
+The partner of the conformal algebra is the same object with its squared radius of opposite sign:
+(−1)^(grade(𝐦) + 1) (𝐦☆)⊡ ∨ 𝐦⊟. At pin, `⊛` reads the grade of its operand at run time, through
+`m.grade.get`. It then runs two products, and scales their result by that sign. The scan reads
+every coefficient, the scale writes every coefficient, and each product fills its result with
+zeros first.
 
-## What it buys
+## Idea
 
-The partner at cga5d, as the inspector counts the C of the bench, at pin `3121342`:
+- **First table.** `CAYLEY_PARTNER_CONTAINER` is the container of the weight dual, read with 𝐦 as
+  both operands. The sign (−1)^(gr 𝐦 + 1) rides the left read alone, by the grade of each term.
+- **Second table.** `CAYLEY_PARTNER_MEET` is 𝐭 ∨ 𝐦⊟, the meet with the carrier of its second
+  operand. The carrier folds in, so the product reads only the slots that the carrier reaches. It
+  takes two thirds of the multiplies of `∨`.
+- **Operator.** `⊛` reads `partnerMeet(partnerContainer(m), m)`. Both steps are private, through a
+  new `is_public` argument of the Cayley2D overload of `defineOperator`, true by default.
 
-| Build | Multiplies | Zero fills | Error checks | Lines | Bytes moved |
-|-------|------------|------------|--------------|-------|-------------|
-| Pin | 518 | 108 | 271 | 2710 | 30720 |
-| P01 and P08 | 437 | 104 | 268 | 2621 | 28672 |
-| P01, P08 and this proposal | 324 | 3 | 2 | 83 | 2048 |
+The container is quadratic in its operand, so a sign on both reads would square away. On one
+read, the sign is exact when every term of the operand has the same grade.
 
-324 is the chain bound of the partner: 162 for each folded table. Five alternating runs on
-2026-10-02 time the partner at ×0.44 to ×0.53 of the pin, over every operand kind. P01 and P08
-timed ×0.65 to ×0.72 on 2026-10-01. The same container took both. P01 held the tables of P08
-until 2026-10-07, so its figures stand for both.
+## Alternatives
 
-## Limits
-
-- An operand of mixed grade has no defined partner. The pin stops on one, through
-  `m.grade.get`. This proposal returns a value that means nothing, and checks nothing. The
-  change `partner-guard` added a message to that stop, and said it goes when the sign folds.
-- The chain still calls two functions. So the partner keeps three fills and two error checks,
-  for the intermediate and its two calls.
-- The partner is cubic, so no one table of two operands holds it. A table of three operands
-  would, and the emitter reads none.
-
-## Alternatives weighed
-
-| Option | How it was tried, and why it lost |
-|--------|-----------------------------------|
+| Option | Why it lost |
+|--------|-------------|
 | Sign on both reads of the container | Squares away, since the container is quadratic |
 | Sign on the right read of the second step | Exact and as cheap; one of the two must carry it |
 | Scan of grade, unrolled at build | What the dense form does; still a branch for each slot |
 | Assert of single grade in release | Costs the scan this proposal removes |
 
+## Costs
+
+- **Mixed grade.** At pin, `m.grade.get` stops on an operand of mixed grade, with no message. Here
+  no check runs, and such an operand gets a value that means nothing. Each caller of `partner`
+  in `pga.nim` keeps its signature, so no caller changes.
+- **Two calls.** The chain still calls two functions. So the partner keeps three zero fills and
+  two error checks, for two intermediates and two calls.
+- **No table of three operands.** The partner is cubic, so no one table of two operands holds it.
+  A table of three operands would, and the emitter reads none.
+
 ## Open decisions
 
 - Keep a check of single grade under `-d:testing` alone, or none.
-- Export `containPartner` and `joinCarrier`, or keep them private as here.
+- Export `partnerContainer` and `partnerMeet`, or keep them private as here.
+
+## Landing
+
+- **Order.** This proposal reads `applyMap` of P01, and quotes `CAYLEY_CONTAINER` of P08.
+- **P06, `float-width`.** This proposal removes the sign line of `⊛`, so the edit of that line in
+  P06 is void once it lands. If P06 lands first, this proposal quotes `Coefficient(...)` in place
+  of `float(...)`.
+- **Change `partner-guard`.** It quotes the same two lines of `⊛`, for a message on mixed grade.
+  It is void once this proposal lands. If it lands first, this proposal quotes its lines, and so
+  removes its assert too.
+- **Change `doc-comments`.** It adds a line on single grade to the doc of `partner` in `pga.nim`.
+  That line is stale once this proposal lands, so whichever of the two lands second drops it.
+- **Change `imports-narrow`.** It names each symbol that `pga/operators.nim` imports. Whichever
+  of the two lands second writes the merged import of P08. It adds both new tables to the
+  conformal import of `cayleys`, and drops `grade` from the import of `algebra`. A run by hand on
+  2026-10-15 built that import with P01, P08 and this proposal, and the suites passed at rga2d,
+  rga3d, rga4d, cga3d, cga4d and cga5d.
+
+## Evidence
+
+At cga5d the 324 multiplies of the partner are the bound of its chain: 162 for each folded table.
+Its error checks fall from 271 to 2, and its lines of C from 2710 to 83.
+
+P01 and P08 alone run the partner at ×0.66 to ×0.70 of pin at cga5d, and ×0.53 to ×0.60 at
+cga4d. So the fold gives the rest of the gain on the partner.

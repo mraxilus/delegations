@@ -44,10 +44,10 @@ type
   Space = enum
     Base, Anti
 const ALGEBRA_DEFAULT = 1
-proc constructTable(count: int) =
+func constructTable(count: int): seq[int] {.compileTime.} =
   let metric_exomorphism = 1
 """
-    ## Every kind in its own case (V.1, V.11).
+    ## Every kind in its own case (V.1, V.11), and routine of its verb's kind (V.3).
   CASES_BROKEN = """
 type
   basis_digits = distinct string
@@ -226,6 +226,44 @@ suite "Names":
     check checkNames("x.nim", "proc f(ctx: int) = discard\n", ["ctx"]).len == 0  # glossary admits
 
 
+  test "V.3 verb of generation fixes kind of routine, and kind never fixes verb":
+    # Every keyword, compile time and return under every verb, so each kind meets each verb.
+    const
+      keywords = ["func", "proc", "macro", "template", "iterator", "converter", "method"]
+      types_return = ["", "NimNode", "untyped", "seq[int]"]
+      verbs = ["construct", "define", "emit", "build"]
+    var count = 0
+    for keyword in keywords:
+      for is_compile_time in [false, true]:
+        for type_return in types_return:
+          for verb in verbs:
+            let
+              source = keyword & " " & verb & "Table(count: int)" &
+                (if type_return.len > 0: ": " & type_return else: "") &
+                (if is_compile_time: " {.compileTime.}" else: "") & " = discard\n"
+              is_kind =
+                case verb
+                of "construct": keyword in ["func", "proc"] and is_compile_time and
+                  type_return.len > 0
+                of "define": keyword == "macro"
+                of "emit": keyword in ["func", "proc"] and type_return == "NimNode"
+                else: true
+            check source.breaches.countIt(it[0] == Rule.VerbAction) == ord(not is_kind)
+            inc count
+    check count == keywords.len * 2 * types_return.len * verbs.len  # domain enumerated whole
+    check "proc constructSeeds(scene: var Scene) = discard\n".breaches == @[(Rule.VerbAction,
+      "`construct…` names compile-time routine returning data structure; got " &
+      "`proc constructSeeds`.")]  # rga_visualiser
+    check "template defineKind(name: untyped) = discard\n".breaches == @[(Rule.VerbAction,
+      "`define…` names macro; got `template defineKind`.")]  # pga_benchmark
+    check "macro emitCatalogue(): untyped = discard\n".breaches == @[(Rule.VerbAction,
+      "`emit…` names compile-time routine returning syntax tree, never macro; got " &
+      "`macro emitCatalogue`.")]  # pga_benchmark
+    check "macro importSuites(): untyped = discard\n".breaches.len == 0  # kind fixes no verb
+    check "func nodeSum(terms: seq[Term]): NimNode = discard\n".breaches.len == 0
+    check "proc emit() = discard\n".breaches.len == 0  # one word, no verb of generation
+
+
   test "foreign binding keeps library's name, and its parameters are read":
     const foreign = "proc getError*(): cstring {.importc: \"SDL_GetError\".}\n" &
         "proc glGetString*(name: GLenum, buf: pointer) {.importc, dynlib: \"GL\".}\n" &
@@ -375,10 +413,10 @@ suite "Names":
 
 
   test "name that template substitutes declares nothing of that name":
-    # `type name = object` inside `template defineKind(name: untyped)` declares parameter's
+    # `type name = object` inside `template declareKind(name: untyped)` declares parameter's
     #   argument at expansion, never type `name` (P05 of `pga_benchmark`).
     const substituted =
-        "template defineKind(name: untyped; count: static int) =\n" &
+        "template declareKind(name: untyped; count: static int) =\n" &
         "  type name = object\n" &
         "    elements: array[count, float]\n" &
         "  let name_value = count\n"

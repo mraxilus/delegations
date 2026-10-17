@@ -6,6 +6,18 @@ It states the invariant that the slice table rests on.
 It also states the real limit on dimensions. Each basis is one decimal digit, so 9D is the
 ceiling. No count changes.
 
+Proposal P01, `cayley-derivation`, replaces `pga/cayleys.nim` whole from a digest, and this
+change edits that file too. Whichever lands second is quoted again against the first. If P01
+lands second, its Replace carries the text of this change under a new digest. P01 also edits the
+import line of `tests/suites.nim` that this change quotes, so the second to land quotes that line
+again.
+
+Two proposals quote lines next to the docs that this change adds, so the second to land quotes the
+first. P05, `multivector-align`, quotes the line under `Multivector* = object`. P07, `part-scale`,
+quotes the doc of `grade`. P06, `float-width`, quotes no line here, but it makes the width of a
+coefficient a build option. Once both land, the doc of `Multivector` names the width, since a
+multivector at 4D holds 128 bytes at 64 bits and 64 bytes at 32 bits.
+
 ## Edit `pga.nim`
 
 ```nim
@@ -221,11 +233,11 @@ when IS_RIGID:
 ## Edit `tests/suites.nim`
 
 ```nim
-import ../pga/[algebra {.all.}, multivectors {.all.}, operators {.all.}]
+import ../pga/[algebra {.all.}, multivectors {.all.}, operators]
 ```
 
 ```nim
-import ../pga/[algebra {.all.}, multivectors {.all.}, operators {.all.}]
+import ../pga/[algebra {.all.}, multivectors {.all.}, operators]
   # Open imports reach private symbols; same narrowing as operators.nim would apply.
 ```
 

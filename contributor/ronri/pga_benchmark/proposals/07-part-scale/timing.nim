@@ -1,22 +1,28 @@
-## Time comparison and grade under rule of changed library against rule of pin, at width of
-##   this build (`part-scale`).
-##   Evaluation compiles this against changed library at rga4d, at default width and at 32
-##     bits; exit code says it ran, and figures it prints are evidence that never gates.
-##   Rule of pin is copied here, since claim builds against changed library alone.
-##   Equal pairs read every coefficient under both rules. Unequal pairs differ in scalar, so
-##     both rules stop at first coefficient, where rule of change reads its part for scale.
-##   Stray pairs are points about 1000 units out, one holding stray of 50 tolerances in its
-##     plane slot: rule of change calls them equal, and rule of pin stops there and does not.
+## Time comparison and grade under rule of P07 against rule of pin, at width of this build
+##   (`part-scale`).
+##   Evaluation compiles this against changed library at rga4d, cga4d and cga5d, at default width
+##     and at 32 bits; exit code says it ran, and figures it prints are evidence that never gates.
+##   Rule of pin is copied here, since claim builds against changed library alone; at 32 bits it
+##     is rule of P06 alone, since pin has no 32-bit build.
+##   Equal pairs read every coefficient under both rules. Unequal pairs differ in scalar: rule of
+##     pin stops at first coefficient. Rule of P07 stops in part holding scalar, after it reads
+##     scale of that part; in CGA it first reads and compares whole of part that bulk flat holds.
+##   Points have Gaussian coordinates of deviation 1000 units: unit points in RGA, round points in
+##     CGA, whose grade under rule of P07 also scans for largest coefficient. Stray pairs, in
+##     RGA alone, are such points, one holding stray of 50 tolerances in its plane slot: rule of
+##     P07 calls them equal, and rule of pin stops there and does not.
 ##   Each timed loop sits in procedure of its own, so compiler estimates it hot, as caller's.
+##   Template `timeRounds` mirrors that of `timing.nim` in P05 and P06; fix to one reaches each.
 ##
 ##   Cost: `seq` stands for caller's heap storage; 1024 pairs, 41 rounds, median nanoseconds
 ##     per pair.
 
 {.experimental: "strictFuncs".}
 
-when compileOption("profiler"): import std/nimprof
+when compileOption("profiler"):
+  import std/nimprof
 
-import std/[algorithm, monotimes, options, random, strutils, times]
+import std/[algorithm, math, monotimes, options, random, strutils, times]
 
 import pga
 
@@ -27,7 +33,7 @@ const
   SEED = 0  ## Seed of sample generator, so every run reads same objects.
 
 
-func isEqualNow(m, n: Multivector): bool =
+func isEqualPin(m, n: Multivector): bool =
   ## Compare as pin does: each coefficient against max(1, |x|, |y|) of its own.
   for basis in Basis:
     let bound = TOLERANCE_ABS * max(Coefficient(1), max(abs(m[basis]), abs(n[basis])))
@@ -35,17 +41,17 @@ func isEqualNow(m, n: Multivector): bool =
   true
 
 
-func gradeNow(m: Multivector): Option[Grade] =
+func gradePin(m: Multivector): Option[Grade] =
   ## Get grade as pin does: each coefficient at most tolerance counts as zero.
-  var is_found = false
+  var found_grade = false
   for basis in Basis:
     if abs(m[basis]) <= TOLERANCE_ABS: continue
-    if not is_found:
-      is_found = true
+    if result.isNone:
+      found_grade = true
       result = some(basis.grade)
-    elif int(result.get) != int(basis.grade):
-      return none(Grade)
-  if not is_found: result = some(Grade(0))
+    elif result.get != basis.grade:
+      return none[Grade]()
+  if not found_grade: result = some(Grade.low)
 
 
 template timeRounds(label: string, loop: untyped) =
@@ -62,10 +68,10 @@ template timeRounds(label: string, loop: untyped) =
 proc timeEqual(label: string; left, right: seq[Multivector]) {.noinline.} =
   ## Time both comparisons over pairs, counting equal ones so no loop folds away.
   var count = 0
-  timeRounds(label & " now"):
+  timeRounds(label & " pin"):
     for i in 0..<OBJECTS:
-      if isEqualNow(left[i], right[i]): inc count
-  timeRounds(label & " part"):
+      if isEqualPin(left[i], right[i]): inc count
+  timeRounds(label & " P07"):
     for i in 0..<OBJECTS:
       if left[i] =~ right[i]: inc count
   echo label, " equal ", count div (2 * ROUNDS), " of ", OBJECTS
@@ -74,10 +80,10 @@ proc timeEqual(label: string; left, right: seq[Multivector]) {.noinline.} =
 proc timeGrade(label: string, objects: seq[Multivector]) {.noinline.} =
   ## Time both grades over objects, counting grades found so no loop folds away.
   var count = 0
-  timeRounds(label & " now"):
+  timeRounds(label & " pin"):
     for i in 0..<OBJECTS:
-      if gradeNow(objects[i]).isSome: inc count
-  timeRounds(label & " part"):
+      if gradePin(objects[i]).isSome: inc count
+  timeRounds(label & " P07"):
     for i in 0..<OBJECTS:
       if objects[i].grade.isSome: inc count
   echo label, " graded ", count div (2 * ROUNDS), " of ", OBJECTS
@@ -97,17 +103,22 @@ proc main() =
   timeEqual("equal", left, right)
   timeEqual("unequal", left, unequal)
   timeGrade("grade_mixed", left)
-  var points, strays = newSeq[Multivector](OBJECTS)
+  var points = newSeq[Multivector](OBJECTS)
   for i in 0..<OBJECTS:
-    points[i][Basis.E1] = Coefficient(gauss(0.0, 1000.0))
-    points[i][Basis.E2] = Coefficient(gauss(0.0, 1000.0))
-    points[i][Basis.E3] = Coefficient(gauss(0.0, 1000.0))
-    points[i][Basis.E4] = 1
-    strays[i] = points[i]
-    strays[i][Basis.E321] = TOLERANCE_ABS * 50
-  timeEqual("stray", points, strays)
+    when IS_CONFORMAL:
+      var distance_squared = 0.0
+    for basis in Basis.scalar.succ..Basis.origin.pred:
+      let coordinate = gauss(0.0, 1000.0)
+      points[i][basis] = Coefficient(coordinate)
+      when IS_CONFORMAL: distance_squared += coordinate^2
+    points[i][Basis.origin] = 1
+    when IS_CONFORMAL: points[i][Basis.infinity] = Coefficient(distance_squared / 2)
+  when IS_RIGID:
+    var strays = points
+    for stray in strays.mitems: stray[Basis.E321] = TOLERANCE_ABS * 50
+    timeEqual("stray", points, strays)
   timeGrade("grade_point", points)
-  timeGrade("grade_stray", strays)
+  when IS_RIGID: timeGrade("grade_stray", strays)
 
 
 main()

@@ -22,16 +22,17 @@ ASCII. A control page beside them proves that the render sees.
 | [Gap docket][docket] | monitoring | every measurand at pin against both lower bounds |
 | [Marginalia][marginalia] | monitoring | library at pin: changes tried, and notes in its margin |
 | [Proposals][proposals] | list | every proposal, graph of what each blocks, each read in place |
-| [P01 Cayley derivation][cayley-derivation] | proposal | every Cayley table derived from three |
-| [P02 Typed multivectors][typed-multivectors] | withdrawn | k-vector types, folded into P04 |
+| [P01 Cayley derivation][cayley-derivation] | proposal | every Cayley table from metric and 𝟙 |
+| [P02 Typed multivectors][typed-multivectors] | withdrawn | k-vector types, now P04 and P09 |
 | [P03 Partner sign][partner-sign] | proposal | sign of partner folded into its first table |
 | [P04 Exact kinds][exact-kinds] | proposal | product returns exactly bases it reaches |
 | [P05 Multivector align][multivector-align] | proposal | multivector aligned to one cache line |
 | [P06 Float width][float-width] | proposal | width of each float as a build option |
 | [P07 Part scale][part-scale] | proposal | each part compared at its own scale |
 | [P08 Compound tables][compound-tables] | proposal | one table for each compound operator |
-| [P09 Object names][object-names] | proposal | names of geometric objects over kinds of P04 |
+| [P09 Object names][object-names] | proposal | names of objects over basis-set types |
 | [P10 Homogeneous scalar][homogeneous-scalar] | proposal | scalar kept with its weight |
+| [P11 Unitize general][unitize-general] | proposal | one unitize rule for any element |
 
 A **monitoring** page shows the library as it is. A **proposal** page shows a future state of
 the library, argued in its `proposal.md` and checked by its evaluation. Each proposal has the
@@ -129,7 +130,7 @@ tests/                             suites, the testament stubs that run them, an
 
 ## Status
 
-Measured on the pinned compiler and on library head `e993419`, which is the pin. The runtime
+Measured on the pinned compiler and on library head `28f4e11`, which is the pin. The runtime
 baselines were timed at the pin, and each evaluation names the pin it was timed at. The library
 stands above both lower bounds; `gaps.md` counts the gaps, and the docket shows each one.
 Unreviewed by a human. See `PROVENANCE.md` for the figures, and for what each subsystem was
@@ -150,3 +151,4 @@ checked against.
 [compound-tables]: https://claude.ai/artifact/TczTs551nkXVaWiyHzfVAn
 [object-names]: https://claude.ai/artifact/XtPy7LToDTT2P8S1FfGauX
 [homogeneous-scalar]: https://claude.ai/artifact/5NwSv2YW9ZfDa5BbbVrv1D
+[unitize-general]: https://claude.ai/artifact/3P9PNEcD7JyH3YAb5GuUqy

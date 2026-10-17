@@ -89,7 +89,7 @@ const
     ##   categorical run has left.
 
 
-proc constructSeeds*(scene: var Scene, now = 0.0) =
+proc addSeeds*(scene: var Scene, now = 0.0) =
   ## Place three points and ground plane every later step derives from.
   ##   `now` is forwarded to `addObject` untouched, so seeds animate in as any object does.
   let

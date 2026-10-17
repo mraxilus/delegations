@@ -169,11 +169,11 @@ through the widening, and suite `Internal: Measurements` runs every measurand ov
 
 ## Measurements
 
-`emitCatalogue` turns the catalogue into one timed loop for each measurand of each
+`defineCatalogue` turns the catalogue into one timed loop for each measurand of each
 implementation. Operands are template aliases into pool slots, and never copies, so the loop
 moves only the traffic of the operation itself. Every result is folded into one sink after
-the timing, so nothing is dead. The share of results that carry NaN is counted. The conformal
-norms of the library return NaN on real objects, and that is measured rather than stated.
+the timing, so nothing is dead. The share of results that carry NaN is counted. The radius norm
+of the library returns NaN where 𝐦 ∘ 𝐦 is negative, and that is measured rather than stated.
 
 **Each timed loop has a procedure of its own**, one for each measurand of each implementation,
 as the function of a caller would call it. In one function that holds every loop, Nim puts an
@@ -247,7 +247,7 @@ One run times both implementations, so the runs pair by index, and each run give
 ratio. The docket draws one tick for each of those ratios. Rejected: the spread of rounds inside
 one run, because it misses drift between runs. That drift is the larger part on this machine.
 
-**The runtime baselines are from 2026-10-10 at all four algebras**, at the pin `e993419`, five runs
+**The runtime baselines are from 2026-10-11 at all four algebras**, at the pin `28f4e11`, five runs
 each on `linux amd64, 4 cores`. The bench of 2026-10-01, run at `3121342` on 2026-10-02 in turn
 with the baselines of that day, gives the drift between days. At rga4d its library runs ×1.19 to
 ×1.22 of its own times of 2026-10-01. Its reference runs ×1.26 to ×1.27, and its dense forms ×1.00
@@ -363,6 +363,12 @@ three raised to the dimensions, because each dimension stands in one of three st
 pair of blades. A geometric product loses one of four states for each null dimension. A
 bilinear form landing in one slot spends one term for each blade that carries an image.
 
+A norm of one part spends one term for each blade of that part. That is half the blades under
+the rigid metric, and a quarter under the conformal metric, since the four parts are of one size.
+A unitize spends the norm of one part, then one term for each slot. The radius norm squares the
+whole antidot, so it spends what a bilinear form spends. Under the rigid metric a part holds the
+blades that carry an image, so each norm counts as the bilinear form did.
+
 A product against the dual of its second operand spends what the grade of that operand
 allows. A permutation and a product against a one-component constant spend nothing. The
 carrier, the cocarrier and the attitude each take that last form, and so spend nothing.
@@ -403,7 +409,8 @@ reproduce 27 and 54 for the expansions, 16 for a scale and 24 for a unitize.
 
 The conformal metric is held to 1024 and to 32, and to 243 for each of the four dual
 products. A chain of an expansion and an exterior product is held to their sum, 486 at five
-dimensions.
+dimensions. At five dimensions a norm of one part is held to 8, the radius norm to 32 and a
+unitize to 40.
 
 The supports are held to 54 at four dimensions, and the centre and the container to 162 at
 five. The partner chain is held to 324, and to its mark as an estimate.
@@ -479,13 +486,13 @@ first step leaves whole grades at zero, and the second step reads none of them. 
 bound is an estimate.
 
 **What the library spends in time against them.** The runtime baselines time each dense form
-beside the library, five alternating runs at the pin `e993419`, at four algebras, on `linux amd64,
-4 cores` on 2026-10-10. The median general measurand runs ×1.00 to ×1.02 its dense form, since most
-library operators are already one generated table. The compound operations are not. They run
-×2.1 to ×6.7 their dense forms, from the container at cga5d to the support at rga4d.
+beside the library, five alternating runs at the pin `28f4e11`, at four algebras, on `linux amd64,
+4 cores` on 2026-10-11. The median general measurand runs ×1.00 its dense form at each algebra,
+since most library operators are already one generated table. The compound operations are not.
+They run ×2.0 to ×5.7 their dense forms, from the container at cga5d to the support at rga4d.
 
-The antigrade selection runs ×2.4 to ×3.2, and the norms ×0.78 to ×2.1. Sum, difference and
-negation run ×0.66 to ×1.06, and the unitizes ×0.89 to ×1.39. So a dense form is a measure, and
+The antigrade selection runs ×2.2 to ×3.1, and the norms ×0.98 to ×2.5. Sum, difference and
+negation run ×0.63 to ×1.11, and the unitizes ×0.59 to ×0.98. So a dense form is a measure, and
 never a lower bound on time.
 
 Rejected: a dense form written by hand for each operation. There are 40 to 47 operations at
@@ -603,6 +610,15 @@ whole-file replacement carries the digest of the file it replaces instead. A quo
 once at pin. A line number moves with every library commit, and a quote moves only when its
 own lines do. So a change that still applies at head still says what it meant.
 
+A section `## Add` holds a new file whole, and applies only where no file stands at its path. A
+file that head adds under the same path makes the addition stale, so it is a finding and never an
+overwrite. So a proposal that adds a module is a change of the library, and its laws import the
+library alone. P04 adds `pga/basis_sets.nim` this way, and P10 adds `pga/scalars.nim`. Rejected: a
+prototype beside the library, which P04 was. Each proposal on it then imported the prototype, and
+no evaluation built the library that the proposals described.
+
+Verified by `test_rga4d.nim`, suite `Internal: Changes`.
+
 **A proposal is one directory, with one shape.** `proposal.md` argues the future state,
 `change.md` holds its candidate edits, and `claims.json` lists the proposals it builds on and the
 claims that its evaluation checks. A claim is data, so the page shows each verdict beside it. The
@@ -630,11 +646,11 @@ that commit.
 A program claim names its program relative to its proposal, so a new directory name moves no
 digest.
 
-**A program may import a program of a proposal that it builds on,** by a path relative to its own
-directory. `proposals/10-homogeneous-scalar/prototype.nim` imports the prototype of P04 this way,
-so the kinds have one copy. So the digest of an evaluation reads the programs of each base first,
-and then its own. A change to a program of a base moves the digest of each proposal on it.
-Rejected: a copy of the kinds in each proposal on P04, since two copies drift apart.
+**A program runs against the library with its bases applied.** So `laws.nim` of P09 and of P10
+imports `pga` alone, and reaches the basis-set types that the change of P04 adds. A program may
+still import a program of a base by a path relative to its own directory, and no proposal does so
+now. The digest of an evaluation reads the programs of each base first, and then its own. So a
+change to a program of a base moves the digest of each proposal on it.
 
 **A suites or program claim may name `defines`**, each `name=value`, and each of its builds
 passes them as `-d:`. So a proposal can hold the library at a build option other than its
@@ -681,9 +697,9 @@ A dense form reads tables by their names at pin, and a change may rename them, a
 dense form.
 
 The pristine counts are the baseline, which holds the dense forms. So a dense form that the changed
-build leaves out is no moved function. At rga4d, P01 moves 2 functions, and `multivector-align`
-moves none. So an evaluation of a change that moves no function reads as quiet, and the pages take
-their spread from it.
+build leaves out is no moved function. At rga4d, P08 moves 2 functions, and P01 and
+`multivector-align` move none. So an evaluation of a change that moves no function reads as
+quiet, and the pages take their spread from it.
 
 **A build claim compiles the library alone**, from an entry that holds `import pga` and nothing
 else. It compares the peak memory that the compiler reports for the pin and for the changed
@@ -711,10 +727,13 @@ each time they build, so the record states no figure of it.
 Alternation does not cancel all drift of a shared machine, so the time of one evaluation is
 weak evidence alone. Counts are exact, and carry the verdicts.
 
-`proposals/04-exact-kinds/prototype.nim` holds its laws against the change of
-`cayley-derivation` at rga3d, rga4d, cga4d and cga5d.
-`proposals/10-homogeneous-scalar/prototype.nim` holds its laws at the same four algebras, on the
-kinds of that prototype.
+The laws of P04 and P10 hold against the library with their changes applied. They hold at each of
+the nine algebras of the library, from rga2d to rga6d and from cga3d to cga6d. Without its fix, the
+law of the empty basis set fails at rga2d and cga3d. Without its fix, the law of the root of zero
+fails at rga2d to rga4d. Without its split-complex
+form, P10 stops the build at cga3d and cga6d. `proposals/11-unitize-general/laws.nim` holds the
+laws of its rule, and `limits.nim` its limits over long chains and frames, at rga3d, rga4d, cga4d
+and cga5d.
 
 Verified by `test_rga4d.nim` and the other stubs, suites `Internal: Markdown`, `Internal: Changes`,
 `Internal: Proposals`, `Internal: Evaluations`, `Internal: Cells` and `Internal: Figures`. They
@@ -835,7 +854,8 @@ higher than the macron of the face, to clear the bold x-height.
 The mark stays in the text and a clip hides it, so copy and search read what the source says.
 Each word that holds such a letter stays on one line, because a box is a place where a line may
 break. Tags, attributes, and the content of `svg`, `script` and `style` pass as they are. The
-figure of P01 draws its one bar in its SVG, as an underline, with the mark at size zero.
+figure of P01 draws its bars in its SVG, as an underline or an overline, with the mark at size
+zero.
 Rejected: the marks as the face places them, since each sits after its letter and meets the next
 sign. Rejected: sans-serif bold letters, which carry all three anchors, since the letters change
 shape and the library code that a page quotes cannot change.
@@ -856,12 +876,6 @@ puts the same mark at an offset of −437, under the letter.
 The glyph source of release 2.539 gives `cbold-math` the `center` anchor alone. Tag 3.000 holds
 sources alone, with no bold letter source, and `notofonts.github.io` publishes 2.539 as its last
 build. So whether a later release mends the anchors is unverified.
-
-**Every edit renders closed**, as the Architect asked. Its summary names the file and line at
-pin, and how many lines the edit replaces. It lists the signatures of the routines, tests and
-suites that the edit defines, with no body, pragma or comment. An edit that defines none names
-the routine that it sits in at pin, and an edit at top level names none. So a reader sees what
-changes before the edit opens.
 
 **The docket draws each measure as one bar off its lower bound**, as the Architect chose.
 Multiplies, bytes moved and time each give one bar from ×1 to the library over the lower
@@ -918,8 +932,55 @@ row, and the split of a typed id. It covers the words each row is found by, and 
 hides a row not found.
 
 Suite `Internal: Figures` covers the path a figure resolves, the SVG a page embeds, and every rule
-on the map. Suite `Internal: Edits` covers the closed edit, the signatures it defines or sits in,
-and a header that closes at its own indent.
+on the map. It also covers the summary above the claims. Suite `Internal: Edits` covers the diff
+with its numbers and folds, a new file, and the class of the sign column. It also covers the
+signatures an edit defines or sits in, and a header that closes at its own indent.
+
+## Proposal pages and code
+
+**Every proposal page has one shape, argument first, as the Architect ordered on 2026-10-16.** A
+card opens it: what the proposal is, is for and costs, what it needs and blocks, and its verdicts.
+Then five numbered sections follow: Problem, Idea, Alternatives, Costs and Open decisions. An
+appendix holds Code and Evidence, so the reader meets the idea and its cost before what checks it.
+
+**Each fact stands once.** The page generates the dependencies, the verdicts, the code and the
+measurements, so `proposal.md` restates none of them. Its summary is three labelled paragraphs,
+and its sections are the five, then Landing and Evidence notes, each once, in order. `drive`
+names any file that departs from it. Rejected: free headings for each proposal, which read
+unorganised and said each figure up to three times.
+
+**Evidence condenses what the evaluation moved, as the docket draws it but static.** Per algebra,
+one row stands for each function that moved: its multiplies, bytes moved and time, each a bar of
+the proposal over pin. The axis runs from ×1/16 to ×16, so a bar left of the line is a gain. An
+operation within the spread is counted, and a helper that moved is named. The proposal stands
+with its bases applied, and the page says so.
+
+**A proposal shows its code one block per file, folded, as the Architect asked on 2026-10-16.**
+Inside, each definition that the change adds, removes or changes shows its signature and doc
+comment, and folds its body. A definition is a routine, a member of a section, an import, a test
+or a statement, at top level or under `when` and `suite`. Two versions pair definitions by
+context, kind and name, same head first. Lines in no definition follow as other lines.
+
+**Marginalia shows each edit as a diff of lines, open, under a list of the files it touches.** Each
+line carries its number in the file as the edit finds it. The earlier edits apply first.
+
+A run of unchanged lines longer than twice the context of 3 folds to its count. So a whole-file
+replacement, as P01 makes, shows its hunks and not the whole file. The diff is a longest common
+subsequence over the lines between the head and tail that both sides share.
+
+The summary of each edit names the file and line, and the lines it removes and adds. It lists the
+signatures of the routines, tests and suites that the edit defines, with no body, pragma or
+comment. A whole-file replacement lists only the signatures that the file it replaces lacked. An
+edit that defines none names the routine that it sits in, and an edit at top level names none.
+
+**A fence of Nim marks its keywords, declared names, doc comments, comments, literals and
+pragmas.** So a signature reads apart from its doc comment. Keyword, name, doc comment and literal
+each take a colour token of their own. Each holds 5.4:1 or more on the code ground in both themes.
+A comment takes the muted ink, and a pragma takes the second ink.
+
+The marks read one line at a time, so a string or a comment that spans lines marks wrongly. No
+fence here holds one. Each fenced line flows inline and ends at its newline, so no line doubles
+and a copy keeps each line.
 
 ## Library head
 
@@ -993,7 +1054,7 @@ to read no head, and the verb `head` to report what `checkHead` finds.
 **The PGA library is a pinned dependency, and never a copy.** It lives in [replications],
 which carries no nimble file and holds the library three directories inside it. So the
 requirement in `pga_benchmark.nimble` names the repository by URL and commit. `atlas.lock`
-records the resolved commit `e993419c1f90efba72848d146606f903e1cc141e`, and `nim.cfg` names
+records the resolved commit `28f4e1128e4efee47d3f2ad9543d8c1460a997c3`, and `nim.cfg` names
 the subdirectory that Atlas restores it to.
 
 That commit is the head of the library on 2026-10-07, as the standing instruction of the
@@ -1033,7 +1094,7 @@ static counts are `baseline/static_<algebra>.json`, from `baseline`. They are ex
 compiler commit, with loop trips weighted. The runtime medians are
 `baseline/runtime_<algebra>.json`, from `bench`: five alternating runs of 40 rounds over 1024
 objects, in nanoseconds for each object. Each file names its date, machine, commits and flags
-under `taken`, and at the pin they are from 2026-10-10 on `linux amd64, 4 cores`.
+under `taken`, and at the pin they are from 2026-10-11 on `linux amd64, 4 cores`.
 
 `gaps.md` and the docket show each gap of the pin from those files, and `show` prints the C and
 the machine code of one function. The times of the point forms of Lengyel's code are
@@ -1051,7 +1112,7 @@ norm, writes no zero. The Architect decided this, because the library is about P
 micro-optimisation.
 
 Each function that a Cayley table can express moves to generation, and so gets its zeros
-unrolled at no cost. At the pin `e993419` the library works this way, and its attitude and
+unrolled at no cost. At the pin `28f4e11` the library works this way, and its attitude and
 carrier are generated. Its hand-written `+` and `-` carry `noinit` and write each slot, so they
 fill nothing. The cost that stays is what the hand-written norms pay.
 
@@ -1062,6 +1123,8 @@ passes, and each pass is the median of nine runs of 41 rounds over 1024 objects.
 functions that did not change moved ×0.86 to ×1.02. The pins `d9be8ae` to `e993419`
 change no norm and no generated operator, as their static baselines show, so these figures stand
 for them.
+
+At `28f4e11` each conformal norm reads one part, so its cells stand for `3121342` alone.
 
 For the norms, a cell gives nanoseconds with the default fill, then with straight stores that
 write the zeros first. The cell is the lower of the two passes:
@@ -1087,10 +1150,6 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
 
 - Evaluations time rga4d and cga5d unless `--thorough` asks for rga3d and cga4d too. Each
   evaluation committed now measures all four, from one run of `evaluate all --thorough`.
-- The evaluations at rga3d and rga4d carry the digest of C of a bench whose typed reference
-  divides a point by its signed weight. The reference is no part of what an evaluation times, so
-  their figures stand. `restamp` refuses those records at a new pin, and `evaluate` takes them
-  again.
 - The `build` claim reads the peak memory and seconds that the compiler reports of itself, for
   the library alone. It compares two builds on one machine, and is no measurement of the
   machine.
@@ -1120,21 +1179,22 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
   compile to the same 16 loads, 8 adds and 8 stores. The loop of the library interleaves each
   load, add and store, and the dense form groups its loads first. Of the 66 rows that spend the
   same counts in both, the median reads ×1.00, and light rows stray to ×0.65 at cga5d. Why order
-  moves time is unmeasured, since this container offers no hardware counters.
+  moves time is unmeasured, since this machine offers no hardware counters.
 
 ## Open questions
 
 - Whether the library takes P03, `partner-sign`, and with it a partner that does not check the
-  grade of its operand. At cga5d, P03 on P01 spends the chain bound of 324 multiplies, three
-  zero fills and two error checks. P01 alone spends 437, 104 and 268. Both are the counts
-  after the edits in `evaluations/partner-sign.json` and `evaluations/cayley-derivation.json`.
-- Whether the library takes P04, `exact-kinds`, so that a product returns a kind of exactly
-  the bases it reaches. At rga4d 16 measurands stand above the byte bound only because they
-  write a whole multivector for one slot, and at cga5d 12 do. Each is a dot, an antidot or a
-  squared norm, and under P04 each writes 8 bytes.
+  grade of its operand. At cga5d, P03 on P01 and P08 spends the chain bound of 324 multiplies,
+  three zero fills and two error checks. P01 and P08 alone spend 437, 104 and 268. Both are the
+  counts after the edits in `evaluations/partner-sign.json` and `evaluations/compound-tables.json`.
+- Whether the library takes P04, `exact-kinds`, so that a product returns the exact basis-set
+  type of the bases it reaches. At rga4d 16 measurands stand above the byte bound only because
+  they write a whole multivector for one slot, and at cga5d 15 do. Each is a dot, an antidot or
+  a squared norm. Under P04 each dot and antidot writes 8 bytes. The squared norms reach 8 bytes
+  only once the library emits them as exact basis-set types, which the prototype does not.
 - Whether the library takes P05, `multivector-align`. It aligns each multivector to
-  `min(64, size)`, one cache line from three dimensions up, so it pads no multivector. The kinds
-  of P04 take `alignmentOf` of their basis set instead, as the Architect ruled on 2026-10-04.
+  `min(64, size)`, one cache line from three dimensions up, so it pads no multivector. The basis-set
+  types of P04 take `alignment` of their basis set instead, as the Architect ruled on 2026-10-04.
   That is the largest power of two that divides their bytes, at most 64. P04 holds the rule,
   and its prototype applies it.
 

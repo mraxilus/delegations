@@ -14,8 +14,8 @@ from std/unicode import runeLen
 
 import ../src/pga_benchmark
 import ../src/pga_benchmark/[
-  bound, cells, changes, dense, gaps, guard, head, inspector, markdown, measurements, model,
-  notes, proposals, report,
+  bound, cells, changes, definitions, dense, gaps, guard, head, inspector, markdown,
+  measurements, model, notes, proposals, report,
 ]
 import ../src/pga_benchmark/pages/[docket, evaluation, listing, proposal, render, search, shell]
 from ../src/pga_benchmark/evaluations import
@@ -54,8 +54,8 @@ const
     ##   `*` is template forwarding to scalar `∧`, which catalogue measures once as `scale`.
 
 
-macro emitChecksCompile(measurands: static seq[Measurand]): untyped =
-  ## Emit one `check compiles(expression)` per measurand, with `m` and `n` bound by operand kind.
+macro defineChecksCompile(measurands: static seq[Measurand]): untyped =
+  ## Define one `check compiles(expression)` per measurand, with `m` and `n` bound by operand kind.
   ##   Kinds without typed reference yet bind to library's own multivector.
   result = newStmtList()
   let (m, n) = (ident"m", ident"n")  # plain idents, so expression's own `m` and `n` bind
@@ -273,7 +273,7 @@ suite "Internal: Catalogue":
 
 
   test "every expression compiles against library":
-    emitChecksCompile(CATALOGUE)
+    defineChecksCompile(CATALOGUE)
 
 
   test "symbols match every operator library exports":
@@ -437,6 +437,17 @@ suite "Internal: Lower bound":
       b = boundLowerOf(Shape.Unitize, m, 1)
     check b.multiplies == 8 + 16  # squared norm, then every slot
     check b.divides == 1 and b.roots == 1  # one reciprocal over one root
+
+
+  test "part norm counts blades of one part, and radius norm counts whole form":
+    let
+      rigid = Metric(dimensions: 4, is_conformal: false)
+      conformal = Metric(dimensions: 5, is_conformal: true)
+    check boundLowerOf(Shape.NormPartSquared, rigid, 1).multiplies == 8  # 2.87, bulk of 16 slots
+    check boundLowerOf(Shape.NormPartSquared, conformal, 1).multiplies == 8  # Table 4.12
+    check boundLowerOf(Shape.NormPart, conformal, 1).roots == 1  # Table 4.12, one root
+    check boundLowerOf(Shape.NormSquared, conformal, 1).multiplies == 32  # 4.45, whole antidot
+    check boundLowerOf(Shape.Unitize, conformal, 1).multiplies == 8 + 32  # Section 4.3
 
 
   test "compound product folds its maps into one table, and bound counts that table":
@@ -1332,6 +1343,99 @@ suite "Internal: Markdown":
     check "<th>a</th>" in html and "<td>1</td>" in html and "---" notin html  # header split
 
 
+  test "fenced line takes one line: its newline breaks it, so its span flows inline":
+    const shell_html = staticRead("../pages/shell.html")
+    check "</span>\n<span class=\"cl\">" in renderFence(@["a", "b"], "")  # copy keeps newline
+    for rule in shell_html.split('}'):
+      let body = rule.split('{')
+      if body.len < 2 or body[^2].strip != "pre.code .cl": continue
+      check "display: block" notin body[^1]  # block line after newline doubles each line
+    check "pre.code code { padding: 0;" in shell_html  # inline pad would indent first line alone
+
+
+  test "Nim fence marks keywords, declared name, doc comment, comment, literal and pragma":
+    check renderNim("func `∧`*[A: static set[Basis]](m: Of[A]): int {.noinit.} =") ==
+        "<span class=\"kw\">func</span> <span class=\"nm\">`∧`</span>*[A: " &
+        "<span class=\"kw\">static</span> set[Basis]](m: Of[A]): int " &
+        "<span class=\"pr\">{.noinit.}</span> ="  # name after declaring keyword alone
+    check renderNim("  ## Read `B` < 2.") ==
+        "  <span class=\"doc\">## Read `B` &lt; 2.</span>"  # doc comment whole, escaped
+    check renderNim("let s = \"# no \\\" end\"  # yes") ==
+        "<span class=\"kw\">let</span> s = " &
+        "<span class=\"st\">&quot;# no \\&quot; end&quot;</span>  " &
+        "<span class=\"cm\"># yes</span>"  # hash in literal opens no comment
+    check renderNim("format(proc(m: K))") ==
+        "format(<span class=\"kw\">proc</span>(m: K))"  # keyword whole word, type names none
+
+
+  test "fence marks Nim alone, and shell colours each mark it makes":
+    const shell_html = staticRead("../pages/shell.html")
+    check "<span class=\"kw\">func</span>" in renderFence(@["func a"], "nim")  # Nim marked
+    check "class=\"kw\"" notin renderFence(@["func a"], "")  # other language stays plain
+    for class in ["kw", "nm", "doc", "cm", "st", "pr"]:
+      check "pre.code ." & class & ", .diff ." & class & " {" in shell_html  # drawn, in diff too
+
+
+
+suite "Internal: Definitions":
+  const source = """## Module doc.
+
+import std/strutils
+
+type  ## Kinds of thing.
+  Kind* = enum  ## Kinds.
+    A, B
+  Thing* = object
+    field: int
+
+const LIMIT = 3  ## Limit.
+
+func f*(x: int): int =
+  ## Double x.
+  x * 2
+
+when defined(fast):
+  func `+`(
+    a: int
+  ): int =
+    ## Triple a.
+    a * 3
+
+suite "S":
+  test "t":
+    check true
+
+defineIt(
+  name = "x",
+)"""
+
+
+  test "definitions split routines, members, imports and statements, under when and suite":
+    let found = definitionsOf(source.splitLines)
+    check found.mapIt(it.kind & " " & it.name) == @[
+      "doc module", "import ", "type Kind", "type Thing", "const LIMIT", "func f", "func +",
+      "test t", "statement defineIt( name = \"x\", )",
+    ]  # section members apart, operator unticked, statement named by its head
+    check found[5].head.len == 1 and found[5].doc == @["  ## Double x."] and
+        found[5].body == @["  x * 2"]  # head, doc and body apart
+    check found[6].head.len == 3 and found[6].context == "when defined(fast)"  # head spans lines
+    check found[7].context == "suite \"S\""  # test under its suite
+    check found[3].first == 7 and found[3].body == @["    field: int"]  # member keeps its fields
+
+
+  test "pairs by same head first, then in order, and removed stands after what it followed":
+    let
+      before = definitionsOf(@[
+        "func a(x: int): int = x", "func a(x: float): float = x", "func b(): int = 1",
+        "func d(): int = 2",
+      ])
+      after = definitionsOf(@[
+        "func a(x: float): float = -x", "func a(x: int): int = x", "func c(): int = 1",
+        "func d(): int = 2",
+      ])
+    check pairDefinitions(before, after).mapIt((it.before, it.after)) ==
+        @[(1, 0), (0, 1), (2, -1), (-1, 2), (3, 3)]  # overloads by head, rename as two
+
 
 suite "Internal: Changes":
   const
@@ -1371,17 +1475,41 @@ suite "Internal: Changes":
     let
       fresh = Change(
         edits: @[
-          Edit(path: "pga/a.nim", replacement: "new\n", digest: digestOf(library)),
+          Edit(
+            kind: KindEdit.Replace,
+            path: "pga/a.nim",
+            replacement: "new\n",
+            digest: digestOf(library),
+          ),
         ],
       )
-      stale = Change(edits: @[Edit(path: "pga/a.nim", replacement: "new\n", digest: "0")])
+      stale = Change(
+        edits: @[
+          Edit(kind: KindEdit.Replace, path: "pga/a.nim", replacement: "new\n", digest: "0"),
+        ],
+      )
     check applyChange(files, stale, record).len == 1  # file moved on at head
     check applyChange(files, fresh, record).len == 0 and files["pga/a.nim"] == "new\n"  # replaced
 
 
-  test "section that is neither edit nor replace is finding":
+  test "new file is added where absent; file standing at its path is finding":
+    let (change, findings) = parseChange(
+      record,
+      "# Sign\n\n## Add `pga/b.nim`\n\nFENCEnim\nlet b = 1\nFENCE\n".replace("FENCE", "```"),
+    )
+    check findings.len == 0 and change.edits.len == 1  # well formed
+    check change.edits[0].kind == KindEdit.Add and change.edits[0].path == "pga/b.nim"  # new file
+    var files = {"pga/a.nim": library}.toTable
+    check applyChange(files, change, record).len == 0  # applies
+    check files["pga/b.nim"] == "let b = 1\n"  # added whole
+    check files["pga/a.nim"] == library  # other file untouched
+    let again = applyChange(files, change, record)
+    check again.len == 1 and "holds file already" in again[0].message  # never overwrite
+
+
+  test "section that is neither edit, replace nor add is finding":
     let (_, findings) = parseChange(record, "# Sign\n\n## Rename things\n")
-    check findings.len == 1 and "neither Edit nor Replace" in findings[0].message  # malformed
+    check findings.len == 1 and "neither Edit, Replace nor Add" in findings[0].message  # malformed
 
 
 
@@ -1527,7 +1655,11 @@ suite "Internal: Head":
 suite "Internal: Proposals":
   const
     directory_sign = "proposals/01-sign"
-    record_sign = "# P01: Sign\n\nWhy.\n"
+    shape = "\n**What it is.** It.\n\n**What it is for.** For.\n\n**What it costs.** Cost.\n" &
+      "\n## Problem\n\n## Idea\n\n## Alternatives\n\n## Costs\n\n## Open decisions\n" &
+      "\n## Landing\n\n## Evidence\n"
+      ## Argument of standard shape, after its title.
+    record_sign = "# P01: Sign\n" & shape
 
   func numbered(number: int, status = "proposed", bases: seq[int] = @[]): Proposal =
     ## Read well-formed proposal at number, with status, building on proposals `bases` number.
@@ -1545,6 +1677,23 @@ suite "Internal: Proposals":
       },
       directory,
     )[0]
+
+
+  test "summary is three labelled paragraphs and sections are seven, in order, else finding":
+    let
+      claims = %*{"status": "proposed", "builds_on": [], "claims": []}
+      (_, loose) = parseProposal("# P01: Sign\n\nWhy.\n", "", claims, directory_sign)
+      (_, swapped) = parseProposal(
+        record_sign.replace("## Problem", "## Spare").replace("## Idea", "## Problem")
+          .replace("## Spare", "## Idea"),
+        "",
+        claims,
+        directory_sign,
+      )
+    check loose.len == 2 and "`unlabelled paragraph`" in loose[0].message  # summary needs labels
+    check "got ``" in loose[1].message  # sections absent
+    check swapped.len == 1 and "got `Idea`, `Problem`, `Alternatives`" in swapped[0].message
+      # order
 
 
   test "proposal reads number, title, status, base proposals and claims of every known kind":
@@ -1604,7 +1753,7 @@ suite "Internal: Proposals":
     let
       claims = %*{"status": "proposed", "builds_on": [], "claims": []}
       (_, unnumbered) = parseProposal(record_sign, "", claims, "proposals/sign")
-      (_, uncited) = parseProposal("# Sign\n", "", claims, directory_sign)
+      (_, uncited) = parseProposal("# Sign\n" & shape, "", claims, directory_sign)
       (_, unplaced) =
         parseProposal(
           record_sign,
@@ -1814,7 +1963,7 @@ suite "Internal: Figures":
         "",
       )
     check ("changed library, with " & code("pga.float_width=32")) in body  # define named
-    check ("runs clean at rga4d</td>") in body  # claim naming none reads as before
+    check ("runs clean at rga4d</li>") in body  # claim naming none reads as before
 
 
   test "proposal page embeds SVG figure names, with caption beneath":
@@ -1858,6 +2007,44 @@ suite "Internal: Figures":
     check "<figure" notin bare and "Map." in bare  # absent file renders as text
 
 
+  test "proposal page opens with summary card, then five sections, then code and evidence apart":
+    let
+      record = Proposal(
+        number: 1,
+        name: "p",
+        directory: "proposals/01-p",
+        title: "P",
+        body: parseBlocks("**What it is.** It.\n\n**What it is for.** For.\n\n" &
+          "**What it costs.** Cost.\n\n## Problem\n\nWhy.\n\n## Landing\n\nAfter P02.\n\n" &
+          "## Laws\n\nArgument.\n"),
+        claims: newJArray(),
+      )
+      body = bodyProposal(
+        record,
+        [record],
+        nil,
+        initTable[string, string](),
+        initTable[string, string](),
+        initTable[string, JsonNode](),
+        Spread(),
+        initTable[string, string](),
+        "bd6b23c590d7",
+        " · <a href=\"u\">docket</a>",
+      )
+    check "<dl class=\"summary\"><div><dt>What it is</dt><dd>It.</dd></div>" in body  # labelled
+    check body.find("</dl>") < body.find("id=\"p-problem\"")  # card before sections
+    var at = 0
+    for (mark, name) in [("1", "problem"), ("2", "idea"), ("3", "alternatives"), ("4", "costs"),
+        ("5", "open-decisions"), ("A", "code"), ("B", "evidence")]:
+      let found = body.find("id=\"p-" & name & "\"><h2><span class=\"num\">" & mark)
+      check found > at  # each section marked, in order
+      at = found
+    check "<section class=\"block prose appendix\" id=\"p-code\">" in body  # appendix opens
+    check body.find("After P02.") > body.find("id=\"p-code\"")  # landing inside code
+    check body.find("Argument.") > body.find("id=\"p-evidence\"")  # other section last
+    check body.find("<footer class=\"pages\"><a href=\"u\">docket</a></footer>") > at  # links last
+
+
   test "P01 figure names committed map that shows every rule of P01":
     const
       argument = staticRead("../proposals/01-cayley-derivation/proposal.md")
@@ -1884,19 +2071,55 @@ suite "Internal: Edits":
     ## Library file at pin: routine whose signature spans two lines, then top-level import.
 
   func edit(quote, replacement: string; digest = ""): Change =
-    ## Build change of one edit to `pga/a.nim`.
-    Change(edits: @[Edit(path: "pga/a.nim", quote: quote, replacement: replacement,
+    ## Build change of one edit to `pga/a.nim`: whole-file replacement where digest is given.
+    let kind = if digest.len > 0: KindEdit.Replace else: KindEdit.Quote
+    Change(edits: @[Edit(kind: kind, path: "pga/a.nim", quote: quote, replacement: replacement,
       digest: digest)])
 
   let files = {"pga/a.nim": source_pin}.toTable
     ## Library files edits read their line and context from.
 
 
-  test "edit renders closed, naming routine it sits in at pin":
-    let html = htmlEdits(edit("    result += x\n", "    result -= x\n"), files)
-    check html.startsWith("<details class=\"edit\"><summary>") and " open" notin html  # closed
-    check "<code>pga/a.nim:5</code> · replaces 1 line with 1" in html  # where, and how much
+  test "edit renders open as diff under list of files, naming routine it sits in at pin":
+    let
+      html = htmlEdits(edit("    result += x\n", "    result -= x\n"), files)
+      counts = "<span class=\"removed\">-1</span> <span class=\"added\">+1</span>"
+    check html.startsWith("<ul class=\"files\"><li><code>pga/a.nim</code> " & counts)  # files
+    check "<details class=\"edit\" open><summary>" in html  # open
+    check "<code>pga/a.nim:5</code> · " & counts in html  # where, and how much
     check "inside</span><code>func outer*(a: int; b: int): int</code>" in html  # joined, bare
+    check "<tr class=\"removed\"><td class=\"ln\">5</td><td class=\"ln\"></td>" &
+        "<td class=\"sign\">-</td><td class=\"text\">    result += x</td></tr>" in html  # before
+    check "<tr class=\"added\"><td class=\"ln\"></td><td class=\"ln\">5</td>" &
+        "<td class=\"sign\">+</td><td class=\"text\">    result -= x</td></tr>" in html  # after
+
+
+  test "diff keeps context beside change and folds longer unchanged run to its count":
+    var lines: seq[string]
+    for index in 1..20: lines.add "let x" & $index & " = " & $index
+    var changed = lines
+    changed[9] = "let x10 = 0"
+    let
+      quote = lines.join("\n")
+      html = htmlEdits(edit(quote, changed.join("\n")), {"pga/a.nim": quote & "\n"}.toTable)
+    check "<tr class=\"fold\"><td colspan=\"4\">6 unchanged lines</td></tr>" in html  # head
+    check "<tr class=\"fold\"><td colspan=\"4\">7 unchanged lines</td></tr>" in html  # tail
+    check ">let x7 = 7<" in html and ">let x13 = 13<" in html  # three lines beside change
+    check ">let x6 = 6<" notin html and ">let x14 = 14<" notin html  # rest folded
+    check html.find(">let x10 = 10<") < html.find(">let x10 = 0<")  # removal before addition
+
+
+  test "new file renders every line added, numbered from one":
+    let
+      change = Change(
+        edits: @[
+          Edit(kind: KindEdit.Add, path: "pga/b.nim", replacement: "let a = 1\nlet b = 2\n"),
+        ],
+      )
+      html = htmlEdits(change, files)
+    check "adds <code>pga/b.nim</code> · <span class=\"removed\">-0</span>" in html  # where
+    check "<td class=\"ln\"></td><td class=\"ln\">2</td><td class=\"sign\">+</td>" &
+        "<td class=\"text\">let b = 2</td>" in html  # numbered after alone
 
 
   test "edit inside routine whose header closes at its own indent names that routine":
@@ -1916,14 +2139,78 @@ suite "Internal: Edits":
     check "helper" notin html.split("</summary>")[0]  # nested routine stays in body
 
 
-  test "whole-file replacement lists top-level signatures, operators and pragmas kept apart":
+  test "whole-file replacement lists signatures file lacked, operators and pragmas kept apart":
     let
       replacement = "func `==`(a, b: Order): bool {.borrow.}\nproc b*(x: int) =\n  discard\n"
       html = htmlEdits(edit("", replacement, "abc"), files)
     check "<code>func `==`(a, b: Order): bool</code><code>proc b*(x: int)</code>" in html  # bare
+    let kept = htmlEdits(edit("", source_pin & replacement, "abc"), files)
+    check "func outer" notin kept.split("</summary>")[0]  # signature file held is left out
     check "class=\"signatures\"" notin htmlEdits(edit("import std/math\n", "import std/os\n"),
       files)  # top-level statement sits in no routine
 
+
+
+  test "code folds each file, shows signature and doc of each change, and folds its body":
+    let
+      source = "func f*(): int =\n  ## Doc f.\n  1\n\nfunc h(): int = 3\n"
+      change = Change(edits: @[
+        Edit(kind: KindEdit.Quote, path: "pga/b.nim", quote: "  1\n", replacement: "  2\n"),
+        Edit(kind: KindEdit.Quote, path: "pga/b.nim", quote: "func h(): int = 3\n",
+          replacement: "func g(): int =\n  ## Doc g.\n  4\n"),
+      ])
+      html = htmlCode(change, {"pga/b.nim": source}.toTable)
+    check html.startsWith("<details class=\"file\"><summary><code>pga/b.nim</code>")  # closed
+    check "1 changed · 1 added · 1 removed" in html  # tally of definitions
+    check "<details class=\"body\"><summary>body · 1 line · " in html  # body folded, counted
+    check " open><summary>body" notin html  # every body closed at rest
+    check html.find("Doc f.") < html.find("<details class=\"body\">")  # doc above body
+    check html.find("badge removed") < html.find("badge added")  # removal before addition
+
+
+  test "added file names its status once, and runs bare lines as one block":
+    let
+      change = Change(edits: @[Edit(kind: KindEdit.Add, path: "pga/n.nim",
+        replacement: "import std/math\nimport std/strutils\n\nfunc k*(): int =\n" &
+          "  ## Doc k.\n  5\n")])
+      html = htmlCode(change, initTable[string, string]())
+    check "<span class=\"status\">added</span>" in html  # file says it is new
+    check "class=\"badge" notin html  # each definition says it no more
+    check html.count("<div class=\"definition added\">") == 2  # imports together, then routine
+
+
+  test "change outside every definition shows as other lines":
+    let html = htmlCode(
+      Change(edits: @[Edit(kind: KindEdit.Quote, path: "pga/c.nim", quote: "# TODO: one.\n",
+        replacement: "# TODO: two.\n")]),
+      {"pga/c.nim": "# TODO: one.\nfunc z(): int = 0\n"}.toTable,
+    )
+    check "other lines</span>" in html and "TODO: two." in html  # comment reaches page
+    check "definition changed" notin html  # routine beside it is unchanged
+
+
+  test "evidence shows one row per function that moved, gains first, and counts rest":
+    let
+      baselines = {"rga4d": %*{"measurands": {
+        "a": {"library": "f(M)", "symbol": "∧"}, "b": {"library": "f(M)", "symbol": "∧"},
+        "c": {"library": "g(M)", "symbol": "∨"}, "d": {"library": "k(M)", "symbol": "∙"}}}}.toTable
+      counts = %*{"multiplies": 10, "bytes_moved": 100}
+      evaluation = %*{"pin_suites": {"rga4d": {"ok": 3, "failed": 0}}, "algebras": {"rga4d": {
+        "suites": {"ok": 3, "failed": 0},
+        "functions": {
+          "f(M)": {"before": counts, "after": {"multiplies": 5, "bytes_moved": 50}},
+          "g(M)": {"before": counts, "after": counts},
+          "k(M)": {"before": counts, "after": {"multiplies": 20, "bytes_moved": 100}},
+          "h(M)": {"before": counts, "after": counts}},
+        "times": {"a": [10.0, 5.0, 0.5], "b": [10.0, 6.0, 0.6], "c": [10.0, 10.0, 1.0],
+          "d": [10.0, 15.0, 1.5]}}}}
+      html = htmlEvidence(evaluation, baselines, Spread(low: 0.9, high: 1.1, count: 30))
+    check html.count("<tr><td>") == 2  # f and k; g stayed within spread
+    check html.find("<code>f(M)</code>") < html.find("<code>k(M)</code>")  # gain before loss
+    check "<span class=\"serves\">a, b</span>" in html  # operations f serves, named once
+    check "class=\"gain\"" in html and "class=\"loss\"" in html  # each side drawn
+    check "1 operation whose function moved stayed within spread." in html  # rest counted
+    check "Other functions moved: <code>h(M)</code>." in html  # helper named
 
 
 suite "Internal: Search":
@@ -2326,7 +2613,7 @@ suite "Internal: Proposal list":
         # table row, close, and graph box where undecided
       check "body:has(#" & id & ":checked) [for=\"" & id & "\"]" in body  # labels mark choice
     check "\" checked" notin body and "checked=" notin body  # page opens with none selected
-    check "<h2>P02: Title 2</h2>" in body and "<h3>Claims</h3>" in body  # nested one level down
+    check "<h2>P02: Title 2</h2>" in body and "<h4>Claims</h4>" in body  # nested one level down
     check "<a href=\"https://example.org/p1\">its own page</a>" in body  # published page linked
     check "<button class=\"clear\" type=\"reset\">" in body  # one control clears all
 

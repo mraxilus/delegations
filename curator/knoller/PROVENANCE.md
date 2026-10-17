@@ -1020,6 +1020,32 @@ a bracket stays too, because `y.toX(z)` and `y.toX[T]` read otherwise.
   method call. The tree holds no such field, and every changed file checks as before.
 - Verified by `suites/test_targets.nim`.
 
+**A call of a `define…` or `emit…` routine is a prefix call (STYLE.md §5).** The rule reads a
+name that opens `define` or `emit`, then a capital, after a `.` glued to it. The fixer moves the
+receiver into the call as its first argument, so `MESHES.emitObject(p)` becomes
+`emitObject(MESHES, p)`. A receiver is a name with any call, index or field glued after it, or a
+bracket group, which gives its parentheses to the call. A `construct…` call takes the subject
+test of STYLE.md §5, as every other call does.
+
+- The rule of type conversions reads a receiver the same way, and this rule reaches its readers.
+- A receiver that the file imports as a module qualifies the name, so `tessellate.emitObject`
+  stays.
+- No fixer reaches four shapes, since each holds a layout that hand chose. The check reports
+  each, and hand writes it:
+  - a receiver on the line above the dot;
+  - a generic call, or an index after the name;
+  - a command call;
+  - arguments that open on the line after `(`.
+- The rewrite reads no symbol. A field spelled like a routine would read as a call, but a field
+  is in snake case (V.1).
+- The fixer runs before the command form, so that rule never reads a dotted call of either verb.
+- The static pass of `curator/audit` runs the check beside the entry block, and does not wait in
+  `checkFormatting`. The Architect ruled the call form with the verbs of generation, so the call
+  and the kind of its routine reach the projects together.
+- Verified by `suites/test_generations.nim`. Verified by hand, 2026-10-12: knoller rewrote each
+  dotted call in copies of `src/desktop/main.nim` and `tests/suites/test_mesh.nim` of
+  rga_visualiser, and changed nothing else of those lines.
+
 **A dotted call statement takes the command form where its one argument is a call or a
 parenthesised expression (STYLE.md §5).** So `x.f(Y(…))` becomes `x.f Y(…)`, and `x.f((a, b))`
 becomes `x.f (a, b)`, and the double bracket goes. The rule reads method call syntax alone, with
@@ -1351,7 +1377,7 @@ predicate:
 - Rejected: a parser, which costs a dependency and a compiler version. The scanner reads the
   line forms that this charter prescribes.
 - A name that a template substitutes declares nothing of that name. So `type name = object`
-  inside `template defineKind(name: untyped)` is no type, and the check reads its fields.
+  inside `template declareKind(name: untyped)` is no type, and the check reads its fields.
 - A `static` parameter of a generic is a placeholder, so it takes one capital letter, as V.12
   says (`[N: static int]`).
 - Rejected by the Architect: snake case for a `static` parameter, against the text of V.12.
@@ -1363,6 +1389,20 @@ predicate:
   value `true` or `false`. A boolean that a call returns holds by reading.
 - Cost: a Pascal name of capitals alone, such as `ANTI`, passes the case of a type. Reading holds
   it.
+
+**Each verb of generation fixes the kind of its routine (V.3).** A `construct…` is a `func` or a
+`proc` that carries `{.compileTime.}` and returns a value. A `define…` is a macro, and an `emit…`
+is a `func` or a `proc` that returns `NimNode`, and never a macro. The Architect ruled that the
+kind never fixes the verb. So a macro of another name, or a helper that builds a syntax tree under
+another name, passes. The scanner reads the keyword of each routine, the type it returns before
+its pragmas, and `compileTime` among those pragmas.
+
+- Compile time is read from the routine's own pragma, as STYLE.md §2 applies `{.compileTime.}`
+  across a family. A routine nested in a compile-time one without its own pragma reads as runtime.
+- `NimNode` alone marks an `emit…`, since only a compile-time routine can return one. So an
+  `emit…` needs no pragma.
+- Verified by `suites/test_names.nim`, over every keyword, pragma, return type and verb. Verified by
+  `suites/test_declared.nim` for the three facts that the scanner reads of a routine.
 
 **A name that holds a value in another representation leads with that value (V.2), by the
 ruling of the Architect on #443.** V.2 asks that each cut of the last qualifier of a name still

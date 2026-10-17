@@ -3,7 +3,7 @@
 ##   nanoseconds per object reported. Around every timed run, allocation counters are read
 ##   so any heap use shows as count, and every result is folded into one sink after timing
 ##   so nothing is optimised away; share of results carrying NaN is counted alongside, since
-##   library's conformal norms return NaN on real objects and that is measured, not stated.
+##   library's radius norm returns NaN where 𝐦 ∘ 𝐦 is negative and that is measured, not stated.
 ##   Operands are aliases into pools (template, never `let`), so loop reads pool slot and
 ##   writes result slot: what moves is operation's own traffic.
 ##   Result slots start uninitialised (`noinit`): array filled with zeros would let C compiler
@@ -36,7 +36,8 @@
 
 import std/[algorithm, macros, math, monotimes, strutils, times]
 
-import pga
+# Typed references name objects that P09, `object-names`, names in `pga`; reference wins.
+import pga except Circle, Dipole, Flector, Line, Motor, Plane, Point, PointRound, Sphere
 
 import ./[catalogue, kinds, pools, widening]
 
@@ -143,10 +144,10 @@ template timeRounds(rounds: var array[ROUNDS, int64], loop: untyped) =
     rounds[r] = (getMonoTime() - started).inNanoseconds
 
 
-macro emitMeasurand(
+macro defineMeasurand(
   index: static int, implementation: static Implementation, measurand: static Measurand
 ): untyped =
-  ## Emit timed run of one measurand in one implementation.
+  ## Define timed run of one measurand in one implementation.
   ##   Result lands in `MEASUREMENTS[implementation][index]`.
   let expression =
     case implementation
@@ -210,8 +211,8 @@ macro emitMeasurand(
       )
 
 
-macro emitCatalogue(): untyped =
-  ## Emit one procedure per measurand per implementation, then `measureCatalogue` calling each.
+macro defineCatalogue(): untyped =
+  ## Define one procedure per measurand per implementation, then `measureCatalogue` calling each.
   ##   Calls follow catalogue order, and implementations of one measurand run back to back, so
   ##   machine drift lands on each alike.
   result = newStmtList()
@@ -221,7 +222,7 @@ macro emitCatalogue(): untyped =
       let
         name = ident("measure" & $index & $implementation)
         timed = newCall(
-          bindSym"emitMeasurand",
+          bindSym"defineMeasurand",
           newLit(index),
           newCall(ident"Implementation", newLit(ord(implementation))),
           newTree(nnkBracketExpr, ident"CATALOGUE", newLit(index)),
@@ -238,4 +239,4 @@ macro emitCatalogue(): untyped =
       `calls`
 
 
-emitCatalogue()
+defineCatalogue()
