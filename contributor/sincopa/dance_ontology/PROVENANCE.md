@@ -498,8 +498,9 @@ panel is `wholecloth_turns.nim`, compiled to JavaScript, and `wholecloth.nim` sp
 sweeps of the simulation (`turns.nim`) and the panel into one page.
 
 Verified by `suites/test_marks.nim`, which drives the build of each page of `marks.PAGES` under
-testament. No law builds the whole-cloth page, but `drive` builds it, as it builds every page. No
-law and no harness in the tree holds the turns panel.
+testament. No law builds the whole-cloth page, but `drive` builds it, as it builds every page. One
+law holds where the turns panel finds what it draws (`test_wholecloth_scene.nim`), through node and
+with no browser. No law holds the rest of the panel.
 
 **Every page says its prose in Simplified Technical English, and a hand-drawn figure claims nothing
 of the simulation.** The Architect requires the prose in the subset of the charter (`GUIDE.md`,
@@ -2269,20 +2270,34 @@ broke several terms at once, each by about a millimetre. Those were hands apart,
 clearance, and a hand under the edge of its band. Measured 2026-10-12 by a probe outside the
 tree.
 
-**A planned way can stand several moments at one turn, and the whole-cloth page jumps there.** When
-the plan stops, it goes back, poses the arms again and goes on (Planned turn). Both recordings keep
-each such moment, at one turn. The rig viewer plays every moment. The whole-cloth page finds the
-moment that it draws by its turn (`fillScene`). So at such a turn it draws the two ends of the run
-alone.
+**The whole-cloth page plays every pose that a planned way stands at one turn, and the turn waits
+there (pull request 629, D2).** The Architect ruled on 2026-10-17. When the plan stops, it goes
+back, poses the arms again and goes on (Planned turn). Both recordings keep each such moment, at
+one turn. The rig viewer plays every moment.
 
-The page eases toward the pose that the plan reached that turn with. At the turn it shows the last
-pose that the plan stood there, and says that the arms re-posed (`reseed`). On both ways that last
-pose lies on the side of the turn away from rest, so the page is its own mirror image there.
+The whole-cloth page plays a sweep by place, and not by turn (`wholecloth_scene.fillScene`). The
+recording gives each moment its place: its turn, plus one step of 0.02 for each pose stood again
+before it (`turns.frame`). So each pose at one turn plays for one step, and the turn on the page
+waits. The page says that the arms re-posed there (`reseed`).
 
-Cost: each such turn is a jump that the page plays in no time. In L-r.R-l above it is 492 mm at
-0.02 of a turn, 378 mm at 1.013 and 150 mm at 0.61. In L-l.R-r above it is 277 mm at 0.505, 220 mm
-at 1.47 and 192 mm at 1.51. Each is the same on the other way. Measured 2026-10-12 by a probe
-outside the tree that finds each frame as the page does (Open questions).
+The slider, the strip and the buttons still pick a turn. Where several poses stand at that turn,
+the page draws the one furthest from rest along the play, which the plan stood last (`placeAt`).
+So the page at one turn is the mirror image of the page at the other. Play turns back at the place
+of each block.
+
+Cost: the two chains held above play longer, at 0.35 of a turn each second, within the two turns
+each way that the page shows. One pass of the cross-name chain takes 14.2 s, where it took 8.7 s.
+One pass of the same-name chain takes 17.9 s, where it took 11.4 s. The longest wait at one turn
+is 1.8 s. The other 16 sweeps stand no pose twice at one turn, and play as before. Derived
+2026-10-17 from the turns and places of the recording.
+
+Rejected: the last pose of each turn alone. There an arm moves 205 to 548 mm in one step, where a
+normal step moves it 55 to 58 mm. Halfway through such a step, the page draws an arm up to 61 mm
+short or long. Measured 2026-10-15 by a probe outside the tree.
+
+Verified by `test_wholecloth_scene.nim`: the page drawn at the place of each moment shows that
+moment, for every moment of every sweep. Where the page found moments by turn, 210 of 2775 moments
+were never drawn, and the furthest lay 492 mm from the pose drawn.
 
 **The plan carries the cross-name chain held above to 1.5275 turns either way, and the same-name
 chain to 2.5.** The cross-name chain stands from 0.957 m, by style 13 and its mirror. Of its 139
@@ -3048,7 +3063,8 @@ reddens a law.
 - `tools/build.nim engine`: 32 s cold, and 0.2 s where the archive stands, on the same machine and
   day.
 - `grep -c nimCopy` on the emitted `wholecloth_turns.js` gives 13, all of them the runtime's own,
-  and none from module code. The binding shapes that the port rejected gave 35.
+  and none from module code. The binding shapes that the port rejected gave 35. It gives 13 still
+  with the scene in `design/wholecloth_scene.nim` and the panel on places, read 2026-10-17.
 
 ## Rules deferred
 
@@ -3274,12 +3290,6 @@ to tidy the line away shows up only as suites that fail to build. `result +=` on
   A member of `Stop` for a plan that ends would say only that it ends. A stop read off the terms of
   the plan one solve past its end would say which term gave. But that solve broke several terms at
   once (Planned sweep). The Architect rules which, if either (`walk.plannedWay`).
-- **The whole-cloth page jumps at a turn that a planned way stands several times (Planned
-  sweep).** It finds each frame by its turn, and jumps up to 492 mm between the two ends of such a
-  run. The recording can keep the last pose at each turn alone. The page then draws it whole, and
-  the laws still read it, but the page hides how the plan got there. Or the page can step through
-  the poses at one turn, and every sweep then plays that way. The Architect rules which
-  (`design/turns.frames`).
 - **The pages read a twist that the engine does not hold (Planned sweep).** The reading of strain
   takes the twist off four points of the arm (`read.tightest`). On planned poses that twist lies
   -101 to +76 degrees from the twist of the engine. So the whole-cloth page reads a strain of 1.00
