@@ -41,9 +41,9 @@ equals the 𝐚ᵀ𝐆𝐛 of the figure, which the map gives as a faded route.
 
 The blocks follow the groups of the code, from bases to properties, and a last block holds the
 projections. The faded lines give every other route to a box that holds at pin. So the dot has
-three routes: from ⩓ₖ, which the code takes, from ∨★ at equal grades, and from 𝐆. The faded boxes
-give the operators with no table, such as the support, the center and the roots of the norms, so
-the map shows what the tables serve.
+three routes: from ⩓ₖ, which the code takes, from 𝐚 ∨ 𝐛★ at equal grades, and from 𝐆. The faded
+boxes give the operators with no table, such as the support, the center and the roots of the
+norms, so the map shows what the tables serve.
 
 ### Against Lengyel's figure 2.16
 
@@ -68,7 +68,7 @@ the map shows what the tables serve.
 | Rule | Tables it builds |
 |------|------------------|
 | `constructAnti`: conjugate by complements, 𝐚 ∨ 𝐛 = 𝐮̱ where 𝐮 = 𝐚̄ ∧ 𝐛̄ | ∨, 𝔾, antireverse, ∘ |
-| `applyConstant`, `applyMap`: fix or map operand | ★ ☆ ∨★ ∨☆ ∧★ ∧☆ each side, attitude, carrier |
+| `applyConstant`, `applyMap`: fix or map operand | ★, ☆, 𝐚 ∨ 𝐛★ and each interior product, ⊖, ⊟ |
 | Transwedge sum: Σ where gr 𝐜 = k | ⩓ₖ and ⩔ₖ, ∙ at equal grades, ⟑ and ⟇ by signed sums |
 
 Each dual is a complement after 𝐆 or 𝔾, on the left or on the right, as the library keeps both
@@ -153,7 +153,7 @@ transwedge cannot drift apart. The same suite holds that the dot equals 𝐚ᵀ�
 | Dot as scalar part of ⟑ | Checked; equal only up to (−1)^(k(k−1)/2) |
 | Blade products by bit operations | Weighed; second generator beside the derivation |
 | Dot as 𝐚ᵀ𝐆𝐛 from 𝐆, as in figure 2.16 | Built, equal; ruled on 2026-10-17 for the transwedge |
-| Dot as grade 0 of ∨★, as a pin note asks | Built, equal; ruled on 2026-10-17 for the transwedge |
+| Dot as grade 0 of 𝐚 ∨ 𝐛★, as a pin note asks | Built, equal; ruled on 2026-10-17 for transwedge |
 | Radius norm by `filterGrades` of ∘ | Removes no cell; ruled on 2026-10-17 to read ∘ whole |
 | RGA parts as 𝐆 and 𝔾 | Built, equal; ruled on 2026-10-16 for one rule in both algebras |
 | `Option` cells in `Cayley1D` | Library before `3121342`; two cell shapes, and no sum of terms |
