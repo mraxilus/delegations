@@ -946,9 +946,9 @@ letter. The tilde under 𝐐 sits lower, to clear its tail.
 The map holds eleven blocks, in the order of the groups of the code, under its legend, and each anti
 table stands under its base. Each box holds a symbol alone, and the line into it carries its
 formula, as in Lengyel's figure. Under the line stands the function that builds the table. A box
-from elsewhere is a dashed box of its own colour, so that no line leaves its block. Brown text
-holds in RGA alone and blue text in CGA alone, so that no formula names its algebra. The two
-colours are shell tokens for code, so they follow the theme.
+from elsewhere is a cell of a dashed box, filled in the colour of its kind, so that no line leaves
+its block. Brown text holds in RGA alone and blue text in CGA alone, so that no formula names its
+algebra. The two colours are shell tokens for code, so they follow the theme.
 
 Lines from several boxes meet on one bar at right angles, and one line leaves it. A second bar
 forks that line to each table that it feeds. The formulas take the form of the maths, as Lengyel
@@ -956,11 +956,13 @@ writes them. So a unary operator, such as ★ in 𝐮★, stands after its opera
 such as 𝐚 ∨ 𝐛★, is a product with a dual. The code puts a unary operator first and spells ∨★ as
 one operator, as Nim needs.
 
-Each block takes the boxes of other blocks as dashed boxes on its top row, and it builds downward
-from them. A box of the same block is never a dashed box, since its own line reaches it. Each
-operator of a formula enters its box by a line, unless the box reaches it through another input.
-So ∨ also stands for the ∧ that it derives from, and ★ stands for the 𝐆 that it derives from. A
-dot marks where lines join. A line that crosses another line with no dot passes over it, and the
+Each block takes the boxes of other blocks on its top row, and it builds downward from them. The
+boxes from one block share one dashed box, with a cell for each box, as the Architect asked on
+2026-10-17. A box of the same block is never in a dashed box, since its own line reaches it.
+
+Each operator of a formula enters its box by a line, unless the box reaches it through another
+input. So ∨ also stands for the ∧ that it derives from, and ★ stands for the 𝐆 that it derives from.
+A dot marks where lines join. A line that crosses another line with no dot passes over it, and the
 line under it shows a gap.
 
 The map gives every route to a box that holds at pin, and it fades each route that the code does
