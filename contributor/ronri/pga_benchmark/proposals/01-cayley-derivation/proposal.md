@@ -22,7 +22,8 @@ Lengyel names two in his figure 2.16.
 Every table derives from two inputs, as in Lengyel's figure 2.16: the metric and the orientation
 of the volume element 𝟙. The metric enters as 𝖌 on vectors, and the exomorphism builds 𝐆 from it.
 RGA makes 𝐞ₙ null. CGA pairs 𝐞ₙ₋₁ and 𝐞ₙ with 𝐞ₙ₋₁ ∙ 𝐞ₙ = −1, and names one of them origin and
-the other infinity. The parts split by these projective vectors in both algebras.
+the other infinity. The right complement of the origin, 𝐞̄ₙ in RGA and 𝐞̄ₙ₋₁ in CGA, is the horizon,
+which the attitude reads. The parts split by these projective vectors in both algebras.
 
 ![Derivation map, after Lengyel's figure 2.16, for RGA and CGA. Green boxes are inputs. Blue boxes
 are fixed definitions and maps. Purple boxes conjugate their base by complements. Each box gives
@@ -50,7 +51,7 @@ equals the 𝐚ᵀ𝐆𝐛 of the figure.
 | ⟑ | from 𝐆 and ∧ | 𝐚 ⟑ 𝐛 = Σ (−1)^(k(k−1)/2) 𝐚 ⩓ₖ 𝐛 |
 | ⟇ | conjugate of ⟑ | 𝐚 ⟇ 𝐛 = Σ (−1)^(k(k−1)/2) 𝐚 ⩔ₖ 𝐛, not conjugates of base orders in CGA |
 | Norms | √(𝐮 ∙ 𝐮) and √(𝐮 ∘ 𝐮) | ‖𝐮‖●² = 𝐮●ᵀ𝐮● for each part, split by projective vectors |
-| Projective vectors | absent | split the parts, and give the carrier in CGA |
+| Projective vectors | absent | split the parts, and give the horizon and the CGA carrier |
 
 ### Four rules
 
