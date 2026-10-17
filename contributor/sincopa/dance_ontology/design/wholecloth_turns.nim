@@ -201,8 +201,8 @@ func readSweep(sweep: var Sweep, hold: Hold, level: Level) =
   sweep.limits.is_stopped_positive = sweep_data.stoppedPositive.to(bool) and positive < MOST
   sweep.limits.found_rest = sweep_data.restHolds.to(bool)
   sweep.frames = sweep_data.frames
-  sweep.limits.place_negative = placeAt(sweep.frames, -sweep.limits.negative, HOLDS[hold].rest)
-  sweep.limits.place_positive = placeAt(sweep.frames, sweep.limits.positive, HOLDS[hold].rest)
+  sweep.limits.place_negative = placeAt(sweep.frames, -sweep.limits.negative)
+  sweep.limits.place_positive = placeAt(sweep.frames, sweep.limits.positive)
 
 
 func sweepTable(): array[Hold, array[Level, Sweep]] =
@@ -516,8 +516,7 @@ proc clampTurn(turn: float): float =
 
 proc placeShown(turn: float): float =
   ## Place on play where sweep on show draws `turn`, kept within its blocks.
-  placeAt(LUT_SWEEP_BY_HOLD[HOLD_SHOWN][LEVEL_SHOWN].frames, clampTurn(turn),
-          HOLDS[HOLD_SHOWN].rest)
+  placeAt(LUT_SWEEP_BY_HOLD[HOLD_SHOWN][LEVEL_SHOWN].frames, clampTurn(turn))
 
 
 proc renderStage() =
@@ -623,7 +622,7 @@ proc renderStrip() =
     doAssert fillScene(
       SCENE_STORAGE,
       sweep.frames,
-      placeAt(sweep.frames, turn, HOLDS[HOLD_SHOWN].rest),
+      placeAt(sweep.frames, turn),
     ), "Sweep within its blocks must have moments."
     var words: cstring = ""
     for k in 0..<SCENE_STORAGE.connection_count:

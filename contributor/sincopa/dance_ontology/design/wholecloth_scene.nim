@@ -50,10 +50,11 @@ func placeOf*(moment: JsObject): float =
   moment.place.to(float)
 
 
-func placeAt*(frames: JsObject, turn, rest: float): float =
+func placeAt*(frames: JsObject, turn: float): float =
   ## Find place on play where page draws `turn`: one for one with turn between two moments.
-  ##   Where several poses stand at `turn`, pose furthest from `rest` along play, i.e. one
-  ##     plan stood last there, so page at one turn is mirror image of page at other.
+  ##   Where several poses stand at `turn`, pose plan stood last there.
+  ##     Both ways run outward from turn 0, and negative way is written back to front
+  ##       (`turns.frames`): so first pose along play below turn 0, last one above it.
   ##   Turn itself for sweep with no moment, where nothing is drawn.
   let count = frames.length.to(int)
   if count == 0: return turn
@@ -66,15 +67,15 @@ func placeAt*(frames: JsObject, turn, rest: float): float =
     let middle = (lower + upper) shr 1
     if frames[middle].turn.to(float) <= turn: lower = middle else: upper = middle
 
-  # Where poses stand at `turn`, take one furthest from rest: first along play below rest, last
+  # Where poses stand at `turn`, take one plan stood last: first along play below turn 0, last
   #   above it.  Bisection never reads last moment, so it is read here.  Equality is exact,
   #   since turn asked for is one recording wrote or else falls between two.
   let
     turn_a = frames[lower].turn.to(float)
     turn_b = frames[upper].turn.to(float)
-  if turn_b == turn and turn >= rest: return placeOf(frames[upper])
+  if turn_b == turn and turn >= 0.0: return placeOf(frames[upper])
   if turn_a == turn:
-    if turn < rest:
+    if turn < 0.0:
       while lower > 0 and frames[lower-1].turn.to(float) == turn: dec lower
     return placeOf(frames[lower])
 
