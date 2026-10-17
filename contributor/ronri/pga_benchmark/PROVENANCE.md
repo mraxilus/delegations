@@ -865,6 +865,10 @@ line above. The tilde of the reverse and of the antireverse is a spacing ˜, not
 Two advances, of the tilde and of the letter, set it over or under the letter. The face puts a
 combining tilde beside the letter, as it does each bar mark.
 
+The map writes the origin as 𝐞ᵒ and infinity as 𝐞 with ∞ raised, so that neither reads as a
+basis vector such as 𝐞₀. It parts two formulas or two signs by a comma or a word, so that the dot
+product ∙ is the one dot in the map.
+
 In code, ★ comes from the math face as ☆ does, because the mono face draws ★ smaller.
 
 The cause is in the face. In Noto Sans Math 2.539, the 52 letters of the bold block, U+1D400 to
