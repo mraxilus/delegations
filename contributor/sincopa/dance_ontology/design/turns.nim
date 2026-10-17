@@ -15,6 +15,7 @@
 ##     and moment that plan poses again at one turn is marked so (`reseed`).
 ##   Each moment carries its place on page's play (`place`), so page plays every pose plan
 ##     stands at one turn while turn waits (Architect, pull request 629, 2026-10-17, D2).
+##     Cost: two chains held above play longer per pass, as `frames` measures.
 ##   Words (wrap, lock, low, high) are put on by `simulation/words`, which `verdicts`
 ##     reads too.  Not because simulation speaks other language -- it reuses agreed
 ##     words -- but because here it measures what ontology asserts, and
@@ -80,8 +81,8 @@ func frame(
   ## Record one moment as page draws it: arms, words, crossings, and place on page's play.
   ##   Moment at turn of one before it has arms posed again there (`reseed`), and page says so:
   ##     planned way stands several poses at one wind (`plan.planPath`).
-  ##   Place is turn, plus one step for each of `reposed` poses stood again before it in order
-  ##     written, so page gives each pose one step of play (`wholecloth_scene.fillScene`).
+  ##   Place is turn, plus one step for each of `reposed` poses stood again, this one included,
+  ##     in order written, so page gives each pose one step of play (`wholecloth_scene`).
   ##     Counted in thousandths, as turn is written, so place lies on that same grid.
   let
     tight = tightest(HUMAN, moment.stance, links, moment.arms)
@@ -131,7 +132,7 @@ func isReposed(way: Walk, i: int): bool =
   i > 0 and way.moments[i].at == way.moments[i-1].at
 
 func frames(sweep: Swept, band: Band, links: seq[Link]): JsonNode =
-  ## Every moment of both ways, in order of turn, rest once, each at its own place on play.
+  ## List every moment of both ways, in order of turn, rest once, each at its own place on play.
   ##   Negative way was walked outward from rest, so it is read back to front.
   ##   Page plays every pose planned way stands at one turn, one step of play each, and turn
   ##     waits there (Architect, pull request 629, 2026-10-17, D2).

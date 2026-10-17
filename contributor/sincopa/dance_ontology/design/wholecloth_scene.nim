@@ -1,11 +1,12 @@
 ## Find what whole-cloth page draws at one place of its play, between two recorded moments.
 ##
-##   Split from `wholecloth_turns`, which reads document as it loads, so law reads this lookup
+##   Kept apart from `wholecloth_turns`, which reads document as it loads, so law reads lookup
 ##     through node with no browser (`tests/test_wholecloth_scene.nim`, Article IX.5).
 ##     Cost: scene and its parts are exported, for `wholecloth_turns` that draws them.
 ##   Page plays sweep by place, not by turn: recording gives each moment its own place
 ##     (`turns.frame`), so every pose planned way stands at one turn is drawn, one step of play
 ##     each, and turn waits there (Architect, pull request 629, 2026-10-17, D2).
+##     Cost: two chains held above play longer per pass (`turns.frames`).
 ##   Recording is read in place as `JsObject` through `std/jsffi`, never copied into Nim
 ##     objects, since every copy on JS backend is deep (STYLE.md §7).  Only scene at one place
 ##     is built as Nim value, interpolated afresh.

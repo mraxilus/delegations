@@ -32,7 +32,7 @@
 ##   Kept as hand-drawn, trap noted: `above` fill hatches with left-ink pattern
 ##     for either arm (`aLd`/`aL`), since parity beats correction here.
 ##   Cost read (Article VII.1): `grep -c nimCopy` on emitted JS (`nim js
-##     -d:release`, 2026-09-05) gives 13, every one runtime's own (its
+##     -d:release`, 2026-10-17) gives 13, every one runtime's own (its
 ##     definition, exception messages, one `$` helper); none from this module.
 ##     Read call sites of each binding shape: by-value `Scene` parameter passes
 ##     by reference; `template` aliases into `scene.cn[i]` and
@@ -515,7 +515,7 @@ proc clampTurn(turn: float): float =
   max(-limits.negative, min(limits.positive, turn))
 
 proc placeShown(turn: float): float =
-  ## Place on play where sweep on show draws `turn`, kept within its blocks.
+  ## Find place on play where sweep on show draws `turn`, kept within its blocks.
   placeAt(LUT_SWEEP_BY_HOLD[HOLD_SHOWN][LEVEL_SHOWN].frames, clampTurn(turn))
 
 
