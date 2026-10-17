@@ -38,10 +38,11 @@
 ##     by reference; `template` aliases into `scene.cn[i]` and
 ##     `lut_hold_sweep[hold][level]` read fields inline; `let` of call result
 ##     binds without copy; `var` out-parameters (`wholecloth_scene.interpolate`,
-##     `wholecloth_scene.fillScene`, `readSweep`) write into storage in place.  Shapes rejected after reading
-##     them: `result = [x, y]` and constructor assigned to `result` (one deep
-##     copy each), `Option[Scene]` (two per call), `for (px, py) in` over tuple
-##     table (one per element per call), `Option[float]` clock (two per frame).
+##     `wholecloth_scene.fillScene`, `readSweep`) write into storage in place.
+##     Shapes rejected after reading them: `result = [x, y]` and constructor
+##     assigned to `result` (one deep copy each), `Option[Scene]` (two per call),
+##     `for (px, py) in` over tuple table (one per element per call),
+##     `Option[float]` clock (two per frame).
 
 {.experimental: "strictFuncs".}
 
