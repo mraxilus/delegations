@@ -958,12 +958,14 @@ one operator, as Nim needs.
 
 Each block takes the boxes of other blocks on its top row, and it builds downward from them. The
 boxes from one block share one dashed box, with a cell for each box, as the Architect asked on
-2026-10-17. A box of the same block is never in a dashed box, since its own line reaches it.
+2026-10-17. One line leaves each dashed box and forks to each box that uses that block. The dashed
+boxes stand in the order of the blocks, and the cells in the order that their block derives them.
+A box of the same block is never in a dashed box, since its own line reaches it.
 
-Each operator of a formula enters its box by a line, unless the box reaches it through another
-input. So ∨ also stands for the ∧ that it derives from, and ★ stands for the 𝐆 that it derives from.
-A dot marks where lines join. A line that crosses another line with no dot passes over it, and the
-line under it shows a gap.
+The line of each block that a formula draws on reaches its box, unless the box reaches that operator
+through another input. So ∨ also stands for the ∧ that it derives from, and ★ stands for the 𝐆 that
+it derives from. A dot marks where lines join. A line that crosses another line with no dot passes
+over it, and the line under it shows a gap.
 
 The map gives every route to a box that holds at pin, and it fades each route that the code does
 not take. A faded box is an operator with no table, so the map shows what the tables serve. The
