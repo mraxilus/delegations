@@ -619,11 +619,9 @@ proc renderStrip() =
           (if turn < 0.0: sweep.limits.why_negative else: sweep.limits.why_positive) &
           "</span></figcaption></figure>"
       continue
-    doAssert fillScene(
-      SCENE_STORAGE,
-      sweep.frames,
-      placeAt(sweep.frames, turn),
-    ), "Sweep within its blocks must have moments."
+    doAssert fillScene(SCENE_STORAGE, sweep.frames, placeAt(sweep.frames, turn)),
+      "Sweep within its blocks must have moments; got none at turn `" & $turn.toText & "` of `" &
+        $HOLDS[HOLD_SHOWN].key & "|" & $LEVEL_NAMES[LEVEL_SHOWN] & "`."
     var words: cstring = ""
     for k in 0..<SCENE_STORAGE.connection_count:
       if k > 0: words.add " · "

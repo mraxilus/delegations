@@ -75,9 +75,7 @@ func toMillimetres(point: Vector): JsonNode =
   ## Write point in whole millimetres.
   %*[int(round(point.x * 1000.0)), int(round(point.y * 1000.0)), int(round(point.z * 1000.0))]
 
-func frame(
-  moment: Moment, band: Band, links: seq[Link], is_reposed: bool, reposed: int
-): JsonNode =
+func frame(moment: Moment, band: Band, links: seq[Link], is_reposed: bool, reposed: int): JsonNode =
   ## Record one moment as page draws it: arms, words, crossings, and place on page's play.
   ##   Moment at turn of one before it has arms posed again there (`reseed`), and page says so:
   ##     planned way stands several poses at one wind (`plan.planPath`).
