@@ -865,9 +865,9 @@ line above. The tilde of the reverse and of the antireverse is a spacing ˜, not
 Two advances, of the tilde and of the letter, set it over or under the letter. The face puts a
 combining tilde beside the letter, as it does each bar mark.
 
-The map writes the origin as 𝐞ᵒ and infinity as 𝐞 with ∞ raised, so that neither reads as a
-basis vector such as 𝐞₀. It parts two formulas or two signs by a comma or a word, so that the dot
-product ∙ is the one dot in the map.
+The map writes the origin as 𝐞ᵒ and infinity as 𝐞 with ∞ raised, so that neither reads as 𝐞₀ or
+as another basis vector. A comma or a word parts two formulas or two signs. So the one dot in the
+map is the dot product.
 
 In code, ★ comes from the math face as ☆ does, because the mono face draws ★ smaller.
 
