@@ -25,19 +25,25 @@ RGA makes 𝐞ₙ null. CGA pairs 𝐞ₙ₋₁ and 𝐞ₙ with 𝐞ₙ₋₁ �
 the other infinity. The right complement of the origin, 𝐞̄ₙ in RGA and 𝐞̄ₙ₋₁ in CGA, is the horizon,
 which the attitude reads. The parts split by these projective vectors in both algebras.
 
-![Derivation map, after Lengyel's figure 2.16, in eight blocks in the order of the code. Green
-boxes are the two inputs, and grey boxes are basis and projective elements. Blue boxes are tables,
-and purple boxes are anti tables, each under its base. A dashed box is a table from another block.
-Each line carries its formula, and under it the function that builds the table. Brown text holds
-in RGA alone, and blue text in CGA alone.](../../pages/derivation-map.svg)
+![Derivation map, after Lengyel's figure 2.16, in nine blocks in the order of the code, where each
+box holds a symbol. Green boxes are the two inputs, and grey boxes are basis and projective
+elements. Blue boxes are tables, and purple boxes are anti tables, each under its base. A dashed
+box stands for a box from elsewhere, and each line carries its formula, with the function that
+builds the table under it. A faded line is a route that the code does not take, and a faded box is
+an operator with no table. Brown text holds in RGA alone, and blue text in CGA
+alone.](../../pages/derivation-map.svg)
 
 The figure shows RGA alone, and it predates the transwedge, by which Lengyel later unified the
 geometric product. The map adds both, and it names the code that builds each table. It takes the
 dot 𝐚 ∙ 𝐛 = 𝐚 ⩓ₖ 𝐛 where k = gr 𝐚 = gr 𝐛 from the transwedge, as at pin. So one product gives ∧ at
 order 0, ∙ at equal grades, and ⟑ as a signed sum of its orders. A suite holds that this dot
-equals the 𝐚ᵀ𝐆𝐛 of the figure. The blocks follow the groups of the code: bases with the exterior
-product and the projective elements, metric, parts, interior products, transwedge, geometric
-products, norms and properties.
+equals the 𝐚ᵀ𝐆𝐛 of the figure, which the map gives as a faded route.
+
+The blocks follow the groups of the code, from bases to properties, and a last block holds the
+projections. The faded lines give every other route to a box that holds at pin. So the dot has
+three routes: from ⩓ₖ, which the code takes, from ∨★ at equal grades, and from 𝐆. The faded boxes
+give the operators with no table, such as the support, the center and the roots of the norms, so
+the map shows what the tables serve.
 
 ### Against Lengyel's figure 2.16
 
@@ -189,6 +195,9 @@ transwedge cannot drift apart. The same suite holds that the dot equals 𝐚ᵀ�
   line already.
 
 ## Evidence
+
+A check by hand on 2026-10-17 builds each faded route of the map at rga3d, rga4d, cga4d and
+cga5d. Each route gives the table that it leads to, and the two brown routes hold in RGA alone.
 
 A census by hand on 2026-10-12 checks chirality and the family count at nine algebras: rga2d to
 rga6d, and cga3d to cga6d. It calls `constructProductsTransitional` with each strip product, dual,
