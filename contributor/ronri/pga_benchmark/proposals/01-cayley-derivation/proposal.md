@@ -25,7 +25,7 @@ RGA makes 𝐞ₙ null. CGA pairs 𝐞ₙ₋₁ and 𝐞ₙ with 𝐞ₙ₋₁ �
 the other infinity. The right complement of the origin, 𝐞̄ₙ in RGA and 𝐞̄ₙ₋₁ in CGA, is the horizon,
 which the attitude reads. The parts split by these projective vectors in both algebras.
 
-![Derivation map, after Lengyel's figure 2.16, in nine blocks in the order of the code. Green
+![Derivation map, after Lengyel's figure 2.16, in eight blocks in the order of the code. Green
 boxes are the two inputs, and grey boxes are basis and projective elements. Blue boxes are tables,
 and purple boxes are anti tables, each under its base. A dashed box is a table from another block.
 Each line carries its formula, and under it the function that builds the table. Brown text holds
@@ -35,8 +35,9 @@ The figure shows RGA alone, and it predates the transwedge, by which Lengyel lat
 geometric product. The map adds both, and it names the code that builds each table. It takes the
 dot 𝐚 ∙ 𝐛 = 𝐚 ⩓ₖ 𝐛 where k = gr 𝐚 = gr 𝐛 from the transwedge, as at pin. So one product gives ∧ at
 order 0, ∙ at equal grades, and ⟑ as a signed sum of its orders. A suite holds that this dot
-equals the 𝐚ᵀ𝐆𝐛 of the figure. The blocks follow the groups of the code: bases, metric, parts,
-exterior product, interior products, transwedge, geometric products and norms.
+equals the 𝐚ᵀ𝐆𝐛 of the figure. The blocks follow the groups of the code: bases with the exterior
+product and the projective elements, metric, parts, interior products, transwedge, geometric
+products, norms and properties.
 
 ### Against Lengyel's figure 2.16
 
@@ -172,7 +173,8 @@ transwedge cannot drift apart. The same suite holds that the dot equals 𝐚ᵀ�
 ## Landing
 
 - **P08, `compound-tables`.** It quotes a line of the header of this file and reads `applyMap`,
-  so it lands after this proposal.
+  so it lands after this proposal. Its support, antisupport, cocarrier, center and container follow
+  the carrier, so they join the group of properties.
 - **Change `cayleys-hygiene`.** It renames an overload of `constructProductInterior`, which this
   proposal deletes, so its edits are void once this proposal lands. Its other idea still applies,
   because this proposal writes the parity k(k−1)/2 of the reverse twice, in `reverse` and in

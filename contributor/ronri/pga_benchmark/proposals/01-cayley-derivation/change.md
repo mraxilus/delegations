@@ -90,8 +90,8 @@ suite "Internal: Transwedge":
 ##       `constructProductGeometric` sums orders with sign, i.e. 𝐚 ⟑ 𝐛 = Σ (-1)^(k(k-1)/2) 𝐚 ⩓ₖ 𝐛.
 ##   Dot reads transwedge at equal grades, i.e. 𝐚 ∙ 𝐛 = 𝐚 ⩓ₖ 𝐛 where k = gr 𝐚 = gr 𝐛.
 ##   Parts split by presence of origin and, in CGA, of infinity.
-##   Tables and constructors come in groups, in order of derivation: bases, metric, parts,
-##     exterior product, interior products, transwedge, geometric products, norms.
+##   Tables and constructors come in groups, in order of derivation: bases with exterior product,
+##     metric, parts, interior products, transwedge, geometric products, norms, properties.
 ##   Cost: ⟑ and ⟇ keep two transwedge families, each N³ at compile time, since conformal anti
 ##     orders are not conjugates of base orders; maps and filters walk N² cells.
 ##
@@ -158,6 +158,12 @@ const  # Bases.
       base: base,
       anti: base.constructAnti(CAYLEYS_COMPLEMENT),
     )
+  CAYLEYS_WEDGE* = block:
+    let base = constructProductExterior(CAYLEYS_COMPLEMENT, Spatiality.Base)
+    Spatial[Cayley2D](
+      base: base,
+      anti: base.constructAnti(CAYLEYS_COMPLEMENT),
+    )
 
 const  # Metric.
   CAYLEY_METRIC* = constructMetric()
@@ -183,22 +189,6 @@ const  # Parts.
     bulk: constructParts(Partiality.Bulk),
     weight: constructParts(Partiality.Weight),
   )
-
-const  # Exterior product.
-  CAYLEYS_WEDGE* = block:
-    let base = constructProductExterior(CAYLEYS_COMPLEMENT, Spatiality.Base)
-    Spatial[Cayley2D](
-      base: base,
-      anti: base.constructAnti(CAYLEYS_COMPLEMENT),
-    )
-  CAYLEY_ATTITUDE*: Cayley1D = block:  ## Attitude as one map, i.e. 𝐦 ∨ 𝐞̄ₙ.
-    var cayley = CAYLEYS_WEDGE.anti
-    cayley.applyConstant(Basis.horizon, Chirality.Right)
-
-when IS_CONFORMAL:
-  const CAYLEY_CARRIER*: Cayley1D = block:
-    var cayley = CAYLEYS_WEDGE.base
-    cayley.applyConstant(Basis.infinity.toSigned, Chirality.Right)
 
 const  # Interior products.
   CAYLEYS_INTERIOR* = Spatial[Partial[Chiral[Cayley2D]]](  ## (Anti)wedge with one operand dualized.
@@ -262,6 +252,16 @@ const  # Norms.
 when IS_CONFORMAL:
   const CAYLEYS_NORM_SQUARED_RADIUS* = CAYLEYS_DOT.anti  ## Squared radius norm, i.e. 𝐦 ∘ 𝐦.
 
+const  # Properties.
+  CAYLEY_ATTITUDE*: Cayley1D = block:  ## Attitude as one map, i.e. 𝐦 ∨ 𝐞̄ₙ.
+    var cayley = CAYLEYS_WEDGE.anti
+    cayley.applyConstant(Basis.horizon, Chirality.Right)
+
+when IS_CONFORMAL:
+  const CAYLEY_CARRIER*: Cayley1D = block:
+    var cayley = CAYLEYS_WEDGE.base
+    cayley.applyConstant(Basis.infinity.toSigned, Chirality.Right)
+
 
 
 #[ Operation Construction ]#
@@ -276,6 +276,33 @@ func constructReverse(): Cayley1D {.compileTime, noinit.} =
   ## Construct Cayley table for reverse; antireverse conjugates it.
   for b in Basis:
     result[b] = @[b.reverse]
+
+
+func constructProductExterior(
+  complements: Chiral[Cayley1D], spatiality: Spatiality
+): Cayley2D {.compileTime.} =
+  ## Construct Cayley table for specific exterior/(anti)wedge product.
+  for m in Basis:
+    for n in Basis:
+      # Retrieve product reduction if not degenerate.
+      let product = case spatiality
+        of Spatiality.Base: multiplyExterior(m.toSigned, n.toSigned)
+        of Spatiality.Anti: multiplyExterior(
+          complements.right[m].toSigned,
+          complements.right[n].toSigned,
+        )
+      if product.is_degenerate: continue
+
+      # Construct exterior product mappings.
+      result[m][n].add(case spatiality
+        of Spatiality.Base: product.basis
+        of Spatiality.Anti:
+          let product_complement = complements.left[product.basis.basis].toSigned
+          BasisSigned(
+            basis: product_complement.basis,
+            is_negated: product.basis.is_negated xor product_complement.is_negated,
+          )
+      )
 
 
 func constructAnti(cayley: Cayley1D, complements: Chiral[Cayley1D]): Cayley1D {.compileTime.} =
@@ -379,33 +406,6 @@ func constructParts(partiality: Partiality): Formal[Cayley1D] {.compileTime, noi
       round: constructPart(inclusions, exclusions & @[Basis.infinity]),
       flat: constructPart(inclusions & @[Basis.infinity], exclusions),
     )
-
-
-func constructProductExterior(
-  complements: Chiral[Cayley1D], spatiality: Spatiality
-): Cayley2D {.compileTime.} =
-  ## Construct Cayley table for specific exterior/(anti)wedge product.
-  for m in Basis:
-    for n in Basis:
-      # Retrieve product reduction if not degenerate.
-      let product = case spatiality
-        of Spatiality.Base: multiplyExterior(m.toSigned, n.toSigned)
-        of Spatiality.Anti: multiplyExterior(
-          complements.right[m].toSigned,
-          complements.right[n].toSigned,
-        )
-      if product.is_degenerate: continue
-
-      # Construct exterior product mappings.
-      result[m][n].add(case spatiality
-        of Spatiality.Base: product.basis
-        of Spatiality.Anti:
-          let product_complement = complements.left[product.basis.basis].toSigned
-          BasisSigned(
-            basis: product_complement.basis,
-            is_negated: product.basis.is_negated xor product_complement.is_negated,
-          )
-      )
 
 
 func constructProductsTransitional(
