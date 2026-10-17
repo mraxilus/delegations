@@ -28,9 +28,9 @@ which the attitude reads. The parts split by these projective vectors in both al
 ![Derivation map, after Lengyel's figure 2.16, in eleven blocks in the order of the code, where
 each box holds a symbol. Green boxes are the two inputs, grey boxes are basis and projective
 elements, and purple anti tables stand under their blue tables. A dashed box on the top row of a
-block brings in the boxes of one other block, one cell for each box. One line leaves each dashed
-box and forks to the boxes that it feeds, and each block builds downward. A dot marks where lines
-join, and a line that crosses another line with no dot passes over it. Each line carries its
+block brings in the boxes of one other block, one cell for each box, and each block builds
+downward. Each box takes its own line from each box that it uses, so no two lines join or fork. A
+line that crosses another line passes over it with a gap. Each line carries its
 formula, with the function that builds the table under it. A faded line is a route that the code
 does not take, and a faded box is an operator with no table. Brown text holds in RGA alone, and
 blue text in CGA alone.](../../pages/derivation-map.svg)
