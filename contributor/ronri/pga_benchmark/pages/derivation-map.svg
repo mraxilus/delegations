@@ -1,10 +1,11 @@
 <!-- Derivation map of P01, after Lengyel's figure 2.16, for RGA and CGA, with transwedge.
      Colours are shell tokens, with fallbacks so file reads alone. Proposal embeds it.
      Eleven blocks, in order of code; box holds symbol alone. Inputs from other blocks sit on top
-     row of each block, one dashed box per source block, cell per box; boxes build downward.
-     Box draws only inputs it cannot reach through another input. Dot marks join; line crossing
-     another with no dot passes over it. Formula sits on line, builder under. Faded line is route
-     code does not take; faded box is operator with no table.
+     row of each block, one dashed box per source block, cell per box, in order of blocks and
+     of derivation. One line leaves each dashed box and forks to boxes it feeds; boxes build
+     downward. Box draws only inputs it cannot reach through another input. Dot marks join; line
+     crossing another with no dot passes over it. Formula sits on line, builder under. Faded line
+     is route code does not take; faded box is operator with no table.
      Brown text holds in RGA alone, blue in CGA alone, in place of written algebra names.
      Bar under or over bold letter is decoration, mark kept at size zero: face gives no anchor.
      Bar over group of signs is decoration alone. Tilde and hat are spacing marks, set by width. -->
@@ -15,10 +16,9 @@
   the volume element, in the order of the code: bases, metric, parts, transitional products,
   interior products, geometric products, norms, properties, measures, projections and motion
   operators. Each block takes its inputs from other blocks on a top row, in one box for each
-  block that they come from, and builds downward. Each box holds a symbol, and each operator of
-  a formula enters its box by a line. Each line carries its formula and the function that builds
-  the table. Faded lines are routes that the code does not take, and faded boxes are operators
-  with no table.</desc>
+  block that they come from, with one line from each box, and builds downward. Each box holds a
+  symbol, and each line carries its formula and the function that builds the table. Faded lines
+  are routes that the code does not take, and faded boxes are operators with no table.</desc>
 <style>
 .map text { font-family: var(--sans, sans-serif); font-size: 12px; fill: var(--ink-2, #465262); }
 .map .title { font-size: 16px; fill: var(--ink, #16202c); }
@@ -224,11 +224,11 @@
 <text class="title" x="520" y="683.76" text-anchor="middle">∧</text>
 <rect class="cell fixed" x="542.5" y="665.5" width="35" height="25" rx="5"/>
 <text class="title" x="560" y="683.76" text-anchor="middle"><tspan
-    text-decoration="overline">𝐮</tspan><tspan font-size="0">̄</tspan></text>
+    text-decoration="underline">𝐮</tspan><tspan font-size="0">̱</tspan></text>
 <path class="sep" d="M540 668L540 688"/>
 <rect class="cell fixed" x="582.5" y="665.5" width="35" height="25" rx="5"/>
 <text class="title" x="600" y="683.76" text-anchor="middle"><tspan
-    text-decoration="underline">𝐮</tspan><tspan font-size="0">̱</tspan></text>
+    text-decoration="overline">𝐮</tspan><tspan font-size="0">̄</tspan></text>
 <path class="sep" d="M580 668L580 688"/>
 <g><rect class="fixed" x="265.0" y="917" width="130" height="34" rx="7"/>
   <text class="title" x="330" y="939.76" text-anchor="middle">𝐆</text>
@@ -243,26 +243,23 @@
   <text class="title" x="790" y="1059.76" text-anchor="middle">☆</text>
 </g>
 <path class="edge" d="M210 824L330 824"/>
-<path class="edge" d="M520 693L520 824L330 824"/>
+<path class="edge" d="M560 693L560 1009L330 1009L330 1037" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M560 824L330 824"/>
 <path class="edge" d="M330 824L330 917" marker-end="url(#map-arrow)"/>
-<circle class="dot" cx="330" cy="824" r="2.6"/>
 <text class="lab" x="340" y="867" text-anchor="start">𝐆(𝐚 ∧ 𝐛) = 𝐆𝐚 ∧ 𝐆𝐛</text>
 <text class="code edgecode lab" x="340" y="882"
     text-anchor="start">constructExomorphismMetric</text>
 <path class="edge" d="M395 934L560 934"/>
-<path class="edge" d="M560 693L560 934"/>
 <path class="edge" d="M560 934L725 934" marker-end="url(#map-arrow)"/>
 <text class="lab" x="642.5" y="926" text-anchor="middle">𝐮★ = <tspan
     text-decoration="overline">𝐆𝐮</tspan></text>
 <text class="code edgecode lab" x="642.5" y="949" text-anchor="middle">applyMap</text>
-<path class="edge" d="M560 934L560 1009L330 1009L330 1037" marker-end="url(#map-arrow)"/>
+<circle class="dot" cx="560" cy="824" r="2.6"/>
+<circle class="dot" cx="330" cy="824" r="2.6"/>
 <circle class="dot" cx="560" cy="934" r="2.6"/>
 <text class="lab" x="550" y="976.5" text-anchor="end">𝔾𝐮 = <tspan
     text-decoration="underline">𝐆<tspan text-decoration="overline">𝐮</tspan></tspan></text>
 <text class="code edgecode lab" x="550" y="991.5" text-anchor="end">constructAnti</text>
-<path class="hop" d="M600 929L600 939"/>
-<path class="edge" d="M600 693L600 1022L330 1022"/>
-<circle class="dot" cx="330" cy="1022" r="2.6"/>
 <path class="edge" d="M395 1054L725 1054" marker-end="url(#map-arrow)"/>
 <text class="lab" x="560" y="1046" text-anchor="middle">𝐮☆ = <tspan
     text-decoration="overline">𝔾𝐮</tspan></text>
@@ -270,10 +267,10 @@
 <rect class="group" x="360" y="1161" width="80" height="30" rx="7"/>
 <text class="groupname" x="363" y="1156">Bases</text>
 <rect class="cell base" x="362.5" y="1163.5" width="35" height="25" rx="5"/>
-<text class="title" x="380" y="1181.76" text-anchor="middle">𝐞ᵒ</text>
-<rect class="cell base" x="402.5" y="1163.5" width="35" height="25" rx="5"/>
-<text class="title" x="420" y="1181.76" text-anchor="middle"><tspan class="cga">𝐞<tspan dy="-6"
+<text class="title" x="380" y="1181.76" text-anchor="middle"><tspan class="cga">𝐞<tspan dy="-6"
     font-size="10.5">∞</tspan></tspan></text>
+<rect class="cell base" x="402.5" y="1163.5" width="35" height="25" rx="5"/>
+<text class="title" x="420" y="1181.76" text-anchor="middle">𝐞ᵒ</text>
 <path class="sep" d="M400 1166L400 1186"/>
 <rect class="group" x="770" y="1161" width="40" height="30" rx="7"/>
 <text class="groupname" x="773" y="1156">Metric</text>
@@ -285,17 +282,14 @@
   <text class="title" x="400" y="1327.76" text-anchor="middle">𝐮●, 𝐮○, <tspan
     class="cga">𝐮■, 𝐮□</tspan></text>
 </g>
-<path class="edge" d="M380 1191L380 1222L400 1222"/>
-<path class="edge" d="M420 1191L420 1222L400 1222"/>
-<path class="edge" d="M400 1222L400 1292" marker-end="url(#map-arrow)"/>
-<circle class="dot" cx="400" cy="1222" r="2.6"/>
-<text class="lab" x="410" y="1240" text-anchor="start">𝐮 = 𝐮● + 𝐮○<tspan
+<path class="edge" d="M400 1191L400 1292" marker-end="url(#map-arrow)"/>
+<text class="lab" x="410" y="1224.5" text-anchor="start">𝐮 = 𝐮● + 𝐮○<tspan
     class="cga"> + 𝐮■ + 𝐮□</tspan></text>
-<text class="lab" x="410" y="1254" text-anchor="start">where 𝐞ᵒ is in 𝐮○<tspan
+<text class="lab" x="410" y="1238.5" text-anchor="start">where 𝐞ᵒ is in 𝐮○<tspan
     class="cga">, 𝐮□</tspan></text>
-<text class="lab" x="410" y="1268" text-anchor="start"><tspan class="cga">and 𝐞<tspan dy="-5"
+<text class="lab" x="410" y="1252.5" text-anchor="start"><tspan class="cga">and 𝐞<tspan dy="-5"
     font-size="8.5">∞</tspan><tspan dy="5"> is in 𝐮■, 𝐮□</tspan></tspan></text>
-<text class="code edgecode lab" x="410" y="1282" text-anchor="start">constructParts</text>
+<text class="code edgecode lab" x="410" y="1266.5" text-anchor="start">constructParts</text>
 <g class="faded">
 <path class="edge" d="M790 1191L790 1322L475 1322" marker-end="url(#map-arrow)"/>
 </g>
@@ -307,13 +301,13 @@
 <text class="groupname" x="383" y="1424">Bases</text>
 <rect class="cell anti" x="382.5" y="1431.5" width="35" height="25" rx="5"/>
 <text class="title" x="400" y="1449.76" text-anchor="middle">∨</text>
-<rect class="group" x="580" y="1429" width="80" height="30" rx="7"/>
-<text class="groupname" x="583" y="1424">Metric</text>
-<rect class="cell fixed" x="582.5" y="1431.5" width="35" height="25" rx="5"/>
-<text class="title" x="600" y="1449.76" text-anchor="middle">★</text>
-<rect class="cell anti" x="622.5" y="1431.5" width="35" height="25" rx="5"/>
-<text class="title" x="640" y="1449.76" text-anchor="middle">☆</text>
-<path class="sep" d="M620 1434L620 1454"/>
+<rect class="group" x="600" y="1429" width="80" height="30" rx="7"/>
+<text class="groupname" x="603" y="1424">Metric</text>
+<rect class="cell fixed" x="602.5" y="1431.5" width="35" height="25" rx="5"/>
+<text class="title" x="620" y="1449.76" text-anchor="middle">★</text>
+<rect class="cell anti" x="642.5" y="1431.5" width="35" height="25" rx="5"/>
+<text class="title" x="660" y="1449.76" text-anchor="middle">☆</text>
+<path class="sep" d="M640 1434L640 1454"/>
 <g><rect class="fixed" x="325" y="1563" width="150" height="34" rx="7"/>
   <text class="title" x="400" y="1587.2" text-anchor="middle" style="font-size: 20px">⩓ₖ</text>
 </g>
@@ -321,17 +315,15 @@
   <text class="title" x="400" y="1737.2" text-anchor="middle" style="font-size: 20px">⩔ₖ</text>
 </g>
 <path class="edge" d="M400 1459L400 1563" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M600 1459L600 1500L400 1500"/>
+<path class="edge" d="M640 1459L640 1500L400 1500"/>
+<path class="edge" d="M400 1514L290 1514L290 1650L400 1650L400 1713" marker-end="url(#map-arrow)"/>
 <circle class="dot" cx="400" cy="1500" r="2.6"/>
-<text class="lab" x="410" y="1520.5" text-anchor="start">𝐚 ⩓ₖ 𝐛 = Σ (<tspan
+<circle class="dot" cx="400" cy="1514" r="2.6"/>
+<text class="lab" x="410" y="1527.5" text-anchor="start">𝐚 ⩓ₖ 𝐛 = Σ (<tspan
     text-decoration="underline">𝐜</tspan><tspan font-size="0">̱</tspan> ∨ 𝐚) ∧ (𝐛 ∨ 𝐜★)</text>
-<text class="lab" x="410" y="1535.5" text-anchor="start">where gr 𝐜 = k</text>
-<text class="code edgecode lab" x="410" y="1550.5"
+<text class="lab" x="410" y="1542.5" text-anchor="start">where gr 𝐜 = k</text>
+<text class="code edgecode lab" x="410" y="1557.5"
     text-anchor="start">constructProductsTransitional</text>
-<path class="edge" d="M400 1474L290 1474L290 1650L400 1650L400 1713" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M640 1459L640 1650L400 1650"/>
-<circle class="dot" cx="400" cy="1474" r="2.6"/>
-<circle class="dot" cx="400" cy="1650" r="2.6"/>
 <text class="lab" x="410" y="1670.5" text-anchor="start">𝐚 ⩔ₖ 𝐛 = Σ (<tspan
     text-decoration="underline">𝐜</tspan><tspan font-size="0">̱</tspan> ∧ 𝐚) ∨ (𝐛 ∧ 𝐜☆)</text>
 <text class="lab" x="410" y="1685.5" text-anchor="start">where n − gr 𝐜 = k</text>
@@ -341,38 +333,38 @@
 <text class="groupname" x="15" y="1822">Bases</text>
 <rect class="cell anti" x="14.5" y="1829.5" width="35" height="25" rx="5"/>
 <text class="title" x="32" y="1847.76" text-anchor="middle">∨</text>
-<rect class="group" x="230" y="1827" width="160" height="30" rx="7"/>
-<text class="groupname" x="233" y="1822">Metric</text>
-<rect class="cell fixed" x="232.5" y="1829.5" width="35" height="25" rx="5"/>
-<text class="title" x="250" y="1847.76" text-anchor="middle">★</text>
-<rect class="cell anti" x="272.5" y="1829.5" width="35" height="25" rx="5"/>
-<text class="title" x="290" y="1847.76" text-anchor="middle">☆</text>
-<path class="sep" d="M270 1832L270 1852"/>
+<rect class="group" x="188" y="1827" width="144" height="30" rx="7"/>
+<text class="groupname" x="191" y="1822">Metric</text>
 <g class="faded">
-<rect class="cell fixed" x="312.5" y="1829.5" width="35" height="25" rx="5"/>
-<text class="title" x="330" y="1847.76" text-anchor="middle">𝐆</text>
+<rect class="cell fixed" x="190.5" y="1829.5" width="31" height="25" rx="5"/>
+<text class="title" x="206" y="1847.76" text-anchor="middle">𝐆</text>
 </g>
-<path class="sep" d="M310 1832L310 1852"/>
+<rect class="cell fixed" x="226.5" y="1829.5" width="31" height="25" rx="5"/>
+<text class="title" x="242" y="1847.76" text-anchor="middle">★</text>
+<path class="sep" d="M224 1832L224 1852"/>
 <g class="faded">
-<rect class="cell anti" x="352.5" y="1829.5" width="35" height="25" rx="5"/>
-<text class="title" x="370" y="1847.76" text-anchor="middle">𝔾</text>
+<rect class="cell anti" x="262.5" y="1829.5" width="31" height="25" rx="5"/>
+<text class="title" x="278" y="1847.76" text-anchor="middle">𝔾</text>
 </g>
-<path class="sep" d="M350 1832L350 1852"/>
-<rect class="group" x="624" y="1827" width="88" height="30" rx="7"/>
-<text class="groupname" x="627" y="1822">Transitional products</text>
-<rect class="cell anti" x="626.5" y="1829.5" width="39" height="25" rx="5"/>
-<text class="title" x="646" y="1849.2" text-anchor="middle" style="font-size: 20px">⩔ₖ</text>
-<rect class="cell fixed" x="670.5" y="1829.5" width="39" height="25" rx="5"/>
-<text class="title" x="690" y="1849.2" text-anchor="middle" style="font-size: 20px">⩓ₖ</text>
-<path class="sep" d="M668 1832L668 1852"/>
+<path class="sep" d="M260 1832L260 1852"/>
+<rect class="cell anti" x="298.5" y="1829.5" width="31" height="25" rx="5"/>
+<text class="title" x="314" y="1847.76" text-anchor="middle">☆</text>
+<path class="sep" d="M296 1832L296 1852"/>
+<rect class="group" x="646" y="1827" width="88" height="30" rx="7"/>
+<text class="groupname" x="649" y="1822">Transitional products</text>
+<rect class="cell fixed" x="648.5" y="1829.5" width="39" height="25" rx="5"/>
+<text class="title" x="668" y="1849.2" text-anchor="middle" style="font-size: 20px">⩓ₖ</text>
+<rect class="cell anti" x="692.5" y="1829.5" width="39" height="25" rx="5"/>
+<text class="title" x="712" y="1849.2" text-anchor="middle" style="font-size: 20px">⩔ₖ</text>
+<path class="sep" d="M690 1832L690 1852"/>
 <g><rect class="fixed" x="45" y="1981" width="150" height="34" rx="7"/>
   <text class="title" x="120" y="2003.76" text-anchor="middle">𝐚 ∧ 𝐛★</text>
 </g>
-<g><rect class="anti" x="45" y="2131" width="150" height="34" rx="7"/>
-  <text class="title" x="120" y="2153.76" text-anchor="middle">𝐚 ∨ 𝐛★</text>
-</g>
 <g><rect class="fixed" x="325" y="1981" width="150" height="34" rx="7"/>
   <text class="title" x="400" y="2003.76" text-anchor="middle">𝐚 ∧ 𝐛☆</text>
+</g>
+<g><rect class="anti" x="45" y="2131" width="150" height="34" rx="7"/>
+  <text class="title" x="120" y="2153.76" text-anchor="middle">𝐚 ∨ 𝐛★</text>
 </g>
 <g><rect class="anti" x="325" y="2131" width="150" height="34" rx="7"/>
   <text class="title" x="400" y="2153.76" text-anchor="middle">𝐚 ∨ 𝐛☆</text>
@@ -384,86 +376,47 @@
   <text class="title" x="690" y="2449.52" text-anchor="middle" style="font-size: 32px">∘</text>
 </g>
 <g class="faded">
-<path class="edge" d="M370 1857L370 1869L855 1869L855 2438L765 2438" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M400 1882L840 1882L840 2438L765 2438" marker-end="url(#map-arrow)"/>
 </g>
 <g class="faded">
-<text class="lab" x="810" y="2430" text-anchor="middle">(𝐚ᵀ𝔾𝐛)𝟙</text>
-<text class="lab" x="810" y="2416" text-anchor="middle">𝐚 ∘ 𝐛 =</text>
+<path class="edge" d="M840 2298L765 2298" marker-end="url(#map-arrow)"/>
 </g>
 <g class="faded">
-<path class="edge" d="M330 1857L330 1879L820 1879L820 2298L765 2298" marker-end="url(#map-arrow)"/>
+<circle class="dot" cx="840" cy="2298" r="2.6"/>
 </g>
 <g class="faded">
-<text class="lab" x="792.5" y="2290" text-anchor="middle">𝐚ᵀ𝐆𝐛</text>
-<text class="lab" x="792.5" y="2276" text-anchor="middle">𝐚 ∙ 𝐛 =</text>
-</g>
-<path class="edge" d="M250 1857L250 2048L120 2048"/>
-<path class="edge" d="M250 1869L120 1869L120 1981" marker-end="url(#map-arrow)"/>
-<circle class="dot" cx="250" cy="1869" r="2.6"/>
-<text class="lab" x="130" y="1921.5" text-anchor="start">with 𝐛★ for 𝐛</text>
-<text class="code edgecode lab" x="130" y="1936.5" text-anchor="start">applyMap</text>
-<path class="edge" d="M290 1857L290 2048L400 2048"/>
-<path class="edge" d="M290 1889L400 1889L400 1981" marker-end="url(#map-arrow)"/>
-<circle class="dot" cx="290" cy="1889" r="2.6"/>
-<text class="lab" x="410" y="1931.5" text-anchor="start">with 𝐛☆ for 𝐛</text>
-<text class="code edgecode lab" x="410" y="1946.5" text-anchor="start">applyMap</text>
-<path class="edge" d="M120 2048L120 2131" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M400 2048L400 2131" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M30 1857L30 2072L120 2072"/>
-<path class="hop" d="M115 2060L125 2060"/>
-<path class="edge" d="M30 2060L400 2060"/>
-<circle class="dot" cx="30" cy="2060" r="2.6"/>
-<circle class="dot" cx="120" cy="2048" r="2.6"/>
-<circle class="dot" cx="120" cy="2072" r="2.6"/>
-<circle class="dot" cx="400" cy="2048" r="2.6"/>
-<circle class="dot" cx="400" cy="2060" r="2.6"/>
-<text class="lab" x="130" y="2098" text-anchor="start">with 𝐛★ for 𝐛</text>
-<text class="code edgecode lab" x="130" y="2113" text-anchor="start">applyMap</text>
-<text class="lab" x="410" y="2092" text-anchor="start">with 𝐛☆ for 𝐛</text>
-<text class="code edgecode lab" x="410" y="2107" text-anchor="start">applyMap</text>
-<path class="hop" d="M646 1864L646 1874"/>
-<path class="hop" d="M646 1874L646 1884"/>
-<g class="faded">
-<path class="edge" d="M646 1857L646 1899L560 1899L560 2438L615 2438" marker-end="url(#map-arrow)"/>
+<text class="lab" x="802.5" y="2290" text-anchor="middle">𝐚ᵀ𝐆𝐛</text>
+<text class="lab" x="802.5" y="2276" text-anchor="middle">𝐚 ∙ 𝐛 =</text>
 </g>
 <g class="faded">
-<path class="edge" d="M560 1990L475 1990" marker-end="url(#map-arrow)"/>
+<text class="lab" x="802.5" y="2430" text-anchor="middle">(𝐚ᵀ𝔾𝐛)𝟙</text>
+<text class="lab" x="802.5" y="2416" text-anchor="middle">𝐚 ∘ 𝐛 =</text>
 </g>
 <g class="faded">
-<circle class="dot" cx="560" cy="1990" r="2.6"/>
+<path class="edge" d="M690 1990L475 1990" marker-end="url(#map-arrow)"/>
 </g>
 <g class="faded">
-<text class="lab" x="570" y="1941" text-anchor="start">𝐚 ∧ 𝐛☆ = 𝐛 ⩔ₖ 𝐚</text>
-<text class="lab" x="570" y="1956" text-anchor="start">where k = n − gr 𝐛</text>
+<text class="lab" x="582.5" y="1982" text-anchor="middle">where k = n − gr 𝐛</text>
+<text class="lab" x="582.5" y="1968" text-anchor="middle">𝐚 ∧ 𝐛☆ = 𝐛 ⩔ₖ 𝐚</text>
+</g>
+<g class="faded">
+<path class="edge" d="M690 2253L560 2253L560 2438L615 2438" marker-end="url(#map-arrow)"/>
 </g>
 <g class="faded">
 <text class="lab" x="570" y="2365.5" text-anchor="start">𝐚 ∘ 𝐛 = 𝐚 ⩔ₖ 𝐛</text>
 <text class="lab" x="570" y="2380.5" text-anchor="start">where k = n − gr 𝐚</text>
 <text class="lab" x="570" y="2395.5" text-anchor="start">= n − gr 𝐛</text>
 </g>
-<path class="hop" d="M690 1864L690 1874"/>
-<path class="hop" d="M690 1874L690 1884"/>
-<path class="edge" d="M690 1857L690 2281" marker-end="url(#map-arrow)"/>
-<text class="lab" x="700" y="2203.5" text-anchor="start">𝐚 ∙ 𝐛 = 𝐚 ⩓ₖ 𝐛</text>
-<text class="lab" x="700" y="2218.5" text-anchor="start">where k = gr 𝐚 = gr 𝐛</text>
-<text class="code edgecode lab" x="700" y="2233.5" text-anchor="start">constructDot</text>
-<path class="edge" d="M690 2315L690 2421" marker-end="url(#map-arrow)"/>
-<text class="lab" x="700" y="2364.5" text-anchor="start">𝐚 ∘ 𝐛 = <tspan
-    text-decoration="underline"><tspan text-decoration="overline">𝐚</tspan> ∙ <tspan
-    text-decoration="overline">𝐛</tspan></tspan></text>
-<text class="code edgecode lab" x="700" y="2379.5" text-anchor="start">constructAnti</text>
 <g class="faded">
 <path class="edge" d="M475 2006L500 2006L500 2468L690 2468L690 2455" marker-end="url(#map-arrow)"/>
 </g>
 <g class="faded">
 <text class="lab" x="595" y="2486" text-anchor="middle">𝐚 ∘ 𝐛 = 𝐚 ∧ 𝐛☆, where gr 𝐚 = gr 𝐛</text>
 </g>
-<path class="hop" d="M555 2193L565 2193"/>
 <path class="hop" d="M495 2193L505 2193"/>
 <g class="faded">
 <path class="edge" d="M690 2193L160 2193L160 2165" marker-end="url(#map-arrow)"/>
 </g>
-<circle class="dot" cx="690" cy="2193" r="2.6"/>
 <g class="faded">
 <text class="lab" x="320" y="2211" text-anchor="middle">𝐚 ∨ 𝐛★ = 𝐛 ⩓ₖ 𝐚</text>
 <text class="lab" x="320" y="2225" text-anchor="middle">where k = gr 𝐛</text>
@@ -477,13 +430,44 @@
 <text class="lab" x="130" y="2245.5" text-anchor="start">𝐚 ∙ 𝐛 = 𝐚 ∨ 𝐛★</text>
 <text class="lab" x="130" y="2260.5" text-anchor="start">where gr 𝐚 = gr 𝐛</text>
 </g>
-<rect class="group" x="178" y="2567" width="88" height="30" rx="7"/>
-<text class="groupname" x="181" y="2562">Transitional products</text>
-<rect class="cell fixed" x="180.5" y="2569.5" width="39" height="25" rx="5"/>
-<text class="title" x="200" y="2589.2" text-anchor="middle" style="font-size: 20px">⩓ₖ</text>
-<rect class="cell anti" x="224.5" y="2569.5" width="39" height="25" rx="5"/>
-<text class="title" x="244" y="2589.2" text-anchor="middle" style="font-size: 20px">⩔ₖ</text>
-<path class="sep" d="M222 2572L222 2592"/>
+<path class="edge" d="M260 1857L260 2060"/>
+<path class="edge" d="M260 1882L120 1882L120 1981" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M260 1882L400 1882L400 1981" marker-end="url(#map-arrow)"/>
+<text class="lab" x="130" y="1928" text-anchor="start">with 𝐛★ for 𝐛</text>
+<text class="code edgecode lab" x="130" y="1943" text-anchor="start">applyMap</text>
+<text class="lab" x="410" y="1928" text-anchor="start">with 𝐛☆ for 𝐛</text>
+<text class="code edgecode lab" x="410" y="1943" text-anchor="start">applyMap</text>
+<path class="edge" d="M32 1857L32 2048L260 2048"/>
+<path class="edge" d="M260 2060L120 2060L120 2131" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M260 2060L400 2060L400 2131" marker-end="url(#map-arrow)"/>
+<text class="lab" x="130" y="2092" text-anchor="start">with 𝐛★ for 𝐛</text>
+<text class="code edgecode lab" x="130" y="2107" text-anchor="start">applyMap</text>
+<text class="lab" x="410" y="2092" text-anchor="start">with 𝐛☆ for 𝐛</text>
+<text class="code edgecode lab" x="410" y="2107" text-anchor="start">applyMap</text>
+<path class="hop" d="M690 1877L690 1887"/>
+<path class="edge" d="M690 1857L690 2281" marker-end="url(#map-arrow)"/>
+<text class="lab" x="700" y="2203.5" text-anchor="start">𝐚 ∙ 𝐛 = 𝐚 ⩓ₖ 𝐛</text>
+<text class="lab" x="700" y="2218.5" text-anchor="start">where k = gr 𝐚 = gr 𝐛</text>
+<text class="code edgecode lab" x="700" y="2233.5" text-anchor="start">constructDot</text>
+<path class="edge" d="M690 2315L690 2421" marker-end="url(#map-arrow)"/>
+<text class="lab" x="700" y="2364.5" text-anchor="start">𝐚 ∘ 𝐛 = <tspan
+    text-decoration="underline"><tspan text-decoration="overline">𝐚</tspan> ∙ <tspan
+    text-decoration="overline">𝐛</tspan></tspan></text>
+<text class="code edgecode lab" x="700" y="2379.5" text-anchor="start">constructAnti</text>
+<circle class="dot" cx="260" cy="1882" r="2.6"/>
+<circle class="dot" cx="400" cy="1882" r="2.6"/>
+<circle class="dot" cx="260" cy="2048" r="2.6"/>
+<circle class="dot" cx="260" cy="2060" r="2.6"/>
+<circle class="dot" cx="690" cy="1990" r="2.6"/>
+<circle class="dot" cx="690" cy="2193" r="2.6"/>
+<circle class="dot" cx="690" cy="2253" r="2.6"/>
+<rect class="group" x="156" y="2567" width="88" height="30" rx="7"/>
+<text class="groupname" x="159" y="2562">Transitional products</text>
+<rect class="cell fixed" x="158.5" y="2569.5" width="39" height="25" rx="5"/>
+<text class="title" x="178" y="2589.2" text-anchor="middle" style="font-size: 20px">⩓ₖ</text>
+<rect class="cell anti" x="202.5" y="2569.5" width="39" height="25" rx="5"/>
+<text class="title" x="222" y="2589.2" text-anchor="middle" style="font-size: 20px">⩔ₖ</text>
+<path class="sep" d="M200 2572L200 2592"/>
 <g><rect class="fixed" x="125" y="2691" width="150" height="34" rx="7"/>
   <text class="title" x="200" y="2715.92" text-anchor="middle" style="font-size: 22px">⟑</text>
 </g>
@@ -491,11 +475,12 @@
   <text class="title" x="200" y="2845.92" text-anchor="middle" style="font-size: 22px">⟇</text>
 </g>
 <path class="edge" d="M200 2597L200 2691" marker-end="url(#map-arrow)"/>
-<text class="lab" x="210" y="2640.5" text-anchor="start">𝐚 ⟑ 𝐛 = Σ (−1)<tspan dy="-5"
+<text class="lab" x="210" y="2646.5" text-anchor="start">𝐚 ⟑ 𝐛 = Σ (−1)<tspan dy="-5"
     font-size="8.5">k(k−1)/2</tspan><tspan dy="5"> </tspan>𝐚 ⩓ₖ 𝐛</text>
-<text class="code edgecode lab" x="210" y="2655.5"
+<text class="code edgecode lab" x="210" y="2661.5"
     text-anchor="start">constructProductGeometric</text>
-<path class="edge" d="M244 2597L244 2609L560 2609L560 2838L275 2838" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M200 2609L560 2609L560 2838L275 2838" marker-end="url(#map-arrow)"/>
+<circle class="dot" cx="200" cy="2609" r="2.6"/>
 <text class="lab" x="417.5" y="2830" text-anchor="middle">𝐚 ⟇ 𝐛 = Σ (−1)<tspan dy="-5"
     font-size="8.5">k(k−1)/2</tspan><tspan dy="5"> </tspan>𝐚 ⩔ₖ 𝐛</text>
 <text class="code edgecode lab" x="417.5" y="2853"
@@ -611,54 +596,54 @@
 <text class="quiet" x="595" y="3470" text-anchor="end"><tspan
     class="cga">no formula in library</tspan></text>
 </g>
-<rect class="group" x="10" y="3563" width="788" height="30" rx="7"/>
-<text class="groupname" x="13" y="3558">Bases</text>
-<rect class="cell fixed" x="12.5" y="3565.5" width="24" height="25" rx="5"/>
-<text class="title" x="26" y="3583.76" text-anchor="middle"><tspan
-    text-decoration="overline">𝐮</tspan><tspan font-size="0">̄</tspan></text>
-<rect class="cell fixed" x="41.5" y="3565.5" width="28" height="25" rx="5"/>
-<text class="title" x="52" y="3583.76" text-anchor="middle"><tspan
-    text-decoration="underline">𝐮</tspan><tspan font-size="0">̱</tspan></text>
-<path class="sep" d="M39 3568L39 3588"/>
-<rect class="cell base" x="74.5" y="3565.5" width="148" height="25" rx="5"/>
-<text class="title" x="140" y="3583.76" text-anchor="middle">𝐞₁, …, 𝐞ₙ</text>
-<path class="sep" d="M72 3568L72 3588"/>
-<g class="faded">
-<rect class="cell base" x="227.5" y="3565.5" width="100" height="25" rx="5"/>
-<text class="title" x="310" y="3583.76" text-anchor="middle">𝐞ᵒ</text>
-</g>
-<path class="sep" d="M225 3568L225 3588"/>
-<rect class="cell base" x="332.5" y="3565.5" width="120" height="25" rx="5"/>
-<text class="title" x="350" y="3583.76" text-anchor="middle"><tspan
-    text-decoration="overline">𝐞ᵒ</tspan></text>
-<path class="sep" d="M330 3568L330 3588"/>
-<rect class="cell anti" x="457.5" y="3565.5" width="145" height="25" rx="5"/>
-<text class="title" x="560" y="3583.76" text-anchor="middle">∨</text>
-<path class="sep" d="M455 3568L455 3588"/>
-<rect class="cell fixed" x="607.5" y="3565.5" width="85" height="25" rx="5"/>
-<text class="title" x="650" y="3583.76" text-anchor="middle">∧</text>
-<path class="sep" d="M605 3568L605 3588"/>
-<rect class="cell base" x="697.5" y="3565.5" width="98" height="25" rx="5"/>
-<text class="title" x="740" y="3583.76" text-anchor="middle"><tspan class="cga">𝐞<tspan dy="-6"
+<rect class="group" x="12" y="3563" width="348" height="30" rx="7"/>
+<text class="groupname" x="15" y="3558">Bases</text>
+<rect class="cell base" x="14.5" y="3565.5" width="91" height="25" rx="5"/>
+<text class="title" x="60" y="3583.76" text-anchor="middle">𝐞₁, …, 𝐞ₙ</text>
+<rect class="cell fixed" x="110.5" y="3565.5" width="31" height="25" rx="5"/>
+<text class="title" x="126" y="3583.76" text-anchor="middle">∧</text>
+<path class="sep" d="M108 3568L108 3588"/>
+<rect class="cell base" x="146.5" y="3565.5" width="31" height="25" rx="5"/>
+<text class="title" x="162" y="3583.76" text-anchor="middle"><tspan class="cga">𝐞<tspan dy="-6"
     font-size="10.5">∞</tspan></tspan></text>
-<path class="sep" d="M695 3568L695 3588"/>
-<rect class="group" x="805" y="3563" width="62" height="30" rx="7"/>
-<text class="groupname" x="808" y="3558">Metric</text>
+<path class="sep" d="M144 3568L144 3588"/>
 <g class="faded">
-<rect class="cell anti" x="807.5" y="3565.5" width="26" height="25" rx="5"/>
-<text class="title" x="820.5" y="3583.76" text-anchor="middle">☆</text>
+<rect class="cell base" x="182.5" y="3565.5" width="31" height="25" rx="5"/>
+<text class="title" x="198" y="3583.76" text-anchor="middle">𝐞ᵒ</text>
+</g>
+<path class="sep" d="M180 3568L180 3588"/>
+<rect class="cell fixed" x="218.5" y="3565.5" width="31" height="25" rx="5"/>
+<text class="title" x="234" y="3583.76" text-anchor="middle"><tspan
+    text-decoration="underline">𝐮</tspan><tspan font-size="0">̱</tspan></text>
+<path class="sep" d="M216 3568L216 3588"/>
+<rect class="cell fixed" x="254.5" y="3565.5" width="31" height="25" rx="5"/>
+<text class="title" x="270" y="3583.76" text-anchor="middle"><tspan
+    text-decoration="overline">𝐮</tspan><tspan font-size="0">̄</tspan></text>
+<path class="sep" d="M252 3568L252 3588"/>
+<rect class="cell anti" x="290.5" y="3565.5" width="31" height="25" rx="5"/>
+<text class="title" x="306" y="3583.76" text-anchor="middle">∨</text>
+<path class="sep" d="M288 3568L288 3588"/>
+<rect class="cell base" x="326.5" y="3565.5" width="31" height="25" rx="5"/>
+<text class="title" x="342" y="3583.76" text-anchor="middle"><tspan
+    text-decoration="overline">𝐞ᵒ</tspan></text>
+<path class="sep" d="M324 3568L324 3588"/>
+<rect class="group" x="804" y="3563" width="64" height="30" rx="7"/>
+<text class="groupname" x="807" y="3558">Metric</text>
+<g class="faded">
+<rect class="cell fixed" x="806.5" y="3565.5" width="27" height="25" rx="5"/>
+<text class="title" x="820" y="3583.76" text-anchor="middle">★</text>
 </g>
 <g class="faded">
-<rect class="cell fixed" x="838.5" y="3565.5" width="26" height="25" rx="5"/>
-<text class="title" x="851.5" y="3583.76" text-anchor="middle">★</text>
+<rect class="cell anti" x="838.5" y="3565.5" width="27" height="25" rx="5"/>
+<text class="title" x="852" y="3583.76" text-anchor="middle">☆</text>
 </g>
 <path class="sep" d="M836 3568L836 3588"/>
-<g><rect class="fixed" x="90.0" y="3707" width="100" height="34" rx="7"/>
-  <text class="title" x="140" y="3729.76" text-anchor="middle">𝐮<tspan dx="-8.93"
+<g><rect class="fixed" x="136.0" y="3707" width="100" height="34" rx="7"/>
+  <text class="title" x="186" y="3729.76" text-anchor="middle">𝐮<tspan dx="-8.93"
     dy="-1.33333">˜</tspan><tspan dx="1.76" dy="1.33333"></tspan></text>
 </g>
-<g><rect class="anti" x="90.0" y="3887" width="100" height="34" rx="7"/>
-  <text class="title" x="140" y="3909.76" text-anchor="middle">𝐮<tspan dx="-8.93"
+<g><rect class="anti" x="136.0" y="3887" width="100" height="34" rx="7"/>
+  <text class="title" x="186" y="3909.76" text-anchor="middle">𝐮<tspan dx="-8.93"
     dy="14">˜</tspan><tspan dx="1.76" dy="-14"></tspan></text>
 </g>
 <g><rect class="fixed" x="390.0" y="3707" width="100" height="34" rx="7"/>
@@ -688,133 +673,98 @@
 </g>
 </g>
 <g class="faded">
-<g><rect class="fixed" x="720.0" y="3887" width="100" height="34" rx="7"/>
-  <text class="title" x="770" y="3909.76" text-anchor="middle"><tspan class="cga">⊡</tspan></text>
+<g><rect class="fixed" x="710.0" y="3887" width="100" height="34" rx="7"/>
+  <text class="title" x="760" y="3909.76" text-anchor="middle"><tspan class="cga">⊡</tspan></text>
 </g>
 </g>
 <g class="faded">
-<g><rect class="fixed" x="720.0" y="4067" width="100" height="34" rx="7"/>
-  <text class="title" x="770" y="4089.76" text-anchor="middle"><tspan class="cga">⊛</tspan></text>
+<g><rect class="fixed" x="710.0" y="4067" width="100" height="34" rx="7"/>
+  <text class="title" x="760" y="4089.76" text-anchor="middle"><tspan class="cga">⊛</tspan></text>
 </g>
 </g>
-<path class="edge" d="M140 3593L140 3707" marker-end="url(#map-arrow)"/>
-<text class="lab" x="150" y="3645" text-anchor="start">𝐮<tspan dx="-6.70" dy="-1">˜</tspan><tspan
+<path class="edge" d="M186 3593L186 3707" marker-end="url(#map-arrow)"/>
+<text class="lab" x="196" y="3649" text-anchor="start">𝐮<tspan dx="-6.70" dy="-1">˜</tspan><tspan
     dx="1.32" dy="1"> = </tspan>(−1)<tspan dy="-5" font-size="8.5">k(k−1)/2</tspan><tspan
     dy="5"> </tspan>𝐮</text>
-<text class="lab" x="150" y="3660" text-anchor="start">where k = gr 𝐮</text>
-<text class="code edgecode lab" x="150" y="3675" text-anchor="start">constructReverse</text>
+<text class="lab" x="196" y="3664" text-anchor="start">where k = gr 𝐮</text>
+<text class="code edgecode lab" x="196" y="3679" text-anchor="start">constructReverse</text>
+<path class="edge" d="M186 3613L650 3613L650 3707" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M440 3613L440 3707" marker-end="url(#map-arrow)"/>
+<text class="lab" x="450" y="3656.5" text-anchor="start">𝐮⊖ = 𝐮 ∨ <tspan
+    text-decoration="overline">𝐞ᵒ</tspan></text>
+<text class="code edgecode lab" x="450" y="3671.5" text-anchor="start">applyConstant</text>
+<text class="lab" x="660" y="3656.5" text-anchor="start"><tspan class="cga">𝐮⊟ = 𝐮 ∧ 𝐞<tspan
+    dy="-5" font-size="8.5">∞</tspan><tspan dy="5"></tspan></tspan></text>
+<text class="code edgecode lab" x="660" y="3671.5" text-anchor="start">applyConstant</text>
+<path class="edge" d="M186 3741L186 3887" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M186 3613L30 3613L30 3842L186 3842"/>
 <g class="faded">
-<path class="edge" d="M140 3605L74 3605L74 3944L140 3944L140 3921" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M30 3842L30 3944L186 3944L186 3921" marker-end="url(#map-arrow)"/>
 </g>
-<circle class="dot" cx="140" cy="3605" r="2.6"/>
 <g class="faded">
-<text class="lab" x="137" y="3962" text-anchor="middle">𝐮<tspan dx="-6.70"
+<text class="lab" x="138" y="3962" text-anchor="middle">𝐮<tspan dx="-6.70"
     dy="10.5">˜</tspan><tspan dx="1.32" dy="-10.5"> = </tspan>(−1)<tspan dy="-5"
     font-size="8.5">k(k−1)/2</tspan><tspan dy="5"> </tspan>𝐮</text>
-<text class="lab" x="137" y="3976" text-anchor="middle">where k = n − gr 𝐮</text>
+<text class="lab" x="138" y="3976" text-anchor="middle">where k = n − gr 𝐮</text>
 </g>
-<path class="edge" d="M140 3741L140 3887" marker-end="url(#map-arrow)"/>
-<path class="hop" d="M69 3842L79 3842"/>
-<path class="edge" d="M26 3593L26 3842L140 3842"/>
-<path class="edge" d="M52 3593L52 3842"/>
-<circle class="dot" cx="52" cy="3842" r="2.6"/>
-<circle class="dot" cx="140" cy="3842" r="2.6"/>
-<text class="lab" x="150" y="3780.5" text-anchor="start">𝐮<tspan dx="-6.70"
+<text class="lab" x="196" y="3780.5" text-anchor="start">𝐮<tspan dx="-6.70"
     dy="10.5">˜</tspan><tspan dx="1.32" dy="-10.5"> = </tspan><tspan
     text-decoration="underline">𝐱</tspan><tspan font-size="0">̱</tspan> where</text>
-<text class="lab" x="150" y="3795.5" text-anchor="start">𝐱 = 𝐲<tspan dx="-6.70"
+<text class="lab" x="196" y="3795.5" text-anchor="start">𝐱 = 𝐲<tspan dx="-6.70"
     dy="-1">˜</tspan><tspan dx="1.32" dy="1">, </tspan>𝐲 = <tspan
     text-decoration="overline">𝐮</tspan><tspan font-size="0">̄</tspan></text>
-<text class="code edgecode lab" x="150" y="3810.5" text-anchor="start">constructAnti</text>
-<path class="edge" d="M350 3593L350 3650L440 3650L440 3707" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M560 3593L560 3662L440 3662"/>
-<text class="lab" x="450" y="3681" text-anchor="start">𝐮⊖ = 𝐮 ∨ <tspan
-    text-decoration="overline">𝐞ᵒ</tspan></text>
-<text class="code edgecode lab" x="450" y="3696" text-anchor="start">applyConstant</text>
-<path class="edge" d="M650 3593L650 3707" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M740 3593L740 3662L650 3662"/>
-<text class="lab" x="660" y="3681" text-anchor="start"><tspan class="cga">𝐮⊟ = 𝐮 ∧ 𝐞<tspan dy="-5"
-    font-size="8.5">∞</tspan><tspan dy="5"></tspan></tspan></text>
-<text class="code edgecode lab" x="660" y="3696" text-anchor="start">applyConstant</text>
-<g class="faded">
-<path class="edge" d="M560 3662L560 4022L440 4022"/>
-</g>
-<g class="faded">
-<path class="edge" d="M350 3650L350 3998L440 3998L440 4067" marker-end="url(#map-arrow)"/>
-</g>
-<circle class="dot" cx="440" cy="3662" r="2.6"/>
-<circle class="dot" cx="560" cy="3662" r="2.6"/>
-<circle class="dot" cx="350" cy="3650" r="2.6"/>
-<circle class="dot" cx="650" cy="3662" r="2.6"/>
+<text class="code edgecode lab" x="196" y="3810.5" text-anchor="start">constructAnti</text>
+<circle class="dot" cx="186" cy="3613" r="2.6"/>
+<circle class="dot" cx="440" cy="3613" r="2.6"/>
+<circle class="dot" cx="186" cy="3842" r="2.6"/>
+<circle class="dot" cx="30" cy="3842" r="2.6"/>
 <g class="faded">
 <path class="edge" d="M650 3741L650 3887" marker-end="url(#map-arrow)"/>
 </g>
 <g class="faded">
-<path class="edge" d="M650 3842L770 3842L770 3887" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M650 3842L760 3842L760 3887" marker-end="url(#map-arrow)"/>
 </g>
 <g class="faded">
 <path class="edge" d="M650 3921L650 4067" marker-end="url(#map-arrow)"/>
 </g>
 <g class="faded">
-<path class="edge" d="M770 3921L770 4067" marker-end="url(#map-arrow)"/>
-</g>
-<path class="hop" d="M345 3818L355 3818"/>
-<g class="faded">
-<path class="edge" d="M310 3593L310 3818L440 3818L440 3887" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M760 3921L760 4067" marker-end="url(#map-arrow)"/>
 </g>
 <g class="faded">
-<path class="edge" d="M820.5 3593L820.5 3830L650 3830"/>
+<path class="edge" d="M560 3613L560 4022L440 4022L440 4067" marker-end="url(#map-arrow)"/>
 </g>
-<path class="hop" d="M555 3818L565 3818"/>
+<g class="faded">
+<path class="edge" d="M836 3593L836 3830L650 3830"/>
+</g>
 <path class="hop" d="M645 3818L655 3818"/>
 <g class="faded">
-<path class="edge" d="M820.5 3818L440 3818"/>
+<path class="edge" d="M836 3818L560 3818"/>
 </g>
 <g class="faded">
-<path class="edge" d="M560 3842L440 3842"/>
-</g>
-<g class="faded">
-<circle class="dot" cx="820.5" cy="3818" r="2.6"/>
-</g>
-<g class="faded">
-<circle class="dot" cx="440" cy="3818" r="2.6"/>
-</g>
-<g class="faded">
-<circle class="dot" cx="650" cy="3830" r="2.6"/>
-</g>
-<g class="faded">
-<circle class="dot" cx="440" cy="3842" r="2.6"/>
-</g>
-<g class="faded">
-<circle class="dot" cx="560" cy="3842" r="2.6"/>
-</g>
-<g class="faded">
-<circle class="dot" cx="650" cy="3842" r="2.6"/>
-</g>
-<g class="faded">
-<text class="lab" x="450" y="3861" text-anchor="start"><tspan class="rga">𝐮∩ = 𝐮 ∨</tspan></text>
-<text class="lab" x="450" y="3876" text-anchor="start"><tspan class="rga">(𝐞ᵒ ∧ 𝐮☆)</tspan></text>
-</g>
-<g class="faded">
-<text class="lab" x="640" y="3861" text-anchor="end"><tspan class="cga">𝐮⊞ =</tspan></text>
-<text class="lab" x="640" y="3876" text-anchor="end"><tspan class="cga">(𝐮☆)⊟</tspan></text>
-</g>
-<g class="faded">
-<text class="lab" x="760" y="3861" text-anchor="end"><tspan class="cga">𝐮⊡ = 𝐮 ∧</tspan></text>
-<text class="lab" x="760" y="3876" text-anchor="end"><tspan class="cga">(𝐮⊟)☆</tspan></text>
-</g>
-<g class="faded">
-<path class="edge" d="M851.5 3593L851.5 4124L440 4124L440 4101" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M560 3842L440 3842L440 3887" marker-end="url(#map-arrow)"/>
 </g>
 <g class="faded">
 <path class="edge" d="M560 4010L650 4010"/>
 </g>
 <path class="hop" d="M645 3998L655 3998"/>
 <g class="faded">
-<path class="edge" d="M560 3998L770 3998"/>
+<path class="edge" d="M560 3998L760 3998"/>
+</g>
+<circle class="dot" cx="560" cy="3613" r="2.6"/>
+<g class="faded">
+<circle class="dot" cx="560" cy="3818" r="2.6"/>
 </g>
 <g class="faded">
-<circle class="dot" cx="440" cy="4022" r="2.6"/>
+<circle class="dot" cx="836" cy="3818" r="2.6"/>
+</g>
+<g class="faded">
+<circle class="dot" cx="650" cy="3830" r="2.6"/>
+</g>
+<g class="faded">
+<circle class="dot" cx="650" cy="3842" r="2.6"/>
+</g>
+<g class="faded">
+<circle class="dot" cx="560" cy="3842" r="2.6"/>
 </g>
 <g class="faded">
 <circle class="dot" cx="560" cy="4010" r="2.6"/>
@@ -826,7 +776,19 @@
 <circle class="dot" cx="650" cy="4010" r="2.6"/>
 </g>
 <g class="faded">
-<circle class="dot" cx="770" cy="3998" r="2.6"/>
+<circle class="dot" cx="760" cy="3998" r="2.6"/>
+</g>
+<g class="faded">
+<text class="lab" x="450" y="3861" text-anchor="start"><tspan class="rga">𝐮∩ = 𝐮 ∨</tspan></text>
+<text class="lab" x="450" y="3876" text-anchor="start"><tspan class="rga">(𝐞ᵒ ∧ 𝐮☆)</tspan></text>
+</g>
+<g class="faded">
+<text class="lab" x="640" y="3861" text-anchor="end"><tspan class="cga">𝐮⊞ =</tspan></text>
+<text class="lab" x="640" y="3876" text-anchor="end"><tspan class="cga">(𝐮☆)⊟</tspan></text>
+</g>
+<g class="faded">
+<text class="lab" x="750" y="3861" text-anchor="end"><tspan class="cga">𝐮⊡ = 𝐮 ∧</tspan></text>
+<text class="lab" x="750" y="3876" text-anchor="end"><tspan class="cga">(𝐮⊟)☆</tspan></text>
 </g>
 <g class="faded">
 <text class="lab" x="450" y="4041" text-anchor="start"><tspan class="rga">𝐮∪ = 𝐮 ∧</tspan></text>
@@ -838,123 +800,123 @@
 <text class="lab" x="640" y="4050" text-anchor="end"><tspan class="cga">𝐮⊞ ∨ 𝐮</tspan></text>
 </g>
 <g class="faded">
-<text class="lab" x="760" y="4021.5" text-anchor="end"><tspan class="cga">𝐮⊛ = (−1)<tspan dy="-5"
+<text class="lab" x="750" y="4021.5" text-anchor="end"><tspan class="cga">𝐮⊛ = (−1)<tspan dy="-5"
     font-size="8.5">k+1</tspan><tspan dy="5"> </tspan></tspan></text>
-<text class="lab" x="760" y="4036.5" text-anchor="end"><tspan class="cga">(𝐮☆)⊡ ∨ 𝐮⊟</tspan></text>
-<text class="lab" x="760" y="4051.5" text-anchor="end"><tspan
+<text class="lab" x="750" y="4036.5" text-anchor="end"><tspan class="cga">(𝐮☆)⊡ ∨ 𝐮⊟</tspan></text>
+<text class="lab" x="750" y="4051.5" text-anchor="end"><tspan
     class="cga">where k = gr 𝐮</tspan></text>
 </g>
-<rect class="group" x="130" y="4221" width="40" height="30" rx="7"/>
-<text class="groupname" x="133" y="4216">Properties</text>
+<rect class="group" x="40" y="4221" width="40" height="30" rx="7"/>
+<text class="groupname" x="43" y="4216">Bases</text>
 <g class="faded">
-<rect class="cell fixed" x="132.5" y="4223.5" width="35" height="25" rx="5"/>
-<text class="title" x="150" y="4241.76" text-anchor="middle">⊖</text>
+<rect class="cell anti" x="42.5" y="4223.5" width="35" height="25" rx="5"/>
+<text class="title" x="60" y="4241.76" text-anchor="middle">∨</text>
 </g>
-<rect class="group" x="320" y="4221" width="120" height="30" rx="7"/>
-<text class="groupname" x="323" y="4216">Norms</text>
+<rect class="group" x="120" y="4221" width="40" height="30" rx="7"/>
+<text class="groupname" x="123" y="4216">Metric</text>
 <g class="faded">
-<rect class="cell fixed" x="322.5" y="4223.5" width="115" height="25" rx="5"/>
-<text class="title" x="380" y="4241.76" text-anchor="middle">‖𝐮‖●, ‖𝐮‖○</text>
+<rect class="cell anti" x="122.5" y="4223.5" width="35" height="25" rx="5"/>
+<text class="title" x="140" y="4241.76" text-anchor="middle">☆</text>
 </g>
-<rect class="group" x="580" y="4221" width="40" height="30" rx="7"/>
-<text class="groupname" x="583" y="4216">Bases</text>
+<rect class="group" x="340" y="4221" width="120" height="30" rx="7"/>
+<text class="groupname" x="343" y="4216">Norms</text>
 <g class="faded">
-<rect class="cell anti" x="582.5" y="4223.5" width="35" height="25" rx="5"/>
-<text class="title" x="600" y="4241.76" text-anchor="middle">∨</text>
+<rect class="cell fixed" x="342.5" y="4223.5" width="115" height="25" rx="5"/>
+<text class="title" x="400" y="4241.76" text-anchor="middle">‖𝐮‖●, ‖𝐮‖○</text>
 </g>
-<rect class="group" x="660" y="4221" width="40" height="30" rx="7"/>
-<text class="groupname" x="663" y="4216">Metric</text>
+<rect class="group" x="620" y="4221" width="40" height="30" rx="7"/>
+<text class="groupname" x="623" y="4216">Properties</text>
 <g class="faded">
-<rect class="cell anti" x="662.5" y="4223.5" width="35" height="25" rx="5"/>
-<text class="title" x="680" y="4241.76" text-anchor="middle">☆</text>
-</g>
-<g class="faded">
-<g><rect class="fixed" x="75" y="4365" width="150" height="34" rx="7"/>
-  <text class="title" x="150" y="4387.76" text-anchor="middle"><tspan
-    class="rga">d(𝐚, 𝐛)</tspan></text>
-</g>
+<rect class="cell fixed" x="622.5" y="4223.5" width="35" height="25" rx="5"/>
+<text class="title" x="640" y="4241.76" text-anchor="middle">⊖</text>
 </g>
 <g class="faded">
-<g><rect class="fixed" x="525" y="4365" width="150" height="34" rx="7"/>
-  <text class="title" x="600" y="4387.76" text-anchor="middle"><tspan
+<g><rect class="fixed" x="175" y="4365" width="150" height="34" rx="7"/>
+  <text class="title" x="250" y="4387.76" text-anchor="middle"><tspan
     class="rga">cos φ(𝐚, 𝐛)</tspan></text>
 </g>
 </g>
 <g class="faded">
-<path class="edge" d="M150 4251L150 4365" marker-end="url(#map-arrow)"/>
+<g><rect class="fixed" x="565" y="4365" width="150" height="34" rx="7"/>
+  <text class="title" x="640" y="4387.76" text-anchor="middle"><tspan
+    class="rga">d(𝐚, 𝐛)</tspan></text>
+</g>
 </g>
 <g class="faded">
-<path class="edge" d="M600 4251L600 4365" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M140 4251L140 4296L250 4296L250 4365" marker-end="url(#map-arrow)"/>
 </g>
 <g class="faded">
-<path class="edge" d="M380 4251L380 4308L150 4308"/>
+<path class="edge" d="M60 4251L60 4308L250 4308"/>
 </g>
 <g class="faded">
-<path class="edge" d="M380 4308L600 4308"/>
+<path class="edge" d="M640 4251L640 4365" marker-end="url(#map-arrow)"/>
 </g>
 <g class="faded">
-<path class="edge" d="M680 4251L680 4320L600 4320"/>
+<path class="edge" d="M400 4251L400 4320L250 4320"/>
 </g>
 <g class="faded">
-<circle class="dot" cx="150" cy="4308" r="2.6"/>
+<path class="edge" d="M400 4320L640 4320"/>
 </g>
 <g class="faded">
-<circle class="dot" cx="600" cy="4308" r="2.6"/>
+<circle class="dot" cx="250" cy="4308" r="2.6"/>
 </g>
 <g class="faded">
-<circle class="dot" cx="380" cy="4308" r="2.6"/>
+<circle class="dot" cx="250" cy="4320" r="2.6"/>
 </g>
 <g class="faded">
-<circle class="dot" cx="600" cy="4320" r="2.6"/>
+<circle class="dot" cx="400" cy="4320" r="2.6"/>
 </g>
 <g class="faded">
-<text class="lab" x="160" y="4333" text-anchor="start"><tspan
-    class="rga">d(𝐚, 𝐛) = ‖(𝐚 ∧ 𝐛)⊖‖●</tspan></text>
-<text class="lab" x="160" y="4348" text-anchor="start"><tspan class="rga">+ ‖𝐚 ∧ 𝐛⊖‖○</tspan></text>
+<circle class="dot" cx="640" cy="4320" r="2.6"/>
 </g>
 <g class="faded">
-<text class="lab" x="610" y="4339" text-anchor="start"><tspan
+<text class="lab" x="260" y="4339" text-anchor="start"><tspan
     class="rga">cos φ = ‖𝐚 ∨ 𝐛☆‖●</tspan></text>
-<text class="lab" x="610" y="4354" text-anchor="start"><tspan class="rga">+ ‖𝐚‖○‖𝐛‖○</tspan></text>
+<text class="lab" x="260" y="4354" text-anchor="start"><tspan class="rga">+ ‖𝐚‖○‖𝐛‖○</tspan></text>
 </g>
 <g class="faded">
-<text class="quiet" x="150" y="4414" text-anchor="middle">not in library</text>
+<text class="lab" x="650" y="4339" text-anchor="start"><tspan
+    class="rga">d(𝐚, 𝐛) = ‖(𝐚 ∧ 𝐛)⊖‖●</tspan></text>
+<text class="lab" x="650" y="4354" text-anchor="start"><tspan class="rga">+ ‖𝐚 ∧ 𝐛⊖‖○</tspan></text>
 </g>
 <g class="faded">
-<text class="quiet" x="600" y="4414" text-anchor="middle">not in library</text>
-</g>
-<rect class="group" x="12" y="4503" width="738" height="30" rx="7"/>
-<text class="groupname" x="15" y="4498">Interior products</text>
-<g class="faded">
-<rect class="cell anti" x="14.5" y="4505.5" width="84" height="25" rx="5"/>
-<text class="title" x="55" y="4523.76" text-anchor="middle">𝐚 ∨ 𝐛★</text>
+<text class="quiet" x="250" y="4414" text-anchor="middle">not in library</text>
 </g>
 <g class="faded">
-<rect class="cell fixed" x="103.5" y="4505.5" width="268" height="25" rx="5"/>
-<text class="title" x="148" y="4523.76" text-anchor="middle">𝐚 ∧ 𝐛★</text>
+<text class="quiet" x="640" y="4414" text-anchor="middle">not in library</text>
 </g>
-<path class="sep" d="M101 4508L101 4528"/>
+<rect class="group" x="110" y="4503" width="80" height="30" rx="7"/>
+<text class="groupname" x="113" y="4498">Bases</text>
 <g class="faded">
-<rect class="cell fixed" x="376.5" y="4505.5" width="271" height="25" rx="5"/>
-<text class="title" x="600" y="4523.76" text-anchor="middle">𝐚 ∧ 𝐛☆</text>
-</g>
-<path class="sep" d="M374 4508L374 4528"/>
-<g class="faded">
-<rect class="cell anti" x="652.5" y="4505.5" width="95" height="25" rx="5"/>
-<text class="title" x="700" y="4523.76" text-anchor="middle">𝐚 ∨ 𝐛☆</text>
-</g>
-<path class="sep" d="M650 4508L650 4528"/>
-<rect class="group" x="760" y="4503" width="80" height="30" rx="7"/>
-<text class="groupname" x="763" y="4498">Bases</text>
-<g class="faded">
-<rect class="cell anti" x="762.5" y="4505.5" width="35" height="25" rx="5"/>
-<text class="title" x="780" y="4523.76" text-anchor="middle">∨</text>
+<rect class="cell fixed" x="112.5" y="4505.5" width="35" height="25" rx="5"/>
+<text class="title" x="130" y="4523.76" text-anchor="middle">∧</text>
 </g>
 <g class="faded">
-<rect class="cell fixed" x="802.5" y="4505.5" width="35" height="25" rx="5"/>
-<text class="title" x="820" y="4523.76" text-anchor="middle">∧</text>
+<rect class="cell anti" x="152.5" y="4505.5" width="35" height="25" rx="5"/>
+<text class="title" x="170" y="4523.76" text-anchor="middle">∨</text>
 </g>
-<path class="sep" d="M800 4508L800 4528"/>
+<path class="sep" d="M150 4508L150 4528"/>
+<rect class="group" x="540" y="4503" width="320" height="30" rx="7"/>
+<text class="groupname" x="543" y="4498">Interior products</text>
+<g class="faded">
+<rect class="cell fixed" x="542.5" y="4505.5" width="75" height="25" rx="5"/>
+<text class="title" x="580" y="4523.76" text-anchor="middle">𝐚 ∧ 𝐛★</text>
+</g>
+<g class="faded">
+<rect class="cell fixed" x="622.5" y="4505.5" width="75" height="25" rx="5"/>
+<text class="title" x="660" y="4523.76" text-anchor="middle">𝐚 ∧ 𝐛☆</text>
+</g>
+<path class="sep" d="M620 4508L620 4528"/>
+<g class="faded">
+<rect class="cell anti" x="702.5" y="4505.5" width="75" height="25" rx="5"/>
+<text class="title" x="740" y="4523.76" text-anchor="middle">𝐚 ∨ 𝐛★</text>
+</g>
+<path class="sep" d="M700 4508L700 4528"/>
+<g class="faded">
+<rect class="cell anti" x="782.5" y="4505.5" width="75" height="25" rx="5"/>
+<text class="title" x="820" y="4523.76" text-anchor="middle">𝐚 ∨ 𝐛☆</text>
+</g>
+<path class="sep" d="M780 4508L780 4528"/>
 <g class="faded">
 <g><rect class="fixed" x="195" y="4647" width="150" height="34" rx="7"/>
   <text class="title" x="270" y="4669.76" text-anchor="middle">𝐧 ∨ (𝐦 ∧ 𝐧★)</text>
@@ -992,54 +954,34 @@
 <text class="lab" x="590" y="4776" text-anchor="end">of 𝐦 onto 𝐧</text>
 </g>
 <g class="faded">
-<path class="edge" d="M148 4533L148 4590L270 4590L270 4647" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M150 4533L150 4558L435 4558"/>
 </g>
 <g class="faded">
-<path class="edge" d="M600 4533L600 4647" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M700 4533L700 4558L435 4558"/>
 </g>
 <g class="faded">
-<path class="edge" d="M700 4533L700 4730L600 4730L600 4787" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M435 4558L435 4742"/>
 </g>
 <g class="faded">
-<path class="edge" d="M55 4533L55 4730L270 4730L270 4787" marker-end="url(#map-arrow)"/>
-</g>
-<path class="hop" d="M595 4602L605 4602"/>
-<path class="hop" d="M695 4602L705 4602"/>
-<g class="faded">
-<path class="edge" d="M780 4533L780 4602L270 4602"/>
-</g>
-<path class="hop" d="M695 4590L705 4590"/>
-<g class="faded">
-<path class="edge" d="M780 4590L600 4590"/>
-</g>
-<path class="hop" d="M595 4742L605 4742"/>
-<g class="faded">
-<path class="edge" d="M820 4533L820 4742L270 4742"/>
-</g>
-<path class="hop" d="M695 4718L705 4718"/>
-<g class="faded">
-<path class="edge" d="M820 4718L600 4718L600 4730"/>
+<path class="edge" d="M435 4602L270 4602L270 4647" marker-end="url(#map-arrow)"/>
 </g>
 <g class="faded">
-<circle class="dot" cx="270" cy="4602" r="2.6"/>
+<path class="edge" d="M435 4602L600 4602L600 4647" marker-end="url(#map-arrow)"/>
 </g>
 <g class="faded">
-<circle class="dot" cx="600" cy="4590" r="2.6"/>
+<path class="edge" d="M435 4742L270 4742L270 4787" marker-end="url(#map-arrow)"/>
 </g>
 <g class="faded">
-<circle class="dot" cx="780" cy="4590" r="2.6"/>
+<path class="edge" d="M435 4742L600 4742L600 4787" marker-end="url(#map-arrow)"/>
 </g>
 <g class="faded">
-<circle class="dot" cx="270" cy="4742" r="2.6"/>
+<circle class="dot" cx="435" cy="4558" r="2.6"/>
 </g>
 <g class="faded">
-<circle class="dot" cx="600" cy="4718" r="2.6"/>
+<circle class="dot" cx="435" cy="4602" r="2.6"/>
 </g>
 <g class="faded">
-<circle class="dot" cx="820" cy="4718" r="2.6"/>
-</g>
-<g class="faded">
-<circle class="dot" cx="600" cy="4730" r="2.6"/>
+<circle class="dot" cx="435" cy="4742" r="2.6"/>
 </g>
 <rect class="group" x="280" y="4911" width="40" height="30" rx="7"/>
 <text class="groupname" x="283" y="4906">Geometric products</text>
