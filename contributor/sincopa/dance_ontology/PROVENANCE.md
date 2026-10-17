@@ -2232,10 +2232,11 @@ the joined hands sink, the plan lifts them. The recording keeps the planned turn
 falls short. The cross-name chain held above then stops near 1.53 turns, where the edge forbids
 more.
 
-The code plans every stop of the walk over the crown, and not only a stop where a hand sinks
-(`waysOf`). So the same-name chain held above is planned too. The wrist of the lead stops its walk
-at +1.80, and arm through arm stops it at -1.66. The Architect rules whether the plan answers every
-stop, or a hand that sinks alone (Open questions).
+**The plan answers every stop of the walk over the crown, and not only a hand that sinks (pull
+request 629, D1 of its notes).** The Architect ruled on 2026-10-12 (`waysOf`). So the same-name
+chain held above is planned too. The wrist of the lead stops its walk at +1.80, and arm through
+arm stops it at -1.66. The plan carries it to 2.5 turns both ways. Rejected: a plan for a sinking
+hand alone, which leaves that chain at -1.66 and +1.80 on both pages.
 
 A way over the crown that the walk stops short of 2.5 turns is planned toward 2.5 turns
 (`plannedWay`). Each style is tried in its order, own path and mirrored path, as a planned still
@@ -3268,12 +3269,6 @@ to tidy the line away shows up only as suites that fail to build. `result +=` on
   Each of the four sweeps at the lower bands keeps one, and the law of the edge reads it.
 
   The Architect rules two things. Does a sweep keep the moment of its stop? Does each law read it?
-- **The plan answers every stop of the walk over the crown, and the ruling names hands that sink
-  (pull request 629, D1).** The same-name chain held above stops its walk by the wrist of the lead
-  at +1.80, and by arm through arm at -1.66. The plan carries it to 2.5 both ways. Where the plan
-  answers a sinking hand alone, that chain stays at -1.66 and +1.80 on both pages. The option that
-  the Architect chose said -1.88 and +1.82, which a plan toward the walk's own end gave. The
-  Architect rules which stops the plan answers (`walk.waysOf`).
 - **A planned way that ends short of all that a sweep asks names no stop.** It ends where its last
   moment stands, with `Stop.None`, and each page says in its own words that no plan goes further.
   A member of `Stop` for a plan that ends would say only that it ends. A stop read off the terms of
