@@ -91,7 +91,8 @@ suite "Internal: Transwedge":
 ##   Dot reads transwedge at equal grades, i.e. 𝐚 ∙ 𝐛 = 𝐚 ⩓ₖ 𝐛 where k = gr 𝐚 = gr 𝐛.
 ##   Parts split by presence of origin and, in CGA, of infinity.
 ##   Tables and constructors come in groups, in order of derivation: bases with exterior product,
-##     metric, parts, interior products, transwedge, geometric products, norms, properties.
+##     metric, parts, transitional products, interior products with dot, geometric products,
+##     norms, properties with reverse.
 ##   Cost: ⟑ and ⟇ keep two transwedge families, each N³ at compile time, since conformal anti
 ##     orders are not conjugates of base orders; maps and filters walk N² cells.
 ##
@@ -152,12 +153,6 @@ const  # Bases.
     left: constructComplement(Chirality.Left),
     right: constructComplement(Chirality.Right),
   )
-  CAYLEYS_REVERSE* = block:  ## Reverse; antireverse conjugates it by complements.
-    let base = constructReverse()
-    Spatial[Cayley1D](
-      base: base,
-      anti: base.constructAnti(CAYLEYS_COMPLEMENT),
-    )
   CAYLEYS_WEDGE* = block:
     let base = constructProductExterior(CAYLEYS_COMPLEMENT, Spatiality.Base)
     Spatial[Cayley2D](
@@ -190,6 +185,24 @@ const  # Parts.
     weight: constructParts(Partiality.Weight),
   )
 
+const  # Transitional products.
+  CAYLEYS_WEDGES_TRANS* = Spatial[array[Order, Cayley2D]](
+    base: constructProductsTransitional(
+      CAYLEYS_COMPLEMENT.left,
+      CAYLEYS_DUAL.base.right,
+      CAYLEYS_WEDGE,
+      Chirality.Right,
+      Spatiality.Base,
+    ),
+    anti: constructProductsTransitional(
+      CAYLEYS_COMPLEMENT.left,
+      CAYLEYS_DUAL.anti.right,
+      CAYLEYS_WEDGE,
+      Chirality.Right,
+      Spatiality.Anti,
+    ),
+  )
+
 const  # Interior products.
   CAYLEYS_INTERIOR* = Spatial[Partial[Chiral[Cayley2D]]](  ## (Anti)wedge with one operand dualized.
     base: Partial[Chiral[Cayley2D]](
@@ -211,24 +224,6 @@ const  # Interior products.
         left: CAYLEYS_WEDGE.anti.applyMap(CAYLEYS_DUAL.anti.left, Chirality.Left),
         right: CAYLEYS_WEDGE.anti.applyMap(CAYLEYS_DUAL.anti.right, Chirality.Right),
       ),
-    ),
-  )
-
-const  # Transwedge.
-  CAYLEYS_WEDGES_TRANS* = Spatial[array[Order, Cayley2D]](
-    base: constructProductsTransitional(
-      CAYLEYS_COMPLEMENT.left,
-      CAYLEYS_DUAL.base.right,
-      CAYLEYS_WEDGE,
-      Chirality.Right,
-      Spatiality.Base,
-    ),
-    anti: constructProductsTransitional(
-      CAYLEYS_COMPLEMENT.left,
-      CAYLEYS_DUAL.anti.right,
-      CAYLEYS_WEDGE,
-      Chirality.Right,
-      Spatiality.Anti,
     ),
   )
   CAYLEYS_DOT* = block:  ## Dot as 𝐚 ⩓ₖ 𝐛 where k = gr 𝐚 = gr 𝐛; antidot conjugates it.
@@ -253,6 +248,12 @@ when IS_CONFORMAL:
   const CAYLEYS_NORM_SQUARED_RADIUS* = CAYLEYS_DOT.anti  ## Squared radius norm, i.e. 𝐦 ∘ 𝐦.
 
 const  # Properties.
+  CAYLEYS_REVERSE* = block:  ## Reverse; antireverse conjugates it by complements.
+    let base = constructReverse()
+    Spatial[Cayley1D](
+      base: base,
+      anti: base.constructAnti(CAYLEYS_COMPLEMENT),
+    )
   CAYLEY_ATTITUDE*: Cayley1D = block:  ## Attitude as one map, i.e. 𝐦 ∨ 𝐞̄ₙ.
     var cayley = CAYLEYS_WEDGE.anti
     cayley.applyConstant(Basis.horizon, Chirality.Right)
@@ -270,12 +271,6 @@ func constructComplement(chirality: Chirality): Cayley1D {.compileTime, noinit.}
   ## Construct Cayley table for left and right complements.
   for b in Basis:
     result[b] = @[b.complement(chirality)]
-
-
-func constructReverse(): Cayley1D {.compileTime, noinit.} =
-  ## Construct Cayley table for reverse; antireverse conjugates it.
-  for b in Basis:
-    result[b] = @[b.reverse]
 
 
 func constructProductExterior(
@@ -540,6 +535,12 @@ func constructNormsSquared(
       round: constructNormSquared(parts_partial.round, partiality),
       flat: constructNormSquared(parts_partial.flat, partiality),
     )
+
+
+func constructReverse(): Cayley1D {.compileTime, noinit.} =
+  ## Construct Cayley table for reverse; antireverse conjugates it.
+  for b in Basis:
+    result[b] = @[b.reverse]
 
 
 
