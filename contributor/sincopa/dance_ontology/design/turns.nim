@@ -140,17 +140,21 @@ func frames(sweep: Swept, band: Band, links: seq[Link]): JsonNode =
   ##       second, derived 2026-10-17 from recording's turns and places.
   ##     Rejected: last pose at each turn alone, which moves arm 205 to 548 mm in one step and
   ##       draws it up to 61 mm short or long halfway, measured 2026-10-15.
+
+  template write(moment: Moment, is_reposed: bool) =
+    ## Write moment as frame, counting it where it stands at turn of one written before it.
+    ##   Template, since it writes owner's `result`, `reposed` and `at_prev` in place.
+    ##   Same wind is one stored figure kept again (`plan.planPath`), so `==` is exact.
+    if result.len > 0 and moment.at == at_prev: inc reposed
+    at_prev = moment.at
+    result.add frame(moment, band, links, is_reposed, reposed)
+
   result = newJArray()
   var
     reposed = 0  ## Poses stood again so far, in order written.
-    at_prev = NaN  ## Turn of moment written last; none before first.
+    at_prev = 0.0  ## Turn of moment written last, read once one is written.
 
-  # Count each moment at turn of one written before it: same wind is one stored figure kept
-  #   again (`plan.planPath`), so `==` is exact.
-  template write(moment: Moment, is_reposed: bool) =
-    if moment.at == at_prev: inc reposed
-    at_prev = moment.at
-    result.add frame(moment, band, links, is_reposed, reposed)
+  # Write negative way back to front, then positive way from rest.
   for i in countdown(sweep.negative.moments.high, 1):
     write(sweep.negative.moments[i], isReposed(sweep.negative, i))
   for i, moment in sweep.positive.moments:
