@@ -3,7 +3,7 @@
   "kind": "evaluation",
   "name": "partner-sign",
   "path": "proposals/03-partner-sign",
-  "edits_digest": "9c125fa541eb80e9",
+  "edits_digest": "3a8ceafc5b5d6964",
   "taken": {
     "date": "2026-10-15",
     "machine": "linux amd64, 4 cores",
