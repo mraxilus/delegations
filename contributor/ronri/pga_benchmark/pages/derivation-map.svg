@@ -1,14 +1,14 @@
 <!-- Derivation map of P01, after Lengyel's figure 2.16, for RGA and CGA, with transwedge.
-     Each arrow is one argument of function that builds its target, as in change of P01.
      Colours are shell tokens, with fallbacks so file reads alone. Proposal embeds it.
      Bar under or over bold letter is decoration, mark kept at size zero: face gives no anchor. -->
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 863" class="map" role="img"
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 628" class="map" role="img"
   aria-labelledby="map-title map-desc">
 <title id="map-title">Derivation map</title>
 <desc id="map-desc">Two inputs, the metric and the orientation of the volume element, fix every
-  table; the projective vectors, origin and in CGA infinity, split the parts. Each box names
-  the function that builds it, and each arrow is one argument of that function. Each anti
-  table conjugates its base by complements, and defineOperator emits every table.</desc>
+  table; the projective vectors, origin and in CGA infinity, split the parts. Exterior product,
+  exomorphism, dot, complements and reverse are fixed definitions. Each anti table conjugates
+  its base by complements. Maps build duals, dual products, transwedge orders, geometric
+  products, parts and norms, and the emitter reads every table.</desc>
 <style>
 .map text { font-family: var(--sans, sans-serif); font-size: 12px; fill: var(--ink-2, #465262); }
 .map .title { font-size: 13.5px; fill: var(--ink, #16202c); }
@@ -18,161 +18,146 @@
 .map .fixed { fill: var(--hover, #eef2f6); stroke: var(--bound, #2a78d6); stroke-width: 1.25; }
 .map .anti { fill: var(--status-wash, #ece9f8); stroke: var(--status, #5a4a9c);
   stroke-width: 1.25; }
-.map .edge { fill: none; stroke: var(--muted, #667384); stroke-width: 1.1; }
+.map .emission { fill: var(--track, #edf0f4); stroke: var(--rule-strong, #c6ced8);
+  stroke-width: 1.25; }
+.map .edge { fill: none; stroke: var(--muted, #667384); stroke-width: 1.25; }
 .map .head { fill: var(--muted, #667384); }
 </style>
 <defs><marker id="map-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6"
   markerHeight="6" orient="auto-start-reverse"><path class="head" d="M0 0L10 5L0 10z"/>
 </marker></defs>
 <g>
-<path class="edge" d="M116 78V115H52V148" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M268 78V124H180V148" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M332 78V148" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M396 78V106H484V148" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M548 78V97H612V148" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M828 78V88H870V496H764V511" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M700 78V133H651V487H612V511" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M52 210V310H116V352" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M116 210V301H268V352" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M510 210V328H396V352" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M311 210V274H484V352" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M561 210V247H612V352" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M764 210V220H828V352" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M612 210V229H700V352" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M116 414V451H52V511" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M484 210V319H222V460H180V511" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M180 210V292H226V442H268V511" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M332 414V511" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M535 210V337H430V469H396V511" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M353 210V265H435V433H484V511" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M548 414V511" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M116 573V643" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M268 210V283H440V601H332V643" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M484 414V478H445V610H396V643" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M268 573V643" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M396 210V256H450V583H527V643" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M612 414V424H656V619H569V643" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M586 210V238H661V628H612V643" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M396 573V592H484V643" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M764 573V643" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M548 705V745" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M116 80V124" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M332 80V102H116"/>
+<path class="edge" d="M332 102H548"/>
+<path class="edge" d="M548 80V124" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M212 156H236" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M860 48H872V368H860" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M116 210H764"/>
+<path class="edge" d="M116 188V232" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M332 188V232" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M548 188V232" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M764 188V232" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M116 312H764"/>
+<path class="edge" d="M116 288V336" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M332 288V336" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M548 288V336" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M764 288V336" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M428 368H452" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M332 400V440" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M548 400V440" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M764 400V440" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M116 400V540" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M332 504V540" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M548 504V540" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M764 504V540" marker-end="url(#map-arrow)"/>
 </g>
-<g><rect class="input" x="20" y="16" width="192" height="62" rx="8"/>
-  <text class="title" x="116" y="36" text-anchor="middle">Metric 𝖌</text>
-  <text x="116" y="55" text-anchor="middle">RGA 𝐞ₙ null · CGA null pair</text>
-  <text class="code" x="116" y="70" text-anchor="middle">constructMetric</text>
+<g><rect class="input" x="20" y="16" width="192" height="64" rx="8"/>
+  <text class="title" x="116" y="38" text-anchor="middle">Metric 𝖌</text>
+  <text x="116" y="56" text-anchor="middle">RGA 𝐞ₙ null · CGA null pair</text>
+  <text class="code" x="116" y="71" text-anchor="middle">constructMetric</text>
 </g>
-<g><rect class="fixed" x="236" y="16" width="192" height="62" rx="8"/>
-  <text class="title" x="332" y="36" text-anchor="middle">Basis product</text>
-  <text x="332" y="55" text-anchor="middle">sign by order of factors</text>
-  <text class="code" x="332" y="70" text-anchor="middle">multiplyExterior</text>
+<g><rect class="fixed" x="236" y="16" width="192" height="64" rx="8"/>
+  <text class="title" x="332" y="38" text-anchor="middle">Exterior product ∧</text>
+  <text x="332" y="56" text-anchor="middle">on basis factors, any metric</text>
+  <text class="code" x="332" y="71" text-anchor="middle">constructProductExterior</text>
 </g>
-<g><rect class="input" x="452" y="16" width="192" height="62" rx="8"/>
-  <text class="title" x="548" y="36" text-anchor="middle">Volume element 𝟙</text>
-  <text x="548" y="55" text-anchor="middle">orientation of antiscalar</text>
-  <text class="code" x="548" y="70" text-anchor="middle">Basis.scalarAnti</text>
+<g><rect class="input" x="452" y="16" width="192" height="64" rx="8"/>
+  <text class="title" x="548" y="38" text-anchor="middle">Volume element 𝟙</text>
+  <text x="548" y="56" text-anchor="middle">orientation of antiscalar</text>
+  <text class="code" x="548" y="71" text-anchor="middle">Basis.scalarAnti</text>
 </g>
-<g><rect class="input" x="668" y="16" width="192" height="62" rx="8"/>
-  <text class="title" x="764" y="36" text-anchor="middle">Projective vectors</text>
-  <text x="764" y="55" text-anchor="middle">origin, horizon; CGA infinity</text>
-  <text class="code" x="764" y="70" text-anchor="middle">Basis members</text>
+<g><rect class="input" x="668" y="16" width="192" height="64" rx="8"/>
+  <text class="title" x="764" y="38" text-anchor="middle">Projective vectors</text>
+  <text x="764" y="56" text-anchor="middle">RGA  origin 𝐞ₙ</text>
+  <text x="764" y="71" text-anchor="middle">CGA  origin, infinity</text>
 </g>
-<g><rect class="fixed" x="20" y="148" width="192" height="62" rx="8"/>
-  <text class="title" x="116" y="168" text-anchor="middle">Exomorphism 𝐆</text>
-  <text x="116" y="187" text-anchor="middle">𝐆(𝐚 ∧ 𝐛) = 𝐆𝐚 ∧ 𝐆𝐛</text>
-  <text class="code" x="116" y="202" text-anchor="middle">constructExomorphismMetric</text>
+<g><rect class="fixed" x="20" y="124" width="192" height="64" rx="8"/>
+  <text class="title" x="116" y="146" text-anchor="middle">Exomorphism 𝐆</text>
+  <text x="116" y="164" text-anchor="middle">𝐆(𝐚 ∧ 𝐛) = 𝐆𝐚 ∧ 𝐆𝐛</text>
+  <text class="code" x="116" y="179" text-anchor="middle">constructExomorphismMetric</text>
 </g>
-<g><rect class="fixed" x="236" y="148" width="192" height="62" rx="8"/>
-  <text class="title" x="332" y="168" text-anchor="middle">Exterior product ∧</text>
-  <text x="332" y="187" text-anchor="middle">every basis pair</text>
-  <text class="code" x="332" y="202" text-anchor="middle">constructProductExterior</text>
+<g><rect class="fixed" x="236" y="124" width="192" height="64" rx="8"/>
+  <text class="title" x="332" y="146" text-anchor="middle">Dot ∙</text>
+  <text x="332" y="164" text-anchor="middle">𝐚 ∙ 𝐛 = 𝐚ᵀ𝐆𝐛</text>
+  <text class="code" x="332" y="179" text-anchor="middle">constructDot</text>
 </g>
-<g><rect class="fixed" x="452" y="148" width="192" height="62" rx="8"/>
-  <text class="title" x="548" y="165" text-anchor="middle">Complements</text>
-  <text x="548" y="191" text-anchor="middle"><tspan text-decoration="underline">𝐮</tspan><tspan
+<g><rect class="fixed" x="452" y="124" width="192" height="64" rx="8"/>
+  <text class="title" x="548" y="143" text-anchor="middle">Complements</text>
+  <text x="548" y="167" text-anchor="middle"><tspan text-decoration="underline">𝐮</tspan><tspan
     font-size="0">̱</tspan> ∧ 𝐮 = 𝟙 = 𝐮 ∧ <tspan text-decoration="overline">𝐮</tspan><tspan
     font-size="0">̄</tspan></text>
-  <text class="code" x="548" y="205" text-anchor="middle">constructComplement</text>
+  <text class="code" x="548" y="182" text-anchor="middle">constructComplement</text>
 </g>
-<g><rect class="fixed" x="668" y="148" width="192" height="62" rx="8"/>
-  <text class="title" x="764" y="168" text-anchor="middle">Reverse ~</text>
-  <text x="764" y="187" text-anchor="middle">sign (−1)^(k(k−1)/2)</text>
-  <text class="code" x="764" y="202" text-anchor="middle">constructReverse</text>
+<g><rect class="fixed" x="668" y="124" width="192" height="64" rx="8"/>
+  <text class="title" x="764" y="146" text-anchor="middle">Reverse ~</text>
+  <text x="764" y="164" text-anchor="middle">sign (−1)^(k(k−1)/2)</text>
+  <text class="code" x="764" y="179" text-anchor="middle">constructReverse</text>
 </g>
-<g><rect class="fixed" x="20" y="352" width="192" height="62" rx="8"/>
-  <text class="title" x="116" y="372" text-anchor="middle">Dot ∙</text>
-  <text x="116" y="391" text-anchor="middle">𝐚 ∙ 𝐛 = 𝐚ᵀ𝐆𝐛</text>
-  <text class="code" x="116" y="406" text-anchor="middle">constructDot</text>
+<text class="quiet" x="124" y="226">constructAnti · De Morgan</text>
+<g><rect class="anti" x="20" y="232" width="192" height="56" rx="8"/>
+  <text class="title" x="116" y="254" text-anchor="middle">Antiexomorphism 𝔾</text>
+  <text class="code" x="116" y="274" text-anchor="middle">constructAnti(𝐆)</text>
 </g>
-<g><rect class="anti" x="452" y="352" width="192" height="62" rx="8"/>
-  <text class="title" x="548" y="372" text-anchor="middle">Antiwedge ∨</text>
-  <text x="548" y="391" text-anchor="middle">De Morgan of ∧</text>
-  <text class="code" x="548" y="406" text-anchor="middle">constructAnti</text>
+<g><rect class="anti" x="236" y="232" width="192" height="56" rx="8"/>
+  <text class="title" x="332" y="254" text-anchor="middle">Antidot ∘</text>
+  <text class="code" x="332" y="274" text-anchor="middle">constructAnti(∙)</text>
 </g>
-<g><rect class="anti" x="236" y="352" width="192" height="62" rx="8"/>
-  <text class="title" x="332" y="372" text-anchor="middle">Antiexomorphism 𝔾</text>
-  <text x="332" y="391" text-anchor="middle">De Morgan of 𝐆</text>
-  <text class="code" x="332" y="406" text-anchor="middle">constructAnti</text>
+<g><rect class="anti" x="452" y="232" width="192" height="56" rx="8"/>
+  <text class="title" x="548" y="254" text-anchor="middle">Antiwedge ∨</text>
+  <text class="code" x="548" y="274" text-anchor="middle">constructAnti(∧)</text>
 </g>
-<g><rect class="anti" x="668" y="352" width="192" height="62" rx="8"/>
-  <text class="title" x="764" y="372" text-anchor="middle">Antireverse</text>
-  <text x="764" y="391" text-anchor="middle">De Morgan of ~</text>
-  <text class="code" x="764" y="406" text-anchor="middle">constructAnti</text>
+<g><rect class="anti" x="668" y="232" width="192" height="56" rx="8"/>
+  <text class="title" x="764" y="254" text-anchor="middle">Antireverse</text>
+  <text class="code" x="764" y="274" text-anchor="middle">constructAnti(~)</text>
 </g>
-<g><rect class="anti" x="20" y="511" width="192" height="62" rx="8"/>
-  <text class="title" x="116" y="531" text-anchor="middle">Antidot ∘</text>
-  <text x="116" y="550" text-anchor="middle">De Morgan of ∙</text>
-  <text class="code" x="116" y="565" text-anchor="middle">constructAnti</text>
+<text class="quiet" x="124" y="328">each map reads tables above</text>
+<g><rect class="fixed" x="20" y="336" width="192" height="64" rx="8"/>
+  <text class="title" x="116" y="358" text-anchor="middle">Constant operands</text>
+  <text x="116" y="376" text-anchor="middle">attitude ⊖ · carrier ⊟</text>
+  <text class="code" x="116" y="391" text-anchor="middle">applyConstant</text>
 </g>
-<g><rect class="fixed" x="236" y="511" width="192" height="62" rx="8"/>
-  <text class="title" x="332" y="531" text-anchor="middle">Duals ★ · ☆</text>
-  <text x="332" y="550" text-anchor="middle">complement after 𝐆 or 𝔾</text>
-  <text class="code" x="332" y="565" text-anchor="middle">applyMap</text>
+<g><rect class="fixed" x="236" y="336" width="192" height="64" rx="8"/>
+  <text class="title" x="332" y="358" text-anchor="middle">Duals ★ · ☆</text>
+  <text x="332" y="376" text-anchor="middle">complement after 𝐆 or 𝔾</text>
+  <text class="code" x="332" y="391" text-anchor="middle">applyMap</text>
 </g>
-<g><rect class="fixed" x="452" y="511" width="192" height="62" rx="8"/>
-  <text class="title" x="548" y="531" text-anchor="middle">Attitude ⊖ · carrier ⊟</text>
-  <text x="548" y="550" text-anchor="middle">𝐦 ∨ horizon · 𝐦 ∧ infinity</text>
-  <text class="code" x="548" y="565" text-anchor="middle">applyConstant</text>
+<g><rect class="fixed" x="452" y="336" width="192" height="64" rx="8"/>
+  <text class="title" x="548" y="358" text-anchor="middle">Transwedge ⩃ₖ</text>
+  <text x="548" y="376" text-anchor="middle">Σ (<tspan text-decoration="underline">𝐜</tspan><tspan
+    font-size="0">̱</tspan> ∨ 𝐚) ∧ (𝐛 ∨ 𝐜★)</text>
+  <text class="code" x="548" y="391" text-anchor="middle">constructProductsTransitional</text>
 </g>
-<g><rect class="fixed" x="668" y="511" width="192" height="62" rx="8"/>
-  <text class="title" x="764" y="531" text-anchor="middle">Parts</text>
-  <text x="764" y="550" text-anchor="middle">by projective vectors</text>
-  <text class="code" x="764" y="565" text-anchor="middle">constructParts</text>
+<g><rect class="fixed" x="668" y="336" width="192" height="64" rx="8"/>
+  <text class="title" x="764" y="358" text-anchor="middle">Parts</text>
+  <text x="764" y="376" text-anchor="middle">by projective vectors</text>
+  <text class="code" x="764" y="391" text-anchor="middle">constructParts</text>
 </g>
-<g><rect class="fixed" x="20" y="643" width="192" height="62" rx="8"/>
-  <text class="title" x="116" y="663" text-anchor="middle">Radius norm ‖𝐦‖⊘²</text>
-  <text x="116" y="682" text-anchor="middle">CGA, top grade of ∘</text>
-  <text class="code" x="116" y="697" text-anchor="middle">filterGrades</text>
+<g><rect class="fixed" x="236" y="440" width="192" height="64" rx="8"/>
+  <text class="title" x="332" y="462" text-anchor="middle">Dual products</text>
+  <text x="332" y="480" text-anchor="middle">∨★  ∨☆  ∧★  ∧☆</text>
+  <text x="332" y="495" text-anchor="middle"><tspan class="code">applyMap</tspan> of dual</text>
 </g>
-<g><rect class="fixed" x="236" y="643" width="192" height="62" rx="8"/>
-  <text class="title" x="332" y="663" text-anchor="middle">Dual products</text>
-  <text x="332" y="682" text-anchor="middle">∨★  ∨☆  ∧★  ∧☆</text>
-  <text class="code" x="332" y="697" text-anchor="middle">applyMap</text>
+<g><rect class="fixed" x="452" y="440" width="192" height="64" rx="8"/>
+  <text class="title" x="548" y="462" text-anchor="middle">⟑ · ⟇</text>
+  <text x="548" y="480" text-anchor="middle">signed sum of orders</text>
+  <text class="code" x="548" y="495" text-anchor="middle">constructProductGeometric</text>
 </g>
-<g><rect class="fixed" x="452" y="643" width="192" height="62" rx="8"/>
-  <text class="title" x="548" y="663" text-anchor="middle">Transwedge ⩃ₖ</text>
-  <text x="548" y="682" text-anchor="middle">Σ (<tspan text-decoration="underline">𝐜</tspan><tspan
-    font-size="0">̱</tspan> ∨ 𝐚) ∧ (𝐛 ∨ 𝐜★), anti ☆</text>
-  <text class="code" x="548" y="697" text-anchor="middle">constructProductsTransitional</text>
+<g><rect class="fixed" x="668" y="440" width="192" height="64" rx="8"/>
+  <text class="title" x="764" y="462" text-anchor="middle">Squared norms</text>
+  <text class="code" x="764" y="480" text-anchor="middle">constructNormsSquared</text>
+  <text x="764" y="495" text-anchor="middle">radius: <tspan class="code">filterGrades</tspan>
+    of ∘</text>
 </g>
-<g><rect class="fixed" x="668" y="643" width="192" height="62" rx="8"/>
-  <text class="title" x="764" y="663" text-anchor="middle">Squared norms</text>
-  <text x="764" y="682" text-anchor="middle">bulk and weight, from parts</text>
-  <text class="code" x="764" y="697" text-anchor="middle">constructNormsSquared</text>
-</g>
-<g><rect class="fixed" x="452" y="745" width="192" height="62" rx="8"/>
-  <text class="title" x="548" y="765" text-anchor="middle">⟑ · ⟇</text>
-  <text x="548" y="784" text-anchor="middle">signed sum of orders</text>
-  <text class="code" x="548" y="799" text-anchor="middle">constructProductGeometric</text>
-</g>
+<g><rect class="emission" x="20" y="540" width="840" height="40" rx="8"/>
+  <text x="440" y="565" text-anchor="middle">defineOperator emits each table over the bases of
+  its operands</text></g>
 <g>
-  <rect class="input" x="20" y="833" width="14" height="14" rx="3"/>
-  <text class="quiet" x="42" y="844">input</text>
-  <rect class="fixed" x="120" y="833" width="14" height="14" rx="3"/>
-  <text class="quiet" x="142" y="844">fixed definition or map</text>
-  <rect class="anti" x="320" y="833" width="14" height="14" rx="3"/>
-  <text class="quiet" x="342" y="844">anti side, by De Morgan</text>
-  <text class="quiet" x="860" y="844" text-anchor="end"><tspan
-    class="code">defineOperator</tspan> emits each table</text>
+  <rect class="input" x="20" y="602" width="14" height="14" rx="3"/>
+  <text class="quiet" x="42" y="613">input</text>
+  <rect class="fixed" x="120" y="602" width="14" height="14" rx="3"/>
+  <text class="quiet" x="142" y="613">fixed definition or map</text>
+  <rect class="anti" x="320" y="602" width="14" height="14" rx="3"/>
+  <text class="quiet" x="342" y="613">anti side, by De Morgan</text>
 </g>
 </svg>

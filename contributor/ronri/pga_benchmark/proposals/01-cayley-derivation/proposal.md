@@ -26,11 +26,10 @@ the other infinity. The parts split by these projective vectors in both algebras
 
 ![Derivation map, after Lengyel's figure 2.16, for RGA and CGA. Green boxes are inputs. Blue boxes
 are fixed definitions and maps. Purple boxes conjugate their base by complements. Each box names
-the function that builds its table, and each arrow is one argument of that
-function.](../../pages/derivation-map.svg)
+the function that builds its table.](../../pages/derivation-map.svg)
 
 The figure shows RGA alone, and it predates the transwedge, by which Lengyel later unified the
-geometric product. The map adds both, and each of its arrows is a real argument in the code.
+geometric product. The map adds both, and it names the code that builds each table.
 
 ### Against Lengyel's figure 2.16
 
