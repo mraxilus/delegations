@@ -950,22 +950,21 @@ from elsewhere is a cell of a dashed box, filled in the colour of its kind, so t
 its block. Brown text holds in RGA alone and blue text in CGA alone, so that no formula names its
 algebra. The two colours are shell tokens for code, so they follow the theme.
 
-Lines from several boxes meet on one bar at right angles, and one line leaves it. A second bar
-forks that line to each table that it feeds. The formulas take the form of the maths, as Lengyel
-writes them. So a unary operator, such as ★ in 𝐮★, stands after its operand. An interior product,
-such as 𝐚 ∨ 𝐛★, is a product with a dual. The code puts a unary operator first and spells ∨★ as
-one operator, as Nim needs.
+Each box takes its own line from each box that it uses, and no two lines join or fork, as the
+Architect asked on 2026-10-17. Each line turns at right angles. The formulas take the form of the
+maths, as Lengyel writes them. So a unary operator, such as ★ in 𝐮★, stands after its operand. An
+interior product, such as 𝐚 ∨ 𝐛★, is a product with a dual. The code puts a unary operator first and
+spells ∨★ as one operator, as Nim needs.
 
 Each block takes the boxes of other blocks on its top row, and it builds downward from them. The
 boxes from one block share one dashed box, with a cell for each box, as the Architect asked on
-2026-10-17. One line leaves each dashed box and forks to each box that uses that block. The dashed
-boxes stand in the order of the blocks, and the cells in the order that their block derives them.
-A box of the same block is never in a dashed box, since its own line reaches it.
+2026-10-17. A separate line leaves a dashed box for each box that uses that block. The dashed boxes
+stand in the order of the blocks, and the cells in the order that their block derives them. A box of
+the same block is never in a dashed box, since its own line reaches it.
 
 The line of each block that a formula draws on reaches its box, unless the box reaches that operator
 through another input. So ∨ also stands for the ∧ that it derives from, and ★ stands for the 𝐆 that
-it derives from. A dot marks where lines join. A line that crosses another line with no dot passes
-over it, and the line under it shows a gap.
+it derives from. A line that crosses another line passes over it, and the line under it shows a gap.
 
 The map gives every route to a box that holds at pin, and it fades each route that the code does
 not take. A faded box is an operator with no table, so the map shows what the tables serve. The
