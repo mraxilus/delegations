@@ -2504,9 +2504,16 @@ Where the algebra meets a world object with the eye or a ray, it builds the line
 the place so read. So a world plane met with a ray far out lands on the world step.
 
 The aim stays world's, because it has to compare equal frame to frame while the origin moves.
-Framing reads its places about the view origin, and a destination stance carries the origin it is
-held about (`CameraStance.origin`). So an ease lands on its destination bit for bit while the view
-origin moves under it. The point that a right drag holds carries its origin too.
+A destination stance is held about the place it lands on, and carries that origin
+(`CameraStance.origin`). A pick or a framing stands its pivot on the world place of its object
+(`camera.stanceRepivotedAt`). The slide that builds it composes onto the camera's motor, with the
+view origin at the eye, so no number far out enters it. At progress 1, `toward` returns the
+destination itself, so an ease lands on it bit for bit while the view origin moves under it.
+
+Rejected: a destination held about the view origin of the eye it starts from. Far out, its pivot
+rounds off the object, and an orbit then swings the object across the frame. Rejected: the screw at
+progress 1, which rounds off the destination from millions of units away. The point that a right
+drag holds carries its origin too.
 
 **Records are float32 about the view origin, with no split into parts.** Emission reads each world
 place about the view origin and hands it on, and the five record writers store what they are handed.
@@ -4008,7 +4015,8 @@ plane, which never pulls in.
 
 A star or a planet of the demo carries `RADIUS_OBJECT_LEAST`, so a pick of one comes in to 2.4e-7
 units. The pivot lands on it there, and it reads in front (Camera aiming, Picking). An orbit there
-keeps it mid-frame however far out it stands, as the camera is held about the view origin (Origins).
+keeps it mid-frame however far out it stands, and however far off the pick starts. The destination
+is held about the place of the star itself, and the ease lands on it exactly (Origins).
 
 **An object behind the reader is left to the frame rule.** To centre one would slide the camera back
 past it rather than turn, which is a jump nobody asked for. `stanceApproaching` answers none there,
@@ -4038,11 +4046,16 @@ tall, against 19.9 px at 9.38e-8 without the floor.
 
 - a pointer pick lands the object within 0.01 px of the frame's middle, from every angle swept;
 - a pick of a point at least radius lands on its fit, in front and picked, at 1 and 2.36e6 units;
-- its pivot stays on it through an orbit, to 2% of the separation;
+- its pivot stays on it through an orbit, to a millionth of the separation;
 - an orbit of 0.7 by 0.3 then leaves it there;
+- a pointer pick and a pick from the list land on the star from 40 to 3.19e6 units off;
+- their pivot stands on it to a millionth of the separation, and an orbit keeps it there;
 - the arrival distance equals the fit, and the reach to the object equals it too;
 - a near point and a line keep the orbit distance, and one behind the reader is refused;
 - the arrival of the plane from 12 units and from 1.
+
+That sweep, on the C build on 2026-10-17, reads the worst pivot 1.7e-8 of the separation off. A
+destination held about the view origin of the starting eye read 7.0e-3 off in the same sweep.
 
 Verified by driven check:
 
@@ -4050,7 +4063,9 @@ Verified by driven check:
   from 45 units to 19.3;
 - a second pick after a wheel out past 100 comes in to 19.3 again;
 - a right-click on the ground plane from Home settles its centre at 48.28, which is exactly the
-  depth wanted for 0.40.
+  depth wanted for 0.40;
+- a first left-click on LSPM J0344+0741, 3.19 million units out, holds it within 0.01 px of the
+  middle through four orbit drags (`driveFarPick`).
 
 Verified by a Playwright script that is not kept, in Playwright's Chromium under SwiftShader, on
 2026-10-04. A click on HD 222237b in the demo of 5,038 objects settles at 2.413e-7 units, with its
