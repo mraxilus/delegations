@@ -3,6 +3,9 @@
 ##   Split from `wholecloth_turns`, which reads document as it loads, so law reads this lookup
 ##     through node with no browser (`tests/test_wholecloth_scene.nim`, Article IX.5).
 ##     Cost: scene and its parts are exported, for `wholecloth_turns` that draws them.
+##   Page plays sweep by place, not by turn: recording gives each moment its own place
+##     (`turns.frame`), so every pose planned way stands at one turn is drawn, one step of play
+##     each, and turn waits there (Architect, pull request 629, 2026-10-17, D2).
 ##   Recording is read in place as `JsObject` through `std/jsffi`, never copied into Nim
 ##     objects, since every copy on JS backend is deep (STYLE.md §7).  Only scene at one place
 ##     is built as Nim value, interpolated afresh.
@@ -43,8 +46,43 @@ type
 
 
 func placeOf*(moment: JsObject): float =
-  ## Read where moment stands on page's play: its turn.
-  moment.turn.to(float)
+  ## Read where moment stands on page's play, as recording writes it (`turns.frame`).
+  moment.place.to(float)
+
+
+func placeAt*(frames: JsObject, turn, rest: float): float =
+  ## Find place on play where page draws `turn`: one for one with turn between two moments.
+  ##   Where several poses stand at `turn`, pose furthest from `rest` along play, i.e. one
+  ##     plan stood last there, so page at one turn is mirror image of page at other.
+  ##   Turn itself for sweep with no moment, where nothing is drawn.
+  let count = frames.length.to(int)
+  if count == 0: return turn
+
+  # Find last moment at or before `turn` by bisection on turns, which never fall.
+  var
+    lower = 0
+    upper = count - 1
+  while upper - lower > 1:
+    let middle = (lower + upper) shr 1
+    if frames[middle].turn.to(float) <= turn: lower = middle else: upper = middle
+
+  # Where poses stand at `turn`, take one furthest from rest: first along play below rest, last
+  #   above it.  Bisection never reads last moment, so it is read here.  Equality is exact,
+  #   since turn asked for is one recording wrote or else falls between two.
+  let
+    turn_a = frames[lower].turn.to(float)
+    turn_b = frames[upper].turn.to(float)
+  if turn_b == turn and turn >= rest: return placeOf(frames[upper])
+  if turn_a == turn:
+    if turn < rest:
+      while lower > 0 and frames[lower-1].turn.to(float) == turn: dec lower
+    return placeOf(frames[lower])
+
+  # Between two moments, move place as turn moves; exact equality only guards division.
+  let
+    place_a = placeOf(frames[lower])
+    u = if turn_b == turn_a: 0.0 else: max(0.0, min(1.0, (turn - turn_a) / (turn_b - turn_a)))
+  place_a + (placeOf(frames[upper]) - place_a) * u
 
 
 func interpolate[N: static int](destination: var array[N, float]; a, b: JsObject; u: float) =
@@ -58,6 +96,7 @@ func interpolate[N: static int](destination: var array[N, float]; a, b: JsObject
 func fillScene*(scene: var Scene, frames: JsObject, place: float): bool =
   ## Fill `scene` at `place`: joints interpolated between moments either side, words from nearer.
   ##   False, and `scene` untouched, for empty sweep: rest pose that never held draws nothing.
+  ##   Turn is interpolated as joints are, so it waits while poses at one turn play.
   ##   Fills caller's storage rather than returning `Option[Scene]`, which deep copied
   ##     scene twice per call on JS backend (read in emitted JS: `some` copies its
   ##     parameter into constructor, then constructor into result).
@@ -83,7 +122,8 @@ func fillScene*(scene: var Scene, frames: JsObject, place: float): bool =
       else: max(0.0, min(1.0, (place - place_a) / (place_b - place_a)))
     near = if u < 0.5: moment_a else: moment_b
     strain_a = moment_a.strain.to(float)
-  scene.turn = place
+    turn_a = moment_a.turn.to(float)
+  scene.turn = turn_a + (moment_b.turn.to(float) - turn_a) * u
   scene.is_ok = near.ok.to(bool)
   scene.is_reseed = near.reseed.to(bool)
   scene.strain = strain_a + (moment_b.strain.to(float) - strain_a) * u

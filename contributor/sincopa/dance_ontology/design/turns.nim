@@ -13,6 +13,8 @@
 ##   Way over crown that walk stops short of all it asks, by whatever stopped it, is planned way
 ##     where that holds further (`walk.swept`): couple stand where plan has them at each moment,
 ##     and moment that plan poses again at one turn is marked so (`reseed`).
+##   Each moment carries its place on page's play (`place`), so page plays every pose plan
+##     stands at one turn while turn waits (Architect, pull request 629, 2026-10-17, D2).
 ##   Words (wrap, lock, low, high) are put on by `simulation/words`, which `verdicts`
 ##     reads too.  Not because simulation speaks other language -- it reuses agreed
 ##     words -- but because here it measures what ontology asserts, and
@@ -72,14 +74,21 @@ func toMillimetres(point: Vector): JsonNode =
   ## Write point in whole millimetres.
   %*[int(round(point.x * 1000.0)), int(round(point.y * 1000.0)), int(round(point.z * 1000.0))]
 
-func frame(moment: Moment, band: Band, links: seq[Link], is_reposed: bool): JsonNode =
-  ## Record one moment as page draws it: arms, words and crossings.
+func frame(
+  moment: Moment, band: Band, links: seq[Link], is_reposed: bool, reposed: int
+): JsonNode =
+  ## Record one moment as page draws it: arms, words, crossings, and place on page's play.
   ##   Moment at turn of one before it has arms posed again there (`reseed`), and page says so:
-  ##     planned way stands several poses at one wind (`plan.planPath`).  Page draws two ends
-  ##     of them alone, and jumps from one to other at that turn (`wholecloth_turns.fillScene`).
-  let tight = tightest(HUMAN, moment.stance, links, moment.arms)
+  ##     planned way stands several poses at one wind (`plan.planPath`).
+  ##   Place is turn, plus one step for each of `reposed` poses stood again before it in order
+  ##     written, so page gives each pose one step of play (`wholecloth_scene.fillScene`).
+  ##     Counted in thousandths, as turn is written, so place lies on that same grid.
+  let
+    tight = tightest(HUMAN, moment.stance, links, moment.arms)
+    turn_milli = int(round(moment.at * 1000.0))
   result = %*{
-    "turn": round(moment.at * 1000.0) / 1000.0,
+    "turn": float(turn_milli) / 1000.0,
+    "place": float(turn_milli + reposed * int(round(STEP * 1000.0))) / 1000.0,
     "ok": true,
     "reseed": is_reposed,
     "strain": round(tight.strain * 100.0) / 100.0,
@@ -122,20 +131,30 @@ func isReposed(way: Walk, i: int): bool =
   i > 0 and way.moments[i].at == way.moments[i-1].at
 
 func frames(sweep: Swept, band: Band, links: seq[Link]): JsonNode =
-  ## Every moment of both ways, in order of turn, rest once.
+  ## Every moment of both ways, in order of turn, rest once, each at its own place on play.
   ##   Negative way was walked outward from rest, so it is read back to front.
-  # TODO: Should page show every pose planned way stands at one turn?  Page finds moment by turn
-  #   (`wholecloth_turns.fillScene`), so it eases toward pose at one end and then shows other:
-  #   492 mm in one jump on cross-name chain held above at 0.02 of turn, 2026-10-12.
-  #   Candidates: keep last pose at each turn alone, which page draws whole and laws still read,
-  #     but which hides how plan got there; or let page step through poses at one turn, which
-  #     changes how every sweep plays.
-  #   Evidence needed: Architect's ruling on which (`PROVENANCE.md`, Open questions).
+  ##   Page plays every pose planned way stands at one turn, one step of play each, and turn
+  ##     waits there (Architect, pull request 629, 2026-10-17, D2).
+  ##     Cost: two chains held above play longer, cross-name 8.7 s to 14.2 s per pass and
+  ##       same-name 11.4 s to 17.9 s, within page's two turns each way at 0.35 of turn per
+  ##       second, derived 2026-10-17 from recording's turns and places.
+  ##     Rejected: last pose at each turn alone, which moves arm 205 to 548 mm in one step and
+  ##       draws it up to 61 mm short or long halfway, measured 2026-10-15.
   result = newJArray()
+  var
+    reposed = 0  ## Poses stood again so far, in order written.
+    at_prev = NaN  ## Turn of moment written last; none before first.
+
+  # Count each moment at turn of one written before it: same wind is one stored figure kept
+  #   again (`plan.planPath`), so `==` is exact.
+  template write(moment: Moment, is_reposed: bool) =
+    if moment.at == at_prev: inc reposed
+    at_prev = moment.at
+    result.add frame(moment, band, links, is_reposed, reposed)
   for i in countdown(sweep.negative.moments.high, 1):
-    result.add frame(sweep.negative.moments[i], band, links, isReposed(sweep.negative, i))
+    write(sweep.negative.moments[i], isReposed(sweep.negative, i))
   for i, moment in sweep.positive.moments:
-    result.add frame(moment, band, links, isReposed(sweep.positive, i))
+    write(moment, isReposed(sweep.positive, i))
 
 func went(way: Walk): float =
   ## How far one way got: where it stopped, else as far as it was walked.

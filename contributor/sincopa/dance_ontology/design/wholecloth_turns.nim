@@ -90,6 +90,7 @@ type
     why_negative, why_positive: cstring  ## What refused, each way.
     is_stopped_negative, is_stopped_positive: bool  ## Blocked within `MOST`, not merely ended.
     found_rest: bool  ## Whether rest pose exists at all.
+    place_negative, place_positive: float  ## Places on play of both ends, where play turns back.
 
   Sweep = object
     ## Define one sweep as page reads it: limits, and moments as reference into `TURNS`.
@@ -199,6 +200,8 @@ func readSweep(sweep: var Sweep, hold: Hold, level: Level) =
   sweep.limits.is_stopped_positive = sweep_data.stoppedPositive.to(bool) and positive < MOST
   sweep.limits.found_rest = sweep_data.restHolds.to(bool)
   sweep.frames = sweep_data.frames
+  sweep.limits.place_negative = placeAt(sweep.frames, -sweep.limits.negative, HOLDS[hold].rest)
+  sweep.limits.place_positive = placeAt(sweep.frames, sweep.limits.positive, HOLDS[hold].rest)
 
 
 func sweepTable(): array[Hold, array[Level, Sweep]] =
@@ -484,8 +487,9 @@ func levelOfName(name: cstring): Level =
 var
   HOLD_SHOWN = Hold.LeftToLeft  ## Hold on show.
   LEVEL_SHOWN = Level.Low  ## Height on show.
-  TURN_DRAWN = -0.5  ## Turn drawn now.
-  TURN_TARGET = -0.5  ## Turn eased toward while not playing.
+  PLACE_DRAWN = 0.0  ## Place on play drawn now; rest of hold on show before first draw.
+  PLACE_TARGET = 0.0  ## Place eased toward while not playing.
+  TURN_DRAWN = 0.0  ## Turn at `PLACE_DRAWN`, read off scene at each draw.
   IS_PLAYING = false  ## Sweeping between blocks.
   DIRECTION_PLAY = 1.0  ## Way play sweeps: `+1` toward `positive` block, `-1` other way.
   NOW_PREV = 0.0  ## Timestamp of previous frame; seeded by `start`.
@@ -509,15 +513,21 @@ proc clampTurn(turn: float): float =
   template limits: untyped = LUT_SWEEP_BY_HOLD[HOLD_SHOWN][LEVEL_SHOWN].limits
   max(-limits.negative, min(limits.positive, turn))
 
+proc placeShown(turn: float): float =
+  ## Place on play where sweep on show draws `turn`, kept within its blocks.
+  placeAt(LUT_SWEEP_BY_HOLD[HOLD_SHOWN][LEVEL_SHOWN].frames, clampTurn(turn),
+          HOLDS[HOLD_SHOWN].rest)
+
 
 proc renderStage() =
-  ## Redraw stage and readout at `TURN_DRAWN`, and move slider there.
+  ## Redraw stage and readout at `PLACE_DRAWN`, and move slider to its turn.
   ##   Hot path: once per animated frame.  Constant: one scene refilled in place.
   ##     Allocates markup strings only; browser's parse of stage and readout dominates.
   template sweep: untyped = LUT_SWEEP_BY_HOLD[HOLD_SHOWN][LEVEL_SHOWN]
   # Alias into storage, never copy.
   template limits: untyped = sweep.limits
-  let found_scene = fillScene(SCENE_STORAGE, sweep.frames, TURN_DRAWN)
+  let found_scene = fillScene(SCENE_STORAGE, sweep.frames, PLACE_DRAWN)
+  TURN_DRAWN = if found_scene: SCENE_STORAGE.turn else: PLACE_DRAWN
   STAGE_ELEMENT.innerHTML =
     if found_scene: sceneSvg(HOLD_SHOWN, LEVEL_SHOWN, SCENE_STORAGE) else: ""
   SLIDER_ELEMENT.value = TURN_DRAWN.toText
@@ -609,8 +619,11 @@ proc renderStrip() =
           (if turn < 0.0: sweep.limits.why_negative else: sweep.limits.why_positive) &
           "</span></figcaption></figure>"
       continue
-    doAssert fillScene(SCENE_STORAGE, sweep.frames, turn),
-      "Sweep within its blocks must have moments."
+    doAssert fillScene(
+      SCENE_STORAGE,
+      sweep.frames,
+      placeAt(sweep.frames, turn, HOLDS[HOLD_SHOWN].rest),
+    ), "Sweep within its blocks must have moments."
     var words: cstring = ""
     for k in 0..<SCENE_STORAGE.connection_count:
       if k > 0: words.add " · "
@@ -628,7 +641,7 @@ proc renderStrip() =
   for figure in STRIP_ELEMENT.querySelectorAll(".mini:not(.blocked)"):
     figure.addEventListener("click", proc (event: Event) =
       IS_PLAYING = false
-      TURN_TARGET = parseFloat(event.currentTarget.getAttribute("data-t")))
+      PLACE_TARGET = placeShown(parseFloat(event.currentTarget.getAttribute("data-t"))))
 
 
 proc renderButtons() =
@@ -646,41 +659,42 @@ proc renderButtons() =
   for button in HOLD_BOX.querySelectorAll("button"):
     button.addEventListener("click", proc (event: Event) =
       HOLD_SHOWN = holdOfKey(event.currentTarget.getAttribute("data-k"))
-      TURN_DRAWN = clampTurn(HOLDS[HOLD_SHOWN].rest)
-      TURN_TARGET = TURN_DRAWN
+      PLACE_DRAWN = placeShown(HOLDS[HOLD_SHOWN].rest)
+      PLACE_TARGET = PLACE_DRAWN
       renderButtons()
       renderStrip()
       renderStage())
   for button in LEVEL_BOX.querySelectorAll("button"):
     button.addEventListener("click", proc (event: Event) =
       LEVEL_SHOWN = levelOfName(event.currentTarget.getAttribute("data-l"))
-      TURN_DRAWN = clampTurn(TURN_DRAWN)
-      TURN_TARGET = TURN_DRAWN
+      PLACE_DRAWN = placeShown(TURN_DRAWN)
+      PLACE_TARGET = PLACE_DRAWN
       renderButtons()
       renderStrip()
       renderStage())
 
 
 proc tick(now: float) =
-  ## Advance one frame: sweep between blocks while playing, else ease toward `TURN_TARGET`.
-  ##   Redraws only when `TURN_DRAWN` moved (Article VII.3); frame time capped at 50 ms.
+  ## Advance one frame: sweep between blocks while playing, else ease toward `PLACE_TARGET`.
+  ##   Moves place on play, not turn, so turn waits while poses at one turn play.
+  ##   Redraws only when `PLACE_DRAWN` moved (Article VII.3); frame time capped at 50 ms.
   let elapsed = min(0.05, (now - NOW_PREV) / 1000.0)
   NOW_PREV = now
   if IS_PLAYING:
     # Alias into storage, never copy.
     template limits: untyped = LUT_SWEEP_BY_HOLD[HOLD_SHOWN][LEVEL_SHOWN].limits
-    TURN_DRAWN += DIRECTION_PLAY * elapsed * 0.35
-    if TURN_DRAWN >= limits.positive:
-      TURN_DRAWN = limits.positive
+    PLACE_DRAWN += DIRECTION_PLAY * elapsed * 0.35
+    if PLACE_DRAWN >= limits.place_positive:
+      PLACE_DRAWN = limits.place_positive
       DIRECTION_PLAY = -1.0
-    elif TURN_DRAWN <= -limits.negative:
-      TURN_DRAWN = -limits.negative
+    elif PLACE_DRAWN <= limits.place_negative:
+      PLACE_DRAWN = limits.place_negative
       DIRECTION_PLAY = 1.0
-    TURN_TARGET = TURN_DRAWN
+    PLACE_TARGET = PLACE_DRAWN
     renderStage()
-  elif abs(TURN_TARGET - TURN_DRAWN) > 0.002:
-    let away = TURN_TARGET - TURN_DRAWN
-    TURN_DRAWN += (if away < 0.0: -1.0 else: 1.0) * min(abs(away), elapsed * 0.9)
+  elif abs(PLACE_TARGET - PLACE_DRAWN) > 0.002:
+    let away = PLACE_TARGET - PLACE_DRAWN
+    PLACE_DRAWN += (if away < 0.0: -1.0 else: 1.0) * min(abs(away), elapsed * 0.9)
     renderStage()
   discard window.requestAnimationFrame(tick)
 
@@ -693,15 +707,17 @@ proc start(now: float) =
 
 SLIDER_ELEMENT.addEventListener("input", proc (event: Event) =
   IS_PLAYING = false
-  TURN_DRAWN = clampTurn(parseFloat(SLIDER_ELEMENT.value))
-  TURN_TARGET = TURN_DRAWN
+  PLACE_DRAWN = placeShown(parseFloat(SLIDER_ELEMENT.value))
+  PLACE_TARGET = PLACE_DRAWN
   renderStage())
 document.getElementById("play").addEventListener("click", proc (event: Event) =
   IS_PLAYING = not IS_PLAYING)
 document.getElementById("to-rest").addEventListener("click", proc (event: Event) =
   IS_PLAYING = false
-  TURN_TARGET = clampTurn(HOLDS[HOLD_SHOWN].rest))
+  PLACE_TARGET = placeShown(HOLDS[HOLD_SHOWN].rest))
 
+PLACE_DRAWN = placeShown(HOLDS[HOLD_SHOWN].rest)
+PLACE_TARGET = PLACE_DRAWN
 renderButtons()
 renderStrip()
 renderStage()
