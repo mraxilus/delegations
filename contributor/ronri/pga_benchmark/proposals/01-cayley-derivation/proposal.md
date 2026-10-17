@@ -25,13 +25,14 @@ RGA makes 𝐞ₙ null. CGA pairs 𝐞ₙ₋₁ and 𝐞ₙ with 𝐞ₙ₋₁ �
 the other infinity. The right complement of the origin, 𝐞̄ₙ in RGA and 𝐞̄ₙ₋₁ in CGA, is the horizon,
 which the attitude reads. The parts split by these projective vectors in both algebras.
 
-![Derivation map, after Lengyel's figure 2.16, in ten blocks in the order of the code, where each
-box holds a symbol. Green boxes are the two inputs, grey boxes are basis and projective elements,
-and purple anti tables stand under their blue tables. Each operator in a formula enters its box by
-a line, and a dashed box stands for a box from elsewhere. Each line carries its formula, with the
-function that builds the table under it. A faded line is a route that the code does not take, and
-a faded box is an operator with no table. Brown text holds in RGA alone, and blue text in CGA
-alone.](../../pages/derivation-map.svg)
+![Derivation map, after Lengyel's figure 2.16, in eleven blocks in the order of the code, where
+each box holds a symbol. Green boxes are the two inputs, grey boxes are basis and projective
+elements, and purple anti tables stand under their blue tables. Dashed boxes on the top row of a
+block bring in boxes from other blocks, and each block builds downward. A dot marks where lines
+join, and a line that crosses another line with no dot passes over it. Each line carries its
+formula, with the function that builds the table under it. A faded line is a route that the code
+does not take, and a faded box is an operator with no table. Brown text holds in RGA alone, and
+blue text in CGA alone.](../../pages/derivation-map.svg)
 
 The figure shows RGA alone, and it predates the transwedge, by which Lengyel later unified the
 geometric product. The map adds both, and it names the code that builds each table. It takes the
@@ -39,13 +40,16 @@ dot 𝐚 ∙ 𝐛 = 𝐚 ⩓ₖ 𝐛 where k = gr 𝐚 = gr 𝐛 from the transw
 order 0, ∙ at equal grades, and ⟑ as a signed sum of its orders. A suite holds that this dot
 equals the 𝐚ᵀ𝐆𝐛 of the figure, which the map gives as a faded route.
 
-The blocks follow the groups of the code, from bases to properties, and the last two blocks hold
-the projections and the motion operators. Each table takes only the inputs that it uses, so ★
-feeds ⩓ₖ alone and ☆ feeds ⩔ₖ alone. The faded lines give every other route to a box that holds at
-pin. So the dot has
-three routes: from ⩓ₖ, which the code takes, from 𝐚 ∨ 𝐛★ at equal grades, and from 𝐆. The faded
-boxes give the operators with no table, such as the support, the center and the roots of the
-norms, so the map shows what the tables serve.
+The blocks follow the groups of the code, from bases to properties. The last three blocks hold
+the measures, the projections and the motion operators. A box draws only the inputs that it cannot
+reach through another input, so ∨ also stands for the ∧ that it derives from. The faded lines give
+every other route to a box that holds at pin. So the dot has three routes: from ⩓ₖ, which the code
+takes, from 𝐚 ∨ 𝐛★ at equal grades, and from 𝐆. The faded boxes give the operators with no table,
+such as the support, the distance and the flector, so the map shows how complete the library is.
+
+P01 lays out every Cayley table of the library, so most other proposals build on it. They count
+only the tables that the library builds, and they take a new table into account when the library
+adds it.
 
 ### Against Lengyel's figure 2.16
 
