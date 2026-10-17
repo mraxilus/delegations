@@ -1,12 +1,12 @@
 # Cayley derivation as edits at pin
 
 Duals, interior products, antireverse and attitude read three of the four rules, in place of
-constructors of their own. The dot reads 𝐆 as 𝐚ᵀ𝐆𝐛, as in Lengyel's figure 2.16. The parts
-split by the projective vectors in both algebras. `constructAnti`, `applyConstant` and
+constructors of their own. The dot reads the transwedge 𝐚 ⩓ₖ 𝐛 at k = gr 𝐚 = gr 𝐛, as at pin.
+The parts split by the projective vectors in both algebras. `constructAnti`, `applyConstant` and
 `filterGrades` are in the library at pin. This change adds `applyMap`, `constructDot`, and
 `mergeTerm`, which both `applyMap` and `merge` call. Every exported table keeps its name, shape
-and cells. The suites hold the transwedge identity that the dot no longer reads. `cayleys.nim` is
-replaced whole, since its tables and constructors change together.
+and cells. The suites hold that the dot equals 𝐚ᵀ𝐆𝐛, as in Lengyel's figure 2.16. `cayleys.nim`
+is replaced whole, since its tables and constructors change together.
 
 ### Order of edits
 
@@ -52,7 +52,7 @@ import ../pga/[algebra {.all.}, cayleys {.all.}, multivectors {.all.}, operators
 
 
 suite "Internal: Transwedge":
-  test "Order 0 is wedge, order gr(𝐚) is bulk contraction, equal grades give dot":
+  test "Order 0 is wedge, order gr(𝐚) is bulk contraction, equal grades give dot as 𝐚ᵀ𝐆𝐛":
     const (contraction, dot) = block:
       var contraction, dot: Cayley2D
       for k in Order:
@@ -60,11 +60,13 @@ suite "Internal: Transwedge":
           if Order(a.grade) != k: continue
           for b in Basis:
             contraction[b][a].add(CAYLEYS_WEDGES_TRANS.base[k][a][b])
-            if a.grade == b.grade: dot[a][b].add(CAYLEYS_WEDGES_TRANS.base[k][a][b])
+      for n in Basis:  # 𝐚ᵀ𝐆𝐛: scalar wherever 𝐆 maps one basis onto other.
+        for term in CAYLEYS_EXOMORPHISM_METRIC.base[n]:
+          dot[term.basis][n].add BasisSigned(basis: Basis.scalar, is_negated: term.is_negated)
       (contraction, dot)
-    check CAYLEYS_WEDGES_TRANS.base[Order.low] == CAYLEYS_WEDGE.base  # 𝐚 ⩃₀ 𝐛 = 𝐚 ∧ 𝐛
-    check contraction == CAYLEYS_INTERIOR.anti.bulk.right  # 𝐚 ⩃ₖ 𝐛 at k = gr(𝐚) is 𝐛 ∨ 𝐚★
-    check dot == CAYLEYS_DOT.base  # 𝐚 ⩃ₖ 𝐛 at gr(𝐚) = gr(𝐛) is 𝐚 ∙ 𝐛
+    check CAYLEYS_WEDGES_TRANS.base[Order.low] == CAYLEYS_WEDGE.base  # 𝐚 ⩓₀ 𝐛 = 𝐚 ∧ 𝐛
+    check contraction == CAYLEYS_INTERIOR.anti.bulk.right  # 𝐚 ⩓ₖ 𝐛 at k = gr(𝐚) is 𝐛 ∨ 𝐚★
+    check dot == CAYLEYS_DOT.base  # 𝐚 ⩓ₖ 𝐛 at gr(𝐚) = gr(𝐛) is 𝐚ᵀ𝐆𝐛
 ```
 
 ## Replace `pga/cayleys.nim` from `4aa7a2507c537c06`
@@ -84,9 +86,11 @@ suite "Internal: Transwedge":
 ##       (attitude, carrier, duals, interior products).
 ##       Each dual composes two maps: complement after 𝐆 or 𝔾.
 ##     `filterGrades` keeps one grade of product (squared radius norm, top grade of antidot).
-##     `constructProductsTransitional` sums wedge chains over one grade (transwedge orders).
-##       `constructProductGeometric` sums orders with sign (-1)^(k(k-1)/2) (geometric products).
-##   Dot reads 𝐆 as 𝐚ᵀ𝐆𝐛. Parts split by presence of origin and, in CGA, of infinity.
+##     `constructProductsTransitional` sums wedge chains over one grade (transwedge orders),
+##       i.e. 𝐚 ⩓ₖ 𝐛 = Σ (𝐜̲ ∨ 𝐚) ∧ (𝐛 ∨ 𝐜★) over 𝐜 of grade k; ⩔ₖ swaps ∧ for ∨, ★ for ☆.
+##       `constructProductGeometric` sums orders with sign, i.e. 𝐚 ⟑ 𝐛 = Σ (-1)^(k(k-1)/2) 𝐚 ⩓ₖ 𝐛.
+##   Dot reads transwedge at equal grades, i.e. 𝐚 ∙ 𝐛 = 𝐚 ⩓ₖ 𝐛 at k = gr 𝐚 = gr 𝐛.
+##   Parts split by presence of origin and, in CGA, of infinity.
 ##   Cost: ⟑ and ⟇ keep two transwedge families, each N³ at compile time, since conformal anti
 ##     orders are not conjugates of base orders; maps and filters walk N² cells.
 ##
@@ -172,12 +176,6 @@ const
       base: base,
       anti: base.constructAnti(CAYLEYS_COMPLEMENT),
     )
-  CAYLEYS_DOT* = block:  ## Dot as 𝐚ᵀ𝐆𝐛; antidot conjugates it.
-    let base = constructDot(CAYLEYS_EXOMORPHISM_METRIC.base)
-    Spatial[Cayley2D](
-      base: base,
-      anti: base.constructAnti(CAYLEYS_COMPLEMENT),
-    )
 
 const
   CAYLEYS_DUAL* = Spatial[Chiral[Cayley1D]](  ## Complement after exomorphism, e.g. 𝐦★ = (𝐆𝐦)̅.
@@ -235,6 +233,12 @@ const
   )
 
 const
+  CAYLEYS_DOT* = block:  ## Dot as 𝐚 ⩓ₖ 𝐛 at k = gr 𝐚 = gr 𝐛; antidot conjugates it.
+    let base = constructDot(CAYLEYS_WEDGES_TRANS.base)
+    Spatial[Cayley2D](
+      base: base,
+      anti: base.constructAnti(CAYLEYS_COMPLEMENT),
+    )
   CAYLEYS_WEDGE_DOT* = Spatial[Cayley2D](
     base: constructProductGeometric(CAYLEYS_WEDGES_TRANS.base),
     anti: constructProductGeometric(CAYLEYS_WEDGES_TRANS.anti),
@@ -408,13 +412,6 @@ func constructExomorphismMetric(metric: Cayley1D): Cayley1D {.compileTime, noini
     result[operand] = @[product.basis]
 
 
-func constructDot(exomorphism: Cayley1D): Cayley2D {.compileTime.} =
-  ## Construct Cayley table for dot as 𝐚ᵀ𝐆𝐛: scalar wherever 𝐆 maps one basis onto other.
-  for n in Basis:
-    for term in exomorphism[n]:
-      result[term.basis][n].add BasisSigned(basis: Basis.scalar, is_negated: term.is_negated)
-
-
 func constructProductExterior(
   complements: Chiral[Cayley1D], spatiality: Spatiality
 ): Cayley2D {.compileTime.} =
@@ -440,6 +437,13 @@ func constructProductExterior(
             is_negated: product.basis.is_negated xor product_complement.is_negated,
           )
       )
+
+
+func constructDot(wedges_trans: array[Order, Cayley2D]): Cayley2D {.compileTime.} =
+  ## Construct Cayley table for dot as transwedge at equal grades, i.e. 𝐚 ⩓ₖ 𝐛 at k = gr 𝐚 = gr 𝐛.
+  for a in Basis:
+    for b in Basis:
+      if a.grade == b.grade: result[a][b] = wedges_trans[Order(a.grade)][a][b]
 
 
 func constructProductGeometric(wedges_trans: array[Order, Cayley2D]): Cayley2D {.compileTime.} =

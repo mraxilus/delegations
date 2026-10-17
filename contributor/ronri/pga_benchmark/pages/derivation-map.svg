@@ -1,14 +1,17 @@
 <!-- Derivation map of P01, after Lengyel's figure 2.16, for RGA and CGA, with transwedge.
      Colours are shell tokens, with fallbacks so file reads alone. Proposal embeds it.
-     Bar under or over bold letter is decoration, mark kept at size zero: face gives no anchor. -->
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 628" class="map" role="img"
+     Bar under or over bold letter is decoration, mark kept at size zero: face gives no anchor.
+     Bar over group of signs is decoration alone. Line with bar over stands 22 below line above,
+     since face sets overline near its ascent. Tilde is spacing ˜, moved over or under letter. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 740" class="map" role="img"
   aria-labelledby="map-title map-desc">
 <title id="map-title">Derivation map</title>
 <desc id="map-desc">Two inputs, the metric and the orientation of the volume element, fix every
   table; the projective vectors, origin and in CGA infinity, split the parts. Exterior product,
-  exomorphism, dot, complements and reverse are fixed definitions. Each anti table conjugates
-  its base by complements. Maps build duals, dual products, transwedge orders, geometric
-  products, parts and norms, and the emitter reads every table.</desc>
+  exomorphism, complements and reverse are fixed definitions. Each anti table conjugates its
+  base by complements. Maps build duals, dual products and transwedge orders. The dot is the
+  transwedge at equal grades, and the geometric products are signed sums of its orders. Parts
+  and norms follow, and the emitter reads every table.</desc>
 <style>
 .map text { font-family: var(--sans, sans-serif); font-size: 12px; fill: var(--ink-2, #465262); }
 .map .title { font-size: 13.5px; fill: var(--ink, #16202c); }
@@ -27,137 +30,165 @@
   markerHeight="6" orient="auto-start-reverse"><path class="head" d="M0 0L10 5L0 10z"/>
 </marker></defs>
 <g>
-<path class="edge" d="M116 80V124" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M332 80V102H116"/>
-<path class="edge" d="M332 102H548"/>
-<path class="edge" d="M548 80V124" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M212 156H236" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M860 48H872V368H860" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M116 210H764"/>
-<path class="edge" d="M116 188V232" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M332 188V232" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M548 188V232" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M764 188V232" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M116 312H764"/>
-<path class="edge" d="M116 288V336" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M332 288V336" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M548 288V336" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M764 288V336" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M428 368H452" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M332 400V440" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M548 400V440" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M764 400V440" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M116 400V540" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M332 504V540" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M548 504V540" marker-end="url(#map-arrow)"/>
-<path class="edge" d="M764 504V540" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M116 92V136" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M332 92V114H116"/>
+<path class="edge" d="M332 114H548"/>
+<path class="edge" d="M548 92V136" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M764 92V136" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M116 234H548"/>
+<path class="edge" d="M116 212V256" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M332 212V256" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M548 212V256" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M116 354H548"/>
+<path class="edge" d="M116 332V376" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M332 332V376" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M548 332V376" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M428 414H452" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M644 414H668" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M332 452V496" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M548 452V496" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M764 452V496" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M764 572V616" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M860 174H872V654H860" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M116 452V616" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M332 572V616" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M548 572V616" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M668 654H644" marker-end="url(#map-arrow)"/>
 </g>
-<g><rect class="input" x="20" y="16" width="192" height="64" rx="8"/>
-  <text class="title" x="116" y="38" text-anchor="middle">Metric 𝖌</text>
-  <text x="116" y="56" text-anchor="middle">RGA 𝐞ₙ null · CGA null pair</text>
-  <text class="code" x="116" y="71" text-anchor="middle">constructMetric</text>
+<text class="quiet" x="124" y="250">constructAnti · De Morgan</text>
+<text class="quiet" x="124" y="370">each map reads tables above</text>
+<text class="quiet" x="556" y="478">signed sum</text>
+<text class="quiet" x="772" y="598">filterGrades</text>
+<g><rect class="input" x="20" y="16" width="192" height="76" rx="8"/>
+  <text class="title" x="116" y="32" text-anchor="middle">Metric 𝖌</text>
+  <text x="116" y="50" text-anchor="middle">RGA  diag(1, …, 1, 0)</text>
+  <text x="116" y="66" text-anchor="middle">CGA  diag(1, …, 1, [0 −1; −1 0])</text>
+  <text class="code" x="116" y="82" text-anchor="middle">constructMetric</text>
 </g>
-<g><rect class="fixed" x="236" y="16" width="192" height="64" rx="8"/>
-  <text class="title" x="332" y="38" text-anchor="middle">Exterior product ∧</text>
-  <text x="332" y="56" text-anchor="middle">on basis factors, any metric</text>
-  <text class="code" x="332" y="71" text-anchor="middle">constructProductExterior</text>
+<g><rect class="fixed" x="236" y="16" width="192" height="76" rx="8"/>
+  <text class="title" x="332" y="40" text-anchor="middle">Exterior product ∧</text>
+  <text x="332" y="58" text-anchor="middle">𝐞ᵢ ∧ 𝐞ⱼ = −𝐞ⱼ ∧ 𝐞ᵢ, 𝐞ᵢ ∧ 𝐞ᵢ = 0</text>
+  <text class="code" x="332" y="74" text-anchor="middle">constructProductExterior</text>
 </g>
-<g><rect class="input" x="452" y="16" width="192" height="64" rx="8"/>
-  <text class="title" x="548" y="38" text-anchor="middle">Volume element 𝟙</text>
-  <text x="548" y="56" text-anchor="middle">orientation of antiscalar</text>
-  <text class="code" x="548" y="71" text-anchor="middle">Basis.scalarAnti</text>
+<g><rect class="input" x="452" y="16" width="192" height="76" rx="8"/>
+  <text class="title" x="548" y="40" text-anchor="middle">Volume element 𝟙</text>
+  <text x="548" y="58" text-anchor="middle">𝟙 = 𝐞₁ ∧ 𝐞₂ ∧ ⋯ ∧ 𝐞ₙ</text>
+  <text class="code" x="548" y="74" text-anchor="middle">Basis.scalarAnti</text>
 </g>
-<g><rect class="input" x="668" y="16" width="192" height="64" rx="8"/>
-  <text class="title" x="764" y="38" text-anchor="middle">Projective vectors</text>
-  <text x="764" y="56" text-anchor="middle">RGA  origin 𝐞ₙ</text>
-  <text x="764" y="71" text-anchor="middle">CGA  origin, infinity</text>
+<g><rect class="input" x="668" y="16" width="192" height="76" rx="8"/>
+  <text class="title" x="764" y="32" text-anchor="middle">Projective vectors</text>
+  <text x="764" y="50" text-anchor="middle">origin 𝐞ₒ: RGA 𝐞ₙ, CGA 𝐞ₙ₋₁</text>
+  <text x="764" y="66" text-anchor="middle">infinity 𝐞∞: CGA 𝐞ₙ</text>
+  <text class="code" x="764" y="82" text-anchor="middle">Basis.origin · Basis.infinity</text>
 </g>
-<g><rect class="fixed" x="20" y="124" width="192" height="64" rx="8"/>
-  <text class="title" x="116" y="146" text-anchor="middle">Exomorphism 𝐆</text>
-  <text x="116" y="164" text-anchor="middle">𝐆(𝐚 ∧ 𝐛) = 𝐆𝐚 ∧ 𝐆𝐛</text>
-  <text class="code" x="116" y="179" text-anchor="middle">constructExomorphismMetric</text>
+<g><rect class="fixed" x="20" y="136" width="192" height="76" rx="8"/>
+  <text class="title" x="116" y="160" text-anchor="middle">Exomorphism 𝐆</text>
+  <text x="116" y="178" text-anchor="middle">𝐆(𝐚 ∧ 𝐛) = 𝐆𝐚 ∧ 𝐆𝐛</text>
+  <text class="code" x="116" y="194" text-anchor="middle">constructExomorphismMetric</text>
 </g>
-<g><rect class="fixed" x="236" y="124" width="192" height="64" rx="8"/>
-  <text class="title" x="332" y="146" text-anchor="middle">Dot ∙</text>
-  <text x="332" y="164" text-anchor="middle">𝐚 ∙ 𝐛 = 𝐚ᵀ𝐆𝐛</text>
-  <text class="code" x="332" y="179" text-anchor="middle">constructDot</text>
+<g><rect class="fixed" x="236" y="136" width="192" height="76" rx="8"/>
+  <text class="title" x="332" y="160" text-anchor="middle">Reverse ~</text>
+  <text x="332" y="178" text-anchor="middle">𝐮<tspan dx="-6.7" dy="-1">˜</tspan><tspan dx="1.3"
+    dy="1"> = </tspan>(−1)<tspan dy="-5" font-size="8.5">k(k−1)/2</tspan><tspan
+    dy="5"> </tspan>𝐮, k = gr 𝐮</text>
+  <text class="code" x="332" y="194" text-anchor="middle">constructReverse</text>
 </g>
-<g><rect class="fixed" x="452" y="124" width="192" height="64" rx="8"/>
-  <text class="title" x="548" y="143" text-anchor="middle">Complements</text>
-  <text x="548" y="167" text-anchor="middle"><tspan text-decoration="underline">𝐮</tspan><tspan
+<g><rect class="fixed" x="452" y="136" width="192" height="76" rx="8"/>
+  <text class="title" x="548" y="158" text-anchor="middle">Complements</text>
+  <text x="548" y="180" text-anchor="middle"><tspan text-decoration="underline">𝐮</tspan><tspan
     font-size="0">̱</tspan> ∧ 𝐮 = 𝟙 = 𝐮 ∧ <tspan text-decoration="overline">𝐮</tspan><tspan
     font-size="0">̄</tspan></text>
-  <text class="code" x="548" y="182" text-anchor="middle">constructComplement</text>
+  <text class="code" x="548" y="196" text-anchor="middle">constructComplement</text>
 </g>
-<g><rect class="fixed" x="668" y="124" width="192" height="64" rx="8"/>
-  <text class="title" x="764" y="146" text-anchor="middle">Reverse ~</text>
-  <text x="764" y="164" text-anchor="middle">sign (−1)^(k(k−1)/2)</text>
-  <text class="code" x="764" y="179" text-anchor="middle">constructReverse</text>
+<g><rect class="fixed" x="668" y="136" width="192" height="76" rx="8"/>
+  <text class="title" x="764" y="152" text-anchor="middle">Parts</text>
+  <text x="764" y="170" text-anchor="middle">𝐮 = 𝐮● + 𝐮○, 𝐞ₒ in 𝐮○ only</text>
+  <text x="764" y="186" text-anchor="middle">CGA  𝐞∞ in 𝐮■, 𝐮□ only</text>
+  <text class="code" x="764" y="202" text-anchor="middle">constructParts</text>
 </g>
-<text class="quiet" x="124" y="226">constructAnti · De Morgan</text>
-<g><rect class="anti" x="20" y="232" width="192" height="56" rx="8"/>
-  <text class="title" x="116" y="254" text-anchor="middle">Antiexomorphism 𝔾</text>
-  <text class="code" x="116" y="274" text-anchor="middle">constructAnti(𝐆)</text>
+<g><rect class="anti" x="20" y="256" width="192" height="76" rx="8"/>
+  <text class="title" x="116" y="278" text-anchor="middle">Antiexomorphism 𝔾</text>
+  <text x="116" y="300" text-anchor="middle">𝔾𝐮 = <tspan text-decoration="underline">𝐆<tspan
+    text-decoration="overline">𝐮</tspan></tspan></text>
+  <text class="code" x="116" y="316" text-anchor="middle">constructAnti(𝐆)</text>
 </g>
-<g><rect class="anti" x="236" y="232" width="192" height="56" rx="8"/>
-  <text class="title" x="332" y="254" text-anchor="middle">Antidot ∘</text>
-  <text class="code" x="332" y="274" text-anchor="middle">constructAnti(∙)</text>
+<g><rect class="anti" x="236" y="256" width="192" height="76" rx="8"/>
+  <text class="title" x="332" y="280" text-anchor="middle">Antireverse</text>
+  <text x="332" y="298" text-anchor="middle">𝐮<tspan dx="-6.7" dy="10.5">˜</tspan><tspan dx="1.3"
+    dy="-10.5"> = </tspan>(−1)<tspan dy="-5" font-size="8.5">k(k−1)/2</tspan><tspan
+    dy="5"> </tspan>𝐮, k = agr 𝐮</text>
+  <text class="code" x="332" y="314" text-anchor="middle">constructAnti(~)</text>
 </g>
-<g><rect class="anti" x="452" y="232" width="192" height="56" rx="8"/>
-  <text class="title" x="548" y="254" text-anchor="middle">Antiwedge ∨</text>
-  <text class="code" x="548" y="274" text-anchor="middle">constructAnti(∧)</text>
+<g><rect class="anti" x="452" y="256" width="192" height="76" rx="8"/>
+  <text class="title" x="548" y="278" text-anchor="middle">Antiwedge ∨</text>
+  <text x="548" y="300" text-anchor="middle">𝐚 ∨ 𝐛 = <tspan text-decoration="underline"><tspan
+    text-decoration="overline">𝐚</tspan> ∧ <tspan
+    text-decoration="overline">𝐛</tspan></tspan></text>
+  <text class="code" x="548" y="316" text-anchor="middle">constructAnti(∧)</text>
 </g>
-<g><rect class="anti" x="668" y="232" width="192" height="56" rx="8"/>
-  <text class="title" x="764" y="254" text-anchor="middle">Antireverse</text>
-  <text class="code" x="764" y="274" text-anchor="middle">constructAnti(~)</text>
+<g><rect class="fixed" x="20" y="376" width="192" height="76" rx="8"/>
+  <text class="title" x="116" y="390" text-anchor="middle">Constant operands</text>
+  <text x="116" y="412" text-anchor="middle">⊖𝐮 = 𝐮 ∨ <tspan
+    text-decoration="overline">𝐞ₒ</tspan></text>
+  <text x="116" y="428" text-anchor="middle">⊟𝐮 = 𝐮 ∧ 𝐞∞, CGA</text>
+  <text class="code" x="116" y="444" text-anchor="middle">applyConstant</text>
 </g>
-<text class="quiet" x="124" y="328">each map reads tables above</text>
-<g><rect class="fixed" x="20" y="336" width="192" height="64" rx="8"/>
-  <text class="title" x="116" y="358" text-anchor="middle">Constant operands</text>
-  <text x="116" y="376" text-anchor="middle">attitude ⊖ · carrier ⊟</text>
-  <text class="code" x="116" y="391" text-anchor="middle">applyConstant</text>
+<g><rect class="fixed" x="236" y="376" width="192" height="76" rx="8"/>
+  <text class="title" x="332" y="398" text-anchor="middle">Duals ★ · ☆</text>
+  <text x="332" y="420" text-anchor="middle">𝐮★ = <tspan
+    text-decoration="overline">𝐆𝐮</tspan> · 𝐮☆ = <tspan text-decoration="overline">𝔾𝐮</tspan></text>
+  <text class="code" x="332" y="436" text-anchor="middle">applyMap</text>
 </g>
-<g><rect class="fixed" x="236" y="336" width="192" height="64" rx="8"/>
-  <text class="title" x="332" y="358" text-anchor="middle">Duals ★ · ☆</text>
-  <text x="332" y="376" text-anchor="middle">complement after 𝐆 or 𝔾</text>
-  <text class="code" x="332" y="391" text-anchor="middle">applyMap</text>
+<g><rect class="fixed" x="452" y="376" width="192" height="76" rx="8"/>
+  <text class="title" x="548" y="392" text-anchor="middle">Transwedge ⩓ₖ · ⩔ₖ</text>
+  <text x="548" y="410" text-anchor="middle">𝐚 ⩓ₖ 𝐛 = Σ (<tspan
+    text-decoration="underline">𝐜</tspan><tspan font-size="0">̱</tspan> ∨ 𝐚) ∧ (𝐛 ∨ 𝐜★)</text>
+  <text x="548" y="426" text-anchor="middle">𝐚 ⩔ₖ 𝐛 = Σ (<tspan
+    text-decoration="underline">𝐜</tspan><tspan font-size="0">̱</tspan> ∧ 𝐚) ∨ (𝐛 ∧ 𝐜☆)</text>
+  <text class="code" x="548" y="442" text-anchor="middle">constructProductsTransitional</text>
 </g>
-<g><rect class="fixed" x="452" y="336" width="192" height="64" rx="8"/>
-  <text class="title" x="548" y="358" text-anchor="middle">Transwedge ⩃ₖ</text>
-  <text x="548" y="376" text-anchor="middle">Σ (<tspan text-decoration="underline">𝐜</tspan><tspan
-    font-size="0">̱</tspan> ∨ 𝐚) ∧ (𝐛 ∨ 𝐜★)</text>
-  <text class="code" x="548" y="391" text-anchor="middle">constructProductsTransitional</text>
+<g><rect class="fixed" x="668" y="376" width="192" height="76" rx="8"/>
+  <text class="title" x="764" y="392" text-anchor="middle">Dot ∙</text>
+  <text x="764" y="410" text-anchor="middle">𝐚 ∙ 𝐛 = 𝐚 ⩓ₖ 𝐛 = 𝐚ᵀ𝐆𝐛</text>
+  <text x="764" y="426" text-anchor="middle">k = gr 𝐚 = gr 𝐛</text>
+  <text class="code" x="764" y="442" text-anchor="middle">constructDot</text>
 </g>
-<g><rect class="fixed" x="668" y="336" width="192" height="64" rx="8"/>
-  <text class="title" x="764" y="358" text-anchor="middle">Parts</text>
-  <text x="764" y="376" text-anchor="middle">by projective vectors</text>
-  <text class="code" x="764" y="391" text-anchor="middle">constructParts</text>
+<g><rect class="fixed" x="236" y="496" width="192" height="76" rx="8"/>
+  <text class="title" x="332" y="512" text-anchor="middle">Dual products</text>
+  <text x="332" y="530" text-anchor="middle">𝐚 ∨ 𝐛★ · 𝐚 ∨ 𝐛☆</text>
+  <text x="332" y="546" text-anchor="middle">𝐚 ∧ 𝐛★ · 𝐚 ∧ 𝐛☆</text>
+  <text class="code" x="332" y="562" text-anchor="middle">applyMap</text>
 </g>
-<g><rect class="fixed" x="236" y="440" width="192" height="64" rx="8"/>
-  <text class="title" x="332" y="462" text-anchor="middle">Dual products</text>
-  <text x="332" y="480" text-anchor="middle">∨★  ∨☆  ∧★  ∧☆</text>
-  <text x="332" y="495" text-anchor="middle"><tspan class="code">applyMap</tspan> of dual</text>
+<g><rect class="fixed" x="452" y="496" width="192" height="76" rx="8"/>
+  <text class="title" x="548" y="512" text-anchor="middle">Geometric products ⟑ · ⟇</text>
+  <text x="548" y="530" text-anchor="middle">𝐚 ⟑ 𝐛 = Σ (−1)<tspan dy="-5"
+    font-size="8.5">k(k−1)/2</tspan><tspan dy="5"> </tspan>𝐚 ⩓ₖ 𝐛</text>
+  <text x="548" y="546" text-anchor="middle">𝐚 ⟇ 𝐛 = Σ (−1)<tspan dy="-5"
+    font-size="8.5">k(k−1)/2</tspan><tspan dy="5"> </tspan>𝐚 ⩔ₖ 𝐛</text>
+  <text class="code" x="548" y="562" text-anchor="middle">constructProductGeometric</text>
 </g>
-<g><rect class="fixed" x="452" y="440" width="192" height="64" rx="8"/>
-  <text class="title" x="548" y="462" text-anchor="middle">⟑ · ⟇</text>
-  <text x="548" y="480" text-anchor="middle">signed sum of orders</text>
-  <text class="code" x="548" y="495" text-anchor="middle">constructProductGeometric</text>
+<g><rect class="anti" x="668" y="496" width="192" height="76" rx="8"/>
+  <text class="title" x="764" y="518" text-anchor="middle">Antidot ∘</text>
+  <text x="764" y="540" text-anchor="middle">𝐚 ∘ 𝐛 = <tspan text-decoration="underline"><tspan
+    text-decoration="overline">𝐚</tspan> ∙ <tspan
+    text-decoration="overline">𝐛</tspan></tspan></text>
+  <text class="code" x="764" y="556" text-anchor="middle">constructAnti(∙)</text>
 </g>
-<g><rect class="fixed" x="668" y="440" width="192" height="64" rx="8"/>
-  <text class="title" x="764" y="462" text-anchor="middle">Squared norms</text>
-  <text class="code" x="764" y="480" text-anchor="middle">constructNormsSquared</text>
-  <text x="764" y="495" text-anchor="middle">radius: <tspan class="code">filterGrades</tspan>
-    of ∘</text>
+<g><rect class="fixed" x="668" y="616" width="192" height="76" rx="8"/>
+  <text class="title" x="764" y="632" text-anchor="middle">Squared norms</text>
+  <text x="764" y="650" text-anchor="middle">‖𝐮‖●² = 𝐮●ᵀ𝐮●, also ○ ■ □</text>
+  <text x="764" y="666" text-anchor="middle">‖𝐮‖⊘² = 𝐮 ∘ 𝐮, CGA</text>
+  <text class="code" x="764" y="682" text-anchor="middle">constructNormsSquared</text>
 </g>
-<g><rect class="emission" x="20" y="540" width="840" height="40" rx="8"/>
-  <text x="440" y="565" text-anchor="middle">defineOperator emits each table over the bases of
-  its operands</text></g>
+<g><rect class="emission" x="20" y="616" width="624" height="76" rx="8"/>
+  <text x="332" y="658"
+    text-anchor="middle">defineOperator emits each table over the bases of its operands</text></g>
 <g>
-  <rect class="input" x="20" y="602" width="14" height="14" rx="3"/>
-  <text class="quiet" x="42" y="613">input</text>
-  <rect class="fixed" x="120" y="602" width="14" height="14" rx="3"/>
-  <text class="quiet" x="142" y="613">fixed definition or map</text>
-  <rect class="anti" x="320" y="602" width="14" height="14" rx="3"/>
-  <text class="quiet" x="342" y="613">anti side, by De Morgan</text>
+  <rect class="input" x="20" y="714" width="14" height="14" rx="3"/>
+  <text class="quiet" x="42" y="725">input</text>
+  <rect class="fixed" x="120" y="714" width="14" height="14" rx="3"/>
+  <text class="quiet" x="142" y="725">fixed definition or map</text>
+  <rect class="anti" x="320" y="714" width="14" height="14" rx="3"/>
+  <text class="quiet" x="342" y="725">anti side, by De Morgan</text>
 </g>
 </svg>
