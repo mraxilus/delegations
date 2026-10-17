@@ -25,7 +25,9 @@ import std/[algorithm, json, options, os, osproc, sequtils, strutils, tables, ti
 
 import ../src/pga_benchmark/[changes, gaps, guard, head, inspector, model, notes, proposals]
 from ../src/pga_benchmark/report import combineRuns, IMPLEMENTATIONS
-import ../src/pga_benchmark/pages/[docket, listing, marginalia, render, shell]
+import ../src/pga_benchmark/pages/[
+  completion, docket, explorations, home, listing, marginalia, render, shell
+]
 import ../src/pga_benchmark/pages/proposal as page_proposal
 import ../src/pga_benchmark/pages/evaluation as page_evaluation
 from ../src/pga_benchmark/evaluations import
@@ -68,6 +70,8 @@ const
     ## Evaluation documents, one per change or proposal, committed.
   PATH_NOTES = "marginalia" / "notes.md"  ## Notes on library source (`notes.nim`).
   PATH_SHELL = "pages" / "shell.html"  ## Shell every page is assembled in.
+  PATH_MAP = "pages" / "derivation-map.svg"
+    ## Library map, laid out by hand; its boxes name what they stand for (`completion.nim`).
   PATH_PUBLICATIONS = "pages" / "published.json"
     ## Publications: page name to URL and digest at its last publish.
   PATH_README = "README.md"  ## File that must name every published URL.
@@ -509,17 +513,8 @@ proc compileScript(entry: string): string =
 
 
 proc pagesBuilt(faces: Table[string, string]): OrderedTable[string, string] =
-  ## Build every page from committed files: docket, marginalia, proposal list, then one per
-  ##   proposal.
-
-  func htmlLinks(names: openArray[string], published: JsonNode, self: string): string =
-    ## Link every other published page, in page order, led by separator; empty where none.
-    var links: seq[string]
-    for name in names:
-      let url = published{name, "url"}.getStr
-      if name == self or url.len == 0: continue
-      links.add "<a href=\"" & url & "\">" & name & "</a>"
-    if links.len == 0: "" else: " · " & links.join(" · ")
+  ## Build every page from committed files: home, library map, docket, explorations, then one
+  ##   per proposal. Each page opens with bar linking home and every view (`htmlViews`).
 
   func titled(name: string): string =
     ## Title proposal page by its name, as `Cayley Derivation`.
@@ -535,12 +530,15 @@ proc pagesBuilt(faces: Table[string, string]): OrderedTable[string, string] =
     evaluations = readEvaluations()
     files = readLibrary(LIBRARY)
     (notes, _) = parseNotes(PATH_NOTES, readFile(PATH_NOTES))
-    names = @["docket", "marginalia", "proposals"] & proposals.mapIt(it.name)
+    svg = readFile(PATH_MAP)
+    ids = readDocument(PATH_DOCKET)
   var
     sheets: seq[Sheet]
     baselines: Table[string, JsonNode]
     overlays: seq[Overlay]
     documents: seq[JsonNode]
+    urls: Table[string, string]
+  for name, entry in published.pairs: urls[name] = entry{"url"}.getStr
   for (name, dimensions, _) in CONFIGS:
     let path = BASELINE / "static_" & name & ".json"
     if not fileExists(path): continue
@@ -553,30 +551,19 @@ proc pagesBuilt(faces: Table[string, string]): OrderedTable[string, string] =
       measurements_runtime: readDocument(BASELINE / "runtime_" & name & ".json"),
     )
   for _, document in evaluations.pairs: documents.add document
-  let spread = spreadOf(documents)
+  let
+    spread = spreadOf(documents)
+    library = libraryOf(files, toSeq(baselines.values))
   for proposal in proposals:
     if proposal.isFrozen or proposal.name notin evaluations: continue
     var overlay = Overlay(
       name: proposal.name,
       title: proposal.citation & ": " & proposal.title,
-      url: published{proposal.name, "url"}.getStr,
+      url: urls.getOrDefault(proposal.name),
     )
     for algebra, measured in evaluations[proposal.name]{"algebras"}.pairs:
       overlay.functions[algebra] = measured{"functions"}
     overlays.add overlay
-  result["docket"] = assemble(
-    text_shell,
-    "PGA Gap Docket",
-    bodyDocket(
-      sheets,
-      readDocument(PATH_DOCKET),
-      overlays,
-      pin,
-      htmlLinks(names, published, "docket"),
-      compileScript(ENTRY_FIND),
-    ),
-    faces,
-  )
   var changes_evaluated: seq[ChangeEvaluated]
   for (name, change) in changes:
     changes_evaluated.add ChangeEvaluated(
@@ -584,41 +571,77 @@ proc pagesBuilt(faces: Table[string, string]): OrderedTable[string, string] =
       change: change,
       evaluation: evaluations.getOrDefault(name),
     )
-  result["marginalia"] = assemble(
-    text_shell,
-    "PGA Marginalia",
-    bodyMarginalia(
-      changes_evaluated,
-      notes,
-      files,
-      baselines,
-      spread,
-      pin,
-      htmlLinks(names, published, "marginalia"),
-    ),
-    faces,
-  )
-  var urls: Table[string, string]
-  for proposal in proposals: urls[proposal.name] = published{proposal.name, "url"}.getStr
   var figures: Table[string, string]
   for proposal in proposals:
     for node in proposal.body:
       let figure = node.figureOf(proposal.directory)
       if figure.isSome and fileExists(figure.get.path):
         figures[figure.get.path] = readFile(figure.get.path)
+  let
+    boxes = boxesOf(svg).filterIt(not it.is_input)
+    (at_bound, bounded) = if sheets.len > 0: countAtBound(sheets[0], ids) else: (0, 0)
+    cards = [
+      Card(
+        name: "library-map",
+        title: "Library map",
+        url: urls.getOrDefault("library-map"),
+        figure: $boxes.countIt(it.stateOf(library) == StateBox.Tabled) & "/" & $boxes.len,
+        measure: "boxes built from a table of their own",
+        text: "How complete the library is: every Cayley table, derived from the metric and 𝟙.",
+      ),
+      Card(
+        name: "docket",
+        title: "Gap docket",
+        url: urls.getOrDefault("docket"),
+        figure: $at_bound & "/" & $bounded,
+        measure: "operations at the multivector lower bound on multiplies, " &
+            (if sheets.len > 0: sheets[0].title else: ""),
+        text: "How far each operation stands from what it could spend, at each algebra.",
+      ),
+      Card(
+        name: "proposals",
+        title: "Explorations",
+        url: urls.getOrDefault("proposals"),
+        figure: $proposals.countIt(not it.isFrozen) & "/" & $proposals.len,
+        measure: "proposals undecided",
+        text: "What to change next: proposals, changes tried at the pin, and notes.",
+      ),
+    ]
+  result["home"] = assemble(
+    text_shell,
+    "PGA Benchmark",
+    htmlViews(urls, "home") & bodyHome(cards, pin),
+    faces,
+  )
+  result["library-map"] = assemble(
+    text_shell,
+    "PGA Library Map",
+    htmlViews(urls, "library-map") &
+        bodyCompletion(svg, library, pin, urls.getOrDefault("cayley-derivation")),
+    faces,
+  )
+  result["docket"] = assemble(
+    text_shell,
+    "PGA Gap Docket",
+    htmlViews(urls, "docket") & bodyDocket(
+      sheets,
+      ids,
+      overlays,
+      pin,
+      compileScript(ENTRY_FIND),
+    ),
+    faces,
+  )
   result["proposals"] = assemble(
     text_shell,
-    "PGA Proposals",
-    bodyListing(
+    "PGA Explorations",
+    htmlViews(urls, "proposals") & bodyExplorations(
       proposals,
-      evaluations,
-      files,
-      figures,
-      baselines,
-      spread,
-      urls,
+      changes_evaluated.len,
+      notes.items.len,
+      htmlListing(proposals, evaluations, files, figures, baselines, spread, urls, pin),
+      htmlMarginalia(changes_evaluated, notes, files, baselines, spread),
       pin,
-      htmlLinks(names, published, "proposals"),
     ),
     faces,
   )
@@ -626,7 +649,7 @@ proc pagesBuilt(faces: Table[string, string]): OrderedTable[string, string] =
     result[proposal.name] = assemble(
       text_shell,
       proposal.citation & " " & titled(proposal.name),
-      bodyProposal(
+      htmlViews(urls, "proposals", is_view = false) & bodyProposal(
         proposal,
         proposals,
         evaluations.getOrDefault(proposal.name),
@@ -636,7 +659,7 @@ proc pagesBuilt(faces: Table[string, string]): OrderedTable[string, string] =
         spread,
         urls,
         pin,
-        htmlLinks(names, published, proposal.name),
+        "",
       ),
       faces,
     )
@@ -875,7 +898,8 @@ proc restamp() =
 
 
 proc pinnedChecked(pin: string, built: OrderedTable[string, string]): seq[Finding] =
-  ## Hold everything to pin: stamps, evaluations, changes, proposals, notes, pages and publications.
+  ## Hold everything to pin: stamps, evaluations, changes, proposals, notes, library map, pages
+  ##   and publications.
   ##   Pages come built, so `drive` builds them once for digests and render alike.
   for (name, _, _) in CONFIGS:
     for kind in ["static", "runtime"]:
@@ -909,6 +933,11 @@ proc pinnedChecked(pin: string, built: OrderedTable[string, string]): seq[Findin
   let (notes, why) = parseNotes(PATH_NOTES, readFile(PATH_NOTES))
   result.add why
   result.add checkAnchors(notes, files, PATH_NOTES)
+  var catalogues: seq[JsonNode]
+  for (name, _, _) in CONFIGS:
+    let path = BASELINE / "static_" & name & ".json"
+    if fileExists(path): catalogues.add readDocument(path)
+  result.add checkMap(boxesOf(readFile(PATH_MAP)), libraryOf(files, catalogues), PATH_MAP)
   var digests: Table[string, string]
   for name, page in built.pairs: digests[name] = digestPage(page)
   result.add checkPublished(digests, publications(), readFile(PATH_README), PATH_PUBLICATIONS)

@@ -17,7 +17,9 @@ import ../src/pga_benchmark/[
   bound, cells, changes, definitions, dense, gaps, guard, head, inspector, markdown,
   measurements, model, notes, proposals, report,
 ]
-import ../src/pga_benchmark/pages/[docket, evaluation, listing, proposal, render, search, shell]
+import ../src/pga_benchmark/pages/[
+  completion, docket, evaluation, explorations, home, listing, proposal, render, search, shell,
+]
 from ../src/pga_benchmark/evaluations import
   ENTRY_LIBRARY, algebrasEvaluated, digestEdits, functionsChanged, nanOf, readLibrary, successOf,
   timesOf
@@ -2045,21 +2047,13 @@ suite "Internal: Figures":
     check body.find("<footer class=\"pages\"><a href=\"u\">docket</a></footer>") > at  # links last
 
 
-  test "P01 figure names committed map that shows every rule of P01":
+  test "P01 links library map where it is published, and map shows every rule of P01":
     const
       argument = staticRead("../proposals/01-cayley-derivation/proposal.md")
       svg = staticRead("../pages/derivation-map.svg")
-    let
-      (record, _) = parseProposal(
-        argument,
-        "",
-        %*{"status": "proposed", "builds_on": [], "claims": []},
-        "proposals/01-cayley-derivation",
-      )
-      paths = record.body.mapIt(it.figureOf(record.directory)).filterIt(it.isSome).mapIt(
-        it.get.path,
-      )
-    check paths == @["pages/derivation-map.svg"]  # one figure, file staticRead found
+      published = staticRead("../pages/published.json")
+    let url = parseJson(published){"library-map", "url"}.getStr
+    check url.len > 0 and "](" & url & ")" in argument  # P01 links map at its publication
     for rule in ["constructAnti", "applyMap", "applyConstant", "constructProductsTransitional"]:
       check rule in svg  # each of three rules marks its line or box
 
@@ -2380,12 +2374,12 @@ suite "Internal: Pages":
         measurements_runtime: %*{"taken": {"date": "d", "machine": "m"}, "measurands": {}},
       )
       ids = %*{"schema": 1, "kind": "docket", "next": 8, "ids": {"rga4d/wedge": "G007"}}
-    check "G007 · ∧" in bodyDocket([sheet], ids, [], "bd6b23c590d7", "", "")  # shown beside symbol
+    check "G007 · ∧" in bodyDocket([sheet], ids, [], "bd6b23c590d7", "")  # shown beside symbol
 
 
   test "docket measures typed row against reference, general row against multivector bound":
     let
-      body = bodyDocket([sheetDocket(81, 12, %*{})], ids_docket, [], "bd6b23c590d7", "", "")
+      body = bodyDocket([sheetDocket(81, 12, %*{})], ids_docket, [], "bd6b23c590d7", "")
     check "library 81 multiplies, reference 12, multivector lower bound 54\"" in body  # typed
     check "library 81 multiplies, multivector lower bound 54\"" in body  # general, no tick
     check ">×6.75<" in body and ">×1.50<" in body  # each over what it is measured against
@@ -2398,8 +2392,8 @@ suite "Internal: Pages":
     later.title = "Rigid 3D"
     later.measurements_runtime["taken"]["date"] = %"e"
     let
-      both = bodyDocket([sheetDocket(81, 12, %*{}), later], ids_docket, [], "bd6b23c590d7", "", "")
-      one = bodyDocket([sheetDocket(81, 12, %*{})], ids_docket, [], "bd6b23c590d7", "", "")
+      both = bodyDocket([sheetDocket(81, 12, %*{}), later], ids_docket, [], "bd6b23c590d7", "")
+      one = bodyDocket([sheetDocket(81, 12, %*{})], ids_docket, [], "bd6b23c590d7", "")
     check "time d for Rigid 4D, e for Rigid 3D, m" in both  # each algebra under its own date
     check "time d, m" in one  # one date stays plain
 
@@ -2409,7 +2403,7 @@ suite "Internal: Pages":
       runs = %*{"wedge_point_point": {
         "library": {"ns_median": 11.0, "share_nan": 0.0, "ns_runs": [12.0, 10.0, 11.0]},
         "reference": {"ns_median": 4.0, "share_nan": 0.0, "ns_runs": [4.0, 5.0, 3.0]}}}
-      body = bodyDocket([sheetDocket(81, 12, runs)], ids_docket, [], "bd6b23c590d7", "", "")
+      body = bodyDocket([sheetDocket(81, 12, runs)], ids_docket, [], "bd6b23c590d7", "")
     check ">×3.00<" in body  # median of 3.00, 2.00 and 3.67; ratio of medians reads 2.75
     check "runs ×3.00 ×2.00 ×3.67" in body  # each run named, in run order
     check body.count("<s style=") == 3  # one tick for each run
@@ -2420,7 +2414,7 @@ suite "Internal: Pages":
       runs = %*{"wedge": {
         "library": {"ns_median": 8.5, "share_nan": 0.0, "ns_runs": [8.0, 9.0]},
         "dense": {"ns_median": 3.5, "share_nan": 0.0, "ns_runs": [4.0, 3.0]}}}
-      body = bodyDocket([sheetDocket(81, 12, runs)], ids_docket, [], "bd6b23c590d7", "", "")
+      body = bodyDocket([sheetDocket(81, 12, runs)], ids_docket, [], "bd6b23c590d7", "")
     check "library 8.5 ns, dense form 3.5 ns" in body  # general row names what it times against
     check ">×2.50<" in body and body.count("<s style=") == 2  # median of 2.00 and 3.00, two ticks
 
@@ -2430,7 +2424,7 @@ suite "Internal: Pages":
       runs = %*{"wedge_point_point": {
         "library": {"ns_median": 11.0, "share_nan": 0.0, "ns_runs": [12.0, 10.0, 11.0]},
         "reference": {"ns_median": 4.0, "share_nan": 0.0, "ns_runs": [4.0, 5.0, 3.0]}}}
-      body = bodyDocket([sheetDocket(81, 12, runs)], ids_docket, [], "bd6b23c590d7", "", "")
+      body = bodyDocket([sheetDocket(81, 12, runs)], ids_docket, [], "bd6b23c590d7", "")
 
     func tagOf(body, measurand: string): string =
       ## Read opening tag of row naming measurand.
@@ -2462,8 +2456,8 @@ suite "Internal: Pages":
       source_find = staticRead("../src/pga_benchmark/pages/find.nim")
     let
       sheets = [sheetDocket(81, 12, %*{})]
-      body = bodyDocket(sheets, ids_docket, [], "bd6b23c590d7", "", "filter()")
-      bare = bodyDocket(sheets, ids_docket, [], "bd6b23c590d7", "", "")
+      body = bodyDocket(sheets, ids_docket, [], "bd6b23c590d7", "filter()")
+      bare = bodyDocket(sheets, ids_docket, [], "bd6b23c590d7", "")
     check "<input type=\"search\" id=\"find\"" in body and body.count("<script>") == 1  # one
     check "<script>filter()</script>" in body and "<script>" notin bare  # as driver passes it
     check "data-find=\"wedge_point_point g002 ∧ wedge point point\"" in body  # id, kinds, lower
@@ -2485,14 +2479,14 @@ suite "Internal: Pages":
           "functions": {}},
         measurements_runtime: %*{"taken": {"date": "d", "machine": "m"}, "measurands": {}},
       )
-      body = bodyDocket([sheet], %*{"ids": {}}, [], "bd6b23c590d7", "", "")
+      body = bodyDocket([sheet], %*{"ids": {}}, [], "bd6b23c590d7", "")
     check "operation-bulk_flat operand-round_point" in body  # round point, never point
     check "operation-wedge operand-round_point operand-dipole" in body  # both, in id order
     check "operand-point" notin body and "operation-bulk_flat_round" notin body  # no half kind
 
 
   test "count over reference that spends none reads its excess, never infinite ratio":
-    let body = bodyDocket([sheetDocket(81, 0, %*{})], ids_docket, [], "bd6b23c590d7", "", "")
+    let body = bodyDocket([sheetDocket(81, 0, %*{})], ids_docket, [], "bd6b23c590d7", "")
     check ">81 over 0<" in body and "class=\"open\"" in body  # bar runs to axis end
     check "×inf" notin body and "×nan" notin body  # no ratio divides by zero
 
@@ -2507,6 +2501,41 @@ suite "Internal: Pages":
       chips = chipsVerdict(document_evaluation, baselines, Spread(low: 0.9, high: 1.1))
     check "NaN gone in 1" in chips and "chip pass" in chips  # gain named, suites held
     check "no evaluation" in chipsVerdict(nil, baselines, Spread())  # absent evaluation is said
+
+
+
+  test "home quotes docket's count of operations at multivector bound on multiplies":
+    check countAtBound(sheetDocket(54, 12, %*{}), ids_docket) == (1, 1)  # at bound of 54
+    check countAtBound(sheetDocket(81, 12, %*{}), ids_docket) == (0, 1)  # over it
+
+
+  test "every page opens with bar to home and each view, linked where published":
+    let
+      urls = {"home": "https://x/h", "docket": "https://x/d"}.toTable
+      docket = htmlViews(urls, "docket")
+      proposal = htmlViews(urls, "proposals", is_view = false)
+    check "<a href=\"https://x/h\">PGA benchmark</a>" in docket  # home linked first
+    check "<a class=\"here\" aria-current=\"page\" href=\"https://x/d\">Gap docket</a>" in
+        docket  # view page is marked as current page
+    check "<span>Library map</span>" in docket  # unpublished view named, unlinked
+    check "<span class=\"here\">Explorations</span>" in proposal  # its view marked, not page
+    check docket.find("Library map") < docket.find("Gap docket") and
+        docket.find("Gap docket") < docket.find("Explorations")  # views in order
+
+
+  test "home shows one card per view, its figure, and link where view is published":
+    let body = bodyHome(
+      [
+        Card(name: "a", title: "Map", url: "https://x/a", figure: "2/4", measure: "boxes",
+          text: "What."),
+        Card(name: "b", title: "Docket", figure: "1/1", measure: "at bound", text: "How."),
+      ],
+      "bd6b23c590d7",
+    )
+    check "<a class=\"tile\" href=\"https://x/a\"><h2>Map</h2><p class=\"headline\"><b>2/4</b> " &
+        "boxes</p><p>What.</p></a>" in body  # published view linked
+    check "<div class=\"tile\"><h2>Docket</h2>" in body  # unpublished one unlinked
+    check "pga <code>bd6b23c</code>" in body  # pin named
 
 
 
@@ -2572,7 +2601,7 @@ suite "Internal: Proposal list":
     let
       evaluations =
         {"p1": %*{"algebras": {}, "claims": [{"passed": true}, {"passed": false}]}}.toTable
-      body = bodyListing(
+      body = htmlListing(
         chain,
         evaluations,
         initTable[string, string](),
@@ -2581,9 +2610,10 @@ suite "Internal: Proposal list":
         Spread(),
         urls,
         "bd6b23c590d7",
-        "",
       )
-    check "5 proposals · 4 undecided · pga <code>bd6b23c</code>" in body  # counts in header
+      page = bodyExplorations(chain, 2, 3, body, "", "bd6b23c590d7")
+    check "5 proposals · 4 undecided · 2 changes · 3 notes · pga <code>bd6b23c</code>" in page
+      # counts in header
     for number in 1..5:
       check "Title " & $number & "</td>" in body  # every proposal, frozen one too
     check "<span class=\"chip fail\">1 of 2 hold</span>" in body  # one claim fails
@@ -2594,7 +2624,7 @@ suite "Internal: Proposal list":
 
 
   test "list page holds every proposal whole behind its checkbox, none checked at rest":
-    let body = bodyListing(
+    let body = htmlListing(
       chain,
       initTable[string, JsonNode](),
       initTable[string, string](),
@@ -2603,7 +2633,6 @@ suite "Internal: Proposal list":
       Spread(),
       urls,
       "bd6b23c590d7",
-      "",
     )
     for number in 1..5:
       let id = "pick-p" & $number
@@ -2616,6 +2645,106 @@ suite "Internal: Proposal list":
     check "<h2>P02: Title 2</h2>" in body and "<h4>Claims</h4>" in body  # nested one level down
     check "<a href=\"https://example.org/p1\">its own page</a>" in body  # published page linked
     check "<button class=\"clear\" type=\"reset\">" in body  # one control clears all
+
+
+  test "explorations open on proposals tab, with marginalia in tab beside it":
+    let page = bodyExplorations(chain, 0, 0, "<p>L</p>", "<p>M</p>", "bd6b23c590d7")
+    check page.count(" checked") == 1 and "id=\"view-proposals\" checked>" in page
+      # proposals shown at rest, and nothing else checked
+    check "<section class=\"view view-proposals\"><p>L</p></section>" in page  # proposals tab
+    check "<section class=\"view view-marginalia\"><p>M</p></section>" in page  # marginalia tab
+    for name in ["proposals", "marginalia"]:
+      check "body:has(#view-" & name & ":checked) .view:not(.view-" & name & ")" in page
+        # each tab hides other
+
+
+
+suite "Internal: Library map":
+  const
+    svg_fixture = "<rect class=\"block\" x=\"8\" y=\"0\" width=\"864\" height=\"300\"/>\n" &
+      "<text class=\"blockname\" x=\"22\" y=\"19\">Products</text>\n" &
+      "<g data-table=\"CAYLEYS_W.base\"><rect class=\"fixed\" x=\"0\" y=\"20\"/>\n" &
+      "  <text>w</text></g>\n" &
+      "<g data-ids=\"wedge\"><rect class=\"fixed\" x=\"0\" y=\"40\"/><text>∧</text></g>\n" &
+      "<g class=\"faded\">\n<g data-ids=\"support\"><rect class=\"fixed\" x=\"0\" y=\"60\"/>\n" &
+      "  <text>∩</text></g>\n</g>\n" &
+      "<g class=\"faded\">\n<g data-ids=\"distance\"><rect class=\"fixed\" x=\"0\" y=\"80\"/>\n" &
+      "  <text>d</text><text>(a, b)</text></g>\n</g>\n" &
+      "<g data-table=\"CAYLEY_M\">\n<rect class=\"input\" x=\"0\" y=\"100\"/></g>\n"
+      ## Map of one block: table alone, table, composite, missing, and input.
+    cayleys = "const\n  CAYLEYS_W* = block:\n    x\n  CAYLEY_M* = y\n  CAYLEY_P = z\n"
+      ## Library declaring two tables, and one table it keeps private.
+    operators = "macro defineOperator(symbols: string) = discard\n\ndefineOperator(\n" &
+      "  symbols = \"∧\",\n  cayley = CAYLEYS_W.base,\n)\n"
+      ## Library building wedge alone from table.
+  let
+    catalogue = %*{"measurands": {"wedge": {"symbol": "∧", "alias": "wedge"},
+      "support": {"symbol": "∩", "alias": "support"}}, "missing": {}}
+      ## Catalogue holding wedge and support; distance it lacks.
+    library = libraryOf(
+      {PATH_CAYLEYS: cayleys, PATH_OPERATORS: operators}.toTable,
+      [catalogue],
+    )
+
+
+  test "library is read from its source: tables it exports, and operations built from them":
+    check library.tables == @["CAYLEYS_W", "CAYLEY_M"]  # private table left out
+    check library.symbols == @["∧"] and library.served == @["CAYLEYS_W"]  # macro itself skipped
+    check library.operations["support"].spelling == "∩"  # catalogue read
+
+
+  test "box reads table, composite or missing, and map that fades each box so agrees":
+    let boxes = boxesOf(svg_fixture)
+    check boxes.mapIt(it.stateOf(library)) == @[StateBox.Tabled, StateBox.Tabled,
+        StateBox.Composed, StateBox.Missing, StateBox.Tabled]
+    check boxes.mapIt(it.is_faded) == @[false, false, true, true, false]  # wrapper read
+    check boxes[3].title == "d, (a, b)" and boxes[3].section == "Products"  # lines parted
+    check boxes[4].is_input  # input holds no state of its own
+    check checkMap(boxes, library, "m.svg").len == 0  # drawn as library holds it
+
+
+  test "check names box drawn against its state, and table or operation no box stands for":
+    let
+      drawn = svg_fixture.replace("<g class=\"faded\">\n<g data-ids=\"support\"",
+        "<g>\n<g data-ids=\"support\"")
+      grown = libraryOf(
+        {PATH_CAYLEYS: cayleys & "  CAYLEYS_X* = q\n", PATH_OPERATORS: operators &
+          "defineOperator(\n  symbols = r\"∨\",\n  cayley = CAYLEYS_W.anti,\n)\n"}.toTable,
+        [catalogue],
+      )
+      findings = checkMap(boxesOf(drawn), grown, "m.svg").mapIt(it.message)
+    check findings.len == 3
+    check "Box `∩` is drawn solid, where library at pin holds it as composite" in findings[0]
+    check findings[1].endsWith("got `∨`.")  # raw literal read, and no box stands for it
+    check findings[2].endsWith("got `CAYLEYS_X`.")  # table no box or operator names
+
+
+  test "page writes state on each box, and counts boxes by state":
+    let body = bodyCompletion(svg_fixture, library, "bd6b23c590d7", "https://x/p01")
+    check "<g data-ids=\"distance\" data-state=\"missing\">" in body  # state on box
+    check "<g data-ids=\"support\" data-state=\"composite\">" in body
+    check "<dt>2/4</dt>" in body  # input not counted
+    check "as <a href=\"https://x/p01\">P01</a> lays them out" in body  # P01 linked
+    check "<td>Products</td><td>∩</td><td><code>∩</code></td><td><span class=\"chip " &
+        "status\">from other operators</span></td>" in body  # row of composite box
+
+
+  test "library map agrees with library at pin and catalogue at every algebra":
+    const
+      svg = staticRead("../pages/derivation-map.svg")
+      sources = [staticRead(LIBRARY & "/" & PATH_CAYLEYS),
+        staticRead(LIBRARY & "/" & PATH_OPERATORS)]
+      catalogues = [staticRead("../baseline/static_rga4d.json"),
+        staticRead("../baseline/static_cga5d.json"), staticRead("../baseline/static_rga3d.json"),
+        staticRead("../baseline/static_cga4d.json")]
+    let
+      pinned = libraryOf(
+        {PATH_CAYLEYS: sources[0], PATH_OPERATORS: sources[1]}.toTable,
+        catalogues.mapIt(parseJson(it)),
+      )
+      findings = checkMap(boxesOf(svg), pinned, "pages/derivation-map.svg")
+    checkpoint findings.mapIt(it.message).join("\n")
+    check findings.len == 0  # map lags no table, and fades each box as library builds it
 
 
 
