@@ -18,11 +18,11 @@
 ##       wall with its slope at 270 carries it 1.60, from 0.86 m, with hands down to 1.594 m at
 ##       26 moments of rig's sweep and 44 of whole-cloth page, measured 2026-10-12.
 ##   Where walk over crown stops short of `MOST`, whatever stopped it, recordings keep planned
-##     way where it holds further: plan lifts hands walk lets sink (Architect, pull request 629,
-##     2026-10-12, D1).  Engine stands each planned moment, and still's judge reads it
-##     (`plannedWay`).  Every other sweep is walk alone (`swept`, `should_plan`).
-##     Ruling names hands that sink, and this plans every stop: same-name chain, which lead's
-##       wrist and arm through arm stop, is planned too.  Architect rules whether that holds.
+##     way where it holds further: plan answers every stop, not only hand walk lets sink
+##     (Architect, pull request 629, 2026-10-12, D1 of its notes).  Engine stands each planned
+##     moment, and still's judge reads it (`plannedWay`).  Every other sweep is walk alone
+##     (`swept`, `should_plan`).
+##     So same-name chain, which lead's wrist and arm through arm stop, is planned too.
 ##     Cost: recording plans 64 paths over crown, both chains toward both ways in every style
 ##       (`planAhead`).  Plan carries same-name chain to 2.5 both ways, and cross-name chain to
 ##       1.5275 of turn, its upper arm riding plan's six degrees inside shoulder's edge.  Edge
@@ -845,9 +845,8 @@ proc waysOf(
   ##     reflected (`twinOf`), unless it rests face to back or sweep is raw.
   ##   Where `should_plan`, way over crown that walk stops short of `most` is planned, whatever
   ##     stopped walk, and planned way is kept where it holds further (`plannedWay`,
-  ##     `turnsHeld`): where walk alone lets joined hands sink, plan lifts them (Architect, pull
-  ##     request 629, 2026-10-12, D1).  Ruling names hands that sink; wrist, arm through arm
-  ##     and every other stop are planned too, and Architect rules whether that holds.
+  ##     `turnsHeld`): plan answers wrist, arm through arm and every other stop, not only joined
+  ##     hands that sink (Architect, pull request 629, 2026-10-12, D1 of its notes).
 
   proc way(towards: float): Walk =
     ## One way, `towards` its own step: engine's own walk where raw, and planned way where
