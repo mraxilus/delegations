@@ -950,6 +950,12 @@ box of its own colour, so that no line leaves its block. Brown text holds in RGA
 text in CGA alone, so that no formula names its algebra. The two colours are shell tokens for code,
 so they follow the theme.
 
+Lines from several boxes meet on one bar at right angles, and one line leaves it. A second bar
+forks that line to each table that it feeds. The formulas take the form of the maths, as Lengyel
+writes them. So a unary operator, such as ★ in 𝐮★, stands after its operand. An interior product,
+such as 𝐚 ∨ 𝐛★, is a product with a dual. The code puts a unary operator first and spells ∨★ as
+one operator, as Nim needs.
+
 The map gives every route to a box that holds at pin, and it fades each route that the code does
 not take. A faded box is an operator with no table, so the map shows what the tables serve. The
 center norm has no formula in the library, so its box has no line. A check by hand on 2026-10-17
