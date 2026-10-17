@@ -28,7 +28,10 @@ const
   FLOOR_RUNS = 6
     ## Least turns read that hold several poses: half of 12, six in each chain held above, read
     ##   2026-10-17.
+  FLOOR_BLOCKS = 18
+    ## Least blocks read: half of 36, both of eighteen sweeps, read 2026-10-17.
   REACH = 1.0  ## Furthest drawn joint may lie from its moment's, in millimetres: rounding alone.
+  SAME = 1e-9  ## Furthest turn read may lie from block's, in turns: rounding alone.
 
 
 proc readText(path: cstring): cstring {.importjs: "require('fs').readFileSync(#, 'utf8')".}
@@ -121,4 +124,37 @@ suite "Internal: The whole-cloth page plays every recorded moment":
     checkpoint "Turns read: `" & $read & "`.  Wrong pose: `" & $missed.len & "`, from: `" &
         missed[0..<min(missed.len, 6)].join(", ") & "`."
     check read >= FLOOR_RUNS
+    check missed.len == 0
+
+
+
+  test "each block of each sweep is drawn at its own turn":
+    ## Page drawn at place of each block (`placeAt`) reads block's own turn, and shows end
+    ##   moment of that way: where walk refuses, its block lies one step past that moment.
+    ##   Domain: both blocks of every sweep that holds moments in `design/turns.json`.
+    ##   Regression of pull request 629, as found on 2026-10-17 in review of `ad971957`: page
+    ##     read turn off scene, which stopped at end moment, so `L-l|low` read -0.92 at its block
+    ##     of -0.94, and "blocked here" showed on no low or high sweep.
+    let sweeps = readText(cstring(KEPT_TURNS)).toJsObject.sweeps
+    var
+      scene: Scene
+      missed: seq[string]
+      read = 0
+    for key in sweeps.keys:
+      let
+        sweep = sweeps[key]
+        count = sweep.frames.length.to(int)
+      if count == 0: continue
+      # Each way's block, with moment at that way's end.
+      for (turn, moment_end) in [(-sweep.negative.to(float), 0),
+                                 (sweep.positive.to(float), count - 1)]:
+        inc read
+        doAssert fillScene(scene, sweep.frames, placeAt(sweep.frames, turn)),
+          "Sweep that holds moments draws one; got none at `" & $key & "`."
+        if abs(scene.turn - turn) > SAME or reach(scene, sweep.frames[moment_end]) > REACH:
+          missed.add $key & " at " & $turn & " (read " & formatFloat(scene.turn, ffDecimal, 3) &
+              ")"
+    checkpoint "Blocks read: `" & $read & "`.  Missed: `" & $missed.len & "`, from: `" &
+        missed[0..<min(missed.len, 6)].join(", ") & "`."
+    check read >= FLOOR_BLOCKS
     check missed.len == 0
