@@ -3,7 +3,7 @@
   "kind": "evaluation",
   "name": "compound-tables",
   "path": "proposals/08-compound-tables",
-  "edits_digest": "c2ce6a8226cae85f",
+  "edits_digest": "4f3b030bdf0e7cd7",
   "taken": {
     "date": "2026-10-15",
     "machine": "linux amd64, 4 cores",

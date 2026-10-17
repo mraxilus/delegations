@@ -2060,8 +2060,8 @@ suite "Internal: Figures":
         it.get.path,
       )
     check paths == @["pages/derivation-map.svg"]  # one figure, file staticRead found
-    for rule in ["constructAnti", "applyMap", "applyConstant", "filterGrades", "signed sum"]:
-      check rule in svg  # each of four rules marks its arrow or box
+    for rule in ["constructAnti", "applyMap", "applyConstant", "constructProductsTransitional"]:
+      check rule in svg  # each of three rules marks its line or box
 
 
 
