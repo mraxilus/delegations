@@ -395,5 +395,6 @@ design/
   drawn.nim              where each point of the world lands on the viewer's canvas
   wholecloth.nim         splices the data of the simulation into wholecloth.html
   wholecloth_turns.nim   the turns panel of wholecloth.html
+  wholecloth_scene.nim   what that panel draws at one place of its play
   shot.nim               a screenshot of one page, light and dark
 ```

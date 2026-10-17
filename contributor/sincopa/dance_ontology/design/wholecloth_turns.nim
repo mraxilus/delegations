@@ -8,6 +8,8 @@
 ##     global) is read in place as `JsObject` through `std/jsffi`, never copied
 ##     into Nim objects, since every copy on JS backend is deep (STYLE.md §7).
 ##     Only scene at one moment is built as Nim value, interpolated afresh.
+##   Scene, and how page finds it between two moments, live in `wholecloth_scene`, which
+##     law reads through node: this module reads document as it loads.
 ##   Holds and levels are closed domains (six by three), so both are enums and
 ##     every table over them is enum-indexed array (Article IV.6): sweep limits
 ##     and frame references are read once at load into `LUT_SWEEP_BY_HOLD`, which
@@ -35,8 +37,8 @@
 ##     Read call sites of each binding shape: by-value `Scene` parameter passes
 ##     by reference; `template` aliases into `scene.cn[i]` and
 ##     `lut_hold_sweep[hold][level]` read fields inline; `let` of call result
-##     binds without copy; `var` out-parameters (`interpolate`, `sceneOf`,
-##     `readSweep`) write into storage in place.  Shapes rejected after reading
+##     binds without copy; `var` out-parameters (`wholecloth_scene.interpolate`,
+##     `wholecloth_scene.fillScene`, `readSweep`) write into storage in place.  Shapes rejected after reading
 ##     them: `result = [x, y]` and constructor assigned to `result` (one deep
 ##     copy each), `Option[Scene]` (two per call), `for (px, py) in` over tuple
 ##     table (one per element per call), `Option[float]` clock (two per frame).
@@ -47,6 +49,8 @@ when compileOption("profiler"): import std/nimprof
 
 import std/[dom, jsffi, math]
 
+import ./wholecloth_scene
+
 
 
 #[ Domain ]#
@@ -54,10 +58,6 @@ import std/[dom, jsffi, math]
 type
   Arm {.pure.} = enum  ## Define which arm of dancer.
     Left, Right
-
-  Dancer {.pure.} = enum
-    ## Define who: lead (square marks, deep ink) or follow (round marks, plain ink).
-    Lead, Follow
 
   Hold {.pure.} = enum  ## Define six holds page offers, lead's hand named first.
     LeftToLeft, RightToRight, LeftToRight, RightToLeft, LeftToLeftRightToRight,
@@ -96,30 +96,8 @@ type
     limits: Limits
     frames: JsObject
 
-  Vector2 = array[2, float]  ## Define point on page, or centre in millimetres.
-
-  Vector3 = array[3, float]  ## Define joint in millimetres: across, along, up.
-
   PartExtent = object  ## Define one body part's half-extents and height band, in millimetres.
     across, deep, z_from, z_to: float
-
-  BodyPose = object  ## Define where one dancer stands and faces at one moment.
-    centre: Vector2
-    facing: float
-
-  Connection = object
-    ## Define one rope at one moment: four joints each side, and simulation's words.
-    lead, follow: array[4, Vector3]
-    lead_says, follow_says: cstring
-    cross: JsObject  ## Crossings from data, `undefined` where none; read in place.
-
-  Scene = object  ## Define everything drawn at one turn, interpolated between two moments.
-    turn, strain: float
-    is_ok, is_reseed: bool
-    worst: cstring  ## Joint nearest its edge, or empty.
-    bodies: array[Dancer, BodyPose]
-    connections: array[2, Connection]
-    connection_count: int  ## Live bound of `connections`.
 
 
 func holdDescription(
@@ -297,13 +275,6 @@ func pathOf(joints: array[4, Vector3], view: static View): cstring =
     if k > 0: result.add " L "
     result.add pointText(project(joints[k], view))
 
-func interpolate[N: static int](destination: var array[N, float]; a, b: JsObject; u: float) =
-  ## Interpolate one vector between two moments into `destination`, reading both in place.
-  ##   Writes into scene's own storage: returning array would copy it on assignment.
-  for i in 0..<destination.len:
-    let value_a = a[i].to(float)
-    destination[i] = value_a + (b[i].to(float) - value_a) * u
-
 
 
 #[ Marks And Bodies ]#
@@ -392,61 +363,6 @@ func sideBodies(scene: Scene): cstring =
 
 
 #[ Scene ]#
-
-func fillScene(scene: var Scene, frames: JsObject, turn: float): bool =
-  ## Fill `scene` at `turn`: joints interpolated between moments either side, words from nearer.
-  ##   False, and `scene` untouched, for empty sweep: rest pose that never held draws nothing.
-  ##   Fills caller's storage rather than returning `Option[Scene]`, which deep copied
-  ##     scene twice per call on JS backend (read in emitted JS: `some` copies its
-  ##     parameter into constructor, then constructor into result).
-  let count = frames.length.to(int)
-  if count == 0: return false
-
-  # Find moments either side of `turn` by bisection on their turns.
-  var
-    lower = 0
-    upper = count - 1
-  while upper - lower > 1:
-    let middle = (lower + upper) shr 1
-    if frames[middle].turn.to(float) <= turn: lower = middle else: upper = middle
-
-  # Weigh later moment by where `turn` falls between; exact equality only guards division.
-  let
-    moment_a = frames[lower]
-    moment_b = frames[upper]
-    turn_a = moment_a.turn.to(float)
-    turn_b = moment_b.turn.to(float)
-    u = if turn_b == turn_a: 0.0 else: max(0.0, min(1.0, (turn - turn_a) / (turn_b - turn_a)))
-    near = if u < 0.5: moment_a else: moment_b
-    strain_a = moment_a.strain.to(float)
-  scene.turn = turn
-  scene.is_ok = near.ok.to(bool)
-  scene.is_reseed = near.reseed.to(bool)
-  scene.strain = strain_a + (moment_b.strain.to(float) - strain_a) * u
-  scene.worst = near.worst.to(cstring)
-  scene.connection_count = moment_a.connections.length.to(int)
-
-  # Interpolate bodies, then every joint of every rope; words come from nearer moment.
-  for who in Dancer:
-    let
-      body_a = moment_a.bodies[ord(who)]
-      body_b = moment_b.bodies[ord(who)]
-      facing_a = body_a.facing.to(float)
-    interpolate(scene.bodies[who].centre, body_a.centre, body_b.centre, u)
-    scene.bodies[who].facing = facing_a + (body_b.facing.to(float) - facing_a) * u
-  for i in 0..<scene.connection_count:
-    let
-      connection_a = moment_a.connections[i]
-      connection_b = moment_b.connections[i]
-      connection_near = near.connections[i]
-    for k in 0..<4:
-      interpolate(scene.connections[i].lead[k], connection_a.lead[k], connection_b.lead[k], u)
-      interpolate(scene.connections[i].follow[k], connection_a.follow[k], connection_b.follow[k], u)
-    scene.connections[i].lead_says = connection_near.leadSays.to(cstring)
-    scene.connections[i].follow_says = connection_near.followSays.to(cstring)
-    scene.connections[i].cross = connection_near.cross
-  true
-
 
 func sceneSvg(hold: Hold, level: Level, scene: Scene): cstring =
   ## Draw scene: bodies, ropes and marks from above, then same moment from side.
