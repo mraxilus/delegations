@@ -55,9 +55,18 @@ func placeAt*(frames: JsObject, turn: float): float =
   ##   Where several poses stand at `turn`, pose plan stood last there.
   ##     Both ways run outward from turn 0, and negative way is written back to front
   ##       (`turns.frames`): so first pose along play below turn 0, last one above it.
+  ##   Past either end moment, one for one with turn: walk's block lies one step past moment
+  ##     it refused, and page draws end moment there at block's own turn.
   ##   Turn itself for sweep with no moment, where nothing is drawn.
   let count = frames.length.to(int)
   if count == 0: return turn
+
+  # Past either end moment, move place one for one with turn.
+  let
+    turn_first = frames[0].turn.to(float)
+    turn_last = frames[count-1].turn.to(float)
+  if turn < turn_first: return placeOf(frames[0]) + (turn - turn_first)
+  if turn > turn_last: return placeOf(frames[count-1]) + (turn - turn_last)
 
   # Find last moment at or before `turn` by bisection on turns, which never fall.
   var
@@ -98,6 +107,7 @@ func fillScene*(scene: var Scene, frames: JsObject, place: float): bool =
   ## Fill `scene` at `place`: joints interpolated between moments either side, words from nearer.
   ##   False, and `scene` untouched, for empty sweep: rest pose that never held draws nothing.
   ##   Turn is interpolated as joints are, so it waits while poses at one turn play.
+  ##     Past either end moment it moves one for one with place, while joints hold end pose.
   ##   Fills caller's storage rather than returning `Option[Scene]`, which deep copied
   ##     scene twice per call on JS backend (read in emitted JS: `some` copies its
   ##     parameter into constructor, then constructor into result).
@@ -124,7 +134,11 @@ func fillScene*(scene: var Scene, frames: JsObject, place: float): bool =
     near = if u < 0.5: moment_a else: moment_b
     strain_a = moment_a.strain.to(float)
     turn_a = moment_a.turn.to(float)
-  scene.turn = turn_a + (moment_b.turn.to(float) - turn_a) * u
+    turn_b = moment_b.turn.to(float)
+  scene.turn =
+    if place < place_a: turn_a + (place - place_a)
+    elif place > place_b: turn_b + (place - place_b)
+    else: turn_a + (turn_b - turn_a) * u
   scene.is_ok = near.ok.to(bool)
   scene.is_reseed = near.reseed.to(bool)
   scene.strain = strain_a + (moment_b.strain.to(float) - strain_a) * u
