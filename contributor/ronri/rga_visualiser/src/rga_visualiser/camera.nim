@@ -1462,6 +1462,30 @@ func stanceRepivoted*(camera: Camera, pivot: Position): CameraStance =
   )
 
 
+func stanceRepivotedAt*(camera: Camera, pivot: Position): CameraStance =
+  ## Read stance camera would stand at with its pivot moved to world position `pivot`.
+  ##   Same slide as `stanceRepivoted`, held about `pivot` itself rather than view origin.
+  ##     Not about view origin: millions of units off, pivot rounds on its doubles and orbit
+  ##     swings what pick landed on; suite case trips on it.
+  ##   Slide composes onto copy whose view origin `moveOriginView` carries to eye, so no
+  ##   number far out enters it. Turn crosses whole, roll with it.
+  var near = camera
+  let
+    (eye, frame) = near.moveOriginView
+    # Pivot is stance's origin, so eye stands separation back along sight from zero.
+    eye_wanted = Position() + (-camera.distance) * frame.forward
+  CameraStance(
+    origin: pivot,
+    motor: motorOf(
+      wedgeDotAnti(
+        motorSliding(subtract(eye_wanted.toMultivector, eye.toMultivector)),
+        near.motor.toMultivector,
+      ),
+    ),
+    distance: camera.distance,
+  )
+
+
 func placed*(camera: Camera, stance: CameraStance): Camera =
   ## Put copy of `camera` at `stance`, lens untouched.
   ##   Whole motion crosses, so roll crosses with it, and origin it is held about with it:
@@ -1515,8 +1539,12 @@ func toward*(from_stance, to_stance: CameraStance; progress: float): CameraStanc
   ##     Held off zero by `distanceHeld`, floor of every separation, so ease lands on
   ##     destination's own: pointer pick of star at least radius asks 2.4e-7.
   ##     Not fixed millionth, which stood pivot 7.6e-7 past that star; suite case trips on it.
-  ##   Eased about destination's own origin, so ease lands on it bit for bit; where two
-  ##   origins differ, start is read about it (`rebasedTo`).
+  ##   Eased about destination's own origin; where two origins differ, start is read about
+  ##   it (`rebasedTo`).
+  ##   Progress 1 is destination itself, bit for bit.
+  ##     Not screw at 1: from millions of units off, `exp` of `log` of step rounds off
+  ##     destination, and orbit swings what pick landed on; suite case trips on it.
+  if progress >= 1.0: return to_stance
   let
     (near, far) = (distanceHeld(from_stance.distance), distanceHeld(to_stance.distance))
     held = from_stance.rebasedTo(to_stance.origin).motor.toMultivector
