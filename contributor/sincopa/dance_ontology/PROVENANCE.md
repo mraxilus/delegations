@@ -498,9 +498,10 @@ panel is `wholecloth_turns.nim`, compiled to JavaScript, and `wholecloth.nim` sp
 sweeps of the simulation (`turns.nim`) and the panel into one page.
 
 Verified by `suites/test_marks.nim`, which drives the build of each page of `marks.PAGES` under
-testament. No law builds the whole-cloth page, but `drive` builds it, as it builds every page. One
-law holds where the turns panel finds what it draws (`test_wholecloth_scene.nim`), through node and
-with no browser. No law holds the rest of the panel.
+testament. No law builds the whole-cloth page, but `drive` builds it, as it builds every page.
+Laws hold how the turns panel finds the place of a turn, and what it draws at a place (`placeAt`,
+`fillScene`). They run through node, with no browser (`test_wholecloth_scene.nim`). No law holds
+the rest of the panel.
 
 **Every page says its prose in Simplified Technical English, and a hand-drawn figure claims nothing
 of the simulation.** The Architect requires the prose in the subset of the charter (`GUIDE.md`,
@@ -2277,13 +2278,15 @@ one turn. The rig viewer plays every moment.
 
 The whole-cloth page plays a sweep by place, and not by turn (`wholecloth_scene.fillScene`). The
 recording gives each moment its place: its turn, plus one step of 0.02 for each pose stood again
-before it (`turns.frame`). So each pose at one turn plays for one step, and the turn on the page
-waits. The page says that the arms re-posed there (`reseed`).
+up to it, itself included (`turns.frame`). So each pose at one turn plays for one step, and the
+turn on the page waits. The page says that the arms re-posed there (`reseed`).
 
-The slider, the strip and the buttons still pick a turn. Where several poses stand at that turn,
-the page draws the one furthest from rest along the play, which the plan stood last (`placeAt`).
-So the page at one turn is the mirror image of the page at the other. Play turns back at the place
-of each block.
+The slider, the strip and the buttons still pick a turn, and the page finds its place
+(`placeAt`). Where several poses stand at that turn, the page draws the one that the plan stood
+last. Both ways run outward from turn 0, so that pose is the first along the play below turn 0, and
+the last above it. Past either end moment, place and turn move one for one. The block of a walked
+sweep lies one step past the moment that the walk refused. So it reads at its own turn, and play
+turns back there.
 
 Cost: the two chains held above play longer, at 0.35 of a turn each second, within the two turns
 each way that the page shows. One pass of the cross-name chain takes 14.2 s, where it took 8.7 s.
@@ -2295,9 +2298,9 @@ Rejected: the last pose of each turn alone. There an arm moves 205 to 548 mm in 
 normal step moves it 55 to 58 mm. Halfway through such a step, the page draws an arm up to 61 mm
 short or long. Measured 2026-10-15 by a probe outside the tree.
 
-Verified by `test_wholecloth_scene.nim`: the page drawn at the place of each moment shows that
-moment, for every moment of every sweep. Where the page found moments by turn, 210 of 2775 moments
-were never drawn, and the furthest lay 492 mm from the pose drawn.
+Verified by `test_wholecloth_scene.nim`, over every sweep of the recording. The page drawn at the
+place of each moment shows that moment. At each turn that holds several poses, it shows the pose
+that the plan stood last. At each block, it reads the turn of the block and shows the end moment.
 
 **The plan carries the cross-name chain held above to 1.5275 turns either way, and the same-name
 chain to 2.5.** The cross-name chain stands from 0.957 m, by style 13 and its mirror. Of its 139
@@ -3240,14 +3243,14 @@ to tidy the line away shows up only as suites that fail to build. `result +=` on
   moves in the body when it does.
 - **The radius of the girdle, 60 mm, is an estimate and not tape.**
 - **On the whole-cloth page, a point of a held arm can leap in one moment.** As the page plays
-  `design/turns.json`, 13 of 18 sweeps move some point further than the bound of a leap, 195 mm,
-  between two frames. That counts the step at rest from one way to the other. It also counts the
-  jump at a turn that a planned way stands several times (Planned sweep). The furthest is 511 mm,
-  at the rest of L-l.R-r above, where the two ways start from mirror images of one pose.
+  `design/turns.json`, 12 of 18 sweeps move some point further than 195 mm, the bound of a leap.
+  Each such move lies between two frames next to each other on the play. That counts the step at
+  rest from one way to the other. The furthest is 511 mm, at the rest of L-l.R-r above, where the
+  two ways start from mirror images of one pose.
 
-  Inside each way, and with no such jump, 11 of 18 move further than 195 mm. The furthest of them
-  is 481 mm, in L-l.R-r high from 0.00 to 0.02 of a turn. Measured 2026-10-12 by a probe outside
-  the tree.
+  Inside each way, 11 of 18 move further than 195 mm. The furthest of them is 481 mm, in L-l.R-r
+  high from 0.00 to 0.02 of a turn. Measured 2026-10-17 by a probe outside the tree that plays
+  each frame at its place.
 
   The page stands each sweep where it carries furthest, to two and a half turns. The leap law walks
   two sweeps from the distances that the kept answers chose, to one turn, so no law reads the page.
