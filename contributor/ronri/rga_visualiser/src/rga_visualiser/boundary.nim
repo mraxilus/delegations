@@ -424,14 +424,18 @@ func pointFrom*(m: Multivector): Position =
   ## Read point assembled through algebra back out as place.
   ##   Every caller builds `m` as unit-weight point plus weightless directions, so weight
   ##   is exactly one and read cannot refuse.
+  ##   Weight is tested against zero alone, not against bulk as `position` tests it.
+  ##     Assembled weight is exact, and bulk only says how far out point stands: horizon
+  ##     drawn past `1 / TOLERANCE_ABS` read as direction there, and assert stopped frame.
   ##   Asserted rather than defaulted: zero weight here means assembly upstream is wrong.
   ##   Tallied while suite counts; see `countPointsRead`.
-  let read = position(m)
-  doAssert read.isSome, &"Assembled point must carry weight, its assembly is wrong; got `{m}`."
+  let weight = m[Basis.E4]
+  doAssert weight != 0.0, &"Assembled point must carry weight, its assembly is wrong; got `{m}`."
+  tallyCrossing(Crossing.ToEuclidean)
   # Cast covers tally alone: instrument's own state, which no caller reads as result.
   {.cast(noSideEffect).}:
     if IS_COUNTING_POINTS_READ: inc COUNT_POINTS_READ
-  read.get
+  Position(x: m[Basis.E1] / weight, y: m[Basis.E2] / weight, z: m[Basis.E3] / weight)
 
 
 func pointAlong*(place: Position, direction: Direction, length: float): Position =

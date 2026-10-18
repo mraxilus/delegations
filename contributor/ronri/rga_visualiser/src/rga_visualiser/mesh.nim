@@ -1148,10 +1148,9 @@ func viewBoxOfDisc*(
   ##   Box's floor then rises to vanishing line. No ray below it meets plane in front of eye,
   ##   so clip is exact; every fragment it removes was cast and discarded.
   ##     Empty box where eye stands in plane, or where whole view looks past line.
-  ##   Not fan of corners on plane itself: corner behind eye left triangle for clipper,
-  ##   and sliver clipper returned rasterised to nothing under grazing camera, so disc
-  ##   ended at hard chord under camera standing inside it. Box is filled by fragment
-  ##   stage casting its own ray, `hitDiscAlong`, exact at any grazing angle.
+  ##   Not fan of corners on plane itself: clipper's sliver of corner behind eye grazes to nothing.
+  ##   Box is filled by fragment stage casting its own ray, `hitDiscAlong`, exact at any grazing
+  ##   angle.
 
   func slopesOnRim(offset, depth: float; arms, swings: (float, float)): (float, float) =
     ## Find least and most slope, lateral over depth, rim's picture reaches along one axis.

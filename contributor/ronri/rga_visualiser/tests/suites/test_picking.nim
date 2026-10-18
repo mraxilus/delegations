@@ -19,7 +19,7 @@ suite "Picking":
     cameraAround(Position(x: 0, y: 0, z: 0), distance, Direction(x: 1, y: 0, z: 0))
 
 
-  test "a zoom anchors on what is under the cursor only near the depth being looked at":
+  test "a zoom with a selection anchors only near the depth looked at, and free flight at any":
     # Camera tilted down at origin from ten units.
     #   Point on sight line at one and half orbit distances is anchor; point eight off is
     #   passed over, and nothing else answers: world has no ground to fall back on.
@@ -52,6 +52,40 @@ suite "Picking":
       centre,
     )
     check anchor_far.isNone
+    # Free flight takes it where it stands: wheel there refers to object under pointer, and
+    #   band about separation would leave it nothing once flight moved on.
+    let anchor_free = anchorZoomAt(
+      far,
+      camera,
+      scale,
+      view_projection,
+      width_pick,
+      height_pick,
+      centre,
+      is_banded = false,
+    )
+    check anchor_free.isSome and abs(anchor_free.get.at.z + 7.0 * eye.z) < 1.0e-6
+
+
+  test "a star is picked where it is drawn, however far out the horizon stands":
+    # Fault: horizon past `1 / TOLERANCE_ABS` read star's place as none, and pick passed it
+    #   over. Camera 1e8 out stands horizon 1.8e9 off eye.
+    let
+      camera = cameraFacingOrigin(1.0e8)
+      view_projection = camera.initMatrixViewProjection(width_pick / height_pick)
+      scale = camera.drawExtentFor(height_pick, 0.0)
+      star = Direction(x: -0.96, y: 0.12, z: 0.16).toMultivector
+      heading = directionHorizon(star)
+    check scale.radiusHorizon > 1.0 / TOLERANCE_ABS
+    check heading.isSome
+    let cursor = projectToScreen(
+      view_projection, width_pick, height_pick, scale.eye + scale.radiusHorizon * heading.get
+    )
+    var scene = initScene()
+    scene.addObject(star, "star", Ink.Rose)
+    check pickNearest(
+      scene, camera, scale, view_projection, width_pick, height_pick, cursor
+    ) == some(0)
 
 
   test "a point drawn wide is picked anywhere on its disc, over the plane behind it":

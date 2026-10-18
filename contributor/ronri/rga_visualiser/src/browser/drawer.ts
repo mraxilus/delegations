@@ -28,10 +28,10 @@ button_drawer.addEventListener('click', () => {
   refreshObjectsUI();
 });
 
-// Top menu: one popover holding every top-bar action (undo/redo, axes/grid, save/load.
-//   scene, save PNG/load demo) that used to be spread across four separate chip-row
-//   pill-groups -- each button inside keeps its own pre-existing #id-based wiring
-//   unchanged below; this only owns popover's own open/close.
+// Top menu: one popover holding every top-bar action (undo/redo, axes/grid, save/load
+//   scene, save PNG/load demo).
+//   Each button inside keeps its own #id-based wiring below; this only owns popover's own
+//   open/close.
 const menu_top = elementById('top-menu');
 const button_menu = elementById('button-menu');
 button_menu.addEventListener('click', () => {

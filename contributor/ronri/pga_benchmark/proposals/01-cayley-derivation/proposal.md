@@ -1,7 +1,7 @@
 # P01: Derive every Cayley table from the metric and the orientation of 𝟙
 
 **What it is.** `pga/cayleys.nim` derives every table from two inputs, as in Lengyel's figure
-2.16: the metric and the orientation of 𝟙. Fixed definitions and four rules build the rest. One
+2.16: the metric and the orientation of 𝟙. Fixed definitions and three rules build the rest. One
 rule, the new `applyMap`, puts a map into one operand of a table.
 
 **What it is for.** A reader follows one derivation that matches Lengyel's, with two constructors
@@ -22,49 +22,72 @@ Lengyel names two in his figure 2.16.
 Every table derives from two inputs, as in Lengyel's figure 2.16: the metric and the orientation
 of the volume element 𝟙. The metric enters as 𝖌 on vectors, and the exomorphism builds 𝐆 from it.
 RGA makes 𝐞ₙ null. CGA pairs 𝐞ₙ₋₁ and 𝐞ₙ with 𝐞ₙ₋₁ ∙ 𝐞ₙ = −1, and names one of them origin and
-the other infinity. The parts split by these projective vectors in both algebras.
+the other infinity. The right complement of the origin, 𝐞̄ₙ in RGA and 𝐞̄ₙ₋₁ in CGA, is the horizon,
+which the attitude reads. The parts split by these projective vectors in both algebras.
 
-![Derivation map, after Lengyel's figure 2.16, for RGA and CGA. Green boxes are inputs. Blue boxes
-are fixed definitions and maps. Purple boxes conjugate their base by complements. Each box names
-the function that builds its table.](../../pages/derivation-map.svg)
+![Derivation map, after Lengyel's figure 2.16, in eleven blocks in the order of the code, where
+each box holds a symbol. Green boxes are the two inputs, grey boxes are basis and projective
+elements, and purple anti tables stand under their blue tables. A dashed box on the top row of a
+block brings in the boxes of one other block, one cell for each box, and each block builds
+downward. Each box takes its own line from each box that it uses, so no two lines join or fork. A
+line that crosses another line passes over it with a gap. Each line carries its
+formula, with the function that builds the table under it. A faded line is a route that the code
+does not take, and a faded box is an operator with no table. Brown text holds in RGA alone, and
+blue text in CGA alone.](../../pages/derivation-map.svg)
 
 The figure shows RGA alone, and it predates the transwedge, by which Lengyel later unified the
-geometric product. The map adds both, and it names the code that builds each table.
+geometric product. The map adds both, and it names the code that builds each table. It takes the
+dot 𝐚 ∙ 𝐛 = 𝐚 ⩓ₖ 𝐛 where k = gr 𝐚 = gr 𝐛 from the transwedge, as at pin. So one product gives ∧ at
+order 0, ∙ at equal grades, and ⟑ as a signed sum of its orders. A suite holds that this dot
+equals the 𝐚ᵀ𝐆𝐛 of the figure, which the map gives as a faded route.
+
+The blocks follow the groups of the code, from bases to properties. The last three blocks hold
+the measures, the projections and the motion operators. A box draws only the inputs that it cannot
+reach through another input, so ∨ also stands for the ∧ that it derives from. The faded lines give
+every other route to a box that holds at pin. So the dot has three routes: from ⩓ₖ, which the code
+takes, from 𝐚 ∨ 𝐛★ at equal grades, and from 𝐆. The faded boxes give the operators with no table,
+such as the support, the distance and the flector, so the map shows how complete the library is.
+
+P01 lays out every Cayley table of the library, so most other proposals build on it. They count
+only the tables that the library builds, and they take a new table into account when the library
+adds it.
 
 ### Against Lengyel's figure 2.16
 
 | Table | Figure 2.16 | This proposal |
 |-------|-------------|---------------|
 | 𝐆 | input | from 𝖌, by 𝐆(𝐚 ∧ 𝐛) = 𝐆𝐚 ∧ 𝐆𝐛 |
-| 𝟙 | input, by its orientation | order of the antiscalar basis |
-| ∧ | fixed | `multiplyExterior` on basis factors |
+| 𝟙 | input, by its orientation | 𝟙 = 𝐞₁ ∧ 𝐞₂ ∧ ⋯ ∧ 𝐞ₙ, the antiscalar basis |
+| ∧ | fixed | 𝐞ᵢ ∧ 𝐞ⱼ = −𝐞ⱼ ∧ 𝐞ᵢ, by `multiplyExterior` on basis factors |
 | Complements | from ∧ and 𝟙 | same, as 𝐮̱ ∧ 𝐮 = 𝟙 = 𝐮 ∧ 𝐮̄ |
-| Reverse | from ∧, sign by grade | same sign, by grade alone |
-| ∙ | 𝐚ᵀ𝐆𝐛 | same, `constructDot` |
-| 𝔾, ∨, ∘, antireverse | conjugate by complements | same, `constructAnti` |
+| Reverse | from ∧, sign by grade | same sign (−1)^(k(k−1)/2) where k = gr 𝐮, by grade alone |
+| 𝔾, ∨, ∘, antireverse | conjugate by complements | `constructAnti`: 𝐚 ∨ 𝐛 = 𝐮̱ where 𝐮 = 𝐚̄ ∧ 𝐛̄ |
 | Duals | complement of 𝐆𝐮 or 𝔾𝐮 | same, `applyMap` |
-| ⟑ | from 𝐆 and ∧ | signed sum of transwedge orders |
-| ⟇ | conjugate of ⟑ | signed sum of anti orders, not conjugates of base orders in CGA |
-| Norms | √(𝐮 ∙ 𝐮) and √(𝐮 ∘ 𝐮) | from parts, split by projective vectors |
-| Projective vectors | absent | split the parts, and give the carrier in CGA |
+| Transwedge | absent | 𝐚 ⩓ₖ 𝐛 = Σ (𝐜̱ ∨ 𝐚) ∧ (𝐛 ∨ 𝐜★) where gr 𝐜 = k |
+| ∙ | 𝐚ᵀ𝐆𝐛 | 𝐚 ⩓ₖ 𝐛 where k = gr 𝐚 = gr 𝐛, as a suite holds equal to 𝐚ᵀ𝐆𝐛 |
+| ⟑ | from 𝐆 and ∧ | 𝐚 ⟑ 𝐛 = Σ (−1)^(k(k−1)/2) 𝐚 ⩓ₖ 𝐛 |
+| ⟇ | conjugate of ⟑ | 𝐚 ⟇ 𝐛 = Σ (−1)^(k(k−1)/2) 𝐚 ⩔ₖ 𝐛, not conjugates of base orders in CGA |
+| Norms | √(𝐮 ∙ 𝐮) and √(𝐮 ∘ 𝐮) | ‖𝐮‖●² = 𝐮●ᵀ𝐮● as for each part, and ‖𝐮‖⊘² = 𝐮 ∘ 𝐮 in CGA |
+| Projective vectors | absent | split the parts, and give the horizon and the CGA carrier |
 
-### Four rules
+### Three rules
 
 | Rule | Tables it builds |
 |------|------------------|
-| `constructAnti`: conjugate by complements, De Morgan | antiwedge, 𝔾, antireverse, antidot |
-| `applyConstant`, `applyMap`: fix or map operand | ★ ☆ ∨★ ∨☆ ∧★ ∧☆ each side, attitude, carrier |
-| `filterGrades`: keep one grade of product | ‖𝐦‖⊘², as top grade of ∘ |
-| Transwedge sum: wedge chains over one grade | ⟑, and ⟇ from the anti family |
+| `constructAnti`: conjugate by complements, 𝐚 ∨ 𝐛 = 𝐮̱ where 𝐮 = 𝐚̄ ∧ 𝐛̄ | ∨, 𝔾, antireverse, ∘ |
+| `applyConstant`, `applyMap`: fix or map operand | ★, ☆, 𝐚 ∨ 𝐛★ and each interior product, ⊖, ⊟ |
+| Transwedge sum: Σ where gr 𝐜 = k | ⩓ₖ and ⩔ₖ, ∙ at equal grades, ⟑ and ⟇ by signed sums |
 
 Each dual is a complement after 𝐆 or 𝔾, on the left or on the right, as the library keeps both
-sides. Each interior product is one dual fed into one product, by one rule.
+sides. Each interior product is one dual fed into one product, by one rule. The squared radius
+norm is the table of ∘ itself, so it needs no filter, and `filterGrades` leaves the file.
 
-Direct constructors remain for the base reverse, for 𝐆 from 𝖌, for the dot, for the parts and for
-the squared norms. The antireverse is `constructAnti` of the reverse, so `constructReverse` and
-`reverse` lose their `Spatiality` parameter. `constructParts` splits each part by the presence of
-the projective vectors. The origin splits bulk from weight, and in CGA infinity splits round from
-flat. In RGA, 𝐆 and 𝔾 give the same parts, but one rule holds in both algebras.
+Direct constructors remain for the base reverse, for 𝐆 from 𝖌, for the parts and for the squared
+norms. `constructDot` keeps the cells of 𝐚 ⩓ₖ 𝐛 where k = gr 𝐚 = gr 𝐛 holds. The antireverse is
+`constructAnti` of the reverse, so `constructReverse` and `reverse` lose their `Spatiality`
+parameter. `constructParts` splits each part by the presence of the projective vectors. The origin
+splits bulk from weight, and in CGA infinity splits round from flat. In RGA, 𝐆 and 𝔾 give the same
+parts, but one rule holds in both algebras.
 
 ### Tables that change
 
@@ -77,8 +100,9 @@ The table below gives the new rule of each derived table that changes. In it, `s
 | `CAYLEYS_DUAL.s.side` | `CAYLEYS_COMPLEMENT.side.applyMap(CAYLEYS_EXOMORPHISM_METRIC.s)` |
 | `CAYLEYS_INTERIOR.s.bulk.side` | `CAYLEYS_WEDGE.s.applyMap(CAYLEYS_DUAL.base.side, side)` |
 | `CAYLEYS_INTERIOR.s.weight.side` | `CAYLEYS_WEDGE.s.applyMap(CAYLEYS_DUAL.anti.side, side)` |
-| `CAYLEYS_DOT.base` | `constructDot(CAYLEYS_EXOMORPHISM_METRIC.base)` |
+| `CAYLEYS_DOT.base` | `constructDot(CAYLEYS_WEDGES_TRANS.base)` |
 | `CAYLEY_ATTITUDE` | `CAYLEYS_WEDGE.anti`, with `applyConstant` of `Basis.horizon` on the right |
+| `CAYLEYS_NORM_SQUARED_RADIUS` | `CAYLEYS_DOT.anti` |
 
 ### Cells of one term
 
@@ -89,8 +113,8 @@ map that these rules build holds at most one term in a cell, so the emitter stay
 
 ### Transwedge
 
-Order k of the transwedge sums one term for each basis 𝐜 of grade k. The term strips 𝐜 from 𝐚 by
-its complement and from 𝐛 by its dual, and then joins the two results.
+Order k of the transwedge, 𝐚 ⩓ₖ 𝐛, sums one term for each basis 𝐜 where gr 𝐜 = k. The term strips 𝐜
+from 𝐚 by its complement and from 𝐛 by its dual, and then joins the two results.
 
 The transwedge has 32 variants. Three choices matter: which product strips, which dual strips 𝐛,
 and whether the two complements are on opposed sides. Chirality changes no table, and grade order
@@ -122,9 +146,10 @@ alone.
 In families 3, 4, 7 and 8, the cells for order 0, equal grades and signed sum hold under the
 rigid metric only. Under the conformal metric 𝔾 = −𝐆, so family 3 is −1 and family 7 is −5.
 
-Family 1 gives wedge, dot, geometric product and bulk contraction. The build takes the dot from
-𝐆 and the contraction as a map. A suite holds the identity at order gr 𝐚, so the build and the
-transwedge cannot drift apart.
+Family 1 is 𝐚 ⩓ₖ 𝐛, and it gives wedge, dot, geometric product and bulk contraction. Family 5 is
+the antitranswedge 𝐚 ⩔ₖ 𝐛, which gives ⟇. The build takes the dot from family 1 at equal grades,
+and the contraction as a map. A suite holds the identity at order gr 𝐚, so the build and the
+transwedge cannot drift apart. The same suite holds that the dot equals 𝐚ᵀ𝐆𝐛.
 
 ## Alternatives
 
@@ -132,10 +157,11 @@ transwedge cannot drift apart.
 |--------|-------------|
 | Four dual products from transwedge | Built, tables equal; four N³ families where maps cost N² |
 | Left and right chirality | Tables identical in the census by hand |
-| Dot from equal-grade transwedge cells | Built, equal; needs transwedge for what filter gives |
 | Dot as scalar part of ⟑ | Checked; equal only up to (−1)^(k(k−1)/2) |
 | Blade products by bit operations | Weighed; second generator beside the derivation |
-| Dot as grade 0 of ∨★, as a note at pin asks | Built, equal; ruled for 𝐚ᵀ𝐆𝐛 on 2026-10-16 |
+| Dot as 𝐚ᵀ𝐆𝐛 from 𝐆, as in figure 2.16 | Built, equal; ruled on 2026-10-17 for the transwedge |
+| Dot as grade 0 of 𝐚 ∨ 𝐛★, as a pin note asks | Built, equal; ruled on 2026-10-17 for transwedge |
+| Radius norm by `filterGrades` of ∘ | Removes no cell; ruled on 2026-10-17 to read ∘ whole |
 | RGA parts as 𝐆 and 𝔾 | Built, equal; ruled on 2026-10-16 for one rule in both algebras |
 | `Option` cells in `Cayley1D` | Library before `3121342`; two cell shapes, and no sum of terms |
 | ⟇ as conjugate of ⟑, one family | Built; equal sum, but anti orders differ at cga4d and cga5d |
@@ -160,7 +186,8 @@ transwedge cannot drift apart.
 ## Landing
 
 - **P08, `compound-tables`.** It quotes a line of the header of this file and reads `applyMap`,
-  so it lands after this proposal.
+  so it lands after this proposal. Its support, antisupport, cocarrier, center and container follow
+  the carrier, so they join the group of properties.
 - **Change `cayleys-hygiene`.** It renames an overload of `constructProductInterior`, which this
   proposal deletes, so its edits are void once this proposal lands. Its other idea still applies,
   because this proposal writes the parity k(k−1)/2 of the reverse twice, in `reverse` and in
@@ -175,6 +202,9 @@ transwedge cannot drift apart.
   line already.
 
 ## Evidence
+
+A check by hand on 2026-10-17 builds each faded route of the map at rga3d, rga4d, cga4d and
+cga5d. Each route gives the table that it leads to, and the two brown routes hold in RGA alone.
 
 A census by hand on 2026-10-12 checks chirality and the family count at nine algebras: rga2d to
 rga6d, and cga3d to cga6d. It calls `constructProductsTransitional` with each strip product, dual,

@@ -373,12 +373,15 @@ func stanceFor*(aim: CameraAim; camera: Camera; width, height: int): CameraStanc
   ##     rule demands.
   ##   Price is named in `CameraAim`: one bounding sphere frames line further out than
   ##   crossing frame would need.
-  ##   Stance is held about camera's view origin, and aim's places are read about it.
+  ##   Stance is held about centroid of what was picked, and aim's places are read about it;
+  ##   see `camera.stanceRepivotedAt`. Horizon object alone keeps camera's view origin.
   let
     origin = camera.originView
     pivot = if aim.centroid.isSome: aim.centroid.get.toView(origin) else: camera.pivot
   # Framing something finite turns nothing, so whole motion crosses and roll with it.
-  let settled = camera.stanceRepivoted(pivot)
+  let settled =
+    if aim.centroid.isSome: camera.stanceRepivotedAt(aim.centroid.get)
+    else: camera.stanceRepivoted(pivot)
   if aim.sphere.isNone:
     # Horizon object alone, and it turns only where its own bound is broken: one already
     #   in view keeps reader's own framing, as finite selection already fitting does.
@@ -396,13 +399,14 @@ func stanceFor*(aim: CameraAim; camera: Camera; width, height: int): CameraStanc
     placed = camera.placed(settled)
     axes = placed.frame
     reach = distanceFitting(aim.sphere.get.radius, placed, width, height, INSET_POINT_SHOWN)
-    back = stepOutTo(placed.eye, aim.sphere.get.centre.toView(origin), -axes.forward, reach)
+    centre = aim.sphere.get.centre.toView(placed.originView)
+    back = stepOutTo(placed.eye, centre, -axes.forward, reach)
   if back <= 0.0: return settled
   camera.stanceDollied(settled, settled.distance + back)
 
 
 func stanceApproaching*(
-  shaped: Kind, radius: float, centre: Position, camera: Camera, scale: DrawExtent
+  shaped: Kind, radius: float, place: Position, camera: Camera, scale: DrawExtent
 ): Option[CameraStance] =
   ## Resolve where camera ends after pointer pick: object centred, and come in to.
   ##   Pivot goes onto object's own anchor, so it sits at middle of frame and orbit turns
@@ -411,7 +415,7 @@ func stanceApproaching*(
   ##     sight line at that object's depth, units away from object itself, and every orbit
   ##     swung object round screen rather than turning it where it stood.
   ##   Camera slides rather than turns, so angles and roll both survive; see
-  ##   `camera.stanceRepivoted`.
+  ##   `camera.stanceRepivotedAt`.
   ##   How far in depends on shape and on what reader could see.
   ##     Point drawn at floor dot (`DIAMETER_POINT_LEAST`) is only place, so camera comes
   ##     in until its disc spans `FRACTION_HEIGHT_APPROACH_POINT` of frame's height: moon
@@ -422,7 +426,8 @@ func stanceApproaching*(
   ##     close leaves reader's own scale alone.
   ##     Plane comes in until its whole disc spans `FRACTION_HEIGHT_APPROACH_PLANE`, which
   ##     is reach its own centre asks for rather than one any crossing does.
-  ##   `centre` is about camera's view origin, as `tessellate.anchorFor` reads it.
+  ##   `place` is world's, as scene stores it. Reach and depth read it about view origin,
+  ##   and stance is held about it, so pivot lands on it from any distance.
   ##   None where object is not ahead of eye, leaving caller `stanceFor`. Centring one
   ##   behind reader would slide camera back past it rather than turn, which is jump
   ##   nobody asked for; frame rule turns nothing and handles it by its own bound.
@@ -431,6 +436,7 @@ func stanceApproaching*(
   ##     which object picked from hundredth of millionth off stands well under.
   let
     (eye, frame) = camera.sight
+    centre = place.toView(camera.originView)
     reach_now = distanceBetween(centre.toMultivector, eye.toMultivector)
   if depthAlong(eye, frame.forward, centre) <= TOLERANCE_ABS * reach_now: return
   var depth_end = min(reach_now, camera.distance)
@@ -446,7 +452,7 @@ func stanceApproaching*(
     depth_end = depthSpanning(2.0 * EXTENT_PLANE_F, FRACTION_HEIGHT_APPROACH_PLANE, camera)
     if depth_end <= 1.0e-6: return
   of Kind.Line: discard
-  some(camera.stanceDollied(camera.stanceRepivoted(centre), distanceHeld(depth_end)))
+  some(camera.stanceDollied(camera.stanceRepivotedAt(place), distanceHeld(depth_end)))
 
 
 func stanceLifted*(stance: CameraStance, camera: Camera, normal: Direction): CameraStance =
@@ -636,7 +642,7 @@ func offerAim*(
       destination = stanceApproaching(
         shaped.get,
         scene.radiusAt(pick.get.handle),
-        placement.at.toView(scale.origin),
+        placement.at,
         camera,
         scale,
       )

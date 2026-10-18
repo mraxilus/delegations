@@ -775,8 +775,7 @@ func placeLabelAboveLeftmost(marker: var Marker, points: openArray[ScreenPositio
   ##   so label rides crossing as camera turns, and `labelInView` then holds its box in.
   ##   Tie within `PIXELS_TIE_LEFTMOST` goes to higher point: both bands leave through one
   ##   edge, one above other, and label stands above upper.
-  ##   Not highest point: on level horizon two side crossings stand within pixel in height,
-  ##   and highest hopped between edges frame to frame.
+  ##   Not highest point: on level horizon, side crossings tie within pixel and swap each frame.
   for i in 0..<count:
     let top = marker.label_at.y + GAP_MARKER + 0.5 * HEIGHT_MARKER_LABEL
     if not marker.has_label or points[i].x < marker.label_at.x - PIXELS_TIE_LEFTMOST or

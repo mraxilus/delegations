@@ -853,9 +853,7 @@ higher than the macron of the face, to clear the bold x-height.
 
 The mark stays in the text and a clip hides it, so copy and search read what the source says.
 Each word that holds such a letter stays on one line, because a box is a place where a line may
-break. Tags, attributes, and the content of `svg`, `script` and `style` pass as they are. The
-figure of P01 draws its bars in its SVG, as an underline or an overline, with the mark at size
-zero.
+break. Tags, attributes, and the content of `svg`, `script` and `style` pass as they are.
 Rejected: the marks as the face places them, since each sits after its letter and meets the next
 sign. Rejected: sans-serif bold letters, which carry all three anchors, since the letters change
 shape and the library code that a page quotes cannot change.
@@ -935,6 +933,60 @@ Suite `Internal: Figures` covers the path a figure resolves, the SVG a page embe
 on the map. It also covers the summary above the claims. Suite `Internal: Edits` covers the diff
 with its numbers and folds, a new file, and the class of the sign column. It also covers the
 signatures an edit defines or sits in, and a header that closes at its own indent.
+
+## Derivation map
+
+The figure of P01 draws its bars in its SVG, as an underline or an overline, with the mark at
+size zero. A bar over a group of signs, as in 𝐚 ∨ 𝐛 = 𝐮̱ where 𝐮 = 𝐚̄ ∧ 𝐛̄, is the decoration
+alone. The face sets an overline near its ascent, so no text stands just above a formula with a
+bar over it. The tilde and the hat are spacing marks, ˜ and ˆ, since the face puts a combining
+mark beside its letter. Two advances, of the mark and of the letter, set each over or under its
+letter. The tilde under 𝐐 sits lower, to clear its tail.
+
+The map holds eleven blocks, in the order of the groups of the code, under its legend, and each anti
+table stands under its base. Each box holds a symbol alone, and the line into it carries its
+formula, as in Lengyel's figure. Under the line stands the function that builds the table. A box
+from elsewhere is a cell of a dashed box, filled in the colour of its kind, so that no line leaves
+its block. Brown text holds in RGA alone and blue text in CGA alone, so that no formula names its
+algebra. The two colours are shell tokens for code, so they follow the theme.
+
+Each box takes its own line from each box that it uses, and no two lines join or fork, as the
+Architect asked on 2026-10-17. Each line turns at right angles. The formulas take the form of the
+maths, as Lengyel writes them. So a unary operator, such as ★ in 𝐮★, stands after its operand. An
+interior product, such as 𝐚 ∨ 𝐛★, is a product with a dual. The code puts a unary operator first and
+spells ∨★ as one operator, as Nim needs.
+
+Each block takes the boxes of other blocks on its top row, and it builds downward from them. The
+boxes from one block share one dashed box, with a cell for each box, as the Architect asked on
+2026-10-17. A separate line leaves a dashed box for each box that uses that block. The dashed boxes
+stand in the order of the blocks, and the cells in the order that their block derives them. A box of
+the same block is never in a dashed box, since its own line reaches it.
+
+The line of each block that a formula draws on reaches its box, unless the box reaches that operator
+through another input. So ∨ also stands for the ∧ that it derives from, and ★ stands for the 𝐆 that
+it derives from. A line that crosses another line passes over it, and the line under it shows a gap.
+
+The map gives every route to a box that holds at pin, and it fades each route that the code does
+not take. A faded box is an operator with no table, so the map shows what the tables serve. The
+center norm has no formula in the library, so its box has no line. A check by hand on 2026-10-17
+builds each faded route at rga3d, rga4d, cga4d and cga5d, and each gives the table it leads to. Two
+of them hold in RGA alone, so the map writes them in brown.
+
+The last three blocks hold the measures, the projections and the motion operators. Of the
+operators that Lengyel gives, the map adds the flector, the distance and the angle, as the
+Architect ruled on 2026-10-17. The exponential, the logarithm and the square root of a motor are
+not on it. The map also leaves out the motor that moves one object onto another, and the dilation
+and the transversion of CGA.
+
+P01 lays out every Cayley table of the library, so most other proposals build on it. The map shows
+how complete the library is, and a faded box is an operator that waits for its table. Other
+proposals count only the tables that the library builds. When the library adds a table, each
+proposal that it concerns takes the new table into account.
+
+The metric shows as its matrix in each algebra, with ellipses for the rows that repeat. The map
+writes the origin as 𝐞ᵒ and infinity as 𝐞 with ∞ raised, so that neither reads as 𝐞₀ or as
+another basis vector. A comma or a word parts two formulas or two signs, so the sign ∙ in the map
+is always the dot product.
 
 ## Proposal pages and code
 

@@ -877,10 +877,10 @@ export async function drivePerFrame(page: Page): Promise<void> {
     };
     const original_dolly = scope.nimCameraDollyAt;
     scope.nimCameraDollyAt = function (
-      factor: number, width: number, height: number,
+      notches: number, width: number, height: number,
     ): void {
       dollies += 1;
-      original_dolly(factor, width, height);
+      original_dolly(notches, width, height);
     };
     const send = (kind: string, at_x: number, at_y: number, buttons: number): void => {
       canvas.dispatchEvent(new PointerEvent(kind, {
