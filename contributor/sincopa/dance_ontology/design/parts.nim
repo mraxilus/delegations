@@ -197,26 +197,6 @@ func placeOf*(pose: Pose): tuple[axis, facing: float] =
   (floorMod(relation.axis, 360.0), floorMod(relation.facing, 360.0))
 
 
-func turnGlyph*(label: string, width = 44.0): string =
-  ## Draw one edge of cycle: two-headed arrow, since turn reverses.
-  ##   Arrow keeps its length whatever bounds; `width` is room for
-  ##     label above it, which longer name needs more of.
-  let
-    middle = width / 2
-    (tail, head) = (middle - 15, middle + 15)
-  &"""<svg viewBox="0 0 {numeral(width)} 30" width="{numeral(width)}" height="30"""" &
-      " aria-hidden=\"true\">" &
-      &"""<text x="{numeral(middle)}" y="9" text-anchor="middle" style="font: 8px""" &
-      &""" 'Noto Sans', ui-sans-serif, system-ui, sans-serif; fill: {FAINT}">{label}""" &
-      "</text>" &
-      &"""<path d="M{numeral(tail)} 20 L{numeral(head)} 20 M{numeral(tail + 5)} 15""" &
-      &""" L{numeral(tail)} 20 L{numeral(tail + 5)} 25""" &
-      &""" M{numeral(head - 5)} 15 L{numeral(head)} 20""" &
-      &""" L{numeral(head - 5)} 25" fill="none" stroke="{QUIET}"""" &
-      """ stroke-width="1.6" stroke-linecap="round"""" &
-      """ stroke-linejoin="round"/></svg>"""
-
-
 func singleTurnParts*(): Parts =
   ## Build every SVG of single-hand turns, which card review places and checks read.
   ##   Rule 16: single hand held above turns for ever, so no position is
@@ -360,8 +340,6 @@ func singleTurnParts*(): Parts =
         walk_half[manner],
         PIXELS,
       )
-
-  result["g_quarter"] = turnGlyph("&#188; turn")
 
   # Every position of round draws differently, or position it is not.
   for manner in Manner:
@@ -728,10 +706,6 @@ func chainTurnParts*(holds: Holds, key: string): Parts =
       walk_half[manner],
       PIXELS,
     )
-
-  # Narrow, because chain is seven long now and glyph stands
-  # between every pair of them (rule 31).
-  result["g_half"] = turnGlyph("a half turn", 52.0)
 
   # Every position draws differently, or they are not seven positions.
   for i in 0..<chain.len:
