@@ -51,7 +51,22 @@ proc reviewed(): Parts = reviewParts(singleParts(), handParts())
   ## Review page's parts, from walked pages' own.
 
 
+proc checkReviewed() =
+  ## Check everything card review places: drawing, ledger, both chains, then rulings.
+  ##   Each chain's checks read that chain's own parts, never review's merged ones:
+  ##     `checkHandTurns` walks every figure it is given, so merged parts would widen its law.
+  checkFrame()
+  checkRules()
+  checkSingleTurns(singleParts())
+  checkHandTurns(handParts())
+  checkReview()
+
+
 const PAGES* = [
+  (name: "review.html",
+   parts_of: proc (): Parts {.nimcall.} = once("review.html", reviewed),
+   check: proc (parts: Parts) {.nimcall.} = checkReviewed(),
+   render: proc (parts: Parts): string {.nimcall.} = review_page.render(parts)),
   (name: "frames.html",
    parts_of: proc (): Parts {.nimcall.} = once("frames.html", frameParts),
    check: proc (parts: Parts) {.nimcall.} = checkFrameAndRules(),
@@ -69,11 +84,9 @@ const PAGES* = [
    parts_of: proc (): Parts {.nimcall.} = handParts(),
    check: proc (parts: Parts) {.nimcall.} = checkHandTurns(parts),
    render: proc (parts: Parts): string {.nimcall.} = hands_page.render(parts)),
-  (name: "review.html",
-   parts_of: proc (): Parts {.nimcall.} = once("review.html", reviewed),
-   check: proc (parts: Parts) {.nimcall.} = checkReview(),
-   render: proc (parts: Parts): string {.nimcall.} = review_page.render(parts)),
 ]  ## Each page: its file, its figures, its checks, its layout.
+  ##   Review page leads, since its check reads kept parts and so is not `gcsafe`:
+  ##     list takes its type from its first entry.
 
 
 proc buildPage*(page_index: int, directory_out: string) =

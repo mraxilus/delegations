@@ -77,6 +77,10 @@ template holdPage(name: string) =
 
 
 suite "Internal: Mark workbench":
+  test "review.html":
+    holdPage("review.html")
+
+
   test "frames.html":
     holdPage("frames.html")
 
@@ -91,10 +95,6 @@ suite "Internal: Mark workbench":
 
   test "turns-hands.html":
     holdPage("turns-hands.html")
-
-
-  test "review.html":
-    holdPage("review.html")
 
 
   test "every page the workbench writes has a law of its own":
