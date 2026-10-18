@@ -1,8 +1,8 @@
 # The rotation mark workbench
 
-This directory holds mock-ups of the marks for rotation, drawn before the app draws them. Every page
-is a mock-up, and its title says so. The reason for each choice is in `../PROVENANCE.md`, under the
-rules of the drawing, the frame picture and the turn sign.
+This directory holds the review page, which draws the marks for rotation before the app draws them,
+and the rig viewer. Each is a mock-up, and its title says so. The reason for each choice is in
+`../PROVENANCE.md`, under the rules of the drawing, the frame picture and the design workbench.
 
 **A check holds a drawing to a rule as it is written.** It does not show that a couple can dance
 what the drawing shows. The frame states to trust are reference cells that are kept, modelled
@@ -10,15 +10,9 @@ and confirmed. `CONFIRMED` in `review_page.nim` names each confirmed cell.
 
 ## Pages
 
-- `frames.html` is the frame picture: how a held pair of hands looks, and how a move changes it.
-- `signs.html` is the turn sign: how to label a move with an amount of turn.
-- `turns-single.html` and `turns-hands.html` show each frame state a hold turns through, and each
-  move between two of them. The first is for one hand, and the second is for two.
 - `review.html` lays out each frame state the project draws, card by card, for the Architect to
   rule on.
 - `rig.html` plays the sweeps and stills that the body simulation recorded.
-- `wholecloth.html` is drawn by hand, in `../mockups/wholecloth.html`. Its turns panel draws what
-  the body simulation found.
 
 `../README.md` gives the address where each page is published.
 
@@ -35,12 +29,15 @@ nim r tools/build.nim shot       # builds the helper that screenshots a page
 ```
 
 The build does not write a page whose checks fail. Each page is a product of the build, under
-`build/`, and is not committed. The build reads the four JSON files and does not write them. Each
-verb that writes one is run by hand. `rig` and `modelled` keep a stamp of the physics with what they
-record, and record nothing again when it is the same.
+`build/`, and is not committed. The build reads what `rig`, `modelled` and `fixtures` record, and
+does not write it. Each verb that writes a JSON file is run by hand. `rig` and `modelled` keep a
+stamp of the physics with what they record, and record nothing again when it is the same.
 
 No page reads `watched-fixtures.json`. A law of `../tests/suites/test_asks.nim` holds the stills to
 it, and `watched` runs in the pull request that moves them.
+
+No page reads `turns.json` either. Laws of `../tests/suites/test_asks.nim` and
+`../tests/suites/test_shoulder.nim` read it.
 
 ## Rules
 
@@ -120,7 +117,7 @@ Replaced by rule 17: a turn is drawn above, and not high.
 
 > no additional frame positions, just the addition of rotations that let us travel between them
 
-Held by `checkSingleTurns`, on the turn pages.
+Held by `checkSingleTurns`, on the single-hand turns of the review page.
 
 ### Rule 12
 
@@ -198,7 +195,8 @@ Held by `checkSingleTurns` and `checkHandTurns`.
 > and chevrons as to not imply connection and not obscure direction. it is however fine to animate
 > smoothly past it as it would do now for a full turn for example
 
-Held by `checkSingleTurns`, on the turn pages. The frame page does not follow it yet.
+Held by `checkSingleTurns`, on the turns of the review page. The frame picture does not follow it
+yet.
 
 ### Rule 23
 
@@ -222,7 +220,7 @@ Held by `checkSingleTurns`.
 > possible (obviously this can't really be the case when the lead orbits, a reposition/re entering)
 > will still be necessary I think
 
-Held by `checkSingleTurns`, on the turn pages. The frame page does not follow it yet.
+Held by `checkSingleTurns`, on the turns of the review page.
 
 ### Rule 26
 
@@ -373,15 +371,10 @@ workbench imports it from there.
 design/
   rules.nim              each rule, in the words it arrived in; re-exports draw/terms
   checks.nim             each standing rule, checked on every build
-  parts.nim              each figure the mark pages place, keyed by name
-  sign.nim               the turn sign
-  page.nim               the style sheet, key and wrapper the mark pages share
-  frame_page.nim         frames.html
-  sign_page.nim          signs.html
-  turns_single_page.nim  turns-single.html
-  hands_page.nim         turns-hands.html
+  parts.nim              each figure the review page places, keyed by name
+  page.nim               the style sheet, key and wrapper the review page and the rig viewer share
   review_page.nim        review.html, and which cards are kept and confirmed
-  marks.nim              builds the five pages above
+  marks.nim              checks and builds review.html
   plain.nim              reads prose, and holds it to the two countable rules
   faces.nim              the faces each page embeds
   asks.nim               what each reference card asks of the body simulation
@@ -393,8 +386,5 @@ design/
   rig_view.nim           the viewer, which draws what the engine collides
   watch.nim              the stills the C cards show, as watched: watched-fixtures.json
   drawn.nim              where each point of the world lands on the viewer's canvas
-  wholecloth.nim         splices the data of the simulation into wholecloth.html
-  wholecloth_turns.nim   the turns panel of wholecloth.html
-  wholecloth_scene.nim   what that panel draws at one place of its play
   shot.nim               a screenshot of one page, light and dark
 ```
