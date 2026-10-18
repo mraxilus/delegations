@@ -475,7 +475,7 @@ func speedOpening*(width, height: int): float =
 func rollHeld*(camera: Camera): Option[float] =
   ## Read camera's roll about its sight, against `UP_WORLD`, or none near pole.
   ##   Positive `roll` lowers this reading.
-  ##   Read by suite, which holds page's drag in `interaction.turnFollowing` to leaving it.
+  ##   Read by suite, which holds free flight's drag in `interaction.turnFollowing` to leaving it.
   let
     frame = camera.frame
     up = UP_WORLD.toMultivector
@@ -904,26 +904,45 @@ func pointHeld*(eye, pivot: Position; heading: Direction; radius: float): Positi
   position(eye_place + (nearest - back) * along).get(eye)
 
 
+func turnCarrying(held, under: Direction): Option[(Direction, float)] =
+  ## Solve trackball's turn that carries `under` onto `held`: least turn, about axis square
+  ## to both.
+  ##   Axis is normal to pencil of two directions, and angle is read off their inner product
+  ##   and size of their wedge, so it holds from least turn to nearly half turn.
+  ##   None where two name one direction or opposite ones: no turn, or no one axis for it.
+  ##   Geometry is algebra's, as in `turnsCarrying`: directions are weightless points, and
+  ##   their wedge is horizon line, whose pencil's normal is axis. Neither needs to be unit.
+  let
+    toward = ^∙under.toMultivector
+    target = ^∙held.toMultivector
+    pencil = toward ∧ target
+    axis = directionNormalHorizon(pencil)
+  if axis.isNone: return
+  let sine = hypot(hypot(pencil[Basis.E23], pencil[Basis.E31]), pencil[Basis.E12])
+  some((axis.get, arctan2(sine, innerOf(toward, target))))
+
+
 func orbitCarrying*(camera: var Camera; held, under: Direction) =
-  ## Turn eye about pivot as turntable does, so point `held` off pivot comes to be seen
+  ## Turn eye about pivot as trackball does, so point `held` off pivot comes to be seen
   ## where point `under` off pivot is seen now.
   ##   Finger's orbit: both are points `pointHeld` places under pixel finger left and pixel
   ##   it reached, less pivot. Turn about pivot keeps sphere they lie on, so point finger
-  ##   took moves with finger, pixel for pixel. See `turnsCarrying`.
+  ##   took moves with finger, pixel for pixel. See `turnCarrying`.
+  ##   Least turn, about axis square to both, by ruling of 2026-10-18: drag turns view alike
+  ##   at every height, over top too, as camera itself sees it.
+  ##     Not turntable about world up and level across, which near pole spins picture about
+  ##     middle and lets point held slip; suite case trips on it. Cost: loop of drag leaves
+  ##     roll by solid angle it encloses, as held keys' `orbit` does; Q, E and Home set it.
   let (eye, frame) = camera.sight
-  camera.orbitCarrying(held, under, frame, eye + camera.depth_pivot * frame.forward)
+  camera.orbitCarrying(held, under, eye + camera.depth_pivot * frame.forward)
 
 
-func orbitCarrying*(
-  camera: var Camera; held, under: Direction; frame: FrameCamera; pivot: Position
-) =
-  ## Turn as `orbitCarrying` above, with frame and pivot caller has already read off stance.
-  ##   Finger's turn reads them once for both pixels it maps, so stance is read once per event.
-  ##   Second turn reads pivot again rather than reuse it: turn about pivot leaves pivot, but
-  ##   only to rounding, and one read keeps result bit for bit what it was.
-  let (across, pitch, bearing) = frame.turnsCarrying(held, under)
-  camera.motor = camera.turnedAboutPivot(pivot, across, pitch)
-  camera.motor = camera.turnedAboutPivot(camera.pivot, UP_WORLD, bearing)
+func orbitCarrying*(camera: var Camera; held, under: Direction; pivot: Position) =
+  ## Turn as `orbitCarrying` above, about pivot caller has already read off stance.
+  ##   Finger's turn reads it once for both pixels it maps, so stance is read once per event.
+  let turn = turnCarrying(held, under)
+  if turn.isNone: return
+  camera.motor = camera.turnedAboutPivot(pivot, turn.get[0], turn.get[1])
 
 
 func roll*(camera: var Camera, radians: float) =
