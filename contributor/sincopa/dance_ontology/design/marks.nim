@@ -1,18 +1,17 @@
-## Build workbench: parts, checks, pages, files.
+## Build card review: parts, checks, page, file.
 ##
 ##   Build refuses to write page whose claims fail: checks run between building page's
 ##     parts and writing it, and several figures are asserted during their own construction.
-##     Cost of refusing whole build: one broken rule stops every page, not just its own.
-##       Accepted -- workbench that publishes half-checked pages is worse than one that stops.
-##   Pages are build products under `build/design/`, never committed: repository reads only
-##     registered file kinds.  Each is published at fixed URL listed in `../README.md`;
-##     republishing rebuilt files to those URLs is whole release step.
-##     Every one is mock-up rather than page project stands behind, and its title says so.
+##     Cost of refusing whole build: one broken rule stops page, not just card it is about.
+##       Accepted -- workbench that publishes half-checked page is worse than one that stops.
+##   Page is build product under `build/design/`, never committed: repository reads only
+##     registered file kinds.  It is published at fixed URL listed in `../README.md`;
+##     republishing rebuilt file to that URL is whole release step.
+##     It is mock-up rather than page project stands behind, and its title says so.
 ##   `tests/suites/test_marks.nim` drives `buildPage` for every page, so every gate runs under
 ##     `nim r koch test` (Article IX.6).
-##   Every page's parts are built once in process and kept (`LUT_PARTS_BY_PAGE`).  Page's checks
-##     read what page placed, and review page places both walked pages' figures again, so
-##     full build routed single-hand turns three times and hand-to-hand turns three.
+##   Each chain's parts are built once in process and kept (`LUT_PARTS_BY_NAME`).  Review
+##     places both chains, and their checks read them, so each chain is routed once.
 ##     Routing is most of what build costs.
 
 {.experimental: "strictFuncs".}
@@ -21,27 +20,27 @@ when compileOption("profiler"): import std/nimprof
 
 import std/[os, strformat, tables, unicode]
 
-import ./[checks, hands_page, parts, review_page, turns_single_page]
+import ./[checks, parts, review_page]
 
 
-# Mutable: filled as pages build, one run long.
-var LUT_PARTS_BY_PAGE: Table[string, Parts]
-  ## Parts of every page built so far, by page, so none is routed twice.
+# Mutable: filled as parts build, one run long.
+var LUT_PARTS_BY_NAME: Table[string, Parts]
+  ## Parts built so far, by name, so none is routed twice.
 
 proc once(name: string, build: proc (): Parts {.nimcall.}): Parts =
-  ## Parts of page `name`, built on first asking and kept.
-  if name notin LUT_PARTS_BY_PAGE:
-    LUT_PARTS_BY_PAGE[name] = build()
-  LUT_PARTS_BY_PAGE[name]
+  ## Parts named `name`, built on first asking and kept.
+  if name notin LUT_PARTS_BY_NAME:
+    LUT_PARTS_BY_NAME[name] = build()
+  LUT_PARTS_BY_NAME[name]
 
-proc singleParts(): Parts = once("turns-single.html", singleTurnParts)
-  ## Single-hand turns page's parts, built once.
+proc singleParts(): Parts = once("single", singleTurnParts)
+  ## Single-hand turns' parts, built once.
 
-proc handParts(): Parts = once("turns-hands.html", handTurnParts)
-  ## Hand-to-hand turns page's parts, built once.
+proc handParts(): Parts = once("hand", handTurnParts)
+  ## Hand-to-hand chain's parts, built once.
 
 proc reviewed(): Parts = reviewParts(singleParts(), handParts())
-  ## Review page's parts, from walked pages' own.
+  ## Card review's parts, from both chains' own.
 
 
 proc checkReviewed() =
@@ -60,18 +59,7 @@ const PAGES* = [
    parts_of: proc (): Parts {.nimcall.} = once("review.html", reviewed),
    check: proc (parts: Parts) {.nimcall.} = checkReviewed(),
    render: proc (parts: Parts): string {.nimcall.} = review_page.render(parts)),
-  (name: "turns-single.html",
-   parts_of: proc (): Parts {.nimcall.} = singleParts(),
-   check: proc (parts: Parts) {.nimcall.} = checkSingleTurns(parts),
-   render: proc (parts: Parts): string {.nimcall.} =
-     turns_single_page.render(parts)),
-  (name: "turns-hands.html",
-   parts_of: proc (): Parts {.nimcall.} = handParts(),
-   check: proc (parts: Parts) {.nimcall.} = checkHandTurns(parts),
-   render: proc (parts: Parts): string {.nimcall.} = hands_page.render(parts)),
 ]  ## Each page: its file, its figures, its checks, its layout.
-  ##   Review page leads, since its check reads kept parts and so is not `gcsafe`:
-  ##     list takes its type from its first entry.
 
 
 proc buildPage*(page_index: int, directory_out: string) =

@@ -101,14 +101,6 @@ suite "Internal: Mark workbench":
     holdPage("review.html")
 
 
-  test "turns-single.html":
-    holdPage("turns-single.html")
-
-
-  test "turns-hands.html":
-    holdPage("turns-hands.html")
-
-
   test "every page the workbench writes has a law of its own":
     ## Each law above names its page by literal, so review page's count reads it
     ##   (`tools/review.nim`), where one law named at run time hid one law for each page.
@@ -148,40 +140,17 @@ suite "Internal: Every page this project publishes":
 
 
 suite "Internal: The sixteen facings, drawn":
-  # Glossary agrees sixteen facings, and model holds them (`rotation.Facing`).  Pages draw
-  # them from model, so every name below comes from model, never from page it checks.
+  # Glossary agrees sixteen facings, and model holds them (`rotation.Facing`).  Card review
+  # names facings through `parts.turnedFacing`, so law holds it over all sixteen.
   test "each drawn facing reads back as the facing it is named for":
     for named, orientation in ORIENTATIONS:
       check turnedFacing(orientation.lead_turn, orientation.follow_turn) == some(named)
 
 
-  test "every quarter the single-hand page draws names its facing, in its own place":
-    # Read within each manner's section, in order: manners share names, so name found
-    # anywhere on page would stand in for one missing or swapped.
-    let page = readFile(OUT / "turns-single.html")
-    for manner in Manner:
-      let opens = page.find("<h2>" & MANNERS[manner].title & "</h2>")
-      check opens >= 0
-      if opens < 0: continue
-      let section = page[opens..<page.find("</section>", opens)]
-      var want, got: seq[string]
-      for _ in SINGLES:
-        for quarter in 1..<QUARTERS_ROUND:
-          let named = facingOf(quarterPose(manner, quarter))
-          check named.isSome
-          want.add (if named.isSome: named.get.name else: "")
-      var at = section.find(" turn<br>")
-      while at >= 0:
-        let start = at + " turn<br>".len
-        got.add section[start..<section.find("</figcaption>", start)]
-        at = section.find(" turn<br>", start)
-      check got == want
-
-
 
 suite "Internal: The rests and the chains, named by model":
-  ## Each page names chain's rest and facings through `parts.restOf` and
-  ##   `parts.facingAt`, and law reads written page back (Article IX.5).
+  ## Card review names each chain's rest through `parts.restOf`, and law reads written page
+  ##   back (Article IX.5).
   test "the review page heads each chain with the facing it rests at":
     let page = readFile(OUT / "review.html")
     check page.contains(
@@ -210,11 +179,3 @@ suite "Internal: The rests and the chains, named by model":
       if not (name.len == 3 and name[0] in {'A'..'G'} and name[1..2].allCharsInSet(Digits)):
         checkpoint "card named `" & name & "`"
         fail()
-
-
-  test "the hand-to-hand page names each facing its chain stands at":
-    let page = readFile(OUT / "turns-hands.html")
-    check page.contains(
-      "<b>" & facingAt(HAND_TO_HAND, 1.0).get.name & "</b> at a whole number of turns",
-    )
-    check page.contains("<b>" & facingAt(HAND_TO_HAND, 0.5).get.name & "</b> at a half")

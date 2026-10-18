@@ -1,15 +1,15 @@
 ## Assert claims eye cannot check, instead of trusting them.
 ##
-##   Everything pages argue is here as test: hands land where
+##   Everything card review argues is here as test: hands land where
 ##     rules put them, orbit collapses onto matching axis turn mark
 ##     for mark, every cycle closes, no reach enters body, and bare
 ##     border carries no arm ink.
-##   Each page's checker is ledger made executable: one block per rule,
+##   Each checker is ledger made executable: one block per rule,
 ##     each opening with rule in words it was given, each printing
 ##     one line on every build.  Rule that is only implemented and not
 ##     asserted is rule that quietly stops being true, which has happened
 ##     here more than once.
-##     Cost of spoken ledger: one line of build noise per rule per page, and
+##     Cost of spoken ledger: one line of build noise per rule, and
 ##       there are twenty-nine of them now.  Accepted -- noise is
 ##       receipt.
 
@@ -20,7 +20,7 @@ import std/[algorithm, math, options, sequtils, sets, strformat, strutils,
 
 import ./[parts, rules]
 import ../src/dance_ontology/draw/[body, figure, geometry, pose, route, style]
-# Qualified, and only here: rule 11 claims turn pages add no frame that
+# Qualified, and only here: rule 11 claims turn figures add no frame that
 # app does not have, and only way to check *that* is to ask app's
 # own model rather than list this file could let drift.
 from ../src/dance_ontology/frame import nil
@@ -413,10 +413,10 @@ proc checkRules*() =
 #[ Single-Hand Turns ]#
 
 proc checkSingleTurns*(built: Parts) =
-  ## Verify single-hand turns page's rules as given, one line each.
-  ##   Reads figures page placed (`singleTurnParts`), never builds its own:
+  ## Verify rules of single-hand turns as given, one line each.
+  ##   Reads figures `singleTurnParts` built for card review, never builds its own:
   ##     check holds what was drawn, and building same figures twice cost
-  ##     every page build second routing of every reach.
+  ##     every build second routing of every reach.
   var told: seq[string]
 
   # RULE 17.  `"all turns should be in the \"above\" position, not the high.`
@@ -1016,8 +1016,8 @@ func inkOf(figure, ink: string): float =
 #[ Hand-to-Hand Turns ]#
 
 proc checkHandTurns*(built: Parts) =
-  ## Verify hand-to-hand turns page's rules as given, one line each.
-  ##   Reads figures page placed (`handTurnParts`), as single-hand check does.
+  ## Verify rules of hand-to-hand turns as given, one line each.
+  ##   Reads figures `handTurnParts` built for card review, as single-hand check does.
   var told: seq[string]
 
   func pairOf(wind: float): array[Arm, seq[Point]] =

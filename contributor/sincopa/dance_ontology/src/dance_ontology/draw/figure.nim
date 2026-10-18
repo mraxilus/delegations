@@ -35,7 +35,7 @@ type Twists* = array[Arm, float]
   ##     it to mark, and rule 28's measured winding replaced braid with
   ##     geometry.  Neither has had caller since.
 
-const NO_TWIST*: Twists = [0.0, 0.0]  ## Nothing wound: every figure but turn pages'.
+const NO_TWIST*: Twists = [0.0, 0.0]  ## Nothing wound: every figure but turn figures.
 
 
 

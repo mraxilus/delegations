@@ -1,6 +1,6 @@
-## Build every figure two turn pages place, keyed by name each page uses.
+## Build every figure card review places, keyed by name it uses.
 ##
-##   Split as pages are: one turn mock-up for each kind of hold.
+##   Split by hold: single-hand turns, then hand-to-hand chain and same-name pair.
 ##   Inline assertions are part of build -- page whose quarters
 ##     or positions draw alike is refused, not published.
 ##     Cost of asserting in builder: broken figure stops whole
@@ -78,21 +78,20 @@ func replaceFirst*(text, pattern, by: string): string =
 
 
 
-#[ Single-Hand Turns Page ]#
+#[ Single-Hand Turns ]#
 
 const
-  PIXELS = 1.0  ## Pixels one unit takes in turn page's moving cell.
+  PIXELS = 1.0  ## Pixels one unit takes in turn's moving cell.
   STILL_PIXELS = 0.72  ## And in still one, where figures are smaller.
   WALK_SECONDS = 5.4  ## Clock one edge of state graph takes, out and back.
-    ## Walk of several edges takes multiple of it, so every animation on
-    ##   these pages runs at one pace and length of loop says how far it
-    ##   goes rather than how fast.
+    ## Walk of several edges takes multiple of it, so every animation
+    ##   runs at one pace and length of loop says how far it goes rather
+    ##   than how fast.
 
 
 func sized(svg, classes: string; half, pixels: float): string =
   ## Give cell room its row's bounds need at its row's own scale.
-  ##   Shared by both turn pages -- it was defined twice, byte for byte,
-  ##     inside each builder before pages were read side by side.
+  ##   Shared by both chains' builders, so one cell is sized one way.
   svg.replaceFirst(&"class=\"{classes}\"",
     &"""class="{classes}" style="width: {numeral(2 * half * pixels)}px;""" &
     &""" height: {numeral(2 * half * pixels)}px"""")
@@ -219,7 +218,7 @@ func turnGlyph*(label: string, width = 44.0): string =
 
 
 func singleTurnParts*(): Parts =
-  ## Build every SVG single-hand turns page places.
+  ## Build every SVG of single-hand turns, which card review places and checks read.
   ##   Rule 16: single hand held above turns for ever, so no position is
   ##     ever refused and how far it has wound is not part of its state.
   ##     What is left is four quarter-turn orientations per connection.
@@ -400,7 +399,7 @@ func singleTurnParts*(): Parts =
 
 
 
-#[ Hand-to-Hand Turns Page ]#
+#[ Hand-to-Hand Turns ]#
 
 const
   HAND_TO_HAND*: Holds = [some Arm.Right, some Arm.Left]
@@ -577,7 +576,7 @@ const PAIRED*: Holds = [some Arm.Left, some Arm.Right]
 
 
 func chainTurnParts*(holds: Holds, key: string): Parts =
-  ## Build every SVG one chain's turns page places, keyed under `key`.
+  ## Build every SVG of one chain's turns, which card review places, keyed under `key`.
   ##   Two chains are drawn -- hand to hand, and same-name pair -- and they
   ##     differ only in which hands are joined and where chain rests.  Written
   ##     once and called twice rather than copied: what is true of walking one

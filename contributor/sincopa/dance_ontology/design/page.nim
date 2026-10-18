@@ -1,27 +1,15 @@
-## Share chrome every mark page uses: style sheet, key,
-## wrapper.
+## Share chrome card review and rig viewer use: style sheet and wrapper.
 ##
-##   Explorations live on pages of their own -- frame picture, one
-##     turn mock-up per kind of hold, and page every drawn
-##     frame state is ruled on -- because they are separate questions that
-##     happen to be related, and page that holds more than one of them
-##     makes each harder to read.
-##   What they do share is palette and furniture, which is here so it
+##   What they share is palette and furniture, which is here so it
 ##     cannot drift between them.
-##   Page body is template with `{marker}` holes and `filled` closes
-##     them, refusing to build while any marker is unfilled -- same
-##     discipline `tools/review.nim` uses for review page.
-##     Cost of markers over inline calls: figure's caption and its part key
-##       sit some lines apart in page module.  Accepted -- template
-##       stays readable as page it is.
+##   Rig viewer is wrapped here too, and also takes review's own sheet back from built
+##     page (`rig_page.styleSheetOf`), so its cards dress as review's do.
 
 {.experimental: "strictFuncs".}
 
-import std/[options, strformat, strutils]
+import std/strformat
 
-import ./rules
 import ../tools/title
-import ../src/dance_ontology/draw/[body, geometry, style]
 
 
 const STYLE* = """<style>
@@ -151,11 +139,6 @@ code { font: 0.88em var(--mono); background: var(--wash); padding: 0.1em 0.35em;
     ## custom properties, this defines them.
 
 
-type
-  Swatch* {.pure.} = enum  ## Five ways key draws pair of hands.
-    Free, Unsaid, Low, High, Above
-
-
 func document*(title, page_body: string): string =
   ## Wrap one page: shared style sheet, then whatever page is about.
   ##   Title is what browser tab and published gallery both show, so
@@ -163,52 +146,3 @@ func document*(title, page_body: string): string =
   ##   Every page this wraps is exploration, so each takes mockup form.
   &"<meta charset=\"utf-8\">\n<title>{MOCKUP} — {title}</title>\n" &
       &"{STYLE}{page_body}"
-
-
-func filled*(template_body: string, fills: openArray[tuple[marker, value: string]]): string =
-  ## Close every `{marker}` hole in page template, and refuse build that
-  ## leaves one open or fills one that is not there.
-  result = template_body
-  for (marker, value) in fills:
-    let token = "{" & marker & "}"
-    doAssert token in result, &"No hole for a fill; got `{marker}`."
-    result = result.replace(token, value)
-  let leftover = result.find('{')
-  doAssert leftover < 0,
-    &"A hole is unfilled; got `{result[leftover .. min(leftover + 40, result.high)]}`."
-
-
-func swatch*(kind: Swatch): string =
-  ## Draw swatch pair: lead's square in its side, follow's circle
-  ## in its.
-  ##   Fills, shades and fade come from same code hands
-  ##     themselves use.  Key that drew them its own way could drift from
-  ##     figures it sits beside -- and had: it faded at 0.4 against
-  ##     hands' 0.5.
-  let
-    level = case kind
-            of Swatch.Low: some Level.Low
-            of Swatch.High: some Level.High
-            of Swatch.Above: some Level.Above
-            else: none(Level)
-    faint = if kind == Swatch.Free: &" opacity=\"{FREE_FADE}\"" else: ""
-  var bits =
-    @["""<svg viewBox="0 0 36 16" width="36" height="16" aria-hidden="true">"""]
-  for (is_leading, arm, centre_x) in [(true, Arm.Left, 7.0), (false, Arm.Right, 28.0)]:
-    let
-      ink = if is_leading: DEEP[arm] else: INK[arm]
-      fill = fillOf(level, arm, is_leading)
-    if is_leading:
-      bits.add &"""<rect x="1" y="2" width="12" height="12" rx="1.5"""" &
-          &""" fill="{fill}" stroke="{ink}" stroke-width="1.5"{faint}/>"""
-    else:
-      bits.add &"""<circle cx="28" cy="8" r="6" fill="{fill}"""" &
-          &""" stroke="{ink}" stroke-width="1.5"{faint}/>"""
-    if kind == Swatch.High:
-      bits.add &"""<circle cx="{numeral(centre_x)}" cy="8" r="2.7" fill="{ink}"/>"""
-  bits.join("") & "</svg>"
-
-
-func figure*(svg, caption: string): string =
-  ## Set one figure beside its caption.
-  &"<figure>{svg}<figcaption>{caption}</figcaption></figure>"
