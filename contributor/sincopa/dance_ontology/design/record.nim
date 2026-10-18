@@ -50,14 +50,13 @@ type
 
 
 const SLOWEST* = ["rig D01", "modelled hc_la", "rig C01", "rig C02", "modelled hw_la_0",
-                  "verdicts sweep 0|0|false|0.0|00", "modelled pc_la", "modelled pw_la_0"]
+                  "modelled pc_la", "modelled pw_la_0"]
   ## Jobs slowest first, by their times in full run of 2026-10-04 that set this order, four at
   ##   once: rig D01 391 s, modelled hc_la 379 s, rig C01 365 s and C02 227 s, modelled hw_la_0
-  ##   152 s, report's sweep turning lead 116 s, modelled pc_la 88 s and pw_la_0 76 s.  Each
-  ##   still plans 32 paths on every core (`walk.planAhead`), which modelled's planned
-  ##   questions find kept.  C07 and C06 take C01 and C02 reflected (`walk.twinOf`), and D07 takes
-  ##   D01's paths kept, so they follow in order of `wanted`, as every other job does:
-  ##   turns first, which walk every distance.
+  ##   152 s, modelled pc_la 88 s and pw_la_0 76 s.  Each still plans 32 paths on every core
+  ##   (`walk.planAhead`), which modelled's planned questions find kept.  C07 and C06 take C01
+  ##   and C02 reflected (`walk.twinOf`), and D07 takes D01's paths kept, so they follow in order
+  ##   of `wanted`, as every other job does: turns first, which walk every distance.
 
 # Mutable and global: thread takes one argument, so workers read queue and what answers it here.
 var
