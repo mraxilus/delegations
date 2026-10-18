@@ -2,10 +2,11 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, os, strutils, unittest]
+import std/[options, os, strformat, strutils, unittest]
 
 import ../../design/[marks, parts, plain, rig_page]
 import ../../tools/title
+from ../../src/dance_ontology/rotation import facing, seenAfter
 
 
 const OUT = "build/suites/design"
@@ -16,6 +17,25 @@ const OUT = "build/suites/design"
 const SMALL = ["a", "an", "and", "as", "at", "but", "by", "for", "from", "in", "into",
                "nor", "of", "on", "or", "over", "so", "the", "to", "up", "with", "yet"]
   ## Words title case leaves lowercase where they fall inside title.
+
+const ORIENTATIONS: array[Facing, tuple[lead_turn, follow_turn: float]] =
+  block:
+    var found: array[Facing, Option[tuple[lead, follow: int]]]
+    for movers in 0..2:
+      for lead in [0, 1, -1, 2]:
+        for follow in [0, 1, -1, 2]:
+          let named = facing(seenAfter([lead, follow]))
+          if ord(lead != 0) + ord(follow != 0) == movers and found[named].isNone:
+            found[named] = some((lead, follow))
+    var each: array[Facing, tuple[lead_turn, follow_turn: float]]
+    for named in Facing:
+      doAssert found[named].isSome, &"No turn on the spot reaches `{named.name}`."
+      each[named] = (90.0 * float(found[named].get.lead), 90.0 * float(found[named].get.follow))
+    each
+  ## Sixteen ways couple can face, each reached by fewest dancers turning on spot.
+  ##   Derived from model's facings (`rotation.Facing`), not listed: quarter
+  ##     turn is 90 degrees, clockwise, as drawing counts its bearings.
+  ##   Domain of law that holds `parts.turnedFacing`, which card review names facings by.
 
 func isTitleCased(title: string): bool =
   ## Whether title reads in title case: every word capitalised but small ones inside it.
@@ -81,10 +101,6 @@ suite "Internal: Mark workbench":
     holdPage("review.html")
 
 
-  test "frames.html":
-    holdPage("frames.html")
-
-
   test "turns-single.html":
     holdPage("turns-single.html")
 
@@ -134,36 +150,6 @@ suite "Internal: Every page this project publishes":
 suite "Internal: The sixteen facings, drawn":
   # Glossary agrees sixteen facings, and model holds them (`rotation.Facing`).  Pages draw
   # them from model, so every name below comes from model, never from page it checks.
-  test "the frame page draws each facing once, under its own name":
-    let page = readFile(OUT / "frames.html")
-    for named in Facing:
-      check page.count("<figcaption>" & named.name & "</figcaption>") == 1
-      # Name capitalises lead's side alone, so no header that capitalises names one.
-      check page.count("<th>" & named.name) == 0
-
-
-  test "the frame page gives each side of the lead a row, in the glossary's order":
-    # Name gives lead's side first, so row for each side reads down page as names do.
-    let page = readFile(OUT / "frames.html")
-    var at = page.find("<h3>At rest, no ring</h3>")
-    check at >= 0
-    if at >= 0:
-      for side in ["Face", "Starboard", "Back", "Port"]:
-        at = page.find("<div class=\"row\">", at)
-        let shuts = page.find("</div>", at)
-        var
-          captions: seq[string]
-          caption_at = page.find("<figcaption>", at)
-        while caption_at >= 0 and caption_at < shuts:
-          let start = caption_at + "<figcaption>".len
-          captions.add page[start..<page.find("</figcaption>", start)]
-          caption_at = page.find("<figcaption>", start)
-        check captions.len == 4
-        for caption in captions:
-          check caption.startsWith(side & "-to-")
-        at = shuts
-
-
   test "each drawn facing reads back as the facing it is named for":
     for named, orientation in ORIENTATIONS:
       check turnedFacing(orientation.lead_turn, orientation.follow_turn) == some(named)

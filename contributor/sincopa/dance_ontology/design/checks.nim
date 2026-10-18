@@ -32,7 +32,7 @@ func decimal(value: float, places: int): string =
 
 
 
-#[ Frame Page ]#
+#[ Frame Picture ]#
 
 proc checkFrame*() =
   ## Check frame picture's claims, and say what was measured.

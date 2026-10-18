@@ -1,21 +1,19 @@
-## Build every figure three pages place, keyed by name each page uses.
+## Build every figure two turn pages place, keyed by name each page uses.
 ##
-##   Split as pages are: frame picture is one exploration,
-##     and two turn mock-ups one each.
-##   Inline assertions are part of build -- page whose orientations
-##     collide or whose collapse figures differ is refused, not published.
+##   Split as pages are: one turn mock-up for each kind of hold.
+##   Inline assertions are part of build -- page whose quarters
+##     or positions draw alike is refused, not published.
 ##     Cost of asserting in builder: broken figure stops whole
 ##       build rather than one plate.  Accepted -- published page with one
 ##       wrong plate is worse than no page.
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, math, options, sequtils, sets, strformat, strutils,
-            tables]
+import std/[math, options, sequtils, strformat, strutils, tables]
 
 import ./rules
 import ../src/dance_ontology/draw/[body, figure, geometry, pose, route, style]
-from ../src/dance_ontology/rotation import Facing, facing, name, Seen, seenAfter
+from ../src/dance_ontology/rotation import Facing, facing, name, Seen
   # Rotation's `Dancer` would meet drawing's, so only facing's words come in.
 export Facing, name
 
@@ -60,52 +58,7 @@ func turnedFacing*(lead_turn, follow_turn: float): Option[Facing] =
   )
 
 
-const ORIENTATIONS*: array[Facing, tuple[name: string, lead_turn, follow_turn: float]] =
-  block:
-    var found: array[Facing, Option[tuple[lead, follow: int]]]
-    for movers in 0..2:
-      for lead in [0, 1, -1, 2]:
-        for follow in [0, 1, -1, 2]:
-          let named = facing(seenAfter([lead, follow]))
-          if ord(lead != 0) + ord(follow != 0) == movers and found[named].isNone:
-            found[named] = some((lead, follow))
-    var each: array[Facing, tuple[name: string, lead_turn, follow_turn: float]]
-    for named in Facing:
-      doAssert found[named].isSome, &"No turn on the spot reaches `{named.name}`."
-      each[named] = (named.name, 90.0 * float(found[named].get.lead),
-                     90.0 * float(found[named].get.follow))
-    each
-  ## Sixteen ways couple can face, each reached by fewest dancers turning on spot.
-  ##   Derived from model's facings (`rotation.Facing`), not listed: quarter
-  ##     turn is 90 degrees, clockwise, as drawing counts its bearings.
-
 const HOLD*: Holds = [some Arm.Left, none Arm]  ## Workhorse hold: lead's Left to follow's left.
-
-const SETTLINGS* = [
-  (level: none Level, modifier: none Modifier, follow_turn: 0.0,
-   caption: "no modifier said<br>— it stays at its side"),
-  (level: some Level.Low, modifier: some Modifier.Lock, follow_turn: 0.0,
-   caption: "<em>low</em> lock<br>Face-to-face"),
-  (level: some Level.High, modifier: some Modifier.Lock, follow_turn: 0.0,
-   caption: "<em>high</em> lock<br>Face-to-face"),
-  (level: some Level.Low, modifier: some Modifier.Wrap, follow_turn: 180.0,
-   caption: "<em>low</em> wrap<br>" & Facing.FaceToBack.name),
-  (level: some Level.High, modifier: some Modifier.Wrap, follow_turn: 180.0,
-   caption: "<em>high</em> wrap<br>" & Facing.FaceToBack.name),
-]  ## Each settling drawn in orientation that admits it, because most do
-  ## not: lock or wrap only exists where line really goes round.
-
-const GRID_STATES* = [
-  (level: Level.High, modifier: Modifier.Wrap), (level: Level.Low, modifier: Modifier.Wrap),
-  (level: Level.Low, modifier: Modifier.Lock), (level: Level.High, modifier: Modifier.Lock),
-]  ## Grid rule 7 implies: which states exist in which orientation.
-
-const GRID_TURNS* = [0.0, 90.0, 180.0, 270.0]
-  ## Follow's four bearings settling grid samples, one quarter apart.
-
-const CHART_FACING* = 40.0
-  ## Chart's body is turned off vertical, so spots visibly
-  ## follow chevron and not page.
 
 
 func said*(level: Option[Level], arm = Arm.Left): Levels =
@@ -122,268 +75,6 @@ func replaceFirst*(text, pattern, by: string): string =
   let at = text.find(pattern)
   if at < 0: text
   else: text[0..<at] & by & text[at+pattern.len .. ^1]
-
-
-func slotChart*(arm = Arm.Left): string =
-  ## Draw one body with all six spots on it, and this hand's four marked.
-  ##   Drawn rather than tabulated because table is thing most likely
-  ##     to be wrong -- and drawn on body turned off vertical, because
-  ##     spots are measured off dancer's facing rather than off
-  ##     page, and body facing up hides difference (rule 3).
-  # Its own bounds rather than square every other figure uses: labels
-  # are wide and body is small, so square would draw it tiny.
-  var
-    bits = @["""<svg viewBox="-80 -46 160 92" width="248" height="143">"""]
-    chart = rest()
-  chart.place[Dancer.Lead] = (0.0, 0.0)
-  chart.facing[Dancer.Lead] = CHART_FACING
-  bits.add border(chart, Dancer.Lead)
-  bits.add chevron((0.0, 0.0), CHART_FACING)
-  var lands: seq[tuple[arm: Arm, slot: Slot]]
-  for settling in SETTLINGS:
-    let landed = slotOf(arm, settling.level, settling.modifier)
-    if landed notin lands:
-      lands.add landed
-  for place in Arm:
-    for slot in Slot:
-      let
-        aim = CHART_FACING + slotBearing(place, slot)
-        hand_centre = polar(0.0, 0.0, BODY_RADIUS, aim)
-        # In this hand's own ink wherever it sits, because that is
-        # whole point: Left hand carried to right side is still Left.
-        is_used = (place, slot) in lands
-      bits.add hand(hand_centre.x, hand_centre.y, is_leading = true, arm = arm, is_held = is_used,
-                    level = none(Level),
-                    free = (if is_used: Free.Fade else: Free.Grey))
-      let
-        label = polar(0.0, 0.0, BODY_RADIUS + HAND_RADIUS + 13, aim)
-        anchor = if label.x < 0: "end" else: "start"
-        text = if slot == Slot.Default: "side" else: word(slot)
-      bits.add &"""<text x="{numeral(label.x)}" y="{numeral(label.y + 3)}"""" &
-          &""" text-anchor="{anchor}"""" &
-          " style=\"font: 8px 'Noto Sans', ui-sans-serif, system-ui," &
-          &""" sans-serif; fill: {FAINT}">{text}</text>"""
-  bits.join("") & "</svg>"
-
-
-
-#[ Frame Page ]#
-
-func frameParts*(): Parts =
-  ## Build every SVG frame page places.
-  result["f_none"] = renderFigure("f", HOLD)
-  result["f_low"] = renderFigure("f", HOLD, said(some Level.Low))
-  result["f_high"] = renderFigure("f", HOLD, said(some Level.High))
-  result["f_above"] = renderFigure("f", HOLD, said(some Level.Above))
-  result["f_over"] = renderFigure(
-    "f",
-    [some Arm.Left, some Arm.Right],
-    [some Level.High, some Level.Low],
-    over = some Arm.Left,
-  )
-
-  # Sixteen orientations, twice: with nothing held, where only colours
-  # and chevrons can say it, and holding, where line is there too.  Each
-  # drawn pose must read back as facing it is named for.
-  var seen: HashSet[string]
-  for named, orientation in ORIENTATIONS:
-    doAssert turnedFacing(orientation.lead_turn, orientation.follow_turn) == some(named),
-      &"Orientation `{orientation.name}` draws another facing."
-    let i = ord(named)
-    result[&"or_free_{i}"] = renderFigure(
-      "f",
-      default(Holds),
-      lead_turn = orientation.lead_turn,
-      follow_turn = orientation.follow_turn,
-    )
-    result[&"or_held_{i}"] = renderFigure(
-      "f",
-      HOLD,
-      lead_turn = orientation.lead_turn,
-      follow_turn = orientation.follow_turn,
-    )
-    result[&"or_tiny_{i}"] = renderFigure(
-      "tiny",
-      HOLD,
-      lead_turn = orientation.lead_turn,
-      follow_turn = orientation.follow_turn,
-      has_captions = false,
-    )
-    seen.incl result[&"or_free_{i}"]
-  doAssert seen.len == ORIENTATIONS.len,
-    &"Orientations collide; got `{seen.len}` distinct of `{ORIENTATIONS.len}`."
-
-  # Free hands: keep hue, or go grey and lose orientation with it.
-  result["free_fade"] = renderFigure("f", default(Holds), free = Free.Fade)
-  result["free_grey"] = renderFigure("f", default(Holds), free = Free.Grey)
-  result["free_fade_tiny"] = renderFigure(
-    "tiny",
-    default(Holds),
-    free = Free.Fade,
-    has_captions = false,
-  )
-  result["free_grey_tiny"] = renderFigure(
-    "tiny",
-    default(Holds),
-    free = Free.Grey,
-    has_captions = false,
-  )
-
-  # What pair of colours at two ends says.
-  result["pair_ll"] = renderFigure("f", HOLD)
-  result["pair_ll_turned"] = renderFigure("f", HOLD, follow_turn = 180)
-  result["pair_lr"] = renderFigure("f", [some Arm.Right, none Arm])
-  result["pair_lr_turned"] = renderFigure("f", [some Arm.Right, none Arm], follow_turn = 180)
-
-  # Six spots, and five settlings that reach four of them.
-  result["slot_chart"] = slotChart(Arm.Left)
-  var reached: seq[tuple[arm: Arm, slot: Slot]]
-  for k, settling in SETTLINGS:
-    result[&"settle_{k}"] = renderFigure(
-      "f",
-      HOLD,
-      said(settling.level),
-      modifiers = said(settling.modifier),
-      follow_turn = settling.follow_turn,
-      has_captions = false,
-    )
-    let landed = slotOf(Arm.Left, settling.level, settling.modifier)
-    if landed notin reached:
-      reached.add landed
-  # Left hand reaches four of six; other two belong to Right.
-  doAssert reached.sorted == @[(Arm.Left, Slot.Default), (Arm.Left, Slot.Back),
-                               (Arm.Right, Slot.Front), (Arm.Right, Slot.Back)].sorted,
-    &"The settlings reach the wrong spots; got `{reached.sorted}`."
-  # Both wraps share spot and are told apart by their fill alone.
-  doAssert result["settle_3"] != result["settle_4"],
-    "High and low wrap collide; got one drawing for both."
-
-  # Routing each hold decides, on one orientation that admits all three.
-  for (name, level, modifier) in [("route_wrap", Level.Low, Modifier.Wrap),
-                                  ("route_low", Level.Low, Modifier.Lock),
-                                  ("route_high", Level.High, Modifier.Lock)]:
-    let turn = if modifier == Modifier.Wrap: 180.0 else: 0.0
-    result[name] = renderFigure(
-      "f",
-      HOLD,
-      said(some level),
-      modifiers = said(some modifier),
-      follow_turn = turn,
-      has_captions = false,
-    )
-  doAssert toHashSet(
-    [result["route_wrap"], result["route_low"],
-                        result["route_high"]],
-  ).len == 3,
-    "The three routes are not three distinct drawings."
-
-  # And grid wrap rule implies: most states do not exist most of
-  # time, which is worth drawing rather than asserting on its own.
-  var drawn = 0
-  for state in GRID_STATES:
-    for turn in GRID_TURNS:
-      let
-        key = &"grid_{word(state.level)}_{word(state.modifier)}_{int(turn)}"
-        pose = canonicalise(spinAbout(rest(), Dancer.Follow, turn))
-      if isDanceable(pose, HOLD, said(some state.level), said(some state.modifier)):
-        result[key] = renderFigure(
-          "tiny",
-          HOLD,
-          said(some state.level),
-          modifiers = said(some state.modifier),
-          follow_turn = turn,
-          has_captions = false,
-        )
-        inc drawn
-      else:
-        result[key] = ""  # edge that is not drawn
-  doAssert drawn > 0 and drawn < GRID_STATES.len * GRID_TURNS.len,
-    &"The grid should be partial; got `{drawn}` cells drawn."
-
-  # `above` has no lock and no wrap, so it stays where arm hangs.
-  result["above_plain"] = renderFigure("f", HOLD, said(some Level.Above), has_captions = false)
-  result["above_asked"] = renderFigure(
-    "f",
-    HOLD,
-    said(some Level.Above),
-    modifiers = said(some Modifier.Wrap),
-    has_captions = false,
-  )
-  doAssert result["above_plain"] == result["above_asked"],
-    "Above took a wrap; the two drawings differ."
-
-  # Orbit in two stages: follow travels, then world comes home.
-  # Drawn twice -- orbit itself, where walker keeps their side to
-  # centre (rule 32), and compound turn, which is that orbit with
-  # counter-turn danced into it so walker keeps their own bearing.
-  for (tag, is_locked) in [("orbit", true), ("compound", false)]:
-    var stage_one = [0.0, 0.5, 1.0].mapIt(
-      orbit(rest(), Dancer.Follow, 90 * it, is_locked = is_locked),
-    )
-    stage_one[0].ring = none(Ring)  # nothing is travelling yet
-    let landed = stage_one[^1]
-    var stage_two = [0.5, 1.0].mapIt(canonicalise(landed, it))
-    for pose in stage_two.mitems:
-      pose.ring = none(Ring)
-    let
-      walk = stage_one & stage_two
-      half = walk.mapIt(extent(it, has_captions = false)).max
-    for k, pose in walk:
-      result[&"walk_{tag}_{k}"] = renderFigure(
-        "wide",
-        HOLD,
-        pose = some pose,
-        has_captions = false,
-        half = some half,
-      )
-
-  # What collapses, and what does not.  Compound turn -- orbit walked
-  # while turning other way, so walker keeps their own bearing --
-  # lands in one picture whichever dancer walks it: only pair's axis has
-  # swung, and drawing cannot say who walked.
-  var walked_by: array[Dancer, Pose]
-  for who in Dancer:
-    walked_by[who] = canonicalise(orbit(rest(), who, 90, is_locked = false))
-    walked_by[who].ring = none(Ring)  # move is over
-  result["collapse_follow_walked"] = renderFigure("f", HOLD, pose = some walked_by[Dancer.Follow])
-  result["collapse_lead_walked"] = renderFigure("f", HOLD, pose = some walked_by[Dancer.Lead])
-  doAssert result["collapse_follow_walked"] == result["collapse_lead_walked"],
-    "Two compound turns draw two pictures; the drawing can say who walked."
-
-  # And orbit -- walker keeping their side to centre (rule 32) --
-  # lands where their partner's own axis turn lands.  Compound turn does not,
-  # which is what pair of figures is here to show.
-  var orbited = canonicalise(orbit(rest(), Dancer.Follow, 90, is_locked = true))
-  orbited.ring = none(Ring)
-  result["collapse_orbit"] = renderFigure("f", HOLD, pose = some orbited)
-  result["collapse_axis"] = renderFigure("f", HOLD, lead_turn = -90)
-  doAssert relative(orbited) == relative(spinAbout(rest(), Dancer.Lead, -90)),
-    "The orbit does not land on the axis turn's state."
-  # Not merely equal numbers: both are same drawing, mark for mark.
-  doAssert result["collapse_orbit"] == result["collapse_axis"],
-    "The collapse differs: orbit and axis draw two pictures."
-  doAssert result["collapse_follow_walked"] != result["collapse_axis"],
-    "The compound turn lands on the axis turn, so the two are not two moves."
-
-  # And same four moves, running.
-  const move_pixels = 1.3  ## Pixels one unit takes in frame page's moving cells.
-  for named_move in MOVES:
-    let
-      tag = named_move.name.replace(" ", "_").replace(",", "")
-      half = cycle(named_move.apply).poses.mapIt(extent(it, has_captions = false)).max
-      style = &"""class="mv" style="width: {numeral(2 * half * move_pixels)}px;""" &
-          &""" height: {numeral(2 * half * move_pixels)}px""""
-    result[&"mv_{tag}"] = animated("mv", HOLD, named_move.apply, some half)
-      .replaceFirst("class=\"mv\"", style)
-    result[&"mv_{tag}_still"] = renderFigure(
-      "mv still",
-      HOLD,
-      has_captions = false,
-      half = some half,
-    )
-      .replaceFirst("class=\"mv still\"",
-        &"""class="mv still" style="width: {numeral(2 * half * move_pixels)}px;""" &
-        &""" height: {numeral(2 * half * move_pixels)}px"""")
 
 
 

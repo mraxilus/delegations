@@ -21,13 +21,7 @@ when compileOption("profiler"): import std/nimprof
 
 import std/[os, strformat, tables, unicode]
 
-import ./[checks, frame_page, hands_page, parts, review_page, turns_single_page]
-
-
-proc checkFrameAndRules() =
-  ## Check everything frame page claims: drawing, then ledger.
-  checkFrame()
-  checkRules()
+import ./[checks, hands_page, parts, review_page, turns_single_page]
 
 
 # Mutable: filled as pages build, one run long.
@@ -66,10 +60,6 @@ const PAGES* = [
    parts_of: proc (): Parts {.nimcall.} = once("review.html", reviewed),
    check: proc (parts: Parts) {.nimcall.} = checkReviewed(),
    render: proc (parts: Parts): string {.nimcall.} = review_page.render(parts)),
-  (name: "frames.html",
-   parts_of: proc (): Parts {.nimcall.} = once("frames.html", frameParts),
-   check: proc (parts: Parts) {.nimcall.} = checkFrameAndRules(),
-   render: proc (parts: Parts): string {.nimcall.} = frame_page.render(parts)),
   (name: "turns-single.html",
    parts_of: proc (): Parts {.nimcall.} = singleParts(),
    check: proc (parts: Parts) {.nimcall.} = checkSingleTurns(parts),
