@@ -939,9 +939,11 @@ signatures an edit defines or sits in, and a header that closes at its own inden
 **A home page and three views carry every page,** as the Architect proposed on 2026-10-17. The
 Architect named the views Progress, Performance and Proposals on 2026-10-18. Progress shows how
 complete the library is, in the library map. Performance shows how far each operation stands from
-what it could spend, in the gap docket. Proposals shows what to change next. The home page gives
-each view a card with one figure, read from the files that the view reads. A bar on top of each page
-links the home page and the views, and it marks the view that the page belongs to.
+what it could spend, in the gap docket. Proposals shows what to change next.
+
+The home page gives each view a card with one figure, read from the files that the view reads. A bar
+on top of each page links the home page and the views, and it marks the view that the page belongs
+to.
 
 The card of the docket counts the operations at the multivector lower bound on multiplies, at the
 first algebra of the docket. One figure fits a card, and the docket opens on that algebra.
