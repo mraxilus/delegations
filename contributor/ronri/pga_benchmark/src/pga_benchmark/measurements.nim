@@ -95,9 +95,9 @@ func fold*(x: Antiscalar): float {.inline.} =
   ## Fold antiscalar into sink.
   float(x)
 
-func fold*(m: Multivector): float =
-  ## Fold every component into sink.
-  for b in Basis: result += m[b]
+func fold*[B: static Bases](m: MultivectorOf[B]): float =
+  ## Fold every component multivector holds into sink, full or partial alike.
+  for b in B: result += m[b]
 
 func fold*[T: object](x: T): float =
   ## Fold every field of typed object into sink, recursively.
@@ -111,9 +111,9 @@ func isAnyNan*(x: Antiscalar): bool {.inline.} =
   ## Decide whether antiscalar is NaN.
   float(x).isNaN
 
-func isAnyNan*(m: Multivector): bool =
-  ## Decide whether any component is NaN.
-  for b in Basis:
+func isAnyNan*[B: static Bases](m: MultivectorOf[B]): bool =
+  ## Decide whether any component multivector holds is NaN, full or partial alike.
+  for b in B:
     if m[b].isNaN: return true
 
 func isAnyNan*[T: object](x: T): bool =

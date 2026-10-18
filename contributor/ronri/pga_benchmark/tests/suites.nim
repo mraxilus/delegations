@@ -111,7 +111,7 @@ proc emitTestsReference(measurands: seq[Measurand], section: string): NimNode {.
                 `m` {.used.} = `m_library`[i]  # Read by `expression`.
                 `n` {.used.} = `n_library`[j]  # Read by binary `expression`; unary leaves it.
               `expression`
-          check got =~ expected  # library on images equals reference embedded
+          check widen(got) =~ expected  # library on images equals reference embedded
 
 
 proc emitTestSkipped(): NimNode {.compileTime.} =
@@ -150,8 +150,8 @@ macro checkReferencesWiki(measurands: static seq[Measurand]): untyped =
         `tests`
 
 
-func isNear(got, expected: Multivector): bool =
-  ## Decide whether two multivectors agree, as library's own comparison decides.
+func isNear[B: static Bases](got, expected: MultivectorOf[B]): bool =
+  ## Decide whether two multivectors over one set of bases agree, as library's comparison decides.
   got =~ expected
 
 

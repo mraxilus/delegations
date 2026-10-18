@@ -52,6 +52,10 @@ func widen*(s: float): Multivector =
   ## Embed scalar as s𝟏.
   result[Basis.scalar] = s
 
+func widen*[B: static Bases](m: MultivectorOf[B]): Multivector =
+  ## Embed multivector over any bases into full one, slot for slot; full one passes as it is.
+  for b in B: result[b] = m[b]
+
 func toScalar*(m: Multivector): float =
   ## Extract scalar s𝟏; asserts nothing else present under `-d:testing`.
   m.only({Basis.scalar})

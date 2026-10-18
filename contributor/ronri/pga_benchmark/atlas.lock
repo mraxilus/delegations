@@ -3,7 +3,7 @@
     "replications.mraxilus.gitlab.com": {
       "dir": "$deps/replications.mraxilus.gitlab.com",
       "url": "https://gitlab.com/mraxilus/replications",
-      "commit": "28f4e1128e4efee47d3f2ad9543d8c1460a997c3",
+      "commit": "e2a8248dfd2c024dd007b62a1e3c3c9e27c3f5ec",
       "version": ""
     }
   },
