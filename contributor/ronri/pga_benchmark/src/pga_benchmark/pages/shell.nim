@@ -52,10 +52,10 @@ const
     ##   Each Noto face ships whole, as TrueType of its own release, never as subset (X.8).
     ##     Commit Mono is no Noto, so its Latin subset stays.
     ##   Same six as `rga_visualiser` page, from same store.
-  VIEWS* = [("home", "PGA benchmark"), ("library-map", "Library map"), ("docket", "Gap docket"),
-    ("proposals", "Explorations")]
+  VIEWS* = [("home", "PGA benchmark"), ("progress", "Progress"), ("docket", "Performance"),
+    ("proposals", "Proposals")]
     ## Page name and title of home and of each view, in order bar shows them.
-    ##   Explorations keeps page name `proposals`, so its URL stays.
+    ##   Performance keeps page name `docket`, and Proposals keeps `proposals`, so URLs stay.
   SKELETON_HOST* = (
     "<!doctype html><html><head><meta charset=\"utf-8\">" &
     "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"></head><body>",

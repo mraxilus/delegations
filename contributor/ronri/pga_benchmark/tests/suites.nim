@@ -18,7 +18,7 @@ import ../src/pga_benchmark/[
   measurements, model, notes, proposals, report,
 ]
 import ../src/pga_benchmark/pages/[
-  completion, docket, evaluation, explorations, home, listing, proposal, render, search, shell,
+  completion, docket, evaluation, home, listing, proposal, render, search, shell,
 ]
 from ../src/pga_benchmark/evaluations import
   ENTRY_LIBRARY, algebrasEvaluated, digestEdits, functionsChanged, nanOf, readLibrary, successOf,
@@ -2052,7 +2052,7 @@ suite "Internal: Figures":
       argument = staticRead("../proposals/01-cayley-derivation/proposal.md")
       svg = staticRead("../pages/derivation-map.svg")
       published = staticRead("../pages/published.json")
-    let url = parseJson(published){"library-map", "url"}.getStr
+    let url = parseJson(published){"progress", "url"}.getStr
     check url.len > 0 and "](" & url & ")" in argument  # P01 links map at its publication
     for rule in ["constructAnti", "applyMap", "applyConstant", "constructProductsTransitional"]:
       check rule in svg  # each of three rules marks its line or box
@@ -2515,12 +2515,12 @@ suite "Internal: Pages":
       docket = htmlViews(urls, "docket")
       proposal = htmlViews(urls, "proposals", is_view = false)
     check "<a href=\"https://x/h\">PGA benchmark</a>" in docket  # home linked first
-    check "<a class=\"here\" aria-current=\"page\" href=\"https://x/d\">Gap docket</a>" in
+    check "<a class=\"here\" aria-current=\"page\" href=\"https://x/d\">Performance</a>" in
         docket  # view page is marked as current page
-    check "<span>Library map</span>" in docket  # unpublished view named, unlinked
-    check "<span class=\"here\">Explorations</span>" in proposal  # its view marked, not page
-    check docket.find("Library map") < docket.find("Gap docket") and
-        docket.find("Gap docket") < docket.find("Explorations")  # views in order
+    check "<span>Progress</span>" in docket  # unpublished view named, unlinked
+    check "<span class=\"here\">Proposals</span>" in proposal  # its view marked, not page
+    check docket.find("Progress") < docket.find("Performance") and
+        docket.find("Performance") < docket.find("Proposals")  # views in order
 
 
   test "home shows one card per view, its figure, and link where view is published":
@@ -2611,7 +2611,7 @@ suite "Internal: Proposal list":
         urls,
         "bd6b23c590d7",
       )
-      page = bodyExplorations(chain, 2, 3, body, "", "bd6b23c590d7")
+      page = bodyListing(chain, 2, 3, body, "", "bd6b23c590d7")
     check "5 proposals · 4 undecided · 2 changes · 3 notes · pga <code>bd6b23c</code>" in page
       # counts in header
     for number in 1..5:
@@ -2647,8 +2647,8 @@ suite "Internal: Proposal list":
     check "<button class=\"clear\" type=\"reset\">" in body  # one control clears all
 
 
-  test "explorations open on proposals tab, with marginalia in tab beside it":
-    let page = bodyExplorations(chain, 0, 0, "<p>L</p>", "<p>M</p>", "bd6b23c590d7")
+  test "Proposals page opens on proposals tab, with marginalia in tab beside it":
+    let page = bodyListing(chain, 0, 0, "<p>L</p>", "<p>M</p>", "bd6b23c590d7")
     check page.count(" checked") == 1 and "id=\"view-proposals\" checked>" in page
       # proposals shown at rest, and nothing else checked
     check "<section class=\"view view-proposals\"><p>L</p></section>" in page  # proposals tab

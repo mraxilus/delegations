@@ -12,18 +12,18 @@ hand-rolled typed reference spends, derived from Lengyel's own forms.
 
 ## Pages
 
-A home page and three views answer the question. Each page is built from committed files alone.
-`drive` holds each file to the library at pin, and `head` holds the pin to library head.
-`drive` also renders each page, and fails where a face of the system draws a character beyond
-ASCII. A control page beside them proves that the render sees. A bar on top of each page links
-the home page and the three views.
+A home page and three views answer the question: Progress, Performance and Proposals. Each page is
+built from committed files alone. `drive` holds each file to the library at pin, and `head` holds
+the pin to library head. `drive` also renders each page, and fails where a face of the system draws
+a character beyond ASCII. A control page beside them proves that the render sees. A bar on top of
+each page links the home page and the three views.
 
 | Page | Kind | What it shows |
 |------|------|---------------|
 | [Home][home] | home | the three views, each with its headline figure |
-| [Library map][library-map] | completion | every Cayley table, as the library holds it at pin |
-| [Gap docket][docket] | performance | every measurand at pin against both lower bounds |
-| [Explorations][proposals] | explorations | every proposal in a graph and table, and marginalia |
+| [Progress][progress] | view | library map: every Cayley table, as the library holds it at pin |
+| [Performance][docket] | view | gap docket: every measurand at pin against both lower bounds |
+| [Proposals][proposals] | view | every proposal in a graph and table, and marginalia |
 | [P01 Cayley derivation][cayley-derivation] | proposal | every Cayley table from metric and 𝟙 |
 | [P02 Typed multivectors][typed-multivectors] | withdrawn | k-vector types, now P04 and P09 |
 | [P03 Partner sign][partner-sign] | proposal | sign of partner folded into its first table |
@@ -36,17 +36,17 @@ the home page and the three views.
 | [P10 Homogeneous scalar][homogeneous-scalar] | proposal | scalar kept with its weight |
 | [P11 Unitize general][unitize-general] | proposal | one unitize rule for any element |
 
-The library map and the gap docket show the library as it is. A **proposal** page shows a
-future state of the library, argued in its `proposal.md` and checked by its evaluation. Each
-proposal has the same shape, so the next exploration starts from the same frame. Each proposal
-page states what the proposal depends on, and what its rejection blocks. The explorations page
-names every proposal, draws the undecided ones as a graph, and shows each selected proposal in
-place. Its second tab holds the marginalia: small changes tried at pin, and notes on the library.
+Progress and Performance show the library as it is. A **proposal** page shows a future state of the
+library, argued in its `proposal.md` and checked by its evaluation. Each proposal has the same
+shape, so the next exploration starts from the same frame. Each proposal page states what the
+proposal depends on, and what its rejection blocks. The Proposals page names every proposal, draws
+the undecided ones as a graph, and shows each selected proposal in place. Its second tab holds the
+marginalia: small changes tried at pin, and notes on the library.
 
-The library map reads the state of each box from the library at pin and from the catalogue. A
-box has a table of its own, or the library builds it from other operators, or the library lacks
-it. `drive` fails where the map draws a box in another state, or where the library builds a table
-that no box stands for.
+The library map on the Progress page reads the state of each box from the library at pin and from
+the catalogue. A box has a table of its own, or the library builds it from other operators, or the
+library lacks it. `drive` fails where the map draws a box in another state, or where the library
+builds a table that no box stands for.
 
 P01 lays out every Cayley table of the library, so most other proposals build on it. A proposal
 counts only the tables that the library builds at pin, as the library map shows them. When the
@@ -59,7 +59,7 @@ library adds a table, each proposal that the table concerns takes it into accoun
 | `baseline/` | measurements at pin, and the docket of identifiers | docket, `gaps.md` |
 | `changes/` | one small change to the library for each file: why, then quoted edits | marginalia |
 | `proposals/<NN>-<name>/` | `proposal.md`, `change.md` if any, `claims.json`, programs | its page |
-| `evaluations/` | what each change or proposal measured when tried at pin | explorations |
+| `evaluations/` | what each change or proposal measured when tried at pin | proposals |
 | `marginalia/notes.md` | notes on library source, each quoting the lines it is about | marginalia |
 | `pages/` | shell every page is built in, library map, publications | every page |
 
@@ -151,7 +151,7 @@ checked against.
 
 [replications]: https://gitlab.com/mraxilus/replications
 [home]: https://claude.ai/artifact/UVdybSYjYs3oHkt6bsR1sU
-[library-map]: https://claude.ai/artifact/TsUU8dwwthrgRvbAvCeinV
+[progress]: https://claude.ai/artifact/TsUU8dwwthrgRvbAvCeinV
 [docket]: https://claude.ai/artifact/XyT583x9RnTKixers2q4gT
 [proposals]: https://claude.ai/artifact/CW9ZL5eotsVYrZPjMnTLoG
 

@@ -770,7 +770,7 @@ func bodyDocket*(
     if dates.len > 1: text_dates.add " for " & titles.join(" and ")
 
   result = "<div class=\"page\" style=\"--origin:" & axis.positionOf(1.0).fixed & "%;--octaves:" &
-      $(axis.exponent_high - axis.exponent_low) & "\"><header><h1>PGA Gap Docket</h1>" &
+      $(axis.exponent_high - axis.exponent_low) & "\"><header><h1>Performance</h1>" &
       "<p class=\"meta\">pga " & code(pin[0..<7]) & " · time " & escapeHtml(text_dates) &
       measuredAt(taken) & ", " & escapeHtml(taken{"machine"}.getStr) &
       (if count_runs > 1: ", median of " & $count_runs & " runs" else: "") &

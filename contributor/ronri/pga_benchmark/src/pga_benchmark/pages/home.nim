@@ -1,6 +1,6 @@
 ## Render home: one card per view of library at pin, each with its headline figure.
-##   Three views answer three questions. Library map: how complete library is. Gap docket: how far
-##     each operation stands from what it could spend. Explorations: what to change next.
+##   Three views answer three questions. Progress: how complete library is. Performance: how far
+##     each operation stands from what it could spend. Proposals: what to change next.
 ##   Each card is link to its view; view not yet published shows its card unlinked.
 
 {.experimental: "strictFuncs".}

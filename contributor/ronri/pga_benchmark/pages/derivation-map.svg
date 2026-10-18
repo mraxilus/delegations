@@ -1,5 +1,5 @@
 <!-- Derivation map of P01, after Lengyel's figure 2.16, for RGA and CGA, with transwedge.
-     Colours are shell tokens, with fallbacks so file reads alone. Library map page embeds it.
+     Colours are shell tokens, with fallbacks so file reads alone. Progress page embeds it.
      Box names what it stands for: catalogue ids in `data-ids`, or table constant alone in
      `data-table`. Page writes state library holds at pin on each box, and `drive` holds fade
      of each box to that state (`src/pga_benchmark/pages/completion.nim`).

@@ -26,7 +26,7 @@ import std/[algorithm, json, options, os, osproc, sequtils, strutils, tables, ti
 import ../src/pga_benchmark/[changes, gaps, guard, head, inspector, model, notes, proposals]
 from ../src/pga_benchmark/report import combineRuns, IMPLEMENTATIONS
 import ../src/pga_benchmark/pages/[
-  completion, docket, explorations, home, listing, marginalia, render, shell
+  completion, docket, home, listing, marginalia, render, shell
 ]
 import ../src/pga_benchmark/pages/proposal as page_proposal
 import ../src/pga_benchmark/pages/evaluation as page_evaluation
@@ -71,7 +71,8 @@ const
   PATH_NOTES = "marginalia" / "notes.md"  ## Notes on library source (`notes.nim`).
   PATH_SHELL = "pages" / "shell.html"  ## Shell every page is assembled in.
   PATH_MAP = "pages" / "derivation-map.svg"
-    ## Library map, laid out by hand; its boxes name what they stand for (`completion.nim`).
+    ## Library map of Progress page, laid out by hand; its boxes name what they stand for
+    ##   (`completion.nim`).
   PATH_PUBLICATIONS = "pages" / "published.json"
     ## Publications: page name to URL and digest at its last publish.
   PATH_README = "README.md"  ## File that must name every published URL.
@@ -513,7 +514,7 @@ proc compileScript(entry: string): string =
 
 
 proc pagesBuilt(faces: Table[string, string]): OrderedTable[string, string] =
-  ## Build every page from committed files: home, library map, docket, explorations, then one
+  ## Build every page from committed files: home, Progress, Performance, Proposals, then one
   ##   per proposal. Each page opens with bar linking home and every view (`htmlViews`).
 
   func titled(name: string): string =
@@ -582,16 +583,16 @@ proc pagesBuilt(faces: Table[string, string]): OrderedTable[string, string] =
     (at_bound, bounded) = if sheets.len > 0: countAtBound(sheets[0], ids) else: (0, 0)
     cards = [
       Card(
-        name: "library-map",
-        title: "Library map",
-        url: urls.getOrDefault("library-map"),
+        name: "progress",
+        title: "Progress",
+        url: urls.getOrDefault("progress"),
         figure: $boxes.countIt(it.stateOf(library) == StateBox.Tabled) & "/" & $boxes.len,
         measure: "boxes built from a table of their own",
         text: "How complete the library is: every Cayley table, derived from the metric and 𝟙.",
       ),
       Card(
         name: "docket",
-        title: "Gap docket",
+        title: "Performance",
         url: urls.getOrDefault("docket"),
         figure: $at_bound & "/" & $bounded,
         measure: "operations at the multivector lower bound on multiplies, " &
@@ -600,7 +601,7 @@ proc pagesBuilt(faces: Table[string, string]): OrderedTable[string, string] =
       ),
       Card(
         name: "proposals",
-        title: "Explorations",
+        title: "Proposals",
         url: urls.getOrDefault("proposals"),
         figure: $proposals.countIt(not it.isFrozen) & "/" & $proposals.len,
         measure: "proposals undecided",
@@ -613,16 +614,16 @@ proc pagesBuilt(faces: Table[string, string]): OrderedTable[string, string] =
     htmlViews(urls, "home") & bodyHome(cards, pin),
     faces,
   )
-  result["library-map"] = assemble(
+  result["progress"] = assemble(
     text_shell,
-    "PGA Library Map",
-    htmlViews(urls, "library-map") &
+    "PGA Progress",
+    htmlViews(urls, "progress") &
         bodyCompletion(svg, library, pin, urls.getOrDefault("cayley-derivation")),
     faces,
   )
   result["docket"] = assemble(
     text_shell,
-    "PGA Gap Docket",
+    "PGA Performance",
     htmlViews(urls, "docket") & bodyDocket(
       sheets,
       ids,
@@ -634,8 +635,8 @@ proc pagesBuilt(faces: Table[string, string]): OrderedTable[string, string] =
   )
   result["proposals"] = assemble(
     text_shell,
-    "PGA Explorations",
-    htmlViews(urls, "proposals") & bodyExplorations(
+    "PGA Proposals",
+    htmlViews(urls, "proposals") & bodyListing(
       proposals,
       changes_evaluated.len,
       notes.items.len,

@@ -27,7 +27,7 @@
 ##     [markdown, pages/evaluation, pages/shell, proposals] -> pages/proposal
 ##     [guard, markdown, pages/shell] -> pages/completion
 ##     [markdown, pages/shell] -> pages/home
-##     [pages/shell, proposals] -> pages/explorations
+##     [markdown, pages/evaluation, pages/proposal, pages/shell, proposals] -> pages/listing
 ##     [pages/search] -> pages/find (entry point, compiled to JavaScript for docket)
 ##     [pga, bound, catalogue, inspector, kinds, report] -> inspect (entry point, tool side)
 ##     [pga, catalogue, kinds, measurements, pools, report] -> bench (entry point, tool side)

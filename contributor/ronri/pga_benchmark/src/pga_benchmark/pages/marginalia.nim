@@ -1,4 +1,4 @@
-## Render marginalia tab of explorations: changes tried on library at pin, and notes in its margin.
+## Render marginalia tab of Proposals page: changes tried on library at pin, and notes in margin.
 ##   Changes are small edits, each tried at pin and shown with what its evaluation measured; notes
 ##     are open questions and observations, each quoting lines of library it is about, located
 ##     where those lines stand at pin.

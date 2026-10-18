@@ -1,4 +1,4 @@
-## Render library map: derivation of every table, each box in state library holds at pin.
+## Render Progress page: library map of every table, each box in state library holds at pin.
 ##   Map is committed SVG, `pages/derivation-map.svg`, laid out by hand after P01, which lays out
 ##     every table of library. Box of operation names catalogue ids it stands for in `data-ids`,
 ##     and box of table alone names its constant in `data-table`, as `CAYLEYS_WEDGES_TRANS.base`.
@@ -253,7 +253,7 @@ func chipState(state: StateBox): string =
 
 
 func bodyCompletion*(svg: string, library: Library, pin, url_derivation: string): string =
-  ## Render library map body: header, counts by state, map, then every box with its state.
+  ## Render Progress page body: header, counts by state, map, then every box with its state.
   ##   `url_derivation` is where P01 is published; P01 stands unlinked where empty.
   let
     derivation =
@@ -264,7 +264,7 @@ func bodyCompletion*(svg: string, library: Library, pin, url_derivation: string)
     count_tabled = states.countIt(it == StateBox.Tabled)
     count_composed = states.countIt(it == StateBox.Composed)
     count_missing = states.countIt(it == StateBox.Missing)
-  result = "<div class=\"page\"><header><h1>Library map</h1><p class=\"meta\">pga " &
+  result = "<div class=\"page\"><header><h1>Progress</h1><p class=\"meta\">pga " &
       code(pin[0..<min(7, pin.len)]) & " · state of each box read from library at pin" &
       "</p><p>The map derives every Cayley table of the library from two inputs, the metric " &
       "and the orientation of 𝟙, as " & derivation & " lays them out. Each box takes the " &
@@ -275,7 +275,7 @@ func bodyCompletion*(svg: string, library: Library, pin, url_derivation: string)
       "their own</dd></div><div><dt>" & $count_composed & "</dt><dd>boxes it builds from other " &
       "operators</dd></div><div><dt>" & $count_missing & "</dt><dd>boxes not in the " &
       "library</dd></div></dl></section>"
-  result.add "<section class=\"block\"><h2>Map</h2><figure class=\"figure\"><div " &
+  result.add "<section class=\"block\"><h2>Library map</h2><figure class=\"figure\"><div " &
       "class=\"figure-art\">" & svgStated(svg, library) & "</div><figcaption>Eleven blocks " &
       "follow the groups of the code, and each box holds a symbol. Green boxes are the two " &
       "inputs, grey boxes are basis and projective elements, and purple anti tables stand " &
