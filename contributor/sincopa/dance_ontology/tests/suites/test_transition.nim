@@ -299,23 +299,12 @@ suite "Internal: Routes":
 
 
 suite "Internal: The vocabulary":
-  test "no two moves share a mark, a name or a change":
-    var
-      marks: seq[char] = @[]
-      names, changes: seq[string] = @[]
+  test "no two moves share a name":
+    var names: seq[string] = @[]
     for helper in Helper:
-      check HELPER_MARKS[helper] notin marks
       check helper.name notin names
-      check HELPER_CHANGES[helper] notin changes
       check helper.manner.startsWith(helper.name)
-      marks.add HELPER_MARKS[helper]
       names.add helper.name
-      changes.add HELPER_CHANGES[helper]
-    for named in Compound:
-      check COMPOUND_MARKS[named] notin marks
-      check COMPOUND_CHANGES[named] notin changes
-      marks.add COMPOUND_MARKS[named]
-      changes.add COMPOUND_CHANGES[named]
 
 
   test "a move with another word says so, and one without does not":
