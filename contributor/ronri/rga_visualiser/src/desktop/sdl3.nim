@@ -109,6 +109,8 @@ type
     modifiers* {.importc: "mod".}: uint16  ## Modifier keys held as this one went down.
 
   MouseMotionEvent* {.bycopy, header: HEADER, importc: "SDL_MouseMotionEvent".} = object
+    window_id* {.importc: "windowID".}: uint32  ## Window pointer is over.
+      ## Dear ImGui's SDL3 backend drops event naming no window of its own.
     x* {.importc.}: cfloat  ## Position in window, in pixels, from top-left.
     y* {.importc.}: cfloat  ## Position in window, in pixels, from top-left.
     xrel* {.importc.}: cfloat  ## Motion since previous event, in pixels.
@@ -123,6 +125,8 @@ type
     button* {.importc.}: uint8  ## Which button changed state.
 
   MouseWheelEvent* {.bycopy, header: HEADER, importc: "SDL_MouseWheelEvent".} = object
+    window_id* {.importc: "windowID".}: uint32  ## Window pointer is over.
+      ## Dear ImGui's SDL3 backend drops event naming no window of its own.
     y* {.importc.}: cfloat  ## Scroll amount, positive away from user.
 
   Event* {.bycopy, union, header: HEADER, importc: "SDL_Event".} = object

@@ -171,9 +171,6 @@ const
   PATH_EXPORT_DEFAULT* = "rga_visualiser.png"
 
 const
-  FACTOR_DOLLY = 1.12
-    ## Set how much one wheel notch scales orbit distance.
-    ##   Notch is aimed at cursor (`interaction.dollyAtCursor`).
   FRAMES_SETTLE = 2  ## Draw this many frames before capturing, so widget layout has settled.
   INK_PREVIEW = Ink.Guide
     ## Tint add panel's uncommitted multivector in this palette handle, muted.
@@ -212,8 +209,7 @@ const
     ##   Bound for every drive rather than for longest: keys is longest script, and each drive
     ##   returns on step it does not recognise, so surplus frames cost nothing but let tween
     ##   and ease settle before verdict reads camera.
-    ##   Measured rather than guessed: every drive reaches its verdict inside this, and whole
-    ##   set of nineteen checks runs in about twenty seconds under software GL.
+    ##   Measured rather than guessed: every drive `driven` runs reaches its verdict inside this.
   SECONDS_FRAME_DRIVEN* = 1.0 / RATE_FRAME_LEAST
     ## Advance scripted run's clock by this much for each frame drawn, whatever machine takes.
     ##   One frame at `timings.RATE_FRAME_LEAST`, so scripted run shows what reader at that
@@ -408,6 +404,8 @@ type
       ## Headless run then shows no text drawn falls to `.notdef`; see `shown`.
     is_edit_driven: bool  ## Whether to open edit on object far out and save it unchanged.
       ## Headless run then shows what staging keeps of it; see `driveEdit`.
+    is_wheel_driven: bool  ## Whether to pick object, then turn wheel over menu pick opens.
+      ## Headless run then shows where that wheel goes; see `driveWheel`.
     path_help_driven: Option[HelpPath]  ## Which help tab to open at startup, if any.
       ## Headless run cannot click tab strip, so `--drive-help:<tab>` names one.
 
@@ -417,6 +415,13 @@ type
     ##   event every frame could never leave it held.
     pressed: Option[tuple[scancode: Scancode, keycode: uint32]]
     is_down: bool  ## Whether this step presses key or lets go of it.
+
+  WheelDrive = object  ## Define what `--drive-wheel` carries between frames, for its verdict.
+    handle: Option[int]  ## Object it picks; none until found by label.
+    is_eased: bool  ## Whether pick's ease was seen under way.
+    frame_menu: Option[int]  ## Frame pointer moved onto menu, once that ease arrived.
+    camera_before: Camera  ## Camera as wheel found it.
+    is_over_menu: bool  ## Whether Dear ImGui read pointer over menu as wheel turned.
 
 
 func demoScaleOf(value: string): Option[ScaleOrrery] =
@@ -455,6 +460,7 @@ proc applyOption(options: var Options; key, value: string) =
   of "drive-menu": options.is_menu_driven = true
   of "drive-faces": options.is_faces_driven = true
   of "drive-edit": options.is_edit_driven = true
+  of "drive-wheel": options.is_wheel_driven = true
   of "drive-help":
     for path in HelpPath:
       if titleOf(path) == value: options.path_help_driven = some(path)
@@ -465,7 +471,7 @@ proc applyOption(options: var Options; key, value: string) =
       "Option must be one of screenshot, storyboard, load-scene, frames, hidden, " &
       "timings, novsync, fill, demo[:<objects>], help-tabs, drive-drag, drive-keys, " &
       "drive-select, drive-undo, drive-sky, drive-search, drive-menu, drive-faces, " &
-      "drive-edit or drive-help; " &
+      "drive-edit, drive-wheel or drive-help; " &
       &"got `--{key}`."
 
 
@@ -474,7 +480,7 @@ func isDriven(options: Options): bool =
   options.is_drag_driven or options.is_key_driven or options.is_select_driven or
       options.is_undo_driven or options.is_sky_driven or options.is_search_driven or
       options.is_menu_driven or options.is_faces_driven or options.is_edit_driven or
-      options.path_help_driven.isSome
+      options.is_wheel_driven or options.path_help_driven.isSome
 
 
 proc parseOptions(): Options =
@@ -1150,7 +1156,7 @@ proc renderFrame(
     #   either button greys out where its side of timeline is empty.
     if not stepHistory(panel, scene, camera, HISTORY_DESKTOP, is_undo):
       panel.say(stepMessage(is_undo), now)
-  layoutPanel(panel, scene, camera, HISTORY_DESKTOP, interaction.speedFlying(camera), now)
+  layoutPanel(panel, scene, camera, HISTORY_DESKTOP, interaction.speedFlying, now)
   # Row of constant controls floats over scene beside panel, as browser's chip row does.
   layoutChipRow(panel, scene, camera, HISTORY_DESKTOP, now)
   layoutHelp(panel, path_help)
@@ -1516,16 +1522,20 @@ proc handleEvent(
     if event.button.button == uint8(MouseButton.Left): is_dragging_orbit = false
     if event.button.button == uint8(MouseButton.Right): is_dragging_pan = false
   of uint32(EventKind.MouseWheel):
-    if gui.wantsMouse(): return
-    panel.tween_camera.halt()  # Zoom lands pivot on what cursor is over; see `halt`.
+    # Menu scrolls nothing, so wheel over it zooms view as over view itself.
+    #   Sibling of page's `sumWheel` in `pointer.ts`; change both together.
+    if gui.wantsMouse() and not panel.is_menu_selection_hovered: return
+    # Free flight's zoom lands pivot on what cursor is over; see `yieldOrHalt`.
+    panel.tween_camera.yieldOrHalt(panel.selection.len > 0)
     # Zoom toward whatever cursor is over; see `interaction.dollyAtCursor`.
     #   Frame's size is passed because sight ray needs it before frame reports it again.
     #   Pick reads last frame's placements, as hover does, with any edit since placed first.
+    #   Each of SDL's notches scales by core's rule, as page's `bridge.nimNotchesWheel` counts.
     placeEdited(scene)
     interaction.dollyAtCursor(
       camera,
       scene,
-      pow(FACTOR_DOLLY, -float(event.wheel.y)),
+      factorWheel(float(event.wheel.y)),
       camera.drawExtentFor(height_frame, REACH_SCENE),
       camera.initMatrixViewProjection(float(width_frame) / float(height_frame)),
       width_frame,
@@ -1554,7 +1564,8 @@ proc handleEvent(
         panel.tween_camera.reachAimed(camera),
       )
     if is_dragging_pan:
-      panel.tween_camera.halt()  # Pan places pivot itself; see `halt`.
+      # Free flight's pan places pivot itself; see `yieldOrHalt`.
+      panel.tween_camera.yieldOrHalt(panel.selection.len > 0)
       # Pass where pointer was and is, rather than how far it moved.
       #   Pan carries point it grabbed between both ends of step; see
       #   `interaction.panAcross`.
@@ -1797,7 +1808,9 @@ proc driveEdit(panel: var Panel, scene: var Scene, camera: Camera, count_drawn: 
     saveSession(panel, scene, camera, HISTORY_DESKTOP, now)
 
 
-proc driveSelect(scene: Scene; camera: Camera; width, height, count_drawn: int; scale: DrawExtent) =
+proc driveSelect(
+  window: Window; scene: Scene; camera: Camera; width, height, count_drawn: int; scale: DrawExtent
+) =
   ## Script click, then two shift-clicks, on first three objects, then drag off menu's object.
   ##   Headless run then shows floating selection menu at each size and proves it does not
   ##   swallow next drag; for `--drive-select`.
@@ -1811,6 +1824,8 @@ proc driveSelect(scene: Scene; camera: Camera; width, height, count_drawn: int; 
   ##   press in same drain as its motion reads previous frame's pick.
   ##   Shift is set through `sdl3.setModState`: pushed event never reaches state
   ##   `getModState` reads.
+  ##   Motion names this window, so Dear ImGui reads pointer over menu, and menu can swallow;
+  ##   see `MouseMotionEvent`.
   ##   Shares `driveDrag`'s warning: look at capture; do not byte-compare.
   const
     frame_first = 2  # Past startup, so first frame's layout has settled.
@@ -1833,6 +1848,7 @@ proc driveSelect(scene: Scene; camera: Camera; width, height, count_drawn: int; 
 
   if not is_acting:
     var reach = Event(kind: uint32(EventKind.MouseMotion))
+    reach.motion.window_id = sdl3.windowId(window)
     reach.motion.x = cfloat(screen.x)
     reach.motion.y = cfloat(screen.y)
     sdl3.pushEvent(addr reach)
@@ -1855,6 +1871,89 @@ proc driveSelect(scene: Scene; camera: Camera; width, height, count_drawn: int; 
     var release = Event(kind: uint32(EventKind.MouseButtonUp))
     release.button.button = event.button.button  # Button that pressed is one that lifts.
     sdl3.pushEvent(addr release)
+
+
+const
+  LABEL_WHEEL_DRIVEN = "b"  ## Label of object `--drive-wheel` picks, as page's `wheel.ts` does.
+  NOTCHES_WHEEL_DRIVEN = 3  ## Notches in `--drive-wheel` turns over menu, as page's drive does.
+  PIXELS_INSIDE_MENU = 12.0'f32
+    ## Aim this far inside menu's top-left corner, past its border and onto its first button.
+
+
+proc driveWheel(
+  drive: var WheelDrive;
+  window: Window;
+  scene: Scene;
+  camera: Camera;
+  panel: Panel;
+  width, height, count_drawn: int;
+  scale: DrawExtent;
+) =
+  ## Pick object `b` with button that reveals menu, then turn wheel over menu, for
+  ## `--drive-wheel`.
+  ##   Menu scrolls nothing, so wheel there should zoom view about pick, as on page.
+  ##   Waits on pick's ease itself rather than frame count: menu rides object while ease
+  ##   carries it, so pointer sent early could land beside menu.
+  ##   Posted to SDL's queue, split across frames, for reasons `driveDrag` and `driveSelect`
+  ##   give; same warning about byte-comparing.
+  ##   Pointer events name this window, since Dear ImGui must read pointer over menu as it
+  ##   would; see `MouseMotionEvent`.
+  const frame_first = 2  # Past startup, so first frame's layout has settled.
+  if count_drawn == frame_first:
+    var handles: array[OBJECTS_MAX, int]
+    for position in 0..<scene.handlesCreated(handles):
+      if scene[handles[position]].label.toText == LABEL_WHEEL_DRIVEN:
+        drive.handle = some(handles[position])
+  if drive.handle.isNone: return
+  let handle = drive.handle.get
+
+  # Reach object, then click it, frame each, so press reads hover that motion moved.
+  if count_drawn <= frame_first + 1:
+    let anchor = anchorFor(scene[handle].geometry, scene[handle].anchorOverride, scale)
+    if anchor.isNone: return
+    let screen = projectToScreen(
+      camera.initMatrixViewProjection(width / height), width, height, anchor.get
+    )
+    if count_drawn == frame_first:
+      var reach = Event(kind: uint32(EventKind.MouseMotion))
+      reach.motion.window_id = sdl3.windowId(window)
+      reach.motion.x = cfloat(screen.x)
+      reach.motion.y = cfloat(screen.y)
+      sdl3.pushEvent(addr reach)
+      return
+    var press = Event(kind: uint32(EventKind.MouseButtonDown))
+    press.button.button =
+      if isMenuRevealedOn(PointerButton.Right): uint8(MouseButton.Right)
+      else: uint8(MouseButton.Left)
+    sdl3.pushEvent(addr press)
+    var release = Event(kind: uint32(EventKind.MouseButtonUp))
+    release.button.button = press.button.button
+    sdl3.pushEvent(addr release)
+    return
+
+  # Reach menu once pick's ease has run, where menu then stays.
+  #   Menu hangs from its top-left corner, since pointer placed it; see `layoutSelectionMenu`.
+  if drive.frame_menu.isNone:
+    if not panel.tween_camera.is_arrived: drive.is_eased = true
+    if not (drive.is_eased and panel.tween_camera.is_arrived and panel.is_menu_selection_shown):
+      return
+    drive.frame_menu = some(count_drawn)
+    var reach = Event(kind: uint32(EventKind.MouseMotion))
+    reach.motion.window_id = sdl3.windowId(window)
+    reach.motion.x = panel.position_menu_selection[0] + PIXELS_INSIDE_MENU
+    reach.motion.y = panel.position_menu_selection[1] + PIXELS_INSIDE_MENU
+    sdl3.pushEvent(addr reach)
+    return
+
+  # Turn wheel frame after pointer arrived, once Dear ImGui has read pointer there.
+  if count_drawn != drive.frame_menu.get + 2: return
+  drive.camera_before = camera
+  drive.is_over_menu = gui.wantsMouse() and panel.is_menu_selection_hovered
+  for _ in 1..NOTCHES_WHEEL_DRIVEN:
+    var notch = Event(kind: uint32(EventKind.MouseWheel))
+    notch.wheel.window_id = sdl3.windowId(window)
+    notch.wheel.y = 1.0  # Away from user, which zooms in.
+    sdl3.pushEvent(addr notch)
 
 
 const KEYS_UNDO_DRIVEN = [
@@ -2008,6 +2107,7 @@ proc verdictDriven(
   panel: Panel;
   count_settled: int;
   found_dragging, found_menu_open: bool;
+  wheel_drive: WheelDrive;
 ): int =
   ## Judge what `--drive-*` run reached, and report every check pass or fail.
   ##   Answers with number that failed, for caller to exit on.
@@ -2231,6 +2331,38 @@ proc verdictDriven(
       found_dragging and found_menu_open,
       &"dragged {found_dragging}, menu opened {found_menu_open}",
     )
+  if options.is_wheel_driven:
+    # Check wheel over menu zooms view about pick, as page's `wheel.ts` holds.
+    #   Pivot read against object's own point in world, so pick and wheel are both judged.
+    let
+      scale = camera.drawExtentFor(PIXELS_HEIGHT, REACH_SCENE)
+      anchor =
+        if wheel_drive.handle.isSome:
+          anchorFor(
+            scene[wheel_drive.handle.get].geometry,
+            scene[wheel_drive.handle.get].anchorOverride,
+            scale,
+          )
+        else: none(Position)
+      off =
+        if anchor.isSome: norm(camera.pivotWorld - anchor.get.toWorld(scale.origin))
+        else: Inf
+      (before, after) = (wheel_drive.camera_before.distance, camera.distance)
+    report(
+      "a wheel over the selection menu zooms the view, about the point picked",
+      wheel_drive.frame_menu.isSome and wheel_drive.is_over_menu and after < 0.8 * before and
+          off < 1.0e-4,
+      &"menu reached {wheel_drive.frame_menu.isSome}, pointer over menu " &
+      &"{wheel_drive.is_over_menu}; distance {before:.3f} -> {after:.3f}, " &
+      &"pivot off the point by {off:.2e}",
+    )
+    # Check three notches scale separation by core's rule, which page's `wheel.ts` holds too.
+    let ratio_rule = factorWheel(float(NOTCHES_WHEEL_DRIVEN))
+    report(
+      "and three notches zoom the desktop by the rule the page reads",
+      before > 0.0 and abs(after / before / ratio_rule - 1.0) < 1.0e-6,
+      &"separation scaled by {after / before:.9f}, rule {ratio_rule:.9f}",
+    )
   if options.path_help_driven.isSome:
     report(
       "the help tab asked for opened, with rows in it",
@@ -2256,7 +2388,9 @@ proc runInteractive(
   ##     Splitting would pass most by `var` across new boundary, trading readable loop for
   ##     indirection.
   var
-    interaction = Interaction(is_enabled: true)
+    interaction = Interaction(
+      is_enabled: true, speed_ship: speedOpening(PIXELS_WIDTH, PIXELS_HEIGHT)
+    )
     button_dragging = none(uint8)
     is_running = true
     is_dragging_orbit = false
@@ -2294,6 +2428,8 @@ proc runInteractive(
     #   `--drive-sky` builds horizon plane it needs, and counting before that would make
     #   precondition look like something drag built; no gesture commits this early.
     count_settled = count_opened
+    # Record what `--drive-wheel` learns between its frames; see `driveWheel`.
+    wheel_drive = WheelDrive()
 
   while is_running:
     # Turn frame's measurements over, on two-frame lifetime frame arenas keep; see `timings`.
@@ -2347,9 +2483,21 @@ proc runInteractive(
           scale_driven,
         )
       elif options.is_select_driven:
-        driveSelect(scene, camera, PIXELS_WIDTH, PIXELS_HEIGHT, count_drawn, scale_driven)
+        driveSelect(window, scene, camera, PIXELS_WIDTH, PIXELS_HEIGHT, count_drawn, scale_driven)
       else:
         driveUndo(scene, camera, PIXELS_WIDTH, PIXELS_HEIGHT, count_drawn, scale_driven)
+    if options.is_wheel_driven:
+      driveWheel(
+        wheel_drive,
+        window,
+        scene,
+        camera,
+        panel,
+        PIXELS_WIDTH,
+        PIXELS_HEIGHT,
+        count_drawn,
+        camera.drawExtentFor(PIXELS_HEIGHT, REACH_SCENE),
+      )
 
     var event: Event
     while sdl3.pollEvent(addr event):
@@ -2464,6 +2612,7 @@ proc runInteractive(
       count_settled,
       found_dragging,
       found_menu_open,
+      wheel_drive,
     )
     if count_failed > 0:
       echo &"\n{count_failed} driven check(s) failed."

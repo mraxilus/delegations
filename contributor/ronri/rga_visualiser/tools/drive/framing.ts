@@ -6,7 +6,7 @@
 //   picked was already on screen, which swung picked object around view instead.
 
 import type { CDPSession, Page } from '@playwright/test';
-import { MILLISECONDS_FRAME, evaluateOver } from './clock';
+import { MILLISECONDS_FRAME, advance, evaluateOver } from './clock';
 import {
   depthOf, readCamera, settleCamera, spanOf, spanPivot, type Stance,
 } from './camera';
@@ -124,8 +124,8 @@ async function menuAndAnchor(page: Page, handle: number): Promise<MenuStanding> 
 
 /** Drive right-click pick from far out, which opens menu and brings camera in.
  *
- *  Wheel out six notches from `Home` so first pickable point is dot far off, then click
- *  6 px off its anchor. Menu is up two frames in and keeps its inset from that object's own
+ *  Wheel out six notches from `Home`, over first pickable point, so it is dot far off, then
+ *  click 6 px off its anchor. Menu is up two frames in and keeps its inset from that object's own
  *  anchor; object settles in middle of frame however far off it was clicked; distance fell;
  *  pivot is object itself. Glass is cleared first, since drawer open would take click.
  */
@@ -137,7 +137,14 @@ export async function drivePointerPick(page: Page): Promise<void> {
   const picked = points[0];
   if (picked === undefined) return;
 
-  await page.mouse.move(400, 300);
+  // Wheel out over point about to be picked: wheel in free flight refers to object under
+  //   pointer, and over empty sky does nothing (repository issue 535).
+  const start = await page.evaluate((one) => {
+    const rect = (document.getElementById('gl') as HTMLElement).getBoundingClientRect();
+    const at = Array.from(nimAnchorScreen(one, rect.width, rect.height));
+    return [rect.left + (at[0] ?? 0), rect.top + (at[1] ?? 0)];
+  }, picked);
+  await page.mouse.move(start[0] ?? 0, start[1] ?? 0);
   for (let notch = 0; notch < 6; notch += 1) {
     await page.mouse.wheel(0, 120);
     await waitFrames(page, 2);
@@ -257,8 +264,13 @@ function reportPointerPick(
 
 /** Pick same object again once wheel has taken reader out until it is dot once more.
  *
- *  Offer it holds is renewed, and camera comes in again. Wheel over object, so zoom stays
- *  anchored on it and it is still under pointer to be picked.
+ *  Offer it holds is renewed, and camera comes in again. Object is read again where wheel
+ *  left it, and picked there.
+ *  Wheel stands opposite object across middle of frame. Selection's wheel dollies about pivot
+ *  wherever pointer stands, and object off pivot draws in toward middle as wheel goes out,
+ *  with menu riding it.
+ *    Not over object: menu riding object comes under pointer held there, and takes wheel
+ *    from canvas.
  */
 async function drivePickAgain(page: Page, picked: number, near: Stance): Promise<void> {
   const anchorOf = (): Promise<{ x: number; y: number; is_in_front: boolean }> =>
@@ -272,7 +284,11 @@ async function drivePickAgain(page: Page, picked: number, near: Stance): Promise
     }, picked);
 
   const out = await anchorOf();
-  await page.mouse.move(out.x, out.y);
+  const middle = await page.evaluate(() => {
+    const rect = (document.getElementById('gl') as HTMLElement).getBoundingClientRect();
+    return { x: rect.left + 0.5 * rect.width, y: rect.top + 0.5 * rect.height };
+  });
+  await page.mouse.move(2 * middle.x - out.x, 2 * middle.y - out.y);
   // Wheel out past hundred units, well past thirty, where 0.08 of radius drops under floor
   //   dot's three pixels.
   for (let notch = 0; notch < 80; notch += 1) {
@@ -620,5 +636,225 @@ export async function driveFarOrbit(page: Page): Promise<void> {
       `${(separation * 149_597_870_700).toFixed(0)} m away; ` +
       `off middle ${before.off.toFixed(3)} px, then ${after.off.toFixed(3)} px after ` +
       `${PIXELS_ORBIT_FAR} px of drag turned ${turned.toFixed(3)} rad`,
+  );
+}
+
+
+/** Star Architect first clicked from afar, in demo's largest size. */
+const NAME_FAR_PICK = 'LSPM J0344+0741';
+
+/** Left drags facing star from `Home`, as `[x_from, y_from, x_to, y_to]` px on canvas.
+ *
+ *  Star stands behind eye at `Home`. Free flight holds sky under pointer, so each drag of
+ *  1100 px turns sight about 56 degrees, and three bring star to about (834, 331) px: off
+ *  middle, so pick slides camera across to it. Each press lands on open sky at stance drag
+ *  before it leaves; press on star would arm construction rather than turn view.
+ */
+const LOOKS_FAR_PICK: readonly (readonly [number, number, number, number])[] = [
+  [1167, 433, 67, 433], [1143, 467, 43, 467], [1150, 450, 50, 450],
+];
+
+/** Left drags orbit takes once star is picked, as `[across, down]` px. */
+const DRAGS_ORBIT_FAR_PICK: readonly (readonly [number, number])[] = [
+  [150, 0], [0, 120], [-200, 0], [120, -80],
+];
+
+/** Where each orbit drag is pressed, in px off frame's middle: open sky below star. */
+const PRESS_ORBIT_FAR_PICK = { across: -100, down: 150 };
+
+/** Steps each look drag and each orbit drag is cut into, one frame drawn after each. */
+const STEPS_LOOK_FAR_PICK = 8, STEPS_ORBIT_FAR_PICK = 10;
+
+/** Frames run past ease's own span before settled star is read, so last frame lands. */
+const FRAMES_PAST_EASE = 4;
+
+/** Pixels star may stand off frame's middle, once settled and after every orbit step.
+ *
+ *  Pick puts pivot on star and orbit turns about pivot, so star stands in middle exactly:
+ *  second click holds it at 0.000 px. Reading is float32, which steps by 6e-5 px near 600,
+ *  so hundredth of pixel leaves room for rounding. At fit of 2.4e-7 units one pixel spans
+ *  2.2e-10 units, so bound still reads pivot standing 2.2e-12 units off star. Fault read 5.4 px
+ *  from `Home`, and 15 px from demo's opening stance.
+ */
+const PIXELS_MIDDLE_FAR_PICK = 0.01;
+
+/** Canvas's place on page and its size, in CSS px. */
+interface Box {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}
+
+/** Read canvas's box on page. */
+async function boxOfCanvas(page: Page): Promise<Box> {
+  return page.evaluate(() => {
+    const box = (document.getElementById('gl') as HTMLElement).getBoundingClientRect();
+    return { left: box.left, top: box.top, width: box.width, height: box.height };
+  });
+}
+
+/** Read object's anchor off frame's middle, as `[across, down, is_in_front]` in px. */
+async function offMiddleOf(page: Page, handle: number, box: Box): Promise<number[]> {
+  return page.evaluate((given) => {
+    const at = Array.from(nimAnchorScreen(given.handle, given.width, given.height));
+    return [(at[0] ?? 0) - given.width / 2, (at[1] ?? 0) - given.height / 2, at[2] ?? 0];
+  }, { handle, width: box.width, height: box.height });
+}
+
+/** Drag left button across canvas, one frame for each step; say whether press found sky.
+ *
+ *  Press is read first, one frame after pointer arrives, so hover has followed it. Press on
+ *  object arms construction rather than moving view, so none is pressed there. `each` runs
+ *  after every step's frame.
+ */
+async function dragOnSky(
+  page: Page, box: Box, from: readonly number[], to: readonly number[], steps: number,
+  each: () => Promise<void> = async () => undefined,
+): Promise<boolean> {
+  const [x_from, y_from, x_to, y_to] = [from[0] ?? 0, from[1] ?? 0, to[0] ?? 0, to[1] ?? 0];
+  await page.mouse.move(box.left + x_from, box.top + y_from);
+  await waitFrames(page, 1);
+  if (!(await page.evaluate(() => nimHoverHandle() < 0 || nimIsHoverBackdrop()))) return false;
+  await page.mouse.down();
+  for (let step = 1; step <= steps; step += 1) {
+    await page.mouse.move(
+      box.left + x_from + ((x_to - x_from) * step) / steps,
+      box.top + y_from + ((y_to - y_from) * step) / steps,
+    );
+    await waitFrames(page, 1);
+    await each();
+  }
+  await page.mouse.up();
+  await waitFrames(page, 2);
+  return true;
+}
+
+/** Face star by `LOOKS_FAR_PICK`, with nothing picked, and click it once.
+ *
+ *  Answers what stopped it, or empty where click landed on star. Ease is left to run.
+ */
+async function clickFarStar(page: Page, box: Box, handle: number): Promise<string> {
+  for (const [x_from, y_from, x_to, y_to] of LOOKS_FAR_PICK) {
+    if (!(await dragOnSky(page, box, [x_from, y_from], [x_to, y_to], STEPS_LOOK_FAR_PICK))) {
+      return `look drag pressed at (${x_from}, ${y_from}) found no open sky`;
+    }
+  }
+  const faced = await offMiddleOf(page, handle, box);
+  const [x_star, y_star] = [box.width / 2 + (faced[0] ?? 0), box.height / 2 + (faced[1] ?? 0)];
+  await page.mouse.move(box.left + x_star, box.top + y_star);
+  await waitFrames(page, 1);
+  const is_over = await page.evaluate(
+    (one) => nimSelectionCount() === 0 && nimHoverHandle() === one, handle,
+  );
+  if ((faced[2] ?? 0) < 0.5 || !is_over) {
+    return `${NAME_FAR_PICK} not under the pointer after the look drags, at ` +
+      `(${x_star.toFixed(1)}, ${y_star.toFixed(1)}) px`;
+  }
+  await page.mouse.down();
+  await waitFrames(page, 1);
+  await page.mouse.up();
+  return '';
+}
+
+/** Drop every pick and send camera `Home`, so view stands as far orbit leaves it.
+ *
+ *  Canvas takes focus first: chrome holding it swallows key.
+ */
+async function sendHome(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    nimSelectClear();
+    document.getElementById('gl')?.focus();
+  });
+  await page.keyboard.press('Home');
+  await settleCamera(page);
+}
+
+/** Read largest distance off middle over readings, and largest move between two in row.
+ *
+ *  Reading behind eye counts as infinitely far off.
+ */
+function spreadOf(readings: readonly number[][]): { off_most: number; move_most: number } {
+  const offs = readings.map(
+    (one) => ((one[2] ?? 0) > 0.5 ? Math.hypot(one[0] ?? 0, one[1] ?? 0) : Infinity),
+  );
+  let move_most = 0;
+  for (let i = 1; i < readings.length; i += 1) {
+    const [now_at, was] = [readings[i] ?? [], readings[i - 1] ?? []];
+    move_most = Math.max(
+      move_most, Math.hypot((now_at[0] ?? 0) - (was[0] ?? 0), (now_at[1] ?? 0) - (was[1] ?? 0)),
+    );
+  }
+  return { off_most: Math.max(...offs), move_most };
+}
+
+/** Drive one click on star millions of units out, from afar, and orbit it by mouse.
+ *
+ *  Three left drags face star with nothing picked, and one left click picks it: ease
+ *  carries camera across millions of units to its fit. Four left drags on sky then orbit it,
+ *  one frame for each step. Star is read in px through its anchor once ease has run out and
+ *  after every step, and must stand in frame's middle throughout.
+ *  As found on published page, 2026-10-17: after Architect's first click on LSPM J0344+0741,
+ *  3.19e6 units out in demo of 5,038, mouse orbit moved star about screen; second click held
+ *  it. Reproduced on `afd0a46d` from demo's opening stance: pivot 6.6e-9 in front of star,
+ *  and star swung up to 15 px.
+ *  Pivot's offset along sight is star's depth less separation: `nimCameraScaleLocal` reads
+ *  depth of nearest object drawn ahead, which is star at its fit. World places cross as
+ *  float32, which cannot resolve offset 3e6 units out, so it is read along sight alone.
+ */
+export async function driveFarPick(page: Page): Promise<void> {
+  const name = 'a first click on a star millions of units out holds it in the middle through ' +
+    'an orbit';
+  await clearTheGlass(page);
+  await sendHome(page);
+  const star = await page.evaluate((label) => {
+    const handle = nimSceneHandles().find((one) => nimObjectLabel(one) === label) ?? -1;
+    const at = handle < 0 ? [] : Array.from(nimAnchorWorld(handle));
+    return { handle, reach: Math.hypot(at[0] ?? 0, at[1] ?? 0, at[2] ?? 0) };
+  }, NAME_FAR_PICK);
+  if (star.handle < 0) {
+    report(name, false, `${NAME_FAR_PICK} is not in the demo`);
+    return;
+  }
+  const box = await boxOfCanvas(page);
+  const stopped = await clickFarStar(page, box, star.handle);
+  // Ease arms on frame after click; clock runs past its whole span.
+  const milliseconds_ease = await page.evaluate(() => nimAnimationMilliseconds());
+  await advance(page, milliseconds_ease + FRAMES_PAST_EASE * MILLISECONDS_FRAME);
+  const settled = await page.evaluate((one) => ({
+    is_picked: nimSelectionCount() === 1 && nimSelectionHandles()[0] === one,
+    is_carrying: nimCameraCarrying(),
+    separation: nimCameraDistance(),
+    depth: nimCameraScaleLocal(),
+  }), star.handle);
+  const readings = [await offMiddleOf(page, star.handle, box)];
+  const press = [
+    box.width / 2 + PRESS_ORBIT_FAR_PICK.across, box.height / 2 + PRESS_ORBIT_FAR_PICK.down,
+  ];
+  let is_open = true;
+  for (const [across, down] of DRAGS_ORBIT_FAR_PICK) {
+    if (stopped !== '' || !is_open) break;
+    const to = [(press[0] ?? 0) + across, (press[1] ?? 0) + down];
+    is_open = await dragOnSky(page, box, press, to, STEPS_ORBIT_FAR_PICK, async () => {
+      readings.push(await offMiddleOf(page, star.handle, box));
+    });
+    readings.push(await offMiddleOf(page, star.handle, box));
+  }
+  await sendHome(page);
+
+  const faults = [
+    stopped, settled.is_picked ? '' : 'not picked', settled.is_carrying ? 'still easing' : '',
+    is_open ? '' : 'an orbit press found no open sky',
+  ].filter((one) => one !== '');
+  const { off_most, move_most } = spreadOf(readings);
+  report(
+    name, faults.length === 0 && off_most <= PIXELS_MIDDLE_FAR_PICK,
+    `${NAME_FAR_PICK}, ${(star.reach / 1e6).toFixed(2)} million units out` +
+      `${faults.map((one) => `, ${one}`).join('')}; off middle ` +
+      `${spreadOf(readings.slice(0, 1)).off_most.toFixed(3)} px once settled, then by up to ` +
+      `${off_most.toFixed(3)} px over ${readings.length - 1} steps, moving up to ` +
+      `${move_most.toFixed(3)} px a step; star stands ` +
+      `${(settled.depth - settled.separation).toExponential(2)} units past the pivot along the ` +
+      `sight, at ${settled.separation.toExponential(4)}`,
   );
 }

@@ -1078,6 +1078,31 @@ suite "Mesh":
       check isNear(star, scale_test.eye + scale_test.radiusHorizon * heading.get)
 
 
+  test "a horizon past a billion units still holds each kind where the algebra puts it":
+    # Fault: horizon stands at 0.9 of far bound, and past `1 / TOLERANCE_ABS` its unit
+    #   weight read as direction against its bulk. `pointFrom` asserted in frame loop, so
+    #   page stopped drawing, and star's anchor read none. Largest demo reached it 5.6e7 out.
+    let scale_far = block:
+      var far = scale_test
+      far.scale.radius_horizon = 4.0e9
+      algebraFilled(far)
+    for line in LINES:
+      MESHES.clearMeshes
+      check MESHES.addObject(SCRATCH, line, Ink.Jade.colour, scale_far) == Outcome.Finite
+      check 6 * MESHES.ribbons.count == 2 * vertices_ribbon
+      let
+        attitude = ⊖line
+        heading = directionHorizon(attitude)
+      check heading.isSome
+      let star_true = scale_far.eye + scale_far.radiusHorizon * heading.get
+      MESHES.clearMeshes
+      check MESHES.addObject(SCRATCH, attitude, Ink.Cobalt.colour, scale_far) == Outcome.Horizon
+      check MESHES.points.count_vertices == 1
+      check isNear(MESHES.points.vertices[0].toPosition, star_true)
+      let anchor = anchorFor(attitude, scale_far)
+      check anchor.isSome and isNear(anchor.get, star_true)
+
+
   test "horizon line becomes a great circle around eye, perpendicular to its normal":
     var count_showable = 0
     for plane in PLANES:
