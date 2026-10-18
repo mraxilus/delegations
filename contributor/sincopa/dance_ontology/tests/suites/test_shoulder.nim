@@ -62,8 +62,9 @@ const
     ## stop sweep early and shed some; reader that loses its way sheds nearly all.
   FLOOR_STILLS = 114  ## Least arm-moments law reads from rig's stills: half of 228, likewise.
   FLOOR_TURNS = 3588
-    ## Least held arm-moments law reads from whole-cloth recording: half of 7176, likewise.
-  KEPT_TURNS = KEPT_RIG.parentDir / "turns.json"  ## Recording of whole-cloth page, beside rig's.
+    ## Least held arm-moments law reads from `design/turns`: half of 7176, likewise.
+  KEPT_TURNS = KEPT_RIG.parentDir / "turns.json"
+    ## Recording of every hold turning (`design/turns`), beside rig's.
   WORST_SHOWN = 12  ## Moments furthest past edge that failure lists.
 
   SUBJECTS: array[Man, tuple[φ, θ: float]] = [
@@ -107,7 +108,7 @@ const
 
 type ArmMoment = object  ## Define one arm at one moment of recording, as law reads it.
   recording: string  ## `rig sweep`, `rig still` or `turns`.
-  card: string  ## Sweep, still or whole-cloth sweep it belongs to.
+  card: string  ## Sweep, still or sweep of `design/turns` it belongs to.
   who: Body  ## Whose arm.
   arm: Arm  ## Which of their two.
   at: float  ## Turns from rest, signed.
@@ -214,7 +215,7 @@ func armMomentsRig(kept: JsonNode): seq[ArmMoment] =
                                reading: outside(axesOf(stance), arm, pose))
 
 func armMomentsTurns(kept: JsonNode): seq[ArmMoment] =
-  ## Read every held arm of every moment of whole-cloth recording: lead's points run shoulder
+  ## Read every held arm of every moment of `design/turns`: lead's points run shoulder
   ## to join, and follow's join to shoulder, in whole millimetres (`design/turns`).
   func pointOf(figures: JsonNode): Vector =
     (figures[0].getFloat / 1000.0, figures[1].getFloat / 1000.0, figures[2].getFloat / 1000.0)
@@ -577,8 +578,8 @@ suite "Internal: Every upper arm the simulation recorded, against shoulder's edg
     var worst: seq[string]
     for moment in past[0..<min(past.len, WORST_SHOWN)]: worst.add moment.named
     checkpoint &"Arm-moments read: `{read[\"rig sweep\"]}` of rig's sweeps, " &
-        &"`{read[\"rig still\"]}` of its stills, `{read[\"turns\"]}` held in whole-cloth " &
-        &"recording.  Stills holding no pose: `{kept.unheld.join(\", \")}`."
+        &"`{read[\"rig still\"]}` of its stills, `{read[\"turns\"]}` held in " &
+        &"`design/turns`.  Stills holding no pose: `{kept.unheld.join(\", \")}`."
     check read["rig sweep"] >= FLOOR_SWEEPS
     check read["rig still"] >= FLOOR_STILLS
     check read["turns"] >= FLOOR_TURNS

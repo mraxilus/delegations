@@ -10,8 +10,7 @@
 ##   |----------|-----------------------------------------------------------------------|
 ##   | pages    | fetch faces, write shells from Nim hosts, compile browser scripts,    |
 ##   |          | fold each into one self-contained file, render review page and frame  |
-##   |          | pictures, build mark pages, fold recorded turns into whole-cloth      |
-##   |          | page, build rig viewer                                                |
+##   |          | pictures, build card review, then rig viewer                          |
 ##   | assets   | fetch faces pages embed from repository store into build/fonts        |
 ##   | types    | type-check harness `tools/drive/`, and emit it into build/drive        |
 ##   | drive    | build every page, render each and control as publish host serves it, |
@@ -29,7 +28,7 @@
 ##   | record   | every recording below in one queue, slowest job first, each question  |
 ##   |          | asked once, each result kept as it comes, so run stopped part way     |
 ##   |          | goes on where it stopped                                              |
-##   | turns    | rewrite design/turns.json: sweeps whole-cloth page plays              |
+##   | turns    | rewrite design/turns.json: every hold turning, which laws read        |
 ##   | verdicts | instrument run, not build: answers land in simulation/verdicts.md     |
 ##   | answers  | rewrite simulation/answers.json: where couple stand for rig's laws,   |
 ##   |          | stamped                                                               |
@@ -269,22 +268,9 @@ proc dress() =
   echo "Faces put into ", dressed, " pages."
 
 
-proc turnsJs() =
-  ## Fold recorded sweeps into script whole-cloth page reads.
-  ##   Recording is `turns` verb's, as `modelled` and `rig` are theirs: eighteen
-  ##     sweeps searching every distance couple may stand at cost more than
-  ##     every `pages` run should pay.
-  let data = "design" / "turns.json"
-  if not fileExists(data):
-    quit(
-      "Whole-cloth page has no sweeps; run `nim r tools/build.nim turns`: got `" & data & "`.",
-      1,
-    )
-  writeFile(BUILD / "design" / "turns.js", "var TURNS = " & readFile(data).strip() & ";\n")
-  echo "wrote " & BUILD / "design" / "turns.js"
-
 proc turns() =
-  ## Rewrite `design/turns.json`: every hold turning, for whole-cloth page.
+  ## Rewrite `design/turns.json`: every hold turning, which laws read (`test_asks`,
+  ##   `test_shoulder`).
   nim(@["c", "-r"] & DANGER & @["--outdir:" & BINARIES, "design/record.nim", "turns"])
 
 proc pages() =
@@ -298,13 +284,6 @@ proc pages() =
   compileRun(["tools/bundle.nim", BUILD / "app", "app"])
   compileRun(["tools/review.nim", BUILD / "review"])
   compileRun(["design/marks.nim", BUILD / "design"])
-  turnsJs()
-  nim(
-    @["js"] & RELEASE & @[
-      "-o:" & BUILD / "design" / "wholecloth_turns.js", "design/wholecloth_turns.nim",
-    ],
-  )
-  compileRun(["design/wholecloth.nim", BUILD / "design"])
   nim(
     @["js"] & RELEASE & @[
       "-o:" & BUILD / "design" / "rig_view.js", "design/rig_view.nim",

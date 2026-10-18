@@ -31,17 +31,18 @@ const
   FACE_SLOP = 0.005  ## Metres arm may sit inside face: engine's own linear slop, which it never
                     ## resolves (`test_rigid.SLOP`).
   KEPT_TURNS = KEPT_RIG.parentDir / "turns.json"
-    ## Recording of whole-cloth page, beside rig's.  Sibling: `test_shoulder.KEPT_TURNS`.
+    ## Recording of every hold turning (`design/turns`), beside rig's.  Sibling:
+    ##   `test_shoulder.KEPT_TURNS`.
   PLACE_RIG = 1.0 / 10.0^PLACE
     ## Rig's recording rounds every figure to this, metres and turns alike (`design/rig.PLACE`).
-  PLACE_TURNS = 1e-3  ## Metres whole-cloth recording rounds every point to (`turns.toMillimetres`).
+  PLACE_TURNS = 1e-3  ## Metres `design/turns` rounds every point to (`turns.toMillimetres`).
   FLOOR_AWAY_RIG = 106
     ## Least moments past face to face law on hands over crown reads from rig's sweeps over
     ##   crown: half of 213 read 2026-10-12, on recording of wall on step.  Fix may stop sweep
     ##   early or carry it further; reader that loses its way, by wrong rest or wrong keys, reads
     ##   nearly none.
-  FLOOR_AWAY_TURNS = 340  ## Same, from whole-cloth recording's six holds over crown: half of 680.
-  PLACE_TURN_TURNS = 1e-3  ## Turns whole-cloth recording rounds each moment's to (`turns.frame`).
+  FLOOR_AWAY_TURNS = 340  ## Same, from six holds over crown of `design/turns`: half of 680.
+  PLACE_TURN_TURNS = 1e-3  ## Turns `design/turns` rounds each moment's to (`turns.frame`).
   TURNS_PLANNED = [
     (hold: "L-l", negative: MOST, positive: MOST),
     (hold: "R-r", negative: MOST, positive: MOST),
@@ -270,7 +271,7 @@ func liftedRig(recording: JsonNode): tuple[hands: seq[Lifted], moments: int] =
   ##   Joined hand is one of each dancer whose line passes nearest each join at rest.  Rest is
   ##     Face-to-back where two chests face one way at nought.
   ##   Sweep that stops keeps moment it stops at (`seen.shownAsked`), where walk gave: that one
-  ##     is left out, so moments read are those walk holds, as whole-cloth recording keeps them
+  ##     is left out, so moments read are those walk holds, as `design/turns` keeps them
   ##     (`heldMoments`).
   let
     card = recording["hold"].getStr & " · " & recording["band"].getStr
@@ -310,7 +311,7 @@ func liftedRig(recording: JsonNode): tuple[hands: seq[Lifted], moments: int] =
       result.hands.add (card, at, hand.body, hand.arm, carried.z)
 
 func liftedTurns(kept: JsonNode): tuple[hands: seq[Lifted], moments: int] =
-  ## Every joined hand of each hold over crown of whole-cloth recording, both ways, at every
+  ## Every joined hand of each hold over crown of `design/turns`, both ways, at every
   ## moment couple are `RAISE` or more from face to face, where it is carried: `rig.carry` past
   ## wrist toward join (`limb.carriedOf`).  Lead's points run shoulder to join, and follow's
   ## join to shoulder, in whole millimetres (`design/turns`).
@@ -351,7 +352,7 @@ func named(hand: Lifted): string =
 
 
 func holdOf(arms: seq[(Arm, Arm)]): string =
-  ## Hold as whole-cloth recording names it: lead's hand in capitals, follow's in lower case.
+  ## Hold as `design/turns` names it: lead's hand in capitals, follow's in lower case.
   var parts: seq[string]
   for (lead_arm, follow_arm) in arms:
     parts.add (if lead_arm == Arm.Left: "L" else: "R") & "-" &
@@ -369,8 +370,8 @@ func turnsHeldRig(kept: JsonNode): seq[tuple[card, hold: string, way: int, held:
     result.add (sweep["hold"].getStr & " · above", holdOf(SHOWN[i].arms), 1, held)
 
 func turnsHeldTurns(kept: JsonNode): seq[tuple[card, hold: string, way: int, held: float]] =
-  ## Turns from rest of furthest moment each way of each hold over crown of whole-cloth
-  ##   recording holds: it keeps no moment that gave (`design/turns.frames`).
+  ## Turns from rest of furthest moment each way of each hold over crown `design/turns`
+  ##   holds: it keeps no moment that gave (`design/turns.frames`).
   for key, sweep in kept["sweeps"].pairs:
     if not key.endsWith("|above"): continue
     for way in [-1, 1]:
@@ -745,7 +746,7 @@ suite "Internal: Simulation against reference":
     ##   Carried point is read (`limb.carriedOf`), and not join: ruling quotes band, 1.735 to
     ##     2.00 m, and join may sit under it while carried point is inside, as in stills.
     ##   Domain: every moment of every sweep over crown both recordings keep, rig's four and six
-    ##     holds of whole-cloth page both ways, each yielding at least its floor.  Moments are
+    ##     holds of `design/turns` both ways, each yielding at least its floor.  Moments are
     ##     those walk holds: rig's sweep keeps moment it stops at too (`seen.shownAsked`), where
     ##     something gave, and that one is not read; planned way keeps none (`heldMoments`).
     ##     Cost: viewer draws that moment, hands and all, under words of its stop; law of
@@ -765,7 +766,7 @@ suite "Internal: Simulation against reference":
     ##     L-l.R-r above at -1.86: lead's right hand at 1.667 m.
     ##     L-r.R-l above and `Chain, cross name · above` at +0.60: follow's left hand at 1.696 m.
     ##   Red before its fix, read 2026-10-12 on recording of wall with slope at 270 alone: 205 of
-    ##     881 moments, 64 of rig's 212 and 141 of whole-cloth recording's 669, lowest hand at
+    ##     881 moments, 64 of rig's 212 and 141 of 669 of `design/turns`, lowest hand at
     ##     1.363 m.  On recording of wall on step, 137 of 893.
     let
       (rig, turns) = (parseFile(KEPT_RIG), parseFile(KEPT_TURNS))
@@ -812,7 +813,7 @@ suite "Internal: Simulation against reference":
     var worst: seq[string]
     for hand in under[0..<min(under.len, 12)]: worst.add hand.named
     checkpoint &"Moments past face to face read: `{got_rig.moments}` of rig's sweeps over crown, " &
-        &"`{got_turns.moments}` of whole-cloth recording; hands read under `{floor_crown:.3f}` m " &
+        &"`{got_turns.moments}` of `design/turns`; hands read under `{floor_crown:.3f}` m " &
         &"less `{under_rig * 1000.0:.2f}` and `{under_turns * 1000.0:.2f}` mm of rounding."
     check got_rig.moments >= FLOOR_AWAY_RIG
     check got_turns.moments >= FLOOR_AWAY_TURNS
@@ -840,7 +841,7 @@ suite "Internal: Simulation against reference":
     ##   Way holds as far as its furthest moment, in turns from rest: rig's sweep keeps moment it
     ##     stops at, where walk gave, and that one is not read (`heldMoments`).
     ##   Domain: every way over crown both recordings keep: way of each of rig's four sweeps that
-    ##     turns positive (`seen.shown`), and both ways of whole-cloth recording's six holds.
+    ##     turns positive (`seen.shown`), and both ways of six holds of `design/turns`.
     ##     Every hold read names its floor, and none is left unread.
     ##   That plan's moments keep hands in band and arms inside edge is held where each moment
     ##     is read: joined hands over crown (law above), and shoulder's edge (`test_shoulder.nim`).
@@ -867,7 +868,7 @@ suite "Internal: Simulation against reference":
         checkpoint &"`{named}`: holds to `{held:.4f}` of turn, plan carries `{floor.get:.4f}`."
         if held + place / 2.0 < floor.get: short.add &"{named} {held:.4f}"
     checkpoint &"Ways read: `{by_rig.len}` of rig's sweeps over crown, `{by_turns.len}` of " &
-        &"whole-cloth recording.  Short of plan: `{short.join(\", \")}`.  With no floor: " &
+        &"`design/turns`.  Short of plan: `{short.join(\", \")}`.  With no floor: " &
         &"`{unfloored.join(\", \")}`."
     check by_rig.len == ways_rig
     check by_turns.len == ways_turns
@@ -882,8 +883,9 @@ suite "Internal: Simulation against reference":
     ##   Law above reads how far each way turns, and laws of hands and edge read moments each way
     ##     keeps, so none of them sees way that leaves out moments it could not hold.
     ##   Domain: every moment of every sweep both recordings keep: each rig sweep, way that turns
-    ##     positive, from its first moment, which is rest (`seen.shown`); and each whole-cloth
-    ##     sweep, both ways in order of turn, through rest it draws once (`design/turns.frames`).
+    ##     positive, from its first moment, which is rest (`seen.shown`); and each sweep of
+    ##     `design/turns`, both ways in order of turn, through rest it writes once
+    ##     (`design/turns.frames`).
     ##     Sweep that holds no rest keeps no moment; half of sweeps is floor read.
     ##   Each recording rounds turn of each moment, so step may read long or back by that.
     ##   Gap found 2026-10-12 in review of `cd9ec9a8`: with moments 0.80 to 1.20 of turn taken out

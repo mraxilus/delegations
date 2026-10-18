@@ -1,36 +1,33 @@
-## Ask body simulation for every hold turning, and write it down for whole-cloth page.
+## Ask body simulation for every hold turning, and write it down for laws that read it.
 ##
-##   Whole-cloth page animates hold turning, and only honest way to animate two
-##     bodies and their arms is to ask thing that models them.  Engine is C and
-##     page is script in browser, so this program runs simulation natively and writes
-##     every moment of every sweep as data; page only draws.  Nothing about
-##     physics is guessed on page: where each joint is, which way arm lies, and
-##     where turn runs out are all read from here.
-##   Written to `design/turns.json` by its own verb, as `modelled` and `rig` are,
-##     and folded into page by `pages`.  Couple stand for turn, so each sweep
-##     searches every distance they may stand at, and eighteen of them cost more
-##     than every `pages` run should pay.
+##   Laws read moments of every sweep: hands over crown, how far plan carries each way
+##     and step from rest (`tests/suites/test_asks.nim`), and shoulder's edge
+##     (`tests/suites/test_shoulder.nim`).  So this program runs simulation natively and
+##     writes every moment as data, and laws only read it.
+##   Written to `design/turns.json` by its own verb, as `modelled` and `rig` are.  Couple
+##     stand for turn, so each sweep searches every distance they may stand at, and
+##     eighteen of them cost more than every suite run should pay.
 ##   Way over crown that walk stops short of all it asks, by whatever stopped it, is planned way
 ##     where that holds further (`walk.swept`): couple stand where plan has them at each moment,
 ##     and moment that plan poses again at one turn is marked so (`reseed`).
-##   Each moment carries its place on page's play (`place`), so page plays every pose plan
-##     stands at one turn while turn waits (Architect, pull request 629, 2026-10-17, D2).
-##     Cost: two chains held above play longer per pass, as `frames` measures.
+##   Each moment carries its place in play of its sweep (`place`): every pose plan stands at
+##     one turn takes step of its own while turn waits (Architect, pull request 629,
+##     2026-10-17, D2).  No law reads `place` or `reseed`.
 ##   Words (wrap, lock, low, high) are put on by `simulation/words`, which `verdicts`
 ##     reads too.  Not because simulation speaks other language -- it reuses agreed
 ##     words -- but because here it measures what ontology asserts, and
 ##     translation kept visible is evidence where assumed identity is echo.
 ##     Table was once written out here and again in `verdicts`, to keep it
-##       visible in both.  Two copies drifted instead, so page and report gave
+##       visible in both.  Two copies drifted instead, so recording and report gave
 ##       one pose two answers; one table, named for itself, is what keeps it
 ##       visible now.
-##   Two rests, both page's own choice: cross-name holds rest face to face, and
+##   Two rests, both recording's own choice: cross-name holds rest face to face, and
 ##     same-name holds are also built face to face so turns count as sheet
 ##     counts.  Same-name *pair* is exception: face to face its two connections
 ##     lie through each other, so it is built Face-to-back -- collected there, as
 ##     couple would -- and its turns count from it.
 ##   Two ways of one sweep stand where each of them wants, so frame at nought
-##     turns is reached from two stances and page shows step between them.  That
+##     turns is reached from two stances and recording keeps step between them.  That
 ##     is what model says, not smoothing to hide.
 
 {.experimental: "strictFuncs".}
@@ -76,11 +73,11 @@ func toMillimetres(point: Vector): JsonNode =
   %*[int(round(point.x * 1000.0)), int(round(point.y * 1000.0)), int(round(point.z * 1000.0))]
 
 func frame(moment: Moment, band: Band, links: seq[Link], is_reposed: bool, reposed: int): JsonNode =
-  ## Record one moment as page draws it: arms, words, crossings, and place on page's play.
-  ##   Moment at turn of one before it has arms posed again there (`reseed`), and page says so:
-  ##     planned way stands several poses at one wind (`plan.planPath`).
+  ## Record one moment: arms, words, crossings, and place in play of its sweep.
+  ##   Moment at turn of one before it has arms posed again there (`reseed`), and is marked
+  ##     so: planned way stands several poses at one wind (`plan.planPath`).
   ##   Place is turn, plus one step for each of `reposed` poses stood again, this one included,
-  ##     in order written, so page gives each pose one step of play (`wholecloth_scene`).
+  ##     in order written, so each pose takes one step of play.
   ##     Counted in thousandths, as turn is written, so place lies on that same grid.
   let
     tight = tightest(HUMAN, moment.stance, links, moment.arms)
@@ -132,13 +129,8 @@ func isReposed(way: Walk, i: int): bool =
 func frames(sweep: Swept, band: Band, links: seq[Link]): JsonNode =
   ## List every moment of both ways, in order of turn, rest once, each at its own place on play.
   ##   Negative way was walked outward from rest, so it is read back to front.
-  ##   Page plays every pose planned way stands at one turn, one step of play each, and turn
-  ##     waits there (Architect, pull request 629, 2026-10-17, D2).
-  ##     Cost: two chains held above play longer, cross-name 8.7 s to 14.2 s per pass and
-  ##       same-name 11.4 s to 17.9 s, within page's two turns each way at 0.35 of turn per
-  ##       second, derived 2026-10-17 from recording's turns and places.
-  ##     Rejected: last pose at each turn alone, which moves arm 205 to 548 mm in one step and
-  ##       draws it up to 61 mm short or long halfway, measured 2026-10-15.
+  ##   Every pose planned way stands at one turn takes one step of play, and turn waits there
+  ##     (Architect, pull request 629, 2026-10-17, D2).
 
   template write(moment: Moment, is_reposed: bool) =
     ## Write moment as frame, counting it where it stands at turn of one written before it.
@@ -161,9 +153,8 @@ func frames(sweep: Swept, band: Band, links: seq[Link]): JsonNode =
 
 func went(way: Walk): float =
   ## How far one way got: where it stopped, else as far as it was walked.
-  ##   `Walk.at` is set only where something gave.  Page reads this as edge of
-  ##     what it may draw, so free way written as nought would be drawn not at
-  ##     all; old solver wrote `MOST` there and page still expects that.
+  ##   `Walk.at` is set only where something gave.  Free way is written as far as it
+  ##     was walked rather than as nought, which would read as way that went nowhere.
   if way.is_stopped: way.at
   elif way.moments.len > 0: abs(way.moments[^1].at)
   else: 0.0
@@ -198,10 +189,10 @@ proc sweepJson(hold, word: string; band: Band): JsonNode =
       " (" & $(sweep.negative.moments.len + sweep.positive.moments.len) & " moments)"
 
 
-type Sweep* = tuple[hold, word: string, band: Band]  ## One sweep of whole-cloth page.
+type Sweep* = tuple[hold, word: string, band: Band]  ## One sweep of this recording.
 
 func sweeps*(): seq[Sweep] =
-  ## Every sweep page plays, in order its file keeps them: each hold at each band.
+  ## Every sweep recorded, in order its file keeps them: each hold at each band.
   for hold in HOLDS:
     for (word, band) in BANDS: result.add (hold, word, band)
 

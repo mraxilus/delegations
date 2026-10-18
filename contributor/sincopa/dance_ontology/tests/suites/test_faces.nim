@@ -27,7 +27,6 @@ const
   PATH_APP = "pages" / "app" / "index.html"
     ## Shell of Reference, whose style sheet sits in its head.
   PATH_REVIEW = "mockups" / "review.html"  ## Shell of review page.
-  PATH_WHOLECLOTH = "mockups" / "wholecloth.html"  ## Whole-cloth proposal, drawn by hand.
 
 
 proc stub(directory: string) =
@@ -213,7 +212,6 @@ suite "Internal: Faces":
       (page.STYLE.stylesOf, @["h1", "h2", "h3"]),
       (readFile(PATH_APP).stylesOf, @["h1", "h2", "h3", "h4"]),
       (readFile(PATH_REVIEW).stylesOf, @["h1", "h2", "h3"]),
-      (readFile(PATH_WHOLECLOTH).stylesOf, @["h1", "section.plate h2", ".panel h3"]),
     ]:
       for selector in selectors:
         checkpoint(selector)
@@ -230,7 +228,6 @@ suite "Internal: Faces":
       (page.STYLE.stylesOf, @["body", "h1", "code"]),
       (readFile(PATH_APP).stylesOf, @["body", "h1"]),
       (readFile(PATH_REVIEW).stylesOf, @["body", "h1", "code"]),
-      (readFile(PATH_WHOLECLOTH).stylesOf, @["body", "h1", ".m"]),
     ]:
       for selector in selectors:
         checkpoint(selector)

@@ -1,5 +1,5 @@
 ## Record every kept file of simulation in one pool: rig viewer's stills and sweeps, reference's
-## badges, whole-cloth turns, rig suite's answers and report's readings.  Every job of five
+## badges, turns laws read, rig suite's answers and report's readings.  Every job of five
 ## recordings is in one queue, slowest first, and each result is kept as it comes, so restarted
 ## run asks only what has no result yet.
 ##
@@ -7,7 +7,7 @@
 ##     still holds several.  Each verb split its own jobs by worker, `k`, `k + cores` onward,
 ##     and one worker held rig 5.7 h where three ended at 3.1 to 3.8 h; modelled then took 3.0
 ##     h after it.  Estimated 2026-10-03 from job times of one run.
-##   One run asks each question once (`walk.keepAnswers`): report sweeps holds whole-cloth page
+##   One run asks each question once (`walk.keepAnswers`): report sweeps holds `design/turns`
 ##     sweeps, and rig and modelled stand same stills, so each reads what first job answered.
 ##   Slowest first (`SLOWEST`): last job to start is short, so every worker ends near same
 ##     time.  Order is measured and goes stale as simulation changes; wrong order costs time
@@ -57,7 +57,7 @@ const SLOWEST* = ["rig D01", "modelled hc_la", "rig C01", "rig C02", "modelled h
   ##   still plans 32 paths on every core (`walk.planAhead`), which modelled's planned
   ##   questions find kept.  C07 and C06 take C01 and C02 reflected (`walk.twinOf`), and D07 takes
   ##   D01's paths kept, so they follow in order of `wanted`, as every other job does:
-  ##   whole-cloth turns first, which walk every distance.
+  ##   turns first, which walk every distance.
 
 # Mutable and global: thread takes one argument, so workers read queue and what answers it here.
 var
@@ -178,7 +178,7 @@ proc main() =
       quit("Usage: record [rig] [modelled] [turns] [answers] [verdicts]; got `" &
            asked.join(" ") & "`.", 2)
   if wanted.len == 0:
-    # Sweeps of whole-cloth page first: report and rig viewer sweep same holds, and find
+    # Sweeps of `design/turns` first: report and rig viewer sweep same holds, and find
     # them kept.  Report's rungs next, which nothing else asks.  Rig's stills before
     # modelled's, which ask same stills again.
     wanted = @[Recording.Turns, Recording.Verdicts, Recording.Rig, Recording.Answers,

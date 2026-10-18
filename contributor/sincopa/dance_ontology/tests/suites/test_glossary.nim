@@ -45,7 +45,6 @@ const
     ## Directories whose string literals reach reader: page written into markup,
     ##   element set by browser, or row of `simulation/verdicts.md`.
   DOCUMENTS = [
-    "mockups" / "wholecloth.html",
     "mockups" / "review.html",
     "pages" / "app" / "index.html",
   ]
