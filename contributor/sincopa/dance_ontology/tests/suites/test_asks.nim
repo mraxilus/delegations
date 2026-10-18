@@ -9,7 +9,7 @@ import std/[algorithm, json, math, options, os, sequtils, sets, strformat, strut
 import ../../design/[asks, modelled, parts, rig_page, twins, watch]
 from ../../design/rig as recording import KEPT_RIG, rigStamp
 from ../../design/rig {.all.} import PLACE, SHOWN
-from ../../design/turns as whole_cloth import nil
+from ../../design/turns as turning import nil
 import ../../simulation/[body, hold, limb, read, rig, vector, words]
 from ../../simulation/plan import isMirrorSame, STRIDE
 from ../../simulation/rigid import ELBOW_END, ELBOWS_APART, faceCapsule, Mark, ON_UPPER,
@@ -855,7 +855,7 @@ suite "Internal: Simulation against reference":
       by_rig = turnsHeldRig(parseFile(KEPT_RIG))
       by_turns = turnsHeldTurns(parseFile(KEPT_TURNS))
       ways_rig = SHOWN.countIt(it.band == Band.Crown)
-      ways_turns = 2 * whole_cloth.sweeps().countIt(it.band == Band.Crown)
+      ways_turns = 2 * turning.sweeps().countIt(it.band == Band.Crown)
     var short, unfloored: seq[string]
     for (ways, place) in [(by_rig, PLACE_RIG), (by_turns, PLACE_TURN_TURNS)]:
       for (card, hold, way, held) in ways:
@@ -893,7 +893,7 @@ suite "Internal: Simulation against reference":
     let
       (rig_kept, turns_kept) = (parseFile(KEPT_RIG), parseFile(KEPT_TURNS))
       step_most = max(STEP, STRIDE)
-      sweeps_least = (SHOWN.len + whole_cloth.sweeps().len) div 2
+      sweeps_least = (SHOWN.len + turning.sweeps().len) div 2
     var
       gaps: seq[string]
       read = 0
