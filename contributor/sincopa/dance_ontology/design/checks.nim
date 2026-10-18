@@ -1,8 +1,8 @@
 ## Assert claims eye cannot check, instead of trusting them.
 ##
 ##   Everything card review argues is here as test: hands land where
-##     rules put them, orbit collapses onto matching axis turn mark
-##     for mark, every cycle closes, no reach enters body, and bare
+##     rules put them, orbit lands on state of matching axis turn,
+##     every cycle closes, no reach enters body, and bare
 ##     border carries no arm ink.
 ##   Each checker is ledger made executable: one block per rule,
 ##     each opening with rule in words it was given, each printing

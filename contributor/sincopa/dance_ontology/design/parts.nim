@@ -336,7 +336,7 @@ func singleTurnParts*(): Parts =
       doAssert shared == (if is_same_round: QUARTERS_ROUND else: 1),
         &"A manner left its round; got `{shared}` shared of `{manner}` and `{mate}`."
 
-  # And nothing on this page wraps body: reach is connection's own
+  # And no single-hand figure wraps body: reach is connection's own
   # stroke width, and one drawn with arc has walked round body.
   for key, figure in result:
     if not (key.startsWith("st_") or key.startsWith("tr_")):
@@ -466,11 +466,11 @@ const
   HAND_PHASE* = phaseOf(HAND_TO_HAND)
     ## Hand to hand runs parallel with partners facing one another, so
     ## its chain sits at nothing -- measured on every build, not assumed.
-  CHAIN* = chainFor(HAND_TO_HAND)  ## Seven positions this page holds, in chain order.
+  CHAIN* = chainFor(HAND_TO_HAND)  ## Seven positions of hand-to-hand chain, in chain order.
 
 
 func handPose*(wind = 0.0): Pose =
-  ## Get pose one position of this page's chain stands in.
+  ## Get pose one position of `CHAIN` stands in.
   posedAt(wind, HAND_PHASE)
 
 

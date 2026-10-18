@@ -240,8 +240,7 @@ func border*(pose: Pose, who: Dancer): string =
 #[ Hands And Furniture ]#
 
 func fillOf(level: Option[Level], arm: Arm, is_deep = false): string =
-  ## Get fill that level draws as -- only place level becomes fill,
-  ## so hands and pips cannot drift.
+  ## Get fill that level draws as -- only place level becomes fill.
   if level == some(Level.Low):
     return if is_deep: DEEP[arm] else: INK[arm]
   if level == some(Level.Above):
