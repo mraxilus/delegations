@@ -10,7 +10,7 @@
 ##   |----------|-----------------------------------------------------------------------|
 ##   | pages    | fetch faces, write shells from Nim hosts, compile browser scripts,    |
 ##   |          | fold each into one self-contained file, render review page and frame  |
-##   |          | pictures, build five mark pages, fold recorded turns into whole-cloth |
+##   |          | pictures, build mark pages, fold recorded turns into whole-cloth      |
 ##   |          | page, build rig viewer                                                |
 ##   | assets   | fetch faces pages embed from repository store into build/fonts        |
 ##   | types    | type-check harness `tools/drive/`, and emit it into build/drive        |

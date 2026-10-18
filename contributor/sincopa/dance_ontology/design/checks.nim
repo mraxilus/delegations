@@ -2,9 +2,8 @@
 ##
 ##   Everything pages argue is here as test: hands land where
 ##     rules put them, orbit collapses onto matching axis turn mark
-##     for mark, every cycle closes, no reach enters body, bare border
-##     carries no arm ink, and sign's geometry is even to tenth of
-##     unit.
+##     for mark, every cycle closes, no reach enters body, and bare
+##     border carries no arm ink.
 ##   Each page's checker is ledger made executable: one block per rule,
 ##     each opening with rule in words it was given, each printing
 ##     one line on every build.  Rule that is only implemented and not
@@ -19,7 +18,7 @@
 import std/[algorithm, math, options, sequtils, sets, strformat, strutils,
             tables]
 
-import ./[parts, rules, sign]
+import ./[parts, rules]
 import ../src/dance_ontology/draw/[body, figure, geometry, pose, route, style]
 # Qualified, and only here: rule 11 claims turn pages add no frame that
 # app does not have, and only way to check *that* is to ask app's
@@ -1641,67 +1640,3 @@ proc checkHandTurns*(built: Parts) =
 
   for line in told:
     echo &"  rule: {line}"
-
-
-
-#[ Turn Sign ]#
-
-proc checkSign*() =
-  ## Check numbers eye cannot: equal sides, margins, gaps,
-  ## clearance.
-  let
-    y_foot = PAD + OVER
-    y_bottom = y_foot + HEIGHT
-  for rows in 1..QUARTERS:
-    var
-      sides: HashSet[float]
-      margins: HashSet[float]
-      clear: HashSet[float]
-      gaps: seq[float]
-      edges: seq[tuple[top, bottom: float]]
-    for place in 0..<rows:
-      let
-        top = y_bottom - GAP_X - float(place) * (PIP + GAP_X) - PIP +
-            (PIP - PIP * LEAN_COSINE) / 2
-        left = PAD + (y_bottom - top) * TANGENT
-        corner_x = left + GAP_X
-        points: array[4, Point] = [
-          (corner_x, top), (corner_x + PIP, top),
-          (corner_x + PIP - PIP * LEAN_SINE, top + PIP * LEAN_COSINE),
-          (corner_x - PIP * LEAN_SINE, top + PIP * LEAN_COSINE)]
-      for i in 0..3:
-        let
-          p = points[i]
-          q = points[(i+1) mod 4]
-        sides.incl round(hypot(q.x - p.x, q.y - p.y), 3)
-      let bottom_left = PAD + (y_bottom - (top + PIP * LEAN_COSINE)) * TANGENT
-      margins.incl round(points[0].x - left, 3)
-      margins.incl round(points[3].x - bottom_left, 3)
-      margins.incl round(left + SIGN_BODY - (points[1].x + PIP + GAP_X), 3)
-      # Circle has no corners to tuck under lean, so its clearance is
-      # measured square to edge rather than across page.
-      for column in [0.0, 1.0]:
-        let across = GAP_X + column * (PIP + GAP_X) + PIP / 2
-        clear.incl round(min(across, SIGN_BODY - across) * LEAN_COSINE - PIP / 2, 3)
-      edges.add (y_bottom - GAP_X - float(place) * (PIP + GAP_X) - PIP,
-                 y_bottom - GAP_X - float(place) * (PIP + GAP_X))
-    edges.sort
-    gaps.add round(edges[0].top - y_foot, 3)  # to lid
-    for i in 0..<edges.high:
-      gaps.add round(edges[i+1].top - edges[i].bottom, 3)
-    gaps.add round(y_bottom - edges[^1].bottom, 3)  # to foot
-    doAssert sides == toHashSet([PIP]), &"Uneven pip sides; got `{sides}`."
-    doAssert margins == toHashSet([GAP_X]),
-      &"Uneven margins; got `{margins}`."
-    doAssert clear.toSeq.min > 0, &"A circle touches the lean; got `{clear}`."
-    doAssert gaps[1 .. ^1].toHashSet == toHashSet([GAP_X]),
-      &"Uneven gaps; got `{gaps}`."
-    if rows == QUARTERS:
-      doAssert gaps[0] == GAP_X, &"The lid gap is off; got `{gaps[0]}`."
-    let
-      sides_said = sides.toSeq.sorted.mapIt($it).join(", ")
-      margins_said = margins.toSeq.sorted.mapIt($it).join(", ")
-      gaps_said = gaps.mapIt($it).join(", ")
-      clear_said = clear.toSeq.sorted.mapIt($it).join(", ")
-    echo &"  {rows}/4: sides [{sides_said}] margins [{margins_said}] " &
-        &"gaps [{gaps_said}] circle clearance [{clear_said}]"

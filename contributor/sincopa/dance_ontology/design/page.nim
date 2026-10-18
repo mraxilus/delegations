@@ -1,8 +1,8 @@
 ## Share chrome every mark page uses: style sheet, key,
 ## wrapper.
 ##
-##   Five explorations live on five pages -- frame picture, turn
-##     sign, one turn mock-up per kind of hold, and page every drawn
+##   Explorations live on pages of their own -- frame picture, one
+##     turn mock-up per kind of hold, and page every drawn
 ##     frame state is ruled on -- because they are separate questions that
 ##     happen to be related, and page that holds more than one of them
 ##     makes each harder to read.
@@ -160,7 +160,7 @@ func document*(title, page_body: string): string =
   ## Wrap one page: shared style sheet, then whatever page is about.
   ##   Title is what browser tab and published gallery both show, so
   ##     it carries name of work as well as name of page.
-  ##   Every page this wraps is exploration, so all five take mockup form.
+  ##   Every page this wraps is exploration, so each takes mockup form.
   &"<meta charset=\"utf-8\">\n<title>{MOCKUP} — {title}</title>\n" &
       &"{STYLE}{page_body}"
 

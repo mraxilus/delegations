@@ -85,10 +85,6 @@ suite "Internal: Mark workbench":
     holdPage("frames.html")
 
 
-  test "signs.html":
-    holdPage("signs.html")
-
-
   test "turns-single.html":
     holdPage("turns-single.html")
 

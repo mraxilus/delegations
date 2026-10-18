@@ -1,7 +1,7 @@
-## Build every figure four pages place, keyed by name each page uses.
+## Build every figure three pages place, keyed by name each page uses.
 ##
 ##   Split as pages are: frame picture is one exploration,
-##     turn sign another, and two turn mock-ups one each.
+##     and two turn mock-ups one each.
 ##   Inline assertions are part of build -- page whose orientations
 ##     collide or whose collapse figures differ is refused, not published.
 ##     Cost of asserting in builder: broken figure stops whole
@@ -13,7 +13,7 @@
 import std/[algorithm, math, options, sequtils, sets, strformat, strutils,
             tables]
 
-import ./[rules, sign]
+import ./rules
 import ../src/dance_ontology/draw/[body, figure, geometry, pose, route, style]
 from ../src/dance_ontology/rotation import Facing, facing, name, Seen, seenAfter
   # Rotation's `Dancer` would meet drawing's, so only facing's words come in.
@@ -1055,97 +1055,3 @@ func handTurnParts*(): Parts = chainTurnParts(HAND_TO_HAND, "h")
 
 func pairTurnParts*(): Parts = chainTurnParts(PAIRED, "p")
   ## Same-name pair's chain: sections D and G.
-
-
-
-#[ Turn Sign Page ]#
-
-func signParts*(): Parts =
-  ## Build every SVG turn-sign page places.
-  let
-    low_arms: SignArms = [(true, some Level.Low), (true, some Level.Low)]
-    split_arms: SignArms = [(true, some Level.Low), (true, some Level.High)]
-  # Quarters, packed up from foot.
-  for k in 1..4:
-    result[&"q_lead_{k}"] = sign(newSeqWith(k, Row.Lead), arms = low_arms)
-    result[&"q_foll_{k}"] = sign(newSeqWith(k, Row.Follow), arms = low_arms)
-    result[&"q_lead_{k}_small"] = sign(newSeqWith(k, Row.Lead), arms = low_arms, scale = 0.72)
-  for k in [1, 3]:  # alternative: spread, not packed
-    result[&"u_lead_{k}"] = sign(newSeqWith(k, Row.Lead), arms = low_arms, is_packed = false)
-
-  # Whose quarter, and arms inside.
-  result["s_split"] = sign(@[Row.Lead, Row.Lead], arms = split_arms)
-  result["s_acw"] = sign(newSeqWith(3, Row.Lead), Lean.Anticlockwise, low_arms)
-  result["s_one_hand"] = sign(
-    @[Row.Follow, Row.Follow],
-    arms = [(true, some Level.Low),
-            (false, none Level)],
-  )
-  result["s_above"] = sign(
-    newSeqWith(4, Row.Follow),
-    arms = [(true, some Level.Above),
-            (true, some Level.Above)],
-  )
-  result["s_unsaid"] = sign(@[Row.Lead])
-  result["s_lead_small"] = sign(@[Row.Lead, Row.Lead], arms = low_arms, scale = 0.72)
-  result["s_foll_small"] = sign(@[Row.Follow, Row.Follow], arms = low_arms, scale = 0.72)
-  # Shade says whose quarter it is as well as shape does.
-  doAssert result["s_lead_small"] != result["s_foll_small"],
-    "Dancers collide: the two shades draw one sign."
-
-  # Mixed, now that there is room for more than one split.
-  result["m_11"] = sign(@[Row.Follow, Row.Lead], arms = low_arms)
-  result["m_12"] = sign(@[Row.Follow, Row.Lead, Row.Lead], arms = low_arms)
-  result["m_22"] = sign(@[Row.Follow, Row.Follow, Row.Lead, Row.Lead], arms = low_arms)
-  result["m_31"] = sign(@[Row.Follow, Row.Follow, Row.Follow, Row.Lead], arms = low_arms)
-  result["m_22_small"] = sign(
-    @[Row.Follow, Row.Follow, Row.Lead, Row.Lead],
-    arms = low_arms,
-    scale = 0.72,
-  )
-
-  # Axis against orbit, on sign.
-  result["o_axis"] = sign(@[Row.Lead, Row.Lead], arms = split_arms, about = some About.Axis)
-  result["o_orbit"] = sign(@[Row.Lead, Row.Lead], arms = split_arms, about = some About.Orbit)
-  result["o_orbit_acw"] = sign(
-    newSeqWith(3, Row.Follow),
-    Lean.Anticlockwise,
-    split_arms,
-    about = some About.Orbit,
-  )
-  result["o_axis_small"] = sign(
-    @[Row.Lead, Row.Lead],
-    arms = split_arms,
-    about = some About.Axis,
-    scale = 0.72,
-  )
-  result["o_orbit_small"] = sign(
-    @[Row.Lead, Row.Lead],
-    arms = split_arms,
-    about = some About.Orbit,
-    scale = 0.72,
-  )
-  result["p_split"] = sign(
-    @[Row.Follow, Row.Lead],
-    arms = split_arms,
-    pip_about = @[About.Orbit, About.Axis],
-  )
-  result["p_split_small"] = sign(
-    @[Row.Follow, Row.Lead],
-    arms = split_arms,
-    pip_about = @[About.Orbit, About.Axis],
-    scale = 0.72,
-  )
-
-  # Five ways to say "any amount".
-  result["any_full"] = sign(newSeqWith(4, Row.Lead), arms = low_arms)
-  for (name, ending) in [("open", Ending.Open), ("spill", Ending.Spill),
-                         ("ellipsis", Ending.EllipsisEnd),
-                         ("repeat", Ending.RepeatEnd), ("loop", Ending.Loop)]:
-    let
-      count = if ending in [Ending.EllipsisEnd, Ending.RepeatEnd]: 3 else: 4
-      base = newSeqWith(count, Row.Lead)
-      follow = newSeqWith(count, Row.Follow)
-    result[&"any_{name}"] = sign(base, arms = low_arms, ending = some ending)
-    result[&"any_{name}_small"] = sign(base, arms = low_arms, ending = some ending, scale = 0.72)
-    result[&"any_{name}_foll"] = sign(follow, arms = low_arms, ending = some ending)
