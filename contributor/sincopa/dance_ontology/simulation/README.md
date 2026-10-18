@@ -19,10 +19,12 @@ Every number is in `rig.nim`, with its source. Each body and each arm is a set o
 a rigid body engine that `tools/build.nim` clones at a fixed commit. There is no gravity, and the
 arms weigh nothing. The question is where arms can be, and not what they weigh.
 
-A joint resists as it comes near the end of its range, and does not stop at a wall. A turn is walked
-a fiftieth of a turn at a time, and the engine carries the arms on. So an arm that has gone round a
-body stays round it. Where the couple stand is chosen for each turn, and nothing is fixed except
-that the two bodies stay apart.
+A joint resists as it comes near the end of its range, and does not stop at a wall. The edge of the
+shoulder has no ease, because no source gives one, so a stiff wall holds every upper arm there, held
+or free. A turn is walked a fiftieth of a turn at a time, and the engine carries the arms on. So an
+arm that has gone round a body stays round it. Where the couple stand is chosen for each turn, and
+nothing is fixed except that the two bodies stay apart. Over the crown, a joined hand that sinks
+under the band stops the walk once the couple are not face to face.
 
 Where the walk gives short, the turn is planned. The plan chooses every joint of both arms at each
 moment, and keeps every capsule clear and every joint in its range. The engine then follows the
@@ -58,11 +60,13 @@ vector.nim   points, directions, and the two contact tests
 rig.nim      every measurement, with its source
 body.nim     two bodies standing and facing; where the shoulders are
 limb.nim     one arm: forward kinematics, inverse kinematics, joint readings
+shoulder.nim where a shoulder lets its upper arm point, as two studies measured it
 contact.nim  arms against bodies and against arms, as geometry
 hold.nim     what the couple is asked: which hands are joined, what may stop
 engine.nim   the rigid body engine, bound; nothing above it knows it is C
 rigid.nim    two dancers in that engine: capsules, joints, their ranges,
-             and what stops a connection
+             the wall of the shoulder's edge, and what stops a connection or a
+             free arm
 walk.nim     a hold turned until something gives, from wherever the couple
              stand for that turn; whether a pose holds, whether a turn reaches;
              the engine steered along a planned turn
@@ -80,6 +84,8 @@ verdicts.md  what it said, translated once and generated, not edited
 ../tests/test_rigid.nim  the rig held to tape, geometry and the rows of the
              Architect's floor held above
 ../tests/suites/test_limb.nim  the tape's numbers and one arm's kinematics
+../tests/suites/test_shoulder.nim  the shoulder's edge held to Engin and Chen, and
+             to Haering
 ../tests/test_read.nim   crossings read off the drawn arms, not assumed
 ../tests/test_plan.nim   the plan held to the engine: one place for each body,
              the mirror, a turn that keeps what it claims, and the engine on it

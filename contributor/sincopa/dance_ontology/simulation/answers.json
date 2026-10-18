@@ -1,33 +1,33 @@
 {
-  "stamp": "c50110893f69acbf",
+  "stamp": "2fd0e9712e433216",
   "sweeps": {
     "shake at torso": {
       "negative": {
         "is_holding": true,
         "apart": 0.47787780744861197,
         "is_stopped": true,
-        "at": 1.520000000000001,
+        "at": 0.7600000000000003,
         "why": "Wrist"
       },
       "positive": {
         "is_holding": true,
-        "apart": 0.35787780744861186,
+        "apart": 0.45787780744861195,
         "is_stopped": true,
-        "at": 1.0200000000000005,
-        "why": "Wrist"
+        "at": 0.9600000000000005,
+        "why": "Arms"
       }
     },
     "left to left at torso": {
       "negative": {
         "is_holding": true,
-        "apart": 0.35787780744861186,
+        "apart": 0.3978778074486119,
         "is_stopped": false,
         "at": 0.0,
         "why": "None"
       },
       "positive": {
         "is_holding": true,
-        "apart": 0.45787780744861195,
+        "apart": 0.497877807448612,
         "is_stopped": false,
         "at": 0.0,
         "why": "None"
@@ -36,14 +36,14 @@
     "right to right at torso": {
       "negative": {
         "is_holding": true,
-        "apart": 0.45787780744861195,
+        "apart": 0.497877807448612,
         "is_stopped": false,
         "at": 0.0,
         "why": "None"
       },
       "positive": {
         "is_holding": true,
-        "apart": 0.35787780744861186,
+        "apart": 0.3978778074486119,
         "is_stopped": false,
         "at": 0.0,
         "why": "None"
@@ -68,14 +68,14 @@
     "left to right over crown": {
       "negative": {
         "is_holding": true,
-        "apart": 0.35787780744861186,
+        "apart": 0.45787780744861195,
         "is_stopped": false,
         "at": 0.0,
         "why": "None"
       },
       "positive": {
         "is_holding": true,
-        "apart": 0.35787780744861186,
+        "apart": 0.3778778074486119,
         "is_stopped": false,
         "at": 0.0,
         "why": "None"
@@ -84,32 +84,32 @@
     "left to right at torso": {
       "negative": {
         "is_holding": true,
-        "apart": 0.35787780744861186,
-        "is_stopped": false,
-        "at": 0.0,
-        "why": "None"
-      },
-      "positive": {
-        "is_holding": true,
-        "apart": 0.35787780744861186,
-        "is_stopped": false,
-        "at": 0.0,
-        "why": "None"
-      }
-    },
-    "left to right at torso, as far as shake": {
-      "negative": {
-        "is_holding": true,
-        "apart": 0.35787780744861186,
+        "apart": 0.45787780744861195,
         "is_stopped": true,
-        "at": 1.0200000000000005,
-        "why": "Wrist"
+        "at": 0.9600000000000005,
+        "why": "Arms"
       },
       "positive": {
         "is_holding": true,
         "apart": 0.47787780744861197,
         "is_stopped": true,
-        "at": 1.520000000000001,
+        "at": 0.7600000000000003,
+        "why": "Wrist"
+      }
+    },
+    "left to right at torso, as far as shake": {
+      "negative": {
+        "is_holding": true,
+        "apart": 0.45787780744861195,
+        "is_stopped": true,
+        "at": 0.9600000000000005,
+        "why": "Arms"
+      },
+      "positive": {
+        "is_holding": true,
+        "apart": 0.47787780744861197,
+        "is_stopped": true,
+        "at": 0.7600000000000003,
         "why": "Wrist"
       }
     }
@@ -120,301 +120,301 @@
         "apart": 0.35787780744861186,
         "is_holding": true,
         "is_stopped": true,
-        "at": 1.2400000000000007
+        "at": 0.4200000000000001
       },
       {
         "apart": 0.3778778074486119,
         "is_holding": true,
         "is_stopped": true,
-        "at": 1.2600000000000007
+        "at": 0.4200000000000001
       },
       {
         "apart": 0.3978778074486119,
         "is_holding": true,
         "is_stopped": true,
-        "at": 1.2600000000000007
+        "at": 0.4000000000000001
       },
       {
         "apart": 0.4178778074486119,
         "is_holding": true,
         "is_stopped": true,
-        "at": 1.2800000000000007
+        "at": 0.4200000000000001
       },
       {
         "apart": 0.43787780744861193,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.8000000000000004
+        "at": 0.4400000000000001
       },
       {
         "apart": 0.45787780744861195,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.8000000000000004
+        "at": 0.7200000000000003
       },
       {
         "apart": 0.47787780744861197,
         "is_holding": true,
         "is_stopped": true,
-        "at": 1.520000000000001
+        "at": 0.7600000000000003
       },
       {
         "apart": 0.497877807448612,
         "is_holding": true,
         "is_stopped": true,
-        "at": 1.5000000000000009
+        "at": 0.7600000000000003
       },
       {
         "apart": 0.517877807448612,
         "is_holding": true,
         "is_stopped": true,
-        "at": 1.5000000000000009
+        "at": 0.7600000000000003
       },
       {
         "apart": 0.537877807448612,
         "is_holding": true,
         "is_stopped": true,
-        "at": 1.4400000000000008
+        "at": 0.7400000000000003
       },
       {
         "apart": 0.557877807448612,
         "is_holding": true,
         "is_stopped": true,
-        "at": 1.4200000000000008
+        "at": 0.7400000000000003
       },
       {
         "apart": 0.5778778074486121,
         "is_holding": true,
         "is_stopped": true,
-        "at": 1.4000000000000008
+        "at": 0.7400000000000003
       },
       {
         "apart": 0.5978778074486121,
         "is_holding": true,
         "is_stopped": true,
-        "at": 1.4000000000000008
+        "at": 0.7400000000000003
       },
       {
         "apart": 0.6178778074486121,
         "is_holding": true,
         "is_stopped": true,
-        "at": 1.3800000000000008
+        "at": 0.7600000000000003
       },
       {
         "apart": 0.6378778074486121,
         "is_holding": true,
         "is_stopped": true,
-        "at": 1.3600000000000008
+        "at": 0.36000000000000004
       },
       {
         "apart": 0.6578778074486121,
         "is_holding": true,
         "is_stopped": true,
-        "at": 1.3600000000000008
+        "at": 0.7400000000000003
       },
       {
         "apart": 0.6778778074486121,
         "is_holding": true,
         "is_stopped": true,
-        "at": 1.3200000000000007
+        "at": 0.7400000000000003
       },
       {
         "apart": 0.6978778074486122,
         "is_holding": true,
         "is_stopped": true,
-        "at": 1.3200000000000007
+        "at": 0.7400000000000003
       },
       {
         "apart": 0.7178778074486122,
         "is_holding": true,
         "is_stopped": true,
-        "at": 1.3000000000000007
+        "at": 0.7400000000000003
       },
       {
         "apart": 0.7378778074486122,
         "is_holding": true,
         "is_stopped": true,
-        "at": 1.2800000000000007
+        "at": 0.7200000000000003
       },
       {
         "apart": 0.7578778074486122,
         "is_holding": true,
         "is_stopped": true,
-        "at": 1.2800000000000007
+        "at": 0.7200000000000003
       },
       {
         "apart": 0.7778778074486122,
         "is_holding": true,
         "is_stopped": true,
-        "at": 1.2800000000000007
+        "at": 0.7200000000000003
       },
       {
         "apart": 0.7978778074486123,
         "is_holding": true,
         "is_stopped": true,
-        "at": 1.2600000000000007
+        "at": 0.7000000000000003
       },
       {
         "apart": 0.8178778074486123,
         "is_holding": true,
         "is_stopped": true,
-        "at": 1.2600000000000007
+        "at": 0.7000000000000003
       },
       {
         "apart": 0.8378778074486123,
         "is_holding": true,
         "is_stopped": true,
-        "at": 1.2600000000000007
+        "at": 0.7000000000000003
       },
       {
         "apart": 0.8578778074486123,
         "is_holding": true,
         "is_stopped": true,
-        "at": 1.2400000000000007
+        "at": 0.7000000000000003
       },
       {
         "apart": 0.8778778074486123,
         "is_holding": true,
         "is_stopped": true,
-        "at": 1.2400000000000007
+        "at": 0.7000000000000003
       },
       {
         "apart": 0.8978778074486123,
         "is_holding": true,
         "is_stopped": true,
-        "at": 1.2400000000000007
+        "at": 0.6800000000000003
       },
       {
         "apart": 0.9178778074486124,
         "is_holding": true,
         "is_stopped": true,
-        "at": 1.2200000000000006
+        "at": 0.6600000000000003
       },
       {
         "apart": 0.9378778074486124,
         "is_holding": true,
         "is_stopped": true,
-        "at": 1.2200000000000006
+        "at": 0.6600000000000003
       },
       {
         "apart": 0.9578778074486124,
         "is_holding": true,
         "is_stopped": true,
-        "at": 1.2000000000000006
+        "at": 0.6600000000000003
       },
       {
         "apart": 0.9778778074486124,
         "is_holding": true,
         "is_stopped": true,
-        "at": 1.2000000000000006
+        "at": 0.6600000000000003
       },
       {
         "apart": 0.9978778074486124,
         "is_holding": true,
         "is_stopped": true,
-        "at": 1.1800000000000006
+        "at": 0.6600000000000003
       },
       {
         "apart": 1.0178778074486123,
         "is_holding": true,
         "is_stopped": true,
-        "at": 1.1800000000000006
+        "at": 0.6600000000000003
       },
       {
         "apart": 1.0378778074486124,
         "is_holding": true,
         "is_stopped": true,
-        "at": 1.1600000000000006
+        "at": 0.6400000000000002
       },
       {
         "apart": 1.0578778074486124,
         "is_holding": true,
         "is_stopped": true,
-        "at": 1.1600000000000006
+        "at": 0.6400000000000002
       },
       {
         "apart": 1.0778778074486124,
         "is_holding": true,
         "is_stopped": true,
-        "at": 1.1400000000000006
+        "at": 0.6400000000000002
       },
       {
         "apart": 1.0978778074486124,
         "is_holding": true,
         "is_stopped": true,
-        "at": 1.1200000000000006
+        "at": 0.6400000000000002
       },
       {
         "apart": 1.1178778074486124,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.9600000000000005
+        "at": 0.6400000000000002
       },
       {
         "apart": 1.1378778074486124,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.9600000000000005
+        "at": 0.6200000000000002
       },
       {
         "apart": 1.1578778074486125,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.9600000000000005
+        "at": 0.6200000000000002
       },
       {
         "apart": 1.1778778074486125,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.9400000000000005
+        "at": 0.6000000000000002
       },
       {
         "apart": 1.1978778074486125,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.9400000000000005
+        "at": 0.6000000000000002
       },
       {
         "apart": 1.2178778074486125,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.9400000000000005
+        "at": 0.6000000000000002
       },
       {
         "apart": 1.2378778074486125,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.9400000000000005
+        "at": 0.6200000000000002
       },
       {
         "apart": 1.2578778074486126,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.9200000000000005
+        "at": 0.6200000000000002
       },
       {
         "apart": 1.2778778074486126,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.9200000000000005
+        "at": 0.6200000000000002
       },
       {
         "apart": 1.2978778074486126,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.9200000000000005
+        "at": 0.6200000000000002
       },
       {
         "apart": 1.3178778074486126,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.9000000000000005
+        "at": 0.6200000000000002
       },
       {
         "apart": 1.3378778074486126,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.9000000000000005
+        "at": 0.6200000000000002
       }
     ],
     "shake at torso, positive": [
@@ -422,31 +422,31 @@
         "apart": 0.35787780744861186,
         "is_holding": true,
         "is_stopped": true,
-        "at": 1.0200000000000005
+        "at": 0.4000000000000001
       },
       {
         "apart": 0.3778778074486119,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.9800000000000005
+        "at": 0.4000000000000001
       },
       {
         "apart": 0.3978778074486119,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.9800000000000005
+        "at": 0.4000000000000001
       },
       {
         "apart": 0.4178778074486119,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.9800000000000005
+        "at": 0.4200000000000001
       },
       {
         "apart": 0.43787780744861193,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.9600000000000005
+        "at": 0.4400000000000001
       },
       {
         "apart": 0.45787780744861195,
@@ -482,13 +482,13 @@
         "apart": 0.557877807448612,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.7800000000000004
+        "at": 0.8000000000000004
       },
       {
         "apart": 0.5778778074486121,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.8000000000000004
+        "at": 0.7800000000000004
       },
       {
         "apart": 0.5978778074486121,
@@ -506,7 +506,7 @@
         "apart": 0.6378778074486121,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.7600000000000003
+        "at": 0.7400000000000003
       },
       {
         "apart": 0.6578778074486121,
@@ -524,7 +524,7 @@
         "apart": 0.6978778074486122,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.7200000000000003
+        "at": 0.7000000000000003
       },
       {
         "apart": 0.7178778074486122,
@@ -536,7 +536,7 @@
         "apart": 0.7378778074486122,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.6800000000000003
+        "at": 0.7000000000000003
       },
       {
         "apart": 0.7578778074486122,
@@ -554,7 +554,7 @@
         "apart": 0.7978778074486123,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.6800000000000003
+        "at": 0.6600000000000003
       },
       {
         "apart": 0.8178778074486123,
@@ -614,31 +614,31 @@
         "apart": 0.9978778074486124,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.6200000000000002
+        "at": 0.6400000000000002
       },
       {
         "apart": 1.0178778074486123,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.6000000000000002
+        "at": 0.6400000000000002
       },
       {
         "apart": 1.0378778074486124,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.5800000000000002
+        "at": 0.6200000000000002
       },
       {
         "apart": 1.0578778074486124,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.5800000000000002
+        "at": 0.6000000000000002
       },
       {
         "apart": 1.0778778074486124,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.5600000000000002
+        "at": 0.5800000000000002
       },
       {
         "apart": 1.0978778074486124,
@@ -650,13 +650,13 @@
         "apart": 1.1178778074486124,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.5400000000000001
+        "at": 0.5600000000000002
       },
       {
         "apart": 1.1378778074486124,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.5200000000000001
+        "at": 0.5400000000000001
       },
       {
         "apart": 1.1578778074486125,
@@ -674,7 +674,7 @@
         "apart": 1.1978778074486125,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.5000000000000001
+        "at": 0.48000000000000015
       },
       {
         "apart": 1.2178778074486125,
@@ -686,69 +686,69 @@
         "apart": 1.2378778074486125,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.48000000000000015
+        "at": 0.46000000000000013
       },
       {
         "apart": 1.2578778074486126,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.46000000000000013
+        "at": 0.4400000000000001
       },
       {
         "apart": 1.2778778074486126,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.46000000000000013
+        "at": 0.4200000000000001
       },
       {
         "apart": 1.2978778074486126,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.4400000000000001
+        "at": 0.4200000000000001
       },
       {
         "apart": 1.3178778074486126,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.4200000000000001
+        "at": 0.4000000000000001
       },
       {
         "apart": 1.3378778074486126,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.4200000000000001
+        "at": 0.38000000000000006
       }
     ],
     "shake at torso, asked": [
       {
         "apart": 0.35787780744861186,
         "is_holding": true,
-        "is_stopped": false,
-        "at": 0.0
+        "is_stopped": true,
+        "at": 0.4200000000000001
       },
       {
         "apart": 0.3778778074486119,
         "is_holding": true,
-        "is_stopped": false,
-        "at": 0.0
+        "is_stopped": true,
+        "at": 0.4200000000000001
       },
       {
         "apart": 0.3978778074486119,
         "is_holding": true,
-        "is_stopped": false,
-        "at": 0.0
+        "is_stopped": true,
+        "at": 0.4000000000000001
       },
       {
         "apart": 0.4178778074486119,
         "is_holding": true,
-        "is_stopped": false,
-        "at": 0.0
+        "is_stopped": true,
+        "at": 0.4200000000000001
       },
       {
         "apart": 0.43787780744861193,
         "is_holding": true,
-        "is_stopped": false,
-        "at": 0.0
+        "is_stopped": true,
+        "at": 0.4400000000000001
       },
       {
         "apart": 0.45787780744861195,
@@ -807,8 +807,8 @@
       {
         "apart": 0.6378778074486121,
         "is_holding": true,
-        "is_stopped": false,
-        "at": 0.0
+        "is_stopped": true,
+        "at": 0.36000000000000004
       },
       {
         "apart": 0.6578778074486121,
@@ -969,20 +969,20 @@
       {
         "apart": 1.1778778074486125,
         "is_holding": true,
-        "is_stopped": false,
-        "at": 0.0
+        "is_stopped": true,
+        "at": 0.6000000000000002
       },
       {
         "apart": 1.1978778074486125,
         "is_holding": true,
-        "is_stopped": false,
-        "at": 0.0
+        "is_stopped": true,
+        "at": 0.6000000000000002
       },
       {
         "apart": 1.2178778074486125,
         "is_holding": true,
-        "is_stopped": false,
-        "at": 0.0
+        "is_stopped": true,
+        "at": 0.6000000000000002
       },
       {
         "apart": 1.2378778074486125,
@@ -1029,7 +1029,7 @@
   "stills": {
     "cross-name at -0.5": {
       "is_holding": true,
-      "apart": 0.4178778074486119,
+      "apart": 0.3978778074486119,
       "turns": -0.5
     },
     "cross-name at +0.0": {
@@ -1039,17 +1039,17 @@
     },
     "cross-name at +0.5": {
       "is_holding": true,
-      "apart": 0.4178778074486119,
+      "apart": 0.3978778074486119,
       "turns": 0.5
     },
     "same-name at rest": {
       "is_holding": true,
-      "apart": 0.4178778074486119,
+      "apart": 0.6778778074486121,
       "turns": 0.0
     },
     "same-name at half, either way": {
       "is_holding": true,
-      "apart": 0.8378778074486123,
+      "apart": 0.6578778074486121,
       "turns": -0.5
     },
     "free, Face-to-back": {
@@ -1059,27 +1059,27 @@
     },
     "left to left at quarter": {
       "is_holding": true,
-      "apart": 0.35787780744861186,
+      "apart": 0.3778778074486119,
       "turns": 0.25
     },
     "left to left at half": {
       "is_holding": true,
-      "apart": 0.537877807448612,
+      "apart": 0.45787780744861195,
       "turns": 0.5
     },
     "same-name at half": {
       "is_holding": true,
-      "apart": 0.8378778074486123,
+      "apart": 0.6578778074486121,
       "turns": -0.5
     },
     "right to left at half": {
       "is_holding": true,
-      "apart": 0.497877807448612,
+      "apart": 0.45787780744861195,
       "turns": 0.5
     },
     "right to left at half, either way": {
       "is_holding": true,
-      "apart": 0.4178778074486119,
+      "apart": 0.3778778074486119,
       "turns": -0.5
     }
   }

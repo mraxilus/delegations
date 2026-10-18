@@ -12,6 +12,9 @@
 ##     sweep at every distance couple may stand at; carrying this much at each of
 ##     them would cost tens of times what answering costs.  So sweep is answered
 ##     first, and only one that won is recorded.
+##   Way over crown that walk stops short of all it asks, by whatever stopped it, is recorded as
+##     planned way where that holds further: its moments are stood again from plan, as
+##     `walk.plannedWay` stood them.
 
 {.experimental: "strictFuncs".}
 
@@ -55,7 +58,9 @@ type
     why*: Stop
     whose*: Hand  ## Whose hand it gave at.
     stills*: seq[Still]
-    is_planned*: bool  ## Whether planner stood still, where no distance of carried walk held.
+    is_planned*: bool
+      ## Whether planner stood it: still no distance of carried walk held, or sweep's way over
+      ## crown that walk stops short of all it asks (`walk.swept`).
     strain*: float  ## Worst joint of still, nought at ease and one at end.
     tried*: seq[Option[float]]  ## Strain of each pose its search tried, in order: none gave.
 
@@ -171,6 +176,9 @@ proc shownAsked(
   ## Walk one way from wherever it carries furthest, keeping every moment whole.
   ##   Distance is asked of `walk.swept`, so page shows couple standing exactly
   ##     where model has them stand and not somewhere chosen for drawing.
+  ##   Way over crown that walk stops short of all it asks is planned way, as `walk.swept` keeps
+  ##     it: each moment it keeps is stood again from plan (`walk.standMoment`), as
+  ##     `walk.replayedWay` stood it, and none past them.
   let
     sweep = swept(
       rig,
@@ -181,6 +189,7 @@ proc shownAsked(
       step = step,
       is_away = is_away,
       head = head,
+      should_plan = true,
     )
     best = (if step >= 0.0: sweep.positive else: sweep.negative)
   result = Shown(
@@ -191,8 +200,16 @@ proc shownAsked(
     is_stopped: best.is_stopped,
     why: best.why,
     whose: best.whose,
+    is_planned: best.isPlanned,
   )
   if not best.found_rest:
+    return
+  if best.isPlanned:
+    var planned = builtFor(rig, band, links, is_away, head, best.path)
+    for i in 0..<best.path.plans.len:
+      planned.standMoment(best.path, i, is_away)
+      result.stills.add stillOf(planned, best.path.winds[i])
+    planned.free()
     return
   var couple = build(rig, restStance(rig, best.apart, is_away), band, links, head, is_away)
   couple.settle()

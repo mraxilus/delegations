@@ -45,6 +45,12 @@ func prose(text: string): string =
   ## Wrap paragraph at `WIDTH` columns, closing it with blank line.
   wrapWords(text, WIDTH, splitLongWords = false) & "\n\n"
 
+func item(text: string): string =
+  ## Wrap one item of list at `WIDTH` columns, its later lines indented under its first.
+  let lines = wrapWords(text, WIDTH - 2, splitLongWords = false).splitLines
+  result = "- " & lines[0] & "\n"
+  for line in lines[1..^1]: result.add "  " & line & "\n"
+
 func turns(value: float): string = formatFloat(value, ffDecimal, 2)
   ## Render turns to two places.
 
@@ -279,64 +285,66 @@ proc chain(): string =
   result.add "\n"
 
 
-proc drawnRow(drawn: string, links: seq[Link], who: Body, turn: float, band: Band): string =
-  ## Tabulate one state whole-cloth page draws, asked of simulation.
+proc drawnItem(drawn: string, links: seq[Link], who: Body, turn: float, band: Band): string =
+  ## Say one state whole-cloth page draws, asked of simulation, as item of list.
   let glance = glanceAt(sweepOf(band, links, who = who), turn)
   if not glance.is_reached:
-    return &"| {drawn} | {turns(turn)} | blocked before it | | | |\n"
-  &"| {drawn} | {turns(turn)} | yes | {said(glance.lies[0][Body.Two], band)} | " &
-      &"{said(glance.lies[0][Body.One], band)} | {strainWord(glance.strain)} |\n"
+    return item(&"{drawn}, turned {turns(turn)}: blocked before it.")
+  item(&"{drawn}, turned {turns(turn)}: holds, at strain {strainWord(glance.strain)}.  " &
+       &"Follow's arm: {said(glance.lies[0][Body.Two], band)}.  " &
+       &"Lead's arm: {said(glance.lies[0][Body.One], band)}.")
 
 
 proc drawnStates(): string =
-  ## Tabulate every state whole-cloth page draws.
+  ## Say every state whole-cloth page draws, as list.
+  ##   List and not table: row of label, turn, two arms' words and strain ran past audit's
+  ##     hundred columns once `Left to left-lock-high @ -1` held.  Item wraps at `WIDTH`,
+  ##     whatever words it carries.
   result.add "## The states the whole-cloth page draws\n\n"
-  result.add "| drawn as | turned | holds | follow's arm | lead's arm | strain |\n" &
-      "|---|---|---|---|---|---|\n"
-  result.add drawnRow("Left to left, open", oneLink(Arm.Left, Arm.Left), Body.Two, 0.0, Band.Torso)
-  result.add drawnRow(
+  result.add drawnItem("Left to left, open", oneLink(Arm.Left, Arm.Left), Body.Two, 0.0, Band.Torso)
+  result.add drawnItem(
     "Left to right-wrap-low @ 1/2",
     oneLink(Arm.Left, Arm.Right),
     Body.Two,
     -0.5,
     Band.Torso,
   )
-  result.add drawnRow(
+  result.add drawnItem(
     "Left to right-wrap-high @ 1/2",
     oneLink(Arm.Left, Arm.Right),
     Body.Two,
     -0.5,
     Band.Neck,
   )
-  result.add drawnRow(
+  result.add drawnItem(
     "Left to left-lock-low @ -1",
     oneLink(Arm.Left, Arm.Left),
     Body.Two,
     -1.0,
     Band.Torso,
   )
-  result.add drawnRow(
+  result.add drawnItem(
     "Left to left-lock-high @ -1",
     oneLink(Arm.Left, Arm.Left),
     Body.Two,
     -1.0,
     Band.Neck,
   )
-  result.add drawnRow(
+  result.add drawnItem(
     "Left to left @ above, +1",
     oneLink(Arm.Left, Arm.Left),
     Body.Two,
     1.0,
     Band.Crown,
   )
-  result.add drawnRow(
+  result.add drawnItem(
     "Left-Lock-Low to left, lead turned -1",
     oneLink(Arm.Left, Arm.Left),
     Body.One,
     -1.0,
     Band.Torso,
   )
-  result.add drawnRow(
+  result.add drawnItem(
     "Left-Lock-Low to left, lead turned +1",
     oneLink(Arm.Left, Arm.Left),
     Body.One,

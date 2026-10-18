@@ -10,6 +10,12 @@
 ##     and folded into page by `pages`.  Couple stand for turn, so each sweep
 ##     searches every distance they may stand at, and eighteen of them cost more
 ##     than every `pages` run should pay.
+##   Way over crown that walk stops short of all it asks, by whatever stopped it, is planned way
+##     where that holds further (`walk.swept`): couple stand where plan has them at each moment,
+##     and moment that plan poses again at one turn is marked so (`reseed`).
+##   Each moment carries its place on page's play (`place`), so page plays every pose plan
+##     stands at one turn while turn waits (Architect, pull request 629, 2026-10-17, D2).
+##     Cost: two chains held above play longer per pass, as `frames` measures.
 ##   Words (wrap, lock, low, high) are put on by `simulation/words`, which `verdicts`
 ##     reads too.  Not because simulation speaks other language -- it reuses agreed
 ##     words -- but because here it measures what ontology asserts, and
@@ -55,12 +61,12 @@ func isSameName(hold: string): bool =
     if lead_arm != follow_arm: return false
   true
 
-func linksOf(hold: string): seq[Link] =
+func linksOf*(hold: string): seq[Link] =
   ## List hold's connections, lead's arm to follow's.
   for (lead_arm, follow_arm) in armsOf(hold):
     result.add Link(ends: [(Body.One, lead_arm), (Body.Two, follow_arm)])
 
-func isRestingAway(hold: string): bool =
+func isRestingAway*(hold: string): bool =
   ## Same-name pair is built Face-to-back; every other hold Face-to-face.
   hold.contains('.') and isSameName(hold)
 
@@ -69,13 +75,21 @@ func toMillimetres(point: Vector): JsonNode =
   ## Write point in whole millimetres.
   %*[int(round(point.x * 1000.0)), int(round(point.y * 1000.0)), int(round(point.z * 1000.0))]
 
-func frame(moment: Moment, band: Band, links: seq[Link]): JsonNode =
-  ## Record one moment as page draws it: arms, words and crossings.
-  let tight = tightest(HUMAN, moment.stance, links, moment.arms)
+func frame(moment: Moment, band: Band, links: seq[Link], is_reposed: bool, reposed: int): JsonNode =
+  ## Record one moment as page draws it: arms, words, crossings, and place on page's play.
+  ##   Moment at turn of one before it has arms posed again there (`reseed`), and page says so:
+  ##     planned way stands several poses at one wind (`plan.planPath`).
+  ##   Place is turn, plus one step for each of `reposed` poses stood again, this one included,
+  ##     in order written, so page gives each pose one step of play (`wholecloth_scene`).
+  ##     Counted in thousandths, as turn is written, so place lies on that same grid.
+  let
+    tight = tightest(HUMAN, moment.stance, links, moment.arms)
+    turn_milli = int(round(moment.at * 1000.0))
   result = %*{
-    "turn": round(moment.at * 1000.0) / 1000.0,
+    "turn": float(turn_milli) / 1000.0,
+    "place": float(turn_milli + reposed * int(round(STEP * 1000.0))) / 1000.0,
     "ok": true,
-    "reseed": false,
+    "reseed": is_reposed,
     "strain": round(tight.strain * 100.0) / 100.0,
     "worst": (if links.len == 0: "" else: whose(tight.whose) & " " & dofName(tight.dof)),
     "bodies": [
@@ -110,14 +124,40 @@ func frame(moment: Moment, band: Band, links: seq[Link]): JsonNode =
     result["connections"].add connection
 
 
+func isReposed(way: Walk, i: int): bool =
+  ## Whether moment `i` of way stands at turn of one before it.
+  ##   Same wind is one stored figure kept again (`plan.planPath`), so `==` is exact.
+  i > 0 and way.moments[i].at == way.moments[i-1].at
+
 func frames(sweep: Swept, band: Band, links: seq[Link]): JsonNode =
-  ## Every moment of both ways, in order of turn, rest once.
+  ## List every moment of both ways, in order of turn, rest once, each at its own place on play.
   ##   Negative way was walked outward from rest, so it is read back to front.
+  ##   Page plays every pose planned way stands at one turn, one step of play each, and turn
+  ##     waits there (Architect, pull request 629, 2026-10-17, D2).
+  ##     Cost: two chains held above play longer, cross-name 8.7 s to 14.2 s per pass and
+  ##       same-name 11.4 s to 17.9 s, within page's two turns each way at 0.35 of turn per
+  ##       second, derived 2026-10-17 from recording's turns and places.
+  ##     Rejected: last pose at each turn alone, which moves arm 205 to 548 mm in one step and
+  ##       draws it up to 61 mm short or long halfway, measured 2026-10-15.
+
+  template write(moment: Moment, is_reposed: bool) =
+    ## Write moment as frame, counting it where it stands at turn of one written before it.
+    ##   Template, since it writes owner's `result`, `reposed` and `at_prev` in place.
+    ##   Same wind is one stored figure kept again (`plan.planPath`), so `==` is exact.
+    if result.len > 0 and moment.at == at_prev: inc reposed
+    at_prev = moment.at
+    result.add frame(moment, band, links, is_reposed, reposed)
+
   result = newJArray()
+  var
+    reposed = 0  ## Poses stood again so far, in order written.
+    at_prev = 0.0  ## Turn of moment written last, read once one is written.
+
+  # Write negative way back to front, then positive way from rest.
   for i in countdown(sweep.negative.moments.high, 1):
-    result.add frame(sweep.negative.moments[i], band, links)
-  for moment in sweep.positive.moments:
-    result.add frame(moment, band, links)
+    write(sweep.negative.moments[i], isReposed(sweep.negative, i))
+  for i, moment in sweep.positive.moments:
+    write(moment, isReposed(sweep.positive, i))
 
 func went(way: Walk): float =
   ## How far one way got: where it stopped, else as far as it was walked.
@@ -132,7 +172,14 @@ proc sweepJson(hold, word: string; band: Band): JsonNode =
   ## Sweep one hold at one band, and record every moment and where each way ran out.
   let
     links = linksOf(hold)
-    sweep = swept(HUMAN, band, links, most = MOST, is_away = isRestingAway(hold))
+    sweep = swept(
+      HUMAN,
+      band,
+      links,
+      most = MOST,
+      is_away = isRestingAway(hold),
+      should_plan = true,
+    )
   result = %*{
     "restHolds": sweep.found_rest,
     "negative": round(went(sweep.negative) * 1000.0) / 1000.0,

@@ -170,6 +170,7 @@ proc step*(world: WorldId, seconds: cfloat, substeps: cint) {.importc: "b3World_
 proc positionOf*(body: BodyId): Position {.importc: "b3Body_GetPosition".}
 proc pointOf*(body: BodyId, local: Vector): Position {.importc: "b3Body_GetWorldPoint".}
 proc setSpin*(body: BodyId, spin: Vector) {.importc: "b3Body_SetAngularVelocity".}
+proc spinOf*(body: BodyId): Vector {.importc: "b3Body_GetAngularVelocity".}
 proc defaultHinge*(): HingeDefinition {.importc: "b3DefaultRevoluteJointDef".}
 proc createHinge*(
   world: WorldId, definition: ptr HingeDefinition

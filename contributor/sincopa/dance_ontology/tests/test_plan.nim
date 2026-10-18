@@ -17,15 +17,20 @@ cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on -d:danger $opti
 
 when compileOption("profiler"): import std/nimprof
 
-import std/[math, random, unittest]
+import std/[math, random, strformat, unittest]
 
 import ../simulation/[body, hold, limb, plan {.all.}, rig, rigid, vector, walk]
 import ./fixtures
 from ../simulation/engine import nil
+from ../simulation/shoulder import GIVE_EDGE, outside
 
 
 const
   SAMPLES = 64  ## Seeded random poses each kinematic law is asked of.
+  FLOOR_EDGE = 7
+    ## Least of each case judge's law at shoulder's edge reads, so it reads all four: held arm
+    ##   stopped by edge alone, connection inside, free couple past and inside.  39, 57, 49 and
+    ##   15 on 2026-10-11, of 64 poses; floor is half of fewest.
   PLACED = 1e-4  ## Metres engine may stand point from plan's: engine holds single
                 ## precision, and float's own error over one metre is under this.
   MIRRORED = 1e-9  ## Metres reflected point may sit from mirrored plan's: arithmetic alone.
@@ -64,6 +69,10 @@ func pointsOf(pose: ArmPose): array[4, Vector] =
 
 func reflected(point: Vector): Vector = (-point.x, point.y, point.z)
   ## Point seen in mirror across couple's line.
+
+func isPast(stance: Stance, arm: Arm, pose: ArmPose): bool =
+  ## Decide whether upper arm lies past shoulder's edge by more than judge's give.
+  outside(axesOf(stance), arm, pose).angle > GIVE_EDGE
 
 func asVector(vector: engine.Vector): Vector =
   ## Engine's vector as this project's, in same body's own terms.
@@ -178,6 +187,68 @@ suite "Internal: Planner and engine are one rig":
         couple.free()
     checkpoint "furthest point off plan: " & $worst
     check worst < PLACED
+
+
+  test "judge stops at every arm stood past shoulder's edge, held or free, and names it":
+    ## Upper arm past edge by more than `GIVE_EDGE` stops connection holding it, at that end, as
+    ## swing past its range does (`stoppedBy`, `Stop.Swing`).  Free arm past it stops couple,
+    ## named by its hand (`stoppedFree`, `gives`).  Arm inside stops nothing by swing.
+    ##   Engine's wall keeps every recorded arm inside give, so no recording reaches judge:
+    ##     poses here are seeded, and stood where plan places them, nothing stepped.
+    ##   Red with no reading of edge in judge: arm past edge and inside both swing ranges
+    ##     stopped nothing, held or free.
+    var
+      generator = initRand(43)
+      (held_past, held_inside, free_past, free_inside) = (0, 0, 0, 0)
+    for sample in 0..<SAMPLES:
+      let
+        plan = randomPlan(HUMAN, generator)
+        start = placings(HUMAN, plan, 0.0, false, Body.Two)
+      var held_couple = build(HUMAN, restStance(HUMAN, plan[0]), Band.Crown, HAND_TO_HAND,
+                             Body.Two)
+      held_couple.placeBodies(start.chests, start.arms)
+      for i, link in HAND_TO_HAND:
+        var expected = (why: Stop.None, end_index: -1)
+        for k in 0..1:
+          let
+            (who, arm) = (link.ends[k].body, link.ends[k].arm)
+            stance = held_couple.chestStance(who)
+            pose = held_couple.armPoseOf(who, arm)
+            swing = joints(stance, arm, pose)
+            is_swung = margin(HUMAN.range[Dof.Extend], swing.extend) < -GIVE or
+                margin(HUMAN.range[Dof.Across], swing.across) < -GIVE
+          if expected.why != Stop.None or not (is_swung or isPast(stance, arm, pose)): continue
+          expected = (Stop.Swing, k)
+          if not is_swung: inc held_past
+        let got = held_couple.stoppedBy(i)
+        if expected.why == Stop.Swing:
+          check got == expected
+          if i == 0: check held_couple.gives == Stop.Swing
+        else:
+          inc held_inside
+          check got.why != Stop.Swing
+      check held_couple.stoppedFree.why == Stop.None
+      held_couple.free()
+      # Same pose, nothing held: every arm is free.
+      var free_couple = build(HUMAN, restStance(HUMAN, plan[0]), Band.Crown, @[], Body.Two)
+      free_couple.placeBodies(start.chests, start.arms)
+      var past: seq[Hand]
+      for who in Body:
+        for arm in Arm:
+          if isPast(free_couple.chestStance(who), arm, free_couple.armPoseOf(who, arm)):
+            past.add (who, arm)
+      if past.len > 0:
+        inc free_past
+        check free_couple.gives == Stop.Swing
+        check free_couple.stoppedFree == (Stop.Swing, past[0])
+      else:
+        inc free_inside
+        check free_couple.gives != Stop.Swing
+        check free_couple.stoppedFree.why == Stop.None
+      free_couple.free()
+    checkpoint &"held arm stopped by edge alone {held_past}, connection inside {held_inside}, " &
+        &"free couple past {free_past}, inside {free_inside}"
+    for count in [held_past, held_inside, free_past, free_inside]: check count >= FLOOR_EDGE
 
 
   test "plan curls each free hand toward its palm, where engine holds it":
