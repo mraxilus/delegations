@@ -117,42 +117,13 @@ const
   QUARTER* = 90.0  ## Degrees in one of them.
 
 
-const MANNERS*: array[Manner, tuple[
-    tag, title, blurb: string, who: Dancer, about: About]] = [
-  (tag: "fa", title: "The follow turns on the spot",
-   blurb: "The follow turns on their own axis, and nobody travels. Their " &
-       "<b>chevron</b> comes round, and with it the hand that stands nearer. " &
-       "The lead stands still and faces up, so nothing needs to come back " &
-       "afterward. One stage, and it is over.",
-   who: Dancer.Follow, about: About.Axis),
-  (tag: "la", title: "The lead turns on the spot",
-   blurb: "The lead turns on their own axis, and here the two stages " &
-       "matter. <b>Stage one</b>: the lead turns, the room holds still, and " &
-       "the picture leans off upright. <b>Stage two</b>: the picture turns " &
-       "back until the lead faces up, which swings the follow round them. It " &
-       "is one turn, told in the order it is danced.",
-   who: Dancer.Lead, about: About.Axis),
-  (tag: "fo", title: "The follow orbits the lead",
-   blurb: "The follow walks the ring round the lead, who stands still. The " &
-       "dashed ring says so, and says who stands. <b>Whichever side of them " &
-       "faced the lead goes on facing them</b>, so they turn as far as they " &
-       "travel (rule 32). The lead never moves and never turns, so there is " &
-       "no second stage: the walk is the whole figure. It lands on the " &
-       "pictures the <em>axis turn of the lead</em> reaches, and every " &
-       "build measures that.",
-   who: Dancer.Follow, about: About.Orbit),
-  (tag: "lo", title: "The lead orbits the follow",
-   blurb: "The lead walks the ring round the follow, and faces the centre " &
-       "the same way. It is the one manner of the four that takes the lead " &
-       "off their spot. Its second stage has something to do. It lands " &
-       "where the <em>axis turn of the follow</em> lands. The drawing cannot " &
-       "say which dancer walked, and only the path says that, so all four " &
-       "are drawn in motion.",
-   who: Dancer.Lead, about: About.Orbit),
-]  ## What each manner of turn is called on pages, who dances it, and
-  ## about what.  Which round it walks is not restated here: `LUT_ROUND_BY_MANNER`
-  ## carries that, measured -- second copy had crept into these rows and
-  ## been one nothing read.
+const MANNERS*: array[Manner, tuple[tag, title: string, who: Dancer, about: About]] = [
+  (tag: "fa", title: "The follow turns on the spot", who: Dancer.Follow, about: About.Axis),
+  (tag: "la", title: "The lead turns on the spot", who: Dancer.Lead, about: About.Axis),
+  (tag: "fo", title: "The follow orbits the lead", who: Dancer.Follow, about: About.Orbit),
+  (tag: "lo", title: "The lead orbits the follow", who: Dancer.Lead, about: About.Orbit),
+]  ## What each manner of turn is called, who dances it, and about what.
+  ##   Which round it walks is not restated here: `LUT_ROUND_BY_MANNER` carries that, measured.
 
 const LUT_ROUND_BY_MANNER*: array[Manner, Round] = [
   Round.FollowFacing, Round.PairSwung, Round.PairSwung,
