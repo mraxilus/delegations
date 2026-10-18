@@ -670,7 +670,7 @@ library implements drops out, since the library holds its edits.
 
 **Each proposal page states its dependencies, and one page lists every proposal.** The page of a
 proposal names what it depends on and what its rejection blocks. Where a proposal is reached through
-another, the page names that one too, as `(through P02)`. The proposals tab of the explorations page
+another, the page names that one too, as `(through P02)`. The proposals tab of the Proposals page
 gives each proposal its standing, its claims that hold, its dependencies and what it blocks.
 
 Above the table, the tab draws the undecided proposals as a graph, in columns by depth and in rows
@@ -937,22 +937,23 @@ signatures an edit defines or sits in, and a header that closes at its own inden
 ## Home and views
 
 **A home page and three views carry every page,** as the Architect proposed on 2026-10-17. The
-library map shows how complete the library is. The gap docket shows how far each operation stands
-from what it could spend. The explorations page shows what to change next. The home page gives each
-view a card with one figure, read from the files that the view reads. A bar on top of each page
+Architect named the views Progress, Performance and Proposals on 2026-10-18. Progress shows how
+complete the library is, in the library map. Performance shows how far each operation stands from
+what it could spend, in the gap docket. Proposals shows what to change next. The home page gives
+each view a card with one figure, read from the files that the view reads. A bar on top of each page
 links the home page and the views, and it marks the view that the page belongs to.
 
 The card of the docket counts the operations at the multivector lower bound on multiplies, at the
 first algebra of the docket. One figure fits a card, and the docket opens on that algebra.
 
-**The marginalia are a tab of the explorations page,** as the Architect ruled on 2026-10-17. The
-changes and the notes record explorations, as the proposals do. The explorations page keeps the
-name and the URL of the list of proposals. No verb builds the marginalia page now, so
-`pages/published.json` does not name it.
+**The marginalia are a tab of the Proposals page,** as the Architect ruled on 2026-10-17. The
+changes and the notes record explorations, as the proposals do. The Proposals page keeps the name
+and the URL of the list of proposals, and Performance keeps those of the docket. No verb builds the
+marginalia page now, so `pages/published.json` does not name it.
 
-**The library map has a page of its own,** as the Architect ruled on 2026-10-17. It grows with the
-library, so it outlives P01, and P01 links to it. Each box of `pages/derivation-map.svg` names the
-catalogue ids that it stands for. A box of a table alone names its constant, as
+**The library map has a page of its own, Progress,** as the Architect ruled on 2026-10-17. It grows
+with the library, so it outlives P01, and P01 links to it. Each box of `pages/derivation-map.svg`
+names the catalogue ids that it stands for. A box of a table alone names its constant, as
 `CAYLEYS_WEDGES_TRANS.base`.
 
 **The state of each box is read from the library at pin and from the catalogue.** An operation has
