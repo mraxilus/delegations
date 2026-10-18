@@ -102,10 +102,8 @@ suite "Internal: Mark workbench":
 
 
   test "every page the workbench writes has a law of its own":
-    ## Each law above names its page by literal, so review page's count reads it
-    ##   (`tools/review.nim`), where one law named at run time hid one law for each page.
-    ##   Laws are read off this file, as that count reads them, and held to `PAGES`, so
-    ##   page added there cannot go unbuilt here.
+    ## Laws above name their page by literal; they are read off this file and held to
+    ##   `PAGES`, so page added there cannot go unbuilt here.
     var held: seq[string]
     for line in readFile(currentSourcePath()).splitLines:
       let opening = line.strip

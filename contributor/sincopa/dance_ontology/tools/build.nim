@@ -1,4 +1,4 @@
-## Build every page, picture and script of this project: `nim r tools/build.nim <command>`.
+## Build every page and script of this project: `nim r tools/build.nim <command>`.
 ##   Repository drives tests through koch, which holds no verb for this project's pages, so
 ##   project carries its own compiled driver, same pattern one level down (Article IX.6).
 ##   Translation of retired Makefile, recipe for recipe: same programs, same arguments, same
@@ -8,9 +8,8 @@
 ##   |----------|-----------------------------------------------------------------------|
 ##   | Command  | Effect                                                                |
 ##   |----------|-----------------------------------------------------------------------|
-##   | pages    | fetch faces, write shells from Nim hosts, compile browser scripts,    |
-##   |          | fold each into one self-contained file, render review page and frame  |
-##   |          | pictures, build card review, then rig viewer                          |
+##   | pages    | fetch faces, copy Reference's shell, compile its script and fold it   |
+##   |          | into one self-contained file, build card review, then rig viewer      |
 ##   | assets   | fetch faces pages embed from repository store into build/fonts        |
 ##   | types    | type-check harness `tools/drive/`, and emit it into build/drive        |
 ##   | drive    | build every page, render each and control as publish host serves it, |
@@ -65,7 +64,7 @@ import ../design/[faces, render, review_page, watch]
 
 
 const
-  BUILD = "build"  ## Directory every page, picture and script lands in.
+  BUILD = "build"  ## Directory every page and script lands in.
   BINARIES = "binaries"  ## Directory tool binaries land in.
   DANGER = @["-d:danger", "--hints:off"]  ## Options of runs whose speed is point, i.e. sweeps.
   RELEASE = @["-d:release", "--hints:off"]  ## Options of browser scripts shipped with pages.
@@ -113,7 +112,7 @@ const
   PATH_TSCONFIG = "tsconfig.json"  ## Type-checker configuration of harness.
   PATH_HARNESS = "tools" / "drive" / "main.ts"  ## Harness source, where its finding points.
   ENTRY_HARNESS = BUILD / "drive" / "main.js"  ## Harness as `types` emits it, which node runs.
-  DIRECTORIES_PAGES = ["app", "review", "design"]
+  DIRECTORIES_PAGES = ["app", "design"]
     ## Directories under `build/` that `pages` writes pages into, and dresses and `drive` reads.
     ##   Named rather than walked from `build/`, since suites write undressed pages under
     ##     `build/suites/`, and `drive` writes hosted copies under `build/hosted/`.
@@ -274,7 +273,7 @@ proc turns() =
   nim(@["c", "-r"] & DANGER & @["--outdir:" & BINARIES, "design/record.nim", "turns"])
 
 proc pages() =
-  ## Write every page, picture and script under `build/`.
+  ## Write every page and script under `build/`.
   ##   Faces first: every page embeds them, and check that wants verb run by hand
   ##     first is check runner will not run.
   assets()
@@ -282,7 +281,6 @@ proc pages() =
   compileRun(["tools/pages.nim", BUILD])
   nim(@["js"] & RELEASE & @["-o:" & BUILD / "app" / "app.js", "app/app.nim"])
   compileRun(["tools/bundle.nim", BUILD / "app", "app"])
-  compileRun(["tools/review.nim", BUILD / "review"])
   compileRun(["design/marks.nim", BUILD / "design"])
   nim(
     @["js"] & RELEASE & @[

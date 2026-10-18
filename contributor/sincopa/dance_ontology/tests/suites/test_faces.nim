@@ -21,12 +21,11 @@ const
       "<style>p{}</style>\n</head>\n<body>x</body>\n</html>"
     ## Whole page, of shape `pages/app/index.html` carries.
   FRAGMENT = "<title>T</title>\n<style>p{}</style>\n<main>x</main>"
-    ## Headless page, of shape review page and mark pages carry.
+    ## Headless page, of shape card review and rig viewer carry (`page.document`).
   STORE = "../../../curator/audit/src/assets.nim"
     ## Repository's declaration of every file fetched at build time, from project directory.
   PATH_APP = "pages" / "app" / "index.html"
     ## Shell of Reference, whose style sheet sits in its head.
-  PATH_REVIEW = "mockups" / "review.html"  ## Shell of review page.
 
 
 proc stub(directory: string) =
@@ -211,7 +210,6 @@ suite "Internal: Faces":
     for (style_sheet, selectors) in [
       (page.STYLE.stylesOf, @["h1", "h2", "h3"]),
       (readFile(PATH_APP).stylesOf, @["h1", "h2", "h3", "h4"]),
-      (readFile(PATH_REVIEW).stylesOf, @["h1", "h2", "h3"]),
     ]:
       for selector in selectors:
         checkpoint(selector)
@@ -227,7 +225,6 @@ suite "Internal: Faces":
     for (style_sheet, selectors) in [
       (page.STYLE.stylesOf, @["body", "h1", "code"]),
       (readFile(PATH_APP).stylesOf, @["body", "h1"]),
-      (readFile(PATH_REVIEW).stylesOf, @["body", "h1", "code"]),
     ]:
       for selector in selectors:
         checkpoint(selector)

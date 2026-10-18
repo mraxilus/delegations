@@ -3,14 +3,10 @@
 ##   Colours come through custom properties **with fallbacks**: inside page
 ##     that defines them, picture follows page, light and dark themes
 ##     included, and on its own it still draws in ink somebody chose.
-##     Fallback used to be left off, on grounds that these pictures
-##       only ever appeared on workbench's own pages.  They do not:
-##       app writes each frame out as standalone file for `doc/frames/`, to
-##       be shown on grounds this module cannot see, and `tests/suites/test_review`
-##       holds every colour to naming property *and* fallback.
+##     `tests/suites/test_diagram` holds every colour to naming property *and* fallback.
 ##     Cost of fallback: on its own picture is tuned to neither ground,
-##       only readable on either.  Accepted -- standalone file cannot know
-##       ground it will be shown on.
+##       only readable on either.  Accepted -- picture cannot know ground
+##       it will be shown on.
 ##   Values are ones workbench settled on and are repeated in
 ##     two places that define properties, `design/page.nim` and
 ##     `app/index.html`.  Repeated on purpose: fallback is what reader
