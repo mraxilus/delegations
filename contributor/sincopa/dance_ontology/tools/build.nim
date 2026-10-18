@@ -278,6 +278,11 @@ proc pages() =
   ##     first is check runner will not run.
   assets()
   for directory in DIRECTORIES_PAGES: createDir(BUILD / directory)
+
+  # Clear pages earlier builds wrote: dress and `drive` walk every page there, retired ones too.
+  for page in pagesBuilt(): removeFile(page)
+
+  # Write Reference, card review and rig viewer, in order rig viewer reads them; then dress all.
   compileRun(["tools/pages.nim", BUILD])
   nim(@["js"] & RELEASE & @["-o:" & BUILD / "app" / "app.js", "app/app.nim"])
   compileRun(["tools/bundle.nim", BUILD / "app", "app"])
