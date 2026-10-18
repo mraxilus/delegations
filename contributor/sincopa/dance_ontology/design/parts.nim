@@ -70,7 +70,7 @@ func said*(modifier: Option[Modifier], arm = Arm.Left): Modifiers =
   result[arm] = modifier
 
 
-func replaceFirst*(text, pattern, by: string): string =
+func replaceFirst(text, pattern, by: string): string =
   ## Replace only first occurrence, as figure post-passes need.
   let at = text.find(pattern)
   if at < 0: text
