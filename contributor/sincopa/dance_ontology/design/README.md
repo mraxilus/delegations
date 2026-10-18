@@ -29,9 +29,10 @@ nim r tools/build.nim shot       # builds the helper that screenshots a page
 ```
 
 The build does not write a page whose checks fail. Each page is a product of the build, under
-`build/`, and is not committed. The build reads what `rig`, `modelled` and `fixtures` record, and
-does not write it. Each verb that writes a JSON file is run by hand. `rig` and `modelled` keep a
-stamp of the physics with what they record, and record nothing again when it is the same.
+`build/`, and is not committed. The build reads what `rig`, `modelled`, `fixtures` and `confirmed`
+record, and does not write it. Each verb that writes a JSON file is run by hand. `rig` and
+`modelled` keep a stamp of the physics with what they record, and record nothing again when it is
+the same.
 
 No page reads `watched-fixtures.json`. A law of `../tests/suites/test_asks.nim` holds the stills to
 it, and `watched` runs in the pull request that moves them.
@@ -372,7 +373,7 @@ design/
   rules.nim              each rule, in the words it arrived in; re-exports draw/terms
   checks.nim             each standing rule, checked on every build
   parts.nim              each figure the review page places, keyed by name
-  page.nim               the style sheet, key and wrapper the review page and the rig viewer share
+  page.nim               the style sheet and wrapper the review page and the rig viewer share
   review_page.nim        review.html, and which cards are kept and confirmed
   marks.nim              checks and builds review.html
   plain.nim              reads prose, and holds it to the two countable rules

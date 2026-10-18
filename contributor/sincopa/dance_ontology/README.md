@@ -64,7 +64,7 @@ translation is printed in one table, and nothing is tuned to make them agree.
 nim r koch check                                   # root: every check a pull request runs
 nim r koch test contributor/sincopa/dance_ontology  # this project alone, every suite of it
 nim r tools/build.nim assets                           # faces every page ships, into build/fonts
-nim r tools/build.nim pages                            # every page, picture and script, into build/
+nim r tools/build.nim pages                            # every page and script, into build/
 nim r tools/build.nim drive                            # every page rendered, and every face proven
 nim r tools/build.nim verdicts                         # rewrite simulation/verdicts.md
 nim r tools/build.nim floors                           # how far the plan carries each hold above
@@ -104,7 +104,7 @@ Mock-ups and instruments:
 An old link can refuse a publish until the whole of its live page is read back, and a page then
 takes a new link. The change that publishes a page to a new link puts that link in this list.
 
-A page taken out of use keeps whatever URL it was last published at, and is not listed here.
+A page taken out of use is not listed here, and its published copy can be deleted.
 The repository does not rely on a published copy as its record. What a retired page claimed
 is in the log, and in `PROVENANCE.md` where it still bears on the design.
 
@@ -141,7 +141,7 @@ tests/                             the simulation's laws (test_rigid, test_read)
                                    every other suite as one binary from suites/: the laws
                                    over every pair of frames, the tape's (test_limb) and the
                                    workbench's gates (test_marks); drive/, fixtures `drive` reads
-build/                             every page, picture and script; ignored by git
+build/                             every page and script; ignored by git
 ```
 
 ## The Reference
