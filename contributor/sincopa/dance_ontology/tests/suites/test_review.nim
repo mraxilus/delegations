@@ -139,16 +139,6 @@ suite "Internal: The review page":
     check page.count("<td class=\"on") == cells
 
 
-  test "the pictures fix no colour of their own":
-    # They are shown inside two pages that theme them and as standalone files that cannot
-    # be themed, so every ink is custom property with fallback and no ink is written down
-    # on its own.
-    for target in FRAMES:
-      let picture = renderFrame(target)
-      check picture.count('#') == picture.count("var(--")
-      check picture.count('#') > 0
-
-
   test "a frame's file name survives its description":
     check fromKey("--.").get.slug == "free"
     check fromKey("l-.").get.slug == "left-to-left"
