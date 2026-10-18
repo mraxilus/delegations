@@ -172,29 +172,18 @@ func crossings*(arms: Arms): seq[Crossing] =
 func tightest*(rig: Rig, stance: array[Body, Stance], links: seq[Link], arms: Arms): Tight =
   ## Which joint of which held arm is nearest its edge, and how near.
   ##   Read off pose by `joints`, so it says same thing whichever model posed it.
-  ##   Twist's ends are mirrored for left arm, as `rigid.twistEnds` has them.
+  ##   `joints` reads left arm in mirror, so rig's own ranges serve both arms as
+  ##     they stand: twist's ends are swapped only for engine's own reading
+  ##     (`rigid.twistEnds`), which is not mirrored.
   result = Tight(room: Inf)
   for i in 0..<links.len:
     for k in 0..1:
       let
         hand = links[i].ends[k]
-        arm_joints = joints(stance[hand.body], hand.arm, arms[i][k])
-        twist_range = rig.range[Dof.Twist]
-        twist = (if hand.arm == Arm.Right: twist_range
-                 else: Range(
-                   lower: -twist_range.upper,
-                   upper: -twist_range.lower,
-                   ease_lower: twist_range.ease_upper,
-                   ease_upper: twist_range.ease_lower,
-                 ))
-      for (dof, joint_range, value) in [(Dof.Extend, rig.range[Dof.Extend], arm_joints.extend),
-                          (Dof.Across, rig.range[Dof.Across], arm_joints.across),
-                          (Dof.Twist, twist, arm_joints.twist),
-                          (Dof.Bend, rig.range[Dof.Bend], arm_joints.bend),
-                          (Dof.Wrist, rig.range[Dof.Wrist], arm_joints.wrist)]:
-        let joint_margin = margin(joint_range, value)
-        if joint_margin < result.room:
-          result = Tight(room: joint_margin, dof: dof, whose: hand)
+        room = margins(rig, joints(stance[hand.body], hand.arm, arms[i][k]))
+      for dof in Dof:
+        if room[dof] < result.room:
+          result = Tight(room: room[dof], dof: dof, whose: hand)
 
 func strain*(tight: Tight): float =
   ## How far into last stretch before edge tightest joint is: one is edge.

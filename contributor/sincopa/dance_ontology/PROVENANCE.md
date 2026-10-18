@@ -1387,12 +1387,18 @@ it. A stop with no ease costs nothing to lean on, and counts only past half a de
 engine solves its limits rather than clamps them.
 
 The report and the whole-cloth sweeps read strain off a pose alone, from the joints of the held
-arms. `read.tightest` names the joint nearest its edge, and that joint gives the strain.
+arms. `read.tightest` names the joint nearest its edge, and that joint gives the strain. It reads
+each arm by `limb.margins`, against the ranges that the rig states. `limb.joints` reads a left arm
+in mirror, so the twist of a left arm is already in the terms of a right arm. So the reader keeps
+the ends of the twist as the rig states them, for both arms. Only the reading of the engine, which
+is not mirrored, swaps those ends for a left arm (`rigid.twistEnds`).
 
-Verified by `test_read.nim`, over the couples that it settles and one single hold at rest. Every
-joint of every held arm has at least the margin of the joint that `tightest` names. The law failed
-on two breaks made on purpose. One left an end of each connection unread, and one read the twist of
-a left arm against the range of a right arm.
+Verified by `test_read.nim`, over the couples that it settles, one single hold at rest, and arms
+that `limb.placed` builds. Every joint of every held arm has at least the margin of the joint that
+`tightest` names. A pose and its mirror image name the same joint, with the same room, on the
+mirrored arm. That law sweeps the twist of one held arm from -106 to 106 degrees, past both ends of
+its range, -90 and 105. Both laws fail on a reader that swaps the ends of the twist of a left arm a
+second time. The first law also fails on a reader that leaves an end of each connection unread.
 
 A still whose card fixes no way about is wound either way at every distance, and takes whichever way
 sits easier (`is_either_way`). Those are the frames of the standard diagram turned half a turn,
@@ -2231,9 +2237,13 @@ stands at ease, where C03 has a strain of 0.0019.
 In every recording, a reflected twin takes its poses, distances and stops from its mirror twin,
 reflected, unless a law asks it raw. But `design/turns.json`, `simulation/verdicts.json` and
 `simulation/verdicts.md` hold its strain as read again from its own pose (`tightest`). That reader
-judges the twist of a left arm against swapped ends, as #610 holds. So there the strain of a twin
-can differ from that of its mirror twin. Of the 95 stills of the rig, 41 are reflected twins, and
-11 rest face to back, counted by `walk.twinOf` on 2026-10-04.
+holds both arms to the same ranges (Stance and strain), so a twin reads the strain of its mirror
+twin. Of the 1059 pairs of moments of mirror twins in `design/turns.json`, one reads another
+strain: the rest moment of L-l and R-r high. Its couples stand 398 and 358 mm apart, so it is no
+mirror image. Measured 2026-10-10, on the recording of `8556fcc0`.
+
+Of the 95 stills of the rig, 41 are reflected twins, and 11 rest face to back, counted by
+`walk.twinOf` on 2026-10-04.
 
 Verified on 2026-10-04 against the recordings of `9bbf656`: every answer that the simulation
 computes is the same, to the last bit. Those are 54 stills of the rig, all 231 modelled badges, and
@@ -2752,9 +2762,6 @@ to tidy the line away shows up only as suites that fail to build. `result +=` on
 - **The neck of the model pinches to a point where it meets the head (#613).** The neck capsule and
   the head capsule meet at one point, at 1.50 m. So a hand can sit 25 mm inside a neck of its own
   girth, and the engine reads no depth. Measured 2026-10-09, in the high cross-name chain.
-- **The pages read the twist of a left arm against swapped ends (#610).** `read.tightest` swaps the
-  ends of the twist of a left arm, which `limb.joints` already reads in mirror. So a twin and its
-  mirror twin can show different strains on the whole-cloth page and in the report (Mirror twins).
 
 **Open in the workbench, and on the side of the Architect.** Each one waits on a ruling, and the
 workbench draws the current reading meanwhile.

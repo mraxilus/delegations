@@ -75,7 +75,7 @@ Blocks: -1.72, 0.36 m apart: lead's wrist; +0.86, 0.46 m apart: follow's wrist.
 | -1 | lock low (led) | open | 0.06 | 1.04 m |
 | -1/2 | lock low (led) | open | 0.63 | 0.98 m |
 | 0 | open | open | 0.00 | 1.00 m |
-| +1/2 | wrap low (led) | open | 0.67 | 1.16 m |
+| +1/2 | wrap low (led) | open | 1.00 (at edge) | 1.16 m |
 | +1 | blocked | | | |
 | +1 1/2 | blocked | | | |
 | +2 | blocked | | | |
@@ -91,8 +91,8 @@ Blocks: -1.82, 0.36 m apart: lead's wrist; +1.24, 0.40 m apart: lead's wrist.
 | -1 | lock high (led) | open | 0.14 | 1.39 m |
 | -1/2 | lock high (led) | open | 1.00 (at edge) | 1.39 m |
 | 0 | open | open | 0.15 | 1.50 m |
-| +1/2 | lock high (led), elbow forward | wrap high (led) | 0.33 | 1.47 m |
-| +1 | lock high (led), elbow forward | open | 0.50 | 1.52 m |
+| +1/2 | lock high (led), elbow forward | wrap high (led) | 0.56 | 1.47 m |
+| +1 | lock high (led), elbow forward | open | 0.91 (near it) | 1.52 m |
 | +1 1/2 | blocked | | | |
 | +2 | blocked | | | |
 
@@ -107,9 +107,9 @@ Blocks: -: free to 2.50 turns, 0.42 m apart; +: free to 2.50 turns, 0.42 m apart
 | -1 | above | above | 0.30 | 1.37 m |
 | -1/2 | above | above | 0.00 | 1.76 m |
 | 0 | above | above | 0.00 | 1.00 m |
-| +1/2 | above | above | 0.00 | 1.75 m |
+| +1/2 | above | above | 0.05 | 1.75 m |
 | +1 | above | above | 0.78 (near it) | 1.43 m |
-| +1 1/2 | above | above | 0.00 | 1.75 m |
+| +1 1/2 | above | above | 0.08 | 1.75 m |
 | +2 | above | above | 0.49 | 1.59 m |
 
 ### R-r, low
@@ -172,7 +172,7 @@ Blocks: -1.02, 0.36 m apart: follow's wrist; +1.52, 0.48 m apart: follow's wrist
 | -1/2 | wrap low (led) | open | 0.19 | 1.11 m |
 | 0 | open | open | 0.00 | 1.00 m |
 | +1/2 | lock low (led) | open | 0.49 | 0.96 m |
-| +1 | wrap low (led) | wrap low (led) | 0.03 | 1.11 m |
+| +1 | wrap low (led) | wrap low (led) | 0.05 | 1.11 m |
 | +1 1/2 | wrap low | open | 1.00 (at edge) | 1.33 m |
 | +2 | blocked | | | |
 
@@ -202,7 +202,7 @@ Blocks: -: free to 2.50 turns, 0.36 m apart; +: free to 2.50 turns, 0.36 m apart
 | -1 1/2 | above | above | 0.09 | 1.74 m |
 | -1 | above | above | 0.67 | 1.56 m |
 | -1/2 | above | above | 0.00 | 1.74 m |
-| 0 | above | above | 0.07 | 1.00 m |
+| 0 | above | above | 0.00 | 1.00 m |
 | +1/2 | above | above | 0.00 | 1.90 m |
 | +1 | above | above | 0.20 | 1.39 m |
 | +1 1/2 | above | above | 0.00 | 1.87 m |
@@ -218,7 +218,7 @@ Blocks: -1.52, 0.48 m apart: follow's wrist; +1.02, 0.36 m apart: follow's wrist
 | -1 1/2 | wrap low | open | 1.00 (at edge) | 1.33 m |
 | -1 | wrap low (led) | wrap low (led) | 0.05 | 1.11 m |
 | -1/2 | lock low (led) | open | 0.49 | 0.96 m |
-| 0 | open | open | 0.08 | 1.00 m |
+| 0 | open | open | 0.00 | 1.00 m |
 | +1/2 | wrap low (led) | open | 0.19 | 1.11 m |
 | +1 | lock low, elbow forward | open | 1.00 (at edge) | 1.30 m |
 | +1 1/2 | blocked | | | |
@@ -233,10 +233,10 @@ Blocks: -1.64, 0.50 m apart: follow's wrist; +1.40, 0.40 m apart: lead's wrist.
 | -2 | blocked | | | |
 | -1 1/2 | open | open | 0.74 (near it) | 1.51 m |
 | -1 | wrap high (led) | wrap high (led) | 0.11 | 1.50 m |
-| -1/2 | lock high (led) | wrap high (led) | 1.00 (at edge) | 1.33 m |
-| 0 | open | open | 0.18 | 1.40 m |
+| -1/2 | lock high (led) | wrap high (led) | 0.86 (near it) | 1.33 m |
+| 0 | open | open | 0.00 | 1.40 m |
 | +1/2 | wrap high (led) | open | 0.22 | 1.50 m |
-| +1 | lock high (led), elbow forward | open | 0.37 | 1.50 m |
+| +1 | lock high (led), elbow forward | open | 0.71 (near it) | 1.50 m |
 | +1 1/2 | blocked | | | |
 | +2 | blocked | | | |
 
@@ -250,10 +250,10 @@ Blocks: -: free to 2.50 turns, 0.36 m apart; +: free to 2.50 turns, 0.36 m apart
 | -1 1/2 | above | above | 0.00 | 1.87 m |
 | -1 | above | above | 0.20 | 1.39 m |
 | -1/2 | above | above | 0.00 | 1.90 m |
-| 0 | above | above | 0.08 | 1.00 m |
+| 0 | above | above | 0.00 | 1.00 m |
 | +1/2 | above | above | 0.00 | 1.74 m |
 | +1 | above | above | 0.67 | 1.56 m |
-| +1 1/2 | above | above | 0.00 | 1.74 m |
+| +1 1/2 | above | above | 0.09 | 1.74 m |
 | +2 | above | above | 0.68 | 1.56 m |
 
 ## The floor's claim
@@ -292,9 +292,9 @@ Blocks: -1.04, 0.36 m apart: follow's wrist; +1.04, 0.36 m apart: follow's wrist
 | -1 1/2 | blocked | | | |
 | -1 | lock low, elbow forward | wrap low (led) | 2, 2, 2, 1, 1 | 1.00 (at edge) |
 | -1/2 | wrap low (led) | lock low (led) | none | 0.57 |
-| 0 | open | open | none | 0.09 |
+| 0 | open | open | none | 0.00 |
 | +1/2 | lock low (led) | wrap low (led) | none | 0.57 |
-| +1 | wrap low (led) | lock low, elbow forward | 2, 2, 1, 1, 1 | 0.97 (near it) |
+| +1 | wrap low (led) | lock low, elbow forward | 2, 2, 1, 1, 1 | 1.00 (at edge) |
 | +1 1/2 | blocked | | | |
 | +2 | blocked | | | |
 
@@ -307,10 +307,10 @@ Blocks: -1.30, 0.46 m apart: lead's wrist; +1.30, 0.46 m apart: lead's wrist.
 | -2 | blocked | | | |
 | -1 1/2 | blocked | | | |
 | -1 | lock high (led), elbow forward | wrap high (led) | 1, 1, 1 | 0.92 (near it) |
-| -1/2 | lock high (led), elbow forward | lock high (led) | 1 | 1.00 (at edge) |
-| 0 | open | open | none | 0.08 |
+| -1/2 | lock high (led), elbow forward | lock high (led) | 1 | 0.96 (near it) |
+| 0 | open | open | none | 0.00 |
 | +1/2 | lock high (led) | lock high (led), elbow forward | 2 | 0.96 (near it) |
-| +1 | wrap high (led) | lock high (led), elbow forward | 2, 2, 2 | 0.50 |
+| +1 | wrap high (led) | lock high (led), elbow forward | 2, 2, 2 | 0.92 (near it) |
 | +1 1/2 | blocked | | | |
 | +2 | blocked | | | |
 
@@ -325,7 +325,7 @@ Blocks: -1.88, 0.64 m apart: arm through arm; +1.88, 0.64 m apart: arm through a
 | -1 | above | above | 1, 2 | 0.59 |
 | -1/2 | above | above | 1, 1 | 0.23 |
 | 0 | above | above | none | 0.00 |
-| +1/2 | above | above | 2, 2 | 0.19 |
+| +1/2 | above | above | 2, 2 | 0.23 |
 | +1 | above | above | 2, 1 | 0.59 |
 | +1 1/2 | above | above | 2, 1, 2 | 0.63 |
 | +2 | blocked | | | |
@@ -369,12 +369,12 @@ Blocks: -2.04, 0.74 m apart: follow's wrist; +1.84, 0.46 m apart: lead's wrist.
 | turn | follow's first arm | follow's second arm | over at each crossing | strain |
 |---|---|---|---|---|
 | -2 | above | above | 1, 2, 1, 1, 1 | 1.00 (at edge) |
-| -1 1/2 | above | above | 1, 2, 1 | 0.44 |
+| -1 1/2 | above | above | 1, 2, 1 | 0.42 |
 | -1 | above | above | 1, 2, 2 | 1.00 (at edge) |
 | -1/2 | above | above | 1 | 0.06 |
 | 0 | above | above | none | 0.00 |
 | +1/2 | above | above | 1, 1, 2 | 1.00 (at edge) |
-| +1 | above | above | 2, 1 | 0.00 |
+| +1 | above | above | 2, 1 | 0.20 |
 | +1 1/2 | above | above | 2, 1, 2 | 1.00 (at edge) |
 | +2 | blocked | | | |
 
