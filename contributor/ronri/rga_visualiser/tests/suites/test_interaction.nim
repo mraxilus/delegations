@@ -5,6 +5,18 @@
 import ./fixtures
 
 
+func angleTurned(was, now: FrameCamera): float =
+  ## Read angle of turn carrying frame `was` onto frame `now`, off trace of rotation between.
+  let trace = dot(now.axis_right, was.axis_right) + dot(now.axis_up, was.axis_up) +
+      dot(now.forward, was.forward)
+  arccos(clamp(0.5 * (trace - 1.0), -1.0, 1.0))
+
+
+func enclosed(a, b, c: Direction): float =
+  ## Read solid angle spherical triangle of unit directions encloses (Van Oosterom, Strackee).
+  2.0 * arctan2(abs(dot(a, cross(b, c))), 1.0 + dot(a, b) + dot(b, c) + dot(c, a))
+
+
 
 suite "Interaction":
   test "drag operation maps to the catalogue entry it names":
@@ -1046,10 +1058,11 @@ suite "Interaction":
     check not (orbiting.eye =~ opening.eye)
 
 
-  test "a drag holds its roll, where turns about the camera's axes keep what transport leaves":
-    # Turning about camera's own axes carries roll round by solid angle loop encloses.
-    #   That is geometry rather than mistake, and no drag asks for any of it: finger
-    #   wanders in curves, and has no roll key beside it, and both mice drag as finger does.
+  test "a look's drag holds its roll, and an orbit's drag turns as held keys do, by transport":
+    # Turning about camera's own axes carries roll round by solid angle loop encloses: that
+    #   is geometry rather than mistake. Look drags as turntable, so its loop leaves none.
+    #   Orbit drags as trackball, by ruling of 2026-10-18, so it behaves alike at every
+    #   height, and its loop leaves transport, as held keys' orbit does.
     const loop = [(0.3, 0.0), (0.0, 0.3), (-0.3, 0.0), (0.0, -0.3)]
     # Stance these figures are read at: 19 units off pivot one unit above origin, 24 degrees up.
     let stance = cameraAround(
@@ -1069,8 +1082,11 @@ suite "Interaction":
         for (turn, rise) in loop:
           if picked: carried.orbit(turn, rise) else: carried.look(turn, rise)
       check abs(carried.rollHeld.get - 0.3242) < 1.0e-3
-    # Drag's loop of pixels leaves none in either state, keeps roll reader set by twist,
-    #   and brings camera back where it began.
+    # Look's loop of pixels leaves none, keeps roll reader set by twist, and brings camera
+    #   back where it began.
+    # Orbit turns as trackball, by ruling of 2026-10-18, so its loop is transport too. Point
+    #   held at first corner comes back under it each round, so four rounds turn view about
+    #   that point's direction, by four times solid angle that loop of held points encloses.
     const (wide, tall) = (390, 844)
     let corners = [
       ScreenPosition(x: 160.0, y: 390.0), ScreenPosition(x: 230.0, y: 390.0),
@@ -1085,10 +1101,27 @@ suite "Interaction":
           for corner in 0..<4:
             held.turnFollowing(corners[corner], corners[(corner+1) mod 4], wide, tall,
               has_selection = picked)
-        check held.rollHeld.get =~ opening.rollHeld.get
-        check held.eye =~ opening.eye
-        check held.frame.forward =~ opening.frame.forward
-        check held.frame.axis_up =~ opening.frame.axis_up
+        if not picked:
+          check held.rollHeld.get =~ opening.rollHeld.get
+          check held.eye =~ opening.eye
+          check held.frame.forward =~ opening.frame.forward
+          check held.frame.axis_up =~ opening.frame.axis_up
+          continue
+        let radius = opening.radiusHeld(wide, tall, 0.0)
+        var off: array[4, Direction]
+        for k in 0..<4:
+          let at = pointHeld(opening.eye, opening.pivot,
+            opening.headingThrough(opening.frame, wide, tall, corners[k]), radius) - opening.pivot
+          off[k] = (1.0 / norm(at)) * at
+        let
+          excess = enclosed(off[0], off[1], off[2]) + enclosed(off[0], off[2], off[3])
+          (was, now) = (opening.frame, held.frame)
+          carried = dot(was.axis_right, off[0]) * now.axis_right +
+              dot(was.axis_up, off[0]) * now.axis_up + dot(was.forward, off[0]) * now.forward
+        check abs(angleTurned(was, now) - 4.0 * excess) < 1.0e-9
+        check norm(carried + (-1.0) * off[0]) < 1.0e-9
+        check held.pivot =~ opening.pivot
+        check held.distance =~ opening.distance
 
 
   test "a finger's orbit keeps the point it took hold of under it, pixel for pixel":
@@ -1130,7 +1163,16 @@ suite "Interaction":
             check carried.heldUnder(finish, radius) =~ taken
             check carried.pivot =~ opening.pivot
             check carried.distance =~ opening.distance
-            check carried.rollHeld.get =~ opening.rollHeld.get
+            # Trackball turns least, by ruling of 2026-10-18: one step turns by angle between
+            #   point taken and point reached, about pivot.
+            if steps == 1:
+              let
+                (taken_off, reached_off) =
+                  (taken - opening.pivot, opening.heldUnder(finish, radius) - opening.pivot)
+                between = arccos(clamp(
+                  dot(taken_off, reached_off) / (norm(taken_off) * norm(reached_off)), -1.0, 1.0
+                ))
+              check abs(angleTurned(opening.frame, carried.frame) - between) < 1.0e-9
           # Drag that comes back brings camera back.
           var back = opening
           back.turnFollowing(start, finish, wide, tall, has_selection = true,
@@ -1253,6 +1295,84 @@ suite "Interaction":
     check spun.pivot =~ pole.pivot
     check abs(dot(spun.frame.axis_right, spun.frame.forward)) < TOLERANCE_TEST
     check abs(norm(spun.frame.forward) - 1.0) < TOLERANCE_TEST
+
+
+  test "an orbit's drag turns the view alike at every height, over the top too":
+    # Case as found on published page, 2026-10-18: Architect's mouse orbit of picked point
+    #   behaved oddly near top. Turntable yawed about world up, which near pole lies along
+    #   sight: drag spun picture about middle, pitch could not reach height asked, and
+    #   point grabbed slipped from under pointer.
+    # Swept: heights from level to straight down and past it, two headings, rolled view,
+    #   and drags at middle, near top edge, off sphere and down, in 1 step or 16. Seen from
+    #   camera's own axes before it, each drag turns view same at every stance, and point
+    #   taken at press stays under pointer.
+    const (wide, tall) = (390, 844)
+    let middle = ScreenPosition(x: float(wide) / 2.0, y: float(tall) / 2.0)
+    proc heldUnder(camera: Camera, at: ScreenPosition, radius: float): Position =
+      # Place point drag holds under pixel.
+      pointHeld(camera.eye, camera.pivot, camera.headingThrough(camera.frame, wide, tall, at),
+        radius)
+    proc turnSeen(before, after: Camera): array[9, float] =
+      # Read each axis after turn along each axis before it: turn as camera itself sees it.
+      let (was, now) = (before.frame, after.frame)
+      for i, a in [now.axis_right, now.axis_up, now.forward]:
+        for j, b in [was.axis_right, was.axis_up, was.forward]:
+          result[3 * i + j] = dot(a, b)
+    proc dragged(camera: Camera; start, finish: ScreenPosition; steps: int): Camera =
+      # Drag from `start` to `finish` in `steps` equal steps, with selection.
+      result = camera
+      var at = start
+      for step in 1..steps:
+        let
+          reached = float(step) / float(steps)
+          next = ScreenPosition(
+            x: start.x + reached * (finish.x - start.x),
+            y: start.y + reached * (finish.y - start.y),
+          )
+        result.turnFollowing(at, next, wide, tall, has_selection = true)
+        at = next
+    # Stances: level to straight down and past it, at two headings, and rolled.
+    var stances: seq[Camera]
+    for heading in [0.3, 2.1]:
+      for degrees in [0.0, 45.0, 80.0, 88.0, 89.9, 90.0]:
+        let height = degToRad(degrees)
+        stances.add cameraAround(
+          ORIGIN,
+          19.0,
+          Direction(x: cos(height) * cos(heading), y: cos(height) * sin(heading), z: sin(height)),
+        )
+    var rolled = stances[2]
+    rolled.roll(0.5)
+    stances.add rolled
+    var over = stances[0]
+    for step in 1..4:
+      over = over.dragged(middle, ScreenPosition(x: middle.x, y: middle.y + 80.0), 1)
+    check dot(over.frame.axis_up, UP_WORLD) < 0.0  # Past straight down, upside down.
+    stances.add over
+    let drags = [
+      (middle, ScreenPosition(x: middle.x + 100.0, y: middle.y)),
+      (ScreenPosition(x: 315.0, y: 170.0), ScreenPosition(x: 215.0, y: 170.0)),
+      (ScreenPosition(x: 40.0, y: 100.0), ScreenPosition(x: 140.0, y: 160.0)),
+      (middle, ScreenPosition(x: middle.x, y: middle.y + 100.0)),
+    ]
+    for (start, finish) in drags:
+      for steps in [1, 16]:
+        let seen_level = turnSeen(stances[0], stances[0].dragged(start, finish, steps))
+        for stance in stances:
+          let
+            radius = stance.radiusHeld(wide, tall, 0.0)
+            taken = stance.heldUnder(start, radius)
+            carried = stance.dragged(start, finish, steps)
+            seen = turnSeen(stance, carried)
+          for k in 0..<9: check abs(seen[k] - seen_level[k]) < 1.0e-9
+          # Direction off pivot is what turn carries; off sphere, distance slips by design.
+          let
+            off_taken = taken - stance.pivot
+            off_now = carried.heldUnder(finish, radius) - carried.pivot
+          check norm((1.0 / norm(off_now)) * off_now + -((1.0 / norm(off_taken)) * off_taken)) <
+              1.0e-9
+          check carried.pivot =~ stance.pivot
+          check carried.distance =~ stance.distance
 
 
   test "a roll carries the picture the way the reader turns":
