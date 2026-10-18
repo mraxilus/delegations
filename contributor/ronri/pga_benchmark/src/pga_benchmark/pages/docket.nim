@@ -280,28 +280,36 @@ func positionOf(axis: Axis, ratio: float): float =
 
 #[ Facts ]#
 
+func tallyOf(rows: openArray[Row], is_typed: bool): Tally =
+  ## Count rows at bound and sum their spending; typed population counts rows with all three.
+  for row in rows:
+    if not is_typed and not row.is_general: continue
+    if row.library.isNone or row.bound.isNone: continue
+    let (library, bound) = (row.library.get, row.bound.get)
+    inc result.bounded
+    if library.multiplies <= bound.multiplies: inc result.at_multiplies
+    if library.bytes <= bound.bytes: inc result.at_bytes
+    if bound.is_chain: inc result.chains
+    if is_typed and row.reference.isNone: continue
+    inc result.full
+    result.sums_library[0] += library.multiplies
+    result.sums_library[1] += library.bytes
+    result.sums_bound[0] += bound.multiplies
+    result.sums_bound[1] += bound.bytes
+    if row.reference.isSome:
+      result.sums_reference[0] += row.reference.get.multiplies
+      result.sums_reference[1] += row.reference.get.bytes
+
+
+func countAtBound*(sheet: Sheet, ids: JsonNode): tuple[at_multiplies, bounded: int] =
+  ## Count operations of algebra at multivector lower bound on multiplies, over those bounded;
+  ##   home quotes it for docket. `ids` is docket file whole.
+  let tally = tallyOf(rowsOf(sheet, ids), false)
+  (tally.at_multiplies, tally.bounded)
+
+
 func htmlFacts(sheet: Sheet, rows: openArray[Row]): string =
   ## Render facts for both populations; typed toggle shows one.
-
-  func tallyOf(rows: openArray[Row], is_typed: bool): Tally =
-    ## Count rows at bound and sum their spending; typed population counts rows with all three.
-    for row in rows:
-      if not is_typed and not row.is_general: continue
-      if row.library.isNone or row.bound.isNone: continue
-      let (library, bound) = (row.library.get, row.bound.get)
-      inc result.bounded
-      if library.multiplies <= bound.multiplies: inc result.at_multiplies
-      if library.bytes <= bound.bytes: inc result.at_bytes
-      if bound.is_chain: inc result.chains
-      if is_typed and row.reference.isNone: continue
-      inc result.full
-      result.sums_library[0] += library.multiplies
-      result.sums_library[1] += library.bytes
-      result.sums_bound[0] += bound.multiplies
-      result.sums_bound[1] += bound.bytes
-      if row.reference.isSome:
-        result.sums_reference[0] += row.reference.get.multiplies
-        result.sums_reference[1] += row.reference.get.bytes
 
   func shareFill(sheet: Sheet): int =
     ## Read share of library's modelled bytes that are zero fill, in percent.
@@ -609,7 +617,7 @@ operation, and do not predict time across different operations. Inspect one your
 
 
 func bodyDocket*(
-  sheets: openArray[Sheet]; ids: JsonNode; overlays: openArray[Overlay]; pin, links, script: string
+  sheets: openArray[Sheet]; ids: JsonNode; overlays: openArray[Overlay]; pin, script: string
 ): string =
   ## Render docket body: header, one tab per algebra, controls, proposals against bound, method.
   ##   `script` is search box's JavaScript, compiled from `find.nim`; empty leaves page without.
@@ -762,11 +770,11 @@ func bodyDocket*(
     if dates.len > 1: text_dates.add " for " & titles.join(" and ")
 
   result = "<div class=\"page\" style=\"--origin:" & axis.positionOf(1.0).fixed & "%;--octaves:" &
-      $(axis.exponent_high - axis.exponent_low) & "\"><header><h1>PGA Gap Docket</h1>" &
+      $(axis.exponent_high - axis.exponent_low) & "\"><header><h1>Performance</h1>" &
       "<p class=\"meta\">pga " & code(pin[0..<7]) & " · time " & escapeHtml(text_dates) &
       measuredAt(taken) & ", " & escapeHtml(taken{"machine"}.getStr) &
       (if count_runs > 1: ", median of " & $count_runs & " runs" else: "") &
-      " · counts read from emitted C, exact" & links & "</p><label class=\"toggle\"><input " &
+      " · counts read from emitted C, exact</p><label class=\"toggle\"><input " &
       "type=\"checkbox\" id=\"typed\"> typed measurands</label></header><nav class=\"tabs\" " &
       "aria-label=\"Algebra\">"
   for index, sheet in sheets:

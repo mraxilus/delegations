@@ -1,6 +1,12 @@
-## Render proposal list: graph of undecided proposals, every proposal in table, and readings.
+## Render Proposals page: proposals tab with graph, table and readings, beside marginalia tab.
+##   Proposals page is one of three views of library, beside Progress and Performance (`home.nim`).
+##     Proposals argue future states of library, each on page of its own; marginalia hold smaller
+##     changes tried at pin, and notes on library source. Both answer what to change next, so
+##     they share one page, as Architect ruled on 2026-10-17.
+##   Tabs are radio inputs that `:has()` rules read, as docket's algebra tabs are; proposals tab
+##     is checked at rest.
 ##   Architect decides each proposal on its own, and proposals build on others as graph without
-##     cycles (`proposals.nim`). List page shows that graph for those still proposed, so reader
+##     cycles (`proposals.nim`). Proposals tab shows that graph for those still proposed, so reader
 ##     sees what one decision blocks before opening any page; frozen ones are decided, so graph
 ##     leaves them out and table alone keeps them.
 ##   Graph lays proposals in columns by depth, as longest path to one that builds on no proposed
@@ -29,6 +35,8 @@ const
   GAP_COLUMN = 84  ## Gap between columns, in px, where arrows run.
   GAP_ROW = 20  ## Gap between rows, in px.
   MARGIN_GRAPH = 8  ## Margin around graph, in px.
+  TABS = [("proposals", "Proposals"), ("marginalia", "Marginalia")]
+    ## Name and title of each tab of page, in order shown; first is checked at rest.
 
 
 func idPick*(proposal: Proposal): string =
@@ -85,7 +93,7 @@ func htmlGraph*(proposals: openArray[Proposal]): string =
   result.add "</div>"
 
 
-func bodyListing*(
+func htmlListing*(
   proposals: openArray[Proposal];
   evaluations: Table[string, JsonNode];
   files: Table[string, string];
@@ -93,9 +101,9 @@ func bodyListing*(
   baselines: Table[string, JsonNode];
   spread: Spread;
   urls: Table[string, string];
-  pin, links: string;
+  pin: string;
 ): string =
-  ## Render list page body: header, graph, table, then every proposal behind its checkbox.
+  ## Render proposals tab: graph, table, then every proposal behind its checkbox.
 
   func chipStanding(proposal: Proposal): string =
     ## Render where proposal stands as chip: proposed, implemented or withdrawn.
@@ -116,15 +124,11 @@ func bodyListing*(
     if cited.len == 0: "<span class=\"none\">none</span>"
     else: cited.mapIt(citeLinked(it, urls)).join(", ")
 
-  let
-    undecided = proposals.countIt(not it.isFrozen)
-    graph = htmlGraph(proposals)
-  result = "<div class=\"page\"><header><h1>Proposals</h1><p class=\"meta\">" &
-      $proposals.len & " proposals · " & $undecided & " undecided · pga " &
-      code(pin[0..<min(7, pin.len)]) & links & "</p><p>Each proposal is one future state of " &
-      "the library, argued and measured at the pin. The Architect decides each one on its own. " &
-      "A proposal needs each proposal that it depends on. A rejected proposal blocks each " &
-      "proposal that depends on it.</p></header><form class=\"picks\">"
+  let graph = htmlGraph(proposals)
+  result = "<p class=\"lead\">Each proposal is one future state of the library, argued and " &
+      "measured at the pin. The Architect decides each one on its own. A proposal needs each " &
+      "proposal that it depends on. A rejected proposal blocks each proposal that depends on " &
+      "it.</p><form class=\"picks\">"
   result.add "<section class=\"block\"><h2>Undecided proposals</h2>"
   if graph.len == 0:
     result.add "<p class=\"note\">No proposal waits on a decision.</p>"
@@ -172,4 +176,26 @@ func bodyListing*(
         "--pick-ring:var(--status);--pick-fill:var(--status-wash)}"
     rules.add "body:has(#" & id & ":focus-visible) [for=\"" & id & "\"]{outline:2px solid " &
         "var(--bound);outline-offset:2px}"
-  result.add "</section></form><style>" & rules.join("") & "</style></div>"
+  result.add "</section></form><style>" & rules.join("") & "</style>"
+
+
+func bodyListing*(
+  proposals: openArray[Proposal];
+  count_changes, count_notes: int;
+  listing, marginalia, pin: string;
+): string =
+  ## Render Proposals page body: header with counts, tabs, then proposals and marginalia.
+  let undecided = proposals.countIt(not it.isFrozen)
+  result = "<div class=\"page\"><header><h1>Proposals</h1><p class=\"meta\">" &
+      $proposals.len & " proposals · " & $undecided & " undecided · " & $count_changes &
+      " changes · " & $count_notes & " notes · pga " & code(pin[0..<min(7, pin.len)]) &
+      "</p></header><nav class=\"tabs\" aria-label=\"Proposals\">"
+  for index, (name, title) in TABS:
+    result.add "<label><input type=\"radio\" name=\"view\" id=\"view-" & name & "\"" &
+        (if index == 0: " checked" else: "") & "> " & title & "</label>"
+  result.add "</nav><section class=\"view view-proposals\">" & listing &
+      "</section><section class=\"view view-marginalia\">" & marginalia & "</section><style>"
+  for (name, _) in TABS:
+    result.add "body:has(#view-" & name & ":checked) .view:not(.view-" & name &
+        ") { display: none; }"
+  result.add "</style></div>"

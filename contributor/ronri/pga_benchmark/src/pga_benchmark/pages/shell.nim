@@ -52,6 +52,10 @@ const
     ##   Each Noto face ships whole, as TrueType of its own release, never as subset (X.8).
     ##     Commit Mono is no Noto, so its Latin subset stays.
     ##   Same six as `rga_visualiser` page, from same store.
+  VIEWS* = [("home", "PGA benchmark"), ("progress", "Progress"), ("docket", "Performance"),
+    ("proposals", "Proposals")]
+    ## Page name and title of home and of each view, in order bar shows them.
+    ##   Performance keeps page name `docket`, and Proposals keeps `proposals`, so URLs stay.
   SKELETON_HOST* = (
     "<!doctype html><html><head><meta charset=\"utf-8\">" &
     "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"></head><body>",
@@ -181,6 +185,26 @@ func digestPage*(page: string): string =
 func hosted*(page: string): string =
   ## Wrap built page in skeleton publish host serves it in, as `drive` renders it.
   SKELETON_HOST[0] & page & SKELETON_HOST[1]
+
+
+
+func htmlViews*(urls: Table[string, string], current: string, is_view = true): string =
+  ## Render bar every page opens with: home and each view, linked where published.
+  ##   `current` names view page belongs to; page that is view itself marks it as current page,
+  ##     and proposal page marks its view alone.
+  result = "<nav class=\"views\" aria-label=\"Views\">"
+  for (name, title) in VIEWS:
+    let
+      url = urls.getOrDefault(name)
+      mark =
+        if name != current: ""
+        elif is_view: " class=\"here\" aria-current=\"page\""
+        else: " class=\"here\""
+    result.add(
+      if url.len > 0: "<a" & mark & " href=\"" & escapeHtml(url) & "\">" & title & "</a>"
+      else: "<span" & mark & ">" & title & "</span>"
+    )
+  result.add "</nav>"
 
 
 
