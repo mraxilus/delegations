@@ -2337,9 +2337,9 @@ themes. A path that names no browser fails loudly rather than silently. No test 
 
 **URLs are listed once.** The URL of every published page is in the `README.md` of this project, in
 two tables that carry the same split. `design/README.md` and `simulation/README.md` point at it
-rather than repeat it (Article II.1). A page taken out of use keeps its URL and is not listed. The
-repository does not treat a published copy as its record, because the log does that. Cost: a URL is
-not beside the subsystem that builds the page.
+rather than repeat it (Article II.1). A page taken out of use is not listed, and its published
+copy can be deleted. The repository does not treat a published copy as its record, because the log
+does that. Cost: a URL is not beside the subsystem that builds the page.
 
 **Hand-written pages are committed files, and everything a build emits is not.** The shell of the
 Reference is `pages/app/index.html`, a page that the project stands behind.
@@ -2382,10 +2382,10 @@ stack. Verified by `suites/test_faces.nim`, test "every heading takes serif face
 
 Labels drawn inside figures take Noto Sans rather than Commit Mono. The "code, data and figures" of
 X.8 reads as numbers, and a label that names a hand is interface text. Every label that the code
-draws names Noto Sans first. Verified by `suites/test_faces.nim` for the label of the turn glyph,
-test "label of turn glyph names face pages ship". The faces check of the audit joins the literals
-that `&` carries across a line end, so it reads that label too (#412). It holds that label only to a
-first family that X.8 names, so only the test holds it to Noto Sans.
+draws names Noto Sans first. The faces check of the audit joins the literals that `&` carries
+across a line end, so it reads each label (#412). It holds a label only to a first family that X.8
+names, so reading alone holds it to Noto Sans. Verified by hand with a search of the source on
+2026-10-18, which finds Noto Sans first in every stack of a label.
 
 **No face of the three draws every character that the pages draw, so each stack names two more.**
 Noto Sans and Noto Serif draw no arrow, and Commit Mono draws no `⇄`. Noto Sans Math draws all five
