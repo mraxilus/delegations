@@ -151,6 +151,17 @@ _Avoid_: register, ledger, listing
 The hand-written HTML that every page is built in, `pages/shell.html`.
 _Avoid_: template, layout
 
+**View**:
+One of the three pages that the home page links: Progress, Performance and Proposals. Each view
+shows the library at the pin from one side.
+_Avoid_: tab, dashboard, section
+
+**Library map**:
+The figure on the Progress page that derives every Cayley table from the metric and 𝟙, in the
+order of the code. Each of its boxes shows the state that the library holds at the pin: a table of
+its own, other operators, or missing.
+_Avoid_: completion map, progress map, table graph
+
 **Change**:
 A small proposed edit to the library: one Markdown file in `changes/` that says why, then quotes
 each edit with its replacement.
