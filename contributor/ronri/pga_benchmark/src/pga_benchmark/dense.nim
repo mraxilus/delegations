@@ -333,7 +333,9 @@ func recipeOf(emitter: var Emitter; id: string; m, n: Slots): Slots =
 
 #[ Functions ]#
 
-func basesOf[B: static Bases](t: typedesc[MultivectorOf[B]]): Bases {.used.} =
+func basesOf[B: static Bases](
+  t: typedesc[MultivectorOf[B]]
+): Bases {.used.} =  # Used in forms that `defineFormsDense` emits.
   ## Read bases multivector type holds; read by `defineFormsDense`'s emitted forms.
   B
 
