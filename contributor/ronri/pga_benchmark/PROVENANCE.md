@@ -602,6 +602,25 @@ second program, which compiles again whenever its sources change.
 Suite `Internal: Driver` of `test_rga4d.nim` holds the imports of the dispatcher to `std/`. It
 also holds each verb that the dispatcher hands on to one that `tools/verbs.nim` answers.
 
+**Each suite runs in a proc of its own.** The template `suite` of `std/unittest` writes each test
+into the function that runs the module. Template `suiteInProc` in `tests/suites.nim` puts each
+suite in a proc of its own. That function then holds 0.4 MB of C at rga4d, and the largest suite
+about 1 MB.
+
+Rejected: suites at module level. They put every test in one C function of 8.1 MB at rga4d. There
+gcc spends 31 s on its file, and the count of its multiplies spends 51 s of the run, measured
+2026-10-19.
+
+On `linux amd64, 4 cores` on 2026-10-19, nothing else ran. There the tests of this project took
+79 s in place of 221 s. The stub of rga4d took 21 s in place of 82 s, and cga5d 24 s in place of
+49 s. The stub of cga4d took 19 s in place of 45 s, and rga3d 14 s in place of 32 s. Both layouts
+ran the same tests, by name, at rga4d. A suite that reads no algebra still compiles once for each
+of the four stubs.
+
+Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Inspector`: the function that
+runs the module holds under 2 MB of C. The law fails on suites at module level, where that
+function holds 8,316,057 bytes.
+
 ## Changes, proposals and evaluations
 
 **A change is Markdown, and quotes what it edits.** Each file in `changes/` holds a title,
