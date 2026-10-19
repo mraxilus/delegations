@@ -206,8 +206,8 @@ _Avoid_: configuration, config, target, signature
 
 **Basis-set type**:
 A type that holds the coefficients of one set of bases alone, dense in basis order, as
-`MultivectorOf[B]` of P04 does. A named one is an alias of a set, such as `Kvector2`. An exact
-one holds the bases that a product reaches.
+`MultivectorOf[B]` of the library does. A named one is an alias of a set, such as
+`Multivector2`. An exact one holds the bases that a product reaches.
 _Avoid_: kind, exact kind, named kind
 
 **Comparison tolerance**:
