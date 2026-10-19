@@ -58,6 +58,8 @@ const
   ]
     ## Words compiler spells ASCII operator characters with, longest first.
   STEM_MULTIVECTOR* = "tyObject_Multivector"  ## Type stem of library's dense object in emitted C.
+  PREFIX_INSTANCE = "tyObject_MultivectorOf__"
+    ## C name every instance of library's `MultivectorOf` opens with, hash after it.
   ACCESSOR = "X5BX5D_"
     ## Mangled head of `[]`, whose calls are element reads and not counted as calls.
 
@@ -143,11 +145,43 @@ func overloadOf*(name: string): int =
 
 #[ Functions ]#
 
-func functionsIn*(source: string): seq[FunctionC] =
+func named(source: string, stems: openArray[(int, string)]): string =
+  ## Rename each `MultivectorOf` instance C source defines after library type of its count.
+  ##   C names every instance `tyObject_MultivectorOf__<hash>`, so element count tells them
+  ##     apart: `struct <name> {` holds `<array> elements;`, and `typedef NF <array>[<n>];`.
+  ##   Renamed instance reads `tyObject_<type>__<hash>`, as one type per object did, so every
+  ##     reader below sees one stem per library type. Count no stem names keeps its C name.
+  var counts: Table[string, int]
+  let lines = source.splitLines
+  for line in lines:
+    if line.startsWith("typedef NF") and " tyArray__" in line and line.endsWith("];"):
+      let
+        start = line.find("tyArray__")
+        bracket = line.rfind('[')
+      counts[line[start..<bracket]] = parseInt(line[bracket+1..^3])
+  var renames: seq[(string, string)]
+  for index, line in lines:
+    if not (line.startsWith("struct " & PREFIX_INSTANCE) and line.endsWith(" {")): continue
+    if index + 1 >= lines.len: continue
+    let
+      instance = line["struct ".len..^3]
+      field = lines[index+1].strip
+      array = field.split(' ')[0]
+    if not field.endsWith(" elements;") or array notin counts: continue
+    for (count, stem) in stems:
+      if count == counts[array]:
+        renames.add (instance, "tyObject_" & stem & instance[PREFIX_INSTANCE.len-2..^1])
+  source.multiReplace(renames)
+
+
+func functionsIn*(emitted: string, stems: openArray[(int, string)] = []): seq[FunctionC] =
   ## Read every function definition of C source, with its parameter stems and body.
+  ##   Instances of `MultivectorOf` are named first, after library type of their element count,
+  ##     which `stems` maps; none named where it is empty, as in fixture C.
   ##   Definition opens on line `N_NIMCALL(<type>, <name>)(<params>) {`,
   ##   `N_NOINLINE(<type>, <name>)(<params>) {` or `static N_INLINE(<type>, <name>)(<params>) {`;
   ##   declarations end in `;` and are skipped. Body runs to brace closing that line's.
+  let source = emitted.named(stems)
   var position = 0
   while position < source.len:
     let
@@ -220,7 +254,7 @@ func countIntermediates(body: string): int =
   ## Count local multivector declarations, i.e. lines `tyObject_Multivector__<id> T<n>_;`.
   for line in body.splitLines:
     let s = line.strip
-    if s.startsWith(STEM_MULTIVECTOR) and s.endsWith("_;") and " T" in s and '*' notin s:
+    if s.startsWith(STEM_MULTIVECTOR & "__") and s.endsWith("_;") and " T" in s and '*' notin s:
       inc result
 
 
@@ -448,8 +482,9 @@ func totals*(functions: seq[FunctionC], roots: openArray[string]): Table[string,
 
 #[ Cache ]#
 
-proc inspectCache*(directory: string): seq[FunctionC] =
+proc inspectCache*(directory: string, stems: openArray[(int, string)]): seq[FunctionC] =
   ## Read every function of every C file in nimcache directory, first definition kept.
+  ##   `stems` names library type of each element count, as `functionsIn` reads it.
   ##   Inline functions are emitted once per module using them; duplicates share body.
   ##   Files are read in path order, so numbering of colliding keys is same on every
   ##   file system.
@@ -459,7 +494,7 @@ proc inspectCache*(directory: string): seq[FunctionC] =
   paths.sort
   var seen: Table[string, bool]
   for path in paths:
-    for f in functionsIn(readFile(path)):
+    for f in functionsIn(readFile(path), stems):
       if f.name in seen: continue
       seen[f.name] = true
       result.add f

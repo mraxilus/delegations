@@ -153,7 +153,7 @@ proc main(): int =
     stderr.write "Usage: inspect <cache> <output.json> <nim> <pga> <flags>\n"
     return 2
   let
-    functions = inspectCache(paramStr(1))
+    functions = inspectCache(paramStr(1), STEMS_MULTIVECTOR)
     total = totals(functions)
   var taken = takenNow()
   taken["nim"] = %paramStr(3)

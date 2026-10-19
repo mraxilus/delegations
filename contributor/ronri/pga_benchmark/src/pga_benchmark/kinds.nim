@@ -49,6 +49,11 @@ const
     ## Timed rounds per measurand; median and minimum over rounds are measurements reported.
   SIZE_MULTIVECTOR* = sizeof(Multivector)
     ## Bytes one dense multivector occupies, i.e. 8 × 2^DIMENSIONS.
+  STEMS_MULTIVECTOR* = [
+    (sizeof(Multivector) div sizeof(Coefficient), "Multivector"),
+    (sizeof(MultivectorScalars) div sizeof(Coefficient), "MultivectorScalars"),
+  ]
+    ## Name library type of each element count, since C names every `MultivectorOf` alike.
 
 static:
   doAssert OBJECTS >= 2, "Pool should hold at least two objects; got `" & $OBJECTS & "`."

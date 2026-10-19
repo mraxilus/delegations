@@ -287,8 +287,9 @@ suite "Internal: Catalogue":
 
   test "inlined names every symbol library spells as template over field read":
     for symbol in INLINED:
-      let line = "template `" & symbol & "`*(m: Multivector, b: Basis): float = m.elements[b]"
-      check line in SOURCE_MULTIVECTORS  # template, so C carries no function to inspect
+      let head = "template `" & symbol & "`*[B: static Bases](m: MultivectorOf[B], b: Basis): "
+      check head & "Coefficient =" in SOURCE_MULTIVECTORS  # template, so C carries no function
+      check "m.elements[index[B](b)]" in SOURCE_MULTIVECTORS  # body is field read alone
 
 
   test "templates name every symbol library spells over another":
@@ -509,7 +510,7 @@ suite "Internal: Lower bound":
 
 const CACHE = querySetting(SingleValueSetting.nimcacheDir)
   ## Nimcache of this test binary, which inspector suites read back.
-let INSPECTED = inspectCache(CACHE)
+let INSPECTED = inspectCache(CACHE, STEMS_MULTIVECTOR)
   ## Read once: walking cache costs seconds, and two suites read same functions.
 
 
@@ -844,10 +845,25 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
   test "timed loop binds result returned by value, so no temporary is zero-filled":
     # Result of three floats or fewer returns by value; assigned straight into its slot, it
     #   passes through temporary that call site zero-fills, out of line where function is
-    #   large, about 11 ns.
-    var calls, filled = 0
+    #   large, about 11 ns. Reference returns so, and library's norms return two scalars so.
+    let returning_scalars = INSPECTED.filterIt(it.stem_result == "MultivectorScalars")
+        .mapIt(it.name)
+    var calls, filled, calls_library, filled_library = 0
     for path in walkFiles(CACHE / "*measurements.nim.c"):
-      let lines = readFile(path).splitLines
+      let source = readFile(path)
+      for f in functionsIn(source):
+        if not f.name.startsWith("measure"): continue  # timed loops alone, not callees
+        let lines = f.body.splitLines
+        for index, line in lines:
+          for name in returning_scalars:
+            let at = line.find(" = " & name & "(")
+            if at < 0: continue
+            inc calls_library
+            let target = line[0..<at].split({' ', '\t', ';'})[^1]  # after any line marker
+            if index > 0 and lines[index-1].strip.startsWith("nimZeroMem") and
+                ("(&" & target & ")") in lines[index-1]:
+              inc filled_library
+      let lines = source.splitLines
       for index, line in lines:
         if "referenceZ" notin line: continue
         inc calls
@@ -855,6 +871,8 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
           inc filled
     check calls > 0  # loops that call reference are read
     check filled == 0  # no reference result passes through zero-filled temporary
+    check calls_library > 0  # loops that call library's norms are read
+    check filled_library == 0  # no norm's two scalars pass through zero-filled temporary
 
 
   test "own nimcache holds every catalogued symbol at its arity":

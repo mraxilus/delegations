@@ -31,6 +31,7 @@ func sizeOfStem*(stem: string, size_multivector: int, module = ""): int =
   ##   names reference whose types they are; 3D Euclidean reference where module names none.
   case stem
   of "Multivector": size_multivector
+  of "MultivectorScalars": 16  # scalar and antiscalar, eight bytes each
   of "float", "int", "Antiscalar": 8
   else:
     if module.endsWith("rigid2"):
