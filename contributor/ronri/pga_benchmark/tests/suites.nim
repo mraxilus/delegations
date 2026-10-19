@@ -2329,15 +2329,135 @@ suite "Internal: Pages":
     check spreadOf([quiet]).low < 1.0 and spreadOf([quiet]).high > 1.0  # around no change
 
 
-  test "every grid in shell bounds its columns, so wide content scrolls in place":
+  test "every grid in shell and docket bounds its columns, so wide content scrolls in place":
     const shell_html = staticRead("../pages/shell.html")
+    let
+      docket = bodyDocket([sheetDocket(81, 12, %*{})], ids_docket, [], "bd6b23c590d7", "")
+      style_docket = docket.split("<style>")[1].split("</style>")[0]
     var unbounded: seq[string]
-    for rule in shell_html.split('}'):
+    for rule in (shell_html & style_docket).split('}'):
       let body = rule.split('{')
       if body.len < 2 or "display: grid" notin body[^1]: continue
       if "grid-template-columns" notin body[^1]: unbounded.add body[^2].strip
     checkpoint "unbounded: " & unbounded.join(", ")
     check unbounded.len == 0  # grid child of auto width widens page at phone width
+
+
+  test "rule through class and bare tag never outranks one-class rule of element it reaches":
+    # Case: Performance summary drew its bars over each other at 1100 px, as Architect found.
+    #   Shell's `.summary div`, written for proposal page's summary card, reached docket's
+    #   `div.summary` too, and outranked `.aggregate`, `.bars` and `.bar` on their columns.
+    # Domain: every element docket and proposal page draw, under every rule they ship.
+    const
+      shell_html = staticRead("../pages/shell.html")
+      characters_name = {'a'..'z', '0'..'9', '-', '_'}  # Class name, as pages spell it.
+      characters_tag = {'a'..'z', '0'..'9'}
+      tags_void = ["br", "hr", "img", "input", "link", "meta", "source", "wbr"]
+
+    func rulesOf(css: string):
+        (Table[string, seq[string]], seq[tuple[name, tag: string, properties: seq[string]]]) =
+      ## Read properties of each one-class rule by class, and each rule through class and tag.
+      ##   Rule inside `@media` counts as one outside, since either can apply.
+      var
+        text = css
+        start = text.find("/*")
+      while start >= 0:
+        text.delete(start .. text.find("*/", start) + 1)
+        start = text.find("/*")
+      for rule in text.split('}'):
+        let parts = rule.split('{')
+        if parts.len < 2: continue
+        let properties = parts[^1].split(';').mapIt(it.split(':')[0].strip).filterIt(it.len > 0)
+        for selector in parts[^2].split(','):
+          let words = selector.splitWhitespace
+          if words.len == 0 or words.len > 2 or not words[0].startsWith('.'): continue
+          let name = words[0][1..^1]
+          if not name.allCharsInSet(characters_name): continue
+          if words.len == 1: result[0].mgetOrPut(name, @[]).add properties
+          elif words[1].allCharsInSet(characters_tag): result[1].add (name, words[1], properties)
+
+    func outranked(body, css: string): seq[string] =
+      ## Name each property rule through ancestor's class and bare tag takes from element's own
+      ##   one-class rule, as `.summary div` over `.bar` on `display`.
+      ##   Class and tag outrank one class, so own rule loses wherever both set property.
+      let (rules_class, rules_tag) = rulesOf(css)
+      var
+        open: seq[tuple[tag: string, classes: seq[string]]]  # Elements open, outermost first.
+        at = body.find('<')
+      while at >= 0:
+        let
+          stop = body.find('>', at)
+          inside = body[at+1..<stop]
+        at = body.find('<', stop)
+
+        # Close innermost open element of tag; skip comment and doctype.
+        if inside.startsWith('/'):
+          var index = open.high
+          while index >= 0 and open[index].tag != inside[1..^1]: dec index
+          if index >= 0: open.setLen(index)
+          continue
+        if inside.startsWith('!'): continue
+
+        # Read tag and classes; script and style hold no element.
+        let
+          tag = inside.splitWhitespace[0]
+          start = inside.find(" class=\"")
+          classes =
+            if start < 0: @[]
+            else: inside[start+8..<inside.find('"', start + 8)].splitWhitespace
+        if tag in ["script", "style"]: at = body.find("</" & tag, stop)
+
+        # Gather what ancestors' rules set on tag, then name what element's own rules lose.
+        var reaching: seq[(string, string)]
+        for (_, classes_ancestor) in open:
+          for (name, tag_rule, properties) in rules_tag:
+            if tag_rule != tag or name notin classes_ancestor: continue
+            for property in properties: reaching.add ("." & name & " " & tag, property)
+        for name in classes:
+          for (rule, property) in reaching:
+            if property notin rules_class.getOrDefault(name): continue
+            result.add "`" & rule & "` over `." & name & "` on `" & property & "`"
+        if tag notin tags_void and tag notin ["script", "style"]: open.add (tag, classes)
+      result = result.deduplicate
+
+    func styles(body: string): string =
+      ## Read rules page carries in its own `style` elements.
+      for part in body.split("<style>")[1..^1]: result.add part.split("</style>")[0] & "\n"
+
+    let
+      overlay = Overlay(
+        name: "p",
+        title: "P01: P",
+        url: "u",
+        functions: {"rga4d": %*{"∧(M,M)": {"after": {"multiplies": 54, "bytes_moved": 384}}}}
+          .toTable,
+      )
+      docket = bodyDocket([sheetDocket(81, 12, %*{})], ids_docket, [overlay], "bd6b23c590d7", "")
+      record = Proposal(
+        number: 1,
+        name: "p",
+        directory: "proposals/01-p",
+        title: "P",
+        body: parseBlocks("**What it is.** It.\n\n## Problem\n\nWhy.\n"),
+        claims: newJArray(),
+      )
+      proposal = bodyProposal(
+        record,
+        [record],
+        nil,
+        initTable[string, string](),
+        initTable[string, string](),
+        initTable[string, JsonNode](),
+        Spread(),
+        initTable[string, string](),
+        "bd6b23c590d7",
+        "",
+      )
+    for body in [docket, proposal]:
+      let found = outranked(body, shell_html & styles(body))
+      checkpoint "outranked: " & found.join(", ")
+      check found.len == 0  # own rule of element holds, so no page's rule reshapes another's
+    check "<dl class=\"summary\">" in proposal  # proposal page's card still read
 
 
   test "every stack holds each face of sans stack before any family shell does not ship":
@@ -2489,6 +2609,35 @@ suite "Internal: Pages":
     let body = bodyDocket([sheetDocket(81, 0, %*{})], ids_docket, [], "bd6b23c590d7", "")
     check ">81 over 0<" in body and "class=\"open\"" in body  # bar runs to axis end
     check "×inf" notin body and "×nan" notin body  # no ratio divides by zero
+
+
+  test "proposal draws one bar per count, segment per fate of each operation, counts beside":
+
+    func overlayOf(title, url: string; functions: JsonNode): Overlay =
+      ## Build one proposal changing functions of `rga4d` alone.
+      Overlay(name: title, title: title, url: url, functions: {"rga4d": functions}.toTable)
+
+    let
+      overlays = [
+        overlayOf("P01: Swap", "u", %*{"∧(M,M)": {"after": {"multiplies": 81,
+          "bytes_moved": 384}}}),
+        overlayOf("P02: Drop", "", %*{"∧(M,M)": {"after": nil}}),
+        overlayOf("P03: Keep", "", %*{}),
+      ]
+      body = bodyDocket([sheetDocket(54, 12, %*{})], ids_docket, overlays, "bd6b23c590d7", "")
+      bar = "<i class=\"$1\" style=\"left:0.00%;width:100.00%\"></i></div><span class=\"v\">$2<"
+    check body.count("<a href=\"u\">P01: Swap</a>") == 1  # link once, over its algebras
+    check "<p>P02: Drop</p>" in body  # unpublished proposal named, unlinked
+    check bar % ["lost", "1 → 0 of 1"] in body  # 54 at bound of 54, then 81 over it
+    check bar % ["gained", "0 → 1 of 1"] in body  # 512 over 384, then 384 at it
+    check bar % ["lost", "1 of 1 → 0 of 0"] in body  # dropped function leaves its count
+    check "<div class=\"track\"></div><span class=\"v\">0 of 1 → 0 of 0<" in body  # none at it
+    check bar % ["kept", "1 → 1 of 1"] in body  # untouched function keeps its fate
+    check "Rigid 4D, multiplies: 1 of 1 at bound now, 0 of 1 with proposal; 0 brought to it, " &
+        "1 taken off it" in body  # tip says every count
+    check "class=\"gained\">brought to bound by proposal</span>" in body  # legend names fate
+    check "/" notin body[body.find("Proposals against")..<body.find("How each figure")].replace(
+        "</", "")  # no count left as fraction text
 
 
   test "verdict chips say when evaluation removes NaN results":
