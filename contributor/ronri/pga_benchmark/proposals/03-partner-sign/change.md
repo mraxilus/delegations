@@ -11,9 +11,6 @@ Other edits land in this order against the edits below:
 
 - P01, `cayley-derivation`, lands first and P08, `compound-tables`, second. The tables below
   read `applyMap` of P01, and the first edit quotes `CAYLEY_CONTAINER` of P08.
-- P06, `float-width`, edits the sign line of `⊛`, which the last edit removes. So that edit of P06
-  is void once this change lands. If P06 lands first, this change quotes `Coefficient(...)` in
-  place of `float(...)`.
 - The change `partner-guard` quotes the same two lines of `⊛`, so it is void once this change
   lands. If it lands first, this change quotes its lines, and so removes its assert too.
 - The change `doc-comments` writes a line in `pga.nim` that says `partner` reads grade at run
@@ -105,7 +102,7 @@ import std/[macros, math]
 ```nim
   func `⊛`*(m: Multivector): Multivector =
     ## Get partner of multivector, i.e. (-1)^(grade(𝐦)+1) (𝐦☆)⊡ ∨ 𝐦⊟.
-    let sign = float(-1^(int(m.grade.get) + 1))
+    let sign = Coefficient(-1^(int(m.grade.get) + 1))
     sign * ⊡(☆m) ∨ ⊟m
 ```
 

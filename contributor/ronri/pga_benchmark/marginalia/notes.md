@@ -194,7 +194,7 @@ Binary products also write every slot, with `noinit`. The same effect of the ben
 ```nim
   func `⊛`*(m: Multivector): Multivector =
     ## Get partner of multivector, i.e. (-1)^(grade(𝐦)+1) (𝐦☆)⊡ ∨ 𝐦⊟.
-    let sign = float(-1^(int(m.grade.get) + 1))
+    let sign = Coefficient(-1^(int(m.grade.get) + 1))
     sign * ⊡(☆m) ∨ ⊟m
 ```
 

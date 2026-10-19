@@ -241,7 +241,7 @@ one, as Evidence states, so `^∘` drops `inline`.
   That is a factor of 5e8.
 - **Range.** Results hold while the squared coefficients stay inside the range of 64-bit floats,
   as at pin.
-- **32 bits.** P06 sets the comparison tolerance to 1e-4 at 32 bits. A projection from that
+- **32 bits.** The library sets the comparison tolerance to 1e-4 at 32 bits. A projection from that
   tolerance moves the radius edge in to about 1e4 units, and the transversion edge to about 2e4.
   This change and its claims run at 64 bits alone, so no claim checks this.
 
@@ -292,9 +292,8 @@ One rule holds in all four algebras, so a user need not know which algebra or ki
 - **Change `conformal-norms`.** This change puts one test at the head of suite Chapter 4, and keeps
   the placeholder test there. `conformal-norms` replaces that placeholder with its two tests. So
   the two apply in either order, and their three tests in Chapter 4 then stand side by side.
-- **P06, `float-width`.** P06 quotes no line here. Two locals start at the float `0.0`: `largest`
-  in `^∘` and `distance_squared` in `toRoundPoint`. Each compiles at 32 bits. Once both land, the
-  second to land declares them `Coefficient`.
+- **Float width.** The width of each float is a build option at pin. So `largest` in `^∘` and
+  `distance_squared` in `toRoundPoint` are declared `Coefficient`.
 - **P07, `part-scale`.** P07 edits `=~` and `grade` in `pga/multivectors.nim` alone, so no line
   collides. But P07 removes the private `=~` of two scalars. So the test that this change adds to
   suite Internal compares the antiscalar of 𝐯 ∘ 𝐯 with 1 through the public `=~`, as

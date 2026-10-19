@@ -16,9 +16,8 @@ and back.
 This change applies at pin and builds on no other. Other edits reach code that this change
 touches:
 
-- P06, `float-width`, quotes no line of this change. Two locals here start at the float `0.0`:
-  `largest` in `^∘` and `distance_squared` in `samplePoint`. Each compiles at 32 bits. Once both
-  land, the second to land declares them `Coefficient`.
+- The width of each float is a build option at pin, so `largest` in `^∘` and `distance_squared`
+  in `toRoundPoint` are declared `Coefficient`.
 - P07, `part-scale`, removes the private `=~` of two scalars. The test of suite Internal compares
   two multivectors through the public `=~` instead, so the two build together in either order.
 - The change `algebra-hygiene` renames `TOLERANCE_ABS`, which `^∘` names. The second to land
@@ -106,7 +105,7 @@ func `^∘`*(m: Multivector): Multivector {.noinit.} =
       m_norm_weight_round_squared > TOLERANCE_ABS * TOLERANCE_ABS * m_norm_radius_squared
     if is_round:  # Scan grades only where round weight passes, and stop at second grade.
       var
-        largest = 0.0
+        largest: Coefficient = 0.0
         found_grade = false
         grade_first = Grade.low
       for b in Basis: largest = max(largest, abs(m[b]))
@@ -157,7 +156,7 @@ suite "Internal":
 when IS_CONFORMAL:
   proc toRoundPoint(m: Multivector): Multivector =
     ## Lift Euclidean part of multivector to round point of radius zero.
-    var distance_squared = 0.0
+    var distance_squared: Coefficient = 0.0
     for b in Basis.scalar.succ..Basis.origin.pred:
       result[b] = m[b]
       distance_squared += m[b]^2
