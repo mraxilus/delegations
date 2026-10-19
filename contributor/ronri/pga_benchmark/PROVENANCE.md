@@ -913,6 +913,25 @@ in the browser. Rejected: JavaScript in a Nim string, which no compiler reads. R
 TypeScript, which brings Node and a lockfile for eight lines, where Article II.9 keeps the
 source in Nim.
 
+**The docket carries the rules that it alone draws with,** as `STYLE` in `docket.nim`. So a
+change to its look moves its digest alone, and the cost is that its look reads from two files. A
+class that the shell styles for another page must not mark an element of the docket. The shell
+gives `.summary div` to the card of a proposal page. A rule through a class and a bare tag
+outranks the own rule of each element that it reaches. Suite `Internal: Pages` of
+`test_rga4d.nim` holds that law over the docket and a proposal page.
+
+**Each count of a proposal is one bar** over the general operations bounded now, and each
+operation counts once. A proposal names itself once, then gives one line to each algebra that it
+changes. Grey marks an operation at the bound now and with the proposal. Blue marks one that the
+proposal brings to the bound, and orange one that it takes off. The exact counts stand beside, as
+`37 → 39 of 39`. Where the proposal drops a function, its operation leaves the second count, and
+the label names both totals.
+
+Rejected: green for a gain and red for a loss. The palette validator of the `dataviz` skill put
+them 3.8 apart to a reader with red and green colour blindness, against a floor of 8. It put blue
+and orange 24.7 apart. Verified by `test_rga4d.nim`, and by hand in Chromium 141 on 2026-10-19.
+The hand check rendered the docket as `drive` wraps it, at 400 px and 1100 px in both themes.
+
 **A publication holds each published page to its build.** `pages/published.json` maps each
 page to its URL and to the digest of the page as built when it was published. `drive` builds
 every page again, and any page whose digest differs is a finding. `README.md` must name the URL
