@@ -28,7 +28,7 @@ import ./[algebra {.all.}, cayleys {.all.}, emitters, multivectors]
 ```nim
 import ./[emitters, multivectors]
 from ./algebra {.all.} import
-  Basis, Grade, GradeAnti, DIMENSIONS, IS_CONFORMAL, IS_RIGID,
+  Basis, Coefficient, Grade, GradeAnti, DIMENSIONS, IS_CONFORMAL, IS_RIGID,
   grade, gradeAnti, scalar, scalarAnti, origin, high, low, `==`
 from ./cayleys {.all.} import
   Cayley1D, Cayley2D, BasisSigned, Chiral, Formal, Partial, Spatial, complement,
