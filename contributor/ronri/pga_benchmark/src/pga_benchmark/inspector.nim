@@ -109,8 +109,10 @@ func demangle*(name: string): string =
 func stemOf(parameter: string): string =
   ## Read type stem of one C parameter or return type.
   ##   E.g. `Point` from `tyObject_Point__hash* p_p0`, `float` from `NF`, `Basis` from
-  ##     `tyEnum_Basis__hash`.
+  ##     `tyEnum_Basis__hash`, `set[Basis]` from `tySet_tyEnum_Basis__hash`.
+  ##   Hash follows path of module, so stem drops it, and key holds on every machine.
   let text = parameter.strip
+  if text.startsWith("tySet_"): return "set[" & text["tySet_".len..^1].stemOf & "]"
   for prefix in ["tyObject_", "tyEnum_", "tyDistinct_", "tyTuple_"]:
     if text.startsWith(prefix):
       let start = prefix.len
