@@ -14,6 +14,9 @@
 ##     here spells option and rule alike. Search box is only script: row hides while its words
 ##     lack any word typed, as Architect chose at cost of script. Script is Nim, `find.nim`,
 ##     which driver compiles to JavaScript and passes in; rule it applies is `search.isFound`.
+##   Rules docket alone draws with ride in its body, `STYLE`; shell keeps rules pages share.
+##     So change to docket's look moves docket's digest alone, and no other page needs publishing.
+##     Cost: docket's look reads from two files.
 ##
 ##   Cost: every row renders once per page whatever filter reader picks; 150 rows of four
 ##     algebras stay under one megabyte.
@@ -614,6 +617,14 @@ dense form    = each slot once, as sum of terms library's tables keep: no fill,
 operation, and do not predict time across different operations. Inspect one yourself with
 <code>nim r tools/build.nim show ∧</code>.</p></details></section>"""
     ## Method, same for every algebra.
+  STYLE = """
+.overview { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: 20px 32px; padding-block: 18px; align-items: start; }
+@media (max-width: 860px) { .overview { grid-template-columns: minmax(0, 1fr); } }
+"""
+    ## Rules docket alone draws with, carried in its body.
+    ##   Trap: class shell styles for other page reshapes docket, as `.summary div` for proposal
+    ##     card outranks `.bar`; `Internal: Pages` trips on it.
 
 
 func bodyDocket*(
@@ -786,9 +797,9 @@ func bodyDocket*(
   for sheet in sheets:
     rules.add "body:has(#algebra-" & sheet.name & ":checked) .algebra:not(.algebra-" & sheet.name &
         ") { display: none; }\n"
-  result.add rules & rules_controls & "</style>"
+  result.add rules & rules_controls & STYLE & "</style>"
   for index, sheet in sheets:
-    result.add "<section class=\"algebra algebra-" & sheet.name & "\"><div class=\"summary\">" &
+    result.add "<section class=\"algebra algebra-" & sheet.name & "\"><div class=\"overview\">" &
         htmlFacts(sheet, every[index]) & "</div></section>"
   result.add controls & htmlHead(axis)
   for index, sheet in sheets:

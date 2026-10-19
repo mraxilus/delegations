@@ -2329,10 +2329,13 @@ suite "Internal: Pages":
     check spreadOf([quiet]).low < 1.0 and spreadOf([quiet]).high > 1.0  # around no change
 
 
-  test "every grid in shell bounds its columns, so wide content scrolls in place":
+  test "every grid in shell and docket bounds its columns, so wide content scrolls in place":
     const shell_html = staticRead("../pages/shell.html")
+    let
+      docket = bodyDocket([sheetDocket(81, 12, %*{})], ids_docket, [], "bd6b23c590d7", "")
+      style_docket = docket.split("<style>")[1].split("</style>")[0]
     var unbounded: seq[string]
-    for rule in shell_html.split('}'):
+    for rule in (shell_html & style_docket).split('}'):
       let body = rule.split('{')
       if body.len < 2 or "display: grid" notin body[^1]: continue
       if "grid-template-columns" notin body[^1]: unbounded.add body[^2].strip
