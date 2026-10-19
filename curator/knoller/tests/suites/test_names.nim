@@ -264,6 +264,28 @@ suite "Names":
     check "proc emit() = discard\n".breaches.len == 0  # one word, no verb of generation
 
 
+  test "V.3 routine nested where compile time alone runs it is compile-time, pragma or none":
+    # Found in PGA library at `3d9696e`: `pga/multivectors.nim` nests `constructLutKvector` (39)
+    #   and `constructVectorParity` (44) in `macro defineMultivectors`, with no pragma of own.
+    const
+      routine = "func constructLut(): set[int] = discard\n"  ## Routine read under each opener.
+      sources = [
+        ("macro defineKinds(): untyped =\n  " & routine, true),
+        ("static:\n  " & routine, true),
+        ("func constructAll(): seq[int] {.compileTime.} =\n  " & routine, true),
+        ("macro defineKinds(): untyped =\n  func collect(): int =\n    " & routine, true),
+        ("proc run() =\n  " & routine, false),
+        ("template declareAll() =\n  " & routine, false),
+        ("macro defineKinds(): untyped = discard\n" & routine, false),
+        (routine, false),
+      ]
+        ## Source and whether compile time alone runs `constructLut`: under macro, `static:`,
+        ##   `compileTime` routine and two deep; not under `proc` or template, after macro
+        ##   closes, or alone.
+    for (source, is_compile_time) in sources:
+      check source.breaches.countIt("`func constructLut`" in it[1]) == ord(not is_compile_time)
+
+
   test "foreign binding keeps library's name, and its parameters are read":
     const foreign = "proc getError*(): cstring {.importc: \"SDL_GetError\".}\n" &
         "proc glGetString*(name: GLenum, buf: pointer) {.importc, dynlib: \"GL\".}\n" &
