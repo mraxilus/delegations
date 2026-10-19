@@ -8587,12 +8587,12 @@
         "bytes_moved": 0
       }
     },
-    "formatValue(NimStringV2*,tySet_tyEnum_Basis__gGbI82gXtN9aA55oTTss8Kg)": {
+    "formatValue(NimStringV2*,set[Basis])": {
       "symbol": "formatValue",
       "module": "pga/operators",
       "params": [
         "NimStringV2*",
-        "tySet_tyEnum_Basis__gGbI82gXtN9aA55oTTss8Kg"
+        "set[Basis]"
       ],
       "returns": "void",
       "inline": false,
@@ -8675,11 +8675,11 @@
         "bytes_moved": 0
       }
     },
-    "collectionToString(tySet_tyEnum_Basis__gGbI82gXtN9aA55oTTss8Kg,NimStringV2,NimStringV2,NimStringV2)": {
+    "collectionToString(set[Basis],NimStringV2,NimStringV2,NimStringV2)": {
       "symbol": "collectionToString",
       "module": "pga/operators",
       "params": [
-        "tySet_tyEnum_Basis__gGbI82gXtN9aA55oTTss8Kg",
+        "set[Basis]",
         "NimStringV2",
         "NimStringV2",
         "NimStringV2"
@@ -8721,11 +8721,11 @@
         "bytes_moved": 0
       }
     },
-    "$(tySet_tyEnum_Basis__gGbI82gXtN9aA55oTTss8Kg)": {
+    "$(set[Basis])": {
       "symbol": "$",
       "module": "pga/operators",
       "params": [
-        "tySet_tyEnum_Basis__gGbI82gXtN9aA55oTTss8Kg"
+        "set[Basis]"
       ],
       "returns": "NimStringV2",
       "inline": false,
