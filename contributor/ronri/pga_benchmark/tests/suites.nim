@@ -2611,6 +2611,35 @@ suite "Internal: Pages":
     check "×inf" notin body and "×nan" notin body  # no ratio divides by zero
 
 
+  test "proposal draws one bar per count, segment per fate of each operation, counts beside":
+
+    func overlayOf(title, url: string; functions: JsonNode): Overlay =
+      ## Build one proposal changing functions of `rga4d` alone.
+      Overlay(name: title, title: title, url: url, functions: {"rga4d": functions}.toTable)
+
+    let
+      overlays = [
+        overlayOf("P01: Swap", "u", %*{"∧(M,M)": {"after": {"multiplies": 81,
+          "bytes_moved": 384}}}),
+        overlayOf("P02: Drop", "", %*{"∧(M,M)": {"after": nil}}),
+        overlayOf("P03: Keep", "", %*{}),
+      ]
+      body = bodyDocket([sheetDocket(54, 12, %*{})], ids_docket, overlays, "bd6b23c590d7", "")
+      bar = "<i class=\"$1\" style=\"left:0.00%;width:100.00%\"></i></div><span class=\"v\">$2<"
+    check body.count("<a href=\"u\">P01: Swap</a>") == 1  # link once, over its algebras
+    check "<p>P02: Drop</p>" in body  # unpublished proposal named, unlinked
+    check bar % ["lost", "1 → 0 of 1"] in body  # 54 at bound of 54, then 81 over it
+    check bar % ["gained", "0 → 1 of 1"] in body  # 512 over 384, then 384 at it
+    check bar % ["lost", "1 of 1 → 0 of 0"] in body  # dropped function leaves its count
+    check "<div class=\"track\"></div><span class=\"v\">0 of 1 → 0 of 0<" in body  # none at it
+    check bar % ["kept", "1 → 1 of 1"] in body  # untouched function keeps its fate
+    check "Rigid 4D, multiplies: 1 of 1 at bound now, 0 of 1 with proposal; 0 brought to it, " &
+        "1 taken off it" in body  # tip says every count
+    check "class=\"gained\">brought to bound by proposal</span>" in body  # legend names fate
+    check "/" notin body[body.find("Proposals against")..<body.find("How each figure")].replace(
+        "</", "")  # no count left as fraction text
+
+
   test "verdict chips say when evaluation removes NaN results":
     let
       baselines = {"rga4d": %*{"measurands": {}}}.toTable
