@@ -247,18 +247,25 @@ One run times both implementations, so the runs pair by index, and each run give
 ratio. The docket draws one tick for each of those ratios. Rejected: the spread of rounds inside
 one run, because it misses drift between runs. That drift is the larger part on this machine.
 
-**The runtime baselines are from 2026-10-11 at all four algebras**, at the pin `28f4e11`, five runs
-each on `linux amd64, 4 cores`. The bench of 2026-10-01, run at `3121342` on 2026-10-02 in turn
-with the baselines of that day, gives the drift between days. At rga4d its library runs ×1.19 to
+**The runtime baselines are from 2026-10-19 at all four algebras**, five runs each on `linux
+amd64, 4 cores`. At rga3d, cga4d and cga5d they ran at the pin `3d9696e`, with nothing else on the
+machine. At rga4d they ran at `3838c54`, which emits the same C as the pin, so `restamp` carries
+them. Each algebra keeps the take whose median paired spread is smaller, as the Architect ruled on
+2026-10-19 (D5).
+
+The bench of 2026-10-01, run at `3121342` on 2026-10-02 in turn with the baselines of that day,
+gives the drift between days. At rga4d its library runs ×1.19 to
 ×1.22 of its own times of 2026-10-01. Its reference runs ×1.26 to ×1.27, and its dense forms ×1.00
 to ×1.01. The bench of 2026-10-02 runs ×0.99 to ×1.01 of it in the same runs.
 
 So the machine moves between days, and not by one factor for each implementation. Times
 taken at different hours never compare, and ratios within one run do.
 
-Within these baselines, the least and greatest run ratios of the median measurand are ×1.07
-to ×1.23 apart at each algebra. The widest measurand spreads ×2.40, as `container_dipole` at
-cga4d does. Its library takes 39 to 70 ns across the five runs, and its reference 2.1 to 4.0 ns.
+Within these baselines, the least and greatest run ratios of the median measurand are ×1.15
+to ×1.19 apart at each algebra. The widest measurand spreads ×2.01, as `select_part` at cga4d
+does. Its library takes 0.82 to 1.81 ns across the five runs, and its dense form 0.82 to 0.97 ns.
+The take of 2026-10-03 spread ×1.10 to ×1.12 at the median measurand, so this host now spreads
+more, with no other work on it.
 
 So one run's time ratio is weak evidence, and the ticks on the docket say how weak.
 
@@ -283,7 +290,9 @@ the compiler back to symbols. ASCII operator characters become words such as `ba
 `roof`, and other bytes become `X<hex>`. `_u<n>` numbers the overloads, and `__<module>`
 names the module.
 
-It keys every function by symbol and by parameter type stems. It then counts what the C
+It keys every function by symbol and by parameter type stems. A stem drops the hash that the
+compiler puts in the name of a type, since that hash follows the path of its module. So a set of
+an enum reads as `set[Basis]`, and a key holds on every machine. It then counts what the C
 spells:
 
 - multiplies, adds, subtractions and divides;
@@ -486,14 +495,14 @@ first step leaves whole grades at zero, and the second step reads none of them. 
 bound is an estimate.
 
 **What the library spends in time against them.** The runtime baselines time each dense form
-beside the library, five alternating runs at the pin `28f4e11`, at four algebras, on `linux amd64,
-4 cores` on 2026-10-11. The median general measurand runs ×1.00 its dense form at each algebra,
+beside the library, five alternating runs at four algebras, on `linux amd64, 4 cores` on
+2026-10-19. The median general measurand runs ×1.00 to ×1.01 its dense form at each algebra,
 since most library operators are already one generated table. The compound operations are not.
 They run ×2.0 to ×5.7 their dense forms, from the container at cga5d to the support at rga4d.
 
-The antigrade selection runs ×2.2 to ×3.1, and the norms ×0.98 to ×2.5. Sum, difference and
-negation run ×0.63 to ×1.11, and the unitizes ×0.59 to ×0.98. So a dense form is a measure, and
-never a lower bound on time.
+The antigrade selection runs ×2.5 to ×4.6, and the norms ×0.68 to ×1.11. Sum, difference and
+negation run ×0.63 to ×1.14, and the unitizes and normalizations ×0.59 to ×0.89. So a dense
+form is a measure, and never a lower bound on time.
 
 Rejected: a dense form written by hand for each operation. There are 40 to 47 operations at
 each of four algebras, and forms by hand would drift from the library as it moves. The
@@ -666,10 +675,10 @@ A program claim names its program relative to its proposal, so a new directory n
 digest.
 
 **A program runs against the library with its bases applied.** So `laws.nim` of P09 and of P10
-imports `pga` alone, and reaches the basis-set types that the change of P04 adds. A program may
-still import a program of a base by a path relative to its own directory, and no proposal does so
-now. The digest of an evaluation reads the programs of each base first, and then its own. So a
-change to a program of a base moves the digest of each proposal on it.
+imports `pga` alone, and reaches the products of basis-set types that the change of P04 adds. A
+program may still import a program of a base by a path relative to its own directory, and no
+proposal does so now. The digest of an evaluation reads the programs of each base first, and then
+its own. So a change to a program of a base moves the digest of each proposal on it.
 
 **A suites or program claim may name `defines`**, each `name=value`, and each of its builds
 passes them as `-d:`. So a proposal can hold the library at a build option other than its
@@ -747,8 +756,9 @@ Alternation does not cancel all drift of a shared machine, so the time of one ev
 weak evidence alone. Counts are exact, and carry the verdicts.
 
 The laws of P04 and P10 hold against the library with their changes applied. They hold at each of
-the nine algebras of the library, from rga2d to rga6d and from cga3d to cga6d. Without its fix, the
-law of the empty basis set fails at rga2d and cga3d. Without its fix, the law of the root of zero
+the nine algebras of the library, from rga2d to rga6d and from cga3d to cga6d. A product of P04
+that reaches no basis stops the compile, so its laws leave out the bulk of a bivector at rga2d and
+cga3d. Without its fix, the law of the root of zero
 fails at rga2d to rga4d. Without its split-complex
 form, P10 stops the build at cga3d and cga6d. `proposals/11-unitize-general/laws.nim` holds the
 laws of its rule, and `limits.nim` its limits over long chains and frames, at rga3d, rga4d, cga4d
@@ -1186,10 +1196,10 @@ to read no head, and the verb `head` to report what `checkHead` finds.
 **The PGA library is a pinned dependency, and never a copy.** It lives in [replications],
 which carries no nimble file and holds the library three directories inside it. So the
 requirement in `pga_benchmark.nimble` names the repository by URL and commit. `atlas.lock`
-records the resolved commit `28f4e1128e4efee47d3f2ad9543d8c1460a997c3`, and `nim.cfg` names
+records the resolved commit `3d9696edbaaa5dca655c3024174bd46fd156d7c6`, and `nim.cfg` names
 the subdirectory that Atlas restores it to.
 
-That commit is the head of the library on 2026-10-07, as the standing instruction of the
+That commit is the head of the library on 2026-10-19, as the standing instruction of the
 Architect asks. Both projects are under the Prosperity Public License 3.0.0. Rejected: a copy
 of the library in this tree, which Article XI.3 forbids.
 
@@ -1244,7 +1254,7 @@ norm, writes no zero. The Architect decided this, because the library is about P
 micro-optimisation.
 
 Each function that a Cayley table can express moves to generation, and so gets its zeros
-unrolled at no cost. At the pin `28f4e11` the library works this way, and its attitude and
+unrolled at no cost. At the pin `3d9696e` the library works this way, and its attitude and
 carrier are generated. Its hand-written `+` and `-` carry `noinit` and write each slot, so they
 fill nothing. The cost that stays is what the hand-written norms pay.
 
@@ -1323,12 +1333,12 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
   type of the bases it reaches. At rga4d 16 measurands stand above the byte bound only because
   they write a whole multivector for one slot, and at cga5d 15 do. Each is a dot, an antidot or
   a squared norm. Under P04 each dot and antidot writes 8 bytes. The squared norms reach 8 bytes
-  only once the library emits them as exact basis-set types, which the prototype does not.
-- Whether the library takes P05, `multivector-align`. It aligns each multivector to
-  `min(64, size)`, one cache line from three dimensions up, so it pads no multivector. The basis-set
-  types of P04 take `alignment` of their basis set instead, as the Architect ruled on 2026-10-04.
-  That is the largest power of two that divides their bytes, at most 64. P04 holds the rule,
-  and its prototype applies it.
+  only once the library emits them as exact basis-set types, which the change does not.
+- Whether the library takes P05, `multivector-align`. It aligns the whole set to `min(64, size)`,
+  one cache line from three dimensions up, so it pads no multivector. P04 aligns every basis-set
+  type to `alignment` of its count instead, as the Architect ruled on 2026-10-04. That is the
+  largest power of two that divides their bytes, at most 64, and it gives the whole set the same.
+  Both edit the one definition of `MultivectorOf`, so the second to land quotes the first.
 
   On two machines and three instruction sets, a caller that holds multivectors in a `seq` times
   `-m` at ×0.42 to ×0.93 of the pin. It times `m + n` at ×0.70 to ×0.88, at no cost in size. On

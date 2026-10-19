@@ -11,10 +11,10 @@ call. On one of two cores, most operations at cga5d run slower under SSE2.
 
 ## Problem
 
-At pin, a multivector aligns to 8 bytes, as its floats do. A processor moves memory in lines of
-64 bytes. A multivector that starts on a line touches the fewest lines it can, and one that starts
-inside a line touches one more. A large `seq` of multivectors at pin starts 56 bytes into a line,
-so each element touches one line more than it holds:
+At pin, a multivector aligns to 8 bytes at 64 bits, as its coefficients do. A processor moves memory
+in lines of 64 bytes. A multivector that starts on a line touches the fewest lines it can, and one
+that starts inside a line touches one more. A large `seq` of multivectors at pin starts 56 bytes
+into a line, so each element touches one line more than it holds:
 
 | Algebra | Floats | Bytes | Lines from a line start | Lines from 56 bytes in |
 |---------|--------|-------|-------------------------|------------------------|
@@ -24,11 +24,13 @@ so each element touches one line more than it holds:
 
 ## Idea
 
-- **Multivector.** Its private field `elements` carries
-  `{.align(min(64, sizeof(array[Basis, float]))).}`. That is 64 bytes at every algebra of three
-  dimensions or more. At rga2d a multivector aligns to its own 32 bytes, so it never crosses a
-  line.
-- **Size.** A multivector still holds its 2^D floats alone, so its size stays 2^D times 8 bytes.
+- **Multivector.** At pin `Multivector` is the alias of `MultivectorOf` of all bases. A `when` in
+  `MultivectorOf` gives that set alone the field `elements` with
+  `{.align(min(64, sizeof(array[Basis, Coefficient]))).}`. That is 64 bytes at every algebra of
+  three dimensions or more at 64 bits. At rga2d a multivector aligns to its own 32 bytes, so it
+  never crosses a line. Every other basis-set type keeps the alignment of its coefficient.
+- **Size.** A multivector still holds its 2^D coefficients alone, so its size stays 2^D times the
+  size of one coefficient.
 - **Each storage.** The pinned compiler honours the alignment in a `seq`, a `ref`, a global and on
   the stack. So from three dimensions up, each multivector starts on a line in each storage.
   `layout.nim` holds the size, the alignment and the address in each of them.
@@ -59,22 +61,17 @@ so each element touches one line more than it holds:
 ## Open decisions
 
 - Take this alignment of the multivector into the library, or keep the alignment of pin.
-- Once P04 lands, spell the alignment as `alignment` of the count of bases, so one rule spells
-  both, or keep `min(64, size)`.
+- Align the whole set alone, as here, or every basis-set type by the rule of P04, `exact-kinds`,
+  which gives the whole set the same alignment.
 
 ## Landing
 
-- **P06, `float-width`.** It replaces the same line with `elements: array[Basis, Coefficient]`.
-  Each of the two applies at pin, and the second to land quotes the first. The merged line is
-  `elements {.align(min(64, sizeof(array[Basis, Coefficient]))).}: array[Basis, Coefficient]`.
-  With `float` left in the alignment, a 32-bit multivector at rga3d pads from 32 to 64 bytes.
-- **P04, `exact-kinds`.** It edits no line of this change. Its basis-set types hold any count of
-  floats, and its rule `alignment` aligns them. For a whole basis set, that rule gives
-  `min(64, size)`, since 2^D coefficients take a power of two bytes. So once both land,
-  `Multivector` has the layout of the exact basis-set type of the whole set. Without this change,
-  the two layouts differ.
-- **Change `doc-comments-2`.** It adds a doc line under `Multivector* = object`, which this change
-  quotes, so the second of the two to land quotes the first.
+- **Float width.** The alignment reads the size of `Coefficient`. So at 32 bits a multivector at
+  rga3d aligns to its own 32 bytes and pads none, and from rga4d up it aligns to 64.
+- **P04, `exact-kinds`.** It replaces the same type definition, and aligns every basis-set type to
+  `alignment` of its count. That is the largest power of two that divides its bytes, and at most 64.
+  The second of the two to land quotes the first. For the whole set, that rule gives `min(64,
+  size)`, since 2^D coefficients take a power of two bytes. So once P04 lands, its rule spells both.
 
 ## Evidence
 
@@ -142,8 +139,9 @@ most at rga3d and least at cga5d.
   intermediates inside the library gain. `timing.nim` exits zero when it runs, so its figures
   never guard.
 
-### With P06
+### At 32 bits
 
-A run by hand on 2026-10-13 applied P06 and the merged line to a copy of the library at pin. There
-`layout.nim` held at four algebras, at 64 and at 32 bits, since it reads the width of a
-coefficient from the library. At 32 bits a multivector at rga3d aligns to 32 bytes and holds 32.
+A run by hand on 2026-10-19 applied this change to a copy of the library at pin. There
+`layout.nim` held at rga3d, rga4d, cga4d and cga5d, at 64 and at 32 bits. It reads the width of a
+coefficient from the library. At 32 bits a multivector at rga3d aligns to 32 bytes and holds
+32.

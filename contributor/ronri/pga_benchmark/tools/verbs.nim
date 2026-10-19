@@ -1059,7 +1059,9 @@ func unindexed(text: string): string =
 func readable(text: string): string =
   ## Rewrite emitted C so reader sees types and slots rather than hashes.
   ##   Reading aid alone: cache holds exact text every count is read from.
-  text.shortened(STEM_MULTIVECTOR, "Multivector").shortened("tyEnum_Basis", "Basis").unindexed
+  text.shortened(STEM_MULTIVECTOR, "Multivector")
+    .shortened(STEM_MULTIVECTOR & "Scalars", "MultivectorScalars")
+    .shortened("tyEnum_Basis", "Basis").unindexed
 
 
 proc disassembled(cache, name: string): seq[string] =
@@ -1093,7 +1095,9 @@ proc showFunction(symbol, algebra: string) =
     compile(ENTRY_BENCH, BUILD / "show_" & name, cache, dimensions, is_conformal, nim, pga)
     let size = 8 shl dimensions
     var seen = 0
-    for function in inspectCache(cache):
+    # Verb reads C without library, so counts are spelled: 2^n floats, and scalar and antiscalar.
+    let stems = [(1 shl dimensions, "Multivector"), (2, "MultivectorScalars")]
+    for function in inspectCache(cache, stems):
       if function.symbol != symbol: continue
       inc seen
       let

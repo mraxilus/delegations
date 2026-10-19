@@ -191,7 +191,7 @@ const CATALOGUE* = block:
     ("attitude", "⊖", "attitude", "(⊖ m)", 1, "2.73"),
     ("select_grade", "{}", "selectGrade", "(m{Grade(1)})", 1, "2.17"),
     ("select_grade_anti", "{}", "selectGradeAnti", "(m{GradeAnti(1)})", 1, "2.29"),
-    ("select_part", "[]", "selectPart", "(m[Basis.E1])", 1, "2.24"),
+    ("select_part", "[]", "selectElement", "(m[Basis.E1])", 1, "2.24"),
   ]
 
   when IS_RIGID:

@@ -6,25 +6,23 @@ change calls it `TOLERANCE_REL`.
 `$` is the one operator that `Grade` does not borrow, so this change borrows it. A define,
 `pgaValidate`, keeps the compile-time checks in a release build.
 
-Three proposals edit lines that this change quotes. Of this change and each of them, the second
+Two proposals edit lines that this change quotes. Of this change and each of them, the second
 to land quotes the first:
 
-- P06, `float-width`, replaces the line of `TOLERANCE_ABS`. The merged line keeps both the new
-  name and `Coefficient`.
-- P07, `part-scale`, removes the scalar `=~` and replaces the zero test of `grade`. Its new code
-  takes the new name.
+- P07, `part-scale`, replaces the zero test of `grade`, and its new `=~` names the tolerance. Its
+  new code takes the new name.
 - P11, `unitize-general`, names `TOLERANCE_ABS` in `^∘`. The second to land carries the new name
   into `^∘`.
 
 ## Edit `pga/algebra.nim`
 
 ```nim
-  TOLERANCE_ABS* = 10.pow(-TOLERANCE_PLACES.float)
+const TOLERANCE_ABS* = Coefficient(10.pow(-FLOAT_TOLERANCE.float))
 ```
 
 ```nim
-  TOLERANCE_REL* = 10.pow(-TOLERANCE_PLACES.float)
-    ## Bound is relative above 1 and absolute below; see `=~` in multivectors.nim.
+const TOLERANCE_REL* = Coefficient(10.pow(-FLOAT_TOLERANCE.float))
+  ## Bound is relative above 1 and absolute below; see `=~` in multivectors.nim.
 ```
 
 ## Edit `pga/algebra.nim`

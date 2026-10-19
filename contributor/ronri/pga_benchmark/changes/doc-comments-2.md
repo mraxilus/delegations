@@ -14,9 +14,8 @@ again.
 
 Two proposals quote lines next to the docs that this change adds, so the second to land quotes the
 first. P05, `multivector-align`, quotes the line under `Multivector* = object`. P07, `part-scale`,
-quotes the doc of `grade`. P06, `float-width`, quotes no line here, but it makes the width of a
-coefficient a build option. Once both land, the doc of `Multivector` names the width, since a
-multivector at 4D holds 128 bytes at 64 bits and 64 bytes at 32 bits.
+quotes the doc of `grade`. The width of a coefficient is a build option at pin, so the doc of
+`Multivector` names the width: a multivector at 4D holds 128 bytes at 64 bits.
 
 ## Edit `pga.nim`
 
@@ -154,27 +153,27 @@ when IS_RIGID:
   ##   Parity argument below is proof; keep it with code.
 ```
 
-## Edit `pga/helpers.nim`
+## Edit `pga/emitters.nim`
 
 ```nim
 ## TODO: Document.
 ```
 
 ```nim
-## AST helper shared by both operator macros and by constructor generator.
-##   Builds `func` node with doc comment first in body, so `nim doc` renders it.
-##   `pragma` argument is where `{.inline.}` would go for every generated operator.
+## AST emitters shared by operator macros, constructor generator and type definitions.
+##   `emitFunc` builds `func` node with doc comment first in body, so `nim doc` renders it;
+##     its `pragma` argument is where `{.inline.}` would go for every generated operator.
 ```
 
 ## Edit `pga/multivectors.nim`
 
 ```nim
-  Multivector* = object  ## Define generalised multivector for n-dimensional PGA.
+    ## Define generalised multivector for n-dimensional PGA.
 ```
 
 ```nim
-  Multivector* = object  ## Define generalised multivector for n-dimensional PGA.
-    ## Dense by design: 2^N floats per object whatever its grade, 128 bytes at 4D.
+    ## Define generalised multivector for n-dimensional PGA.
+    ##   Dense by design: 2^N coefficients whatever its grade, 128 bytes at 4D and 64 bits.
 ```
 
 ## Edit `pga/multivectors.nim`
@@ -244,10 +243,12 @@ import ../pga/[algebra {.all.}, multivectors {.all.}, operators]
 ## Edit `tests/suites.nim`
 
 ```nim
-  ## Find square root of multivector elementwise, i.e. √𝐦.
+func sqrt(m: Multivector): MultivectorScalars =
+  ## Find square root of dual number, i.e. √𝐦.
 ```
 
 ```nim
-  ## Find square root of multivector elementwise, i.e. √𝐦.
+func sqrt(m: Multivector): MultivectorScalars =
+  ## Find square root of dual number, i.e. √𝐦.
   ##   Test scaffolding, deliberately independent of library norms.
 ```

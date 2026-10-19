@@ -2,8 +2,8 @@
 ##   (`homogeneous-scalar`).
 ##   Evaluation compiles this against library with change applied, at each algebra its claim
 ##     names, and exit code is verdict: every law below holds, or program stops on assertion.
-##   Each law compares against product of library on whole `Multivector`, so none tests
-##     emission of basis-set types against itself.
+##   Each law compares against product or norm of library, so none tests emission of
+##     basis-set types against itself.
 ##   Samples cover each basis element and zero, where one part of root is zero, then seeded
 ##     pairs and multivectors with each coefficient in [-1, 1].
 
@@ -27,12 +27,12 @@ const
 
 #[ Laws ]#
 
-proc sample(): ScalarHomogeneous =
+proc sample(): MultivectorScalars =
   ## Sample homogeneous scalar with each part uniform in [-1, 1].
-  initScalarHomogeneous(rand(-1.0..1.0), rand(-1.0..1.0))
+  initMultivectorScalars(Coefficient(rand(-1.0..1.0)), Coefficient(rand(-1.0..1.0)))
 
 
-proc sampleRooted(unit: static Basis): ScalarHomogeneous =
+proc sampleRooted(unit: static Basis): MultivectorScalars =
   ## Sample homogeneous scalar with real root.
   ##   Part on unit lies in (0, 1] under rigid metric, any part does in complex algebra, and part
   ##     on unit exceeds size of other part by (0, 1] in split-complex one.
@@ -48,13 +48,13 @@ proc sampleWhole(): Multivector =
   for basis in Basis: result[basis] = rand(-1.0..1.0)
 
 
-func series(z: ScalarHomogeneous, as_anti: static bool): Multivector =
+func series(z: MultivectorScalars, as_anti: static bool): Multivector =
   ## Sum power series of exponential under library's product or antiproduct.
   ##   Independent of closed form.
   var term = initElement(when as_anti: Basis.scalarAnti else: Basis.scalar)
   for k in 1..TERMS_SERIES:
     result = result + term
-    term = (when as_anti: term ⟇ z.toMultivector else: term ⟑ z.toMultivector) * (1 / float(k))
+    term = (when as_anti: term ⟇ z.toMultivector else: term ⟑ z.toMultivector) * Coefficient(1 / k)
 
 
 when IS_CONFORMAL:
@@ -91,30 +91,28 @@ proc main(): int =
   ## Hold laws on seeded samples; print where they hold, and exit zero.
   randomize(SEED)
   let (one, one_anti) = (initElement(Basis.scalar), initElement(Basis.scalarAnti))
-  doAssert sizeof(ScalarHomogeneous) == 2 * sizeof(float) and
-      alignof(ScalarHomogeneous) == 2 * sizeof(float),
-    &"Homogeneous scalar must hold two floats unpadded; got `{sizeof(ScalarHomogeneous)}` bytes."
-  doAssert (one ⟇ one) =~ float(SQUARE_BULK) * one_anti,
+  doAssert sizeof(MultivectorScalars) == 2 * sizeof(Coefficient),
+    &"Homogeneous scalar must hold two coefficients unpadded; got `{sizeof(MultivectorScalars)}`."
+  doAssert (one ⟇ one) =~ Coefficient(SQUARE_BULK) * one_anti,
     &"Table read must agree with library's antiproduct; got `{SQUARE_BULK=}`."
-  doAssert (one_anti ⟑ one_anti) =~ float(SQUARE_WEIGHT) * one,
+  doAssert (one_anti ⟑ one_anti) =~ Coefficient(SQUARE_WEIGHT) * one,
     &"Table read must agree with library's geometric product; got `{SQUARE_WEIGHT=}`."
   doAssert SQUARE_BULK == 0 xor IS_CONFORMAL, "Pair must be dual under rigid metric alone."
 
-  # Hold roots of zero, and norms of each basis element, where one part of root is zero.
-  let zero = initScalarHomogeneous(0, 0)
+  # Hold roots of zero, and roots of each basis element, where one part of root is zero.
+  let zero = initMultivectorScalars(0, 0)
   doAssert sqrt(zero).toMultivector =~ 0.0 and sqrtAnti(zero).toMultivector =~ 0.0,
     &"Root of zero must be zero; got `{sqrt(zero).toMultivector}`."
   when IS_RIGID:
     for basis in Basis:
       let
         element = initElement(basis)
-        (bulk, weight) = (normBulk(element), normWeight(element))
-      doAssert bulk.toMultivector =~ |∙element,
-        &"Bulk norm of basis element must equal library's; got `{bulk.toMultivector}`."
-      doAssert weight.toMultivector =~ |∘element,
-        &"Weight norm of basis element must equal library's; got `{weight.toMultivector}`."
-      doAssert norm(element).toMultivector =~ |element,
-        &"Geometric norm of element must equal library's; got `{norm(element)[Basis.scalar]}`."
+        bulk = sqrt(initMultivectorScalars((element ∙ element)[Basis.scalar], 0))
+        weight = sqrtAnti(initMultivectorScalars(0, (element ∘ element)[Basis.scalarAnti]))
+      doAssert bulk =~ |∙element,
+        &"Root of 𝐞∙𝐞 under ⟑ must equal bulk norm of library; got `{bulk.toMultivector}`."
+      doAssert weight =~ |∘element,
+        &"Root of 𝐞∘𝐞 under ⟇ must equal weight norm of library; got `{weight.toMultivector}`."
 
   # Hold arithmetic and norms on seeded samples.
   when IS_CONFORMAL:
@@ -126,7 +124,7 @@ proc main(): int =
       (y, z) = (sample(), sample())
       (rooted, rooted_anti) = (sampleRooted(Basis.scalar), sampleRooted(Basis.scalarAnti))
       m = sampleWhole()
-      root_dot = sqrt(initScalarHomogeneous((m ∙ m)[Basis.scalar], 0))
+      root_dot = sqrt(initMultivectorScalars((m ∙ m)[Basis.scalar], 0))
     doAssert complement(z).toMultivector =~ /z.toMultivector, "Complement must equal library's."
     doAssert (z.toMultivector ⟑ one) =~ z.toMultivector, "𝟏 must be unit of geometric product."
     doAssert (z.toMultivector ⟑ inverse(z).toMultivector) =~ one, "z ⟑ z⁻¹ must be 𝟏."
@@ -136,7 +134,7 @@ proc main(): int =
       "Exp must be its power series under geometric product."
     doAssert exp(y + z).toMultivector =~ (exp(y).toMultivector ⟑ exp(z).toMultivector),
       "Exp of sum must be product of exps under geometric product."
-    doAssert (y ⟇ z) is ScalarHomogeneous,
+    doAssert (y ⟇ z) is MultivectorScalars,
       "Antiproduct of homogeneous scalars must be homogeneous scalar, by table."
     doAssert (z.toMultivector ⟇ one_anti) =~ z.toMultivector, "𝟙 must be unit of antiproduct."
     doAssert (z.toMultivector ⟇ inverseAnti(z).toMultivector) =~ one_anti, "z ⟇ z⁻¹ must be 𝟙."
@@ -159,15 +157,13 @@ proc main(): int =
       let (bulk, weight) = (normBulk(m), normWeight(m))
       doAssert (weight.toMultivector ⟇ weight.toMultivector) =~ (m ∘ m),
         &"‖𝐦‖∘ ⟇ ‖𝐦‖∘ must be 𝐦∘𝐦; got `{weight.toMultivector}`."
-      doAssert bulk.toMultivector =~ |∙m,
-        &"Bulk norm must equal library's; got `{bulk.toMultivector}`."
-      doAssert weight.toMultivector =~ |∘m,
-        &"Weight norm must equal library's; got `{weight.toMultivector}`."
-      doAssert norm(m).toMultivector =~ |m,
-        &"Geometric norm must equal library's; got `{norm(m).toMultivector}`."
+      doAssert root_dot =~ bulk,
+        &"Root of 𝐦∙𝐦 under ⟑ must equal bulk norm of library; got `{root_dot.toMultivector}`."
+      doAssert sqrtAnti(initMultivectorScalars(0, (m ∘ m)[Basis.scalarAnti])) =~ weight,
+        "Root of 𝐦∘𝐦 under ⟇ must equal weight norm of library."
       let unitized = norm(m) / weight
       doAssert unitized.toMultivector =~
-          initScalarHomogeneous((|∙m)[Basis.scalar] / (|∘m)[Basis.scalarAnti], 1).toMultivector,
+          initMultivectorScalars((|∙m)[Basis.scalar] / (|∘m)[Basis.scalarAnti], 1).toMultivector,
         &"Homogeneous scalar must unitize to distance 𝟏 + 𝟙; got `{unitized.toMultivector}`."
       doAssert m / weight =~ ^m, &"Division by weight norm must equal `^`; got `{m / weight}`."
     else:

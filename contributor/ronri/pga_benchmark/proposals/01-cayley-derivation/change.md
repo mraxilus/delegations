@@ -41,12 +41,12 @@ import ../pga/[algebra {.all.}, cayleys {.all.}, multivectors {.all.}, operators
 ## Edit `tests/suites.nim`
 
 ```nim
-  test "TODO: Add chapter 5 tests":
+  test "TODO: Add remaining chapter 5 tests":
     skip()
 ```
 
 ```nim
-  test "TODO: Add chapter 5 tests":
+  test "TODO: Add remaining chapter 5 tests":
     skip()
 
 

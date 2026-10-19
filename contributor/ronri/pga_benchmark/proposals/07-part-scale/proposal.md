@@ -16,8 +16,8 @@ At pin, `=~` weighs the difference of each coefficient against max(1, |x|, |y|) 
 coefficient alone. `grade` counts a coefficient as zero at or under the comparison tolerance, which
 is absolute. A product builds small coefficients, and stray ones outside the grade of its result,
 from terms as large as the scene. Their noise grows with the distance from the origin, so a fixed
-tolerance holds only near it, and one place goes per decade. At 32 bits under P06 alone, `grade`
-reads a moved point as mixed from about 1,000 units. There the stray in its plane slot passes the
+tolerance holds only near it, and one place goes per decade. At 32 bits at pin, `grade` reads a
+moved point as mixed from about 1,000 units. There the stray in its plane slot passes the
 tolerance.
 
 ## Idea
@@ -29,8 +29,11 @@ tolerance.
   the bases of a part as an array, so a loop over it reads that part alone and unrolls.
 - **Comparison.** `=~` takes each part in turn. It fails when a difference in that part is past
   the comparison tolerance times the larger scale of that part in the two objects. `m =~ s`
-  compares m with `initElement(Basis.scalar, s)`, so one rule holds, and the private `=~` of two
-  scalars goes.
+  compares m with `initElement(Basis.scalar, s)`, so one rule holds. The private `=~` of two
+  scalars stays, since the narrowing check of `toMultivectorOf` reads it.
+- **Sets of bases.** `=~` stays generic over the set of bases of its multivectors, as at pin. The
+  macro spells the bases of a part that the set holds, so `MultivectorScalars` compares its two
+  coefficients alone.
 - **Grade.** `grade` counts a coefficient as zero at or under the tolerance times the scale of its
   part. `isMixed`, `gradeAnti` and the partner `⊛` read `grade`, so they follow.
 - **Grade in a conformal algebra.** `grade` takes the larger of that bound and 16 rounding units of
@@ -82,7 +85,7 @@ ruled on 2026-10-12.
 - **Time.** A pair that differs reads the scale of its first part in both objects before it
   stops. `grade` reads the scale of each part, and in a conformal algebra it also scans for the
   largest coefficient.
-- **Typed objects.** These costs fall on the dense `Multivector` alone. A typed object knows its
+- **Typed objects.** These costs fall on the types of the library at pin. A typed object knows its
   grade from its type when it compiles, so `grade` would cost nothing there under either rule. It
   knows its parts too. So the scale of a part is a `max` over its own few slots, as three for the
   bulk of a point.
@@ -105,9 +108,9 @@ ruled on 2026-10-12.
   distance in the units of the scene is outside this proposal.
 - **Comparison far out.** Noise of `=~` at a distance is measured at rga4d alone. In the
   conformal algebras it is unmeasured, and only `grade` is measured.
-- **Basis-set types.** This proposal gives no comparison and no `grade` for the basis-set types of
-  P04, `MultivectorOf[B]`. The change of P04 defines neither, and the typed reference under
-  Evidence is no basis-set type.
+- **Basis-set types.** `=~` takes each `MultivectorOf[B]`, as at pin, and reads only the parts of
+  B. `grade` takes the dense `Multivector` alone, as at pin. Evidence measures the dense type, and
+  the typed reference there is no basis-set type.
 
 ## Open decisions
 
@@ -116,23 +119,20 @@ ruled on 2026-10-12.
 
 ## Landing
 
-- **P06, `float-width`.** It lands first. These edits quote its `Coefficient` signatures, and the
-  32-bit claims need the width that it makes configurable.
+- **P06, `float-width`.** It is implemented at pin `3d9696e`. The 32-bit claims build at the width
+  that it makes configurable.
 - **Imports.** The new import of `./cayleys` forms no cycle, since `pga/cayleys.nim` imports
   `./algebra` alone, at pin and under P01.
 - **Change `doc-comments-2`.** It adds a line under the doc of `grade`, which the third edit
   quotes. The second of the two to land quotes the first again.
-- **Change `algebra-hygiene`.** It renames `TOLERANCE_ABS` to `TOLERANCE_REL` in the scalar `=~`
-  that this proposal removes, and in the zero test of `grade` that it replaces. The second of the
-  two to land quotes the first again. Where `algebra-hygiene` lands first, the new code takes its
-  name.
+- **Change `algebra-hygiene`.** It renames `TOLERANCE_ABS` to `TOLERANCE_REL` in the zero test of
+  `grade` that this proposal replaces. The second of the two to land quotes the first again. Where
+  `algebra-hygiene` lands first, the new code takes its name.
 - **P03, `partner-sign`, and P11, `unitize-general`.** Neither edits a line here. A test that P11
-  adds to suite Internal compares the antiscalar of 𝐯 ∘ 𝐯 with 1. This proposal removes the
-  private `=~` of two scalars. So that test compares two multivectors through the public `=~`, as
-  `abs((𝐯 ∘ 𝐯)[Basis.scalarAnti]) ∧ 𝟙 =~ 𝟙`, and the two build together in either order.
-  A run by hand on 2026-10-15 applied P06, this proposal and P11 to a copy of the library at pin.
-  The suites passed at `rga4d`, `cga4d` and `cga5d` at 64 bits, and at `cga4d` and `cga5d` at 32
-  bits.
+  adds to suite Internal compares two multivectors through the public `=~`, as
+  `abs((𝐯 ∘ 𝐯)[Basis.scalarAnti]) ∧ 𝟙 =~ 𝟙`. So that test reads this rule once both land. A run
+  by hand on 2026-10-19 applied this proposal and P11 to a copy of the library at pin. The suites
+  passed at `rga3d`, `rga4d`, `cga4d` and `cga5d`, at 64 and at 32 bits.
 - **Two zero tests.** P11 keeps its own grade scan in `^∘`, at the comparison tolerance times the
   largest coefficient. So once both land, `grade` and `^∘` can read one element differently. That
   scan is the test of the largest coefficient alone, under Evidence.
@@ -144,12 +144,12 @@ ruled on 2026-10-12.
 `laws.nim` moves unitized points, lines and planes by unit motors at rga4d, in scenes at a distance
 from the origin. Three laws compute one object two ways that agree in exact arithmetic: a point
 moved twice, a join moved, and a meet moved. Each cell is the most places that hold for the worst
-of the three with no noise in 4096 samples, on this machine on 2026-10-12. Pin is the rule of pin,
-which `laws.nim` copies, and P07 the rule of this proposal. Pin has no 32-bit build, so P06 alone
-gives the rule of pin at 32 bits.
+of the three with no noise in 4096 samples. The runs took pin on this machine on 2026-10-19. Pin is
+the rule of pin, which `laws.nim` copies, and P07 the rule of this proposal. Pin at 32 bits is pin
+built with `-d:pga.float_width=32`.
 
-| Distance | Pin, 64 | P07, 64 | P06 alone, 32 | P07, 32 | `grade` misread by P06 alone, 32 |
-|----------|---------|---------|---------------|---------|----------------------------------|
+| Distance | Pin, 64 | P07, 64 | Pin, 32 | P07, 32 | `grade` misread by pin, 32 |
+|----------|---------|---------|---------|---------|----------------------------|
 | 1 | 14 | 14 | 5 | 6 | 0 of 4096 |
 | 10 | 13 | 13 | 5 | 5 | 0 of 4096 |
 | 100 | 12 | 13 | 4 | 5 | 0 of 4096 |
@@ -158,8 +158,8 @@ gives the rule of pin at 32 bits.
 | 100,000 | 10 | 13 | 1 | 4 | 2962 of 4096 |
 | 1,000,000 | 9 | 14 | 0 | 5 | 3049 of 4096 |
 
-So the default of 4 places at 32 bits holds at every distance measured, where under P06 alone it
-held within about 100 units. With this proposal, `grade` reads a moved point as grade one at every
+So the default of 4 places at 32 bits holds at every distance measured, where at pin it held
+within about 100 units. With this proposal, `grade` reads a moved point as grade one at every
 distance, at both widths. These samples differ from those of `noise.nim` in P06, which also draws
 a point on each line. So the rule of pin keeps 12 places at 100 units here, and 13 there.
 
@@ -171,8 +171,8 @@ The typed reference keeps the gain. A typed point, line or plane holds no slot o
 so the stray noise of a dense product goes. Noise still lands in small coefficients that the type
 holds, such as a coordinate or a moment near zero. The reference holds 64 bits alone, so a copy of
 `reference/rigid3.nim` built at each width ran the same laws by hand. Under P07 it kept 4 to 5
-places at 32 bits at every distance, where P06 alone fell to 0 at 1,000,000 units. At 64 bits it
-kept 12 to 14, where pin fell to 10.
+places at 32 bits at every distance, where the rule of pin fell to 0 at 1,000,000 units. At 64
+bits it kept 12 to 14, where pin fell to 10.
 
 ### Grade in every algebra
 
@@ -183,8 +183,8 @@ of two of them, and general multivectors. The conformal algebras add products of
 and k-vectors. The conformal algebras add spheres, and round objects moved by a conformal motion
 operator.
 
-Each cell counts the elements that a zero test misread, on this machine on 2026-10-12. Pin is the
-comparison tolerance, absolute, as at pin and under P06 alone. Part or n takes the larger of the
+Each cell counts the elements that a zero test misread, on this machine on 2026-10-19 at pin. Pin
+is the comparison tolerance, absolute, as at pin. Part or n takes the larger of the
 part bound and n rounding units of the largest coefficient. Within a row, every test reads the same
 elements.
 
@@ -224,9 +224,10 @@ that sphere.
 
 ### Time
 
-`timing.nim` times both rules, with the rule of pin copied into the program. At 32 bits, the
-columns P06 hold that rule under P06 alone. Each cell is the median of three runs by hand on this
-machine on 2026-10-12, in nanoseconds per pair or per object, on one core. Each run takes the
+`timing.nim` times both rules, with the rule of pin copied into the program. Each cell is the
+median of three runs by hand on this machine on 2026-10-12, in nanoseconds per pair or per object,
+on one core. Those runs took library `28f4e11`, with P06 applied for the 32-bit builds, and the
+rules they time are those of pin `3d9696e`. Each run takes the
 median of 41 rounds over 1024 pairs or objects. Each point has Gaussian coordinates of deviation
 1000 units, and is a round point in a conformal algebra. Each dense multivector has Gaussian
 coefficients of deviation 1.
@@ -238,14 +239,14 @@ coefficients of deviation 1.
 | `grade` of mixed multivector | 2.5 | 7.5 | 2.8 | 16.7 | 4.2 | 29.1 |
 | `grade` of point | 8.2 | 25.0 | 8.1 | 31.1 | 29.0 | 62.4 |
 
-| Case, 32 bits | P06, rga4d | P07, rga4d | P06, cga4d | P07, cga4d | P06, cga5d | P07, cga5d |
+| Case, 32 bits | Pin, rga4d | P07, rga4d | Pin, cga4d | P07, cga4d | Pin, cga5d | P07, cga5d |
 |---------------|------------|------------|------------|------------|------------|------------|
 | Equal pair | 55.9 | 41.9 | 54.2 | 46.2 | 130.6 | 124.5 |
 | Pair that differs in its scalar | 3.5 | 18.0 | 2.6 | 20.0 | 2.6 | 43.4 |
 | `grade` of mixed multivector | 2.5 | 8.1 | 3.2 | 10.6 | 5.9 | 27.1 |
 | `grade` of point | 8.1 | 26.1 | 8.1 | 35.8 | 20.9 | 62.2 |
 
-The `grade` cells under Pin and P06 come from an earlier copy of the rule of pin. That copy tested
+The `grade` cells under Pin come from an earlier copy of the rule of pin. That copy tested
 a flag of its own in place of `result.isNone`. The copy in `timing.nim` now spells the lines of
 pin, and for it those cells are unmeasured.
 
