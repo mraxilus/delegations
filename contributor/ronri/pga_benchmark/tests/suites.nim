@@ -533,6 +533,19 @@ suite "Internal: Inspector":
     check overloadOf("wedge_u0__referenceZrigid3") == 0 and overloadOf("nimZeroMem") == -1  # none
 
 
+  test "set of enum reads as its stem with no hash, so key holds on every machine":
+    # Case: at 3d9696e, `index` formats `set[Basis]`, and key held mangled hash of set type,
+    #   which differs between this machine and CI runner, so guard found 24 functions moved.
+    const fixture = [
+      "N_LIB_PRIVATE N_NIMCALL(NimStringV2, dollar___u0__OOZpgaZmultivectors)(" &
+        "tySet_tyEnum_Basis__GwNZjTO9bxGEIf59by1p9aEeA x_p0) {",
+      "}",
+    ].join("\n")
+    let found = functionsIn(fixture)
+    check found.len == 1
+    if found.len == 1:
+      check found[0].parameters == @["set[Basis]"]
+
   test "functions are split and counted from fixture C":
     const
       multivector_mangled = "tyObject_Multivector__h"
