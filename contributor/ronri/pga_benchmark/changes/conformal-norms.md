@@ -7,7 +7,7 @@ and 4.13. Both run at `cga5d` alone, since they name the bases of 5D.
 
 The doc of the radius norm states that its float root is NaN for an imaginary object. Each
 norm returns `MultivectorScalars` at pin, and so does the center norm. Proposal P10,
-`homogeneous-scalar`, proposes `ScalarHomogeneous` as the return of `normRadius`. Proposal P11,
+`homogeneous-scalar`, proposes the root under the antiproduct for `normRadius`. Proposal P11,
 `unitize-general`, sets how unitization treats a flat object. The change `doc-comments` edits
 nearby docs in `pga.nim`. The two changes quote distinct lines, so they apply in either order.
 

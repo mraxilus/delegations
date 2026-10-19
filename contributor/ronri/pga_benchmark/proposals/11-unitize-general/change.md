@@ -18,8 +18,8 @@ touches:
 
 - The width of each float is a build option at pin, so `largest` in `^∘` and `distance_squared`
   in `toRoundPoint` are declared `Coefficient`.
-- P07, `part-scale`, removes the private `=~` of two scalars. The test of suite Internal compares
-  two multivectors through the public `=~` instead, so the two build together in either order.
+- P07, `part-scale`, edits `=~` and `grade`, and no line here. The test of suite Internal compares
+  two multivectors through the public `=~`, so it reads the rule of P07 once both land.
 - The change `algebra-hygiene` renames `TOLERANCE_ABS`, which `^∘` names. The second to land
   carries the new name into `^∘`.
 - The change `doc-comments` writes that `^` and `normalizeWeight` cost no call. With this change
@@ -200,14 +200,14 @@ suite "Internal":
         let 𝐯 = ^(3 ∧ (sampleReflector() ⟇ sampleReflector()))
         check abs((𝐯 ∘ 𝐯)[Basis.scalarAnti]) ∧ 𝟙 =~ 𝟙  # Product of two reflections ends unit.
         let 𝐦 = 𝐯 ⟇ samplePoint() ⟇ ~∘𝐯
-        check |∘(^𝐦) =~ 𝟙  # Moved round point keeps unit round weight.
+        check toMultivector(|∘(^𝐦)) =~ 𝟙  # Moved round point keeps unit round weight.
 
         let 𝐬 = sampleSphere()
         var 𝐠 = samplePoint()
         for _ in 2 ..< DIMENSIONS - 1: 𝐠 = 𝐠 ∧ samplePoint()
         𝐠 = 𝐠 ∧ 𝐞∞
         let 𝐠_back = 𝐬 ⟇ (𝐬 ⟇ 𝐠 ⟇ ~∘𝐬) ⟇ ~∘𝐬
-        check |□(^𝐠_back) =~ 𝟙  # Plane through sphere and back keeps unit flat weight.
+        check toMultivector(|□(^𝐠_back)) =~ 𝟙  # Plane sent through sphere and back stays unit.
 
 
 ```
@@ -230,9 +230,9 @@ suite "Chapter 4":
         var 𝐮 = 𝐫
         for grade in 1..<DIMENSIONS:
           let scale = 3 * gauss()
-          check |∘(^(scale ∧ 𝐮)) =~ 𝟙  # Section 4.3, round object
+          check toMultivector(|∘(^(scale ∧ 𝐮))) =~ 𝟙  # Section 4.3, round object
           if grade < DIMENSIONS - 1:
-            check |□(^(scale ∧ (𝐮 ∧ 𝐞∞))) =~ 𝟙  # Section 4.3, flat object
+            check toMultivector(|□(^(scale ∧ (𝐮 ∧ 𝐞∞)))) =~ 𝟙  # Section 4.3, flat object
           𝐮 = 𝐮 ∧ samplePoint()
 
 
