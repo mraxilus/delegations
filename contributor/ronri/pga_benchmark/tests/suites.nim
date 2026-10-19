@@ -26,6 +26,16 @@ from ../src/pga_benchmark/evaluations import
 from ../src/pga_benchmark/unitized import nil
 
 
+template suiteInProc(name: static string, body: untyped) =
+  ## Run suite in proc of its own, so C of each suite is function of its own.
+  ##   `suite` writes each test into function that runs module; that one function of every test
+  ##     took gcc 31 s and count of its multiplies 51 s at rga4d, measured 2026-10-19.
+  proc run() {.gensym.} =
+    suite name:
+      body
+  run()
+
+
 const
   LIBRARY =
     "../dependencies/replications.mraxilus.gitlab.com/lengyel/projective_geometric_algebra_illuminated"
@@ -201,7 +211,7 @@ fillPools(0)
 
 
 
-suite "Internal: Configuration":
+suiteInProc "Internal: Configuration":
   test "stub matrix names algebra umbrella reports":
     check DIMENSIONS in 2..6  # library's own bound
     when DIMENSIONS == 4 and IS_RIGID:
@@ -215,7 +225,7 @@ suite "Internal: Configuration":
 
 
 
-suite "Internal: Surface":
+suiteInProc "Internal: Surface":
   test "symbols are read under gate of their algebra":
     const fixture = """
 defineOperator(
@@ -262,7 +272,7 @@ func hidden(m: Multivector): Multivector = m
 
 
 
-suite "Internal: Catalogue":
+suiteInProc "Internal: Catalogue":
   test "ids are unique":
     let ids = idsOf(CATALOGUE) & idsOf(MISSING)
     check ids.deduplicate.len == ids.len  # one gap per operation
@@ -305,7 +315,7 @@ suite "Internal: Catalogue":
 
 
 
-suite "Chapter 2":
+suiteInProc "Chapter 2":
   checkReferences(CATALOGUE, "2.")
 
   test "unitize of point with negative weight keeps its sign  # 2.89":
@@ -323,12 +333,12 @@ checkReferencesWiki(CATALOGUE)
 
 
 
-suite "Internal: Dense forms":
+suiteInProc "Internal: Dense forms":
   checkFormsDense(CATALOGUE)
 
 
 
-suite "Internal: Measurements":
+suiteInProc "Internal: Measurements":
   test "every pool starts on cache line":
     # Pool off line puts 128-byte multivector across three lines, not two, and typed object
     #   across lines in other patterns, so library and reference read different layouts.
@@ -397,7 +407,7 @@ suite "Internal: Measurements":
 
 
 
-suite "Internal: Allocation":
+suiteInProc "Internal: Allocation":
   test "allocation gauge is live under this build":
     let before = getAllocStats()
     var control = newSeq[float](8)
@@ -417,7 +427,7 @@ suite "Internal: Allocation":
 
 
 
-suite "Internal: Lower bound":
+suiteInProc "Internal: Lower bound":
   test "derived counts reproduce what algebra demands":
     let m = Metric(dimensions: 4, is_conformal: false)
     check boundLowerOf(Shape.Wedge, m, 2).multiplies == 81  # three states per dimension
@@ -514,7 +524,17 @@ let INSPECTED = inspectCache(CACHE)
 
 
 
-suite "Internal: Inspector":
+suiteInProc "Internal: Inspector":
+  test "function that runs this module holds no suite, so gcc compiles each suite apart":
+    # Case: each `suite` at module level wrote its tests into one C function, 8.1 MB at rga4d;
+    #   gcc took 31 s on it, measured 2026-10-19. With each suite in its own proc it holds 0.4 MB.
+    var is_found = false
+    for f in INSPECTED:
+      if f.name == "NimMainModule":
+        is_found = true
+        check f.body.len < 2_000_000
+    check is_found
+
   test "mangled names demangle to symbols":
     check demangle("XE2X88XA7__u0__OOZdependenciesZpgaZoperators") == "∧"  # non-ASCII bytes
     check demangle("barXE2X88X99__u0__pgaZoperators") == "|∙"  # special word then bytes
@@ -885,7 +905,7 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
 
 
 
-suite "Internal: Unitized":
+suiteInProc "Internal: Unitized":
   # Program `unitized` times Lengyel's code in homogeneous form against form whose point has
   #   w = 1; suite holds each form to its pair, and each row of its record to C of its forms.
 
@@ -1028,7 +1048,7 @@ suite "Internal: Unitized":
 
 
 
-suite "Internal: Guard":
+suiteInProc "Internal: Guard":
   const
     path = "baseline/rga4d.json"
     key = "∧(Multivector,Multivector)"
@@ -1133,7 +1153,7 @@ suite "Internal: Guard":
 
 
 
-suite "Internal: Gaps":
+suiteInProc "Internal: Gaps":
   const key_wedge = "∧(Multivector,Multivector)"
 
   func nodeFunction(
@@ -1313,7 +1333,7 @@ suite "Internal: Gaps":
 
 
 
-suite "Internal: Markdown":
+suiteInProc "Internal: Markdown":
   test "blocks keep kind, level and line they open on":
     let blocks = parseBlocks(
       "# Title\n\nWhy it is.\nStill why.\n\n- one\n- two\n\n" & "| a | b |\n|---|---|\n| 1 | 2 |\n",
@@ -1379,7 +1399,7 @@ suite "Internal: Markdown":
 
 
 
-suite "Internal: Definitions":
+suiteInProc "Internal: Definitions":
   const source = """## Module doc.
 
 import std/strutils
@@ -1439,7 +1459,7 @@ defineIt(
         @[(1, 0), (0, 1), (2, -1), (-1, 2), (3, 3)]  # overloads by head, rename as two
 
 
-suite "Internal: Changes":
+suiteInProc "Internal: Changes":
   const
     record = "changes/sign.md"
     library = "let x = 1\nlet y = 2\nlet z = 1\n"
@@ -1515,7 +1535,7 @@ suite "Internal: Changes":
 
 
 
-suite "Internal: Notes":
+suiteInProc "Internal: Notes":
   const
     record = "marginalia/notes.md"
     source = "Notes.\n\n## Odd grade\n\n`pga/a.nim` · decide\n\n" &
@@ -1542,7 +1562,7 @@ suite "Internal: Notes":
 
 
 
-suite "Internal: Head":
+suiteInProc "Internal: Head":
   const pin = "bd6b23c590d7e1da91a1ea288a1a4b94dedbf315"
 
 
@@ -1654,7 +1674,7 @@ suite "Internal: Head":
 
 
 
-suite "Internal: Proposals":
+suiteInProc "Internal: Proposals":
   const
     directory_sign = "proposals/01-sign"
     shape = "\n**What it is.** It.\n\n**What it is for.** For.\n\n**What it costs.** Cost.\n" &
@@ -1838,7 +1858,7 @@ suite "Internal: Proposals":
 
 
 
-suite "Internal: Evaluations":
+suiteInProc "Internal: Evaluations":
   func run(ns: openArray[(string, float, float)]): JsonNode =
     ## Build one bench run: library median and NaN share per measurand.
     result = %*{"measurands": {}}
@@ -1929,7 +1949,7 @@ suite "Internal: Evaluations":
 
 
 
-suite "Internal: Figures":
+suiteInProc "Internal: Figures":
   test "figure is one image alone, path resolved against proposal's directory":
     let
       node = Block(
@@ -2059,7 +2079,7 @@ suite "Internal: Figures":
 
 
 
-suite "Internal: Edits":
+suiteInProc "Internal: Edits":
   const source_pin = "func outer*(a: int;\n    b: int): int {.inline.} =\n  ## Doc.\n" &
       "  for x in 0 ..< a:\n    result += x\n\nimport std/math\n"
     ## Library file at pin: routine whose signature spans two lines, then top-level import.
@@ -2207,7 +2227,7 @@ suite "Internal: Edits":
     check "Other functions moved: <code>h(M)</code>." in html  # helper named
 
 
-suite "Internal: Search":
+suiteInProc "Internal: Search":
   test "row shows while its words hold every word typed, case folded in ASCII":
     const words = "wedge_point_point g007 ∧ wedge point"
     check isFound(words, "")  # nothing typed shows every row
@@ -2219,7 +2239,7 @@ suite "Internal: Search":
 
 
 
-suite "Internal: Cells":
+suiteInProc "Internal: Cells":
   test "table reads cell for cell, sign included, in both cell shapes":
     let wedge = cells(CAYLEYS_WEDGE.base)
     check wedge["E1,E2"] == %*[{"to": "E12", "neg": false}]  # 𝐞₁ ∧ 𝐞₂ = 𝐞₁₂
@@ -2229,7 +2249,7 @@ suite "Internal: Cells":
 
 
 
-suite "Internal: Pages":
+suiteInProc "Internal: Pages":
   let ids_docket = %*{"ids": {"rga4d/wedge": "G001", "rga4d/wedge_point_point": "G002"}}
     ## Docket file allotting both rows of `sheetDocket`.
 
@@ -2539,7 +2559,7 @@ suite "Internal: Pages":
 
 
 
-suite "Internal: Proposal list":
+suiteInProc "Internal: Proposal list":
   func listed(number: int, status = "proposed", bases: seq[int] = @[]): Proposal =
     ## Build proposal at number, titled after it, with status and bases by number.
     let citation = "P" & align($number, 2, '0')
@@ -2659,7 +2679,7 @@ suite "Internal: Proposal list":
 
 
 
-suite "Internal: Library map":
+suiteInProc "Internal: Library map":
   const
     svg_fixture = "<rect class=\"block\" x=\"8\" y=\"0\" width=\"864\" height=\"300\"/>\n" &
       "<text class=\"blockname\" x=\"22\" y=\"19\">Products</text>\n" &
@@ -2748,7 +2768,7 @@ suite "Internal: Library map":
 
 
 
-suite "Internal: Render":
+suiteInProc "Internal: Render":
   const fixture = staticRead("fixtures/control_faces.json")  ## Control page `drive` renders.
   let expected = @[(element: "p#han", codepoint: 0x4E2D), (element: "p#open", codepoint: 0x2603)]
     ## Findings control of these tests expects.
@@ -2824,7 +2844,7 @@ suite "Internal: Render":
 
 
 
-suite "Internal: Driver":
+suiteInProc "Internal: Driver":
   const
     driver = staticRead("../tools/build.nim")  ## Dispatcher: header table, usage and packages.
     verbs = staticRead("../tools/verbs.nim")  ## Program every verb compiling project code runs.
