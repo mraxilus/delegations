@@ -290,7 +290,9 @@ the compiler back to symbols. ASCII operator characters become words such as `ba
 `roof`, and other bytes become `X<hex>`. `_u<n>` numbers the overloads, and `__<module>`
 names the module.
 
-It keys every function by symbol and by parameter type stems. It then counts what the C
+It keys every function by symbol and by parameter type stems. A stem drops the hash that the
+compiler puts in the name of a type, since that hash follows the path of its module. So a set of
+an enum reads as `set[Basis]`, and a key holds on every machine. It then counts what the C
 spells:
 
 - multiplies, adds, subtractions and divides;
