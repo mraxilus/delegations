@@ -19,12 +19,12 @@ to land quotes the first:
 ## Edit `pga/algebra.nim`
 
 ```nim
-  TOLERANCE_ABS* = 10.pow(-TOLERANCE_PLACES.float)
+const TOLERANCE_ABS* = Coefficient(10.pow(-FLOAT_TOLERANCE.float))
 ```
 
 ```nim
-  TOLERANCE_REL* = 10.pow(-TOLERANCE_PLACES.float)
-    ## Bound is relative above 1 and absolute below; see `=~` in multivectors.nim.
+const TOLERANCE_REL* = Coefficient(10.pow(-FLOAT_TOLERANCE.float))
+  ## Bound is relative above 1 and absolute below; see `=~` in multivectors.nim.
 ```
 
 ## Edit `pga/algebra.nim`

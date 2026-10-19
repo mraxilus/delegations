@@ -68,13 +68,13 @@ func unitize*(m: Multivector): Multivector {.inline.} = ^m
 ## Edit `pga/operators.nim`
 
 ```nim
-func `|∘`*(m: Multivector): Multivector {.inline.} =
+func `|∘`*(m: Multivector): MultivectorScalars {.inline.} =
   ## Get (round) weight norm of multivector as size of (round) weight components.
   ##   I.e. ‖𝐦‖∘ = √(𝐦∘𝐦).
 ```
 
 ```nim
-func `|∘`*(m: Multivector): Multivector {.inline.} =
+func `|∘`*(m: Multivector): MultivectorScalars {.inline.} =
   ## Get (round) weight norm of multivector as size of (round) weight components.
   ##   In RGA, ‖𝐦‖∘ = √(𝐦∘𝐦); in CGA, √(𝐦∘𝐦) is radius norm ‖𝐦‖⊘ instead (4.45).
 ```

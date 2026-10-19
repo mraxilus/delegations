@@ -22,11 +22,11 @@ second to land writes the merged import:
 ## Edit `pga/operators.nim`
 
 ```nim
-import ./[algebra {.all.}, cayleys {.all.}, helpers, multivectors]
+import ./[algebra {.all.}, cayleys {.all.}, emitters, multivectors]
 ```
 
 ```nim
-import ./[helpers, multivectors]
+import ./[emitters, multivectors]
 from ./algebra {.all.} import
   Basis, Grade, GradeAnti, DIMENSIONS, IS_CONFORMAL, IS_RIGID,
   grade, gradeAnti, scalar, scalarAnti, origin, high, low, `==`
