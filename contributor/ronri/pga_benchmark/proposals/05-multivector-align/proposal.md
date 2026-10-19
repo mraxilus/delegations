@@ -11,10 +11,10 @@ call. On one of two cores, most operations at cga5d run slower under SSE2.
 
 ## Problem
 
-At pin, a multivector aligns to 8 bytes at 64 bits, as its coefficients do. A processor moves memory in lines of
-64 bytes. A multivector that starts on a line touches the fewest lines it can, and one that starts
-inside a line touches one more. A large `seq` of multivectors at pin starts 56 bytes into a line,
-so each element touches one line more than it holds:
+At pin, a multivector aligns to 8 bytes at 64 bits, as its coefficients do. A processor moves memory
+in lines of 64 bytes. A multivector that starts on a line touches the fewest lines it can, and one
+that starts inside a line touches one more. A large `seq` of multivectors at pin starts 56 bytes
+into a line, so each element touches one line more than it holds:
 
 | Algebra | Floats | Bytes | Lines from a line start | Lines from 56 bytes in |
 |---------|--------|-------|-------------------------|------------------------|
@@ -69,9 +69,9 @@ so each element touches one line more than it holds:
 - **Float width.** The alignment reads the size of `Coefficient`. So at 32 bits a multivector at
   rga3d aligns to its own 32 bytes and pads none, and from rga4d up it aligns to 64.
 - **P04, `exact-kinds`.** It replaces the same type definition, and aligns every basis-set type to
-  `alignment` of its count. That is the largest power of two that divides its bytes, and at most
-  64. The second of the two to land quotes the first. For the whole set, that rule gives `min(64, size)`,
-  since 2^D coefficients take a power of two bytes. So once P04 lands, its rule spells both.
+  `alignment` of its count. That is the largest power of two that divides its bytes, and at most 64.
+  The second of the two to land quotes the first. For the whole set, that rule gives `min(64,
+  size)`, since 2^D coefficients take a power of two bytes. So once P04 lands, its rule spells both.
 
 ## Evidence
 
