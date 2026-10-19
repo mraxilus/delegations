@@ -251,8 +251,10 @@ one run, because it misses drift between runs. That drift is the larger part on 
 amd64, 4 cores`. At rga3d, cga4d and cga5d they ran at the pin `3d9696e`, with nothing else on the
 machine. At rga4d they ran at `3838c54`, which emits the same C as the pin, so `restamp` carries
 them. Each algebra keeps the take whose median paired spread is smaller, as the Architect ruled on
-2026-10-19 (D5). The bench of 2026-10-01, run at `3121342` on 2026-10-02 in turn
-with the baselines of that day, gives the drift between days. At rga4d its library runs ×1.19 to
+2026-10-19 (D5).
+
+The bench of 2026-10-01, run at `3121342` on 2026-10-02 in turn with the baselines of that day,
+gives the drift between days. At rga4d its library runs ×1.19 to
 ×1.22 of its own times of 2026-10-01. Its reference runs ×1.26 to ×1.27, and its dense forms ×1.00
 to ×1.01. The bench of 2026-10-02 runs ×0.99 to ×1.01 of it in the same runs.
 
@@ -497,8 +499,8 @@ since most library operators are already one generated table. The compound opera
 They run ×2.0 to ×5.7 their dense forms, from the container at cga5d to the support at rga4d.
 
 The antigrade selection runs ×2.5 to ×4.6, and the norms ×0.68 to ×1.11. Sum, difference and
-negation run ×0.63 to ×1.14, and the unitizes and normalizations ×0.59 to ×0.89. So a dense form is a measure, and
-never a lower bound on time.
+negation run ×0.63 to ×1.14, and the unitizes and normalizations ×0.59 to ×0.89. So a dense
+form is a measure, and never a lower bound on time.
 
 Rejected: a dense form written by hand for each operation. There are 40 to 47 operations at
 each of four algebras, and forms by hand would drift from the library as it moves. The
@@ -652,10 +654,10 @@ A program claim names its program relative to its proposal, so a new directory n
 digest.
 
 **A program runs against the library with its bases applied.** So `laws.nim` of P09 and of P10
-imports `pga` alone, and reaches the products of basis-set types that the change of P04 adds. A program may
-still import a program of a base by a path relative to its own directory, and no proposal does so
-now. The digest of an evaluation reads the programs of each base first, and then its own. So a
-change to a program of a base moves the digest of each proposal on it.
+imports `pga` alone, and reaches the products of basis-set types that the change of P04 adds. A
+program may still import a program of a base by a path relative to its own directory, and no
+proposal does so now. The digest of an evaluation reads the programs of each base first, and then
+its own. So a change to a program of a base moves the digest of each proposal on it.
 
 **A suites or program claim may name `defines`**, each `name=value`, and each of its builds
 passes them as `-d:`. So a proposal can hold the library at a build option other than its
