@@ -21,8 +21,8 @@ zeros first.
 - **First table.** `CAYLEY_PARTNER_CONTAINER` is the container of the weight dual, read with 𝐦 as
   both operands. The sign (−1)^(gr 𝐦 + 1) rides the left read alone, by the grade of each term.
 - **Second table.** `CAYLEY_PARTNER_MEET` is 𝐭 ∨ 𝐦⊟, the meet with the carrier of its second
-  operand. The carrier folds in, so the product reads only the slots that the carrier reaches. It
-  takes two thirds of the multiplies of `∨`.
+  operand. The carrier folds in, so the product reads only the coefficients that the carrier
+  reaches. It takes two thirds of the multiplies of `∨`.
 - **Operator.** `⊛` reads `partnerMeet(partnerContainer(m), m)`. Both steps are private, through a
   new `is_public` argument of the Cayley2D overload of `defineOperator`, true by default.
 
@@ -35,7 +35,7 @@ read, the sign is exact when every term of the operand has the same grade.
 |--------|-------------|
 | Sign on both reads of the container | Squares away, since the container is quadratic |
 | Sign on the right read of the second step | Exact and as cheap; one of the two must carry it |
-| Scan of grade, unrolled at build | What the dense form does; still a branch for each slot |
+| Scan of grade, unrolled at build | What the dense form does; still a branch for each coefficient |
 | Assert of single grade in release | Costs the scan this proposal removes |
 
 ## Costs

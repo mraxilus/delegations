@@ -4,21 +4,21 @@
 ##   so any heap use shows as count, and every result is folded into one sink after timing
 ##   so nothing is optimised away; share of results carrying NaN is counted alongside, since
 ##   library's radius norm returns NaN where 𝐦 ∘ 𝐦 is negative and that is measured, not stated.
-##   Operands are aliases into pools (template, never `let`), so loop reads pool slot and
-##   writes result slot: what moves is operation's own traffic.
-##   Result slots start uninitialised (`noinit`): array filled with zeros would let C compiler
+##   Operands are aliases into pools (template, never `let`), so loop reads pool element and
+##   writes result element: what moves is operation's own traffic.
+##   Result elements start uninitialised (`noinit`): array filled with zeros would let C compiler
 ##     drop each zero store that inlined operation repeats, and so time fewer stores than any
 ##     caller pays.
 ##   Result of three floats or fewer returns by value, so loop binds it before storing it.
-##     Assigned straight into slot, it passes through temporary that call site zero-fills, and
-##     in large function compiler keeps that fill as out-of-line `rep stos`, about 11 ns per
+##     Assigned straight into its element, it passes through temporary that call site zero-fills,
+##     and in large function compiler keeps that fill as out-of-line `rep stos`, about 11 ns per
 ##     object that no caller of normal size pays. Suite `Internal: Inspector` holds it.
 ##   Each measurand times in procedure of its own per implementation, as caller's function
 ##     would call it. In one function holding every loop, error check after each call drains
 ##     compiler's estimate of reaching code below it to zero from second measurand on; code
 ##     estimated cold is optimised for size, so library's loops stay scalar while straight-line
 ##     forms still vectorise. Suite `Internal: Inspector` holds it.
-##   Result slots align to cache line, so every implementation writes same layout; alignment
+##   Result elements align to cache line, so every implementation writes same layout; alignment
 ##     alone moves time of identical code by up to one fifth.
 ##
 ##   Instrument gates: allocation counts are live only under `-d:nimAllocStats`, and
@@ -30,7 +30,7 @@
 ##     read tables by name at pin and change may rename them; evaluation builds so.
 ##
 ##   Cost: measurements arrays hold one entry per measurand per implementation; sink is float.
-##   Cost: pairing slot i with slot (7i + 3) mod OBJECTS costs integer ops in both.
+##   Cost: pairing element i with element (7i + 3) mod OBJECTS costs integer ops in both.
 
 {.experimental: "strictFuncs".}
 
@@ -183,7 +183,7 @@ macro defineMeasurand(
           `body`)]
         rounds: array[ROUNDS, int64]
       let statistics_before = getAllocStats()
-      # Hot path, per pool slot: index and pool reads constant; work linear in `OBJECTS` times
+      # Hot path, per pool element: index and pool reads constant; work linear in `OBJECTS` times
       #   `ROUNDS`; nothing allocates but `body`, and `allocations` counts what it does.
       timeRounds(rounds):
         for i in 0..<OBJECTS:

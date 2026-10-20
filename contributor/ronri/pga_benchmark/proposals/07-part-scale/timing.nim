@@ -9,8 +9,8 @@
 ##     scale of that part; in CGA it first reads and compares whole of part that bulk flat holds.
 ##   Points have Gaussian coordinates of deviation 1000 units: unit points in RGA, round points in
 ##     CGA, whose grade under rule of P07 also scans for largest coefficient. Stray pairs, in
-##     RGA alone, are such points, one holding stray of 50 tolerances in its plane slot: rule of
-##     P07 calls them equal, and rule of pin stops there and does not.
+##     RGA alone, are such points, one holding stray of 50 tolerances in its plane coefficient: rule
+##     of P07 calls them equal, and rule of pin stops there and does not.
 ##   Each timed loop sits in procedure of its own, so compiler estimates it hot, as caller's.
 ##   Template `timeRounds` mirrors that of `timing.nim` in P05 and P06; fix to one reaches each.
 ##

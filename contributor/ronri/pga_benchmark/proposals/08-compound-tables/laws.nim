@@ -6,7 +6,7 @@
 ##   Rigid laws: 𝐦∩ = 𝐦 ∨ (𝐞ₙ ∧ 𝐦☆) and 𝐦∪ = 𝐦 ∧ (𝐞̄ₙ ∨ 𝐦★).
 ##   Conformal laws: 𝐦⊞ = 𝐦☆ ∧ 𝐞∞, 𝐦⊙ = (𝐦☆ ∧ 𝐞∞) ∨ 𝐦 and 𝐦⊡ = 𝐦 ∧ (𝐦⊟)☆. Center is spelled
 ##     through ☆ and ∧, not through ⊞, since proposal replaces ⊞ with table too.
-##   Samples are dense, every slot drawn, so each law reads every cell of its table.
+##   Samples are dense, every coefficient drawn, so each law reads every cell of its table.
 
 {.experimental: "strictFuncs".}
 
@@ -32,7 +32,7 @@ else:
 
 
 proc sample(): Multivector =
-  ## Draw dense multivector, every slot uniform in [-1, 1].
+  ## Draw dense multivector, every coefficient uniform in [-1, 1].
   for basis in Basis: result[basis] = rand(-1.0..1.0)
 
 

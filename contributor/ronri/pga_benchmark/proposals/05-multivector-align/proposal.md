@@ -99,8 +99,8 @@ alone. A small `seq` starts at another offset, and this proposal makes it start 
 
 ### Timing
 
-`timing.nim` holds 1024 multivectors in a `seq`, and pairs slot i with slot (7i + 3) mod 1024. It
-times each operation in a procedure of its own, as the median nanoseconds for each object over 41
+`timing.nim` holds 1024 multivectors in a `seq`, and pairs element i with element (7i + 3) mod 1024.
+It times each operation in a procedure of its own, as the median nanoseconds for each object over 41
 rounds. Each machine ran five alternating runs of pin `d9be8ae`, of 16 bytes and of 64 bytes, on
 one pinned core. A ratio is the median over the runs of 64 bytes to pin. Each cell gives the range
 of that ratio over rga3d, rga4d, cga4d and cga5d.

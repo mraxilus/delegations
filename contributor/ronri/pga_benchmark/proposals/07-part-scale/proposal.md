@@ -17,7 +17,7 @@ coefficient alone. `grade` counts a coefficient as zero at or under the comparis
 is absolute. A product builds small coefficients, and stray ones outside the grade of its result,
 from terms as large as the scene. Their noise grows with the distance from the origin, so a fixed
 tolerance holds only near it, and one place goes per decade. At 32 bits at pin, `grade` reads a
-moved point as mixed from about 1,000 units. There the stray in its plane slot passes the
+moved point as mixed from about 1,000 units. There the stray in its plane coefficient passes the
 tolerance.
 
 ## Idea
@@ -87,8 +87,8 @@ ruled on 2026-10-12.
   largest coefficient.
 - **Typed objects.** These costs fall on the types of the library at pin. A typed object knows its
   grade from its type when it compiles, so `grade` would cost nothing there under either rule. It
-  knows its parts too. So the scale of a part is a `max` over its own few slots, as three for the
-  bulk of a point.
+  knows its parts too. So the scale of a part is a `max` over its own few coefficients, as three for
+  the bulk of a point.
 - **Partner.** `⊛` calls `grade` for its sign, so it slows at `cga4d` and `cga5d` too. P03 folds
   that sign into the first table of the partner, so with P03 the partner calls no `grade`.
 - **Not finite.** A multivector with a coefficient that is not finite equals nothing, itself
@@ -167,10 +167,10 @@ a point on each line. So the rule of pin keeps 12 places at 100 units here, and 
 At any distance, that plane never compares equal to the plane it came from. So the weight of a far
 object stays as strict as at pin.
 
-The typed reference keeps the gain. A typed point, line or plane holds no slot outside its type,
-so the stray noise of a dense product goes. Noise still lands in small coefficients that the type
-holds, such as a coordinate or a moment near zero. The reference holds 64 bits alone, so a copy of
-`reference/rigid3.nim` built at each width ran the same laws by hand. Under P07 it kept 4 to 5
+The typed reference keeps the gain. A typed point, line or plane holds no coefficient outside its
+type, so the stray noise of a dense product goes. Noise still lands in small coefficients that the
+type holds, such as a coordinate or a moment near zero. The reference holds 64 bits alone, so a copy
+of `reference/rigid3.nim` built at each width ran the same laws by hand. Under P07 it kept 4 to 5
 places at 32 bits at every distance, where the rule of pin fell to 0 at 1,000,000 units. At 64
 bits it kept 12 to 14, where pin fell to 10.
 
@@ -252,9 +252,9 @@ pin, and for it those cells are unmeasured.
 
 At `rga4d` an equal dense pair costs about a quarter less than at pin. Pin tests max(1, |x|, |y|)
 for each coefficient with a branch. On coefficients of deviation 1 that branch goes either way, so
-it is probably often mispredicted. On points it goes one way. Pin reads 15 of 16 slots of a point
-beside the same point with a stray in 19.3 ns at both widths. P07 calls that pair equal, so it
-reads every slot, in 42.0 ns at 64 bits and 56.9 ns at 32 bits.
+it is probably often mispredicted. On points it goes one way. Pin reads 15 of 16 coefficients of a
+point beside the same point with a stray in 19.3 ns at both widths. P07 calls that pair equal, so it
+reads every coefficient, in 42.0 ns at 64 bits and 56.9 ns at 32 bits.
 
 A build with the part scale alone, and no overflow guard, timed both cases of `grade` in the same
 runs. So the scan and the overflow guard add about 3 to 12 ns at `cga4d`, and 20 to 23 ns at

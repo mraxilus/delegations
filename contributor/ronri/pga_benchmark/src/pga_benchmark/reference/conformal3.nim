@@ -18,7 +18,7 @@
 ##   | PlaneFlat  | 𝐠 = x y z w (e₄₂₃₅ e₄₃₁₅ e₄₁₂₅ e₃₂₁₅)             | E4235.. E3215           |
 ##   |------------|---------------------------------------------------|-------------------------|
 ##
-##   Unary maps (complements, duals, attitude, carrier, cocarrier) are signed slot
+##   Unary maps (complements, duals, attitude, carrier, cocarrier) are signed coefficient
 ##     permutations; signs are library's, read off its own tables on basis elements and
 ##     held by suite `Chapter 2`. Where Terathon's `Cocarrier` of circle orders direction
 ##     and moment differently, library's table wins.
