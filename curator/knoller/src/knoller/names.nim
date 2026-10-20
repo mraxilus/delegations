@@ -162,7 +162,7 @@ func words*(name: string): seq[string] =
   name.spansWord.mapIt(name[it[0]..<it[1]])
 
 
-func wordFullOf(word: string, exempt_lower: openArray[string]): string =
+func wordFull(word: string, exempt_lower: openArray[string]): string =
   ## Read full word `ABBREVIATIONS` gives coined abbreviation, in word's own case; empty where
   ##   word is none, or exempt.
   let lower = word.toLowerAscii
@@ -180,7 +180,7 @@ func respelled*(name: string, exempt: openArray[string]): string =
   let exempt_lower = exempt.mapIt(it.toLowerAscii)
   result = name
   for (first, after) in name.spansWord.reversed:
-    let full = name[first..<after].wordFullOf(exempt_lower)
+    let full = name[first..<after].wordFull(exempt_lower)
     if full.len > 0: result = result[0..<first] & full & result[after .. ^1]
 
 
@@ -227,7 +227,7 @@ func isCased*(name: string, casing: Casing): bool =
   of Casing.Letter: count == 1 and first == CaseLetter.Upper
 
 
-func casingOf*(d: Declared): Casing =
+func casing*(d: Declared): Casing =
   ## Read casing declared name takes by its kind and reach (V.1, V.11, V.12); generic parameter
   ##   takes placeholder's.
   case d.kind
@@ -244,7 +244,7 @@ func isMiscased*(d: Declared): bool =
   ##   binding of entry block and variable in source's notation carry no case to read.
   if d.kind == KindName.Binding and d.reach == Reach.Entry: return false
   if d.kind in KINDS_VARIABLE and d.name.isNotation: return false
-  not d.name.isCased(d.casingOf)
+  not d.name.isCased(d.casing)
 
 
 func isTarget(word: string): bool =
@@ -289,17 +289,17 @@ type Chain = object  ## Define expression read as steps from one root (V.2).
   names: seq[string]  ## Root, then each step, `to<Target>` aside; type rooting chain left out.
 
 
-func chainOf(text: string): Chain =
+func toChain(text: string): Chain =
   ## Read expression as chain of steps from one root. Step is field or call of one input, by dot
   ##   or by prefix call, so `dual(c)` reads as `c.dual`, and empty call reads as its name
   ##   (`a.basis()`). Index, call of second input, operator and literal read as no chain.
   let text = text.strip
   if text.len == 0: return
   if text[0] == '$':
-    result = text[1 .. ^1].chainOf
+    result = text[1 .. ^1].toChain
     result.is_converted = result.is_read
     return
-  if text[0] == '(' and text.closing(0) == text.high: return text[1 ..< text.high].chainOf
+  if text[0] == '(' and text.closing(0) == text.high: return text[1 ..< text.high].toChain
   if text[^1] == ')':
     let open = text.opening(text.high)
     if open <= 0: return
@@ -307,10 +307,10 @@ func chainOf(text: string): Chain =
       callee = text[0 ..< open]
       inner = text[open + 1 ..< text.high].strip
     if '.' in callee:
-      if inner.len == 0: return callee.chainOf
+      if inner.len == 0: return callee.toChain
       return
     if not callee.isName or inner.len == 0 or inner.isSplitTop: return
-    result = inner.chainOf
+    result = inner.toChain
     if not result.is_read: return
     result.is_converted = callee.isTarget or callee.isType
     if not result.is_converted: result.names.add callee
@@ -321,7 +321,7 @@ func chainOf(text: string): Chain =
     return Chain(is_read: true, names: if text.isType: @[] else: @[text])
   let step = text[dot + 1 .. ^1]
   if not step.isName: return
-  result = text[0 ..< dot].chainOf
+  result = text[0 ..< dot].toChain
   if not result.is_read: return
   result.is_converted = step.isTarget
   if not result.is_converted: result.names.add step
@@ -332,7 +332,7 @@ func namesConverted*(value: string): seq[string] =
   ##   then each step, where chain ends in `$`, `to<Target>` call or type conversion.
   ##   `a.basis.toFlags` gives `a` and `basis`, `toFlags(dual(c))` gives `c` and `dual`, `uint(b)`
   ##   and `$b` give `b`; `m.grade.get`, `dual[c].toFlags` and `toFlags(a + b)` give none.
-  let chain = value.chainOf
+  let chain = value.toChain
   if chain.is_read and chain.is_converted: chain.names.deduplicate else: @[]
 
 
@@ -385,7 +385,7 @@ func checkNames*(path, source: string; exempt: openArray[string]): seq[Report] =
   for d in declared:
     let parts = d.name.words
     for w in parts:
-      let full = w.wordFullOf(exempt_lower).toLowerAscii
+      let full = w.wordFull(exempt_lower).toLowerAscii
       if full.len == 0: continue
       result.add initReport(
         path,
@@ -454,7 +454,7 @@ func checkNames*(path, source: string; exempt: openArray[string]): seq[Report] =
     # Case follows kind; entry binding is entry block's, and notation excuses immutable global.
     if d.kind == KindName.Binding and d.reach == Reach.Entry: continue
     let
-      casing = d.casingOf
+      casing = d.casing
       is_notation = d.kind in KINDS_VARIABLE and d.name.isNotation
     if is_notation and d.reach == Reach.Global and d.is_mutable:
       result.add initReport(
@@ -539,7 +539,7 @@ func renamesAbbreviation*(
         break
 
 
-func wordsOf(line: string): seq[string] =
+func identifiers(line: string): seq[string] =
   ## Read identifiers of one line of code view.
   var word = ""
   for c in line & " ":
@@ -559,7 +559,7 @@ func markForeign(code: openArray[string], line: int, kind: KindName): string =
   for i in 0 ..< line:
     let s = code[i].strip
     if s.startsWith("{.push"):
-      let marks = s.wordsOf.filterIt(it in MARKS_FOREIGN)
+      let marks = s.identifiers.filterIt(it in MARKS_FOREIGN)
       pushed = if marks.len > 0: marks[0] else: "push"
     elif s.startsWith("{.pop"): pushed = ""
   if pushed.len > 0: return pushed
@@ -575,14 +575,14 @@ func markForeign(code: openArray[string], line: int, kind: KindName): string =
       code[read[^1] + 1].strip.startsWith("{."):
     read.add read[^1] + 1
   if kind in {KindName.Field, KindName.Member}:
-    var indent = code[line].indentOf
+    var indent = code[line].indentWidth
     for i in countdown(line - 1, 0):
-      if code[i].strip.len == 0 or code[i].indentOf >= indent: continue
+      if code[i].strip.len == 0 or code[i].indentWidth >= indent: continue
       read.add i
-      indent = code[i].indentOf
+      indent = code[i].indentWidth
       if indent == 0: break
   for i in read:
-    for word in code[i].wordsOf:
+    for word in code[i].identifiers:
       if word in MARKS_FOREIGN: return word
 
 
@@ -619,7 +619,7 @@ func renamesCase*(source: string, exempt: openArray[string]): seq[CaseRename] =
     if d.kind == KindName.Binding and d.reach == Reach.Entry:
       if entry.refusal.len > 0: continue
       subject.reach = Reach.Local
-    let casing = subject.casingOf
+    let casing = subject.casing
     if casing == Casing.Letter or not subject.isMiscased: continue
 
     # Name rule: case of member (V.11), else case of name's kind (V.1); spelling out each coined

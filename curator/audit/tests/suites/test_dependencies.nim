@@ -24,9 +24,9 @@ suite "Dependencies":
     check directoriesLock("{\"items\": {}}").len == 0  # empty items
     check TEXT_LOCK.directoriesLock("dependencies") ==
       @["dependencies/replications.example.invalid"]
-    check directoryDepsOf("{\"deps\": \"dependencies\"}") == "dependencies"  # V.9 name
-    check directoryDepsOf("{\"deps\": \"\"}") == "deps"  # empty name takes default
-    check directoryDepsOf("{}") == "deps"  # no key takes default
+    check directoryDeps("{\"deps\": \"dependencies\"}") == "dependencies"  # V.9 name
+    check directoryDeps("{\"deps\": \"\"}") == "deps"  # empty name takes default
+    check directoryDeps("{}") == "deps"  # no key takes default
 
 
   test "checkout absent after restore is finding":

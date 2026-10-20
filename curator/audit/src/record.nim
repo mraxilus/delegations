@@ -146,7 +146,7 @@ func isIdCommit*(s: string): bool =
   s.len in 7 .. 40 and s.allCharsInSet({'0' .. '9', 'a' .. 'f'})
 
 
-func prunedOf*(source: string): string =
+func pruned*(source: string): string =
   ## Read `Pruned` row's value; empty when row is absent.
   let fields = source.fieldsHeader
   if PRUNED in fields: fields[PRUNED] else: ""
@@ -154,7 +154,7 @@ func prunedOf*(source: string): string =
 
 func checkRowPruned(path, source: string): seq[Finding] =
   ## Report `Pruned` row whose value is not commit id.
-  let value = source.prunedOf
+  let value = source.pruned
   if value.len > 0 and not value.isIdCommit:
     result.add finding(
       path,

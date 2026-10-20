@@ -394,7 +394,7 @@ suite "Names":
     check pick.breaches == @[(Rule.CaseName, "Parameter is `snake_case`; got `T`.")]  # V.1
     check renamesCase(pick, []).mapIt((it.name, it.renamed)) == @[("T", "t")]  # V.1
     check pick.replace("(T:", "(t:").breaches.len == 0  # V.1, `I` is placeholder (V.12)
-    check Declared(kind: KindName.Parameter, is_generic: true).casingOf == Casing.Letter  # V.12
+    check Declared(kind: KindName.Parameter, is_generic: true).casing == Casing.Letter  # V.12
     check Declared(name: "kind", kind: KindName.Parameter, is_generic: true).isMiscased  # V.12
     check not Declared(name: "K", kind: KindName.Parameter, is_generic: true).isMiscased  # V.12
 
@@ -423,10 +423,10 @@ suite "Names":
 
 
   test "casing follows kind and reach":
-    check Declared(kind: KindName.Binding, reach: Reach.Global).casingOf == Casing.Screaming
-    check Declared(kind: KindName.Binding, reach: Reach.Local).casingOf == Casing.Snake
-    check Declared(kind: KindName.Member).casingOf == Casing.Pascal  # V.11
-    check Declared(kind: KindName.Placeholder).casingOf == Casing.Letter  # V.12
+    check Declared(kind: KindName.Binding, reach: Reach.Global).casing == Casing.Screaming
+    check Declared(kind: KindName.Binding, reach: Reach.Local).casing == Casing.Snake
+    check Declared(kind: KindName.Member).casing == Casing.Pascal  # V.11
+    check Declared(kind: KindName.Placeholder).casing == Casing.Letter  # V.12
     check "isMixed".isCased(Casing.Camel) and not "is_mixed".isCased(Casing.Camel)  # V.1
     check "E1".isCased(Casing.Pascal) and "x2".isCased(Casing.Snake)  # V.1, digits carry none
     check Declared(name: "Width", kind: KindName.Field).isMiscased  # V.1

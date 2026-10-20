@@ -17,7 +17,7 @@ const
   GROUPED = "let s = @(x) + @(x[0])\n"  ## Source holding group parser proves, and group it refuses.
 
 
-proc streamsOf(action: proc ()): tuple[output, errors: string] =
+proc captureStreams(action: proc ()): tuple[output, errors: string] =
   ## Run action with descriptors `1` and `2` written to files, so output of each child lands
   ##   there too, as it would on terminal; read both back.
   let directory = createTempDir("knoller_", "_streams")
@@ -69,10 +69,10 @@ proc writeToolchain(root, pin: string) =
 
 suite "Compilers":
   test "platform names tarball nim-lang.org publishes, or nothing":
-    check platformOf("linux", "amd64") == "linux_x64"  # runner and owner's machine
-    check platformOf("macosx", "amd64") == "macosx_x64"
-    check platformOf("linux", "arm64").len == 0  # no published build; source instead
-    check platformOf("windows", "amd64").len == 0  # zip, not tarball this reads
+    check platform("linux", "amd64") == "linux_x64"  # runner and owner's machine
+    check platform("macosx", "amd64") == "macosx_x64"
+    check platform("linux", "arm64").len == 0  # no published build; source instead
+    check platform("windows", "amd64").len == 0  # zip, not tarball this reads
 
 
   test "release is fetched as tarball, and everything else is built":
@@ -121,22 +121,22 @@ suite "Compilers":
       defer: removeFile(path)
       file.write("nim tarball, or something standing for one")
       file.close
-      let whole = path.digestOf
+      let whole = path.digest
       check whole.len == 64  # `sha256sum` ran, and its output parsed
       check whole == digestPinned(whole & "  " & path)  # same reader as sidecar's
       writeFile(path, "nim tarball, or something standing for onf")  # one byte
-      check path.digestOf != whole
-      check path.digestOf.len == 64  # still digest, just not that one
+      check path.digest != whole
+      check path.digest.len == 64  # still digest, just not that one
       # Absent file is nothing rather than digest, so it reports instead of matching.
-      check digestOf(path & ".absent").len == 0
+      check digest(path & ".absent").len == 0
 
 
   test "cache lies outside repository, keyed by pin":
     let root = rootCache("/h/.cache/knoller/nim")
     check root == "/h/.cache/knoller/nim"
-    check binOf(root, PIN) == "/h/.cache/knoller/nim" / "2.2.4" / "bin"  # joined natively
+    check binCached(root, PIN) == "/h/.cache/knoller/nim" / "2.2.4" / "bin"  # joined natively
     # Audit reads untracked files, so toolchain inside checkout would be audited.
-    check not binOf(root, PIN).startsWith(".")
+    check not binCached(root, PIN).startsWith(".")
 
 
   test "cache is knoller's, under home, and `$KNOLLER_NIM_DIR` moves it for koch too":
@@ -169,7 +169,7 @@ suite "Compilers":
     putEnv("PATH", directory / "tools" & PathSep & path)
     defer: putEnv("PATH", path)
     var bins: seq[Option[string]]
-    let streams = streamsOf(proc () =
+    let streams = captureStreams(proc () =
       for pin in [PIN, COMMIT]: bins.add resolve(pin, Compiler(), directory / "cache")
     )
     check bins == @[none(string), none(string)]  # stub serves neither
@@ -181,7 +181,7 @@ suite "Compilers":
     else:
       for pin in [PIN, COMMIT]: check ("== fetching Nim " & pin) in streams.errors
       check "git stub ran" in streams.errors and "git stub failed" in streams.errors  # build
-      if platformOf(hostOS, hostCPU).len > 0:
+      if platform(hostOS, hostCPU).len > 0:
         check "curl stub ran" in streams.errors and "curl stub failed" in streams.errors
 
 
@@ -201,7 +201,7 @@ suite "Compilers":
       var
         toolchains = initToolchains(directory / "cache", some(Compiler(version: "9.9.8")))
         bins: seq[Option[string]]
-      let streams = streamsOf(proc () =
+      let streams = captureStreams(proc () =
         for pin in ["9.9.8", "9.9.9", "0.0.1", "0.0.1"]: bins.add toolchains.binFor(pin)
       )
       check bins[0] == some("")  # compiler on PATH serves its own version
@@ -227,7 +227,7 @@ suite "Compilers":
       let provers =
         proversPin(initToolchains(directory / "cache", some(Compiler(version: "9.9.8"))))
       var provings: seq[Proving]
-      let streams = streamsOf(proc () =
+      let streams = captureStreams(proc () =
         for pin in ["9.9.9", "0.0.1"]: provings.add provers(pin)(@[GROUPED])
       )
       check provings[0].failure.len == 0 and provings[0].answers == @[@[9]]  # `@(x[0])` stays

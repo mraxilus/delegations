@@ -280,7 +280,7 @@ func isOperandEnd*(tokens: openArray[Token], k: int, source: string): bool =
   else: false
 
 
-func signatureOf*(tokens: openArray[Token], partners: openArray[int], k: int, source: string): int =
+func signature*(tokens: openArray[Token], partners: openArray[int], k: int, source: string): int =
   ## Read index of routine keyword whose parameters `(` at `k` opens; `-1` where it opens none.
   ##   Named routine reads `proc name*[T](`, generic and export marker optional; `proc (` and
   ##   `proc(` open parameters of routine type or lambda.
@@ -305,7 +305,7 @@ func isCallOpen*(tokens: openArray[Token], partners: openArray[int], k: int, sou
   if callee.spelling(source) == "]" and partners[k - 1] > 0 and
       tokens[partners[k - 1] - 1].isKeyword(source):
     return false
-  tokens.signatureOf(partners, k, source) < 0
+  tokens.signature(partners, k, source) < 0
 
 
 

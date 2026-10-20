@@ -104,7 +104,7 @@ func nameAfter(source: string, first: int): int =
   while result < source.len and source[result] in CHARS_NAME: inc result
 
 
-func sitesOf(source, name: string): seq[(int, int)] =
+func sites(source, name: string): seq[(int, int)] =
   ## Read one-based line and zero-based byte column of each name token Nim reads as `name`.
   let starts = source.lineStarts
   for t in source.tokens:
@@ -112,7 +112,7 @@ func sitesOf(source, name: string): seq[(int, int)] =
       result.add (t.line + 1, t.first - starts[t.line])
 
 
-func calleeOf(source: string, site: (int, int)): (int, int) =
+func callee(source: string, site: (int, int)): (int, int) =
   ## Read site of callee whose named argument or field name stands at site (`f(name = v)`,
   ##   `T(name: v)`); `(0, 0)` where site names none. Semantic pass resolves no such name, so
   ##   callee tells whose parameter or field it is.
@@ -138,14 +138,14 @@ func calleeOf(source: string, site: (int, int)): (int, int) =
   (tokens[callee].line + 1, tokens[callee].first - starts[tokens[callee].line])
 
 
-func queriesOf*(rename: Rename, files: openArray[(string, string)]): seq[Query] =
+func queries*(rename: Rename, files: openArray[(string, string)]): seq[Query] =
   ## Build what rename asks semantic pass: every site of old name in scope, declaration among
   ##   them, and globals named as new name, in declaring file.
   for (path, source) in files:
-    let sites = source.sitesOf(rename.name)
+    let sites = source.sites(rename.name)
     var query = Query(path: path, sites: sites)
     for site in sites:
-      let callee = source.calleeOf(site)
+      let callee = source.callee(site)
       if callee != (0, 0) and callee notin query.sites: query.sites.add callee
     if path == rename.path:
       if (rename.line, rename.column) notin query.sites:
@@ -196,7 +196,7 @@ func planRename*(
     if interpolated.len > 0:
       refuse "`" & path & ":" & $(interpolated[0] + 1) & "` names `" & rename.name &
         "` inside interpolated string"
-    let sites = source.sitesOf(rename.name)
+    let sites = source.sites(rename.name)
     if sites.len == 0: continue
     if path notin answers or answers[path].reason.len > 0:
       refuse "`" & path & "` names `" & rename.name & "` and does not compile"
@@ -215,7 +215,7 @@ func planRename*(
       else:
         # Named argument or field resolves through its callee: parameter of that routine, or
         #   field of that type, in file declaring it.
-        let callee = source.calleeOf(site)
+        let callee = source.callee(site)
         if callee == (0, 0) or callee notin answers[path].symbols:
           refuse "`" & path & ":" & $site[0] & "` resolves to no symbol"
         let
@@ -230,7 +230,7 @@ func planRename*(
       edits.add Edit(first: first, after: source.nameAfter(first), text: rename.renamed)
       result.lines.add (path, site[0])
     if edits.len == 0: continue
-    if not is_respelled and source.sitesOf(rename.renamed).len > 0:
+    if not is_respelled and source.sites(rename.renamed).len > 0:
       refuse "`" & rename.renamed & "` already stands in `" & path & "`"
 
     # Rename mention in backticks of comment where every use is renamed.

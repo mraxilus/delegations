@@ -232,7 +232,7 @@ func applied(path, source: string; rewrites: openArray[Rewrite]): Fix =
 
 #[ Parameter Separators ]#
 
-func groupsOf(s: Scan, items: openArray[Item]): seq[seq[Item]] =
+func groups(s: Scan, items: openArray[Item]): seq[seq[Item]] =
   ## Group parameters sharing one type: names up to one typed or defaulted, or up to `;`.
   ##   Empty where any group lacks type and default, which no rule here reads.
   var group: seq[Item]
@@ -246,7 +246,7 @@ func groupsOf(s: Scan, items: openArray[Item]): seq[seq[Item]] =
   if group.len > 0: return @[]
 
 
-func separatorOf(groups: openArray[seq[Item]]): string =
+func separator(groups: openArray[seq[Item]]): string =
   ## Read separator groups take: `;` where one group holds several names, `,` otherwise.
   if groups.anyIt(it.len > 1): ";" else: ","
 
@@ -254,10 +254,10 @@ func separatorOf(groups: openArray[seq[Item]]): string =
 func separators(s: Scan): seq[int] =
   ## Find each separator between parameter groups, trailing one included, of wrong kind.
   for o in 0 ..< s.tokens.len:
-    if s.tokens.signatureOf(s.partners, o, s.source) < 0 or s.partners[o] < o: continue
-    let groups = s.groupsOf(s.items(o))
+    if s.tokens.signature(s.partners, o, s.source) < 0 or s.partners[o] < o: continue
+    let groups = s.groups(s.items(o))
     if groups.len == 0: continue
-    let wanted = groups.separatorOf
+    let wanted = groups.separator
     for group in groups:
       let separator = group[^1].separator
       if separator >= 0 and s.spelling(separator) != wanted: result.add separator
@@ -311,7 +311,7 @@ func fixSeparators*(path, source: string): Fix =
 func rewritesSignature(s: Scan): seq[Rewrite] =
   ## Lay out each routine signature as X.3 wraps it, one rewrite to each it changes.
   for o in 0 ..< s.tokens.len:
-    let keyword = s.tokens.signatureOf(s.partners, o, s.source)
+    let keyword = s.tokens.signature(s.partners, o, s.source)
     if keyword < 0 or keyword == o - 1 or not s.isLineFirst(keyword): continue
     let c = s.partners[o]
     if c < o or s.tokens[keyword].line != s.tokens[o].line: continue
@@ -332,7 +332,7 @@ func rewritesSignature(s: Scan): seq[Rewrite] =
       inc k
     let
       items = s.items(o)
-      groups = s.groupsOf(items)
+      groups = s.groups(items)
     if is_unread or groups.len == 0: continue
     if groups.anyIt(s.tokens[it[0].first].line != s.lasts[it[^1].last]): continue
 
@@ -344,10 +344,10 @@ func rewritesSignature(s: Scan): seq[Rewrite] =
       tail = closing[s.offset(c) .. ^1]
       signature_tail = if equals < 0: tail else: closing[s.offset(c) .. s.offset(equals)]
       texts = groups.mapIt(s.source[s.tokens[it[0].first].first ..< s.tokens[it[^1].last].after])
-      separator = groups.separatorOf
+      separator = groups.separator
       joined = texts.join(separator & " ")
-      margin = ' '.repeat(line.indentOf)
-      inner = ' '.repeat(line.indentOf + STEP_INDENT)
+      margin = ' '.repeat(line.indentWidth)
+      inner = ' '.repeat(line.indentWidth + STEP_INDENT)
       one = head & joined & tail
       line_parameters = @[head, inner & joined, margin & tail]
       lines_group = @[head] & texts.mapIt(inner & it & separator) & @[margin & tail]
@@ -473,15 +473,15 @@ func kept(s: Scan; lead: string; a, b: int; trail: string): Option[seq[string]] 
       return none(seq[string])
     if k > a and t.line > s.lasts[k - 1] and t.kind == KindToken.Operator:
       return none(seq[string])
-  let shift = lead.len - s.lines[line_first].indentOf
+  let shift = lead.len - s.lines[line_first].indentWidth
   var shaped = @[lead & s.lines[line_first][s.offset(a) .. ^1]]
   for line in line_first + 1 .. line_last:
     let
       text = s.lines[line]
       stop = if line == line_last: s.tokens[b].after - s.starts[line] else: text.len
-      indent = text.indentOf + shift
+      indent = text.indentWidth + shift
     if indent < 0: return none(seq[string])
-    shaped.add ' '.repeat(indent) & text[text.indentOf ..< stop]
+    shaped.add ' '.repeat(indent) & text[text.indentWidth ..< stop]
   shaped[^1].add trail
   some(shaped)
 
@@ -563,11 +563,11 @@ func bindingOpened(s: Scan, k: int): int =
   # Entry of `type` section declares type, never value.
   let
     line = s.tokens[first].line
-    indent = s.lines[line].indentOf
+    indent = s.lines[line].indentWidth
   var parent = first - 1
   while parent >= 0 and not (s.isLineFirst(parent) and
       s.tokens[parent].kind != KindToken.Comment and
-      s.lines[s.tokens[parent].line].indentOf < indent):
+      s.lines[s.tokens[parent].line].indentWidth < indent):
     dec parent
   if parent >= 0 and s.spelling(parent) == "type": -1 else: line
 
@@ -581,7 +581,7 @@ func isOwnLine(s: Scan; a, b: int): bool =
   while j >= 0 and s.tokens[j].kind == KindToken.Comment: dec j
   if j < 0 or not (s.tokens[j].kind == KindToken.Comma or s.spelling(j) in ["(", "[", "{"]):
     return false
-  let elements = elementsOf(s.tokens, s.partners, a, b, s.source)
+  let elements = elements(s.tokens, s.partners, a, b, s.source)
   for m, e in elements:
     if e.kind == KindElement.Delimiter: return false
     if m == 0: continue
@@ -610,7 +610,7 @@ func broken(s: Scan; lead: string; a, b: int; trail: string; indent: int): Optio
       return none(seq[string])
 
   # Read operators of one depth; `:` before code passes only as type of name it follows.
-  let elements = elementsOf(s.tokens, s.partners, a, b, s.source)
+  let elements = elements(s.tokens, s.partners, a, b, s.source)
   var breaks: seq[Element]
   for e in elements:
     let k = e.first
@@ -694,15 +694,15 @@ func linesHand(s: Scan; lead: string; a, b: int; trail: string): Option[seq[stri
     if t.kind == KindToken.Comment or s.lasts[k] > t.line: return none(seq[string])
     if t.kind == KindToken.Open and s.isMultiline(k): spanning.add k
   if spanning.len != 1 or not s.isCallEligible(spanning[0]): return none(seq[string])
-  let shift = lead.indentOf - s.lines[line_first].indentOf
+  let shift = lead.indentWidth - s.lines[line_first].indentWidth
   var shaped = @[lead & s.lines[line_first][s.offset(a)..^1]]
   for line in line_first + 1 .. line_last:
     let
       text = s.lines[line]
       stop = if line == line_last: s.tokens[b].after - s.starts[line] else: text.len
-      indent = text.indentOf + shift
+      indent = text.indentWidth + shift
     if indent < 0: return none(seq[string])
-    shaped.add ' '.repeat(indent) & text[text.indentOf ..< stop]
+    shaped.add ' '.repeat(indent) & text[text.indentWidth ..< stop]
   shaped[^1].add trail
   if shaped.anyIt(it.isWide): none(seq[string]) else: some(shaped)
 
@@ -842,7 +842,7 @@ func rewritesCall(s: Scan): seq[Rewrite] =
       inc line
       continue
     let
-      indent = s.lines[line].indentOf
+      indent = s.lines[line].indentWidth
       laid = s.layout(' '.repeat(indent), first, k - 1, "", indent, is_argument = false)
     if laid.isSome and laid.get.lines != s.lines[line .. line_last]:
       result.add Rewrite(first: line, last: line_last, lines: laid.get.lines, rule: laid.get.rule)
@@ -939,13 +939,13 @@ func shiftsContinuation(s: Scan, held: Held): seq[Shift] =
       step = STEP_CONTINUATION
     if statement < 0:
       if s.isOwnLine(k, s.continued(run[1])): step = 0
-      let wanted = s.lines[t.line].indentOf + step
+      let wanted = s.lines[t.line].indentWidth + step
       for first in run[1 .. ^1]: planned.add (s.tokens[first].line, wanted)
     else:
       # Value runs down while code opens line at its own indent or deeper; chain must be all of it.
       let
-        wanted = s.lines[statement].indentOf + STEP_CONTINUATION
-        base = s.lines[t.line].indentOf
+        wanted = s.lines[statement].indentWidth + STEP_CONTINUATION
+        base = s.lines[t.line].indentWidth
       var
         last = t.line
         line = t.line + 1
@@ -958,14 +958,14 @@ func shiftsContinuation(s: Scan, held: Held): seq[Shift] =
             break
           inc line
           continue
-        if s.lines[line].indentOf < base: break
+        if s.lines[line].indentWidth < base: break
         if s.tokens[first].kind == KindToken.Comment:
           # Comment ends value, unless code at its depth follows.
           var next = line
           while next < s.lines.len and
               (firsts[next] < 0 or s.tokens[firsts[next]].kind == KindToken.Comment):
             inc next
-          if next < s.lines.len and s.lines[next].indentOf >= base: is_read = false
+          if next < s.lines.len and s.lines[next].indentWidth >= base: is_read = false
           break
         last = line
         inc line
@@ -982,7 +982,7 @@ func shiftsContinuation(s: Scan, held: Held): seq[Shift] =
     for (line, indent) in planned:
       let
         text = s.lines[line]
-        shaped = ' '.repeat(indent) & text[text.indentOf .. ^1]
+        shaped = ' '.repeat(indent) & text[text.indentWidth .. ^1]
         rewrite = Rewrite(first: line, last: line, lines: @[shaped], rule: Rule.IndentContinuation)
       if shaped == text: continue
       if held.isHeld(line + 1) and shaped.isWide and not text.isWide:
@@ -1041,14 +1041,14 @@ func liftsHead(s: Scan, held: Held): seq[Lift] =
       if firsts[body] < 0 and s.lines[body].strip.len > 0: break
       inc body
     if body >= s.lines.len or firsts[body] < 0: continue
-    let (base, deep) = (s.lines[t.line].indentOf, s.lines[body].indentOf)
-    if deep <= base or s.lines[last].indentOf != deep: continue
+    let (base, deep) = (s.lines[t.line].indentWidth, s.lines[body].indentWidth)
+    if deep <= base or s.lines[last].indentWidth != deep: continue
     var shallowest = high(int)
     for line in t.line + 1 .. last:
       if firsts[line] < 0 or s.tokens[firsts[line]].kind == KindToken.Comment:
         shallowest = -1
         break
-      shallowest = min(shallowest, s.lines[line].indentOf)
+      shallowest = min(shallowest, s.lines[line].indentWidth)
     let step = base + STEP_CONTINUATION - shallowest
     if shallowest < 0 or step <= 0: continue
 
@@ -1057,7 +1057,7 @@ func liftsHead(s: Scan, held: Held): seq[Lift] =
     for line in t.line + 1 .. last:
       let
         text = s.lines[line]
-        shaped = ' '.repeat(text.indentOf + step) & text[text.indentOf .. ^1]
+        shaped = ' '.repeat(text.indentWidth + step) & text[text.indentWidth .. ^1]
         rewrite = Rewrite(first: line, last: line, lines: @[shaped], rule: Rule.IndentContinuation)
       if held.isHeld(line + 1) and shaped.isWide and not text.isWide:
         lifts.setLen(0)
@@ -1084,12 +1084,12 @@ func checkContinuations*(path, source: string): seq[Report] =
       Rule.IndentContinuation,
       "Line of block head right above its body takes " & $STEP_CONTINUATION & " spaces more " &
           "than head's first line, so it stands apart from body; got `" &
-          $(s.lines[line].indentOf - lift.base) & "`.",
+          $(s.lines[line].indentWidth - lift.base) & "`.",
     )
   for shift in shifts:
     let
       line = shift.rewrite.first
-      relative = s.lines[line].indentOf - shift.rewrite.lines[0].indentOf + shift.step
+      relative = s.lines[line].indentWidth - shift.rewrite.lines[0].indentWidth + shift.step
       message =
         if shift.step == 0:
           "Line of expression whose first piece opens its own line takes no spaces more than " &
@@ -1123,7 +1123,7 @@ func isConstructorOpen(s: Scan, o: int): bool =
     let is_glued = s.tokens[o - 1].after == s.tokens[o].first
     if is_glued and s.tokens.isOperandEnd(o - 1, s.source): return false
     if s.spelling(o - 1) in KEYWORDS_TYPE: return false
-  text != "(" or s.tokens.signatureOf(s.partners, o, s.source) < 0
+  text != "(" or s.tokens.signature(s.partners, o, s.source) < 0
 
 
 func isFittingJoined(s: Scan, o: int): bool =
@@ -1150,7 +1150,7 @@ func insertsTrailing(s: Scan, held: Held): seq[Insert] =
     if not s.isLineLast(o) or not s.isLineFirst(c): continue
     let
       is_call = s.tokens.isCallOpen(s.partners, o, s.source)
-      is_signature = s.tokens.signatureOf(s.partners, o, s.source) >= 0
+      is_signature = s.tokens.signature(s.partners, o, s.source) >= 0
       items = s.items(o)
     if not (is_call or is_signature or s.isConstructorOpen(o)): continue
     if items.len == 0 or items[^1].separator >= 0: continue
@@ -1164,9 +1164,9 @@ func insertsTrailing(s: Scan, held: Held): seq[Insert] =
       continue
     var separator = ","
     if is_signature:
-      let groups = s.groupsOf(items)
+      let groups = s.groups(items)
       if groups.len == 0: continue
-      separator = groups.separatorOf
+      separator = groups.separator
     elif s.spelling(o) == "(" and not is_call and items.len == 1: continue
     let
       line = s.lasts[last.last]

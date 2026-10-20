@@ -58,7 +58,7 @@ func isSettled(source: string): bool =
     fixWrapping("a.nim", source).fixed.len == 0
 
 
-func operatorsOf(source: string): seq[string] =
+func operators(source: string): seq[string] =
   ## Read spelling of each operator token of source, in order.
   for t in source.tokens:
     if t.kind == KindToken.Operator: result.add t.spelling(source)
@@ -67,7 +67,7 @@ func operatorsOf(source: string): seq[string] =
 func isBrokenAlone(source: string): bool =
   ## Decide whether fix breaks lines alone: operator tokens read same in same order, and fixed
   ##   source settles.
-  source.fixed.operatorsOf == source.operatorsOf and source.fixed.isSettled
+  source.fixed.operators == source.operators and source.fixed.isSettled
 
 
 

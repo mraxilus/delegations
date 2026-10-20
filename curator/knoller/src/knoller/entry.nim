@@ -56,7 +56,7 @@ func blockEntry*(source: string): BlockEntry =
     starts = source.lineStarts
   var heads: seq[int]
   for i, line in code:
-    if line.indentOf == 0 and line.identifierAt(0) == "when" and "isMainModule" in line:
+    if line.indentWidth == 0 and line.identifierAt(0) == "when" and "isMainModule" in line:
       heads.add i
   if heads.len != 1:
     result.refusal = "module holds `" & $heads.len & "` entry blocks"
@@ -68,7 +68,7 @@ func blockEntry*(source: string): BlockEntry =
 
   # Body runs to first line of code at indent 0; comment opening its line there stays below.
   var stop = result.head + 1
-  while stop < code.len and (code[stop].strip.len == 0 or code[stop].indentOf > 0): inc stop
+  while stop < code.len and (code[stop].strip.len == 0 or code[stop].indentWidth > 0): inc stop
   result.first = result.head + 1
   while lines[result.first].strip.len == 0: inc result.first
   for t in tokens:
@@ -77,7 +77,7 @@ func blockEntry*(source: string): BlockEntry =
     result.last = max(result.last, t.lineLast(source))
   for i in result.first .. result.last:
     if code[i].strip.len == 0: continue
-    result.indent = code[i].indentOf
+    result.indent = code[i].indentWidth
     break
 
   # Refuse what routine cannot hold, or would read otherwise than block.
@@ -103,7 +103,7 @@ func blockEntry*(source: string): BlockEntry =
     if word in KEYWORDS_MODULE:
       result.refusal = "`" & word & "` stands at module level alone"
       return
-    if code[i].indentOf == result.indent and word == "quit" and rest notin ["", "()"]:
+    if code[i].indentWidth == result.indent and word == "quit" and rest notin ["", "()"]:
       result.refusal = "`quit` at block's own indent returns value, which `quit main()` would carry"
       return
   for t in tokens:

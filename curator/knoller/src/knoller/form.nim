@@ -175,7 +175,7 @@ func commentsLifted(source: string): seq[Gap] =
     if not line.isWide or spanned[gap.line] or comment.startsWith("##") or
         comment.startsWith("#["):
       continue
-    if (' '.repeat(line.indentOf) & comment).isWide: continue
+    if (' '.repeat(line.indentWidth) & comment).isWide: continue
     result.add gap
 
 
@@ -200,7 +200,7 @@ func fixCommentsAbove*(path, source: string): Fix =
   for gap in found.reversed:
     let
       line = lines[gap.line]
-      lifted = @[' '.repeat(line.indentOf) & line[gap.at .. ^1], line[0 ..< gap.at - gap.spaces]]
+      lifted = @[' '.repeat(line.indentWidth) & line[gap.at .. ^1], line[0 ..< gap.at - gap.spaces]]
     lines = lines[0 ..< gap.line] & lifted & lines[gap.line + 1 .. ^1]
     origin = origin[0 ..< gap.line] & origin[gap.line].repeat(2) & origin[gap.line + 1 .. ^1]
   result.source = lines.join("\n")

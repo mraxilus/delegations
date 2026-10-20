@@ -90,8 +90,8 @@ suite "Checker":
       "`curator/audit/tests/suites/test_form.nim`; got nothing.",
     )
     check checkSuites(["koch.nim", "README.md"]).len == 0  # rule covers check modules only
-    check moduleOf("curator/audit/src/form.nim") == "form"
-    check moduleOf("curator/probe/src/probe.nim").len == 0  # other projects group differently
+    check moduleCheck("curator/audit/src/form.nim") == "form"
+    check moduleCheck("curator/probe/src/probe.nim").len == 0  # other projects group differently
 
 
   test "verbs are read from dispatch, never from option parser above it":

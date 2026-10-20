@@ -92,7 +92,7 @@ const LUT_RULE_BY_KIND*: array[Kind, RuleKind] = [
   ## Map kind to its rule; header table is derived view of this array.
 
 
-func kindOf*(path: string): Option[Kind] =
+func classify*(path: string): Option[Kind] =
   ## Classify path by basename, then extension; `none` for unregistered kind.
   let (_, base, ext) = path.splitFile
   case base & ext
@@ -123,7 +123,7 @@ func rule*(kind: Kind): lent RuleKind =
   LUT_RULE_BY_KIND[kind]
 
 
-func dialectOf*(kind: Kind): Dialect =
+func dialect*(kind: Kind): Dialect =
   ## Read dialect of knoller kind of Nim source is: module, script or package; every other kind
   ##   reads as module, and no caller asks of one.
   case kind

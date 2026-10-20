@@ -393,7 +393,7 @@ suite "Regressions":
 
 
   test "11. each report prints at its line in file as given (#521)":
-    let outcome = outcomeOf([("tests/suites/test_mesh.nim", MESH)], [], is_check = true)
+    let outcome = outcome([("tests/suites/test_mesh.nim", MESH)], [], is_check = true)
     check outcome.lines == @[
       "tests/suites/test_mesh.nim:5: expression-spacing to fix",
       "tests/suites/test_mesh.nim:10: expression-spacing to fix",
@@ -414,9 +414,9 @@ suite "Regressions":
       "tests/suites/test_mesh.nim:29: expression-spacing to fix",
       "17 to fix.",
     ]  # line 538 prints as 27, where fixed text holds it at 33, after six lines calls insert
-    let written = outcomeOf([("tests/suites/test_mesh.nim", MESH)], [], is_check = false).written
+    let written = outcome([("tests/suites/test_mesh.nim", MESH)], [], is_check = false).written
     check written[0][1].splitLines[32].startsWith("          else: generator.rand(0.5..3.0)) * ")
-    check outcomeOf(written, [], is_check = false).lines == @["0 fixed."]  # second run
+    check outcome(written, [], is_check = false).lines == @["0 fixed."]  # second run
 
 
   test "12. stub inside category of `tests` takes stub rules, as testament reads it (#443)":
@@ -425,12 +425,12 @@ suite "Regressions":
     let mended =
       STUB.replace(" -r ", " ").replace("\"\"\"\ninclude", "\"\"\"\n\n" & HEAD & "include") & "\n"
     for path in ["tests/rga3d/test_rga3d.nim", "tests/test_rga3d.nim"]:
-      check outcomeOf([(path, STUB)], [], is_check = true).lines == @[
+      check outcome([(path, STUB)], [], is_check = true).lines == @[
         path & ": file-ending to fix",
         path & ": strictfuncs to fix",
         path & ":3: stub-keys to fix",
         "3 to fix.",
       ]  # stub of category reports as stub directly under `tests` does
-      let written = outcomeOf([(path, STUB)], [], is_check = false).written
+      let written = outcome([(path, STUB)], [], is_check = false).written
       check written == @[(path, mended)]
-      check outcomeOf(written, [], is_check = false).lines == @["0 fixed."]  # second run
+      check outcome(written, [], is_check = false).lines == @["0 fixed."]  # second run

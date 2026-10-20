@@ -47,7 +47,7 @@ suite "Findings":
 
 
   test "rewrite of knoller renders as its rule and article, as koch fix prints it":
-    check initReport("a.nim", 3, Rule.SpacingExpression).findingOf ==
+    check initReport("a.nim", 3, Rule.SpacingExpression).toFinding ==
       finding("a.nim", 3, "expression spacing (X.9)")
     let rendered = [
       (Rule.WhitespaceTrailing, "trailing whitespace (VIII.5)"),
@@ -66,7 +66,7 @@ suite "Findings":
       (Rule.WrappingSignature, "signature wrapping (X.3)"),
     ]
     for (rule, message) in rendered:
-      check initReport("a.nim", 1, rule).findingOf.message == message  # bytes koch printed
+      check initReport("a.nim", 1, rule).toFinding.message == message  # bytes koch printed
 
 
   test "finding of knoller's check cites article where sentence ends, never propagation":
@@ -74,21 +74,21 @@ suite "Findings":
       found = initReport("a.nim", 2, Rule.CommentTrailing, "Comment gap; got `1`.")
       bare = initReport("a.nim", 0, Rule.FileEnding, "File ends in one newline.")
       quoting = initReport("a.nim", 1, Rule.ValueMessage, "Ends as ``a; got `b`.``; got `c`.")
-    check found.findingOf == finding("a.nim", 2, "Comment gap (X.9); got `1`.")
-    check not found.findingOf.is_propagation  # whoever owns path fixes it
-    check bare.findingOf.message == "File ends in one newline (VIII.5)."  # sentence echoes none
-    check quoting.findingOf.message == "Ends as ``a; got `b`.`` (IV.4); got `c`."  # span quotes
+    check found.toFinding == finding("a.nim", 2, "Comment gap (X.9); got `1`.")
+    check not found.toFinding.is_propagation  # whoever owns path fixes it
+    check bare.toFinding.message == "File ends in one newline (VIII.5)."  # sentence echoes none
+    check quoting.toFinding.message == "Ends as ``a; got `b`.`` (IV.4); got `c`."  # span quotes
     let reports = @[found, initReport("b.nim", 0, Rule.FileEnding)]
-    check reports.findingsOf.mapIt(it.path) == @["a.nim", "b.nim"]  # order kept
+    check reports.toFindings.mapIt(it.path) == @["a.nim", "b.nim"]  # order kept
 
 
   test "value quoting `; got ` inside code span leaves article where sentence ends":
     let quoted = initReport("a.nim", 2, Rule.CommentTrailing, "Sentence; got `a; got b`.")
-    check quoted.findingOf.message == "Sentence (X.9); got `a; got b`."  # first mark outside span
+    check quoted.toFinding.message == "Sentence (X.9); got `a; got b`."  # first mark outside span
 
 
   test "sentence ending in code span right before `; got ` takes article after span":
-    check checkNegations("a.nim", "let b = not a == 3\n").findingsOf.mapIt(it.message) == @[
+    check checkNegations("a.nim", "let b = not a == 3\n").toFindings.mapIt(it.message) == @[
       "`not` over binary expression takes parentheses, since Nim reads `not a == b` as " &
       "`(not a) == b` (X.4); got `not a == 3`.",
     ]  # real message of `not-over-binary`, through its check
@@ -101,14 +101,14 @@ suite "Findings":
       late = "import std/os\n" & STRICT_FUNCS & "\n"
       stub = "discard \"\"\"\naction: run\ncmd: \"nim c -r $file\"\njoinable: false\n\"\"\"\n"
       found =
-          heldOf("a.nims", fenced, Dialect.Script) & faultOf("a.nim", crossing.fenceOf) &
+          checkFenceHeld("a.nims", fenced, Dialect.Script) & checkFence("a.nim", crossing.fence) &
           checkStrictFuncs("a.nim", @["import std/os"], @["import std/os"]) &
           checkStrictFuncs("a.nim", late.splitLines, late.codeOnly.splitLines) &
           checkImports("a.nim", @["import std/[strutils, os]", "import ./a", "import std/math"]) &
           checkBindings("a.nim", @["proc f() =", "  let a = 1", "  let b = 2"]) &
           checkReturns("a.nim", @["proc f(): int =", "  return result"]) &
           checkKeysStub("tests/test_a.nim", stub)
-    check found.findingsOf.mapIt(it.message) == @[
+    check found.toFindings.mapIt(it.message) == @[
       "Fence keeps its lines as written, and inside them expression-spacing breaks once at " &
       "line 3 (X.1); got lines `2` to `4`.",  # fence warning
       "Fence closes outside bracket, string or comment it opens in, so fix leaves file as " &
@@ -134,7 +134,7 @@ suite "Findings":
           checkBanners("a.nim", "x = 1\n\n\n\n#[ Section ]#\ny = 2\n") &
           checkComments("a.nim", "let a = 1 # One.\n") & checkMessages("a.nim", tail) &
           checkSpacing("a.nim", "let r = 0 .. n\n")
-    check found.findingsOf.mapIt(it.message) == @[
+    check found.toFindings.mapIt(it.message) == @[
       "First-tier banner takes three blank lines before it (X.2); got `2`.",
       "Second-tier banner takes two blank lines before it (X.2); got `3`.",
       "Banner takes one blank line after it (X.2); got `0`.",
@@ -152,7 +152,7 @@ suite "Findings":
           checkSignatures("a.nim", "proc g(\n    a: int\n) = discard\n") &
           checkCalls("a.nim", "let x = foo(\n  1,\n  2\n)\n") & checkCalls("a.nim", sum) &
           checkBracketsImport("a.nim", "import std/[math]\n")
-    check found.findingsOf.mapIt(it.message) == @[
+    check found.toFindings.mapIt(it.message) == @[
       "Signature stays on one line where it fits, else wraps its parameters onto one line of " &
       "their own, else one group to line (X.3); got `3` lines.",
       "Call stays on its line where it fits, else takes one argument to line with trailing " &

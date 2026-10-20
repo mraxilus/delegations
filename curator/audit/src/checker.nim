@@ -167,7 +167,7 @@ func fixExportsDead*(
   result.source = lines.join("\n")
 
 
-func moduleOf*(path: string): string =
+func moduleCheck*(path: string): string =
   ## Read module name of check source; empty when path is not one.
   if not (path.startsWith(DIRECTORY_CHECK) and path.endsWith(EXT_NIM)): return ""
   path[DIRECTORY_CHECK.len ..< path.len - EXT_NIM.len]
@@ -177,7 +177,7 @@ func checkSuites*(paths: openArray[string]): seq[Finding] =
   ## Report check module carrying no suite of its own.
   let present = paths.toSeq
   for path in paths:
-    let module = path.moduleOf
+    let module = path.moduleCheck
     if module.len == 0: continue
     let suite = DIRECTORY_SUITE & "test_" & module & EXT_NIM
     if suite notin present:

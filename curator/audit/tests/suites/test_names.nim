@@ -1,7 +1,7 @@
 ## Replicate names check as koch prints it, article where sentence ends, with words glossaries
 ##   admit. Renames that names check asks are knoller's, held in its suite.
 ##   Check itself is knoller's, and its cases are held in `curator/knoller/tests/suites/
-##     test_names.nim`; here each rule renders through `findingsOf`, as static pass prints it.
+##     test_names.nim`; here each rule renders through `toFindings`, as static pass prints it.
 ##   Acronym check (V.9) is audit's, since it reads glossaries, so its cases are held here.
 
 {.experimental: "strictFuncs".}
@@ -30,7 +30,7 @@ proc Construct_table(Count: int) =
 func breaches(source: string, exempt: seq[string] = @[]): seq[string] =
   ## Read each message static pass prints for names of source: names check, entry block,
   ##   generation calls, then acronyms.
-  let found = findingsOf(
+  let found = toFindings(
     checkNames("x.nim", source, exempt) & checkBlockEntry("x.nim", source) &
       checkGenerations("x.nim", source)
   )
@@ -99,6 +99,6 @@ suite "Names":
       ("curator/audit/GLOSSARY.md", "# A\n\n## Standards\n\n- **T**: `px`.\n\n## Language\n"),
       ("curator/probe/GLOSSARY.md", "# P\n\n## Standards\n\n- **U**: `au`.\n\n## Language\n"),
     ]
-    let exempt = glossaries.exemptionsOf("curator/audit/src/a.nim")
+    let exempt = glossaries.exemptions("curator/audit/src/a.nim")
     check "ms" in exempt and "px" in exempt and "lut" in exempt
     check "au" notin exempt  # other project's glossary

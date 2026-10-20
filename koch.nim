@@ -201,7 +201,7 @@ proc jobsPlanned(options: Options, tree: Tree): seq[Job] =
   else: tree.jobs(pathsChanged(options.root, options.baseOrDefault))
 
 
-proc dirsScopedOf(options: Options, tree: Tree): seq[string] =
+proc directoriesScoped(options: Options, tree: Tree): seq[string] =
   ## Read project directories one-job check drives: named one, else those one change asks for.
   ##   Directories rather than jobs, since type check runs on driver's compiler and so needs
   ##   no pin; project pinning none is still type-checked.
@@ -224,7 +224,7 @@ proc fileMark(root: string): string =
   pathMark(root, fieldsGit(root, ["rev-parse", "--git-dir"])[0].strip)
 
 
-proc branchOf(checkout: string): string =
+proc branch(checkout: string): string =
   ## Read branch checked out in checkout.
   fieldsGit(checkout, ["rev-parse", "--abbrev-ref", "HEAD"])[0].strip
 
@@ -241,7 +241,7 @@ proc runHook(root, event, input: string): int =
   ##   `path`, `edit` and `bash` read checkout call acts in, never root alone: subagent works
   ##     in worktree of its own, on branch of its own (GUIDE.md, Independent changes). Call
   ##     acting in other repository is that repository's, so these three pass it unread.
-  let branch = root.branchOf
+  let branch_root = root.branch
   case event
   of "path", "bash", "body", "edit", "stop":
     let
@@ -255,7 +255,7 @@ proc runHook(root, event, input: string): int =
       if tool notin TOOLS_EDIT: return 0
       let checkout = checkoutAt(root, file.parentDir)
       if checkout.isNone: return 0
-      refuse(checkPathEdit(checkout.get.branchOf, insideRoot(checkout.get, file)), 2)
+      refuse(checkPathEdit(checkout.get.branch, insideRoot(checkout.get, file)), 2)
     of "bash":
       let
         command = data{"tool_input", "command"}.getStr
@@ -263,9 +263,9 @@ proc runHook(root, event, input: string): int =
       var found: seq[Finding]
       if checkout.isSome:
         let is_pushed = fieldsGit(checkout.get, ["branch", "-r", "--contains", "HEAD"]).len > 0
-        found = checkBash(checkout.get.branchOf, command, is_pushed)
+        found = checkBash(checkout.get.branch, command, is_pushed)
       # Post through `gh api` speaks for delegate, so role line reads root's branch, as `body` does.
-      found.add checkPosts(branch, command, directory)
+      found.add checkPosts(branch_root, command, directory)
       refuse(found, 2)
     of "body":
       if not isPost(tool, data{"tool_input", "body"} != nil): return 0
@@ -273,7 +273,7 @@ proc runHook(root, event, input: string): int =
       refuse(
         checkBody(
           tool,
-          branch,
+          branch_root,
           data{"tool_input", "title"}.getStr,
           data{"tool_input", "body"}.getStr,
           labels,
@@ -304,7 +304,7 @@ proc runHook(root, event, input: string): int =
       let turn = readFile(data{"transcript_path"}.getStr).parseTurn
       var found = checkNumbersBare(turn.text)
       found.add checkReferencesBare(turn.text)
-      if turn.calls.isTurnWriting: found.add checkEndTurn(turn.text, branch)
+      if turn.calls.isTurnWriting: found.add checkEndTurn(turn.text, branch_root)
       if found.len == 0: return 0
       echo %*{"decision": "block", "reason": found.reasonStop}
       0
@@ -315,7 +315,7 @@ proc runHook(root, event, input: string): int =
       drift = checkBase(pathsGained(root, "origin/" & MAIN))
     except CatchableError: discard
     echo contextStart(
-      branch,
+      branch_root,
       readFile(root / "CONTRIBUTOR.md"),
       "## Carry the unchecked list in the open",
       drift,
@@ -335,7 +335,7 @@ proc runHook(root, event, input: string): int =
     let
       earlier = subjects(root, getEnv("BASE", "origin/" & MAIN))
       staged = fieldsGit(root, ["diff", "--cached", "-z", "--name-only"])
-    refuse(checkMessage(branch, input, earlier, staged), 1)
+    refuse(checkMessage(branch_root, input, earlier, staged), 1)
   else:
     stderr.write "koch hook: unknown event `" & event & "`.\n"
     2
@@ -369,7 +369,7 @@ proc run(options: Options): int =
       echo "Held for their projects (CURATOR.md, duty 3); runner stays red until they fix:"
       held.report
     found = own
-    found.add runJobsType(options.root, tree, options.dirsScopedOf(tree))
+    found.add runJobsType(options.root, tree, options.directoriesScoped(tree))
     let jobs = tree.jobs(pathsChanged(options.root, base))
     found.add runJobsCi(options.root, tree, jobs)
     # Conversion asks semantic pass, so it runs once restore stands (D1 of #558).
@@ -392,7 +392,7 @@ proc run(options: Options): int =
     if not options.isReadAll({Root, Base, All, Recent}, has_project = true):
       return options.refused
     let tree = options.root.readTree
-    found = runJobsType(options.root, tree, options.dirsScopedOf(tree))
+    found = runJobsType(options.root, tree, options.directoriesScoped(tree))
   of "check-scope":
     if not options.isReadAll({Root, Branch, Base}): return options.refused
     let base = options.baseOrDefault
@@ -463,7 +463,7 @@ proc run(options: Options): int =
       tree = options.root.readTree
       named = (if options.project.len > 0: @[options.project] else: @[]) & options.rest
       (entries, unknown) = tree.entriesNamed(
-        if named.len > 0: named else: options.dirsScopedOf(tree)
+        if named.len > 0: named else: options.directoriesScoped(tree)
       )
     if unknown.len > 0:
       unknown.report
@@ -476,7 +476,7 @@ proc run(options: Options): int =
         tree,
         entries,
         locked,
-        tree.contextOf(entries, answers, locked),
+        initContext(tree, entries, answers, locked),
         proversPin(initToolchains()),
       )
       (written, fixed, refused, left, warned, _) = fix

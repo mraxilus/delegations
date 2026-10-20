@@ -16,19 +16,19 @@ const LINKS =
   ## Lines 77 to 80 of `tests/test_read.nim` of `dance_ontology` (#539), as found.
 
 
-func proofsOf(source: string): Proofs =
+func proofsStubbed(source: string): Proofs =
   ## Answer source by stub parser, as caller holds answer before fix runs again.
   result.answers[source] = source.stubbed
 
 
 func fixed(source: string): string =
   ## Fix parentheses of source, parser answering, as `koch fix` does.
-  fixParentheses("a.nim", source, source.proofsOf).source
+  fixParentheses("a.nim", source, source.proofsStubbed).source
 
 
 func isSettled(source: string): bool =
   ## Decide whether source reports no parentheses finding and fixes to itself again.
-  let proofs = source.proofsOf
+  let proofs = source.proofsStubbed
   checkParentheses("a.nim", source, proofs).len == 0 and source.fixed == source and
     fixParentheses("a.nim", source, proofs).fixed.len == 0
 
@@ -60,11 +60,11 @@ suite "Parentheses":
       ),
       ("let x = (a.b(c)[i]) + 1\n", "let x = a.b(c)[i] + 1\n", 1),  # call, index, field glued
     ]:
-      check checkParentheses("a.nim", breach, breach.proofsOf).len == count
+      check checkParentheses("a.nim", breach, breach.proofsStubbed).len == count
       check breach.fixed == mended
       check mended.isSettled  # second run writes nothing
     let named = "let c = ☆(m) ∧ n\n"
-    check checkParentheses("a.nim", named, named.proofsOf)[0].message.endsWith("got `(m)`.")
+    check checkParentheses("a.nim", named, named.proofsStubbed)[0].message.endsWith("got `(m)`.")
 
 
   test "group whose removal glues tokens, or that holds binary expression or suffix, stays":
@@ -108,7 +108,7 @@ suite "Parentheses":
   test "check and fix agree: each names only groups parser proves, none where no answer holds":
     let
       source = "let x = (a.b(c)[i]) + @(x[0])\n"
-      proofs = source.proofsOf
+      proofs = source.proofsStubbed
     check proofs.answers[source] == @[8]  # `(x[0])` refused
     check checkParentheses("a.nim", source, proofs).mapIt(it.message.split("got ")[1]) ==
       @["`(a.b(c)[i])`."]
@@ -122,7 +122,7 @@ suite "Parentheses":
 
 
   test "candidates are three kinds alone, in source order, each with its spans":
-    let groups = candidatesOf("let x = (|∙ m) + ■(n) * (a and b) + 2^(k)\n")
+    let groups = groupsCandidate("let x = (|∙ m) + ■(n) * (a and b) + 2^(k)\n")
     check groups.mapIt(it.got) == @["(|∙ m)", "(n)", "(k)"]  # binary group no candidate
     check groups[0].opening == (8, 9) and groups[0].closing == (15, 16)  # `∙` three bytes
-    check candidatesOf("let y = (\n  a) + b\n").len == 0  # spanning lines
+    check groupsCandidate("let y = (\n  a) + b\n").len == 0  # spanning lines

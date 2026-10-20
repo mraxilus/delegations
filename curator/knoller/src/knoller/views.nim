@@ -98,7 +98,7 @@ func codeAndComments*(source: string): string =
   source.blanked(should_keep_comments = true)
 
 
-func indentOf*(line: string): int =
+func indentWidth*(line: string): int =
   ## Count leading spaces.
   for c in line:
     if c != ' ': return

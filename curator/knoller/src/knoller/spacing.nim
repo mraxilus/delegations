@@ -131,7 +131,7 @@ func tokensPath*(tokens: openArray[Token], partners: openArray[int], source: str
   ## Collect tokens of `import`, `include`, `from` and `export` statements: brackets, and lines
   ##   indented under statement's own, included.
   var indents: seq[int]
-  for line in source.split('\n'): indents.add line.indentOf
+  for line in source.split('\n'): indents.add line.indentWidth
   var k = 0
   while k < tokens.len:
     let
@@ -222,7 +222,7 @@ func respacingGap(tokens: openArray[Token], k: int, source: string): Respacing =
   result.got = source.excerpt(a, b)
 
 
-func columnOf(source: string, at: int): int =
+func column(source: string, at: int): int =
   ## Count bytes between start of line and offset.
   var k = at
   while k > 0 and source[k - 1] != '\n': dec k
@@ -241,12 +241,12 @@ func isListDeclared(tokens: openArray[Token], k: int, source: string): bool =
     return tokens[j - 1].spelling(source) in HEADS_GENERIC
 
   # Name opens its line: read keyword of nearest line above at smaller indent.
-  let indent = source.columnOf(tokens[j].first)
+  let indent = source.column(tokens[j].first)
   var m = j - 1
   while m >= 0:
     let is_first = m == 0 or tokens[m - 1].lineLast(source) < tokens[m].line
     if is_first and tokens[m].kind != KindToken.Comment and
-        source.columnOf(tokens[m].first) < indent:
+        source.column(tokens[m].first) < indent:
       return tokens[m].spelling(source) == "type"
     dec m
   false
@@ -273,7 +273,7 @@ func elementsLine(
       last = p + 1
     elif tokens[last].kind in {KindToken.Open, KindToken.Close, KindToken.Comment}: break
     else: inc last
-  let elements = elementsOf(tokens, partners, first + 1, last - 1, source)
+  let elements = elements(tokens, partners, first + 1, last - 1, source)
   (elements, elements.mapIt(it.first).find(k))
 
 

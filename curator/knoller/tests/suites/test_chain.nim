@@ -111,24 +111,24 @@ const
     ##   library writes it, and ASCII form; glued, each pair lexes one operator.
 
 
-func provenOf(source: string): Proofs =
+func proofsModule(source: string): Proofs =
   ## Answer module source and what chain asks of it by stub parser, as `koch fix` asks.
   proofsStub("a.nim", source, Dialect.Module)
 
 
-func fixedOf(source: string): string =
+func fixed(source: string): string =
   ## Fix module source by whole chain, parser answering, as `koch fix` does.
-  formatted("a.nim", source, Dialect.Module, source.provenOf).source
+  formatted("a.nim", source, Dialect.Module, source.proofsModule).source
 
 
 func isSettled(source: string): bool =
   ## Decide whether chain reports nothing over source and fixes it to itself.
-  let proofs = source.provenOf
+  let proofs = source.proofsModule
   checkFormatting("a.nim", source, Dialect.Module, proofs).len == 0 and
-    source.fixedOf == source and formatted("a.nim", source, Dialect.Module, proofs).fixed.len == 0
+    source.fixed == source and formatted("a.nim", source, Dialect.Module, proofs).fixed.len == 0
 
 
-func operatorsOf(source: string): seq[string] =
+func operators(source: string): seq[string] =
   ## Read spelling of each operator token of source, in order.
   for t in source.tokens:
     if t.kind == KindToken.Operator: result.add t.spelling(source)
@@ -171,7 +171,7 @@ suite "Chain":
 
   test "idioms of any Nim code reach script and package, checks and fixers, module's do not":
     # Case held: static pass of `curator/audit` ran idiom checks on `.nim` alone, and chain took
-    #   idiom fixers in module alone (`audit.nim`, `stepsOf`), so script and package read none
+    #   idiom fixers in module alone (`audit.nim`, `steps`), so script and package read none
     #   (#557); domain is each dialect, idioms of any Nim code in each, module's in module alone.
     let breach =
       "let A = 1\nlet B = 2\n{.push inline.}\nproc f(): int =\n  return result\n{.pop.}\n"
@@ -202,7 +202,7 @@ suite "Chain":
       source = "let A = 1\n" & FENCE_OFF & "\nlet B = 1+2\nlet C = not A == B\nlet D = 3*4\n" &
         FENCE_ON & "\n"
       unfenced = source.replace(FENCE_OFF, "# Rows.").replace(FENCE_ON, "# Rows.")
-      held = heldOf("a.nims", source, Dialect.Script)
+      held = checkFenceHeld("a.nims", source, Dialect.Script)
     check held.len == 1 and held[0].line == 2 and held[0].rule == Rule.FenceHeld  # at marker
     check held[0].message == "Fence keeps its lines as written, and inside them " &
       "not-over-binary breaks once at line 4, single-bindings once at line 3 and " &
@@ -218,23 +218,23 @@ suite "Chain":
     let
       source = "let A = 1+2\n" & FENCE_OFF & "\nlet B = 1+2\n" & FENCE_ON & "\nlet C = 3\n" &
         FENCE_OFF & "\nlet D = 4\n"
-      held = heldOf("a.nims", source, Dialect.Script)
+      held = checkFenceHeld("a.nims", source, Dialect.Script)
     check held.mapIt(it.line) == @[2, 6]  # one for each fence
     check held[0].message.contains(" expression-spacing breaks once at line 3; got")  # 1 outside
     check held[1].message == "Fence keeps its lines as written, and nothing inside breaks a " &
       "rule; got lines `6` to `7`."
-    check heldOf("a.nims", "let a = 1+2\n", Dialect.Script).len == 0  # no fence, no line
+    check checkFenceHeld("a.nims", "let a = 1+2\n", Dialect.Script).len == 0  # no fence, no line
 
 
   test "fence counts idioms of its dialect, and module's own in module alone":
     let source =
       FENCE_OFF & "\nimport std/[strutils, os]\nlet A = 1\nlet B = 2\nproc f(): int =\n" &
         "  return result\n"
-    check heldOf("a.nim", source, Dialect.Module)[0].message.contains(
+    check checkFenceHeld("a.nim", source, Dialect.Module)[0].message.contains(
       "inside them return-result breaks once at line 6, bracket-import once at line 2 and " &
         "single-bindings once at line 3; got",
     )
-    check heldOf("a.nims", source, Dialect.Script)[0].message.contains(
+    check checkFenceHeld("a.nims", source, Dialect.Script)[0].message.contains(
       "inside them return-result breaks once at line 6 and single-bindings once at line 3; got",
     )  # script keeps its imports
 
@@ -244,7 +244,7 @@ suite "Chain":
     check formatted("a.nims", crossing, Dialect.Script).source == crossing  # nothing written
     check formatted("a.nims", crossing, Dialect.Script).fixed.len == 0
     check checkFormatting("a.nims", crossing, Dialect.Script).mapIt(it.rule) == @[Rule.Fence]
-    check heldOf("a.nims", crossing, Dialect.Script).len == 0  # fault, and no warning
+    check checkFenceHeld("a.nims", crossing, Dialect.Script).len == 0  # fault, and no warning
 
 
   test "comment table stays as written: width reader sees depends on font, so reading holds it":
@@ -267,44 +267,44 @@ suite "Chain":
 
 suite "Repair that widens its line":
   test "spacing past `LINE_MAX` splits call crossing it, arguments one level in":
-    check (HEAD & PICKING).fixedOf == HEAD & "  let\n    lateral = tangent_half_view * hypot(\n" &
+    check (HEAD & PICKING).fixed == HEAD & "  let\n    lateral = tangent_half_view * hypot(\n" &
         "      clip_x / depth * float(width) / float(height),\n      clip_y / depth,\n    )\n"
-    check (HEAD & GIF).fixedOf == HEAD & "  let compressed = encodeLempelZivWelch(\n    arena,\n" &
+    check (HEAD & GIF).fixed == HEAD & "  let compressed = encodeLempelZivWelch(\n    arena,\n" &
         "    dictionary,\n    indices.toOpenArray(0, width * height - 1),\n  )\n"
-    for source in [PICKING, GIF]: check (HEAD & source).fixedOf.isSettled
+    for source in [PICKING, GIF]: check (HEAD & source).fixed.isSettled
 
 
   test "doc gap past `LINE_MAX` moves doc to next line, one round after gap widens":
-    check (STRICT_FUNCS & "\n\n" & VERDICTS).fixedOf == STRICT_FUNCS & "\n\nvar\n" &
+    check (STRICT_FUNCS & "\n\n" & VERDICTS).fixed == STRICT_FUNCS & "\n\nvar\n" &
         "  READINGS_KEPT*: Readings  ## Readings report renders from.\n" &
         "  SWEEPS_WANTED: seq[SweepAsk]\n    ## Sweeps render asked for and `READINGS_KEPT` " &
         "lacks, in order asked.\n  RUNGS_WANTED: seq[RungAsk]\n"
-    check (STRICT_FUNCS & "\n\n" & VERDICTS).fixedOf.isSettled
+    check (STRICT_FUNCS & "\n\n" & VERDICTS).fixed.isSettled
 
 
   test "message ending on its value takes shape; continuation four in, or flat in argument":
-    check (HEAD & CAPTION).fixedOf == HEAD & "  for i, line in lines:\n    if is_caption:\n" &
+    check (HEAD & CAPTION).fixed == HEAD & "  for i, line in lines:\n    if is_caption:\n" &
         "      if not line.namesKey(\"captionWindow\"):\n        found.add PATH_DESKTOP_NIM & " &
         "\":\" & $(i + 1) & \": caption must name `captionWindow`; got `\" &\n" &
         "            line.strip & \"`.\"\n"  # first line exactly 100 runes
-    check (HEAD & SHOWN).fixedOf == HEAD & "  if found.len > 0:\n    raise newException(\n" &
+    check (HEAD & SHOWN).fixed == HEAD & "  if found.len > 0:\n    raise newException(\n" &
         "      OSError,\n      \"Shown text belongs in `wording.nim`, named by key; got `\" & " &
         "$found.len & \"`:\\n  `\" &\n      found.join(\"\\n  \") & \"`.\",\n    )\n"
-    for source in [CAPTION, SHOWN]: check (HEAD & source).fixedOf.isSettled
+    for source in [CAPTION, SHOWN]: check (HEAD & source).fixed.isSettled
 
 
   test "message shape fitting no call split breaks after operator, flat in its argument":
-    check (HEAD & FACES).fixedOf == HEAD & "  if code != 0:\n    raise newException(\n" &
+    check (HEAD & FACES).fixed == HEAD & "  if code != 0:\n    raise newException(\n" &
         "      OSError,\n      \"`koch fetch-assets` would not serve every face; got exit `\" & " &
         "$code & \"` --\\n`\" & written &\n      \"`.\",\n    )\n"
-    check (HEAD & FACES).fixedOf.isSettled
+    check (HEAD & FACES).fixed.isSettled
 
 
   test "comment gap past `LINE_MAX` moves plain comment to own line above":
-    check (HEAD & AIM).fixedOf == HEAD & "  block:\n    block:\n" &
+    check (HEAD & AIM).fixed == HEAD & "  block:\n    block:\n" &
         "      # Orbit turned; what it turns about did not.\n" &
         "      check camera.placed(framed).pivot =~ camera.pivot\n"
-    check (HEAD & AIM).fixedOf.isSettled
+    check (HEAD & AIM).fixed.isSettled
 
 
   test "repair no wrap fits keeps width guard on its line alone, with its finding":
@@ -314,12 +314,12 @@ suite "Repair that widens its line":
         "offset_x*forward_x + offset_y*forward_y + offset_z*forward_z + offset_w*forward_w\n"
     check checkFormatting("a.nim", fix.source, Dialect.Module).mapIt(it.line).deduplicate ==
         @[6]  # finding stays on held line alone
-    check attempted("a.nim", HEAD & HELD, Dialect.Module.stepsOf).attempts == 2  # one holds it
+    check attempted("a.nim", HEAD & HELD, Dialect.Module.steps).attempts == 2  # one holds it
     check formatted("a.nim", fix.source, Dialect.Module).source == fix.source  # settled
 
 
   test "continuation run with line no wrap fits keeps its indent whole, with its findings":
-    check (HEAD & PACKED).fixedOf == HEAD & PACKED  # no continuation parts from its run
+    check (HEAD & PACKED).fixed == HEAD & PACKED  # no continuation parts from its run
     check checkFormatting("a.nim", HEAD & PACKED, Dialect.Module).mapIt(it.line) == @[5]
 
 
@@ -328,23 +328,23 @@ suite "Repair that widens its line":
 
 
   test "value after `=` that breaks after operator sits four spaces past statement, flat":
-    check (HEAD & NAMES).fixedOf == HEAD & "  const NAMES =\n      \"" & "a".repeat(45) &
+    check (HEAD & NAMES).fixed == HEAD & "  const NAMES =\n      \"" & "a".repeat(45) &
         "\" &\n      \"" & "b".repeat(45) & "\"\n"
-    check (HEAD & NAMES).fixedOf.isSettled
+    check (HEAD & NAMES).fixed.isSettled
 
 
   test "value after `=` with line no wrap fits keeps its indent whole, with its findings":
     let source = STRICT_FUNCS & "\n\n" & RANGES
-    check source.fixedOf == source
+    check source.fixed == source
     check checkFormatting("a.nim", source, Dialect.Module).mapIt(it.line) == @[5, 6, 7]
 
 
   test "dotted call statement drops its double bracket, and call layout keeps its lines":
     let hugged = HEAD & "  result[a][b].add(BasisSigned(\n    basis: term.basis,\n" &
       "    is_negated: dual_signed.is_negated xor term.is_negated,\n  ))\n"
-    check hugged.fixedOf == HEAD & "  result[a][b].add BasisSigned(\n    basis: term.basis,\n" &
+    check hugged.fixed == HEAD & "  result[a][b].add BasisSigned(\n    basis: term.basis,\n" &
       "    is_negated: dual_signed.is_negated xor term.is_negated,\n  )\n"
-    check hugged.fixedOf.isSettled
+    check hugged.fixed.isSettled
 
 
   test "group one item to line that would not fit joined takes comma, lines and chain kept":
@@ -356,39 +356,39 @@ suite "Repair that widens its line":
         "    is_negated: b_to_signed.is_negated xor b_to_complement.is_negated\n  )]\n"
       sliced = HEAD & "  result[b] = @[BasisSigned(\n    basis: result[b][0].basis,\n" &
         "    is_negated: result[b][0].is_negated xor basis.is_negated\n  )]\n"
-    check chained.fixedOf == chained.replace("    )\n  )\n", "    ),\n  )\n")  # `cayleys.nim:271`
-    check dual.fixedOf == dual.replace("is_negated\n  )]", "is_negated,\n  )]")  # `:338`
-    check sliced.fixedOf == sliced.replace("is_negated\n  )]", "is_negated,\n  )]")  # `:604`
-    for source in [chained, dual, sliced]: check source.fixedOf.isSettled  # second run
+    check chained.fixed == chained.replace("    )\n  )\n", "    ),\n  )\n")  # `cayleys.nim:271`
+    check dual.fixed == dual.replace("is_negated\n  )]", "is_negated,\n  )]")  # `:338`
+    check sliced.fixed == sliced.replace("is_negated\n  )]", "is_negated,\n  )]")  # `:604`
+    for source in [chained, dual, sliced]: check source.fixed.isSettled  # second run
 
 
   test "block head whose last line would stand at body's indent reads apart from body":
     let head = HEAD & "  if check(a_long_name, first_condition or second_condition or\n" &
       "    second_condition and first_condition):\n    echo a_long_name\n"
-    check head.fixedOf == HEAD &
+    check head.fixed == HEAD &
       "  if check(a_long_name, first_condition or second_condition or\n" &
       "      (second_condition and first_condition)):\n    echo a_long_name\n"  # STYLE.md §5
-    check head.fixedOf.isSettled
+    check head.fixed.isSettled
 
 
   test "needless parentheses go, and spacing glues prefix operator they leave, in one round":
     let distances = HEAD & "  let distance_b = (|∙ ⊖(𝐦 ∧ 𝐧)) + (|∘ (𝐦 ∧ ⊖𝐧))\n"
-    check distances.fixedOf == HEAD & "  let distance_b = |∙ ⊖(𝐦 ∧ 𝐧) + |∘(𝐦 ∧ ⊖𝐧)\n"
-    check attempted("a.nim", distances, Dialect.Module.stepsOf, distances.provenOf).attempts == 1
-    check distances.fixedOf.isSettled
+    check distances.fixed == HEAD & "  let distance_b = |∙ ⊖(𝐦 ∧ 𝐧) + |∘(𝐦 ∧ ⊖𝐧)\n"
+    check attempted("a.nim", distances, Dialect.Module.steps, distances.proofsModule).attempts == 1
+    check distances.fixed.isSettled
 
 
   test "power operator and needless parentheses agree on wrapped exponent, in one round":
     let wrapped = HEAD & "  let p = a^(-b)\n"
     check wrapped.isSettled  # parentheses rule keeps group power operator needs
     for breach in [HEAD & "  let p = a ^ -b\n", HEAD & "  let p = a ^ (-b)\n"]:
-      check breach.fixedOf == wrapped
-      check attempted("a.nim", breach, Dialect.Module.stepsOf, breach.provenOf).attempts == 1
+      check breach.fixed == wrapped
+      check attempted("a.nim", breach, Dialect.Module.steps, breach.proofsModule).attempts == 1
     for (breach, mended) in [
       ("  let p = -1 ^ (k)\n", "  let p = -1^k\n"),  # group of one operand goes (X.4)
       ("  let p = -1 ^ (a * b)\n", "  let p = -1^(a * b)\n"),  # group of math stays
     ]:
-      check (HEAD & breach).fixedOf == HEAD & mended
+      check (HEAD & breach).fixed == HEAD & mended
       check (HEAD & mended).isSettled
 
 
@@ -399,20 +399,22 @@ suite "Repair that widens its line":
     check unanswered.source == source  # nothing else due, so nothing written
     check unanswered.asked == @[source]  # source as parentheses step reads it
     check checkFormatting("a.nim", source, Dialect.Module).len == 0  # no answer, no finding
-    let proofs = source.provenOf
+    let proofs = source.proofsModule
     check checkFormatting("a.nim", source, Dialect.Module, proofs).mapIt(it.rule) ==
       @[Rule.ParenthesesNeedless, Rule.ParenthesesNeedless]
     let fix = formatted("a.nim", source, Dialect.Module, proofs)
     check fix.source == HEAD & "  let c = ☆m ∧ n + ■k\n" and fix.asked.len == 0  # all answered
     let fenced = HEAD & "  #!fix off\n  let c = ☆(m) ∧ n + ■(k)\n  #!fix on\n"
-    check heldOf("a.nim", fenced, Dialect.Module)[0].message.contains("nothing inside breaks")
-    check heldOf("a.nim", fenced, Dialect.Module, fenced.provenOf)[0].message.contains(
+    check checkFenceHeld("a.nim", fenced, Dialect.Module)[0].message.contains(
+      "nothing inside breaks",
+    )
+    check checkFenceHeld("a.nim", fenced, Dialect.Module, fenced.proofsModule)[0].message.contains(
       "needless-parentheses breaks 2 times from line 5",
     )  # answer for source as given counts its groups
 
 
   test "value after `=` that is no chain keeps one level under its statement":
-    check (HEAD & TWIST).fixedOf == HEAD & TWIST
+    check (HEAD & TWIST).fixed == HEAD & TWIST
     check checkFormatting("a.nim", HEAD & TWIST, Dialect.Module).len == 0
 
 
@@ -420,7 +422,7 @@ suite "Repair that widens its line":
     let verdicts = STRICT_FUNCS & "\n\n" & VERDICTS
     for source in [PICKING, GIF, CAPTION, SHOWN, FACES, AIM, HELD, STACKED].mapIt(HEAD & it) &
         verdicts:
-      let (before, after) = (source.operatorsOf, source.fixedOf.operatorsOf)
+      let (before, after) = (source.operators, source.fixed.operators)
       check after.filterIt(it != "&") == before.filterIt(it != "&")
       check after.countIt(it == "&") - before.countIt(it == "&") in 0 .. 1  # one shape at most
 
@@ -436,8 +438,8 @@ suite "Repair that widens its line":
   test "output agrees whatever order files come in, and on second run":
     let
       sources = [LAYOUT, HEAD & PICKING, HEAD & HELD, HEAD & FACES, HEAD & AIM]
-      outputs = sources.mapIt(it.fixedOf)
+      outputs = sources.mapIt(it.fixed)
     var backward = newSeq[string](sources.len)
-    for k in countdown(sources.high, 0): backward[k] = sources[k].fixedOf
+    for k in countdown(sources.high, 0): backward[k] = sources[k].fixed
     check backward == outputs  # order of files moves nothing
-    check sources.mapIt(it.fixedOf) == outputs  # second run agrees
+    check sources.mapIt(it.fixed) == outputs  # second run agrees
