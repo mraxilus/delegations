@@ -18,7 +18,7 @@ const
   COUNT_LINES_LARGE = 300_000  ## Lines one command prints, past what pipe buffer holds.
 
 
-func outputOf(error: Option[string]): string =
+func outputCompile(error: Option[string]): string =
   ## Write compile output whose last error line names error's file.
   if error.isNone: "Hint: built\n"
   elif error.get.len == 0: "Error: unhandled exception\n"
@@ -32,7 +32,7 @@ func runShell(place: int, directory: string, command: string, action = Action.Ru
       execution: @[executable])
 
 
-func scriptOf(executable, body: string): string =
+func script(executable, body: string): string =
   ## Write shell command writing executable script of body to executable.
   "printf '#!/bin/sh\\n" & body & "\\n' > " & executable.quoteShell & " && chmod +x " &
       executable.quoteShell
@@ -62,14 +62,14 @@ suite "Runs":
               execution =
                 if program.isNone: none(Step)
                 else: some(Step(command: "/work/program", code: program.get))
-              outcome = Outcome(compile: Step(output: error.outputOf, code: code),
+              outcome = Outcome(compile: Step(output: error.outputCompile, code: code),
                   execution: execution)
               is_passed =
                 case action
                 of Action.Run: code == 0 and error.isNone and program == some(0)
                 of Action.Compile: code == 0 and error.isNone
                 of Action.Reject: code == 1 and error == some("test_k.nim")
-            check (run.failureOf(outcome).len == 0) == is_passed  # pass, as testament judges
+            check (run.failure(outcome).len == 0) == is_passed  # pass, as testament judges
 
 
   test "failure says why, step by step":
@@ -77,34 +77,34 @@ suite "Runs":
       run = Run(file: FILE, action: Action.Run, executable: "/work/program")
       reject = Run(file: FILE, action: Action.Reject)
       clean = Step(code: 0)
-    check Run(refusal: "no Node.js").failureOf(Outcome()) == "no Node.js"  # refusal itself
-    check run.failureOf(Outcome(compile: Step(failure: "no shell"))) ==
+    check Run(refusal: "no Node.js").failure(Outcome()) == "no Node.js"  # refusal itself
+    check run.failure(Outcome(compile: Step(failure: "no shell"))) ==
         "compile cannot start: no shell"
-    check run.failureOf(Outcome(compile: Step(code: 1))) == "compile exits 1"
-    check run.failureOf(Outcome(compile: Step(output: "Error: x"))) ==
+    check run.failure(Outcome(compile: Step(code: 1))) == "compile exits 1"
+    check run.failure(Outcome(compile: Step(output: "Error: x"))) ==
         "compile exits 0, yet prints an error"
-    check run.failureOf(Outcome(compile: clean)) == "compile writes no program at `/work/program`"
-    check run.failureOf(Outcome(compile: clean, execution: some(Step(code: 3)))) ==
+    check run.failure(Outcome(compile: clean)) == "compile writes no program at `/work/program`"
+    check run.failure(Outcome(compile: clean, execution: some(Step(code: 3)))) ==
         "program exits 3"
-    check run.failureOf(Outcome(compile: clean, execution: some(Step(failure: "denied")))) ==
+    check run.failure(Outcome(compile: clean, execution: some(Step(failure: "denied")))) ==
         "program cannot start: denied"
-    check reject.failureOf(Outcome(compile: clean)) ==
+    check reject.failure(Outcome(compile: clean)) ==
         "compiles, where the header asks for rejection"
-    check reject.failureOf(Outcome(compile: Step(code: 2))) ==
+    check reject.failure(Outcome(compile: Step(code: 2))) ==
         "compile exits 2, where rejection exits 1"
-    check reject.failureOf(Outcome(compile: Step(code: 1))) == "compile exits 1 with no error line"
-    check reject.failureOf(Outcome(compile: Step(code: 1, output: "Error: x"))) ==
+    check reject.failure(Outcome(compile: Step(code: 1))) == "compile exits 1 with no error line"
+    check reject.failure(Outcome(compile: Step(code: 1, output: "Error: x"))) ==
         "compile rejects with an error that names no file"
-    check reject.failureOf(Outcome(compile: Step(code: 1, output: some("other.nim").outputOf))) ==
-        "compile rejects in `other.nim`, not in the test file"
+    let outcome_named = Outcome(compile: Step(code: 1, output: some("other.nim").outputCompile))
+    check reject.failure(outcome_named) == "compile rejects in `other.nim`, not in the test file"
 
 
   test "duration of run is compile, then program where it ran":
     let
       compile = Step(duration: initDuration(milliseconds = 1200))
       program = Step(duration: initDuration(milliseconds = 300))
-    check Outcome(compile: compile).durationOf == initDuration(milliseconds = 1200)  # no program
-    check Outcome(compile: compile, execution: some(program)).durationOf ==
+    check Outcome(compile: compile).duration == initDuration(milliseconds = 1200)  # no program
+    check Outcome(compile: compile, execution: some(program)).duration ==
         initDuration(milliseconds = 1500)  # both steps
 
 
@@ -138,7 +138,7 @@ suite "Runs":
     for place in 0..<6:
       let executable = directory / "program_" & $place
       plan.add runShell(place, directory,
-          scriptOf(executable, "echo out " & $place & "; exit " & $place))
+          script(executable, "echo out " & $place & "; exit " & $place))
     var places: seq[int]
     let outcomes = plan.runAll(3) do (place: int, outcome: Outcome): places.add place
     check places == toSeq(0..<6)  # plan order
@@ -146,7 +146,7 @@ suite "Runs":
       check outcome.compile.code == 0 and outcome.execution.isSome  # compiled, then ran
       check outcome.execution.get.output == "out " & $place & "\n"  # its own output
       check outcome.execution.get.code == place  # its own exit code
-      check plan[place].failureOf(outcome) ==
+      check plan[place].failure(outcome) ==
           (if place == 0: "" else: "program exits " & $place)
 
 
@@ -170,9 +170,9 @@ suite "Runs":
     writeFile(stale.executable, "#!/bin/sh\nexit 0\n")
     setFilePermissions(stale.executable, {fpUserExec, fpUserRead, fpUserWrite})
     let outcomes = @[stale, blocked].runAll(2) do (place: int, outcome: Outcome): discard
-    check stale.failureOf(outcomes[0]) ==
+    check stale.failure(outcomes[0]) ==
         "compile writes no program at `" & stale.executable & "`"  # stale one deleted first
-    check blocked.failureOf(outcomes[1]).startsWith("program cannot start: ")  # not exec
+    check blocked.failure(outcomes[1]).startsWith("program cannot start: ")  # not exec
 
 
   test "compile and reject judge real compiler output, and refused run makes nothing":
@@ -185,7 +185,7 @@ suite "Runs":
       refused = Run(file: FILE, refusal: "No Node.js on PATH, which JavaScript run needs.")
       outcomes = @[rejected, compiled, refused].runAll(3) do (place: int, outcome: Outcome):
         discard
-    check rejected.failureOf(outcomes[0]) == ""  # rejected in test file
-    check compiled.failureOf(outcomes[1]) == "" and outcomes[1].execution.isNone  # no program
+    check rejected.failure(outcomes[0]) == ""  # rejected in test file
+    check compiled.failure(outcomes[1]) == "" and outcomes[1].execution.isNone  # no program
     check outcomes[2] == Outcome()  # nothing ran
-    check refused.failureOf(outcomes[2]) == refused.refusal  # refusal fails it
+    check refused.failure(outcomes[2]) == refused.refusal  # refusal fails it

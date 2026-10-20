@@ -81,7 +81,7 @@ suite "Reports":
       short = Run(file: FILE, target: Target.C, configuration: "-d:k=1", action: Action.Compile)
       long = Run(file: "tests/test_long_name.nim", target: Target.JavaScript,
           action: Action.Compile, refusal: "no Node.js on PATH for a JavaScript run")
-      widths = widthsOf([short, long], ROOT)
+      widths = widths([short, long], ROOT)
       passed = Outcome(compile: Step(duration: milliseconds(1500)))
     check widths == Widths(file: "tests/test_long_name.nim".len, target: 2)  # widest of each
     check lineRun(short, passed, widths, ROOT) ==
@@ -108,23 +108,23 @@ suite "Reports":
 
 
   test "excerpt drops hints, progress, frames outside and passed tests, keeping what explains":
-    check OUTPUT_COMPILE.excerptOf(ROOT) == (@["tests/test_k.nim(5, 14) Error: type mismatch"], 0)
-    check OUTPUT_SUITES.excerptOf(ROOT) == (@[
+    check OUTPUT_COMPILE.excerpt(ROOT) == (@["tests/test_k.nim(5, 14) Error: type mismatch"], 0)
+    check OUTPUT_SUITES.excerpt(ROOT) == (@[
       "[Suite] Ring",
       "    tests/test_k.nim(10, 12): Check failed: k != 2",
       "    k was 2",
       "  [FAILED] k is not two",
     ], 0)  # empty suite gone, shape kept
-    check OUTPUT_TRACEBACK.excerptOf(ROOT) == (@[
+    check OUTPUT_TRACEBACK.excerpt(ROOT) == (@[
       "tests/test_k.nim(20) test_k",
       "/nim/lib/system/fatal.nim(62, 5) Error: unhandled exception: boom [AssertionDefect]",
     ], 0)  # frame below root and error line stay
 
 
   test "excerpt joins blank lines, takes shared indent off, and keeps tail, counting cut":
-    check "a\n\n\nb\n\n".excerptOf(ROOT) == (@["a", "", "b"], 0)  # one blank, none at end
-    check "    a\n      b\n".excerptOf(ROOT) == (@["a", "  b"], 0)  # shape under one indent
-    let (lines, cut) = linesNumbered(COUNT_LINES_LONG).excerptOf(ROOT)
+    check "a\n\n\nb\n\n".excerpt(ROOT) == (@["a", "", "b"], 0)  # one blank, none at end
+    check "    a\n      b\n".excerpt(ROOT) == (@["a", "  b"], 0)  # shape under one indent
+    let (lines, cut) = linesNumbered(COUNT_LINES_LONG).excerpt(ROOT)
     check cut == COUNT_LINES_LONG - LINES_EXCERPT_MAX  # lines above
     check lines == toSeq(cut + 1 .. COUNT_LINES_LONG).mapIt("line " & $it)  # tail
 

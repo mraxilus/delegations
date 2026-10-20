@@ -18,7 +18,7 @@ func module(body: string): string =
 
 func messages(path, source: string): seq[string] =
   ## Collect messages idioms check reports over source.
-  checkIdioms(path, source).findingsOf.mapIt(it.message)
+  checkIdioms(path, source).toFindings.mapIt(it.message)
 
 
 func fixed(source: string): Fix =
@@ -299,7 +299,7 @@ suite "Idiom fixes":
       apart =
         module("import std/strutils\nimport std/[os, algorithm]\nimport ./b\nimport ./a {.all.}\n")
       fix = fixed(apart)
-    check checkBracketsImport("a.nim", apart).findingsOf.mapIt(it.message) == @[
+    check checkBracketsImport("a.nim", apart).toFindings.mapIt(it.message) == @[
       "Imports of one directory share one bracket (X.5); got `std/` in `2` statements.",
       "Imports of one directory share one bracket (X.5); got `./` in `2` statements.",
     ]
@@ -309,7 +309,7 @@ suite "Idiom fixes":
     check fix.source.isSettled
     check checkBracketsImport("a.nim", fix.source).len == 0
     check fixed(module("import std/[math]\n")).source == module("import std/math\n")
-    check checkBracketsImport("a.nim", module("import std/[math]\n")).findingsOf[0].message ==
+    check checkBracketsImport("a.nim", module("import std/[math]\n")).toFindings[0].message ==
       "Bracket of one module drops its bracket (STYLE.md §5); got `std/[math]`."  # own rule
     check checkBracketsImport("a.nim", module("import std/[math]\n"))[0].rule ==
       Rule.BracketModule

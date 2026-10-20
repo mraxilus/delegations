@@ -27,20 +27,20 @@ proc writeInto(root, path, content: string) =
 
 suite "Internal: Symbols":
   test "answer line reads as symbol; malformed one reads as none":
-    let symbol = LINE_ANSWER.symbolOf.get
+    let symbol = LINE_ANSWER.toSymbol.get
     check symbol.kind == "skType" and symbol.name == "system.float"
     check symbol.file == "/lib/system/basic_types.nim" and symbol.line == 15
     check symbol.column == 2
-    check "def\tskType".symbolOf.isNone
+    check "def\tskType".toSymbol.isNone
 
 
   test "output splits into one block per command, mark to mark, empty answer kept":
-    let blocks = OUTPUT.blocksOf
+    let blocks = OUTPUT.blocksAnswer
     check blocks.len == 3
     check blocks[0].len == 0 and blocks[1] == @[LINE_ANSWER] and blocks[2].len == 0
-    check OUTPUT.replace("\n", "\r\n").blocksOf == blocks  # Windows ends lines in CRLF
-    check "!EOF!\n".blocksOf.len == 0  # ready, and asked nothing
-    check ("!EOF!\n" & LINE_ANSWER & "\n").blocksOf.len == 0  # answer cut short reads as none
+    check OUTPUT.replace("\n", "\r\n").blocksAnswer == blocks  # Windows ends lines in CRLF
+    check "!EOF!\n".blocksAnswer.len == 0  # ready, and asked nothing
+    check ("!EOF!\n" & LINE_ANSWER & "\n").blocksAnswer.len == 0  # answer cut short reads as none
 
 
   test "run reads commands and writes answers through sh on POSIX and through cmd on Windows":
@@ -70,8 +70,8 @@ suite "Internal: Symbols":
       ("tests/more.nim", "let x = 1\n"),
       ("src/b.nim", "let y = 2\n"),
     ]
-    check files.includerOf("tests/more.nim") == "tests/test_a.nim"
-    check files.includerOf("src/b.nim") == "src/b.nim"
+    check files.includer("tests/more.nim") == "tests/test_a.nim"
+    check files.includer("src/b.nim") == "src/b.nim"
 
 
   test "site resolves to symbol through nimsuggest of toolchain; file that fails resolves none":
@@ -94,7 +94,7 @@ suite "Internal: Symbols":
         query: Query(path: path, sites: sites),
         root: root,
         directory: root,
-        includer: files.includerOf(path),
+        includer: files.includer(path),
       )
       for answer in resolve([request]): answers[answer.path] = answer
     check answers.len == 3
@@ -132,8 +132,8 @@ suite "Internal: Symbols":
     check answers[0].reason.contains("nimsuggest")  # warning names tool missing
 
     # Domain: output holding no answer reads as none, whatever header stands before it.
-    check "".blocksOf.len == 0
-    check "usage: sug|con|def\ntype 'quit' to quit\n".blocksOf.len == 0
+    check "".blocksAnswer.len == 0
+    check "usage: sug|con|def\ntype 'quit' to quit\n".blocksAnswer.len == 0
 
 
   test "project path holding colon resolves, as Windows drive does":
@@ -174,7 +174,7 @@ suite "Internal: Symbols":
       query: Query(path: "src/d.nim", sites: @[(2, 8)], names: @[name, "w"]),
       root: root,
       directory: root,
-      includer: files.includerOf("src/d.nim"),
+      includer: files.includer("src/d.nim"),
     )])
     check answers.len == 1 and answers[0].reason.len == 0
     check answers[0].symbols[(2, 8)].kind == "skLet" and answers[0].symbols[(2, 8)].line == 1

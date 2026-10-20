@@ -26,7 +26,7 @@ const
 
 func stubbed*(source: string): seq[int] =
   ## Answer source as stub parser: offset of `(` of each candidate group `REJECTED` does not name.
-  source.candidatesOf.filterIt(it.got notin REJECTED).mapIt(it.opening[0])
+  source.groupsCandidate.filterIt(it.got notin REJECTED).mapIt(it.opening[0])
 
 
 func proverStub*(sources: seq[string]): Proving =

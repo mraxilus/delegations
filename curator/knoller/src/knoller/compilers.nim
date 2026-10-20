@@ -109,7 +109,7 @@ proc compilerRunning*(): Compiler =
   compilerAt(NIM)
 
 
-func platformOf*(name_os, cpu: string): string =
+func platform*(name_os, cpu: string): string =
   ## Read tarball name nim-lang.org publishes for platform; empty when it publishes none.
   for (name, arch, tarball) in PLATFORMS:
     if name == name_os and arch == cpu: return tarball
@@ -153,12 +153,12 @@ proc rootCache*(override: string): string =
   if override.len > 0: override else: getHomeDir() / DIRECTORY_CACHE
 
 
-func binOf*(root, pin: string): string =
+func binCached*(root, pin: string): string =
   ## Read directory holding compiler serving pin, once it is cached.
   root / pin / "bin"
 
 
-proc digestOf*(path: string): string =
+proc digest*(path: string): string =
   ## Read file's SHA-256, as `sha256sum` writes it; empty when it cannot be read.
   ##   Shelled out rather than computed here for reason `std/sha1` is rejected: it is
   ##   deprecated and too weak, and digest of this strength lives in `checksums`, which is
@@ -204,7 +204,7 @@ proc fetchRelease(version, platform, directory: string): bool =
     stderr.writeLine "No digest published beside tarball, so it is refused; got `" &
         urlDigest(version, platform) & "`."
     return false
-  let (wanted, got) = (digestPinned(readFile(sidecar)), archive.digestOf)
+  let (wanted, got) = (digestPinned(readFile(sidecar)), archive.digest)
   if wanted.len == 0 or wanted != got:
     stderr.writeLine "Digest of tarball does not match published one; wanted `" & wanted &
         "`, got `" & got & "`."
@@ -242,7 +242,7 @@ proc resolve*(pin: string, running: Compiler, root: string): Option[string] =
   ##   so always takes first branch. Two outcomes stay apart, since empty string means
   ##   PATH everywhere else here and would otherwise read as success.
   if pin.isServedBy(running): return some("")
-  let bin = binOf(root, pin)
+  let bin = binCached(root, pin)
   if pin.isServedBy(compilerAt(bin / NIM)): return some(bin)
   let directory = root / pin
   when defined(windows):
@@ -253,7 +253,7 @@ proc resolve*(pin: string, running: Compiler, root: string): Option[string] =
     createDir(root)
     stderr.writeLine "== fetching Nim " & pin
     let
-      platform = platformOf(hostOS, hostCPU)
+      platform = platform(hostOS, hostCPU)
       is_built =
         if pin.isBuilt(platform): buildSource(pin, directory)
         else: fetchRelease(pin, platform, directory)

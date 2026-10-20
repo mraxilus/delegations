@@ -365,7 +365,7 @@ func wordsShell(command: string): seq[seq[Word]] =
   finish()
 
 
-func toolOf(action, endpoint: string): string =
+func tool(action, endpoint: string): string =
   ## Read GitHub tool whose rules request shares, by method and endpoint; empty where none.
   ##   Endpoint is read from `issues` or `pulls` segment after `repos`, so owner and repo may be
   ##     `{owner}/{repo}` or one shell variable, and leading `/`, host and query drop.
@@ -388,7 +388,7 @@ func located(base, path: string): string =
   if path == "-" or path.isAbsolute or path.startsWith('~'): path else: base / path
 
 
-func requestOf(arguments: openArray[Word], directory: string): Request =
+func toRequest(arguments: openArray[Word], directory: string): Request =
   ## Read one `gh api` request from words after `api`: each flag with its value, and first other
   ##   word as endpoint.
   ##   Method is `-X` or `--method`, else POST where field or input file is given, else GET, as
@@ -440,7 +440,7 @@ func requestOf(arguments: openArray[Word], directory: string): Request =
   # Default method as `gh api` does, then tool whose rules write shares.
   if result.action.len == 0: result.action = if is_field: "POST" else: "GET"
   result.is_create = result.action == "POST"
-  result.tool = toolOf(result.action, result.endpoint)
+  result.tool = tool(result.action, result.endpoint)
 
 
 func requests*(command, directory: string): seq[Request] =
@@ -456,7 +456,7 @@ func requests*(command, directory: string): seq[Request] =
     for i in 0 ..< words.len - 1:
       let name = words[i].text
       if (name == "gh" or name.endsWith("/gh")) and words[i + 1].text == "api":
-        result.add requestOf(words[i + 2 .. ^1], working)
+        result.add toRequest(words[i + 2 .. ^1], working)
         break
 
 

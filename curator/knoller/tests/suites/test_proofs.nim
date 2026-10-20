@@ -35,18 +35,18 @@ proc fixedBy(source: string): string =
 
 suite "Proofs":
   test "probe names each source by file and each candidate by byte spans of its brackets":
-    let probe = probeOf(["let s = @(x)\n", "let y = (a)\n"])
+    let probe = probe(["let s = @(x)\n", "let y = (a)\n"])
     check "prove(\"s0.nim\", @[[9, 10, 11, 12]])\n" in probe  # `(` and `)` of `(x)`
     check "prove(\"s1.nim\", @[])\n" in probe  # no candidate: parser asked nothing
     check "staticRead" in probe and "parseStmt" in probe
 
 
   test "answer lines read by source; output holding none is failure with its first line":
-    let proving = provingOf("knoller-proof s1.nim: 8 20\nknoller-proof s0.nim:\nother\n", 2)
+    let proving = toProving("knoller-proof s1.nim: 8 20\nknoller-proof s0.nim:\nother\n", 2)
     check proving.answers == @[newSeq[int](), @[8, 20]] and proving.failure.len == 0
-    let outside = provingOf("knoller-proof s7.nim: 1\nknoller-proof s0.nim:\n", 1)
+    let outside = toProving("knoller-proof s7.nim: 1\nknoller-proof s0.nim:\n", 1)
     check outside.answers == @[newSeq[int]()]  # source not asked is passed over
-    let failed = provingOf("\nError: cannot open file\nmore\n", 1)
+    let failed = toProving("\nError: cannot open file\nmore\n", 1)
     check failed.answers == @[newSeq[int]()]  # none proven
     check failed.failure == "Parser proved no removal, since compiler ran no probe; got " &
       "`Error: cannot open file`."
@@ -101,7 +101,7 @@ suite "Proofs":
     let directory = createTempDir("knoller_suite_", "")
     defer: removeDir(directory)
     writeFile(directory / "s0.nim", "let x = (y) + (z)\n")
-    let probe = probeOf([""]).replace(
+    let probe = probe([""]).replace(
       "prove(\"s0.nim\", @[])",
       "prove(\"s0.nim\", @[[8, 9, 10, 11], [8, 9, 10, 11], [14, 15, 16, 17]])",
     )
@@ -111,7 +111,7 @@ suite "Proofs":
       args = ["check", "--hints:off", "--nimcache:" & directory / "cache", directory / "probe.nim"],
       options = {poStdErrToStdOut},
     )
-    check provingOf(output, 1).answers == @[@[8, 14]]  # second of twice-named group left out
+    check toProving(output, 1).answers == @[@[8, 14]]  # second of twice-named group left out
 
 
   test "compiler that does not run proves nothing, and says why":
@@ -127,7 +127,7 @@ suite "Proofs":
       proofs = Proofs()
     let counted = proc (sources: seq[string]): Proving =
       inc runs
-      Proving(answers: sources.mapIt(it.candidatesOf.mapIt(it.opening[0])))
+      Proving(answers: sources.mapIt(it.groupsCandidate.mapIt(it.opening[0])))
     check proofs.answered(["let s = @(x)\n", "let s = @(x)\n"], counted).len == 0
     check runs == 1 and proofs.answers["let s = @(x)\n"] == @[9]
     discard proofs.answered(["let s = @(x)\n"], counted)

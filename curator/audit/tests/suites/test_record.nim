@@ -102,8 +102,8 @@ suite "Article VIII":
   test "VIII.6 Pruned row names commit as hex":
     let with_row = textProvenance("d").replace("| Review |", "| Pruned | c723ede |\n| Review |")
     check messages(with_row & BODY).len == 0
-    check with_row.prunedOf == "c723ede"
-    check textProvenance("d").prunedOf.len == 0  # absent row
+    check with_row.pruned == "c723ede"
+    check textProvenance("d").pruned.len == 0  # absent row
     check messages(with_row.replace("c723ede", "main") & BODY) ==
       @["`Pruned` must name commit as 7 to 40 hex digits; got `main`."]
     check "c723ede".isIdCommit and "c723ede1d0fd6f5e01b6b4d5c2ea8c1f9b2a3d4e".isIdCommit

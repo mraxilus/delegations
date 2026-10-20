@@ -41,7 +41,7 @@ type
   Prover* = proc (sources: seq[string]): Proving {.closure.}
     ## Define prover: sources asked in, answer of parser for each out.
 
-  ProverOf* = proc (pin: string): Prover {.closure.}
+  ProversPin* = proc (pin: string): Prover {.closure.}
     ## Define prover of each pin: parser of compiler serving it.
 
 
@@ -102,19 +102,19 @@ macro prove(name: static string, groups: static seq[array[4, int]]): untyped =
   ITERATIONS_VM = 1_000_000_000  ## Loop iterations probe may take in compiler's VM.
 
 
-func probeOf*(sources: openArray[string]): string =
+func probe*(sources: openArray[string]): string =
   ## Write probe program asking parser about each source, read from file `s<k>.nim` beside it,
-  ##   with candidate groups of each (`candidatesOf`) as byte spans.
+  ##   with candidate groups of each (`groupsCandidate`) as byte spans.
   result = PROBE
   for k, source in sources:
-    let groups = source.candidatesOf.mapIt(
+    let groups = source.groupsCandidate.mapIt(
       "[" & $it.opening[0] & ", " & $it.opening[1] & ", " & $it.closing[0] & ", " &
         $it.closing[1] & "]",
     )
     result.add "prove(\"s" & $k & ".nim\", @[" & groups.join(", ") & "])\n"
 
 
-func provingOf*(output: string, count: int): Proving =
+func toProving*(output: string, count: int): Proving =
   ## Read answers of probe from output of compiler for `count` sources; source probe answered
   ##   none for proves none. Output holding no answer at all is failure, with its first line.
   result.answers = newSeq[seq[int]](count)
@@ -142,14 +142,14 @@ proc proverCompiler*(nim: string): Prover =
     let directory = createTempDir("knoller_proof_", "")
     defer: removeDir(directory)
     for k, source in sources: writeFile(directory / "s" & $k & ".nim", source)
-    writeFile(directory / "probe.nim", probeOf(sources))
+    writeFile(directory / "probe.nim", probe(sources))
     let command = nim.quoteShell & " check --hints:off --warnings:off --maxLoopIterationsVM:" &
       $ITERATIONS_VM & " --nimcache:" & quoteShell(directory / "cache") & " " &
       quoteShell(directory / "probe.nim")
     let output =
       try: execCmdEx(command, options = {poStdErrToStdOut, poEvalCommand}).output
       except OSError as e: e.msg
-    provingOf(output, sources.len)
+    toProving(output, sources.len)
 
 
 func proverFailure*(failure: string): Prover =
@@ -158,7 +158,7 @@ func proverFailure*(failure: string): Prover =
     Proving(answers: newSeq[seq[int]](sources.len), failure: failure)
 
 
-proc proversPin*(toolchains: Toolchains): ProverOf =
+proc proversPin*(toolchains: Toolchains): ProversPin =
   ## Build prover of each pin: parser of compiler `toolchains` serve it, resolved where first
   ##   source asks, once for each pin; pin nothing serves proves nothing, with reason naming it.
   var held = toolchains

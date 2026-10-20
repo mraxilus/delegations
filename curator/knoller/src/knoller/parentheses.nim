@@ -8,8 +8,8 @@
 ##     `2'u^DIMENSIONS`.
 ##   Plain operand: name or literal, with any call, index or field glued after it. Prefix term:
 ##     symbol prefix operators, then one operand. Elements read as `precedence.nim` reads them
-##     (`elementsOf`), on group's line, inside bracket around it. Candidate set is pure reading
-##     of text (`candidatesOf`).
+##     (`elements`), on group's line, inside bracket around it. Candidate set is pure reading
+##     of text (`groupsCandidate`).
 ##   Parser decides each candidate (`Proofs`, answered by `proofs.nim`): group goes where source
 ##     without it parses to same tree, each `nnkPar` of one child collapsed on both sides, alone
 ##     and with every other group removed. So `@(x[i])` stays, since sigil `@` binds `x` before
@@ -53,7 +53,7 @@ func isPlain(tokens: openArray[Token], k: int, source: string): bool =
   else: false
 
 
-func windowOf(tokens: openArray[Token], partners: openArray[int], o: int): (int, int) =
+func window(tokens: openArray[Token], partners: openArray[int], o: int): (int, int) =
   ## Read first and last token around group `o` on its line, inside bracket around it; bracket
   ##   group of line is passed whole, and comment or bracket opening or closing elsewhere ends it.
   let line = tokens[o].line
@@ -74,7 +74,7 @@ func windowOf(tokens: openArray[Token], partners: openArray[int], o: int): (int,
   (first + 1, last - 1)
 
 
-func candidatesOf*(source: string): seq[Group] =
+func groupsCandidate*(source: string): seq[Group] =
   ## Find each group of one of three kinds header gives, in source order; parser decides which
   ##   go.
   let
@@ -88,12 +88,12 @@ func candidatesOf*(source: string): seq[Group] =
 
     # Group opens element of its own, so no callee glues to it; suffix may follow, parser reads.
     let
-      (first, last) = tokens.windowOf(partners, o)
-      elements = elementsOf(tokens, partners, first, last, source)
+      (first, last) = tokens.window(partners, o)
+      elements = elements(tokens, partners, first, last, source)
       at = elements.mapIt(it.first).find(o)
     if at < 0: continue
     let
-      inner = elementsOf(tokens, partners, o + 1, c - 1, source)
+      inner = elements(tokens, partners, o + 1, c - 1, source)
       before = if at > 0: elements[at - 1].kind else: KindElement.Delimiter
       after = if at < elements.high: elements[at + 1].kind else: KindElement.Delimiter
       is_prefix_symbol = before == KindElement.Prefix and
@@ -119,15 +119,15 @@ func candidatesOf*(source: string): seq[Group] =
     )
 
 
-func provenOf(source: string, proofs: Proofs): seq[Group] =
+func groupsProven(source: string, proofs: Proofs): seq[Group] =
   ## Read each candidate of source parser proves; none where no answer holds.
   let answer = proofs.answers.getOrDefault(source)
-  source.candidatesOf.filterIt(it.opening[0] in answer)
+  source.groupsCandidate.filterIt(it.opening[0] in answer)
 
 
-func questionsOf*(source: string, proofs: Proofs): seq[string] =
+func questions*(source: string, proofs: Proofs): seq[string] =
   ## Read what source asks parser: itself, where it holds candidate and no answer for it.
-  if source notin proofs.answers and source.candidatesOf.len > 0: result.add source
+  if source notin proofs.answers and source.groupsCandidate.len > 0: result.add source
 
 
 func checkParentheses*(path, source: string; proofs: Proofs): seq[Report] =
@@ -135,7 +135,7 @@ func checkParentheses*(path, source: string; proofs: Proofs): seq[Report] =
   ##   binary operator, or around plain operand after prefix operator (X.4). Group no proof
   ##   reaches is reported by none, so check never names group fix keeps.
   ##   Named by its suite and `chain.nim` alone until static pass calls it (`fixes.nim`).
-  for group in source.provenOf(proofs):
+  for group in source.groupsProven(proofs):
     result.add initReport(
       path,
       group.line + 1,
@@ -148,9 +148,9 @@ func checkParentheses*(path, source: string; proofs: Proofs): seq[Report] =
 func fixParentheses*(path, source: string; proofs: Proofs): Fix =
   ## Remove each group parser proves, spans last first, so earlier offsets hold; source holding
   ##   candidate and no answer writes nothing, and asks.
-  result = Fix(source: source, asked: source.questionsOf(proofs))
+  result = Fix(source: source, asked: source.questions(proofs))
   var spans: seq[(int, int)]
-  for group in source.provenOf(proofs):
+  for group in source.groupsProven(proofs):
     spans.add @[group.opening, group.closing]
     result.fixed.add initReport(path, group.line + 1, Rule.ParenthesesNeedless)
   for (a, b) in spans.sortedByIt(-it[0]):

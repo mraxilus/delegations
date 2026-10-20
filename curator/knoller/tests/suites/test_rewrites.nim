@@ -38,7 +38,7 @@ func answers(): Table[string, Answer] =
   result["p/b.nim"].symbols[(3, 7)] = global
 
 
-func planOf(
+func planBoth(
   declaring = DECLARING, answers = answers(), fenced = initTable[string, seq[int]]()
 ): Plan =
   ## Plan `RENAME` over both files.
@@ -63,14 +63,14 @@ suite "Internal: Rewrites":
 
 
   test "rename asks every site of old name in scope, and globals of new name in declaring file":
-    let queries = RENAME.queriesOf([("p/a.nim", DECLARING), ("p/b.nim", USING)])
+    let queries = RENAME.queries([("p/a.nim", DECLARING), ("p/b.nim", USING)])
     check queries.len == 2
     check queries[0].sites == @[(1, 8), (3, 2)] and queries[0].names == @["context"]
     check queries[1].sites == @[(2, 4), (3, 7)] and queries[1].names.len == 0
 
 
   test "rename writes declaration, each use resolving to it, and mention in backticks":
-    let plan = planOf()
+    let plan = planBoth()
     check plan.refusal.len == 0
     check DECLARING.applied(plan.edits["p/a.nim"]) ==
       "proc f*(context: int): int =\n  ## Read `context` back.\n  context + 1\n"
@@ -87,7 +87,7 @@ suite "Internal: Rewrites":
       parameter = Symbol(kind: "skParam", name: "a.f.ctx", file: "/r/p/a.nim", line: 1, column: 8)
       global = Symbol(kind: "skLet", name: "b.ctx", file: "/r/p/b.nim", line: 2, column: 4)
       files = [("p/a.nim", declaring), ("p/b.nim", calling)]
-    check RENAME.queriesOf(files)[1].sites == @[(2, 4), (3, 7), (3, 13), (3, 21), (3, 5), (3, 19)]
+    check RENAME.queries(files)[1].sites == @[(2, 4), (3, 7), (3, 13), (3, 21), (3, 5), (3, 19)]
     var named = initTable[string, Answer]()
     named["p/a.nim"] = Answer(path: "p/a.nim")
     named["p/a.nim"].symbols[(1, 8)] = parameter
@@ -169,7 +169,7 @@ suite "Internal: Rewrites":
     ]:
       var nested = answers()
       nested["p/a.nim"].globals["context"] = @[symbol]
-      check planOf(answers = nested).refusal == refusal  # bare name reaches global and member
+      check planBoth(answers = nested).refusal == refusal  # bare name reaches global and member
 
 
   test "rename to keyword or to implicit `result` is refused, as compiler reads either otherwise":
@@ -188,26 +188,26 @@ suite "Internal: Rewrites":
   test "rename is refused whole where any site, or new name, cannot be proved":
     var unresolved = answers()
     unresolved["p/a.nim"].reason = "undeclared identifier"
-    check planOf(answers = unresolved).refusal == "declaring file does not compile on its pin"
+    check planBoth(answers = unresolved).refusal == "declaring file does not compile on its pin"
     var unknown = answers()
     unknown["p/b.nim"].symbols.del((3, 7))
-    check planOf(answers = unknown).refusal == "`p/b.nim:3` resolves to no symbol"
+    check planBoth(answers = unknown).refusal == "`p/b.nim:3` resolves to no symbol"
     var implicit = answers()
     implicit["p/a.nim"].symbols[(3, 2)] = Symbol(kind: "skIterator", name: "iterators.items")
-    check planOf(answers = implicit).refusal ==
+    check planBoth(answers = implicit).refusal ==
       "`p/a.nim:3` resolves to `iterators.items`, which its token does not name"  # `for x in ctx`
-    check planOf(DECLARING & "let s = &\"{ctx + 1}\"\n").refusal ==
+    check planBoth(DECLARING & "let s = &\"{ctx + 1}\"\n").refusal ==
       "`p/a.nim:4` names `ctx` inside interpolated string"  # strformat reads it, no token stands
-    check planOf(DECLARING & "let s = \"a\" & \"{ctx}\"\n").refusal.len == 0  # plain string
+    check planBoth(DECLARING & "let s = \"a\" & \"{ctx}\"\n").refusal.len == 0  # plain string
     var elsewhere = answers()
     elsewhere["p/a.nim"].symbols[(1, 8)].line = 9  # site uses name declared on other line
-    check planOf(answers = elsewhere).refusal == "`p/a.nim:1` names symbol declared elsewhere"
+    check planBoth(answers = elsewhere).refusal == "`p/a.nim:1` names symbol declared elsewhere"
     var shadowing = answers()
     shadowing["p/a.nim"].globals["context"] = @[Symbol(kind: "skProc", name: "m.context")]
-    check planOf(answers = shadowing).refusal == "`context` would shadow `m.context`"
+    check planBoth(answers = shadowing).refusal == "`context` would shadow `m.context`"
     let present = DECLARING & "let context = 1\n"
-    check planOf(present).refusal == "`context` already stands in `p/a.nim`"
-    check planOf(fenced = {"p/a.nim": @[2]}.toTable).refusal == "`p/a.nim:3` is fenced"
+    check planBoth(present).refusal == "`context` already stands in `p/a.nim`"
+    check planBoth(fenced = {"p/a.nim": @[2]}.toTable).refusal == "`p/a.nim:3` is fenced"
     let wide = DECLARING.replace("  ctx + 1", "  ctx + " & "1".repeat(92))
-    check planOf(wide).refusal.endsWith("would cross 100 characters")
-    check planOf(wide).edits.len == 0  # nothing planned in part
+    check planBoth(wide).refusal.endsWith("would cross 100 characters")
+    check planBoth(wide).edits.len == 0  # nothing planned in part
