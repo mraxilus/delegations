@@ -2257,8 +2257,8 @@ moment to the next. In the rig recording of `bc656d30`, which walked both chains
 to 596 mm and 570 mm. Measured 2026-10-20 with Python 3.11, the same way on both.
 
 Cost: the rig plans 64 paths over the crown, for both chains toward both ways in every style
-(`planAhead`). With them, a full `tools/build.nim record` took TODO-FIGURE-RECORD on 2026-10-20
-(Figures). Without them, its time on this tree is unmeasured.
+(`planAhead`). With them, a full `tools/build.nim record` took 24 min 8 s on 2026-10-20 (Figures).
+Without them, its time on this tree is unmeasured.
 
 Verified by `suites/test_asks.nim`. Every way over the crown that the rig keeps holds as far as the
 plan carries it (`TURNS_PLANNED`), less half the rounding of the rig. Those are the four ways that
@@ -2715,7 +2715,7 @@ When they were the twelve ways of six sweeps, every line the suite printed was t
 ran one after another. That took 38.7 s, where every core at once took 28.6 s, on 2026-09-24.
 
 Cost: a change to any `simulation/*.nim`, words included, asks for the answers again. The full
-recording asks them with every other kept file, and took TODO-FIGURE-RECORD on 2026-10-20 (Figures).
+recording asks them with every other kept file, and took 24 min 8 s on 2026-10-20 (Figures).
 A digest of every file is one rule. A list of the files that move the answers would be a second
 thing to keep true.
 
@@ -2762,7 +2762,7 @@ A verb whose stamp is the same records nothing again.
 
 From no recording, the time of each verb alone is unmeasured. With the stamp the same, each verb
 took 0.25 s to 0.33 s on four cores on 2026-10-08. Where it compiled first, each took 2.8 s to
-3.9 s. All of them from one queue took TODO-FIGURE-RECORD on 2026-10-20 (Figures).
+3.9 s. All of them from one queue took 24 min 8 s on 2026-10-20 (Figures).
 
 Each question that the verb asks goes into the stamp as text, and not the source of
 `design/asks.nim`. So a change to how the questions are listed that asks the same questions records
@@ -2943,7 +2943,8 @@ reddens a law.
 - The whole of `nim r koch check`, with the kept answers, the joined suites and
   `tests/test_plan.nim`: 102 s and 86 s. Those are two runs on four cores, on 2026-10-03.
 - `tools/build.nim record`, every recording from one queue, with no result kept, on four cores of a
-  2.8 GHz Xeon, compile included. On 2026-10-20 it took TODO-FIGURE-RECORD.
+  2.8 GHz Xeon, compile included. On 2026-10-20 it took 24 min 8 s, and 90 min 9 s of user time.
+  It asked all 534 jobs, and each kept file came out byte for byte as committed.
 - `design/record`, rig and modelled alone, with each still planned by the plain cost: 6.3 h on
   four cores on 2026-10-03 (Kept answers).
 - `tools/build.nim verdicts`, with its readings kept: 2.8 s to 3.9 s after a change to words,
@@ -3039,7 +3040,7 @@ missed use.
 
 **A rename in `simulation/` computes every kept file again.** Each stamp is a digest of source text,
 so a change of names alone computes the physics again. That is a full recording, which took
-TODO-FIGURE-RECORD on four cores on 2026-10-20 (Figures).
+24 min 8 s on four cores on 2026-10-20 (Figures).
 
 That is the cost of a stamp that reads text and not the program, and it is accepted. Renames of the
 simulation are rare.
