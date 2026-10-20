@@ -266,6 +266,12 @@ for slot in 0..<pool.bound:  # Bound, never `HANDLES_MAX`.
    `curr`, and `len` as a local. The symbols of the source (`mu`, `sigma`) are exempt too, and
    so is the symbol of a unit that a glossary names under `## Standards`. A plural holds a
    collection, and its singular holds one member (`for term in terms`).
+
+   A type that holds a collection takes the plural of its member too (`Bases = set[Basis]`). So
+   does a record with one field for each member. A noun of the domain for the whole wins over
+   the plural (`Matrix`, `Tree`). A word for the form (`Set`, `Seq`, `Array`, `Table`) closes
+   the name only where two collection types would take one name. Then each of them takes its
+   word (`BasesSet`, `BasesArray`), after any qualifier.
 7. Name each distinction, then choose its form by what the code does with it. An axis that
    code selects between at compile time is a closed enum (`Chirality`). A pair that several
    types carry is a small generic wrapper, named by its axis (`Chiral[T]`, `Spatial[T]`).
