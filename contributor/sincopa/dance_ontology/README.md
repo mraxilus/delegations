@@ -67,7 +67,7 @@ nim r tools/build.nim assets                           # faces every page ships,
 nim r tools/build.nim pages                            # every page and script, into build/
 nim r tools/build.nim drive                            # every page rendered, and every face proven
 nim r tools/build.nim verdicts                         # rewrite simulation/verdicts.md
-nim r tools/build.nim floors                           # how far the plan carries each hold above
+nim r tools/build.nim floors                           # how far a plan carries each rig sweep above
 nim r tools/build.nim shot                             # screenshot helper, for node and Playwright
 ```
 
@@ -132,8 +132,7 @@ pages/                             hand-written pages this project stands behind
 tools/pages.nim, tools/bundle.nim  copy the shell in; fold a page into one file
 tools/build.nim                    this project's verbs: pages, assets, types, drive,
                                    fixtures, confirmed, watched, modelled, rig, record,
-                                   turns, verdicts, answers, floors, engine, shot, system,
-                                   clean
+                                   verdicts, answers, floors, engine, shot, system, clean
 tools/drive/                       harness `drive` renders every page with, in TypeScript
 tests/                             the simulation's laws (test_rigid, test_read), the engine's
                                    (test_engine) and the planner's (test_plan); test_said, in
