@@ -40,7 +40,7 @@ func facing*(rig: Rig, apart: float): array[Body, Stance] =
   [Stance(centre: (0.0, 0.0), facing: PI / 2.0),
    Stance(centre: (0.0, apart), facing: -PI / 2.0)]
 
-func axesOf*(stance: Stance): Axes =
+func toAxes*(stance: Stance): Axes =
   ## Body's own right and forward, in world.
   let
     c = cos(stance.facing)
@@ -64,7 +64,7 @@ func side*(arm: Arm): float = (if arm == Arm.Right: 1.0 else: -1.0)
 
 func shoulder*(rig: Rig, stance: Stance, arm: Arm): Vector =
   ## Joint's centre in world.
-  toWorld(axesOf(stance), (side(arm) * rig.shoulder_out, 0.0, rig.shoulder_up))
+  toWorld(stance.toAxes, (side(arm) * rig.shoulder_out, 0.0, rig.shoulder_up))
 
 func twist*(stance: array[Body, Stance]): float =
   ## How far Two has turned relative to One, radians, from face-to-face.

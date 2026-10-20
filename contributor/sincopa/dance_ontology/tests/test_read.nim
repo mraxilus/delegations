@@ -86,7 +86,7 @@ proc settling(id: int) {.thread.} =
         is_away = is_away,
       )
       couple.settle()
-      for k in 0..<links.len: SETTLED_ARMS[i][k] = couple.poseOf(k).arms
+      for k in 0..<links.len: SETTLED_ARMS[i][k] = couple.poseLink(k).arms
       couple.free()
 
 proc settleAll() =
@@ -135,7 +135,7 @@ suite "Internal: Two hands":
     ## as four crossings and as one (repository issue 88).  Same count for exact
     ## figures and for thousand poses jittered by 1e-13, which is below anything
     ## pose carries, and count in exact terms is one in both.
-    func armsOf(first, second: array[7, Vector]): Arms =
+    func toArms(first, second: array[7, Vector]): Arms =
       ## Two connections from their seven points each, join in middle.
 
       func pose(shoulder_point, elbow_point, wrist_point, join_point: Vector): ArmPose =
@@ -164,7 +164,7 @@ suite "Internal: Two hands":
                           (0.7, 0.0, 1.5), (0.9, 0.0, 1.5), (1.1, 0.1, 1.5), (1.3, 0.2, 1.5)]
     var random = initRand(7)
     for (name, other) in [("at vertex", at_vertex), ("along", along_base)]:
-      let exact = crossings(armsOf(base, other)).len
+      let exact = crossings(toArms(base, other)).len
       var counts: CountTable[int]
       for trial in 0..<TRIALS_JITTER:
         var
@@ -181,7 +181,7 @@ suite "Internal: Two hands":
             other_jittered[i].y + random.rand(-1e-13..1e-13),
             other_jittered[i].z,
           )
-        counts.inc crossings(armsOf(base_jittered, other_jittered)).len
+        counts.inc crossings(toArms(base_jittered, other_jittered)).len
       checkpoint &"{name}: exact {exact}, jittered {counts}"
       check exact == 1
       check counts.len == 1
@@ -197,7 +197,7 @@ suite "Internal: Two hands":
     ##   Law is argument minimum itself, so reader that leaves out one end of each
     ##     connection fails here.  Law below holds reader fair to both arms.
 
-    func marginsOf(
+    func marginsHeld(
       stance: array[Body, Stance], links: seq[Link], arms: Arms, tight: Tight
     ): tuple[least, named: float] =
       ## Least margin of any joint of any held arm, and margin of joint `tight` names.
@@ -216,7 +216,7 @@ suite "Internal: Two hands":
     let links = @[Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Right)])]
     var couple = build(HUMAN, restStance(HUMAN, APART), Band.Torso, links)
     couple.settle()
-    var poses = @[(stance: couple.stance, links: links, arms: @[couple.poseOf(0).arms])]
+    var poses = @[(stance: couple.stance, links: links, arms: @[couple.poseLink(0).arms])]
     couple.free()
     for i, task in SETTLES:
       # Stance each couple was built at, which settling keeps.
@@ -228,7 +228,7 @@ suite "Internal: Two hands":
     for (stance, pose_links, arms) in poses:
       let
         tight = tightest(HUMAN, stance, pose_links, arms)
-        (least, named) = marginsOf(stance, pose_links, arms, tight)
+        (least, named) = marginsHeld(stance, pose_links, arms, tight)
       check tight.room < Inf
       check tight.strain >= 0.0 and tight.strain <= 1.0
       check named =~ tight.room

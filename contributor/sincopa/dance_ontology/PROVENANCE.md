@@ -192,7 +192,7 @@ side of the Follow, in the words of the glossary. Each law failed on a break mad
 breaks swapped starboard and port, named the Follow first, and set the side of the Follow in
 capitals. One more listed the sides of the glossary in another order.
 
-**The drawings name a facing by reading the pose back through the model.** `facingOf` in
+**The drawings name a facing by reading the pose back through the model.** `facingDrawn` in
 `parts.nim` reads a drawn pose back as a facing, from where each dancer sees the other.
 `turnedFacing` names the facing that a turn on the spot of each dancer draws from Face-to-face. The
 review page says through it which facing each standard diagram draws.
@@ -202,11 +202,11 @@ Verified by `suites/test_marks.nim`, suite "Internal: The sixteen facings, drawn
 the turns on the spot that reach each facing from Face-to-face.
 
 **The rests and the chain name their facing.** A hold rests where its two connections run parallel
-and cross nothing (rule 31). `parts.restOf` names that facing, read off the pose through the model:
-Face-to-face for hand to hand, and Face-to-back for the crossed pair. `parts.facingAt` names the
-facing of each step of the chain in the same way. The review page takes each name from there, and
-the rig page reads its headings from the review page. Each card of the review page carries its rest
-as a `Facing`.
+and cross nothing (rule 31). `parts.facingRest` names that facing, read off the pose through the
+model: Face-to-face for hand to hand, and Face-to-back for the crossed pair. `parts.facingAt` names
+the facing of each step of the chain in the same way. The review page takes each name from there,
+and the rig page reads its headings from the review page. Each card of the review page carries its
+rest as a `Facing`.
 
 **The simulation reads its own facing, and `simulation/words.nim` names it.** The simulation imports
 nothing from the model, so it cannot be told a facing. `body.quartersTo` reads where each body sees
@@ -299,7 +299,7 @@ every picture says what its frame is, at any size. Verified by the gates of the 
 
 **Rule 24 is measured along the reach, and not only at its sharpest corner.** A settled reach picks
 its way past the marks it must not touch. It weighs three candidates on length and turns together
-(`readingCost`): the taut string, and a bow over each side. `crestOf` measures rule 24 along the
+(`readingCost`): the taut string, and a bow over each side. `crestReach` measures rule 24 along the
 reach. A reach that leaves its chord must crest away from both hands.
 
 Rejected: the taut string taken unweighed where it turns little. It hugs a mark near a hand, so it
@@ -365,7 +365,7 @@ one shared between them. The straight one **hinges**: it gives up its bend late 
 
 That order is what does the work. The snake is at its tightest, 0.82 of the swing of one connection,
 at 1.42 turns, and opens after. **Measured** every hundredth of a turn with `parts.pairAt` and
-`route.crossingsOf`, 2026-10-08: the third crossing arrives at 1.24 turns. There it is 7.74 from the
+`route.crossings`, 2026-10-08: the third crossing arrives at 1.24 turns. There it is 7.74 from the
 centre of the nearest hand, against a trim of 7.7. It moves away, then comes back to 12.6 from the
 centre of a hand at 1.43, while the snake is still at 0.82. A snake that opens early drives it under
 the mark.
@@ -554,7 +554,7 @@ page under `build/simulation/`.
 
 **The four are a manner of turn, and not a way of turning.** `Manner` and `MANNERS` name the four
 through the workbench. The pages, the checks and the ledger say "manner". "Way" names clockwise
-against anticlockwise, as `wayOf` and `wayName` return it. Rejected: one word for both senses.
+against anticlockwise, as `wayTurn` and `wayName` return it. Rejected: one word for both senses.
 Rejected: a rename of `Way` as well, which leaves the direction of the turn unnamed.
 
 The lock or wrap of the drawing is `terms.Modifier`, so `Way` names the direction alone
@@ -760,9 +760,9 @@ that a hatched mark moves nothing of its own.
 31).**
 The seven are swan, diamond, cross, neutral, cross, diamond and swan. The chain has ends, and is not
 a cycle (rule 30). Hand to hand and the crossed pair walk the same chain, and differ only in the
-facing where the hold is unwound (rule 31). `parts.restOf` names that facing, and `parts.chainFor`
-lays the seven out from it. Verified by `checkHandTurns`, which measures the chain of hand to hand
-alone.
+facing where the hold is unwound (rule 31). `parts.facingRest` names that facing, and
+`parts.chainFor` lays the seven out from it. Verified by `checkHandTurns`, which measures the chain
+of hand to hand alone.
 
 **The twist is measured from the pose, and is not told (rule 28).** Each held hand sits on the rim
 of its body, and both bodies stand on the axis of the pair. So the angle a hand makes with that axis
@@ -990,7 +990,7 @@ finger reaches 0.15 m. No study measures that distance, so it is derived, and th
 derivation is 0.14 to 0.16 m.
 
 **A hand is carried at the centre of its grip, 0.08 m past the wrist, and each band is asked of
-that point (`carry`, `carriedOf`).** The tape gives that centre (`rig.nim`). It lies between the
+that point (`carry`, `pointCarried`).** The tape gives that centre (`rig.nim`). It lies between the
 join of a palm grip and that of a finger grip, and neither join serves as that point.
 
 Measured 2026-10-08. Asked of the fingertips, where the hands meet, the band lets the wrist and
@@ -1617,9 +1617,9 @@ Rejected: the first distance that holds. It is chest to chest, so a couple asked
 crush the free arm of the follow between two torsos.
 
 Strain is read as the worst over every joint of every arm, both waists, and the two swings of every
-collarbone (`strainOf`, `Strain`). It is nought outside every ease, one at some end, and more past
-it. A stop with no ease costs nothing to lean on, and counts only past half a degree (`SLACK`). The
-engine solves its limits rather than clamps them.
+collarbone (`strainWorst`, `Strain`). It is nought outside every ease, one at some end, and more
+past it. A stop with no ease costs nothing to lean on, and counts only past half a degree (`SLACK`).
+The engine solves its limits rather than clamps them.
 
 Strain does not read the edge of the shoulder. So a still can stand with an arm on that wall and
 read at ease. The search for where to stand does not weigh the edge either (Open questions).
@@ -1681,7 +1681,7 @@ half of what a card asks.
 An orbit keeps the walker facing the centre (rule 32). So the relation of the walker to the
 connection never changes, and the dancer at the centre turns against it. Physically, an orbit is
 the dancer at the centre turning the other way about. That is the reading of the Architect. The
-connection goes round the dancer who turns, so the hands go over their crown. `asks.turnerOf` holds
+connection goes round the dancer who turns, so the hands go over their crown. `asks.turner` holds
 this one rule for stills and for moving cards.
 
 The page walks each single-hand move clockwise for every manner, as its caption says, and the chain
@@ -1938,9 +1938,9 @@ each moment it takes the pose nearest to ease, close to the last pose, that keep
 The hands stay joined. Every capsule stays 20 mm clear of every other (`clearance`). Each joint that
 the judge stops at stays six degrees inside its end (`margin`), and each waist and collarbone stays
 within its range. Each upper arm stays the same six degrees inside the edge of the shoulder, read in
-both cost paths from one term (`ArmPlaced.outside`, `marginOf`). The joined hands stay 30 mm inside
-their band (`room`). They turn against each other no further than their grip lets, with the same six
-degrees to spare (`gripBroken`, Planned grip).
+both cost paths from one term (`ArmPlaced.outside`, `marginsArm`). The joined hands stay 30 mm
+inside their band (`room`). They turn against each other no further than their grip lets, with the
+same six degrees to spare (`gripBroken`, Planned grip).
 
 Each face is a capsule of the plan too. The arms and the girdles of the partner keep clear of it,
 as in the engine. Verified by `test_plan.nim`: the plan pairs each face with every capsule that the
@@ -2069,7 +2069,7 @@ its reason (`CARDS_REFUSED` in `suites/test_asks.nim`):
   upper arms of the follow behind the head, up to 90 degrees past the edge.
 
 `la` is the turn of the lead, and `fo` is the orbit of the follow, which asks the same
-(`asks.turnerOf`). The review page reads the same answers. It shows not modelled on G03 and G05,
+(`asks.turner`). The review page reads the same answers. It shows not modelled on G03 and G05,
 and on the last two steps of G04 and G06, and on no other cell. Read by a probe outside the tree
 on the page that the suites write, `build/suites/design/review.html`, 2026-10-12.
 
@@ -2188,7 +2188,7 @@ hands sink, the plan lifts them. The recording keeps the planned turn where the 
 The cross-name chain held above then stops near 1.53 turns, where the edge forbids more.
 
 **The plan answers every stop of the walk over the crown, and not only a hand that sinks (pull
-request 629, D1 of its notes).** The Architect ruled on 2026-10-12 (`waysOf`). So the same-name
+request 629, D1 of its notes).** The Architect ruled on 2026-10-12 (`ways`). So the same-name
 chain held above is planned too. The wrist of the lead stops its walk at +1.80, and arm through arm
 stops it at -1.66. The plan carries it to 2.5 turns both ways. Rejected: a plan for a sinking hand
 alone, which leaves that chain at -1.66 and +1.80, where the walk stops it.
@@ -2482,7 +2482,7 @@ So `withFaces` puts `<meta charset="utf-8">` first in a page that declares none.
 **Each Noto face ships whole, as the TrueType of its own release.** Noto was chosen so that no
 character of a page falls outside its faces. A Latin subset undoes that (Article X.8, as #425 rules
 it). Commit Mono is no Noto, and keeps its Latin subset. Each rule declares the media type and the
-format of its own file, which `formatOf` reads off its extension.
+format of its own file, which `formatDeclared` reads off its extension.
 
 Verified by `suites/test_faces.nim`, test "every Noto face ships whole, as TrueType of its own
 release". With the Noto subsets of `@fontsource` back in its rows, that law fails on each of the six
@@ -2564,9 +2564,9 @@ draws a card differently on each machine, and X.8 forbids that. Verified by hand
 **Two mirror twins are one question, and the simulation answers it once.** Two frame holds are
 mirror twins where each is the other seen in a mirror: each hand on the other arm, at opposite
 turns. Of two mirror twins, the simulation answers the one whose first connection is on the left arm
-of the lead. It reflects that answer for the other, the reflected twin (`walk.twinOf`). Of a frame
-hold that is its own mirror, it answers the way that turns positive, and reflects it for the other
-way.
+of the lead. It reflects that answer for the other, the reflected twin (`walk.twinAnswering`). Of a
+frame hold that is its own mirror, it answers the way that turns positive, and reflects it for the
+other way.
 
 The Architect chose this on 2026-10-04, so that a recording walks one twin of each pair. The rig
 suite asks one reflected twin raw, R-r held low, so that a law holds the engine to its mirror
@@ -2588,10 +2588,10 @@ That is unmeasured since the edge of the shoulder. Asked on its own, it holds 0.
 (`simulation/answers.json`, 2026-10-11).
 
 The simulation reflects each answer that a law or the report reads: a sweep, a walk, and the search
-of a still (`walk.twinOf`). The reflection flips every point across the line of the couple. Each arm
-takes the points of the other arm, and each twist turns the other way. That is because the rig
-states the ends of the left arm mirrored. The simulation reflects a facing about the way that its
-body faces at rest, so a wound turn keeps its laps.
+of a still (`walk.twinAnswering`). The reflection flips every point across the line of the couple.
+Each arm takes the points of the other arm, and each twist turns the other way. That is because the
+rig states the ends of the left arm mirrored. The simulation reflects a facing about the way that
+its body faces at rest, so a wound turn keeps its laps.
 
 **The rig page shows each reflected twin as the still that its mirror twin keeps, mirrored, and each
 arm recoloured.** The rig recording keeps each answered still once. A twin card keeps no still of
@@ -2643,7 +2643,7 @@ couples stand 398 and 358 mm apart, so it is no mirror image. Measured 2026-10-1
 of `8556fcc0`, and read 2026-10-20 in the report.
 
 Of the 95 stills of the rig, 41 are reflected twins, and 11 rest face to back, counted by
-`walk.twinOf` on 2026-10-04.
+`walk.twinAnswering` on 2026-10-04.
 
 Verified on 2026-10-04 against the recordings of `9bbf656`: every answer that the simulation
 computes is the same, to the last bit. Those are 54 stills of the rig, all 231 modelled badges, and
@@ -2661,8 +2661,8 @@ kept sweep of that twin too, ways swapped, to the last bit, measured 2026-10-09.
 even where the simulation reflects no twin.
 
 Every law that stands a kept still stands each reflected twin as the twin that it reflects
-(`standOf`), which is what the simulation answers. With each reflected twin stood raw, every law of
-the rig suite passed too on 2026-10-09, before the edge of the shoulder. On this physics one twin
+(`standLive`), which is what the simulation answers. With each reflected twin stood raw, every law
+of the rig suite passed too on 2026-10-09, before the edge of the shoulder. On this physics one twin
 stood raw does not hold (below), so a law that stood it raw would fail.
 
 Cross-name at minus half a turn, stood raw at its kept 0.40 m, holds at ease, and so does its twin.
@@ -2823,7 +2823,7 @@ Each routine answers from its arguments alone, so the answer kept is the answer 
 gives again, to the last bit. A float in a key is its bits, so nought and minus nought are two keys.
 The recorder keeps answers. Every law asks afresh, so no law reads an answer that another law made.
 
-**A walk to a lesser turn is the first part of a walk to a greater one.** `walkedOf` turns one step
+**A walk to a lesser turn is the first part of a walk to a greater one.** `walkedRaw` turns one step
 at a time from one distance, and `most` only ends its loop. So a walk kept to 2.5 turns gives a walk
 to any lesser turn, cut where that walk would end (`cut`). A walk that stopped gives every walk from
 that distance. The sweeps of the report and of the rig viewer walk each distance that they try, to
@@ -2846,8 +2846,8 @@ is the answer of one thread, to the last bit. A batch is one distance, and one m
 that found the queue empty (`walk.SPARE`). The searches that do this are these:
 
 - `walk.furthest`, the walk of a sweep from where it carries furthest
-- `walk.standingOf`, the search of distances for a still
-- `walk.isReachingOf`, whether a turn is reached
+- `walk.standingSearched`, the search of distances for a still
+- `walk.isReachingSearched`, whether a turn is reached
 - `readings.readRung`, the rungs of the report.
 
 While every worker has a job, no core walks a distance past the answer. As the queue empties, the
@@ -3066,8 +3066,8 @@ comes first there, with a comment, because the line reads redundant and is not.
 Five lines reproduce the crash on 2.2.12 with nothing from this project, verified 2026-09-10 (issue
 106). Verified by `suites/test_route.nim`, which takes a run length in a `const`. Without that law,
 to tidy the line away shows up only as suites that fail to build. `result +=` on a float survives in
-`limb.comfort`, `plan.comfortOf`, `plan.crampedOf`, `plan.gripBroken`, `plan.violationOf` and
-`checks.inkOf`, none of which the VM evaluates today. That is latent, and not urgent.
+`limb.comfort`, `plan.comfort`, `plan.cramped`, `plan.gripBroken`, `plan.violation` and
+`checks.inkLength`, none of which the VM evaluates today. That is latent, and not urgent.
 
 ## Open questions
 
@@ -3174,10 +3174,10 @@ to tidy the line away shows up only as suites that fail to build. `result +=` on
   gives 1.00 where the engine is well inside the ends. Measured 2026-10-12 by a probe outside the
   tree. Right arms differ too, so the swapped ends of the left arm (#610) are not all of it. The
   reading could take the joint frame of the engine, and a ruling picks whether it does.
-- **Strain, the rig viewer and the report do not read the edge.** `strainOf`, `read.tightest`, the
-  joint bars of the viewer and `simulation/verdicts.md` read extension, adduction and twist. A still
-  can lean on the wall of the edge and read at ease. The reading needs a unit for the edge, which
-  has no ease to count in.
+- **Strain, the rig viewer and the report do not read the edge.** `strainWorst`, `read.tightest`,
+  the joint bars of the viewer and `simulation/verdicts.md` read extension, adduction and twist. A
+  still can lean on the wall of the edge and read at ease. The reading needs a unit for the edge,
+  which has no ease to count in.
 - **One stop names a swing past its range and an arm past the edge.** `Stop.Swing` covers both,
   and says that the upper arm swings no further. In L-l low, from the stances that the report tells,
   all three stops by swing are at the edge (Rigid body engine). A stop of its own for the edge would

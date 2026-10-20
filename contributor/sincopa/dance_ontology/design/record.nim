@@ -56,8 +56,9 @@ const SLOWEST* = ["rig D01", "modelled hc_la", "rig C01", "rig C02", "modelled h
   ##   once: rig D01 391 s, modelled hc_la 379 s, rig C01 365 s and C02 227 s, modelled hw_la_0
   ##   152 s, modelled pc_la 88 s and pw_la_0 76 s.  Each still plans 32 paths on every core
   ##   (`walk.planAhead`), which modelled's planned questions find kept.  C07 and C06 take C01
-  ##   and C02 reflected (`walk.twinOf`), and D07 takes D01's paths kept, so they follow in order
-  ##   of `wanted`, as every other job does: report first, whose sweeps walk every distance.
+  ##   and C02 reflected (`walk.twinAnswering`), and D07 takes D01's paths kept, so they follow
+  ##   in order of `wanted`, as every other job does: report first, whose sweeps walk every
+  ##   distance.
 
 # Mutable and global: thread takes one argument, so workers read queue and what answers it here.
 var
@@ -71,7 +72,7 @@ var
 
 #[ Queue ]#
 
-func pathOf*(root: string, stamps: array[Recording, string], task: Task): string =
+func pathResult*(root: string, stamps: array[Recording, string], task: Task): string =
   ## Where one job's result is kept: under its recording and that recording's stamp.
   root / &"{task.recording}-{stamps[task.recording]}" / &"{task.index}.txt"
 
@@ -96,7 +97,7 @@ proc work(worker: int) {.thread.} =
       if k >= QUEUE.len:
         discard SPARE.fetchAdd(1)
         break
-      let path = pathOf(ROOT, STAMPS, QUEUE[k])
+      let path = pathResult(ROOT, STAMPS, QUEUE[k])
       if fileExists(path): continue
       let text = ASKED(QUEUE[k])
       writeFile(path & ".part", text)
@@ -124,17 +125,17 @@ var
   READ_SWEEPS: seq[SweepAsk]  ## Sweeps report lacks, plain values each worker copies.
   READ_RUNGS: seq[RungAsk]  ## Rungs report lacks; their jobs come first.
 
-proc nameOf(task: Task): string =
+proc nameTask(task: Task): string =
   ## Name of one job, as `SLOWEST` names it.
   case task.recording
-  of Recording.Rig: "rig " & nameOf(jobs()[task.index])
+  of Recording.Rig: "rig " & nameJob(jobs()[task.index])
   of Recording.Modelled: "modelled " & questions()[task.index].key
   of Recording.Answers: &"answers {tasks()[task.index]}"
   of Recording.Verdicts:
-    if task.index < READ_RUNGS.len: &"verdicts rung {keyOf(READ_RUNGS[task.index])}"
-    else: &"verdicts sweep {keyOf(READ_SWEEPS[task.index - READ_RUNGS.len])}"
+    if task.index < READ_RUNGS.len: &"verdicts rung {key(READ_RUNGS[task.index])}"
+    else: &"verdicts sweep {key(READ_SWEEPS[task.index - READ_RUNGS.len])}"
 
-proc askedOf(task: Task): string =
+proc answerTask(task: Task): string =
   ## Answer one job as its result file keeps it, and say so with its time.
   ##   Rig job keeps its line of what it found first, then its text.
   ##   Report's readings are read from lists set before any thread starts, and only read.
@@ -144,14 +145,14 @@ proc askedOf(task: Task): string =
     of Recording.Rig:
       let (note, text) = recorded(jobs()[task.index])
       result = note & "\n" & text
-      echo &"{nameOf(task)}: {note} ({epochTime() - start:.0f} s)"
+      echo &"{nameTask(task)}: {note} ({epochTime() - start:.0f} s)"
       return
     of Recording.Modelled: result = $answered(questions()[task.index])
     of Recording.Answers: result = taskText(tasks()[task.index])
     of Recording.Verdicts:
       result = (if task.index < READ_RUNGS.len: rungText(READ_RUNGS[task.index])
                 else: sweepText(READ_SWEEPS[task.index-READ_RUNGS.len]))
-    echo &"{nameOf(task)}: {result.len} bytes ({epochTime() - start:.0f} s)"
+    echo &"{nameTask(task)}: {result.len} bytes ({epochTime() - start:.0f} s)"
 
 proc isKept(path, stamp: string): bool =
   ## Whether kept file already carries this stamp, so nothing need be asked again.
@@ -198,16 +199,16 @@ proc main() =
       continue
     for i in 0..<counts[recording]:
       tasks_all.add (recording, i)
-      names.add nameOf((recording, i))
+      names.add nameTask((recording, i))
   echo &"{tasks_all.len} jobs to ask"
   keepAnswers()
-  runQueue(ordered(tasks_all, names, SLOWEST), root, stamps, max(1, countProcessors()), askedOf)
+  runQueue(ordered(tasks_all, names, SLOWEST), root, stamps, max(1, countProcessors()), answerTask)
 
   # Assemble each kept file in its recording's own order, then drop its results.
   for recording in wanted:
     if not is_due[recording]: continue
     var texts: seq[string]
-    for i in 0..<counts[recording]: texts.add readFile(pathOf(root, stamps, (recording, i)))
+    for i in 0..<counts[recording]: texts.add readFile(pathResult(root, stamps, (recording, i)))
     case recording
     of Recording.Rig:
       var bodies: seq[string]

@@ -18,7 +18,7 @@
 ##   Every still card of reference is recorded beside sweeps, one moment each,
 ##     wound to its facing as `walk.stood` winds it, so viewer can lay simulation's
 ##     answer beside each cell.
-##   Each answered still is kept once.  Reflected twin card (`walk.twinOf`) keeps none of
+##   Each answered still is kept once.  Reflected twin card (`walk.twinAnswering`) keeps none of
 ##     its own: it names card that keeps still it mirrors (`mirror`), and page mirrors that
 ##     still (`design/twins`).  Twin whose answer no card asks keeps answer itself, under its
 ##     own name.
@@ -34,7 +34,7 @@ when compileOption("profiler"): import std/nimprof
 import std/[math, options, os, sequtils, strformat, strutils]
 
 import ../simulation/[body, hold, rig, seen]
-from ../simulation/walk import mirrored, twinOf
+from ../simulation/walk import mirrored, twinAnswering
 import ./[asks, stamps]
 
 
@@ -209,16 +209,16 @@ func jobs*(): seq[Job] =
   for i in 0..<SHOWN.len: result.add Job(cut: i, is_still: false)
   for ask in stillAsks(): result.add Job(ask: ask, is_still: true)
 
-func nameOf*(job: Job): string =
+func nameJob*(job: Job): string =
   ## Name of one job: still by its card's key, sweep by its hold and band.
   if job.is_still: job.ask.key
   else: &"{SHOWN[job.cut].name}, {BANDS[ord(SHOWN[job.cut].band)]}"
 
-func keeperOf(ask: StillAsk, links: seq[Link], turns: float): string =
+func keeperTwin(ask: StillAsk, links: seq[Link], turns: float): string =
   ## Card that keeps answer to reflected twin `ask`: first card that asks it unreflected,
   ## or `ask` itself where none does.
   for other in stillAsks():
-    if not twinOf(other.links, other.turns, other.isRestAway).is_reflected and
+    if not twinAnswering(other.links, other.turns, other.isRestAway).is_reflected and
         other.links == links and other.turns == turns and
         other.isRestAway == ask.isRestAway and other.head == ask.head and
         other.is_either_way == ask.is_either_way and other.who == ask.who and
@@ -232,8 +232,8 @@ proc recorded*(job: Job): tuple[note, text: string] =
   if job.is_still:
     let
       ask = job.ask
-      twin = twinOf(ask.links, ask.turns, ask.isRestAway)
-      keeper = (if twin.is_reflected: keeperOf(ask, twin.links, twin.turns) else: ask.key)
+      twin = twinAnswering(ask.links, ask.turns, ask.isRestAway)
+      keeper = (if twin.is_reflected: keeperTwin(ask, twin.links, twin.turns) else: ask.key)
     if keeper != ask.key:
       result.note = &"{ask.key}: mirror of {keeper}"
       result.text = &"{{\"key\":\"{ask.key}\",\n\"hold\":\"{ask.key}\",\n" &
@@ -272,7 +272,7 @@ proc recorded*(job: Job): tuple[note, text: string] =
 proc rigStamp*(): string =
   ## Stamp recording carries: physics, this verb, and every job.
   ##   Sweep job names only its place in `SHOWN`, and `SHOWN` is in this verb's source.
-  stampOf(currentSourcePath(), jobs().mapIt($it))
+  stampRecording(currentSourcePath(), jobs().mapIt($it))
 
 
 func assembled*(stamp: string, texts: seq[string]): string =

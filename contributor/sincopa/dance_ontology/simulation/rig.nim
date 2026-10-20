@@ -290,7 +290,7 @@ const SLACK* = toRadians(0.5)
   ## its limits rather than clamping them, so joint leant on its stop reads hair
   ## past it.
 
-func strainOf*(range: Range, value: float): float =
+func strainRange*(range: Range, value: float): float =
   ## How far into ease before either end `value` sits: nought outside every
   ## ease, one at end, more past it.  Stop with no ease costs nothing to lean
   ## on, and counts only once value is past it by more than `SLACK`, in units of

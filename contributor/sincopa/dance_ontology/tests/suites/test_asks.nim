@@ -13,7 +13,7 @@ from ../../simulation/plan import isMirrorSame, STRIDE
 from ../../simulation/rigid import ELBOW_END, ELBOWS_APART, faceCapsule, Mark, ON_UPPER,
   restStance, SAG, trunkCapsules
 from ../../simulation/rigid {.all.} import RAISE
-from ../../simulation/walk import mirrored, MOST, stands, STEP, STYLES, twinOf
+from ../../simulation/walk import mirrored, MOST, stands, STEP, STYLES, twinAnswering
 import ../../src/dance_ontology/rotation
 from ../../src/dance_ontology/draw/pose import relative
 from ../../src/dance_ontology/draw/route import overArm
@@ -74,14 +74,14 @@ const
   ]
     ## Cards shoulder's edge refuses, each with its reason (Architect, issue 611, 2026-10-11,
     ##   D1): first wall tried for two at whole turn, then each card still failing named here.
-    ##   `la` is lead's turn and `fo` follow's orbit, which asks same (`asks.turnerOf`).
+    ##   `la` is lead's turn and `fo` follow's orbit, which asks same (`asks.turner`).
     ##   Measured 2026-10-11 and 2026-10-12 by probes outside tree (`PROVENANCE.md`, Planned
     ##     turn, and Open questions).
 
 
 type Lifted = tuple[card: string, at: float, who: Body, arm: Arm, z: float]
   ## One joined hand at one recorded moment past face to face: card, turns from rest, whose
-  ## hand, and height it is carried at (`limb.carriedOf`).
+  ## hand, and height it is carried at (`limb.pointCarried`).
 
 
 func arranged(stance: array[Body, Stance]): tuple[axis, facing: float] =
@@ -97,16 +97,16 @@ func arranged(stance: array[Body, Stance]): tuple[axis, facing: float] =
   (floorMod(bearing - page(one.facing), 360.0),
    floorMod(page(two.facing) - page(one.facing), 360.0))
 
-func apartOf(a, b: float): float =
+func apart(a, b: float): float =
   ## How far two bearings in degrees are apart, round either way.
   let d = floorMod(a - b, 360.0)
   min(d, 360.0 - d)
 
-func armOf(still: JsonNode, who: Body, arm: Arm, join: Vector): ArmPose =
+func toArmPose(still: JsonNode, who: Body, arm: Arm, join: Vector): ArmPose =
   ## One arm as recording keeps it, from engine's own capsules, holding at `join`: each
   ##   limb's capsule runs its radius in from both joints.
   ##   Sibling: `test_shoulder.armMomentsRig` reads elbow at forearm link's origin instead, as
-  ##     judge does (`rigid.armPoseOf`).  Here it is upper arm's own end, as page draws it; two
+  ##     judge does (`rigid.armPoseNow`).  Here it is upper arm's own end, as page draws it; two
   ##     differ by elbow's parting, up to 7.8 mm in `One hand, same name · above`.
   let
     tags = still["tag"].getElems
@@ -129,7 +129,7 @@ func armOf(still: JsonNode, who: Body, arm: Arm, join: Vector): ArmPose =
   result.wrist = fore.z + forward * fore.radius
   result.join = join
 
-func handLineOf(still: JsonNode, who: Body, arm: Arm): tuple[a, z: Vector] =
+func lineHand(still: JsonNode, who: Body, arm: Arm): tuple[a, z: Vector] =
   ## Hand's own line as recording keeps it: middle of its three capsules (`rigid.handCapsules`).
   let
     tags = still["tag"].getElems
@@ -143,7 +143,7 @@ func handLineOf(still: JsonNode, who: Body, arm: Arm): tuple[a, z: Vector] =
       inc seen
   raiseAssert "No hand of three capsules recorded for " & $who & " " & $arm & "."
 
-func armsOf(still: JsonNode, links: seq[Link]): Arms =
+func toArms(still: JsonNode, links: seq[Link]): Arms =
   ## Every connection's two arms, lead's first, as recording keeps them.
   ##   Join of each connection is found where it lies, on both its hands' lines: mirror twin
   ##     keeps its twin's joins in its twin's order (`twins.mirrored`), so order names no
@@ -152,8 +152,8 @@ func armsOf(still: JsonNode, links: seq[Link]): Arms =
   let joins = still["joins"][^1].getElems
   for link in links:
     let
-      a = handLineOf(still, link.ends[0].body, link.ends[0].arm)
-      b = handLineOf(still, link.ends[1].body, link.ends[1].arm)
+      a = lineHand(still, link.ends[0].body, link.ends[0].arm)
+      b = lineHand(still, link.ends[1].body, link.ends[1].arm)
     var
       join: Vector
       nearest = Inf
@@ -163,15 +163,15 @@ func armsOf(still: JsonNode, links: seq[Link]): Arms =
         off = closest(point, point, a.a, a.z).gap + closest(point, point, b.a, b.z).gap
       if off < nearest:
         (join, nearest) = (point, off)
-    result.add [armOf(still, link.ends[0].body, link.ends[0].arm, join),
-                armOf(still, link.ends[1].body, link.ends[1].arm, join)]
+    result.add [toArmPose(still, link.ends[0].body, link.ends[0].arm, join),
+                toArmPose(still, link.ends[1].body, link.ends[1].arm, join)]
 
 func capsuleAt(frame: JsonNode, i: int): tuple[a, z: Vector] =
   ## Two ends of `i`th capsule of one recorded moment.
   ((frame[6*i].getFloat, frame[6*i+1].getFloat, frame[6*i+2].getFloat),
    (frame[6*i+3].getFloat, frame[6*i+4].getFloat, frame[6*i+5].getFloat))
 
-func faceGapOf(recording, frame: JsonNode): float =
+func gapFace(recording, frame: JsonNode): float =
   ## Nearest any arm of either dancer comes to either face at one recorded moment, past both
   ## radii: face placed off recording's own head and torso, as `rigid.faceCapsule` sets it.
   ##   Torso is two capsules side by side, left first (`rigid.trunkCapsules`), so they give
@@ -238,7 +238,7 @@ func isCrossed(recording, frame: JsonNode): bool =
   false
 
 
-func awayOf(at: float, is_away: bool): float =
+func away(at: float, is_away: bool): float =
   ## How far couple are from face to face at `at` turns from rest, in turns, nought to half: hips'
   ## wind, as `rigid.awayFrom` reads it, half turn more where rest is Face-to-back.
   let turned = floorMod(at + (if is_away: 0.5 else: 0.0), 1.0)
@@ -259,7 +259,7 @@ func heldMoments(recording: JsonNode): int =
 func liftedRig(recording: JsonNode): tuple[hands: seq[Lifted], moments: int] =
   ## Every joined hand of one rig sweep at every moment couple are `RAISE` or more from face to
   ## face, where it is carried: middle of its hand's three capsules (`rigid.handCapsules`), run
-  ## back its radius to wrist, then `rig.carry` along it, as `limb.carriedOf` reads it.
+  ## back its radius to wrist, then `rig.carry` along it, as `limb.pointCarried` reads it.
   ##   Joined hand is one of each dancer whose line passes nearest each join at rest.  Rest is
   ##     Face-to-back where two chests face one way at nought.
   ##   Sweep that stops keeps moment it stops at (`seen.shownAsked`), where walk gave: that one
@@ -292,7 +292,7 @@ func liftedRig(recording: JsonNode): tuple[hands: seq[Lifted], moments: int] =
       held.add (who, nearest)
   for m in 0..<heldMoments(recording):
     let at = recording["at"][m].getFloat
-    if awayOf(at, is_away) < RAISE: continue
+    if away(at, is_away) < RAISE: continue
     inc result.moments
     for hand in held:
       let
@@ -355,7 +355,7 @@ suite "Internal: What each card asks of simulation":
     ## positive turns, so C05 is asked negative.
     check ask_by_key["C05"].turns == -0.5
     check ask_by_key["C03"].turns == 0.5
-    check wayOf(HalfTurns(1)) == Way.Clockwise
+    check wayTurn(HalfTurns(1)) == Way.Clockwise
 
 
   test "every single-hand card stands where its cell draws follow, facing as drawn":
@@ -373,8 +373,8 @@ suite "Internal: What each card asks of simulation":
             stood = arranged(turned(restStance(HUMAN, 1.0, ask.isRestAway), ask.who, ask.turns))
             drawn = relative(quarterPose(manner, quarter))
           checkpoint ask.key & ": stood " & $stood & ", drawn " & $drawn
-          check apartOf(stood.axis, drawn.axis) < ARRANGED
-          check apartOf(stood.facing, drawn.facing) < ARRANGED
+          check apart(stood.axis, drawn.axis) < ARRANGED
+          check apart(stood.facing, drawn.facing) < ARRANGED
 
 
   test "two cards of one cell stand one arrangement, turned by one dancer":
@@ -387,7 +387,8 @@ suite "Internal: What each card asks of simulation":
         for mate in Manner:
           for quarter in 0..<QUARTERS_ROUND:
             for other in 0..<QUARTERS_ROUND:
-              if placeOf(quarterPose(manner, quarter)) != placeOf(quarterPose(mate, other)):
+              if placeComparable(quarterPose(manner, quarter)) !=
+                  placeComparable(quarterPose(mate, other)):
                 continue
               if quarter == 0: continue
               let
@@ -401,7 +402,7 @@ suite "Internal: What each card asks of simulation":
   test "every card carries joined hands over crown of dancer who turns":
     ## Connection goes round dancer whose facing turns against it, and over crown it goes
     ##   round over their head.  Orbit keeps walker facing centre, so centre dancer turns
-    ##   against connection, and hands go over their crown (`asks.turnerOf`).
+    ##   against connection, and hands go over their crown (`asks.turner`).
     ##   Red with orbit asked over walker's crown, and every still turned by follow alone,
     ##     measured 2026-10-02.
     for ask in stillAsks():
@@ -434,8 +435,8 @@ suite "Internal: What each card asks of simulation":
         drawn = relative(quarterPose(manner, parseInt(parts[4])))
       inc moves
       checkpoint question.key & ": stood " & $stood & ", drawn " & $drawn
-      check apartOf(stood.axis, drawn.axis) < ARRANGED
-      check apartOf(stood.facing, drawn.facing) < ARRANGED
+      check apart(stood.axis, drawn.axis) < ARRANGED
+      check apart(stood.facing, drawn.facing) < ARRANGED
     check moves == SINGLES.len * 4 * QUARTERS_ROUND
 
 
@@ -447,14 +448,14 @@ suite "Internal: Each hold rests at named facing":
     ##     of two at halves.
     for (holds, rest, other) in [(HAND_TO_HAND, Facing.FaceToFace, Facing.FaceToBack),
                                  (PAIRED, Facing.FaceToBack, Facing.FaceToFace)]:
-      check restOf(holds) == rest
+      check facingRest(holds) == rest
       for wind in STEPS:
         let is_whole = abs(wind - round(wind)) < 1e-9
         check facingAt(holds, wind) == some(if is_whole: rest else: other)
 
 
   test "simulation is told each card's rest where it stands couple":
-    ## Card names its rest from model (`parts.restOf`), and simulation is told only
+    ## Card names its rest from model (`parts.facingRest`), and simulation is told only
     ##   `away`.  Stance simulation then stands couple in, read by simulation's own words, is
     ##   what card named.  Distance puts no one at other side of other.
     for ask in stillAsks():
@@ -498,7 +499,7 @@ suite "Internal: Simulation against reference":
           named.add (key, (if target.over.get == Side.Left: Arm.Left else: Arm.Right))
     for (tag, arms) in [("C", HAND_TO_HAND), ("D", PAIRED)]:
       for i, wind in STEPS:
-        if wind != 0.0: named.add (&"{tag}{i + 1:02}", armOf(overArm(wind)))
+        if wind != 0.0: named.add (&"{tag}{i + 1:02}", overArm(wind).toArm)
     let chains = named
     for (frame, chain) in [("A16", "C05"), ("A17", "C03")]:
       for (key, arm) in chains:
@@ -507,7 +508,7 @@ suite "Internal: Simulation against reference":
     for (key, arm) in named:
       let
         ask = ask_by_key[key]
-        found = crossings(armsOf(recorded[key], ask.links))
+        found = crossings(toArms(recorded[key], ask.links))
       checkpoint key & ": " & $found.len & " crossings"
       check found.len > 0
       if found.len == 0: continue
@@ -546,7 +547,7 @@ suite "Internal: Simulation against reference":
 
   test "each reflected twin card names card that keeps answer to its mirror twin":
     ## Twin card keeps no still of its own (`design/rig`): it names first card that asks its
-    ##   mirror twin unreflected (`walk.twinOf`), and page shows that still mirrored.  Where
+    ##   mirror twin unreflected (`walk.twinAnswering`), and page shows that still mirrored.  Where
     ##   no card asks it, twin card keeps that answer itself and names itself.
     ##   Mirror is its own undoing, figure for figure, on every still that holds.
     let kept = parseFile(KEPT_RIG)
@@ -555,7 +556,7 @@ suite "Internal: Simulation against reference":
     for name in kept["dofs"]: dofs.add name.getStr
     func isAnswerTo(other, ask: StillAsk; links: seq[Link]; turns: float): bool =
       ## Whether `other` asks question that answers twin `ask`, unreflected.
-      not twinOf(other.links, other.turns, other.isRestAway).is_reflected and
+      not twinAnswering(other.links, other.turns, other.isRestAway).is_reflected and
           other.links == links and other.turns == turns and
           other.isRestAway == ask.isRestAway and other.head == ask.head and
           other.is_either_way == ask.is_either_way and other.who == ask.who and
@@ -564,7 +565,7 @@ suite "Internal: Simulation against reference":
     for still in kept["stills"]:
       let
         ask = ask_by_key[still["key"].getStr]
-        twin = twinOf(ask.links, ask.turns, ask.isRestAway)
+        twin = twinAnswering(ask.links, ask.turns, ask.isRestAway)
       checkpoint ask.key
       check still.hasKey("mirror") == twin.is_reflected
       if still.hasKey("at") and still["at"].len > 0:
@@ -589,7 +590,7 @@ suite "Internal: Simulation against reference":
 
 
   test "each arm's girdle stands on its own side of its chest, in every still page shows":
-    ## Page colours each arm by side it is named for (`rig_view.inkOf`), so arm named left
+    ## Page colours each arm by side it is named for (`rig_view.inkArm`), so arm named left
     ##   is to stand left.  Twin card's still is mirrored, so each arm is named as arm of
     ##   other side (`design/twins`); named as before, it would be drawn in other arm's colour.
     var (stills, girdles) = (0, 0)
@@ -666,7 +667,7 @@ suite "Internal: Simulation against reference":
         if recording.hasKey("key"): recording["key"].getStr
         else: recording["hold"].getStr & " " & recording["band"].getStr
       for moment, frame in recording["points"].getElems:
-        let gap = faceGapOf(recording, frame)
+        let gap = gapFace(recording, frame)
         inc moments
         deepest = min(deepest, gap)
         if gap < -FACE_SLOP: inside.add &"{name}@{moment}"
@@ -682,7 +683,7 @@ suite "Internal: Simulation against reference":
     ##   those read it: each joined hand carried no lower than crown band less `SAG`, once couple
     ##   are `RAISE` of turn or more from face to face, where `rigid.up` is whole.  Hips' wind says
     ##   so, as judge reads it, and chest, which waist turns off hips, does not.
-    ##   Carried point is read (`limb.carriedOf`), and not join: ruling quotes band, 1.735 to
+    ##   Carried point is read (`limb.pointCarried`), and not join: ruling quotes band, 1.735 to
     ##     2.00 m, and join may sit under it while carried point is inside, as in stills.
     ##   Domain: every moment of rig's four sweeps over crown, way each turns positive
     ##     (`seen.shown`), at least `FLOOR_AWAY_RIG` of them.  Moments are those walk holds: rig's
@@ -765,7 +766,7 @@ suite "Internal: Simulation against reference":
     ## Architect, pull request 629, 2026-10-12, D1: where walk alone lets joined hands sink, plan
     ##   lifts them, and recording keeps planned turn where walk falls short.  Plan keeps joined
     ##   hands inside band and every upper arm inside shoulder's edge (`plan.bandAt`,
-    ##   `plan.marginOf`), so turn it carries is floor of each way (`TURNS_PLANNED`).
+    ##   `plan.marginsArm`), so turn it carries is floor of each way (`TURNS_PLANNED`).
     ##   Way holds as far as its furthest moment, in turns from rest: rig's sweep keeps moment it
     ##     stops at, where walk gave, and that one is not read (`heldMoments`).
     ##   Domain: way of each of rig's four sweeps over crown that turns positive (`seen.shown`).

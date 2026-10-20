@@ -38,7 +38,7 @@ func onQuarter(degrees: float): Option[int] =
   else: none(int)
 
 
-func facingOf*(pose: Pose): Option[Facing] =
+func facingDrawn*(pose: Pose): Option[Facing] =
   ## Name facing drawn pose stands in, read off where each dancer sees other.
   ##   `relative` holds follow's place and facing against lead.  Follow sees
   ##     lead back across that axis: half turn round, less follow's own facing.
@@ -53,7 +53,7 @@ func facingOf*(pose: Pose): Option[Facing] =
 
 func turnedFacing*(lead_turn, follow_turn: float): Option[Facing] =
   ## Name facing each dancer's turn on spot from Face-to-face draws, in degrees.
-  facingOf(
+  facingDrawn(
     canonicalise(spinAbout(spinAbout(rest(), Dancer.Lead, lead_turn), Dancer.Follow, follow_turn)),
   )
 
@@ -159,7 +159,7 @@ func quarterPose*(manner: Manner, quarter: int): Pose =
   result.ring = none(Ring)
 
 
-func placeOf*(pose: Pose): tuple[axis, facing: float] =
+func placeComparable*(pose: Pose): tuple[axis, facing: float] =
   ## Get position as pair of numbers that compare cleanly.
   ##   `relative` can hand back 360 where another hands back 0, and
   ##     negative zero where another hands back positive one, so both are
@@ -329,8 +329,8 @@ func singleTurnParts*(): Parts =
       var shared = 0
       for quarter in 0..<QUARTERS_ROUND:
         for other_quarter in 0..<QUARTERS_ROUND:
-          if placeOf(quarterPose(manner, quarter)) ==
-              placeOf(quarterPose(mate, other_quarter)):
+          if placeComparable(quarterPose(manner, quarter)) ==
+              placeComparable(quarterPose(mate, other_quarter)):
             inc shared
       let is_same_round = LUT_ROUND_BY_MANNER[manner] == LUT_ROUND_BY_MANNER[mate]
       doAssert shared == (if is_same_round: QUARTERS_ROUND else: 1),
@@ -388,11 +388,11 @@ func posedAt*(wind, phase: float): Pose =
   result.ring = none(Ring)
 
 
-func phaseOf*(holds: Holds): float =
+func phaseChain*(holds: Holds): float =
   ## Say how far off Face-to-face this hold's two connections run parallel:
   ## phase of chain it sits on (rule 31).
   ##   Measured, in rule 28's habit: hold is parallel where angle
-  ##     its two ends make with pair's axis agree, and `windOf` is
+  ##     its two ends make with pair's axis agree, and `windMeasured` is
   ##     already thing that measures that.
   ##   Two candidates and no more, because chain steps by half turns:
   ##     hand to hand runs parallel with partners Face-to-face,
@@ -400,7 +400,7 @@ func phaseOf*(holds: Holds): float =
   ##     same chain read half turn apart.
   for phase in [0.0, 0.5]:
     let put = settled(posedAt(0.0, phase), holds, ABOVE_BOTH, default(Modifiers))
-    if abs(windOf(put, holds, Arm.Left).spread) < 1e-6:
+    if abs(windMeasured(put, holds, Arm.Left).spread) < 1e-6:
       return phase
   raise newException(Defect, &"A hold runs parallel at neither phase; got `{holds}`.")
 
@@ -408,13 +408,13 @@ func phaseOf*(holds: Holds): float =
 func facingAt*(holds: Holds, wind: float): Option[Facing] =
   ## Name facing hold's chain stands at `wind` turns from its rest, read off
   ## pose through model.
-  facingOf(posedAt(wind, phaseOf(holds)))
+  facingDrawn(posedAt(wind, phaseChain(holds)))
 
 
-func restOf*(holds: Holds): Facing =
+func facingRest*(holds: Holds): Facing =
   ## Name facing hold rests at (rule 31).
   ##   Hold rests where its two connections run parallel and cross nothing,
-  ##     which `phaseOf` measures: Face-to-face for hand to hand, Face-to-back
+  ##     which `phaseChain` measures: Face-to-face for hand to hand, Face-to-back
   ##     for crossed pair.  Hold with fewer than two connections has no such state,
   ##     and rests Face-to-face.
   if holds.countIt(it.isSome) < 2: Facing.FaceToFace
@@ -434,7 +434,7 @@ func chainFor*(holds: Holds): seq[Position] =
   ##     own crossover, and for shape pair makes there.
   # Asked for its refusal alone: hold that runs parallel at neither
   # phase cannot walk chain, and dies here rather than mid-table.
-  discard phaseOf(holds)
+  discard phaseChain(holds)
   for wind in STEPS:
     let
       shape = case int(abs(wind) * 2)
@@ -463,7 +463,7 @@ func chainFor*(holds: Holds): seq[Position] =
 
 
 const
-  HAND_PHASE* = phaseOf(HAND_TO_HAND)
+  HAND_PHASE* = phaseChain(HAND_TO_HAND)
     ## Hand to hand runs parallel with partners facing one another, so
     ## its chain sits at nothing -- measured on every build, not assumed.
   CHAIN* = chainFor(HAND_TO_HAND)  ## Seven positions of hand-to-hand chain, in chain order.
@@ -478,13 +478,13 @@ func pairAt*(holds: Holds; wind, phase: float): array[Arm, seq[Point]] =
   ## Two reaches position draws, made as drawing makes them.
   let
     put = settled(posedAt(wind, phase), holds, ABOVE_BOTH, default(Modifiers))
-    hands = handsOf(put)
+    hands = handPoints(put)
   for arm in Arm:
     result[arm] = wound(
       hands[Dancer.Lead][arm],
       hands[Dancer.Follow][holds[arm].get],
-      axisOf(put).across,
-      degToRad(windOf(put, holds, arm).phi),
+      axisPair(put).across,
+      degToRad(windMeasured(put, holds, arm).phi),
       2 * PI * wind,
       share = windShare(wind, arm),
     )
@@ -507,7 +507,7 @@ func windSense*(manner: Manner): float =
   var turned_by = 0.0
   for put in turnWalk(handPose(), description.who, description.about, HALF / 2,
                       on = Anchor.Lead).poses:
-    let spread = windOf(
+    let spread = windMeasured(
       settled(put, HAND_TO_HAND, ABOVE_BOTH, default(Modifiers)),
       HAND_TO_HAND,
       Arm.Left,
@@ -541,7 +541,7 @@ func chainTurnParts*(holds: Holds, key: string): Parts =
   ##     answer was other one.
   let
     chain = chainFor(holds)
-    phase = phaseOf(holds)
+    phase = phaseChain(holds)
   var
     walks: array[Manner, seq[Walk]]
     still_half = 0.0
