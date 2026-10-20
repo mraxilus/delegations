@@ -17,13 +17,13 @@ const
     ## Fewest range bounds law below must sample; guard skipping nearly all of them fails.
 
 
-func rangesOf(file: string): seq[Slice[int]] =
+func ranges(file: string): seq[Slice[int]] =
   ## Read ranges store row of face spells, as slices.
   for (name, _, _, ranges) in ASSETS:
     if name == file: return ranges.toRanges
 
 
-func codepointOf(f: Finding): int =
+func codepoint(f: Finding): int =
   ## Read codepoint finding names, from its `U+` notation.
   let at = f.message.find("`U+")
   f.message[at + 3 ..< f.message.find('`', at + 1)].parseHexInt
@@ -31,7 +31,7 @@ func codepointOf(f: Finding): int =
 
 func codepointsReported(tree: Tree): seq[int] =
   ## Read codepoint each finding over fixture project names.
-  tree.checkCoverage(DIRECTORY_ALPHA).mapIt(it.codepointOf)
+  tree.checkCoverage(DIRECTORY_ALPHA).mapIt(it.codepoint)
 
 
 
@@ -118,14 +118,14 @@ suite "Coverage":
       entry(DIRECTORY_ALPHA & "/src/faces.nim", "const MATH = \"" & MATH & "\"\n"),
       entry(DIRECTORY_ALPHA & "/tests/test_faces.nim", "const NOT = \"NotoSerif-Italic.ttf\"\n"),
     ).replaced(DIRECTORY_ALPHA & "/README.md", "# Alpha\n\nShips no `NotoSans-Bold.ttf`.\n")
-    check tree.facesOf(DIRECTORY_ALPHA) == @["NotoSans-Regular.ttf", "NotoSansMath-Regular.ttf"]
+    check tree.facesNamed(DIRECTORY_ALPHA) == @["NotoSans-Regular.ttf", "NotoSansMath-Regular.ttf"]
 
 
   test "project naming no store face is skipped":
     # Nothing tells page shipping no face apart from tool printing non-ASCII text (header).
     let tree = treeGood().with(entry(PAGE, "<p>⇄</p>\n"))
-    check tree.facesOf(DIRECTORY_ALPHA).len == 0
-    check tree.charactersOf(DIRECTORY_ALPHA).len == 1  # read, then skipped for want of faces
+    check tree.facesNamed(DIRECTORY_ALPHA).len == 0
+    check tree.characters(DIRECTORY_ALPHA).len == 1  # read, then skipped for want of faces
     check tree.checkCoverage(DIRECTORY_ALPHA).len == 0
 
 
@@ -138,7 +138,7 @@ suite "Coverage":
     # Law at every bound of Noto Sans's ranges, both sides: bound passes, its neighbour outside
     #   is reported unless another range holds it. Surrogates encode nothing, so they are no
     #   sample; ASCII is never read.
-    let held = "NotoSans-Regular.ttf".rangesOf
+    let held = "NotoSans-Regular.ttf".ranges
     var samples, expected: seq[int]
     for bounds in held:
       for codepoint in [bounds.a - 1, bounds.a, bounds.b, bounds.b + 1]:
@@ -163,12 +163,12 @@ suite "Coverage":
       entry(DIRECTORY_ALPHA & "/src/page.nim", "# ⇄ ↑\nconst A = \"é\"  # ⇄\nconst B = \"&uarr;\""),
       entry(DIRECTORY_ALPHA & "/src/plain.nim", "const C = \"é ü\"  # ⇄ in comment alone\n"),
     )
-    let held = "NotoSans-Regular.ttf".rangesOf
+    let held = "NotoSans-Regular.ttf".ranges
     var expected: seq[(string, int, int)]
-    for c in tree.charactersOf(DIRECTORY_ALPHA):
+    for c in tree.characters(DIRECTORY_ALPHA):
       let located = (c.path, c.line, c.codepoint)
       if not held.anyIt(c.codepoint in it) and located notin expected: expected.add located
-    let found = tree.checkCoverage(DIRECTORY_ALPHA).mapIt((it.path, it.line, it.codepointOf))
+    let found = tree.checkCoverage(DIRECTORY_ALPHA).mapIt((it.path, it.line, it.codepoint))
     check found == expected  # optimised path against reference (Article IX.2)
     check found.len == 3  # page twice on its third line, `page.nim` once; `plain.nim` none
 

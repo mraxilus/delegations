@@ -14,7 +14,7 @@ import ../../src/[domains, kinds, layout, markdown, provenance]
 
 func entry*(path, content: string): Entry =
   ## Construct tree entry with kind classified from path.
-  Entry(path: path, kind: path.kindOf, content: content)
+  Entry(path: path, kind: path.classify, content: content)
 
 
 func textProvenance*(stamp: string): string =

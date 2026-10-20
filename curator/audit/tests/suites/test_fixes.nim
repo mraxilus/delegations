@@ -123,7 +123,7 @@ suite "Fixes":
     check checkForm(path, LAYOUT, Kind.Nim.rule).mapIt(it.message) ==
       @["First-tier banner takes three blank lines before it (X.2); got `2`."]  # X.2 alone wired
     check checkIdioms(path, LAYOUT).len == 0
-    let found = checkFormatting(path, LAYOUT, Kind.Nim).findingsOf
+    let found = checkFormatting(path, LAYOUT, Kind.Nim).toFindings
     for rule in ["(X.2)", "(X.9)", "(STYLE.md §5)", "Signature", "Call", "trailing separator",
                  "share one bracket", "alphabetised", "`=` takes"]:
       check found.anyIt(rule in it.message)  # each rule reported
@@ -145,7 +145,7 @@ suite "Fixes":
 
   test "layout checks read Nim syntax; import and list checks read `.nim` alone":
     let breach = "import std/os\nimport std/strutils\nlet a = b+c\n"
-    check checkFormatting("a.nims", breach, Kind.NimScript).findingsOf.allIt("X.9" in it.message)
+    check checkFormatting("a.nims", breach, Kind.NimScript).toFindings.allIt("X.9" in it.message)
     check checkFormatting("a.nim", breach, Kind.Nim).len == 2  # brackets too
     check checkFormatting("a.md", breach, Kind.Markdown).len == 0
 
@@ -241,9 +241,9 @@ suite "Fixes":
     #   unsettled, so fix stands for what `formatted` gives.
     const unsettled =
       "File still changes after 3 rounds of fixers, so fix leaves it as written; got `3` rounds."
-    check unsettledOf("a.nim", Fix(source: "a\n", unsettled: unsettled)).mapIt(it.render) ==
+    check warnUnsettled("a.nim", Fix(source: "a\n", unsettled: unsettled)).mapIt(it.render) ==
         @["a.nim: " & unsettled]  # `koch fix` prints it after `warning:`, as it is
-    check unsettledOf("a.nim", Fix(source: "a\n")).len == 0  # settled source warns of nothing
+    check warnUnsettled("a.nim", Fix(source: "a\n")).len == 0  # settled source warns of nothing
 
 
   test "fixer that would move fenced lines is skipped, and its finding stays for hand":
@@ -260,13 +260,13 @@ suite "Fixes":
       path = "curator/audit/src/a.nim"
       module = "## Do.\n\n" & STRICT_FUNCS & "\n\nfunc f*(): int = 1\n\nlet x = f()\n"
       tree = @[entry(path, module), entry("curator/audit/src/b.nim", "## Do.\n")]
-      context = tree.contextOf
+      context = tree.context
       plan = fixEntries(BRANCH_CURATOR, [tree[0]], context = context)
     check plan.written[0].content == module.replace("f*()", "f()")
     check plan.fixed.mapIt(it.line) == @[5]
     check fixEntries(BRANCH_CURATOR, [tree[0]]).written.len == 0  # no context: nothing known
     let again = @[plan.written[0], tree[1]]
-    check fixEntries(BRANCH_CURATOR, [again[0]], context = again.contextOf).written.len == 0
+    check fixEntries(BRANCH_CURATOR, [again[0]], context = again.context).written.len == 0
 
 
   test "semantic pass settles conversion first; file compiling nowhere is left with its error":
@@ -280,13 +280,13 @@ suite "Fixes":
     answer.symbols[(5, 8)] = Symbol(kind: "skLet")
     let
       tree = @[entry(path, module)]
-      plan = fixEntries(BRANCH_CURATOR, tree, context = tree.contextOf(tree, [answer]))
+      plan = fixEntries(BRANCH_CURATOR, tree, context = tree.context(tree, [answer]))
     check plan.written[0].content == module.replace("x.float", "float(x)")
     check plan.fixed.mapIt(it.message) == @["type conversion (STYLE.md §5)"]
     check fixEntries(BRANCH_CURATOR, plan.written).written.len == 0  # second fix writes nothing
     let
       failed = Answer(path: path, reason: "undeclared identifier: 'x'")
-      left = fixEntries(BRANCH_CURATOR, tree, context = tree.contextOf(tree, [failed]))
+      left = fixEntries(BRANCH_CURATOR, tree, context = tree.context(tree, [failed]))
     check left.written.len == 0
     check left.left[0].message.endsWith("got `undeclared identifier: 'x'`.")
 
@@ -307,12 +307,12 @@ suite "Fixes":
     answers[0].symbols[(5, 4)] = declared
     answers[0].globals["CONTEXT"] = @[]
     answers[1].symbols[(7, 8)] = declared
-    let plan = fixEntries(BRANCH_CURATOR, tree, context = tree.contextOf(tree, answers))
+    let plan = fixEntries(BRANCH_CURATOR, tree, context = tree.context(tree, answers))
     check plan.written.len == 2
     check plan.written[0].content == head & "let CONTEXT* = 1\n"
     check plan.written[1].content == head & "import ./a\n\nlet Y = CONTEXT\n"
     check plan.fixed.filterIt(it.message == "abbreviation (V.6)").len == 2
-    let alone = fixEntries(BRANCH_CURATOR, [a], context = tree.contextOf([a], answers))
+    let alone = fixEntries(BRANCH_CURATOR, [a], context = tree.context([a], answers))
     check alone.written.len == 0  # rename would write `b.nim`, which fix leaves alone
     check "refused: it would write `" & b.path & "`, which this fix leaves alone" in
       alone.left[0].message
@@ -369,7 +369,7 @@ suite "Fixes":
     answers[1].symbols[(11, 14)] = routine
     for site in [(11, 6), (12, 7)]: answers[1].symbols[site] = binding
     answers[1].globals["count"] = @[]
-    let plan = fixEntries(BRANCH_CURATOR, tree, context = tree.contextOf(tree, answers))
+    let plan = fixEntries(BRANCH_CURATOR, tree, context = tree.context(tree, answers))
     check plan.written.mapIt(it.content) == @[
       head & "proc runAll*(): int = 1\nconst COUNT* = 2\n",
       head & IMPORT_PROFILER & "\n\nimport ./a\n\nproc main() =\n  ## TODO: Document.\n" &
@@ -386,7 +386,7 @@ suite "Fixes":
     let again = plan.written
     check again.mapIt(checkNames(it.path, it.content, []).len) == @[0, 0]  # V.1, V.10: none left
     check queriesSemantic(again, again).len == 0  # no rename left for second run to ask
-    check fixEntries(BRANCH_CURATOR, again, context = again.contextOf(again)).written.len == 0
+    check fixEntries(BRANCH_CURATOR, again, context = again.context(again)).written.len == 0
 
 
   test "global breaking case and coining abbreviation takes one rename that settles both rules":
@@ -405,7 +405,7 @@ suite "Fixes":
     answers[0].symbols[(5, 4)] = declared
     answers[0].globals["TEMPORARY_DIRECTORY"] = @[]
     answers[1].symbols[(7, 16)] = declared
-    let plan = fixEntries(BRANCH_CURATOR, tree, context = tree.contextOf(tree, answers))
+    let plan = fixEntries(BRANCH_CURATOR, tree, context = tree.context(tree, answers))
     check plan.written.mapIt(it.content) == @[
       head & "let TEMPORARY_DIRECTORY* = \"a\"\n",
       head & "import ./a\n\nlet PATH_HOME = TEMPORARY_DIRECTORY\n",
@@ -420,7 +420,7 @@ suite "Fixes":
       source = "## Do.\n\n" & STRICT_FUNCS & "\n\ntype Def {.importc: \"b3Def\".} = object\n" &
         "  enableSleep {.importc.}: bool\n"
       tree = @[entry(path, source)]
-      plan = fixEntries(BRANCH_CURATOR, tree, context = tree.contextOf(tree))
+      plan = fixEntries(BRANCH_CURATOR, tree, context = tree.context(tree))
     check queriesSemantic(tree, tree).len == 0  # refused already, so nothing asked
     check plan.written.len == 0
     check plan.left.mapIt((it.line, it.message)) == @[
@@ -448,7 +448,7 @@ suite "Fixes":
     let unanswered = fixEntries(BRANCH_CURATOR, entries)
     check unanswered.written.len == 0  # nothing proven, nothing written
     check unanswered.asked.mapIt(it[0]) == entries.mapIt(it.path)  # each source asks
-    let (fix, failures) = fixProven(BRANCH_CURATOR, tree, entries, [], tree.contextOf, stub)
+    let (fix, failures) = fixProven(BRANCH_CURATOR, tree, entries, [], tree.context, stub)
     check failures.len == 0
     check pins[0 .. 1] == @[PIN, COMMIT]  # first round: one run for each pin, project's own
     check fix.written.mapIt(it.content) == @[
@@ -457,7 +457,7 @@ suite "Fixes":
     ]  # group parser refuses stays
     check fix.fixed.filterIt("needless parentheses" in it.message).len == 3
     check fix.asked.len == 0
-    let again = fixProven(BRANCH_CURATOR, tree, fix.written, [], tree.contextOf, stub)
+    let again = fixProven(BRANCH_CURATOR, tree, fix.written, [], tree.context, stub)
     check again.fix.written.len == 0  # second fix writes nothing
 
 
@@ -467,13 +467,13 @@ suite "Fixes":
       broken = proc (pin: string): Prover =
         result = proc (sources: seq[string]): Proving =
           Proving(answers: newSeq[seq[int]](sources.len), failure: "Compiler failed; got `x`.")
-    let (fix, failures) = fixProven(BRANCH_CURATOR, tree, [tree[^1]], [], tree.contextOf, broken)
+    let (fix, failures) = fixProven(BRANCH_CURATOR, tree, [tree[^1]], [], tree.context, broken)
     check fix.written.len == 0 and fix.fixed.len == 0
     check failures == @["needless-parentheses: Compiler failed; got `x`."]  # driver pin asked
     let unpinned = treeGood().without(DIRECTORY_AUDIT & "/audit.nimble").with(
       entry("koch2.nim", GROUPED),
     )
-    let alone = fixProven(BRANCH_CURATOR, unpinned, [unpinned[^1]], [], unpinned.contextOf, broken)
+    let alone = fixProven(BRANCH_CURATOR, unpinned, [unpinned[^1]], [], unpinned.context, broken)
     check alone.fix.written.len == 0
     check alone.failures == @[
       "needless-parentheses: Parser proved no removal, since project pins no compiler; got " &
@@ -530,8 +530,8 @@ suite "Fixes":
         if pin == COMMIT: broken(pin) else: counted(pin)
     for provers in [counted, broken, commit_broken]:
       let
-        proven = fixProven(BRANCH_CURATOR, tree, entries, [], tree.contextOf, provers)
-        reference = fixEvery(BRANCH_CURATOR, tree, entries, [], tree.contextOf, provers)
+        proven = fixProven(BRANCH_CURATOR, tree, entries, [], tree.context, provers)
+        reference = fixEvery(BRANCH_CURATOR, tree, entries, [], tree.context, provers)
       check proven.fix.written.mapIt((it.path, it.content)) ==
           reference.fix.written.mapIt((it.path, it.content))
       for (fast, every) in [

@@ -70,10 +70,10 @@ suite "Article IX":
   test "IX.6 named toolchain is what runs, never whatever PATH holds":
     # Pin resolution hands each project its own compiler; runner must use it rather than
     #   falling back, or two projects on two pins would silently share one.
-    check nimOf("") == findExe("nim")  # empty names PATH, as CI installs per job
-    check nimOf("/c/2.2.6/bin") == "/c/2.2.6/bin" / "nim"
-    check toolOf("/c/2.2.6/bin", "testament") == "/c/2.2.6/bin" / "testament"
-    check toolOf("", "atlas") == "atlas"  # bare name, resolved through PATH
+    check pathNim("") == findExe("nim")  # empty names PATH, as CI installs per job
+    check pathNim("/c/2.2.6/bin") == "/c/2.2.6/bin" / "nim"
+    check pathTool("/c/2.2.6/bin", "testament") == "/c/2.2.6/bin" / "testament"
+    check pathTool("", "atlas") == "atlas"  # bare name, resolved through PATH
     # Absent tool falls back to PATH rather than raising: tools Nim's own `koch` builds move
     #   between versions, and PATH tool still works while announcing its own mismatch.
     check toolIn("/c/2.2.6/bin", "atlas") == "atlas"  # nothing at that path

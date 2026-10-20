@@ -55,7 +55,7 @@ proc directoriesLock*(lock: string, directory_deps = DIRECTORY_DEPS): seq[string
     result.add item["dir"].getStr.replace("$deps", directory_deps)
 
 
-proc directoryDepsOf*(config: string): string =
+proc directoryDeps*(config: string): string =
   ## Read directory `atlas.config` restores into, i.e. its `deps` key; default when absent.
   ##   Project names it in full (`dependencies`, Article V.9) or keeps Atlas default `deps`.
   let node = parseJson(config)
@@ -119,7 +119,7 @@ proc checkCheckouts*(root, directory: string): seq[Finding] =
     path_lock = directory & "/" & FILE_LOCK
     path_config = root / directory / ATLAS_CONFIG
     directory_deps =
-      if fileExists(path_config): readFile(path_config).directoryDepsOf else: DIRECTORY_DEPS
+      if fileExists(path_config): readFile(path_config).directoryDeps else: DIRECTORY_DEPS
   var directories: seq[string]
   try:
     directories = readFile(root / path_lock).directoriesLock(directory_deps)

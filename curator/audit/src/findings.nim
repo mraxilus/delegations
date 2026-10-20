@@ -103,7 +103,7 @@ func finding*(path: string, line: int, message: string, is_propagation = false):
   Finding(path: path, line: line, message: message, is_propagation: is_propagation)
 
 
-func findingOf*(report: Report): Finding =
+func toFinding*(report: Report): Finding =
   ## Render report of knoller as finding, citing article of its rule: rewrite as rule and
   ##   article, i.e. `expression spacing (X.9)`; check's message with article where sentence
   ##   ends, i.e. ``Range operator takes no space (X.9); got `0 .. n`.``.
@@ -136,9 +136,9 @@ func findingOf*(report: Report): Finding =
   finding(report.path, report.line, report.message[0..<at] & article & report.message[at .. ^1])
 
 
-func findingsOf*(reports: openArray[Report]): seq[Finding] =
+func toFindings*(reports: openArray[Report]): seq[Finding] =
   ## Render each report of knoller as finding, in order given.
-  reports.mapIt(it.findingOf)
+  reports.mapIt(it.toFinding)
 
 
 func `<`*(a, b: Finding): bool =

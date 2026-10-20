@@ -27,7 +27,7 @@ suite "Article I":
         for prefix in ["", "d/"]:  # root and nested
           # Leading dot is extension or dotfile basename; one spelling of two classifies.
           let spellings = if match.startsWith("."): @[match, "x" & match] else: @[match]
-          check spellings.anyIt(kindOf(prefix & it) == some(kind))  # VI.5 match classifies
+          check spellings.anyIt(classify(prefix & it) == some(kind))  # VI.5 match classifies
       check row[2] == $kind.rule.syntax  # Syntax column
       check row[3] == kind.rule.is_prose.yesNo  # Prose column
       check row[4] == kind.rule.is_gated.yesNo  # Gate column
@@ -42,9 +42,10 @@ suite "Article I":
 
 suite "Article VI":
   test "VI.5 last extension decides":
-    check kindOf("koch.nim.cfg") == some(Kind.Configuration)  # driver flags read as cfg, never Nim
+    check classify("koch.nim.cfg") ==
+      some(Kind.Configuration)  # driver flags read as cfg, never Nim
 
 
   test "VI.5 unregistered kinds are none":
     for path in ["Makefile", "x.mk", "data.csv", "nimble.paths", "a.txt"]:  # 5 cases
-      check kindOf(path).isNone  # retired or never registered
+      check classify(path).isNone  # retired or never registered

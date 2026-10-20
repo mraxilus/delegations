@@ -4,7 +4,7 @@
 ##     `curator/audit` cites article of each rule, so `koch fix` prints `path:line: <rule>
 ##     (<article>) fixed`.
 ##   Message reads `<sentence>; got <value>.`, or `<sentence>.`, and names no article, since
-##     knoller runs on any repository; caller cites article where sentence ends (`findingOf` of
+##     knoller runs on any repository; caller cites article where sentence ends (`toFinding` of
 ##     `curator/audit`), and command line names rule by id.
 ##   Fixer that inserts or deletes lines records input line each output line came from, and
 ##     `chain` traces every later report through it. So each report names line of source as

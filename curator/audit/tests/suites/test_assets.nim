@@ -2,9 +2,9 @@
 ##   Codepoints each face row carries are held to bytes of its file: suite reads `cmap` itself,
 ##     as browser reads it, i.e. codepoint maps to glyph other than `.notdef`. Reader is
 ##     suite's alone (Article IX.11), since static pass reads rows and never bytes.
-##   Sibling: `cmapOf` of `contributor/ronri/rga_visualiser/tools/drive/faces.ts` reads same
-##     tables for one page, in TypeScript and inside contributor project, which curator never
-##     imports (Article II.9). Fix to either is finished once other is checked.
+##   Sibling: `cmapOf` of `contributor/ronri/rga_visualiser/tools/drive/faces.ts`, twin of `cmap`
+##     here, reads same tables for one page, in TypeScript and inside contributor project, which
+##     curator never imports (Article II.9). Fix to either is finished once other is checked.
 ##   `woff2` keeps every table in one Brotli stream, and no Nim import decodes Brotli, so
 ##     `libbrotlidec` is loaded at run: codec is external concern (Article II.8). Loaded rather
 ##     than linked, so machine lacking it fails test needing it, by name, rather than every
@@ -73,7 +73,7 @@ proc decodeBrotli(encoded: string, size: int): string =
     )
 
 
-proc cmapOf(bytes: string): string =
+proc cmap(bytes: string): string =
   ## Read `cmap` table out of OpenType, TrueType or `woff2` face.
 
   func base128(bytes: string, at: var int): int =
@@ -125,7 +125,7 @@ proc cmapOf(bytes: string): string =
   raise newException(ValueError, "Face holds no `cmap` table; got none.")
 
 
-func codepointsOf(cmap: string): seq[int] =
+func codepoints(cmap: string): seq[int] =
   ## Read every codepoint Unicode subtables of `cmap` map to glyph other than `.notdef`, sorted.
   ##   Unicode subtable is platform `0` save encoding `5`, which maps variation sequences, and
   ##   platform `3` at encoding `1` or `10`. Formats `4` and `12` are read, which every face of
@@ -188,14 +188,15 @@ func toSlices(codepoints: seq[int]): seq[Slice[int]] =
 func toText(ranges: seq[Slice[int]]): string =
   ## Render ranges as row spells them: lowercase hex, `low-high` or lone `low`, space apart.
 
-  func hexOf(codepoint: int): string =
+  func toHexLower(codepoint: int): string =
     ## Render codepoint in lowercase hex, no leading zero.
     codepoint.toHex.strip(trailing = false, chars = {'0'}).toLowerAscii
 
   var tokens: seq[string]
   for bounds in ranges:
     tokens.add(
-      if bounds.a == bounds.b: bounds.a.hexOf else: bounds.a.hexOf & "-" & bounds.b.hexOf
+      if bounds.a == bounds.b: bounds.a.toHexLower
+      else: bounds.a.toHexLower & "-" & bounds.b.toHexLower
     )
   tokens.join(" ")
 
@@ -216,27 +217,27 @@ suite "Assets":
     #   different entry rather than stale one.
     const face = "NotoSans-Regular.ttf"
     let digest = face.digestDeclared
-    check pathOf("/s", face) == "/s" / digest
-    check face notin pathOf("/s", face)  # name is nowhere in path
-    check pathOf("/s", "not-a-face.woff2").len == 0  # undeclared face has no path
+    check pathStore("/s", face) == "/s" / digest
+    check face notin pathStore("/s", face)  # name is nowhere in path
+    check pathStore("/s", "not-a-face.woff2").len == 0  # undeclared face has no path
 
 
   test "address carries version, so bytes and version move together or neither":
     const face = "commit-mono-latin-700-normal.woff2"
-    let address = face.addressOf
+    let address = face.address
     check address.startsWith("https://")
     check address.endsWith(face)
     check "@fontsource/commit-mono@" in address  # package and its version, in address
-    check addressOf("not-a-face.woff2").len == 0
+    check address("not-a-face.woff2").len == 0
 
 
   test "TrueType comes from Noto's own repository, since fontsource ships none":
     # Atlas reads TrueType and `@fontsource` packages `woff2` alone, so desktop faces have
     #   their own upstream; store holds both rather than one project holding each.
-    check "notofonts" in "NotoSans-Regular.ttf".addressOf
-    check "notofonts" in "NotoSansMath-Regular.ttf".addressOf
-    check "commit-mono" in "CommitMonoV142-400Regular.otf".addressOf  # its author's own
-    check "fontsource" in "commit-mono-latin-400-normal.woff2".addressOf
+    check "notofonts" in "NotoSans-Regular.ttf".address
+    check "notofonts" in "NotoSansMath-Regular.ttf".address
+    check "commit-mono" in "CommitMonoV142-400Regular.otf".address  # its author's own
+    check "fontsource" in "commit-mono-latin-400-normal.woff2".address
 
 
   test "every row is one file, one address and one digest of sixty-four hex digits":
@@ -303,7 +304,7 @@ suite "Assets":
       check parts.len == 2  # neither column holds space, so `split` is enough
       check parts[1].len == 64  # digest, rendered whole
       check parts[1] == parts[0].digestDeclared  # column two is what store declares for column one
-      check parts[0].addressOf.len > 0  # column one names row store knows
+      check parts[0].address.len > 0  # column one names row store knows
     # Ends in newline, so appending or piping row-wise needs no special case.
     check declaration().endsWith("\n")
     # Proven by asking for one that is there: consumer checks membership without parsing.
@@ -329,7 +330,7 @@ suite "Assets":
       let path = assetIn(root, file)
       check path.len > 0  # fetched, and digest held
       if path.len == 0: continue
-      let read = readFile(path).cmapOf.codepointsOf.toSlices.toText
+      let read = readFile(path).cmap.codepoints.toSlices.toText
       if read != ranges: checkpoint "Row of `" & file & "` spells what its bytes do not map."
       check read == ranges  # row spells what `cmap` maps; `read` is text row takes (Article X.8)
 

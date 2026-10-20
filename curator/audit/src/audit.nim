@@ -62,7 +62,7 @@ proc findingsPruned*(root: string, tree: Tree): seq[Finding] =
     let path = directory & "/PROVENANCE.md"
     for e in tree:
       if e.path != path: continue
-      let named = e.content.prunedOf
+      let named = e.content.pruned
       if not named.isIdCommit: continue
       let touched = fieldsGit(root, ["log", "-z", "--format=%H", "--", path])
       if not touched.anyIt(it.strip.startsWith(named)):
@@ -106,12 +106,12 @@ proc auditTree*(tree: Tree): seq[Finding] =
 
   # Driver version is derived from driver project's pin, so it is never stated twice. Every
   #   workflow installing compiler, not driver's alone: second one drifts unwatched otherwise.
-  let driver = tree.pinOf(DIRECTORY_DRIVER)
+  let driver = tree.pin(DIRECTORY_DRIVER)
   if driver.isSome:
     for e in tree:
       if e.path.startsWith(DIRECTORY_WORKFLOW):
         result.add checkDriver(e.path, e.content, driver.get)
-  result.add checkKnoller(DIRECTORY_KNOLLER.pathNimble, tree.pinOf(DIRECTORY_KNOLLER), driver)
+  result.add checkKnoller(DIRECTORY_KNOLLER.pathNimble, tree.pin(DIRECTORY_KNOLLER), driver)
 
   # Every workflow, not just driver's: grant its steps outrun is `403` on runner and nothing
   #   readable here.
@@ -173,7 +173,7 @@ proc auditTree*(tree: Tree): seq[Finding] =
       result.add checkFaces(e.path, e.content)
       if e.kind.get != Kind.Markdown: result.add checkPathsMachine(e.path, e.content)
     if e.kind.get.rule.has_guide:
-      result.add checkIdioms(e.path, e.content, e.kind.get.dialectOf).findingsOf
+      result.add checkIdioms(e.path, e.content, e.kind.get.dialect).toFindings
     for directory in directories:
       if e.path == directory & "/PROVENANCE.md":
         result.add checkProvenance(e.path, e.content, stamp_now)
@@ -213,10 +213,10 @@ proc auditTree*(tree: Tree): seq[Finding] =
   #   and so is prefix call of verb of generation (V.3, STYLE.md §5).
   for e in tree:
     if e.kind.isNone or e.kind.get notin [Kind.Nim, Kind.NimScript, Kind.Nimble]: continue
-    let exempt = glossaries.exemptionsOf(e.path)
-    result.add findingsOf(checkNames(e.path, e.content, exempt))
-    result.add findingsOf(checkBlockEntry(e.path, e.content))
-    result.add findingsOf(checkGenerations(e.path, e.content))
+    let exempt = glossaries.exemptions(e.path)
+    result.add toFindings(checkNames(e.path, e.content, exempt))
+    result.add toFindings(checkBlockEntry(e.path, e.content))
+    result.add toFindings(checkGenerations(e.path, e.content))
     result.add checkAcronyms(e.path, e.content, exempt)
 
   # Fixed waits: drive code of every project, checker's own included, since its suite holds

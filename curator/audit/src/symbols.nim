@@ -15,13 +15,13 @@ import ../../knoller/src/knoller
 import ./[layout, plan, toolchain]
 
 
-func includerOf*(tree: Tree, path: string): string =
+func includer*(tree: Tree, path: string): string =
   ## Read file whose `include` names path, followed up to file nothing includes; path itself
   ##   where nothing includes it.
   tree.mapIt((it.path, it.content)).includer(path)
 
 
-func directoryOf(path: string): string =
+func directoryProject(path: string): string =
   ## Read project directory of path; empty for file at root, such as `koch.nim`.
   path.split('/').directoryProject
 
@@ -36,8 +36,8 @@ proc resolve*(root: string, tree: Tree, queries: openArray[Query]): seq[Answer] 
   let absolute = root.absolutePath
   for query in queries:
     let
-      directory = query.path.directoryOf
-      pin = tree.pinOf(if directory.len == 0: DIRECTORY_DRIVER else: directory)
+      directory = query.path.directoryProject
+      pin = tree.pin(if directory.len == 0: DIRECTORY_DRIVER else: directory)
     if pin.isNone:
       result.add Answer(path: query.path, reason: "project pins no compiler")
       continue
@@ -49,7 +49,7 @@ proc resolve*(root: string, tree: Tree, queries: openArray[Query]): seq[Answer] 
       query: query,
       root: absolute,
       directory: absolute / directory,
-      includer: tree.includerOf(query.path),
+      includer: tree.includer(query.path),
       bin: bin.get,
     )
   result.add resolve(requests)
