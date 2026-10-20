@@ -1263,7 +1263,7 @@ jargon list of V.6 always passes. Verified by `suites/test_names.nim`.
 
 - Each finding names a rule of its own: `abbreviation`, `action-verb`, `boolean-name`,
   `lookup-table`, `name-case`, `member-case`, `placeholder-letter`, `notation`, `global-word`,
-  `representation-head`, `generic-suffix` and `collection-name`.
+  `representation-head`, `routine-suffix`, `generic-suffix` and `collection-name`.
   The case of a name takes three rules, because V.1, V.11 and V.12 state it by kind.
 - This module gives the rename that each rule asks (`renamesAbbreviation`, `renamesCase`). A
   rename reaches each use of a name, and only the semantic pass of the compiler finds each use. So
@@ -1460,8 +1460,9 @@ verb of V.3 that takes a type opens the name, and two words or more follow it, t
 
 - The verbs are `to`, `init`, `emit`, `construct` and `define` (`VERBS_TYPE`). So
   `toMultivectorOf` passes, and `gradeOf` and `headOf` are findings.
-- The finding is of `action-verb`, which cites V.3, since a property is the bare noun there. The
-  word `Of` is read without case, so `grade_of` is a finding too.
+- The finding is of `routine-suffix`, which cites V.3. The rule `action-verb` keeps the first word
+  of a routine alone, so `newMeshOf` is one finding of each rule.
+- The word `Of` is read without case, so `grade_of` is a finding too, beside its finding of case.
 - `Of` inside a name, as in `basesOfGrade`, is unread.
 - Rejected: an exemption where the same file declares the type that the words spell. A generic
   type and a routine that spells it can stand in two modules, and the check then reads no type.
@@ -1493,11 +1494,15 @@ is a finding, and V.6 gives it the name `Meshes`.
   (`FORMS_COLLECTION`). A word outside that list, such as `List`, is unread.
 - A plural before the word for its form passes, as `BasesSet` beside `Basis` does. V.6 asks for
   that name where two collection types would share one.
+- A type that the file declares as a collection is no member, so a word for a form after it
+  passes. The check reads that from the opening of its value, such as `set[` or `Table[`
+  (`OPENINGS_COLLECTION`). So `BasesSet` beside `Bases = set[Basis]` passes, and `MeshSet` beside
+  `Mesh = object` is a finding.
 - Cost: the member is read only where the same file declares it, and only where the word for its
   form follows it at once. A member of another module, or a qualifier between them, passes.
-- Cost: a plural that the file declares as a type reads as a member, so `BasesSet` beside a type
-  `Bases` is a finding. V.6 gives no word for a form beside the bare plural, so the finding
-  stands. The member that it names can be `Basis` all the same.
+- Cost: a collection whose value opens in another way reads as a member. An alias of another
+  alias, such as `Bases = Grades`, is one, and so is `distinct set[Basis]`. A word for a form
+  after it is a finding.
 - Verified by `suites/test_names.nim`, for each word for a form.
 
 ## Idioms
