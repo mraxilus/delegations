@@ -701,6 +701,7 @@ suite "Internal: Simulation against reference":
     ##     (`roundedUnder`): hand gripped palm deep, nearest its wrist, turns most.
     ##   Regression of issue 611, as found on 2026-10-11, each card kept and its quoted hand read
     ##     wherever its moment is still recorded:
+    ##     L-r above at +1.42: follow's right hand at 1.405 m.  Rig sweeps same walk, read next.
     ##     `One hand, cross name · above` at +1.42: follow's right hand at 1.406 m.
     ##     `Chain, cross name · above` at +0.60: follow's left hand at 1.696 m.
     ##     L-l above at -0.40, follow's left hand at 1.363 m, R-r above at +0.40 its mirror, and
@@ -807,7 +808,8 @@ suite "Internal: Simulation against reference":
     ##     Sweep that holds no rest keeps no moment; half of sweeps is floor read.
     ##   Rig rounds turn of each moment, so step may read long or back by that.
     ##   Gap found 2026-10-12 in review of `cd9ec9a8`: with moments 0.80 to 1.20 of turn taken out
-    ##     of `Chain, cross name · above`, every law passed.
+    ##     of `Chain, cross name · above`, and of L-r.R-l above in `cd9ec9a8:design/turns.json`,
+    ##     every law passed.  Rig keeps first alone.
     let
       step_most = max(STEP, STRIDE)
       sweeps_least = SHOWN.len div 2

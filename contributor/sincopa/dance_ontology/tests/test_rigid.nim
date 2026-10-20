@@ -669,9 +669,9 @@ suite "Internal: Two dancers in rigid body engine":
     ## Simulation answers hold whose lead's right comes first as its mirror twin reflected
     ## (`walk.twinOf`): way that turns positive is twin's that turns negative, and
     ## distance, turn reached and what stopped it are twin's own, to last bit.
-    ##   Pair is one engine does not mirror exactly: at `9bbf656`, shake walked raw reaches 1.36
-    ##     turns one way, where left to right reaches 1.34 other way.  So law fails where twin
-    ##     is answered raw, as it was before twins.
+    ##   Pair is one engine does not mirror exactly: in `9bbf656:design/turns.json`, shake walked
+    ##     raw reaches 1.36 turns one way, where left to right reaches 1.34 other way.  So law
+    ##     fails where twin is answered raw, as it was before twins.
     var pairs = 0
     let given = answered()
     for question in SWEEPS:
