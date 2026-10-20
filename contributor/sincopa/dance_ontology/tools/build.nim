@@ -1,4 +1,4 @@
-## Build every page, picture and script of this project: `nim r tools/build.nim <command>`.
+## Build every page and script of this project: `nim r tools/build.nim <command>`.
 ##   Repository drives tests through koch, which holds no verb for this project's pages, so
 ##   project carries its own compiled driver, same pattern one level down (Article IX.6).
 ##   Translation of retired Makefile, recipe for recipe: same programs, same arguments, same
@@ -8,10 +8,8 @@
 ##   |----------|-----------------------------------------------------------------------|
 ##   | Command  | Effect                                                                |
 ##   |----------|-----------------------------------------------------------------------|
-##   | pages    | fetch faces, write shells from Nim hosts, compile browser scripts,    |
-##   |          | fold each into one self-contained file, render review page and frame  |
-##   |          | pictures, build five mark pages, fold recorded turns into whole-cloth |
-##   |          | page, build rig viewer                                                |
+##   | pages    | fetch faces, copy Reference's shell, compile its script and fold it   |
+##   |          | into one self-contained file, build card review, then rig viewer      |
 ##   | assets   | fetch faces pages embed from repository store into build/fonts        |
 ##   | types    | type-check harness `tools/drive/`, and emit it into build/drive        |
 ##   | drive    | build every page, render each and control as publish host serves it, |
@@ -20,6 +18,8 @@
 ##   |          | Architect rules on cards, never to quiet check that says one moved    |
 ##   | confirmed| rewrite design/confirmed-fixtures.json from page just built: run when |
 ##   |          | Architect confirms stills, never to quiet check that says one moved   |
+##   | watched  | rewrite design/watched-fixtures.json from design/rig.json: run in     |
+##   |          | pull request that moves still C card shows, never to quiet watch      |
 ##   | modelled | rewrite design/modelled.json: which reference cards simulation        |
 ##   |          | reaches, stamped, and only where stamp changed                        |
 ##   | rig      | rewrite design/rig.json: sweeps rig viewer plays, and every still,    |
@@ -27,10 +27,12 @@
 ##   | record   | every recording below in one queue, slowest job first, each question  |
 ##   |          | asked once, each result kept as it comes, so run stopped part way     |
 ##   |          | goes on where it stopped                                              |
-##   | turns    | rewrite design/turns.json: sweeps whole-cloth page plays              |
+##   | turns    | rewrite design/turns.json: every hold turning, which laws read        |
 ##   | verdicts | instrument run, not build: answers land in simulation/verdicts.md     |
 ##   | answers  | rewrite simulation/answers.json: where couple stand for rig's laws,   |
 ##   |          | stamped                                                               |
+##   | floors   | instrument run, not build: how far plan carries each hold over crown  |
+##   |          | each way, printed as rows of floors law of planned sweep reads        |
 ##   | shot     | screenshot helper, for node and Playwright                            |
 ##   | clean    | remove binaries, build, nimcache, testresults and testament binaries  |
 ##   |----------|-----------------------------------------------------------------------|
@@ -58,11 +60,11 @@ when compileOption("profiler"): import std/nimprof
 
 import std/[algorithm, json, os, osproc, strutils]
 
-import ../design/[faces, render, review_page]
+import ../design/[faces, render, review_page, watch]
 
 
 const
-  BUILD = "build"  ## Directory every page, picture and script lands in.
+  BUILD = "build"  ## Directory every page and script lands in.
   BINARIES = "binaries"  ## Directory tool binaries land in.
   DANGER = @["-d:danger", "--hints:off"]  ## Options of runs whose speed is point, i.e. sweeps.
   RELEASE = @["-d:release", "--hints:off"]  ## Options of browser scripts shipped with pages.
@@ -71,8 +73,8 @@ const
     ## Directory faces land in.  Never committed: fonts are unregistered kind, so
     ##   lock is committed and checkout is not, as Atlas does for packages.
   USAGE = "Usage: nim r tools/build.nim " &
-      "<pages|assets|types|drive|fixtures|confirmed|modelled|rig|record|turns|verdicts|answers|" &
-      "engine|shot|system|clean>\n"
+      "<pages|assets|types|drive|fixtures|confirmed|watched|modelled|rig|record|turns|verdicts|" &
+      "answers|floors|engine|shot|system|clean>\n"
     ## Text printed on usage error.
   SYSTEM = [
     ("git", true, "clone engine's source at its pinned commit; `engine` shells out to it"),
@@ -91,7 +93,7 @@ const
     ##   Chromium that `drive` renders with is Playwright's own, which `drive` fetches at
     ##   revision lock pins, so runner installs no browser.  `chromium` here is `shot`'s, which
     ##   person runs by hand, and `shot` prints it where it builds.  `pages`, `fixtures`,
-    ##   `confirmed`, `verdicts` and `clean` need Nim alone.
+    ##   `confirmed`, `watched`, `verdicts` and `clean` need Nim alone.
   SOURCES = [
     ("box3d", "https://github.com/erincatto/box3d",
      "47d7f7cc7e091142c08d11dc7d2e493c5d34f536",
@@ -110,7 +112,7 @@ const
   PATH_TSCONFIG = "tsconfig.json"  ## Type-checker configuration of harness.
   PATH_HARNESS = "tools" / "drive" / "main.ts"  ## Harness source, where its finding points.
   ENTRY_HARNESS = BUILD / "drive" / "main.js"  ## Harness as `types` emits it, which node runs.
-  DIRECTORIES_PAGES = ["app", "review", "design"]
+  DIRECTORIES_PAGES = ["app", "design"]
     ## Directories under `build/` that `pages` writes pages into, and dresses and `drive` reads.
     ##   Named rather than walked from `build/`, since suites write undressed pages under
     ##     `build/suites/`, and `drive` writes hosted copies under `build/hosted/`.
@@ -265,42 +267,26 @@ proc dress() =
   echo "Faces put into ", dressed, " pages."
 
 
-proc turnsJs() =
-  ## Fold recorded sweeps into script whole-cloth page reads.
-  ##   Recording is `turns` verb's, as `modelled` and `rig` are theirs: eighteen
-  ##     sweeps searching every distance couple may stand at cost more than
-  ##     every `pages` run should pay.
-  let data = "design" / "turns.json"
-  if not fileExists(data):
-    quit(
-      "Whole-cloth page has no sweeps; run `nim r tools/build.nim turns`: got `" & data & "`.",
-      1,
-    )
-  writeFile(BUILD / "design" / "turns.js", "var TURNS = " & readFile(data).strip() & ";\n")
-  echo "wrote " & BUILD / "design" / "turns.js"
-
 proc turns() =
-  ## Rewrite `design/turns.json`: every hold turning, for whole-cloth page.
+  ## Rewrite `design/turns.json`: every hold turning, which laws read (`test_asks`,
+  ##   `test_shoulder`).
   nim(@["c", "-r"] & DANGER & @["--outdir:" & BINARIES, "design/record.nim", "turns"])
 
 proc pages() =
-  ## Write every page, picture and script under `build/`.
+  ## Write every page and script under `build/`.
   ##   Faces first: every page embeds them, and check that wants verb run by hand
   ##     first is check runner will not run.
   assets()
   for directory in DIRECTORIES_PAGES: createDir(BUILD / directory)
+
+  # Clear pages earlier builds wrote: dress and `drive` walk every page there, retired ones too.
+  for page in pagesBuilt(): removeFile(page)
+
+  # Write Reference, card review and rig viewer, in order rig viewer reads them; then dress all.
   compileRun(["tools/pages.nim", BUILD])
   nim(@["js"] & RELEASE & @["-o:" & BUILD / "app" / "app.js", "app/app.nim"])
   compileRun(["tools/bundle.nim", BUILD / "app", "app"])
-  compileRun(["tools/review.nim", BUILD / "review"])
   compileRun(["design/marks.nim", BUILD / "design"])
-  turnsJs()
-  nim(
-    @["js"] & RELEASE & @[
-      "-o:" & BUILD / "design" / "wholecloth_turns.js", "design/wholecloth_turns.nim",
-    ],
-  )
-  compileRun(["design/wholecloth.nim", BUILD / "design"])
   nim(
     @["js"] & RELEASE & @[
       "-o:" & BUILD / "design" / "rig_view.js", "design/rig_view.nim",
@@ -332,6 +318,19 @@ proc confirmed() =
     quit("No review page to read; run `pages` first.", 1)
   writeFile("design/confirmed-fixtures.json", confirmedIn(readFile(page)))
   echo "wrote design/confirmed-fixtures.json"
+
+
+proc watched() =
+  ## Write every capsule end of still each C card shows, as page shows it, into
+  ## `design/watched-fixtures.json`, from `design/rig.json` (`design/watch`).
+  ##   Second step, as `fixtures` is, and for like reason: run by hand in pull request that
+  ##     moves those stills, so its diff shows each end before and after.  Run to quiet watch
+  ##     that says one moved, it would hide move nobody saw.
+  let recording = "design" / "rig.json"
+  if not fileExists(recording):
+    quit("No rig recording to read; run `rig` first: got `" & recording & "`.", 1)
+  writeFile(KEPT_WATCHED, watchedIn(parseFile(recording)))
+  echo "wrote design/watched-fixtures.json"
 
 
 proc modelled() =
@@ -376,6 +375,14 @@ proc answers() =
   ##     whenever any `simulation/*.nim` changes, since law refuses answers whose stamp is
   ##     not that of tree.
   nim(@["c", "-r"] & DANGER & @["--outdir:" & BINARIES, "design/record.nim", "answers"])
+
+
+proc floors() =
+  ## Print how far plan carries each hold over crown each way (`design/floors`): floors law of
+  ## planned sweep holds recordings to (`tests/suites/test_asks.TURNS_PLANNED`).
+  ##   Instrument run, not build: it writes nothing, and plans every style of every hold, which
+  ##     costs minutes.  Run where planner or engine moves, and paste rows it prints.
+  nim(@["c", "-r"] & DANGER & @["--outdir:" & BINARIES, "design/floors.nim"])
 
 
 func helpers(): seq[string] =
@@ -494,12 +501,14 @@ proc main(): int =
     of "drive": drive()
     of "fixtures": fixtures()
     of "confirmed": confirmed()
+    of "watched": watched()
     of "modelled": modelled()
     of "rig": rig()
     of "record": record()
     of "turns": turns()
     of "verdicts": verdicts()
     of "answers": answers()
+    of "floors": floors()
     of "engine": engine()
     of "shot": shot()
     of "system": system()

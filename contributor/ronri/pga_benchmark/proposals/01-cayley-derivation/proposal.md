@@ -25,21 +25,16 @@ RGA makes 𝐞ₙ null. CGA pairs 𝐞ₙ₋₁ and 𝐞ₙ with 𝐞ₙ₋₁ �
 the other infinity. The right complement of the origin, 𝐞̄ₙ in RGA and 𝐞̄ₙ₋₁ in CGA, is the horizon,
 which the attitude reads. The parts split by these projective vectors in both algebras.
 
-![Derivation map, after Lengyel's figure 2.16, in eleven blocks in the order of the code, where
-each box holds a symbol. Green boxes are the two inputs, grey boxes are basis and projective
-elements, and purple anti tables stand under their blue tables. A dashed box on the top row of a
-block brings in the boxes of one other block, one cell for each box, and each block builds
-downward. Each box takes its own line from each box that it uses, so no two lines join or fork. A
-line that crosses another line passes over it with a gap. Each line carries its
-formula, with the function that builds the table under it. A faded line is a route that the code
-does not take, and a faded box is an operator with no table. Brown text holds in RGA alone, and
-blue text in CGA alone.](../../pages/derivation-map.svg)
+The [library map](https://claude.ai/artifact/TsUU8dwwthrgRvbAvCeinV) draws this derivation
+after Lengyel's figure 2.16, in eleven blocks in the order of the code. Each box takes the state
+that the library holds at the pin. The line into a box carries its formula, with the function that
+builds the table under it.
 
-The figure shows RGA alone, and it predates the transwedge, by which Lengyel later unified the
-geometric product. The map adds both, and it names the code that builds each table. It takes the
-dot 𝐚 ∙ 𝐛 = 𝐚 ⩓ₖ 𝐛 where k = gr 𝐚 = gr 𝐛 from the transwedge, as at pin. So one product gives ∧ at
-order 0, ∙ at equal grades, and ⟑ as a signed sum of its orders. A suite holds that this dot
-equals the 𝐚ᵀ𝐆𝐛 of the figure, which the map gives as a faded route.
+Lengyel's figure shows RGA alone, and it predates the transwedge, by which Lengyel later unified the
+geometric product. The map adds both, and it names the code that builds each table. It takes the dot
+𝐚 ∙ 𝐛 = 𝐚 ⩓ₖ 𝐛 where k = gr 𝐚 = gr 𝐛 from the transwedge, as at pin. So one product gives ∧ at order
+0, ∙ at equal grades, and ⟑ as a signed sum of its orders. A suite holds that this dot equals the
+𝐚ᵀ𝐆𝐛 of the figure, which the map gives as a faded route.
 
 The blocks follow the groups of the code, from bases to properties. The last three blocks hold
 the measures, the projections and the motion operators. A box draws only the inputs that it cannot

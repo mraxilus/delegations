@@ -44,17 +44,17 @@ suite "Internal: Judge of faces":
 
   test "character page draws with face of system fails, naming page, element and codepoint":
     let
-      found = parseJson("""{"design-frames": {"characters": [
+      found = parseJson("""{"design-review": {"characters": [
         {"element": "svg > text.name", "codepoint": 8644}], "faces": []},
         "control_faces": {"characters": [{"element": "p#han", "codepoint": 20013}],
         "faces": []}}""")
       expected = @[(element: "p#han", codepoint: 0x4E2D)]
       findings = checkRendered(found, expected, CONTROL, DIRECTORY)
     check findings.len == 1
-    check findings[0].path == DIRECTORY / "design-frames.html"
+    check findings[0].path == DIRECTORY / "design-review.html"
     check findings[0].message ==
         "svg > text.name: Character drawn by face of system; got `U+21C4`."
-    check findings[0].render.startsWith(DIRECTORY / "design-frames.html:0: ")
+    check findings[0].render.startsWith(DIRECTORY / "design-review.html:0: ")
 
 
   test "control that raises every finding it expects, and no other, passes":

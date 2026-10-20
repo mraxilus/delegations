@@ -16,11 +16,10 @@ and back.
 This change applies at pin and builds on no other. Other edits reach code that this change
 touches:
 
-- P06, `float-width`, quotes no line of this change. Two locals here start at the float `0.0`:
-  `largest` in `^∘` and `distance_squared` in `samplePoint`. Each compiles at 32 bits. Once both
-  land, the second to land declares them `Coefficient`.
-- P07, `part-scale`, removes the private `=~` of two scalars. The test of suite Internal compares
-  two multivectors through the public `=~` instead, so the two build together in either order.
+- The width of each float is a build option at pin, so `largest` in `^∘` and `distance_squared`
+  in `toRoundPoint` are declared `Coefficient`.
+- P07, `part-scale`, edits `=~` and `grade`, and no line here. The test of suite Internal compares
+  two multivectors through the public `=~`, so it reads the rule of P07 once both land.
 - The change `algebra-hygiene` renames `TOLERANCE_ABS`, which `^∘` names. The second to land
   carries the new name into `^∘`.
 - The change `doc-comments` writes that `^` and `normalizeWeight` cost no call. With this change
@@ -68,13 +67,13 @@ func unitize*(m: Multivector): Multivector {.inline.} = ^m
 ## Edit `pga/operators.nim`
 
 ```nim
-func `|∘`*(m: Multivector): Multivector {.inline.} =
+func `|∘`*(m: Multivector): MultivectorScalars {.inline.} =
   ## Get (round) weight norm of multivector as size of (round) weight components.
   ##   I.e. ‖𝐦‖∘ = √(𝐦∘𝐦).
 ```
 
 ```nim
-func `|∘`*(m: Multivector): Multivector {.inline.} =
+func `|∘`*(m: Multivector): MultivectorScalars {.inline.} =
   ## Get (round) weight norm of multivector as size of (round) weight components.
   ##   In RGA, ‖𝐦‖∘ = √(𝐦∘𝐦); in CGA, √(𝐦∘𝐦) is radius norm ‖𝐦‖⊘ instead (4.45).
 ```
@@ -106,7 +105,7 @@ func `^∘`*(m: Multivector): Multivector {.noinit.} =
       m_norm_weight_round_squared > TOLERANCE_ABS * TOLERANCE_ABS * m_norm_radius_squared
     if is_round:  # Scan grades only where round weight passes, and stop at second grade.
       var
-        largest = 0.0
+        largest: Coefficient = 0.0
         found_grade = false
         grade_first = Grade.low
       for b in Basis: largest = max(largest, abs(m[b]))
@@ -157,7 +156,7 @@ suite "Internal":
 when IS_CONFORMAL:
   proc toRoundPoint(m: Multivector): Multivector =
     ## Lift Euclidean part of multivector to round point of radius zero.
-    var distance_squared = 0.0
+    var distance_squared: Coefficient = 0.0
     for b in Basis.scalar.succ..Basis.origin.pred:
       result[b] = m[b]
       distance_squared += m[b]^2
@@ -201,14 +200,14 @@ suite "Internal":
         let 𝐯 = ^(3 ∧ (sampleReflector() ⟇ sampleReflector()))
         check abs((𝐯 ∘ 𝐯)[Basis.scalarAnti]) ∧ 𝟙 =~ 𝟙  # Product of two reflections ends unit.
         let 𝐦 = 𝐯 ⟇ samplePoint() ⟇ ~∘𝐯
-        check |∘(^𝐦) =~ 𝟙  # Moved round point keeps unit round weight.
+        check toMultivector(|∘(^𝐦)) =~ 𝟙  # Moved round point keeps unit round weight.
 
         let 𝐬 = sampleSphere()
         var 𝐠 = samplePoint()
         for _ in 2 ..< DIMENSIONS - 1: 𝐠 = 𝐠 ∧ samplePoint()
         𝐠 = 𝐠 ∧ 𝐞∞
         let 𝐠_back = 𝐬 ⟇ (𝐬 ⟇ 𝐠 ⟇ ~∘𝐬) ⟇ ~∘𝐬
-        check |□(^𝐠_back) =~ 𝟙  # Plane through sphere and back keeps unit flat weight.
+        check toMultivector(|□(^𝐠_back)) =~ 𝟙  # Plane sent through sphere and back stays unit.
 
 
 ```
@@ -231,9 +230,9 @@ suite "Chapter 4":
         var 𝐮 = 𝐫
         for grade in 1..<DIMENSIONS:
           let scale = 3 * gauss()
-          check |∘(^(scale ∧ 𝐮)) =~ 𝟙  # Section 4.3, round object
+          check toMultivector(|∘(^(scale ∧ 𝐮))) =~ 𝟙  # Section 4.3, round object
           if grade < DIMENSIONS - 1:
-            check |□(^(scale ∧ (𝐮 ∧ 𝐞∞))) =~ 𝟙  # Section 4.3, flat object
+            check toMultivector(|□(^(scale ∧ (𝐮 ∧ 𝐞∞)))) =~ 𝟙  # Section 4.3, flat object
           𝐮 = 𝐮 ∧ samplePoint()
 
 

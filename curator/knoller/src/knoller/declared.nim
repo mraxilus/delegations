@@ -13,6 +13,9 @@
 ##   Parameter of type `typedesc` alone is generic (`is_generic`): it stands for any type, as
 ##     placeholder does (V.12). `type` alone is same type to Nim, so it is generic too;
 ##     `typedesc[I]` holds placeholder `I`, so its parameter is not generic.
+##   Routine is compile-time where its pragmas hold `compileTime`, or where it nests in body that
+##     compile time alone runs: macro, `static:`, or compile-time routine. Macro itself reads by
+##     its keyword, and template body runs where it expands, so neither marks itself.
 ##
 ##   Cost: text scanner, never parser. Comments and strings are blanked first; multi-line
 ##     signature is joined to its closing parenthesis; object variant branch is read as fields
@@ -70,7 +73,8 @@ type
     keyword*: string  ## Keyword declaring routine, as `macro`; empty for every other kind.
     type_return*: string
       ## Type routine returns, as signature spells it before its pragmas; empty where none.
-    is_compile_time*: bool  ## Routine whose pragmas hold `compileTime`.
+    is_compile_time*: bool
+      ## Routine whose pragmas hold `compileTime`, or that nests where compile time alone runs.
     value*: string
       ## Value binding takes on its own line and lines below opening `.`, its element where tuple
       ##   gives one to each name; empty where line gives none, or value runs past otherwise.
@@ -81,6 +85,8 @@ type
     is_scope_free: bool  ## Block opens no scope: `when` chain, or bare section keyword.
     is_entry: bool  ## Top-level `when isMainModule:`, where module runs as program.
     substituted: seq[string]  ## Parameters of template, which its body names in place of argument.
+    is_compile_time: bool
+      ## Body compile time alone runs: macro, `static:`, or routine with pragma `compileTime`.
 
 
 func nameOf(piece: string): string =
@@ -333,6 +339,7 @@ func declarations*(source: string): seq[Declared] =
     var
       next = i + 1
       substituted: seq[string]
+      is_compile_time_body = word == "static" and rest.strip == ":"
 
     block reading:
       if word in KEYWORDS_ROUTINE and rest.len > 0 and rest[0] == ' ':
@@ -387,6 +394,7 @@ func declarations*(source: string): seq[Declared] =
             tail.identifierAt(1) == "bool"
           pragmas = text.wordsPragma
           is_foreign = pragmas.anyIt(it in MARKS_FOREIGN)
+          is_compile_time = "compileTime" in pragmas or openers.anyIt(it.is_compile_time)
         if name.len > 0 and not is_foreign:
           result.add Declared(
             name: name,
@@ -395,8 +403,9 @@ func declarations*(source: string): seq[Declared] =
             is_boolean: is_predicate,
             keyword: word,
             type_return: tail.typeReturn,
-            is_compile_time: "compileTime" in pragmas,
+            is_compile_time: is_compile_time,
           )
+        is_compile_time_body = word == "macro" or is_compile_time
         break reading
 
       if word == "type" and rest.strip.len == 0:
@@ -495,5 +504,6 @@ func declarations*(source: string): seq[Declared] =
     if is_opening:
       var held = opener
       held.substituted = substituted
+      held.is_compile_time = is_compile_time_body
       openers.add held
     i = next

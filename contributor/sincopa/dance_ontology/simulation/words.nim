@@ -3,15 +3,10 @@
 ##   Simulation names what it measures for body: torso band, fore aspect, elbow
 ##     forward.  Dance names same readings low, wrap and elbow forward.  This
 ##     module is only place where one becomes other.
-##   Report (`verdicts`) and page data (`turns`) both once carried own copy of
-##     this table, deliberately, so translation stayed visible in each.  Two
-##     copies drifted: report named elbow folded forward and page did not, so
-##     one pose carried two answers, and reader comparing page against report
-##     met disagreement that neither file admitted.
-##     Cost of one table: module sits under `simulation`, which otherwise puts no
-##       word of dance on anything it measures.  Accepted -- translation is
-##       still visible, in one file that names itself, and evidence is that
-##       both readers quote same table rather than that each writes one.
+##   Report (`verdicts`) and recording of every hold turning (`turns`) both read this one table.
+##     Rejected: copy in each, which can drift until one pose carries two answers.
+##     Cost: module sits under `simulation`, which otherwise puts no word of dance on anything it
+##       measures.  Accepted: translation stays visible, in one file that names itself.
 ##   Words are `GLOSSARY.md`'s, and `tests/suites/test_glossary` holds every string here
 ##     to it.
 ##
@@ -39,7 +34,7 @@ import ./[body, hold, read, rig, walk]
 
 
 const BANDS* = [("low", Band.Torso), ("high", Band.Neck), ("above", Band.Crown)]
-  ## Name each band, in order report and page tabulate them.
+  ## Name each band, in order report and `design/turns` tabulate them.
 
 const SIDES = ["Face", "Starboard", "Back", "Port"]
   ## Name side each dancer turns to other, by quarters clockwise from own front
@@ -116,7 +111,9 @@ func why*(walk: Walk): string =
   ## Say what refuses, in few words that table cell or page can show.
   ##   Short register.  `hold.says` answers same question in whole sentence,
   ##     for viewer that has room for one.
+  ##   Planned way that stops names nothing that gave: no planned pose stands further on.
   if not walk.is_stopped: return "no block"
+  if walk.isPlanned and walk.why == Stop.None: return "no plan goes further"
   case walk.why
   of Stop.None: "holds"
   of Stop.Span: whose(walk.whose) & " span"
@@ -127,3 +124,4 @@ func why*(walk: Walk): string =
   of Stop.Through: whose(walk.whose) & " arm through a body"
   of Stop.Arms: "arm through arm"
   of Stop.Crossed: "arms cross above elbow"
+  of Stop.Band: whose(walk.whose) & " hand off band"

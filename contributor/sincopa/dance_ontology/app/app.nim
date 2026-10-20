@@ -18,9 +18,8 @@
 ##   What model has to say about spreadsheet it was read from is not
 ##     here and should not be: it is finding about document rather than
 ##     fact about two bodies, it is true whether or not anyone is dancing, and
-##     reader who wants it wants to read it rather than click through it.  It
-##     lives in `doc/review.html`, which is written from same model, and in
-##     `nimble audit`.
+##     reader who wants it wants to read it rather than click through it.
+##     `tools/audit.nim` prints it, from same model.
 
 {.experimental: "strictFuncs".}
 
@@ -201,8 +200,8 @@ proc suitDrawing() =
 
 func escaped(text: string): string =
   ## Escape text for placement in markup, quotes included.
-  ##   Stricter than review page's `escape`: this one also feeds
-  ##     attribute values, where bare quote ends attribute.
+  ##   Quotes too, since it also feeds attribute values, where bare quote
+  ##     ends attribute.
   text.multiReplace(("&", "&amp;"), ("<", "&lt;"), (">", "&gt;"), ("\"", "&quot;"))
 
 
@@ -566,7 +565,7 @@ func renderGallery(narrowing: Filter): string =
   ## Show every frame as its own picture, and let one of them be started from.
   ##   Name is claim about frame; picture is frame.
   ##   Showing both means vocabulary can be read off drawing rather
-  ##     than trusted, which is same reason review page carries
+  ##     than trusted, which is same reason card review carries
   ##     pictures too.
   var
     cards = ""
@@ -704,8 +703,8 @@ func renderMatrix(): string =
   ##   What source spreadsheet has and has not got is not marked here.
   ##     Which cells its author has filled in is fact about document being
   ##       written, not about two bodies, and app is ontology:
-  ##       `doc/review.html` says it, at length and in order, which is how it
-  ##       wants to be read.
+  ##       `tools/audit.nim` prints it, in order, which is how it wants to be
+  ##       read.
   let order = towerOrder()
   # Band opens wherever tower steps down row, and gap that marks it
   # has to fall in same place down rows as it does across columns.

@@ -8,12 +8,15 @@
 ##     counts against multivector lower bound, and times against dense form (`dense.nim`).
 ##     Time bar ends at median of run ratios, and each run is one tick on it.
 ##   Proposals close on it: each proposal's evaluation overlays its changed functions, and docket
-##     counts how many measurands would then stand at bound.
+##     counts which operations would then stand at bound, one bar per count.
 ##   Rows carry CSS hooks rather than script: class per filter, custom property per sort key.
 ##     Dropdowns name them, and `:has()` rules body generates read chosen option, so one list
 ##     here spells option and rule alike. Search box is only script: row hides while its words
 ##     lack any word typed, as Architect chose at cost of script. Script is Nim, `find.nim`,
 ##     which driver compiles to JavaScript and passes in; rule it applies is `search.isFound`.
+##   Rules docket alone draws with ride in its body, `STYLE`; shell keeps rules pages share.
+##     So change to docket's look moves docket's digest alone, and no other page needs publishing.
+##     Cost: docket's look reads from two files.
 ##
 ##   Cost: every row renders once per page whatever filter reader picks; 150 rows of four
 ##     algebras stay under one megabyte.
@@ -67,6 +70,12 @@ type
     bounded, at_multiplies, at_bytes, chains: int
     sums_library, sums_bound, sums_reference: array[2, int]
     full: int
+  Parity = object
+    ## Define operations at multivector lower bound on one count, now against one proposal.
+    ##   Each operation counts once, so each segment of its bar is exact, never difference of sums.
+    bounded, bounded_proposal: int
+      ## Operations bounded now, and with proposal, less any whose function proposal drops.
+    kept, gained, lost: int  ## At bound now and with proposal, with proposal alone, and now alone.
   Sheet* = object  ## Define one algebra's documents docket reads.
     name*, title*: string  ## Short name and title, as `rga4d` and `Rigid 4D`.
     dimensions*: int  ## Vector space dimensions.
@@ -280,28 +289,36 @@ func positionOf(axis: Axis, ratio: float): float =
 
 #[ Facts ]#
 
+func tallyOf(rows: openArray[Row], is_typed: bool): Tally =
+  ## Count rows at bound and sum their spending; typed population counts rows with all three.
+  for row in rows:
+    if not is_typed and not row.is_general: continue
+    if row.library.isNone or row.bound.isNone: continue
+    let (library, bound) = (row.library.get, row.bound.get)
+    inc result.bounded
+    if library.multiplies <= bound.multiplies: inc result.at_multiplies
+    if library.bytes <= bound.bytes: inc result.at_bytes
+    if bound.is_chain: inc result.chains
+    if is_typed and row.reference.isNone: continue
+    inc result.full
+    result.sums_library[0] += library.multiplies
+    result.sums_library[1] += library.bytes
+    result.sums_bound[0] += bound.multiplies
+    result.sums_bound[1] += bound.bytes
+    if row.reference.isSome:
+      result.sums_reference[0] += row.reference.get.multiplies
+      result.sums_reference[1] += row.reference.get.bytes
+
+
+func countAtBound*(sheet: Sheet, ids: JsonNode): tuple[at_multiplies, bounded: int] =
+  ## Count operations of algebra at multivector lower bound on multiplies, over those bounded;
+  ##   home quotes it for docket. `ids` is docket file whole.
+  let tally = tallyOf(rowsOf(sheet, ids), false)
+  (tally.at_multiplies, tally.bounded)
+
+
 func htmlFacts(sheet: Sheet, rows: openArray[Row]): string =
   ## Render facts for both populations; typed toggle shows one.
-
-  func tallyOf(rows: openArray[Row], is_typed: bool): Tally =
-    ## Count rows at bound and sum their spending; typed population counts rows with all three.
-    for row in rows:
-      if not is_typed and not row.is_general: continue
-      if row.library.isNone or row.bound.isNone: continue
-      let (library, bound) = (row.library.get, row.bound.get)
-      inc result.bounded
-      if library.multiplies <= bound.multiplies: inc result.at_multiplies
-      if library.bytes <= bound.bytes: inc result.at_bytes
-      if bound.is_chain: inc result.chains
-      if is_typed and row.reference.isNone: continue
-      inc result.full
-      result.sums_library[0] += library.multiplies
-      result.sums_library[1] += library.bytes
-      result.sums_bound[0] += bound.multiplies
-      result.sums_bound[1] += bound.bytes
-      if row.reference.isSome:
-        result.sums_reference[0] += row.reference.get.multiplies
-        result.sums_reference[1] += row.reference.get.bytes
 
   func shareFill(sheet: Sheet): int =
     ## Read share of library's modelled bytes that are zero fill, in percent.
@@ -527,47 +544,94 @@ func htmlRow(row: Row, axis: Axis, order: array[SORTS.len, int]): string =
 #[ Page ]#
 
 func htmlProposals(sheets: openArray[Sheet], overlays: openArray[Overlay]): string =
-  ## Render how far each proposal moves parity with multivector bound.
+  ## Render how far each proposal moves operations to multivector bound, one bar per count.
+  ##   One block per proposal, its link once, then one line per algebra it was evaluated on.
+  ##   Bar spans operations bounded now: at bound both ways, then brought to it, then taken off
+  ##     it, so change stands out of grey; exact counts beside, as `37 → 39 of 39`.
 
-  func parity(sheet: Sheet, overlay: JsonNode, is_typed: bool): (int, int, int) =
-    ## Count rows at bound on multiplies and on bytes, with overlay's functions in place.
-    var bounded, at_multiplies, at_bytes: int
+  func paritiesOf(sheet: Sheet, overlay: JsonNode): array[2, Parity] =
+    ## Count general operations at bound on multiplies, then on bytes, now and with overlay's
+    ##   functions in place.
     let functions = sheet.measurements_static{"functions"}
-    for id, measurand in sheet.measurements_static{"measurands"}.pairs:
-      if not is_typed and measurand{"reference"}.getStr.len > 0: continue
+    for _, measurand in sheet.measurements_static{"measurands"}.pairs:
       let
         key = measurand{"library"}.getStr
         bound = measurand{"bound"}
-      if bound.isNil or key.len == 0 or not functions.hasKey(key): continue
-      var function = functions[key]
-      if not overlay.isNil and overlay.hasKey(key):
-        let after = overlay[key]{"after"}
-        if after.isNil or after.kind != JObject: continue
-        function = %*{"total": after, "movement": after}
-      inc bounded
-      if function{"total", "multiplies"}.getInt <= bound{"multiplies"}.getInt: inc at_multiplies
-      if function{"movement", "bytes_moved"}.getInt <= bound{"bytes_moved"}.getInt: inc at_bytes
-    (bounded, at_multiplies, at_bytes)
+      if measurand{"reference"}.getStr.len > 0 or bound.isNil or key.len == 0 or
+          not functions.hasKey(key): continue
+      let
+        changed = overlay{key}
+        after = if changed.isNil: nil else: changed{"after"}
+        is_dropped = not changed.isNil and (after.isNil or after.kind != JObject)
+        limits = [bound{"multiplies"}.getInt, bound{"bytes_moved"}.getInt]
+        spent_now = [functions[key]{"total", "multiplies"}.getInt,
+          functions[key]{"movement", "bytes_moved"}.getInt]
+        spent_proposal =
+          if changed.isNil or is_dropped: spent_now
+          else: [after{"multiplies"}.getInt, after{"bytes_moved"}.getInt]
+      for index in 0..<limits.len:
+        let
+          is_at_bound_now = spent_now[index] <= limits[index]
+          is_at_bound_proposal = not is_dropped and spent_proposal[index] <= limits[index]
+        inc result[index].bounded
+        if not is_dropped: inc result[index].bounded_proposal
+        if is_at_bound_now and is_at_bound_proposal: inc result[index].kept
+        elif is_at_bound_proposal: inc result[index].gained
+        elif is_at_bound_now: inc result[index].lost
+
+  func htmlCount(parity: Parity; name_measure, title_algebra: string): string =
+    ## Render one count as bar over operations bounded now, segment per fate, counts beside.
+    ##   Label names both totals where proposal drops operation, else one.
+    let
+      (now, proposal) = (parity.kept + parity.lost, parity.kept + parity.gained)
+      label =
+        if parity.bounded == parity.bounded_proposal:
+          $now & " → " & $proposal & " of " & $parity.bounded
+        else:
+          $now & " of " & $parity.bounded & " → " & $proposal & " of " & $parity.bounded_proposal
+      tip = title_algebra & ", " & name_measure & ": " & $now & " of " & $parity.bounded &
+          " at bound now, " & $proposal & " of " & $parity.bounded_proposal &
+          " with proposal; " & $parity.gained & " brought to it, " & $parity.lost & " taken off it"
+    var
+      marks: string
+      at = 0.0
+    for (name_class, count) in [("kept", parity.kept), ("gained", parity.gained),
+        ("lost", parity.lost)]:
+      if count == 0: continue
+      let width = 100.0 * float(count) / float(parity.bounded)
+      marks.add "<i class=\"" & name_class & "\" style=\"left:" & at.fixed & "%;width:" &
+          width.fixed & "%\"></i>"
+      at += width
+    "<div class=\"count\" title=\"" & escapeHtml(tip) & "\"><span class=\"k\">" & name_measure &
+        "</span><div class=\"track\">" & marks & "</div><span class=\"v\">" & label &
+        "</span></div>"
 
   if overlays.len == 0: return ""
   result = "<section class=\"block\"><h2>Proposals against the bound</h2><p class=\"note\">" &
       "Each proposal's evaluation replaces the functions it changes; the rest stay as baselines " &
-      "hold them.</p><div class=\"table\"><table><tr><th>Proposal</th><th>Algebra</th>" &
-      "<th>At bound on multiplies, now → proposal</th><th>At bound on bytes</th></tr>"
+      "hold them. Each bar spans the operations bounded now; beside it, how many stand at the " &
+      "multivector lower bound now → with the proposal.</p><div class=\"legend\"><span " &
+      "class=\"kept\">at bound now and with proposal</span><span class=\"gained\">brought to " &
+      "bound by proposal</span><span class=\"lost\">taken off bound by proposal</span></div>" &
+      "<div class=\"parities\"><div class=\"parity parity-head\" aria-hidden=\"true\">" &
+      "<span>Proposal</span><div class=\"line\"><span>Algebra</span><span>At bound on " &
+      "multiplies</span><span>At bound on bytes moved</span></div></div>"
   for overlay in overlays:
+    var lines: string
     for sheet in sheets:
       if sheet.name notin overlay.functions: continue
-      let
-        now = parity(sheet, nil, false)
-        after = parity(sheet, overlay.functions[sheet.name], false)
-        title =
-          if overlay.url.len > 0:
-            "<a href=\"" & escapeHtml(overlay.url) & "\">" & escapeHtml(overlay.title) & "</a>"
-          else: escapeHtml(overlay.title)
-      result.add "<tr><td>" & title & "</td><td>" & sheet.title & "</td><td>" &
-          $now[1] & "/" & $now[0] & " → " & $after[1] & "/" & $after[0] & "</td><td>" & $now[2] &
-          "/" & $now[0] & " → " & $after[2] & "/" & $after[0] & "</td></tr>"
-  result.add "</table></div></section>"
+      let parities = paritiesOf(sheet, overlay.functions[sheet.name])
+      lines.add "<div class=\"line\"><span>" & sheet.title & "</span>" &
+          htmlCount(parities[0], "multiplies", sheet.title) &
+          htmlCount(parities[1], "bytes moved", sheet.title) & "</div>"
+    if lines.len == 0: continue
+    let title =
+      if overlay.url.len > 0:
+        "<a href=\"" & escapeHtml(overlay.url) & "\">" & escapeHtml(overlay.title) & "</a>"
+      else: escapeHtml(overlay.title)
+    result.add "<div class=\"parity\"><p>" & title & "</p><div class=\"lines\">" & lines &
+        "</div></div>"
+  result.add "</div></section>"
 
 
 const
@@ -606,10 +670,46 @@ dense form    = each slot once, as sum of terms library's tables keep: no fill,
 operation, and do not predict time across different operations. Inspect one yourself with
 <code>nim r tools/build.nim show ∧</code>.</p></details></section>"""
     ## Method, same for every algebra.
+  STYLE = """
+.overview { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: 20px 32px; padding-block: 18px; align-items: start; }
+.parities { display: grid; grid-template-columns: minmax(0, 1fr); }
+.parity { display: grid; grid-template-columns: minmax(0, 15rem) minmax(0, 1fr); gap: 4px 22px;
+  padding: 10px 6px; border-bottom: 1px solid var(--rule); align-items: start; }
+.parity-head { color: var(--muted); font-size: 0.74rem; text-transform: uppercase;
+  letter-spacing: 0.06em; padding-block: 6px; }
+.parity .lines { display: grid; gap: 6px; grid-template-columns: minmax(0, 1fr); }
+.parity .line { display: grid; grid-template-columns: 7rem minmax(0, 1fr) minmax(0, 1fr);
+  gap: 4px 22px; align-items: center; }
+.parity .count { display: grid; grid-template-columns: minmax(0, 1fr) 8rem; gap: 8px;
+  align-items: center; }
+.parity .count .k { display: none; }
+.parity .count .v { font-family: var(--mono); font-size: 0.78rem; color: var(--ink-2);
+  font-variant-numeric: tabular-nums; }
+.parity .track { height: 8px; }
+.parity .track i { border-radius: 0; }
+.parity .track i:last-child { border-radius: 0 4px 4px 0; }
+.parity .track i + i { border-left: 2px solid var(--bg); }
+.parity .kept, .legend .kept::before { background: var(--muted); }
+.parity .gained, .legend .gained::before { background: var(--bound); }
+.parity .lost, .legend .lost::before { background: var(--library); }
+@media (max-width: 860px) {
+  .overview, .parity, .parity .line { grid-template-columns: minmax(0, 1fr); }
+  .parity-head { display: none; }
+  .parity .count { grid-template-columns: 6.4rem minmax(0, 1fr) 8rem; }
+  .parity .count .k { display: block; color: var(--muted); font-size: 0.8rem; }
+}
+"""
+    ## Rules docket alone draws with, carried in its body.
+    ##   Parity bars grey what proposal leaves, so blue gain and orange loss stand out.
+    ##     Blue and orange measured 24.7 apart to colour-blind eye, green and red 3.8 (ΔE in
+    ##     OKLab ×100, palette validator of `dataviz` skill, light theme, 2026-10-19).
+    ##   Trap: class shell styles for other page reshapes docket, as `.summary div` for proposal
+    ##     card outranks `.bar`; `Internal: Pages` trips on it.
 
 
 func bodyDocket*(
-  sheets: openArray[Sheet]; ids: JsonNode; overlays: openArray[Overlay]; pin, links, script: string
+  sheets: openArray[Sheet]; ids: JsonNode; overlays: openArray[Overlay]; pin, script: string
 ): string =
   ## Render docket body: header, one tab per algebra, controls, proposals against bound, method.
   ##   `script` is search box's JavaScript, compiled from `find.nim`; empty leaves page without.
@@ -762,11 +862,11 @@ func bodyDocket*(
     if dates.len > 1: text_dates.add " for " & titles.join(" and ")
 
   result = "<div class=\"page\" style=\"--origin:" & axis.positionOf(1.0).fixed & "%;--octaves:" &
-      $(axis.exponent_high - axis.exponent_low) & "\"><header><h1>PGA Gap Docket</h1>" &
+      $(axis.exponent_high - axis.exponent_low) & "\"><header><h1>Performance</h1>" &
       "<p class=\"meta\">pga " & code(pin[0..<7]) & " · time " & escapeHtml(text_dates) &
       measuredAt(taken) & ", " & escapeHtml(taken{"machine"}.getStr) &
       (if count_runs > 1: ", median of " & $count_runs & " runs" else: "") &
-      " · counts read from emitted C, exact" & links & "</p><label class=\"toggle\"><input " &
+      " · counts read from emitted C, exact</p><label class=\"toggle\"><input " &
       "type=\"checkbox\" id=\"typed\"> typed measurands</label></header><nav class=\"tabs\" " &
       "aria-label=\"Algebra\">"
   for index, sheet in sheets:
@@ -778,9 +878,9 @@ func bodyDocket*(
   for sheet in sheets:
     rules.add "body:has(#algebra-" & sheet.name & ":checked) .algebra:not(.algebra-" & sheet.name &
         ") { display: none; }\n"
-  result.add rules & rules_controls & "</style>"
+  result.add rules & rules_controls & STYLE & "</style>"
   for index, sheet in sheets:
-    result.add "<section class=\"algebra algebra-" & sheet.name & "\"><div class=\"summary\">" &
+    result.add "<section class=\"algebra algebra-" & sheet.name & "\"><div class=\"overview\">" &
         htmlFacts(sheet, every[index]) & "</div></section>"
   result.add controls & htmlHead(axis)
   for index, sheet in sheets:

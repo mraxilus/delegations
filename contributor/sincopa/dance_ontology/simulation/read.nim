@@ -175,6 +175,14 @@ func tightest*(rig: Rig, stance: array[Body, Stance], links: seq[Link], arms: Ar
   ##   `joints` reads left arm in mirror, so rig's own ranges serve both arms as
   ##     they stand: twist's ends are swapped only for engine's own reading
   ##     (`rigid.twistEnds`), which is not mirrored.
+  # TODO: Should twist read here be engine's own?  Off four points, `joints` reads twist that
+  #   lies -101 to +76 degrees from engine's on planned way of same-name chain held above, where
+  #   engine's matches plan's to 0.01 degree inside its ends: here 106 of 207 moments read 1.00,
+  #   and engine reads 1.00 at 2, measured 2026-10-12.  Right arms differ too, so issue 610's
+  #   swapped ends of left arm are not all of it.
+  #   Candidates: record engine's twist with each moment, which pages then read, at cost of field
+  #     drawing chain cannot derive; or read twist off points in engine's own joint frame.
+  #   Evidence needed: which twist pages show (`PROVENANCE.md`, Open questions).
   result = Tight(room: Inf)
   for i in 0..<links.len:
     for k in 0..1:

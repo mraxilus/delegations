@@ -12,16 +12,18 @@ hand-rolled typed reference spends, derived from Lengyel's own forms.
 
 ## Pages
 
-Three kinds of page answer the question. Each one is built from committed files alone.
-`drive` holds each file to the library at pin, and `head` holds the pin to library head.
-`drive` also renders each page, and fails where a face of the system draws a character beyond
-ASCII. A control page beside them proves that the render sees.
+A home page and three views answer the question: Progress, Performance and Proposals. Each page is
+built from committed files alone. `drive` holds each file to the library at pin, and `head` holds
+the pin to library head. `drive` also renders each page, and fails where a face of the system draws
+a character beyond ASCII. A control page beside them proves that the render sees. A bar on top of
+each page links the home page and the three views.
 
 | Page | Kind | What it shows |
 |------|------|---------------|
-| [Gap docket][docket] | monitoring | every measurand at pin against both lower bounds |
-| [Marginalia][marginalia] | monitoring | library at pin: changes tried, and notes in its margin |
-| [Proposals][proposals] | list | every proposal, graph of what each blocks, each read in place |
+| [Home][home] | home | the three views, each with its headline figure |
+| [Progress][progress] | view | library map: every Cayley table, as the library holds it at pin |
+| [Performance][docket] | view | gap docket: every measurand at pin against both lower bounds |
+| [Proposals][proposals] | view | every proposal in a graph and table, and marginalia |
 | [P01 Cayley derivation][cayley-derivation] | proposal | every Cayley table from metric and 𝟙 |
 | [P02 Typed multivectors][typed-multivectors] | withdrawn | k-vector types, now P04 and P09 |
 | [P03 Partner sign][partner-sign] | proposal | sign of partner folded into its first table |
@@ -34,11 +36,21 @@ ASCII. A control page beside them proves that the render sees.
 | [P10 Homogeneous scalar][homogeneous-scalar] | proposal | scalar kept with its weight |
 | [P11 Unitize general][unitize-general] | proposal | one unitize rule for any element |
 
-A **monitoring** page shows the library as it is. A **proposal** page shows a future state of
-the library, argued in its `proposal.md` and checked by its evaluation. Each proposal has the
-same shape, so the next exploration starts from the same frame. Each proposal page states what
-the proposal depends on, and what its rejection blocks. The **list** page names every proposal,
-draws the undecided ones as a graph, and shows each selected proposal in place.
+Progress and Performance show the library as it is. A **proposal** page shows a future state of the
+library, argued in its `proposal.md` and checked by its evaluation. Each proposal has the same
+shape, so the next exploration starts from the same frame. Each proposal page states what the
+proposal depends on, and what its rejection blocks. The Proposals page names every proposal, draws
+the undecided ones as a graph, and shows each selected proposal in place. Its second tab holds the
+marginalia: small changes tried at pin, and notes on the library.
+
+The library map on the Progress page reads the state of each box from the library at pin and from
+the catalogue. A box has a table of its own, or the library builds it from other operators, or the
+library lacks it. `drive` fails where the map draws a box in another state, or where the library
+builds a table that no box stands for.
+
+P01 lays out every Cayley table of the library, so most other proposals build on it. A proposal
+counts only the tables that the library builds at pin, as the library map shows them. When the
+library adds a table, each proposal that the table concerns takes it into account.
 
 ## What pages are built from
 
@@ -47,9 +59,9 @@ draws the undecided ones as a graph, and shows each selected proposal in place.
 | `baseline/` | measurements at pin, and the docket of identifiers | docket, `gaps.md` |
 | `changes/` | one small change to the library for each file: why, then quoted edits | marginalia |
 | `proposals/<NN>-<name>/` | `proposal.md`, `change.md` if any, `claims.json`, programs | its page |
-| `evaluations/` | what each change or proposal measured when tried at pin | marginalia, proposals |
+| `evaluations/` | what each change or proposal measured when tried at pin | proposals |
 | `marginalia/notes.md` | notes on library source, each quoting the lines it is about | marginalia |
-| `pages/` | shell every page is built in, figures that proposals embed, publications | every page |
+| `pages/` | shell every page is built in, library map, publications | every page |
 
 A change, a proposal and a note quote the library, and never give a line number. A quote that
 does not occur once at pin is a finding, so no file points at lines that say something else.
@@ -64,7 +76,8 @@ one issue open until the pin follows. To follow head:
 1. Bump the commit in `pga_benchmark.nimble` and `atlas.lock`, and restore with
    `nim r koch fetch-deps`.
 2. Re-take the static counts with `baseline`, and re-quote each change, proposal and note that
-   `drive` names.
+   `drive` names. Redraw each box of the library map that `drive` names, and add a box for each
+   new table.
 3. Run `restamp`. It moves each timed record whose builds emit the same C to the pin, and names
    each other one. Re-take those with `bench`, `sweep` or `evaluate <name>`.
 4. Run `gaps` and `pages`, publish each page that `drive` names, and record each one with
@@ -130,15 +143,17 @@ tests/                             suites, the testament stubs that run them, an
 
 ## Status
 
-Measured on the pinned compiler and on library head `28f4e11`, which is the pin. The runtime
-baselines were timed at the pin, and each evaluation names the pin it was timed at. The library
+Measured on the pinned compiler and on library head `3d9696e`, which is the pin. The runtime
+baselines were timed at the pin, or at a commit that emits the same C. Each evaluation names the
+pin it was timed at. The library
 stands above both lower bounds; `gaps.md` counts the gaps, and the docket shows each one.
 Unreviewed by a human. See `PROVENANCE.md` for the figures, and for what each subsystem was
 checked against.
 
 [replications]: https://gitlab.com/mraxilus/replications
+[home]: https://claude.ai/artifact/UVdybSYjYs3oHkt6bsR1sU
+[progress]: https://claude.ai/artifact/TsUU8dwwthrgRvbAvCeinV
 [docket]: https://claude.ai/artifact/XyT583x9RnTKixers2q4gT
-[marginalia]: https://claude.ai/artifact/6WwLfdHiisCtGWUcFxibBM
 [proposals]: https://claude.ai/artifact/CW9ZL5eotsVYrZPjMnTLoG
 
 [cayley-derivation]: https://claude.ai/artifact/2fi2hTpobqChXSTPq4vB6q

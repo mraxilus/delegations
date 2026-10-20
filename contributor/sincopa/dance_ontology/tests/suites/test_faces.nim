@@ -13,7 +13,7 @@
 
 import std/[os, sequtils, strutils, unittest]
 
-import ../../design/[faces, page, parts]
+import ../../design/[faces, page]
 
 
 const
@@ -21,13 +21,11 @@ const
       "<style>p{}</style>\n</head>\n<body>x</body>\n</html>"
     ## Whole page, of shape `pages/app/index.html` carries.
   FRAGMENT = "<title>T</title>\n<style>p{}</style>\n<main>x</main>"
-    ## Headless page, of shape review page and mark pages carry.
+    ## Headless page, of shape card review and rig viewer carry (`page.document`).
   STORE = "../../../curator/audit/src/assets.nim"
     ## Repository's declaration of every file fetched at build time, from project directory.
   PATH_APP = "pages" / "app" / "index.html"
     ## Shell of Reference, whose style sheet sits in its head.
-  PATH_REVIEW = "mockups" / "review.html"  ## Shell of review page.
-  PATH_WHOLECLOTH = "mockups" / "wholecloth.html"  ## Whole-cloth proposal, drawn by hand.
 
 
 proc stub(directory: string) =
@@ -212,8 +210,6 @@ suite "Internal: Faces":
     for (style_sheet, selectors) in [
       (page.STYLE.stylesOf, @["h1", "h2", "h3"]),
       (readFile(PATH_APP).stylesOf, @["h1", "h2", "h3", "h4"]),
-      (readFile(PATH_REVIEW).stylesOf, @["h1", "h2", "h3"]),
-      (readFile(PATH_WHOLECLOTH).stylesOf, @["h1", "section.plate h2", ".panel h3"]),
     ]:
       for selector in selectors:
         checkpoint(selector)
@@ -229,8 +225,6 @@ suite "Internal: Faces":
     for (style_sheet, selectors) in [
       (page.STYLE.stylesOf, @["body", "h1", "code"]),
       (readFile(PATH_APP).stylesOf, @["body", "h1"]),
-      (readFile(PATH_REVIEW).stylesOf, @["body", "h1", "code"]),
-      (readFile(PATH_WHOLECLOTH).stylesOf, @["body", "h1", ".m"]),
     ]:
       for selector in selectors:
         checkpoint(selector)
@@ -255,13 +249,3 @@ suite "Internal: Faces":
         dressed = withFaces(page, directory)
         declared = dressed.find("<meta charset=\"utf-8\">")
       check declared >= 0 and declared < dressed.find("@font-face") and declared < 1024
-
-
-  test "label of turn glyph names face pages ship":
-    ## Its label named `ui-sans-serif` first, which no page ships, so `¼` and `½` came from
-    ## reader's machine: Chromium 141 drew `¼` in DejaVu Sans on 2026-10-02 (repository
-    ## issue 391).  Audit's faces check reads no stack built through `&`, as this one is.
-    let
-      glyph = turnGlyph("&#188; turn")
-      opens = glyph.find("8px ") + "8px ".len
-    check familiesOf(glyph[opens..<glyph.find(';', opens)])[0] == "Noto Sans"

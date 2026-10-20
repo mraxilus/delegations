@@ -5,28 +5,28 @@ roots the antidot. The center norm, (4.43), is still a stub. This change fills i
 weighted distance from the origin to the center. Chapter 4 gains two tests, from Tables 4.12
 and 4.13. Both run at `cga5d` alone, since they name the bases of 5D.
 
-The doc of the radius norm states that its float root is NaN for an imaginary object. This change
-keeps `Multivector` as the return of each norm, as at pin. Proposal P10, `homogeneous-scalar`,
-proposes `ScalarHomogeneous` as the return of `normRadius`. Proposal P11, `unitize-general`, sets
-how unitization treats a flat object. The change `doc-comments` edits nearby docs in `pga.nim`.
-The two changes quote distinct lines, so they apply in either order.
+The doc of the radius norm states that its float root is NaN for an imaginary object. Each
+norm returns `MultivectorScalars` at pin, and so does the center norm. Proposal P10,
+`homogeneous-scalar`, proposes the root under the antiproduct for `normRadius`. Proposal P11,
+`unitize-general`, sets how unitization treats a flat object. The change `doc-comments` edits
+nearby docs in `pga.nim`. The two changes quote distinct lines, so they apply in either order.
 
 ## Edit `pga/operators.nim`
 
 ```nim
-  func `|⊘`*(m: Multivector): Multivector {.inline.} =
+  func `|⊘`*(m: Multivector): MultivectorScalars {.inline.} =
     ## Get radius norm of multivector.
     ##   Taken from antidot to avoid square root of negative.
     result[Basis.scalarAnti] = (`|⊘²`m)[Basis.scalarAnti].sqrt
 ```
 
 ```nim
-  func `|⊘`*(m: Multivector): Multivector {.inline.} =
+  func `|⊘`*(m: Multivector): MultivectorScalars {.inline.} =
     ## Get radius norm of multivector.
     ##   Float root of antidot; NaN where 𝐦∘𝐦 < 0, as for imaginary object.
     result[Basis.scalarAnti] = (`|⊘²`m)[Basis.scalarAnti].sqrt
 
-  func `|⊙`*(m: Multivector): Multivector {.inline.} =
+  func `|⊙`*(m: Multivector): MultivectorScalars {.inline.} =
     ## Get center norm of multivector, i.e. ‖𝐦‖⊙ = √(‖𝐦‖∙² + ‖𝐦‖□²) (4.43).
     ##   Weighted distance from origin to center; divide by round weight norm for distance.
     result[Basis.scalar] = sqrt((`|∙²`m)[Basis.scalar] + (`|□²`m)[Basis.scalarAnti])
@@ -35,19 +35,19 @@ The two changes quote distinct lines, so they apply in either order.
 ## Edit `pga.nim`
 
 ```nim
-  func normCenter*(m: Multivector): Multivector {.inline, error: "TODO:  |⊙m".}
+  func normCenter*(m: Multivector): MultivectorScalars {.inline, error: "TODO:  |⊙m".}
     ## Get center norm of multivector.
 ```
 
 ```nim
-  func normCenter*(m: Multivector): Multivector {.inline.} = |⊙m
+  func normCenter*(m: Multivector): MultivectorScalars {.inline.} = |⊙m
     ## Get center norm of multivector as weighted distance from origin to its center.
 ```
 
 ## Edit `tests/suites.nim`
 
 ```nim
-  test "TODO: Add chapter 4 tests":
+  test "TODO: Add remaining chapter 4 tests":
     skip()
 ```
 
@@ -73,10 +73,10 @@ The two changes quote distinct lines, so they apply in either order.
             for b in part:
               𝐮[b] = gauss()
               sizes[i] += 𝐮[b] ^ 2
-          check |∙𝐮 =~ initElement(Basis.scalar, sizes[0].sqrt)  # 4.12, round bulk
-          check |∘𝐮 =~ initElement(Basis.scalarAnti, sizes[1].sqrt)  # 4.12, round weight
-          check |■𝐮 =~ initElement(Basis.scalar, sizes[2].sqrt)  # 4.12, flat bulk
-          check |□𝐮 =~ initElement(Basis.scalarAnti, sizes[3].sqrt)  # 4.12, flat weight
+          check toMultivector(|∙𝐮) =~ initElement(Basis.scalar, sizes[0].sqrt)  # round bulk
+          check toMultivector(|∘𝐮) =~ initElement(Basis.scalarAnti, sizes[1].sqrt)  # round weight
+          check toMultivector(|■𝐮) =~ initElement(Basis.scalar, sizes[2].sqrt)  # flat bulk
+          check toMultivector(|□𝐮) =~ initElement(Basis.scalarAnti, sizes[3].sqrt)  # flat weight
 
     else: skip()
 
@@ -104,10 +104,13 @@ The two changes quote distinct lines, so they apply in either order.
             𝐬[E4235]^2 + 𝐬[E4315]^2 + 𝐬[E4125]^2 - 2*𝐬[E3215]*𝐬[E1234],
           ]
         for i, 𝐮 in [𝐚, 𝐝, 𝐜, 𝐬]:
-          check |⊙𝐮 =~ initElement(Basis.scalar, centers[i].sqrt)  # 4.43, Table 4.13
+          check toMultivector(|⊙𝐮) =~ initElement(Basis.scalar, centers[i].sqrt)  # 4.43, Table 4.13
           check 𝐮 ∘ 𝐮 =~ initElement(Basis.scalarAnti, radii[i])  # 4.45, Table 4.13
           if radii[i] >= 0:
-            check |⊘𝐮 =~ initElement(Basis.scalarAnti, radii[i].sqrt)  # 4.45, real object
+            check toMultivector(|⊘𝐮) =~ initElement(Basis.scalarAnti, radii[i].sqrt)  # 4.45, real
 
     else: skip()
+
+  test "TODO: Add remaining chapter 4 tests":
+    skip()
 ```

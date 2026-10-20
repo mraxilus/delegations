@@ -1,5 +1,8 @@
 <!-- Derivation map of P01, after Lengyel's figure 2.16, for RGA and CGA, with transwedge.
-     Colours are shell tokens, with fallbacks so file reads alone. Proposal embeds it.
+     Colours are shell tokens, with fallbacks so file reads alone. Progress page embeds it.
+     Box names what it stands for: catalogue ids in `data-ids`, or table constant alone in
+     `data-table`. Page writes state library holds at pin on each box, and `drive` holds fade
+     of each box to that state (`src/pga_benchmark/pages/completion.nim`).
      Eleven blocks, in order of code; box holds symbol alone. Inputs from other blocks sit on top
      row of each block, one dashed box per source block, cell per box, in order of blocks and
      of derivation; boxes build downward. Each box takes own line from each box it uses, and no
@@ -105,7 +108,7 @@
   <text class="title" x="140" y="201.76" text-anchor="middle">𝐞₁, …, 𝐞ₙ</text>
 </g>
 <text class="code edgecode" x="130" y="228" text-anchor="end">Basis</text>
-<g><rect class="fixed" x="65" y="299" width="150" height="34" rx="7"/>
+<g data-ids="wedge"><rect class="fixed" x="65" y="299" width="150" height="34" rx="7"/>
   <text class="title" x="140" y="321.76" text-anchor="middle">∧</text>
 </g>
 <g><rect class="base" x="365" y="299" width="150" height="34" rx="7"/>
@@ -115,15 +118,15 @@
 <g><rect class="base" x="625" y="299" width="150" height="34" rx="7"/>
   <text class="title" x="700" y="321.76" text-anchor="middle">𝐞ᵒ</text>
 </g>
-<g><rect class="fixed" x="65" y="429" width="150" height="34" rx="7"/>
+<g data-ids="complement_left"><rect class="fixed" x="65" y="429" width="150" height="34" rx="7"/>
   <text class="title" x="140" y="451.76" text-anchor="middle"><tspan
     text-decoration="underline">𝐮</tspan><tspan font-size="0">̱</tspan></text>
 </g>
-<g><rect class="fixed" x="365" y="429" width="150" height="34" rx="7"/>
+<g data-ids="complement_right"><rect class="fixed" x="365" y="429" width="150" height="34" rx="7"/>
   <text class="title" x="440" y="451.76" text-anchor="middle"><tspan
     text-decoration="overline">𝐮</tspan><tspan font-size="0">̄</tspan></text>
 </g>
-<g><rect class="anti" x="65" y="549" width="150" height="34" rx="7"/>
+<g data-ids="wedge_anti"><rect class="anti" x="65" y="549" width="150" height="34" rx="7"/>
   <text class="title" x="140" y="571.76" text-anchor="middle">∨</text>
 </g>
 <g><rect class="base" x="625" y="549" width="150" height="34" rx="7"/>
@@ -172,7 +175,8 @@
 <text class="lab" x="710" y="437.5" text-anchor="start"><tspan
     text-decoration="overline">𝐮</tspan><tspan font-size="0">̄</tspan> where 𝐮 = 𝐞ᵒ</text>
 <text class="code edgecode lab" x="710" y="452.5" text-anchor="start">Basis.horizon</text>
-<g><rect class="input" x="20" y="664" width="190" height="202" rx="7"/></g>
+<g data-table="CAYLEY_METRIC">
+<rect class="input" x="20" y="664" width="190" height="202" rx="7"/></g>
 <text class="title rga" x="34" y="717.5">𝖌 =</text>
 <text class="rga" x="92.5" y="690.25" text-anchor="middle" style="font-size: 15px">1</text>
 <text class="rga" x="113.5" y="690.25" text-anchor="middle" style="font-size: 15px">⋯</text>
@@ -233,16 +237,18 @@
 <text class="title" x="600" y="683.76" text-anchor="middle"><tspan
     text-decoration="overline">𝐮</tspan><tspan font-size="0">̄</tspan></text>
 <path class="sep" d="M580 668L580 688"/>
-<g><rect class="fixed" x="265.0" y="917" width="130" height="34" rx="7"/>
+<g data-table="CAYLEYS_EXOMORPHISM_METRIC.base">
+<rect class="fixed" x="265.0" y="917" width="130" height="34" rx="7"/>
   <text class="title" x="330" y="939.76" text-anchor="middle">𝐆</text>
 </g>
-<g><rect class="anti" x="265.0" y="1037" width="130" height="34" rx="7"/>
+<g data-table="CAYLEYS_EXOMORPHISM_METRIC.anti">
+<rect class="anti" x="265.0" y="1037" width="130" height="34" rx="7"/>
   <text class="title" x="330" y="1059.76" text-anchor="middle">𝔾</text>
 </g>
-<g><rect class="fixed" x="725.0" y="917" width="130" height="34" rx="7"/>
+<g data-ids="dual_bulk"><rect class="fixed" x="725.0" y="917" width="130" height="34" rx="7"/>
   <text class="title" x="790" y="939.76" text-anchor="middle">★</text>
 </g>
-<g><rect class="anti" x="725.0" y="1037" width="130" height="34" rx="7"/>
+<g data-ids="dual_weight"><rect class="anti" x="725.0" y="1037" width="130" height="34" rx="7"/>
   <text class="title" x="790" y="1059.76" text-anchor="middle">☆</text>
 </g>
 <path class="edge" d="M210 824L305 824L305 917" marker-end="url(#map-arrow)"/>
@@ -279,7 +285,8 @@
 <rect class="cell anti" x="772.5" y="1163.5" width="35" height="25" rx="5"/>
 <text class="title" x="790" y="1181.76" text-anchor="middle">𝔾</text>
 </g>
-<g><rect class="fixed" x="325" y="1292" width="150" height="60" rx="7"/>
+<g data-ids="bulk weight bulk_flat weight_flat">
+<rect class="fixed" x="325" y="1292" width="150" height="60" rx="7"/>
   <text class="title" x="400" y="1327.76" text-anchor="middle">𝐮●, 𝐮○, <tspan
     class="cga">𝐮■, 𝐮□</tspan></text>
 </g>
@@ -309,10 +316,12 @@
 <rect class="cell anti" x="627.5" y="1431.5" width="45" height="25" rx="5"/>
 <text class="title" x="650" y="1449.76" text-anchor="middle">☆</text>
 <path class="sep" d="M625 1434L625 1454"/>
-<g><rect class="fixed" x="325" y="1563" width="150" height="34" rx="7"/>
+<g data-table="CAYLEYS_WEDGES_TRANS.base">
+<rect class="fixed" x="325" y="1563" width="150" height="34" rx="7"/>
   <text class="title" x="400" y="1587.2" text-anchor="middle" style="font-size: 20px">⩓ₖ</text>
 </g>
-<g><rect class="anti" x="325" y="1713" width="150" height="34" rx="7"/>
+<g data-table="CAYLEYS_WEDGES_TRANS.anti">
+<rect class="anti" x="325" y="1713" width="150" height="34" rx="7"/>
   <text class="title" x="400" y="1737.2" text-anchor="middle" style="font-size: 20px">⩔ₖ</text>
 </g>
 <path class="edge" d="M375 1459L375 1563" marker-end="url(#map-arrow)"/>
@@ -358,22 +367,22 @@
 <rect class="cell anti" x="692.5" y="1829.5" width="45" height="25" rx="5"/>
 <text class="title" x="715" y="1849.2" text-anchor="middle" style="font-size: 20px">⩔ₖ</text>
 <path class="sep" d="M690 1832L690 1852"/>
-<g><rect class="fixed" x="75" y="1981" width="150" height="34" rx="7"/>
+<g data-ids="expand_bulk"><rect class="fixed" x="75" y="1981" width="150" height="34" rx="7"/>
   <text class="title" x="150" y="2003.76" text-anchor="middle">𝐚 ∧ 𝐛★</text>
 </g>
-<g><rect class="fixed" x="375" y="1981" width="150" height="34" rx="7"/>
+<g data-ids="expand_weight"><rect class="fixed" x="375" y="1981" width="150" height="34" rx="7"/>
   <text class="title" x="450" y="2003.76" text-anchor="middle">𝐚 ∧ 𝐛☆</text>
 </g>
-<g><rect class="anti" x="75" y="2131" width="150" height="34" rx="7"/>
+<g data-ids="contract_bulk"><rect class="anti" x="75" y="2131" width="150" height="34" rx="7"/>
   <text class="title" x="150" y="2153.76" text-anchor="middle">𝐚 ∨ 𝐛★</text>
 </g>
-<g><rect class="anti" x="375" y="2131" width="150" height="34" rx="7"/>
+<g data-ids="contract_weight"><rect class="anti" x="375" y="2131" width="150" height="34" rx="7"/>
   <text class="title" x="450" y="2153.76" text-anchor="middle">𝐚 ∨ 𝐛☆</text>
 </g>
-<g><rect class="fixed" x="635" y="2281" width="150" height="34" rx="7"/>
+<g data-ids="dot"><rect class="fixed" x="635" y="2281" width="150" height="34" rx="7"/>
   <text class="title" x="710" y="2309.52" text-anchor="middle" style="font-size: 32px">∙</text>
 </g>
-<g><rect class="anti" x="635" y="2421" width="150" height="34" rx="7"/>
+<g data-ids="dot_anti"><rect class="anti" x="635" y="2421" width="150" height="34" rx="7"/>
   <text class="title" x="710" y="2449.52" text-anchor="middle" style="font-size: 32px">∘</text>
 </g>
 <g class="faded">
@@ -467,10 +476,10 @@
 <rect class="cell anti" x="202.5" y="2569.5" width="39" height="25" rx="5"/>
 <text class="title" x="222" y="2589.2" text-anchor="middle" style="font-size: 20px">⩔ₖ</text>
 <path class="sep" d="M200 2572L200 2592"/>
-<g><rect class="fixed" x="125" y="2691" width="150" height="34" rx="7"/>
+<g data-ids="wedge_dot"><rect class="fixed" x="125" y="2691" width="150" height="34" rx="7"/>
   <text class="title" x="200" y="2715.92" text-anchor="middle" style="font-size: 22px">⟑</text>
 </g>
-<g><rect class="anti" x="125" y="2821" width="150" height="34" rx="7"/>
+<g data-ids="wedge_dot_anti"><rect class="anti" x="125" y="2821" width="150" height="34" rx="7"/>
   <text class="title" x="200" y="2845.92" text-anchor="middle" style="font-size: 22px">⟇</text>
 </g>
 <path class="edge" d="M200 2597L200 2691" marker-end="url(#map-arrow)"/>
@@ -500,7 +509,9 @@
 <text class="groupname" x="653" y="2930">Interior products</text>
 <rect class="cell anti" x="652.5" y="2937.5" width="45" height="25" rx="5"/>
 <text class="title" x="675" y="2957.92" text-anchor="middle" style="font-size: 22px">∘</text>
-<g><rect class="fixed" x="125" y="3069.5" width="150" height="53" rx="7"/>
+<g data-ids="norm_bulk_squared norm_weight_squared norm_bulk_flat_squared
+  norm_weight_flat_squared">
+<rect class="fixed" x="125" y="3069.5" width="150" height="53" rx="7"/>
   <text class="title" x="200" y="3092.26" text-anchor="middle">‖𝐮‖●², ‖𝐮‖○²</text>
   <text class="title" x="200" y="3111.26" text-anchor="middle"><tspan
     class="cga">‖𝐮‖■², ‖𝐮‖□²</tspan></text>
@@ -518,7 +529,8 @@
     class="rga">‖𝐮‖●² = 𝐮 ∙ 𝐮, ‖𝐮‖○² = 𝐮 ∘ 𝐮</tspan></text>
 </g>
 <g class="faded">
-<g><rect class="fixed" x="125" y="3209.5" width="150" height="53" rx="7"/>
+<g data-ids="norm_bulk norm_weight norm_bulk_flat norm_weight_flat">
+<rect class="fixed" x="125" y="3209.5" width="150" height="53" rx="7"/>
   <text class="title" x="200" y="3232.26" text-anchor="middle">‖𝐮‖●, ‖𝐮‖○</text>
   <text class="title" x="200" y="3251.26" text-anchor="middle"><tspan
     class="cga">‖𝐮‖■, ‖𝐮‖□</tspan></text>
@@ -533,7 +545,8 @@
     class="cga">, ■ and □</tspan></text>
 </g>
 <g class="faded">
-<g><rect class="fixed" x="125" y="3349" width="150" height="34" rx="7"/>
+<g data-ids="normalize_bulk normalize_weight">
+<rect class="fixed" x="125" y="3349" width="150" height="34" rx="7"/>
   <text class="title" x="200" y="3371.76" text-anchor="middle">𝐮<tspan dx="-8.70"
     dy="-1.33333">ˆ</tspan><tspan dx="1.99" dy="1.33333">●, </tspan>𝐮<tspan dx="-8.70"
     dy="-1.33333">ˆ</tspan><tspan dx="1.99" dy="1.33333">○</tspan></text>
@@ -549,7 +562,7 @@
     dx="1.49" dy="1">○ = 𝐮 ÷ ‖𝐮‖○</tspan></text>
 </g>
 <g class="faded">
-<g><rect class="fixed" x="365" y="3349" width="150" height="34" rx="7"/>
+<g data-ids="norm"><rect class="fixed" x="365" y="3349" width="150" height="34" rx="7"/>
   <text class="title" x="440" y="3371.76" text-anchor="middle">‖𝐮‖</text>
 </g>
 </g>
@@ -562,7 +575,8 @@
 <text class="lab" x="450" y="3304" text-anchor="start"><tspan
     class="cga">‖𝐮‖ = ‖𝐮‖■ + ‖𝐮‖□</tspan></text>
 </g>
-<g><rect class="anti" x="605" y="3219" width="150" height="34" rx="7"/>
+<g data-ids="norm_radius_squared">
+<rect class="anti" x="605" y="3219" width="150" height="34" rx="7"/>
   <text class="title" x="680" y="3241.76" text-anchor="middle"><tspan
     class="cga">‖𝐮‖⊘²</tspan></text>
 </g>
@@ -571,7 +585,7 @@
     class="cga">‖𝐮‖⊘² = 𝐮 ∘ 𝐮</tspan></text>
 <text class="code edgecode lab" x="690" y="3169" text-anchor="start">CAYLEYS_DOT.anti</text>
 <g class="faded">
-<g><rect class="anti" x="605" y="3349" width="150" height="34" rx="7"/>
+<g data-ids="norm_radius"><rect class="anti" x="605" y="3349" width="150" height="34" rx="7"/>
   <text class="title" x="680" y="3371.76" text-anchor="middle"><tspan
     class="cga">‖𝐮‖⊘</tspan></text>
 </g>
@@ -584,7 +598,7 @@
     class="cga">‖𝐮‖⊘ = √‖𝐮‖⊘²</tspan></text>
 </g>
 <g class="faded">
-<g><rect class="fixed" x="605" y="3449" width="150" height="34" rx="7"/>
+<g data-ids="norm_center"><rect class="fixed" x="605" y="3449" width="150" height="34" rx="7"/>
   <text class="title" x="680" y="3471.76" text-anchor="middle"><tspan
     class="cga">‖𝐮‖⊙</tspan></text>
 </g>
@@ -635,47 +649,47 @@
 <text class="title" x="851" y="3583.76" text-anchor="middle">☆</text>
 </g>
 <path class="sep" d="M836 3568L836 3588"/>
-<g><rect class="fixed" x="60.0" y="3707" width="100" height="34" rx="7"/>
+<g data-ids="reverse"><rect class="fixed" x="60.0" y="3707" width="100" height="34" rx="7"/>
   <text class="title" x="110" y="3729.76" text-anchor="middle">𝐮<tspan dx="-8.93"
     dy="-1.33333">˜</tspan><tspan dx="1.76" dy="1.33333"></tspan></text>
 </g>
-<g><rect class="anti" x="60.0" y="3917" width="100" height="34" rx="7"/>
+<g data-ids="reverse_anti"><rect class="anti" x="60.0" y="3917" width="100" height="34" rx="7"/>
   <text class="title" x="110" y="3939.76" text-anchor="middle">𝐮<tspan dx="-8.93"
     dy="14">˜</tspan><tspan dx="1.76" dy="-14"></tspan></text>
 </g>
-<g><rect class="fixed" x="220.0" y="3707" width="100" height="34" rx="7"/>
+<g data-ids="attitude"><rect class="fixed" x="220.0" y="3707" width="100" height="34" rx="7"/>
   <text class="title" x="270" y="3729.76" text-anchor="middle">⊖</text>
 </g>
-<g><rect class="fixed" x="410.0" y="3707" width="100" height="34" rx="7"/>
+<g data-ids="carrier"><rect class="fixed" x="410.0" y="3707" width="100" height="34" rx="7"/>
   <text class="title" x="460" y="3729.76" text-anchor="middle"><tspan class="cga">⊟</tspan></text>
 </g>
 <g class="faded">
-<g><rect class="fixed" x="410.0" y="3917" width="100" height="34" rx="7"/>
+<g data-ids="carrier_co"><rect class="fixed" x="410.0" y="3917" width="100" height="34" rx="7"/>
   <text class="title" x="460" y="3939.76" text-anchor="middle"><tspan class="cga">⊞</tspan></text>
 </g>
 </g>
 <g class="faded">
-<g><rect class="fixed" x="410.0" y="4127" width="100" height="34" rx="7"/>
+<g data-ids="center"><rect class="fixed" x="410.0" y="4127" width="100" height="34" rx="7"/>
   <text class="title" x="460" y="4149.76" text-anchor="middle"><tspan class="cga">⊙</tspan></text>
 </g>
 </g>
 <g class="faded">
-<g><rect class="fixed" x="570.0" y="3917" width="100" height="34" rx="7"/>
+<g data-ids="container"><rect class="fixed" x="570.0" y="3917" width="100" height="34" rx="7"/>
   <text class="title" x="620" y="3939.76" text-anchor="middle"><tspan class="cga">⊡</tspan></text>
 </g>
 </g>
 <g class="faded">
-<g><rect class="fixed" x="570.0" y="4127" width="100" height="34" rx="7"/>
+<g data-ids="partner"><rect class="fixed" x="570.0" y="4127" width="100" height="34" rx="7"/>
   <text class="title" x="620" y="4149.76" text-anchor="middle"><tspan class="cga">⊛</tspan></text>
 </g>
 </g>
 <g class="faded">
-<g><rect class="fixed" x="760.0" y="3917" width="90" height="34" rx="7"/>
+<g data-ids="support"><rect class="fixed" x="760.0" y="3917" width="90" height="34" rx="7"/>
   <text class="title" x="805" y="3939.76" text-anchor="middle"><tspan class="rga">∩</tspan></text>
 </g>
 </g>
 <g class="faded">
-<g><rect class="anti" x="760.0" y="4127" width="90" height="34" rx="7"/>
+<g data-ids="support_anti"><rect class="anti" x="760.0" y="4127" width="90" height="34" rx="7"/>
   <text class="title" x="805" y="4149.76" text-anchor="middle"><tspan class="rga">∪</tspan></text>
 </g>
 </g>
@@ -811,13 +825,13 @@
 <text class="title" x="660" y="4331.76" text-anchor="middle">⊖</text>
 </g>
 <g class="faded">
-<g><rect class="fixed" x="175" y="4455" width="150" height="34" rx="7"/>
+<g data-ids="angle"><rect class="fixed" x="175" y="4455" width="150" height="34" rx="7"/>
   <text class="title" x="250" y="4477.76" text-anchor="middle"><tspan
     class="rga">cos φ(𝐚, 𝐛)</tspan></text>
 </g>
 </g>
 <g class="faded">
-<g><rect class="fixed" x="565" y="4455" width="150" height="34" rx="7"/>
+<g data-ids="distance"><rect class="fixed" x="565" y="4455" width="150" height="34" rx="7"/>
   <text class="title" x="640" y="4477.76" text-anchor="middle"><tspan
     class="rga">d(𝐚, 𝐛)</tspan></text>
 </g>
@@ -886,7 +900,7 @@
 </g>
 <path class="sep" d="M785 4598L785 4618"/>
 <g class="faded">
-<g><rect class="fixed" x="365" y="4697" width="150" height="34" rx="7"/>
+<g data-ids="project_central"><rect class="fixed" x="365" y="4697" width="150" height="34" rx="7"/>
   <text class="title" x="440" y="4719.76" text-anchor="middle">𝐧 ∨ (𝐦 ∧ 𝐧★)</text>
 </g>
 </g>
@@ -900,7 +914,8 @@
 <path class="edge" d="M580 4623L580 4714L515 4714" marker-end="url(#map-arrow)"/>
 </g>
 <g class="faded">
-<g><rect class="anti" x="365" y="4807" width="150" height="34" rx="7"/>
+<g data-ids="project_central_anti">
+<rect class="anti" x="365" y="4807" width="150" height="34" rx="7"/>
   <text class="title" x="440" y="4829.76" text-anchor="middle">𝐧 ∧ (𝐦 ∨ 𝐧★)</text>
 </g>
 </g>
@@ -914,7 +929,8 @@
 <path class="edge" d="M600 4623L600 4824L515 4824" marker-end="url(#map-arrow)"/>
 </g>
 <g class="faded">
-<g><rect class="fixed" x="365" y="4917" width="150" height="34" rx="7"/>
+<g data-ids="project_orthogonal">
+<rect class="fixed" x="365" y="4917" width="150" height="34" rx="7"/>
   <text class="title" x="440" y="4939.76" text-anchor="middle">𝐧 ∨ (𝐦 ∧ 𝐧☆)</text>
 </g>
 </g>
@@ -928,7 +944,8 @@
 <path class="edge" d="M620 4623L620 4934L515 4934" marker-end="url(#map-arrow)"/>
 </g>
 <g class="faded">
-<g><rect class="anti" x="365" y="5027" width="150" height="34" rx="7"/>
+<g data-ids="project_orthogonal_anti">
+<rect class="anti" x="365" y="5027" width="150" height="34" rx="7"/>
   <text class="title" x="440" y="5049.76" text-anchor="middle">𝐧 ∧ (𝐦 ∨ 𝐧☆)</text>
 </g>
 </g>
@@ -955,13 +972,14 @@
     dy="14">˜</tspan><tspan dx="1.76" dy="-14"></tspan></text>
 </g>
 <g class="faded">
-<g><rect class="fixed" x="225" y="5292" width="150" height="40" rx="7"/>
+<g data-ids="transform_motor"><rect class="fixed" x="225" y="5292" width="150" height="40" rx="7"/>
   <text class="title" x="300" y="5317.76" text-anchor="middle">𝐐 ⟇ 𝐮 ⟇ 𝐐<tspan dx="-9.89"
     dy="18">˜</tspan><tspan dx="2.71" dy="-18"></tspan></text>
 </g>
 </g>
 <g class="faded">
-<g><rect class="fixed" x="485" y="5292" width="150" height="40" rx="7"/>
+<g data-ids="transform_flector">
+<rect class="fixed" x="485" y="5292" width="150" height="40" rx="7"/>
   <text class="title" x="560" y="5317.76" text-anchor="middle">−𝐅 ⟇ 𝐮 ⟇ 𝐅<tspan dx="-8.56"
     dy="14">˜</tspan><tspan dx="1.39" dy="-14"></tspan></text>
 </g>

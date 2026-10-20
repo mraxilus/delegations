@@ -1391,18 +1391,21 @@ predicate:
   it.
 
 **Each verb of generation fixes the kind of its routine (V.3).** A `construct…` is a `func` or a
-`proc` that carries `{.compileTime.}` and returns a value. A `define…` is a macro, and an `emit…`
+`proc` that runs at compile time and returns a value. A `define…` is a macro, and an `emit…`
 is a `func` or a `proc` that returns `NimNode`, and never a macro. The Architect ruled that the
 kind never fixes the verb. So a macro of another name, or a helper that builds a syntax tree under
 another name, passes. The scanner reads the keyword of each routine, the type it returns before
-its pragmas, and `compileTime` among those pragmas.
+its pragmas, and whether it runs at compile time.
 
-- Compile time is read from the routine's own pragma, as STYLE.md §2 applies `{.compileTime.}`
-  across a family. A routine nested in a compile-time one without its own pragma reads as runtime.
+- Compile time is read from the routine's own `{.compileTime.}`, as STYLE.md §2 applies it, or
+  from the body around it. Only compile time runs the body of a macro, of a `static:` block or of
+  a compile-time routine. A template body runs where it expands, so it marks nothing.
+- Rejected: the pragma alone, which reports a helper nested in a macro, such as
+  `constructLutKvector` of the PGA library.
 - `NimNode` alone marks an `emit…`, since only a compile-time routine can return one. So an
   `emit…` needs no pragma.
-- Verified by `suites/test_names.nim`, over every keyword, pragma, return type and verb. Verified by
-  `suites/test_declared.nim` for the three facts that the scanner reads of a routine.
+- Verified by `suites/test_names.nim`, over every keyword, pragma, return type, verb and body
+  around a routine. Verified by `suites/test_declared.nim` for the facts that the scanner reads.
 
 **A name that holds a value in another representation leads with that value (V.2), by the
 ruling of the Architect on #443.** V.2 asks that each cut of the last qualifier of a name still

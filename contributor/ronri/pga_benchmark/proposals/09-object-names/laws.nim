@@ -2,10 +2,10 @@
 ##   Evaluation compiles this against library with change applied, at each algebra its claim
 ##     names; exit code is verdict: every law below holds, or program stops on assertion.
 ##   Names stand at rga4d and cga5d alone, algebras of 3D space book uses. Each name is alias of
-##     named basis-set type of P04, so it adds no type: product that reaches its bases is that
-##     object, and value is library's.
+##     named basis-set type of library, so it adds no type: product of P04 that reaches its bases
+##     is that object, and value is library's.
 ##   Laws: at rga4d, wedge of two points is line and of three is plane, and motor and flector hold
-##     8 floats of one parity; at cga5d, wedge of two round points is dipole, of three circle,
+##     8 coefficients of one parity; at cga5d, wedge of two round points is dipole, of three circle,
 ##     of four sphere. Each wedge equals library's on whole multivectors.
 ##   Prints name compiler gives type of wedge of two points, and of binding declared with object
 ##     name, since alias adds no type to print.
@@ -32,11 +32,15 @@ const
 
 #[ Laws ]#
 
-proc sample[B: static set[Basis]](t: typedesc[MultivectorOf[B]]): MultivectorOf[B] =
+func bases[B: static Bases](t: typedesc[MultivectorOf[B]]): Bases = B
+  ## Get bases basis-set type holds.
+
+
+proc sample[B: static Bases](t: typedesc[MultivectorOf[B]]): MultivectorOf[B] =
   ## Sample basis-set type with each coefficient uniform in [-1, 1], narrowed from multivector.
   var m: Multivector
-  for basis in B: m[basis] = rand(-1.0..1.0)
-  m.toMultivectorOf(t)
+  for basis in B: m[basis] = Coefficient(rand(-1.0..1.0))
+  toMultivectorOf[bases(Multivector), B](m)
 
 
 func holdParity(m: Multivector, is_even: bool) =
@@ -51,10 +55,10 @@ proc main(): int =
   ## Hold laws on seeded samples; print where they hold and name compiler prints, and exit zero.
   randomize(SEED)
   when IS_RIGID:
-    doAssert sizeof(Motor) == 8 * sizeof(float),
-      &"Motor must hold 8 floats, as Lengyel's; got `{sizeof(Motor)}` bytes."
-    doAssert sizeof(Flector) == 8 * sizeof(float),
-      &"Flector must hold 8 floats, as Lengyel's; got `{sizeof(Flector)}` bytes."
+    doAssert sizeof(Motor) == 8 * sizeof(Coefficient),
+      &"Motor must hold 8 coefficients, as Lengyel's; got `{sizeof(Motor)}` bytes."
+    doAssert sizeof(Flector) == 8 * sizeof(Coefficient),
+      &"Flector must hold 8 coefficients, as Lengyel's; got `{sizeof(Flector)}` bytes."
     for _ in 1..SAMPLES:
       let (p, q, r) = (sample(Point), sample(Point), sample(Point))
       doAssert (p ∧ q) is Line, "Point wedge point must be line."

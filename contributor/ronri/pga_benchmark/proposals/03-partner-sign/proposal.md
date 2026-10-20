@@ -56,9 +56,6 @@ read, the sign is exact when every term of the operand has the same grade.
 ## Landing
 
 - **Order.** This proposal reads `applyMap` of P01, and quotes `CAYLEY_CONTAINER` of P08.
-- **P06, `float-width`.** This proposal removes the sign line of `⊛`, so the edit of that line in
-  P06 is void once it lands. If P06 lands first, this proposal quotes `Coefficient(...)` in place
-  of `float(...)`.
 - **Change `partner-guard`.** It quotes the same two lines of `⊛`, for a message on mixed grade.
   It is void once this proposal lands. If it lands first, this proposal quotes its lines, and so
   removes its assert too.

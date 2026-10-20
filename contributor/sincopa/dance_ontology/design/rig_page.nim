@@ -1,8 +1,8 @@
 ## Write viewer page: markup, its two scripts, and faces it draws with.
 ##
-##   Three built things are folded into one self-contained document, as
-##     `design/wholecloth` folds its three: sweeps and stills recorded by
-##     `design/rig`, and viewer compiled from `design/rig_view` by `nim js`.
+##   Three built things are folded into one self-contained document: sweeps and
+##     stills recorded by `design/rig`, and viewer compiled from `design/rig_view` by
+##     `nim js`.
 ##     Page is published as single file, so nothing may be left to fetch.
 ##   Page is laid out as reference page is, section by section and card by
 ##     card, with simulation's own still of each card drawn beside reference's drawing

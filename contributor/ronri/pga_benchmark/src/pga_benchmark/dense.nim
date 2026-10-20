@@ -333,8 +333,17 @@ func recipeOf(emitter: var Emitter; id: string; m, n: Slots): Slots =
 
 #[ Functions ]#
 
+func basesOf[B: static Bases](
+  t: typedesc[MultivectorOf[B]]
+): Bases {.used.} =  # Used in forms that `defineFormsDense` emits.
+  ## Read bases multivector type holds; read by `defineFormsDense`'s emitted forms.
+  B
+
+
 macro defineFormsDense*(): untyped =
   ## Define one dense form per general measurand, named by `nameDenseOf`.
+  ##   Form returns type library expression returns, so norm returns `MultivectorScalars` as
+  ##     library's does; it writes each slot that type holds, and no other.
   ##   Partner carries sign of its operand's grade, as library's does; grade is read as
   ##   library reads it, from first component beyond tolerance, and sign flips, never scales.
   result = newStmtList()
@@ -369,23 +378,41 @@ macro defineFormsDense*(): untyped =
       scan.add nnkElseExpr.newTree(newLit(true))  # zero reads as grade 0, as library reads it
       body.add newLetStmt(is_negated, scan)
     for b in Basis:
-      let target = nnkBracketExpr.newTree(ident"result", newCall(bindSym"Basis", newLit(ord(b))))
+      let
+        basis = newCall(bindSym"Basis", newLit(ord(b)))
+        target = nnkBracketExpr.newTree(ident"result", basis)
+        message = newLit("Dense form of `" & p.id & "` sums slot its type lacks; got `" & $b &
+          "`.")
+      var assignments = newStmtList()
       if is_partner and slots[b].len > 0:
         # Sum bound once and flipped after, since select over two sums spells each twice.
         let value = ident("value_" & $ord(b))
-        body.add newLetStmt(value, nodeSum(slots[b], is_scalar_m))
-        body.add newAssignment(target, quote do: (if `is_negated`: -`value` else: `value`))
+        assignments.add newLetStmt(value, nodeSum(slots[b], is_scalar_m))
+        assignments.add newAssignment(target, quote do: (if `is_negated`: -`value` else: `value`))
       else:
-        body.add newAssignment(target, nodeSum(slots[b], is_scalar_m))
-    let type_m = if is_scalar_m: ident"float" else: ident"Multivector"
+        assignments.add newAssignment(target, nodeSum(slots[b], is_scalar_m))
+      # Slot type lacks is skipped where it sums nothing, and fails build where it sums terms.
+      let otherwise =
+        if slots[b].len == 0: newStmtList(nnkDiscardStmt.newTree(newEmptyNode()))
+        else: quote do: {.error: `message`.}
+      body.add nnkWhenStmt.newTree(
+        nnkElifBranch.newTree(
+          quote do: `basis` in basesOf(typeof(result)),
+          assignments,
+        ),
+        nnkElse.newTree(otherwise),
+      )
+    let
+      type_m = if is_scalar_m: ident"float" else: ident"Multivector"
+      returned = newCall(ident"typeof", parseExpr(p.expression))
     result.add(
       if p.arity == 2:
         quote do:
-          func `name`*(`m`: `type_m`, `n`: Multivector): Multivector {.inline, noinit.} =
+          func `name`*(`m`: `type_m`, `n`: Multivector): `returned` {.inline, noinit.} =
             `body`
       else:
         quote do:
-          func `name`*(`m`: Multivector): Multivector {.inline, noinit.} =
+          func `name`*(`m`: Multivector): `returned` {.inline, noinit.} =
             `body`
     )
 

@@ -241,7 +241,7 @@ one, as Evidence states, so `^∘` drops `inline`.
   That is a factor of 5e8.
 - **Range.** Results hold while the squared coefficients stay inside the range of 64-bit floats,
   as at pin.
-- **32 bits.** P06 sets the comparison tolerance to 1e-4 at 32 bits. A projection from that
+- **32 bits.** The library sets the comparison tolerance to 1e-4 at 32 bits. A projection from that
   tolerance moves the radius edge in to about 1e4 units, and the transversion edge to about 2e4.
   This change and its claims run at 64 bits alone, so no claim checks this.
 
@@ -292,13 +292,14 @@ One rule holds in all four algebras, so a user need not know which algebra or ki
 - **Change `conformal-norms`.** This change puts one test at the head of suite Chapter 4, and keeps
   the placeholder test there. `conformal-norms` replaces that placeholder with its two tests. So
   the two apply in either order, and their three tests in Chapter 4 then stand side by side.
-- **P06, `float-width`.** P06 quotes no line here. Two locals start at the float `0.0`: `largest`
-  in `^∘` and `distance_squared` in `toRoundPoint`. Each compiles at 32 bits. Once both land, the
-  second to land declares them `Coefficient`.
+- **Float width.** The width of each float is a build option at pin. So `largest` in `^∘` and
+  `distance_squared` in `toRoundPoint` are declared `Coefficient`.
+- **Norms.** Each norm returns `MultivectorScalars` at pin, which compares with no `Multivector`.
+  So each test converts the norm with `toMultivector` before it compares it with 𝟙.
 - **P07, `part-scale`.** P07 edits `=~` and `grade` in `pga/multivectors.nim` alone, so no line
-  collides. But P07 removes the private `=~` of two scalars. So the test that this change adds to
-  suite Internal compares the antiscalar of 𝐯 ∘ 𝐯 with 1 through the public `=~`, as
-  `abs((𝐯 ∘ 𝐯)[Basis.scalarAnti]) ∧ 𝟙 =~ 𝟙`. The two then build together in either order.
+  collides. The test that this change adds to suite Internal compares the antiscalar of 𝐯 ∘ 𝐯
+  with 1 through the public `=~`, as `abs((𝐯 ∘ 𝐯)[Basis.scalarAnti]) ∧ 𝟙 =~ 𝟙`. So that test
+  reads the rule of P07 once both land.
 - **P10, `homogeneous-scalar`.** P10 keeps `unitize` as `^m`, which then calls `^∘` of this
   change.
 - **Change `algebra-hygiene`.** It renames `TOLERANCE_ABS`, which `^∘` names. So the second to land
@@ -310,10 +311,9 @@ One rule holds in all four algebras, so a user need not know which algebra or ki
   point one unit along each axis and one unit back along the first. So no two of its points lie
   close, as the Architect ruled on 2026-10-16. Random points can lie close, and at `cga3d` two
   points 0.0037 apart sent a plane through and back to a flat weight of 0.999924. A run by hand on
-  2026-10-16 applied this change alone, and the suites passed at `cga3d` to `cga6d`.
-- **Runs by hand.** A run on 2026-10-15 applied P06, P07 and this change to a copy of the library
-  at pin. The suites passed at `rga4d`, `cga4d` and `cga5d` at 64 bits, and at `cga4d` and
-  `cga5d` at 32 bits.
+  2026-10-19 applied this change alone at pin, and the suites passed at `cga3d` to `cga6d`.
+- **Runs by hand.** A run on 2026-10-19 applied P07 and this change to a copy of the library at
+  pin. The suites passed at `rga3d`, `rga4d`, `cga4d` and `cga5d`, at 64 and at 32 bits.
 
 ## Evidence
 

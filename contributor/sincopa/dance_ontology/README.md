@@ -47,11 +47,12 @@ translation is printed in one table, and nothing is tuned to make them agree.
 - The workbook of the Architect, `ontology.partnerwork.xlsx`, sheets `base` and
   `vocabulary`. It is held as data in `src/dance_ontology/workbook.nim`, and audited against
   the derived model by `tests/suites/test_workbook.nim`. **Superseded.** The Architect has replaced
-  it with a newer sheet that this project has not been given. So what the audit reports, and the
-  sheet-facing half of the review page, are findings about a document no longer in use. Both
-  stay running until the new sheet arrives and replaces the transcription.
+  it with a newer sheet that this project has not been given. So what the audit reports is a
+  finding about a document no longer in use. The audit stays running until the new sheet arrives
+  and replaces the transcription.
 - The drawing rules of the Architect as given, held as data in `design/rules.nim`, and
-  mirrored entry for entry in `design/README.md`. `design/checks.nim` holds the pages to them.
+  mirrored entry for entry in `design/README.md`. `design/checks.nim` holds the review page to
+  them.
 - For the body simulation, the ANSUR II medians with the AAOS and NASA-STD-3000 joint ranges. Every
   one is in `simulation/rig.nim` with its derivation. `tests/test_rigid.nim`, `tests/test_read.nim`
   and `tests/suites/test_limb.nim` hold the simulation to the values there, and no test cites a
@@ -63,9 +64,10 @@ translation is printed in one table, and nothing is tuned to make them agree.
 nim r koch check                                   # root: every check a pull request runs
 nim r koch test contributor/sincopa/dance_ontology  # this project alone, every suite of it
 nim r tools/build.nim assets                           # faces every page ships, into build/fonts
-nim r tools/build.nim pages                            # every page, picture and script, into build/
+nim r tools/build.nim pages                            # every page and script, into build/
 nim r tools/build.nim drive                            # every page rendered, and every face proven
 nim r tools/build.nim verdicts                         # rewrite simulation/verdicts.md
+nim r tools/build.nim floors                           # how far the plan carries each hold above
 nim r tools/build.nim shot                             # screenshot helper, for node and Playwright
 ```
 
@@ -73,12 +75,11 @@ The first two run from the repository root, and the rest from this directory. Th
 git, and the compiler that this project pins in `dance_ontology.nimble`. `drive` also needs node,
 with the tools of `package-lock.json` installed by `npm ci`.
 
-Hand-written pages are committed files. The shell of the Reference lives under `pages/`. The prose
-of the review page and the one hand-drawn proposal live under `mockups/`, because both are
-explorations. `tools/build.nim pages` copies, fills and splices them under `build/`, beside the
-scripts compiled for them. What a build emits is never committed, because its lines run far past any
-width a file may have. To publish a page is to republish its built file to the URL it already has,
-listed below.
+Hand-written pages are committed files. The shell of the Reference lives under `pages/`.
+`tools/build.nim pages` copies the shell under `build/`, beside the script compiled for it, and
+writes the pages of `design/` there too. What a build emits is never committed, because its lines
+run far past any width a file may have. To publish a page is to republish its built file to the
+URL it already has, listed below.
 
 ## Published pages
 
@@ -97,19 +98,13 @@ Mock-ups and instruments:
 
 | built file, under `build/` | published at |
 | --- | --- |
-| design/frames.html | https://claude.ai/artifact/TuDxCFEpKGQBpsLdWvTEq1 |
-| design/signs.html | https://claude.ai/artifact/2KCtSbNHhpUwncJRj8Nf9y |
-| design/turns-single.html | https://claude.ai/artifact/3DavQ5JHpEPEirY9Xqyb1R |
-| design/turns-hands.html | https://claude.ai/artifact/2A95Vd5ydYYX52bQY26owy |
 | design/review.html | https://claude.ai/artifact/8dpKVyaBu9qJnXg3hsUyRe |
 | design/rig.html | https://claude.ai/artifact/MARvX6rpxW4NQvvvi2xHJa |
-| design/wholecloth.html | https://claude.ai/artifact/46HxPCET9ne8c1UNXCKPMb |
-| review/review.html | https://claude.ai/artifact/D5D4b2nVNpDFShggYkqi8S |
 
 An old link can refuse a publish until the whole of its live page is read back, and a page then
 takes a new link. The change that publishes a page to a new link puts that link in this list.
 
-A page taken out of use keeps whatever URL it was last published at, and is not listed here.
+A page taken out of use is not listed here, and its published copy can be deleted.
 The repository does not rely on a published copy as its record. What a retired page claimed
 is in the log, and in `PROVENANCE.md` where it still bears on the design.
 
@@ -134,22 +129,19 @@ simulation/                               the body simulation, standalone on pur
 tools/audit.nim                    the same audit, printed
 pages/                             hand-written pages this project stands behind:
                                    app shell
-mockups/                           explorations: wholecloth.html, hand-drawn proposal
-                                   to react to, and review.html, review page's prose
-tools/review.nim                   fills the review page's markers from the model
-tools/pages.nim, tools/bundle.nim  copy the shells in; fold a page into one file
+tools/pages.nim, tools/bundle.nim  copy the shell in; fold a page into one file
 tools/build.nim                    this project's verbs: pages, assets, types, drive,
-                                   fixtures, confirmed, modelled, rig, record, turns,
-                                   verdicts, answers, engine, shot, system, clean
+                                   fixtures, confirmed, watched, modelled, rig, record,
+                                   turns, verdicts, answers, floors, engine, shot, system,
+                                   clean
 tools/drive/                       harness `drive` renders every page with, in TypeScript
 tests/                             the simulation's laws (test_rigid, test_read), the engine's
                                    (test_engine) and the planner's (test_plan); test_said, in
                                    JavaScript; test_suites, which runs
                                    every other suite as one binary from suites/: the laws
-                                   over every pair of frames, the tape's (test_limb), the
-                                   workbench's gates (test_marks) and the review page
-                                   rendered whole (test_review); drive/, fixtures `drive` reads
-build/                             every page, picture and script; ignored by git
+                                   over every pair of frames, the tape's (test_limb) and the
+                                   workbench's gates (test_marks); drive/, fixtures `drive` reads
+build/                             every page and script; ignored by git
 ```
 
 ## The Reference
@@ -166,14 +158,14 @@ usable from the keyboard, and a live region says what was danced, for a reader w
 the drawing.
 
 What the model has to say about the spreadsheet is not in the app. It is a finding about a
-document, and it lives in the review page (`build/review/review.html`) and in
-`tools/audit.nim`.
+document, and `tools/audit.nim` prints it.
 
 The rotation half (`rotation.nim`, `axle.nim`, `tests/suites/test_rotation.nim`) is on the bench,
 and not in the app. 148 frame states render as 17 distinct pictures. Level, contact and twist beyond
 its parity have no marks yet, but for one frame. `Left-to-right and Right-to-left` draws a quarter
-turn of twist one way apart from one the other way. The workbench pages (`design/`) are where
-those marks get worked out, and the views wait until they are decided.
+turn of twist one way apart from one the other way. The workbench in `design/` is where those marks
+get worked out. Its review page lays out each frame state for the Architect to rule on, and the
+views wait until the marks are decided.
 
 ## What it says
 
@@ -186,19 +178,19 @@ twenty-seven cells hold between those seven. All eighteen name the same move tha
 model derives independently. They are every move that exists between those seven states:
 nothing missing, and nothing spare.
 
-Three things are outstanding, and the review page sets them out. `free` has no row. `closed`
-and `half-closed` need a vocabulary for places on the body. Two words have drifted between
-the `base` and `vocabulary` sheets.
+Three things are outstanding. `free` has no row. `closed` and `half-closed` need a vocabulary
+for places on the body. `tools/audit.nim` prints those two. Two words have drifted between the
+`base` and `vocabulary` sheets.
 
-Rotation is not modelled beyond what the hand-to-hand model forces. What it forces is in the
-review page, along with the four cells worth dancing to settle the rest.
+Rotation is not modelled beyond what the hand-to-hand model forces.
 
 ## Status
 
 Every law is under test through testament, on the compiler that this project pins. Those are
 the frame and transition laws over every pair of frames, the workbook audit cell by cell, and
-the drawings against the model. They are also the gates of the workbench on every page, and the
-laws of the simulation. Each law of the simulation holds over its own corpus of sweeps and stills.
+the drawings against the model. They are also the gates of the workbench on the review page, and
+the laws of the simulation. Each law of the simulation holds over its own corpus of sweeps and
+stills.
 
 Unreviewed by a human. The design decisions, what was rejected and what each one costs are in
 `PROVENANCE.md`. The language of the project is in `GLOSSARY.md`.

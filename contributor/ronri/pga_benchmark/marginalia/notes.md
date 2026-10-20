@@ -13,15 +13,17 @@ a note never points at lines that say something else.
 `pga/multivectors.nim` · proposal
 
 ```nim
-type
-  Multivector* = object  ## Define generalised multivector for n-dimensional PGA.
+  MultivectorOf*[B: static Bases] = object
+    elements: array[B.card, Coefficient]
 ```
 
-A point carries all 2^D slots, and each product reads every slot. Of the measurands with a
-typed reference, most spend more multiplies than the reference, and this is why.
+Each product takes and returns `Multivector`, the instance over all 2^D bases. A point carries
+all 2^D slots, and each product reads every slot. Of the measurands with a typed reference, most
+spend more multiplies than the reference, and this is why.
 
-Grade restriction lives in the emission, and the tables stay whole. Proposal P04,
-`exact-kinds`, explores concrete kinds that hold only the bases a product reaches.
+An instance holds only the slots of its own bases, and the norms return two of them. Grade
+restriction still lives in the emission of each product, and the tables stay whole. Proposal P04,
+`exact-kinds`, explores products that return only the bases they reach.
 
 ## What an out-of-range grade does
 
@@ -46,16 +48,14 @@ The Architect decides: raise, return zero, or reject at compile time.
 `pga/operators.nim` · proposal
 
 ```nim
-func `|∙`*(m: Multivector): Multivector {.inline.} =
-  ## Get (round) bulk norm of multivector as size of (round) bulk components.
-  ##   I.e. ‖𝐦‖∙ = √(𝐦∙𝐦).
-  result[Basis.scalar] = (`|∙²`m)[Basis.scalar].sqrt
+    docs = """Get bulk squared norm of multivector, i.e. ‖𝐦‖∙² = 𝐦∙𝐦.""",
 ```
 
-`∙ ∘`, the squared norms and the norms each write a full multivector to carry one double.
-For those operations, the result alone puts them above the byte bound.
+`∙ ∘` and the squared norms each write a full multivector to carry one coefficient. For those
+operations, the result alone puts them above the byte bound. The norms return
+`MultivectorScalars`, which holds 𝟏 and 𝟙 alone.
 
-An emitter that returns `float`, for a table whose products all land in one slot, closes that.
+An emitter that returns that pair, for a table whose products all land in 𝟏 or 𝟙, closes the rest.
 Proposal P04, `exact-kinds`, returns the kind of exactly the bases that the result reaches,
 which here is one slot.
 
@@ -64,7 +64,7 @@ which here is one slot.
 `pga.nim` · proposal
 
 ```nim
-  func normCenter*(m: Multivector): Multivector {.inline, error: "TODO:  |⊙m".}
+  func normCenter*(m: Multivector): MultivectorScalars {.inline, error: "TODO:  |⊙m".}
     ## Get center norm of multivector.
 ```
 
@@ -194,7 +194,7 @@ Binary products also write every slot, with `noinit`. The same effect of the ben
 ```nim
   func `⊛`*(m: Multivector): Multivector =
     ## Get partner of multivector, i.e. (-1)^(grade(𝐦)+1) (𝐦☆)⊡ ∨ 𝐦⊟.
-    let sign = float(-1^(int(m.grade.get) + 1))
+    let sign = Coefficient(-1^(int(m.grade.get) + 1))
     sign * ⊡(☆m) ∨ ⊟m
 ```
 
@@ -220,19 +220,19 @@ The library asks this in a TODO. At 5D, the typed reference defines the attitude
 `𝐚 ∨ 𝐞̄₄`, and the generated attitude passes the conformal suite against it. The other conformal
 dimensions are unchecked.
 
-## Norm returns a multivector for two doubles
+## Norm returns a pair with no arithmetic
 
 `pga.nim` · proposal
 
 ```nim
-func norm*(m: Multivector): Multivector {.inline.} = |m
+func norm*(m: Multivector): MultivectorScalars {.inline.} = |m
   ## Get geometric norm of multivector as distance from origin.
 ```
 
-The book writes ‖𝐦‖ = s𝟏 + t𝟙, and a `Multivector` result mirrors that exactly. The cost is
-movement: `|` fills and writes all 2^D slots to hand back two. Proposal P10,
-`homogeneous-scalar`, holds the pair as a kind of P04, `exact-kinds`, with a root and a division
-of its own.
+The book writes ‖𝐦‖ = s𝟏 + t𝟙, and `MultivectorScalars` holds that pair and no other slot. The
+library gives the pair no root, division or exponential. So the library's suites define `sqrt`,
+`sqrtAnti` and `div` of their own, beside a TODO to move them into the library. Proposal P10,
+`homogeneous-scalar`, gives such a pair a root and a division of its own.
 
 ## Support is three dense products
 

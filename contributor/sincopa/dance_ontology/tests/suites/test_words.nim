@@ -13,12 +13,15 @@
 import std/[algorithm, options, os, strformat, strutils, tables, unittest]
 
 import std/[json, jsonutils]
+from std/unicode import runeLen
 import ../../simulation/[body, read, readings, rig, verdicts, words]
 from ../../src/dance_ontology/rotation import Dancer, facing, name, seenAfter
 
 
-const REPORT = currentSourcePath().parentDir.parentDir.parentDir / "simulation" / "verdicts.md"
-  ## Report simulation writes, which opens by printing its translation table.
+const
+  REPORT = currentSourcePath().parentDir.parentDir.parentDir / "simulation" / "verdicts.md"
+    ## Report simulation writes, which opens by printing its translation table.
+  COLUMNS_AUDIT = 100  ## Columns audit holds every line of every committed file to (Article X.1).
 
 
 func turnedOn(by_lead, by_follow: int; lap = 0.0): array[Body, Stance] =
@@ -132,6 +135,20 @@ suite "Internal: The report renders from its kept readings":
     let text = render()
     check lacking() == 0
     check text == readFile(REPORT)
+
+
+  test "every line of the report fits in the audit's hundred columns":
+    ## Report is committed, so audit holds each of its lines to hundred columns, and every
+    ##   reading report may render must fit them.
+    ##   Red first, read 2026-10-11: drawn state `Left to left-lock-high @ -1` came to hold
+    ##     once shoulder's edge held every arm, and its row ran to 102 columns.
+    ##   Domain: every line rendered from readings kept, tables and prose alike.
+    let lines = readFile(REPORT).splitLines
+    var wide: seq[string]
+    for k, line in lines:
+      if line.runeLen > COLUMNS_AUDIT: wide.add &"line {k + 1}, {line.runeLen} columns: {line}"
+    checkpoint "Lines wider than audit's columns:\n      " & wide.join("\n      ")
+    check wide.len == 0
 
 
 

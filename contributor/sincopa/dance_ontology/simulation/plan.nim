@@ -17,6 +17,7 @@
 import std/[bitops, math]
 
 import ./[body, hold, rig, vector]
+from ./shoulder import outside
 from ./rigid {.all.} import ArmPlacing, ELBOW_END, ELBOWS_APART, faceCapsule, GIRDLE_RADIUS,
   DEPTHS, handCapsules, Matrix, MATRIX_REST, ON_UPPER, relaxedCapsules, times, transposed,
   trunkCapsules, turnAbout
@@ -119,6 +120,8 @@ type
     depth*: float  ## How far past wrist hand holds.
     capsules*: array[6, Capsule]
     twist*, bend*, cone*, extend*, protract*, elevate*: float
+    outside*: float
+      ## Radians upper arm lies past shoulder's edge, negative inside (`shoulder.outside`).
     turns: array[4, Matrix]  ## Girdle's, upper arm's, forearm's and hand's, in body's frame.
     joints: array[3, Vector]  ## Shoulder, elbow and wrist, in body's frame.
 
@@ -191,6 +194,9 @@ func placeArm(
     result.joints[1] = result.joints[0] + column(result.turns[1], 2) * rig.upper
     result.twist = twistOf(shoulderTurn(plan, i))
     result.extend = arcsin(clamp(-column(result.turns[1], 2).y, -1.0, 1.0))
+    # Edge is read in body's mirrored terms, left arm in mirror (`shoulder`).
+    let along = column(result.turns[1], 2)
+    result.outside = outside(if handedness < 0.0: mirrored(along) else: along).angle
   if first <= 2:
     result.turns[2] = times(result.turns[1], aboutRight(plan[base+5]))
     result.joints[2] = result.joints[1] + column(result.turns[2], 2) * rig.fore
@@ -347,16 +353,18 @@ func comfort*(rig: Rig, placed: Placed, plan: Plan): float =
 func gapOf(p, q: Capsule): float = closest(p.a, p.z, q.a, q.z).gap - p.radius - q.radius
   ## How far apart two capsules' skins are: negative where they overlap.
 
-func marginOf(rig: Rig, problem: Problem, a: ArmPlaced, i: int): array[3, float] =
-  ## Arm `i`'s twist, cone and extend past margin inside their ends, squared.
+func marginOf(rig: Rig, problem: Problem, a: ArmPlaced, i: int): array[4, float] =
+  ## Arm `i`'s twist, cone, extend and upper arm's direction past margin inside their ends,
+  ## squared: direction's end is shoulder's edge, which engine's wall holds (`rigid.holdSwing`).
   let (lower, upper) = twistEnds(rig, i)
   [max(0.0, lower + problem.style.margin - a.twist)^2 +
      max(0.0, a.twist - upper + problem.style.margin)^2,
    max(0.0, a.cone - rig.range[Dof.Wrist].upper + problem.style.margin)^2,
-   max(0.0, a.extend - rig.range[Dof.Extend].upper + problem.style.margin)^2]
+   max(0.0, a.extend - rig.range[Dof.Extend].upper + problem.style.margin)^2,
+   max(0.0, a.outside + problem.style.margin)^2]
 
-func marginsOf(rig: Rig, problem: Problem, placed: Placed): array[4, array[3, float]] =
-  ## Each arm's twist, cone and extend past margin inside their ends, squared.
+func marginsOf(rig: Rig, problem: Problem, placed: Placed): array[4, array[4, float]] =
+  ## Each arm's twist, cone, extend and direction past margin inside their ends, squared.
   for i in 0..3: result[i] = marginOf(rig, problem, placed.arms[i], i)
 
 func leapsOf(problem: Problem; now, then: Capsule): array[2, float] =
@@ -425,7 +433,7 @@ func violationOf(
   problem: Problem,
   arms: array[4, ArmPlaced],
   gaps: Gaps,
-  margins: array[4, array[3, float]],
+  margins: array[4, array[4, float]],
   leaps: openArray[array[2, float]],
 ): float =
   ## Sum of violation's terms: joined hands apart, out of band and turned past their grip,
@@ -544,7 +552,7 @@ type
     face: Capsule  ## One face in body's own frame (`rigid.faceCapsule`).
     eases: array[4, array[6, float]]
     waists: array[2, float]
-    margins: array[4, array[3, float]]
+    margins: array[4, array[4, float]]
     leaps: seq[array[2, float]]  ## Each arm capsule's, or none with no last moment.
 
 func ballOf(capsule: Capsule): Ball =
@@ -658,7 +666,7 @@ type Held = object  ## What one arm's step re-reckoned away from, to put back.
   arm: ArmPlaced
   balls: array[PER_ARM_CAPSULES, Ball]
   ease: array[6, float]
-  margin: array[3, float]
+  margin: array[4, float]
   leaps: array[PER_ARM_CAPSULES, array[2, float]]
   gaps: seq[float]  ## Gap of each moved pair, in order moved.
   near: seq[uint64]

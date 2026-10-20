@@ -7,7 +7,7 @@ their wedge plus their dot.
 ## Edit `tests/suites.nim`
 
 ```nim
-  test "TODO: Add chapter 3 tests":
+  test "TODO: Add remaining chapter 3 tests":
     skip()
 ```
 
@@ -21,4 +21,7 @@ their wedge plus their dot.
     for b, c, 𝐮, 𝐯 in enumerateBasisPair():
       if b.grade == Grade(1) and c.grade == Grade(1):
         check 𝐮 ⟑ 𝐯 =~ (𝐮 ∧ 𝐯) + (𝐮 ∙ 𝐯)
+
+  test "TODO: Add remaining chapter 3 tests":
+    skip()
 ```
