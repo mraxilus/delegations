@@ -664,7 +664,7 @@ bar           = library ÷ what row is measured against, log scale
 time          = median over runs of library ÷ that, within each run
                 one tick at each run's ratio
 
-dense form    = each slot once, as sum of terms library's tables keep: no fill,
+dense form    = each coefficient once, as sum of terms library's tables keep: no fill,
                 no intermediate, no call; operand already a product binds scalars</pre>
 <p class="note">Bytes are modelled from the C, not measured. They rank two versions of one
 operation, and do not predict time across different operations. Inspect one yourself with

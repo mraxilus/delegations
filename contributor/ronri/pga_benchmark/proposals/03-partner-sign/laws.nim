@@ -22,7 +22,7 @@ const
 
 
 proc sample(grade: Grade): Multivector =
-  ## Draw multivector of one grade, every slot of that grade uniform in [-1, 1].
+  ## Draw multivector of one grade, every coefficient of that grade uniform in [-1, 1].
   for basis in LUT_BASES_BY_GRADE[grade]: result[basis] = rand(-1.0..1.0)
 
 

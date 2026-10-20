@@ -93,7 +93,7 @@ func isCitedUnder(cite, section: string): bool =
 
 proc emitTestsReference(measurands: seq[Measurand], section: string): NimNode {.compileTime.} =
   ## Build one test per typed measurand cited under section, holding library to reference.
-  ##   Operands pair pool slot i with slot j = (7i + 3) mod OBJECTS, so pairs vary.
+  ##   Operands pair pool element i with element j = (7i + 3) mod OBJECTS, so pairs vary.
   result = newStmtList()
   let (m, n) = (ident"m", ident"n")  # plain idents, so expression and reference bind them
   for p in measurands:
@@ -179,7 +179,7 @@ func isNear[T: object](got, expected: T): bool =
 
 macro checkFormsDense(measurands: static seq[Measurand]): untyped =
   ## Emit one test per general measurand holding its dense form to library expression.
-  ##   Operands pair pool slot i with slot j = (7i + 3) mod OBJECTS, as chapters do; NaN
+  ##   Operands pair pool element i with element j = (7i + 3) mod OBJECTS, as chapters do; NaN
   ##   where library returns NaN is equality too, since conformal norms return it.
   result = newStmtList()
   let (m, n) = (ident"m", ident"n")  # plain idents, so expression and dense form bind them
@@ -432,23 +432,23 @@ suiteInProc "Internal: Lower bound":
   test "derived counts reproduce what algebra demands":
     let m = Metric(dimensions: 4, is_conformal: false)
     check boundLowerOf(Shape.Wedge, m, 2).multiplies == 81  # three states per dimension
-    check boundLowerOf(Shape.Wedge, m, 2).adds == 65  # one add per term past first of each slot
+    check boundLowerOf(Shape.Wedge, m, 2).adds == 65  # one add per term past first of each sum
     check boundLowerOf(Shape.Geometric, m, 2).multiplies == 192  # null vector drops one state
     check boundLowerOf(Shape.FormScalar, m, 2).multiplies == 8  # blades carrying metric image
     check boundLowerOf(Shape.ContractBulk, m, 2).multiplies == 54  # 2.119
     check boundLowerOf(Shape.ContractWeight, m, 2).multiplies == 27  # 2.120
     check boundLowerOf(Shape.ExpandBulk, m, 2).multiplies == 27  # wiki:Expansions
     check boundLowerOf(Shape.ExpandWeight, m, 2).multiplies == 54  # wiki:Expansions
-    check boundLowerOf(Shape.Scale, m, 2).multiplies == 16  # every slot times one scalar
+    check boundLowerOf(Shape.Scale, m, 2).multiplies == 16  # every coefficient times one scalar
     check boundLowerOf(Shape.Permutation, m, 1).multiplies == 0  # sign and reorder only
     check boundLowerOf(Shape.ProductConstant, m, 1).multiplies == 0  # constant carries unit part
 
 
-  test "unitize bound is norm, one reciprocal and one scale of each slot":
+  test "unitize bound is norm, one reciprocal and one scale of each coefficient":
     let
       m = Metric(dimensions: 4, is_conformal: false)
       b = boundLowerOf(Shape.Unitize, m, 1)
-    check b.multiplies == 8 + 16  # squared norm, then every slot
+    check b.multiplies == 8 + 16  # squared norm, then every coefficient
     check b.divides == 1 and b.roots == 1  # one reciprocal over one root
 
 
@@ -456,7 +456,7 @@ suiteInProc "Internal: Lower bound":
     let
       rigid = Metric(dimensions: 4, is_conformal: false)
       conformal = Metric(dimensions: 5, is_conformal: true)
-    check boundLowerOf(Shape.NormPartSquared, rigid, 1).multiplies == 8  # 2.87, bulk of 16 slots
+    check boundLowerOf(Shape.NormPartSquared, rigid, 1).multiplies == 8  # 2.87, bulk of 16
     check boundLowerOf(Shape.NormPartSquared, conformal, 1).multiplies == 8  # Table 4.12
     check boundLowerOf(Shape.NormPart, conformal, 1).roots == 1  # Table 4.12, one root
     check boundLowerOf(Shape.NormSquared, conformal, 1).multiplies == 32  # 4.45, whole antidot
@@ -876,7 +876,7 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
 
 
   test "timed loop binds result returned by value, so no temporary is zero-filled":
-    # Result of three floats or fewer returns by value; assigned straight into its slot, it
+    # Result of three floats or fewer returns by value; assigned straight into its element, it
     #   passes through temporary that call site zero-fills, out of line where function is
     #   large, about 11 ns. Reference returns so, and library's norms return two scalars so.
     let returning_scalars = INSPECTED.filterIt(it.stem_result == "MultivectorScalars")
@@ -943,7 +943,7 @@ suiteInProc "Internal: Unitized":
   test "unitized form agrees with homogeneous form where weight is one":
     when IS_RIGID and DIMENSIONS == 4:
       template checkLayout(U: typedesc, i, j: int) =
-        ## Hold every form of layout U to its homogeneous form, on slots i and j of pools.
+        ## Hold every form of layout U to its homogeneous form, on elements i and j of pools.
         let
           (a, b) = (POOL_POINT[i], POOL_POINT[j])
           p = unitized.PointHomogeneous(x: a.x, y: a.y, z: a.z, w: 1.0)
@@ -995,7 +995,7 @@ suiteInProc "Internal: Unitized":
           check isNear(abs(unit_book.w), 1.0) and unit_book.w * weight > 0.0  # 2.89, sign kept
           check isNear(unit_code, unit_signed)  # code divides by signed w, so differs by its sign
       for i in 0..<OBJECTS:
-        let j = (i * 7 + 3) mod OBJECTS  # pair slots as bench pairs them
+        let j = (i * 7 + 3) mod OBJECTS  # pair elements as bench pairs them
         checkLayout(unitized.PointUnitized, i, j)
         checkLayout(unitized.PointPadded, i, j)
     else:

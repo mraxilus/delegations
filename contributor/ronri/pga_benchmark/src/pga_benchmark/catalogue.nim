@@ -362,8 +362,9 @@ const CATALOGUE* = block:
         ("weight", "∘", "weight", "(∘ m)", "weight(m)", "2.68"),
         ("norm_bulk", "|∙", "normBulk", "(|∙ m)", "normBulk(m)", "2.87"),
         ("norm_weight", "|∘", "normWeight", "(|∘ m)", "normWeight(m)", "2.88"),
-        # Weight squared norm lands in antiscalar slot, so reference wears `Antiscalar`;
-        #   conversion is free, since type is distinct float, and widening reads slot from it.
+        # Weight squared norm lands in antiscalar coefficient, so reference wears `Antiscalar`;
+        #   conversion is free, since type is distinct float, and widening reads coefficient from
+        #   it.
         ("norm_bulk_squared", "|∙²", "", "(`|∙²`(m))", "normBulkSquared(m)", "2.87"),
         (
           "norm_weight_squared", "|∘²", "", "(`|∘²`(m))",
@@ -583,8 +584,9 @@ const CATALOGUE* = block:
         ("weight", "∘", "weight", "(∘ m)", "weight(m)", "2.68"),
         ("norm_bulk", "|∙", "normBulk", "(|∙ m)", "normBulk(m)", "2.87"),
         ("norm_weight", "|∘", "normWeight", "(|∘ m)", "normWeight(m)", "2.88"),
-        # Weight squared norm lands in antiscalar slot, so reference wears `Antiscalar`;
-        #   conversion is free, since type is distinct float, and widening reads slot from it.
+        # Weight squared norm lands in antiscalar coefficient, so reference wears `Antiscalar`;
+        #   conversion is free, since type is distinct float, and widening reads coefficient from
+        #   it.
         ("norm_bulk_squared", "|∙²", "", "(`|∙²`(m))", "normBulkSquared(m)", "2.87"),
         (
           "norm_weight_squared", "|∘²", "", "(`|∘²`(m))",
@@ -742,7 +744,7 @@ const SHAPES* = [
 
 
 const CHAINS* = [
-  # Norm reads two slots, each one root over one part, i.e. `‖m‖∙` then `‖m‖∘`.
+  # Norm reads two coefficients, each one root over one part, i.e. `‖m‖∙` then `‖m‖∘`.
   ("(| m)", @[Shape.NormPart, Shape.NormPart]),
   # Support, center and container fold their maps into one table (`Shape.Support` and
   #   siblings). Partner is cubic, so it stays chain: container of weight dual, then antiwedge
@@ -772,8 +774,8 @@ func chainOf*(p: Measurand): seq[Shape] =
 func shapeOf*(p: Measurand): Shape =
   ## Read arithmetic shape of measurand, from its symbol, arity and operand kinds.
   ##   Unary `∙` and `∘` read bulk and weight parts, which are permutations; binary ones
-  ##   are bilinear forms landing in one slot.
-  # Product against scalar operand scales every slot, whatever symbol spells it.
+  ##   are bilinear forms landing in one coefficient.
+  # Product against scalar operand scales every coefficient, whatever symbol spells it.
   if p.arity == 2 and Kind.Scalar in p.operands: return Shape.Scale
   if p.symbol in ["∙", "∘"]:
     return (if p.arity == 2: Shape.FormScalar else: Shape.Permutation)

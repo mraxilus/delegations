@@ -1057,7 +1057,7 @@ func unindexed(text: string): string =
 
 
 func readable(text: string): string =
-  ## Rewrite emitted C so reader sees types and slots rather than hashes.
+  ## Rewrite emitted C so reader sees types and indexes rather than hashes.
   ##   Reading aid alone: cache holds exact text every count is read from.
   text.shortened(STEM_MULTIVECTOR, "Multivector")
     .shortened(STEM_MULTIVECTOR & "Scalars", "MultivectorScalars")

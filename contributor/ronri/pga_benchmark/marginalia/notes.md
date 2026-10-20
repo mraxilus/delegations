@@ -18,10 +18,10 @@ a note never points at lines that say something else.
 ```
 
 Each product takes and returns `Multivector`, the instance over all 2^D bases. A point carries
-all 2^D slots, and each product reads every slot. Of the measurands with a typed reference, most
-spend more multiplies than the reference, and this is why.
+all 2^D coefficients, and each product reads every coefficient. Of the measurands with a typed
+reference, most spend more multiplies than the reference, and this is why.
 
-An instance holds only the slots of its own bases, and the norms return two of them. Grade
+An instance holds only the coefficients of its own bases, and the norms return two of them. Grade
 restriction still lives in the emission of each product, and the tables stay whole. Proposal P04,
 `exact-kinds`, explores products that return only the bases they reach.
 
@@ -57,7 +57,7 @@ operations, the result alone puts them above the byte bound. The norms return
 
 An emitter that returns that pair, for a table whose products all land in 𝟏 or 𝟙, closes the rest.
 Proposal P04, `exact-kinds`, returns the kind of exactly the bases that the result reaches,
-which here is one slot.
+which here is one coefficient.
 
 ## What the conformal norms compute
 
@@ -170,10 +170,10 @@ call site with it, so the Architect decides.
     pragma = nnkPragma.newTree(ident"inline", ident"noinit"),
 ```
 
-Unary operators write every slot, with `noinit`. The bench fills each result array with
+Unary operators write every coefficient, with `noinit`. The bench fills each result array with
 zeros once, and the compiler can delete each store of zero that repeats that fill. So the
-bench can favour a form that fills over one that writes every slot. Timed alone, the form
-that writes every slot does not lose.
+bench can favour a form that fills over one that writes every coefficient. Timed alone, the form
+that writes every coefficient does not lose.
 
 ## Binary products against their fill
 
@@ -184,7 +184,7 @@ that writes every slot does not lose.
     pragma = nnkPragma.newTree(ident"inline", ident"noinit"),
 ```
 
-Binary products also write every slot, with `noinit`. The same effect of the bench applies:
+Binary products also write every coefficient, with `noinit`. The same effect of the bench applies:
 `∨★` measured slower than a form with a fill, and timed alone it does not lose.
 
 ## Partner scans grade at run time
@@ -198,7 +198,7 @@ Binary products also write every slot, with `noinit`. The same effect of the ben
     sign * ⊡(☆m) ∨ ⊟m
 ```
 
-`⊛` reads `m.grade.get`, which scans every slot. The sign (−1)^(grade+1) can fold into the
+`⊛` reads `m.grade.get`, which scans every coefficient. The sign (−1)^(grade+1) can fold into the
 first table, by the grade of the first factor of each term. That is exact under the
 homogeneity that `⊛` already asserts.
 
@@ -229,8 +229,8 @@ func norm*(m: Multivector): MultivectorScalars {.inline.} = |m
   ## Get geometric norm of multivector as distance from origin.
 ```
 
-The book writes ‖𝐦‖ = s𝟏 + t𝟙, and `MultivectorScalars` holds that pair and no other slot. The
-library gives the pair no root, division or exponential. So the library's suites define `sqrt`,
+The book writes ‖𝐦‖ = s𝟏 + t𝟙, and `MultivectorScalars` holds that pair and no other coefficient.
+The library gives the pair no root, division or exponential. So the library's suites define `sqrt`,
 `sqrtAnti` and `div` of their own, beside a TODO to move them into the library. Proposal P10,
 `homogeneous-scalar`, gives such a pair a root and a division of its own.
 

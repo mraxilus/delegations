@@ -3,7 +3,7 @@
 At pin, the test of 2.73 checks `⊖𝐦` against `𝐦 ∨ /horizon`, which is how `⊖` is defined.
 So the test cannot fail, and it reports green for any definition.
 
-This change checks each basis vector instead: its attitude is its weight, in the scalar slot.
+This change checks each basis vector instead: its attitude is its weight, in the scalar coefficient.
 The weight is the coordinate on 𝐞ₙ under the rigid metric, and on 𝐞ₙ₋₁ under the conformal
 metric, where the library puts the horizon.
 
@@ -16,7 +16,7 @@ metric, where the library puts the horizon.
 ```
 
 ```nim
-    # Expectation independent of operator: attitude of point is its weight, in scalar slot.
+    # Expectation independent of operator: attitude of point is its weight, in scalar coefficient.
     for b, 𝐦 in enumerateBasis():
       if b.grade == Grade(1):
         check (⊖𝐦)[Basis.scalar] =~ 𝐦[Basis(if IS_RIGID: DIMENSIONS else: DIMENSIONS-1)]

@@ -19,7 +19,7 @@ at rga4d and 256 at cga5d to give one number. The type of the result does not sa
 is.
 
 At rga4d, 16 measurands move more bytes than their multivector lower bound only because each
-writes a whole multivector for one slot. They are the dot, the antidot, 6 typed dots and
+writes a whole multivector for one coefficient. They are the dot, the antidot, 6 typed dots and
 antidots, and 8 squared norms. At cga5d, 15 do: the dot, the antidot, 8 typed dots and antidots,
 and 5 squared norms. `baseline/static_rga4d.json` and `baseline/static_cga5d.json` hold them.
 
@@ -43,7 +43,7 @@ antiscalar. One macro names an alias for each grade and for each parity. At rga4
 | `MultivectorEven` | `S`, the six bivectors and `E1234` | 8 |
 | `MultivectorOdd` | the four vectors and the four trivectors | 8 |
 
-The slot of a basis is the count of the bases of `B` below it, which `index` folds wherever the
+The index of a basis is the count of the bases of `B` below it, which `index` folds wherever the
 basis is static. A static basis outside `B` stops the compile. `toMultivector` widens a
 basis-set type, and `toMultivectorOf` narrows it. This proposal reads all of these, and adds none.
 
@@ -55,9 +55,9 @@ read the same tables as `defineOperator`, over the bases of the operands alone. 
 whole, and their count does not grow with the count of types. Products are generic, so a program
 makes only the pairs of types that it uses.
 
-A product reaches every slot of its exact basis-set type. So each product is `noinit`, and writes
-each slot once. `typeReached` names the result type, and `defineProduct` or `defineMap` fills it.
-Both read the same table, so the type and the body agree.
+A product reaches every coefficient of its exact basis-set type. So each product is `noinit`, and
+writes each coefficient once. `typeReached` names the result type, and `defineProduct` or
+`defineMap` fills it. Both read the same table, so the type and the body agree.
 
 Nim reads the argument of a generic type as it is spelled. `MultivectorOf[{Basis.E1..Basis.E4}]`
 is not `Multivector1`, which lists its four bases, and a set of all bases listed is not
@@ -82,7 +82,7 @@ result[E31] = -(m[E1] * n[E3]) + m[E3] * n[E1]
 result[E12] = m[E1] * n[E2] + -(m[E2] * n[E1])
 ```
 
-The accessors then fold each basis to its slot, so the compiled body reads fixed offsets alone:
+The accessors then fold each basis to its index, so the compiled body reads fixed offsets alone:
 
 ```nim
 result.elements[0] = m.elements[1] * n.elements[2] + -(m.elements[2] * n.elements[1])
@@ -110,8 +110,9 @@ withdrawn.
 
 | Option | Why it lost |
 |--------|-------------|
-| Smallest named basis-set type, as P02 | Bulk of a bivector holds zeros in half its slots |
-| `Coefficient` for a product of one slot | Scalar and antiscalar become one type; basis is lost |
+| Smallest named basis-set type, as P02 | Bulk of a bivector holds zeros in half its coefficients |
+| `Coefficient` for a product of one coefficient | Scalar and antiscalar become one type; basis is
+lost |
 | Return type `MultivectorOf[reach(...)]` | Built; it is not the same type as its alias |
 | One named type for each set reached | The names would spell the bases, as the generic does |
 | Empty set for a product that reaches none | Pinned compiler stops on `B.card` and on `index` |
@@ -129,7 +130,7 @@ types and thirty binary operators give some 1 900 copies, or about 1.7 GB at 6D.
 Each name follows the charter: head first and qualifiers last (V.2), and a property is the
 bare noun (V.3).
 
-| Slot | Proposed | Options weighed |
+| Item | Proposed | Options weighed |
 |------|----------|-----------------|
 | Type a product reaches | `typeReached(cayley, A, B)` | `kindOf`: glossary keeps kind for operand |
 | Alignment of a count | `alignment(count)` | `alignmentOf`: V.3 wants the bare noun |
@@ -213,10 +214,10 @@ library.
 | `∘ m`, weight of vector | 32, 40 | 8 | 8 |
 | Even sandwich of vector | 64, 128 | 64 | 128 |
 
-A result of one slot writes 8 bytes, which meets the multivector lower bound. P02 also returns one
-slot for a dot, as the alias of grade 0 or of grade N. So this proposal gains over P02 on the
-parts, and not on the dots. For the squared norms, the 8 bytes are a claim of design alone, since
-the change emits none.
+A result of one coefficient writes 8 bytes, which meets the multivector lower bound. P02 also
+returns one coefficient for a dot, as the alias of grade 0 or of grade N. So this proposal gains
+over P02 on the parts, and not on the dots. For the squared norms, the 8 bytes are a claim of design
+alone, since the change emits none.
 
 The prototype of P02 counts the terms that a motor sandwich on a point emits at 4D, with the
 second product kept to grade 1. It counts 384 untyped, 96 over contiguous ranges with the motor at

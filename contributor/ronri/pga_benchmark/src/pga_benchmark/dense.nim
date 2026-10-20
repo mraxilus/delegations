@@ -1,12 +1,12 @@
 ## Generate dense form of every general measurand: straight-line code over dense multivector.
-##   Dense form is what careful hand writes over dense multivector: each result slot assigned
+##   Dense form is what careful hand writes over dense multivector: each result coefficient assigned
 ##     once as sum of its terms, no zero fill, no intermediate multivector, no call. Its time
 ##     is what general row of docket is measured against, as reference is for typed row.
 ##   Generator evaluates each operation symbolically at compile time over library's own Cayley
-##     tables. Slot is polynomial over operand components: sign map composes for free, product
-##     multiplies polynomials, and like terms combine. Operand that is already product becomes
-##     scalar temporaries first, so chain spends sum of its steps, as its bound does; operand
-##     that is only map of another folds into product, as compound product's bound does.
+##     tables. Coefficient is polynomial over operand components: sign map composes for free,
+##     product multiplies polynomials, and like terms combine. Operand that is already product
+##     becomes scalar temporaries first, so chain spends sum of its steps, as its bound does;
+##     operand that is only map of another folds into product, as compound product's bound does.
 ##
 ##   Cost: tables are library's, so dense form shares any sign library gets wrong. Chapter
 ##     and wiki suites hold library to reference, and suite `Internal: Dense forms` holds
@@ -25,15 +25,15 @@ import ./[catalogue, kinds]
 
 
 type
-  Factor = tuple[source, slot: int]
-    ## Define one factor of term: operand or temporary, and its slot.
+  Factor = tuple[source, index: int]
+    ## Define one factor of term: operand or temporary, and its index.
     ##   Source `m` is 0, `n` is 1, and temporaries are 2 on.
-    ##   Slot below zero reads source whole, as scalar operand or scalar temporary.
-  Term = object  ## Define one term of slot: coefficient times product of factors.
+    ##   Index below zero reads source whole, as scalar operand or scalar temporary.
+  Term = object  ## Define one term of coefficient: coefficient times product of factors.
     coefficient: float
     factors: seq[Factor]
-  Slots = array[Basis, seq[Term]]
-    ## Define multivector symbolically: each slot is sum of its terms.
+  Sums = array[Basis, seq[Term]]
+    ## Define multivector symbolically: each coefficient is sum of its terms.
   Emitter = object  ## Define generation state: statements so far, and source next temporary takes.
     statements: NimNode
     source_next: int
@@ -42,31 +42,31 @@ type
 const
   SOURCE_M = 0  ## Source of first operand.
   SOURCE_N = 1  ## Source of second operand.
-  SLOT_WHOLE = -1  ## Slot that reads source whole, as scalar.
+  INDEX_WHOLE = -1  ## Index that reads source whole, as scalar.
   TOLERANCE_COEFFICIENT = 1e-12  ## Coefficient below which combined term vanishes.
 
 
 
 #[ Polynomials ]#
 
-func operandOf(source: int): Slots =
-  ## Read operand whole, each slot one term of itself.
+func operandOf(source: int): Sums =
+  ## Read operand whole, each coefficient one term of itself.
   for b in Basis: result[b] = @[Term(coefficient: 1.0, factors: @[(source, ord(b))])]
 
 
-func scalarOf(source: int): Slots =
-  ## Read scalar operand or temporary as multivector carrying it in scalar slot.
-  result[Basis.scalar] = @[Term(coefficient: 1.0, factors: @[(source, SLOT_WHOLE)])]
+func scalarOf(source: int): Sums =
+  ## Read scalar operand or temporary as multivector carrying it in scalar coefficient.
+  result[Basis.scalar] = @[Term(coefficient: 1.0, factors: @[(source, INDEX_WHOLE)])]
 
 
-func constantOf(b: Basis, coefficient = 1.0): Slots =
+func constantOf(b: Basis, coefficient = 1.0): Sums =
   ## Read unit constant on one basis element, signed.
   result[b] = @[Term(coefficient: coefficient, factors: @[])]
 
 
-func degreeOf(slots: Slots): int =
+func degreeOf(sums: Sums): int =
   ## Read greatest count of factors any term carries.
-  for terms in slots:
+  for terms in sums:
     for term in terms: result = max(result, term.factors.len)
 
 
@@ -83,48 +83,48 @@ func combined(terms: seq[Term]): seq[Term] =
   result = result.filterIt(abs(it.coefficient) > TOLERANCE_COEFFICIENT)
 
 
-func negated(slots: Slots): Slots =
+func negated(sums: Sums): Sums =
   ## Negate every term.
   for b in Basis:
-    for term in slots[b]:
+    for term in sums[b]:
       result[b].add Term(coefficient: -term.coefficient, factors: term.factors)
 
 
-func summed(left, right: Slots; is_difference = false): Slots =
-  ## Add or subtract slot by slot.
+func summed(left, right: Sums; is_difference = false): Sums =
+  ## Add or subtract coefficient by coefficient.
   let other = if is_difference: right.negated else: right
   for b in Basis: result[b] = combined(left[b] & other[b])
 
 
-func mapped(slots: Slots, cayley: Cayley1D): Slots =
-  ## Send each slot where one-dimensional table sends its basis element, signed.
-  ##   Cell of several terms sends slot to each.
+func mapped(sums: Sums, cayley: Cayley1D): Sums =
+  ## Send each coefficient where one-dimensional table sends its basis element, signed.
+  ##   Cell of several terms sends coefficient to each.
   for b in Basis:
     for destination in cayley[b]:
-      for term in slots[b]:
+      for term in sums[b]:
         result[destination.basis].add Term(
           coefficient: if destination.is_negated: -term.coefficient else: term.coefficient,
           factors: term.factors,
         )
 
 
-func selected(slots: Slots, grade: Grade): Slots =
-  ## Keep slots of one grade, and drop rest.
-  for b in LUT_BASES_BY_GRADE[grade]: result[b] = slots[b]
+func selected(sums: Sums, grade: Grade): Sums =
+  ## Keep coefficients of one grade, and drop rest.
+  for b in LUT_BASES_BY_GRADE[grade]: result[b] = sums[b]
 
 
 
 #[ Emission ]#
 
 func nodeFactor(factor: Factor, is_scalar_m: bool): NimNode =
-  ## Spell one factor: operand slot, scalar operand or temporary.
+  ## Spell one factor: operand coefficient, scalar operand or temporary.
   let name = case factor.source
     of SOURCE_M: "m"
     of SOURCE_N: "n"
     else: "t" & $factor.source
-  if factor.slot == SLOT_WHOLE or (factor.source == SOURCE_M and is_scalar_m): return ident(name)
-  if factor.source > SOURCE_N: return ident(name & "_" & $factor.slot)
-  nnkBracketExpr.newTree(ident(name), newCall(bindSym"Basis", newLit(factor.slot)))
+  if factor.index == INDEX_WHOLE or (factor.source == SOURCE_M and is_scalar_m): return ident(name)
+  if factor.source > SOURCE_N: return ident(name & "_" & $factor.index)
+  nnkBracketExpr.newTree(ident(name), newCall(bindSym"Basis", newLit(factor.index)))
 
 
 func nodeSum(terms: seq[Term], is_scalar_m = false): NimNode =
@@ -144,13 +144,13 @@ func nodeSum(terms: seq[Term], is_scalar_m = false): NimNode =
       else: infix(result, if is_negative: "-" else: "+", product)
 
 
-func temporaries(emitter: var Emitter, slots: Slots): Slots =
-  ## Bind each non-empty slot to scalar temporary, so later product reads it as one factor.
+func temporaries(emitter: var Emitter, sums: Sums): Sums =
+  ## Bind each non-empty coefficient to scalar temporary, so later product reads it as one factor.
   let source = emitter.source_next
   inc emitter.source_next
   for b in Basis:
-    if slots[b].len == 0: continue
-    emitter.statements.add newLetStmt(ident("t" & $source & "_" & $ord(b)), nodeSum(slots[b]))
+    if sums[b].len == 0: continue
+    emitter.statements.add newLetStmt(ident("t" & $source & "_" & $ord(b)), nodeSum(sums[b]))
     result[b] = @[Term(coefficient: 1.0, factors: @[(source, ord(b))])]
 
 
@@ -161,7 +161,7 @@ func bindScalar(emitter: var Emitter, value: NimNode): int =
   emitter.statements.add newLetStmt(ident("t" & $result), value)
 
 
-func product(emitter: var Emitter; left, right: Slots; cayley: Cayley2D): Slots =
+func product(emitter: var Emitter; left, right: Sums; cayley: Cayley2D): Sums =
   ## Multiply through two-dimensional table; operand already product binds temporaries first.
   let
     bound_left = if left.degreeOf > 1: emitter.temporaries(left) else: left
@@ -182,23 +182,24 @@ func product(emitter: var Emitter; left, right: Slots; cayley: Cayley2D): Slots 
 
 
 func rootOf(terms: seq[Term]): NimNode =
-  ## Spell square root of one slot's sum.
+  ## Spell square root of one coefficient's sum.
   newCall(bindSym"sqrt", nodeSum(terms))
 
 
 
 #[ Recipes ]#
 
-func recipeOf(emitter: var Emitter; id: string; m, n: Slots): Slots =
+func recipeOf(emitter: var Emitter; id: string; m, n: Sums): Sums =
   ## Evaluate measurand symbolically, as library defines it, from its tables.
 
-  func norm(emitter: var Emitter, m: Slots, cayley: Cayley2D, b: Basis): Slots =
-    ## Read root of one slot of operand's product with itself, in that slot alone.
+  func norm(emitter: var Emitter, m: Sums, cayley: Cayley2D, b: Basis): Sums =
+    ## Read root of one coefficient of operand's product with itself, in that coefficient alone.
     let root = emitter.bindScalar(rootOf(emitter.product(m, m, cayley)[b]))
-    result[b] = @[Term(coefficient: 1.0, factors: @[(root, SLOT_WHOLE)])]
+    result[b] = @[Term(coefficient: 1.0, factors: @[(root, INDEX_WHOLE)])]
 
-  func unitized(emitter: var Emitter, m: Slots, cayley: Cayley2D, b: Basis): Slots =
-    ## Scale operand by reciprocal of root of one slot of its product with itself, unless zero.
+  func unitized(emitter: var Emitter, m: Sums, cayley: Cayley2D, b: Basis): Sums =
+    ## Scale operand by reciprocal of root of one coefficient of its product with itself, unless
+    ## zero.
     let
       root = ident("t" & $emitter.bindScalar(rootOf(emitter.product(m, m, cayley)[b])))
       reciprocal = emitter.bindScalar(quote do:
@@ -207,10 +208,10 @@ func recipeOf(emitter: var Emitter; id: string; m, n: Slots): Slots =
       for term in m[a]:
         result[a].add Term(
           coefficient: term.coefficient,
-          factors: term.factors & @[(reciprocal, SLOT_WHOLE)],
+          factors: term.factors & @[(reciprocal, INDEX_WHOLE)],
         )
 
-  func container(emitter: var Emitter, m: Slots): Slots =
+  func container(emitter: var Emitter, m: Sums): Sums =
     ## Read container, i.e. `m ∧ (m⊟)☆`.
     when IS_CONFORMAL:
       emitter.product(
@@ -220,7 +221,7 @@ func recipeOf(emitter: var Emitter; id: string; m, n: Slots): Slots =
       )
     else: m
 
-  func cocarrier(emitter: var Emitter, m: Slots): Slots =
+  func cocarrier(emitter: var Emitter, m: Sums): Sums =
     ## Read cocarrier, i.e. `m☆ ∧ 𝐞∞`.
     when IS_CONFORMAL:
       emitter.product(
@@ -343,7 +344,7 @@ func basesOf[B: static Bases](
 macro defineFormsDense*(): untyped =
   ## Define one dense form per general measurand, named by `nameDenseOf`.
   ##   Form returns type library expression returns, so norm returns `MultivectorScalars` as
-  ##     library's does; it writes each slot that type holds, and no other.
+  ##     library's does; it writes each coefficient that type holds, and no other.
   ##   Partner carries sign of its operand's grade, as library's does; grade is read as
   ##   library reads it, from first component beyond tolerance, and sign flips, never scales.
   result = newStmtList()
@@ -360,8 +361,8 @@ macro defineFormsDense*(): untyped =
       continue
     var emitter = Emitter(statements: newStmtList(), source_next: SOURCE_N + 1)
     let
-      slot_m = if is_scalar_m: scalarOf(SOURCE_M) else: operandOf(SOURCE_M)
-      slots = emitter.recipeOf(p.id, slot_m, operandOf(SOURCE_N))
+      sums_m = if is_scalar_m: scalarOf(SOURCE_M) else: operandOf(SOURCE_M)
+      sums = emitter.recipeOf(p.id, sums_m, operandOf(SOURCE_N))
       is_partner = p.id == "partner"
     var body = emitter.statements
     let is_negated = ident"is_negated"  # plain ident, since `quote` hides names it declares
@@ -381,19 +382,21 @@ macro defineFormsDense*(): untyped =
       let
         basis = newCall(bindSym"Basis", newLit(ord(b)))
         target = nnkBracketExpr.newTree(ident"result", basis)
-        message = newLit("Dense form of `" & p.id & "` sums slot its type lacks; got `" & $b &
-          "`.")
+        message = newLit(
+          "Dense form of `" & p.id & "` sums coefficient its type lacks; got `" & $b & "`."
+        )
       var assignments = newStmtList()
-      if is_partner and slots[b].len > 0:
+      if is_partner and sums[b].len > 0:
         # Sum bound once and flipped after, since select over two sums spells each twice.
         let value = ident("value_" & $ord(b))
-        assignments.add newLetStmt(value, nodeSum(slots[b], is_scalar_m))
+        assignments.add newLetStmt(value, nodeSum(sums[b], is_scalar_m))
         assignments.add newAssignment(target, quote do: (if `is_negated`: -`value` else: `value`))
       else:
-        assignments.add newAssignment(target, nodeSum(slots[b], is_scalar_m))
-      # Slot type lacks is skipped where it sums nothing, and fails build where it sums terms.
+        assignments.add newAssignment(target, nodeSum(sums[b], is_scalar_m))
+      # Coefficient type lacks is skipped where it sums nothing, and fails build where it sums
+      # terms.
       let otherwise =
-        if slots[b].len == 0: newStmtList(nnkDiscardStmt.newTree(newEmptyNode()))
+        if sums[b].len == 0: newStmtList(nnkDiscardStmt.newTree(newEmptyNode()))
         else: quote do: {.error: `message`.}
       body.add nnkWhenStmt.newTree(
         nnkElifBranch.newTree(

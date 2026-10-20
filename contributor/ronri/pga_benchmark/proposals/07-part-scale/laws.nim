@@ -216,7 +216,7 @@ when IS_RIGID and DIMENSIONS == 4:
 
 
   func isPointPin(m: Multivector): bool =
-    ## Tell whether grade of pin would read one: each slot outside point at most tolerance.
+    ## Tell whether grade of pin would read one: each coefficient outside point at most tolerance.
     for basis in Basis:
       if basis notin {Basis.E1, Basis.E2, Basis.E3, Basis.E4} and abs(m[basis]) > TOLERANCE_ABS:
         return false
