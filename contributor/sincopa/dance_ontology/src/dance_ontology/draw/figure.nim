@@ -35,7 +35,7 @@ type Twists* = array[Arm, float]
   ##     it to mark, and rule 28's measured winding replaced braid with
   ##     geometry.  Neither has had caller since.
 
-const NO_TWIST*: Twists = [0.0, 0.0]  ## Nothing wound: every figure but turn pages'.
+const NO_TWIST*: Twists = [0.0, 0.0]  ## Nothing wound: every figure but turn figures.
 
 
 
@@ -214,9 +214,7 @@ func partsOf*(
   ## Draw every element of one pose, in order picture is read from.
   ##   `clear_marks` asks straight reach to bend round marks it does
   ##     not join (rule 22).  It is off by default so that only pages
-  ##     that have been looked at under rule take it: frame page's
-  ##     straight and wrapping reaches are next piece of that work, and
-  ##     this flag is where it will be turned on for them.
+  ##     that have been looked at under rule take it.
   # Lock or wrap that does not go round body is not one, and state
   # that cannot be danced is edge that is not drawn -- so this refuses
   # rather than drawing something rules say does not exist.

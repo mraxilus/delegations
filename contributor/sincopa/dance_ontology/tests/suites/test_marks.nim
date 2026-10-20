@@ -2,10 +2,11 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, os, strutils, unittest]
+import std/[options, os, strformat, strutils, unittest]
 
 import ../../design/[marks, parts, plain, rig_page]
 import ../../tools/title
+from ../../src/dance_ontology/rotation import facing, seenAfter
 
 
 const OUT = "build/suites/design"
@@ -16,6 +17,25 @@ const OUT = "build/suites/design"
 const SMALL = ["a", "an", "and", "as", "at", "but", "by", "for", "from", "in", "into",
                "nor", "of", "on", "or", "over", "so", "the", "to", "up", "with", "yet"]
   ## Words title case leaves lowercase where they fall inside title.
+
+const ORIENTATIONS: array[Facing, tuple[lead_turn, follow_turn: float]] =
+  block:
+    var found: array[Facing, Option[tuple[lead, follow: int]]]
+    for movers in 0..2:
+      for lead in [0, 1, -1, 2]:
+        for follow in [0, 1, -1, 2]:
+          let named = facing(seenAfter([lead, follow]))
+          if ord(lead != 0) + ord(follow != 0) == movers and found[named].isNone:
+            found[named] = some((lead, follow))
+    var each: array[Facing, tuple[lead_turn, follow_turn: float]]
+    for named in Facing:
+      doAssert found[named].isSome, &"No turn on the spot reaches `{named.name}`."
+      each[named] = (90.0 * float(found[named].get.lead), 90.0 * float(found[named].get.follow))
+    each
+  ## Sixteen ways couple can face, each reached by fewest dancers turning on spot.
+  ##   Derived from model's facings (`rotation.Facing`), not listed: quarter
+  ##     turn is 90 degrees, clockwise, as drawing counts its bearings.
+  ##   Domain of law that holds `parts.turnedFacing`, which card review names facings by.
 
 func isTitleCased(title: string): bool =
   ## Whether title reads in title case: every word capitalised but small ones inside it.
@@ -77,31 +97,13 @@ template holdPage(name: string) =
 
 
 suite "Internal: Mark workbench":
-  test "frames.html":
-    holdPage("frames.html")
-
-
-  test "signs.html":
-    holdPage("signs.html")
-
-
-  test "turns-single.html":
-    holdPage("turns-single.html")
-
-
-  test "turns-hands.html":
-    holdPage("turns-hands.html")
-
-
   test "review.html":
     holdPage("review.html")
 
 
   test "every page the workbench writes has a law of its own":
-    ## Each law above names its page by literal, so review page's count reads it
-    ##   (`tools/review.nim`), where one law named at run time hid one law for each page.
-    ##   Laws are read off this file, as that count reads them, and held to `PAGES`, so
-    ##   page added there cannot go unbuilt here.
+    ## Laws above name their page by literal; they are read off this file and held to
+    ##   `PAGES`, so page added there cannot go unbuilt here.
     var held: seq[string]
     for line in readFile(currentSourcePath()).splitLines:
       let opening = line.strip
@@ -120,86 +122,19 @@ suite "Internal: Every page this project publishes":
     check isTitleCased(TITLE)
 
 
-  test "committed markup says its prose plainly too":
-    ## Whole-cloth mock-up is hand-authored file rather than page workbench renders, so its
-    ## prose is held here.  Reference page's own markup is held by `test_review.nim`, beside
-    ## build that fills it.
-    let markup = readFile("mockups" / "wholecloth.html")
-    check markup.prose.len > 0
-    for said in markup.longSentences:
-      checkpoint "sentence over " & $WORDS & " words: " & said
-      fail()
-    for said in markup.longParagraphs:
-      checkpoint "paragraph over " & $SENTENCES & " sentences, opening: " & said
-      fail()
-
-
 
 suite "Internal: The sixteen facings, drawn":
-  # Glossary agrees sixteen facings, and model holds them (`rotation.Facing`).  Pages draw
-  # them from model, so every name below comes from model, never from page it checks.
-  test "the frame page draws each facing once, under its own name":
-    let page = readFile(OUT / "frames.html")
-    for named in Facing:
-      check page.count("<figcaption>" & named.name & "</figcaption>") == 1
-      # Name capitalises lead's side alone, so no header that capitalises names one.
-      check page.count("<th>" & named.name) == 0
-
-
-  test "the frame page gives each side of the lead a row, in the glossary's order":
-    # Name gives lead's side first, so row for each side reads down page as names do.
-    let page = readFile(OUT / "frames.html")
-    var at = page.find("<h3>At rest, no ring</h3>")
-    check at >= 0
-    if at >= 0:
-      for side in ["Face", "Starboard", "Back", "Port"]:
-        at = page.find("<div class=\"row\">", at)
-        let shuts = page.find("</div>", at)
-        var
-          captions: seq[string]
-          caption_at = page.find("<figcaption>", at)
-        while caption_at >= 0 and caption_at < shuts:
-          let start = caption_at + "<figcaption>".len
-          captions.add page[start..<page.find("</figcaption>", start)]
-          caption_at = page.find("<figcaption>", start)
-        check captions.len == 4
-        for caption in captions:
-          check caption.startsWith(side & "-to-")
-        at = shuts
-
-
+  # Glossary agrees sixteen facings, and model holds them (`rotation.Facing`).  Card review
+  # names facings through `parts.turnedFacing`, so law holds it over all sixteen.
   test "each drawn facing reads back as the facing it is named for":
     for named, orientation in ORIENTATIONS:
       check turnedFacing(orientation.lead_turn, orientation.follow_turn) == some(named)
 
 
-  test "every quarter the single-hand page draws names its facing, in its own place":
-    # Read within each manner's section, in order: manners share names, so name found
-    # anywhere on page would stand in for one missing or swapped.
-    let page = readFile(OUT / "turns-single.html")
-    for manner in Manner:
-      let opens = page.find("<h2>" & MANNERS[manner].title & "</h2>")
-      check opens >= 0
-      if opens < 0: continue
-      let section = page[opens..<page.find("</section>", opens)]
-      var want, got: seq[string]
-      for _ in SINGLES:
-        for quarter in 1..<QUARTERS_ROUND:
-          let named = facingOf(quarterPose(manner, quarter))
-          check named.isSome
-          want.add (if named.isSome: named.get.name else: "")
-      var at = section.find(" turn<br>")
-      while at >= 0:
-        let start = at + " turn<br>".len
-        got.add section[start..<section.find("</figcaption>", start)]
-        at = section.find(" turn<br>", start)
-      check got == want
-
-
 
 suite "Internal: The rests and the chains, named by model":
-  ## Each page names chain's rest and facings through `parts.restOf` and
-  ##   `parts.facingAt`, and law reads written page back (Article IX.5).
+  ## Card review names each chain's rest through `parts.restOf`, and law reads written page
+  ##   back (Article IX.5).
   test "the review page heads each chain with the facing it rests at":
     let page = readFile(OUT / "review.html")
     check page.contains(
@@ -228,11 +163,3 @@ suite "Internal: The rests and the chains, named by model":
       if not (name.len == 3 and name[0] in {'A'..'G'} and name[1..2].allCharsInSet(Digits)):
         checkpoint "card named `" & name & "`"
         fail()
-
-
-  test "the hand-to-hand page names each facing its chain stands at":
-    let page = readFile(OUT / "turns-hands.html")
-    check page.contains(
-      "<b>" & facingAt(HAND_TO_HAND, 1.0).get.name & "</b> at a whole number of turns",
-    )
-    check page.contains("<b>" & facingAt(HAND_TO_HAND, 0.5).get.name & "</b> at a half")

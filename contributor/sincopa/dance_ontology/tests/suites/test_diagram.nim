@@ -125,3 +125,12 @@ suite "Internal: The picture":
       # And turning shows, in every frame -- including `free`, which
       # old drawing could not tell apart from itself turned.
       check renderFrame(target, 1) != renderFrame(target, 0)
+
+
+  test "the pictures fix no colour of their own":
+    # Reference and card review theme every picture, light and dark, so every ink is
+    # custom property with fallback and no ink is written down on its own.
+    for target in FRAMES:
+      let picture = renderFrame(target)
+      check picture.count('#') == picture.count("var(--")
+      check picture.count('#') > 0

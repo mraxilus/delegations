@@ -177,7 +177,7 @@ const RULES* = [
   ##     drawn at either invites very states this work is holding out
   ##     of scope.  Above is over head, on axis couple turns
   ##     about, and has no lock and no wrap by rule 8.
-  ##   Rule 18 keeps two stages frame page dances lead's move in:
+  ##   Rule 18 keeps two stages frame picture dances lead's move in:
   ##     lead turns while world holds still, and only then does
   ##     picture turn back to face them up.
   ##   Rule 19 adds orbit turns beside axis turns.
@@ -193,7 +193,7 @@ const RULES* = [
   ##       that round is not either axis round.  Four manners of turn,
   ##       three rounds of positions.
   ##   Rule 21 puts level on moving hand as well as still one; on
-  ##     turns pages that is above, only level in scope.
+  ##     turn figures that is above, only level in scope.
   ##   Rule 22 keeps settled reach out of marks it does not join.
   ##     Line through hand cell says hand is held, and line
   ##       through chevron hides which way its dancer faces; settled
@@ -240,14 +240,14 @@ const RULES* = [
   ##       twice, once by each dancer, and what two crossings enclose
   ##       is diamond rule names.
   ##     Two answers settle how it is read.  *"three positions, full turn
-  ##       required between them"*: step on that page is whole turn,
+  ##       required between them"*: step along that chain is whole turn,
   ##       which is what makes rule 12's three into chain -- whole turn puts
   ##       every place and every facing back where it was, and what it
   ##       leaves behind is wind.  And *"they alternate"*: whichever
   ##       connection is over at lead's crossover is under at
   ##       follow's, because that is what being wound together means.  Two
   ##       crossings same way round would be one arm lying on another.
-  ##     So both pages are duals.  Single hand turns for ever, so its
+  ##     So both chains are duals.  Single hand turns for ever, so its
   ##       wind is not part of its state and its orientation is all of it
   ##       (rule 16); hold both hands and whole turn returns every
   ##       orientation, so wind is all of it instead.
@@ -368,9 +368,8 @@ const RULES* = [
   ##       axis turn and by other dancer's orbit.  All four are still
   ##       drawn: which dancer walked is fact about path, and only
   ##       path can say it.
-  ##     And on frame page two collapse figures swap over.  It is
-  ##       orbit that now lands on matching axis turn, and
-  ##       bearing-keeping compound turn that lands somewhere of its own --
+  ##     So orbit lands on matching axis turn, and
+  ##       bearing-keeping compound turn lands somewhere of its own --
   ##       one picture either dancer's compound turn reaches, since only
   ##       pair's axis has swung.
   ##   Rule 33 tightens swan and fixes mark that would not hold still.
@@ -469,7 +468,7 @@ const FROM_ABOVE*: array[2, tuple[level: Option[Level], modifier: Option[Modifie
 ]  ## Only transitions out of `above`, per rule 8: upper wrap, or back
   ## to default.
   ##   *Upper wrap* is read as high wrap; that reading is
-  ##     implementer's, not rule's, and page flags it as such.
+  ##     implementer's, not rule's, and `design/README.md` says so.
   ##   Ledger data like `RULES`: nothing loads it yet.  Check used to
   ##     doAssert it against its own spelled-out copy, which checked
   ##     nothing and is gone; making it load-bearing is same open TODO.

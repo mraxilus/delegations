@@ -4,8 +4,8 @@
 ##   Instrument run by hand (`tools/build.nim floors`), never by suite: each way plans every
 ##     style on every core, and both chains alone planned 64 paths in 377 s on four cores,
 ##     measured 2026-10-12.  Law reads floors as figures, so this is how they are read again.
-##   Asks `walk.plannedWay`, which recordings ask where walk falls short, of whole-cloth page's
-##     holds over crown (`turns.sweeps`): rig's four sweeps over crown are four of those holds.
+##   Asks `walk.plannedWay`, which recordings ask where walk falls short, of holds over crown
+##     `design/turns` sweeps (`turns.sweeps`): rig's four sweeps over crown are four of those holds.
 ##   Prints one row of `TURNS_PLANNED` for each hold, as table writes it, then style and start
 ##     of each way's path, so floor and its source are read off one run.
 ##   Cost: plans hold that walk carries free too, which no recording asks, so its row says what

@@ -142,7 +142,7 @@ suite "Internal: The report renders from its kept readings":
     ##   reading report may render must fit them.
     ##   Red first, read 2026-10-11: drawn state `Left to left-lock-high @ -1` came to hold
     ##     once shoulder's edge held every arm, and its row ran to 102 columns.
-    ##   Domain: every line rendered from readings kept, tables, lists and prose alike.
+    ##   Domain: every line rendered from readings kept, tables and prose alike.
     let lines = readFile(REPORT).splitLines
     var wide: seq[string]
     for k, line in lines:

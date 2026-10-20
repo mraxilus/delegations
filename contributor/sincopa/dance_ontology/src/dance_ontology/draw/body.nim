@@ -46,9 +46,9 @@ const
   ARM_REST* = 90.0  ## Resting hand, one quarter of rim from front.
   HAND_RADIUS* = 6.0  ## Hand mark's radius, or half its side.
   CAPTION_RADIUS* = BODY_RADIUS + HAND_RADIUS + 2  ## Just past hand that caption names.
-  FREE_FADE* = 0.5  ## How far hand nobody holds fades, keeping its hue.
+  FREE_FADE = 0.5  ## How far hand nobody holds fades, keeping its hue.
 
-const SLOT_OFFSET* = 44.0
+const SLOT_OFFSET = 44.0
   ## How far round rim `front` and `back` sit from side.
   ##   Wide enough that no two marks ever touch -- two need 34.9 degrees on
   ##     this rim -- and narrow enough that spot still belongs to its own
@@ -239,9 +239,8 @@ func border*(pose: Pose, who: Dancer): string =
 
 #[ Hands And Furniture ]#
 
-func fillOf*(level: Option[Level], arm: Arm, is_deep = false): string =
-  ## Get fill that level draws as -- only place level becomes fill,
-  ## so hands and pips cannot drift.
+func fillOf(level: Option[Level], arm: Arm, is_deep = false): string =
+  ## Get fill that level draws as -- only place level becomes fill.
   if level == some(Level.Low):
     return if is_deep: DEEP[arm] else: INK[arm]
   if level == some(Level.Above):

@@ -6,7 +6,7 @@
 ##   Compiled to javascript and run under node, so workbench stays one
 ##     language:
 ##       nim js --hints:off -d:nodejs -o:build/design/shot.js design/shot.nim
-##       node build/design/shot.js build/design/frames.html /tmp/frames
+##       node build/design/shot.js build/design/review.html /tmp/review
 ##     Cost of port: one page of foreign-function glue for thirty lines of
 ##       work.  Accepted -- one language in repo is worth one page.
 ##   Neither playwright nor chromium is named by path here: path names one
