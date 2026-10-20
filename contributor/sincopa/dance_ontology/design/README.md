@@ -30,6 +30,7 @@ nim r tools/build.nim turns      # asks the simulation for every hold turning: t
 nim r tools/build.nim rig        # records the sweeps the viewer plays: rig.json
 nim r tools/build.nim modelled   # records which cards the simulation reaches: modelled.json
 nim r tools/build.nim fixtures   # records what each ruled card is drawn as: review-fixtures.json
+nim r tools/build.nim watched    # records the stills the C cards show: watched-fixtures.json
 nim r tools/build.nim shot       # builds the helper that screenshots a page
 ```
 
@@ -37,6 +38,9 @@ The build does not write a page whose checks fail. Each page is a product of the
 `build/`, and is not committed. The build reads the four JSON files and does not write them. Each
 verb that writes one is run by hand. `rig` and `modelled` keep a stamp of the physics with what they
 record, and record nothing again when it is the same.
+
+No page reads `watched-fixtures.json`. A law of `../tests/suites/test_asks.nim` holds the stills to
+it, and `watched` runs in the pull request that moves them.
 
 ## Rules
 
@@ -383,11 +387,14 @@ design/
   asks.nim               what each reference card asks of the body simulation
   modelled.nim           which cards the simulation reaches: modelled.json
   turns.nim              every hold turning, asked of the simulation: turns.json
+  floors.nim             how far the plan carries each hold over the crown, printed
   rig.nim                the sweeps and stills the viewer plays: rig.json
   rig_page.nim           rig.html
   rig_view.nim           the viewer, which draws what the engine collides
+  watch.nim              the stills the C cards show, as watched: watched-fixtures.json
   drawn.nim              where each point of the world lands on the viewer's canvas
   wholecloth.nim         splices the data of the simulation into wholecloth.html
   wholecloth_turns.nim   the turns panel of wholecloth.html
+  wholecloth_scene.nim   what that panel draws at one place of its play
   shot.nim               a screenshot of one page, light and dark
 ```

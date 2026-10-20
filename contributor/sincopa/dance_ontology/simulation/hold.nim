@@ -20,10 +20,11 @@ type
     Twist,  ## Upper arm turned about its own length as far as it goes.
     Elbow,  ## Elbow at its bend.
     Wrist,  ## Hand as far off forearm as it goes.
-    Swing,  ## Upper arm too far behind or across body.
+    Swing,  ## Upper arm too far behind or across body, or past shoulder's edge.
     Through,  ## Arm against body.
     Arms,  ## Arm against arm.
-    Crossed  ## Dancer's own arms cross above elbow: elbows out of order, or upper arm on arm.
+    Crossed,  ## Dancer's own arms cross above elbow: elbows out of order, or upper arm on arm.
+    Band  ## Joined hand off its band: under it once risen, or over it facing.
 
 
 func says*(stop: Stop): string =
@@ -34,7 +35,8 @@ func says*(stop: Stop): string =
   of Stop.Twist: "shoulder twists no further"
   of Stop.Elbow: "elbow bends no further"
   of Stop.Wrist: "wrist bends no further"
-  of Stop.Swing: "upper arm swings no further behind or across"
+  of Stop.Swing: "upper arm swings no further"
   of Stop.Through: "arm meets body"
   of Stop.Arms: "arm meets arm"
   of Stop.Crossed: "arms cross above elbow"
+  of Stop.Band: "joined hands leave their band"

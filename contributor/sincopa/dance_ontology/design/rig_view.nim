@@ -292,24 +292,34 @@ proc readout() =
   document.getElementById("reads").innerHTML = html
 
 
+proc apartAt(recording: JsObject, at: int): float =
+  ## Metres between two dancers' axes at moment `at` of entry, as recording has each stand.
+  ##   Read off each moment, not off `apart`: planned sweep moves couple as plan has them
+  ##     (`walk.swept`), and its `apart` is where its path starts.
+  let look = recording.faces[at]
+  hypot(look[4].toFloat - look[0].toFloat, look[5].toFloat - look[1].toFloat)
+
+proc whereOf(recording: JsObject, at: int): cstring =
+  ## Say where entry stands at moment `at`: its turns, and how far apart couple stand.
+  ##   Markup returned and not written, so `test_said` reads it without document.
+  if isStill(recording):
+    if momentsOf(recording) > 0:
+      cstring"<b>" & toFixed(recording.turns.toFloat, 2) & cstring"</b> turns · stood <b>" &
+          toFixed(apartAt(recording, 0), 2) & cstring"</b> m apart"
+    else:
+      cstring"<b>" & toFixed(recording.turns.toFloat, 2) & cstring"</b> turns · no pose holds"
+  else:
+    cstring"<b>" & toFixed(recording.at[at].toFloat, 2) & cstring"</b> turns · stood <b>" &
+        toFixed(apartAt(recording, at), 2) & cstring"</b> m apart"
+
 proc caption() =
   ## Say what entry shows: its turns and distance, or what stopped it.
   let sweep_shown = sweep()
+  document.getElementById("where").innerHTML = whereOf(sweep_shown, MOMENT_SHOWN)
   if isStill(sweep_shown):
-    document.getElementById("where").innerHTML =
-      (if moments() > 0:
-         cstring"<b>" & toFixed(sweep_shown.turns.toFloat, 2) & cstring"</b> turns · stood <b>" &
-             toFixed(sweep_shown.apart.toFloat, 2) & cstring"</b> m apart"
-       else:
-         cstring"<b>" & toFixed(sweep_shown.turns.toFloat, 2) &
-             cstring"</b> turns · no pose holds")
     document.getElementById("verdict").innerHTML =
       (if moments() > 0: cstring(VERDICTS[0]) else: cstring(VERDICTS[1]))
   else:
-    let turned = sweep_shown.at[MOMENT_SHOWN].toFloat
-    document.getElementById("where").innerHTML =
-        cstring"<b>" & toFixed(turned, 2) & cstring"</b> turns · stood <b>" &
-        toFixed(sweep_shown.apart.toFloat, 2) & cstring"</b> m apart"
     document.getElementById("verdict").innerHTML =
       (if truth(sweep_shown.stopped):
          cstring"Stops at <b>" & toFixed(sweep_shown.turns.toFloat, 2) & cstring"</b> turns: " &

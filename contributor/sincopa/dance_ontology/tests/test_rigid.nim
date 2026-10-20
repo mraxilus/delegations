@@ -30,22 +30,49 @@ import std/[atomics, cpuinfo, math, os, random, strformat, strutils, tables, typ
 import ../simulation/[answers, body, hold, limb, read, rig, rigid, vector, walk]
 import ./fixtures
 from ../simulation/engine import nil
+from ../simulation/rigid {.all.} import edgeWall, inertiaUpper, SLOPE_SEAM
+from ../simulation/shoulder import edge, edgeMen, GIVE_EDGE, Polar, SPAN_ADULTS, toPolar
 
 
 func asVector(vector: engine.Vector): Vector =
   ## Engine's vector as this project's, in same body's own terms.
   (float(vector.x), float(vector.y), float(vector.z))
 
+type
+  Columns {.bycopy, header: "box3d/box3d.h", importc: "b3Matrix3".} = object
+    ## Engine's three by three matrix, column by column.
+    cx, cy, cz: engine.Vector
+  MassData {.bycopy, header: "box3d/box3d.h", importc: "b3MassData".} = object
+    ## Engine's weighing of one body: mass, its centre in body's own terms, inertia about centre.
+    mass: cfloat
+    center: engine.Vector
+    inertia: Columns
+
+proc massOf(
+  body: engine.BodyId
+): MassData {.header: "box3d/box3d.h", importc: "b3Body_GetMassData".}
+  ## Engine's own weighing of body, over every shape on it.
+  ##   Bound here and not in `simulation/engine`: only law below asks it, and model never does.
+
 
 const
   APART = 1.10  ## One distance laws below that do not care where couple stand use.
     ## Was where that hold left joints freest standing still, back when that was
     ## how standing was chosen.  It is now only place to build couple at.
+  CLIMB_READ = 1e-12  ## Radians wall's edge may read off its climb on wedge: arithmetic alone.
+  FLOOR_CROSSINGS = 48
+    ## Least crossings of seam at 270 law at seam reads, so it reads some: in 50 walks of left
+    ##   to left above, 96 with wall on step and 109 with its slope, 2026-10-12.  Floor is half
+    ##   of fewer.
   FLOOR_STOPS = 4
     ## Least stopped walks law on stops reads, so it reads some: 10 on 2026-10-04, five
     ##   ways each kept and walked live.  Margin, not 10: recording moves which ways stop.
   GIVE_REST = 0.01  ## Metres shoulder may sit off tape at rest, girdle being on spring:
                    ## measured 6.3 mm, pushed by its own arm resting against torso.
+  HUNDREDTH = PI / 18000.0  ## Radians: hundredth of degree, step wall's edge is read at.
+  INERTIA_READ = 1e-4  ## Share engine's weighing of link may differ from damper's: engine
+                      ## weighs in single precision, and differed by under 1e-7, measured
+                      ## 2026-10-11.
   SAME_SIDE = cos(30.0 * PI / 180.0)  ## Cosine between two lines that lie on one side of
                                      ## hand: within thirty degrees, where other side is
                                      ## near half turn away.
@@ -53,6 +80,11 @@ const
                            ## stand this far past its end for one step and come back.
   TWINS_SWEPT = 1  ## Pairs of `SWEEPS` that are each other's mirror twin: shake, and left
                    ## to right as far.
+  WEDGE_READ = 0.05
+    ## Degrees wedge's width may read off `WEDGE_SEAM`: half of tenth that figure is given to.
+  WEDGE_SEAM = 9.5
+    ## Degrees of meridian wedge before seam at 270 spans, where wall leans on arm inside
+    ##   shoulder's edge: cost `rigid.holdSwing` states, to tenth.
 
 
 type
@@ -73,6 +105,10 @@ type
     ## distance, from `apart`.  Plain numbers, so threads share nothing but this list.
 
   Seen = tuple[name: string, band: Band, links: seq[Link], went: Went]
+
+  Crossed = tuple[is_holding: bool, crossings: int, past: seq[string]]
+    ## One walk's crossings of seam at 270 by any arm between two moments, and each that
+    ## landed past edge by more than its give, named.
 
   Posed = tuple[key: string, is_holding: bool, strain: Strain, depth: float, pair: string,
                      apart, parted: float]
@@ -130,6 +166,60 @@ func carried(walk: Walk): float =
 func carried(walk: Way | Walked | Went): float =
   ## How far kept walk went, counted as live one is.
   if not walk.is_holding: -Inf elif walk.is_stopped: walk.at else: Inf
+
+func askedSweep(key: string): SweepAsked =
+  ## Sweep of `SWEEPS` by its key.
+  for question in SWEEPS:
+    if question.key == key: return question
+  raiseAssert "No sweep asked by that key; got `" & key & "`."
+
+proc crossedFrom(apart: float): Crossed {.gcsafe, nimcall.} =
+  ## Walk left to left above from `apart`, positive way, as `walk.walkedOf` walks it, and read
+  ## every arm, held or free, at each moment: each crossing of seam at 270 from adults' side to
+  ## men's since moment before, and each that came from within edge's give and lands past it.
+  ##   Read here, not in walk: walk keeps no moment it stops at.
+  {.cast(gcsafe).}:
+    let
+      question = askedSweep("left to left over crown")
+      seam = SPAN_ADULTS.upper * PI / 180.0
+    var
+      couple = build(HUMAN, restStance(HUMAN, apart), question.band, question.links)
+      before: array[Body, array[Arm, Polar]]
+      at = 0.0
+    couple.settle()
+    while true:
+      # Read each arm's direction, and what judge says of moment.
+      var now: array[Body, array[Arm, Polar]]
+      for who in Body:
+        for arm in Arm:
+          let
+            axes = axesOf(couple.chestStance(who))
+            pose = couple.armPoseOf(who, arm)
+          now[who][arm] = toPolar(ownTerms(axes, arm, pose.elbow) -
+              ownTerms(axes, arm, pose.shoulder))
+      var why = couple.stoppedBy(0).why
+      if why == Stop.None: why = couple.stoppedFree.why
+      if at == 0.0:
+        result.is_holding = why == Stop.None
+        if not result.is_holding: break
+      else:
+        # Count crossings since moment before, by shorter way round; name each past give.
+        for who in Body:
+          for arm in Arm:
+            let
+              (was, got) = (before[who][arm], now[who][arm])
+              turned = floorMod(got.φ - was.φ + PI, 2.0 * PI) - PI
+            if was.φ > seam or was.φ + turned <= seam: continue
+            inc result.crossings
+            let past = got.θ - edge(got.φ).θ
+            if was.θ - edge(was.φ).θ <= GIVE_EDGE and past > GIVE_EDGE:
+              result.past.add &"{apart:.2f} m, {who} {arm} at {at:.2f}: " &
+                  &"{radToDeg(was.φ):.1f} to {radToDeg(got.φ):.1f}, {radToDeg(past):.1f} past"
+      if why != Stop.None or at >= question.most - 1e-9: break
+      before = now
+      couple.turn(Body.Two, STEP, BEATS)
+      at += STEP
+    couple.free()
 
 
 
@@ -278,7 +368,7 @@ suite "Internal: Two dancers in rigid body engine":
     ##     below walk anyway, so this walks nothing of its own.
     ##   Still that holds at no distance and in no plan is marked stopped and names no stop
     ##     (`seen.still`), and rig page says no pose holds there (`design/rig.nim`).  No
-    ##     law stands such still: every card reference draws is modelled
+    ##     law stands such still: every still card reference draws is modelled
     ##     (`suites/test_asks.nim`).
     var stops = 0
     let given = answered()
@@ -350,6 +440,100 @@ suite "Internal: Two dancers in rigid body engine":
     check girdles == 4
     check limbs == 20
     couple.free()
+
+
+  test "wall of shoulder's edge weighs upper arm as engine does":
+    ## Wall's damper is critical on upper arm's inertia about shoulder (`rigid.holdSwing`),
+    ## reckoned from capsule `limbOf` builds (`inertiaUpper`) and never asked of engine.
+    ##   Link built otherwise leaves damper reckoned on arm engine does not have, and arm
+    ##     crossing seam at 270 under-damped.  Engine weighs each link about its own centre;
+    ##     carried to shoulder, across link's length, it is damper's figure.
+    ##   Red with damper's figure taken about link's centre, not carried to shoulder.
+    let couple = rest()
+    var uppers = 0
+    for shape in couple.shapes:
+      if shape.mark != Mark.Upper: continue
+      let
+        weighed = massOf(shape.body)
+        centre = asVector(weighed.center)
+      for across in [float(weighed.inertia.cx.x) + float(weighed.mass) * (centre.y^2 + centre.z^2),
+                     float(weighed.inertia.cy.y) + float(weighed.mass) * (centre.x^2 + centre.z^2)]:
+        checkpoint &"engine {across}, damper {inertiaUpper(HUMAN)}"
+        check abs(across - inertiaUpper(HUMAN)) <= INERTIA_READ * inertiaUpper(HUMAN)
+      uppers += 1
+    check uppers == 4
+    couple.free()
+
+
+  test "no arm carried across seam at 270 lands past edge's give":
+    ## Shoulder's edge steps down 8.6 degrees at 270 of meridian, from adults' to men's, where
+    ##   adults stop deciding (`shoulder.SPAN_ADULTS`).  Arm under adults' edge that crosses
+    ##   there lies past men's: wall holds it to men's edge before it crosses, so crossing
+    ##   lands within give and stops no walk.
+    ##   Found 2026-10-11: left to left above from 0.46 m stopped at 0.38 of turn, follow's left
+    ##     arm carried from 269.1 to 270.0 degrees of meridian between two moments, 6.9 degrees
+    ##     past men's edge (`rigid.holdSwing`, its cost).
+    ##   Domain: every arm, held or free, of that way of that hold from every distance couple
+    ##     may stand at, each moment to next: 109 crossings in 50 walks, 2026-10-12.
+    ##   Red with wall on shoulder's edge as it steps: 4 crossings landed 2.7 to 7.9 degrees past
+    ##     men's edge, each stopping its walk.
+    var aparts: seq[float]
+    for apart in stands(HUMAN): aparts.add apart
+    var
+      (walks, crossings) = (0, 0)
+      past: seq[string]
+    for got in onEveryCore(aparts, crossedFrom):
+      if not got.is_holding: continue
+      inc walks
+      crossings += got.crossings
+      past.add got.past
+    checkpoint &"`{crossings}` crossings in `{walks}` walks; past give: " & past.join("; ")
+    check crossings >= FLOOR_CROSSINGS
+    check past.len == 0
+
+
+  test "wall's edge is shoulder's but on wedge before seam at 270, climbing from men's at slope":
+    ## Wall holds arm to its own edge (`rigid.edgeWall`), and judge to shoulder's, so arm wall
+    ##   holds within give of its edge lies within give of shoulder's.  At 270 shoulder's edge
+    ##   steps 8.6 degrees, adults' to men's, and wall's edge climbs back from men's there at
+    ##   `SLOPE_SEAM`, so arm carried across seam meets no step.
+    ##   Cost wall states is held too (`rigid.holdSwing`): wall's edge lies inside shoulder's on
+    ##     one wedge before seam alone, `WEDGE_SEAM` wide, and climbs at its slope all across it.
+    ##     Wall flat from men's edge at seam, or climbing at 0.8 or 1.9, fails here, measured
+    ##     2026-10-12.
+    ##   Read every hundredth of degree of meridian, and either side of seam from `HUNDREDTH`
+    ##     down to millionth of it, where shoulder's own edge steps.
+    let seam = SPAN_ADULTS.upper * PI / 180.0
+    var
+      meridian = 0.0
+      first = seam  ## Meridian furthest back from seam where wall's edge lies inside shoulder's.
+      off, gaps: seq[string]
+    while meridian < 2.0 * PI:
+      let (wall, shoulder) = (edgeWall(meridian), edge(meridian).θ)
+      check wall <= shoulder
+      if wall < shoulder:
+        first = min(first, meridian)
+        let climbed = edgeMen(seam) + SLOPE_SEAM * (seam - meridian)
+        if meridian > seam or abs(wall - climbed) > CLIMB_READ:
+          off.add &"{radToDeg(meridian):.2f}"
+      elif first < meridian and meridian < seam:
+        gaps.add &"{radToDeg(meridian):.2f}"
+      meridian += HUNDREDTH
+    let
+      wide = radToDeg(seam - first)
+      astray = off & gaps
+    checkpoint &"Wedge `{wide:.2f}` degrees wide, off its climb at `{off.len}` meridians, and " &
+        &"broken at `{gaps.len}`: " & astray[0..<min(astray.len, 12)].join(" ")
+    check off.len == 0
+    check gaps.len == 0
+    check abs(wide - WEDGE_SEAM) <= WEDGE_READ
+    var near = HUNDREDTH
+    while near > HUNDREDTH * 1e-6:
+      let (before, after) = (edgeWall(seam - near), edgeWall(seam + near))
+      checkpoint &"`{radToDeg(near)}` degrees either side: `{radToDeg(before)}` and " &
+          &"`{radToDeg(after)}`; shoulder's `{radToDeg(edge(seam - near).θ)}` before"
+      check abs(before - after) <= SLOPE_SEAM * 2.0 * near
+      near /= 10.0
 
 
   test "arm's three links run end to end":
@@ -695,8 +879,8 @@ func leapIn(walk: Walk, links: seq[Link]): tuple[most, at: float] =
   ## Furthest any joint or join of any held arm moves between two moments, and where.
   ##   Worked out here rather than borrowed from `walk.leapOf`, so law does not
   ##     check simulation against itself.  `leapOf` reads breadth of hand too, and this
-  ##     does not: in L-r low, edge of follow's right hand moves 218 mm between 0.56 and
-  ##     0.58 of turn, past bound, where join moves 187 (issue 605).
+  ##     does not (issue 605): in L-r low, edge of held hand moves 150 mm at 0.38 of
+  ##     turn, where join moves 137, measured 2026-10-11.
   # One loop for each axis of data: moment, link, end, joint.
   # Split would hide its shape.
   for j in 1..<walk.moments.len:
