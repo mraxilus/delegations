@@ -140,6 +140,9 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
 
 - Wrap a primitive in a `distinct` type (`BasisDigits = distinct string`). Give it only the
   iterators and accessors that it needs.
+- Close a generic type with `Of` only where an alias takes its bare name (V.13). Nim refuses a
+  generic type and an alias of one name as a redefinition. A default for the parameter does not
+  make the bare name valid.
 - Use `Option[T]` for expected absence, and never `-1`, `NaN` or an in-range sentinel. Where
   a foreign boundary cannot carry an `Option`, translate through one named constant. Put that
   constant at the return of the boundary proc, and never upstream of it.

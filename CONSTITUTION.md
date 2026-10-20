@@ -233,7 +233,7 @@ for slot in 0..<pool.bound:  # Bound, never `HANDLES_MAX`.
    orders pass, the value that the code names leads (`a_flags`, never `flags_a`), and where the
    code names none, the kind leads.
 3. An action is an imperative verb (`constructTable`, `emitOperator`). A property is the bare
-   domain noun (`grade`, `norm`, `centroid`), and never `getGrade` or `computeNorm`. A
+   domain noun (`grade`, `norm`, `centroid`), and never `getGrade`, `computeNorm` or `gradeOf`. A
    recurring kind of action keeps one verb, and that verb fixes the kind of the routine. Three
    verbs name the stages of generation (II.4), in the order that they run:
    - `construct…` names a compile-time routine that builds and returns a data structure. A
@@ -249,6 +249,10 @@ for slot in 0..<pool.bound:  # Bound, never `HANDLES_MAX`.
      reference (IV.6);
    - `to<Target>` names a change of representation, and takes its subject first. A
      transformation inside the domain keeps its domain name.
+
+   No routine closes with `Of`. A property or a lookup drops it for the bare noun, a conversion
+   takes `to<Target>`, and an action takes its verb. A routine keeps `Of` only where its name
+   spells a generic type (V.13), as `toMultivectorOf` does.
 4. A boolean is a proposition or a mode. Write `is_` for state, `as_` for interpretation,
    `should_` for policy, `found_` for a search outcome, and `has_` for possession.
    A mode boolean passes as a named argument (`as_weight = true`). A predicate callable is
@@ -283,6 +287,10 @@ for slot in 0..<pool.bound:  # Bound, never `HANDLES_MAX`.
 11. A member of an enum is `PascalCase`, as its type is.
 12. A type parameter, or any placeholder of a generic or a concept, is one capital letter, the
     initial of what it ranges over. Where nothing constrains it, the letter is `T`.
+13. A generic type takes its bare name (`Pool[T]`). Where an alias of one common instance takes
+    that bare name, the generic type closes with `Of` (`Multivector = MultivectorOf[...]`). No
+    other type closes with `Of`. The suffix costs the reader a second name, which a language
+    forces where it refuses one name for both.
 
 ```nim
 BasisDigits  # type
