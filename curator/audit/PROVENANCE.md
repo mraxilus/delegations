@@ -378,20 +378,24 @@ reads the form of that row, 7 to 40 hex digits. Koch reads its existence from `g
 file itself, under `check-files` and `check`. That needs a full clone. A shallow one has no
 such log, so the `check-files` job fetches every commit.
 
-**The log of a record follows renames.** A move of a project carries its records to a new path,
-and a `Pruned` row may name a commit from before the move. So koch reads `git log --follow`.
-
-- Cost: git pairs a deleted file with a similar new file as a rename. So a record written anew in
-  the place of another inherits the history of the other.
-- Verified by `suites/test_audit.nim` on a throwaway repository. A row that names the commit before
-  a move, the move itself, or an edit after it passes. A commit beside the record is still a
-  finding.
-
 - Rejected: a split of a long provenance file into files by subsystem. The checker names one
   `PROVENANCE.md` for each project, and the stamp lives in its header. History is git's, and
   the row says where.
 - Cost: line forms, and never a Markdown parse. A heading inside an HTML comment counts, and
   front matter is not skipped. No governed provenance file carries either.
+
+**The log of a record follows renames where the plain log misses the row.** A move of a project
+carries its records to a new path, and a `Pruned` row may name a commit from before the move. So
+koch reads the plain log first, and `git log --follow` only where the plain log misses the commit.
+
+- Rejected: `--follow` alone. It drops a merge commit that changed the record on both sides, and
+  the true row of `pga_benchmark` names such a commit.
+- Cost: git pairs a deleted file with a similar new file as a rename. So a record written anew in
+  the place of another inherits the history of the other.
+- Cost: a second log for each row that the plain log misses.
+- Verified by `suites/test_audit.nim` on a throwaway repository. A row that names the commit before
+  a move, the move itself, or an edit after it passes. So does a row that names a merge commit, or
+  a commit of either side of it. A commit beside the record is still a finding.
 
 **A number written before `files`, `suites`, `checks` or `tests` in the prose of a record is a
 finding.** A count goes stale by the next commit, and nothing here reads it again, so the guide
