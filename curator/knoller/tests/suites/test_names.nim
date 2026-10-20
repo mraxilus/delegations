@@ -333,23 +333,25 @@ suite "Names":
         for middle in middles:
           let
             name = first & middle & "Of"
-            found = ("action-verb", MESSAGE_ROUTINE & "; got `" & name & "`.")
+            found = ("routine-suffix", MESSAGE_ROUTINE & "; got `" & name & "`.")
             is_spelled = first in verbs_type and middle.len > 0
           check (keyword & " " & name & "() = discard\n").breachesId.count(found) ==
               ord(not is_spelled)  # V.3, V.13
           inc count
     check count == keywords.len * firsts.len * middles.len  # domain enumerated whole
     check "func gradeOf(m: Multivector): Grade = m.grade\n".breachesId ==
-        @[("action-verb", MESSAGE_ROUTINE & "; got `gradeOf`.")]  # V.3
+        @[("routine-suffix", MESSAGE_ROUTINE & "; got `gradeOf`.")]  # V.3
     const nested = "func resolve(definition: Definition): string =\n" &
         "  func headOf(definition: Definition): string = definition.name\n" &
         "  definition.headOf\n"
-    check nested.breachesId == @[("action-verb", MESSAGE_ROUTINE & "; got `headOf`.")]  # V.3
+    check nested.breachesId == @[("routine-suffix", MESSAGE_ROUTINE & "; got `headOf`.")]  # V.3
     check ("func toMultivectorOf*[B: static Bases](m: Multivector): MultivectorOf[B] =\n" &
         "  discard\n").breachesId.len == 0  # V.3, V.13
     check "func basesOfGrade(grade: Grade): Bases {.compileTime.} = discard\n".breachesId.len ==
         0  # `Of` inside name is no last word
-    check "proc grade_of() = discard\n".breachesId.mapIt(it[0]) == @["action-verb", "name-case"]
+    check "proc grade_of() = discard\n".breachesId.mapIt(it[0]) == @["routine-suffix", "name-case"]
+    check "proc newMeshOf() = discard\n".breachesId.mapIt(it[0]) ==
+        @["action-verb", "routine-suffix"]  # V.3, banned verb and `Of` each own rule
     check "proc `Of`() = discard\n".breachesId.len == 0  # operator is no name
 
 
@@ -373,7 +375,8 @@ suite "Names":
     #   `Mesh* = object` at `contributor/ronri/pga_visualiser/src/rga_visualiser/mesh.nim:452`;
     #   V.6 names it `Meshes`.
     #   Domain: each word for form of V.6 after member file declares, after plural (`BasesSet`
-    #   beside `Basis`), and after member file declares none; word for form outside V.6; plural.
+    #   beside `Basis`), and after member file declares none; word for form outside V.6; plural;
+    #   plural file declares as collection type, by each opening of its value, or as other alias.
     const forms = ["Set", "Seq", "Array", "Table"]
     for form in forms:
       let source = "type\n  Mesh* = object\n  Basis = enum\n    E0, E1\n  Mesh" & form &
@@ -387,6 +390,13 @@ suite "Names":
     check "type\n  Basis = enum\n    E0\n  BasisSet = set[Basis]\n".breachesId == @[(
       "collection-name", "Collection type takes plural of its member `Basis`; got `BasisSet`."
     )]  # V.6, `Bases`
+    for opening in ["set[", "seq[", "array[4, ", "Table[string, ", "OrderedTable[string, ",
+                    "HashSet[", "CountTable["]:
+      check ("type\n  Basis = enum\n    E0\n  Bases = " & opening & "Basis]\n" &
+          "  BasesSet = HashSet[Bases]\n").breachesId.len == 0  # V.6, member is collection
+    check "type\n  Bases = Grades\n  BasesSet = HashSet[Bases]\n".breachesId == @[(
+      "collection-name", "Collection type takes plural of its member `Bases`; got `BasesSet`."
+    )]  # V.6, alias of other alias reads as no collection
 
 
   test "foreign binding keeps library's name, and its parameters are read":
