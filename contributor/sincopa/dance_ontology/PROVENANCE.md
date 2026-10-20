@@ -1555,12 +1555,12 @@ the way that each sweep turns positive. Each joined hand is carried at 1.731 m a
 reading of the law in Python 3.11.
 
 Red first, on the recording of the wall alone: 64 of 212 moments of the rig held a joined hand under
-the band.
+the band. Read 2026-10-12.
 
 The law holds the carried point to the lower edge of the band less `SAG`, 1.705 m, as the laws of
 the stills do. The ruling quotes the band itself, 1.735 to 2.00 m. Read against 1.735 m, the joins
-of `Chain, cross name · above` lie under it at 1 moment of the rig, between 1.714 and 1.727 m. That
-moment is at 1.25 of a turn, in a planned turn.
+of `Chain, cross name · above` lie under it at one moment of the rig, at 1.714 and 1.727 m. That
+moment is at 1.2525 of a turn, in a planned turn.
 
 The carried points of 29 moments of the rig lie between 1.705 and 1.735 m. Measured 2026-10-12 by a
 probe outside the tree.
@@ -2233,7 +2233,8 @@ stand at a wind already stood. The same-name chain stands from 0.417 m, by style
 Of its 207 moments, 57 stand at a wind already stood. Measured 2026-10-12 in `design/rig.json`, on
 the way that turns positive.
 
-The walk alone carries them to 1.26, and to -1.66 and +1.80 (`simulation/verdicts.md`). The single
+The walk alone carries them to 1.26, and to -1.66 and +1.80, read 2026-10-20 in
+`simulation/verdicts.md`. The single
 holds run free on the walk, so the plan is not asked. It carries each of them to 2.5 turns too,
 measured 2026-10-12 by `tools/build.nim floors`. That run planned each hold over the crown both
 ways, and the negative way of each reached as far as its positive way. Each way that the rig keeps
@@ -2252,8 +2253,8 @@ there. Measured 2026-10-12 by probes outside the tree.
 
 **Between two moments, the planned ways leap less than the walks that they replace.** In
 `design/rig.json`, no end of a capsule of an arm of either chain moves more than 62 mm from one
-moment to the next. Measured 2026-10-20 with Python 3.11. The walks moved 567 mm and 562 mm,
-measured 2026-10-12 by a probe outside the tree.
+moment to the next. In the rig recording of `bc656d30`, which walked both chains, the ends moved up
+to 596 mm and 570 mm. Measured 2026-10-20 with Python 3.11, the same way on both.
 
 Cost: the rig plans 64 paths over the crown, for both chains toward both ways in every style
 (`planAhead`). With them, a full `tools/build.nim record` took TODO-FIGURE-RECORD on 2026-10-20
@@ -2270,16 +2271,18 @@ chain held to 1.24, and the same-name chain to +1.78.
 
 Verified by `suites/test_asks.nim` too: every sweep of the rig starts at rest, and steps no more
 than one moment from there to its end. So no way leaves out a moment between rest and where it ends.
-It passes on this tree. A copy of the rig recording has the moments from 0.80 to 1.20 of a turn cut
-out of `Chain, cross name · above`. On that copy the law names the one gap, from +0.7900 to +1.2125,
-and every other law passes.
+It passes on this tree.
+
+A copy of the rig recording of `cd9ec9a8` has the moments from 0.80 to 1.20 of a turn cut out of
+`Chain, cross name · above`. On that copy the law names the one gap, from +0.7900 to +1.2125. Read
+2026-10-20 by a probe outside the tree. Red first: on such a copy every other law passes, read
+2026-10-12.
 
 `tools/build.nim floors` measures each floor again (`design/floors`). It plans each sweep of the rig
-over the crown, the way that turns positive, as the rig does. It prints the row of `TURNS_PLANNED`
-for each sweep, keyed by its card, and the style and start of its path. Its rows come in the order
-of `design/rig.SHOWN`, and the table holds the values that it printed on 2026-10-12. It took
-TODO-FIGURE-FLOORS on four cores on 2026-10-20. Planned for six holds both ways, it took 13 min 54 s
-and 47 min 34 s of user time on 2026-10-12.
+over the crown, the way that the rig keeps, which turns positive. It prints the row of
+`TURNS_PLANNED` for each sweep, keyed by its card, and the style and start of its path. Its rows
+come in the order of `design/rig.SHOWN`, and the table holds the values that it printed on
+2026-10-12. It took TODO-FIGURE-FLOORS on four cores on 2026-10-20.
 
 Cost: the law reads each floor as a figure, and does not plan again. A change that carries a chain
 less far fails the law. A change that carries it further passes, and its floor stays short until
@@ -2802,7 +2805,7 @@ stamp. Verified 2026-10-04 by three full runs from no kept file.
 **One run asks each question once, and every job that asks it again takes the answer.** The jobs of
 the recordings ask the same questions. Rig and modelled stand the same stills, field for field. The
 report walks 18 sweeps, six frame holds at three levels. The rig viewer sweeps 8 of those, and takes
-each walk that the report walked. D01 and D07 plan the same 32 paths.
+each walk that the report asks. D01 and D07 plan the same 32 paths.
 
 So one run keeps each answer by every argument of its question, for every thread
 (`walk.keepAnswers`). These are the answers that it keeps:
@@ -2939,9 +2942,7 @@ reddens a law.
 - The whole of `nim r koch check`, with the kept answers, the joined suites and
   `tests/test_plan.nim`: 102 s and 86 s. Those are two runs on four cores, on 2026-10-03.
 - `tools/build.nim record`, every recording from one queue, with no result kept, on four cores of a
-  2.8 GHz Xeon, compile included. On 2026-10-20 it took TODO-FIGURE-RECORD. With the whole-cloth
-  recording of every hold both ways, two runs on 2026-10-12 took 28 min 53 s and 26 min 12 s. Their
-  user times were 107 min 25 s and 97 min 51 s.
+  2.8 GHz Xeon, compile included. On 2026-10-20 it took TODO-FIGURE-RECORD.
 - `design/record`, rig and modelled alone, with each still planned by the plain cost: 6.3 h on
   four cores on 2026-10-03 (Kept answers).
 - `tools/build.nim verdicts`, with its readings kept: 2.8 s to 3.9 s after a change to words,
@@ -3163,13 +3164,14 @@ to tidy the line away shows up only as suites that fail to build. `result +=` on
   report says that the cross-name chain held above is blocked at a turn and a half, by a hand off
   its band at 1.26. The rig carries it to 1.5275. The report says that the same-name chain held
   above stops at -1.66 and +1.80, and the plan carries it to 2.5 both ways (Planned sweep). Read
-  2026-10-12 in `simulation/verdicts.md`. The Architect rules whether the report reads the planned
+  2026-10-20 in `simulation/verdicts.md`. The Architect rules whether the report reads the planned
   turn too.
 
   If it does, its reading of strain takes the twist off four points of the arm (`read.tightest`). On
-  planned poses that twist lay -101 to +76 degrees from the twist of the engine. So it read a strain
-  of 1.00 where the engine read well inside the ends. Measured 2026-10-12 by a probe outside the
-  tree. Right arms differ too, so the swapped ends of the left arm (#610) are not all of it.
+  planned poses that twist lies -101 to +76 degrees from the twist of the engine. So the reading
+  gives 1.00 where the engine is well inside the ends. Measured 2026-10-12 by a probe outside the
+  tree. Right arms differ too, so the swapped ends of the left arm (#610) are not all of it. The
+  reading could take the joint frame of the engine, and a ruling picks whether it does.
 - **Strain, the rig viewer and the report do not read the edge.** `strainOf`, `read.tightest`, the
   joint bars of the viewer and `simulation/verdicts.md` read extension, adduction and twist. A still
   can lean on the wall of the edge and read at ease. The reading needs a unit for the edge, which
