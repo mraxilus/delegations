@@ -19,12 +19,12 @@ suite "Internal: The spokes":
       for target in FRAMES:
         if compound(here, target).isSome:
           inc named
-      check spokesOf(here).len == moves(here).len + named
+      check spokesFrame(here).len == moves(here).len + named
 
 
   test "every spoke arrives somewhere the ontology derives":
     for here in FRAMES:
-      for spoke in spokesOf(here):
+      for spoke in spokesFrame(here):
         if spoke.is_compound:
           check compound(here, spoke.to).isSome
           check route(here, spoke.to).len == 2
@@ -38,18 +38,18 @@ suite "Internal: The spokes":
       var
         seen: seq[Frame] = @[]
         places: seq[(int, int)] = @[]
-      for spoke in spokesOf(here):
+      for spoke in spokesFrame(here):
         check spoke.to notin seen
-        check endOf(spoke) notin places
+        check endSpoke(spoke) notin places
         seen.add spoke.to
-        places.add endOf(spoke)
+        places.add endSpoke(spoke)
 
 
   test "a collect points up, a drop points down, and a compound move goes aside":
     # Tower is built upwards, so taking hand climbs and letting one go
     # falls.  Screen's y grows downwards, so climbing is negative rise.
     for here in FRAMES:
-      for spoke in spokesOf(here):
+      for spoke in spokesFrame(here):
         let rise = sin(spoke.angle * PI / 180)
         if spoke.is_compound:
           check abs(rise) < 0.5
@@ -66,7 +66,7 @@ suite "Internal: The space and the window":
     # place in frame arrived at as it did in frame left behind.
     let (bounds_x, bounds_y, bounds_width, bounds_height) = SPOKES_BOUNDS
     for here in FRAMES:
-      let (x, y, width, height) = windowOf(here)
+      let (x, y, width, height) = windowFrame(here)
       check x >= bounds_x
       check y >= bounds_y
       check x + width <= bounds_x + bounds_width
@@ -75,9 +75,9 @@ suite "Internal: The space and the window":
 
   test "a window holds the whole of the frame it is cut for":
     for here in FRAMES:
-      let (x, y, width, height) = windowOf(here)
-      for spoke in spokesOf(here):
-        let (end_x, end_y) = endOf(spoke)
+      let (x, y, width, height) = windowFrame(here)
+      for spoke in spokesFrame(here):
+        let (end_x, end_y) = endSpoke(spoke)
         check end_x > x and end_x < x + width
         check end_y > y and end_y < y + height
         let (label_x, label_y) = labelAt(spoke)
@@ -90,19 +90,19 @@ suite "Internal: The space and the window":
     # mostly empty, which is whole reason window moves at all.
     var sizes: seq[(int, int)] = @[]
     for here in FRAMES:
-      let (_, _, width, height) = windowOf(here)
+      let (_, _, width, height) = windowFrame(here)
       if (width, height) notin sizes:
         sizes.add (width, height)
     check sizes.len > 1
     for here in FRAMES:
-      let (_, _, width, height) = windowOf(here)
+      let (_, _, width, height) = windowFrame(here)
       check width <= SPOKES_BOUNDS[2]
       check height <= SPOKES_BOUNDS[3]
 
 
   test "the middle is inside every window, with the drawing around it":
     for here in FRAMES:
-      let (x, y, width, height) = windowOf(here)
+      let (x, y, width, height) = windowFrame(here)
       check MIDDLE[0] > x and MIDDLE[0] < x + width
       check MIDDLE[1] > y and MIDDLE[1] < y + height
 
@@ -152,7 +152,7 @@ suite "Internal: The moving":
     for here in FRAMES:
       let
         picture = renderSpokes(here)
-        (_, _, width, height) = windowOf(here)
+        (_, _, width, height) = windowFrame(here)
       check picture.contains("--w: " & $width & "; --h: " & $height & ";")
       check not picture.contains("--w: " & $width & "px")
       check picture.contains("--bw: " & $SPOKES_BOUNDS[2] & "; --bh: " &
@@ -194,7 +194,7 @@ suite "Internal: The moving":
       # Last way out is given whole budget and no more, however many
       # ways there are: step per way would run past end of phase.
       check picture.count("--turn: 0") >= 1
-      if spokesOf(here).len > 1:
+      if spokesFrame(here).len > 1:
         check picture.contains("--turn: 1.000")
 
 
@@ -208,11 +208,11 @@ suite "Internal: The moving":
 
   test "while leaving, the way taken is marked and every other is folding":
     for here in FRAMES:
-      for spoke in spokesOf(here):
+      for spoke in spokesFrame(here):
         let picture = renderSpokes(here, Motion.Leaving, some(spoke.to))
         check picture.count("spoke taken") + picture.count("spoke two taken") == 1
         check picture.count(" taken\"") == 1
-        check picture.count(" going\"") == spokesOf(here).len - 1
+        check picture.count(" going\"") == spokesFrame(here).len - 1
 
 
   test "a frame standing still is neither taking nor folding":
@@ -225,8 +225,8 @@ suite "Internal: The moving":
   test "every leaf is grown from the place it occupies":
     for here in FRAMES:
       let picture = renderSpokes(here)
-      for spoke in spokesOf(here):
-        let (x, y) = endOf(spoke)
+      for spoke in spokesFrame(here):
+        let (x, y) = endSpoke(spoke)
         check picture.contains("--lx: " & $x & "px; --ly: " & $y & "px")
       # Branch grows from middle, and middle is one place for them all.
       check picture.count("--ox: ") == 1
@@ -237,13 +237,13 @@ suite "Internal: The moving":
     # recentres on has to be, to pixel, what frame reached is drawn as
     # when it is standing still: same window, same place on screen.
     for here in FRAMES:
-      for spoke in spokesOf(here):
+      for spoke in spokesFrame(here):
         let
           leaving = renderSpokes(here, Motion.Leaving, some(spoke.to))
           resting = renderSpokes(spoke.to)
-          (_, _, width, height) = windowOf(spoke.to)
-          (pan_x, pan_y) = panOf(windowOf(spoke.to))
-          (end_x, end_y) = endOf(spoke)
+          (_, _, width, height) = windowFrame(spoke.to)
+          (pan_x, pan_y) = pan(windowFrame(spoke.to))
+          (end_x, end_y) = endSpoke(spoke)
         # Window it ends in is window frame reached is given.
         check leaving.contains("--to-w: " & $width & "; --to-h: " & $height)
         check resting.contains("--w: " & $width & "; --h: " & $height)
@@ -257,10 +257,10 @@ suite "Internal: The moving":
 
   test "the mark carries the distance from the frame held to the one chosen":
     for here in FRAMES:
-      for spoke in spokesOf(here):
+      for spoke in spokesFrame(here):
         let
           picture = renderSpokes(here, Motion.Leaving, some(spoke.to))
-          (end_x, end_y) = endOf(spoke)
+          (end_x, end_y) = endSpoke(spoke)
         check picture.contains("--mx: " & $(end_x - MIDDLE[0]) & "px; --my: " &
           $(end_y - MIDDLE[1]) & "px")
     # Standing still it goes nowhere.

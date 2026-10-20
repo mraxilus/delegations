@@ -135,7 +135,7 @@ func closeStyle*(): string =
 
 #[ Concepts ]#
 
-func spokesOf*(here: Frame): seq[Spoke] =
+func spokesFrame*(here: Frame): seq[Spoke] =
   ## Get every way out of frame, in order they are drawn.
   ##   Collects, then drops, then compound moves: order eye reads them
   ##     in, up page and then down it and then out to side.
@@ -184,7 +184,7 @@ func spokesOf*(here: Frame): seq[Spoke] =
     result[index].turn = index
 
 
-func endOf*(spoke: Spoke): (int, int) =
+func endSpoke*(spoke: Spoke): (int, int) =
   ## Get where spoke puts frame it arrives in.
   let radians = spoke.angle * PI / 180
   (CENTRE_X + int(round(cos(radians) * float(spoke.radius))),
@@ -193,7 +193,7 @@ func endOf*(spoke: Spoke): (int, int) =
 
 func labelAt*(spoke: Spoke): (int, int) =
   ## Get where name of spoke sits, under frame it arrives in.
-  let (x, y) = endOf(spoke)
+  let (x, y) = endSpoke(spoke)
   (x, y + frameHeight(NODE_WIDTH) div 2 + LABEL_DROP +
     plateSpan(spoke.lines)[1] div 2)
 
@@ -227,7 +227,7 @@ func naming(x, y: int; lines: seq[string]; colour: string): string =
 
 #[ Space And Window ]#
 
-func extentOf(here: Frame): (int, int, int, int) =
+func extent(here: Frame): (int, int, int, int) =
   ## Get bounds one frame's drawing needs, and no more.
   ##   Frame with only collects has nothing below it and frame with only
   ##     drops has nothing above, so bounds that hold one frame are not
@@ -241,9 +241,9 @@ func extentOf(here: Frame): (int, int, int, int) =
     right = CENTRE_X + max(NODE_WIDTH div 2 + 8, textHalf(here.describe))
     top = CENTRE_Y - frameHeight(NODE_WIDTH) div 2 - NAME_ROOM
     bottom = CENTRE_Y + frameHeight(NODE_WIDTH) div 2 + 6
-  for spoke in spokesOf(here):
+  for spoke in spokesFrame(here):
     let
-      (x, y) = endOf(spoke)
+      (x, y) = endSpoke(spoke)
       (_, label_y) = labelAt(spoke)
       # Measured at size way out grows to when it is one taken, since
       # it grows where it stands and window cut any tighter would clip it.
@@ -267,7 +267,7 @@ func spokesBounds(): (int, int, int, int) {.compileTime.} =
   ##     fitting instead.
   var (left, top, right, bottom) = (CENTRE_X, CENTRE_Y, CENTRE_X, CENTRE_Y)
   for here in FRAMES:
-    let (x, y, width, height) = extentOf(here)
+    let (x, y, width, height) = extent(here)
     left = min(left, x)
     top = min(top, y)
     right = max(right, x + width)
@@ -282,16 +282,16 @@ const SPOKES_BOUNDS* = spokesBounds()
 const MIDDLE* = (CENTRE_X, CENTRE_Y)  ## Hold one place frame being held is drawn, in every frame.
 
 
-func windowOf*(here: Frame): (int, int, int, int) =
+func windowFrame*(here: Frame): (int, int, int, int) =
   ## Get window one frame is seen through: exactly what that frame needs.
   ##   Frame with only collects has nothing below it, so window that
   ##     reserved room below would be mostly empty.  Window is cut to
   ##     drawing and drawing slides under it, which is why both have
   ##     to move together.
-  extentOf(here)
+  extent(here)
 
 
-func panOf*(window: (int, int, int, int)): (int, int) =
+func pan*(window: (int, int, int, int)): (int, int) =
   ## Get where drawing sits behind window, so window shows that part.
   (SPOKES_BOUNDS[0] - window[0], SPOKES_BOUNDS[1] - window[1])
 
@@ -323,8 +323,8 @@ func renderSpokes*(here: Frame, motion = Motion.Still, taken = none(Frame)): str
   let
     (bounds_x, bounds_y, bounds_width, bounds_height) = SPOKES_BOUNDS
     is_leaving = motion == Motion.Leaving and taken.isSome
-    window = windowOf(here)
-    (pan_x, pan_y) = panOf(window)
+    window = windowFrame(here)
+    (pan_x, pan_y) = pan(window)
   # Where drawing has to end up for frame reached to be sitting where
   # frame it is holding sits: its own window, shifted by distance from
   # middle out to wherever along drawing that frame is standing now.
@@ -333,12 +333,12 @@ func renderSpokes*(here: Frame, motion = Motion.Still, taken = none(Frame)): str
     (landing_pan_x, landing_pan_y) = (pan_x, pan_y)
     (shift_x, shift_y) = (0, 0)
   if is_leaving:
-    for spoke in spokesOf(here):
+    for spoke in spokesFrame(here):
       if spoke.to != taken.get:
         continue
-      let (end_x, end_y) = endOf(spoke)
-      reached = windowOf(taken.get)
-      let (reached_pan_x, reached_pan_y) = panOf(reached)
+      let (end_x, end_y) = endSpoke(spoke)
+      reached = windowFrame(taken.get)
+      let (reached_pan_x, reached_pan_y) = pan(reached)
       (landing_pan_x, landing_pan_y) = (
         reached_pan_x + CENTRE_X - end_x,
         reached_pan_y + CENTRE_Y - end_y,
@@ -371,10 +371,10 @@ func renderSpokes*(here: Frame, motion = Motion.Still, taken = none(Frame)): str
 
   # Each way out in turn: its branch from middle, then frame and
   # name it carries.
-  let ways = spokesOf(here)
+  let ways = spokesFrame(here)
   for spoke in ways:
     let
-      (x, y) = endOf(spoke)
+      (x, y) = endSpoke(spoke)
       (label_x, label_y) = labelAt(spoke)
       colour = armColour(spoke.side)
       # Stagger is share of one budget rather than step of its own, so

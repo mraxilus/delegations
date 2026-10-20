@@ -136,17 +136,17 @@ proc answered(): Answers =
 proc live(key: string, is_positive: bool): Went
   ## Sweep of `SWEEPS` walked live one way, from distance its kept answer chose.
 
-proc standOf(question: StillAsked): tuple[is_holding: bool, couple: Couple, links: seq[Link]] =
+proc standLive(question: StillAsked): tuple[is_holding: bool, couple: Couple, links: seq[Link]] =
   ## Couple stood live for still, at distance and way about kept answer gives, and hold
   ## stood.
-  ##   Simulation answers mirror twin as other twin reflected (`walk.twinOf`), so twin's
+  ##   Simulation answers mirror twin as other twin reflected (`walk.twinAnswering`), so twin's
   ##     answer is stood as other twin, which shows same holds, strain and heights.  Twin
   ##     stood raw there may not hold: right to left at half, either way, stood 0.36 apart
   ##     wound minus half, does not hold and strains 1.01, where left to right wound plus
   ##     half is at ease, measured 2026-10-04.
   let
-    where = answered().stillOf(question.key)
-    twin = twinOf(question.links, question.turns, question.is_away)
+    where = answered().stillKept(question.key)
+    twin = twinAnswering(question.links, question.turns, question.is_away)
     turns = (if twin.is_reflected: -where.turns else: where.turns)
     (is_holding, couple) = stood(HUMAN, Band.Crown, twin.links, turns, question.is_away,
                                  Body.Two, where.apart)
@@ -174,7 +174,7 @@ func askedSweep(key: string): SweepAsked =
   raiseAssert "No sweep asked by that key; got `" & key & "`."
 
 proc crossedFrom(apart: float): Crossed {.gcsafe, nimcall.} =
-  ## Walk left to left above from `apart`, positive way, as `walk.walkedOf` walks it, and read
+  ## Walk left to left above from `apart`, positive way, as `walk.walkedRaw` walks it, and read
   ## every arm, held or free, at each moment: each crossing of seam at 270 from adults' side to
   ## men's since moment before, and each that came from within edge's give and lands past it.
   ##   Read here, not in walk: walk keeps no moment it stops at.
@@ -193,8 +193,8 @@ proc crossedFrom(apart: float): Crossed {.gcsafe, nimcall.} =
       for who in Body:
         for arm in Arm:
           let
-            axes = axesOf(couple.chestStance(who))
-            pose = couple.armPoseOf(who, arm)
+            axes = toAxes(couple.chestStance(who))
+            pose = couple.armPoseNow(who, arm)
           now[who][arm] = toPolar(ownTerms(axes, arm, pose.elbow) -
               ownTerms(axes, arm, pose.shoulder))
       var why = couple.stoppedBy(0).why
@@ -230,7 +230,7 @@ suite "Internal: Two dancers in rigid body engine":
     ## shoulder hangs unloaded; centimetres would be shoulder placed wrong.
     let
       couple = rest()
-      pose = couple.poseOf(0)
+      pose = couple.poseLink(0)
     for k in 0..1:
       let hand = couple.links[0].ends[k]
       check distance(
@@ -265,7 +265,7 @@ suite "Internal: Two dancers in rigid body engine":
     for apart in [0.6, 0.9, 1.1]:
       let
         couple = rest(apart = apart)
-        pose = couple.poseOf(0)
+        pose = couple.poseLink(0)
       for k in 0..1:
         let
           arm = pose.arms[k]
@@ -278,9 +278,9 @@ suite "Internal: Two dancers in rigid body engine":
     for band in Band:
       let
         couple = rest(band)
-        pose = couple.poseOf(0)
+        pose = couple.poseLink(0)
       check pose.apart < PARTED
-      check couple.stopOf(0) == Stop.None
+      check couple.stopLink(0) == Stop.None
       couple.free()
 
 
@@ -294,7 +294,7 @@ suite "Internal: Two dancers in rigid body engine":
     for band in Band:
       var couple = rest(band)
       for quarter in 0..3:
-        let pose = couple.poseOf(0)
+        let pose = couple.poseLink(0)
         if pose.apart < PARTED:
           inc checked
           for k in 0..1:
@@ -337,11 +337,11 @@ suite "Internal: Two dancers in rigid body engine":
     ##   Both sides are kept answers: search's choice, and walk from every distance
     ##     (`simulation/answers.nim`), each answered by simulation at stamp suite
     ##     "Internal: Answers" holds.
-    let sweep = answered().sweepOf("shake at torso")
+    let sweep = answered().sweepKept("shake at torso")
     for (chose, every) in [(sweep.negative, "shake at torso, negative"),
                            (sweep.positive, "shake at torso, positive")]:
       check chose.is_holding
-      let got = answered().walksOf(every)
+      let got = answered().walksKept(every)
       check got.len > 1
       for walk in got:
         check walk.carried <= chose.carried + STEP + 1e-9
@@ -354,7 +354,7 @@ suite "Internal: Two dancers in rigid body engine":
     ##   `Inf` is how `carried` says walk never stopped, which is hold standing
     ##   at rest there and turn running whole way.
     var found_any = false
-    for walk in answered().walksOf("shake at torso, asked"):
+    for walk in answered().walksKept("shake at torso, asked"):
       if walk.carried == Inf: found_any = true
     check found_any
     check answered().isReaching("shake asked")
@@ -373,7 +373,7 @@ suite "Internal: Two dancers in rigid body engine":
     var stops = 0
     let given = answered()
     for question in SWEEPS:
-      let sweep = given.sweepOf(question.key)
+      let sweep = given.sweepKept(question.key)
       for (is_positive, kept) in [(true, sweep.positive), (false, sweep.negative)]:
         if not kept.is_holding: continue
         let went = live(question.key, is_positive)
@@ -389,10 +389,10 @@ suite "Internal: Two dancers in rigid body engine":
     ## On `margin`, which counts stop with no ease as costing nothing to lean on,
     ## straight elbow reads perfectly comfortable and every moment page draws
     ## reports room it does not have.
-    let sweep = answered().sweepOf("shake at torso")
+    let sweep = answered().sweepKept("shake at torso")
     for way in [sweep.negative, sweep.positive]:
       let couple = rest(Band.Torso, way.apart)
-      check roomAt(couple, couple.poseOf(0), 0) > 0.0
+      check roomAt(couple, couple.poseLink(0), 0) > 0.0
       couple.free()
 
 
@@ -444,7 +444,7 @@ suite "Internal: Two dancers in rigid body engine":
 
   test "wall of shoulder's edge weighs upper arm as engine does":
     ## Wall's damper is critical on upper arm's inertia about shoulder (`rigid.holdSwing`),
-    ## reckoned from capsule `limbOf` builds (`inertiaUpper`) and never asked of engine.
+    ## reckoned from capsule `buildLimb` builds (`inertiaUpper`) and never asked of engine.
     ##   Link built otherwise leaves damper reckoned on arm engine does not have, and arm
     ##     crossing seam at 270 under-damped.  Engine weighs each link about its own centre;
     ##     carried to shoulder, across link's length, it is damper's figure.
@@ -552,7 +552,7 @@ suite "Internal: Two dancers in rigid body engine":
           hand: seq[tuple[a, z: Vector, radius: float]]
         for shape in couple.shapes:
           if shape.who != who or shape.arm != arm: continue
-          let (a, z) = couple.endsOf(shape)
+          let (a, z) = couple.ends(shape)
           if shape.mark in {Mark.Upper, Mark.Fore}: run.add (a, z, shape.radius)
           elif shape.mark == Mark.Palm: hand.add (a, z, shape.radius)
         check hand.len == 3
@@ -567,14 +567,14 @@ suite "Internal: Two dancers in rigid body engine":
     ## Guards drawing frozen at rest: ends are asked of engine each moment, so
     ## turning one dancer has to move their arms and leave other's trunk alone.
     var couple = rest()
-    let before = couple.endsOf(couple.shapes[0])
+    let before = couple.ends(couple.shapes[0])
     var arms_before: seq[tuple[a, z: Vector]]
     for shape in couple.shapes:
-      if shape.mark != Mark.Trunk and shape.who == Body.Two: arms_before.add couple.endsOf(shape)
+      if shape.mark != Mark.Trunk and shape.who == Body.Two: arms_before.add couple.ends(shape)
     couple.turn(Body.Two, 0.25, 600)
     var arms_after: seq[tuple[a, z: Vector]]
     for shape in couple.shapes:
-      if shape.mark != Mark.Trunk and shape.who == Body.Two: arms_after.add couple.endsOf(shape)
+      if shape.mark != Mark.Trunk and shape.who == Body.Two: arms_after.add couple.ends(shape)
     var moved = 0.0
     for i in 0..<arms_before.len:
       moved = max(moved, distance(arms_before[i].a, arms_after[i].a))
@@ -586,8 +586,8 @@ suite "Internal: Two dancers in rigid body engine":
     ## millimetre, not micron: waist is soft constraint, and chest under hold
     ## measured ten microns off hip axis (9.7e-6 m, 2026-09-12).
     let
-      hip = axesOf(couple.stance[Body.One]).origin
-      after = couple.endsOf(couple.shapes[0]).a
+      hip = toAxes(couple.stance[Body.One]).origin
+      after = couple.ends(couple.shapes[0]).a
       radius_was = sqrt((before.a.x - hip.x)^2 + (before.a.y - hip.y)^2)
       radius_now = sqrt((after.x - hip.x)^2 + (after.y - hip.y)^2)
     check abs(radius_was - radius_now) < 1e-4
@@ -603,11 +603,11 @@ suite "Internal: Two dancers in rigid body engine":
     ## correction into shove further out.
     ##   Where couple stand each way is search's answer, kept; how far each walk
     ##     goes from there, and what stops it, is walked live (`live`).
-    ##   Simulation answers R-r as L-l reflected (`walk.twinOf`), so R-r is asked raw:
+    ##   Simulation answers R-r as L-l reflected (`walk.twinAnswering`), so R-r is asked raw:
     ##     its search and its walks are engine's own, as they were before twins.
     let
-      left_to_left = answered().sweepOf("left to left at torso")
-      right_to_right = answered().sweepOf("right to right at torso")
+      left_to_left = answered().sweepKept("left to left at torso")
+      right_to_right = answered().sweepKept("right to right at torso")
       left_to_left_positive = live("left to left at torso", true)
       left_to_left_negative = live("left to left at torso", false)
       right_to_right_positive = live("right to right at torso", true)
@@ -646,7 +646,7 @@ suite "Internal: Two dancers in rigid body engine":
 
   test "mirror twin's hands are question's, capsule by capsule":
     ## Twin answered in mirror (`walk.walked`) lays each side capsule of each hand on side
-    ## of hand where question walked raw lays it (`walk.walkedOf`).  Mirror keeps order of
+    ## of hand where question walked raw lays it (`walk.walkedRaw`).  Mirror keeps order of
     ## capsules across hand, since hand's own terms are mirrored with it.
     ##   Read as side of middle capsule, since engine is not exact in mirror: at rest,
     ##     twin's wrist stands 34 mm from question's.  Red with order turned about: each side
@@ -654,9 +654,9 @@ suite "Internal: Two dancers in rigid body engine":
     let
       twin = walked(HUMAN, Band.Torso, RIGHT_TO_RIGHT, Body.Two, APART, STEP, STEP, false,
                     Body.Two)
-      raw = walkedOf(HUMAN, Band.Torso, RIGHT_TO_RIGHT, Body.Two, APART, STEP, STEP, false,
-                     Body.Two)
-    check twinOf(RIGHT_TO_RIGHT, STEP, false).is_reflected
+      raw = walkedRaw(HUMAN, Band.Torso, RIGHT_TO_RIGHT, Body.Two, APART, STEP, STEP, false,
+                      Body.Two)
+    check twinAnswering(RIGHT_TO_RIGHT, STEP, false).is_reflected
     for e in 0..1:
       let (seen, own) = (twin.moments[0].hands[0][e], raw.moments[0].hands[0][e])
       for finger in [0, 2]:
@@ -667,7 +667,7 @@ suite "Internal: Two dancers in rigid body engine":
 
   test "kept sweep of mirror twin is its other twin's, ways swapped":
     ## Simulation answers hold whose lead's right comes first as its mirror twin reflected
-    ## (`walk.twinOf`): way that turns positive is twin's that turns negative, and
+    ## (`walk.twinAnswering`): way that turns positive is twin's that turns negative, and
     ## distance, turn reached and what stopped it are twin's own, to last bit.
     ##   Pair is one engine does not mirror exactly: in `9bbf656:design/turns.json`, shake walked
     ##     raw reaches 1.36 turns one way, where left to right reaches 1.34 other way.  So law
@@ -675,7 +675,7 @@ suite "Internal: Two dancers in rigid body engine":
     var pairs = 0
     let given = answered()
     for question in SWEEPS:
-      let twin = twinOf(question.links, 1.0, false)
+      let twin = twinAnswering(question.links, 1.0, false)
       if question.is_raw or not twin.is_reflected: continue
       for other in SWEEPS:
         if other.band != question.band or other.most != question.most or
@@ -685,7 +685,7 @@ suite "Internal: Two dancers in rigid body engine":
           is_same = is_same and other.links[k].ends == twin.links[k].ends
         if not is_same: continue
         inc pairs
-        let (asked, mirror) = (given.sweepOf(question.key), given.sweepOf(other.key))
+        let (asked, mirror) = (given.sweepKept(question.key), given.sweepKept(other.key))
         for (way, image) in [(asked.positive, mirror.negative), (asked.negative, mirror.positive)]:
           check way.is_holding == image.is_holding
           check way.apart == image.apart
@@ -847,7 +847,7 @@ func linkCapsules(
     result.add (joint_a + direction * rig.limb, joint_b - direction * rig.limb, rig.limb)
   for capsule in hand: result.add (capsule.a, capsule.z, capsule.radius)
 
-func deepestOf(walk: Walk, links: seq[Link]): float =
+func deepestHeld(walk: Walk, links: seq[Link]): float =
   ## Deepest any link of any held arm sits in any body, over every moment.
   ##   Read against trunk capsules where engine has them, with distance worked
   ##     out here and not engine's manifolds.  Arm hangs from its own girdle and
@@ -877,8 +877,8 @@ func deepestOf(walk: Walk, links: seq[Link]): float =
 
 func leapIn(walk: Walk, links: seq[Link]): tuple[most, at: float] =
   ## Furthest any joint or join of any held arm moves between two moments, and where.
-  ##   Worked out here rather than borrowed from `walk.leapOf`, so law does not
-  ##     check simulation against itself.  `leapOf` reads breadth of hand too, and this
+  ##   Worked out here rather than borrowed from `walk.leap`, so law does not
+  ##     check simulation against itself.  `leap` reads breadth of hand too, and this
   ##     does not (issue 605): in L-r low, edge of held hand moves 150 mm at 0.38 of
   ##     turn, where join moves 137, measured 2026-10-11.
   # One loop for each axis of data: moment, link, end, joint.
@@ -901,7 +901,7 @@ func leapIn(walk: Walk, links: seq[Link]): tuple[most, at: float] =
 const SWING_END = HUMAN.range[Dof.Extend].upper - 5.0 * PI / 180.0
   ## Extension within five degrees of swing's end.
 
-func extensionOf(walk: Walk, links: seq[Link]): tuple[peak: float, at_end: int] =
+func extension(walk: Walk, links: seq[Link]): tuple[peak: float, at_end: int] =
   ## Furthest first connection's two arms extend, and arm-moments at swing's end.
   result.peak = -Inf
   for moment in walk.moments:
@@ -912,18 +912,18 @@ func extensionOf(walk: Walk, links: seq[Link]): tuple[peak: float, at_end: int] 
       result.peak = max(result.peak, joint_angles.extend)
       if joint_angles.extend > SWING_END: inc result.at_end
 
-func wentOf(walk: Walk, links: seq[Link]): Went =
+func toWent(walk: Walk, links: seq[Link]): Went =
   ## Walk reduced to numbers laws read.
   let
     (most, at) = leapIn(walk, links)
-    (peak, at_end) = extensionOf(walk, links)
+    (peak, at_end) = extension(walk, links)
   Went(
     is_holding: walk.found_rest,
     is_stopped: walk.is_stopped,
     at: walk.at,
     why: walk.why,
     moments: walk.moments.len,
-    deepest: deepestOf(walk, links),
+    deepest: deepestHeld(walk, links),
     leap: most,
     leap_at: at,
     peak: peak,
@@ -955,11 +955,11 @@ proc going(id: int) {.thread.} =
         let
           question = SWEEPS[task.index]
           step = (if task.is_positive: STEP else: -STEP)
-          walk = (if question.is_raw: walkedOf(HUMAN, question.band, question.links, Body.Two,
-                                               task.apart, question.most, step, false, Body.Two)
+          walk = (if question.is_raw: walkedRaw(HUMAN, question.band, question.links, Body.Two,
+                                                task.apart, question.most, step, false, Body.Two)
                   else: walked(HUMAN, question.band, question.links, Body.Two, task.apart,
                                question.most, step, false, Body.Two))
-        WENTS[i] = wentOf(walk, question.links)
+        WENTS[i] = toWent(walk, question.links)
       else:
         let
           question = WALKS[task.index]
@@ -974,7 +974,7 @@ proc going(id: int) {.thread.} =
             false,
             Body.Two,
           )
-        WENTS[i] = wentOf(walk, question.links)
+        WENTS[i] = toWent(walk, question.links)
 
 proc walkEveryWay() =
   ## Walk, on every core at once, every way of every sweep from its kept distance,
@@ -985,12 +985,12 @@ proc walkEveryWay() =
   if GOES.len > 0: return
   let given = answered()
   for i, question in SWEEPS:
-    let sweep = given.sweepOf(question.key)
+    let sweep = given.sweepKept(question.key)
     for (is_positive, way) in [(true, sweep.positive), (false, sweep.negative)]:
       if way.is_holding: GOES.add (true, i, is_positive, way.apart)
   var every: seq[tuple[index: int, kept: Walked]]
   for i, question in WALKS:
-    for walk in given.walksOf(question.key): every.add (i, walk)
+    for walk in given.walksKept(question.key): every.add (i, walk)
   var draw = initRand(fromHex[int](given.stamp[0..<12]))
   for _ in 0..1:
     let got = every[draw.rand(every.high)]
@@ -1007,7 +1007,7 @@ proc live(key: string, is_positive: bool): Went =
   ## Walk is simulation's own, on this build: only where couple stand comes from
   ##   answers.  `walked` builds its own world, so it walks exactly what search
   ##   walked from that distance.  Raw question is walked on engine as it is
-  ##   (`walkedOf`), as its search was.
+  ##   (`walkedRaw`), as its search was.
   ##   Way whose search found no distance to stand at is not walked, and reads
   ##   as hold that did not stand.
   walkEveryWay()
@@ -1071,11 +1071,11 @@ suite "Internal: Arms move as arms do":
     couple.settle()
     for who in Body:
       for arm in Arm:
-        let shoulder_point = couple.armPoseOf(who, arm).shoulder
+        let shoulder_point = couple.armPoseNow(who, arm).shoulder
         var gap = Inf
         for shape in couple.shapes:
           if shape.who != who or shape.mark in {Mark.Upper, Mark.Fore, Mark.Palm}: continue
-          let ends = couple.endsOf(shape)
+          let ends = couple.ends(shape)
           gap = min(gap, between(shoulder_point, shoulder_point, ends.a, ends.z) - shape.radius)
         echo &"    {who} {arm}: shoulder joint {gap * 1000:.0f} mm outside own body"
         check gap <= 0.0
@@ -1095,7 +1095,7 @@ suite "Internal: Arms move as arms do":
         found_pose = true
         for link in WOUND:
           for hand in link.ends:
-            let carried = carriedOf(HUMAN, couple.armPoseOf(hand.body, hand.arm))
+            let carried = pointCarried(HUMAN, couple.armPoseNow(hand.body, hand.arm))
             check carried.z >= HUMAN.band[Band.Crown].lower - SAG
       couple.free()
       if found_pose: break
@@ -1122,7 +1122,7 @@ suite "Internal: Arms move as arms do":
         at += STEP
       var arms: Arms
       for i in 0..<WOUND.len:
-        arms.add couple.poseOf(i).arms
+        arms.add couple.poseLink(i).arms
       result = crossings(arms).len
       couple.free()
     check crossed(0.0) == 0
@@ -1149,7 +1149,7 @@ const
   JOINED = 0.005  ## Metres joined hands may sit apart and still be joined: slop.
   PART = 0.002  ## Metres any joint of any arm may be pulled apart: dislocation past this.
 
-proc overlapOf(couple: Couple): tuple[depth: float, pair: string] =
+proc overlap(couple: Couple): tuple[depth: float, pair: string] =
   ## Deepest any two capsules engine collides sit in each other, by geometry
   ## worked out here and not engine's manifolds, and which two.
   ##   Pairs engine never collides are left out: capsules of one body, one arm's
@@ -1183,8 +1183,8 @@ proc overlapOf(couple: Couple): tuple[depth: float, pair: string] =
       let (shape_a, shape_b) = (couple.shapes[i], couple.shapes[k])
       if isSkipped(shape_a, shape_b): continue
       let
-        ends_a = couple.endsOf(shape_a)
-        ends_b = couple.endsOf(shape_b)
+        ends_a = couple.ends(shape_a)
+        ends_b = couple.ends(shape_b)
         depth = shape_a.radius + shape_b.radius - between(ends_a.a, ends_a.z, ends_b.a, ends_b.z)
       if depth > result.depth:
         result = (
@@ -1203,12 +1203,12 @@ proc poses(): seq[Posed] =
   ##   Two laws stood same eight poses each, 6.2 s apiece, measured 2026-09-24.
   if STILLS_POSED.len == 0:
     for question in STILLS[0..<CORPUS]:
-      let (is_holding, couple, _) = standOf(question)
+      let (is_holding, couple, _) = standLive(question)
       var still: Posed = (question.key, is_holding, Strain(), 0.0, "", 0.0, 0.0)
       if is_holding:
-        still.strain = couple.strainOf
-        (still.depth, still.pair) = couple.overlapOf
-        for i in 0..<question.links.len: still.apart = max(still.apart, couple.poseOf(i).apart)
+        still.strain = couple.strainWorst
+        (still.depth, still.pair) = couple.overlap
+        for i in 0..<question.links.len: still.apart = max(still.apart, couple.poseLink(i).apart)
         for who in Body:
           for arm in Arm: still.parted = max(still.parted, max(couple.partedAt(who, arm)))
       couple.free()
@@ -1228,7 +1228,7 @@ suite "Internal: Every still stands at ease":
     ## by partner's trunk is strain couple feel, as much as held one's.
     ##   Where to stand is kept answer; pose there is stood live (`poses`).
     for still in poses():
-      let where = answered().stillOf(still.key)
+      let where = answered().stillKept(still.key)
       check where.is_holding
       check still.is_holding
       echo &"    {still.key}: stood {where.apart:.2f}, strain {still.strain.most:.2f} " &
@@ -1251,7 +1251,7 @@ suite "Internal: Every still stands at ease":
         var hand: seq[tuple[a, z: Vector]]
         for shape in couple.shapes:
           if shape.mark == Mark.Palm and shape.who == who and shape.arm == arm:
-            hand.add couple.endsOf(shape)
+            hand.add couple.ends(shape)
             # Engine's own capsule, and not only couple's record of what it was given.
             let held = engine.capsuleOf(shape.id)
             check distance(asVector(held.center1), asVector(shape.a)) < 1e-6
@@ -1259,7 +1259,7 @@ suite "Internal: Every still stands at ease":
         check hand.len == 3
         if hand.len != 3: continue
         let
-          pose = couple.armPoseOf(who, arm)
+          pose = couple.armPoseNow(who, arm)
           along = unit(pose.join - pose.wrist)
           across = unit(hand[2].a - hand[0].a)
           palm = cross(across, along) * -side(arm)
@@ -1281,7 +1281,7 @@ suite "Internal: Every still stands at ease":
     ## of other dancer's arms.  Before this, hanging arms were twisted forty degrees and
     ## swung forward twenty by fixed elbow moment, forearms pointing at partner,
     ## and free couple at rest stood with arms crossed between them.
-    ##   Hand is read where it is carried (`carriedOf`), on hand's own line: free hand
+    ##   Hand is read where it is carried (`pointCarried`), on hand's own line: free hand
     ##     hangs relaxed, its fingers curled off that line.
     let (is_holding, couple) = stood(HUMAN, Band.Crown, FREE, 0.0, false, Body.Two, 0.36)
     check is_holding
@@ -1289,9 +1289,9 @@ suite "Internal: Every still stands at ease":
     for who in Body:
       for arm in Arm:
         let
-          (swings, twist_angle, bend_angle, wrist_angle) = couple.jointsOf(who, arm)
-          pose = couple.armPoseOf(who, arm)
-          hang = carriedOf(HUMAN, pose) - pose.shoulder
+          (swings, twist_angle, bend_angle, wrist_angle) = couple.jointsNow(who, arm)
+          pose = couple.armPoseNow(who, arm)
+          hang = pointCarried(HUMAN, pose) - pose.shoulder
         echo &"    {who} {arm}: extend {swings.extend * 180.0 / PI:.1f}, across " &
             &"{swings.across * 180.0 / PI:.1f}, twist {twist_angle * 180.0 / PI:.1f}, bend " &
             &"{bend_angle * 180.0 / PI:.1f}, wrist {wrist_angle * 180.0 / PI:.1f}, hand " &
@@ -1305,7 +1305,7 @@ suite "Internal: Every still stands at ease":
       for shape_b in couple.shapes:
         if shape_a.who == shape_b.who or shape_a.mark notin {Mark.Upper, Mark.Fore, Mark.Palm} or
             shape_b.mark notin {Mark.Upper, Mark.Fore, Mark.Palm}: continue
-        let (ends_a, ends_b) = (couple.endsOf(shape_a), couple.endsOf(shape_b))
+        let (ends_a, ends_b) = (couple.ends(shape_a), couple.ends(shape_b))
         nearest = min(
           nearest,
           between(ends_a.a, ends_a.z, ends_b.a, ends_b.z) - shape_a.radius - shape_b.radius,
@@ -1328,9 +1328,9 @@ suite "Internal: Every still stands at ease":
       for who in Body:
         for arm in Arm:
           let
-            swings = couple.jointsOf(who, arm).swings
-            pose = couple.armPoseOf(who, arm)
-            hang = carriedOf(HUMAN, pose) - pose.shoulder
+            swings = couple.jointsNow(who, arm).swings
+            pose = couple.armPoseNow(who, arm)
+            hang = pointCarried(HUMAN, pose) - pose.shoulder
           echo &"    wound {turns:+.1f} {who} {arm}: extend {swings.extend * 180.0 / PI:.1f}, " &
               &"hand {sqrt(hang.x * hang.x + hang.y * hang.y) * 1000:.0f} mm off plumb"
           check abs(swings.extend) <= 10.0 * DEGREE
@@ -1344,7 +1344,7 @@ suite "Internal: Every still stands at ease":
     ## Deeper than slop is one thing in another; hands further apart than slop
     ## are not joined; joint pulled further than `PART` is dislocation.
     for still in poses():
-      check answered().stillOf(still.key).is_holding
+      check answered().stillKept(still.key).is_holding
       check still.is_holding
       if not still.is_holding: continue
       echo &"    {still.key}: deepest {still.depth * 1000:.1f} mm ({still.pair}), hands " &
@@ -1361,12 +1361,12 @@ suite "Internal: Every still stands at ease":
     ## card draws them.  Keyed to hold's own rest instead, every same-name still
     ## was wound from hold at hip.
     let question = asked("same-name at rest")
-    check answered().stillOf(question.key).is_holding
-    let (holds, couple, _) = standOf(question)
+    check answered().stillKept(question.key).is_holding
+    let (holds, couple, _) = standLive(question)
     check holds
     for link in answers.CHAIN:
       for hand in link.ends:
-        let carried = carriedOf(HUMAN, couple.armPoseOf(hand.body, hand.arm))
+        let carried = pointCarried(HUMAN, couple.armPoseNow(hand.body, hand.arm))
         check carried.z >= HUMAN.band[Band.Crown].lower - SAG
     couple.free()
 
@@ -1415,13 +1415,13 @@ suite "Internal: Every still stands at ease":
     for name in ["cross-name at +0.0", "same-name at half"]:
       let
         question = asked(name)
-        where = answered().stillOf(name)
+        where = answered().stillKept(name)
       check where.is_holding
-      let (holds, couple, links) = standOf(question)
+      let (holds, couple, links) = standLive(question)
       check holds
       for link in links:
         for hand in link.ends:
-          let z = carriedOf(HUMAN, couple.armPoseOf(hand.body, hand.arm)).z
+          let z = pointCarried(HUMAN, couple.armPoseNow(hand.body, hand.arm)).z
           echo &"    {name}: {hand.body} {hand.arm} hand at {z:.2f} m, stood {where.apart:.2f}"
           check z >= HUMAN.band[Band.Torso].lower - SAG
           check z <= HUMAN.band[Band.Torso].upper + SAG
@@ -1434,11 +1434,11 @@ suite "Internal: Every still stands at ease":
     ## than way asked alone.
     ##   Both searches' answers are kept; each pose is stood live there.
     let
-      (is_asked_holding, asked_at, _) = standOf(asked("right to left at half"))
-      (is_free_holding, free_at, _) = standOf(asked("right to left at half, either way"))
-      (asked_way, free_way) = (answered().stillOf("right to left at half"),
-                             answered().stillOf("right to left at half, either way"))
-      (asked_strain, free_strain) = (asked_at.strainOf, free_at.strainOf)
+      (is_asked_holding, asked_at, _) = standLive(asked("right to left at half"))
+      (is_free_holding, free_at, _) = standLive(asked("right to left at half, either way"))
+      (asked_way, free_way) = (answered().stillKept("right to left at half"),
+                             answered().stillKept("right to left at half, either way"))
+      (asked_strain, free_strain) = (asked_at.strainWorst, free_at.strainWorst)
     echo &"    right to left at half: asked way stood {asked_way.apart:.2f} strain " &
         &"{asked_strain.most:.2f}; either way stood {free_way.apart:.2f} at " &
         &"{free_way.turns:+.1f} strain {free_strain.most:.2f}"
@@ -1458,7 +1458,7 @@ suite "Internal: Every still stands at ease":
       var got: array[2, float]
       for run in 0..1:
         let (is_holding, couple) = stood(HUMAN, Band.Crown, WOUND, 1.0, false, Body.Two, 0.44)
-        got[run] = (if is_holding: couple.strainOf.most else: -1.0)
+        got[run] = (if is_holding: couple.strainWorst.most else: -1.0)
         couple.free()
       check got[0] == got[1]
 
@@ -1489,16 +1489,16 @@ suite "Internal: Answers":
     check given.reaches.len == REACHES.len
     check given.stills.len == STILLS.len
     for question in SWEEPS:
-      let sweep = given.sweepOf(question.key)
+      let sweep = given.sweepKept(question.key)
       for way in [sweep.negative, sweep.positive]:
         if way.is_holding: check way.apart in fars
     for question in WALKS:
-      let got = given.walksOf(question.key)
+      let got = given.walksKept(question.key)
       check got.len == fars.len
       for i in 0..<min(got.len, fars.len): check got[i].apart == fars[i]
     for question in REACHES: discard given.isReaching(question.key)
     for question in STILLS:
-      let where = given.stillOf(question.key)
+      let where = given.stillKept(question.key)
       if where.is_holding: check where.apart in fars
 
 
@@ -1509,7 +1509,7 @@ suite "Internal: Answers":
     ## says simulation has not changed; this says answers came from it.
     let given = answered()
     for question in SWEEPS:
-      let sweep = given.sweepOf(question.key)
+      let sweep = given.sweepKept(question.key)
       for (is_positive, kept) in [(true, sweep.positive), (false, sweep.negative)]:
         if not kept.is_holding: continue
         let went = live(question.key, is_positive)

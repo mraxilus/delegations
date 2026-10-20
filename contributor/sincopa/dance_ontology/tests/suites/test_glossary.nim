@@ -106,7 +106,7 @@ func literals(source: string): seq[tuple[said: string, next: char]] =
       i += 1
 
 
-func rungsOf(report: string): seq[tuple[turns: int, said, facing: string]] =
+func readRungs(report: string): seq[tuple[turns: int, said, facing: string]] =
   ## Read chain table of report: how far each rung is wound, word report gave
   ## that rung, and facing it stands at.
   ##   Rung cell reads `<word> (<turns>)`, under header that names its columns,
@@ -253,7 +253,7 @@ suite "Internal: The report speaks glossary":
     source = readFile(GLOSSARY)
     rejected = source.avoided(CHAIN_TERMS)
     report = readFile(REPORT)
-    rungs = rungsOf(report)
+    rungs = readRungs(report)
 
 
   test "report still tabulates every rung of chain":

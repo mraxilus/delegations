@@ -35,7 +35,7 @@ proc stub(directory: string) =
     writeFile(directory / file, "x")
 
 
-func stylesOf(markup: string): string =
+func styles(markup: string): string =
   ## Join every `<style>` block of markup, comments cut, so no brace of script or comment
   ## reads as rule.
   var at = 0
@@ -56,7 +56,7 @@ func stylesOf(markup: string): string =
     result = result[0..<opens] & result[shuts+2 .. ^1]
 
 
-func declarationsOf(style_sheet, selector: string): seq[string] =
+func declarations(style_sheet, selector: string): seq[string] =
   ## Read every declaration of every rule whose selector list holds `selector` as written.
   ##   At-rule's block holds braces of its own, so reader steps into it and reads its rules.
   var
@@ -80,18 +80,18 @@ func declarationsOf(style_sheet, selector: string): seq[string] =
     inc at
 
 
-func familiesOf(stack: string): seq[string] =
+func toFamilies(stack: string): seq[string] =
   ## Split stack into its families, in order, quotes taken off.
   for family in stack.split(','):
     if family.strip.len > 0: result.add family.strip.strip(chars = {'"', '\''})
 
 
-func stackOf(style_sheet, selector: string): seq[string] =
+func stackDeclared(style_sheet, selector: string): seq[string] =
   ## Read families, in order, that last face declaration of `selector` names.
   ##   One custom property is resolved, as audit's faces check resolves one; shorthand
   ##     `font` gives its families after size, so stack starts at its first family.
   var value = ""
-  for declaration in declarationsOf(style_sheet, selector):
+  for declaration in declarations(style_sheet, selector):
     let parts = declaration.split(':', maxsplit = 1)
     if parts.len == 2 and parts[0].strip in ["font-family", "font"]:
       value = parts[1].strip
@@ -105,7 +105,7 @@ func stackOf(style_sheet, selector: string): seq[string] =
       else: style_sheet[defined+property.len+1..<style_sheet.find(';', defined)]
   elif value.find('"') > 0:
     value = value[value.find('"') .. ^1]
-  familiesOf(value)
+  toFamilies(value)
 
 
 
@@ -138,10 +138,11 @@ suite "Internal: Faces":
 
   test "each face declares media type and format of its own file":
     ## TrueType and woff2 travel side by side, so each rule says which of them its bytes are.
-    check formatOf("NotoSans-Regular.ttf") == (media: "font/ttf", format: "truetype")
-    check formatOf("commit-mono-latin-400-normal.woff2") == (media: "font/woff2", format: "woff2")
+    check formatDeclared("NotoSans-Regular.ttf") == (media: "font/ttf", format: "truetype")
+    check formatDeclared("commit-mono-latin-400-normal.woff2") ==
+        (media: "font/woff2", format: "woff2")
     expect ValueError:
-      discard formatOf("NotoSans-Regular.otf")
+      discard formatDeclared("NotoSans-Regular.otf")
     let style = faceStyle(directory)
     check style.count("format(\"truetype\")") == faces.FACES.countIt(it[0].endsWith(".ttf"))
 
@@ -208,12 +209,12 @@ suite "Internal: Faces":
     ## rules of Reference and of shared style sheet of workbench named no face, so every heading
     ## took body's Noto Sans (repository issue 391).
     for (style_sheet, selectors) in [
-      (page.STYLE.stylesOf, @["h1", "h2", "h3"]),
-      (readFile(PATH_APP).stylesOf, @["h1", "h2", "h3", "h4"]),
+      (page.STYLE.styles, @["h1", "h2", "h3"]),
+      (readFile(PATH_APP).styles, @["h1", "h2", "h3", "h4"]),
     ]:
       for selector in selectors:
         checkpoint(selector)
-        let families = stackOf(style_sheet, selector)
+        let families = stackDeclared(style_sheet, selector)
         check families.len > 0 and families[0] == "Noto Serif"
 
 
@@ -223,18 +224,18 @@ suite "Internal: Faces":
     ##   five arrows from whatever face their reader's machine had (repository issue 391).
     ##   Noto Sans Math draws all five, and Commit Mono draws `✓`, which other three lack.
     for (style_sheet, selectors) in [
-      (page.STYLE.stylesOf, @["body", "h1", "code"]),
-      (readFile(PATH_APP).stylesOf, @["body", "h1"]),
+      (page.STYLE.styles, @["body", "h1", "code"]),
+      (readFile(PATH_APP).styles, @["body", "h1"]),
     ]:
       for selector in selectors:
         checkpoint(selector)
-        let families = stackOf(style_sheet, selector)
+        let families = stackDeclared(style_sheet, selector)
         check families.len >= 3 and families[1] == "Noto Sans Math"
         if families.len >= 3 and families[0] != "Commit Mono":
           check families[2] == "Commit Mono"
     for stack in [faces.SERIF, faces.SANS_SERIF, faces.MONOSPACE]:
       checkpoint(stack)
-      let families = familiesOf(stack)
+      let families = toFamilies(stack)
       check families.len >= 3 and families[1] == "Noto Sans Math"
 
 

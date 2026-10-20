@@ -102,21 +102,21 @@ func slotBearing*(arm: Arm, slot: Slot): float =
           of Slot.Default: 0.0)
 
 
-func slotOf*(arm: Arm, level: Option[Level], modifier: Option[Modifier]):
+func slotHand*(arm: Arm, level: Option[Level], modifier: Option[Modifier]):
     tuple[arm: Arm, slot: Slot] =
   ## Get one of six spots this hand settles in: whose side, how far round.
   ##   `above` never settles anywhere but its own side's default (rule 8).
-  let settled = settleOf(level, modifier)
+  let settled = settleHold(level, modifier)
   if settled.isNone:
     return (arm, Slot.Default)
   ((if settled.get.whose == Whose.Own: arm else: other(arm)),
    settled.get.slot)
 
 
-func roundOf*(level: Option[Level], modifier: Option[Modifier]): Option[Sends] =
+func sendsHold*(level: Option[Level], modifier: Option[Modifier]): Option[Sends] =
   ## Get which way round body this hold sends its line, where rules 4 to
   ## 6 say anything; none where nothing is said and short way is taken.
-  let settled = settleOf(level, modifier)
+  let settled = settleHold(level, modifier)
   if settled.isSome: some settled.get.sends else: none(Sends)
 
 
@@ -132,7 +132,7 @@ func settledWind*(arm: Arm, level: Option[Level], modifier: Option[Modifier]): f
   ##     for either hand, so this is only place two conventions are
   ##     reconciled.
   let
-    landed = slotOf(arm, level, modifier)
+    landed = slotHand(arm, level, modifier)
     aim = slotBearing(landed.arm, landed.slot)
   if arm == Arm.Left: -ARM_REST - aim else: aim - ARM_REST
 
@@ -142,7 +142,7 @@ func handPoint*(centre: Point, facing: float, arm: Arm, wind = 0.0): Point =
   polar(centre.x, centre.y, BODY_RADIUS, handBearing(facing, arm, wind))
 
 
-func handsOf*(pose: Pose): array[Dancer, array[Arm, Point]] =
+func handPoints*(pose: Pose): array[Dancer, array[Arm, Point]] =
   ## Get where all four hands are.
   for who in Dancer:
     for arm in Arm:
@@ -239,7 +239,7 @@ func border*(pose: Pose, who: Dancer): string =
 
 #[ Hands And Furniture ]#
 
-func fillOf(level: Option[Level], arm: Arm, is_deep = false): string =
+func fillLevel(level: Option[Level], arm: Arm, is_deep = false): string =
   ## Get fill that level draws as -- only place level becomes fill.
   if level == some(Level.Low):
     return if is_deep: DEEP[arm] else: INK[arm]
@@ -261,7 +261,7 @@ func hand*(
   let
     ink = if is_leading: DEEP[arm] else: INK[arm]
     stroke = if is_held or free == Free.Fade: ink else: QUIET
-    fill = if is_held: fillOf(level, arm, is_leading) else: "none"
+    fill = if is_held: fillLevel(level, arm, is_leading) else: "none"
     faded = if is_held or free != Free.Fade: ""
             else: &" opacity=\"{FREE_FADE}\""
     dot = if level == some(Level.High):
@@ -281,7 +281,7 @@ func hand*(
   shape & dot
 
 
-func ringOf*(pose: Pose): string =
+func renderRing*(pose: Pose): string =
   ## Draw orbit, only while one is happening.
   ##   Nothing else in picture is dashed, so dashed circle says one
   ##     thing: somebody is going round somebody.  It is centred on whoever

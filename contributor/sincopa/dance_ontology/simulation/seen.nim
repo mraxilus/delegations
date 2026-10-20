@@ -69,12 +69,12 @@ func degrees*(radians: float): float = radians * 180.0 / PI
   ## Convert radians to degrees.
 
 
-proc acheOf(couple: Couple, who: Body, arm: Arm): Ache =
+proc toAche(couple: Couple, who: Body, arm: Arm): Ache =
   ## Read one arm's six joints, each against its own two ends.
   ##   Twist's ends are swapped for left arm, as `twistEnds` has it, so range
   ##     quoted here is arm's own rather than rig's unmirrored one.
   let
-    (swings, twist_angle, bend_angle, wrist_angle) = couple.jointsOf(who, arm)
+    (swings, twist_angle, bend_angle, wrist_angle) = couple.jointsNow(who, arm)
     (twist_lower, twist_upper) = twistEnds(couple.rig, arm)
   result = Ache(who: who, arm: arm)
   result.read = [swings.extend, swings.across, twist_angle, bend_angle, wrist_angle]
@@ -84,14 +84,14 @@ proc acheOf(couple: Couple, who: Body, arm: Arm): Ache =
   result.lower[Dof.Twist] = twist_lower
   result.upper[Dof.Twist] = twist_upper
 
-proc stillOf(couple: Couple, at: float): Still =
+proc toStill(couple: Couple, at: float): Still =
   ## Everything page draws of couple as they stand this moment.
   result.at = at
   for who in Body:
-    let axes = axesOf(couple.chestStance(who))
+    let axes = toAxes(couple.chestStance(who))
     result.faces[who] = Faces(at: axes.origin, fore: axes.fore)
   for shape in couple.shapes:
-    let (a, z) = couple.endsOf(shape)
+    let (a, z) = couple.ends(shape)
     result.bars.add Bar(
       who: shape.who,
       arm: shape.arm,
@@ -102,9 +102,9 @@ proc stillOf(couple: Couple, at: float): Still =
     )
   for who in Body:
     for arm in Arm:
-      result.arms.add couple.acheOf(who, arm)
+      result.arms.add couple.toAche(who, arm)
   for i in 0..<couple.links.len:
-    let pose = couple.poseOf(i)
+    let pose = couple.poseLink(i)
     result.joins.add (pose.arms[0].join + pose.arms[1].join) * 0.5
     result.apart.add pose.apart
 
@@ -150,7 +150,7 @@ proc stillAsked(
       result.turns = planned.turns
       result.strain = planned.strain
       result.is_stopped = false
-      result.stills.add stillOf(planned.couple, planned.turns)
+      result.stills.add toStill(planned.couple, planned.turns)
       planned.couple.free()
     return
   let (is_holding, couple) = stood(rig, band, links, where.turns, is_away, head, where.apart, who)
@@ -160,7 +160,7 @@ proc stillAsked(
     result.turns = where.turns
     result.strain = where.strain.most
     result.is_stopped = false
-    result.stills.add stillOf(couple, where.turns)
+    result.stills.add toStill(couple, where.turns)
   couple.free()
 
 proc shownAsked(
@@ -208,18 +208,18 @@ proc shownAsked(
     var planned = builtFor(rig, band, links, is_away, head, best.path)
     for i in 0..<best.path.plans.len:
       planned.standMoment(best.path, i, is_away)
-      result.stills.add stillOf(planned, best.path.winds[i])
+      result.stills.add toStill(planned, best.path.winds[i])
     planned.free()
     return
   var couple = build(rig, restStance(rig, best.apart, is_away), band, links, head, is_away)
   couple.settle()
   var at = 0.0
-  result.stills.add stillOf(couple, at)
+  result.stills.add toStill(couple, at)
   let most = (if best.is_stopped: best.at else: MOST)
   while abs(at) < most:
     couple.turn(who, step, BEATS)
     at += step
-    result.stills.add stillOf(couple, at)
+    result.stills.add toStill(couple, at)
   couple.free()
 
 
@@ -249,7 +249,7 @@ proc still*(
   ##   Card that draws crossing names lead's arm laid over (`over`), by ordinal; none below nought.
   result = kept(
     STILLS,
-    keyOf(rig, links, $band, bits(turns), $is_away, $head, $is_either_way, $who, $over),
+    key(rig, links, $band, bits(turns), $is_away, $head, $is_either_way, $who, $over),
     stillAsked(rig, band, links, name, turns, is_away, head, is_either_way, who, over),
   )
   result.hold = name

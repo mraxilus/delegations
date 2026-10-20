@@ -39,13 +39,13 @@ const HOW_MANY = FRAMES.len * 3
   ##     only its parity, so half turn and one and one-half turns draw alike.
 
 
-func armOf(side: Side): Arm {.compileTime.} =
+func toArm(side: Side): Arm {.compileTime.} =
   ## Read hand of lead as side of body.
   case side
   of Side.Left: Arm.Left
   of Side.Right: Arm.Right
 
-func armOf(site: Site): Arm {.compileTime.} =
+func toArm(site: Site): Arm {.compileTime.} =
   ## Read hand of follow same way.
   ##   Two are separate types in model so that nothing can hold one
   ##     where it means other; here they land on one word, because
@@ -55,11 +55,11 @@ func armOf(site: Site): Arm {.compileTime.} =
   of Site.RightHand: Arm.Right
 
 
-func holdsOf(target: Frame): Holds {.compileTime.} =
+func toHolds(target: Frame): Holds {.compileTime.} =
   ## Say what each of lead's arms holds, as drawing takes it.
   for side in Side:
     if target.hold[side].isSome:
-      result[armOf(side)] = some armOf(target.hold[side].get)
+      result[toArm(side)] = some toArm(target.hold[side].get)
 
 
 func poseFor(is_facing: bool): Pose {.compileTime.} =
@@ -71,7 +71,7 @@ func poseFor(is_facing: bool): Pose {.compileTime.} =
   canonicalise(spinAbout(rest(), Dancer.Follow, if is_facing: 0.0 else: 180.0))
 
 
-func sceneOf(target: Frame; is_facing, is_clockwise: bool): string {.compileTime.} =
+func renderScene(target: Frame; is_facing, is_clockwise: bool): string {.compileTime.} =
   ## Draw one frame: two bodies, their hands, and what joins them.
   ##   No level is said, because `Frame` does not carry one -- levels live
   ##     in `rotation.FrameState` and nothing hands them here yet.  So every
@@ -87,10 +87,10 @@ func sceneOf(target: Frame; is_facing, is_clockwise: bool): string {.compileTime
   ##     same rule wound pair is drawn by (rules 27, 29).
   ##     Facing, nothing crosses, so there is nothing for way round to
   ##       decide and none is asked for.
-  partsOf(poseFor(is_facing), holdsOf(target), has_captions = false,
-          over = (if target.over.isSome: some armOf(target.over.get)
-                  elif is_facing: none(Arm)
-                  else: some overArm(if is_clockwise: 1.0 else: -1.0))).join("")
+  renderParts(poseFor(is_facing), toHolds(target), has_captions = false,
+              over = (if target.over.isSome: some toArm(target.over.get)
+                      elif is_facing: none(Arm)
+                      else: some overArm(if is_clockwise: 1.0 else: -1.0))).join("")
 
 
 func buildScenes(): array[HOW_MANY, string] {.compileTime.} =
@@ -102,9 +102,9 @@ func buildScenes(): array[HOW_MANY, string] {.compileTime.} =
   ##     apart; other way is one frame drawn with its crossing unbroken,
   ##     and rule 14 has no exception in it.
   for i, target in FRAMES:
-    result[i*3] = sceneOf(target, is_facing = true, is_clockwise = true)
-    result[i*3+1] = sceneOf(target, is_facing = false, is_clockwise = true)
-    result[i*3+2] = sceneOf(target, is_facing = false, is_clockwise = false)
+    result[i*3] = renderScene(target, is_facing = true, is_clockwise = true)
+    result[i*3+1] = renderScene(target, is_facing = false, is_clockwise = true)
+    result[i*3+2] = renderScene(target, is_facing = false, is_clockwise = false)
 
 
 const SCENES = buildScenes()  ## Every frame picture, drawn in compiler and shipped as text.

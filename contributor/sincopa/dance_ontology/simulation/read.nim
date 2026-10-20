@@ -44,7 +44,7 @@ type
     whose*: Hand
 
 
-func armOf*(links: seq[Link], i: int, who: Body): int =
+func endOwn*(links: seq[Link], i: int, who: Body): int =
   ## Which end of connection `i` is `who`'s.
   if links[i].ends[0].body == who: 0 else: 1
 
@@ -57,11 +57,11 @@ func lyingOn*(
   if band == Band.Crown:
     return none(Lying)
   let
-    end_index = armOf(links, i, who)
+    end_index = endOwn(links, i, who)
     hand = links[i].ends[end_index]
     pose = arms[i][end_index]
     stance = stance[who]
-    axes = axesOf(stance)
+    axes = toAxes(stance)
     join = toBody(axes, pose.join)
     elbow = toBody(axes, pose.elbow)
     own_side = side(hand.arm)
@@ -95,7 +95,7 @@ const ON_LINE = 1e-9
   ## anything pose carries, above float noise, so answer is same for two poses
   ## that differ by less than float carries.
 
-func sideOf(a, b, p: Vector): int =
+func sideLine(a, b, p: Vector): int =
   ## Which side of line through `a` and `b` point `p` lies on in plan: one either
   ## way, nought within `ON_LINE`, nought for segment too short to have line.
   let
@@ -133,16 +133,16 @@ func crossings*(arms: Arms): seq[Crossing] =
         b = first[i+1]
         c = second[j]
         d = second[j+1]
-      if lifted(sideOf(a, b, c)) == lifted(sideOf(a, b, d)):
+      if lifted(sideLine(a, b, c)) == lifted(sideLine(a, b, d)):
         continue
-      if lifted(sideOf(c, d, a)) == lifted(sideOf(c, d, b)):
+      if lifted(sideLine(c, d, a)) == lifted(sideLine(c, d, b)):
         continue
       let denominator = (b.x - a.x) * (d.y - c.y) - (b.y - a.y) * (d.x - c.x)
       var t, u: float
       if abs(denominator) < 1e-18:
         # Sides differ only where point sits on line: segments run along one another
         # and one end sits on other's line.  Crossing is that end.
-        if sideOf(a, b, c) == 0: u = 0.0 else: u = 1.0
+        if sideLine(a, b, c) == 0: u = 0.0 else: u = 1.0
         let
           end_point = (if u == 0.0: c else: d)
           delta_x = b.x - a.x

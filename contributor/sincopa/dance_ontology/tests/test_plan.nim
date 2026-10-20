@@ -59,11 +59,11 @@ func randomPlan(rig: Rig, generator: var Rand): Plan =
     for k in 6..8: result[base+k] = generator.rand(-0.8..0.8)
   for i in 0..3: result[DEPTHS+i] = generator.rand(gripAtPalm(rig)..gripAtTips(rig))
 
-func pointsOf(placed: ArmPlaced): array[4, Vector] =
+func points(placed: ArmPlaced): array[4, Vector] =
   ## Read four points of arm planner placed, shoulder to join.
   [placed.shoulder, placed.elbow, placed.wrist, placed.join]
 
-func pointsOf(pose: ArmPose): array[4, Vector] =
+func points(pose: ArmPose): array[4, Vector] =
   ## Read four points of posed arm, shoulder to join.
   [pose.shoulder, pose.elbow, pose.wrist, pose.join]
 
@@ -72,7 +72,7 @@ func reflected(point: Vector): Vector = (-point.x, point.y, point.z)
 
 func isPast(stance: Stance, arm: Arm, pose: ArmPose): bool =
   ## Decide whether upper arm lies past shoulder's edge by more than judge's give.
-  outside(axesOf(stance), arm, pose).angle > GIVE_EDGE
+  outside(toAxes(stance), arm, pose).angle > GIVE_EDGE
 
 func asVector(vector: engine.Vector): Vector =
   ## Engine's vector as this project's, in same body's own terms.
@@ -180,10 +180,10 @@ suite "Internal: Planner and engine are one rig":
           for arm in Arm:
             let
               i = armIndex(who, arm)
-              stood = pointsOf(couple.armPoseOf(who, arm))
+              stood = points(couple.armPoseNow(who, arm))
             for k in 0..3:
-              worst = max(worst, distance(stood[k], pointsOf(planned.arms[i])[k]))
-              worst = max(worst, distance(pointsOf(again.arms[i])[k], pointsOf(planned.arms[i])[k]))
+              worst = max(worst, distance(stood[k], points(planned.arms[i])[k]))
+              worst = max(worst, distance(points(again.arms[i])[k], points(planned.arms[i])[k]))
         couple.free()
     checkpoint "furthest point off plan: " & $worst
     check worst < PLACED
@@ -213,7 +213,7 @@ suite "Internal: Planner and engine are one rig":
           let
             (who, arm) = (link.ends[k].body, link.ends[k].arm)
             stance = held_couple.chestStance(who)
-            pose = held_couple.armPoseOf(who, arm)
+            pose = held_couple.armPoseNow(who, arm)
             swing = joints(stance, arm, pose)
             is_swung = margin(HUMAN.range[Dof.Extend], swing.extend) < -GIVE or
                 margin(HUMAN.range[Dof.Across], swing.across) < -GIVE
@@ -235,7 +235,7 @@ suite "Internal: Planner and engine are one rig":
       var past: seq[Hand]
       for who in Body:
         for arm in Arm:
-          if isPast(free_couple.chestStance(who), arm, free_couple.armPoseOf(who, arm)):
+          if isPast(free_couple.chestStance(who), arm, free_couple.armPoseNow(who, arm)):
             past.add (who, arm)
       if past.len > 0:
         inc free_past
@@ -255,7 +255,7 @@ suite "Internal: Planner and engine are one rig":
     ## Architect, 2026-10-04: free hand hangs relaxed, half curled, as hand at rest does.
     ##   Its fingertip lies `rig.relaxed` from wrist and `rig.curled` off hand's own line,
     ##     toward palm; plan places each of its three capsules where engine holds them.
-    ##   Free hand holds nothing, so its depth is whole hand, as `boundsOf` keeps it.
+    ##   Free hand holds nothing, so its depth is whole hand, as `initBounds` keeps it.
     ##   Red with curl turned across knuckles, 30 degrees off line still, measured 2026-10-09.
     let
       single = @[Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Right)])]
@@ -288,7 +288,7 @@ suite "Internal: Planner and engine are one rig":
         var k = 0
         for shape in couple.shapes:
           if shape.mark == Mark.Palm and shape.who == who and shape.arm == arm:
-            let ends = couple.endsOf(shape)
+            let ends = couple.ends(shape)
             worst = max(worst, distance(ends.a, hand.capsules[3+k].a))
             worst = max(worst, distance(ends.z, hand.capsules[3+k].z))
             inc k
@@ -327,7 +327,7 @@ suite "Internal: Planner and engine are one rig":
           check distance(asVector(held.center1), asVector(shape.a)) < 1e-6
           check distance(asVector(held.center2), asVector(shape.z)) < 1e-6
           worst = max(worst, abs(float(held.center2.z) + shape.radius - long))
-          worst = max(worst, distance(couple.endsOf(shape).z, placed.arms[index].capsules[3+k].z))
+          worst = max(worst, distance(couple.ends(shape).z, placed.arms[index].capsules[3+k].z))
           inc k
         check k == 3
       couple.free()
@@ -356,7 +356,7 @@ suite "Internal: Planner and engine are one rig":
             for k in 0..3:
               worst = max(
                 worst,
-                distance(reflected(pointsOf(placed.arms[i])[k]), pointsOf(image.arms[i xor 1])[k]),
+                distance(reflected(points(placed.arms[i])[k]), points(image.arms[i xor 1])[k]),
               )
     checkpoint "furthest reflected point: " & $worst
     check worst < MIRRORED
@@ -369,7 +369,7 @@ suite "Internal: Planner and engine are one rig":
     ##   Red with partner's girdles left out of plan, found 2026-10-04 by reading both filters.
     let
       placed = place(HUMAN, default(Plan), 0.0, false)
-      capsules = capsulesOf(placed)
+      capsules = toCapsules(placed)
       first_arm = 2 * trunkCapsules(HUMAN).len
       per_arm = placed.arms[0].capsules.len
       first_face = capsules.len - placed.faces.len
@@ -381,7 +381,7 @@ suite "Internal: Planner and engine are one rig":
           i = (k - first_arm) div per_arm
           (owner, part) = ((if i < 2: Body.One else: Body.Two), (k - first_arm) mod per_arm)
         if part >= 1 or owner != who: expected.add k
-      for (a, b) in pairsOf(problemOf(HUMAN, HAND_TO_HAND, false)):
+      for (a, b) in pairsCollided(initProblem(HUMAN, HAND_TO_HAND, false)):
         if a == face: paired.add b
         elif b == face: paired.add a
       check paired.len == expected.len
@@ -407,14 +407,14 @@ suite "Internal: Planned turn":
     for moment in 0..<path.plans.len:
       let
         placed = place(HUMAN, path.plans[moment], path.winds[moment], false)
-        capsules = capsulesOf(placed)
+        capsules = toCapsules(placed)
       for link in HAND_TO_HAND:
         let (one, two) = (link.ends[0], link.ends[1])
         check distance(
           placed.arms[armIndex(one.body, one.arm)].join,
           placed.arms[armIndex(two.body, two.arm)].join,
         ) < JOINED
-      for (i, j) in pairsOf(path.problem):
+      for (i, j) in pairsCollided(path.problem):
         let
           (p, q) = (capsules[i], capsules[j])
           gap = closest(p.a, p.z, q.a, q.z).gap - p.radius - q.radius
@@ -468,7 +468,7 @@ suite "Internal: Planned turn":
       couple.standAt(here, at.chests, at.arms)
       couple.steer(path.plans[moment], STEER)
       couple.advance(BEATS)
-      for i in 0..<HAND_TO_HAND.len: most = max(most, couple.poseOf(i).apart)
+      for i in 0..<HAND_TO_HAND.len: most = max(most, couple.poseLink(i).apart)
     couple.free()
     checkpoint "ties parted by " & $(most * 1000.0) & " mm at most"
     check most < TIED
@@ -491,11 +491,11 @@ suite "Internal: Planner's cost":
     for links in [HAND_TO_HAND, same_name, @[HAND_TO_HAND[0]]]:
       for is_away in [false, true]:
         for style in [STYLES[0], STYLES[13]]:
-          var problem = problemOf(HUMAN, links, is_away)
+          var problem = initProblem(HUMAN, links, is_away)
           problem.style = style
           (problem.lower, problem.upper) = bandAt(HUMAN, 0.3, 1.0, is_away, style.room)
           let
-            bounds = boundsOf(HUMAN, style.margin, links)
+            bounds = initBounds(HUMAN, style.margin, links)
             moving = movedPairs(HUMAN, problem)
           for sample in 0 ..< SAMPLES div 8:
             let wind = generator.rand(-1.0..1.0)
@@ -504,7 +504,7 @@ suite "Internal: Planner's cost":
                                     weight: [1e3, 1e5, 1e7][sample mod 3],
                                     holding: style.stay)
             if sample mod 2 == 1:
-              weighing.before = capsulesOf(place(HUMAN, randomPlan(HUMAN, generator), wind,
+              weighing.before = toCapsules(place(HUMAN, randomPlan(HUMAN, generator), wind,
                                                  is_away))
             for k in 4..<SIZE: weighing.bias[k] = generator.rand(-0.05..0.05)
             let plan = randomPlan(HUMAN, generator)

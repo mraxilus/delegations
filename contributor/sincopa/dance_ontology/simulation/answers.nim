@@ -195,13 +195,13 @@ proc kept*(path = KEPT): Answers =
   let node = parseFile(path)
   node.to(Answers)
 
-proc sweepOf*(answers: Answers, key: string): Ways =
+proc sweepKept*(answers: Answers, key: string): Ways =
   ## Kept sweep, or failure naming verb that answers it.
   doAssert key in answers.sweeps, "No sweep answered; run `nim r tools/build.nim answers`: got `" &
       key & "`."
   answers.sweeps[key]
 
-proc walksOf*(answers: Answers, key: string): seq[Walked] =
+proc walksKept*(answers: Answers, key: string): seq[Walked] =
   ## Kept walks from every distance, nearest first.
   doAssert key in answers.walks, "No walks answered; run `nim r tools/build.nim answers`: got `" &
       key & "`."
@@ -213,7 +213,7 @@ proc isReaching*(answers: Answers, key: string): bool =
       key & "`."
   answers.reaches[key]
 
-proc stillOf*(answers: Answers, key: string): Stand =
+proc stillKept*(answers: Answers, key: string): Stand =
   ## Kept distance couple stand at for still.
   doAssert key in answers.stills, "No still answered; run `nim r tools/build.nim answers`: got `" &
       key & "`."
@@ -223,7 +223,7 @@ proc stillOf*(answers: Answers, key: string): Stand =
 
 #[ Parallel Answers ]#
 
-func wayOf(walk: Walk): Way =
+func toWay(walk: Walk): Way =
   ## Strip walk to numbers laws read.
   Way(
     is_holding: walk.found_rest,
@@ -234,7 +234,7 @@ func wayOf(walk: Walk): Way =
   )
 
 
-proc farsOf(): seq[float] =
+proc fars(): seq[float] =
   ## Every distance couple may stand at.
   for far in stands(HUMAN): result.add far
 
@@ -245,7 +245,7 @@ proc tasks*(): seq[Task] =
   for i in 0..<REACHES.len: result.add (Reach, i, 0)
   for i in 0..<SWEEPS.len: result.add (Sweep, i, 0)
   for i in 0..<STILLS.len: result.add (Still, i, 0)
-  let count = farsOf().len
+  let count = fars().len
   for i in 0..<WALKS.len:
     for k in 0..<count: result.add (WalkFrom, i, k)
 
@@ -259,11 +259,11 @@ proc taskText*(task: Task): string =
       question = SWEEPS[task.index]
       sweep = swept(HUMAN, question.band, question.links, most = question.most,
                     is_raw = question.is_raw)
-    $(%Ways(negative: wayOf(sweep.negative), positive: wayOf(sweep.positive)))
+    $(%Ways(negative: toWay(sweep.negative), positive: toWay(sweep.positive)))
   of WalkFrom:
     let
       question = WALKS[task.index]
-      apart = farsOf()[task.far]
+      apart = fars()[task.far]
       walk = walked(
         HUMAN,
         question.band,
@@ -303,7 +303,7 @@ proc assembled*(texts: seq[string]): string =
     walkeds: array[WALKS.len, seq[Walked]]
     reached: array[REACHES.len, bool]
     stoods: array[STILLS.len, Stand]
-  let count = farsOf().len
+  let count = fars().len
   for i in 0..<WALKS.len: walkeds[i] = newSeq[Walked](count)
   for i, task in tasks():
     let node = parseJson(texts[i])

@@ -36,7 +36,7 @@ type
     lies*: array[2, array[Body, Option[Lying]]]
       ## Where each connection's arm lies on its own body, by body.
     strain*: float  ## Of tightest joint (`tightest`).
-    hand_height*: float  ## Height first connection's hand is carried at (`carriedOf`), metres.
+    hand_height*: float  ## Height first connection's hand is carried at (`pointCarried`), metres.
     crossed*: int  ## How many times connections cross in plan.
     over*: array[CROSSED, int]  ## Which connection is over, at each crossing.
 
@@ -80,22 +80,22 @@ const CHAIN* = [Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Right)]),
   ## Cross-name chain, L-r.R-l, whose rungs report asks still.
 
 
-func linksOf*(ask: SweepAsk): seq[Link] =
+func linksAsked*(ask: SweepAsk): seq[Link] =
   ## Connections sweep asks for.
   for i in 0..<ask.count: result.add ask.links[i]
 
-func askOf*(band: Band, links: seq[Link], who: Body, is_away: bool, apart: float): SweepAsk =
+func initSweepAsk*(band: Band, links: seq[Link], who: Body, is_away: bool, apart: float): SweepAsk =
   ## Sweep ask as plain values.
   result = SweepAsk(band: band, count: links.len, who: who, is_away: is_away, apart: apart)
   for i, link in links: result.links[i] = link
 
-func keyOf*(ask: SweepAsk): string =
+func key*(ask: SweepAsk): string =
   ## Name sweep by all it is of.
   result = $ord(ask.who) & "|" & $ord(ask.band) & "|" & $ask.is_away & "|" & $ask.apart
-  for link in ask.linksOf:
+  for link in ask.linksAsked:
     result.add "|" & $ord(link.ends[0].arm) & $ord(link.ends[1].arm)
 
-func keyOf*(ask: RungAsk): string = $ord(ask.band) & "|" & $ask.turn
+func key*(ask: RungAsk): string = $ord(ask.band) & "|" & $ask.turn
   ## Name rung by band and turn.
 
 
@@ -111,19 +111,19 @@ func momentAt*(sweep: Swept, at: float): Option[Moment] =
       best = some moment
   best
 
-func glanceOf(band: Band, links: seq[Link], moment: Moment): Glance =
+func readGlance(band: Band, links: seq[Link], moment: Moment): Glance =
   ## Read one moment as report reads it.
   result.is_reached = true
   for k in 0..<links.len:
     for who in Body:
       result.lies[k][who] = lyingOn(HUMAN, band, links, moment.stance, moment.arms, k, who)
   result.strain = tightest(HUMAN, moment.stance, links, moment.arms).strain
-  result.hand_height = carriedOf(HUMAN, moment.arms[0][0]).z
+  result.hand_height = pointCarried(HUMAN, moment.arms[0][0]).z
   for crossing in crossings(moment.arms):
     if result.crossed < CROSSED: result.over[result.crossed] = crossing.over
     inc result.crossed
 
-func wayOf(walk: Walk): WayRead =
+func toWayRead(walk: Walk): WayRead =
   ## Read one way of sweep as report reads it.
   WayRead(
     is_stopped: walk.is_stopped,
@@ -136,7 +136,7 @@ func wayOf(walk: Walk): WayRead =
 proc readSweep*(ask: SweepAsk): SweepRead =
   ## Sweep hold, and read it as report reads it.
   let
-    links = ask.linksOf
+    links = ask.linksAsked
     sweep = swept(
       HUMAN,
       ask.band,
@@ -147,11 +147,11 @@ proc readSweep*(ask: SweepAsk): SweepRead =
       apart = ask.apart,
     )
   result.found_rest = sweep.found_rest
-  result.negative = wayOf(sweep.negative)
-  result.positive = wayOf(sweep.positive)
+  result.negative = toWayRead(sweep.negative)
+  result.positive = toWayRead(sweep.positive)
   for i, half_turns in HALVES:
     let moment = momentAt(sweep, float(half_turns) / 2.0)
-    if moment.isSome: result.glances[i] = glanceOf(ask.band, links, moment.get)
+    if moment.isSome: result.glances[i] = readGlance(ask.band, links, moment.get)
 
 type RungTry = tuple[band: Band, turn, apart: float]  ## Rung stood from one distance.
 
@@ -163,7 +163,7 @@ proc rungAt(ask: RungTry): RungRead {.gcsafe, nimcall.} =
       (is_holding, couple) = stood(HUMAN, ask.band, links, ask.turn, false, Body.Two, ask.apart)
     if is_holding:
       var arms: Arms
-      for i in 0..<links.len: arms.add couple.poseOf(i).arms
+      for i in 0..<links.len: arms.add couple.poseLink(i).arms
       result = RungRead(
         found_pose: true,
         apart: ask.apart,
@@ -179,7 +179,7 @@ proc readRung*(ask: RungAsk): RungRead =
   for apart in stands(HUMAN): tries.add (ask.band, ask.turn, apart)
   var first = 0
   while first < tries.len:
-    let batch = tries.batchOf(first)
+    let batch = tries.batchFrom(first)
     for got in onEveryCore(batch, rungAt):
       if got.found_pose: return got
     first += batch.len

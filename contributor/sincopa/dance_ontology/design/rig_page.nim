@@ -186,7 +186,7 @@ func attribute(tag, name: string): string =
   if start < 0: "" else: tag[start..<stop]
 
 
-func cardsOf(html: string): Table[string, seq[Card]] =
+func toCards(html: string): Table[string, seq[Card]] =
   ## Every still card of reference page, by section letter, in page's order.
   ##   Cards are cut from built page, since drawing there is what was ruled on.
   var
@@ -225,7 +225,7 @@ func cardsOf(html: string): Table[string, seq[Card]] =
     card.caption = "<figcaption>" & whole[caption_start..<caption_stop] & "</figcaption>"
     result.mgetOrPut(section, @[]).add card
 
-func styleSheetOf(html: string): string =
+func styleSheetReference(html: string): string =
   ## Reference page's own style, so its cards look here as they do there.
   var at = 0
   while true:
@@ -248,7 +248,7 @@ proc cardsBody(review: string, data: JsonNode): string =
     held[key] = (if still.hasKey("at") and still["at"].len > 0:
                    &"holds, {apart:.2f} m apart"
                  else: "no pose holds at any distance")
-  let cards = cardsOf(review)
+  let cards = toCards(review)
   # Each heading is read off reference page, which names each chain's rest
   # through model, so two pages cannot name one section two ways.
   var titles: seq[tuple[letter, title: string]]
@@ -309,7 +309,7 @@ proc main() =
     shown = folded(parseFile(data))
     html = document(
       TITLE,
-      styleSheetOf(review_html) & STYLE_SHEET & HEAD_BODY &
+      styleSheetReference(review_html) & STYLE_SHEET & HEAD_BODY &
       cardsBody(review_html, shown) &
       "<script>var RIG = " & $shown & ";</script>\n" &
       "<script>" & readFile(view) & "</script>\n",

@@ -45,7 +45,7 @@
 ##     in `design/faces.nim`.  So `assets` names files and koch answers with their paths.
 ##   Cost: driver runs from project directory, since every path here is relative to it.
 ##   Cost: `assets` shells out to koch, so it needs repository above project rather than
-##     project alone; `rootOf` says how that is found and why.
+##     project alone; `root` says how that is found and why.
 ##   Cost: `shot` needs node for its output to run; build itself needs only Nim.
 ##   Cost: `types` and `drive` need node and npm, and `drive` needs Chromium, which it fetches
 ##     through Playwright unless `DANCE_CHROMIUM` names one.
@@ -151,7 +151,7 @@ proc compileRun(arguments: openArray[string]) =
 
 #[ Commands ]#
 
-proc rootOf(): string =
+proc root(): string =
   ## Read repository root, which is nearest directory above holding koch.
   ##   Walked rather than counted from project depth, so path holds if project moves.
   result = getCurrentDir()
@@ -179,7 +179,7 @@ proc assets() =
     wanted.add file
   let (written, code) = execCmdEx(
     "nim r --hints:off koch fetch-assets " & wanted.join(" "),
-    workingDir = rootOf(),
+    workingDir = root(),
   )
   if code != 0:
     raise newException(OSError, "Shared store did not serve every face asked for; got:\n" & written)
@@ -425,7 +425,7 @@ proc drive() =
   types()
   browser()
   pages()
-  let paragraphs = paragraphsOf(parseFile(PATH_CONTROL))
+  let paragraphs = toParagraphs(parseFile(PATH_CONTROL))
   removeDir(BUILD_HOSTED)
   createDir(BUILD_HOSTED)
   var paths: seq[string]
@@ -451,7 +451,12 @@ proc drive() =
       PATH_HARNESS & ":0: Render of pages failed, as harness printed above; got exit `" &
       $code & "`.",
     )
-  let findings = checkRendered(parseFile(PATH_FOUND), expectedOf(paragraphs), CONTROL, BUILD_HOSTED)
+  let findings = checkRendered(
+    parseFile(PATH_FOUND),
+    findingsExpected(paragraphs),
+    CONTROL,
+    BUILD_HOSTED,
+  )
   for finding in findings: echo finding.render
   if findings.len > 0:
     raise newException(

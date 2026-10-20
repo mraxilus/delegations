@@ -7,7 +7,7 @@
 ##     Cost of sampling: animation is as smooth as its samples, and every
 ##       sample is full routing.  Accepted -- routes are built once,
 ##       into markup, not per frame in browser.
-##   State that rules say does not exist is refused, not drawn: `partsOf`
+##   State that rules say does not exist is refused, not drawn: `renderParts`
 ##     asserts `danceable`, so build fails rather than publishing wrap
 ##     that does not wrap (rule 7).
 ##     Cost of refusing at build time: page asking for impossible state
@@ -62,7 +62,7 @@ func ghosts*(holds: Holds, levels: Levels, modifiers: Modifiers):
       continue
     let held = [(Dancer.Lead, arm), (Dancer.Follow, holds[arm].get)]
     for (who, own) in held:
-      if slotOf(own, levels[arm], modifiers[arm]) != (own, Slot.Default):
+      if slotHand(own, levels[arm], modifiers[arm]) != (own, Slot.Default):
         result.add (who, own)
 
 
@@ -86,7 +86,7 @@ func settled*(pose: Pose, holds: Holds, levels: Levels, modifiers: Modifiers): P
   result.wind = wind
 
 
-func bodiesOf(pose: Pose): tuple[lead, follow: route.Body] =
+func toBodies(pose: Pose): tuple[lead, follow: route.Body] =
   ## See couple as routing does.
   ((pose.place[Dancer.Lead], pose.facing[Dancer.Lead]),
    (pose.place[Dancer.Follow], pose.facing[Dancer.Follow]))
@@ -103,12 +103,12 @@ func isDanceable*(
   ##     and this is what says so.
   let
     put = settled(pose, holds, levels, modifiers)
-    hands = handsOf(put)
-    (lead_body, follow_body) = bodiesOf(put)
+    hands = handPoints(put)
+    (lead_body, follow_body) = toBodies(put)
   for arm in Arm:
     if holds[arm].isNone:
       continue
-    if roundOf(levels[arm], modifiers[arm]).isNone:
+    if sendsHold(levels[arm], modifiers[arm]).isNone:
       continue  # nothing claimed, nothing to hold up
     let ends: route.Ends = (hands[Dancer.Lead][arm],
                             hands[Dancer.Follow][holds[arm].get],
@@ -130,7 +130,7 @@ func clearingMarks*(put: Pose; a, b: Point): seq[Mark] =
   ##     thin V, so it is string of small discs walked along its own two
   ##     legs -- single disc over whole of it would cover middle
   ##     of body and push every reach outside it.
-  let hands = handsOf(put)
+  let hands = handPoints(put)
   for who in Dancer:
     let drawn = chevronPoints(put.place[who], put.facing[who])
     for leg in 0..1:
@@ -145,7 +145,7 @@ func clearingMarks*(put: Pose; a, b: Point): seq[Mark] =
         result.add (hand_centre, (if who == Dancer.Lead: LEAD_CLEAR else: FOLLOW_CLEAR))
 
 
-func axisOf*(put: Pose): tuple[along, across: Point, bearing: float] =
+func axisPair*(put: Pose): tuple[along, across: Point, bearing: float] =
   ## Get pair's own axis: way from lead to follow, way
   ## square to it, and bearing of first.
   let
@@ -156,7 +156,7 @@ func axisOf*(put: Pose): tuple[along, across: Point, bearing: float] =
   (along, (-along.y, along.x), bearing(follow.x - lead.x, follow.y - lead.y))
 
 
-func windOf*(put: Pose, holds: Holds, arm: Arm): tuple[phi, spread: float] =
+func windMeasured*(put: Pose, holds: Holds, arm: Arm): tuple[phi, spread: float] =
   ## Measure how far one connection has wound, in degrees (rules 27, 28).
   ##   Each held hand sits on its own body's rim, and both bodies stand on
   ##     pair's axis, so angle hand makes with that axis is what
@@ -168,8 +168,8 @@ func windOf*(put: Pose, holds: Holds, arm: Arm): tuple[phi, spread: float] =
   ##     keeps its side to centre winds as far as it carries (rule 32).
   ##     Measuring survived both answers without being touched.
   let
-    axis = axisOf(put)
-    hands = handsOf(put)
+    axis = axisPair(put)
+    hands = handPoints(put)
     a = hands[Dancer.Lead][arm]
     b = hands[Dancer.Follow][holds[arm].get]
     phi_a = bearing(a.x - put.place[Dancer.Lead].x, a.y - put.place[Dancer.Lead].y) - axis.bearing
@@ -186,7 +186,7 @@ func diveGap*(under, over: seq[Point]; meeting: Point): tuple[opens, shuts: floa
   gapFor(alongAt(under, meeting), polylineLength(under), hidesAt(under, over, meeting))
 
 
-func divesOf*(one, other: seq[Point]; turns: float): array[Arm, seq[Point]] =
+func divesPair*(one, other: seq[Point]; turns: float): array[Arm, seq[Point]] =
   ## Share crossings of two wound reaches out: say which of them dives at
   ## each one.
   ##   Arm on top at first crossing stays on top there, so it is other one
@@ -195,12 +195,12 @@ func divesOf*(one, other: seq[Point]; turns: float): array[Arm, seq[Point]] =
   ##   Drawing and checks both ask here, so neither can hold its own idea
   ##     of which arm goes under where.
   let on_top = overArm(turns)
-  for i, meeting in crossingsOf(one, other):
+  for i, meeting in crossings(one, other):
     let under = if (i mod 2 == 0) == (on_top == Arm.Left): Arm.Right else: Arm.Left
     result[under].add meeting
 
 
-func partsOf*(
+func renderParts*(
   pose: Pose,
   holds: Holds,
   levels = default(Levels),
@@ -224,10 +224,10 @@ func partsOf*(
   # put: pose handed in ready-made is settled exactly like one built below.
   let
     put = settled(pose, holds, levels, modifiers)
-    hands = handsOf(put)
-    (lead_body, follow_body) = bodiesOf(put)
+    hands = handPoints(put)
+    (lead_body, follow_body) = toBodies(put)
 
-  var bits = @[ringOf(put), border(put, Dancer.Lead),
+  var bits = @[renderRing(put), border(put, Dancer.Lead),
                border(put, Dancer.Follow)]
   for who in Dancer:
     bits.add chevron(put.place[who], put.facing[who])
@@ -264,8 +264,8 @@ func partsOf*(
           wound(
             ends.a,
             ends.b,
-            axisOf(put).across,
-            degToRad(windOf(put, holds, arm).phi),
+            axisPair(put).across,
+            degToRad(windMeasured(put, holds, arm).phi),
             2 * PI * twist[arm],
             share = windShare(twist[arm], arm),
           )
@@ -281,7 +281,7 @@ func partsOf*(
   # in order along line, and shared out between two arms.
   var dives: array[Arm, seq[Point]]
   if is_winding:
-    dives = divesOf(routes[Arm.Left], routes[Arm.Right], twist[Arm.Left])
+    dives = divesPair(routes[Arm.Left], routes[Arm.Right], twist[Arm.Left])
 
   let order = if on_top == some(Arm.Left): [Arm.Right, Arm.Left] else: [Arm.Left, Arm.Right]
   for arm in order:
@@ -374,7 +374,7 @@ func renderFigure*(
             )
     bounds = if half.isSome: half.get
           else: (if has_captions: WIDE else: SIZE) / 2
-    bits = partsOf(
+    bits = renderParts(
       drawn,
       holds,
       levels = levels,
@@ -580,7 +580,7 @@ func animatedPoses*(
     poses = walk.mapIt(settled(it, holds, levels, modifiers))
     bounds = if half.isSome: half.get
           else: poses.mapIt(extent(it, has_captions = false)).max
-    hands = poses.mapIt(handsOf(it))
+    hands = poses.mapIt(handPoints(it))
 
   var bits: seq[string]
   # Ring is drawn only where one is happening.  Move nobody orbits in
@@ -659,7 +659,7 @@ func animatedPoses*(
       # round is not mistaken for one that has not moved -- and so nothing
       # jumps between two frames.
       if holds[other(arm)].isSome:
-        let seen = continuous(poses.mapIt(windOf(it, holds, arm).spread))
+        let seen = continuous(poses.mapIt(windMeasured(it, holds, arm).spread))
         # Measured from where it started, and started from where
         # hold says: two together are whole of winding.
         winds[arm] = seen.mapIt(it + 360 * wound - seen[0])
@@ -667,8 +667,8 @@ func animatedPoses*(
           routes[arm].add wound(
             ends.a,
             ends.b,
-            axisOf(poses[i]).across,
-            degToRad(windOf(poses[i], holds, arm).phi),
+            axisPair(poses[i]).across,
+            degToRad(windMeasured(poses[i], holds, arm).phi),
             degToRad(winds[arm][i]),
             share = windShare(winds[arm][i] / 360, arm),
           )
@@ -704,7 +704,7 @@ func animatedPoses*(
         # In turns, since every other reader of wind counts them; `winds`
         # counts degrees.
         on_top = overArm(turned_by / 360)
-      for k, meeting in crossingsOf(routes[Arm.Left][i], routes[Arm.Right][i]):
+      for k, meeting in crossings(routes[Arm.Left][i], routes[Arm.Right][i]):
         let under = if (k mod 2 == 0) == (on_top == Arm.Left): Arm.Right else: Arm.Left
         mine[under].add diveGap(routes[under][i], routes[other(under)][i], meeting)
       for arm in Arm:

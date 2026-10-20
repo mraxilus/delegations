@@ -38,9 +38,9 @@ type
     parts*: array[Part, PartShape]
 
 
-func shapeOf*(rig: Rig, stance: Stance): BodyShape =
+func toBodyShape*(rig: Rig, stance: Stance): BodyShape =
   ## Body's shape at stance.
-  result.axes = axesOf(stance)
+  result.axes = toAxes(stance)
   for part in Part:
     result.parts[part] = PartShape(
       half_breadth: halfBreadth(rig, part),
@@ -106,7 +106,7 @@ func bodyGap*(rig: Rig; shape: BodyShape; a, b: Vector; is_own: bool): Touch =
 
 func bodyGap*(rig: Rig; stance: Stance; a, b: Vector; is_own: bool): Touch =
   ## Same, from stance.
-  bodyGap(rig, shapeOf(rig, stance), a, b, is_own)
+  bodyGap(rig, toBodyShape(rig, stance), a, b, is_own)
 
 
 func armGap*(rig: Rig; a, b, c, d: Vector; meet: Vector; excuse: float): float =
@@ -129,7 +129,7 @@ func isPressingBody*(rig: Rig, stance: Stance, pose: tuple[elbow, wrist, join: V
   ##     what says arm is wound rather than merely led there is part
   ##     of it past elbow.
   const near = 0.01
-  let shape = shapeOf(rig, stance)
+  let shape = toBodyShape(rig, stance)
   for (a, b) in [(pose.elbow, pose.wrist), (pose.wrist, pose.join)]:
     for part in [Part.Torso, Part.Neck]:
       if partGap(shape.axes, shape.parts[part], a, b) < near:

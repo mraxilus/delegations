@@ -49,7 +49,7 @@ func isTitleCased(title: string): bool =
     return false
   true
 
-func titleOf(page: string): string =
+func titlePage(page: string): string =
   ## Page's own name, after work's name and its dash.
   let opens = page.find("<title>")
   doAssert opens >= 0, "Page carries no title."
@@ -77,7 +77,7 @@ template holdPage(name: string) =
   # Every published title reads in title case, so published set is one consistent
   # form.  Nothing checked it until viewer page shipped with sentence for title
   # while every page beside it was cased.
-  check isTitleCased(titleOf(written))
+  check isTitleCased(titlePage(written))
   # Rule 26 ranks move's stages, and markup can only rank them through
   # `keyTimes`: without it browser spreads frames evenly, so turn, settle and
   # reset all read at one speed.  Every animated element carries its own
@@ -133,15 +133,15 @@ suite "Internal: The sixteen facings, drawn":
 
 
 suite "Internal: The rests and the chains, named by model":
-  ## Card review names each chain's rest through `parts.restOf`, and law reads written page
+  ## Card review names each chain's rest through `parts.facingRest`, and law reads written page
   ##   back (Article IX.5).
   test "the review page heads each chain with the facing it rests at":
     let page = readFile(OUT / "review.html")
     check page.contains(
-      "<h2>C &middot; The cross-name chain, " & restOf(HAND_TO_HAND).name & " at rest</h2>",
+      "<h2>C &middot; The cross-name chain, " & facingRest(HAND_TO_HAND).name & " at rest</h2>",
     )
     check page.contains(
-      "<h2>D &middot; The same-name chain, " & restOf(PAIRED).name & " at rest</h2>",
+      "<h2>D &middot; The same-name chain, " & facingRest(PAIRED).name & " at rest</h2>",
     )
 
 
