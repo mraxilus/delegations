@@ -2,7 +2,7 @@
 ##   Codepoints each face row carries are held to bytes of its file: suite reads `cmap` itself,
 ##     as browser reads it, i.e. codepoint maps to glyph other than `.notdef`. Reader is
 ##     suite's alone (Article IX.11), since static pass reads rows and never bytes.
-##   Sibling: `cmapOf` of `contributor/ronri/rga_visualiser/tools/drive/faces.ts` reads same
+##   Sibling: `cmapOf` of `contributor/ronri/pga_visualiser/tools/drive/faces.ts` reads same
 ##     tables for one page, in TypeScript and inside contributor project, which curator never
 ##     imports (Article II.9). Fix to either is finished once other is checked.
 ##   `woff2` keeps every table in one Brotli stream, and no Nim import decodes Brotli, so
@@ -261,7 +261,7 @@ suite "Assets":
       check file.digestDeclared.len == 64
     # And what only one of them wants, so none loses face by sharing one table.
     check "NotoSerif-Italic.ttf".digestDeclared.len == 64  # dance_ontology alone
-    check "CommitMonoV142-400Regular.otf".digestDeclared.len == 64  # rga_visualiser alone
+    check "CommitMonoV142-400Regular.otf".digestDeclared.len == 64  # pga_visualiser alone
 
 
   test "each Noto face a page draws is declared whole (Article X.8)":

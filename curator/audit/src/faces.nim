@@ -62,7 +62,7 @@ const
     "cdnjs.cloudflare.com/ajax/libs/font",
   ]
     ## Font hosts page must not link. Build fetching face and embedding it is not here: that
-    ## is build's own business and viewer never reaches it (`rga_visualiser`, `assets`).
+    ## is build's own business and viewer never reaches it (`pga_visualiser`, `assets`).
   LIGATURES* = ["font-variant-ligatures", "font-feature-settings"]
     ## Properties that can enable `calt`; either satisfies ligature rule.
   MARK = "font-family"  ## Declaration naming family list outright.

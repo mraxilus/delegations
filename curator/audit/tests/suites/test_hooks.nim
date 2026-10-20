@@ -23,7 +23,7 @@ Done.
 | --- | --- | --- | --- | --- |
 | 1 | ☑️ | Names stay by the ruling (carried 3) | #320 | the Architect ruled |
 | 2 | ✅ | Gap list reads each baseline | `src/gaps.nim` | `koch check` green |
-| 3 | ⚠️ | `koch drive` red in rga_visualiser | #332 | contributor/ronri/rga_visualiser, fix |
+| 3 | ⚠️ | `koch drive` red in pga_visualiser | #332 | contributor/ronri/pga_visualiser, fix |
 | 4 | ⏸️ | Names in the tests | #310 | D1 |
 | 5 | ⬜ | cga5d baseline | `tests/` | this delegate |
 
@@ -386,10 +386,10 @@ suite "Hooks":
       .messages.anyIt("names decision it waits on" in it)
     check checkSignoff(SIGNOFF.replace("| #310 | D1 |", "| #310 | D3 |"), BRANCH)
       .messages.anyIt("names decision it waits on" in it)  # no such decision
-    check checkSignoff(SIGNOFF.replace("contributor/ronri/rga_visualiser, fix", "they fix"), BRANCH)
+    check checkSignoff(SIGNOFF.replace("contributor/ronri/pga_visualiser, fix", "they fix"), BRANCH)
       .messages.anyIt("opens last cell with role string" in it)
     check checkSignoff(
-      SIGNOFF.replace("contributor/ronri/rga_visualiser, fix", "outside, GitHub fixes runner"),
+      SIGNOFF.replace("contributor/ronri/pga_visualiser, fix", "outside, GitHub fixes runner"),
       BRANCH,
     ).len == 0
 

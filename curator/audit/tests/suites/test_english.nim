@@ -80,7 +80,7 @@ suite "Article VI.8":
     check isGoverned("contributor/README.md")
     check isGoverned("contributor/abstand/README.md")  # registered domain index
     check isGoverned("curator/audit/PROVENANCE.md")  # record of project that exists
-    check isGoverned("contributor/ronri/rga_visualiser/GLOSSARY.md")
+    check isGoverned("contributor/ronri/pga_visualiser/GLOSSARY.md")
 
 
   test "project and domain added later are governed from their first line":
