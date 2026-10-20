@@ -8,6 +8,11 @@ import ../../src/[audit, domains, provenance]
 import ./fixtures
 
 
+func pruned(named: string): string =
+  ## Render record whose `Pruned` row names commit by its first eight digits.
+  textProvenance("y").replace("| Review |", "| Pruned | " & named[0..7] & " |\n| Review |")
+
+
 
 suite "Audit":
   test "good tree is clean under every static check":
@@ -111,9 +116,6 @@ suite "Audit":
     #   `rga_visualiser` to `pga_visualiser` lost commits of old path, and true row naming
     #   `70ced35e` was finding (#631). Domain: commit before move, move itself, edit after it,
     #   and commit that never touched record.
-    func pruned(named: string): string =
-      textProvenance("y").replace("| Review |", "| Pruned | " & named[0..7] & " |\n| Review |")
-
     let
       root = repoTemp()
       after = CONTRIBUTOR & "/ronri/beta/PROVENANCE.md"
@@ -137,3 +139,28 @@ suite "Audit":
     check findingsPruned(root, @[entry(after, pruned(elsewhere))]).mapIt(it.message) == @[
       "`Pruned` must name commit that touched this record; got `" & elsewhere[0..7] & "`.",
     ]  # commit beside record still finding
+
+
+  test "Pruned row names merge commit that log of renames drops":
+    # Case held: `git log --follow` dropped merge commit `de53b987`, which `Pruned` row of
+    #   `pga_benchmark` names, once branch of move merged `main`, so true row was finding (#631).
+    #   Domain: merge that changed record on both sides, and commit of each side.
+    let
+      root = repoTemp()
+      path = DIRECTORY_ALPHA & "/PROVENANCE.md"
+    defer: removeDir(root)
+    root.writeInto(path, textProvenance("x") & "\nOne.\n\nTwo.\n\nThree.\n")
+    discard root.git("add -A")
+    discard root.git("commit -q -m 'docs(alpha): open record'")
+    discard root.git("checkout -q -b side")
+    root.writeInto(path, readFile(root / path).replace("One.", "Uno."))
+    discard root.git("commit -q -am 'docs(alpha): change first'")
+    let side = root.git("rev-parse HEAD").strip
+    discard root.git("checkout -q main")
+    root.writeInto(path, readFile(root / path).replace("Three.", "Tres."))
+    discard root.git("commit -q -am 'docs(alpha): change third'")
+    let main_side = root.git("rev-parse HEAD").strip
+    discard root.git("merge -q --no-ff --no-edit side")
+    let merged = root.git("rev-parse HEAD").strip
+    for named in [side, main_side, merged]:
+      check findingsPruned(root, @[entry(path, pruned(named))]).len == 0  # record touched
