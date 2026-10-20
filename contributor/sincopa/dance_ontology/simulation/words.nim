@@ -73,7 +73,7 @@ func facingName*(stance: array[Body, Stance]): Option[string] =
   none(string)
 
 
-func whose*(hand: Hand): string =
+func whose(hand: Hand): string =
   ## Name dancer whose arm reading is about.
   if hand.body == Body.One: "lead's" else: "follow's"
 
@@ -97,23 +97,11 @@ func said*(lying: Option[Lying], band: Band): string =
   way & " " & at & held & elbow
 
 
-func dofName*(dof: Dof): string =
-  ## Name freedom that ran out, joint first.
-  case dof
-  of Dof.Extend: "shoulder, behind"
-  of Dof.Across: "shoulder, across"
-  of Dof.Twist: "shoulder, twist"
-  of Dof.Bend: "elbow"
-  of Dof.Wrist: "wrist"
-
-
 func why*(walk: Walk): string =
   ## Say what refuses, in few words that table cell or page can show.
   ##   Short register.  `hold.says` answers same question in whole sentence,
   ##     for viewer that has room for one.
-  ##   Planned way that stops names nothing that gave: no planned pose stands further on.
   if not walk.is_stopped: return "no block"
-  if walk.isPlanned and walk.why == Stop.None: return "no plan goes further"
   case walk.why
   of Stop.None: "holds"
   of Stop.Span: whose(walk.whose) & " span"

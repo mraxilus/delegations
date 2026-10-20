@@ -68,6 +68,8 @@ const SHOWN: seq[Cut] = @[
    true, Band.Torso)]
   ## Eight sweeps worth watching: four holds above, where whole reference is drawn,
   ## and two chains at each lower level, where floor and engine still argue.
+  ##   Reached by `design/floors`, which plans each sweep over crown, and by
+  ##     `tests/suites/test_asks`, which counts them.
 
 const
   PLACE = 4  ## Decimal places kept.  Tenth of millimetre on lengths, and finer

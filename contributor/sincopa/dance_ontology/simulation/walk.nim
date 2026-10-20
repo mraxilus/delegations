@@ -1261,7 +1261,7 @@ proc plannedWay*(
         if turnsHeld(got) > turnsHeld(result): result = got
         if turnsHeld(result) >= abs(most) - 1e-9: break search
   # TODO: Name what ends planned way short of `most`: `Stop.None` with `which` at -1 names
-  #   nothing, so `words.why` and `design/rig` each say in own words that no plan goes further.
+  #   nothing, so `design/rig` says in own words that no plan carries turn further.
   #   Candidates: `Stop` member for plan that ends, which says only that it ends; or stop read
   #     off plan's terms one solve past its end, which says which term gave, but that solve broke
   #     several terms at once, each by about 1 mm, on cross-name chain, 2026-10-12.

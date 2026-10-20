@@ -1,14 +1,15 @@
 ## Record every kept file of simulation in one pool: rig viewer's stills and sweeps, reference's
-## badges, turns laws read, rig suite's answers and report's readings.  Every job of five
-## recordings is in one queue, slowest first, and each result is kept as it comes, so restarted
-## run asks only what has no result yet.
+## badges, rig suite's answers and report's readings.  Every job of four recordings is in one
+## queue, slowest first, and each result is kept as it comes, so restarted run asks only what
+## has no result yet.
 ##
 ##   One queue: worker takes next job as it ends last one, so no worker waits while another
 ##     still holds several.  Each verb split its own jobs by worker, `k`, `k + cores` onward,
 ##     and one worker held rig 5.7 h where three ended at 3.1 to 3.8 h; modelled then took 3.0
 ##     h after it.  Estimated 2026-10-03 from job times of one run.
-##   One run asks each question once (`walk.keepAnswers`): report sweeps holds `design/turns`
-##     sweeps, and rig and modelled stand same stills, so each reads what first job answered.
+##   One run asks each question once (`walk.keepAnswers`): report walks every hold rig sweeps,
+##     so rig takes each walk report walked, and rig and modelled stand same stills, so each reads
+##     what first job answered.
 ##   Slowest first (`SLOWEST`): last job to start is short, so every worker ends near same
 ##     time.  Order is measured and goes stale as simulation changes; wrong order costs time
 ##     and never changes answer.
@@ -24,8 +25,8 @@
 ##     strings read by four threads raced on its counts, and verb died inside engine every
 ##     other run.
 ##
-##   Usage: record [rig] [modelled] [turns] [answers] [verdicts]   writes kept file of each
-##                                    recording named, or of all five
+##   Usage: record [rig] [modelled] [answers] [verdicts]   writes kept file of each
+##                                    recording named, or of all four
 
 {.experimental: "strictFuncs".}
 
@@ -35,12 +36,12 @@ import std/[algorithm, atomics, cpuinfo, json, os, strformat, strutils, tables, 
             typedthreads]
 
 import ../simulation/[answers, readings, verdicts, walk]
-import ./[modelled, rig, turns]
+import ./[modelled, rig]
 
 
 type
   Recording* {.pure.} = enum  ## Kept file one job belongs to.
-    Rig, Modelled, Turns, Answers, Verdicts
+    Rig, Modelled, Answers, Verdicts
 
   Task* = tuple[recording: Recording, index: int]
     ## One job, by its recording and its place in that recording's own list.
@@ -56,7 +57,7 @@ const SLOWEST* = ["rig D01", "modelled hc_la", "rig C01", "rig C02", "modelled h
   ##   152 s, modelled pc_la 88 s and pw_la_0 76 s.  Each still plans 32 paths on every core
   ##   (`walk.planAhead`), which modelled's planned questions find kept.  C07 and C06 take C01
   ##   and C02 reflected (`walk.twinOf`), and D07 takes D01's paths kept, so they follow in order
-  ##   of `wanted`, as every other job does: turns first, which walk every distance.
+  ##   of `wanted`, as every other job does: report first, whose sweeps walk every distance.
 
 # Mutable and global: thread takes one argument, so workers read queue and what answers it here.
 var
@@ -128,9 +129,6 @@ proc nameOf(task: Task): string =
   case task.recording
   of Recording.Rig: "rig " & nameOf(jobs()[task.index])
   of Recording.Modelled: "modelled " & questions()[task.index].key
-  of Recording.Turns:
-    let sweep = sweeps()[task.index]
-    &"turns {sweep.hold} {sweep.word}"
   of Recording.Answers: &"answers {tasks()[task.index]}"
   of Recording.Verdicts:
     if task.index < READ_RUNGS.len: &"verdicts rung {keyOf(READ_RUNGS[task.index])}"
@@ -149,7 +147,6 @@ proc askedOf(task: Task): string =
       echo &"{nameOf(task)}: {note} ({epochTime() - start:.0f} s)"
       return
     of Recording.Modelled: result = $answered(questions()[task.index])
-    of Recording.Turns: result = sweepText(sweeps()[task.index])
     of Recording.Answers: result = taskText(tasks()[task.index])
     of Recording.Verdicts:
       result = (if task.index < READ_RUNGS.len: rungText(READ_RUNGS[task.index])
@@ -163,7 +160,7 @@ proc isKept(path, stamp: string): bool =
 
 
 proc main() =
-  ## Record each recording named on command line, or all five, from one queue, and assemble
+  ## Record each recording named on command line, or all four, from one queue, and assemble
   ## each kept file.
   let asked = commandLineParams()
   var wanted: seq[Recording]
@@ -174,27 +171,22 @@ proc main() =
         wanted.add recording
         is_known = true
     if not is_known:
-      quit("Usage: record [rig] [modelled] [turns] [answers] [verdicts]; got `" &
+      quit("Usage: record [rig] [modelled] [answers] [verdicts]; got `" &
            asked.join(" ") & "`.", 2)
   if wanted.len == 0:
-    # Sweeps of `design/turns` first: report and rig viewer sweep same holds, and find
-    # them kept.  Report's rungs next, which nothing else asks.  Rig's stills before
-    # modelled's, which ask same stills again.
-    wanted = @[Recording.Turns, Recording.Verdicts, Recording.Rig, Recording.Answers,
-               Recording.Modelled]
+    # Report first: it walks every hold rig sweeps, so rig takes those walks kept.  Rig's
+    # stills before modelled's, which ask same stills again.
+    wanted = @[Recording.Verdicts, Recording.Rig, Recording.Answers, Recording.Modelled]
   (READ_SWEEPS, READ_RUNGS) = verdicts.wanted()
   let
-    stamps: array[Recording, string] = [rigStamp(), modelledStamp(), turnsStamp(),
-                                         answers.stamp(), physics()]
-    counts: array[Recording, int] = [jobs().len, questions().len, sweeps().len, tasks().len,
+    stamps: array[Recording, string] = [rigStamp(), modelledStamp(), answers.stamp(), physics()]
+    counts: array[Recording, int] = [jobs().len, questions().len, tasks().len,
                                      READ_RUNGS.len + READ_SWEEPS.len]
     root = "build" / "record"
-  # Turns keep no stamp, so are recorded every time; report renders every time, and reads
-  # only readings it lacks.
+  # Report renders every time, and reads only readings it lacks.
   var is_due: array[Recording, bool]
   is_due[Recording.Rig] = not isKept(KEPT_RIG, stamps[Recording.Rig])
   is_due[Recording.Modelled] = not isKept(KEPT_MODELLED, stamps[Recording.Modelled])
-  is_due[Recording.Turns] = true
   is_due[Recording.Answers] = not isKept(answers.KEPT, stamps[Recording.Answers])
   is_due[Recording.Verdicts] = true
   var
@@ -225,7 +217,6 @@ proc main() =
       var told = initOrderedTable[string, bool]()
       for i, question in questions(): told[question.key] = texts[i] == "true"
       writeFile(KEPT_MODELLED, kept(stamps[recording], told))
-    of Recording.Turns: writeFile("design/turns.json", bridged(texts))
     of Recording.Answers: writeFile(answers.KEPT, answers.assembled(texts))
     of Recording.Verdicts:
       writeFile(
