@@ -2,9 +2,9 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, sequtils, strutils, unittest]
+import std/[algorithm, os, sequtils, strutils, unittest]
 import ../../../knoller/src/knoller
-import ../../src/[audit, provenance]
+import ../../src/[audit, domains, provenance]
 import ./fixtures
 
 
@@ -104,3 +104,36 @@ suite "Audit":
       "Line ends with whitespace (VIII.5).",
       "Comment holds article (VI.5); got `the`.",
     ]  # both checks ran
+
+
+  test "Pruned row reads history of record across move":
+    # Case held: `findingsPruned` read `git log -- <path>` without `--follow`, so move of
+    #   `rga_visualiser` to `pga_visualiser` lost commits of old path, and true row naming
+    #   `70ced35e` was finding (#631). Domain: commit before move, move itself, edit after it,
+    #   and commit that never touched record.
+    func pruned(named: string): string =
+      textProvenance("y").replace("| Review |", "| Pruned | " & named[0..7] & " |\n| Review |")
+
+    let
+      root = repoTemp()
+      after = CONTRIBUTOR & "/ronri/beta/PROVENANCE.md"
+    defer: removeDir(root)
+    root.writeInto(DIRECTORY_ALPHA & "/PROVENANCE.md", textProvenance("x"))
+    discard root.git("add -A")
+    discard root.git("commit -q -m 'docs(alpha): open record'")
+    let opened = root.git("rev-parse HEAD").strip
+    root.writeInto("README.md", "# r\n")
+    discard root.git("add -A")
+    discard root.git("commit -q -m 'docs(curator): add readme'")
+    let elsewhere = root.git("rev-parse HEAD").strip
+    discard root.git("mv " & DIRECTORY_ALPHA & " " & CONTRIBUTOR & "/ronri/beta")
+    discard root.git("commit -q -m 'chore(curator): move alpha to beta'")
+    let moved = root.git("rev-parse HEAD").strip
+    root.writeInto(after, textProvenance("y"))
+    discard root.git("commit -q -am 'docs(beta): change stamp'")
+    let edited = root.git("rev-parse HEAD").strip
+    for named in [opened, moved, edited]:
+      check findingsPruned(root, @[entry(after, pruned(named))]).len == 0  # record touched
+    check findingsPruned(root, @[entry(after, pruned(elsewhere))]).mapIt(it.message) == @[
+      "`Pruned` must name commit that touched this record; got `" & elsewhere[0..7] & "`.",
+    ]  # commit beside record still finding
