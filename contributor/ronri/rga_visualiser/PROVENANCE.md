@@ -2040,28 +2040,38 @@ Rejected: `orbit` for every drag, which swings the eye round the pivot where a r
 Rejected: a rate, which turns the sight by an angle the screen does not show. On a phone a 60 by 40
 px drag carries the picture of free aim 60.4 by 41.0 px. A rate carried it 542.4 by 411.8.
 
-**A left drag turns about level axes, so it leaves no roll.** Turning about the camera's own axes
-carries roll round with it. The roll that a closed loop leaves is the solid angle that loop
-encloses. A loop of 0.3 radians leaves 0.0813, against 0.0822 enclosed: 4.7 degrees for each loop,
-and 18.6 over four. That is the geometry of transport, not a fault, and `look` and `orbit` carry
-exactly the same amount. Held keys keep it, with Q and E beside them.
+**Turns about the camera's own axes carry roll round with them.** The roll that a closed loop leaves
+is the solid angle that loop encloses. A loop of 0.3 radians leaves 0.0813, against 0.0822 enclosed:
+4.7 degrees for each loop, and 18.6 over four. That is the geometry of transport, not a fault, and
+`look` and `orbit` carry exactly the same amount. Held keys keep it, with Q and E beside them.
 
-A finger has no roll key beside it and wanders in curves, and both mice drag as a finger does. So
-`turnFollowing` turns about world up and the level axis across the sight, and keeps any roll that a
-twist or Q and E set. Each axis is the world axis nearest the camera's own, signed from the camera.
-So the camera passes over the top, upside down on the far side, and the picture still follows the
-drag. Rejected: the 0.008 radians for each pixel of the window about the camera's axes, since both
-front-ends drag alike by the ruling of the Architect.
+**A left drag in free flight turns about level axes, so it leaves no roll.** A finger has no roll
+key beside it and wanders in curves, and both mice drag as a finger does. So free aim turns about
+world up and the level axis across the sight. It keeps any roll that a twist or Q and E set. Each
+axis is the world axis nearest the camera's own, signed from the camera. So the view passes under
+its feet, upside down on the far side, and the picture still follows the drag.
 
-Rejected: the roll put back after each turn about the camera's own axes, which leaves the sight
-sunk. On a 390 by 844 page in Chromium on 2026-09-24, over 2,000 turns of each, a free-aim turn took
-0.45 to 0.48 ms. An orbit turn took 0.63 to 0.72 ms.
+**A left drag with a selection turns as a trackball, alike at every height.** By the ruling of the
+Architect on 2026-10-18, `orbitCarrying` turns about the pivot by the least turn that carries one
+held point onto the other. Its axis is square to both points (`turnCarrying`). So a drag turns the
+view the same way, as the camera itself sees it, at every height and heading, and over the top. A
+loop of the drag leaves roll by the solid angle that its held points enclose, as held keys do. Q,
+E and Home set the view level again.
 
-**`turnsCarrying` holds what a left drag took.** It pitches about the level axis until one direction
-has the height of the other, then yaws about world up until their bearings meet. Of the two pitches
-that reach that height, it takes the pair that turns least, so a drag that comes back brings the
-camera back. Free aim holds the sky, and `lookCarrying` turns about the eye. Near the pole, a height
-out of reach lets what the drag holds slip.
+Rejected: the turntable about world up and the level axis for the orbit. Near the pole, world up
+lies along the sight, so a drag spun the picture about the middle and the point held slipped.
+Rejected: the 0.008 radians for each pixel of the window about the camera's axes, since both
+front-ends drag alike by the ruling of the Architect. Rejected: the roll put back after each turn
+about the camera's own axes, which leaves the sight sunk.
+
+On a 390 by 844 page in Chromium on 2026-09-24, over 2,000 turns of each, a free-aim turn took 0.45
+to 0.48 ms. An orbit turn of the turntable took 0.63 to 0.72 ms. The trackball's turn is unmeasured.
+
+**`turnsCarrying` holds what a free-aim drag took.** It pitches about the level axis until one
+direction has the height of the other, then yaws about world up until their bearings meet. Of the
+two pitches that reach that height, it takes the pair that turns least, so a drag that comes back
+brings the camera back. Free aim holds the sky, and `lookCarrying` turns about the eye. Near the
+pole, a height out of reach lets what the drag holds slip.
 
 Orbit holds a point on a sphere about the pivot, since the pivot itself never moves under orbit.
 `pointHeld` places it on the ray, on the near side of the sphere while the ray passes within
@@ -2110,8 +2120,12 @@ radians and a factor of 1.004 for each pixel, which held the point under the cur
 
 - a left drag looks about the eye with nothing picked, and orbits the pivot with a pick;
 - one loop of `look` or `orbit` leaves the solid angle it encloses, and four leave 0.324 radians;
-- a drag's loop of pixels leaves none of it in either state, keeps the reader's roll, and closes;
+- a free-aim drag's loop of pixels leaves no roll, keeps the reader's roll, and closes;
+- an orbit drag's loop turns the view about the point it holds, by the solid angle it encloses;
 - a finger's orbit keeps the point on its sphere under it, from three stances and two reaches;
+- one step of an orbit drag turns by the angle between the point taken and the point reached;
+- an orbit drag turns alike, as the camera sees it, from level to straight down and over the top;
+- it does so at two headings and with a rolled view, and keeps the point taken under the pointer;
 - a finger's free aim keeps the sky it took under it, from three stances, in 1 step or 16;
 - an orbit passes over the top and a look under its feet, and a drag goes through the pole;
 - a right drag carries a point held at 2.5, 19 and 4,000 units to its pixel, within 0.01 px;

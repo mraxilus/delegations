@@ -955,11 +955,11 @@ func turnFollowing*(
 ) =
   ## Turn camera by left drag, finger's or either mouse's, from pixel it left to pixel it
   ## reached.
-  ##   Both states turn as turntable does, about world up and level across, so neither
-  ##   leaves roll: touch has no roll key beside it, finger wanders in curves, and both
-  ##   mice drag as finger does. Roll reader set by twist or by Q and E survives.
-  ##     Not `look` and `orbit` about camera's own axes, which carry roll round by solid
-  ##     angle drag encloses: 0.3 radian loop leaves 4.7 degrees.
+  ##   Free flight turns as turntable does, about world up and level across, so it leaves
+  ##   no roll: touch has no roll key beside it, and finger wanders in curves.
+  ##   Orbit turns as trackball does, by least turn about pivot, by ruling of 2026-10-18:
+  ##   it turns alike at every height, over top too. Its loop leaves roll by solid angle it
+  ##   encloses, as held keys' `orbit` does; see `camera.orbitCarrying`.
   ##   Both carry what finger holds with finger, pixel for pixel, and drag that comes back
   ##   brings camera back. Not rate: no rate matches field of view at every pixel.
   ##   Free flight holds sky; see `camera.lookCarrying`.
@@ -979,7 +979,6 @@ func turnFollowing*(
   camera.orbitCarrying(
     held = pointHeld(eye, pivot, left, radius) - pivot,
     under = pointHeld(eye, pivot, reached, radius) - pivot,
-    frame = frame,
     pivot = pivot,
   )
 
