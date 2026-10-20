@@ -845,7 +845,7 @@ a copy from two different faces.
 - Cost: a whole face is 610 to 780 KB of TrueType, where its Latin subset is about 13 KB. A page
   that inlines it as base64 carries about a third more again.
 - One digest reader serves both fetches. `fetchAsset` reads the bytes that it fetched through
-  `digestOf` of knoller, so the parse that the suites of knoller test also guards the store.
+  `digest` of knoller, so the parse that the suites of knoller test also guards the store.
 - Verified by `suites/test_assets.nim`. Verified by hand with the built `binaries/koch
   fetch-assets` on 2026-10-04, in the cloud container of Claude Code, into an empty store.
   Three whole faces, 2.0 MB, fill it in **1.5 s**. The same call warm takes **0.002 s**, and
@@ -1441,7 +1441,7 @@ acronym rule of V.9 stays here (`checkAcronyms`, D2 of #572). An acronym is a ru
 capitals inside a camel or Pascal name. It passes only where the root or the project glossary
 lists it, as a symbol under `## Standards` or as a term.
 
-- `exemptionsOf` reads those two glossaries for each path. The static pass gives their words to
+- `exemptions` reads those two glossaries for each path. The static pass gives their words to
   the acronym check, and to the check of abbreviations of knoller (V.6). The jargon list of V.6
   passes too.
 - A SCREAMING name is all capitals, so its acronyms cannot be told from words and hold by
@@ -1491,11 +1491,11 @@ needs no lock. The record of knoller holds the design of those fixers and checks
 - Each of those checks names a rule of knoller with an id of its own, and `CITATIONS` holds its
   article. What reads this repository stays here: the glossaries, the paths of drive code, the
   exemption of `LICENSE.md`, machine paths and `tsconfig.json`.
-- `findingOf` renders each report of knoller as a finding. A rewrite renders as its rule and the
+- `toFinding` renders each report of knoller as a finding. A rewrite renders as its rule and the
   article that `CITATIONS` holds for it, so `koch fix` prints `expression spacing (X.9) fixed`.
   Verified by `suites/test_findings.nim`.
 - `kinds.nim` maps each kind of Nim onto a dialect of knoller, a module, a script or a package
-  (`dialectOf`). `fixes.nim` and the static pass both read that map.
+  (`dialect`). `fixes.nim` and the static pass both read that map.
 - Knoller also reads the pin of a nimble file and serves the compiler of each pin. Audit imports
   both, and keeps the policy of duty 8 (`## Toolchain`).
 - Rejected: knoller copied first and audit switched later. The code would stand twice, and the
@@ -1503,7 +1503,7 @@ needs no lock. The record of knoller holds the design of those fixers and checks
 
 **The audit cites the article of each message of knoller, where its sentence ends.** A message of
 a check of knoller names no article, and reads `<sentence>; got <value>.`, or `<sentence>.` where
-it gives no value (D2 a of #505). `findingOf` puts the article that `CITATIONS` holds for the rule
+it gives no value (D2 a of #505). `toFinding` puts the article that `CITATIONS` holds for the rule
 before `; got `, or before the closing period. So `koch check` prints
 ``Bracket import is alphabetised (X.5); got `strutils, os`.``.
 
@@ -1576,8 +1576,8 @@ reads as one that holds a comment, and stays as written.
   as written. `koch fix` prints it with its line, and `checkFormatting` reports it alone.
 - `koch fix` prints a warning for each fence that it reads, with the lines that the fence keeps.
   The warning names each rule that breaks inside the fence, with its count and its first line, as
-  knoller reads it (`heldOf`). So no held line goes unseen, and none is written. A warning changes
-  no exit code.
+  knoller reads it (`checkFenceHeld`). So no held line goes unseen, and none is written. A warning
+  changes no exit code.
 - Rejected: each fixer told of the fence, and each rewrite tested against it. Every fixer would
   carry the fence, and the masking holds it in one place.
 - Cost: a skipped fixer is skipped whole for that file, and not for its one rewrite.
@@ -1622,9 +1622,9 @@ groups with the separator it reads, and a trailing separator goes only where no 
   past `LINE_MAX`. `ROUNDS_MAX` is three, and the tree settles in two. Knoller runs the rounds
   again where a line stays wide, and holds each line that no wrap fits (`## Wraps` of its record).
 - A source that the fixers do not settle keeps the edits of the semantic pass and of the dead
-  exports alone. `koch fix` prints a warning with the message of knoller (`unsettledOf`). It cites
+  exports alone. `koch fix` prints a warning with the message of knoller (`warnUnsettled`). It cites
   no article, because the fault is in the tool (D1 a of #572). `suites/test_fixes.nim` holds the
-  warning of `unsettledOf` for a fix built by hand, since no source in the suite leaves the fixers
+  warning of `warnUnsettled` for a fix built by hand, since no source in the suite leaves the fixers
   unsettled.
 - Verified by `suites/test_fixes.nim`: one source that breaks each layout rule settles in one
   run. Every check then reports none of it, and a second run writes nothing.
@@ -1906,7 +1906,7 @@ includer of a file is read among the Nim files of the tree.
 
 **`koch fix` renames through the planner of knoller, with the scope and the words of the
 audit.** `fixes.nim` reads each rename that the names check asks, with the words that the
-glossaries admit (`exemptionsOf`). It plans each one across the project of the declaring file and
+glossaries admit (`exemptions`). It plans each one across the project of the declaring file and
 the root files, which import across projects. A rename that would write a file that the run
 leaves out is refused, and the finding stays for the hand.
 

@@ -97,9 +97,9 @@ suite "Tokens":
     var opens: seq[int]
     for k, t in found:
       if t.spelling(source) == "(": opens.add k
-    check found.signatureOf(partners, opens[0], source) == 0  # named, generic, exported
+    check found.signature(partners, opens[0], source) == 0  # named, generic, exported
     check found.isCallOpen(partners, opens[1], source)  # `g(`
-    check found.signatureOf(partners, opens[2], source) >= 0  # lambda `proc (`
+    check found.signature(partners, opens[2], source) >= 0  # lambda `proc (`
     check not found.isCallOpen(partners, opens[3], source)  # `cast[int](` is no call
     check not found.isCallOpen(partners, opens[4], source)  # space before `(`: tuple argument
 

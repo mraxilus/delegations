@@ -62,7 +62,7 @@ proc readTree*(root: string): Tree =
   ## Read every listed file whose kind is registered; unregistered entries carry no content.
   for path in root.listPaths:
     let
-      kind = path.kindOf
+      kind = path.classify
       content = if kind.isSome: readFile(root / path) else: ""
     result.add Entry(path: path, kind: kind, content: content)
 

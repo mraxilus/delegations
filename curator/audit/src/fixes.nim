@@ -16,7 +16,7 @@
 ##     pin, whose glyphs 2.2.12 lexes as names. Pin nothing serves proves nothing, and run
 ##     prints why.
 ##   Fixer whose rule needs more than text of one file runs first, once, on source as given,
-##     from what `contextOf` reads: rename of abbreviation (V.6), and to case of name's kind
+##     from what `initContext` reads: rename of abbreviation (V.6), and to case of name's kind
 ##     (V.1, V.11), across files, planned whole or refused whole (`names.nim`, `rewrites.nim`),
 ##     one rename where both rules ask at one name; and type conversion `x.T`
 ##     (`conversions.nim`), each from semantic pass (`symbols.nim`); then dead export of checker
@@ -78,7 +78,7 @@ func checkFormatting*(path, source: string; kind: Kind): seq[Report] =
   ## Report each rule `koch fix` clears in full in source of Nim syntax, as knoller reads its
   ##   dialect (`checkFormatting` there); other kind is read by none.
   if kind.rule.syntax != Syntax.Nim: return
-  checkFormatting(path, source, kind.dialectOf)
+  checkFormatting(path, source, kind.dialect)
 
 
 func checkFormatting*(tree: Tree): seq[Finding] =
@@ -87,7 +87,7 @@ func checkFormatting*(tree: Tree): seq[Finding] =
   let locked = tree.nimblesLocked
   for e in tree:
     if e.kind.isNone or e.path in locked: continue
-    result.add checkFormatting(e.path, e.content, e.kind.get).findingsOf
+    result.add checkFormatting(e.path, e.content, e.kind.get).toFindings
 
 
 func entriesNamed*(
@@ -114,7 +114,7 @@ func isKindNim(e: Entry): bool =
   e.kind.isSome and e.kind.get.rule.has_guide
 
 
-func scopeOf(tree: Tree, rename: Rename): seq[(string, string)] =
+func scopeRename(tree: Tree, rename: Rename): seq[(string, string)] =
   ## Read Nim files rename may reach: declaring file alone for local binding, which no other
   ##   module names; else its project, and root files, which import across projects (`koch.nim`).
   let directory = rename.path.split('/').directoryProject
@@ -125,7 +125,7 @@ func scopeOf(tree: Tree, rename: Rename): seq[(string, string)] =
       result.add (e.path, e.content)
 
 
-func renamesOf(
+func renames(
   tree: Tree, entries: openArray[Entry], locked: openArray[string]
 ): seq[(Rename, string)] =
   ## Read rename of each declaration in entries, as names check reads it with words glossaries
@@ -139,7 +139,7 @@ func renamesOf(
   for e in entries:
     if not e.isKindNim or e.path in locked: continue
     let
-      exempt = glossaries.exemptionsOf(e.path)
+      exempt = glossaries.exemptions(e.path)
       recased = renamesCase(e.content, exempt)
     for (line, column, name, renamed) in renamesAbbreviation(e.content, exempt):
       if recased.anyIt(it.line == line and it.column == column): continue
@@ -175,8 +175,8 @@ func queriesSemantic*(
   var asked: seq[Query]
   for e in entries:
     if e.isKindNim and e.path notin locked: asked.add queryConversion(e.path, e.content)
-  for (rename, refusal) in renamesOf(tree, entries, locked):
-    if refusal.len == 0: asked.add rename.queriesOf(tree.scopeOf(rename))
+  for (rename, refusal) in renames(tree, entries, locked):
+    if refusal.len == 0: asked.add rename.queries(tree.scopeRename(rename))
   for query in asked:
     if query.sites.len == 0 and query.names.len == 0: continue
     var k = result.mapIt(it.path).find(query.path)
@@ -207,10 +207,10 @@ proc checkConversions*(
       continue
     for e in tree:
       if e.path == answer.path:
-        result.found.add checkConversions(e.path, e.content, answer).findingsOf
+        result.found.add checkConversions(e.path, e.content, answer).toFindings
 
 
-func contextOf*(
+func initContext*(
   tree: Tree,
   entries: openArray[Entry] = [],
   answers: openArray[Answer] = [],
@@ -229,13 +229,13 @@ func contextOf*(
   result.dead = exportsDead(paths, sources, suites).deduplicate
   for answer in answers: result.answers[answer.path] = answer
   let named = entries.mapIt(it.path)
-  for (rename, refusal) in renamesOf(tree, entries, locked):
+  for (rename, refusal) in renames(tree, entries, locked):
     if refusal.len > 0:
       result.plans.add Plan(rename: rename, refusal: refusal)
       continue
-    let scope = tree.scopeOf(rename)
+    let scope = tree.scopeRename(rename)
     var fenced = initTable[string, seq[int]]()
-    for (path, source) in scope: fenced[path] = source.fenceOf.lines
+    for (path, source) in scope: fenced[path] = source.fence.lines
     var plan = planRename(rename, scope, result.answers, fenced)
     for path in plan.edits.keys:
       if plan.refusal.len > 0: break
@@ -244,7 +244,7 @@ func contextOf*(
     result.plans.add plan
 
 
-func unsettledOf*(path: string, fix: Fix): seq[Finding] =
+func warnUnsettled*(path: string, fix: Fix): seq[Finding] =
   ## Warn that knoller's fixers leave source as written, since they do not settle it: message
   ##   knoller gives (`Fix.unsettled`), whole file, and no article, since fault is tool's and
   ##   no rule of style; none where source settles. `koch fix` prints it after `warning:`.
@@ -257,7 +257,7 @@ func fixSource(
   ## Write edits semantic pass and tree settle, off fenced lines, then fix rest by knoller
   ##   (`formatted`); none of those edits moves line, so every report names line of source as
   ##   given. Source knoller cannot settle keeps those edits alone, with warning that says why
-  ##   (`unsettledOf`), since rename planned whole reaches other files too.
+  ##   (`warnUnsettled`), since rename planned whole reaches other files too.
 
   # Write edits semantic pass settles, off fenced lines; no line moves, so fence holds.
   var renamed: seq[Edit]
@@ -265,13 +265,13 @@ func fixSource(
     if plan.refusal.len > 0 or path notin plan.edits: continue
     renamed.add plan.edits[path]
     for (file, line) in plan.lines:
-      if file == path: result.fixed.add initReport(path, line, plan.rename.rule).findingOf
+      if file == path: result.fixed.add initReport(path, line, plan.rename.rule).toFinding
   var base = source.applied(renamed)
   if path in context.answers:
     let (edits, reports) =
       editsConversion(path, source, context.answers[path], fence.lines, renamed)
     base = source.applied(renamed & edits)
-    result.fixed.add reports.findingsOf
+    result.fixed.add reports.toFindings
 
   # Drop `*` of dead export, fenced lines read as `FENCED`; fix moving them is skipped.
   let dead = context.dead.filterIt(it[0] == path).mapIt(it[1])
@@ -282,14 +282,14 @@ func fixSource(
       result.fixed.add step.fixed
 
   # Run chain of knoller's fixers until source settles; unsettled source keeps edits above.
-  let fix = formatted(path, base, kind.dialectOf, context.proofs.getOrDefault(path))
+  let fix = formatted(path, base, kind.dialect, context.proofs.getOrDefault(path))
   result.source = fix.source
   result.asked = fix.asked
-  result.fixed.add fix.fixed.findingsOf
-  result.warned = path.unsettledOf(fix)
+  result.fixed.add fix.fixed.toFindings
+  result.warned = warnUnsettled(path, fix)
 
 
-func partOf(e: Entry; locked: openArray[string]; context: Context): Fixed =
+func fixEntry(e: Entry; locked: openArray[string]; context: Context): Fixed =
   ## Fix one entry as `fixEntries` does, scope left unread.
   if e.kind.isNone or not e.kind.get.rule.has_guide: return
   if e.path in locked:
@@ -299,14 +299,14 @@ func partOf(e: Entry; locked: openArray[string]; context: Context): Fixed =
       "Nimble file whose copy `" & FILE_LOCK & "` holds stays as written; got its copy there.",
     )
     return
-  let fence = e.content.fenceOf
+  let fence = e.content.fence
   if fence.fault >= 0:
-    result.left.add faultOf(e.path, fence).findingsOf
+    result.left.add checkFence(e.path, fence).toFindings
     return
   let proofs = context.proofs.getOrDefault(e.path)
-  result.warned.add heldOf(e.path, e.content, e.kind.get.dialectOf, proofs).findingsOf
+  result.warned.add checkFenceHeld(e.path, e.content, e.kind.get.dialect, proofs).toFindings
   if fence.lines.len > 0:
-    for source in e.content.questionsOf(proofs): result.asked.add (e.path, source)
+    for source in e.content.questions(proofs): result.asked.add (e.path, source)
   for plan in context.plans:
     if plan.rename.path != e.path or plan.refusal.len == 0: continue
     result.left.add finding(
@@ -363,22 +363,22 @@ func fixEntries*(
   ## Fix each entry: entries to write, one report per rewrite, scope findings, files left as
   ##   written with reason (nimble file `locked` names, fence fix cannot read), and one warning
   ##   for each fence, which keeps its lines as written, naming each rule broken among them
-  ##   (`heldOf`), and for each file knoller's fixers do not settle (`unsettledOf`). `context`
-  ##   carries what tree tells fixers across modules (`contextOf`), and answers of parser; each
-  ##   source chain asks and no answer holds is in `asked`, source as given too where fence
-  ##   holds lines, since its warning reads it.
+  ##   (`checkFenceHeld`), and for each file knoller's fixers do not settle (`warnUnsettled`).
+  ##   `context` carries what tree tells fixers across modules, as `initContext` reads it,
+  ##   and answers of parser; each source chain asks and no answer holds is in `asked`, source
+  ##   as given too where fence holds lines, since its warning reads it.
   ##   Where any path to write lies outside branch scope, nothing is written or reported fixed.
-  scoped(branch, entries.mapIt(it.partOf(locked, context)))
+  scoped(branch, entries.mapIt(it.fixEntry(locked, context)))
 
 
 func pinFor(tree: Tree, path: string): string =
   ## Read pin of project holding path, driver's for file at root; empty where none is pinned.
   let directory = path.split('/').directoryProject
-  tree.pinOf(if directory.len == 0: DIRECTORY_DRIVER else: directory).get("")
+  tree.pin(if directory.len == 0: DIRECTORY_DRIVER else: directory).get("")
 
 
 proc answered*(
-  context: var Context; tree: Tree; asked: openArray[(string, string)]; provers: ProverOf
+  context: var Context; tree: Tree; asked: openArray[(string, string)]; provers: ProversPin
 ): seq[string] =
   ## Ask parser of each pin what `asked` holds and no answer holds yet, one run for each pin on
   ##   all its sources, and hold answers by path; return why each run proved nothing, empty
@@ -418,7 +418,7 @@ proc fixProven*(
   entries: openArray[Entry];
   locked: openArray[string];
   context: Context;
-  provers: ProverOf,
+  provers: ProversPin,
 ): tuple[fix: Fixed, failures: seq[string]] =
   ## Fix entries as `fixEntries` does, ask parser of each pin what fix asked, and fix again, at
   ##   most `ASKS_MAX` times; each run that proved nothing gives one failure, for warning, led
@@ -427,7 +427,7 @@ proc fixProven*(
   ##   so each round fixes again only entries that asked.
   var
     known = context
-    parts = entries.mapIt(it.partOf(locked, known))
+    parts = entries.mapIt(it.fixEntry(locked, known))
   for ask in 1 .. ASKS_MAX:
     let asked = parts.mapIt(it.asked).concat
     if asked.len == 0: break
@@ -435,5 +435,5 @@ proc fixProven*(
       let line = Rule.ParenthesesNeedless.id & ": " & failure
       if line notin result.failures: result.failures.add line
     for k, e in entries:
-      if parts[k].asked.len > 0: parts[k] = e.partOf(locked, known)
+      if parts[k].asked.len > 0: parts[k] = e.fixEntry(locked, known)
   result.fix = scoped(branch, parts)

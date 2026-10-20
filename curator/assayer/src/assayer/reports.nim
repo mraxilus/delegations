@@ -6,12 +6,12 @@
 ##     reason is lowercase with no period, after rustc.
 ##   Run line opens with status word, `PASS` or `FAIL`, then duration, file, backend and
 ##     configuration, each in column of its own (`lineRun`): eye scans first column, and `FAIL`
-##     greps, as testament means its `FAIL:`. Widths come from plan (`widthsOf`), so columns align
+##     greps, as testament means its `FAIL:`. Widths come from plan (`widths`), so columns align
 ##     from first line however lines arrive. Word, not symbol, so text reads same without color.
 ##   Failure prints after every run line, as pytest prints it, so list stays one line for each run
 ##     (`linesFailure`): header naming run and reason, excerpt of output of step that failed,
 ##     command that reproduces it, and log holding whole output (`textLog`).
-##   Excerpt drops what explains nothing (`excerptOf`): hints and progress dots of compiler, frames
+##   Excerpt drops what explains nothing (`excerpt`): hints and progress dots of compiler, frames
 ##     of traceback outside working directory, tests `std/unittest` passed or skipped, and suite
 ##     left empty. Then it keeps last
 ##     `LINES_EXCERPT_MAX` lines, since compiler and program both end on their error, and says how
@@ -76,7 +76,7 @@ func relative*(text, root: string): string =
 
 func shown*(path, root: string): string =
   ## Write path of test file as report shows it: normalized, and relative where below `root`.
-  path.absoluteOf(root).relative(root)
+  path.toAbsolute(root).relative(root)
 
 
 func seconds*(duration: Duration): string =
@@ -84,7 +84,7 @@ func seconds*(duration: Duration): string =
   formatFloat(float(duration.inMilliseconds) / 1000, ffDecimal, 1) & "s"
 
 
-func widthsOf*(runs: openArray[Run], root: string): Widths =
+func widths*(runs: openArray[Run], root: string): Widths =
   ## Read widths of file and backend columns: widest of each among runs.
   for run in runs:
     result.file = max(result.file, run.file.shown(root).runeLen)
@@ -106,11 +106,11 @@ func lineRefusal*(path, refusal, root: string; as_color = false): string =
 func lineRun*(run: Run, outcome: Outcome, widths: Widths, root: string, as_color = false): string =
   ## Write line of run: status, duration, file, backend, then configuration where it has one.
   let status =
-    if run.failureOf(outcome).len == 0: painted(STATUS_PASS, CODE_GREEN, as_color)
+    if run.failure(outcome).len == 0: painted(STATUS_PASS, CODE_GREEN, as_color)
     else: painted(STATUS_FAIL, CODE_BOLD & CODE_RED, as_color)
   [
     status,
-    painted(outcome.durationOf.seconds.align(WIDTH_DURATION), CODE_DIM, as_color),
+    painted(outcome.duration.seconds.align(WIDTH_DURATION), CODE_DIM, as_color),
     run.file.shown(root).padded(widths.file),
     ($run.target).padded(widths.target),
     run.configuration,
@@ -142,7 +142,7 @@ func isNoise(line: string): bool =
       s.startsWith("[OK] ") or s.startsWith("[SKIPPED] ")
 
 
-func excerptOf*(output, root: string): tuple[lines: seq[string], cut: int] =
+func excerpt*(output, root: string): tuple[lines: seq[string], cut: int] =
   ## Read lines of output that explain failure, at most `LINES_EXCERPT_MAX` from its end, common
   ##   indent taken off; `cut` counts lines left above.
   ##   Noise goes (`isNoise`), then each suite left empty, i.e. next line with text opens suite
@@ -179,16 +179,16 @@ func linesFailure*(run: Run, outcome: Outcome, root: string, as_color = false): 
   ##   Refused run ran nothing, so its block is header alone.
   let name = [run.file.shown(root), $run.target, run.configuration].join(" ").strip
   result.add painted(STATUS_FAIL, CODE_BOLD & CODE_RED, as_color) & " " & name & ": " &
-      run.failureOf(outcome).relative(root)
+      run.failure(outcome).relative(root)
   let step = outcome.execution.get(outcome.compile)
   if step.command.len == 0: return
-  let (lines, cut) = step.output.excerptOf(root)
+  let (lines, cut) = step.output.excerpt(root)
   if cut > 0: result.add INDENT_EXCERPT & painted("… " & plural(cut, "line") & " above", CODE_DIM,
       as_color)
   for line in lines: result.add (INDENT_EXCERPT & line).strip(leading = false)
   let rerun = if outcome.execution.isSome: step.command else: run.rerun
   result.add INDENT_NOTE & painted("rerun:", CODE_DIM, as_color) & " " & rerun.relative(root)
-  result.add INDENT_NOTE & painted("log:", CODE_DIM, as_color) & " " & run.logOf.relative(root)
+  result.add INDENT_NOTE & painted("log:", CODE_DIM, as_color) & " " & run.pathLog.relative(root)
 
 
 func textLog*(outcome: Outcome): string =

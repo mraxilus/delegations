@@ -42,7 +42,7 @@
 ##     download is never mistaken for verified one -- same shape `fetchRelease` uses.
 ##
 ##   Cost: `sha256sum` and `curl` are shelled out to; `koch list-packages` declares both. Digest is
-##     read by `digestOf` of knoller, not copied here, so one reader serves both fetches and
+##     read by `digest` of knoller, not copied here, so one reader serves both fetches and
 ##     store imports knoller for it.
 ##   Nim tarball is not here, deliberately: its digest comes from upstream sidecar at fetch
 ##     time rather than from table here, and it is stored unpacked by pin because rest of koch
@@ -202,7 +202,7 @@ func rootStore*(override: string): string =
   if override.len > 0: override else: getHomeDir() / DIRECTORY_ASSETS
 
 
-func addressOf*(file: string): string =
+func address*(file: string): string =
   ## Read address asset is fetched from; empty when store declares no such asset.
   for (name, prefix, _, _) in ASSETS:
     if name == file: return prefix & name
@@ -240,7 +240,7 @@ func declaration*(): string =
     result.add file & " " & digest & "\n"
 
 
-func pathOf*(root, file: string): string =
+func pathStore*(root, file: string): string =
   ## Read path asset takes in store, which is its digest; empty when none is declared.
   ##   Digest names file rather than its name doing so, since two projects asking for one
   ##   asset then share one entry, and moved pin is different entry rather than stale one.
@@ -261,7 +261,7 @@ proc fetchAsset(root, file: string): bool =
   ## Fetch asset into store and keep it only when its bytes carry declared digest.
   ##   Downloaded beside destination and moved in once checked, so half-written file is never
   ##   read as verified one.
-  let (address, digest) = (file.addressOf, file.digestDeclared)
+  let (address, digest) = (file.address, file.digestDeclared)
   if address.len == 0 or digest.len == 0: return false
   createDir(root)
   let landing = root / digest & ".fetching"
@@ -269,7 +269,7 @@ proc fetchAsset(root, file: string): bool =
   defer: removeFile(landing)
   if execCmdEx("curl -sSLf -o " & quoteShell(landing) & " " & quoteShell(address))[1] != 0:
     return false
-  let got = landing.digestOf
+  let got = landing.digest
   if got != digest:
     echo "Asset does not carry digest declared for it; wanted `" & digest & "`, got `" &
       got & "`."
@@ -282,7 +282,7 @@ proc assetIn*(root, file: string): string =
   ## Read path to asset in store, fetching it when store holds none; empty when it cannot.
   ##   Entry already present is trusted without re-reading its bytes: name is digest, so
   ##   file at that path either carries it or was never written there by this.
-  let path = pathOf(root, file)
+  let path = pathStore(root, file)
   if path.len == 0: return ""
   if fileExists(path): return path
   if fetchAsset(root, file): path else: ""

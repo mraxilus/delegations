@@ -59,7 +59,7 @@ func generations(source: string): seq[Generation] =
     let callee = name.spelling(source)
     if not callee.isNameGeneration: continue
     let first =
-      if k > 0 and tokens[k - 1].after == t.first: receiverOf(tokens, partners, k, source)
+      if k > 0 and tokens[k - 1].after == t.first: receiver(tokens, partners, k, source)
       else: -1
 
     # Module path qualifies name, and calls nothing by dot.

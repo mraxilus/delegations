@@ -72,9 +72,9 @@ so a new rule without a citation does not compile there.
   repository, whose charter need not be this one, and the README lists the id that each line
   names. The one shape lets a caller find where the sentence ends, and `koch` cites the article of
   the rule there.
-- Verified by `suites/test_rules.nim`. The messages of `checkBlanks`, `checkDefaults` and `heldOf`
-  hold no article. No string literal under `src/` holds `§`, or `(` before a Roman numeral and a
-  dot.
+- Verified by `suites/test_rules.nim`. The messages of `checkBlanks`, `checkDefaults` and
+  `checkFenceHeld` hold no article. No string literal under `src/` holds `§`, or `(` before a
+  Roman numeral and a dot.
 - Rejected: the article written into each message. `CITATIONS` would then stand twice, and each
   message would cite the charter of this repository wherever knoller runs.
 - Cost: no suite of knoller holds the text that `koch` prints. The suite `test_findings.nim` of
@@ -111,7 +111,7 @@ inside the fence, in the order of `Rule`, with its count and its first line. Kno
 because the charter grants the fence (Article X.1).
 
 **The warning runs the checks as a dry run, on the source as given.** No mask hides a fenced line,
-so each marker reads as a plain comment, and each line keeps its number. `heldOf` keeps each
+so each marker reads as a plain comment, and each line keeps its number. `checkFenceHeld` keeps each
 finding whose line falls inside a fence. So a fence counts what its lines report without the fence.
 A rule that a fixer clears and a rule left for the hand count alike, because a check names both.
 Each check of knoller that the static pass of `curator/audit` reads counts too, in each dialect.
@@ -164,16 +164,16 @@ under `--check`.
   output and the exit code.
 - The module is `command.nim`, because a path spells its words in full (Article V.9), and no
   glossary lists the acronym CLI.
-- `outcomeOf` decides what a run writes and prints from text alone, so its suite needs no file.
+- `outcome` decides what a run writes and prints from text alone, so its suite needs no file.
   Verified by `suites/test_command.nim`. The suite also holds the README to every rule id.
 - A directory that gives no Nim file is a usage error, and its message says why. The directory
   is outside a git work tree, or git lists no Nim file under it. A silent `0 to fix.` reads as a
   clean run over files that knoller never read.
-- Each fixer reads the path whole: absolute, with `.` and `..` resolved (`layoutOf`). So the
+- Each fixer reads the path whole: absolute, with `.` and `..` resolved (`toAbsolute`). So the
   test file, the stub and the umbrella read alike from any directory, and the output prints the
   path as named.
 - That path is `/` separated on every platform. A path join on Windows writes a backslash, so
-  `layoutOf` and the listing of a directory write each separator `/` (`slashed`). Each path
+  `toAbsolute` and the listing of a directory write each separator `/` (`slashed`). Each path
   relative to a project reads with `/` too. So a rule finds `tests` on Windows as it does on
   Linux, and one tree prints the same output on every platform.
 - Fixers read the text as a commit stores it. Git for Windows checks out CRLF by default, and a
@@ -344,8 +344,8 @@ toolchain that serves the pin of the project.
 - The caller names three facts for each file it asks: the directory the run starts in, the file
   that includes it, and the toolchain. The command line reads them from disk. The run starts in
   the nearest directory that holds a nimble file, and the includer is read among the Nim files git
-  lists there. The toolchain is the one that proves parentheses (`batchesOf`). `koch` reads the
-  same facts from its tree instead.
+  lists there. The toolchain is the one that proves parentheses (`groupByCompiler`). `koch` reads
+  the same facts from its tree instead.
 - One `nimsuggest --v3 --tester` serves each entry: the file itself, or the file that includes it.
   It runs in the project directory, so the `nim.cfg` of the project applies. A file under
   `tests/` takes `-d:testing`, as the stub of STYLE.md §6 does.
@@ -438,7 +438,7 @@ by word, in its own case. `rewrites.nim` plans the rename from what the pass res
   `suites/test_rewrites.nim`. Verified by hand on `c5c65db`, 2026-10-04: `globalSymbols` answered
   fields such as `camera.SphereWorld.radius`.
 - Cost: the presence test reads each token of the new name, a field access among them. So a
-  rename that would compile can be refused. Inferred from `sitesOf`, which reads every name token.
+  rename that would compile can be refused. Inferred from `sites`, which reads every name token.
 - No edit may land on a fenced line, or widen a line past 100 characters. A rename that reaches a
   file that the run does not fix is refused.
 - A mention of the old name in backticks, in a comment of a file where every use is renamed, is
@@ -547,7 +547,7 @@ as `koch fix` runs it, and holds the exact output and a second run that writes n
   now fixes `)*radius`. So it holds that each report on its lines prints at its line as given.
   `suites/test_command.nim` holds a finding left at its line as given.
 - The case of the stub `tests/rga3d/test_rga3d.nim` (#443) depends on its path. So it runs
-  through `outcomeOf`, as the command line runs it, at that path and at `tests/test_rga3d.nim`.
+  through `outcome`, as the command line runs it, at that path and at `tests/test_rga3d.nim`.
   Verified by hand, 2026-10-08: it fails at the parent of the commit that builds the ruling.
 - Verified by hand, 2026-10-05: the suite ran against the parent of the commit that fixed each
   case, with a shim that proves nothing. Each case that a commit fixed failed at its parent. A
@@ -704,7 +704,7 @@ opens with no header is a suite module, and no rule of a stub reads it. A file `
 is a stub with or without a header, so a missing header there stays a `stub-header` finding.
 
 - `isStub` takes the source beside the path, since the header decides. Each caller holds the
-  source already: `keysStub`, `checkTests` and `profilerOf` of `idioms.nim`.
+  source already: `keysStub`, `checkTests` and `profiler` of `idioms.nim`.
 - Rejected: the path alone, which reads each suite module of a category as a stub. Each one, such
   as `tests/suites/test_names.nim` here, would then take `stub-header` and `profiler-import`.
 - Rejected: the header test at each of those callers, which writes the rule of a category three
@@ -1313,7 +1313,7 @@ never notation. So `N` or `M` as a local, a parameter or a field takes the snake
 **A parameter of type `typedesc` alone takes the one capital letter of a placeholder, by the
 ruling of the Architect on #443.** Such a parameter stands for any type, as a generic does, so
 V.12 binds it. `declared.nim` marks it as generic (`is_generic`), and `type` alone too, since Nim
-reads it as the same type. `casingOf` gives a generic parameter the letter of a placeholder. A
+reads it as the same type. `casing` gives a generic parameter the letter of a placeholder. A
 parameter of `typedesc[I]` keeps the snake case of V.1, since `I` is its placeholder, as
 `scalar*[I: Basis](t: typedesc[I])` shows. `STYLE.md` spells its borrow template with `T`.
 
@@ -1330,7 +1330,7 @@ placeholder. A name in another form, such as `kind` or `Kind`, is one finding of
 - Rejected: a kind of its own in `KindName`. Each reader of `KindName.Parameter` then has to
   learn it, such as the foreign mark, the notation of III.5 and the subject of each message. A
   flag on `Declared` reaches the casing alone.
-- Cost: a reader of the kind alone sees a parameter, so `casingOf` and `isMiscased` read the flag
+- Cost: a reader of the kind alone sees a parameter, so `casing` and `isMiscased` read the flag
   beside it.
 - Cost: both forms pass, so one file may spell two generic parameters two ways. Reading holds it
   until the rename.
@@ -1339,7 +1339,7 @@ placeholder. A name in another form, such as `kind` or `Kind`, is one finding of
 - Verified by `suites/test_names.nim` and `suites/test_declared.nim`.
 
 **One function decides the reach of a binding.** The case of a binding marks its reach, and not
-its mutability (V.1). So `reachOf` of `declared.nim` reads the blocks that enclose the binding:
+its mutability (V.1). So `reach` of `declared.nim` reads the blocks that enclose the binding:
 
 - A routine makes it local.
 - The entry block, which is a top-level `when isMainModule:`, makes it an entry binding.

@@ -175,13 +175,13 @@ func charactersOutside(e: Entry): seq[Character] =
       result.add Character(path: e.path, line: i + 1, codepoint: codepoint, spelling: spelling)
 
 
-func charactersOf*(tree: Tree, directory: string): seq[Character] =
+func characters*(tree: Tree, directory: string): seq[Character] =
   ## Read each character beyond ASCII that page sources of project use, comments set aside.
   for e in tree:
     if e.kind.isSome and e.path.isSourcePage(directory): result.add e.charactersOutside
 
 
-func facesOf*(tree: Tree, directory: string): seq[string] =
+func facesNamed*(tree: Tree, directory: string): seq[string] =
   ## Read store faces that page sources of project name by file, in store order.
   for (file, _) in FACES:
     for e in tree:
@@ -203,7 +203,7 @@ func checkCoverage*(tree: Tree, directory: string): seq[Finding] =
   ##   One finding for each codepoint on line, however often line spells it.
   ##   Source whose every character faces cover is passed before its comments are scanned:
   ##     faces cover nearly everything, and scan is most of check's cost (PROVENANCE.md).
-  let faces = tree.facesOf(directory)
+  let faces = tree.facesNamed(directory)
   if faces.len == 0: return
   var ranges: seq[Slice[int]]
   for (file, held) in FACES:

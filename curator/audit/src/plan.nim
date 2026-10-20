@@ -132,7 +132,7 @@ func directoriesNode*(tree: Tree, directories: openArray[string]): seq[string] =
       result.add directory
 
 
-func driverOf(tree: Tree, directory: string): string =
+func driver(tree: Tree, directory: string): string =
   ## Read project's build driver from tree; empty when project carries none.
   let path = directory & "/" & FILE_DRIVER
   for e in tree:
@@ -146,7 +146,7 @@ func directoriesVerb*(tree: Tree, directories: openArray[string], verb: string):
   ##   gains driven checks by carrying verb, and `check.yml` names no project. Driver is read
   ##   by same parser `checker.nim` reads koch's own dispatch with, since both hold one shape.
   for directory in directories:
-    if verb in tree.driverOf(directory).verbsDispatch(CASE_DRIVER): result.add directory
+    if verb in tree.driver(directory).verbsDispatch(CASE_DRIVER): result.add directory
 
 
 proc packagesSystem*(root: string, tree: Tree, directories: openArray[string]): seq[string] =
@@ -156,7 +156,7 @@ proc packagesSystem*(root: string, tree: Tree, directories: openArray[string]): 
   var targets: seq[Target]
   for directory in tree.directoriesVerb(directories, VERB_SYSTEM):
     targets.add Target(directory: directory)
-  systemOf(root, targets).sorted
+  packagesSystem(root, targets).sorted
 
 
 proc systemRepository*(root: string, tree: Tree, directories: openArray[string]): seq[string] =
@@ -190,7 +190,7 @@ proc runJobsType*(root: string, tree: Tree, directories: openArray[string]): seq
   result.add runTypes(root, targets)
 
 
-func nimbleOf(tree: Tree, directory: string): string =
+func nimble(tree: Tree, directory: string): string =
   ## Read project's nimble text from tree; empty when file is absent.
   let path = directory.pathNimble
   for e in tree:
@@ -198,16 +198,16 @@ func nimbleOf(tree: Tree, directory: string): string =
   ""
 
 
-func pinOf*(tree: Tree, directory: string): Option[string] =
+func pin*(tree: Tree, directory: string): Option[string] =
   ## Read exact Nim pin project declares; `none` when nimble file or pin is absent.
-  tree.nimbleOf(directory).pinNim
+  tree.nimble(directory).pinNim
 
 
 func jobsFor*(tree: Tree, directories: openArray[string]): seq[Job] =
   ## Build one job per directory, carrying its pin; unpinned project is skipped, since
   ##   `layout.nim` already reports it and matrix cannot install version nobody named.
   for directory in directories:
-    let pin = tree.pinOf(directory)
+    let pin = tree.pin(directory)
     if pin.isSome: result.add Job(directory: directory, pin: pin.get)
 
 
@@ -252,7 +252,8 @@ proc targetsFor(jobs: openArray[Job]): (seq[Target], seq[Finding]) =
   var toolchains = initToolchains()
   for job in jobs:
     let bin = toolchains.binFor(job.pin)
-    if bin.isNone: result[1].add missing(job.directory, job.pin, binOf(toolchains.root, job.pin))
+    if bin.isNone:
+      result[1].add missing(job.directory, job.pin, binCached(toolchains.root, job.pin))
     else: result[0].add Target(directory: job.directory, bin: bin.get)
 
 

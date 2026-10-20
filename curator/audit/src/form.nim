@@ -3,7 +3,7 @@
 ##   as Unicode runes, not bytes, where breaking can fix it. Per file: non-empty; ends with
 ##   exactly one newline. Knoller holds these rules (`form.checkForm` there), which read text
 ##   alone, so every kind takes one copy of them; this module adds width exemption of this
-##   repository, and renders each report with its article (`findingOf`).
+##   repository, and renders each report with its article (`toFinding`).
 ##   Per Nim banner, first tier `#[ Title ]#` or second tier `#[[ Title ]]#`: X.2 exactly, as
 ##     knoller reads it (`checkBanners`) and its fixer writes it: three blank lines before first
 ##     tier, two before second, one after either, and second tier following its parent at once
@@ -37,5 +37,5 @@ func checkForm*(path, source: string; rule: RuleKind): seq[Finding] =
   let is_width_exempt = path in WIDTH_EXEMPT
   result = checkForm(path, source).filterIt(
     not (is_width_exempt and it.rule == Rule.LineWidth),
-  ).findingsOf
-  if rule.syntax == Syntax.Nim: result.add checkBanners(path, source).findingsOf
+  ).toFindings
+  if rule.syntax == Syntax.Nim: result.add checkBanners(path, source).toFindings

@@ -15,7 +15,7 @@
 ##     with no shell between.
 ##   Program left by earlier run is deleted before compile, so compile writing none fails run
 ##     rather than runs stale program.
-##   Verdict (`failureOf`):
+##   Verdict (`failure`):
 ##     - `run` passes where compile exits 0 printing no error, then program exits 0;
 ##     - `compile` passes where compile exits 0 printing no error;
 ##     - `reject` passes where compile exits 1, its last error naming test file.
@@ -72,7 +72,7 @@ func errorLast*(output: string): Option[string] =
     elif line.startsWith("Error:"): result = some("")
 
 
-func failureOf*(run: Run, outcome: Outcome): string =
+func failure*(run: Run, outcome: Outcome): string =
   ## Read why run failed, as testament judges it; empty where it passed.
   if run.refusal.len > 0: return run.refusal
   let
@@ -97,7 +97,7 @@ func failureOf*(run: Run, outcome: Outcome): string =
   ""
 
 
-func durationOf*(outcome: Outcome): Duration =
+func duration*(outcome: Outcome): Duration =
   ## Read time run took: compile, then program where it ran.
   result = outcome.compile.duration
   if outcome.execution.isSome: result += outcome.execution.get.duration
@@ -130,7 +130,7 @@ proc captured(
     withLock lock_pipes: process.close
 
 
-proc outcomeOf*(run: Run, lock_pipes: var Lock): Outcome =
+proc runOne*(run: Run, lock_pipes: var Lock): Outcome =
   ## Compile run, then execute what compile writes where action asks it; refused run does neither.
   if run.refusal.len > 0: return
   try: removeFile(run.executable)
@@ -150,7 +150,7 @@ proc work(pool: ptr Pool) {.thread.} =
   while true:
     let (place, run) = pool.jobs.recv
     if place < 0: break
-    pool.outcomes.send (place, outcomeOf(run, pool.lock_pipes))
+    pool.outcomes.send (place, runOne(run, pool.lock_pipes))
 
 
 func released*(arrived: openArray[bool], next: int): int =

@@ -18,7 +18,7 @@
 ##     read only whether operator binds looser than `or`, as `or`, as `and`, or tighter; operator
 ##     break of `wrapping.nim` reads every level.
 ##   Checks and fixer share one reading (`mixtures`), so each rule is written once (Article
-##     II.1). Elements of one depth (`elementsOf`) are exported, since message shape reads
+##     II.1). Elements of one depth (`elements`) are exported, since message shape reads
 ##     operators of its value there (`messages.nim`).
 ##
 ##   Cost: scanner, never parser; command call nested inside operand (`a and f b or c`) reads
@@ -88,7 +88,7 @@ const
   RUNES_EXCERPT = 40  ## Runes of expression echoed in finding.
 
 
-func precedenceOf(t: Token, source: string): int =
+func precedenceOperator(t: Token, source: string): int =
   ## Read precedence of operator token; `-1` where token is no binary operator.
   let text = t.spelling(source)
   if t.kind == KindToken.Word:
@@ -116,7 +116,7 @@ func isTokenOperand(tokens: openArray[Token], k: int, source: string): bool =
   else: false
 
 
-func elementsOf*(
+func elements*(
   tokens: openArray[Token]; partners: openArray[int]; first, last: int; source: string
 ): seq[Element] =
   ## Read tokens `first` to `last` of one bracket depth as elements; bracket group, and `.`
@@ -151,7 +151,7 @@ func elementsOf*(
       e.kind = KindElement.Operand
     elif t.kind == KindToken.Word and t.spelling(source) == "not":
       e.kind = KindElement.Prefix
-    elif t.kind in {KindToken.Operator, KindToken.Word} and t.precedenceOf(source) >= 0:
+    elif t.kind in {KindToken.Operator, KindToken.Word} and t.precedenceOperator(source) >= 0:
       let
         text = t.spelling(source)
         is_spaced_before = k > 0 and tokens[k - 1].after < t.first
@@ -163,7 +163,7 @@ func elementsOf*(
       elif is_prefix: e.kind = KindElement.Delimiter
       else:
         e.kind = KindElement.Binary
-        e.precedence = t.precedenceOf(source)
+        e.precedence = t.precedenceOperator(source)
         if e.precedence < PRECEDENCE_OR: e.kind = KindElement.Delimiter
     result.add e
     k = e.last + 1
@@ -177,14 +177,14 @@ func isBreakStatement(tokens: openArray[Token], k: int, source: string): bool =
   while previous > 0 and tokens[previous].kind == KindToken.Comment: dec previous
   let before = tokens[previous]
   if before.kind in {KindToken.Operator, KindToken.Comma, KindToken.Open}: return false
-  before.precedenceOf(source) < 0
+  before.precedenceOperator(source) < 0
 
 
-func segmentsOf(
+func segments(
   tokens: openArray[Token]; partners: openArray[int]; first, last: int; source: string
 ): seq[seq[Element]] =
   ## Split one bracket depth into expressions between delimiters, nested depths included.
-  let elements = elementsOf(tokens, partners, first, last, source)
+  let elements = elements(tokens, partners, first, last, source)
   var
     segment: seq[Element]
     is_head_for = false
@@ -211,7 +211,7 @@ func segmentsOf(
   var k = first
   while k <= last:
     if tokens[k].kind == KindToken.Open and partners[k] > k and partners[k] <= last:
-      result.add segmentsOf(tokens, partners, k + 1, partners[k] - 1, source)
+      result.add segments(tokens, partners, k + 1, partners[k] - 1, source)
       k = partners[k]
     inc k
 
@@ -243,7 +243,7 @@ func mixtures(source: string): seq[Mixture] =
     tokens = source.tokens
     partners = tokens.partners
   if tokens.len == 0: return
-  for segment in segmentsOf(tokens, partners, 0, tokens.high, source):
+  for segment in segments(tokens, partners, 0, tokens.high, source):
     let expression = segment.tailCommand(tokens)
     if expression.len == 0: continue
     let
@@ -316,7 +316,7 @@ func negations(source: string): seq[Negation] =
     tokens = source.tokens
     partners = tokens.partners
   if tokens.len == 0: return
-  for segment in segmentsOf(tokens, partners, 0, tokens.high, source):
+  for segment in segments(tokens, partners, 0, tokens.high, source):
     for j, e in segment:
       if e.kind != KindElement.Prefix or tokens[e.first].spelling(source) != "not": continue
       var operand = j + 1

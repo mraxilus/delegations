@@ -63,7 +63,7 @@ func namesImported(
     if tokens[k].kind == KindToken.Word: result.incl tokens[k].spelling(source)
 
 
-func receiverOf(
+func receiver(
   tokens: openArray[Token], partners: openArray[int], dot: int, source: string
 ): int {.used.} =  # Used in `generations.nim`.
   ## Read index of first token of receiver ending before `.` at `dot`: name with calls, indexes
@@ -111,7 +111,7 @@ func candidates(source: string): seq[Candidate] =
       continue
     let
       last = tokens[k - 1]
-      first = receiverOf(tokens, partners, k, source)
+      first = receiver(tokens, partners, k, source)
     if first < 0 or tokens[first].line != name.line: continue
     if last.kind == KindToken.Word and
         (last.spelling(source)[0] in {'A' .. 'Z'} or last.spelling(source) in modules):

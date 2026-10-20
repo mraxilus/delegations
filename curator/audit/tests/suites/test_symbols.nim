@@ -19,8 +19,8 @@ suite "Internal: Symbols":
       entry("p/tests/more.nim", "let x = 1\n"),
       entry("p/src/b.nim", "let y = 2\n"),
     ]
-    check tree.includerOf("p/tests/more.nim") == "p/tests/test_a.nim"
-    check tree.includerOf("p/src/b.nim") == "p/src/b.nim"
+    check tree.includer("p/tests/more.nim") == "p/tests/test_a.nim"
+    check tree.includer("p/src/b.nim") == "p/src/b.nim"
 
 
   test "site resolves to symbol through nimsuggest of pin; file that fails resolves none":

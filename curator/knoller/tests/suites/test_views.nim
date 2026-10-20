@@ -34,4 +34,4 @@ suite "Views":
     check "Wide".identity != "wide".identity  # first character exact
     check "ctxFoo".identity == "ctx_foo".identity and "ctx".identity == "cTX".identity
     check "Ctx".identity != "ctx".identity  # rename planner of `curator/audit` compares so
-    check "    x".indentOf == 4 and "x".indentOf == 0
+    check "    x".indentWidth == 4 and "x".indentWidth == 0

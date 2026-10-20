@@ -4,7 +4,7 @@
 ##     `curator/audit` cites article of each rule, so `koch fix` prints `path:line: <rule>
 ##     (<article>) fixed`.
 ##   Message reads `<sentence>; got <value>.`, or `<sentence>.`, and names no article, since
-##     knoller runs on any repository; caller cites article where sentence ends (`findingOf` of
+##     knoller runs on any repository; caller cites article where sentence ends (`toFinding` of
 ##     `curator/audit`), and command line names rule by id.
 ##   Fixer that inserts or deletes lines records input line each output line came from, and
 ##     `chain` traces every later report through it. So each report names line of source as
@@ -20,7 +20,7 @@
 ##   Dialect of Nim file, module, script or package, decides which idiom checks and fixers it
 ##     takes; `idioms.nim` and `chain.nim` both read it, so it stands here, below both.
 ##   Path fixer reads is `/` separated: repository-relative from `koch`, absolute from command
-##     line on every platform (`command.layoutOf`). Rule reading layout from it reads test file
+##     line on every platform (`command.toAbsolute`). Rule reading layout from it reads test file
 ##     and stub here alone, both from last directory `tests` (`partTests`), so each meaning is
 ##     written once; drive file, where command line reads fixed waits, too (`isFileDrive`).
 ##   Stub is read as testament reads category (#443), i.e. directory directly under `tests`,

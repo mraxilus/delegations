@@ -8,7 +8,7 @@
 ##     cannot be told from words and hold by reading. Declarations alone are read, so name library
 ##     owns, which reaches code only at use site, passes by construction.
 ##   `JARGON` is closed list of V.6. Caller adds symbols glossaries list under `## Standards` as
-##     code spans, and their `**Term**` names, through `exemptionsGlossary`; `exemptionsOf`
+##     code spans, and their `**Term**` names, through `exemptionsGlossary`; `exemptions`
 ##     reads root glossary and glossary of path's own project, and static pass gives them to
 ##     knoller's check.
 ##
@@ -41,7 +41,7 @@ func exemptionsGlossary*(glossary: string): seq[string] =
     if line.isLineTerm: result.add line[2 ..< line.len - 3]
 
 
-func exemptionsOf*(glossaries: openArray[(string, string)], path: string): seq[string] =
+func exemptions*(glossaries: openArray[(string, string)], path: string): seq[string] =
   ## Read words name in path may take beyond table: jargon of V.6, and what root glossary and
   ##   glossary of path's own project list (`exemptionsGlossary`).
   result = JARGON.toSeq

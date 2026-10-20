@@ -77,7 +77,7 @@ func pathNimble*(directory: string): string =
   directory & "/" & directory.nameProject & EXTENSIONS[Dialect.Package]
 
 
-func directoryOf(path: string): string =
+func directoryParent(path: string): string =
   ## Read directory part of path, empty at root.
   let cut = path.rfind('/')
   if cut < 0: "" else: path[0 ..< cut]
@@ -203,7 +203,7 @@ func checkProject(tree: Tree, paths: Table[string, int], directory: string): seq
   if nimble notin paths: result.add finding(nimble, 0, "Project nimble file missing.")
   for e in tree:
     let is_nimble = e.path.endsWith(EXTENSIONS[Dialect.Package])
-    if e.path.directoryOf == directory and is_nimble and e.path != nimble:
+    if e.path.directoryParent == directory and is_nimble and e.path != nimble:
       result.add finding(
         e.path,
         0,

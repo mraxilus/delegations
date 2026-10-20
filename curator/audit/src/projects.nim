@@ -62,7 +62,7 @@ type Target* = object  ## Define one project to run, with toolchain serving its 
   bin*: string  ## Directory holding compiler and its tools; empty names PATH.
 
 
-func toolOf*(bin, tool: string): string =
+func pathTool*(bin, tool: string): string =
   ## Read path tool would have inside toolchain; bare name when `bin` names PATH.
   if bin.len == 0: tool else: bin / tool
 
@@ -72,11 +72,11 @@ proc toolIn*(bin, tool: string): string =
   ##   Source build carries whatever tools Nim's own `koch` produced, and that set moves
   ##   between Nim versions; naming absent file would raise rather than report, and PATH tool
   ##   still works, announcing its own mismatch where one matters.
-  let path = bin.toolOf(tool)
+  let path = bin.pathTool(tool)
   if bin.len == 0 or fileExists(path): path else: tool
 
 
-proc nimOf*(bin: string): string =
+proc pathNim*(bin: string): string =
   ## Read compiler path testament must be told, absolute so any cwd resolves it.
   if bin.len == 0: findExe(NIM) else: bin / NIM
 
@@ -137,7 +137,7 @@ proc runVerb(root: string; targets: openArray[Target]; verb, failed: string): se
     echo "== " & target.directory
     let code = runIn(
       root / target.directory,
-      target.bin.nimOf,
+      target.bin.pathNim,
       ["r", "--hints:off", FILE_DRIVER, verb],
       target.bin,
     )
@@ -171,7 +171,7 @@ proc runHead*(root: string, targets: openArray[Target]): seq[Finding] =
   runVerb(root, targets, VERB_HEAD, "Head check failed")
 
 
-proc systemOf*(root: string, targets: openArray[Target]): seq[string] =
+proc packagesSystem*(root: string, targets: openArray[Target]): seq[string] =
   ## Read system packages every project declares, through each project's own verb.
   ##   Read rather than listed: workflow installing these names no project, exactly as it
   ##   names none for compiler matrix, so package arrives by being declared.
@@ -180,7 +180,7 @@ proc systemOf*(root: string, targets: openArray[Target]): seq[string] =
   for target in targets:
     for package in linesIn(
       root / target.directory,
-      target.bin.nimOf,
+      target.bin.pathNim,
       ["r", "--hints:off", FILE_DRIVER, VERB_SYSTEM],
       target.bin,
     ):
@@ -196,7 +196,7 @@ proc runTests*(root: string, targets: openArray[Target]): seq[Finding] =
     let code = runIn(
       root / target.directory,
       target.bin.toolIn("testament"),
-      ["--nim:" & target.bin.nimOf, "pattern", "tests/t*.nim"],
+      ["--nim:" & target.bin.pathNim, "pattern", "tests/t*.nim"],
       target.bin,
     )
     if code != 0:
