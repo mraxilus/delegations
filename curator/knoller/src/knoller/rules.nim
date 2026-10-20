@@ -38,6 +38,9 @@ type Rule* {.pure.} = enum  ## Define one rule knoller fixes or reports, in orde
   WordGlobal = "global word"  ## Global shares no word with type.
   HeadRepresentation = "representation head"
     ## Name holding value in another representation leads with that value.
+  SuffixGeneric = "generic suffix"
+    ## Type closes with `Of` only where alias of its instance takes its bare name.
+  NameCollection = "collection name"  ## Collection type takes plural of its member.
   ArticleInComment = "article in comment"  ## Comment drops its articles.
   ValueMessage = "message value"  ## Message echoes its value in backticks.
   AndWithOr = "and with or"  ## Condition mixing `and` with `or` parenthesises each `and`.
