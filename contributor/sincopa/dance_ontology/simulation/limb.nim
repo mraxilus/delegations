@@ -150,7 +150,7 @@ func placed*(
     elbow_point = shoulder_point + upper_direction * rig.upper
     wrist_point = elbow_point + fore_direction * rig.fore
     join_point = wrist_point + hand_direction * gripAtPalm(rig)
-    axes = toAxes(stance)
+    axes = stance.toAxes
   if arm == Arm.Left:
     ArmPose(
       shoulder: toWorld(axes, mirrored(shoulder_point)),
@@ -224,7 +224,7 @@ func joints*(axes: Axes, arm: Arm, pose: ArmPose): Joints =
 
 func joints*(stance: Stance, arm: Arm, pose: ArmPose): Joints =
   ## Read every joint off pose, in body's own terms.
-  joints(toAxes(stance), arm, pose)
+  joints(stance.toAxes, arm, pose)
 
 
 func reading*(arm_joints: Joints, dof: Dof): float =

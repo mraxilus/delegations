@@ -105,7 +105,7 @@ func stackDeclared(style_sheet, selector: string): seq[string] =
       else: style_sheet[defined+property.len+1..<style_sheet.find(';', defined)]
   elif value.find('"') > 0:
     value = value[value.find('"') .. ^1]
-  toFamilies(value)
+  value.toFamilies
 
 
 
@@ -235,7 +235,7 @@ suite "Internal: Faces":
           check families[2] == "Commit Mono"
     for stack in [faces.SERIF, faces.SANS_SERIF, faces.MONOSPACE]:
       checkpoint(stack)
-      let families = toFamilies(stack)
+      let families = stack.toFamilies
       check families.len >= 3 and families[1] == "Noto Sans Math"
 
 

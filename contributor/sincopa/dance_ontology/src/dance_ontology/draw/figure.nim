@@ -104,7 +104,7 @@ func isDanceable*(
   let
     put = settled(pose, holds, levels, modifiers)
     hands = handPoints(put)
-    (lead_body, follow_body) = toBodies(put)
+    (lead_body, follow_body) = put.toBodies
   for arm in Arm:
     if holds[arm].isNone:
       continue
@@ -225,7 +225,7 @@ func renderParts*(
   let
     put = settled(pose, holds, levels, modifiers)
     hands = handPoints(put)
-    (lead_body, follow_body) = toBodies(put)
+    (lead_body, follow_body) = put.toBodies
 
   var bits = @[renderRing(put), border(put, Dancer.Lead),
                border(put, Dancer.Follow)]

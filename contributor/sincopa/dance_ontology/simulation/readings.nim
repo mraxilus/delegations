@@ -147,8 +147,8 @@ proc readSweep*(ask: SweepAsk): SweepRead =
       apart = ask.apart,
     )
   result.found_rest = sweep.found_rest
-  result.negative = toWayRead(sweep.negative)
-  result.positive = toWayRead(sweep.positive)
+  result.negative = sweep.negative.toWayRead
+  result.positive = sweep.positive.toWayRead
   for i, half_turns in HALVES:
     let moment = momentAt(sweep, float(half_turns) / 2.0)
     if moment.isSome: result.glances[i] = readGlance(ask.band, links, moment.get)

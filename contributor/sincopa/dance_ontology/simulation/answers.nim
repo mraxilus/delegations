@@ -259,7 +259,7 @@ proc taskText*(task: Task): string =
       question = SWEEPS[task.index]
       sweep = swept(HUMAN, question.band, question.links, most = question.most,
                     is_raw = question.is_raw)
-    $(%Ways(negative: toWay(sweep.negative), positive: toWay(sweep.positive)))
+    $(%Ways(negative: sweep.negative.toWay, positive: sweep.positive.toWay))
   of WalkFrom:
     let
       question = WALKS[task.index]

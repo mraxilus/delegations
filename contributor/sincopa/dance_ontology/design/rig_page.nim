@@ -248,7 +248,7 @@ proc cardsBody(review: string, data: JsonNode): string =
     held[key] = (if still.hasKey("at") and still["at"].len > 0:
                    &"holds, {apart:.2f} m apart"
                  else: "no pose holds at any distance")
-  let cards = toCards(review)
+  let cards = review.toCards
   # Each heading is read off reference page, which names each chain's rest
   # through model, so two pages cannot name one section two ways.
   var titles: seq[tuple[letter, title: string]]

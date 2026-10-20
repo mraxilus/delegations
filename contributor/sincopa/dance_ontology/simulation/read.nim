@@ -61,7 +61,7 @@ func lyingOn*(
     hand = links[i].ends[end_index]
     pose = arms[i][end_index]
     stance = stance[who]
-    axes = toAxes(stance)
+    axes = stance.toAxes
     join = toBody(axes, pose.join)
     elbow = toBody(axes, pose.elbow)
     own_side = side(hand.arm)

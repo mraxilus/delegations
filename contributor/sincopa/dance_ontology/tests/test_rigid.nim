@@ -193,7 +193,7 @@ proc crossedFrom(apart: float): Crossed {.gcsafe, nimcall.} =
       for who in Body:
         for arm in Arm:
           let
-            axes = toAxes(couple.chestStance(who))
+            axes = couple.chestStance(who).toAxes
             pose = couple.armPoseNow(who, arm)
           now[who][arm] = toPolar(ownTerms(axes, arm, pose.elbow) -
               ownTerms(axes, arm, pose.shoulder))
@@ -586,7 +586,7 @@ suite "Internal: Two dancers in rigid body engine":
     ## millimetre, not micron: waist is soft constraint, and chest under hold
     ## measured ten microns off hip axis (9.7e-6 m, 2026-09-12).
     let
-      hip = toAxes(couple.stance[Body.One]).origin
+      hip = couple.stance[Body.One].toAxes.origin
       after = couple.ends(couple.shapes[0]).a
       radius_was = sqrt((before.a.x - hip.x)^2 + (before.a.y - hip.y)^2)
       radius_now = sqrt((after.x - hip.x)^2 + (after.y - hip.y)^2)

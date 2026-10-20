@@ -487,11 +487,11 @@ func leaps(problem: Problem; capsules, before: seq[Capsule]; first_arm: int):
 func cramped*(rig: Rig, problem: Problem, placed: Placed): float =
   ## How near this pose sits to what it must keep, inside its margins: capsules nearer
   ## than `ROOMY` and joined hands nearer band's edge than `ROOMY` cost by square.
-  cramped(problem, placed.arms, initGaps(problem, toCapsules(placed)))
+  cramped(problem, placed.arms, initGaps(problem, placed.toCapsules))
 
 func violation*(rig: Rig, problem: Problem, placed: Placed, before: seq[Capsule]): float =
   ## Sum of squares by which this pose breaks what plan must keep.
-  let capsules = toCapsules(placed)
+  let capsules = placed.toCapsules
   violation(rig, problem, placed.arms, initGaps(problem, capsules),
             margins(rig, problem, placed),
             leaps(problem, capsules, before, 2 * trunkCapsules(rig).len))
@@ -580,7 +580,7 @@ proc reckon(
 ) =
   ## Every term of pose at `plan`.
   r.placed = place(rig, plan, wind, problem.is_away, problem.turner)
-  r.capsules = toCapsules(r.placed)
+  r.capsules = r.placed.toCapsules
   r.first_arm = 2 * r.placed.trunks[Body.One].len
   r.first_face = r.first_arm + ARM_CAPSULES
   if r.trunk.len == 0:
@@ -1096,7 +1096,7 @@ proc planPath*(
     problem.lower = lower
     problem.upper = upper
     let
-      before = toCapsules(place(rig, last, wind, is_away, turner))
+      before = place(rig, last, wind, is_away, turner).toCapsules
       solved = solve(rig, problem, last, last, target, before, bias = bias)
     if solved.broken < KEPT:
       result.winds.add target
@@ -1130,7 +1130,7 @@ proc planPath*(
             start[j] += 0.3 * (spread(float(j * (walk + 5) + 31 * failures +
                                             17 * problem.style.seed) * 0.6180339887) - 0.5) * 2.0
           let
-            here = toCapsules(place(rig, result.plans[^1], at, is_away, turner))
+            here = place(rig, result.plans[^1], at, is_away, turner).toCapsules
             moved = solve(rig, problem, start, result.plans[^1], at, here, stay = 0.0)
           if moved.broken < KEPT:
             result.winds.add at
@@ -1152,7 +1152,7 @@ proc planPath*(
         start[j] += 0.1 * sqrt(float(failures)) *
             (spread(float(j * (nudge + 7 * failures)) * 0.7548776662) - 0.5) * 2.0
       let
-        here = toCapsules(place(rig, result.plans[^1], at, is_away, turner))
+        here = place(rig, result.plans[^1], at, is_away, turner).toCapsules
         nudged = solve(rig, problem, start, result.plans[^1], at, here, stay = 0.02)
       if nudged.broken < KEPT:
         result.winds.add at
@@ -1179,7 +1179,7 @@ proc corrected*(rig: Rig, path: Path, i: int, now: Plan): Plan =
   problem.lower = lower
   problem.upper = upper
   let
-    before = toCapsules(place(rig, now, path.winds[max(0, i-1)], problem.is_away, problem.turner))
+    before = place(rig, now, path.winds[max(0, i-1)], problem.is_away, problem.turner).toCapsules
     solved = solve(rig, problem, now, path.plans[i], wind, before)
   if solved.broken < KEPT: solved.plan else: path.plans[i]
 

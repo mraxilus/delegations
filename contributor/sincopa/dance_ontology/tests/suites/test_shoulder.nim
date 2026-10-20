@@ -208,7 +208,7 @@ func armMomentsRig(kept: JsonNode): seq[ArmMoment] =
               elbow: linkOrigin(points, fore, item["radii"][fore].getFloat),
             )
           result.add ArmMoment(recording: kind, card: card, who: who, arm: arm, at: at.getFloat,
-                               reading: outside(toAxes(stance), arm, pose))
+                               reading: outside(stance.toAxes, arm, pose))
 
 func cardsKept(rig: JsonNode): tuple[cards, unheld: seq[string]] =
   ## Name every sweep and still rig keeps, as `ArmMoment.card` names it, and each still that
@@ -403,8 +403,8 @@ suite "Internal: Shoulder's edge as law reads it":
                                       random.rand(0.0..1.0), random.rand(-PI..PI))
         left = placed(HUMAN, stance, Arm.Left, direction, twist, bend, wrist, roll)
         right = placed(HUMAN, stance, Arm.Right, direction, twist, bend, wrist, roll)
-        (read_left, read_right) = (outside(toAxes(stance), Arm.Left, left),
-                                   outside(toAxes(stance), Arm.Right, right))
+        (read_left, read_right) = (outside(stance.toAxes, Arm.Left, left),
+                                   outside(stance.toAxes, Arm.Right, right))
       check abs(read_left.angle - read_right.angle) < 1e-9
       check abs(read_left.angle - outside(direction).angle) < 1e-9
       if abs(read_left.angle) > 1e-9: check read_left.source == read_right.source

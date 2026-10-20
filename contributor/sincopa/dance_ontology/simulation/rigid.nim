@@ -455,7 +455,7 @@ proc buildTrunk(couple: var Couple, who: Body): tuple[hips, chest: engine.BodyId
   ## and stopped at thoracic rotation.  Shoulders hang from chest.
   let
     stance = couple.stance[who]
-    axes = toAxes(stance)
+    axes = stance.toAxes
   var body_definition = engine.defaultBody()
   body_definition.kind = engine.BODY_KINEMATIC
   body_definition.position = asPlace(axes.origin)
@@ -620,7 +620,7 @@ proc buildArm(couple: var Couple, who: Body, arm: Arm, group: cint): ArmRig =
   ## Three links on shoulder, elbow and wrist, laid out hanging.
   let
     stance = couple.stance[who]
-    axes = toAxes(stance)
+    axes = stance.toAxes
     trunk_turn = standing(axes)
     frame = restFrame()
     turn = quaternionProduct(trunk_turn, frame)
@@ -1137,11 +1137,11 @@ proc carry(couple: Couple) =
     is_crown = (couple.band == Band.Crown)
     is_leaving = couple.isLeavingCrown
     risen = couple.height
-    one = toAxes(couple.stance[Body.One]).origin
-    two = toAxes(couple.stance[Body.Two]).origin
+    one = couple.stance[Body.One].toAxes.origin
+    two = couple.stance[Body.Two].toAxes.origin
     between = (one + two) * 0.5
     middle = (if is_crown: between +
-                        (toAxes(couple.stance[couple.turning]).origin - between) * couple.over
+                        (couple.stance[couple.turning].toAxes.origin - between) * couple.over
               else: between)
       ## Over crown, hands go over head of dancer who turns, not between two:
       ## couple setting hold up put them there, and pulling them to midpoint
@@ -1247,7 +1247,7 @@ proc holdSwing(couple: Couple) =
   ##       over up to 42 degrees of meridian, and would move holds at torso: so laid, left to
   ##       right low leapt 180 mm where it leaps 137, measured 2026-10-11.
   for who in Body:
-    let axes = toAxes(couple.chestStance(who))
+    let axes = couple.chestStance(who).toAxes
     for arm in Arm:
       let
         arm_rig = couple.who[who].arm[arm]
@@ -1398,7 +1398,7 @@ proc easeOff(couple: Couple) =
     elif yaw < easing_lower: square = WAIST_LEAN * (easing_lower - yaw)
     if square != 0.0:
       engine.twistBy(couple.who[who].chest, asEngine((0.0, 0.0, square)), true)
-    let axes = toAxes(couple.chestStance(who))
+    let axes = couple.chestStance(who).toAxes
     for arm in Arm:
       let arm_rig = couple.who[who].arm[arm]
       # Collarbone, each hinge about its own axis in world: girdle turned back
@@ -1596,7 +1596,7 @@ func turnVector(r: Matrix): array[3, float] =
 proc axesInBody(couple: Couple, who: Body, link: engine.BodyId): Matrix =
   ## Link's own three axes as columns, in its dancer's chest terms.
   let
-    axes = toAxes(couple.chestStance(who))
+    axes = couple.chestStance(who).toAxes
     origin = asWorld(engine.pointOf(link, engine.initVector(0, 0, 0)))
   for j in 0..2:
     # Link's local axes are engine's; project's are turned from them (`asEngine`).
@@ -1614,8 +1614,8 @@ proc poseVector*(couple: Couple): array[44, float] =
   ## two waists, then each arm's collarbone, shoulder, elbow and wrist.  Depth each hand
   ## holds follows, as last set, and not read off engine.
   let
-    one = toAxes(couple.stance[Body.One]).origin
-    two = toAxes(couple.stance[Body.Two]).origin
+    one = couple.stance[Body.One].toAxes.origin
+    two = couple.stance[Body.Two].toAxes.origin
   # Lead stands at origin facing along y in every planned turn, so plan's apart and
   # sideways are follow's place in those terms.
   result[0] = two.y - one.y
@@ -1669,28 +1669,28 @@ proc placeBodies*(couple: var Couple, chests: array[Body, Stance], arms: array[4
     )
 
   for who in Body:
-    let axes = toAxes(chests[who])
+    let axes = chests[who].toAxes
     engine.place(couple.who[who].chest, asPlace(axes.origin), standing(axes))
     for arm in Arm:
       let
         placing = arms[2*ord(who)+ord(arm)]
         arm_rig = couple.who[who].arm[arm]
-      engine.place(arm_rig.collar, asPlace(placing.root), toQuaternionEngine(placing.collar))
-      engine.place(arm_rig.girdle, asPlace(placing.shoulder), toQuaternionEngine(placing.girdle))
+      engine.place(arm_rig.collar, asPlace(placing.root), placing.collar.toQuaternionEngine)
+      engine.place(arm_rig.girdle, asPlace(placing.shoulder), placing.girdle.toQuaternionEngine)
       engine.place(
         arm_rig.link[Limb.Upper],
         asPlace(placing.shoulder),
-        toQuaternionEngine(placing.upper),
+        placing.upper.toQuaternionEngine,
       )
       engine.place(
         arm_rig.link[Limb.Fore],
         asPlace(placing.elbow),
-        toQuaternionEngine(placing.fore),
+        placing.fore.toQuaternionEngine,
       )
       engine.place(
         arm_rig.link[Limb.Palm],
         asPlace(placing.wrist),
-        toQuaternionEngine(placing.palm),
+        placing.palm.toQuaternionEngine,
       )
       couple.depth[2*ord(who)+ord(arm)] = placing.depth
   for i in 0..<couple.links.len: setTie(couple, i)
@@ -1705,7 +1705,7 @@ proc standAt*(
   ## where plan places them (`walk.replay`).
   couple.stance = stance
   for who in Body:
-    let axes = toAxes(stance[who])
+    let axes = stance[who].toAxes
     engine.place(couple.who[who].trunk, asPlace(axes.origin), standing(axes))
   couple.placeBodies(chests, arms)
   let still = asEngine((0.0, 0.0, 0.0))
@@ -1946,7 +1946,7 @@ func restStance*(rig: Rig, apart: float, is_away = false): array[Body, Stance] =
 
 func isPastEdge(stance: Stance, arm: Arm, pose: ArmPose): bool =
   ## Decide whether upper arm lies past shoulder's edge by more than its give, `GIVE_EDGE`.
-  outside(toAxes(stance), arm, pose).angle > GIVE_EDGE
+  outside(stance.toAxes, arm, pose).angle > GIVE_EDGE
 
 proc stoppedBy*(couple: Couple, i: int): tuple[why: Stop, end_index: int] =
   ## What stops this connection here, if anything does, and at which of its two arms.
@@ -2042,7 +2042,7 @@ proc crossing*(couple: Couple): tuple[is_crossed: bool, whose: Hand] =
   ## Whether one dancer's own arms cross above elbow, and whose: elbows out of order, or other
   ## arm against upper arm short of its elbow's end.
   for who in Body:
-    let axes = toAxes(couple.chestStance(who))
+    let axes = couple.chestStance(who).toAxes
     if dot(couple.elbow(who, Arm.Right) - couple.elbow(who, Arm.Left), axes.right) <
         ELBOWS_APART:
       return (true, (who, Arm.Right))

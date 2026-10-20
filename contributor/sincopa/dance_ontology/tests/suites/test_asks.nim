@@ -499,7 +499,7 @@ suite "Internal: Simulation against reference":
           named.add (key, (if target.over.get == Side.Left: Arm.Left else: Arm.Right))
     for (tag, arms) in [("C", HAND_TO_HAND), ("D", PAIRED)]:
       for i, wind in STEPS:
-        if wind != 0.0: named.add (&"{tag}{i + 1:02}", toArm(overArm(wind)))
+        if wind != 0.0: named.add (&"{tag}{i + 1:02}", overArm(wind).toArm)
     let chains = named
     for (frame, chain) in [("A16", "C05"), ("A17", "C03")]:
       for (key, arm) in chains:

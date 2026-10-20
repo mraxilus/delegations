@@ -425,7 +425,7 @@ proc drive() =
   types()
   browser()
   pages()
-  let paragraphs = toParagraphs(parseFile(PATH_CONTROL))
+  let paragraphs = parseFile(PATH_CONTROL).toParagraphs
   removeDir(BUILD_HOSTED)
   createDir(BUILD_HOSTED)
   var paths: seq[string]

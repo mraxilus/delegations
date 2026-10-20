@@ -94,7 +94,7 @@ func questions*(): seq[Question] =
   #   Turned by chain's sense instead, lead's own turn and lead's orbit went anticlockwise
   #     where caption says clockwise.
   for connection, single in SINGLES:
-    let links = toLinks(single.holds)
+    let links = single.holds.toLinks
     for manner in Manner:
       let tag = MANNERS[manner].tag
       for quarter in 0..<QUARTERS_ROUND:
@@ -118,7 +118,7 @@ func questions*(): seq[Question] =
   #   rather than whether pose stands there.
   for (key, arms) in [("h", HAND_TO_HAND), ("p", PAIRED)]:
     let
-      links = toLinks(arms)
+      links = arms.toLinks
       is_away = isRestAway(facingRest(arms))
     for manner in Manner:
       let

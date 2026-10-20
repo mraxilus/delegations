@@ -72,7 +72,7 @@ func reflected(point: Vector): Vector = (-point.x, point.y, point.z)
 
 func isPast(stance: Stance, arm: Arm, pose: ArmPose): bool =
   ## Decide whether upper arm lies past shoulder's edge by more than judge's give.
-  outside(toAxes(stance), arm, pose).angle > GIVE_EDGE
+  outside(stance.toAxes, arm, pose).angle > GIVE_EDGE
 
 func asVector(vector: engine.Vector): Vector =
   ## Engine's vector as this project's, in same body's own terms.
@@ -369,7 +369,7 @@ suite "Internal: Planner and engine are one rig":
     ##   Red with partner's girdles left out of plan, found 2026-10-04 by reading both filters.
     let
       placed = place(HUMAN, default(Plan), 0.0, false)
-      capsules = toCapsules(placed)
+      capsules = placed.toCapsules
       first_arm = 2 * trunkCapsules(HUMAN).len
       per_arm = placed.arms[0].capsules.len
       first_face = capsules.len - placed.faces.len
@@ -407,7 +407,7 @@ suite "Internal: Planned turn":
     for moment in 0..<path.plans.len:
       let
         placed = place(HUMAN, path.plans[moment], path.winds[moment], false)
-        capsules = toCapsules(placed)
+        capsules = placed.toCapsules
       for link in HAND_TO_HAND:
         let (one, two) = (link.ends[0], link.ends[1])
         check distance(

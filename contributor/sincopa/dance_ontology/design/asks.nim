@@ -51,7 +51,7 @@ func toLinks*(holds: Holds): seq[Link] =
   ## Read `parts`'s hold table: index is lead's arm, value is follow's it joins.
   for lead, follow in holds.pairs:
     if follow.isSome:
-      result.add Link(ends: [(Body.One, toArm(terms.Arm(lead))), (Body.Two, toArm(follow.get))])
+      result.add Link(ends: [(Body.One, terms.Arm(lead).toArm), (Body.Two, follow.get.toArm)])
 
 func toHolds*(target: Frame): Holds =
   ## Which hands this frame joins, in `parts`'s own terms.
@@ -70,7 +70,7 @@ func asked*(wind: float): float = -wind
   ## asked: flipped for chains alone, A16 was stood in C03's pose and A17 in
   ## C05's, mirror of what each card draws, and every single-hand card likewise.
 
-func facingRest*(target: Frame): Facing = facingRest(toHolds(target))
+func facingRest*(target: Frame): Facing = facingRest(target.toHolds)
   ## Name facing frame rests at.  Same reading `review_page` makes, by
   ## `parts.facingRest`, and never written down.
 
@@ -96,7 +96,7 @@ func turner*(manner: Manner, amount: float): tuple[who: Body, turns: float] =
   ##     about.  Architect's reading.  Simulation turns that dancer, and connection goes
   ##     round them and over their crown.  Card draws same: orbit lands on picture partner's
   ##     axis turn reaches (`parts.LUT_ROUND_BY_MANNER`).
-  let walker = toBodySimulation(MANNERS[manner].who)
+  let walker = MANNERS[manner].who.toBodySimulation
   if MANNERS[manner].about == About.Axis: (walker, asked(amount))
   else: (otherThan(walker), asked(-amount))
 
@@ -137,14 +137,14 @@ func stillAsks*(): seq[StillAsk] =
   #     wind (`route.overArm`): frame that names its own winds whichever way puts it over.
   func overOrdinal(target: Frame, wind: float): int =
     ## Say which of lead's arms card lays over, by ordinal, or below nought where it names none.
-    if wind == 0.0 or toLinks(toHolds(target)).len < 2: -1 else: ord(toArm(overArm(wind)))
+    if wind == 0.0 or target.toHolds.toLinks.len < 2: -1 else: ord(overArm(wind).toArm)
 
   for i, target in FRAMES:
     for twist in [0, 1]:
       let amount = amountFor(target, twist)
       result.add StillAsk(
         key: &"A{i * 2 + twist + 1:02}",
-        links: toLinks(toHolds(target)),
+        links: target.toHolds.toLinks,
         turns: asked(sense(target) * amount),
         rest: facingRest(target),
         who: Body.Two,
@@ -156,7 +156,7 @@ func stillAsks*(): seq[StillAsk] =
     let target = FRAMES[^1]
     result.add StillAsk(
       key: "A17",
-      links: toLinks(toHolds(target)),
+      links: target.toHolds.toLinks,
       turns: asked(-amountFor(target, 1)),
       rest: facingRest(target),
       who: Body.Two,
@@ -174,7 +174,7 @@ func stillAsks*(): seq[StillAsk] =
         let (who, turns) = turner(manner, float(quarter) / float(QUARTERS_ROUND))
         result.add StillAsk(
           key: &"st_{MANNERS[manner].tag}_{single_index}_{quarter}",
-          links: toLinks(single.holds),
+          links: single.holds.toLinks,
           turns: turns,
           rest: facingRest(single.holds),
           who: who,
@@ -187,10 +187,10 @@ func stillAsks*(): seq[StillAsk] =
     for i, wind in STEPS:
       result.add StillAsk(
         key: &"{tag}{i + 1:02}",
-        links: toLinks(arms),
+        links: arms.toLinks,
         turns: asked(wind),
         rest: facingRest(arms),
         who: Body.Two,
         head: Body.Two,
-        over: (if wind == 0.0: -1 else: ord(toArm(overArm(wind)))),
+        over: (if wind == 0.0: -1 else: ord(overArm(wind).toArm)),
       )

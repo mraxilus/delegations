@@ -59,7 +59,7 @@ func toHolds(target: Frame): Holds {.compileTime.} =
   ## Say what each of lead's arms holds, as drawing takes it.
   for side in Side:
     if target.hold[side].isSome:
-      result[toArm(side)] = some toArm(target.hold[side].get)
+      result[side.toArm] = some target.hold[side].get.toArm
 
 
 func poseFor(is_facing: bool): Pose {.compileTime.} =
@@ -87,8 +87,8 @@ func renderScene(target: Frame; is_facing, is_clockwise: bool): string {.compile
   ##     same rule wound pair is drawn by (rules 27, 29).
   ##     Facing, nothing crosses, so there is nothing for way round to
   ##       decide and none is asked for.
-  renderParts(poseFor(is_facing), toHolds(target), has_captions = false,
-              over = (if target.over.isSome: some toArm(target.over.get)
+  renderParts(poseFor(is_facing), target.toHolds, has_captions = false,
+              over = (if target.over.isSome: some target.over.get.toArm
                       elif is_facing: none(Arm)
                       else: some overArm(if is_clockwise: 1.0 else: -1.0))).join("")
 

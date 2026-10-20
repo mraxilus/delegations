@@ -25,7 +25,7 @@ suite "Internal: Judge of faces":
 
 
   test "control expects each character beyond ASCII that system draws, once":
-    let paragraphs = toParagraphs(parseFile(PATH_CONTROL))
+    let paragraphs = parseFile(PATH_CONTROL).toParagraphs
     check paragraphs.len == 3
     check findingsExpected(paragraphs) == @[
       (element: "p#han", codepoint: 0x4E2D), (element: "p#open", codepoint: 0x1D400)
@@ -35,7 +35,7 @@ suite "Internal: Judge of faces":
 
 
   test "control is whole document in body stack, each paragraph with its own stack":
-    let page = pageControl(toParagraphs(parseFile(PATH_CONTROL)))
+    let page = pageControl(parseFile(PATH_CONTROL).toParagraphs)
     check page.startsWith("<!doctype html>")
     check ("body { font-family: " & SANS_SERIF & "; }") in page
     check "<p id=\"han\">中</p>" in page
@@ -61,7 +61,7 @@ suite "Internal: Judge of faces":
     let found = parseJson("""{"control_faces": {"characters": [
       {"element": "p#han", "codepoint": 20013}, {"element": "p#open", "codepoint": 119808}],
       "faces": []}}""")
-    let expected = findingsExpected(toParagraphs(parseFile(PATH_CONTROL)))
+    let expected = findingsExpected(parseFile(PATH_CONTROL).toParagraphs)
     check checkRendered(found, expected, CONTROL, DIRECTORY).len == 0
 
 
@@ -69,7 +69,7 @@ suite "Internal: Judge of faces":
     let
       found = parseJson("""{"control_faces": {"characters": [
         {"element": "p#han", "codepoint": 20013}], "faces": []}}""")
-      expected = findingsExpected(toParagraphs(parseFile(PATH_CONTROL)))
+      expected = findingsExpected(parseFile(PATH_CONTROL).toParagraphs)
       findings = checkRendered(found, expected, CONTROL, DIRECTORY)
     check findings.len == 1
     check findings[0].path == DIRECTORY / CONTROL & ".html"

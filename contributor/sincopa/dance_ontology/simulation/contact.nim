@@ -40,7 +40,7 @@ type
 
 func toBodyShape*(rig: Rig, stance: Stance): BodyShape =
   ## Body's shape at stance.
-  result.axes = toAxes(stance)
+  result.axes = stance.toAxes
   for part in Part:
     result.parts[part] = PartShape(
       half_breadth: halfBreadth(rig, part),
