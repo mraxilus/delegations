@@ -67,13 +67,13 @@ _Avoid_: side, party, subject, control
 
 **Dense form**:
 The straight-line implementation of a general measurand, generated from the tables of the
-library. It assigns each slot once as the sum of its terms, with no fill, no intermediate and no
-call. A general row is timed against it, as a typed row is timed against its reference.
+library. It assigns each coefficient once as the sum of its terms, with no fill, no intermediate and
+no call. A general row is timed against it, as a typed row is timed against its reference.
 _Avoid_: dense reference, bound form, oracle
 
 **Widen / narrow**:
-To put a typed object into the basis slots of the dense multivector, and to read it back
-out. A narrow asserts that the other slots are zero.
+To put a typed object into the coefficients of its bases in the dense multivector, and to read it
+back out. A narrow asserts that the other coefficients are zero.
 _Avoid_: bridge, embed, extract, lift, convert
 
 **Measurement**:

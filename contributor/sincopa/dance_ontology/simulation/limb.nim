@@ -65,7 +65,9 @@ func shoulderLocal*(rig: Rig): Vector = (rig.shoulder_out, 0.0, rig.shoulder_up)
   ## Shoulder in body's mirrored terms: always right arm here.
 
 
-func circleOf*(rig: Rig; shoulder_point, join_point, hand_direction: Vector; depth: float): Circle =
+func initCircle*(
+  rig: Rig; shoulder_point, join_point, hand_direction: Vector; depth: float
+): Circle =
   ## Elbow's circle for arm from shoulder `shoulder_point` to join `join_point` with
   ## hand pointing along unit `hand_direction`, holding `depth` past wrist.
   result.shoulder = shoulder_point
@@ -123,7 +125,7 @@ func posed*(
   ##     overshoot has something smooth to descend.
   posedOn(
     rig,
-    circleOf(rig, shoulder_point, join_point, hand_direction, depth),
+    initCircle(rig, shoulder_point, join_point, hand_direction, depth),
     join_point,
     cos(swivel),
     sin(swivel),
@@ -148,7 +150,7 @@ func placed*(
     elbow_point = shoulder_point + upper_direction * rig.upper
     wrist_point = elbow_point + fore_direction * rig.fore
     join_point = wrist_point + hand_direction * gripAtPalm(rig)
-    axes = axesOf(stance)
+    axes = stance.toAxes
   if arm == Arm.Left:
     ArmPose(
       shoulder: toWorld(axes, mirrored(shoulder_point)),
@@ -165,7 +167,7 @@ func placed*(
     )
 
 
-func carriedOf*(rig: Rig, pose: ArmPose): Vector =
+func pointCarried*(rig: Rig, pose: ArmPose): Vector =
   ## Where hand is carried, which band is asked of: `rig.carry` past wrist, on hand's own
   ## line from wrist through join.
   ##   Between join of palm grip and that of finger grip, since neither serves.  Asked of
@@ -202,7 +204,7 @@ func swing*(axes: Axes, arm: Arm, pose: ArmPose): Swing =
   result.joints.bend = angleBetween(upper_direction, fore_direction)
   result.joints.wrist = angleBetween(fore_direction, hand_direction)
 
-func twistOf*(arm_swing: Swing): float =
+func twistShoulder*(arm_swing: Swing): float =
   ## Shoulder's twist, read off elbow's plane; nought where
   ## elbow is too straight to have one.
   if arm_swing.joints.bend > STRAIGHT:
@@ -218,11 +220,11 @@ func joints*(axes: Axes, arm: Arm, pose: ArmPose): Joints =
   ## axes already worked out.
   let arm_swing = swing(axes, arm, pose)
   result = arm_swing.joints
-  result.twist = twistOf(arm_swing)
+  result.twist = twistShoulder(arm_swing)
 
 func joints*(stance: Stance, arm: Arm, pose: ArmPose): Joints =
   ## Read every joint off pose, in body's own terms.
-  joints(axesOf(stance), arm, pose)
+  joints(stance.toAxes, arm, pose)
 
 
 func reading*(arm_joints: Joints, dof: Dof): float =

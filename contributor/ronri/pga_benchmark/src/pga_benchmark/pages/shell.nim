@@ -80,7 +80,7 @@ func facesAsked*(shell: string): seq[string] =
     at = shell.find(TOKEN_EMBED, close + 1)
 
 
-func mediaOf(face: string): string =
+func mediaType(face: string): string =
   ## Name media type data URL of `face` declares, read off its extension.
   ##   Type stated matches `format()` beside it in shell, so two never disagree about one file.
   if face.endsWith(".ttf"): "font/ttf"
@@ -173,13 +173,13 @@ func assemble*(shell, title, body: string; faces: Table[string, string]): string
   for face, bytes in faces.pairs:
     result = result.replace(
       TOKEN_EMBED & face & "@",
-      "data:" & mediaOf(face) & ";base64," & encode(bytes),
+      "data:" & mediaType(face) & ";base64," & encode(bytes),
     )
 
 
 func digestPage*(page: string): string =
   ## Digest built page, as publications hold it once page is published.
-  digestOf(page)
+  digest(page)
 
 
 func hosted*(page: string): string =

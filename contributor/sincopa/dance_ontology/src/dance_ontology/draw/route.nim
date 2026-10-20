@@ -328,7 +328,7 @@ func resample*(points: seq[Point], count: int): seq[Point] =
 
 #[ Rim Directions ]#
 
-func frontOf*(hand: Point, body: Body): Option[float] =
+func front*(hand: Point, body: Body): Option[float] =
   ## Get way round rim, from this hand, that heads for its own
   ## dancer's front.
   ##   Hand's own side turns "front" or "back" into direction by itself,
@@ -349,10 +349,10 @@ func wayFor*(ends: Ends, level: Option[Level], modifier: Option[Modifier]):
   ##     front, both locks round back (rules 4 to 6).  Hold that has
   ##     named no level or no modifier has no opinion, and `routed` takes
   ##     short way.
-  let sends = roundOf(level, modifier)
+  let sends = sendsHold(level, modifier)
   if sends.isNone:
     return none(WayRound)
-  let sides = (a: frontOf(ends.a, ends.body_a), b: frontOf(ends.b, ends.body_b))
+  let sides = (a: front(ends.a, ends.body_a), b: front(ends.b, ends.body_b))
   if sides.a.isNone or sides.b.isNone:
     return none(WayRound)  # dead ahead or behind: neither way
   if sends.get == Sends.FrontWay:
@@ -508,7 +508,7 @@ func sharpestIn*(points: seq[Point]): float =
     result = max(result, abs(radToDeg(arctan2(cross, dot))))
 
 
-func crestOf*(points: seq[Point]): tuple[at, offset: float] =
+func crestReach*(points: seq[Point]): tuple[at, offset: float] =
   ## Say where drawn reach stands furthest off its own chord, and how far
   ## (rule 24).
   ##   `at` is fraction of chord that happens at, `offset` is how far off it
@@ -817,7 +817,7 @@ func clearedReach*(a, b: Point; marks: seq[Mark]): seq[Point] =
   ##     whichever mark it meets, and mark near hand puts whole of that
   ##     hug against that hand.  Line then runs dead straight to its far
   ##     end and bends only there, which reads as kink beside hand
-  ##     however few degrees each corner turns (rule 24, and `crestOf`
+  ##     however few degrees each corner turns (rule 24, and `crestReach`
   ##     measures it).  B04 and B23 of review page were drawn that way.
   ##     Cost of weighing always: three band relaxations per settled
   ##       reach where one sometimes did.  Accepted -- shape is what
@@ -834,7 +834,7 @@ func clearedReach*(a, b: Point; marks: seq[Mark]): seq[Point] =
       result = tried
 
 
-func crossingsOf*(one, other: seq[Point]): seq[Point] =
+func crossings*(one, other: seq[Point]): seq[Point] =
   ## Find where two drawn reaches cross, so each crossing can be broken.
   ##   Segment against segment, and where they really cross rather than
   ##     where their sampled points come close.  Two lines crossing steeply
@@ -949,7 +949,7 @@ func gapFor*(at, span, wide: float): tuple[opens, shuts: float] =
   (at - half, at + half)
 
 
-func alongOf(points: seq[Point]): seq[float] =
+func alongPoints(points: seq[Point]): seq[float] =
   ## Measure how far along reach each of its points sits.
   result = @[0.0]
   for i in 0..<points.high:
@@ -1012,7 +1012,7 @@ func cutGapsAt*(points, over: seq[Point]; centres: seq[Point]): seq[Run] =
   ##     crosses over is wanted here and not only its crossings.
   if centres.len == 0:
     return @[points]
-  let along = alongOf(points)
+  let along = alongPoints(points)
   var gaps: seq[tuple[opens, shuts: float]]
   for centre in centres:
     var nearest = (distance: Inf, at: 0.0)
@@ -1139,4 +1139,4 @@ func cutGap*(points: seq[Point], over: seq[Point]): seq[Run] =
   ##     parallel pair, at end nearest point ties on.
   ##   Same crossings and same gaps as wound pair's, through same two
   ##     funcs, since one break should read like every other.
-  cutGapsAt(points, over, crossingsOf(points, over))
+  cutGapsAt(points, over, crossings(points, over))

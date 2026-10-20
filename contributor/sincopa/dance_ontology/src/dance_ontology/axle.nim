@@ -46,7 +46,7 @@ func axleWidth*: int =
   2 * (MOST_TURN * STEP) + NODE_WIDTH + 60
 
 
-func centreOf*(stood: FrameState, twist: HalfTurns): (int, int) =
+func centre*(stood: FrameState, twist: HalfTurns): (int, int) =
   ## Get where twist sits along axle.
   ##   Placed by twist itself rather than by index, so distance
   ##     between two frame states on drawing is size of turn between
@@ -74,8 +74,8 @@ func arc(stood: FrameState, twist: HalfTurns, is_refused: bool): string =
   ##     same thing.  Which dancer takes it is in list beside
   ##     drawing, where there is room to say it.
   let
-    (start_x, start_y) = centreOf(stood, stood.twist)
-    (end_x, end_y) = centreOf(stood, twist)
+    (start_x, start_y) = centre(stood, stood.twist)
+    (end_x, end_y) = centre(stood, twist)
     reach = abs(twist - stood.twist)
     # Stacked by how far turn goes, so long arc clears short one rather
     # than crossing it twice.
@@ -110,12 +110,12 @@ func renderAxle*(stood: FrameState, motion = Motion.Still, taken = none(HalfTurn
   let ends = standing(stood)
   if ends.len > 0:
     result.add "<line class=\"axle-line\" x1=\"" &
-        $centreOf(stood, ends[0])[0] & "\" y1=\"" & $AXLE_Y & "\" x2=\"" &
-        $centreOf(stood, ends[^1])[0] & "\" y2=\"" & $AXLE_Y & "\"/>"
+        $centre(stood, ends[0])[0] & "\" y1=\"" & $AXLE_Y & "\" x2=\"" &
+        $centre(stood, ends[^1])[0] & "\" y2=\"" & $AXLE_Y & "\"/>"
 
   # Arcs: one per place turn can land, refused ones included.
   var drawn: seq[HalfTurns] = @[]
-  for offer in turnsOf(stood):
+  for offer in turnsOffered(stood):
     if offer.to.twist == stood.twist or offer.to.twist in drawn:
       continue
     drawn.add offer.to.twist
@@ -126,7 +126,7 @@ func renderAxle*(stood: FrameState, motion = Motion.Still, taken = none(HalfTurn
     var landing = stood
     landing.twist = twist
     let
-      (centre_x, centre_y) = centreOf(stood, twist)
+      (centre_x, centre_y) = centre(stood, twist)
       is_reachable = twist != stood.twist
       classes = "node" & (if twist == here: " here" else: "") &
           (if is_reachable: " reachable" else: "")
@@ -158,8 +158,8 @@ func renderAxle*(stood: FrameState, motion = Motion.Still, taken = none(HalfTurn
   # Mark carries distance to where it is going, so taking turn is
   # mark travelling along axle, which is what move is.
   let
-    (stood_x, stood_y) = centreOf(stood, stood.twist)
-    (here_x, _) = centreOf(stood, here)
+    (stood_x, stood_y) = centre(stood, stood.twist)
+    (here_x, _) = centre(stood, here)
   result.add markAt(
     stood_x,
     stood_y,

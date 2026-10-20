@@ -58,7 +58,7 @@ so their alias field stands empty and the alias suite passes over them.
 Their cite is the
 equation that defines the norm. The squared quantity is what stands under its root. The
 suites of the library cite none. The reference returns the weight squared norm as an
-`Antiscalar`, so that widening puts it in the antiscalar slot where the library writes it.
+`Antiscalar`, so that widening puts it in the antiscalar coefficient where the library writes it.
 
 Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Catalogue`. Ids are unique. Every
 expression compiles against the library. The set of symbols equals the set of exported
@@ -158,9 +158,9 @@ one 32. Suite `Internal: Inspector` holds both sizes.
 
 ## Widening and pools
 
-A widen puts each typed object into the dense multivector at its basis slots. A narrow reads
-it back, and asserts under `-d:testing` that every other slot is zero. Pools are filled once
-from `randomize(0)`: dense multivectors of every grade, typed objects in general position,
+A widen puts each typed object into the dense multivector at the indexes of its bases. A narrow
+reads it back, and asserts under `-d:testing` that every other coefficient is zero. Pools are filled
+once from `randomize(0)`: dense multivectors of every grade, typed objects in general position,
 lines and planes joined from points, and motors unitized. Every typed pool has a widened
 image, so the two implementations read equivalent operands.
 
@@ -170,7 +170,7 @@ through the widening, and suite `Internal: Measurements` runs every measurand ov
 ## Measurements
 
 `defineCatalogue` turns the catalogue into one timed loop for each measurand of each
-implementation. Operands are template aliases into pool slots, and never copies, so the loop
+implementation. Operands are template aliases into pool elements, and never copies, so the loop
 moves only the traffic of the operation itself. Every result is folded into one sink after
 the timing, so nothing is dead. The share of results that carry NaN is counted. The radius norm
 of the library returns NaN where 𝐦 ∘ 𝐦 is negative, and that is measured rather than stated.
@@ -205,16 +205,16 @@ day, one straight-line form ran 6.40 to 7.59 ns as its arrays moved. Without ali
 `dual_weight_point` at rga4d ran 5.44 ns against 2.71 ns. Suite `Internal: Measurements` holds
 each pool to a line.
 
-**Result slots start uninitialised (`noinit`).** A fill of zeros that the compiler sees lets it
+**Result elements start uninitialised (`noinit`).** A fill of zeros that the compiler sees lets it
 delete each store of zero that repeats the fill. The bench then times fewer stores than a caller
 pays.
 
-Alone, `∙` at rga4d ran at 4.4 ns into slots filled once with zeros, and at 7.0 ns into slots
+Alone, `∙` at rga4d ran at 4.4 ns into elements filled once with zeros, and at 7.0 ns into elements
 left uninitialised. In the bench at `3121342`, the machine code holds 245 stores of zero
 with or without the fill. So there a fill gives no measurand a discount, and the `noinit`
 keeps it so as the catalogue grows. Both figures are from `linux amd64, 4 cores` on 2026-10-02.
 
-**A result of three floats or fewer is bound before its slot.** Nim returns such a result by
+**A result of three floats or fewer is bound before it is stored.** Nim returns such a result by
 value, through a temporary that the call site fills with zeros. In a large function, the
 compiler keeps that fill as a call to an out-of-line `rep stosq`. A caller of normal size pays
 nothing, because there the fill is two stores that the compiler deletes.
@@ -370,12 +370,12 @@ has an image.
 Each operation carries a shape, and the shape carries the rule. An exterior product spends
 three raised to the dimensions, because each dimension stands in one of three states for a
 pair of blades. A geometric product loses one of four states for each null dimension. A
-bilinear form landing in one slot spends one term for each blade that carries an image.
+bilinear form landing in one coefficient spends one term for each blade that carries an image.
 
 A norm of one part spends one term for each blade of that part. That is half the blades under
 the rigid metric, and a quarter under the conformal metric, since the four parts are of one size.
-A unitize spends the norm of one part, then one term for each slot. The radius norm squares the
-whole antidot, so it spends what a bilinear form spends. Under the rigid metric a part holds the
+A unitize spends the norm of one part, then one term for each coefficient. The radius norm squares
+the whole antidot, so it spends what a bilinear form spends. Under the rigid metric a part holds the
 blades that carry an image, so each norm counts as the bilinear form did.
 
 A product against the dual of its second operand spends what the grade of that operand
@@ -386,9 +386,9 @@ A support, an antisupport, a centre and a container each apply maps to the opera
 take one product. A map is a signed read, so the product against the mapped operand is one
 table, and the cells of that table are the bound. The supports count 54 at four dimensions,
 and the centre and the container count 162 at five. Those counts rest on the same assumption
-as the primitives, that no slot shares a subexpression with another.
+as the primitives, that no coefficient shares a subexpression with another.
 
-The library composes some other operations from several operators. A norm reads two slots.
+The library composes some other operations from several operators. A norm reads two coefficients.
 The four projections take a dual product and then a full product. The partner is cubic in
 its operand, so it stays a chain of two folded tables. Those are the container of a dual,
 then an antiwedge against the carrier.
@@ -441,7 +441,7 @@ one unit component. So it spends 243 multiplies where the algebra demands none.
 
 On bytes moved the library stands at the bound for 55 of 107 operations at four dimensions,
 and for 81 of 130 at five. Those are the operations that one generated function serves,
-since that function writes every slot and fills nothing. A chain fills its
+since that function writes every coefficient and fills nothing. A chain fills its
 intermediates, and stands above the bound.
 
 At four dimensions the exterior product spends the bound's 81 multiplies and moves the
@@ -456,7 +456,7 @@ byte shares are 51 and 47 per cent. Those shares rest on one population, so
 the figures compare.
 
 Cost: the multivector lower bound is derived, and never measured (Article VIII.1). It bounds
-arithmetic and movement, and never time. It assumes that no result slot shares a
+arithmetic and movement, and never time. It assumes that no result coefficient shares a
 subexpression with another, which holds for these products and would not hold where
 factoring helps.
 
@@ -468,11 +468,11 @@ steps.
 
 **A general row is timed against its dense form**, as the Architect chose. A general row has
 no reference, so nothing measured stood for what a dense multivector could spend. The dense
-form is that measure. It assigns each slot once as the sum of its terms, with no fill, no
+form is that measure. It assigns each coefficient once as the sum of its terms, with no fill, no
 intermediate multivector and no call.
 
 `dense.nim` generates one dense form for each general measurand at build time. It evaluates
-the operation symbolically over the library's own Cayley tables. Each slot is a polynomial
+the operation symbolically over the library's own Cayley tables. Each coefficient is a polynomial
 over the components of the operands. A sign map composes for free, a product multiplies
 polynomials, and like terms combine. An operand that is already a product binds scalar
 temporaries first, so a chain spends the sum of its steps.
@@ -576,7 +576,7 @@ hold 400 MB.
 
 Verified by `test_rga4d.nim`, suite `Internal: Unitized`. Where the weight is one, each unitized
 form equals its homogeneous form, in both layouts. Each row of `baseline/unitized.json` saves the
-multiplies that the C of its two forms differs by. Each timed call hands the slot of its pool to
+multiplies that the C of its two forms differs by. Each timed call hands the element of its pool to
 the form, and no temporary.
 
 Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Guard`. A grown total is one
@@ -691,8 +691,8 @@ file beside each program. It would reach programs alone, and the digest would no
 proposals whose changes it needs, and an empty list says that it needs none. Rejected: one base
 for each proposal. A proposal that needs two others could then not say so.
 
-`dependenciesOf` walks the graph depth first. It gives what an adoption needs first, each one
-after its own bases and once only. `dependentsOf` gives what a rejection blocks. A cycle, an
+`dependencies` walks the graph depth first. It gives what an adoption needs first, each one
+after its own bases and once only. `dependents` gives what a rejection blocks. A cycle, an
 unknown name, a withdrawn base or a `builds_on` that is not a list is a finding. A base that the
 library implements drops out, since the library holds its edits.
 
@@ -713,7 +713,7 @@ to its checkbox, so the page runs no script. The cost is weight: the page carrie
 MiB against 4.3 MiB without them, by `ls -l build` on 2026-10-04.
 
 **An evaluation measures a copy of the library at pin.** It copies the checkout, applies the edits
-(what the proposal depends on first, in the order of `dependenciesOf`), and measures the copy
+(what the proposal depends on first, in the order of `dependencies`), and measures the copy
 against the pin. It runs the suites of the
 library, reads the static measurements of every function, and times each measurand. The
 binaries of the pin and of the copy run alternately, five times each, so drift of the machine
@@ -1255,8 +1255,8 @@ micro-optimisation.
 
 Each function that a Cayley table can express moves to generation, and so gets its zeros
 unrolled at no cost. At the pin `3d9696e` the library works this way, and its attitude and
-carrier are generated. Its hand-written `+` and `-` carry `noinit` and write each slot, so they
-fill nothing. The cost that stays is what the hand-written norms pay.
+carrier are generated. Its hand-written `+` and `-` carry `noinit` and write each coefficient, so
+they fill nothing. The cost that stays is what the hand-written norms pay.
 
 The cost is measured at `3121342` on `linux amd64, 4 cores`, an Intel Xeon at 2.10 GHz, on
 2026-10-03. The harness calls each function through a volatile procedure pointer. So the body of
@@ -1331,8 +1331,8 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
   counts after the edits in `evaluations/partner-sign.json` and `evaluations/compound-tables.json`.
 - Whether the library takes P04, `exact-kinds`, so that a product returns the exact basis-set
   type of the bases it reaches. At rga4d 16 measurands stand above the byte bound only because
-  they write a whole multivector for one slot, and at cga5d 15 do. Each is a dot, an antidot or
-  a squared norm. Under P04 each dot and antidot writes 8 bytes. The squared norms reach 8 bytes
+  they write a whole multivector for one coefficient, and at cga5d 15 do. Each is a dot, an antidot
+  or a squared norm. Under P04 each dot and antidot writes 8 bytes. The squared norms reach 8 bytes
   only once the library emits them as exact basis-set types, which the change does not.
 - Whether the library takes P05, `multivector-align`. It aligns the whole set to `min(64, size)`,
   one cache line from three dimensions up, so it pads no multivector. P04 aligns every basis-set

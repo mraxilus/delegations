@@ -16,7 +16,7 @@ cmd: "nim $target --hints:off -d:testing -d:nodejs -d:nimUnittestAbortOnError:on
 ##   Neither needs browser: nothing called here touches document.
 ##   Runs on JS target alone, because both pages import `std/dom`.
 ##   Also holds what viewer says of where couple stand to recording it plays: its line is
-##     built from recording (`rig_view.whereOf`), so law reads recording itself, through node.
+##     built from recording (`rig_view.where`), so law reads recording itself, through node.
 
 {.experimental: "strictFuncs".}
 
@@ -25,7 +25,7 @@ when compileOption("profiler"): import std/nimprof
 import std/[jsffi, math, options, os, strutils, unittest]
 
 import ../design/[plain, rig_view]
-from ../design/rig_view {.all.} import toFixed, whereOf
+from ../design/rig_view {.all.} import toFixed, where
 import ../app/app {.all.}
 import ../src/dance_ontology
 
@@ -109,7 +109,7 @@ suite "Internal: The rig viewer says its prose in few words":
 
 suite "Internal: The rig viewer says where couple stand":
   test "every moment of every entry says how far apart couple stand at that moment":
-    ## Viewer's line of where couple stand (`rig_view.whereOf`) names metres between two dancers'
+    ## Viewer's line of where couple stand (`rig_view.where`) names metres between two dancers'
     ##   axes at moment shown, to two places, as recording has each stand there (`faces`).
     ##   Walk keeps one distance through sweep, and planned sweep moves couple as plan has them.
     ##   Domain: every moment of every entry of rig's recording, stills and sweeps; still that
@@ -135,7 +135,7 @@ suite "Internal: The rig viewer says where couple stand":
             look = entry.faces[at]
             apart = hypot(look[4].to(float) - look[0].to(float),
                           look[5].to(float) - look[1].to(float))
-            said = $whereOf(entry, at)
+            said = $where(entry, at)
             meant = "stood <b>" & $toFixed(apart, 2) & "</b> m apart"
           if meant notin said: wrong.add name & " moment " & $at
     checkpoint "Moments read: `" & $read & "`.  Wrong distance: `" & $wrong.len & "`, from: `" &

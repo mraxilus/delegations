@@ -108,14 +108,14 @@ func wristTurn*(plan: Plan, i: int): Matrix =
   let base = 4 + PER_ARM * i
   turnAbout([plan[base+6], plan[base+7], plan[base+8]])
 
-func twistOf(turn: Matrix): float = arctan2(turn[1][0] - turn[0][1], turn[0][0] + turn[1][1])
+func twistBall(turn: Matrix): float = arctan2(turn[1][0] - turn[0][1], turn[0][0] + turn[1][1])
   ## Engine's twist of ball's turn about its own z (`b3GetTwistAngle`).
 
 
 type
   ArmPlaced* = object  ## One arm placed in world, and what its joints read.
     shoulder*, elbow*, wrist*, join*: Vector
-    carried*: Vector  ## Where hand is carried, which band is asked of (`limb.carriedOf`).
+    carried*: Vector  ## Where hand is carried, which band is asked of (`limb.pointCarried`).
     palm*, fingers*: Vector  ## Unit out of palm, and unit along fingers.
     depth*: float  ## How far past wrist hand holds.
     capsules*: array[6, Capsule]
@@ -131,7 +131,7 @@ type
     faces*: array[Body, Capsule]  ## Sphere ahead of each head, which every arm keeps off.
 
 
-func facingOf*(plan: Plan, who: Body, wind: float, is_away: bool, turner = Body.Two): float =
+func facingChest*(plan: Plan, who: Body, wind: float, is_away: bool, turner = Body.Two): float =
   ## Way chest faces: lead along y, follow back along it, turner turned by wind.
   ##   Turner turns on own spot and partner stays where they stand, as card draws it: lead
   ##     who turns quarter has follow at side, and follow who turns quarter is still ahead.
@@ -143,10 +143,10 @@ func facingOf*(plan: Plan, who: Body, wind: float, is_away: bool, turner = Body.
 
 type Frame = tuple[origin, right, fore: Vector]  ## Where one body stands, and its right and fore.
 
-func frameOf(plan: Plan, who: Body, wind: float, is_away: bool, turner: Body): Frame =
+func frameChest(plan: Plan, who: Body, wind: float, is_away: bool, turner: Body): Frame =
   ## Where body stands at this plan and wind, and which way its right and fore point.
   let
-    facing = facingOf(plan, who, wind, is_away, turner)
+    facing = facingChest(plan, who, wind, is_away, turner)
     origin: Vector = (if who == Body.One: (0.0, 0.0, 0.0) else: (plan[1], plan[0], 0.0))
     right: Vector = (sin(facing), -cos(facing), 0.0)
     fore: Vector = (cos(facing), sin(facing), 0.0)
@@ -192,7 +192,7 @@ func placeArm(
       times(turnAbout([plan[base+2], plan[base+3], plan[base+4]]), MATRIX_REST),
     )
     result.joints[1] = result.joints[0] + column(result.turns[1], 2) * rig.upper
-    result.twist = twistOf(shoulderTurn(plan, i))
+    result.twist = twistBall(shoulderTurn(plan, i))
     result.extend = arcsin(clamp(-column(result.turns[1], 2).y, -1.0, 1.0))
     # Edge is read in body's mirrored terms, left arm in mirror (`shoulder`).
     let along = column(result.turns[1], 2)
@@ -225,7 +225,7 @@ func placeArm(
                         frame.world(shoulder + direction * (rig.upper - rig.limb)), rig.limb)
   result.capsules[2] = (frame.world(elbow + column(forearm, 2) * rig.limb),
                         frame.world(elbow + column(forearm, 2) * (rig.fore - rig.limb)), rig.limb)
-  # Free hand holds nothing, and its depth is whole hand (`boundsOf`): it hangs relaxed.
+  # Free hand holds nothing, and its depth is whole hand (`initBounds`): it hangs relaxed.
   let hand_capsules =
     if depth >= rig.hand: relaxedCapsules(rig, handedness)
     else: handCapsules(rig, handLong(rig, depth))
@@ -236,7 +236,7 @@ func placeArm(
 func place*(rig: Rig, plan: Plan, wind: float, is_away: bool, turner = Body.Two): Placed =
   ## Every capsule and joint reading of couple at this plan and wind.
   for who in Body:
-    let frame = frameOf(plan, who, wind, is_away, turner)
+    let frame = frameChest(plan, who, wind, is_away, turner)
     for (a, z, radius) in trunkCapsules(rig):
       result.trunks[who].add (frame.world(a), frame.world(z), radius)
     let face = faceCapsule(rig)
@@ -245,10 +245,10 @@ func place*(rig: Rig, plan: Plan, wind: float, is_away: bool, turner = Body.Two)
       let i = armIndex(who, arm)
       result.arms[i] = placeArm(rig, plan, i, frame)
 
-func pairsOf*(problem: Problem): seq[(int, int)] = problem.pairs
-  ## Every pair of capsules engine collides, by index into `capsulesOf`.
+func pairsCollided*(problem: Problem): seq[(int, int)] = problem.pairs
+  ## Every pair of capsules engine collides, by index into `toCapsules`.
 
-func capsulesOf*(placed: Placed): seq[Capsule] =
+func toCapsules*(placed: Placed): seq[Capsule] =
   ## Every capsule, trunks first, then each arm's girdle, upper, fore and three of hand, then
   ## each face.
   for who in Body:
@@ -258,7 +258,7 @@ func capsulesOf*(placed: Placed): seq[Capsule] =
   for who in Body: result.add placed.faces[who]
 
 
-func problemOf*(rig: Rig, links: seq[Link], is_away: bool, turner = Body.Two): Problem =
+func initProblem*(rig: Rig, links: seq[Link], is_away: bool, turner = Body.Two): Problem =
   ## Hold, and every pair of capsules engine collides, by its own filters.
   result = Problem(links: links, is_away: is_away, turner: turner, lower: 0.0, upper: 3.0)
   for who in Body:
@@ -314,7 +314,7 @@ func twistEnds(rig: Rig, i: int): (float, float) =
   if i mod 2 == 1: (twist_range.lower, twist_range.upper)
   else: (-twist_range.upper, -twist_range.lower)
 
-func easeOf(rig: Rig, a: ArmPlaced, i: int): array[6, float] =
+func easesArm(rig: Rig, a: ArmPlaced, i: int): array[6, float] =
   ## Arm `i`'s squared way into each joint's ease, in order `comfort` sums them.
   let
     twist_range = rig.range[Dof.Twist]
@@ -330,30 +330,30 @@ func easeOf(rig: Rig, a: ArmPlaced, i: int): array[6, float] =
    ease(a.protract, fore.lower, fore.upper, fore.ease_lower, fore.ease_upper),
    ease(a.elevate, up.lower, up.upper, up.ease_lower, up.ease_upper)]
 
-func easesOf(rig: Rig, placed: Placed): array[4, array[6, float]] =
+func eases(rig: Rig, placed: Placed): array[4, array[6, float]] =
   ## Each arm's squared way into each joint's ease.
-  for i in 0..3: result[i] = easeOf(rig, placed.arms[i], i)
+  for i in 0..3: result[i] = easesArm(rig, placed.arms[i], i)
 
-func waistsOf(rig: Rig, plan: Plan): array[2, float] =
+func waists(rig: Rig, plan: Plan): array[2, float] =
   ## Each waist's squared way into its ease.
   for k in 0..1:
     result[k] = ease(plan[2+k], rig.waist.lower, rig.waist.upper, rig.waist.ease_lower,
                      rig.waist.ease_upper)
 
-func comfortOf(eases: array[4, array[6, float]], waists: array[2, float]): float =
+func comfort(eases: array[4, array[6, float]], waists: array[2, float]): float =
   ## Sum of every joint's ease, arm by arm, then waists.
   for terms in eases:
     for term in terms: result += term
   for term in waists: result += term
 
 func comfort*(rig: Rig, placed: Placed, plan: Plan): float =
-  ## Sum of every joint's squared way into its ease, as `rigid.strainOf` reads them.
-  comfortOf(easesOf(rig, placed), waistsOf(rig, plan))
+  ## Sum of every joint's squared way into its ease, as `rigid.strainWorst` reads them.
+  comfort(eases(rig, placed), waists(rig, plan))
 
-func gapOf(p, q: Capsule): float = closest(p.a, p.z, q.a, q.z).gap - p.radius - q.radius
+func gap(p, q: Capsule): float = closest(p.a, p.z, q.a, q.z).gap - p.radius - q.radius
   ## How far apart two capsules' skins are: negative where they overlap.
 
-func marginOf(rig: Rig, problem: Problem, a: ArmPlaced, i: int): array[4, float] =
+func marginsArm(rig: Rig, problem: Problem, a: ArmPlaced, i: int): array[4, float] =
   ## Arm `i`'s twist, cone, extend and upper arm's direction past margin inside their ends,
   ## squared: direction's end is shoulder's edge, which engine's wall holds (`rigid.holdSwing`).
   let (lower, upper) = twistEnds(rig, i)
@@ -363,11 +363,11 @@ func marginOf(rig: Rig, problem: Problem, a: ArmPlaced, i: int): array[4, float]
    max(0.0, a.extend - rig.range[Dof.Extend].upper + problem.style.margin)^2,
    max(0.0, a.outside + problem.style.margin)^2]
 
-func marginsOf(rig: Rig, problem: Problem, placed: Placed): array[4, array[4, float]] =
+func margins(rig: Rig, problem: Problem, placed: Placed): array[4, array[4, float]] =
   ## Each arm's twist, cone, extend and direction past margin inside their ends, squared.
-  for i in 0..3: result[i] = marginOf(rig, problem, placed.arms[i], i)
+  for i in 0..3: result[i] = marginsArm(rig, problem, placed.arms[i], i)
 
-func leapsOf(problem: Problem; now, then: Capsule): array[2, float] =
+func leaps(problem: Problem; now, then: Capsule): array[2, float] =
   ## How far each end of one capsule moved past leap since last moment, squared.
   [max(0.0, distance(now.a, then.a) - problem.style.leap)^2,
    max(0.0, distance(now.z, then.z) - problem.style.leap)^2]
@@ -393,7 +393,7 @@ iterator nearOnes(gaps: Gaps): float =
       yield gaps.values[64*word_index+countTrailingZeroBits(bits)]
       bits = bits and (bits - 1)
 
-func crampedOf(problem: Problem, arms: array[4, ArmPlaced], gaps: Gaps): float =
+func cramped(problem: Problem, arms: array[4, ArmPlaced], gaps: Gaps): float =
   ## Sum of cramped's terms: pairs nearer than `ROOMY`, then joined hands near band's edge.
   for gap in gaps.nearOnes:
     if gap < ROOMY: result += (ROOMY - gap)^2
@@ -428,7 +428,7 @@ func gripBroken*(rig: Rig; a, b: ArmPlaced; margin: float): float =
   if twist < PI:
     result += max(0.0, cos(max(0.0, twist - margin)) + dot(a.fingers, b.fingers))^2
 
-func violationOf(
+func violation(
   rig: Rig,
   problem: Problem,
   arms: array[4, ArmPlaced],
@@ -469,37 +469,37 @@ func violationOf(
   for ends in leaps:
     for term in ends: result += term
 
-func gapsOf(problem: Problem, capsules: seq[Capsule]): Gaps =
+func initGaps(problem: Problem, capsules: seq[Capsule]): Gaps =
   ## Every pair's gap, each one free to add.
   result.near = newSeq[uint64]((problem.pairs.len + 63) div 64)
   for k, (i, j) in problem.pairs:
-    result.values.add gapOf(capsules[i], capsules[j])
+    result.values.add gap(capsules[i], capsules[j])
     result.mark(k, Inf)
 
-func leapsOf(problem: Problem; capsules, before: seq[Capsule]; first_arm: int):
+func leaps(problem: Problem; capsules, before: seq[Capsule]; first_arm: int):
     seq[array[2, float]] =
   ## Each arm capsule's leap terms since last moment, or none where there is no last moment.
   if before.len > 0:
     # Arms only: trunks and faces are carried by turn itself.
     for k in first_arm ..< first_arm + ARM_CAPSULES:
-      result.add leapsOf(problem, capsules[k], before[k])
+      result.add leaps(problem, capsules[k], before[k])
 
 func cramped*(rig: Rig, problem: Problem, placed: Placed): float =
   ## How near this pose sits to what it must keep, inside its margins: capsules nearer
   ## than `ROOMY` and joined hands nearer band's edge than `ROOMY` cost by square.
-  crampedOf(problem, placed.arms, gapsOf(problem, capsulesOf(placed)))
+  cramped(problem, placed.arms, initGaps(problem, placed.toCapsules))
 
 func violation*(rig: Rig, problem: Problem, placed: Placed, before: seq[Capsule]): float =
   ## Sum of squares by which this pose breaks what plan must keep.
-  let capsules = capsulesOf(placed)
-  violationOf(rig, problem, placed.arms, gapsOf(problem, capsules),
-              marginsOf(rig, problem, placed),
-              leapsOf(problem, capsules, before, 2 * trunkCapsules(rig).len))
+  let capsules = placed.toCapsules
+  violation(rig, problem, placed.arms, initGaps(problem, capsules),
+            margins(rig, problem, placed),
+            leaps(problem, capsules, before, 2 * trunkCapsules(rig).len))
 
 
 type Bounds = array[SIZE, (float, float)]
 
-func boundsOf(rig: Rig, margin: float, links: seq[Link]): Bounds =
+func initBounds(rig: Rig, margin: float, links: seq[Link]): Bounds =
   ## Each freedom's ends: collarbones, waists and elbow at engine's own, sideways held nought.
   ##   Held hand holds anywhere from palm to fingertips.  Free hand holds nothing, its depth
   ##     whole hand, and hangs relaxed, as engine builds it (`rigid.build`).
@@ -543,7 +543,7 @@ type
     ##     plain cost's order, so cost is same to last bit (`tests/test_plan.nim`).
     ##   Gap whose balls keep it past every threshold reads `Inf`: no sum adds it.
     placed: Placed
-    capsules: seq[Capsule]  ## As `capsulesOf` lists them.
+    capsules: seq[Capsule]  ## As `toCapsules` lists them.
     balls: seq[Ball]  ## Each capsule's ball.
     gaps: Gaps
     first_arm: int  ## Place of first arm capsule in `capsules`.
@@ -555,11 +555,11 @@ type
     margins: array[4, array[4, float]]
     leaps: seq[array[2, float]]  ## Each arm capsule's, or none with no last moment.
 
-func ballOf(capsule: Capsule): Ball =
+func ballBounding(capsule: Capsule): Ball =
   ## Ball holding capsule whole: its middle, and half its length and its radius.
   ((capsule.a + capsule.z) * 0.5, distance(capsule.a, capsule.z) * 0.5 + capsule.radius)
 
-func gapOf(r: Reckoning; i, j: int; threshold: float): float =
+func gap(r: Reckoning; i, j: int; threshold: float): float =
   ## Gap between capsules `i` and `j`, or `Inf` where their balls alone keep them
   ## `threshold` apart: segment lies inside its ball, so gap is never less than balls'.
   ##   Balls are compared squared, both sides positive, and slop covers rounding.
@@ -568,9 +568,9 @@ func gapOf(r: Reckoning; i, j: int; threshold: float): float =
     reach = p.reach + q.reach + threshold + FAR_SLOP
     (x, y, z) = (p.centre.x - q.centre.x, p.centre.y - q.centre.y, p.centre.z - q.centre.z)
   if x * x + y * y + z * z >= reach * reach: return Inf
-  gapOf(r.capsules[i], r.capsules[j])
+  gap(r.capsules[i], r.capsules[j])
 
-func thresholdOf(problem: Problem): float =
+func thresholdNear(problem: Problem): float =
   ## Gap beyond which pair adds to no sum: clearance, and `ROOMY` where cramped is weighed.
   if problem.style.slack > 0.0: max(max(problem.style.clearance, ROOMY), CROSS_ROOM)
   else: max(problem.style.clearance, CROSS_ROOM)
@@ -580,7 +580,7 @@ proc reckon(
 ) =
   ## Every term of pose at `plan`.
   r.placed = place(rig, plan, wind, problem.is_away, problem.turner)
-  r.capsules = capsulesOf(r.placed)
+  r.capsules = r.placed.toCapsules
   r.first_arm = 2 * r.placed.trunks[Body.One].len
   r.first_face = r.first_arm + ARM_CAPSULES
   if r.trunk.len == 0:
@@ -588,17 +588,17 @@ proc reckon(
     let face = faceCapsule(rig)
     r.face = (face.a, face.z, face.radius)
   r.balls.setLen(r.capsules.len)
-  for k, capsule in r.capsules: r.balls[k] = ballOf(capsule)
-  let threshold = thresholdOf(problem)
+  for k, capsule in r.capsules: r.balls[k] = ballBounding(capsule)
+  let threshold = thresholdNear(problem)
   r.gaps.values.setLen(problem.pairs.len)
   r.gaps.near.setLen((problem.pairs.len + 63) div 64)
   for k, (i, j) in problem.pairs:
-    r.gaps.values[k] = r.gapOf(i, j, threshold)
+    r.gaps.values[k] = r.gap(i, j, threshold)
     r.gaps.mark(k, threshold)
-  r.eases = easesOf(rig, r.placed)
-  r.waists = waistsOf(rig, plan)
-  r.margins = marginsOf(rig, problem, r.placed)
-  r.leaps = leapsOf(problem, r.capsules, before, r.first_arm)
+  r.eases = eases(rig, r.placed)
+  r.waists = waists(rig, plan)
+  r.margins = margins(rig, problem, r.placed)
+  r.leaps = leaps(problem, r.capsules, before, r.first_arm)
 
 type Weighing = object
   ## What one stage of `solve` weighs every pose by, beyond pose itself.
@@ -612,12 +612,12 @@ type Weighing = object
 func total(r: Reckoning, rig: Rig, weighing: Weighing, plan: Plan): float =
   ## Weigh pose: comfort, weighted violation, stay near last, bias, slack and gather.
   let problem = weighing.problem
-  result = comfortOf(r.eases, r.waists) +
-      weighing.weight * violationOf(rig, problem, r.placed.arms, r.gaps, r.margins, r.leaps)
+  result = comfort(r.eases, r.waists) +
+      weighing.weight * violation(rig, problem, r.placed.arms, r.gaps, r.margins, r.leaps)
   for k in 0..<SIZE:
     result += weighing.holding * (plan[k] - weighing.last[k])^2 + weighing.bias[k] * plan[k]
   if problem.style.slack > 0.0:
-    result += problem.style.slack * crampedOf(problem, r.placed.arms, r.gaps)
+    result += problem.style.slack * cramped(problem, r.placed.arms, r.gaps)
   if problem.style.gather > 0.0 and problem.links.len == 2:
     let
       (one, two) = (problem.links[0].ends[0], problem.links[1].ends[0])
@@ -647,7 +647,7 @@ func movedPairs(rig: Rig, problem: Problem): Moving =
     first_arm = 2 * trunk
     first_face = first_arm + ARM_CAPSULES
 
-  func isOf(k: int, who: Body): bool =
+  func isOwn(k: int, who: Body): bool =
     ## Whether capsule `k` is one of body's own: its trunk, one of its two arms, or its face.
     k in ord(who) * trunk ..< (ord(who) + 1) * trunk or
         k in first_arm + 2 * PER_ARM_CAPSULES * ord(who) ..<
@@ -660,7 +660,7 @@ func movedPairs(rig: Rig, problem: Problem): Moving =
             first_arm + PER_ARM_CAPSULES * (i + 1) - 1
         if a in moved or b in moved: result.arms[i][f].add k
     for who in Body:
-      if a.isOf(who) or b.isOf(who): result.bodies[who].add k
+      if a.isOwn(who) or b.isOwn(who): result.bodies[who].add k
 
 type Held = object  ## What one arm's step re-reckoned away from, to put back.
   arm: ArmPlaced
@@ -690,7 +690,7 @@ proc stepArm(
   let
     i = armMoved(freedom)
     first_arm = r.first_arm
-    threshold = thresholdOf(problem)
+    threshold = thresholdNear(problem)
   held.arm = r.placed.arms[i]
   held.ease = r.eases[i]
   held.margin = r.margins[i]
@@ -698,7 +698,7 @@ proc stepArm(
     rig,
     plan,
     i,
-    frameOf(plan, Body(i div 2), wind, problem.is_away, problem.turner),
+    frameChest(plan, Body(i div 2), wind, problem.is_away, problem.turner),
     firstMoved(freedom),
     held.arm,
   )
@@ -706,20 +706,20 @@ proc stepArm(
     let k = first_arm + PER_ARM_CAPSULES * i + part
     held.balls[part] = r.balls[k]
     r.capsules[k] = r.placed.arms[i].capsules[part]
-    r.balls[k] = ballOf(r.capsules[k])
+    r.balls[k] = ballBounding(r.capsules[k])
     if r.leaps.len > 0:
       held.leaps[part] = r.leaps[k-first_arm]
-      r.leaps[k-first_arm] = leapsOf(problem, r.capsules[k], before[k])
+      r.leaps[k-first_arm] = leaps(problem, r.capsules[k], before[k])
   held.near.setLen(r.gaps.near.len)
   for w in 0..<r.gaps.near.len: held.near[w] = r.gaps.near[w]
   held.gaps.setLen(moved.len)
   for n, k in moved:
     held.gaps[n] = r.gaps.values[k]
     let (a, b) = problem.pairs[k]
-    r.gaps.values[k] = r.gapOf(a, b, threshold)
+    r.gaps.values[k] = r.gap(a, b, threshold)
     r.gaps.mark(k, threshold)
-  r.eases[i] = easeOf(rig, r.placed.arms[i], i)
-  r.margins[i] = marginOf(rig, problem, r.placed.arms[i], i)
+  r.eases[i] = easesArm(rig, r.placed.arms[i], i)
+  r.margins[i] = marginsArm(rig, problem, r.placed.arms[i], i)
 
 proc restore(r: var Reckoning, held: Held, freedom: int, moved: seq[int]) =
   ## Put back pose `stepArm` re-reckoned away from.
@@ -770,9 +770,9 @@ proc stepBody(
   ##     in reckoned again.
   let
     who = bodyMoving(freedom)
-    frame = frameOf(plan, who, wind, problem.is_away, problem.turner)
+    frame = frameChest(plan, who, wind, problem.is_away, problem.turner)
     trunk = r.trunk.len
-    threshold = thresholdOf(problem)
+    threshold = thresholdNear(problem)
   held.trunk.setLen(trunk)
   held.balls.setLen(trunk + 2 * PER_ARM_CAPSULES + 1)
   for t in 0..<trunk:
@@ -781,13 +781,13 @@ proc stepBody(
     held.balls[t] = r.balls[k]
     r.capsules[k] = (frame.world(r.trunk[t].a), frame.world(r.trunk[t].z), r.trunk[t].radius)
     r.placed.trunks[who][t] = r.capsules[k]
-    r.balls[k] = ballOf(r.capsules[k])
+    r.balls[k] = ballBounding(r.capsules[k])
   let face = r.first_face + ord(who)
   held.face = r.capsules[face]
   held.balls[trunk+2*PER_ARM_CAPSULES] = r.balls[face]
   r.capsules[face] = (frame.world(r.face.a), frame.world(r.face.z), r.face.radius)
   r.placed.faces[who] = r.capsules[face]
-  r.balls[face] = ballOf(r.capsules[face])
+  r.balls[face] = ballBounding(r.capsules[face])
   for side in 0..1:
     let i = 2 * ord(who) + side
     held.arms[side] = r.placed.arms[i]
@@ -796,19 +796,19 @@ proc stepBody(
       let k = r.first_arm + PER_ARM_CAPSULES * i + part
       held.balls[trunk+PER_ARM_CAPSULES*side+part] = r.balls[k]
       r.capsules[k] = r.placed.arms[i].capsules[part]
-      r.balls[k] = ballOf(r.capsules[k])
+      r.balls[k] = ballBounding(r.capsules[k])
       if r.leaps.len > 0:
         held.leaps[PER_ARM_CAPSULES*side+part] = r.leaps[k-r.first_arm]
-        r.leaps[k-r.first_arm] = leapsOf(problem, r.capsules[k], before[k])
+        r.leaps[k-r.first_arm] = leaps(problem, r.capsules[k], before[k])
   held.waists = r.waists
-  r.waists = waistsOf(rig, plan)
+  r.waists = waists(rig, plan)
   held.near.setLen(r.gaps.near.len)
   for w in 0..<r.gaps.near.len: held.near[w] = r.gaps.near[w]
   held.gaps.setLen(moved.len)
   for n, k in moved:
     held.gaps[n] = r.gaps.values[k]
     let (a, b) = problem.pairs[k]
-    r.gaps.values[k] = r.gapOf(a, b, threshold)
+    r.gaps.values[k] = r.gap(a, b, threshold)
     r.gaps.mark(k, threshold)
 
 proc restoreBody(r: var Reckoning, held: HeldBody, freedom: int, moved: seq[int]) =
@@ -890,7 +890,7 @@ proc solve*(
   ## Comfiest pose near `last`, by penalty on what must be kept, on growing weight.
   ##   Limited-memory quasi-Newton on numerical gradient, bounds by clamping.
   let
-    bounds = boundsOf(rig, problem.style.margin, problem.links)
+    bounds = initBounds(rig, problem.style.margin, problem.links)
     holding = (if stay >= 0.0: stay else: problem.style.stay)
   var x = clamped(start, bounds)
   let moving = movedPairs(rig, problem)
@@ -1006,7 +1006,7 @@ type Path* = object  ## Planned turn: one pose per moment, and how far it got.
   problem*: Problem  ## What was planned, so moment can be planned again from engine's pose.
   direction*: float
 
-func awayOf(wind: float, is_away: bool): float =
+func away(wind: float, is_away: bool): float =
   ## How far couple are from face to face, turns, nought to half.
   let turned = floorMod(wind + (if is_away: 0.5 else: 0.0), 1.0)
   min(turned, 1.0 - turned)
@@ -1024,7 +1024,7 @@ func bandAt*(rig: Rig; wind, direction: float; is_away: bool; room: float):
     high_torso = torso.upper + 0.05 - room
     low_crown = crown.lower - 0.03 + room
     high_crown = crown.upper - room
-    up = min(1.0, awayOf(wind, is_away) / 0.25)
+    up = min(1.0, away(wind, is_away) / 0.25)
     turned = floorMod(wind + (if is_away: 0.5 else: 0.0), 1.0)
     is_leaving = abs(wind) < 1e-9 or ((turned < 0.5) == (direction > 0.0))
   const window = FACE_WINDOW
@@ -1044,7 +1044,7 @@ func hanging*(apart: float): Plan =
   result[0] = apart
   for i in 0..3: result[4+PER_ARM*i+5] = 30.0 * PI / 180.0
 
-proc restOf*(rig: Rig, problem: var Problem, tries = 8): tuple[plan: Plan, broken: float] =
+proc planRest*(rig: Rig, problem: var Problem, tries = 8): tuple[plan: Plan, broken: float] =
   ## Comfiest rest pose found from several starts: couple stand where rest sits easiest.
   ##   Starts are fixed, so plan is same on every build and every core.
   let (lower, upper) = bandAt(rig, 0.0, 1.0, problem.is_away, problem.style.room)
@@ -1070,9 +1070,9 @@ proc planPath*(
   ## Plan couple from rest to `turns` of wind, `turner` turning, moment by moment, as far as
   ## plan keeps everything.  Stuck, it backs off, nudges arms at standing wind and tries
   ## again.
-  var problem = problemOf(rig, links, is_away, turner)
+  var problem = initProblem(rig, links, is_away, turner)
   problem.style = style
-  let rest = restOf(rig, problem)
+  let rest = planRest(rig, problem)
   if rest.broken >= KEPT: return
   let direction = (if turns >= 0.0: 1.0 else: -1.0)
   result.problem = problem
@@ -1096,7 +1096,7 @@ proc planPath*(
     problem.lower = lower
     problem.upper = upper
     let
-      before = capsulesOf(place(rig, last, wind, is_away, turner))
+      before = place(rig, last, wind, is_away, turner).toCapsules
       solved = solve(rig, problem, last, last, target, before, bias = bias)
     if solved.broken < KEPT:
       result.winds.add target
@@ -1113,7 +1113,7 @@ proc planPath*(
     if failures mod 3 == 0:
       var facing_at = -1
       for k in countdown(result.winds.len - 1, 0):
-        if min(1.0, awayOf(result.winds[k], is_away) / 0.25) <= FACE_WINDOW:
+        if min(1.0, away(result.winds[k], is_away) / 0.25) <= FACE_WINDOW:
           facing_at = k
           break
       if facing_at > 0:
@@ -1130,7 +1130,7 @@ proc planPath*(
             start[j] += 0.3 * (spread(float(j * (walk + 5) + 31 * failures +
                                             17 * problem.style.seed) * 0.6180339887) - 0.5) * 2.0
           let
-            here = capsulesOf(place(rig, result.plans[^1], at, is_away, turner))
+            here = place(rig, result.plans[^1], at, is_away, turner).toCapsules
             moved = solve(rig, problem, start, result.plans[^1], at, here, stay = 0.0)
           if moved.broken < KEPT:
             result.winds.add at
@@ -1152,7 +1152,7 @@ proc planPath*(
         start[j] += 0.1 * sqrt(float(failures)) *
             (spread(float(j * (nudge + 7 * failures)) * 0.7548776662) - 0.5) * 2.0
       let
-        here = capsulesOf(place(rig, result.plans[^1], at, is_away, turner))
+        here = place(rig, result.plans[^1], at, is_away, turner).toCapsules
         nudged = solve(rig, problem, start, result.plans[^1], at, here, stay = 0.02)
       if nudged.broken < KEPT:
         result.winds.add at
@@ -1179,7 +1179,7 @@ proc corrected*(rig: Rig, path: Path, i: int, now: Plan): Plan =
   problem.lower = lower
   problem.upper = upper
   let
-    before = capsulesOf(place(rig, now, path.winds[max(0, i-1)], problem.is_away, problem.turner))
+    before = place(rig, now, path.winds[max(0, i-1)], problem.is_away, problem.turner).toCapsules
     solved = solve(rig, problem, now, path.plans[i], wind, before)
   if solved.broken < KEPT: solved.plan else: path.plans[i]
 
@@ -1247,7 +1247,7 @@ func placings*(rig: Rig, plan: Plan, wind: float, is_away: bool, turner = Body.T
     ## Trunk's and girdle's own axes in body's terms: right, up, back (`rigid.standing`).
   for who in Body:
     let
-      facing = facingOf(plan, who, wind, is_away, turner)
+      facing = facingChest(plan, who, wind, is_away, turner)
       origin: Vector = (if who == Body.One: (0.0, 0.0, 0.0) else: (plan[1], plan[0], 0.0))
       right: Vector = (sin(facing), -cos(facing), 0.0)
       fore: Vector = (cos(facing), sin(facing), 0.0)

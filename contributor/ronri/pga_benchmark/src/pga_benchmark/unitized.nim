@@ -248,8 +248,8 @@ type
 
 
 template timed(count, rounds: int, body: untyped): float =
-  ## Time body over every slot of pool `rounds` times; median nanoseconds per object.
-  ##   Operands pair slot i with slot j = (7i + 3) mod count, as bench pairs them.
+  ## Time body over every element of pool `rounds` times; median nanoseconds per object.
+  ##   Operands pair element i with element j = (7i + 3) mod count, as bench pairs them.
   var spans = newSeq[int64](rounds)
   for round in 0..<rounds:
     let started = getMonoTime()

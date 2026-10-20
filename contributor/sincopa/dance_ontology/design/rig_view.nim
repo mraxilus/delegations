@@ -41,11 +41,11 @@ const VERDICTS* = [
 
 # Browser's own calls, one line each.
 func rig(): JsObject {.importjs: "RIG@".}
-func contextOf(id: cstring): JsObject {.importjs:
+func contextDrawing(id: cstring): JsObject {.importjs:
   "document.getElementById(#).getContext('2d')".}
   ## Get drawing context of canvas named `id`.
 func canvasOf(id: cstring): JsObject {.importjs: "document.getElementById(#)".}
-func contextOf(canvas: JsObject): JsObject {.importjs: "(#).getContext('2d')".}
+func contextDrawing(canvas: JsObject): JsObject {.importjs: "(#).getContext('2d')".}
 func toFixed(number: float, places: int): cstring {.importjs: "(#).toFixed(#)".}
 func toFloat(item: JsObject): float {.importjs: "(#)".}
 func count(list: JsObject): int {.importjs: "(#).length".}
@@ -59,17 +59,17 @@ func entriesOn(event: Event): cstring {.importjs:
   ## saw every card's number as last one's, and every click chose D07.
 
 
-func styleOf(name: cstring): cstring {.importjs:
+func styleComputed(name: cstring): cstring {.importjs:
   "getComputedStyle(document.documentElement).getPropertyValue(#).trim()".}
   ## Colours come from page's own custom properties rather than being written
   ## twice.  `draw/style` names same four for arms, so arm here and arm on
   ## reference page are one arm to reader, and dark scheme moves both together.
 
-proc inkOf(side, who: int): cstring =
+proc inkArm(side, who: int): cstring =
   ## Hue is side, shade is whose: plain for follow, deep for lead.
   const names = [[cstring"--left-deep", cstring"--left"],
                  [cstring"--right-deep", cstring"--right"]]
-  styleOf(names[side][who])
+  styleComputed(names[side][who])
 
 const
   NEAR = 5.0 * PI / 180.0  ## Within this of either end, joint reads as strained.
@@ -100,8 +100,8 @@ var
 # Entries of recording, read as viewer reads them.
 proc entry(i: int): JsObject = ENTRIES_ALL[i]
 proc sweep(): JsObject = entry(PICK)
-proc momentsOf(recording: JsObject): int = (if has(recording, "at"): count(recording.at) else: 0)
-proc moments(): int = momentsOf(sweep())
+proc moments(recording: JsObject): int = (if has(recording, "at"): count(recording.at) else: 0)
+proc moments(): int = moments(sweep())
 proc isStill(recording: JsObject): bool = has(recording, "key")
 
 
@@ -119,19 +119,19 @@ proc paintOn(
 ) =
   ## Draw one moment of one entry on one canvas, seen from one place.
   let
-    context = contextOf(canvas)
+    context = contextDrawing(canvas)
     width = canvas.width.toFloat
     height = canvas.height.toFloat
     scale = min(width, height) / (2.2 * framing.reach) * zoom
     centre_x = width / 2.0
     centre_y = height / 2.0
   discard context.clearRect(0, 0, width, height)
-  if momentsOf(recording) == 0:
+  if moments(recording) == 0:
     return
 
   # Floor, so height and distance have something to be read against.
   context.lineWidth = 1.0.toJs
-  context.strokeStyle = styleOf("--rule").toJs
+  context.strokeStyle = styleComputed("--rule").toJs
   let span = 1.5
   var grid_offset = -span
   while grid_offset <= span + 0.001:
@@ -168,8 +168,8 @@ proc paintOn(
       depth: seen_ahead.depth - seen_here.depth,
     )
   let
-    shade = $styleOf("--body-shade")
-    lit = $styleOf("--body-lit")
+    shade = $styleComputed("--body-shade")
+    lit = $styleComputed("--body-lit")
 
   # Capsules, furthest first, in order `drawn` gives.
   var capsules: seq[tuple[a, z: Spot]]
@@ -210,7 +210,7 @@ proc paintOn(
           discard gradient.addColorStop(stop, cstring(mixColours(shade, lit, litAt(fore, offset))))
         ink = gradient
     else:
-      ink = inkOf(int(tag[1].toFloat), int(tag[0].toFloat)).toJs
+      ink = inkArm(int(tag[1].toFloat), int(tag[0].toFloat)).toJs
     case drawnAs(a, z)
     of Drawn.Stroke:
       context.lineWidth = (2.0 * radius * scale).toJs
@@ -241,7 +241,7 @@ proc paintOn(
       elevation,
       framing,
     )
-    context.fillStyle = styleOf("--ink").toJs
+    context.fillStyle = styleComputed("--ink").toJs
     discard context.beginPath()
     discard context.arc(
       centre_x + seen_join.x * scale,
@@ -270,7 +270,7 @@ proc readout() =
         side = int(sweep_shown.arm[arm][1].toFloat)
       # Label, not heading: heading would take serif face (Article X.8).
       html = html & cstring"<div class='arm'><p class='who'><i style='background:" &
-          inkOf(side, who) & cstring"'></i>" & WHOSE[who] & cstring" " &
+          inkArm(side, who) & cstring"'></i>" & WHOSE[who] & cstring" " &
           SIDES[side] & cstring"</p>"
       for dof in 0..<DOFS.len:
         let
@@ -299,11 +299,11 @@ proc apartAt(recording: JsObject, at: int): float =
   let look = recording.faces[at]
   hypot(look[4].toFloat - look[0].toFloat, look[5].toFloat - look[1].toFloat)
 
-proc whereOf(recording: JsObject, at: int): cstring =
+proc where(recording: JsObject, at: int): cstring =
   ## Say where entry stands at moment `at`: its turns, and how far apart couple stand.
   ##   Markup returned and not written, so `test_said` reads it without document.
   if isStill(recording):
-    if momentsOf(recording) > 0:
+    if moments(recording) > 0:
       cstring"<b>" & toFixed(recording.turns.toFloat, 2) & cstring"</b> turns · stood <b>" &
           toFixed(apartAt(recording, 0), 2) & cstring"</b> m apart"
     else:
@@ -315,7 +315,7 @@ proc whereOf(recording: JsObject, at: int): cstring =
 proc caption() =
   ## Say what entry shows: its turns and distance, or what stopped it.
   let sweep_shown = sweep()
-  document.getElementById("where").innerHTML = whereOf(sweep_shown, MOMENT_SHOWN)
+  document.getElementById("where").innerHTML = where(sweep_shown, MOMENT_SHOWN)
   if isStill(sweep_shown):
     document.getElementById("verdict").innerHTML =
       (if moments() > 0: cstring(VERDICTS[0]) else: cstring(VERDICTS[1]))
@@ -328,13 +328,13 @@ proc caption() =
          cstring(VERDICTS[2]))
 
 
-proc framingOf(recording: JsObject): Framing =
+proc framingEntry(recording: JsObject): Framing =
   ## Frame one entry to what it holds, over every moment of it, so view does
   ## not jump as couple turn and nothing wanders off edge part way through.
   var
     lower = [1e9, 1e9, 1e9]
     upper = [-1e9, -1e9, -1e9]
-  for moment in 0..<momentsOf(recording):
+  for moment in 0..<moments(recording):
     let row = recording.points[moment]
     for k in 0 ..< count(row) div 3:
       for axis in 0..2:
@@ -352,7 +352,7 @@ proc framingOf(recording: JsObject): Framing =
 proc fit() =
   ## Frame camera to entry chosen, where it has any moment.
   if moments() > 0:
-    FRAMING_SHOWN = framingOf(sweep())
+    FRAMING_SHOWN = framingEntry(sweep())
 
 
 proc reference() =
@@ -398,8 +398,8 @@ proc thumbs() =
       width = canvas.clientWidth.toFloat * 2.0
     canvas.width = width.toJs
     canvas.height = width.toJs
-    if momentsOf(recording) > 0:
-      paintOn(canvas, recording, 0, AZIMUTH_START, ELEVATION_START, 1.0, framingOf(recording))
+    if moments(recording) > 0:
+      paintOn(canvas, recording, 0, AZIMUTH_START, ELEVATION_START, 1.0, framingEntry(recording))
 
 
 proc tick() =

@@ -92,10 +92,11 @@ proc main(): int =
   doAssert (p ∙ m) is Multivector0, "Dot of vector and whole multivector must be scalar."
   doAssert ((p ∧ q) ⟇ (m ∧ n)) is Multivector,
     "Product that reaches every basis must be `Multivector`, so library takes it."
-  doAssert sizeof(p ∙ m) == sizeof(Coefficient), "Dot must write one slot, never whole multivector."
+  doAssert sizeof(p ∙ m) == sizeof(Coefficient),
+    "Dot must write one coefficient, never whole multivector."
   doAssert sizeof(p ∘ m) == sizeof(Coefficient),
-    "Antidot must write one slot, never whole multivector."
-  doAssert sizeof(∘p) == sizeof(Coefficient), "Weight of vector must write one slot."
+    "Antidot must write one coefficient, never whole multivector."
+  doAssert sizeof(∘p) == sizeof(Coefficient), "Weight of vector must write one coefficient."
   doAssert (∙m) is Multivector, "Bulk of whole multivector must stay library's."
   doAssert ((even ⟇ p) ⟇ even) is MultivectorOdd,
     "Sandwich of vector must reach whole odd parity, as table can produce."
@@ -112,7 +113,7 @@ proc main(): int =
         "Bulk and weight of bivector must cover its grade, under rigid metric."
   doAssert not compiles(top ∧ top), "Product that reaches no basis must stop compile."
   doAssert not compiles(p[Basis.scalar]),
-    "Static basis outside bases of type must stop compile, so product reads fixed slots alone."
+    "Static basis outside bases of type must stop compile, so product reads fixed indexes alone."
   doAssert wedge(p, q).toMultivector =~ (p ∧ q).toMultivector, "Alias must forward to operator."
   for _ in 1..SAMPLES:
     let

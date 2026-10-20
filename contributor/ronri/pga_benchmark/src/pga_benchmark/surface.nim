@@ -24,14 +24,14 @@ type
     gate: Gate
 
 
-func indentOf(line: string): int =
+func spacesLeading(line: string): int =
   ## Count leading spaces of line.
   for c in line:
     if c != ' ': break
     inc result
 
 
-func gateOf(stripped: string): Gate =
+func gate(stripped: string): Gate =
   ## Read gate named by `when` line, `Any` for every other `when`.
   if stripped.startsWith("when IS_RIGID:"): Gate.Rigid
   elif stripped.startsWith("when IS_CONFORMAL:"): Gate.Conformal
@@ -73,7 +73,7 @@ iterator admitted(source: string, is_conformal: bool): string =
   for line in source.splitLines:
     let stripped = line.strip
     if stripped.len == 0 or stripped.startsWith("#"): continue
-    let indent = line.indentOf
+    let indent = line.spacesLeading
     while frames.len > 0 and indent <= frames[^1].indent:
       # Line at or above block's indent closes it, unless it is that block's `else:`.
       if indent == frames[^1].indent and stripped.startsWith("else:"):
@@ -83,7 +83,7 @@ iterator admitted(source: string, is_conformal: bool): string =
     if stripped.startsWith("else:") and frames.len > 0 and indent == frames[^1].indent:
       continue
     if stripped.startsWith("when ") and stripped.endsWith(":"):
-      frames.add Frame(indent: indent, gate: stripped.gateOf)
+      frames.add Frame(indent: indent, gate: stripped.gate)
       continue
     if frames.isAdmitted(is_conformal): yield stripped
 

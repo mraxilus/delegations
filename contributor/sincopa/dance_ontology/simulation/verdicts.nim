@@ -61,7 +61,7 @@ func strainWord(strain: float): string =
   let text = formatFloat(strain, ffDecimal, 2)
   if strain >= 1.0: text & " (at edge)" elif strain >= 0.7: text & " (near it)" else: text
 
-func whyOf(way: WayRead): string =
+func whyText(way: WayRead): string =
   ## Say what refuses, as `words.why` says it of walk.
   why(Walk(is_stopped: way.is_stopped, at: way.at, why: way.why, whose: way.whose))
 
@@ -72,7 +72,7 @@ func blockLine(way: WayRead, sign: string, should_say_apart = true): string =
   let stood = if should_say_apart: &", {turns(way.apart)} m apart" else: ""
   if not way.is_stopped:
     return &"{sign}: free to {turns(MOST)} turns{stood}"
-  &"{sign}{turns(way.at)}{stood}: {whyOf(way)}"
+  &"{sign}{turns(way.at)}{stood}: {whyText(way)}"
 
 func blocks(sweep: SweepRead): string =
   ## Say both blocks of sweep as one wrapped paragraph.
@@ -95,20 +95,20 @@ var
   RUNGS_WANTED: seq[RungAsk]
   KEYS_USED: HashSet[string]  ## Keys render read, so file keeps nothing no render reads.
 
-proc sweepOf(band: Band, links: seq[Link], is_away = false, apart = 0.0): SweepRead =
+proc sweepReading(band: Band, links: seq[Link], is_away = false, apart = 0.0): SweepRead =
   ## Kept reading of sweep, follow turning; lacking it, ask for it and render blank for now.
   let
-    ask = askOf(band, links, Body.Two, is_away, apart)
-    key = keyOf(ask)
+    ask = initSweepAsk(band, links, Body.Two, is_away, apart)
+    key = key(ask)
   KEYS_USED.incl key
   if key in READINGS_KEPT.sweeps: return READINGS_KEPT.sweeps[key]
   if ask notin SWEEPS_WANTED: SWEEPS_WANTED.add ask
 
-proc rungOf(band: Band, turn: float): RungRead =
+proc rungReading(band: Band, turn: float): RungRead =
   ## Kept reading of rung; lacking it, ask for it and render blank for now.
   let
     ask = RungAsk(band: band, turn: turn)
-    key = keyOf(ask)
+    key = key(ask)
   KEYS_USED.incl key
   if key in READINGS_KEPT.rungs: return READINGS_KEPT.rungs[key]
   if ask notin RUNGS_WANTED: RUNGS_WANTED.add ask
@@ -169,7 +169,7 @@ proc singleHolds(): string =
                        (Arm.Left, Arm.Right, "L-r"), (Arm.Right, Arm.Left, "R-l")]:
     let links = oneLink(lead_arm, follow_arm)
     for (word, band) in BANDS:
-      let sweep = sweepOf(band, links)
+      let sweep = sweepReading(band, links)
       result.add &"### {name}, {word}\n\n"
       if not sweep.found_rest:
         result.add "No pose holds at the rest.\n\n"
@@ -200,7 +200,7 @@ proc floorClaim(): string =
   for (lead_arm, follow_arm, name, lock_sign) in [(Arm.Left, Arm.Left, "L-l", -1.0),
                                  (Arm.Left, Arm.Right, "L-r", 1.0)]:
     for (word, band) in BANDS:
-      let sweep = sweepOf(band, oneLink(lead_arm, follow_arm))
+      let sweep = sweepReading(band, oneLink(lead_arm, follow_arm))
       for (way, sign) in [("lock way", lock_sign), ("wrap way", -lock_sign)]:
         let
           way_read = if sign < 0: sweep.negative else: sweep.positive
@@ -208,7 +208,7 @@ proc floorClaim(): string =
                   elif band == Band.Torso and way == "wrap way": "half a turn"
                   else: "a whole turn"
           says = if way_read.is_stopped: &"blocks at {turns(way_read.at)}" else: "no block"
-          names = if way_read.is_stopped: whyOf(way_read) else: ""
+          names = if way_read.is_stopped: whyText(way_read) else: ""
         result.add &"| {name} | {word} | {way} | {floor} | {says} | {names} |\n"
   result.add "\n"
 
@@ -224,7 +224,7 @@ proc pairHolds(): string =
       (twoLinks(Arm.Left, Arm.Left, Arm.Right, Arm.Right), true,
        "L-l.R-r, from " & restName(true))]:
     for (word, band) in BANDS:
-      let sweep = sweepOf(band, links, is_away = is_away)
+      let sweep = sweepReading(band, links, is_away = is_away)
       result.add &"### {name}, {word}\n\n"
       if not sweep.found_rest:
         result.add "No pose holds at the rest.\n\n"
@@ -265,7 +265,7 @@ proc chain(): string =
       # Read off stance rung winds couple to, whether pose holds there or not.
       let
         facing = facingName(turned(restStance(HUMAN, 1.0), Body.Two, turn)).get
-        rung_read = rungOf(band, turn)
+        rung_read = rungReading(band, turn)
       if rung_read.found_pose:
         result.add &"| {word} | {rung} ({turns(turn)}) | {facing} | yes | " &
             &"{strainWord(rung_read.strain)} | {rung_read.crossed} | {turns(rung_read.apart)} m |\n"
@@ -285,11 +285,11 @@ proc standing(): string =
   result.add "| apart | lock way | wrap way |\n|---|---|---|\n"
   let
     links = oneLink(Arm.Left, Arm.Left)
-    chosen = sweepOf(Band.Torso, links)
+    chosen = sweepReading(Band.Torso, links)
   result.add &"| chosen | {blockLine(chosen.negative, \"-\")} | " &
       &"{blockLine(chosen.positive, \"+\")} |\n"
   for apart in [0.36, 0.50, 0.70]:
-    let sweep = sweepOf(Band.Torso, links, apart = apart)
+    let sweep = sweepReading(Band.Torso, links, apart = apart)
     if not sweep.found_rest:
       result.add &"| {apart} m | no rest | |\n"
       continue
@@ -371,9 +371,9 @@ proc assembled*(
   if sweeps.len + rungs.len > 0:
     READINGS_KEPT.stamp = physics()
     for i, ask in sweeps:
-      READINGS_KEPT.sweeps[keyOf(ask)] = parseJson(sweep_texts[i]).jsonTo(SweepRead)
+      READINGS_KEPT.sweeps[key(ask)] = parseJson(sweep_texts[i]).jsonTo(SweepRead)
     for i, ask in rungs:
-      READINGS_KEPT.rungs[keyOf(ask)] = parseJson(rung_texts[i]).jsonTo(RungRead)
+      READINGS_KEPT.rungs[key(ask)] = parseJson(rung_texts[i]).jsonTo(RungRead)
   result = render()
   doAssert lacking() == 0, "Report still lacks readings once all are read."
   # Keep only what report reads, so file holds no reading nothing renders.

@@ -3,7 +3,7 @@
 ##   What they share is palette and furniture, which is here so it
 ##     cannot drift between them.
 ##   Rig viewer is wrapped here too, and also takes review's own sheet back from built
-##     page (`rig_page.styleSheetOf`), so its cards dress as review's do.
+##     page (`rig_page.styleSheetReference`), so its cards dress as review's do.
 
 {.experimental: "strictFuncs".}
 

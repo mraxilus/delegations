@@ -30,7 +30,7 @@
 import std/[algorithm, json, strutils, tables]
 
 import ./guard
-from ./changes import digestOf
+from ./changes import digest
 
 
 const SHORT = 7  ## Digits of commit findings name, as `git log --oneline` prints.
@@ -145,7 +145,7 @@ func digestSources*(sources: openArray[(string, string)], pin: string): string =
   for (name, source) in sorted:
     let pinless = if pin.len > 0: source.replace(pin, "") else: source
     text.add name & "\0" & pinless.headless.numbered(seen) & "\0"
-  digestOf(text)
+  digest(text)
 
 
 func checkRestamp*(recorded, digests: JsonNode; taken, pin, path, again: string): seq[Finding] =

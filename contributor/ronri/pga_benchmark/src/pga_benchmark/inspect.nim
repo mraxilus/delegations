@@ -109,7 +109,7 @@ func keyDense(p: Measurand): string =
   if p.reference.len > 0: return ""
   var stems: seq[string]
   for i in 0..<int(p.arity): stems.add stemLibrary(p.operands[i])
-  p.nameDenseOf & "(" & stems.join(",") & ")"
+  p.nameDense & "(" & stems.join(",") & ")"
 
 
 func nodeMeasurands(): JsonNode =
@@ -126,12 +126,12 @@ func nodeMeasurands(): JsonNode =
       "dense": p.keyDense,
       "cite": p.cite,
     }
-    let b = p.boundOf(METRIC)
+    let b = p.boundLower(METRIC)
     if b.is_derived:
       result[p.id]["bound"] = %*{
-        "shape": p.nameShapeOf,
+        "shape": p.nameShape,
         "is_chain": b.is_chain,
-        "steps": p.stepsOf,
+        "steps": p.stepsNamed,
         "multiplies": b.multiplies,
         "adds": b.adds,
         "divides": b.divides,

@@ -36,12 +36,12 @@ const
     ## Words opening block whose children are definitions of their own.
 
 
-func indentOf(line: string): int =
+func spacesLeading(line: string): int =
   ## Count spaces line opens with.
   line.len - line.strip(trailing = false).len
 
 
-func wordOf(text: string): string =
+func wordLeading(text: string): string =
   ## Read leading identifier of text; empty where text opens otherwise.
   for c in text:
     if c notin IdentChars: break
@@ -62,23 +62,23 @@ func depthAfter(text: string, depth: int): int =
     elif c in {')', ']', '}'}: dec result
 
 
-func nameOf(text: string): string =
+func nameDeclared(text: string): string =
   ## Read name text declares after its keyword: backticked operator, else identifier.
   let rest = text.strip
   if rest.startsWith("`"):
     let close = rest.find('`', 1)
     return if close > 0: rest[1..<close] else: rest
-  rest.wordOf
+  rest.wordLeading
 
 
-func definitionsOf*(lines: openArray[string]): seq[Definition] =
+func splitDefinitions*(lines: openArray[string]): seq[Definition] =
   ## Split lines into definitions, at top level and under `when` and `suite`, in order.
 
   func blockEnd(lines: openArray[string]; first, last, level: int): int =
     ## Find line after block opening at `first`: next line at `level` or less, blank aside.
     result = first + 1
     while result < last and
-        (lines[result].strip.len == 0 or lines[result].indentOf > level):
+        (lines[result].strip.len == 0 or lines[result].spacesLeading > level):
       inc result
 
   func scan(lines: openArray[string]; first, last, level: int; context, member: string):
@@ -98,11 +98,11 @@ func definitionsOf*(lines: openArray[string]): seq[Definition] =
       let
         line = lines[index]
         stripped = line.strip
-      if stripped.len == 0 or line.indentOf != level or stripped.startsWith("#"):
+      if stripped.len == 0 or line.spacesLeading != level or stripped.startsWith("#"):
         inc index
         continue
       let
-        word = stripped.wordOf
+        word = stripped.wordLeading
         code = stripped.split('#', 1)[0].strip  # Line less its comment.
 
       # Descend into block whose children are definitions: `when`, its branches, and `suite`.
@@ -113,7 +113,7 @@ func definitionsOf*(lines: openArray[string]): seq[Definition] =
         if child < finish:
           let label = stripped[0 ..< ^1].strip
           result.add scan(
-            lines, child, finish, lines[child].indentOf,
+            lines, child, finish, lines[child].spacesLeading,
             (if context.len > 0: context & " / " & label else: label), "",
           )
         index = finish
@@ -125,7 +125,7 @@ func definitionsOf*(lines: openArray[string]): seq[Definition] =
         var child = index + 1
         while child < finish and lines[child].strip.len == 0: inc child
         if child < finish:
-          result.add scan(lines, child, finish, lines[child].indentOf, context, word)
+          result.add scan(lines, child, finish, lines[child].spacesLeading, context, word)
         index = finish
         continue
 
@@ -144,7 +144,7 @@ func definitionsOf*(lines: openArray[string]): seq[Definition] =
         # Member whose value spans lines keeps its first line as head; value is body, in order.
         definition.body = definition.head[1 .. ^1]
         definition.head.setLen(1)
-      while definition.body.len == 0 and at < last and lines[at].indentOf > level and
+      while definition.body.len == 0 and at < last and lines[at].spacesLeading > level and
           lines[at].strip.startsWith("##"):
         definition.doc.add lines[at]
         inc at
@@ -155,10 +155,10 @@ func definitionsOf*(lines: openArray[string]): seq[Definition] =
 
       if member.len > 0:
         definition.kind = member
-        definition.name = stripped.nameOf
+        definition.name = stripped.nameDeclared
       elif word in KEYWORDS_ROUTINE or word in KEYWORDS_SECTION or word == "test":
         definition.kind = word
-        definition.name = stripped[word.len .. ^1].strip(chars = {' ', '"'}).nameOf
+        definition.name = stripped[word.len .. ^1].strip(chars = {' ', '"'}).nameDeclared
         if word == "test":
           let (open, close) = (stripped.find('"'), stripped.rfind('"'))
           if close > open: definition.name = stripped[open+1 ..< close]
@@ -177,11 +177,11 @@ func pairDefinitions*(before, after: openArray[Definition]): seq[Paired] =
   ## Pair definitions of two versions, by context, kind and name; same head first, then in
   ##   order. Each removed definition stands after pair it followed in `before`.
 
-  func keyOf(definition: Definition): string =
+  func keyPairing(definition: Definition): string =
     ## Join what pairs definition: context, kind and name.
     definition.context & "\0" & definition.kind & "\0" & definition.name
 
-  func headOf(definition: Definition): string =
+  func headFolded(definition: Definition): string =
     ## Fold whitespace of head, so layout alone pairs no head apart.
     definition.head.join(" ").splitWhitespace.join(" ")
 
@@ -193,8 +193,8 @@ func pairDefinitions*(before, after: openArray[Definition]): seq[Paired] =
     for index, definition in after:
       if partner_after[index] >= 0: continue
       for other, candidate in before:
-        if not is_taken[other] and candidate.keyOf == definition.keyOf and
-            (not is_strict or candidate.headOf == definition.headOf):
+        if not is_taken[other] and candidate.keyPairing == definition.keyPairing and
+            (not is_strict or candidate.headFolded == definition.headFolded):
           partner_after[index] = other
           is_taken[other] = true
           break

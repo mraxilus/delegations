@@ -55,7 +55,7 @@ const
 
 #[ Block Parsing ]#
 
-func fenceOf(line: string): int =
+func fence(line: string): int =
   ## Count backticks opening line; zero when fewer than fence needs.
   for c in line:
     if c != MARK_FENCE: break
@@ -63,7 +63,7 @@ func fenceOf(line: string): int =
   if result < LENGTH_FENCE_MIN: result = 0
 
 
-func headingOf(line: string): int =
+func headingLevel(line: string): int =
   ## Count `#` opening heading line; zero when line is no heading.
   for c in line:
     if c != '#': break
@@ -88,7 +88,7 @@ func parseBlocks*(source: string): seq[Block] =
 
   func isStartBlock(line: string): bool =
     ## Tell whether line opens block of its own, so ends paragraph before it.
-    line.headingOf > 0 or line.fenceOf > 0 or line.isBullet or line.textNumbered > 0 or
+    line.headingLevel > 0 or line.fence > 0 or line.isBullet or line.textNumbered > 0 or
         line.startsWith("|")
 
   let lines = source.splitLines
@@ -102,12 +102,12 @@ func parseBlocks*(source: string): seq[Block] =
       continue
 
     # Read fence whole, up to closing run of at least same length.
-    let fence = line.fenceOf
+    let fence = line.fence
     if fence > 0:
       var body: seq[string]
       let opening = i + 1
       inc i
-      while i < lines.len and lines[i].strip(leading = false).fenceOf < fence:  # Close on run.
+      while i < lines.len and lines[i].strip(leading = false).fence < fence:  # Close on run.
         body.add lines[i]
         inc i
       result.add Block(
@@ -120,7 +120,7 @@ func parseBlocks*(source: string): seq[Block] =
       continue
 
     # Read heading as one line.
-    let level = line.headingOf
+    let level = line.headingLevel
     if level > 0:
       result.add Block(
         kind: KindBlock.Heading,
@@ -301,7 +301,7 @@ func renderNim*(line: string): string =
 
 #[ Block Rendering ]#
 
-func cellsOf(row: string): seq[string] =
+func splitCells(row: string): seq[string] =
   ## Split pipe table row into trimmed cells.
   var inner = row.strip
   if inner.startsWith("|"): inner = inner[1 .. ^1]
@@ -328,7 +328,7 @@ func renderBlock*(node: Block, offset = 1): string =
 
     func isDivider(row: string): bool =
       ## Tell whether table row divides header from body: dashes and colons only.
-      for cell in row.cellsOf:
+      for cell in row.splitCells:
         if cell.len == 0 or not cell.allCharsInSet({'-', ':', ' '}): return false
       true
 
@@ -338,7 +338,7 @@ func renderBlock*(node: Block, offset = 1): string =
       if has_header and i == 1: continue
       let tag = if has_header and i == 0: "th" else: "td"
       result.add "<tr>"
-      for cell in row.cellsOf:
+      for cell in row.splitCells:
         result.add "<" & tag & ">" & renderInline(cell) & "</" & tag & ">"
       result.add "</tr>"
     result.add "</table></div>"

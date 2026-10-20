@@ -65,7 +65,7 @@ const LUT_STILLS_BY_CARD = block:
     held[pair.key] = pair.val.getStr
   held
 
-func stillsOf(asks: seq[string]): string =
+func stillsFixture(asks: seq[string]): string =
   ## Fixture of stills card stands for, one per question, in card's order.
   asks.mapIt(LUT_STILL_BY_ASK.getOrDefault(it, "none")).join(" ")
 
@@ -125,7 +125,7 @@ const
   QUARTER_FROM = ["the start", "a quarter", "a half", "three quarters"]
     ## Same, worded for move that sets off from it.
 
-const QUARTER_WAY = wayName(wayOf(HalfTurns(QUARTER)))
+const QUARTER_WAY = wayName(wayTurn(HalfTurns(QUARTER)))
   ## Which way round every quarter on this page turns.
   ##   Read off turn itself rather than written down, so label cannot
   ##     outlive sign it describes.
@@ -175,7 +175,7 @@ func reviewParts*(single, hand: Parts): Parts =
     result[key] = svg
 
 
-func pageOf(parts: Parts): string =
+func pageBody(parts: Parts): string =
   ## Build page, holding every card already ruled on to its own fixture.
 
   func stepped(
@@ -263,7 +263,7 @@ func pageOf(parts: Parts): string =
     # Confirmation was given on still, so still that moved under one carries confirmation
     # it was never given.
     if id in CONFIRMED:
-      doAssert stillsOf(put) == LUT_STILLS_BY_CARD.getOrDefault(id),
+      doAssert stillsFixture(put) == LUT_STILLS_BY_CARD.getOrDefault(id),
         &"A confirmed card now shows another still: `{id}`.  Its confirmation goes " &
         "back until the Architect confirms it again."
     &"""<figure class="pic{mark}{stand}" data-asks="{put.join(" ")}"><div class="art""" &
@@ -294,7 +294,7 @@ func pageOf(parts: Parts): string =
   var body = ""
 
   # `A`. Standard diagram: eight frames, two twist parities, and that is all of it.
-  let same_name_rest = restOf(PAIRED).name  # Same-name pair's rest, read through model.
+  let same_name_rest = facingRest(PAIRED).name  # Same-name pair's rest, read through model.
   body.add &"""<section id="standard"><h2>A &middot; The standard diagram</h2>
   <p class="lede">Every drawing in this project is one of these, and a table built at compile
   time holds them all. The drawing reads the frame hold, the parity of the twist, and the way
@@ -325,20 +325,20 @@ func pageOf(parts: Parts): string =
     ## Same for hand of follow.
     if site == Site.LeftHand: Arm.Left else: Arm.Right
 
-  func restOf(target: Frame): Facing =
-    ## Name facing this frame rests at, by `parts.restOf`, never written down.
+  func facingRest(target: Frame): Facing =
+    ## Name facing this frame rests at, by `parts.facingRest`, never written down.
     var holds: Holds
     for side in Side:
       if target.hold[side].isSome:
         holds[armFor(side)] = some armFor(target.hold[side].get)
-    restOf(holds)
+    facingRest(holds)
 
   proc facingNote(target: Frame, twist: int, way: string): string =
     ## Say which facing this picture draws, and what it is turned from.
     ##   Standard diagram turns follow alone, by half turns (`twist`).
     let
       drawn = turnedFacing(0.0, 180.0 * float(twist)).get.name
-      rest = restOf(target).name
+      rest = facingRest(target).name
     if drawn == rest: &"{drawn}, at rest"
     elif way.len > 0: &"{drawn}, half a turn {way} from {rest}"
     else: &"{drawn}, half a turn from {rest}"
@@ -410,17 +410,17 @@ func pageOf(parts: Parts): string =
   func windNote(note: string, wind: float, zero = ""): string =
     ## Say how far frame state stands from where its chain rests, and which way
     ## round.
-    ##   Way comes from `wayOf`, so page and vocabulary cannot drift apart on
+    ##   Way comes from `wayTurn`, so page and vocabulary cannot drift apart on
     ##     which sign is which.
     ##   `zero` replaces resting note for chain whose rest is not app's frame,
     ##     which `chainFor` names for hand-to-hand chain it was written for.
     if abs(wind) < 1e-9: (if zero.len > 0: zero else: note)
-    else: note & " " & wayName(wayOf(HalfTurns(wind * 2)))
+    else: note & " " & wayName(wayTurn(HalfTurns(wind * 2)))
 
   # `C`. Chain section `F` walks.
   let chains = parts
   let
-    dual_phase = phaseOf(PAIRED)
+    dual_phase = phaseChain(PAIRED)
     dual_chain = chainFor(PAIRED)
   # One scale for both chains, so section `C` and section `D` compare directly.
   var half = 0.0
@@ -431,7 +431,7 @@ func pageOf(parts: Parts): string =
 
   # Each facing named here is read off pose through model, never written down.
   let
-    hand_rest = restOf(HAND_TO_HAND).name
+    hand_rest = facingRest(HAND_TO_HAND).name
     whole = facingAt(HAND_TO_HAND, 1.0).get.name
     halves = facingAt(HAND_TO_HAND, 0.5).get.name
   body.add &"""<section id="chain"><h2>C &middot; The cross-name chain, {hand_rest} at rest</h2>
@@ -463,7 +463,7 @@ func pageOf(parts: Parts): string =
 
   # `D`. Dual chain: same hold, follow starting away.
   let  # Paired hold is this section's hold.
-    paired_rest = restOf(PAIRED).name
+    paired_rest = facingRest(PAIRED).name
     paired_whole = facingAt(PAIRED, 1.0).get.name
     paired_half = facingAt(PAIRED, 0.5).get.name
   body.add &"""<section id="paired"><h2>D &middot; The same-name chain, {paired_rest} at rest</h2>
@@ -548,7 +548,7 @@ func pageOf(parts: Parts): string =
     ##   Not same for all four: positive turn by lead unwinds what positive
     ##     turn by follow winds (rule 30), so each manner turns whichever way
     ##     carries pair inward along chain, and that sense is measured.
-    wayName(wayOf(HalfTurns(HALF * windSense(manner))))
+    wayName(wayTurn(HalfTurns(HALF * windSense(manner))))
 
   # `F`. Every chain edge animated.
   body.add """<section id="chain-moving"><h2>F &middot; The cross-name chain, moving</h2>
@@ -749,10 +749,10 @@ func pageOf(parts: Parts): string =
 
 func render*(parts: Parts): string =
   ## Lay page out under its own title.
-  document("Frame States, Drawn", pageOf(parts))
+  document("Frame States, Drawn", pageBody(parts))
 
 
-func drawingOf(html, id: string): string =
+func drawing(html, id: string): string =
   ## Cut this card's drawings back out of built page, joined as card holds
   ## them.
   ##   Card opens with its own `figure`, so its slice runs from last of
@@ -778,7 +778,7 @@ func drawingOf(html, id: string): string =
     at = shuts + 1
 
 
-func asksOf(html, id: string): seq[string] =
+func asksCard(html, id: string): seq[string] =
   ## Questions this card stands for, read off built page, as viewer reads them.
   let names = html.find(&"<code>{id}</code>")
   doAssert names > 0, &"A confirmed card is not on the page: got `{id}`."
@@ -793,7 +793,7 @@ func confirmedIn*(html: string): string =
   ## holds it.
   var held = newJObject()
   for id in CONFIRMED:
-    held[id] = %stillsOf(asksOf(html, id))
+    held[id] = %stillsFixture(asksCard(html, id))
   held.pretty & "\n"
 
 func fixturesIn*(html: string): string =
@@ -803,7 +803,7 @@ func fixturesIn*(html: string): string =
   ##     is what was published and nothing beside it.
   var held = newJObject()
   for id in KEPT:
-    held[id] = %($hash(drawingOf(html, id)))
+    held[id] = %($hash(drawing(html, id)))
   for id in DROPPED:
-    held[id] = %($hash(drawingOf(html, id)))
+    held[id] = %($hash(drawing(html, id)))
   held.pretty & "\n"

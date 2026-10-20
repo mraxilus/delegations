@@ -56,7 +56,7 @@ const
 
 #[ Digests ]#
 
-func digestOf*(text: string): string =
+func digest*(text: string): string =
   ## Digest text as 16 hexadecimal digits.
   toHex(cast[uint64](hash(text))).toLowerAscii
 
@@ -190,7 +190,7 @@ func applyChange*(files: var Table[string, string], change: Change, source: stri
     # Replace file whole where its digest still holds, or quote where it occurs once.
     let text = files[edit.path]
     if edit.kind == KindEdit.Replace:
-      let digest = text.digestOf
+      let digest = text.digest
       if digest != edit.digest:
         result.add Finding(
           path: source,
@@ -211,7 +211,7 @@ func applyChange*(files: var Table[string, string], change: Change, source: stri
     files[edit.path] = text.replace(edit.quote, edit.replacement)
 
 
-func lineOf*(text, quote: string): int =
+func lineQuoted*(text, quote: string): int =
   ## Read line quote opens on, counted from one; zero where quote is absent.
   let at = text.find(quote)
   if at < 0: 0 else: text[0..<at].count('\n') + 1

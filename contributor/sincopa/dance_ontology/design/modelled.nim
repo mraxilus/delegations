@@ -4,8 +4,8 @@
 ##     on floor.  `modelled` is this one: whether simulation reaches what card draws.  Goal is
 ##     both at hundred per cent, and gap between them is work left.
 ##   Written here rather than on page because asking simulation costs minutes and page is
-##     markup.  Same arrangement `design/turns` uses, and same reason.
-##   Badge must not touch fixtures.  `review_page.drawingOf` cuts cards back out of built
+##     markup.
+##   Badge must not touch fixtures.  `review_page.drawing` cuts cards back out of built
 ##     page by collecting their `svg` elements alone, so badge outside drawing changes no
 ##     fixture, and no kept card is re-drawn by adding this.
 ##   Answers are keyed by question, never by card's own name: page already folds
@@ -13,7 +13,7 @@
 ##     that would be second place to get it wrong.
 ##   Four manners are two motions.  Orbit keeps walker facing centre, so it is physically
 ##     turn of dancer at centre, other way about.  Architect's reading, and it is what
-##     `simulation/rigid` is asked (`asks.turnerOf`).  Connection goes round dancer who
+##     `simulation/rigid` is asked (`asks.turner`).  Connection goes round dancer who
 ##     turns, so hands go over their crown, orbit or not.
 ##   Card simulation has not been asked about is absent, and gets no badge: unasked reads as
 ##     unasked rather than as disagreement.
@@ -53,13 +53,13 @@ type Question* = object  ## One card's question, as data, so threads may share i
 
 func moving(key: string, links: seq[Link], is_away: bool, manner: Manner, amount: float): Question =
   ## Whether this hold carries this far under this manner, page turning manner's own
-  ## dancer `amount` turns clockwise (`asks.turnerOf`).
+  ## dancer `amount` turns clockwise (`asks.turner`).
   ##   Couple stand for turn they are about to take, so question goes straight to
   ##     `walk.reaches`, which asks it of every distance couple may stand at and
   ##     answers at first that carries it.  Sweeping once and reading several
   ##     answers off it would be cheaper, but it would pin whole manner to one
   ##     distance again, which is what Architect ruled against.
-  let (who, turns) = turnerOf(manner, amount)
+  let (who, turns) = turner(manner, amount)
   Question(
     key: key,
     links: links,
@@ -94,21 +94,21 @@ func questions*(): seq[Question] =
   #   Turned by chain's sense instead, lead's own turn and lead's orbit went anticlockwise
   #     where caption says clockwise.
   for connection, single in SINGLES:
-    let links = linksOf(single.holds)
+    let links = single.holds.toLinks
     for manner in Manner:
       let tag = MANNERS[manner].tag
       for quarter in 0..<QUARTERS_ROUND:
         result.add moving(
           &"tr_{tag}_{connection}_{quarter}_{(quarter + 1) mod QUARTERS_ROUND}",
           links,
-          isRestAway(restOf(single.holds)),
+          isRestAway(facingRest(single.holds)),
           manner,
           float(quarter + 1) / float(QUARTERS_ROUND),
         )
       result.add moving(
         &"rd_{tag}_{connection}",
         links,
-        isRestAway(restOf(single.holds)),
+        isRestAway(facingRest(single.holds)),
         manner,
         1.0,
       )
@@ -118,8 +118,8 @@ func questions*(): seq[Question] =
   #   rather than whether pose stands there.
   for (key, arms) in [("h", HAND_TO_HAND), ("p", PAIRED)]:
     let
-      links = linksOf(arms)
-      is_away = isRestAway(restOf(arms))
+      links = arms.toLinks
+      is_away = isRestAway(facingRest(arms))
     for manner in Manner:
       let
         tag = MANNERS[manner].tag
@@ -185,7 +185,7 @@ proc answered*(question: Question): bool =
     )
 
 
-proc modelledStamp*(): string = stampOf(currentSourcePath(), questions().mapIt($it))
+proc modelledStamp*(): string = stampRecording(currentSourcePath(), questions().mapIt($it))
   ## Stamp answers carry: physics, this verb, and every question.
 
 

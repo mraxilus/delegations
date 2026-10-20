@@ -50,8 +50,8 @@ func kinds(): seq[(string, set[Basis])] {.compileTime.} =
   result.add ("MultivectorOdd", basesOfParity(Parity.Odd))
 
 
-func slotOf(listed: set[Basis], basis: Basis): int =
-  ## Get dense slot of basis among listed bases: count of listed bases below it.
+func index(listed: set[Basis], basis: Basis): int =
+  ## Get dense index of basis among listed bases: count of listed bases below it.
   ##   Plain function rather than compile-time one, so runtime bodies can call it too.
   for other in Basis:
     if other == basis: return
@@ -88,18 +88,18 @@ defineMultivectors()
 
 template `[]`*(m: SomeMultivector, basis: static Basis): float =
   ## Read coefficient of basis from its dense slot.
-  m.elements[static(slotOf(bases(typeof(m)), basis))]
+  m.elements[static(index(bases(typeof(m)), basis))]
 
 
 template `[]=`*(m: var SomeMultivector, basis: static Basis, value: float) =
   ## Write coefficient of basis into its dense slot.
-  m.elements[static(slotOf(bases(typeof(m)), basis))] = value
+  m.elements[static(index(bases(typeof(m)), basis))] = value
 
 
 
 #[ Products ]#
 
-func kindOf(reach: set[Basis]): string {.compileTime.} =
+func typeReached(reach: set[Basis]): string {.compileTime.} =
   ## Name smallest kind holding every basis reached; library's `Multivector` where none does.
   for (name, listed) in kinds():
     if reach <= listed: return name
@@ -125,7 +125,7 @@ macro defineProduct(
         )
         sums[term.basis].add(if term.is_negated: prefix(product, "-") else: product)
   let product = genSym(nskVar, "product")
-  var body = newStmtList(newVarStmt(product, newCall("default", ident(kindOf(reach)))))
+  var body = newStmtList(newVarStmt(product, newCall("default", ident(typeReached(reach)))))
   for basis in Basis:
     if sums[basis].len == 0: continue
     var sum = sums[basis][0]
@@ -150,7 +150,7 @@ func `⟇`*[M, N: SomeMultivector](m: M, n: N): auto =
 
 func toMultivector*[T: SomeMultivector](m: T): Multivector =
   ## Widen generated kind to library's multivector, same coefficients.
-  for basis in bases(T): result[basis] = m.elements[slotOf(bases(T), basis)]
+  for basis in bases(T): result[basis] = m.elements[index(bases(T), basis)]
 
 
 

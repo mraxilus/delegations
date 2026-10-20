@@ -3,7 +3,7 @@
 ##   Simulation names what it measures for body: torso band, fore aspect, elbow
 ##     forward.  Dance names same readings low, wrap and elbow forward.  This
 ##     module is only place where one becomes other.
-##   Report (`verdicts`) and recording of every hold turning (`turns`) both read this one table.
+##   Report (`verdicts`) and laws (`test_asks`, `test_words`) read this one table.
 ##     Rejected: copy in each, which can drift until one pose carries two answers.
 ##     Cost: module sits under `simulation`, which otherwise puts no word of dance on anything it
 ##       measures.  Accepted: translation stays visible, in one file that names itself.
@@ -34,7 +34,7 @@ import ./[body, hold, read, rig, walk]
 
 
 const BANDS* = [("low", Band.Torso), ("high", Band.Neck), ("above", Band.Crown)]
-  ## Name each band, in order report and `design/turns` tabulate them.
+  ## Name each band, in order report tabulates them.
 
 const SIDES = ["Face", "Starboard", "Back", "Port"]
   ## Name side each dancer turns to other, by quarters clockwise from own front
@@ -73,7 +73,7 @@ func facingName*(stance: array[Body, Stance]): Option[string] =
   none(string)
 
 
-func whose*(hand: Hand): string =
+func whose(hand: Hand): string =
   ## Name dancer whose arm reading is about.
   if hand.body == Body.One: "lead's" else: "follow's"
 
@@ -97,23 +97,11 @@ func said*(lying: Option[Lying], band: Band): string =
   way & " " & at & held & elbow
 
 
-func dofName*(dof: Dof): string =
-  ## Name freedom that ran out, joint first.
-  case dof
-  of Dof.Extend: "shoulder, behind"
-  of Dof.Across: "shoulder, across"
-  of Dof.Twist: "shoulder, twist"
-  of Dof.Bend: "elbow"
-  of Dof.Wrist: "wrist"
-
-
 func why*(walk: Walk): string =
   ## Say what refuses, in few words that table cell or page can show.
   ##   Short register.  `hold.says` answers same question in whole sentence,
   ##     for viewer that has room for one.
-  ##   Planned way that stops names nothing that gave: no planned pose stands further on.
   if not walk.is_stopped: return "no block"
-  if walk.isPlanned and walk.why == Stop.None: return "no plan goes further"
   case walk.why
   of Stop.None: "holds"
   of Stop.Span: whose(walk.whose) & " span"

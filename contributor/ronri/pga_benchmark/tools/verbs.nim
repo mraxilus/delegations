@@ -314,7 +314,7 @@ proc generated(): (string, string) =
   ## Generate list and docket text from committed documents.
   let
     ids =
-      if fileExists(PATH_DOCKET): docketOf(readDocument(PATH_DOCKET)) else: docketOf(nil)
+      if fileExists(PATH_DOCKET): toDocket(readDocument(PATH_DOCKET)) else: toDocket(nil)
     (text, grown) = generate(algebras(), ids)
   (text, pretty(grown.toJson) & "\n")
 
@@ -365,7 +365,7 @@ proc readProposals(findings: var seq[Finding]): seq[Proposal] =
     )
     findings.add why
     for node in proposal.body:
-      let figure = node.figureOf(proposal.directory)
+      let figure = node.figure(proposal.directory)
       if figure.isSome and not fileExists(figure.get.path):
         findings.add Finding(
           path: argument,
@@ -376,7 +376,7 @@ proc readProposals(findings: var seq[Finding]): seq[Proposal] =
   findings.add checkNumbers(result)
 
 
-proc candidatesOf(
+proc candidates(
   changes: seq[(string, Change)], proposals: seq[Proposal], findings: var seq[Finding]
 ): seq[Candidate] =
   ## Shape one evaluation candidate per change and per proposed proposal.
@@ -399,12 +399,12 @@ proc candidatesOf(
         message: "Proposal shares name with change; got `" & proposal.name & "`.",
       )
     if proposal.isFrozen: continue
-    let (dependencies, why) = dependenciesOf(proposals, proposal)
+    let (dependencies, why) = dependencies(proposals, proposal)
     findings.add why
     var programs: seq[string]
-    for path in programsOf(dependencies):
+    for path in programs(dependencies):
       if fileExists(path): programs.add readFile(path)
-    for path in programsOf(proposal):
+    for path in programs(proposal):
       if fileExists(path): programs.add readFile(path)
       else: findings.add Finding(
         path: directory,
@@ -553,8 +553,8 @@ proc pagesBuilt(faces: Table[string, string]): OrderedTable[string, string] =
     )
   for _, document in evaluations.pairs: documents.add document
   let
-    spread = spreadOf(documents)
-    library = libraryOf(files, toSeq(baselines.values))
+    spread = spread(documents)
+    library = toLibrary(files, toSeq(baselines.values))
   for proposal in proposals:
     if proposal.isFrozen or proposal.name notin evaluations: continue
     var overlay = Overlay(
@@ -575,18 +575,18 @@ proc pagesBuilt(faces: Table[string, string]): OrderedTable[string, string] =
   var figures: Table[string, string]
   for proposal in proposals:
     for node in proposal.body:
-      let figure = node.figureOf(proposal.directory)
+      let figure = node.figure(proposal.directory)
       if figure.isSome and fileExists(figure.get.path):
         figures[figure.get.path] = readFile(figure.get.path)
   let
-    boxes = boxesOf(svg).filterIt(not it.is_input)
+    boxes = boxes(svg).filterIt(not it.is_input)
     (at_bound, bounded) = if sheets.len > 0: countAtBound(sheets[0], ids) else: (0, 0)
     cards = [
       Card(
         name: "progress",
         title: "Progress",
         url: urls.getOrDefault("progress"),
-        figure: $boxes.countIt(it.stateOf(library) == StateBox.Tabled) & "/" & $boxes.len,
+        figure: $boxes.countIt(it.state(library) == StateBox.Tabled) & "/" & $boxes.len,
         measure: "boxes built from a table of their own",
         text: "How complete the library is: every Cayley table, derived from the metric and 𝟙.",
       ),
@@ -681,7 +681,7 @@ proc renderedChecked(
   ## Render every built page and control as publish host serves them, and judge what harness
   ##   found: each page held to faces it ships, control to findings it expects (`render.nim`).
   ##   Harness and browser are dispatcher's to ready, before `drive` reaches here.
-  let paragraphs = paragraphsOf(readDocument(PATH_CONTROL))
+  let paragraphs = paragraphs(readDocument(PATH_CONTROL))
   var pages = built
   pages[CONTROL] = assemble(readFile(PATH_SHELL), "Faces Control", bodyControl(paragraphs), faces)
   createDir BUILD_HOSTED
@@ -697,7 +697,7 @@ proc renderedChecked(
       path: PATH_HARNESS,
       message: "Render of pages failed, as harness printed above; got exit `" & $code & "`.",
     )]
-  checkRendered(readDocument(PATH_FOUND), expectedOf(paragraphs), CONTROL, BUILD_HOSTED)
+  checkRendered(readDocument(PATH_FOUND), findingsExpected(paragraphs), CONTROL, BUILD_HOSTED)
 
 
 proc publishedAt(name, url: string) =
@@ -783,7 +783,7 @@ proc evaluate(which: string, is_thorough: bool) =
   let
     changes = readChanges(findings)
     proposals = readProposals(findings)
-    candidates = candidatesOf(changes, proposals, findings)
+    candidates = candidates(changes, proposals, findings)
   if findings.len > 0: report(findings)
   let
     pin = commitPga()
@@ -879,7 +879,7 @@ proc restamp() =
   let
     changes = readChanges(findings)
     proposals = readProposals(findings)
-    candidates = candidatesOf(changes, proposals, findings)
+    candidates = candidates(changes, proposals, findings)
     before = readEvaluations()
   var names_algebra: seq[string]
   for document in before.values:
@@ -910,7 +910,7 @@ proc pinnedChecked(pin: string, built: OrderedTable[string, string]): seq[Findin
   let
     changes = readChanges(result)
     proposals = readProposals(result)
-    candidates = candidatesOf(changes, proposals, result)
+    candidates = candidates(changes, proposals, result)
     files = readLibrary(LIBRARY)
     evaluations = readEvaluations()
   for candidate in candidates:
@@ -938,7 +938,7 @@ proc pinnedChecked(pin: string, built: OrderedTable[string, string]): seq[Findin
   for (name, _, _) in CONFIGS:
     let path = BASELINE / "static_" & name & ".json"
     if fileExists(path): catalogues.add readDocument(path)
-  result.add checkMap(boxesOf(readFile(PATH_MAP)), libraryOf(files, catalogues), PATH_MAP)
+  result.add checkMap(boxes(readFile(PATH_MAP)), toLibrary(files, catalogues), PATH_MAP)
   var digests: Table[string, string]
   for name, page in built.pairs: digests[name] = digestPage(page)
   result.add checkPublished(digests, publications(), readFile(PATH_README), PATH_PUBLICATIONS)
@@ -1057,7 +1057,7 @@ func unindexed(text: string): string =
 
 
 func readable(text: string): string =
-  ## Rewrite emitted C so reader sees types and slots rather than hashes.
+  ## Rewrite emitted C so reader sees types and indexes rather than hashes.
   ##   Reading aid alone: cache holds exact text every count is read from.
   text.shortened(STEM_MULTIVECTOR, "Multivector")
     .shortened(STEM_MULTIVECTOR & "Scalars", "MultivectorScalars")

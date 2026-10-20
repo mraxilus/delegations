@@ -19,16 +19,16 @@
 ##   Cost: every evaluation compiles library four times per algebra (suites, counts, two timed
 ##     binaries); pristine binaries are built once per run of driver and shared.
 ##   Cost: timings are machine's, as every runtime measurement is; evaluation names machine.
-##   Cost: stages of evaluation (`prepareCopy`, `staticOf`, `checkClaims`, `tablesOf`, `buildCost`)
-##     each serve one caller, yet stay at module scope; nested, `runEvaluation` and `checkClaims`
-##     would run past two hundred lines, which X.4 asks to split.
+##   Cost: stages of evaluation (`prepareCopy`, `inspectStatic`, `checkClaims`, `runTables`,
+##     `buildCost`) each serve one caller, yet stay at module scope; nested, `runEvaluation` and
+##     `checkClaims` would run past two hundred lines, which X.4 asks to split.
 
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, json, math, os, osproc, sequtils, strutils, tables]
 
 import ./[changes, guard, head, report]
-from ./proposals import definesOf
+from ./proposals import flagsDefine
 
 
 type
@@ -95,7 +95,7 @@ func digestEdits*(changes: openArray[Change], claims: JsonNode, programs: seq[st
     for edit in change.edits:
       text.add edit.path & "\0" & edit.quote & "\0" & edit.replacement & "\0" & edit.digest
   for program in programs: text.add "\0" & program
-  digestOf(text)
+  digest(text)
 
 
 
@@ -195,7 +195,9 @@ proc suites(
   }
 
 
-proc staticOf(chain: Toolchain; library, directory: string; algebra: Algebra): (JsonNode, string) =
+proc inspectStatic(
+  chain: Toolchain; library, directory: string; algebra: Algebra
+): (JsonNode, string) =
   ## Inspect emitted C of bench entry built against library; document and failure text.
   let
     cache = directory / "cache_bench_" & algebra.name
@@ -240,7 +242,7 @@ func functionsChanged*(before, after: JsonNode): JsonNode =
   ##   Dense form changed build leaves out is no move: changed build omits dense forms, since
   ##     change may rename tables they read, and pristine counts hold them.
 
-  func countsOf(function: JsonNode): JsonNode =
+  func reportCounts(function: JsonNode): JsonNode =
     ## Build totals and movement evaluation reports for one function.
     ##   Count document lacks is JSON null, never nil.
     result = newJObject()
@@ -268,13 +270,13 @@ func functionsChanged*(before, after: JsonNode): JsonNode =
   for key in keys:
     if key in forms_dense and not now.hasKey(key): continue
     let
-      counts_before = if was.hasKey(key): countsOf(was[key]) else: newJNull()
-      counts_after = if now.hasKey(key): countsOf(now[key]) else: newJNull()
+      counts_before = if was.hasKey(key): reportCounts(was[key]) else: newJNull()
+      counts_after = if now.hasKey(key): reportCounts(now[key]) else: newJNull()
     if counts_before != counts_after:
       result[key] = %*{"before": counts_before, "after": counts_after}
 
 
-func timesOf*(pristine, candidate: seq[JsonNode]): JsonNode =
+func pairTimes*(pristine, candidate: seq[JsonNode]): JsonNode =
   ## Pair runs of both binaries by measurand; median ns of each and median of per-run ratios.
   result = newJObject()
   if pristine.len == 0 or candidate.len == 0: return
@@ -293,7 +295,7 @@ func timesOf*(pristine, candidate: seq[JsonNode]): JsonNode =
     result[id] = %*[ns_before.median.round(2), ns_after.median.round(2), ratios.median.round(4)]
 
 
-func nanOf*(pristine, candidate: seq[JsonNode]): JsonNode =
+func compareNan*(pristine, candidate: seq[JsonNode]): JsonNode =
   ## Compare share of NaN results per measurand, first run of each side; keep those that differ.
   ##   Share is property of samples and code, never of machine, so one run of each suffices.
   result = newJObject()
@@ -308,7 +310,7 @@ func nanOf*(pristine, candidate: seq[JsonNode]): JsonNode =
       result[id] = %*[share_pristine.getFloat, share_changed.getFloat]
 
 
-func successOf*(output: string): (float, float) =
+func compileCost*(output: string): (float, float) =
   ## Read seconds and peak memory in MiB from compiler's success line; zeros where absent.
   for line in output.splitLines:
     if not line.contains("[SuccessX]"): continue
@@ -338,7 +340,7 @@ proc timed(chain: Toolchain; pristine, candidate, directory: string): (JsonNode,
     if run_pristine.isNil or run_changed.isNil: continue
     before.add run_pristine
     after.add run_changed
-  (timesOf(before, after), nanOf(before, after))
+  (pairTimes(before, after), compareNan(before, after))
 
 
 
@@ -358,7 +360,7 @@ echo tables
   ##   and program itself holds nothing to test.
 
 
-proc tablesOf(
+proc runTables(
   library, directory, side: string; expressions: seq[string]; algebra: Algebra
 ): (JsonNode, string) =
   ## Compile and run table program against library; tables in order and failure text.
@@ -396,7 +398,7 @@ proc buildCost(
   arguments.add entry
   let (output, code) = runCompiler(arguments)
   if code != 0: return (0.0, 0.0, output.strip.splitLines[^1])
-  let (seconds, peak) = successOf(output)
+  let (seconds, peak) = compileCost(output)
   (seconds, peak, "")
 
 
@@ -431,7 +433,7 @@ proc checkClaims(
             copy,
             directory / "cache_suites_defined_" & algebra.name,
             algebra,
-            definesOf(claim),
+            flagsDefine(claim),
           )
       for name, node in held.pairs:
         if node{"failed"}.getInt > 0 or not node{"built"}.getBool:
@@ -447,8 +449,8 @@ proc checkClaims(
         let algebra = algebraNamed(name.getStr, algebras)
         let
           (before, why_before) =
-            tablesOf(chain.library, directory, "pristine", side_pristine, algebra)
-          (after, why_after) = tablesOf(copy, directory, "changed", side_changed, algebra)
+            runTables(chain.library, directory, "pristine", side_pristine, algebra)
+          (after, why_after) = runTables(copy, directory, "changed", side_changed, algebra)
         if before.isNil or after.isNil:
           let why = (why_before & why_after).strip.splitLines
           is_holding = false
@@ -467,7 +469,7 @@ proc checkClaims(
           "--nimcache:" & directory / "cache_program_" & algebra.name,
           "-o:" & directory / "program_" & algebra.name, "-r"]
         arguments.add definesAlgebra(algebra)
-        arguments.add definesOf(claim)
+        arguments.add flagsDefine(claim)
         arguments.add program
         let (output, code) = runCompiler(arguments)
         if code != 0:
@@ -552,7 +554,7 @@ proc runEvaluation*(
   for algebra in algebras:
     let suite = suites(copy, directory / "cache_suites_" & algebra.name, algebra)
     suited[algebra.name] = suite
-    let (after, why) = staticOf(chain, copy, directory, algebra)
+    let (after, why) = inspectStatic(chain, copy, directory, algebra)
     if after.isNil:
       return (nil, @[Finding(path: candidate.path, message: "Changed library does not " &
         "build at " & algebra.name & "; got `" & why.strip.splitLines[^1] & "`.")])

@@ -81,7 +81,7 @@ var
   GENERATION = 0  ## Which move is in flight, so older one can be dropped.
 
 
-func tempoOf(drawing: Drawing): Tempo =
+func tempoDrawing(drawing: Drawing): Tempo =
   ## Get how long drawing on show takes to say move.
   ##   Page waits on whichever drawing dancer is actually watching.
   ##   Close drawing has to clear its ways out and build next lot;
@@ -611,7 +611,7 @@ const
     ## crosses one arm over other.
 
 
-func toneOf(side: Side): string =
+func tone(side: Side): string =
   ## Name custom property holding ink of one of lead's arms.
   ##   Deep shade, because matrix cell is lead acting -- same reading
   ##     that inks line on map and acting word of every name.
@@ -749,14 +749,14 @@ func renderMatrix(): string =
         let move = Move(helper: helper.get, to: target, side: actingSide(source, target))
         row.add matrixCell(
           "one" & edge,
-          toneOf(move.side),
+          tone(move.side),
           phrase(source, move),
           tag("span", "class=\"tile one\"", HELPER_GLYPHS[move.helper]),
         )
       elif named.isSome:
         row.add matrixCell(
           "two" & edge,
-          toneOf(compoundSide(source, target).get),
+          tone(compoundSide(source, target).get),
           compoundPhrase(source, target),
           tag("span", "class=\"tile two\"", COMPOUND_GLYPHS[named.get]),
         )
@@ -889,7 +889,7 @@ proc dance(key: string) =
   inc GENERATION
   let
     mine = GENERATION
-    tempo = tempoOf(DRAWING_SHOWN)
+    tempo = tempoDrawing(DRAWING_SHOWN)
   MOTION_NOW = Motion.Leaving
   FRAME_TAKEN = target
   paintStage()

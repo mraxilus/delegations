@@ -14,7 +14,7 @@
 ##     residue lies near tolerance of grade test across it.
 ##   Helpers `dotAntiSelf`, `moved`, `samplePoint` and `unitizeAntidot` mirror those of
 ##     `limits.nim`, whose `largest` also reads NaN as infinity; fix to one reaches each.
-##     P07's `laws.nim` holds twins of `largest`, `partOf` and `unitizeAntidot`.
+##     P07's `laws.nim` holds twins of `largest`, `part` and `unitizeAntidot`.
 
 {.experimental: "strictFuncs".}
 
@@ -213,7 +213,7 @@ when IS_CONFORMAL:
     (initElement(b) ∧ initElement(Basis.origin)).largest == 0
 
 
-  func partOf(b: Basis): Part =
+  func part(b: Basis): Part =
     ## Get part of basis, by origin and infinity it holds.
     Part(2 * int(b.isHoldingInfinity) + int(b.isHoldingOrigin))
 
@@ -245,12 +245,12 @@ when IS_CONFORMAL:
       grade_first = Grade.low
     for b in Basis:
       scale = max(scale, abs(m[b]))
-      scales[b.partOf] = max(scales[b.partOf], abs(m[b]))
+      scales[b.part] = max(scales[b.part], abs(m[b]))
     for b in Basis:
       let floor = case selector
         of Selector.Exact, Selector.Antiscalar: 0.0
         of Selector.AbsoluteAtPin: TOLERANCE_ABS
-        of Selector.PartScale: TOLERANCE_ABS * scales[b.partOf]
+        of Selector.PartScale: TOLERANCE_ABS * scales[b.part]
         of Selector.Relative: TOLERANCE_ABS * scale
       if abs(m[b]) <= floor: continue
       if not found_grade:

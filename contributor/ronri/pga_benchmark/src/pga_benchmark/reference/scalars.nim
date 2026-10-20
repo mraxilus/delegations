@@ -1,6 +1,6 @@
 ## Name scalar values typed references return, so scalar and antiscalar results never mix.
 ##   Shared by every algebra's reference; one definition rather than one per module
-##   (Article II.9), since bridge embeds each into its own slot of library's multivector.
+##   (Article II.9), since bridge embeds each into its own coefficient of library's multivector.
 
 {.experimental: "strictFuncs".}
 

@@ -83,7 +83,7 @@ function codepointsOfCmap(table: Buffer): Set<number> {
 }
 
 /** Read `cmap` table out of TrueType, OpenType or WOFF2 file. */
-function cmapOf(bytes: Buffer): Buffer {
+function cmap(bytes: Buffer): Buffer {
   if (bytes.toString('latin1', 0, 4) !== 'wOF2') {
     const count_tables = bytes.readUInt16BE(4);
     for (let i = 0; i < count_tables; i += 1) {
@@ -133,27 +133,27 @@ function cmapOf(bytes: Buffer): Buffer {
 }
 
 /** Read codepoints face of one `data:` source maps; throw where source is not inlined. */
-function heldOf(source: string): Set<number> {
+function codepointsHeld(source: string): Set<number> {
   const known = HELD_BY_SOURCE.get(source);
   if (known !== undefined) return known;
   const payload = PATTERN_SOURCE.exec(source)?.[1];
   if (payload === undefined) {
     throw new Error(`Face is inlined as \`data:\` source; got \`${source.slice(0, 60)}\`.`);
   }
-  const held = codepointsOfCmap(cmapOf(Buffer.from(payload, 'base64')));
+  const held = codepointsOfCmap(cmap(Buffer.from(payload, 'base64')));
   HELD_BY_SOURCE.set(source, held);
   return held;
 }
 
 /** Read weight descriptor, keyword or number, single or range, as its two bounds. */
-function weightsOf(descriptor: string): [number, number] {
+function parseWeights(descriptor: string): [number, number] {
   const weights = descriptor.trim().split(/\s+/)
     .map((word) => word === 'bold' ? 700 : word === 'normal' || word === '' ? 400 : Number(word));
   return [weights[0] ?? 400, weights[1] ?? weights[0] ?? 400];
 }
 
 /** Read `unicode-range` descriptor as inclusive bounds; empty where rule sets none. */
-function rangesOf(descriptor: string): [number, number][] {
+function parseRanges(descriptor: string): [number, number][] {
   const ranges: [number, number][] = [];
   for (const range of descriptor.split(',')) {
     const bounds = /U\+([0-9A-Fa-f?]+)(?:-([0-9A-Fa-f]+))?/i.exec(range.trim());
@@ -167,19 +167,19 @@ function rangesOf(descriptor: string): [number, number][] {
 }
 
 /** Read family names of font stack, unquoted and lowercase, as CSS compares them. */
-export function familiesOf(stack: string): string[] {
+export function parseFamilies(stack: string): string[] {
   return (stack.match(/\s*(?:"[^"]*"|'[^']*'|[^,]+)/g) ?? [])
     .map((family) => family.trim().replace(/^["']|["']$/g, '').toLowerCase())
     .filter((family) => family.length > 0);
 }
 
 /** Read every `@font-face` rule page declares, with what its file maps. */
-export function facesOf(declared: Declared[]): Face[] {
+export function toFaces(declared: Declared[]): Face[] {
   return declared.map((rule) => ({
-    family: familiesOf(rule.family)[0] ?? '',
-    weights: weightsOf(rule.weight),
-    ranges: rangesOf(rule.range),
-    held: heldOf(rule.source),
+    family: parseFamilies(rule.family)[0] ?? '',
+    weights: parseWeights(rule.weight),
+    ranges: parseRanges(rule.range),
+    held: codepointsHeld(rule.source),
   }));
 }
 

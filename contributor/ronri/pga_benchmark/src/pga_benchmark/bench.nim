@@ -63,7 +63,7 @@ proc isAllocationCounted(): bool =
   control[0] = 1.0
   let after = getAllocStats()
   SINK += control[0]
-  allocationsOf(after - before) > 0
+  countAllocations(after - before) > 0
 
 
 proc main(): int =

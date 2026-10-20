@@ -106,13 +106,13 @@ func demangle*(name: string): string =
   else: head
 
 
-func stemOf(parameter: string): string =
+func stem(parameter: string): string =
   ## Read type stem of one C parameter or return type.
   ##   E.g. `Point` from `tyObject_Point__hash* p_p0`, `float` from `NF`, `Basis` from
   ##     `tyEnum_Basis__hash`, `set[Basis]` from `tySet_tyEnum_Basis__hash`.
   ##   Hash follows path of module, so stem drops it, and key holds on every machine.
   let text = parameter.strip
-  if text.startsWith("tySet_"): return "set[" & text["tySet_".len..^1].stemOf & "]"
+  if text.startsWith("tySet_"): return "set[" & text["tySet_".len..^1].stem & "]"
   for prefix in ["tyObject_", "tyEnum_", "tyDistinct_", "tyTuple_"]:
     if text.startsWith(prefix):
       let start = prefix.len
@@ -125,13 +125,13 @@ func stemOf(parameter: string): string =
   text.split(' ')[0]
 
 
-func moduleOf(name: string): string =
+func moduleSuffix(name: string): string =
   ## Read module suffix after last `__`; empty where name carries none.
   let at = name.rfind("__")
   if at < 0: "" else: name[at+2..<name.len]
 
 
-func overloadOf*(name: string): int =
+func overloadIndex*(name: string): int =
   ## Read overload index `_u<n>` before module suffix; `-1` where name carries none.
   ##   Compiler numbers overloads in declaration order within module, so index is stable
   ##   where emission order is not.
@@ -203,7 +203,7 @@ func functionsIn*(emitted: string, stems: openArray[(int, string)] = []): seq[Fu
     if comma < 0 or name_stop < 0: continue
     let
       name = line[comma+1..<name_stop].strip
-      returns = line[parenthesis_open+1..<comma].stemOf
+      returns = line[parenthesis_open+1..<comma].stem
       parameters_start = line.find('(', name_stop)
       parameters_stop = line.rfind(')')
     if parameters_start < 0 or parameters_stop <= parameters_start: continue
@@ -211,7 +211,7 @@ func functionsIn*(emitted: string, stems: openArray[(int, string)] = []): seq[Fu
       parameters: seq[string]
       stem_result = returns
     for parameter in line[parameters_start+1..<parameters_stop].split(','):
-      let stem = parameter.stemOf
+      let stem = parameter.stem
       if stem.len == 0: continue
       if parameter.strip.endsWith(" Result"): stem_result = stem
       else: parameters.add stem
@@ -225,8 +225,8 @@ func functionsIn*(emitted: string, stems: openArray[(int, string)] = []): seq[Fu
     result.add FunctionC(
       name: name,
       symbol: name.demangle,
-      module: name.moduleOf,
-      overload: name.overloadOf,
+      module: name.moduleSuffix,
+      overload: name.overloadIndex,
       parameters: parameters,
       stem_result: stem_result,
       is_inline: is_inline,
@@ -268,7 +268,7 @@ const
   PREFIX_BOUND = "((NI) "  ## Text before literal bound; bound naming variable instead is unknown.
 
 
-func startOf(context, counter: string): int =
+func startCounter(context, counter: string): int =
   ## Read value counter was last set to before loop, `<counter> = ((NI) <n>);`; zero else.
   let at = context.rfind(counter & " = ((NI) ")
   if at < 0: return 0
@@ -278,7 +278,7 @@ func startOf(context, counter: string): int =
   if stop == digits_start: 0 else: parseInt(context[digits_start..<stop])
 
 
-func tripsOf(inner, context: string): int =
+func trips(inner, context: string): int =
   ## Read how many times loop body runs from its bound test and counter's start.
   ##   One where bound is not literal.
   let at = inner.find(OPENING_BOUND)
@@ -297,7 +297,7 @@ func tripsOf(inner, context: string): int =
   while stop < inner.len and inner[stop] in Digits: inc stop
   if stop == i: return 1
   let bound = parseInt(inner[i..<stop]) + (if is_inclusive: 1 else: 0)
-  max(1, bound - startOf(context, counter))
+  max(1, bound - startCounter(context, counter))
 
 
 func plain(body: string): Counts =
@@ -371,7 +371,7 @@ func weighted(body, context: string): Counts =
     let
       inner = body[at+OPENING_LOOP.len..<max(at+OPENING_LOOP.len, i-1)]
       before = context & body[0..<at]
-    result = result + weighted(inner, before) * tripsOf(inner, before)
+    result = result + weighted(inner, before) * trips(inner, before)
     position = i
   result = result + plain(outside)
 
@@ -399,7 +399,7 @@ func sitesWeighted(body, context: string): seq[string] =
       inner = body[at+OPENING_LOOP.len..<max(at+OPENING_LOOP.len, i-1)]
       before = context & body[0..<at]
       sites = sitesWeighted(inner, before)
-    for _ in 1..tripsOf(inner, before): result.add sites
+    for _ in 1..trips(inner, before): result.add sites
     position = i
   result.add sitesPlain(outside)
 
@@ -427,7 +427,7 @@ func key*(f: FunctionC): string =
   f.symbol & "(" & f.parameters.join(",") & ")"
 
 
-func totalOf(
+func total(
   name: string, own: Table[string, Counts], sites: Table[string, seq[string]], depth: int
 ): Counts =
   ## Count one function with its callees folded in, per call site, recursion bounded.
@@ -435,7 +435,7 @@ func totalOf(
   if name notin own or depth > 32: return Counts()
   result = own[name]
   for callee in sites[name]:
-    if callee != name: result = result + totalOf(callee, own, sites, depth + 1)
+    if callee != name: result = result + total(callee, own, sites, depth + 1)
 
 
 func folded(functions: seq[FunctionC]): (Table[string, Counts], Table[string, seq[string]]) =
@@ -450,7 +450,7 @@ func totals*(functions: seq[FunctionC]): Table[string, Counts] =
   ## Count each function with its callees folded in, keyed by mangled name.
   let (own, sites) = folded(functions)
   for name in own.keys:
-    result[name] = totalOf(name, own, sites, 0)
+    result[name] = total(name, own, sites, 0)
 
 
 func totals*(functions: seq[FunctionC], roots: openArray[string]): Table[string, Counts] =
@@ -478,7 +478,7 @@ func totals*(functions: seq[FunctionC], roots: openArray[string]): Table[string,
     for callee in sites[name]:
       if callee in positions and callee notin own: pending.add callee
   for name in roots:
-    if name in own: result[name] = totalOf(name, own, sites, 0)
+    if name in own: result[name] = total(name, own, sites, 0)
 
 
 
