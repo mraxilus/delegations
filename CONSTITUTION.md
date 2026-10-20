@@ -274,9 +274,10 @@ for slot in 0..<pool.bound:  # Bound, never `HANDLES_MAX`.
    word (`BasesSet`, `BasesArray`), after any qualifier.
 7. Name each distinction, then choose its form by what the code does with it. An axis that
    code selects between at compile time is a closed enum (`Chirality`). A pair that several
-   types carry is a small generic wrapper, named by its axis (`Chiral[T]`, `Spatial[T]`).
-   Wrappers compose as `Spatial[Chiral[T]]`, and never multiply into new names. An axis that
-   code walks over is an array indexed by an enum (`array[Order, Cayley2D]`).
+   types carry is a small generic wrapper. It takes the adjective of its axis that closes
+   with -al (`Chiral[T]` for `Chirality`, `Spatial[T]` for `Space`). Wrappers compose as
+   `Spatial[Chiral[T]]`, and never multiply into new names. An axis that code walks over is an
+   array indexed by an enum (`array[Order, Cayley2D]`).
 8. Name every landmark index of a domain as an alias on its type (`Basis.origin`,
    `Grade.high`), and never write a bare index. Where the landmark depends on the
    configuration, the alias resolves it, so that no caller branches.
