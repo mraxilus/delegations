@@ -78,7 +78,8 @@ knoller [--check] [--nim:path] path...
   Where a step follows the root, the finding lists each name of the chain, since a step can make
   a new thing, as `m.grade` does. Knoller renames nothing, since the new name can need a reading.
 - Each verb of generation fixes the kind of its routine (V.3). A `construct…` is a `func` or a
-  `proc` that carries `{.compileTime.}` and returns a value. A `define…` is a macro, and an
+  `proc` that returns a value and runs at compile time. Its own `{.compileTime.}` says so, or the
+  macro, `static:` block or compile-time routine that it nests in. A `define…` is a macro, and an
   `emit…` is a `func` or a `proc` that returns `NimNode`. The kind never fixes the verb, so a
   macro of another name passes. Knoller renames nothing here either.
 - A dotted call of a `define…` or `emit…` routine becomes a prefix call, with the receiver as the
