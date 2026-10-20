@@ -54,7 +54,9 @@
 ##   V.6: collection type takes plural of its member (`Bases`), never member and word for form
 ##     (`FORMS_COLLECTION`): word for form after type same file declares, as `MeshSet` beside
 ##     `Mesh`, is finding. Plural before word for form passes, as `BasesSet` beside `Basis`, since
-##     V.6 asks for it where two collection types would share name.
+##     V.6 asks for it where two collection types would share name. So does type file declares as
+##     collection, read from its value's opening (`OPENINGS_COLLECTION`): `BasesSet` beside
+##     `Bases = set[Basis]` is collection of collections, and member it names is no member.
 ##   Cost: compile time is read from routine's own `{.compileTime.}`, as STYLE.md §2 applies it
 ##     across family; routine nested in compile-time one without it reads as runtime.
 ##   V.2: binding holding named value in another representation leads with name of its chain,
@@ -90,9 +92,8 @@
 ##     stands there is finding; alias wrapping past its line is unread too (`declared.nim`).
 ##   Cost: member of collection is read only where same file declares it, and only where word
 ##     for form follows it at once: member of other module, or qualifier between (`MeshAntiSet`),
-##     passes. Plural file declares as type reads as member, so `BasesSet` beside type `Bases` is
-##     finding. V.6 gives word for form to each of two collections, never beside bare plural, so
-##     finding stands, though member it names may be `Basis`.
+##     passes. Collection whose value opens otherwise, as alias of other alias (`Bases = Grades`)
+##     or `distinct set[Basis]`, reads as member, so word for form after it is finding.
 
 {.experimental: "strictFuncs".}
 
@@ -136,6 +137,11 @@ const
   FORMS_COLLECTION = ["Array", "Seq", "Set", "Table"]
     ## Words for form of collection, which close type's name only where two collection types
     ##   would share it (V.6).
+  OPENINGS_COLLECTION = [
+    "array[", "CountTable[", "HashSet[", "OrderedTable[", "seq[", "set[", "Table[",
+  ]
+    ## Openings of value declaring collection type, so word for form after it names collection
+    ##   of collections, never member (V.6).
   KINDS_VERB_GENERATION = [
     ("construct", "compile-time routine returning data structure"),
     ("define", "macro"),
@@ -197,6 +203,13 @@ func stem(name: string): string =
   ##   empty where name is one word.
   let spans = name.spansWord
   if spans.len < 2: "" else: name[0..<spans[^2][1]]
+
+
+func isCollection(value: string): bool =
+  ## Decide whether type's value declares collection, by its opening (`OPENINGS_COLLECTION`).
+  for opening in OPENINGS_COLLECTION:
+    if value.startsWith(opening): return true
+  false
 
 
 func wordFull(word: string, exempt_lower: openArray[string]): string =
@@ -448,7 +461,7 @@ func checkNames*(path, source: string; exempt: openArray[string]): seq[Report] =
       result.add initReport(
         path,
         d.line,
-        Rule.VerbAction,
+        Rule.SuffixRoutine,
         "Routine closes with `Of` only where it spells generic type; got `" & d.name & "`.",
       )
     if d.kind == KindName.Type and is_closed_of and
@@ -461,7 +474,7 @@ func checkNames*(path, source: string; exempt: openArray[string]): seq[Report] =
         d.name & "`.",
       )
     if d.kind == KindName.Type and parts.len > 1 and parts[^1] in FORMS_COLLECTION and
-        types.anyIt(it.name == bare):
+        types.anyIt(it.name == bare and not it.value.isCollection):
       result.add initReport(
         path,
         d.line,

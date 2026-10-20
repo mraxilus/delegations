@@ -55,6 +55,7 @@ const CITATIONS*: array[Rule, string] = [
   Rule.Notation: "III.5",
   Rule.WordGlobal: "V.10",
   Rule.HeadRepresentation: "V.2",
+  Rule.SuffixRoutine: "V.3",
   Rule.SuffixGeneric: "V.13",
   Rule.NameCollection: "V.6",
   Rule.ArticleInComment: "VI.5",
