@@ -58,13 +58,15 @@ proc findingsPruned*(root: string, tree: Tree): seq[Finding] =
   ##   existence of commit is git's; koch runs both under `check-files` and `check`.
   ##   Needs full log: shallow clone reports true row as missing, so `check-files` job fetches
   ##   depth 0.
+  ##   Log follows renames, since move of project carries record and history with it (#631).
+  ##     Cost: git pairs delete with similar add as rename, so such record inherits history.
   for directory in tree.directoriesProject:
     let path = directory & "/PROVENANCE.md"
     for e in tree:
       if e.path != path: continue
       let named = e.content.prunedOf
       if not named.isIdCommit: continue
-      let touched = fieldsGit(root, ["log", "-z", "--format=%H", "--", path])
+      let touched = fieldsGit(root, ["log", "-z", "--follow", "--format=%H", "--", path])
       if not touched.anyIt(it.strip.startsWith(named)):
         result.add finding(
           path,
