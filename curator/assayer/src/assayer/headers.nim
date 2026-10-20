@@ -53,7 +53,7 @@ type
     refusal*: string  ## Why header cannot be read; empty where it can.
 
 
-func targetOf*(word: string): Option[Target] =
+func toTarget*(word: string): Option[Target] =
   ## Read backend word names, as testament reads `targets` and `--backend`; `none` where it names
   ##   none.
   ##   Word is normalized first, as testament normalizes it, so `JS` names JavaScript too.
@@ -95,7 +95,7 @@ func textHeader*(source: string): tuple[text, refusal: string] =
   (source[first..<last].multiReplace(("'''", QUOTES), ("\\31", "\31")), "")
 
 
-proc headerOf*(source: string): Header =
+proc header*(source: string): Header =
   ## Read testament header source opens, as testament reads it; defaults where source opens none,
   ##   and refusal where header cannot be read.
   ##   Proc, since `std/parsecfg` reads through stream, whose calls compiler cannot prove pure.
@@ -138,7 +138,7 @@ proc headerOf*(source: string): Header =
         for configuration in event.value.split(';'): matrix.add configuration.strip
       of "targets", "target":
         for word in event.value.splitWhitespace:
-          let target = word.targetOf
+          let target = word.toTarget
           if target.isNone:
             return Header(refusal: "header target `" & word & "` is none of " & TARGETS)
           targets.incl target.get

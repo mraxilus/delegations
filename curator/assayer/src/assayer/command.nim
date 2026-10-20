@@ -4,7 +4,7 @@
 ##     twice, by any path, runs once, since two runs of one configuration would share cache.
 ##   Compiler of file is one `--nim` names; else one serving pin of nearest nimble file at or
 ##     above directory of file, from toolchain of knoller (`compilers.nim`); else `nim` on PATH,
-##     which testament takes too (`compilerOf`). Pin nothing serves refuses file, and so does
+##     which testament takes too (`compiler`). Pin nothing serves refuses file, and so does
 ##     directory holding several nimble files: no other compiler stands in silently (`GUIDE.md`,
 ##     Toolchain).
 ##   Runs go `--jobs` at once at most, by default one for each processor.
@@ -96,7 +96,7 @@ func isColoredBy*(no_color, force_color, term: string; is_terminal: bool): bool 
   term != "dumb" and is_terminal
 
 
-proc compilerOf*(path, nim: string; toolchains: var Toolchains): tuple[compiler, refusal: string] =
+proc compiler*(path, nim: string; toolchains: var Toolchains): tuple[compiler, refusal: string] =
   ## Read compiler of test file at path: one `nim` names, else one serving pin of nearest nimble
   ##   file at or above its directory, else `nim` on PATH; refusal says why none serves.
   ##   Nimble file naming no exact pin takes `nim` on PATH, as knoller takes it.
@@ -149,36 +149,36 @@ proc assay*(options: Options, write: proc(line: string), as_color = false): int 
 
   # Plan runs of each file once, refusing file whose header, template or compiler cannot serve.
   for path in options.paths:
-    let absolute = path.absoluteOf(root)
+    let absolute = path.toAbsolute(root)
     if absolute in seen: continue
     seen.add absolute
-    let header = readFile(path).headerOf
+    let header = readFile(path).header
     var (compiler, refusal) = ("", header.refusal)
     if refusal.len == 0: refusal = header.command.refusalTemplate
-    if refusal.len == 0: (compiler, refusal) = path.compilerOf(options.nim, toolchains)
+    if refusal.len == 0: (compiler, refusal) = path.compiler(options.nim, toolchains)
     if refusal.len > 0:
       write lineRefusal(path, refusal, root, as_color)
       inc refused
       continue
     inc files
-    runs.add runsOf(path, header, compiler, node, root)
+    runs.add planRuns(path, header, compiler, node, root)
 
   # Make every run, writing line of each in plan order.
   let jobs = if options.jobs > 0: options.jobs else: max(1, countProcessors())
   if runs.len > 0: write lineStart(runs.len, files, countThreads(jobs, runs.len))
   let
-    widths = runs.widthsOf(root)
+    widths = runs.widths(root)
     outcomes = runs.runAll(jobs) do (place: int, outcome: Outcome):
       write lineRun(runs[place], outcome, widths, root, as_color)
 
   # Write log of each failure now no thread runs, then its block, then count.
   var failed = 0
   for place, run in runs:
-    if run.failureOf(outcomes[place]).len == 0: continue
+    if run.failure(outcomes[place]).len == 0: continue
     inc failed
     if run.refusal.len == 0:
-      createDir(run.logOf.parentDir)
-      writeFile(run.logOf, outcomes[place].textLog)
+      createDir(run.pathLog.parentDir)
+      writeFile(run.pathLog, outcomes[place].textLog)
     write ""
     for line in linesFailure(run, outcomes[place], root, as_color): write line
   write ""

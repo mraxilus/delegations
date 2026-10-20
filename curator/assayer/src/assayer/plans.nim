@@ -11,13 +11,13 @@
 ##     reproduces compile by hand, and log keeps command as run.
 ##   Runs go configuration by configuration, each under every backend, in order testament takes.
 ##   Each run compiles into directory of its own under `DIRECTORY_RUNS`, below working directory,
-##     named for path of file, backend and place of configuration (`directoryOf`), as
+##     named for path of file, backend and place of configuration (`directoryRun`), as
 ##     `tests/test_k/c_2`: two runs share no cache, so none races another, and run of same file and
 ##     configuration finds its cache again. Report prints that path, so it reads as what it holds.
 ##     Testament instead shares one cache across configurations of file, and writes program
 ##     beside it, which holds only while configurations run one after another.
 ##   Program lands inside that directory, and runs from working directory, as testament runs it.
-##     Log of failed run lands beside it (`logOf`).
+##     Log of failed run lands beside it (`pathLog`).
 ##   Template naming what testament fills nothing for refuses file before any run (`nameUnfilled`),
 ##     since every run of file would fail alike.
 ##
@@ -66,16 +66,16 @@ func targetIn*(configuration: string, target: Target): Target =
   result = target
   for word in configuration.parseCmdLine:
     for prefix in PREFIXES_BACKEND:
-      if word.startsWith(prefix): result = word[prefix.len .. ^1].targetOf.get(result)
+      if word.startsWith(prefix): result = word[prefix.len .. ^1].toTarget.get(result)
 
 
-func absoluteOf*(path, root: string): string =
+func toAbsolute*(path, root: string): string =
   ## Read path absolute and normalized, relative one resolved against working directory `root`, so
   ##   two paths naming one file read alike.
   normalizedPath(if path.isAbsolute: path else: root / path)
 
 
-func directoryOf*(path, root: string; target: Target; place: int): string =
+func directoryRun*(path, root: string; target: Target; place: int): string =
   ## Read directory run of test file compiles into: path of file below `root`, extension dropped,
   ##   then backend and place of configuration counted from one, as `tests/test_k/c_2`.
   ##   File outside `root` takes its name and hash of its absolute path instead, so no directory
@@ -83,7 +83,7 @@ func directoryOf*(path, root: string; target: Target; place: int): string =
   ##   `root` is absolute already, so prefix decides what lies below it; `relativePath` would read
   ##     working directory, which no function here reads.
   let
-    absolute = path.absoluteOf(root)
+    absolute = path.toAbsolute(root)
     prefix = if root.endsWith(DirSep): root else: root & DirSep
     key =
       if absolute.startsWith(prefix): absolute[prefix.len .. ^1].changeFileExt("")
@@ -91,7 +91,7 @@ func directoryOf*(path, root: string; target: Target; place: int): string =
   root / DIRECTORY_RUNS / key / ($target & "_" & $(place + 1))
 
 
-func logOf*(run: Run): string =
+func pathLog*(run: Run): string =
   ## Read path of log of run, beside its program.
   run.executable.parentDir / FILE_LOG
 
@@ -143,7 +143,7 @@ func spacesJoined*(command: string): string =
   result.strip(leading = false)
 
 
-func commandOf(head: string; target: Target; options, path, directory, compiler: string): string =
+func fillCommand(head: string; target: Target; options, path, directory, compiler: string): string =
   ## Fill template of command, leading `nim` replaced already, as testament fills it
   ##   (`prepareTestCmd`); `ValueError` where template names what testament fills nothing for.
   head % [
@@ -155,13 +155,13 @@ func commandOf(head: string; target: Target; options, path, directory, compiler:
   ]
 
 
-func runsOf*(path: string; header: Header; compiler, node, root: string): seq[Run] =
+func planRuns*(path: string; header: Header; compiler, node, root: string): seq[Run] =
   ## Plan each run header asks of test file at path: one for each backend under each
   ##   configuration.
   ##   `compiler` is absolute path of compiler; `node` that of Node.js, empty where PATH holds none;
   ##   `root` is absolute working directory, which cache and `$filedir` resolve against.
   let
-    absolute = path.absoluteOf(root)
+    absolute = path.toAbsolute(root)
     head =
       if header.command.startsWith("nim "): compiler.quoteShell & header.command[3 .. ^1]
       else: header.command
@@ -169,7 +169,7 @@ func runsOf*(path: string; header: Header; compiler, node, root: string): seq[Ru
     for target_header in header.targets:
       let
         target = configuration.targetIn(target_header)
-        directory = directoryOf(path, root, target_header, place)
+        directory = directoryRun(path, root, target_header, place)
         extension = if target == Target.JavaScript: "js" else: ExeExt
         executable = directory / path.splitFile.name.changeFileExt(extension)
         options = [
@@ -189,9 +189,9 @@ func runsOf*(path: string; header: Header; compiler, node, root: string): seq[Ru
         execution: @[executable],
       )
       try:
-        run.command = commandOf(head, target, options, path, absolute.parentDir, compiler)
+        run.command = fillCommand(head, target, options, path, absolute.parentDir, compiler)
         run.rerun =
-          commandOf(head, target, options_rerun, path, absolute.parentDir, compiler).spacesJoined
+          fillCommand(head, target, options_rerun, path, absolute.parentDir, compiler).spacesJoined
       except ValueError:
         run.refusal = header.command.refusalTemplate
       if target == Target.JavaScript:

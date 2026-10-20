@@ -72,15 +72,15 @@ suite "Command line":
     createDir(directory / "tests")
     let file = directory / "tests" / "test_k.nim"
     var toolchains = initToolchains(directory / "cache", some(Compiler(version: NimVersion)))
-    check compilerOf(file, "bin/nim", toolchains) ==
+    check compiler(file, "bin/nim", toolchains) ==
         ((getCurrentDir() / "bin/nim").addFileExt(ExeExt), "")  # named, made absolute
-    check compilerOf(file, "", toolchains) == (findExe("nim"), "")  # no nimble file above
+    check compiler(file, "", toolchains) == (findExe("nim"), "")  # no nimble file above
     writeFile(directory / "k.nimble", "requires \"nim == " & NimVersion & "\"\n")
-    check compilerOf(file, "", toolchains) == (findExe("nim"), "")  # pin PATH serves
+    check compiler(file, "", toolchains) == (findExe("nim"), "")  # pin PATH serves
     writeFile(directory / "k.nimble", "requires \"nim >= 2.0.0\"\n")
-    check compilerOf(file, "", toolchains) == (findExe("nim"), "")  # range names no pin
+    check compiler(file, "", toolchains) == (findExe("nim"), "")  # range names no pin
     writeFile(directory / "l.nimble", "requires \"nim == " & NimVersion & "\"\n")
-    check compilerOf(file, "", toolchains) == ("", "`" & directory & "` holds `k.nimble` and " &
+    check compiler(file, "", toolchains) == ("", "`" & directory & "` holds `k.nimble` and " &
         "`l.nimble`, so no pin is trusted")  # nimble refuses such directory
 
 
@@ -93,7 +93,7 @@ suite "Command line":
     setFilePermissions(bin / "nim", {fpUserExec, fpUserRead, fpUserWrite})
     writeFile(directory / "k.nimble", "requires \"nim == " & PIN_FAKE & "\"\n")
     var toolchains = initToolchains(directory / "cache", some(Compiler(version: NimVersion)))
-    check compilerOf(directory / "test_k.nim", "", toolchains) == (bin / "nim", "")  # cached
+    check compiler(directory / "test_k.nim", "", toolchains) == (bin / "nim", "")  # cached
 
 
   test "real runs report refusal, start, each run in plan order, failure, then count":
@@ -109,7 +109,7 @@ suite "Command line":
         paths: @[refused, matrix, directory / "." / "test_k.nim"],
       )
       (lines, code) = options.assayed(directory)
-      log = directoryOf(matrix, directory, Target.C, 1) / FILE_LOG
+      log = directoryRun(matrix, directory, Target.C, 1) / FILE_LOG
     check lines[0] == "error: test_refused.nim: header key `exitcode` is not read; assayer " &
         "reads `action`, `cmd`, `matrix` and `targets`"  # refused file, path relative
     check lines[1] == "Starting 3 runs of 1 file, 3 at once"  # duplicate path runs once
@@ -143,5 +143,5 @@ suite "Command line":
     check lines[3] == "" and lines[4].endsWith(": 2 passed")  # count alone, no block
     check code == 0  # clean
     for place in 0..1:
-      check dirExists(directoryOf(file, directory, Target.C, place))  # cache of each
-      check not fileExists(directoryOf(file, directory, Target.C, place) / FILE_LOG)  # no log
+      check dirExists(directoryRun(file, directory, Target.C, place))  # cache of each
+      check not fileExists(directoryRun(file, directory, Target.C, place) / FILE_LOG)  # no log
