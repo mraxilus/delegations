@@ -99,7 +99,9 @@ proc findingsLock(tree: Tree, directories: openArray[string]): seq[Finding] =
       elif e.path == path_lock:
         lock = e.content
         found_lock = true
-    if found_lock: result.add checkNimbleLock(path_nimble, path_lock, lock, nimble)
+    if found_lock:
+      result.add checkNimbleLock(path_nimble, path_lock, lock, nimble)
+      result.add checkNameNimble(path_nimble, path_lock, lock)
 
 
 proc auditTree*(tree: Tree): seq[Finding] =

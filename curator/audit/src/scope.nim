@@ -39,10 +39,7 @@
 
 import std/[options, sets, strutils]
 import ../../knoller/src/knoller
-import ./[domains, findings, layout]
-
-
-const KEY_FILENAME = "\"filename\":"  ## Key of lock line naming nimble copy, as Atlas writes it.
+import ./[dependencies, domains, findings, layout]
 
 
 func checkPropagation(path: string): seq[Finding] =
