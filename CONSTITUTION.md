@@ -233,7 +233,7 @@ for slot in 0..<pool.bound:  # Bound, never `HANDLES_MAX`.
    orders pass, the value that the code names leads (`a_flags`, never `flags_a`), and where the
    code names none, the kind leads.
 3. An action is an imperative verb (`constructTable`, `emitOperator`). A property is the bare
-   domain noun (`grade`, `norm`, `centroid`), and never `getGrade` or `computeNorm`. A
+   domain noun (`grade`, `norm`, `centroid`), and never `getGrade`, `computeNorm` or `gradeOf`. A
    recurring kind of action keeps one verb, and that verb fixes the kind of the routine. Three
    verbs name the stages of generation (II.4), in the order that they run:
    - `construct…` names a compile-time routine that builds and returns a data structure. A
@@ -249,6 +249,10 @@ for slot in 0..<pool.bound:  # Bound, never `HANDLES_MAX`.
      reference (IV.6);
    - `to<Target>` names a change of representation, and takes its subject first. A
      transformation inside the domain keeps its domain name.
+
+   No routine closes with `Of`. A property or a lookup drops it for the bare noun, a conversion
+   takes `to<Target>`, and an action takes its verb. A routine keeps `Of` only where its name
+   spells a generic type (V.13), as `toMultivectorOf` does.
 4. A boolean is a proposition or a mode. Write `is_` for state, `as_` for interpretation,
    `should_` for policy, `found_` for a search outcome, and `has_` for possession.
    A mode boolean passes as a named argument (`as_weight = true`). A predicate callable is
@@ -262,11 +266,18 @@ for slot in 0..<pool.bound:  # Bound, never `HANDLES_MAX`.
    `curr`, and `len` as a local. The symbols of the source (`mu`, `sigma`) are exempt too, and
    so is the symbol of a unit that a glossary names under `## Standards`. A plural holds a
    collection, and its singular holds one member (`for term in terms`).
+
+   A type that holds a collection takes the plural of its member too (`Bases = set[Basis]`). So
+   does a record with one field for each member. A noun of the domain for the whole wins over
+   the plural (`Matrix`, `Tree`). A word for the form (`Set`, `Seq`, `Array`, `Table`) closes
+   the name only where two collection types would take one name. Then each of them takes its
+   word (`BasesSet`, `BasesArray`), after any qualifier.
 7. Name each distinction, then choose its form by what the code does with it. An axis that
    code selects between at compile time is a closed enum (`Chirality`). A pair that several
-   types carry is a small generic wrapper, named by its axis (`Chiral[T]`, `Spatial[T]`).
-   Wrappers compose as `Spatial[Chiral[T]]`, and never multiply into new names. An axis that
-   code walks over is an array indexed by an enum (`array[Order, Cayley2D]`).
+   types carry is a small generic wrapper. It takes the adjective of its axis that closes
+   with -al (`Chiral[T]` for `Chirality`, `Spatial[T]` for `Space`). Wrappers compose as
+   `Spatial[Chiral[T]]`, and never multiply into new names. An axis that code walks over is an
+   array indexed by an enum (`array[Order, Cayley2D]`).
 8. Name every landmark index of a domain as an alias on its type (`Basis.origin`,
    `Grade.high`), and never write a bare index. Where the landmark depends on the
    configuration, the alias resolves it, so that no caller branches.
@@ -283,6 +294,10 @@ for slot in 0..<pool.bound:  # Bound, never `HANDLES_MAX`.
 11. A member of an enum is `PascalCase`, as its type is.
 12. A type parameter, or any placeholder of a generic or a concept, is one capital letter, the
     initial of what it ranges over. Where nothing constrains it, the letter is `T`.
+13. A generic type takes its bare name (`Pool[T]`). Where an alias of one common instance takes
+    that bare name, the generic type closes with `Of` (`Multivector = MultivectorOf[...]`). No
+    other type closes with `Of`. The suffix costs the reader a second name, which a language
+    forces where it refuses one name for both.
 
 ```nim
 BasisDigits  # type
