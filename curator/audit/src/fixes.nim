@@ -16,7 +16,7 @@
 ##     pin, whose glyphs 2.2.12 lexes as names. Pin nothing serves proves nothing, and run
 ##     prints why.
 ##   Fixer whose rule needs more than text of one file runs first, once, on source as given,
-##     from what `context` reads: rename of abbreviation (V.6), and to case of name's kind
+##     from what `initContext` reads: rename of abbreviation (V.6), and to case of name's kind
 ##     (V.1, V.11), across files, planned whole or refused whole (`names.nim`, `rewrites.nim`),
 ##     one rename where both rules ask at one name; and type conversion `x.T`
 ##     (`conversions.nim`), each from semantic pass (`symbols.nim`); then dead export of checker
@@ -210,7 +210,7 @@ proc checkConversions*(
         result.found.add checkConversions(e.path, e.content, answer).toFindings
 
 
-func context*(
+func initContext*(
   tree: Tree,
   entries: openArray[Entry] = [],
   answers: openArray[Answer] = [],
@@ -364,7 +364,7 @@ func fixEntries*(
   ##   written with reason (nimble file `locked` names, fence fix cannot read), and one warning
   ##   for each fence, which keeps its lines as written, naming each rule broken among them
   ##   (`checkFenceHeld`), and for each file knoller's fixers do not settle (`warnUnsettled`).
-  ##   `context` carries what tree tells fixers across modules, as routine `context` reads it,
+  ##   `context` carries what tree tells fixers across modules, as `initContext` reads it,
   ##   and answers of parser; each source chain asks and no answer holds is in `asked`, source
   ##   as given too where fence holds lines, since its warning reads it.
   ##   Where any path to write lies outside branch scope, nothing is written or reported fixed.

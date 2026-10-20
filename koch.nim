@@ -476,7 +476,7 @@ proc run(options: Options): int =
         tree,
         entries,
         locked,
-        tree.context(entries, answers, locked),
+        initContext(tree, entries, answers, locked),
         proversPin(initToolchains()),
       )
       (written, fixed, refused, left, warned, _) = fix
