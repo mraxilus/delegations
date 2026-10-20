@@ -27,7 +27,7 @@
     ""
   ],
   "nimbleFile": {
-    "filename": "rga_visualiser.nimble",
+    "filename": "pga_visualiser.nimble",
     "content": [
       "# Package description read by Atlas and nimble; requirements live here (Article II.8).",
       "",
