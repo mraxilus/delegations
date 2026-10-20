@@ -1,8 +1,7 @@
 ## Record sweeps for viewer page, as `design/rig.json`.
 ##
 ##   Run at build time, natively: engine is C, page is script in browser, so every
-##     figure page draws is found here and played there.  Same arrangement
-##     `design/turns` uses.
+##     figure page draws is found here and played there.
 ##   Written beside source rather than under `build/`, and recorded by verb of its own, as
 ##     `design/modelled.json` is: recording costs eight stance searches, and every
 ##     `pages` run would pay for it.  `rig_page` folds it into page, which is
@@ -68,6 +67,8 @@ const SHOWN: seq[Cut] = @[
    true, Band.Torso)]
   ## Eight sweeps worth watching: four holds above, where whole reference is drawn,
   ## and two chains at each lower level, where floor and engine still argue.
+  ##   Reached by `design/floors`, which plans each sweep over crown, and by
+  ##     `tests/suites/test_asks`, which counts them.
 
 const
   PLACE = 4  ## Decimal places kept.  Tenth of millimetre on lengths, and finer

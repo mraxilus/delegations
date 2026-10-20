@@ -20,7 +20,6 @@ and confirmed. `CONFIRMED` in `review_page.nim` names each confirmed cell.
 
 ```
 nim r tools/build.nim pages      # checks every standing rule, then writes every page
-nim r tools/build.nim turns      # asks the simulation for every hold turning: turns.json
 nim r tools/build.nim rig        # records the sweeps the viewer plays: rig.json
 nim r tools/build.nim modelled   # records which cards the simulation reaches: modelled.json
 nim r tools/build.nim fixtures   # records what each ruled card is drawn as: review-fixtures.json
@@ -36,9 +35,6 @@ the same.
 
 No page reads `watched-fixtures.json`. A law of `../tests/suites/test_asks.nim` holds the stills to
 it, and `watched` runs in the pull request that moves them.
-
-No page reads `turns.json` either. Laws of `../tests/suites/test_asks.nim` and
-`../tests/suites/test_shoulder.nim` read it.
 
 ## Rules
 
@@ -380,8 +376,7 @@ design/
   faces.nim              the faces each page embeds
   asks.nim               what each reference card asks of the body simulation
   modelled.nim           which cards the simulation reaches: modelled.json
-  turns.nim              every hold turning, asked of the simulation: turns.json
-  floors.nim             how far the plan carries each hold over the crown, printed
+  floors.nim             how far the plan carries each rig sweep over the crown, printed
   rig.nim                the sweeps and stills the viewer plays: rig.json
   rig_page.nim           rig.html
   rig_view.nim           the viewer, which draws what the engine collides

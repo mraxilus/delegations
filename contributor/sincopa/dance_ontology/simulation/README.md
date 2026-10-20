@@ -98,7 +98,6 @@ nim r koch test contributor/sincopa/dance_ontology  # the laws, with every other
 nim r tools/build.nim pages       # every page, the rig viewer among them
 nim r tools/build.nim modelled    # rewrite design/modelled.json: cards reached
 nim r tools/build.nim rig         # rewrite design/rig.json: sweeps the viewer plays
-nim r tools/build.nim turns       # rewrite design/turns.json: sweeps the laws read
 nim r tools/build.nim verdicts    # rewrite verdicts.md: seconds for words, minutes for physics
 ```
 
@@ -113,7 +112,7 @@ at the first distance that reaches it. So an easy card costs one sweep, and only
 reaches pays for the whole search. A card that no walk reaches is then planned. `PROVENANCE.md`,
 Planned turn and Figures, gives what each planned card costs.
 
-For that reason `modelled`, `rig` and `turns` each have a verb of their own, and their answers are
+For that reason `modelled` and `rig` each have a verb of their own, and their answers are
 committed. So `pages` and the laws use what was last recorded, and do not pay for it again.
 `modelled` and `rig` keep a stamp of the physics with what they record, and record nothing again
 when it is the same. `verdicts` keeps its readings in `verdicts.json`, with a stamp of the

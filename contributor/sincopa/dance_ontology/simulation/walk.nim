@@ -1,8 +1,7 @@
 ## Turn couple until something gives, keeping every moment on way.
 ##
 ##   Page cannot run engine: engine is C and page is script in browser.  So sweep is
-##     run here, natively, at build time, and page plays what came of it -- same
-##     arrangement `design/turns` already uses for whole-cloth page, and reason
+##     run here, natively, at build time, and page plays what came of it (`design/rig`), so
 ##     nothing on page needs to guess at physics.
 ##   Turn is walked in small steps rather than jumped, because whole point of engine
 ##     is that arms slide: pose at each moment is pose before it carried on, so arm
@@ -16,9 +15,9 @@
 ##     it stops still (`momentOf`), so couple stand where carry keeps hands up.
 ##     Cost: cross-name chain held above is carried 1.26 of turn, from 0.54 m.  Without this,
 ##       wall with its slope at 270 carries it 1.60, from 0.86 m, with hands down to 1.594 m at
-##       26 moments of rig's sweep and 44 of whole-cloth page, measured 2026-10-12.
-##   Where walk over crown stops short of `MOST`, whatever stopped it, recordings keep planned
-##     way where it holds further: plan answers every stop, not only hand walk lets sink
+##       26 moments of rig's sweep, measured 2026-10-12.
+##   Where walk over crown stops short of `MOST`, whatever stopped it, rig's recording keeps
+##     planned way where it holds further: plan answers every stop, not only hand walk lets sink
 ##     (Architect, pull request 629, 2026-10-12, D1 of its notes).  Engine stands each planned
 ##     moment, and still's judge reads it (`plannedWay`).  Every other sweep is walk alone
 ##     (`swept`, `should_plan`).
@@ -896,8 +895,8 @@ proc swept*(
   ##   Raw sweep is engine's own: it reflects no twin, and keeps nothing, so no other
   ##     sweep reads it.
   ##   Where `should_plan`, way over crown that walk stops short of `most`, by whatever stopped
-  ##     it, is planned way where that holds further: what recordings keep, where every other
-  ##     sweep is walk alone (`waysOf`).
+  ##     it, is planned way where that holds further: what rig's recording keeps (`seen.shown`),
+  ##     where every other sweep is walk alone (`waysOf`).
   if is_raw:
     let (positive, negative) =
       waysOf(rig, band, links, who, most, step, apart, is_away, head, true, should_plan)
@@ -1261,7 +1260,7 @@ proc plannedWay*(
         if turnsHeld(got) > turnsHeld(result): result = got
         if turnsHeld(result) >= abs(most) - 1e-9: break search
   # TODO: Name what ends planned way short of `most`: `Stop.None` with `which` at -1 names
-  #   nothing, so `words.why` and `design/rig` each say in own words that no plan goes further.
+  #   nothing, so `design/rig` says in own words that no plan carries turn further.
   #   Candidates: `Stop` member for plan that ends, which says only that it ends; or stop read
   #     off plan's terms one solve past its end, which says which term gave, but that solve broke
   #     several terms at once, each by about 1 mm, on cross-name chain, 2026-10-12.

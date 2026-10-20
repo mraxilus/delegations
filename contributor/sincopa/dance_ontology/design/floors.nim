@@ -1,46 +1,40 @@
-## Measure how far plan carries each hold over crown each way from rest: floors law of planned
-## sweep holds both recordings to (`tests/suites/test_asks.TURNS_PLANNED`).
+## Measure how far plan carries each rig sweep over crown from rest: floors law of planned sweep
+## holds rig's recording to (`tests/suites/test_asks.TURNS_PLANNED`).
 ##
 ##   Instrument run by hand (`tools/build.nim floors`), never by suite: each way plans every
 ##     style on every core, and both chains alone planned 64 paths in 377 s on four cores,
 ##     measured 2026-10-12.  Law reads floors as figures, so this is how they are read again.
-##   Asks `walk.plannedWay`, which recordings ask where walk falls short, of holds over crown
-##     `design/turns` sweeps (`turns.sweeps`): rig's four sweeps over crown are four of those holds.
-##   Prints one row of `TURNS_PLANNED` for each hold, as table writes it, then style and start
-##     of each way's path, so floor and its source are read off one run.
-##   Cost: plans hold that walk carries free too, which no recording asks, so its row says what
-##     plan carries and not what walk does.
+##   Asks `walk.plannedWay`, which rig's recording asks where walk falls short, of each sweep
+##     over crown rig viewer plays (`rig.SHOWN`), way it plays: positive (`seen.shown`).
+##   Prints one row of `TURNS_PLANNED` for each sweep, keyed by card as table keys it, then
+##     style and start of its path, so floor and its source are read off one run.
+##   Cost: plans hold that walk carries free too, which recording never asks, so its row says
+##     what plan carries and not what walk does.
 
 {.experimental: "strictFuncs".}
 
 when compileOption("profiler"): import std/nimprof
 
-import std/[strformat, strutils]
+import std/strformat
 
-import ../simulation/[body, rig, walk]
-import ./turns
+import ../simulation/[body, hold, rig, walk]
+from ./rig {.all.} import SHOWN
 
 
 proc main() =
-  ## Plan each hold over crown toward `walk.MOST` each way, follow turning, and print each row.
+  ## Plan each rig sweep over crown toward `walk.MOST`, follow turning, and print its row.
   keepAnswers()
-  for sweep in sweeps():
-    if sweep.band != Band.Crown: continue
+  for cut in SHOWN:
+    if cut.band != Band.Crown: continue
+    var links: seq[Link]
+    for (lead_arm, follow_arm) in cut.arms:
+      links.add Link(ends: [(Body.One, lead_arm), (Body.Two, follow_arm)])
     let
-      links = linksOf(sweep.hold)
-      is_away = isRestingAway(sweep.hold)
-    var
-      row = &"(hold: \"{sweep.hold}\""
-      sources: seq[string]
-    for (name, step) in [("negative", -STEP), ("positive", STEP)]:
-      let
-        way = plannedWay(HUMAN, Band.Crown, links, Body.Two, MOST, step, is_away, Body.Two)
-        held = turnsHeld(way)
-        style = STYLES.find(way.path.problem.style)
-      row.add (if way.found_rest and not way.is_stopped: &", {name}: MOST"
-               else: &", {name}: {held:.4f}")
-      sources.add &"{name} by style {style} from {way.apart:.3f} m, {way.moments.len} moments"
-    echo row, "),  # ", sources.join("; ")
+      way = plannedWay(HUMAN, Band.Crown, links, Body.Two, MOST, STEP, cut.is_away, Body.Two)
+      style = STYLES.find(way.path.problem.style)
+      floor = (if way.found_rest and not way.is_stopped: "MOST" else: &"{turnsHeld(way):.4f}")
+    echo &"(card: \"{cut.name} · above\", positive: {floor}),  # style {style} from " &
+        &"{way.apart:.3f} m, {way.moments.len} moments"
 
 
 when isMainModule:
