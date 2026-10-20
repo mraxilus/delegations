@@ -119,7 +119,7 @@ suite "Headers":
         "action: run",
         "matrix: \"-d:nimUnittestAbortOnError:on -d:visualiser.history_capacity=4\"",
         "targets: \"js\"",
-      ).headerOf  # `contributor/ronri/rga_visualiser/tests/test_4d_browser.nim`
+      ).headerOf  # `contributor/ronri/pga_visualiser/tests/test_4d_browser.nim`
     check probe.refusal == "" and probe.matrix == @["-d:probe.modulus=4"]  # one configuration
     check probe.command.startsWith("nim c --hints:off")  # command as written
     check browser.command == COMMAND_DEFAULT and browser.targets == {Target.JavaScript}
