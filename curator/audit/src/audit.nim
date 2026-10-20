@@ -58,21 +58,31 @@ proc findingsPruned*(root: string, tree: Tree): seq[Finding] =
   ##   existence of commit is git's; koch runs both under `check-files` and `check`.
   ##   Needs full log: shallow clone reports true row as missing, so `check-files` job fetches
   ##   depth 0.
-  ##   Log follows renames, since move of project carries record and history with it (#631).
+  ##   Plain log is read first, since it keeps merge commit that changed record on both sides.
+  ##     Log that follows renames is read only where plain one misses: move of project carries
+  ##     record and history with it (#631), but `--follow` drops such merge commit.
   ##     Cost: git pairs delete with similar add as rename, so such record inherits history.
+  ##     Cost: second log for each row plain log misses, which true row reaches only after move.
+  proc isLogged(path, named: string; should_follow: bool): bool =
+    ## Tell whether log of record holds named commit, following renames on request.
+    var arguments = @["log", "-z", "--format=%H"]
+    if should_follow: arguments.add "--follow"
+    arguments.add ["--", path]
+    fieldsGit(root, arguments).anyIt(it.strip.startsWith(named))
+
   for directory in tree.directoriesProject:
     let path = directory & "/PROVENANCE.md"
     for e in tree:
       if e.path != path: continue
       let named = e.content.prunedOf
       if not named.isIdCommit: continue
-      let touched = fieldsGit(root, ["log", "-z", "--follow", "--format=%H", "--", path])
-      if not touched.anyIt(it.strip.startsWith(named)):
-        result.add finding(
-          path,
-          0,
-          "`" & PRUNED & "` must name commit that touched this record; got `" & named & "`.",
-        )
+      if isLogged(path, named, should_follow = false): continue
+      if isLogged(path, named, should_follow = true): continue
+      result.add finding(
+        path,
+        0,
+        "`" & PRUNED & "` must name commit that touched this record; got `" & named & "`.",
+      )
 
 
 func isCodeContributor(path: string, directories: openArray[string]): bool =
