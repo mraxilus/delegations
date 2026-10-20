@@ -3,7 +3,7 @@
 ##     copy; each prints tables through this module, and equal JSON is equal table, signs
 ##     included. Suites run same module against pin, so serialiser evaluation relies on is tested.
 ##   Cell is `seq` in every table at pin; library before `3121342` held `Option[BasisSigned]` in
-##     1D ones. `cellOf` reads both, so one module serves change that restores either shape.
+##     1D ones. `toTerms` reads both, so one module serves change that restores either shape.
 ##
 ##   Cost: serialiser walks every cell, N² for 2D table; 6D is 4 096 cells, milliseconds.
 
@@ -14,18 +14,18 @@ import std/[json, options]
 import pga/[algebra {.all.}, cayleys {.all.}]
 
 
-func termOf(b: BasisSigned): JsonNode =
+func term(b: BasisSigned): JsonNode =
   ## Build one term: basis it lands on and its sign.
   %*{"to": $b.basis, "neg": b.is_negated}
 
 
-func cellOf[C](c: C): JsonNode =
+func toTerms[C](c: C): JsonNode =
   ## Read one cell, `Option` or `seq`, as array of terms.
   result = newJArray()
   when C is seq:
-    for b in c: result.add termOf(b)
+    for b in c: result.add term(b)
   else:
-    if c.isSome: result.add termOf(c.get)
+    if c.isSome: result.add term(c.get)
 
 
 func cells*[T](table: T): JsonNode =
@@ -34,8 +34,8 @@ func cells*[T](table: T): JsonNode =
   for a in Basis:
     when table[a] is array:
       for b in Basis:
-        let terms = cellOf(table[a][b])
+        let terms = toTerms(table[a][b])
         if terms.len > 0: result[$a&"," & $b] = terms
     else:
-      let terms = cellOf(table[a])
+      let terms = toTerms(table[a])
       if terms.len > 0: result[$a] = terms

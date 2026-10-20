@@ -49,22 +49,22 @@ const
 
 #[ Polynomials ]#
 
-func operandOf(source: int): Sums =
+func operand(source: int): Sums =
   ## Read operand whole, each coefficient one term of itself.
   for b in Basis: result[b] = @[Term(coefficient: 1.0, factors: @[(source, ord(b))])]
 
 
-func scalarOf(source: int): Sums =
+func operandScalar(source: int): Sums =
   ## Read scalar operand or temporary as multivector carrying it in scalar coefficient.
   result[Basis.scalar] = @[Term(coefficient: 1.0, factors: @[(source, INDEX_WHOLE)])]
 
 
-func constantOf(b: Basis, coefficient = 1.0): Sums =
+func constant(b: Basis, coefficient = 1.0): Sums =
   ## Read unit constant on one basis element, signed.
   result[b] = @[Term(coefficient: coefficient, factors: @[])]
 
 
-func degreeOf(sums: Sums): int =
+func degree(sums: Sums): int =
   ## Read greatest count of factors any term carries.
   for terms in sums:
     for term in terms: result = max(result, term.factors.len)
@@ -164,8 +164,8 @@ func bindScalar(emitter: var Emitter, value: NimNode): int =
 func product(emitter: var Emitter; left, right: Sums; cayley: Cayley2D): Sums =
   ## Multiply through two-dimensional table; operand already product binds temporaries first.
   let
-    bound_left = if left.degreeOf > 1: emitter.temporaries(left) else: left
-    bound_right = if right.degreeOf > 1: emitter.temporaries(right) else: right
+    bound_left = if left.degree > 1: emitter.temporaries(left) else: left
+    bound_right = if right.degree > 1: emitter.temporaries(right) else: right
   for a in Basis:
     if bound_left[a].len == 0: continue
     for b in Basis:
@@ -181,7 +181,7 @@ func product(emitter: var Emitter; left, right: Sums; cayley: Cayley2D): Sums =
   for b in Basis: result[b] = combined(result[b])
 
 
-func rootOf(terms: seq[Term]): NimNode =
+func root(terms: seq[Term]): NimNode =
   ## Spell square root of one coefficient's sum.
   newCall(bindSym"sqrt", nodeSum(terms))
 
@@ -189,19 +189,19 @@ func rootOf(terms: seq[Term]): NimNode =
 
 #[ Recipes ]#
 
-func recipeOf(emitter: var Emitter; id: string; m, n: Sums): Sums =
+func recipe(emitter: var Emitter; id: string; m, n: Sums): Sums =
   ## Evaluate measurand symbolically, as library defines it, from its tables.
 
   func norm(emitter: var Emitter, m: Sums, cayley: Cayley2D, b: Basis): Sums =
     ## Read root of one coefficient of operand's product with itself, in that coefficient alone.
-    let root = emitter.bindScalar(rootOf(emitter.product(m, m, cayley)[b]))
+    let root = emitter.bindScalar(root(emitter.product(m, m, cayley)[b]))
     result[b] = @[Term(coefficient: 1.0, factors: @[(root, INDEX_WHOLE)])]
 
   func unitized(emitter: var Emitter, m: Sums, cayley: Cayley2D, b: Basis): Sums =
     ## Scale operand by reciprocal of root of one coefficient of its product with itself, unless
     ## zero.
     let
-      root = ident("t" & $emitter.bindScalar(rootOf(emitter.product(m, m, cayley)[b])))
+      root = ident("t" & $emitter.bindScalar(root(emitter.product(m, m, cayley)[b])))
       reciprocal = emitter.bindScalar(quote do:
         if `root` != 0: 1.0 / `root` else: 1.0)
     for a in Basis:
@@ -226,7 +226,7 @@ func recipeOf(emitter: var Emitter; id: string; m, n: Sums): Sums =
     when IS_CONFORMAL:
       emitter.product(
         m.mapped(CAYLEYS_DUAL.anti.right),
-        constantOf(Basis.infinity),
+        constant(Basis.infinity),
         CAYLEYS_WEDGE.base,
       )
     else: m
@@ -292,14 +292,14 @@ func recipeOf(emitter: var Emitter; id: string; m, n: Sums): Sums =
     when IS_RIGID:
       case id
       of "support":
-        let origin = constantOf(Basis.origin)
+        let origin = constant(Basis.origin)
         emitter.product(
           m,
           emitter.product(origin, m.mapped(CAYLEYS_DUAL.anti.right), CAYLEYS_WEDGE.base),
           CAYLEYS_WEDGE.anti,
         )
       of "support_anti":
-        let horizon = constantOf(Basis.horizon.basis,
+        let horizon = constant(Basis.horizon.basis,
           if Basis.horizon.is_negated: -1.0 else: 1.0)
         emitter.product(
           m,
@@ -334,7 +334,7 @@ func recipeOf(emitter: var Emitter; id: string; m, n: Sums): Sums =
 
 #[ Functions ]#
 
-func basesOf[B: static Bases](
+func basesHeld[B: static Bases](
   t: typedesc[MultivectorOf[B]]
 ): Bases {.used.} =  # Used in forms that `defineFormsDense` emits.
   ## Read bases multivector type holds; read by `defineFormsDense`'s emitted forms.
@@ -342,7 +342,7 @@ func basesOf[B: static Bases](
 
 
 macro defineFormsDense*(): untyped =
-  ## Define one dense form per general measurand, named by `nameDenseOf`.
+  ## Define one dense form per general measurand, named by `nameDense`.
   ##   Form returns type library expression returns, so norm returns `MultivectorScalars` as
   ##     library's does; it writes each coefficient that type holds, and no other.
   ##   Partner carries sign of its operand's grade, as library's does; grade is read as
@@ -351,7 +351,7 @@ macro defineFormsDense*(): untyped =
   for p in CATALOGUE:
     if p.reference.len > 0: continue
     let
-      name = ident(p.nameDenseOf)
+      name = ident(p.nameDense)
       (m, n) = (ident"m", ident"n")
       is_scalar_m = p.operands[0] == Kind.Scalar
     if p.id == "select_part":
@@ -361,8 +361,8 @@ macro defineFormsDense*(): untyped =
       continue
     var emitter = Emitter(statements: newStmtList(), source_next: SOURCE_N + 1)
     let
-      sums_m = if is_scalar_m: scalarOf(SOURCE_M) else: operandOf(SOURCE_M)
-      sums = emitter.recipeOf(p.id, sums_m, operandOf(SOURCE_N))
+      sums_m = if is_scalar_m: operandScalar(SOURCE_M) else: operand(SOURCE_M)
+      sums = emitter.recipe(p.id, sums_m, operand(SOURCE_N))
       is_partner = p.id == "partner"
     var body = emitter.statements
     let is_negated = ident"is_negated"  # plain ident, since `quote` hides names it declares
@@ -400,7 +400,7 @@ macro defineFormsDense*(): untyped =
         else: quote do: {.error: `message`.}
       body.add nnkWhenStmt.newTree(
         nnkElifBranch.newTree(
-          quote do: `basis` in basesOf(typeof(result)),
+          quote do: `basis` in basesHeld(typeof(result)),
           assignments,
         ),
         nnkElse.newTree(otherwise),

@@ -36,8 +36,8 @@
 ##     `pages/`, since layout admits hand-written markup there alone.
 ##
 ##   Proposals build on others as graph without cycles, as Architect ruled on 2026-10-04: each
-##     names those whose changes it needs, and is decided on its own. `dependenciesOf` lists
-##     what adopting proposal needs first; `dependentsOf` lists what rejecting it blocks.
+##     names those whose changes it needs, and is decided on its own. `dependencies` lists
+##     what adopting proposal needs first; `dependents` lists what rejecting it blocks.
 ##
 ##   Cost: graph is walked once per proposal and again per dependent, so `n` proposals cost
 ##     `n²` walks; five cost twenty-five.
@@ -84,7 +84,7 @@ const
      ##   appendix.
 
 
-func figureOf*(node: Block, directory: string): Option[Figure] =
+func figure*(node: Block, directory: string): Option[Figure] =
   ## Read figure paragraph names: caption, and path resolved against `directory`.
   ##   Path has `..` folded.
   ##   None for any block that is not one image alone.
@@ -252,21 +252,21 @@ func parseProposal*(
   (proposal, findings)
 
 
-func definesOf*(claim: JsonNode): seq[string] =
+func flagsDefine*(claim: JsonNode): seq[string] =
   ## Spell defines claim names as compiler flags, in order; none where it names none.
   for define in claim{"defines"}.getElems: result.add "-d:" & define.getStr
 
 
-func programsOf*(proposal: Proposal): seq[string] =
+func programs*(proposal: Proposal): seq[string] =
   ## List program paths proposal's claims run, project-relative, in order.
   for claim in proposal.claims:
     if claim{"kind"}.getStr == "program":
       result.add proposal.directory & "/" & claim{"path"}.getStr
 
 
-func programsOf*(proposals: openArray[Proposal]): seq[string] =
+func programs*(proposals: openArray[Proposal]): seq[string] =
   ## List program paths claims of each proposal run, in order of proposals.
-  for proposal in proposals: result.add programsOf(proposal)
+  for proposal in proposals: result.add programs(proposal)
 
 
 func checkNumbers*(proposals: openArray[Proposal]): seq[Finding] =
@@ -326,7 +326,7 @@ func visit(
   order.add found[0]
 
 
-func dependenciesOf*(
+func dependencies*(
   proposals: openArray[Proposal], proposal: Proposal
 ): (seq[Proposal], seq[Finding]) =
   ## List proposals adopting `proposal` needs first, each after those it builds on.
@@ -341,12 +341,12 @@ func dependenciesOf*(
   (order, findings)
 
 
-func dependentsOf*(proposals: openArray[Proposal], proposal: Proposal): seq[Proposal] =
+func dependents*(proposals: openArray[Proposal], proposal: Proposal): seq[Proposal] =
   ## List proposed proposals that rejecting `proposal` blocks, in number order.
   ##   Blocked one needs `proposal` directly or through another.
   for other in proposals:
     if other.isFrozen or other.name == proposal.name: continue
-    if dependenciesOf(proposals, other)[0].anyIt(it.name == proposal.name): result.add other
+    if dependencies(proposals, other)[0].anyIt(it.name == proposal.name): result.add other
 
 
 func basesToward*(proposals: openArray[Proposal]; proposal, target: Proposal): seq[Proposal] =
@@ -355,5 +355,5 @@ func basesToward*(proposals: openArray[Proposal]; proposal, target: Proposal): s
   if target.name in proposal.builds_on: return
   for base in proposals:
     if base.name in proposal.builds_on and
-        dependenciesOf(proposals, base)[0].anyIt(it.name == target.name):
+        dependencies(proposals, base)[0].anyIt(it.name == target.name):
       result.add base

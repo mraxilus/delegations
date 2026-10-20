@@ -178,7 +178,7 @@ func isWedgeAntiNonzero(m: Metric; a, b: Blade): bool =
   (a or b) == m.bladeFull
 
 
-func imageOf(m: Metric, shape: Shape, s: Blade): Option[Blade] =
+func image(m: Metric, shape: Shape, s: Blade): Option[Blade] =
   ## Read blade maps of compound definition send `s` to, or nothing where product dies.
   case shape
   of Shape.Support:  # 𝐞ₙ ∧ s☆
@@ -212,7 +212,7 @@ func termsCompound*(m: Metric, shape: Shape): int =
   ##   Pairs give distinct products of two components, so count holds under same assumption
   ##   as primitives: no subexpression shared between coefficients.
   for raw in 0..<m.countCoefficients:
-    let image = m.imageOf(shape, Blade(raw))
+    let image = m.image(shape, Blade(raw))
     if image.isNone: continue
     for other in 0..<m.countCoefficients:
       let
@@ -239,7 +239,7 @@ func termsProductDual*(m: Metric; as_weight, as_expand: bool): int =
     result += 1 shl (if as_expand: grade else: m.dimensions - grade)
 
 
-func boundLowerOf*(shape: Shape, m: Metric, arity: range[1..2]): BoundLower =
+func boundLower*(shape: Shape, m: Metric, arity: range[1..2]): BoundLower =
   ## Derive multivector lower bound of one operation from its shape and algebra.
   ##   Movement is operands read once and result written once, since dense operation needs
   ##   no fill, no copy and no intermediate to be correct.
@@ -323,7 +323,7 @@ func boundLowerOfChain*(parts: openArray[Shape], m: Metric, arity: range[1..2]):
   ##     minimum sits below this. Record marks every such bound (Article VIII.1).
   var is_any_derived = false
   for part in parts:
-    let b = boundLowerOf(part, m, arity)
+    let b = boundLower(part, m, arity)
     if not b.is_derived: continue
     is_any_derived = true
     result.multiplies += b.multiplies
