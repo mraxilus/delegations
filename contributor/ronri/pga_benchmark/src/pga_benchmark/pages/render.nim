@@ -45,7 +45,7 @@ func codepointText*(codepoint: int): string =
   "U+" & codepoint.toHex.strip(trailing = false, chars = {'0'}).align(4, '0')
 
 
-func paragraphsOf*(control: JsonNode): seq[ParagraphControl] =
+func paragraphs*(control: JsonNode): seq[ParagraphControl] =
   ## Read paragraphs of control fixture, in order written.
   for paragraph in control{"paragraphs"}.getElems:
     result.add ParagraphControl(
@@ -66,7 +66,7 @@ func bodyControl*(paragraphs: openArray[ParagraphControl]): string =
         escapeHtml(paragraph.text) & "</p>"
 
 
-func expectedOf*(paragraphs: openArray[ParagraphControl]): seq[FindingExpected] =
+func findingsExpected*(paragraphs: openArray[ParagraphControl]): seq[FindingExpected] =
   ## List findings control must raise: each character beyond ASCII that system draws.
   for paragraph in paragraphs:
     if not paragraph.is_drawn_by_system: continue

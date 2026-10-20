@@ -140,7 +140,9 @@ func at(node: JsonNode, key: string): JsonNode =
   if node.isNil: nil else: node{key}
 
 
-func valuesOf(functions, measurement: JsonNode; key: string; is_allocation_measured: bool): Values =
+func valuesImplementation(
+  functions, measurement: JsonNode; key: string; is_allocation_measured: bool
+): Values =
   ## Read one implementation's values: counts of function keyed, runtime measurement's timing.
   if key.len > 0 and not functions.isNil and functions.hasKey(key):
     let function = functions[key]
@@ -186,7 +188,7 @@ func decide*(gap: var Gap) =
     else: Status.Met
 
 
-func valuesBoundOf(node: JsonNode): Values =
+func valuesBound(node: JsonNode): Values =
   ## Read multivector lower bound of one measurand; fields absent where document has none.
   ##   Bound spends no fill, no intermediate, no error check and no allocation by
   ##   construction, so those stand at zero rather than absent.
@@ -200,7 +202,7 @@ func valuesBoundOf(node: JsonNode): Values =
   result.allocations = some(0)
 
 
-func gapsOf*(algebra: Algebra): seq[Gap] =
+func gapsAlgebra*(algebra: Algebra): seq[Gap] =
   ## Read one gap per catalogued measurand of algebra, decided.
   let measurands = algebra.measurements_static.at("measurands")
   if measurands.isNil: return
@@ -210,19 +212,19 @@ func gapsOf*(algebra: Algebra): seq[Gap] =
   for id, measurand in measurands.pairs:
     var gap = Gap(key: algebra.name & "/" & id, algebra: algebra.name, measurand: id)
     let measurement = algebra.measurements_runtime.at("measurands").at(id)
-    gap.library = valuesOf(
+    gap.library = valuesImplementation(
       functions,
       measurement.at("library"),
       measurand{"library"}.getStr,
       measured,
     )
-    gap.reference = valuesOf(
+    gap.reference = valuesImplementation(
       functions,
       measurement.at("reference"),
       measurand{"reference"}.getStr,
       measured,
     )
-    gap.bound = valuesBoundOf(measurand.at("bound"))
+    gap.bound = valuesBound(measurand.at("bound"))
     gap.decide
     result.add gap
 
@@ -230,7 +232,7 @@ func gapsOf*(algebra: Algebra): seq[Gap] =
 
 #[ Docket ]#
 
-func docketOf*(node: JsonNode): Docket =
+func toDocket*(node: JsonNode): Docket =
   ## Read docket from its document; empty docket where document is nil.
   result.next = 1
   if node.isNil: return
@@ -484,7 +486,7 @@ func word(s: Status): string =
   toLowerAscii($s)
 
 
-func headerOf(algebra: Algebra): string =
+func renderHeader(algebra: Algebra): string =
   ## Render one paragraph naming what algebra's documents measured, on what, and when.
   let
     section_algebra = algebra.measurements_static.at("algebra")
@@ -575,7 +577,7 @@ func render*(
     lines.add ""
     lines.add "## " & algebra.name
     lines.add ""
-    lines.add wrap(algebra.headerOf)
+    lines.add wrap(algebra.renderHeader)
     var
       counts: array[Status, int]
       own: seq[Gap]
@@ -615,7 +617,7 @@ func render*(
 func generate*(algebras: openArray[Algebra], docket: Docket): (string, Docket) =
   ## Generate list and grown docket from documents.
   var gaps: seq[Gap]
-  for a in algebras: gaps.add a.gapsOf
+  for a in algebras: gaps.add a.gapsAlgebra
   var grown = docket
   gaps.assign(grown)
   var decided: seq[Decision]

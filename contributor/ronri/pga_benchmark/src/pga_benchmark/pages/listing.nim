@@ -146,8 +146,8 @@ func htmlListing*(
         escapeHtml(proposal.citation) & " here\"></label></td><td>" & citeLinked(proposal, urls) &
         " " & renderInline(proposal.title) & "</td><td>" & chipStanding(proposal) & "</td><td>" &
         chipClaims(evaluation) & "</td><td>" &
-        htmlCited(dependenciesOf(proposals, proposal)[0], urls) & "</td><td>" &
-        htmlCited(dependentsOf(proposals, proposal), urls) & "</td></tr>"
+        htmlCited(dependencies(proposals, proposal)[0], urls) & "</td><td>" &
+        htmlCited(dependents(proposals, proposal), urls) & "</td></tr>"
   result.add "</table></div></section><section class=\"block readings\"><h2>Selected " &
       "proposals</h2><p class=\"note hint\">Select a proposal in the graph or the table to read " &
       "it here.</p><p><button class=\"clear\" type=\"reset\">Clear selection</button></p>"

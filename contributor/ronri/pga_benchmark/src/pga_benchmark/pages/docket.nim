@@ -109,10 +109,10 @@ const
 
 #[ Reading ]#
 
-func rowsOf(sheet: Sheet, ids: JsonNode): seq[Row] =
+func rowsDocket(sheet: Sheet, ids: JsonNode): seq[Row] =
   ## Read one row per catalogued measurand, docket order; `ids` is docket file whole.
 
-  func figuresOf(function: JsonNode): Option[Figures] =
+  func figures(function: JsonNode): Option[Figures] =
     ## Read counts and movement of one function; none where function is absent.
     if function.isNil or function.kind != JObject: return none(Figures)
     let
@@ -136,7 +136,7 @@ func rowsOf(sheet: Sheet, ids: JsonNode): seq[Row] =
       ),
     )
 
-  func boundOf(bound: JsonNode, width: int): Option[FiguresBound] =
+  func figuresBound(bound: JsonNode, width: int): Option[FiguresBound] =
     ## Read bound with read and written bytes split out; none where no rule derived.
     ##   Scalar-valued shapes write one double; scale reads operand and one scalar.
     if bound.isNil or bound.kind != JObject: return none(FiguresBound)
@@ -164,7 +164,7 @@ func rowsOf(sheet: Sheet, ids: JsonNode): seq[Row] =
       ),
     )
 
-  func runsOf(timing: JsonNode): seq[float] =
+  func runsMedian(timing: JsonNode): seq[float] =
     ## Read median of each run in run order; empty where runs are not recorded.
     timing{"ns_runs"}.getElems.mapIt(it.getFloat)
 
@@ -209,16 +209,16 @@ func rowsOf(sheet: Sheet, ids: JsonNode): seq[Row] =
       operation: operation,
       operands: operands,
       is_general: key_reference.len == 0,
-      library: figuresOf(functions{key_library}),
+      library: figures(functions{key_library}),
       reference:
-        if key_reference.len == 0: none(Figures) else: figuresOf(functions{key_reference}),
-      dense: if key_dense.len == 0: none(Figures) else: figuresOf(functions{key_dense}),
-      bound: boundOf(measurand{"bound"}, width),
+        if key_reference.len == 0: none(Figures) else: figures(functions{key_reference}),
+      dense: if key_dense.len == 0: none(Figures) else: figures(functions{key_dense}),
+      bound: figuresBound(measurand{"bound"}, width),
       ns_library: if is_timed_library: timing_library{"ns_median"}.getFloat else: 0.0,
       ns_against: if is_timed_against: timing_against{"ns_median"}.getFloat else: 0.0,
       share_nan: if is_timed_library: timing_library{"share_nan"}.getFloat else: 0.0,
-      ns_runs_library: if is_timed_library: runsOf(timing_library) else: @[],
-      ns_runs_against: if is_timed_against: runsOf(timing_against) else: @[],
+      ns_runs_library: if is_timed_library: runsMedian(timing_library) else: @[],
+      ns_runs_against: if is_timed_against: runsMedian(timing_against) else: @[],
     )
   result.sort(proc (left, right: Row): int = cmp(left.id, right.id))
 
@@ -226,27 +226,27 @@ func rowsOf(sheet: Sheet, ids: JsonNode): seq[Row] =
 
 #[ Ratios ]#
 
-func metricOf(figures: Option[Figures], is_bytes: bool): Option[int] =
+func metric(figures: Option[Figures], is_bytes: bool): Option[int] =
   ## Read bytes or multiplies of figures; none where figures are absent.
   if figures.isNone: none(int)
   elif is_bytes: some(figures.get.bytes)
   else: some(figures.get.multiplies)
 
 
-func metricOf(bound: Option[FiguresBound], is_bytes: bool): Option[int] =
+func metric(bound: Option[FiguresBound], is_bytes: bool): Option[int] =
   ## Read bytes or multiplies of bound; none where no rule derived.
   if bound.isNone: none(int)
   elif is_bytes: some(bound.get.bytes)
   else: some(bound.get.multiplies)
 
 
-func targetOf(row: Row, is_bytes: bool): (Option[int], string) =
+func target(row: Row, is_bytes: bool): (Option[int], string) =
   ## Read what row's count is measured against, with its name.
   ##   Reference on typed row that carries one, multivector lower bound else.
   if not row.is_general and row.reference.isSome:
-    (metricOf(row.reference, is_bytes), "reference")
+    (metric(row.reference, is_bytes), "reference")
   else:
-    (metricOf(row.bound, is_bytes), "multivector lower bound")
+    (metric(row.bound, is_bytes), "multivector lower bound")
 
 
 func ratioCount(row: Row, is_bytes: bool): float =
@@ -254,8 +254,8 @@ func ratioCount(row: Row, is_bytes: bool): float =
   ##   One where both are zero.
   ##   Zero where either is absent or only lower bound is zero, so no ratio reads.
   let
-    library = metricOf(row.library, is_bytes)
-    target = targetOf(row, is_bytes)[0]
+    library = metric(row.library, is_bytes)
+    target = target(row, is_bytes)[0]
   if library.isNone or target.isNone: 0.0
   elif target.get > 0: library.get / target.get
   elif library.get == 0: 1.0
@@ -280,7 +280,7 @@ func ratioTime(row: Row): float =
   if ratios.len > 0: median(ratios) else: row.ns_library / row.ns_against
 
 
-func positionOf(axis: Axis, ratio: float): float =
+func position(axis: Axis, ratio: float): float =
   ## Read where ratio sits on axis, in percent of its width, clamped to axis.
   let span = float(axis.exponent_high - axis.exponent_low)
   clamp(100.0 * (log2(ratio) - float(axis.exponent_low)) / span, 0.0, 100.0)
@@ -289,7 +289,7 @@ func positionOf(axis: Axis, ratio: float): float =
 
 #[ Facts ]#
 
-func tallyOf(rows: openArray[Row], is_typed: bool): Tally =
+func tally(rows: openArray[Row], is_typed: bool): Tally =
   ## Count rows at bound and sum their spending; typed population counts rows with all three.
   for row in rows:
     if not is_typed and not row.is_general: continue
@@ -313,7 +313,7 @@ func tallyOf(rows: openArray[Row], is_typed: bool): Tally =
 func countAtBound*(sheet: Sheet, ids: JsonNode): tuple[at_multiplies, bounded: int] =
   ## Count operations of algebra at multivector lower bound on multiplies, over those bounded;
   ##   home quotes it for docket. `ids` is docket file whole.
-  let tally = tallyOf(rowsOf(sheet, ids), false)
+  let tally = tally(rowsDocket(sheet, ids), false)
   (tally.at_multiplies, tally.bounded)
 
 
@@ -338,8 +338,8 @@ func htmlFacts(sheet: Sheet, rows: openArray[Row]): string =
         "<span class=\"v\">" & grouped(amount) & "</span></div>"
 
   let
-    general = tallyOf(rows, false)
-    typed = tallyOf(rows, true)
+    general = tally(rows, false)
+    typed = tally(rows, true)
     ratios_general = rows.filterIt(it.is_general).mapIt(it.ratioTime).filterIt(it > 0).sorted
     ratios_typed = rows.filterIt(not it.is_general).mapIt(it.ratioTime).filterIt(it > 0).sorted
     fill = shareFill(sheet)
@@ -390,9 +390,9 @@ func htmlRow(row: Row, axis: Axis, order: array[SORTS.len, int]): string =
     ##   Tick sits at multivector lower bound where typed row is measured against reference.
     let
       unit = if is_bytes: " bytes" else: " multiplies"
-      library = metricOf(row.library, is_bytes)
-      (target, name_target) = targetOf(row, is_bytes)
-      bound = metricOf(row.bound, is_bytes)
+      library = metric(row.library, is_bytes)
+      (target, name_target) = target(row, is_bytes)
+      bound = metric(row.bound, is_bytes)
     result.name_measure = if is_bytes: "bytes" else: "multiplies"
     if library.isNone:
       result.label = "none"
@@ -441,19 +441,19 @@ func htmlRow(row: Row, axis: Axis, order: array[SORTS.len, int]): string =
     ## Render one deviation bar on shared axis.
     ##   Bar runs from ×1, tick sits at multivector lower bound, and one tick marks each run.
     ##   Bare label where no ratio reads.
-    let origin = axis.positionOf(1.0)
+    let origin = axis.position(1.0)
     var marks: string
     if deviation.is_over_zero:
       marks.add "<i class=\"open\" style=\"left:" & origin.fixed & "%;width:" &
           (100.0 - origin).fixed & "%\"></i>"
     elif deviation.ratio > 0:
-      let at = axis.positionOf(deviation.ratio)
+      let at = axis.position(deviation.ratio)
       marks.add "<i" & (if deviation.ratio < 1.0: " class=\"below\"" else: "") & " style=\"left:" &
           min(origin, at).fixed & "%;width:" & abs(at - origin).fixed & "%\"></i>"
     if deviation.tick > 0:
-      marks.add "<b style=\"left:" & axis.positionOf(deviation.tick).fixed & "%\"></b>"
+      marks.add "<b style=\"left:" & axis.position(deviation.tick).fixed & "%\"></b>"
     for run in deviation.runs:
-      marks.add "<s style=\"left:" & axis.positionOf(run).fixed & "%\"></s>"
+      marks.add "<s style=\"left:" & axis.position(run).fixed & "%\"></s>"
     let
       is_bare = deviation.ratio == 0 and not deviation.is_over_zero
       name = if deviation.name_measure == "bytes": "bytes moved" else: deviation.name_measure
@@ -510,8 +510,8 @@ func htmlRow(row: Row, axis: Axis, order: array[SORTS.len, int]): string =
   if not row.is_general: classes.add "typed"
   for (is_bytes, name_class) in [(false, "over-multiplies"), (true, "over-bytes")]:
     let
-      library = metricOf(row.library, is_bytes)
-      target = targetOf(row, is_bytes)[0]
+      library = metric(row.library, is_bytes)
+      target = target(row, is_bytes)[0]
     if library.isNone or target.isNone: is_at_bound = false
     elif library.get > target.get:
       is_at_bound = false
@@ -549,7 +549,7 @@ func htmlProposals(sheets: openArray[Sheet], overlays: openArray[Overlay]): stri
   ##   Bar spans operations bounded now: at bound both ways, then brought to it, then taken off
   ##     it, so change stands out of grey; exact counts beside, as `37 → 39 of 39`.
 
-  func paritiesOf(sheet: Sheet, overlay: JsonNode): array[2, Parity] =
+  func parities(sheet: Sheet, overlay: JsonNode): array[2, Parity] =
     ## Count general operations at bound on multiplies, then on bytes, now and with overlay's
     ##   functions in place.
     let functions = sheet.measurements_static{"functions"}
@@ -620,7 +620,7 @@ func htmlProposals(sheets: openArray[Sheet], overlays: openArray[Overlay]): stri
     var lines: string
     for sheet in sheets:
       if sheet.name notin overlay.functions: continue
-      let parities = paritiesOf(sheet, overlay.functions[sheet.name])
+      let parities = parities(sheet, overlay.functions[sheet.name])
       lines.add "<div class=\"line\"><span>" & sheet.title & "</span>" &
           htmlCount(parities[0], "multiplies", sheet.title) &
           htmlCount(parities[1], "bytes moved", sheet.title) & "</div>"
@@ -714,7 +714,7 @@ func bodyDocket*(
   ## Render docket body: header, one tab per algebra, controls, proposals against bound, method.
   ##   `script` is search box's JavaScript, compiled from `find.nim`; empty leaves page without.
 
-  func keysOf(row: Row): array[SORTS.len, float] =
+  func sortKeys(row: Row): array[SORTS.len, float] =
     ## Read row's key under every sort, in order of `SORTS`.
     ##   Below zero where row has none, so such row sorts last.
 
@@ -724,8 +724,8 @@ func bodyDocket*(
       if value.isNone or base.isNone: -1.0 else: float(value.get + 1) / float(base.get + 1)
 
     let runs = row.ratiosRuns
-    [above(metricOf(row.library, true), targetOf(row, true)[0]),
-      above(metricOf(row.library, false), targetOf(row, false)[0]),
+    [above(metric(row.library, true), target(row, true)[0]),
+      above(metric(row.library, false), target(row, false)[0]),
       (if row.ratioTime > 0: row.ratioTime else: -1.0),
       (if runs.len > 1: max(runs) / min(runs) else: -1.0),
       (if row.library.isSome: float(row.library.get.divides) else: -1.0),
@@ -739,7 +739,7 @@ func bodyDocket*(
       if left[0] == right[0]: cmp(left[1], right[1]) else: cmp(right[0], left[0]))
     for rank, (_, id) in keyed: result[id] = rank
 
-  func axisOf(every: openArray[seq[Row]]): Axis =
+  func fitAxis(every: openArray[seq[Row]]): Axis =
     ## Fit axis to every ratio on page: ×1 inside, whole powers of two, ×1/8 to ×1024 at most.
     var low, high = 0.0
     for rows in every:
@@ -751,7 +751,7 @@ func bodyDocket*(
           high = max(high, log2(ratio))
     Axis(exponent_low: clamp(int(floor(low)), -3, -1), exponent_high: clamp(int(ceil(high)), 1, 10))
 
-  func controlsOf(sheets: openArray[Sheet], every: openArray[seq[Row]]): (string, string) =
+  func renderControls(sheets: openArray[Sheet], every: openArray[seq[Row]]): (string, string) =
     ## Render legend and four dropdowns, with `:has()` rules that read them.
     ##   Dropdowns are sort, show, operation and operand.
     ##   Option of last two carries class of each algebra it matches, so rule hides it on others.
@@ -831,7 +831,7 @@ func bodyDocket*(
           of -2: "×¼"
           else: (if exponent < 0: "×1/" & $(1 shl -exponent) else: "×" & $(1 shl exponent))
         result.add "<i" & (if exponent mod 4 != 0: " class=\"minor\"" else: "") & " style=\"left:" &
-            axis.positionOf(pow(2.0, float(exponent))).fixed & "%\">" & label & "</i>"
+            axis.position(pow(2.0, float(exponent))).fixed & "%\">" & label & "</i>"
       result.add "</span>"
 
     "<div class=\"head\" aria-hidden=\"true\"><span>Operation</span>" &
@@ -841,9 +841,9 @@ func bodyDocket*(
         scale(axis, "") & "</span></div>"
 
   var every: seq[seq[Row]]
-  for sheet in sheets: every.add rowsOf(sheet, ids)
+  for sheet in sheets: every.add rowsDocket(sheet, ids)
   let
-    axis = axisOf(every)
+    axis = fitAxis(every)
     taken = sheets[0].measurements_runtime{"taken"}
     count_runs = taken{"runs"}.getInt(1)
 
@@ -861,7 +861,7 @@ func bodyDocket*(
     text_dates.add date
     if dates.len > 1: text_dates.add " for " & titles.join(" and ")
 
-  result = "<div class=\"page\" style=\"--origin:" & axis.positionOf(1.0).fixed & "%;--octaves:" &
+  result = "<div class=\"page\" style=\"--origin:" & axis.position(1.0).fixed & "%;--octaves:" &
       $(axis.exponent_high - axis.exponent_low) & "\"><header><h1>Performance</h1>" &
       "<p class=\"meta\">pga " & code(pin[0..<7]) & " · time " & escapeHtml(text_dates) &
       measuredAt(taken) & ", " & escapeHtml(taken{"machine"}.getStr) &
@@ -873,7 +873,7 @@ func bodyDocket*(
     result.add "<label><input type=\"radio\" name=\"algebra\" id=\"algebra-" & sheet.name & "\"" &
         (if index == 0: " checked" else: "") & "> " & sheet.title & "</label>"
   result.add "</nav>"
-  let (controls, rules_controls) = controlsOf(sheets, every)
+  let (controls, rules_controls) = renderControls(sheets, every)
   var rules = "<style>"
   for sheet in sheets:
     rules.add "body:has(#algebra-" & sheet.name & ":checked) .algebra:not(.algebra-" & sheet.name &
@@ -886,7 +886,7 @@ func bodyDocket*(
   for index, sheet in sheets:
     let
       rows = every[index]
-      keys = rows.mapIt(keysOf(it))
+      keys = rows.mapIt(sortKeys(it))
     var order: array[SORTS.len, Table[string, int]]
     for index_sort in 0..<SORTS.len: order[index_sort] = ranks(rows, keys.mapIt(it[index_sort]))
     result.add "<section class=\"algebra algebra-" & sheet.name & "\"><div class=\"rows\">"

@@ -20,7 +20,7 @@
 import { chromium, type Browser } from '@playwright/test';
 import { basename } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { faceDrawing, facesOf, familiesOf } from './faces';
+import { faceDrawing, toFaces, parseFamilies } from './faces';
 import { writeFound, type Found } from './found';
 import { readWritten } from './text';
 
@@ -48,10 +48,10 @@ async function pageFound(browser: Browser, path: string): Promise<Found> {
   };
 
   // Resolve every character beyond ASCII down stack of element drawing it.
-  const faces = facesOf(written.declared);
+  const faces = toFaces(written.declared);
   const counted = new Set<number>();
   for (const run of written.runs) {
-    const families = familiesOf(run.stack);
+    const families = parseFamilies(run.stack);
     for (const codepoint of run.codepoints) {
       counted.add(codepoint);
       if (faceDrawing(faces, families, run.weight, codepoint) !== undefined) continue;
