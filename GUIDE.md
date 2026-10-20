@@ -74,8 +74,9 @@ no glossary lists. It passes what the glossaries list under `## Standards`, thei
 jargon of V.6. A binding of a library's own name is skipped, because the name is not ours.
 
 The same check holds the first word of a routine (V.3) and the form of a lookup table (V.5). It
-also holds a global that shares its word with a type (V.10). The rest of Article V holds because
-you read it.
+also holds a global that shares its word with a type (V.10). It holds the last word `Of` of a
+routine (V.3) and of a type (V.13). It holds a collection type whose name is its member and a word
+for its form (V.6). The rest of Article V holds because you read it.
 
 ## The queue and the shared allowance
 
