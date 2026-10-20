@@ -56,7 +56,7 @@ const
 
 #[ Reading ]#
 
-func attributeOf(tag, name: string): string =
+func attribute(tag, name: string): string =
   ## Read value of attribute in tag; empty where absent.
   let at = tag.find(" " & name & "=\"")
   if at < 0: return ""
@@ -66,7 +66,7 @@ func attributeOf(tag, name: string): string =
   if last < 0: "" else: tag[first..<last]
 
 
-func textOf(html: string): string =
+func stripTags(html: string): string =
   ## Drop tags of fragment and collapse its whitespace.
   var
     text = ""
@@ -78,7 +78,7 @@ func textOf(html: string): string =
   text.splitWhitespace.join(" ")
 
 
-func boxesOf*(svg: string): seq[Box] =
+func boxes*(svg: string): seq[Box] =
   ## Read every box of map that names what it stands for, in order of file.
   ##   Block of box is one whose frame spans top of its rectangle.
   var
@@ -88,8 +88,8 @@ func boxesOf*(svg: string): seq[Box] =
     let
       close = svg.find('>', at)
       tag = svg[at..close]
-      top = parseFloat(attributeOf(tag, "y"))
-      bottom = top + parseFloat(attributeOf(tag, "height"))
+      top = parseFloat(attribute(tag, "y"))
+      bottom = top + parseFloat(attribute(tag, "height"))
       name_at = svg.find("class=\"blockname\"", close)
       name_first = svg.find('>', name_at) + 1
     sections.add (top, bottom, svg[name_first..<svg.find('<', name_first)])
@@ -103,13 +103,13 @@ func boxesOf*(svg: string): seq[Box] =
       inner = svg[close+1..<ending]
       rect_at = inner.find("<rect ")
       rect = inner[rect_at..inner.find('>', rect_at)]
-      top = parseFloat(attributeOf(rect, "y"))
+      top = parseFloat(attribute(rect, "y"))
     var box = Box(
-      ids: attributeOf(tag, ATTRIBUTES[0]).splitWhitespace,
-      table: attributeOf(tag, ATTRIBUTES[1]),
-      title: inner.split("</text>").mapIt(textOf(it)).filterIt(it.len > 0).join(", "),
+      ids: attribute(tag, ATTRIBUTES[0]).splitWhitespace,
+      table: attribute(tag, ATTRIBUTES[1]),
+      title: inner.split("</text>").mapIt(stripTags(it)).filterIt(it.len > 0).join(", "),
       is_faded: svg[0..<at].strip(leading = false).endsWith(MARK_FADED),
-      is_input: attributeOf(rect, "class") == "input",
+      is_input: attribute(rect, "class") == "input",
     )
     for (first, last, name) in sections:
       if top >= first and top <= last: box.section = name
@@ -117,7 +117,7 @@ func boxesOf*(svg: string): seq[Box] =
     at = svg.find("<g data-", ending)
 
 
-func libraryOf*(files: Table[string, string], catalogues: openArray[JsonNode]): Library =
+func toLibrary*(files: Table[string, string], catalogues: openArray[JsonNode]): Library =
   ## Read what library at pin builds, from its source and catalogue of each algebra.
 
   func literalAt(text: string, at: int): string =
@@ -170,7 +170,7 @@ func spelling*(operation: Operation): string =
   if operation.symbol.len > 0: operation.symbol else: operation.alias
 
 
-func stateOf*(box: Box, library: Library): StateBox =
+func state*(box: Box, library: Library): StateBox =
   ## Read state of box: weakest over operations it stands for, or of its table alone.
   ##   Operation catalogue holds by neither symbol nor alias is no operation of library.
   if box.table.len > 0:
@@ -202,7 +202,7 @@ func checkMap*(boxes: openArray[Box], library: Library, path: string): seq[Findi
       let symbol = library.operations.getOrDefault(id).symbol
       if symbol.len > 0: symbols.add symbol
     if box.is_input: continue
-    let state = box.stateOf(library)
+    let state = box.state(library)
     if box.is_faded != (state != StateBox.Tabled):
       result.add Finding(
         path: path,
@@ -238,8 +238,8 @@ func svgStated*(svg: string, library: Library): string =
       break
     let
       close = svg.find('>', next)
-      boxes = boxesOf(svg[next .. svg.find("</g>", close) + "</g>".len - 1])
-      state = if boxes.len > 0: $boxes[0].stateOf(library) else: ""
+      boxes = boxes(svg[next .. svg.find("</g>", close) + "</g>".len - 1])
+      state = if boxes.len > 0: $boxes[0].state(library) else: ""
     result.add svg[at..<close] & " data-state=\"" & state & "\">"
     at = close + 1
 
@@ -259,8 +259,8 @@ func bodyCompletion*(svg: string, library: Library, pin, url_derivation: string)
     derivation =
       if url_derivation.len > 0: "<a href=\"" & escapeHtml(url_derivation) & "\">P01</a>"
       else: "P01"
-    boxes = boxesOf(svg).filterIt(not it.is_input)
-    states = boxes.mapIt(it.stateOf(library))
+    boxes = boxes(svg).filterIt(not it.is_input)
+    states = boxes.mapIt(it.state(library))
     count_tabled = states.countIt(it == StateBox.Tabled)
     count_composed = states.countIt(it == StateBox.Composed)
     count_missing = states.countIt(it == StateBox.Missing)

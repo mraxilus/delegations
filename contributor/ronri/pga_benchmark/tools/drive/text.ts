@@ -69,7 +69,7 @@ export async function readWritten(page: Page): Promise<Written> {
       return parts.join(' > ');
     };
     // Join strings of computed `content` or `list-style-type`, with CSS escapes resolved.
-    const stringsOf = (value: string): string => {
+    const joinStrings = (value: string): string => {
       let text = '';
       for (const quoted of value.matchAll(/"((?:[^"\\]|\\.)*)"/g)) {
         text += (quoted[1] ?? '').replace(
@@ -133,9 +133,9 @@ export async function readWritten(page: Page): Promise<Written> {
         add(element, '', element.value);
       }
       for (const pseudo of ['::before', '::after', '::marker']) {
-        add(element, pseudo, stringsOf(getComputedStyle(element, pseudo).content));
+        add(element, pseudo, joinStrings(getComputedStyle(element, pseudo).content));
       }
-      add(element, '::marker', stringsOf(getComputedStyle(element).listStyleType));
+      add(element, '::marker', joinStrings(getComputedStyle(element).listStyleType));
     }
 
     // Read every face rule of every sheet, as CSSOM serialises its descriptors.

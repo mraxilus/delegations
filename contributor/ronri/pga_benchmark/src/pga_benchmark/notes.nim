@@ -110,4 +110,4 @@ func checkAnchors*(notes: Notes, files: Table[string, string], source: string): 
 
 func lineAt*(note: Note, files: Table[string, string]): int =
   ## Read line note's quote opens on at pin; zero where file or quote is absent.
-  if note.path notin files: 0 else: files[note.path].lineOf(note.quote)
+  if note.path notin files: 0 else: files[note.path].lineQuoted(note.quote)

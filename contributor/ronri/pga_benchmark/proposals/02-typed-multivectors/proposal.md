@@ -36,7 +36,7 @@ uses. An importer writes `p ∧ q` and reads `Kvector2`, never a generic.
 
 ### Mechanics the prototype settled
 
-- A compile-time slot function cannot serve a runtime body. So `slotOf` is a plain function,
+- A compile-time index function cannot serve a runtime body. So `index` is a plain function,
   and `static(...)` forces it where the basis is static.
 - `quote do` cannot embed a set value, so the macro builds the literal first.
 - The typeclass needs an explicit type section.

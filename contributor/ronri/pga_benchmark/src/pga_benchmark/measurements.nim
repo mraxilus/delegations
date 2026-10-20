@@ -72,7 +72,7 @@ func isAllocationMeasured*(): bool =
   defined(nimAllocStats)
 
 
-func allocationsOf*(stats: AllocStats): int =
+func countAllocations*(stats: AllocStats): int =
   ## Read allocation count out of counter difference.
   ##   `AllocStats` exports its fields to nobody and only `-` and default `$`, so count is
   ##   read back from its rendering, `(allocCount: N, deallocCount: M)`; tool it, after
@@ -155,8 +155,8 @@ macro defineMeasurand(
     of Implementation.Reference: measurand.reference
     of Implementation.Dense:
       if not HAS_FORMS_DENSE or measurand.reference.len > 0: ""
-      elif measurand.arity == 2: measurand.nameDenseOf & "(m, n)"
-      else: measurand.nameDenseOf & "(m)"
+      elif measurand.arity == 2: measurand.nameDense & "(m, n)"
+      else: measurand.nameDense & "(m)"
   if expression.len == 0:
     let implementation_literal = newCall(ident"Implementation", newLit(ord(implementation)))
     return quote do:
@@ -206,7 +206,7 @@ macro defineMeasurand(
         is_measured: true,
         ns_median: median,
         ns_min: minimum,
-        allocations: allocationsOf(statistics_after - statistics_before),
+        allocations: countAllocations(statistics_after - statistics_before),
         share_nan: float(count_nan) / float(OBJECTS),
       )
 

@@ -691,8 +691,8 @@ file beside each program. It would reach programs alone, and the digest would no
 proposals whose changes it needs, and an empty list says that it needs none. Rejected: one base
 for each proposal. A proposal that needs two others could then not say so.
 
-`dependenciesOf` walks the graph depth first. It gives what an adoption needs first, each one
-after its own bases and once only. `dependentsOf` gives what a rejection blocks. A cycle, an
+`dependencies` walks the graph depth first. It gives what an adoption needs first, each one
+after its own bases and once only. `dependents` gives what a rejection blocks. A cycle, an
 unknown name, a withdrawn base or a `builds_on` that is not a list is a finding. A base that the
 library implements drops out, since the library holds its edits.
 
@@ -713,7 +713,7 @@ to its checkbox, so the page runs no script. The cost is weight: the page carrie
 MiB against 4.3 MiB without them, by `ls -l build` on 2026-10-04.
 
 **An evaluation measures a copy of the library at pin.** It copies the checkout, applies the edits
-(what the proposal depends on first, in the order of `dependenciesOf`), and measures the copy
+(what the proposal depends on first, in the order of `dependencies`), and measures the copy
 against the pin. It runs the suites of the
 library, reads the static measurements of every function, and times each measurand. The
 binaries of the pin and of the copy run alternately, five times each, so drift of the machine

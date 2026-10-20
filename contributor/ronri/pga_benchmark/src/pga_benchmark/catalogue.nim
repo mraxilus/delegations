@@ -764,14 +764,14 @@ const CHAINS* = [
   ##   sum over steps, and record marks it as estimate rather than proved minimum.
 
 
-func chainOf*(p: Measurand): seq[Shape] =
+func chain*(p: Measurand): seq[Shape] =
   ## Read steps measurand composes, empty where library spells it with one operator.
   for (expression, parts) in CHAINS:
     if p.expression == expression: return parts
   @[]
 
 
-func shapeOf*(p: Measurand): Shape =
+func shape*(p: Measurand): Shape =
   ## Read arithmetic shape of measurand, from its symbol, arity and operand kinds.
   ##   Unary `∙` and `∘` read bulk and weight parts, which are permutations; binary ones
   ##   are bilinear forms landing in one coefficient.
@@ -787,19 +787,19 @@ func shapeOf*(p: Measurand): Shape =
   Shape.Unknown
 
 
-func boundOf*(p: Measurand, m: Metric): BoundLower =
+func boundLower*(p: Measurand, m: Metric): BoundLower =
   ## Derive multivector lower bound of measurand, by chain where library composes it.
-  let parts = p.chainOf
+  let parts = p.chain
   if parts.len > 0: return boundLowerOfChain(parts, m, p.arity)
-  boundLowerOf(p.shapeOf, m, p.arity)
+  boundLower(p.shape, m, p.arity)
 
 
-func nameShapeOf*(p: Measurand): string =
+func nameShape*(p: Measurand): string =
   ## Name shape of measurand: one shape, or steps of chain joined by plus.
   ##   Repeated step carries its count rather than its name twice, since whole chain of
-  ##   partner outruns width record allows. `stepsOf` carries chain itself.
-  let parts = p.chainOf
-  if parts.len == 0: return $p.shapeOf
+  ##   partner outruns width record allows. `stepsNamed` carries chain itself.
+  let parts = p.chain
+  if parts.len == 0: return $p.shape
   var
     steps: seq[string]
     counts: seq[int]
@@ -815,15 +815,15 @@ func nameShapeOf*(p: Measurand): string =
     result.add (if counts[i] > 1: $counts[i] & " " else: "") & step
 
 
-func nameDenseOf*(p: Measurand): string =
+func nameDense*(p: Measurand): string =
   ## Name dense form of general measurand, as `denseWedgeAnti` for `wedge_anti`.
   result = "dense"
   for word in p.id.split('_'): result.add word.capitalizeAscii
 
 
-func stepsOf*(p: Measurand): seq[string] =
+func stepsNamed*(p: Measurand): seq[string] =
   ## Name every step of measurand's chain in order, empty where it carries none.
-  for part in p.chainOf: result.add $part
+  for part in p.chain: result.add $part
 
 
 const INLINED* = ["[]"]
@@ -847,18 +847,18 @@ func headEmitted*(p: Measurand): string =
   ""
 
 
-func symbolsOf*(measurands: openArray[Measurand]): seq[string] =
+func symbols*(measurands: openArray[Measurand]): seq[string] =
   ## Read distinct symbols measurands spell, in first-seen order; tool and test side.
   for p in measurands:
     if p.symbol.len > 0 and p.symbol notin result: result.add p.symbol
 
 
-func aliasesOf*(measurands: openArray[Measurand]): seq[string] =
+func aliases*(measurands: openArray[Measurand]): seq[string] =
   ## Read distinct aliases measurands name, in first-seen order; tool and test side.
   for p in measurands:
     if p.alias.len > 0 and p.alias notin result: result.add p.alias
 
 
-func idsOf*(measurands: openArray[Measurand]): seq[string] =
+func ids*(measurands: openArray[Measurand]): seq[string] =
   ## Read ids of measurands in order; tool and test side.
   for p in measurands: result.add p.id
