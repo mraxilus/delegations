@@ -248,7 +248,9 @@ The library gives the pair no root, division or exponential. So the library's su
 
 `∩` is `m ∨ (𝐞ₙ ∧ ☆ m)`: a dual, a wedge with a constant basis element, and an antiwedge.
 The wedge with one basis element is a signed selection, not a full product. Proposal P01,
-`cayley-derivation`, generates `∩` and `∪` as one table each, through map operators.
+`cayley-derivation`, generates `∩` and `∪` as one table each, through map operators. Until
+then, change `locals-noinit` writes each step into a local that the compiler does not fill with
+zeros.
 
 ## Unitization keeps the sign of the weight
 

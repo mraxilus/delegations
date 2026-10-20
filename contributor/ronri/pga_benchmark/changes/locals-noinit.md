@@ -16,7 +16,9 @@ operator gains nothing, because the C compiler removes those fills already. The 
 its lines, since `partner-guard` quotes them.
 
 Proposal P08, `compound-tables`, gives each of the five operators one table, with no step and no
-temporary. So this change is void once P08 lands.
+temporary. So this change is void once P08 lands. P08 also gains more. At `rga4d`, the support
+takes 0.53 of its time with this change, and 0.15 with P08. At `cga5d`, the center takes 0.74
+and 0.30. This change costs five local edits, and P08 costs five tables that each build derives.
 
 ## Edit `pga/operators.nim`
 
