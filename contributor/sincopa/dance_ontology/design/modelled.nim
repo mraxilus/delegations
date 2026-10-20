@@ -4,7 +4,7 @@
 ##     on floor.  `modelled` is this one: whether simulation reaches what card draws.  Goal is
 ##     both at hundred per cent, and gap between them is work left.
 ##   Written here rather than on page because asking simulation costs minutes and page is
-##     markup.  Same arrangement `design/turns` uses, and same reason.
+##     markup.
 ##   Badge must not touch fixtures.  `review_page.drawingOf` cuts cards back out of built
 ##     page by collecting their `svg` elements alone, so badge outside drawing changes no
 ##     fixture, and no kept card is re-drawn by adding this.

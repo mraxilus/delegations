@@ -1,8 +1,7 @@
 ## Record sweeps for viewer page, as `design/rig.json`.
 ##
 ##   Run at build time, natively: engine is C, page is script in browser, so every
-##     figure page draws is found here and played there.  Same arrangement
-##     `design/turns` uses.
+##     figure page draws is found here and played there.
 ##   Written beside source rather than under `build/`, and recorded by verb of its own, as
 ##     `design/modelled.json` is: recording costs eight stance searches, and every
 ##     `pages` run would pay for it.  `rig_page` folds it into page, which is

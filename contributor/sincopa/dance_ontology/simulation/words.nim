@@ -3,7 +3,7 @@
 ##   Simulation names what it measures for body: torso band, fore aspect, elbow
 ##     forward.  Dance names same readings low, wrap and elbow forward.  This
 ##     module is only place where one becomes other.
-##   Report (`verdicts`) and recording of every hold turning (`turns`) both read this one table.
+##   Report (`verdicts`) and laws (`test_asks`, `test_words`) read this one table.
 ##     Rejected: copy in each, which can drift until one pose carries two answers.
 ##     Cost: module sits under `simulation`, which otherwise puts no word of dance on anything it
 ##       measures.  Accepted: translation stays visible, in one file that names itself.
@@ -34,7 +34,7 @@ import ./[body, hold, read, rig, walk]
 
 
 const BANDS* = [("low", Band.Torso), ("high", Band.Neck), ("above", Band.Crown)]
-  ## Name each band, in order report and `design/turns` tabulate them.
+  ## Name each band, in order report tabulates them.
 
 const SIDES = ["Face", "Starboard", "Back", "Port"]
   ## Name side each dancer turns to other, by quarters clockwise from own front

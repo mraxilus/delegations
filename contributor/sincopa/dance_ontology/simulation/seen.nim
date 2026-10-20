@@ -1,8 +1,8 @@
 ## One sweep recorded in full, as engine holds it, for page to draw.
 ##
 ##   Page cannot run engine -- engine is C and page is script in browser -- so what
-##     page draws is recorded here, natively, at build time.  Same arrangement
-##     `design/turns` uses, and reason nothing on page guesses at physics.
+##     page draws is recorded here, natively, at build time, and nothing on page guesses
+##     at physics.
 ##   Every figure comes off engine.  Capsules are ones `rigid` handed it, asked
 ##     for their world ends rather than worked out again from stance; joints are
 ##     read where laws read them.  Drawing that works anything out for itself can
