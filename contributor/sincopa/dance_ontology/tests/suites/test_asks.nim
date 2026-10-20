@@ -48,7 +48,7 @@ const
     ##   Keyed by card as rig names its sweep, in order of `design/rig.SHOWN`, so `floors` prints
     ##     table row for row.
     ##   Measured by `nim r tools/build.nim floors`, which prints each row with style and start
-    ##     of its path, 2026-10-12, on physics of `6ef96eaf`:
+    ##     of its path, 2026-10-12, on physics of `6ef96eaf`, and same again 2026-10-20:
     ##     One hand, same name: style 0 to +2.5.  One hand, cross name: style 2 to +2.5.
     ##     Chain, cross name: style 13, from 0.957 m, to 1.5275.
     ##     Chain, same name: style 4, from 0.417 m.
