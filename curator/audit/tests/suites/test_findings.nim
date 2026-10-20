@@ -101,7 +101,7 @@ suite "Findings":
       late = "import std/os\n" & STRICT_FUNCS & "\n"
       stub = "discard \"\"\"\naction: run\ncmd: \"nim c -r $file\"\njoinable: false\n\"\"\"\n"
       found =
-          heldOf("a.nims", fenced, Dialect.Script) & faultOf("a.nim", crossing.fenceOf) &
+          checkFenceHeld("a.nims", fenced, Dialect.Script) & checkFence("a.nim", crossing.fence) &
           checkStrictFuncs("a.nim", @["import std/os"], @["import std/os"]) &
           checkStrictFuncs("a.nim", late.splitLines, late.codeOnly.splitLines) &
           checkImports("a.nim", @["import std/[strutils, os]", "import ./a", "import std/math"]) &

@@ -5,7 +5,7 @@
 ##     i.e. routine whose pragmas hold word of `MARKS_FOREIGN`, as `importc` or `exportc`,
 ##     declares name foreign code reads by its spelling, so it is skipped; its parameters are ours
 ##     and are read.
-##   Reach of binding is decided in `reachOf` alone. Global where every enclosing block opens no
+##   Reach of binding is decided in `reach` alone. Global where every enclosing block opens no
 ##     scope (`when` chain, bare `let`, `var`, `const` or `type`); local under routine or any
 ##     other block; entry inside top-level `when isMainModule:` and outside routine.
 ##   Name template substitutes, i.e. its parameter, declares nothing of that name in its body.
@@ -89,7 +89,7 @@ type
       ## Body compile time alone runs: macro, `static:`, or routine with pragma `compileTime`.
 
 
-func nameOf(piece: string): string =
+func nameDeclared(piece: string): string =
   ## Read declared name from `name`, `name*`, `name: T`, `name = v`, `name {.pragma.}`.
   piece.strip.identifierAt(0)
 
@@ -191,7 +191,7 @@ func pairsBinding(text: string): seq[(string, string)] =
       let parts = value[1 ..< value.high].splitTop({','})
       if parts.len == pieces.len: values = parts.mapIt(it.strip)
   for k, piece in pieces:
-    let name = piece.strip(chars = {' ', '(', ')'}).nameOf
+    let name = piece.strip(chars = {' ', '(', ')'}).nameDeclared
     if name.len > 0 and name != "_": result.add (name, values[k])
 
 
@@ -207,7 +207,7 @@ func namesParameter(signature: string): seq[(string, bool, bool)] =
   let pieces = signature.splitTop({',', ';'})
   var group: seq[string]
   for k, piece in pieces:
-    let name = piece.nameOf
+    let name = piece.nameDeclared
     if name.len > 0 and name != "_" and name != "var": group.add name
     if ':' in piece or '=' in piece or k == pieces.high:
       let (is_boolean, is_generic) = (piece.isBooleanShown, piece.isGenericShown)
@@ -229,7 +229,7 @@ func namesPlaceholder(text: string): seq[string] =
     var words = piece.strip.splitWhitespace
     while words.len > 1 and words[0] in MODIFIERS_CONCEPT: words.delete(0)
     if words.len == 0: continue
-    let name = words.join(" ").nameOf
+    let name = words.join(" ").nameDeclared
     if name.len > 0: result.add name
 
 
@@ -250,7 +250,8 @@ func readType(text: string, line: int, names: var seq[Declared]): KindName =
     head = value.identifierAt(0)
   if head == "enum":
     for m in value[head.len .. ^1].splitTop({','}):
-      if m.nameOf.len > 0: names.add Declared(name: m.nameOf, line: line, kind: KindName.Member)
+      if m.nameDeclared.len > 0:
+        names.add Declared(name: m.nameDeclared, line: line, kind: KindName.Member)
     return KindName.Member
   if head == "concept":
     for p in value[head.len .. ^1].namesPlaceholder:
@@ -263,7 +264,7 @@ func continued(lines: openArray[string], i: int): string =
   ## Read lines below line `i` that continue its value as steps of chain, each opening `.`,
   ##   joined; empty where none.
   var k = i + 1
-  while k < lines.len and lines[k].indentOf > lines[i].indentOf and
+  while k < lines.len and lines[k].indentWidth > lines[i].indentWidth and
       lines[k].strip.startsWith('.'):
     result.add lines[k].strip
     inc k
@@ -273,7 +274,7 @@ func isOpening(lines: openArray[string], i: int): bool =
   ## Decide whether next non-blank line sits deeper than line `i`, i.e. line opens block.
   var k = i + 1
   while k < lines.len and lines[k].strip.len == 0: inc k
-  k < lines.len and lines[k].indentOf > lines[i].indentOf
+  k < lines.len and lines[k].indentWidth > lines[i].indentWidth
 
 
 func isSubstituted(openers: openArray[Opener], name: string): bool =
@@ -281,7 +282,7 @@ func isSubstituted(openers: openArray[Opener], name: string): bool =
   openers.anyIt(name in it.substituted)
 
 
-func reachOf(openers: openArray[Opener], is_scoped = false): Reach =
+func reach(openers: openArray[Opener], is_scoped = false): Reach =
   ## Decide reach of binding under enclosing blocks, outermost first (V.1, V.10).
   ##   Routine makes local, entry block makes entry, and so does binding opening own scope
   ##     there (`for`, `except … as`). Global needs every enclosing block to open no scope.
@@ -307,7 +308,7 @@ func declarations*(source: string): seq[Declared] =
     let
       line = lines[i]
       s = line.strip
-      indent = line.indentOf
+      indent = line.indentWidth
       one = i + 1
     if s.len == 0:
       inc i
@@ -424,8 +425,8 @@ func declarations*(source: string): seq[Declared] =
 
       if indent_enum >= 0 and indent > indent_enum:
         for m in s.splitTop({','}):
-          if m.nameOf.len > 0:
-            result.add Declared(name: m.nameOf, line: one, kind: KindName.Member)
+          if m.nameDeclared.len > 0:
+            result.add Declared(name: m.nameDeclared, line: one, kind: KindName.Member)
         break reading
 
       if indent_object >= 0 and indent > indent_object:
@@ -433,9 +434,9 @@ func declarations*(source: string): seq[Declared] =
         let text = if word == "case": rest else: s
         if word notin ["of", "else", "elif", "when"] and text.indexTop(':') > 0:
           for name in text[0 ..< text.indexTop(':')].splitTop({','}):
-            if name.nameOf.len > 0:
+            if name.nameDeclared.len > 0:
               result.add Declared(
-                name: name.nameOf,
+                name: name.nameDeclared,
                 line: one,
                 kind: KindName.Field,
                 is_boolean: text.isBooleanShown,
@@ -453,7 +454,7 @@ func declarations*(source: string): seq[Declared] =
               name: name,
               line: one,
               kind: KindName.Binding,
-              reach: openers.reachOf,
+              reach: openers.reach,
               is_mutable: word == "var",
               is_boolean: rest.isBooleanShown,
               value: value,
@@ -470,7 +471,7 @@ func declarations*(source: string): seq[Declared] =
               name: name,
               line: one,
               kind: KindName.Binding,
-              reach: openers.reachOf,
+              reach: openers.reach,
               is_mutable: is_section_mutable,
               is_boolean: s.isBooleanShown,
               value: value,
@@ -485,20 +486,20 @@ func declarations*(source: string): seq[Declared] =
               name: name,
               line: one,
               kind: KindName.Binding,
-              reach: openers.reachOf(is_scoped = true),
+              reach: openers.reach(is_scoped = true),
             )
         break reading
 
       if word == "except":
         let at = rest.find(" as ")
         if at >= 0:
-          let name = rest[at + 4 .. ^1].strip(chars = {' ', ':'}).nameOf
+          let name = rest[at + 4 .. ^1].strip(chars = {' ', ':'}).nameDeclared
           if name.len > 0:
             result.add Declared(
               name: name,
               line: one,
               kind: KindName.Binding,
-              reach: openers.reachOf(is_scoped = true),
+              reach: openers.reach(is_scoped = true),
             )
 
     if is_opening:

@@ -102,7 +102,7 @@ func commands(source: string): seq[Command] =
     if inner < first: continue
     let is_group = inner == first
     if not is_group:
-      let elements = elementsOf(tokens, partners, first, last, source)
+      let elements = elements(tokens, partners, first, last, source)
       if elements.len != 1 or elements[0].kind != KindElement.Operand: continue
       if not tokens.isCallOpen(partners, inner, source): continue
     result.add Command(

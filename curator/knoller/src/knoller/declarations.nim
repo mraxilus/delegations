@@ -126,20 +126,20 @@ func movesDoc(source: string): seq[MoveDoc] =
     var
       is_declared = word in KEYWORDS_SECTION
       parent = d
-    while not is_declared and code[parent].indentOf > 0:
-      let indent = code[parent].indentOf
+    while not is_declared and code[parent].indentWidth > 0:
+      let indent = code[parent].indentWidth
       dec parent
-      while parent >= 0 and (code[parent].strip.len == 0 or code[parent].indentOf >= indent):
+      while parent >= 0 and (code[parent].strip.len == 0 or code[parent].indentWidth >= indent):
         dec parent
       if parent < 0 or code[parent].wordFirst in KEYWORDS_ROUTINE: break
       is_declared = code[parent].wordFirst in KEYWORDS_SECTION
     if not is_declared: continue
 
     # Count doc lines below at deeper indent; read trailing comment on declaration's line.
-    let indent = lines[d].indentOf
+    let indent = lines[d].indentWidth
     var below = d + 1
     while below < lines.len and isDoc(code[below], kept[below]) and
-        lines[below].indentOf > indent:
+        lines[below].indentWidth > indent:
       inc below
     let
       docs = below - d - 1
@@ -151,7 +151,7 @@ func movesDoc(source: string): seq[MoveDoc] =
         joined = lines[d] & ' '.repeat(GAP_COMMENT) & doc
       if not joined.isWide:
         result.add MoveDoc(line: d, shape: Shape.Join, last: d + 1, lines: @[joined])
-      elif lines[d + 1].indentOf != indent + STEP_INDENT:
+      elif lines[d + 1].indentWidth != indent + STEP_INDENT:
         let shaped = @[lines[d], inner & doc]
         result.add MoveDoc(line: d, shape: Shape.Indent, last: d + 1, lines: shaped)
     elif marker >= 0 and docs == 0 and kept[d][marker .. ^1].startsWith("##") and
@@ -178,7 +178,7 @@ func checkDocs*(path, source: string): seq[Report] =
         "Doc widening its line past `" & $LINE_MAX & "` takes next line; got it on " &
           "declaration's line."
       of Shape.Indent: "Doc on next line stands one level in; got indent `" &
-        $source.split('\n')[move.line + 1].indentOf & "`."
+        $source.split('\n')[move.line + 1].indentWidth & "`."
     result.add initReport(path, move.line + 1, Rule.PositionDoc, message)
 
 
@@ -225,7 +225,7 @@ func defaults(source: string): seq[Default] =
     tokens = source.tokens
     partners = tokens.partners
   for o, t in tokens:
-    let keyword = tokens.signatureOf(partners, o, source)
+    let keyword = tokens.signature(partners, o, source)
     if keyword < 0 or partners[o] < o: continue
     if tokens[keyword].spelling(source) notin ROUTINES_DEFAULTED: continue
 

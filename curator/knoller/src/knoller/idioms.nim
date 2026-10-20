@@ -269,12 +269,12 @@ func runsBinding(code: seq[string]): seq[RunBinding] =
       a = code[i]
       b = code[i + 1]
     if a.isBindingSingle and b.isBindingSingle and a.wordFirst == b.wordFirst and
-        a.indentOf == b.indentOf:
+        a.indentWidth == b.indentWidth:
       var j = i + 1
       while j + 1 < code.len and code[j + 1].isBindingSingle and
-          code[j + 1].wordFirst == a.wordFirst and code[j + 1].indentOf == a.indentOf:
+          code[j + 1].wordFirst == a.wordFirst and code[j + 1].indentWidth == a.indentWidth:
         inc j
-      result.add RunBinding(first: i, last: j, keyword: a.wordFirst, indent: a.indentOf)
+      result.add RunBinding(first: i, last: j, keyword: a.wordFirst, indent: a.indentWidth)
       i = j + 1
     else: inc i
 
@@ -412,10 +412,10 @@ func checkPragmas(path: string; lines, code: seq[string]): seq[Report] =
 
 func isUnderCondition(code: seq[string], i: int): bool =
   ## Decide whether nearest line enclosing line `i` opens condition.
-  let indent = code[i].indentOf
+  let indent = code[i].indentWidth
   var k = i - 1
   while k >= 0:
-    if code[k].strip.len > 0 and code[k].indentOf < indent:
+    if code[k].strip.len > 0 and code[k].indentWidth < indent:
       return code[k].wordFirst in CONDITIONS
     dec k
 
@@ -479,14 +479,14 @@ func checkIdioms*(path, source: string; dialect: Dialect = Dialect.Module): seq[
     if is_module: result.add checkKeysStub(path, source)
 
 
-func placeOf(lines, code: seq[string]; i: int): PlaceReturn =
+func place(lines, code: seq[string]; i: int): PlaceReturn =
   ## Read where `return result` on line `i` stands, from line opening its block.
   ##   Opener is nearest code line above at smaller indent. `:` opens branch; `=` opens
   ##   routine body where routine keyword stands on that line, or on line opening signature
   ##   that its `)` closes. Any other opener is unread.
-  let indent = code[i].indentOf
+  let indent = code[i].indentWidth
   var opener = i - 1
-  while opener >= 0 and (code[opener].strip.len == 0 or code[opener].indentOf >= indent):
+  while opener >= 0 and (code[opener].strip.len == 0 or code[opener].indentWidth >= indent):
     dec opener
   if opener < 0: return PlaceReturn.Unread
   let head = code[opener].strip
@@ -496,7 +496,7 @@ func placeOf(lines, code: seq[string]; i: int): PlaceReturn =
   if head.startsWith(")"):
     signature = opener - 1
     while signature >= 0 and
-        (code[signature].strip.len == 0 or code[signature].indentOf > code[opener].indentOf):
+        (code[signature].strip.len == 0 or code[signature].indentWidth > code[opener].indentWidth):
       dec signature
   if signature < 0 or code[signature].wordFirst notin ROUTINES_RESULT:
     return PlaceReturn.Unread
@@ -504,7 +504,7 @@ func placeOf(lines, code: seq[string]; i: int): PlaceReturn =
   # Read what follows in body, and what ending line would leave behind.
   var after = i + 1
   while after < code.len and code[after].strip.len == 0: inc after
-  if after < code.len and code[after].indentOf >= indent: return PlaceReturn.Early
+  if after < code.len and code[after].indentWidth >= indent: return PlaceReturn.Early
   let
     has_statement = (opener + 1 ..< i).toSeq.anyIt(code[it].strip.len > 0)
     has_comment = lines[i].strip != RETURN_RESULT
@@ -521,7 +521,7 @@ func fixReturnResult(path, source: string): Fix =
     code = source.codeOnly.split('\n')
   var shaped: seq[string]
   for i, line in lines:
-    let place = if code[i].strip == RETURN_RESULT: placeOf(lines, code, i) else: PlaceReturn.Unread
+    let place = if code[i].strip == RETURN_RESULT: place(lines, code, i) else: PlaceReturn.Unread
     case place
     of PlaceReturn.Unread:
       shaped.add line
@@ -663,7 +663,7 @@ func consolidations(lines, code: seq[string]): seq[Consolidation] =
   result = result.filterIt(not it.statement.isWide)
 
 
-func ruleOf(c: Consolidation): Rule =
+func rule(c: Consolidation): Rule =
   ## Read rule of consolidation: imports of one directory merge (X.5), or bracket of one
   ##   module drops (STYLE.md §5); two articles state two rewrites.
   if c.lines.len > 1: Rule.BracketsImport else: Rule.BracketModule
@@ -679,7 +679,7 @@ func checkBracketsImport*(path, source: string): seq[Report] =
         "Imports of one directory share one bracket; got `" & c.prefix & "` in `" &
           $c.lines.len & "` statements."
       else: "Bracket of one module drops its bracket; got `" & c.prefix & "[" & c.items[0] & "]`."
-    result.add initReport(path, c.lines[0] + 1, c.ruleOf, message)
+    result.add initReport(path, c.lines[0] + 1, c.rule, message)
 
 
 func fixConsolidations(path, source: string): Fix =
@@ -693,7 +693,7 @@ func fixConsolidations(path, source: string): Fix =
     dropped: seq[int]
   for c in found:
     dropped.add c.lines[1 .. ^1]
-    result.fixed.add initReport(path, c.lines[0] + 1, c.ruleOf)
+    result.fixed.add initReport(path, c.lines[0] + 1, c.rule)
   for i, line in lines:
     if i in dropped: continue
     var statement = line
@@ -705,27 +705,27 @@ func fixConsolidations(path, source: string): Fix =
   if dropped.len == 0: result.origin.setLen(0)
 
 
-func depthOf(code: string): int =
+func depth(code: string): int =
   ## Count brackets code line opens and leaves open; negative where it closes more.
   for c in code:
     if c in OPENERS: inc result
     elif c in CLOSERS: dec result
 
 
-func continuationOf(run: RunBinding; lines, code: seq[string]): int =
+func continuation(run: RunBinding; lines, code: seq[string]): int =
   ## Find last line continuing run's last binding: open bracket, deeper indent, doc under it.
   ##   Blank line counts only where line after it continues too.
   result = run.last
   var
-    depth = code[run.last].depthOf
+    depth = code[run.last].depth
     i = run.last + 1
   while i < lines.len:
     let
       is_code = code[i].strip.len > 0
       is_text = lines[i].strip.len > 0
-    if depth > 0 or (is_code and code[i].indentOf > run.indent) or
-        (not is_code and is_text and lines[i].indentOf > run.indent):
-      depth += code[i].depthOf
+    if depth > 0 or (is_code and code[i].indentWidth > run.indent) or
+        (not is_code and is_text and lines[i].indentWidth > run.indent):
+      depth += code[i].depth
       result = i
       inc i
     elif not is_text: inc i
@@ -744,7 +744,7 @@ func fixBindings(path, source: string): Fix =
       lines = result.source.split('\n')
       code = result.source.codeOnly.split('\n')
       kept = result.source.codeAndComments.split('\n')
-      last = run.continuationOf(lines, code)
+      last = run.continuation(lines, code)
       margin = ' '.repeat(run.indent)
     var shaped = @[margin & run.keyword]
     for k in run.first .. run.last:
@@ -820,7 +820,7 @@ func isIncluding(source: string): bool =
   source.codeOnly.splitLines.anyIt(it.startsWith("include "))
 
 
-func profilerOf(path, source: string): Profiler =
+func profiler(path, source: string): Profiler =
   ## Read profiler import of module: forms joined onto one line, presence, and pragma it goes
   ##   after.
   ##   Module opens with header docs, notes and testament header; pragma lines after them, with
@@ -835,7 +835,7 @@ func profilerOf(path, source: string): Profiler =
     if code[i].strip.len == 0: continue
     if line.startsWith(GUARD_MAIN): result.is_entry = true
     if line == GUARD_PROFILER and i + 1 < lines.len and lines[i + 1].strip == MODULE_PROFILER and
-        lines[i + 1].indentOf > 0:
+        lines[i + 1].indentWidth > 0:
       result.is_present = true
     if line == IMPORT_PROFILER_JOINED:
       result.is_present = true
@@ -854,7 +854,7 @@ func checkProfiler*(path, source: string): seq[Report] =
   ## Report profiler import joined onto one line, and entry module, umbrella or stub lacking it
   ##   (STYLE.md §3).
   ##   Named by its suite and `fixes.nim` alone until static pass calls it (`fixes.nim`).
-  let profiler = profilerOf(path, source)
+  let profiler = profiler(path, source)
   for i in profiler.lines_joined:
     result.add initReport(
       path,
@@ -878,7 +878,7 @@ func fixProfiler(path, source: string): Fix =
   ##   last opening pragma, where entry module, umbrella or stub lacks it. Module without such
   ##   pragma stays.
   ##   Both lines of split import trace to line it was joined on.
-  let profiler = profilerOf(path, source)
+  let profiler = profiler(path, source)
   result.source = source
   if profiler.lines_joined.len == 0 and (profiler.is_present or not profiler.is_entry or
       profiler.anchor < 0):

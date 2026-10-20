@@ -18,7 +18,7 @@ import ./[layout, plan, toolchain]
 func includerOf*(tree: Tree, path: string): string =
   ## Read file whose `include` names path, followed up to file nothing includes; path itself
   ##   where nothing includes it.
-  tree.mapIt((it.path, it.content)).includerOf(path)
+  tree.mapIt((it.path, it.content)).includer(path)
 
 
 func directoryOf(path: string): string =

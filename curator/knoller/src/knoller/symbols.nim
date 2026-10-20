@@ -123,7 +123,7 @@ func slashed*(path: string; separator = DirSep): string =
   if separator == '/': path else: path.replace(separator, '/')
 
 
-func symbolOf*(line: string): Option[Symbol] =
+func toSymbol*(line: string): Option[Symbol] =
   ## Read symbol of one answer line: section, kind, name, type, file, line, column, doc, ….
   let fields = line.split('\t')
   if fields.len < 7: return none(Symbol)
@@ -140,7 +140,7 @@ func symbolOf*(line: string): Option[Symbol] =
   except ValueError: none(Symbol)
 
 
-func blocksOf*(output: string): seq[seq[string]] =
+func blocksAnswer*(output: string): seq[seq[string]] =
   ## Split output of tester mode into one block of answer lines per command. Mark printed once
   ##   ready opens first answer, and each answer ends at mark, so text before first mark is no
   ##   answer, output with no mark holds none, and answer no mark closes was cut short and
@@ -171,7 +171,7 @@ func declaredAt(symbol: Symbol, path: string, site: (int, int)): Symbol =
   )
 
 
-func includerOf*(files: openArray[(string, string)], path: string): string =
+func includer*(files: openArray[(string, string)], path: string): string =
   ## Read file whose `include` names path, followed up to file nothing includes; path itself
   ##   where nothing includes it. Files are path and text, paths relative to one directory.
   result = path
@@ -245,7 +245,7 @@ proc ask(entry: Entry, is_js: bool): Asked =
   result.process = startProcess(line, workingDir = entry.directory, options = {poEvalCommand})
 
 
-proc answersOf(entry: Entry, asked: Asked): seq[Answer] =
+proc readAnswers(entry: Entry, asked: Asked): seq[Answer] =
   ## Read answers of started run, in order commands went: check, sites, names of each file.
   ##   Run that never started answers each file unresolved, with reason it gives.
   var output = ""
@@ -255,7 +255,7 @@ proc answersOf(entry: Entry, asked: Asked): seq[Answer] =
     if fileExists(asked.answers): output = readFile(asked.answers)
     removeFile(asked.commands)
     removeFile(asked.answers)
-  let blocks = output.blocksOf
+  let blocks = output.blocksAnswer
   var at = 0
   for query in entry.queries:
     var answer = Answer(path: query.path)
@@ -269,14 +269,14 @@ proc answersOf(entry: Entry, asked: Asked): seq[Answer] =
     inc at
     for site in query.sites:
       if at < blocks.len and blocks[at].len > 0:
-        let symbol = blocks[at][0].symbolOf
+        let symbol = blocks[at][0].toSymbol
         if symbol.isSome: answer.symbols[site] = symbol.get.declaredAt(query.path, site)
       inc at
     for name in query.names:
       var found: seq[Symbol]
       if at < blocks.len:
         for line in blocks[at]:
-          let symbol = line.symbolOf
+          let symbol = line.toSymbol
           if symbol.isSome and symbol.get.name.split('.')[^1].identity == name.identity:
             found.add symbol.get
       answer.globals[name] = found
@@ -311,11 +311,11 @@ proc resolve*(requests: openArray[Request]): seq[Answer] =
     for entry in batch: started.add entry.ask(is_js = false)
     var retried: seq[(Entry, seq[Answer], Asked)]
     for i, entry in batch:
-      let answers = entry.answersOf(started[i])
+      let answers = entry.readAnswers(started[i])
       if answers.allIt(it.reason.len == 0): result.add answers
       else: retried.add (entry, answers, entry.ask(is_js = true))
     for (entry, answers, asked) in retried:
-      let again = entry.answersOf(asked)
+      let again = entry.readAnswers(asked)
       for i, answer in answers:
         result.add(if answer.reason.len == 0 or again[i].reason.len > 0: answer else: again[i])
     k += PARALLEL

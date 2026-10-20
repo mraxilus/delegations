@@ -32,7 +32,7 @@ type
       ## Zero-based line fence crosses bracket or token at, or reads `FENCED`; `-1` if none.
 
 
-func fenceOf*(source: string): Fence =
+func fence*(source: string): Fence =
   ## Read fenced lines of Nim source, and first line where fence cannot be read.
   ##   Marker is comment token opening its line, so marker inside string or block comment is none.
   result.fault = -1
@@ -74,7 +74,7 @@ func masked*(source: string, fence: Fence): string =
   ## Read each fenced line as `FENCED` at its own indent; blank line at none.
   var lines = source.split('\n')
   for i in fence.lines:
-    lines[i] = (if lines[i].strip.len == 0: "" else: ' '.repeat(lines[i].indentOf)) & FENCED
+    lines[i] = (if lines[i].strip.len == 0: "" else: ' '.repeat(lines[i].indentWidth)) & FENCED
   lines.join("\n")
 
 
@@ -83,7 +83,7 @@ func shapeFence*(source: string): seq[(int, bool)] =
   let lines = source.split('\n')
   for i, line in lines:
     if line.strip != FENCED: continue
-    result.add (line.indentOf, i > 0 and lines[i - 1].strip == FENCED)
+    result.add (line.indentWidth, i > 0 and lines[i - 1].strip == FENCED)
 
 
 func restored*(fixed, source: string; fence: Fence): string =
@@ -99,7 +99,7 @@ func restored*(fixed, source: string; fence: Fence): string =
   lines.join("\n")
 
 
-func runsOf*(fence: Fence): seq[Slice[int]] =
+func runs*(fence: Fence): seq[Slice[int]] =
   ## Read each run of consecutive fenced lines, zero-based, markers included; fence left open
   ##   runs to end of file, and fences touching read as one run.
   for k, line in fence.lines:
@@ -107,7 +107,7 @@ func runsOf*(fence: Fence): seq[Slice[int]] =
     else: result[^1].b = line
 
 
-func faultOf*(path: string, fence: Fence): seq[Report] =
+func checkFence*(path: string, fence: Fence): seq[Report] =
   ## Report fence fix cannot read, which leaves file as written.
   if fence.fault < 0: return
   result.add initReport(

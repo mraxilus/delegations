@@ -252,7 +252,8 @@ proc targetsFor(jobs: openArray[Job]): (seq[Target], seq[Finding]) =
   var toolchains = initToolchains()
   for job in jobs:
     let bin = toolchains.binFor(job.pin)
-    if bin.isNone: result[1].add missing(job.directory, job.pin, binOf(toolchains.root, job.pin))
+    if bin.isNone:
+      result[1].add missing(job.directory, job.pin, binCached(toolchains.root, job.pin))
     else: result[0].add Target(directory: job.directory, bin: bin.get)
 
 

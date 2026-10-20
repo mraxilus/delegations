@@ -57,7 +57,7 @@ const
     ## Precedence of `&` (Nim manual, Operators), which each operator of shaped value exceeds.
 
 
-func contentOf(t: Token, source: string): (int, int) =
+func content(t: Token, source: string): (int, int) =
   ## Read byte span of literal's content, quotes left out.
   if source.continuesWith(QUOTE_LONG, t.first): (t.first + 3, t.after - 3)
   else: (t.first + 1, t.after - 1)
@@ -111,13 +111,13 @@ func isShapeable(
 ): bool =
   ## Decide whether value may end message in shape: each operator of it binds tighter than `&`,
   ##   so literal appended after it joins concatenation, never value.
-  elementsOf(tokens, partners, piece.first, piece.last, source).allIt(
+  elements(tokens, partners, piece.first, piece.last, source).allIt(
     it.kind in {KindElement.Operand, KindElement.Prefix} or
         (it.kind == KindElement.Binary and it.precedence > PRECEDENCE_CONCATENATION)
   )
 
 
-func valuesOf(
+func valuesBare(
   chain: seq[Piece], tokens: openArray[Token], partners: openArray[int], tail: int, source: string
 ): seq[Value] =
   ## Read every bare value of chain past byte offset `tail`, with backticks or shape it lacks.
@@ -136,16 +136,16 @@ func valuesOf(
         previous = if p > 0: chain[p - 1].literal else: -1
         next = if p + 1 < chain.len: chain[p + 1].literal else: -1
       if previous >= 0 and next >= 0:
-        value.inserts.add (tokens[previous].contentOf(source)[1], $BACKTICK)
-        value.inserts.add (tokens[next].contentOf(source)[0], $BACKTICK)
+        value.inserts.add (tokens[previous].content(source)[1], $BACKTICK)
+        value.inserts.add (tokens[next].content(source)[0], $BACKTICK)
       elif previous >= 0 and p == chain.high and piece.isShapeable(tokens, partners, source):
-        value.inserts.add (tokens[previous].contentOf(source)[1], $BACKTICK)
+        value.inserts.add (tokens[previous].content(source)[1], $BACKTICK)
         value.inserts.add (tokens[piece.last].after, ENDING)
       result.add value  # Without literal before it, no backtick has place.
       continue
 
     # Count backticks of literal; read each interpolation of it, `{{` aside.
-    let (start, stop) = tokens[piece.literal].contentOf(source)
+    let (start, stop) = tokens[piece.literal].content(source)
     var k = start
     while k < stop:
       let c = source[k]
@@ -188,7 +188,7 @@ func tails(source: string): seq[Value] =
     let chain = chainFrom(tokens, partners, k, source)
     for piece in chain:
       if piece.literal >= 0: seen.add piece.literal
-    result.add valuesOf(chain, tokens, partners, t.first + at + MARKER.len, source)
+    result.add valuesBare(chain, tokens, partners, t.first + at + MARKER.len, source)
 
 
 func checkMessages*(path, source: string): seq[Report] =

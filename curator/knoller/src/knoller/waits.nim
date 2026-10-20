@@ -45,7 +45,7 @@ func identifiers(line: string): seq[string] =
       i += name.len
 
 
-func replacementOf(identifier: string, is_nim: bool): string =
+func replacement(identifier: string, is_nim: bool): string =
   ## Read replacement of fixed wait identifier names; empty when it names none.
   for (name, replacement) in WAITS:
     if is_nim and identifier.identity == name.identity: return replacement
@@ -57,7 +57,7 @@ func checkWaits*(path: string, lines: openArray[seq[string]], is_nim: bool): seq
   ##   where `is_nim`, as Nim compares them, else Playwright's alone, exactly.
   for i, line in lines:
     for identifier in line:
-      let replacement = identifier.replacementOf(is_nim)
+      let replacement = identifier.replacement(is_nim)
       if replacement.len == 0: continue
       result.add initReport(
         path,

@@ -87,7 +87,7 @@ suite "Command line":
   test "pin cache of knoller serves is compiler of file":
     let directory = createTempDir("assayer_", "")
     defer: removeDir(directory)
-    let bin = binOf(directory / "cache", PIN_FAKE)
+    let bin = binCached(directory / "cache", PIN_FAKE)
     createDir(bin)
     writeFile(bin / "nim", "#!/bin/sh\necho 'Nim Compiler Version " & PIN_FAKE & " [Linux]'\n")
     setFilePermissions(bin / "nim", {fpUserExec, fpUserRead, fpUserWrite})

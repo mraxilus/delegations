@@ -42,7 +42,7 @@
 ##     download is never mistaken for verified one -- same shape `fetchRelease` uses.
 ##
 ##   Cost: `sha256sum` and `curl` are shelled out to; `koch list-packages` declares both. Digest is
-##     read by `digestOf` of knoller, not copied here, so one reader serves both fetches and
+##     read by `digest` of knoller, not copied here, so one reader serves both fetches and
 ##     store imports knoller for it.
 ##   Nim tarball is not here, deliberately: its digest comes from upstream sidecar at fetch
 ##     time rather than from table here, and it is stored unpacked by pin because rest of koch
@@ -269,7 +269,7 @@ proc fetchAsset(root, file: string): bool =
   defer: removeFile(landing)
   if execCmdEx("curl -sSLf -o " & quoteShell(landing) & " " & quoteShell(address))[1] != 0:
     return false
-  let got = landing.digestOf
+  let got = landing.digest
   if got != digest:
     echo "Asset does not carry digest declared for it; wanted `" & digest & "`, got `" &
       got & "`."

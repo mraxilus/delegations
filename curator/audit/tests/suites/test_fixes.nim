@@ -47,7 +47,7 @@ proc fixEvery(
   entries: openArray[Entry],
   locked: openArray[string],
   context: Context,
-  provers: ProverOf,
+  provers: ProversPin,
 ): tuple[fix: Fixed, failures: seq[string]] =
   ## Fix every entry again each round of asking: reference that loop of `fixProven`, fixing
   ##   entries that asked alone, is held equal to (Article IX.2).
@@ -443,7 +443,7 @@ suite "Fixes":
       stub = proc (pin: string): Prover =
         pins.add pin
         result = proc (sources: seq[string]): Proving =
-          Proving(answers: sources.mapIt(it.candidatesOf.filterIt(it.got notin
+          Proving(answers: sources.mapIt(it.groupsCandidate.filterIt(it.got notin
             ["(x[0])", "(y[0])"]).mapIt(it.opening[0])))
     let unanswered = fixEntries(BRANCH_CURATOR, entries)
     check unanswered.written.len == 0  # nothing proven, nothing written
@@ -517,7 +517,7 @@ suite "Fixes":
     let
       stubbed = proc (sources: seq[string]): Proving =
         Proving(answers: sources.mapIt(
-          it.candidatesOf.filterIt(it.got notin ["(x[0])", "(y[0])"]).mapIt(it.opening[0]),
+          it.groupsCandidate.filterIt(it.got notin ["(x[0])", "(y[0])"]).mapIt(it.opening[0]),
         ))
       counted = proc (pin: string): Prover =
         result = proc (sources: seq[string]): Proving =

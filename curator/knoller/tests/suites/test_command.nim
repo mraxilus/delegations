@@ -1,9 +1,9 @@
 ## Replicate command line of `command.nim` header: what `knoller [--check] [--nim:path] path...`
-##   reads, writes, prints and exits with, driven through `outcomeOf` on text alone, and through
+##   reads, writes, prints and exits with, driven through `outcome` on text alone, and through
 ##   `outcomeProven` with parser stubbed (`stubs.nim`).
-##   Compiler of each file (`batchesOf`) is driven over real files, with real parser where it is
-##   cheap: `--nim` and `nim` on `PATH`. Prover of pin is stubbed, since serving pin may fetch;
-##   `test_compilers.nim` holds real prover of pin.
+##   Compiler of each file (`groupByCompiler`) is driven over real files, with real parser where
+##   it is cheap: `--nim` and `nim` on `PATH`. Prover of pin is stubbed, since serving pin may
+##   fetch; `test_compilers.nim` holds real prover of pin.
 
 {.experimental: "strictFuncs".}
 
@@ -57,18 +57,18 @@ proc outcomeEvery(
   var
     proofs = Proofs()
     failure = ""
-  result = outcomeOf(files, locked, is_check, directory, proofs)
+  result = outcome(files, locked, is_check, directory, proofs)
   for ask in 1..ASKS_MAX:
     if result.asked.len == 0: break
     if failure.len > 0:
       for source in result.asked: proofs.answers[source] = @[]
     else: failure = proofs.answered(result.asked, prover)
-    result = outcomeOf(files, locked, is_check, directory, proofs, failure)
+    result = outcome(files, locked, is_check, directory, proofs, failure)
 
 
 func shown(path, directory, source: string): seq[string] =
   ## Print check of one file path names from directory, path read as `<path>`.
-  let outcome = outcomeOf([(path, source)], [], is_check = true, directory)
+  let outcome = outcome([(path, source)], [], is_check = true, directory)
   outcome.lines.mapIt(it.replace(path, "<path>"))
 
 
@@ -87,14 +87,14 @@ suite "Command line":
 
 
   test "dialect follows extension, and other file has none":
-    check "a.nim".dialectOf == some(Dialect.Module)
-    check "a.nims".dialectOf == some(Dialect.Script)
-    check "a.nimble".dialectOf == some(Dialect.Package)
-    check "a.md".dialectOf.isNone and "nim.cfg".dialectOf.isNone
+    check "a.nim".dialect == some(Dialect.Module)
+    check "a.nims".dialect == some(Dialect.Script)
+    check "a.nimble".dialect == some(Dialect.Package)
+    check "a.md".dialect.isNone and "nim.cfg".dialect.isNone
 
 
   test "fix writes changed file alone, and prints each rewrite by rule id, then count":
-    let outcome = outcomeOf([("a.nim", DIRTY), ("b.nim", CLEAN)], [], is_check = false)
+    let outcome = outcome([("a.nim", DIRTY), ("b.nim", CLEAN)], [], is_check = false)
     check outcome.written.len == 1 and outcome.written[0][0] == "a.nim"  # clean file unwritten
     check outcome.lines == @[
       "a.nim: strictfuncs fixed",  # whole file: path alone
@@ -104,23 +104,23 @@ suite "Command line":
       "4 fixed.",
     ]  # sorted by path, line, then rule id
     check outcome.code == 0  # nothing left
-    let again = outcomeOf([outcome.written[0]], [], is_check = false)
+    let again = outcome([outcome.written[0]], [], is_check = false)
     check again.written.len == 0 and again.lines == @["0 fixed."]  # second run writes nothing
 
 
   test "check writes nothing, reports each change due, and exits 1 where any":
-    let outcome = outcomeOf([("a.nim", DIRTY)], [], is_check = true)
+    let outcome = outcome([("a.nim", DIRTY)], [], is_check = true)
     check outcome.written.len == 0
     check outcome.lines[^1] == "4 to fix."
     check outcome.lines[0] == "a.nim: strictfuncs to fix"
     check outcome.code == 1
-    check outcomeOf([("b.nim", CLEAN)], [], is_check = true).code == 0  # nothing due
+    check outcome([("b.nim", CLEAN)], [], is_check = true).code == 0  # nothing due
 
 
   test "finding fix leaves prints by rule id with its message, and exits 1":
     let
       crossing = "let A = 1+2\nvar M = f(\n  #!fix off\n  1,  0,\n)\n#!fix on\n"
-      outcome = outcomeOf([("a.nims", crossing)], [], is_check = false)
+      outcome = outcome([("a.nims", crossing)], [], is_check = false)
     check outcome.written.len == 0  # fence it cannot read leaves file as written
     check outcome.lines[0].startsWith("a.nims:2: fence left: Fence closes outside bracket")
     check outcome.lines[^1] == "0 fixed."
@@ -129,7 +129,7 @@ suite "Command line":
 
   test "file fixers do not settle prints by path alone with no rule, before findings, and exits 1":
     # Domain: unsettled file alone, and beside file that settles, under fix and `--check`. No
-    #   source of suite leaves chain unsettled, so part stands for what `partOf` gives.
+    #   source of suite leaves chain unsettled, so part stands for what `part` gives.
     privateAccess(Part)
     let
       alone = [Part(path: "b.nim", unsettled: UNSETTLED)]
@@ -153,7 +153,7 @@ suite "Command line":
 
 
   test "finding left prints at its line in file as given, as each rewrite does":
-    let outcome = outcomeOf([("a.nim", "let A = 1\nlet B = not x == y\n")], [], is_check = true)
+    let outcome = outcome([("a.nim", "let A = 1\nlet B = not x == y\n")], [], is_check = true)
     check outcome.lines.len == 4
     check outcome.lines[0 .. 1] == @["a.nim: strictfuncs to fix", "a.nim:1: single-bindings to fix"]
     check outcome.lines[2].startsWith("a.nim:2: not-over-binary left: ")  # fix moves it to 5
@@ -161,9 +161,9 @@ suite "Command line":
 
   test "check exits 1 on each finding fixers leave, fence or none, and fence counts it":
     # Case held: `knoller --check` ran idiom checks of static pass on file holding fence alone
-    #   (`chain.nim`, `heldOf` against `checkFormatting`), and checks of form, articles, entry
-    #   block, names and waits never, so it exited 0 on each source below (#557); domain is each
-    #   rule of knoller static pass of `curator/audit` reads that fixers can leave, as left.
+    #   (`chain.nim`, `checkFenceHeld` against `checkFormatting`), and checks of form, articles,
+    #   entry block, names and waits never, so it exited 0 on each source below (#557); domain is
+    #   each rule of knoller static pass of `curator/audit` reads that fixers can leave, as left.
     #   Rule fixers always clear (trailing whitespace, banners, `strictFuncs`, stub keys) is none.
     let module = "{.experimental: \"strictFuncs\".}\n\n"
     for (path, source, rule) in [
@@ -193,10 +193,10 @@ suite "Command line":
       ("a.nim", module & "import ./a\n\nimport std/os\n", Rule.RankImport),  # blank line apart
       ("a.nim", module & "const A = 1\nconst B = \"\"\"\ntext\n\"\"\"\n", Rule.BindingsSingle),
     ]:
-      let outcome = outcomeOf([(path, source)], [], is_check = true)
+      let outcome = outcome([(path, source)], [], is_check = true)
       check outcome.code == 1  # violation fails run
       check outcome.lines.anyIt(it.startsWith(path) and (" " & rule.id & " left: ") in it)
-    let fenced = outcomeOf([("a.nims", "#!fix off\nlet a = 1 \n#!fix on\n")], [], is_check = true)
+    let fenced = outcome([("a.nims", "#!fix off\nlet a = 1 \n#!fix on\n")], [], is_check = true)
     check fenced.lines.anyIt("inside them trailing-whitespace breaks once at line 2" in it)
     check fenced.code == 1  # fence keeps line from fixer, never from finding
 
@@ -212,29 +212,29 @@ suite "Command line":
       let
         given = if path.endsWith(".nim"): "{.experimental: \"strictFuncs\".}\n\n" & source
           else: source
-        outcome = outcomeOf([(path, given)], [], is_check = true)
+        outcome = outcome([(path, given)], [], is_check = true)
       check outcome.lines == @["0 to fix."] and outcome.code == 0
 
 
   test "each fence prints as warning naming what breaks inside it, and changes no exit code":
     let
       fenced = "let A = 1\n#!fix off\nlet B = 1+2\n#!fix on\n"
-      outcome = outcomeOf([("a.nims", fenced)], [], is_check = true)
+      outcome = outcome([("a.nims", fenced)], [], is_check = true)
     check outcome.lines == @[
       "a.nims:2: fence-held warning: Fence keeps its lines as written, and inside them " &
         "expression-spacing breaks once at line 3; got lines `2` to `4`.",
       "0 to fix.",
     ]
     check outcome.code == 0  # break inside fence alone fails nothing
-    let written = outcomeOf([("a.nims", fenced)], [], is_check = false)
+    let written = outcome([("a.nims", fenced)], [], is_check = false)
     check written.written.len == 0 and written.code == 0  # nothing written
 
 
   test "path reads whole from directory it is named from, `.` and `..` resolved":
-    check layoutOf("suites.nim", "/p/tests") == "/p/tests/suites.nim"
-    check layoutOf("tests/suites.nim", "/p") == "/p/tests/suites.nim"
-    check layoutOf("../tests/./a.nim", "/p/src") == "/p/tests/a.nim"
-    check layoutOf("/q/a.nim", "/p") == "/q/a.nim"  # absolute path stays
+    check toAbsolute("suites.nim", "/p/tests") == "/p/tests/suites.nim"
+    check toAbsolute("tests/suites.nim", "/p") == "/p/tests/suites.nim"
+    check toAbsolute("../tests/./a.nim", "/p/src") == "/p/tests/a.nim"
+    check toAbsolute("/q/a.nim", "/p") == "/q/a.nim"  # absolute path stays
 
 
   test "same file reports alike however path names it: test file, stub and umbrella":
@@ -249,12 +249,12 @@ suite "Command line":
 
 
   test "directory names Nim files git lists under it, sorted; one naming none says why":
-    check listingOf("src", "b.nim\0a.md\0a.nim\0", 0) == (@["src/a.nim", "src/b.nim"], "")
-    let outside = listingOf("/q", "fatal: not a git repository\n", 128)
+    check listing("src", "b.nim\0a.md\0a.nim\0", 0) == (@["src/a.nim", "src/b.nim"], "")
+    let outside = listing("/q", "fatal: not a git repository\n", 128)
     check outside.files.len == 0
     check outside.refusal.startsWith("Directory lies outside git work tree")
     check outside.refusal.endsWith("got `/q`.")
-    let bare = listingOf("docs", "a.md\0", 0)
+    let bare = listing("docs", "a.md\0", 0)
     check bare.files.len == 0
     check bare.refusal.startsWith("Directory holds no Nim file that git lists")
 
@@ -320,14 +320,14 @@ suite "Command line":
     removeFile(root / "b.nim")
     check execCmd(git & "checkout -- .") == 0
     check readFile(root / "a.nim") == "let a = 1\r\n"  # checkout wrote CRLF
-    let converted = convertedOf([root / "a.nim", root / "b.nim", outside / "c.nim"])
+    let converted = converted([root / "a.nim", root / "b.nim", outside / "c.nim"])
     check root / "a.nim" in converted
     check root / "b.nim" notin converted  # commit keeps its CRLF, so finding stays
     check outside / "c.nim" notin converted  # git knows nothing of it
 
 
   test "locked nimble file and file of no dialect are passed over":
-    let outcome = outcomeOf(
+    let outcome = outcome(
       [("p/p.nimble", "version = \"0.1.0\" \n"), ("README.md", "x \n")],
       ["p/p.nimble"],
       is_check = false,
@@ -347,13 +347,13 @@ suite "Command line":
     answer.symbols[(3, 28)] = Symbol(kind: "skParam")
     let
       answers = {"a.nim": answer}.toTable
-      fixed = outcomeOf([("a.nim", source)], [], is_check = false, answers = answers)
-      due = outcomeOf([("a.nim", source)], [], is_check = true, answers = answers)
+      fixed = outcome([("a.nim", source)], [], is_check = false, answers = answers)
+      due = outcome([("a.nim", source)], [], is_check = true, answers = answers)
     check fixed.written == @[("a.nim", source.replace("x.float", "float(x)"))]
     check fixed.lines == @["a.nim:3: type-conversion fixed", "1 fixed."]
     check due.written.len == 0 and due.code == 1
     check due.lines == @["a.nim:3: type-conversion to fix", "1 to fix."]
-    let unread = outcomeOf(
+    let unread = outcome(
       [("a.nim", source)],
       [],
       is_check = true,
@@ -381,11 +381,11 @@ suite "Command line":
     let
       files = [("p/src/a.nim", readFile(root / "p/src/a.nim")),
                ("p/src/b.nim", readFile(root / "p/src/b.nim"))]
-      answers = files.answersOf("", root, toolchains)
+      answers = files.resolveConversions("", root, toolchains)
     check answers.len == 1  # `b.nim` holds no candidate
     check answers["p/src/a.nim"].reason.len == 0
     check answers["p/src/a.nim"].symbols[(3, 8)].kind == "skType"
-    let outcome = outcomeOf(files, [], is_check = true, directory = root, answers = answers)
+    let outcome = outcome(files, [], is_check = true, directory = root, answers = answers)
     check "p/src/a.nim:3: type-conversion to fix" in outcome.lines
 
 
@@ -401,8 +401,8 @@ suite "Command line":
                            Edit(first: 63, after: 68, text: "count")]}.toTable,
         lines: @[("a.nim", 3), ("a.nim", 3)],
       )
-      fixed = outcomeOf([("a.nim", source)], [], is_check = false, plans = [planned])
-      refused = outcomeOf(
+      fixed = outcome([("a.nim", source)], [], is_check = false, plans = [planned])
+      refused = outcome(
         [("a.nim", source)],
         [],
         is_check = true,
@@ -430,18 +430,18 @@ suite "Command line":
     let
       a = ("p/src/a.nim", readFile(root / "p/src/a.nim"))
       b = ("p/src/b.nim", readFile(root / "p/src/b.nim"))
-      alone = [a].plansOf([], "", root, toolchains)
-      both = [a, b].plansOf([], "", root, toolchains)
+      alone = [a].planRenames([], "", root, toolchains)
+      both = [a, b].planRenames([], "", root, toolchains)
     check alone.len == 1
     check alone[0].refusal == "it would write `src/b.nim`, which this run leaves alone"
     check both.len == 1 and both[0].refusal.len == 0
-    let outcome = outcomeOf([a, b], [], is_check = false, directory = root, plans = both)
+    let outcome = outcome([a, b], [], is_check = false, directory = root, plans = both)
     check outcome.written.mapIt(it[0]) == @["p/src/a.nim", "p/src/b.nim"]
     check outcome.written.allIt("countUp" in it[1] and "Count_up" notin it[1])
 
 
   test "parentheses go where parser proves it, after one more run, and second run writes none":
-    let unanswered = outcomeOf([("a.nim", GROUPED)], [], is_check = false)
+    let unanswered = outcome([("a.nim", GROUPED)], [], is_check = false)
     check unanswered.written.len == 0 and unanswered.asked == @[GROUPED]  # waits for parser
     let outcome = outcomeProven([("a.nim", GROUPED)], [], false, "/", proverStub)
     check outcome.written == @[("a.nim", GROUPED.replace("@(x) +", "@x +"))]
@@ -471,7 +471,7 @@ suite "Command line":
     let provers = proc (pin: string): Prover =
       pins.add pin
       proverFailure("Prover of pin ran; got `" & pin & "`.")
-    let batches = batchesOf(["p/a.nim"], NIM, root, provers)
+    let batches = groupByCompiler(["p/a.nim"], NIM, root, provers)
     check batches.mapIt(it.paths) == @[@["p/a.nim"]]
     let outcome = outcomeProven([("p/a.nim", GROUPED)], [], false, root, batches)
     check pins.len == 0  # pin is never resolved, so never fetched
@@ -495,7 +495,7 @@ suite "Command line":
       result = proc (sources: seq[string]): Proving =
         asked.add (pin, sources)
         proverStub(sources)
-    let batches = batchesOf(paths, "", root, provers)
+    let batches = groupByCompiler(paths, "", root, provers)
     check batches.mapIt(it.paths) ==
         @[@["p/src/a.nim", "p/src/deep/c.nim"], @["q/b.nim"], @["r/d.nim"]]  # nearest decides
     let outcome = outcomeProven(zip(paths, sources), [], true, root, batches)
@@ -520,8 +520,8 @@ suite "Command line":
     root.writeTree(@[("p/p.nimble", "requires \"nim == 0.0.1\"\n")] & zip(paths, sources))
     let
       provers = proc (pin: string): Prover = proverFailure(UNSERVED & pin & "`.")
-      outcome =
-        outcomeProven(zip(paths, sources), [], true, root, batchesOf(paths, "", root, provers))
+      batches = groupByCompiler(paths, "", root, provers)
+      outcome = outcomeProven(zip(paths, sources), [], true, root, batches)
     check outcome.written.len == 0 and outcome.code == 0  # exit code holds
     check outcome.lines == @["needless-parentheses warning: " & UNSERVED & "0.0.1`.", "0 to fix."]
 
@@ -542,7 +542,7 @@ suite "Command line":
       pins.add pin
       proverFailure("Prover of pin ran; got `" & pin & "`.")
     let outcome =
-      outcomeProven(zip(paths, sources), [], true, root, batchesOf(paths, "", root, provers))
+      outcomeProven(zip(paths, sources), [], true, root, groupByCompiler(paths, "", root, provers))
     check pins.len == 0  # neither pin is trusted, as nimble refuses such directory
     check outcome.written.len == 0 and outcome.code == 0
     check outcome.lines == @[
@@ -563,7 +563,7 @@ suite "Command line":
     let provers = proc (pin: string): Prover =
       pins.add pin
       proverFailure("Prover of pin ran; got `" & pin & "`.")
-    let batches = batchesOf(paths, "", root, provers)
+    let batches = groupByCompiler(paths, "", root, provers)
     check batches.mapIt(it.paths) == @[@paths]  # one batch: `nim` on PATH
     let outcome = outcomeProven(zip(paths, sources), [], true, root, batches)
     check pins.len == 0  # range names no pin
@@ -587,7 +587,7 @@ suite "Command line":
         ("p/p.nimble", "version = \"0.1.0\" \n"),
         ("README.md", "x \n"),
       ]
-      asking = files.filterIt(outcomeOf([it], ["p/p.nimble"], is_check = true).asked.len > 0)
+      asking = files.filterIt(outcome([it], ["p/p.nimble"], is_check = true).asked.len > 0)
     check asking.mapIt(it[0]) == @["a.nim", "d.nims", "e.nim"]  # some files ask, some do not
     for is_check in [false, true]:
       var calls = 0

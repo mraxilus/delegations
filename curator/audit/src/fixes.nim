@@ -176,7 +176,7 @@ func queriesSemantic*(
   for e in entries:
     if e.isKindNim and e.path notin locked: asked.add queryConversion(e.path, e.content)
   for (rename, refusal) in renamesOf(tree, entries, locked):
-    if refusal.len == 0: asked.add rename.queriesOf(tree.scopeOf(rename))
+    if refusal.len == 0: asked.add rename.queries(tree.scopeOf(rename))
   for query in asked:
     if query.sites.len == 0 and query.names.len == 0: continue
     var k = result.mapIt(it.path).find(query.path)
@@ -235,7 +235,7 @@ func contextOf*(
       continue
     let scope = tree.scopeOf(rename)
     var fenced = initTable[string, seq[int]]()
-    for (path, source) in scope: fenced[path] = source.fenceOf.lines
+    for (path, source) in scope: fenced[path] = source.fence.lines
     var plan = planRename(rename, scope, result.answers, fenced)
     for path in plan.edits.keys:
       if plan.refusal.len > 0: break
@@ -299,14 +299,14 @@ func partOf(e: Entry; locked: openArray[string]; context: Context): Fixed =
       "Nimble file whose copy `" & FILE_LOCK & "` holds stays as written; got its copy there.",
     )
     return
-  let fence = e.content.fenceOf
+  let fence = e.content.fence
   if fence.fault >= 0:
-    result.left.add faultOf(e.path, fence).findingsOf
+    result.left.add checkFence(e.path, fence).findingsOf
     return
   let proofs = context.proofs.getOrDefault(e.path)
-  result.warned.add heldOf(e.path, e.content, e.kind.get.dialectOf, proofs).findingsOf
+  result.warned.add checkFenceHeld(e.path, e.content, e.kind.get.dialectOf, proofs).findingsOf
   if fence.lines.len > 0:
-    for source in e.content.questionsOf(proofs): result.asked.add (e.path, source)
+    for source in e.content.questions(proofs): result.asked.add (e.path, source)
   for plan in context.plans:
     if plan.rename.path != e.path or plan.refusal.len == 0: continue
     result.left.add finding(
@@ -363,10 +363,10 @@ func fixEntries*(
   ## Fix each entry: entries to write, one report per rewrite, scope findings, files left as
   ##   written with reason (nimble file `locked` names, fence fix cannot read), and one warning
   ##   for each fence, which keeps its lines as written, naming each rule broken among them
-  ##   (`heldOf`), and for each file knoller's fixers do not settle (`unsettledOf`). `context`
-  ##   carries what tree tells fixers across modules (`contextOf`), and answers of parser; each
-  ##   source chain asks and no answer holds is in `asked`, source as given too where fence
-  ##   holds lines, since its warning reads it.
+  ##   (`checkFenceHeld`), and for each file knoller's fixers do not settle (`unsettledOf`).
+  ##   `context` carries what tree tells fixers across modules (`contextOf`), and answers of
+  ##   parser; each source chain asks and no answer holds is in `asked`, source as given too
+  ##   where fence holds lines, since its warning reads it.
   ##   Where any path to write lies outside branch scope, nothing is written or reported fixed.
   scoped(branch, entries.mapIt(it.partOf(locked, context)))
 
@@ -378,7 +378,7 @@ func pinFor(tree: Tree, path: string): string =
 
 
 proc answered*(
-  context: var Context; tree: Tree; asked: openArray[(string, string)]; provers: ProverOf
+  context: var Context; tree: Tree; asked: openArray[(string, string)]; provers: ProversPin
 ): seq[string] =
   ## Ask parser of each pin what `asked` holds and no answer holds yet, one run for each pin on
   ##   all its sources, and hold answers by path; return why each run proved nothing, empty
@@ -418,7 +418,7 @@ proc fixProven*(
   entries: openArray[Entry];
   locked: openArray[string];
   context: Context;
-  provers: ProverOf,
+  provers: ProversPin,
 ): tuple[fix: Fixed, failures: seq[string]] =
   ## Fix entries as `fixEntries` does, ask parser of each pin what fix asked, and fix again, at
   ##   most `ASKS_MAX` times; each run that proved nothing gives one failure, for warning, led

@@ -30,7 +30,7 @@ func splitTop(text: string): seq[string] =
   result.add text[start .. ^1]
 
 
-func pathsOf(statement: string): seq[string] =
+func paths(statement: string): seq[string] =
   ## Read each module path one import statement names, bracket group expanded, pragma dropped.
   var text = statement
   while "{." in text:
@@ -75,7 +75,7 @@ func pathsImported(source: string): seq[string] =
       statement = text
       depth = text.count('[') - text.count(']')
     if depth > 0: continue
-    result.add statement.pathsOf
+    result.add statement.paths
     statement = ""
 
 

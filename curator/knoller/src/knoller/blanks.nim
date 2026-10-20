@@ -59,7 +59,7 @@ const
     ## Keywords declaring routine.
 
 
-func viewOf(source: string): View =
+func toView(source: string): View =
   ## Read source once for every rule here.
   result = View(
     lines: source.split('\n'),
@@ -108,7 +108,7 @@ func runBefore(v: View, i: int): tuple[first, count, upper: int] =
   ##   indent; `upper` is text line above run, `-1` where none.
   var anchor = i
   while anchor > 0 and v.isComment(anchor - 1) and
-      v.lines[anchor - 1].indentOf == v.lines[i].indentOf:
+      v.lines[anchor - 1].indentWidth == v.lines[i].indentWidth:
     dec anchor
   var upper = anchor - 1
   while upper >= 0 and not v.isText(upper): dec upper
@@ -120,27 +120,27 @@ func isOpenerAbove(v: View; upper, i: int): bool =
   ##   opens block holding line `i`.
   var k = upper
   while k >= 0 and not v.isCode(k) and v.isText(k): dec k
-  k >= 0 and v.isCode(k) and v.code[k].indentOf < v.code[i].indentOf
+  k >= 0 and v.isCode(k) and v.code[k].indentWidth < v.code[i].indentWidth
 
 
-func ownerOf(v: View, i: int): int =
+func owner(v: View, i: int): int =
   ## Find line routine opens on whose body holds line `i` at its own level; `-1` where none.
   ##   Body opens after `=` closing signature: on routine's line, or on line `)` opens.
-  let indent = v.code[i].indentOf
+  let indent = v.code[i].indentWidth
   var parent = i - 1
-  while parent >= 0 and (not v.isCode(parent) or v.code[parent].indentOf >= indent):
+  while parent >= 0 and (not v.isCode(parent) or v.code[parent].indentWidth >= indent):
     dec parent
   if parent < 0 or not v.code[parent].strip.endsWith("="): return -1
   var signature = parent
   if v.code[parent].strip.startsWith(")"):
     signature = parent - 1
     while signature >= 0 and
-        (not v.isCode(signature) or v.code[signature].indentOf > v.code[parent].indentOf):
+        (not v.isCode(signature) or v.code[signature].indentWidth > v.code[parent].indentWidth):
       dec signature
   if signature >= 0 and v.code[signature].wordFirst in KEYWORDS_ROUTINE: signature else: -1
 
 
-func lastOf(v: View, i: int): int =
+func lineLast(v: View, i: int): int =
   ## Find last line of routine declared on line `i`: brackets it opens, lines deeper than it,
   ##   and lines inside its strings and comments.
   result = i
@@ -149,7 +149,7 @@ func lastOf(v: View, i: int): int =
     j = i
   while j < v.lines.len:
     let is_held = j == i or depth > 0 or v.inside[j] or
-      (v.isText(j) and v.lines[j].indentOf > v.code[i].indentOf)
+      (v.isText(j) and v.lines[j].indentWidth > v.code[i].indentWidth)
     if v.isText(j) and not is_held: break
     if is_held:
       result = j
@@ -172,13 +172,13 @@ func isHeadRoutine(v: View, i: int): bool =
 func isOneLine(v: View; i, indent: int): bool =
   ## Decide whether line `i` declares, at indent, routine whose definition stands on that line
   ##   alone: `{.borrow.}` with no body, or body on line of its signature, no doc after it.
-  v.isHeadRoutine(i) and v.code[i].indentOf == indent and v.lastOf(i) == i
+  v.isHeadRoutine(i) and v.code[i].indentWidth == indent and v.lineLast(i) == i
 
 
 func runs(path, source: string): seq[Run] =
   ## Find each run of blank lines beside suite, test or nested helper whose count breaks rule.
   let
-    v = source.viewOf
+    v = source.toView
     is_file_test = path.isFileTest
   var found: seq[Run]
   for i in 0 ..< v.lines.len:
@@ -192,13 +192,13 @@ func runs(path, source: string): seq[Run] =
       if v.isBanner(upper): target = Target.Banner
       elif v.isOpenerAbove(upper, i): target = Target.Child
       found.add Run(first: first, count: count, target: target, line: i)
-    elif v.isHeadRoutine(i) and v.code[i].indentOf > 0 and v.ownerOf(i) >= 0:
-      let last = v.lastOf(i)
+    elif v.isHeadRoutine(i) and v.code[i].indentWidth > 0 and v.owner(i) >= 0:
+      let last = v.lineLast(i)
       if word == "template" and last == i: continue
 
       # One-line routine stacks after owner's head, its doc or another one; others take one.
       let
-        indent = v.code[i].indentOf
+        indent = v.code[i].indentWidth
         is_one_line = last == i
         (first, count, upper) = v.runBefore(i)
       if upper >= 0:
@@ -208,9 +208,9 @@ func runs(path, source: string): seq[Run] =
         found.add Run(first: first, count: count, target: target, line: i)
       var next = last + 1
       while next < v.lines.len and not v.isText(next): inc next
-      if next < v.lines.len and v.lines[next].indentOf >= indent:
+      if next < v.lines.len and v.lines[next].indentWidth >= indent:
         var named = next  # Code line run stands before, past `#` comments at helper's indent.
-        while named < v.lines.len and v.isComment(named) and v.lines[named].indentOf == indent:
+        while named < v.lines.len and v.isComment(named) and v.lines[named].indentWidth == indent:
           inc named
         let
           is_stacked = is_one_line and named < v.lines.len and v.isOneLine(named, indent)
