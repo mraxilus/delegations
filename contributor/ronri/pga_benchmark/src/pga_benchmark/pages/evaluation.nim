@@ -20,7 +20,7 @@
 ##     beside figures it qualifies.
 ##
 ##   Cost: measurand counts as touched where its library function moved; measurand served by
-##     composition of several functions is left out, as `timesOf` leaves it out of median.
+##     composition of several functions is left out, as `pairTimes` leaves it out of median.
 ##   Cost: diff takes table of common lengths over lines between shared head and tail, so whole-
 ##     file replacement of about thousand changed lines holds about million counts while page
 ##     builds.
@@ -68,7 +68,7 @@ func touched*(
     if changed.hasKey(measurand{"library"}.getStr): result.add id
 
 
-func spreadOf*(evaluations: openArray[JsonNode]): Spread =
+func spread*(evaluations: openArray[JsonNode]): Spread =
   ## Read spread from evaluations that change no library function at any algebra.
   var ratios: seq[float]
   for evaluation in evaluations:
@@ -247,7 +247,7 @@ func htmlEvidence*(
     if now == 0: return (pow(2.0, float(exponent_low)), grouped(was) & " → 0", tip)
     (now / was, textRatio(now / was), tip)
 
-  func titleOf(algebra: string): string =
+  func titleAlgebra(algebra: string): string =
     ## Title algebra, as `Conformal 5D` for `cga5d`.
     (if algebra.startsWith("cga"): "Conformal " else: "Rigid ") & algebra[3 .. ^1].toUpperAscii
 
@@ -263,8 +263,8 @@ func htmlEvidence*(
     var facts = @["suites " & textSuites(evaluation, algebra), $moved.len & " functions moved"]
     if gone > 0: facts.add "NaN gone in " & $gone
     if came > 0: facts.add "NaN new in " & $came
-    result.add "<div class=\"evidence-algebra\"><p class=\"caption\"><strong>" & titleOf(algebra) &
-        "</strong> · " & facts.join(" · ") & "</p>"
+    result.add "<div class=\"evidence-algebra\"><p class=\"caption\"><strong>" &
+        titleAlgebra(algebra) & "</strong> · " & facts.join(" · ") & "</p>"
 
     # One row per function moved that serves operations, kept where any count or time moved.
     var functions: OrderedTable[string, seq[string]]  # Function, operations it serves.
@@ -320,7 +320,7 @@ func diffLines(before, after: seq[string]; first_before, first_after: int): seq[
   ## Diff lines through longest common subsequence; removal stands before addition it pairs with.
   ##   `first_before` and `first_after` number first line of each side; zero leaves side bare.
 
-  func numberOf(first, index: int): int =
+  func lineNumber(first, index: int): int =
     ## Number line `index` of side opening at `first`; zero where side is bare.
     if first > 0: first + index else: 0
 
@@ -347,8 +347,8 @@ func diffLines(before, after: seq[string]; first_before, first_after: int): seq[
     result.add LineDiffed(
       kind: KindLine.Kept,
       text: before[index],
-      number_before: numberOf(first_before, index),
-      number_after: numberOf(first_after, index),
+      number_before: lineNumber(first_before, index),
+      number_after: lineNumber(first_after, index),
     )
   var (i, j) = (0, 0)
   while i < count_before or j < count_after:
@@ -356,8 +356,8 @@ func diffLines(before, after: seq[string]; first_before, first_after: int): seq[
       result.add LineDiffed(
         kind: KindLine.Kept,
         text: before[head+i],
-        number_before: numberOf(first_before, head + i),
-        number_after: numberOf(first_after, head + j),
+        number_before: lineNumber(first_before, head + i),
+        number_after: lineNumber(first_after, head + j),
       )
       inc i
       inc j
@@ -366,26 +366,26 @@ func diffLines(before, after: seq[string]; first_before, first_after: int): seq[
       result.add LineDiffed(
         kind: KindLine.Removed,
         text: before[head+i],
-        number_before: numberOf(first_before, head + i),
+        number_before: lineNumber(first_before, head + i),
       )
       inc i
     else:
       result.add LineDiffed(
         kind: KindLine.Added,
         text: after[head+j],
-        number_after: numberOf(first_after, head + j),
+        number_after: lineNumber(first_after, head + j),
       )
       inc j
   for index in 0..<tail:
     result.add LineDiffed(
       kind: KindLine.Kept,
       text: before[before.len-tail+index],
-      number_before: numberOf(first_before, before.len - tail + index),
-      number_after: numberOf(first_after, after.len - tail + index),
+      number_before: lineNumber(first_before, before.len - tail + index),
+      number_after: lineNumber(first_after, after.len - tail + index),
     )
 
 
-func linesOf(text: string): seq[string] =
+func toLines(text: string): seq[string] =
   ## Split text into lines, one closing line break dropped; empty text holds none.
   if text.len == 0: return
   (if text.endsWith("\n"): text[0 .. ^2] else: text).splitLines
@@ -406,7 +406,7 @@ func htmlDiff(lines: seq[LineDiffed], language = ""): string =
   ## Render diff as numbered lines, each unchanged run past context folded to its count.
   ##   Lines of Nim take marks of their tokens, as fenced Nim does.
 
-  func cellOf(number: int): string =
+  func cellLine(number: int): string =
     ## Render line number, or empty cell where side holds no such line.
     "<td class=\"ln\">" & (if number > 0: $number else: "") & "</td>"
 
@@ -435,8 +435,8 @@ func htmlDiff(lines: seq[LineDiffed], language = ""): string =
       of KindLine.Kept: ("kept", " ")
       of KindLine.Removed: ("removed", "-")
       of KindLine.Added: ("added", "+")
-    result.add "<tr class=\"" & row & "\">" & cellOf(lines[index].number_before) &
-        cellOf(lines[index].number_after) & "<td class=\"sign\">" & sign &
+    result.add "<tr class=\"" & row & "\">" & cellLine(lines[index].number_before) &
+        cellLine(lines[index].number_after) & "<td class=\"sign\">" & sign &
         "</td><td class=\"text\">" &
         (if language == "nim": renderNim(lines[index].text) else: escapeHtml(lines[index].text)) &
         "</td></tr>"
@@ -452,7 +452,7 @@ func htmlEdits*(change: Change, files: Table[string, string]): string =
     "converter ", "suite ", "test "]
     ## Words opening declaration whose signature summary shows.
 
-  func indentOf(line: string): int =
+  func spacesLeading(line: string): int =
     ## Count spaces line opens with.
     line.len - line.strip(trailing = false).len
 
@@ -521,11 +521,11 @@ func htmlEdits*(change: Change, files: Table[string, string]): string =
       open_at = -1
     while index < lines.len:
       let line = lines[index]
-      if line.strip.len > 0 and open_at >= 0 and line.indentOf <= open_at: open_at = -1
+      if line.strip.len > 0 and open_at >= 0 and line.spacesLeading <= open_at: open_at = -1
       if line.isDeclaration and open_at < 0:
         let (found, last) = signature(lines, index)
         result.add found
-        open_at = line.indentOf
+        open_at = line.spacesLeading
         index = last
       inc index
 
@@ -536,23 +536,23 @@ func htmlEdits*(change: Change, files: Table[string, string]): string =
     var level = high(int)
     for line in quote.splitLines:
       if line.strip.len > 0:
-        level = line.indentOf
+        level = line.spacesLeading
         break
     var index = at - 2
     while index >= 0 and level > 0:
       let line = lines[index]
-      if line.strip.len > 0 and not line.strip.startsWith("#") and line.indentOf < level:
+      if line.strip.len > 0 and not line.strip.startsWith("#") and line.spacesLeading < level:
         if line.isDeclaration: return some(signature(lines, index)[0])
         if line.strip[0] in {')', ']', '}'}:
           # Header closing at its own indent, as `): untyped =`; its opening line is next above
           #   at same indent.
           var opening = index - 1
           while opening >= 0 and
-              (lines[opening].strip.len == 0 or lines[opening].indentOf > line.indentOf):
+              (lines[opening].strip.len == 0 or lines[opening].spacesLeading > line.spacesLeading):
             dec opening
           if opening >= 0 and lines[opening].isDeclaration:
             return some(signature(lines, opening)[0])
-        level = line.indentOf
+        level = line.spacesLeading
       dec index
     none(string)
 
@@ -576,12 +576,12 @@ func htmlEdits*(change: Change, files: Table[string, string]): string =
     var lines: seq[LineDiffed]
     case edit.kind
     of KindEdit.Add:
-      lines = diffLines(@[], linesOf(edit.replacement), 0, 1)
+      lines = diffLines(@[], toLines(edit.replacement), 0, 1)
       sections.add "<details class=\"edit\" open><summary><span class=\"where\">adds " &
           code(edit.path) & " · " & textCounts(lines) & "</span>" &
           htmlSignatures("defines", declared(edit.replacement)) & "</summary>"
     of KindEdit.Replace:
-      lines = diffLines(linesOf(before), linesOf(edit.replacement), 1, 1)
+      lines = diffLines(toLines(before), toLines(edit.replacement), 1, 1)
       let changed = block:  # Signatures absent from file it replaces: new or changed.
         let kept = declared(before)
         declared(edit.replacement).filterIt(it notin kept)
@@ -590,7 +590,7 @@ func htmlEdits*(change: Change, files: Table[string, string]): string =
           textCounts(lines) & "</span>" & htmlSignatures("defines", changed) & "</summary>"
     of KindEdit.Quote:
       let
-        at = if is_applied: before.lineOf(edit.quote) else: 0
+        at = if is_applied: before.lineQuoted(edit.quote) else: 0
         where = if at > 0: edit.path & ":" & $at else: edit.path  # quote gone from file
         defined = declared(edit.replacement)
         context =
@@ -598,7 +598,7 @@ func htmlEdits*(change: Change, files: Table[string, string]): string =
           else:
             let inside = enclosing(before, edit.quote, at)
             if inside.isSome: htmlSignatures("inside", [inside.get]) else: ""
-      lines = diffLines(linesOf(edit.quote), linesOf(edit.replacement), at, at)
+      lines = diffLines(toLines(edit.quote), toLines(edit.replacement), at, at)
       sections.add "<details class=\"edit\" open><summary><span class=\"where\">" & code(where) &
           " · " & textCounts(lines) & "</span>" & context & "</summary>"
     sections[^1].add htmlDiff(lines) & "</details>"
@@ -624,10 +624,10 @@ func htmlCode*(change: Change, files: Table[string, string]): string =
 
   for path in paths:
     let
-      lines_before = linesOf(files.getOrDefault(path))
-      lines_after = linesOf(after.getOrDefault(path))
-      before = definitionsOf(lines_before)
-      later = definitionsOf(lines_after)
+      lines_before = toLines(files.getOrDefault(path))
+      lines_after = toLines(after.getOrDefault(path))
+      before = splitDefinitions(lines_before)
+      later = splitDefinitions(lines_after)
       status =
         if path notin files: "added"
         elif change.edits.anyIt(it.path == path and it.kind == KindEdit.Replace): "replaced"

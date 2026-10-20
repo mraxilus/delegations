@@ -48,7 +48,7 @@ func htmlBlocks(
 ): string =
   ## Render blocks of argument, each figure paragraph as SVG it names where page holds it.
   for node in nodes:
-    let figure = node.figureOf(directory)
+    let figure = node.figure(directory)
     if figure.isSome and figure.get.path in figures:
       result.add "<figure class=\"figure\"><div class=\"figure-art\">" &
           figures[figure.get.path] & "</div><figcaption>" & renderInline(figure.get.caption) &
@@ -79,9 +79,9 @@ func htmlDependencies*(
   for base in proposals:
     if base.name in proposal.builds_on and base.isImplemented:
       needs.add named(base, @[], urls) & " (implemented)"
-  for base in dependenciesOf(proposals, proposal)[0]:
+  for base in dependencies(proposals, proposal)[0]:
     needs.add named(base, basesToward(proposals, proposal, base), urls)
-  for dependent in dependentsOf(proposals, proposal):
+  for dependent in dependents(proposals, proposal):
     blocks.add named(dependent, basesToward(proposals, dependent, proposal), urls)
   "<dl class=\"depends\"><div><dt>Depends on</dt><dd>" & htmlItems(needs) &
       "</dd></div><div><dt>Blocks if rejected</dt><dd>" & htmlItems(blocks) & "</dd></div></dl>"
@@ -178,7 +178,7 @@ func htmlProposal*(
     if node.kind == KindBlock.Heading and node.level == 2: sections.add (node.lines[0], @[])
     elif sections.len > 0: sections[^1][1].add node
 
-  func blocksOf(sections: seq[(string, seq[Block])], name: string): seq[Block] =
+  func blocks(sections: seq[(string, seq[Block])], name: string): seq[Block] =
     ## Get blocks of section of name; none where argument lacks it.
     for (heading, nodes) in sections:
       if heading == name: return nodes
@@ -227,30 +227,30 @@ func htmlProposal*(
     of "Evidence":
       result.add "<" & part & ">Claims</" & part & ">" & htmlClaims(evaluation) & "<" & part &
           ">Gains and losses at pin</" & part & ">"
-      let bases = dependenciesOf(proposals, proposal)[0]
+      let bases = dependencies(proposals, proposal)[0]
       if bases.len > 0 and not evaluation.isNil:
         result.add "<p class=\"note\">Proposal is measured with " &
             bases.mapIt(citeLinked(it, urls)).join(", ") & " applied first, so its figures " &
             "hold their gains too.</p>"
       result.add htmlEvidence(evaluation, baselines, spread)
-      let notes = sections.blocksOf(name)
+      let notes = sections.blocks(name)
       if notes.len > 0:
         result.add "<" & part & ">Notes</" & part & ">" &
             htmlBlocks(notes, proposal.directory, figures, level)
     of "Code":
-      let landing = sections.blocksOf("Landing")
+      let landing = sections.blocks("Landing")
       if landing.len > 0:
         result.add "<" & part & ">How it lands</" & part & ">" &
             htmlBlocks(landing, proposal.directory, figures, level)
       if proposal.change.edits.len > 0:
         var based = files
-        for base in dependenciesOf(proposals, proposal)[0]:
+        for base in dependencies(proposals, proposal)[0]:
           discard applyChange(based, base.change, base.directory)  # Misfit is `drive`'s finding.
         result.add "<" & part & ">Files</" & part & ">" & htmlCode(proposal.change, based)
       else:
         result.add "<p class=\"note\">Proposal carries no change.</p>"
     else:
-      result.add htmlBlocks(sections.blocksOf(name), proposal.directory, figures, level)
+      result.add htmlBlocks(sections.blocks(name), proposal.directory, figures, level)
     result.add "</section>"
 
   # Section outside standard set stays on page, after it, and `drive` names it.

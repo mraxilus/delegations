@@ -185,8 +185,8 @@ suite "Internal: Modifiers":
     for what in Blocker:
       check around(what, Level.Above).isNone
     for twist in -6..6:
-      check blockerOf(twist, Level.Above).isNone
-      check armCapacity(blockerOf(twist, Level.Above), Level.Above) ==
+      check blockerArm(twist, Level.Above).isNone
+      check armCapacity(blockerArm(twist, Level.Above), Level.Above) ==
           UNBOUNDED_TURNS
     check not IS_ABOVE_BLOCKING
 
@@ -220,7 +220,7 @@ suite "Internal: What there is":
     # other leave couple in same frame state.  So half of workbook's
     # twelve sheets are other half read backwards.
     for stood in frameStates():
-      let offers = turnsOf(stood)
+      let offers = turnsOffered(stood)
       check offers.len == 12
       var landings: seq[FrameState] = @[]
       for offer in offers:
@@ -235,7 +235,7 @@ suite "Internal: What there is":
 
   test "a turn is offered exactly when it is not refused":
     for stood in frameStates():
-      for offer in turnsOf(stood):
+      for offer in turnsOffered(stood):
         let taken = stood.turn(rotates(offer.who, offer.amount))
         check taken.isSome == offer.refused.isNone
         if offer.refused.isNone:
@@ -244,7 +244,7 @@ suite "Internal: What there is":
 
   test "a refusal names the block that refuses, and the hold comes first":
     for stood in frameStates():
-      for offer in turnsOf(stood):
+      for offer in turnsOffered(stood):
         if offer.refused.isNone:
           continue
         let over = offer.to.twist
@@ -262,13 +262,13 @@ suite "Internal: What there is":
     # turn is never refused by hold before arm has already had its say.
     let low = fromKey("l-.").get.rest
     var arm_first = 0
-    for offer in turnsOf(low):
+    for offer in turnsOffered(low):
       if offer.refused == some(Refusal.Arm):
         inc arm_first
     check arm_first == 0
     # Because arm's block is not refusal here -- it is what makes full
     # turn into lock.  What refuses is hold, at one-and-a-half.
-    for offer in turnsOf(low):
+    for offer in turnsOffered(low):
       if abs(offer.to.twist) == 3:
         check offer.refused == some(Refusal.Hold)
 

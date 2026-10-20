@@ -1,13 +1,13 @@
 ## Carry typed reference objects into library's dense multivector and back.
 ##   Suites compare both implementations through these images: reference result embedded must equal
 ##   library result on embedded operands. Extraction under `-d:testing` asserts every
-##   component outside object's slots is zero, so library result of wrong grade fails
+##   component outside object's bases is zero, so library result of wrong grade fails
 ##   loudly rather than silently losing components.
-##   Slots follow library's `Basis` enum for this algebra, listed in header table of its
+##   Indexes follow library's `Basis` enum for this algebra, listed in header table of its
 ##   reference module; algebra without typed reference exports scalar images alone.
 ##
 ##   Cost: images are built component by component through library's accessor, i.e. one
-##     store per slot plus zero fill of rest; suites only, never on timed path.
+##     store per coefficient plus zero fill of rest; suites only, never on timed path.
 
 {.experimental: "strictFuncs".}
 
@@ -39,13 +39,13 @@ when IS_CONFORMAL and DIMENSIONS == 4:
 export scalars
 
 
-func only(m: Multivector, slots: set[Basis]) =
-  ## Assert, under `-d:testing`, that components outside slots are zero within tolerance.
+func only(m: Multivector, bases: set[Basis]) =
+  ## Assert, under `-d:testing`, that components outside bases are zero within tolerance.
   when defined(testing):
     for b in Basis:
-      if b notin slots:
+      if b notin bases:
         doAssert abs(m[b]) <= TOLERANCE_ABS,
-          "Component outside object's slots; got `" & $m & "` at `" & $b & "`."
+          "Component outside object's bases; got `" & $m & "` at `" & $b & "`."
 
 
 func widen*(s: float): Multivector =
@@ -53,7 +53,8 @@ func widen*(s: float): Multivector =
   result[Basis.scalar] = s
 
 func widen*[B: static Bases](m: MultivectorOf[B]): Multivector =
-  ## Embed multivector over any bases into full one, slot for slot; full one passes as it is.
+  ## Embed multivector over any bases into full one, coefficient for coefficient; full one passes as
+  ## it is.
   for b in B: result[b] = m[b]
 
 func toScalar*(m: Multivector): float =
@@ -95,7 +96,7 @@ when IS_RIGID and DIMENSIONS == 4:
     result[Basis.E12] = l.m.z
 
   func toLine*(m: Multivector): Line =
-    ## Extract line from grade-2 slots.
+    ## Extract line from grade-2 coefficients.
     m.only({Basis.E41, Basis.E42, Basis.E43, Basis.E23, Basis.E31, Basis.E12})
     Line(
       v: Vector3(x: m[Basis.E41], y: m[Basis.E42], z: m[Basis.E43]),
@@ -110,12 +111,12 @@ when IS_RIGID and DIMENSIONS == 4:
     result[Basis.E321] = g.w
 
   func toPlane*(m: Multivector): Plane =
-    ## Extract plane from grade-3 slots.
+    ## Extract plane from grade-3 coefficients.
     m.only({Basis.E423, Basis.E431, Basis.E412, Basis.E321})
     Plane(x: m[Basis.E423], y: m[Basis.E431], z: m[Basis.E412], w: m[Basis.E321])
 
   func widen*(q: Motor): Multivector =
-    ## Embed motor into grade-2 slots, 𝟙 and 𝟏.
+    ## Embed motor into grade-2 coefficients, 𝟙 and 𝟏.
     result[Basis.E41] = q.v.x
     result[Basis.E42] = q.v.y
     result[Basis.E43] = q.v.z
@@ -126,7 +127,7 @@ when IS_RIGID and DIMENSIONS == 4:
     result[Basis.scalar] = q.mw
 
   func toMotor*(m: Multivector): Motor =
-    ## Extract motor from even-grade slots.
+    ## Extract motor from even-grade coefficients.
     m.only(
       {
         Basis.E41, Basis.E42, Basis.E43, Basis.E23, Basis.E31, Basis.E12, Basis.scalarAnti,
@@ -151,7 +152,7 @@ when IS_CONFORMAL and DIMENSIONS == 5:
     result[Basis.E5] = a.u
 
   func toPointRound*(m: Multivector): PointRound =
-    ## Extract round point from grade-1 slots.
+    ## Extract round point from grade-1 coefficients.
     m.only({Basis.E1, Basis.E2, Basis.E3, Basis.E4, Basis.E5})
     PointRound(x: m[Basis.E1], y: m[Basis.E2], z: m[Basis.E3], w: m[Basis.E4], u: m[Basis.E5])
 
@@ -163,7 +164,7 @@ when IS_CONFORMAL and DIMENSIONS == 5:
     result[Basis.E45] = p.w
 
   func widen*(d: Dipole): Multivector =
-    ## Embed dipole into grade-2 slots.
+    ## Embed dipole into grade-2 coefficients.
     result[Basis.E41] = d.v.x
     result[Basis.E42] = d.v.y
     result[Basis.E43] = d.v.z
@@ -176,7 +177,7 @@ when IS_CONFORMAL and DIMENSIONS == 5:
     result[Basis.E45] = d.p.w
 
   func toDipole*(m: Multivector): Dipole =
-    ## Extract dipole from grade-2 slots.
+    ## Extract dipole from grade-2 coefficients.
     m.only(
       {
         Basis.E41, Basis.E42, Basis.E43, Basis.E23, Basis.E31, Basis.E12, Basis.E15, Basis.E25,
@@ -199,7 +200,7 @@ when IS_CONFORMAL and DIMENSIONS == 5:
     result[Basis.E125] = l.m.z
 
   func widen*(c: Circle): Multivector =
-    ## Embed circle into grade-3 slots.
+    ## Embed circle into grade-3 coefficients.
     result[Basis.E423] = c.g.x
     result[Basis.E431] = c.g.y
     result[Basis.E412] = c.g.z
@@ -212,7 +213,7 @@ when IS_CONFORMAL and DIMENSIONS == 5:
     result[Basis.E125] = c.m.z
 
   func toCircle*(m: Multivector): Circle =
-    ## Extract circle from grade-3 slots.
+    ## Extract circle from grade-3 coefficients.
     m.only(
       {
         Basis.E423, Basis.E431, Basis.E412, Basis.E321, Basis.E415, Basis.E425, Basis.E435,
@@ -233,7 +234,7 @@ when IS_CONFORMAL and DIMENSIONS == 5:
     result[Basis.E3215] = g.w
 
   func widen*(s: Sphere): Multivector =
-    ## Embed sphere into grade-4 slots.
+    ## Embed sphere into grade-4 coefficients.
     result[Basis.E1234] = s.u
     result[Basis.E4235] = s.x
     result[Basis.E4315] = s.y
@@ -241,7 +242,7 @@ when IS_CONFORMAL and DIMENSIONS == 5:
     result[Basis.E3215] = s.w
 
   func toSphere*(m: Multivector): Sphere =
-    ## Extract sphere from grade-4 slots.
+    ## Extract sphere from grade-4 coefficients.
     m.only({Basis.E1234, Basis.E4235, Basis.E4315, Basis.E4125, Basis.E3215})
     Sphere(
       u: m[Basis.E1234],
@@ -260,7 +261,7 @@ when IS_RIGID and DIMENSIONS == 3:
     result[Basis.E3] = p.w
 
   func toPoint*(m: Multivector): Point =
-    ## Extract point from grade-1 slots.
+    ## Extract point from grade-1 coefficients.
     m.only({Basis.E1, Basis.E2, Basis.E3})
     Point(x: m[Basis.E1], y: m[Basis.E2], w: m[Basis.E3])
 
@@ -271,19 +272,19 @@ when IS_RIGID and DIMENSIONS == 3:
     result[Basis.E12] = g.w
 
   func toLine*(m: Multivector): Line =
-    ## Extract line from grade-2 slots.
+    ## Extract line from grade-2 coefficients.
     m.only({Basis.E23, Basis.E31, Basis.E12})
     Line(x: m[Basis.E23], y: m[Basis.E31], w: m[Basis.E12])
 
   func widen*(q: Motor): Multivector =
-    ## Embed motor into grade-1 slots and 𝟙.
+    ## Embed motor into grade-1 coefficients and 𝟙.
     result[Basis.E1] = q.x
     result[Basis.E2] = q.y
     result[Basis.E3] = q.z
     result[Basis.scalarAnti] = q.w
 
   func toMotor*(m: Multivector): Motor =
-    ## Extract motor from antieven slots.
+    ## Extract motor from antieven coefficients.
     m.only({Basis.E1, Basis.E2, Basis.E3, Basis.scalarAnti})
     Motor(x: m[Basis.E1], y: m[Basis.E2], z: m[Basis.E3], w: m[Basis.scalarAnti])
 
@@ -297,7 +298,7 @@ when IS_CONFORMAL and DIMENSIONS == 4:
     result[Basis.E4] = a.u
 
   func toPointRound*(m: Multivector): PointRound =
-    ## Extract round point from grade-1 slots.
+    ## Extract round point from grade-1 coefficients.
     m.only({Basis.E1, Basis.E2, Basis.E3, Basis.E4})
     PointRound(x: m[Basis.E1], y: m[Basis.E2], w: m[Basis.E3], u: m[Basis.E4])
 
@@ -308,7 +309,7 @@ when IS_CONFORMAL and DIMENSIONS == 4:
     result[Basis.E43] = p.w
 
   func widen*(d: Dipole): Multivector =
-    ## Embed dipole into grade-2 slots.
+    ## Embed dipole into grade-2 coefficients.
     result[Basis.E23] = d.g.x
     result[Basis.E31] = d.g.y
     result[Basis.E12] = d.g.w
@@ -317,7 +318,7 @@ when IS_CONFORMAL and DIMENSIONS == 4:
     result[Basis.E43] = d.p.w
 
   func toDipole*(m: Multivector): Dipole =
-    ## Extract dipole from grade-2 slots.
+    ## Extract dipole from grade-2 coefficients.
     m.only({Basis.E23, Basis.E31, Basis.E12, Basis.E41, Basis.E42, Basis.E43})
     Dipole(
       g: LineCarrier(x: m[Basis.E23], y: m[Basis.E31], w: m[Basis.E12]),
@@ -331,13 +332,13 @@ when IS_CONFORMAL and DIMENSIONS == 4:
     result[Basis.E412] = l.w
 
   func widen*(c: Circle): Multivector =
-    ## Embed circle into grade-3 slots.
+    ## Embed circle into grade-3 coefficients.
     result[Basis.E321] = c.u
     result[Basis.E423] = c.x
     result[Basis.E431] = c.y
     result[Basis.E412] = c.w
 
   func toCircle*(m: Multivector): Circle =
-    ## Extract circle from grade-3 slots.
+    ## Extract circle from grade-3 coefficients.
     m.only({Basis.E321, Basis.E423, Basis.E431, Basis.E412})
     Circle(u: m[Basis.E321], x: m[Basis.E423], y: m[Basis.E431], w: m[Basis.E412])

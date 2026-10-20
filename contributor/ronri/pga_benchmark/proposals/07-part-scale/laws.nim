@@ -22,8 +22,8 @@
 ##   Rigid scene sits at distance from origin: each coordinate and translation is Gaussian, with
 ##     deviation distance / sqrt(3). Population scene draws each coordinate with deviation of its
 ##     row, so its points lie about that deviation times square root of coordinate count away.
-##   Helpers `largest`, `partOf` and `unitizeAntidot` serve as P11's `laws.nim` ones do; here
-##     `partOf` returns index of part, and RGA uses two. Proposal does not build on P11.
+##   Helpers `largest`, `part` and `unitizeAntidot` serve as P11's `laws.nim` ones do; here
+##     `part` returns index of part, and RGA uses two. Proposal does not build on P11.
 ##   Rigid helpers `moved`, `sampleCoordinate`, `sampleDirection`, `samplePlane` and `sampleMotor`
 ##     mirror those of P06's `noise.nim`, and `noisePin` mirrors `noise` there; fix to one reaches
 ##     each. Here `samplePoint` takes deviation of each coordinate, so rigid laws pass distance /
@@ -95,7 +95,7 @@ func isReadable(m: Multivector): bool =
   m.largest > 0
 
 
-func partOf(b: Basis): int =
+func part(b: Basis): int =
   ## Get part of basis, as `CAYLEYS_PARTS` splits it: by origin it holds, and in CGA by infinity.
   let has_origin = (initElement(b) ∧ initElement(Basis.origin)).largest == 0
   when IS_CONFORMAL:
@@ -216,7 +216,7 @@ when IS_RIGID and DIMENSIONS == 4:
 
 
   func isPointPin(m: Multivector): bool =
-    ## Tell whether grade of pin would read one: each slot outside point at most tolerance.
+    ## Tell whether grade of pin would read one: each coefficient outside point at most tolerance.
     for basis in Basis:
       if basis notin {Basis.E1, Basis.E2, Basis.E3, Basis.E4} and abs(m[basis]) > TOLERANCE_ABS:
         return false
@@ -411,7 +411,7 @@ proc holdPopulations() =
   var
     parts: array[Basis, int]
     totals: array[Test, int]
-  for b in Basis: parts[b] = b.partOf
+  for b in Basis: parts[b] = b.part
   echo "population: elements read, then misreads of each zero test"
 
   # Tally mixed populations: motion operators and their products; in CGA products of spheres,

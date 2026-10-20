@@ -1,10 +1,10 @@
 # Arithmetic of homogeneous scalars, and the radius norm as their root
 
 At pin, each norm returns `MultivectorScalars`, the pair x𝟏 + y𝟙 of the scalar and the antiscalar,
-and takes a float root of one slot. A new module, `pga/scalars.nim`, gives that pair an inverse, a
-root and an exponential under each product, and a division. Under the conformal metric, the radius
-norm becomes the root of 𝐦 ∘ 𝐦 under the antiproduct. So at cga4d and cga5d an imaginary object
-has an imaginary radius, where pin gives NaN.
+and takes a float root of one coefficient. A new module, `pga/scalars.nim`, gives that pair an
+inverse, a root and an exponential under each product, and a division. Under the conformal metric,
+the radius norm becomes the root of 𝐦 ∘ 𝐦 under the antiproduct. So at cga4d and cga5d an imaginary
+object has an imaginary radius, where pin gives NaN.
 
 ## Add `pga/scalars.nim`
 

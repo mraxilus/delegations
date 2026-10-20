@@ -67,7 +67,7 @@ const
     ## Code, data and figures, with Noto Sans Math for `⇄`, which Commit Mono lacks.
 
 
-func formatOf*(file: string): tuple[media, format: string] =
+func formatDeclared*(file: string): tuple[media, format: string] =
   ## Media type and CSS format that face `file` declares, read off its extension.
   ##   Raises for kind no row names, rather than declare bytes browser cannot read.
   for (extension, media, format) in LUT_FORMAT_BY_EXTENSION:
@@ -89,7 +89,7 @@ proc faceStyle*(directory = DIRECTORY_FONTS): string =
         "Face is absent, so page would name one reader may lack; run " &
         "`nim r tools/build.nim assets`: got `" & path & "`.",
       )
-    let (media, format) = formatOf(file)
+    let (media, format) = formatDeclared(file)
     rules.add "@font-face{font-family:\"" & family & "\";font-style:" & style &
         ";font-weight:" & weight & ";font-display:block;src:url(data:" & media & ";base64," &
         encode(readFile(path)) & ") format(\"" & format & "\")}"

@@ -71,14 +71,14 @@ type
   Bounds* = tuple[x, y, width, height: int]  ## Room something takes up in drawing.
 
 
-func rowOf(target: Frame): int = target.countHolds
+func rowFrame(target: Frame): int = target.countHolds
   ## Get row that frame is drawn in.
 
 
 func towerOrder*(): seq[Frame] =
   ## Get every frame in order tower stacks them, top row first.
   ##   Here rather than where it is read, because where frame goes is what
-  ##     this module already decides, for `NODE_ORDER` and `rowOf` alike.
+  ##     this module already decides, for `NODE_ORDER` and `rowFrame` alike.
   ##   Anything else that puts frames in order -- matrix orders both
   ##     its axes down tower, so that reading it and reading map are
   ##     same reading -- takes order from here and cannot drift from
@@ -86,17 +86,17 @@ func towerOrder*(): seq[Frame] =
   for row in countdown(ROW_Y.high, 0):
     for key in NODE_ORDER:
       let candidate = fromKey(key)
-      if candidate.isSome and rowOf(candidate.get) == row:
+      if candidate.isSome and rowFrame(candidate.get) == row:
         result.add candidate.get
 
 
-func placeOf(target: Frame): int =
+func place(target: Frame): int =
   ## Get position of frame along its row, counting from left.
   for key in NODE_ORDER:
     let candidate = fromKey(key)
     if candidate.isNone or candidate.get == target:
       break
-    if rowOf(candidate.get) == rowOf(target):
+    if rowFrame(candidate.get) == rowFrame(target):
       inc result
 
 
@@ -104,17 +104,17 @@ func rowSize(row: int): int =
   ## Count frames drawn in one row.
   for key in NODE_ORDER:
     let candidate = fromKey(key)
-    if candidate.isSome and rowOf(candidate.get) == row:
+    if candidate.isSome and rowFrame(candidate.get) == row:
       inc result
 
 
-func centreOf*(target: Frame): (int, int) =
+func centreFrame*(target: Frame): (int, int) =
   ## Get middle of place frame is drawn in.
   let
     span = MAP_WIDTH - 2 * MARGIN
-    size = rowSize(rowOf(target))
+    size = rowSize(rowFrame(target))
     step = span div size
-  (MARGIN + step * placeOf(target) + step div 2, ROW_Y[rowOf(target)])
+  (MARGIN + step * place(target) + step div 2, ROW_Y[rowFrame(target)])
 
 
 
@@ -261,7 +261,7 @@ func frameBounds*(): seq[Bounds] =
   ##     as it is.
   for target in FRAMES:
     let
-      (centre_x, centre_y) = centreOf(target)
+      (centre_x, centre_y) = centreFrame(target)
       height = frameHeight(NODE_WIDTH)
     result.add (centre_x - NODE_WIDTH div 2 - 8, centre_y - height div 2 - 6,
       NODE_WIDTH + 16, height + 12)
@@ -395,8 +395,8 @@ func edge(
   ##     that runs up page.  Naming those too is what lets map be
   ##     read as map rather than only from where you happen to be.
   let
-    (start_x, start_y) = centreOf(a)
-    (end_x, end_y) = centreOf(b)
+    (start_x, start_y) = centreFrame(a)
+    (end_x, end_y) = centreFrame(b)
     is_lit = standing == some(a) or standing == some(b)
     is_lit_prev = was == some(a) or was == some(b)
     # Line mark is travelling along, while it is travelling along it.
@@ -409,8 +409,8 @@ func edge(
   # read from frame holding less, and where name is *written* is
   # measured from whichever end is higher up drawing.
   let
-    fewer = if rowOf(a) < rowOf(b): a else: b
-    more = if rowOf(a) < rowOf(b): b else: a
+    fewer = if rowFrame(a) < rowFrame(b): a else: b
+    more = if rowFrame(a) < rowFrame(b): b else: a
     # Read from where couple stand if they stand here, and from frame
     # holding less otherwise, so line nobody stands on is named for move
     # that builds rather than one that lets go.
@@ -421,10 +421,10 @@ func edge(
     # Measured from top either way, so that line's name does not jump from
     # one end to other as couple move: what move is called can change
     # under reader, where it is written should not.
-    top = if centreOf(a)[1] <= centreOf(b)[1]: a else: b
+    top = if centreFrame(a)[1] <= centreFrame(b)[1]: a else: b
     bottom = if top == a: b else: a
-    (top_x, top_y) = centreOf(top)
-    (bottom_x, bottom_y) = centreOf(bottom)
+    (top_x, top_y) = centreFrame(top)
+    (bottom_x, bottom_y) = centreFrame(bottom)
   # Name sits along line, wherever along it there is room.
   let (label_x, label_y) = placeLabel(top_x, top_y, bottom_x, bottom_y, naming, used)
   # And where it lands on line, line is *cut* for it rather than
@@ -479,8 +479,8 @@ func arc(
   ## Draw compound move as curve, since no single move joins two frames.
   ##   Ink and name apart, for reason `edge` parts them.
   let
-    (start_x, start_y) = centreOf(a)
-    (end_x, end_y) = centreOf(b)
+    (start_x, start_y) = centreFrame(a)
+    (end_x, end_y) = centreFrame(b)
     middle_x = (start_x + end_x) div 2
     dip = ARC_DIP + (abs(start_x - end_x) div 5)
     is_lit = standing == some(a) or standing == some(b)
@@ -549,7 +549,7 @@ func nodeAt*(target: Frame; centre_x, centre_y, width: int; classes: string; ext
   result.add "</g>"
 
 
-func standingOf(target: Frame, where: Option[Frame]): (bool, bool, bool) =
+func standingFrame(target: Frame, where: Option[Frame]): (bool, bool, bool) =
   ## Get how frame stands to wherever couple are: held, reachable, or two.
   if where.isNone:
     return (false, false, false)
@@ -576,9 +576,9 @@ func markAt*(centre_x, centre_y, width: int; extra = ""): string =
 func node(target: Frame; standing, was: Option[Frame]): string =
   ## Draw one frame in its row, on map of everything.
   let
-    (centre_x, centre_y) = centreOf(target)
-    (is_here, is_reachable, is_compound) = standingOf(target, standing)
-    (is_here_prev, is_reachable_prev, is_compound_prev) = standingOf(target, was)
+    (centre_x, centre_y) = centreFrame(target)
+    (is_here, is_reachable, is_compound) = standingFrame(target, standing)
+    (is_here_prev, is_reachable_prev, is_compound_prev) = standingFrame(target, was)
     is_within = is_here or is_reachable or is_compound
   nodeAt(target, centre_x, centre_y, NODE_WIDTH,
     (if is_here: "here " else: "") & (if is_reachable: "reachable " else: "") &
@@ -678,8 +678,8 @@ func renderMap*(here: Option[Frame], motion = Motion.Still, taken = none(Frame))
     # distance to frame chosen: taking move is mark passing along
     # line between them, which is same thing close drawing says.
     let
-      (here_x, here_y) = centreOf(here.get)
-      (taken_x, taken_y) = if is_leaving: centreOf(taken.get) else: (here_x, here_y)
+      (here_x, here_y) = centreFrame(here.get)
+      (taken_x, taken_y) = if is_leaving: centreFrame(taken.get) else: (here_x, here_y)
     # Placed by where it is rather than moved to it, so that distance it
     # carries is distance to travel and not place to jump to.
     result.add markAt(

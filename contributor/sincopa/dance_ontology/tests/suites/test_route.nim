@@ -54,7 +54,7 @@ func crossedBy(wavelength: float): seq[Point] =
                      y: WAVE_HEIGHT * cos(float(it) * STEP * 2 * PI / wavelength)),
   )
 
-func zerosOf(wavelength: float): int =
+func countZeros(wavelength: float): int =
   ## Count places cosine of this wavelength crosses nought over sampled span.
   ##   Derived from wavelength rather than counted off picture, so law is
   ##     stated against arithmetic and never against what drawing did.
@@ -140,8 +140,8 @@ suite "Internal: Crossings found":
     # within stroke of each other; picture merging them states one
     # over-under where there are two, which is opposite of what rule 14 asks.
     for wavelength in WAVELENGTHS:
-      let met = crossingsOf(LINE_SAMPLED, crossedBy(wavelength))
-      check met.len == zerosOf(wavelength)  # rule 14
+      let met = crossings(LINE_SAMPLED, crossedBy(wavelength))
+      check met.len == countZeros(wavelength)  # rule 14
 
 
   test "one crossing met twice at one spot is reported once":
@@ -149,15 +149,15 @@ suite "Internal: Crossings found":
     # that share it, at same point twice.  That, and only that, is duplicate
     # fold exists to drop, so wave sampled on its own zeros must still count
     # its crossings and no more.
-    let met = crossingsOf(LINE_SAMPLED, crossedBy(ON_ZEROS))
-    check met.len == zerosOf(ON_ZEROS)  # rule 14
+    let met = crossings(LINE_SAMPLED, crossedBy(ON_ZEROS))
+    check met.len == countZeros(ON_ZEROS)  # rule 14
 
 
   test "crossings come out in order along first reach":
     # Which arm dives is alternated from first crossing to last (rule 27),
     # so order is load-bearing and not incidental.
     for wavelength in WAVELENGTHS:
-      let met = crossingsOf(LINE_SAMPLED, crossedBy(wavelength))
+      let met = crossings(LINE_SAMPLED, crossedBy(wavelength))
       for i in 1..<met.len:
         check met[i-1].x < met[i].x  # rule 27
 

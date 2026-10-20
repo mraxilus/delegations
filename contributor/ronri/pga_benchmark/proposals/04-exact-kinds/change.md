@@ -62,8 +62,8 @@ type
 ```nim
 ## Define products of basis-set types, which return exact set of bases they reach.
 ##   Product reads library's whole table over bases of its operands alone, and returns exact
-##     `MultivectorOf` of bases it reaches. So dot of whole multivectors is one slot, and bulk of
-##     bivector is part of its grade. Tables stay whole, so their count grows with no type.
+##     `MultivectorOf` of bases it reaches. So dot of whole multivectors is one coefficient, and
+##     bulk of bivector is part of its grade. Tables stay whole, so their count grows with no type.
 ##   Result spells its set as aliases spell theirs, so it is their type: Nim tells sets apart by
 ##     spelling, and `{Basis.E1..Basis.E4}` is not `Multivector1`.
 ##
@@ -84,7 +84,8 @@ import ./[algebra, cayleys, emitters, multivectors]
 #[ Emission ]#
 
 func emitWrites(sums: array[Basis, seq[NimNode]]): NimNode {.compileTime.} =
-  ## Emit write of each reached slot once; every slot of exact type is reached, so none fills.
+  ## Emit write of each reached coefficient once; every coefficient of exact type is reached, so
+  ## none fills.
 
   func emitSum(terms: seq[NimNode]): NimNode =
     ## Emit sum of terms, left to right.
@@ -163,14 +164,14 @@ func `⟇`*[A, B: static Bases](
 func `∙`*[A, B: static Bases](
   m: MultivectorOf[A], n: MultivectorOf[B]
 ): typeReached(CAYLEYS_DOT.base, A, B) {.noinit.} =
-  ## Multiply through inner product, i.e. 𝐦 ∙ 𝐧; result holds scalar slot alone.
+  ## Multiply through inner product, i.e. 𝐦 ∙ 𝐧; result holds scalar coefficient alone.
   defineProduct(CAYLEYS_DOT.base, A, B)
 
 
 func `∘`*[A, B: static Bases](
   m: MultivectorOf[A], n: MultivectorOf[B]
 ): typeReached(CAYLEYS_DOT.anti, A, B) {.noinit.} =
-  ## Multiply through inner antiproduct, i.e. 𝐦 ∘ 𝐧; result holds antiscalar slot alone.
+  ## Multiply through inner antiproduct, i.e. 𝐦 ∘ 𝐧; result holds antiscalar coefficient alone.
   defineProduct(CAYLEYS_DOT.anti, A, B)
 
 

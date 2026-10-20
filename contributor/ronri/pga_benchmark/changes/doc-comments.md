@@ -365,8 +365,8 @@ type  ## Define type definitions for algebraic distinctions.
 
 ```nim
 ## Operator definitions: one function generated per Cayley table.
-##   Cayley cell (i, j) -> k with sign: product of basis i and j lands in slot k.
-##   Negative sign emits leading `-`; absent cell leaves slot at zero fill.
+##   Cayley cell (i, j) -> k with sign: product of basis i and j lands at index k.
+##   Negative sign emits leading `-`; absent cell leaves its coefficient at zero fill.
 ##   Generated functions take pragma from macro's `emitFunc` call, currently empty.
 ##   Hand-written below generated block: norms, unitize, support, attitude, properties.
 ```

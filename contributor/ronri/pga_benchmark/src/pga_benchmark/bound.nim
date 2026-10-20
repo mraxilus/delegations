@@ -15,7 +15,7 @@
 ##   two vectors off diagonal, so its metric is non-singular and every blade has image.
 ##
 ##   Cost: bound counts arithmetic that survives, and assumes no common subexpression is
-##     shared between result slots. Geometric-algebra products share almost none, so bound
+##     shared between result coefficients. Geometric-algebra products share almost none, so bound
 ##     is tight for products; where factoring would help, true minimum sits below it.
 ##   Cost: bound is derived, never measured, and record says so (Article VIII.1). What it
 ##     bounds is arithmetic and movement, never time.
@@ -37,15 +37,15 @@ type
     Unknown  ## No rule derived yet; bound is absent rather than wrong.
     Wedge  ## Exterior product over dense operands, i.e. terms whose factors are disjoint.
     Geometric  ## Geometric product over dense operands, i.e. terms whose shared factors have image.
-    FormScalar  ## Bilinear form landing in one slot, e.g. inner product.
-    NormSquared  ## Bilinear form of operand with itself, landing in one slot.
+    FormScalar  ## Bilinear form landing in one coefficient, e.g. inner product.
+    NormSquared  ## Bilinear form of operand with itself, landing in one coefficient.
     Norm  ## Squared norm and one root.
-    NormPartSquared  ## Sum of squares of one part's components, landing in one slot.
+    NormPartSquared  ## Sum of squares of one part's components, landing in one coefficient.
     NormPart  ## Squared norm of one part and one root.
-    Componentwise  ## Slot-by-slot sum or difference.
+    Componentwise  ## Coefficient-by-coefficient sum or difference.
     Permutation  ## Sign and reorder only, i.e. no multiply and no add.
-    Scale  ## Every slot times one scalar.
-    Unitize  ## Norm of one part, one reciprocal, every slot scaled by it.
+    Scale  ## Every coefficient times one scalar.
+    Unitize  ## Norm of one part, one reciprocal, every coefficient scaled by it.
     ProductConstant  ## Product against constant carrying one unit component, i.e. signed reads.
     ContractBulk  ## Antiwedge against bulk dual of second operand.
     ContractWeight  ## Antiwedge against weight dual of second operand.
@@ -75,14 +75,14 @@ type
       ## Operands read once, result written once; no fill, no copy, no intermediate.
 
 
-func slots*(m: Metric): int =
+func countCoefficients*(m: Metric): int =
   ## Count components dense multivector carries, i.e. 2 raised to dimensions.
   1 shl m.dimensions
 
 
 func sizeOfMultivector*(m: Metric): int =
   ## Read bytes dense multivector occupies, at eight bytes for each component.
-  8 * m.slots
+  8 * m.countCoefficients
 
 
 func isNull*(m: Metric, index: int): bool =
@@ -117,8 +117,8 @@ func termsGeometric*(m: Metric): int =
 
 
 func termsFormScalar*(m: Metric): int =
-  ## Count terms bilinear form landing in one slot spends, i.e. blades carrying image.
-  for b in 0..<m.slots:
+  ## Count terms bilinear form landing in one coefficient spends, i.e. blades carrying image.
+  for b in 0..<m.countCoefficients:
     if m.isImaged(Blade(b)): inc result
 
 
@@ -150,7 +150,7 @@ func termsPart*(m: Metric): int =
   ##   Rigid part splits by origin; conformal part splits by origin and infinity. Every part
   ##   holds as many blades, since toggling those factors maps one part onto other.
   let excluded = if m.is_conformal: m.origin or m.infinity else: m.origin
-  for b in 0..<m.slots:
+  for b in 0..<m.countCoefficients:
     if (Blade(b) and excluded) == 0: inc result
 
 
@@ -178,7 +178,7 @@ func isWedgeAntiNonzero(m: Metric; a, b: Blade): bool =
   (a or b) == m.bladeFull
 
 
-func imageOf(m: Metric, shape: Shape, s: Blade): Option[Blade] =
+func image(m: Metric, shape: Shape, s: Blade): Option[Blade] =
   ## Read blade maps of compound definition send `s` to, or nothing where product dies.
   case shape
   of Shape.Support:  # 𝐞ₙ ∧ s☆
@@ -210,11 +210,11 @@ func termsCompound*(m: Metric, shape: Shape): int =
   ##   Map step (dual, constant product) is signed read, so table of product against mapped
   ##   operand holds one term for each pair of blades whose product survives, and no more.
   ##   Pairs give distinct products of two components, so count holds under same assumption
-  ##   as primitives: no subexpression shared between slots.
-  for raw in 0..<m.slots:
-    let image = m.imageOf(shape, Blade(raw))
+  ##   as primitives: no subexpression shared between coefficients.
+  for raw in 0..<m.countCoefficients:
+    let image = m.image(shape, Blade(raw))
     if image.isNone: continue
-    for other in 0..<m.slots:
+    for other in 0..<m.countCoefficients:
       let
         a = Blade(other)
         survives = case shape
@@ -230,7 +230,7 @@ func termsProductDual*(m: Metric; as_weight, as_expand: bool): int =
   ##   Antiwedge with dual of `n` needs first operand to contain `n`, which two raised to
   ##   dimensions less grade of `n` counts; wedge needs it contained in `n` instead, which
   ##   two raised to grade of `n` counts.
-  for raw in 0..<m.slots:
+  for raw in 0..<m.countCoefficients:
     let
       n = Blade(raw)
       has_null = not m.isImaged(n)
@@ -239,7 +239,7 @@ func termsProductDual*(m: Metric; as_weight, as_expand: bool): int =
     result += 1 shl (if as_expand: grade else: m.dimensions - grade)
 
 
-func boundLowerOf*(shape: Shape, m: Metric, arity: range[1..2]): BoundLower =
+func boundLower*(shape: Shape, m: Metric, arity: range[1..2]): BoundLower =
   ## Derive multivector lower bound of one operation from its shape and algebra.
   ##   Movement is operands read once and result written once, since dense operation needs
   ##   no fill, no copy and no intermediate to be correct.
@@ -255,10 +255,10 @@ func boundLowerOf*(shape: Shape, m: Metric, arity: range[1..2]): BoundLower =
     result.bytes_written = 0
   of Shape.Wedge:
     result.multiplies = m.termsWedge
-    result.adds = m.termsWedge - m.slots
+    result.adds = m.termsWedge - m.countCoefficients
   of Shape.Geometric:
     result.multiplies = m.termsGeometric
-    result.adds = m.termsGeometric - m.slots
+    result.adds = m.termsGeometric - m.countCoefficients
   of Shape.FormScalar, Shape.NormSquared:
     result.multiplies = m.termsFormScalar
     result.adds = m.termsFormScalar - 1
@@ -278,15 +278,15 @@ func boundLowerOf*(shape: Shape, m: Metric, arity: range[1..2]): BoundLower =
     result.roots = 1
     result.bytes_written = 8
   of Shape.Componentwise:
-    result.adds = m.slots
+    result.adds = m.countCoefficients
   of Shape.Permutation:
     discard
   of Shape.Scale:
-    result.multiplies = m.slots
+    result.multiplies = m.countCoefficients
     result.bytes_read = size + 8
   of Shape.Unitize:
-    # Norm of one part, one reciprocal, then every slot times that reciprocal.
-    result.multiplies = m.termsPart + m.slots
+    # Norm of one part, one reciprocal, then every coefficient times that reciprocal.
+    result.multiplies = m.termsPart + m.countCoefficients
     result.adds = m.termsPart - 1
     result.roots = 1
     result.divides = 1
@@ -299,17 +299,17 @@ func boundLowerOf*(shape: Shape, m: Metric, arity: range[1..2]): BoundLower =
     #   signed permutation of every blade and product keeps every cell of wedge.
     if m.is_conformal:
       result.multiplies = m.termsWedge
-      result.adds = m.termsWedge - m.slots
+      result.adds = m.termsWedge - m.countCoefficients
     else:
       let
         as_weight = shape in {Shape.ContractWeight, Shape.ExpandWeight}
         as_expand = shape in {Shape.ExpandBulk, Shape.ExpandWeight}
       result.multiplies = m.termsProductDual(as_weight, as_expand)
-      result.adds = max(0, result.multiplies - m.slots)
+      result.adds = max(0, result.multiplies - m.countCoefficients)
   of Shape.Support, Shape.SupportAnti, Shape.Center, Shape.Container, Shape.JoinCarrier:
     # Maps of definition fold into one table read against operand twice; count its cells.
     result.multiplies = m.termsCompound(shape)
-    result.adds = max(0, result.multiplies - m.slots)
+    result.adds = max(0, result.multiplies - m.countCoefficients)
 
 
 func boundLowerOfChain*(parts: openArray[Shape], m: Metric, arity: range[1..2]): BoundLower =
@@ -323,7 +323,7 @@ func boundLowerOfChain*(parts: openArray[Shape], m: Metric, arity: range[1..2]):
   ##     minimum sits below this. Record marks every such bound (Article VIII.1).
   var is_any_derived = false
   for part in parts:
-    let b = boundLowerOf(part, m, arity)
+    let b = boundLower(part, m, arity)
     if not b.is_derived: continue
     is_any_derived = true
     result.multiplies += b.multiplies

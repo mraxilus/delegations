@@ -54,7 +54,7 @@ suite "Internal: The layout":
   test "no two frames are drawn in the same place":
     var places: seq[(int, int)] = @[]
     for target in FRAMES:
-      let centre = centreOf(target)
+      let centre = centreFrame(target)
       check centre notin places
       check centre[0] > 0 and centre[0] < MAP_WIDTH
       check centre[1] > 0 and centre[1] < MAP_HEIGHT
@@ -64,7 +64,7 @@ suite "Internal: The layout":
   test "frames with the same number of connections share a row":
     for a in FRAMES:
       for b in FRAMES:
-        check (centreOf(a)[1] == centreOf(b)[1]) == (a.countHolds == b.countHolds)
+        check (centreFrame(a)[1] == centreFrame(b)[1]) == (a.countHolds == b.countHolds)
 
 
   test "a move always runs up the page, from fewer connections to more":
@@ -73,14 +73,14 @@ suite "Internal: The layout":
     for source in FRAMES:
       for move in moves(source):
         let is_rising = move.helper == Helper.Collect
-        check (centreOf(move.to)[1] < centreOf(source)[1]) == is_rising
+        check (centreFrame(move.to)[1] < centreFrame(source)[1]) == is_rising
 
 
   test "free is at the foot of the tower and the fullest frames at its head":
     for target in FRAMES:
       for other in FRAMES:
         if target.countHolds < other.countHolds:
-          check centreOf(target)[1] > centreOf(other)[1]
+          check centreFrame(target)[1] > centreFrame(other)[1]
 
 
   test "the order the tower stacks the frames is the order it draws them in":
@@ -92,7 +92,7 @@ suite "Internal: The layout":
     for target in FRAMES:
       check target in order
     for index in 1..<order.len:
-      check centreOf(order[index-1])[1] <= centreOf(order[index])[1]
+      check centreFrame(order[index-1])[1] <= centreFrame(order[index])[1]
 
 
 
@@ -164,7 +164,12 @@ suite "Internal: The drawing":
       # Both drawings ring frame held from same numbers, so that two
       # say *here* same way and neither says it twice.
       check picture.contains(
-        markAt(centreOf(here)[0], centreOf(here)[1], NODE_WIDTH, " style=\"--mx: 0px; --my: 0px\""),
+        markAt(
+          centreFrame(here)[0],
+          centreFrame(here)[1],
+          NODE_WIDTH,
+          " style=\"--mx: 0px; --my: 0px\"",
+        ),
       )
       check renderSpokes(here).count("class=\"mark\"") == 1
 
@@ -177,9 +182,9 @@ suite "Internal: The drawing":
       for move in moves(here):
         let picture = renderMap(some(here), Motion.Leaving, some(move.to))
         check picture.contains(
-          "--mx: " & $(centreOf(move.to)[0] -
-            centreOf(here)[0]) & "px; --my: " & $(centreOf(move.to)[1] -
-            centreOf(here)[1]) & "px",
+          "--mx: " & $(centreFrame(move.to)[0] -
+            centreFrame(here)[0]) & "px; --my: " & $(centreFrame(move.to)[1] -
+            centreFrame(here)[1]) & "px",
         )
 
 
@@ -297,9 +302,9 @@ suite "Internal: The drawing":
     let picture = renderMap(none(Frame))
     check picture.count("class=\"name-plate\"") == FRAMES.len
     check renderSpokes(FRAMES[0]).count("class=\"name-plate\"") ==
-        spokesOf(FRAMES[0]).len + 1
+        spokesFrame(FRAMES[0]).len + 1
     for here in FRAMES:
-      let (x, y, width, height) = nameBounds(here, centreOf(here)[0], centreOf(here)[1], 74)
+      let (x, y, width, height) = nameBounds(here, centreFrame(here)[0], centreFrame(here)[1], 74)
       check picture.contains(
         "class=\"name-plate\" x=\"" & $x & "\" y=\"" & $y &
         "\" width=\"" & $width & "\" height=\"" & $height & "\"",

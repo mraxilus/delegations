@@ -6,7 +6,7 @@
 ##     Stand-in of 4 floats also takes 32 bytes, which `alignment` gives that count. Stand-ins
 ##     need no library.
 ##   Stand-in is summed and negated through operator of its own, returned by value. Raw loop
-##     over slots of `var seq` parameter stays scalar, since each store may alias `seq` itself,
+##     over elements of `var seq` parameter stays scalar, since each store may alias `seq` itself,
 ##     and so it shows no cost of layout.
 ##   `timeRounds` mirrors that of `timing.nim` in P05, P06 and P07; fix to one reaches each.
 ##   Each timed loop sits in procedure of its own, so compiler estimates it hot, as caller's.
@@ -41,7 +41,7 @@ template timeRounds(label: string, loop: untyped) =
 
 template declareStandIn(name: untyped; count, alignment: static int) =
   ## Declare stand-in of `count` floats at one of four alignments, with sum and negation.
-  ##   Operators return by value and loop each slot.
+  ##   Operators return by value and loop each coefficient.
   when alignment == 8:
     type name = object
       elements: array[count, float]
@@ -56,16 +56,16 @@ template declareStandIn(name: untyped; count, alignment: static int) =
       elements {.align(64).}: array[count, float]
 
   func `+`(a, b: name): name =
-    ## Add slot by slot.
+    ## Add coefficient by coefficient.
     for k in 0..<count: result.elements[k] = a.elements[k] + b.elements[k]
 
   func `-`(a: name): name =
-    ## Negate slot by slot.
+    ## Negate coefficient by coefficient.
     for k in 0..<count: result.elements[k] = -a.elements[k]
 
 
 template timeStandIn(T: typedesc, label: string) =
-  ## Time sum and negation of stand-in `T` over `seq`, slot i paired with (7i + 3).
+  ## Time sum and negation of stand-in `T` over `seq`, element i paired with (7i + 3).
   block:
     proc run(pool: seq[T], results: var seq[T]) {.noinline.} =
       ## Time both operations in procedure of their own.

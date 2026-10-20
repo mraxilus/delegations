@@ -14,7 +14,7 @@ cga6d the radius norm of an imaginary object stays NaN, as at pin.
 ## Problem
 
 At pin, each norm returns `MultivectorScalars`, the pair of the scalar and the antiscalar, and
-takes a float root of one slot. The pair has `+` and `=~`, and no product, inverse, root or
+takes a float root of one coefficient. The pair has `+` and `=~`, and no product, inverse, root or
 exponential. Section 4.3 of the book defines the radius norm as √(𝐮 ∘ 𝐮), in (4.45). It is real
 for a real object, and imaginary for an imaginary one. Under the conformal metric, 𝐦 ∘ 𝐦 is
 negative for about half of all multivectors, and there the float root of `|⊘` gives NaN.

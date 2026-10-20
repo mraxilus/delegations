@@ -281,7 +281,7 @@ func blocker*(twist: HalfTurns): Option[Blocker] =
   else: some(Blocker.Lock)
 
 
-func blockerOf*(twist: HalfTurns, level: Level): Option[Blocker] =
+func blockerArm*(twist: HalfTurns, level: Level): Option[Blocker] =
   ## Get what blocks arm at given twist, at height it is carried.
   ##
   ## Only low or high arm is wound round anything: arm over head is on axis,
@@ -304,7 +304,7 @@ func armsCapacity*(state: FrameState, twist: HalfTurns): HalfTurns =
   result = UNBOUNDED_TURNS
   for side in Side:
     if state.frame.hold[side].isSome:
-      result = min(result, armCapacity(blockerOf(twist, state.level[side]), state.level[side]))
+      result = min(result, armCapacity(blockerArm(twist, state.level[side]), state.level[side]))
 
 
 func around*(blocker: Blocker, level: Level): Option[BodySite] =
@@ -457,7 +457,7 @@ func refusal*(state: FrameState, twist: HalfTurns): Option[Refusal] =
     none(Refusal)
 
 
-func turnsOf*(state: FrameState): seq[Offer] =
+func turnsOffered*(state: FrameState): seq[Offer] =
   ## Get every turn out of frame state, refused ones included.
   ##   Every turn workbook has sheet for: either dancer, either way, by half,
   ##     whole or one-and-a-half.
@@ -492,7 +492,7 @@ const TURN_NAMES* = ["", "half a turn", "one turn", "one and a half turns"]
   ## Name each size of turn as workbook's sheets name it.
 
 
-func wayOf*(amount: HalfTurns): Way =
+func wayTurn*(amount: HalfTurns): Way =
   ## Get which way turn of this sign goes.
   ##
   ## Clockwise seen from above, which is how drawings see couple, and unlike
@@ -512,7 +512,7 @@ func turnName*(amount: HalfTurns): string =
   ## Name turn by its size and way it goes.
   if amount == 0:
     return "no turn"
-  TURN_NAMES[min(abs(amount), TURN_NAMES.high)] & " " & wayName(wayOf(amount))
+  TURN_NAMES[min(abs(amount), TURN_NAMES.high)] & " " & wayName(wayTurn(amount))
 
 
 func aboutName*(about: About): string =
@@ -535,7 +535,7 @@ func armName*(state: FrameState): string =
   ## Height comes first because it is what decides how far arm can go: low
   ## wrap and high wrap are one blocker at two heights, and it is height that
   ## says which of them runs out first.
-  let what = blockerOf(state.twist, state.level[Side.Left])
+  let what = blockerArm(state.twist, state.level[Side.Left])
   if what.isNone:
     return ""
   var heights: seq[string] = @[]

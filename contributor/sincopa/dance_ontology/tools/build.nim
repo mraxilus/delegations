@@ -24,15 +24,14 @@
 ##   |          | reaches, stamped, and only where stamp changed                        |
 ##   | rig      | rewrite design/rig.json: sweeps rig viewer plays, and every still,    |
 ##   |          | stamped, and only where stamp changed                                 |
-##   | record   | every recording below in one queue, slowest job first, each question  |
-##   |          | asked once, each result kept as it comes, so run stopped part way     |
-##   |          | goes on where it stopped                                              |
-##   | turns    | rewrite design/turns.json: every hold turning, which laws read        |
+##   | record   | rig, modelled, verdicts and answers in one queue, slowest job first,  |
+##   |          | each question asked once, each result kept as it comes, so run        |
+##   |          | stopped part way goes on where it stopped                             |
 ##   | verdicts | instrument run, not build: answers land in simulation/verdicts.md     |
 ##   | answers  | rewrite simulation/answers.json: where couple stand for rig's laws,   |
 ##   |          | stamped                                                               |
-##   | floors   | instrument run, not build: how far plan carries each hold over crown  |
-##   |          | each way, printed as rows of floors law of planned sweep reads        |
+##   | floors   | instrument run, not build: how far plan carries each rig sweep over   |
+##   |          | crown, printed as rows of floors law of planned sweep reads           |
 ##   | shot     | screenshot helper, for node and Playwright                            |
 ##   | clean    | remove binaries, build, nimcache, testresults and testament binaries  |
 ##   |----------|-----------------------------------------------------------------------|
@@ -46,7 +45,7 @@
 ##     in `design/faces.nim`.  So `assets` names files and koch answers with their paths.
 ##   Cost: driver runs from project directory, since every path here is relative to it.
 ##   Cost: `assets` shells out to koch, so it needs repository above project rather than
-##     project alone; `rootOf` says how that is found and why.
+##     project alone; `root` says how that is found and why.
 ##   Cost: `shot` needs node for its output to run; build itself needs only Nim.
 ##   Cost: `types` and `drive` need node and npm, and `drive` needs Chromium, which it fetches
 ##     through Playwright unless `DANCE_CHROMIUM` names one.
@@ -73,7 +72,7 @@ const
     ## Directory faces land in.  Never committed: fonts are unregistered kind, so
     ##   lock is committed and checkout is not, as Atlas does for packages.
   USAGE = "Usage: nim r tools/build.nim " &
-      "<pages|assets|types|drive|fixtures|confirmed|watched|modelled|rig|record|turns|verdicts|" &
+      "<pages|assets|types|drive|fixtures|confirmed|watched|modelled|rig|record|verdicts|" &
       "answers|floors|engine|shot|system|clean>\n"
     ## Text printed on usage error.
   SYSTEM = [
@@ -152,7 +151,7 @@ proc compileRun(arguments: openArray[string]) =
 
 #[ Commands ]#
 
-proc rootOf(): string =
+proc root(): string =
   ## Read repository root, which is nearest directory above holding koch.
   ##   Walked rather than counted from project depth, so path holds if project moves.
   result = getCurrentDir()
@@ -180,7 +179,7 @@ proc assets() =
     wanted.add file
   let (written, code) = execCmdEx(
     "nim r --hints:off koch fetch-assets " & wanted.join(" "),
-    workingDir = rootOf(),
+    workingDir = root(),
   )
   if code != 0:
     raise newException(OSError, "Shared store did not serve every face asked for; got:\n" & written)
@@ -267,11 +266,6 @@ proc dress() =
   echo "Faces put into ", dressed, " pages."
 
 
-proc turns() =
-  ## Rewrite `design/turns.json`: every hold turning, which laws read (`test_asks`,
-  ##   `test_shoulder`).
-  nim(@["c", "-r"] & DANGER & @["--outdir:" & BINARIES, "design/record.nim", "turns"])
-
 proc pages() =
   ## Write every page and script under `build/`.
   ##   Faces first: every page embeds them, and check that wants verb run by hand
@@ -353,8 +347,8 @@ proc rig() =
 
 
 proc record() =
-  ## Rewrite every recording from one queue (`design/record`): answers, turns, report, rig
-  ## and modelled.
+  ## Rewrite every recording from one queue (`design/record`): answers, report, rig and
+  ## modelled.
   ##   One pool for all, slowest job first: four workers end near same time, where verbs one
   ##     after other leave cores idle.  One run asks each question once, and every job that
   ##     asks it again reads answer kept (`walk.keepAnswers`).  Each result is kept as it
@@ -378,10 +372,10 @@ proc answers() =
 
 
 proc floors() =
-  ## Print how far plan carries each hold over crown each way (`design/floors`): floors law of
-  ## planned sweep holds recordings to (`tests/suites/test_asks.TURNS_PLANNED`).
-  ##   Instrument run, not build: it writes nothing, and plans every style of every hold, which
-  ##     costs minutes.  Run where planner or engine moves, and paste rows it prints.
+  ## Print how far plan carries each rig sweep over crown (`design/floors`): floors law of
+  ## planned sweep holds rig's recording to (`tests/suites/test_asks.TURNS_PLANNED`).
+  ##   Instrument run, not build: it writes nothing, and plans every style of each rig sweep over
+  ##     crown, which costs minutes.  Run where planner or engine moves, and paste rows it prints.
   nim(@["c", "-r"] & DANGER & @["--outdir:" & BINARIES, "design/floors.nim"])
 
 
@@ -431,7 +425,7 @@ proc drive() =
   types()
   browser()
   pages()
-  let paragraphs = paragraphsOf(parseFile(PATH_CONTROL))
+  let paragraphs = parseFile(PATH_CONTROL).toParagraphs
   removeDir(BUILD_HOSTED)
   createDir(BUILD_HOSTED)
   var paths: seq[string]
@@ -457,7 +451,12 @@ proc drive() =
       PATH_HARNESS & ":0: Render of pages failed, as harness printed above; got exit `" &
       $code & "`.",
     )
-  let findings = checkRendered(parseFile(PATH_FOUND), expectedOf(paragraphs), CONTROL, BUILD_HOSTED)
+  let findings = checkRendered(
+    parseFile(PATH_FOUND),
+    findingsExpected(paragraphs),
+    CONTROL,
+    BUILD_HOSTED,
+  )
   for finding in findings: echo finding.render
   if findings.len > 0:
     raise newException(
@@ -505,7 +504,6 @@ proc main(): int =
     of "modelled": modelled()
     of "rig": rig()
     of "record": record()
-    of "turns": turns()
     of "verdicts": verdicts()
     of "answers": answers()
     of "floors": floors()

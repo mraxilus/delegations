@@ -11,8 +11,8 @@ import ../../design/record
 
 
 const
-  STAMPS: array[Recording, string] = ["stamp-of-rig", "stamp-of-modelled", "stamp-of-turns",
-                                      "stamp-of-answers", "stamp-of-verdicts"]
+  STAMPS: array[Recording, string] = ["stamp-of-rig", "stamp-of-modelled", "stamp-of-answers",
+                                      "stamp-of-verdicts"]
     ## Stamp of each recording, as recorder keys its results.
   JOBS_RIG = 6  ## Rig jobs of stub recording.
   JOBS_MODELLED = 4  ## Modelled jobs of stub recording.
@@ -59,7 +59,7 @@ suite "Internal: Recording in one queue":
     runQueue(tasks, parts, STAMPS, WORKERS, stub)
     check CALLS.load == tasks.len
     for task in tasks:
-      let (one, two) = (pathOf(whole, STAMPS, task), pathOf(parts, STAMPS, task))
+      let (one, two) = (pathResult(whole, STAMPS, task), pathResult(parts, STAMPS, task))
       check fileExists(two)
       check readFile(one) == readFile(two)
     removeDir(whole)
@@ -82,5 +82,5 @@ suite "Internal: Recording in one queue":
     CALLS.store(0)
     runQueue(queue, root, STAMPS, 1, stubOrdered)
     for place, task in queue:
-      check readFile(pathOf(root, STAMPS, task)) == $place
+      check readFile(pathResult(root, STAMPS, task)) == $place
     removeDir(root)
