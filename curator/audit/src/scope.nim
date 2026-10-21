@@ -12,6 +12,10 @@
 ##   Content-preserving move is exempt, since registry is curator's and renaming domain or
 ##     project is registry change; moving file is consequence, never authorship. Only exact
 ##     rename counts (`pathsMoved`, 100% similarity), so edit disguised as move is caught.
+##   Lock moving with its project is exempt for one line more: name of its nimble copy, which
+##     `atlas rep` writes back under that name while layout names nimble file after folder.
+##     Move renames file, so line must follow in same branch, and no other branch can write it
+##     (#631). Line is judged exactly (`isLockMoved`), so any other edit of lock stays finding.
 ##
 ##   Held finding: curator branch whose check or rule reddens contributor project waits for
 ##     that project to fix (CURATOR.md, duty 3), and never fixes it itself. `koch check` holds
@@ -34,7 +38,8 @@
 {.experimental: "strictFuncs".}
 
 import std/[options, sets, strutils]
-import ./[domains, findings, layout]
+import ../../knoller/src/knoller
+import ./[dependencies, domains, findings, layout]
 
 
 func checkPropagation(path: string): seq[Finding] =
@@ -51,6 +56,30 @@ func checkPropagation(path: string): seq[Finding] =
     "Curator writes only " & FILES_PROJECT.join(", ") & " in contributor project; change " &
       "rule or check and let contributor apply it; got `" & path & "`.",
   )
+
+
+func isLockMoved*(path_from, path_to, lock_from, lock_to: string): bool =
+  ## Tell whether lock moved to other folder and changed one line alone: name of its nimble
+  ##   copy, from old folder's name to new one's.
+  let (parts_from, parts_to) = (path_from.split('/'), path_to.split('/'))
+  if parts_from.len < 2 or parts_to.len < 2: return false
+  if parts_from[^1] != FILE_LOCK or parts_to[^1] != FILE_LOCK: return false
+  let
+    name_from = "\"" & parts_from[^2] & EXTENSIONS[Dialect.Package] & "\""
+    name_to = "\"" & parts_to[^2] & EXTENSIONS[Dialect.Package] & "\""
+    (lines_from, lines_to) = (lock_from.split('\n'), lock_to.split('\n'))
+  if name_from == name_to or lines_from.len != lines_to.len: return false
+
+  # Find lines that differ; exactly one may.
+  var edited: seq[int]
+  for i in 0..<lines_from.len:
+    if lines_from[i] != lines_to[i]: edited.add i
+  if edited.len != 1: return false
+
+  # Hold that line to key of nimble copy, and to old name swapped for new one.
+  let line = lines_from[edited[0]]
+  line.strip.startsWith(KEY_FILENAME) and name_from in line and
+      lines_to[edited[0]] == line.replace(name_from, name_to)
 
 
 func checkScope*(

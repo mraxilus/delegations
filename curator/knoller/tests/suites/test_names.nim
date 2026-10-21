@@ -488,7 +488,7 @@ suite "Names":
     check "SDL3Window".acronyms == @["SDL3"]
     check "Chiral".acronyms.len == 0 and "isMixed".acronyms.len == 0
     check "DIRECTORY_SDL3".acronyms.len == 0  # screaming holds by reading
-    check "rga_visualiser".acronyms.len == 0
+    check "pga_visualiser".acronyms.len == 0
 
 
   test "V.6 rename target is each declaration check reports, at its name's column":

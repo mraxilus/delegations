@@ -3,7 +3,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[options, os, sequtils, strutils, tempfiles, unittest]
-import ../../src/tree
+import ../../src/[domains, tree]
 import ./fixtures
 
 
@@ -146,3 +146,32 @@ suite "Tree":
     check checkoutAt(root, root / "sub" / "unwritten") == some(root)
     check checkoutAt(root, tree / "sub") == some(tree)  # worktree holds its own branch
     check checkoutAt(root, plain) == some(root)  # git fails, so root's rule still holds
+
+
+  test "lock that moved with its project and follows its name is move":
+    # Case held: `pathsMoved` read exact renames alone, so lock whose one line follows moved
+    #   nimble file read as edit, and `check-scope` refused it (#631). Domain: that lock, and
+    #   lock moved with second edit, which stays edit.
+    let
+      root = repoTemp()
+      gamma = CONTRIBUTOR & "/ronri/gamma"
+      nimble_gamma = TEXT_NIMBLE & "\nrequires \"jsony\"\nbin = @[\"gamma\"]\n"
+    defer: removeDir(root)
+    root.writeInto(DIRECTORY_ALPHA & "/atlas.lock", lockWith(TEXT_NIMBLE).replace("probe", "alpha"))
+    root.writeInto(gamma & "/atlas.lock", lockWith(nimble_gamma).replace("probe", "gamma"))
+    discard root.git("add -A")
+    discard root.git("commit -q -m 'build(alpha): pin'")
+    discard root.git("checkout -q -b curator/move")
+    discard root.git("mv " & DIRECTORY_ALPHA & " " & CONTRIBUTOR & "/ronri/beta")
+    discard root.git("mv " & gamma & " " & CONTRIBUTOR & "/ronri/delta")
+    let
+      beta = CONTRIBUTOR & "/ronri/beta/atlas.lock"
+      delta = CONTRIBUTOR & "/ronri/delta/atlas.lock"
+    root.writeInto(beta, readFile(root / beta).replace("alpha.nimble", "beta.nimble"))
+    root.writeInto(
+      delta,
+      readFile(root / delta).replace("gamma.nimble", "delta.nimble").replace("jsony", "yaml"),
+    )
+    discard root.git("add -A")
+    discard root.git("commit -q -m 'chore(curator): move alpha and gamma'")
+    check pathsMoved(root, "main") == @[DIRECTORY_ALPHA & "/atlas.lock", beta]  # delta edited

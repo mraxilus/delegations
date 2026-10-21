@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 4f42993698db4180 |
+| Rules   | 87b32e76eb0755e0 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 | Pruned  | ab8fb063b62bb03ba9fd7f2964a1866b3862909b |
 
@@ -200,7 +200,7 @@ is taken as soon as it is free.
 
 **A quotation is skipped whole.** Quoted text comes from outside this repository, and a
 delegate may not rewrite it. A finding on it could never be fixed. The `PROVENANCE.md` of
-`rga_visualiser` quotes the acknowledgement that the NASA Exoplanet Archive asks for word for
+`pga_visualiser` quotes the acknowledgement that the NASA Exoplanet Archive asks for word for
 word, and it is longer than 25 words.
 
 - Rejected: an allowlist of exact sentences, which is the grandfathering that curator duty 3
@@ -384,6 +384,19 @@ such log, so the `check-files` job fetches every commit.
 - Cost: line forms, and never a Markdown parse. A heading inside an HTML comment counts, and
   front matter is not skipped. No governed provenance file carries either.
 
+**The log of a record follows renames where the plain log misses the row.** A move of a project
+carries its records to a new path, and a `Pruned` row may name a commit from before the move. So
+koch reads the plain log first, and `git log --follow` only where the plain log misses the commit.
+
+- Rejected: `--follow` alone. It drops a merge commit that changed the record on both sides, and
+  the true row of `pga_benchmark` names such a commit.
+- Cost: git pairs a deleted file with a similar new file as a rename. So a record written anew in
+  the place of another inherits the history of the other.
+- Cost: a second log for each row that the plain log misses.
+- Verified by `suites/test_audit.nim` on a throwaway repository. A row that names the commit before
+  a move, the move itself, or an edit after it passes. So does a row that names a merge commit, or
+  a commit of either side of it. A commit beside the record is still a finding.
+
 **A number written before `files`, `suites`, `checks` or `tests` in the prose of a record is a
 finding.** A count goes stale by the next commit, and nothing here reads it again, so the guide
 asks for the command that counts. Fenced code and code spans are skipped, so a command and its
@@ -548,18 +561,28 @@ Without this, duty 11 holds by reading alone, on the role that runs most often.
 - Verified by `suites/test_scope.nim`: a curator branch that writes contributor code is a finding,
   and one that writes the records of that project is not.
 
-**A curator may move the files of a contributor, and never edit them.** `tree.pathsMoved`
-reads `--name-status --find-renames=100%`, and `checkScope` exempts exactly those paths on a
-curator branch. So only an exact rename qualifies, and an edit disguised as a move is still
-caught. To rename a domain is a registry change, and the registry is the curator's. To move
-files is the consequence, and never authorship.
+**A curator may move the files of a contributor, and never edit them, except one line of a
+moved lock.** `tree.pathsMoved` reads `--name-status --find-renames`, and `checkScope` exempts
+the paths it lists on a curator branch. An exact rename (`R100`) qualifies, so an edit disguised
+as a move is still caught. To rename a domain or a project is a registry change, and the registry
+is the curator's. To move files is the consequence, and never authorship.
+
+A lock that moved at a lower score is read at the merge base and at HEAD. It qualifies only where
+its one changed line is the name of its nimble copy, from the old folder to the new one
+(`isLockMoved`). Layout names the nimble file after its folder, and `atlas rep` writes the copy
+under the name that the lock stores. So a move of a project must change that line, and no
+contributor branch can write both sides of the move. Any other edit of a lock is still a finding.
 
 Cost: a curator may reorder the files of a contributor without asking. Content cannot change
 and the move is visible in review, so the cost is disorder rather than damage.
 
+- Rejected: a move merged red, which leaves `main` red until the project renames its lock.
+- Rejected: an ignore line for the stray nimble copy, which hides a file from the audit.
 - Verified by `suites/test_scope.nim`: a moved path is exempt on the curator root alone, and a move
-  never widens a project branch. `suites/test_tree.nim` holds on a throwaway repository that only
-  an exact rename is a move.
+  never widens a project branch. The name line of a lock passes. Another name, a second edit, an
+  edit in place and a file other than a lock each fail.
+- Verified by `suites/test_tree.nim` on a throwaway repository: an exact rename is a move, and so
+  is a lock whose one edit is that line. A lock moved with a second edit is not.
 
 **Domain folders are ASCII slugs, and the accent lives in the display name.** The folder is
 `sincopa` and the name is `síncopa`, the split that `comma_games` and `comma, games` use too.
@@ -1033,7 +1056,7 @@ label would show a stale queue.
 `requires "nim == <version>"` sits in the nimble file of the project. It is read through the
 `requireLiterals` scan of knoller (`pins.nim`), which `dependencies.nim` imports too, so
 requirements are parsed in one place. No single version serves every project, because
-`rga_visualiser` and `pga_benchmark` pin a compiler commit that no release carries.
+`pga_visualiser` and `pga_benchmark` pin a compiler commit that no release carries.
 
 - Rejected: one pin for the repository, which cannot hold a commit pin and a release pin at
   once. Rejected: `>=`, which cannot express an upper bound, and cannot say which compiler a
@@ -1165,6 +1188,15 @@ against the committed file, and reports the first differing line.
 - Verified by `suites/test_dependencies.nim`. Verified by hand against the real lock, recorded
   2026-09-06: a stored copy that holds `nim >= 2.2.6` names `rga_visualiser.nimble:13`, and
   the restored lock is silent.
+
+**The lock names its nimble copy after the nimble file of its project.** `atlas rep` writes the
+copy under the name in `nimbleFile.filename`. A lock that names another file writes a second
+nimble file beside the real one, and layout refuses two. `checkNameNimble` reports such a lock,
+at the line that names the copy.
+
+- A lock that will not parse is `checkNimbleLock`'s to report, so it is reported once.
+- Verified by `suites/test_dependencies.nim`: a matching name, another name, a lock that stores no
+  name, and a lock that will not parse.
 
 ## Scoped checks
 
@@ -1362,7 +1394,7 @@ passed by in silence, which is why CONTRIBUTOR.md names `drive`, `head` and `sys
 
 **It is a matrix, each project on its own pin, where `check-types` is one plain job.** `drive`
 calls `web`, which runs `nim js` over `bridge.nim`, and that compiles project code and
-everything it imports. So `rga_visualiser` on the compiler of koch fails inside
+everything it imports. So `pga_visualiser` on the compiler of koch fails inside
 `multivectors.nim` of `pga`, whose syntax only the pinned commit can lex. The type check rests
 on a verb that compiles no project code, and `drive` breaks that condition. So `koch drive` is
 planned like `test`, and `list-projects --drive` filters what `list-projects` already selected.
@@ -1591,7 +1623,7 @@ reads as one that holds a comment, and stays as written.
 **A nimble file whose copy sits in `atlas.lock` stays as written.** A rewrite would leave the
 copy in the lock stale, and Atlas reads that as a change of package. `koch fix` prints each such
 file with its reason, and no layout check reads it. The lock names its copy in
-`nimbleFile.filename`. On the tree, the nimble files of `pga_benchmark` and `rga_visualiser` are
+`nimbleFile.filename`. On the tree, the nimble files of `pga_benchmark` and `pga_visualiser` are
 locked. Verified by `suites/test_fixes.nim`.
 
 **`koch fix` writes Nim files alone.** A fixer applies a style guide, and STYLE.md is the guide
@@ -1969,14 +2001,14 @@ less those that its comments hold, go to the same check. So each kind reports in
 
 **A timer is unread, because one name is both clocks.** Inside a page under the clock of
 Playwright, `setTimeout` and `performance.now` are simulated reads. A check over them would
-report every correctness drive of `rga_visualiser`, where each `setTimeout` sits inside
+report every correctness drive of `pga_visualiser`, where each `setTimeout` sits inside
 `evaluateOver` or `page.evaluate`. So the check holds the narrow half, and the rule holds the
 rest by reading.
 
 - Nim names compare as the compiler compares them, so `sleep_async` is `sleepAsync`. Nim
   source is read with comments and strings blanked, so the suite of the check holds its
   fixtures as strings and reports nothing.
-- `sleep` of TypeScript is the drive's own helper. In `rga_visualiser` it wraps `setTimeout`
+- `sleep` of TypeScript is the drive's own helper. In `pga_visualiser` it wraps `setTimeout`
   inside a page on the simulated clock, so it is unread.
 - Verified by hand with `nim r koch check-files` on 2026-10-01: no finding in any project. A
   planted `sleep(10)` in a Nim suite and a planted `waitForTimeout(100)` in a TypeScript drive

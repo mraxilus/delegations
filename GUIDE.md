@@ -212,7 +212,7 @@ Every later delegate:
 
 A correctness check moves time itself (Article IX.12). Install the clock of Playwright, paused,
 before the page loads. Timers, animation frames and `performance.now` then move only when the
-check moves them. Three things stay on real time, and `rga_visualiser` sets each one in
+check moves them. Three things stay on real time, and `pga_visualiser` sets each one in
 `tools/drive/clock.ts`:
 
 - **The rendering step.** Resize, scroll and observer events fire on real frames. So wait for
@@ -485,12 +485,12 @@ of each algebra.
 | 1 | ☑️ | Draft since it opened, another commit intended (carried 3) | [#331] | |
 | 2 | ✅ | The gap list reads the baseline of each algebra | `src/gaps.nim` | `koch check` green |
 | 3 | ✅ | A worked example shows the gap rows (carried 5) | [#331], Verification | command, output |
-| 4 | ⚠️ | `koch drive` red in rga_visualiser | [#332] | contributor/ronri/rga_visualiser, fix |
+| 4 | ⚠️ | `koch drive` red in pga_visualiser | [#332] | contributor/ronri/pga_visualiser, fix |
 | 5 | ⏸️ | Names in the tests (carried 2) | [#310] | D1 |
 | 6 | ⬜ | cga5d baseline measurement, then the pull request marks ready | `tests/` | this delegate |
 
 **Summary:** The gap list is done and green, and its pull request waits only on D1. Row 4
-belongs to rga_visualiser and blocks nothing here.
+belongs to pga_visualiser and blocks nothing here.
 
 **State:** blocked, at `3f2a9c1`, pushed, [the gap list (#331)][#331] draft, run 412 green
 

@@ -15,6 +15,8 @@
 ##     compilation never reads nimble, so nothing fails when edit is lost; what fails is later
 ##     check, on reverted line contributor never wrote. Copy is therefore compared against
 ##     committed file, and difference is finding.
+##   Lock stores name of copy too, and `atlas rep` writes copy under it; name of other file
+##     writes second nimble file, so name is held to nimble file of project (#631).
 ##   Comparison belongs to static pass, over tree as git holds it. Run after restore it would
 ##     compare file against copy it was just written from, pass always, and cover nothing.
 ##
@@ -36,6 +38,7 @@ const
   ATLAS_CONFIG* = "atlas.config"  ## Where project names its checkout directory, under `deps`.
   MANIFEST_NODE* = "package.json"  ## Node manifest, naming tools project type-checks with.
   LOCK_NODE* = "package-lock.json"  ## Node lock, pinning every one of those to exact version.
+  KEY_FILENAME* = "\"filename\":"  ## Key of lock line naming nimble copy, as Atlas writes it.
   UNREADABLE = "Lock unreadable as JSON; got `"
     ## Opening of finding both lock readers report when JSON will not parse.
 
@@ -110,6 +113,36 @@ proc checkNimbleLock*(path_nimble, path_lock, lock, nimble: string): seq[Finding
     line,
     "Lock's stored nimble differs here, and `atlas rep` writes it back over this file; " &
       "regenerate lock, or make its stored copy match; got `" & held & "`.",
+  )
+
+
+proc checkNameNimble*(path_nimble, path_lock, lock: string): seq[Finding] =
+  ## Report lock naming its nimble copy after other file than nimble file of its project.
+  ##   `atlas rep` writes copy under that name, so other name writes second nimble file, which
+  ##     layout refuses; project move left one such lock (#631).
+  ##   Finding points at lock, at line naming copy, since regenerating lock is fix.
+  ##   Lock that will not parse is `checkNimbleLock`'s to report, so it is reported once.
+  var node: JsonNode
+  try:
+    node = parseJson(lock)
+  except CatchableError:
+    return
+  if "nimbleFile" notin node or "filename" notin node["nimbleFile"]: return
+  let (named, expected) = (node["nimbleFile"]["filename"].getStr, path_nimble.extractFilename)
+  if named == expected: return
+
+  # Locate line naming copy, so finding opens where fix lands.
+  var line = 0
+  let lines = lock.split('\n')
+  for i, text in lines:
+    if text.strip.startsWith(KEY_FILENAME) and named in text:
+      line = i + 1
+      break
+  result.add finding(
+    path_lock,
+    line,
+    "Lock names nimble copy after nimble file of project, or `atlas rep` writes second one " &
+      "beside it; regenerate lock; got `" & named & "` for `" & expected & "`.",
   )
 
 
