@@ -19,7 +19,7 @@ stated once is then reached through two mechanisms, rather than asked to agree w
 
 None directly. The `pga` library that it depends on replicates the book of Lengyel. This project
 replicates no published source. It derives the `exp` and `log` of a motor, which `pga` does not
-yet carry, from the operators of `pga`. `src/rga_visualiser/motors.nim` holds them, with the turn
+yet carry, from the operators of `pga`. `src/pga_visualiser/motors.nim` holds them, with the turn
 and the sandwich that are built on them.
 
 ## Build and test
@@ -28,9 +28,9 @@ and the sandwich that are built on them.
 nim r koch check                                 # repository root: every check a pull request runs
 nim r koch test contributor/ronri/pga_visualiser  # this project alone, three configurations
 nim r tools/build.nim assets                     # this project: fetch every face, once
-nim r tools/build.nim web                        # this project: build/rga_visualiser.html
+nim r tools/build.nim web                        # this project: build/pga_visualiser.html
 nim r tools/build.nim drive                      # this project: drive both front-ends
-nim r tools/build.nim desktop                    # this project: binaries/rga_visualiser
+nim r tools/build.nim desktop                    # this project: binaries/pga_visualiser
 nim r tools/build.nim driven                     # this project: drive the desktop alone
 nim r tools/build.nim system                     # this project: what to install first
 ```
@@ -72,13 +72,13 @@ committed. `nim r koch fetch-deps contributor/ronri/pga_visualiser` restores it 
 pinned at `295bafc`, which is the head of that library.
 
 Four projection operations are withdrawn at head while the library rebuilds them.
-`src/rga_visualiser/projections.nim` stands in for them until they return. See Dependencies and
+`src/pga_visualiser/projections.nim` stands in for them until they return. See Dependencies and
 vendoring in `PROVENANCE.md`. The algebra that every target builds against is four dimensions with a
 rigid metric. It is set once in `nim.cfg`, so no entry point repeats it.
 
 `tools/build.nim` assembles the browser page. It compiles the bridge through the JS backend,
 type-checks and emits the TypeScript glue, and inlines the font faces. It folds all of it into one
-self-contained `build/rga_visualiser.html` that opens from `file://`.
+self-contained `build/pga_visualiser.html` that opens from `file://`.
 
 That needs Node and npm alongside Nim. `npm ci` restores the pinned dev dependencies into
 `node_modules/`, which is never committed.
@@ -107,8 +107,8 @@ two backends to the same rule.
 ## Layout
 
 ```
-src/rga_visualiser.nim        umbrella: bootstrap order, re-exports
-src/rga_visualiser/           geometry and model, reachable from either front-end:
+src/pga_visualiser.nim        umbrella: bootstrap order, re-exports
+src/pga_visualiser/           geometry and model, reachable from either front-end:
                               objects, euclid, boundary, mesh, tessellate, camera,
                               scene, selection, picking, marker, framing, interaction,
                               storyboard, orrery, neighbourhood, starfield, history,
@@ -138,12 +138,12 @@ dependencies/                 PGA library, restored by Atlas; never committed
 ## Published
 
 The browser front-end is published, so it can be opened rather than rebuilt. Publish it again from
-`build/rga_visualiser.html` after any change that alters what the page shows. Put the URL in the
+`build/pga_visualiser.html` after any change that alters what the page shows. Put the URL in the
 pull request, and in the message that says the work is ready.
 
 | built file, under `build/` | published at |
 | --- | --- |
-| rga_visualiser.html | https://claude.ai/code/artifact/a523f27b-d74e-4987-9b6e-7b1680e469a6 |
+| pga_visualiser.html | https://claude.ai/code/artifact/a523f27b-d74e-4987-9b6e-7b1680e469a6 |
 
 The URL lives here, so that a reader of this repository finds where the page is published.
 
