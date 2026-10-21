@@ -83,7 +83,7 @@ const
   BUILD_HOSTED = BUILD / "hosted"
     ## Directory each page lands in as publish host serves it, for harness to render.
   PATH_FOUND = BUILD / "found.json"  ## What harness found on each page, as data (`render.nim`).
-  PATH_CONTROL = "tests" / "fixtures" / "control_faces.json"
+  PATH_CONTROL = "tests" / "fixtures" / "control_render.json"
     ## Fixture control page is built from; under `tests/`, as `render.nim` says why.
   RUNS_EVALUATION = 5  ## Timed runs of each binary per evaluation, alternating.
   RUNS_BENCH = 5
@@ -679,11 +679,16 @@ proc renderedChecked(
   built: OrderedTable[string, string], faces: Table[string, string]
 ): seq[Finding] =
   ## Render every built page and control as publish host serves them, and judge what harness
-  ##   found: each page held to faces it ships, control to findings it expects (`render.nim`).
+  ##   found: each page held to faces it ships and to blocks of card that do not touch, control
+  ##   to findings it expects (`render.nim`).
   ##   Harness and browser are dispatcher's to ready, before `drive` reaches here.
-  let paragraphs = paragraphs(readDocument(PATH_CONTROL))
+  let
+    control = readDocument(PATH_CONTROL)
+    paragraphs = paragraphs(control)
+    cards = cards(control)
   var pages = built
-  pages[CONTROL] = assemble(readFile(PATH_SHELL), "Faces Control", bodyControl(paragraphs), faces)
+  pages[CONTROL] =
+    assemble(readFile(PATH_SHELL), "Render Control", bodyControl(paragraphs, cards), faces)
   createDir BUILD_HOSTED
   var paths: seq[string]
   for name, page in pages.pairs:
@@ -697,7 +702,9 @@ proc renderedChecked(
       path: PATH_HARNESS,
       message: "Render of pages failed, as harness printed above; got exit `" & $code & "`.",
     )]
-  checkRendered(readDocument(PATH_FOUND), findingsExpected(paragraphs), CONTROL, BUILD_HOSTED)
+  let found = readDocument(PATH_FOUND)
+  checkRendered(found, findingsExpected(paragraphs), CONTROL, BUILD_HOSTED) &
+    checkCrowded(found, crowdedExpected(cards), CONTROL, BUILD_HOSTED)
 
 
 proc publishedAt(name, url: string) =

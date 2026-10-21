@@ -2410,10 +2410,15 @@ beyond ASCII, it resolves the font stack of the element against the `cmap` of ea
 page ships. A character that no face of that stack maps is a finding. The finding names the page,
 the element and the codepoint. A face that the browser does not load is a finding too.
 
-The harness is TypeScript under `tools/drive/`, ported from `pga_benchmark`. TypeScript is admitted
-for the host API of a test driver. It checks each expression that runs inside the page against the
-types of the DOM. The verdict is Nim, in `design/render.nim`, where the suites reach it (Article
-II.9).
+The harness is TypeScript under `tools/drive/`. TypeScript is admitted for the host API of a test
+driver. It checks each expression that runs inside the page against the types of the DOM. The
+verdict is Nim, in `design/render.nim`, where the suites reach it (Article II.9).
+
+**The harness and its verdict are copies, and they name no sibling (Architect, issue 670,
+2026-10-21).** This project names no other project, because it is concerned with itself alone. So
+the copies break the rule that each copy names its siblings (Article II.9). Cost: a fix found in
+another copy reaches these files by chance alone. The curator weighs one shared check of faces
+(issue 671), which would remove the copies.
 
 Rejected: a harness in Nim compiled to JavaScript, as `shot` is, where each of those expressions is
 an unchecked string. Rejected: `CSS.getPlatformFontsForNode`, which answers only for text laid out
@@ -2446,11 +2451,11 @@ resolved alone, as its `cmap` maps it, so a combining mark can draw from a face 
 name. Cost: the time that `drive` takes over the kept pages is unmeasured.
 
 **`package-lock.json` pins the node tools, and git ignores their checkout.** The project commits
-`package.json` and `package-lock.json` with the versions that `pga_benchmark` pins. `typescript`
-7.0.2 type-checks the harness, and `@playwright/test` 1.63.0 drives Chromium. Both are Microsoft's,
-under Apache-2.0. `@types/node` 22.20.2 is DefinitelyTyped's, under MIT, and types the node surface
-that the harness reaches. The `license` field of each entry in `package-lock.json` gives these
-licences, and the licences of what they bring.
+`package.json` and `package-lock.json`, which pin these versions. `typescript` 7.0.2 type-checks the
+harness, and `@playwright/test` 1.63.0 drives Chromium. Both are Microsoft's, under Apache-2.0.
+`@types/node` 22.20.2 is DefinitelyTyped's, under MIT, and types the node surface that the harness
+reaches. The `license` field of each entry in `package-lock.json` gives these licences, and the
+licences of what they bring.
 
 **Chromium is the one that Playwright pins, unless `DANCE_CHROMIUM` names one.** `package-lock.json`
 pins `@playwright/test`, and that version pins the revision of the browser. `drive` fetches it with
@@ -2460,7 +2465,7 @@ revision 1243.
 
 **`types` compiles this driver, and the project code that it imports, on the compiler of koch.**
 That holds while the pin of this project is the pin of koch, 2.2.12 for both. A pin that moves first
-splits the driver, as `pga_benchmark` split its own.
+splits the driver.
 
 **Suites write pages apart from the directories that `pages` writes.** A page that a suite writes
 carries no faces. So `test_marks` writes under `build/suites/`, and `pages` dresses only `build/app`
@@ -2524,7 +2529,7 @@ store (issue 116). `assets` names the eight files it wants, and `koch fetch-asse
 paths. One store stops two projects from pinning one face twice (Article II.9).
 
 **The digest is the curator's, and the choice is this project's.** The store never says which faces
-a page draws with, so each project keeps its own choice. `rga_visualiser` draws from it too.
+a page draws with, so each project keeps its own choice.
 
 The store keys entries by digest, so a face arrives under a name that is its hash. `assets` restores
 the file name on the way into `build/fonts`, because everything downstream reads faces by name.

@@ -51,7 +51,7 @@
 ##     through Playwright unless `DANCE_CHROMIUM` names one.
 ##   Cost: `types` compiles this driver, and so project code it imports, on koch's compiler
 ##     (`curator/audit/src/plan.nim`, `typeJobs`). That holds while project's pin is koch's,
-##     2.2.12 both; pin that moves first splits driver as `pga_benchmark` split its own.
+##     2.2.12 both; pin that moves first splits driver.
 
 {.experimental: "strictFuncs".}
 
@@ -205,9 +205,8 @@ proc engine() =
   ##     in library's fifty files needs generating. Cost: build flags are this file's
   ##     rather than upstream's, and `-O2 -std=c17` is what upstream's release build sets.
   ##   Rebuilt only where library is absent, since fifty files cost twenty seconds.
-  ##   Cloned whole rather than shallow at ref, which `rga_visualiser` must do for SDL3 and
-  ##     keeps tag beside commit for: engine's history is 41 commits and 4.6 MB, so whole
-  ##     clone costs nothing and reaches any commit without ref to fetch. Pin is therefore
+  ##   Cloned whole rather than shallow at ref: engine's history is 41 commits and 4.6 MB, so
+  ##     whole clone costs nothing and reaches any commit without ref to fetch. Pin is therefore
   ##     commit alone, with no tag beside it, and that is measurement rather than taste.
   for (name, url, commit, _, _) in SOURCES:
     let into = DIRECTORY_DEPENDENCIES / name

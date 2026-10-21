@@ -43,8 +43,9 @@ read, the sign is exact when every term of the operand has the same grade.
 - **Mixed grade.** At pin, `m.grade.get` stops on an operand of mixed grade, with no message. Here
   no check runs, and such an operand gets a value that means nothing. Each caller of `partner`
   in `pga.nim` keeps its signature, so no caller changes.
-- **Two calls.** The chain still calls two functions. So the partner keeps three zero fills and
-  two error checks, for two intermediates and two calls.
+- **Two calls.** The chain still calls two functions. Its first step writes a local declared
+  `noinit`, since the compiler fills the temporary of a call with zeros. So the partner keeps
+  one zero fill and two error checks, for one intermediate and two calls.
 - **No table of three operands.** The partner is cubic, so no one table of two operands holds it.
   A table of three operands would, and the emitter reads none.
 
