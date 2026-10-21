@@ -768,7 +768,7 @@ func showOrrery*(
   ## Replace scene with arrangement and stand camera back to hold Sol's system.
   ##   Whole preset in one place, because both front-ends open on it.
   ##   Arrives as replay: `scene.replayFrom` restamps whole construction, so nearest
-  ##   system appears first, as loaded `.rgascene` does.
+  ##   system appears first, as loaded scene file does.
   ##     Restamped after fact so beat is fitted to whole arrival.
   ##   Camera stands back far enough to hold Neptune's ring, aims at Sol, pitches up over
   ##   it.

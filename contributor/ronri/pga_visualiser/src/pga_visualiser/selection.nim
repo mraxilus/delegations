@@ -3,7 +3,7 @@
 ## Order is whole point, and reason this is list rather than set.
 ##   Operation reads operands positionally, so first handle picked is `m` and second is `n`.
 ## Selection is deliberately not part of `Scene`: view of scene, not content.
-##   Never saved to `.rgascene`, never recorded on undo timeline.
+##   Never saved to scene file, never recorded on undo timeline.
 ##   Step across timeline keeps each pick that still names same object; see `keepNaming`.
 ## Plain fixed-size value type with no refs, like `History` beside it.
 ##   Copying one is value copy, so it can live in GUI's own state struct without allocator.

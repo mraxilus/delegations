@@ -21,7 +21,7 @@
 ##   from `format.formatMagnitude` rather than JS `toFixed`.
 ##   Browser diagnostics substitute (frame time via `requestAnimationFrame`, JS heap where
 ##   available) covers same purpose without pretending to same numbers.
-## Desktop's file-path save/load becomes browser download/upload of identical `.rgascene`
+## Desktop's file-path save/load becomes browser download/upload of identical scene file
 ## binary; see `scene.nim`.
 ##   This module exposes raw per-object fields rather than bytes, since packing IEEE-754
 ##   doubles by hand in Nim/JS would reinvent browser's `DataView`.
@@ -2476,7 +2476,18 @@ proc nimShownCounted(shown, total: cint): cstring {.exportc.} =
 #[ Scene Save/Load Primitives ]#
 
 proc nimSceneMagic(): cstring {.exportc.} = cstring(MAGIC_SCENE)
-  ## Report four bytes `.rgascene` file opens with, for packer in browser scripts.
+  ## Report four bytes scene file opens with, for packer in browser scripts.
+
+proc nimSceneExtension(): cstring {.exportc.} = cstring(EXTENSION_SCENE)
+  ## Report extension packer names saved scene file with.
+
+proc nimSceneExtensionsRead(): cstring {.exportc.} =
+  ## Report each extension scene file is read under, comma-separated, as picker's `accept`.
+  var joined = ""
+  for extension in EXTENSIONS_SCENE_READ:
+    if len(joined) > 0: joined.add ','
+    joined.add extension
+  cstring(joined)
 
 proc nimSceneVersion(): cint {.exportc.} = cint(VERSION_SCENE)
   ## Report format version this build writes, for that packer.
@@ -2516,7 +2527,7 @@ proc nimSceneAddRaw(
   count_total: cint,
   now: cfloat,
 ): cint {.exportc.} =
-  ## Add one object straight from parsed `.rgascene` fields, for load path.
+  ## Add one object straight from parsed scene file fields, for load path.
   ##   Presentation layer parses bytes into these fields and calls this once per object, in
   ##   file order.
   ##   `version` is file's own; object is carried up by `scene.objectUpgraded`, same chain

@@ -297,7 +297,7 @@ func initPanel*(path_export: string): Panel =
   result.is_axes_shown = true
   result.is_vsync_enabled = true
   toChars(path_export, result.path_export)
-  toChars("scene.rgascene", result.path_scene)
+  toChars("scene" & EXTENSION_SCENE, result.path_scene)
 
 
 proc say*(panel: var Panel, text: string, now: float) =

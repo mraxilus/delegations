@@ -102,7 +102,7 @@ export async function driveHostSave(
   report(
     'on the artifact host, a scene saves through the host, as a zip that holds the scene file',
     scene?.filename === 'scene.zip' && typeof entry !== 'string' &&
-      entry.name === 'scene.rgascene' && magic === await page.evaluate(() => nimSceneMagic()),
+      entry.name === 'scene.pgascene' && magic === await page.evaluate(() => nimSceneMagic()),
     scene === undefined ? 'host was handed nothing' :
       `${scene.filename}, ${typeof entry === 'string' ? entry : `${entry.name} opens ${magic}`}`,
   );
@@ -121,6 +121,39 @@ export async function driveHostSave(
     labels_loaded.length > 0 && labels_loaded.join('|') === labels_saved.join('|'),
     `${labels_loaded.length} of ${labels_saved.length} objects back; says ` +
       `"${(await toastSays()).text}"`,
+  );
+
+  // Zip whose entry ends `.rgascene`, as builds saved before name PGA, loads alike.
+  //   Old name is as long as new one, so entry is renamed in place and zip stays whole:
+  //   once in its local header and once in its central directory.
+  const older = Buffer.from(scene?.bytes ?? []);
+  const [name_new, name_old] = [Buffer.from('scene.pgascene'), Buffer.from('scene.rgascene')];
+  let renamed = 0;
+  for (let at = older.indexOf(name_new); at >= 0; at = older.indexOf(name_new, at + 1)) {
+    name_old.copy(older, at);
+    renamed += 1;
+  }
+  await page.evaluate(() => nimSceneClear());
+  await page.setInputFiles('#file-load-scene', {
+    name: 'scene.zip', mimeType: 'application/zip', buffer: older,
+  });
+  await waitUntil(page, (count) => nimSceneCount() === count, labels_saved.length)
+    .catch(() => undefined);
+  const labels_older = await labels();
+  report(
+    'a zip that holds a .rgascene, as older builds saved, loads as the scene it holds',
+    renamed === 2 && labels_older.length > 0 && labels_older.join('|') === labels_saved.join('|'),
+    `${renamed} names changed; ${labels_older.length} of ${labels_saved.length} objects back; ` +
+      `says "${(await toastSays()).text}"`,
+  );
+
+  // Picker offers both extensions and zip, so reader's system lists each such file.
+  const accept = await page.evaluate(
+    () => (document.getElementById('file-load-scene') as HTMLInputElement | null)?.accept ?? '');
+  report(
+    'the scene picker offers .pgascene, .rgascene and the zip the host saves',
+    accept === '.pgascene,.rgascene,.zip',
+    `accepts "${accept}"`,
   );
 
   // Image: extension host takes, so PNG goes as itself.

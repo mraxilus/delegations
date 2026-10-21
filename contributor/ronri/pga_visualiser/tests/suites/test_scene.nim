@@ -873,6 +873,14 @@ suite "Scene":
     check animationProgress(clock, bornReplaying(0, 4, clock)) == 0.0
 
 
+  test "the tips of save and load name the extension saved, and each one read":
+    # Tips are words of their own, so format's extensions reach them only through here.
+    check EXTENSION_SCENE in $wordingText(TipMenuSaveScene)
+    for extension in EXTENSIONS_SCENE_READ:
+      checkpoint extension
+      check extension in $wordingText(TipMenuLoadScene)
+
+
   # Saving and loading name filesystem, which browser has none of: `scene.nim`.
   #   declares that pair for desktop backend alone, so their tests are guarded to
   #   match. Every other invariant in this suite holds on both backends and is checked
@@ -887,7 +895,7 @@ suite "Scene":
       let handle_last = original.addObject(POINTS[3], "d", Ink.Cobalt)
       original.setVisible(handle_last, false)
 
-      let path = getTempDir() / "visualiser_suite_scene.rgascene"
+      let path = getTempDir() / "visualiser_suite_scene.pgascene"
       check saveScene(original, path).contains("Saved 3")
       defer: removeFile(path)
 
@@ -916,6 +924,28 @@ suite "Scene":
       check not loaded[2].isVisible
 
 
+    test "a scene saved as .pgascene loads again as .rgascene, as older builds named it":
+      # Desktop reads by path, and extension decides nothing: file older build saved,
+      #   under its old extension, opens as one this build saves.
+      var original = initScene()
+      discard original.addObject(POINTS[0], "a", Ink.Rose)
+      discard original.addObject(POINTS[1], "b", Ink.Jade)
+      let
+        path_new = getTempDir() / "visualiser_suite_scene_named.pgascene"
+        path_old = getTempDir() / "visualiser_suite_scene_named.rgascene"
+      check saveScene(original, path_new).contains("Saved 2")
+      defer: removeFile(path_new)
+      copyFile(path_new, path_old)
+      defer: removeFile(path_old)
+
+      var loaded = initScene()
+      check loadScene(loaded, path_old).contains("Loaded 2")
+      check loaded.len == 2
+      check loaded[0].label.toText == "a"
+      check loaded[1].label.toText == "b"
+      check loaded[1].geometry =~ POINTS[1]
+
+
     test "every multi-byte field is written little-endian, whatever the host":
       # Bytes themselves, not round trip: round trip passes on any byte order as.
       #   long as one build writes and reads it, and second implementation of this
@@ -927,7 +957,7 @@ suite "Scene":
         geometry: Multivector
       geometry[Basis.low] = 2.0  # 0x4000000000000000, whose bytes are unambiguous either way
       discard scene.addObject(geometry, "e", Ink.Rose)
-      let path = getTempDir() / "visualiser_suite_scene_endian.rgascene"
+      let path = getTempDir() / "visualiser_suite_scene_endian.pgascene"
       check saveScene(scene, path).contains("Saved 1")
       defer: removeFile(path)
 
@@ -950,7 +980,7 @@ suite "Scene":
     test "empty scene round-trips":
       let
         original = initScene()
-        path = getTempDir() / "visualiser_suite_scene_empty.rgascene"
+        path = getTempDir() / "visualiser_suite_scene_empty.pgascene"
       check saveScene(original, path).contains("Saved 0")
       defer: removeFile(path)
 
@@ -963,7 +993,7 @@ suite "Scene":
     test "loading a foreign file leaves scene untouched and reports why":
       var scene = initScene()
       discard scene.addObject(POINTS[0], "keep", Ink.Rose)
-      let path = getTempDir() / "visualiser_suite_scene_bogus.rgascene"
+      let path = getTempDir() / "visualiser_suite_scene_bogus.pgascene"
       writeFile(path, "not a scene file at all")
       defer: removeFile(path)
 
@@ -975,7 +1005,7 @@ suite "Scene":
     test "loading a file saved under a different PGA dimension is rejected":
       var scene = initScene()
       discard scene.addObject(POINTS[0], "keep", Ink.Rose)
-      let path = getTempDir() / "visualiser_suite_scene_wrongbasis.rgascene"
+      let path = getTempDir() / "visualiser_suite_scene_wrongbasis.pgascene"
       writeFile(path, "RGAS" & char(2) & char(99))  # no build here carries 99 basis terms
       defer: removeFile(path)
 
@@ -1098,7 +1128,7 @@ suite "Scene":
       check scene[1].label.toText == "second"
       check not scene[1].isVisible
       # And today's file carries radius through, wherever writer put it.
-      let path_now = getTempDir() / "visualiser_suite_scene_v4.rgascene"
+      let path_now = getTempDir() / "visualiser_suite_scene_v4.pgascene"
       writeFile(
         path_now,
         encodeSceneFile(
@@ -1153,7 +1183,7 @@ suite "Scene":
       #   anything at all by these bytes, and there is nothing honest to do but say so.
       var scene = initScene()
       discard scene.addObject(POINTS[0], "keep", Ink.Rose)
-      let path = getTempDir() / "visualiser_suite_scene_ahead.rgascene"
+      let path = getTempDir() / "visualiser_suite_scene_ahead.pgascene"
       writeFile(
         path,
         encodeSceneFile(
@@ -1182,7 +1212,7 @@ suite "Scene":
       discard original.addObject(POINTS[4], "late", Ink.Rose)  # reuses handle 1
       check original.len == 4
 
-      let path = getTempDir() / "visualiser_suite_scene_order.rgascene"
+      let path = getTempDir() / "visualiser_suite_scene_order.pgascene"
       check saveScene(original, path).contains("Saved 4")
       defer: removeFile(path)
 
@@ -1210,7 +1240,7 @@ suite "Scene":
       var original = initScene()
       for i in 0..<5:
         discard original.addObject(POINTS[i], "p" & $i, inkCycled(i))
-      let path = getTempDir() / "visualiser_suite_scene_replay.rgascene"
+      let path = getTempDir() / "visualiser_suite_scene_replay.pgascene"
       check saveScene(original, path).contains("Saved 5")
       defer: removeFile(path)
 
@@ -1233,7 +1263,7 @@ suite "Scene":
     test "loading a missing path reports cleanly and leaves scene untouched":
       var scene = initScene()
       discard scene.addObject(POINTS[0], "keep", Ink.Rose)
-      let path = getTempDir() / "visualiser_suite_scene_does_not_exist.rgascene"
+      let path = getTempDir() / "visualiser_suite_scene_does_not_exist.pgascene"
 
       check loadScene(scene, path).contains("No such file")
       check scene.len == 1
@@ -1247,7 +1277,7 @@ suite "Scene":
         count = uint32(OBJECTS_MAX + 1)
         count_bytes = newString(4)
       copyMem(addr count_bytes[0], addr count, 4)
-      let path = getTempDir() / "visualiser_suite_scene_toobig.rgascene"
+      let path = getTempDir() / "visualiser_suite_scene_toobig.pgascene"
       writeFile(path, "RGAS" & char(2) & char(ord(Basis.high) + 1) & count_bytes)
       defer: removeFile(path)
 
