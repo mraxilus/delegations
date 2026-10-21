@@ -35,7 +35,7 @@ const ORIENTATIONS: array[Facing, tuple[lead_turn, follow_turn: float]] =
   ## Sixteen ways couple can face, each reached by fewest dancers turning on spot.
   ##   Derived from model's facings (`rotation.Facing`), not listed: quarter
   ##     turn is 90 degrees, clockwise, as drawing counts its bearings.
-  ##   Domain of law that holds `parts.turnedFacing`, which card review names facings by.
+  ##   Domain of law that holds `parts.turnedFacing`, which Reference names facings by.
 
 func isTitleCased(title: string): bool =
   ## Whether title reads in title case: every word capitalised but small ones inside it.
@@ -50,11 +50,14 @@ func isTitleCased(title: string): bool =
   true
 
 func titlePage(page: string): string =
-  ## Page's own name, after work's name and its dash.
+  ## Page's own name, after work's name and space that follows it.
   let opens = page.find("<title>")
   doAssert opens >= 0, "Page carries no title."
-  let shuts = page.find("</title>", opens)
-  page[opens+"<title>".len..<shuts].split(" \u2014 ")[^1]
+  let
+    shuts = page.find("</title>", opens)
+    named = page[opens+"<title>".len..<shuts]
+  doAssert named.startsWith(WORK & " "), "Title opens with no name of work; got `" & named & "`."
+  named[(WORK & " ").len .. ^1]
 
 func pageIndex(name: string): int =
   ## Index of page `name` in `PAGES`, which builds it.
@@ -69,11 +72,12 @@ template holdPage(name: string) =
   buildPage(pageIndex(name), OUT)
   let written = readFile(OUT / name)
   check written.len > 0  # written and read back (IX.5)
-  # Every page workbench writes is exploration, so every one carries mockup form and
-  # none carries plain one: reader tells stood-behind page from mock-up before opening
-  # either.  Asserted against constant, so title cannot drift while test still passes.
-  check "<title>" & MOCKUP & " — " in written
+  # Every page workbench writes is one project stands behind, so title is work's name, space,
+  # then page's own name: no dash, and no mock-up form (Architect, 2026-10-21).
+  # Asserted against constant, so title cannot drift while test still passes.
+  check "<title>" & WORK & " " in written
   check "<title>" & WORK & " — " notin written
+  check "<title>" & WORK & " Mockup" notin written
   # Every published title reads in title case, so published set is one consistent
   # form.  Nothing checked it until viewer page shipped with sentence for title
   # while every page beside it was cased.
@@ -97,8 +101,8 @@ template holdPage(name: string) =
 
 
 suite "Internal: Mark workbench":
-  test "review.html":
-    holdPage("review.html")
+  test "reference.html":
+    holdPage("reference.html")
 
 
   test "every page the workbench writes has a law of its own":
@@ -124,7 +128,7 @@ suite "Internal: Every page this project publishes":
 
 
 suite "Internal: The sixteen facings, drawn":
-  # Glossary agrees sixteen facings, and model holds them (`rotation.Facing`).  Card review
+  # Glossary agrees sixteen facings, and model holds them (`rotation.Facing`).  Reference
   # names facings through `parts.turnedFacing`, so law holds it over all sixteen.
   test "each drawn facing reads back as the facing it is named for":
     for named, orientation in ORIENTATIONS:
@@ -133,10 +137,10 @@ suite "Internal: The sixteen facings, drawn":
 
 
 suite "Internal: The rests and the chains, named by model":
-  ## Card review names each chain's rest through `parts.facingRest`, and law reads written page
+  ## Reference names each chain's rest through `parts.facingRest`, and law reads written page
   ##   back (Article IX.5).
-  test "the review page heads each chain with the facing it rests at":
-    let page = readFile(OUT / "review.html")
+  test "the Reference heads each chain with the facing it rests at":
+    let page = readFile(OUT / "reference.html")
     check page.contains(
       "<h2>C &middot; The cross-name chain, " & facingRest(HAND_TO_HAND).name & " at rest</h2>",
     )
@@ -145,10 +149,10 @@ suite "Internal: The rests and the chains, named by model":
     )
 
 
-  test "the review page names every card by its section's letter and two digits":
+  test "the Reference names every card by its section's letter and two digits":
     ## Card is named A01 to G08, so no card reads as decision `D1` of sign-off (Architect,
     ##   2026-10-04).  Red with cards named A1 to G8, read 2026-10-04: 57 of 107 had one digit.
-    let page = readFile(OUT / "review.html")
+    let page = readFile(OUT / "reference.html")
     var
       names: seq[string]
       at = page.find("<figcaption><code>")

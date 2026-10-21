@@ -29,6 +29,7 @@ import std/[options, strutils]
 import std/dom except Frame  ## Exclude browser's own `Frame`, which is window.
 
 import ../src/dance_ontology
+import ../tools/title
 
 
 
@@ -565,7 +566,7 @@ func renderGallery(narrowing: Filter): string =
   ## Show every frame as its own picture, and let one of them be started from.
   ##   Name is claim about frame; picture is frame.
   ##   Showing both means vocabulary can be read off drawing rather
-  ##     than trusted, which is same reason card review carries
+  ##     than trusted, which is same reason Reference carries
   ##     pictures too.
   var
     cards = ""
@@ -798,7 +799,7 @@ func renderControls(view: View): string =
   for candidate in View:
     let classes = if candidate == view: "tab on" else: "tab"
     views.add button("view", $candidate, classes, escaped($candidate))
-  tag("header", "", tag("h1", "", "dance ontology") & tag("div", "class=\"tabs\"", views))
+  tag("header", "", tag("h1", "", WORK & " Explorer") & tag("div", "class=\"tabs\"", views))
 
 
 proc paintStage() =

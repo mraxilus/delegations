@@ -45,7 +45,7 @@ const
     ## Directories whose string literals reach reader: page written into markup,
     ##   element set by browser, or row of `simulation/verdicts.md`.
   DOCUMENTS = ["pages" / "app" / "index.html"]
-    ## Pages this project writes by hand rather than from Nim: Reference's shell.
+    ## Pages this project writes by hand rather than from Nim: Explorer's shell.
   HOLDS = [HAND_TO_HAND, [some Arm.Left, some Arm.Right]]
     ## Both holds workbench walks: app's own frame, and its dual (rule 31).
 

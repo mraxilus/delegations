@@ -19,8 +19,8 @@
 ##     checked by nothing here -- simulation reports in their words, which is
 ##     not check -- and rule 41 checked by nothing.
 ##   What these checks verify is that drawing follows rule as written,
-##     never that couple can dance it.  Workbench is mock-up.  Only
-##     reference cell kept, modelled and confirmed is trusted.
+##     never that couple can dance it.  Only cell of Reference kept, modelled and
+##     confirmed is trusted.
 
 # TODO: Make ledger load-bearing for checks.
 #   README half is done: its quotations are held to `RULES`.  Checks
@@ -458,8 +458,8 @@ const RULES* = [
   ##     hold but high lock.  Rule 37 says why: high lock is hammerlock,
   ##     hand brought round back to its own shoulder, so line going
   ##     round body is not what makes it.  Nothing checks rule 41, and
-  ##     drawing still holds high lock to `WRAP_MIN`; workbench is
-  ##     mock-up, trusted by nobody, so drawing is left as it is.
+  ##     drawing still holds high lock to `WRAP_MIN`; Architect trusts no cell until
+  ##     kept, modelled and confirmed, so drawing is left as it is.
 
 
 const FROM_ABOVE*: array[2, tuple[level: Option[Level], modifier: Option[Modifier]]] = [

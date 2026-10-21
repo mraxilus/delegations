@@ -1,4 +1,4 @@
-## Build every figure card review places, keyed by name it uses.
+## Build every figure Reference places, keyed by name it uses.
 ##
 ##   Split by hold: single-hand turns, then hand-to-hand chain and same-name pair.
 ##   Inline assertions are part of build -- page whose quarters
@@ -169,7 +169,7 @@ func placeComparable*(pose: Pose): tuple[axis, facing: float] =
 
 
 func singleTurnParts*(): Parts =
-  ## Build every SVG of single-hand turns, which card review places and checks read.
+  ## Build every SVG of single-hand turns, which Reference places and checks read.
   ##   Rule 16: single hand held above turns for ever, so no position is
   ##     ever refused and how far it has wound is not part of its state.
   ##     What is left is four quarter-turn orientations per connection.
@@ -525,7 +525,7 @@ const PAIRED*: Holds = [some Arm.Left, some Arm.Right]
 
 
 func chainTurnParts*(holds: Holds, key: string): Parts =
-  ## Build every SVG of one chain's turns, which card review places, keyed under `key`.
+  ## Build every SVG of one chain's turns, which Reference places, keyed under `key`.
   ##   Two chains are drawn -- hand to hand, and same-name pair -- and they
   ##     differ only in which hands are joined and where chain rests.  Written
   ##     once and called twice rather than copied: what is true of walking one

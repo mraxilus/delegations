@@ -1,6 +1,6 @@
 ## Assert claims eye cannot check, instead of trusting them.
 ##
-##   Everything card review argues is here as test: hands land where
+##   Everything Reference argues is here as test: hands land where
 ##     rules put them, orbit lands on state of matching axis turn,
 ##     every cycle closes, no reach enters body, and bare
 ##     border carries no arm ink.
@@ -416,7 +416,7 @@ proc checkRules*() =
 
 proc checkSingleTurns*(built: Parts) =
   ## Verify rules of single-hand turns as given, one line each.
-  ##   Reads figures `singleTurnParts` built for card review, never builds its own:
+  ##   Reads figures `singleTurnParts` built for Reference, never builds its own:
   ##     check holds what was drawn, and building same figures twice cost
   ##     every build second routing of every reach.
   var told: seq[string]
@@ -1022,7 +1022,7 @@ func inkLength(figure, ink: string): float =
 
 proc checkHandTurns*(built: Parts) =
   ## Verify rules of hand-to-hand turns as given, one line each.
-  ##   Reads figures `handTurnParts` built for card review, as single-hand check does.
+  ##   Reads figures `handTurnParts` built for Reference, as single-hand check does.
   var told: seq[string]
 
   func pairHand(wind: float): array[Arm, seq[Point]] =

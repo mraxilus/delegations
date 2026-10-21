@@ -4,11 +4,11 @@
 ##     stills recorded by `design/rig`, and viewer compiled from `design/rig_view` by
 ##     `nim js`.
 ##     Page is published as single file, so nothing may be left to fetch.
-##   Page is laid out as reference page is, section by section and card by
-##     card, with simulation's own still of each card drawn beside reference's drawing
+##   Page is laid out as Reference is, section by section and card by
+##     card, with simulation's own still of each card drawn beside Reference's drawing
 ##     of it.  Architect: lay reference and simulation side by side so each card can be
 ##     compared with what it looks like in model.  Cards are cut from built
-##     reference page itself rather than drawn again, so what is compared is
+##     Reference itself rather than drawn again, so what is compared is
 ##     what was ruled on, badge for badge.
 ##   Faces are inlined by `design/faces`, which also turns Commit Mono's
 ##     ligatures on at root.  Article X.8: presentation target ships faces it
@@ -19,7 +19,7 @@
 ##     (`design/twins`), so viewer draws every card from same fields.
 ##
 ##   Usage: rig_page <dir>   reads design/rig.json, <dir>/rig_view.js and
-##                           <dir>/review.html, writes <dir>/rig.html
+##                           <dir>/reference.html, writes <dir>/rig.html
 
 {.experimental: "strictFuncs".}
 
@@ -30,11 +30,15 @@ import std/[json, os, strformat, strutils, tables]
 import ./[faces, page, twins]
 
 
+const TITLE* = "Simulation"
+  ## Page's own name, after work's name: what browser tab, gallery and heading show.
+
+
 const HEAD_BODY = """
 <main class="rigview">
   <header>
     <p class="kicker">Body simulation</p>
-    <h1>The rig, drawn from the engine</h1>
+    <h1>""" & titled(TITLE) & """</h1>
     <p class="lede">The stage draws every capsule the engine tests for contact, and
       nothing more. Each capsule runs between the two points the engine reports, at
       the radius the engine gives it. A gap shows below the hips because the rig stops
@@ -43,7 +47,7 @@ const HEAD_BODY = """
       brighter side of a torso or a head shows which way that dancer faces. The shape
       cannot show it, because a torso is the same front and back, and a head is a
       sphere. Drag the stage to turn the view. Scroll to zoom.</p>
-    <p class="lede">Below the stage, each still card of the reference page appears in
+    <p class="lede">Below the stage, each still card of the Reference appears in
       that page's order, with the simulation's still beside the drawing. For each card the
       simulation turns the dancer that the card turns, lifts the joined hands over that
       dancer's crown, and then lets the pose settle. An orbit is the dancer at the centre
@@ -155,12 +159,8 @@ figure.pic.picked { outline: 2px solid var(--ink); outline-offset: 2px; }
 </style>"""
 
 
-const TITLE* = "The Rig, Drawn from the Engine"
-  ## Page's own name, after work's name: what browser tab and published gallery show.
-
-
 type
-  Card = object  ## One still card of reference page, as built page holds it.
+  Card = object  ## One still card of Reference, as built page holds it.
     id: string
     asks: seq[string]  ## Questions it stands for, as `design/asks` keys them.
     classes: string  ## Its own classes, carrying kept and modelled.
@@ -187,7 +187,7 @@ func attribute(tag, name: string): string =
 
 
 func toCards(html: string): Table[string, seq[Card]] =
-  ## Every still card of reference page, by section letter, in page's order.
+  ## Every still card of Reference, by section letter, in page's order.
   ##   Cards are cut from built page, since drawing there is what was ruled on.
   var
     section = ""
@@ -202,7 +202,7 @@ func toCards(html: string): Table[string, seq[Card]] =
       at = heading_start + 4
       continue
     let shut = html.find("</figure>", figure_start)
-    doAssert shut > figure_start, "A card on reference page never closes."
+    doAssert shut > figure_start, "A card on Reference never closes."
     let whole = html[figure_start..<shut+"</figure>".len]
     at = shut + 1
     if section notin ["A", "B", "C", "D"]: continue
@@ -213,7 +213,7 @@ func toCards(html: string): Table[string, seq[Card]] =
     let asks = attribute(opening, "data-asks")
     if asks.len > 0: card.asks = asks.split(' ')
     let (id_start, id_stop) = between(whole, "<code>", "</code>", 0)
-    doAssert id_start > 0, "A card on reference page carries no identifier."
+    doAssert id_start > 0, "A card on Reference carries no identifier."
     card.id = whole[id_start..<id_stop]
     let art = whole.find("<div class=\"art")
     doAssert art >= 0, &"A card carries no drawing; got `{card.id}`."
@@ -236,8 +236,8 @@ func styleSheetReference(html: string): string =
     at = stop
 
 
-proc cardsBody(review: string, data: JsonNode): string =
-  ## Lay every still card out as reference page does, simulation's still beside it.
+proc cardsBody(reference: string, data: JsonNode): string =
+  ## Lay every still card out as Reference does, simulation's still beside it.
   var
     entry_of: Table[string, int]
     held: Table[string, string]
@@ -248,20 +248,20 @@ proc cardsBody(review: string, data: JsonNode): string =
     held[key] = (if still.hasKey("at") and still["at"].len > 0:
                    &"holds, {apart:.2f} m apart"
                  else: "no pose holds at any distance")
-  let cards = review.toCards
-  # Each heading is read off reference page, which names each chain's rest
+  let cards = reference.toCards
+  # Each heading is read off Reference, which names each chain's rest
   # through model, so two pages cannot name one section two ways.
   var titles: seq[tuple[letter, title: string]]
   for letter in ["A", "B", "C", "D"]:
     let
       head = &"<h2>{letter} &middot; "
-      opens = review.find(head)
+      opens = reference.find(head)
       start = opens + head.len
     if opens < 0:
       quit(&"Reference page has no section `{letter}`; run `pages` first.", 1)
-    titles.add (letter, review[start..<review.find("</h2>", start)])
+    titles.add (letter, reference[start..<reference.find("</h2>", start)])
   result.add """<section class="cards"><p class="lede">Every card here comes from the
-    reference page, with the same badges, and the simulation's still stands beside it. Where
+    Reference, with the same badges, and the simulation's still stands beside it. Where
     one card asks more than one question, the badge shows the first. The picker above
     reaches every card.</p>"""
   for (letter, title) in titles:
@@ -292,25 +292,25 @@ func folded*(recording: JsonNode): JsonNode =
 
 
 proc main() =
-  ## Fold recording, viewer and reference into `rig.html`, in directory first argument names.
+  ## Fold recording, viewer and Reference into `rig.html`, in directory first argument names.
   let
     directory = if paramCount() >= 1: paramStr(1) else: "."
     data = "design" / "rig.json"
     view = directory / "rig_view.js"
-    review = directory / "review.html"
+    reference = directory / "reference.html"
   if not fileExists(data):
     quit(&"Viewer page has no sweeps; run `nim r tools/build.nim rig`: got `{data}`.", 1)
   if not fileExists(view):
     quit(&"Viewer page has no viewer; run `pages` first: got `{view}`.", 1)
-  if not fileExists(review):
-    quit(&"Viewer page has no reference to lay beside; run `pages` first: got `{review}`.", 1)
+  if not fileExists(reference):
+    quit(&"Viewer page has no Reference to lay beside; run `pages` first: got `{reference}`.", 1)
   let
-    review_html = readFile(review)
+    reference_html = readFile(reference)
     shown = folded(parseFile(data))
     html = document(
       TITLE,
-      styleSheetReference(review_html) & STYLE_SHEET & HEAD_BODY &
-      cardsBody(review_html, shown) &
+      styleSheetReference(reference_html) & STYLE_SHEET & HEAD_BODY &
+      cardsBody(reference_html, shown) &
       "<script>var RIG = " & $shown & ";</script>\n" &
       "<script>" & readFile(view) & "</script>\n",
     )

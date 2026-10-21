@@ -30,7 +30,7 @@ const MODELLED = staticRead("modelled.json")
   ##   Second badge each cell carries.  `kept` is Architect's, by eye on floor;
   ##     `modelled` is simulation's answer confirmed by Architect against their own body,
   ##     and goal is both at hundred per cent.  Simulation reaching card is not enough:
-  ##     Architect, on seeing simulation's stills laid beside reference: many static
+  ##     Architect, on seeing simulation's stills laid beside Reference: many static
   ##     states are wrong; mark everything unmodelled until confirmed.  So card
   ##     simulation reaches reads *unconfirmed* until its name is in `CONFIRMED`, and
   ##     only then *modelled*.
@@ -148,7 +148,7 @@ func unpinned(svg: string): string =
     return
   result = result[0..<at] & result[shut+1 .. ^1]
 
-proc checkReview*() =
+proc checkRulings*() =
   ## Check every card ruled on has fixture holding it to what it was drawn as.
   ##   Ruling without fixture is ruling nothing guards, which is how ruled
   ##     card came to move under one in first place.
@@ -163,7 +163,7 @@ proc checkReview*() =
       &"A confirmed card carries no fixture; run `tools/build.nim confirmed`: got `{id}`."
 
 
-func reviewParts*(single, hand: Parts): Parts =
+func referenceParts*(single, hand: Parts): Parts =
   ## Collect every figure this page places: single-hand and hand-to-hand chains'
   ## parts, which it draws again at its own size, and crossed pair's.
   ##   Both chains' parts are handed in, as `marks` built them once, rather
@@ -173,6 +173,10 @@ func reviewParts*(single, hand: Parts): Parts =
     result[key] = svg
   for key, svg in pairTurnParts():
     result[key] = svg
+
+
+const TITLE = "Reference"
+  ## Page's own name, after work's name: what browser tab, gallery and heading show.
 
 
 func pageBody(parts: Parts): string =
@@ -718,7 +722,7 @@ func pageBody(parts: Parts): string =
 """ & switching & """  </style>"""
 
   let markup = head & """<div class="wrap">
-  <h1>Frame states, drawn</h1>
+  <h1>""" & titled(TITLE) & """</h1>
   <p class="lede">Every frame state this project draws, in one place, so that the Architect
   can keep or drop each one. Every card carries an identifier to quote back.</p>
   <p class="tally">{{tally}}</p>
@@ -749,7 +753,7 @@ func pageBody(parts: Parts): string =
 
 func render*(parts: Parts): string =
   ## Lay page out under its own title.
-  document("Frame States, Drawn", pageBody(parts))
+  document(TITLE, pageBody(parts))
 
 
 func drawing(html, id: string): string =

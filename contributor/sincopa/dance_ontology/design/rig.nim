@@ -15,7 +15,7 @@
 ##     moment.  Straight transcription ran to four megabytes; this is fifth of
 ##     that and says exactly as much.
 ##
-##   Every still card of reference is recorded beside sweeps, one moment each,
+##   Every still card of Reference is recorded beside sweeps, one moment each,
 ##     wound to its facing as `walk.stood` winds it, so viewer can lay simulation's
 ##     answer beside each cell.
 ##   Each answered still is kept once.  Reflected twin card (`walk.twinAnswering`) keeps none of
@@ -65,7 +65,7 @@ const SHOWN: seq[Cut] = @[
    false, Band.Torso),
   ("Chain, same name", @[(Arm.Left, Arm.Left), (Arm.Right, Arm.Right)],
    true, Band.Torso)]
-  ## Eight sweeps worth watching: four holds above, where whole reference is drawn,
+  ## Eight sweeps worth watching: four holds above, where whole Reference is drawn,
   ## and two chains at each lower level, where floor and engine still argue.
   ##   Reached by `design/floors`, which plans each sweep over crown, and by
   ##     `tests/suites/test_asks`, which counts them.
@@ -279,7 +279,7 @@ func assembled*(stamp: string, texts: seq[string]): string =
   ## Whole recording as file keeps it: stamp, rig's measures, then each job's text.
   # Every still card, wound to its facing from distance that sits easiest.
   #   Recorded whole, one moment each, so viewer can lay simulation's answer beside
-  #   each cell of reference; card no distance holds is recorded with no moment.
+  #   each cell of Reference; card no distance holds is recorded with no moment.
   let
     cuts = texts[0..<SHOWN.len]
     stills = texts[SHOWN.len..^1]

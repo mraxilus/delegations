@@ -7,9 +7,9 @@
 ##   Projection, painter's order and what each capsule is put down as are
 ##     `drawn`'s, pure and held to laws natively; this file only puts ink on
 ##     canvas in that order.
-##   One list of entries: every still of reference first, in page's order, then
+##   One list of entries: every still of Reference first, in page's order, then
 ##     every sweep.  Stage shows one; every still is also drawn small beside its
-##     own card of reference, and clicking card puts it on stage.  Architect: lay
+##     own card of Reference, and clicking card puts it on stage.  Architect: lay
 ##     reference and simulation side by side, with next and previous.
 ##   Data is read in place through `jsffi`, never copied into Nim values: every
 ##     copy on JS backend is deep (STYLE.md), and this is read sixty times per
@@ -63,7 +63,7 @@ func styleComputed(name: cstring): cstring {.importjs:
   "getComputedStyle(document.documentElement).getPropertyValue(#).trim()".}
   ## Colours come from page's own custom properties rather than being written
   ## twice.  `draw/style` names same four for arms, so arm here and arm on
-  ## reference page are one arm to reader, and dark scheme moves both together.
+  ## Reference are one arm to reader, and dark scheme moves both together.
 
 proc inkArm(side, who: int): cstring =
   ## Hue is side, shade is whose: plain for follow, deep for lead.
@@ -93,7 +93,7 @@ var
   IS_PLAYING = true
   IS_DRAGGING = false
   X_PREV, Y_PREV = 0.0
-  LUT_ID_BY_ENTRY: seq[cstring]  ## Identifier of reference card each entry belongs to, or empty.
+  LUT_ID_BY_ENTRY: seq[cstring]  ## Identifier of Reference card each entry belongs to, or empty.
   LUT_CARD_BY_ENTRY: seq[Element]  ## And card itself, or nil.
 
 
@@ -421,9 +421,9 @@ proc choose(i: int) =
 
 
 proc start() =
-  ## Read recording, tie each entry to its reference card, and draw first.
+  ## Read recording, tie each entry to its Reference card, and draw first.
   ENTRIES_ALL = joined(rig().stills, rig().sweeps)
-  # Which card of reference each entry belongs to, read off page itself.
+  # Which card of Reference each entry belongs to, read off page itself.
   for i in 0..<count(ENTRIES_ALL):
     LUT_ID_BY_ENTRY.add cstring""
     LUT_CARD_BY_ENTRY.add nil

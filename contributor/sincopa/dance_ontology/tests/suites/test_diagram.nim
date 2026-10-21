@@ -128,7 +128,7 @@ suite "Internal: The picture":
 
 
   test "the pictures fix no colour of their own":
-    # Reference and card review theme every picture, light and dark, so every ink is
+    # Explorer and Reference theme every picture, light and dark, so every ink is
     # custom property with fallback and no ink is written down on its own.
     for target in FRAMES:
       let picture = renderFrame(target)

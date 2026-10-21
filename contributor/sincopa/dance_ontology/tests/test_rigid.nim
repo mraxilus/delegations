@@ -368,7 +368,7 @@ suite "Internal: Two dancers in rigid body engine":
     ##     below walk anyway, so this walks nothing of its own.
     ##   Still that holds at no distance and in no plan is marked stopped and names no stop
     ##     (`seen.still`), and rig page says no pose holds there (`design/rig.nim`).  No
-    ##     law stands such still: every still card reference draws is modelled
+    ##     law stands such still: every still card Reference draws is modelled
     ##     (`suites/test_asks.nim`).
     var stops = 0
     let given = answered()
@@ -1087,7 +1087,7 @@ suite "Internal: Arms move as arms do":
     ## longer face to face hands must actually be above.  Still card was built at
     ## its facing and settled, and lift starts only after settling: over crown at
     ## half turn every joined hand hung at hip height, 0.87 m, so every still past
-    ## face to face on reference was answered with hands nowhere near its band.
+    ## face to face on Reference was answered with hands nowhere near its band.
     var found_pose = false
     for apart in stands(HUMAN):
       let (is_holding, couple) = stood(HUMAN, Band.Crown, WOUND, 0.5, false, Body.Two, apart)
@@ -1105,7 +1105,7 @@ suite "Internal: Arms move as arms do":
   test "still at diamond is wound where open is not":
     ## Winding is path, not facing.  Couple built at whole turn stand as they do
     ## at none: diamond read as open and swan as cross, and every wound still on
-    ## reference was answered by unwound pose.  Turned there, diamond's two
+    ## Reference was answered by unwound pose.  Turned there, diamond's two
     ## connections cross twice in plan where open's run clear.
     ##   Wound there whether or not pose holds, and from `diamond`: what is
     ##   claimed here is path, not hold.  From `APART` whole turn ends with arm
