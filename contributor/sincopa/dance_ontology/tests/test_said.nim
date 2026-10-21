@@ -4,11 +4,11 @@ targets: "js"
 cmd: "nim $target --hints:off -d:testing -d:nodejs -d:nimUnittestAbortOnError:on $options $file"
 """
 ## Hold prose browser writes to same two rules as prose written into markup.
-##   Reference and rig viewer build their pages in browser, so no page on disk
+##   Explorer and rig viewer build their pages in browser, so no page on disk
 ##     carries their sentences and `test_marks` cannot read them.  Gap was recorded
-##     rather than closed, and Reference held nine sentences and two paragraphs
+##     rather than closed, and Explorer held nine sentences and two paragraphs
 ##     past bounds when this first ran.
-##   Two shapes, because two pages are built two ways.  Reference builds markup
+##   Two shapes, because two pages are built two ways.  Explorer builds markup
 ##     in pure functions that return it, so law calls them and reads what they
 ##     return: law runs where mechanism runs (Article IX.5).  Viewer writes its
 ##     sentences straight into elements, so they are held in one table
@@ -45,7 +45,7 @@ func parsed(text: cstring): JsObject {.importjs: "JSON.parse(#)".}
 
 
 func pages(): seq[(string, string)] =
-  ## Every markup Reference builds, named, over states that carry its prose.
+  ## Every markup Explorer builds, named, over states that carry its prose.
   let
     start = startFrame()
     still = default(Motion)
@@ -64,7 +64,7 @@ func pages(): seq[(string, string)] =
 
 
 
-suite "Internal: The Reference says its prose in few words":
+suite "Internal: The Explorer says its prose in few words":
   let built = pages()
 
 

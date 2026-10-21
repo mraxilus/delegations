@@ -3,21 +3,14 @@
 ##   Every page published from this project puts name of work in front of its own name, so
 ##     gallery holding work from several places sorts them together and one of these can be
 ##     told from somebody else's at one glance.
-##   Two forms, because two kinds of page are published and reader deserves to know which is
-##     which before opening either:
-##     `WORK` titles page project stands behind, which is validator.
-##     `MOCKUP` titles exploration or instrument kept for reference, which is every other
-##       page (`CONTRIBUTOR.md` draws same line between `pages/` and `mockups/`).
-##       Body simulation's page stood behind until it went with solver it drove; viewer that
-##       replaced it plays sweeps recorded here and is titled as instrument it is.
-##   Mockup form is derived from `WORK`, never written out again, so name of work is spelt
-##     once in whole project (Article II.1).
+##   One form: `WORK`, space, then page's own name, with no dash, as `Dance Ontology Explorer`.
+##     Project stands behind every page it publishes (Explorer, Reference, rig viewer), so
+##     every title takes this one form.
+##   Name of work is spelt once in whole project (Article II.1); every title derives from `WORK`.
 ##   Every title reads in title case, so published set is one consistent form.
 
 {.experimental: "strictFuncs".}
 
 
 const
-  WORK* = "Dance Ontology"  ## Name of body of work, titling page project stands behind.
-  MOCKUP* = WORK & " Mockup"
-    ## Same name marked as exploration, titling page project does not stand behind.
+  WORK* = "Dance Ontology"  ## Name of body of work, titling every page this project publishes.

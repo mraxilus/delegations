@@ -7,7 +7,7 @@
 ##   Why engine at all: pose search this project had proposed poses and checked
 ##     them, with no notion of motion between two of them, so arms could not slide
 ##     along one another as couple's do. It wound chain to one crossing and no
-##     further, where reference Architect signed off draws two at whole turn and
+##     further, where Reference Architect signed off draws two at whole turn and
 ##     three at turn and half. Engine integrates motion with contacts, so sliding is
 ##     what it does rather than what it cannot express (`PROVENANCE.md`).
 ##   Engine stands Y up and this project stands Z up. Translation is deliberately not

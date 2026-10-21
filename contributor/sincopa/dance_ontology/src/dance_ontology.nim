@@ -28,7 +28,7 @@
 ##   [diagram, frame, map, motion, transition] -> spokes
 ##   [diagram, map, motion, rotation] -> axle
 ##   draw/ chain is indexed by its own umbrella-less imports: it serves pages
-##     and app directly and is not re-exported here.
+##     and Explorer directly and is not re-exported here.
 
 {.experimental: "strictFuncs".}
 

@@ -1,11 +1,11 @@
-## Ask body simulation about every card reference draws, and write down which it agrees with.
+## Ask body simulation about every card Reference draws, and write down which it agrees with.
 ##
-##   Reference page carries two badges on each cell.  `kept` is Architect's, given by eye
+##   Reference carries two badges on each cell.  `kept` is Architect's, given by eye
 ##     on floor.  `modelled` is this one: whether simulation reaches what card draws.  Goal is
 ##     both at hundred per cent, and gap between them is work left.
 ##   Written here rather than on page because asking simulation costs minutes and page is
 ##     markup.
-##   Badge must not touch fixtures.  `review_page.drawing` cuts cards back out of built
+##   Badge must not touch fixtures.  `reference_page.drawing` cuts cards back out of built
 ##     page by collecting their `svg` elements alone, so badge outside drawing changes no
 ##     fixture, and no kept card is re-drawn by adding this.
 ##   Answers are keyed by question, never by card's own name: page already folds
@@ -36,7 +36,7 @@ const KEPT_MODELLED* = currentSourcePath().parentDir / "modelled.json"
 
 
 const CROWN = Band.Crown
-  ## Whole reference is drawn over crown: `design/parts` picks `ABOVE_BOTH` for chains
+  ## Whole Reference is drawn over crown: `design/parts` picks `ABOVE_BOTH` for chains
   ## and `ABOVE_ONE`/`ABOVE_OTHER` for singles, so no card asks about any other band.
 
 

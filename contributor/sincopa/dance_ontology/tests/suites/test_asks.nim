@@ -1,4 +1,4 @@
-## What reference's cards ask of body simulation, held to being one question wherever one
+## What Reference's cards ask of body simulation, held to being one question wherever one
 ## picture is drawn.
 
 {.experimental: "strictFuncs".}
@@ -473,7 +473,7 @@ suite "Internal: Each hold rests at named facing":
 
 
 
-suite "Internal: Simulation against reference":
+suite "Internal: Simulation against Reference":
   ## Laws read each still as page shows it, so twin card is read as still it mirrors
   ##   (`design/twins`).
   let recorded = block:
@@ -851,13 +851,13 @@ suite "Internal: Simulation against reference":
     check crossed.len == 0
 
 
-  test "simulation models every card reference draws, but cards shoulder's edge refuses":
-    ## Every position and movement reference draws is one dancers take with ease, so card
+  test "simulation models every card Reference draws, but cards shoulder's edge refuses":
+    ## Every position and movement Reference draws is one dancers take with ease, so card
     ##   simulation cannot reach is fault of simulation, never of card.
     ##   Red with arms carried by pulls on hands alone: 33 of 231 cards unmodelled, all four
     ##     swans and every whole chain among them, measured 2026-10-02.
     ##   Card shoulder's edge stops is refused (Architect, issue 611, 2026-10-11, D1): law names
-    ##     each with its reason (`CARDS_REFUSED`), and review page shows it not modelled.  Each
+    ##     each with its reason (`CARDS_REFUSED`), and Reference shows it not modelled.  Each
     ##     stays unmodelled, so change that models one fails here and lifts its refusal.
     let answers = parseFile(KEPT_MODELLED)["answers"]
     var unmodelled, modelled_refused: seq[string]
@@ -880,15 +880,15 @@ suite "Internal: Each recording is of tree it is kept in":
   ## Verb whose stamp is unchanged records nothing again (`design/stamps`), so recording kept
   ##   with other stamp is of other physics, other questions or other verb.  Page would show it
   ##   as this tree's answer.
-  test "answers the reference page badges carry the stamp the tree gives":
+  test "answers the Reference's badges carry the stamp the tree gives":
     check parseFile(KEPT_MODELLED)["stamp"].getStr == modelledStamp()
 
 
-  test "recording the rig page plays carries the stamp the tree gives":
+  test "recording the rig viewer plays carries the stamp the tree gives":
     check parseFile(KEPT_RIG)["stamp"].getStr == rigStamp()
 
 
-  test "rig page folds in the recording without its stamp, each twin mirrored, nothing left out":
+  test "rig viewer folds in the recording without its stamp, each twin mirrored, nothing left out":
     ## Stamp changes with any change to physics, where page shows none.  Twin card is folded
     ##   in as still it names, mirrored (`design/twins`).
     let

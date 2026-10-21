@@ -51,7 +51,7 @@ const
     "\n</body></html>",
   )
     ## Document skeleton publish host wraps page in: opening, then closing.
-    ##   Read off Frame States, Drawn, version 11, as published on 2026-10-05, with host's style
+    ##   Read off Reference, version 11, as published on 2026-10-05, with host's style
     ##     sheet left out, as module's head says why. Host's own, so it can change under us.
 
 

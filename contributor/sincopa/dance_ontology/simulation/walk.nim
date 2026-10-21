@@ -526,7 +526,7 @@ proc stood*(
   ## standing there, and whether pose holds.  Caller frees couple, holding or not.
   ##   Wound, not built there.  Winding is path, not facing: couple built at
   ##     whole turn stand exactly as at none, so diamond read as open and swan
-  ##     as cross, and every wound still on reference was answered by unwound
+  ##     as cross, and every wound still on Reference was answered by unwound
   ##     pose.  And built at facing and settled, lift never came: every joined
   ##     hand of every still past face to face hung at hip height, 0.87 m, over
   ##     crown.  So couple are turned there as walk turns them, hands lifted as
