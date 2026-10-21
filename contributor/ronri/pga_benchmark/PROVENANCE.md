@@ -787,7 +787,7 @@ and a stale anchor.
 
 **Every page is one shell and one body.** The shell is `pages/shell.html`, committed and
 hand-written. The body is rendered in Nim from committed files, so a page says only what those
-files say. The faces are the six that `rga_visualiser` embeds, fetched through
+files say. The faces are the six that `pga_visualiser` embeds, fetched through
 `koch fetch-assets` and inlined as base64. Interaction is CSS: tabs, filters and sort are
 inputs that `:has()` rules read.
 
@@ -1230,14 +1230,14 @@ Architect asks. Both projects are under the Prosperity Public License 3.0.0. Rej
 of the library in this tree, which Article XI.3 forbids.
 
 **The compiler is pinned by commit**, `27763495bcfe265507ca98aedc1c7064bf1e0e4d`, which is
-the same pin that `rga_visualiser` carries. The library spells seven operators with
+the same pin that `pga_visualiser` carries. The library spells seven operators with
 characters that no Nim release lexes. One cached build therefore serves both projects. Atlas
 writes `"objects": {}` for a repository without a nimble file, so the resolved commit is
 patched into `atlas.lock` by hand. The stored copies in the lock of the nimble file and of
 `nim.cfg` are kept byte-identical to the committed files, which the static pass checks.
 
 **`package-lock.json` pins the Node tools, and git ignores their checkout.** The project commits
-`package.json` and `package-lock.json` with the versions that `rga_visualiser` pins.
+`package.json` and `package-lock.json` with the versions that `pga_visualiser` pins.
 `typescript` 7.0.2 type-checks the harness, and `@playwright/test` 1.63.0 drives Chromium. Both
 are Microsoft's, under Apache-2.0. `@types/node` 22.20.2 is DefinitelyTyped's, under MIT, and
 types the Node surface that the harness reaches. The `license` field of each entry in
