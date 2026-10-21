@@ -75,7 +75,7 @@ one issue open until the pin follows. To follow head:
 
 1. Bump the commit in `pga_benchmark.nimble` and `atlas.lock`, and restore with
    `nim r koch fetch-deps`.
-2. Re-take the static counts and the counts of the machine with `baseline`, and re-quote each
+2. Re-take the static and machine measurements with `baseline`, and re-quote each
    change, proposal and note that `drive` names. Redraw each box of the library map that `drive`
    names, and add a box for each new table.
 3. Run `restamp`. It moves each timed record whose builds emit the same C to the pin, and names
@@ -92,7 +92,7 @@ nim r tools/build.nim types         # type-check the render harness, with no bro
 nim r tools/build.nim drive         # project directory: every check CI runs, all at pin
 nim r tools/build.nim head          # compare pin with library head, as the daily workflow does
 nim r tools/build.nim bench         # five alternating runs into baseline/runtime_<algebra>.json
-nim r tools/build.nim baseline      # re-record static and machine counts after an intended change
+nim r tools/build.nim baseline      # re-record static and machine measurements after a change
 nim r tools/build.nim guard         # compare the last inspection against the baselines
 nim r tools/build.nim gaps          # regenerate gaps.md and the docket from baseline/
 nim r tools/build.nim evaluate all  # try every change and proposal at pin, into evaluations/
@@ -129,7 +129,7 @@ src/pga_benchmark/dense.nim        dense form of each general measurand, from li
 src/pga_benchmark/inspect.nim      entry: static measurements of one nimcache
 src/pga_benchmark/machine.nim      entry: each measurand once, in a wrapper that valgrind traces
 src/pga_benchmark/trace.nim        instructions and bytes of each wrapper, read from the trace
-src/pga_benchmark/guard.nim        compare static and machine counts against the baselines
+src/pga_benchmark/guard.nim        compare static and machine measurements against the baselines
 src/pga_benchmark/gaps.nim         gaps, causes, docket, rendering
 src/pga_benchmark/markdown.nim     records read as blocks, and rendered for pages
 src/pga_benchmark/changes.nim      changes: quoted edits, applied at pin
