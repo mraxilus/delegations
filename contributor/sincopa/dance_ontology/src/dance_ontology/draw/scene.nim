@@ -1,4 +1,4 @@
-## Draw each of app's frames, through marks workbench settled.
+## Draw each of Explorer's frames, through marks workbench settled.
 ##
 ##   This is only place two vocabularies meet.  Model says `Side`
 ##     and `Site` -- hand of lead, hand of follow, told apart by
@@ -15,7 +15,7 @@
 ##     effect, so whole chain -- settling hands, routing each
 ##     connection round bodies, breaking one that passes underneath
 ##     -- runs in compiler and what ships is twenty-four strings.
-##     Which is worth more than speed: app regenerates its whole page
+##     Which is worth more than speed: Explorer regenerates its whole page
 ##       on every interaction, and router that ran per draw would run
 ##       thousands of times per second for answer that never changes.  It
 ##       also keeps routing out of browser bundle entirely, and it
@@ -96,7 +96,7 @@ func renderScene(target: Frame; is_facing, is_clockwise: bool): string {.compile
 func buildScenes(): array[HOW_MANY, string] {.compileTime.} =
   ## Draw every frame model has, in every state it draws, once and for all.
   ##   Three states, not two: facing, turned one way, turned other.  Third
-  ##     earns its place on one frame alone -- app's own, which holds both
+  ##     earns its place on one frame alone -- Explorer's own, which holds both
   ##     hands and says nothing about over and under -- and is duplicate of
   ##     second everywhere else.  Cost is seven strings nobody can tell
   ##     apart; other way is one frame drawn with its crossing unbroken,

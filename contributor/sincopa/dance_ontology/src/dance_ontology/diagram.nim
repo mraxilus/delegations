@@ -33,7 +33,7 @@
 ##       ground, only readable on either.  Accepted -- standalone file
 ##       cannot know ground it will be shown on.
 ##   None of drawing is here.  Marks were settled in design
-##     workbench and live in `draw/`, which workbench and app both
+##     workbench and live in `draw/`, which workbench and Explorer both
 ##     read, so two cannot drift; `draw/scene` builds every frame's
 ##     picture at compile time and this module is frame around it.
 

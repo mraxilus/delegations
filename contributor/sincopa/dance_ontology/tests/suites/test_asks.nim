@@ -884,11 +884,11 @@ suite "Internal: Each recording is of tree it is kept in":
     check parseFile(KEPT_MODELLED)["stamp"].getStr == modelledStamp()
 
 
-  test "recording the rig page plays carries the stamp the tree gives":
+  test "recording the rig viewer plays carries the stamp the tree gives":
     check parseFile(KEPT_RIG)["stamp"].getStr == rigStamp()
 
 
-  test "rig page folds in the recording without its stamp, each twin mirrored, nothing left out":
+  test "rig viewer folds in the recording without its stamp, each twin mirrored, nothing left out":
     ## Stamp changes with any change to physics, where page shows none.  Twin card is folded
     ##   in as still it names, mirrored (`design/twins`).
     let

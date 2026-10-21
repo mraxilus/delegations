@@ -416,7 +416,7 @@ func pageBody(parts: Parts): string =
     ## round.
     ##   Way comes from `wayTurn`, so page and vocabulary cannot drift apart on
     ##     which sign is which.
-    ##   `zero` replaces resting note for chain whose rest is not app's frame,
+    ##   `zero` replaces resting note for chain whose rest is not Explorer's frame,
     ##     which `chainFor` names for hand-to-hand chain it was written for.
     if abs(wind) < 1e-9: (if zero.len > 0: zero else: note)
     else: note & " " & wayName(wayTurn(HalfTurns(wind * 2)))
@@ -508,7 +508,7 @@ func pageBody(parts: Parts): string =
   <p class="how"><b>Every walk here turns one way.</b> The page turns by a positive quarter, so
   every walk here is clockwise. The frame states in section B are complete either way, because
   four quarters make a whole round. <b>The anticlockwise walks are not drawn</b>, and neither
-  is any edge run backwards. That is a gap in this reference, and not in the model.</p>
+  is any edge run backwards. That is a gap in the Reference, and not in the model.</p>
   <p class="how"><b>The bend at a chevron is a fault here, and nowhere above.</b> A reach keeps
   clear of both chevrons, so that a line through a chevron always means that hand is held. Rule
   22 holds it off, and every still in section B is right because of it. <b>In a walk the same
@@ -733,7 +733,7 @@ func pageBody(parts: Parts): string =
   on the drawing, by eye on the floor.</p>
    <p class="how">The other badge is the body simulation's. It reads <i>not modelled</i>
   where the simulation reaches no pose. It reads <i>unconfirmed</i> where the simulation
-  reaches one that the Architect has not yet held against their own body on the viewer. It
+  reaches one that the Architect has not yet held against their own body on the rig viewer. It
   reads <i>modelled</i> once they have. A pose the simulation reaches is a claim, and never a
   ruling.</p>
   """ & body & "</div>"

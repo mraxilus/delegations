@@ -6,7 +6,7 @@
 ##     Page is published as single file, so nothing may be left to fetch.
 ##   Page is laid out as Reference is, section by section and card by
 ##     card, with simulation's own still of each card drawn beside Reference's drawing
-##     of it.  Architect: lay reference and simulation side by side so each card can be
+##     of it.  Architect: lay Reference and simulation side by side so each card can be
 ##     compared with what it looks like in model.  Cards are cut from built
 ##     Reference itself rather than drawn again, so what is compared is
 ##     what was ruled on, badge for badge.
@@ -226,11 +226,11 @@ func toCards(html: string): Table[string, seq[Card]] =
     result.mgetOrPut(section, @[]).add card
 
 func styleSheetReference(html: string): string =
-  ## Reference page's own style, so its cards look here as they do there.
+  ## Reference's own style, so its cards look here as they do there.
   var at = 0
   while true:
     let (start, stop) = between(html, "<style>", "</style>", at)
-    doAssert start >= 0, "Reference page carries no style block for its cards."
+    doAssert start >= 0, "Reference carries no style block for its cards."
     let style = html[start..<stop]
     if ".pic {" in style: return "<style>" & style & "</style>"
     at = stop
@@ -258,7 +258,7 @@ proc cardsBody(reference: string, data: JsonNode): string =
       opens = reference.find(head)
       start = opens + head.len
     if opens < 0:
-      quit(&"Reference page has no section `{letter}`; run `pages` first.", 1)
+      quit(&"Reference has no section `{letter}`; run `pages` first.", 1)
     titles.add (letter, reference[start..<reference.find("</h2>", start)])
   result.add """<section class="cards"><p class="lede">Every card here comes from the
     Reference, with the same badges, and the simulation's still stands beside it. Where
@@ -299,11 +299,11 @@ proc main() =
     view = directory / "rig_view.js"
     reference = directory / "reference.html"
   if not fileExists(data):
-    quit(&"Viewer page has no sweeps; run `nim r tools/build.nim rig`: got `{data}`.", 1)
+    quit(&"Rig viewer has no sweeps; run `nim r tools/build.nim rig`: got `{data}`.", 1)
   if not fileExists(view):
-    quit(&"Viewer page has no viewer; run `pages` first: got `{view}`.", 1)
+    quit(&"Rig viewer has no script; run `pages` first: got `{view}`.", 1)
   if not fileExists(reference):
-    quit(&"Viewer page has no Reference to lay beside; run `pages` first: got `{reference}`.", 1)
+    quit(&"Rig viewer has no Reference to lay beside; run `pages` first: got `{reference}`.", 1)
   let
     reference_html = readFile(reference)
     shown = folded(parseFile(data))

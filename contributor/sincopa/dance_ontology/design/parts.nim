@@ -102,7 +102,7 @@ const SINGLES*: array[4, tuple[holds: Holds, name: string]] = [
   ([some Arm.Right, none Arm], "Left to right"),
   ([none Arm, some Arm.Left], "Right to left"),
   ([none Arm, some Arm.Right], "Right to right"),
-]  ## App's four single-hand frames, named as workbook names them.
+]  ## Explorer's four single-hand frames, named as workbook names them.
 
 const
   ABOVE_ONE*: Levels = [some Level.Above, none Level]
@@ -352,7 +352,7 @@ func singleTurnParts*(): Parts =
 
 const
   HAND_TO_HAND*: Holds = [some Arm.Right, some Arm.Left]
-    ## App's own two-hand frame: lead's Left in follow's right
+    ## Explorer's own two-hand frame: lead's Left in follow's right
     ## and lead's Right in follow's left, uncrossed.
   ABOVE_BOTH*: Levels = [some Level.Above, some Level.Above]
     ## Both arms over head, this scope's one level (rules 17, 21).
@@ -444,7 +444,7 @@ func chainFor*(holds: Holds): seq[Position] =
               of 2: "diamond"
               else: "swan"
       far = case int(abs(wind) * 2)
-            of 0: "the app's frame"
+            of 0: "the Explorer's frame"
             of 1: "a half turn"
             of 2: "a whole turn"
             else: "a turn and a half"

@@ -10,7 +10,7 @@
 ##   One list of entries: every still of Reference first, in page's order, then
 ##     every sweep.  Stage shows one; every still is also drawn small beside its
 ##     own card of Reference, and clicking card puts it on stage.  Architect: lay
-##     reference and simulation side by side, with next and previous.
+##     Reference and simulation side by side, with next and previous.
 ##   Data is read in place through `jsffi`, never copied into Nim values: every
 ##     copy on JS backend is deep (STYLE.md), and this is read sixty times per
 ##     second.

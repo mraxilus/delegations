@@ -21,7 +21,7 @@ import std/[algorithm, math, options, sequtils, sets, strformat, strutils,
 import ./[parts, rules]
 import ../src/dance_ontology/draw/[body, figure, geometry, pose, route, style]
 # Qualified, and only here: rule 11 claims turn figures add no frame that
-# app does not have, and only way to check *that* is to ask app's
+# Explorer does not have, and only way to check *that* is to ask Explorer's
 # own model rather than list this file could let drift.
 from ../src/dance_ontology/frame import nil
 
@@ -443,11 +443,11 @@ proc checkSingleTurns*(built: Parts) =
       "one level that cannot lock or wrap whichever way the couple turns"
 
   # RULE 11.  `"no additional frame positions, just the addition of`
-  # `rotations that let us travel between them."`  Measured against app's
+  # `rotations that let us travel between them."`  Measured against Explorer's
   # own model: single-hold frames are read out of `frame.FRAMES` rather
   # than from list this file used to keep, which asserted copy against
-  # itself and would have missed app changing.
-  var app_singles: seq[Holds]
+  # itself and would have missed Explorer changing.
+  var explorer_singles: seq[Holds]
   for laid in frame.FRAMES:
     if frame.countHolds(laid) != 1:
       continue
@@ -457,13 +457,13 @@ proc checkSingleTurns*(built: Parts) =
         holds[if side==frame.Side.Left: Arm.Left else: Arm.Right] =
           some (if laid.hold[side].get == frame.Site.LeftHand: Arm.Left
                 else: Arm.Right)
-    app_singles.add holds
-  doAssert app_singles.len == SINGLES.len,
-    &"The app's single-hold frames moved; got `{app_singles.len}`."
+    explorer_singles.add holds
+  doAssert explorer_singles.len == SINGLES.len,
+    &"The Explorer's single-hold frames moved; got `{explorer_singles.len}`."
   for single in SINGLES:
-    doAssert single.holds in app_singles,
-      &"A hold outside the app's four appears; got `{single.name}`."
-  told.add &"every position is one of the app's {SINGLES.len} single-hand " &
+    doAssert single.holds in explorer_singles,
+      &"A hold outside the Explorer's four appears; got `{single.name}`."
+  told.add &"every position is one of the Explorer's {SINGLES.len} single-hand " &
       "frames, turned; nothing new is drawn"
 
   # RULE 19.  `"you should also include orbit turns not just the axis`

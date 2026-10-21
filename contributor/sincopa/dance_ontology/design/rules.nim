@@ -1,4 +1,4 @@
-## Hold every rule mock-ups were given, in words it arrived in.
+## Hold every rule drawing was given, in words it arrived in.
 ##
 ##   This module is authority workbench replicates: README quotes each
 ##     entry, and checks cite by number.
@@ -10,7 +10,7 @@
 ##   Vocabulary rules speak in -- sides, levels, holds, settle
 ##     table -- lives in `dance_ontology/draw/terms` now, and this re-exports it
 ##     so reader of ledger still has words in scope.  It moved
-##     because app draws these marks now: words belong beside
+##     because Explorer draws these marks now: words belong beside
 ##     drawing, and argument for them belongs here.
 ##   Rule that is only implemented and not asserted quietly stops being
 ##     true; checkers in `checks.nim` verify standing ones on every
@@ -153,7 +153,7 @@ const RULES* = [
   "that applies to everything but high lock",
 ]  ## Each rule verbatim, one-indexed in prose as `RULES[i - 1]`.
   ##   Rules 10 to 14 govern rotation page: rotation as edges over
-  ##     app's eight frames, everything held high.
+  ##     Explorer's eight frames, everything held high.
   ##   In rule 13 twisted states are ends of chain, not cycle --
   ##     middle edge is full turn that swaps which arm is over.
   ##     That chain shape is implementer's reading of words, flagged
@@ -163,7 +163,7 @@ const RULES* = [
   ##     never routes round one.  Twist is said as crossover is
   ##     said -- lines crossing, with over-under break naming which is
   ##     on top -- and never by which side of body line hugs.
-  ##   Rules 15 and 16 turn work into one mock-up per kind of turn, and
+  ##   Rules 15 and 16 turn work into one drawing per kind of turn, and
   ##     rule 16 takes block off high single hand.
   ##     Hold that turns for ever has no wound-out end, so how far it has
   ##       wound is not part of its state; only orientation is, which is
@@ -255,7 +255,7 @@ const RULES* = [
   ##     first drawing went wrong.
   ##     At half turn partners face same way and pair makes
   ##       **cross**, which is crossing geometry itself gives --
-  ##       same mark app already uses for crossed pair.  So chain
+  ##       same mark Explorer already uses for crossed pair.  So chain
   ##       is five: diamond, cross, frame, cross, diamond, half turn apart.
   ##     `"tied to the final visual representations"` is fault named:
   ##       wind was number handed to drawing, and diamond was swelled

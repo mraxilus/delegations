@@ -367,7 +367,7 @@ suite "Internal: Two dancers in rigid body engine":
     ##   Every way of every sweep is read as kept and as walked again live, which laws
     ##     below walk anyway, so this walks nothing of its own.
     ##   Still that holds at no distance and in no plan is marked stopped and names no stop
-    ##     (`seen.still`), and rig page says no pose holds there (`design/rig.nim`).  No
+    ##     (`seen.still`), and rig viewer says no pose holds there (`design/rig.nim`).  No
     ##     law stands such still: every still card Reference draws is modelled
     ##     (`suites/test_asks.nim`).
     var stops = 0
