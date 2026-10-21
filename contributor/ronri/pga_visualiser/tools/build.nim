@@ -89,7 +89,7 @@ const
     ## Desktop entry point `desktop` compiles, which shows one piece of text: window's caption.
   PATH_DESKTOP_BINARY = BINARIES / "pga_visualiser"
     ## Desktop binary that verb writes; never committed, since `.gitignore` covers `binaries/`.
-  ENV_FONT = "RGA_FONT"
+  ENV_FONT = "PGA_FONT"
     ## Environment name overriding face front-end sets its interface in.
     ##   Declared by `src/desktop/main.nim`, which says what all four are for; named again
     ##   here rather than imported, since driver compiles no project code.
@@ -539,13 +539,13 @@ proc browser() =
   ##   version fixes browser revision, but Playwright publishes no checksum for archive it
   ##   serves. So bytes arrive on TLS alone, as compiler tarballs do, and PROVENANCE.md
   ##   records that rather than implying pin stronger than one there is.
-  ##   Skipped where `RGA_CHROMIUM` names one: harness reads that first, so second browser
+  ##   Skipped where `PGA_CHROMIUM` names one: harness reads that first, so second browser
   ##   would be fetched for nobody (Article VII.3). Wrong guess here costs fetch, never wrong
   ##   browser -- harness resolves, and this only provides.
   ##   Costs nothing warm: `playwright install` keeps build already at pinned revision.
-  let named = getEnv("RGA_CHROMIUM")
+  let named = getEnv("PGA_CHROMIUM")
   if named.len > 0:
-    echo "Kept ", named, ", named by RGA_CHROMIUM"
+    echo "Kept ", named, ", named by PGA_CHROMIUM"
     return
   run("npx", ["playwright", "install", "chromium"])
 
@@ -837,7 +837,7 @@ proc driven() =
   if not reported(["--hidden", "--fill", "--drive-keys"]): failed.add "drive-keys filled"
 
   # Machine carrying no face, driven once, since that is machine this had never been run on.
-  #   `RGA_FONT` names path no machine has rather than one this machine happens to lack, so
+  #   `PGA_FONT` names path no machine has rather than one this machine happens to lack, so
   #   run asks same question everywhere. Interface face alone is hidden: it is one Dear ImGui
   #   asserted on, and other three are reached through same code.
   echo "== --drive-keys, with no face to load"

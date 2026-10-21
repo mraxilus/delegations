@@ -2,7 +2,7 @@
 //   Playwright's API and node's process are what this speaks, and Nim reaches them only
 //   through glue that would leave every browser-side expression unchecked string.
 //   Run it by `nim r tools/build.nim drive`, which builds page first when it is stale.
-//   Chromium is one `RGA_CHROMIUM` names, else Playwright's own pinned build, else one on
+//   Chromium is one `PGA_CHROMIUM` names, else Playwright's own pinned build, else one on
 //   `PATH`; `chromiumChosen` says why that order. Software rendering is forced, so figures
 //   here are not this machine's GPU.
 
@@ -99,7 +99,7 @@ const URL_SERVED = 'http://visualiser.test/';
 
 /** Chromium to drive, in order of what pins each candidate.
  *
- *  `RGA_CHROMIUM` names one outright and stays first, since that is what override is for;
+ *  `PGA_CHROMIUM` names one outright and stays first, since that is what override is for;
  *  nothing outside this project sets it. Failing that, Playwright's own build is what
  *  `package-lock.json` pins -- lock fixes `@playwright/test`, version fixes browser
  *  revision -- so this machine and runner drive one binary rather than two. Last is
@@ -110,7 +110,7 @@ const URL_SERVED = 'http://visualiser.test/';
  *  all means fetch was skipped or refused.
  */
 function chromiumChosen(): string | undefined {
-  const named = process.env['RGA_CHROMIUM'];
+  const named = process.env['PGA_CHROMIUM'];
   if (named !== undefined && named.length > 0) return named;
   if (existsSync(chromium.executablePath())) return undefined;
   return chromiumOnPath();

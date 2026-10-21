@@ -138,7 +138,7 @@ const
     ##   found by absolute path (Article X.8; CONTRIBUTOR.md, "System dependencies").
   FACE_FONT* {.define: "visualiser.face_font".} = "NotoSans-Regular.ttf"
     ## Carry UI's text: Latin, punctuation, subscripts and combining marks.
-    ##   `RGA_FONT` names another outright, for reason `faceAt` gives. Three below follow
+    ##   `PGA_FONT` names another outright, for reason `faceAt` gives. Three below follow
     ##   same pattern.
   FACE_FONT_MATH* {.define: "visualiser.face_font_math".} = "NotoSansMath-Regular.ttf"
     ## Carry operators notation is written with, and Lengyel's bold operands.
@@ -161,13 +161,13 @@ const
     ##   reads its CFF outlines, driven rather than assumed.
     ##   Ligatures it carries are drawn by page and not here: Dear ImGui shapes no text, so
     ##   `liga` and `calt` never fire. Letterforms are shared, ligatures are not.
-  ENV_FONT* = "RGA_FONT"
+  ENV_FONT* = "PGA_FONT"
     ## Environment name carrying interface face's location, where machine keeps its own.
-  ENV_FONT_MATH* = "RGA_FONT_MATH"  ## Environment name carrying operator face's location.
-  ENV_FONT_SYMBOL* = "RGA_FONT_SYMBOL"  ## Environment name carrying symbol face's location.
-  ENV_FONT_LABEL* = "RGA_FONT_LABEL"  ## Environment name carrying label face's location.
-  ENV_FONT_TITLE* = "RGA_FONT_TITLE"  ## Environment name carrying title face's location.
-  ENV_FONT_MONO* = "RGA_FONT_MONO"  ## Environment name carrying mono face's location.
+  ENV_FONT_MATH* = "PGA_FONT_MATH"  ## Environment name carrying operator face's location.
+  ENV_FONT_SYMBOL* = "PGA_FONT_SYMBOL"  ## Environment name carrying symbol face's location.
+  ENV_FONT_LABEL* = "PGA_FONT_LABEL"  ## Environment name carrying label face's location.
+  ENV_FONT_TITLE* = "PGA_FONT_TITLE"  ## Environment name carrying title face's location.
+  ENV_FONT_MONO* = "PGA_FONT_MONO"  ## Environment name carrying mono face's location.
   SIZE_FONT* = 16.0'f32
   PATH_EXPORT_DEFAULT* = "pga_visualiser.png"
 

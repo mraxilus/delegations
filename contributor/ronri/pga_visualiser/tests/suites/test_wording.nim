@@ -80,8 +80,8 @@ suite "Wording":
 
   test "the application names itself as a name, and every other label stays a word":
     # Label is word on control and stays lower case. This one is proper noun both front-ends
-    #   show, window's own caption included, and it was written half one way: `RGA` carried
-    #   its capital where second word did not.
+    #   show, window's own caption included, and it was once cased two ways: first word
+    #   carried its capital where second word did not.
     for word in strutils.splitWhitespace($wordingText(NameTitle)):
       check word[0].isUpperAscii
     for key in Wording:
