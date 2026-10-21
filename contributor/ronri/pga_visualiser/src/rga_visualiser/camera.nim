@@ -920,24 +920,19 @@ func turnCarrying(held, under: Direction): Option[(Direction, float)] =
   some((axis.get, arctan2(sine, inner(toward, target))))
 
 
-func orbitCarrying*(camera: var Camera; held, under: Direction) =
-  ## Turn eye about pivot as trackball does, so point `held` off pivot comes to be seen
+func orbitCarrying*(camera: var Camera; held, under: Direction; pivot: Position) =
+  ## Turn eye about `pivot` as trackball does, so point `held` off pivot comes to be seen
   ## where point `under` off pivot is seen now.
   ##   Finger's orbit: both are points `pointHeld` places under pixel finger left and pixel
   ##   it reached, less pivot. Turn about pivot keeps sphere they lie on, so point finger
   ##   took moves with finger, pixel for pixel. See `turnCarrying`.
+  ##   Caller reads pivot off stance once for both pixels it maps, so stance is read once
+  ##   per event.
   ##   Least turn, about axis square to both, by ruling of 2026-10-18: drag turns view alike
   ##   at every height, over top too, as camera itself sees it.
   ##     Not turntable about world up and level across, which near pole spins picture about
   ##     middle and lets point held slip; suite case trips on it. Cost: loop of drag leaves
   ##     roll by solid angle it encloses, as held keys' `orbit` does; Q, E and Home set it.
-  let (eye, frame) = camera.sight
-  camera.orbitCarrying(held, under, eye + camera.depth_pivot * frame.forward)
-
-
-func orbitCarrying*(camera: var Camera; held, under: Direction; pivot: Position) =
-  ## Turn as `orbitCarrying` above, about pivot caller has already read off stance.
-  ##   Finger's turn reads it once for both pixels it maps, so stance is read once per event.
   let turn = turnCarrying(held, under)
   if turn.isNone: return
   camera.motor = camera.turnedAboutPivot(pivot, turn.get[0], turn.get[1])
