@@ -93,7 +93,7 @@ suite "Picking":
     #   360 pixels of radius on 600-pixel frame, and cursor anywhere inside picks Sol,
     #   not ecliptic disc it stands on. Two radii, since Sol is its real size, 0.00465.
     # Smallest arrangement; reduced-capacity build cannot hold it and skips whole.
-    if OBJECTS_MAX < objectsOf(ScaleOrrery.Nearest):
+    if OBJECTS_MAX < countObjects(ScaleOrrery.Nearest):
       skip()
     else:
       var scene = initScene()

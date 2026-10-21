@@ -25,7 +25,7 @@ func textsShown*(): seq[string] =
   ## Gather every text build itself writes.
   ##   Units are written once each, with figures chosen only to reach every unit word.
   for key in Wording: result.add $wordingText(key)
-  for path in HelpPath: result.add [titleOf(path), descriptionOf(path)]
+  for path in HelpPath: result.add [title(path), description(path)]
   for entry in HELP_ENTRIES: result.add [entry.action, entry.outcome]
   for operation in Operation:
     result.add [
@@ -33,7 +33,7 @@ func textsShown*(): seq[string] =
       notationSubstituted(operation, "a", "b"),
     ]
   for basis in Basis: result.add LUT_NAME_BY_BASIS[basis]
-  for choice in DragChoice: result.add labelOf(choice)
+  for choice in DragChoice: result.add label(choice)
   var
     units: array[64, char]
     cursor = 0
@@ -44,7 +44,7 @@ func textsShown*(): seq[string] =
   result.add units.toText
 
 
-func codepointsOf*(texts: openArray[string]): seq[int] =
+func codepoints*(texts: openArray[string]): seq[int] =
   ## Gather every codepoint `texts` hold, with all of printable ASCII, sorted and once each.
   ##   Printable ASCII is in whatever texts hold, since reader names objects in it.
   for codepoint in 0x20..0x7E: result.add codepoint
@@ -61,4 +61,4 @@ func codepointsOf*(texts: openArray[string]): seq[int] =
 
 func codepointsShown*(): seq[int] =
   ## Gather every codepoint build itself writes, with all of printable ASCII.
-  codepointsOf(textsShown())
+  codepoints(textsShown())

@@ -849,7 +849,7 @@ The menu hangs by its **right** edge, since anchored by its left it opens past t
 sees that, because the verdict asks what the menu *offered*, so such a change ends with a picture.
 
 **Both front-ends offer the same three menu groups, and the demo group is built rather than
-written.** It walks `orrery.ScaleOrrery` and labels each button with `objectsOf`, as the page
+written.** It walks `orrery.ScaleOrrery` and labels each button with `countObjects`, as the page
 builds its own from `nimDemoScales`. A size added to `orrery` then arrives in both.
 
 There are two deliberate differences. The menu of the desktop carries `scene file` and `image file`
@@ -863,8 +863,8 @@ under `SetNextWindowSizeConstraints`, with the heading outside that region so it
 Rejected: a fixed height with a threshold, which put a five-object scene in a box of blank.
 
 **Toggles are pills on both front-ends**, and `guiButtonToggle` carries fill, border and text
-colour together. The words of the wheel are taught in the drag tab of help, read from `wordOf`
-and `labelOf`. A law in the shared suite holds that every wheel word appears there.
+colour together. The words of the wheel are taught in the drag tab of help, read from `word`
+and `label`. A law in the shared suite holds that every wheel word appears there.
 
 *Checked.* Verified by a run. Both bindings compile and link against SDL3 3.2.30 and libGL
 through `nim cpp`, and their assertions run against real headers. Dear ImGui starts over a hidden
@@ -1205,10 +1205,10 @@ the near reach, the cull, the emission and the hover pick read the placements of
 the marker, its pulse and its label, the anchor and the comet of the overlay, and the menu anchor.
 So do the aim of the camera and the lattice of a selected plane, through `framing`. The wheel pick
 of the desktop reads them after `placeEdited`. A caller with no frame, such as a preview, still
-hands a multivector, and the reader places it first (`placementOf`).
+hands a multivector, and the reader places it first (`toPlacement`).
 
 Rejected: a placement again in `addObject` and in the pick, which placed each object twice and ran
-`kindOf` three times for each. Rejected: a reader that classifies the multivector again, which
+`classify` three times for each. Rejected: a reader that classifies the multivector again, which
 classifies each selected object on each call.
 
 **The placements of a frame live in its frame arena.** The desktop carves them first from
@@ -1570,7 +1570,7 @@ framing all follow the drawn disc.
   centres alone, which lets a background star win through the disc of a planet.
 
   A point covered by a nearer disc that is narrower than a fingertip is still a rival to the crowd
-  rule of touch. One covered by a body as wide as a fingertip is not (`coverOf`). The walk gathers
+  rule of touch. One covered by a body as wide as a fingertip is not (`cover`). The walk gathers
   the discs under the cursor into a fixed array of eight (`Hiders`) as it goes. Depth in the point
   branch is read off the homogeneous weight of the projection (`depthAlongSight`), so the branch
   builds nothing for each point.
@@ -1782,11 +1782,11 @@ distances alone. Six notches in at the centre of the demo, with the starfield 3,
 draws 49 of 4,938 points. The reach draws 367.
 
 **The reach of the scene is the caller's, and never the camera's.** Each front-end measures it on an
-edit (`framing.reachOf`), and hands it to `drawExtentFor`, `viewBoundsFor` and the furniture key. A
+edit (`framing.reachFar`), and hands it to `drawExtentFor`, `viewBoundsFor` and the furniture key. A
 field on the camera is dropped by `home`, and by every path that replaces the camera value.
 
 **Depth is logarithmic, and written for each fragment.** Every fragment shader on both front-ends
-writes `camera.depthOf` of its own view depth, which is `log2(D / near) / log2(far / near)` scaled
+writes `camera.depthClip` of its own view depth, which is `log2(D / near) / log2(far / near)` scaled
 to clip depth. It writes through `EXT_frag_depth` or through the `gl_FragDepth` of GL 3.3, so
 resolution is a fixed fraction of distance at every distance.
 
@@ -1982,7 +1982,7 @@ then reads its radius rather than zero. A near clip of one four-hundredth of tha
 whole planet. It is never the depth of the pointer, which would move the furniture and the depth
 mapping at every pointer move of a still camera.
 
-**It is read once for each frame, and never for each overlay call.** `reachNearOf` walks every
+**It is read once for each frame, and never for each overlay call.** `reachNear` walks every
 placement of the frame, and `ensureViewOverlay` runs many times over one frame: the anchor, each
 marker, each pulse and the hover ring. An overlay call between frames reads the figure of the last
 frame, as it reads the reach of the scene that frame measured.
@@ -2376,7 +2376,7 @@ slot. A field write is a plain store.
 Each write does the constructor's operations, in order, so each result is the same to the bit. On
 the C backend `noinit` skips each operator's zero fill, so it emits the constructor's stores.
 
-The copy matters most in `framing.reachNearOf`, which subtracts two positions for each object each
+The copy matters most in `framing.reachNear`, which subtracts two positions for each object each
 frame. Cost: one statement for each field, not one constructor. `fade` and `addRibbon` keep their
 constructors, because their copies read 1.7% and 0.3% of a moving frame at 5,038 objects.
 
@@ -2395,7 +2395,7 @@ the frame callback:
 
 At the opening scene the two builds overlap, as it holds five objects. At 5,038 objects the profile
 puts `nimCopy` at 39% of the script of a still frame on `c4e7e1fd`, and at 10% in place. The
-subtraction of `reachNearOf` alone is 31.5% of it. A moving frame reads 34% and 10%. With the
+subtraction of `reachNear` alone is 31.5% of it. A moving frame reads 34% and 10%. With the
 operators alone in place, the copies of `addRing` and `addDisc` read 2.6% and 2.7% of a moving
 frame.
 
@@ -2419,7 +2419,7 @@ makes one. **`sight` reads the stance once for each event**, off one lift and on
 not.** The pitch of a finger carries its direction through the motor of `turnAbout`. The level axis
 is the normal of the pencil that the sight and world up span. A held point stands on the ray of the
 finger, a step short of the orthogonal projection of the pivot onto it. Depths along the sight are
-heights over the plane through the eye, distances are `distanceBetween`, and sides are `innerOf`.
+heights over the plane through the eye, distances are `distanceBetween`, and sides are `inner`.
 The near clip, the world size of a pixel and the culling of chords are the picture's.
 
 **Readings and places go the same way.** The roll, the azimuth and the elevation are inner products
@@ -2442,7 +2442,7 @@ browser a fixed buffer.
 entry, and again as its last statement, so a stretch that leaves before that read is never charged.
 So `timed` refuses at build time a `return`, and a `break` or `continue` that no loop or block
 inside catches. `placeInto` times one call to `placeUntimed`, whose answers leave by `return` inside
-its own body. That body is a pure function, so `placementOf` places an object for a `func` that
+its own body. That body is a pure function, so `toPlacement` places an object for a `func` that
 holds no frame, and charges no side. The aim of the camera does so for staged geometry.
 
 Rejected: a `try`/`finally` bracket, which puts a `try` around the placing of every object, at a
@@ -2587,9 +2587,9 @@ page of `0fdcfcfc`, the same check read 403 px off the middle, and the drag turn
 **An object is judged against its own scale, and never against an absolute tolerance.** One world
 unit is one astronomical unit. A join of two points a metre apart, one unit out, carries
 coefficients near 1e-12. The `TOLERANCE_ABS` of the library is an absolute 1e-9, so the library
-alone reads that line as no object. So `objects.kindOf` reads the grade of a scale-free copy, which
-`scaleFree` divides by its largest coefficient. A coefficient then counts where it is more than a
-billionth of the largest one.
+alone reads that line as no object. So `objects.classify` reads the grade of a scale-free copy,
+which `scaleFree` divides by its largest coefficient. A coefficient then counts where it is more
+than a billionth of the largest one.
 
 **The copy is skipped where it changes nothing.** Where the weight `E4` is one or more and the
 library reads one grade, the largest coefficient is at least one. The threshold of the copy then
@@ -2819,7 +2819,7 @@ reject one another by depth.
 
 Rejected: the depth test turned off, under which a planet selected after its moon buried the moon in
 front of it. Rejected: a tail on each kind, which left a selected line tinted by a later veil.
-Rejected: a third `MeshSet`, which reserves every cap for a run that is usually one object. On the
+Rejected: a third `Meshes`, which reserves every cap for a run that is usually one object. On the
 desktop the marks draw on the **background** list of Dear ImGui, beneath the panels, and the drag
 menu alone stays foreground.
 
@@ -3043,7 +3043,7 @@ the frame leaves no glass to press. `SLACK_COVERED` 1e-9 lets a disc fall that f
 corners and still cover. An eye held at the fill stands one ulp short of it, and a bare `>=` reads
 the point there as a handle.
 
-`isBackdropUnder` folds every case into one answer, which `beginDrag`, `destinationOf` and
+`isBackdropUnder` folds every case into one answer, which `beginDrag`, `destination` and
 `interaction.is_hover_backdrop` read. A click on empty space selects the sky rather than clears the
 selection. A tap still treats it as empty space, because a tap on empty space is the only way a
 finger has to dismiss a selection. Touch reaches the sky by a long press.
@@ -3064,7 +3064,7 @@ that a hover or a wheel names is read from its placement too, so the pick classi
 **The pick rejects a plane before it meets it.** `isBeyondDisc` bounds the screen extent of the disc
 by the silhouette of the sphere that contains it, conservative in the depth and off-axis terms.
 20,000 random configurations with 300 surface samples each found no silhouette point outside the
-bound. `geometryOf` hands back a `lent` view, and `projectToScreen` is three dot products in local
+bound. `geometryAt` hands back a `lent` view, and `projectToScreen` is three dot products in local
 floats. Rejected: a 4×4 multiply with two typed arrays allocated for each call, which was 43% of a
 15.4 ms pick over 10,000 handles.
 
@@ -3114,7 +3114,7 @@ ms at 10,000. A hover pick is 0.7, 1.6 and 3.5 ms at 60, 360 and 5,038.
 ## Interaction model
 
 **Which button does what, stated once.** `interaction.isMenuRevealedOn` says whether a click brings
-the floating selection menu: right yes, left and middle no. `armingOf` says whether a drag opens
+the floating selection menu: right yes, left and middle no. `arming` says whether a drag opens
 the choice wheel. Both render paths and `help.nim` read them.
 
 | Gesture | Does |
@@ -3235,7 +3235,7 @@ and `more…` west. Unoffered ones are greyed (`ALPHA_MENU_UNOFFERED` 0.45) rath
 because a menu whose objects move is one that nobody learns. A wedge is the own button of the
 selection menu, moved.
 
-**A wedge says what the picker says.** `labelOf` returns `notationSymbolic` (`𝐦 ∧ 𝐧`, `𝐦 ∨ 𝐧`, `𝐧 ∨
+**A wedge says what the picker says.** `label` returns `notationSymbolic` (`𝐦 ∧ 𝐧`, `𝐦 ∨ 𝐧`, `𝐧 ∨
 (𝐦 ∧ 𝐧☆)`), and `More` returns a bare `…`. A release commits whatever is under the cursor, resolved
 by `endDrag` through `choiceAt`, so the two paths cannot disagree. The centre
 (`PIXELS_MENU_DEADZONE` 26 px) commits nothing, which is why an unasked dwell wheel is safe to open.
@@ -3404,7 +3404,7 @@ widgets lack. It is one fixed array plus one cursor, and not two stacks. An entr
 stance}`, and both are plain value types, so a record is a copy and `entries[cursor].scene` is
 exactly the live scene. `CAPACITY_HISTORY` is 32.
 
-**The array is a ring.** `first` names the handle that holds the oldest step, and `handleOf` is the
+**The array is a ring.** `first` names the handle that holds the oldest step, and `handleAt` is the
 one place where a timeline position becomes an index. To retire the oldest entry moves one integer.
 Rejected: a shift of every later entry down, which is 31 whole scene copies for each edit past the
 thirty-second. On the JS backend at 5,038 handles, that took 153.5 ms to toggle the visibility of
@@ -3573,7 +3573,7 @@ walk passes over a system too large for the room left, and keeps walking.
 
 **To scale: one world unit is one astronomical unit.** `KILOMETRES_PER_ASTRONOMICAL_UNIT` is
 149,597,870.7, and a parsec is `ASTRONOMICAL_UNITS_PER_PARSEC` 206,264.806 of them. Every distance
-is the real one, and every drawn radius is the real radius. `radiusDrawnOf` divides kilometres by
+is the real one, and every drawn radius is the real radius. `radiusDrawn` divides kilometres by
 the unit and does nothing else, so Sol is 0.00465 units wide, Earth 0.0000426, and Phobos
 0.000000074. Sol stands at the origin, with its ecliptic flat in the plane `z = 0`. `sol` is `1 𝐞₄`,
 every planet has z exactly 0, Neptune is 30.05 units out, and Proxima is 268,000.
@@ -3706,8 +3706,8 @@ every star by the obliquity that turns the moons. The star field and the planets
 one frame. Unturned, every star stands 23° off against them.
 
 **Nothing is generated.** A star with no known planet is a star. The 49 of 544 planets with no
-recorded semi-major axis are left out, rather than placed by their order among siblings. `placedOf`
-counts what a star places, and `objectsOf` folds it.
+recorded semi-major axis are left out, rather than placed by their order among siblings.
+`countPlanetsPlaced` counts what a star places, and `countObjects` folds it.
 
 Neighbour suns and planets are drawn at `RADIUS_OBJECT_LEAST`, because neither catalogue carries
 radii. The plane of a neighbour is joined as `star ∧ along ∧ across`, a point and two directions.
@@ -4159,7 +4159,7 @@ with `isHoldMature`, and the indicator is the marker itself drawn part-built. Pr
 and never eased**: it shows a clock, and an eased clock seems to stall just before it fires.
 
 Both front-ends carry a `?` in the bottom-right corner, at least 44 px, which opens the same table
-`help.HELP_ENTRIES`, and both render that table. Construct rows derive from `armingOf` and
+`help.HELP_ENTRIES`, and both render that table. Construct rows derive from `arming` and
 `isMenuRevealedOn`, and keyboard rows from `motionFor` and `actionFor`. The `operations` tab is
 generated from the catalogue, so it cannot fall behind.
 
@@ -4174,7 +4174,7 @@ purpose, on the one screen with no keyboard.
 `camera` carries a row for the twist of two fingers, which rolls the view, and that row is 41 of
 its 103. Rows say what an input does with a selection in one clause, to hold that cost down. **Every
 row makes sense with the rows above covered up.** What a two-column row cannot carry goes in
-`descriptionOf`, one sentence for each tab, which crosses as `nimHelpDescriptions`. One word, one
+`description`, one sentence for each tab, which crosses as `nimHelpDescriptions`. One word, one
 meaning: objects are **selected**, and operations **chosen**.
 
 The two columns of the browser are one grid over the whole table. `.help-rows` is the grid, and each

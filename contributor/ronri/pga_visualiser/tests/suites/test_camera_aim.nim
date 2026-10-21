@@ -69,7 +69,7 @@ suite "Camera Aim":
     ## Build camera 12 units off origin along `out_to`, facing it, for sweeps below.
     cameraAround(ORIGIN, 12.0, out_to)
 
-  proc sceneOf(objects: varargs[Multivector]): (Scene, Selection) =
+  proc initScenePicked(objects: varargs[Multivector]): (Scene, Selection) =
     ## Build scene holding exactly these objects, with every one of them picked.
     var (scene, picked) = (initScene(), Selection())
     for m in objects:
@@ -260,7 +260,7 @@ suite "Camera Aim":
         # Each operand by name, not merely "everything watched" -- that is property.
         for handle in [handle_first, handle_second]:
           check isShownCentrally(
-            scene.geometryOf(handle),
+            scene.geometryAt(handle),
             framed,
             width_aim,
             height_aim,
@@ -272,13 +272,13 @@ suite "Camera Aim":
     # Edit-session case, over same pair: staging one of those points names no.
     #   operands, so other is left out and no pull-back is owed.
     let
-      alone = some(previewStaging(scene.geometryOf(handle_first), RADIUS_OBJECT_DEFAULT))
+      alone = some(previewStaging(scene.geometryAt(handle_first), RADIUS_OBJECT_DEFAULT))
       camera = stanceAim(Direction(x: 12, y: 10, z: 3))
       aim = aimFor(scene, Selection(), alone)
       framed = camera.placed(stanceFor(aim.get, camera, width_aim, height_aim))
     check isShownAll(scene, Selection(), alone, framed, width_aim, height_aim)
     check framed.distance == camera.distance
-    check not isShownCentrally(scene.geometryOf(handle_second), framed, width_aim, height_aim)
+    check not isShownCentrally(scene.geometryAt(handle_second), framed, width_aim, height_aim)
 
 
   test "a plane is centred by its middle and bounded by its rim, against two bounds":
@@ -361,7 +361,7 @@ suite "Camera Aim":
     #   reading asked: that is what one bounding sphere costs.
     let ground = ORIGIN.toMultivector ∧ Position(x: 1.0, y: 0.0, z: 0.0).toMultivector ∧
         Position(x: 0.0, y: 1.0, z: 0.0).toMultivector
-    let (scene, picked) = sceneOf(ground)
+    let (scene, picked) = initScenePicked(ground)
     for out_to in out_to_aim:
         # Close in, where disc of radius `EXTENT_PLANE_F` cannot fit at all.
         var camera = stanceAim(out_to)
@@ -420,7 +420,7 @@ suite "Camera Aim":
       ## Read drawn disc's radius in pixels, as `isBackdropUnder` reads it.
       let
         scale = scaleAt(distance)
-        anchor = anchorFor(scene.geometryOf(ground), scene.anchorOverrideAt(ground), scale)
+        anchor = anchorFor(scene.geometryAt(ground), scene.anchorOverrideAt(ground), scale)
       check anchor.isSome
       EXTENT_PLANE_F / worldPerPixelAt(anchor.get, scale.scale)
 
@@ -526,15 +526,15 @@ suite "Camera Aim":
     )
     # And framing rule follows same anchor, object by object: same plane in.
     #   same scene at same camera costs nothing without one and moves view with it.
-    let (scene_support, picked_support) = sceneOf(ground)
-    check framedFor(scene_support, picked_support, camera) =~ camera.stanceOf
+    let (scene_support, picked_support) = initScenePicked(ground)
+    check framedFor(scene_support, picked_support, camera) =~ camera.stance
 
     var (scene_drawn, picked_drawn) = (initScene(), Selection())
     picked_drawn.toggle scene_drawn.addObject(
       ground, "ground", Ink.Rose, 0.0, some(Position(x: 14.0, y: 0.0, z: 0.0))
     )
     let framed = framedFor(scene_drawn, picked_drawn, camera)
-    check not (framed == camera.stanceOf)
+    check not (framed == camera.stance)
     # Panned toward circle actually drawn.
     check camera.placed(framed).pivotWorld.x > camera.pivotWorld.x
     check isShownAll(
@@ -593,7 +593,7 @@ suite "Camera Aim":
   test "every selected object is brought into view, not merely the first":
     # Rule, over orientations. Two points wide apart cannot both be framed by panning.
     #   alone, so this is also where pull-back earns its keep.
-    let (scene, picked) = sceneOf(
+    let (scene, picked) = initScenePicked(
       Position(x: 14.0, y: -11.0, z: 3.0).toMultivector,
       Position(x: -9.0, y: 12.0, z: -5.0).toMultivector,
     )
@@ -612,7 +612,7 @@ suite "Camera Aim":
     #   framing -- **distance and orbit do not move at all** -- while pivot
     #   comes to middle of what was picked, since turning about point is what
     #   orbit is and reader who picks objects means to turn about those.
-    let (scene, picked) = sceneOf(
+    let (scene, picked) = initScenePicked(
       Position(x: 2.0, y: 0.0, z: 0.0).toMultivector,
       Position(x: -2.0, y: 0.0, z: 0.0).toMultivector,
       Position(x: 0.0, y: 2.0, z: 0.0).toMultivector,
@@ -650,7 +650,7 @@ suite "Camera Aim":
     #   fix, which is least-movement rule holding over everything reader set.
     let
       place = Position(x: 9.0, y: -7.0, z: 4.0)
-      (scene, picked) = sceneOf(place.toMultivector)
+      (scene, picked) = initScenePicked(place.toMultivector)
     for out_to in out_to_aim:
         let
           camera = stanceAim(out_to)
@@ -666,8 +666,8 @@ suite "Camera Aim":
     # Preference for pan and zoom over orbit, stated as property it is: finite.
     #   selection's move carries no turn at all, so no fraction of it does either.
     let scenes = [
-      sceneOf(Position(x: 9.0, y: -7.0, z: 4.0).toMultivector),
-      sceneOf(
+      initScenePicked(Position(x: 9.0, y: -7.0, z: 4.0).toMultivector),
+      initScenePicked(
         Position(x: 14.0, y: -11.0, z: 3.0).toMultivector,
         Position(x: -9.0, y: 12.0, z: -5.0).toMultivector,
       ),
@@ -682,7 +682,7 @@ suite "Camera Aim":
 
 
   test "the camera pulls back only as far as it must, and never pulls in":
-    let (scene, picked) = sceneOf(
+    let (scene, picked) = initScenePicked(
       Position(x: 14.0, y: -11.0, z: 3.0).toMultivector,
       Position(x: -9.0, y: 12.0, z: -5.0).toMultivector,
     )
@@ -697,7 +697,7 @@ suite "Camera Aim":
         let aim = aimFor(scene, picked, none(Preview))
         check aim.isSome
         check aim.get.isFramed(camera.placed(framed), width_aim, height_aim)
-        let short = camera.stanceOf.toward(framed, 0.999)
+        let short = camera.stance.toward(framed, 0.999)
         check not aim.get.isFramed(camera.placed(short), width_aim, height_aim)
         # Everything picked is on screen all same, which is what reader asked.
         check isShownAll(scene, picked, none(Preview), camera.placed(framed), width_aim, height_aim)
@@ -729,7 +729,7 @@ suite "Camera Aim":
   test "the frame rule is a floor, and the camera slides along it":
     const (wide, tall) = (width_aim, height_aim)
     let
-      (scene, picked) = sceneOf(
+      (scene, picked) = initScenePicked(
         Position(x: 6.0, y: -4.0, z: 1.0).toMultivector,
         Position(x: -3.0, y: 5.0, z: -2.0).toMultivector,
       )
@@ -779,7 +779,7 @@ suite "Camera Aim":
     #   Floor used to push eye straight out from sphere's centre, which slid view
     #   sideways and pivot with it, once sphere's centre and middle parted.
     const (wide, tall) = (width_aim, height_aim)
-    let (scene, picked) = sceneOf(
+    let (scene, picked) = initScenePicked(
       Position(x: 0.0, y: 0.0, z: 0.0).toMultivector,
       Position(x: 0.5, y: 0.2, z: 0.0).toMultivector,
       Position(x: 6.0, y: -1.0, z: 1.0).toMultivector,
@@ -822,7 +822,7 @@ suite "Camera Aim":
   test "a selection tight enough to fit already keeps the reader's own scale":
     # Half of "only when it must" that spread selection cannot show: distance left.
     #   exactly alone, not merely one that did not grow much.
-    let (scene, picked) = sceneOf(
+    let (scene, picked) = initScenePicked(
       Position(x: 0.7, y: 0.4, z: 0.2).toMultivector,
       Position(x: -0.6, y: -0.3, z: 0.5).toMultivector,
     )
@@ -849,7 +849,7 @@ suite "Camera Aim":
     #   aim's sphere collapses onto it, so move is pan toward point, cut short
     #   moment its dot fits -- no dolly toward that distant support, ever.
     let
-      (scene, picked) = sceneOf(point, line)
+      (scene, picked) = initScenePicked(point, line)
       aim = aimFor(scene, picked, none(Preview))
     check aim.get.is_bound_by_fitted
     check aim.get.sphere.get.radius =~ 0.0
@@ -868,7 +868,7 @@ suite "Camera Aim":
         Position(x: 4.0, y: 4.0, z: 1.0).toMultivector ∧
         Position(x: 5.0, y: 4.5, z: 1.4).toMultivector,
       )
-      (scene_star, picked_star) = sceneOf(star)
+      (scene_star, picked_star) = initScenePicked(star)
       opening = stanceAim(Direction(x: 9, y: 5, z: 2))
       aim_star = aimFor(scene_star, picked_star, none(Preview)).get
     check aim_star.heading.isSome
@@ -903,9 +903,9 @@ suite "Camera Aim":
       Position(x: 0.0, y: 1.0, z: 0.0).toMultivector,
     )
     check isHorizon(along)
-    check kindOf(along) == some(Kind.Line)
+    check classify(along) == some(Kind.Line)
     let
-      (scene_line, picked_line) = sceneOf(along)
+      (scene_line, picked_line) = initScenePicked(along)
       aim_line = aimFor(scene_line, picked_line, none(Preview)).get
     check aim_line.heading.isNone
     check aim_line.normal_crossing.isSome
@@ -922,7 +922,7 @@ suite "Camera Aim":
 
     # Anything finite wins outright: horizon demand goes unmet rather than fighting it.
     let (scene_both, picked_both) =
-      sceneOf(star, Position(x: 3.0, y: -2.0, z: 1.0).toMultivector)
+      initScenePicked(star, Position(x: 3.0, y: -2.0, z: 1.0).toMultivector)
     let aim_both = aimFor(scene_both, picked_both, none(Preview)).get
     check aim_both.sphere.isSome and aim_both.heading.isSome
     var pair = opening
@@ -941,7 +941,7 @@ suite "Camera Aim":
       Position(x: 5.0, y: 4.5, z: 1.4).toMultivector,
     )
     check isHorizon(star)
-    let (scene_star, picked_star) = sceneOf(star)
+    let (scene_star, picked_star) = initScenePicked(star)
     for out_to in out_to_aim_raised:
       let
         camera = stanceAim(out_to)
@@ -974,7 +974,7 @@ suite "Camera Aim":
     #   behind reader and point in front have no one placement showing both.
     let
       (scene_both, picked_both) =
-        sceneOf(star, Position(x: 3.0, y: -2.0, z: 1.0).toMultivector)
+        initScenePicked(star, Position(x: 3.0, y: -2.0, z: 1.0).toMultivector)
       camera = stanceAim(Direction(x: 12, y: 10, z: 3))
       framed = framedFor(scene_both, picked_both, camera)
     check camera.placed(framed).azimuth =~ camera.azimuth
@@ -985,7 +985,7 @@ suite "Camera Aim":
     var
       camera = stanceAim(Direction(x: 5, y: 0, z: 1))
       tween: CameraTween
-    let (scene, picked) = sceneOf(Position(x: 3.0, y: -2.0, z: 1.5).toMultivector)
+    let (scene, picked) = initScenePicked(Position(x: 3.0, y: -2.0, z: 1.5).toMultivector)
     tween.offerAim(
       camera, scene, picked, none(Preview), camera.drawExtentFor(height_aim, 0.0),
       width_aim, height_aim, 0.0, 0.35
@@ -1020,7 +1020,7 @@ suite "Camera Aim":
     var
       camera = stanceAim(Direction(x: -1, y: 25, z: 5))
       tween: CameraTween
-    let (scene, picked) = sceneOf(
+    let (scene, picked) = initScenePicked(
       Position(x: 14.0, y: -11.0, z: 3.0).toMultivector,
       Position(x: -9.0, y: 12.0, z: -5.0).toMultivector,
     )
@@ -1060,7 +1060,7 @@ suite "Camera Aim":
           eye = camera.eye
           axes = camera.frame
           place = eye + 40.0 * axes.forward + 4.0 * axes.axis_right - 2.0 * axes.axis_up
-        var (scene, picked) = sceneOf(place.toMultivector)
+        var (scene, picked) = initScenePicked(place.toMultivector)
         scene.setRadius(picked.at(0), radius)
         let pixel = projectToScreen(
           camera.initMatrixViewProjection(aspect), width_aim, height_aim, place
@@ -1190,7 +1190,7 @@ suite "Camera Aim":
           eye = camera.eye
           axes = camera.frame
           place = eye + 40.0 * axes.forward + 4.0 * axes.axis_right - 2.0 * axes.axis_up
-        var (scene, picked) = sceneOf(place.toMultivector)
+        var (scene, picked) = initScenePicked(place.toMultivector)
         scene.setRadius(picked.at(0), RADIUS_OBJECT_LEAST)
         var
           tween: CameraTween
@@ -1275,7 +1275,7 @@ suite "Camera Aim":
         let axes = cameraAround(centre, 12.0, out_to).frame
         for offset in [40.0 * axes.forward, -40.0 * axes.forward, 40.0 * axes.axis_right]:
           let place = centre + offset
-          var (scene, picked) = sceneOf(place.toMultivector)
+          var (scene, picked) = initScenePicked(place.toMultivector)
           scene.setRadius(picked.at(0), RADIUS_OBJECT_LEAST)
           for separation in separations:
             var camera = cameraAround(centre, 12.0, out_to)
@@ -1311,7 +1311,7 @@ suite "Camera Aim":
     let
       held_seen = camera_seen.distance
       (scene_seen, picked_seen) =
-        sceneOf(toMultivector(camera_seen.eye + 3.0 * camera_seen.frame.forward))
+        initScenePicked(toMultivector(camera_seen.eye + 3.0 * camera_seen.frame.forward))
     check depthSpanning(2.0 * RADIUS_OBJECT_DEFAULT, FRACTION_HEIGHT_APPROACH_POINT, camera_seen) >
         held_seen
     check pickedFromList(camera_seen, scene_seen, picked_seen, width_aim, height_aim)
@@ -1323,7 +1323,7 @@ suite "Camera Aim":
     var camera_short = stanceAim(Direction(x: 12, y: 10, z: 3))
     camera_short.dollyTo(1.0)
     let (scene_short, picked_short) =
-      sceneOf(toMultivector(camera_short.eye + 15.0 * camera_short.frame.forward))
+      initScenePicked(toMultivector(camera_short.eye + 15.0 * camera_short.frame.forward))
     check pickedFromList(camera_short, scene_short, picked_short, width_aim, height_short)
     check depthSpanning(2.0 * RADIUS_OBJECT_DEFAULT, FRACTION_HEIGHT_APPROACH_POINT, camera_short) >
         15.0
@@ -1356,7 +1356,7 @@ suite "Camera Aim":
               axes = camera.frame
               place = camera.eye + reach * axes.forward + 0.1 * reach * axes.axis_right -
                   0.05 * reach * axes.axis_up
-            var (scene, picked) = sceneOf(place.toMultivector)
+            var (scene, picked) = initScenePicked(place.toMultivector)
             scene.setRadius(picked.at(0), RADIUS_OBJECT_LEAST)
             # List pick starts wheeled in under fit, so it eases out to fit pointer pick
             #   comes in to.
@@ -1412,7 +1412,7 @@ suite "Camera Aim":
     for distance in [12.0, 1.0]:
       var camera = cameraAround(ORIGIN, distance, Direction(x: 7, y: 6, z: 5))
       let (azimuth, elevation) = (camera.azimuth, camera.elevation)
-      var (scene, picked) = sceneOf(ground)
+      var (scene, picked) = initScenePicked(ground)
       let scale = camera.drawExtentFor(height_aim, 0.0)
       var
         tween: CameraTween
@@ -1450,7 +1450,7 @@ suite "Camera Aim":
     # Group has to fit, which one object's reach cannot promise: `stanceFor`.
     const duration = 0.35
     var camera = stanceAim(Direction(x: -1, y: 25, z: 5))
-    let (scene_two, picked_two) = sceneOf(
+    let (scene_two, picked_two) = initScenePicked(
       Position(x: 14.0, y: -11.0, z: 3.0).toMultivector,
       Position(x: -9.0, y: 12.0, z: -5.0).toMultivector,
     )
@@ -1485,7 +1485,7 @@ suite "Camera Aim":
       middle = Position(x: 1.0, y: 2.0, z: 1.0)
     var camera = stanceAim(Direction(x: 12, y: 10, z: 5))
     camera = camera.placed(camera.stanceRepivoted(one))
-    let (scene, picked) = sceneOf(one.toMultivector, two.toMultivector)
+    let (scene, picked) = initScenePicked(one.toMultivector, two.toMultivector)
     var tween: CameraTween
     tween.offerAim(
       camera,
@@ -1570,7 +1570,7 @@ suite "Camera Aim":
       eye = camera.eye
       axes = camera.frame
       place = eye + 20.0 * axes.forward + 2.0 * axes.axis_right
-    let (scene, picked) = sceneOf(place.toMultivector)
+    let (scene, picked) = initScenePicked(place.toMultivector)
     var
       tween: CameraTween
       pointer = none(PointerPick)
@@ -1625,7 +1625,7 @@ suite "Camera Aim":
     #   narrowed window left camera unframed, since nothing moving it meant nothing held it.
     const (wide, tall, duration) = (width_aim, height_aim, 0.35)
     var camera = stanceAim(Direction(x: 13, y: 11, z: 6))
-    let (scene, picked) = sceneOf(
+    let (scene, picked) = initScenePicked(
       Position(x: 6.0, y: -4.0, z: 1.0).toMultivector,
       Position(x: -3.0, y: 5.0, z: -2.0).toMultivector,
     )
@@ -1684,7 +1684,7 @@ suite "Camera Aim":
     #   Step has tween adopt it as delivered, so frame rule alone moves camera then.
     const (wide, tall, duration) = (width_aim, height_aim, 0.35)
     let
-      (scene, picked) = sceneOf(
+      (scene, picked) = initScenePicked(
         Position(x: 6.0, y: -4.0, z: 1.0).toMultivector,
         Position(x: -3.0, y: 5.0, z: -2.0).toMultivector,
       )
@@ -1696,7 +1696,7 @@ suite "Camera Aim":
     # Framed from further out than fit asks: nothing moves it.
     var camera = opening.placed(stanceFor(aim, opening, wide, tall))
     camera.comeIn(-5.0)
-    let stance_far = camera.stanceOf
+    let stance_far = camera.stance
     check aim.isFramed(camera, wide, tall)
     tween.adoptNext()
     tween.offerAim(
@@ -1712,7 +1712,7 @@ suite "Camera Aim":
       pointer,
     )
     check tween.is_arrived
-    check camera.stanceOf == stance_far
+    check camera.stance == stance_far
     # Restored well inside fit: rule is broken, so ease backs camera out to it.
     camera.comeIn(12.0)
     check not aim.isFramed(camera, wide, tall)
@@ -1827,7 +1827,7 @@ suite "Camera Aim":
     var
       camera = cameraAround(ORIGIN, 10.0, Direction(x: 7, y: 0, z: 3))
       tween: CameraTween
-      arrival = camera.stanceOf
+      arrival = camera.stance
     arrival.distance = 40.0
     tween.aimAt(camera, aimOn(ORIGIN, 3.0), arrival, 0.0, duration)
     tween.advance(camera, duration * 0.4, easeOutCubic)
@@ -2038,7 +2038,7 @@ suite "Camera Aim":
       normal = Direction(x: 0, y: 0, z: 1)
       sine = sin(ANGLE_PLANE_LEAST)
       camera = initCamera(Position(x: 30, y: 22.5, z: 0.9), ORIGIN)
-      lifted = camera.placed(camera.stanceOf.stanceLifted(camera, normal))
+      lifted = camera.placed(camera.stance.stanceLifted(camera, normal))
     check abs(lifted.frame.forward.z + sine) < 1.0e-9
     check lifted.eye.z > 0.0
     check lifted.pivot =~ camera.pivot
@@ -2048,26 +2048,26 @@ suite "Camera Aim":
     # From below, view goes ten degrees under plane, rather than over it.
     let
       below = initCamera(Position(x: 30, y: 22.5, z: -0.9), ORIGIN)
-      lowered = below.placed(below.stanceOf.stanceLifted(below, normal))
+      lowered = below.placed(below.stance.stanceLifted(below, normal))
     check abs(lowered.frame.forward.z - sine) < 1.0e-9
     check lowered.eye.z < 0.0
     # Sight lying in plane takes side world up leans to.
     let
       level = initCamera(Position(x: 30, y: 22.5, z: 0.0), ORIGIN)
-      raised = level.placed(level.stanceOf.stanceLifted(level, normal))
+      raised = level.placed(level.stance.stanceLifted(level, normal))
     check raised.eye.z > 0.0
     check abs(raised.frame.forward.z + sine) < 1.0e-9
     # Upright plane lifts eye off its own face, on side eye stood.
     let
       wall = Direction(x: 1, y: 0, z: 0)
       beside = initCamera(Position(x: 0.5, y: 20.0, z: 3.0), ORIGIN)
-      turned = beside.placed(beside.stanceOf.stanceLifted(beside, wall))
+      turned = beside.placed(beside.stance.stanceLifted(beside, wall))
     check abs(abs(turned.frame.forward.x) - sine) < 1.0e-9
     check turned.eye.x > 0.0
     # Sight already ten degrees or more off plane turns nothing.
     let
       steep = initCamera(Position(x: 24, y: 18, z: 16), ORIGIN)
-      kept = steep.placed(steep.stanceOf.stanceLifted(steep, normal))
+      kept = steep.placed(steep.stance.stanceLifted(steep, normal))
     check kept.eye =~ steep.eye
     check kept.frame.forward =~ steep.frame.forward
 
@@ -2077,7 +2077,7 @@ suite "Camera Aim":
     let ground = ORIGIN.toMultivector ∧ Position(x: 1.0, y: 0.0, z: 0.0).toMultivector ∧
         Position(x: 0.0, y: 1.0, z: 0.0).toMultivector
     var
-      (scene, picked) = sceneOf(ground)
+      (scene, picked) = initScenePicked(ground)
       camera = initCamera(Position(x: 30, y: 22.5, z: 0.9), ORIGIN)
       tween: CameraTween
     tween.offerAim(
@@ -2095,7 +2095,7 @@ suite "Camera Aim":
     check abs(camera.frame.forward.z + sin(ANGLE_PLANE_LEAST)) < 1.0e-6
     check camera.eye.z > 0.0
     var
-      (scene_point, picked_point) = sceneOf(ORIGIN.toMultivector)
+      (scene_point, picked_point) = initScenePicked(ORIGIN.toMultivector)
       camera_point = initCamera(Position(x: 30, y: 22.5, z: 0.9), ORIGIN)
       tween_point: CameraTween
     let elevation_start = camera_point.elevation

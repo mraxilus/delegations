@@ -12,7 +12,7 @@
 ##   Library's `TOLERANCE_ABS` (1e-9) is absolute, and join of points metre apart one unit
 ##   out carries coefficients near 1e-12, under it.
 ##   Kind reads scale-free copy, and horizon weighs weight against bulk.
-##   Cost: rounding of zero standing alone reads as object too; `isRoundingOf` judges it
+##   Cost: rounding of zero standing alone reads as object too; `isRounding` judges it
 ##   against factors that made it, where caller holds them.
 ##
 ## Shared by desktop (`main.nim`) and browser (`bridge.nim`) render paths.
@@ -68,7 +68,7 @@ func scaleFree*(m: Multivector): Multivector =
   (1.0 / largest) * m
 
 
-func isRoundingOf*(m: Multivector, scale: float): bool =
+func isRounding*(m: Multivector, scale: float): bool =
   ## Report whether `m` is rounding of zero, for product whose factors' scales multiply to `scale`.
   ##   Scale of factor is its `coefficientLargest`.
   ##   For caller that built `m` on spot and holds what built it: only it knows `scale`.
@@ -133,7 +133,7 @@ func isSameCoefficients(m, n: Multivector): bool =
 
 #[ Kind Classification ]#
 
-func levelOf(read: Option[Grade]): int =
+func toLevel(read: Option[Grade]): int =
   ## Read library's grade as number, or -1 where it found none (mixed grade).
   ##   Taken by value and read through `get` with default: nothing bound, nothing copied.
   if read.isSome: int(read.get(Grade(0))) else: -1
@@ -158,8 +158,8 @@ func kindInto*(m: Multivector, kind: var Kind): bool =
   # Cast covers tally alone: instrument's own state, which no caller reads as result.
   {.cast(noSideEffect).}:
     if IS_COUNTING_KINDS: inc COUNT_KINDS
-  var level = if abs(m[Basis.E4]) >= 1.0: levelOf(m.grade) else: -1
-  if level < 0: level = levelOf(m.scaleFree.grade)
+  var level = if abs(m[Basis.E4]) >= 1.0: m.grade.toLevel else: -1
+  if level < 0: level = m.scaleFree.grade.toLevel
   case level
   of 1: kind = Kind.Point
   of 2: kind = Kind.Line
@@ -168,7 +168,7 @@ func kindInto*(m: Multivector, kind: var Kind): bool =
   true
 
 
-func kindOf*(m: Multivector): Option[Kind] =
+func classify*(m: Multivector): Option[Kind] =
   ## Name geometry multivector stands for; none where `kindInto` names none.
   var kind = Kind.Point
   if m.kindInto(kind): some(kind) else: none(Kind)
@@ -186,7 +186,7 @@ func isHorizon*(m: Multivector): bool =
   abs((|∘m)[Basis.scalarAnti]) <= TOLERANCE_ABS * abs((|∙m)[Basis.scalar])
 
 
-func isHorizonPlane*(m: Multivector): bool = kindOf(m) == some(Kind.Plane) and isHorizon(m)
+func isHorizonPlane*(m: Multivector): bool = classify(m) == some(Kind.Plane) and isHorizon(m)
   ## Report whether object is horizon plane.
   ##   One shape drawn as sky dome (`mesh.addDome`), which frame assembly inserts before
   ##   anything else sharing translucent veil pass. See `main.assembleMeshes`.
@@ -224,7 +224,7 @@ func centroidFolded*(centroid: Multivector, place: Multivector): Multivector =
   add(centroid, place)
 
 
-func innerOf*(m, n: Multivector): float =
+func inner*(m, n: Multivector): float =
   ## Read scalar of inner product between bulks, `𝐦 ∙ 𝐧`.
   ##   For two weightless points, i.e. directions, their lengths times cosine of angle between
   ##   them: sign says which side of each other they stand, and unit pair reads cosine alone.

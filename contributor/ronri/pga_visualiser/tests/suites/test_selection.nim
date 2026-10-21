@@ -95,26 +95,26 @@ suite "Selection":
     # Drag wedges carry that same picker text, so wheel and picker are one.
     #   vocabulary rather than two reader has to map between. Words survive only
     #   where three are *taught*, in drawer's own legend, which prints both.
-    check labelOf(DragChoice.Join) == notationSymbolic(Operation.Wedge)
-    check labelOf(DragChoice.Project) == notationSymbolic(Operation.ProjectOrthogonal)
-    check wordOf(DragChoice.Join) == "join"
+    check label(DragChoice.Join) == notationSymbolic(Operation.Wedge)
+    check label(DragChoice.Project) == notationSymbolic(Operation.ProjectOrthogonal)
+    check word(DragChoice.Join) == "join"
     # Way out to rest of catalogue is bare ellipsis: beside three pieces of.
     #   notation word is odd one out, and no operation is written with one.
-    check labelOf(DragChoice.More) == "…"
+    check label(DragChoice.More) == "…"
 
 
   test "a picker opens on what was last applied at its own arity":
     var memory: OperationMemory
-    check memory.lastOf(Arity.One) == OPERATION_FIRST_UNARY
-    check memory.lastOf(Arity.Two) == OPERATION_FIRST_BINARY
+    check memory.operationLast(Arity.One) == OPERATION_FIRST_UNARY
+    check memory.operationLast(Arity.Two) == OPERATION_FIRST_BINARY
     memory.remember(Operation.WedgeAnti)
-    check memory.lastOf(Arity.Two) == Operation.WedgeAnti
+    check memory.operationLast(Arity.Two) == Operation.WedgeAnti
     # Remembering binary leaves unary picker where it was: two lists are.
     #   disjoint, so one arity's choice can say nothing about other's.
-    check memory.lastOf(Arity.One) == OPERATION_FIRST_UNARY
+    check memory.operationLast(Arity.One) == OPERATION_FIRST_UNARY
     memory.remember(Operation.Bulk)
-    check memory.lastOf(Arity.One) == Operation.Bulk
-    check memory.lastOf(Arity.Two) == Operation.WedgeAnti
+    check memory.operationLast(Arity.One) == Operation.Bulk
+    check memory.operationLast(Arity.Two) == Operation.WedgeAnti
 
 
   test "a selection is hidden only when every one of its objects is":

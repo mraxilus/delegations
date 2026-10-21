@@ -444,7 +444,7 @@ func beginSession*(panel: var Panel, scene: var Scene, handle: Option[int]) =
   ##   Row's edit button opens session through here, and so does `main.driveEdit`.
   var session = EditSession(handle: handle)
   if handle.isSome:
-    session.stage scene.geometryOf(handle.get)
+    session.stage scene.geometryAt(handle.get)
     session.label = scene.labelAt(handle.get)
     session.index_ink = cint(scene.inkAt(handle.get))
     session.radius = scene.radiusAt(handle.get)
@@ -616,7 +616,7 @@ proc layoutObjectDescription(panel: Panel, scene: var Scene, row: ObjectRow) =
   ##   Kind word first on same line, matching browser's `point: 3e1 - 2e2`; two lines
   ##   would double every row's height.
   let geometry_shown =
-    if row.is_open: panel.session.get.geometry else: scene.geometryOf(row.handle.get)
+    if row.is_open: panel.session.get.geometry else: scene.geometryAt(row.handle.get)
   var line: array[WIDTH_OBJECT_LINE, char]
   let description = buildChars(line):
     appendChars(line, cursor, "  ")
@@ -850,7 +850,7 @@ func adoptSelectionAsOperands(panel: var Panel, handles: openArray[int], count: 
   panel.revision_selection_synced = panel.selection.revision
   if panel.selection.len == 0: return
 
-  func positionOf(handles: openArray[int]; count, handle: int): Option[cint] =
+  func positionCombo(handles: openArray[int]; count, handle: int): Option[cint] =
     ## Translate handle back to operand combo's dense position.
     for position in 0..<count:
       if handles[position] == handle: return some(cint(position))
@@ -862,10 +862,10 @@ func adoptSelectionAsOperands(panel: var Panel, handles: openArray[int], count: 
     #   unrelated operation.
     panel.index_arity = arity_implied
     panel.index_operation = 0
-  let position_first = positionOf(handles, count, panel.selection.at(0))
+  let position_first = positionCombo(handles, count, panel.selection.at(0))
   if position_first.isSome: panel.index_operand_first = position_first.get
   if panel.selection.len >= 2:
-    let position_second = positionOf(handles, count, panel.selection.at(1))
+    let position_second = positionCombo(handles, count, panel.selection.at(1))
     if position_second.isSome: panel.index_operand_second = position_second.get
 
 
@@ -878,7 +878,7 @@ func openSelectionMenuPicker*(panel: var Panel) =
   let
     arity = panel.selection.impliedArity
     (_, operations, count_offered) = offerOperationsOfArity(arity)
-    wanted = panel.operations.lastOf(arity)
+    wanted = panel.operations.operationLast(arity)
   panel.is_menu_selection_shown = true
   panel.is_menu_selection_picking = true
   # Open on head of list unless remembered operation is in it: list is per arity.
@@ -965,7 +965,7 @@ proc layoutApply*(
       panel.index_operation = 0
       let
         (_, offered, count) = offerOperationsOfArity(arity)
-        wanted = panel.operations.lastOf(arity)
+        wanted = panel.operations.operationLast(arity)
       for position in 0..<count:
         if offered[position] == wanted:
           panel.index_operation = cint(position)
@@ -1150,7 +1150,7 @@ proc layoutDiagnosticsShare(panel: Panel) =
         if panel.counts_share.busy == 0: wordingText(NoteDiagnosticsShareWaiting)
         else:
           buildChars(line):
-            appendFixed(line, cursor, panel.counts_share.percentOf(owner), 1)
+            appendFixed(line, cursor, panel.counts_share.percent(owner), 1)
             appendChars(line, cursor, "%, n ")
             appendInt(line, cursor, panel.counts_share.busy)
       gui.monoPush()
@@ -1564,7 +1564,7 @@ const
     ## Leave this much of window unclaimed by help panel.
     ##   `?` button below it, tab strip above its rows, window's frame.
 
-func helpActionOf(entry: HelpEntry): string =
+func actionDrawn(entry: HelpEntry): string =
   ## Write one entry's action as panel draws it, indent and touch marker included.
   ##   One writer, because column is sized by measuring exactly what is then drawn.
   "  " & entry.action & (if entry.is_touch: "  (touch)" else: "")
@@ -1576,17 +1576,17 @@ proc layoutHelpTab(path: HelpPath; offset_outcome, width_rows, height_available:
   ##   widest action over whole table, so every tab's column stands at one place.
   # Say what tab is about, before rows that assume it.
   #   Wrapped, and outside rows child so it stays put while they scroll.
-  gui.textWrappedAt(cstring(descriptionOf(path)), width_rows)
+  gui.textWrappedAt(cstring(description(path)), width_rows)
   # Size tab as tall as its rows need, up to what window has.
   #   Fixed height for largest leaves `menu`'s five rows floating in blank.
-  let height_rows = min(gui.childHeightForRows(cint(countOf(path))), height_available)
+  let height_rows = min(gui.childHeightForRows(cint(countEntries(path))), height_available)
   if gui.childBegin(cstring("##help_rows"), width_rows, height_rows):
     for entry in HELP_ENTRIES:
       if entry.path != path: continue
       # Mark touch rows in word rather than only tint.
       #   Survives reader who cannot tell two greys apart.
       gui.monoPush()
-      gui.textTinted(cstring(helpActionOf(entry)), 0.74, 0.95, 0.94)
+      gui.textTinted(cstring(actionDrawn(entry)), 0.74, 0.95, 0.94)
       gui.monoPop()
       gui.sameLineAt(offset_outcome)
       gui.text cstring(entry.outcome)
@@ -1610,7 +1610,7 @@ proc layoutHelp*(panel: var Panel, path_forced = none(HelpPath)) =
   #   Measured only while panel is open, so closed panel pays nothing for table's metrics.
   var offset_outcome, width_outcome = 0.0'f32
   for entry in HELP_ENTRIES:
-    offset_outcome = max(offset_outcome, gui.textWidth(cstring(helpActionOf(entry))))
+    offset_outcome = max(offset_outcome, gui.textWidth(cstring(actionDrawn(entry))))
     width_outcome = max(width_outcome, gui.textWidth(cstring(entry.outcome)))
   offset_outcome += GAP_HELP_COLUMN
   if gui.windowBeginPinned(
@@ -1628,7 +1628,7 @@ proc layoutHelp*(panel: var Panel, path_forced = none(HelpPath)) =
       height_available = height - MARGIN_HELP_PANEL
     if gui.tabBarBegin("##help_tabs"):
       for path in HelpPath:
-        if not gui.tabBegin(cstring(titleOf(path)), path_forced == some(path)): continue
+        if not gui.tabBegin(cstring(title(path)), path_forced == some(path)): continue
         layoutHelpTab(path, offset_outcome, width_rows, height_available)
         gui.tabEnd()
       gui.tabBarEnd()
@@ -1714,7 +1714,7 @@ proc layoutMenu(
     if scale != ScaleOrrery.low: gui.sameLine()
     var name: array[16, char]
     let label = buildChars(name):
-      appendInt(name, cursor, objectsOf(scale))
+      appendInt(name, cursor, countObjects(scale))
     inc panel.count_demo_offered
     if gui.button(label):
       # Frame for window as it stands, which is what browser passes its canvas size for.
@@ -1727,7 +1727,7 @@ proc layoutMenu(
     # Bound before it is passed, so string outlives call rather than being temporary.
     #   Sentence carries size only this loop knows, so `wording` composes it from parts it
     #   holds rather than storing one row per size.
-    let told = demoWording(objectsOf(scale), scale == SCALE_ORRERY_DEFAULT)
+    let told = demoWording(countObjects(scale), scale == SCALE_ORRERY_DEFAULT)
     gui.tooltip cstring(told)
 
   gui.menuEnd()
@@ -1818,7 +1818,7 @@ proc layoutPanel*(
     #   UIs. Browser dropped its own copy of that line; this was last one, which is
     #   drift `help.nim`'s own header is about.
     #   Wedge words were taught here alone, so they moved rather than went: they are
-    #   read from `interaction.wordOf` in `help.descriptionOf`, which both render.
+    #   read from `interaction.word` in `help.description`, which both render.
     #   Row of constant controls left too, for overlay of its own; see `layoutChipRow`.
     # Lay sections out in alphabetical order, matching browser's drawer.
     #   `objects` open by default.

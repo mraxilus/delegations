@@ -39,7 +39,7 @@ func blockAfter(source, opening: string): seq[string] =
     result.add line
 
 
-func keysOf*(source: string): seq[string] =
+func keysWording*(source: string): seq[string] =
   ## Read keys of `Wording` in declared order, so index is ordinal.
   ##   Doc lines and blank lines carry none; values split on commas. Explicit ordinal is
   ##   refused, since index would then no longer be ordinal.
@@ -52,7 +52,7 @@ func keysOf*(source: string): seq[string] =
       result.add key
 
 
-func wordsOf*(source: string): Table[string, string] =
+func wordsByKey*(source: string): Table[string, string] =
   ## Read words of every row of `LUT_TEXT_BY_WORDING`, keyed by name of its key.
   ##   Row is key, colon, then string literals joined by `&`, on one line or several.
   ##   Comment runs from `#` outside literal to end of line.

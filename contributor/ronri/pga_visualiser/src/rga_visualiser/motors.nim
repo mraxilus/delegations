@@ -80,34 +80,34 @@ const MOTOR_IDENTITY* = 1.0.e1234
 
 #[ Bivector Split ]#
 
-func turnPartOf(b_line: Multivector): array[3, float] =
+func halfTurn(b_line: Multivector): array[3, float] =
   ## Read direction of bivector, which is part that turns.
   for index, basis in BASES_TURN: result[index] = b_line[basis]
 
 
-func slidePartOf(b_line: Multivector): array[3, float] =
+func halfSlide(b_line: Multivector): array[3, float] =
   ## Read moment of bivector, which is part that slides.
   for index, basis in BASES_SLIDE: result[index] = b_line[basis]
 
 
-func bivectorOf(turn, slide: array[3, float]): Multivector =
+func initBivector(turn, slide: array[3, float]): Multivector =
   ## Build bivector back from its two halves.
   for index, basis in BASES_TURN: result[basis] = turn[index]
   for index, basis in BASES_SLIDE: result[basis] = slide[index]
 
 
-func magnitudeOf(v: array[3, float]): float =
+func magnitude(v: array[3, float]): float =
   ## Measure length of one half of bivector.
   sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2])
 
 
-func alignmentOf(a, b: array[3, float]): float =
+func alignment(a, b: array[3, float]): float =
   ## Measure how far one half of bivector runs along other, i.e. their dot product.
   ##   For motor's bivector this is pitch times turn's magnitude: slide along axis itself.
   a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
 
 
-func scalesOf(angle: float): (float, float) =
+func scales(angle: float): (float, float) =
   ## Read two series that motor's exponential and logarithm share.
   ##   First is `sin(a)/a`, second is `(a*cos(a) - sin(a))/a³`. Both are finite at zero,
   ##   where they read 1 and -1/3, so neither `exp` nor `log` needs degenerate branch.
@@ -131,15 +131,15 @@ func exp*(b_line: Multivector): Multivector =
   ##   Total: pure slide falls out of same expression, since its direction is zero and both
   ##   series stay finite there. No branch, so no branch to get wrong.
   let
-    (turn, slide) = (b_line.turnPartOf, b_line.slidePartOf)
-    angle = turn.magnitudeOf
-    along = alignmentOf(turn, slide)
-    (scale_turn, scale_slide) = scalesOf(angle)
+    (turn, slide) = (b_line.halfTurn, b_line.halfSlide)
+    angle = turn.magnitude
+    along = alignment(turn, slide)
+    (scale_turn, scale_slide) = scales(angle)
   var turned, slid: array[3, float]
   for index in 0..2:
     turned[index] = scale_turn * turn[index]
     slid[index] = scale_turn * slide[index] + along * scale_slide * turn[index]
-  result = bivectorOf(turned, slid)
+  result = initBivector(turned, slid)
   result[Basis.E1234] = cos(angle)
   result[Basis.scalar] = -along * scale_turn
 
@@ -156,9 +156,9 @@ func log*(motor: Multivector): Multivector =
   ##   solved.
   let held = if motor[Basis.E1234] < 0.0: -motor else: motor
   let
-    (turn, slide) = (held.turnPartOf, held.slidePartOf)
-    angle = arctan2(turn.magnitudeOf, held[Basis.E1234])
-    (scale_turn, scale_slide) = scalesOf(angle)
+    (turn, slide) = (held.halfTurn, held.halfSlide)
+    angle = arctan2(turn.magnitude, held[Basis.E1234])
+    (scale_turn, scale_slide) = scales(angle)
     # Recover pitch from scalar term `exp` wrote, which carried it alone.
     #   `scale_turn` never vanishes here: short way round holds `a` at or under π/2, where
     #   `sin(a)/a` stays above 0.63.
@@ -167,7 +167,7 @@ func log*(motor: Multivector): Multivector =
   for index in 0..2:
     turned[index] = turn[index] / scale_turn
     slid[index] = (slide[index] - along * scale_slide * turned[index]) / scale_turn
-  bivectorOf(turned, slid)
+  initBivector(turned, slid)
 
 
 func turnAbout*(axis: Multivector, radians: float): Option[Multivector] =

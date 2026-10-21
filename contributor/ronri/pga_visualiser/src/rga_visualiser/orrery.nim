@@ -48,7 +48,7 @@
 ##   Luna's ring is tipped out of it by its real 5.16 degrees, so `att(earth ∧ luna)`
 ##   sits off that line and spans horizon plane with it. See horizon block in
 ##   `addOrrery`.
-## `objectsOf(scale)` objects on nose at every size, asserted.
+## `countObjects(scale)` objects on nose at every size, asserted.
 ##   Walk passes over system too large for room left rather than stopping on it.
 ##   Only Sol's block and four in horizon are fixed; everything between is however many
 ##   real stars fit.
@@ -79,13 +79,13 @@ type
     name*: string  ## What it is called, also label it carries in scene.
     role*: Role  ## What kind of body it is.
     distance*: float  ## How far it really stands from Sol, in astronomical units.
-    kilometres_radius*: float  ## Real mean radius, in kilometres; see `radiusDrawnOf`.
+    kilometres_radius*: float  ## Real mean radius, in kilometres; see `radiusDrawn`.
 
   SolMoon* = object  ## Define one real moon of modelled solar system.
     name*: string  ## What it is called, also label it carries in scene.
     parent*: int  ## Which entry of `SOL` it rings.
     kilometres_orbit*: float  ## Real semi-major axis about that parent, in kilometres.
-    kilometres_radius*: float  ## Real mean radius, in kilometres; see `radiusDrawnOf`.
+    kilometres_radius*: float  ## Real mean radius, in kilometres; see `radiusDrawn`.
     inclination*: float  ## Real inclination of its orbit to its reference plane, in degrees.
     node*: float  ## Real longitude of its ascending node on that plane, in degrees.
     pole_ascension*: float  ## Right ascension of reference plane's pole, in degrees, J2000.
@@ -232,7 +232,7 @@ const
     ##   elements state them; rest against local Laplace planes. `normalOfMoon` turns each
     ##   into one unit normal in scene's ecliptic frame. `PROVENANCE.md` names source and
     ##   date.
-    ##   `radiusDrawnOf` says what is done to radius's: divided into astronomical units,
+    ##   `radiusDrawn` says what is done to radius's: divided into astronomical units,
     ##   nothing more.
     ##   `parent` indexes `SOL`; static block below checks every one is planet.
 
@@ -364,7 +364,7 @@ func toEcliptic(d: Direction): Direction =
   turnedBy(d, TURN_ECLIPTIC, TURN_ECLIPTIC_REVERSED)
 
 
-func bearingOf*(toward: Direction): Option[Direction] =
+func bearing*(toward: Direction): Option[Direction] =
   ## Report level direction `toward` leans along, unit and outward: its bearing on ground.
   ##   Meet of ground with plane joining origin, world up and `toward`; sense taken from
   ##     `toward` by inner product, since meet's own runs with order of operands.
@@ -372,7 +372,7 @@ func bearingOf*(toward: Direction): Option[Direction] =
   ##   Exported for `showOrrery`'s camera, and for suite.
   let level = direction((AXIS_UP ∧ toward.toMultivector) ∨ PLANE_GROUND, scale = norm(toward))
   if level.isNone: return
-  if innerOf(level.get.toMultivector, toward.toMultivector) < 0.0: some(-level.get)
+  if inner(level.get.toMultivector, toward.toMultivector) < 0.0: some(-level.get)
   else: level
 
 
@@ -406,12 +406,12 @@ func nodeOfRing(normal: Direction): Direction =
 
 #[ Construction ]#
 
-func sunOf(system: System): Position =
+func sun(system: System): Position =
   ## Report where system's own sun stands: `reach` out from `POSITION_ORRERY` along `toward`.
   pointAlong(POSITION_ORRERY, system.toward, system.reach)
 
 
-func spanOf(system: System): (Direction, Direction) =
+func span(system: System): (Direction, Direction) =
   ## Report two directions system's own plane is spanned by, its bearing first.
   ##   One place orientation is written down, so planet placed on its ecliptic is on very
   ##   plane scene holds.
@@ -420,7 +420,7 @@ func spanOf(system: System): (Direction, Direction) =
   ##   about world up. Real orientation of any neighbour's plane is not on record, and none
   ##   is claimed.
   ##   Sol leans nowhere, standing at origin, and takes x axis.
-  let along = bearingOf(system.toward).get(Direction(x: 1, y: 0, z: 0))
+  let along = bearing(system.toward).get(Direction(x: 1, y: 0, z: 0))
   (along, turnedBy(along, TURN_QUARTER_UP, TURN_QUARTER_UP_REVERSED))
 
 
@@ -441,7 +441,7 @@ func angleRing(spin: float; index, count: int): float =
   spin + TAU * float(index) / float(count + 1)
 
 
-func radiusDrawnOf*(kilometres: float): float =
+func radiusDrawn*(kilometres: float): float =
   ## Report how large body of real radius `kilometres` is drawn, in world units.
   ##   Real radius in astronomical units, since one world unit is one: Sol 0.00465,
   ##   Earth 0.0000426, Phobos 0.000000074. Every body is under least dot until reader
@@ -456,7 +456,7 @@ func radiusOfMoon(moon: SolMoon): float =
   moon.kilometres_orbit / KILOMETRES_PER_ASTRONOMICAL_UNIT
 
 
-func placedOf*(star: Star): int =
+func countPlanetsPlaced*(star: Star): int =
   ## Report how many of real star's planets are placed: those with semi-major axis on record.
   ##   Archive stores missing axis as `0.0` (`neighbourhood.nim`); planet with none is left
   ##   out rather than placed by guess, since distance is whole of what this scene claims.
@@ -496,9 +496,9 @@ func addHorizon(
   ##     make it are genuinely apart: `planet[0] ∧ ecliptic` gave zero, `ecliptic` being
   ##     plane `planet[0]` built.
   ##     `storyboard`'s seeds carry same warning about `o` and `ground`.
-  doAssert kindOf(geometry) == some(expected) and isHorizon(geometry),
+  doAssert classify(geometry) == some(expected) and isHorizon(geometry),
     &"Orrery's `{label}` must be {expected} in horizon, its operands genuinely apart; got " &
-    &"`{kindOf(geometry)}`."
+    &"`{classify(geometry)}`."
   scene.addObject(geometry, label, LUT_INK_BY_ROLE[Role.Derived], now)
 
 
@@ -511,20 +511,20 @@ func addPlane(
   ##   their coordinates and cancels to noise, one part in ten of plane's own normal,
   ##   where point and two directions is same plane with nothing to cancel.
   ##   Guard stays: directions that fail to span leave multivector of no clean grade,
-  ##   which `objects.kindOf` reports as nothing to draw.
-  doAssert kindOf(geometry) == some(Kind.Plane),
+  ##   which `objects.classify` reports as nothing to draw.
+  doAssert classify(geometry) == some(Kind.Plane),
     &"Orrery must derive `{label}` from a point and two directions spanning a plane; got " &
-    &"`{kindOf(geometry)}`."
+    &"`{classify(geometry)}`."
   scene.addObject(geometry, label, LUT_INK_BY_ROLE[Role.Derived], now, some(anchor))
 
 
-func objectsOf*(star: Star): int =
+func countObjects*(star: Star): int =
   ## Report how many scene objects one real star comes to.
   ##   Exported because suite bounds how far fill may depart from nearest-first with it.
   ##   Itself, planets with axis on record, and ecliptic plane it earns with two placed
   ##   planets to span one.
   ##     Every further object would be invention; great majority come to one object.
-  let placed = placedOf(star)
+  let placed = countPlanetsPlaced(star)
   1 + placed + (if placed >= 2: 1 else: 0)
 
 
@@ -551,7 +551,7 @@ const OBJECTS_SOL* = len(SOL) + len(MOONS) + 3
   ##   whole arrangement.
 
 
-func objectsOf*(scale: ScaleOrrery): int =
+func countObjects*(scale: ScaleOrrery): int =
   ## Report how many objects arrangement fills at this size.
   ##   Which size to use is working rule, not build setting.
   ##     `Nearest` for quick check, `Neighbourhood` for final one, `Catalogue` when
@@ -576,7 +576,7 @@ const
     ## Count objects arrangement comes to before single neighbour is placed.
     ##   Folded from tables rather than written beside them, so it moves when they do.
 
-  OBJECTS_ORRERY_MIN* = OBJECTS_FIXED_ORRERY + objectsOf(STARS[0])
+  OBJECTS_ORRERY_MIN* = OBJECTS_FIXED_ORRERY + countObjects(STARS[0])
     ## Count smallest arrangement there is.
     ##   Sol entire, block in horizon, and one neighbour: neighbourhood of one system is
     ##   no neighbourhood, so no size may stop short of nearest star.
@@ -587,9 +587,9 @@ const
 
 static:
   for scale in ScaleOrrery:
-    doAssert objectsOf(scale) >= OBJECTS_ORRERY_MIN,
+    doAssert countObjects(scale) >= OBJECTS_ORRERY_MIN,
       &"`ScaleOrrery.{scale}` must ask for at least `{OBJECTS_ORRERY_MIN}` objects, Sol, the " &
-      &"block in horizon and the nearest neighbour; got `{objectsOf(scale)}`."
+      &"block in horizon and the nearest neighbour; got `{countObjects(scale)}`."
 
 const
   RISE_ORRERY_SHOWN* = 1.4
@@ -612,8 +612,8 @@ func addSol(scene: var Scene; now: float; ecliptic, orbit, tether: var Multivect
   ##   Planets ring Sol at their own real semi-major axes rather than one shared radius,
   ##   whole reason this is not generic template.
   let
-    place_sol = sunOf(SYSTEM_SOL)
-    (along, across) = spanOf(SYSTEM_SOL)
+    place_sol = sun(SYSTEM_SOL)
+    (along, across) = span(SYSTEM_SOL)
     sol = place_sol.toMultivector
   var
     placed: array[len(SOL), Multivector]
@@ -635,7 +635,7 @@ func addSol(scene: var Scene; now: float; ecliptic, orbit, tether: var Multivect
       body.name,
       LUT_INK_BY_ROLE[body.role],
       now,
-      radius = radiusDrawnOf(body.kilometres_radius),
+      radius = radiusDrawn(body.kilometres_radius),
     )
   # Ring every moon about planet it really rings, in plane it really rings in.
   #   Phase is measured from ring's ascending node on ecliptic and stepped by golden angle
@@ -653,7 +653,7 @@ func addSol(scene: var Scene; now: float; ecliptic, orbit, tether: var Multivect
       moon.name,
       LUT_INK_BY_ROLE[Role.Moon],
       now,
-      radius = radiusDrawnOf(moon.kilometres_radius),
+      radius = radiusDrawn(moon.kilometres_radius),
     )
   # Span ecliptic by Sol and two directions planets ring along; see `addPlane`.
   ecliptic = sol ∧ along.toMultivector ∧ across.toMultivector
@@ -676,8 +676,8 @@ func addOrrery*(scene: var Scene, scale: ScaleOrrery = SCALE_ORRERY_DEFAULT, now
   ##   Asserts scene handed is empty and that it leaves exactly size asked for.
   doAssert scene.len == 0,
     &"Orrery fills a scene to a stated size, so it must start empty; got `{scene.len}`."
-  doAssert OBJECTS_MAX >= objectsOf(scale),
-    &"Orrery at `{scale}` needs `{objectsOf(scale)}` object handles; this build was compiled " &
+  doAssert OBJECTS_MAX >= countObjects(scale),
+    &"Orrery at `{scale}` needs `{countObjects(scale)}` object handles; this build was compiled " &
     &"with `{OBJECTS_MAX}`. Raise `--define:visualiser.objects_max`, or ask for a smaller size."
 
   # Build Sol first: nearest system, and horizon block takes attitudes of its objects.
@@ -693,12 +693,12 @@ func addOrrery*(scene: var Scene, scale: ScaleOrrery = SCALE_ORRERY_DEFAULT, now
   #     Cost is that last few systems in are not strictly nearest left, invisible in
   #     field of thousands.
   for star in STARS:
-    if scene.len + objectsOf(star) > objectsOf(scale) - COUNT_OBJECT_HORIZON: continue
+    if scene.len + countObjects(star) > countObjects(scale) - COUNT_OBJECT_HORIZON: continue
     let
       system = systemAt(star)
-      place_sun = sunOf(system)
+      place_sun = sun(system)
       sun = place_sun.toMultivector
-      count_placed = placedOf(star)
+      count_placed = countPlanetsPlaced(star)
     # No radius on record for any star or planet but our own; see `mesh.RADIUS_OBJECT_LEAST`.
     scene.addObject(
       sun,
@@ -710,9 +710,9 @@ func addOrrery*(scene: var Scene, scale: ScaleOrrery = SCALE_ORRERY_DEFAULT, now
     if count_placed == 0: continue
     # Spanned only for star with planet to ring: most stars have none, and each span is
     #   meet and sandwich of dense multivectors.
-    let (along, across) = spanOf(system)
+    let (along, across) = span(system)
 
-    # Planet with no axis on record is left out; see `placedOf`.
+    # Planet with no axis on record is left out; see `countPlanetsPlaced`.
     #   Guarded by block rather than `continue`: compiled to JS, `continue` here placed
     #   every axis-less planet regardless, where C skipped them; block reads same on both.
     var which_placed = 0
@@ -752,8 +752,8 @@ func addOrrery*(scene: var Scene, scale: ScaleOrrery = SCALE_ORRERY_DEFAULT, now
   addHorizon(scene, at_horizon_ecliptic ∧ at_horizon_luna,
     "att(ecliptic sol) ∧ att(earth ∧ luna)", Kind.Plane, now)
 
-  doAssert scene.len == objectsOf(scale),
-    &"Orrery at `{scale}` must build `{objectsOf(scale)}` objects, and its walk passes over " &
+  doAssert scene.len == countObjects(scale),
+    &"Orrery at `{scale}` must build `{countObjects(scale)}` objects, and its walk passes over " &
     &"what will not fit rather than stopping, so it falls short only by running out of " &
     &"catalogue, `starfield.STARS` carrying too few stars; got `{scene.len}`."
 
@@ -785,7 +785,7 @@ func showOrrery*(
   #   away is sum of two weightless points, read back unit.
   #   Sight straight up or down has no bearing, and reference sight stands in for it.
   let
-    bearing = bearingOf(camera.frame.forward).get(FORWARD_REFERENCE)
+    bearing = bearing(camera.frame.forward).get(FORWARD_REFERENCE)
     away = directionHorizon(
       add(wedge(-1.0, bearing.toMultivector), wedge(RISE_ORRERY_SHOWN, UP_WORLD.toMultivector)),
     ).get(UP_WORLD)

@@ -156,7 +156,7 @@ function createdBuffer(): WebGLBuffer {
 }
 // Ask for per-fragment depth before any shader compiles, so `#extension` in each fragment
 //   source finds it. Without it depth stays what clip position gives, linear in projective
-//   depth, and far field's fault returns; see `camera.depthOf`.
+//   depth, and far field's fault returns; see `camera.depthClip`.
 //   Clip position itself is never rewritten with logarithm: clipper interpolates clip
 //   coordinates linearly, so fan corner behind eye, mapped far past far plane, had its
 //   triangle cut beside its centre and plane's disc ended at hard chord under camera.

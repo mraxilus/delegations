@@ -77,7 +77,7 @@ suite "Motors":
   test "every motor is unit, and the exponential and the logarithm invert each other":
     # Screws drawn from seeded pool, one for each sample, so failure reproduces by name.
     #   Angle sweeps whole turn across pool, and every seventh sample takes angle far
-    #   below `ANGLE_SERIES`, so both arms of `scalesOf` are walked.
+    #   below `ANGLE_SERIES`, so both arms of `scales` are walked.
     #   Round trip is exact in coefficients here because `turnAbout` holds every angle
     #   inside half turn, which is where `log` reads motor back unnegated.
     for i in 0..<SAMPLES:

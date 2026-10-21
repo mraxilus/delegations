@@ -106,7 +106,7 @@ suite "Share":
     check pooled == [Owner.Rest: 18, Owner.Pga: 18, Owner.Algebra: 2, Owner.Boundary: 1,
       Owner.Euclidean: 1]
     check pooled.busy == 40
-    check pooled.percentOf(Owner.Pga) == 45.0
+    check pooled.percent(Owner.Pga) == 45.0
     # Second 100 left window at 120; its bucket is counted again from nothing at 120.
     check ring.pooled(119)[Owner.Pga] == 18
     check ring.pooled(120)[Owner.Pga] == 10
@@ -117,7 +117,7 @@ suite "Share":
     )
     check ring.pooled(120) == [Owner.Rest: 11, Owner.Pga: 10, Owner.Algebra: 0,
       Owner.Boundary: 0, Owner.Euclidean: 0]
-    check initRingShare[CountsShare]().pooled(0).percentOf(Owner.Pga) == 0.0
+    check initRingShare[CountsShare]().pooled(0).percent(Owner.Pga) == 0.0
 
 
   test "each value that crosses the boundary counts once, each way, while the tally is open":
@@ -128,7 +128,7 @@ suite "Share":
     setCountingCrossings(true)
     let place = Position(x: 1, y: 2, z: 3).toMultivector
     discard place.position
-    discard Motor().toMultivector.motorOf
+    discard Motor().toMultivector.toMotor
     discard Direction(x: 0, y: 2, z: 0).toMultivector.directionFrom
     # Weightless point names no place, so read refuses and nothing leaves algebra.
     discard Direction(x: 0, y: 0, z: 1).toMultivector.position
@@ -166,5 +166,5 @@ suite "Share":
         let counts = drainSamples()
         checkpoint &"{counts} over {spins} products, {product}"
         check counts.busy >= 40
-        check counts.percentOf(Owner.Pga) > 50.0
+        check counts.percent(Owner.Pga) > 50.0
         check drainSamples().busy == 0

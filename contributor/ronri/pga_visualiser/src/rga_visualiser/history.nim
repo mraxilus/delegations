@@ -6,7 +6,7 @@
 ##     Entry at cursor always equals live state.
 ##     Undo and redo move cursor and copy entry back out.
 ##     Fresh edit truncates redo-able future before appending.
-##   `handleOf` is only place timeline position becomes array index.
+##   `handleAt` is only place timeline position becomes array index.
 ##   Cost: `CAPACITY_HISTORY` whole scenes of fixed reservation; see that constant.
 ## Camera's stance rides along, never moves timeline by itself.
 ##   Each step records where camera stood when its edit was made, so undoing construction
@@ -72,10 +72,10 @@ type
 
   History* = object  ## Define fixed-capacity timeline of steps, with cursor onto live one.
     ## Array is ring: `count` and `cursor` are timeline positions, `first` says which handle
-    ## holds oldest, and `handleOf` alone relates them.
+    ## holds oldest, and `handleAt` alone relates them.
     ##   Dropping oldest step moves one integer; see `record`.
     entries: array[CAPACITY_HISTORY, Step]  ## Snapshot per committed edit, in ring order.
-      ## Reach one through `handleOf`, never by indexing directly.
+      ## Reach one through `handleAt`, never by indexing directly.
     first: int  ## Array handle holding oldest step, timeline position 0.
     count: int  ## Valid timeline entries so far, <= CAPACITY_HISTORY.
     cursor: int  ## Timeline position of entry equal to live scene right now.
@@ -84,7 +84,7 @@ type
 
 #[ Ring Indexing ]#
 
-func handleOf(history: History, position: int): int =
+func handleAt(history: History, position: int): int =
   ## Report array handle holding step at `position` along timeline, 0 being oldest retained.
   ##   Every read and write of `entries` goes through here.
   ##     Position is not array index, and two must never be spelled same way.
@@ -120,7 +120,7 @@ func record*(history: var History, scene: Scene, camera: Camera) =
     history.first = (history.first + 1) mod CAPACITY_HISTORY
     history.cursor = CAPACITY_HISTORY - 1
   # Copy scene once, field by field; see `initHistory`.
-  let handle = history.handleOf(history.cursor)
+  let handle = history.handleAt(history.cursor)
   history.entries[handle].scene = scene
   history.entries[handle].stance = camera.stanceWorld
   history.count = history.cursor + 1
@@ -148,10 +148,10 @@ func undo*(history: var History, scene: var Scene, camera: var Camera): bool
   ##     Lens is reader's setting, and `camera.CameraStance` says nothing aiming camera may
   ##     rewrite it. Whole-value assignment handed back lens of step arrived at.
   if not history.isUndoable: return false
-  camera = camera.placed(history.entries[history.handleOf(history.cursor)].stance)
+  camera = camera.placed(history.entries[history.handleAt(history.cursor)].stance)
   history.cursor.dec
   # Restore through `restoreFrom`, never assignment: revision must pass every one drawn.
-  scene.restoreFrom(history.entries[history.handleOf(history.cursor)].scene)
+  scene.restoreFrom(history.entries[history.handleAt(history.cursor)].scene)
   true
 
 
@@ -164,8 +164,8 @@ func redo*(history: var History, scene: var Scene, camera: var Camera): bool
   ##   Stance alone crosses, as in `undo`.
   if not history.isRedoable: return false
   history.cursor.inc
-  scene.restoreFrom(history.entries[history.handleOf(history.cursor)].scene)
-  camera = camera.placed(history.entries[history.handleOf(history.cursor)].stance)
+  scene.restoreFrom(history.entries[history.handleAt(history.cursor)].scene)
+  camera = camera.placed(history.entries[history.handleAt(history.cursor)].stance)
   true
 
 
@@ -174,7 +174,7 @@ func undo*(
 ): bool {.discardable.} =
   ## Undo, keeping every pick that still names object it named.
   ##   Entry left is live scene as it stood, so it says what each pick named.
-  let left = history.handleOf(history.cursor)
+  let left = history.handleAt(history.cursor)
   result = history.undo(scene, camera)
   if result: picked.keepNaming(history.entries[left].scene, scene)
 
@@ -183,6 +183,6 @@ func redo*(
   history: var History, scene: var Scene, camera: var Camera, picked: var Selection
 ): bool {.discardable.} =
   ## Redo, keeping every pick that still names object it named; see `undo`.
-  let left = history.handleOf(history.cursor)
+  let left = history.handleAt(history.cursor)
   result = history.redo(scene, camera)
   if result: picked.keepNaming(history.entries[left].scene, scene)
