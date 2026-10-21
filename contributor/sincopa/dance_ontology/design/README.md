@@ -349,7 +349,7 @@ holds a high lock to rule 7 as well.
 
 ## Layout
 
-The drawing is in `../src/dance_ontology/draw/`, because the app draws these marks too. The
+The drawing is in `../src/dance_ontology/draw/`, because the Explorer draws these marks too. The
 workbench imports it from there.
 
 ```
@@ -361,7 +361,7 @@ workbench imports it from there.
   body.nim      one dancer: circle, chevron, spots, hands
   route.nim     a connection, routed as a taut string round two bodies
   figure.nim    whole pictures, still and moving
-  scene.nim     each of the app's frames
+  scene.nim     each of the Explorer's frames
 ```
 
 ```

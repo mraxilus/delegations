@@ -79,7 +79,7 @@ by `test_rigid.nim`: the turn that a couple are said to reach is the turn that s
 carries. Every walk that stops names what stopped it, as kept and as walked again live.
 
 `seen.still` marks a still that holds at no distance and in no plan as stopped, and names no stop.
-The rig page then says that no pose holds at any distance (`design/rig.nim`). No law stands such a
+The rig viewer then says that no pose holds at any distance (`design/rig.nim`). No law stands such a
 still, because every still card holds a pose. The law that every card is modelled
 (`suites/test_asks.nim`) leaves out the six moving cards that the edge of the shoulder refuses. No
 still is among them (Planned turn).
@@ -205,7 +205,7 @@ the turns on the spot that reach each facing from Face-to-face.
 and cross nothing (rule 31). `parts.facingRest` names that facing, read off the pose through the
 model: Face-to-face for hand to hand, and Face-to-back for the crossed pair. `parts.facingAt` names
 the facing of each step of the chain in the same way. The Reference takes each name from there,
-and the rig page reads its headings from the Reference. Each card of the Reference carries its
+and the rig viewer reads its headings from the Reference. Each card of the Reference carries its
 rest as a `Facing`.
 
 **The simulation reads its own facing, and `simulation/words.nim` names it.** The simulation imports
@@ -1759,7 +1759,7 @@ until the Architect confirms one.
 **The stills that the C cards show stand as they are, and a watch reports each move (#611).** The
 Architect kept C01 to C07 at a first look, and they are not confirmed. Every law holds their moments
 as it holds any other. `design/watched-fixtures.json` holds each capsule end of the still that each
-of these cards shows, as the rig page shows it. So a twin card holds the still that it names,
+of these cards shows, as the rig viewer shows it. So a twin card holds the still that it names,
 mirrored, and a card that comes to show another still moves too.
 
 A move past 1 mm fails, and names the card, the capsule, the end, the move and the verb. A card
@@ -2604,10 +2604,11 @@ Each arm takes the points of the other arm, and each twist turns the other way. 
 rig states the ends of the left arm mirrored. The simulation reflects a facing about the way that
 its body faces at rest, so a wound turn keeps its laps.
 
-**The rig page shows each reflected twin as the still that its mirror twin keeps, mirrored, and each
-arm recoloured.** The rig recording keeps each answered still once. A twin card keeps no still of
-its own. It names the card that keeps the still that it mirrors (`mirror`). Where no card asks that
-answer, the twin card keeps it itself, and names itself. A02, A04 and A06 do so, counted 2026-10-04.
+**The rig viewer shows each reflected twin as the still that its mirror twin keeps, mirrored, and
+each arm recoloured.** The rig recording keeps each answered still once. A twin card keeps no still
+of its own. It names the card that keeps the still that it mirrors (`mirror`). Where no card asks
+that answer, the twin card keeps it itself, and names itself. A02, A04 and A06 do so, counted
+2026-10-04.
 
 The page builder flips each point of that still across the line of the couple (`design/twins`). It
 names the capsules of each arm as those of the other arm, so the page paints them in the colour of
@@ -2777,7 +2778,8 @@ took 0.25 s to 0.33 s on four cores on 2026-10-08. Where it compiled first, each
 
 Each question that the verb asks goes into the stamp as text, and not the source of
 `design/asks.nim`. So a change to how the questions are listed that asks the same questions records
-nothing again. The rig page leaves the stamp out, so the page changes only where the recording does.
+nothing again. The rig viewer leaves the stamp out, so the page changes only where the recording
+does.
 
 A law fails when a recording carries a stamp other than the one that the tree gives. Without it, a
 page could show the answers of other physics as those of this tree. Verified by

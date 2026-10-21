@@ -105,7 +105,7 @@ Two moves that a lead leads as one. They change which hands are held, and not ho
 _Avoid_: compound, combination, combo, macro, sequence
 
 **Transition**:
-A chain of moves from one frame state to another. Where several exist, the app offers the
+A chain of moves from one frame state to another. Where several exist, the Explorer offers the
 shortest.
 _Avoid_: route, path, sequence, walk
 

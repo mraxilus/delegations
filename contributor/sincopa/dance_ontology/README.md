@@ -125,7 +125,7 @@ design/                            the design workbench: rules first, pages afte
 simulation/                               the body simulation, standalone on purpose
 tools/audit.nim                    the same audit, printed
 pages/                             hand-written pages this project stands behind:
-                                   app shell
+                                   the shell of the Explorer
 tools/pages.nim, tools/bundle.nim  copy the shell in; fold a page into one file
 tools/build.nim                    this project's verbs: pages, assets, types, drive,
                                    fixtures, confirmed, watched, modelled, rig, record,
@@ -153,15 +153,15 @@ walks the state machine from `free`. **Matrix** is every move there is at once. 
 usable from the keyboard, and a live region says what was danced, for a reader who cannot see
 the drawing.
 
-What the model has to say about the spreadsheet is not in the app. It is a finding about a
+What the model has to say about the spreadsheet is not in the Explorer. It is a finding about a
 document, and `tools/audit.nim` prints it.
 
 The rotation half (`rotation.nim`, `axle.nim`, `tests/suites/test_rotation.nim`) is on the bench,
-and not in the app. 148 frame states render as 17 distinct pictures. Level, contact and twist beyond
-its parity have no marks yet, but for one frame. `Left-to-right and Right-to-left` draws a quarter
-turn of twist one way apart from one the other way. The workbench in `design/` is where those marks
-get worked out. The Reference lays out each frame state for the Architect to rule on, and the
-views wait until the marks are decided.
+and not in the Explorer. 148 frame states render as 17 distinct pictures. Level, contact and twist
+beyond its parity have no marks yet, but for one frame. `Left-to-right and Right-to-left` draws a
+quarter turn of twist one way apart from one the other way. The workbench in `design/` is where
+those marks get worked out. The Reference lays out each frame state for the Architect to rule on,
+and the views wait until the marks are decided.
 
 ## What it says
 
