@@ -331,7 +331,7 @@ Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Inspector`. I
 
 `baseline/static_<algebra>.json` records the static measurements, and
 `baseline/runtime_<algebra>.json` records the runtime ones. `baseline/machine_<algebra>.json`
-records the counts of the machine, as the next section says. All are schema 1, with a header
+records the machine measurements, as the next section says. All are schema 1, with a header
 that names algebra, compiler commit, library commit, flags, machine and date.
 
 `guard` compares a fresh inspection against the baseline. Any gated count or bytes moved that
@@ -348,7 +348,7 @@ an improvement only, and bytes moved are gated. A function absent in either docu
 and another build or schema is refused. A lower bound that moves either way, or that is absent now,
 is a finding.
 
-## Counts of the machine
+## Machine measurements
 
 `inspect` also counts the work of the machine for each measurand, as Article VII.10 asks. The
 entry `machine` puts the library expression of each measurand in a wrapper of its own. It calls
