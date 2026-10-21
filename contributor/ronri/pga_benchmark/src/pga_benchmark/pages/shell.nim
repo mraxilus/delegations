@@ -51,7 +51,7 @@ const
     ##   Maths and symbols are what notation needs (`𝐆`, `⟑`, `★`).
     ##   Each Noto face ships whole, as TrueType of its own release, never as subset (X.8).
     ##     Commit Mono is no Noto, so its Latin subset stays.
-    ##   Same six as `rga_visualiser` page, from same store.
+    ##   Same six as `pga_visualiser` page, from same store.
   VIEWS* = [("home", "PGA benchmark"), ("progress", "Progress"), ("docket", "Performance"),
     ("proposals", "Proposals")]
     ## Page name and title of home and of each view, in order bar shows them.

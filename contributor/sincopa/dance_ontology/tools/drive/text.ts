@@ -18,7 +18,7 @@
 //   Cost: page is read at one viewport, Playwright's default; string or stack that `@media`
 //     gates on other width is unread.
 //   Cost: page is read in state it opens on. Text that script writes only once reader acts,
-//     as Reference writes moves of frame reached, is unread until then.
+//     as Explorer writes moves of frame reached, is unread until then.
 
 import type { Page } from '@playwright/test';
 import type { Declared } from './faces';

@@ -288,15 +288,15 @@ suite "Camera":
     check abs(camera.distance - filling) <= 1.0e-9 * filling
     check camera.distanceNear < filling - radius
     let far = camera.distanceFar(reach)
-    check camera.depthOf(camera.distanceNear, reach) =~ -1.0
-    check camera.depthOf(far, reach) =~ 1.0
-    check camera.depthOf(filling + radius, reach) - camera.depthOf(filling - radius, reach) >
+    check camera.depthClip(camera.distanceNear, reach) =~ -1.0
+    check camera.depthClip(far, reach) =~ 1.0
+    check camera.depthClip(filling + radius, reach) - camera.depthClip(filling - radius, reach) >
         step_sixteen_bit
     var last = -2.0
     for exponent in -14..6:
       let depth = pow(10.0, float(exponent))
       if depth <= camera.distanceNear or depth >= far: continue
-      let z = camera.depthOf(depth, reach)
+      let z = camera.depthClip(depth, reach)
       check z > last and z > -1.0 and z < 1.0
       last = z
 
@@ -308,7 +308,7 @@ suite "Camera":
         PLACES[i], 1.0 + float(i), Direction(x: 1.0, y: 0.2 * float(i) - 1.0, z: 0.1 * float(i))
       )
       let lifted = camera.motor.toMultivector
-      check motorOf(lifted) == camera.motor
+      check lifted.toMotor == camera.motor
       check normWeight(lifted)[Basis.scalarAnti] =~ 1.0
 
 
@@ -457,7 +457,7 @@ suite "Camera":
     # Reach is measured from what scene holds, point's own radius included.
     var scene = initScene()
     scene.addObject(Position(x: 300, y: 0, z: 0).toMultivector, "p", Ink.Rose, radius = 2.5)
-    check abs(reachOf(scene) - 302.5) < 1.0e-6
+    check abs(reachFar(scene) - 302.5) < 1.0e-6
 
 
   test "the frustum takes its scale from the nearest drawn object, not from the separation":
@@ -474,8 +474,8 @@ suite "Camera":
     # Far clip still reaches whole scene, since scene's own reach is its other term.
     check camera.distanceFar(6.5e6) >= norm(camera.eye - ORIGIN) + 6.5e6
     # Depth stays logarithmic across that range, and both ends still land where they must.
-    check camera.depthOf(camera.distanceNear, 6.5e6) =~ -1.0
-    check camera.depthOf(camera.distanceFar(6.5e6), 6.5e6) =~ 1.0
+    check camera.depthClip(camera.distanceNear, 6.5e6) =~ -1.0
+    check camera.depthClip(camera.distanceFar(6.5e6), 6.5e6) =~ 1.0
     # Zero hands scale back, so empty scene is unchanged.
     camera.reach_near = 0.0
     check camera.scaleLocal =~ 19.0
@@ -495,17 +495,17 @@ suite "Camera":
     var placed = newSeq[Placement](scene.bound)
     for handle in 0..<scene.bound:
       if scene.isAlive(handle):
-        placed[handle] = placeObject(scene.geometryOf(handle), scene.anchorOverrideAt(handle))
+        placed[handle] = placeObject(scene.geometryAt(handle), scene.anchorOverrideAt(handle))
     let eye = camera.eye
     # Nearest ahead answers, and one behind is passed over however near it stands.
     #   Eye stands one unit out at +x, so depths are five and thirty one.
-    check reachNearOf(placed, scene, camera.originView, eye, camera.frame.forward) =~ 5.0
+    check reachNear(placed, scene, camera.originView, eye, camera.frame.forward) =~ 5.0
     # Hidden objects are not drawn, so they set no scale.
     scene.setVisible(0, false)
-    check reachNearOf(placed, scene, camera.originView, eye, camera.frame.forward) =~ 31.0
+    check reachNear(placed, scene, camera.originView, eye, camera.frame.forward) =~ 31.0
     # Nothing ahead at all reads zero, which hands scale back to separation.
     scene.setVisible(2, false)
-    check reachNearOf(placed, scene, camera.originView, eye, camera.frame.forward) =~ 0.0
+    check reachNear(placed, scene, camera.originView, eye, camera.frame.forward) =~ 0.0
 
 
   test "a moved camera carries the view origin to its eye, and a still one leaves it standing":
@@ -758,25 +758,25 @@ suite "Camera":
       reach = 6.5e6
     var camera = cameraAround(ORIGIN, 122.0, Direction(x: 2, y: 3, z: 5))
     let far = camera.distanceFar(reach)
-    check camera.depthOf(camera.distanceNear, reach) =~ -1.0
-    check camera.depthOf(far, reach) =~ 1.0
+    check camera.depthClip(camera.distanceNear, reach) =~ -1.0
+    check camera.depthClip(far, reach) =~ 1.0
     # Star at million units stands clear of sky dome at nine tenths of far, and of star.
     #   at fifth of its distance.
-    check camera.depthOf(0.9 * far, reach) - camera.depthOf(1.0e6, reach) > step_sixteen_bit
-    check camera.depthOf(1.0e6, reach) - camera.depthOf(2.0e5, reach) > step_sixteen_bit
+    check camera.depthClip(0.9 * far, reach) - camera.depthClip(1.0e6, reach) > step_sixteen_bit
+    check camera.depthClip(1.0e6, reach) - camera.depthClip(2.0e5, reach) > step_sixteen_bit
     # Io before Jupiter, from where occlusion check stands: three spans out, moon one in.
     var near = cameraAround(ORIGIN, 0.0085, Direction(x: 7, y: 11, z: 4))
-    check near.depthOf(0.0085, reach) - near.depthOf(0.0085 - 0.0028, reach) > step_sixteen_bit
+    check near.depthClip(0.0085, reach) - near.depthClip(0.0085 - 0.0028, reach) > step_sixteen_bit
     # Monotone across every decade scene spans, and clipping planes still clip.
     var last = -2.0
     for exponent in -8..6:
       let depth = pow(10.0, float(exponent))
       if depth <= camera.distanceNear or depth >= far: continue
-      let z = camera.depthOf(depth, reach)
+      let z = camera.depthClip(depth, reach)
       check z > last and z > -1.0 and z < 1.0
       last = z
-    check camera.depthOf(0.5 * camera.distanceNear, reach) < -1.0
-    check camera.depthOf(2.0 * far, reach) > 1.0
+    check camera.depthClip(0.5 * camera.distanceNear, reach) < -1.0
+    check camera.depthClip(2.0 * far, reach) > 1.0
     check camera.depthLogScale(reach) =~ 2.0 / log2(far / camera.distanceNear)
 
 
@@ -940,7 +940,7 @@ suite "Camera":
     const (wide, tall) = (1440, 900)
     let cursor = ScreenPosition(x: 260.0, y: 720.0)
     var camera = cameraAround(ORIGIN, 12.0, Direction(x: 11, y: 6, z: 4))
-    let stance = camera.stanceOf
+    let stance = camera.stance
     var interaction = Interaction(is_enabled: true)
     interaction.updateCursor(cursor.x, cursor.y)
     for _ in 1..200:
@@ -954,7 +954,7 @@ suite "Camera":
         tall,
         has_selection = false,
       )
-    check camera.stanceOf == stance
+    check camera.stance == stance
     # Two fingers there hold places at frame's own scale, and slide carries pivot along:
     #   spread flies eye toward them, and separation holds however far it flies.
     let facing = camera.frame
@@ -985,7 +985,7 @@ suite "Camera":
     # Gap held went from 200 to 600, counted from slop's edge at 212.
     check abs(
       depthAlong(eye, frame.forward, grip.fingers[0].place.toView(camera.originView)) -
-          12.0 * 212.0 / 600.0
+      12.0 * 212.0 / 600.0,
     ) < 1.0e-4
 
 
@@ -1132,9 +1132,7 @@ suite "Camera":
     scene.addObject(planet.toMultivector, "planet", Ink.Cobalt)
     # Pivot 6 units across sight from planet, so planet stands 17 degrees off middle.
     var
-      camera = cameraAround(
-        Position(x: 5.31, y: -4.54, z: 0.0), 20.0, Direction(x: 12, y: 5, z: 7)
-      )
+      camera = cameraAround(Position(x: 5.31, y: -4.54, z: 0.0), 20.0, Direction(x: 12, y: 5, z: 7))
       interaction = Interaction(is_enabled: true)
     let at = projectToScreen(
       camera.initMatrixViewProjection(float(wide) / float(tall)),

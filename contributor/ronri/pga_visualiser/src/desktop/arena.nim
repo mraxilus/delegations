@@ -23,7 +23,7 @@
 ##
 ## Object pool is arena with free list in place of offset, not `Arena`.
 ##   Fixed arrays in `Scene`, threaded by free list; undo timeline holds whole copies of it.
-##   `MeshSet` is fixed arrays too, cleared in place; loop's text formatting writes into stack
+##   `Meshes` is fixed arrays too, cleared in place; loop's text formatting writes into stack
 ##   buffers (`format.nim`).
 ## Export's scratch is stretch of program arena, not of frame arenas.
 ##   Tens of megabytes at most once per keypress, where frame's work is tens of kilobytes

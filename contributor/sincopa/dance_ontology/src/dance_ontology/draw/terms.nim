@@ -2,7 +2,7 @@
 ##
 ##   This is vocabulary that rules speak in, and drawing replicates.
 ##     It sat beside rules themselves while marks were being settled
-##     and only workbench drew them; app draws them now, so
+##     and only workbench drew them; Explorer draws them now, so
 ##     words move to where drawing is and ledger stays where
 ##     argument is (`design/rules.nim`, which re-exports this).
 ##   Settle table encodes rules 4 to 6 once; where hand lands and which

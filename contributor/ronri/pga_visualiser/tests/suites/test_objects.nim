@@ -59,12 +59,12 @@ suite "Objects":
 
 
   test "the inner product of two directions is their classical dot product":
-    # `innerOf` is how camera reads sides and cosines; classical form is reference.
+    # `inner` is how camera reads sides and cosines; classical form is reference.
     for i in 0..<SAMPLES:
       let
         (p, q) = (PLACES[i], PLACES[(i+1) mod SAMPLES])
         (d, e) = (Direction(x: p.x, y: p.y, z: p.z), Direction(x: q.x, y: q.y, z: q.z))
-      check innerOf(d.toMultivector, e.toMultivector) =~ d.x * e.x + d.y * e.y + d.z * e.z
+      check inner(d.toMultivector, e.toMultivector) =~ d.x * e.x + d.y * e.y + d.z * e.z
 
 
   test "position ignores scale of homogeneous point":
@@ -77,10 +77,10 @@ suite "Objects":
 
   test "shape follows grade":
     for i in 0..<SAMPLES:
-      check kindOf(POINTS[i]) == some(Kind.Point)
-      check kindOf(LINES[i]) == some(Kind.Line)
-      check kindOf(PLANES[i]) == some(Kind.Plane)
-    check kindOf(1.0 + POINTS[0]).isNone
+      check classify(POINTS[i]) == some(Kind.Point)
+      check classify(LINES[i]) == some(Kind.Line)
+      check classify(PLANES[i]) == some(Kind.Plane)
+    check classify(1.0 + POINTS[0]).isNone
 
 
   test "support lies on its object":
@@ -224,7 +224,7 @@ suite "Objects":
       along = Direction(x: 1.0 / 3.0, y: 2.0 / 3.0, z: 2.0 / 3.0)
     for base in [PLACE_EARTH, PLACE_NEAR_ORIGIN]:
       let line = base.toMultivector ∧ (base + metre * along).toMultivector
-      check kindOf(line) == some(Kind.Line)
+      check classify(line) == some(Kind.Line)
       check not isHorizon(line)
       check direction(line).isSome
       check placeObject(line).kind == Case.LineThrough
@@ -270,7 +270,7 @@ suite "Objects":
           applyOperation(Operation.Wedge, corners[0].toMultivector, corners[1].toMultivector),
           corners[2].toMultivector,
         )
-      check kindOf(plane) == some(Kind.Plane)
+      check classify(plane) == some(Kind.Plane)
       check not isHorizon(plane)
       check placeObject(plane).kind == Case.PlaneOn
       for corner in corners:
@@ -284,6 +284,6 @@ suite "Objects":
           (through + (-0.5 * metre) * across).toMultivector,
         )
         crossing = applyOperation(Operation.WedgeAnti, line, plane)
-      check kindOf(crossing) == some(Kind.Point)
+      check classify(crossing) == some(Kind.Point)
       check position(crossing).isSome
       check norm(position(crossing).get - through) <= TOLERANCE_HOLD_METRE * metre

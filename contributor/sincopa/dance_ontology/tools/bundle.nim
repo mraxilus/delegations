@@ -16,9 +16,9 @@ import std/[os, strutils]
 import ./title
 
 
-const TITLE_PREFIX = WORK & " — "
+const TITLE_PREFIX = WORK & " "
   ## Prefix published page's title carries, so gallery sorts body of work together.
-  ##   Bundling is only ever page project stands behind, so plain form, never mockup form.
+  ##   Same form `page.document` gives: name of work, space, then page's own name.
 
 
 proc bundle(directory, name: string) =

@@ -141,7 +141,7 @@ function renderFrame(now_seconds: number) {
   //   Depth writes off for veils, so translucent plane never occludes line or point
   //   that happens to sit behind it; it only tints over whatever was already drawn
   //   there.
-  //   Mirrors renderer.nim's own drawMeshes(MESHES, ...) call exactly.
+  //   Mirrors renderer.nim's own drawMeshes(MESHES_SCENE, ...) call exactly.
   const count_ribbon = uploadBuffer(data.ribbon_vertices, buffers.ribbon, 16);
   drawRibbons(buffers.ribbon, count_ribbon, data.ribbon_over, false);
   // Draw plane rims, one record each, straight after lines they are drawn like.

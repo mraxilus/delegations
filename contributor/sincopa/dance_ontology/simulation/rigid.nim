@@ -871,7 +871,7 @@ proc build*(
   is_away = false,
 ): Couple =
   ## Stand two dancers, hang four arms, and join hands each link names.
-  ##   No gravity.  Question reference asks is where arms can be, not what they
+  ##   No gravity.  Question Reference asks is where arms can be, not what they
   ##     weigh, and weightless arms stay where turn leaves them, so pose at one
   ##     moment is pose before it carried forward rather than found afresh.
   var world_definition = engine.defaultWorld()

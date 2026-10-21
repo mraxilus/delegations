@@ -101,7 +101,8 @@
 
 {.experimental: "strictFuncs".}
 
-when compileOption("profiler"): import std/nimprof
+when compileOption("profiler"):
+  import std/nimprof
 
 import std/[algorithm, math, monotimes, options, os, parseopt, strformat, strutils, typetraits]
 
@@ -222,7 +223,7 @@ const
     ##   Independent of arenas, since benchmark run is not interactive draw loop.
   BYTES_MEMORY_TOTAL* =
       CAPACITY_ARENA_PROGRAM + 2 * CAPACITY_ARENA_FRAME +
-      2 * sizeof(MeshSet) + sizeof(Scene) + sizeof(History) + sizeof(Panel) +
+      2 * sizeof(Meshes) + sizeof(Scene) + sizeof(History) + sizeof(Panel) +
       FRAMES_TIMING_MAX * sizeof(float32)
     ## Sum every fixed-size reservation this binary makes.
     ##   Program arena and both frame arenas at full capacity, in data segment regardless of
@@ -249,10 +250,10 @@ static:
 
 # Hold vertex storage at module scope, far too large for stack frame.
 var
-  MESHES: MeshSet  ## Every scene object, excluding world furniture below.
+  MESHES_SCENE: Meshes  ## Every scene object, excluding world furniture below.
   MARKS_PICKED: array[OBJECTS_MAX, bool]  ## Mark each picked handle while meshes assemble.
     ## Set and cleared around loops of `assembleMeshes`; see `selection.markOnto`.
-  MESHES_FURNITURE: MeshSet  ## Lattices and world axes alone, drawn in own pass first.
+  MESHES_FURNITURE: Meshes  ## Lattices and world axes alone, drawn in own pass first.
     ## Every object's translucent veil then blends over reference marks.
     ## Thinner width (`mesh.WIDTH_LINE_FURNITURE`) is geometry, not draw setting; this
     ## ordering needs pass.
@@ -303,7 +304,7 @@ var
   RING_CROSSING = initRingShare[CountsCrossing]()
   COUNTS_CROSSING_RUN: CountsCrossing
 
-# Hold timing buffer at module scope as `MESHES` is.
+# Hold timing buffer at module scope as `MESHES_SCENE` is.
 #   Too large for stack, touched only by `--timings` run.
 var TIMINGS_FRAME_MILLISECONDS: array[FRAMES_TIMING_MAX, float32]
 # Placing side for every live handle, placed by every frame as browser places it; see
@@ -351,7 +352,7 @@ proc placeScene(scene: Scene) =
   ## Place every live handle, and measure scene's reach from those places.
   ##   Frame's first step, on every frame; see `framing.placeEvery`.
   placements.placeEvery(scene)
-  REACH_SCENE = reachOf(placements, scene)
+  REACH_SCENE = reachFar(placements, scene)
   REVISION_PLACED = scene.revision
 
 
@@ -360,7 +361,7 @@ proc placeEdited(scene: Scene) =
   ##   Hover pick and emission then read scene as it now stands; see `framing.placeStamped`.
   if REVISION_PLACED == scene.revision: return
   placements.placeStamped(scene, REVISION_PLACED)
-  REACH_SCENE = reachOf(placements, scene)
+  REACH_SCENE = reachFar(placements, scene)
   REVISION_PLACED = scene.revision
 
 
@@ -424,11 +425,11 @@ type
     is_over_menu: bool  ## Whether Dear ImGui read pointer over menu as wheel turned.
 
 
-func demoScaleOf(value: string): Option[ScaleOrrery] =
+func toScaleOrrery(value: string): Option[ScaleOrrery] =
   ## Resolve `--demo:<objects>` size by its object count, or none where no size matches.
-  ##   Counts come from `objectsOf`, so size added in `orrery` is accepted here untouched.
+  ##   Counts come from `countObjects`, so size added in `orrery` is accepted here untouched.
   for scale in ScaleOrrery:
-    if $objectsOf(scale) == value: return some(scale)
+    if $countObjects(scale) == value: return some(scale)
 
 
 proc applyOption(options: var Options; key, value: string) =
@@ -444,9 +445,9 @@ proc applyOption(options: var Options; key, value: string) =
   of "fill": options.is_filled = true
   of "demo":
     options.scale_demo =
-      if len(value) == 0: some(SCALE_ORRERY_DEFAULT) else: demoScaleOf(value)
+      if len(value) == 0: some(SCALE_ORRERY_DEFAULT) else: value.toScaleOrrery
     var counts: seq[string]
-    for scale in ScaleOrrery: counts.add($objectsOf(scale))
+    for scale in ScaleOrrery: counts.add($countObjects(scale))
     doAssert options.scale_demo.isSome,
       "Demo size must be one of " & counts.join(", ") &
       &", or `--demo` alone for the default; got `{value}`."
@@ -463,7 +464,7 @@ proc applyOption(options: var Options; key, value: string) =
   of "drive-wheel": options.is_wheel_driven = true
   of "drive-help":
     for path in HelpPath:
-      if titleOf(path) == value: options.path_help_driven = some(path)
+      if title(path) == value: options.path_help_driven = some(path)
     doAssert options.path_help_driven.isSome,
       &"Help tab must be one this build has; got `{value}`."
   else:
@@ -598,7 +599,7 @@ proc assembleMeshes(
   if panel.is_axes_shown:
     MESHES_FURNITURE.addAxes(scratch[0], scale.extentFurniture, scale)
 
-  MESHES.clearMeshes
+  MESHES_SCENE.clearMeshes
   # Mark picks once and read mark per handle below; see `selection.markOnto`.
   panel.selection.markOnto(MARKS_PICKED)
   defer: panel.selection.markOnto(MARKS_PICKED, is_marked = false)
@@ -613,7 +614,7 @@ proc assembleMeshes(
     let
       progress = animationProgress(now, one.born)
       tint = if are_dimmed[handle]: muted(one.ink.colour) else: one.ink.colour
-    discard MESHES.tessellateObject(placements[handle], tint, scale, progress)
+    discard MESHES_SCENE.tessellateObject(placements[handle], tint, scale, progress)
 
   for handle, one in scene.pairs:
     if not one.isVisible or placements[handle].kind == Case.PlaneEverywhere or
@@ -624,7 +625,7 @@ proc assembleMeshes(
     let
       progress = animationProgress(now, one.born)
       tint = if are_dimmed[handle]: muted(one.ink.colour) else: one.ink.colour
-    discard MESHES.tessellateObject(placements[handle], tint, scale, progress, one.radius)
+    discard MESHES_SCENE.tessellateObject(placements[handle], tint, scale, progress, one.radius)
 
   # Emit open edit session's staged multivector, through same dispatch real object uses.
   #   Composing then shows exactly what saving gives.
@@ -634,7 +635,7 @@ proc assembleMeshes(
   #   `panel.staged` decides order.
   let staged = panel.staged
   if staged.isSome:
-    discard MESHES.addObject(
+    discard MESHES_SCENE.addObject(
       scratch[0],
       staged.get.geometry,
       muted(INK_PREVIEW.colour),
@@ -647,7 +648,7 @@ proc assembleMeshes(
   #   Reader learns one "not committed yet" appearance.
   #   Centred on anchor commit stores, so previewed plane stays where previewed.
   if interaction.preview.isSome:
-    discard MESHES.addObject(
+    discard MESHES_SCENE.addObject(
       scratch[0],
       interaction.preview.get.geometry,
       muted(INK_PREVIEW.colour),
@@ -660,7 +661,7 @@ proc assembleMeshes(
   #   Lasts as long as selection does.
   #   Horizon plane selected comes through here too, costing its dome first-in-bucket
   #   place above; sky drawn over one plane while selected is point of this pass.
-  MESHES.markOverlay
+  MESHES_SCENE.markOverlay
   for position in 0..<panel.selection.len:
     let handle = panel.selection.at(position)
     if not scene.isAlive(handle) or not scene[handle].isVisible: continue
@@ -669,17 +670,17 @@ proc assembleMeshes(
     let
       progress = animationProgress(now, one.born)
       tint = if are_dimmed[handle]: muted(one.ink.colour) else: one.ink.colour
-    discard MESHES.tessellateObject(placements[handle], tint, scale, progress, one.radius)
+    discard MESHES_SCENE.tessellateObject(placements[handle], tint, scale, progress, one.radius)
 
   panel.microseconds_tessellate = float(getMonoTime().ticks - ticks_start) / 1000.0
   # Count per record what its shader emits: vertices drawn, not floats carried.
   #   Six per ribbon, whole fan per disc, sphere per dome.
   panel.count_vertices =
-      MESHES.points.count_vertices + MESHES_FURNITURE.points.count_vertices +
-      6 * (MESHES.ribbons.count + MESHES_FURNITURE.ribbons.count) +
-      3 * SEGMENTS_CIRCLE_HORIZON * (MESHES.discs.count + MESHES_FURNITURE.discs.count) +
+      MESHES_SCENE.points.count_vertices + MESHES_FURNITURE.points.count_vertices +
+      6 * (MESHES_SCENE.ribbons.count + MESHES_FURNITURE.ribbons.count) +
+      3 * SEGMENTS_CIRCLE_HORIZON * (MESHES_SCENE.discs.count + MESHES_FURNITURE.discs.count) +
       6 * LATITUDES_HORIZON * LONGITUDES_HORIZON *
-      (MESHES.domes.count + MESHES_FURNITURE.domes.count)
+      (MESHES_SCENE.domes.count + MESHES_FURNITURE.domes.count)
 
 
 proc drawMarkerPulse(marker: Marker, tint: Rgba, alpha: float32) =
@@ -882,11 +883,11 @@ proc drawChoiceMenu(interaction: Interaction, scene: Scene) =
   ##     Surface fill, hairline border, `--ink` label, `--accent` border and
   ##     `--accent-ink` label on one in force, rather than solid slab of choice's hue,
   ##     which made two menus look like two things.
-  ##     Label is catalogue notation `labelOf` reads from `scene.notationSymbolic`.
+  ##     Label is catalogue notation `label` reads from `scene.notationSymbolic`.
   ##     Hues are taught in drawer's legend and still tint rubber-band.
   let
     centre = interaction.menu.get
-    over = destinationOf(interaction)
+    over = destination(interaction)
     highlighted = interaction.choosing
     is_pair_live =
         over.isSome and over.get != interaction.index_source and
@@ -906,14 +907,14 @@ proc drawChoiceMenu(interaction: Interaction, scene: Scene) =
   )
   for choice in DragChoice:
     let
-      label = labelOf(choice)
+      label = label(choice)
       is_offered =
         choice == DragChoice.More or
         (is_pair_live and isOffered(
-          choice, scene.geometryOf(interaction.index_source), scene.geometryOf(over.get)
+          choice, scene.geometryAt(interaction.index_source), scene.geometryAt(over.get)
         ))
       is_chosen = highlighted == some(choice)
-      at = anchorOf(centre, choice)
+      at = anchorWedge(centre, choice)
       alpha = cfloat(if is_offered: ALPHA_MENU_WEDGE else: ALPHA_MENU_UNOFFERED)
       width = gui.textWidth(cstring(label)) + PADDING_MENU_WEDGE
     # Draw border first and surface inside it.
@@ -1177,7 +1178,7 @@ proc renderFrame(
   #   `camera.drawExtentFor`.
   var (eye, frame) = camera.moveOriginView
   # Read local scale once for this frame, before extent reads clip planes off it.
-  REACH_NEAR = reachNearOf(placements, scene, camera.originView, eye, frame.forward)
+  REACH_NEAR = reachNear(placements, scene, camera.originView, eye, frame.forward)
   camera.reach_near = REACH_NEAR
 
   # Derive extent aim reads, and keep motor before aim, so hold it makes is seen below.
@@ -1235,7 +1236,7 @@ proc renderFrame(
   clearFrame(int(width), int(height))
   # GPU takes same transform hover, menu and markers read: all about view origin.
   renderer.drawMeshes(MESHES_FURNITURE, view_projection, scale, width / height)
-  renderer.drawMeshes(MESHES, view_projection, scale, width / height)
+  renderer.drawMeshes(MESHES_SCENE, view_projection, scale, width / height)
 
   # Take one reading per frame, before any handle advances.
   #   Every selected object's comet then moves by same step.
@@ -1329,7 +1330,7 @@ func keyFor(scancode: uint32): Option[Key] =
   else: none(Key)
 
 
-func pointerButtonOf(button: uint8): Option[PointerButton] =
+func toPointerButton(button: uint8): Option[PointerButton] =
   ## Name SDL mouse button in shared vocabulary.
   ##   Only numbering is this build's own: SDL counts 1/2/3 left/middle/right, DOM 0/1/2.
   ##   What button means is `interaction`'s.
@@ -1341,13 +1342,13 @@ func pointerButtonOf(button: uint8): Option[PointerButton] =
 
 func armingFor(button: uint8): Option[MenuArming] =
   ## Say whether mouse button starts construction drag, and how it reaches its menu.
-  let named = pointerButtonOf(button)
-  if named.isNone: none(MenuArming) else: armingOf(named.get)
+  let named = button.toPointerButton
+  if named.isNone: none(MenuArming) else: arming(named.get)
 
 
 func isMenuRevealedFor(button: uint8): bool =
   ## Say whether click of this mouse button brings selection menu up with it.
-  let named = pointerButtonOf(button)
+  let named = button.toPointerButton
   named.isSome and isMenuRevealedOn(named.get)
 
 
@@ -1497,7 +1498,7 @@ proc handleEvent(
         panel.selection.toggle(outcome.operands.get.destination)
         panel.openSelectionMenuPicker()
       button_dragging = none(uint8)
-    elif pointerButtonOf(event.button.button).isSome and interaction.isClick(now):
+    elif event.button.button.toPointerButton.isSome and interaction.isClick(now):
       # Resolve plain click that began no drag.
       #   Landed on empty space, or on one thing that is empty space, plane at horizon,
       #   which `beginDrag` refuses so press could still become orbit.
@@ -1642,9 +1643,9 @@ proc driveDrag(
       ## Reach `more…` wedge two frames past menu opening, then let go on it.
       ##   Shorter runs still capture open menu.
   if count_drawn == frame_reach_more or count_drawn == frame_release:
-    # Aim at wedge itself, from same `anchorOf` that drew it.
+    # Aim at wedge itself, from same `anchorWedge` that drew it.
     #   Never pixel guessed from compass.
-    let at = anchorOf(interaction.menu.get(interaction.cursor), DragChoice.More)
+    let at = anchorWedge(interaction.menu.get(interaction.cursor), DragChoice.More)
     var reach = Event(kind: uint32(EventKind.MouseMotion))
     reach.motion.x = cfloat(at.x)
     reach.motion.y = cfloat(at.y)
@@ -2040,7 +2041,7 @@ proc positionOverSky(
       let
         at = ScreenPosition(x: float(x), y: float(y))
         handle = pickNearest(scene, camera, scale, view_projection, width, height, at)
-      if handle.isSome and scene.geometryOf(handle.get).isHorizonPlane: return some(at)
+      if handle.isSome and scene.geometryAt(handle.get).isHorizonPlane: return some(at)
 
 
 proc driveSky(scene: var Scene; camera: Camera; width, height, count_drawn: int; now: float) =
@@ -2061,7 +2062,7 @@ proc driveSky(scene: var Scene; camera: Camera; width, height, count_drawn: int;
   if count_drawn == frame_first - 1:
     var found_sky = false
     for handle in 0..<scene.bound:
-      if scene.isAlive(handle) and scene.geometryOf(handle).isHorizonPlane: found_sky = true
+      if scene.isAlive(handle) and scene.geometryAt(handle).isHorizonPlane: found_sky = true
     if not found_sky:
       discard scene.addObject(
         Direction(x: 1, y: 0, z: 0).toMultivector ∧
@@ -2194,9 +2195,9 @@ proc verdictDriven(
         found = some(handle)
     if found.isSome:
       for b in Basis:
-        if scene.geometryOf(found.get)[b] != expected[b]: inc count_moved
+        if scene.geometryAt(found.get)[b] != expected[b]: inc count_moved
     let (z_saved, radius_saved) =
-      if found.isSome: (scene.geometryOf(found.get)[Basis.E3], scene.radiusAt(found.get))
+      if found.isSome: (scene.geometryAt(found.get)[Basis.E3], scene.radiusAt(found.get))
       else: (NaN, NaN)
     report(
       "an edit opened far out and saved unchanged keeps every coefficient to the bit",
@@ -2215,7 +2216,7 @@ proc verdictDriven(
     for role in FaceRole:
       let codepoints =
         if role == FaceRole.Title:
-          codepointsOf([
+          codepoints([
             $wordingText(NameHeadApply), $wordingText(NameHeadObjects),
             $wordingText(NameHeadView), $wordingText(NameHeadDiagnostics),
           ])
@@ -2351,7 +2352,7 @@ proc verdictDriven(
     report(
       "a wheel over the selection menu zooms the view, about the point picked",
       wheel_drive.frame_menu.isSome and wheel_drive.is_over_menu and after < 0.8 * before and
-          off < 1.0e-4,
+      off < 1.0e-4,
       &"menu reached {wheel_drive.frame_menu.isSome}, pointer over menu " &
       &"{wheel_drive.is_over_menu}; distance {before:.3f} -> {after:.3f}, " &
       &"pivot off the point by {off:.2e}",
@@ -2366,10 +2367,10 @@ proc verdictDriven(
   if options.path_help_driven.isSome:
     report(
       "the help tab asked for opened, with rows in it",
-      panel.is_help_open and countOf(options.path_help_driven.get) > 0,
+      panel.is_help_open and countEntries(options.path_help_driven.get) > 0,
       &"open {panel.is_help_open}, " &
-      &"{countOf(options.path_help_driven.get)} rows in " &
-      &"`{titleOf(options.path_help_driven.get)}`",
+      &"{countEntries(options.path_help_driven.get)} rows in " &
+      &"`{title(options.path_help_driven.get)}`",
     )
   count_failed
 
@@ -2625,10 +2626,10 @@ proc runInteractive(
         &"(both this run's own CPU-side cost, not the rasterizer's)."
     let busy = COUNTS_SHARE_RUN.busy
     if busy > 0:
-      echo &"  PGA share {COUNTS_SHARE_RUN.percentOf(Owner.Pga):.1f}%, algebra " &
-          &"{COUNTS_SHARE_RUN.percentOf(Owner.Algebra):.1f}%, boundary " &
-          &"{COUNTS_SHARE_RUN.percentOf(Owner.Boundary):.1f}%, euclidean " &
-          &"{COUNTS_SHARE_RUN.percentOf(Owner.Euclidean):.1f}%, of {busy} busy samples."
+      echo &"  PGA share {COUNTS_SHARE_RUN.percent(Owner.Pga):.1f}%, algebra " &
+          &"{COUNTS_SHARE_RUN.percent(Owner.Algebra):.1f}%, boundary " &
+          &"{COUNTS_SHARE_RUN.percent(Owner.Boundary):.1f}%, euclidean " &
+          &"{COUNTS_SHARE_RUN.percent(Owner.Euclidean):.1f}%, of {busy} busy samples."
     else:
       let reason = if IS_SAMPLER_BUILT: NoteDiagnosticsShareWaiting
         elif defined(linux): NoteDiagnosticsShareFrames
@@ -2811,7 +2812,7 @@ proc main() =
   let options = parseOptions()
   if options.is_tabs_listed:
     # Print before SDL starts: caller wants names, not window, and headless machine has none.
-    for path in HelpPath: echo titleOf(path)
+    for path in HelpPath: echo title(path)
     return
   doAssert sdl3.init(INIT_VIDEO), &"SDL3 must start; got `{sdl3.getError()}`."
   defer: sdl3.quit()

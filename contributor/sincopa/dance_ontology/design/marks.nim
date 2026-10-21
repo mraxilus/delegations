@@ -1,4 +1,4 @@
-## Build card review: parts, checks, page, file.
+## Build Reference: parts, checks, page, file.
 ##
 ##   Build refuses to write page whose claims fail: checks run between building page's
 ##     parts and writing it, and several figures are asserted during their own construction.
@@ -7,11 +7,11 @@
 ##   Page is build product under `build/design/`, never committed: repository reads only
 ##     registered file kinds.  It is published at fixed URL listed in `../README.md`;
 ##     republishing rebuilt file to that URL is whole release step.
-##     It is mock-up rather than page project stands behind, and its title says so.
+##     Project stands behind it, so its title is name of work, then page's own name.
 ##   `tests/suites/test_marks.nim` drives `buildPage` for every page, so every gate runs under
 ##     `nim r koch test` (Article IX.6).
-##   Each chain's parts are built once in process and kept (`LUT_PARTS_BY_NAME`).  Review
-##     places both chains, and their checks read them, so each chain is routed once.
+##   Each chain's parts are built once in process and kept (`LUT_PARTS_BY_NAME`).
+##     Reference places both chains, and their checks read them, so each chain is routed once.
 ##     Routing is most of what build costs.
 
 {.experimental: "strictFuncs".}
@@ -20,7 +20,7 @@ when compileOption("profiler"): import std/nimprof
 
 import std/[os, strformat, tables, unicode]
 
-import ./[checks, parts, review_page]
+import ./[checks, parts, reference_page]
 
 
 # Mutable: filled as parts build, one run long.
@@ -39,26 +39,26 @@ proc singleParts(): Parts = once("single", singleTurnParts)
 proc handParts(): Parts = once("hand", handTurnParts)
   ## Hand-to-hand chain's parts, built once.
 
-proc reviewed(): Parts = reviewParts(singleParts(), handParts())
-  ## Card review's parts, from both chains' own.
+proc reference(): Parts = referenceParts(singleParts(), handParts())
+  ## Reference's parts, from both chains' own.
 
 
-proc checkReviewed() =
-  ## Check everything card review places: drawing, ledger, both chains, then rulings.
-  ##   Each chain's checks read that chain's own parts, never review's merged ones:
+proc checkReference() =
+  ## Check everything Reference places: drawing, ledger, both chains, then rulings.
+  ##   Each chain's checks read that chain's own parts, never Reference's merged ones:
   ##     `checkHandTurns` walks every figure it is given, so merged parts would widen its law.
   checkFrame()
   checkRules()
   checkSingleTurns(singleParts())
   checkHandTurns(handParts())
-  checkReview()
+  checkRulings()
 
 
 const PAGES* = [
-  (name: "review.html",
-   parts_of: proc (): Parts {.nimcall.} = once("review.html", reviewed),
-   check: proc (parts: Parts) {.nimcall.} = checkReviewed(),
-   render: proc (parts: Parts): string {.nimcall.} = review_page.render(parts)),
+  (name: "reference.html",
+   parts_of: proc (): Parts {.nimcall.} = once("reference.html", reference),
+   check: proc (parts: Parts) {.nimcall.} = checkReference(),
+   render: proc (parts: Parts): string {.nimcall.} = reference_page.render(parts)),
 ]  ## Each page: its file, its figures, its checks, its layout.
 
 

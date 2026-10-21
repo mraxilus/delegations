@@ -481,7 +481,7 @@ func widest(hiders: Hiders): float =
   for i in 0..<hiders.count: result = max(result, hiders.discs[i].radius)
 
 
-func coverOf(hiders: Hiders, depth: float, at: ScreenPosition): float =
+func cover(hiders: Hiders, depth: float, at: ScreenPosition): float =
   ## Measure widest disc covering point at `depth` projecting to `at`, in pixels; 0 if none.
   ##   Disc hides point where it is nearer eye and its drawn disc covers point's centre;
   ##   disc merely under cursor beside point hides nothing of it.
@@ -569,13 +569,13 @@ proc pickWalk(
   for handle in 0..<scene.bound:
     if not scene.isAlive(handle) or not scene.isVisible(handle): continue
     if not is_placement_given:
-      placement_here = placeObject(scene.geometryOf(handle), scene.anchorOverrideAt(handle))
+      placement_here = placeObject(scene.geometryAt(handle), scene.anchorOverrideAt(handle))
     # Read in place, never bound.
     #   `Placement` holds five multivectors, and binding to `let` deep-copies on JS backend.
     #   Both aliases expand to read at each use; confirmed in generated JavaScript that
     #   neither copies.
     template place: untyped = (if is_placement_given: placed[handle] else: placement_here)
-    template geometry: untyped = scene.geometryOf(handle)
+    template geometry: untyped = scene.geometryAt(handle)
 
     case place.kind
     of Case.Nothing: continue
@@ -604,7 +604,7 @@ proc pickWalk(
         is_under = distance <= radius_drawn
       if is_under: hiders.add(Hider(depth: depth, x: at.x, y: at.y, radius: radius_drawn))
       # Behind body wider than fingertip: neither winner nor rival.
-      if hiders_known.coverOf(depth, at) >= RADIUS_PICK_POINT: continue
+      if hiders_known.cover(depth, at) >= RADIUS_PICK_POINT: continue
       if distance <= radius_pick: consider(0, distance, depth, is_under)
       crowd(0)
 
@@ -620,7 +620,7 @@ proc pickWalk(
         distance = pixelsFromCursor(view_projection, width, height, star, cursor)
       if distance > RADIUS_CROWD_TOUCH: continue
       # Star lies in horizon, deeper than any disc, and is dot cursor is never inside.
-      if hiders_known.coverOf(
+      if hiders_known.cover(
         scale.radiusHorizon, projectToScreen(view_projection, width, height, star)
       ) >= RADIUS_PICK_POINT: continue
       if distance <= RADIUS_PICK_POINT: consider(0, distance, scale.radiusHorizon, false)
@@ -759,7 +759,7 @@ proc pickAt*(
   ##   inside nothing. Rival counting follows finger, not eye: point covered by nearer
   ##   disc narrower than fingertip is still rival, since two dots overlapping are one
   ##   blob to finger; point covered by fingertip-wide body is not, star behind planet
-  ##   being no ambiguity for finger on planet; see `coverOf`. Point covered by disc
+  ##   being no ambiguity for finger on planet; see `cover`. Point covered by disc
   ##   cursor is not inside is left alone: it is reachable from beside its cover, and
   ##   knowing it covered would take every disc, not ones under cursor.
   ##     Discs under cursor are only known once walk is over, and covered rivals only
@@ -841,7 +841,7 @@ func placementAt*(placed: openArray[Placement], scene: Scene, handle: int): Plac
   ## Read handle's placement: frame's where caller handed them whole, else placed here.
   ##   Copy of one, for reader of one handle; walk of many reads frame's in place.
   if placed.isWhole: placed[handle]
-  else: placementOf(scene.geometryOf(handle), scene.anchorOverrideAt(handle))
+  else: toPlacement(scene.geometryAt(handle), scene.anchorOverrideAt(handle))
 
 
 func isBackdropPlaced(
@@ -879,7 +879,7 @@ func isBackdropUnder*(
   if placed.isWhole:
     return isBackdropPlaced(placed[handle], scene.radiusAt(handle), scale, width, height)
   isBackdropPlaced(
-    placementOf(scene.geometryOf(handle), scene.anchorOverrideAt(handle)),
+    toPlacement(scene.geometryAt(handle), scene.anchorOverrideAt(handle)),
     scene.radiusAt(handle),
     scale,
     width,
@@ -914,11 +914,11 @@ func positionUnderPointerOn*(
     ray = castRay(camera, scale.eye, frame_camera, width, height, cursor)
   if placed.isWhole:
     return positionOnObjectUnder(
-      placed[handle], scene.geometryOf(handle), ray, scale.plane_eye, scale.eye_point, scale.origin
+      placed[handle], scene.geometryAt(handle), ray, scale.plane_eye, scale.eye_point, scale.origin
     )
   positionOnObjectUnder(
-    placementOf(scene.geometryOf(handle), scene.anchorOverrideAt(handle)),
-    scene.geometryOf(handle),
+    toPlacement(scene.geometryAt(handle), scene.anchorOverrideAt(handle)),
+    scene.geometryAt(handle),
     ray,
     scale.plane_eye,
     scale.eye_point,
@@ -1216,7 +1216,7 @@ func isShownCentrally*(
   ##   Only *ratio* of `width` to `height` matters, so caller holding aspect and one
   ##   dimension may pass any pair in that ratio.
   ##   False where `m` draws nothing at all.
-  let shape_m = kindOf(m)
+  let shape_m = classify(m)
   if shape_m.isNone: return false
   # Outside any scene, so scene's reach is empty scene's: zero.
   let

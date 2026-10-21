@@ -10,14 +10,14 @@
 ##   which cell sits in which row. Cell naming button or key composes through `wording`'s
 ##   own funcs, so no word reader sees is written here.
 ##   Binding derived from rule stated elsewhere is read from there: `HELP_ENTRIES`
-##   builds construct rows out of `interaction.armingOf`, so rebinding button rewrites help.
+##   builds construct rows out of `interaction.arming`, so rebinding button rewrites help.
 ## Every row has to make sense with rows above it covered up.
 ##   Reader opens one tab, finds line they need, leaves.
 ##   Three failures, found by reading rendered panel cold.
 ##     Circular: `drag one object onto another` → `make whatever the two of them make`.
 ##     Leaning on neighbour: `the same choice, without needing the other button`.
 ##     Naming internals reader never met: `the apply section`, `dolly`.
-##   What row cannot carry (which menu, what wedge is) goes in `descriptionOf`.
+##   What row cannot carry (which menu, what wedge is) goes in `description`.
 ## One word, one meaning: objects are *selected*, operations are *chosen*.
 ## Cut by how reader is working, not by what control is.
 ##   Reader opens this mid-task, and only that task's rows are of use.
@@ -89,7 +89,7 @@ type
       ## behind guess about hardware leaves reader believing gesture does not exist.
 
 
-func titleOf*(path: HelpPath): string =
+func title*(path: HelpPath): string =
   ## Name one tab as reader would say what they are doing.
   $wordingText(
     case path
@@ -108,10 +108,10 @@ func wheelPairs(): seq[tuple[notation, word: string]] =
   ##   `More` is left out -- its wedge is bare ellipsis, which needs no decoding, and row
   ##   in this tab already says what it hands over.
   for choice in [DragChoice.Join, DragChoice.Meet, DragChoice.Project]:
-    result.add (labelOf(choice), wordOf(choice))
+    result.add (label(choice), word(choice))
 
 
-func descriptionOf*(path: HelpPath): string =
+func description*(path: HelpPath): string =
   ## Say in one sentence what tab is about, for line above its rows.
   ##   Row stands on its own only so far: `the … wedge` and `the apply section` name
   ##   things met *inside* one way of working, and `menu` rows name five buttons without
@@ -120,9 +120,9 @@ func descriptionOf*(path: HelpPath): string =
   case path
   of HelpPath.Drag:
     # Teach three wedges their words here, where both UIs already read this line.
-    #   Wedge wears notation alone (`interaction.labelOf`), which names nothing until
+    #   Wedge wears notation alone (`interaction.label`), which names nothing until
     #   reader is told which operation it is.
-    #   Read from `wordOf` and `labelOf` rather than written out, so wedge renamed or
+    #   Read from `word` and `label` rather than written out, so wedge renamed or
     #   renotated is renamed here too.
     $wordingText(NoteTabDrag) & " " & wheelWordsTaught(wheelPairs())
   of HelpPath.Select: $wordingText(NoteTabSelect)
@@ -136,7 +136,7 @@ func descriptionOf*(path: HelpPath): string =
 
 #[ Entry Table ]#
 
-func nameOf(button: PointerButton): string =
+func nameSpoken(button: PointerButton): string =
   ## Name mouse button as reader would say it.
   toLowerAscii($button)
 
@@ -164,13 +164,13 @@ const HELP_ENTRIES* = block:
   proc add(path: HelpPath; action, outcome: Wording; is_touch = false) =
     add(path, $wordingText(action), outcome, is_touch)
 
-  # Ask `interaction.armingOf` which button asks and which decides.
+  # Ask `interaction.arming` which button asks and which decides.
   #   Walked in reading order rather than `PointerButton`'s physical left, middle, right.
   for button in [PointerButton.Left, PointerButton.Right, PointerButton.Middle]:
-    let arming = armingOf(button)
+    let arming = arming(button)
     if arming.isNone: continue
     add(
-      HelpPath.Drag, withButton(nameOf(button), HelpDragOnto),
+      HelpPath.Drag, withButton(nameSpoken(button), HelpDragOnto),
       case arming.get
       of MenuArming.Never: HelpBuildUnasked
       of MenuArming.OnDwell: HelpBuildOrPause
@@ -181,18 +181,18 @@ const HELP_ENTRIES* = block:
   add(HelpPath.Drag, HelpDragAloneOnto, HelpBuildDefined, is_touch = true)
   # Touch alone, now that mouse decides by button; see `MenuArming`.
   add(HelpPath.Drag, HelpPauseMidDrag, HelpOpenWheelNoButton, is_touch = true)
-  add(HelpPath.Drag, wedgeNamed(labelOf(DragChoice.More)), HelpHandToPicker)
+  add(HelpPath.Drag, wedgeNamed(label(DragChoice.More)), HelpHandToPicker)
 
-  # Ask `interaction.isMenuRevealedOn` which button brings menu, as drag rows ask `armingOf`.
+  # Ask `interaction.isMenuRevealedOn` which button brings menu, as drag rows ask `arming`.
   #   Shift gets one row, not one per button: shift means same thing whichever button,
   #   and four rows overflow phone.
   for button in [PointerButton.Left, PointerButton.Right]:
     add(
-      HelpPath.Select, withButton(nameOf(button), HelpClickObject),
+      HelpPath.Select, withButton(nameSpoken(button), HelpClickObject),
       if isMenuRevealedOn(button): HelpSameAndMenu else: HelpSelectJustOne,
     )
   add(HelpPath.Select, HelpHoldShiftClick, HelpAddOrDrop)
-  add(HelpPath.Select, withButton(nameOf(PointerButton.Right), HelpClickSelected), HelpMenuBack)
+  add(HelpPath.Select, withButton(nameSpoken(PointerButton.Right), HelpClickSelected), HelpMenuBack)
   add(HelpPath.Select, HelpClickEmpty, HelpClearOrSky)
   add(HelpPath.Select, HelpPressHold, HelpSelectFills, is_touch = true)
   add(HelpPath.Select, HelpTapAnother, HelpAddToSelection, is_touch = true)
@@ -227,7 +227,11 @@ const HELP_ENTRIES* = block:
   )
 
   add(HelpPath.Camera, HelpDragEmpty, HelpOrbit)
-  add(HelpPath.Camera, withButton(nameOf(PointerButton.Right), HelpDragEmpty), HelpSlideSideways)
+  add(
+    HelpPath.Camera,
+    withButton(nameSpoken(PointerButton.Right), HelpDragEmpty),
+    HelpSlideSideways,
+  )
   add(HelpPath.Camera, HelpWheel, HelpMoveToward)
   # Say `empty space or a crowd`, not just `with one finger`: finger starting on *lone*.
   #   object builds; over several it moves, and zooming in separates them.
@@ -240,29 +244,31 @@ const HELP_ENTRIES* = block:
   add(HelpPath.Keys, HelpUndoRedoKeys, HelpUndoRedo)
   add(HelpPath.Keys, HelpTab, HelpMoveFocus)
   add(HelpPath.Keys, HelpSearchKey, HelpSearchObjects)
-  # Name keys out of `interaction.nameOf`, so key renamed is renamed in its row.
+  # Name keys out of `interaction.nameSpoken`, so key renamed is renamed in its row.
   #   Grouped by job, since reader looks for job first.
   add(
     HelpPath.Keys,
-    namesJoined([nameOf(Key.W), nameOf(Key.A), nameOf(Key.S), nameOf(Key.D)]),
+    namesJoined([nameSpoken(Key.W), nameSpoken(Key.A), nameSpoken(Key.S), nameSpoken(Key.D)]),
     HelpTravel,
   )
-  add(HelpPath.Keys, namesJoined([nameOf(Key.Q), nameOf(Key.E)]), HelpRoll)
-  add(HelpPath.Keys, namesJoined([nameOf(Key.Space), nameOf(Key.Control)]), HelpRaiseLower)
+  add(HelpPath.Keys, namesJoined([nameSpoken(Key.Q), nameSpoken(Key.E)]), HelpRoll)
+  add(HelpPath.Keys, namesJoined([nameSpoken(Key.Space), nameSpoken(Key.Control)]), HelpRaiseLower)
   add(
     HelpPath.Keys,
-    namesJoined([nameOf(Key.Left), nameOf(Key.Right), nameOf(Key.Up), nameOf(Key.Down)]),
+    namesJoined(
+      [nameSpoken(Key.Left), nameSpoken(Key.Right), nameSpoken(Key.Up), nameSpoken(Key.Down)],
+    ),
     HelpOrbit,
   )
-  add(HelpPath.Keys, namesJoined([nameOf(Key.Minus), nameOf(Key.Plus)]), HelpSlowerFaster)
-  add(HelpPath.Keys, nameOf(Key.F), HelpBackIntoView)
+  add(HelpPath.Keys, namesJoined([nameSpoken(Key.Minus), nameSpoken(Key.Plus)]), HelpSlowerFaster)
+  add(HelpPath.Keys, nameSpoken(Key.F), HelpBackIntoView)
   add(
     HelpPath.Keys,
-    namesJoined([nameOf(Key.BracketLeft), nameOf(Key.BracketRight)]),
+    namesJoined([nameSpoken(Key.BracketLeft), nameSpoken(Key.BracketRight)]),
     HelpHighlightPrevNext,
   )
-  add(HelpPath.Keys, nameOf(Key.Enter), HelpSelectHighlighted)
-  add(HelpPath.Keys, nameOf(Key.Home), HelpCameraHome)
+  add(HelpPath.Keys, nameSpoken(Key.Enter), HelpSelectHighlighted)
+  add(HelpPath.Keys, nameSpoken(Key.Home), HelpCameraHome)
   # Generate whole catalogue: row per operation, named as every picker offers it.
   #   `scene.notationSymbolic`, `scene.notationNamed`; hand-written list falls behind.
   for operation in Operation:
@@ -279,7 +285,7 @@ const HELP_ENTRIES* = block:
   lut
 
 
-func countOf*(path: HelpPath): int =
+func countEntries*(path: HelpPath): int =
   ## Count entries one tab holds, for caller sizing or checking one.
   for entry in HELP_ENTRIES:
     if entry.path == path: inc result
@@ -299,12 +305,12 @@ static:
       path_last = some(entry.path)
   for path in HelpPath:
     doAssert path in seen,
-      &"Every help path must hold at least one entry; got none for `{titleOf(path)}`."
+      &"Every help path must hold at least one entry; got none for `{title(path)}`."
     let entries_max =
       case path
       of HelpPath.Operations: ENTRIES_MAX_PATH_CATALOGUE
       of HelpPath.Keys: ENTRIES_MAX_PATH_KEYS
       else: ENTRIES_MAX_PATH
-    doAssert countOf(path) <= entries_max,
-      &"Help path `{titleOf(path)}` must fit a phone, split it or raise its own bound " &
-      &"deliberately; got `{countOf(path)}` over `{entries_max}`."
+    doAssert countEntries(path) <= entries_max,
+      &"Help path `{title(path)}` must fit a phone, split it or raise its own bound " &
+      &"deliberately; got `{countEntries(path)}` over `{entries_max}`."

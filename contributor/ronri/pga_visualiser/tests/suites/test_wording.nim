@@ -159,7 +159,7 @@ suite "Wording":
     #   project code on koch's compiler (#385). Here, on pin, reading meets compiled enum
     #   and table: key moved or row written in form reading cannot follow fails here.
     const source = staticRead("../../src/rga_visualiser/wording.nim")
-    let (keys, words) = (keysOf(source), wordsOf(source))
+    let (keys, words) = (keysWording(source), wordsByKey(source))
     check keys.len == ord(high(Wording)) + 1
     check words.len == keys.len
     for key in Wording:

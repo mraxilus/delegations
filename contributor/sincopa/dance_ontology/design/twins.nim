@@ -1,4 +1,4 @@
-## Each still as rig page shows it: reflected twin card shows still its mirror twin keeps,
+## Each still as rig viewer shows it: reflected twin card shows still its mirror twin keeps,
 ## mirrored across couple's line, each arm recoloured as arm of other side.
 ##
 ##   Recording keeps each answered still once (`design/rig`).  Twin card keeps none of its

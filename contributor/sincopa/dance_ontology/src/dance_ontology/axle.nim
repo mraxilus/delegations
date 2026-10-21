@@ -10,9 +10,9 @@
 ##     same reason map draws frames you cannot reach.
 ##     Cost of drawing refused: ink and room spent on turns couple
 ##       cannot take.  Accepted -- drawing that showed only what is
-##       allowed would be menu, and what makes this validator is that
+##       allowed would be menu, and what makes this more than menu is that
 ##       it can show turn and refuse it in same breath.
-##   Nothing places this drawing yet.  App's Dance view is graph-first
+##   Nothing places this drawing yet.  Explorer's Dance view is graph-first
 ##     and rotation exploration moved to design workbench, so
 ##     axle waits for page that stands frame states in links.  `test_axle`
 ##     holds its laws green in meantime, so wait cannot rot.

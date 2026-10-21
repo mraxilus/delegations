@@ -23,7 +23,7 @@
 ##   | directionNormal | -𝐦☆          | Unit direction perpendicular to plane.       |
 ##   | directionHorizon| 𝐩 at pʷ = 0  | Unit direction horizon point stands for.  |
 ##   | frame           | derived      | Orthonormal pair of directions inside plane. |
-##   | motorOf         | 𝐐 even grades| Eight coefficients of rigid motion.          |
+##   | toMotor         | 𝐐 even grades| Eight coefficients of rigid motion.          |
 ##   |-----------------|--------------|----------------------------------------------|
 ##
 ## Shared by desktop (`main.nim`) and browser (`bridge.nim`) render paths.
@@ -207,7 +207,7 @@ func motorSliding*(offset: Multivector): Multivector =
   result[Basis.E1234] = 1.0
 
 
-func motorOf*(m: Multivector): Motor =
+func toMotor*(m: Multivector): Motor =
   ## Read rigid motion back out of multivector, dropping every odd-grade coefficient.
   ##   Caller hands motor; odd grades are zero in one, so dropping them loses nothing.
   tallyCrossing(Crossing.ToEuclidean)

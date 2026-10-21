@@ -330,11 +330,13 @@ Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Inspector`. I
 ## Baseline and guard
 
 `baseline/static_<algebra>.json` records the static measurements, and
-`baseline/runtime_<algebra>.json` records the runtime ones. Both are schema 1, with a header
-that names algebra, compiler commit, library commit, flags, machine and date. `guard`
-compares a fresh inspection against the baseline. Any gated count or bytes moved that grew is
-a finding, rendered as `path:0: message; got value`. Any shrink is a notice. A document of
-another algebra, compiler or set of flags is refused rather than compared.
+`baseline/runtime_<algebra>.json` records the runtime ones. `baseline/machine_<algebra>.json`
+records the machine measurements, as the next section says. All are schema 1, with a header
+that names algebra, compiler commit, library commit, flags, machine and date.
+
+`guard` compares a fresh inspection against the baseline. Any gated count or bytes moved that
+grew is a finding, rendered as `path:0: message; got value`. Any shrink is a notice. A document
+of another algebra, compiler or set of flags is refused rather than compared.
 
 Date and machine are ignored, because static measurements owe them nothing. `drive` is the
 verb that koch and CI run: inspect every algebra, guard, and hold the committed `gaps.md` and
@@ -345,6 +347,98 @@ silently. One grown count is one finding, which names function, metric and both 
 an improvement only, and bytes moved are gated. A function absent in either document is a finding,
 and another build or schema is refused. A lower bound that moves either way, or that is absent now,
 is a finding.
+
+## Machine measurements
+
+`inspect` also counts the work of the machine for each measurand, as Article VII.10 asks. The
+entry `machine` puts the library expression of each measurand in a wrapper of its own. It calls
+each wrapper once, on pools of two objects that seed 0 fills. So a binary measurand reads two
+objects, and never one object twice.
+
+Each wrapper is `noinit`, and carries the gcc attributes `noinline` and `noipa`. So the driver
+cannot inline, clone, fold or drop a call, and the wrapper knows nothing of its operands (VII.9).
+The library inlines its operators into each caller, so a count of the bench names no operator.
+The count of a wrapper does.
+
+Every wrapper shares one C file. gcc inlines a function that the file calls once, and it stops
+inlining and cloning where the file has grown past its limit. Either makes the count of one
+wrapper move with the others. So `inspect` builds the entry with
+`-fno-inline-functions-called-once`, and sets `large-unit-insns` and `ipa-cp-unit-growth` past
+any file. Then what gcc inlines into a wrapper depends on that wrapper alone.
+
+Each wrapper has a copy, later in the same C file, which the driver calls on the same operands
+after every wrapper. `guard` makes a finding of a wrapper whose copy reads other counts. That
+finding holds the flags: without them, one copy reads apart at rga4d and one at cga5d.
+
+- Rejected: a twin of the same C over other operands, such as `wedge` beside `wedge_point_point`.
+  `⊛` branches on the kind of its operand, so `partner` and `partner_dipole` read apart with no
+  coupling.
+
+Valgrind's `lackey` traces the binary. It lists each instruction executed, and each access to
+memory with its bytes. The trace names no function. So `machine` writes the runtime entry of
+each wrapper and of the driver, and `nm -S` gives the extent of the driver.
+
+The work of a wrapper opens at its entry, and closes at the first instruction back in the
+driver. It holds the return and each function that the wrapper calls, but not the call itself.
+That is the inclusive cost of callgrind.
+
+`baseline/machine_<algebra>.json` records three counts and two flags for each measurand:
+
+- the instructions executed, where each trip of a `rep` instruction is one;
+- the bytes read and the bytes written, where an access that reads and writes the same bytes
+  counts in both;
+- whether any instruction ran outside the text of the binary, in a shared object;
+- whether the copy of the wrapper read other counts.
+
+The header names the Nim commit, the flags, the C compiler with its version, and the tracer
+(VII.11). `guard` refuses a baseline whose header names another build. A grown count is a
+finding, and a shrink is a notice. Each message names the static count of the library function
+of the measurand beside it, because that count names the line of C (VII.10). A measurand that
+composes several calls names no library function, and its message says so.
+
+**The band of each count is zero, and this is its cause (VII.12).** Valgrind 3.22 ran the four
+algebras on `linux amd64, 4 cores` on 2026-10-21, at 451 measurands:
+
+- Two runs of one binary gave the same counts for each measurand.
+- A run with `GLIBC_TUNABLES=glibc.cpu.hwcaps=-AVX2,-AVX512F,-ERMS,-AVX_Fast_Unaligned_Load,-FMA`
+  gave the same counts. Under it the C library reads the processor of valgrind as x86-64-v2,
+  and not v3, and the trace outside the wrappers changed.
+- Seeds 1 and 7 gave the counts of seed 0 for each measurand. So the values of the operands
+  move no branch.
+- No wrapper reaches a shared object. So no counted code runs code that the processor selects.
+- Two builds that each hold every other wrapper gave the counts of the whole build. So did the
+  build with a copy of each wrapper, which doubles the C file. Without the three flags of gcc, 5
+  counts of 111 moved at rga4d, and 10 of 135 at cga5d. Then `wedge` and
+  `wedge_round_point_dipole` at cga5d, of the same C, read 871 and 774 instructions.
+- `drive` on the runner of CI, on 2026-10-21, read the same counts for each measurand, under the
+  same gcc package.
+
+A wrapper that reaches a shared object is a finding. Its band would need readings of the
+runner and of a delegate, and no record holds them.
+
+- Cost: the counted build is not the build that ships. A shipped caller inlines the operator,
+  and the driver calls the wrapper. The flags lift limits that gcc keeps for a shipped build. So
+  the counts are evidence for this build alone (VII.11).
+- Cost: the wrapper returns its expression as `result`. So the count holds what that call site
+  pays, such as a temporary that is filled with zeros and copied.
+- Cost: the counts are for one pair of operands. A path that another operand takes is not
+  counted, such as `sqrt` of a negative number, which calls the C library.
+- Cost: the C compiler joins the build. A runner image with another gcc package fails `drive`
+  until `baseline` is taken again on it.
+- Cost: `drive` needs valgrind, and runs the machine build of each algebra under it, about one
+  second each.
+- Bytes allocated are not counted. Suite `Internal: Allocation` holds that no measurand
+  allocates in any implementation.
+- Rejected: callgrind, which the table on #665 used. It counts each access, and not its bytes,
+  so a load of 16 bytes counts as one, as a load of 8 bytes does.
+- Rejected: counts of the bench, since each loop inlines its operator, and no count names it.
+
+Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Machine`. A fixture trace
+holds two wrappers, a callee, a `rep` instruction and a shared object. A trace that ends inside a
+wrapper, or that misses one, is refused. The gate refuses another compiler, and reports growth,
+shrink, a shared object, a copy that reads apart and an absent measurand. The C of the test
+binary declares each wrapper and each copy behind `noipa`, at its own entry, copies after
+wrappers.
 
 ## Lower bounds
 
@@ -787,7 +881,7 @@ and a stale anchor.
 
 **Every page is one shell and one body.** The shell is `pages/shell.html`, committed and
 hand-written. The body is rendered in Nim from committed files, so a page says only what those
-files say. The faces are the six that `rga_visualiser` embeds, fetched through
+files say. The faces are the six that `pga_visualiser` embeds, fetched through
 `koch fetch-assets` and inlined as base64. Interaction is CSS: tabs, filters and sort are
 inputs that `:has()` rules read.
 
@@ -802,69 +896,6 @@ character that the first faces of a stack lack falls to a face that the page shi
 draws `ₙ`, `ₖ` and `ᵀ` in code, which no face of the mono stack holds, at a width that is not
 one column. Verified by `test_rga4d.nim`, which reads the stacks of the shell, and by `drive`,
 which renders every page (below).
-
-**`drive` renders every page, and fails where a face of the system draws a character beyond
-ASCII** (`CONTRIBUTOR.md`, Pages and assets). The driver builds the pages once, for the digests
-and for the render. It wraps each page in the skeleton that the publish host adds, and writes it
-to `build/hosted/`. The harness in `tools/drive/` loads each one in Chromium through Playwright,
-and opens every `details`. It reads each string that the page draws, with the font stack, weight
-and case transform of its element. That covers text nodes, SVG text, placeholders, and the
-strings of `content` on `::before`, `::after` and `::marker`.
-
-The harness resolves each character beyond ASCII down its stack, against the `@font-face` rules
-and the `cmap` of each face. The faces come out of the page itself, as the `data:` sources of
-its rules, so the check reads the bytes that a viewer receives. A family that the page does not
-ship ends the search, because a face of the viewer would draw the character there. The harness
-writes each such character as data, with each face that the browser does not load.
-`src/pga_benchmark/pages/render.nim` turns each one into a finding at its hosted page:
-
-```text
-build/hosted/docket.html:0: p.note: Character drawn by face of system; got `U+2603`.
-```
-
-Rejected: `CSS.getPlatformFontsForNode`, which in Chromium 141 on 2026-10-04 returned no font for
-an element with `display: none`.
-
-Before it reads, the harness shows every element through one `display: revert` rule. Chromium
-styles a hidden element on demand, one at a time, and the docket hides 28 540 of its 31 355
-elements. One read of the docket took 65 s that way, and three reads took 1.4 to 1.7 s with the
-rule. `Date.now()` in node timed each read, in Chromium 141 on `linux amd64, 4 cores` on
-2026-10-04. `display` sets no property of a font, and the 2 623 strings that the docket draws read
-identical both ways.
-
-**A standing control proves that the render sees.** `drive` renders a control page beside the
-pages, built through the shell from `tests/fixtures/control_faces.json`, so it ships the same
-faces. Two of its paragraphs write a character that no shipped face maps under their stack.
-One writes `U+4E2D` under the stack of the page, and one `U+2603` under `"Noto Sans", sans-serif`.
-A third writes `U+2603` under the stack of the page, which Noto Sans Symbols 2 maps. The control
-must raise exactly the two expected findings, and they never count against a page.
-
-An expected finding that is absent is a finding, because the check is then blind. A finding that
-the control does not expect is a finding too, and so is a control that expects nothing. The
-fixture lives under `tests/`, because the static coverage check reads every file outside it.
-Rejected: the control as HTML under `pages/`, where the layout admits HTML, since coverage reads it.
-
-Costs: the harness reads one viewport, the default of Playwright. So a string or a stack that
-`@media` adds at another width is unread. It resolves each character alone, and a browser picks
-a face for each cluster. So a combining mark can draw from a face that the harness does not name.
-Three runs of the harness over the nine pages took 7.4 to 7.8 s, and one run of `drive` took
-166 s. The wall clock timed both, on the same machine and date.
-
-Verified by driven check on 2026-10-04, in Chromium 141 that `PGA_CHROMIUM` named, and not in the
-revision that the lock pins. Every page held no finding, and the control raised its two. With the
-resolver blinded by hand, so that a shipped face drew every character, `drive` failed so:
-
-```text
-build/hosted/control_faces.html:0: p#han: Check is blind, since control raised no finding here;
-got none for `U+4E2D`.
-```
-
-Suite `Internal: Render` of `test_rga4d.nim` holds the verdict and the control. Suite
-`Internal: Pages` holds the skeleton, and suite `Internal: Driver` holds one build for both uses.
-
-The one script is the search box of the docket. It is Nim, `pages/find.nim`, which the driver
-compiles to JavaScript under the flags of every build. The compiler is pinned, so the script
-and the digest of each page still follow those files.
 
 **A proposal can carry a figure.** A paragraph of one image alone, as
 `![Derivation map.](../../pages/derivation-map.svg)`, embeds the SVG that it names. The SVG lives
@@ -981,6 +1012,95 @@ Suite `Internal: Figures` covers the path a figure resolves, the SVG a page embe
 on the map. It also covers the summary above the claims. Suite `Internal: Edits` covers the diff
 with its numbers and folds, a new file, and the class of the sign column. It also covers the
 signatures an edit defines or sits in, and a header that closes at its own indent.
+
+## Render of pages
+
+**`drive` renders every page, and fails where a face of the system draws a character beyond
+ASCII** (`CONTRIBUTOR.md`, Pages and assets). The driver builds the pages once, for the digests
+and for the render. It wraps each page in the skeleton that the publish host adds, and writes it
+to `build/hosted/`. The harness in `tools/drive/` loads each one in Chromium through Playwright,
+and opens every `details`. It reads each string that the page draws, with the font stack, weight
+and case transform of its element. That covers text nodes, SVG text, placeholders, and the
+strings of `content` on `::before`, `::after` and `::marker`.
+
+The harness resolves each character beyond ASCII down its stack, against the `@font-face` rules
+and the `cmap` of each face. The faces come out of the page itself, as the `data:` sources of
+its rules, so the check reads the bytes that a viewer receives. A family that the page does not
+ship ends the search, because a face of the viewer would draw the character there. The harness
+writes each such character as data, with each face that the browser does not load.
+`src/pga_benchmark/pages/render.nim` turns each one into a finding at its hosted page:
+
+```text
+build/hosted/docket.html:0: p.note: Character drawn by face of system; got `U+2603`.
+```
+
+Rejected: `CSS.getPlatformFontsForNode`, which in Chromium 141 on 2026-10-04 returned no font for
+an element with `display: none`.
+
+Before it reads, the harness shows every element through one `display: revert` rule. Chromium
+styles a hidden element on demand, one at a time, and the docket hides 28 540 of its 31 355
+elements. One read of the docket took 65 s that way, and three reads took 1.4 to 1.7 s with the
+rule. `Date.now()` in node timed each read, in Chromium 141 on `linux amd64, 4 cores` on
+2026-10-04. `display` sets no property of a font, and the 2 623 strings that the docket draws read
+identical both ways.
+
+**A standing control proves that the render sees.** `drive` renders a control page beside the
+pages, built through the shell from `tests/fixtures/control_render.json`, so it ships the same
+faces. Two of its paragraphs write a character that no shipped face maps under their stack.
+One writes `U+4E2D` under the stack of the page, and one `U+2603` under `"Noto Sans", sans-serif`.
+A third writes `U+2603` under the stack of the page, which Noto Sans Symbols 2 maps. The control
+must raise exactly the two expected findings, and they never count against a page.
+
+An expected finding that is absent is a finding, because the check is then blind. A finding that
+the control does not expect is a finding too, and so is a control that expects nothing. The
+fixture lives under `tests/`, because the static coverage check reads every file outside it.
+Rejected: the control as HTML under `pages/`, where the layout admits HTML, since coverage reads it.
+
+Costs: the harness reads one viewport, the default of Playwright. So a string or a stack that
+`@media` adds at another width is unread. It resolves each character alone, and a browser picks
+a face for each cluster. So a combining mark can draw from a face that the harness does not name.
+Three runs of the harness over the nine pages took 7.4 to 7.8 s, and one run of `drive` took
+166 s. The wall clock timed both, on the same machine and date.
+
+Verified by driven check on 2026-10-04, in Chromium 141 that `PGA_CHROMIUM` named, and not in the
+revision that the lock pins. Every page held no finding, and the control raised its two. With the
+resolver blinded by hand, so that a shipped face drew every character, `drive` failed so:
+
+```text
+build/hosted/control_render.html:0: p#han: Check is blind, since control raised no finding here;
+got none for `U+4E2D`.
+```
+
+**Each card holds its blocks apart.** Before it reads faces, the harness reads layout, in
+`tools/drive/layout.ts`. It opens each `details.card`, then checks each tab that `nav.tabs` offers,
+since a card behind another tab draws no box. Two blocks of one card that share a column and
+stand closer than 4 px are one finding at their page:
+
+```text
+build/hosted/proposals.html:0: details#change-imports-narrow.card: Blocks of card touch; got `p, p`
+at `0 px`.
+```
+
+The shell spaces a card by the gap of its grid. A `details` holds each child after its summary in
+one box, so that gap stops at the summary. The shell gives each block after the summary a margin
+of 10 px, the gap of a card that is not a `details`. Without that rule, 34 pairs on the proposal
+list touched, and 17 pages held none.
+
+The control page holds two cards for this check. The card `crowded` sets an inline margin of zero
+on its second block, and no rule of the shell outranks it. So that card must raise one finding.
+The card `spaced` keeps the margins of the shell, so it must raise none, and it fails where the
+shell loses the rule. The verdict holds the control to exactly the cards that it expects, as it
+does for characters.
+
+Costs: the layout is read at one viewport, as the faces are. Two blocks side by side, as the columns
+of a grid, are not compared.
+
+Suite `Internal: Render` of `test_rga4d.nim` holds the verdict and the control. Suite
+`Internal: Pages` holds the skeleton, and suite `Internal: Driver` holds one build for both uses.
+
+The one script is the search box of the docket. It is Nim, `pages/find.nim`, which the driver
+compiles to JavaScript under the flags of every build. The compiler is pinned, so the script
+and the digest of each page still follow those files.
 
 ## Home and views
 
@@ -1204,14 +1324,14 @@ Architect asks. Both projects are under the Prosperity Public License 3.0.0. Rej
 of the library in this tree, which Article XI.3 forbids.
 
 **The compiler is pinned by commit**, `27763495bcfe265507ca98aedc1c7064bf1e0e4d`, which is
-the same pin that `rga_visualiser` carries. The library spells seven operators with
+the same pin that `pga_visualiser` carries. The library spells seven operators with
 characters that no Nim release lexes. One cached build therefore serves both projects. Atlas
 writes `"objects": {}` for a repository without a nimble file, so the resolved commit is
 patched into `atlas.lock` by hand. The stored copies in the lock of the nimble file and of
 `nim.cfg` are kept byte-identical to the committed files, which the static pass checks.
 
 **`package-lock.json` pins the Node tools, and git ignores their checkout.** The project commits
-`package.json` and `package-lock.json` with the versions that `rga_visualiser` pins.
+`package.json` and `package-lock.json` with the versions that `pga_visualiser` pins.
 `typescript` 7.0.2 type-checks the harness, and `@playwright/test` 1.63.0 drives Chromium. Both
 are Microsoft's, under Apache-2.0. `@types/node` 22.20.2 is DefinitelyTyped's, under MIT, and
 types the Node surface that the harness reaches. The `license` field of each entry in

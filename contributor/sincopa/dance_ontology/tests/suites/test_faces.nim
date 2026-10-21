@@ -21,11 +21,11 @@ const
       "<style>p{}</style>\n</head>\n<body>x</body>\n</html>"
     ## Whole page, of shape `pages/app/index.html` carries.
   FRAGMENT = "<title>T</title>\n<style>p{}</style>\n<main>x</main>"
-    ## Headless page, of shape card review and rig viewer carry (`page.document`).
+    ## Headless page, of shape Reference and rig viewer carry (`page.document`).
   STORE = "../../../curator/audit/src/assets.nim"
     ## Repository's declaration of every file fetched at build time, from project directory.
   PATH_APP = "pages" / "app" / "index.html"
-    ## Shell of Reference, whose style sheet sits in its head.
+    ## Shell of Explorer, whose style sheet sits in its head.
 
 
 proc stub(directory: string) =
@@ -206,7 +206,7 @@ suite "Internal: Faces":
 
   test "every heading takes serif face":
     ## X.8 gives headings and titles to Noto Serif, and record says pages follow it.  Heading
-    ## rules of Reference and of shared style sheet of workbench named no face, so every heading
+    ## rules of Explorer and of shared style sheet of workbench named no face, so every heading
     ## took body's Noto Sans (repository issue 391).
     for (style_sheet, selectors) in [
       (page.STYLE.styles, @["h1", "h2", "h3"]),
@@ -241,7 +241,7 @@ suite "Internal: Faces":
 
   test "dressed page declares utf-8 ahead of its face block":
     ## Face block is half megabyte of ASCII, and browser that opens page from file guesses
-    ## its charset from bytes ahead of first that is not ASCII.  Review page and whole-cloth
+    ## its charset from bytes ahead of first that is not ASCII.  Reference and whole-cloth
     ## page declared none, and Chromium 141 read both as windows-1250 on 2026-10-02 once
     ## block grew (repository issue 391).
     for page in [DOCUMENT, FRAGMENT]:
