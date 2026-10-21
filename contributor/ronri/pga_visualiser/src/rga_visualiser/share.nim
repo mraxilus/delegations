@@ -179,7 +179,7 @@ func busy*(counts: CountsShare): int =
   for owner in Owner: result += counts[owner]
 
 
-func percentOf*(counts: CountsShare, owner: Owner): float =
+func percent*(counts: CountsShare, owner: Owner): float =
   ## Report `owner`'s share of busy samples, in percent; 0 where nothing was sampled.
   let total = counts.busy
   if total == 0: 0.0 else: 100.0 * float(counts[owner]) / float(total)

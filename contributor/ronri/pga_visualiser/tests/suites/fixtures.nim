@@ -129,7 +129,7 @@ GENERAL_SECOND = [
 ]
 
 # Mesh storage is far too large for stack frame, exactly as it is in application.
-var MESHES*: MeshSet
+var MESHES_SCENE*: Meshes
 
 # Where tessellation step assembles its ribbon pieces before emitting them.
 #   application carves this from frame arena on desktop and holds fixed buffer on

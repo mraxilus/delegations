@@ -879,11 +879,11 @@ func directionAcross(geometry: Multivector, eye: Position): Option[Direction] =
   ##   straddle plane line's projection is, symmetric from any angle.
   ##     Cost is step tilting hair out of plane perspective divides by, under pixel.
   ##   None where eye lies on line itself, edge-on with no side to flank: join is then
-  ##   rounding of zero against line and eye (`isRoundingOf`), whatever line's own scale.
+  ##   rounding of zero against line and eye (`isRounding`), whatever line's own scale.
   let
     eye_point = eye.toMultivector
     plane = geometry ∧ eye_point
-  if plane.isRoundingOf(geometry.coefficientLargest * eye_point.coefficientLargest): return
+  if plane.isRounding(geometry.coefficientLargest * eye_point.coefficientLargest): return
   directionNormal(plane)
 
 

@@ -8,10 +8,10 @@ import ./fixtures
 
 suite "Help":
   test "every entry lands in exactly one tab, and the tabs account for the whole table":
-    # What stops reflow that quietly drops row to make rest fit. `countOf` is what.
+    # What stops reflow that quietly drops row to make rest fit. `countEntries` is what.
     #   both front-ends size tab from, so summing it is summing what is actually drawn.
     var total = 0
-    for path in HelpPath: total += countOf(path)
+    for path in HelpPath: total += countEntries(path)
     check total == len(HELP_ENTRIES)
 
 
@@ -28,7 +28,7 @@ suite "Help":
         of HelpPath.Operations: ENTRIES_MAX_PATH_CATALOGUE
         of HelpPath.Keys: ENTRIES_MAX_PATH_KEYS
         else: ENTRIES_MAX_PATH
-      check countOf(path) in 1..entries_max
+      check countEntries(path) in 1..entries_max
 
 
   test "the help records every operation the build offers, by the name it offers it under":
@@ -41,7 +41,7 @@ suite "Help":
           check entry.outcome == notationNamed(operation)
           is_listed = true
       check is_listed
-    check countOf(HelpPath.Operations) == COUNT_OPERATION
+    check countEntries(HelpPath.Operations) == COUNT_OPERATION
 
 
   test "the help names every wedge the drag wheel offers, and says which word it is":
@@ -50,12 +50,12 @@ suite "Help":
     #   nothing taught it for while; help's drag tab is where it lives now, and this is
     #   what keeps it there. Wedge renamed with no telling fails here rather than quietly
     #   leaving reader with three symbols and no words.
-    let described = descriptionOf(HelpPath.Drag)
+    let described = description(HelpPath.Drag)
     for choice in [DragChoice.Join, DragChoice.Meet, DragChoice.Project]:
-      check wordOf(choice) in described
-      check labelOf(choice) in described
+      check word(choice) in described
+      check label(choice) in described
     # `More` takes bare ellipsis, which needs no decoding; its row already says what it does.
-    check wordOf(DragChoice.More) notin described
+    check word(DragChoice.More) notin described
 
 
   test "the help records every key, every motion and every action the view answers":
@@ -67,7 +67,7 @@ suite "Help":
       for entry in HELP_ENTRIES: joined &= entry.action & " " & entry.outcome & " "
       joined
     for key in Key:
-      check nameOf(key) in text
+      check nameSpoken(key) in text
     # Every motion and action is *described* by some row; rows group them by job, so.
     #   this asks for words reader would look for rather than enum's own name.
     for phrase in [
@@ -119,6 +119,6 @@ suite "Help":
     #   Which menu this is, what wedge is; path added without one would render that line
     #   blank, which reads as gap rather than as omission.
     for path in HelpPath:
-      check len(descriptionOf(path)) > 0
+      check len(description(path)) > 0
       # Sentence, not label: tab strip already carries short form.
-      check len(descriptionOf(path)) > len(titleOf(path))
+      check len(description(path)) > len(title(path))

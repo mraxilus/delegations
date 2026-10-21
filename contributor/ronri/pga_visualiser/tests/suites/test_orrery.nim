@@ -12,7 +12,7 @@ import ../../src/rga_visualiser/orrery {.all.}
 # Orrery needs room for its default size, and one configuration here deliberately compiles.
 #   much smaller pool to exercise pool's own limits. Guarded rather than shrunk:
 #   arrangement scaled down would no longer be stress case these cases exist to check.
-when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
+when OBJECTS_MAX >= countObjects(SCALE_ORRERY_DEFAULT):
   suite "Orrery":
     ## Check demo preset, heaviest scene this build draws, against world it claims.
     ##   Real solar neighbourhood to scale: these bodies stand where they really stand, as
@@ -26,15 +26,15 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       ##   above, so this only ever narrows for capacity between two.
       var held: seq[ScaleOrrery]
       for scale in ScaleOrrery:
-        if OBJECTS_MAX >= objectsOf(scale): held.add(scale)
+        if OBJECTS_MAX >= countObjects(scale): held.add(scale)
       held
 
-    proc placesOf(scene: var Scene): Table[string, Position] =
+    proc places(scene: var Scene): Table[string, Position] =
       ## Read every finite point of scene by label, as position.
       for handle in 0..<scene.bound:
         if not scene.isAlive(handle): continue
-        let geometry = scene.geometryOf(handle)
-        if kindOf(geometry) != some(Kind.Point) or isHorizon(geometry): continue
+        let geometry = scene.geometryAt(handle)
+        if classify(geometry) != some(Kind.Point) or isHorizon(geometry): continue
         result[scene.labelAt(handle).toText] = position(geometry).get
 
     proc isClose(a, b: float; parts = 1.0e-9): bool =
@@ -56,7 +56,7 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
         var scene = initScene()
         addOrrery(scene, scale)
         checkpoint(&"{scale}: {scene.len} objects, {OBJECTS_MAX - scene.len} free")
-        check scene.len == objectsOf(scale)
+        check scene.len == countObjects(scale)
         check not scene.isFull
         if scale == ScaleOrrery.high: check OBJECTS_MAX - scene.len == 2
 
@@ -70,7 +70,7 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       var without: seq[string] = @[]
       for handle in 0..<scene.bound:
         if not scene.isAlive(handle): continue
-        if kindOf(scene.geometryOf(handle)).isNone: without.add(scene.labelAt(handle).toText)
+        if classify(scene.geometryAt(handle)).isNone: without.add(scene.labelAt(handle).toText)
       check without == newSeq[string]()
 
 
@@ -90,8 +90,8 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
         for handle in 0..<scene.bound:
           if not scene.isAlive(handle): continue
           let
-            geometry = scene.geometryOf(handle)
-            kind = kindOf(geometry)
+            geometry = scene.geometryAt(handle)
+            kind = classify(geometry)
           if kind.isNone: continue
           inc tally[kind.get]
           if isHorizon(geometry): inc at_horizon[kind.get]
@@ -136,7 +136,7 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       var scene = initScene()
       addOrrery(scene, scale)
       let
-        placed = placesOf(scene)
+        placed = places(scene)
         sol = placed[SOL[0].name]
         obliquity = degToRad(23.4392911)
       var
@@ -172,7 +172,7 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
         &"off by {worst:.3e} of its distance; worst direction off by {worst_turn:.3e}")
       # Most of what size spends goes on stars, so most of what it holds should be one.
       #   Folded from size rather than written down, so it survives next one.
-      check seen > (objectsOf(scale) - OBJECTS_FIXED_ORRERY) div 2
+      check seen > (countObjects(scale) - OBJECTS_FIXED_ORRERY) div 2
       check worst <= 1.0e-12
       check worst_turn <= 1.0e-9
       # Turn is real one: Proxima's ecliptic latitude, -44.8 degrees, is well north of its
@@ -199,7 +199,7 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       for index in missing_from..<len(STARS):
         if STARS[index].name in placed: inc slack
       var widest = 0
-      for star in STARS: widest = max(widest, objectsOf(star))
+      for star in STARS: widest = max(widest, countObjects(star))
       checkpoint(&"{slack} stars placed beyond the first gap; the widest system is " &
         &"{widest} objects, so at most {widest - 1} can be")
       check slack <= widest - 1
@@ -283,9 +283,9 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
         lines: seq[Multivector]
       for handle in 0..<scene.bound:
         if not scene.isAlive(handle): continue
-        let geometry = scene.geometryOf(handle)
+        let geometry = scene.geometryAt(handle)
         if isHorizon(geometry): continue
-        case kindOf(geometry).get(Kind.Point)
+        case classify(geometry).get(Kind.Point)
         of Kind.Plane: planes.add(unitize(geometry))
         of Kind.Line: lines.add(geometry)
         of Kind.Point: discard
@@ -294,8 +294,8 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
         worst_label = ""
       for handle in 0..<scene.bound:
         if not scene.isAlive(handle): continue
-        let point = scene.geometryOf(handle)
-        if kindOf(point) != some(Kind.Point) or isHorizon(point): continue
+        let point = scene.geometryAt(handle)
+        if classify(point) != some(Kind.Point) or isHorizon(point): continue
         let place = unitize(point)
         var through = 0
         for plane in planes:
@@ -328,8 +328,8 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       check radii["saturn"] > radii["earth"]
       check radii["earth"] > radii["luna"]
       check radii["luna"] > radii["phobos"]
-      for body in SOL: check isClose(radii[body.name], radiusDrawnOf(body.kilometres_radius))
-      for moon in MOONS: check isClose(radii[moon.name], radiusDrawnOf(moon.kilometres_radius))
+      for body in SOL: check isClose(radii[body.name], radiusDrawn(body.kilometres_radius))
+      for moon in MOONS: check isClose(radii[moon.name], radiusDrawn(moon.kilometres_radius))
       # Smallest body stays above what editor accepts, so none is pinned at least dot for good.
       for moon in MOONS: check radii[moon.name] >= RADIUS_OBJECT_LEAST
       # Neighbour suns and planets claim no size, having none on record: least, and stated.
@@ -345,7 +345,7 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       var scene = initScene()
       addOrrery(scene)
       let
-        placed = placesOf(scene)
+        placed = places(scene)
         sol = placed["sol"]
       for body in SOL:
         if body.role != Role.Planet: continue
@@ -361,7 +361,7 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       #   `normalOfMoon`, and every moon's place pinned perpendicular to it.
       var scene = initScene()
       addOrrery(scene)
-      let placed = placesOf(scene)
+      let placed = places(scene)
       var normals: Table[string, Direction]
       for moon in MOONS:
         let
@@ -373,8 +373,8 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
         check norm(normal) =~ 1.0
         check abs(dot(apart, normal)) <= 1.0e-9 * norm(apart)
         # Ring clears both discs: bodies never overlap.
-        check norm(apart) > radiusDrawnOf(SOL[moon.parent].kilometres_radius) +
-            radiusDrawnOf(moon.kilometres_radius)
+        check norm(apart) > radiusDrawn(SOL[moon.parent].kilometres_radius) +
+            radiusDrawn(moon.kilometres_radius)
       checkpoint(&"luna leans {radToDeg(arccos(normals[\"luna\"].z)):.2f} degrees, triton's " &
         &"normal z {normals[\"triton\"].z:.3f}, miranda's {normals[\"miranda\"].z:.3f}")
       check abs(radToDeg(arccos(normals["luna"].z)) - 5.16) <= 1.0e-6
@@ -450,7 +450,7 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       var scene = initScene()
       addOrrery(scene, scale)
       let
-        placed = placesOf(scene)
+        placed = places(scene)
         up = Direction(x: 0, y: 0, z: 1)
       var
         worst = 0.0
@@ -478,7 +478,7 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
           moon.kilometres_orbit / KILOMETRES_PER_ASTRONOMICAL_UNIT,
           SYSTEM_SOL.spin + 2.4 * float(index))
       for star in STARS:
-        if star.name notin placed or placedOf(star) == 0: continue
+        if star.name notin placed or countPlanetsPlaced(star) == 0: continue
         let
           sun = placed[star.name]
           outward = sun - POSITION_ORRERY
@@ -488,7 +488,7 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
           let planet = PLANETS[star.first+which]
           if planet.axis_semi_major <= 0.0: continue
           hold(planet.name, sun, node, up, planet.axis_semi_major,
-            angleRing(systemAt(star).spin, which_placed, placedOf(star)))
+            angleRing(systemAt(star).spin, which_placed, countPlanetsPlaced(star)))
           inc which_placed
       checkpoint(&"{scale}: {checked} bodies on their rings; worst is `{worst_name}`, at " &
         &"{worst:.3f} of its tolerance")
@@ -504,7 +504,7 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       let scale = scales_held[^1]
       var scene = initScene()
       addOrrery(scene, scale)
-      let placed = placesOf(scene)
+      let placed = places(scene)
       var left_out, checked = 0
       for star in STARS:
         if star.name notin placed or star.planets == 0: continue
@@ -528,7 +528,8 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       check without == 49
       # Count each star comes to says same: placed planets, not archive's.
       for star in STARS:
-        check objectsOf(star) == 1 + placedOf(star) + (if placedOf(star) >= 2: 1 else: 0)
+        let placed = countPlanetsPlaced(star)
+        check countObjects(star) == 1 + placed + (if placed >= 2: 1 else: 0)
 
 
     test "every object wears its own type's colour, and no two types share one":
@@ -577,9 +578,9 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
         if not scene.isAlive(handle): continue
         let
           label = scene.labelAt(handle).toText
-          geometry = scene.geometryOf(handle)
+          geometry = scene.geometryAt(handle)
         if isHorizon(geometry): continue
-        case kindOf(geometry).get(Kind.Point)
+        case classify(geometry).get(Kind.Point)
         of Kind.Line: lines.add(label)
         of Kind.Point:
           case roles.getOrDefault(label, Role.Derived)
@@ -596,8 +597,8 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       var joining = 0
       for handle in 0..<scene.bound:
         if not scene.isAlive(handle): continue
-        let geometry = scene.geometryOf(handle)
-        if isHorizon(geometry) or kindOf(geometry) != some(Kind.Line): continue
+        let geometry = scene.geometryAt(handle)
+        if isHorizon(geometry) or classify(geometry) != some(Kind.Line): continue
         for sun in suns:
           if not lies(geometry, sun): continue
           for planet in planets:
@@ -616,7 +617,7 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       var at_horizon: Table[string, Multivector]
       for handle in 0..<scene.bound:
         if not scene.isAlive(handle): continue
-        let geometry = scene.geometryOf(handle)
+        let geometry = scene.geometryAt(handle)
         if isHorizon(geometry): at_horizon[scene.labelAt(handle).toText] = geometry
       let
         line = at_horizon["att(ecliptic sol)"]
@@ -629,7 +630,7 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       checkpoint(&"earth's direction spans {along:.9f} with the line, luna's {across:.9f}")
       check along <= TOLERANCE_SINGLE  # On line: it adds nothing.
       check across > TOLERANCE_SINGLE  # Off it: it spans plane.
-      check kindOf(line ∧ off_it) == some(Kind.Plane)
+      check classify(line ∧ off_it) == some(Kind.Plane)
       check isHorizon(line ∧ off_it)
 
 
@@ -660,7 +661,7 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       camera = camera.placed(stanceAround(camera.pivot, 19.0, Direction(x: 1, y: 3, z: 1)))
       let bearing = camera.azimuth
       showOrrery(scene, camera, 1440, 900)
-      check scene.len == objectsOf(SCALE_ORRERY_DEFAULT)
+      check scene.len == countObjects(SCALE_ORRERY_DEFAULT)
       check camera.pivot =~ POSITION_ORRERY
       check camera.elevation =~ arctan(RISE_ORRERY_SHOWN)
       check camera.azimuth =~ bearing

@@ -878,7 +878,7 @@ proc clearFrame*(width, height: int) =
   gl.clear(gl.COLOR_BUFFER_BIT or gl.DEPTH_BUFFER_BIT)
 
 
-proc uploadPoints(renderer: Renderer, meshes: MeshSet) =
+proc uploadPoints(renderer: Renderer, meshes: Meshes) =
   ## Hand point records to driver whole, ready to be drawn as one run or two.
   ##   Separate from drawing because two runs are issued in different passes; see
   ##   `drawMeshes`.
@@ -895,7 +895,7 @@ proc uploadPoints(renderer: Renderer, meshes: MeshSet) =
   )
 
 
-proc uploadRibbons(renderer: Renderer, meshes: MeshSet) =
+proc uploadRibbons(renderer: Renderer, meshes: Meshes) =
   ## Hand this frame's ribbon records to driver whole; shader does rest.
   if meshes.ribbons.count == 0: return
   gl.bindBuffer(gl.ARRAY_BUFFER, renderer.buffer_ribbon_records)
@@ -907,7 +907,7 @@ proc uploadRibbons(renderer: Renderer, meshes: MeshSet) =
   )
 
 
-proc uploadVeils(renderer: Renderer, meshes: MeshSet) =
+proc uploadVeils(renderer: Renderer, meshes: Meshes) =
   ## Hand this frame's disc, ring and dome records to driver whole; shaders fan them.
   ##   Rings ride along on same upload schedule, not because rim is veil: it is drawn
   ##   opaque, with lines.
@@ -938,7 +938,7 @@ proc uploadVeils(renderer: Renderer, meshes: MeshSet) =
 
 
 func runOfRibbons(ribbons: RibbonMesh, is_overlay: bool): tuple[first, count: int] =
-  ## Say which stretch of ribbon records belongs to which pass; `runOf`'s rule.
+  ## Say which stretch of ribbon records belongs to which pass; `runMesh`'s rule.
   let split =
     if ribbons.index_overlay.isSome: clamp(ribbons.index_overlay.get, 0, ribbons.count)
     else: ribbons.count
@@ -946,7 +946,7 @@ func runOfRibbons(ribbons: RibbonMesh, is_overlay: bool): tuple[first, count: in
   else: (first: 0, count: split)
 
 
-proc drawRibbonRun(renderer: Renderer, meshes: MeshSet, is_overlay: bool) =
+proc drawRibbonRun(renderer: Renderer, meshes: Meshes, is_overlay: bool) =
   ## Draw one run of already-uploaded ribbon records as instanced triangle pairs.
   ##   GL 3.3 has no base instance, so run not starting at first record re-points five
   ##   instance attributes at its first byte.
@@ -965,7 +965,7 @@ proc drawRibbonRun(renderer: Renderer, meshes: MeshSet, is_overlay: bool) =
 
 
 func runOfRings(rings: RingMesh, is_overlay: bool): tuple[first, count: int] =
-  ## Say which stretch of ring records belongs to which pass; `runOf`'s rule.
+  ## Say which stretch of ring records belongs to which pass; `runMesh`'s rule.
   let split =
     if rings.index_overlay.isSome: clamp(rings.index_overlay.get, 0, rings.count)
     else: rings.count
@@ -973,7 +973,7 @@ func runOfRings(rings: RingMesh, is_overlay: bool): tuple[first, count: int] =
   else: (first: 0, count: split)
 
 
-proc drawRingRun(renderer: Renderer, meshes: MeshSet, is_overlay: bool) =
+proc drawRingRun(renderer: Renderer, meshes: Meshes, is_overlay: bool) =
   ## Draw one run of already-uploaded ring records, each instance whole plane rim.
   ##   Re-points instance attributes at run's first byte, `drawRibbonRun`'s rule.
   ##   Mirrors `glue.js`'s `drawRings`.
@@ -990,7 +990,7 @@ proc drawRingRun(renderer: Renderer, meshes: MeshSet, is_overlay: bool) =
   gl.drawArraysInstanced(gl.TRIANGLES, 0, gl.Sizei(COUNT_CORNERS_RING), gl.Sizei(run.count))
 
 
-func runOf(mesh: Mesh, is_overlay: bool): tuple[first, count: int] =
+func runMesh(mesh: Mesh, is_overlay: bool): tuple[first, count: int] =
   ## Say which stretch of one mesh belongs to depth-tested run or to overlay run.
   ##   Empty where mesh has no such run, ordinary case for overlay; see
   ##   `mesh.Mesh.index_overlay`.
@@ -1001,11 +1001,11 @@ func runOf(mesh: Mesh, is_overlay: bool): tuple[first, count: int] =
   else: (first: 0, count: split)
 
 
-proc drawPointRun(renderer: Renderer, meshes: MeshSet, is_overlay: bool) =
+proc drawPointRun(renderer: Renderer, meshes: Meshes, is_overlay: bool) =
   ## Draw one run of already-uploaded point records, each instance one disc.
   ##   Re-points instance attributes at run's first byte, `drawRibbonRun`'s rule.
   ##   Mirrors `glue.js`'s `drawPoints`.
-  let run = runOf(meshes.points, is_overlay)
+  let run = runMesh(meshes.points, is_overlay)
   if run.count == 0: return
   gl.bindVertexArray(renderer.array_points)
   gl.bindBuffer(gl.ARRAY_BUFFER, renderer.buffer_points)
@@ -1019,7 +1019,7 @@ proc drawPointRun(renderer: Renderer, meshes: MeshSet, is_overlay: bool) =
 
 
 func runsOfVeils(veils: VeilRuns, is_overlay: bool): tuple[begin, until: int] =
-  ## Say which stretch of veil runs belongs to which pass: `runOf`'s rule at run grain.
+  ## Say which stretch of veil runs belongs to which pass: `runMesh`'s rule at run grain.
   ##   Run never straddles mark; see `mesh.VeilRuns`.
   let split =
     if veils.index_overlay.isSome: clamp(veils.index_overlay.get, 0, veils.count)
@@ -1056,7 +1056,7 @@ proc drawVeilRun(renderer: Renderer, run: VeilRun) =
     gl.drawArraysInstanced(gl.TRIANGLES, 0, gl.Sizei(COUNT_CORNERS_DOME), gl.Sizei(run.count))
 
 
-proc drawVeilRuns(renderer: Renderer, meshes: MeshSet, is_overlay: bool) =
+proc drawVeilRuns(renderer: Renderer, meshes: Meshes, is_overlay: bool) =
   ## Walk one pass's stretch of veil draw order, drawing each run through its program.
   ##   Two veils then blend in order scene emitted them.
   ##   Mirrors `glue.js`'s `drawVeilRuns`.
@@ -1064,17 +1064,17 @@ proc drawVeilRuns(renderer: Renderer, meshes: MeshSet, is_overlay: bool) =
   for i in begin..<until: renderer.drawVeilRun(meshes.veils.runs[i])
 
 
-func isHoldingOverlay(meshes: MeshSet): bool =
+func isHoldingOverlay(meshes: Meshes): bool =
   ## Report whether anything in this set asked to be drawn over rest of it.
   if runOfRibbons(meshes.ribbons, is_overlay = true).count > 0: return true
   if runOfRings(meshes.rings, is_overlay = true).count > 0: return true
-  if runOf(meshes.points, is_overlay = true).count > 0: return true
+  if runMesh(meshes.points, is_overlay = true).count > 0: return true
   let (begin, until) = runsOfVeils(meshes.veils, is_overlay = true)
   until > begin
 
 
 proc drawMeshes*(
-  renderer: Renderer, meshes: MeshSet, view_projection: Matrix4, scale: DrawScale, aspect: float
+  renderer: Renderer, meshes: Meshes, view_projection: Matrix4, scale: DrawScale, aspect: float
 ) =
   ## Draw every mesh, opaque kinds before translucent ones, then overlay over both.
   ##   Takes frame's `DrawScale` because ribbon program needs camera, and `aspect`, width

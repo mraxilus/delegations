@@ -322,7 +322,7 @@ type
       ## holding operation could only hold placeholder, sentinel smuggled into value's range.
     index_source*: int  ## Object drag started from; meaningful only while `is_dragging`.
     index_destination*: Option[int]  ## Object drag points at, latched moment its menu opens.
-      ## Readers ask `destinationOf` instead.
+      ## Readers ask `destination` instead.
     pressed*: ScreenPosition  ## Where last pointer press landed, whatever it became.
     started*: float  ## When that press landed, on clock every caller passes as `now`.
       ## Read only through `isClick`.
@@ -401,7 +401,7 @@ type
 
   PointerButton* {.pure.} = enum  ## Define physical mouse button, however numbered.
     ## SDL counts 1/2/3 and DOM 0/1/2 for left/middle/right.
-    ##   Each render path translates into this and asks `armingOf`, so which button does what
+    ##   Each render path translates into this and asks `arming`, so which button does what
     ##   is stated once.
     Left, Middle, Right
 
@@ -490,7 +490,7 @@ func actionFor*(key: Key): Option[KeyAction] =
     none(KeyAction)
 
 
-func nameOf*(key: Key): string =
+func nameSpoken*(key: Key): string =
   ## Name key as reader would say it, for help table.
   case key
   of Key.W: "w"
@@ -515,7 +515,7 @@ func nameOf*(key: Key): string =
   of Key.Control: "ctrl"
 
 
-func armingOf*(button: PointerButton): Option[MenuArming] =
+func arming*(button: PointerButton): Option[MenuArming] =
   ## Say whether button starts construction drag, and how that drag reaches its menu.
   ##   None for button starting no drag.
   ##     Middle is such button: hardware most trackpads lack, so nothing lives behind it.
@@ -567,7 +567,7 @@ func toOperation*(drag: DragOperation): Operation =
   of DragOperation.Project: Operation.ProjectOrthogonal
 
 
-func compassOf*(choice: DragChoice): Compass =
+func compass*(choice: DragChoice): Compass =
   ## Place choice in menu, fixed for life of program; see `Compass`.
   ##   North is default plain release takes most often, nearest cursor's resting direction.
   case choice
@@ -577,7 +577,7 @@ func compassOf*(choice: DragChoice): Compass =
   of DragChoice.More: Compass.West
 
 
-func labelOf*(choice: DragChoice): string =
+func label*(choice: DragChoice): string =
   ## Name choice as its wedge says it, in catalogue's symbols.
   ##   Very text apply picker offers, through `scene.notationSymbolic`.
   ##     Wheel and picker are same control in two postures, so whichever reader meets first
@@ -593,10 +593,10 @@ func labelOf*(choice: DragChoice): string =
   of DragChoice.More: "…"
 
 
-func wordOf*(choice: DragChoice): string =
+func word*(choice: DragChoice): string =
   ## Name choice in words, for one place each is taught rather than offered.
-  ##   Wedge wears notation alone (see `labelOf`), readable only once told it is `join`.
-  ##   Telling is `help.descriptionOf(HelpPath.Drag)`, which both UIs render and which
+  ##   Wedge wears notation alone (see `label`), readable only once told it is `join`.
+  ##   Telling is `help.description(HelpPath.Drag)`, which both UIs render and which
   ##   reads this; that keeps teaching line and help table naming three same way.
   case choice
   of DragChoice.Join: "join"
@@ -605,7 +605,7 @@ func wordOf*(choice: DragChoice): string =
   of DragChoice.More: "more"
 
 
-func inkOf*(choice: DragChoice): Ink =
+func ink*(choice: DragChoice): Ink =
   ## Tint choice, for its wedge and for rubber-band pointing at it.
   ##   Here rather than in either render path, so neither keeps copy of this table.
   case choice
@@ -615,7 +615,7 @@ func inkOf*(choice: DragChoice): Ink =
   of DragChoice.More: Ink.Guide
 
 
-func offsetOf(compass: Compass): tuple[x, y: float] =
+func offset(compass: Compass): tuple[x, y: float] =
   ## Point from menu's centre toward one wedge, one reach away, in screen pixels.
   ##   Screen y grows downward, so south is positive.
   case compass
@@ -625,9 +625,9 @@ func offsetOf(compass: Compass): tuple[x, y: float] =
   of Compass.West: (-PIXELS_MENU_REACH, 0.0)
 
 
-func anchorOf*(centre: ScreenPosition, choice: DragChoice): ScreenPosition =
+func anchorWedge*(centre: ScreenPosition, choice: DragChoice): ScreenPosition =
   ## Place one wedge on screen, given where its menu opened.
-  let offset = offsetOf(compassOf(choice))
+  let offset = offset(compass(choice))
   ScreenPosition(x: centre.x + offset.x, y: centre.y + offset.y, depth: centre.depth)
 
 
@@ -646,28 +646,28 @@ func choiceAt*(centre, cursor: ScreenPosition): Option[DragChoice] =
     if abs(offset_x) > abs(offset_y): (if offset_x > 0.0: Compass.East else: Compass.West)
     else: (if offset_y > 0.0: Compass.South else: Compass.North)
   for choice in DragChoice:
-    if compassOf(choice) == compass: return some(choice)
+    if compass(choice) == compass: return some(choice)
   none(DragChoice)
 
 
-func resultOf*(choice: DragChoice; m, n: Multivector): Option[Multivector] =
+func outcome*(choice: DragChoice; m, n: Multivector): Option[Multivector] =
   ## Compute what choice would make of these two operands, if it makes anything.
   ##   None for `More`, and none wherever result has no drawable shape.
   ##     One test covers both ways construction comes to nothing: wrong grades landing on
   ##     scalar or antiscalar, and pair lying on each other giving zero.
   ##     `scene.applyOperation` answers zero for rounding of it, judged against operands,
-  ##     and `objects.kindOf` reads zero as no shape; line metre long still reads as line.
+  ##     and `objects.classify` reads zero as no shape; line metre long still reads as line.
   let drag = choice.toDrag
   if drag.isNone: return
   let derived = applyOperation(drag.get.toOperation, m, n)
-  if kindOf(derived).isNone: return
+  if classify(derived).isNone: return
   some(derived)
 
 
 func isOffered*(choice: DragChoice; m, n: Multivector): bool =
   ## Report whether choice would make something of these two operands.
   ##   `More` is always offered: only route from this gesture to rest of catalogue.
-  choice == DragChoice.More or resultOf(choice, m, n).isSome
+  choice == DragChoice.More or outcome(choice, m, n).isSome
 
 
 func proposalFor*(m, n: Multivector): Option[DragChoice] =
@@ -693,7 +693,7 @@ func choosing*(interaction: Interaction): Option[DragChoice] =
   choiceAt(interaction.menu.get, interaction.cursor)
 
 
-func effectOf*(interaction: Interaction): ReleaseEffect =
+func effectRelease*(interaction: Interaction): ReleaseEffect =
   ## Resolve what letting go right now would do, from drag's own state.
   ##   Reads `proposal` and `preview`, which `updateDrag` resolved in `endDrag`'s order,
   ##   rather than re-deriving: second derivation is second answer waiting to disagree.
@@ -725,7 +725,7 @@ func inkOfDrag*(interaction: Interaction, ink_next: Ink): Ink =
   ##     Greyed wedge magenta, offered wedge new object's hue.
   ##   `ink_next` is `scene.inkNext`, passed in since this has no scene.
   ##     Operation's own colour would say nothing about object reader is about to have.
-  case interaction.effectOf
+  case interaction.effectRelease
   of ReleaseEffect.Nothing: Ink.Guide
   of ReleaseEffect.Refused: Ink.Invalid
   of ReleaseEffect.Builds: ink_next
@@ -906,7 +906,7 @@ proc dollyAt*(
   if depth > 0.0: camera.repivotToDepth(depth)
 
 
-func yieldOrHalt*(tween: var CameraTween; has_selection: bool) =
+func yieldOrHalt*(tween: var CameraTween, has_selection: bool) =
   ## Give camera's ease up to wheel, right drag or two fingers, in whichever way state reads.
   ##   Free flight's lands pivot on what pointer or fingers are over, so ease stops where camera
   ##   stands; see `camera.halt`.
@@ -1242,7 +1242,7 @@ func applyAction*(
     # Return to placement both builds open at, so "home" means same as starting again.
     #   Stance alone: lens is reader's setting, as history's step keeps it.
     #   Fitted to frame as it stands now, as opening was to frame it opened on.
-    camera = camera.placed(initCameraDefault(width, height).stanceOf)
+    camera = camera.placed(initCameraDefault(width, height).stance)
   none(int)
 
 
@@ -1271,7 +1271,7 @@ func gapAndAngle(fingers: array[2, ScreenPosition]): (float, float) =
   (hypot(across, down), arctan2(down, across))
 
 
-func middleOf(fingers: array[2, ScreenPosition]): ScreenPosition =
+func middle(fingers: array[2, ScreenPosition]): ScreenPosition =
   ## Read pixel halfway between two fingers.
   ScreenPosition(x: 0.5 * (fingers[0].x + fingers[1].x), y: 0.5 * (fingers[0].y + fingers[1].y))
 
@@ -1289,9 +1289,7 @@ func noteSlop(grip: var GripFingers, fingers: array[2, ScreenPosition]) =
     grip.angle_from = some(angle_landed + copySign(RADIANS_TWIST_SLOP, turned))
 
 
-func fingersHeld*(
-  grip: GripFingers, fingers: array[2, ScreenPosition]
-): array[2, ScreenPosition] =
+func fingersHeld*(grip: GripFingers, fingers: array[2, ScreenPosition]): array[2, ScreenPosition] =
   ## Place pixels grip holds what each finger took at: fingers as they stand, less slop.
   ##   Middle is fingers' own, so slide follows them from first pixel.
   ##   Gap and angle stand as fingers landed until each passes its slop; see `noteSlop`.
@@ -1311,7 +1309,7 @@ func fingersHeld*(
       if grip.angle_from.isNone: angle_landed
       else: angle_landed + angle - grip.angle_from.get
     (across, down) = (0.5 * gap_held * cos(angle_held), 0.5 * gap_held * sin(angle_held))
-    middle = middleOf(fingers)
+    middle = middle(fingers)
   [
     ScreenPosition(x: middle.x - across, y: middle.y - down),
     ScreenPosition(x: middle.x + across, y: middle.y + down),
@@ -1326,9 +1324,7 @@ func placesSeen(
   let (eye, frame) = camera.sight
   var seen: array[2, ScreenPosition]
   for index, held in grip.fingers:
-    let at = camera.pixelThrough(
-      frame, width, height, held.place.toView(camera.originView) - eye
-    )
+    let at = camera.pixelThrough(frame, width, height, held.place.toView(camera.originView) - eye)
     if at.isNone: return
     seen[index] = at.get
   some(seen)
@@ -1340,12 +1336,14 @@ func missesGripped(
   ## Measure, in pixels, how far `camera` sees each held place from where its finger holds it.
   let seen = grip.placesSeen(camera, width, height)
   if seen.isNone: return
-  some([
-    seen.get[0].x - fingers[0].x,
-    seen.get[0].y - fingers[0].y,
-    seen.get[1].x - fingers[1].x,
-    seen.get[1].y - fingers[1].y,
-  ])
+  some(
+    [
+      seen.get[0].x - fingers[0].x,
+      seen.get[0].y - fingers[0].y,
+      seen.get[1].x - fingers[1].x,
+      seen.get[1].y - fingers[1].y,
+    ],
+  )
 
 
 func isClearOfFloors(grip: GripFingers, solution: array[4, float]): bool =
@@ -1372,17 +1370,17 @@ func solveFour(matrix: array[4, array[4, float]], vector: array[4, float]): arra
     sides = vector
   for column in 0..3:
     var pivot = column
-    for row in column + 1..3:
+    for row in column + 1 .. 3:
       if abs(rows[row][column]) > abs(rows[pivot][column]): pivot = row
     swap(rows[column], rows[pivot])
     swap(sides[column], sides[pivot])
-    for row in column + 1..3:
+    for row in column + 1 .. 3:
       let factor = rows[row][column] / rows[column][column]
       for k in column..3: rows[row][k] -= factor * rows[column][k]
       sides[row] -= factor * sides[column]
   for row in countdown(3, 0):
     var sum = sides[row]
-    for k in row + 1..3: sum -= rows[row][k] * result[k]
+    for k in row + 1 .. 3: sum -= rows[row][k] * result[k]
     result[row] = sum / rows[row][row]
 
 
@@ -1395,7 +1393,7 @@ func placeShownNearest(
 ): Option[tuple[depth, floor: float]] =
   ## Read depth along sight, and drawn radius, of object shown nearest `pixel`, of those
   ## standing within `FACTOR_ANCHOR_DEPTH` of pivot's depth.
-  ##   Finite kinds alone, at their own placement's point, as `framing.reachNearOf` reads
+  ##   Finite kinds alone, at their own placement's point, as `framing.reachNear` reads
   ##   them. Band about pivot, as selection's wheel keeps, so pinch scales what view is about.
   ##     Not nearest ahead, which far out is star off to side, not what fingers are on.
   ##     Not nearest shown at any depth, which far out is background star thousand times deeper.
@@ -1448,7 +1446,7 @@ proc gripFingers*(
     landed: fingers,
     is_orbit: has_selection,
     reach_selection: reach_selection,
-    middle_last: middleOf(fingers),
+    middle_last: middle(fingers),
   )
   var anchors: array[2, Option[AnchorZoom]]
   for index, finger in fingers:
@@ -1471,7 +1469,7 @@ proc gripFingers*(
       open = some((depth: depth, floor: 0.0))
       break
   if open.isNone and not has_selection:
-    open = placeShownNearest(scene, camera, width, height, middleOf(fingers), placed)
+    open = placeShownNearest(scene, camera, width, height, middle(fingers), placed)
     result.is_open = open.isNone
   var reaches = 0.0
   for index, finger in fingers:
@@ -1588,7 +1586,7 @@ func gapDollied(grip: GripFingers; camera: Camera; width, height: int; along: fl
   ## Read pixels between both places once `camera` dollies by `exp(along)`.
   ##   Infinite where either stands behind eye, as eye past it sees it nearer than any.
   var dollied = camera
-  dollied.dolly(exp(along))
+  dollied.dolly exp(along)
   let seen = grip.placesSeen(dollied, width, height)
   if seen.isNone: Inf else: gapAndAngle(seen.get)[0]
 
@@ -1605,7 +1603,7 @@ func orbitGripped(
   ##   Dolly scales about pivot, in middle of frame, so what fingers' middle holds drifts
   ##   toward middle of frame as view zooms out, and away from it as view zooms in.
   ##   Eye stops at each place's floor, as wheel stops; past it, fingers slip.
-  let middle = middleOf(held)
+  let middle = middle(held)
   camera.turnFollowing(
     grip.middle_last, middle, width, height, has_selection = true, grip.reach_selection
   )
@@ -1767,7 +1765,7 @@ func takeHold*(interaction: var Interaction, now: float): Option[int] =
 
 #[ Drag Lifecycle ]#
 
-func destinationOf*(interaction: Interaction): Option[int] =
+func destination*(interaction: Interaction): Option[int] =
   ## Say which object drag in progress points at, for its release to build with.
   ##   Hover while no menu is open; object menu opened over once one is.
   ##     Menu opens centred on cursor, so reaching wedge takes cursor off object, and
@@ -1820,7 +1818,7 @@ func isConstructibleByTouch*(interaction: Interaction): bool =
 func beginDrag*(interaction: var Interaction, arming: MenuArming, now: float): bool =
   ## Start construction drag from object currently hovered.
   ##   Reports whether one started, so caller knows whether to fall back to camera.
-  ##   `arming` is what pointer chose; see `MenuArming` and `armingOf`.
+  ##   `arming` is what pointer chose; see `MenuArming` and `arming`.
   ##   Expects `beginPress` to have run for same press.
   ##   Backdrop is click and hold pivot, never drag handle; see `is_hover_backdrop`.
   ##     Horizon plane is drawn as dome over every direction, hovered wherever nothing
@@ -1894,7 +1892,7 @@ func updateDrag*(interaction: var Interaction, scene: Scene, now: float) =
       interaction.index_hover != interaction.index_disengaged:
     interaction.index_disengaged = none(int)
 
-  let over = destinationOf(interaction)
+  let over = destination(interaction)
   interaction.is_over_target =
       over.isSome and over.get != interaction.index_source and
       scene.isAlive(over.get) and scene.isAlive(interaction.index_source)
@@ -1928,8 +1926,8 @@ func updateDrag*(interaction: var Interaction, scene: Scene, now: float) =
     interaction.is_menu_entered = false
 
   let
-    m = scene.geometryOf(interaction.index_source)
-    n = scene.geometryOf(over.get)
+    m = scene.geometryAt(interaction.index_source)
+    n = scene.geometryAt(over.get)
   # Resolve in `endDrag`'s order.
   #   Wheel answers where open, `proposalFor` where none, except dwell wheel nobody has
   #   entered answers nothing at centre, so pair's answer stands.
@@ -1961,7 +1959,7 @@ func commitChoice*(
   ##   Refuses rather than adding object that draws nothing: message and no object, which is
   ##   why `index_created` is `Option`.
   ##     Menu greys wedges this would refuse.
-  let over = destinationOf(interaction)
+  let over = destination(interaction)
   # Stay silent as `endDrag` is.
   #   Reachable only through menu whose pivot went away under it.
   if over.isNone: return DragOutcome()
@@ -1973,8 +1971,8 @@ func commitChoice*(
   let
     label_source = scene.labelAt(interaction.index_source).toText
     label_destination = scene.labelAt(over.get).toText
-    m = scene.geometryOf(interaction.index_source)
-    n = scene.geometryOf(over.get)
+    m = scene.geometryAt(interaction.index_source)
+    n = scene.geometryAt(over.get)
     operands = some((source: interaction.index_source, destination: over.get))
   if choice == DragChoice.More:
     return DragOutcome(
@@ -1988,7 +1986,7 @@ func commitChoice*(
   let
     operation = choice.toDrag.get.toOperation
     label = notationSubstituted(operation, label_source, label_destination)
-    derived = resultOf(choice, m, n)
+    derived = outcome(choice, m, n)
   if derived.isNone:
     return DragOutcome(
       message: &"{label} makes nothing drawable; nothing added.",
@@ -2068,7 +2066,7 @@ func endDrag*(interaction: var Interaction, scene: var Scene, now = 0.0): DragOu
     if interaction.is_menu_entered or interaction.arming != MenuArming.OnDwell:
       return DragOutcome(message: "Released without choosing; nothing done.")
 
-  let over = destinationOf(interaction)
+  let over = destination(interaction)
   # Say nothing about release over nothing.
   #   Reader can see no object arrived, and message on every abandoned gesture fires on
   #   commonest thing reader does.
@@ -2080,7 +2078,7 @@ func endDrag*(interaction: var Interaction, scene: var Scene, now = 0.0): DragOu
   if not (scene.isAlive(interaction.index_source) and scene.isAlive(over.get)):
     return DragOutcome(message: "Source or destination no longer exists; nothing done.")
 
-  let proposal = proposalFor(scene.geometryOf(interaction.index_source), scene.geometryOf(over.get))
+  let proposal = proposalFor(scene.geometryAt(interaction.index_source), scene.geometryAt(over.get))
   if proposal.isNone:
     let
       label_source = scene.labelAt(interaction.index_source).toText
