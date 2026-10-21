@@ -15,7 +15,7 @@ from std/unicode import runeLen
 import ../src/pga_benchmark
 import ../src/pga_benchmark/[
   bound, cells, changes, definitions, dense, gaps, guard, head, inspector, markdown,
-  measurements, model, notes, proposals, report,
+  measurements, model, notes, proposals, report, trace,
 ]
 import ../src/pga_benchmark/pages/[
   completion, docket, evaluation, home, listing, proposal, render, search, shell,
@@ -23,6 +23,7 @@ import ../src/pga_benchmark/pages/[
 from ../src/pga_benchmark/evaluations import
   ENTRY_LIBRARY, algebrasEvaluated, digestEdits, functionsChanged, compareNan, readLibrary,
   compileCost, pairTimes
+from ../src/pga_benchmark/machine import entries
 from ../src/pga_benchmark/unitized import nil
 
 
@@ -1182,6 +1183,207 @@ suiteInProc "Internal: Guard":
     check grown.findings.len == 1 and "got `90`" in grown.findings[0].message  # equality gate
     check gone.findings.len == 1 and
         gone.findings[0].message == "Lower bound absent now; got `wedge`."  # bound lost
+
+
+
+suiteInProc "Internal: Machine":
+  const
+    path = "baseline/machine_rga4d.json"
+    symbols = """
+0000000000001000 0000000000000100 T machine_drive
+0000000000002000 0000000000000040 t wrapper0_u0__machine
+0000000000003000 0000000000000040 t wrapper1_u0__machine
+0000000000004000 0000000000000020 t unitize__pgaZnorms_u3
+0000000000005000 0000000000000008 B SINK
+0000000000004020 0000000000000000 t sizeless
+                 U sqrt@GLIBC_2.2.5
+"""
+      ## Symbols as `nm -S` prints them: driver, two wrappers, callee, data, sizeless, foreign.
+    written = "machine_drive\t109000\nadd\t10a000\nunitize\t10b000\n"
+      ## Entries as `machine` writes them, binary loaded `0x108000` past its file addresses.
+    trace = """
+==1== Lackey, an example Valgrind tool
+I  00109000,4
+ S 1ffefff000,8
+I  0010a000,4
+ L 00200000,8
+ L 00200008,8
+I  0010a004,3
+ S 00300000,16
+I  0010a010,3
+ S 00500000,8
+I  0010a010,3
+ S 00500008,8
+I  0010a017,5
+ S 1ffeffef00,8
+I  0010c000,4
+ M 00300000,8
+I  0010c004,1
+ L 1ffeffef00,8
+I  0010a01c,1
+ L 1ffefff008,8
+I  00109010,4
+ S 00400000,8
+I  0010b000,4
+I  07000000,4
+ L 07100000,32
+I  0010b004,1
+I  00109020,4
+==1== Exit
+"""
+      ## Trace of driver calling two wrappers: first stores, fills two words by `rep`, and calls
+      ##   function of binary that modifies; second runs one instruction in shared object.
+
+  func tallied(text: string): Tally =
+    ## Read trace text into tally over fixture entries and symbols.
+    result = initTally(parseEntries(written), parseSymbols(symbols))
+    for line in text.splitLines: result.read(line)
+
+  func documentMachine(node: JsonNode; compiler_c = "gcc 13.3.0"; id = "add"): JsonNode =
+    ## Build machine document holding one measurand's work.
+    result = document(
+      "machine",
+      nodeAlgebra("rga4d", 4, false, 128),
+      %*{
+        "date": "2026-10-21", "machine": "m", "nim": "n", "pga": "p", "flags": "-d:release",
+        "compiler_c": compiler_c, "tracer": "valgrind-3.22.0 --tool=lackey",
+      },
+    )
+    result["measurands"] = newJObject()
+    result["measurands"][id] = node
+
+  func work(instructions, bytes_written: int; is_shared_reached = false): JsonNode =
+    ## Build work of one wrapper.
+    nodeWork(Work(
+      instructions: instructions,
+      bytes_read: 417,
+      bytes_written: bytes_written,
+      is_shared_reached: is_shared_reached,
+    ))
+
+  let statics = %*{
+    "measurands": {"add": {"library": "+(Multivector,Multivector)"}, "sandwich": {"library": ""}},
+    "functions": {"+(Multivector,Multivector)": {
+      "total": {"fills_zero": 1, "copies": 0}, "movement": {"bytes_moved": 512},
+    }},
+  }
+    ## Static document beside machine one: `add` names library function, `sandwich` composes.
+
+
+  test "symbols keep functions of binary with size, and skip data and foreign ones":
+    check parseSymbols(symbols).mapIt(it.name) == @[
+      "machine_drive", "wrapper0_u0__machine", "wrapper1_u0__machine", "unitize__pgaZnorms_u3",
+      "sizeless",
+    ]  # data `B` and undefined `U` skipped; sizeless kept, and counts in no extent
+
+
+  test "work of wrapper runs from its entry to first instruction back in driver":
+    let works = tallied(trace).works
+    check works.mapIt(it[0]) == @["add", "unitize"]  # order `machine` listed
+    check works[0][1] == Work(
+      instructions: 8,  # own four, return among them, `rep` twice, callee's two; never driver's
+      bytes_read: 40,  # two loads, callee's modify, two returns
+      bytes_written: 48,  # store, two words of `rep`, call's push, callee's modify
+      is_shared_reached: false,  # callee lies in binary's text
+    )
+    check works[1][1] == Work(
+      instructions: 3, bytes_read: 32, bytes_written: 0, is_shared_reached: true
+    )  # instruction at `0x7000000` lies past binary's text
+
+
+  test "trace ending inside wrapper, or missing one, is refused":
+    let cut = trace[0 ..< trace.find("I  00109010")]
+    expect ValueError: discard tallied(cut).works  # ends inside `add`
+    let half = trace[0 ..< trace.find("I  0010b000")]
+    expect ValueError: discard tallied(half).works  # holds no work of `unitize`
+    expect ValueError: discard tallied(trace & "I  0010a000,4\nI  00109000,4\n").works  # twice
+
+
+  test "entries open with driver, and symbol table sizes it":
+    expect ValueError: discard initTally(parseEntries("add\t10a000\n"), parseSymbols(symbols))
+    expect ValueError: discard initTally(parseEntries(written), parseSymbols(""))
+    expect ValueError: discard initTally(
+      parseEntries(written & "subtract\t10a000\n"), parseSymbols(symbols)
+    )  # two measurands share one entry
+    expect ValueError: discard parseEntries("add 10a000\n")  # tab separates name and address
+
+
+  test "equal machine documents pass with nothing to say":
+    let v = compareMachine(documentMachine(work(82, 392)), documentMachine(work(82, 392)),
+        statics, path)
+    check v.findings.len == 0 and v.improvements.len == 0  # zero band holds
+
+
+  test "grown machine count is finding, with static count of its function beside it":
+    let v = compareMachine(documentMachine(work(82, 392)), documentMachine(work(83, 392)),
+        statics, path)
+    check v.findings.len == 1 and v.improvements.len == 0  # one instruction more is growth
+    check v.findings[0].render == path & ":0: Machine `instructions` of `add` grew; got `83`, " &
+        "baseline `82`, beside static `+(Multivector,Multivector)` of `1` fills, `0` copies " &
+        "and `512` bytes moved."  # VII.10, IV.4
+    let composed = compareMachine(
+      documentMachine(work(900, 392), id = "sandwich"),
+      documentMachine(work(900, 520), id = "sandwich"),
+      statics,
+      path,
+    )
+    check composed.findings.len == 1 and composed.findings[0].message.endsWith(
+      "got `520`, baseline `392`, and no static function names it."
+    )  # measurand composing several calls names no library function
+
+
+  test "shrunk machine count is improvement, never finding":
+    let v = compareMachine(documentMachine(work(82, 392)), documentMachine(work(82, 264)),
+        statics, path)
+    check v.findings.len == 0 and v.improvements.len == 1  # baseline moves by choice
+    check "`bytes_written` of `add` shrank; got `264`" in v.improvements[0]  # what shrank
+
+
+  test "machine document of another compiler is refused, never compared":
+    let v = compareMachine(
+      documentMachine(work(82, 392)),
+      documentMachine(work(90, 392), compiler_c = "clang 18.1.3"),
+      statics,
+      path,
+    )
+    check v.findings.len == 1 and v.findings[0].message ==
+        "Build `compiler_c` differs; got `clang 18.1.3`, baseline `gcc 13.3.0`."  # VII.11
+    let static_kind = compareMachine(documentMachine(work(82, 392)),
+        document("static", newJObject(), newJObject()), statics, path)
+    check static_kind.findings.len == 1 and "Kind differs" in static_kind.findings[0].message
+
+
+  test "wrapper reaching shared object is finding, though its counts hold":
+    let v = compareMachine(
+      documentMachine(work(82, 392)),
+      documentMachine(work(82, 392, is_shared_reached = true)),
+      statics,
+      path,
+    )
+    check v.findings.len == 1 and v.findings[0].message.endsWith("zero no longer; got `add`.")
+
+
+  test "measurand absent in either machine document is finding":
+    let
+      present = documentMachine(work(82, 392))
+      other = documentMachine(work(82, 392), id = "subtract")
+      v = compareMachine(present, other, statics, path)
+    check v.findings.mapIt(it.message) == @[
+      "Measurand absent now; got `add`.", "Measurand absent from baseline; got `subtract`."
+    ]
+
+
+  test "each wrapper is its own function behind boundary optimiser cannot see through":
+    # VII.9: gcc's `noipa` keeps driver from inlining, cloning, folding or dropping each call.
+    let listed = entries()
+    check listed.len == CATALOGUE.len + 1  # driver, then one wrapper per measurand
+    check listed.mapIt(it[1]).deduplicate.len == listed.len  # no two share one entry
+    var declared = 0
+    for path in walkFiles(CACHE / "*machine.nim.c"):
+      for line in readFile(path).splitLines:
+        if line.startsWith("__attribute__((noinline, noipa))") and line.endsWith(";"):
+          inc declared
+    check declared == CATALOGUE.len + 1  # every wrapper and driver declared so
 
 
 

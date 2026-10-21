@@ -14,13 +14,17 @@
 ##   | Command   | Effect                                                               |
 ##   |-----------|----------------------------------------------------------------------|
 ##   | inspect   | compile bench entry per algebra to C, read it, write static          |
-##   |           | measurements as `build/static_<algebra>.json`                        |
+##   |           | measurements as `build/static_<algebra>.json`; compile machine entry |
+##   |           | per algebra, trace it under valgrind, write each measurand's         |
+##   |           | instructions and bytes as `build/machine_<algebra>.json`             |
 ##   | bench     | compile and run bench per algebra, plain ones five times alternating |
 ##   |           | then instrumented, record runtime measurements as                    |
 ##   |           | `baseline/runtime_<algebra>.json`                                    |
-##   | baseline  | inspect, then record static measurements as                          |
-##   |           | `baseline/static_<algebra>.json`                                     |
-##   | guard     | compare last inspect against baseline; any count grown is finding    |
+##   | baseline  | inspect, then record static and machine measurements as              |
+##   |           | `baseline/static_<algebra>.json` and                                 |
+##   |           | `baseline/machine_<algebra>.json`                                    |
+##   | guard     | compare last inspect against baselines; any count grown is finding,  |
+##   |           | and machine counts hold zero band                                    |
 ##   | evaluate  | try one change or proposal at pin, `stale` ones, or `all`, and       |
 ##   |           | record what each measured as `evaluations/<name>.json`; typed        |
 ##   |           | algebras alone, or all four after `--thorough`                       |
@@ -72,6 +76,8 @@ const
     ("git", "read library head and trees `drive` holds pin to"),
     ("curl", "fetch faces asked of shared store, one level down through `koch fetch-assets`"),
     ("binutils", "`objdump` disassembles object files `show` reads machine code from"),
+    ("gcc", "C compiler of every build; machine build names its version (VII.11)"),
+    ("valgrind", "`lackey` traces machine build, whose instructions and bytes `inspect` counts"),
     ("coreutils", "`sha256sum` store checks those faces with"),
     ("nodejs", "run type-checker `types` drives and harness `drive` runs"),
   ]
