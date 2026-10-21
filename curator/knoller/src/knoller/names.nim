@@ -1,4 +1,4 @@
-## Enforce declared names (Article III.5, V.1-V.6, V.11, V.12; V.10 globals), from text of one
+## Enforce declared names (Article III.5, V.1-V.6, V.11-V.13; V.10 globals), from text of one
 ##   file.
 ##   Reads declarations alone, as `declared.nim` reads them: binding, routine, type, field,
 ##     parameter, enum member and placeholder. Name library owns reaches code only at use site,
@@ -41,6 +41,22 @@
 ##     is macro, `emit…` returns `NimNode`. Kind never fixes verb, so other macro and helper
 ##     building syntax tree keep names for their act. V.5: name opening `lut` reads
 ##     `lut_<value>_by_<key>`.
+##   V.3: routine never closes with word `Of`, read without case: property drops it for bare
+##     noun, conversion takes `to<Target>`, action its verb. Routine keeps it only where its name
+##     spells generic type (V.13), as `toMultivectorOf` spells `MultivectorOf`. Generic type may
+##     stand in other module, and knoller reads one file, so spelling is read from words alone:
+##     first word is verb of V.3 taking type after it (`VERBS_TYPE`), and two words or more
+##     follow it, last `Of`. `Of` inside name (`basesOfGrade`) is unread.
+##   V.13: type closes with `Of` only where same file declares alias of its instance taking its
+##     bare name (`stem`): `Multivector = MultivectorOf[…]`. Alias reads from type's value
+##     (`declared.nim`), whose head is generic type and `[`. Proc type, generic alone, alias of
+##     other name or of no instance, and bare name of other type are findings.
+##   V.6: collection type takes plural of its member (`Bases`), never member and word for form
+##     (`FORMS_COLLECTION`): word for form after type same file declares, as `MeshSet` beside
+##     `Mesh`, is finding. Plural before word for form passes, as `BasesSet` beside `Basis`, since
+##     V.6 asks for it where two collection types would share name. So does type file declares as
+##     collection, read from its value's opening (`OPENINGS_COLLECTION`): `BasesSet` beside
+##     `Bases = set[Basis]` is collection of collections, and member it names is no member.
 ##   Cost: compile time is read from routine's own `{.compileTime.}`, as STYLE.md §2 applies it
 ##     across family; routine nested in compile-time one without it reads as runtime.
 ##   V.2: binding holding named value in another representation leads with name of its chain,
@@ -69,6 +85,15 @@
 ##     still need reading, as `is_moved = moved.toHashSet` does.
 ##   Cost: chain with index, call of second input, operator or literal reads as no chain, so
 ##     its name holds by reading. Wrong name of chain at head passes, as `m_grade_int` does.
+##   Cost: routine spelling generic type is read from its verb, never from type. So `toGradeOf`,
+##     spelling no type, passes and holds by reading; routine spelling generic type after other
+##     verb, as `sampleMultivectorOf`, is finding until rule names its verb.
+##   Cost: alias in other module of project is unread, so type closing with `Of` whose alias
+##     stands there is finding; alias wrapping past its line is unread too (`declared.nim`).
+##   Cost: member of collection is read only where same file declares it, and only where word
+##     for form follows it at once: member of other module, or qualifier between (`MeshAntiSet`),
+##     passes. Collection whose value opens otherwise, as alias of other alias (`Bases = Grades`)
+##     or `distinct set[Basis]`, reads as member, so word for form after it is finding.
 
 {.experimental: "strictFuncs".}
 
@@ -106,6 +131,17 @@ const
   JARGON* = ["lut", "min", "max", "src", "prev", "curr", "len"]
     ## Closed list of V.6, which Architect alone extends.
   VERBS_BANNED* = ["get", "compute", "new"]  ## First words routine never takes (V.3).
+  VERBS_TYPE = ["construct", "define", "emit", "init", "to"]
+    ## Verbs of V.3 taking type after them, so routine opening one may spell generic type closing
+    ##   with `Of` (V.13), as `toMultivectorOf` does.
+  FORMS_COLLECTION = ["Array", "Seq", "Set", "Table"]
+    ## Words for form of collection, which close type's name only where two collection types
+    ##   would share it (V.6).
+  OPENINGS_COLLECTION = [
+    "array[", "CountTable[", "HashSet[", "OrderedTable[", "seq[", "set[", "Table[",
+  ]
+    ## Openings of value declaring collection type, so word for form after it names collection
+    ##   of collections, never member (V.6).
   KINDS_VERB_GENERATION = [
     ("construct", "compile-time routine returning data structure"),
     ("define", "macro"),
@@ -160,6 +196,20 @@ func spansWord(name: string): seq[(int, int)] =
 func words*(name: string): seq[string] =
   ## Split name at `_` and at case changes: `lut_grade`, `wedgeAnti`, `JSONData` give words.
   name.spansWord.mapIt(name[it[0]..<it[1]])
+
+
+func stem(name: string): string =
+  ## Read name before its last word: `MultivectorOf` gives `Multivector`, `Pair_of` gives `Pair`;
+  ##   empty where name is one word.
+  let spans = name.spansWord
+  if spans.len < 2: "" else: name[0..<spans[^2][1]]
+
+
+func isCollection(value: string): bool =
+  ## Decide whether type's value declares collection, by its opening (`OPENINGS_COLLECTION`).
+  for opening in OPENINGS_COLLECTION:
+    if value.startsWith(opening): return true
+  false
 
 
 func wordFull(word: string, exempt_lower: openArray[string]): string =
@@ -348,7 +398,9 @@ func indexRun(parts, run: openArray[string]): int =
 
 func namesLater*(d: Declared): seq[string] =
   ## Read names of chain whose value binding holds in another representation, where binding's
-  ##   name holds one of them after its head and none at its head (V.2); empty otherwise.
+  ##   name holds one of them after its head and none at its head (V.2); empty otherwise, and
+  ##   for every other kind, type's value among them.
+  if d.kind != KindName.Binding: return
   let
     held = d.value.namesConverted
     at = held.mapIt(d.name.words.indexRun(it.words))
@@ -374,14 +426,15 @@ func listed(names: openArray[string]): string =
 
 func checkNames*(path, source: string; exempt: openArray[string]): seq[Report] =
   ## Report declared name that coins abbreviation `exempt` does not list, opens routine with
-  ##   banned verb, misnames lookup table or boolean, breaks case of its kind, or shares its word
-  ##   with type as global; binding of entry block is entry block's. Acronym is caller's (V.9).
+  ##   banned verb, closes routine or type with `Of` where V.3 or V.13 forbids it, names
+  ##   collection by member and form, misnames lookup table or boolean, breaks case of its kind,
+  ##   or shares its word with type as global; binding of entry block is entry block's. Acronym
+  ##   is caller's (V.9).
   let
     exempt_lower = exempt.mapIt(it.toLowerAscii)
     declared = source.declarations
-  var keys_type: seq[string]
-  for d in declared:
-    if d.kind == KindName.Type: keys_type.add d.name.toLowerAscii.replace("_", "")
+    types = declared.filterIt(it.kind == KindName.Type)
+    keys_type = types.mapIt(it.name.toLowerAscii.replace("_", ""))
   for d in declared:
     let parts = d.name.words
     for w in parts:
@@ -399,6 +452,34 @@ func checkNames*(path, source: string; exempt: openArray[string]): seq[Report] =
         d.line,
         Rule.VerbAction,
         "Action is imperative verb and property is bare noun; got `" & d.name & "`.",
+      )
+    let
+      is_closed_of = parts.len > 1 and parts[^1].toLowerAscii == "of"
+      bare = d.name.stem
+    if d.kind == KindName.Routine and is_closed_of and
+        not (parts[0] in VERBS_TYPE and parts.len > 2):
+      result.add initReport(
+        path,
+        d.line,
+        Rule.SuffixRoutine,
+        "Routine closes with `Of` only where it spells generic type; got `" & d.name & "`.",
+      )
+    if d.kind == KindName.Type and is_closed_of and
+        not types.anyIt(it.name == bare and it.value.startsWith(d.name & "[")):
+      result.add initReport(
+        path,
+        d.line,
+        Rule.SuffixGeneric,
+        "Type closes with `Of` only where alias of its instance takes its bare name; got `" &
+        d.name & "`.",
+      )
+    if d.kind == KindName.Type and parts.len > 1 and parts[^1] in FORMS_COLLECTION and
+        types.anyIt(it.name == bare and not it.value.isCollection):
+      result.add initReport(
+        path,
+        d.line,
+        Rule.NameCollection,
+        "Collection type takes plural of its member `" & bare & "`; got `" & d.name & "`.",
       )
     for (verb, kind) in KINDS_VERB_GENERATION:
       if d.kind != KindName.Routine or parts.len < 2 or parts[0] != verb: continue
