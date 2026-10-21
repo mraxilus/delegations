@@ -118,7 +118,7 @@ its two arenas, and its scene block. The page row of that block reads a count ov
 rather than the bytes that the sentence names. A control that the window explains and the page does
 not is a gap to close, and not a design choice.
 
-**The application names itself once.** `NameTitle` reads `RGA Visualiser`, and both front-ends take
+**The application names itself once.** `NameTitle` reads `PGA Visualiser`, and both front-ends take
 it. The caption of the window is `captionWindow()`, which reads the catalogue. A law requires that
 name to be title case, and every other label to stay a word.
 

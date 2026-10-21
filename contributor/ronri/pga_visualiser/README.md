@@ -1,4 +1,4 @@
-# rga_visualiser
+# pga_visualiser
 
 An interactive visualiser of rigid geometric algebra. It holds points, lines and planes in a
 four-dimensional projective algebra with a rigid, degenerate metric. It holds the operations that
@@ -26,7 +26,7 @@ and the sandwich that are built on them.
 
 ```sh
 nim r koch check                                 # repository root: every check a pull request runs
-nim r koch test contributor/ronri/rga_visualiser  # this project alone, three configurations
+nim r koch test contributor/ronri/pga_visualiser  # this project alone, three configurations
 nim r tools/build.nim assets                     # this project: fetch every face, once
 nim r tools/build.nim web                        # this project: build/rga_visualiser.html
 nim r tools/build.nim drive                      # this project: drive both front-ends
@@ -68,7 +68,7 @@ nim r tools/build.nim desktop
 ```
 
 Atlas restores the `pga` library from `atlas.lock` into `dependencies/`, and it is never
-committed. `nim r koch fetch-deps contributor/ronri/rga_visualiser` restores it alone. It is
+committed. `nim r koch fetch-deps contributor/ronri/pga_visualiser` restores it alone. It is
 pinned at `295bafc`, which is the head of that library.
 
 Four projection operations are withdrawn at head while the library rebuilds them.
