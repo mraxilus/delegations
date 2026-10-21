@@ -1,4 +1,4 @@
-# rga_visualiser
+# pga_visualiser
 
 The words that this project uses for itself. They are the parts of a drawn object, the
 states a pointer can put it in, and the machinery that decides where each mark goes. Only
