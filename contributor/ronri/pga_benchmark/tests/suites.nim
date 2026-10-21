@@ -2950,7 +2950,7 @@ suiteInProc "Internal: Library map":
 
 
 suiteInProc "Internal: Render":
-  const fixture = staticRead("fixtures/control_faces.json")  ## Control page `drive` renders.
+  const fixture = staticRead("fixtures/control_render.json")  ## Control page `drive` renders.
   let expected = @[(element: "p#han", codepoint: 0x4E2D), (element: "p#open", codepoint: 0x2603)]
     ## Findings control of these tests expects.
 
@@ -2965,7 +2965,7 @@ suiteInProc "Internal: Render":
   test "control fixture expects findings, and its page writes each paragraph it names":
     let
       paragraphs = paragraphs(parseJson(fixture))
-      body = bodyControl(paragraphs)
+      body = bodyControl(paragraphs, [])
     check findingsExpected(paragraphs).len > 0  # control proves something
     check findingsExpected(paragraphs).allIt(it.codepoint > 0x7F)  # beyond ASCII alone
     check paragraphs.anyIt(not it.is_drawn_by_system)  # one shipped face draws, unexpected
@@ -2973,6 +2973,46 @@ suiteInProc "Internal: Render":
       check "<p id=\"" & paragraph.id & "\"" in body  # each paragraph on page, by id
       if paragraph.stack.len > 0:
         check "font-family: " & escapeHtml(paragraph.stack) & "\"" in body  # own stack, inline
+
+
+  test "control fixture expects one crowded card, and its page writes each card it names":
+    let
+      cards = cards(parseJson(fixture))
+      body = bodyControl([], cards)
+    check crowdedExpected(cards).len > 0  # control proves something
+    check cards.anyIt(not it.is_crowded)  # one card keeps margins of shell, unexpected
+    for card in cards:
+      let opening = "<details class=\"card\" id=\"" & card.id & "\" open>"
+      check opening in body  # each card on page, open, by id
+      check (crowdedExpected(cards).contains("details#" & card.id & ".card")) == card.is_crowded
+    check body.count("margin-top: 0 !important") == cards.countIt(it.is_crowded)  # crowded alone
+
+
+  test "crowded pair reads as finding at its page, and control passes on cards it expects":
+    let
+      expected = @["details#crowded.card"]
+      found = %*{
+        "proposals": {"crowded": [
+          {"element": "details#change-x.card", "between": "p, p", "gap": 0}]},
+        "control": {"crowded": [
+          {"element": "details#crowded.card", "between": "p, p", "gap": 0}]},
+      }
+    check checkCrowded(found, expected, "control", "h").mapIt(it.render) == @[
+      "h/proposals.html:0: details#change-x.card: Blocks of card touch; got `p, p` at `0 px`.",
+    ]  # page's pair is finding, control's expected pair is not
+
+
+  test "crowded control card absent is blind, and one nobody expects is finding":
+    let
+      expected = @["details#crowded.card"]
+      blind = checkCrowded(%*{"control": {"crowded": []}}, expected, "control", "h")
+    check blind.len == 1 and "Check is blind" in blind[0].message  # render missed it
+    let spaced = %*{"control": {"crowded": [
+      {"element": "details#crowded.card", "between": "p, p", "gap": 0},
+      {"element": "details#spaced.card", "between": "p, p", "gap": 0}]}}
+    check checkCrowded(spaced, expected, "control", "h").len == 1  # shell left spaced card crowded
+    let none = checkCrowded(newJObject(), [], "control", "h")
+    check none.len == 1 and "proves nothing" in none[0].message  # vacuous control refused
 
 
   test "codepoint reads as Unicode names it":

@@ -1,7 +1,7 @@
 // Render each page `drive` builds, and write where face of system would draw character beyond
-//   ASCII; not Nim because question is browser's own cascade, asked through Playwright's API,
-//   which Nim reaches only through glue that would leave every expression run inside page
-//   unchecked string.
+//   ASCII, and where two blocks of card touch (`layout.ts`); not Nim because question is
+//   browser's own cascade and layout, asked through Playwright's API, which Nim reaches only
+//   through glue that would leave every expression run inside page unchecked string.
 //   Run by `nim r tools/build.nim drive`, which builds every page and control page, wraps each
 //     as publish host does into `build/hosted/<name>.html`, and names output file, then each
 //     page, here as arguments. Driver judges what this writes (`render.nim`); this judges none.
@@ -22,6 +22,7 @@ import { basename } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { faceDrawing, toFaces, parseFamilies } from './faces';
 import { writeFound, type Found } from './found';
+import { readCrowded } from './layout';
 import { readWritten } from './text';
 
 /** Variable naming Chromium to drive in place of Playwright's own. */
@@ -38,6 +39,7 @@ async function pageFound(browser: Browser, path: string): Promise<Found> {
   const name = basename(path, '.html');
   const page = await browser.newPage();
   await page.goto(pathToFileURL(path).href);
+  const crowded = await readCrowded(page);
   const written = await readWritten(page);
   await page.close();
 
@@ -45,6 +47,7 @@ async function pageFound(browser: Browser, path: string): Promise<Found> {
   const found: Found = {
     characters: [],
     faces: written.loaded.filter((face) => face.status !== 'loaded'),
+    crowded,
   };
 
   // Resolve every character beyond ASCII down stack of element drawing it.
