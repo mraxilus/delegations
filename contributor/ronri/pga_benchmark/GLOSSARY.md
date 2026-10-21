@@ -91,6 +91,11 @@ A timing, an allocation count or a NaN share, taken by a run of the measurand ov
 pool.
 _Avoid_: bench document, timing, benchmark result
 
+**Machine measurement**:
+A count of the work the machine does for one measurand: instructions executed, bytes read and
+bytes written. Valgrind traces it, with the measurand in a wrapper of its own.
+_Avoid_: machine count, traced measurement, dynamic count
+
 **Movement**:
 The bytes that one call moves, modelled from static measurements: operands read, result
 written, zero fills, whole-object copies, intermediates. It is named bytes, and never cache
@@ -103,12 +108,12 @@ mid-chain.
 _Avoid_: temporary, scratch, local
 
 **Baseline**:
-The committed static measurements that the guard compares a fresh reading against. Only the
-`baseline` verb moves it, after an intended change.
+The committed static and machine measurements that the guard compares a fresh reading against.
+Only the `baseline` verb moves it, after an intended change.
 _Avoid_: snapshot, golden, expected, recorded
 
 **Guard**:
-The verb that fails on any static measurement or bytes moved that grew against the
+The verb that fails on any static or machine measurement, or bytes moved, that grew against the
 baseline. It is what `drive` runs in CI.
 _Avoid_: gate, check, regression test
 

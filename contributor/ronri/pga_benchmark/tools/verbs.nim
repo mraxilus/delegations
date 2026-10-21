@@ -11,7 +11,8 @@
 ##     timing, so runner's verdict on measurements is same as local one.
 ##   `head` alone reads library head over network, so its verdict moves with library and not
 ##     with this project; `head.yml` runs it daily, and no merge waits on it (CONTRIBUTOR.md).
-##   Cost: `drive` compiles bench and inspect entries once per algebra, seconds each.
+##   Cost: `drive` compiles bench, inspect and machine entries once per algebra, seconds each,
+##     and runs machine entry under valgrind, about one second each.
 ##   Cost: `drive` renders through node and Chromium, which dispatcher readies; render reads
 ##     computed style, not clock.
 ##   Cost: `bench` and `evaluate` measurements name machine they were taken on; committing them
@@ -23,8 +24,11 @@ when compileOption("profiler"): import std/nimprof
 
 import std/[algorithm, json, options, os, osproc, sequtils, strutils, tables, times]
 
-import ../src/pga_benchmark/[changes, gaps, guard, head, inspector, model, notes, proposals]
-from ../src/pga_benchmark/report import combineRuns, IMPLEMENTATIONS
+import ../src/pga_benchmark/[
+  changes, gaps, guard, head, inspector, model, notes, proposals, trace
+]
+from ../src/pga_benchmark/report import
+  combineRuns, document, nodeAlgebra, takenNow, IMPLEMENTATIONS
 import ../src/pga_benchmark/pages/[
   completion, docket, home, listing, marginalia, render, shell
 ]
@@ -49,6 +53,23 @@ const
     ## Entry reaching every measurand; its cache is what inspect reads.
   ENTRY_INSPECT = "src/pga_benchmark/inspect.nim"
     ## Entry reading cache, compiled per algebra for its catalogue.
+  ENTRY_MACHINE = "src/pga_benchmark/machine.nim"
+    ## Entry calling every measurand once in wrapper of its own, which tracer counts.
+  FLAGS_MACHINE = [
+    "-d:pga_benchmark.objects=2",
+    "--cc:gcc",
+    "--passC:-fno-inline-functions-called-once",
+    "--passC:--param=large-unit-insns=1000000000",
+    "--passC:--param=ipa-cp-unit-growth=1000000",
+  ]
+    ## Flags machine build adds, which its documents name (VII.11): pools of `m` and `n` alone, C
+    ##   compiler `noipa` needs, and no limit gcc sets over whole C file.
+    ##   Every wrapper shares one C file. gcc inlines callee called once, and stops inlining and
+    ##     cloning where file has grown by its limit; either makes count of one wrapper move with
+    ##     others. Without these flags, wrappers of identical C read other counts, and dropping
+    ##     half of wrappers moved 5 counts at rga4d and 10 at cga5d.
+  TRACER = ["--tool=lackey", "--trace-mem=yes"]
+    ## Arguments of valgrind tracing every instruction and access of machine build.
   ENTRY_UNITIZED = "src/pga_benchmark/unitized.nim"
     ## Program timing point operations of Lengyel's code, homogeneous against unitized.
   ENTRY_FIND = "src/pga_benchmark/pages/find.nim"
@@ -160,11 +181,63 @@ proc readDocument(path: string): JsonNode =
   parseJson(readFile(path))
 
 
+proc firstLine(command: string): string =
+  ## Run command line, and read first line it prints; raise on non-zero exit.
+  let (text, code) = execCmdEx(command)
+  if code != 0:
+    raise newException(OSError, command & " failed; got exit `" & $code & "`.")
+  text.splitLines[0].strip
+
+
 
 #[ Commands ]#
 
+proc countMachine(name: string; dimensions: int; is_conformal: bool; nim, pga: string) =
+  ## Compile machine entry for algebra, trace it under valgrind, and count each wrapper's work
+  ##   into `build/machine_<algebra>.json` (`trace.nim`).
+  let
+    binary = BUILD / "machine_" & name
+    entries = binary & ".tsv"
+    log = BUILD / "trace_" & name & ".txt"
+  removeDir BUILD / "cache_machine_" & name
+  compile(
+    ENTRY_MACHINE,
+    binary,
+    BUILD / "cache_machine_" & name,
+    dimensions,
+    is_conformal,
+    nim,
+    pga,
+    FLAGS_MACHINE,
+  )
+  run("valgrind", @TRACER & @["--log-file=" & log, binary, entries])
+  let (symbols, code) = execCmdEx("nm -S " & quoteShell(binary))
+  if code != 0: raise newException(OSError, "nm failed; got exit `" & $code & "`.")
+  var tally = initTally(parseEntries(readFile(entries)), parseSymbols(symbols))
+  for line in lines(log): tally.read(line)
+  var taken = takenNow()
+  taken["nim"] = %nim
+  taken["pga"] = %pga
+  taken["flags"] = %FLAGS
+  taken["flags_machine"] = %FLAGS_MACHINE
+  taken["compiler_c"] = %firstLine("gcc --version")
+  taken["tracer"] = %(firstLine("valgrind --version") & " " & TRACER.join(" "))
+  var
+    measured = document(
+      "machine",
+      nodeAlgebra(name, dimensions, is_conformal, 8 shl dimensions),
+      taken,
+    )
+    measurands = newJObject()
+  for (id, work) in tally.works: measurands[id] = nodeWork(work)
+  measured["measurands"] = measurands
+  writeFile(BUILD / "machine_" & name & ".json", pretty(measured) & "\n")
+  echo "Counted ", measurands.len, " wrappers into ", BUILD / "machine_" & name & ".json"
+
+
 proc inspect() =
-  ## Compile bench entry per algebra to C only, then read its cache into document.
+  ## Compile bench entry per algebra to C only, then read its cache into document; count
+  ##   machine's work of every measurand beside it.
   let
     nim = commitNim()
     pga = commitPga()
@@ -193,6 +266,7 @@ proc inspect() =
       pga,
     )
     run(inspector, [cache, BUILD / "static_" & name & ".json", nim, pga, FLAGS])
+    countMachine(name, dimensions, is_conformal, nim, pga)
 
 
 proc mergeAllocations(plain, instrumented: JsonNode): JsonNode =
@@ -262,29 +336,37 @@ proc bench() =
 
 
 proc baseline() =
-  ## Inspect, then record every algebra's counts as its baseline.
+  ## Inspect, then record every algebra's counts, static and machine, as its baselines.
   inspect()
   createDir BASELINE
   for (name, _, _) in CONFIGS:
-    copyFile(BUILD / "static_" & name & ".json", BASELINE / "static_" & name & ".json")
-    echo "Recorded ", BASELINE / "static_" & name & ".json"
+    for kind in ["static", "machine"]:
+      copyFile(BUILD / kind & "_" & name & ".json", BASELINE / kind & "_" & name & ".json")
+      echo "Recorded ", BASELINE / kind & "_" & name & ".json"
 
 
 proc guarded(): seq[Finding] =
-  ## Compare last inspect of every algebra against its baseline; print improvements.
+  ## Compare last inspect of every algebra against its baselines, static and machine; print
+  ##   improvements. Machine findings name static count of same inspect beside them.
   for (name, _, _) in CONFIGS:
     let
-      path = BASELINE / "static_" & name & ".json"
-      fresh = BUILD / "static_" & name & ".json"
-    if not fileExists(path):
-      result.add Finding(path: path, message: "No baseline recorded; run `baseline`.")
-      continue
-    if not fileExists(fresh):
-      result.add Finding(path: path, message: "No inspect output to compare; run `inspect`.")
-      continue
-    let verdict = compare(readDocument(path), readDocument(fresh), path)
-    for line in verdict.improvements: echo "notice: ", line
-    result.add verdict.findings
+      fresh_static = BUILD / "static_" & name & ".json"
+      statics = if fileExists(fresh_static): readDocument(fresh_static) else: newJNull()
+    for kind in ["static", "machine"]:
+      let
+        path = BASELINE / kind & "_" & name & ".json"
+        fresh = BUILD / kind & "_" & name & ".json"
+      if not fileExists(path):
+        result.add Finding(path: path, message: "No baseline recorded; run `baseline`.")
+        continue
+      if not fileExists(fresh):
+        result.add Finding(path: path, message: "No inspect output to compare; run `inspect`.")
+        continue
+      let verdict =
+        if kind == "static": compare(readDocument(path), statics, path)
+        else: compareMachine(readDocument(path), readDocument(fresh), statics, path)
+      for line in verdict.improvements: echo "notice: ", line
+      result.add verdict.findings
 
 
 proc report(findings: seq[Finding]) =
@@ -910,7 +992,7 @@ proc pinnedChecked(pin: string, built: OrderedTable[string, string]): seq[Findin
   ##   and publications.
   ##   Pages come built, so `drive` builds them once for digests and render alike.
   for (name, _, _) in CONFIGS:
-    for kind in ["static", "runtime"]:
+    for kind in ["static", "machine", "runtime"]:
       let path = BASELINE / kind & "_" & name & ".json"
       if fileExists(path): result.add checkStamp(readDocument(path), pin, path)
   if fileExists(PATH_SWEEP): result.add checkStamp(readDocument(PATH_SWEEP), pin, PATH_SWEEP)
