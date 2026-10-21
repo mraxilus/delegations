@@ -70,9 +70,9 @@ const
     ## Bridge whose own `exportc` signatures `declare` reads.
   PATH_PANEL_NIM = "src" / "desktop" / "panel.nim"
     ## Panel, swept for shown text written where it is drawn.
-  PATH_WORDING_NIM = "src" / "rga_visualiser" / "wording.nim"
+  PATH_WORDING_NIM = "src" / "pga_visualiser" / "wording.nim"
     ## Catalogue of shown text, read for its keys and words; see `catalogue`.
-  PATH_HELP_NIM = "src" / "rga_visualiser" / "help.nim"
+  PATH_HELP_NIM = "src" / "pga_visualiser" / "help.nim"
     ## Help tables, swept for shown text written where they are composed.
   PATH_BRIDGE_JS = BUILD_BROWSER / "bridge.js"  ## Compiled bridge, first script on page.
   PATH_DECLARATIONS = BUILD / "bridge.d.ts"

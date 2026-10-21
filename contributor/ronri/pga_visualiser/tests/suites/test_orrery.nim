@@ -6,7 +6,7 @@ import ./fixtures
 # Opened with `{.all.}`, so suite reads moon's frame directly: `nodeOfRing` and `ringed` decide
 #   where on its ring every moon stands, and `toEcliptic` with `directionEquatorial` turn its
 #   elements into frame its normal is read in.
-import ../../src/rga_visualiser/orrery {.all.}
+import ../../src/pga_visualiser/orrery {.all.}
 
 
 # Orrery needs room for its default size, and one configuration here deliberately compiles.

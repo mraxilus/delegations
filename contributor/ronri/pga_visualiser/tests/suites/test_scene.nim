@@ -5,7 +5,7 @@
 import ./fixtures
 # Opened with `{.all.}`, so suite holds `applyOperation` to library's own `operated`, and
 #   `OPERATIONS_SLIDING` to operations that commute with slide.
-import ../../src/rga_visualiser/scene {.all.}
+import ../../src/pga_visualiser/scene {.all.}
 
 
 

@@ -6,7 +6,7 @@ import ./fixtures
 # Opened with `{.all.}`, so suite checks private helper directly: `isBeyondDisc` is broad phase
 #   whose only property worth pinning, never rejecting hit meet would accept, is stated against
 #   it directly.
-import ../../src/rga_visualiser/picking {.all.}
+import ../../src/pga_visualiser/picking {.all.}
 
 
 

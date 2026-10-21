@@ -3,7 +3,7 @@
 {.experimental: "strictFuncs".}
 
 import ./fixtures
-import ../../src/rga_visualiser/[boundary, share]
+import ../../src/pga_visualiser/[boundary, share]
 when not defined(js):
   import std/times
   import ../../src/desktop/sampler
@@ -18,13 +18,13 @@ suite "Share":
         "projective95geometric95algebra95illuminatedZpgaZmultivectors", Owner.Pga),
       ("wedge_u12__OOZOOZdependenciesZreplicationsOmraxilusOgitlabOcomZlengyelZ" &
         "projective95geometric95algebra95illuminatedZpga", Owner.Pga),
-      ("kindOf_u3__OOZrga95visualiserZobjects", Owner.Algebra),
-      ("carried_u1__OOZrga95visualiserZmotors", Owner.Algebra),
-      ("toMultivector_u1__OOZrga95visualiserZboundary", Owner.Boundary),
-      ("normalize_u0__OOZrga95visualiserZeuclid", Owner.Euclidean),
-      ("addDome_u0__OOZrga95visualiserZmesh", Owner.Euclidean),
-      ("placeEvery_u0__OOZrga95visualiserZframing", Owner.Rest),
-      ("placeInto_u9__OOZrga95visualiserZtessellate", Owner.Rest),
+      ("classify_u3__OOZpga95visualiserZobjects", Owner.Algebra),
+      ("carried_u1__OOZpga95visualiserZmotors", Owner.Algebra),
+      ("toMultivector_u1__OOZpga95visualiserZboundary", Owner.Boundary),
+      ("normalize_u0__OOZpga95visualiserZeuclid", Owner.Euclidean),
+      ("addDome_u0__OOZpga95visualiserZmesh", Owner.Euclidean),
+      ("placeEvery_u0__OOZpga95visualiserZframing", Owner.Rest),
+      ("placeInto_u9__OOZpga95visualiserZtessellate", Owner.Rest),
       ("nimBuildFrame", Owner.Rest),
       ("(program)", Owner.Rest),
     ]
@@ -37,16 +37,16 @@ suite "Share":
     test "a desktop frame is owned by the file its code is in":
       # Paths as debug build's frames carry them, absolute and checkout-dependent.
       let paths = [
-        ("/c/rga_visualiser/dependencies/replications.mraxilus.gitlab.com/lengyel/" &
+        ("/c/pga_visualiser/dependencies/replications.mraxilus.gitlab.com/lengyel/" &
           "projective_geometric_algebra_illuminated/pga/multivectors.nim", Owner.Pga),
-        ("/c/rga_visualiser/dependencies/replications.mraxilus.gitlab.com/lengyel/" &
+        ("/c/pga_visualiser/dependencies/replications.mraxilus.gitlab.com/lengyel/" &
           "projective_geometric_algebra_illuminated/pga.nim", Owner.Pga),
-        ("/c/rga_visualiser/src/rga_visualiser/objects.nim", Owner.Algebra),
-        ("/c/rga_visualiser/src/rga_visualiser/projections.nim", Owner.Algebra),
-        ("/c/rga_visualiser/src/rga_visualiser/boundary.nim", Owner.Boundary),
-        ("/c/rga_visualiser/src/rga_visualiser/euclid.nim", Owner.Euclidean),
-        ("/c/rga_visualiser/src/rga_visualiser/mesh.nim", Owner.Euclidean),
-        ("/c/rga_visualiser/src/rga_visualiser/tessellate.nim", Owner.Rest),
+        ("/c/pga_visualiser/src/pga_visualiser/objects.nim", Owner.Algebra),
+        ("/c/pga_visualiser/src/pga_visualiser/projections.nim", Owner.Algebra),
+        ("/c/pga_visualiser/src/pga_visualiser/boundary.nim", Owner.Boundary),
+        ("/c/pga_visualiser/src/pga_visualiser/euclid.nim", Owner.Euclidean),
+        ("/c/pga_visualiser/src/pga_visualiser/mesh.nim", Owner.Euclidean),
+        ("/c/pga_visualiser/src/pga_visualiser/tessellate.nim", Owner.Rest),
         ("/root/.cache/koch/nim/lib/pure/options.nim", Owner.Rest),
       ]
       for (path, owner) in paths:
@@ -58,18 +58,18 @@ suite "Share":
     test "a desktop stack is owned by its innermost frame that has an owner":
       # Outermost first, chained through `prev` as Nim's frames are; walk starts at last.
       const
-        framing = "/c/rga_visualiser/src/rga_visualiser/framing.nim"
-        boundary = "/c/rga_visualiser/src/rga_visualiser/boundary.nim"
-        objects = "/c/rga_visualiser/src/rga_visualiser/objects.nim"
-        multivectors = "/c/rga_visualiser/dependencies/replications.mraxilus.gitlab.com/" &
+        framing = "/c/pga_visualiser/src/pga_visualiser/framing.nim"
+        boundary = "/c/pga_visualiser/src/pga_visualiser/boundary.nim"
+        objects = "/c/pga_visualiser/src/pga_visualiser/objects.nim"
+        multivectors = "/c/pga_visualiser/dependencies/replications.mraxilus.gitlab.com/" &
             "lengyel/projective_geometric_algebra_illuminated/pga/multivectors.nim"
       let stacks = [
-        (@[framing, boundary, "/c/rga_visualiser/src/rga_visualiser/euclid.nim"],
+        (@[framing, boundary, "/c/pga_visualiser/src/pga_visualiser/euclid.nim"],
           Owner.Euclidean),
         (@[framing, boundary, "/root/.cache/koch/nim/lib/system.nim"], Owner.Boundary),
         (@[framing, boundary, objects, multivectors], Owner.Pga),
         (@[framing, objects], Owner.Algebra),
-        (@[framing, "/c/rga_visualiser/src/rga_visualiser/tessellate.nim"], Owner.Rest),
+        (@[framing, "/c/pga_visualiser/src/pga_visualiser/tessellate.nim"], Owner.Rest),
       ]
       for (paths, owner) in stacks:
         var frames = newSeq[TFrame](paths.len)

@@ -55,7 +55,7 @@
 ##   |----------------------|--------------------------------------------------------|
 ##   | Directory            | Reachable from                                         |
 ##   |----------------------|--------------------------------------------------------|
-##   | `src/rga_visualiser` | Both. Geometry, scene, and everything derived from it. |
+##   | `src/pga_visualiser` | Both. Geometry, scene, and everything derived from it. |
 ##   | `src/desktop`        | This file only. SDL3, OpenGL, Dear ImGui, PNG, GIF.    |
 ##   | `src/browser`        | `bridge.nim` only. Bridge, markup, glue.               |
 ##   |----------------------|--------------------------------------------------------|
@@ -107,7 +107,7 @@ when compileOption("profiler"):
 import std/[algorithm, math, monotimes, options, os, parseopt, strformat, strutils, typetraits]
 
 import pga
-import ../rga_visualiser/[
+import ../pga_visualiser/[
   boundary, camera, format, framing, help, history, interaction, marker, message,
   orrery, picking, scene, selection, share, shown, storyboard, tessellate, timings, wording,
 ]

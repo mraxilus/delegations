@@ -42,7 +42,7 @@ import std/[options, strformat]
 
 import pga
 import ./[gui, sampler]
-import ../rga_visualiser/[
+import ../pga_visualiser/[
   boundary, camera, format, framing, help, history, message, orrery, picking,
   scene, selection, share, tessellate, timings, wording,
 ]

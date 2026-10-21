@@ -4,7 +4,7 @@
 ## and nothing here knows which one is drawing (Article II.9).
 ##   Front-end owns window, input device and graphics API; core owns geometry, scene and
 ##   every decision about where mark goes.
-##   Facade re-exports coherent surface, so caller writes `import rga_visualiser` rather
+##   Facade re-exports coherent surface, so caller writes `import pga_visualiser` rather
 ##   than naming modules it happens to need today (Article I.6).
 ##
 ## Order of bootstrapping, by what each module needs before it, one line for each module:
@@ -61,7 +61,7 @@
 
 when compileOption("profiler"): import std/nimprof
 
-import ./rga_visualiser/[
+import ./pga_visualiser/[
   boundary, camera, euclid, format, framing, help, history, interaction, marker,
   mesh, message, neighbourhood, objects, orrery, picking, projections, ramp, scene,
   selection, starfield, storyboard, tessellate, timings, wording,

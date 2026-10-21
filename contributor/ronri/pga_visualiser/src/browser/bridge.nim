@@ -33,7 +33,7 @@
 import std/[options, strformat]
 
 import pga
-import ../rga_visualiser/[
+import ../pga_visualiser/[
   boundary, camera, format, framing, help, history,
   interaction, marker, message, orrery, picking, ramp, scene, selection, share, shown,
   storyboard, tessellate, timings, wording,

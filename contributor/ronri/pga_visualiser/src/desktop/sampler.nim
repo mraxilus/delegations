@@ -18,7 +18,7 @@
 
 {.experimental: "strictFuncs".}
 
-import ../rga_visualiser/share
+import ../pga_visualiser/share
 
 
 const
