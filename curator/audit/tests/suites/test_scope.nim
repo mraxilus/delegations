@@ -4,6 +4,7 @@
 
 import std/[sequtils, strutils, unittest]
 import ../../src/[domains, findings, scope]
+import ./fixtures
 
 
 const OUTSIDE = @[
@@ -119,3 +120,29 @@ suite "Scope":
 
     # Branch outside grammar holds nothing, so its scope finding still blocks.
     check splitHeld("claude/setup", found).held.len == 0
+
+
+  test "curator move changes lock line naming nimble copy, and nothing else":
+    # Case held: move of `rga_visualiser` to `pga_visualiser` renames nimble file after folder,
+    #   while `atlas.lock` stored `"filename": "rga_visualiser.nimble"`, which `atlas rep` writes
+    #   back; no order of two branches moved both (#631). Domain: that line to new name, to other
+    #   name, unchanged, beside second edit, in place, and file other than lock.
+    let
+      alpha = CONTRIBUTOR & "/ronri/alpha/atlas.lock"
+      beta = CONTRIBUTOR & "/ronri/beta/atlas.lock"
+      lock_alpha = lockWith(TEXT_NIMBLE).replace("\"probe.nimble\"", "\"alpha.nimble\"")
+      lock_beta = lock_alpha.replace("\"alpha.nimble\"", "\"beta.nimble\"")
+      lock_gamma = lock_alpha.replace("\"alpha.nimble\"", "\"gamma.nimble\"")
+    check isLockMoved(alpha, beta, lock_alpha, lock_beta)  # name follows folder
+    check not isLockMoved(alpha, beta, lock_alpha, lock_gamma)  # name of no folder
+    check not isLockMoved(alpha, beta, lock_alpha, lock_alpha)  # exact rename, `pathsMoved`'s
+    check not isLockMoved(
+      alpha, beta, lock_alpha, lock_beta.replace("0.1.0", "0.2.0")
+    )  # second edit stays edit
+    check not isLockMoved(alpha, alpha, lock_alpha, lock_beta)  # edit in place is no move
+    check not isLockMoved(
+      alpha.replace("atlas.lock", "alpha.nimble"),
+      beta.replace("atlas.lock", "beta.nimble"),
+      lock_alpha,
+      lock_beta,
+    )  # lock alone carries copy

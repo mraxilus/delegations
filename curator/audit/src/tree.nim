@@ -15,8 +15,9 @@
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, options, os, sequtils, strutils]
+from ../../knoller/src/knoller/chain import FILE_LOCK
 from ../../knoller/src/knoller/command import runGit
-import ./[commits, kinds, layout]
+import ./[commits, kinds, layout, scope]
 
 export layout.Entry, layout.Tree
 
@@ -80,21 +81,32 @@ proc revBefore*(root: string, days: int): string =
 
 
 proc pathsMoved*(root, base: string): seq[string] =
-  ## List paths on both sides of content-preserving rename, i.e. file moved and not edited.
-  ##   `--name-status -M100%` reports `R100`, old path, new path; only exact renames count,
-  ##   so edited file is never mistaken for moved one.
-  let fields = fieldsGit(
-    root,
-    ["diff", "-z", "--name-status", "--find-renames=100%", base & "...HEAD"],
-  )
-  var i = 0
+  ## List paths on both sides of rename that scope exempts, old path then new one.
+  ##   `--name-status` reports score, old path, new path. Exact rename (`R100`) is file moved and
+  ##     not edited, and git pairs exact renames before any other, so edited file is never
+  ##     mistaken for moved one.
+  ##   Lock renamed at lower score is read at merge base and at HEAD, and passes only where its
+  ##     one edit is name of its nimble copy (`isLockMoved`, #631).
+  ##   Cost: merge base and two reads of git for each such lock; branch moving none pays nothing.
+  let fields = fieldsGit(root, ["diff", "-z", "--name-status", "--find-renames", base & "...HEAD"])
+  var
+    fork = ""  # Merge base, read on first lock that needs it.
+    i = 0
   while i + 2 < fields.len:
-    if fields[i].startsWith("R"):
-      result.add fields[i + 1]
-      result.add fields[i + 2]
-      i += 3
-    else:
+    if not fields[i].startsWith("R"):
       i += 2
+      continue
+    let (score, path_from, path_to) = (fields[i], fields[i+1], fields[i+2])
+    i += 3
+    if score != "R100":
+      if not path_from.endsWith("/" & FILE_LOCK): continue
+      if fork.len == 0: fork = fieldsGit(root, ["merge-base", base, "HEAD"])[0].strip
+      let
+        lock_from = fieldsGit(root, ["show", fork & ":" & path_from]).join
+        lock_to = fieldsGit(root, ["show", "HEAD:" & path_to]).join
+      if not isLockMoved(path_from, path_to, lock_from, lock_to): continue
+    result.add path_from
+    result.add path_to
 
 
 proc pathsGained*(root, base: string): seq[string] =

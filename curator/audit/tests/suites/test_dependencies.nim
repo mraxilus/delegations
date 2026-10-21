@@ -2,7 +2,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, os, strutils, tempfiles, unittest]
+import std/[options, os, sequtils, strutils, tempfiles, unittest]
 import ../../src/[dependencies, projects]
 import ./fixtures
 
@@ -87,3 +87,21 @@ suite "Dependencies":
     let found = checkNimbleLock("p/p.nimble", "p/atlas.lock", "not json at all", TEXT_NIMBLE)
     check found.len == 1
     check found[0].path == "p/atlas.lock"  # fault is lock's, so finding points there
+
+
+  test "lock names its nimble copy after nimble file of its project":
+    # Case held: move of `rga_visualiser` to `pga_visualiser` left lock naming
+    #   `rga_visualiser.nimble`, so `atlas rep` wrote stray copy beside `pga_visualiser.nimble`
+    #   (#631). Domain: name that matches, name of other file, lock storing no name, and lock
+    #   that will not parse, which `checkNimbleLock` reports once already.
+    let lock = lockWith(TEXT_NIMBLE)  # Names `probe.nimble`.
+    check checkNameNimble("probe/probe.nimble", "probe/atlas.lock", lock).len == 0  # matches
+    let found = checkNameNimble("p/p.nimble", "p/atlas.lock", lock)
+    check found.mapIt((it.path, it.line, it.message)) == @[(
+      "p/atlas.lock",
+      4,
+      "Lock names nimble copy after nimble file of project, or `atlas rep` writes second " &
+        "one beside it; regenerate lock; got `probe.nimble` for `p.nimble`.",
+    )]  # copy of other name, at its line
+    check checkNameNimble("p/p.nimble", "p/atlas.lock", TEXT_LOCK).len == 0  # no copy, no name
+    check checkNameNimble("p/p.nimble", "p/atlas.lock", "not json at all").len == 0  # once
