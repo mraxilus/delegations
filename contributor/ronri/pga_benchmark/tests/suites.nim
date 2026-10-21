@@ -3003,8 +3003,9 @@ suiteInProc "Internal: Render":
 
 
   test "crowded control card absent is blind, and one nobody expects is finding":
-    let expected = @["details#crowded.card"]
-    let blind = checkCrowded(%*{"control": {"crowded": []}}, expected, "control", "h")
+    let
+      expected = @["details#crowded.card"]
+      blind = checkCrowded(%*{"control": {"crowded": []}}, expected, "control", "h")
     check blind.len == 1 and "Check is blind" in blind[0].message  # render missed it
     let spaced = %*{"control": {"crowded": [
       {"element": "details#crowded.card", "between": "p, p", "gap": 0},
