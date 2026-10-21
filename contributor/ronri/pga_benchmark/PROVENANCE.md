@@ -330,11 +330,13 @@ Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Inspector`. I
 ## Baseline and guard
 
 `baseline/static_<algebra>.json` records the static measurements, and
-`baseline/runtime_<algebra>.json` records the runtime ones. Both are schema 1, with a header
-that names algebra, compiler commit, library commit, flags, machine and date. `guard`
-compares a fresh inspection against the baseline. Any gated count or bytes moved that grew is
-a finding, rendered as `path:0: message; got value`. Any shrink is a notice. A document of
-another algebra, compiler or set of flags is refused rather than compared.
+`baseline/runtime_<algebra>.json` records the runtime ones. `baseline/machine_<algebra>.json`
+records the counts of the machine, as the next section says. All are schema 1, with a header
+that names algebra, compiler commit, library commit, flags, machine and date.
+
+`guard` compares a fresh inspection against the baseline. Any gated count or bytes moved that
+grew is a finding, rendered as `path:0: message; got value`. Any shrink is a notice. A document
+of another algebra, compiler or set of flags is refused rather than compared.
 
 Date and machine are ignored, because static measurements owe them nothing. `drive` is the
 verb that koch and CI run: inspect every algebra, guard, and hold the committed `gaps.md` and
@@ -345,6 +347,85 @@ silently. One grown count is one finding, which names function, metric and both 
 an improvement only, and bytes moved are gated. A function absent in either document is a finding,
 and another build or schema is refused. A lower bound that moves either way, or that is absent now,
 is a finding.
+
+## Counts of the machine
+
+`inspect` also counts the work of the machine for each measurand, as Article VII.10 asks. The
+entry `machine` puts the library expression of each measurand in a wrapper of its own. It calls
+each wrapper once, on pools of two objects that seed 0 fills. So a binary measurand reads two
+objects, and never one object twice.
+
+Each wrapper is `noinit`, and carries the gcc attributes `noinline` and `noipa`. So the driver
+cannot inline, clone, fold or drop a call, and the wrapper knows nothing of its operands (VII.9).
+The library inlines its operators into each caller, so a count of the bench names no operator.
+The count of a wrapper does.
+
+Every wrapper shares one C file. gcc inlines a function that the file calls once, and it stops
+inlining and cloning where the file has grown past its limit. Either makes the count of one
+wrapper move with the others. So `inspect` builds the entry with
+`-fno-inline-functions-called-once`, and sets `large-unit-insns` and `ipa-cp-unit-growth` past
+any file. Then what gcc inlines into a wrapper depends on that wrapper alone.
+
+Valgrind's `lackey` traces the binary. It lists each instruction executed, and each access to
+memory with its bytes. The trace names no function. So `machine` writes the runtime entry of
+each wrapper and of the driver, and `nm -S` gives the extent of the driver.
+
+The work of a wrapper opens at its entry, and closes at the first instruction back in the
+driver. It holds the return and each function that the wrapper calls, but not the call itself.
+That is the inclusive cost of callgrind.
+
+`baseline/machine_<algebra>.json` records three counts for each measurand, and one flag:
+
+- the instructions executed, where each trip of a `rep` instruction is one;
+- the bytes read and the bytes written, where an access that reads and writes the same bytes
+  counts in both;
+- whether any instruction ran outside the text of the binary, in a shared object.
+
+The header names the Nim commit, the flags, the C compiler with its version, and the tracer
+(VII.11). `guard` refuses a baseline whose header names another build. A grown count is a
+finding, and a shrink is a notice. Each message names the static count of the library function
+of the measurand beside it, because that count names the line of C (VII.10). A measurand that
+composes several calls names no library function, and its message says so.
+
+**The band of each count is zero, and this is its cause (VII.12).** Valgrind 3.22 ran the four
+algebras on `linux amd64, 4 cores` on 2026-10-21, at 451 measurands:
+
+- Two runs of one binary gave the same counts for each measurand.
+- A run with `GLIBC_TUNABLES=glibc.cpu.hwcaps=-AVX2,-AVX512F,-ERMS,-AVX_Fast_Unaligned_Load,-FMA`
+  gave the same counts. Under it the C library reads the processor of valgrind as x86-64-v2,
+  and not v3, and the trace outside the wrappers changed.
+- Seeds 1 and 7 gave the counts of seed 0 for each measurand. So the values of the operands
+  move no branch.
+- No wrapper reaches a shared object. So no counted code runs code that the processor selects.
+- Two builds that each hold every other wrapper gave the counts of the whole build. Without the
+  three flags of gcc, 5 counts of 111 moved at rga4d, and 10 of 135 at cga5d. Then `wedge` and
+  `wedge_round_point_dipole` at cga5d, of the same C, read 871 and 774 instructions.
+
+A wrapper that reaches a shared object is a finding. Its band would need readings of the
+runner and of a delegate, and no record holds them.
+
+- Cost: the counted build is not the build that ships. A shipped caller inlines the operator,
+  and the driver calls the wrapper. The flags lift limits that gcc keeps for a shipped build. So
+  the counts are evidence for this build alone (VII.11).
+- Cost: the wrapper returns its expression as `result`. So the count holds what that call site
+  pays, such as a temporary that is filled with zeros and copied.
+- Cost: the counts are for one pair of operands. A path that another operand takes is not
+  counted, such as `sqrt` of a negative number, which calls the C library.
+- Cost: the C compiler joins the build. A runner image with another gcc package fails `drive`
+  until `baseline` is taken again on it.
+- Cost: `drive` needs valgrind, and runs the machine build of each algebra under it, about one
+  second each.
+- Bytes allocated are not counted. Suite `Internal: Allocation` holds that no measurand
+  allocates in any implementation.
+- Rejected: callgrind, which the table on #665 used. It counts each access, and not its bytes,
+  so a load of 16 bytes counts as one, as a load of 8 bytes does.
+- Rejected: counts of the bench, since each loop inlines its operator, and no count names it.
+
+Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Machine`. A fixture trace
+holds two wrappers, a callee, a `rep` instruction and a shared object. A trace that ends inside a
+wrapper, or that misses one, is refused. The gate refuses another compiler, and reports growth,
+shrink, a shared object and an absent measurand. The C of the test binary declares each wrapper
+behind `noipa`, at its own entry.
 
 ## Lower bounds
 
