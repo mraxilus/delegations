@@ -28,529 +28,617 @@
       "instructions": 87,
       "bytes_read": 144,
       "bytes_written": 64,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "wedge_anti": {
       "instructions": 90,
       "bytes_read": 192,
       "bytes_written": 72,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "wedge_dot": {
       "instructions": 156,
       "bytes_read": 200,
       "bytes_written": 80,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "wedge_dot_anti": {
       "instructions": 158,
       "bytes_read": 216,
       "bytes_written": 80,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "dot": {
       "instructions": 35,
       "bytes_read": 160,
       "bytes_written": 136,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "dot_anti": {
       "instructions": 32,
       "bytes_read": 112,
       "bytes_written": 136,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "contract_bulk": {
       "instructions": 58,
       "bytes_read": 120,
       "bytes_written": 64,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "contract_weight": {
       "instructions": 55,
       "bytes_read": 152,
       "bytes_written": 144,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "expand_bulk": {
       "instructions": 53,
       "bytes_read": 152,
       "bytes_written": 144,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "expand_weight": {
       "instructions": 59,
       "bytes_read": 120,
       "bytes_written": 64,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "add": {
       "instructions": 42,
       "bytes_read": 225,
       "bytes_written": 200,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "subtract": {
       "instructions": 42,
       "bytes_read": 225,
       "bytes_written": 200,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "project_central": {
       "instructions": 142,
       "bytes_read": 209,
       "bytes_written": 280,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "project_central_anti": {
       "instructions": 156,
       "bytes_read": 233,
       "bytes_written": 208,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "project_orthogonal": {
       "instructions": 150,
       "bytes_read": 241,
       "bytes_written": 200,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "project_orthogonal_anti": {
       "instructions": 148,
       "bytes_read": 233,
       "bytes_written": 296,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "scale": {
       "instructions": 39,
       "bytes_read": 161,
       "bytes_written": 200,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "bulk": {
       "instructions": 27,
       "bytes_read": 112,
       "bytes_written": 144,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "weight": {
       "instructions": 27,
       "bytes_read": 112,
       "bytes_written": 144,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "complement_right": {
       "instructions": 24,
       "bytes_read": 80,
       "bytes_written": 64,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "complement_left": {
       "instructions": 24,
       "bytes_read": 80,
       "bytes_written": 64,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "reverse": {
       "instructions": 14,
       "bytes_read": 80,
       "bytes_written": 64,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "reverse_anti": {
       "instructions": 14,
       "bytes_read": 80,
       "bytes_written": 64,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "dual_bulk": {
       "instructions": 32,
       "bytes_read": 136,
       "bytes_written": 144,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "dual_weight": {
       "instructions": 33,
       "bytes_read": 120,
       "bytes_written": 144,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "negate": {
       "instructions": 40,
       "bytes_read": 169,
       "bytes_written": 200,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "norm_bulk": {
       "instructions": 18,
       "bytes_read": 41,
       "bytes_written": 0,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "norm_weight": {
       "instructions": 18,
       "bytes_read": 41,
       "bytes_written": 0,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "norm_bulk_squared": {
       "instructions": 35,
       "bytes_read": 128,
       "bytes_written": 136,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "norm_weight_squared": {
       "instructions": 32,
       "bytes_read": 80,
       "bytes_written": 136,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "norm": {
       "instructions": 46,
       "bytes_read": 113,
       "bytes_written": 104,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "normalize_bulk": {
       "instructions": 60,
       "bytes_read": 209,
       "bytes_written": 200,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "normalize_weight": {
       "instructions": 60,
       "bytes_read": 209,
       "bytes_written": 200,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "unitize": {
       "instructions": 60,
       "bytes_read": 209,
       "bytes_written": 200,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "attitude": {
       "instructions": 31,
       "bytes_read": 128,
       "bytes_written": 144,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "select_grade": {
       "instructions": 71,
       "bytes_read": 139,
       "bytes_written": 240,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "select_grade_anti": {
       "instructions": 79,
       "bytes_read": 155,
       "bytes_written": 256,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "select_part": {
       "instructions": 3,
       "bytes_read": 16,
       "bytes_written": 0,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "support": {
       "instructions": 178,
       "bytes_read": 337,
       "bytes_written": 432,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "support_anti": {
       "instructions": 168,
       "bytes_read": 233,
       "bytes_written": 368,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "wedge_point_point": {
       "instructions": 87,
       "bytes_read": 144,
       "bytes_written": 64,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "wedge_point_line": {
       "instructions": 87,
       "bytes_read": 144,
       "bytes_written": 64,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "wedge_line_point": {
       "instructions": 87,
       "bytes_read": 144,
       "bytes_written": 64,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "wedge_anti_line_line": {
       "instructions": 90,
       "bytes_read": 192,
       "bytes_written": 72,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "wedge_anti_point_line": {
       "instructions": 90,
       "bytes_read": 192,
       "bytes_written": 72,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "wedge_anti_line_point": {
       "instructions": 90,
       "bytes_read": 192,
       "bytes_written": 72,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "dot_point_point": {
       "instructions": 35,
       "bytes_read": 160,
       "bytes_written": 136,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "dot_line_line": {
       "instructions": 35,
       "bytes_read": 160,
       "bytes_written": 136,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "dot_anti_point_point": {
       "instructions": 32,
       "bytes_read": 112,
       "bytes_written": 136,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "dot_anti_line_line": {
       "instructions": 32,
       "bytes_read": 112,
       "bytes_written": 136,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "wedge_dot_anti_motor_motor": {
       "instructions": 158,
       "bytes_read": 216,
       "bytes_written": 80,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "transform_point_motor": {
       "instructions": 311,
       "bytes_read": 417,
       "bytes_written": 128,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "transform_line_motor": {
       "instructions": 311,
       "bytes_read": 417,
       "bytes_written": 128,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "project_orthogonal_point_line": {
       "instructions": 150,
       "bytes_read": 241,
       "bytes_written": 200,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "support_line": {
       "instructions": 178,
       "bytes_read": 337,
       "bytes_written": 432,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "support_anti_point": {
       "instructions": 168,
       "bytes_read": 233,
       "bytes_written": 368,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "reverse_anti_motor": {
       "instructions": 14,
       "bytes_read": 80,
       "bytes_written": 64,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "unitize_motor": {
       "instructions": 60,
       "bytes_read": 209,
       "bytes_written": 200,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "norm_weight_motor": {
       "instructions": 18,
       "bytes_read": 41,
       "bytes_written": 0,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "norm_bulk_motor": {
       "instructions": 18,
       "bytes_read": 41,
       "bytes_written": 0,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "complement_right_point": {
       "instructions": 24,
       "bytes_read": 80,
       "bytes_written": 64,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "complement_left_point": {
       "instructions": 24,
       "bytes_read": 80,
       "bytes_written": 64,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "reverse_point": {
       "instructions": 14,
       "bytes_read": 80,
       "bytes_written": 64,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "reverse_anti_point": {
       "instructions": 14,
       "bytes_read": 80,
       "bytes_written": 64,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "dual_bulk_point": {
       "instructions": 32,
       "bytes_read": 136,
       "bytes_written": 144,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "dual_weight_point": {
       "instructions": 33,
       "bytes_read": 120,
       "bytes_written": 144,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "bulk_point": {
       "instructions": 27,
       "bytes_read": 112,
       "bytes_written": 144,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "weight_point": {
       "instructions": 27,
       "bytes_read": 112,
       "bytes_written": 144,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "norm_bulk_point": {
       "instructions": 18,
       "bytes_read": 41,
       "bytes_written": 0,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "norm_weight_point": {
       "instructions": 18,
       "bytes_read": 41,
       "bytes_written": 0,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "norm_bulk_squared_point": {
       "instructions": 35,
       "bytes_read": 128,
       "bytes_written": 136,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "norm_weight_squared_point": {
       "instructions": 32,
       "bytes_read": 80,
       "bytes_written": 136,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "unitize_point": {
       "instructions": 60,
       "bytes_read": 209,
       "bytes_written": 200,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "attitude_point": {
       "instructions": 31,
       "bytes_read": 128,
       "bytes_written": 144,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "complement_right_line": {
       "instructions": 24,
       "bytes_read": 80,
       "bytes_written": 64,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "complement_left_line": {
       "instructions": 24,
       "bytes_read": 80,
       "bytes_written": 64,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "reverse_line": {
       "instructions": 14,
       "bytes_read": 80,
       "bytes_written": 64,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "reverse_anti_line": {
       "instructions": 14,
       "bytes_read": 80,
       "bytes_written": 64,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "dual_bulk_line": {
       "instructions": 32,
       "bytes_read": 136,
       "bytes_written": 144,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "dual_weight_line": {
       "instructions": 33,
       "bytes_read": 120,
       "bytes_written": 144,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "bulk_line": {
       "instructions": 27,
       "bytes_read": 112,
       "bytes_written": 144,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "weight_line": {
       "instructions": 27,
       "bytes_read": 112,
       "bytes_written": 144,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "norm_bulk_line": {
       "instructions": 18,
       "bytes_read": 41,
       "bytes_written": 0,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "norm_weight_line": {
       "instructions": 18,
       "bytes_read": 41,
       "bytes_written": 0,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "norm_bulk_squared_line": {
       "instructions": 35,
       "bytes_read": 128,
       "bytes_written": 136,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "norm_weight_squared_line": {
       "instructions": 32,
       "bytes_read": 80,
       "bytes_written": 136,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "unitize_line": {
       "instructions": 60,
       "bytes_read": 209,
       "bytes_written": 200,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     },
     "attitude_line": {
       "instructions": 31,
       "bytes_read": 128,
       "bytes_written": 144,
-      "is_shared_reached": false
+      "is_shared_reached": false,
+      "is_copy_apart": false
     }
   }
 }
