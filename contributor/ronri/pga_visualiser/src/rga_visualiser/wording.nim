@@ -329,7 +329,7 @@ const LUT_TEXT_BY_WORDING: array[Wording, cstring] = [
   #   where chip row is too narrow to carry product's name, in place of it.
   NameChipDrawer: "◧",
 
-  NameTitle: "RGA Visualiser",
+  NameTitle: "PGA Visualiser",
 
   # Sentences shown in place, where control has nothing to hover.
   NoteListEmpty: "Nothing here yet -- press `add` above, or drag between two objects.",
@@ -483,9 +483,8 @@ const NAME_AUTHORITY* = "Projective Geometric Algebra Illuminated"
 func captionWindow*(): string =
   ## Report caption desktop window wears: authority it replicates, then application's name.
   ##   Composed rather than stored, as `demoWording` is: half is catalogue's and half is
-  ##   this project's subject. Second copy of name is exactly what drifted -- window said
-  ##   `RGA visualiser` where page said `RGA Visualiser`, and no sweep reached entry point
-  ##   holding it.
+  ##   this project's subject. Second copy of name is exactly what drifted -- window and page
+  ##   once cased it two ways, and no sweep reached entry point holding it.
   ##   Lives here rather than beside window so suite can hold it: `main` links SDL and GL,
   ##   which no test binary carries.
   NAME_AUTHORITY & " — " & $wordingText(NameTitle)
