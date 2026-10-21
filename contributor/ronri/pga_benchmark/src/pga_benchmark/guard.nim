@@ -11,6 +11,9 @@
 ##     need readings of runner and delegate that no record holds.
 ##   Static count of measurand's library function stands beside each machine finding, since it
 ##     names line of C (VII.10).
+##   Wrapper whose copy, later in same C file on same operands, reads other counts is finding:
+##     its count moves with code around it, as when gcc's limits over whole file decide what it
+##     inlines.
 ##
 ##   Cost: findings render as `path:line: message; got value`, so `guard` reads as koch does.
 
@@ -191,6 +194,12 @@ func compareMachine*(baseline, current, statics: JsonNode; path: string): Verdic
         path: path,
         message: "Wrapper reaches shared object, whose code processor may select, so band of " &
             "its counts is zero no longer; got `" & id & "`.",
+      )
+    if node{"is_copy_apart"}.getBool:
+      result.findings.add Finding(
+        path: path,
+        message: "Copy of wrapper reads other counts, so its count moves with code around it; " &
+            "got `" & id & "`.",
       )
     if not before.hasKey(id):
       result.findings.add Finding(

@@ -1308,6 +1308,22 @@ I  00109020,4
     expect ValueError: discard parseEntries("add 10a000\n")  # tab separates name and address
 
 
+  test "copy is read apart, and its wrapper says whether they agree":
+    let parsed = parseEntries(written & "add\t10a020\tcopy\nunitize\t10b020\tcopy\n")
+    check parsed.mapIt(it.is_copy) == @[false, false, false, true, true]
+    var tally = initTally(parsed, parseSymbols(symbols))
+    for line in (trace & "I  0010a020,4\n L 00200000,8\nI  00109030,4\n" &
+        "I  0010b020,4\nI  07000000,4\n L 07100000,32\nI  0010b024,1\nI  00109040,4\n").splitLines:
+      tally.read(line)
+    let works = tally.works
+    check works.mapIt(it[1].is_copy_apart) == @[true, false]  # copy of `add` runs 1 of 8
+    check nodeWork(works[0][1]){"is_copy_apart"}.getBool  # document says so
+    var unread = initTally(parseEntries(written & "add\t10a020\tcopy\n"), parseSymbols(symbols))
+    for line in trace.splitLines: unread.read(line)
+    expect ValueError: discard unread.works  # copy listed and never run
+    expect ValueError: discard parseEntries("add\t10a000\ttwin\n")  # mark other than `copy`
+
+
   test "equal machine documents pass with nothing to say":
     let v = compareMachine(documentMachine(work(82, 392)), documentMachine(work(82, 392)),
         statics, path)
@@ -1363,6 +1379,15 @@ I  00109020,4
     check v.findings.len == 1 and v.findings[0].message.endsWith("zero no longer; got `add`.")
 
 
+  test "wrapper whose copy reads other counts is finding":
+    var apart = documentMachine(work(82, 392))
+    apart["measurands"]["add"]["is_copy_apart"] = %true
+    let v = compareMachine(documentMachine(work(82, 392)), apart, statics, path)
+    check v.findings.len == 1 and v.findings[0].message.endsWith(
+      "moves with code around it; got `add`."
+    )  # coupling through C file, which three flags of gcc lift
+
+
   test "measurand absent in either machine document is finding":
     let
       present = documentMachine(work(82, 392))
@@ -1376,14 +1401,18 @@ I  00109020,4
   test "each wrapper is its own function behind boundary optimiser cannot see through":
     # VII.9: gcc's `noipa` keeps driver from inlining, cloning, folding or dropping each call.
     let listed = entries()
-    check listed.len == CATALOGUE.len + 1  # driver, then one wrapper per measurand
-    check listed.mapIt(it[1]).deduplicate.len == listed.len  # no two share one entry
+    check listed.len == 2 * CATALOGUE.len + 1  # driver, then wrapper and copy per measurand
+    check listed.mapIt(it.address).deduplicate.len == listed.len  # no two share one entry
+    check listed[1 .. CATALOGUE.len].mapIt(it.name) == CATALOGUE.mapIt(it.id)  # in order
+    check listed[1 .. CATALOGUE.len].allIt(not it.is_copy)
+    check listed[CATALOGUE.len + 1 .. ^1].mapIt(it.name) == CATALOGUE.mapIt(it.id)  # then copies
+    check listed[CATALOGUE.len + 1 .. ^1].allIt(it.is_copy)
     var declared = 0
     for path in walkFiles(CACHE / "*machine.nim.c"):
       for line in readFile(path).splitLines:
         if line.startsWith("__attribute__((noinline, noipa))") and line.endsWith(";"):
           inc declared
-    check declared == CATALOGUE.len + 1  # every wrapper and driver declared so
+    check declared == 2 * CATALOGUE.len + 1  # every wrapper, copy and driver declared so
 
 
 

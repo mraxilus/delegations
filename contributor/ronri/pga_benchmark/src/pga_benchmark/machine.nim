@@ -3,6 +3,10 @@
 ##   Run under valgrind's `lackey` by `inspect`, which reads trace with `trace.nim`. Writes
 ##     runtime entry of every wrapper, and of driver calling them, so reader knows where each
 ##     wrapper's work starts and ends; trace alone names no function.
+##   Each wrapper has copy, later in same C file, on same operands. Copy must read counts of its
+##     original, so `guard` finds wrapper whose count moves with code around it (`guard.nim`).
+##     Rejected: twin of same C over other operands, since operator such as `⊛` branches on
+##     kind of its operand, and twins then read apart with no coupling.
 ##   Each wrapper holds one expression and is called across boundary optimiser cannot see
 ##     through (VII.9): gcc's `noipa` keeps caller from inlining, cloning or dropping call, and
 ##     wrapper from knowing its operands. Library inlines each operator into every caller, so
@@ -33,10 +37,9 @@ const DECLARATION = "__attribute__((noinline, noipa)) $1 $2$3"
   ## C declaration of wrapper and driver: return type, name, parameters, behind boundary.
 
 
-macro defineWrapper(index: static int, measurand: static Measurand): untyped =
-  ## Define wrapper `wrapper<index>` of one measurand's library expression.
+macro defineWrapper(name: untyped; measurand: static Measurand): untyped =
+  ## Define wrapper of one measurand's library expression, under name given.
   let
-    name = ident("wrapper" & $index)
     body = parseExpr(measurand.expression)
     (m, n) = (ident"m", ident"n")  # plain idents, so expression binds them
     pool_m = parseExpr(namePoolLibrary(measurand.operands[0], measurand.grade))
@@ -53,41 +56,45 @@ macro defineWrapper(index: static int, measurand: static Measurand): untyped =
 
 
 macro defineWrappers(): untyped =
-  ## Define every wrapper, driver calling each once in catalogue order, and `entries` listing
-  ##   runtime entry of each, driver's first.
+  ## Define every wrapper and its copy, driver calling each once, and `entries` listing runtime
+  ##   entry of each, driver's first.
+  ##   Originals come in catalogue order, then copies in same order, in definition, call and list
+  ##     alike, so each copy stands later in same C file than its original.
   result = newStmtList()
   let
     calls = newStmtList()
     listed = nnkBracket.newTree()
-  for index in 0..<CATALOGUE.len:
-    let
-      measurand = CATALOGUE[index]
-      name = ident("wrapper" & $index)
-      pool_m = parseExpr(namePoolLibrary(measurand.operands[0], measurand.grade))
-      pool_n = parseExpr(namePoolLibrary(measurand.operands[1], measurand.grade))
-      id = newLit(measurand.id)
-    result.add newCall(
-      bindSym"defineWrapper",
-      newLit(index),
-      newTree(nnkBracketExpr, ident"CATALOGUE", newLit(index)),
-    )
-    if measurand.arity == 2:
-      calls.add quote do:
-        discard `name`(`pool_m`[0], `pool_n`[OBJECTS - 1])
-    else:
-      calls.add quote do:
-        discard `name`(`pool_m`[0])
-    listed.add quote do:
-      (`id`, cast[uint](`name`))
+  for is_copy in [false, true]:
+    for index in 0..<CATALOGUE.len:
+      let
+        measurand = CATALOGUE[index]
+        name = ident((if is_copy: "copy" else: "wrapper") & $index)
+        pool_m = parseExpr(namePoolLibrary(measurand.operands[0], measurand.grade))
+        pool_n = parseExpr(namePoolLibrary(measurand.operands[1], measurand.grade))
+        id = newLit(measurand.id)
+        copy = newLit(is_copy)
+      result.add newCall(
+        bindSym"defineWrapper",
+        name,
+        newTree(nnkBracketExpr, ident"CATALOGUE", newLit(index)),
+      )
+      if measurand.arity == 2:
+        calls.add quote do:
+          discard `name`(`pool_m`[0], `pool_n`[OBJECTS - 1])
+      else:
+        calls.add quote do:
+          discard `name`(`pool_m`[0])
+      listed.add quote do:
+        Entry(name: `id`, address: cast[uint](`name`), is_copy: `copy`)
   let symbol = newLit(SYMBOL_DRIVER)
   result.add quote do:
     proc drive() {.exportc: `symbol`, codegenDecl: DECLARATION.} =
-      ## Call every wrapper once; results are dropped, and boundary keeps each call.
+      ## Call every wrapper once, then every copy; results are dropped, and boundary keeps each.
       `calls`
 
-    proc entries*(): seq[(string, uint)] =
-      ## List runtime entry of driver, then of every wrapper by measurand id.
-      result = @[(SYMBOL_DRIVER, cast[uint](drive))]
+    proc entries*(): seq[Entry] =
+      ## List runtime entry of driver, then of every wrapper by measurand id, then every copy.
+      result = @[Entry(name: SYMBOL_DRIVER, address: cast[uint](drive))]
       result.add @`listed`
 
 
@@ -101,8 +108,9 @@ proc main(): int =
     return 2
   fillPools(0)
   var text = ""
-  for (name, entry) in entries():
-    text.add name & "\t" & entry.toHex.toLowerAscii & "\n"
+  for entry in entries():
+    text.add entry.name & "\t" & entry.address.toHex.toLowerAscii & "\t" &
+        (if entry.is_copy: "copy" else: "") & "\n"
   writeFile(paramStr(1), text)
   drive()
   0
