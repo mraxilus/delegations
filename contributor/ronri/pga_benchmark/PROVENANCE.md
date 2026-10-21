@@ -366,6 +366,14 @@ wrapper move with the others. So `inspect` builds the entry with
 `-fno-inline-functions-called-once`, and sets `large-unit-insns` and `ipa-cp-unit-growth` past
 any file. Then what gcc inlines into a wrapper depends on that wrapper alone.
 
+Each wrapper has a copy, later in the same C file, which the driver calls on the same operands
+after every wrapper. `guard` makes a finding of a wrapper whose copy reads other counts. That
+finding holds the flags: without them, one copy reads apart at rga4d and one at cga5d.
+
+- Rejected: a twin of the same C over other operands, such as `wedge` beside `wedge_point_point`.
+  `⊛` branches on the kind of its operand, so `partner` and `partner_dipole` read apart with no
+  coupling.
+
 Valgrind's `lackey` traces the binary. It lists each instruction executed, and each access to
 memory with its bytes. The trace names no function. So `machine` writes the runtime entry of
 each wrapper and of the driver, and `nm -S` gives the extent of the driver.
@@ -374,12 +382,13 @@ The work of a wrapper opens at its entry, and closes at the first instruction ba
 driver. It holds the return and each function that the wrapper calls, but not the call itself.
 That is the inclusive cost of callgrind.
 
-`baseline/machine_<algebra>.json` records three counts for each measurand, and one flag:
+`baseline/machine_<algebra>.json` records three counts and two flags for each measurand:
 
 - the instructions executed, where each trip of a `rep` instruction is one;
 - the bytes read and the bytes written, where an access that reads and writes the same bytes
   counts in both;
-- whether any instruction ran outside the text of the binary, in a shared object.
+- whether any instruction ran outside the text of the binary, in a shared object;
+- whether the copy of the wrapper read other counts.
 
 The header names the Nim commit, the flags, the C compiler with its version, and the tracer
 (VII.11). `guard` refuses a baseline whose header names another build. A grown count is a
@@ -397,9 +406,12 @@ algebras on `linux amd64, 4 cores` on 2026-10-21, at 451 measurands:
 - Seeds 1 and 7 gave the counts of seed 0 for each measurand. So the values of the operands
   move no branch.
 - No wrapper reaches a shared object. So no counted code runs code that the processor selects.
-- Two builds that each hold every other wrapper gave the counts of the whole build. Without the
-  three flags of gcc, 5 counts of 111 moved at rga4d, and 10 of 135 at cga5d. Then `wedge` and
+- Two builds that each hold every other wrapper gave the counts of the whole build. So did the
+  build with a copy of each wrapper, which doubles the C file. Without the three flags of gcc, 5
+  counts of 111 moved at rga4d, and 10 of 135 at cga5d. Then `wedge` and
   `wedge_round_point_dipole` at cga5d, of the same C, read 871 and 774 instructions.
+- `drive` on the runner of CI, on 2026-10-21, read the same counts for each measurand, under the
+  same gcc package.
 
 A wrapper that reaches a shared object is a finding. Its band would need readings of the
 runner and of a delegate, and no record holds them.
@@ -424,8 +436,9 @@ runner and of a delegate, and no record holds them.
 Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Machine`. A fixture trace
 holds two wrappers, a callee, a `rep` instruction and a shared object. A trace that ends inside a
 wrapper, or that misses one, is refused. The gate refuses another compiler, and reports growth,
-shrink, a shared object and an absent measurand. The C of the test binary declares each wrapper
-behind `noipa`, at its own entry.
+shrink, a shared object, a copy that reads apart and an absent measurand. The C of the test
+binary declares each wrapper and each copy behind `noipa`, at its own entry, copies after
+wrappers.
 
 ## Lower bounds
 
