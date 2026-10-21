@@ -218,6 +218,10 @@ tr.fast td:last-child { color: var(--pass); } tr.slow td:last-child { color: var
   padding: 14px 16px; display: grid; gap: 10px; grid-template-columns: minmax(0, 1fr); }
 details.card > summary { cursor: pointer; display: grid; gap: 6px;
   grid-template-columns: minmax(0, 1fr); }
+/* Browser holds every child after summary in one box, so gap of `.card` stops at summary;
+   margin spaces those children as gap spaces children of other card. */
+details.card > :not(summary) { margin-block: 0; }
+details.card > :not(summary) + :not(summary) { margin-top: 10px; }
 .card pre.code, .prose pre.code { margin: 0; }
 pre.code { background: var(--code); border-radius: 6px; padding: 10px 12px; overflow-x: auto;
   line-height: 1.5; }
