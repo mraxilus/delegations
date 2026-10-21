@@ -3,5 +3,9 @@
     {"id": "han", "stack": "", "text": "中", "is_drawn_by_system": true},
     {"id": "open", "stack": "\"Noto Sans\", sans-serif", "text": "☃", "is_drawn_by_system": true},
     {"id": "closed", "stack": "", "text": "☃", "is_drawn_by_system": false}
+  ],
+  "cards": [
+    {"id": "crowded", "is_crowded": true},
+    {"id": "spaced", "is_crowded": false}
   ]
 }
