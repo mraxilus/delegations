@@ -4,8 +4,8 @@
 ##     gallery holding work from several places sorts them together and one of these can be
 ##     told from somebody else's at one glance.
 ##   One form: `WORK`, space, then page's own name, with no dash, as `Dance Ontology Explorer`.
-##     Project stands behind every page it publishes (Explorer, Reference, rig viewer), so no
-##     title marks one as mockup.
+##     Project stands behind every page it publishes (Explorer, Reference, rig viewer), so
+##     every title takes this one form.
 ##   Name of work is spelt once in whole project (Article II.1); every title derives from `WORK`.
 ##   Every title reads in title case, so published set is one consistent form.
 

@@ -104,7 +104,7 @@ const
   DROPPED: seq[string] = @[]  ## Ids Architect has ruled out.
   CONFIRMED*: seq[string] = @[]
     ## Ids whose simulation still Architect has confirmed against their own body, on
-    ## viewer page that lays each beside its cell.  Added as they are confirmed.
+    ## rig viewer, which lays each beside its cell.  Added as they are confirmed.
     ##   Confirmation is of one still, so each confirmed card is held to its still
     ##     (`confirmed-fixtures.json`), as each ruled card is held to its drawing.  When
     ##     still moves, build stops, and name comes out of here until it is confirmed
@@ -253,7 +253,7 @@ func pageBody(parts: Parts): string =
              elif not is_reached: """<em class="badge nomodel">not modelled</em>"""
              elif id in CONFIRMED: """<em class="badge model">modelled</em>"""
              else: """<em class="badge unsure">unconfirmed</em>"""
-    # Questions cell stands for are written on it, so viewer page laying simulation
+    # Questions cell stands for are written on it, so rig viewer, laying simulation
     # beside each cell can find its still by question and not by cell's name.
     # Ruling was given on pictures, so picture that moved under one carries
     # approval it was never given.  Card holds itself to what it was drawn

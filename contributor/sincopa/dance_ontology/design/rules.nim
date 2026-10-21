@@ -163,7 +163,7 @@ const RULES* = [
   ##     never routes round one.  Twist is said as crossover is
   ##     said -- lines crossing, with over-under break naming which is
   ##     on top -- and never by which side of body line hugs.
-  ##   Rules 15 and 16 turn work into one drawing per kind of turn, and
+  ##   Rules 15 and 16 turn work into one set of drawings per kind of turn, and
   ##     rule 16 takes block off high single hand.
   ##     Hold that turns for ever has no wound-out end, so how far it has
   ##       wound is not part of its state; only orientation is, which is
@@ -458,8 +458,7 @@ const RULES* = [
   ##     hold but high lock.  Rule 37 says why: high lock is hammerlock,
   ##     hand brought round back to its own shoulder, so line going
   ##     round body is not what makes it.  Nothing checks rule 41, and
-  ##     drawing still holds high lock to `WRAP_MIN`; Architect trusts no cell until
-  ##     kept, modelled and confirmed, so drawing is left as it is.
+  ##     drawing still holds high lock to `WRAP_MIN`; fix waits on Architect.
 
 
 const FROM_ABOVE*: array[2, tuple[level: Option[Level], modifier: Option[Modifier]]] = [

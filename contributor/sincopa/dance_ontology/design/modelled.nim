@@ -1,6 +1,6 @@
 ## Ask body simulation about every card Reference draws, and write down which it agrees with.
 ##
-##   Reference page carries two badges on each cell.  `kept` is Architect's, given by eye
+##   Reference carries two badges on each cell.  `kept` is Architect's, given by eye
 ##     on floor.  `modelled` is this one: whether simulation reaches what card draws.  Goal is
 ##     both at hundred per cent, and gap between them is work left.
 ##   Written here rather than on page because asking simulation costs minutes and page is

@@ -1,4 +1,4 @@
-## Write viewer page: markup, its two scripts, and faces it draws with.
+## Write rig viewer: markup, its two scripts, and faces it draws with.
 ##
 ##   Three built things are folded into one self-contained document: sweeps and
 ##     stills recorded by `design/rig`, and viewer compiled from `design/rig_view` by

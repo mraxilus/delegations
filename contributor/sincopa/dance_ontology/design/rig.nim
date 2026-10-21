@@ -1,4 +1,4 @@
-## Record sweeps for viewer page, as `design/rig.json`.
+## Record sweeps for rig viewer, as `design/rig.json`.
 ##
 ##   Run at build time, natively: engine is C, page is script in browser, so every
 ##     figure page draws is found here and played there.

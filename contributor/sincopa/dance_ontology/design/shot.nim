@@ -1,4 +1,4 @@
-## Screenshot one marks page, light and dark, full length.
+## Screenshot one page of workbench, light and dark, full length.
 ##
 ##   Animations only exist in browser, so any still build passing says
 ##     nothing about them; this is cheap half of checking they run (take

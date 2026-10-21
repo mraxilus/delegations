@@ -336,7 +336,7 @@ proc modelled() =
 
 
 proc rig() =
-  ## Rewrite `design/rig.json`: sweeps viewer page plays, and every still it lays
+  ## Rewrite `design/rig.json`: sweeps rig viewer plays, and every still it lays
   ## beside Reference.
   ##   Own verb, as `modelled` is, and for like reason: recording costs eight
   ##     stance searches over every distance couple may stand at, and every

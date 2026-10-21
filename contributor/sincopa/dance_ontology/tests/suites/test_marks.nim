@@ -79,7 +79,7 @@ template holdPage(name: string) =
   check "<title>" & WORK & " — " notin written
   check "<title>" & WORK & " Mockup" notin written
   # Every published title reads in title case, so published set is one consistent
-  # form.  Nothing checked it until viewer page shipped with sentence for title
+  # form.  Nothing checked it until rig viewer shipped with sentence for title
   # while every page beside it was cased.
   check isTitleCased(titlePage(written))
   # Rule 26 ranks move's stages, and markup can only rank them through

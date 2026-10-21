@@ -21,7 +21,7 @@ import std/[algorithm, math, options, sequtils, sets, strformat, strutils,
 import ./[parts, rules]
 import ../src/dance_ontology/draw/[body, figure, geometry, pose, route, style]
 # Qualified, and only here: rule 11 claims turn figures add no frame that
-# Explorer does not have, and only way to check *that* is to ask Explorer's
+# Explorer does not have, and only way to check *that* is to ask ontology's
 # own model rather than list this file could let drift.
 from ../src/dance_ontology/frame import nil
 
@@ -443,10 +443,10 @@ proc checkSingleTurns*(built: Parts) =
       "one level that cannot lock or wrap whichever way the couple turns"
 
   # RULE 11.  `"no additional frame positions, just the addition of`
-  # `rotations that let us travel between them."`  Measured against Explorer's
+  # `rotations that let us travel between them."`  Measured against ontology's
   # own model: single-hold frames are read out of `frame.FRAMES` rather
   # than from list this file used to keep, which asserted copy against
-  # itself and would have missed Explorer changing.
+  # itself and would have missed model changing.
   var explorer_singles: seq[Holds]
   for laid in frame.FRAMES:
     if frame.countHolds(laid) != 1:
