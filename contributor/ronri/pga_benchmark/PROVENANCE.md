@@ -833,7 +833,7 @@ rule. `Date.now()` in node timed each read, in Chromium 141 on `linux amd64, 4 c
 identical both ways.
 
 **A standing control proves that the render sees.** `drive` renders a control page beside the
-pages, built through the shell from `tests/fixtures/control_faces.json`, so it ships the same
+pages, built through the shell from `tests/fixtures/control_render.json`, so it ships the same
 faces. Two of its paragraphs write a character that no shipped face maps under their stack.
 One writes `U+4E2D` under the stack of the page, and one `U+2603` under `"Noto Sans", sans-serif`.
 A third writes `U+2603` under the stack of the page, which Noto Sans Symbols 2 maps. The control
@@ -855,9 +855,33 @@ revision that the lock pins. Every page held no finding, and the control raised 
 resolver blinded by hand, so that a shipped face drew every character, `drive` failed so:
 
 ```text
-build/hosted/control_faces.html:0: p#han: Check is blind, since control raised no finding here;
+build/hosted/control_render.html:0: p#han: Check is blind, since control raised no finding here;
 got none for `U+4E2D`.
 ```
+
+**Each card holds its blocks apart.** Before it reads faces, the harness reads layout, in
+`tools/drive/layout.ts`. It opens each `details.card`, then checks each tab that `nav.tabs` offers,
+since a card behind another tab draws no box. Two blocks of one card that share a column and
+stand closer than 4 px are one finding at their page:
+
+```text
+build/hosted/proposals.html:0: details#change-imports-narrow.card: Blocks of card touch; got `p, p`
+at `0 px`.
+```
+
+The shell spaces a card by the gap of its grid. A `details` holds each child after its summary in
+one box, so that gap stops at the summary. The shell gives each block after the summary a margin
+of 10 px, the gap of a card that is not a `details`. Without that rule, 34 pairs on the proposal
+list touched, and 17 pages held none.
+
+The control page holds two cards for this check. The card `crowded` sets an inline margin of zero
+on its second block, which no rule of the shell outranks, so it must raise one finding. The card
+`spaced` keeps the margins of the shell, so it must raise none, and it fails where the shell
+loses the rule. The verdict holds the control to exactly the cards that it expects, as it does for
+characters.
+
+Costs: the layout is read at one viewport, as the faces are. Two blocks side by side, as the columns
+of a grid, are not compared.
 
 Suite `Internal: Render` of `test_rga4d.nim` holds the verdict and the control. Suite
 `Internal: Pages` holds the skeleton, and suite `Internal: Driver` holds one build for both uses.
