@@ -391,6 +391,22 @@ func multiplyExterior(a, b: BasisSigned): ... =
    the memory that the function writes. A benchmark whose memory the optimiser can see measures
    the benchmark. Take each pair twice, and keep a change only where both pairs show it beyond
    the spread of unchanged functions. Then confirm it on the whole (VII.5).
+10. A check of cost gates on counts, and time is its budget. Each check names the fault that it
+    pins, or says that it is a budget and pins none. It counts the work of the domain, such as
+    calls, copies and records. It also counts the work of the machine: instructions executed,
+    and bytes read, written and allocated. Each counted function runs alone, across a boundary
+    that the optimiser cannot see through (VII.9). A static count of the emitted code stays
+    beside each count of the machine, because it names the line.
+11. A check of cost names its build: each compiler with its version, the flags, and the engine
+    of a page. It refuses a baseline from another build. A page counts in its engine with the
+    optimiser off, because an inlined function stops its count. A check is evidence only for
+    the build that it drove (IX.6). So where the counted build is not the build that ships, the
+    record says so.
+12. Each bound of a count is a baseline and a band, and the band has a cause. Where the counted
+    code calls nothing that selects its code by processor, the band is zero. Elsewhere, the band
+    is the widest difference that the record measured between the runner and a delegate, with
+    its margin. A time bound pins a fault only where the fault reads beyond the spread of
+    unchanged code. Otherwise the time bound is a budget.
 
 ```nim
 template m: untyped = MULTIVECTORS[i]  # Alias; `let m = MULTIVECTORS[i]` deep-copies on JS backend.

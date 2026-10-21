@@ -394,11 +394,12 @@ follows the cascade of each element, so `drive` holds what the audit cannot.
   instrument check reads a timing readout, and no limit on time decides its verdict. Every other
   check runs on a simulated clock, and `GUIDE.md`, How to drive a page on a simulated clock,
   gives the how-to. The `waits` check holds the half that text can read.
-- **A speed check samples a count of frames or calls**, and never a span of time, so only the
-  figure moves with the machine. Its bound is an upper limit that the runner and a delegate meet
-  with a measured margin, and a regression reads over it. The record holds the readings that set
-  the bound, from the runner and from a delegate, beside it. A bound moves only with new readings
-  beside it, and never to quiet a red run.
+- **A check of cost gates on counts, and keeps time as a budget** (Article VII.10). A speed
+  check samples a count of frames or calls, and never a span of time, so only the figure moves
+  with the machine. Where it pins a fault, its record holds the reading of that fault beside the
+  slowest and the typical reading of unchanged code. Those readings come from at least 20 runs
+  on a delegate, and from the runner. A bound moves only with new readings beside it, and never
+  to quiet a red run.
 - **Where the cause is outside your project**, say so on an issue rather than absorb it.
   That cause is a browser, a runner image or a driver. Where you cannot make the check
   deterministic, say what varies and how often, measured. The Architect then decides whether
