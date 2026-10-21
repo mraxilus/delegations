@@ -123,6 +123,6 @@ it cannot choose them.
 ## The rig viewer
 
 The rig viewer plays the sweeps that `nim r tools/build.nim rig` records to `design/rig.json`.
-`design/rig_page.nim` writes it to `build/design/rig.html`. It is an instrument, and not a page that
-the project stands behind. Its address is in `../README.md`, with every other page the project
-publishes.
+`design/rig_page.nim` writes it to `build/design/rig.html`. It is a page that the project stands
+behind, and its published title is `Dance Ontology Simulation`. Its address is in `../README.md`,
+with every other page the project publishes.

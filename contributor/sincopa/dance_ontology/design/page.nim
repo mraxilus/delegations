@@ -1,9 +1,9 @@
-## Share chrome card review and rig viewer use: style sheet and wrapper.
+## Share chrome Reference and rig viewer use: style sheet and wrapper.
 ##
 ##   What they share is palette and furniture, which is here so it
 ##     cannot drift between them.
-##   Rig viewer is wrapped here too, and also takes review's own sheet back from built
-##     page (`rig_page.styleSheetReference`), so its cards dress as review's do.
+##   Rig viewer is wrapped here too, and also takes Reference's own sheet back from built
+##     page (`rig_page.styleSheetReference`), so its cards dress as Reference's do.
 
 {.experimental: "strictFuncs".}
 
@@ -139,10 +139,14 @@ code { font: 0.88em var(--mono); background: var(--wash); padding: 0.1em 0.35em;
     ## custom properties, this defines them.
 
 
+func titled*(name: string): string = WORK & " " & name
+  ## Name of work, space, then page's own name: what tab, gallery and page's heading show.
+
+
 func document*(title, page_body: string): string =
   ## Wrap one page: shared style sheet, then whatever page is about.
   ##   Title is what browser tab and published gallery both show, so
   ##     it carries name of work as well as name of page.
-  ##   Every page this wraps is exploration, so each takes mockup form.
-  &"<meta charset=\"utf-8\">\n<title>{MOCKUP} — {title}</title>\n" &
+  ##   Project stands behind every page this wraps: name of work, space, then page's own name.
+  &"<meta charset=\"utf-8\">\n<title>{titled(title)}</title>\n" &
       &"{STYLE}{page_body}"

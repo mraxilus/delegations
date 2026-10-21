@@ -337,7 +337,7 @@ type
       ##   `markOverlay` sets it, and each render path draws two runs as two calls; see
       ##   `renderer.drawRun`.
       ## None where nothing asked to be drawn over; zero means whole mesh is overlay.
-      ## Watermark rather than second `MeshSet`, since set reserves whole storage for run
+      ## Watermark rather than second `Meshes`, since set reserves whole storage for run
       ## that is usually one object.
       ##   Order already decides buckets (see `main.assembleMeshes`), so index into
       ##   order costs nothing.
@@ -449,7 +449,7 @@ type
       ## `Mesh.index_overlay`'s rule at run grain, since run never straddles mark:
       ## `markOverlay` seals current run, and append refuses to extend across it.
 
-  MeshSet* = object  ## Define everything one frame draws: vertices and every record kind.
+  Meshes* = object  ## Define everything one frame draws: vertices and every record kind.
     ## Points are one shape still assembled as vertices; rest cross wire as records.
     points*: Mesh
     ribbons*: RibbonMesh
@@ -482,7 +482,7 @@ type
     depth_near*: float  ## Camera's near clip distance, depth is clamped at.
       ## Nothing nearer is drawn, and without clamp segment past eye reads negative depth
       ## and turns ribbon inside out.
-    depth_log*: float  ## Scale depth's logarithm maps by; see `camera.depthOf`.
+    depth_log*: float  ## Scale depth's logarithm maps by; see `camera.depthClip`.
 
   RibbonPiece* = object
     ## Define one ribbon segment, fully resolved: where it runs, and colour of each end.
@@ -774,7 +774,7 @@ func animationProgress*(now, born: float): float =
 
 #[ Vertex Assembly ]#
 
-func clearMeshes*(meshes: var MeshSet) =
+func clearMeshes*(meshes: var Meshes) =
   ## Drop every vertex and record assembled so far, so frame may be rebuilt from scratch.
   meshes.points.count_vertices = 0
   meshes.points.index_overlay = none(int)
@@ -788,7 +788,7 @@ func clearMeshes*(meshes: var MeshSet) =
   meshes.veils.index_overlay = none(int)
 
 
-func markOverlay*(meshes: var MeshSet) =
+func markOverlay*(meshes: var Meshes) =
   ## Say that everything appended from here on is drawn over what came before.
   ##   Called once, between ordinary objects and selected ones.
   ##   Calling twice moves boundary rather than adding second one: assembly order
@@ -799,7 +799,7 @@ func markOverlay*(meshes: var MeshSet) =
   meshes.veils.index_overlay = some(meshes.veils.count)
 
 
-func addMarker*(meshes: var MeshSet, at: Position, radius: float, tint: Rgba, alpha: float32) =
+func addMarker*(meshes: var Meshes, at: Position, radius: float, tint: Rgba, alpha: float32) =
   ## Append point marking single position at `radius`, in `tint`'s hue at `alpha`.
   ##   Shaded as sphere lit from world's up by shaders; see `FRACTION_AMBIENT_SHADE`.
   ##   Alpha apart from tint so caller fading point need not build faded `Rgba` first.
@@ -948,7 +948,7 @@ func expandRibbon*(record: RibbonRecord, scale: DrawScale): array[6, Vertex] =
 
 
 func addRibbon*(
-  meshes: var MeshSet;
+  meshes: var Meshes;
   tail, head: Position;
   tint_tail, tint_head: Rgba;
   width: float32;
@@ -986,7 +986,7 @@ func addRibbon*(
 
 
 func addRibbonPieces*(
-  meshes: var MeshSet, pieces: openArray[RibbonPiece], width: float32, is_fogged = false
+  meshes: var Meshes, pieces: openArray[RibbonPiece], width: float32, is_fogged = false
 ) =
   ## Append every assembled piece as ribbon record.
   ##   Emit half of seam: no multivector is named here, and none can be.
@@ -994,7 +994,7 @@ func addRibbonPieces*(
     meshes.addRibbon(piece.tail, piece.head, piece.tint_tail, piece.tint_head, width, is_fogged)
 
 
-func addSegment*(meshes: var MeshSet; tail, head: Position; tint: Rgba; width: float32) =
+func addSegment*(meshes: var Meshes; tail, head: Position; tint: Rgba; width: float32) =
   ## Append ribbon of one tint end to end.
   meshes.addRibbon(tail, head, tint, tint, width)
 
@@ -1055,7 +1055,7 @@ proc expandRingVertex*(record: RingRecord, segment: int, scale: DrawScale): arra
 
 
 func addRing*(
-  meshes: var MeshSet;
+  meshes: var Meshes;
   centre: Position;
   axis_first, axis_second: Direction;
   radius: float;
@@ -1445,7 +1445,7 @@ func domeCorners*(): seq[float32] =
         at += 3
 
 
-func appendVeilRun(meshes: var MeshSet, kind: VeilKind) =
+func appendVeilRun(meshes: var Meshes, kind: VeilKind) =
   ## Note one more record of `kind` in veil draw order.
   ##   Extends current run where it is same kind and this side of overlay mark, opens
   ##   new one otherwise. See `VeilRuns`.
@@ -1465,7 +1465,7 @@ func appendVeilRun(meshes: var MeshSet, kind: VeilKind) =
 
 
 func addDisc*(
-  meshes: var MeshSet;
+  meshes: var Meshes;
   center: Position;
   axis_first, axis_second: Direction;
   radius: float;
@@ -1504,7 +1504,7 @@ func addDisc*(
   meshes.discs.count = count + 1
 
 
-func addDome*(meshes: var MeshSet, center: Position, radius: float, tint: Rgba) =
+func addDome*(meshes: var Meshes, center: Position, radius: float, tint: Rgba) =
   ## Append whole-sky sphere record around `center`, for dome vertex shader to widen.
   ##   Horizon plane is unique universal whole-sky object, same regardless of which
   ##   points produced it (see `directionNormalHorizon`), so only `radius` and `tint`

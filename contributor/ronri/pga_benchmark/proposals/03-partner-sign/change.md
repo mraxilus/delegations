@@ -121,8 +121,12 @@ import std/[macros, math]
     is_public = false,
   )
 
-  func `⊛`*(m: Multivector): Multivector {.inline.} = partnerMeet(partnerContainer(m), m)
+  func `⊛`*(m: Multivector): Multivector {.inline, noinit.} =
     ## Get partner of multivector, i.e. (-1)^(grade(𝐦)+1) (𝐦☆)⊡ ∨ 𝐦⊟.
     ##   Sign rides each term by its own grade, so operand of one grade is required; mixed
     ##     grade has no defined partner, and gets no check.
+    ##   First step writes local declared noinit, since compiler zero-fills temporary of call.
+    var container {.noinit.}: Multivector
+    container = partnerContainer(m)
+    result = partnerMeet(container, m)
 ```

@@ -1,4 +1,4 @@
-## Screenshot one marks page, light and dark, full length.
+## Screenshot one page of workbench, light and dark, full length.
 ##
 ##   Animations only exist in browser, so any still build passing says
 ##     nothing about them; this is cheap half of checking they run (take
@@ -6,7 +6,7 @@
 ##   Compiled to javascript and run under node, so workbench stays one
 ##     language:
 ##       nim js --hints:off -d:nodejs -o:build/design/shot.js design/shot.nim
-##       node build/design/shot.js build/design/review.html /tmp/review
+##       node build/design/shot.js build/design/reference.html /tmp/reference
 ##     Cost of port: one page of foreign-function glue for thirty lines of
 ##       work.  Accepted -- one language in repo is worth one page.
 ##   Neither playwright nor chromium is named by path here: path names one

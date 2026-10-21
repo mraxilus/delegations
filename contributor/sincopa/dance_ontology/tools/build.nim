@@ -8,8 +8,8 @@
 ##   |----------|-----------------------------------------------------------------------|
 ##   | Command  | Effect                                                                |
 ##   |----------|-----------------------------------------------------------------------|
-##   | pages    | fetch faces, copy Reference's shell, compile its script and fold it   |
-##   |          | into one self-contained file, build card review, then rig viewer      |
+##   | pages    | fetch faces, copy Explorer's shell, compile its script and fold it    |
+##   |          | into one self-contained file, build Reference, then rig viewer        |
 ##   | assets   | fetch faces pages embed from repository store into build/fonts        |
 ##   | types    | type-check harness `tools/drive/`, and emit it into build/drive        |
 ##   | drive    | build every page, render each and control as publish host serves it, |
@@ -20,7 +20,7 @@
 ##   |          | Architect confirms stills, never to quiet check that says one moved   |
 ##   | watched  | rewrite design/watched-fixtures.json from design/rig.json: run in     |
 ##   |          | pull request that moves still C card shows, never to quiet watch      |
-##   | modelled | rewrite design/modelled.json: which reference cards simulation        |
+##   | modelled | rewrite design/modelled.json: which Reference cards simulation        |
 ##   |          | reaches, stamped, and only where stamp changed                        |
 ##   | rig      | rewrite design/rig.json: sweeps rig viewer plays, and every still,    |
 ##   |          | stamped, and only where stamp changed                                 |
@@ -51,7 +51,7 @@
 ##     through Playwright unless `DANCE_CHROMIUM` names one.
 ##   Cost: `types` compiles this driver, and so project code it imports, on koch's compiler
 ##     (`curator/audit/src/plan.nim`, `typeJobs`). That holds while project's pin is koch's,
-##     2.2.12 both; pin that moves first splits driver as `pga_benchmark` split its own.
+##     2.2.12 both; pin that moves first splits driver.
 
 {.experimental: "strictFuncs".}
 
@@ -59,7 +59,7 @@ when compileOption("profiler"): import std/nimprof
 
 import std/[algorithm, json, os, osproc, strutils]
 
-import ../design/[faces, render, review_page, watch]
+import ../design/[faces, reference_page, render, watch]
 
 
 const
@@ -121,7 +121,7 @@ const
   PATH_CONTROL = "tests" / "drive" / "control_faces.json"
     ## Fixture control page is built from; under `tests/`, as `design/render.nim` says why.
   PAGE_UNBUNDLED = BUILD / "app" / "index.html"
-    ## Reference before `bundle` folds its script in. Not driven: it loads `app.js` beside it,
+    ## Explorer before `bundle` folds its script in. Not driven: it loads `app.js` beside it,
     ##   which hosted copy has not, and `app/artifact.html` is same page as published.
   VARIABLE_CHROMIUM = "DANCE_CHROMIUM"
     ## Environment variable naming Chromium to drive; empty fetches Playwright's own.
@@ -205,9 +205,8 @@ proc engine() =
   ##     in library's fifty files needs generating. Cost: build flags are this file's
   ##     rather than upstream's, and `-O2 -std=c17` is what upstream's release build sets.
   ##   Rebuilt only where library is absent, since fifty files cost twenty seconds.
-  ##   Cloned whole rather than shallow at ref, which `rga_visualiser` must do for SDL3 and
-  ##     keeps tag beside commit for: engine's history is 41 commits and 4.6 MB, so whole
-  ##     clone costs nothing and reaches any commit without ref to fetch. Pin is therefore
+  ##   Cloned whole rather than shallow at ref: engine's history is 41 commits and 4.6 MB, so
+  ##     whole clone costs nothing and reaches any commit without ref to fetch. Pin is therefore
   ##     commit alone, with no tag beside it, and that is measurement rather than taste.
   for (name, url, commit, _, _) in SOURCES:
     let into = DIRECTORY_DEPENDENCIES / name
@@ -276,7 +275,7 @@ proc pages() =
   # Clear pages earlier builds wrote: dress and `drive` walk every page there, retired ones too.
   for page in pagesBuilt(): removeFile(page)
 
-  # Write Reference, card review and rig viewer, in order rig viewer reads them; then dress all.
+  # Write Explorer, Reference and rig viewer, in order rig viewer reads them; then dress all.
   compileRun(["tools/pages.nim", BUILD])
   nim(@["js"] & RELEASE & @["-o:" & BUILD / "app" / "app.js", "app/app.nim"])
   compileRun(["tools/bundle.nim", BUILD / "app", "app"])
@@ -295,9 +294,9 @@ proc fixtures() =
   ##   Second step on purpose.  Ruling and fixture are added together or not at
   ##     all: running this to quiet check that says ruled card moved would
   ##     hand approval to picture nobody approved.
-  let page = BUILD / "design" / "review.html"
+  let page = BUILD / "design" / "reference.html"
   if not fileExists(page):
-    quit("No review page to read; run `pages` first.", 1)
+    quit("No Reference to read; run `pages` first.", 1)
   writeFile("design/review-fixtures.json", fixturesIn(readFile(page)))
   echo "wrote design/review-fixtures.json"
 
@@ -307,9 +306,9 @@ proc confirmed() =
   ##   Second step, as `fixtures` is, and for like reason: confirmation and fixture are
   ##     added together, so build that says confirmed still moved is never quieted by
   ##     running this alone.
-  let page = BUILD / "design" / "review.html"
+  let page = BUILD / "design" / "reference.html"
   if not fileExists(page):
-    quit("No review page to read; run `pages` first.", 1)
+    quit("No Reference to read; run `pages` first.", 1)
   writeFile("design/confirmed-fixtures.json", confirmedIn(readFile(page)))
   echo "wrote design/confirmed-fixtures.json"
 
@@ -337,8 +336,8 @@ proc modelled() =
 
 
 proc rig() =
-  ## Rewrite `design/rig.json`: sweeps viewer page plays, and every still it lays
-  ## beside reference.
+  ## Rewrite `design/rig.json`: sweeps rig viewer plays, and every still it lays
+  ## beside Reference.
   ##   Own verb, as `modelled` is, and for like reason: recording costs eight
   ##     stance searches over every distance couple may stand at, and every
   ##     `pages` run would pay for it.  Page folds in whatever was last recorded.

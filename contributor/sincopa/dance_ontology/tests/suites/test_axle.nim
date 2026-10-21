@@ -1,6 +1,6 @@
 ## Hold axle drawing to its own claims.
 ##
-## Axle has no page yet -- app's Dance view is graph-first and
+## Axle has no page yet -- Explorer's Dance view is graph-first and
 ## rotation exploration lives in design workbench -- so these laws are
 ## what keeps it from rotting while it waits: drawing still says what
 ## its header says it says.

@@ -13,7 +13,7 @@ import std/strutils
 
 #[ Declarations ]#
 
-func typeScriptOf(nim_type: string): string =
+func toTypeScript(nim_type: string): string =
   ## Map Nim type at bridge boundary onto its TypeScript spelling.
   ##   `FlatBuffer` is opaque handle on JS `Float32Array`, never constructed in Nim; every
   ##   `seq` reaches JS as plain array, since JS backend boxes elements.
@@ -56,7 +56,7 @@ func signatureAt*(lines: openArray[string], index: int): string =
   parts.join(" ").split("{.exportc")[0].strip
 
 
-func declarationOf*(signature: string): string =
+func renderDeclaration*(signature: string): string =
   ## Render one TypeScript declaration from one Nim signature; empty where unparsable.
   let opened = signature.find('(')
   if opened < 0: return ""
@@ -92,7 +92,7 @@ func declarationOf*(signature: string): string =
       if nim_type.strip.len == 0: return ""
       waiting.add fragment[0..<(if is_untyped: defaulted_at else: stated_at)].strip
       for name in waiting:
-        rendered.add name & ": " & nim_type.typeScriptOf
+        rendered.add name & ": " & nim_type.toTypeScript
       waiting.setLen 0
   # Name left without type: declaration short of it lets page omit that argument, and
   #   `undefined` then passes type check. Absent declaration fails at each call instead.
@@ -100,11 +100,11 @@ func declarationOf*(signature: string): string =
 
   let
     tail = signature[closed+1 .. ^1].strip
-    returned = if tail.startsWith(":"): tail[1 .. ^1].typeScriptOf else: "void"
+    returned = if tail.startsWith(":"): tail[1 .. ^1].toTypeScript else: "void"
   "declare function " & name & "(" & rendered.join(", ") & "): " & returned & ";"
 
 
-func recordOf*(lines: openArray[string], name: string): string =
+func renderRecord*(lines: openArray[string], name: string): string =
   ## Render TypeScript interface from Nim object type of `name`; empty where absent.
   ##   Read from bridge rather than kept beside it, so record crossing boundary has one
   ##   home and no second copy can drift from it (Article I.4).
@@ -134,7 +134,7 @@ func recordOf*(lines: openArray[string], name: string): string =
       stated = bare.split("##")[0].strip
       split_at = stated.find(':')
     if split_at < 0: continue
-    let rendered_type = stated[split_at+1 .. ^1].typeScriptOf
+    let rendered_type = stated[split_at+1 .. ^1].toTypeScript
     for field in stated[0..<split_at].split(','):
       if field.strip.len == 0: continue
       fields.add "  " & field.strip & ": " & rendered_type & ";"

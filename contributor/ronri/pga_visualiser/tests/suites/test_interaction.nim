@@ -93,7 +93,7 @@ suite "Interaction":
     interaction.is_hover_backdrop = false
     check interaction.beginDrag(arming = MenuArming.OnDwell, now = 0.0)
     interaction.is_hover_backdrop = true
-    check interaction.destinationOf.isNone
+    check interaction.destination.isNone
     let outcome = interaction.endDrag(scene)
     check outcome.index_created.isNone
     check outcome.message.len == 0
@@ -266,7 +266,7 @@ suite "Interaction":
     interaction.updateDrag(scene, now = 0.0)
     check interaction.menu.isSome
     check interaction.index_source == 0
-    check destinationOf(interaction) == some(2)
+    check destination(interaction) == some(2)
 
 
   test "a wheel opens again on the object it was let go of, once the drag has left it":
@@ -503,7 +503,7 @@ suite "Interaction":
         check not (isOffered(DragChoice.Join, m, n) and isOffered(DragChoice.Meet, m, n))
         # Whatever is proposed is drawable, so plain release never adds blank object.
         let proposal = proposalFor(m, n)
-        if proposal.isSome: check resultOf(proposal.get, m, n).isSome
+        if proposal.isSome: check outcome(proposal.get, m, n).isSome
         # And `more…` is always there, which is what keeps menu from ever being empty.
         check isOffered(DragChoice.More, m, n)
 
@@ -529,7 +529,7 @@ suite "Interaction":
   test "a menu release picks the wedge the cursor is in, and nothing at its centre":
     for choice in DragChoice:
       let centre = ScreenPosition(x: 400.0, y: 300.0, depth: 0.0)
-      check choiceAt(centre, anchorOf(centre, choice)) == some(choice)
+      check choiceAt(centre, anchorWedge(centre, choice)) == some(choice)
     # Back at middle is how reader changes their mind without letting go.
     let centre = ScreenPosition(x: 400.0, y: 300.0, depth: 0.0)
     check choiceAt(centre, centre).isNone
@@ -558,10 +558,10 @@ suite "Interaction":
     check interaction.preview.isNone
     # Reaching for wedge takes cursor off object; destination must survive it.
     interaction.index_hover = none(int)
-    let south = anchorOf(interaction.menu.get, DragChoice.Project)
+    let south = anchorWedge(interaction.menu.get, DragChoice.Project)
     interaction.updateCursor(south.x, south.y)
     interaction.updateDrag(scene, 0.0)
-    check destinationOf(interaction) == some(1)
+    check destination(interaction) == some(1)
     check interaction.proposal == some(DragChoice.Project)
     let outcome = interaction.endDrag(scene)
     check outcome.choice == some(DragChoice.Project)
@@ -589,7 +589,7 @@ suite "Interaction":
     check isOffered(DragChoice.Project, GENERAL_FIRST[0], GENERAL_SECOND[0])
 
     proc aimAt(interaction: var Interaction, scene: Scene, choice: DragChoice) =
-      let at = anchorOf(centre, choice)
+      let at = anchorWedge(centre, choice)
       interaction.updateCursor(at.x, at.y)
       interaction.updateDrag(scene, 0.0)
 
@@ -630,7 +630,7 @@ suite "Interaction":
 
     # Back at wheel's own centre: releasing calls gesture off, so band goes.
     #   neutral rather than warning about refusal that is not going to happen.
-    check interaction.effectOf == ReleaseEffect.Nothing
+    check interaction.effectRelease == ReleaseEffect.Nothing
     check interaction.inkOfDrag(scene.inkNext) == Ink.Guide
     check interaction.preview.isNone
 
@@ -640,12 +640,12 @@ suite "Interaction":
       (DragChoice.Project, ReleaseEffect.Builds),
       (DragChoice.More, ReleaseEffect.Builds),  # Builds nothing itself; picker will.
     ]:
-      let at = anchorOf(centre, choice)
+      let at = anchorWedge(centre, choice)
       interaction.updateCursor(at.x, at.y)
       interaction.updateDrag(scene, 0.0)
       check isOffered(choice, GENERAL_FIRST[0], GENERAL_SECOND[0]) ==
           (effect == ReleaseEffect.Builds)
-      check interaction.effectOf == effect
+      check interaction.effectRelease == effect
       check interaction.inkOfDrag(scene.inkNext) ==
         (case effect
          of ReleaseEffect.Nothing: Ink.Guide
@@ -671,7 +671,7 @@ suite "Interaction":
     check interaction.menu.isNone
     check interaction.proposal == some(DragChoice.Join)
     check interaction.preview.get.geometry =~ (GENERAL_FIRST[0] ∧ GENERAL_SECOND[0])
-    check interaction.effectOf == ReleaseEffect.Builds
+    check interaction.effectRelease == ReleaseEffect.Builds
 
 
   test "a previewed plane is centred where the committed one will be":
@@ -689,7 +689,7 @@ suite "Interaction":
     interaction.index_hover = some(1)
     interaction.updateDrag(scene, 0.0)
     check interaction.proposal == some(DragChoice.Join)
-    check kindOf(interaction.preview.get.geometry) == some(Kind.Plane)
+    check classify(interaction.preview.get.geometry) == some(Kind.Plane)
     check interaction.preview.get.anchor.isSome
     # Read before releasing: `endDrag` clears drag's whole state on its way out.
     let previewed = interaction.preview.get.anchor.get
@@ -726,7 +726,7 @@ suite "Interaction":
     discard interaction.beginDrag(arming = MenuArming.Always, now = 0.0)
     interaction.index_hover = some(1)
     interaction.updateDrag(scene, 0.0)
-    let west = anchorOf(interaction.menu.get, DragChoice.More)
+    let west = anchorWedge(interaction.menu.get, DragChoice.More)
     interaction.updateCursor(west.x, west.y)
     let outcome = interaction.endDrag(scene)
     check scene.len == 2
@@ -858,7 +858,7 @@ suite "Interaction":
       depth_near: 0.1,
       forward: Direction(x: 0, y: 0, z: -1),
     )))
-    var meshes: MeshSet
+    var meshes: Meshes
     clearMeshes(meshes)
     check meshes.points.index_overlay.isNone
     check meshes.ribbons.index_overlay.isNone
@@ -938,13 +938,13 @@ suite "Interaction":
   test "a mouse never waits: left decides, right asks, middle starts nothing":
     # One rule both render paths and help panel read, held here rather than left.
     #   to three copies agreeing by inspection.
-    check armingOf(PointerButton.Left) == some(MenuArming.Never)
-    check armingOf(PointerButton.Right) == some(MenuArming.Always)
-    check armingOf(PointerButton.Middle).isNone
+    check arming(PointerButton.Left) == some(MenuArming.Never)
+    check arming(PointerButton.Right) == some(MenuArming.Always)
+    check arming(PointerButton.Middle).isNone
     # And no button reaches dwell, which belongs to one pointer with no second.
     #   button to ask with.
     for button in PointerButton:
-      check armingOf(button) != some(MenuArming.OnDwell)
+      check arming(button) != some(MenuArming.OnDwell)
 
 
   test "stepping walks live handles in both directions and wraps at both ends":
@@ -1119,7 +1119,7 @@ suite "Interaction":
           carried = dot(was.axis_right, off[0]) * now.axis_right +
               dot(was.axis_up, off[0]) * now.axis_up + dot(was.forward, off[0]) * now.forward
         check abs(angleTurned(was, now) - 4.0 * excess) < 1.0e-9
-        check norm(carried + (-1.0) * off[0]) < 1.0e-9
+        check norm(carried + -1.0 * off[0]) < 1.0e-9
         check held.pivot =~ opening.pivot
         check held.distance =~ opening.distance
 
@@ -1317,7 +1317,7 @@ suite "Interaction":
       let (was, now) = (before.frame, after.frame)
       for i, a in [now.axis_right, now.axis_up, now.forward]:
         for j, b in [was.axis_right, was.axis_up, was.forward]:
-          result[3 * i + j] = dot(a, b)
+          result[3*i+j] = dot(a, b)
     proc dragged(camera: Camera; start, finish: ScreenPosition; steps: int): Camera =
       # Drag from `start` to `finish` in `steps` equal steps, with selection.
       result = camera
@@ -1515,11 +1515,11 @@ suite "Interaction":
     var
       interaction = Interaction(is_enabled: true, speed_ship: 19.0)
       camera = cameraAround(ORIGIN, 19.0, Direction(x: 1, y: 2, z: 1))
-    let stance = camera.stanceOf
+    let stance = camera.stance
     interaction.holdKey(Key.Plus)
     interaction.driveHeld(camera, 1.0, has_selection = false)
     check interaction.speed_ship =~ 19.0 * FACTOR_DOLLY_SECOND
-    check camera.stanceOf == stance
+    check camera.stance == stance
     interaction.releaseKey(Key.Plus)
     interaction.holdKey(Key.Minus)
     interaction.driveHeld(camera, 2.0, has_selection = false)
@@ -2089,17 +2089,17 @@ suite "Interaction":
     hypot(at.x - finger.x, at.y - finger.y)
 
 
-  func angleOf(fingers: array[2, ScreenPosition]): float =
+  func angleFingers(fingers: array[2, ScreenPosition]): float =
     ## Read angle of line from first finger to second, in radians.
     arctan2(fingers[1].y - fingers[0].y, fingers[1].x - fingers[0].x)
 
 
-  func gapOf(fingers: array[2, ScreenPosition]): float =
+  func gapFingers(fingers: array[2, ScreenPosition]): float =
     ## Read pixels between two fingers.
     hypot(fingers[1].x - fingers[0].x, fingers[1].y - fingers[0].y)
 
 
-  func seenOf(
+  func toScreen(
     camera: Camera; width, height: int; places: array[2, Position]
   ): array[2, ScreenPosition] =
     ## Project two world places onto screen pixels.
@@ -2165,8 +2165,10 @@ suite "Interaction":
     check missedBy(camera, wide, tall, far, held[1]) < 0.05
     # Slop costs its own share and no more: gap scales from its edge, and angle turns from it.
     check grip.gap_from.isSome and grip.angle_from.isSome
-    check gapOf(held) =~ gapOf(landed) * gapOf(fingers) / (gapOf(landed) + PIXELS_TAP_SLOP)
-    check abs(wrapAngle(angleOf(held) - angleOf(landed) - (0.3 - RADIANS_TWIST_SLOP))) < 1.0e-9
+    check gapFingers(held) =~
+        gapFingers(landed) * gapFingers(fingers) / (gapFingers(landed) + PIXELS_TAP_SLOP)
+    check abs(wrapAngle(angleFingers(held) - angleFingers(landed) - (0.3 - RADIANS_TWIST_SLOP))) <
+        1.0e-9
     # Fingers back where they landed: zoom and twist still count from slop's edge.
     grip.carryGrip(camera, landed, wide, tall)
     let back = grip.fingersHeld(landed)
@@ -2211,7 +2213,7 @@ suite "Interaction":
     check missedBy(camera, wide, tall, grip.fingers[0].place, held[0]) < 0.05
     check missedBy(camera, wide, tall, grip.fingers[1].place, held[1]) < 0.05
     # Places stand at one depth, square to sight, so their depth scales as gap held does.
-    let ratio = gapOf(held) / gapOf(landed)
+    let ratio = gapFingers(held) / gapFingers(landed)
     check abs(depthHeld(camera, grip, 0) - opened.distance / ratio) < 1.0e-4
     check camera.distance =~ opened.distance
     # No twist asked, so sight neither turns nor rolls.
@@ -2266,7 +2268,7 @@ suite "Interaction":
         wobble = if step mod 2 == 0: 1.0 else: -1.0
       fingers = movedAbout(
         landed,
-        1.0 + wobble * 10.0 / gapOf(landed),
+        1.0 + wobble * 10.0 / gapFingers(landed),
         wobble * 0.15,
         ScreenPosition(x: 80.0 * along, y: -50.0 * along),
       )
@@ -2288,8 +2290,8 @@ suite "Interaction":
       opened = cameraAround(ORIGIN, 12.0, Direction(x: 10, y: 4, z: 3))
       aspect = float(wide) / float(tall)
       landed = [ScreenPosition(x: 420.0, y: 450.0), ScreenPosition(x: 780.0, y: 450.0)]
-      edge = gapOf(landed) + PIXELS_TAP_SLOP
-      parted = (edge + 0.5) / gapOf(landed)
+      edge = gapFingers(landed) + PIXELS_TAP_SLOP
+      parted = (edge + 0.5) / gapFingers(landed)
     var
       camera = opened
       grip = gripFingers(
@@ -2349,8 +2351,8 @@ suite "Interaction":
       grip.carryGrip(camera, fingers, wide, tall)
     let
       held = grip.fingersHeld(fingers)
-      seen = seenOf(camera, wide, tall, [grip.fingers[0].place, grip.fingers[1].place])
-      ratio = gapOf(held) / gapOf(landed)
+      seen = toScreen(camera, wide, tall, [grip.fingers[0].place, grip.fingers[1].place])
+      ratio = gapFingers(held) / gapFingers(landed)
       centre = ScreenPosition(x: 0.5 * float(wide), y: 0.5 * float(tall))
       middle_held =
         ScreenPosition(x: 0.5 * (held[0].x + held[1].x), y: 0.5 * (held[0].y + held[1].y))
@@ -2358,8 +2360,8 @@ suite "Interaction":
         ScreenPosition(x: 0.5 * (seen[0].x + seen[1].x), y: 0.5 * (seen[0].y + seen[1].y))
     check norm(camera.pivot - opened.pivot) < 1.0e-9
     check camera.distance < opened.distance
-    check abs(gapOf(seen) - gapOf(held)) < 0.01
-    check abs(wrapAngle(angleOf(seen) - angleOf(held))) < 1.0e-9
+    check abs(gapFingers(seen) - gapFingers(held)) < 0.01
+    check abs(wrapAngle(angleFingers(seen) - angleFingers(held))) < 1.0e-9
     check hypot(middle_seen.x - middle_held.x, middle_seen.y - middle_held.y) <=
         (ratio - 1.0) * hypot(middle_held.x - centre.x, middle_held.y - centre.y) + 1.0
 
@@ -2394,9 +2396,9 @@ suite "Interaction":
       grip.carryGrip(camera, fingers, wide, tall)
     let
       held = grip.fingersHeld(fingers)
-      seen = seenOf(camera, wide, tall, [grip.fingers[0].place, grip.fingers[1].place])
-    check abs(gapOf(seen) - gapOf(held)) < 0.01
-    check abs(wrapAngle(angleOf(seen) - angleOf(held))) < 1.0e-9
+      seen = toScreen(camera, wide, tall, [grip.fingers[0].place, grip.fingers[1].place])
+    check abs(gapFingers(seen) - gapFingers(held)) < 0.01
+    check abs(wrapAngle(angleFingers(seen) - angleFingers(held))) < 1.0e-9
     # Places stood nearer than pivot, so distance grows by less than gap shrinks.
     check camera.distance > 3.0 * opened.distance
     check norm(camera.pivot - opened.pivot) < 1.0e-6

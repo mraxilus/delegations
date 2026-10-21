@@ -56,7 +56,7 @@ const
                 ## 2026-09-13 with shoulder girdles giving, against 0.42 before them.
   WOUND* = @[Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Right)]),
              Link(ends: [(Body.One, Arm.Right), (Body.Two, Arm.Left)])]
-    ## Cross-name chain, whose stills reference draws wound to turn and half.
+    ## Cross-name chain, whose stills Reference draws wound to turn and half.
   FREE*: seq[Link] = @[]  ## No hands joined.
   LEFT_TO_LEFT* = @[Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Left)])]
     ## Single hold, left to left.

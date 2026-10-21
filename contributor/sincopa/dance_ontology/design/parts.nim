@@ -1,4 +1,4 @@
-## Build every figure card review places, keyed by name it uses.
+## Build every figure Reference places, keyed by name it uses.
 ##
 ##   Split by hold: single-hand turns, then hand-to-hand chain and same-name pair.
 ##   Inline assertions are part of build -- page whose quarters
@@ -102,7 +102,7 @@ const SINGLES*: array[4, tuple[holds: Holds, name: string]] = [
   ([some Arm.Right, none Arm], "Left to right"),
   ([none Arm, some Arm.Left], "Right to left"),
   ([none Arm, some Arm.Right], "Right to right"),
-]  ## App's four single-hand frames, named as workbook names them.
+]  ## Explorer's four single-hand frames, named as workbook names them.
 
 const
   ABOVE_ONE*: Levels = [some Level.Above, none Level]
@@ -169,7 +169,7 @@ func placeComparable*(pose: Pose): tuple[axis, facing: float] =
 
 
 func singleTurnParts*(): Parts =
-  ## Build every SVG of single-hand turns, which card review places and checks read.
+  ## Build every SVG of single-hand turns, which Reference places and checks read.
   ##   Rule 16: single hand held above turns for ever, so no position is
   ##     ever refused and how far it has wound is not part of its state.
   ##     What is left is four quarter-turn orientations per connection.
@@ -352,7 +352,7 @@ func singleTurnParts*(): Parts =
 
 const
   HAND_TO_HAND*: Holds = [some Arm.Right, some Arm.Left]
-    ## App's own two-hand frame: lead's Left in follow's right
+    ## Explorer's own two-hand frame: lead's Left in follow's right
     ## and lead's Right in follow's left, uncrossed.
   ABOVE_BOTH*: Levels = [some Level.Above, some Level.Above]
     ## Both arms over head, this scope's one level (rules 17, 21).
@@ -444,7 +444,7 @@ func chainFor*(holds: Holds): seq[Position] =
               of 2: "diamond"
               else: "swan"
       far = case int(abs(wind) * 2)
-            of 0: "the app's frame"
+            of 0: "the Explorer's frame"
             of 1: "a half turn"
             of 2: "a whole turn"
             else: "a turn and a half"
@@ -525,7 +525,7 @@ const PAIRED*: Holds = [some Arm.Left, some Arm.Right]
 
 
 func chainTurnParts*(holds: Holds, key: string): Parts =
-  ## Build every SVG of one chain's turns, which card review places, keyed under `key`.
+  ## Build every SVG of one chain's turns, which Reference places, keyed under `key`.
   ##   Two chains are drawn -- hand to hand, and same-name pair -- and they
   ##     differ only in which hands are joined and where chain rests.  Written
   ##     once and called twice rather than copied: what is true of walking one

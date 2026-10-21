@@ -146,7 +146,7 @@ type
       ##   Exactly `mesh.DrawScale`'s same-named fields.
       ##   Widening, near clip and screen-constant width run on GPU.
     camera_depth_log: float32
-      ## Carry scale every shader maps depth's logarithm by; see `camera.depthOf`.
+      ## Carry scale every shader maps depth's logarithm by; see `camera.depthClip`.
     camera_right_x, camera_right_y, camera_right_z: float32
     camera_up_x, camera_up_y, camera_up_z: float32
       ## Carry camera's screen axes, point vertex shader spans each disc across.
@@ -284,12 +284,12 @@ var
   CAMERA_PAGE: Camera
   MARKS_PICKED: array[OBJECTS_MAX, bool]  ## Mark each picked handle while frame is built.
     ## Set and cleared around frame's loops; see `selection.markOnto`.
-  MESHES_FURNITURE, MESHES: MeshSet  ## Hold meshes at module scope, reused every frame.
+  MESHES_FURNITURE, MESHES_SCENE: Meshes  ## Hold meshes at module scope, reused every frame.
     ## Cleared through `clearMeshes` rather than declared per frame.
     ## `clearMeshes` resets each mesh's `count_vertices`, not storage, mirroring
-    ## `main.nim`'s `MESHES`/`MESHES_FURNITURE`.
+    ## `main.nim`'s `MESHES_SCENE`/`MESHES_FURNITURE`.
     ## As `nimBuildFrame` locals, each call reallocates and zero-fills whole fixed
-    ## storage regardless of object count: `MeshSet` reserves it up front, and JS backend
+    ## storage regardless of object count: `Meshes` reserves it up front, and JS backend
     ## has no stack allocation.
   SETTINGS_OVERLAY_FRAME = none(SettingsOverlay)  ## What `SCALE_OVERLAY` and
     ## `VIEW_PROJECTION_OVERLAY` were derived from in this frame, or none before first
@@ -319,7 +319,7 @@ var
     ##   itself.
     ##   Page passes every input: Nim default never reaches JS call, and `undefined` matches
     ##   no stored value. Derived declarations make each parameter required; see
-    ##   `tools/build.nim`'s `declarationOf`.
+    ##   `tools/build.nim`'s `renderDeclaration`.
   INTERACTION_PAGE = Interaction(is_enabled: true)  ## Picking and drag, always live here.
     ## No storyboard-capture mode to switch them off for.
   POINTER_PICK: Option[PointerPick]  ## Pick made by pointer since camera was last offered.
@@ -601,7 +601,7 @@ proc nimDemoScales(): seq[cint] {.exportc.} =
 
 proc nimDemoObjects(scale_ordinal: cint): cint {.exportc.} =
   ## Report how many objects demo comes to at one size, for button that loads it.
-  cint(objectsOf(ScaleOrrery(scale_ordinal)))
+  cint(countObjects(ScaleOrrery(scale_ordinal)))
 
 
 proc nimDemoScaleDefault(): cint {.exportc.} = cint(ord(SCALE_ORRERY_DEFAULT))
@@ -674,13 +674,13 @@ proc nimObjectBorn(handle: cint): cfloat {.exportc.} = cfloat(BORNS[int(handle)]
 proc nimObjectKindWord(handle: cint): cstring {.exportc.} =
   ## Report object's kind, by handle, in words `scene.kindText` names it.
   ##   Same words desktop status line uses, same call.
-  cstring(kindText(SCENE_PAGE.geometryOf(int(handle))))
+  cstring(kindText(SCENE_PAGE.geometryAt(int(handle))))
 
 
 proc nimObjectCoefficients(handle: cint): seq[float] {.exportc.} =
   ## Report all sixteen basis coefficients of object's multivector, in library's `Basis` order.
   ##   Same order `scene.saveScene`/`loadScene` and `panel.layoutCoefficients` use.
-  let geometry = SCENE_PAGE.geometryOf(int(handle))
+  let geometry = SCENE_PAGE.geometryAt(int(handle))
   result = newSeq[float](ord(Basis.high) + 1)
   for b in Basis: result[ord(b)] = geometry[b]
 
@@ -700,7 +700,7 @@ proc nimFormatMultivector(handle: cint): cstring {.exportc.} =
   ## Format object's multivector for display, by handle, through `scene.multivectorText`.
   ##   Same writer desktop panel's object line uses; library's `$` writes at library's `%G`,
   ##   not this project's four significant digits.
-  cstring(multivectorText(SCENE_PAGE.geometryOf(int(handle))))
+  cstring(multivectorText(SCENE_PAGE.geometryAt(int(handle))))
 
 
 
@@ -741,7 +741,7 @@ proc nimCommitObject(
   ##   "Edit committed" boundary `history.nim` asks of continuous widgets: timeline gains
   ##   one entry per save rather than one per frame of input.
   let index = int(handle)
-  var geometry = SCENE_PAGE.geometryOf(index)
+  var geometry = SCENE_PAGE.geometryAt(index)
   for b in Basis: geometry[b] = coefficients[ord(b)]
   SCENE_PAGE.setGeometryAt(index, geometry)
   toChars($label, SCENE_PAGE.labelAt(index))
@@ -757,8 +757,8 @@ proc nimApplyOperation(
   ##   As `panel.layoutOperation`'s apply button does.
   let
     operation = Operation(operation_ordinal)
-    operand_first = SCENE_PAGE.geometryOf(int(handle_first))
-    operand_second = SCENE_PAGE.geometryOf(int(handle_second))
+    operand_first = SCENE_PAGE.geometryAt(int(handle_first))
+    operand_second = SCENE_PAGE.geometryAt(int(handle_second))
     derived = applyOperation(operation, operand_first, operand_second)
     anchor = creationAnchor(operation, operand_first, operand_second, derived)
     name_first = SCENE_PAGE.labelAt(int(handle_first)).toText
@@ -782,7 +782,7 @@ proc nimApplyOperation(
 proc nimOperationRemembered(arity: cint): cint {.exportc.} =
   ## Report operation picker of this arity should open on.
   ##   Whatever was last applied at that arity, or catalogue's first choice.
-  cint(ord(OPERATIONS.lastOf(if arity == 0: Arity.One else: Arity.Two)))
+  cint(ord(OPERATIONS.operationLast(if arity == 0: Arity.One else: Arity.Two)))
 
 
 proc nimPreviewOperation(operation_ordinal, handle_first, handle_second: cint): bool
@@ -841,7 +841,7 @@ proc nimSetRadius(handle: cint, radius: cfloat) {.exportc.} =
 
 proc nimSetCoefficient(handle, basis_index: cint; value: cfloat) {.exportc.} =
   ## Rewrite one basis coefficient of object's multivector, by handle.
-  var geometry = SCENE_PAGE.geometryOf(int(handle))
+  var geometry = SCENE_PAGE.geometryAt(int(handle))
   geometry[Basis(basis_index)] = float(value)
   SCENE_PAGE.setGeometryAt(int(handle), geometry)
 
@@ -1203,7 +1203,7 @@ proc placeScene() =
   # Scene's reach moves with same placements, so far clip follows; see `camera.distanceFar`.
   #   Passed to each extent, never kept in camera: `home` and every path replacing camera
   #   value would drop it.
-  REACH_SCENE = reachOf(placements, SCENE_PAGE)
+  REACH_SCENE = reachFar(placements, SCENE_PAGE)
   REVISION_PLACED = SCENE_PAGE.revision
 
 
@@ -1213,7 +1213,7 @@ proc placeEdited() =
   ##   see `framing.placeStamped`.
   if REVISION_PLACED == SCENE_PAGE.revision: return
   placements.placeStamped(SCENE_PAGE, REVISION_PLACED)
-  REACH_SCENE = reachOf(placements, SCENE_PAGE)
+  REACH_SCENE = reachFar(placements, SCENE_PAGE)
   REVISION_PLACED = SCENE_PAGE.revision
 
 
@@ -1358,7 +1358,7 @@ const
   MODE_WHEEL_PAGE = 2  ## DOM's `WheelEvent.DOM_DELTA_PAGE`: travel counted in pages.
 
 
-proc nimNotchesWheel(travel: cfloat; mode: cint): cfloat {.exportc.} =
+proc nimNotchesWheel(travel: cfloat, mode: cint): cfloat {.exportc.} =
   ## Count one wheel event's travel as notches turned away from reader, by core's notch.
   ##   `mode` is event's `deltaMode`; page counts one page as one notch.
   ##   Page counts travel toward reader, so sign turns.
@@ -1413,8 +1413,11 @@ proc nimCameraPanAt(before_x, before_y, after_x, after_y: cfloat; width, height:
   ##   point between them, which `nimCameraPanGrab` took.
   TWEEN_CAMERA.yieldOrHalt(SELECTION_PAGE.len > 0)
   panAcross(
-    CAMERA_PAGE, ScreenPosition(x: float(before_x), y: float(before_y)),
-    ScreenPosition(x: float(after_x), y: float(after_y)), int(width), int(height),
+    CAMERA_PAGE,
+    ScreenPosition(x: float(before_x), y: float(before_y)),
+    ScreenPosition(x: float(after_x), y: float(after_y)),
+    int(width),
+    int(height),
     SELECTION_PAGE.len > 0,
     INTERACTION_PAGE.depth_pan,
     INTERACTION_PAGE.pointPanNow(CAMERA_PAGE),
@@ -1736,7 +1739,7 @@ proc nimDragKindForButton(dom_button: cint): cint {.exportc.} =
     of 2: some(PointerButton.Right)
     else: none(PointerButton)
   if button.isNone: return SLOT_NONE
-  let arming = armingOf(button.get)
+  let arming = arming(button.get)
   if arming.isNone: SLOT_NONE else: cint(ord(arming.get))
 
 
@@ -1764,7 +1767,7 @@ proc nimHelpEntries(): seq[cstring] {.exportc.} =
   ##   Entries are `help.HELP_ENTRIES`, which desktop panel renders too.
   for entry in HELP_ENTRIES:
     result.add([
-      cstring(titleOf(entry.path)), cstring(entry.action), cstring(entry.outcome),
+      cstring(title(entry.path)), cstring(entry.action), cstring(entry.outcome),
       cstring(if entry.is_touch: "touch" else: ""),
     ])
 
@@ -1776,7 +1779,7 @@ proc nimHelpDescriptions(): seq[cstring] {.exportc.} =
   ##   Keyed by title entries carry, so presentation layer joins on string it groups rows
   ##   by.
   for path in HelpPath:
-    result.add([cstring(titleOf(path)), cstring(descriptionOf(path))])
+    result.add([cstring(title(path)), cstring(description(path))])
 
 
 proc nimBeginHold(handle: cint, now: cfloat) {.exportc.} =
@@ -2050,7 +2053,7 @@ proc nimDragMenuCentre(): FlatBuffer {.exportc.} =
 
 proc nimDragMenuLabels(): seq[cstring] {.exportc.} =
   ## Name every wedge, in `DragChoice` order, order layout below is in.
-  for choice in DragChoice: result.add(cstring(labelOf(choice)))
+  for choice in DragChoice: result.add(cstring(label(choice)))
 
 
 proc nimDragMenuLayout(): FlatBuffer {.exportc.} =
@@ -2058,24 +2061,24 @@ proc nimDragMenuLayout(): FlatBuffer {.exportc.} =
   ##   Centre x and y in canvas pixels, then offered as 1 or 0.
   ##   Flat as `nimSelectionMarker` is, view over `FLAT_MENU` refilled per frame menu is
   ##   open.
-  ##   No hue: label wears `--ink`; `interaction.inkOf` answers for rubber-band and
+  ##   No hue: label wears `--ink`; `interaction.ink` answers for rubber-band and
   ##   drawer's legend.
   ##   Empty where no menu is open.
   if INTERACTION_PAGE.menu.isNone: return FLAT_MENU.emptied
   let
     centre = INTERACTION_PAGE.menu.get
-    over = destinationOf(INTERACTION_PAGE)
+    over = destination(INTERACTION_PAGE)
     is_pair_live =
         over.isSome and over.get != INTERACTION_PAGE.index_source and
         SCENE_PAGE.isAlive(over.get) and SCENE_PAGE.isAlive(INTERACTION_PAGE.index_source)
   for choice in DragChoice:
     let
-      at = anchorOf(centre, choice)
+      at = anchorWedge(centre, choice)
       is_offered =
         choice == DragChoice.More or
         (is_pair_live and isOffered(
-          choice, SCENE_PAGE.geometryOf(INTERACTION_PAGE.index_source),
-          SCENE_PAGE.geometryOf(over.get),
+          choice, SCENE_PAGE.geometryAt(INTERACTION_PAGE.index_source),
+          SCENE_PAGE.geometryAt(over.get),
         ))
     let base = 3 * ord(choice)
     FLAT_MENU[base] = float32(at.x)
@@ -2666,7 +2669,7 @@ proc nimBuildFrame(
   var (eye, frame) = CAMERA_PAGE.moveOriginView
   # Read local scale once for this frame, before extent reads clip planes off it.
   #   Walks every placement, so here rather than in `ensureViewOverlay`; see `REACH_NEAR`.
-  REACH_NEAR = reachNearOf(placements, SCENE_PAGE, CAMERA_PAGE.originView, eye, frame.forward)
+  REACH_NEAR = reachNear(placements, SCENE_PAGE, CAMERA_PAGE.originView, eye, frame.forward)
   CAMERA_PAGE.reach_near = REACH_NEAR
   # Take framebuffer's height, not window's.
   #   Ribbon's width is measured in pixels drawn, and this build renders at
@@ -2727,7 +2730,7 @@ proc nimBuildFrame(
     ms_after_furniture = performanceNow()
 
   var cost: SceneCost
-  clearMeshes(MESHES)
+  clearMeshes(MESHES_SCENE)
   cost.openTally()
   # Mark picks once and read mark per handle below; see `selection.markOnto`.
   SELECTION_PAGE.markOnto(MARKS_PICKED)
@@ -2750,7 +2753,7 @@ proc nimBuildFrame(
       if placements[handle].kind == Case.PlaneEverywhere:
         let progress = animationProgress(float(now), BORNS[handle])
         discard tessellateObject(
-          MESHES,
+          MESHES_SCENE,
           placements[handle],
           SCENE_PAGE.inkAt(handle).colour,
           scale,
@@ -2774,7 +2777,7 @@ proc nimBuildFrame(
           continue
         let progress = animationProgress(float(now), BORNS[handle])
         discard tessellateObject(
-          MESHES,
+          MESHES_SCENE,
           placements[handle],
           SCENE_PAGE.inkAt(handle).colour,
           scale,
@@ -2796,7 +2799,7 @@ proc nimBuildFrame(
     # Place here: preview is not handle, so `placeScene` never reaches it.
     var placement_staged = placeObject(preview.get.geometry, preview.get.anchor)
     discard tessellateObject(
-      MESHES,
+      MESHES_SCENE,
       placement_staged,
       INK_PREVIEW.colour.muted(),
       scale,
@@ -2812,13 +2815,13 @@ proc nimBuildFrame(
       INTERACTION_PAGE.preview.get.geometry,
       INTERACTION_PAGE.preview.get.anchor,
     )
-    discard tessellateObject(MESHES, placement_derived, INK_PREVIEW.colour.muted(), scale)
+    discard tessellateObject(MESHES_SCENE, placement_derived, INK_PREVIEW.colour.muted(), scale)
     cost.chargeTally(placement_derived.kind, is_sky = false, is_preview = true, is_selected = false)
 
   # Emit everything selected last, drawn over cleared depth.
   #   Picked object is then never buried.
   #   Mirrors `main.assembleMeshes`.
-  markOverlay(MESHES)
+  markOverlay(MESHES_SCENE)
   for position in 0..<SELECTION_PAGE.len:
     let handle = SELECTION_PAGE.at(position)
     if not SCENE_PAGE.isAlive(handle) or not SCENE_PAGE.isVisible(handle): continue
@@ -2827,7 +2830,7 @@ proc nimBuildFrame(
       continue
     let progress = animationProgress(float(now), BORNS[handle])
     discard tessellateObject(
-      MESHES,
+      MESHES_SCENE,
       placements[handle],
       SCENE_PAGE.inkAt(handle).colour,
       scale,
@@ -2849,12 +2852,12 @@ proc nimBuildFrame(
   let
     ms_after_matrix = performanceNow()
     ms_before_flatten = ms_after_matrix
-  flattenDiscsInto(MESHES.discs, FLAT_DISC)
-  flattenRingsInto(MESHES.rings, FLAT_RING)
-  flattenDomesInto(MESHES.domes, FLAT_DOME)
-  flattenVeilRunsInto(MESHES.veils, FLAT_RUNS)
-  flattenRibbonsInto(MESHES.ribbons, FLAT_RIBBON)
-  flattenInto(MESHES.points, FLAT_POINT)
+  flattenDiscsInto(MESHES_SCENE.discs, FLAT_DISC)
+  flattenRingsInto(MESHES_SCENE.rings, FLAT_RING)
+  flattenDomesInto(MESHES_SCENE.domes, FLAT_DOME)
+  flattenVeilRunsInto(MESHES_SCENE.veils, FLAT_RUNS)
+  flattenRibbonsInto(MESHES_SCENE.ribbons, FLAT_RIBBON)
+  flattenInto(MESHES_SCENE.points, FLAT_POINT)
   flattenRibbonsInto(MESHES_FURNITURE.ribbons, FLAT_FURNITURE)
   let ms_done = performanceNow()
 
@@ -2928,13 +2931,13 @@ proc nimBuildFrame(
     ms_hover_pick: float32(recordLastFrame().ms_hover_pick),
     # Split ribbons in records, veils in whole runs.
     #   Instanced draws take ranges of instances.
-    ribbon_over: (if MESHES.ribbons.index_overlay.isSome:
-      max(0, MESHES.ribbons.count - MESHES.ribbons.index_overlay.get) else: 0),
-    ring_over: (if MESHES.rings.index_overlay.isSome:
-      max(0, MESHES.rings.count - MESHES.rings.index_overlay.get) else: 0),
-    point_over: countOverlay(MESHES.points),
-    veil_run_over: (if MESHES.veils.index_overlay.isSome:
-      max(0, MESHES.veils.count - MESHES.veils.index_overlay.get) else: 0),
+    ribbon_over: (if MESHES_SCENE.ribbons.index_overlay.isSome:
+      max(0, MESHES_SCENE.ribbons.count - MESHES_SCENE.ribbons.index_overlay.get) else: 0),
+    ring_over: (if MESHES_SCENE.rings.index_overlay.isSome:
+      max(0, MESHES_SCENE.rings.count - MESHES_SCENE.rings.index_overlay.get) else: 0),
+    point_over: countOverlay(MESHES_SCENE.points),
+    veil_run_over: (if MESHES_SCENE.veils.index_overlay.isSome:
+      max(0, MESHES_SCENE.veils.count - MESHES_SCENE.veils.index_overlay.get) else: 0),
   )
   # Stamp whole of proc after record is built.
   #   Overlay scans and record's construction fall past `ms_done`, so tail would belong to

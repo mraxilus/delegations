@@ -41,7 +41,8 @@
 
 {.experimental: "strictFuncs".}
 
-when compileOption("profiler"): import std/nimprof
+when compileOption("profiler"):
+  import std/nimprof
 
 import std/[os, osproc, sequtils, strutils, tables]
 
@@ -243,7 +244,7 @@ proc declare() =
   var declarations: seq[string]
   for i, line in lines:
     if "{.exportc" notin line: continue
-    let rendered = lines.signatureAt(i).declarationOf
+    let rendered = lines.signatureAt(i).renderDeclaration
     if rendered.len > 0: declarations.add rendered
 
   # Page names shown text by key, and key is Nim enum. Emitted here rather than written
@@ -252,14 +253,14 @@ proc declare() =
   #   `declare const enum` and not plain enum: ambient const enum is inlined at every use
   #   site, so page carries numbers rather than lookup object, and nothing new joins
   #   `SCRIPTS`. Both configurations already read this file.
-  let keys = keysOf(readFile(PATH_WORDING_NIM))
+  let keys = keysWording(readFile(PATH_WORDING_NIM))
   var wording = "declare const enum Wording {\n"
   for ordinal, key in keys: wording.add "  " & key & " = " & $ordinal & ",\n"
   wording.add "}\n"
 
   var records: seq[string]
   for name in RECORDS:
-    let rendered = lines.recordOf(name)
+    let rendered = lines.renderRecord(name)
     if rendered.len == 0:
       raise newException(OSError, "Bridge carries no record `" & name & "`.")
     records.add rendered
@@ -392,7 +393,7 @@ proc checkWording() =
   #   written for nobody, and next reader cannot tell it from one still in use.
   var shown = readFile(PATH_PANEL_NIM) & readFile(PATH_SHELL) & caption & readFile(PATH_HELP_NIM)
   for path in walkFiles("src" / "browser" / "*.ts"): shown.add readFile(path)
-  for key in keysOf(readFile(PATH_WORDING_NIM)):
+  for key in keysWording(readFile(PATH_WORDING_NIM)):
     if not shown.namesKey(key):
       found.add "wording.nim: `" & key & "` is shown by neither front-end"
   if found.len > 0:
@@ -499,7 +500,7 @@ proc storePathsCopied(): Table[string, string] =
     if parts.len == 2: result[parts[0]] = parts[1]
 
 
-func mediaOf(face: string): string =
+func mediaType(face: string): string =
   ## Name media type data URL of `face` declares, read off its extension.
   ##   Browser reads TrueType, OpenType and WOFF2 alike; type stated is what `format()` beside
   ##   it in shell says, so two never disagree about one file.
@@ -556,7 +557,7 @@ proc worded(page: string): string =
   ##   Whole document is swept rather than attribute or element kind, since token is written
   ##   wherever page shows words.
   result = page
-  for key, words in wordsOf(readFile(PATH_WORDING_NIM)):
+  for key, words in wordsByKey(readFile(PATH_WORDING_NIM)):
     result = result.replace(TOKEN_WORD & key & "@", words)
   var unfilled: seq[string]
   # Bound first: bare `splitLines` in `for` resolves to iterator, which yields no index.
@@ -606,7 +607,10 @@ proc web() =
     #   embeds is what every reader downloads. Wrong byte stops build rather than ships.
     checkFace(face, copied)
     run("bash", ["-c", "base64 -w0 " & quoteShell(path) & " > " & quoteShell(path & ".b64")])
-    page = page.replace(token, "data:" & mediaOf(face) & ";base64," & readFile(path & ".b64").strip)
+    page = page.replace(
+      token,
+      "data:" & mediaType(face) & ";base64," & readFile(path & ".b64").strip,
+    )
 
   page = page.worded
 

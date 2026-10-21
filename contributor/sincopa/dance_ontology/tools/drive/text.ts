@@ -12,16 +12,13 @@
 //     `text-transform` applied, since uppercase of character is other codepoint.
 //   Every `details` opens first, and every element shows: element behind tab or filter that
 //     `:has()` rules hide still carries computed style, so every state of page reads in one
-//     pass. Showing is for cost alone. Chromium styles hidden element on demand, one by one,
-//     which cost 65 s against 1.7 s in one pass on `pga_benchmark`'s docket of 28 540
-//     elements, measured there in Chromium 141 on 2026-10-04. `display` sets no font
-//     property, so no verdict moves.
-//   Ported from `pga_benchmark`'s `tools/drive/text.ts`; fix to one is finished only when
-//     other is checked.
+//     pass. Showing is for cost alone: Chromium styles hidden element on demand, one by one,
+//     where page shown whole is styled in one pass; gain on these pages unmeasured. `display`
+//     sets no font property, so no verdict moves.
 //   Cost: page is read at one viewport, Playwright's default; string or stack that `@media`
 //     gates on other width is unread.
 //   Cost: page is read in state it opens on. Text that script writes only once reader acts,
-//     as Reference writes moves of frame reached, is unread until then.
+//     as Explorer writes moves of frame reached, is unread until then.
 
 import type { Page } from '@playwright/test';
 import type { Declared } from './faces';

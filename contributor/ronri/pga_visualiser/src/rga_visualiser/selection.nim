@@ -45,7 +45,7 @@ type
     ##   laps accumulated, first fault in new units.
     ##   Reduced each frame amplification is exactly one; only discontinuity left is lap
     ##   arriving up to one frame's shrink early.
-    ## Plain fixed array, like `Scene` and `MeshSet`, not arena allocation.
+    ## Plain fixed array, like `Scene` and `Meshes`, not arena allocation.
     ##   One float per handle with compile-time bound and program-long lifetime needs no arena
     ##   (see `arena.nim` header).
     ##   Not double buffered either: update reads and writes one handle and consults no
@@ -195,7 +195,7 @@ func keepNaming*(selection: var Selection; before, after: Scene) =
   for position in 0..<selection.count:
     let handle = selection.handles[position]
     if not (before.isAlive(handle) and after.isAlive(handle)): continue
-    if before.orderOf(handle) != after.orderOf(handle): continue
+    if before.orderAt(handle) != after.orderAt(handle): continue
     selection.handles[kept] = handle
     kept.inc
   if kept == selection.count: return

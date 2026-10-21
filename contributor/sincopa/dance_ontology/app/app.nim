@@ -1,6 +1,6 @@
 ## Drive partner-work ontology from browser, as check on model.
 ##
-##   Page is validator before it is toy: it shows frame couple
+##   Page is check before it is toy: it shows frame couple
 ##     is in, every frame one move away, and every frame that is *not*,
 ##     with number of moves it would take to get there.  Nothing
 ##     outside offered list can be clicked, so move ontology does not
@@ -29,6 +29,7 @@ import std/[options, strutils]
 import std/dom except Frame  ## Exclude browser's own `Frame`, which is window.
 
 import ../src/dance_ontology
+import ../tools/title
 
 
 
@@ -303,7 +304,7 @@ func renderMoves(source: Frame): string =
 
 func renderElsewhere(source: Frame): string =
   ## List every frame that is not one move away, and way to it.
-  ##   This half of panel is what makes page validator: frame here
+  ##   This half of panel is what lets page refuse: frame here
   ##     can be seen but not danced, and route says exactly what is missing.
   ##   Named step by step, in words moves panel uses for same
   ##     move.
@@ -565,7 +566,7 @@ func renderGallery(narrowing: Filter): string =
   ## Show every frame as its own picture, and let one of them be started from.
   ##   Name is claim about frame; picture is frame.
   ##   Showing both means vocabulary can be read off drawing rather
-  ##     than trusted, which is same reason card review carries
+  ##     than trusted, which is same reason Reference carries
   ##     pictures too.
   var
     cards = ""
@@ -702,7 +703,7 @@ func renderMatrix(): string =
   ##       under it.
   ##   What source spreadsheet has and has not got is not marked here.
   ##     Which cells its author has filled in is fact about document being
-  ##       written, not about two bodies, and app is ontology:
+  ##       written, not about two bodies, and Explorer is ontology:
   ##       `tools/audit.nim` prints it, in order, which is how it wants to be
   ##       read.
   let order = towerOrder()
@@ -798,7 +799,7 @@ func renderControls(view: View): string =
   for candidate in View:
     let classes = if candidate == view: "tab on" else: "tab"
     views.add button("view", $candidate, classes, escaped($candidate))
-  tag("header", "", tag("h1", "", "dance ontology") & tag("div", "class=\"tabs\"", views))
+  tag("header", "", tag("h1", "", WORK & " Explorer") & tag("div", "class=\"tabs\"", views))
 
 
 proc paintStage() =
@@ -880,7 +881,7 @@ proc dance(key: string) =
     # compound move is two changes of state, and phase that would have taken its
     # second half has collapsed along with rest, so it is taken here instead
     # -- or page offers move and then does not make it, which is one
-    # thing validator must never do.
+    # thing Explorer must never do.
     arrive(target.get)
     leadOn()
     render()

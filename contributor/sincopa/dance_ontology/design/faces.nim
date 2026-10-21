@@ -130,7 +130,7 @@ proc withFaces*(raw: string, directory = DIRECTORY_FONTS): string =
   ##   Page that declares no charset is given UTF-8, first in its head or first in
   ##     fragment.  Block is half megabyte of ASCII, and browser that opens page from
   ##     file guesses charset from bytes ahead of first that is not ASCII: Chromium 141
-  ##     read review page and whole-cloth page as windows-1250 behind it.
+  ##     read Reference and whole-cloth page as windows-1250 behind it.
   const
     shut = "</head>"
     title = "</title>"

@@ -1,7 +1,7 @@
 // Resolve font stack of element against `cmap` of each face page ships; not Nim because
 //   faces here are those browser read out of page's own stylesheet, and this module is half
 //   of harness that Playwright's API forces into node (see `main.ts`).
-//   Ported from `rga_visualiser`'s `tools/drive/faces.ts`: `cmap` reader, TrueType and WOFF2,
+//   Ported from `pga_visualiser`'s `tools/drive/faces.ts`: `cmap` reader, TrueType and WOFF2,
 //   and weight matching of CSS Fonts 4. Fix to one is finished only when other is checked.
 //   Differs in two places, both on purpose:
 //   - Faces come out of built page, as `data:` sources its `@font-face` rules carry, rather

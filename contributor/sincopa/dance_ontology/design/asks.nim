@@ -1,4 +1,4 @@
-## What each still card of reference asks of body simulation: which hands are joined, who
+## What each still card of Reference asks of body simulation: which hands are joined, who
 ## turns and how far from rest, and so whose crown joined hands are carried over.
 ##
 ##   One list, read by `design/modelled` (which answers each) and by `design/rig`
@@ -71,7 +71,7 @@ func asked*(wind: float): float = -wind
   ## C05's, mirror of what each card draws, and every single-hand card likewise.
 
 func facingRest*(target: Frame): Facing = facingRest(target.toHolds)
-  ## Name facing frame rests at.  Same reading `review_page` makes, by
+  ## Name facing frame rests at.  Same reading `reference_page` makes, by
   ## `parts.facingRest`, and never written down.
 
 func isRestAway*(rest: Facing): bool =

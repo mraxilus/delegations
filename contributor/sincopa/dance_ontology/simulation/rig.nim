@@ -119,7 +119,7 @@ const
     ## simulation collides already.  Reading is arcsin and cannot pass ninety, so at
     ## this figure cap never binds and body does stopping -- as in life.
     ##   Measured: every chain jammed on old cap with arm raised.  Freed, chains
-    ##     go from 18 to 47 of 56 questions and reference from 193 to 223 of 231,
+    ##     go from 18 to 47 of 56 questions and Reference from 193 to 223 of 231,
     ##     with nothing lost; every law holds, and mirror law was corrected on way.
   WRIST_UPPER = toRadians(60)
     ## Cone under clinical flexion and extension, which are seventy to eighty.

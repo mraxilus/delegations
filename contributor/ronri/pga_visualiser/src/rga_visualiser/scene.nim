@@ -455,7 +455,7 @@ func applyOperation*(operation: Operation; m, n: Multivector): Multivector =
   ##   Each slide keeps only grades its multivector occupies; see `slid`.
   ##   Result within rounding of zero, judged against operands that made it, is zero:
   ##   point lying on line joins with it to nothing, never to rounding.
-  ##     `objects.kindOf` reads object at its own scale, so rounding left standing reads
+  ##     `objects.classify` reads object at its own scale, so rounding left standing reads
   ##     as plane, and every path building from catalogue builds through here.
   ##     Judged on operands as slid, against scale of point they were slid from: each
   ##     carries rounding of where it stood, so far out rounding still reads as zero.
@@ -469,11 +469,11 @@ func applyOperation*(operation: Operation; m, n: Multivector): Multivector =
   func originModel(m, n: Multivector): Option[Position] =
     ## Choose model origin: point operand's own place, else finite operand's anchor.
     for operand in [m, n]:
-      if kindOf(operand) == some(Kind.Point):
+      if classify(operand) == some(Kind.Point):
         let place = position(operand)
         if place.isSome: return place
     for operand in [m, n]:
-      if kindOf(operand).isSome:
+      if classify(operand).isSome:
         let anchor = positionAnchor(operand)
         if anchor.isSome: return anchor
 
@@ -509,11 +509,11 @@ func applyOperation*(operation: Operation; m, n: Multivector): Multivector =
   let is_rounding =
     case operation
     of Operation.Add, Operation.Subtract:
-      result.isRoundingOf(
+      result.isRounding(
         max(m_model.coefficientLargest, n_model.coefficientLargest) * scale_origin,
       )
     else:
-      operated(operation, m_model.scaleFree, n_model.scaleFree).isRoundingOf(scale_origin)
+      operated(operation, m_model.scaleFree, n_model.scaleFree).isRounding(scale_origin)
   if is_rounding: return Multivector()
 
   # Slide result back to world origin.
@@ -536,16 +536,16 @@ func creationAnchor*(operation: Operation; m, n, derived: Multivector): Option[P
     #   Both unitized first, so sum's weight is exactly two and position read back is
     #   plain midpoint.
     let (line, point) =
-      if kindOf(m) == some(Kind.Line) and kindOf(n) == some(Kind.Point): (m, n)
-      elif kindOf(n) == some(Kind.Line) and kindOf(m) == some(Kind.Point): (n, m)
+      if classify(m) == some(Kind.Line) and classify(n) == some(Kind.Point): (m, n)
+      elif classify(n) == some(Kind.Line) and classify(m) == some(Kind.Point): (n, m)
       else: return none(Position)
     position(add(unitize(point), unitize(projectOrthogonal(point, line))))
 
   of Operation.ExpandWeight:
     # Meet line with plane built perpendicular to it, which crosses at exactly one point.
     let line =
-      if kindOf(m) == some(Kind.Line): m
-      elif kindOf(n) == some(Kind.Line): n
+      if classify(m) == some(Kind.Line): m
+      elif classify(n) == some(Kind.Line): n
       else: return none(Position)
     position(wedgeAnti(line, derived))
 
@@ -601,7 +601,7 @@ func formatMultivector*(m: Multivector, storage: var openArray[char], cursor: va
   ##   Magnitudes stay project's four significant digits.
   ##   Appends from `cursor` rather than returning `string`, so redrawing every visible
   ##   object's coefficients every frame never touches heap.
-  ##   Term prints where it stands over billionth of largest, as `objects.kindOf` reads it.
+  ##   Term prints where it stands over billionth of largest, as `objects.classify` reads it.
   ##     Never against library's absolute tolerance, as `$` judges: line metre long one
   ##     unit out carries coefficients near 1e-12, which that prints as zero.
   let floor = TOLERANCE_ABS * m.coefficientLargest
@@ -625,7 +625,7 @@ const WIDTH_KIND_WORD* = 32  ## Bound kind word alone, longest being "mixed grad
 func describeKind*(m: Multivector, storage: var openArray[char], cursor: var int) =
   ## Name geometry multivector stands for into fixed storage, for reporting to user.
   ##   Appends from `cursor` onward; see `formatMultivector`.
-  let kind = kindOf(m)
+  let kind = classify(m)
   appendChars(storage, cursor,
     if kind.isNone: "mixed grade, nothing to draw"
     else:
@@ -836,7 +836,7 @@ func anchorOverride*(one: Object): Option[Position] = one.scene.anchor_overrides
   ##   See `creationAnchor`.
 
 
-func geometryOf*(scene: Scene, handle: int): lent Multivector =
+func geometryAt*(scene: Scene, handle: int): lent Multivector =
   ## Read object's geometry in place, by handle, without mutable scene.
   ##   `lent`, not `var`: `var`-returning accessor read rather than written miscompiles
   ##   under JS backend; borrow cannot be written through.
@@ -852,7 +852,7 @@ func geometryOf*(scene: Scene, handle: int): lent Multivector =
 
 func setGeometryAt*(scene: var Scene, handle: int, geometry: Multivector) =
   ## Write object's geometry, by handle, only way live object's geometry changes.
-  ##   Setter rather than `var Multivector`, for reason `geometryOf` gives and second.
+  ##   Setter rather than `var Multivector`, for reason `geometryAt` gives and second.
   ##     Front-end holding last frame's meshes can only know scene changed if every write
   ##     passes one door; see `revision`.
   doAssert scene.isAlive(handle), &"Object handle must be alive; got `{handle}`."
@@ -899,7 +899,7 @@ func bornAt*(scene: Scene, handle: int): float =
   scene.borns[handle]
 
 
-func orderOf*(scene: Scene, handle: int): uint32 =
+func orderAt*(scene: Scene, handle: int): uint32 =
   ## Read where object stands in order this scene's objects were created, by handle.
   ##   Comparable only within one scene: counts additions to this arena, says nothing
   ##   about wall-clock time or another scene's ordinals.
@@ -943,7 +943,7 @@ func handlesCreated*(scene: Scene, handles: var array[OBJECTS_MAX, int]): int =
 func anchorOverrideAt*(scene: Scene, handle: int): lent Option[Position] =
   ## Read where object's circle should centre, by handle rather than through `Object`.
   ##   See `inkAt`.
-  ##   `lent`, as `geometryOf` is, for same reason: placing whole scene reads it for each handle.
+  ##   `lent`, as `geometryAt` is, for same reason: placing whole scene reads it for each handle.
   doAssert scene.isAlive(handle), &"Object handle must be alive; got `{handle}`."
   scene.anchor_overrides[handle]
 
@@ -976,14 +976,14 @@ func isMatchingSearch*(scene: Scene, handle: int, query: openArray[char]): bool 
   ##   Kind word is described only where label misses word, since it is dearer of two reads.
   ##   Cost: fold is ASCII alone, so non-ASCII byte matches only itself; `é` does not find `É`.
 
-  func lengthOf(text: openArray[char]): int =
+  func lengthTerminated(text: openArray[char]): int =
     ## Count characters ahead of terminator, or all of them where none stands.
     while result < text.len and text[result] != '\0': inc result
 
   func isHoldingWord(text, query: openArray[char]; start, stop: int): bool =
     ## Report whether `query[start ..< stop]` stands in `text` ahead of its terminator, folded.
     let
-      length_text = lengthOf(text)
+      length_text = lengthTerminated(text)
       length_word = stop - start
     for at in 0 .. length_text - length_word:
       var offset = 0
@@ -998,7 +998,7 @@ func isMatchingSearch*(scene: Scene, handle: int, query: openArray[char]): bool 
     kind: array[WIDTH_KIND_WORD, char]
     is_kind_described = false
     start = 0
-  let length_query = lengthOf(query)
+  let length_query = lengthTerminated(query)
   while start < length_query:
     if query[start] in BLANKS_SEARCH:
       inc start
@@ -1057,10 +1057,10 @@ func previewApplying*(scene: Scene; operation: Operation; first, second: int): O
   ##   Unary operation ignores `second`; pass first handle again, as every commit path does.
   if not (scene.isAlive(first) and scene.isAlive(second)): return
   let
-    m = scene.geometryOf(first)
-    n = scene.geometryOf(second)
+    m = scene.geometryAt(first)
+    n = scene.geometryAt(second)
     derived = applyOperation(operation, m, n)
-  if kindOf(derived).isNone: return
+  if classify(derived).isNone: return
   some(Preview(
     geometry: derived,
     anchor: creationAnchor(operation, m, n, derived),
@@ -1615,7 +1615,7 @@ const
     ##   Join, what two objects picked in order most often mean.
 
 
-func lastOf*(memory: OperationMemory, arity: Arity): Operation =
+func operationLast*(memory: OperationMemory, arity: Arity): Operation =
   ## Read operation picker of this arity should open on.
   if not memory.is_started:
     return if arity == Arity.One: OPERATION_FIRST_UNARY else: OPERATION_FIRST_BINARY

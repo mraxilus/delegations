@@ -1,11 +1,13 @@
 // Write what render found, page by page, as data for driver to judge; not Nim because harness
 //   that finds it runs in node under Playwright (see `main.ts`), and writing it is all left.
-//   Data alone crosses: element and codepoint of each character face of system would draw, and
-//     family, weight and status of each face that does not load. Wording, control and verdict
+//   Data alone crosses: element and codepoint of each character face of system would draw,
+//     family, weight and status of each face that does not load, and each pair of blocks of card
+//     that touch (`layout.ts`). Wording, control and verdict
 //     are Nim's (`src/pga_benchmark/pages/render.nim`), where suites reach them (Article II.9).
 //   Every page rendered has entry, empty or not, so page that raised nothing reads as rendered.
 
 import { writeFileSync } from 'node:fs';
+import type { Crowded } from './layout';
 
 /** One character beyond ASCII that no face page ships would draw, in element that writes it. */
 export interface Character {
@@ -24,6 +26,7 @@ export interface Refused {
 export interface Found {
   characters: Character[];
   faces: Refused[];
+  crowded: Crowded[];
 }
 
 /** Write what render found on every page, each character once per element, as JSON. */
@@ -37,7 +40,7 @@ export function writeFound(path: string, found: Map<string, Found>): void {
       keys.add(key);
       return true;
     });
-    document[page] = { characters, faces: one.faces };
+    document[page] = { characters, faces: one.faces, crowded: one.crowded };
   }
   writeFileSync(path, `${JSON.stringify(document, null, 2)}\n`);
 }

@@ -130,7 +130,7 @@ func depthNear*(d: DrawExtent): float = d.scale.depth_near
   ## Read near clip depth.
 
 func depthLog*(d: DrawExtent): float = d.scale.depth_log
-  ## Read scale depth's logarithm maps by; see `camera.depthOf`.
+  ## Read scale depth's logarithm maps by; see `camera.depthClip`.
 
 # Convert whole half implicitly, so extent hands to any of `mesh`'s procs unwrapped.
 #   Extent *is* scale with algebra's reading beside it, conversion runs one way, and no
@@ -163,7 +163,7 @@ func anchorWorld*(m: Multivector): Option[Position] =
   ##   For `anchorFor` reading multivector, which reads it about view origin; placement holds
   ##   same place as `Placement.at`.
   ##   None in horizon, and where `m` carries no drawable geometry.
-  let kind = kindOf(m)
+  let kind = classify(m)
   if kind.isNone: return
   case kind.get
   of Kind.Point: position(m)
@@ -182,7 +182,7 @@ func anchorFor*(m: Multivector, scale: DrawExtent): Option[Position] =
   ##   None where `m` carries no drawable geometry.
   let finite = anchorWorld(m)
   if finite.isSome: return some(finite.get.toView(scale.origin))
-  if kindOf(m) != some(Kind.Point): return
+  if classify(m) != some(Kind.Point): return
   let heading = directionHorizon(m)
   if heading.isNone: return
   some(pointFrom(add(scale.eye_point, wedge(scale.radiusHorizon, heading.get.toMultivector))))
@@ -200,7 +200,7 @@ func anchorFor*(
   ##     from point nowhere on visible circle.
   ##   Ignored for every other kind, as `addObject` ignores it.
   ##   Override is world's, as scene stores it, so it is read about view origin too.
-  if anchor_override.isSome and kindOf(m) == some(Kind.Plane):
+  if anchor_override.isSome and classify(m) == some(Kind.Plane):
     return some(anchor_override.get.toView(scale.origin))
   anchorFor(m, scale)
 
@@ -225,7 +225,7 @@ func anchorFor*(placed: Placement, scale: DrawExtent): Option[Position] =
 #[ Great Circle ]#
 
 func addGreatCircle(
-  meshes: var MeshSet;
+  meshes: var Meshes;
   center: Position;
   axis_first, axis_second: Direction;
   radius: float;
@@ -326,7 +326,7 @@ func placeAxes(scratch: var DrawScratch, extent: float, scale: DrawExtent): int 
   count_assembled
 
 
-proc addAxes*(meshes: var MeshSet, scratch: var DrawScratch, extent: float, scale: DrawExtent) =
+proc addAxes*(meshes: var Meshes, scratch: var DrawScratch, extent: float, scale: DrawExtent) =
   ## Append world axes; `placeAxes` says what each is and how far it runs.
   ##   Two calls, for reason `addGridFamily` gives.
   var count_assembled = 0
@@ -411,7 +411,7 @@ func placeGridFamily(
 
 
 proc addGridFamily*(
-  meshes: var MeshSet;
+  meshes: var Meshes;
   scratch: var DrawScratch;
   scale: DrawExtent;
   tint: Rgba;
@@ -446,11 +446,7 @@ proc addGridFamily*(
 
 
 proc addLattice*(
-  meshes: var MeshSet,
-  scratch: var DrawScratch,
-  extent: float,
-  scale: DrawExtent,
-  plane: Multivector,
+  meshes: var Meshes, scratch: var DrawScratch, extent: float, scale: DrawExtent, plane: Multivector
 ) =
   ## Append lattice on `plane`, so distance and direction on it stay judgeable.
   ##   For each selected plane; world itself carries no ground, since its origin is Sol
@@ -477,7 +473,7 @@ proc addLattice*(
 
 
 proc addLattice*(
-  meshes: var MeshSet,
+  meshes: var Meshes,
   scratch: var DrawScratch,
   extent: float,
   scale: DrawExtent,
@@ -619,7 +615,7 @@ proc placeObject*(geometry: Multivector, anchor_override = none(Position)): Plac
   result.placeInto(geometry, anchor_override)
 
 
-func placementOf*(geometry: Multivector, anchor_override = none(Position)): Placement =
+func toPlacement*(geometry: Multivector, anchor_override = none(Position)): Placement =
   ## Ask algebra what object is and where, as fresh answer charged to no timing side.
   ##   For `func` reading object outside any frame's placements, which cannot read clock:
   ##   camera's aim at staged preview, and caller handing no frame's placements.
@@ -663,7 +659,7 @@ func isPointInView*(placed: Placement, radius: float, bounds: ViewBounds): bool 
 
 
 proc tessellateObject*(
-  meshes: var MeshSet,
+  meshes: var Meshes,
   placed: var Placement,
   tint: Rgba,
   scale: DrawExtent,
@@ -785,7 +781,7 @@ proc tessellateObject*(
 
 
 proc addObject*(
-  meshes: var MeshSet,
+  meshes: var Meshes,
   scratch: var DrawScratch,
   geometry: Multivector,
   tint: Rgba,

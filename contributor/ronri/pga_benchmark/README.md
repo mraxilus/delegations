@@ -75,9 +75,9 @@ one issue open until the pin follows. To follow head:
 
 1. Bump the commit in `pga_benchmark.nimble` and `atlas.lock`, and restore with
    `nim r koch fetch-deps`.
-2. Re-take the static counts with `baseline`, and re-quote each change, proposal and note that
-   `drive` names. Redraw each box of the library map that `drive` names, and add a box for each
-   new table.
+2. Re-take the static and machine measurements with `baseline`, and re-quote each
+   change, proposal and note that `drive` names. Redraw each box of the library map that `drive`
+   names, and add a box for each new table.
 3. Run `restamp`. It moves each timed record whose builds emit the same C to the pin, and names
    each other one. Re-take those with `bench`, `sweep` or `evaluate <name>`.
 4. Run `gaps` and `pages`, publish each page that `drive` names, and record each one with
@@ -92,8 +92,8 @@ nim r tools/build.nim types         # type-check the render harness, with no bro
 nim r tools/build.nim drive         # project directory: every check CI runs, all at pin
 nim r tools/build.nim head          # compare pin with library head, as the daily workflow does
 nim r tools/build.nim bench         # five alternating runs into baseline/runtime_<algebra>.json
-nim r tools/build.nim baseline      # re-record static measurements after an intended change
-nim r tools/build.nim guard         # compare the last inspection against the baseline
+nim r tools/build.nim baseline      # re-record static and machine measurements after a change
+nim r tools/build.nim guard         # compare the last inspection against the baselines
 nim r tools/build.nim gaps          # regenerate gaps.md and the docket from baseline/
 nim r tools/build.nim evaluate all  # try every change and proposal at pin, into evaluations/
 nim r tools/build.nim evaluate all --thorough  # the same, at rga3d and cga4d as well
@@ -103,9 +103,10 @@ nim r tools/build.nim sweep         # five runs at two to six dimensions, into b
 nim r tools/build.nim unitized      # point forms of Lengyel's code, into baseline/unitized.json
 ```
 
-`drive` fetches the Chromium that Playwright pins. Set `PGA_CHROMIUM` to the path of a Chromium
-executable, and `drive` uses that one instead. `types` and `drive` need node and npm on `PATH`,
-and `nim r tools/build.nim system` names every system package.
+`inspect`, `baseline` and `drive` run valgrind, and name the gcc that builds the counted
+binary. `drive` fetches the Chromium that Playwright pins. Set `PGA_CHROMIUM` to the path of a
+Chromium executable, and `drive` uses that one instead. `types` and `drive` need node and npm on
+`PATH`, and `nim r tools/build.nim system` names every system package.
 
 The pin is **Nim at commit `27763495b`**, and no release serves it. Koch fetches and builds it
 once for each machine (`GUIDE.md`, Toolchain). The record says which characters of `pga` need
@@ -126,7 +127,9 @@ src/pga_benchmark/model.nim        movement from counts and sizes
 src/pga_benchmark/bound.nim        multivector lower bound, derived from the algebra
 src/pga_benchmark/dense.nim        dense form of each general measurand, from library's tables
 src/pga_benchmark/inspect.nim      entry: static measurements of one nimcache
-src/pga_benchmark/guard.nim        compare static measurements against the baseline
+src/pga_benchmark/machine.nim      entry: each measurand once, in a wrapper that valgrind traces
+src/pga_benchmark/trace.nim        instructions and bytes of each wrapper, read from the trace
+src/pga_benchmark/guard.nim        compare static and machine measurements against the baselines
 src/pga_benchmark/gaps.nim         gaps, causes, docket, rendering
 src/pga_benchmark/markdown.nim     records read as blocks, and rendered for pages
 src/pga_benchmark/changes.nim      changes: quoted edits, applied at pin

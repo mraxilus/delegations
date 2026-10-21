@@ -466,7 +466,7 @@ func turnsOffered*(state: FrameState): seq[Offer] =
   ##       and it does not care which of them moved.
   ##   Refused ones are carried rather than dropped.
   ##     Page that listed only what can be danced would be menu; what makes
-  ##       it validator is that it can say what cannot be danced, and why.
+  ##       it more than menu is that it can say what cannot be danced, and why.
   ##   On axis only.
   ##     Dancer can also turn about couple's centre of mass rather than their
   ##       own -- `About.Orbit` -- and how much twist that stores is not

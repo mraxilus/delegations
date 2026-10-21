@@ -7,7 +7,7 @@ humanoid bodies, four hands, and the geometry of two dancers face to face.
 The model has one state and one relation. A **frame** is what each hand of the lead holds,
 and how the arms lie where they overlap. A **move** exists between two frames exactly when
 they differ in one connection. Everything else is derived from those two things: the names,
-the transitions, the audit of the source workbook, the drawings and the Reference.
+the transitions, the audit of the source workbook, the drawings and the Explorer.
 
 ```
                    Right to left               Right-to-right over Left-to-left
@@ -51,7 +51,7 @@ translation is printed in one table, and nothing is tuned to make them agree.
   finding about a document no longer in use. The audit stays running until the new sheet arrives
   and replaces the transcription.
 - The drawing rules of the Architect as given, held as data in `design/rules.nim`, and
-  mirrored entry for entry in `design/README.md`. `design/checks.nim` holds the review page to
+  mirrored entry for entry in `design/README.md`. `design/checks.nim` holds the Reference to
   them.
 - For the body simulation, the ANSUR II medians with the AAOS and NASA-STD-3000 joint ranges. Every
   one is in `simulation/rig.nim` with its derivation. `tests/test_rigid.nim`, `tests/test_read.nim`
@@ -75,7 +75,7 @@ The first two run from the repository root, and the rest from this directory. Th
 git, and the compiler that this project pins in `dance_ontology.nimble`. `drive` also needs node,
 with the tools of `package-lock.json` installed by `npm ci`.
 
-Hand-written pages are committed files. The shell of the Reference lives under `pages/`.
+Hand-written pages are committed files. The shell of the Explorer lives under `pages/`.
 `tools/build.nim pages` copies the shell under `build/`, beside the script compiled for it, and
 writes the pages of `design/` there too. What a build emits is never committed, because its lines
 run far past any width a file may have. To publish a page is to republish its built file to the
@@ -83,22 +83,19 @@ URL it already has, listed below.
 
 ## Published pages
 
-The Reference is the page that the project stands behind. Every other one is a mock-up or an
-instrument, kept for reference. `CONTRIBUTOR.md` draws the same line between `pages/` and
-`mockups/`, and every published title carries it. A gallery that holds both then says which
-is which before either one is opened.
+The project stands behind each page that it publishes. Each published title is the name of the
+work, then the name of the page. A gallery then sorts the pages of the work together.
 
-What the project stands behind:
+The published titles are these:
+
+- the Explorer, `Dance Ontology Explorer`
+- the Reference, `Dance Ontology Reference`
+- the rig viewer, `Dance Ontology Simulation`.
 
 | built file, under `build/` | published at |
 | --- | --- |
 | app/artifact.html | https://claude.ai/artifact/3skKNwADdEG256v9ucpnvt |
-
-Mock-ups and instruments:
-
-| built file, under `build/` | published at |
-| --- | --- |
-| design/review.html | https://claude.ai/artifact/8dpKVyaBu9qJnXg3hsUyRe |
+| design/reference.html | https://claude.ai/artifact/8dpKVyaBu9qJnXg3hsUyRe |
 | design/rig.html | https://claude.ai/artifact/MARvX6rpxW4NQvvvi2xHJa |
 
 An old link can refuse a publish until the whole of its live page is read back, and a page then
@@ -123,12 +120,12 @@ src/dance_ontology/rotation.nim    the unfinished rotation axis: twist, body, wr
 src/dance_ontology/axle.nim        the rotation axis drawn as an axle of frame states
 src/dance_ontology/draw/           the shared drawing chain: geometry, style, pose,
                                    body, figure, route, scene, and its own terms
-app/app.nim                        the script of the Reference
-design/                            the mock-up workbench: rules first, pages after
+app/app.nim                        the script of the Explorer
+design/                            the design workbench: rules first, pages after
 simulation/                               the body simulation, standalone on purpose
 tools/audit.nim                    the same audit, printed
 pages/                             hand-written pages this project stands behind:
-                                   app shell
+                                   the shell of the Explorer
 tools/pages.nim, tools/bundle.nim  copy the shell in; fold a page into one file
 tools/build.nim                    this project's verbs: pages, assets, types, drive,
                                    fixtures, confirmed, watched, modelled, rig, record,
@@ -143,7 +140,7 @@ tests/                             the simulation's laws (test_rigid, test_read)
 build/                             every page and script; ignored by git
 ```
 
-## The Reference
+## The Explorer
 
 `build/app/index.html` shows three things, and so does `artifact.html`, which is the same
 page as one self-contained file. It shows the frame you are in, and every frame one move away
@@ -156,15 +153,15 @@ walks the state machine from `free`. **Matrix** is every move there is at once. 
 usable from the keyboard, and a live region says what was danced, for a reader who cannot see
 the drawing.
 
-What the model has to say about the spreadsheet is not in the app. It is a finding about a
+What the model has to say about the spreadsheet is not in the Explorer. It is a finding about a
 document, and `tools/audit.nim` prints it.
 
 The rotation half (`rotation.nim`, `axle.nim`, `tests/suites/test_rotation.nim`) is on the bench,
-and not in the app. 148 frame states render as 17 distinct pictures. Level, contact and twist beyond
-its parity have no marks yet, but for one frame. `Left-to-right and Right-to-left` draws a quarter
-turn of twist one way apart from one the other way. The workbench in `design/` is where those marks
-get worked out. Its review page lays out each frame state for the Architect to rule on, and the
-views wait until the marks are decided.
+and not in the Explorer. 148 frame states render as 17 distinct pictures. Level, contact and twist
+beyond its parity have no marks yet, but for one frame. `Left-to-right and Right-to-left` draws a
+quarter turn of twist one way apart from one the other way. The workbench in `design/` is where
+those marks get worked out. The Reference lays out each frame state for the Architect to rule on,
+and the views wait until the marks are decided.
 
 ## What it says
 
@@ -187,7 +184,7 @@ Rotation is not modelled beyond what the hand-to-hand model forces.
 
 Every law is under test through testament, on the compiler that this project pins. Those are
 the frame and transition laws over every pair of frames, the workbook audit cell by cell, and
-the drawings against the model. They are also the gates of the workbench on the review page, and
+the drawings against the model. They are also the gates of the workbench on the Reference, and
 the laws of the simulation. Each law of the simulation holds over its own corpus of sweeps and
 stills.
 

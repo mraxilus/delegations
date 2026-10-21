@@ -221,7 +221,7 @@ func compoundWay*(source, destination: Frame): seq[Move] =
   ## -- and only one of them is one vocabulary means, which is arm that ends
   ## up on top letting go and coming back.  Page that danced `route`'s answer
   ## while printing this one's would be doing one thing and saying another,
-  ## which for validator is whole of what it must not do.
+  ## which for Explorer is whole of what it must not do.
   let
     named = compound(source, destination)
     taking = compoundSide(source, destination)

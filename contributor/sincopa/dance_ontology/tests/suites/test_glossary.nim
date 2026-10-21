@@ -45,9 +45,14 @@ const
     ## Directories whose string literals reach reader: page written into markup,
     ##   element set by browser, or row of `simulation/verdicts.md`.
   DOCUMENTS = ["pages" / "app" / "index.html"]
-    ## Pages this project writes by hand rather than from Nim: Reference's shell.
+    ## Pages this project writes by hand rather than from Nim: Explorer's shell.
   HOLDS = [HAND_TO_HAND, [some Arm.Left, some Arm.Right]]
-    ## Both holds workbench walks: app's own frame, and its dual (rule 31).
+    ## Both holds workbench walks: Explorer's own frame, and its dual (rule 31).
+  PAGE_TERMS = ["Explorer", "Reference"]
+    ## Entries naming page, whose rejected words no page may call it by.
+  RIG_VIEWER = "rig viewer"
+    ## Project's own name for third page, which keeps `viewer` that glossary rejects for
+    ##   Explorer (Architect, 2026-10-21); taken out of string before its words are read.
 
 
 func replaced(source, term: string): seq[string] =
@@ -240,6 +245,40 @@ suite "Internal: Pages speak of the lead and the follow":
         if said.isSaying(word):
           checkpoint name & " says `" & word & "`"
           fail()
+
+
+
+suite "Internal: Pages name each page by glossary's own word":
+  ## Rename of pages left `the app's frame` on card of Reference and rig viewer, and
+  ##   `the viewer` in prose of Reference, while every other law passed.
+  let
+    source = readFile(GLOSSARY)
+    rejected = source.avoided(PAGE_TERMS)
+    root = currentSourcePath().parentDir.parentDir.parentDir
+
+
+  test "glossary still rejects a word for each page":
+    for term in PAGE_TERMS:
+      check term in rejected
+      check rejected[term].len > 0
+
+
+  test "no string a page shows calls a page by word glossary rejects for it":
+    ## String of one word is name of element or key, as `app` that Explorer is drawn into,
+    ##   and no reader reads it.
+    ##   Cost: shell of Explorer is not read; its markup names element `app` and script
+    ##     `app.js`, and its one line of text is its title.
+    for directory in SAID_IN:
+      for path in walkDirRec(root / directory):
+        if path.splitFile.ext != ".nim": continue
+        for (said, next) in readFile(path).literals:
+          if next == ':' or ' ' notin said: continue  # key, or name of element
+          let words = said.toLowerAscii.replace(RIG_VIEWER, "")
+          for term, rejects in rejected:
+            for word in rejects:
+              if words.isSaying(word):
+                checkpoint path.extractFilename & " calls " & term & " `" & word & "`: " & said
+                fail()
 
 
 

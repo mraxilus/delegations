@@ -63,7 +63,7 @@ func `==`*(d, e: Direction): bool {.error:
 
 # Operators write `result` field by field, never as constructor.
 #   JS backend `nimCopy`s constructor assigned to `result`; field writes are plain stores
-#   (read in emitted JS). `framing.reachNearOf` subtracts once per object per frame.
+#   (read in emitted JS). `framing.reachNear` subtracts once per object per frame.
 #   `noinit`, as every path writes every field: C then skips zero fill, and emits stores
 #   constructor did (read in emitted C).
 #   Same float operations in same order, so results stay bit-identical.

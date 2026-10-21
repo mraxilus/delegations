@@ -123,9 +123,9 @@ suite "Scene":
         line = applyOperation(Operation.Wedge, POINTS[i], POINTS[j])
         plane = applyOperation(Operation.Wedge, line, POINTS[(i+2) mod SAMPLES])
         crossed = applyOperation(Operation.WedgeAnti, plane, PLANES[(i+7) mod SAMPLES])
-      check kindOf(line) == some(Kind.Line)
-      check kindOf(plane) == some(Kind.Plane)
-      check kindOf(crossed) == some(Kind.Line)
+      check classify(line) == some(Kind.Line)
+      check classify(plane) == some(Kind.Plane)
+      check classify(crossed) == some(Kind.Line)
       # Both seed points must lie on line joining them.
       check POINTS[i] ∧ line =~ 0
       check POINTS[j] ∧ line =~ 0
@@ -157,15 +157,15 @@ suite "Scene":
             Operation.Wedge, applyOperation(Operation.Wedge, at(i + 7), at(i + 8)), at(i + 9)
           )
           crossing = applyOperation(Operation.WedgeAnti, line, plane)
-        check kindOf(applyOperation(Operation.Wedge, point, point)).isNone
-        if kindOf(crossing) != some(Kind.Point) or isHorizon(crossing): continue
+        check classify(applyOperation(Operation.Wedge, point, point)).isNone
+        if classify(crossing) != some(Kind.Point) or isHorizon(crossing): continue
         let on_line = unitize(crossing)
         for b in Basis:
           if wedge(line, on_line)[b] != 0.0:
             inc rounded
             break
-        check kindOf(applyOperation(Operation.Wedge, line, on_line)).isNone
-        check resultOf(DragChoice.Join, line, on_line).isNone
+        check classify(applyOperation(Operation.Wedge, line, on_line)).isNone
+        check outcome(DragChoice.Join, line, on_line).isNone
       check rounded >= rounded_floor
 
 
@@ -217,7 +217,7 @@ suite "Scene":
         for m in [POINTS[i], LINES[i], PLANES[i]]:
           for n in [POINTS[k], LINES[k], PLANES[k]]:
             let about_sol = operated(operation, m, n)
-            if about_sol.isRoundingOf(m.coefficientLargest * n.coefficientLargest): continue
+            if about_sol.isRounding(m.coefficientLargest * n.coefficientLargest): continue
             inc compared
             let
               about_moved =
@@ -250,7 +250,7 @@ suite "Scene":
         off_plane = toMultivector(far_on_plane + axes.get.normal)
         line = far_on_plane.toMultivector ∧ off_plane
         crossing = applyOperation(Operation.WedgeAnti, line, plane)
-      check kindOf(crossing) == some(Kind.Point)
+      check classify(crossing) == some(Kind.Point)
       let place = position(crossing)
       check place.isSome
       check place.get =~ far_on_plane
@@ -263,7 +263,7 @@ suite "Scene":
         plane = PLANES[i]
         point = POINTS[(i+9) mod SAMPLES]
         projected = applyOperation(Operation.ProjectOrthogonal, point, plane)
-      check kindOf(projected) == some(Kind.Point)
+      check classify(projected) == some(Kind.Point)
       let place = position(projected)
       check place.isSome
       check place.get.toMultivector ∧ plane =~ 0
@@ -458,7 +458,7 @@ suite "Scene":
 
   test "a line a metre long prints the terms it carries, and no rounding beside them":
     # Its coefficients stand near 1e-12 one unit out, under library's absolute tolerance.
-    #   Term prints against largest coefficient instead, as `kindOf` reads it, so line
+    #   Term prints against largest coefficient instead, as `classify` reads it, so line
     #   reads as line in panel rather than as zero.
     let
       metre = 1.0 / (1000.0 * KILOMETRES_PER_ASTRONOMICAL_UNIT)
@@ -499,7 +499,7 @@ suite "Scene":
     check labels == @["p0", "p2", "p3", "p5", "seventh", "eighth"]
     # Which is ordinals in order, and every one of them distinct.
     for position in 1..<count:
-      check scene.orderOf(handles[position]) > scene.orderOf(handles[position-1])
+      check scene.orderAt(handles[position]) > scene.orderAt(handles[position-1])
 
     # Empty scene fills nothing rather than reporting handle that is not there.
     let empty = initScene()
@@ -523,7 +523,7 @@ suite "Scene":
     let count = scene.handlesCreated(handles)
     check count == scene.len
     for position in 1..<count:
-      check scene.orderOf(handles[position]) > scene.orderOf(handles[position-1])
+      check scene.orderAt(handles[position]) > scene.orderAt(handles[position-1])
 
 
   test "a search finds each word in label or kind word, whatever its case":
@@ -698,7 +698,7 @@ suite "Scene":
 
   test "only versions 5 and 6 carry a shines byte, and this build writes none":
     # Byte is skipped on reading and nothing is carried from it, so whole of what.
-    #   version pair means is which offsets bytes after it parse from; see `sceneFileOf`.
+    #   version pair means is which offsets bytes after it parse from; see `encodeSceneFile`.
     for version in VERSION_SCENE_LEAST..<VERSION_SCENE_SHINE:
       check not isCarryingShine(version)
     for version in VERSION_SCENE_SHINE..VERSION_SCENE_SHINE_LAST:
@@ -983,7 +983,7 @@ suite "Scene":
       check scene.len == 1
 
 
-    proc sceneFileOf(version: uint8, saved: seq[(int, bool, string, Multivector)]): string =
+    proc encodeSceneFile(version: uint8, saved: seq[(int, bool, string, Multivector)]): string =
       ## Build bytes of scene file by hand, at whatever version is asked for.
       ##   Hand-built rather than saved by this build, because point of cases
       ##   below is to read version this build can no longer *write*: asking `saveScene`
@@ -1024,7 +1024,7 @@ suite "Scene":
       var scene = initScene()
       discard scene.addObject(POINTS[9], "replaced", Ink.Rose)
       let path = getTempDir() / "visualiser_suite_scene_v1.rgascene"
-      writeFile(path, sceneFileOf(1'u8, @[
+      writeFile(path, encodeSceneFile(1'u8, @[
         (4, true, "grid-hued", POINTS[0]),  # Structural slot, unmoved between palettes.
         (7, true, "was rose", POINTS[1]),  # First categorical hue of old palette.
         (11, false, "was cobalt", POINTS[2]),
@@ -1055,7 +1055,7 @@ suite "Scene":
       let path = getTempDir() / "visualiser_suite_scene_v2.rgascene"
       writeFile(
         path,
-        sceneFileOf(
+        encodeSceneFile(
           2'u8,
           @[
             (ord(Ink.Grid), true, "structural", POINTS[0]),
@@ -1081,7 +1081,7 @@ suite "Scene":
       let path = getTempDir() / "visualiser_suite_scene_v3.rgascene"
       writeFile(
         path,
-        sceneFileOf(
+        encodeSceneFile(
           3'u8,
           @[
             (ord(Ink.Rose), true, "first", POINTS[0]),
@@ -1101,7 +1101,7 @@ suite "Scene":
       let path_now = getTempDir() / "visualiser_suite_scene_v4.rgascene"
       writeFile(
         path_now,
-        sceneFileOf(
+        encodeSceneFile(
           VERSION_SCENE,
           @[
             (ord(Ink.Rose), true, "sized", POINTS[0]),
@@ -1115,7 +1115,7 @@ suite "Scene":
       let path_four = getTempDir() / "visualiser_suite_scene_v4_only.rgascene"
       writeFile(
         path_four,
-        sceneFileOf(
+        encodeSceneFile(
           4'u8,
           @[
             (ord(Ink.Rose), true, "sized", POINTS[0]),
@@ -1132,7 +1132,7 @@ suite "Scene":
       let path_six = getTempDir() / "visualiser_suite_scene_v6_shine.rgascene"
       writeFile(
         path_six,
-        sceneFileOf(
+        encodeSceneFile(
           VERSION_SCENE_SHINE_LAST,
           @[
             (ord(Ink.Rose), true, "shone", POINTS[0]),
@@ -1156,7 +1156,7 @@ suite "Scene":
       let path = getTempDir() / "visualiser_suite_scene_ahead.rgascene"
       writeFile(
         path,
-        sceneFileOf(
+        encodeSceneFile(
           VERSION_SCENE + 1'u8,
           @[
             (ord(Ink.Rose), true, "future", POINTS[1]),
