@@ -87,18 +87,39 @@ export async function driveTint(page: Page): Promise<void> {
 
   // Sort by cost and walk: never cheaper row further along ramp. Equal step is allowed;
   //   rows page left untinted carry no step and sit out of comparison.
+  //   Rows showing one time are one cost. Page tints from time before rounding, so two
+  //   rows reading `0.02` may wear neighbouring steps, and sort leaves them in panel's
+  //   order. So each row is held against coolest step of rows showing more, never against
+  //   row it ties with.
   const ranked: Tinted[] = tinted.rows.filter((one) => one.step >= 0 && one.name !== 'idle')
     .sort((a, b) => b.milliseconds - a.milliseconds);
-  let is_ordered = true;
-  for (let i = 1; i < ranked.length; i += 1) {
-    if ((ranked[i]?.step ?? 0) > (ranked[i - 1]?.step ?? 0)) is_ordered = false;
+  let step_coolest_above = Infinity; // Coolest step among rows showing more time.
+  let misplaced: Tinted | undefined;
+  let start = 0;
+  while (start < ranked.length) {
+    const time = ranked[start]?.milliseconds;
+    let end = start;
+    let step_coolest_tier = Infinity;
+    while (end < ranked.length && ranked[end]?.milliseconds === time) {
+      const one = ranked[end];
+      if (one !== undefined) {
+        if (one.step > step_coolest_above && misplaced === undefined) misplaced = one;
+        step_coolest_tier = Math.min(step_coolest_tier, one.step);
+      }
+      end += 1;
+    }
+    step_coolest_above = Math.min(step_coolest_above, step_coolest_tier);
+    start = end;
   }
   report(
     'a costlier timing row never wears a cooler colour than a cheaper one',
-    ranked.length >= 4 && is_ordered,
+    ranked.length >= 4 && misplaced === undefined,
     `${ranked.length} tinted rows, worst-first: ` +
       ranked.slice(0, 5).map((one) => `${one.name} ${one.milliseconds} step ${one.step}`)
-        .join(', '),
+        .join(', ') +
+      (misplaced === undefined ? '' :
+        `; ${misplaced.name} ${misplaced.milliseconds} step ${misplaced.step} ` +
+          `wears a warmer step than a row that shows more`),
   );
   // Frame's leftover is largest share of healthy frame, so tinting it would paint best case
   //   in ramp's loudest colour.
