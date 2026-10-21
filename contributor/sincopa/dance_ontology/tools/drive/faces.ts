@@ -1,10 +1,7 @@
 // Resolve font stack of element against `cmap` of each face page ships; not Nim because
 //   faces here are those browser read out of page's own stylesheet, and this module is half
 //   of harness that Playwright's API forces into node (see `main.ts`).
-//   Ported from `pga_benchmark`'s `tools/drive/faces.ts`, itself ported from
-//   `rga_visualiser`'s: `cmap` reader, TrueType and WOFF2, and weight matching of CSS Fonts 4.
-//   Fix to one is finished only when others are checked. Same as `pga_benchmark`'s, line for
-//   line, in what it does:
+//   Holds `cmap` reader, TrueType and WOFF2, and weight matching of CSS Fonts 4. What it does:
 //   - Faces come out of built page, as `data:` sources its `@font-face` rules carry, rather
 //     than out of store, so check holds bytes viewer receives.
 //   - Family page does not ship ends search, rather than being stepped over. Viewer's own face
