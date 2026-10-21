@@ -6,10 +6,8 @@
 //     as publish host does into `build/hosted/<name>.html`, and names output file, then each
 //     page, here as arguments. Driver judges what this writes (`design/render.nim`); this
 //     judges none.
-//   Ported from `pga_benchmark`'s `tools/drive/`, which holds reasons for its method: font
-//     stack of each element, as browser computes it, resolved against `cmap` of each face page
-//     ships (`faces.ts`), second method CONTRIBUTOR.md, Pages and assets, admits. Fix to one
-//     is finished only when other is checked.
+//   Method: font stack of each element, as browser computes it, resolved against `cmap` of each
+//     face page ships (`faces.ts`), second method CONTRIBUTOR.md, Pages and assets, admits.
 //   Face that browser refuses to load is written too: its `cmap` reads whole here, yet viewer
 //     gets face of system for every character it was declared for.
 //   Cost: character is resolved alone, as `cmap` maps it. Browser picks face per cluster, so

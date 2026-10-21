@@ -2,10 +2,8 @@
 ##   Harness (`tools/drive/`) renders each page and writes, as data, every character beyond ASCII
 ##     that face of system would draw, and every face browser does not load. It judges nothing:
 ##     wording and verdict are here, where suites reach them (Article II.9).
-##   Ported from `pga_benchmark`'s `src/pga_benchmark/pages/render.nim`; fix to one is finished
-##     only when other is checked. Differs where pages differ: control here is whole document
-##     set in this project's body stack, since pages here are whole documents, and `drive`
-##     dresses it with every face as `pages` dresses every page.
+##   Control is whole document set in this project's body stack, since pages here are whole
+##     documents, and `drive` dresses it with every face as `pages` dresses every page.
 ##   Control page is positive control of render. Its paragraphs come from fixture
 ##     `tests/drive/control_faces.json`. Paragraph marked drawn by system writes character no
 ##     shipped face maps under its stack; other paragraph writes one shipped face does map.
