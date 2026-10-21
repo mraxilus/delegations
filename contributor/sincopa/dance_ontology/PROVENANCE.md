@@ -500,8 +500,8 @@ the viewer past the bound.
 
 Nothing the law calls touches the document, so a count for both needs no browser.
 
-Some prose is counted by nothing still. `rig_page.nim` writes the fixed prose of the viewer page
-into its markup, and no law counts it. By the count of `plain.nim`, one paragraph there holds seven
+Some prose is counted by nothing still. `rig_page.nim` writes the fixed prose of the rig viewer into
+its markup, and no law counts it. By the count of `plain.nim`, one paragraph there holds seven
 sentences, and one sentence holds 26 words, measured on 2026-10-08. The Explorer writes what its
 live region says straight into the element, so no law reaches it either. The fourth verdict of the
 viewer opens `Stops at N turns:` and closes with a reason the simulation recorded, so it never
@@ -681,8 +681,8 @@ arc a drawn line hugs takes one of five values: 0, 51, 90, 141 and 180 degrees. 
 Verified by `checkRules`, which checks that `isDanceable` agrees with the measured arc.
 
 The drawing does not follow rule 41. It holds a high lock to `WRAP_MIN` too. So it refuses a high
-lock with the follow a quarter turned, where the arc is 141 degrees. The Architect trusts no cell
-until it is kept, modelled and confirmed, so that is left as it is.
+lock with the follow a quarter turned, where the arc is 141 degrees. Nothing checks rule 41, and the
+fix waits on the Architect.
 
 **Above takes no lock and no wrap, and its line passes over the body (rule 8).** Above is over the
 head, so from overhead nothing is under it, and `straightReach` draws its line straight. Verified by
@@ -2086,9 +2086,9 @@ its reason (`CARDS_REFUSED` in `suites/test_asks.nim`):
   upper arms of the follow behind the head, up to 90 degrees past the edge.
 
 `la` is the turn of the lead, and `fo` is the orbit of the follow, which asks the same
-(`asks.turner`). The Reference reads the same answers. It shows not modelled on G03 and G05,
-and on the last two steps of G04 and G06, and on no other cell. Read by a probe outside the tree
-on the Reference that the suites write, 2026-10-12.
+(`asks.turner`). The Reference reads the same answers. It shows not modelled on G03 and G05, and on
+the last two steps of G04 and G06, and on no other cell. Read by a probe outside the tree on the
+copy of the Reference that the suites write, 2026-10-12.
 
 The plan of D07 that `design/rig.json` keeps puts the couple 0.60 m apart. It holds its two joins
 0.23 m from each other, at 1.25 m and 1.28 m, in the upper third of the `Torso` band. Measured on
@@ -2309,8 +2309,8 @@ less far fails the law. A change that carries it further passes, and its floor s
 ## Pages and build
 
 **Every published title is the name of the work, then the name of the page.** The project stands
-behind each of the three pages that it publishes, so no title marks a mock-up. A gallery then sorts
-the pages of the work together.
+behind each of the three pages that it publishes, so every title takes this one form. A gallery then
+sorts the pages of the work together.
 
 Each page takes its own name after the name of the work:
 
