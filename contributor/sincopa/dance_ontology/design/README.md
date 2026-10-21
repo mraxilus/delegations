@@ -1,16 +1,16 @@
 # The rotation mark workbench
 
-This directory holds the review page, which draws the marks for rotation before the app draws them,
-and the rig viewer. Each is a mock-up, and its title says so. The reason for each choice is in
+This directory holds the Reference, which draws the marks for rotation before the Explorer draws
+them, and the rig viewer. The project stands behind both pages. The reason for each choice is in
 `../PROVENANCE.md`, under the rules of the drawing, the frame picture and the design workbench.
 
 **A check holds a drawing to a rule as it is written.** It does not show that a couple can dance
-what the drawing shows. The frame states to trust are reference cells that are kept, modelled
-and confirmed. `CONFIRMED` in `review_page.nim` names each confirmed cell.
+what the drawing shows. The frame states to trust are cells of the Reference that are kept, modelled
+and confirmed. `CONFIRMED` in `reference_page.nim` names each confirmed cell.
 
 ## Pages
 
-- `review.html` lays out each frame state the project draws, card by card, for the Architect to
+- `reference.html` lays out each frame state the project draws, card by card, for the Architect to
   rule on.
 - `rig.html` plays the sweeps and stills that the body simulation recorded.
 
@@ -114,7 +114,7 @@ Replaced by rule 17: a turn is drawn above, and not high.
 
 > no additional frame positions, just the addition of rotations that let us travel between them
 
-Held by `checkSingleTurns`, on the single-hand turns of the review page.
+Held by `checkSingleTurns`, on the single-hand turns of the Reference.
 
 ### Rule 12
 
@@ -192,7 +192,7 @@ Held by `checkSingleTurns` and `checkHandTurns`.
 > and chevrons as to not imply connection and not obscure direction. it is however fine to animate
 > smoothly past it as it would do now for a full turn for example
 
-Held by `checkSingleTurns`, on the turns of the review page. The frame picture does not follow it
+Held by `checkSingleTurns`, on the turns of the Reference. The frame picture does not follow it
 yet.
 
 ### Rule 23
@@ -217,7 +217,7 @@ Held by `checkSingleTurns`.
 > possible (obviously this can't really be the case when the lead orbits, a reposition/re entering)
 > will still be necessary I think
 
-Held by `checkSingleTurns`, on the turns of the review page.
+Held by `checkSingleTurns`, on the turns of the Reference.
 
 ### Rule 26
 
@@ -368,13 +368,13 @@ workbench imports it from there.
 design/
   rules.nim              each rule, in the words it arrived in; re-exports draw/terms
   checks.nim             each standing rule, checked on every build
-  parts.nim              each figure the review page places, keyed by name
-  page.nim               the style sheet and wrapper the review page and the rig viewer share
-  review_page.nim        review.html, and which cards are kept and confirmed
-  marks.nim              checks and builds review.html
+  parts.nim              each figure the Reference places, keyed by name
+  page.nim               the style sheet and wrapper the Reference and the rig viewer share
+  reference_page.nim     reference.html, and which cards are kept and confirmed
+  marks.nim              checks and builds reference.html
   plain.nim              reads prose, and holds it to the two countable rules
   faces.nim              the faces each page embeds
-  asks.nim               what each reference card asks of the body simulation
+  asks.nim               what each card of the Reference asks of the body simulation
   modelled.nim           which cards the simulation reaches: modelled.json
   floors.nim             how far the plan carries each rig sweep over the crown, printed
   rig.nim                the sweeps and stills the viewer plays: rig.json

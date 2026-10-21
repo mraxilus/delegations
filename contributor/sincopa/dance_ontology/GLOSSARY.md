@@ -217,10 +217,16 @@ A turn and a half from neutral, at either end of the chain. One connection is st
 and the other snakes around it.
 _Avoid_: double box, triple cross, coil
 
-**Reference**:
+**Explorer**:
 The browser page that offers exactly the moves that the ontology derives, so a move it does
 not derive cannot be danced.
 _Avoid_: validator, app, demo, viewer
+
+**Reference**:
+The browser page that lays out each frame state that the project draws, card by card, for the
+Architect to rule on. In its general sense, the word names a source that a check holds work to,
+such as the workbook.
+_Avoid_: card review, review page
 
 **Chevron**:
 The mark at the centre of a dancer that says which way they face.
@@ -293,7 +299,7 @@ A table that the Architect gives as a source, such as the `base` sheet of the wo
 _Avoid_: tab, worksheet, review sheet
 
 **Cell**:
-A cell of a sheet, or the slot on a page that copies it. The matrix of the Reference says matrix
+A cell of a sheet, or the slot on a page that copies it. The matrix of the Explorer says matrix
 cell in full.
 _Avoid_: box, square, field
 
