@@ -134,7 +134,7 @@ export async function driveHostSave(
   const signature = (image?.bytes ?? []).slice(1, 4).map((byte) => String.fromCharCode(byte));
   report(
     'an image saves through the host as the PNG itself',
-    image?.filename === 'rga_visualiser.png' && signature.join('') === 'PNG',
+    image?.filename === 'pga_visualiser.png' && signature.join('') === 'PNG',
     image === undefined ? 'host was handed nothing' :
       `${image.filename}, ${image.bytes.length} bytes, opens ${signature.join('')}`,
   );

@@ -93,7 +93,7 @@ const MILLISECONDS_TREE_TICKS = 1000;
 const SIZE_VIEW = { width: 1200, height: 900 };
 
 /** Assembled page, as `tools/build.nim web` writes it. */
-const PATH_PAGE = join(__dirname, '..', '..', 'build', 'rga_visualiser.html');
+const PATH_PAGE = join(__dirname, '..', '..', 'build', 'pga_visualiser.html');
 /** Address served page stands at; route answers it, and no server stands behind it. */
 const URL_SERVED = 'http://visualiser.test/';
 

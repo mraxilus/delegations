@@ -169,7 +169,7 @@ const
   ENV_FONT_TITLE* = "RGA_FONT_TITLE"  ## Environment name carrying title face's location.
   ENV_FONT_MONO* = "RGA_FONT_MONO"  ## Environment name carrying mono face's location.
   SIZE_FONT* = 16.0'f32
-  PATH_EXPORT_DEFAULT* = "rga_visualiser.png"
+  PATH_EXPORT_DEFAULT* = "pga_visualiser.png"
 
 const
   FRAMES_SETTLE = 2  ## Draw this many frames before capturing, so widget layout has settled.

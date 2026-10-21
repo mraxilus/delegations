@@ -87,7 +87,7 @@ const
     ##   listed again, so `help.HelpPath` stays their one home (Article I.4).
   PATH_DESKTOP_NIM = "src" / "desktop" / "main.nim"
     ## Desktop entry point `desktop` compiles, which shows one piece of text: window's caption.
-  PATH_DESKTOP_BINARY = BINARIES / "rga_visualiser"
+  PATH_DESKTOP_BINARY = BINARIES / "pga_visualiser"
     ## Desktop binary that verb writes; never committed, since `.gitignore` covers `binaries/`.
   ENV_FONT = "RGA_FONT"
     ## Environment name overriding face front-end sets its interface in.
@@ -134,7 +134,7 @@ const
     ##   Docking branch rather than master: `gui` asks for docking, which master lacks.
   PATH_SHELL = "pages" / "shell.html"
     ## Committed markup, carrying `@EMBED:<face>@` and `@SCRIPT@` tokens.
-  PATH_PAGE = BUILD / "rga_visualiser.html"  ## Assembled page.
+  PATH_PAGE = BUILD / "pga_visualiser.html"  ## Assembled page.
   TOKEN_SCRIPT = "@SCRIPT@"
     ## Token every script replaces, so committed shell stays whole document.
   TOKEN_EMBED = "@EMBED:"  ## Opening of token one face replaces.
