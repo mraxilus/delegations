@@ -541,6 +541,21 @@ the Explorer. A literal that a colon follows is a key of recorded data, so the c
 it. Verified by `suites/test_glossary.nim`, which fails on a page string such as `her arm` or
 `his reach`.
 
+**No string a page shows calls a page by a word that the glossary rejects for it.** The glossary
+rejects validator, app, demo and viewer for the Explorer, and card review and review page for the
+Reference. `test_glossary.nim` reads those words from the glossary, and holds every string literal
+of `design`, `app` and `simulation` to them. A literal of one word names an element or a key, as
+`app` does, so the check steps over it. The project calls the third page the rig viewer, and that
+name holds `viewer`. So the check takes the name out of a string before it reads it.
+
+Verified by `suites/test_glossary.nim`. Red first on 2026-10-21, on the sources before the fix: it
+failed at five strings. One was `the app's frame` on card C04, and one was `the viewer` in the prose
+of the Reference. Three were messages of the rig viewer that said `Viewer page`.
+
+Cost: the shell of the Explorer is not read. Its markup names the element `app` and the script
+`app.js`, and its one line of text is its title. Cost: a word that names a page in a comment or in
+the record is held by reading alone.
+
 **To dress a page twice gives the same bytes as to dress it once.** `dress()` walks every page under
 `build/app` and `build/design`, and not only the pages of the run. So a page that the run did not
 write is dressed again. `faceStyle` marks its block `<style data-faces>`, and
@@ -560,9 +575,10 @@ Rejected: a rename of `Way` as well, which leaves the direction of the turn unna
 The lock or wrap of the drawing is `terms.Modifier`, so `Way` names the direction alone
 (`rotation.Way`).
 
-Cost: no test reads the `_Avoid_` line of the manner of turn. `test_glossary.nim` reads only the
-`_Avoid_` lines of the steps of the chain, of the lead and the follow, and of the facing. So "way"
-can drift back into the sense of "manner" without a test noticing.
+Cost: no test reads the `_Avoid_` line of the manner of turn. `test_glossary.nim` reads the
+`_Avoid_` lines of the steps of the chain, of the lead and the follow, and of the facing. It also
+reads those of the Explorer and the Reference, and no others. So "way" can drift back into the sense
+of "manner" without a test noticing.
 
 **The moving sections show a walk whole before they show it in pieces.** Each manner of each hold
 takes two cells in sections E, F and G of the Reference. Those are the whole walk, and the same
