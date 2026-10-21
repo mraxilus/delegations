@@ -24,7 +24,7 @@
 ##   |           | `baseline/static_<algebra>.json` and                                 |
 ##   |           | `baseline/machine_<algebra>.json`                                    |
 ##   | guard     | compare last inspect against baselines; any count grown is finding,  |
-##   |           | and machine counts hold zero band                                    |
+##   |           | and machine measurements hold zero band                              |
 ##   | evaluate  | try one change or proposal at pin, `stale` ones, or `all`, and       |
 ##   |           | record what each measured as `evaluations/<name>.json`; typed        |
 ##   |           | algebras alone, or all four after `--thorough`                       |

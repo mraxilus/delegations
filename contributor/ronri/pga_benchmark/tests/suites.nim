@@ -1330,7 +1330,7 @@ I  00109020,4
     check v.findings.len == 0 and v.improvements.len == 0  # zero band holds
 
 
-  test "grown machine count is finding, with static count of its function beside it":
+  test "grown machine measurement is finding, with static count of its function beside it":
     let v = compareMachine(documentMachine(work(82, 392)), documentMachine(work(83, 392)),
         statics, path)
     check v.findings.len == 1 and v.improvements.len == 0  # one instruction more is growth
@@ -1348,7 +1348,7 @@ I  00109020,4
     )  # measurand composing several calls names no library function
 
 
-  test "shrunk machine count is improvement, never finding":
+  test "shrunk machine measurement is improvement, never finding":
     let v = compareMachine(documentMachine(work(82, 392)), documentMachine(work(82, 264)),
         statics, path)
     check v.findings.len == 0 and v.improvements.len == 1  # baseline moves by choice

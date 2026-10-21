@@ -5,7 +5,7 @@
 ##   Headers must name same algebra, compiler commit and flags, since counts of another
 ##   build are not comparable; date and machine are ignored, as counts are theirs to vary
 ##   by nothing.
-##   Machine counts take zero band (VII.12): same build runs same instructions, and wrapper
+##   Machine measurements take zero band (VII.12): same build runs same instructions, and wrapper
 ##     reaching no shared object runs no code processor selects. So header names C compiler and
 ##     tracer too (VII.11), and wrapper reaching shared object is finding, since its band would
 ##     need readings of runner and delegate that no record holds.
