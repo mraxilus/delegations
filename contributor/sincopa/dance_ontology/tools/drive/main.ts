@@ -43,7 +43,7 @@ async function pageFound(browser: Browser, path: string): Promise<Found> {
   // Keep every font face browser refused, since one refused draws nothing it declares.
   const found: Found = {
     characters: [],
-    faces: written.loaded.filter((face) => face.status !== 'loaded'),
+    faces: written.loaded.filter((font_face) => font_face.status !== 'loaded'),
   };
 
   // Resolve every character beyond ASCII down stack of element drawing it.

@@ -15,9 +15,9 @@
 ##     paragraph `han` is `p#han`; misnamed one reads as blind, so drive holds naming too.
 ##   Every page is rendered as publish host serves it, inside host's document skeleton
 ##     (`SKELETON_HOST`), so charset and viewport are what viewer gets.
-##     Host's style sheet is left out: its body stack leads with font faces of system, which no file
-##       here may name (X.8). Nothing is lost: element that inherits no stack from page takes
-##       browser's default, also font face of system, so drive finds it either way.
+##     Host's style sheet is left out: its body stack leads with font families of system, which
+##       no file here may name (X.8). Nothing is lost: element that inherits no stack from page
+##       takes browser's default, also font family of system, so drive finds it either way.
 
 {.experimental: "strictFuncs".}
 

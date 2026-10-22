@@ -157,10 +157,10 @@ export async function readWritten(page: Page): Promise<Written> {
     }
 
     // Load every font face, so one browser refuses reads as refused rather than as never asked.
-    const faces = [...document.fonts];
-    await Promise.allSettled(faces.map(async (face) => await face.load()));
-    const loaded = faces.map((face) => ({
-      family: face.family, weight: face.weight, status: face.status,
+    const font_faces = [...document.fonts];
+    await Promise.allSettled(font_faces.map(async (font_face) => await font_face.load()));
+    const loaded = font_faces.map((font_face) => ({
+      family: font_face.family, weight: font_face.weight, status: font_face.status,
     }));
 
     return { runs, declared, loaded, count_elements: elements.length };

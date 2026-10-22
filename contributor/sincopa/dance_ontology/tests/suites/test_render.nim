@@ -97,7 +97,7 @@ suite "Internal: Judge of font faces":
     check findings[0].message == "@font-face Noto Serif 600: Font face does not load; got `error`."
 
 
-  test "page sits inside host's skeleton, which names no font face":
+  test "page sits inside host's skeleton, which names no font family":
     let page = hosted("<p>x</p>")
     check page.startsWith("<!doctype html>")
     check page.find("<body>") < page.find("<p>x</p>")

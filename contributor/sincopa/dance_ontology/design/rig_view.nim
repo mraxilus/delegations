@@ -268,7 +268,7 @@ proc readout() =
       let
         who = int(sweep_shown.arm[arm][0].toFloat)
         side = int(sweep_shown.arm[arm][1].toFloat)
-      # Label, not heading: heading would take serif font face (Article X.8).
+      # Label, not heading: heading would take serif font family (Article X.8).
       html = html & cstring"<div class='arm'><p class='who'><i style='background:" &
           inkArm(side, who) & cstring"'></i>" & WHOSE[who] & cstring" " &
           SIDES[side] & cstring"</p>"

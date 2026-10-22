@@ -1,5 +1,5 @@
-## Hold font faces every page ships to what they claim, and every style sheet to font faces it
-## names.
+## Hold font faces every page ships to what they claim, and every style sheet to font families
+## it names.
 ##
 ##   Font faces themselves are fetched, so nothing here reaches network or reads one:
 ##     laws are about which font faces are named, and about where they land in page.
@@ -89,7 +89,7 @@ func toFamilies(stack: string): seq[string] =
 
 func stackDeclared(style_sheet, selector: string): seq[string] =
   ## Read families, in order, that last font family declaration of `selector` names.
-  ##   One custom property is resolved, as audit's font faces check resolves one; shorthand
+  ##   One custom property is resolved, as audit's `checkFaces` resolves one; shorthand
   ##     `font` gives its families after size, so stack starts at its first family.
   var value = ""
   for declaration in declarations(style_sheet, selector):
@@ -208,8 +208,8 @@ suite "Internal: Font faces":
 
   test "every heading takes serif font family":
     ## X.8 gives headings and titles to Noto Serif, and record says pages follow it.  Heading
-    ## rules of Explorer and of shared style sheet of workbench named no font face, so every heading
-    ## took body's Noto Sans (repository issue 391).
+    ## rules of Explorer and of shared style sheet of workbench named no font family, so every
+    ## heading took body's Noto Sans (repository issue 391).
     for (style_sheet, selectors) in [
       (page.STYLE.styles, @["h1", "h2", "h3"]),
       (readFile(PATH_APP).styles, @["h1", "h2", "h3", "h4"]),

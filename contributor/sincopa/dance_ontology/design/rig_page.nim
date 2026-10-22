@@ -10,7 +10,7 @@
 ##     compared with what it looks like in model.  Cards are cut from built
 ##     Reference itself rather than drawn again, so what is compared is
 ##     what was ruled on, badge for badge.
-##   Font faces are inlined by `design/faces`, which also turns Commit Mono's
+##   Font faces are inlined by `design/font_faces`, which also turns Commit Mono's
 ##     ligatures on at root.  Article X.8: presentation target ships font faces it
 ##     draws with, never naming one reader may lack.
 ##   Recording's stamp is left out (`folded`): it says what physics gave recording, and
