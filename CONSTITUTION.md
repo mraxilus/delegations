@@ -314,7 +314,7 @@ CAYLEYS_WEDGE  # module constant
    mechanical delegation (a borrow, a forward) that stands in a stack under one group comment. A
    doc is imperative and opens with a verb, and a type opens with "Define …". It holds one
    summary line that ends in a period, and it cites formal notation inline with `i.e.`. Where you
-   cannot write honest text yet, write the doc `TODO: Document.`, and never leave the slot empty.
+   cannot write honest text yet, write the doc `TODO: Document.`, and never leave the doc empty.
    A generator carries its docs through a required parameter of the emitting helper, so that an
    undocumented emission cannot compile.
 2. Elaboration is a hanging outline. Each deeper nuance is indented two more spaces under its
@@ -436,8 +436,8 @@ if is_tallying: cost.mark = cpuTime()  # Instrument runs only while report reads
 3. A TODO is a compact design journal: the question, the candidate approaches, the expected
    benefits, the likely costs, and the evidence needed. Where the next action is obvious, one
    line is enough.
-4. Work in progress may stay in the tree, commented out, while its research value is greater
-   than its maintenance cost. Never manufacture commented code as a substitute for version
+4. Work in progress may stay in the tree, commented out, while it teaches more than it costs
+   to keep. Never manufacture commented code as a substitute for version
    history. A commented-out block keeps its docs and its TODOs, so that it stays readable.
 5. Honesty is about knowledge, and not about sloppiness. Leave no typo, no debug output, no
    trailing whitespace and no stale summary. Do not imitate the accidents of a reference
@@ -569,15 +569,14 @@ suite "Chapter 2":
    generator takes its semantic data first and its thin lowering last. A replication test
    preserves the correspondence to the notation of its source. Never force the profile of one
    onto another.
-8. A presentation target ships the faces that it draws with, and never names one that a
-   viewer may lack. Those faces are Noto Serif for headings and titles, Noto Sans for body
-   and interface text, and Commit Mono for code, data and figures. Enable the ligatures of
+8. A presentation target ships the font faces that it draws with, and never names one that a
+   viewer may lack. They belong to Noto Serif for headings and titles, Noto Sans for body and
+   interface text, and Commit Mono for code, data and figures. Enable the ligatures of
    Commit Mono wherever the renderer shapes text, because a glyph atlas that does no shaping
    needs none. The split is a preference of the Architect rather than a finding, so taste
-   decides, and the record says so. A Noto face ships whole and never as a subset, since Noto
-   was chosen so that no character of a page falls outside its faces. Merge faces by codepoint
-   range where none covers everything, then render each codepoint against `.notdef` to verify
-   the coverage.
+   decides, and the record says so. A Noto font face ships whole and never as a subset, since
+   Noto was chosen to cover every character of a page. Merge font faces by codepoint range where
+   none covers everything, then render each codepoint against `.notdef` to verify the coverage.
 9. A space inside an expression stands only where this list puts it, or where the tokeniser
    demands it:
    - one space on each side of a binary operator, and of `=`;
