@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-10-04 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 87b32e76eb0755e0 |
+| Rules   | d70947e81f32921b |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: a curator project, from the brief of the Architect. It holds the fixers of `koch fix`
@@ -564,6 +564,14 @@ operator. A `-` before a digit opens a number after a space or an opening bracke
 - Verified by `suites/test_tokens.nim`. Verified by hand over the tree, 2026-10-02: each byte of
   each Nim file outside whitespace lies in one token, and each bracket finds its partner.
 
+**A name of code is each run of name characters, read once (`wordsCode`).** The names check, the
+fixed waits and the words among pragmas read names so. So the tail of an indented name never reads
+as a name of its own.
+
+- Rejected: a reader that skips the spaces before a name, but steps by the name alone. It reads
+  the tail of each later name again, as `t` of `{.compileTime, noinit.}`.
+- Verified by `suites/test_views.nim` and `suites/test_waits.nim`.
+
 ## Form
 
 **Each check of form reads text alone, so it serves every kind (`checkForm`).** A line holds no
@@ -905,6 +913,8 @@ such as `got none.`, echoes no value and is no finding.
   appended literal would join that operator. So `"got " & a == b` stays.
 - The rule reads every value of the tail, so a context after the value takes backticks too, as
   `for {manner}` does.
+- A joining `&` stands on the line where its operand ends. Nim continues a line that a binary
+  operator ends, so a line that `&` opens is the next statement, such as an `&"…"` result.
 - A test that builds the old text in the same form changes with it. A test that asserts the
   text in another form changes by hand, as two tests of `test_record.nim` do.
 - Verified by `suites/test_messages.nim`.
@@ -1262,8 +1272,8 @@ caller. `curator/audit` gives those that its glossaries list, and the command li
 jargon list of V.6 always passes. Verified by `suites/test_names.nim`.
 
 - Each finding names a rule of its own: `abbreviation`, `action-verb`, `boolean-name`,
-  `lookup-table`, `name-case`, `member-case`, `placeholder-letter`, `notation`, `global-word` and
-  `representation-head`.
+  `lookup-table`, `name-case`, `member-case`, `placeholder-letter`, `notation`, `global-word`,
+  `representation-head`, `routine-suffix`, `generic-suffix` and `collection-name`.
   The case of a name takes three rules, because V.1, V.11 and V.12 state it by kind.
 - This module gives the rename that each rule asks (`renamesAbbreviation`, `renamesCase`). A
   rename reaches each use of a name, and only the semantic pass of the compiler finds each use. So
@@ -1390,6 +1400,12 @@ predicate:
 - Cost: a Pascal name of capitals alone, such as `ANTI`, passes the case of a type. Reading holds
   it.
 
+## Names and what they name
+
+These rules hold the words of a name to the thing that it names. That thing is the kind of a
+routine, the value of a binding, a generic type or the member of a collection. Each rule reads one
+file, as the rules under Names do.
+
 **Each verb of generation fixes the kind of its routine (V.3).** A `construct…` is a `func` or a
 `proc` that runs at compile time and returns a value. A `define…` is a macro, and an `emit…`
 is a `func` or a `proc` that returns `NimNode`, and never a macro. The Architect ruled that the
@@ -1445,6 +1461,59 @@ m.grade.get.toInt`.
   its line otherwise is unread.
 - Rejected: a check of the cut itself, since "still describes the thing" asks what a word means.
 - Verified by `suites/test_names.nim` and `suites/test_declared.nim`.
+
+**A routine never closes with `Of`, and keeps it only where its name spells a generic type (V.3,
+V.13).** The Architect ruled this on #649. A property drops `Of` for the bare noun, a conversion
+takes `to<Target>`, and an action takes its verb. A generic type can stand in another module,
+and knoller reads one file. So the check reads the spelling from the words of the name alone. A
+verb of V.3 that takes a type opens the name, and two words or more follow it, the last `Of`.
+
+- The verbs are `to`, `init`, `emit`, `construct` and `define` (`VERBS_TYPE`). So
+  `toMultivectorOf` passes, and `gradeOf` and `headOf` are findings.
+- The finding is of `routine-suffix`, which cites V.3. The rule `action-verb` keeps the first word
+  of a routine alone, so `newMeshOf` is one finding of each rule.
+- The word `Of` is read without case, so `grade_of` is a finding too, beside its finding of case.
+- `Of` inside a name, as in `basesOfGrade`, is unread.
+- Rejected: an exemption where the same file declares the type that the words spell. A generic
+  type and a routine that spells it can stand in two modules, and the check then reads no type.
+- Cost: the check reads the verb, and never the type. So `toGradeOf`, which spells no type,
+  passes, and reading holds it. A routine that spells a generic type after another verb, such as
+  `sampleMultivectorOf`, is a finding.
+- Verified by `suites/test_names.nim`, over each keyword of a routine, each first word, and none,
+  one or two words between that word and `Of`.
+
+**A type closes with `Of` only where an alias of its instance takes its bare name (V.13).** The
+rule `generic-suffix` reports each other type that closes with `Of`, and cites V.13. The check
+reads the alias in the same file, such as `Multivector = MultivectorOf[…]`. `declared.nim`
+keeps the value of each type on its line. The head of the value of the alias is the generic type,
+then `[`.
+
+- So a proc type with no alias, such as `ProverOf`, is a finding. So is a generic with no alias,
+  or with an alias of another name or of no instance. So is a generic whose bare name another type
+  takes.
+- Cost: an alias in another module of the project is unread, so its generic type is a finding. An
+  alias that wraps past its line is unread too.
+- Verified by `suites/test_names.nim` and `suites/test_declared.nim`.
+
+**A collection type takes the plural of its member (V.6).** A word for its form closes the name
+only where two collection types would share it. The rule `collection-name` reports a type whose
+name is a type of the same file and a word for a form, and cites V.6. So `MeshSet` beside `Mesh`
+is a finding, and V.6 gives it the name `Meshes`.
+
+- The words for a form are `Set`, `Seq`, `Array` and `Table`, as V.6 lists them
+  (`FORMS_COLLECTION`). A word outside that list, such as `List`, is unread.
+- A plural before the word for its form passes, as `BasesSet` beside `Basis` does. V.6 asks for
+  that name where two collection types would share one.
+- A type that the file declares as a collection is no member, so a word for a form after it
+  passes. The check reads that from the opening of its value, such as `set[` or `Table[`
+  (`OPENINGS_COLLECTION`). So `BasesSet` beside `Bases = set[Basis]` passes, and `MeshSet` beside
+  `Mesh = object` is a finding.
+- Cost: the member is read only where the same file declares it, and only where the word for its
+  form follows it at once. A member of another module, or a qualifier between them, passes.
+- Cost: a collection whose value opens in another way reads as a member. An alias of another
+  alias, such as `Bases = Grades`, is one, and so is `distinct set[Basis]`. A word for a form
+  after it is a finding.
+- Verified by `suites/test_names.nim`, for each word for a form.
 
 ## Idioms
 

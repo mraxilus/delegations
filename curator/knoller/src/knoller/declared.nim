@@ -1,5 +1,5 @@
 ## Read each name Nim source declares, with its kind and reach (Article V.1, V.10, V.11), and
-##   value binding takes (V.2).
+##   value binding takes (V.2) or type takes (V.13).
 ##   Reads declarations alone: binding (`let`, `var`, `const`, `for`, `except … as`), routine,
 ##     type, field, parameter, enum member and placeholder in generic brackets. Foreign binding,
 ##     i.e. routine whose pragmas hold word of `MARKS_FOREIGN`, as `importc` or `exportc`,
@@ -25,7 +25,8 @@
 ##     `true` or `false`. Boolean from call or expression holds by reading.
 ##   Cost: generic is read from type as signature spells it, so alias of `typedesc` is unread.
 ##   Cost: binding's value is read on binding's own line, and lines below it opening `.` that
-##     continue its chain; value running past it otherwise is unread (`value`).
+##     continue its chain; value running past it otherwise is unread (`value`). Type's value is
+##     read on its own line alone, so alias wrapping after `=` names no type.
 
 {.experimental: "strictFuncs".}
 
@@ -78,6 +79,7 @@ type
     value*: string
       ## Value binding takes on its own line and lines below opening `.`, its element where tuple
       ##   gives one to each name; empty where line gives none, or value runs past otherwise.
+      ##   Type keeps text after `=` on its line, so alias names type it takes (V.13).
 
   Opener = object  ## Define block enclosing line, by its opening line.
     indent: int
@@ -234,20 +236,20 @@ func namesPlaceholder(text: string): seq[string] =
 
 
 func readType(text: string, line: int, names: var seq[Declared]): KindName =
-  ## Read type's name and placeholders, and enum's members on its line; give kind lines below
+  ## Read type's name, value and placeholders, and enum's members on its line; give kind lines below
   ##   declare: `Member` under enum, `Field` under object or alias, `Placeholder` under concept.
   let name = text.identifierAt(0)
   if name.len == 0: return KindName.Field
-  names.add Declared(name: name, line: line, kind: KindName.Type)
+  let
+    at = text.indexTop('=')
+    value = if at < 0: "" else: text[at + 1 .. ^1].strip
+    head = value.identifierAt(0)
+  names.add Declared(name: name, line: line, kind: KindName.Type, value: value)
   var k = name.len
   if k < text.len and text[k] == '*': inc k
   if k < text.len and text[k] == '[' and text.closing(k) > k:
     for p in text[k + 1 ..< text.closing(k)].namesPlaceholder:
       names.add Declared(name: p, line: line, kind: KindName.Placeholder)
-  let
-    at = text.indexTop('=')
-    value = if at < 0: "" else: text[at + 1 .. ^1].strip
-    head = value.identifierAt(0)
   if head == "enum":
     for m in value[head.len .. ^1].splitTop({','}):
       if m.nameDeclared.len > 0:

@@ -96,13 +96,19 @@ func chainFrom(
       tokens[k - 1].spelling(source) in INTERPOLATORS:
     result[0].first = k - 1
     result[0].is_interpolated = true
-  var at = k + 1
+  var
+    at = k + 1
+    last = k  # Last token of operand before next `&`.
   while at + 1 < tokens.len:
     while at < tokens.len and tokens[at].kind == KindToken.Comment: inc at
     if at + 1 >= tokens.len or tokens[at].spelling(source) != "&": break
+    # Joining `&` stands on line its operand ends: Nim continues line binary operator ends,
+    #   never one it opens, so `&` opening line opens next statement, as `&"…"`.
+    if tokens[at].line != tokens[last].lineLast(source): break
     let piece = pieceAt(tokens, partners, at + 1, source)
     if piece.last < piece.first: break
     result.add piece
+    last = piece.last
     at = piece.last + 1
 
 

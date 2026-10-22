@@ -165,6 +165,30 @@ proc unread(c: Basis, camera: Camera) =
 """
     ## Chains of steps after root, by dot, prefix call, empty call and split line, with one name
     ##   of chain at head and behind it; index and call of second input read as no chain (V.2).
+  SUFFIXES = """
+type
+  MultivectorOf*[B: static Bases] = object
+    elements: array[4, float]
+  Multivector* = MultivectorOf[BASES_ALL]
+  Bivector* = BivectorOf[BASES_PLANE]
+  BivectorOf*[B: static Bases] = object
+  ProverOf* = proc (pin: string): Prover {.closure.}
+  KvectorOf*[B: static Bases] = object
+  VersorOf*[B: static Bases] = object
+  Motor* = VersorOf[BASES_MOTOR]
+  RotorOf* = object
+  Rotor* = RotorOf
+  FrameOf*[T] = object
+  Frame* = object
+  BasesOfGrade* = array[4, Bases]
+"""
+    ## Types closing with `Of` beside alias of their instance, before and after it, and beside none
+    ##   (V.13): proc type, generic alone, alias of other name, alias of no instance, bare name of
+    ##   other type; `Of` inside name.
+  MESSAGE_SUFFIX = "Type closes with `Of` only where alias of its instance takes its bare name"
+    ## Sentence of finding of type closing with `Of` (V.13).
+  MESSAGE_ROUTINE = "Routine closes with `Of` only where it spells generic type"
+    ## Sentence of finding of routine closing with `Of` (V.3).
 
 
 func names(source: string): seq[string] =
@@ -180,6 +204,12 @@ func breaches(source: string): seq[(Rule, string)] =
 func messages(source: string): seq[string] =
   ## Read message of each finding names check reports on source, with no exemption.
   checkNames("x.nim", source, []).mapIt(it.message)
+
+
+func breachesId(source: string): seq[(string, string)] =
+  ## Read id of rule and message of each finding names check reports on source, as output
+  ##   prints them, with no exemption.
+  checkNames("x.nim", source, []).mapIt (it.rule.id, it.message)
 
 
 func reachIn(source, name: string): Reach =
@@ -284,6 +314,89 @@ suite "Names":
         ##   closes, or alone.
     for (source, is_compile_time) in sources:
       check source.breaches.countIt("`func constructLut`" in it[1]) == ord(not is_compile_time)
+
+
+  test "V.3 routine never closes with `Of`, but where its words after verb spell generic type":
+    # Case held (#649): `gradeOf`, which V.3 names; `headOf`, nested in `func` at
+    #   `contributor/ronri/pga_benchmark/src/pga_benchmark/definitions.nim:184`; `toMultivectorOf`,
+    #   which V.3 keeps, since it spells `MultivectorOf` (V.13).
+    #   Domain: every keyword under each first word, verb taking type and other word, with none,
+    #   one or two words between it and `Of`.
+    const
+      keywords = ["func", "proc", "macro", "template", "iterator", "converter", "method"]
+      firsts = ["to", "init", "emit", "construct", "define", "grade", "find"]
+      middles = ["", "Multivector", "MultivectorAnti"]
+      verbs_type = ["to", "init", "emit", "construct", "define"]
+    var count = 0
+    for keyword in keywords:
+      for first in firsts:
+        for middle in middles:
+          let
+            name = first & middle & "Of"
+            found = ("routine-suffix", MESSAGE_ROUTINE & "; got `" & name & "`.")
+            is_spelled = first in verbs_type and middle.len > 0
+          check (keyword & " " & name & "() = discard\n").breachesId.count(found) ==
+              ord(not is_spelled)  # V.3, V.13
+          inc count
+    check count == keywords.len * firsts.len * middles.len  # domain enumerated whole
+    check "func gradeOf(m: Multivector): Grade = m.grade\n".breachesId ==
+        @[("routine-suffix", MESSAGE_ROUTINE & "; got `gradeOf`.")]  # V.3
+    const nested = "func resolve(definition: Definition): string =\n" &
+        "  func headOf(definition: Definition): string = definition.name\n" &
+        "  definition.headOf\n"
+    check nested.breachesId == @[("routine-suffix", MESSAGE_ROUTINE & "; got `headOf`.")]  # V.3
+    check ("func toMultivectorOf*[B: static Bases](m: Multivector): MultivectorOf[B] =\n" &
+        "  discard\n").breachesId.len == 0  # V.3, V.13
+    check "func basesOfGrade(grade: Grade): Bases {.compileTime.} = discard\n".breachesId.len ==
+        0  # `Of` inside name is no last word
+    check "proc grade_of() = discard\n".breachesId.mapIt(it[0]) == @["routine-suffix", "name-case"]
+    check "proc newMeshOf() = discard\n".breachesId.mapIt(it[0]) ==
+        @["action-verb", "routine-suffix"]  # V.3, banned verb and `Of` each own rule
+    check "proc `Of`() = discard\n".breachesId.len == 0  # operator is no name
+
+
+  test "V.13 type closes with `Of` only where alias of its instance takes its bare name":
+    # Case held: `ProverOf* = proc (pin: string): Prover {.closure.}`, beside no alias, at
+    #   `curator/knoller/src/knoller/compilers.nim` until #653 named it `ProversPin` (#649).
+    #   Domain: generic with alias of instance after and before it; proc type, generic, alias of
+    #   other name, alias of no instance and bare name of other type; `Of` inside name.
+    check SUFFIXES.breachesId == ["ProverOf", "KvectorOf", "VersorOf", "RotorOf", "FrameOf"].mapIt(
+      ("generic-suffix", MESSAGE_SUFFIX & "; got `" & it & "`."),
+    )  # V.13
+    check "type ProverOf* = proc (pin: string): Prover {.closure.}\n".breachesId ==
+        @[("generic-suffix", MESSAGE_SUFFIX & "; got `ProverOf`.")]  # V.13
+    check "type\n  Pair_of[T] = object\n".breachesId.mapIt(it[0]) ==
+        @["generic-suffix", "name-case"]  # V.1, V.13, word read without case
+    check "type Of = object\n".breachesId.len == 0  # one word closes nothing
+
+
+  test "V.6 collection type takes plural of its member, never member and word for form":
+    # Case held (#649): `MeshSet* = object`, holding every record kind one frame draws, beside
+    #   `Mesh* = object` at `contributor/ronri/pga_visualiser/src/rga_visualiser/mesh.nim:452`;
+    #   V.6 names it `Meshes`.
+    #   Domain: each word for form of V.6 after member file declares, after plural (`BasesSet`
+    #   beside `Basis`), and after member file declares none; word for form outside V.6; plural;
+    #   plural file declares as collection type, by each opening of its value, or as other alias.
+    const forms = ["Set", "Seq", "Array", "Table"]
+    for form in forms:
+      let source = "type\n  Mesh* = object\n  Basis = enum\n    E0, E1\n  Mesh" & form &
+          "* = object\n  Bases" & form & " = object\n  Ribbon" & form & " = object\n"
+      check source.breachesId == @[(
+        "collection-name",
+        "Collection type takes plural of its member `Mesh`; got `Mesh" & form & "`.",
+      )]  # V.6; `Bases…` is plural, `Ribbon…` member file declares none
+    check "type\n  Mesh = object\n  MeshList = seq[Mesh]\n  Meshes = seq[Mesh]\n".breachesId.len ==
+        0  # V.6, `List` names no form of V.6
+    check "type\n  Basis = enum\n    E0\n  BasisSet = set[Basis]\n".breachesId == @[(
+      "collection-name", "Collection type takes plural of its member `Basis`; got `BasisSet`."
+    )]  # V.6, `Bases`
+    for opening in ["set[", "seq[", "array[4, ", "Table[string, ", "OrderedTable[string, ",
+                    "HashSet[", "CountTable["]:
+      check ("type\n  Basis = enum\n    E0\n  Bases = " & opening & "Basis]\n" &
+          "  BasesSet = HashSet[Bases]\n").breachesId.len == 0  # V.6, member is collection
+    check "type\n  Bases = Grades\n  BasesSet = HashSet[Bases]\n".breachesId == @[(
+      "collection-name", "Collection type takes plural of its member `Bases`; got `BasesSet`."
+    )]  # V.6, alias of other alias reads as no collection
 
 
   test "foreign binding keeps library's name, and its parameters are read":

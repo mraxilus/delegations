@@ -34,17 +34,6 @@ const
   WAITS_NIM = ["sleep", "sleepAsync"]  ## Names read in Nim source alone.
 
 
-func identifiers(line: string): seq[string] =
-  ## Read every name of line of Nim code view, in order.
-  var i = 0
-  while i < line.len:
-    let name = line.identifierAt(i)
-    if name.len == 0: inc i
-    else:
-      result.add name
-      i += name.len
-
-
 func replacement(identifier: string, is_nim: bool): string =
   ## Read replacement of fixed wait identifier names; empty when it names none.
   for (name, replacement) in WAITS:
@@ -70,5 +59,5 @@ func checkWaits*(path: string, lines: openArray[seq[string]], is_nim: bool): seq
 func checkWaits*(path, source: string): seq[Report] =
   ## Report fixed wait in Nim drive source, line by line, with its replacement.
   var lines: seq[seq[string]]
-  for line in source.codeOnly.splitLines: lines.add line.identifiers
+  for line in source.codeOnly.splitLines: lines.add line.wordsCode
   checkWaits(path, lines, is_nim = true)
