@@ -199,6 +199,7 @@ suite "Internal: Rewrites":
     check planBoth(DECLARING & "let s = &\"{ctx + 1}\"\n").refusal ==
       "`p/a.nim:4` names `ctx` inside interpolated string"  # strformat reads it, no token stands
     check planBoth(DECLARING & "let s = \"a\" & \"{ctx}\"\n").refusal.len == 0  # plain string
+    check planBoth(DECLARING & "let s = \"a\"&\"{ctx}\"\n").refusal.len == 0  # glued `&` joins
     var elsewhere = answers()
     elsewhere["p/a.nim"].symbols[(1, 8)].line = 9  # site uses name declared on other line
     check planBoth(answers = elsewhere).refusal == "`p/a.nim:1` names symbol declared elsewhere"
