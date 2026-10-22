@@ -345,7 +345,8 @@ Left to left held low, turned from face to face.
 > that applies to everything but high lock
 
 It answers the second sentence of rule 7. Held by `checkRules`, which draws a high lock on each
-single hold at each quarter turn of the follow. Eight of those sixteen hug less than rule 7 asks.
+single hold at each quarter turn of the follow. It prints how many of them hug less than rule 7
+asks, and at which arcs.
 
 ## Layout
 

@@ -670,31 +670,40 @@ settles in one of six places, each a bearing off its own dancer's facing (rule 3
 `body.nim` sets them 44 degrees apart, and two marks need 34.9 degrees, so no two marks touch.
 
 Both wraps go round the front to the front of the other hand, and both locks go round the back
-(rules 4 to 6). A high lock goes round to the back of its own shoulder, which is a hammerlock (rule
-37). Verified by `checkRules`, which checks where each hold settles and which way its route sets
-off.
+(rules 4 to 6). A high lock bends the arm to the shoulder of the same arm, and its line goes round
+the back (rules 6 and 37). Verified by `checkRules`, which checks where each hold settles and which
+way its route sets off.
 
 **A lock or a wrap needs its line to go round the body (rule 7), except a high lock (rule 41).** On
-the four single holds at quarter turns, the arc a drawn line hugs is 0, 51, 90, 132, 135, 141 or 180
-degrees. Measured on 2026-10-22, by a probe outside the tree. So `WRAP_MIN`, at 170 degrees, admits
-180 alone. The build refuses to draw a lock or a wrap that rule 7 binds and that falls short.
-Verified by `checkRules`, which checks that `isDanceable` agrees with the measured arc on every
-landing but a high lock.
+the four single holds, at quarter turns of the follow, the larger arc takes seven values. They are
+0, 51, 90, 132, 135, 141 and 180 degrees. So `WRAP_MIN`, at 170 degrees, admits 180 alone. A still
+figure refuses to draw a lock or a wrap that rule 7 binds and that falls short. A moving figure asks
+no such question, and no page moves a lock or a wrap.
 
-**A high lock stands whatever arc its line hugs (rule 41).** A high lock is a hammerlock, with the
-hand brought round the back to its own shoulder (rule 37). So the line round the body is not what
-makes it. `terms.isMadeRoundBody` names the locks and wraps that rule 7 binds, and `isDanceable`
-asks the arc of those alone. Rejected: a lower threshold for a high lock, which would still refuse
-the arcs below it, where rule 41 refuses none.
+Verified by `checkRules`, on each single hold at each quarter turn of the follow. It checks that
+`isDanceable` agrees with the measured arc, for every lock and wrap but a high lock. It prints the
+arcs that it meets.
+
+**A high lock stands whatever arc its line hugs (rule 41).** A high lock bends the arm to the
+shoulder of the same arm, and its line goes round the back (rules 6 and 37). Rule 41 gives no
+reason. The reading here is that the bent arm makes the lock, and not how far its line hugs.
+`terms.isMadeRoundBody` names the locks and wraps that rule 7 binds, and `isDanceable` asks the arc
+of those alone. Rejected: a lower threshold for a high lock, which would still refuse the arcs below
+it, where rule 41 refuses none.
 
 Verified by `checkRules`, which draws a high lock on each of the four single holds at each quarter
-turn of the follow. Eight of those sixteen hug 132, 135 or 141 degrees. The check demands at least
-one such, so it cannot pass while it holds nothing that rule 7 does not. Red first on 2026-10-22:
-before the fix, the drawing refused a high lock on Left to left with the follow turned a quarter.
+turn of the follow. It prints how many hug less than rule 7 asks, and at which arcs. On 2026-10-22
+it was eight of sixteen, at 132, 135 or 141 degrees. The check demands at least one such, so it
+cannot pass while it holds nothing that rule 7 does not. Red first on 2026-10-22: before the fix,
+the drawing refused a high lock on Left to left with the follow turned a quarter.
 
-Cost: the drawing now refuses no high lock, at any turn of the follow. The simulation asks no
-question of a high lock, so nothing says which of them a couple can dance. No page draws a lock or a
-wrap yet.
+Cost: the drawing refuses no high lock for its arc. The simulation reads a high lock on the arm of
+the follow at half and whole turns (`simulation/verdicts.md`), and no law holds those rows. Nothing
+asks it about a high lock at a quarter turn, so nothing says which of the drawn ones a couple can
+dance. No page draws a lock or a wrap yet.
+
+Between quarter turns, some locks that `isDanceable` admits find no route, high and low alike. The
+build then fails on an empty value, and does not refuse with a message (#688).
 
 **Above takes no lock and no wrap, and its line passes over the body (rule 8).** Above is over the
 head, so from overhead nothing is under it, and `straightReach` draws its line straight. Verified by
@@ -820,9 +829,9 @@ crossing, so it dives once. Verified by `checkHandTurns`.
 
 **The sheet of the Architect gives rules 36 to 40, and the workbench checks none of them.** The
 simulation reports in their words, through `simulation/words.nim`, and that is not a check. Rule 37
-says what a lock is, and makes a high lock a hammerlock. Rule 38 says a wrap crosses the other arm
-of its dancer. The drawing does not show that crossing yet, because rule 22 keeps a settled reach
-away from that hand.
+says what a lock is, and bends the arm of a high lock to the shoulder of the same arm. Rule 38 says
+a wrap crosses the other arm of its dancer. The drawing does not show that crossing yet, because
+rule 22 keeps a settled reach away from that hand.
 
 Rule 39 makes modifiers belong to each arm, for either dancer. The drawing holds one level and one
 modifier for each connection. Rule 40 is the one filled rotation row of the sheet.
@@ -3162,7 +3171,7 @@ to tidy the line away shows up only as suites that fail to build. `result +=` on
   read *unconfirmed* until then.
 - **The floor held low and high.** `simulation/verdicts.md` prints each claim of the floor
   there beside the answer of the simulation and what stops it (Against the floor). Where the two
-  disagree, the ruling is the Architect's. So is whether a hammerlock goes a whole turn, and what
+  disagree, the ruling is the Architect's. So is whether a high lock goes a whole turn, and what
   moves in the body when it does.
 - **The radius of the girdle, 60 mm, is an estimate and not tape.**
 - **The breadth of the hand is not held to the bound of a leap (#605).** In L-r low, the edge of a
