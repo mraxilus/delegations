@@ -301,33 +301,33 @@ proc checkRules*() =
   told.add &"six spots, {decimal(apart, 0)} degrees apart at the closest, " &
       "off each dancer's own facing"
 
-  # RULES 4, 5 and 6.  `"high and low wraps go around to the front of the`
-  # `other hand, low lock goes around the back to the back of the other hand"`
-  # and `"in high lock the line goes around the back of the modified body"`,
-  # to back of current hand.  Table here is rules
+  # RULES 4 and 5.  `"high and low wraps go around to the front of the`
+  # `other hand, low lock goes around the back to the back of the other hand"`.
+  # Rule 6 sent high lock round back, and Architect retired it on 2026-10-22:
+  # high-locked hand settles in front slot of its own side, and no rule sends
+  # its line, so it takes short way.  Table here is rules and that ruling
   # transcribed, held against settle table that drawing derives from.
-  # Architect retired rule 6 on 2026-10-22; its row holds drawing as it is until
-  # issue 697 moves high lock to front slot.
   const landings = [
     (level: Level.High, modifier: Modifier.Wrap, whose: Whose.Other, spot: Slot.Front,
-     sends: Sends.FrontWay),
+     sends: some(Sends.FrontWay)),
     (level: Level.Low, modifier: Modifier.Wrap, whose: Whose.Other, spot: Slot.Front,
-     sends: Sends.FrontWay),
+     sends: some(Sends.FrontWay)),
     (level: Level.Low, modifier: Modifier.Lock, whose: Whose.Other, spot: Slot.Back,
-     sends: Sends.BackWay),
-    (level: Level.High, modifier: Modifier.Lock, whose: Whose.Own, spot: Slot.Back,
-     sends: Sends.BackWay),
+     sends: some(Sends.BackWay)),
+    (level: Level.High, modifier: Modifier.Lock, whose: Whose.Own, spot: Slot.Front,
+     sends: none(Sends)),
   ]
   for landing in landings:
     for arm in Arm:
       let lands = if landing.whose == Whose.Own: arm else: other(arm)
       doAssert slotHand(arm, some landing.level, some landing.modifier) == (lands, landing.spot),
         &"A settle lands wrong; got `{slotHand(arm, some landing.level, some landing.modifier)}`."
-    doAssert sendsHold(some landing.level, some landing.modifier) == some landing.sends,
+    doAssert sendsHold(some landing.level, some landing.modifier) == landing.sends,
       &"A hold sends its line the wrong way; got " &
       &"`{sendsHold(some landing.level, some landing.modifier)}` for " &
       &"`{landing.level}` `{landing.modifier}`."
-    # And drawn route really does set off that way, at both ends.
+    # And drawn route really does set off that way, at both ends.  Where no rule
+    # sends line, no way is asked, and route takes short way.
     let
       turn = if landing.modifier == Modifier.Wrap: 180.0 else: 0.0
       pose = settled(
@@ -341,14 +341,22 @@ proc checkRules*() =
         (pose.place[Dancer.Lead], pose.facing[Dancer.Lead]),
         (pose.place[Dancer.Follow], pose.facing[Dancer.Follow]))
       asked = wayFor(ends, some landing.level, some landing.modifier)
-      towards = if landing.sends == Sends.FrontWay: 1.0 else: -1.0
+    if landing.sends.isNone:
+      doAssert asked.isNone,
+        &"A way was asked that no rule sends; got `{asked}` for {landing.level} " &
+        &"{landing.modifier}."
+      doAssert routed(ends, asked).isSome,
+        &"The short way found no route for {landing.level} {landing.modifier}."
+      continue
+    let towards = if landing.sends.get == Sends.FrontWay: 1.0 else: -1.0
     doAssert asked == some (towards * front(ends.a, ends.body_a).get,
                             towards * front(ends.b, ends.body_b).get),
       &"The asked way is not the rule's way for {landing.level} {landing.modifier}."
     doAssert routed(ends, asked).get.way == asked.get,
       &"The drawn route disobeys its way for {landing.level} {landing.modifier}."
-  told.add "both wraps land in front and go round the front; both locks " &
-      "land behind and go round the back"
+  told.add "both wraps land in front and go round the front; a low lock lands behind " &
+      "and goes round the back; a high lock lands in front on its own side and takes " &
+      "the short way"
 
   # RULE 7.  `"lock/wrap positions can only be used when the connecting line`
   # `goes around no less than just under 1/2 of the circumference.  it`
@@ -436,13 +444,13 @@ proc checkRules*() =
         ends: route.Ends = (hands[Dancer.Lead][arm], hands[Dancer.Follow][single.holds[arm].get],
           (pose.place[Dancer.Lead], pose.facing[Dancer.Lead]),
           (pose.place[Dancer.Follow], pose.facing[Dancer.Follow]))
-        asked = wayFor(ends, levels[arm], modifiers[arm])
-        arcs = if asked.isSome: wrapArc(ends, asked.get)
-               else: none(tuple[a, b: float])
+        drawn = routed(ends, wayFor(ends, levels[arm], modifiers[arm]))
       doAssert isDanceable(pose, single.holds, levels, modifiers),
         &"A high lock was refused; got `{single.name}` at turn `{turn}`."
-      doAssert routed(ends, asked).isSome,
+      doAssert drawn.isSome,
         &"A high lock found no route; got `{single.name}` at turn `{turn}`."
+      # Arc is measured round way route was drawn, since no rule sends it.
+      let arcs = wrapArc(ends, drawn.get.way)
       # Drawing refuses by raising, so drawing it whole is check that it stands.
       discard renderParts(pose, single.holds, levels = levels, modifiers = modifiers)
       inc drawn_freed
@@ -452,10 +460,29 @@ proc checkRules*() =
           short_seen.incl int(max(arcs.get.a, arcs.get.b))
   doAssert short_freed > 0,
     "No high lock hugs less than rule 7 asks, so nothing here tests rule 41."
+  # And between quarter turns: no rule sends line of high lock, so it takes short way,
+  # which finds route at every whole degree of follow's turn.  Back way of retired
+  # rule 6 found none in two bands on each crossed hold (repository issue 688).
+  var degrees_routed = 0
+  for single in SINGLES:
+    let arm = if single.holds[Arm.Left].isSome: Arm.Left else: Arm.Right
+    for degree in 0..359:
+      let
+        pose = canonicalise(spinAbout(rest(), Dancer.Follow, float(degree)))
+        levels = said(some freed.level, arm)
+        modifiers = said(some freed.modifier, arm)
+        hands = handPoints(settled(pose, single.holds, levels, modifiers))
+        ends: route.Ends = (hands[Dancer.Lead][arm], hands[Dancer.Follow][single.holds[arm].get],
+          (pose.place[Dancer.Lead], pose.facing[Dancer.Lead]),
+          (pose.place[Dancer.Follow], pose.facing[Dancer.Follow]))
+      doAssert routed(ends, wayFor(ends, levels[arm], modifiers[arm])).isSome,
+        &"A high lock found no route; got `{single.name}` at `{degree}` degrees."
+      inc degrees_routed
   let shorts = short_seen.toSeq.sorted
   told.add &"a high lock stands whatever its line hugs: {drawn_freed} drawn, every single " &
       &"hold at every quarter turn, {short_freed} of them short of {WRAP_MIN} degrees, " &
-      &"at [{shorts.mapIt($it).join(\", \")}]"
+      &"at [{shorts.mapIt($it).join(\", \")}]; and it finds a route at each of " &
+      &"{degrees_routed} whole degrees of turn"
 
   for line in told:
     echo &"  rule: {line}"
