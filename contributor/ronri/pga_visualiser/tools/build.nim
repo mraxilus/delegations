@@ -17,6 +17,7 @@
 ##   | desktop  | fetch SDL3 and Dear ImGui, compile desktop front-end into `binaries/`  |
 ##   | driven   | build desktop front-end, drive it through every scripted run, report   |
 ##   | assets   | fetch vendored faces page embeds, and verify each against its pin      |
+##   | head     | hold library's pin to head of its repository; finding where head moved |
 ##   | system   | print system packages build needs, one per line, for caller to install |
 ##   | clean    | remove `build`, `binaries` and `nimcache`                              |
 ##   |----------|-----------------------------------------------------------------------|
@@ -48,11 +49,16 @@ import std/[os, osproc, sequtils, strutils, tables]
 
 # Catalogue and bridge read as text, never imported: type check runs this driver on koch's
 #   compiler, which must compile no project code (#385). Suite holds both readings.
-import ./[catalogue, declarations]
+import ./[catalogue, declarations, head]
 
 
 const
   BUILD = "build"  ## Directory every product lands in.
+  PATH_LOCK = "atlas.lock"  ## Lock naming commit library is pinned at, which `head` reads.
+  DIRECTORY_REPLICATIONS = "dependencies" / "replications.mraxilus.gitlab.com"
+    ## Atlas checkout of repository library sits in, at pin; never committed (Article XI.3).
+  PATH_LIBRARY = "lengyel/projective_geometric_algebra_illuminated"
+    ## Library's directory inside that repository, as git names tree; `nim.cfg` names it too.
   BINARIES = "binaries"  ## Directory compiled binaries land in.
   BUILD_BROWSER = BUILD / "browser"  ## Directory browser products land in.
   DIRECTORY_FONTS = BUILD / "fonts"
@@ -196,7 +202,7 @@ const
     ("curl", "fetch faces asked of shared store, one level down through `koch fetch-assets`"),
     ("coreutils", "`base64` inlining those faces, and `sha256sum` store checks them with"),
     ("nodejs", "run type-checker `types` drives and harness `drive` runs"),
-    ("git", "clone Dear ImGui and SDL3, and read commit `desktop` holds each of them at"),
+    ("git", "clone Dear ImGui and SDL3, read commits `desktop` holds them at, and library head"),
     ("cmake", "build SDL3 from source, since no package of it exists on Ubuntu 24.04"),
     ("pkg-config", "read version of that SDL3, which `desktop` checks before compiling"),
     ("libx11-dev", "X11 headers SDL3 builds its video backend from; window is X11 one"),
@@ -219,7 +225,7 @@ const
     ##   -- only SDL2 -- so SDL3 is built and installed from source too. Both are pinned to
     ##   commit rather than to package manager; see `COMMIT_IMGUI` and `COMMIT_SDL3`.
   USAGE = "Usage: nim r tools/build.nim " &
-      "<declare|types|web|drive|desktop|driven|assets|system|clean>\n"
+      "<declare|types|web|drive|desktop|driven|assets|head|system|clean>\n"
     ## Text printed on usage error.
 
 
@@ -885,6 +891,47 @@ proc clean() =
 
 
 
+#[ Library Head ]#
+
+proc git(arguments: openArray[string]): (string, int) =
+  ## Run git in library checkout; what it prints, and its exit code.
+  execCmdEx(
+    "git -C " & quoteShell(DIRECTORY_REPLICATIONS) & " " &
+        arguments.mapIt(quoteShell(it)).join(" ")
+  )
+
+
+proc lineGit(arguments: openArray[string], ending = ""): string =
+  ## Read last line git prints in library checkout that ends with `ending`; empty where none
+  ##   does, or where git fails.
+  ##   Last rather than first: git prints notices, as of redirect, ahead of what it read.
+  let (output, code) = git(arguments)
+  if code != 0: return ""
+  for line in output.splitLines:
+    if line.strip.len > 0 and line.strip.endsWith(ending): result = line.strip
+
+
+proc head() =
+  ## Hold library's pin to head of its repository, by tree of library's directory.
+  ##   Raises on finding, so verb exits 1 and `head.yml` posts what it says.
+  ##   Reads network: `ls-remote` names head, and `fetch` brings head's tree only where head is
+  ##   not pin. Checkout is Atlas's own at pin, which `koch head` restores before verb runs.
+  let
+    pin = commitPinned(readFile(PATH_LOCK))
+    tree_pin = lineGit(["rev-parse", pin & ":" & PATH_LIBRARY])
+    commit_head = lineGit(["ls-remote", "origin", "HEAD"], ending = "\tHEAD").split('\t')[0]
+    is_fetched = commit_head.len > 0 and commit_head != pin and
+        git(["fetch", "--quiet", "origin", "HEAD"])[1] == 0
+    tree_head =
+      if commit_head.len > 0 and commit_head == pin: tree_pin
+      elif is_fetched: lineGit(["rev-parse", "FETCH_HEAD:" & PATH_LIBRARY])
+      else: ""
+    finding = findingHead(pin, tree_pin, commit_head, tree_head)
+  if finding.len > 0: raise newException(OSError, finding)
+  echo "Library at pin `", pin, "` is library at head `", commit_head, "`."
+
+
+
 #[ Entry Point ]#
 
 proc main(): int =
@@ -901,6 +948,7 @@ proc main(): int =
     of "desktop": desktop()
     of "driven": driven()
     of "assets": assets()
+    of "head": head()
     of "system": system()
     of "clean": clean()
     else:
