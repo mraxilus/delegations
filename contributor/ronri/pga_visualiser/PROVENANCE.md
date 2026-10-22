@@ -4371,6 +4371,22 @@ configurable `Coefficient`, and norms that return `MultivectorScalars` compile u
 here. Head prints its multivector aliases while it compiles, through `expandMacros`. That adds about
 ten lines to each build log, and changes nothing that is built.
 
+**On the page, head makes a frame cheaper in calls, and its lattice dearer in copies.** A probe
+counted calls and copies in V8 with its optimiser off, on 2026-10-22, at `295bafc` and at the pin.
+Each count is of the opening scene, with its plane picked and the camera at 300, after one frame
+that is not counted.
+
+| Count | At `295bafc` | At the pin |
+|-------|--------------|------------|
+| Calls of a frame with no lattice | 25,163 | 16,484 |
+| Calls of a frame with the lattice | 566,902 | 553,658 |
+| Calls that the lattice adds to 9 moving frames | 4,847,207 | 4,817,506 |
+| Copies that the lattice adds to those frames | 340,767 | 356,725 |
+| Copies and calls of a marker and its pulse, over 5 objects | 15,883 and 48,642 | the same |
+
+The counted build is not the build that ships, which runs the optimiser. The lattice uploads the
+same bytes at both pins, and every speed check passes at the pin.
+
 **Two Atlas defects stand, and the workaround is by hand.** `atlas pin` writes `"objects": {}` for a
 repository that carries no nimble file, so the resolved commit is patched into `atlas.lock` by hand.
 `atlas` also calls the nimble file "broken" because it cannot parse a commit where it expects a
