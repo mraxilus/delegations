@@ -2038,6 +2038,31 @@ suite "Interaction":
     check takeHold(interaction, 2000.0 + SECONDS_SWELL_GROW + 1.01 * SECONDS_LONG_PRESS) == some(7)
 
 
+  test "a menu opened with no pointer hangs centred above its object, inside view":
+    # Point is menu's bottom middle; both front-ends hang menu from it (repository issue 632).
+    let
+      (width, height) = (1200.0, 900.0)
+      (wide, tall) = (200.0, 40.0)
+      hung = pointMenuHung(ScreenPosition(x: 400.0, y: 300.0), width, height, wide, tall)
+    check hung.x == 400.0
+    check hung.y == 300.0 - PIXELS_LIFT_MENU_SELECTION
+    check hung.y < 300.0
+    # Object near edge moves menu only as far as keeps all of it margin inside view.
+    #   Point alone kept inside would leave half of menu off view, or all of it above.
+    let margin = PIXELS_MARGIN_MENU_SELECTION
+    check pointMenuHung(ScreenPosition(x: 400.0, y: 10.0), width, height, wide, tall).y ==
+      margin + tall
+    check pointMenuHung(ScreenPosition(x: 400.0, y: 2000.0), width, height, wide, tall).y ==
+      height - margin
+    check pointMenuHung(ScreenPosition(x: -50.0, y: 300.0), width, height, wide, tall).x ==
+      margin + wide / 2
+    check pointMenuHung(ScreenPosition(x: 1199.0, y: 300.0), width, height, wide, tall).x ==
+      width - margin - wide / 2
+    # Menu wider than view keeps its left edge inside, where its buttons begin.
+    check pointMenuHung(ScreenPosition(x: 60.0, y: 300.0), 100.0, height, wide, tall).x ==
+      margin + wide / 2
+
+
   test "a cancelled hold snaps away rather than settling":
     # Cancelling is press that stopped being one -- moved into camera gesture, or.
     #   interrupted -- so there is nothing left for settle to be about.

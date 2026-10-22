@@ -240,6 +240,16 @@ bool guiWindowBeginPinned(const char *name, float x, float y, float pivot_x,
 
 bool guiWindowBegin(const char* name) { return ImGui::Begin(name); }
 
+// Report current window's place and size, as left, top, width and height, for verdict.
+void guiWindowBox(float* box) {
+  const ImVec2 position = ImGui::GetWindowPos();
+  const ImVec2 size = ImGui::GetWindowSize();
+  box[0] = position.x;
+  box[1] = position.y;
+  box[2] = size.x;
+  box[3] = size.y;
+}
+
 void guiWindowEnd() { ImGui::End(); }
 
 bool guiChildBegin(const char* name, float width, float height) {

@@ -417,6 +417,11 @@ type
     pressed: Option[tuple[scancode: Scancode, keycode: uint32]]
     is_down: bool  ## Whether this step presses key or lets go of it.
 
+  MoreSeen = object  ## Define what `--drive-drag` found frame after letting go on `more…`.
+    is_picking: bool  ## Whether selection menu stood with its operation picker open.
+    corner: array[2, cfloat]  ## Where that menu sat, by corner pointer placed it from.
+    cursor: ScreenPosition  ## Where pointer let go.
+
   WheelDrive = object  ## Define what `--drive-wheel` carries between frames, for its verdict.
     handle: Option[int]  ## Object it picks; none until found by label.
     is_eased: bool  ## Whether pick's ease was seen under way.
@@ -1493,9 +1498,11 @@ proc handleEvent(
         HISTORY_DESKTOP.record(scene, camera)
       elif outcome.choice == some(DragChoice.More) and outcome.operands.isSome:
         # Hand pair to apply picker, way out of three operations into other twenty-four.
-        #   Both operands selected in drag order (m then n), picker opened where wheel was.
+        #   Both operands selected in drag order (m then n), picker opened beside pointer
+        #   that chose `more…`, as page's `openApplyPickerOnOperands` opens it.
         panel.selection.selectOnly(outcome.operands.get.source)
         panel.selection.toggle(outcome.operands.get.destination)
+        panel.showSelectionMenuAt(interaction.cursor)
         panel.openSelectionMenuPicker()
       button_dragging = none(uint8)
     elif event.button.button.toPointerButton.isSome and interaction.isClick(now):
@@ -1619,6 +1626,11 @@ proc reportTimings(milliseconds: var openArray[float32]) =
       &"max {milliseconds[^1]:.3f} ({1000.0/float(milliseconds[^1]):.1f})"
 
 
+const FRAME_RELEASE_MORE = 9
+  ## Let `--drive-drag` go on `more…` at this frame, and read what opened as frame lays out.
+  ##   Read then: later frames carry menu with its object while camera eases onto pair.
+
+
 proc driveDrag(
   scene: Scene;
   interaction: Interaction;
@@ -1639,7 +1651,7 @@ proc driveDrag(
   ##     Look at capture; do not byte-compare.
   const
     (frame_reach_source, frame_press, frame_reach_target) = (2, 3, 4)
-    (frame_reach_more, frame_release) = (8, 9)
+    (frame_reach_more, frame_release) = (FRAME_RELEASE_MORE - 1, FRAME_RELEASE_MORE)
       ## Reach `more…` wedge two frames past menu opening, then let go on it.
       ##   Shorter runs still capture open menu.
   if count_drawn == frame_reach_more or count_drawn == frame_release:
@@ -2108,6 +2120,7 @@ proc verdictDriven(
   panel: Panel;
   count_settled: int;
   found_dragging, found_menu_open: bool;
+  more_seen: MoreSeen;
   wheel_drive: WheelDrive;
 ): int =
   ## Judge what `--drive-*` run reached, and report every check pass or fail.
@@ -2245,6 +2258,24 @@ proc verdictDriven(
     )
 
   if options.is_key_driven:
+    # Check menu Enter opened, with no pointer, hangs centred above its object, as page's
+    #   `menus.ts` holds: bottom middle of box laid out on point core names.
+    let
+      box = panel.box_menu_selection
+      hung = pointMenuHung(
+        ScreenPosition(x: panel.anchor_menu_selection[0], y: panel.anchor_menu_selection[1]),
+        gui.viewportWidth(),
+        gui.viewportHeight(),
+        box[2],
+        box[3],
+      )
+      (middle, bottom) = (box[0] + 0.5 * box[2], box[1] + box[3])
+    report(
+      "a menu opened with no pointer hangs centred above its object",
+      panel.is_menu_selection_shown and abs(middle - hung.x) < 1.0 and abs(bottom - hung.y) < 1.0,
+      &"bottom middle at ({middle:.1f}, {bottom:.1f}), point hung from " &
+        &"({hung.x:.1f}, {hung.y:.1f})",
+    )
     # Check traversal, selection and every kind of camera motion.
     #   Through queue and past Dear ImGui's navigation.
     report(
@@ -2331,6 +2362,18 @@ proc verdictDriven(
       "a drag from one object onto another opens its choice menu",
       found_dragging and found_menu_open,
       &"dragged {found_dragging}, menu opened {found_menu_open}",
+    )
+    # Check `more…` opens picker beside pointer that chose it, as page's `menus.ts` holds.
+    let wanted = [
+      cfloat(more_seen.cursor.x + PIXELS_INSET_MENU_POINTER),
+      cfloat(more_seen.cursor.y + PIXELS_INSET_MENU_POINTER),
+    ]
+    report(
+      "more… opens the operation picker beside the pointer that chose it",
+      more_seen.is_picking and abs(more_seen.corner[0] - wanted[0]) < 1.0 and
+        abs(more_seen.corner[1] - wanted[1]) < 1.0,
+      &"picker open {more_seen.is_picking}, corner at ({more_seen.corner[0]:.1f}, " &
+        &"{more_seen.corner[1]:.1f}), pointer and inset at ({wanted[0]:.1f}, {wanted[1]:.1f})",
     )
   if options.is_wheel_driven:
     # Check wheel over menu zooms view about pick, as page's `wheel.ts` holds.
@@ -2419,6 +2462,8 @@ proc runInteractive(
   var
     found_dragging = false
     found_menu_open = false
+    # Record what `more…` opened, frame after `--drive-drag` lets go on it.
+    more_seen = MoreSeen()
     # Record camera as first held motion key found it.
     #   Picking turns orbit about what was picked, and script selects before it slides, so
     #   opening placement is not what slide starts from.
@@ -2559,6 +2604,12 @@ proc runInteractive(
       found_dragging = found_dragging or interaction.is_dragging
       found_menu_open = found_menu_open or interaction.menu.isSome
       if count_drawn == 2: count_settled = len(scene)
+      if options.is_drag_driven and count_drawn == FRAME_RELEASE_MORE:
+        more_seen = MoreSeen(
+          is_picking: panel.is_menu_selection_shown and panel.is_menu_selection_picking,
+          corner: panel.position_menu_selection,
+          cursor: interaction.cursor,
+        )
     # Carry size into next iteration's events, which need it to cast sight ray.
     (width_frame, height_frame) = (int(width), int(height))
     if options.is_timed:
@@ -2613,6 +2664,7 @@ proc runInteractive(
       count_settled,
       found_dragging,
       found_menu_open,
+      more_seen,
       wheel_drive,
     )
     if count_failed > 0:

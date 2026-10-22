@@ -144,6 +144,13 @@ proc windowBegin*(name: cstring): bool {.sideEffect, importc: "guiWindowBegin".}
 proc windowEnd*() {.sideEffect, importc: "guiWindowEnd".}
   ## End window begun by `windowBegin` or `windowBeginPinned`.
 
+proc windowBoxInto(box: ptr cfloat) {.sideEffect, importc: "guiWindowBox".}
+  ## Write current window's left, top, width and height into four floats at `box`.
+
+proc windowBox*(): array[4, cfloat] =
+  ## Report current window's left, top, width and height, as laid out this frame.
+  windowBoxInto(addr result[0])
+
 proc viewportWidth*(): cfloat {.sideEffect, importc: "guiViewportWidth".}
   ## Report drawable area's width, for anchoring something to corner of it.
 
