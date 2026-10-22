@@ -481,8 +481,8 @@ proc checkRules*() =
   let shorts = short_seen.toSeq.sorted
   told.add &"a high lock stands whatever its line hugs: {drawn_freed} drawn, every single " &
       &"hold at every quarter turn, {short_freed} of them short of {WRAP_MIN} degrees, " &
-      &"at [{shorts.mapIt($it).join(\", \")}]; and it finds a route at each of " &
-      &"{degrees_routed} whole degrees of turn"
+      &"at [{shorts.mapIt($it).join(\", \")}]; and it finds a route at each whole degree of " &
+      &"turn, {degrees_routed div SINGLES.len} on each of {SINGLES.len} single holds"
 
   for line in told:
     echo &"  rule: {line}"
