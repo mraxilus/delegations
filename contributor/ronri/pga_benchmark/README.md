@@ -112,6 +112,10 @@ The pin is **Nim at commit `27763495b`**, and no release serves it. Koch fetches
 once for each machine (`GUIDE.md`, Toolchain). The record says which characters of `pga` need
 it.
 
+Run each verb of `tools/build.nim` with the `bin/` of the pin first on `PATH`, as koch does
+(`GUIDE.md`, Toolchain). The page `docket` holds a script that `nim js` emits, and a release of
+Nim emits another script. Then `drive` finds that the page changed since it was published.
+
 ## Layout
 
 ```
