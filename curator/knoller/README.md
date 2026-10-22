@@ -82,6 +82,15 @@ knoller [--check] [--nim:path] path...
   macro, `static:` block or compile-time routine that it nests in. A `define…` is a macro, and an
   `emit…` is a `func` or a `proc` that returns `NimNode`. The kind never fixes the verb, so a
   macro of another name passes. Knoller renames nothing here either.
+- A routine closes with `Of` only where its name spells a generic type (V.3). Knoller reads that
+  from the words alone. The first word is `to`, `init`, `emit`, `construct` or `define`, and two
+  words or more follow it, as in `toMultivectorOf`. A type closes with `Of` only where an alias of
+  its instance takes its bare name, in the same file (V.13). An example is
+  `Multivector = MultivectorOf[…]`. Knoller renames neither.
+- A collection type takes the plural of its member (V.6). A word for its form, such as `Set`,
+  closes a name only where two collection types would share it. So `MeshSet` beside a type `Mesh`
+  of the same file is a finding, and `BasesSet` beside `Basis` is not. Nor is `BasesSet` beside
+  `Bases = set[Basis]`, since its member is a collection itself. Knoller renames nothing here.
 - A dotted call of a `define…` or `emit…` routine becomes a prefix call, with the receiver as the
   first argument (STYLE.md §5). A module path, such as `tessellate.emitObject`, stays. Knoller
   cannot rewrite four shapes in place, so each is a finding for hand. They are a receiver above
@@ -155,6 +164,9 @@ the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, 
 | `notation` | The notation of the source holds over case only for an immutable global. |
 | `global-word` | A global shares no word with a type. |
 | `representation-head` | A name holding a value in another representation leads with it. |
+| `routine-suffix` | A routine closes with `Of` only where its name spells a generic type. |
+| `generic-suffix` | A type closes with `Of` only where an alias of it takes its bare name. |
+| `collection-name` | A collection type takes the plural of its member, not a word for its form. |
 | `article-in-comment` | A comment holds no article. |
 | `message-value` | A message echoes its value in backticks. |
 | `and-with-or` | A condition that mixes `and` with `or` puts each `and` in parentheses. |
