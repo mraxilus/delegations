@@ -58,6 +58,8 @@ suite "Names":
         "Acronym stays only where glossary lists it (V.9); got `JSON` in `toJSON`."),
       ("proc getGrade() = discard\n",
         "Action is imperative verb and property is bare noun (V.3); got `getGrade`."),
+      ("func gradeOf(m: Multivector): Grade = m.grade\n",
+        "Routine closes with `Of` only where it spells generic type (V.3); got `gradeOf`."),
       ("proc constructSeeds(scene: var Scene) = discard\n",
         "`construct…` names compile-time routine returning data structure (V.3); got " &
         "`proc constructSeeds`."),
@@ -86,6 +88,11 @@ suite "Names":
       ("proc f(c: Basis) =\n  let flags_c = c.dual.toFlags\n",
         "Name holding value in another representation leads with a name of its chain, `c` or " &
         "`dual` (V.2); got `flags_c`."),
+      ("type ProverOf* = proc (pin: string): Prover {.closure.}\n",
+        "Type closes with `Of` only where alias of its instance takes its bare name (V.13); got " &
+        "`ProverOf`."),
+      ("type\n  Mesh* = object\n  MeshSet* = object\n",
+        "Collection type takes plural of its member `Mesh` (V.6); got `MeshSet`."),
       ("when isMainModule:\n  let verb = paramStr(1)\n",
         "Entry block holds no binding; move code that binds into `proc main` (V.10); got " &
         "`verb`."),
