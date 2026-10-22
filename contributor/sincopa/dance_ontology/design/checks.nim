@@ -10,8 +10,8 @@
 ##     asserted is rule that quietly stops being true, which has happened
 ##     here more than once.
 ##     Cost of spoken ledger: one line of build noise per rule, and
-##       there are twenty-nine of them now.  Accepted -- noise is
-##       receipt.
+##       there were thirty-four of them on 2026-10-22.  Accepted -- noise
+##       is receipt.
 
 {.experimental: "strictFuncs".}
 

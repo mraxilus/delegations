@@ -95,9 +95,9 @@ const WRAP_MIN* = 170  ## Least degrees line must hug body for lock or
                       ## wrap to be one at all.
   ##   Rule 7 asks for `"no less than just under 1/2 of the circumference"`, of every lock
   ##     and wrap but high lock (rule 41, `isMadeRoundBody`).
-  ##   Arcs this geometry produces are quantised at 0, 51, 90, 141 and
-  ##     180 degrees, so any threshold in that last gap picks out same
-  ##     set; 170 sits squarely in it, and `checks` asserts gap holds.
+  ##   Arcs this geometry produces on single holds at quarter turns fall at 0, 51, 90,
+  ##     132, 135, 141 and 180 degrees, so any threshold between 141 and 180 picks out
+  ##     same set; 170 sits squarely in that gap, and `checks` asserts gap holds.
 
 
 func other*(arm: Arm): Arm =
