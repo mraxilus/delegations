@@ -564,6 +564,14 @@ operator. A `-` before a digit opens a number after a space or an opening bracke
 - Verified by `suites/test_tokens.nim`. Verified by hand over the tree, 2026-10-02: each byte of
   each Nim file outside whitespace lies in one token, and each bracket finds its partner.
 
+**A name of code is each run of name characters, read once (`wordsCode`).** The names check, the
+fixed waits and the words among pragmas read names so. So the tail of an indented name never reads
+as a name of its own.
+
+- Rejected: a reader that skips the spaces before a name, but steps by the name alone. It reads
+  the tail of each later name again, as `t` of `{.compileTime, noinit.}`.
+- Verified by `suites/test_views.nim` and `suites/test_waits.nim`.
+
 ## Form
 
 **Each check of form reads text alone, so it serves every kind (`checkForm`).** A line holds no

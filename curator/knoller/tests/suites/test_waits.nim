@@ -37,6 +37,7 @@ suite "Article IX":
       "`clock.runFor`; got `waitForTimeout`.",
     ]  # value echoed as written, replacement of name it compares to
     check checkWaits("a.nim", "let sléep = 1\nlet x = Sleep\n").len == 0  # other names
+    check checkWaits("a.nim", "proc f() =\n     oversleep()\n").len == 0  # tail of name unread
 
 
   test "IX.12 lines other syntax passes read Playwright's name alone, exactly":
