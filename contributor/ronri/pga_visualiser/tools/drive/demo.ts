@@ -23,7 +23,7 @@ const KINDS_DRAWING = [
 
 /** How many objects default size comes to, or override named for run driven by hand. */
 export async function objectsDefault(page: Page): Promise<number> {
-  const named = Number(process.env['RGA_DEMO_OBJECTS'] ?? 0);
+  const named = Number(process.env['PGA_DEMO_OBJECTS'] ?? 0);
   return named || page.evaluate(() => nimDemoObjects(nimDemoScaleDefault()));
 }
 

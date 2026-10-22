@@ -226,9 +226,9 @@ const LUT_TEXT_BY_WORDING: array[Wording, cstring] = [
   # Top menu: everything reached for rarely.
   TipMenuSceneFile: "File `save scene` writes to and `load scene` reads from.",
   TipMenuImageFile: "File `save image` and the `S` key both write the current frame to.",
-  TipMenuSaveScene: "Save this scene as a .rgascene file.",
+  TipMenuSaveScene: "Save this scene as a .pgascene file.",
   TipMenuSaveImage: "Save the current view as a PNG image.",
-  TipMenuLoadScene: "Load a .rgascene file, replacing this scene.",
+  TipMenuLoadScene: "Load a .pgascene or .rgascene file, replacing this scene.",
 
   # Row of constant controls, floating over scene.
   TipChipAdd:

@@ -9,8 +9,8 @@ import std/[
 ]
 
 # `pga` arrives through `projections`, which stands in for four it has withdrawn.
-import ../../src/rga_visualiser/projections
-import ../../src/rga_visualiser/[
+import ../../src/pga_visualiser/projections
+import ../../src/pga_visualiser/[
   boundary, camera, format, framing, help, history, interaction, marker, message, motors,
   neighbourhood, objects, orrery, picking, scene, selection, shown, starfield, storyboard,
   tessellate, wording,

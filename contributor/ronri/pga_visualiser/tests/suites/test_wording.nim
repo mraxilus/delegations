@@ -80,8 +80,8 @@ suite "Wording":
 
   test "the application names itself as a name, and every other label stays a word":
     # Label is word on control and stays lower case. This one is proper noun both front-ends
-    #   show, window's own caption included, and it was written half one way: `RGA` carried
-    #   its capital where second word did not.
+    #   show, window's own caption included, and it was once cased two ways: first word
+    #   carried its capital where second word did not.
     for word in strutils.splitWhitespace($wordingText(NameTitle)):
       check word[0].isUpperAscii
     for key in Wording:
@@ -158,7 +158,7 @@ suite "Wording":
     # Driver reads `wording.nim` as text and imports none of it, so type check compiles no
     #   project code on koch's compiler (#385). Here, on pin, reading meets compiled enum
     #   and table: key moved or row written in form reading cannot follow fails here.
-    const source = staticRead("../../src/rga_visualiser/wording.nim")
+    const source = staticRead("../../src/pga_visualiser/wording.nim")
     let (keys, words) = (keysWording(source), wordsByKey(source))
     check keys.len == ord(high(Wording)) + 1
     check words.len == keys.len

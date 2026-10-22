@@ -55,7 +55,7 @@
 ##   |----------------------|--------------------------------------------------------|
 ##   | Directory            | Reachable from                                         |
 ##   |----------------------|--------------------------------------------------------|
-##   | `src/rga_visualiser` | Both. Geometry, scene, and everything derived from it. |
+##   | `src/pga_visualiser` | Both. Geometry, scene, and everything derived from it. |
 ##   | `src/desktop`        | This file only. SDL3, OpenGL, Dear ImGui, PNG, GIF.    |
 ##   | `src/browser`        | `bridge.nim` only. Bridge, markup, glue.               |
 ##   |----------------------|--------------------------------------------------------|
@@ -107,7 +107,7 @@ when compileOption("profiler"):
 import std/[algorithm, math, monotimes, options, os, parseopt, strformat, strutils, typetraits]
 
 import pga
-import ../rga_visualiser/[
+import ../pga_visualiser/[
   boundary, camera, format, framing, help, history, interaction, marker, message,
   orrery, picking, scene, selection, share, shown, storyboard, tessellate, timings, wording,
 ]
@@ -138,7 +138,7 @@ const
     ##   found by absolute path (Article X.8; CONTRIBUTOR.md, "System dependencies").
   FACE_FONT* {.define: "visualiser.face_font".} = "NotoSans-Regular.ttf"
     ## Carry UI's text: Latin, punctuation, subscripts and combining marks.
-    ##   `RGA_FONT` names another outright, for reason `faceAt` gives. Three below follow
+    ##   `PGA_FONT` names another outright, for reason `faceAt` gives. Three below follow
     ##   same pattern.
   FACE_FONT_MATH* {.define: "visualiser.face_font_math".} = "NotoSansMath-Regular.ttf"
     ## Carry operators notation is written with, and Lengyel's bold operands.
@@ -161,15 +161,15 @@ const
     ##   reads its CFF outlines, driven rather than assumed.
     ##   Ligatures it carries are drawn by page and not here: Dear ImGui shapes no text, so
     ##   `liga` and `calt` never fire. Letterforms are shared, ligatures are not.
-  ENV_FONT* = "RGA_FONT"
+  ENV_FONT* = "PGA_FONT"
     ## Environment name carrying interface face's location, where machine keeps its own.
-  ENV_FONT_MATH* = "RGA_FONT_MATH"  ## Environment name carrying operator face's location.
-  ENV_FONT_SYMBOL* = "RGA_FONT_SYMBOL"  ## Environment name carrying symbol face's location.
-  ENV_FONT_LABEL* = "RGA_FONT_LABEL"  ## Environment name carrying label face's location.
-  ENV_FONT_TITLE* = "RGA_FONT_TITLE"  ## Environment name carrying title face's location.
-  ENV_FONT_MONO* = "RGA_FONT_MONO"  ## Environment name carrying mono face's location.
+  ENV_FONT_MATH* = "PGA_FONT_MATH"  ## Environment name carrying operator face's location.
+  ENV_FONT_SYMBOL* = "PGA_FONT_SYMBOL"  ## Environment name carrying symbol face's location.
+  ENV_FONT_LABEL* = "PGA_FONT_LABEL"  ## Environment name carrying label face's location.
+  ENV_FONT_TITLE* = "PGA_FONT_TITLE"  ## Environment name carrying title face's location.
+  ENV_FONT_MONO* = "PGA_FONT_MONO"  ## Environment name carrying mono face's location.
   SIZE_FONT* = 16.0'f32
-  PATH_EXPORT_DEFAULT* = "rga_visualiser.png"
+  PATH_EXPORT_DEFAULT* = "pga_visualiser.png"
 
 const
   FRAMES_SETTLE = 2  ## Draw this many frames before capturing, so widget layout has settled.

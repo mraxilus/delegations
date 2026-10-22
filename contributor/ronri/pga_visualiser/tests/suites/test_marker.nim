@@ -6,7 +6,7 @@ import ./fixtures
 # Opened with `{.all.}`, so suite checks private helper directly: `directionAcross` is whole of
 #   why line's rails converge, worth asserting on its own terms rather than only through
 #   markers it ends up shaping.
-import ../../src/rga_visualiser/marker {.all.}
+import ../../src/pga_visualiser/marker {.all.}
 
 
 

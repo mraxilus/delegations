@@ -18,7 +18,7 @@
 
 import std/[options, strformat]
 
-import ../rga_visualiser/[camera, mesh]
+import ../pga_visualiser/[camera, mesh]
 import ./opengl as gl
 
 
