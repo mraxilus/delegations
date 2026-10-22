@@ -535,6 +535,43 @@ holds an uncovered character, in a comment or not, has its comments scanned.
 - On 2026-10-04 at `de0c189`, the check reports no finding in any project. `nim r koch
   check-files` repeats it.
 
+## Font stacks
+
+**One resolver serves every project with pages, through `koch resolve-font-faces`.** Each
+project's browser part writes what the browser computed into `written.json`. The command
+resolves each character down the font stack of its element, against the font faces that the
+page ships, and writes `found.json`. The project's own judge then gives the verdict. The
+Architect ruled this shape on repository issue 671.
+
+- **The command resolves, and the project judges.** Each judge holds its own control page and
+  wording, and the judge of pga_benchmark also judges layout against that control page.
+  Rejected: the verdict inside the command, which would split that control page in two.
+  Rejected: the whole check inside koch, which would bring Node, a browser and every form of
+  page into koch.
+- **A family that the page does not ship ends the search.** A font face of that name on the
+  machine of the viewer would draw the character, which Article X.8 forbids. Rejected: a step
+  over such a family, which passes a page that such a viewer sees in the wrong font face.
+- **Where two weight sets hold the weight wanted, each set or a family after them draws the
+  character.** The browser picks one of the two by its own rule, so neither may be trusted alone.
+- **Weight matching follows CSS Fonts 4 over the bounds that the rules declare.** Inside 400 to
+  500, it looks upward to 500, then downward, then upward past 500. Below 400 it looks downward
+  first, and above 500 upward first.
+- **`font_files.nim` reads the `cmap` of each file**, and the suite of the store reads through it
+  too. So the store and the pages read font faces through one reader.
+- Cost: the weight alone is matched, and `font-style` and `font-stretch` are unread. A character
+  is resolved alone, while a browser picks a font face for each cluster.
+- Cost: `written.json` names each font face by its file. So a page that inlines its font faces
+  writes their bytes out first, and the check still reads the bytes that a viewer receives.
+- Cost: a machine that runs the command needs `libbrotli1` for `woff2`. The job of the runner
+  installs only what a project declares. So each project that calls the command from `drive`
+  declares that package in its `system` verb.
+- Verified by `suites/test_font_stacks.nim`, each rule above, and by `suites/test_font_files.nim`,
+  each format that the reader reads. On 2026-10-22, a break of the rule on an unshipped family
+  failed one test. A break of the window from 400 to 500 failed another.
+- Verified by a run on font faces of the store, 2026-10-22. Noto Sans and Noto Sans Math drew
+  "é", "→" and "∧" down one stack. "é" after `Inter` was reported, and so was an emoji in a
+  stack of Noto Sans alone.
+
 ## Branch scope
 
 **The branch grammar mirrors paths: two, three or four segments, and the scope follows from
@@ -826,10 +863,11 @@ that the shape is settled for all time.
 - Faces that map one set share one constant. Upright Noto Sans and Noto Serif map one set at
   every weight, and the three files of Commit Mono map one set. A face whose bytes move splits
   from its constant.
-- **The suite reads `woff2` through `libbrotlidec`, which it loads at run.** No Nim import decodes
-  Brotli, and a codec is an external concern (Article II.8). A machine without the library fails
-  that test by name, and every other suite still runs. Rejected: `fc-query` as the reader,
-  which adds fontconfig to every machine and reads its charset rather than the `cmap`.
+- **`font_files.nim` reads `woff2` through `libbrotlidec`, which it loads at run.** No Nim import
+  decodes Brotli, and a codec is an external concern (Article II.8). A machine without the
+  library fails each read of `woff2` by name, and every other suite still runs. Rejected:
+  `fc-query` as the reader, which adds fontconfig to every machine and reads its charset rather
+  than the `cmap`.
 - Cost: the test fetches each face that the store lacks. Measured on 2026-10-04 on the machine
   of Figures: into an empty store, it fetched 5,670,612 bytes in 2.5 s. Warm, it took 0.08 s.
   The `test` job of the runner restores no store, so it fetches on each run.
@@ -1284,9 +1322,9 @@ absent package names itself.
 **Koch declares its own system packages, as the rule it enforces asks of every project.**
 `SYSTEM_KOCH` in `projects.nim` pairs each one with its reason. It holds git and curl, `tar`
 for the tarball that `fetchRelease` unpacks, and `coreutils` for `sha256sum`. It also holds
-`libbrotli1` for the audit suite, which reads `woff2` faces, because `curator/audit` carries no
-driver with a `system` verb. The runner holds it: verified by run 906 of `check`, whose `test`
-job ran that suite and passed.
+`libbrotli1`, because `resolve-font-faces` and the suite of the store read `woff2` font faces
+through `font_files.nim`. The runner holds it: verified by run 906 of `check`, whose `test` job
+ran that suite and passed.
 
 `koch list-packages` with no project prints those and every project's, unscoped, so one
 command answers what a machine needs before any of this runs. To name a project keeps the
