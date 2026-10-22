@@ -572,6 +572,12 @@ as a name of its own.
   the tail of each later name again, as `t` of `{.compileTime, noinit.}`.
 - Verified by `suites/test_views.nim` and `suites/test_waits.nim`.
 
+**A string literal is interpolated where `&` or `fmt` stands glued before it (`isInterpolated`).**
+An `&` glued after an operand joins instead, as Nim reads `a&"…"`, so the literal after it stays
+plain. The message rule and the rename planner read literals so.
+
+- Verified by `suites/test_messages.nim` and `suites/test_rewrites.nim`.
+
 ## Form
 
 **Each check of form reads text alone, so it serves every kind (`checkForm`).** A line holds no
@@ -915,6 +921,8 @@ such as `got none.`, echoes no value and is no finding.
   `for {manner}` does.
 - A joining `&` stands on the line where its operand ends. Nim continues a line that a binary
   operator ends, so a line that `&` opens is the next statement, such as an `&"…"` result.
+- An operand ends at its line, so a bracket that opens the next line opens the next statement.
+  A comment after a joining `&` is no operand, and the operand follows it on the next line.
 - A test that builds the old text in the same form changes with it. A test that asserts the
   text in another form changes by hand, as two tests of `test_record.nim` do.
 - Verified by `suites/test_messages.nim`.
