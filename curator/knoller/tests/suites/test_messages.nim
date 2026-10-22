@@ -93,6 +93,13 @@ suite "Article IV":
       check checkMessages("a.nim", kept).len > 0  # finding stays for hand
 
 
+  test "IV.4 message ends at its line, before statement that `&` opens":
+    let source = "func f(x, y: int): string =\n" &
+      "  doAssert x > 0, \"Bad; got `\" & $x & \"`.\"\n" &
+      "  &\"y is {y}, from \" & $x\n"
+    check source.isSettled  # interpolated result on next line is no tail of message
+
+
   test "IV.4 backtick widening line stays with finding":
     let near = "f(&\"" & "x".repeat(80) & "; got {value}.\")\n"  # 100 runes; backticks 102
     check near.fixed == near

@@ -913,6 +913,8 @@ such as `got none.`, echoes no value and is no finding.
   appended literal would join that operator. So `"got " & a == b` stays.
 - The rule reads every value of the tail, so a context after the value takes backticks too, as
   `for {manner}` does.
+- A joining `&` stands on the line where its operand ends. Nim continues a line that a binary
+  operator ends, so a line that `&` opens is the next statement, such as an `&"…"` result.
 - A test that builds the old text in the same form changes with it. A test that asserts the
   text in another form changes by hand, as two tests of `test_record.nim` do.
 - Verified by `suites/test_messages.nim`.
