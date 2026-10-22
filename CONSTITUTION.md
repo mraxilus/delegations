@@ -405,8 +405,10 @@ func multiplyExterior(a, b: BasisSigned): ... =
 12. Each bound of a count is a baseline and a band, and the band has a cause. Where the counted
     code calls nothing that selects its code by processor, the band is zero. Elsewhere, the band
     is the widest difference that the record measured between the runner and a delegate, with
-    its margin. A time bound pins a fault only where the fault reads beyond the spread of
-    unchanged code. Otherwise the time bound is a budget.
+    its margin. A count can also move with the code that the compiler builds beside it, where
+    the compiler limits its work over a whole file. Where it does, the build lifts those limits,
+    or the band covers that cause. A time bound pins a fault only where the fault reads beyond
+    the spread of unchanged code, and is a budget otherwise.
 
 ```nim
 template m: untyped = MULTIVECTORS[i]  # Alias; `let m = MULTIVECTORS[i]` deep-copies on JS backend.
