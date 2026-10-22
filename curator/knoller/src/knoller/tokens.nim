@@ -67,6 +67,12 @@ const
     ## Words lexer reads as keywords (`TokType`), never as identifiers.
   KEYWORDS_ROUTINE = ["converter", "func", "iterator", "macro", "method", "proc", "template"]
     ## Keywords opening routine, its type, or lambda.
+  INTERPOLATORS* = ["&", "fmt"]  ## Prefixes of string strformat interpolates (`&"…{x}…"`).
+  KINDS_OPERAND_ENDING = {
+    KindToken.Word, KindToken.Quoted, KindToken.Number, KindToken.Text, KindToken.Character,
+    KindToken.Close,
+  }
+    ## Kinds of token operand may end on; operator glued after one is binary.
 
 
 func glyphLength(source: string, at: int): int =
@@ -254,6 +260,17 @@ func lineLast*(t: Token, source: string): int =
 func spelling*(t: Token, source: string): string =
   ## Read text of token.
   source[t.first ..< t.after]
+
+
+func isInterpolated*(tokens: openArray[Token], k: int, source: string): bool =
+  ## Decide whether string literal at token `k` is interpolated: `&` or `fmt` glued before it.
+  ##   `&` glued after operand joins, as Nim reads `a&"…"`, so literal after it stays plain.
+  if k == 0 or tokens[k].kind != KindToken.Text or tokens[k - 1].after != tokens[k].first:
+    return false
+  let prefix = tokens[k - 1].spelling(source)
+  if prefix notin INTERPOLATORS: return false
+  prefix != "&" or k < 2 or tokens[k - 2].after != tokens[k - 1].first or
+    tokens[k - 2].kind notin KINDS_OPERAND_ENDING
 
 
 func isKeyword*(t: Token, source: string): bool =

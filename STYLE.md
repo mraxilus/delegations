@@ -160,7 +160,7 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
 
 ## 5. Signatures, imports, calls
 
-- A doc comment is `##`, so an empty slot is `## TODO: Document.` (VI.1). A doc takes one
+- A doc comment is `##`, so an empty doc is `## TODO: Document.` (VI.1). A doc takes one
   position for each shape of declaration (VI.9). A type, a field, a binding and an enum member
   take it after them on the same line, where the joined line fits. Otherwise the doc takes the
   next line, indented one level.
@@ -282,8 +282,8 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
   and `#!fix on` as written (X.1). `--dry-run` prints each change, and writes none.
 - Put `*` on every intentional export, and on nothing else. The umbrella module re-exports
   the coherent surface (`import ./pga/[...]`, then `export ...`).
-- Membership in a hot path is two comparisons (`slot >= 0 and slot < N`). Do not write
-  `slot in 0..<N`, which allocates on the JS backend (§7).
+- Membership in a hot path is two comparisons (`index >= 0 and index < N`). Do not write
+  `index in 0..<N`, which allocates on the JS backend (§7).
 
 ## 6. Test harness
 
@@ -353,7 +353,7 @@ the lowered output. A `let` of a scalar is free on both backends. What to look f
 - **JS backend.** Every object and array is a JS object, every copy is deep, and a
   `let x = y` of an object emits `nimCopy`. A by-value parameter copies at the call, and a
   by-value return copies on the way out. `lent` and `var` avoid the copy only where the
-  caller reads the value inline. `slot in a..<b` builds a slice object, and `seq.add` and
+  caller reads the value inline. `index in a..<b` builds a slice object, and `seq.add` and
   string concatenation allocate. Check with `grep -c nimCopy` on the emitted file, and read
   one call site of each new binding shape.
 - A boundary (`{.importc.}`, `{.importjs.}`, `{.exportc.}`) is where the rule of each target
