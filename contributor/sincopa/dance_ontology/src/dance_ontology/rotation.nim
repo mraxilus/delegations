@@ -557,11 +557,19 @@ func describe*(state: FrameState): string =
     result.add ", " & arms
 
 
+const LUT_LETTER_BY_LEVEL: array[Level, char] = ['L', 'H', 'A']
+  ## Spell each level as letter of its own in frame state key.
+  ##   One table that `key` writes and `fromFrameStateKey` reads, so two cannot spell level
+  ##     differently.
+
+
 func key*(state: FrameState): string =
   ## Form identifier for frame state, for page to name one by.
+  ##   Each level takes letter of its own (`LUT_LETTER_BY_LEVEL`), so no two frame states
+  ##     share key: round trip in `test_rotation` holds it.
   result = state.frame.key & ":"
   for side in Side:
-    result.add(if state.level[side] == Level.High: "H" else: "L")
+    result.add LUT_LETTER_BY_LEVEL[state.level[side]]
   result.add ":" & $state.twist
 
 
@@ -572,6 +580,15 @@ func fromFrameStateKey*(key: string): Option[FrameState] =
   ## does not stand at could not then be arrived at by asking for it in link.
   ## No page decodes frame state key yet -- this is `key`'s inverse, written with
   ## it so two cannot drift before they are needed.
+  ##   Letter that `LUT_LETTER_BY_LEVEL` holds for no level is refused, not read as
+  ##     some level.
+  func level(letter: char): Option[Level] =
+    ## Read one letter of key as level, where it spells one.
+    for candidate in Level:
+      if LUT_LETTER_BY_LEVEL[candidate] == letter:
+        return some(candidate)
+    none(Level)
+
   let parts = key.split(':')
   if parts.len != 3 or parts[1].len != 2:
     return none(FrameState)
@@ -580,7 +597,10 @@ func fromFrameStateKey*(key: string): Option[FrameState] =
     return none(FrameState)
   var stood = target.get.rest
   for index, side in [Side.Left, Side.Right]:
-    stood.level[side] = if parts[1][index] == 'H': Level.High else: Level.Low
+    let read = level(parts[1][index])
+    if read.isNone:
+      return none(FrameState)
+    stood.level[side] = read.get
   var twist: int
   try:
     twist = parseInt(parts[2])
