@@ -2409,17 +2409,17 @@ stack. Verified by `suites/test_font_faces.nim`, test "every heading takes serif
 
 Labels drawn inside figures take Noto Sans rather than Commit Mono. The "code, data and figures" of
 X.8 reads as numbers, and a label that names a hand is interface text. Every label that the code
-draws names Noto Sans first. The font faces check of the audit joins the literals that `&` carries
-across a line end, so it reads each label (#412). It holds a label only to a first family that X.8
-names, so reading alone holds it to Noto Sans. Verified by hand with a search of the source on
-2026-10-18, which finds Noto Sans first in every stack of a label.
+draws names Noto Sans first. The check in `curator/audit/src/faces.nim` joins the literals that `&`
+carries across a line end, so it reads each label (#412). It holds a label only to a first family
+that X.8 names, so reading alone holds it to Noto Sans. Verified by hand with a search of the source
+on 2026-10-18, which finds Noto Sans first in every stack of a label.
 
 **No font family of the three draws every character that the pages draw, so each stack names two
 more.** Noto Sans and Noto Serif draw no arrow, and Commit Mono draws no `⇄`. Noto Sans Math draws
-all five arrows, and Commit Mono draws marks such as `✓` that the text font faces lack. So a stack
-names its own font family, then Noto Sans Math, then Commit Mono. That is the merge by codepoint
-range of X.8. The maps were read with fontconfig 2.15.0 on 2026-10-03, from the whole font faces
-with the digests of the store.
+all five arrows, and Commit Mono draws marks such as `✓` that the text font families lack. So a
+stack names its own font family, then Noto Sans Math, then Commit Mono. That is the merge by
+codepoint range of X.8. The maps were read with fontconfig 2.15.0 on 2026-10-03, from the whole
+font faces with the digests of the store.
 
 The wiring is verified by `suites/test_font_faces.nim`, test "every stack falls back to font
 families that draw what its own font family lacks". The coverage is verified by `drive`, below, on
@@ -2458,11 +2458,11 @@ because the static check of coverage reads every other file, and no font face ma
 **Each page is rendered inside the document skeleton that the publish host wraps it in.** So the
 charset and the viewport are the ones that a viewer gets. `SKELETON_HOST` was read off the
 Reference, version 11, on 2026-10-05. It is the host's own, so it can change. The style sheet of the
-host is left out, because its body stack leads with font faces of the system, which X.8 forbids
+host is left out, because its body stack leads with font families of the system, which X.8 forbids
 here.
 
 No check is lost by that. An element that inherits no stack from its page takes the default of the
-browser. That default is a font face of the system too, so the drive finds it either way.
+browser. That default is a font family of the system too, so the drive finds it either way.
 
 Verified by `suites/test_render.nim`, nine laws over the verdict. Without the line that keeps an
 expected finding of the control out of the findings, three of the nine fail. Verified by `drive` on
