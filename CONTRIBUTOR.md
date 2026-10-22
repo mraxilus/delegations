@@ -334,28 +334,29 @@ long URL or another single token, and nothing else. Everything that a build emit
 artifact under `build/`, and is never committed. Generated markup is one long line, and fails
 the width rule on its own.
 
-Binaries are never committed, and neither are fonts, images, or any file that the audit cannot
-read. Every such file fetched at build time is declared once, for the store of the repository
+Binaries are never committed, and neither are font faces, images, or any file that the audit
+cannot read. Every such file fetched at build time is declared once, for the store of the repository
 (`curator/audit/src/assets.nim`: name, address, digest). `koch fetch-assets <file>` fetches it
 into `~/.cache/koch/assets`, checks it, and prints its path; `koch fetch-assets` alone prints
 every row that it declares. Your `tools/build.nim` names the files it wants and copies them
 into `build/`, and `PROVENANCE.md` records the origin, version and licence of each one. A file
 that `assets.nim` does not declare is a process-change issue for the curator, who adds the row.
 
-A presentation target ships the faces that Article X.8 names, inlined, and the store serves
-them. Each Noto face ships whole, as the TrueType file of its own release, and never as a subset.
+A presentation target ships the font faces that Article X.8 names, inlined, and the store
+serves them. Each Noto font face ships whole, as the TrueType file of its own release, and never
+as a subset.
 
-**A page proves its faces in `drive`.** A project that builds pages has a `drive` verb, and it
-renders each page that the project builds. It fails where a face of the system draws a
+**A page proves its font faces in `drive`.** A project that builds pages has a `drive` verb,
+and it renders each page that the project builds. It fails where a font face of the system draws a
 character beyond ASCII, and the finding names the page, the element and the codepoint. Either
 of two methods meets this rule:
 
-- Ask the browser which fonts drew each character of each text element. The DevTools protocol
+- Ask the browser which font faces drew each character of each text element. The DevTools protocol
   answers through `CSS.getPlatformFontsForNode`.
-- Resolve the font stack of each element against the `cmap` of each face that the page ships.
-  A character that no face of that stack maps is a finding.
+- Resolve the font stack of each element against the `cmap` of each font face that the page
+  ships. A character that no font face of that stack maps is a finding.
 
-The audit reads what each face of a project maps, across the whole project. Only a render
+The audit reads what each font face of a project maps, across the whole project. Only a render
 follows the cascade of each element, so `drive` holds what the audit cannot.
 
 ## Tests are paramount
