@@ -79,8 +79,8 @@ Held by `checkRules`.
 > in high lock the line goes around the back of the modified body
 
 Retired by the Architect on 2026-10-22, because a high lock folds the arm in front, with the hand on
-top of the same shoulder. `checkRules` still holds the drawing to it, until #697 moves the hand to
-the front slot.
+top of the same shoulder. The hand settles in the front slot of its own side. No rule sends its line
+round a body, so the line takes the short way. `checkRules` holds the drawing to that.
 
 ### Rule 7
 
@@ -351,7 +351,7 @@ Left to left held low, turned from face to face.
 
 It answers the second sentence of rule 7. Held by `checkRules`, which draws a high lock on each
 single hold at each quarter turn of the follow. It prints how many of them hug less than rule 7
-asks, and at which arcs.
+asks, and at which arcs. It also routes a high lock at each whole degree that the follow turns.
 
 ## Layout
 
