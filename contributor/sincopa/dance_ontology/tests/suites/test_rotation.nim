@@ -214,6 +214,39 @@ suite "Internal: What there is":
       check target.rest in frameStates()
 
 
+  test "a frame state survives a round trip through its key":
+    # Red with every level but high spelled `L`, measured 2026-10-22 (issue #698): 148 frame
+    # states had 83 keys, and `Right to left` held above at one turn anticlockwise read back
+    # as held low, `-l.:LL:-2`.
+    var keys: seq[string] = @[]
+    for stood in frameStates():
+      check fromFrameStateKey(stood.key) == some(stood)
+      keys.add stood.key
+    check keys.deduplicate.len == keys.len
+
+
+  test "a key is refused where a letter spells no level":
+    # Red with every letter but `H` read back as low (issue #698), so `l-.:XL:0` read as
+    # `Left to left` at rest.  Letters that keys write are read off keys themselves.
+    check fromFrameStateKey("l-.:XL:0").isNone
+    var written: set[char] = {}
+    for stood in frameStates():
+      for letter in stood.key.split(':')[1]:
+        written.incl letter
+    var (tried, refused) = (0, 0)
+    for stood in frameStates():
+      let parts = stood.key.split(':')
+      for index in 0..<parts[1].len:
+        for letter in {'!'..'~'} - written:
+          var levels = parts[1]
+          levels[index] = letter
+          inc tried
+          if fromFrameStateKey([parts[0], levels, parts[2]].join(":")).isNone:
+            inc refused
+    check tried > 0
+    check refused == tried
+
+
   test "the twelve turn sheets are six":
     # Turn is stored as one number for couple, and that number does not
     # care which of them moved: lead turning one way and follow turning
