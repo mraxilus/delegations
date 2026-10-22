@@ -101,8 +101,7 @@ func isDanceable*(
   ##     anything to have wrap without line actually going round
   ##     body.  So whether state exists at all depends on orientation,
   ##     and this is what says so.
-  ##   High lock is one exception (rule 41): hand at its own shoulder makes it, so it
-  ##     stands at every orientation, whatever arc its line hugs.
+  ##   High lock is one exception (rule 41): no arc is asked of it.
   let
     put = settled(pose, holds, levels, modifiers)
     hands = handPoints(put)
