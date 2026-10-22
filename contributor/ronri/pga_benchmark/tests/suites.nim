@@ -2541,7 +2541,7 @@ suiteInProc "Internal: Pages":
     )
 
 
-  test "shell names faces it embeds, and assembly fills every token":
+  test "shell names font faces it embeds, and assembly fills every token":
     let
       text_shell =
         "<title>@TITLE@</title><style>src: url(@EMBED:a.woff2@) url(@EMBED:b.ttf@)</style>@BODY@"
@@ -2551,7 +2551,7 @@ suiteInProc "Internal: Pages":
         "<p>body</p>",
         {"a.woff2": "xyz", "b.ttf": "uvw"}.toTable,
       )
-    check facesAsked(text_shell) == @["a.woff2", "b.ttf"]  # both faces asked, in order
+    check fontFacesAsked(text_shell) == @["a.woff2", "b.ttf"]  # both font faces asked, in order
     check "@" notin page and "A &amp; B" in page and "<p>body</p>" in page  # filled
     check "data:font/woff2;base64,eHl6" in page  # WOFF2 bytes inlined as WOFF2
     check "data:font/ttf;base64,dXZ3" in page  # TrueType bytes inlined as TrueType
@@ -2600,10 +2600,10 @@ suiteInProc "Internal: Pages":
       check rule in shell_html  # shell draws each box marking makes
 
 
-  test "every Noto face ships whole, as TrueType of its own release":
-    for face in FACES:
-      if face.toLowerAscii.startsWith("noto"):
-        check face.endsWith(".ttf")  # Article X.8: Noto face whole, never subset
+  test "every Noto font face ships whole, as TrueType of its own release":
+    for font_face in FONT_FACES:
+      if font_face.toLowerAscii.startsWith("noto"):
+        check font_face.endsWith(".ttf")  # Article X.8: Noto font face whole, never subset
 
 
   test "spread is assumed until quiet evaluations give enough ratios":
@@ -2743,7 +2743,7 @@ suiteInProc "Internal: Pages":
     check "<dl class=\"summary\">" in proposal  # proposal page's card still read
 
 
-  test "every stack holds each face of sans stack before any family shell does not ship":
+  test "every stack holds each family of sans stack before any family shell does not ship":
     const shell_html = staticRead("../pages/shell.html")
     var shipped, gaps: seq[string]
     for rule in shell_html.split("@font-face")[1..^1]:
@@ -2763,7 +2763,7 @@ suiteInProc "Internal: Pages":
       for family in stacks[0]:
         if family notin stack: gaps.add stack[0] & " stack lacks " & family
     checkpoint "gaps: " & gaps.join(", ")
-    check gaps.len == 0  # Article X.8: stack falls to face page ships, never to face of system
+    check gaps.len == 0  # Article X.8: stack falls to font face page ships, never to system
 
 
   test "docket rows carry identifiers docket file allots":
@@ -3199,7 +3199,7 @@ suiteInProc "Internal: Render":
       body = bodyControl(paragraphs, [])
     check findingsExpected(paragraphs).len > 0  # control proves something
     check findingsExpected(paragraphs).allIt(it.codepoint > 0x7F)  # beyond ASCII alone
-    check paragraphs.anyIt(not it.is_drawn_by_system)  # one shipped face draws, unexpected
+    check paragraphs.anyIt(not it.is_drawn_by_system)  # one shipped font face draws, unexpected
     for paragraph in paragraphs:
       check "<p id=\"" & paragraph.id & "\"" in body  # each paragraph on page, by id
       if paragraph.stack.len > 0:
@@ -3261,7 +3261,7 @@ suiteInProc "Internal: Render":
       ]
       findings = checkRendered(documentFound(characters), expected, "control", "build/hosted")
     check findings.mapIt(it.render) == @[
-      "build/hosted/docket.html:0: p.note: Character drawn by face of system; got `U+2603`.",
+      "build/hosted/docket.html:0: p.note: Character drawn by font face of system; got `U+2603`.",
     ]  # one finding, at page, element first, codepoint last
 
 
@@ -3284,15 +3284,15 @@ suiteInProc "Internal: Render":
     ).len == 1  # expectation holds on control alone
 
 
-  test "control expecting nothing proves nothing, and face not loaded is finding":
+  test "control expecting nothing proves nothing, and font face not loaded is finding":
     let none = checkRendered(newJObject(), [], "control", "h")
     check none.len == 1 and "proves nothing" in none[0].message  # vacuous control refused
     let refused = %*{"docket": {"characters": [], "faces": [
       {"family": "Noto Sans", "weight": "400", "status": "error"}]}}
     let
       messages = checkRendered(refused, expected, "control", "h").mapIt(it.message)
-      refusal = "@font-face Noto Sans 400: Face does not load; got `error`."
-    check refusal in messages  # refused face named with status
+      refusal = "@font-face Noto Sans 400: Font face does not load; got `error`."
+    check refusal in messages  # refused font face named with status
 
 
 
@@ -3386,7 +3386,7 @@ suiteInProc "Internal: Driver":
       body = verbs[start..<verbs.find("\n\n\n", start)]
     check body.count("pagesBuilt(") == 1  # one build serves digests and render alike
     check "pinnedChecked(pin, built)" in body  # digests of that build
-    check "renderedChecked(built, faces)" in body  # render of that build
+    check "renderedChecked(built, font_faces)" in body  # render of that build
     check "(\"nodejs\"," in driver  # node that render runs under, declared
 
 
