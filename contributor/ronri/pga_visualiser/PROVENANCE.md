@@ -368,6 +368,18 @@ of time. Their size is then the same on every machine, and only the figures move
 The heap row reads `NaN` on the simulated page, because the clock stands in for `performance`. So
 `driveHeapUnit` reads that row on the second page too.
 
+**The check that both sides of the algebra boundary carry time builds frames until each side
+reads time.** The clock of the page ticks in steps of 100 µs, and each side charges many shorter
+stretches. So one frame can read zero on a side with both brackets running. The check builds
+frames of the largest demo until both sides read time, or 300 frames. A side that reads zero in
+all 300 is a bracket that never ran, or one whose charge is lost.
+
+Over 29 drives on runners, 30 frames of the opening scene peaked at 0.1 ms on the emitting side
+in 26. They peaked at 0.2 ms in 1, and at zero in 2. Under the largest demo, a delegate read zero
+on that side in 1 to 7 of 30 frames, in 3 drives. Rejected: the peak of 30 frames of the opening
+scene, which read zero in 2 of those 29 drives. Verified by a run: with the emitting charge taken
+out of `timed`, the check reads time on no frame of 300, and fails.
+
 **Every wait on the real page is a count of frames, and never a span of time.** `waitUntil` steps
 that page one frame at a time. `settleTurn` waits on the transitions that an element runs, as
 `getAnimations` lists them. No limit on time then decides a verdict (Article IX.12). Rejected: a
