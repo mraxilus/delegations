@@ -4250,8 +4250,8 @@ distance each moved by exactly their own constant.
 
 Verified by `--drive-escape` and the page's `driveEscape`, 2026-10-22, with all six standing. Each
 press shed one, in order, and a seventh shed nothing. Both read `HMGEPS`, `MGEPS`, `GEPS`, `EPS`,
-`PS`, `S`, then nothing twice. On the key handling of `main` at `81c35326`, each front-end shed two
-things in one press.
+`PS`, `S`, then nothing twice. On the key handling of `main` at `81c35326`, one press shed three
+things on the page, and two on the desktop.
 
 Verified by `--drive-chords` and the page's `driveKeysChorded`, the same day. Control alone lowered
 the view 3.0544 units against 3.0544 for space on the desktop, and 3.0116 against 3.1843 on the
