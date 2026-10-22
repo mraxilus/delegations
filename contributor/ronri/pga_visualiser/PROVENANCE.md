@@ -1144,7 +1144,7 @@ row. Verified on 2026-10-06 by `xvfb-run -a binaries/rga_visualiser --hidden --n
 |  |  | `scene`, `selection`, `picking`, `marker`, `framing`, `interaction`, |
 |  |  | `storyboard`, `orrery`, `neighbourhood`, `starfield`, `history`, |
 |  |  | `format`, `help`, `message`, `wording`, `timings`, `ramp`, |
-|  |  | `motors`, `share` |
+|  |  | `motors`, `share`, `shown` |
 | `src/desktop` | `main.nim` alone | `main`, `panel`, `renderer`, `gui`, `gui_shim.cpp`, |
 |  |  | `opengl`, `sdl3`, `image`, `gif`, `arena` |
 | `src/browser` | `bridge.nim` alone | `bridge.nim` and the page's own scripts |
