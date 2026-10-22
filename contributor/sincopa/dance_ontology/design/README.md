@@ -78,7 +78,9 @@ Held by `checkRules`.
 
 > in high lock the line goes around the back of the modified body
 
-Held by `checkRules`.
+Retired by the Architect on 2026-10-22, because a high lock folds the arm in front, with the hand on
+top of the same shoulder. `checkRules` still holds the drawing to it, until #697 moves the hand to
+the front slot.
 
 ### Rule 7
 
@@ -315,7 +317,10 @@ The workbench does not check it. The simulation reports levels in its words, thr
 > same arm. To get into low lock, the form must enter from a low position only due to
 > physical/safety limitations
 
-The workbench does not check it. The simulation reports a hand behind its own back as a lock.
+The workbench does not check it. The Architect gave the high lock its shape on 2026-10-22: the arm
+folds at the elbow, with the elbow in front of the shoulder. The hand rests on top of the same
+shoulder. The simulation reports a hand behind its own back as a lock, and a high lock can end with
+the hand slightly behind the neck.
 
 ### Rule 38
 

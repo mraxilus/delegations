@@ -669,10 +669,10 @@ alone does not say which side a hand goes to, so the hold must say lock or wrap 
 settles in one of six places, each a bearing off its own dancer's facing (rule 3). `SLOT_OFFSET` in
 `body.nim` sets them 44 degrees apart, and two marks need 34.9 degrees, so no two marks touch.
 
-Both wraps go round the front to the front of the other hand, and both locks go round the back
-(rules 4 to 6). A high lock bends the arm to the shoulder of the same arm, and its line goes round
-the back (rules 6 and 37). Verified by `checkRules`, which checks where each hold settles and which
-way its route sets off.
+Both wraps go round the front to the front of the other hand, and a low lock goes round the back
+(rules 4 and 5). The drawing sends a high lock round the back too, as rule 6 asked. The Architect
+retired rule 6 on 2026-10-22, and #697 holds the change. Verified by `checkRules`, which checks
+where each hold settles and which way its route sets off.
 
 **A lock or a wrap needs its line to go round the body (rule 7), except a high lock (rule 41).** On
 the four single holds, at quarter turns of the follow, the larger arc takes seven values. They are
@@ -684,12 +684,11 @@ Verified by `checkRules`, on each single hold at each quarter turn of the follow
 `isDanceable` agrees with the measured arc, for every lock and wrap but a high lock. It prints the
 arcs that it meets.
 
-**A high lock stands whatever arc its line hugs (rule 41).** A high lock bends the arm to the
-shoulder of the same arm, and its line goes round the back (rules 6 and 37). Rule 41 gives no
-reason. The reading here is that the bent arm makes the lock, and not how far its line hugs.
-`terms.isMadeRoundBody` names the locks and wraps that rule 7 binds, and `isDanceable` asks the arc
-of those alone. Rejected: a lower threshold for a high lock, which would still refuse the arcs below
-it, where rule 41 refuses none.
+**A high lock stands whatever arc its line hugs (rule 41).** A high lock folds the arm at the elbow,
+with the elbow in front of the shoulder. The hand rests on top of the same shoulder (Architect,
+2026-10-22). So no line round the body makes it. `terms.isMadeRoundBody` names the locks and wraps
+that rule 7 binds, and `isDanceable` asks the arc of those alone. Rejected: a lower threshold for a
+high lock, which would still refuse the arcs below it, where rule 41 refuses none.
 
 Verified by `checkRules`, which draws a high lock on each of the four single holds at each quarter
 turn of the follow. It prints how many hug less than rule 7 asks, and at which arcs. On 2026-10-22
