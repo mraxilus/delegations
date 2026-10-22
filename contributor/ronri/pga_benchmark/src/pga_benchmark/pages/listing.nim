@@ -19,7 +19,7 @@
 ##
 ##   Cost: edge spanning more than one column passes through column between, and may cross node
 ##     there; five proposals hold none such.
-##   Cost: page carries every proposal whole, so it weighs their bodies on top of its faces.
+##   Cost: page carries every proposal whole, so it weighs their bodies on top of its font faces.
 
 {.experimental: "strictFuncs".}
 

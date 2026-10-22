@@ -20,8 +20,8 @@ only some of the bases.
 
 - **Basis-set types.** `Kvector0` to `KvectorN`, one for each grade, then `MultivectorEven` and
   `MultivectorOdd`. Each type stores only its own bases, densely.
-- **Slots.** The `Basis` enum keeps its grade-major order. A slot is the count of the bases of
-  the type below the basis that is asked for. It folds at compile time wherever the basis is
+- **Indexes.** The `Basis` enum keeps its grade-major order. The index of a basis in a type is
+  the count of the bases of the type below it. It folds at compile time wherever the basis is
   static, which in an emitted body it always is.
 - **Products.** Products are generic over the closed set of these types. The emitter walks the
   whole table over the bases of the two operands. It finds the bases the product can reach, and
@@ -49,7 +49,7 @@ uses. An importer writes `p ∧ q` and reads `Kvector2`, never a generic.
 | Contiguous ranges, `array[E41 .. E12, float]` | Plan of pin's TODO; no range names motor |
 | `BasisEven`, `BasisOdd` enums with converters | Second enum, and converters for each operator |
 | Basis order by parity first | Changes enum order and `succ`, which ranges use |
-| Type as list of grades | Two-level slot map for what one set gives |
+| Type as list of grades | Two-level index map for what one set gives |
 | Composite of typed parts, as Lengyel's fields | Second level of emission |
 | Phantom grade set over full storage | Bytes moved stay at full width |
 | Grade mask at run time | Branches at run time; bodies not derived |
@@ -62,8 +62,8 @@ uses. An importer writes `p ∧ q` and reads `Kvector2`, never a generic.
 Each name follows the charter: head first and qualifiers last (V.2), and a property is the
 bare noun (V.3).
 
-| Slot | Proposed | Options weighed |
-|------|----------|-----------------|
+| Concept | Proposed | Options weighed |
+|---------|----------|-----------------|
 | One grade | `Kvector1` to `KvectorN` | `Grade1` reads as a grade; `Vector1` collides with vector |
 | One parity | `MultivectorEven`, `MultivectorOdd` | Bare `Even` is vague; `Motion` names too few |
 | Conformal flats | `Kvector2Flat` and kin | Grade, then formality, the axis `Formal[T]` names |
