@@ -539,16 +539,6 @@ func renamesAbbreviation*(
         break
 
 
-func identifiers(line: string): seq[string] =
-  ## Read identifiers of one line of code view.
-  var word = ""
-  for c in line & " ":
-    if c in CHARS_NAME: word.add c
-    elif word.len > 0:
-      result.add word
-      word = ""
-
-
 func markForeign(code: openArray[string], line: int, kind: KindName): string =
   ## Read word marking name declared at zero-based line as one foreign code reads by spelling
   ##   (`MARKS_FOREIGN`): on its signature or line, on each line enclosing field or member, or on
@@ -559,7 +549,7 @@ func markForeign(code: openArray[string], line: int, kind: KindName): string =
   for i in 0 ..< line:
     let s = code[i].strip
     if s.startsWith("{.push"):
-      let marks = s.identifiers.filterIt(it in MARKS_FOREIGN)
+      let marks = s.wordsCode.filterIt(it in MARKS_FOREIGN)
       pushed = if marks.len > 0: marks[0] else: "push"
     elif s.startsWith("{.pop"): pushed = ""
   if pushed.len > 0: return pushed
@@ -582,7 +572,7 @@ func markForeign(code: openArray[string], line: int, kind: KindName): string =
       indent = code[i].indentWidth
       if indent == 0: break
   for i in read:
-    for word in code[i].identifiers:
+    for word in code[i].wordsCode:
       if word in MARKS_FOREIGN: return word
 
 
