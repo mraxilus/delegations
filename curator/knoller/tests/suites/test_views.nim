@@ -35,3 +35,10 @@ suite "Views":
     check "ctxFoo".identity == "ctx_foo".identity and "ctx".identity == "cTX".identity
     check "Ctx".identity != "ctx".identity  # rename planner of `curator/audit` compares so
     check "    x".indentWidth == 4 and "x".indentWidth == 0
+
+
+  test "each name among pragmas reads once":
+    check "func f() {.compileTime, noinit.} =".wordsPragma == @["compileTime", "noinit"]
+    check "{.push importc, header: H.}".wordsPragma == @["push", "importc", "header", "H"]
+    check "{.  used, 𝐦_b.}".wordsPragma == @["used", "𝐦_b"]  # spaces and Unicode name characters
+    check "proc inline() {.used.}".wordsPragma == @["used"]  # name outside pragma unread

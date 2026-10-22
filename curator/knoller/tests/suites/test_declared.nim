@@ -86,6 +86,25 @@ let flags_c = c
     ]  # tuple of no one value to each name, value past its line, shared value, no binding, chain
 
 
+  test "type keeps value of its line, so alias names type it takes":
+    const source = """
+type
+  MultivectorOf*[B: static Bases] = object
+    elements: array[4, float]
+  Multivector* = MultivectorOf[BASES_ALL]
+type ProverOf = proc (pin: string): Prover {.closure.}
+type Space {.pure.} = enum
+  Base, Anti
+"""
+    check source.declarations.filterIt(it.kind == KindName.Type).mapIt((it.name, it.value)) == @[
+      ("MultivectorOf", "object"),
+      ("Multivector", "MultivectorOf[BASES_ALL]"),  # alias of instance (V.13)
+      ("ProverOf", "proc (pin: string): Prover {.closure.}"),
+      ("Space", "enum"),
+    ]
+    check source.declarations.filterIt(it.kind != KindName.Type).allIt(it.value.len == 0)
+
+
   test "operator is backticked and never read as name":
     let found = OPERATORS.names
     check "∧" notin found and "[]" notin found  # III.5
