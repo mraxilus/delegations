@@ -425,10 +425,10 @@ const RULES* = [
   ##     other arm low, over it high), while level says only where
   ##     on body connection rides.
   ##   Rule 37 settles what high lock is: arm bent to shoulder of
-  ##     *same* arm.  Rule 6 said its line goes around back of
-  ##     modified body, and both are one shape -- hand comes round
-  ##     back up to its own shoulder -- so settle
-  ##     table's `(Own, Back)` stands.  Entry note is transition
+  ##     *same* arm.  Architect, 2026-10-22: arm folds at elbow, elbow
+  ##     in front of shoulder, hand on top of it.  Rule 6 sent its line
+  ##     round back of modified body, and Architect retired it; settle
+  ##     table keeps `(Own, Back)` until issue 697.  Entry note is transition
   ##     fact, first ledger has that is about safety rather than
   ##     shape; `simulation/verdicts.md` records what jointed-arm simulation makes of
   ##     low lock: hand led behind back at whole turn,
@@ -454,9 +454,9 @@ const RULES* = [
   ##     neither was told other's answer.
   ##   Rule 41 answers rule 7: its second sentence, that lock or wrap
   ##     means nothing unless line goes round body, holds for every
-  ##     hold but high lock.  Rule gives no reason; implementer's reading,
-  ##     from rule 37, is that arm bent to shoulder of same arm makes high
-  ##     lock, and not line going round body.  `isMadeRoundBody` frees high
+  ##     hold but high lock.  High lock folds arm in front, hand on top of
+  ##     its own shoulder (Architect, 2026-10-22), so no line round body
+  ##     makes it.  `isMadeRoundBody` frees high
   ##     lock from `WRAP_MIN`, and `checkRules` draws it on every single hold
   ##     at every quarter turn of follow.
 

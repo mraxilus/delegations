@@ -306,6 +306,8 @@ proc checkRules*() =
   # and `"in high lock the line goes around the back of the modified body"`,
   # to back of current hand.  Table here is rules
   # transcribed, held against settle table that drawing derives from.
+  # Architect retired rule 6 on 2026-10-22; its row holds drawing as it is until
+  # issue 697 moves high lock to front slot.
   const landings = [
     (level: Level.High, modifier: Modifier.Wrap, whose: Whose.Other, spot: Slot.Front,
      sends: Sends.FrontWay),
@@ -414,9 +416,9 @@ proc checkRules*() =
   told.add "a connection is drawn in its two hands' own colours"
 
   # RULE 41.  `"that applies to everything but high lock"` -- answer to second sentence
-  # of rule 7.  Rule gives no reason; implementer's reading is that arm bent to shoulder
-  # of same arm (rule 37), its line round back (rule 6), makes high lock, and not how far
-  # that line hugs.  Every single hold is drawn high locked at every quarter turn of
+  # of rule 7.  High lock folds arm at elbow, elbow in front of shoulder and hand on top
+  # of same shoulder (Architect, 2026-10-22), so no line round body makes it.  Every
+  # single hold is drawn high locked at every quarter turn of
   # follow, and some must hug less than rule 7 asks, or this would hold nothing rule 7
   # does not.
   var
