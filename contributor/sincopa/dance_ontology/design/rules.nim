@@ -427,8 +427,9 @@ const RULES* = [
   ##   Rule 37 settles what high lock is: arm bent to shoulder of
   ##     *same* arm.  Architect, 2026-10-22: arm folds at elbow, elbow
   ##     in front of shoulder, hand on top of it.  Rule 6 sent its line
-  ##     round back of modified body, and Architect retired it; settle
-  ##     table keeps `(Own, Back)` until issue 697.  Entry note is transition
+  ##     round back of modified body, and Architect retired it: settle
+  ##     table puts hand in front slot of its own side and sends its line
+  ##     no way, so it takes short way.  Entry note is transition
   ##     fact, first ledger has that is about safety rather than
   ##     shape; `simulation/verdicts.md` records what jointed-arm simulation makes of
   ##     low lock: hand led behind back at whole turn,
