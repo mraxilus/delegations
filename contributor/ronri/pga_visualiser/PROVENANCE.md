@@ -164,7 +164,7 @@ and this file does not:
 | `frame`, `classified`, `diagnostics`, `ramp` | frame's own clocks and counts, tree, colours |
 | `exceedance`, `rings` | distribution curve, its axis, rings each reading is taken over |
 | `scenery`, `pins`, `built`, `pool` | what scene costs, repaired faults, each frame built, drawer |
-| `counted` | calls, copies and bytes of marker and lattice, with the optimiser off |
+| `counted` | calls, copies and bytes of marker, lattice and frame, optimiser off |
 | `demo`, `loaded`, `objects` | preset, culling, occlusion, a line through a point, loaded |
 | `message`, `style`, `type`, `canvas` | outcome fade, declared CSS, faces in roles, blank refused |
 | `host`, `shade` | save through the artifact host, every point shaded from world-up |
@@ -533,9 +533,30 @@ records stay one for each line, and only the count of calls reads that fault.
 **Time does not read the fault of the lattice.** With its stand-in, the moving grid read 15.4 to
 18.9 ms in 5 runs, under the budget of 26 ms. Without it, the grid read 8.4 to 10.8 ms.
 
+**A whole frame is counted too, as a net for work that no span names.** A page of its own picks a
+point, then the plane, and counts one still frame after each pick settles. That net and the copies
+of the lattice pin no named fault, so each says that it pins the work that a change adds.
+
+**A move of the library pin is counted at both pins, and each count that grows is traced to its
+cause.** The baselines are counted at the pin, so a count that grows on a move fails the drive. At
+`3d9696e`, the copies grew for one cause. The generic `+` of the library loops over a constant set
+of basis elements, and the JS backend copies that set at each call. A `+` that adds the packed slots
+in order copies nothing more, and each count then reads at or under both pins. That fix belongs in
+the library, which is a dependency of this project (Article II.8).
+
+| Count | At `295bafc` | At `3d9696e` | `+` by slots |
+|-------|--------------|--------------|--------------|
+| Calls that the lattice adds to 9 moving frames | 4,847,207 | 4,817,506 | 4,031,154 |
+| Copies that the lattice adds to those frames | 340,767 | 356,725 | 340,677 |
+| Calls of a frame with a point picked | 40,287 | 29,591 | 29,248 |
+| Copies of a frame with a point picked | 4,811 | 4,808 | 4,801 |
+| Calls of a frame with the plane picked | 121,922 | 96,476 | 91,429 |
+| Copies of a frame with the plane picked | 9,793 | 9,874 | 9,771 |
+
 *Checked.* Verified by driven check: `counted.ts` reads each count at or under its baseline, on the
 build that the baseline names. Verified by runs on 2026-10-22: each stand-in read over its baseline,
-as the table gives, and the counts of the other span did not move.
+as the table gives, and the counts of the other span did not move. Verified by runs of the check on
+2026-10-22, at `295bafc`, at `3d9696e`, and with the `+` by slots in a scratch copy of the library.
 
 ## Browser front-end
 
