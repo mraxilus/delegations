@@ -57,6 +57,7 @@ import ./curator/audit/src/[
   domains,
   findings,
   fixes,
+  font_stacks,
   hooks,
   plan,
   projects,
@@ -86,6 +87,7 @@ Verbs:
   fix            apply in place each fix checks name, refusing all where path is out of scope
   fetch-deps     check out what each atlas.lock pins, and confirm checkouts match
   fetch-assets   fetch named files into store, print each path; none named prints table
+  resolve-font-faces  resolve each character of project's written.json down its font stack
   list-packages  OS packages koch and projects need, one per line
   list-projects  projects to compile, as JSON for CI matrix
   stamp          print rules stamp; --write sets every Rules row to it
@@ -129,12 +131,13 @@ proc parseOptions(): Option[Options] =
   for kind, key, value in getopt():
     case kind
     of cmdArgument:
-      # Third argument onward is refused for every verb but `fetch-assets` and `fix`, which
-      #   name files rather than one project; refusing them everywhere would make those verbs
-      #   impossible and accepting them everywhere would let typo pass as argument nothing reads.
+      # Third argument onward is refused for every verb but `fetch-assets`, `fix` and
+      #   `resolve-font-faces`, which name files rather than one project; refusing them everywhere
+      #   would make those verbs impossible and accepting them everywhere would let typo pass as
+      #   argument nothing reads.
       if options.command.len == 0: options.command = key
       elif options.project.len == 0: options.project = key
-      elif options.command in ["fetch-assets", "fix"]: options.rest.add key
+      elif options.command in ["fetch-assets", "fix", "resolve-font-faces"]: options.rest.add key
       else: return none(Options)
     of cmdLongOption, cmdShortOption:
       case key
@@ -520,6 +523,13 @@ proc run(options: Options): int =
         )])
       else: echo path
     if found.len == 0: return 0
+  of "resolve-font-faces":
+    # Project's browser part writes what browser computed, and its judge reads what this
+    #   writes; resolver between them is one for every project (`font_stacks.nim`). Exit `0`
+    #   says file was written, never that page passed: verdict is project's.
+    if not options.isReadAll({}, has_project = true): return options.refused
+    if options.project.len == 0 or options.rest.len != 1: return options.refused
+    found = writeFound(options.project, options.rest[0])
   of "list-packages":
     # Named project answers for that project, which is what runner asks per matrix job.
     #   Named none answers for machine: koch's own packages and every project's, unscoped,
