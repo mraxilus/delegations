@@ -41,8 +41,8 @@
 ##     is macro, `emit…` returns `NimNode`. Kind never fixes verb, so other macro and helper
 ##     building syntax tree keep names for their act. V.5: name opening `lut` reads
 ##     `lut_<value>_by_<key>`.
-##   Cost: compile time is read from routine's own `{.compileTime.}`, as STYLE.md §2 applies it
-##     across family; routine nested in compile-time one without it reads as runtime.
+##   Compile time is read from routine's own `{.compileTime.}`, as STYLE.md §2 applies it across
+##     family, or from body it nests in that compile time alone runs (`declared.nim`).
 ##   V.2: binding holding named value in another representation leads with name of its chain,
 ##     where its name holds one: `c_dual_flags = c.dual.toFlags`, never `flags_c`. Last name of
 ##     chain describes value, so both orders pass cut of V.2, and tie-breaker settles it. Syntax
@@ -357,7 +357,7 @@ func namesLater*(d: Declared): seq[string] =
 
 func isKindOfVerb(d: Declared, verb: string): bool =
   ## Decide whether routine is kind its verb of generation fixes (V.3): `construct…` is
-  ##   `{.compileTime.}` routine `ROUTINES_CALLED` lists returning value, `define…` is macro, and
+  ##   compile-time routine `ROUTINES_CALLED` lists returning value, `define…` is macro, and
   ##   `emit…` is routine `ROUTINES_CALLED` lists returning `NimNode`; other verb fixes no kind.
   case verb
   of "construct": d.keyword in ROUTINES_CALLED and d.is_compile_time and d.type_return.len > 0
