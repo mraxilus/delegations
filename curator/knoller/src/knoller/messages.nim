@@ -46,7 +46,6 @@ type
 const
   MARKER = "; got "  ## Text message's tail follows.
   QUOTE_LONG = "\"\"\""  ## Delimiter of long literal.
-  INTERPOLATORS = ["&", "fmt"]  ## Prefix glued before literal that makes `{…}` value.
   KEYWORDS_ENDING = [
     "and", "do", "elif", "else", "if", "in", "of", "or", "return", "then", "when", "while",
   ]
@@ -68,21 +67,22 @@ func pieceAt(tokens: openArray[Token], partners: openArray[int], k: int, source:
   ##   next `&` outside brackets, separator, closing bracket or line end `&` does not continue.
   let t = tokens[k]
   if t.kind == KindToken.Text: return Piece(first: k, last: k, literal: k)
-  let text = t.spelling(source)
   if k + 1 < tokens.len and tokens[k + 1].kind == KindToken.Text and
       tokens[k + 1].first == t.after and t.kind in {KindToken.Operator, KindToken.Word}:
-    return Piece(first: k, last: k + 1, literal: k + 1, is_interpolated: text in INTERPOLATORS)
-  result = Piece(first: k, last: k, literal: -1)
+    return Piece(first: k, last: k + 1, literal: k + 1,
+      is_interpolated: tokens.isInterpolated(k + 1, source))
+  result = Piece(first: k, last: k - 1, literal: -1)  # Token that opens no operand gives none.
   var j = k
   while j < tokens.len:
     let u = tokens[j]
+    # Line end comes first: bracket that opens next line opens next statement, never this one.
+    if j > k and tokens[j - 1].lineLast(source) < u.line: break
     if u.kind == KindToken.Open and partners[j] > j: j = partners[j]
     elif u.kind in {KindToken.Comma, KindToken.Semicolon, KindToken.Close, KindToken.Comment}:
       break
     elif u.kind == KindToken.Operator and u.spelling(source) in ["&", ":", "="] and j > k:
       break
     elif u.kind == KindToken.Word and u.spelling(source) in KEYWORDS_ENDING: break
-    elif j > k and tokens[j - 1].lineLast(source) < u.line: break
     result.last = j
     inc j
 
@@ -92,8 +92,7 @@ func chainFrom(
 ): seq[Piece] =
   ## Read concatenation from literal token `k` to its end: each `&` followed by operand.
   result.add Piece(first: k, last: k, literal: k)
-  if k > 0 and tokens[k - 1].after == tokens[k].first and
-      tokens[k - 1].spelling(source) in INTERPOLATORS:
+  if tokens.isInterpolated(k, source):
     result[0].first = k - 1
     result[0].is_interpolated = true
   var
@@ -105,7 +104,10 @@ func chainFrom(
     # Joining `&` stands on line its operand ends: Nim continues line binary operator ends,
     #   never one it opens, so `&` opening line opens next statement, as `&"…"`.
     if tokens[at].line != tokens[last].lineLast(source): break
-    let piece = pieceAt(tokens, partners, at + 1, source)
+    var next = at + 1  # Comment after `&` that ends line stands before operand on next line.
+    while next < tokens.len and tokens[next].kind == KindToken.Comment: inc next
+    if next >= tokens.len: break
+    let piece = pieceAt(tokens, partners, next, source)
     if piece.last < piece.first: break
     result.add piece
     last = piece.last

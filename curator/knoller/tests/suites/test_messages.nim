@@ -100,6 +100,14 @@ suite "Article IV":
     check source.isSettled  # interpolated result on next line is no tail of message
 
 
+  test "IV.4 operand at line end stops before bracket and comment, as Nim reads them":
+    let bracket = "doAssert x > 0, \"Bad; got \" & $x\n  (echo \"next\")\n"
+    check bracket.fixed == "doAssert x > 0, \"Bad; got `\" & $x & \"`.\"\n  (echo \"next\")\n"
+    let commented = "doAssert x > 0, \"Bad; got \" &  # Value follows.\n    $x & \".\"\n"
+    check commented.fixed == "doAssert x > 0, \"Bad; got `\" &  # Value follows.\n    $x & \"`.\"\n"
+    check "let m = prefix&\"Bad; got {x}.\"\n".isSettled  # glued `&` joins plain literal
+
+
   test "IV.4 backtick widening line stays with finding":
     let near = "f(&\"" & "x".repeat(80) & "; got {value}.\")\n"  # 100 runes; backticks 102
     check near.fixed == near
