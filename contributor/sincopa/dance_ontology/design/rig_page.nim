@@ -1,4 +1,4 @@
-## Write rig viewer: markup, its two scripts, and faces it draws with.
+## Write rig viewer: markup, its two scripts, and font faces it draws with.
 ##
 ##   Three built things are folded into one self-contained document: sweeps and
 ##     stills recorded by `design/rig`, and viewer compiled from `design/rig_view` by
@@ -10,8 +10,8 @@
 ##     compared with what it looks like in model.  Cards are cut from built
 ##     Reference itself rather than drawn again, so what is compared is
 ##     what was ruled on, badge for badge.
-##   Faces are inlined by `design/faces`, which also turns Commit Mono's
-##     ligatures on at root.  Article X.8: presentation target ships faces it
+##   Font faces are inlined by `design/faces`, which also turns Commit Mono's
+##     ligatures on at root.  Article X.8: presentation target ships font faces it
 ##     draws with, never naming one reader may lack.
 ##   Recording's stamp is left out (`folded`): it says what physics gave recording, and
 ##     page that carried it would change on every change to physics, where page shows none.
@@ -27,7 +27,7 @@ when compileOption("profiler"): import std/nimprof
 
 import std/[json, os, strformat, strutils, tables]
 
-import ./[faces, page, twins]
+import ./[font_faces, page, twins]
 
 
 const TITLE* = "Simulation"
@@ -314,7 +314,7 @@ proc main() =
       "<script>var RIG = " & $shown & ";</script>\n" &
       "<script>" & readFile(view) & "</script>\n",
     )
-  writeFile(directory / "rig.html", withFaces(html))
+  writeFile(directory / "rig.html", withFontFaces(html))
   echo "wrote ", directory / "rig.html"
 
 

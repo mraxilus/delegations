@@ -8,12 +8,12 @@
 ##   |----------|-----------------------------------------------------------------------|
 ##   | Command  | Effect                                                                |
 ##   |----------|-----------------------------------------------------------------------|
-##   | pages    | fetch faces, copy Explorer's shell, compile its script and fold it    |
-##   |          | into one self-contained file, build Reference, then rig viewer        |
-##   | assets   | fetch faces pages embed from repository store into build/fonts        |
+##   | pages    | fetch font faces, copy Explorer's shell, compile its script and fold  |
+##   |          | it into one self-contained file, build Reference, then rig viewer     |
+##   | assets   | fetch font faces pages embed from repository store into build/fonts   |
 ##   | types    | type-check harness `tools/drive/`, and emit it into build/drive        |
 ##   | drive    | build every page, render each and control as publish host serves it, |
-##   |          | and fail where face of system draws character beyond ASCII            |
+##   |          | and fail where font face of system draws character beyond ASCII       |
 ##   | fixtures | rewrite design/review-fixtures.json from page just built: run when    |
 ##   |          | Architect rules on cards, never to quiet check that says one moved    |
 ##   | confirmed| rewrite design/confirmed-fixtures.json from page just built: run when |
@@ -39,10 +39,10 @@
 ##     at any depth.
 ##   Exit: 0 done, 1 command failed, 2 usage error.
 ##
-##   Faces are fetched by repository's shared store rather than by this driver, since two
+##   Font faces are fetched by repository's shared store rather than by this driver, since two
 ##     projects pinned four of same files byte for byte before it existed (repository issue
-##     116).  Store holds digest and address; this project holds which faces it draws with,
-##     in `design/faces.nim`.  So `assets` names files and koch answers with their paths.
+##     116).  Store holds digest and address; this project holds which font faces it draws with,
+##     in `design/font_faces.nim`.  So `assets` names files and koch answers with their paths.
 ##   Cost: driver runs from project directory, since every path here is relative to it.
 ##   Cost: `assets` shells out to koch, so it needs repository above project rather than
 ##     project alone; `root` says how that is found and why.
@@ -59,7 +59,7 @@ when compileOption("profiler"): import std/nimprof
 
 import std/[algorithm, json, os, osproc, strutils]
 
-import ../design/[faces, reference_page, render, watch]
+import ../design/[font_faces, reference_page, render, watch]
 
 
 const
@@ -69,7 +69,7 @@ const
   RELEASE = @["-d:release", "--hints:off"]  ## Options of browser scripts shipped with pages.
   QUIET = @["--hints:off"]  ## Options of runs whose output is their product.
   DIRECTORY_FONTS = BUILD / "fonts"
-    ## Directory faces land in.  Never committed: fonts are unregistered kind, so
+    ## Directory font faces land in.  Never committed: font faces are unregistered kind, so
     ##   lock is committed and checkout is not, as Atlas does for packages.
   USAGE = "Usage: nim r tools/build.nim " &
       "<pages|assets|types|drive|fixtures|confirmed|watched|modelled|rig|record|verdicts|" &
@@ -118,7 +118,7 @@ const
   BUILD_HOSTED = BUILD / "hosted"
     ## Directory each page lands in as publish host serves it, for harness to render.
   PATH_FOUND = BUILD / "found.json"  ## What harness found on each page, as data (`render.nim`).
-  PATH_CONTROL = "tests" / "drive" / "control_faces.json"
+  PATH_CONTROL = "tests" / "drive" / "control_font_faces.json"
     ## Fixture control page is built from; under `tests/`, as `design/render.nim` says why.
   PAGE_UNBUNDLED = BUILD / "app" / "index.html"
     ## Explorer before `bundle` folds its script in. Not driven: it loads `app.js` beside it,
@@ -167,22 +167,25 @@ proc root(): string =
 
 
 proc assets() =
-  ## Fetch faces pages embed from repository's shared store into `build/fonts`.
+  ## Fetch font faces pages embed from repository's shared store into `build/fonts`.
   ##   Digests are curator's and choice is this project's (repository issue 116): store
-  ##     says what bytes each face is, `design/faces.nim` says which faces are drawn with,
-  ##     and neither writes what other holds.
-  ##   Store keys entries by digest, so name is restored here: rest of build reads faces
+  ##     says what bytes each font face is, `design/font_faces.nim` says which font faces are
+  ##     drawn with, and neither writes what other holds.
+  ##   Store keys entries by digest, so name is restored here: rest of build reads font faces
   ##     by name, and page embedding one wants to say which it embedded.
   createDir(DIRECTORY_FONTS)
   var wanted: seq[string]
-  for (file, _, _, _) in FACES:
+  for (file, _, _, _) in FONT_FACES:
     wanted.add file
   let (written, code) = execCmdEx(
     "nim r --hints:off koch fetch-assets " & wanted.join(" "),
     workingDir = root(),
   )
   if code != 0:
-    raise newException(OSError, "Shared store did not serve every face asked for; got:\n" & written)
+    raise newException(
+      OSError,
+      "Shared store did not serve every font face asked for; got:\n" & written,
+    )
   var paths: seq[string]
   for line in written.splitLines:
     if line.startsWith('/') and fileExists(line):
@@ -191,11 +194,11 @@ proc assets() =
     raise newException(
       OSError,
       "Store answered with `" & $paths.len & "` paths for `" & $wanted.len &
-      "` faces asked for, so which is which cannot be told; got:\n" & written,
+      "` font faces asked for, so which is which cannot be told; got:\n" & written,
     )
   for i, file in wanted:
     copyFile(paths[i], DIRECTORY_FONTS / file)
-  echo "Faces in ", DIRECTORY_FONTS, ": ", wanted.len, ", every one from repository store."
+  echo "Font faces in ", DIRECTORY_FONTS, ": ", wanted.len, ", every one from repository store."
 
 
 proc engine() =
@@ -254,20 +257,20 @@ proc pagesBuilt(): seq[string] =
 
 
 proc dress() =
-  ## Put faces into every page build wrote, once every writer has run.
+  ## Put font faces into every page build wrote, once every writer has run.
   ##   Done here rather than in each writer so that suites which write page need
   ##     neither network nor fetched byte: page they write is evidence about markup,
-  ##     and page shipped is what has to carry its faces (Article X.8).
+  ##     and page shipped is what has to carry its font faces (Article X.8).
   var dressed = 0
   for path in pagesBuilt():
-    writeFile(path, withFaces(readFile(path)))
+    writeFile(path, withFontFaces(readFile(path)))
     inc dressed
-  echo "Faces put into ", dressed, " pages."
+  echo "Font faces put into ", dressed, " pages."
 
 
 proc pages() =
   ## Write every page and script under `build/`.
-  ##   Faces first: every page embeds them, and check that wants verb run by hand
+  ##   Font faces first: every page embeds them, and check that wants verb run by hand
   ##     first is check runner will not run.
   assets()
   for directory in DIRECTORIES_PAGES: createDir(BUILD / directory)
@@ -416,10 +419,10 @@ proc browser() =
 
 proc drive() =
   ## Build every page, render each and control as publish host serves them, and fail where
-  ## face of system would draw character beyond ASCII (CONTRIBUTOR.md, Pages and assets).
+  ## font face of system would draw character beyond ASCII (CONTRIBUTOR.md, Pages and assets).
   ##   Every page `pages` writes is driven, but `PAGE_UNBUNDLED`, so page added later is
   ##     driven without being named here. Name is its path under `build/`, `/` read as `-`.
-  ##   Control is built from fixture and dressed as every page is, so it ships same faces.
+  ##   Control is built from fixture and dressed as every page is, so it ships same font faces.
   ##   Harness writes what it found; `render.nim` judges it, and each finding prints here.
   types()
   browser()
@@ -435,7 +438,7 @@ proc drive() =
     writeFile(hosted_path, hosted(readFile(path)))
     paths.add hosted_path
   let path_control = BUILD_HOSTED / CONTROL & ".html"
-  writeFile(path_control, hosted(withFaces(pageControl(paragraphs))))
+  writeFile(path_control, hosted(withFontFaces(pageControl(paragraphs))))
   paths.add path_control
   removeFile(PATH_FOUND)
   let
@@ -459,9 +462,10 @@ proc drive() =
   for finding in findings: echo finding.render
   if findings.len > 0:
     raise newException(
-      OSError, "Drive found face of system drawing; got `" & $findings.len & "` finding(s)."
+      OSError, "Drive found font face of system drawing; got `" & $findings.len & "` finding(s)."
     )
-  echo "Faces of ", paths.len - 1, " pages proven, and control raised every finding it expects."
+  echo "Font faces of ", paths.len - 1,
+      " pages proven, and control raised every finding it expects."
 
 
 proc system() =

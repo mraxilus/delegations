@@ -1,5 +1,5 @@
-## Hold judge of `drive` to what harness found: each page to faces it ships, control to findings
-## it expects, and host's skeleton to one place for page.
+## Hold judge of `drive` to what harness found: each page to font faces it ships, control to
+## findings it expects, and host's skeleton to one place for page.
 ##
 ##   Harness itself needs node and browser, so `drive` runs it, and these laws read its output
 ##     as data written here. Every law fails where judge says other than what found holds.
@@ -8,16 +8,16 @@
 
 import std/[json, os, strutils, unittest]
 
-import ../../design/[faces, render]
+import ../../design/[font_faces, render]
 
 
 const
   DIRECTORY = "build" / "hosted"  ## Directory pages are judged in, as `drive` names it.
-  PATH_CONTROL = "tests" / "drive" / "control_faces.json"  ## Fixture control is built from.
+  PATH_CONTROL = "tests" / "drive" / "control_font_faces.json"  ## Fixture control is built from.
 
 
 
-suite "Internal: Judge of faces":
+suite "Internal: Judge of font faces":
   test "codepoint is spelt as Unicode spells it, at least four digits":
     check codepointText(0x41) == "U+0041"
     check codepointText(0x2192) == "U+2192"
@@ -42,23 +42,23 @@ suite "Internal: Judge of faces":
     check "<p id=\"open\" style=\"font-family: &quot;Noto Sans&quot;, sans-serif\">" in page
 
 
-  test "character page draws with face of system fails, naming page, element and codepoint":
+  test "character page draws with font face of system fails, naming page, element and codepoint":
     let
       found = parseJson("""{"design-reference": {"characters": [
         {"element": "svg > text.name", "codepoint": 8644}], "faces": []},
-        "control_faces": {"characters": [{"element": "p#han", "codepoint": 20013}],
+        "control_font_faces": {"characters": [{"element": "p#han", "codepoint": 20013}],
         "faces": []}}""")
       expected = @[(element: "p#han", codepoint: 0x4E2D)]
       findings = checkRendered(found, expected, CONTROL, DIRECTORY)
     check findings.len == 1
     check findings[0].path == DIRECTORY / "design-reference.html"
     check findings[0].message ==
-        "svg > text.name: Character drawn by face of system; got `U+21C4`."
+        "svg > text.name: Character drawn by font face of system; got `U+21C4`."
     check findings[0].render.startsWith(DIRECTORY / "design-reference.html:0: ")
 
 
   test "control that raises every finding it expects, and no other, passes":
-    let found = parseJson("""{"control_faces": {"characters": [
+    let found = parseJson("""{"control_font_faces": {"characters": [
       {"element": "p#han", "codepoint": 20013}, {"element": "p#open", "codepoint": 119808}],
       "faces": []}}""")
     let expected = findingsExpected(parseFile(PATH_CONTROL).toParagraphs)
@@ -67,7 +67,7 @@ suite "Internal: Judge of faces":
 
   test "control that misses finding it expects reads as blind":
     let
-      found = parseJson("""{"control_faces": {"characters": [
+      found = parseJson("""{"control_font_faces": {"characters": [
         {"element": "p#han", "codepoint": 20013}], "faces": []}}""")
       expected = findingsExpected(parseFile(PATH_CONTROL).toParagraphs)
       findings = checkRendered(found, expected, CONTROL, DIRECTORY)
@@ -79,25 +79,25 @@ suite "Internal: Judge of faces":
 
   test "control finding it does not expect fails, as on any page":
     let
-      found = parseJson("""{"control_faces": {"characters": [
+      found = parseJson("""{"control_font_faces": {"characters": [
         {"element": "p#closed", "codepoint": 119808}], "faces": []}}""")
       findings = checkRendered(found, @[], CONTROL, DIRECTORY)
     check findings.len == 2
     check findings[0].message ==
-        "p#closed: Character drawn by face of system; got `U+1D400`."
+        "p#closed: Character drawn by font face of system; got `U+1D400`."
     check "render proves nothing" in findings[1].message
 
 
-  test "face browser does not load fails, naming family and weight":
+  test "font face browser does not load fails, naming family and weight":
     let
       found = parseJson("""{"design-rig": {"characters": [], "faces": [
         {"family": "Noto Serif", "weight": "600", "status": "error"}]}}""")
       findings = checkRendered(found, @[], CONTROL, DIRECTORY)
     check findings[0].path == DIRECTORY / "design-rig.html"
-    check findings[0].message == "@font-face Noto Serif 600: Face does not load; got `error`."
+    check findings[0].message == "@font-face Noto Serif 600: Font face does not load; got `error`."
 
 
-  test "page sits inside host's skeleton, which names no face":
+  test "page sits inside host's skeleton, which names no font face":
     let page = hosted("<p>x</p>")
     check page.startsWith("<!doctype html>")
     check page.find("<body>") < page.find("<p>x</p>")

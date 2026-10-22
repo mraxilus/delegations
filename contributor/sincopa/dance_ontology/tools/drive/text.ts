@@ -1,4 +1,4 @@
-// Read what rendered page writes, and faces it declares, as browser computed them; not Nim
+// Read what rendered page writes, and font faces it declares, as browser computed them; not Nim
 //   because every expression here runs inside page through Playwright's `evaluate`, which
 //   Nim reaches only as unchecked string, where TypeScript checks it against DOM's own types.
 //   Text read is every string page draws:
@@ -31,7 +31,7 @@ export interface Run {
   codepoints: number[];
 }
 
-/** One face page declares, with status browser reached loading it. */
+/** One font face page declares, with status browser reached loading it. */
 export interface Loaded {
   family: string;
   weight: string;
@@ -46,7 +46,10 @@ export interface Written {
   count_elements: number;
 }
 
-/** Read every run beyond ASCII page draws, every face it declares, and what each face loaded. */
+/**
+ * Read every run beyond ASCII page draws, every font face it declares, and what each font face
+ * loaded.
+ */
 export async function readWritten(page: Page): Promise<Written> {
   return await page.evaluate(async () => {
     const silent = 'script, style, title, desc, metadata, noscript';
@@ -139,7 +142,7 @@ export async function readWritten(page: Page): Promise<Written> {
       add(element, '::marker', stringsOf(getComputedStyle(element).listStyleType));
     }
 
-    // Read every face rule of every sheet, as CSSOM serialises its descriptors.
+    // Read every font face rule of every sheet, as CSSOM serialises its descriptors.
     const declared: Declared[] = [];
     for (const sheet of document.styleSheets) {
       for (const rule of sheet.cssRules) {
@@ -153,7 +156,7 @@ export async function readWritten(page: Page): Promise<Written> {
       }
     }
 
-    // Load every face, so one browser refuses reads as refused rather than as never asked.
+    // Load every font face, so one browser refuses reads as refused rather than as never asked.
     const faces = [...document.fonts];
     await Promise.allSettled(faces.map(async (face) => await face.load()));
     const loaded = faces.map((face) => ({
