@@ -198,12 +198,12 @@ func motorSliding*(offset: Multivector): Multivector =
   ##   Takes multivector rather than `Direction`, so caller assembling offset as sum of
   ##   points hands that sum straight over, at whatever length it has. Unit direction would
   ##   throw length away.
-  ##   Moment alone, at half offset negated, beside unit weight. Such bivector antisquares
+  ##   Moment alone, at half offset, beside unit weight. Such bivector antisquares
   ##   to zero, so its exponential stops at two terms, and this *is* that motor rather than
   ##   bivector to raise: see `motors.exp`.
-  result[Basis.E23] = -0.5 * offset[Basis.E1]
-  result[Basis.E31] = -0.5 * offset[Basis.E2]
-  result[Basis.E12] = -0.5 * offset[Basis.E3]
+  result[Basis.E23] = 0.5 * offset[Basis.E1]
+  result[Basis.E31] = 0.5 * offset[Basis.E2]
+  result[Basis.E12] = 0.5 * offset[Basis.E3]
   result[Basis.E1234] = 1.0
 
 
