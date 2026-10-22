@@ -1232,7 +1232,13 @@ func removeObject*(scene: var Scene, handle: int) =
 ##   Adding version means adding one func.
 
 const
-  MAGIC_SCENE* = "RGAS"  ## Open every `.rgascene` file with these four bytes.
+  MAGIC_SCENE* = "RGAS"
+    ## Open every scene file with these four bytes, under either extension.
+    ##   Kept when extension changed: bytes after it did not, so one reader serves both.
+  EXTENSION_SCENE* = ".pgascene"  ## Name extension this build saves scene file under.
+  EXTENSIONS_SCENE_READ* = [EXTENSION_SCENE, ".rgascene"]
+    ## Name each extension page reads scene file under, from its picker or inside zip.
+    ##   `.rgascene` is extension of files saved before project took name PGA.
   VERSION_SCENE* = 7'u8
     ## Stamp format version this build writes.
     ##   Every version down to `VERSION_SCENE_LEAST` is still read; see table above.

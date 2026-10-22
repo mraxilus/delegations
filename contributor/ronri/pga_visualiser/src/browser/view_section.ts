@@ -138,7 +138,7 @@ function captureFrameIfAsked() {
       return;
     }
     deliverFile(
-      blob, 'rga_visualiser.png', 'image/png',
+      blob, 'pga_visualiser.png', 'image/png',
       'A ' + width + '\u00d7' + height + ' image of this view',
     );
   }, 'image/png');

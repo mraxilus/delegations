@@ -3,7 +3,7 @@
 {.experimental: "strictFuncs".}
 
 import ./fixtures
-import ../../src/rga_visualiser/timings
+import ../../src/pga_visualiser/timings
 
 
 

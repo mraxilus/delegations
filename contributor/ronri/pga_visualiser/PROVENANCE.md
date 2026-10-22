@@ -21,7 +21,7 @@ the choice costs. A rejected alternative appears only where it is still a live t
 beside the constant it justified, because the comments in the source carry no figures (Article
 VII.5). The `Pruned` row names the last commit that carried the pruned text.
 
-**What is here.** The render-path-independent core sits under `src/rga_visualiser`. The browser
+**What is here.** The render-path-independent core sits under `src/pga_visualiser`. The browser
 front-end sits under `src/browser`, its page under `pages/`, and its harness under `tools/drive/`.
 The desktop front-end sits under `src/desktop`, with the PNG and GIF encoders and the arena they
 write through. The suite runs in the configurations that Testing lists.
@@ -265,7 +265,7 @@ Cost: two more readings. Timed alone on this machine, 2026-10-04, the check took
 against 2.5 s and 3.1 s for one reading alone.
 
 **The harness resolves its own browser, and drives the pinned build of Playwright by default.** It
-takes what `RGA_CHROMIUM` names, else the build that `package-lock.json` pins, else `chromium` on
+takes what `PGA_CHROMIUM` names, else the build that `package-lock.json` pins, else `chromium` on
 `PATH`. On Ubuntu 24.04 that last one is the snap shim alone (repository issue 77). The lock fixes
 `@playwright/test` at 1.63.0, and that fixes the browser revision, so this machine and the runner
 drive one binary. `check.yml` caches `~/.cache/ms-playwright` on that same lock. The pin is a
@@ -596,7 +596,7 @@ Verified by eye in Chrome for Testing 153 with SwiftShader, 2026-10-05. The pict
 over the largest demo and the opening scene, each at 0.82, 0.88 and 0.92. At 0.88 the lines of the
 demo show faintly through the drawer, and every row stays legible. Nothing stands behind the pills
 of the opening scene, so there 0.82 and 0.88 look the same. To take the pictures again, run `nim r
-tools/build.nim web`, and open `build/rga_visualiser.html` at 1200 by 900 px. Then load the largest
+tools/build.nim web`, and open `build/pga_visualiser.html` at 1200 by 900 px. Then load the largest
 demo from the menu, and open the drawer.
 
 **A comment may not quote a closing block-comment delimiter.** A comment that does ends itself on
@@ -608,9 +608,10 @@ frame code download directly, and offers `claude.use("downloads")` instead. `del
 first where the host answered at load, and the reader confirms the file. A reader's "no", or a
 prompt already open, ends the save, and any other refusal falls through to the page's own routes.
 
-**A scene goes to the host as `scene.zip`, which holds `scene.rgascene` unchanged and stored.** The
-host saves only the extensions on its list, and `.rgascene` is not one. Loading opens the first
-`.rgascene` entry of a zip, stored or deflated. Rejected: a JSON scene, a second format to read.
+**A scene goes to the host as `scene.zip`, which holds `scene.pgascene` unchanged and stored.** The
+host saves only the extensions on its list, and `.pgascene` is not one. Loading opens the first
+entry of a zip that ends `.pgascene` or `.rgascene`, stored or deflated. Rejected: a JSON scene, a
+second format to read.
 
 *Checked.* Verified by a cold run. `clean` removes `build`, `binaries` and `nimcache`. Then `drive`
 fetches every face, builds both front-ends, and drives them with no step run by hand, as the runner
@@ -918,8 +919,8 @@ where it cannot open a path, and an assertion is SIGABRT rather than a report. `
 each face to empty where the file is not there. It says which face is missing, which variable names
 it, and which verb fetches it. The interface draws in what is left.
 
-Locations come from the environment first, with one `RGA_FONT…` name for each face, and fall back to
-the faces that this build ships. `driven` drives the case by a run of `--drive-keys` with `RGA_FONT`
+Locations come from the environment first, with one `PGA_FONT…` name for each face, and fall back to
+the faces that this build ships. `driven` drives the case by a run of `--drive-keys` with `PGA_FONT`
 naming a path that no machine carries.
 
 **This half ships the faces that it draws with** (Article X.8; repository issue 93).
@@ -1139,7 +1140,7 @@ row. Verified on 2026-10-06 by `xvfb-run -a binaries/rga_visualiser --hidden --n
 
 | Directory | Reachable from | Holds |
 |-----------|----------------|-------|
-| `src/rga_visualiser` | Both | `objects`, `euclid`, `boundary`, `mesh`, `tessellate`, `camera`, |
+| `src/pga_visualiser` | Both | `objects`, `euclid`, `boundary`, `mesh`, `tessellate`, `camera`, |
 |  |  | `scene`, `selection`, `picking`, `marker`, `framing`, `interaction`, |
 |  |  | `storyboard`, `orrery`, `neighbourhood`, `starfield`, `history`, |
 |  |  | `format`, `help`, `message`, `wording`, `timings`, `ramp`, |
@@ -1150,7 +1151,7 @@ row. Verified on 2026-10-06 by `xvfb-run -a binaries/rga_visualiser --hidden --n
 
 `pga` is the dependency above all three, and the shared core imports nothing outside itself and
 `pga`. `src/desktop` and `src/browser` each import that core, and never each other, which the import
-paths show (`../rga_visualiser/`). One driver builds both: `web` assembles the page, and `desktop`
+paths show (`../pga_visualiser/`). One driver builds both: `web` assembles the page, and `desktop`
 compiles the binary, and neither entry point carries a configuration file of its own. `arena` sits
 in `src/desktop` although it is general-purpose, because only the encoders and the draw loop of the
 desktop reach it. The JS backend cannot carve typed slices from a byte array at all.
@@ -1495,7 +1496,7 @@ luminance of 0.62 read well and *failed*, because the dimming walked the green a
 the luminance of `Rose`. That is 3.5 and 3.3 ΔE under red-green, against the floor of 4.0.
 
 `Ink.Outline` is kept although nothing draws with it. To remove an entry next to the categorical run
-shifts every later ordinal and corrupts the colours of a saved `.rgascene`. **Seed hues** are not
+shifts every later ordinal and corrupts the colours of a saved scene file. **Seed hues** are not
 arbitrary: `ground` keeps the olive of `INK_SEED_GROUND`, and `o` the copper of `INK_SEED_ORIGIN`.
 
 *Checked.* Verified then, by the `check_palette` of the prototype: every floor above, and the
@@ -3492,7 +3493,7 @@ is native to RGA: it sums unit-weight points, and `position` divides by weight.
 *Checked.* Verified by `suites.nim`: the anchor of each special case. Assumed: that no other
 operation wants one, because nobody has asked for one.
 
-## Save and load format (`.rgascene`)
+## Save and load format (`.pgascene`)
 
 Compact binary that matches the layout of `Scene`, **little-endian throughout**. The browser reaches
 it through `DataView`, so the byte order had to be a choice. It is little-endian because every file
@@ -3512,6 +3513,13 @@ already written held it. The desktop converts through `std/endians`.
 `TextDecoder`. A value derived in Nim and copied by hand into JavaScript leaves the two builds
 unable to open each other's files. A round-trip suite stays green on it, because it only asks one
 build to read what it wrote.
+
+**A scene saves as `.pgascene`, and a file that ends `.rgascene` still loads.** `EXTENSION_SCENE`
+names the extension that both front-ends save under, and `EXTENSIONS_SCENE_READ` names both
+extensions. The page reaches them through `nimSceneExtension` and `nimSceneExtensionsRead`, for its
+picker and for the entry that it opens in a zip. The desktop reads a scene from any path. The magic
+stays `RGAS`, because the bytes after it did not change, so one reader serves both. Rejected: the
+magic `PGAS`, which every earlier build refuses.
 
 Only live objects are written, **in creation order** (`nimSceneHandlesCreated`). That order is the
 whole of what version 3 added. Version 4 appended the radius after the geometry of each object.
@@ -4291,7 +4299,7 @@ human has read the result.
 
 **The PGA library is a pinned dependency, and never a copy.** It lives in
 [replications][replications], which carries no nimble file and holds the library three directories
-inside it. So the requirement in `rga_visualiser.nimble` names the repository by URL and commit.
+inside it. So the requirement in `pga_visualiser.nimble` names the repository by URL and commit.
 `atlas.lock` records the resolved commit, and `nim.cfg` names the subdirectory that Atlas restores
 it to. `koch fetch-deps` replays that lock, and nothing is committed (Article XI.3).
 
@@ -4397,7 +4405,7 @@ that the runner carries that library. Assumed: nothing about the suite itself.
 - No tool in this repository measures the palette floors again (Colour palette).
 - The frame-time tail on real hardware is undiagnosed, and this container cannot see it.
 - The conformal metric (`IS_CONFORMAL`) is unfinished in the library, and this build is rigid 4D.
-- `.rgascene` is little-endian by rule, but only a little-endian host has ever written or read one,
+- A scene file is little-endian by rule, but only a little-endian host has ever written or read one,
   so the byte-swapping path is unexercised.
 - A page whose WebGL lacks `EXT_frag_depth` keeps linear depth. It keeps the fault of the far field
   with it, and the disc of every plane at the depth of its centre.

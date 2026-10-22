@@ -5,7 +5,7 @@
 //   Concatenated into page in order `tools/build.nim` names; see its `SCRIPTS`.
 
 /* ---------------------------------------------------------------------- */
-/* Scene save/load: pack and parse exact `.rgascene` binary format         */
+/* Scene save/load: pack and parse exact `.pgascene` binary format         */
 /* `scene.nim`'s own doc comment documents (magic/version/basis-count/     */
 /* object-count/per-object ink+visible+label+16 float64+radius), so build    */
 /* saves loads on desktop build and vice versa. Packing lives             */
@@ -67,7 +67,7 @@ function saveScene() {
   }
 
   deliverFile(
-    new Blob([buffer], { type: 'application/octet-stream' }), 'scene.rgascene',
+    new Blob([buffer], { type: 'application/octet-stream' }), 'scene' + nimSceneExtension(),
     'application/octet-stream',
     'A scene file holding ' + objects.length + ' object(s)',
   );
@@ -105,6 +105,7 @@ async function sceneInZip(buffer: ArrayBuffer): Promise<ArrayBuffer> {
   //   Central directory is read, not local headers: local header may leave its sizes to
   //   descriptor after data, and central one never does.
   const view = new DataView(buffer);
+  const extensions = nimSceneExtensionsRead().split(',');
   let end = buffer.byteLength - 22;
   while (end >= 0 && view.getUint32(end, true) !== SIGNATURE_ZIP_END) end -= 1;
   if (end < 0) throw new Error('File is a zip with no directory.');
@@ -118,7 +119,7 @@ async function sceneInZip(buffer: ArrayBuffer): Promise<ArrayBuffer> {
     const local = view.getUint32(entry + 42, true);
     const name = new TextDecoder().decode(new Uint8Array(buffer, entry + 46, length_name));
     entry += 46 + length_name + view.getUint16(entry + 30, true) + view.getUint16(entry + 32, true);
-    if (!name.toLowerCase().endsWith('.rgascene')) continue;
+    if (!extensions.some((extension) => name.toLowerCase().endsWith(extension))) continue;
     if (local + 30 > buffer.byteLength) break;
     const start = local + 30 + view.getUint16(local + 26, true) + view.getUint16(local + 28, true);
     const packed = buffer.slice(start, start + size_packed);
