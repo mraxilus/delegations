@@ -564,6 +564,14 @@ operator. A `-` before a digit opens a number after a space or an opening bracke
 - Verified by `suites/test_tokens.nim`. Verified by hand over the tree, 2026-10-02: each byte of
   each Nim file outside whitespace lies in one token, and each bracket finds its partner.
 
+**A name of code is each run of name characters, read once (`wordsCode`).** The names check, the
+fixed waits and the words among pragmas read names so. So the tail of an indented name never reads
+as a name of its own.
+
+- Rejected: a reader that skips the spaces before a name, but steps by the name alone. It reads
+  the tail of each later name again, as `t` of `{.compileTime, noinit.}`.
+- Verified by `suites/test_views.nim` and `suites/test_waits.nim`.
+
 ## Form
 
 **Each check of form reads text alone, so it serves every kind (`checkForm`).** A line holds no
@@ -905,6 +913,8 @@ such as `got none.`, echoes no value and is no finding.
   appended literal would join that operator. So `"got " & a == b` stays.
 - The rule reads every value of the tail, so a context after the value takes backticks too, as
   `for {manner}` does.
+- A joining `&` stands on the line where its operand ends. Nim continues a line that a binary
+  operator ends, so a line that `&` opens is the next statement, such as an `&"…"` result.
 - A test that builds the old text in the same form changes with it. A test that asserts the
   text in another form changes by hand, as two tests of `test_record.nim` do.
 - Verified by `suites/test_messages.nim`.
