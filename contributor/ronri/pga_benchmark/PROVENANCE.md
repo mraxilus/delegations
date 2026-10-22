@@ -410,8 +410,28 @@ algebras on `linux amd64, 4 cores` on 2026-10-21, at 451 measurands:
   build with a copy of each wrapper, which doubles the C file. Without the three flags of gcc, 5
   counts of 111 moved at rga4d, and 10 of 135 at cga5d. Then `wedge` and
   `wedge_round_point_dipole` at cga5d, of the same C, read 871 and 774 instructions.
-- `drive` on the runner of CI, on 2026-10-21, read the same counts for each measurand, under the
-  same gcc package.
+
+**The gate pins a fault that grows a count, and the record holds its reading beside unchanged
+code** (`CONTRIBUTOR.md`, Tests are paramount). The fault is `+` of the library without `inline`.
+Its C body stays the same, so no static count moves. Only the counts of `add` grow, at each
+algebra. In each cell below, the first figure is the slowest and the typical reading of unchanged
+code, which are equal. The second figure is the reading of the fault:
+
+| Algebra | Instructions | Bytes read | Bytes written |
+| --- | --- | --- | --- |
+| rga3d | 42, fault 56 | 225, fault 241 | 200, fault 216 |
+| rga4d | 82, fault 97 | 417, fault 433 | 392, fault 408 |
+| cga4d | 82, fault 97 | 417, fault 433 | 392, fault 408 |
+| cga5d | 146, fault 159 | 801, fault 817 | 776, fault 792 |
+
+The readings of unchanged code are 20 runs of `inspect` and `guard` on `linux amd64, 4 cores`, on
+2026-10-22. In each run, each count of each measurand equalled its baseline. `guard` gave no
+finding and no notice in any run. The fault was read on a copy of the library at the pin, with
+`inline` taken from `+` in `pga/multivectors.nim`.
+
+The runner of CI read the same. Run 1340 of `check`, on 2026-10-22, gave no finding and no notice,
+under the same gcc package. Runs 1296, 1298 and 1306, on 2026-10-21, gave no finding. So the spread
+of unchanged code is zero, and the fault reads beyond it at each count of `add`.
 
 A wrapper that reaches a shared object is a finding. Its band would need readings of the
 runner and of a delegate, and no record holds them.
