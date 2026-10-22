@@ -95,7 +95,7 @@ async function typeField(page: Page, id: string, text: string): Promise<void> {
  *
  *  Field of view stays inside 10 to 120 degrees, and distance at zero or below lands on near
  *  limit, as desktop's fields hold them. Field left empty changes nothing, as Dear ImGui's
- *  typed entry does. Puts both back as they were.
+ *  typed entry does: both front-ends stay in sync (repository issue 632). Puts both back.
  */
 export async function driveFieldsHeld(page: Page): Promise<void> {
   await clearTheGlass(page);
@@ -131,6 +131,15 @@ export async function driveFieldsHeld(page: Page): Promise<void> {
     'a typed distance at zero or below lands on the near limit, as on the desktop',
     isNear(distance_zero) && isNear(distance_below),
     `typed 0 reads ${distance_zero}, -5 reads ${distance_below}, near limit ${near}`,
+  );
+  await typeField(page, 'cam-distance', '7');
+  const distance_typed = await readDistance();
+  await typeField(page, 'cam-distance', '');
+  const distance_empty = await readDistance();
+  report(
+    'a distance field left empty keeps its value, as on the desktop',
+    Math.abs(distance_typed - 7) < 1e-9 && distance_empty === distance_typed,
+    `typed 7 reads ${distance_typed}, then empty reads ${distance_empty}`,
   );
 
   // Home puts distance back, and keeps field of view, which is typed back.
