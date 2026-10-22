@@ -82,9 +82,19 @@ func settleHold*(level: Option[Level], modifier: Option[Modifier]): Option[Settl
   settled
 
 
+func isMadeRoundBody*(level: Option[Level], modifier: Option[Modifier]): bool =
+  ## Test whether this lock or wrap is made by its line going round body, which rule 7
+  ## asks of every lock and wrap but high lock (rule 41).
+  ##   High lock is hammerlock: hand comes round back up to its own shoulder (rules 6
+  ##     and 37), so line round body is not what makes it.
+  settleHold(level, modifier).isSome and
+    not (level == some(Level.High) and modifier == some(Modifier.Lock))
+
+
 const WRAP_MIN* = 170  ## Least degrees line must hug body for lock or
                       ## wrap to be one at all.
-  ##   Rule 7 asks for `"no less than just under 1/2 of the circumference"`.
+  ##   Rule 7 asks for `"no less than just under 1/2 of the circumference"`, of every lock
+  ##     and wrap but high lock (rule 41, `isMadeRoundBody`).
   ##   Arcs this geometry produces are quantised at 0, 51, 90, 141 and
   ##     180 degrees, so any threshold in that last gap picks out same
   ##     set; 170 sits squarely in it, and `checks` asserts gap holds.

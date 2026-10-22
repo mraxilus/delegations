@@ -95,12 +95,14 @@ func toBodies(pose: Pose): tuple[lead, follow: route.Body] =
 func isDanceable*(
   pose: Pose, holds: Holds, levels = default(Levels), modifiers = default(Modifiers)
 ): bool =
-  ## Test whether every lock and wrap in this hold really is one (rule 7).
+  ## Test whether every lock and wrap in this hold really is one (rules 7 and 41).
   ##   Lock or wrap position may only be used when line goes round no
   ##     less than just under half circumference -- it does not mean
   ##     anything to have wrap without line actually going round
   ##     body.  So whether state exists at all depends on orientation,
   ##     and this is what says so.
+  ##   High lock is one exception (rule 41): hand at its own shoulder makes it, so it
+  ##     stands at every orientation, whatever arc its line hugs.
   let
     put = settled(pose, holds, levels, modifiers)
     hands = handPoints(put)
@@ -108,8 +110,8 @@ func isDanceable*(
   for arm in Arm:
     if holds[arm].isNone:
       continue
-    if sendsHold(levels[arm], modifiers[arm]).isNone:
-      continue  # nothing claimed, nothing to hold up
+    if not isMadeRoundBody(levels[arm], modifiers[arm]):
+      continue  # nothing claimed, or high lock, which rule 41 frees
     let ends: route.Ends = (hands[Dancer.Lead][arm],
                             hands[Dancer.Follow][holds[arm].get],
                             lead_body, follow_body)
