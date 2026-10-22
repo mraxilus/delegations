@@ -535,14 +535,22 @@ func armName*(state: FrameState): string =
   ## Height comes first because it is what decides how far arm can go: low
   ## wrap and high wrap are one blocker at two heights, and it is height that
   ## says which of them runs out first.
-  let what = blockerArm(state.twist, state.level[Side.Left])
+  ##   Read off each held arm at its own height (`blockerArm`), so arm above names none
+  ##     and lends no height, and mirror twins name one modifier.
+  ##   Every arm that carries modifier carries same one, since size of twist decides it
+  ##     (`blocker`).
+  var
+    what = none(Blocker)
+    heights: seq[string] = @[]
+  for side in Side:
+    let carried = blockerArm(state.twist, state.level[side])
+    if state.frame.hold[side].isNone or carried.isNone:
+      continue
+    what = carried
+    if levelName(state.level[side]) notin heights:
+      heights.add levelName(state.level[side])
   if what.isNone:
     return ""
-  var heights: seq[string] = @[]
-  for side in Side:
-    if state.frame.hold[side].isSome and
-        levelName(state.level[side]) notin heights:
-      heights.add levelName(state.level[side])
   (if heights.len == 1: heights[0] & " " else: "") &
       ($what.get).toLowerAscii
 
