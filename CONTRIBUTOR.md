@@ -354,7 +354,11 @@ of two methods meets this rule:
 - Ask the browser which font faces drew each character of each text element. The DevTools protocol
   answers through `CSS.getPlatformFontsForNode`.
 - Resolve the font stack of each element against the `cmap` of each font face that the page
-  ships. A character that no font face of that stack maps is a finding.
+  ships. A character that no font face of that stack maps is a finding. The resolver is the
+  curator's: write `written.json`, run `nim r koch resolve-font-faces <written.json>
+  <found.json>` from the repository root, and judge what it writes. `font_stacks.nim` in
+  `curator/audit/src/` gives the shape of both files, so the project keeps no reader of `cmap`.
+  Its `system` verb declares `libbrotli1`, through which the command reads `woff2`.
 
 The audit reads what each font face of a project maps, across the whole project. Only a render
 follows the cascade of each element, so `drive` holds what the audit cannot.
