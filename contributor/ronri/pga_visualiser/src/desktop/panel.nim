@@ -1018,6 +1018,22 @@ proc layoutApply*(
 
 #[ View Panel ]#
 
+func commitDistance*(panel: var Panel, camera: var Camera, distance: float) =
+  ## Take distance view section's field settled on, and halt standing tween, as page's does.
+  ##   Zero or below lands on near limit, through `camera.distanceHeld`, as on page
+  ##   (repository issue 632). Typed entry left empty never reaches here: Dear ImGui keeps
+  ##   value field held, as page's field does.
+  camera.dollyTo distance
+  panel.tween_camera.halt()
+
+
+func commitFieldOfView*(camera: var Camera, degrees: float) =
+  ## Take field of view view section's field settled on, held inside its bounds.
+  ##   Through `camera.fieldOfViewHeld`, as page's field is (repository issue 632).
+  ##   Typed entry passes widget's bounds, which hold drag alone.
+  camera.degrees_field_of_view = fieldOfViewHeld(degrees)
+
+
 proc layoutView*(panel: var Panel, camera: var Camera, speed: float) =
   ## Lay out camera's placement: motor as value, readings derived from it, and lens.
   ##   Motor is value, in grid object's own coefficients stand in. `motorRigid` settles
@@ -1058,8 +1074,7 @@ proc layoutView*(panel: var Panel, camera: var Camera, speed: float) =
     # Leave unbounded at widget, floored by `distanceHeld` on way in.
     #   No ceiling on orbit distance, and one value it may not take is stated in `camera`.
     if gui.dragFloat("##distance", addr distance, 0.05, 0.0, 0.0):
-      camera.dollyTo float(distance)
-      panel.tween_camera.halt()
+      panel.commitDistance(camera, float(distance))
     gui.tooltip wordingText(TipViewDistance)
   else:
     fieldLabel(wordingText(NameViewSpeed))
@@ -1068,8 +1083,15 @@ proc layoutView*(panel: var Panel, camera: var Camera, speed: float) =
 
   var field_of_view = cfloat(camera.degrees_field_of_view)
   fieldLabel(wordingText(NameViewLens))
-  if gui.dragFloat("##field_of_view", addr field_of_view, 0.2, 10.0, 120.0):
-    camera.degrees_field_of_view = float(field_of_view)
+  # Widget bounds drag alone: typed value passes them, and `commitFieldOfView` holds it.
+  if gui.dragFloat(
+    "##field_of_view",
+    addr field_of_view,
+    0.2,
+    cfloat(DEGREES_FIELD_OF_VIEW_LEAST),
+    cfloat(DEGREES_FIELD_OF_VIEW_MOST),
+  ):
+    commitFieldOfView(camera, float(field_of_view))
   gui.tooltip wordingText(TipViewLens)
   gui.widthPop()
 
@@ -1444,6 +1466,34 @@ proc layoutSelectionMenuApply(
   gui.tooltip wordingText(TipPickBack)
 
 
+proc hideSelected*(
+  panel: var Panel, scene: var Scene, camera: Camera, history: var History, now: float
+) =
+  ## Show every picked object where all are hidden, else hide them all, as one step of undo.
+  ##   Selection menu's `hide` does this, as page's does (repository issue 632).
+  let is_all_hidden = panel.selection.isAllHidden(scene)
+  panel.selection.setVisibleAll(scene, is_all_hidden)
+  history.record(scene, camera)
+  panel.say(visibilityMessage(panel.selection.len, is_all_hidden), now)
+
+
+proc deleteSelected*(
+  panel: var Panel, scene: var Scene, camera: Camera, history: var History, now: float
+) =
+  ## Remove every picked object as one step of undo, and close menu.
+  ##   Selection menu's `delete` does this, as page's does (repository issue 632).
+  ##   Drops open session against one of them, which has nothing left to commit against;
+  ##   same guard `layoutObjects` keeps.
+  let count = panel.selection.len
+  if panel.session.isSome and panel.session.get.handle.isSome and
+      panel.session.get.handle.get in panel.selection:
+    panel.session = none(EditSession)
+  panel.selection.removeAll(scene)
+  history.record(scene, camera)
+  panel.say(deletedMessage(count), now)
+  panel.hideSelectionMenu()
+
+
 proc layoutSelectionMenu*(
   panel: var Panel,
   scene: var Scene,
@@ -1521,27 +1571,12 @@ proc layoutSelectionMenu*(
       if is_line_started: gui.sameLine()
       is_line_started = true
       if gui.buttonSmall(visibilityLabel(not is_all_hidden, NamePickHide, NamePickShow)):
-        for position in 0..<count:
-          scene.setVisible(panel.selection.at(position), is_all_hidden)
-        history.record(scene, camera)
-        panel.say(visibilityMessage(count, is_all_hidden), now)
+        panel.hideSelected(scene, camera, history, now)
       gui.tooltip wordingText(TipPickVisible)
 
       gui.sameLine()
       if gui.buttonSmall(wordingText(NamePickDelete)):
-        # Read handles out before removing any; removal prunes selection this loop walks.
-        var handles: array[OBJECTS_MAX, int]
-        for position in 0..<count: handles[position] = panel.selection.at(position)
-        # Drop open session against one of these, which has nothing left to commit against.
-        #   Same guard `layoutObjects` keeps.
-        if panel.session.isSome and panel.session.get.handle.isSome and
-            panel.session.get.handle.get in panel.selection:
-          panel.session = none(EditSession)
-        for position in 0..<count: scene.removeObject(handles[position])
-        panel.selection.clear()
-        history.record(scene, camera)
-        panel.say(deletedMessage(count), now)
-        panel.hideSelectionMenu()
+        panel.deleteSelected(scene, camera, history, now)
       gui.tooltip wordingText(TipPickDelete)
 
     gui.sameLine()

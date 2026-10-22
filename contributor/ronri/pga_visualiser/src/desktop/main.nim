@@ -407,6 +407,12 @@ type
       ## Headless run then shows what staging keeps of it; see `driveEdit`.
     is_wheel_driven: bool  ## Whether to pick object, then turn wheel over menu pick opens.
       ## Headless run then shows where that wheel goes; see `driveWheel`.
+    is_bulk_driven: bool  ## Whether to hide two objects from menu, undo, delete them, undo.
+      ## Headless run then shows each act takes one step of undo; see `driveBulk`.
+    is_fields_driven: bool  ## Whether to hand view section's two fields values past bounds.
+      ## Headless run then shows where each lands; see `driveFields`.
+    is_hover_driven: bool  ## Whether to pick under still pointer, then hold arrow key.
+      ## Headless run then shows when hover stands; see `driveHover`.
     path_help_driven: Option[HelpPath]  ## Which help tab to open at startup, if any.
       ## Headless run cannot click tab strip, so `--drive-help:<tab>` names one.
 
@@ -416,6 +422,26 @@ type
     ##   event every frame could never leave it held.
     pressed: Option[tuple[scancode: Scancode, keycode: uint32]]
     is_down: bool  ## Whether this step presses key or lets go of it.
+
+  BulkDrive = object  ## Define what `--drive-bulk` reads between frames, for its verdict.
+    picked: Option[array[2, int]]  ## Two objects it hides, then deletes.
+    shown_hidden, shown_undone: array[2, bool]
+      ## Whether each was shown after hide, and after one undo of it.
+    alive_deleted, alive_undone: array[2, bool]
+      ## Whether each stood after delete, and after one undo of it.
+
+  FieldsDrive = object  ## Define what `--drive-fields` reads, for its verdict.
+    is_run: bool  ## Whether it handed fields their values.
+    degrees_wide, degrees_narrow: float  ## Field of view after 200, and after 1.
+    distance_zero, distance_below: float  ## Distance after 0, and after -5.
+
+  HoverDrive = object  ## Define what `--drive-hover` reads between frames, for its verdict.
+    is_eased: bool  ## Whether pick's ease was seen under way.
+    picked: Option[int]  ## Object keyboard picked, once its ease arrived.
+    hovered_eased: Option[int]  ## Hover then, under pointer that never moved.
+    frame_held: Option[int]  ## Frame arrow key went down.
+    frames_lit: int  ## Frames hover stood while arrow was held.
+    hovered_after: Option[int]  ## Hover once move ended.
 
   WheelDrive = object  ## Define what `--drive-wheel` carries between frames, for its verdict.
     handle: Option[int]  ## Object it picks; none until found by label.
@@ -462,6 +488,9 @@ proc applyOption(options: var Options; key, value: string) =
   of "drive-faces": options.is_faces_driven = true
   of "drive-edit": options.is_edit_driven = true
   of "drive-wheel": options.is_wheel_driven = true
+  of "drive-bulk": options.is_bulk_driven = true
+  of "drive-fields": options.is_fields_driven = true
+  of "drive-hover": options.is_hover_driven = true
   of "drive-help":
     for path in HelpPath:
       if title(path) == value: options.path_help_driven = some(path)
@@ -472,7 +501,7 @@ proc applyOption(options: var Options; key, value: string) =
       "Option must be one of screenshot, storyboard, load-scene, frames, hidden, " &
       "timings, novsync, fill, demo[:<objects>], help-tabs, drive-drag, drive-keys, " &
       "drive-select, drive-undo, drive-sky, drive-search, drive-menu, drive-faces, " &
-      "drive-edit, drive-wheel or drive-help; " &
+      "drive-edit, drive-wheel, drive-bulk, drive-fields, drive-hover or drive-help; " &
       &"got `--{key}`."
 
 
@@ -481,7 +510,8 @@ func isDriven(options: Options): bool =
   options.is_drag_driven or options.is_key_driven or options.is_select_driven or
       options.is_undo_driven or options.is_sky_driven or options.is_search_driven or
       options.is_menu_driven or options.is_faces_driven or options.is_edit_driven or
-      options.is_wheel_driven or options.path_help_driven.isSome
+      options.is_wheel_driven or options.is_bulk_driven or options.is_fields_driven or
+      options.is_hover_driven or options.path_help_driven.isSome
 
 
 proc parseOptions(): Options =
@@ -1957,6 +1987,123 @@ proc driveWheel(
     sdl3.pushEvent(addr notch)
 
 
+proc driveBulk(
+  drive: var BulkDrive; panel: var Panel; scene: var Scene; camera: var Camera; count_drawn: int;
+  now: float
+) =
+  ## Pick first two objects, hide both from menu and undo once, then delete both and undo
+  ## once, for `--drive-bulk`.
+  ##   Through panel's own `hideSelected` and `deleteSelected`, as menu's buttons call them:
+  ##   headless run has no pointer to press them with, as `--drive-edit` has none.
+  ##   One act for each frame, read next frame, once its layout has run.
+  const frame_first = 3  # Past startup, so first frame's layout has settled.
+  let step = count_drawn - frame_first
+  if step == 0:
+    var handles: array[OBJECTS_MAX, int]
+    if scene.handlesCreated(handles) < 2: return
+    drive.picked = some([handles[0], handles[1]])
+  if drive.picked.isNone: return
+  let picked = drive.picked.get
+  case step
+  of 0, 2:
+    if step == 2:
+      for position, handle in picked: drive.shown_undone[position] = scene.isVisible(handle)
+    panel.selection.selectOnly(picked[0])
+    panel.selection.toggle(picked[1])
+    panel.showSelectionMenu()
+    if step == 0: panel.hideSelected(scene, camera, HISTORY_DESKTOP, now)
+    else: panel.deleteSelected(scene, camera, HISTORY_DESKTOP, now)
+  of 1:
+    for position, handle in picked: drive.shown_hidden[position] = scene.isVisible(handle)
+    discard panel.stepHistory(scene, camera, HISTORY_DESKTOP, is_undo = true)
+  of 3:
+    for position, handle in picked: drive.alive_deleted[position] = scene.isAlive(handle)
+    discard panel.stepHistory(scene, camera, HISTORY_DESKTOP, is_undo = true)
+  of 4:
+    for position, handle in picked: drive.alive_undone[position] = scene.isAlive(handle)
+  else: discard
+
+
+proc driveFields(drive: var FieldsDrive; panel: var Panel; camera: var Camera; count_drawn: int) =
+  ## Hand view section's field of view and distance values past their bounds, for
+  ## `--drive-fields`.
+  ##   Through panel's own `commitFieldOfView` and `commitDistance`, as fields call them:
+  ##   headless run types into no Dear ImGui field, as `--drive-edit` presses no button.
+  ##   Entry left empty never reaches either, since Dear ImGui keeps value field held.
+  ##   Puts camera back, for what run draws after.
+  const frame_first = 3  # Past startup, so first frame's layout has settled.
+  if count_drawn != frame_first: return
+  let camera_before = camera
+  commitFieldOfView(camera, 200.0)
+  drive.degrees_wide = camera.degrees_field_of_view
+  commitFieldOfView(camera, 1.0)
+  drive.degrees_narrow = camera.degrees_field_of_view
+  panel.commitDistance(camera, 0.0)
+  drive.distance_zero = camera.distance
+  panel.commitDistance(camera, -5.0)
+  drive.distance_below = camera.distance
+  camera = camera_before
+  drive.is_run = true
+
+
+const
+  FRAMES_HELD_HOVER = 12
+    ## Hold arrow key `--drive-hover` holds this many frames, reading hover in each.
+  FRAMES_EASE_HOVER = 240
+    ## Wait at most this many frames for pick's ease to arrive: two seconds of scripted clock.
+
+proc pushKey(scancode: Scancode; keycode: uint32; modifiers: uint16; is_down: bool) =
+  ## Post one key event onto SDL's queue, with modifiers held as reader's would be.
+  var event = Event(kind: uint32(if is_down: EventKind.KeyDown else: EventKind.KeyUp))
+  event.key.scancode = uint32(scancode)
+  event.key.keycode = keycode
+  event.key.is_down = is_down
+  event.key.modifiers = modifiers
+  sdl3.pushEvent(addr event)
+
+
+proc driveHover(
+  drive: var HoverDrive; window: Window; panel: Panel; interaction: Interaction; count_drawn: int
+) =
+  ## Rest pointer at middle of view, pick by keyboard, hold right arrow, then let go, for
+  ## `--drive-hover`.
+  ##   Keyboard pick carries its object to middle, under pointer that never moves, so hover
+  ##   must follow ease there. Held arrow then orbits about pick, which stays under pointer,
+  ##   so hover must drop for whole move and come back once it ends, as page's does.
+  ##   Reads in each frame what frame before it picked, once its layout has run.
+  ##   Pointer event names this window, so Dear ImGui reads pointer where view does.
+  const frame_first = 2  # Past startup, so first frame's layout has settled.
+  let step = count_drawn - frame_first
+  case step
+  of 0:
+    var reach = Event(kind: uint32(EventKind.MouseMotion))
+    reach.motion.window_id = sdl3.windowId(window)
+    reach.motion.x = cfloat(PIXELS_WIDTH div 2)
+    reach.motion.y = cfloat(PIXELS_HEIGHT div 2)
+    sdl3.pushEvent(addr reach)
+    return
+  of 1, 2: pushKey(Scancode.BracketRight, uint32(ord(']')), 0, is_down = step == 1)
+  of 3, 4: pushKey(Scancode.Return, 13'u32, 0, is_down = step == 3)  # ASCII carriage return.
+  else: discard
+  if step <= 4: return
+
+  # Hold arrow once pick's ease has arrived, reading what hover settled on first.
+  if drive.frame_held.isNone:
+    if not panel.tween_camera.is_arrived: drive.is_eased = true
+    if step > FRAMES_EASE_HOVER: return
+    if not (drive.is_eased and panel.tween_camera.is_arrived and len(panel.selection) == 1):
+      return
+    drive.picked = some(panel.selection.at(0))
+    drive.hovered_eased = interaction.index_hover
+    drive.frame_held = some(count_drawn)
+    pushKey(Scancode.Right, KEYCODE_RIGHT, 0, is_down = true)
+    return
+  let held = count_drawn - drive.frame_held.get
+  if held in 1..FRAMES_HELD_HOVER and interaction.index_hover.isSome: inc drive.frames_lit
+  if held == FRAMES_HELD_HOVER: pushKey(Scancode.Right, KEYCODE_RIGHT, 0, is_down = false)
+  elif held == FRAMES_HELD_HOVER + 3: drive.hovered_after = interaction.index_hover
+
+
 const KEYS_UNDO_DRIVEN = [
   (Scancode.Right, uint32(1073741903), 0'u16, true),  # SDLK_RIGHT, no modifier: orbit.
   (Scancode.Right, uint32(1073741903), 0'u16, false),
@@ -2109,6 +2256,9 @@ proc verdictDriven(
   count_settled: int;
   found_dragging, found_menu_open: bool;
   wheel_drive: WheelDrive;
+  bulk_drive: BulkDrive;
+  fields_drive: FieldsDrive;
+  hover_drive: HoverDrive;
 ): int =
   ## Judge what `--drive-*` run reached, and report every check pass or fail.
   ##   Answers with number that failed, for caller to exit on.
@@ -2364,6 +2514,59 @@ proc verdictDriven(
       before > 0.0 and abs(after / before / ratio_rule - 1.0) < 1.0e-6,
       &"separation scaled by {after / before:.9f}, rule {ratio_rule:.9f}",
     )
+  if options.is_bulk_driven:
+    # Check each act on two picked objects is one step of undo, as page's `acts.ts` holds.
+    let
+      shown_hidden = bulk_drive.shown_hidden
+      shown_undone = bulk_drive.shown_undone
+    report(
+      "hiding two picked objects takes one step of undo, as on the page",
+      bulk_drive.picked.isSome and not (shown_hidden[0] or shown_hidden[1]) and
+          shown_undone[0] and shown_undone[1],
+      &"picked {bulk_drive.picked}; shown after hide {shown_hidden}, after one undo " &
+        &"{shown_undone}",
+    )
+    report(
+      "deleting two picked objects takes one step of undo, as on the page",
+      bulk_drive.picked.isSome and
+          not (bulk_drive.alive_deleted[0] or bulk_drive.alive_deleted[1]) and
+          bulk_drive.alive_undone[0] and bulk_drive.alive_undone[1],
+      &"standing after delete {bulk_drive.alive_deleted}, after one undo " &
+        &"{bulk_drive.alive_undone}",
+    )
+  if options.is_fields_driven:
+    # Check view section's fields hold values past bounds as page's `acts.ts` holds its own.
+    #   Dolly scales distance by ratio, so landing reads near limit to rounding of it.
+    let
+      (zero, below) = (fields_drive.distance_zero, fields_drive.distance_below)
+      slack = DISTANCE_LIMIT_NEAR * 1.0e-9
+    report(
+      "a typed field of view is held inside 10 to 120 degrees, as on the page",
+      fields_drive.is_run and fields_drive.degrees_wide == DEGREES_FIELD_OF_VIEW_MOST and
+          fields_drive.degrees_narrow == DEGREES_FIELD_OF_VIEW_LEAST,
+      &"200 reads {fields_drive.degrees_wide}, 1 reads {fields_drive.degrees_narrow}",
+    )
+    report(
+      "a typed distance at zero or below lands on the near limit, as on the page",
+      fields_drive.is_run and abs(zero - DISTANCE_LIMIT_NEAR) <= slack and
+          abs(below - DISTANCE_LIMIT_NEAR) <= slack,
+      &"0 reads {zero:.6e}, -5 reads {below:.6e}, near limit {DISTANCE_LIMIT_NEAR:.6e}",
+    )
+  if options.is_hover_driven:
+    # Check hover follows ease under still pointer, and drops for whole of held key's move.
+    #   Page's `acts.ts` holds same sequence.
+    report(
+      "hover follows what the camera eases under a still pointer, as on the page",
+      hover_drive.picked.isSome and hover_drive.hovered_eased == hover_drive.picked,
+      &"picked {hover_drive.picked}, hovered {hover_drive.hovered_eased} once settled",
+    )
+    report(
+      "a held key hides hover for its whole move, and it comes back once the move ends",
+      hover_drive.frame_held.isSome and hover_drive.frames_lit == 0 and
+          hover_drive.hovered_after == hover_drive.picked,
+      &"{hover_drive.frames_lit} of {FRAMES_HELD_HOVER} frames lit mid-move, hovered " &
+        &"{hover_drive.hovered_after} after",
+    )
   if options.path_help_driven.isSome:
     report(
       "the help tab asked for opened, with rows in it",
@@ -2431,6 +2634,10 @@ proc runInteractive(
     count_settled = count_opened
     # Record what `--drive-wheel` learns between its frames; see `driveWheel`.
     wheel_drive = WheelDrive()
+    # Record what `--drive-bulk`, `--drive-fields` and `--drive-hover` read, likewise.
+    bulk_drive = BulkDrive()
+    fields_drive = FieldsDrive()
+    hover_drive = HoverDrive()
 
   while is_running:
     # Turn frame's measurements over, on two-frame lifetime frame arenas keep; see `timings`.
@@ -2499,6 +2706,9 @@ proc runInteractive(
         count_drawn,
         camera.drawExtentFor(PIXELS_HEIGHT, REACH_SCENE),
       )
+    if options.is_bulk_driven: driveBulk(bulk_drive, panel, scene, camera, count_drawn, now)
+    if options.is_fields_driven: driveFields(fields_drive, panel, camera, count_drawn)
+    if options.is_hover_driven: driveHover(hover_drive, window, panel, interaction, count_drawn)
 
     var event: Event
     while sdl3.pollEvent(addr event):
@@ -2614,6 +2824,9 @@ proc runInteractive(
       found_dragging,
       found_menu_open,
       wheel_drive,
+      bulk_drive,
+      fields_drive,
+      hover_drive,
     )
     if count_failed > 0:
       echo &"\n{count_failed} driven check(s) failed."

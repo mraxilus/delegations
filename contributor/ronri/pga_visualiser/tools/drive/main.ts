@@ -11,6 +11,7 @@ import { accessSync, constants, existsSync, readFileSync } from 'node:fs';
 import { delimiter, join } from 'node:path';
 import { countFailed, countRun, report } from './report';
 import { focusCanvas } from './gestures';
+import { driveBulkUndo, driveFieldsHeld, driveHoverWhileMoving } from './acts';
 import { driveKeys } from './keys';
 import { driveAim, driveLook, drivePan, driveStretch } from './pan';
 import { driveWheel } from './wheel';
@@ -249,6 +250,10 @@ async function driveSimulated(browser: Browser): Promise<void> {
   await driveRuler(page);
   await driveSceneBuilt(page);
   await driveDrawerCost(page);
+  // Acts both front-ends share, last on opening scene: demo below replaces it.
+  await driveBulkUndo(page);
+  await driveFieldsHeld(page);
+  await driveHoverWhileMoving(page);
 
   // Demo runs last, and under load: it builds thousands of objects, and every check above is
   //   written against opening scene's own weight.
