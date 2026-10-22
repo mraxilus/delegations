@@ -164,6 +164,7 @@ and this file does not:
 | `frame`, `classified`, `diagnostics`, `ramp` | frame's own clocks and counts, tree, colours |
 | `exceedance`, `rings` | distribution curve, its axis, rings each reading is taken over |
 | `scenery`, `pins`, `built`, `pool` | what scene costs, repaired faults, each frame built, drawer |
+| `counted` | calls, copies and bytes of marker and lattice, with the optimiser off |
 | `demo`, `loaded`, `objects` | preset, culling, occlusion, a line through a point, loaded |
 | `message`, `style`, `type`, `canvas` | outcome fade, declared CSS, faces in roles, blank refused |
 | `host`, `shade` | save through the artifact host, every point shaded from world-up |
@@ -376,13 +377,17 @@ limit of time as a fallback, which a loaded machine meets with no page fault. Ve
 
 **A speed bound is 1.5 times the slowest reading on a delegate, rounded up to two figures.** Runners
 and delegates meet it, and each fault that a bound pins reads over it. A fault reads as `pins.ts`
-recorded it on a delegate on 2026-09-07, under the figure that the check took then.
+recorded it on a delegate on 2026-09-07, under the figure that the check took then. A bound whose
+fault reads inside the spread of unchanged code is a budget, and pins no fault (Article VII.12). The
+bounds of the marker and of the moving grid are budgets, and a count pins each fault (Counts of the
+machine).
 
 Delegate readings are from 20 or 21 runs of the drive on one delegate, from 2026-09-28 to
 2026-09-30, alone and in the gate. The anchor readings are from 11 runs of the measured page up to
-its pins, on 2026-09-30. The marker readings are from 11 such runs on 2026-10-04, with each outline
-shaped once for each pair (Marker pulse). Runner readings are from one CI run of the change that set
-each bound. The runner reading of the marker is from the drive job on `d305c68c`.
+its pins on 2026-09-30, which read 7.0 to 10.0 µs. Another delegate read the anchor and the marker
+in 22 such runs on 2026-10-22, at library `3d9696e`. It has 4 cores of an Intel Xeon at 2.10 GHz.
+Runner readings are from one CI run of the change that set each bound. The runner reading of the
+marker is from the drive job on `d305c68c`.
 
 The still frame, the moving frame and the frame after an edit read a full build in every frame
 (Render paths). Those rows are from 20 runs of the measured page on one delegate, on 2026-10-05, in
@@ -398,28 +403,29 @@ an edit they read 1.5 to 2.4 ms.
 | Still frame, slowest tenth | 3.2 ms | | 1.0 to 2.1 | |
 | Moving frame, median | 3 ms | | 1.3 to 2.0 | |
 | Hover pick | 2.6 ms | 0.1 | 0.2 to 1.7 | 7.1 |
-| Anchor lookup | 15 µs | 5.0 | 7.0 to 10.0 | 280 |
-| Marker and its pulse, worst kind | 1.1 ms | 0.38 | 0.34 to 0.70 | 3.2 |
-| Moving grid, median | 26 ms | 4.3 | 6.3 to 17.1 | 26.1 |
+| Anchor lookup | 15 µs | 5.0 | 3.0 to 10.0 | 280 |
+| Marker and its pulse, worst kind | 1.1 ms | 0.38 | 0.28 to 0.84 | 3.2, budget |
+| Moving grid, median | 26 ms | 4.3 | 5.4 to 17.1 | 26.1, budget |
 | CPU emit, median | 2 ms | 0.3 | 0.3 to 1.3 | 6.3 |
 | Edit past the timeline capacity, at 5,038 | 9.6 ms | 1.7 | 1.7 to 6.4 | |
 | Frame after an edit, at 5,038 | 31 ms | | 8.4 to 20.2 | |
 | Hover pick, at 5,038 | 7.2 ms | 1.9 | 1.2 to 4.8 | |
 
 The marker fault read 3.2 ms against 1.2 ms repaired, both with each outline shaped twice, so it
-costs 2.7 times the repair. Assumed: the ratio holds where the check shapes each outline once. The
-fault then reads 0.91 ms at least on a delegate, and 1.0 ms on the runner, both under the bound. So
-the bound holds that fault only where the repair reads 0.42 ms or more: 9 of the 11 delegate runs.
-The point count of the marker suite holds it on every run (Selection and markers).
+costs 2.7 times the repair. The repair alone read 0.28 to 0.84 ms in the 22 runs, a spread of 3
+times. So the fault reads inside the spread of unchanged code, and its bound is a budget. The
+slowest of those runs sets 1.3 ms by the rule above, and the bound stands at 1.1 ms. Repository
+issue 635 holds that question for the Architect.
 
-The moving grid fault reads over its bound by 0.1 ms only. A check with no fault reading pins a
-budget rather than a repair.
+The moving grid fault reads over its bound by 0.1 ms only, inside the spread of unchanged code. So
+its bound is a budget, and the count of calls of the lattice pins the fault.
 
 **A fault that reads close to its speed bound is pinned by a count too.** A count reads the same on
 every machine, and load never moves it. The marker suite counts the points that each marker reads
 out of the algebra (Selection and markers). `driveGround` counts the lines that the records of the
 lattice lie on (Geometry and drawing). `driveMarkerShapedOnce` counts the outlines that the overlay
-shapes for each marker it draws (Marker pulse).
+shapes for each marker it draws (Marker pulse). The page counts the calls and the copies of each
+span in its engine (Counts of the machine).
 
 Each bound stays at 1.5 times beside its count, so a slowdown that no count names still fails.
 Rejected: bounds at 3 times beside the counts, which pass such a slowdown.
@@ -478,6 +484,58 @@ in 3 runs of 3. The pinch then read 7.62 in 15 fresh pages of 15, 5 of them with
 lines for the simulated page. Each loads the other, and the lines agree in every figure. Without the
 rendering step, the touch wait and the seed, two runs of the same code differ in their figures, and
 their verdicts agree.
+
+## Counts of the machine
+
+**The page counts the work of its marker and of its moving lattice, in its engine with the optimiser
+off.** A check of cost gates on counts, and time is its budget (Article VII.10). `counted.ts` opens
+the built page in a browser of its own, under `--js-flags=--no-opt --no-maglev --no-sparkplug`. V8
+then runs its interpreter alone, so no tier inlines a function and stops its count (VII.11). The
+precise coverage of V8, over the DevTools protocol, gives the calls of each function. A page counts
+no instruction and no byte that it reads, so it counts calls, copies and the bytes it uploads.
+
+**Each count is of one span of work alone, on a paused clock.** The page runs on the simulated
+clock, so no frame or timer runs between the reset of the counters and their read. One pass that is
+not counted comes first, because the first call does work that no later call repeats. The span of
+the marker shapes one marker and its pulse for each of the 5 objects of the opening scene. The span
+of the lattice builds each of 9 frames twice, with the lattice and without it, as `drivePinGrid`
+turns the camera at 300. The lattice adds the difference of the two builds, and its bytes are the
+records that the frame hands to the upload.
+
+**The counted build is named, and the check refuses a baseline from another build.** The baseline
+names Chromium 153.0.8010.12, which Playwright 1.63.0 pins, its engine flags, and the Nim commit
+that the nimble file requires. A run on another build fails, and names the build that it ran. The
+counted build is not the build that ships, which runs the optimiser. So a count is evidence for the
+interpreter alone (IX.6).
+
+**The band of each count is zero.** The counted code calls nothing that selects its code by
+processor, and every input is held, the clock among them. Three runs in fresh browsers on 2026-10-22
+read each count the same. A count under its baseline passes, and the baseline is then counted again.
+
+**A static count stands beside each count of the machine, because it names the line.** The check of
+the marker reports the copy sites in the functions that its span reaches: 50 sites in 83 functions.
+The check of the lattice reports those in the functions that only the lattice reaches: 10 sites in
+15 functions.
+
+| Count | Baseline | With its fault |
+|-------|----------|----------------|
+| Copies of a marker and its pulse, over 5 objects | 15,883 | 16,523 |
+| Calls of a marker and its pulse, over 5 objects | 48,642 | 79,810 |
+| Calls that the lattice adds to 9 moving frames | 4,817,506 | 8,893,698 |
+| Bytes that the lattice adds to those frames | 219,136 | 219,136 |
+
+**Each fault is stood in for by hand, and its count reads over its baseline.** Neither fault was
+repaired in this repository, so no commit holds it. The stand-in of the marker sums each sample of
+the loop of a plane in the algebra, as the reference of the marker suite does. The stand-in of the
+lattice sums four points along each line and takes the distance of each, and adds no record. So its
+records stay one for each line, and only the count of calls reads that fault.
+
+**Time does not read the fault of the lattice.** With its stand-in, the moving grid read 15.4 to
+18.9 ms in 5 runs, under the budget of 26 ms. Without it, the grid read 8.4 to 10.8 ms.
+
+*Checked.* Verified by driven check: `counted.ts` reads each count at or under its baseline, on the
+build that the baseline names. Verified by runs on 2026-10-22: each stand-in read over its baseline,
+as the table gives, and the counts of the other span did not move.
 
 ## Browser front-end
 
