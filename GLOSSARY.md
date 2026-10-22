@@ -166,3 +166,31 @@ _Avoid_: assignment, task, ticket
 One message from the coordinator to the Architect. It carries every sign-off since the last
 one, combined and sorted, and leaves no row of any sign-off out.
 _Avoid_: relay, roll-up, summary
+
+**Index**:
+The position of an element in an array or a sequence. A sequence counts it from zero, and an
+array counts it over its index type, which can be an enum.
+_Avoid_: slot, position
+
+**Element**:
+One item that an array, a sequence or a set holds. The element of a multivector at one basis is
+its coefficient.
+_Avoid_: slot
+
+**Offset**:
+The distance from one index or address to another, counted in elements or in bytes.
+_Avoid_: slot, displacement
+
+**Value**:
+What an expression yields, and so what a binding, a field or an element holds. It is distinct
+from the name or the index that reaches it, and from a reference to it.
+_Avoid_: slot, content
+
+**Slot**:
+A place in a pool or a table that holds one element or none, and outlives each element it holds.
+_Avoid_: bucket, cell
+
+**Font face**:
+One weight and style of one font family, held in one file, as Noto Sans at weight 700. CSS
+declares one with `@font-face`.
+_Avoid_: face, font, typeface
