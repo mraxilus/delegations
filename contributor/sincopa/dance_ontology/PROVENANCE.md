@@ -654,10 +654,9 @@ names each one.
 
 **A rule that is implemented and not checked stops being true, so each rule drawn has a check.** A
 check names its rules in a comment in `checks.nim` that opens `RULE`. Nothing in the workbench
-checks rules 36 to 40, and the simulation reports in their words. Nothing checks rule 41.
-`tests/suites/test_readme.nim` holds every quotation in the README to `RULES` word for word, so the
-two copies cannot drift. The checks do not quote `RULES`, because their printed lines say what was
-measured.
+checks rules 36 to 40, and the simulation reports in their words. `tests/suites/test_readme.nim`
+holds every quotation in the README to `RULES` word for word, so the two copies cannot drift. The
+checks do not quote `RULES`, because their printed lines say what was measured.
 
 **A moving picture is checked where it is drawn, and not only at its frames (rule 1).** A browser
 blends two frames point by point. So two frames that disagree about which side of a body a line
@@ -675,14 +674,27 @@ Both wraps go round the front to the front of the other hand, and both locks go 
 37). Verified by `checkRules`, which checks where each hold settles and which way its route sets
 off.
 
-**A lock or a wrap needs its line to go round the body (rule 7), except a high lock (rule 41).** The
-arc a drawn line hugs takes one of five values: 0, 51, 90, 141 and 180 degrees. So `WRAP_MIN`, at
-170 degrees, admits 180 alone, and the build refuses to draw a lock or a wrap that falls short.
-Verified by `checkRules`, which checks that `isDanceable` agrees with the measured arc.
+**A lock or a wrap needs its line to go round the body (rule 7), except a high lock (rule 41).** On
+the four single holds at quarter turns, the arc a drawn line hugs is 0, 51, 90, 132, 135, 141 or 180
+degrees. Measured on 2026-10-22, by a probe outside the tree. So `WRAP_MIN`, at 170 degrees, admits
+180 alone. The build refuses to draw a lock or a wrap that rule 7 binds and that falls short.
+Verified by `checkRules`, which checks that `isDanceable` agrees with the measured arc on every
+landing but a high lock.
 
-The drawing does not follow rule 41. It holds a high lock to `WRAP_MIN` too. So it refuses a high
-lock with the follow a quarter turned, where the arc is 141 degrees. Nothing checks rule 41, and the
-fix waits on the Architect.
+**A high lock stands whatever arc its line hugs (rule 41).** A high lock is a hammerlock, with the
+hand brought round the back to its own shoulder (rule 37). So the line round the body is not what
+makes it. `terms.isMadeRoundBody` names the locks and wraps that rule 7 binds, and `isDanceable`
+asks the arc of those alone. Rejected: a lower threshold for a high lock, which would still refuse
+the arcs below it, where rule 41 refuses none.
+
+Verified by `checkRules`, which draws a high lock on each of the four single holds at each quarter
+turn of the follow. Eight of those sixteen hug 132, 135 or 141 degrees. The check demands at least
+one such, so it cannot pass while it holds nothing that rule 7 does not. Red first on 2026-10-22:
+before the fix, the drawing refused a high lock on Left to left with the follow turned a quarter.
+
+Cost: the drawing now refuses no high lock, at any turn of the follow. The simulation asks no
+question of a high lock, so nothing says which of them a couple can dance. No page draws a lock or a
+wrap yet.
 
 **Above takes no lock and no wrap, and its line passes over the body (rule 8).** Above is over the
 head, so from overhead nothing is under it, and `straightReach` draws its line straight. Verified by

@@ -86,7 +86,7 @@ Held by `checkRules`.
 > 1/2 of the circumference. it doesn't make sense to have a wrap or a lock without the line actually
 > going around the body
 
-Held by `checkRules`. The drawing holds a high lock to this rule too, which rule 41 does not ask.
+Held by `checkRules`, for every lock and wrap but a high lock, which rule 41 frees.
 
 ### Rule 8
 
@@ -344,8 +344,8 @@ Left to left held low, turned from face to face.
 
 > that applies to everything but high lock
 
-It answers the second sentence of rule 7. Nothing checks it. The drawing does not follow it, and
-holds a high lock to rule 7 as well.
+It answers the second sentence of rule 7. Held by `checkRules`, which draws a high lock on each
+single hold at each quarter turn of the follow. Eight of those sixteen hug less than rule 7 asks.
 
 ## Layout
 
