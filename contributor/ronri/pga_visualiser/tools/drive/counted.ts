@@ -8,10 +8,12 @@
 //     clock among them, so same build reads same count on every run and every machine.
 //   Baselines name build they were counted on, and other build is refused, never compared.
 
-import { chromium, type CDPSession, type LaunchOptions, type Page } from '@playwright/test';
+import {
+  chromium, type Browser, type CDPSession, type LaunchOptions, type Page,
+} from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { simulateClock, waitUntil } from './clock';
+import { advanceFrames, simulateClock, waitUntil } from './clock';
 import { pickPlane } from './ground';
 import { report } from './report';
 
@@ -40,9 +42,23 @@ const BUILD_BASELINE: BuildCounted = {
 const COPIES_MARKER = 15883; // Fault: outline summed sample by sample.
 const CALLS_MARKER = 48642;
 
-/** Calls and bytes lattice adds to `FRAMES_LATTICE` frames of moving camera. */
+/** Calls, copies and bytes lattice adds to `FRAMES_LATTICE` frames of moving camera. */
 const CALLS_LATTICE = 4817506; // Fault: fade sampled at each boundary.
+const COPIES_LATTICE = 356725; // Pins copy any change adds, as library's `+` added one per sum.
 const BYTES_LATTICE = 219136;
+
+/** Calls and copies of one still page frame, as page's own loop draws it, with each kind picked.
+ *
+ *  Net over whole frame: build, overlay, marker and label. Pins work any change adds where no
+ *  span above reads it, as move of library pin can. Opening scene holds points and plane.
+ */
+const FRAMES_PICKED = [
+  { kind: 'point', calls: 29591, copies: 4808 },
+  { kind: 'plane', calls: 96476, copies: 9874 },
+];
+
+/** Frames page draws after pick before one is counted, so pick's own first frames pass. */
+const FRAMES_SETTLED = 2;
 
 /** Frames lattice is counted over, and turn between two, as `drivePinGrid` turns camera. */
 const FRAMES_LATTICE = 9;
@@ -99,6 +115,31 @@ async function countOver<R, A>(
   return { calls: await readCalls(devtools, url), value };
 }
 
+/** Advance page one frame through its own loop, after it settles, and read calls of that frame. */
+async function countFrame(devtools: CDPSession, page: Page): Promise<Calls> {
+  const url = page.url();
+  await advanceFrames(page, FRAMES_SETTLED);
+  await readCalls(devtools, url);
+  await advanceFrames(page, 1);
+  return readCalls(devtools, url);
+}
+
+/** Open built page on simulated clock, paused, with V8's counters armed. */
+async function openCounted(
+  browser: Browser, url: string, size: { width: number; height: number }, errors: string[],
+): Promise<{ page: Page; devtools: CDPSession }> {
+  const page = await browser.newPage({ viewport: size });
+  page.on('pageerror', (error) => errors.push(error.message));
+  await simulateClock(page);
+  await page.goto(url);
+  await waitUntil(page, () => typeof nimSceneCount === 'function' && nimSceneCount() > 0, null);
+  const devtools = await page.context().newCDPSession(page);
+  await devtools.send('Profiler.enable');
+  await devtools.send('Debugger.enable');
+  await devtools.send('Profiler.startPreciseCoverage', { callCount: true, detailed: false });
+  return { page, devtools };
+}
+
 /** Sum every call one span counted. */
 function callsAll(calls: Calls): number {
   let sum = 0;
@@ -152,17 +193,8 @@ export async function driveCounted(
     ...options,
     args: [...(options.args ?? []), `--js-flags=${FLAGS_ENGINE_COUNTED}`],
   });
-  const page = await browser.newPage({ viewport: size });
   const errors_page: string[] = [];
-  page.on('pageerror', (error) => errors_page.push(error.message));
-  await simulateClock(page);
-  await page.goto(url);
-  await waitUntil(page, () => typeof nimSceneCount === 'function' && nimSceneCount() > 0, null);
-
-  const devtools = await page.context().newCDPSession(page);
-  await devtools.send('Profiler.enable');
-  await devtools.send('Debugger.enable');
-  await devtools.send('Profiler.startPreciseCoverage', { callCount: true, detailed: false });
+  const { page, devtools } = await openCounted(browser, url, size, errors_page);
 
   const build = buildRunning(browser.version());
   const is_build_same = build.chromium === BUILD_BASELINE.chromium &&
@@ -209,6 +241,7 @@ export async function driveCounted(
   // First frame does work no later frame repeats, as first marker does.
   await page.evaluate(frameBuilt, { seconds: SECONDS_COUNTED, is_grid_shown: true });
   let calls_lattice = 0;
+  let copies_lattice = 0;
   let bytes_lattice = 0;
   let sites_lattice = '';
   const per_frame: number[] = [];
@@ -223,6 +256,8 @@ export async function driveCounted(
     const added = callsAll(ruled.calls) - callsAll(bare.calls);
     per_frame.push(added);
     calls_lattice += added;
+    copies_lattice += (ruled.calls.by_name.get(NAME_COPY) ?? 0) -
+      (bare.calls.by_name.get(NAME_COPY) ?? 0);
     bytes_lattice += ruled.value - bare.value;
     if (frame === 0) sites_lattice = await sitesCopy(devtools, ruled.calls, bare.calls);
   }
@@ -232,11 +267,36 @@ export async function driveCounted(
     `calls over ${FRAMES_LATTICE} frames, ${per_frame.join(' ')} each, ${sites_lattice}`,
   );
   reportCount(
+    'the moving lattice copies no more than its baseline', copies_lattice, COPIES_LATTICE,
+    is_build_same, `copies over ${FRAMES_LATTICE} frames`,
+  );
+  reportCount(
     'the moving lattice uploads no more bytes than the repair does', bytes_lattice,
     BYTES_LATTICE, is_build_same, `bytes over ${FRAMES_LATTICE} frames`,
   );
-
   await devtools.send('Profiler.stopPreciseCoverage');
+  await page.close();
+
+  // Page of its own, so camera that lattice moved and picks it made reach no frame counted here.
+  const picked = await openCounted(browser, url, size, errors_page);
+  for (const one of FRAMES_PICKED) {
+    const handle = await picked.page.evaluate(
+      (word) => nimSceneHandles().find((each) => nimObjectKindWord(each) === word) ?? -1,
+      one.kind,
+    );
+    if (handle >= 0) await picked.page.evaluate((each) => { selectOnly(each, null); }, handle);
+    const frame = await countFrame(picked.devtools, picked.page);
+    reportCount(
+      `a still frame with a ${one.kind} picked makes no more calls than its baseline`,
+      handle < 0 ? Infinity : callsAll(frame), one.calls, is_build_same, 'calls of one frame',
+    );
+    reportCount(
+      `a still frame with a ${one.kind} picked copies no more than its baseline`,
+      handle < 0 ? Infinity : frame.by_name.get(NAME_COPY) ?? 0, one.copies, is_build_same,
+      'copies of one frame',
+    );
+  }
+  await picked.devtools.send('Profiler.stopPreciseCoverage');
   report(
     'the counted page raised no error', errors_page.length === 0, errors_page.join(' | '),
   );
