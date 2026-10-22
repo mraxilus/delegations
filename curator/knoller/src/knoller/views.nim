@@ -114,6 +114,17 @@ func identifierAt*(text: string, start: int): string =
   text[i ..< j]
 
 
+func wordsCode*(text: string): seq[string] =
+  ## Read every name of code text, in order: each run of name characters once, so tail of name
+  ##   never reads as name of its own.
+  var word = ""
+  for c in text & " ":
+    if c in CHARS_NAME: word.add c
+    elif word.len > 0:
+      result.add word
+      word = ""
+
+
 func identity*(name: string): string =
   ## Read name as Nim compares it: first character exact, rest without case and underscores.
   if name.len == 0: "" else: name[0] & name[1 .. ^1].replace("_", "").toLowerAscii
@@ -128,11 +139,5 @@ func wordsPragma*(code: string): seq[string] =
     if open < 0: break
     let close = code.find(".}", open + 2)
     if close < 0: break
-    var k = open + 2
-    while k < close:
-      let name = code.identifierAt(k)
-      if name.len == 0: inc k
-      else:
-        result.add name
-        k += name.len
+    result.add code[open + 2 ..< close].wordsCode
     at = close + 2
