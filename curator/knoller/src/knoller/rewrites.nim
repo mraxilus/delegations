@@ -61,7 +61,6 @@ type
 const
   NAME_RESULT = "result"  ## Name compiler declares in each routine returning value.
   KIND_MEMBER = "skEnumField"  ## Kind of enum member, which bare name reaches unless enum is pure.
-  INTERPOLATORS = ["&", "fmt"]  ## Prefixes of string strformat interpolates (`&"…{x}…"`).
 
 
 func isIdentical(a, b: Symbol): bool =
@@ -74,8 +73,7 @@ func linesInterpolated(source, name: string): seq[int] =
   ##   `&"…{x}…"` or `fmt"…{x}…"`: strformat parses it from text, so no name token stands there.
   let tokens = source.tokens
   for k, t in tokens:
-    if t.kind != KindToken.Text or k == 0 or tokens[k - 1].after != t.first: continue
-    if tokens[k - 1].spelling(source) notin INTERPOLATORS: continue
+    if not tokens.isInterpolated(k, source): continue
     var
       depth = 0
       word = ""
