@@ -1763,22 +1763,23 @@ eighteen sandwiches to decide whether to skip four. `drivePinAnchor` allows an a
 **An orbit distance has a floor and no ceiling.** `DISTANCE_LIMIT_NEAR` at 10⁻¹³ is geometry: at
 zero the eye coincides with its pivot, and every direction that `camera.frame` derives collapses.
 `distanceHeld` is the one statement of it. Both distance fields write through it, so a typed zero or
-less lands on the near limit. A field left empty changes nothing on either, because Dear ImGui keeps
-the value of a typed entry left empty.
-
-**The field of view is held inside 10 to 120 degrees.** `fieldOfViewHeld` holds
-`DEGREES_FIELD_OF_VIEW_LEAST` and `DEGREES_FIELD_OF_VIEW_MOST`, and both fields write through it,
-typed or dragged. Rejected: bounds on the widget alone, which a typed entry passes in Dear ImGui.
-
-Verified by `--drive-fields` and the page's `driveFieldsHeld`, 2026-10-22. A field of view of 200
-read 120, and 1 read 10. A distance of 0 or -5 read 10⁻¹³, the near limit. On the code of `main` at
-`85ccefc1`, the page took 200 and 1 as typed, and read 0 as 0.1. The desktop took a typed 200 too.
+less lands on the near limit. A field left empty changes nothing on either. Dear ImGui keeps the
+value of a typed entry left empty, and the page does the same, so the two front-ends stay in sync.
 
 It is tiny rather than small: 1.5 cm, so an object a metre wide fills the frame. The stance, the
 records and the transform are held about the view origin, near the eye. So doubles and float32 hold
 that close-up wherever the eye stands (Origins). The near clip is a four-hundredth of the local
 scale, and the logarithmic depth spans it out to a far bound millions of units off. There is no
 ceiling, which would read as a camera bounded to a region, and which nothing downstream needs.
+
+**The field of view is held inside 10 to 120 degrees.** `fieldOfViewHeld` holds
+`DEGREES_FIELD_OF_VIEW_LEAST` and `DEGREES_FIELD_OF_VIEW_MOST`, and both fields write through it,
+typed or dragged. Rejected: bounds on the widget alone, which a typed entry passes in Dear ImGui.
+
+Verified by `--drive-fields` and the page's `driveFieldsHeld`, 2026-10-22. A field of view of 200
+read 120, and 1 read 10. A distance of 0 or -5 read 10⁻¹³, the near limit, and an empty field kept
+a typed 7. On the code of `main` at `85ccefc1`, the page took 200 and 1 as typed, and read 0 and an
+empty field as 0.1. The desktop took a typed 200 too.
 
 **One transform serves the GPU, the picks and markers, about the view origin.** Its translation is
 the remainder of the eye about that origin, under half a world step. `Matrix4` stays in doubles,
