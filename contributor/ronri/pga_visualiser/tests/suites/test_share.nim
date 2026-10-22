@@ -153,6 +153,7 @@ suite "Share":
       test "the sampler counts a loop of PGA calls as PGA's":
         # Spins on geometric products, so nearly every busy sample is inside PGA.
         #   Bound sits below that, since sample landing in push or pop of tiny proc misses.
+        #   Clock read once for 256 products: `cpuTime` is system call, about as dear as one.
         discard drainSamples()
         check startSampling()
         var
@@ -160,8 +161,9 @@ suite "Share":
           spins = 0
         let seconds_started = cpuTime()
         while cpuTime() - seconds_started < 0.4:
-          product = POINTS[spins mod SAMPLES] ∧ LINES[spins mod SAMPLES] + product
-          inc spins
+          for _ in 0..<256:
+            product = POINTS[spins mod SAMPLES] ∧ LINES[spins mod SAMPLES] + product
+            inc spins
         stopSampling()
         let counts = drainSamples()
         checkpoint &"{counts} over {spins} products, {product}"
