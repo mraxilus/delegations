@@ -353,8 +353,12 @@ proc checkRules*() =
   # `goes around no less than just under 1/2 of the circumference.  it`
   # `doesn't make sense to have a wrap or a lock without the line actually`
   # `going around the body."`
+  # Rule 41 frees high lock from this sentence, and block for rule 41 holds it.
+  const freed = (level: Level.High, modifier: Modifier.Lock)
   var arc_seen: HashSet[float]
   for landing in landings:
+    if landing.level == freed.level and landing.modifier == freed.modifier:
+      continue
     for turn in [0.0, 90.0, 180.0, 270.0]:
       let
         pose = canonicalise(spinAbout(rest(), Dancer.Follow, turn))
@@ -406,6 +410,40 @@ proc checkRules*() =
   doAssert DEEP[Arm.Left] in crossed and INK[Arm.Right] in crossed,
     "A crossed connection lost one of its two hands' colours."
   told.add "a connection is drawn in its two hands' own colours"
+
+  # RULE 41.  `"that applies to everything but high lock"` -- answer to second sentence
+  # of rule 7.  High lock is hammerlock, hand brought round back to its own shoulder
+  # (rule 37), so it stands whatever arc its line hugs.  Every single hold is drawn high
+  # locked at every quarter turn of follow, and some must hug less than rule 7 asks, or
+  # this would hold nothing rule 7 does not.
+  var
+    drawn_freed = 0
+    short_freed = 0
+  for single in SINGLES:
+    let arm = if single.holds[Arm.Left].isSome: Arm.Left else: Arm.Right
+    for turn in [0.0, 90.0, 180.0, 270.0]:
+      let
+        pose = canonicalise(spinAbout(rest(), Dancer.Follow, turn))
+        levels = said(some freed.level, arm)
+        modifiers = said(some freed.modifier, arm)
+        hands = handPoints(settled(pose, single.holds, levels, modifiers))
+        ends: route.Ends = (hands[Dancer.Lead][arm], hands[Dancer.Follow][single.holds[arm].get],
+          (pose.place[Dancer.Lead], pose.facing[Dancer.Lead]),
+          (pose.place[Dancer.Follow], pose.facing[Dancer.Follow]))
+        asked = wayFor(ends, levels[arm], modifiers[arm])
+        arcs = if asked.isSome: wrapArc(ends, asked.get)
+               else: none(tuple[a, b: float])
+      doAssert isDanceable(pose, single.holds, levels, modifiers),
+        &"A high lock was refused; got `{single.name}` at turn `{turn}`."
+      doAssert renderParts(pose, single.holds, levels = levels, modifiers = modifiers).len > 0,
+        &"A high lock drew nothing; got `{single.name}` at turn `{turn}`."
+      inc drawn_freed
+      if arcs.isNone or max(arcs.get.a, arcs.get.b) < float(WRAP_MIN):
+        inc short_freed
+  doAssert short_freed > 0,
+    "No high lock hugs less than rule 7 asks, so nothing here tests rule 41."
+  told.add &"a high lock stands whatever its line hugs: {drawn_freed} drawn, every single " &
+      &"hold at every quarter turn, {short_freed} of them short of {WRAP_MIN} degrees"
 
   for line in told:
     echo &"  rule: {line}"
