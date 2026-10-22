@@ -9,9 +9,8 @@
 ##     one line on every build.  Rule that is only implemented and not
 ##     asserted is rule that quietly stops being true, which has happened
 ##     here more than once.
-##     Cost of spoken ledger: one line of build noise per rule, and
-##       there were thirty-four of them on 2026-10-22.  Accepted -- noise
-##       is receipt.
+##     Cost of spoken ledger: one line of build noise per rule.
+##       Accepted -- noise is receipt.
 
 {.experimental: "strictFuncs".}
 
@@ -359,24 +358,27 @@ proc checkRules*() =
   for landing in landings:
     if landing.level == freed.level and landing.modifier == freed.modifier:
       continue
-    for turn in [0.0, 90.0, 180.0, 270.0]:
+    for single in SINGLES:
       let
-        pose = canonicalise(spinAbout(rest(), Dancer.Follow, turn))
-        hands = handPoints(
-          settled(pose, HOLD, said(some landing.level), said(some landing.modifier)),
-        )
-        ends: route.Ends = (hands[Dancer.Lead][Arm.Left], hands[Dancer.Follow][Arm.Left],
-          (pose.place[Dancer.Lead], pose.facing[Dancer.Lead]),
-          (pose.place[Dancer.Follow], pose.facing[Dancer.Follow]))
-        asked = wayFor(ends, some landing.level, some landing.modifier)
-        arcs = if asked.isSome: wrapArc(ends, asked.get)
-               else: none(tuple[a, b: float])
-        is_legal = isDanceable(pose, HOLD, said(some landing.level), said(some landing.modifier))
-      doAssert is_legal == (arcs.isSome and
-                      max(arcs.get.a, arcs.get.b) >= float(WRAP_MIN)),
-        &"Danceable and the measured arc disagree for {landing.level} {landing.modifier}."
-      if arcs.isSome:
-        arc_seen.incl max(arcs.get.a, arcs.get.b)
+        arm = if single.holds[Arm.Left].isSome: Arm.Left else: Arm.Right
+        levels = said(some landing.level, arm)
+        modifiers = said(some landing.modifier, arm)
+      for turn in [0.0, 90.0, 180.0, 270.0]:
+        let
+          pose = canonicalise(spinAbout(rest(), Dancer.Follow, turn))
+          hands = handPoints(settled(pose, single.holds, levels, modifiers))
+          ends: route.Ends = (hands[Dancer.Lead][arm], hands[Dancer.Follow][single.holds[arm].get],
+            (pose.place[Dancer.Lead], pose.facing[Dancer.Lead]),
+            (pose.place[Dancer.Follow], pose.facing[Dancer.Follow]))
+          asked = wayFor(ends, levels[arm], modifiers[arm])
+          arcs = if asked.isSome: wrapArc(ends, asked.get)
+                 else: none(tuple[a, b: float])
+          is_legal = isDanceable(pose, single.holds, levels, modifiers)
+        doAssert is_legal == (arcs.isSome and max(arcs.get.a, arcs.get.b) >= float(WRAP_MIN)),
+          &"Danceable and the measured arc disagree for {landing.level} {landing.modifier} " &
+          &"on `{single.name}` at turn `{turn}`."
+        if arcs.isSome:
+          arc_seen.incl max(arcs.get.a, arcs.get.b)
   # Arcs are quantised, and threshold sits in gap below one half.
   for arc in arc_seen:
     doAssert arc <= 141 or arc >= 180,
@@ -384,8 +386,8 @@ proc checkRules*() =
   doAssert 141 < WRAP_MIN and WRAP_MIN < 180,
     &"The threshold left the gap; got `{WRAP_MIN}`."
   let quanta = arc_seen.toSeq.mapIt(int(it)).sorted
-  told.add &"a lock or wrap needs {WRAP_MIN} degrees of wrap; the arcs " &
-      &"this geometry makes are [{quanta.mapIt($it).join(\", \")}]"
+  told.add &"a lock or wrap but a high lock needs {WRAP_MIN} degrees of wrap; the arcs " &
+      &"single holds make at quarter turns are [{quanta.mapIt($it).join(\", \")}]"
 
   # RULE 8.  `"above has no locks/wraps and can only transition to upper wrap`
   # `or back to default (physical restrictions)."`  `upper wrap` is read as
@@ -412,13 +414,15 @@ proc checkRules*() =
   told.add "a connection is drawn in its two hands' own colours"
 
   # RULE 41.  `"that applies to everything but high lock"` -- answer to second sentence
-  # of rule 7.  High lock is hammerlock, hand brought round back to its own shoulder
-  # (rule 37), so it stands whatever arc its line hugs.  Every single hold is drawn high
-  # locked at every quarter turn of follow, and some must hug less than rule 7 asks, or
-  # this would hold nothing rule 7 does not.
+  # of rule 7.  Rule gives no reason; implementer's reading is that arm bent to shoulder
+  # of same arm (rule 37), its line round back (rule 6), makes high lock, and not how far
+  # that line hugs.  Every single hold is drawn high locked at every quarter turn of
+  # follow, and some must hug less than rule 7 asks, or this would hold nothing rule 7
+  # does not.
   var
     drawn_freed = 0
     short_freed = 0
+    short_seen: HashSet[int]
   for single in SINGLES:
     let arm = if single.holds[Arm.Left].isSome: Arm.Left else: Arm.Right
     for turn in [0.0, 90.0, 180.0, 270.0]:
@@ -435,15 +439,21 @@ proc checkRules*() =
                else: none(tuple[a, b: float])
       doAssert isDanceable(pose, single.holds, levels, modifiers),
         &"A high lock was refused; got `{single.name}` at turn `{turn}`."
-      doAssert renderParts(pose, single.holds, levels = levels, modifiers = modifiers).len > 0,
-        &"A high lock drew nothing; got `{single.name}` at turn `{turn}`."
+      doAssert routed(ends, asked).isSome,
+        &"A high lock found no route; got `{single.name}` at turn `{turn}`."
+      # Drawing refuses by raising, so drawing it whole is check that it stands.
+      discard renderParts(pose, single.holds, levels = levels, modifiers = modifiers)
       inc drawn_freed
       if arcs.isNone or max(arcs.get.a, arcs.get.b) < float(WRAP_MIN):
         inc short_freed
+        if arcs.isSome:
+          short_seen.incl int(max(arcs.get.a, arcs.get.b))
   doAssert short_freed > 0,
     "No high lock hugs less than rule 7 asks, so nothing here tests rule 41."
+  let shorts = short_seen.toSeq.sorted
   told.add &"a high lock stands whatever its line hugs: {drawn_freed} drawn, every single " &
-      &"hold at every quarter turn, {short_freed} of them short of {WRAP_MIN} degrees"
+      &"hold at every quarter turn, {short_freed} of them short of {WRAP_MIN} degrees, " &
+      &"at [{shorts.mapIt($it).join(\", \")}]"
 
   for line in told:
     echo &"  rule: {line}"
