@@ -373,7 +373,7 @@ design/
   reference_page.nim     reference.html, and which cards are kept and confirmed
   marks.nim              checks and builds reference.html
   plain.nim              reads prose, and holds it to the two countable rules
-  faces.nim              the faces each page embeds
+  font_faces.nim         the font faces each page embeds
   asks.nim               what each card of the Reference asks of the body simulation
   modelled.nim           which cards the simulation reaches: modelled.json
   floors.nim             how far the plan carries each rig sweep over the crown, printed
