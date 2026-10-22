@@ -160,6 +160,7 @@ and this file does not:
 | `keys`, `wheel`, `pan` | held keys, wheel zoom, mouse pan, what zoom settles onto |
 | `touch`, `construct`, `finger` | pinch, long press, drag construction, crowd, paused drag |
 | `apply`, `framing`, `label`, `view` | pickers, what picking does to camera, names, view section |
+| `acts` | one undo for a whole selection, typed camera fields, hover while camera moves |
 | `chrome`, `comet`, `ground` | hover during gesture, help, horizon comet, lattice's reach |
 | `frame`, `classified`, `diagnostics`, `ramp` | frame's own clocks and counts, tree, colours |
 | `exceedance`, `rings` | distribution curve, its axis, rings each reading is taken over |
@@ -888,11 +889,12 @@ Software GL reports no multisampled visual, so thin lines alias.
 **The suites test the rules, `tools/drive/` tests the wiring of the browser, and this tests the
 wiring of the desktop.** The entry point carries scripted runs: `--drive-keys`, `--drive-sky`,
 `--drive-undo`, `--drive-select`, `--drive-drag`, `--drive-search`, `--drive-menu`, `--drive-faces`,
-`--drive-edit`, `--drive-wheel`, and `--drive-help:<tab>`, one for each tab. Each pushes real
-events through the queue of SDL, but `--drive-edit` calls the procs of the buttons (Desktop
-front-end). `driven` runs all of them and reports every failure, and not the first. It asks the
-binary which help tabs exist (`--help-tabs`), so `help.HelpPath` stays their one home (Article
-I.4). `drive` chains it, here and on the runner (repository issue 91).
+`--drive-edit`, `--drive-wheel`, `--drive-bulk`, `--drive-fields`, `--drive-hover`, and
+`--drive-help:<tab>`, one for each tab. Each pushes real events through the queue of SDL, but
+`--drive-edit`, `--drive-bulk` and `--drive-fields` call the procs that the buttons and fields call
+(Desktop front-end). `driven` runs all of them and reports every failure, and not the first. It
+asks the binary which help tabs exist (`--help-tabs`), so `help.HelpPath` stays their one home
+(Article I.4). `drive` chains it, here and on the runner (repository issue 91).
 
 **A run that reaches a window of Dear ImGui names that window on its motion.** The SDL3 backend of
 Dear ImGui drops motion that names no window of its own. `--drive-select` and `--drive-wheel` name
@@ -912,7 +914,10 @@ it, so Dear ImGui reads the pointer over the menu as it reads a hand. Verified b
 - a scene filled to capacity leaves what follows its list on the window;
 - the menu opens and offers the demo at every size that `orrery` has;
 - an edit opened far out and saved unchanged keeps every coefficient and its radius to the bit;
-- a wheel over the selection menu zooms the view about the pick, as on the page.
+- a wheel over the selection menu zooms the view about the pick, as on the page;
+- a hide or a delete of two picked objects takes one step of undo, as on the page;
+- typed values past the bounds of the view section land inside them, as on the page;
+- hover follows an ease under a still pointer, and drops while a held key moves the camera.
 
 **An absent face is a finding, and never an abort.** Dear ImGui asserts inside `AddFontFromFileTTF`
 where it cannot open a path, and an assertion is SIGABRT rather than a report. `faceAt` resolves
@@ -1757,7 +1762,17 @@ eighteen sandwiches to decide whether to skip four. `drivePinAnchor` allows an a
 
 **An orbit distance has a floor and no ceiling.** `DISTANCE_LIMIT_NEAR` at 10⁻¹³ is geometry: at
 zero the eye coincides with its pivot, and every direction that `camera.frame` derives collapses.
-`distanceHeld` is the one statement of it.
+`distanceHeld` is the one statement of it. Both distance fields write through it, so a typed zero or
+less lands on the near limit. A field left empty changes nothing on either, because Dear ImGui keeps
+the value of a typed entry left empty.
+
+**The field of view is held inside 10 to 120 degrees.** `fieldOfViewHeld` holds
+`DEGREES_FIELD_OF_VIEW_LEAST` and `DEGREES_FIELD_OF_VIEW_MOST`, and both fields write through it,
+typed or dragged. Rejected: bounds on the widget alone, which a typed entry passes in Dear ImGui.
+
+Verified by `--drive-fields` and the page's `driveFieldsHeld`, 2026-10-22. A field of view of 200
+read 120, and 1 read 10. A distance of 0 or -5 read 10⁻¹³, the near limit. On the code of `main` at
+`85ccefc1`, the page took 200 and 1 as typed, and read 0 as 0.1. The desktop took a typed 200 too.
 
 It is tiny rather than small: 1.5 cm, so an object a metre wide fills the frame. The stance, the
 records and the transform are held about the view origin, near the eye. So doubles and float32 hold
@@ -3050,11 +3065,16 @@ selection. A tap still treats it as empty space, because a tap on empty space is
 finger has to dismiss a selection. Touch reaches the sky by a long press.
 
 **The pick runs once for each frame, and not for each input event.** A pick walks every live handle,
-which is linear in the scene. Each pointer move marks hover stale, that of a mouse with no button
-down included, and the frame loop picks once after `nimDriveHeld`. The wheel sums its notches and
-the loop applies one dolly, the same zoom, because notches compose (`interaction.factorWheel`).
-Rejected: a pick for each notch, at 83.8 ms of picking for six notches a frame. Three paths pick in
-their handler, because they answer before it returns: `pointerdown`, a touch-down and `handleTap`.
+which is linear in the scene. While a mouse is the pointer, the frame loop picks in every frame
+after `nimDriveHeld`, as the desktop does. Hover then follows what the camera carries under a still
+cursor, and drops while the camera moves (`interaction.updateHover`). That is one pick in each
+frame, the cost that the desktop pays, measured below. A finger leaves no cursor, so only its move
+marks hover stale, and `nimClearHover` drops hover once it lifts.
+
+The wheel sums its notches and the loop applies one dolly, the same zoom, because notches compose
+(`interaction.factorWheel`). Rejected: a pick for each notch, at 83.8 ms of picking for six notches
+a frame. Three paths pick in their handler, because they answer before it returns: `pointerdown`, a
+touch-down and `handleTap`.
 
 **The pick ranks what was drawn.** It takes the placements of the frame and dispatches on
 `Placement.kind`, rather than asks `position`, `direction`, `frame` and `spanPerpendicular` again
@@ -3108,6 +3128,12 @@ out. A right drag of 180 px on it moves the view and builds nothing.
 
 Verified by driven check on the page, through pointer events alone (`driveHoverFollowsMouse`). A
 mouse moved onto an object with no button down hovers it, and moved off it hovers nothing.
+
+Verified by `--drive-hover` and the page's `driveHoverWhileMoving`, 2026-10-22. A pick by keyboard
+eased its object under a still pointer, and hover named it once the ease arrived. A right arrow held
+for twelve frames lit hover in none of them, and hover named the pick again three frames after the
+release. On the frame loop of `main` at `85ccefc1`, the page hovered the ground plane after the
+ease, and through all twelve frames.
 
 Measured then, and not since: one pick went from 11.4 to 3.9 ms p50 at 1,024, and from 15.4 to 4.7
 ms at 10,000. A hover pick is 0.7, 1.6 and 3.5 ms at 60, 360 and 5,038.
@@ -3404,6 +3430,15 @@ ink, and the `save` of an edit session. That save is the "edit committed" moment
 widgets lack. It is one fixed array plus one cursor, and not two stacks. An entry is a `Step {scene,
 stance}`, and both are plain value types, so a record is a copy and `entries[cursor].scene` is
 exactly the live scene. `CAPACITY_HISTORY` is 32.
+
+**A hide or a delete of the whole selection is one step.** Both menus act through
+`selection.setVisibleAll` and `selection.removeAll`, and record the act once. So one undo takes it
+back on both builds, as one press made it. A delete also ends an edit session against any of the
+objects, which has nothing left to commit to.
+
+Verified by `--drive-bulk` and the page's `driveBulkUndo`, 2026-10-22, with two objects picked. A
+hide and then one undo left both shown, and a delete and then one undo left both standing. On the
+code of `main` at `85ccefc1`, one undo on the page brought back one object of the two, each time.
 
 **The array is a ring.** `first` names the handle that holds the oldest step, and `handleAt` is the
 one place where a timeline position becomes an index. To retire the oldest entry moves one integer.
@@ -4429,12 +4464,7 @@ that the runner carries that library. Assumed: nothing about the suite itself.
   - Undo and redo follow the printed key on the page, and the place of the key on the desktop.
   - With no pointer, the page hangs the selection menu from its corner, and the desktop centres it.
   - `more…` opens its picker at the cursor on the page alone.
-  - Hide or delete of several objects takes one step of undo on the desktop, and one for each
-    object on the page.
-  - The field of view takes any value on the page, and 10 to 120 by drag on the desktop.
-  - An empty distance field reads 0.1 on the page, and the near limit on the desktop.
   - Alt with a view key moves the camera on the desktop alone.
-  - While the camera moves, the page keeps hover on what slid under a still pointer.
 - Control does not descend while it is held, on either front-end. Its own key press carries the
   modifier that both guards refuse. The same read of the code found this, and no run has checked it.
 
