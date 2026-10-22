@@ -69,7 +69,7 @@ const
     ##   Algebra: stand-ins for operators library lacks, and incidence in algebra's words.
     ##   Boundary: lift and read-out, by coefficient. Euclidean: positions, directions and
     ##   vertices. Every other module consumes these, and its own work is Rest.
-  DIRECTORY_PROJECT = "rga_visualiser/"
+  DIRECTORY_PROJECT = "pga_visualiser/"
     ## Name directory project's own modules sit in, under `src`.
 
 

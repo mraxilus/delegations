@@ -157,7 +157,7 @@ func appendChars*(storage: var openArray[char], cursor: var int, text: openArray
   ##   Truncates whole characters, never part of one.
   ##     Byte-wise copy cut three-byte operator in half, and invalid tail reached browser
   ##     as literal `%e2%8a`: Nim's JS backend percent-escapes what it cannot decode.
-  ##     Same mismatch `.rgascene` label field had, other half of it.
+  ##     Same mismatch scene file's label field had, other half of it.
   for offset in 0..<lengthFitting(text, len(storage) - 1 - cursor):
     storage[cursor] = text[offset]
     inc cursor

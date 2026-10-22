@@ -700,6 +700,8 @@ function buildObjectRow(handle: number | null) {
 //   `shell.html` could only hold second copy of it.
 elementById('button-save-scene').title = nimWording(Wording.TipMenuSaveScene);
 elementById('button-load-scene').title = nimWording(Wording.TipMenuLoadScene);
+// Picker offers each extension scene is read under, and zip host's save wraps it in.
+elementById<HTMLInputElement>('file-load-scene').accept = nimSceneExtensionsRead() + ',.zip';
 elementById('button-save-scene').addEventListener('click', saveScene);
 elementById('button-load-scene').addEventListener('click', () => {
   elementById('file-load-scene').click();
