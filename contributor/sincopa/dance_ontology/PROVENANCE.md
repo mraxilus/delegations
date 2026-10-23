@@ -2429,10 +2429,10 @@ stack. Verified by `suites/test_font_faces.nim`, test "every heading takes serif
 
 Labels drawn inside figures take Noto Sans rather than Commit Mono. The "code, data and figures" of
 X.8 reads as numbers, and a label that names a hand is interface text. Every label that the code
-draws names Noto Sans first. The check in `curator/audit/src/faces.nim` joins the literals that `&`
-carries across a line end, so it reads each label (#412). It holds a label only to a first family
-that X.8 names, so reading alone holds it to Noto Sans. Verified by hand with a search of the source
-on 2026-10-18, which finds Noto Sans first in every stack of a label.
+draws names Noto Sans first. The check in `curator/audit/src/font_families.nim` joins the literals
+that `&` carries across a line end, so it reads each label (#412). It holds a label only to a first
+family that X.8 names, so reading alone holds it to Noto Sans. Verified by hand with a search of the
+source on 2026-10-18, which finds Noto Sans first in every stack of a label.
 
 **No font family of the three draws every character that the pages draw, so each stack names two
 more.** Noto Sans and Noto Serif draw no arrow, and Commit Mono draws no `⇄`. Noto Sans Math draws
