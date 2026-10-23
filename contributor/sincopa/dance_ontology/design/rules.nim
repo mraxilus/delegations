@@ -14,10 +14,9 @@
 ##     drawing, and argument for them belongs here.
 ##   Rule that is only implemented and not asserted quietly stops being
 ##     true; checkers in `checks.nim` verify standing ones on every
-##     build -- twenty-nine lines for forty-one rules, superseded six
-##     living here with their corrections, sheet's five (36 to 40)
-##     checked by nothing here -- simulation reports in their words, which is
-##     not check -- and rule 41 checked by nothing.
+##     build, one printed line each -- superseded six living here with
+##     their corrections, and sheet's five (36 to 40) checked by nothing
+##     here -- simulation reports in their words, which is not check.
 ##   What these checks verify is that drawing follows rule as written,
 ##     never that couple can dance it.  Only cell of Reference kept, modelled and
 ##     confirmed is trusted.
@@ -426,10 +425,10 @@ const RULES* = [
   ##     other arm low, over it high), while level says only where
   ##     on body connection rides.
   ##   Rule 37 settles what high lock is: arm bent to shoulder of
-  ##     *same* arm.  Rule 6 said its line goes around back of
-  ##     modified body, and both are one shape -- hand comes round
-  ##     back up to its own shoulder, hammerlock -- so settle
-  ##     table's `(Own, Back)` stands.  Entry note is transition
+  ##     *same* arm.  Architect, 2026-10-22: arm folds at elbow, elbow
+  ##     in front of shoulder, hand on top of it.  Rule 6 sent its line
+  ##     round back of modified body, and Architect retired it; settle
+  ##     table keeps `(Own, Back)` until issue 697.  Entry note is transition
   ##     fact, first ledger has that is about safety rather than
   ##     shape; `simulation/verdicts.md` records what jointed-arm simulation makes of
   ##     low lock: hand led behind back at whole turn,
@@ -455,10 +454,11 @@ const RULES* = [
   ##     neither was told other's answer.
   ##   Rule 41 answers rule 7: its second sentence, that lock or wrap
   ##     means nothing unless line goes round body, holds for every
-  ##     hold but high lock.  Rule 37 says why: high lock is hammerlock,
-  ##     hand brought round back to its own shoulder, so line going
-  ##     round body is not what makes it.  Nothing checks rule 41, and
-  ##     drawing still holds high lock to `WRAP_MIN`; fix waits on Architect.
+  ##     hold but high lock.  High lock folds arm in front, hand on top of
+  ##     its own shoulder (Architect, 2026-10-22), so no line round body
+  ##     makes it.  `isMadeRoundBody` frees high
+  ##     lock from `WRAP_MIN`, and `checkRules` draws it on every single hold
+  ##     at every quarter turn of follow.
 
 
 const FROM_ABOVE*: array[2, tuple[level: Option[Level], modifier: Option[Modifier]]] = [

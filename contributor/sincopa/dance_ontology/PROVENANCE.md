@@ -654,10 +654,9 @@ names each one.
 
 **A rule that is implemented and not checked stops being true, so each rule drawn has a check.** A
 check names its rules in a comment in `checks.nim` that opens `RULE`. Nothing in the workbench
-checks rules 36 to 40, and the simulation reports in their words. Nothing checks rule 41.
-`tests/suites/test_readme.nim` holds every quotation in the README to `RULES` word for word, so the
-two copies cannot drift. The checks do not quote `RULES`, because their printed lines say what was
-measured.
+checks rules 36 to 40, and the simulation reports in their words. `tests/suites/test_readme.nim`
+holds every quotation in the README to `RULES` word for word, so the two copies cannot drift. The
+checks do not quote `RULES`, because their printed lines say what was measured.
 
 **A moving picture is checked where it is drawn, and not only at its frames (rule 1).** A browser
 blends two frames point by point. So two frames that disagree about which side of a body a line
@@ -670,19 +669,40 @@ alone does not say which side a hand goes to, so the hold must say lock or wrap 
 settles in one of six places, each a bearing off its own dancer's facing (rule 3). `SLOT_OFFSET` in
 `body.nim` sets them 44 degrees apart, and two marks need 34.9 degrees, so no two marks touch.
 
-Both wraps go round the front to the front of the other hand, and both locks go round the back
-(rules 4 to 6). A high lock goes round to the back of its own shoulder, which is a hammerlock (rule
-37). Verified by `checkRules`, which checks where each hold settles and which way its route sets
-off.
+Both wraps go round the front to the front of the other hand, and a low lock goes round the back
+(rules 4 and 5). The drawing sends a high lock round the back too, as rule 6 asked. The Architect
+retired rule 6 on 2026-10-22, and #697 holds the change. Verified by `checkRules`, which checks
+where each hold settles and which way its route sets off.
 
-**A lock or a wrap needs its line to go round the body (rule 7), except a high lock (rule 41).** The
-arc a drawn line hugs takes one of five values: 0, 51, 90, 141 and 180 degrees. So `WRAP_MIN`, at
-170 degrees, admits 180 alone, and the build refuses to draw a lock or a wrap that falls short.
-Verified by `checkRules`, which checks that `isDanceable` agrees with the measured arc.
+**A lock or a wrap needs its line to go round the body (rule 7), except a high lock (rule 41).** On
+the four single holds, at quarter turns of the follow, the larger arc takes seven values. They are
+0, 51, 90, 132, 135, 141 and 180 degrees. So `WRAP_MIN`, at 170 degrees, admits 180 alone. A still
+figure refuses to draw a lock or a wrap that rule 7 binds and that falls short. A moving figure asks
+no such question, and no page moves a lock or a wrap.
 
-The drawing does not follow rule 41. It holds a high lock to `WRAP_MIN` too. So it refuses a high
-lock with the follow a quarter turned, where the arc is 141 degrees. Nothing checks rule 41, and the
-fix waits on the Architect.
+Verified by `checkRules`, on each single hold at each quarter turn of the follow. It checks that
+`isDanceable` agrees with the measured arc, for every lock and wrap but a high lock. It prints the
+arcs that it meets.
+
+**A high lock stands whatever arc its line hugs (rule 41).** A high lock folds the arm at the elbow,
+with the elbow in front of the shoulder. The hand rests on top of the same shoulder (Architect,
+2026-10-22). So no line round the body makes it. `terms.isMadeRoundBody` names the locks and wraps
+that rule 7 binds, and `isDanceable` asks the arc of those alone. Rejected: a lower threshold for a
+high lock, which would still refuse the arcs below it, where rule 41 refuses none.
+
+Verified by `checkRules`, which draws a high lock on each of the four single holds at each quarter
+turn of the follow. It prints how many hug less than rule 7 asks, and at which arcs. On 2026-10-22
+it was eight of sixteen, at 132, 135 or 141 degrees. The check demands at least one such, so it
+cannot pass while it holds nothing that rule 7 does not. Red first on 2026-10-22: before the fix,
+the drawing refused a high lock on Left to left with the follow turned a quarter.
+
+Cost: the drawing refuses no high lock for its arc. The simulation reads a high lock on the arm of
+the follow at half and whole turns (`simulation/verdicts.md`), and no law holds those rows. Nothing
+asks it about a high lock at a quarter turn, so nothing says which of the drawn ones a couple can
+dance. No page draws a lock or a wrap yet.
+
+Between quarter turns, some locks that `isDanceable` admits find no route, high and low alike. The
+build then fails on an empty value, and does not refuse with a message (#688).
 
 **Above takes no lock and no wrap, and its line passes over the body (rule 8).** Above is over the
 head, so from overhead nothing is under it, and `straightReach` draws its line straight. Verified by
@@ -808,9 +828,9 @@ crossing, so it dives once. Verified by `checkHandTurns`.
 
 **The sheet of the Architect gives rules 36 to 40, and the workbench checks none of them.** The
 simulation reports in their words, through `simulation/words.nim`, and that is not a check. Rule 37
-says what a lock is, and makes a high lock a hammerlock. Rule 38 says a wrap crosses the other arm
-of its dancer. The drawing does not show that crossing yet, because rule 22 keeps a settled reach
-away from that hand.
+says what a lock is, and bends the arm of a high lock to the shoulder of the same arm. Rule 38 says
+a wrap crosses the other arm of its dancer. The drawing does not show that crossing yet, because
+rule 22 keeps a settled reach away from that hand.
 
 Rule 39 makes modifiers belong to each arm, for either dancer. The drawing holds one level and one
 modifier for each connection. Rule 40 is the one filled rotation row of the sheet.
@@ -3150,7 +3170,7 @@ to tidy the line away shows up only as suites that fail to build. `result +=` on
   read *unconfirmed* until then.
 - **The floor held low and high.** `simulation/verdicts.md` prints each claim of the floor
   there beside the answer of the simulation and what stops it (Against the floor). Where the two
-  disagree, the ruling is the Architect's. So is whether a hammerlock goes a whole turn, and what
+  disagree, the ruling is the Architect's. So is whether a high lock goes a whole turn, and what
   moves in the body when it does.
 - **The radius of the girdle, 60 mm, is an estimate and not tape.**
 - **The breadth of the hand is not held to the bound of a leap (#605).** In L-r low, the edge of a
