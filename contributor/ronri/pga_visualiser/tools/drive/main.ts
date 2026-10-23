@@ -12,7 +12,8 @@ import { delimiter, join } from 'node:path';
 import { countFailed, countRun, report } from './report';
 import { focusCanvas } from './gestures';
 import { driveBulkUndo, driveFieldsHeld, driveHoverWhileMoving } from './acts';
-import { driveKeys } from './keys';
+import { driveKeys, driveKeysChorded } from './keys';
+import { driveEscape } from './escape';
 import { driveAim, driveLook, drivePan, driveStretch } from './pan';
 import { driveWheel } from './wheel';
 import { driveFingerTurntable, driveTouchSelect, drivePinch, openTouch } from './touch';
@@ -250,7 +251,9 @@ async function driveSimulated(browser: Browser): Promise<void> {
   await driveRuler(page);
   await driveSceneBuilt(page);
   await driveDrawerCost(page);
-  // Acts both front-ends share, last on opening scene: demo below replaces it.
+  // Key checks and acts both front-ends share, last on opening scene: demo below replaces it.
+  await driveKeysChorded(page);
+  await driveEscape(page);
   await driveBulkUndo(page);
   await driveFieldsHeld(page);
   await driveHoverWhileMoving(page);

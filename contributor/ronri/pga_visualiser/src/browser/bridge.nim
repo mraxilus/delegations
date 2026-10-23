@@ -2015,6 +2015,22 @@ proc nimCancelDrag() {.exportc.} =
 proc nimDragActive(): bool {.exportc.} = INTERACTION_PAGE.is_dragging
   ## Report whether drag is in progress.
 
+proc nimBackOut(
+  is_help_open, is_menu_top_open, is_editing, is_menu_selection_shown: bool
+): cint {.exportc.} =
+  ## Report what one press of Escape sheds, as `interaction.BackOut` ordinal, or -1 for nothing.
+  ##   Page reports what its markup holds, and gesture and selection are read here.
+  ##   Order is `interaction.backOut`'s, which desktop's `handleEvent` asks too.
+  var standing: set[BackOut]
+  if is_help_open: standing.incl BackOut.Help
+  if is_menu_top_open: standing.incl BackOut.MenuTop
+  if INTERACTION_PAGE.isGesturing: standing.incl BackOut.Gesture
+  if is_editing: standing.incl BackOut.Edit
+  if is_menu_selection_shown: standing.incl BackOut.MenuSelection
+  if SELECTION_PAGE.len > 0: standing.incl BackOut.Selection
+  let shed = backOut(standing)
+  if shed.isSome: cint(ord(shed.get)) else: -1
+
 proc nimDragSourceHandle(): cint {.exportc.} = cint(INTERACTION_PAGE.index_source)
   ## Report object drag started from; meaningful only while `nimDragActive()`.
   ##   Mirrors `interaction.index_source`, field already paired with that guard.

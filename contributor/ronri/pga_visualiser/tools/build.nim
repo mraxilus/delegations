@@ -74,6 +74,8 @@ const
     ## Catalogue of shown text, read for its keys and words; see `catalogue`.
   PATH_HELP_NIM = "src" / "pga_visualiser" / "help.nim"
     ## Help tables, swept for shown text written where they are composed.
+  PATH_INTERACTION_NIM = "src" / "pga_visualiser" / "interaction.nim"
+    ## Gesture rules, read for enums page names beside wording's keys; see `declare`.
   PATH_BRIDGE_JS = BUILD_BROWSER / "bridge.js"  ## Compiled bridge, first script on page.
   PATH_DECLARATIONS = BUILD / "bridge.d.ts"
     ## Derived declarations of bridge's exports, read by type-checker alone.
@@ -82,8 +84,8 @@ const
   PATH_TSCONFIG_DRIVE = "tsconfig.drive.json"
     ## Harness's own type-checker configuration, targeting node not browser.
   DRIVES = [
-    "keys", "sky", "undo", "select", "drag", "search", "menu", "faces", "edit", "wheel", "bulk",
-    "fields", "hover",
+    "keys", "sky", "undo", "select", "drag", "search", "menu", "faces", "edit", "wheel", "escape",
+    "chords", "bulk", "fields", "hover",
   ]
     ## Scripted runs entry point carries, each reporting checks of its own.
     ##   Help's runs are not here: one per tab, and tabs are read from binary rather than
@@ -250,16 +252,21 @@ proc declare() =
     let rendered = lines.signatureAt(i).renderDeclaration
     if rendered.len > 0: declarations.add rendered
 
-  # Page names shown text by key, and key is Nim enum. Emitted here rather than written
-  #   twice: renaming key and not re-deriving then fails type check, exactly as renamed
-  #   export does (repository issue 47).
+  # Page names shown text by key, and key is Nim enum, as is what Escape sheds. Emitted
+  #   here rather than written twice: renaming member and not re-deriving then fails type
+  #   check, exactly as renamed export does (repository issue 47).
   #   `declare const enum` and not plain enum: ambient const enum is inlined at every use
   #   site, so page carries numbers rather than lookup object, and nothing new joins
   #   `SCRIPTS`. Both configurations already read this file.
   let keys = keysWording(readFile(PATH_WORDING_NIM))
-  var wording = "declare const enum Wording {\n"
-  for ordinal, key in keys: wording.add "  " & key & " = " & $ordinal & ",\n"
-  wording.add "}\n"
+  var enums = ""
+  for (name, members) in [
+    ("Wording", keys),
+    ("BackOut", keysEnum(readFile(PATH_INTERACTION_NIM), "BackOut")),
+  ]:
+    enums.add "declare const enum " & name & " {\n"
+    for ordinal, member in members: enums.add "  " & member & " = " & $ordinal & ",\n"
+    enums.add "}\n"
 
   var records: seq[string]
   for name in RECORDS:
@@ -273,7 +280,7 @@ proc declare() =
     PATH_DECLARATIONS,
     MARKER_GATE &
     "//   Regenerate with `nim r tools/build.nim declare`; never edit by hand.\n\n" &
-    wording & "\n" & records.join("\n") & "\n" & declarations.join("\n") & "\n",
+    enums & "\n" & records.join("\n") & "\n" & declarations.join("\n") & "\n",
   )
   echo "Wrote ", PATH_DECLARATIONS, " (", declarations.len, " declarations, ",
     keys.len, " wording keys)."

@@ -265,6 +265,8 @@ type
     is_menu_top_forced*: bool  ## Whether to open top menu with no click, for scripted run.
       ## Headless run has no pointer to press `☰` with, exactly as it has none for help's
       ## tabs; see `main.--drive-menu`.
+    is_menu_top_open*: bool  ## Whether top menu showed last frame, for Escape to shed.
+    is_menu_top_shut*: bool  ## Whether to close top menu at its next draw, as Escape asks.
     count_demo_offered*: int  ## Sizes menu's demo group offered, last time it was drawn.
       ## Zero until menu has been opened once. Read by scripted run's verdict, which is
       ## only way headless run can say menu came up with its groups in it.
@@ -1709,9 +1711,16 @@ proc layoutMenu(
   ##   file picker rather than through file system.
   ##   Demo group is built from `orrery.ScaleOrrery` rather than written out, as browser's
   ##   is built from `nimDemoScales`: size added there arrives in both menus untouched.
-  if not gui.menuBegin(
+  panel.is_menu_top_open = gui.menuBegin(
     wordingText(NameChipMenu), "##menu_top", WIDTH_CHIP_MENU, panel.is_menu_top_forced
-  ): return
+  )
+  if not panel.is_menu_top_open:
+    panel.is_menu_top_shut = false
+    return
+  if panel.is_menu_top_shut:
+    # Shut from this frame on, so next press of Escape passes to what stands under it.
+    (panel.is_menu_top_shut, panel.is_menu_top_open) = (false, false)
+    gui.menuClose()
 
   gui.widthPush(WIDTH_MENU_FIELD)
   fieldLabel(wordingText(NameMenuSceneFile))

@@ -63,12 +63,12 @@ translation is printed in one table, and nothing is tuned to make them agree.
 ```sh
 nim r koch check                                   # root: every check a pull request runs
 nim r koch test contributor/sincopa/dance_ontology  # this project alone, every suite of it
-nim r tools/build.nim assets                           # faces every page ships, into build/fonts
-nim r tools/build.nim pages                            # every page and script, into build/
-nim r tools/build.nim drive                            # every page rendered, and every face proven
-nim r tools/build.nim verdicts                         # rewrite simulation/verdicts.md
-nim r tools/build.nim floors                           # how far a plan carries each rig sweep above
-nim r tools/build.nim shot                             # screenshot helper, for node and Playwright
+nim r tools/build.nim assets                       # font faces every page ships, into build/fonts
+nim r tools/build.nim pages                        # every page and script, into build/
+nim r tools/build.nim drive                        # every page rendered, and every font face proven
+nim r tools/build.nim verdicts                     # rewrite simulation/verdicts.md
+nim r tools/build.nim floors                       # how far a plan carries each rig sweep above
+nim r tools/build.nim shot                         # screenshot helper, for node and Playwright
 ```
 
 The first two run from the repository root, and the rest from this directory. This needs

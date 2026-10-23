@@ -165,3 +165,11 @@ suite "Wording":
     for key in Wording:
       check keys[ord(key)] == $key
       check words.getOrDefault($key, "") == $wordingText(key)
+
+
+  test "the driver's reading of what escape sheds holds every member, in order":
+    # Page names `BackOut` through declarations driver derives from source, as it names keys.
+    const source = staticRead("../../src/pga_visualiser/interaction.nim")
+    var names: seq[string]
+    for one in BackOut: names.add $one
+    check source.keysEnum("BackOut") == names

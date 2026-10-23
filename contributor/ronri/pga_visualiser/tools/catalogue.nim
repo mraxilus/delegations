@@ -1,4 +1,4 @@
-## Read wording catalogue's keys and words from its source, as text.
+## Read wording catalogue's keys and words, and members of other enums page names, as text.
 ##   Driver compiles no project code: type check runs it on koch's compiler, never on this
 ##   project's pin, and importing `wording.nim` compiled that module there (#385).
 ##   Suite holds both readings to compiled enum and table on pin, so key moved or row
@@ -15,9 +15,7 @@ import std/[strutils, tables]
 
 #[ Catalogue Configuration ]#
 
-const
-  OPENING_KEYS = "type Wording* = enum"  ## Line opening enum whose values are keys.
-  OPENING_WORDS = "const LUT_TEXT_BY_WORDING"  ## Line opening table whose rows are words.
+const OPENING_WORDS = "const LUT_TEXT_BY_WORDING"  ## Line opening table whose rows are words.
 
 
 
@@ -39,17 +37,45 @@ func blockAfter(source, opening: string): seq[string] =
     result.add line
 
 
-func keysWording*(source: string): seq[string] =
-  ## Read keys of `Wording` in declared order, so index is ordinal.
+func depth(line: string): int =
+  ## Count spaces line is indented by.
+  line.len - line.strip(trailing = false).len
+
+
+func isOpeningEnum(line, name: string): bool =
+  ## Report whether `line` declares enum `name`, alone at column zero or inside type section.
+  var text = line.strip(trailing = false)
+  if text.startsWith("type "): text = text["type ".len .. ^1]
+  text.startsWith(name & "*") and "= enum" in text.split('#')[0]
+
+
+func keysEnum*(source, name: string): seq[string] =
+  ## Read members of enum `name` in declared order, so index is ordinal.
+  ##   Members are lines deeper than declaration, up to first line that is not.
+  ##     `Wording` stands alone at column zero, and `interaction.BackOut` inside type section.
   ##   Doc lines and blank lines carry none; values split on commas. Explicit ordinal is
   ##   refused, since index would then no longer be ordinal.
-  for line in source.blockAfter(OPENING_KEYS):
+  let lines = source.splitLines
+  var at = -1
+  for i, line in lines:
+    if line.isOpeningEnum(name):
+      at = i
+      break
+  if at < 0: raise newException(ValueError, "Source declares no enum `" & name & "`.")
+  for line in lines[at+1 .. ^1]:
+    if line.strip.len == 0: continue
+    if line.depth <= lines[at].depth: break
     for field in line.split('#')[0].split(','):
       let key = field.strip
       if key.len == 0: continue
       if not key.validIdentifier:
-        raise newException(ValueError, "Key is bare identifier; got `" & key & "`.")
+        raise newException(ValueError, "Member is bare identifier; got `" & key & "`.")
       result.add key
+
+
+func keysWording*(source: string): seq[string] =
+  ## Read keys of `Wording` in declared order, so index is ordinal; see `keysEnum`.
+  source.keysEnum("Wording")
 
 
 func wordsByKey*(source: string): Table[string, string] =

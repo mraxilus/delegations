@@ -39,8 +39,8 @@
 ##   | drive     | inspect, guard, hold `gaps.md` to regeneration, and hold every       |
 ##   |           | measurement, evaluation, file, page and checkout to pin (`head.nim`) |
 ##   |           | then `types`, render every page as host serves it, and fail where    |
-##   |           | face of system draws character beyond ASCII, or where control page   |
-##   |           | raises other findings than it expects (`render.nim`)                 |
+##   |           | font face of system draws character beyond ASCII, or where control   |
+##   |           | page raises other findings than it expects (`render.nim`)            |
 ##   | head      | compare pin with library head; finding where library moved since     |
 ##   | gaps      | regenerate `gaps.md` and docket from committed baselines             |
 ##   | show      | print one function's emitted C, its counts, its movement and its     |
@@ -74,17 +74,17 @@ const
     ## Environment variable naming Chromium to drive; empty fetches Playwright's own.
   SYSTEM = [
     ("git", "read library head and trees `drive` holds pin to"),
-    ("curl", "fetch faces asked of shared store, one level down through `koch fetch-assets`"),
+    ("curl", "fetch font faces asked of shared store, one level down through `koch fetch-assets`"),
     ("binutils", "`objdump` disassembles object files `show` reads machine code from"),
     ("gcc", "C compiler of every build; machine build names its version (VII.11)"),
     ("valgrind", "`lackey` traces machine build, whose instructions and bytes `inspect` counts"),
-    ("coreutils", "`sha256sum` store checks those faces with"),
+    ("coreutils", "`sha256sum` store checks those font faces with"),
     ("nodejs", "run type-checker `types` drives and harness `drive` runs"),
   ]
     ## System packages build needs beyond compiler.
     ##   Compiler is toolchain, pinned in nimble file.
     ##   Library is Atlas checkout, pinned in lock.
-    ##   Faces come from repository's store.
+    ##   Font faces come from repository's store.
     ##   Type-checker and Playwright are node packages, pinned by `package-lock.json`.
   USAGE = "Usage: nim r tools/build.nim " &
       "<inspect|bench|baseline|guard|evaluate|restamp|pages|types|published|drive|head|gaps|show|" &
