@@ -45,3 +45,24 @@ suite "Internal: The axle":
 
   test "the axle is as wide as it says it is":
     check ("viewBox=\"0 0 " & $axleWidth() & " ") in renderAxle(FRAMES[1].rest)
+
+
+  test "an arc names its turn clockwise or anticlockwise, and never right or left":
+    # One arc stands for two landings, follow's turn one way and lead's turn other, so right
+    # or left is wrong for half of what it names.  Frame states on axle are named from above
+    # too (`turnName`).  Red with arcs named right and left, measured 2026-10-22
+    # (issue #698): `Right to left` at rest drew `half a turn right`.
+    var told: seq[string] = @[]
+    for stood in frameStates():
+      for chunk in renderAxle(stood).split("class=\"turn-name\"")[1 .. ^1]:
+        let
+          said = chunk[0..<chunk.find("</text>")]
+          name = said[said.find('>') + 1 .. ^1]
+        if name notin told:
+          told.add name
+    check told.len == 2 * MOST_TURN  # Every size of turn, either way.
+    for name in told:
+      let words = name.split(' ')
+      check words[^1] in ["clockwise", "anticlockwise"]
+      check "right" notin words
+      check "left" notin words
