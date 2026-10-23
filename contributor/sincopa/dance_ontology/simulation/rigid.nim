@@ -1939,8 +1939,8 @@ func roomAt*(couple: Couple, pose: Pose, i: int): float =
     result = min(result, freedom(couple.rig.range[Dof.Wrist], pose.wrist[k], false))
 
 func restStance*(rig: Rig, apart: float, is_away = false): array[Body, Stance] =
-  ## Where couple start.  Same-name pair is built Face-to-back: face to face its two
-  ## connections lie through each other, so couple would not collect it there.
+  ## Where couple start.  Same-name pair is built Face-to-back, where its two connections
+  ## run parallel and cross nothing; face to face they cross, one over other (rule 31).
   result = facing(rig, apart)
   if is_away: result = turned(result, Body.Two, 0.5)
 

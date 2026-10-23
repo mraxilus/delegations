@@ -216,9 +216,9 @@ proc floorClaim(): string =
 proc pairHolds(): string =
   ## Tabulate both two-hand holds at every band, follow turned.
   result.add "## Both hands held\n\n"
-  result.add prose(&"L-r.R-l rests {restName(false)}; L-l.R-r rests {restName(true)} " &
-    &"({restName(false)} its two connections lie through each other), and its turns count " &
-    "from there.")
+  result.add prose(&"L-r.R-l rests {restName(false)}.  L-l.R-r rests {restName(true)}, where " &
+    "its two connections run parallel and cross nothing, and its turns count from there.  " &
+    &"{restName(false)}, the two connections cross, one over the other (rule 31).")
   for (links, is_away, name) in [
       (twoLinks(Arm.Left, Arm.Right, Arm.Right, Arm.Left), false, "L-r.R-l"),
       (twoLinks(Arm.Left, Arm.Left, Arm.Right, Arm.Right), true,

@@ -278,8 +278,9 @@ positive; for L-r the wrap way is negative and the lock way positive.
 
 ## Both hands held
 
-L-r.R-l rests Face-to-face; L-l.R-r rests Face-to-back (Face-to-face its two connections lie through
-each other), and its turns count from there.
+L-r.R-l rests Face-to-face.  L-l.R-r rests Face-to-back, where its two connections run parallel and
+cross nothing, and its turns count from there.  Face-to-face, the two connections cross, one over
+the other (rule 31).
 
 ### L-r.R-l, low
 
