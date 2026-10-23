@@ -8,7 +8,7 @@
 ##     and over-cautious by at most one centimetre right at cap's rim.
 ##   Against its own body arm is allowed to press: clearance asked is
 ##     part's radius alone, so link's axis may touch skin.
-##     Shoulder joint itself sits only three centimetres outside torso,
+##     Shoulder joint itself sits only 8 mm outside torso,
 ##     which is less than limb's radius, so nothing else lets arm hang.
 ##     Cost: arm can sink half its thickness into its own chest.  Accepted
 ##       -- flesh gives about that much, and alternative refuses standing.

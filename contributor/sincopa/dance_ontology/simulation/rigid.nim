@@ -183,7 +183,7 @@ type
                         ## both waists and every shoulder girdle.
     most*: float  ## Nought outside every ease, one at some end, more past it.
     whose*: Hand  ## Arm it sits at, where it is arm's.
-    what*: string  ## Which joint: freedom's name, `waist` or `girdle`.
+    what*: string  ## Which joint: freedom's name, `waist`, `collar Fore` or `collar Up`.
 
 
 
@@ -378,8 +378,9 @@ const
   TRUNK_BIT = 1'u64  ## Torso, neck and head.
   ARM_BIT: array[Body, uint64] = [2'u64, 4'u64]  ## Lead's arms, follow's arms.
   FACE_BIT = 8'u64  ## Faces, which meet arms and partner's girdles alone, since own girdles share
-                   ## their group.  Trunks keep heads apart, and two faces of couple chest to chest
-                   ## overlap 2 cm, computed from tape, where dancers turn heads aside.
+                   ## their group.  Trunks keep heads apart: chest to chest, two faces of couple
+                   ## stand 9.5 mm apart, computed from tape (`stadium`, `faceCapsule`), so no
+                   ## face meets another.
   EVERY = high(uint64)  ## Meets everything.
 
 func ownGroup(who: Body): cint =

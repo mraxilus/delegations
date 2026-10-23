@@ -70,7 +70,7 @@ func degrees*(radians: float): float = radians * 180.0 / PI
 
 
 proc toAche(couple: Couple, who: Body, arm: Arm): Ache =
-  ## Read one arm's six joints, each against its own two ends.
+  ## Read one arm's five degrees of freedom (`Dof`), each against its own two ends.
   ##   Twist's ends are swapped for left arm, as `twistEnds` has it, so range
   ##     quoted here is arm's own rather than rig's unmirrored one.
   let

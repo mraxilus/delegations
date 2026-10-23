@@ -22,8 +22,9 @@
 ##         from wrist crease, about 30 degrees toward palm.  Derived: no study measures
 ##         that distance.
 ##       Shoulder extension 50-60 degrees and horizontal abduction 40-45 are
-##         held to 45 behind frontal plane; adduction across body to
-##         45 past sagittal plane; humeral rotation 90 in and 105 out, with
+##         held to 45 behind frontal plane; adduction across body to 130
+##         past sagittal plane, cap that never binds, since trunk stops arm
+##         first (`ACROSS_UPPER`); humeral rotation 90 in and 105 out, with
 ##         ease of 25 at either end, so that rotation costs nothing to 65 in
 ##         and 80 out (AAOS: 70 and 90) and is refused past 90 and 105 (AMA
 ##         Guides: 90 in; Boone and Azen 1979: 104 out) -- tables disagree by
