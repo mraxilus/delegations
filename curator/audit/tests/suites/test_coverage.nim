@@ -8,8 +8,8 @@ import ./fixtures
 
 
 const
-  FACE = "@font-face { src: url(NotoSans-Regular.ttf); }"
-    ## Page line naming one store face, Noto Sans, which maps no arrow.
+  FONT_FACE = "@font-face { src: url(NotoSans-Regular.ttf); }"
+    ## Page line naming one store font face, Noto Sans, which maps no arrow.
   MATH = "@font-face { src: url(NotoSansMath-Regular.ttf); }"
     ## Page line naming Noto Sans Math, which maps arrows Noto Sans lacks.
   PAGE = DIRECTORY_ALPHA & "/pages/index.html"  ## Page fixture project carries.
@@ -18,7 +18,7 @@ const
 
 
 func ranges(file: string): seq[Slice[int]] =
-  ## Read ranges store row of face spells, as slices.
+  ## Read ranges store row of font face spells, as slices.
   for (name, _, _, ranges) in ASSETS:
     if name == file: return ranges.toRanges
 
@@ -36,9 +36,11 @@ func codepointsReported(tree: Tree): seq[int] =
 
 
 suite "Coverage":
-  test "character no face project ships covers is reported, by file, line and codepoint":
+  test "character no font face project ships covers is reported, by file, line and codepoint":
     let
-      tree = treeGood().with(entry(PAGE, "<style>" & FACE & "</style>\n<p>café</p>\n<p>⇄</p>\n"))
+      tree = treeGood().with(
+        entry(PAGE, "<style>" & FONT_FACE & "</style>\n<p>café</p>\n<p>⇄</p>\n"),
+      )
       found = tree.checkCoverage(DIRECTORY_ALPHA)
     check found.len == 1  # `é` is Noto Sans's, `⇄` is nobody's here (Article X.8)
     check found[0].path == PAGE
@@ -46,18 +48,18 @@ suite "Coverage":
     check found[0].message.endsWith("got `U+21C4` for `⇄`.")
 
 
-  test "faces merge by codepoint range, so character any face of project covers passes":
-    # X.8 merges faces where none covers everything; Noto Sans Math holds what Noto Sans lacks.
+  test "font faces merge by codepoint range, so character any font face of project covers passes":
+    # X.8 merges font faces where none covers everything; Noto Sans Math holds what Noto Sans lacks.
     let tree = treeGood().with(
-      entry(PAGE, "<style>" & FACE & "</style>\n<p>⇄</p>\n"),
-      entry(DIRECTORY_ALPHA & "/src/faces.nim", "const MATH = \"" & MATH & "\"\n"),
+      entry(PAGE, "<style>" & FONT_FACE & "</style>\n<p>⇄</p>\n"),
+      entry(DIRECTORY_ALPHA & "/src/font_faces.nim", "const MATH = \"" & MATH & "\"\n"),
     )
     check tree.checkCoverage(DIRECTORY_ALPHA).len == 0  # merged by range (Article X.8)
 
 
   test "reference reads as character it names, entities such as `&uarr;` among them":
     let
-      page = "<style>" & FACE & "</style>\n<p>&uarr;</p>\n<p>&#8644;</p>\n<p>&#x21c4;</p>\n" &
+      page = "<style>" & FONT_FACE & "</style>\n<p>&uarr;</p>\n<p>&#8644;</p>\n<p>&#x21c4;</p>\n" &
         "<p>&lang;</p>\n"
       found = treeGood().with(entry(PAGE, page)).checkCoverage(DIRECTORY_ALPHA)
     check found.mapIt(it.line) == @[2, 3, 4, 5]
@@ -70,14 +72,14 @@ suite "Coverage":
   test "reference naming ASCII, name outside table and number past Unicode read as nothing":
     # `&amp;` names ASCII, which check never reads; `&check;` came after HTML 4.01, and `&` in
     #   most code opens no reference, so name outside table is unread rather than reported.
-    let page = "<style>" & FACE & "</style>\n<p>&amp; &lt; &#42; &check; &#x110000; &#; &#xzz;" &
-      " &uarr</p>\n"
+    let page = "<style>" & FONT_FACE & "</style>\n<p>&amp; &lt; &#42; &check; &#x110000; " &
+      "&#; &#xzz; &uarr</p>\n"
     check treeGood().with(entry(PAGE, page)).checkCoverage(DIRECTORY_ALPHA).len == 0
 
 
   test "C and C++ take address with `&`, so reference there is unread":
     let tree = treeGood().with(
-      entry(PAGE, "<style>" & FACE & "</style>\n"),
+      entry(PAGE, "<style>" & FONT_FACE & "</style>\n"),
       entry(DIRECTORY_ALPHA & "/src/shim.cpp", "auto mark = &harr;\n"),
       entry(DIRECTORY_ALPHA & "/src/page.nim", "const MARK = \"&harr;\"\n"),
     )
@@ -90,7 +92,7 @@ suite "Coverage":
     let
       source = "# ⇄ marks place.\nconst MARK = \"⇄\"  # ⇄ marks place.\n#[ ⇄ ]#\n"
       tree = treeGood().with(
-        entry(PAGE, "<style>" & FACE & "</style>\n<!-- ⇄ marks place. -->\n"),
+        entry(PAGE, "<style>" & FONT_FACE & "</style>\n<!-- ⇄ marks place. -->\n"),
         entry(DIRECTORY_ALPHA & "/src/page.nim", source),
       )
       found = tree.checkCoverage(DIRECTORY_ALPHA)
@@ -103,7 +105,7 @@ suite "Coverage":
     # Fixture holds character to prove its absence; record describes page. Markdown that is
     #   no record may be rendered into page, as `pga_benchmark` renders its proposals.
     let tree = treeGood().with(
-      entry(PAGE, "<style>" & FACE & "</style>\n"),
+      entry(PAGE, "<style>" & FONT_FACE & "</style>\n"),
       entry(DIRECTORY_ALPHA & "/tests/suites/test_marks.nim", "const MARK = \"⇄\"\n"),
       entry(DIRECTORY_ALPHA & "/design/README.md", "# Design\n\nPlace mark is ⇄.\n"),
       entry(DIRECTORY_ALPHA & "/proposals/marks.md", "# Marks\n\nPlace mark is ⇄.\n"),
@@ -112,29 +114,30 @@ suite "Coverage":
     check found.mapIt(it.path) == @[DIRECTORY_ALPHA & "/proposals/marks.md"]
 
 
-  test "faces are store files page sources name, outside tests and records":
+  test "font faces are store files page sources name, outside tests and records":
     let tree = treeGood().with(
-      entry(PAGE, "<style>" & FACE & "</style>\n"),
-      entry(DIRECTORY_ALPHA & "/src/faces.nim", "const MATH = \"" & MATH & "\"\n"),
-      entry(DIRECTORY_ALPHA & "/tests/test_faces.nim", "const NOT = \"NotoSerif-Italic.ttf\"\n"),
+      entry(PAGE, "<style>" & FONT_FACE & "</style>\n"),
+      entry(DIRECTORY_ALPHA & "/src/font_faces.nim", "const MATH = \"" & MATH & "\"\n"),
+      entry(DIRECTORY_ALPHA & "/tests/test_alpha.nim", "const NOT = \"NotoSerif-Italic.ttf\"\n"),
     ).replaced(DIRECTORY_ALPHA & "/README.md", "# Alpha\n\nShips no `NotoSans-Bold.ttf`.\n")
-    check tree.facesNamed(DIRECTORY_ALPHA) == @["NotoSans-Regular.ttf", "NotoSansMath-Regular.ttf"]
+    check tree.fontFacesNamed(DIRECTORY_ALPHA) ==
+      @["NotoSans-Regular.ttf", "NotoSansMath-Regular.ttf"]
 
 
-  test "project naming no store face is skipped":
-    # Nothing tells page shipping no face apart from tool printing non-ASCII text (header).
+  test "project naming no store font face is skipped":
+    # Nothing tells page shipping no font face apart from tool printing non-ASCII text (header).
     let tree = treeGood().with(entry(PAGE, "<p>⇄</p>\n"))
-    check tree.facesNamed(DIRECTORY_ALPHA).len == 0
-    check tree.characters(DIRECTORY_ALPHA).len == 1  # read, then skipped for want of faces
+    check tree.fontFacesNamed(DIRECTORY_ALPHA).len == 0
+    check tree.characters(DIRECTORY_ALPHA).len == 1  # read, then skipped for want of font faces
     check tree.checkCoverage(DIRECTORY_ALPHA).len == 0
 
 
   test "one finding for each codepoint on line, however often line spells it":
-    let page = "<style>" & FACE & "</style>\n<p>⇄ ⇄ &#8644; ↑</p>\n"
+    let page = "<style>" & FONT_FACE & "</style>\n<p>⇄ ⇄ &#8644; ↑</p>\n"
     check treeGood().with(entry(PAGE, page)).codepointsReported == @[0x21C4, 0x2191]
 
 
-  test "character is reported exactly where no range of shipped faces holds it":
+  test "character is reported exactly where no range of shipped font faces holds it":
     # Law at every bound of Noto Sans's ranges, both sides: bound passes, its neighbour outside
     #   is reported unless another range holds it. Surrogates encode nothing, so they are no
     #   sample; ASCII is never read.
@@ -147,7 +150,7 @@ suite "Coverage":
         if not held.anyIt(codepoint in it): expected.add codepoint
     check samples.len >= SAMPLES_FLOOR  # guard kept most bounds
     check expected.len > 0  # some neighbour lies outside every range, so law runs both ways
-    var page = "<style>" & FACE & "</style>\n"
+    var page = "<style>" & FONT_FACE & "</style>\n"
     for codepoint in samples: page.add $Rune(codepoint) & "\n"
     let reported = treeGood().with(entry(PAGE, page)).codepointsReported
     check reported.toHashSet == expected.toHashSet  # reported iff no range holds it (Article X.8)
@@ -157,9 +160,9 @@ suite "Coverage":
   test "source passed before its comments are scanned reports as full reading does":
     # Check decides coverage over whole source first, comments included, and scans comments
     #   only where something is uncovered. Reference reads every character outside comments,
-    #   then keeps what no face covers; both must agree.
+    #   then keeps what no font face covers; both must agree.
     let tree = treeGood().with(
-      entry(PAGE, "<style>" & FACE & "</style>\n<!-- ⇄ -->\n<p>é ⇄ &uarr;</p>\n"),
+      entry(PAGE, "<style>" & FONT_FACE & "</style>\n<!-- ⇄ -->\n<p>é ⇄ &uarr;</p>\n"),
       entry(DIRECTORY_ALPHA & "/src/page.nim", "# ⇄ ↑\nconst A = \"é\"  # ⇄\nconst B = \"&uarr;\""),
       entry(DIRECTORY_ALPHA & "/src/plain.nim", "const C = \"é ü\"  # ⇄ in comment alone\n"),
     )

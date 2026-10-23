@@ -1,16 +1,16 @@
-## Hold each character beyond ASCII that page sources of project use to faces project ships
+## Hold each character beyond ASCII that page sources of project use to font faces project ships
 ##   (Article X.8): static half of coverage that article asks for.
-##   X.8 merges faces by codepoint range where none covers everything, then renders each
+##   X.8 merges font faces by codepoint range where none covers everything, then renders each
 ##     codepoint against `.notdef`. Render needs built page and browser, and static pass has
-##     neither; this half reads what sources write against what each face's `cmap` maps, which
-##     store row carries (`assets.nim`). Character no face of project maps falls to face viewer
-##     may lack, which X.8 forbids.
+##     neither; this half reads what sources write against what each font face's `cmap` maps, which
+##     store row carries (`assets.nim`). Character no font face of project maps falls to font face
+##     viewer may lack, which X.8 forbids.
 ##
-##   Faces of project: every store face its page sources name by file. Store refuses file no
-##     row declares, so naming file is only way project reaches face.
-##     Union over project, never per page or per stack: question is whether any face project
-##     ships covers character, and which face cascade picks is render's business.
-##     Cost: character no stack of its element reaches passes, where face covering it serves
+##   Font faces of project: every store font face its page sources name by file. Store refuses
+##     file no row declares, so naming file is only way project reaches font face.
+##     Union over project, never per page or per stack: question is whether any font face project
+##     ships covers character, and which font face cascade picks is render's business.
+##     Cost: character no stack of its element reaches passes, where font face covering it serves
 ##     other stack or desktop atlas alone.
 ##   Page source: every file of project outside `tests/`, records aside. Pages are built from
 ##     Nim, TypeScript, Markdown and JSON as well as from `pages/` and `mockups/`, and static
@@ -25,12 +25,12 @@
 ##     C and C++ read none: `&name;` there takes address, and their text reaches screen
 ##     through Dear ImGui, which decodes no reference.
 ##
-##   Cost: project naming face through computed name, e.g. `"NotoSans-" & weight`, ships face
-##     check does not see, so characters only that face covers read as uncovered.
-##   Cost: page shipping no face at all is unseen: project naming no store face is skipped,
-##     since nothing tells its page apart from tool printing non-ASCII text.
+##   Cost: project naming font face through computed name, e.g. `"NotoSans-" & weight`, ships
+##     font face check does not see, so characters only that font face covers read as uncovered.
+##   Cost: page shipping no font face at all is unseen: project naming no store font face is
+##     skipped, since nothing tells its page apart from tool printing non-ASCII text.
 ##   Cost: default-ignorable codepoint, e.g. `U+FE0F`, draws nothing, yet is reported where no
-##     face maps it. None stands in tree; first one adds exemption with its test.
+##     font face maps it. None stands in tree; first one adds exemption with its test.
 
 {.experimental: "strictFuncs".}
 
@@ -106,9 +106,10 @@ const
     ## Named character references HTML 4.01 defined (section 24), each with codepoint WHATWG
     ## HTML maps it to (section 13.5), which is what browser draws.
     ##   Two differ from HTML 4.01: `lang` and `rang`, which WHATWG moved off `2329` and `232a`.
-    ##   Names WHATWG added since are unread, so `&check;` passes whatever faces ship.
-  FACES = ASSETS.mapIt((file: it[0], ranges: it[3].toRanges))
-    ## Every face store declares, with ranges its row spells read at compile time (Article II.2).
+    ##   Names WHATWG added since are unread, so `&check;` passes whatever font faces ship.
+  FONT_FACES = ASSETS.mapIt((file: it[0], ranges: it[3].toRanges))
+    ## Every font face store declares, with ranges its row spells read at compile time
+    ##   (Article II.2).
 
 
 func referenced(body: string): Option[int] =
@@ -182,9 +183,9 @@ func characters*(tree: Tree, directory: string): seq[Character] =
     if e.kind.isSome and e.path.isSourcePage(directory): result.add e.charactersOutside
 
 
-func facesNamed*(tree: Tree, directory: string): seq[string] =
-  ## Read store faces that page sources of project name by file, in store order.
-  for (file, _) in FACES:
+func fontFacesNamed*(tree: Tree, directory: string): seq[string] =
+  ## Read store font faces that page sources of project name by file, in store order.
+  for (file, _) in FONT_FACES:
     for e in tree:
       if e.kind.isSome and e.path.isSourcePage(directory) and file in e.content:
         result.add file
@@ -192,16 +193,16 @@ func facesNamed*(tree: Tree, directory: string): seq[string] =
 
 
 func checkCoverage*(tree: Tree, directory: string): seq[Finding] =
-  ## Report each character page source of project uses that no face project ships covers.
-  ##   Project naming no store face is skipped; header gives cost.
+  ## Report each character page source of project uses that no font face project ships covers.
+  ##   Project naming no store font face is skipped; header gives cost.
   ##   One finding for each codepoint on line, however often line spells it.
-  ##   Source whose every character faces cover is passed before its comments are scanned:
-  ##     faces cover nearly everything, and scan is most of check's cost (PROVENANCE.md).
-  let faces = tree.facesNamed(directory)
-  if faces.len == 0: return
+  ##   Source whose every character font faces cover is passed before its comments are scanned:
+  ##     font faces cover nearly everything, and scan is most of check's cost (PROVENANCE.md).
+  let font_faces = tree.fontFacesNamed(directory)
+  if font_faces.len == 0: return
   var ranges: seq[Slice[int]]
-  for (file, held) in FACES:
-    if file in faces: ranges.add held
+  for (file, held) in FONT_FACES:
+    if file in font_faces: ranges.add held
 
   var
     is_held: Table[int, bool]  # Codepoint decided once, since project spells few many times.
@@ -223,6 +224,7 @@ func checkCoverage*(tree: Tree, directory: string): seq[Finding] =
       result.add finding(
         character.path,
         character.line,
-        "Character no face project ships covers, so face viewer may lack draws it (Article " &
-          "X.8); got `" & character.codepoint.toNotation & "` for `" & character.spelling & "`.",
+        "Character no font face project ships covers, so font face viewer may lack draws it " &
+          "(Article X.8); got `" & character.codepoint.toNotation & "` for `" &
+          character.spelling & "`.",
       )
