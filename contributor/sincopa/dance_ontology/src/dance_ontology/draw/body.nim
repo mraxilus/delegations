@@ -114,10 +114,10 @@ func slotHand*(arm: Arm, level: Option[Level], modifier: Option[Modifier]):
 
 
 func sendsHold*(level: Option[Level], modifier: Option[Modifier]): Option[Sends] =
-  ## Get which way round body this hold sends its line, where rules 4 to
-  ## 6 say anything; none where nothing is said and short way is taken.
+  ## Get which way round body this hold sends its line, where rules 4 and
+  ## 5 say anything; none where no rule sends it, and short way is taken.
   let settled = settleHold(level, modifier)
-  if settled.isSome: some settled.get.sends else: none(Sends)
+  if settled.isSome: settled.get.sends else: none(Sends)
 
 
 func handBearing*(facing: float, arm: Arm, wind = 0.0): float =

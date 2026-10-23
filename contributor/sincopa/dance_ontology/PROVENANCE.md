@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 1976b11a25eb600c |
+| Rules   | 00884b0317038c80 |
 | Pruned  | f430fbb5863e817e9aff5c07df9f216e8baa16ec |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
@@ -666,15 +666,17 @@ passes are drawn, between them, as a line through that body. `oneWayRound` in `r
 the way round once for a whole move, and every frame of the move uses it. Verified by `checkRules`,
 which samples each blend part way between two frames.
 
-**A hand leaves its side only when its hold names a level and a modifier (rules 2 to 6).** A level
+**A hand leaves its side only when its hold names a level and a modifier (rules 2 to 5).** A level
 alone does not say which side a hand goes to, so the hold must say lock or wrap as well. A hand
 settles in one of six places, each a bearing off its own dancer's facing (rule 3). `SLOT_OFFSET` in
 `body.nim` sets them 44 degrees apart, and two marks need 34.9 degrees, so no two marks touch.
 
 Both wraps go round the front to the front of the other hand, and a low lock goes round the back
-(rules 4 and 5). The drawing sends a high lock round the back too, as rule 6 asked. The Architect
-retired rule 6 on 2026-10-22, and #697 holds the change. Verified by `checkRules`, which checks
-where each hold settles and which way its route sets off.
+(rules 4 and 5). A high lock folds the arm in front, so its hand settles in the front slot of its
+own side (Architect, 2026-10-22). No rule sends its line round a body, so the line takes the short
+way. Rule 6 sent it round the back, and the Architect retired it. Verified by `checkRules`, which
+checks where each hold settles, and which way its route sets off where a rule sends it. Red first on
+2026-10-22: the check failed against the old settle table, which put a high lock in the back slot.
 
 **A lock or a wrap needs its line to go round the body (rule 7), except a high lock (rule 41).** On
 the four single holds, at quarter turns of the follow, the larger arc takes seven values. They are
@@ -694,17 +696,21 @@ high lock, which would still refuse the arcs below it, where rule 41 refuses non
 
 Verified by `checkRules`, which draws a high lock on each of the four single holds at each quarter
 turn of the follow. It prints how many hug less than rule 7 asks, and at which arcs. On 2026-10-22
-it was eight of sixteen, at 132, 135 or 141 degrees. The check demands at least one such, so it
-cannot pass while it holds nothing that rule 7 does not. Red first on 2026-10-22: before the fix,
-the drawing refused a high lock on Left to left with the follow turned a quarter.
+it was all sixteen, at 0, 48, 51, 87 or 90 degrees, because the line takes the short way. The check
+demands at least one such, so it cannot pass while it holds nothing that rule 7 does not. Red first
+on 2026-10-22: before the fix, the drawing refused a high lock on Left to left with the follow
+turned a quarter.
 
 Cost: the drawing refuses no high lock for its arc. The simulation reads a high lock on the arm of
 the follow at half and whole turns (`simulation/verdicts.md`), and no law holds those rows. Nothing
 asks it about a high lock at a quarter turn, so nothing says which of the drawn ones a couple can
 dance. No page draws a lock or a wrap yet.
 
-Between quarter turns, some locks that `isDanceable` admits find no route, high and low alike. The
-build then fails on an empty value, and does not refuse with a message (#688).
+Between quarter turns, a high lock finds a route at each whole degree that the follow turns, on each
+single hold. Verified by `checkRules`, which routes all of them. Red first on 2026-10-22, against
+the back way of rule 6, which found no route on Left to right from 275 to 298 degrees. Some low
+locks that `isDanceable` admits find no route between quarter turns. The build then fails on an
+empty value, and does not refuse with a message (#688).
 
 **Above takes no lock and no wrap, and its line passes over the body (rule 8).** Above is over the
 head, so from overhead nothing is under it, and `straightReach` draws its line straight. Verified by

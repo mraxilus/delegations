@@ -36,6 +36,7 @@
 
 import std/[options, os, sequtils, sets, strutils, tables, unicode]
 import ./[assets, comments, findings, kinds, layout]
+from ./font_files import toNotation
 
 
 type Character* = object  ## Define one character page source uses: where, which, as written.
@@ -188,13 +189,6 @@ func facesNamed*(tree: Tree, directory: string): seq[string] =
       if e.kind.isSome and e.path.isSourcePage(directory) and file in e.content:
         result.add file
         break
-
-
-func toNotation(codepoint: int): string =
-  ## Render codepoint as Unicode writes it, i.e. `U+` and at least four hex digits.
-  var digits = codepoint.toHex(6)
-  while digits.len > 4 and digits[0] == '0': digits = digits[1 .. ^1]
-  "U+" & digits
 
 
 func checkCoverage*(tree: Tree, directory: string): seq[Finding] =
