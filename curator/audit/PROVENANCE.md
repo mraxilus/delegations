@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 125f0baf69b4f5ec |
+| Rules   | c523b64950d1f7de |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 | Pruned  | ab8fb063b62bb03ba9fd7f2964a1866b3862909b |
 
@@ -2202,6 +2202,10 @@ passes once `stop_hook_active` is set, so a blocked turn cannot loop. It counts 
 as a post only where the call carried a body, as the `body` hook does. So a label or a draft
 update ends no turn with a sign-off.
 
+- **A refused message is mended by a diff of each error alone.** The message stands on screen
+  once the hook reads it, so each line sent again reads twice. The reply passes unread, since
+  `stop_hook_active` is set, so the `-` line that repeats a wrong phrase refuses nothing.
+  Rejected: corrected lines alone, which a delegate read as each whole paragraph sent again.
 - Cost: in a project thread, the Architect reads a reply, which is a tool call. `stop` reads
   only the text of the turn, so it holds the shape of a sign-off in that text alone. Reading
   holds the shape of the reply, as it does outside Claude Code. Verified by hand through the
