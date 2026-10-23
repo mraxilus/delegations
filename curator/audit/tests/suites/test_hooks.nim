@@ -272,12 +272,14 @@ suite "Hooks":
       .messages.anyIt("stands alone" in it)
 
 
-  test "stop hook asks for corrected lines alone, never whole message again":
-    # Message stands on screen once hook reads it, so resent message reads twice (D1 of #570).
+  test "stop hook asks for diff of each error alone, never whole message or its lines again":
+    # Message stands on screen once hook reads it, so resent message reads twice (D1 of #570),
+    #   and so does each paragraph sent again around one mended phrase.
     let reason = reasonStop(checkEndTurn("Pushed.\n", BRANCH) & checkNumbersBare("See #12.\n"))
     check reason.startsWith("Mend message that ends this turn (GUIDE.md, Output contract).")
-    check "Reply with corrected lines alone" in reason
-    check "never send it or its sign-off again" in reason
+    check "Reply with a diff of each error alone: one `diff` block" in reason
+    check "each wrong phrase after `-`, that phrase mended after `+`" in reason
+    check "never send it, a line of it, or its sign-off again" in reason
     check reason.splitLines.len == 3  # reason line, then one line for each finding
     check "got neither" in reason.splitLines[1]
 
