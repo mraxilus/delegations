@@ -49,15 +49,15 @@ const HEAD_BODY = """
       sphere. Drag the stage to turn the view. Scroll to zoom.</p>
     <p class="lede">Below the stage, each still card of the Reference appears in
       that page's order, with the simulation's still beside the drawing. For each card the
-      simulation turns the dancer that the card turns, lifts the joined hands over that
-      dancer's crown, and then lets the pose settle. An orbit is the dancer at the centre
+      simulation turns the dancer that the card turns, and lifts the joined hands over that
+      dancer's crown. Then it lets the pose settle. An orbit is the dancer at the centre
       turning the other way, so the hands go over their crown. Where that does not hold, it
       plans every arm through the turn, and the engine stands each moment of the plan. A wound still
       keeps the distance where the pose carries the least strain, and a planned still keeps
-      the distance of its plan. Click a card to put
-      it on the stage, and the arrow buttons or the
-      arrow keys step from one card to the next. One list holds the stills first and
-      the sweeps after them.</p>
+      the distance of its plan.</p>
+    <p class="lede">Click a card to put it on the stage. The arrow buttons or the arrow keys
+      step from one card to the next. One list holds the stills first and the sweeps after
+      them.</p>
   </header>
 
   <div class="rigwrap">
