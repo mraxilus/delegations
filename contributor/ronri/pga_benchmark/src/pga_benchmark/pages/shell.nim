@@ -1,12 +1,12 @@
-## Assemble page from committed shell: title, body and faces filled in, nothing else.
+## Assemble page from committed shell: title, body and font faces filled in, nothing else.
 ##   Every page this project publishes is one shell and one body. Shell is hand-written HTML in
 ##     `pages/shell.html`, committed and checked as any file is; body is rendered here from
 ##     committed files, so page says only what they say, and built page is one long line
 ##     under ignored `build/` (CONTRIBUTOR.md, "Pages and assets").
-##   Shell carries tokens: `@TITLE@`, `@BODY@`, and one `@EMBED:<face>@` per face it draws
-##     with. Faces are named here and fetched by `koch fetch-assets`, which checks each digest
-##     against repository's store (`curator/audit/src/assets.nim`); bytes are inlined, so page
-##     names no face viewer may lack (Article X.8).
+##   Shell carries tokens: `@TITLE@`, `@BODY@`, and one `@EMBED:<file>@` per font face it
+##     draws with. Font faces are named here and fetched by `koch fetch-assets`, which checks
+##     each digest against repository's store (`curator/audit/src/assets.nim`); bytes are
+##     inlined, so page names no font face viewer may lack (Article X.8).
 ##   Page holds no document skeleton, since publish host wraps it in its own; `hosted` spells
 ##     that skeleton, so `drive` renders page as viewer receives it.
 ##   Interaction is CSS: tabs, filters and toggles are inputs read by `:has()` rules, rows open
@@ -17,8 +17,8 @@
 ##     font leaves mark beside letter (`PROVENANCE.md`, Pages). `htmlMarked` boxes each such letter
 ##     with its marks; shell draws bar where font draws its own, and clips mark font left beside.
 ##
-##   Cost: whole Noto faces inlined as base64 weigh about 4.4 MB in each page; published page
-##     may hold sixteen megabytes.
+##   Cost: whole Noto font faces inlined as base64 weigh about 4.4 MB in each page; published
+##     page may hold sixteen megabytes.
 
 {.experimental: "strictFuncs".}
 
@@ -31,7 +31,7 @@ import ../[changes, markdown]
 const
   TOKEN_TITLE* = "@TITLE@"  ## Token page's title replaces.
   TOKEN_BODY* = "@BODY@"  ## Token rendered body replaces.
-  TOKEN_EMBED* = "@EMBED:"  ## Opening of token one face replaces, closed by `@`.
+  TOKEN_EMBED* = "@EMBED:"  ## Opening of token one font face replaces, closed by `@`.
   MARKS_UNDER = [0x0331, 0x0332]  ## Bar marks font draws under base: macron below, low line.
   MARKS_OVER = [0x0304, 0x0305]  ## Bar marks font draws over base: macron, overline.
   BOLD_FIRST = 0x1D400  ## First mathematical bold Latin letter, `𝐀`.
@@ -39,7 +39,7 @@ const
   BOLD_LOWER = 0x1D41A  ## Mathematical bold small `𝐚`; capitals stand before it.
   LETTERS_TALL = "bdfhijklt"  ## Small letters whose ascender or dot rises over x-height.
   ELEMENTS_KEPT = ["svg", "script", "style"]  ## Elements whose content passes unmarked.
-  FACES* = [
+  FONT_FACES* = [
     "commit-mono-latin-400-normal.woff2",
     "NotoSans-Regular.ttf",
     "NotoSans-SemiBold.ttf",
@@ -47,9 +47,9 @@ const
     "NotoSansSymbols2-Regular.ttf",
     "NotoSerif-SemiBold.ttf",
   ]
-    ## Faces pages draw with: Article X.8's three families, plus maths and symbols.
+    ## Font faces pages draw with: Article X.8's three families, plus maths and symbols.
     ##   Maths and symbols are what notation needs (`𝐆`, `⟑`, `★`).
-    ##   Each Noto face ships whole, as TrueType of its own release, never as subset (X.8).
+    ##   Each Noto font face ships whole, as TrueType of its own release, never as subset (X.8).
     ##     Commit Mono is no Noto, so its Latin subset stays.
     ##   Same six as `pga_visualiser` page, from same store.
   VIEWS* = [("home", "PGA benchmark"), ("progress", "Progress"), ("docket", "Performance"),
@@ -69,23 +69,24 @@ const
 
 #[ Assembly ]#
 
-func facesAsked*(shell: string): seq[string] =
-  ## List faces shell's embed tokens name, in order of first use.
+func fontFacesAsked*(shell: string): seq[string] =
+  ## List font faces shell's embed tokens name, in order of first use.
   var at = shell.find(TOKEN_EMBED)
   while at >= 0:
     let close = shell.find('@', at + TOKEN_EMBED.len)
     if close < 0: break
-    let face = shell[at+TOKEN_EMBED.len..<close]
-    if face notin result: result.add face
+    let font_face = shell[at+TOKEN_EMBED.len..<close]
+    if font_face notin result: result.add font_face
     at = shell.find(TOKEN_EMBED, close + 1)
 
 
-func mediaType(face: string): string =
-  ## Name media type data URL of `face` declares, read off its extension.
+func mediaType(font_face: string): string =
+  ## Name media type data URL of `font_face` declares, read off its extension.
   ##   Type stated matches `format()` beside it in shell, so two never disagree about one file.
-  if face.endsWith(".ttf"): "font/ttf"
-  elif face.endsWith(".woff2"): "font/woff2"
-  else: raise newException(ValueError, "Face is TrueType or WOFF2; got `" & face & "`.")
+  if font_face.endsWith(".ttf"): "font/ttf"
+  elif font_face.endsWith(".woff2"): "font/woff2"
+  else:
+    raise newException(ValueError, "Font face is TrueType or WOFF2; got `" & font_face & "`.")
 
 
 func htmlMarked*(html: string): string =
@@ -167,13 +168,13 @@ func htmlMarked*(html: string): string =
         break
 
 
-func assemble*(shell, title, body: string; faces: Table[string, string]): string =
-  ## Fill shell: title escaped, body as rendered with marks boxed, each face as base64 data.
+func assemble*(shell, title, body: string; font_faces: Table[string, string]): string =
+  ## Fill shell: title escaped, body as rendered with marks boxed, each font face as base64 data.
   result = shell.replace(TOKEN_TITLE, escapeHtml(title)).replace(TOKEN_BODY, htmlMarked(body))
-  for face, bytes in faces.pairs:
+  for font_face, bytes in font_faces.pairs:
     result = result.replace(
-      TOKEN_EMBED & face & "@",
-      "data:" & mediaType(face) & ";base64," & encode(bytes),
+      TOKEN_EMBED & font_face & "@",
+      "data:" & mediaType(font_face) & ";base64," & encode(bytes),
     )
 
 

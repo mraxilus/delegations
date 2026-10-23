@@ -1,30 +1,30 @@
 ## Judge what harness found when it rendered pages, and hold it to control that proves it sees.
 ##   Harness (`tools/drive/`) renders each page and writes, as data, every character beyond ASCII
-##     that face of system would draw, and every face browser does not load. It judges nothing:
-##     wording and verdict are here, where suites reach them (Article II.9).
+##     that font face of system would draw, and every font face browser does not load. It judges
+##     nothing: wording and verdict are here, where suites reach them (Article II.9).
 ##   Control is whole document set in this project's body stack, since pages here are whole
-##     documents, and `drive` dresses it with every face as `pages` dresses every page.
+##     documents, and `drive` dresses it with every font face as `pages` dresses every page.
 ##   Control page is positive control of render. Its paragraphs come from fixture
-##     `tests/drive/control_faces.json`. Paragraph marked drawn by system writes character no
-##     shipped face maps under its stack; other paragraph writes one shipped face does map.
-##     Control's expected findings are never page's failure. Expected finding absent is finding
+##     `tests/drive/control_font_faces.json`. Paragraph marked drawn by system writes character no
+##     shipped font face maps under its stack; other paragraph writes one shipped font face does
+##     map. Control's expected findings are never page's failure. Expected finding absent is finding
 ##     instead, since render that misses it is blind; finding control does not expect is one too.
 ##   Fixture lives under `tests/`: static coverage check (`curator/audit/src/coverage.nim`) reads
-##     every file of project outside it, and control's characters are ones no face maps.
+##     every file of project outside it, and control's characters are ones no font face maps.
 ##   Harness names element with id as `<tag>#<id>` (`tools/drive/text.ts`), so control's
 ##     paragraph `han` is `p#han`; misnamed one reads as blind, so drive holds naming too.
 ##   Every page is rendered as publish host serves it, inside host's document skeleton
 ##     (`SKELETON_HOST`), so charset and viewport are what viewer gets.
-##     Host's style sheet is left out: its body stack leads with faces of system, which no file
-##       here may name (X.8). Nothing is lost: element that inherits no stack from page takes
-##       browser's default, also face of system, so drive finds it either way.
+##     Host's style sheet is left out: its body stack leads with font families of system, which
+##       no file here may name (X.8). Nothing is lost: element that inherits no stack from page
+##       takes browser's default, also font family of system, so drive finds it either way.
 
 {.experimental: "strictFuncs".}
 
 import std/[json, os, strutils, unicode]
 from std/xmltree import nil
 
-import ./faces
+import ./font_faces
 
 
 type
@@ -43,7 +43,7 @@ type
 
 
 const
-  CONTROL* = "control_faces"  ## Name control page renders under, beside every page.
+  CONTROL* = "control_font_faces"  ## Name control page renders under, beside every page.
   ASCII_MAX = 0x7F  ## Last codepoint of ASCII, which render never reads.
   SKELETON_HOST* = (
     "<!doctype html><html><head><meta charset=utf8><meta name=viewport " &
@@ -76,9 +76,9 @@ func toParagraphs*(control: JsonNode): seq[ParagraphControl] =
 
 func pageControl*(paragraphs: openArray[ParagraphControl]): string =
   ## Render control as whole document set in body stack pages use, one paragraph each, its
-  ##   stack set inline where it names one; faces are dressing's to add, as on every page.
+  ##   stack set inline where it names one; font faces are dressing's to add, as on every page.
   result = "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n" &
-      "<title>Faces Control</title>\n<style>body { font-family: " & SANS_SERIF &
+      "<title>Font Faces Control</title>\n<style>body { font-family: " & SANS_SERIF &
       "; }</style>\n</head>\n<body>\n"
   for paragraph in paragraphs:
     let style =
@@ -121,11 +121,11 @@ func checkRendered*(
   var seen: seq[FindingExpected]
   for page, document in found.pairs:
     let path = directory / page & ".html"
-    for face in document{"faces"}.getElems:
+    for font_face in document{"faces"}.getElems:
       result.add Finding(
         path: path,
-        message: "@font-face " & face{"family"}.getStr & " " & face{"weight"}.getStr &
-            ": Face does not load; got `" & face{"status"}.getStr & "`.",
+        message: "@font-face " & font_face{"family"}.getStr & " " & font_face{"weight"}.getStr &
+            ": Font face does not load; got `" & font_face{"status"}.getStr & "`.",
       )
     for character in document{"characters"}.getElems:
       let pair = (element: character{"element"}.getStr, codepoint: character{"codepoint"}.getInt)
@@ -134,7 +134,7 @@ func checkRendered*(
         continue
       result.add Finding(
         path: path,
-        message: pair.element & ": Character drawn by face of system; got `" &
+        message: pair.element & ": Character drawn by font face of system; got `" &
             codepointText(pair.codepoint) & "`.",
       )
   let path_control = directory / control & ".html"

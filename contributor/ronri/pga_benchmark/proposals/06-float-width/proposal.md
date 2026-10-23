@@ -45,8 +45,8 @@ places, so that default suits 64 bits alone.
 
 The Architect chose `Coefficient`, `pga.float_width` and `pga.float_tolerance` on 2026-10-06.
 
-- `Coefficient` is the word the library already uses for each slot of a multivector, as the docs
-  of its indexers say.
+- `Coefficient` is the word the library already uses for each element of a multivector, as the
+  docs of its indexers say.
 - `pga.float_width` takes a count of bits, as Nim names `float32` and `float64` by bits.
 - `pga.float_tolerance` sits beside it, since the comparison tolerance follows the width. Both
   share the prefix `float_`, so a reader finds the two together.
@@ -54,7 +54,7 @@ The Architect chose `Coefficient`, `pga.float_width` and `pga.float_tolerance` o
 
 | Name | Why it lost |
 |------|-------------|
-| `Real` | Names a number in mathematics, and not the slot that it fills |
+| `Real` | Names a number in mathematics, and not its use in a multivector |
 | `Scalar` | Is the element of grade zero in the book, so it would name two things |
 | `Float` | Reads as `float` at a glance, and Nim tells the two apart by the case of one letter |
 

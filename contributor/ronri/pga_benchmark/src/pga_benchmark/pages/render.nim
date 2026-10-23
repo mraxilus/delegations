@@ -1,18 +1,19 @@
 ## Judge what harness found when it rendered pages, and hold it to control that proves it sees.
 ##   Harness (`tools/drive/`) renders each page and writes, as data, every character beyond ASCII
-##     that face of system would draw, every face browser does not load, and every pair of
-##     blocks of card that stand closer than 4 px. It judges nothing: wording and verdict are
-##     here, where suites reach them (Article II.9).
+##     that font face of system would draw, every font face browser does not load, and every
+##     pair of blocks of card that stand closer than 4 px. It judges nothing: wording and
+##     verdict are here, where suites reach them (Article II.9).
 ##   Control page is positive control of render. Its paragraphs and cards come from fixture
-##     `tests/fixtures/control_render.json`, built into page through shell, so it ships faces
-##     and styles every page ships. Paragraph marked drawn by system writes character no shipped
-##     face maps under its stack; other paragraph writes one shipped face does map. Card marked
-##     crowded sets inline margin of zero on its second block, which no style of shell outranks;
-##     other card keeps margins shell gives, so it holds shell to spacing each block.
+##     `tests/fixtures/control_render.json`, built into page through shell, so it ships font
+##     faces and styles every page ships. Paragraph marked drawn by system writes character no
+##     shipped font face maps under its stack; other paragraph writes one shipped font face
+##     does map. Card marked crowded sets inline margin of zero on its second block, which no
+##     style of shell outranks; other card keeps margins shell gives, so it holds shell to
+##     spacing each block.
 ##     Control's expected findings are never page's failure. Expected finding absent is finding
 ##     instead, since render that misses it is blind; finding control does not expect is one too.
 ##   Fixture lives under `tests/`: static coverage check (`curator/audit/src/coverage.nim`) reads
-##     every file of project outside it, and control's characters are ones no face maps.
+##     every file of project outside it, and control's characters are ones no font face maps.
 ##     Rejected: control page under `pages/`, where layout admits HTML, since coverage reads it.
 ##   Harness names element with id as `<tag>#<id>`, then its classes (`tools/drive/text.ts`,
 ##     `layout.ts`), so control's paragraph `han` is `p#han` and its card `crowded` is
@@ -116,11 +117,12 @@ func checkRendered*(
   var seen: seq[FindingExpected]
   for page, document in found.pairs:
     let path = directory / page & ".html"
-    for face in document{"faces"}.getElems:
+    for font_face in document{"faces"}.getElems:
       result.add Finding(
         path: path,
-        message: "@font-face " & face{"family"}.getStr & " " & face{"weight"}.getStr &
-            ": Face does not load; got `" & face{"status"}.getStr & "`.",
+        message: "@font-face " & font_face{"family"}.getStr & " " &
+            font_face{"weight"}.getStr & ": Font face does not load; got `" &
+            font_face{"status"}.getStr & "`.",
       )
     for character in document{"characters"}.getElems:
       let pair = (element: character{"element"}.getStr, codepoint: character{"codepoint"}.getInt)
@@ -129,7 +131,7 @@ func checkRendered*(
         continue
       result.add Finding(
         path: path,
-        message: pair.element & ": Character drawn by face of system; got `" &
+        message: pair.element & ": Character drawn by font face of system; got `" &
             codepointText(pair.codepoint) & "`.",
       )
   let path_control = directory / control & ".html"

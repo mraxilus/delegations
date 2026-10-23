@@ -22,8 +22,8 @@
 ##     since library has moved past it.
 ##   Ids carry proposal's name, so list page holds every proposal and contents still lead home.
 ##
-##   Figure paragraph embeds SVG it names, whole, so figure takes page's colours and faces; one
-##     whose file is absent renders as its text, and `drive` names it.
+##   Figure paragraph embeds SVG it names, whole, so figure takes page's colours and font
+##     faces; one whose file is absent renders as its text, and `drive` names it.
 ##
 ##   Argument comes first, as Architect ordered on 2026-10-16: reader meets idea and its cost,
 ##     and appendix holds what checks it.
