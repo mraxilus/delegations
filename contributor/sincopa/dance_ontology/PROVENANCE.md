@@ -477,9 +477,10 @@ caption or a swatch label is a fragment rather than a sentence.
 
 The rest of the subset, from the approved word to the active voice, is read rather than counted.
 
-Verified by `suites/test_marks.nim` over each page of `marks.PAGES`. Both laws were proved able to
-fail on the Reference, 2026-10-18. One sentence lengthened past the bound reddens the page it
-sits on. A seventh sentence added to a full paragraph reddens it too.
+Verified by `suites/test_marks.nim` over each page of `marks.PAGES`, and over the fixed prose of the
+rig viewer. Both laws were proved able to fail on the Reference, 2026-10-18. One sentence lengthened
+past the bound reddens the page it sits on. A seventh sentence added to a full paragraph reddens it
+too.
 
 **The reader of prose steps over a tag that only opens as `p` or `li` does.** A page names each
 drawn element with such a tag, as `path` and `line`. A reader that takes one for a paragraph looks
@@ -500,13 +501,17 @@ the viewer past the bound.
 
 Nothing the law calls touches the document, so a count for both needs no browser.
 
-Some prose is counted by nothing still. `rig_page.nim` writes the fixed prose of the rig viewer into
-its markup, and no law counts it. By the count of `plain.nim`, one paragraph there holds seven
-sentences, and one sentence holds 26 words, measured on 2026-10-08. The Explorer writes what its
-live region says straight into the element, so no law reaches it either. The fourth verdict of the
-viewer opens `Stops at N turns:` and closes with a reason the simulation recorded, so it never
-stands as one whole string. Those reasons come from `hold.says`, and the longest of them holds eight
+**The fixed prose of the rig viewer is counted as the prose of a workbench page is.** `rig_page.nim`
+builds the viewer apart from `marks.PAGES`, so `suites/test_marks.nim` holds its prose in a law of
+its own. The law reads the header and the panel (`HEAD_BODY`), then the cards that `cardsBody` lays
+out from the Reference that the suite writes. The wrapper, the style sheets and the scripts hold no
+prose. Red first: the third paragraph of the header held seven sentences, and one of them held 26
 words.
+
+Some prose is counted by nothing still. The Explorer writes what its live region says straight into
+the element, so no law reaches it. One verdict of the viewer opens `Stops at N turns:` and closes
+with a reason the simulation recorded, so it never stands as one whole string. Those reasons come
+from `hold.says`, and the longest of them holds eight words.
 
 **The two counted rules are a floor, and only a reading catches a word used outside its meaning.** A
 page can stay inside both bounds and still say that a stage `collides` a capsule.
@@ -1861,6 +1866,17 @@ keeps one distance, and a planned sweep moves the couple as the plan has them (P
 Rejected: the distance where a sweep starts (`apart`), which is wrong at most moments of a planned
 sweep. Verified by `test_said.nim`, which reads every moment of `design/rig.json` through node. Red
 first: 338 of 788 moments said a wrong distance, each in one of the two planned sweeps.
+
+**The verdict of a still says how the simulation reached it.** The verdict of a wound still says
+that the simulation wound the couple from rest and let the pose settle (`walk.stood`). The verdict
+of a planned still says that the simulation planned every arm, and that the engine stood each moment
+of the plan. The viewer reads which kind a still is from its mark `planned` in `design/rig.json`
+(Planned turn). A reflected twin card keeps the mark of the still that it mirrors (Mirror twins).
+
+Verified by `test_said.nim`, which runs the caption of the viewer over every still that the page
+shows, and reads each verdict back. The caption writes into the document that `std/dom` keeps for
+node, so the law needs no browser. Red first: the nine planned stills that the page shows said that
+the couple was wound from rest.
 
 **The laws of the edge, of the hands, of the planned sweep and of the step read `design/rig.json`
 alone (Architect, issue 651, 2026-10-20).** Rejected: a recording of both ways of every hold at
