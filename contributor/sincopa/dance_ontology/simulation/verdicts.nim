@@ -321,8 +321,7 @@ proc report(): string =
         &"{SEEN[seen[1]]} | {name} |\n"
   result.add "\n"
   result.add prose(
-    "Read with the model's limits in mind: the shoulder girdle is rigid, so " &
-    "a span a dancer gets by rolling a shoulder forward is refused here; the trunk twists " &
+    "Read with the model's limits in mind: the trunk twists " &
     "at the waist and does not bend; a torso is a stadium of its round; and the couple " &
     "stand for each turn wherever it carries furthest, never inside each other.  A " &
     "*blocks* is therefore a little early, and a *holds* says the pose exists without " &

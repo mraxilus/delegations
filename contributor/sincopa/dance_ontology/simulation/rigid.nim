@@ -333,10 +333,14 @@ const
                    ## deltoid and trapezius, estimate and not tape.  Architect's
                    ## to measure.
   COLLAR_HERTZ = 4.5  ## Hertz of spring holding each collarbone hinge where tape
-                   ## puts shoulder.  Girdle weighs some two kilograms twelve
-                   ## centimetres out, so this is about twenty newton metres per
-                   ## radian: `MUSCLE`, what one arm pulls with, rolls shoulder
-                   ## half way to its ease, and it costs from there.  Girdle was
+                   ## puts shoulder.  Engine sizes hinge's spring from inertias
+                   ## of two bodies it joins, so this is about seven newton
+                   ## metres per radian fore and aft, and four up and down.
+                   ## `MUSCLE`, what one arm pulls with, put on shoulder
+                   ## twelve centimetres out, is about 4.8 newton metres: it
+                   ## carries shoulder into its ease, where `COLLAR_LEAN` holds
+                   ## it near 19 degrees fore and 33 up.  Those figures are
+                   ## computed from capsules, and not measured.  Girdle was
                    ## welded on linear spring of three hertz with rope at five
                    ## centimetres, forty newtons moving it whole five, which is
                    ## scapula hanging slack; dancer's is held by its own muscle,
@@ -1095,8 +1099,8 @@ proc muscle(couple: Couple, arm_rig: ArmRig, force: Vector) =
   ##     any socket in life: muscle spans joint and pushes against link on its
   ##     other side.  Torque at joint is lever from joint to wrist crossed with
   ##     force, so what arm feels is force at wrist, and what socket feels is
-  ##     nothing.  Shoulder's reaction goes to girdle, which is welded rigid in
-  ##     turn to chest, and chest to hips.
+  ##     nothing.  Shoulder's reaction goes to girdle, which swings on sprung
+  ##     hinges of its collarbone, and on to chest, which yaws on sprung waist.
   ##   Wrist is carried, never levered: hand is what band is asked of, and force
   ##     put on fingertip as torque at wrist too bent every wrist to its cone in
   ##     first moments of rise, hand being lightest link and torque sized for

@@ -31,11 +31,10 @@ report says every pose below in the words of that one table:
 | the lead has the follow at left, the follow has the lead behind | Port-to-back |
 | the lead has the follow at left, the follow has the lead at left | Port-to-port |
 
-Read with the model's limits in mind: the shoulder girdle is rigid, so a span a dancer gets by
-rolling a shoulder forward is refused here; the trunk twists at the waist and does not bend; a torso
-is a stadium of its round; and the couple stand for each turn wherever it carries furthest, never
-inside each other.  A *blocks* is therefore a little early, and a *holds* says the pose exists
-without any of that help.
+Read with the model's limits in mind: the trunk twists at the waist and does not bend; a torso is a
+stadium of its round; and the couple stand for each turn wherever it carries furthest, never inside
+each other.  A *blocks* is therefore a little early, and a *holds* says the pose exists without any
+of that help.
 
 ## The rig
 
