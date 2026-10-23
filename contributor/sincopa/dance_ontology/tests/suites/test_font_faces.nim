@@ -1,11 +1,12 @@
-## Hold faces every page ships to what they claim, and every style sheet to faces it names.
+## Hold font faces every page ships to what they claim, and every style sheet to font families
+## it names.
 ##
-##   Faces themselves are fetched, so nothing here reaches network or reads one:
-##     laws are about which faces are named, and about where they land in page.
-##   Two tables name same faces from opposite ends -- one pins bytes, other names
+##   Font faces themselves are fetched, so nothing here reaches network or reads one:
+##     laws are about which font faces are named, and about where they land in page.
+##   Two tables name same font faces from opposite ends -- one pins bytes, other names
 ##     family each answers to -- and pair that drifts is fault neither file shows
 ##     on its own, so it is checked here.
-##   Style sheets are read as text, rule by rule, and never rendered.  Which face draws each
+##   Style sheets are read as text, rule by rule, and never rendered.  Which font face draws each
 ##     codepoint is beyond them, so `drive` holds coverage, by rendering every page
 ##     (`design/render.nim`).
 
@@ -13,7 +14,7 @@
 
 import std/[os, sequtils, strutils, unittest]
 
-import ../../design/[faces, page]
+import ../../design/[font_faces, page]
 
 
 const
@@ -29,9 +30,9 @@ const
 
 
 proc stub(directory: string) =
-  ## Write one byte per face, so shape can be checked without fetching any.
+  ## Write one byte per font face, so shape can be checked without fetching any.
   createDir(directory)
-  for (file, _, _, _) in faces.FACES:
+  for (file, _, _, _) in font_faces.FONT_FACES:
     writeFile(directory / file, "x")
 
 
@@ -87,8 +88,8 @@ func toFamilies(stack: string): seq[string] =
 
 
 func stackDeclared(style_sheet, selector: string): seq[string] =
-  ## Read families, in order, that last face declaration of `selector` names.
-  ##   One custom property is resolved, as audit's faces check resolves one; shorthand
+  ## Read families, in order, that last font family declaration of `selector` names.
+  ##   One custom property is resolved, as audit's `checkFaces` resolves one; shorthand
   ##     `font` gives its families after size, so stack starts at its first family.
   var value = ""
   for declaration in declarations(style_sheet, selector):
@@ -109,49 +110,50 @@ func stackDeclared(style_sheet, selector: string): seq[string] =
 
 
 
-suite "Internal: Faces":
-  let directory = getTempDir() / "dance_faces_test"
+suite "Internal: Font faces":
+  let directory = getTempDir() / "dance_font_faces_test"
   removeDir(directory)
   stub(directory)
 
 
-  test "every face named here is one repository's store declares":
+  test "every font face named here is one repository's store declares":
     ## Store holds digest and address, this project holds choice (repository issue 116),
     ## and pair has to meet somewhere.  It is checked here rather than left to build
     ## because this project carries no `drive` verb, so runner never runs its `assets`:
-    ## face named that store lacks would otherwise surface only when somebody built pages
+    ## font face named that store lacks would otherwise surface only when somebody built pages
     ## by hand.  Read as text rather than imported, so this test depends on declaration
     ## and not on curator's module staying shaped as it is.
     check fileExists(STORE)
     let declared = readFile(STORE)
-    for (file, _, _, _) in faces.FACES:
+    for (file, _, _, _) in font_faces.FONT_FACES:
       checkpoint(file)
       check ("\"" & file & "\"") in declared
 
 
-  test "each face is inlined once, as bytes rather than as link":
-    let style = faceStyle(directory)
-    check style.count("@font-face") == faces.FACES.len
-    check style.count(";base64,") == faces.FACES.len
+  test "each font face is inlined once, as bytes rather than as link":
+    let style = fontFaceStyle(directory)
+    check style.count("@font-face") == font_faces.FONT_FACES.len
+    check style.count(";base64,") == font_faces.FONT_FACES.len
     check "http" notin style  # names no host page would have to reach (X.8)
 
 
-  test "each face declares media type and format of its own file":
+  test "each font face declares media type and format of its own file":
     ## TrueType and woff2 travel side by side, so each rule says which of them its bytes are.
     check formatDeclared("NotoSans-Regular.ttf") == (media: "font/ttf", format: "truetype")
     check formatDeclared("commit-mono-latin-400-normal.woff2") ==
         (media: "font/woff2", format: "woff2")
     expect ValueError:
       discard formatDeclared("NotoSans-Regular.otf")
-    let style = faceStyle(directory)
-    check style.count("format(\"truetype\")") == faces.FACES.countIt(it[0].endsWith(".ttf"))
+    let style = fontFaceStyle(directory)
+    check style.count("format(\"truetype\")") ==
+        font_faces.FONT_FACES.countIt(it[0].endsWith(".ttf"))
 
 
-  test "every Noto face ships whole, as TrueType of its own release":
+  test "every Noto font face ships whole, as TrueType of its own release":
     ## Article X.8 ships Noto whole and never as subset: Noto was chosen so no character of
-    ##   page falls outside its faces, and subset undoes that.  Commit Mono is no Noto, and
+    ##   page falls outside its font faces, and subset undoes that.  Commit Mono is no Noto, and
     ##   keeps its subset.
-    for (file, family, _, _) in faces.FACES:
+    for (file, family, _, _) in font_faces.FONT_FACES:
       if family.startsWith("Noto"):
         checkpoint(file)
         check file.endsWith(".ttf")
@@ -159,7 +161,7 @@ suite "Internal: Faces":
 
 
   test "every family is named, and ligatures are kept on":
-    let style = faceStyle(directory)
+    let style = fontFaceStyle(directory)
     for family in ["Noto Serif", "Noto Sans", "Commit Mono", "Noto Sans Math"]:
       check ("font-family:\"" & family & "\"") in style
     # Commit Mono carries its ligatures in `calt`, on by default until something
@@ -167,26 +169,26 @@ suite "Internal: Faces":
     check "font-variant-ligatures:contextual" in style
 
 
-  test "absent face is refused, never quietly left out":
+  test "absent font face is refused, never quietly left out":
     expect IOError:
-      discard faceStyle(directory / "nowhere")
+      discard fontFaceStyle(directory / "nowhere")
 
 
-  test "whole page takes faces inside its head":
-    let dressed = withFaces(DOCUMENT, directory)
+  test "whole page takes font faces inside its head":
+    let dressed = withFontFaces(DOCUMENT, directory)
     check dressed.find("@font-face") < dressed.find("</head>")
     check dressed.count("<title>") == 1
 
 
-  test "headless page takes faces after its title":
-    let dressed = withFaces(FRAGMENT, directory)
+  test "headless page takes font faces after its title":
+    let dressed = withFontFaces(FRAGMENT, directory)
     check dressed.find("</title>") < dressed.find("@font-face")
     check dressed.count("<main>") == 1
 
 
   test "page with neither head nor title is refused":
     expect ValueError:
-      discard withFaces("<p>no head here</p>", directory)
+      discard withFontFaces("<p>no head here</p>", directory)
 
 
   test "dressing is not doubled where it runs twice":
@@ -197,17 +199,17 @@ suite "Internal: Faces":
     ## 10.9 MB toward limit published page has to stay under.
     for page in [DOCUMENT, FRAGMENT]:
       let
-        once = withFaces(page, directory)
-        twice = withFaces(once, directory)
-      check once.count(";base64,") == faces.FACES.len
-      check twice.count(";base64,") == faces.FACES.len
+        once = withFontFaces(page, directory)
+        twice = withFontFaces(once, directory)
+      check once.count(";base64,") == font_faces.FONT_FACES.len
+      check twice.count(";base64,") == font_faces.FONT_FACES.len
       check twice == once
 
 
-  test "every heading takes serif face":
+  test "every heading takes serif font family":
     ## X.8 gives headings and titles to Noto Serif, and record says pages follow it.  Heading
-    ## rules of Explorer and of shared style sheet of workbench named no face, so every heading
-    ## took body's Noto Sans (repository issue 391).
+    ## rules of Explorer and of shared style sheet of workbench named no font family, so every
+    ## heading took body's Noto Sans (repository issue 391).
     for (style_sheet, selectors) in [
       (page.STYLE.styles, @["h1", "h2", "h3"]),
       (readFile(PATH_APP).styles, @["h1", "h2", "h3", "h4"]),
@@ -218,10 +220,10 @@ suite "Internal: Faces":
         check families.len > 0 and families[0] == "Noto Serif"
 
 
-  test "every stack falls back to faces that draw what its own face lacks":
+  test "every stack falls back to font families that draw what its own font family lacks":
     ## Noto Sans and Noto Serif draw no arrow, and Commit Mono draws no `⇄`, read with
     ##   fontconfig 2.15.0 on 2026-10-02 from files of store's digests.  So pages drew
-    ##   five arrows from whatever face their reader's machine had (repository issue 391).
+    ##   five arrows from whatever font face their reader's machine had (repository issue 391).
     ##   Noto Sans Math draws all five, and Commit Mono draws `✓`, which other three lack.
     for (style_sheet, selectors) in [
       (page.STYLE.styles, @["body", "h1", "code"]),
@@ -233,20 +235,20 @@ suite "Internal: Faces":
         check families.len >= 3 and families[1] == "Noto Sans Math"
         if families.len >= 3 and families[0] != "Commit Mono":
           check families[2] == "Commit Mono"
-    for stack in [faces.SERIF, faces.SANS_SERIF, faces.MONOSPACE]:
+    for stack in [font_faces.SERIF, font_faces.SANS_SERIF, font_faces.MONOSPACE]:
       checkpoint(stack)
       let families = stack.toFamilies
       check families.len >= 3 and families[1] == "Noto Sans Math"
 
 
-  test "dressed page declares utf-8 ahead of its face block":
-    ## Face block is half megabyte of ASCII, and browser that opens page from file guesses
+  test "dressed page declares utf-8 ahead of its font face block":
+    ## Font face block is half megabyte of ASCII, and browser that opens page from file guesses
     ## its charset from bytes ahead of first that is not ASCII.  Reference and whole-cloth
     ## page declared none, and Chromium 141 read both as windows-1250 on 2026-10-02 once
     ## block grew (repository issue 391).
     for page in [DOCUMENT, FRAGMENT]:
       checkpoint(page)
       let
-        dressed = withFaces(page, directory)
+        dressed = withFontFaces(page, directory)
         declared = dressed.find("<meta charset=\"utf-8\">")
       check declared >= 0 and declared < dressed.find("@font-face") and declared < 1024

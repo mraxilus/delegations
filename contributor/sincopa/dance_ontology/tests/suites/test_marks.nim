@@ -11,7 +11,7 @@ from ../../src/dance_ontology/rotation import facing, seenAfter
 
 const OUT = "build/suites/design"
   ## Where pages land; ignored by git, created here.
-  ##   Apart from `build/design`, where `pages` writes each page dressed in its faces: page
+  ##   Apart from `build/design`, where `pages` writes each page dressed in its font faces: page
   ##     written here carries none, and publishing reads that directory.
 
 const SMALL = ["a", "an", "and", "as", "at", "but", "by", "for", "from", "in", "into",
