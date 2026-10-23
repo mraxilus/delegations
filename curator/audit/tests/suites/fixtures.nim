@@ -161,3 +161,77 @@ proc lockWith*(nimble: string): string =
       "nimbleFile": {"filename": "probe" & EXTENSIONS[Dialect.Package], "content": lines},
     },
   ) & "\n"
+
+
+func bigEndian16(value: int): string =
+  ## Render `value` as big-endian `uint16`, as OpenType stores every integer.
+  $chr((value shr 8) and 0xFF) & $chr(value and 0xFF)
+
+
+func bigEndian32(value: int): string =
+  ## Render `value` as big-endian `uint32`.
+  bigEndian16((value shr 16) and 0xFFFF) & bigEndian16(value and 0xFFFF)
+
+
+func subtableFormat12*(runs: openArray[(Slice[int], int)]): string =
+  ## Render `cmap` subtable of format 12: each run of codepoints onto run of glyphs from its own.
+  result = bigEndian16(12) & bigEndian16(0) & bigEndian32(16 + 12 * runs.len) & bigEndian32(0) &
+    bigEndian32(runs.len)
+  for (codepoints, glyph) in runs:
+    result.add bigEndian32(codepoints.a) & bigEndian32(codepoints.b) & bigEndian32(glyph)
+
+
+func subtableFormat4*(runs: openArray[(Slice[int], int)]): string =
+  ## Render `cmap` subtable of format 4: each run of codepoints in first plane onto run of glyphs
+  ##   from its own, through delta, then closing segment at `ffff` that maps nothing.
+  var ends, starts, deltas, offsets: string
+  for (codepoints, glyph) in runs:
+    ends.add bigEndian16(codepoints.b)
+    starts.add bigEndian16(codepoints.a)
+    deltas.add bigEndian16((glyph - codepoints.a) and 0xFFFF)
+    offsets.add bigEndian16(0)
+  ends.add bigEndian16(0xFFFF)
+  starts.add bigEndian16(0xFFFF)
+  deltas.add bigEndian16(1)
+  offsets.add bigEndian16(0)
+  let count = runs.len + 1
+  bigEndian16(4) & bigEndian16(16 + 8 * count) & bigEndian16(0) & bigEndian16(2 * count) &
+    bigEndian16(0).repeat(3) & ends & bigEndian16(0) & starts & deltas & offsets
+
+
+func tableCmap*(subtables: openArray[(int, int, string)]): string =
+  ## Render `cmap` table: each subtable under its platform and encoding, in order given.
+  result = bigEndian16(0) & bigEndian16(subtables.len)
+  var
+    offset = 4 + 8 * subtables.len
+    body = ""
+  for (platform, encoding, subtable) in subtables:
+    result.add bigEndian16(platform) & bigEndian16(encoding) & bigEndian32(offset)
+    offset += subtable.len
+    body.add subtable
+  result.add body
+
+
+func fileFontFace*(tables: openArray[(string, string)]): string =
+  ## Render TrueType file holding each table under its tag, as OpenType's table directory lays out.
+  result = bigEndian32(0x00010000) & bigEndian16(tables.len) & bigEndian16(0).repeat(3)
+  var
+    offset = 12 + 16 * tables.len
+    body = ""
+  for (tag, table) in tables:
+    result.add tag & bigEndian32(0) & bigEndian32(offset) & bigEndian32(table.len)
+    offset += table.len
+    body.add table
+  result.add body
+
+
+func fileFontFace*(codepoints: openArray[Slice[int]]): string =
+  ## Render TrueType file mapping each run of codepoints to glyphs from `1`, through one Unicode
+  ##   subtable of format 12, as font face of store maps them.
+  var
+    runs: seq[(Slice[int], int)]
+    glyph = 1
+  for run in codepoints:
+    runs.add (run, glyph)
+    glyph += run.len
+  fileFontFace([("cmap", tableCmap([(3, 10, subtableFormat12(runs))]))])
