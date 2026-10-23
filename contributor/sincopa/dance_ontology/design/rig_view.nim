@@ -19,7 +19,7 @@
 
 when compileOption("profiler"): import std/nimprof
 
-import std/[dom, jsffi, math, strutils]
+import std/[dom, jsffi, math, options, strutils]
 
 import ./drawn
 
@@ -94,7 +94,7 @@ var
   IS_DRAGGING = false
   X_PREV, Y_PREV = 0.0
   LUT_ID_BY_ENTRY: seq[cstring]  ## Identifier of Reference card each entry belongs to, or empty.
-  LUT_CARD_BY_ENTRY: seq[Element]  ## And card itself, or nil.
+  LUT_CARD_BY_ENTRY: seq[Option[Element]]  ## And card itself, or none.
 
 
 # Entries of recording, read as viewer reads them.
@@ -357,13 +357,14 @@ proc fit() =
 
 proc reference() =
   ## Reference's own drawing of this entry's card beside stage, and card marked.
-  for i, card in LUT_CARD_BY_ENTRY:
-    if card != nil:
-      card.classList.remove(cstring"picked")
-  let card = LUT_CARD_BY_ENTRY[PICK]
-  if card == nil:
+  for held in LUT_CARD_BY_ENTRY:
+    if held.isSome:
+      held.get.classList.remove(cstring"picked")
+  let picked = LUT_CARD_BY_ENTRY[PICK]
+  if picked.isNone:
     document.getElementById("ref").innerHTML = cstring""
     return
+  let card = picked.get
   card.classList.add(cstring"picked")
   let
     art = card.querySelector(".art")
@@ -426,14 +427,14 @@ proc start() =
   # Which card of Reference each entry belongs to, read off page itself.
   for i in 0..<count(ENTRIES_ALL):
     LUT_ID_BY_ENTRY.add cstring""
-    LUT_CARD_BY_ENTRY.add nil
+    LUT_CARD_BY_ENTRY.add none(Element)
   for node in document.querySelectorAll("figure[data-entries]"):
     let card = Element(node)
     for word in ($card.getAttribute("data-entries")).split(' '):
       if word.len == 0: continue
       let index = parseInt(word)
       LUT_ID_BY_ENTRY[index] = card.getAttribute("data-id")
-      LUT_CARD_BY_ENTRY[index] = card
+      LUT_CARD_BY_ENTRY[index] = some(card)
     card.addEventListener("click", proc (event: Event) =
       let first = ($entriesOn(event)).split(' ')
       if first.len > 0 and first[0].len > 0:
