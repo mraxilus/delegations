@@ -33,7 +33,7 @@ import {
 import {
   driveChipRowFits, driveHelp, driveHoverDuringGesture, driveHoverFollowsMouse,
 } from './chrome';
-import { driveTypeDrawn, driveTypeLigatures, driveTypeRoles } from './type';
+import { driveTypeDecoded, driveTypeDrawn, driveTypeLigatures, driveTypeRoles } from './type';
 import { readFontFaces, writeFontFaces } from './font_faces';
 import { driveCreep, drivePlaneBuilt, driveRuler } from './finger';
 import { driveSceneBuilt } from './built';
@@ -220,6 +220,7 @@ async function driveSimulated(browser: Browser): Promise<void> {
   await driveTypeRoles(page);
   await driveTypeDrawn(page);
   await driveTypeLigatures(page);
+  await driveTypeDecoded(page);
   // After role checks, with help open, so its tab strip stands to be read; `koch drive` judges
   //   what this reads, once whole drive passes.
   await readFontFaces(page, basename(PATH_PAGE, '.html'), true);
