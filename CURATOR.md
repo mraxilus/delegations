@@ -364,12 +364,11 @@ alone.
 | `check-role` | a pull request's body and labels | opening line and label are the branch's role |
 | `hook` | one hook event, named as argument, on stdin | answers in that event's protocol |
 | `test` | changed projects, or one | fetch dependencies, then testament, on that project's pin |
-| `drive` | changed projects with a `drive` verb | fetch dependencies, then the verb, on its pin |
+| `drive` | changed projects with a `drive` verb | fetch dependencies, the verb, judge font faces |
 | `head` | projects with a `head` verb, or one | fetch dependencies, then the verb, on its pin |
 | `fix` | Nim files named, or projects | each fix a check names, in place; nothing outside scope |
 | `fetch-deps` | changed projects' `atlas.lock` | checkouts made and matching the lock |
 | `fetch-assets` | files named, against the store | fetches and checks each, prints its path |
-| `resolve-font-faces` | a project's `written.json` | resolves its font stacks into `found.json` |
 | `list-packages` | koch, and projects with a `system` verb | prints OS packages to install |
 | `list-projects` | changed paths, pins | projects whose code changed, as JSON for the matrix |
 | `stamp` | charter documents | prints the stamp; `--write` sets every `Rules` row to it |

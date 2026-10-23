@@ -21,7 +21,7 @@
 
 import std/[os, osproc, streams, strtabs, strutils]
 from ../../knoller/src/knoller import NIM
-import ./findings
+import ./[findings, font_stacks]
 
 
 const
@@ -44,7 +44,7 @@ const
     ("curl", "compiler pin nothing on machine serves is downloaded"),
     ("tar", "that download is archive, and unpacking it is what makes it toolchain"),
     ("coreutils", "`sha256sum` checking it against digest published beside it"),
-    ("libbrotli1", "`resolve-font-faces` reads `cmap` of `woff2` font face, in one Brotli stream"),
+    ("libbrotli1", "`drive` reads `cmap` of `woff2` font face page ships, in one Brotli stream"),
   ]
     ## System packages koch itself needs, whatever any project declares. Same shape rule asks
     ## of every project, kept by driver that enforces it: declaration is data carrying its
@@ -53,8 +53,9 @@ const
     ##   and `compilers.nim` of knoller resolves each pin itself. npm is not here either -- it is
     ##   needed where project carries node manifest, so it belongs to that project rather than to
     ##   koch, and `restoreNode` reports its absence by name.
-    ##   `libbrotli1` serves koch's `resolve-font-faces`, which each project with pages runs from
-    ##   its `drive`, and suite of `assets.nim` too (`font_files.nim`).
+    ##   `libbrotli1` serves koch's `drive`, which reads font faces each project's pages ship,
+    ##   and suite of `assets.nim` too (`font_files.nim`). Drive job installs what project
+    ##   declares, so project whose pages ship `woff2` declares it as well.
 
 
 type Target* = object  ## Define one project to run, with toolchain serving its pin.
@@ -157,11 +158,18 @@ proc runTypes*(root: string, targets: openArray[Target]): seq[Finding] =
 
 
 proc runDriven*(root: string, targets: openArray[Target]): seq[Finding] =
-  ## Drive each project's built page through real events, through driver that project carries.
+  ## Drive each project's built page through real events, through driver that project carries,
+  ##   then judge font faces its pages draw (`font_stacks.nim`).
   ##   Same shape as `runTypes` one step further along: verb is project's, koch names it and
   ##   nothing else. What that verb builds first, and what browser it reaches for, is project's
   ##   own business (CONTRIBUTOR.md, "System dependencies").
-  runVerb(root, targets, VERB_DRIVEN, "Driven checks failed")
+  ##   Control page is written before verb, which reads it. Verdict follows verb that passed:
+  ##     verb that failed may leave its file half written, and its run is red already.
+  for target in targets:
+    writeControl(root, target.directory)
+    let failed = runVerb(root, [target], VERB_DRIVEN, "Driven checks failed")
+    result.add failed
+    if failed.len == 0: result.add checkFontFaces(root, target.directory)
 
 
 proc runHead*(root: string, targets: openArray[Target]): seq[Finding] =
