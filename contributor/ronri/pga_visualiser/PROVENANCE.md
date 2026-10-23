@@ -677,35 +677,42 @@ Rejected: each of them declared again at 400 and at 600, which embeds each file 
 bytes more on a page of 7,718,414.
 
 **The maths and symbol faces are declared over 400 to 600.** Each ships one weight. Declared at 400
-alone, they match no semibold text, so a selected label or chip at 600 takes its operators from the
-system. Cost: regular operators beside semibold letters, which the desktop label also draws.
+alone, they still draw at 600, but the browser synthesises their bold. Such a weight is a font face
+that nothing ships (Article X.8). Cost: regular operators beside semibold letters, which the desktop
+label also draws.
+
+Verified by a run, 2026-10-23, in the Chromium that Playwright pins, with the range cut to 400.
+`CSS.getPlatformFontsForNode` still names Noto Sans Math and Noto Sans Symbols 2 for operators at
+600. Those operators carry 39% more ink than under the range. Cost: no check fails on that cut,
+since `koch drive` takes the font face at 400 for 600, as the browser does.
 
 **Each face is held to its own load status**, by `driveTypeRoles`, because `document.fonts.check`
 answers true where no face matches at all. Verified by a run, 2026-10-07, in Chrome for Testing 153:
 all six faces load. A read of `CSS.getPlatformFontsForNode` over every element of the open drawer
 finds no glyph from a face of the system. Noto Sans draws 946 glyphs and its semibold 204.
 
-**Each element is held to the faces of the stack that the browser resolves for it**, by
-`driveFacesCovered` (`CONTRIBUTOR.md`, Pages and assets). The check reads the computed `font-family`
-and `font-weight` of each element, and holds its text to that stack, at that weight. The value and
-the placeholder of a field count, and so does the text of `::before` and `::after`. A finding names
-the page, the element, the weight and each codepoint that no face of the stack maps.
+**Each element is read in the stack that the browser resolves for it, and `koch drive` judges it**
+(`CONTRIBUTOR.md`, Pages and assets). `readFontFaces` reads the computed `font-family` and
+`font-weight` of each element, and writes its text as one run of `build/font-faces/written.json`.
+The value and the placeholder of a field count, and so does the text of `::before` and `::after`.
+`koch drive` resolves each run down its stack, against the `cmap` of each font face, and gives the
+verdict (`curator/audit/src/font_stacks.nim`). A finding names the page, the run, and each codepoint
+that a font face of the system draws.
 
-**Text that a script writes later is held to every stack in use, and to every stack that a rule
+**Text that a script writes later is one run for each stack in use, and for each stack that a rule
 declares.** `nimCodepointsShown` gives the catalogue, the help, the notation and the units, as
-`--drive-faces` reads them. The strings of the scripts and the text on the page join them. The check
-holds each of these characters to each stack that an element resolves to, and to each stack that a
-rule declares. It does so at each weight that an element resolves to, that a rule declares, and that
-a face declares. A finding for a stack that no element resolves to names the rule by its selector,
-as `rule .later-panel`.
+`--drive-faces` reads them. The strings of the scripts and the text on the page join them. There is
+one such run at each weight that an element resolves to, that a rule declares, and that a font face
+declares. Each is named by the element or the rule of its stack, and by its weight, as `text written
+later in rule .later-panel at 600`.
 
-**The check reads the declared stacks through the CSSOM, and the browser resolves each one.** It
+**The collector reads the declared stacks through the CSSOM, and the browser resolves each one.** It
 walks every rule of every sheet, into `@media`, `@supports`, `@layer`, nested rules and imported
 sheets, whether or not the rule matches now. The declarations of each rule go on a probe under a
 hidden holder, so the browser itself resolves `var()` and the `font` shorthand. It resolves them
 against the document as it stands, and again under the custom properties of each rule that declares
-some. It leaves out an `@font-face` rule, which names a face and not a stack. It leaves out a family
-of `inherit` or `unset`, which takes the stack of its parent.
+some. It leaves out an `@font-face` rule, which names a font face and not a stack. It leaves out a
+family of `inherit` or `unset`, which takes the stack of its parent.
 
 Rejected: `var()` read from the custom properties of the root, which misses a value that a rule
 under `@media` declares.
@@ -716,38 +723,50 @@ is that a stack for titles alone must map the operators too. A checkbox and a fi
 text that the page writes, so they are not a stack in use. Both resolve to Arial, and the button of
 a file field shows the words of the browser.
 
-The check reads each `@font-face` rule of the shell, and the `cmap` of its file. Within a family, it
-picks the set of faces that declare the weight asked, as the engine does. Where two sets hold that
-weight, the pick is the engine's own. A character counts only where each set, or a family after it,
-draws it, and the families of a stack are tried in order. Rejected: the three stacks read from the
-text of the shell, which pass an element that takes a stack of its own. Rejected:
-`CSS.getPlatformFontsForNode`, which answers only for text that has a layout box now.
+The collector reads each `@font-face` rule through the CSSOM, and writes the bytes of its `data:`
+source to a file named by their SHA-256. So `koch drive` reads the bytes that a viewer receives. The
+collector loads each font face, and writes each one that the browser refused. Within a family, `koch
+drive` picks the set of font faces that declare the weight asked, as the engine does. A family that
+the page does not ship ends the search (Article X.8).
 
-Cost: a stack that no rule declares counts only where an element resolves to it at the check. Such a
+Rejected: the three stacks read from the text of the shell, which pass an element that takes a stack
+of its own. Rejected: `CSS.getPlatformFontsForNode`, which answers only for text that has a layout
+box now.
+
+**The control page proves the collector on each run.** `koch drive` writes
+`build/font-faces/control.html` before the drive, and the drive reads it with the same collector, as
+page `control`. Each of its five numerals stands in one kind of place, and a numeral that the
+collector misses is a finding. The control page has no bridge and no script of this project, so its
+runs hold only what it shows. A run of the verb alone, with no control page, writes the page alone.
+
+Runs keep ASCII, so a stack whose font faces lack Latin fails. The resolver reads each codepoint
+that a run gives.
+
+Cost: a stack that no rule declares counts only where an element resolves to it at the read. Such a
 stack is that of a form control, or a family that a script sets. A bare button resolves to Arial,
 and a bare text area to monospace. Verified by a run, 2026-10-04, in Chrome for Testing 153: each
 button and field that a script builds matches a rule that declares a stack. Verified by a read of
 `src/browser` and the shell, the same day: no script sets a family.
 
-*Checked.* Verified by a run of the check alone, 2026-10-04, in Chrome for Testing 153, with the
-drawer and help open: both checks pass, with `missing none`. The stacks that the rules declare are
-the stacks in use. Verified by breaks on purpose, the same day and the same way:
+*Checked.* Verified by `koch drive` in the gate of this change, in the Chromium that Playwright
+pins: no finding, and the control page gives each numeral. Verified by breaks on purpose,
+2026-10-23, with the collector alone and the resolver of `koch drive`, on the page as it opens:
 
-- `#button-menu span { font-family: "Commit Mono UI", monospace; }` fails with `missing
-  rga_visualiser.html #button-menu span at 400: U+2630`, which the three stacks of the shell pass;
-- `.later-panel { font-family: "Commit Mono UI", monospace; }` matches no element, and fails at 400,
-  600 and 700 with `rule .later-panel` and each codepoint that Commit Mono does not map, U+2630
-  among them. A check of the stacks in use alone passes it;
+- `#button-menu span { font-family: "Commit Mono UI", monospace; }` gives a finding for
+  `#button-menu span` drawing U+2630, which the three stacks of the shell pass. It gives 13 more at
+  each of 400, 600 and 700, as text written later in that stack;
+- `.later-panel { font-family: "Commit Mono UI", monospace; }` matches no element, and gives the
+  same 13 at 400, 600 and 700, named `rule .later-panel`, U+2630 among them. A check of the stacks
+  in use alone passes it;
 - a rule for `.later-panel` sets `font: 600 12px var(--later)` inside `@media (max-width: 10px)`.
-  Inside `@media print`, `:root` declares `--later` as the same stack. The check fails it with the
-  same finding.
+  Inside `@media print`, `:root` declares `--later` as the same stack. It gives the same findings;
+- a collector that skips `::before` and `::after` gives a finding from the control page, for U+4E09
+  in `::before`.
 
-With the maths and symbols declared at 400 alone, the check fails at 600, with U+2715 in
-`button#selection-menu-close` and U+25B6 in `#drawer span.chev`. In every stack in use it names the
-operators, the bold operands and the chip symbols. With them under "Noto Sans UI" at 400 to 600,
-both checks fail at 400 and at 600, on 2026-10-07. They name the Latin text of each element in the
-sans stack, as `button#button-add at 600: U+0061`. A model that asks each face that holds the weight
-passes that shell. Verified by a run, 2026-10-03: the other page checks pass with the whole faces.
+With the maths and symbols under "Noto Sans UI" at 400 to 600, `koch drive` gives 894 findings. They
+name the Latin text of each element in the sans stack, as `button#button-add` drawing U+0061. For
+Latin in that stack, `CSS.getPlatformFontsForNode` names a font face of the system. Verified by a
+run, 2026-10-03: the other page checks pass with the whole faces.
 
 **The serif ships at 600 alone, because every title is set at 600.** A weight that nothing ships is
 a face that the browser of the reader invents (Article X.8). The check reads pixels, and not width,
@@ -3787,8 +3806,8 @@ written `` m.`∧ ☆`n ``.
 *Checked.* Verified by suite: every entry non-empty, the placeholder rules of the substitution, and
 every parenthesis case. Verified by driven check: a join of joins flat, and a meet of joins
 parenthesised on the page. Verified by driven check on the desktop: `--drive-faces` asks each face
-for every codepoint of the notation (Desktop driven checks). On the page, `driveFacesCovered` asks
-the faces that it ships (Faces).
+for every codepoint of the notation (Desktop driven checks). On the page, `koch drive` judges what
+`readFontFaces` reads (Faces).
 
 ## Naming and number formatting
 
