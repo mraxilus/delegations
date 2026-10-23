@@ -555,9 +555,8 @@ repository issue 671.
   them, so each numeral that the collector reads is found. A numeral that is missing names the
   place that the collector skips. The script builds its numeral from its codepoint, so only a
   reader of the live page finds it.
-- **A project that writes no `written.json` is not reported yet.** That report would redden
-  every project before any can port, and a port needs the control page and the verdict on
-  `main` (duty 3). The report follows the ports, in a pull request of its own.
+- **A project that writes no `written.json` is a finding.** The rule asks each project with
+  pages for that file, and a verdict over no file would pass pages that nobody read.
 - **A family that the page does not ship ends the search.** A font face of that name on the
   machine of the viewer would draw the character, which Article X.8 forbids. Rejected: a step
   over such a family, which passes a page that such a viewer sees in the wrong font face.
@@ -586,7 +585,8 @@ repository issue 671.
   failed one test. A break of the window from 400 to 500 failed another. On 2026-10-23, a break
   of each rule of the verdict failed at least one test.
 - Verified by `suites/test_projects.nim`, which drives a project of its own through `runDriven`.
-  The control page stands before the verb runs, and no verdict follows a verb that failed.
+  The control page stands before the verb runs, no verdict follows a verb that failed, and a
+  verb that writes no file is a finding.
 - Verified in Chromium, 2026-10-23. A scratch reader that reads as a collector does found each
   numeral of the control page in its place. The verdict over what it read gave no finding. With
   `::before` left out, it gave one finding, which names `::before`.
