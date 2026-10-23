@@ -262,8 +262,8 @@ proc cardsBody(reference: string, data: JsonNode): string =
     titles.add (letter, reference[start..<reference.find("</h2>", start)])
   result.add """<section class="cards"><p class="lede">Every card here comes from the
     Reference, with the same badges, and the simulation's still stands beside it. Where
-    one card asks more than one question, the badge shows the first. The picker above
-    reaches every card.</p>"""
+    one card asks more than one question, the still beside it shows the first, and the badge
+    covers them all. The picker above reaches every card.</p>"""
   for (letter, title) in titles:
     result.add &"<h2>{letter} &middot; {title}</h2><div class=\"grid wide\">"
     for card in cards.getOrDefault(letter):
