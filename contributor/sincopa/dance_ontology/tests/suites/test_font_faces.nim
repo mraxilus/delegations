@@ -89,7 +89,7 @@ func toFamilies(stack: string): seq[string] =
 
 func stackDeclared(style_sheet, selector: string): seq[string] =
   ## Read families, in order, that last font family declaration of `selector` names.
-  ##   One custom property is resolved, as audit's `checkFaces` resolves one; shorthand
+  ##   One custom property is resolved, as audit's `checkFontFamilies` resolves one; shorthand
   ##     `font` gives its families after size, so stack starts at its first family.
   var value = ""
   for declaration in declarations(style_sheet, selector):
