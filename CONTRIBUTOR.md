@@ -347,18 +347,24 @@ serves them. Each Noto font face ships whole, as the TrueType file of its own re
 as a subset.
 
 **A page proves its font faces in `drive`.** A project that builds pages has a `drive` verb,
-and it renders each page that the project builds. It fails where a font face of the system draws a
-character beyond ASCII, and the finding names the page, the element and the codepoint. Either
-of two methods meets this rule:
+and it renders each page that the project builds. The verdict is the curator's, so no project
+judges its own pages. `koch drive` gives it in three steps:
 
-- Ask the browser which font faces drew each character of each text element. The DevTools protocol
-  answers through `CSS.getPlatformFontsForNode`.
-- Resolve the font stack of each element against the `cmap` of each font face that the page
-  ships. A character that no font face of that stack maps is a finding. The resolver is the
-  curator's: write `written.json`, run `nim r koch resolve-font-faces <written.json>
-  <found.json>` from the repository root, and judge what it writes. `font_stacks.nim` in
-  `curator/audit/src/` gives the shape of both files, so the project keeps no reader of `cmap`.
-  Its `system` verb declares `libbrotli1`, through which the command reads `woff2`.
+1. Before it runs the `drive` verb, `koch drive` writes a control page to
+   `build/font-faces/control.html` in the project.
+2. The `drive` verb reads each page that the project builds, and the control page, with one
+   collector. It writes `build/font-faces/written.json`, in the shape that `font_stacks.nim` in
+   `curator/audit/src/` gives. The control page is page `control`.
+3. `koch drive` resolves the font stack of each element against the `cmap` of each font face
+   that the page ships. It writes `build/font-faces/found.json`, and gives the verdict.
+
+The verdict fails where a font face of the system draws a character beyond ASCII. Its finding
+names the page, the element and the codepoint. It also fails where a font face does not load.
+The control page holds a numeral in each kind of place where text stands, and the verdict fails
+where the collector misses one. So each run proves the collector too.
+
+The project keeps no reader of `cmap` and no judge of font faces. Its `system` verb declares
+`libbrotli1` where its pages ship `woff2`, because `koch drive` reads `woff2` through it.
 
 The audit reads what each font face of a project maps, across the whole project. Only a render
 follows the cascade of each element, so `drive` holds what the audit cannot.
