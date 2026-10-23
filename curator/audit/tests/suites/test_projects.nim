@@ -2,8 +2,8 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[os, strutils, tempfiles, unittest]
-import ../../src/projects
+import std/[json, os, strutils, tempfiles, unittest]
+import ../../src/[font_stacks, projects]
 import ./fixtures
 
 
@@ -65,6 +65,49 @@ suite "Article IX":
     check found[0].path == "contributor/ronri/lags/" & FILE_DRIVER
     check found[0].message.endsWith("got exit `1`.")  # verb's own code, unchanged
     check runHead(root, newSeq[Target]()).len == 0  # no project carries verb
+
+
+  test "drive writes control page before verb, then judges what verb leaves (font_stacks.nim)":
+    # Driver reads control page, so it fails where page stands nowhere yet. Plan file picks what
+    #   verb leaves, so one driver, compiled once, serves every case.
+    let root = createTempDir("delegations_", "_drive")
+    defer: removeDir(root)
+    let directory = "contributor/ronri/pages"
+    root.writeInto(directory & "/" & FILE_DRIVER, """
+import std/[os, strutils]
+if paramStr(1) != "drive": quit(2)
+let plan = readFile("plan.txt").strip
+discard readFile("build" / "font-faces" / "control.html")
+if plan == "fail": quit(1)
+if plan != "none":
+  writeFile("build" / "font-faces" / "written.json", readFile("written_" & plan & ".json"))
+""")
+    proc writeWritten(name: string, skipped: openArray[int]) =
+      ## Write control page as collector leaves it, each numeral in run of its own, but `skipped`.
+      var runs = newJArray()
+      for (codepoint, place) in NUMERALS_CONTROL:
+        if codepoint in skipped: continue
+        runs.add %*{"element": place, "stack": "serif", "weight": 400, "codepoints": [codepoint]}
+      root.writeInto(directory & "/written_" & name & ".json",
+        $(%*{"control": {"runs": runs, "declared": [], "refused": []}}))
+    writeWritten("all", [])
+    writeWritten("skip", [0x4E09])
+    let pages = Target(directory: directory)
+
+    root.writeInto(directory & "/plan.txt", "none")
+    check runDriven(root, [pages]).len == 0  # verb wrote no file: not reported yet
+    check fileExists(root / directory / DIRECTORY_FONT_FACES / FILE_CONTROL)
+    root.writeInto(directory & "/plan.txt", "all")
+    check runDriven(root, [pages]).len == 0  # each numeral collected
+    check fileExists(root / directory / DIRECTORY_FONT_FACES / FILE_FOUND)
+    root.writeInto(directory & "/plan.txt", "skip")
+    let skipped = runDriven(root, [pages])
+    check skipped.len == 1
+    check "`U+4E09` in `::before` uncollected" in skipped[0].message
+    root.writeInto(directory & "/plan.txt", "fail")
+    let failed = runDriven(root, [pages])
+    check failed.len == 1  # verb's own exit, and no verdict over file it left before
+    check failed[0].path == directory & "/" & FILE_DRIVER
 
 
   test "IX.6 named toolchain is what runs, never whatever PATH holds":
