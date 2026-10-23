@@ -7,8 +7,8 @@
 ##     family each answers to -- and pair that drifts is fault neither file shows
 ##     on its own, so it is checked here.
 ##   Style sheets are read as text, rule by rule, and never rendered.  Which font face draws each
-##     codepoint is beyond them, so `drive` holds coverage, by rendering every page
-##     (`design/render.nim`).
+##     codepoint is beyond them, so `koch drive` holds coverage, as it resolves what `drive`
+##     reads on every page (CONTRIBUTOR.md, Pages and assets).
 
 {.experimental: "strictFuncs".}
 
@@ -118,11 +118,10 @@ suite "Internal: Font faces":
 
   test "every font face named here is one repository's store declares":
     ## Store holds digest and address, this project holds choice (repository issue 116),
-    ## and pair has to meet somewhere.  It is checked here rather than left to build
-    ## because this project carries no `drive` verb, so runner never runs its `assets`:
-    ## font face named that store lacks would otherwise surface only when somebody built pages
-    ## by hand.  Read as text rather than imported, so this test depends on declaration
-    ## and not on curator's module staying shaped as it is.
+    ## and pair has to meet somewhere.  It is checked here rather than left to build:
+    ## suite reads no network, so font face named that store lacks fails on checkout, before
+    ## `drive` asks store.  Read as text rather than imported, so this test depends on
+    ## declaration and not on curator's module staying shaped as it is.
     check fileExists(STORE)
     let declared = readFile(STORE)
     for (file, _, _, _) in font_faces.FONT_FACES:
