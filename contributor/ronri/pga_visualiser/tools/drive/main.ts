@@ -8,7 +8,7 @@
 
 import { chromium, type Browser, type Page } from '@playwright/test';
 import { accessSync, constants, existsSync, readFileSync } from 'node:fs';
-import { delimiter, join } from 'node:path';
+import { basename, delimiter, join } from 'node:path';
 import { countFailed, countRun, report } from './report';
 import { focusCanvas } from './gestures';
 import { driveKeys, driveKeysChorded } from './keys';
@@ -34,7 +34,7 @@ import {
   driveChipRowFits, driveHelp, driveHoverDuringGesture, driveHoverFollowsMouse,
 } from './chrome';
 import { driveTypeDrawn, driveTypeLigatures, driveTypeRoles } from './type';
-import { driveFacesCovered } from './faces';
+import { readFontFaces, writeFontFaces } from './font_faces';
 import { driveCreep, drivePlaneBuilt, driveRuler } from './finger';
 import { driveSceneBuilt } from './built';
 import { driveDrawerCost } from './pool';
@@ -220,9 +220,9 @@ async function driveSimulated(browser: Browser): Promise<void> {
   await driveTypeRoles(page);
   await driveTypeDrawn(page);
   await driveTypeLigatures(page);
-  // After role checks: those ask which face each role draws in, and this asks whether each
-  //   character page writes has glyph there.
-  await driveFacesCovered(page);
+  // After role checks, with help open, so its tab strip stands to be read; `koch drive` judges
+  //   what this reads, once whole drive passes.
+  await readFontFaces(page, basename(PATH_PAGE, '.html'), true);
   await driveShadedFromAbove(page);
   await driveVeilCovers(page);
   await driveMarkerShapedOnce(page);
@@ -379,6 +379,8 @@ async function main(): Promise<void> {
   await driveServed(browser);
   // Page of its own, since host it stands in has to be there before page's script runs.
   await driveHostSave(browser, `file://${PATH_PAGE}`, SIZE_VIEW);
+  // Last, so control page is read once page itself was.
+  await writeFontFaces(browser);
 
   await browser.close();
   console.log(`\n${countRun() - countFailed()} of ${countRun()} checks passed.`);
