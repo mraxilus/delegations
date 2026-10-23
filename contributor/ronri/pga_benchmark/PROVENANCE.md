@@ -410,8 +410,28 @@ algebras on `linux amd64, 4 cores` on 2026-10-21, at 451 measurands:
   build with a copy of each wrapper, which doubles the C file. Without the three flags of gcc, 5
   counts of 111 moved at rga4d, and 10 of 135 at cga5d. Then `wedge` and
   `wedge_round_point_dipole` at cga5d, of the same C, read 871 and 774 instructions.
-- `drive` on the runner of CI, on 2026-10-21, read the same counts for each measurand, under the
-  same gcc package.
+
+**The gate pins a fault that grows a count, and the record holds its reading beside unchanged
+code** (`CONTRIBUTOR.md`, Tests are paramount). The fault is `+` of the library without `inline`.
+Its C body stays the same, so no static count moves. Only the counts of `add` grow, at each
+algebra. In each cell below, the first figure is the slowest and the typical reading of unchanged
+code, which are equal. The second figure is the reading of the fault:
+
+| Algebra | Instructions | Bytes read | Bytes written |
+| --- | --- | --- | --- |
+| rga3d | 42, fault 56 | 225, fault 241 | 200, fault 216 |
+| rga4d | 82, fault 97 | 417, fault 433 | 392, fault 408 |
+| cga4d | 82, fault 97 | 417, fault 433 | 392, fault 408 |
+| cga5d | 146, fault 159 | 801, fault 817 | 776, fault 792 |
+
+The readings of unchanged code are 20 runs of `inspect` and `guard` on `linux amd64, 4 cores`, on
+2026-10-22. In each run, each count of each measurand equalled its baseline. `guard` gave no
+finding and no notice in any run. The fault was read on a copy of the library at the pin, with
+`inline` taken from `+` in `pga/multivectors.nim`.
+
+The runner of CI read the same. Run 1340 of `check`, on 2026-10-22, gave no finding and no notice,
+under the same gcc package. Runs 1296, 1298 and 1306, on 2026-10-21, gave no finding. So the spread
+of unchanged code is zero, and the fault reads beyond it at each count of `add`.
 
 A wrapper that reaches a shared object is a finding. Its band would need readings of the
 runner and of a delegate, and no record holds them.
@@ -686,7 +706,7 @@ string and the header table name the same verbs.
 
 `system` prints the packages of `SYSTEM`, and each one carries its reason there. Git reads the
 library head, and `curl` and `coreutils` serve `koch fetch-assets`, which fetches and checks the
-faces. `binutils` gives `show` its `objdump`. `nodejs` runs the type checker of `types` and the
+font faces. `binutils` gives `show` its `objdump`. `nodejs` runs the type checker of `types` and the
 render harness of `drive`.
 
 **The driver dispatches, and imports the standard library alone.** `koch check-types` runs
@@ -880,22 +900,21 @@ and a stale anchor.
 ## Pages
 
 **Every page is one shell and one body.** The shell is `pages/shell.html`, committed and
-hand-written. The body is rendered in Nim from committed files, so a page says only what those
-files say. The faces are the six that `pga_visualiser` embeds, fetched through
-`koch fetch-assets` and inlined as base64. Interaction is CSS: tabs, filters and sort are
-inputs that `:has()` rules read.
+hand-written. The body is rendered in Nim from committed files, so a page says only what those files
+say. The font faces are the six that `pga_visualiser` embeds, fetched through `koch fetch-assets`
+and inlined as base64. Interaction is CSS: tabs, filters and sort are inputs that `:has()` rules
+read.
 
-**Each Noto face ships whole, as the TrueType of its own release** (Article X.8, as the
+**Each Noto font face ships whole, as the TrueType of its own release** (Article X.8, as the
 Architect ruled it on 2026-10-03). Commit Mono is no Noto, so it ships as the Latin `woff2` of
-`@fontsource`. All six faces are under the SIL Open Font License 1.1. The cost is weight: each
-page is 4.3 to 5.2 MiB, against 0.9 to 1.8 MiB with the subsets, by `ls -l build` on
-2026-10-04.
+`@fontsource`. All six font faces are under the SIL Open Font License 1.1. The cost is weight: each
+page is 4.3 to 5.2 MiB, against 0.9 to 1.8 MiB with the subsets, by `ls -l build` on 2026-10-04.
 
-**Each stack holds every face of the sans stack before any family of the system.** So a
-character that the first faces of a stack lack falls to a face that the page ships. Noto Sans
-draws `ₙ`, `ₖ` and `ᵀ` in code, which no face of the mono stack holds, at a width that is not
-one column. Verified by `test_rga4d.nim`, which reads the stacks of the shell, and by `drive`,
-which renders every page (below).
+**Each stack holds every family of the sans stack before any family of the system.** So a character
+that the first families of a stack lack falls to a font face that the page ships. Noto Sans draws
+`ₙ`, `ₖ` and `ᵀ` in code, which no family of the mono stack holds, at a width that is not one
+column. Verified by `test_rga4d.nim`, which reads the stacks of the shell, and by `drive`, which
+renders every page (below).
 
 **A proposal can carry a figure.** A paragraph of one image alone, as
 `![Derivation map.](../../pages/derivation-map.svg)`, embeds the SVG that it names. The SVG lives
@@ -904,32 +923,32 @@ tokens with fallbacks, so it follows the theme of the page and still reads alone
 names no file is a finding of `drive`. Rejected: a figure kept outside the repository, because no
 page is built from it.
 
-**Bar marks on bold letters are drawn by markup,** as the Architect ruled on 2026-10-04. The
-left complement is written 𝐜̱, with U+0331, and the right one 𝐜̄, with U+0304. Noto Sans Math holds
-each bold maths letter and both marks, but it puts each mark beside the letter. So `htmlMarked`
-boxes each bold letter that carries a bar mark, together with its marks, and the shell draws the
-bar. The bar under stands where the face draws its macron below. The bar over stands 0.054em
-higher than the macron of the face, to clear the bold x-height.
+**Bar marks on bold letters are drawn by markup,** as the Architect ruled on 2026-10-04. The left
+complement is written 𝐜̱, with U+0331, and the right one 𝐜̄, with U+0304. Noto Sans Math holds each
+bold maths letter and both marks, but it puts each mark beside the letter. So `htmlMarked` boxes
+each bold letter that carries a bar mark, together with its marks, and the shell draws the bar. The
+bar under stands where the font face draws its macron below. The bar over stands 0.054em higher than
+the macron of the font face, to clear the bold x-height.
 
-The mark stays in the text and a clip hides it, so copy and search read what the source says.
-Each word that holds such a letter stays on one line, because a box is a place where a line may
-break. Tags, attributes, and the content of `svg`, `script` and `style` pass as they are.
-Rejected: the marks as the face places them, since each sits after its letter and meets the next
-sign. Rejected: sans-serif bold letters, which carry all three anchors, since the letters change
-shape and the library code that a page quotes cannot change.
+The mark stays in the text and a clip hides it, so copy and search read what the source says. Each
+word that holds such a letter stays on one line, because a box is a place where a line may break.
+Tags, attributes, and the content of `svg`, `script` and `style` pass as they are. Rejected: the
+marks as the font face places them, since each sits after its letter and meets the next sign.
+Rejected: sans-serif bold letters, which carry all three anchors, since the letters change shape and
+the library code that a page quotes cannot change.
 
-In code, ★ comes from the math face as ☆ does, because the mono face draws ★ smaller.
+In code, ★ comes from Noto Sans Math as ☆ does, because Commit Mono draws ★ smaller.
 
-The cause is in the face. In Noto Sans Math 2.539, the 52 letters of the bold block, U+1D400 to
-U+1D433, carry a `center` anchor alone. A mark such as U+0338 uses that anchor. A top or bottom
-mark finds no anchor on them, so HarfBuzz leaves it at the pen, after the letter. The italic, bold
+The cause is in the font face. In Noto Sans Math 2.539, the 52 letters of the bold block, U+1D400 to
+U+1D433, carry a `center` anchor alone. A mark such as U+0338 uses that anchor. A top or bottom mark
+finds no anchor on them, so HarfBuzz leaves it at the pen, after the letter. The italic, bold
 italic, sans-serif bold and monospace blocks carry `top`, `center` and `bottom`, and so does the
 Latin `c`.
 
-Verified on 2026-10-04 by fontTools, which read the GPOS table of the face in the store.
-HarfBuzz shapes `uni0331` with an offset of 0 after `u1D41C`, and of −373 after `c`. HarfBuzz
-moves a mark by its own rule only for a face with no GPOS table. With that table removed, it
-puts the same mark at an offset of −437, under the letter.
+Verified on 2026-10-04 by fontTools, which read the GPOS table of the font face in the store.
+HarfBuzz shapes `uni0331` with an offset of 0 after `u1D41C`, and of −373 after `c`. HarfBuzz moves
+a mark by its own rule only for a font face with no GPOS table. With that table removed, it puts the
+same mark at an offset of −437, under the letter.
 
 The glyph source of release 2.539 gives `cbold-math` the `center` anchor alone. Tag 3.000 holds
 sources alone, with no bold letter source, and `notofonts.github.io` publishes 2.539 as its last
@@ -1015,23 +1034,23 @@ signatures an edit defines or sits in, and a header that closes at its own inden
 
 ## Render of pages
 
-**`drive` renders every page, and fails where a face of the system draws a character beyond
-ASCII** (`CONTRIBUTOR.md`, Pages and assets). The driver builds the pages once, for the digests
-and for the render. It wraps each page in the skeleton that the publish host adds, and writes it
-to `build/hosted/`. The harness in `tools/drive/` loads each one in Chromium through Playwright,
-and opens every `details`. It reads each string that the page draws, with the font stack, weight
-and case transform of its element. That covers text nodes, SVG text, placeholders, and the
-strings of `content` on `::before`, `::after` and `::marker`.
+**`drive` renders every page, and fails where a font face of the system draws a character beyond
+ASCII** (`CONTRIBUTOR.md`, Pages and assets). The driver builds the pages once, for the digests and
+for the render. It wraps each page in the skeleton that the publish host adds, and writes it to
+`build/hosted/`. The harness in `tools/drive/` loads each one in Chromium through Playwright, and
+opens every `details`. It reads each string that the page draws, with the font stack, weight and
+case transform of its element. That covers text nodes, SVG text, placeholders, and the strings of
+`content` on `::before`, `::after` and `::marker`.
 
-The harness resolves each character beyond ASCII down its stack, against the `@font-face` rules
-and the `cmap` of each face. The faces come out of the page itself, as the `data:` sources of
-its rules, so the check reads the bytes that a viewer receives. A family that the page does not
-ship ends the search, because a face of the viewer would draw the character there. The harness
-writes each such character as data, with each face that the browser does not load.
+The harness resolves each character beyond ASCII down its stack, against the `@font-face` rules and
+the `cmap` of each font face. The font faces come out of the page itself, as the `data:` sources of
+its rules. So the check reads the bytes that a viewer receives. A family that the page does not ship
+ends the search, because a font face of the viewer would draw the character there. The harness
+writes each such character as data, with each font face that the browser does not load.
 `src/pga_benchmark/pages/render.nim` turns each one into a finding at its hosted page:
 
 ```text
-build/hosted/docket.html:0: p.note: Character drawn by face of system; got `U+2603`.
+build/hosted/docket.html:0: p.note: Character drawn by font face of system; got `U+2603`.
 ```
 
 Rejected: `CSS.getPlatformFontsForNode`, which in Chromium 141 on 2026-10-04 returned no font for
@@ -1044,12 +1063,12 @@ rule. `Date.now()` in node timed each read, in Chromium 141 on `linux amd64, 4 c
 2026-10-04. `display` sets no property of a font, and the 2 623 strings that the docket draws read
 identical both ways.
 
-**A standing control proves that the render sees.** `drive` renders a control page beside the
-pages, built through the shell from `tests/fixtures/control_render.json`, so it ships the same
-faces. Two of its paragraphs write a character that no shipped face maps under their stack.
-One writes `U+4E2D` under the stack of the page, and one `U+2603` under `"Noto Sans", sans-serif`.
-A third writes `U+2603` under the stack of the page, which Noto Sans Symbols 2 maps. The control
-must raise exactly the two expected findings, and they never count against a page.
+**A standing control proves that the render sees.** `drive` renders a control page beside the pages,
+built through the shell from `tests/fixtures/control_render.json`, so it ships the same font faces.
+Two of its paragraphs write a character that no shipped font face maps under their stack. One writes
+`U+4E2D` under the stack of the page, and one `U+2603` under `"Noto Sans", sans-serif`. A third
+writes `U+2603` under the stack of the page, which Noto Sans Symbols 2 maps. The control must raise
+exactly the two expected findings, and they never count against a page.
 
 An expected finding that is absent is a finding, because the check is then blind. A finding that
 the control does not expect is a finding too, and so is a control that expects nothing. The
@@ -1057,24 +1076,24 @@ fixture lives under `tests/`, because the static coverage check reads every file
 Rejected: the control as HTML under `pages/`, where the layout admits HTML, since coverage reads it.
 
 Costs: the harness reads one viewport, the default of Playwright. So a string or a stack that
-`@media` adds at another width is unread. It resolves each character alone, and a browser picks
-a face for each cluster. So a combining mark can draw from a face that the harness does not name.
-Three runs of the harness over the nine pages took 7.4 to 7.8 s, and one run of `drive` took
+`@media` adds at another width is unread. It resolves each character alone, and a browser picks a
+font face for each cluster. So a combining mark can draw from a font face that the harness does not
+name. Three runs of the harness over the nine pages took 7.4 to 7.8 s, and one run of `drive` took
 166 s. The wall clock timed both, on the same machine and date.
 
 Verified by driven check on 2026-10-04, in Chromium 141 that `PGA_CHROMIUM` named, and not in the
 revision that the lock pins. Every page held no finding, and the control raised its two. With the
-resolver blinded by hand, so that a shipped face drew every character, `drive` failed so:
+resolver blinded by hand, so that a shipped font face drew every character, `drive` failed so:
 
 ```text
 build/hosted/control_render.html:0: p#han: Check is blind, since control raised no finding here;
 got none for `U+4E2D`.
 ```
 
-**Each card holds its blocks apart.** Before it reads faces, the harness reads layout, in
+**Each card holds its blocks apart.** Before it reads font faces, the harness reads layout, in
 `tools/drive/layout.ts`. It opens each `details.card`, then checks each tab that `nav.tabs` offers,
-since a card behind another tab draws no box. Two blocks of one card that share a column and
-stand closer than 4 px are one finding at their page:
+since a card behind another tab draws no box. Two blocks of one card that share a column and stand
+closer than 4 px are one finding at their page:
 
 ```text
 build/hosted/proposals.html:0: details#change-imports-narrow.card: Blocks of card touch; got `p, p`
@@ -1092,8 +1111,8 @@ The card `spaced` keeps the margins of the shell, so it must raise none, and it 
 shell loses the rule. The verdict holds the control to exactly the cards that it expects, as it
 does for characters.
 
-Costs: the layout is read at one viewport, as the faces are. Two blocks side by side, as the columns
-of a grid, are not compared.
+Costs: the layout is read at one viewport, as the font faces are. Two blocks side by side, as the
+columns of a grid, are not compared.
 
 Suite `Internal: Render` of `test_rga4d.nim` holds the verdict and the control. Suite
 `Internal: Pages` holds the skeleton, and suite `Internal: Driver` holds one build for both uses.
@@ -1145,12 +1164,12 @@ line is a route that the code does not take, and no file states which route a ne
 
 ## Derivation map
 
-The library map draws its bars in its SVG, as an underline or an overline, with the mark at
-size zero. A bar over a group of signs, as in 𝐚 ∨ 𝐛 = 𝐮̱ where 𝐮 = 𝐚̄ ∧ 𝐛̄, is the decoration
-alone. The face sets an overline near its ascent, so no text stands just above a formula with a
-bar over it. The tilde and the hat are spacing marks, ˜ and ˆ, since the face puts a combining
-mark beside its letter. Two advances, of the mark and of the letter, set each over or under its
-letter. The tilde under 𝐐 sits lower, to clear its tail.
+The library map draws its bars in its SVG, as an underline or an overline, with the mark at size
+zero. A bar over a group of signs, as in 𝐚 ∨ 𝐛 = 𝐮̱ where 𝐮 = 𝐚̄ ∧ 𝐛̄, is the decoration alone. The
+font face sets an overline near its ascent, so no text stands just above a formula with a bar over
+it. The tilde and the hat are spacing marks, ˜ and ˆ, since the font face puts a combining mark
+beside its letter. Two advances, of the mark and of the letter, set each over or under its letter.
+The tilde under 𝐐 sits lower, to clear its tail.
 
 The map holds eleven blocks, in the order of the groups of the code, under its legend, and each anti
 table stands under its base. Each box holds a symbol alone, and the line into it carries its
