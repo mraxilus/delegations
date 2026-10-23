@@ -104,27 +104,24 @@ const
     ##   crossing is cut by trim and count of them falls.  Opening after
     ##   that leaves crossing clear of every hand by more than trim reaches,
     ##   so it is drawn every step of way.
-    ## Cost: snake gains 0.19 of its swing over last hundredth of turn,
-    ##   which is 3.8 of line.  Looked at frame by frame and it reads as
+    ## Cost: snake gains 0.26 of its swing over last hundredth of turn,
+    ##   which is 5.2 of line.  Looked at frame by frame and it reads as
     ##   loops opening, not as jump.
 
-## Both knobs above move where two reaches cross, and pair of them is
-##   chosen for that rather than for width alone.
-##   Belief that they could not, which stood while whole set was ruled
-##     out untried, came of comparing two reaches at same point along
-##     each.  They cross where they hold same *place*, at their own
-##     points, and their chords differ: follow's two hands sit up to 20
+## Five knobs above, `SWAN_EASE` to `SWAN_OPENS_AT`, move where two reaches
+##   cross, and they are chosen for that rather than for width alone.
+##   Short argument says they cannot: it compares two reaches at same
+##     point along each.  They cross where they hold same *place*, at their
+##     own points, and their chords differ: follow's two hands sit up to 40
 ##     apart **along** pair's axis wherever follow has turned off half
 ##     turn, so equal-point argument holds only at whole and half turns.
-##   Measured over stretch every hundredth of turn, region where third
-##     crossing arrives once and never dives back under hand mark is
-##     ease 4.5 to 6.0 by swing 0.74 to 0.84, narrowing as ease rises;
-##     5.0 and 0.78 sit inside it on both, half step of ease either way
-##     and middle of swing's range at that ease.
-##   Cost: swan is narrower than it was, and swans are Architect's to
-##     rule on.  Width is matter of looks and stays theirs; what checks
-##     hold is that snake goes round something, stays inside its own
-##     figure, and that count of crossings never falls.
+##   Snake pulls in, then opens late, so third crossing arrives once and
+##     never dives under hand mark while swan bows 22, Architect's width.
+##     One swing for whole stretch cannot: widest that keeps count of
+##     crossings monotonic bows 14.1 (`PROVENANCE.md`, Drawing chain).
+##   Width is matter of looks and stays Architect's; what checks hold is
+##     that snake goes round something, stays inside its own figure, and
+##     that count of crossings never falls.
 
 
 

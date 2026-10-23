@@ -8,7 +8,7 @@
 ##       sample is full routing.  Accepted -- routes are built once,
 ##       into markup, not per frame in browser.
 ##   State that rules say does not exist is refused, not drawn: `renderParts`
-##     asserts `danceable`, so build fails rather than publishing wrap
+##     asserts `isDanceable`, so build fails rather than publishing wrap
 ##     that does not wrap (rule 7).
 ##     Cost of refusing at build time: page asking for impossible state
 ##       dies with assertion rather than showing gap.  Accepted --
@@ -213,7 +213,7 @@ func renderParts*(
   should_clear_marks = false,
 ): seq[string] =
   ## Draw every element of one pose, in order picture is read from.
-  ##   `clear_marks` asks straight reach to bend round marks it does
+  ##   `should_clear_marks` asks straight reach to bend round marks it does
   ##     not join (rule 22).  It is off by default so that only pages
   ##     that have been looked at under rule take it.
   # Lock or wrap that does not go round body is not one, and state
@@ -221,8 +221,9 @@ func renderParts*(
   # rather than drawing something rules say does not exist.
   doAssert isDanceable(pose, holds, levels, modifiers),
     &"Undanceable state asked for; got `{holds}` at `{levels}`, `{modifiers}`."
-  # Every drawing path comes through here, so this is where hands are
-  # put: pose handed in ready-made is settled exactly like one built below.
+  # Every still drawing path comes through here, so this is where still
+  # figure's hands are put: pose handed in ready-made is settled exactly
+  # like one built below.
   let
     put = settled(pose, holds, levels, modifiers)
     hands = handPoints(put)
@@ -454,15 +455,16 @@ const GAPS_DRAWN = 2
 
 func dashedAt*(points: seq[Point], dives: seq[tuple[opens, shuts: float]], starts = 0.0):
     tuple[pattern, offset: string] =
-  ## Say moving reach's break as dash pattern: how far it runs, how long
-  ## break is, and then rest of it (rule 29).
+  ## Say moving reach's breaks as dash pattern: run, gap, run, gap, and rest
+  ## of it (rule 29).
   ##   Still reach is cut into runs where it dives under its partner, but
   ##     number of runs changes with number of crossings and path
   ##     that changes shape cannot be morphed between frames.  Dash puts
   ##     same break in same place and leaves path one piece.
   ##   Where this half of reach has no crossing in it, break is zero
-  ##     long, which draws as no break at all -- so every frame says three
-  ##     numbers whether it is broken or not, and nothing jumps.
+  ##     long, which draws as no break at all -- so every frame says
+  ##     `2 * GAPS_DRAWN + 1` numbers whether it is broken or not, and nothing
+  ##     jumps.
   ##   Crossing that sits on join between two halves breaks both
   ##     of them, each by as much of gap as falls inside it, so
   ##     break slides across middle instead of hopping.
