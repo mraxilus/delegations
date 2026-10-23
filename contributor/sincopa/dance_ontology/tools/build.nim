@@ -88,7 +88,8 @@ const
     ##   carries, which is honest limit rather than omission.
     ##   Flag says whether runner installs it: it installs what `system` prints, and opens
     ##   nothing else.  `engine` needs first two and C compiler, which Nim brings already and
-    ##   so is not named twice, and every suite builds engine.  `types` and `drive` need node.
+    ##   so is not named twice, and each suite compiled to C builds engine.  `types` and
+    ##   `drive` need node.
     ##   Chromium that `drive` renders with is Playwright's own, which `drive` fetches at
     ##   revision lock pins, so runner installs no browser.  `chromium` here is `shot`'s, which
     ##   person runs by hand, and `shot` prints it where it builds.  `pages`, `fixtures`,
