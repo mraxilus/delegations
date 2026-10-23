@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 00884b0317038c80 |
+| Rules   | 125f0baf69b4f5ec |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 | Pruned  | ab8fb063b62bb03ba9fd7f2964a1866b3862909b |
 
@@ -455,16 +455,16 @@ Two copies of one rule drift.
   paraphrase.
 - Verified by `suites/test_duplicates.nim`.
 
-## Faces
+## Font faces
 
-**Every presentation target ships the faces that Article X.8 names, and line forms hold it.**
+**Every presentation target ships the font faces that Article X.8 names, and line forms hold it.**
 A source is read only where it declares `font-family` or the `font` shorthand. The project of
 the checker is exempt, because it names the families as data and carries fixture pages. A page
-that links a font host is a finding, because the viewer then fetches the face instead of
+that links a font host is a finding, because the viewer then fetches the font face instead of
 receiving it.
 
 The first family of every stack is Noto Serif, Noto Sans or Commit Mono, subset aliases
-included. The fallbacks after it are free, because the shipped face is what the viewer gets. A
+included. The fallbacks after it are free, because the shipped font face is what the viewer gets. A
 selector whose subject is `h1` to `h6` sets the serif, with one level of `var()` resolved from
 the page's own custom properties. A selector that styles something inside a heading is not
 styling the heading. A source that names Commit Mono enables `calt`, where its functional
@@ -477,22 +477,24 @@ ligatures live.
   unseen, and so is a heading styled through a class alone. A finding inside a joined chain
   names the line where the chain opens. The desktop atlas is outside the ligature rule by X.8
   itself, because Dear ImGui shapes no text, and it declares no CSS.
-- Verified by `suites/test_faces.nim`, each rule by line, and the label beside a heading among them.
+- Verified by `suites/test_font_families.nim`, each rule by line, and the label beside a heading
+  among them.
 
 ## Coverage
 
-**Each character beyond ASCII that the files of a project use has a face that the project
-ships, and `coverage.nim` holds it.** Article X.8 merges faces by codepoint range, then renders
+**Each character beyond ASCII that the files of a project use has a font face that the project
+ships, and `coverage.nim` holds it.** Article X.8 merges font faces by codepoint range, then renders
 each codepoint against `.notdef`. A render needs a built page and a browser, and the static pass
-has neither. So this check holds the static half: what the sources write, against what each face
-maps. A character that no face of the project maps falls to a face that the viewer may lack.
+has neither. So this check holds the static half: what the sources write, against what each font
+face maps. A character that no font face of the project maps falls to a font face that the
+viewer may lack.
 
-- **The faces of a project are the store faces whose file names its files hold.** The store
-  refuses a file that no row declares, so the name is the only way that a project reaches a
-  face. The check takes the union over the project. Rejected: a check for each page or each
+- **The font faces of a project are the store font faces whose file names its files hold.** The
+  store refuses a file that no row declares, so the name is the only way that a project reaches a
+  font face. The check takes the union over the project. Rejected: a check for each page or each
   stack, which repeats the cascade that a render decides.
-- Cost: a character that no stack of its element reaches can still pass. The face that covers it
-  may serve another stack, or the desktop atlas alone. The render of `drive` holds that case
+- Cost: a character that no stack of its element reaches can still pass. The font face that covers
+  it may serve another stack, or the desktop atlas alone. The render of `drive` holds that case
   (`CONTRIBUTOR.md`, Pages and assets), as the Architect ruled on 2026-10-04.
 - **The check reads every file of the project outside `tests/`, other than its records.** The
   drivers of the three page projects build pages from Nim, TypeScript, Markdown and JSON, as
@@ -512,17 +514,17 @@ maps. A character that no face of the project maps falls to a face that the view
 - **A finding names the file, the line, the codepoint and the spelling**, as in
   ``got `U+21C4` for `&#8644;` ``. A line gets one finding for each codepoint, however often it
   spells it.
-- **A project that names no store face is skipped.** Nothing tells its page apart from a tool that
-  prints text beyond ASCII. Cost: a page that ships no face at all is unseen here.
-- **The checker's own project is exempt**, as the faces check exempts it, because `assets.nim`
-  names every face as data.
-- Cost: a codepoint that draws nothing, such as `U+FE0F`, is still reported where no face maps
+- **A project that names no store font face is skipped.** Nothing tells its page apart from a tool
+  that prints text beyond ASCII. Cost: a page that ships no font face at all is unseen here.
+- **The checker's own project is exempt**, as the font families check exempts it, because
+  `assets.nim` names every font face as data.
+- Cost: a codepoint that draws nothing, such as `U+FE0F`, is still reported where no font face maps
   it. Verified by a search on 2026-10-04 at `de0c189`, of each file that the check reads. None
   holds `U+FE0F`, as the character or as a reference.
 - Verified by `suites/test_coverage.nim`: each rule, and the law at every bound of the ranges of
   Noto Sans.
 
-**The check decides coverage over the whole source before it scans the comments.** The faces
+**The check decides coverage over the whole source before it scans the comments.** The font faces
 cover almost every character, and the comment scan is most of the cost. So only a source that
 holds an uncovered character, in a comment or not, has its comments scanned.
 `suites/test_coverage.nim` holds this path to a full reading of every source.
@@ -866,14 +868,14 @@ the class: *"binaries are never committed, and neither are fonts, images or any 
 cannot read"*. Each one is recorded with origin, version, licence and checksum. The store is
 that class kept once, rather than once for each project.
 
-Faces are the only rows, and the rows say so by grouping and by one column. The shape is file,
+Font faces are the only rows, and the rows say so by grouping and by one column. The shape is file,
 address, digest and the codepoints that the file maps. The first three are what any such file
-needs, and the fourth is the face's own. **An asset that wants a field this row lacks is a
+needs, and the fourth is the font face's own. **An asset that wants a field this row lacks is a
 change, and not something this shape answers.** Such a field is unpacking or a variant set, and
-an asset that is no face changes the fourth column too. The header says so, rather than implies
+an asset that is no font face changes the fourth column too. The header says so, rather than implies
 that the shape is settled for all time.
 
-- **Each face row carries the codepoints that its file maps, as ranges.** The coverage check
+- **Each font face row carries the codepoints that its file maps, as ranges.** The coverage check
   reads rows and never bytes, because the static pass fetches nothing. `suites/test_assets.nim`
   reads the `cmap` of each file and holds the row to it. So a new digest with old ranges fails,
   and the failure prints the ranges to take.
@@ -882,15 +884,15 @@ that the shape is settled for all time.
 - The ranges take the spelling of `fc-query --format='%{charset}'`, so a curator can check a row
   with a second reader. Fontconfig 2.15.0 printed the same text as the reader of the suite for
   every file of the store, 2026-10-04. Control characters are left out, because none draws.
-- Faces that map one set share one constant. Upright Noto Sans and Noto Serif map one set at
-  every weight, and the three files of Commit Mono map one set. A face whose bytes move splits
+- Font faces that map one set share one constant. Upright Noto Sans and Noto Serif map one set at
+  every weight, and the three files of Commit Mono map one set. A font face whose bytes move splits
   from its constant.
 - **`font_files.nim` reads `woff2` through `libbrotlidec`, which it loads at run.** No Nim import
   decodes Brotli, and a codec is an external concern (Article II.8). A machine without the
   library fails each read of `woff2` by name, and every other suite still runs. Rejected:
   `fc-query` as the reader, which adds fontconfig to every machine and reads its charset rather
   than the `cmap`.
-- Cost: the test fetches each face that the store lacks. Measured on 2026-10-04 on the machine
+- Cost: the test fetches each font face that the store lacks. Measured on 2026-10-04 on the machine
   of Figures: into an empty store, it fetched 5,670,612 bytes in 2.5 s. Warm, it took 0.08 s.
   The `test` job of the runner restores no store, so it fetches on each run.
 
@@ -900,45 +902,45 @@ projects that a curator may not edit.
 The store exists because Article X.8 gives the same families to every presentation target, so
 a second target repeats the pins of the first. Two pins of one file, each in its own
 `tools/build.nim`, are a copy that no real constraint forces (Article II.9). Nothing tells such
-a copy from two different faces.
+a copy from two different font faces.
 
 - **The digest is the curator's, and the choice is the project's.** The store says what bytes
-  `NotoSans-Regular.ttf` is. It never says which faces a target wants, and the targets differ:
+  `NotoSans-Regular.ttf` is. It never says which font faces a target wants, and the targets differ:
   one draws maths and symbols, and the other italic serif. What stops being written twice is
   only what is identical, so the autonomy that CONTRIBUTOR.md argues for is untouched.
 - The store is the **only shared build input** of the repository. Compilers are pinned for each
   project in nimble files, Atlas checkouts for each project, and npm for each project, all
-  deliberately. The bytes of a face are not a toolchain. They are the same file for whoever
+  deliberately. The bytes of a font face are not a toolchain. They are the same file for whoever
   fetches them.
-- **Keyed by digest, and never by name.** Two projects that ask for one face share one entry
-  by construction, and a moved pin is a different entry rather than a stale one. `check.yml`
+- **Keyed by digest, and never by name.** Two projects that ask for one font face share one entry
+  by construction. A moved pin is a different entry rather than a stale one. `check.yml`
   gets the same property from a cache keyed on the file that holds the digests, one layer
   down. The store sits at `~/.cache/koch/assets`, outside the checkout, because the audit reads
   untracked files. It is the store of koch, while the cache of compilers, `~/.cache/knoller/nim`,
   belongs to knoller and koch uses it.
-- **Pages and the desktop atlas embed whole Noto faces, from the Noto release (Article X.8).**
-  Noto was chosen so that no character of a page falls outside its faces, and a subset undoes
-  that. The rows hold each whole face that a page draws, as TrueType, which `@fontsource` does
+- **Pages and the desktop atlas embed whole Noto font faces, from the Noto release (Article X.8).**
+  Noto was chosen so that no character of a page falls outside its font faces, and a subset undoes
+  that. The rows hold each whole font face that a page draws, as TrueType, which `@fontsource` does
   not ship. Where two projects pin one file, they pin one digest.
 - **The store declares no Noto subset, and `suites/test_assets.nim` holds it so.** Every Noto
   row is a TrueType file of the Noto release. `koch fetch-assets` refuses a file that no row
   declares, so no page can ship a Noto subset.
 - **Commit Mono keeps its Latin subset.** Article X.8 binds Noto alone, and Commit Mono is no
   Noto. Its two `woff2` rows are the only subsets of `@fontsource` in the store.
-- Cost: a whole face is 610 to 780 KB of TrueType, where its Latin subset is about 13 KB. A page
-  that inlines it as base64 carries about a third more again.
+- Cost: a whole font face is 610 to 780 KB of TrueType, where its Latin subset is about 13 KB. A
+  page that inlines it as base64 carries about a third more again.
 - One digest reader serves both fetches. `fetchAsset` reads the bytes that it fetched through
   `digest` of knoller, so the parse that the suites of knoller test also guards the store.
 - Verified by `suites/test_assets.nim`. Verified by hand with the built `binaries/koch
   fetch-assets` on 2026-10-04, in the cloud container of Claude Code, into an empty store.
-  Three whole faces, 2.0 MB, fill it in **1.5 s**. The same call warm takes **0.002 s**, and
+  Three whole font faces, 2.0 MB, fill it in **1.5 s**. The same call warm takes **0.002 s**, and
   fetches nothing.
-- Verified by a break of it, on 2026-09-10. A face that nobody declares is a finding, which
+- Verified by a break of it, on 2026-09-10. A font face that nobody declares is a finding, which
   names the table to add a row to. Alter one declared digest in its last character, and the
   fetch refuses the bytes and **leaves the store empty** rather than keeps them.
-- Cost: the store grows and nothing prunes it. A face is less than 1 MB, where a fetched compiler
-  is about 140 MB and a built one about 2.4 GB. So what is unbounded is the number of pins the
-  repository has ever held, and not the bytes.
+- Cost: the store grows and nothing prunes it. A font face is less than 1 MB, where a fetched
+  compiler is about 140 MB and a built one about 2.4 GB. So what is unbounded is the number of pins
+  the repository has ever held, and not the bytes.
 - Cost: an upstream that moves bytes under one address fails every project at once, rather
   than one. That is the same failure that a digest exists to make loud, and it is louder
   shared.
@@ -955,7 +957,7 @@ a copy from two different faces.
   row. **A row never reads as a path, and the suite holds it so.** The verb prints paths where
   files are named, and rows where none are. Both contributor builds tell those apart by shape
   alone: one keeps the lines that `fileExists`, and the other the lines that start with `/`.
-- A row that looked like an absolute path would be copied as a face by one build, and counted
+- A row that looked like an absolute path would be copied as a font face by one build, and counted
   as served by the other. Neither project can check that. The store owns the shape of the row,
   so the store holds the law.
 
@@ -1474,7 +1476,7 @@ the runner the fetch is 6.6 s cold, and the copy into `build/fonts` is milliseco
   names entries by digest, so an entry that no row declares is unreachable rather than wrong.
   `koch fetch-assets` fetches whatever an older restore lacks.
 - Verified on the runner, 2026-09-12: with no cache of `build/fonts`, the second `assets` pass
-  of a job copies nothing. The first pass puts every face in place, so that cache saves
+  of a job copies nothing. The first pass puts every font face in place, so that cache saves
   nothing.
 
 **The browser that a declaration names is the browser that runs, and the snap serves.**
@@ -1561,8 +1563,8 @@ its kind. A module takes every idiom, and a script or a package takes those that
 code.
 
 - A path of one machine is a finding in every kind but Markdown (CONTRIBUTOR.md, System). The
-  checker names such paths as fixtures, so its own project is left out, as the faces check leaves
-  it out.
+  checker names such paths as fixtures, so its own project is left out, as the font families check
+  leaves it out.
 - `tsconfig.json` sets its three flags to `true`, read as text, because TypeScript admits
   comments that `std/json` refuses.
 - Rejected: the idioms on `.nim` alone, which leave `.nims` and `.nimble` unread, though
@@ -2597,9 +2599,9 @@ each verb could save. The same step compiles koch and runs the verb of the proje
 ## Runner caches
 
 **The compiler is the cache that matters on the `drive` job.** The job restores the store of
-npm, the Atlas checkouts, the commit-pinned compiler, and the faces. To restore the compiler is
+npm, the Atlas checkouts, the commit-pinned compiler, and the font faces. To restore the compiler is
 seconds, where a build from source is fifteen minutes. Every other cache is noise beside it:
-`npm ci` runs in 2 s cached, and the faces of one project take 1.5 s uncached. Measured on the
+`npm ci` runs in 2 s cached, and the font faces of one project take 1.5 s uncached. Measured on the
 runner, recorded 2026-09-07.
 
 - Unmeasured: npm cold on the runner, which needs a key poisoned on purpose. That figure is not
@@ -2707,4 +2709,4 @@ pull requests sat on both sides, so the subject of a call does not say which met
   answers with `items`. So a rename that an implicit call refuses could be planned, at one more
   command for each rename.
 - Whether the `test` job of `curator/audit` should restore the store, as the `drive` job does.
-  Without it, each run fetches 5.7 MB of faces before the suite holds the rows to their bytes.
+  Without it, each run fetches 5.7 MB of font faces before the suite holds the rows to their bytes.
