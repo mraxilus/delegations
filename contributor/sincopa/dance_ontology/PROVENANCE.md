@@ -1811,11 +1811,11 @@ Two joined pairs of one still may stand close, and may touch. Only pairs that ho
 connected or interlocked. So A10 stands, where the two pairs almost meet over the head, as the
 Architect ruled.
 
-Two readings of section A come apart at A09 and A11, which draw the same-name pair face to face.
-Rule 31 of the project itself says that this frame state has its connections lying through each
-other.
-Wound there from `Face-to-back` as the card says, the model stands them at ease, one connection over
-the other. That is a finding against the reading of the rule, and not a number bent toward the page.
+A09 and A11 draw the same-name pair face to face. Rule 31 of the project itself says that there its
+two connections cross, one over the other. The pair rests `Face-to-back`, because there they run
+parallel and cross nothing. Wound face to face from `Face-to-back` as the card says, the model
+stands them at ease, one connection over the other. That agrees with the rule, and is not a number
+bent toward the page.
 
 Sections B and E being whole is a weak result. Every card in them is held above, where a single
 hold sweeps free past two turns, so they test the model hardly at all. The cards that discriminate
