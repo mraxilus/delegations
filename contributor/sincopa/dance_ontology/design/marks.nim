@@ -33,8 +33,8 @@ proc once(name: string, build: proc (): Parts {.nimcall.}): Parts =
     LUT_PARTS_BY_NAME[name] = build()
   LUT_PARTS_BY_NAME[name]
 
-proc singleParts(): Parts = once("single", singleTurnParts)
-  ## Single-hand turns' parts, built once.
+proc singleParts*(): Parts = once("single", singleTurnParts)
+  ## Single-hand turns' parts, built once; `tests/suites/test_marks.nim` reads them too.
 
 proc handParts(): Parts = once("hand", handTurnParts)
   ## Hand-to-hand chain's parts, built once.
