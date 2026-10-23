@@ -585,6 +585,8 @@ repository issue 671.
   each format that the reader reads. On 2026-10-22, a break of the rule on an unshipped family
   failed one test. A break of the window from 400 to 500 failed another. On 2026-10-23, a break
   of each rule of the verdict failed at least one test.
+- Verified by `suites/test_projects.nim`, which drives a project of its own through `runDriven`.
+  The control page stands before the verb runs, and no verdict follows a verb that failed.
 - Verified in Chromium, 2026-10-23. A scratch reader that reads as a collector does found each
   numeral of the control page in its place. The verdict over what it read gave no finding. With
   `::before` left out, it gave one finding, which names `::before`.
