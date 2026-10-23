@@ -43,7 +43,9 @@ const WAYS*: array[4, WayRound] = [
 ]  ## Four ways reach can set off.  Which one whole move uses is
   ## settled once, before any of it is drawn -- see `oneWayRound`.
 
-const BREAK* = 11.0  ## Length of gap cut in under reach at crossing.
+const BREAK* = 11.0  ## Margin checks and tests allow round break.
+  ## No drawing code reads it: `hidesAt` sizes each gap as shadow of crossing line, about
+  ##   9.5 square on and up to 19.7 at `GRAZING`, and `gapFor` narrows it near hand.
 
 const SAME_SPOT* = 0.1  ## Apart from which two meetings are one meeting.
   ## Point is written to one decimal (`geometry.numeral`), so two meetings this

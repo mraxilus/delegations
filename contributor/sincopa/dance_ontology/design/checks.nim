@@ -1061,7 +1061,7 @@ func inkLength(figure, ink: string): float =
   ##   Counting pieces one reach is drawn in cannot see break that falls
   ##     where two shades meet -- it makes one piece of each rather than
   ##     two of one.  Length can see it wherever it falls: broken reach
-  ##     draws one `BREAK` less than whole one.
+  ##     draws less than whole one by gap `hidesAt` sizes.
   ##   Reach is drawn as quadratics through midpoints between its
   ##     sampled points (rule 35), and every one of those points is
   ##     control point of curve -- so reading `M`, each `Q`'s
@@ -1353,9 +1353,9 @@ proc checkHandTurns*(built: Parts) =
       "is stored as, so what turns hard reads as turning rather than as a " &
       "run of corners"
 
-  # And crossing is drawn as crossing: reach that dives loses one
-  # `BREAK` of its own length, and reach that dives twice loses two --
-  # which is alternation, measured rather than assumed.
+  # And crossing is drawn as crossing: reach that dives loses one gap
+  # of its own length, as `hidesAt` sizes it, and reach that dives twice
+  # loses two -- which is alternation, measured rather than assumed.
   for i, position in CHAIN:
     let
       figure = built[&"hh_{i}"]
