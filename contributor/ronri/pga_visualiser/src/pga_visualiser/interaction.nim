@@ -29,8 +29,8 @@
 
 import std/[math, options, strformat]
 
-# `pga` arrives through `projections`, which stands in for four it has withdrawn.
-import ./[boundary, camera, format, picking, projections, scene, tessellate, wording]
+import pga
+import ./[boundary, camera, format, picking, scene, tessellate, wording]
 
 
 

@@ -60,7 +60,7 @@ suite "Motors":
     for i in 0..<COUNT_GENERAL:
       let
         offset = PLACES[i]
-        slide = exp((-0.5 * offset.x).e23 + (-0.5 * offset.y).e31 + (-0.5 * offset.z).e12)
+        slide = exp((0.5 * offset.x).e23 + (0.5 * offset.y).e31 + (0.5 * offset.z).e12)
       check slide[Basis.scalar] =~ 0.0
       for basis in [Basis.E41, Basis.E42, Basis.E43]: check slide[basis] =~ 0.0
       check slide[Basis.E1234] =~ 1.0
@@ -88,7 +88,7 @@ suite "Motors":
       check turn.isSome
       let
         offset = PLACES[i]
-        slide = exp((-0.5 * offset.x).e23 + (-0.5 * offset.y).e31 + (-0.5 * offset.z).e12)
+        slide = exp((0.5 * offset.x).e23 + (0.5 * offset.y).e31 + (0.5 * offset.z).e12)
         screw = wedgeDotAnti(turn.get, slide)
       check normWeight(screw)[Basis.scalarAnti] =~ 1.0
       check exp(log(screw)) =~ screw

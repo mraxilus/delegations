@@ -61,7 +61,7 @@ import { driveSurfacesFilled } from './surface';
 import { driveHeapUnit, drivePhaseSums, driveTree } from './diagnostics';
 import { driveCrossingsCounted, driveShareAgrees, driveShareRefused } from './share';
 import { driveAxis, driveAxisGlide, driveCurve, driveScaleSwitch } from './exceedance';
-import { driveSums, driveTint, openEveryBranch } from './ramp';
+import { driveSidesCarryTime, driveSums, driveTint, openEveryBranch } from './ramp';
 import {
   drivePinAnchor, drivePinGrid, drivePinMarker, drivePinPick, drivePinPool,
   MILLISECONDS_PICK_HOVER_LOADED,
@@ -79,6 +79,7 @@ import { driveHostSave } from './host';
 import { driveVeilCovers } from './veil';
 import { driveViewSection } from './view';
 import { advance, hastenTransitions, simulateClock, waitUntil } from './clock';
+import { driveCounted } from './counted';
 
 declare global {
   interface Window {
@@ -338,6 +339,8 @@ async function driveMeasured(browser: Browser): Promise<void> {
   await drivePlacingCost(page, objects_largest);
   await drivePinPickLoaded(page, MILLISECONDS_PICK_HOVER_LOADED);
   await driveLoadedAccounting(page);
+  // Last: its frames turn camera, which checks above read as framed.
+  await driveSidesCarryTime(page);
 
   report(
     'the measured page raised no error', errors_page.length === 0, errors_page.join(' | '),
@@ -369,10 +372,11 @@ async function driveServed(browser: Browser): Promise<void> {
 
 async function main(): Promise<void> {
   const executable = chromiumChosen();
-  const browser = await chromium.launch({
+  const options = {
     ...(executable === undefined ? {} : { executablePath: executable }),
     args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--no-sandbox'],
-  });
+  };
+  const browser = await chromium.launch(options);
 
   await driveSimulated(browser);
   await driveMeasured(browser);
@@ -381,6 +385,8 @@ async function main(): Promise<void> {
   await driveHostSave(browser, `file://${PATH_PAGE}`, SIZE_VIEW);
 
   await browser.close();
+  // Browser of its own, since engine flags it counts under are whole process's.
+  await driveCounted(options, `file://${PATH_PAGE}`, SIZE_VIEW);
   console.log(`\n${countRun() - countFailed()} of ${countRun()} checks passed.`);
   process.exit(countFailed() === 0 ? 0 : 1);
 }
