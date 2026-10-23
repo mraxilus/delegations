@@ -143,9 +143,12 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
 - Close a generic type with `Of` only where an alias takes its bare name (V.13). Nim refuses a
   generic type and an alias of one name as a redefinition. A default for the parameter does not
   make the bare name valid.
-- Use `Option[T]` for expected absence, and never `-1`, `NaN` or an in-range sentinel. Where
-  a foreign boundary cannot carry an `Option`, translate through one named constant. Put that
-  constant at the return of the boundary proc, and never upstream of it.
+- Make expected absence a type that the caller must unwrap before use, and that fails at the
+  unwrap when empty. `Option[T]` is such a type. A sentinel is not, so never return `-1`, `NaN`
+  or an in-range value for absence. NaN qualifies only where the toolchain forces that unwrap
+  and stops its propagation. Where a foreign boundary cannot carry an `Option`, translate
+  through one named constant. Put that constant at the return of the boundary proc, and never
+  upstream of it.
 - Use an enum-indexed fixed array for a closed static domain (`array[Basis, float]`), and a
   `range` type for a bounded index. A fixed pool carries its live extent as a field
   (`bound`), and every walk is `for slot in 0..<pool.bound`.

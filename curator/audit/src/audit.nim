@@ -18,8 +18,8 @@ when compileOption("profiler"):
 import std/[options, os, sequtils, sets, strutils]
 import ../../knoller/src/knoller
 import ./[
-  checker, coverage, dependencies, domains, duplicates, english, faces, findings, form, glossary,
-  idioms, justification, kinds, layout, names, plan, prompts, prose, provenance, record,
+  checker, coverage, dependencies, domains, duplicates, english, findings, font_families, form,
+  glossary, idioms, justification, kinds, layout, names, plan, prompts, prose, provenance, record,
   toolchain, tree, waits, workflows,
 ]
 
@@ -184,7 +184,7 @@ proc auditTree*(tree: Tree): seq[Finding] =
     #   would report itself; it holds no presentation target of its own to check. Paths of
     #   one machine it names as fixtures, for same reason.
     if not e.path.startsWith(DIRECTORY_DRIVER & "/"):
-      result.add checkFaces(e.path, e.content)
+      result.add checkFontFamilies(e.path, e.content)
       if e.kind.get != Kind.Markdown: result.add checkPathsMachine(e.path, e.content)
     if e.kind.get.rule.has_guide:
       result.add checkIdioms(e.path, e.content, e.kind.get.dialect).toFindings
@@ -199,9 +199,9 @@ proc auditTree*(tree: Tree): seq[Finding] =
   result.add checkStandardsAcross(glossaries)
   result.add checkDuplicates(documents)
 
-  # Coverage reads project whole: faces it names anywhere against characters it writes
-  #   anywhere. Checker's own project names every face as data, so faces check's exemption
-  #   holds here too.
+  # Coverage reads project whole: font faces it names anywhere against characters it writes
+  #   anywhere. Checker's own project names every font face as data, so exemption of font families
+  #   check holds here too.
   for directory in directories:
     if directory != DIRECTORY_DRIVER: result.add tree.checkCoverage(directory)
 
