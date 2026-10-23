@@ -171,9 +171,12 @@ func wedge*(m, n: Multivector): Multivector {.inline.} = m ∧ n
    strictest mechanism available, enabled globally.
 4. Detect each error at its earliest boundary, and by distinct mechanisms. An invalid
    configuration fails statically, and an internal impossibility is an assertion. Expected
-   absence is a typed Option or an empty value, and never an in-range sentinel. Where a failed
-   case still carries a meaningful value, return that value beside a named flag. A message
-   ends by echoing each value in backticks, context included, as in
+   absence is a typed Option or an empty value, and never an in-range sentinel. Another form
+   meets this rule only where the compiler makes the caller unwrap it, and an empty unwrap fails
+   at once.
+
+   Where a failed case still carries a meaningful value, return that value beside a named flag.
+   A message ends by echoing each value in backticks, context included, as in
    ``"…; got `{value}` for `{key}`."``, so an empty value stays visible. An expensive check runs
    under the assertions flag.
 5. Decide the policy for each special case: zero, empty, NaN, overflow, and a zero norm. Express it
