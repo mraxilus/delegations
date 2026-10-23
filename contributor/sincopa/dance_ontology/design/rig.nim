@@ -65,8 +65,9 @@ const SHOWN: seq[Cut] = @[
    false, Band.Torso),
   ("Chain, same name", @[(Arm.Left, Arm.Left), (Arm.Right, Arm.Right)],
    true, Band.Torso)]
-  ## Eight sweeps worth watching: four holds above, where whole Reference is drawn,
-  ## and two chains at each lower level, where floor and engine still argue.
+  ## Eight sweeps worth watching: four holds above, and two chains at each lower level,
+  ## where floor and engine still argue.  Above is where sections `B` to `G` are drawn,
+  ## and where section `A`, which draws no level, is asked.
   ##   Reached by `design/floors`, which plans each sweep over crown, and by
   ##     `tests/suites/test_asks`, which counts them.
 
