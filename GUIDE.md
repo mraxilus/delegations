@@ -355,9 +355,16 @@ instead. The line opens `**Working:**`, then names what runs and what wakes you:
 
 The `stop` hook refuses a turn that pushed or posted and closes with neither.
 
-**Where the `stop` hook refuses a message, reply with the corrected lines alone.** The hook reads
-the message once it is on screen, and the message stands there. A message sent again in full reads
-twice, so never send it, or its sign-off, again.
+**Where the `stop` hook refuses a message, reply with a diff of each error alone.** The hook reads
+the message once it is on screen, and the message stands there. So write one `diff` block. Put
+each wrong phrase after `-`, and that phrase mended after `+`. Change only the wrong words, and
+add no line that holds no error. Never send the message, a line of it, or its sign-off again.
+
+```diff
+- as `#456` asks
++ as [the ledger fix (#456)][#456] asks
++ [#456]: https://github.com/mraxilus/delegations/pull/456
+```
 
 **A wake that changes nothing needs no message.** The echo of your own act is such a wake, as
 the notice that the pull request you marked ready is ready. So is an event that leaves each
