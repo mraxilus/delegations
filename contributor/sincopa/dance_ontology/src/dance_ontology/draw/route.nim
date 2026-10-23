@@ -346,9 +346,9 @@ func wayFor*(ends: Ends, level: Option[Level], modifier: Option[Modifier]):
     Option[WayRound] =
   ## Get which way round both bodies this hold says its line goes.
   ##   Not what is shortest -- what dance says: both wraps come round
-  ##     front, both locks round back (rules 4 to 6).  Hold that has
-  ##     named no level or no modifier has no opinion, and `routed` takes
-  ##     short way.
+  ##     front, and low lock round back (rules 4 and 5).  High lock, and
+  ##     hold that has named no level or no modifier, has no opinion, and
+  ##     `routed` takes short way.
   let sends = sendsHold(level, modifier)
   if sends.isNone:
     return none(WayRound)

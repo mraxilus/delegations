@@ -71,7 +71,7 @@ func settled*(pose: Pose, holds: Holds, levels: Levels, modifiers: Modifiers): P
   ## in.
   ##   There is nothing to solve: settled hand is in one of six places, and
   ##     which one is decided by its own side and by level and modifier of
-  ##     hold it is part of (rules 2 to 6).
+  ##     hold it is part of (rules 2 to 5, and Architect's high lock).
   ##   Hand that is free, or held by hold that has not said both, stays
   ##     where arm hangs.  Hands still move smoothly between slots when
   ##     picture moves; it is settled state that is discrete.
