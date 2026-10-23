@@ -1,7 +1,7 @@
 ## Read which codepoints font face file maps, as browser reads its `cmap` (Article X.8).
-##   One reader serves two callers: `font_stacks.nim`, which resolves characters of page for
-##     every project through `koch resolve-font-faces`, and suite of `assets.nim`, which holds
-##     each row of store to bytes of its file.
+##   One reader serves two callers: `font_stacks.nim`, which resolves characters of each page
+##     `koch drive` drives, and suite of `assets.nim`, which holds each row of store to bytes
+##     of its file. `toNotation` renders codepoint for each finding naming one.
 ##   `woff2` keeps every table in one Brotli stream, and no Nim import decodes Brotli, so
 ##     `libbrotlidec` is loaded at run: codec is external concern (Article II.8). Loaded rather
 ##     than linked, so machine lacking it fails reader needing it, by name, rather than every
@@ -172,3 +172,10 @@ func codepoints*(cmap: string): seq[int] =
       )
   for codepoint in CONTROL_MAX + 1 ..< CODEPOINT_COUNT:
     if held[codepoint]: result.add codepoint
+
+
+func toNotation*(codepoint: int): string =
+  ## Render codepoint as Unicode writes it, i.e. `U+` and at least four hex digits.
+  var digits = codepoint.toHex(6)
+  while digits.len > 4 and digits[0] == '0': digits = digits[1 .. ^1]
+  "U+" & digits
