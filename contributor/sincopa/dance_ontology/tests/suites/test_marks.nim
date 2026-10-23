@@ -139,13 +139,21 @@ suite "Internal: The sixteen facings, drawn":
 suite "Internal: The rests and the chains, named by model":
   ## Reference names each chain's rest through `parts.facingRest`, and law reads written page
   ##   back (Article IX.5).
-  test "the Reference heads each chain with the facing it rests at":
+  test "the Reference heads each section of a chain with the name of that chain":
+    ## Cross-name chain stands in C and moves in F; same-name chain stands in D and moves in G.
+    ##   Headings of C, D and G also name facing their chain rests at.
+    ##   Red with G headed `Hand-to-hand chain`, name of cross-name hold, as audit of #698
+    ##     found it.
     let page = readFile(OUT / "reference.html")
     check page.contains(
       "<h2>C &middot; The cross-name chain, " & facingRest(HAND_TO_HAND).name & " at rest</h2>",
     )
     check page.contains(
       "<h2>D &middot; The same-name chain, " & facingRest(PAIRED).name & " at rest</h2>",
+    )
+    check page.contains("<h2>F &middot; The cross-name chain, moving</h2>")
+    check page.contains(
+      "<h2>G &middot; The same-name chain, " & facingRest(PAIRED).name & ", moving</h2>",
     )
 
 
