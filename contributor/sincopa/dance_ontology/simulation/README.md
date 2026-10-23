@@ -6,11 +6,11 @@ from `../src`. The notation is a shorthand for two people with arms of a given l
 shorthand cannot check itself. The simulation is what the notation is a shorthand for. It is kept
 apart so that what it says is evidence, and not an echo.
 
-It is not kept apart in its words. It uses the agreed words of the project where one fits, and
-`GLOSSARY.md` holds the four that are its own: rig, pose, strain and block. It is a witness because
-it imports no code and is told no answer. Where the simulation measures what the ontology states,
-the translation is evidence and not identity. So `words.nim` holds that translation in one table,
-and `verdicts.nim` uses it.
+It is not kept apart in its words. It uses the agreed words of the project where one fits.
+`GLOSSARY.md` holds those that are its own, such as rig, pose, strain, block, band, sweep, walk,
+path, style and verdict. It is a witness because it imports no code and is told no answer. Where the
+simulation measures what the ontology states, the translation is evidence and not identity. So
+`words.nim` holds that translation in one table, and `verdicts.nim` uses it.
 
 ## What it is
 
@@ -27,8 +27,8 @@ nothing is fixed except that the two bodies stay apart. Over the crown, a joined
 under the band stops the walk once the couple are not face to face.
 
 Where the walk gives short, the turn is planned. The plan chooses every joint of both arms at each
-moment, and keeps every capsule clear and every joint in its range. The engine then follows the
-plan, and judges it as it judges a walk.
+moment, and keeps every capsule clear and every joint in its range. The engine then stands every
+moment of the plan, and judges it as it judges a still (`rigid.gives`).
 
 `PROVENANCE.md` records the design and the reason for each part of it. See Body rig, Rigid body
 engine, Joints that give, Walk and lift, Stance and strain, and Planned turn.
