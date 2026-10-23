@@ -469,92 +469,30 @@ The Reference and the rig viewer are build products under `build/design/`.
 `suites/test_marks.nim` drives the build of each page of `marks.PAGES` under testament, so every
 check runs with the suites.
 
-**Every page says its prose in Simplified Technical English.** The Architect requires the prose in
-the subset of the charter (`GUIDE.md`, Article VI.8). Two rules of that subset can be counted, and
-`design/plain.nim` counts them off the markup. A sentence of prose holds at most `WORDS` words, and
-a paragraph at most `SENTENCES` sentences. Prose is the text of a `p` or an `li` alone, because a
-caption or a swatch label is a fragment rather than a sentence.
+**The check of the single-hand turns measures each reach as the Reference draws it.**
+`checkSingleTurns` reads the line of each moving figure frame by frame, and the line of each still,
+off the markup. It measures the bow of rule 14 on each frame, and on each blend of two frames that
+the browser draws. It measures the daylight of rule 22 and the crest of rule 24 on each still. On
+the first frame of each move, the straight line runs into a mark, so the exemption of rule 22 is
+used for something. Rejected: lines that the check builds itself, which no drawing can fail, since a
+straight line built there never bows.
 
-The rest of the subset, from the approved word to the active voice, is read rather than counted.
+The markup writes each point to one decimal, which moves a point by at most 0.07. Daylight and crest
+take that, but turning does not. One decimal can turn a corner of the shortest reach by up to 20
+degrees, where a routed corner turns less than 3 degrees. So the check counts the turning of rules
+23 and 24 on a route of each settled place. It holds every drawn still to that route within 0.07.
 
-Verified by `suites/test_marks.nim` over each page of `marks.PAGES`. Both laws were proved able to
-fail on the Reference, 2026-10-18. One sentence lengthened past the bound reddens the page it
-sits on. A seventh sentence added to a full paragraph reddens it too.
+Rejected: turning counted off the markup, which counted a bend in 40 of the 56 straight reaches.
+Cost: the check routes each settled place once, as the figure of that place does. The two laws below
+run the check five more times. In three runs of each debug build, the marks suite took 8.9 s to 9.6
+s without them. With them it took 11.4 s to 12.8 s, on four cores under a load average of 25, on
+2026-10-23.
 
-**The reader of prose steps over a tag that only opens as `p` or `li` does.** A page names each
-drawn element with such a tag, as `path` and `line`. A reader that takes one for a paragraph looks
-for its closing tag. It finds the closing tag of the next paragraph, and so skips that paragraph.
-Verified by `suites/test_plain.nim`, which reads prose off markup with a known count.
-
-**The sentences that the Explorer and the rig viewer write in the browser are counted.** No page on
-disk carries those sentences as prose, so `test_marks` reaches none of them. `test_said.nim` reaches
-both, on the JS target, because both pages import `std/dom`.
-
-It reaches them two ways, because they are built two ways. The Explorer builds its markup in pure
-functions that return it, so the law calls them and reads what they return (Article IX.5). The
-viewer writes its sentences straight into elements, so they are held in one table,
-`rig_view.VERDICTS`, which the law reads instead.
-
-Proved able to fail on both paths, by lengthening one sentence of the Explorer and one verdict of
-the viewer past the bound.
-
-Nothing the law calls touches the document, so a count for both needs no browser.
-
-Some prose is counted by nothing still. `rig_page.nim` writes the fixed prose of the rig viewer into
-its markup, and no law counts it. By the count of `plain.nim`, one paragraph there holds seven
-sentences, and one sentence holds 26 words, measured on 2026-10-08. The Explorer writes what its
-live region says straight into the element, so no law reaches it either. The fourth verdict of the
-viewer opens `Stops at N turns:` and closes with a reason the simulation recorded, so it never
-stands as one whole string. Those reasons come from `hold.says`, and the longest of them holds eight
-words.
-
-**The two counted rules are a floor, and only a reading catches a word used outside its meaning.** A
-page can stay inside both bounds and still say that a stage `collides` a capsule.
-
-**The READMEs of the project are counted as its pages are.** Article VI.8 binds every Markdown
-file, and the `english` check of the repository reads only the three records at the root of a
-project. So that check reads neither `simulation/README.md` nor `design/README.md` (issue #239).
-`design/plain.nim` reads Markdown as that check does, and `test_readme.nim` holds both READMEs with
-the two numbers the pages keep. `WRITTEN` names the files held, and a README joins it when it is
-written again.
-
-**The rules that `design/README.md` quotes are held to the ledger, and not to the two numbers.**
-They are the words of the Architect, so a quotation is never rewritten. A `>` quotation carries no
-prose, so neither check counts it. `test_readme.nim` holds each one to its entry in `RULES` instead,
-word for word, once each and in order. Verified by `suites/test_readme.nim`, which fails on a
-changed word, a missing rule and a missing quotation.
-
-**The reader of Markdown is copied from the check, and not imported.** A suite compiled against the
-check of the curator would break whenever the curator changed that check. Duty 3 forbids the
-curator to do that to a project. The cost is two copies that must agree. Verified against the check
-on nine documents of the repository: the two agree on all 1158 blocks and all 2746 sentences. Six
-laws in `test_plain.nim` hold the copy, and each was broken on purpose and caught its own break.
-
-**`simulation/README.md` points at this record and at `rig.nim`, and does not say the model again.**
-A second account of the model goes stale when the design moves. Verified by reading each claim that
-`simulation/README.md` keeps against the code or this record.
-
-**No string a page shows says a gendered word for a dancer.** The glossary rejects one for each
-dancer, and `test_glossary.nim` reads that ruling rather than restates it. It holds every string
-literal of `design`, `app` and `simulation`, and the page this project writes by hand, the shell of
-the Explorer. A literal that a colon follows is a key of recorded data, so the check steps over
-it. Verified by `suites/test_glossary.nim`, which fails on a page string such as `her arm` or
-`his reach`.
-
-**No string a page shows calls a page by a word that the glossary rejects for it.** The glossary
-rejects validator, app, demo and viewer for the Explorer, and card review and review page for the
-Reference. `test_glossary.nim` reads those words from the glossary, and holds every string literal
-of `design`, `app` and `simulation` to them. A literal of one word names an element or a key, as
-`app` does, so the check steps over it. The project calls the third page the rig viewer, and that
-name holds `viewer`. So the check takes the name out of a string before it reads it.
-
-Verified by `suites/test_glossary.nim`. Red first on 2026-10-21, on the sources before the fix: it
-failed at five strings. One was `the app's frame` on card C04, and one was `the viewer` in the prose
-of the Reference. Three were messages of the rig viewer that said `Viewer page`.
-
-Cost: the shell of the Explorer is not read. Its markup names the element `app` and the script
-`app.js`, and its one line of text is its title. Cost: a word that names a page in a comment or in
-the record is held by reading alone.
+Verified by `suites/test_marks.nim`. One law bows one frame of a transition and of a whole round,
+and the check refuses each under rule 14. Another law pulls the reach of three kinds of still
+through the chevron of the lead. They are a position, the still of an edge and the still of a round.
+The check refuses each under rule 22. Red first on 2026-10-23: the check passed all five changed
+figures while it measured lines of its own.
 
 **To dress a page twice gives the same bytes as to dress it once.** `dress()` walks every page under
 `build/app` and `build/design`, and not only the pages of the run. So a page that the run did not
@@ -641,6 +579,95 @@ Verified by `suites/test_marks.nim`, which builds the page under testament. Veri
 being counted off the built page, rather than kept while it is built. What the page says of itself
 cannot then drift from what it holds. The page prints that tally where a reader sees it, which is
 why no number of it is written here.
+
+## Prose of the pages
+
+**Every page says its prose in Simplified Technical English.** The Architect requires the prose in
+the subset of the charter (`GUIDE.md`, Article VI.8). Two rules of that subset can be counted, and
+`design/plain.nim` counts them off the markup. A sentence of prose holds at most `WORDS` words, and
+a paragraph at most `SENTENCES` sentences. Prose is the text of a `p` or an `li` alone, because a
+caption or a swatch label is a fragment rather than a sentence.
+
+The rest of the subset, from the approved word to the active voice, is read rather than counted.
+
+Verified by `suites/test_marks.nim` over each page of `marks.PAGES`. Both laws were proved able to
+fail on the Reference, 2026-10-18. One sentence lengthened past the bound reddens the page it
+sits on. A seventh sentence added to a full paragraph reddens it too.
+
+**The reader of prose steps over a tag that only opens as `p` or `li` does.** A page names each
+drawn element with such a tag, as `path` and `line`. A reader that takes one for a paragraph looks
+for its closing tag. It finds the closing tag of the next paragraph, and so skips that paragraph.
+Verified by `suites/test_plain.nim`, which reads prose off markup with a known count.
+
+**The sentences that the Explorer and the rig viewer write in the browser are counted.** No page on
+disk carries those sentences as prose, so `test_marks` reaches none of them. `test_said.nim` reaches
+both, on the JS target, because both pages import `std/dom`.
+
+It reaches them two ways, because they are built two ways. The Explorer builds its markup in pure
+functions that return it, so the law calls them and reads what they return (Article IX.5). The
+viewer writes its sentences straight into elements, so they are held in one table,
+`rig_view.VERDICTS`, which the law reads instead.
+
+Proved able to fail on both paths, by lengthening one sentence of the Explorer and one verdict of
+the viewer past the bound.
+
+Nothing the law calls touches the document, so a count for both needs no browser.
+
+Some prose is counted by nothing still. `rig_page.nim` writes the fixed prose of the rig viewer into
+its markup, and no law counts it. By the count of `plain.nim`, one paragraph there holds seven
+sentences, and one sentence holds 26 words, measured on 2026-10-08. The Explorer writes what its
+live region says straight into the element, so no law reaches it either. The fourth verdict of the
+viewer opens `Stops at N turns:` and closes with a reason the simulation recorded, so it never
+stands as one whole string. Those reasons come from `hold.says`, and the longest of them holds eight
+words.
+
+**The two counted rules are a floor, and only a reading catches a word used outside its meaning.** A
+page can stay inside both bounds and still say that a stage `collides` a capsule.
+
+**The READMEs of the project are counted as its pages are.** Article VI.8 binds every Markdown
+file, and the `english` check of the repository reads only the three records at the root of a
+project. So that check reads neither `simulation/README.md` nor `design/README.md` (issue #239).
+`design/plain.nim` reads Markdown as that check does, and `test_readme.nim` holds both READMEs with
+the two numbers the pages keep. `WRITTEN` names the files held, and a README joins it when it is
+written again.
+
+**The rules that `design/README.md` quotes are held to the ledger, and not to the two numbers.**
+They are the words of the Architect, so a quotation is never rewritten. A `>` quotation carries no
+prose, so neither check counts it. `test_readme.nim` holds each one to its entry in `RULES` instead,
+word for word, once each and in order. Verified by `suites/test_readme.nim`, which fails on a
+changed word, a missing rule and a missing quotation.
+
+**The reader of Markdown is copied from the check, and not imported.** A suite compiled against the
+check of the curator would break whenever the curator changed that check. Duty 3 forbids the
+curator to do that to a project. The cost is two copies that must agree. Verified against the check
+on nine documents of the repository: the two agree on all 1158 blocks and all 2746 sentences. Six
+laws in `test_plain.nim` hold the copy, and each was broken on purpose and caught its own break.
+
+**`simulation/README.md` points at this record and at `rig.nim`, and does not say the model again.**
+A second account of the model goes stale when the design moves. Verified by reading each claim that
+`simulation/README.md` keeps against the code or this record.
+
+**No string a page shows says a gendered word for a dancer.** The glossary rejects one for each
+dancer, and `test_glossary.nim` reads that ruling rather than restates it. It holds every string
+literal of `design`, `app` and `simulation`, and the page this project writes by hand, the shell of
+the Explorer. A literal that a colon follows is a key of recorded data, so the check steps over
+it. Verified by `suites/test_glossary.nim`, which fails on a page string such as `her arm` or
+`his reach`.
+
+**No string a page shows calls a page by a word that the glossary rejects for it.** The glossary
+rejects validator, app, demo and viewer for the Explorer, and card review and review page for the
+Reference. `test_glossary.nim` reads those words from the glossary, and holds every string literal
+of `design`, `app` and `simulation` to them. A literal of one word names an element or a key, as
+`app` does, so the check steps over it. The project calls the third page the rig viewer, and that
+name holds `viewer`. So the check takes the name out of a string before it reads it.
+
+Verified by `suites/test_glossary.nim`. Red first on 2026-10-21, on the sources before the fix: it
+failed at five strings. One was `the app's frame` on card C04, and one was `the viewer` in the prose
+of the Reference. Three were messages of the rig viewer that said `Viewer page`.
+
+Cost: the shell of the Explorer is not read. Its markup names the element `app` and the script
+`app.js`, and its one line of text is its title. Cost: a word that names a page in a comment or in
+the record is held by reading alone.
 
 ## Rules of the drawing
 
@@ -759,8 +786,8 @@ move, and only a moving picture can show it.
 **A settled reach passes clear of every mark it does not join (rule 22).** It is a line pulled taut
 past both chevrons and every hand but its own two, bent round each and straight elsewhere. The gap
 is taken from what is drawn, with half the width of the line added. A moving reach may pass a mark,
-as the rule allows. Verified by `checkSingleTurns`, which checks both halves. The frame picture
-does not follow rule 22 yet, because it does not pass `should_clear_marks`.
+as the rule allows. Verified by `checkSingleTurns`, which reads both halves as drawn. The frame
+picture does not follow rule 22 yet, because it does not pass `should_clear_marks`.
 
 **A reach is judged on its length and its bends together (rule 23).** The shortest way past the
 marks weaves, and a reader must follow each change of way. So a bend costs `BEND_COST` of length,
@@ -777,7 +804,7 @@ corner in it. Verified by `checkSingleTurns`, which checks the corner of the sto
 `ROUTE_COUNT` points, so that it can move from one shape to the next. Drawn with straight pieces, a
 swan turns back inside a few points and shows its facets. So `route.smoothed` makes each sampled
 point a control point and draws through the midpoints between them. The ends stay on their hands,
-and the checks measure the stored points, and not the drawn curve. Verified by `checkHandTurns`.
+and the checks measure the sampled points, and not the drawn curve. Verified by `checkHandTurns`.
 
 **How wide the swan swings is set by eye, and not by a check (rules 33 to 35).** `SWAN_SWING` in
 `route.nim` holds it. Rule 34 took back the width that rule 33 asked for, and rule 35 set it again.
@@ -865,6 +892,18 @@ one part of a dancer that nothing else uses. `outlineRadius` in `body.nim` is th
 the edge, so the routing and the drawing agree on it. The rim says only that a body is there. It is
 one quiet stroke, broken round each hand by `HAND_GAP`, and it carries no colour of a side. Verified
 by `checkFrame`.
+
+**The rim breaks where a hand is, because a settled hand winds the way its hold sends its line.**
+`border` reads where each hand went from how far its arm has wound, and not from where the hand
+sits. So a low lock winds round the back to the back slot of the other side, as rule 5 sends its
+line (`body.settledWind`). Wound round the front to the same spot, it would draw one stretch through
+both hands. A wrap and a high lock wind round the front.
+
+Where two hands stand closer than two hand gaps, the stretch between them is not drawn. A settled
+wrap puts its hands 44 degrees apart, so the two stretches tile the rim only where no stretch is
+squeezed between two hands. Verified by `checkFrame`, which reads each drawn rim at every settle, on
+each single hold at each quarter turn of the follow. It holds every stretch a hand gap off both
+hands of its dancer. Red first on 2026-10-23, on the low lock of every single hold.
 
 **The rim shows no progress.** The connection shows the wrap already, so a ring that filled in the
 colour of an arm would say the same thing twice. One sign is enough.
