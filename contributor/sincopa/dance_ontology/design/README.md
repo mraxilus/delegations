@@ -152,7 +152,8 @@ Held by `checkSingleTurns`.
 > if held high, they can turn infinitely in either direction, so all we add is the additional
 > quarter turn orientations for each of the 4 single hand connections
 
-Held by `checkSingleTurns`.
+Held by `checkSingleTurns`, for a hand held above. Rule 17 replaces its level: a turn is drawn
+above.
 
 ### Rule 17
 

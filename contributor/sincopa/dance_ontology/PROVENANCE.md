@@ -608,9 +608,9 @@ same hatch laws as the edges.
 
 **A ruling is given on a picture, so the picture is held as a fixture.** `reference_page.nim` lays
 out every frame state that the project draws as a card. Those are the standard diagrams and the one
-anticlockwise counterpart. They are also the distinct single-hand turn frame states, both
-hand-to-hand chains, and every animated edge of the last two. Each card carries the identifier to
-quote back, and whatever has been ruled on it.
+anticlockwise counterpart. They are also the distinct single-hand turn frame states, both chains,
+and every animated edge of the last two. Each card carries the identifier to quote back, and
+whatever has been ruled on it.
 
 **Each identifier is the letter of its section and two digits, from A01 to G08.** So no identifier
 reads as a decision of a sign-off, which `GUIDE.md` numbers from `D1`. The Architect ruled this on
@@ -733,8 +733,8 @@ rule 16 lifts the limit that the pigtail marks. Both are verified by `checkSingl
 
 **The single-hand turns draw each frame state they derive, and each move between two of them
 (rules 15 and 16).** The counts are checked against the graph of states, and not against a number
-typed in. A single hand held high turns without end either way (rule 16). So how far it has turned
-is not part of its state, and only its orientation is. Verified by `checkSingleTurns`.
+typed in. A single hand held above turns without end either way (rules 16 and 17). So how far it
+has turned is not part of its state, and only its orientation is. Verified by `checkSingleTurns`.
 
 **Every turn is drawn above (rules 17 and 21).** Above is the one level rule 8 gives no lock and no
 wrap, and the one whose line runs straight over everything. A moving hand carries the above hatch,
@@ -829,8 +829,8 @@ move.
 
 **Past a whole turn, one connection runs straight and the other goes round it (rule 31).** That is
 the swan. `route.windShare` gives the swing of the straight one to the snake. So at a turn and a
-half, one reach is the plain chord between its hands. The straight one is on top at the first
-crossing, so it dives once. Verified by `checkHandTurns`.
+half, one reach is the plain chord between its hands. The snake is on top at the first crossing, so
+it dives once, and the straight one dives twice (Architect, #375). Verified by `checkHandTurns`.
 
 **The sheet of the Architect gives rules 36 to 40, and the workbench checks none of them.** The
 simulation reports in their words, through `simulation/words.nim`, and that is not a check. Rule 37
@@ -3269,6 +3269,6 @@ workbench draws the current reading meanwhile.
   on how far rule 22 reaches. Until then a low wrap and a high one differ only by their fill.
 - **Whether the model holds a modifier for each arm (rule 39).** The sheet gives either dancer up to
   one modified arm. The drawing holds one level and one modifier for each connection, and settles
-  only the follow. That waits on whether the list in the sheet is the shape wanted. It is the same
-  question as whether the variants of `Left to left` and `Right to right` that differ in which arm
-  is over merge.
+  both hands of each connection, the lead's and the follow's. That waits on whether the list in the
+  sheet is the shape wanted. It is the same question as whether the variants of `Left to left` and
+  `Right to right` that differ in which arm is over merge.
