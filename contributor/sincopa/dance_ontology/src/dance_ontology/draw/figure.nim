@@ -234,8 +234,8 @@ func renderParts*(
   for who in Dancer:
     bits.add chevron(put.place[who], put.facing[who])
   # Where each displaced hand came from, as grey outline of its own mark.
-  # `back` carries locks, so hand no longer says by where it sits how far
-  # it has been taken -- ghost of place it left says it instead, and
+  # Lock or wrap settles hand at slot (`settled`), and slot says nothing of
+  # how far hand was taken -- ghost of place it left says it instead, and
   # hand still at home has no ghost to confuse it with.
   for (who, arm) in ghosts(holds, levels, modifiers):
     let home = handPoint(put.place[who], put.facing[who], arm)
