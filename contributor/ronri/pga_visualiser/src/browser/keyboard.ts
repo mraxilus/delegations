@@ -21,18 +21,25 @@ document.addEventListener('keydown', (e) => {
   }
 
   if (e.key === 'Escape') {
-    // Everything in progress, in order reader would expect to shed it: panel.
-    //   they just opened, then menu, then gesture underneath.
-    if (panel_help.classList.contains('show')) { showHelp(false); return; }
-    if (menu_top.classList.contains('show')) {
-      menu_top.classList.remove('show');
-      button_menu.classList.remove('on');
-      return;
+    // Shed one thing for each press, first of what stands in `interaction.BackOut`'s order,
+    //   which desktop's `handleEvent` asks too.
+    switch (nimBackOut(
+      panel_help.classList.contains('show'), menu_top.classList.contains('show'),
+      session_edit !== null, isSelectionMenuShown(),
+    )) {
+      case BackOut.Help: showHelp(false); break;
+      case BackOut.MenuTop:
+        menu_top.classList.remove('show');
+        button_menu.classList.remove('on');
+        break;
+      case BackOut.Gesture:
+        if (nimDragActive()) { nimCancelDrag(); toast(nimCancelledMessage()); }
+        nimCancelHold();
+        break;
+      case BackOut.Edit: endEditSession(); refreshObjectsUI(); break;
+      case BackOut.MenuSelection: hideSelectionMenu(); break;
+      case BackOut.Selection: clearSelection(); break;
     }
-    if (nimDragActive()) { nimCancelDrag(); toast(nimCancelledMessage()); return; }
-    nimCancelHold();
-    if (menu_selection.classList.contains('show')) { clearSelection(); return; }
-    if (session_edit !== null) { endEditSession(); refreshObjectsUI(); }
     return;
   }
 
@@ -53,7 +60,10 @@ document.addEventListener('keydown', (e) => {
   //   out at same level 2.1.1 asks for this in first place.
   //   Which key does what is `interaction.actionFor`'s to say; only DOM's own naming
   //   of keys is translated across, exactly as SDL scancodes are on desktop side.
-  if (document.activeElement === canvas && !(e.ctrlKey || e.metaKey || e.altKey)) {
+  //   Control's own press carries modifier it is, and alone it descends, as desktop's does.
+  const is_control_own = e.code === 'ControlLeft' || e.code === 'ControlRight';
+  if (document.activeElement === canvas &&
+      !((e.ctrlKey && !is_control_own) || e.metaKey || e.altKey)) {
     // `e.code`, physical key, which is what desktop's scancodes name -- see.
     //   `bridge.keyFor`. Key that moves view is held from here until its
     //   `keyup` below; key that acts does so on this press.

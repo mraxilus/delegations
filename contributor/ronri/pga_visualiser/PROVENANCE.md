@@ -8,7 +8,7 @@ _Who made this, from what, and how far it has been checked._
 | Author  | Claude Opus 5 and Claude Sonnet 5 |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 1976b11a25eb600c |
+| Rules   | 00884b0317038c80 |
 | Pruned  | 49b8f1c6ca50b0bb20472edd1cc819a6d7222045 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
@@ -4196,9 +4196,14 @@ frame changed which glyphs Dear ImGui rasterised into the atlas, and moved singl
 text in the storyboard. `guiChildHeightForRows` asks Dear ImGui for its own line spacing, rather
 than restates it. **The help stays open until it is closed.**
 
-**Keyboard.** `Escape` sheds what is in progress, innermost first, and on the desktop it does not
-quit, because `ctrl+Q` does. The view is one ordinary tab stop, and **Tab is not rebound**, because
-that would trap the reader (WCAG 2.1.2). Traversal is on the brackets.
+**Keyboard.** `Escape` sheds one thing for each press, in one order on both front-ends. The order is
+help, the top menu, a drag or a hold, an edit, the selection menu, then the selection.
+`interaction.BackOut` holds that order, and `backOut` names the first of what stands. The page reads
+its members through the declarations that the build derives, as it reads wording keys. On the
+desktop Escape does not quit, because `ctrl+Q` does.
+
+The view is one ordinary tab stop, and **Tab is not rebound**, because that would trap the reader
+(WCAG 2.1.2). Traversal is on the brackets.
 
 | Key | Does | Kind |
 |---|---|---|
@@ -4224,11 +4229,16 @@ takes the state as a parameter, because the selection belongs to each front-end 
 `interaction`. Roll is the exception, and reaches either state. Q and E roll, the sixth degree of
 freedom that free flight opens, because a hand already rests on those two keys.
 
-Space and control raise and lower. Both control keys and both shift keys are bound, and the
-accelerators read the modifier bitmask, so the binding takes nothing from them. `releaseKeysAll`
-empties the held set on a blur, when the tab is hidden, and when a panel widget takes the keyboard
-(`gui.wantsKeys`). Save is `ctrl+s`, because `s` flies. The keyboard navigation of Dear ImGui is
-enabled, because without it Tab reaches nothing on the desktop.
+Space and control raise and lower. The own press of control carries the modifier that it is, so
+both guards let that press through, and it lowers while held. Both control keys and both shift keys
+are bound, and the accelerators read the modifier bitmask, so the binding takes nothing from them.
+A view key under alt is refused on both front-ends, because alt belongs to the system.
+
+**Undo and redo read the printed key**, as `e.key` and the SDL keycode name it. So control with the
+key printed Z undoes on any layout, as most programs do. `releaseKeysAll` empties the held set on a
+blur, when the tab is hidden, and when a panel widget takes the keyboard (`gui.wantsKeys`). Save is
+`ctrl+s`, because `s` flies. The keyboard navigation of Dear ImGui is enabled, because without it
+Tab reaches nothing on the desktop.
 
 **A camera move is not a hover.** `isMovingCamera` is the own drag flag of each front-end, plus
 `keys_held` through `motionFor`. The movement raises it, not the press, or a click reads a
@@ -4237,6 +4247,22 @@ hover marker.
 
 *Checked.* Verified by `--drive-keys`: focus walked, enter selected, and azimuth, elevation and
 distance each moved by exactly their own constant.
+
+Verified by `--drive-escape` and the page's `driveEscape`, 2026-10-22, with all six standing. Each
+press shed one, in order, and a seventh shed nothing. Both read `HMGEPS`, `MGEPS`, `GEPS`, `EPS`,
+`PS`, `S`, then nothing twice. On the key handling of `main` at `81c35326`, one press shed three
+things on the page, and two on the desktop.
+
+Verified by `--drive-chords` and the page's `driveKeysChorded`, the same day. Control alone lowered
+the view 3.0544 units against 3.0544 for space on the desktop, and 3.0116 against 3.1843 on the
+page, each straight opposite. W under alt moved nothing, and control with the key printed Z undid,
+and with the key printed Y redid. On the key handling of `main`, control moved nothing on either
+front-end. On the desktop, W under alt moved 3.05 units, and the key printed Z redid.
+
+The page holds each key for half a second of its clock, which spans 30 frames or 31, as the clock
+falls against the frame. The last frame of the speed ramp travels about 6% of the hold, so the check
+allows a tenth between the two rates. The desktop steps its clock by whole frames, and reads them
+equal.
 
 Verified by browser drive:
 
@@ -4425,17 +4451,12 @@ that the runner carries that library. Assumed: nothing about the suite itself.
   crossing is not the cause (Records and shaders).
 - The two front-ends still differ in these inputs. A read of the code on 2026-10-12 found them, and
   no run has checked them yet:
-  - Escape clears or keeps a selection in another order on each front-end.
-  - Undo and redo follow the printed key on the page, and the place of the key on the desktop.
   - With no pointer, the page hangs the selection menu from its corner, and the desktop centres it.
   - `more…` opens its picker at the cursor on the page alone.
   - Hide or delete of several objects takes one step of undo on the desktop, and one for each
     object on the page.
   - The field of view takes any value on the page, and 10 to 120 by drag on the desktop.
   - An empty distance field reads 0.1 on the page, and the near limit on the desktop.
-  - Alt with a view key moves the camera on the desktop alone.
   - While the camera moves, the page keeps hover on what slid under a still pointer.
-- Control does not descend while it is held, on either front-end. Its own key press carries the
-  modifier that both guards refuse. The same read of the code found this, and no run has checked it.
 
 [replications]: https://gitlab.com/mraxilus/replications

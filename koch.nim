@@ -81,7 +81,7 @@ Verbs:
   check-role     pull request's role line and label, from ROLE_BODY and ROLE_LABELS
   hook           answer one hook event named as argument, from its JSON or refs on stdin
   test           fetch deps, then testament over tests/t*.nim, on project's own pin
-  drive          fetch deps, then project's own `drive` verb, on project's own pin
+  drive          fetch deps, project's own `drive` verb on its own pin, then judge its font faces
   head           fetch deps, then project's own `head` verb, on project's own pin
   fix            apply in place each fix checks name, refusing all where path is out of scope
   fetch-deps     check out what each atlas.lock pins, and confirm checkouts match
