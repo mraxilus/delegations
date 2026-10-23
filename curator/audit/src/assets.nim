@@ -2,9 +2,9 @@
 ##   CONTRIBUTOR.md names class already: "binaries are never committed, and neither are fonts,
 ##   images or any file audit cannot read", each recorded with origin, version, licence and
 ##   checksum. Store is that class kept once rather than once per project.
-##   Faces are only instances today, and rows say so by grouping and by one column: shape is
+##   Font faces are only instances today, and rows say so by grouping and by one column: shape is
 ##     file, address, digest, and codepoints file maps. First three are what any such file
-##     needs; fourth is face's, and asset that is no face makes it change. So does asset
+##     needs; fourth is font face's, and asset that is no font face makes it change. So does asset
 ##     wanting field this row lacks -- unpacking, or variant set. Said here so next reader does
 ##     not assume shape already answers either.
 ##
@@ -16,7 +16,8 @@
 ##     `-`, space apart. So fontconfig reads same text off same bytes, as check independent of
 ##     suite's reader (measured on every file of store, fontconfig 2.15.0, 2026-10-04).
 ##     Control characters below `20` are left out, since none draws, and fontconfig leaves them
-##     out too. Faces mapping one set share one constant; face whose bytes move splits from it.
+##     out too. Font faces mapping one set share one constant; font face whose bytes move splits
+##     from it.
 ##
 ##   Reason it exists at all: Article X.8 gives three families to every presentation target, so
 ##     second target repeats first target's pins. Two pins of one file, each in its own
@@ -48,7 +49,7 @@
 ##     time rather than from table here, and it is stored unpacked by pin because rest of koch
 ##     resolves toolchains by pin. Different trust and different key, so knoller's `compilers.nim`
 ##     keeps it rather than this pretending one shape serves both.
-##   Cost: store grows and nothing prunes it. Face is under 1 MB where compiler is 140 MB to
+##   Cost: store grows and nothing prunes it. Font face is under 1 MB where compiler is 140 MB to
 ##     2.4 GB, so what is unbounded here is number of pins repository has ever held, not bytes.
 ##   Cost: upstream that moves bytes under one address fails every project at once rather
 ##     than one. That is same failure one digest exists to make loud, and it is louder shared.
@@ -67,7 +68,7 @@ const
   FONTSOURCE = "https://cdn.jsdelivr.net/npm/"
     ## Host serving `woff2` subsets packaged by `@fontsource`.
   NOTOFONTS = "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io"
-    ## Noto project's own release repository, serving whole TrueType faces.
+    ## Noto project's own release repository, serving whole TrueType font faces.
   COMMIT_MONO = "https://cdn.jsdelivr.net/gh/eigilnikolajsen/commit-mono"
     ## Commit Mono is nobody's Noto, so its TrueType comes from its author's repository.
   RANGES_COMMIT_MONO =
@@ -136,9 +137,9 @@ const
     "1fac0-1fac2 1fad0-1fad6 1fb00-1fb92 1fb94-1fbca 1fbf0-1fbf9"
     ## Codepoints Noto Sans Symbols 2 maps: shapes, dingbats, game pieces and pictographs.
   ASSETS* = [
-    # Subset faces: `woff2` through `@fontsource`, version pinned in address, bytes by digest.
+    # Subset font faces: `woff2` through `@fontsource`, version pinned in address, bytes by digest.
     #   Commit Mono alone: it is no Noto, and pages draw its Latin subset. Article X.8 ships
-    #   every Noto face whole, so no row declares Noto subset, and `fetch-assets` refuses one.
+    #   every Noto font face whole, so no row declares Noto subset, and `fetch-assets` refuses one.
     ("commit-mono-latin-400-normal.woff2",
       FONTSOURCE & "@fontsource/commit-mono@5.3.0/files/",
       "86132abb57fc615f2ab900cde4cd9d5796e9791daf1f85d79fc933aa50b3b15c",
@@ -147,8 +148,8 @@ const
       FONTSOURCE & "@fontsource/commit-mono@5.3.0/files/",
       "1b00600b728444492b0c4906cb85e0055b889ea32ea4fb29bf25cd90cd0365b4",
       RANGES_COMMIT_MONO),
-    # Whole faces: TrueType and OpenType from each face's own release, which pages and desktop
-    #   atlas both embed; `@fontsource` ships none of them.
+    # Whole font faces: TrueType and OpenType from each font face's own release, which pages and
+    #   desktop atlas both embed; `@fontsource` ships none of them.
     ("NotoSans-Regular.ttf",
       NOTOFONTS & "@NotoSans-v2.013/fonts/NotoSans/hinted/ttf/",
       "61b72eacd39533f0e5916cbb458abd7b3cf870667f63f3069dac2a75aa0317a2",
@@ -187,7 +188,7 @@ const
       RANGES_COMMIT_MONO),
   ]
     ## Every file fetched at build time: its name, address prefix it is fetched from, digest of
-    ## its bytes, and codepoints its `cmap` maps to glyph. Faces are all of them today; licence
+    ## its bytes, and codepoints its `cmap` maps to glyph. Font faces are all of them today; licence
     ## of each is in PROVENANCE.md, where CONTRIBUTOR.md already asks for it, rather than in
     ## column here.
     ##   Each file any project pins stands here once: where several pin one file they share
@@ -230,7 +231,7 @@ func toRanges*(text: string): seq[Slice[int]] =
 func declaration*(): string =
   ## Render every declared asset as `<file> <digest>`, one per line, ending in newline.
   ##   Published so no consumer parses this source. Project reading `assets.nim` as text to
-  ##     hold law that its faces are declared is second parser for format only this module
+  ##     hold law that its font faces are declared is second parser for format only this module
   ##     owns, which is duplication store exists to end, one layer up.
   ##   Two columns rather than three: address is fetcher's business, digest is what consumer
   ##     checks bytes against. Neither column can hold space, so `split` reads row.

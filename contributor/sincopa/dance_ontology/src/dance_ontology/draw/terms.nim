@@ -5,8 +5,8 @@
 ##     and only workbench drew them; Explorer draws them now, so
 ##     words move to where drawing is and ledger stays where
 ##     argument is (`design/rules.nim`, which re-exports this).
-##   Settle table encodes rules 4 to 6 once; where hand lands and which
-##     way its line goes round are derived from it, never restated.
+##   Settle table encodes rules 4 and 5, and Architect's high lock, once; where hand
+##     lands and which way its line goes round are derived from it, never restated.
 ##     Cost of one table: reader of `body` or `route` follows lookup here
 ##       to see what dance says.  Accepted -- alternative is same
 ##       fact written twice, which is how two of these rules were broken.
@@ -49,7 +49,8 @@ type
   Settle* = tuple  ## Hold what one lock or wrap does to its hand and its line.
     whose: Whose  ## Whose side hand settles on.
     slot: Slot  ## How far round that side it sits.
-    sends: Sends  ## Which way round body line goes.
+    sends: Option[Sends]  ## Which way round body line goes; none where no rule sends it,
+                          ## and line takes short way.
 
   Holds* = array[Arm, Option[Arm]]
     ## What each lead hand holds: follow's own side, where one is held.
@@ -59,9 +60,12 @@ type
 
 
 func settleHold*(level: Option[Level], modifier: Option[Modifier]): Option[Settle] =
-  ## Get what this hold does to its hand and its line, where rules 4 to 6
-  ## say anything.
-  ##   Rules 4 and 5 name *other* hand; rule 6 names current one.
+  ## Get what this hold does to its hand and its line, where rules 4 and 5, or
+  ## Architect's high lock, say anything.
+  ##   Rules 4 and 5 name *other* hand.  High lock folds arm in front, hand on top
+  ##     of same shoulder, so its hand settles in front slot of its own side, and
+  ##     no rule sends its line (Architect, 2026-10-22).  Rule 6, which sent it
+  ##     round back, is retired.
   ##   Hold that names no level, or level without lock or wrap, has no
   ##     settle: there is no knowing which spot it means (rule 2's reading).
   ##   `above` never locks or wraps (rule 8), so it has no settle either.
@@ -71,12 +75,12 @@ func settleHold*(level: Option[Level], modifier: Option[Modifier]): Option[Settl
     case level.get
     of Level.Low:
       case modifier.get
-      of Modifier.Wrap: some (Whose.Other, Slot.Front, Sends.FrontWay)  # rule 4
-      of Modifier.Lock: some (Whose.Other, Slot.Back, Sends.BackWay)  # rule 5
+      of Modifier.Wrap: some (Whose.Other, Slot.Front, some(Sends.FrontWay))  # rule 4
+      of Modifier.Lock: some (Whose.Other, Slot.Back, some(Sends.BackWay))  # rule 5
     of Level.High:
       case modifier.get
-      of Modifier.Wrap: some (Whose.Other, Slot.Front, Sends.FrontWay)  # rule 4
-      of Modifier.Lock: some (Whose.Own, Slot.Back, Sends.BackWay)  # retired rule 6; issue 697
+      of Modifier.Wrap: some (Whose.Other, Slot.Front, some(Sends.FrontWay))  # rule 4
+      of Modifier.Lock: some (Whose.Own, Slot.Front, none(Sends))  # Architect, 2026-10-22
     of Level.Above:
       none(Settle)  # rule 8
   settled
