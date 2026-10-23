@@ -11,7 +11,8 @@ import { accessSync, constants, existsSync, readFileSync } from 'node:fs';
 import { delimiter, join } from 'node:path';
 import { countFailed, countRun, report } from './report';
 import { focusCanvas } from './gestures';
-import { driveKeys } from './keys';
+import { driveKeys, driveKeysChorded } from './keys';
+import { driveEscape } from './escape';
 import { driveAim, driveLook, drivePan, driveStretch } from './pan';
 import { driveWheel } from './wheel';
 import { driveFingerTurntable, driveTouchSelect, drivePinch, openTouch } from './touch';
@@ -250,6 +251,9 @@ async function driveSimulated(browser: Browser): Promise<void> {
   await driveRuler(page);
   await driveSceneBuilt(page);
   await driveDrawerCost(page);
+  // Key checks that select, edit and delete, last on opening scene: demo below replaces it.
+  await driveKeysChorded(page);
+  await driveEscape(page);
 
   // Demo runs last, and under load: it builds thousands of objects, and every check above is
   //   written against opening scene's own weight.

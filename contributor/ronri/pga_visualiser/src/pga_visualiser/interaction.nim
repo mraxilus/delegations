@@ -258,6 +258,19 @@ type
     FrameSelection,  ## Bring selection into view, through framing rule.
     ViewHome  ## Return camera to placement both builds open at.
 
+  BackOut* {.pure.} = enum  ## Define what one press of Escape sheds, in order it sheds them.
+    ## First one standing goes, one for each press, on both front-ends; see `backOut`.
+    ##   Each goes before what it stands on: menu before gesture under it, edit and menu
+    ##   before selection they were opened on.
+    ##   Page reads ordinals through `bridge.nimBackOut`, and names through declarations
+    ##   build derives from here.
+    Help,  ## Help panel.
+    MenuTop,  ## Menu `☰` opens.
+    Gesture,  ## Drag, or hold under finger.
+    Edit,  ## Edit session open on one object.
+    MenuSelection,  ## Menu hung from selection.
+    Selection  ## Selection itself.
+
   Hold* = object  ## Define press that selects its object once it has lasted long enough.
     handle*: int  ## Object pressed, whose marker fills as press matures.
     started*: float  ## When press landed, on clock every caller passes as `now`.
@@ -513,6 +526,20 @@ func nameSpoken*(key: Key): string =
   of Key.Home: "home"
   of Key.Space: "space"
   of Key.Control: "ctrl"
+
+
+func backOut*(standing: set[BackOut]): Option[BackOut] =
+  ## Name what one press of Escape sheds: first of `standing`, in `BackOut`'s order.
+  ##   None where nothing stands, so press does nothing.
+  for one in BackOut:
+    if one in standing: return some(one)
+
+
+func isGesturing*(interaction: Interaction): bool =
+  ## Report whether drag or hold under finger is in progress, which Escape abandons.
+  ##   Released hold only settles its marker, and is no gesture.
+  interaction.is_dragging or
+      (interaction.hold.isSome and interaction.hold.get.released.isNone)
 
 
 func arming*(button: PointerButton): Option[MenuArming] =

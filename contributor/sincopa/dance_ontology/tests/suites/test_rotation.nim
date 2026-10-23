@@ -156,6 +156,17 @@ suite "Internal: What the arm can carry":
       check apart.isHolding(twist)
 
 
+func reflect(state: FrameState): FrameState =
+  ## Mirror frame state through plane between bodies, as `frame.reflect` mirrors frame.
+  ##   Each connection goes to other arm at its height, and twist turns other way: glossary's
+  ##     mirror twin.  No frame state of `frameStates` rests hand on body, so contact is kept.
+  result = state
+  result.frame = state.frame.reflect
+  for side in Side:
+    result.level[other(side)] = state.level[side]
+  result.twist = -state.twist
+
+
 
 suite "Internal: Modifiers":
   test "the two filled cells of the rotations sheet are reproduced":
@@ -191,6 +202,37 @@ suite "Internal: Modifiers":
     check not IS_ABOVE_BLOCKING
 
 
+  test "only an arm that holds below the head names a modifier":
+    # Glossary's `Above` carries no modifier, and arm that holds nothing is wound round
+    # nothing.  Red with modifier read off left arm, held or not, measured 2026-10-22
+    # (issue #698): `Right to left` held above at one turn anticlockwise named `above lock`,
+    # and `free` at one-and-a-half turns named `lock`.
+    var checked = 0
+    for stood in frameStates():
+      var is_held_below = false
+      for side in Side:
+        if stood.frame.hold[side].isSome and stood.level[side] != Level.Above:
+          is_held_below = true
+      if is_held_below:
+        continue
+      inc checked
+      checkpoint stood.key & ": " & stood.describe
+      check stood.armName == ""
+    check checked >= FRAMES.len  # Floor: every frame, held above at rest.
+
+
+  test "a frame state and its mirror twin name one modifier":
+    # Reflection is symmetry of physics (`frame.reflect`), so it cannot change what arm
+    # winds into.  Red with modifier read off left arm (issue #698): `Right to left` held
+    # above at one turn anticlockwise named `above lock`, where its twin named none.
+    let states = frameStates()
+    for stood in states:
+      let twin = stood.reflect
+      checkpoint stood.key & " against " & twin.key
+      check twin in states
+      check stood.armName == twin.armName
+
+
 
 suite "Internal: What there is":
   test "every frame state stands, and no frame state is counted twice":
@@ -212,6 +254,39 @@ suite "Internal: What there is":
   test "every frame at rest is a frame state, and is where its turns start from":
     for target in FRAMES:
       check target.rest in frameStates()
+
+
+  test "a frame state survives a round trip through its key":
+    # Red with every level but high spelled `L`, measured 2026-10-22 (issue #698): 148 frame
+    # states had 83 keys, and `Right to left` held above at one turn anticlockwise read back
+    # as held low, `-l.:LL:-2`.
+    var keys: seq[string] = @[]
+    for stood in frameStates():
+      check fromFrameStateKey(stood.key) == some(stood)
+      keys.add stood.key
+    check keys.deduplicate.len == keys.len
+
+
+  test "a key is refused where a letter spells no level":
+    # Red with every letter but `H` read back as low (issue #698), so `l-.:XL:0` read as
+    # `Left to left` at rest.  Letters that keys write are read off keys themselves.
+    check fromFrameStateKey("l-.:XL:0").isNone
+    var written: set[char] = {}
+    for stood in frameStates():
+      for letter in stood.key.split(':')[1]:
+        written.incl letter
+    var (tried, refused) = (0, 0)
+    for stood in frameStates():
+      let parts = stood.key.split(':')
+      for index in 0..<parts[1].len:
+        for letter in {'!'..'~'} - written:
+          var levels = parts[1]
+          levels[index] = letter
+          inc tried
+          if fromFrameStateKey([parts[0], levels, parts[2]].join(":")).isNone:
+            inc refused
+    check tried > 0
+    check refused == tried
 
 
   test "the twelve turn sheets are six":

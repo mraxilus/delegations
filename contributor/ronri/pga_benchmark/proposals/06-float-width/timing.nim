@@ -38,7 +38,7 @@ template timeRounds(label: string, loop: untyped) =
 
 
 template timeLibrary(label: string, body: untyped) =
-  ## Time one library operation over `seq` of multivectors, slot i paired with (7i + 3).
+  ## Time one library operation over `seq` of multivectors, element i paired with (7i + 3).
   block:
     proc run(pool: seq[Multivector], results: var seq[Multivector]) {.noinline.} =
       ## Time operation in procedure of its own.

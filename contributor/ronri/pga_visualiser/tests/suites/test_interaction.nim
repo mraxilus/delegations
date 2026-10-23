@@ -2049,6 +2049,38 @@ suite "Interaction":
     check not isHoldSpent(interaction, 1000.0 + 10.0)
 
 
+  test "escape sheds one thing for each press, in one order, until nothing stands":
+    # Order is ruling both front-ends ask (repository issue 632): help, top menu, drag or
+    #   hold, edit, selection menu, then selection. Walked press by press from everything
+    #   standing, so order is read off what each press sheds rather than off enum.
+    var
+      standing = {BackOut.low .. BackOut.high}
+      shed: seq[BackOut]
+    while backOut(standing).isSome:
+      shed.add backOut(standing).get
+      standing.excl shed[^1]
+    check shed == @[
+      BackOut.Help, BackOut.MenuTop, BackOut.Gesture, BackOut.Edit, BackOut.MenuSelection,
+      BackOut.Selection,
+    ]
+    check backOut({}).isNone
+    # Selection menu goes before selection it hangs from, so one press never sheds both.
+    check backOut({BackOut.MenuSelection, BackOut.Selection}) == some(BackOut.MenuSelection)
+
+
+  test "a drag or a hold under finger is a gesture escape abandons, and a settling hold is not":
+    var interaction = Interaction(is_enabled: true)
+    check not interaction.isGesturing
+    interaction.beginHold(0, 1000.0)
+    check interaction.isGesturing
+    # Lifted hold only settles its marker; escape then passes to what stands under it.
+    interaction.releaseHold(1000.0 + SECONDS_SWELL_GROW)
+    check not interaction.isGesturing
+    interaction.cancelHold()
+    interaction.is_dragging = true
+    check interaction.isGesturing
+
+
   test "the panel's speed is the ship's own, held or not, and haste multiplies it":
     # Reader reads speed plus and minus set before flying, not only while flying.
     var interaction = Interaction(is_enabled: true, speed_ship: 19.0)

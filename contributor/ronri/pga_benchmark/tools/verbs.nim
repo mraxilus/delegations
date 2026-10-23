@@ -97,7 +97,7 @@ const
   PATH_PUBLICATIONS = "pages" / "published.json"
     ## Publications: page name to URL and digest at its last publish.
   PATH_README = "README.md"  ## File that must name every published URL.
-  PATH_KOCH = ".." / ".." / ".." / "koch.nim"  ## Repository driver, asked for faces.
+  PATH_KOCH = ".." / ".." / ".." / "koch.nim"  ## Repository driver, asked for font faces.
   PATH_HARNESS = "tools" / "drive" / "main.ts"  ## Harness source, where its finding points.
   ENTRY_HARNESS = BUILD / "drive" / "main.js"
     ## Harness as dispatcher's `types` emits it, run by node.
@@ -555,28 +555,28 @@ proc checkoutChecked(): seq[Finding] =
 
 #[ Pages ]#
 
-proc facesFromStore(): Table[string, string] =
-  ## Ask `koch fetch-assets` for each face shell draws with, and read bytes of each.
-  ##   Store checks digest; count of paths is asserted, since verb prints nothing for face
+proc fontFacesFromStore(): Table[string, string] =
+  ## Ask `koch fetch-assets` for each font face shell draws with, and read bytes of each.
+  ##   Store checks digest; count of paths is asserted, since verb prints nothing for font face
   ##   it could not serve, and short list would pair wrong bytes with right name.
   let (written, code) = execCmdEx(
     "nim r --hints:off --warnings:off " & quoteShell(PATH_KOCH) & " fetch-assets " &
-    FACES.quoteShellCommand,
+    FONT_FACES.quoteShellCommand,
   )
   if code != 0:
     raise newException(
       OSError,
-      "`koch fetch-assets` would not serve every face; got exit `" & $code & "`.",
+      "`koch fetch-assets` would not serve every font face; got exit `" & $code & "`.",
     )
   var paths: seq[string]
   for line in written.strip.splitLines:
     if line.strip.len > 0 and fileExists(line.strip): paths.add line.strip
-  if paths.len != FACES.len:
+  if paths.len != FONT_FACES.len:
     raise newException(
       OSError,
-      "`koch fetch-assets` named " & $paths.len & " paths for " & $FACES.len & " faces.",
+      "`koch fetch-assets` named " & $paths.len & " paths for " & $FONT_FACES.len & " font faces.",
     )
-  for index, face in FACES: result[face] = readFile(paths[index])
+  for index, font_face in FONT_FACES: result[font_face] = readFile(paths[index])
 
 
 proc publications(): JsonNode =
@@ -595,7 +595,7 @@ proc compileScript(entry: string): string =
     raise newException(ValueError, "Script closes its element; got `" & output & "`.")
 
 
-proc pagesBuilt(faces: Table[string, string]): OrderedTable[string, string] =
+proc pagesBuilt(font_faces: Table[string, string]): OrderedTable[string, string] =
   ## Build every page from committed files: home, Progress, Performance, Proposals, then one
   ##   per proposal. Each page opens with bar linking home and every view (`htmlViews`).
 
@@ -694,14 +694,14 @@ proc pagesBuilt(faces: Table[string, string]): OrderedTable[string, string] =
     text_shell,
     "PGA Benchmark",
     htmlViews(urls, "home") & bodyHome(cards, pin),
-    faces,
+    font_faces,
   )
   result["progress"] = assemble(
     text_shell,
     "PGA Progress",
     htmlViews(urls, "progress") &
         bodyCompletion(svg, library, pin, urls.getOrDefault("cayley-derivation")),
-    faces,
+    font_faces,
   )
   result["docket"] = assemble(
     text_shell,
@@ -713,7 +713,7 @@ proc pagesBuilt(faces: Table[string, string]): OrderedTable[string, string] =
       pin,
       compileScript(ENTRY_FIND),
     ),
-    faces,
+    font_faces,
   )
   result["proposals"] = assemble(
     text_shell,
@@ -726,7 +726,7 @@ proc pagesBuilt(faces: Table[string, string]): OrderedTable[string, string] =
       htmlMarginalia(changes_evaluated, notes, files, baselines, spread),
       pin,
     ),
-    faces,
+    font_faces,
   )
   for proposal in proposals:
     result[proposal.name] = assemble(
@@ -744,25 +744,25 @@ proc pagesBuilt(faces: Table[string, string]): OrderedTable[string, string] =
         pin,
         "",
       ),
-      faces,
+      font_faces,
     )
 
 
 proc pages() =
   ## Build every page into `build/`, and print each with its digest.
   createDir BUILD
-  for name, page in pagesBuilt(facesFromStore()).pairs:
+  for name, page in pagesBuilt(fontFacesFromStore()).pairs:
     writeFile(BUILD / name & ".html", page)
     echo "Built ", BUILD / name & ".html", "  ", digestPage(page), "  ", page.len div 1024,
       " KiB"
 
 
 proc renderedChecked(
-  built: OrderedTable[string, string], faces: Table[string, string]
+  built: OrderedTable[string, string], font_faces: Table[string, string]
 ): seq[Finding] =
   ## Render every built page and control as publish host serves them, and judge what harness
-  ##   found: each page held to faces it ships and to blocks of card that do not touch, control
-  ##   to findings it expects (`render.nim`).
+  ##   found: each page held to font faces it ships and to blocks of card that do not touch,
+  ##   control to findings it expects (`render.nim`).
   ##   Harness and browser are dispatcher's to ready, before `drive` reaches here.
   let
     control = readDocument(PATH_CONTROL)
@@ -770,7 +770,7 @@ proc renderedChecked(
     cards = cards(control)
   var pages = built
   pages[CONTROL] =
-    assemble(readFile(PATH_SHELL), "Render Control", bodyControl(paragraphs, cards), faces)
+    assemble(readFile(PATH_SHELL), "Render Control", bodyControl(paragraphs, cards), font_faces)
   createDir BUILD_HOSTED
   var paths: seq[string]
   for name, page in pages.pairs:
@@ -791,7 +791,7 @@ proc renderedChecked(
 
 proc publishedAt(name, url: string) =
   ## Record page just published: its URL, and digest of page as built now.
-  let built = pagesBuilt(facesFromStore())
+  let built = pagesBuilt(fontFacesFromStore())
   if name notin built:
     raise newException(ValueError, "No page named `" & name & "`.")
   var entries = publications()
@@ -1036,8 +1036,8 @@ proc pinnedChecked(pin: string, built: OrderedTable[string, string]): seq[Findin
 proc drive() =
   ## Inspect, check against baselines, and hold committed list and docket to regeneration.
   ##   Hold every measurement, evaluation, file, page and checkout to pin; read no head.
-  ##   Render every page, and hold each character beyond ASCII to faces page ships; render
-  ##   control too, and hold it to findings it expects, so blind render is finding.
+  ##   Render every page, and hold each character beyond ASCII to font faces page ships;
+  ##   render control too, and hold it to findings it expects, so blind render is finding.
   let pin = commitPga()
   var findings = checkoutChecked()
   inspect()
@@ -1051,10 +1051,10 @@ proc drive() =
       message: "Docket differs from regeneration; run `gaps`.",
     )
   let
-    faces = facesFromStore()
-    built = pagesBuilt(faces)
+    font_faces = fontFacesFromStore()
+    built = pagesBuilt(font_faces)
   findings.add pinnedChecked(pin, built)
-  findings.add renderedChecked(built, faces)
+  findings.add renderedChecked(built, font_faces)
   report(findings)
 
 

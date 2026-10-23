@@ -83,6 +83,8 @@ type
     Up = 82,
     ControlLeft = 224,
     ShiftLeft = 225,
+    AltLeft = 226,
+      ## Declared so `--drive-chords` can hold one: view keys under it are refused.
     ControlRight = 228,
       ## Bind both control keys to same thing, as both shift keys are bound.
       ##   Lowers camera in free flight. Accelerators read modifier bitmask instead, so
@@ -141,6 +143,7 @@ type
 const
   MODIFIER_CONTROL* = 0x00C0'u16  ## Test key event's modifiers for either control key.
   MODIFIER_SHIFT* = 0x0003'u16  ## Test key event's modifiers for either shift key.
+  MODIFIER_ALT* = 0x0300'u16  ## Test key event's modifiers for either alt key.
   MODIFIER_COMMAND* = 0x0C00'u16
     ## Test key event's modifiers for either command key.
     ##   What reader on macOS presses where everyone else presses control.
@@ -256,6 +259,7 @@ const LUT_SYMBOL_BY_MIRROR = [
   (int(Scancode.F), "SDL_SCANCODE_F"),
   (int(Scancode.W), "SDL_SCANCODE_W"),
   (int(Scancode.ShiftLeft), "SDL_SCANCODE_LSHIFT"),
+  (int(Scancode.AltLeft), "SDL_SCANCODE_LALT"),
   (int(Scancode.ShiftRight), "SDL_SCANCODE_RSHIFT"),
   (int(Scancode.S), "SDL_SCANCODE_S"),
   (int(Scancode.Y), "SDL_SCANCODE_Y"),
@@ -278,6 +282,7 @@ const LUT_SYMBOL_BY_MIRROR = [
   (int(Scancode.Up), "SDL_SCANCODE_UP"),
   (int(MODIFIER_CONTROL), "SDL_KMOD_CTRL"),
   (int(MODIFIER_SHIFT), "SDL_KMOD_SHIFT"),
+  (int(MODIFIER_ALT), "SDL_KMOD_ALT"),
   (int(MODIFIER_COMMAND), "SDL_KMOD_GUI"),
   (int(MouseButton.Left), "SDL_BUTTON_LEFT"),
   (int(MouseButton.Middle), "SDL_BUTTON_MIDDLE"),

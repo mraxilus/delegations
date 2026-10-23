@@ -73,6 +73,9 @@ func arc(stood: FrameState, twist: HalfTurns, is_refused: bool): string =
   ##     twelve arcs would be six drawn twice, on top of each other, saying
   ##     same thing.  Which dancer takes it is in list beside
   ##     drawing, where there is room to say it.
+  ##   Named by way twist turns, seen from above (`turnName`), as frame states on axle are.
+  ##     Arc stands for follow's turn one way and lead's turn other, so dancer's right or
+  ##     left would be wrong for one of them.
   let
     (start_x, start_y) = centre(stood, stood.twist)
     (end_x, end_y) = centre(stood, twist)
@@ -81,11 +84,14 @@ func arc(stood: FrameState, twist: HalfTurns, is_refused: bool): string =
     # than crossing it twice.
     lift = ARC_RISE + reach * 30
     (control_x, control_y) = ((start_x + end_x) div 2, start_y - lift)
-    told = TURN_NAMES[min(reach, TURN_NAMES.high)] &
-        (if twist > stood.twist: " right" else: " left")
+    told = turnName(twist - stood.twist)
   result = "<g class=\"turn" & (if is_refused: " refused" else: "") & "\">" &
       "<path class=\"turn-line\" d=\"M" & $start_x & " " & $(start_y - 58) & "Q" & $control_x &
       " " & $control_y & " " & $end_x & " " & $(end_y - 58) & "\"/>"
+  # TODO: Half-turn plates either side of couple overlap by 16 px, measured 2026-10-22 over
+  #   every frame state's axle: way named from above is longer than `STEP` leaves room for.
+  #   Candidates: stagger plates of one reach by way, or widen `STEP`, which widens axle.
+  #   Evidence needed: page that places axle, and style it gives plate.
   let (label_x, label_y) = (control_x, start_y - lift * 3 div 4)
   result.add "<rect class=\"turn-plate\" x=\"" & $(label_x - told.len * 3 - 5) &
       "\" y=\"" & $(label_y - 9) & "\" width=\"" & $(told.len * 6 + 10) &
