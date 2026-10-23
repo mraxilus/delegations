@@ -485,7 +485,9 @@ their verdicts agree.
 reaches no font host and no script host. So every face is inlined as base64, and `tools/build.nim
 web` concatenates every script into `pages/shell.html` at its `@SCRIPT@` token. `pages/shell.html`
 stays whole markup, rather than ends mid-`<script>`, because a committed page that cannot parse
-alone is a page that no checker can read.
+alone is a page that no checker can read. The page declares its own doctype, charset and viewport,
+because a copy opened from file has nothing else to declare them. Without them that copy rendered in
+quirks mode, and decoded its text as Windows-1252.
 
 **Scripts share one global scope, rather than import each other.** TypeScript 7 removed `outFile`,
 so the compiler does not bundle, and the page cannot resolve ES imports without a server. Files
