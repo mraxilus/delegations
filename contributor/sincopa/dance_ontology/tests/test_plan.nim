@@ -38,8 +38,8 @@ const
   HAND_TO_HAND = @[Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Right)]),
                    Link(ends: [(Body.One, Arm.Right), (Body.Two, Arm.Left)])]
     ## Cross-name two-hand hold, uncrossed Face-to-face: chain this suite turns.
-  CROSS = 0.5  ## Turns from rest to its cross: shortest wind that lifts hands over crown
-              ## and brings them down again facing.
+  CROSS = 0.5  ## Turns from rest to its cross, Face-to-back: shortest wind of chain that
+              ## lifts hands over crown, where they stay.
   JOINED = 1e-3  ## Metres planned joined hands may sit apart: `plan.KEPT` is millimetre
                 ## squared over whole violation, so one pair is never further.
   TIED = 1e-4  ## Metres engine may part tie of hands stood where plan joins them: tenth of
@@ -428,7 +428,7 @@ suite "Internal: Planned turn":
 
 
   test "engine sprung toward plan follows it to cross and stands there":
-    ## Engine judges as it judges every walk (`rigid.gives`): nothing through anything,
+    ## Engine judges as it judges every still (`rigid.gives`): nothing through anything,
     ## no joint past its end, hands not parted.
     ##   Red with shoulder aimed at plan's turn outside its rest frame: Reach at first moment.
     ##     Red with collarbone's lift read back with wrong sign: arm met arm at cross.  Both
