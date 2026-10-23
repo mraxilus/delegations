@@ -488,10 +488,11 @@ func arc(
     lit = (if is_lit: " lit" else: "") & waking(is_lit, is_lit_prev, was.isSome)
   # Drawn as two halves, each in ink of arm that acts as you travel into
   # it.  Ordinary line has one ink because same arm acts whichever way it
-  # is read; compound move has two because it hands follow's hand from one of
-  # lead's arms to other, and which arm that is depends on which way you
-  # are going.  Splitting curve is what lets it say both without lying about
-  # either, and it stays dashed, because it is still two moves.
+  # is read; compound move has two because arm that acts depends on which
+  # way you are going: for `place` it is arm that ends up holding, and for
+  # `cut` arm that ends up on top (`compoundSide`).  Splitting curve is what
+  # lets it say both without lying about either, and it stays dashed,
+  # because it is still two moves.
   let
     (control_x, control_y) = (middle_x, max(start_y, end_y) + dip)
     (first_control_x, first_control_y) = ((start_x + control_x) div 2, (start_y + control_y) div 2)
