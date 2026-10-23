@@ -80,7 +80,7 @@ type
     lower*, upper*: float  ## Ends, radians.  Past either is refused.
     ease_lower*, ease_upper*: float  ## How far short of each end strain begins;
                         ## nought where end is stop that can be leant on.
-    neutral*: float  ## Where joint rests; solver prefers it.
+    neutral*: float  ## Where joint rests; elbow's is where `rigid` springs held arm's elbow.
 
   Rig* = object  ## Tape's numbers, and joints' ranges.
     round*: array[Part, float]  ## Circumferences, metres.
@@ -329,6 +329,6 @@ func margin*(range: Range, value: float): float =
 
 func eased*(range: Range, value: float): float =
   ## Distance from joint's neutral, as fraction of way to
-  ## farther end: smooth cost solver minimises.
+  ## farther end: smooth cost `limb.comfort` sums, which nothing calls.
   let width = max(range.upper - range.neutral, range.neutral - range.lower)
   (value - range.neutral) / width

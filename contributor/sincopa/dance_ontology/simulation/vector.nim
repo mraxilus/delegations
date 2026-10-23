@@ -3,12 +3,13 @@
 ##   Three numbers and no more.  Simulation's whole geometry is capsules against
 ##     cylinders and against each other, which needs distances, projections
 ##     and one rotation, and nothing here knows what body is.
-##   Helpers solver runs in its loop are spelt out in scalars.  On
-##     JavaScript backend tuple operation allocates, and contact tests
-##     run some tens of thousands of times per frame; operators are kept for
-##     paths that run once per pose.
+##   Three helpers are spelt out in scalars: `distance`, `closest` and
+##     `axisNear`; operators serve every other path.  Planner measures each
+##     near pair of capsules by `closest` each time it weighs pose (`plan`),
+##     and reader's contact test runs `axisNear` (`contact`).  What scalars
+##     save there over operators is unmeasured.
 ##     Cost: two spellings of same arithmetic.  Accepted -- scalar ones
-##       are three that run in loop, and each is few lines.
+##       are three, and each is few lines.
 
 {.experimental: "strictFuncs".}
 
@@ -44,7 +45,8 @@ func unit*(a: Vector): Vector =
 func spunBy*(v, axis: Vector; c, s: float): Vector =
   ## Turn `v` about unit `axis` by angle whose cosine and sine are
   ## `c` and `s`, anticlockwise looking down axis (Rodrigues).
-  ##   Form solver's loop wants: swing is known by dot and
+  ##   Form `carried` wants, for arm's forward kinematics and joint readings
+  ##     that reader and laws take (`limb`): swing is known by dot and
   ##     cross of two directions, which are that cosine and sine already, so
   ##     no angle need be taken and its cosine and sine found again.
   let
