@@ -2321,16 +2321,6 @@ func lettersStanding(panel: Panel, interaction: Interaction): string =
     if is_standing: result.add LETTERS_STANDING[i]
 
 
-proc pushKey(scancode: Scancode; keycode: uint32; modifiers: uint16; is_down: bool) =
-  ## Post one key event onto SDL's queue, with modifiers held as reader's would be.
-  var event = Event(kind: uint32(if is_down: EventKind.KeyDown else: EventKind.KeyUp))
-  event.key.scancode = uint32(scancode)
-  event.key.keycode = keycode
-  event.key.is_down = is_down
-  event.key.modifiers = modifiers
-  sdl3.pushEvent(addr event)
-
-
 proc driveEscape(
   drive: var EscapeDrive;
   window: Window;

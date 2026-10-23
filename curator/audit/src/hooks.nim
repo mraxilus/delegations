@@ -1087,10 +1087,12 @@ func checkEndTurn*(message, branch: string): seq[Finding] =
 
 func reasonStop*(found: openArray[Finding]): string =
   ## Render why `stop` hook refuses message ending turn, one finding to line.
-  ##   Message is on screen once hook reads it, so delegate replies with corrected lines
-  ##     alone; whole message sent again reads twice (D1 of #570).
-  "Mend message that ends this turn (GUIDE.md, Output contract). Reply with corrected lines " &
-    "alone; message stands above them, so never send it or its sign-off again:\n" &
+  ##   Message is on screen once hook reads it, so delegate replies with diff of each error
+  ##     alone; whole message sent again reads twice (D1 of #570), and so does each line of it.
+  ##   Reply passes unread, since `stop_hook_active` is set, so its `-` line refuses nothing.
+  "Mend message that ends this turn (GUIDE.md, Output contract). Reply with a diff of each " &
+    "error alone: one `diff` block, each wrong phrase after `-`, that phrase mended after `+`. " &
+    "Message stands above it, so never send it, a line of it, or its sign-off again:\n" &
     found.mapIt(it.message).join("\n")
 
 
