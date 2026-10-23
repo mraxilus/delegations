@@ -2,9 +2,11 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, os, strformat, strutils, unittest]
+import std/[json, options, os, strformat, strutils, unittest]
 
 import ../../design/[marks, parts, plain, rig_page]
+from ../../design/rig as recording import KEPT_RIG
+from ../../design/rig_page {.all.} import cardsBody, HEAD_BODY
 import ../../tools/title
 from ../../src/dance_ontology/rotation import facing, seenAfter
 
@@ -124,6 +126,27 @@ suite "Internal: Every page this project publishes":
     ## Viewer is written by its own module rather than by workbench above, so its title is
     ## held here against same reading rather than left as only one nothing checks.
     check isTitleCased(TITLE)
+
+
+  test "viewer's prose keeps each sentence and each paragraph inside its bound":
+    ## Viewer is written by its own module rather than by workbench above, so its prose is held
+    ##   here to same two bounds as each page of `PAGES` (`plain.WORDS`, `plain.SENTENCES`).
+    ##   Read off markup page carries: header and panel (`rig_page.HEAD_BODY`), then cards
+    ##     (`rig_page.cardsBody`), cut from Reference written above and laid beside stills
+    ##     recording keeps.  Wrapper, style sheets and scripts hold no prose.
+    ##   Regression of finding E-15 of issue 698, as found on 2026-10-22 in audit of project:
+    ##     third paragraph of viewer's header held seven sentences, one of them 26 words long,
+    ##     and no law read viewer's prose.
+    let written = HEAD_BODY &
+        cardsBody(readFile(OUT / "reference.html"), folded(parseFile(KEPT_RIG)))
+    # Bounds below say nothing of markup that holds no paragraph.
+    check written.prose.len > 0
+    for said in written.longSentences:
+      checkpoint "sentence over " & $WORDS & " words: " & said
+      fail()
+    for said in written.longParagraphs:
+      checkpoint "paragraph over " & $SENTENCES & " sentences, opening: " & said
+      fail()
 
 
 
