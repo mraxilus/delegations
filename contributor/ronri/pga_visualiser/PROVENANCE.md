@@ -1046,8 +1046,8 @@ samples count. A wait for vsync, or a sample with no page script on its stack, h
 Nim.** `sampler.nim` arms `timer_create` on `CLOCK_THREAD_CPUTIME_ID`, at 250 samples each busy
 second. The handler allocates nothing. It walks out from the innermost frame to the first that
 `share.ownerOfPath` names a side for, and adds one atomically. This runs on Linux alone, in a build
-that keeps stack frames, and elsewhere the rows say why. Rejected: the own profiler of Nim, which
-read 30 to 41% against 26% and made the frame 2.2 times slower.
+that keeps stack frames. Elsewhere the section says why once, in place of its four shares. Rejected:
+the own profiler of Nim, which read 30 to 41% against 26% and made the frame 2.2 times slower.
 
 **The walk of the frames of Nim reads low against native unwinding.** A sample that lands in the
 push or pop of a small library proc, such as `[]`, misses its frame. On the same samples the walk
@@ -1057,9 +1057,11 @@ measurement found, at 4.515 against 4.506 ms and 4.250 against 4.232 ms for each
 
 **The page samples with the own profiler of the browser, where the browser allows it.** Chromium
 alone has one, and only on a page whose own response carries `Document-Policy: js-profiling`. A page
-opened from a file is refused, and a `<meta>` copy of the policy changes nothing. The rows then say
-why, and give no figure. The profiler gives no interval under 10 ms. Each window of 2 s stops and
-hands in its trace, and the next starts at once, at a cost of 0.2 to 0.3 ms.
+opened from a file is refused, and a `<meta>` copy of the policy changes nothing. The section then
+says why once, in place of its four shares, as the desktop does. Rejected: the reason in each of the
+four rows, where it wrapped into the name of the row. The profiler gives no interval under 10 ms.
+Each window of 2 s stops and hands in its trace, and the next starts at once, at a cost of 0.2 to
+0.3 ms.
 
 **The two front-ends read different shares, because their busy time holds different work.** The busy
 time of the desktop holds the layout of its panel and the submission of its draws. The page leaves
@@ -1082,9 +1084,9 @@ page less the engine over seven runs.
 *Checked.* Verified by `suites.nim`: the rule names the owner of names from the built page and of
 desktop paths. It names a stack by its innermost owned frame, and the ring pools 20 s. On Linux, the
 sampler counts a loop of products as PGA's, at 82 to 85% of about 100 samples. Verified by driven
-check: the page from a file says why it cannot sample, and the served page agrees with the engine on
-each side. Verified on 2026-10-06 by `xvfb-run -a binaries/rga_visualiser --hidden --novsync
---timings --frames:300 --demo:5038`: the desktop figures above.
+check: the page from a file says once why it cannot sample, and the served page agrees with the
+engine on each side. Verified on 2026-10-06 by `xvfb-run -a binaries/rga_visualiser --hidden
+--novsync --timings --frames:300 --demo:5038`: the desktop figures above.
 
 ## Values crossing the boundary
 
