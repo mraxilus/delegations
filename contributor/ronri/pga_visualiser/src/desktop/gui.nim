@@ -186,6 +186,9 @@ proc menuBegin*(label, id: cstring; width: cfloat; is_forced: bool): bool
 
 proc menuEnd*() {.sideEffect, importc: "guiMenuEnd".}
   ## Close region `menuBegin` opened.
+
+proc menuClose*() {.sideEffect, importc: "guiMenuClose".}
+  ## Close menu `menuBegin` opened, from inside it; region still ends at `menuEnd`.
   ## End child region begun by `childBegin`.
 
 proc text*(text: cstring) {.sideEffect, importc: "guiText".}

@@ -27,6 +27,9 @@ declare function refreshSelectionMenu(position_local: null): void;
 /** Shut selection menu, which standing open swallows pointer events over canvas. */
 declare function hideSelectionMenu(): void;
 
+/** Whether floating selection menu stands up, as Escape asks before selection itself. */
+declare function isSelectionMenuShown(): boolean;
+
 /** Read Nim's selection into page's own snapshot, which overlay marks each object of. */
 declare function refreshSelectionSnapshot(): void;
 
@@ -171,8 +174,14 @@ declare const list_objects: HTMLElement;
 /** Open drawer onto this object's own row, scrolled to before this returns. */
 declare function openPanelTo(handle: number | null): void;
 
+/** Open edit session on one object, as edit buttons of its row and of its menu do. */
+declare function beginEditSession(handle: number | null): void;
+
 /** Close whatever edit session stands, discarding its staged values. */
 declare function endEditSession(): void;
+
+/** Edit session standing, or null where none is; `objects_section` stages edits in it. */
+declare let session_edit: object | null;
 
 /** Rebuild objects list against scene standing now. */
 declare function refreshObjectsUI(): void;

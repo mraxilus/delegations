@@ -76,7 +76,8 @@
 ##   Drag from empty space to move camera: left orbits, right pans, wheel zooms toward
 ##   whatever pointer is over.
 ##   `ctrl+S` writes current frame to export path.
-##   `Escape` abandons whatever is in progress (help panel, drag, open edit, selection).
+##   `Escape` sheds one thing for each press, in `interaction.BackOut`'s order: help, top
+##   menu, drag, edit, selection menu, selection.
 ##   `ctrl+Z` and `ctrl+shift+Z` step same timeline panel's undo and redo buttons do.
 ##   `ctrl+Q` quits; `Escape` does not, since pressing it twice to be sure of cancel would
 ##   throw away unsaved scene.
@@ -98,6 +99,8 @@
 ##   can be looked at.
 ##   `--drive-edit` opens edit on object far out and saves it unchanged, so what staging
 ##   keeps of its coefficients can be read.
+##   `--drive-escape` stands up everything Escape sheds and presses it until nothing stands;
+##   `--drive-chords` holds keys under control and alt, and undoes by key printed.
 
 {.experimental: "strictFuncs".}
 
@@ -407,6 +410,10 @@ type
       ## Headless run then shows what staging keeps of it; see `driveEdit`.
     is_wheel_driven: bool  ## Whether to pick object, then turn wheel over menu pick opens.
       ## Headless run then shows where that wheel goes; see `driveWheel`.
+    is_escape_driven: bool  ## Whether to stand up all Escape sheds, then press it repeatedly.
+      ## Headless run then shows what each press shed; see `driveEscape`.
+    is_chords_driven: bool  ## Whether to hold keys under modifiers, and undo by key printed.
+      ## Headless run then shows what control, alt and layout do; see `driveChords`.
     path_help_driven: Option[HelpPath]  ## Which help tab to open at startup, if any.
       ## Headless run cannot click tab strip, so `--drive-help:<tab>` names one.
 
@@ -416,6 +423,16 @@ type
     ##   event every frame could never leave it held.
     pressed: Option[tuple[scancode: Scancode, keycode: uint32]]
     is_down: bool  ## Whether this step presses key or lets go of it.
+
+  EscapeDrive = object  ## Define what `--drive-escape` carries between frames, for its verdict.
+    seen: seq[string]
+      ## What stood before first press, then after each, as `LETTERS_STANDING` spells it.
+
+  ChordDrive = object  ## Define what `--drive-chords` carries between frames, for its verdict.
+    eye_rest, eye_raised, eye_lowered, eye_alted: Position
+      ## Eye before space, after it, after control, and after W held under alt.
+    count_added, count_undone, count_redone: int
+      ## Objects once one is added, then after undo and redo by key printed.
 
   MoreSeen = object  ## Define what `--drive-drag` found frame after letting go on `more…`.
     is_picking: bool  ## Whether selection menu stood with its operation picker open.
@@ -467,6 +484,8 @@ proc applyOption(options: var Options; key, value: string) =
   of "drive-faces": options.is_faces_driven = true
   of "drive-edit": options.is_edit_driven = true
   of "drive-wheel": options.is_wheel_driven = true
+  of "drive-escape": options.is_escape_driven = true
+  of "drive-chords": options.is_chords_driven = true
   of "drive-help":
     for path in HelpPath:
       if title(path) == value: options.path_help_driven = some(path)
@@ -477,7 +496,7 @@ proc applyOption(options: var Options; key, value: string) =
       "Option must be one of screenshot, storyboard, load-scene, frames, hidden, " &
       "timings, novsync, fill, demo[:<objects>], help-tabs, drive-drag, drive-keys, " &
       "drive-select, drive-undo, drive-sky, drive-search, drive-menu, drive-faces, " &
-      "drive-edit, drive-wheel or drive-help; " &
+      "drive-edit, drive-wheel, drive-escape, drive-chords or drive-help; " &
       &"got `--{key}`."
 
 
@@ -486,7 +505,8 @@ func isDriven(options: Options): bool =
   options.is_drag_driven or options.is_key_driven or options.is_select_driven or
       options.is_undo_driven or options.is_sky_driven or options.is_search_driven or
       options.is_menu_driven or options.is_faces_driven or options.is_edit_driven or
-      options.is_wheel_driven or options.path_help_driven.isSome
+      options.is_wheel_driven or options.is_escape_driven or options.is_chords_driven or
+      options.path_help_driven.isSome
 
 
 proc parseOptions(): Options =
@@ -1351,6 +1371,12 @@ func armingFor(button: uint8): Option[MenuArming] =
   if named.isNone: none(MenuArming) else: arming(named.get)
 
 
+func isPrinted(keycode: uint32, letter: char): bool =
+  ## Report whether key event's keycode names `letter`, in either case.
+  ##   Shift may raise case of keycode SDL reports; accelerator reads letter alone.
+  keycode == uint32(ord(letter.toLowerAscii)) or keycode == uint32(ord(letter.toUpperAscii))
+
+
 func isMenuRevealedFor(button: uint8): bool =
   ## Say whether click of this mouse button brings selection menu up with it.
   let named = button.toPointerButton
@@ -1382,37 +1408,60 @@ proc handleEvent(
     #   key view answers; see `gui_shim.cpp`.
     if gui.wantsKeys(): return
     # Accept control on every platform, and command as well, for macOS.
-    let is_accelerator =
-      (event.key.modifiers and (MODIFIER_CONTROL or MODIFIER_COMMAND)) != 0
-    let is_shifted = (event.key.modifiers and MODIFIER_SHIFT) != 0
+    #   Control's own press carries modifier it is, and alone it descends, as page's does;
+    #   see `Key.Control`.
+    let
+      is_control_own = event.key.scancode in
+        [uint32(Scancode.ControlLeft), uint32(Scancode.ControlRight)]
+      modifiers_accelerator =
+        if is_control_own: MODIFIER_COMMAND else: MODIFIER_CONTROL or MODIFIER_COMMAND
+      is_accelerator = (event.key.modifiers and modifiers_accelerator) != 0
+      is_shifted = (event.key.modifiers and MODIFIER_SHIFT) != 0
+      # Refuse view keys under alt, as page does: alt belongs to system.
+      is_alted = (event.key.modifiers and MODIFIER_ALT) != 0
     if event.key.scancode == uint32(Scancode.Escape):
-      # Cancel what is in progress rather than quitting.
+      # Cancel what is in progress rather than quitting: one thing for each press, first of
+      #   what stands in `interaction.BackOut`'s order, which page's `keyboard.ts` asks too.
       #   Pressing twice to be sure would throw away unsaved scene; quitting is ctrl+Q.
-      if panel.is_help_open: panel.is_help_open = false
-      elif interaction.is_dragging:
-        interaction.cancelDrag()
-        panel.say(cancelledMessage(), now)
-      elif panel.session.isSome: panel.session = none(EditSession)
-      elif panel.is_menu_selection_shown: panel.hideSelectionMenu()
-      elif len(panel.selection) > 0: panel.selection.clear()
+      var standing: set[BackOut]
+      if panel.is_help_open: standing.incl BackOut.Help
+      if panel.is_menu_top_open: standing.incl BackOut.MenuTop
+      if interaction.isGesturing: standing.incl BackOut.Gesture
+      if panel.session.isSome: standing.incl BackOut.Edit
+      if panel.is_menu_selection_shown: standing.incl BackOut.MenuSelection
+      if len(panel.selection) > 0: standing.incl BackOut.Selection
+      let shed = backOut(standing)
+      if shed.isSome:
+        case shed.get
+        of BackOut.Help: panel.is_help_open = false
+        of BackOut.MenuTop: panel.is_menu_top_shut = true
+        of BackOut.Gesture:
+          if interaction.is_dragging:
+            interaction.cancelDrag()
+            panel.say(cancelledMessage(), now)
+          interaction.cancelHold()
+        of BackOut.Edit: panel.session = none(EditSession)
+        of BackOut.MenuSelection: panel.hideSelectionMenu()
+        of BackOut.Selection: panel.selection.clear()
     elif is_accelerator and event.key.scancode == uint32(Scancode.S):
       # Take ctrl+S rather than bare S.
       #   S slides view back, and movement key cannot also write PNG.
       panel.is_export_requested = true
     elif is_accelerator and event.key.scancode == uint32(Scancode.Q):
       is_running = false
-    elif is_accelerator and event.key.scancode == uint32(Scancode.Z) and not is_shifted:
+    elif is_accelerator and event.key.keycode.isPrinted('z') and not is_shifted:
+      # Read undo and redo by key printed, as page's `e.key` does: control with Z is undo on
+      #   every layout, and QWERTZ prints Z where QWERTY prints Y.
       panel.is_undo_requested = true
     elif is_accelerator and
-        (event.key.scancode == uint32(Scancode.Y) or
-         (event.key.scancode == uint32(Scancode.Z) and is_shifted)):
+        (event.key.keycode.isPrinted('y') or (event.key.keycode.isPrinted('z') and is_shifted)):
       panel.is_redo_requested = true
-    elif not is_accelerator and event.key.keycode == uint32(ord('/')):
+    elif not is_accelerator and not is_alted and event.key.keycode == uint32(ord('/')):
       # Search objects list from anywhere, as page's `/` does (`keyboard.ts`).
       #   Keycode rather than scancode: it names character printed, which is what reader
       #   looks for, as page reads `e.key` for it.
       panel.is_search_focus_wanted = true
-    elif not is_accelerator:
+    elif not is_accelerator and not is_alted:
       # Answer keys 3D view binds, what makes canvas reachable without pointer.
       #   Chord that missed every branch above falls through rather than orbiting by
       #   accident.
@@ -2112,6 +2161,151 @@ proc driveSky(scene: var Scene; camera: Camera; width, height, count_drawn: int;
   sdl3.pushEvent(addr event)
 
 
+const
+  LETTERS_STANDING = "HMGEPS"
+    ## Spell what stands for Escape to shed, one letter each, in `interaction.BackOut`'s order.
+    ##   Help, top menu, gesture, edit, selection menu (P for its pop-up), selection: as page's
+    ##   `escape.ts` spells it, so both runs report one sequence.
+  LABEL_ESCAPE_DRAGGED = "o"
+    ## Label of object `--drive-escape` drags from: origin, which opening view centres.
+  FRAMES_HELD_CHORDS = 60
+    ## Hold each key `--drive-chords` holds this many frames, from rest: half second at
+    ## `SECONDS_FRAME_DRIVEN`, as page's `keys.ts` holds.
+  KEYCODE_CONTROL = 1073742048'u32  ## Name SDL's keycode for left control, as script sends it.
+  KEYCODE_ALT = 1073742050'u32  ## Name SDL's keycode for left alt, as script sends it.
+
+
+func lettersStanding(panel: Panel, interaction: Interaction): string =
+  ## Spell what stands for Escape to shed, as `LETTERS_STANDING` does.
+  let flags = [
+    panel.is_help_open, panel.is_menu_top_open, interaction.isGesturing, panel.session.isSome,
+    panel.is_menu_selection_shown, len(panel.selection) > 0,
+  ]
+  for i, is_standing in flags:
+    if is_standing: result.add LETTERS_STANDING[i]
+
+
+proc pushKey(scancode: Scancode; keycode: uint32; modifiers: uint16; is_down: bool) =
+  ## Post one key event onto SDL's queue, with modifiers held as reader's would be.
+  var event = Event(kind: uint32(if is_down: EventKind.KeyDown else: EventKind.KeyUp))
+  event.key.scancode = uint32(scancode)
+  event.key.keycode = keycode
+  event.key.is_down = is_down
+  event.key.modifiers = modifiers
+  sdl3.pushEvent(addr event)
+
+
+proc driveEscape(
+  drive: var EscapeDrive;
+  window: Window;
+  panel: var Panel;
+  scene: var Scene;
+  camera: Camera;
+  interaction: Interaction;
+  width, height, count_drawn: int;
+  scale: DrawExtent;
+) =
+  ## Stand up everything Escape sheds at once, then press it until nothing stands, for
+  ## `--drive-escape`.
+  ##   Drag is real: pointer reaches `o` and presses on it, as reader's would.
+  ##   Rest opens through panel's own entries, as `--drive-edit` opens its session: claim is
+  ##   order Escape sheds them in, and each control's way of opening one is check of its own.
+  ##   One press for each frame, read next frame, once its layout has run; one press more
+  ##   than things standing, which must shed nothing.
+  const frame_first = 2  # Past startup, so first frame's layout has settled.
+  let step = count_drawn - frame_first
+  if step < 0: return
+  var
+    handles: array[OBJECTS_MAX, int]
+    (dragged, picked) = (none(int), none(int))
+  for position in 0..<scene.handlesCreated(handles):
+    if scene[handles[position]].label.toText == LABEL_ESCAPE_DRAGGED:
+      dragged = some(handles[position])
+    elif picked.isNone:
+      picked = some(handles[position])
+  if dragged.isNone or picked.isNone: return
+  let step_last = 5 + len(LETTERS_STANDING) + 1
+  if step == 0:
+    # Reach `o`, then press on it next frame, so press reads hover motion moved.
+    let anchor = anchorFor(scene[dragged.get].geometry, scene[dragged.get].anchorOverride, scale)
+    if anchor.isNone: return
+    let screen = projectToScreen(
+      camera.initMatrixViewProjection(width / height), width, height, anchor.get
+    )
+    var reach = Event(kind: uint32(EventKind.MouseMotion))
+    reach.motion.window_id = sdl3.windowId(window)
+    reach.motion.x = cfloat(screen.x)
+    reach.motion.y = cfloat(screen.y)
+    sdl3.pushEvent(addr reach)
+  elif step == 1:
+    var press = Event(kind: uint32(EventKind.MouseButtonDown))
+    press.button.button = uint8(MouseButton.Left)
+    sdl3.pushEvent(addr press)
+  elif step == 2:
+    panel.selection.selectOnly(picked.get)
+    panel.showSelectionMenu()
+    panel.beginSession(scene, picked)
+    panel.is_help_open = true
+  elif step == 3:
+    # Top menu one frame after help: window appearing takes focus, and focus leaving popup
+    #   closes it.
+    panel.is_menu_top_forced = true
+  elif step == 4:
+    panel.is_menu_top_forced = false  # Opened once; Escape must be what shuts it.
+  elif step <= step_last:
+    drive.seen.add lettersStanding(panel, interaction)
+    if step == step_last: return
+    pushKey(Scancode.Escape, 27'u32, 0, true)  # Escape is ASCII escape.
+    pushKey(Scancode.Escape, 27'u32, 0, false)
+
+
+proc driveChords(
+  drive: var ChordDrive; scene: var Scene; camera: Camera; count_drawn: int; now: float
+) =
+  ## Hold space, then control alone, then W under alt, then undo and redo by key printed, for
+  ## `--drive-chords`.
+  ##   Each hold from rest for `FRAMES_HELD_CHORDS` frames, read frame after its release.
+  ##   QWERTZ prints Z where QWERTY prints Y: undo goes at Y's place with Z's print, and redo
+  ##   at Z's place with Y's print, as page's `keys.ts` dispatches them.
+  const
+    frame_first = 3  # Past startup, so first frame's layout has settled.
+    held = FRAMES_HELD_CHORDS
+  let
+    step = count_drawn - frame_first
+    eye = camera.eyeWorld
+  if step == 0:
+    drive.eye_rest = eye
+    pushKey(Scancode.Space, uint32(ord(' ')), 0, true)
+  elif step == held:
+    pushKey(Scancode.Space, uint32(ord(' ')), 0, false)
+  elif step == held + 1:
+    drive.eye_raised = eye
+    pushKey(Scancode.ControlLeft, KEYCODE_CONTROL, MODIFIER_CONTROL, true)
+  elif step == 2 * held + 1:
+    pushKey(Scancode.ControlLeft, KEYCODE_CONTROL, 0, false)
+  elif step == 2 * held + 2:
+    drive.eye_lowered = eye
+    pushKey(Scancode.AltLeft, KEYCODE_ALT, MODIFIER_ALT, true)
+    pushKey(Scancode.W, uint32(ord('w')), MODIFIER_ALT, true)
+  elif step == 3 * held + 2:
+    pushKey(Scancode.W, uint32(ord('w')), MODIFIER_ALT, false)
+    pushKey(Scancode.AltLeft, KEYCODE_ALT, 0, false)
+  elif step == 3 * held + 3:
+    drive.eye_alted = eye
+    discard scene.addObject(Position(x: 1.0, y: 1.0, z: 1.0).toMultivector, "added", Ink.Rose, now)
+    HISTORY_DESKTOP.record(scene, camera)
+    drive.count_added = len(scene)
+  elif step == 3 * held + 4:
+    pushKey(Scancode.Y, uint32(ord('z')), MODIFIER_CONTROL, true)
+    pushKey(Scancode.Y, uint32(ord('z')), MODIFIER_CONTROL, false)
+  elif step == 3 * held + 5:
+    drive.count_undone = len(scene)
+    pushKey(Scancode.Z, uint32(ord('y')), MODIFIER_CONTROL, true)
+    pushKey(Scancode.Z, uint32(ord('y')), MODIFIER_CONTROL, false)
+  elif step == 3 * held + 6:
+    drive.count_redone = len(scene)
+
+
 proc verdictDriven(
   options: Options;
   scene: Scene;
@@ -2122,6 +2316,8 @@ proc verdictDriven(
   found_dragging, found_menu_open: bool;
   more_seen: MoreSeen;
   wheel_drive: WheelDrive;
+  escape_drive: EscapeDrive;
+  chord_drive: ChordDrive;
 ): int =
   ## Judge what `--drive-*` run reached, and report every check pass or fail.
   ##   Answers with number that failed, for caller to exit on.
@@ -2375,6 +2571,45 @@ proc verdictDriven(
       &"picker open {more_seen.is_picking}, corner at ({more_seen.corner[0]:.1f}, " &
         &"{more_seen.corner[1]:.1f}), pointer and inset at ({wanted[0]:.1f}, {wanted[1]:.1f})",
     )
+  if options.is_escape_driven:
+    # Check one thing shed for each press, in order page's `escape.ts` holds too: after
+    #   press k stands what stood before, less first k.
+    var (is_ordered, readings) = (len(escape_drive.seen) == len(LETTERS_STANDING) + 2, "")
+    for k, letters in escape_drive.seen:
+      if letters != LETTERS_STANDING.substr(k): is_ordered = false
+      readings.add (if k > 0: " -> " else: "") & (if len(letters) == 0: "-" else: letters)
+    report(
+      "escape sheds one thing for each press: help, top menu, drag, edit, selection menu, " &
+        "selection",
+      is_ordered,
+      readings,
+    )
+  if options.is_chords_driven:
+    # Check control alone lowers and alt refuses, and undo and redo read key printed, as
+    #   page's `keys.ts` holds. Rate within tenth, as page allows for its own frames.
+    let
+      raised = chord_drive.eye_raised - chord_drive.eye_rest
+      lowered = chord_drive.eye_lowered - chord_drive.eye_raised
+      (span_raised, span_lowered) = (norm(raised), norm(lowered))
+      cosine = dot(raised, lowered) / (span_raised * span_lowered)
+      span_alted = norm(chord_drive.eye_alted - chord_drive.eye_lowered)
+    report(
+      "control held alone lowers the view, opposite to where space raises it and at its rate",
+      span_lowered > 1e-3 and cosine < -1.0 + 1e-9 and abs(span_lowered / span_raised - 1.0) < 0.1,
+      &"space {span_raised:.4f} units, control {span_lowered:.4f}, cosine between {cosine:.12f}",
+    )
+    report(
+      "a view key held under alt moves nothing",
+      span_alted < 1e-9,
+      &"eye moved {span_alted:.2e} units",
+    )
+    report(
+      "control with the key printed z undoes, and with the key printed y redoes, on any layout",
+      chord_drive.count_undone == chord_drive.count_added - 1 and
+        chord_drive.count_redone == chord_drive.count_added,
+      &"added to {chord_drive.count_added}, undone to {chord_drive.count_undone}, " &
+        &"redone to {chord_drive.count_redone}",
+    )
   if options.is_wheel_driven:
     # Check wheel over menu zooms view about pick, as page's `wheel.ts` holds.
     #   Pivot read against object's own point in world, so pick and wheel are both judged.
@@ -2476,6 +2711,9 @@ proc runInteractive(
     count_settled = count_opened
     # Record what `--drive-wheel` learns between its frames; see `driveWheel`.
     wheel_drive = WheelDrive()
+    # Record what `--drive-escape` and `--drive-chords` read between their frames.
+    escape_drive = EscapeDrive()
+    chord_drive = ChordDrive()
 
   while is_running:
     # Turn frame's measurements over, on two-frame lifetime frame arenas keep; see `timings`.
@@ -2544,6 +2782,20 @@ proc runInteractive(
         count_drawn,
         camera.drawExtentFor(PIXELS_HEIGHT, REACH_SCENE),
       )
+    if options.is_escape_driven:
+      driveEscape(
+        escape_drive,
+        window,
+        panel,
+        scene,
+        camera,
+        interaction,
+        PIXELS_WIDTH,
+        PIXELS_HEIGHT,
+        count_drawn,
+        camera.drawExtentFor(PIXELS_HEIGHT, REACH_SCENE),
+      )
+    if options.is_chords_driven: driveChords(chord_drive, scene, camera, count_drawn, now)
 
     var event: Event
     while sdl3.pollEvent(addr event):
@@ -2666,6 +2918,8 @@ proc runInteractive(
       found_menu_open,
       more_seen,
       wheel_drive,
+      escape_drive,
+      chord_drive,
     )
     if count_failed > 0:
       echo &"\n{count_failed} driven check(s) failed."

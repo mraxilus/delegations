@@ -293,6 +293,9 @@ bool guiMenuBegin(const char* label, const char* id, float width, bool is_forced
 
 void guiMenuEnd() { ImGui::EndPopup(); }
 
+// Close menu `guiMenuBegin` opened, from inside it, as Escape asks.
+void guiMenuClose() { ImGui::CloseCurrentPopup(); }
+
 void guiText(const char* text) { ImGui::TextUnformatted(text); }
 
 // Wrap at panel's own right edge instead of clipping.

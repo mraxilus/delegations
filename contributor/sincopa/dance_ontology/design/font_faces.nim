@@ -1,18 +1,18 @@
-## Ship faces every page draws with, inlined, so page names none viewer may lack.
+## Ship font faces every page draws with, inlined, so page names none viewer may lack.
 ##
-##   Article X.8 asks presentation target to ship its faces.  Pages here are opened
+##   Article X.8 asks presentation target to ship its font faces.  Pages here are opened
 ##     from `build/`, from published artefact and from file, none of which can be
-##     relied on to reach font host, so bytes travel inside page as data URI rather
+##     relied on to reach host of font faces, so bytes travel inside page as data URI rather
 ##     than as link to one.
-##     Cost of inlining: every page carries same 5.66 MB face block, whatever of it that
+##     Cost of inlining: every page carries same 5.66 MB font face block, whatever of it that
 ##       page uses, measured in `build/` on 2026-10-03, where Latin subsets made 536 kB.
-##       Rejected: linking host's copy, which names face viewer may lack and needs
+##       Rejected: linking host's copy, which names font face viewer may lack and needs
 ##       network at reading time; rejected: subsetting per page, which trades one
 ##       shared block for five that drift.
 ##   Noto ships whole, never as subset (X.8): Noto was chosen so no character of page
-##     falls outside its faces, and subset undoes that.  Commit Mono is no Noto, and keeps
+##     falls outside its font faces, and subset undoes that.  Commit Mono is no Noto, and keeps
 ##     its Latin subset.
-##   Faces themselves are fetched and pinned by `tools/build.nim`, verb `assets`;
+##   Font faces themselves are fetched and pinned by `tools/build.nim`, verb `assets`;
 ##     this module only reads what that wrote, and says so loudly when it is absent,
 ##     because page drawn without them is page nobody can compare with another.
 ##   Ligatures are why `contextual` is set at root: Commit Mono carries its
@@ -28,8 +28,8 @@ import std/[base64, os, strutils]
 
 const
   DIRECTORY_FONTS* = "build" / "fonts"
-    ## Directory `assets` writes faces into, read from project directory.
-  FACES* = [
+    ## Directory `assets` writes font faces into, read from project directory.
+  FONT_FACES* = [
     ("NotoSerif-Regular.ttf", "Noto Serif", "400", "normal"),
     ("NotoSerif-SemiBold.ttf", "Noto Serif", "600", "normal"),
     ("NotoSerif-Italic.ttf", "Noto Serif", "400", "italic"),
@@ -39,71 +39,74 @@ const
     ("commit-mono-latin-700-normal.woff2", "Commit Mono", "700", "normal"),
     ("NotoSansMath-Regular.ttf", "Noto Sans Math", "400", "normal"),
   ]
-    ## Each face with family, weight and style it answers to.  Repository's store pins
+    ## Each font face with family, weight and style it answers to.  Repository's store pins
     ##   bytes of each file by digest (`curator/audit/src/assets.nim`), and verb `assets`
-    ##   of `tools/build.nim` fetches every row: row here is what to add to ship face.
-    ##   Noto Sans Math draws arrows, which neither text face holds, and every stack names
-    ##     it after its own face: merge by codepoint range (X.8).
-    ##     Cost: its 862 kB as base64 is about 15 percent of face block on every page, for
+    ##   of `tools/build.nim` fetches every row: row here is what to add to ship font face.
+    ##   Noto Sans Math draws arrows, which neither text font family holds, and every stack names
+    ##     it after its own font family: merge by codepoint range (X.8).
+    ##     Cost: its 862 kB as base64 is about 15 percent of font face block on every page, for
     ##       five arrows.
     ##     Rejected: Commit Mono alone, which draws no `⇄`; another mark for `place`, which
     ##       would change design.
   LUT_FORMAT_BY_EXTENSION* = [(".ttf", "font/ttf", "truetype"), (".woff2", "font/woff2", "woff2")]
-    ## Media type and CSS format that each kind of face file declares, by its extension.
-  FACES_MARK* = "<style data-faces>"
-    ## Opening tag of face block, which names block so later run can find it.
+    ## Media type and CSS format that each kind of font face file declares, by its extension.
+  FONT_FACES_MARK* = "<style data-font-faces>"
+    ## Opening tag of font face block, which names block so later run can find it.
     ##   Build dresses every page under `build/`, and not only pages it wrote, so
     ##     page earlier run left there arrives already dressed.  Marked block is
     ##     what lets dressing take old one out before it puts new one in.
   SERIF* = "\"Noto Serif\", \"Noto Sans Math\", \"Commit Mono\", Georgia, " &
       "\"Times New Roman\", serif"
-    ## Titles.  Fallback is only for face that failed to load, never for one absent.
+    ## Titles.  Fallback is only for font face that failed to load, never for one absent.
     ##   Noto Sans Math draws arrows, and Commit Mono marks such as `✓` that both lack.
   SANS_SERIF* = "\"Noto Sans\", \"Noto Sans Math\", \"Commit Mono\", ui-sans-serif, " &
       "system-ui, sans-serif"
-    ## Body text, with same two faces after it as titles.
+    ## Body text, with same two font families after it as titles.
   MONOSPACE* = "\"Commit Mono\", \"Noto Sans Math\", ui-monospace, SFMono-Regular, " &
       "Menlo, monospace"
     ## Code, data and figures, with Noto Sans Math for `⇄`, which Commit Mono lacks.
 
 
 func formatDeclared*(file: string): tuple[media, format: string] =
-  ## Media type and CSS format that face `file` declares, read off its extension.
+  ## Media type and CSS format that font face `file` declares, read off its extension.
   ##   Raises for kind no row names, rather than declare bytes browser cannot read.
   for (extension, media, format) in LUT_FORMAT_BY_EXTENSION:
     if file.endsWith(extension):
       return (media, format)
-  raise newException(ValueError, "Face file is of no kind page can declare; got `" & file & "`.")
+  raise newException(
+    ValueError,
+    "Font face file is of no kind page can declare; got `" & file & "`.",
+  )
 
 
-proc faceStyle*(directory = DIRECTORY_FONTS): string =
-  ## Build `<style>` holding every face inlined, and root that keeps ligatures on.
-  ##   Raises where face is missing, rather than writing page that silently falls
+proc fontFaceStyle*(directory = DIRECTORY_FONTS): string =
+  ## Build `<style>` holding every font face inlined, and root that keeps ligatures on.
+  ##   Raises where font face is missing, rather than writing page that silently falls
   ##     back to whatever machine building it happens to carry.
   var rules: seq[string]
-  for (file, family, weight, style) in FACES:
+  for (file, family, weight, style) in FONT_FACES:
     let path = directory / file
     if not fileExists(path):
       raise newException(
         IOError,
-        "Face is absent, so page would name one reader may lack; run " &
+        "Font face is absent, so page would name one reader may lack; run " &
         "`nim r tools/build.nim assets`: got `" & path & "`.",
       )
     let (media, format) = formatDeclared(file)
     rules.add "@font-face{font-family:\"" & family & "\";font-style:" & style &
         ";font-weight:" & weight & ";font-display:block;src:url(data:" & media & ";base64," &
         encode(readFile(path)) & ") format(\"" & format & "\")}"
-  FACES_MARK & rules.join("\n") & "\n:root{font-variant-ligatures:contextual}</style>"
+  FONT_FACES_MARK & rules.join("\n") & "\n:root{font-variant-ligatures:contextual}</style>"
 
 
-func withoutFaces*(html: string): string =
-  ## Take every face block earlier dressing put in back out again.
-  ##   Replaces rather than skips, so page dressed before face changed takes new
+func withoutFontFaces*(html: string): string =
+  ## Take every font face block earlier dressing put in back out again.
+  ##   Replaces rather than skips, so page dressed before font face changed takes new
   ##     bytes rather than keeping old ones.
   result = html
   const shut = "</style>"
   while true:
-    let opens = result.find(FACES_MARK)
+    let opens = result.find(FONT_FACES_MARK)
     if opens < 0:
       break
     let shuts = result.find(shut, opens)
@@ -115,18 +118,18 @@ func withoutFaces*(html: string): string =
     result = result[0..<opens] & result[cut_to .. ^1]
 
 
-proc withFaces*(raw: string, directory = DIRECTORY_FONTS): string =
-  ## Put face style sheet last in page's head, so page ships what it draws with.
+proc withFontFaces*(raw: string, directory = DIRECTORY_FONTS): string =
+  ## Put font face style sheet last in page's head, so page ships what it draws with.
   ##   Last rather than first for two reasons: root rule keeping ligatures on then
   ##     wins over any page rule that would turn them off, and `bundle` folds head
-  ##     from title to final style block, so faces put before title would be
+  ##     from title to final style block, so font faces put before title would be
   ##     dropped from published page exactly where they are wanted most.
-  ##   Two page shapes reach here.  Whole document takes faces last in its head.
+  ##   Two page shapes reach here.  Whole document takes font faces last in its head.
   ##     Fragment takes them after its title, since publishing wraps it in head of
   ##     its own and there is none here to put them in; nothing in these pages sets
   ##     `font-variant-ligatures`, so order costs nothing either way.
   ##   Block earlier run left is taken out first, so dressing twice gives
-  ##     one page and not one that grows by every face on every build.
+  ##     one page and not one that grows by every font face on every build.
   ##   Page that declares no charset is given UTF-8, first in its head or first in
   ##     fragment.  Block is half megabyte of ASCII, and browser that opens page from
   ##     file guesses charset from bytes ahead of first that is not ASCII: Chromium 141
@@ -137,7 +140,7 @@ proc withFaces*(raw: string, directory = DIRECTORY_FONTS): string =
     charset = "<meta charset=\"utf-8\">"
     head = "<head>"
   let
-    bare = withoutFaces(raw)
+    bare = withoutFontFaces(raw)
     opens = bare.find(head)
     html =
       if "<meta charset" in bare: bare
@@ -145,12 +148,12 @@ proc withFaces*(raw: string, directory = DIRECTORY_FONTS): string =
       else: bare[0..<opens+head.len] & "\n" & charset & bare[opens+head.len .. ^1]
     shuts = html.find(shut)
   if shuts >= 0:
-    return html[0..<shuts] & faceStyle(directory) & "\n" & html[shuts .. ^1]
+    return html[0..<shuts] & fontFaceStyle(directory) & "\n" & html[shuts .. ^1]
   let titled = html.find(title)
   if titled < 0:
     raise newException(
       ValueError,
-      "Page carries neither head nor title to put faces by; got first 40 " &
+      "Page carries neither head nor title to put font faces by; got first 40 " &
       "characters `" & html[0..<min(40, html.len)] & "`.",
     )
-  html[0..<titled+title.len] & "\n" & faceStyle(directory) & html[titled+title.len .. ^1]
+  html[0..<titled+title.len] & "\n" & fontFaceStyle(directory) & html[titled+title.len .. ^1]

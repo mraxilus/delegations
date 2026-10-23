@@ -11,7 +11,8 @@ import { accessSync, constants, existsSync, readFileSync } from 'node:fs';
 import { delimiter, join } from 'node:path';
 import { countFailed, countRun, report } from './report';
 import { focusCanvas } from './gestures';
-import { driveKeys } from './keys';
+import { driveKeys, driveKeysChorded } from './keys';
+import { driveEscape } from './escape';
 import { driveMenuHung, driveMoreAtPointer } from './menus';
 import { driveAim, driveLook, drivePan, driveStretch } from './pan';
 import { driveWheel } from './wheel';
@@ -250,7 +251,9 @@ async function driveSimulated(browser: Browser): Promise<void> {
   await driveRuler(page);
   await driveSceneBuilt(page);
   await driveDrawerCost(page);
-  // Menu checks, last on opening scene: demo below replaces it.
+  // Key and menu checks, last on opening scene: demo below replaces it.
+  await driveKeysChorded(page);
+  await driveEscape(page);
   await driveMenuHung(page);
   await driveMoreAtPointer(page);
 

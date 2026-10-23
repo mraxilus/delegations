@@ -558,11 +558,11 @@ the record is held by reading alone.
 
 **To dress a page twice gives the same bytes as to dress it once.** `dress()` walks every page under
 `build/app` and `build/design`, and not only the pages of the run. So a page that the run did not
-write is dressed again. `faceStyle` marks its block `<style data-faces>`, and
-`withFaces` removes an earlier block before it adds the new one. Rejected: to skip a dressed page,
-which keeps old faces after a face changes.
+write is dressed again. `fontFaceStyle` marks its block `<style data-font-faces>`, and
+`withFontFaces` removes an earlier block before it adds the new one. Rejected: to skip a dressed
+page, which keeps old font faces after a font face changes.
 
-Verified by `suites/test_faces.nim`, test "dressing is not doubled where it runs twice", which
+Verified by `suites/test_font_faces.nim`, test "dressing is not doubled where it runs twice", which
 dresses both shapes of page twice and demands the same bytes. Verified by hand on 2026-10-02: two
 `pages` runs over one tree gave pages that compare equal by `cmp`, byte for byte. No verb writes a
 page under `build/simulation/`.
@@ -597,7 +597,7 @@ The fixture covers every drawing in a cell, because a ruling on a cell is a ruli
 
 Cost: fewer cells, and a larger page. A walk shown whole is drawn as well as its pieces, and not
 instead of them. Of the 10.2 MB of the Reference, the walks shown whole take 4.3 MB. Measured on
-2026-10-08, on the page that `suites/test_marks.nim` writes without faces.
+2026-10-08, on the page that `suites/test_marks.nim` writes without font faces.
 
 Every animation runs at one pace (`WALK_SECONDS`), so the length of a loop says how far it goes
 rather than how fast. The whole chain is six times an edge, which is a long loop.
@@ -654,10 +654,9 @@ names each one.
 
 **A rule that is implemented and not checked stops being true, so each rule drawn has a check.** A
 check names its rules in a comment in `checks.nim` that opens `RULE`. Nothing in the workbench
-checks rules 36 to 40, and the simulation reports in their words. Nothing checks rule 41.
-`tests/suites/test_readme.nim` holds every quotation in the README to `RULES` word for word, so the
-two copies cannot drift. The checks do not quote `RULES`, because their printed lines say what was
-measured.
+checks rules 36 to 40, and the simulation reports in their words. `tests/suites/test_readme.nim`
+holds every quotation in the README to `RULES` word for word, so the two copies cannot drift. The
+checks do not quote `RULES`, because their printed lines say what was measured.
 
 **A moving picture is checked where it is drawn, and not only at its frames (rule 1).** A browser
 blends two frames point by point. So two frames that disagree about which side of a body a line
@@ -670,19 +669,40 @@ alone does not say which side a hand goes to, so the hold must say lock or wrap 
 settles in one of six places, each a bearing off its own dancer's facing (rule 3). `SLOT_OFFSET` in
 `body.nim` sets them 44 degrees apart, and two marks need 34.9 degrees, so no two marks touch.
 
-Both wraps go round the front to the front of the other hand, and both locks go round the back
-(rules 4 to 6). A high lock goes round to the back of its own shoulder, which is a hammerlock (rule
-37). Verified by `checkRules`, which checks where each hold settles and which way its route sets
-off.
+Both wraps go round the front to the front of the other hand, and a low lock goes round the back
+(rules 4 and 5). The drawing sends a high lock round the back too, as rule 6 asked. The Architect
+retired rule 6 on 2026-10-22, and #697 holds the change. Verified by `checkRules`, which checks
+where each hold settles and which way its route sets off.
 
-**A lock or a wrap needs its line to go round the body (rule 7), except a high lock (rule 41).** The
-arc a drawn line hugs takes one of five values: 0, 51, 90, 141 and 180 degrees. So `WRAP_MIN`, at
-170 degrees, admits 180 alone, and the build refuses to draw a lock or a wrap that falls short.
-Verified by `checkRules`, which checks that `isDanceable` agrees with the measured arc.
+**A lock or a wrap needs its line to go round the body (rule 7), except a high lock (rule 41).** On
+the four single holds, at quarter turns of the follow, the larger arc takes seven values. They are
+0, 51, 90, 132, 135, 141 and 180 degrees. So `WRAP_MIN`, at 170 degrees, admits 180 alone. A still
+figure refuses to draw a lock or a wrap that rule 7 binds and that falls short. A moving figure asks
+no such question, and no page moves a lock or a wrap.
 
-The drawing does not follow rule 41. It holds a high lock to `WRAP_MIN` too. So it refuses a high
-lock with the follow a quarter turned, where the arc is 141 degrees. Nothing checks rule 41, and the
-fix waits on the Architect.
+Verified by `checkRules`, on each single hold at each quarter turn of the follow. It checks that
+`isDanceable` agrees with the measured arc, for every lock and wrap but a high lock. It prints the
+arcs that it meets.
+
+**A high lock stands whatever arc its line hugs (rule 41).** A high lock folds the arm at the elbow,
+with the elbow in front of the shoulder. The hand rests on top of the same shoulder (Architect,
+2026-10-22). So no line round the body makes it. `terms.isMadeRoundBody` names the locks and wraps
+that rule 7 binds, and `isDanceable` asks the arc of those alone. Rejected: a lower threshold for a
+high lock, which would still refuse the arcs below it, where rule 41 refuses none.
+
+Verified by `checkRules`, which draws a high lock on each of the four single holds at each quarter
+turn of the follow. It prints how many hug less than rule 7 asks, and at which arcs. On 2026-10-22
+it was eight of sixteen, at 132, 135 or 141 degrees. The check demands at least one such, so it
+cannot pass while it holds nothing that rule 7 does not. Red first on 2026-10-22: before the fix,
+the drawing refused a high lock on Left to left with the follow turned a quarter.
+
+Cost: the drawing refuses no high lock for its arc. The simulation reads a high lock on the arm of
+the follow at half and whole turns (`simulation/verdicts.md`), and no law holds those rows. Nothing
+asks it about a high lock at a quarter turn, so nothing says which of the drawn ones a couple can
+dance. No page draws a lock or a wrap yet.
+
+Between quarter turns, some locks that `isDanceable` admits find no route, high and low alike. The
+build then fails on an empty value, and does not refuse with a message (#688).
 
 **Above takes no lock and no wrap, and its line passes over the body (rule 8).** Above is over the
 head, so from overhead nothing is under it, and `straightReach` draws its line straight. Verified by
@@ -808,9 +828,9 @@ crossing, so it dives once. Verified by `checkHandTurns`.
 
 **The sheet of the Architect gives rules 36 to 40, and the workbench checks none of them.** The
 simulation reports in their words, through `simulation/words.nim`, and that is not a check. Rule 37
-says what a lock is, and makes a high lock a hammerlock. Rule 38 says a wrap crosses the other arm
-of its dancer. The drawing does not show that crossing yet, because rule 22 keeps a settled reach
-away from that hand.
+says what a lock is, and bends the arm of a high lock to the shoulder of the same arm. Rule 38 says
+a wrap crosses the other arm of its dancer. The drawing does not show that crossing yet, because
+rule 22 keeps a settled reach away from that hand.
 
 Rule 39 makes modifiers belong to each arm, for either dancer. The drawing holds one level and one
 modifier for each connection. Rule 40 is the one filled rotation row of the sheet.
@@ -2400,37 +2420,39 @@ Rejected: to ask koch for a verb specific to a project. Cost: the driver runs fr
 directory, because every path in it is relative. Each recording costs minutes, which is why none
 runs under `pages`.
 
-## Faces
+## Font faces
 
-**Every page ships the faces it draws with, inlined.** Headings and titles take Noto Serif, body
-text takes Noto Sans, and code and data take Commit Mono. Those are the standard three of the
+**Every page ships the font faces it draws with, inlined.** Headings and titles take Noto Serif,
+body text takes Noto Sans, and code and data take Commit Mono. Those are the standard three of the
 Architect, and what Article X.8 names. Every heading rule of every style sheet names the serif
-stack. Verified by `suites/test_faces.nim`, test "every heading takes serif face".
+stack. Verified by `suites/test_font_faces.nim`, test "every heading takes serif font family".
 
 Labels drawn inside figures take Noto Sans rather than Commit Mono. The "code, data and figures" of
 X.8 reads as numbers, and a label that names a hand is interface text. Every label that the code
-draws names Noto Sans first. The faces check of the audit joins the literals that `&` carries
-across a line end, so it reads each label (#412). It holds a label only to a first family that X.8
-names, so reading alone holds it to Noto Sans. Verified by hand with a search of the source on
-2026-10-18, which finds Noto Sans first in every stack of a label.
+draws names Noto Sans first. The check in `curator/audit/src/faces.nim` joins the literals that `&`
+carries across a line end, so it reads each label (#412). It holds a label only to a first family
+that X.8 names, so reading alone holds it to Noto Sans. Verified by hand with a search of the source
+on 2026-10-18, which finds Noto Sans first in every stack of a label.
 
-**No face of the three draws every character that the pages draw, so each stack names two more.**
-Noto Sans and Noto Serif draw no arrow, and Commit Mono draws no `⇄`. Noto Sans Math draws all five
-arrows, and Commit Mono draws marks such as `✓` that the text faces lack. So a stack names its own
-face, then Noto Sans Math, then Commit Mono. That is the merge by codepoint range of X.8. The maps
-were read with fontconfig 2.15.0 on 2026-10-03, from the whole faces with the digests of the store.
+**No font family of the three draws every character that the pages draw, so each stack names two
+more.** Noto Sans and Noto Serif draw no arrow, and Commit Mono draws no `⇄`. Noto Sans Math draws
+all five arrows, and Commit Mono draws marks such as `✓` that the text font families lack. So a
+stack names its own font family, then Noto Sans Math, then Commit Mono. That is the merge by
+codepoint range of X.8. The maps were read with fontconfig 2.15.0 on 2026-10-03, from the whole
+font faces with the digests of the store.
 
-The wiring is verified by `suites/test_faces.nim`, test "every stack falls back to faces that draw
-what its own face lacks". The coverage is verified by `drive`, below, on every page that `pages`
-writes, except the Explorer before `bundle` folds its script in. That page loads `app.js` from
-beside it, and its hosted copy finds none there. The bundled Explorer, `app/artifact.html`, is the
-same page as published, and `drive` renders it.
+The wiring is verified by `suites/test_font_faces.nim`, test "every stack falls back to font
+families that draw what its own font family lacks". The coverage is verified by `drive`, below, on
+every page that `pages` writes, except the Explorer before `bundle` folds its script in. That page
+loads `app.js` from beside it, and its hosted copy finds none there. The bundled Explorer,
+`app/artifact.html`, is the same page as published, and `drive` renders it.
 
-**`drive` proves the faces of every page, as `CONTRIBUTOR.md`, Pages and assets, asks.** It builds
-every page, and renders each one in Chromium as the publish host serves it. For each character
-beyond ASCII, it resolves the font stack of the element against the `cmap` of each face that the
-page ships. A character that no face of that stack maps is a finding. The finding names the page,
-the element and the codepoint. A face that the browser does not load is a finding too.
+**`drive` proves the font faces of every page, as `CONTRIBUTOR.md`, Pages and assets, asks.** It
+builds every page, and renders each one in Chromium as the publish host serves it. For each
+character beyond ASCII, it resolves the font stack of the element against the `cmap` of each
+font face that the page ships. A character that no font face of that stack maps is a finding. The
+finding names the page, the element and the codepoint. A font face that the browser does not load is
+a finding too.
 
 The harness is TypeScript under `tools/drive/`. TypeScript is admitted for the host API of a test
 driver. It checks each expression that runs inside the page against the types of the DOM. The
@@ -2439,38 +2461,39 @@ verdict is Nim, in `design/render.nim`, where the suites reach it (Article II.9)
 **The harness and its verdict are copies, and they name no sibling (Architect, issue 670,
 2026-10-21).** This project names no other project, because it is concerned with itself alone. So
 the copies break the rule that each copy names its siblings (Article II.9). Cost: a fix found in
-another copy reaches these files by chance alone. The curator weighs one shared check of faces
+another copy reaches these files by chance alone. The curator weighs one shared check of font faces
 (issue 671), which would remove the copies.
 
 Rejected: a harness in Nim compiled to JavaScript, as `shot` is, where each of those expressions is
 an unchecked string. Rejected: `CSS.getPlatformFontsForNode`, which answers only for text laid out
 alone.
 
-**A control page proves that the render sees.** It is built from `tests/drive/control_faces.json`,
-and dressed with every face, as every page is. Two of its paragraphs write a character that no
-shipped face maps under their stack. A third writes `𝐀` under the body stack, which Noto Sans Math
-maps. The drive fails where the control raises a finding that it does not expect, or misses one that
-it expects. The fixture is under `tests/`, because the static check of coverage reads every other
-file, and no face maps these characters.
+**A control page proves that the render sees.** It is built from
+`tests/drive/control_font_faces.json`, and dressed with every font face, as every page is. Two of
+its paragraphs write a character that no shipped font face maps under their stack. A third writes
+`𝐀` under the body stack, which Noto Sans Math maps. The drive fails where the control raises a
+finding that it does not expect, or misses one that it expects. The fixture is under `tests/`,
+because the static check of coverage reads every other file, and no font face maps these characters.
 
 **Each page is rendered inside the document skeleton that the publish host wraps it in.** So the
 charset and the viewport are the ones that a viewer gets. `SKELETON_HOST` was read off the
 Reference, version 11, on 2026-10-05. It is the host's own, so it can change. The style sheet of the
-host is left out, because its body stack leads with faces of the system, which X.8 forbids here.
+host is left out, because its body stack leads with font families of the system, which X.8 forbids
+here.
 
 No check is lost by that. An element that inherits no stack from its page takes the default of the
-browser. That default is a face of the system too, so the drive finds it either way.
+browser. That default is a font family of the system too, so the drive finds it either way.
 
 Verified by `suites/test_render.nim`, nine laws over the verdict. Without the line that keeps an
 expected finding of the control out of the findings, three of the nine fail. Verified by `drive` on
 2026-10-05, in Chromium 141 (revision 1194) under Playwright 1.63.0. No page that `pages` wrote then
 gave a finding, and the control raised its two findings. With Noto Sans Math taken out of
-`FACES`, the drive fails, and `p#closed` of the control is among its findings.
+`FONT_FACES`, the drive fails, and `p#closed` of the control is among its findings.
 
 Cost: a page is read at one viewport, in the state it opens on. Text that a script writes only after
 the reader acts, as the Explorer writes the moves of a frame, is not read. Cost: a character is
-resolved alone, as its `cmap` maps it, so a combining mark can draw from a face that this does not
-name. Cost: the time that `drive` takes over the kept pages is unmeasured.
+resolved alone, as its `cmap` maps it. So a combining mark can draw from a font face that this does
+not name. Cost: the time that `drive` takes over the kept pages is unmeasured.
 
 **`package-lock.json` pins the node tools, and git ignores their checkout.** The project commits
 `package.json` and `package-lock.json`, which pin these versions. `typescript` 7.0.2 type-checks the
@@ -2490,9 +2513,9 @@ That holds while the pin of this project is the pin of koch, 2.2.12 for both. A 
 splits the driver.
 
 **Suites write pages apart from the directories that `pages` writes.** A page that a suite writes
-carries no faces. So `test_marks` writes under `build/suites/`, and `pages` dresses only `build/app`
-and `build/design`. A suite page that stands where a published page stands could be published
-without its faces. `drive` renders only what `pages` dresses.
+carries no font faces. So `test_marks` writes under `build/suites/`, and `pages` dresses only
+`build/app` and `build/design`. A suite page that stands where a published page stands could be
+published without its font faces. `drive` renders only what `pages` dresses.
 
 Rejected: Commit Mono alone, which draws no `⇄`. Rejected: another mark for `place`, which would
 change the design.
@@ -2500,28 +2523,29 @@ change the design.
 **A dressed page that declares no charset declares UTF-8.** The Reference, the rig viewer and the
 bundled Explorer are fragments, and publishing wraps each one in a document. Opened from a file,
 a fragment declares no charset, so the browser guesses one from the bytes before the first
-non-ASCII byte. The face block is 5,655,720 bytes of ASCII. Behind it, Chromium 141 reads an
+non-ASCII byte. The font face block is 5,655,720 bytes of ASCII. Behind it, Chromium 141 reads an
 undeclared page as windows-1250.
 
-So `withFaces` puts `<meta charset="utf-8">` first in a page that declares none. Verified by
-`suites/test_faces.nim`, and by hand in Chromium 141 on 2026-10-02: every page read as UTF-8.
+So `withFontFaces` puts `<meta charset="utf-8">` first in a page that declares none. Verified by
+`suites/test_font_faces.nim`, and by hand in Chromium 141 on 2026-10-02: every page read as UTF-8.
 
-**Each Noto face ships whole, as the TrueType of its own release.** Noto was chosen so that no
-character of a page falls outside its faces. A Latin subset undoes that (Article X.8, as #425 rules
-it). Commit Mono is no Noto, and keeps its Latin subset. Each rule declares the media type and the
-format of its own file, which `formatDeclared` reads off its extension.
+**Each Noto font face ships whole, as the TrueType of its own release.** Noto was chosen so that no
+character of a page falls outside its font faces. A Latin subset undoes that (Article X.8, as #425
+rules it). Commit Mono is no Noto, and keeps its Latin subset. Each rule declares the media type and
+the format of its own file, which `formatDeclared` reads off its extension.
 
-Verified by `suites/test_faces.nim`, test "every Noto face ships whole, as TrueType of its own
-release". With the Noto subsets of `@fontsource` back in its rows, that law fails on each of the six
-Noto faces. The test "each face declares media type and format of its own file" holds the formats.
+Verified by `suites/test_font_faces.nim`, test "every Noto font face ships whole, as TrueType of its
+own release". With the Noto subsets of `@fontsource` back in its rows, that law fails on each of the
+six Noto font faces. The test "each font face declares media type and format of its own file" holds
+the formats.
 
-**The hinted build of each face of Noto Sans and Noto Serif ships, by the ruling of the Architect on
-2026-10-03 (#428).** Hinting snaps each letter to the pixel grid at small sizes, so small text stays
-sharp on a screen of low density. The unhinted build of the same release holds the same characters,
-and lacks the tables `cvt`, `fpgm`, `prep` and `gasp`. It also lacks the instruction program in each
-glyph. So it is about 32 percent smaller: Noto Sans Regular is 610,392 bytes hinted and 418,820
-unhinted. Rejected: the unhinted build of these five faces, which would save about 1.5 MB on each
-page.
+**The hinted build of each font face of Noto Sans and Noto Serif ships, by the ruling of the
+Architect on 2026-10-03 (#428).** Hinting snaps each letter to the pixel grid at small sizes, so
+small text stays sharp on a screen of low density. The unhinted build of the same release holds the
+same characters, and lacks the tables `cvt`, `fpgm`, `prep` and `gasp`. It also lacks the
+instruction program in each glyph. So it is about 32 percent smaller: Noto Sans Regular is 610,392
+bytes hinted and 418,820 unhinted. Rejected: the unhinted build of these five font faces, which
+would save about 1.5 MB on each page.
 
 Compared by hand on 2026-10-09, for Noto Sans Regular. fontconfig 2.15.0 reads the same charset from
 both builds. Their tables differ in those four, in `glyf`, `head`, `loca` and `maxp`, and in the
@@ -2531,49 +2555,51 @@ Noto Sans Math ships its unhinted build, the file that the store declares, and t
 files of the store. From the Noto release 2.539, its hinted build is 966,008 bytes and its unhinted
 build 646,728, fetched 2026-10-08.
 
-Eight faces are fetched by the `assets` verb of `tools/build.nim` into `build/fonts`, and never
+Eight font faces are fetched by the `assets` verb of `tools/build.nim` into `build/fonts`, and never
 committed. Each one is pinned by package or release version *and* SHA-256. The version is pinned
 because an unversioned path serves whatever the host resolves that day. The digest is pinned
 because the bytes are embedded in what readers open.
 
-`design/faces.nim` inlines them as data URIs, and `pages` dresses every page it wrote, once, after
-every writer has run. To do it there rather than in each writer is what keeps the suites free of the
-network. That is **verified**: every suite passes with `build/` deleted outright.
+`design/font_faces.nim` inlines them as data URIs, and `pages` dresses every page it wrote, once,
+after every writer has run. To do it there rather than in each writer is what keeps the suites free
+of the network. That is **verified**: every suite passes with `build/` deleted outright.
 
-The two faces of Commit Mono come from `@fontsource` 5.3.0, by way of `cdn.jsdelivr.net`. The six
-Noto faces come whole from the releases of the Noto project, by the same host. They are 2.013 for
-Noto Sans and Noto Serif, and 2.539 for Noto Sans Math. All are under the **SIL Open Font License
-1.1**. For Commit Mono that is confirmed from the `LICENSE` of its package, rather than assumed.
-For each Noto face it is confirmed from the licence in its own `name` table.
+The two font faces of Commit Mono come from `@fontsource` 5.3.0, by way of `cdn.jsdelivr.net`. The
+six Noto font faces come whole from the releases of the Noto project, by the same host. They are
+2.013 for Noto Sans and Noto Serif, and 2.539 for Noto Sans Math. All are under the
+**SIL Open Font License 1.1**. For Commit Mono that is confirmed from the `LICENSE` of its package,
+rather than assumed. For each Noto font face it is confirmed from the licence in its own `name`
+table.
 
 Their addresses and checksums are the `ASSETS` table in `curator/audit/src/assets.nim`, the shared
 store (issue 116). `assets` names the eight files it wants, and `koch fetch-assets` gives their
-paths. One store stops two projects from pinning one face twice (Article II.9).
+paths. One store stops two projects from pinning one font face twice (Article II.9).
 
-**The digest is the curator's, and the choice is this project's.** The store never says which faces
-a page draws with, so each project keeps its own choice.
+**The digest is the curator's, and the choice is this project's.** The store never says which
+font faces a page draws with, so each project keeps its own choice.
 
-The store keys entries by digest, so a face arrives under a name that is its hash. `assets` restores
-the file name on the way into `build/fonts`, because everything downstream reads faces by name.
+The store keys entries by digest, so a font face arrives under a name that is its hash. `assets`
+restores the file name on the way into `build/fonts`, because everything downstream reads font faces
+by name.
 
 Verified 2026-10-03. All eight arrive, and each one carries the digest that the store declares. To
-ask for a face that the store does not declare fails with a finding that names it, which is checked
-rather than assumed.
+ask for a font face that the store does not declare fails with a finding that names it, which is
+checked rather than assumed.
 
 That check also lives in a suite. A suite reads no network, so it fails on a checkout before
 `drive` asks the store.
 
-`test_faces.nim` reads the declaration of the store as text, and holds every face named here against
-it. It reads it as text rather than by import. The law then depends on the declaration, and not on
-the module of the curator keeping its present shape. It also means that this project imports no
-curator source, which none does.
+`test_font_faces.nim` reads the declaration of the store as text, and holds every font face named
+here against it. It reads it as text rather than by import. The law then depends on the declaration,
+and not on the module of the curator keeping its present shape. It also means that this project
+imports no curator source, which none does.
 
-Cost, measured 2026-10-03 on this container: the face block is **5,655,720 bytes on each page**,
-where the Latin subsets made it 535,702. The eight files are 4,240,892 bytes, and the six whole Noto
-faces are 4,145,460 of them. So each page grows by 5,120,018 bytes. Built from `e1dfe66` on
-2026-10-09, the bundled Explorer is 6,014,331 bytes, and the Reference is 15,904,530.
+Cost, measured 2026-10-03 on this container: the font face block is **5,655,720 bytes on each
+page**, where the Latin subsets made it 535,702. The eight files are 4,240,892 bytes, and the six
+whole Noto font faces are 4,145,460 of them. So each page grows by 5,120,018 bytes. Built from
+`e1dfe66` on 2026-10-09, the bundled Explorer is 6,014,331 bytes, and the Reference is 15,904,530.
 
-Rejected: to link the copy of the host, which names a face the reader may lack, and needs the
+Rejected: to link the copy of the host, which names a font face the reader may lack, and needs the
 network at reading time. Rejected: to subset for each page, which trades one shared block for one
 on each page, which drift apart.
 
@@ -2582,9 +2608,9 @@ over 1932 glyphs in the latin subset. `calt` is on by default only until somethi
 `font-variant-ligatures`. So the emitted style sheet sets `contextual` at root, and no later reset
 can lose them.
 
-**A shipped label face makes a card one picture on every machine.** A label in the reader's own sans
-draws a card differently on each machine, and X.8 forbids that. Verified by hand in Chromium 1194,
-2026-09-10: none of 97 measured labels sits outside its viewBox.
+**A shipped label font face makes a card one picture on every machine.** A label in the reader's own
+sans draws a card differently on each machine, and X.8 forbids that. Verified by hand in
+Chromium 1194, 2026-09-10: none of 97 measured labels sits outside its viewBox.
 
 ## Mirror twins
 
@@ -2978,9 +3004,9 @@ reddens a law.
   four cores on 2026-10-03 (Kept answers).
 - `tools/build.nim verdicts`, with its readings kept: 2.8 s to 3.9 s after a change to words,
   compile included, on four cores on 2026-10-08.
-- `tools/build.nim pages`, with faces from the shared store: 15.2 s wall on four cores of a 2.8 GHz
-  Xeon, 2026-10-18. It wrote the Explorer, the Reference and the rig viewer. Each tool had been
-  built on that tree before, and a build from a cold cache is unmeasured.
+- `tools/build.nim pages`, with font faces from the shared store: 15.2 s wall on four cores of a
+  2.8 GHz Xeon, 2026-10-18. It wrote the Explorer, the Reference and the rig viewer. Each tool had
+  been built on that tree before, and a build from a cold cache is unmeasured.
 - `tools/build.nim engine`: 32 s cold, and 0.2 s where the archive stands, on four cores of a
   2.8 GHz Xeon, 2026-10-10.
 
@@ -3150,7 +3176,7 @@ to tidy the line away shows up only as suites that fail to build. `result +=` on
   read *unconfirmed* until then.
 - **The floor held low and high.** `simulation/verdicts.md` prints each claim of the floor
   there beside the answer of the simulation and what stops it (Against the floor). Where the two
-  disagree, the ruling is the Architect's. So is whether a hammerlock goes a whole turn, and what
+  disagree, the ruling is the Architect's. So is whether a high lock goes a whole turn, and what
   moves in the body when it does.
 - **The radius of the girdle, 60 mm, is an estimate and not tape.**
 - **The breadth of the hand is not held to the bound of a leap (#605).** In L-r low, the edge of a

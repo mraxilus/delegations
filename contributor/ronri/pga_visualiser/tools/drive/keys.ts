@@ -6,7 +6,7 @@
 import type { Page } from '@playwright/test';
 import { advance } from './clock';
 import { readCamera, slideOf, spanOf } from './camera';
-import { holdKeys } from './gestures';
+import { focusCanvas, holdKeys, settleCount, type Moved } from './gestures';
 import { report, reportWithin } from './report';
 
 /** Drive held keys, and assert what each reached. */
@@ -89,4 +89,80 @@ export async function driveKeys(page: Page): Promise<void> {
     drifted < 1e-6,
     `eye moved ${drifted.toFixed(6)} units after release`,
   );
+}
+
+
+/** Read how far and which way eye went over one hold. */
+function eyeMoved(moved: Moved): number[] {
+  return moved.after.eye.map((value, i) => value - (moved.before.eye[i] ?? 0));
+}
+
+/** Press control with key that prints `key` where `code` stands, as layout other than QWERTY
+ *  puts it.
+ *
+ *  Dispatched rather than typed: Playwright types key where QWERTY prints it, and claim is
+ *  what page reads when print and place disagree.
+ */
+async function pressControlPrinted(page: Page, key: string, code: string): Promise<void> {
+  await page.evaluate((given) => {
+    document.dispatchEvent(new KeyboardEvent(
+      'keydown', { key: given.key, code: given.code, ctrlKey: true, bubbles: true },
+    ));
+  }, { key, code });
+}
+
+/** Drive keys under modifier, and undo and redo read off key printed.
+ *
+ *  Control alone lowers, alt over view key moves nothing, and control with key printing Z or
+ *  Y undoes or redoes wherever layout puts it, as desktop's `--drive-chords` holds too.
+ */
+export async function driveKeysChorded(page: Page): Promise<void> {
+  // Free flight, from rest each time: space raises, and control alone must lower, straight
+  //   opposite and at its rate. Rate within tenth: half second spans 30 frames or 31, as clock
+  //   falls against frame, and frame at top of speed ramp travels about 6% of hold.
+  await page.evaluate(() => clearSelection());
+  await focusCanvas(page);
+  const raised = eyeMoved(await holdKeys(page, ['Space'], 500));
+  const lowered = eyeMoved(await holdKeys(page, ['ControlLeft'], 500));
+  const [span_raised, span_lowered] = [Math.hypot(...raised), Math.hypot(...lowered)];
+  const cosine = raised.reduce((sum, value, i) => sum + value * (lowered[i] ?? 0), 0) /
+    (span_raised * span_lowered);
+  report(
+    'control held alone lowers the view, opposite to where space raises it and at its rate',
+    span_lowered > 1e-3 && cosine < -1 + 1e-9 && Math.abs(span_lowered / span_raised - 1) < 0.1,
+    `space ${span_raised.toFixed(4)} units, control ${span_lowered.toFixed(4)}, ` +
+      `cosine between ${cosine.toFixed(12)}`,
+  );
+
+  // Alt belongs to system, so view key under it is not view's.
+  const alted = await holdKeys(page, ['AltLeft', 'KeyW'], 500);
+  const span_alted = spanOf(alted.before.eye, alted.after.eye);
+  report(
+    'a view key held under alt moves nothing',
+    span_alted < 1e-9,
+    `eye moved ${span_alted.toExponential(2)} units`,
+  );
+
+  // QWERTZ prints Z where QWERTY prints Y, and Y where it prints Z: delete one object, then
+  //   undo and redo it there.
+  const count = await page.evaluate(() => nimSceneCount());
+  await page.evaluate(() => {
+    selectOnly(nimSceneHandles()[0] ?? 0, null);
+    document.getElementById('selection-menu-delete')?.click();
+  });
+  await settleCount(page, count - 1);
+  await pressControlPrinted(page, 'z', 'KeyY');
+  await settleCount(page, count).catch(() => undefined);
+  const undone = await page.evaluate(() => nimSceneCount());
+  await pressControlPrinted(page, 'y', 'KeyZ');
+  await settleCount(page, count - 1).catch(() => undefined);
+  const redone = await page.evaluate(() => nimSceneCount());
+  report(
+    'control with the key printed z undoes, and with the key printed y redoes, on any layout',
+    undone === count && redone === count - 1,
+    `deleted to ${count - 1}, undone to ${undone}, redone to ${redone}`,
+  );
+  // Leave scene as found for checks after this one.
+  await page.keyboard.press('Control+z');
+  await settleCount(page, count);
 }
