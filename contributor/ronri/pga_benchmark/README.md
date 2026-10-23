@@ -14,9 +14,9 @@ hand-rolled typed reference spends, derived from Lengyel's own forms.
 
 A home page and three views answer the question: Progress, Performance and Proposals. Each page is
 built from committed files alone. `drive` holds each file to the library at pin, and `head` holds
-the pin to library head. `drive` also renders each page, and fails where a face of the system draws
-a character beyond ASCII. A control page beside them proves that the render sees. A bar on top of
-each page links the home page and the three views.
+the pin to library head. `drive` also renders each page, and fails where a font face of the system
+draws a character beyond ASCII. A control page beside them proves that the render sees. A bar on top
+of each page links the home page and the three views.
 
 | Page | Kind | What it shows |
 |------|------|---------------|
@@ -112,6 +112,10 @@ The pin is **Nim at commit `27763495b`**, and no release serves it. Koch fetches
 once for each machine (`GUIDE.md`, Toolchain). The record says which characters of `pga` need
 it.
 
+Run each verb of `tools/build.nim` with the `bin/` of the pin first on `PATH`, as koch does
+(`GUIDE.md`, Toolchain). The page `docket` holds a script that `nim js` emits, and a release of
+Nim emits another script. Then `drive` finds that the page changed since it was published.
+
 ## Layout
 
 ```
@@ -140,7 +144,7 @@ src/pga_benchmark/head.nim         hold pin to head, and every file and page to 
 src/pga_benchmark/pages/           shell assembly, one renderer per page kind, docket's search
 tools/build.nim                    driver: every verb, standard library alone
 tools/verbs.nim                    each verb that compiles project code, run through the driver
-tools/drive/                       render harness: font stack of each element against faces shipped
+tools/drive/                       render harness: each font stack against shipped font faces
 tests/                             suites, the testament stubs that run them, and the render control
 ```
 

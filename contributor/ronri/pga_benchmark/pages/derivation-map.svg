@@ -10,7 +10,7 @@
      crossing another passes over it, with gap in line under it. Formula sits on line, builder
      under. Faded line is route code does not take; faded box is operator with no table.
      Brown text holds in RGA alone, blue in CGA alone, in place of written algebra names.
-     Bar under or over bold letter is decoration, mark kept at size zero: face gives no anchor.
+     Bar under or over bold letter is decoration, mark kept at size zero: font face gives no anchor.
      Bar over group of signs is decoration alone. Tilde and hat are spacing marks, set by width. -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 5440" class="map" role="img"
   aria-labelledby="map-title map-desc">

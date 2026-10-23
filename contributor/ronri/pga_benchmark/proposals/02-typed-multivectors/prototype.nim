@@ -2,7 +2,7 @@
 ##   Evaluation compiles this against changed library at each algebra its claim names, and exit code
 ##     is verdict: every law below holds, or program stops on assertion.
 ##   One macro call generates one concrete object per grade and per parity from `DIMENSIONS`
-##     alone. Each stores only its own bases, densely; slot of basis is count of kind's bases
+##     alone. Each stores only its own bases, densely; index of basis is count of kind's bases
 ##     below it, folded at compile time. Products are generic over closed typeclass and return
 ##     smallest kind that holds what table can reach, or library's `Multivector` where none does.
 ##
@@ -87,12 +87,12 @@ defineMultivectors()
 
 
 template `[]`*(m: SomeMultivector, basis: static Basis): float =
-  ## Read coefficient of basis from its dense slot.
+  ## Read coefficient of basis at its index in dense storage.
   m.elements[static(index(bases(typeof(m)), basis))]
 
 
 template `[]=`*(m: var SomeMultivector, basis: static Basis, value: float) =
-  ## Write coefficient of basis into its dense slot.
+  ## Write coefficient of basis at its index in dense storage.
   m.elements[static(index(bases(typeof(m)), basis))] = value
 
 
@@ -157,7 +157,7 @@ func toMultivector*[T: SomeMultivector](m: T): Multivector =
 #[ Laws ]#
 
 proc sample[T: SomeMultivector](): T =
-  ## Draw one kind with every slot uniform in [-1, 1].
+  ## Draw one kind with every element uniform in [-1, 1].
   for index in 0..<result.elements.len: result.elements[index] = rand(-1.0..1.0)
 
 
