@@ -158,10 +158,10 @@ document, and `tools/audit.nim` prints it.
 
 The rotation half (`rotation.nim`, `axle.nim`, `tests/suites/test_rotation.nim`) is on the bench,
 and not in the Explorer. 148 frame states render as 17 distinct pictures. Level, contact and twist
-beyond its parity have no marks yet, but for one frame. `Left-to-right and Right-to-left` draws a
-quarter turn of twist one way apart from one the other way. The workbench in `design/` is where
-those marks get worked out. The Reference lays out each frame state for the Architect to rule on,
-and the views wait until the marks are decided.
+beyond its parity have no marks yet, but for one frame. `Left-to-right and Right-to-left` draws
+half a turn of twist one way apart from half a turn the other way. The workbench in `design/` is
+where those marks get worked out. The Reference lays out each frame state for the Architect to rule
+on, and the views wait until the marks are decided.
 
 ## What it says
 

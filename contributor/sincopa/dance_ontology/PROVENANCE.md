@@ -113,8 +113,8 @@ body, or quote the sheet.
 **No string that writes a recorded sweep names a dancer with a gendered word.**
 `simulation/verdicts.md` heads the arms of its tables by the lead and the follow, and its own verb
 writes it. Verified by `suites/test_glossary.nim`, which reads each string literal of the `.nim`
-files under `simulation`, `design` and `app`. It does not read the report. Verified by hand with GNU
-grep 3.11, 2026-10-04: the report holds no word that the glossary rejects for a dancer.
+files under `simulation`, `design`, `app` and `src`. It does not read the report. Verified by hand
+with GNU grep 3.11, 2026-10-04: the report holds no word that the glossary rejects for a dancer.
 
 **One translation table, which the report and the laws read.** `simulation/words.nim` holds the
 table (Article II.1). Rejected: a copy for each reader, which keeps the translation visible in each,
@@ -226,10 +226,11 @@ where rule 31 says, and the simulation stands each card at the rest that the car
 turn. Verified by `suites/test_marks.nim`: the Reference prints the names that the model gives.
 
 **No page and no report names a facing by a name that the glossary replaced.** The entry for Facing
-rejects Pillion and Sidecar. `suites/test_glossary.nim` reads the whole report, and each string that
-a page shows, for each capitalised word that the entry rejects. Its lower-case words, such as
-`front`, are left out, because a page says them in their own sense. The law failed when the label of
-one hold said `Pillion`, and when the entry dropped the names.
+rejects Pillion and Sidecar. `suites/test_glossary.nim` reads the whole report and the shell of the
+Explorer for each capitalised word that the entry rejects. It reads every string literal of
+`design`, `app`, `simulation` and `src` for them too. The lower-case words of the entry, such as
+`front`, are left out, because a page says them in their own sense. The law failed when the label
+of one hold said `Pillion`, and when the entry dropped the names.
 
 ## Model
 
@@ -431,9 +432,10 @@ the same mark that the map uses. Only what the ontology derives can be clicked, 
 dances both its moves in turn.
 
 The close drawing hands its geometry to the style sheet as bare numbers, and takes back one unit.
-That unit is registered with `@property`, so a recentre animates the scale. It stops shrinking when
-names reach 8 px, and scrolls instead. `--wide` is the width at which the map is worth opening on.
-It is written once in the style sheet, and read by the script.
+The style sheet registers those numbers with `@property`, and works the unit out from the width, so
+a recentre animates the scale. The unit stops shrinking when names reach 8 px, and the drawing
+scrolls instead. `--wide` is the width at which the map is worth opening on. It is written once in
+the style sheet, and read by the script.
 
 Keyboard: every control is reachable, focus returns after each move, and a live region outside the
 rewritten region announces what was danced. Verified by hand in a browser at 390, 600 and 1200 px
@@ -511,7 +513,8 @@ words.
 Some prose is counted by nothing still. The Explorer writes what its live region says straight into
 the element, so no law reaches it. One verdict of the viewer opens `Stops at N turns:` and closes
 with a reason the simulation recorded, so it never stands as one whole string. Those reasons come
-from `hold.says`, and the longest of them holds eight words.
+from `hold.says`, or, for a planned way that ends short, from `design/rig.nim`, and the longest of
+them holds eight words.
 
 **The two counted rules are a floor, and only a reading catches a word used outside its meaning.** A
 page can stay inside both bounds and still say that a stage `collides` a capsule.
@@ -541,16 +544,16 @@ A second account of the model goes stale when the design moves. Verified by read
 
 **No string a page shows says a gendered word for a dancer.** The glossary rejects one for each
 dancer, and `test_glossary.nim` reads that ruling rather than restates it. It holds every string
-literal of `design`, `app` and `simulation`, and the page this project writes by hand, the shell of
-the Explorer. A literal that a colon follows is a key of recorded data, so the check steps over
-it. Verified by `suites/test_glossary.nim`, which fails on a page string such as `her arm` or
+literal of `design`, `app`, `simulation` and `src`, and the page this project writes by hand, the
+shell of the Explorer. A literal that a colon follows is a key of recorded data, so the check steps
+over it. Verified by `suites/test_glossary.nim`, which fails on a page string such as `her arm` or
 `his reach`.
 
 **No string a page shows calls a page by a word that the glossary rejects for it.** The glossary
 rejects validator, app, demo and viewer for the Explorer, and card review and review page for the
 Reference. `test_glossary.nim` reads those words from the glossary, and holds every string literal
-of `design`, `app` and `simulation` to them. A literal of one word names an element or a key, as
-`app` does, so the check steps over it. The project calls the third page the rig viewer, and that
+of `design`, `app`, `simulation` and `src` to them. A literal of one word names an element or a key,
+as `app` does, so the check steps over it. The project calls the third page the rig viewer, and that
 name holds `viewer`. So the check takes the name out of a string before it reads it.
 
 Verified by `suites/test_glossary.nim`. Red first on 2026-10-21, on the sources before the fix: it
@@ -1044,7 +1047,7 @@ join of a palm grip and that of a finger grip, and neither join serves as that p
 Measured 2026-10-08. Asked of the fingertips, where the hands meet, the band lets the wrist and
 elbow of the follow pass at head height. Left to right above then stops by swing at 0.40 to 0.42 of
 a turn, from 0.36 to 0.46 m. From 0.48 m it turns free, with the arm of the follow behind the head,
-at the end of its swing. Left to right at the torso leaps 244 mm in one moment.
+at the end of its swing. Left to right low leaps 244 mm in one moment.
 
 Asked of the middle of the palm, the same-name chain wound half a turn holds from no distance. Asked
 of the centre of the grip, both hold.
@@ -1170,9 +1173,9 @@ and z is the ratio. On the upper arm alone, a ratio of two gives 4.2, computed a
 recordings. Run on the turn of the six cards that are not modelled, it stops the positive way at
 0.70 of a turn (Open questions).
 
-Rejected: no damper. Left to right low, which the leap law walks at the torso, then moves a point
-181 mm in one moment. With the damper it moves 137 mm, and the bound is 195 mm. Measured 2026-10-12
-by a probe outside the tree, on the wall with its slope at 270.
+Rejected: no damper. Left to right low, which the leap law walks, then moves a point 181 mm in one
+moment. With the damper it moves 137 mm, and the bound is 195 mm. Measured 2026-10-12 by a probe
+outside the tree, on the wall with its slope at 270.
 
 The judge stops a connection where one of its arms lies past the edge by more than `GIVE_EDGE`.
 It stops a swing past its range by more than `GIVE` the same way (`stoppedBy`, `Stop.Swing`). It
@@ -1198,9 +1201,10 @@ frame carries the zero of the twist, which #622 holds.
 (`CONTACT`, 240 hertz at `HERTZ` 240 and `SUBSTEPS` 8). At the default thirty, the forces of the
 simulation itself pressed arms through bodies by 45 mm.
 
-The upper arm collides with the chest it hangs from. The engine lets bodies that one joint connects
-pass through each other, unless told otherwise. Without that setting, an upper arm sinks 67 mm into
-its own head and nothing reports it.
+The upper arm meets its own chest, neck and head. It hangs from its girdle, which hangs on a
+collarbone hinged to the chest, so it is three joints from the chest. A joint makes the engine skip
+only the two bodies that it joins, and no joint here changes that. So the upper arm never meets the
+girdle that it hangs from, which it overlaps at the joint by construction.
 
 Every joint but the tie holds at the cap of the engine (`HOLD`, 480 hertz). The tie that joins two
 hands alone holds at thirty (`TIE`), which makes it the softest thing in the couple. A hold forced
@@ -1292,7 +1296,7 @@ wedge is 9.5 degrees of meridian wide, and 8.6 degrees deep at the seam. In `des
 arm-moments lie within 3 degrees of meridian of that seam, between its two edges. Measured
 2026-10-12 on the recordings of this tree, by a probe outside the tree.
 
-The slope moves the holds over the crown, and L-l and R-r held high, and no hold at the torso. It
+The slope moves the holds held above, and L-l and R-r held high, and no hold held low. It
 moves 8 of the 18 sweeps of six frame holds at three levels. In `design/rig.json` it moves 3 of the
 8 sweeps and 14 of the 95 stills. A17 and C03 move 4.0 mm at most. The stills of single holds in
 section B move up to 44.6 mm (`st_lo_0_3`). Measured 2026-10-12 against the wall on the step, on a
@@ -1317,18 +1321,18 @@ the edge of the men, and the wall never acts on it. Measured in the settle by a 
 tree, 2026-10-11.
 
 No arm-moment of `design/rig.json` lies within 3 degrees of meridian of that seam, between its two
-edges. Walks of three holds at the torso and of the two above make 500 walks from every distance.
+edges. Walks of three holds held low and of the two above make 500 walks from every distance.
 No walk of them stops at an arm just past that seam. Measured 2026-10-12 by a probe outside the
 tree.
 
 Rejected: the same slope at 180. It leans on arms in front of plumb, over up to 42 degrees of
-meridian, and moves the holds at the torso. Left to right low then moves a point 180 mm in one
+meridian, and moves the holds held low. Left to right low then moves a point 180 mm in one
 moment, where it moves 137 mm. Measured 2026-10-11 by a probe outside the tree.
 
 Rejected, each measured 2026-10-11 by a probe outside the tree:
 
 - the wall with no cap past the give. It grows as the end of the swing does, and holds more arms
-  within the give. But it moves the holds at the torso. Left to right low then moves a point 191 mm
+  within the give. But it moves the holds held low. Left to right low then moves a point 191 mm
   in one moment, 4 mm under the bound;
 - the reaction of the wall on the girdle. Each torque of a joint acts on both links that it joins,
   but there the girdle swings on the soft springs of its collarbone. The turn of the lead under the
@@ -1553,7 +1557,7 @@ What stops a turn is one thing, asked in order over every arm, held or free:
   the arm was against, or span;
 - once risen, any joined hand further under the edge of its band than the slack of the lift itself
   (`SAG`, `Stop.Band`). A hold whose hands never rose is a hold at some other height. A still
-  reads this from the end of the rise (`height`). A walk reads it over the crown alone, once the
+  reads this from the end of the rise (`height`). A walk reads it only when held above, once the
   couple are not face to face (below).
 
 Verified by `test_rigid.nim`. Hands that are joined stay joined. No joint goes past what the rig
@@ -1564,7 +1568,7 @@ plus its own move. That is 195 mm on the corpus of the laws. The breadth of the 
 (#605). In L-r low its edge moves 150 mm in one moment, at 0.38 of a turn, where the join moves 137.
 Measured 2026-10-11 by a probe outside the tree.
 
-**Over the crown, a walk keeps the joined hands above the heads once the couple are not face to
+**Held above, a walk keeps the joined hands above the heads once the couple are not face to
 face (#611, D2).** The Architect ruled that this holds in every moment of a sweep, as in every
 still. A joined hand that sinks under the `Crown` band by more than `SAG` stops the walk. That
 holds from a quarter turn away from face to face (`up` whole), at every wind.
@@ -1597,7 +1601,7 @@ of the rig. The positive way of the same-name chain turns to +1.88 there, from 0
 short, the plan carries the sweep on (Planned sweep).
 
 Verified by `suites/test_asks.nim`. It reads `design/rig.json` alone (Rig viewer). It reads every
-moment that a sweep over the crown holds, the planned moments among them. That is 241 moments, on
+moment that a sweep held above holds, the planned moments among them. That is 241 moments, on
 the way that each sweep turns positive. Each joined hand is carried at 1.731 m at least, against
 1.705 m, in `One hand, same name · above` at 0.44 of a turn. Measured 2026-10-20 by a copy of the
 reading of the law in Python 3.11.
@@ -1897,7 +1901,7 @@ The ways of R-r and R-l reflect those of L-l and L-r, and the negative way of L-
 positive way (Mirror twins). So the law of the edge reads 7460 fewer arm-moments, and the law of the
 hands reads 733 fewer moments. Counted 2026-10-20 at `2c6c9b62`. No floor holds how far the plan
 carries a way that turns negative (`TURNS_PLANNED`). The laws of `tests/test_rigid.nim` read both
-ways of the single holds over the crown, walked alone (`simulation/answers.json`). The report prints
+ways of the single holds held above, walked alone (`simulation/answers.json`). The report prints
 how far the walk carries each way, and no law reads its numbers.
 
 ## Against the floor
@@ -1983,7 +1987,7 @@ by letting two arms occupy one place.
 
 ## Planned turn
 
-**A turn that the carried walk does not reach is planned, and the engine follows the plan.** The
+**A turn that the carried walk does not reach is planned, and the engine stands the plan.** The
 carried walk moves the arms only by weak pulls on the hands. So an arm caught on a head or on
 another arm stays caught. A dancer chooses the whole arm, and so does the plan. It chooses the
 collarbone, the roll of the shoulder, the elbow, the wrist, the waist and where to stand.
@@ -2031,7 +2035,7 @@ When the plan stops, it goes back some moments, moves the arms a little, and goe
 stop it goes back to the last moment that the couple faced each other. It arranges the arms again
 there, and then goes on. The way down into facing decides the way up out of it.
 
-**The engine stands every planned moment, and the judge is the one of every walk.** `walk.replay`
+**The engine stands every planned moment, and the judge is the one of every still.** `walk.replay`
 stands every body where the plan has it at one moment, with nothing moving (`standAt`). It aims
 every joint at the plan, lets the engine take two steps to find every contact (`STEPS_STAND`), and
 judges (`gives`). Then it takes the next moment. A planned moving card holds where the engine stands
@@ -2241,18 +2245,18 @@ as the one nearer the fingertips lets.
 
 ## Planned sweep
 
-**Where the walk over the crown stops short of all that a sweep asks, the rig keeps the planned way
+**Where the walk held above stops short of all that a sweep asks, the rig keeps the planned way
 (pull request 629, D1).** The Architect ruled on 2026-10-12. Where the walk alone lets the joined
 hands sink, the plan lifts them. The recording keeps the planned turn where the walk falls short.
 The cross-name chain held above then stops near 1.53 turns, where the edge forbids more.
 
-**The plan answers every stop of the walk over the crown, and not only a hand that sinks (pull
+**The plan answers every stop of the walk held above, and not only a hand that sinks (pull
 request 629, D1 of its notes).** The Architect ruled on 2026-10-12 (`ways`). So the same-name
 chain held above is planned too. The wrist of the lead stops its walk at +1.80, and arm through arm
 stops it at -1.66. The plan carries it to 2.5 turns both ways. Rejected: a plan for a sinking hand
 alone, which leaves that chain at -1.66 and +1.80, where the walk stops it.
 
-A way over the crown that the walk stops short of 2.5 turns is planned toward 2.5 turns
+A way held above that the walk stops short of 2.5 turns is planned toward 2.5 turns
 (`plannedWay`). Each style is tried in its order, own path and mirrored path, as a planned still
 tries them (`pathsFor`). The engine stands each moment of each path afresh, and the judge of the
 still reads it (`replayedWay`, `gives`). A path is cut at its first moment that gives. The
@@ -2295,9 +2299,9 @@ the way that turns positive.
 The walk alone carries them to 1.26, and to -1.66 and +1.80, read 2026-10-20 in
 `simulation/verdicts.md`. The single
 holds run free on the walk, so the plan is not asked. It carries each of them to 2.5 turns too,
-measured 2026-10-12 by `tools/build.nim floors`. That run planned each hold over the crown both
-ways, and the negative way of each reached as far as its positive way. Each way that the rig keeps
-over the crown is a row of `TURNS_PLANNED`.
+measured 2026-10-12 by `tools/build.nim floors`. That run planned each hold held above both ways,
+and the negative way of each reached as far as its positive way. Each way held above that the rig
+keeps is a row of `TURNS_PLANNED`.
 
 **The edge holds the cross-name chain near 1.53 turns.** Over the last part of the turn an upper arm
 rides the six degrees that the plan keeps inside the edge. At 38 of the 91 turns that the rig
@@ -2315,11 +2319,11 @@ there. Measured 2026-10-12 by probes outside the tree.
 moment to the next. In the rig recording of `bc656d30`, which walked both chains, the ends moved up
 to 596 mm and 570 mm. Measured 2026-10-20 with Python 3.11, the same way on both.
 
-Cost: the rig plans 64 paths over the crown, for both chains toward both ways in every style
+Cost: the rig plans 64 paths held above, for both chains toward both ways in every style
 (`planAhead`). With them, a full `tools/build.nim record` took 24 min 8 s on 2026-10-20 (Figures).
 Without them, its time on this tree is unmeasured.
 
-Verified by `suites/test_asks.nim`. Every way over the crown that the rig keeps holds as far as the
+Verified by `suites/test_asks.nim`. Every way held above that the rig keeps holds as far as the
 plan carries it (`TURNS_PLANNED`), less half the rounding of the rig. Those are the four ways that
 turn positive, and the law reads no other recording (Rig viewer). The law reads the furthest moment
 that each way holds. The law of the edge reads every planned moment, and the law of the hands each
@@ -2338,7 +2342,7 @@ A copy of the rig recording of `cd9ec9a8` has the moments from 0.80 to 1.20 of a
 2026-10-12.
 
 `tools/build.nim floors` measures each floor again (`design/floors`). It plans each sweep of the rig
-over the crown, the way that the rig keeps, which turns positive. It prints the row of
+held above, the way that the rig keeps, which turns positive. It prints the row of
 `TURNS_PLANNED` for each sweep, keyed by its card, and the style and start of its path. Its rows
 come in the order of `design/rig.SHOWN`, and the table holds the values that it printed on
 2026-10-12. On 2026-10-20 it printed the same rows, styles and starts again. It took 7 min 7 s, and
@@ -3205,7 +3209,7 @@ to tidy the line away shows up only as suites that fail to build. `result +=` on
   held hand moves 150 mm at most in one moment, at 0.38 of a turn. The join moves 137 there.
   Measured 2026-10-11 by a probe outside the tree. Before the edge of the shoulder, it moved 218 mm
   at 0.58, where the join moved 187, past the bound.
-- **Left to left at the waist meets the stops of the floor only in part (#601).** The floor stops
+- **Left to left held low meets the stops of the floor only in part (#601).** The floor stops
   the follow at half a turn into the wrap and a whole turn into the lock, because further is
   uncomfortable. The simulation stops the wrap way at 0.84 of a turn, where an arm meets an arm. It
   stops the lock way at 0.94, short of the floor, by the wrist of the follow
@@ -3226,7 +3230,7 @@ to tidy the line away shows up only as suites that fail to build. `result +=` on
   judge stops at the edge would fail that law (Body rig). None stops so on 2026-10-12. The law of
   the hands over the crown leaves it out (Walk and lift).
 
-  No sweep over the crown keeps such a moment on 2026-10-12. The single holds and the same-name
+  No sweep held above keeps such a moment on 2026-10-12. The single holds and the same-name
   chain run free, and the cross-name chain ends on a planned moment that stands (Planned sweep).
   Each of the four sweeps at the lower bands keeps one, and the law of the edge reads it.
 
@@ -3239,7 +3243,7 @@ to tidy the line away shows up only as suites that fail to build. `result +=` on
 - **A planned way is kept in a `Walk`, and the glossary says that a walk is carried from one
   distance.** A planned way stands the poses of a plan, each at the distance of the plan. The
   Architect rules whether the glossary widens the term, or a planned way takes a name of its own.
-- **The report reads the walk alone over the crown, where the rig keeps the planned turn.** The
+- **Held above, the report reads the walk alone, where the rig keeps the planned turn.** The
   report says that the cross-name chain held above is blocked at a turn and a half, by a hand off
   its band at 1.26. The rig carries it to 1.5275. The report says that the same-name chain held
   above stops at -1.66 and +1.80, and the plan carries it to 2.5 both ways (Planned sweep). Read
