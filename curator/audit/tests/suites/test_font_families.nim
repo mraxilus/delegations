@@ -1,9 +1,9 @@
-## Replicate face rules of `faces.nim` header, i.e. Article X.8 over sources declaring stacks.
+## Replicate rules of `font_families.nim` header, i.e. Article X.8 over sources declaring stacks.
 
 {.experimental: "strictFuncs".}
 
 import std/[sequtils, strutils, unittest]
-import ../../src/faces
+import ../../src/font_families
 
 
 const KEEPING = """
@@ -22,28 +22,28 @@ const KEEPING = """
 
 
 
-suite "Faces":
+suite "Font families":
   test "source declaring no stack is no page, and is not reported for lacking one":
-    # Most files are not pages. Absence of faces is not violation of how faces are named.
-    check checkFaces("koch.nim", "let x = 1\n").len == 0
-    check checkFaces("README.md", "# Title\n\nProse about fonts.\n").len == 0
+    # Most files are not pages. Absence of font faces is not violation of how font faces are named.
+    check checkFontFamilies("koch.nim", "let x = 1\n").len == 0
+    check checkFontFamilies("README.md", "# Title\n\nProse about fonts.\n").len == 0
 
 
   test "page keeping X.8 reports nothing":
-    check checkFaces("pages/shell.html", KEEPING).len == 0
+    check checkFontFamilies("pages/shell.html", KEEPING).len == 0
 
 
-  test "linking font host is failing to ship face":
+  test "linking font host is failing to ship font face":
     const linked = """
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces">
 <style> body { font-family: "Noto Sans", sans-serif; } </style>
 """
-    let found = checkFaces("mockups/wholecloth.html", linked)
+    let found = checkFontFamilies("mockups/wholecloth.html", linked)
     check found.len == 1
     check found[0].line == 1  # names line, so page opens at link
     check found[0].message.endsWith("got `fonts.googleapis.com`.")
     for host in HOSTS:  # every host listed is reported, not first alone
-      check checkFaces(
+      check checkFontFamilies(
         "p.html",
         "a { font-family: \"Noto Sans\"; }\n@import \"https://" & host & "/x\";\n",
       ).len == 1
@@ -53,20 +53,21 @@ suite "Faces":
     const outside = """
   body { font-family: "Fraunces", Georgia, serif; }
 """
-    let found = checkFaces("p.html", outside)
+    let found = checkFontFamilies("p.html", outside)
     check found.len >= 1
     check found[0].message.endsWith("got `Fraunces`.")
 
 
   test "system stack is reported too, since keyword resolves to whatever viewer has":
-    check checkFaces("p.html", "  body { font-family: ui-sans-serif, system-ui; }\n").len == 1
-    check checkFaces("p.html", "  b { font-family: ui-monospace, Menlo; }\n").len == 1
-    check checkFaces("p.html", "  i { font-family: serif; }\n").len == 1
+    check checkFontFamilies("p.html", "  body { font-family: ui-sans-serif, system-ui; }\n")
+      .len == 1
+    check checkFontFamilies("p.html", "  b { font-family: ui-monospace, Menlo; }\n").len == 1
+    check checkFontFamilies("p.html", "  i { font-family: serif; }\n").len == 1
 
 
-  test "fallbacks after first family are free, since shipped face is what viewer gets":
+  test "fallbacks after first family are free, since shipped font face is what viewer gets":
     # Allow-list of every acceptable fallback is list nobody maintains; first entry decides.
-    check checkFaces("p.html",
+    check checkFontFamilies("p.html",
       "  body { font-family: \"Noto Sans\", Impact, Papyrus, cursive; }\n").len == 0
 
 
@@ -91,11 +92,11 @@ suite "Faces":
   :root { --sans: "Noto Sans", sans-serif; --serif: "Noto Serif", serif; }
   h1 { font-family: var(--sans); }
 """
-    let found = checkFaces("p.html", heading_sans)
+    let found = checkFontFamilies("p.html", heading_sans)
     check found.len == 1
     check found[0].message.endsWith("got `Noto Sans`.")
     # Serif heading passes, and so does non-heading element taking sans.
-    check checkFaces(
+    check checkFontFamilies(
       "p.html",
       "  :root { --serif: \"Noto Serif\", serif; }\n  h3 { font-family: var(--serif); }\n",
     ).len == 0
@@ -124,7 +125,7 @@ suite "Faces":
     check not isHeading("h3 .kicker, h4 .kicker")  # every selector in list reads its own
     # Subject decides, so list mixing both still reports where subject is heading.
     check isHeading("h1 .tag, h2")
-    let inside = checkFaces(
+    let inside = checkFontFamilies(
       "p.html",
       "  :root { --mono: \"Commit Mono\", monospace; --serif: \"Noto Serif\", serif; }\n" &
       "  h3 { font-family: var(--serif); }\n" &
@@ -142,20 +143,20 @@ suite "Faces":
     check resolved("var(--x)", properties) == "var(--y)"  # one level, never chased
 
 
-  test "Commit Mono without its ligatures is face half used":
+  test "Commit Mono without its ligatures is font face half used":
     const unligated = """
   :root { --mono: "Commit Mono", monospace; }
   code { font-family: var(--mono); }
 """
-    let found = checkFaces("p.html", unligated)
+    let found = checkFontFamilies("p.html", unligated)
     check found.len == 1
     check found[0].line == 0  # whole-file finding: property may go anywhere
     check MONO in found[0].message
     # Either property satisfies it, since either can carry `calt`.
     for property in LIGATURES:
-      check checkFaces("p.html", unligated & "  code { " & property & ": x; }\n").len == 0
+      check checkFontFamilies("p.html", unligated & "  code { " & property & ": x; }\n").len == 0
     # Page naming no Commit Mono is never asked for ligatures.
-    check checkFaces("p.html", "  body { font-family: \"Noto Sans\", serif; }\n").len == 0
+    check checkFontFamilies("p.html", "  body { font-family: \"Noto Sans\", serif; }\n").len == 0
 
 
   test "property that is not stack is not read as one, whatever commas it holds":
@@ -169,7 +170,7 @@ suite "Faces":
   }
   body { font-family: var(--sans); }
 """
-    check checkFaces("p.html", palette).len == 0
+    check checkFontFamilies("p.html", palette).len == 0
 
 
   test "line carrying two properties yields both, not first alone":
@@ -189,12 +190,12 @@ suite "Faces":
   test "value deferring to cascade names no family, so it is not reported":
     # `font-family: inherit` takes whatever parent settled, and parent is checked where set.
     for defers in DEFERS:
-      check checkFaces(
+      check checkFontFamilies(
         "p.html",
         "  a { font-family: \"Noto Sans\"; }\n  b { font-family: " & defers & "; }\n",
       ).len == 0
     # Heading deferring is not reported either, for same reason.
-    check checkFaces(
+    check checkFontFamilies(
       "p.html",
       "  :root { --serif: \"Noto Serif\", serif; }\n" &
       "  h1 { font-family: var(--serif); }\n  h2 { font-family: inherit; }\n",
@@ -209,18 +210,18 @@ suite "Faces":
     check familiesShorthand("italic bold 12px/30px Georgia, serif") == "Georgia, serif"
     check familiesShorthand("0.66rem/1.4 \"Noto Sans\"") == "\"Noto Sans\""
     check familiesShorthand("caption").len == 0  # names system font, no family list
-    let found = checkFaces(
+    let found = checkFontFamilies(
       "page.nim",
       "  body { font: 16px/1.6 ui-sans-serif; }\n  x { font-family: \"Noto Sans\"; }\n",
     )
     check found.len == 1
     check found[0].message.endsWith("got `ui-sans-serif`.")
     # Shorthand naming admitted family passes, and heading rule reaches it too.
-    check checkFaces(
+    check checkFontFamilies(
       "p.html",
       "  :root { --serif: \"Noto Serif\", serif; }\n  h1 { font: 2rem var(--serif); }\n",
     ).len == 0
-    let heading = checkFaces(
+    let heading = checkFontFamilies(
       "p.html",
       "  :root { --sans: \"Noto Sans\", serif; }\n  h1 { font: 2rem var(--sans); }\n",
     )
@@ -236,13 +237,13 @@ suite "Faces":
       "    &\"\"\" ui-sans-serif, system-ui; fill: red\">\"\"\" &\n" &
       "    \"</text>\"\n" &
       "  x { font-family: \"Noto Sans\"; }\n"
-    let found = checkFaces("design/parts.nim", joined)
+    let found = checkFontFamilies("design/parts.nim", joined)
     check found.len == 1
     check found[0].line == 1  # where joined declaration opens
     check found[0].message.endsWith("got `ui-sans-serif`.")
     # Admitted family behind same join passes.
-    check checkFaces("p.nim", joined.replace("ui-sans-serif", "\"Noto Sans\"")).len == 0
+    check checkFontFamilies("p.nim", joined.replace("ui-sans-serif", "\"Noto Sans\"")).len == 0
     # Joining keeps every line where it stood, so finding below join keeps its line.
-    check checkFaces("p.nim", joined & "  y { font-family: Arial; }\n").anyIt(
+    check checkFontFamilies("p.nim", joined & "  y { font-family: Arial; }\n").anyIt(
       it.line == 5 and it.message.endsWith("got `Arial`."),
     )
