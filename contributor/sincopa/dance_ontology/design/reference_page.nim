@@ -586,7 +586,7 @@ func pageBody(parts: Parts): string =
 
   # `G`. Every edge of paired chain animated, as `F` does for section C.
   body.add &"""<section id="paired-moving">
-  <h2>G &middot; Hand-to-hand chain, {paired_rest}, moving</h2>
+  <h2>G &middot; The same-name chain, {paired_rest}, moving</h2>
   <p class="lede">Every edge of the same-name chain of section D, walked by every manner of
   turn. Each manner takes the same two cells that section F uses, and the way each manner walks
   is read the same. This chain rests <b>{paired_rest}</b> rather than {hand_rest}, because
