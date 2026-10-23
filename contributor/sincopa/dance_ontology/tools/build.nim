@@ -79,6 +79,7 @@ const
     ("git", true, "clone engine's source at its pinned commit; `engine` shells out to it"),
     ("binutils", true, "archive engine's objects into one library; `engine` runs `ar`"),
     ("nodejs", true, "run type-checker `types` drives and harness `drive` runs"),
+    ("libbrotli1", true, "decode `woff2` font faces pages ship; `koch drive` reads their `cmap`"),
     ("chromium", false, "browser `shot` drives; helper takes its path from environment"),
   ]
     ## System packages this build needs present before it runs, with what each is for
@@ -89,6 +90,9 @@ const
     ##   Flag says whether runner installs it: it installs what `system` prints, and opens
     ##   nothing else.  `engine` needs first two and C compiler, which Nim brings already and
     ##   so is not named twice, and every suite builds engine.  `types` and `drive` need node.
+    ##   `libbrotli1` serves `koch drive`, which reads `cmap` of each font face pages ship:
+    ##   Commit Mono ships as `woff2`, whose tables are one Brotli stream (CONTRIBUTOR.md,
+    ##   Pages and assets).
     ##   Chromium that `drive` renders with is Playwright's own, which `drive` fetches at
     ##   revision lock pins, so runner installs no browser.  `chromium` here is `shot`'s, which
     ##   person runs by hand, and `shot` prints it where it builds.  `pages`, `fixtures`,
