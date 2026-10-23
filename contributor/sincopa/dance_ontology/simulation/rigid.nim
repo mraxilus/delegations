@@ -735,11 +735,10 @@ proc buildArm(couple: var Couple, who: Body, arm: Arm, group: cint): ArmRig =
     origin: engine.initVector(0, 0, 0),
     rotation: engine.IDENTITY,
   )
-  # Upper arm and girdle overlap at joint by construction and never collide;
-  # upper arm and chest are no longer one joint apart, so they do, and arm
-  # hung from chest no longer sinks into own torso, neck and head unseen --
-  # 67 mm inside own head by capsule geometry while engine reported no touch,
-  # before shoulder was told to collide with what it hung from.
+  # Upper arm and girdle overlap at joint by construction and never collide.
+  # Upper arm hangs three joints from chest, through girdle and collarbone, and
+  # engine skips only bodies that one joint joins, so arm meets own torso, neck
+  # and head.
   # Held arm is placed by its hold and biased alone; free arm hangs by weight.
   ball.should_spring = true
   ball.hertz = cfloat(if couple.isHeld(who, arm): EASE else: HANG_HERTZ)
