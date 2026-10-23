@@ -1,14 +1,14 @@
-## Enforce faces presentation target ships (Article X.8), over sources declaring them.
+## Enforce font faces presentation target ships (Article X.8), over sources declaring them.
 ##   X.8 names three families by role and forbids naming one viewer may lack. Nothing held it
 ##   before this: every target had drifted, one to Google Fonts and three to system stacks,
 ##   and drift was found by reading rather than by check. Rule that holds by reading is rule
 ##   that holds until nobody reads.
 ##
 ##   Four rules, and what each rests on:
-##     Host. Page linking font host makes viewer fetch face, which is opposite of shipping it.
+##     Host. Page linking font host makes viewer fetch font face, which is opposite of shipping it.
 ##       Substring of known hosts, which is robust: address cannot hide from itself.
 ##     First family. Every stack's *first* family must be one X.8 names. Fallbacks after it are
-##       unreachable once face ships, so they cost nothing and stay free -- and "names one
+##       unreachable once font face ships, so they cost nothing and stay free -- and "names one
 ##       viewer may lack" is violation only where primary is one viewer may lack. Rule is
 ##       crisp where allow-list of every acceptable fallback would be list nobody maintains.
 ##     Heading. Selector whose *subject* is `h1`..`h6` must set serif family, one `var()` deep:
@@ -61,7 +61,7 @@ const
     "fonts.bunny.net",
     "cdnjs.cloudflare.com/ajax/libs/font",
   ]
-    ## Font hosts page must not link. Build fetching face and embedding it is not here: that
+    ## Font hosts page must not link. Build fetching font face and embedding it is not here: that
     ## is build's own business and viewer never reaches it (`pga_visualiser`, `assets`).
   LIGATURES* = ["font-variant-ligatures", "font-feature-settings"]
     ## Properties that can enable `calt`; either satisfies ligature rule.
@@ -150,7 +150,7 @@ func literalsJoined(content: string): string =
 
 func familyFirst*(stack: string): string =
   ## Read first family of stack, unquoted and stripped; empty when stack names none.
-  ##   Stack is comma-separated and first entry is what viewer gets when face ships, so it
+  ##   Stack is comma-separated and first entry is what viewer gets when font face ships, so it
   ##   is only entry this rule reads.
   let head = stack.split(',')[0].strip
   head.strip(chars = {'"', '\'', ' ', '\t'})
@@ -242,9 +242,9 @@ func isHeading*(selector: string): bool =
   false
 
 
-func checkFaces*(path, content: string): seq[Finding] =
-  ## Report every way source departs from faces X.8 names.
-  ##   Source declaring neither form declares no faces and is not page; whole check is
+func checkFontFamilies*(path, content: string): seq[Finding] =
+  ## Report every way source departs from font faces X.8 names.
+  ##   Source declaring neither form declares no font faces and is not page; whole check is
   ##   skipped rather than reporting absence, since most files are not pages.
   ##   Both forms are asked for: page writing every stack as shorthand carries no
   ##   `font-family` at all, and guard reading that alone skipped whole page.
@@ -258,7 +258,7 @@ func checkFaces*(path, content: string): seq[Finding] =
         result.add finding(
           path,
           i + 1,
-          "Page links font host rather than shipping face (Article X.8); got `" & host & "`.",
+          "Page links font host rather than shipping font face (Article X.8); got `" & host & "`.",
         )
 
   # Only stacks declaration names are read. Property is reached through `var()` from one
@@ -302,8 +302,8 @@ func checkFaces*(path, content: string): seq[Finding] =
         "Heading takes family other than `" & SERIF & "` (Article X.8); got `" & first & "`.",
       )
 
-  # Commit Mono's ligatures are functional and live in `calt` alone, so naming face without
-  #   enabling feature ships face half used.
+  # Commit Mono's ligatures are functional and live in `calt` alone, so naming font face without
+  #   enabling feature ships font face half used.
   var has_mono = false
   for (_, value) in stacks:
     if MONO in value.resolved(properties): has_mono = true
