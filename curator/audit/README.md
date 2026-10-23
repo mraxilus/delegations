@@ -20,8 +20,8 @@ nim r koch check                              # every check a pull request runs
 
 This needs the compiler that the project pins in `audit.nimble`, git, and `libbrotli1`. Atlas and
 testament ship with Nim, and koch fetches the pinned compiler where nothing on the machine serves
-it. The suite of the store reads the bytes of each face, and fetches each face that the store
-lacks. So a cold store needs the network.
+it. The suite of the store reads the bytes of each font face, and fetches each font face that the
+store lacks. So a cold store needs the network.
 
 ## Published pages
 

@@ -1,8 +1,8 @@
 ## Replicate shared store of `assets.nim` header, i.e. one declaration, keyed by digest.
-##   Codepoints each face row carries are held to bytes of its file, read through
+##   Codepoints each font face row carries are held to bytes of its file, read through
 ##     `font_files.nim` as browser reads them, i.e. codepoint maps to glyph other than `.notdef`.
 ##     Static pass reads rows and never bytes, so suite alone reads bytes of store.
-##   Cost: test fetches each face store lacks, so cold store needs network and about 6 MB.
+##   Cost: test fetches each font face store lacks, so cold store needs network and about 6 MB.
 
 {.experimental: "strictFuncs".}
 
@@ -46,26 +46,26 @@ suite "Assets":
 
 
   test "asset is stored under its digest, never under its name":
-    # Two projects asking for one face share one entry by construction, and moved pin is
+    # Two projects asking for one font face share one entry by construction, and moved pin is
     #   different entry rather than stale one.
-    const face = "NotoSans-Regular.ttf"
-    let digest = face.digestDeclared
-    check pathStore("/s", face) == "/s" / digest
-    check face notin pathStore("/s", face)  # name is nowhere in path
-    check pathStore("/s", "not-a-face.woff2").len == 0  # undeclared face has no path
+    const font_face = "NotoSans-Regular.ttf"
+    let digest = font_face.digestDeclared
+    check pathStore("/s", font_face) == "/s" / digest
+    check font_face notin pathStore("/s", font_face)  # name is nowhere in path
+    check pathStore("/s", "not-a-font-face.woff2").len == 0  # undeclared font face has no path
 
 
   test "address carries version, so bytes and version move together or neither":
-    const face = "commit-mono-latin-700-normal.woff2"
-    let address = face.address
+    const font_face = "commit-mono-latin-700-normal.woff2"
+    let address = font_face.address
     check address.startsWith("https://")
-    check address.endsWith(face)
+    check address.endsWith(font_face)
     check "@fontsource/commit-mono@" in address  # package and its version, in address
-    check address("not-a-face.woff2").len == 0
+    check address("not-a-font-face.woff2").len == 0
 
 
   test "TrueType comes from Noto's own repository, since fontsource ships none":
-    # Atlas reads TrueType and `@fontsource` packages `woff2` alone, so desktop faces have
+    # Atlas reads TrueType and `@fontsource` packages `woff2` alone, so desktop font faces have
     #   their own upstream; store holds both rather than one project holding each.
     check "notofonts" in "NotoSans-Regular.ttf".address
     check "notofonts" in "NotoSansMath-Regular.ttf".address
@@ -86,21 +86,21 @@ suite "Assets":
 
 
   test "store holds what projects share, once, and what one project alone wants":
-    # Projects wanting one face share its row, so one digest serves each of them, which is
+    # Projects wanting one font face share its row, so one digest serves each of them, which is
     #   Article II.9's own test. These five are what every page project draws.
     for file in [
       "commit-mono-latin-400-normal.woff2", "NotoSans-Regular.ttf", "NotoSans-SemiBold.ttf",
       "NotoSansMath-Regular.ttf", "NotoSerif-SemiBold.ttf",
     ]:
       check file.digestDeclared.len == 64
-    # And what only one of them wants, so none loses face by sharing one table.
+    # And what only one of them wants, so none loses font face by sharing one table.
     check "NotoSerif-Italic.ttf".digestDeclared.len == 64  # dance_ontology alone
     check "CommitMonoV142-400Regular.otf".digestDeclared.len == 64  # pga_visualiser alone
 
 
-  test "each Noto face a page draws is declared whole (Article X.8)":
-    # Noto was chosen so that no character of page falls outside its faces, and subset undoes
-    #   that; so every Noto face pages draw has its whole TrueType file here.
+  test "each Noto font face a page draws is declared whole (Article X.8)":
+    # Noto was chosen so that no character of page falls outside its font faces, and subset undoes
+    #   that; so every Noto font face pages draw has its whole TrueType file here.
     for file in [
       "NotoSans-Regular.ttf", "NotoSans-SemiBold.ttf", "NotoSansMath-Regular.ttf",
       "NotoSansSymbols2-Regular.ttf", "NotoSerif-Italic.ttf", "NotoSerif-Regular.ttf",
@@ -128,7 +128,7 @@ suite "Assets":
 
 
   test "declaration publishes every row, so no consumer parses this source":
-    # Project holding law that its faces are declared reads these rows, never `assets.nim`
+    # Project holding law that its font faces are declared reads these rows, never `assets.nim`
     #   as text: published rows are contract such read stands in for.
     let rows = declaration().strip.splitLines
     check rows.len == ASSETS.len  # every row, none extra
@@ -148,15 +148,15 @@ suite "Assets":
     # Verb prints paths when files are named and rows when none are. Both contributor
     #   builds tell them apart by shape -- one keeps lines that `fileExists`, other keeps
     #   lines starting `/` -- so row that looked like absolute path would be copied as
-    #   face by one and counted as served by other. Neither project can check this; store
+    #   font face by one and counted as served by other. Neither project can check this; store
     #   owns row shape, so store holds law.
     for row in declaration().strip.splitLines:
       check not row.startsWith('/')  # never absolute path
       check not row.fileExists  # nor relative one that happens to resolve
 
 
-  test "each face row carries codepoints its file maps, read from its bytes (Article X.8)":
-    # Coverage check reads rows and never bytes, so rows say what bytes hold. Face store lacks
+  test "each font face row carries codepoints its file maps, read from its bytes (Article X.8)":
+    # Coverage check reads rows and never bytes, so rows say what bytes hold. Font face store lacks
     #   is fetched once; store keeps it under its digest, and later run reads it in place.
     let root = rootStore(getEnv(KEY_ASSETS))
     for (file, _, _, ranges) in ASSETS:
