@@ -40,8 +40,9 @@ import ./draw/[style, terms]
 
 const
   MAP_WIDTH* = 780
-    ## Width map asks for; `--wide` in Explorer's style sheet is
-    ## derived from it plus page's margins.
+    ## Width map's `viewBox` asks for.
+    ##   `--wide` in Explorer's style sheet (`pages/app/index.html`) is not derived from it:
+    ##     it is least width style sheet keeps for `.map`, 620px, plus page's margins.
   MAP_HEIGHT* = 570
     ## Measured, not chosen: tallest drawing gets in any of
     ## states it can be read in.
