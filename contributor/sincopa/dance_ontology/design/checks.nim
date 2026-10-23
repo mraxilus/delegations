@@ -35,6 +35,21 @@ func decimal(value: float, places: int): string =
 
 proc checkFrame*() =
   ## Check frame picture's claims, and say what was measured.
+
+  func stretchesDrawn(rim: string, centre: Point): seq[tuple[start, span: float]] =
+    ## Read back each stretch rim draws: bearing it starts at, and how far clockwise it runs.
+    ##   Read off markup, as page draws it: each stretch is one arc, from its start round to
+    ##     its stop, clockwise where its sweep flag is set (`body.rim`).
+    for part in rim.split("<path ")[1 .. ^1]:
+      const opens = "d=\"M"
+      let
+        at = part.find(opens) + opens.len
+        says = part[at ..< part.find('"', at)].replace("A", "").splitWhitespace
+        start = bearing(parseFloat(says[0]) - centre.x, parseFloat(says[1]) - centre.y)
+        stop = bearing(parseFloat(says[7]) - centre.x, parseFloat(says[8]) - centre.y)
+      result.add (if says[6] == "1": (start, floorMod(stop - start, 360.0))
+                  else: (stop, floorMod(start - stop, 360.0)))
+
   const want = [
     (Dancer.Lead, Arm.Left, (-20.0, 28.0)), (Dancer.Lead, Arm.Right, (20.0, 28.0)),
     (Dancer.Follow, Arm.Left, (20.0, -28.0)),
@@ -65,9 +80,11 @@ proc checkFrame*() =
     doAssert relative(poses[^1]) == relative(rest()),
       &"A cycle does not close; got `{relative(poses[^1])}` for `{named_move.name}`."
 
-  # Boundary is plain circle, and its two stretches tile it once: what
-  # is drawn plus two hand gaps covers rim exactly, whatever
-  # winding, and every stretch ends one hand-gap short of hand it meets.
+  # Boundary is plain circle.  Where no stretch is squeezed between two close hands, its two
+  # stretches tile it once: what is drawn plus hand gap either side of each hand covers rim
+  # exactly, and every stretch ends one hand-gap short of hand it meets.  Not every winding:
+  # settled wrap puts its two hands 44 degrees apart, which squeezes stretch between them
+  # away, so tiling is asked only of windings below.
   for degrees in countup(0, 359, 7):
     doAssert abs(outlineRadius(float(degrees)) - BODY_RADIUS) < 1e-9,
       &"The boundary is not a circle; got `{outlineRadius(float(degrees))}` at `{degrees}`."
@@ -90,6 +107,50 @@ proc checkFrame*() =
   let squeezed = border(rest(squeezed_wind), Dancer.Lead)
   doAssert squeezed.count("<path") == 1,
     &"Extreme winding should squeeze one stretch away; got `{squeezed.count(\"<path\")}`."
+
+  # And wherever settle table puts hand, rim breaks round it.  At every settle of table, on
+  # each single hold at each quarter turn of follow, every stretch drawn for either dancer
+  # stays hand-gap off both of their hands.  Read off rim as drawn: winding that carries hand
+  # to its spot wrong way round still puts it in right place, but leaves stretch running
+  # through it, and tiling above cannot see that, since it asks nothing of where hands are.
+  const written = radToDeg(arcsin(0.05 * sqrt(2.0) / BODY_RADIUS))
+    ## Furthest one decimal of markup moves end of stretch round rim, in degrees.
+  var
+    rims_settled = 0
+    clear_least = Inf
+  # One loop for each axis of data: level, modifier, hold, turn of follow, dancer, stretch, hand.
+  # Split would hide its shape.
+  for level in Level:
+    for modifier in Modifier:
+      if settleHold(some level, some modifier).isNone:
+        continue
+      for single in SINGLES:
+        let arm = if single.holds[Arm.Left].isSome: Arm.Left else: Arm.Right
+        for turn in [0.0, 90.0, 180.0, 270.0]:
+          let
+            put = settled(
+              canonicalise(spinAbout(rest(), Dancer.Follow, turn)),
+              single.holds,
+              said(some level, arm),
+              said(some modifier, arm),
+            )
+            hands = handPoints(put)
+          for who in Dancer:
+            let centre = put.place[who]
+            for stretch in stretchesDrawn(border(put, who), centre):
+              for side in Arm:
+                let
+                  hand = bearing(hands[who][side].x - centre.x, hands[who][side].y - centre.y)
+                  past = floorMod(hand - stretch.start, 360.0)
+                  # How far hand stands off stretch, and how far inside it, as negative.
+                  clear = if past <= stretch.span: -min(past, stretch.span - past)
+                          else: min(past - stretch.span, 360 - past)
+                clear_least = min(clear_least, clear)
+                doAssert clear >= HAND_GAP - written,
+                  &"A rim runs through a hand; got `{decimal(clear, 1)}` degrees clear of " &
+                  &"`{who}` `{side}` on `{single.name}` held {level.word} {modifier.word}, " &
+                  &"follow turned `{turn}`."
+            inc rims_settled
 
   # Centred chevron stays well inside its own rim.
   doAssert CHEVRON_OUT + RIM_WIDTH < BODY_RADIUS,
@@ -183,7 +244,8 @@ proc checkFrame*() =
   doAssert ends_off < 0.3, &"A reach misses its hand; got `{ends_off}`."
   echo &"  frame: hands at rest exact; orbit collapses onto axis at " &
       &"({walked.axis}, {walked.facing}); every cycle closes; every rim is " &
-      &"quiet and breaks at its hands; a facing never steps more than " &
+      &"quiet and breaks at its hands, the {rims_settled} drawn at each settle no nearer " &
+      &"a hand than {decimal(clear_least, 1)} degrees; a facing never steps more than " &
       &"{decimal(biggest, 1)} degrees a frame; every reach stays on or outside " &
       &"the bodies (margin {decimal(worst, 2)}) and starts {HAND_RADIUS + CAP} from its " &
       &"hand (off by {decimal(ends_off, 2)})"
