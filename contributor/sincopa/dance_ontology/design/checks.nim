@@ -411,8 +411,8 @@ proc checkRules*() =
   # nothing loads yet -- see TODO in `rules.nim`.  One doAssert used to
   # compare it to its own spelled-out copy here, which checked nothing;
   # what drawing can actually be held to is half above.
-  told.add "`above` takes no lock or wrap, and leads only to high wrap " &
-      "or default"
+  told.add "`above` takes no lock or wrap; where it may lead next (`FROM_ABOVE`) " &
+      "is not checked"
 
   # RULE 9.  Connecting line's two halves are its two hands' own
   # colours.  Shades are asked of palette rather than spelled out
