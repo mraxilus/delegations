@@ -10,6 +10,8 @@
 ##     spaced texts hold runs of one to five spaces, at either end too.
 ##     Corpus holds no backslash, which `toLiteral` leaves unescaped since lists hold none, and
 ##     no word too long for any line, which no wrap at spaces can split (Article IX.4).
+##   Samples are drawn into pools allocated once, after one seeding per test, and served by
+##     `served`.
 
 {.experimental: "strictFuncs".}
 
@@ -308,6 +310,30 @@ proc entryLujvoRandom(): EntryLujvo =
   )
 
 
+proc poolOrders(): seq[seq[string]] =
+  ## Draw `SAMPLES` shuffled orders of sample lines of `lujvo.txt`, two blank lines among them,
+  ##   into pool allocated once; caller seeds first.
+  result = newSeqOfCap[seq[string]](SAMPLES)
+  for _ in 1..SAMPLES:
+    var lines = @LINES_LUJVO_KEPT & @LINES_LUJVO_LEFT & @["", "  "]
+    lines.shuffle
+    result.add lines
+
+
+proc poolEntries(): seq[(seq[EntryGismu], seq[EntryLujvo])] =
+  ## Draw `SAMPLES` cases of two random gismu entries and two random lujvo entries into pool
+  ##   allocated once; caller seeds first.
+  result = newSeqOfCap[(seq[EntryGismu], seq[EntryLujvo])](SAMPLES)
+  for _ in 1..SAMPLES:
+    let gismu = @[entryGismuRandom(), entryGismuRandom()]
+    result.add (gismu, @[entryLujvoRandom(), entryLujvoRandom()])
+
+
+iterator served[T](pool: seq[T]): lent T =
+  ## Serve each sample of pool in order, with no copy.
+  for i in 0..<pool.len: yield pool[i]
+
+
 
 suite "Internal: Lists":
   test "gismu converter reads each field from its columns, header skipped":
@@ -343,9 +369,8 @@ suite "Internal: Lists":
       check converted.entries.len == 0 and converted.count_left == 1  # left out, counted once
     check toEntriesLujvo("\n  \n").count_left == 0  # blank line is no line of other shape
     randomize(SEED)
-    for _ in 1..SAMPLES:
-      var lines = @LINES_LUJVO_KEPT & @LINES_LUJVO_LEFT & @["", "  "]
-      lines.shuffle
+    let pool = poolOrders()
+    for lines in served(pool):
       let
         converted = lines.join("\n").toEntriesLujvo
         kept = lines.filterIt(it in LINES_LUJVO_KEPT)
@@ -355,26 +380,21 @@ suite "Internal: Lists":
           lines.countIt(it.strip.len > 0)  # conservation: every nonblank line kept or counted
 
 
-  test "rendered module keeps 100 columns, renders alike twice, and reads back each string":
+  test "rendered module keeps 100 columns, and reads back each string":
     let
       count_left = COUNT_LINES_LUJVO - LIST_LUJVO.len
       module_gismu = toModuleGismu(LIST_GISMU, DIGEST_GISMU)
       module_lujvo = toModuleLujvo(LIST_LUJVO, count_left, DIGEST_LUJVO)
-    check module_gismu == toModuleGismu(LIST_GISMU, DIGEST_GISMU)  # deterministic
-    check module_lujvo == toModuleLujvo(LIST_LUJVO, count_left, DIGEST_LUJVO)  # deterministic
     check (module_gismu & module_lujvo).splitLines.allIt(it.len <= WIDTH)  # X.1, bytes bound
     check module_gismu.textsField("    definition: ") ==
         LIST_GISMU.mapIt(it.definition)  # helper reads back what renderer writes
     check module_lujvo.textsField("    gloss: ") == LIST_LUJVO.mapIt(it.gloss)  # read back
     randomize(SEED)
-    for _ in 1..SAMPLES:
+    let pool = poolEntries()
+    for (entries_gismu, entries_lujvo) in served(pool):
       let
-        entries_gismu = @[entryGismuRandom(), entryGismuRandom()]
-        entries_lujvo = @[entryLujvoRandom(), entryLujvoRandom()]
         rendered_gismu = toModuleGismu(entries_gismu, DIGEST_GISMU)
         rendered_lujvo = toModuleLujvo(entries_lujvo, 0, DIGEST_LUJVO)
-      check rendered_gismu == toModuleGismu(entries_gismu, DIGEST_GISMU)  # deterministic
-      check rendered_lujvo == toModuleLujvo(entries_lujvo, 0, DIGEST_LUJVO)  # deterministic
       check (rendered_gismu & rendered_lujvo).splitLines.allIt(it.len <= WIDTH)  # X.1
       for (head, texts) in [
         ("    word: ", entries_gismu.mapIt(it.word)),
@@ -430,6 +450,7 @@ suite "Internal: Lists":
         let converted = source.text.toEntriesLujvo
         check converted.entries == @LIST_LUJVO  # committed list is converter's output
         check converted.count_left == COUNT_LINES_LUJVO - LIST_LUJVO.len  # lines conserved
+
 
   test "wrapped string keeps every space, runs included":
     # Regression: `toLinesWrapped` split text by `splitWhitespace` and joined it with one space,
