@@ -225,26 +225,19 @@ async function driveRamp(page: Page, ranked: Tinted[]): Promise<void> {
  */
 export async function driveSums(page: Page): Promise<void> {
   const summed = await page.evaluate(() => {
-    const runs: Array<{
-      build: number; children: number; placing: number; emitting: number;
-    }> = [];
+    const runs: Array<{ build: number; children: number }> = [];
     for (let i = 0; i < 30; i += 1) {
       nimCameraOrbit(0.01, 0); // Move, as reader's frame does.
       const data = nimBuildFrame(1200 / 900, performance.now() / 1000, 900, true, true, false);
       const children = data.ms_camera + data.ms_place + data.ms_furniture + data.ms_scene +
         data.ms_matrix + data.ms_flatten + data.ms_unaccounted;
-      runs.push({
-        build: data.ms_build, children,
-        placing: data.ms_placing, emitting: data.ms_emitting,
-      });
+      runs.push({ build: data.ms_build, children });
     }
     const worst = runs.reduce((a, b) =>
       (Math.abs(b.build - b.children) > Math.abs(a.build - a.children) ? b : a));
     return {
       n: runs.length, off: worst.build - worst.children,
       build: worst.build, children: worst.children,
-      placing: Math.max(...runs.map((one) => one.placing)),
-      emitting: Math.max(...runs.map((one) => one.emitting)),
     };
   });
   report(
@@ -255,14 +248,36 @@ export async function driveSums(page: Page): Promise<void> {
     `worst of ${summed.n} frames: ${summed.build.toFixed(2)} against ` +
       `${summed.children.toFixed(2)} from its rows, off by ${summed.off.toFixed(3)} ms`,
   );
-  // Both sides of algebra boundary must carry real time on frame that draws scene: split
-  //   reading zero on one side is bracket that never ran, which is failure cut like this
-  //   hides.
+}
+
+/** Most frames of largest demo that both sides of algebra boundary get to read time in. */
+const FRAMES_SIDES_MOST = 300;
+
+/** Drive frames of largest demo until both sides of algebra boundary have read time.
+ *
+ *  Side that reads zero in every frame is bracket that never ran, which sum of rows does not
+ *  show. One frame can read zero with both brackets running: clock of page ticks in steps of
+ *  100 µs, and each side charges many shorter stretches. So frames run until each side reads
+ *  one tick, which takes few, and failure is side that reads none in all of them.
+ */
+export async function driveSidesCarryTime(page: Page): Promise<void> {
+  const first = await page.evaluate((frames_most) => {
+    let placing = 0;
+    let emitting = 0;
+    for (let frame = 1; frame <= frames_most && (placing === 0 || emitting === 0); frame += 1) {
+      nimCameraOrbit(0.01, 0); // Move, as reader's frame does.
+      const data = nimBuildFrame(1200 / 900, performance.now() / 1000, 900, true, true, false);
+      if (placing === 0 && data.ms_placing > 0.01) placing = frame;
+      if (emitting === 0 && data.ms_emitting > 0.01) emitting = frame;
+    }
+    return { placing, emitting };
+  }, FRAMES_SIDES_MOST);
+  const on = (frame: number): string => (frame > 0 ? `frame ${frame}` : 'no frame');
   report(
-    'and both sides of the algebra boundary carry time on a frame that draws',
-    summed.placing > 0.01 && summed.emitting > 0.01,
-    `placing peaked at ${summed.placing.toFixed(2)} ms, emitting at ` +
-      `${summed.emitting.toFixed(2)} ms`,
+    'both sides of the algebra boundary carry time on frames that draw the largest demo',
+    first.placing > 0 && first.emitting > 0,
+    `placing first read time on ${on(first.placing)}, emitting on ${on(first.emitting)}, ` +
+      `of at most ${FRAMES_SIDES_MOST}`,
   );
 }
 

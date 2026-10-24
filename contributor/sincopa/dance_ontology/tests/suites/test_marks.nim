@@ -2,9 +2,10 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, os, strformat, strutils, unittest]
+import std/[math, options, os, strformat, strutils, tables, unittest]
 
-import ../../design/[marks, parts, plain, rig_page]
+import ../../design/[checks, marks, parts, plain, rig_page]
+import ../../src/dance_ontology/draw/[body, geometry, route, style, terms]
 import ../../tools/title
 from ../../src/dance_ontology/rotation import facing, seenAfter
 
@@ -98,6 +99,70 @@ template holdPage(name: string) =
     checkpoint "paragraph over " & $SENTENCES & " sentences, opening: " & said
     fail()
 
+func pointsDrawn(path_data: string): seq[Point] =
+  ## Read back points one drawn run was smoothed from: `M`, each `Q`'s control, closing `L`.
+  for step in path_data.split({'M', 'Q', 'L'}):
+    let says = step.splitWhitespace
+    if says.len >= 2:
+      result.add (parseFloat(says[0]), parseFloat(says[1]))
+
+func bowedFrame(figure, shade: string; frame: int; swell: float): string =
+  ## Bow one frame of moving figure's half reach in `shade` by `swell` off its own chord.
+  var parts = figure.split("<path ")
+  for i, part in parts:
+    if &"stroke=\"{shade}\"" notin part:
+      continue
+    const opens = "attributeName=\"d\" values=\""
+    let
+      at = part.find(opens) + opens.len
+      shuts = part.find('"', at)
+    var frames = part[at ..< shuts].split(';')
+    let
+      run = pointsDrawn(frames[frame])
+      span = distance(run[0], run[^1])
+      across: Point = ((run[0].y - run[^1].y) / span, (run[^1].x - run[0].x) / span)
+    var bowed: seq[Point]
+    for k, point in run:
+      let lift = swell * sin(PI * float(k) / float(run.high))
+      bowed.add (point.x + across.x * lift, point.y + across.y * lift)
+    frames[frame] = smoothed(bowed)
+    parts[i] = part[0 ..< at] & frames.join(";") & part[shuts .. ^1]
+  parts.join("<path ")
+
+func drawnThrough(figure: string; shades: array[2, string]; point: Point): string =
+  ## Pull still figure's reach smoothly aside until its middle runs through `point`.
+  const opens = "d=\""
+  var
+    parts = figure.split("<path ")
+    found: array[2, int]
+    halves: array[2, seq[Point]]
+  for k, shade in shades:
+    for i, part in parts:
+      if &"stroke=\"{shade}\"" in part:
+        let at = part.find(opens) + opens.len
+        (found[k], halves[k]) = (i, pointsDrawn(part[at ..< part.find('"', at)]))
+  let
+    reach = halves[0] & halves[1][1 .. ^1]
+    middle = reach[halves[0].high]
+  var pulled: seq[Point]
+  for k, along in reach:
+    let pull = sin(PI * float(k) / float(reach.high))
+    pulled.add (along.x + (point.x - middle.x) * pull, along.y + (point.y - middle.y) * pull)
+  let runs = [pulled[0 .. halves[0].high], pulled[halves[0].high .. ^1]]
+  for k in 0..1:
+    let
+      part = parts[found[k]]
+      at = part.find(opens) + opens.len
+    parts[found[k]] = part[0 ..< at] & smoothed(runs[k]) & part[part.find('"', at) .. ^1]
+  parts.join("<path ")
+
+proc refusal(built: Parts): string =
+  ## Say what check of single-hand turns refuses figures for; nothing where it passes them.
+  try:
+    checkSingleTurns(built)
+  except AssertionDefect as refused:
+    result = refused.msg
+
 
 
 suite "Internal: Mark workbench":
@@ -116,6 +181,39 @@ suite "Internal: Mark workbench":
     var pages: seq[string]
     for page in PAGES: pages.add page.name
     check held == pages
+
+
+
+suite "Internal: The single-hand turns, checked as drawn":
+  ## Check of single-hand turns reads each reach off figures Reference places, so each law
+  ##   draws one figure of them wrong and asks `checks.checkSingleTurns` to refuse it.
+  ##   Found by audit of project (issue 698): check of rule 14 measured straight lines it built
+  ##     itself, so no drawing could fail it, and check of rule 22 measured reaches it routed
+  ##     itself.  Each law covers every kind of figure its rule holds: transition and whole
+  ##     round, which move, or position, edge's still and round's still.
+  test "a moving reach drawn bowed is refused as a wrap (rule 14)":
+    ## Red on 2026-10-23 against check that built its own lines: it passed both figures.
+    ##   Transition and whole round of follow turning on spot, Left to left, at frame six,
+    ##     halfway through first turn.
+    for key in ["tr_fa_0_0_1", "rd_fa_0"]:
+      var built = singleParts()
+      built[key] = bowedFrame(built[key], DEEP[Arm.Left], frame = 6, swell = 4.0)
+      checkpoint key
+      check "bows off its chord" in refusal(built)
+
+
+  test "a settled reach drawn through the lead's chevron is refused (rule 22)":
+    ## Red on 2026-10-23 against check that routed its own reaches: it passed all three.
+    ##   Left to left as follow turns on spot: position, edge's own still, and whole round's
+    ##     still, each at quarter it stands.  Chevron is mark of every settled reach.
+    for (key, quarter) in [("st_fa_0_1", 1), ("tr_fa_0_1_2_still", 1), ("rd_fa_0_still", 0)]:
+      let
+        standing = quarterPose(Manner.FollowAxis, quarter)
+        apex = chevronPoints(standing.place[Dancer.Lead], standing.facing[Dancer.Lead])[1]
+      var built = singleParts()
+      built[key] = drawnThrough(built[key], [DEEP[Arm.Left], INK[Arm.Left]], apex)
+      checkpoint key
+      check "ran through a mark" in refusal(built)
 
 
 

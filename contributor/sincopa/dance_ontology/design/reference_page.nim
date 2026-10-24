@@ -599,8 +599,9 @@ func pageBody(parts: Parts): string =
   <p class="lede">Every edge of the same-name chain of section D, walked by every manner of
   turn. Each manner takes the same two cells that section F uses, and the way each manner walks
   is read the same. This chain rests <b>{paired_rest}</b> rather than {hand_rest}, because
-  {hand_rest} its two connections lie through each other (rule 31). Its phase measures
-  {dual_phase}, where the phase of the cross-name chain measures {HAND_PHASE}.</p>
+  there its two connections run parallel and cross nothing. {hand_rest}, the two connections
+  cross, one over the other (rule 31). Its phase measures {dual_phase}, where the phase of the
+  cross-name chain measures {HAND_PHASE}.</p>
   <div class="grid wide">"""
   var g_count = 0
   for manner in Manner:

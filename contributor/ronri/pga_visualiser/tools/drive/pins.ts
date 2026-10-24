@@ -9,6 +9,8 @@
 //   it is set from, never adjusted to quiet failure unexamined. Failure just past bound on slow
 //   run says re-measure against previous commit first; failure at multiples of it is fault
 //   this exists for.
+//   Marker's bound is budget, and pins no fault: fault reads inside spread of unchanged code,
+//   so point count of marker suite pins it (Article VII.10, VII.12).
 //   Figure is median of batches, frame apart, wherever one call is too short to time alone:
 //   single mean of few hundred calls moves with one collection or one preemption.
 
@@ -20,14 +22,15 @@ import { pickPlane } from './ground';
 import { report, reportWithin } from './report';
 import { pixelOf } from './wheel';
 
-/** Ceiling each repaired fault is pinned under: 1.5 times slowest delegate reading.
+/** Ceiling of each speed check: 1.5 times slowest delegate reading.
  *
- *  Readings each is set from, and reading of fault it pins, are in `PROVENANCE.md`.
+ *  Readings each is set from, and reading of fault it pins, are in `PROVENANCE.md`. Budget
+ *  pins none, and says so beside its figure.
  */
 export const MILLISECONDS_PICK_HOVER = 2.6; // Fault: scene copied for each handle.
 export const MILLISECONDS_PICK_HOVER_LOADED = 7.2; // Same pick, at 5,038 objects.
 const MICROSECONDS_ANCHOR = 15; // Fault: extent tuple and object copied for each lookup.
-const MILLISECONDS_MARKER_PAIR = 1.1; // Fault: outline summed sample by sample.
+const MILLISECONDS_MARKER_PAIR = 2.5; // Budget; marker suite's count pins outline summed by sample.
 const MILLISECONDS_GRID_MOVING = 26; // Fault: fade sampled at each boundary.
 const MILLISECONDS_EMITTING_MOVING = 2; // Fault: ribbon expanded on CPU.
 
@@ -130,7 +133,7 @@ export async function drivePinMarker(page: Page): Promise<void> {
     return worst_at;
   }, { batches: BATCHES_MARKER, pairs: PAIRS_MARKER });
   reportWithin(
-    `a marker and its pulse shape without copying (worst: ${worst.word})`,
+    `a marker and its pulse shape inside their time budget (worst: ${worst.word})`,
     worst.milliseconds, 0, MILLISECONDS_MARKER_PAIR, 'ms, median of batch means',
   );
 }
