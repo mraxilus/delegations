@@ -62,7 +62,7 @@ declare global {
 }
 
 /** Shape of JS backend's deep copy, `nimCopy`: destination, source, type, and copy made. */
-type CopyNim = (destination: unknown, source: unknown, type: unknown) => unknown;
+export type CopyNim = (destination: unknown, source: unknown, type: unknown) => unknown;
 
 /** Stand wrapper in front of page's frame build, collecting what each frame costs.
  *
