@@ -89,7 +89,8 @@ round a body, so the line takes the short way. `checkRules` holds the drawing to
 > 1/2 of the circumference. it doesn't make sense to have a wrap or a lock without the line actually
 > going around the body
 
-Held by `checkRules`, for every lock and wrap but a high lock, which rule 41 frees.
+Held by `checkRules`, for every lock and wrap but a high lock, which rule 41 frees. It also routes
+each lock and wrap that the drawing allows at each whole degree that the follow turns.
 
 ### Rule 8
 
@@ -352,7 +353,8 @@ Left to left held low, turned from face to face.
 
 It answers the second sentence of rule 7. Held by `checkRules`, which draws a high lock on each
 single hold at each quarter turn of the follow. It prints how many of them hug less than rule 7
-asks, and at which arcs. It also routes a high lock at each whole degree that the follow turns.
+asks, and at which arcs. The check of rule 7 routes a high lock at each whole degree that the
+follow turns, with each other lock and wrap.
 
 ## Layout
 
