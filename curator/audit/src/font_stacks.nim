@@ -20,7 +20,8 @@
 ##     collector skips. Script builds its numeral from codepoint, so no literal stands for
 ##     reader of source alone.
 ##   Verdict: finding for each character page other than control draws from font face of
-##     system, each font face browser refused, and each numeral control page lacks.
+##     system, each run drawn in bold browser synthesises, each font face browser refused, and
+##     each numeral control page lacks.
 ##
 ##   Input, `written.json`, maps each page to three lists:
 ##     `runs`: each string page draws past ASCII, as `element`, `stack` (computed `font-family`),
@@ -30,7 +31,9 @@
 ##       folder of `written.json` names where it is not absolute;
 ##     `refused`: each font face browser did not load, as `family`, `weight` and `status`.
 ##   Output, `found.json`, maps each page to `characters`, each `element` and `codepoint` that font
-##     face of system would draw, once for each element, and to `refused`, copied as read.
+##     face of system would draw, once for each element; to `synthesised`, each `element` and
+##     `family` drawn in bold browser synthesises, with `weight` asked and `matched` weight its
+##     font face holds, once for each element and family; and to `refused`, copied as read.
 ##
 ##   Matching follows CSS Fonts 4 for `font-family` and `font-weight`:
 ##     Family names match without case, quotes stripped.
@@ -42,10 +45,18 @@
 ##       draws it.
 ##     Rule of set draws character where its `unicode-range` holds it, or it sets none, and its
 ##       file maps it (`font_files.nim`).
+##     Family drawing character at weight of 600 or more, from set matched at lighter weight,
+##       draws it in bold browser synthesises: glyphs no file page ships holds, which each
+##       engine thickens its own way (Article X.8; repository issue 730). CSS Fonts 4 names no
+##       bound (2.2.2); Chromium (`kBoldThreshold`) and Firefox (`SupportsBold`) both set 600.
 ##   Each file is read once, however many rules and pages name it.
 ##
 ##   Cost: weight alone is matched; `font-style` and `font-stretch` are unread, as no copy read
-##     them. Italic that page ships is later step.
+##     them. Italic that page ships is later step, and so is oblique browser synthesises.
+##   Cost: collector writes no `font-synthesis`, so page turning synthesis off still gets finding
+##     for bold; its text then draws lighter than it asks.
+##   Cost: bold is judged only in runs collector writes. Collector writing runs past ASCII alone
+##     hides bold of ASCII text, which only collector writing every character shows.
 ##   Cost: character is resolved alone, as `cmap` maps it. Browser picks font face per cluster,
 ##     so combining mark whose base font face lacks it can draw from font face this does not name.
 ##   Cost: text script writes only once reader acts stands in no place of control page.
@@ -56,7 +67,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, json, os, sequtils, sets, strutils, tables]
+import std/[algorithm, json, options, os, sequtils, sets, strutils, tables]
 import ./[findings, font_files]
 
 
@@ -72,6 +83,9 @@ const
   WEIGHT_BOLD = 700  ## Weight keyword `bold` names.
   WEIGHTS_UPWARD = 400 .. 500
     ## Weights wanted that look upward to 500 before they look downward (CSS Fonts 4).
+  WEIGHT_SYNTHESIS = 600
+    ## Weight asked from which browser synthesises bold, where set matched is lighter: Chromium's
+    ##   `kBoldThreshold`, and bold of `SupportsBold` in Firefox.
   DIRECTORY_FONT_FACES* = "build" / "font-faces"
     ## Folder of project, from its root, holding control page, `written.json` and `found.json`.
   FILE_CONTROL* = "control.html"  ## Control page, written before project's `drive`.
@@ -162,6 +176,13 @@ func weightMatched(wanted: int, bounds: seq[int]): int =
   else: (if above.len > 0: above[0] else: below[0])
 
 
+func weightFamily(own: seq[FontFace], wanted: int): int =
+  ## Pick weight family's rules settle on for `wanted`: `wanted` where range of rule holds it,
+  ##   else bound CSS Fonts 4 picks among bounds rules declare.
+  if own.anyIt(wanted in it.weights): wanted
+  else: weightMatched(wanted, own.mapIt(@[it.weights.a, it.weights.b]).concat)
+
+
 func isHolding(font_face: FontFace, codepoint: int): bool =
   ## Tell whether rule draws `codepoint`: its range holds it, or it sets none, and its file maps it.
   (font_face.ranges.len == 0 or font_face.ranges.anyIt(codepoint in it)) and
@@ -178,15 +199,30 @@ func isDrawn(
   var sets: OrderedTable[(int, int), seq[FontFace]]
   for font_face in own:
     sets.mgetOrPut((font_face.weights.a, font_face.weights.b), @[]).add font_face
-  let matched =
-    if own.anyIt(weight in it.weights): weight
-    else: weightMatched(weight, own.mapIt(@[it.weights.a, it.weights.b]).concat)
+  let matched = own.weightFamily(weight)
   for (bounds, set) in sets.pairs:
     if matched notin bounds[0] .. bounds[1]: continue
     if not set.anyIt(it.isHolding(codepoint)) and
         not font_faces.isDrawn(families.toOpenArray(1, families.high), weight, codepoint):
       return false
   true
+
+
+func boldSynthesised(
+  font_faces: seq[FontFace], families: openArray[string], weight, codepoint: int
+): Option[tuple[family: string, matched: int]] =
+  ## Find family drawing `codepoint` at `weight` in bold browser synthesises, with weight its set
+  ##   holds; none under bound, where font face of system draws, or where set matched is bold.
+  ##   Family draws where set matching weight holds `codepoint`, as browser falls back per
+  ##     character; where one of tied sets holds it, family is taken to draw it.
+  if weight < WEIGHT_SYNTHESIS: return
+  for family in families:
+    let own = font_faces.filterIt(it.family == family)
+    if own.len == 0: return  # family page does not ship ends search (Article X.8)
+    let matched = own.weightFamily(weight)
+    if not own.anyIt(matched in it.weights and it.isHolding(codepoint)): continue
+    if matched < WEIGHT_SYNTHESIS: return some((family: family, matched: matched))
+    return
 
 
 proc toFontFaces(
@@ -218,20 +254,30 @@ proc toFound*(written: JsonNode, directory: string): JsonNode =
     let font_faces = entry{"declared"}.toFontFaces(directory, read)
     var
       characters = newJArray()
+      synthesised = newJArray()
       reported: HashSet[(string, int)]
+      bolded: HashSet[(string, string)]
     for run in entry{"runs"}.getElems:
       let
         element = run["element"].getStr
         families = run["stack"].getStr.toFamilies
         weight = int(run["weight"].getFloat)
       for node in run["codepoints"].getElems:
-        let codepoint = node.getInt
+        let
+          codepoint = node.getInt
+          bold = font_faces.boldSynthesised(families, weight, codepoint)
+        if bold.isSome and (element, bold.get.family) notin bolded:
+          bolded.incl (element, bold.get.family)
+          synthesised.add %*{
+            "element": element, "family": bold.get.family, "weight": weight,
+            "matched": bold.get.matched,
+          }
         if (element, codepoint) in reported or font_faces.isDrawn(families, weight, codepoint):
           continue
         reported.incl (element, codepoint)
         characters.add %*{"element": element, "codepoint": codepoint}
     let refused = if entry{"refused"}.isNil: newJArray() else: entry["refused"]
-    result[page] = %*{"characters": characters, "refused": refused}
+    result[page] = %*{"characters": characters, "synthesised": synthesised, "refused": refused}
 
 
 func pageControl*(): string =
@@ -261,6 +307,14 @@ func toVerdict*(found: JsonNode, path: string): seq[Finding] =
         "Character falls to font face of system, which viewer may lack (Article X.8); got `" &
           page & "`: `" & character{"element"}.toText & "` draws `" &
           character{"codepoint"}.getInt.toNotation & "`.",
+      )
+    for bold in entry{"synthesised"}.getElems:
+      result.add finding(
+        path, 0,
+        "Page ships font face of each weight it draws, never bold browser synthesises (Article " &
+          "X.8); got `" & page & "`: `" & bold{"element"}.toText & "` asks `" &
+          bold{"family"}.toText & "` for weight `" & bold{"weight"}.toText &
+          "`, which draws from font face of weight `" & bold{"matched"}.toText & "`.",
       )
   if found{PAGE_CONTROL}.isNil:
     result.add finding(
