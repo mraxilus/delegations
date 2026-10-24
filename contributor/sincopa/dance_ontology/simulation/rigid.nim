@@ -60,8 +60,7 @@ const
   PARTED* = 0.02  ## Hands this far apart, in metres, are no longer joined.
   AT_END* = 0.02  ## Joint within this of its end, in radians, is at its end.
   GIVE* = 0.1  ## How far past its end joint may sit and still hold, in that
-                      ## end's ease.  Same reading, and same reason, old solver's
-                      ## `TOLERANCE` had: under three degrees at joint is less than
+                      ## end's ease: under three degrees at joint, which is less than
                       ## flesh gives.  Without it arm cannot rest against its limit
                       ## and slide along it, which is what arm does: hold reads
                       ## blocked at very moment limit is first touched, and torque
@@ -967,12 +966,11 @@ const
     ## and draw are springs toward where hands are meant to be, and spring
     ## wanting more than this is force dancer does not have: uncapped, hand
     ## twenty centimetres under its rise pulled with eighty newtons, through
-    ## joined hands, on partner's shoulder, and every girdle sat at its rope's end
-    ## before quarter turn.  Assumed.
+    ## joined hands, on partner's shoulder.  Assumed.
   DRAW = [40.0, 40.0, 10.0]  ## Per band, newtons per metre hands are drawn toward
-    ## where couple mean to carry them.  Weighted as old solver's `CENTRING` was,
-    ## two to two to one half, and weak on purpose: this is preference couple have,
-    ## not constraint.  Strong, it drags hands to one spot and arms trail into
+    ## where couple mean to carry them: forty held low or high, and ten held above,
+    ## ratio assumed.  Weak on purpose: this is preference couple have, not
+    ## constraint.  Strong, it drags hands to one spot and arms trail into
     ## swings no shoulder makes, and hold reads blocked when only hands were held
     ## wrongly.  Measured at two hundred newtons per metre: crown blocked at 0.34
     ## of turn where floor says it never blocks.
@@ -1094,10 +1092,8 @@ func join(couple: Couple, who: Body, arm: Arm): Vector =
 proc muscle(couple: Couple, arm_rig: ArmRig, force: Vector) =
   ## Carry this arm's wrist by `force`, put on as torque at shoulder and elbow
   ## with equal and opposite torque on link inside: what muscle does.
-  ##   Force on links alone pulled whole chain up through shoulder and dragged
-  ##     girdle to its rope's end -- shoulder five centimetres out of its socket
-  ##     in every still whose hands were still rising, and nothing pulling on
-  ##     any socket in life: muscle spans joint and pushes against link on its
+  ##   Force on links alone pulls whole chain up through shoulder, where nothing pulls
+  ##     on any socket in life: muscle spans joint and pushes against link on its
   ##     other side.  Torque at joint is lever from joint to wrist crossed with
   ##     force, so what arm feels is force at wrist, and what socket feels is
   ##     nothing.  Shoulder's reaction goes to girdle, which swings on sprung

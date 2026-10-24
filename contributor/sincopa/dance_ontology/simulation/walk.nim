@@ -623,8 +623,8 @@ proc standingSearched(
   ##   Every distance is asked, and one at ease is taken over one that merely
   ##     holds.  First distance that held was taken before, and first is chest to
   ##     chest: couple asked Face-to-back there had follow's free arm crushed between two
-  ##     torsos, shoulder at its rope's end, twist at its end, waist at forty,
-  ##     with nothing held -- couple would stand anywhere else.  Of two equal
+  ##     torsos, twist at its end, waist at forty, with nothing held -- couple would
+  ##     stand anywhere else.  Of two equal
   ##     distances, nearer is taken, as before.
   ##   Distance at ease outright ends search: no distance further out is nearer
   ##     to ease than nought, and of two equal, nearer is kept, so first at ease is
@@ -1265,8 +1265,9 @@ proc plannedWay*(
         let got = replayedWay(rig, band, links, is_away, head, path)
         if turnsHeld(got) > turnsHeld(result): result = got
         if turnsHeld(result) >= abs(most) - 1e-9: break search
-  # TODO: Name what ends planned way short of `most`: `Stop.None` with `which` at -1 names
-  #   nothing, so `design/rig` says in own words that no plan carries turn further.
+  # TODO: Name what ends planned way short of `most`: `Stop.None`, with no connection in
+  #   `which` and no hand in `whose`, names nothing, so `design/rig` says in own words that no
+  #   plan carries turn further.
   #   Candidates: `Stop` member for plan that ends, which says only that it ends; or stop read
   #     off plan's terms one solve past its end, which says which term gave, but that solve broke
   #     several terms at once, each by about 1 mm, on cross-name chain, 2026-10-12.
