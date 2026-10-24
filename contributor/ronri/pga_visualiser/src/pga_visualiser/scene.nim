@@ -836,18 +836,33 @@ func anchorOverride*(one: Object): Option[Position] = one.scene.anchor_overrides
   ##   See `creationAnchor`.
 
 
-func geometryAt*(scene: Scene, handle: int): lent Multivector =
-  ## Read object's geometry in place, by handle, without mutable scene.
-  ##   `lent`, not `var`: `var`-returning accessor read rather than written miscompiles
-  ##   under JS backend; borrow cannot be written through.
-  ##   `lent` pays only where result is never bound.
-  ##     Returning by value allocates fresh `Multivector` and `nimCopy`s field into it on
-  ##     JS backend, once per call.
-  ##     Confirmed in generated JavaScript that `lent` removes copy and binding result to
-  ##     `let` puts it back, so caller wanting saving uses call inline.
-  ##   Borrow lives only while scene is unchanged; do not hold one across edit.
-  doAssert scene.isAlive(handle), &"Object handle must be alive; got `{handle}`."
-  scene.geometries[handle]
+when defined(js):
+  template geometryAt*(scene: Scene, handle: int): Multivector =
+    ## Read object's geometry in place, by handle, without mutable scene.
+    ##   Template on JS backend: `lent` func there builds its default result, fresh
+    ##   `Multivector` in 128-byte array V8 backs off its heap, before returning slot over it.
+    ##     Placing reads every object each frame, so that was one build per object.
+    ##     `noinit` leaves that build in place, as library's own `+` shows.
+    ##   Expansion ends in `block`, so it is value rather than location.
+    ##     Write through it fails to compile, as through C's `lent`; see `test_scene`.
+    ##     JS hands slot on uncopied; binding result to `let` copies, as `lent` did.
+    ##   Borrow lives only while scene is unchanged; do not hold one across edit.
+    ##   Message concatenated: `fmt` macro cannot see template's own `let`.
+    let handle_read = handle
+    doAssert scene.isAlive(handle_read),
+      "Object handle must be alive; got `" & $handle_read & "`."
+    (block: scene.geometries[handle_read])
+else:
+  func geometryAt*(scene: Scene, handle: int): lent Multivector =
+    ## Read object's geometry in place, by handle, without mutable scene.
+    ##   `lent`, not `var`: borrow cannot be written through.
+    ##   Func on C backend, where `lent` is pointer and builds nothing.
+    ##     JS template's `block` would copy twice here, into temporary and out.
+    ##   `lent` pays only where result is never bound: binding result to `let` copies, so
+    ##   caller wanting saving uses call inline.
+    ##   Borrow lives only while scene is unchanged; do not hold one across edit.
+    doAssert scene.isAlive(handle), &"Object handle must be alive; got `{handle}`."
+    scene.geometries[handle]
 
 
 func setGeometryAt*(scene: var Scene, handle: int, geometry: Multivector) =

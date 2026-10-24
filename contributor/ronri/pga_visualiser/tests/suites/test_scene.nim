@@ -83,6 +83,15 @@ suite "Scene":
     check not scene.isAlive(OBJECTS_MAX)
 
 
+  test "a geometry read by handle cannot be written through":
+    # Every writer sits inside `scene`, so revision counts each edit. Read must refuse write
+    #   on both backends: `lent` func on C, template ending in `block` on JS.
+    var scene = initScene()
+    discard scene.addObject(POINTS[0], "a", Ink.Rose)
+    check not compiles(scene.geometryAt(0) = POINTS[1])
+    check not compiles(scene.geometryAt(0)[Basis.E1] = 1.0)
+
+
   test "scene fills to capacity and reports it":
     var scene = initScene()
     for i in 0..<OBJECTS_MAX:
