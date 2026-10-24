@@ -3235,7 +3235,7 @@ suiteInProc "Internal: Render":
     ) == @[
       "f/written.json", "b/crowded.json", "h/docket.html", "h/home.html",
       "--layout-only", "h/control_render.html",
-    ]  # run outside `koch drive` finds no control of font faces, and writes pages alone
+    ]  # no control page of font faces, so `written.json` holds pages alone
 
 
 

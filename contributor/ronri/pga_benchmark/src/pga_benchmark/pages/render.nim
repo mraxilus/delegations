@@ -74,8 +74,8 @@ func argumentsHarness*(
 ): seq[string] =
   ## List command line of harness: files it writes, `written` and `crowded`, then each page for
   ##   both reads, `control` for layout alone, and control page of font faces for text alone.
-  ##   Control page of font faces is one `koch drive` writes, absent outside it; `written` then
-  ##     holds pages alone, and nothing judges it.
+  ##   Control page of font faces is one `koch drive` writes and leaves in place; where none
+  ##     exists, `written` holds pages alone, and nothing judges it.
   result = @[written, crowded]
   result.add pages
   result.add [FLAG_LAYOUT_ONLY, control]
