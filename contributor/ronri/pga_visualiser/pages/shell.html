@@ -1447,11 +1447,11 @@
         <div class="diagnostic-line"><span>@WORD:NameDiagnosticsToEuclidean@</span
           ><b id="diagnostic-crossing-to-euclidean">&mdash;</b></div>
         <!-- Each step of drawing process, as `mean over last 200 ms (median over
-             whole ring)` in ms, so reader can see where frame went rather than one
-             opaque total. Short mean is what to watch while changing something and
-             long median settled figure to act on; neither is single frame, which
-             changes faster than anyone can read it. Rows that have children
-             carry chevron and open on click, and every one of them starts closed:
+             whole ring, or its mean where clock is coarse)` in ms, so reader can see
+             where frame went rather than one opaque total. Short mean is what to watch
+             while changing something and long median settled figure to act on; neither
+             is single frame, which changes faster than anyone can read it. Rows that
+             have children carry chevron and open on click, and every one of them starts closed:
              reader opens this panel to see whether frame is slow, and goes looking for
              *which step* only once it is. `refreshDiagnostics` skips whatever is closed,
              so subtotal nobody is reading costs nothing to keep offering.
@@ -1471,6 +1471,10 @@
         <div class="diagnostic-legend"><span>share of the frame &#183; log</span
           ><span class="diagnostic-legend-axis"><b>0</b
             ><span class="key-ramp" id="diagnostic-legend-ramp"></span><b>1</b></span></div>
+        <!-- Why brackets hold mean rather than median, said once where clock steps 1 ms
+             or more. -->
+        <p class="diagnostic-note" id="diagnostic-clock-coarse" hidden
+          >@WORD:NoteDiagnosticsClockCoarse@</p>
         <div class="diagnostic-node" data-node="build">
           <button class="diagnostic-line diagnostic-parent" type="button"
             ><span><span class="chev">&#9654;</span>build (bridge)</span
