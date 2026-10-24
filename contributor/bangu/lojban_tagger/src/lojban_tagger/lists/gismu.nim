@@ -1619,7 +1619,8 @@ const LIST_GISMU* = [
     rafsi: @["co'a"],
     keyword: "initiative",
     hint: "",
-    definition: "interval event contour: at the starting point of ...; initiative >|< |",
+    definition: "interval event contour: at the starting point of ...; " &
+        "initiative                   >|<    |",
   ),
   EntryGismu(
     word: "co'e",
@@ -1633,8 +1634,8 @@ const LIST_GISMU* = [
     rafsi: @["co'u"],
     keyword: "cessative",
     hint: "",
-    definition: "interval event contour: at the ending point of ... even if not done; cessative " &
-        "| >< |",
+    definition: "interval event contour: at the ending point of ... even if not done; " &
+        "cessative      |  >< |",
   ),
   EntryGismu(
     word: "cokcu",
@@ -8068,7 +8069,7 @@ const LIST_GISMU* = [
     rafsi: @["sir"],
     keyword: "straight",
     hint: "",
-    definition: "x1 is straight/direct/line segment/interval between x2 and x3; (adjective:) x1 " &
+    definition: "x1 is straight/direct/line segment/interval between x2 and x3; (adjective:)  x1 " &
         "is linear",
   ),
   EntryGismu(
@@ -10379,7 +10380,7 @@ const LIST_GISMU* = [
     keyword: "superfective",
     hint: "",
     definition: "interval event contour: continuing too long after natural end of ...; " &
-        "superfective | ---->",
+        "superfective  |     ---->",
   ),
   EntryGismu(
     word: "zabna",

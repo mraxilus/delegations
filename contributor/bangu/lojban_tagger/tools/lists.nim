@@ -10,7 +10,8 @@
 ##     left out, and module header counts them, so cut stays visible.
 ##   Each source is pinned by SHA-256: Debian moving list makes `lists` refuse and `head`
 ##     report, never silent rewrite of committed list.
-##   Rendering is deterministic and wraps each string under 100 columns at spaces, so
+##   Rendering is deterministic and wraps each string under 100 columns after runs of spaces,
+##     every space kept, so
 ##     `head` compares rendered text byte for byte with what is committed.
 ##   Cost: digest is read by shelling out to `sha256sum`, which `system` declares; standard
 ##     library holds no SHA-256.
@@ -143,8 +144,20 @@ func toLiteral(text: string): string =
   "\"" & text.replace("\"", "\\\"") & "\""
 
 
+func toSegments(text: string): seq[string] =
+  ## Split text after each run of spaces, so segments join back into text exactly.
+  var current = ""
+  for i, character in text:
+    current.add character
+    if character == ' ' and (i == text.high or text[i + 1] != ' '):
+      result.add current
+      current = ""
+  if current.len > 0: result.add current
+
+
 func toLinesWrapped(head, text, tail: string, as_literal = true): seq[string] =
-  ## Render `head` then `text` as literal then `tail`, split at spaces into `&` pieces.
+  ## Render `head` then `text` as literal then `tail`, split after runs of spaces into `&` pieces.
+  ##   Pieces join back into text exactly, every space kept, so wrapping changes no field.
   ##   Continuation lines take four spaces past head's indent (STYLE.md §5).
   ##   `as_literal = false` renders text as written, i.e. list of literals, and never splits it.
   let
@@ -155,14 +168,14 @@ func toLinesWrapped(head, text, tail: string, as_literal = true): seq[string] =
   var
     line = head
     piece = ""
-  for word in text.splitWhitespace:
-    let candidate = piece & word & " "
+  for segment in text.toSegments:
+    let candidate = piece & segment
     if (line & toLiteral(candidate) & " &").len > WIDTH and piece.len > 0:
       result.add line & toLiteral(piece) & " &"
       line = continuation
-      piece = word & " "
+      piece = segment
     else: piece = candidate
-  result.add line & toLiteral(piece.strip(leading = false)) & tail
+  result.add line & toLiteral(piece) & tail
 
 
 func toHeader(purpose, source: string, digest: string, extra: openArray[string]): seq[string] =
