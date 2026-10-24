@@ -2732,8 +2732,6 @@ proc nimBuildFrame(
     )
   SIGHT_FRAME = some(sight)
   template scale: DrawExtent = EXTENT_FRAME
-  # Derive frustum once, for cull of every point below; see `isPointInView`.
-  let bounds = CAMERA_PAGE.viewBoundsFor(eye, frame, scale, float(aspect), REACH_SCENE)
   # Recover width of centred box from aspect, since this build is handed that.
   #   Motor is kept first, so hold that aim makes is seen below.
   let
@@ -2755,6 +2753,9 @@ proc nimBuildFrame(
   )
   # Read both again only where aim's hold moved camera, so transform draws where it stands.
   if CAMERA_PAGE.motor != motor_offered: (eye, frame) = CAMERA_PAGE.sight
+  # Derive frustum once, for cull of every point below; see `isPointInView`.
+  #   Past hold, as desktop's `assembleMeshes` derives it, so cull reads stance frame draws.
+  let bounds = CAMERA_PAGE.viewBoundsFor(eye, frame, scale, float(aspect), REACH_SCENE)
 
   let
     ms_after_camera = performanceNow()

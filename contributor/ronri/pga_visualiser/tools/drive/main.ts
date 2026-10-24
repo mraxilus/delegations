@@ -17,6 +17,7 @@ import { driveMenuHung, driveMoreAtPointer } from './menus';
 import { driveAim, driveLook, drivePan, driveStretch } from './pan';
 import { driveWheel } from './wheel';
 import { driveFingerTurntable, driveTouchSelect, drivePinch, openTouch } from './touch';
+import { driveCullHeld } from './held';
 import {
   driveBackdropPlane, driveCrowd, driveEmptyRelease, drivePausedDrag, drivePointFills,
   driveTouchConstruct, driveTwoFingerPan,
@@ -268,6 +269,8 @@ async function driveSimulated(browser: Browser): Promise<void> {
   // First, while demo stands as loaded and nothing in it moves.
   await driveCopiesStill(page, objects_largest);
   await driveCulling(page);
+  // Beside cull, under largest demo, where objects stand at every edge of frame.
+  await driveCullHeld(page, devtools);
   await driveOccluded(page);
   await driveFarSky(page);
   await driveDiscUnderfoot(page);
