@@ -11,6 +11,7 @@ import { accessSync, constants, existsSync, readFileSync } from 'node:fs';
 import { basename, delimiter, join } from 'node:path';
 import { countFailed, countRun, report } from './report';
 import { focusCanvas } from './gestures';
+import { driveBulkUndo, driveFieldsHeld, driveHoverWhileMoving } from './acts';
 import { driveKeys, driveKeysChorded } from './keys';
 import { driveEscape } from './escape';
 import { driveMenuHung, driveMoreAtPointer } from './menus';
@@ -252,11 +253,15 @@ async function driveSimulated(browser: Browser): Promise<void> {
   await driveRuler(page);
   await driveSceneBuilt(page);
   await driveDrawerCost(page);
-  // Key and menu checks, last on opening scene: demo below replaces it.
+  // Key and menu checks, and acts both front-ends share, last on opening scene: demo below
+  //   replaces it.
   await driveKeysChorded(page);
   await driveEscape(page);
   await driveMenuHung(page);
   await driveMoreAtPointer(page);
+  await driveBulkUndo(page);
+  await driveFieldsHeld(page);
+  await driveHoverWhileMoving(page);
 
   // Demo runs last, and under load: it builds thousands of objects, and every check above is
   //   written against opening scene's own weight.

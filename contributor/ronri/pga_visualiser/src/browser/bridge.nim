@@ -1561,8 +1561,19 @@ proc nimSetCameraDistance(v: cfloat) {.exportc.} =
   CAMERA_PAGE.dollyTo float(v)
 
 
-proc nimSetCameraFov(v: cfloat) {.exportc.} = CAMERA_PAGE.degrees_field_of_view = float(v)
-  ## Rewrite vertical field of view, in degrees.
+proc nimDistanceLimitNear(): cfloat {.exportc.} = cfloat(DISTANCE_LIMIT_NEAR)
+  ## Report nearest eye may orbit to pivot; see `camera.DISTANCE_LIMIT_NEAR`.
+
+proc nimFieldOfViewLeast(): cfloat {.exportc.} = cfloat(DEGREES_FIELD_OF_VIEW_LEAST)
+  ## Report narrowest field of view either front-end lets reader set, in degrees.
+
+proc nimFieldOfViewMost(): cfloat {.exportc.} = cfloat(DEGREES_FIELD_OF_VIEW_MOST)
+  ## Report widest field of view either front-end lets reader set, in degrees.
+
+proc nimSetCameraFov(v: cfloat) {.exportc.} =
+  ## Rewrite vertical field of view, in degrees, held inside its bounds.
+  ##   See `camera.fieldOfViewHeld`, which desktop's field writes through too.
+  CAMERA_PAGE.degrees_field_of_view = fieldOfViewHeld(float(v))
 
 proc nimSetCountingLifts(is_counting: bool) {.exportc.} = setCountingLifts(is_counting)
   ## Open or close tally of motor lifts, for driven checks; see `boundary.setCountingLifts`.
@@ -1590,6 +1601,10 @@ proc nimSetCameraDragging(is_dragging: bool) {.exportc.} =
   ##   Orbit or pan drag, or two fingers on canvas.
   ##   What that means for hover is `interaction.updateHover`'s to say.
   INTERACTION_PAGE.is_dragging_camera = is_dragging
+
+
+proc nimIsMovingCamera(): bool {.exportc.} = INTERACTION_PAGE.isMovingCamera
+  ## Report whether pointer or key moves camera right now; see `interaction.isMovingCamera`.
 
 
 proc nimUpdateHover(width, height: cint) {.exportc.} =
@@ -1693,6 +1708,20 @@ proc nimSelectClear() {.exportc.} = SELECTION_PAGE.clear()
 proc nimSelectionAllHidden(): bool {.exportc.} =
   ## Forward to `selection.isAllHidden`.
   SELECTION_PAGE.isAllHidden(SCENE_PAGE)
+
+
+proc nimSetSelectionVisible(is_visible: bool) {.exportc.} =
+  ## Show or hide every picked object, as one step of undo, as desktop's menu does.
+  ##   Forwards to `selection.setVisibleAll`.
+  SELECTION_PAGE.setVisibleAll(SCENE_PAGE, is_visible)
+  HISTORY_PAGE.record(SCENE_PAGE, CAMERA_PAGE)
+
+
+proc nimRemoveSelection() {.exportc.} =
+  ## Remove every picked object, as one step of undo, as desktop's menu does.
+  ##   Forwards to `selection.removeAll`, which drops every pick too.
+  SELECTION_PAGE.removeAll(SCENE_PAGE)
+  HISTORY_PAGE.record(SCENE_PAGE, CAMERA_PAGE)
 
 
 proc nimAnimationMilliseconds(): cint {.exportc.} = cint(ANIMATION_MILLISECONDS)
