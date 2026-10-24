@@ -70,7 +70,7 @@ func degrees*(radians: float): float = radians * 180.0 / PI
 
 
 proc toAche(couple: Couple, who: Body, arm: Arm): Ache =
-  ## Read one arm's six joints, each against its own two ends.
+  ## Read one arm's five degrees of freedom (`Dof`), each against its own two ends.
   ##   Twist's ends are swapped for left arm, as `twistEnds` has it, so range
   ##     quoted here is arm's own rather than rig's unmirrored one.
   let
@@ -118,7 +118,7 @@ proc stillAsked(
   head: Body,
   is_either_way: bool,
   who: Body,
-  over: int,
+  over: Option[Arm],
 ): Shown =
   ## One still, `who` turning, from distance couple stand for it, or none if no distance
   ## holds.
@@ -240,13 +240,13 @@ proc still*(
   head = Body.Two,
   is_either_way = false,
   who = Body.Two,
-  over = -1,
+  over = none(Arm),
 ): Shown =
   ## One still, `who` turning, from distance couple stand for it, or none if no distance
   ## holds (`stillAsked`).
   ##   Card that asks what another card asks reads still that one stood, under its own name.
   ##   Reflected twin is not asked here: page mirrors still its twin keeps (`design/twins`).
-  ##   Card that draws crossing names lead's arm laid over (`over`), by ordinal; none below nought.
+  ##   Card that draws crossing names lead's arm laid over (`over`), or none.
   result = kept(
     STILLS,
     key(rig, links, $band, bits(turns), $is_away, $head, $is_either_way, $who, $over),

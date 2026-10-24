@@ -12,8 +12,8 @@
 ##   |          | it into one self-contained file, build Reference, then rig viewer     |
 ##   | assets   | fetch font faces pages embed from repository store into build/fonts   |
 ##   | types    | type-check harness `tools/drive/`, and emit it into build/drive        |
-##   | drive    | build every page, render each and control as publish host serves it, |
-##   |          | and fail where font face of system draws character beyond ASCII       |
+##   | drive    | build every page, then read each as publish host serves it, and       |
+##   |          | control page koch drive writes, into build/font-faces/written.json    |
 ##   | fixtures | rewrite design/review-fixtures.json from page just built: run when    |
 ##   |          | Architect rules on cards, never to quiet check that says one moved    |
 ##   | confirmed| rewrite design/confirmed-fixtures.json from page just built: run when |
@@ -79,6 +79,7 @@ const
     ("git", true, "clone engine's source at its pinned commit; `engine` shells out to it"),
     ("binutils", true, "archive engine's objects into one library; `engine` runs `ar`"),
     ("nodejs", true, "run type-checker `types` drives and harness `drive` runs"),
+    ("libbrotli1", true, "decode `woff2` font faces pages ship; `koch drive` reads their `cmap`"),
     ("chromium", false, "browser `shot` drives; helper takes its path from environment"),
   ]
     ## System packages this build needs present before it runs, with what each is for
@@ -89,6 +90,9 @@ const
     ##   Flag says whether runner installs it: it installs what `system` prints, and opens
     ##   nothing else.  `engine` needs first two and C compiler, which Nim brings already and
     ##   so is not named twice, and every suite builds engine.  `types` and `drive` need node.
+    ##   `libbrotli1` serves `koch drive`, which reads `cmap` of each font face pages ship:
+    ##   Commit Mono ships as `woff2`, whose tables are one Brotli stream (CONTRIBUTOR.md,
+    ##   Pages and assets).
     ##   Chromium that `drive` renders with is Playwright's own, which `drive` fetches at
     ##   revision lock pins, so runner installs no browser.  `chromium` here is `shot`'s, which
     ##   person runs by hand, and `shot` prints it where it builds.  `pages`, `fixtures`,
@@ -117,9 +121,14 @@ const
     ##     `build/suites/`, and `drive` writes hosted copies under `build/hosted/`.
   BUILD_HOSTED = BUILD / "hosted"
     ## Directory each page lands in as publish host serves it, for harness to render.
-  PATH_FOUND = BUILD / "found.json"  ## What harness found on each page, as data (`render.nim`).
-  PATH_CONTROL = "tests" / "drive" / "control_font_faces.json"
-    ## Fixture control page is built from; under `tests/`, as `design/render.nim` says why.
+  DIRECTORY_FONT_FACES = BUILD / "font-faces"
+    ## Directory `koch drive` writes control page into, and reads `written.json` from, writing
+    ##   `found.json` beside it (`curator/audit/src/font_stacks.nim`).
+  PATH_CONTROL = DIRECTORY_FONT_FACES / "control.html"
+    ## Control page `koch drive` writes before this verb; absent where verb runs alone on
+    ##   fresh build.
+  PATH_WRITTEN = DIRECTORY_FONT_FACES / "written.json"
+    ## What collector read on each page and on control page, for `koch drive` to resolve.
   PAGE_UNBUNDLED = BUILD / "app" / "index.html"
     ## Explorer before `bundle` folds its script in. Not driven: it loads `app.js` beside it,
     ##   which hosted copy has not, and `app/artifact.html` is same page as published.
@@ -418,16 +427,19 @@ proc browser() =
 
 
 proc drive() =
-  ## Build every page, render each and control as publish host serves them, and fail where
-  ## font face of system would draw character beyond ASCII (CONTRIBUTOR.md, Pages and assets).
-  ##   Every page `pages` writes is driven, but `PAGE_UNBUNDLED`, so page added later is
-  ##     driven without being named here. Name is its path under `build/`, `/` read as `-`.
-  ##   Control is built from fixture and dressed as every page is, so it ships same font faces.
-  ##   Harness writes what it found; `render.nim` judges it, and each finding prints here.
+  ## Build every page, then read each one and control page `koch drive` writes with one
+  ## collector, into `build/font-faces/written.json` (CONTRIBUTOR.md, Pages and assets).
+  ##   Every page `pages` writes is read, but `PAGE_UNBUNDLED`, so page added later is read
+  ##     without being named here. Name is its path under `build/`, `/` read as `-`.
+  ##   Page is read as publish host serves it (`render.hosted`). Control page is read as
+  ##     `koch drive` wrote it, outside skeleton: it declares its own charset, and skeleton adds
+  ##     no place text stands in.
+  ##   `koch drive` resolves file once this passes, and reports each finding; this judges nothing.
+  ##     Where no control page stands, as where verb runs alone on fresh build, file holds
+  ##     pages alone, and verb says so.
   types()
   browser()
   pages()
-  let paragraphs = parseFile(PATH_CONTROL).toParagraphs
   removeDir(BUILD_HOSTED)
   createDir(BUILD_HOSTED)
   var paths: seq[string]
@@ -437,13 +449,13 @@ proc drive() =
         ".html"
     writeFile(hosted_path, hosted(readFile(path)))
     paths.add hosted_path
-  let path_control = BUILD_HOSTED / CONTROL & ".html"
-  writeFile(path_control, hosted(withFontFaces(pageControl(paragraphs))))
-  paths.add path_control
-  removeFile(PATH_FOUND)
+  let found_control = fileExists(PATH_CONTROL)
+  if found_control: paths.add PATH_CONTROL
+  createDir(DIRECTORY_FONT_FACES)
+  removeFile(PATH_WRITTEN)
   let
     process = startProcess(
-      "node", args = @[ENTRY_HARNESS, PATH_FOUND] & paths, options = {poUsePath, poParentStreams}
+      "node", args = @[ENTRY_HARNESS, PATH_WRITTEN] & paths, options = {poUsePath, poParentStreams}
     )
     code = process.waitForExit
   process.close
@@ -453,19 +465,13 @@ proc drive() =
       PATH_HARNESS & ":0: Render of pages failed, as harness printed above; got exit `" &
       $code & "`.",
     )
-  let findings = checkRendered(
-    parseFile(PATH_FOUND),
-    findingsExpected(paragraphs),
-    CONTROL,
-    BUILD_HOSTED,
-  )
-  for finding in findings: echo finding.render
-  if findings.len > 0:
-    raise newException(
-      OSError, "Drive found font face of system drawing; got `" & $findings.len & "` finding(s)."
-    )
-  echo "Font faces of ", paths.len - 1,
-      " pages proven, and control raised every finding it expects."
+  if found_control:
+    echo "Wrote ", PATH_WRITTEN, " from ", paths.len - 1, " pages and control page."
+  else:
+    echo "Wrote ", PATH_WRITTEN, " from ", paths.len, " pages, and no control page: none ",
+        "stands at ", PATH_CONTROL, "."
+  echo "Findings on font faces are `koch drive`'s: it writes control page, runs this verb, ",
+      "then resolves that file."
 
 
 proc system() =

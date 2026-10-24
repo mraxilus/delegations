@@ -1,6 +1,9 @@
-// Read what rendered page writes, and faces it declares, as browser computed them; not Nim
-//   because every expression here runs inside page through Playwright's `evaluate`, which
+// Collect what rendered page writes, and font faces it declares, as browser computed them; not
+//   Nim because every expression here runs inside page through Playwright's `evaluate`, which
 //   Nim reaches only as unchecked string, where TypeScript checks it against DOM's own types.
+//   This is collector `koch drive` judges through (CONTRIBUTOR.md, Pages and assets): it reads
+//     each page `drive` builds, and control page `koch drive` writes, and judges none.
+//     `font_stacks.nim` of curator resolves what it reads.
 //   Text read is every string page draws:
 //   - text nodes, SVG `text` and `tspan` among them, past `script`, `style`, `title`, `desc`,
 //     `metadata` and `noscript`, which draw none;
@@ -10,6 +13,8 @@
 //     in decimal, and Chromium paints `disc` as shape rather than glyph.
 //   Each string is read with `font-family` and `font-weight` of element drawing it, and
 //     `text-transform` applied, since uppercase of character is other codepoint.
+//   Each `@font-face` rule is read as CSSOM serialises its descriptors, and each font face
+//     browser refuses is read with status it reached: one refused draws nothing it declares.
 //   Every `details` opens first, and every element shows: element behind tab or filter that
 //     `:has()` rules hide still carries computed style, so every state of page reads in one
 //     pass. Showing is for cost alone. Chromium styles hidden element on demand, one by one,
@@ -20,7 +25,6 @@
 //     gates on other width is unread.
 
 import type { Page } from '@playwright/test';
-import type { Declared } from './faces';
 
 /** One string page draws in one element, with stack and weight it is drawn at. */
 export interface Run {
@@ -30,23 +34,32 @@ export interface Run {
   codepoints: number[];
 }
 
-/** One face page declares, with status browser reached loading it. */
-export interface Loaded {
+/** One `@font-face` rule page declares, as browser's CSSOM serialises its descriptors. */
+export interface Rule {
+  family: string;
+  weight: string;
+  range: string;
+  source: string;
+}
+
+/** One font face page declares that browser did not load, with status it reached. */
+export interface Refused {
   family: string;
   weight: string;
   status: string;
 }
 
-/** Everything one page writes and declares. */
-export interface Written {
+/** Everything collector reads of one page. */
+export interface Collected {
   runs: Run[];
-  declared: Declared[];
-  loaded: Loaded[];
+  rules: Rule[];
+  refused: Refused[];
   count_elements: number;
 }
 
-/** Read every run beyond ASCII page draws, every face it declares, and what each face loaded. */
-export async function readWritten(page: Page): Promise<Written> {
+/** Collect every run beyond ASCII page draws, every `@font-face` rule it declares, and every
+ *  font face browser refused. */
+export async function collect(page: Page): Promise<Collected> {
   return await page.evaluate(async () => {
     const silent = 'script, style, title, desc, metadata, noscript';
     const types_button = new Set(['button', 'reset', 'submit']);
@@ -138,12 +151,12 @@ export async function readWritten(page: Page): Promise<Written> {
       add(element, '::marker', joinStrings(getComputedStyle(element).listStyleType));
     }
 
-    // Read every face rule of every sheet, as CSSOM serialises its descriptors.
-    const declared: Declared[] = [];
+    // Read every `@font-face` rule of every sheet, as CSSOM serialises its descriptors.
+    const rules: Rule[] = [];
     for (const sheet of document.styleSheets) {
       for (const rule of sheet.cssRules) {
         if (!(rule instanceof CSSFontFaceRule)) continue;
-        declared.push({
+        rules.push({
           family: rule.style.getPropertyValue('font-family'),
           weight: rule.style.getPropertyValue('font-weight'),
           range: rule.style.getPropertyValue('unicode-range'),
@@ -152,13 +165,12 @@ export async function readWritten(page: Page): Promise<Written> {
       }
     }
 
-    // Load every face, so one browser refuses reads as refused rather than as never asked.
-    const faces = [...document.fonts];
-    await Promise.allSettled(faces.map(async (face) => await face.load()));
-    const loaded = faces.map((face) => ({
-      family: face.family, weight: face.weight, status: face.status,
-    }));
+    // Load every font face, so one browser refuses reads as refused rather than as never asked.
+    const font_faces = [...document.fonts];
+    await Promise.allSettled(font_faces.map(async (font_face) => await font_face.load()));
+    const refused = font_faces.filter((font_face) => font_face.status !== 'loaded')
+      .map(({ family, weight, status }) => ({ family, weight, status }));
 
-    return { runs, declared, loaded, count_elements: elements.length };
+    return { runs, rules, refused, count_elements: elements.length };
   });
 }
