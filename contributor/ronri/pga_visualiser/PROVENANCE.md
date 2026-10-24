@@ -8,7 +8,7 @@ _Who made this, from what, and how far it has been checked._
 | Author  | Claude Opus 5 and Claude Sonnet 5 |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | c523b64950d1f7de |
+| Rules   | 0ff7fe750293e4e9 |
 | Pruned  | 49b8f1c6ca50b0bb20472edd1cc819a6d7222045 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
@@ -388,13 +388,18 @@ limit of time as a fallback, which a loaded machine meets with no page fault. Ve
 
 **A speed bound is 1.5 times the slowest reading on a delegate, rounded up to two figures.** Runners
 and delegates meet it, and each fault that a bound pins reads over it. A fault reads as `pins.ts`
-recorded it on a delegate on 2026-09-07, under the figure that the check took then.
+recorded it on a delegate on 2026-09-07, under the figure that the check took then. A bound whose
+fault reads inside the spread of unchanged code is a budget, and pins no fault (Article VII.12). The
+bound of the marker is a budget, and a count pins its fault.
 
 Delegate readings are from 20 or 21 runs of the drive on one delegate, from 2026-09-28 to
 2026-09-30, alone and in the gate. The anchor readings are from 11 runs of the measured page up to
 its pins, on 2026-09-30. The marker readings are from 11 such runs on 2026-10-04, with each outline
-shaped once for each pair (Marker pulse). Runner readings are from one CI run of the change that set
-each bound. The runner reading of the marker is from the drive job on `d305c68c`.
+shaped once for each pair (Marker pulse). A slower delegate read the marker at up to 1.66 ms in 4
+full drives on 2026-10-15. That reading sets its bound (repository issue 635).
+
+Runner readings are from one CI run of the change that set each bound. The runner reading of the
+marker is from the drive job on `d305c68c`.
 
 The still frame, the moving frame and the frame after an edit read a full build in every frame
 (Render paths). Those rows are from 20 runs of the measured page on one delegate, on 2026-10-05, in
@@ -411,7 +416,7 @@ an edit they read 1.5 to 2.4 ms.
 | Moving frame, median | 3 ms | | 1.3 to 2.0 | |
 | Hover pick | 2.6 ms | 0.1 | 0.2 to 1.7 | 7.1 |
 | Anchor lookup | 15 µs | 5.0 | 7.0 to 10.0 | 280 |
-| Marker and its pulse, worst kind | 1.1 ms | 0.38 | 0.34 to 0.70 | 3.2 |
+| Marker and its pulse, worst kind | 2.5 ms | 0.38 | 0.34 to 1.66 | 3.2, budget |
 | Moving grid, median | 26 ms | 4.3 | 6.3 to 17.1 | 26.1 |
 | CPU emit, median | 2 ms | 0.3 | 0.3 to 1.3 | 6.3 |
 | Edit past the timeline capacity, at 5,038 | 9.6 ms | 1.7 | 1.7 to 6.4 | |
@@ -419,10 +424,9 @@ an edit they read 1.5 to 2.4 ms.
 | Hover pick, at 5,038 | 7.2 ms | 1.9 | 1.2 to 4.8 | |
 
 The marker fault read 3.2 ms against 1.2 ms repaired, both with each outline shaped twice, so it
-costs 2.7 times the repair. Assumed: the ratio holds where the check shapes each outline once. The
-fault then reads 0.91 ms at least on a delegate, and 1.0 ms on the runner, both under the bound. So
-the bound holds that fault only where the repair reads 0.42 ms or more: 9 of the 11 delegate runs.
-The point count of the marker suite holds it on every run (Selection and markers).
+costs 2.7 times the repair. The repair alone read 0.34 to 1.66 ms across delegates, a spread of
+almost 5 times. So the fault reads inside the spread of unchanged code, and its bound is a budget.
+The point count of the marker suite pins the fault on every run (Selection and markers).
 
 The moving grid fault reads over its bound by 0.1 ms only. A check with no fault reading pins a
 budget rather than a repair.
@@ -1079,8 +1083,8 @@ samples count. A wait for vsync, or a sample with no page script on its stack, h
 Nim.** `sampler.nim` arms `timer_create` on `CLOCK_THREAD_CPUTIME_ID`, at 250 samples each busy
 second. The handler allocates nothing. It walks out from the innermost frame to the first that
 `share.ownerOfPath` names a side for, and adds one atomically. This runs on Linux alone, in a build
-that keeps stack frames, and elsewhere the rows say why. Rejected: the own profiler of Nim, which
-read 30 to 41% against 26% and made the frame 2.2 times slower.
+that keeps stack frames, and elsewhere the section says why once. Rejected: the own profiler of Nim,
+which read 30 to 41% against 26% and made the frame 2.2 times slower.
 
 **The walk of the frames of Nim reads low against native unwinding.** A sample that lands in the
 push or pop of a small library proc, such as `[]`, misses its frame. On the same samples the walk
@@ -1090,9 +1094,12 @@ measurement found, at 4.515 against 4.506 ms and 4.250 against 4.232 ms for each
 
 **The page samples with the own profiler of the browser, where the browser allows it.** Chromium
 alone has one, and only on a page whose own response carries `Document-Policy: js-profiling`. A page
-opened from a file is refused, and a `<meta>` copy of the policy changes nothing. The rows then say
-why, and give no figure. The profiler gives no interval under 10 ms. Each window of 2 s stops and
-hands in its trace, and the next starts at once, at a cost of 0.2 to 0.3 ms.
+opened from a file is refused, and a `<meta>` copy of the policy changes nothing. The section then
+says why once, in place of its four shares, as the desktop does. Rejected: the reason in each of the
+four rows, where it wrapped into the name of the row.
+
+The profiler gives no interval under 10 ms. Each window of 2 s stops and hands in its trace, and the
+next starts at once, at a cost of 0.2 to 0.3 ms.
 
 **The two front-ends read different shares, because their busy time holds different work.** The busy
 time of the desktop holds the layout of its panel and the submission of its draws. The page leaves
@@ -1115,9 +1122,9 @@ page less the engine over seven runs.
 *Checked.* Verified by `suites.nim`: the rule names the owner of names from the built page and of
 desktop paths. It names a stack by its innermost owned frame, and the ring pools 20 s. On Linux, the
 sampler counts a loop of products as PGA's, at 82 to 85% of about 100 samples. Verified by driven
-check: the page from a file says why it cannot sample, and the served page agrees with the engine on
-each side. Verified on 2026-10-06 by `xvfb-run -a binaries/rga_visualiser --hidden --novsync
---timings --frames:300 --demo:5038`: the desktop figures above.
+check: the page from a file says why once, and the served page agrees with the engine on each side.
+Verified on 2026-10-06 by `xvfb-run -a binaries/rga_visualiser --hidden --novsync --timings
+--frames:300 --demo:5038`: the desktop figures above.
 
 ## Values crossing the boundary
 

@@ -924,19 +924,16 @@ func blankSpansCode(line: string): string =
       i = close + n
 
 
-func linksOut(line: string, labels: openArray[string]): string =
-  ## Blank each link of line: `[text](url)`, and `[text][label]` or `[label]` whose label
-  ##   message defines. Bracket opening no link stays text.
+iterator spansLink(line: string, labels: openArray[string]): tuple[start, stop: int] =
+  ## Yield span of each link of line: `[text](url)`, and `[text][label]` or `[label]` whose
+  ##   label message defines. Bracket opening no link is passed over.
   var i = 0
   while i < line.len:
     if line[i] != '[':
-      result.add line[i]
       inc i
       continue
     let close = line.find(']', i + 1)
-    if close < 0:
-      result.add line[i .. ^1]
-      break
+    if close < 0: break
     let text = line[i + 1 ..< close]
     var stop = -1  # Index past link; none where bracket opens no link.
     if close + 1 < line.len and line[close + 1] == '(':
@@ -948,48 +945,87 @@ func linksOut(line: string, labels: openArray[string]): string =
         let label = line[close + 2 ..< shut]
         if (if label.len == 0: text else: label).toLowerAscii in labels: stop = shut + 1
     elif text.toLowerAscii in labels: stop = close + 1
-    if stop < 0:
-      result.add '['
-      inc i
+    if stop < 0: inc i
     else:
-      result.add ' '.repeat(stop - i)
+      yield (i, stop)
       i = stop
 
 
+func linksOut(line: string, labels: openArray[string]): string =
+  ## Blank each link of line (`spansLink`); bracket opening no link stays text.
+  result = line
+  for (start, stop) in line.spansLink(labels):
+    for k in start ..< stop: result[k] = ' '
+
+
+func numbersAt(text: string): seq[(int, string)] =
+  ## Read each `#N` of text with its index. `#` after word character, `&` or `/` opens no
+  ##   number: `&#N;` is character reference, `x#N` fragment or name in other repository.
+  var i = 0
+  while i < text.len:
+    let is_number = text[i] == '#' and i + 1 < text.len and text[i + 1] in Digits and
+      (i == 0 or text[i - 1] notin IdentChars + {'&', '/'})
+    if not is_number:
+      inc i
+      continue
+    var j = i + 1
+    while j < text.len and text[j] in Digits: inc j
+    result.add (i, text[i ..< j])
+    i = j
+
+
 func checkNumbersBare*(message: string): seq[Finding] =
-  ## Report each `#N` of message outside link and outside code (GUIDE.md, Output contract).
-  ##   Definition line `[label]: url` is link too, as is `[label]` it defines. `#` after word
-  ##     character, `&` or `/` opens no number: `&#N;` is character reference, `x#N` fragment
-  ##     or name in other repository. Each number reports once.
+  ## Report each `#N` of message that stands bare before any link holding it (GUIDE.md, Output
+  ##   contract). First mention is link, as `[the ledger fix (#456)](url)`, and after it `#456`
+  ##   alone names same item, as Claude Code links it. Row of table names its item in its own
+  ##   cells, so number in row is first mention as well.
+  ##   Code and links are skipped; definition line `[label]: url` is link too, as is `[label]`
+  ##     it defines (`checkLinksReference` reports both). Each number reports once.
   let lines = message.fencedOut.splitLines
   var
     labels: seq[string]
+    named: seq[string]  # Numbers that link or row named already.
     seen: seq[string]
   for line in lines:
     let label = line.labelDefined
     if label.len > 0: labels.add label
   for line in lines:
     if line.labelDefined.len > 0: continue
-    let text = line.blankSpansCode.linksOut(labels)
-    var i = 0
-    while i < text.len:
-      let is_number = text[i] == '#' and i + 1 < text.len and text[i + 1] in Digits and
-        (i == 0 or text[i - 1] notin IdentChars + {'&', '/'})
-      if not is_number:
-        inc i
-        continue
-      var j = i + 1
-      while j < text.len and text[j] in Digits: inc j
-      let number = text[i ..< j]
-      if number notin seen:
+    let
+      code_out = line.blankSpansCode
+      is_row = line.strip.startsWith("|")
+    var linked: seq[(int, string)]  # Start of each link of line, with each number it holds.
+    for (start, stop) in code_out.spansLink(labels):
+      for (_, number) in code_out[start ..< stop].numbersAt: linked.add (start, number)
+    for (at, number) in code_out.linksOut(labels).numbersAt:
+      if is_row: named.add number
+      elif number notin named and not linked.anyIt(it[0] < at and it[1] == number) and
+          number notin seen:
         seen.add number
         result.add finding(
           "",
           0,
-          "Message names `" & number & "` outside link; name each issue and pull request by " &
-            "short description and its number, as one link (GUIDE.md, Output contract).",
+          "Message names `" & number & "` bare before any link to it; give first mention as " &
+            "one link of short description and number, as `[the ledger fix (#456)](address)`, " &
+            "then number alone (GUIDE.md, Output contract).",
         )
-      i = j
+    for (_, number) in linked: named.add number
+
+
+func checkLinksReference*(message: string): seq[Finding] =
+  ## Report link message gives by reference (GUIDE.md, Output contract): Claude Code shows
+  ##   `[text][label]` as raw text where definition `[label]: url` stands below it, so each link
+  ##   is written inline. One finding names first label defined; code is skipped.
+  for line in message.fencedOut.splitLines:
+    let label = line.labelDefined
+    if label.len > 0:
+      return @[finding(
+        "",
+        0,
+        "Message gives link `[" & label & "]` by reference; write each link inline, as " &
+          "`[the ledger fix (#456)](address)`, since Claude Code shows reference link as raw " &
+          "text where its address stands below it (GUIDE.md, Output contract).",
+      )]
 
 
 func checkReferencesBare*(message: string): seq[Finding] =
@@ -998,6 +1034,7 @@ func checkReferencesBare*(message: string): seq[Finding] =
   ##   Reference passes inside parentheses where word holding letter stands before opening one,
   ##     on same line, as rule's own examples cite it: `expression spacing (X.9)`. So
   ##     `(X.2, X.9)` after text passes whole, and line or bullet opening with `(` fails.
+  ##   Description is given once: reference that message described before passes bare.
   ##   Code and links are skipped as `checkNumbersBare` skips them. Reference opens after no word
   ##     character, `.`, `/` or `-`, and closes before no word character and no `.` with digit,
   ##     so `2.2.12`, `D2`, `§5`, `MIX.3` and `IX.2.1` cite none. Each reference reports once.
@@ -1044,6 +1081,7 @@ func checkReferencesBare*(message: string): seq[Finding] =
   let lines = message.fencedOut.splitLines
   var
     labels: seq[string]
+    described: seq[string]
     seen: seq[string]
   for line in lines:
     let label = line.labelDefined
@@ -1057,15 +1095,18 @@ func checkReferencesBare*(message: string): seq[Finding] =
       if after == i:
         inc i
         continue
-      let reference = text[i ..< after]
-      if not line.isDescribed(text, i, after) and reference.toLowerAscii notin seen:
-        seen.add reference.toLowerAscii
+      let
+        reference = text[i ..< after]
+        key = reference.toLowerAscii
+      if line.isDescribed(text, i, after): described.add key
+      elif key notin described and key notin seen:
+        seen.add key
         result.add finding(
           "",
           0,
           "Message cites `" & reference & "` with no description; cite each article and duty " &
-            "by short description and its reference, as `expression spacing (X.9)` (GUIDE.md, " &
-            "Output contract).",
+            "first by short description and its reference, as `expression spacing (X.9)`, " &
+            "then reference alone (GUIDE.md, Output contract).",
         )
       i = after
 
