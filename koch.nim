@@ -306,8 +306,9 @@ proc runHook(root, event, input: string): int =
       found.add checkReferencesBare(turn.text)
       found.add checkLinksReference(turn.text)
       if turn.calls.isTurnWriting: found.add checkEndTurn(turn.text, branch_root)
-      if found.len == 0: return 0
-      echo %*{"decision": "block", "reason": found.reasonStop}
+      let unread = checkSignoffRead(turn.text, turn.calls)
+      if found.len == 0 and unread.len == 0: return 0
+      echo %*{"decision": "block", "reason": reasonStop(found, unread)}
       0
   of "start":
     var drift: seq[Finding]
