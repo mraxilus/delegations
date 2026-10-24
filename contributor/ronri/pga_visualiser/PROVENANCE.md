@@ -368,6 +368,18 @@ of time. Their size is then the same on every machine, and only the figures move
 The heap row reads `NaN` on the simulated page, because the clock stands in for `performance`. So
 `driveHeapUnit` reads that row on the second page too.
 
+**The check that both sides of the algebra boundary carry time builds frames until each side
+reads time.** The clock of the page ticks in steps of 100 µs, and each side charges many shorter
+stretches. So one frame can read zero on a side with both brackets running. The check builds
+frames of the largest demo until both sides read time, or 300 frames. A side that reads zero in
+all 300 is a bracket that never ran, or one whose charge is lost.
+
+Over 29 drives on runners, 30 frames of the opening scene peaked at 0.1 ms on the emitting side
+in 26. They peaked at 0.2 ms in 1, and at zero in 2. Under the largest demo, a delegate read zero
+on that side in 1 to 7 of 30 frames, in 3 drives. Rejected: the peak of 30 frames of the opening
+scene, which read zero in 2 of those 29 drives. Verified by a run: with the emitting charge taken
+out of `timed`, the check reads time on no frame of 300, and fails.
+
 **Every wait on the real page is a count of frames, and never a span of time.** `waitUntil` steps
 that page one frame at a time. `settleTurn` waits on the transitions that an element runs, as
 `getAnimations` lists them. No limit on time then decides a verdict (Article IX.12). Rejected: a
@@ -376,13 +388,18 @@ limit of time as a fallback, which a loaded machine meets with no page fault. Ve
 
 **A speed bound is 1.5 times the slowest reading on a delegate, rounded up to two figures.** Runners
 and delegates meet it, and each fault that a bound pins reads over it. A fault reads as `pins.ts`
-recorded it on a delegate on 2026-09-07, under the figure that the check took then.
+recorded it on a delegate on 2026-09-07, under the figure that the check took then. A bound whose
+fault reads inside the spread of unchanged code is a budget, and pins no fault (Article VII.12). The
+bound of the marker is a budget, and a count pins its fault.
 
 Delegate readings are from 20 or 21 runs of the drive on one delegate, from 2026-09-28 to
 2026-09-30, alone and in the gate. The anchor readings are from 11 runs of the measured page up to
 its pins, on 2026-09-30. The marker readings are from 11 such runs on 2026-10-04, with each outline
-shaped once for each pair (Marker pulse). Runner readings are from one CI run of the change that set
-each bound. The runner reading of the marker is from the drive job on `d305c68c`.
+shaped once for each pair (Marker pulse). A slower delegate read the marker at up to 1.66 ms in 4
+full drives on 2026-10-15. That reading sets its bound (repository issue 635).
+
+Runner readings are from one CI run of the change that set each bound. The runner reading of the
+marker is from the drive job on `d305c68c`.
 
 The still frame, the moving frame and the frame after an edit read a full build in every frame
 (Render paths). Those rows are from 20 runs of the measured page on one delegate, on 2026-10-05, in
@@ -399,7 +416,7 @@ an edit they read 1.5 to 2.4 ms.
 | Moving frame, median | 3 ms | | 1.3 to 2.0 | |
 | Hover pick | 2.6 ms | 0.1 | 0.2 to 1.7 | 7.1 |
 | Anchor lookup | 15 µs | 5.0 | 7.0 to 10.0 | 280 |
-| Marker and its pulse, worst kind | 1.1 ms | 0.38 | 0.34 to 0.70 | 3.2 |
+| Marker and its pulse, worst kind | 2.5 ms | 0.38 | 0.34 to 1.66 | 3.2, budget |
 | Moving grid, median | 26 ms | 4.3 | 6.3 to 17.1 | 26.1 |
 | CPU emit, median | 2 ms | 0.3 | 0.3 to 1.3 | 6.3 |
 | Edit past the timeline capacity, at 5,038 | 9.6 ms | 1.7 | 1.7 to 6.4 | |
@@ -407,10 +424,9 @@ an edit they read 1.5 to 2.4 ms.
 | Hover pick, at 5,038 | 7.2 ms | 1.9 | 1.2 to 4.8 | |
 
 The marker fault read 3.2 ms against 1.2 ms repaired, both with each outline shaped twice, so it
-costs 2.7 times the repair. Assumed: the ratio holds where the check shapes each outline once. The
-fault then reads 0.91 ms at least on a delegate, and 1.0 ms on the runner, both under the bound. So
-the bound holds that fault only where the repair reads 0.42 ms or more: 9 of the 11 delegate runs.
-The point count of the marker suite holds it on every run (Selection and markers).
+costs 2.7 times the repair. The repair alone read 0.34 to 1.66 ms across delegates, a spread of
+almost 5 times. So the fault reads inside the spread of unchanged code, and its bound is a budget.
+The point count of the marker suite pins the fault on every run (Selection and markers).
 
 The moving grid fault reads over its bound by 0.1 ms only. A check with no fault reading pins a
 budget rather than a repair.
@@ -485,7 +501,9 @@ their verdicts agree.
 reaches no font host and no script host. So every face is inlined as base64, and `tools/build.nim
 web` concatenates every script into `pages/shell.html` at its `@SCRIPT@` token. `pages/shell.html`
 stays whole markup, rather than ends mid-`<script>`, because a committed page that cannot parse
-alone is a page that no checker can read.
+alone is a page that no checker can read. The page declares its own doctype, charset and viewport,
+because a copy opened from file has nothing else to declare them. Without them that copy rendered in
+quirks mode, and decoded its text as Windows-1252.
 
 **Scripts share one global scope, rather than import each other.** TypeScript 7 removed `outFile`,
 so the compiler does not bundle, and the page cannot resolve ES imports without a server. Files
@@ -677,35 +695,42 @@ Rejected: each of them declared again at 400 and at 600, which embeds each file 
 bytes more on a page of 7,718,414.
 
 **The maths and symbol faces are declared over 400 to 600.** Each ships one weight. Declared at 400
-alone, they match no semibold text, so a selected label or chip at 600 takes its operators from the
-system. Cost: regular operators beside semibold letters, which the desktop label also draws.
+alone, they still draw at 600, but the browser synthesises their bold. Such a weight is a font face
+that nothing ships (Article X.8). Cost: regular operators beside semibold letters, which the desktop
+label also draws.
+
+Verified by a run, 2026-10-23, in the Chromium that Playwright pins, with the range cut to 400.
+`CSS.getPlatformFontsForNode` still names Noto Sans Math and Noto Sans Symbols 2 for operators at
+600. Those operators carry 39% more ink than under the range. Cost: no check fails on that cut,
+since `koch drive` takes the font face at 400 for 600, as the browser does.
 
 **Each face is held to its own load status**, by `driveTypeRoles`, because `document.fonts.check`
 answers true where no face matches at all. Verified by a run, 2026-10-07, in Chrome for Testing 153:
 all six faces load. A read of `CSS.getPlatformFontsForNode` over every element of the open drawer
 finds no glyph from a face of the system. Noto Sans draws 946 glyphs and its semibold 204.
 
-**Each element is held to the faces of the stack that the browser resolves for it**, by
-`driveFacesCovered` (`CONTRIBUTOR.md`, Pages and assets). The check reads the computed `font-family`
-and `font-weight` of each element, and holds its text to that stack, at that weight. The value and
-the placeholder of a field count, and so does the text of `::before` and `::after`. A finding names
-the page, the element, the weight and each codepoint that no face of the stack maps.
+**Each element is read in the stack that the browser resolves for it, and `koch drive` judges it**
+(`CONTRIBUTOR.md`, Pages and assets). `readFontFaces` reads the computed `font-family` and
+`font-weight` of each element, and writes its text as one run of `build/font-faces/written.json`.
+The value and the placeholder of a field count, and so does the text of `::before` and `::after`.
+`koch drive` resolves each run down its stack, against the `cmap` of each font face, and gives the
+verdict (`curator/audit/src/font_stacks.nim`). A finding names the page, the run, and each codepoint
+that a font face of the system draws.
 
-**Text that a script writes later is held to every stack in use, and to every stack that a rule
+**Text that a script writes later is one run for each stack in use, and for each stack that a rule
 declares.** `nimCodepointsShown` gives the catalogue, the help, the notation and the units, as
-`--drive-faces` reads them. The strings of the scripts and the text on the page join them. The check
-holds each of these characters to each stack that an element resolves to, and to each stack that a
-rule declares. It does so at each weight that an element resolves to, that a rule declares, and that
-a face declares. A finding for a stack that no element resolves to names the rule by its selector,
-as `rule .later-panel`.
+`--drive-faces` reads them. The strings of the scripts and the text on the page join them. There is
+one such run at each weight that an element resolves to, that a rule declares, and that a font face
+declares. Each is named by the element or the rule of its stack, and by its weight, as `text written
+later in rule .later-panel at 600`.
 
-**The check reads the declared stacks through the CSSOM, and the browser resolves each one.** It
+**The collector reads the declared stacks through the CSSOM, and the browser resolves each one.** It
 walks every rule of every sheet, into `@media`, `@supports`, `@layer`, nested rules and imported
 sheets, whether or not the rule matches now. The declarations of each rule go on a probe under a
 hidden holder, so the browser itself resolves `var()` and the `font` shorthand. It resolves them
 against the document as it stands, and again under the custom properties of each rule that declares
-some. It leaves out an `@font-face` rule, which names a face and not a stack. It leaves out a family
-of `inherit` or `unset`, which takes the stack of its parent.
+some. It leaves out an `@font-face` rule, which names a font face and not a stack. It leaves out a
+family of `inherit` or `unset`, which takes the stack of its parent.
 
 Rejected: `var()` read from the custom properties of the root, which misses a value that a rule
 under `@media` declares.
@@ -716,38 +741,50 @@ is that a stack for titles alone must map the operators too. A checkbox and a fi
 text that the page writes, so they are not a stack in use. Both resolve to Arial, and the button of
 a file field shows the words of the browser.
 
-The check reads each `@font-face` rule of the shell, and the `cmap` of its file. Within a family, it
-picks the set of faces that declare the weight asked, as the engine does. Where two sets hold that
-weight, the pick is the engine's own. A character counts only where each set, or a family after it,
-draws it, and the families of a stack are tried in order. Rejected: the three stacks read from the
-text of the shell, which pass an element that takes a stack of its own. Rejected:
-`CSS.getPlatformFontsForNode`, which answers only for text that has a layout box now.
+The collector reads each `@font-face` rule through the CSSOM, and writes the bytes of its `data:`
+source to a file named by their SHA-256. So `koch drive` reads the bytes that a viewer receives. The
+collector loads each font face, and writes each one that the browser refused. Within a family, `koch
+drive` picks the set of font faces that declare the weight asked, as the engine does. A family that
+the page does not ship ends the search (Article X.8).
 
-Cost: a stack that no rule declares counts only where an element resolves to it at the check. Such a
+Rejected: the three stacks read from the text of the shell, which pass an element that takes a stack
+of its own. Rejected: `CSS.getPlatformFontsForNode`, which answers only for text that has a layout
+box now.
+
+**The control page proves the collector on each run.** `koch drive` writes
+`build/font-faces/control.html` before the drive, and the drive reads it with the same collector, as
+page `control`. Each of its five numerals stands in one kind of place, and a numeral that the
+collector misses is a finding. The control page has no bridge and no script of this project, so its
+runs hold only what it shows. A run of the verb alone, with no control page, writes the page alone.
+
+Runs keep ASCII, so a stack whose font faces lack Latin fails. The resolver reads each codepoint
+that a run gives.
+
+Cost: a stack that no rule declares counts only where an element resolves to it at the read. Such a
 stack is that of a form control, or a family that a script sets. A bare button resolves to Arial,
 and a bare text area to monospace. Verified by a run, 2026-10-04, in Chrome for Testing 153: each
 button and field that a script builds matches a rule that declares a stack. Verified by a read of
 `src/browser` and the shell, the same day: no script sets a family.
 
-*Checked.* Verified by a run of the check alone, 2026-10-04, in Chrome for Testing 153, with the
-drawer and help open: both checks pass, with `missing none`. The stacks that the rules declare are
-the stacks in use. Verified by breaks on purpose, the same day and the same way:
+*Checked.* Verified by `koch drive` in the gate of this change, in the Chromium that Playwright
+pins: no finding, and the control page gives each numeral. Verified by breaks on purpose,
+2026-10-23, with the collector alone and the resolver of `koch drive`, on the page as it opens:
 
-- `#button-menu span { font-family: "Commit Mono UI", monospace; }` fails with `missing
-  rga_visualiser.html #button-menu span at 400: U+2630`, which the three stacks of the shell pass;
-- `.later-panel { font-family: "Commit Mono UI", monospace; }` matches no element, and fails at 400,
-  600 and 700 with `rule .later-panel` and each codepoint that Commit Mono does not map, U+2630
-  among them. A check of the stacks in use alone passes it;
+- `#button-menu span { font-family: "Commit Mono UI", monospace; }` gives a finding for
+  `#button-menu span` drawing U+2630, which the three stacks of the shell pass. It gives 13 more at
+  each of 400, 600 and 700, as text written later in that stack;
+- `.later-panel { font-family: "Commit Mono UI", monospace; }` matches no element, and gives the
+  same 13 at 400, 600 and 700, named `rule .later-panel`, U+2630 among them. A check of the stacks
+  in use alone passes it;
 - a rule for `.later-panel` sets `font: 600 12px var(--later)` inside `@media (max-width: 10px)`.
-  Inside `@media print`, `:root` declares `--later` as the same stack. The check fails it with the
-  same finding.
+  Inside `@media print`, `:root` declares `--later` as the same stack. It gives the same findings;
+- a collector that skips `::before` and `::after` gives a finding from the control page, for U+4E09
+  in `::before`.
 
-With the maths and symbols declared at 400 alone, the check fails at 600, with U+2715 in
-`button#selection-menu-close` and U+25B6 in `#drawer span.chev`. In every stack in use it names the
-operators, the bold operands and the chip symbols. With them under "Noto Sans UI" at 400 to 600,
-both checks fail at 400 and at 600, on 2026-10-07. They name the Latin text of each element in the
-sans stack, as `button#button-add at 600: U+0061`. A model that asks each face that holds the weight
-passes that shell. Verified by a run, 2026-10-03: the other page checks pass with the whole faces.
+With the maths and symbols under "Noto Sans UI" at 400 to 600, `koch drive` gives 894 findings. They
+name the Latin text of each element in the sans stack, as `button#button-add` drawing U+0061. For
+Latin in that stack, `CSS.getPlatformFontsForNode` names a font face of the system. Verified by a
+run, 2026-10-03: the other page checks pass with the whole faces.
 
 **The serif ships at 600 alone, because every title is set at 600.** A weight that nothing ships is
 a face that the browser of the reader invents (Article X.8). The check reads pixels, and not width,
@@ -1046,8 +1083,8 @@ samples count. A wait for vsync, or a sample with no page script on its stack, h
 Nim.** `sampler.nim` arms `timer_create` on `CLOCK_THREAD_CPUTIME_ID`, at 250 samples each busy
 second. The handler allocates nothing. It walks out from the innermost frame to the first that
 `share.ownerOfPath` names a side for, and adds one atomically. This runs on Linux alone, in a build
-that keeps stack frames, and elsewhere the rows say why. Rejected: the own profiler of Nim, which
-read 30 to 41% against 26% and made the frame 2.2 times slower.
+that keeps stack frames, and elsewhere the section says why once. Rejected: the own profiler of Nim,
+which read 30 to 41% against 26% and made the frame 2.2 times slower.
 
 **The walk of the frames of Nim reads low against native unwinding.** A sample that lands in the
 push or pop of a small library proc, such as `[]`, misses its frame. On the same samples the walk
@@ -1057,9 +1094,12 @@ measurement found, at 4.515 against 4.506 ms and 4.250 against 4.232 ms for each
 
 **The page samples with the own profiler of the browser, where the browser allows it.** Chromium
 alone has one, and only on a page whose own response carries `Document-Policy: js-profiling`. A page
-opened from a file is refused, and a `<meta>` copy of the policy changes nothing. The rows then say
-why, and give no figure. The profiler gives no interval under 10 ms. Each window of 2 s stops and
-hands in its trace, and the next starts at once, at a cost of 0.2 to 0.3 ms.
+opened from a file is refused, and a `<meta>` copy of the policy changes nothing. The section then
+says why once, in place of its four shares, as the desktop does. Rejected: the reason in each of the
+four rows, where it wrapped into the name of the row.
+
+The profiler gives no interval under 10 ms. Each window of 2 s stops and hands in its trace, and the
+next starts at once, at a cost of 0.2 to 0.3 ms.
 
 **The two front-ends read different shares, because their busy time holds different work.** The busy
 time of the desktop holds the layout of its panel and the submission of its draws. The page leaves
@@ -1082,9 +1122,9 @@ page less the engine over seven runs.
 *Checked.* Verified by `suites.nim`: the rule names the owner of names from the built page and of
 desktop paths. It names a stack by its innermost owned frame, and the ring pools 20 s. On Linux, the
 sampler counts a loop of products as PGA's, at 82 to 85% of about 100 samples. Verified by driven
-check: the page from a file says why it cannot sample, and the served page agrees with the engine on
-each side. Verified on 2026-10-06 by `xvfb-run -a binaries/rga_visualiser --hidden --novsync
---timings --frames:300 --demo:5038`: the desktop figures above.
+check: the page from a file says why once, and the served page agrees with the engine on each side.
+Verified on 2026-10-06 by `xvfb-run -a binaries/rga_visualiser --hidden --novsync --timings
+--frames:300 --demo:5038`: the desktop figures above.
 
 ## Values crossing the boundary
 
@@ -3125,11 +3165,19 @@ the choice wheel. Both render paths and `help.nim` read them.
 | shift with either | add it, or drop it again if already picked |
 | right click, selection standing, menu down | reveal the menu, selection untouched |
 
-**The selection menu opens on the click, beside the pointer**, `INSET_MENU_POINTER` 8 px from it.
-It then remembers its offset from the anchor of the object, so an orbit carries it with the
+**The selection menu opens on the click, beside the pointer**, `PIXELS_INSET_MENU_POINTER` 8 px from
+it. It then remembers its offset from the anchor of the object, so an orbit carries it with the
 object. A pick carries its object to the middle of the frame, so the menu rides in and settles
 beside the middle. It is not held back until the ease settles: a menu a third of a second after
-the click reads as a missed click. A menu opened with no pointer sits above the anchor.
+the click reads as a missed click.
+
+**With no pointer, the menu hangs centred above its object.** On both builds it hangs by its bottom
+middle from the point that `interaction.pointMenuHung` names, `PIXELS_LIFT_MENU_SELECTION` 46 px
+above the anchor. A menu that straddled its object would swallow the next drag off it, because a
+Dear ImGui window makes `wantsMouse()` true wherever it sits. Near an edge, the point moves only as
+far as it must to keep all of the menu `PIXELS_MARGIN_MENU_SELECTION` 8 px inside the view. When
+only the point stays inside, half of the menu can go off a side, and all of it off the top. The
+desktop hangs its window with the size from the last frame, and the page with the size of the menu.
 
 **A wheel over the selection menu zooms the view on both front-ends**, as a wheel over the view
 does. The menu scrolls nothing, so it hands its wheel on. On the page, the menu passes its wheel to
@@ -3249,8 +3297,9 @@ pause before the lift is the common touch release, so the centre release of an *
 wheel falls through to `proposalFor`.
 
 `more…` builds nothing, and opens **the own apply picker of the selection menu** over both operands
-in drag order. Rejected: the apply section of the drawer, which buried the two objects. A degenerate
-construction, or one on a full scene, is **refused**, with a message that names why.
+in drag order. On both builds, that picker opens beside the pointer that chose it. Rejected: the
+apply section of the drawer, which buried the two objects. A degenerate construction, or one on a
+full scene, is **refused**, with a message that names why.
 
 **Touch.** A finger on an object constructs, and one on empty space moves the camera. Two fingers
 hold what each touched, and cancel any construction. A long press selects. Once a selection exists,
@@ -3266,9 +3315,7 @@ every selected handle, and `✕` clears. `apply` is hidden for three or more sel
 
 It is **shown by the gestures that pick, and hidden by the ones that build**. Every construction
 leaves its result selected, and a menu over each new object would sit in the way of the next drag.
-Placement is `OFFSET_MENU_SELECTION` 46 px **above** its object. A Dear ImGui window makes
-`wantsMouse()` true wherever it sits, so a menu that straddled its object would swallow the next
-drag off it. The listener for a tap outside excludes the canvas, the drawer and the chip row.
+The listener for a tap outside excludes the canvas, the drawer and the chip row.
 
 *Checked.* Verified by `suites.nim`:
 
@@ -3293,6 +3340,14 @@ Verified by driven checks:
   distance goes from 18.097 to 11.749 on the page, and to 12.881 on the desktop;
 - a pivot shift moving that anchor 84 px, with the menu holding the offset;
 - an emptied list, a deep handle edited, and its form in view.
+
+Verified by `--drive-keys` and the page's `driveMenuHung`, 2026-10-22: a menu that Enter opened
+hangs by its bottom middle on the point of the core. It read (720.0, 404.0) on the desktop, and
+(671.7, 369.3) on the page. On `main` at `85ccefc1`, the page hung it 156 px right and 37 px low.
+The suite holds each edge of the view, and a menu wider than the view.
+
+Verified by `--drive-drag` and the page's `driveMoreAtPointer`: `more…` opens its picker at the
+pointer and its inset, on both. On `main`, the desktop opened it 68 px right of that and 54 px high.
 
 Assumed: that 0.75 s is the right dwell for any hand.
 
@@ -3787,8 +3842,8 @@ written `` m.`∧ ☆`n ``.
 *Checked.* Verified by suite: every entry non-empty, the placeholder rules of the substitution, and
 every parenthesis case. Verified by driven check: a join of joins flat, and a meet of joins
 parenthesised on the page. Verified by driven check on the desktop: `--drive-faces` asks each face
-for every codepoint of the notation (Desktop driven checks). On the page, `driveFacesCovered` asks
-the faces that it ships (Faces).
+for every codepoint of the notation (Desktop driven checks). On the page, `koch drive` judges what
+`readFontFaces` reads (Faces).
 
 ## Naming and number formatting
 
@@ -4451,8 +4506,6 @@ that the runner carries that library. Assumed: nothing about the suite itself.
   crossing is not the cause (Records and shaders).
 - The two front-ends still differ in these inputs. A read of the code on 2026-10-12 found them, and
   no run has checked them yet:
-  - With no pointer, the page hangs the selection menu from its corner, and the desktop centres it.
-  - `more…` opens its picker at the cursor on the page alone.
   - Hide or delete of several objects takes one step of undo on the desktop, and one for each
     object on the page.
   - The field of view takes any value on the page, and 10 to 120 by drag on the desktop.

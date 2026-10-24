@@ -692,16 +692,16 @@ func letGo*(a, b: Point; marks: seq[Mark]; side: float): seq[Point] =
         # what actually leaves whole huddle.
         for shove in 1..SHOVES:
           var
-            deepest = -1
+            deepest = none(int)
             depth = 0.0
           for k, mark in asked:
             let into = mark.clear - distance(band[i], mark.centre)
             if into > depth:
               depth = into
-              deepest = k
-          if deepest < 0:
+              deepest = some(k)
+          if deepest.isNone:
             break
-          let mark = asked[deepest]
+          let mark = asked[deepest.get]
           # Out to edge, as it already lay; point exactly on
           # mark's centre has no way of its own, so it takes band's.
           var away = (x: band[i].x - mark.centre.x,
