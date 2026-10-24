@@ -4,7 +4,10 @@
 //     `details` among them, and two in turn that share column and stand closer than `GAP_MIN`
 //     are one crowded pair. Card that is `details` opens first, so its body lays out.
 //   Read runs once for each tab page offers, radio input of `nav.tabs`, since card behind other
-//     tab draws no box. Read precedes `readWritten`, whose `display: revert` lays page out anew.
+//     tab draws no box. Read precedes `collect` (`text.ts`), whose `display: revert` lays page out
+//     anew.
+//   Pairs are data alone: driver words and judges them (`render.nim`), where suites reach them
+//     (Article II.9).
 //   Cost: page is read at one viewport, Playwright's default; card that `@media` lays out
 //     otherwise at other width is unread. Pair side by side, as columns of grid, is not compared.
 

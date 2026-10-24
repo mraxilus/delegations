@@ -38,9 +38,10 @@
 ##   |           | `published docket <url>`, in `pages/published.json`                  |
 ##   | drive     | inspect, guard, hold `gaps.md` to regeneration, and hold every       |
 ##   |           | measurement, evaluation, file, page and checkout to pin (`head.nim`) |
-##   |           | then `types`, render every page as host serves it, and fail where    |
-##   |           | font face of system draws character beyond ASCII, or where control   |
-##   |           | page raises other findings than it expects (`render.nim`)            |
+##   |           | then `types`, render every page as host serves it, write what each   |
+##   |           | draws and font faces it ships into `build/font-faces/written.json`   |
+##   |           | for `koch drive` to judge, and fail where blocks of card touch, or   |
+##   |           | where control page crowds other cards than it expects (`render.nim`) |
 ##   | head      | compare pin with library head; finding where library moved since     |
 ##   | gaps      | regenerate `gaps.md` and docket from committed baselines             |
 ##   | show      | print one function's emitted C, its counts, its movement and its     |
