@@ -3146,11 +3146,19 @@ the choice wheel. Both render paths and `help.nim` read them.
 | shift with either | add it, or drop it again if already picked |
 | right click, selection standing, menu down | reveal the menu, selection untouched |
 
-**The selection menu opens on the click, beside the pointer**, `INSET_MENU_POINTER` 8 px from it.
-It then remembers its offset from the anchor of the object, so an orbit carries it with the
+**The selection menu opens on the click, beside the pointer**, `PIXELS_INSET_MENU_POINTER` 8 px from
+it. It then remembers its offset from the anchor of the object, so an orbit carries it with the
 object. A pick carries its object to the middle of the frame, so the menu rides in and settles
 beside the middle. It is not held back until the ease settles: a menu a third of a second after
-the click reads as a missed click. A menu opened with no pointer sits above the anchor.
+the click reads as a missed click.
+
+**With no pointer, the menu hangs centred above its object.** On both builds it hangs by its bottom
+middle from the point that `interaction.pointMenuHung` names, `PIXELS_LIFT_MENU_SELECTION` 46 px
+above the anchor. A menu that straddled its object would swallow the next drag off it, because a
+Dear ImGui window makes `wantsMouse()` true wherever it sits. Near an edge, the point moves only as
+far as it must to keep all of the menu `PIXELS_MARGIN_MENU_SELECTION` 8 px inside the view. When
+only the point stays inside, half of the menu can go off a side, and all of it off the top. The
+desktop hangs its window with the size from the last frame, and the page with the size of the menu.
 
 **A wheel over the selection menu zooms the view on both front-ends**, as a wheel over the view
 does. The menu scrolls nothing, so it hands its wheel on. On the page, the menu passes its wheel to
@@ -3270,8 +3278,9 @@ pause before the lift is the common touch release, so the centre release of an *
 wheel falls through to `proposalFor`.
 
 `more…` builds nothing, and opens **the own apply picker of the selection menu** over both operands
-in drag order. Rejected: the apply section of the drawer, which buried the two objects. A degenerate
-construction, or one on a full scene, is **refused**, with a message that names why.
+in drag order. On both builds, that picker opens beside the pointer that chose it. Rejected: the
+apply section of the drawer, which buried the two objects. A degenerate construction, or one on a
+full scene, is **refused**, with a message that names why.
 
 **Touch.** A finger on an object constructs, and one on empty space moves the camera. Two fingers
 hold what each touched, and cancel any construction. A long press selects. Once a selection exists,
@@ -3287,9 +3296,7 @@ every selected handle, and `✕` clears. `apply` is hidden for three or more sel
 
 It is **shown by the gestures that pick, and hidden by the ones that build**. Every construction
 leaves its result selected, and a menu over each new object would sit in the way of the next drag.
-Placement is `OFFSET_MENU_SELECTION` 46 px **above** its object. A Dear ImGui window makes
-`wantsMouse()` true wherever it sits, so a menu that straddled its object would swallow the next
-drag off it. The listener for a tap outside excludes the canvas, the drawer and the chip row.
+The listener for a tap outside excludes the canvas, the drawer and the chip row.
 
 *Checked.* Verified by `suites.nim`:
 
@@ -3314,6 +3321,14 @@ Verified by driven checks:
   distance goes from 18.097 to 11.749 on the page, and to 12.881 on the desktop;
 - a pivot shift moving that anchor 84 px, with the menu holding the offset;
 - an emptied list, a deep handle edited, and its form in view.
+
+Verified by `--drive-keys` and the page's `driveMenuHung`, 2026-10-22: a menu that Enter opened
+hangs by its bottom middle on the point of the core. It read (720.0, 404.0) on the desktop, and
+(671.7, 369.3) on the page. On `main` at `85ccefc1`, the page hung it 156 px right and 37 px low.
+The suite holds each edge of the view, and a menu wider than the view.
+
+Verified by `--drive-drag` and the page's `driveMoreAtPointer`: `more…` opens its picker at the
+pointer and its inset, on both. On `main`, the desktop opened it 68 px right of that and 54 px high.
 
 Assumed: that 0.75 s is the right dwell for any hand.
 
@@ -4472,8 +4487,6 @@ that the runner carries that library. Assumed: nothing about the suite itself.
   crossing is not the cause (Records and shaders).
 - The two front-ends still differ in these inputs. A read of the code on 2026-10-12 found them, and
   no run has checked them yet:
-  - With no pointer, the page hangs the selection menu from its corner, and the desktop centres it.
-  - `more…` opens its picker at the cursor on the page alone.
   - Hide or delete of several objects takes one step of undo on the desktop, and one for each
     object on the page.
   - The field of view takes any value on the page, and 10 to 120 by drag on the desktop.
