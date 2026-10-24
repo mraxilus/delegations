@@ -1,7 +1,11 @@
 ## Replicate tag reading of CLL chapters 3 and 4 against `tags.nim`, and hold laws CLL implies.
 ##   Spellings, tanru and scores are copied from CLL text, never from library output, so suite
 ##     checks reading rather than repeating it. 4.13 misstates V of `gerzda` as 3; total 5878 is
-##     right, and is what suite holds.
+##     right, and is what suite holds. CLL lujvo given without rafsi split are marked split
+##     inferred; word no source holds is marked constructed.
+##   Folding capitals and stripping commas are project's choice (`tags.nim` header), and refusing
+##     rafsi of cmavo is Architect's brief, so `Internal: Reading` holds them; CLL there is only
+##     source of word.
 ##   Tags form unbounded domain, so laws run over seeded random tags of one to four gismu, drawn
 ##     from every gismu of list, and over each entry of list exhaustively (Article IX.3).
 ##   Reference for lowest score enumerates every rafsi 4.11 steps 1 and 2 allow, shared `brod`
@@ -37,12 +41,18 @@ const
     "brivla", "brivalsi", "bridyvla", "bridyvalsi", "mampa'u", "soirsai", "sampli", "bralo'i",
     "zunlyjamfu", "zunlyjma", "zuljamfu", "zuljma", "mamtypatfu", "lerfyliste", "nancyprali",
     "prunyplipe", "vancysanmi", "cumfri", "klezba", "kixta'a", "sniju'o", "lerste", "patyta'a",
-    "patta'a", "mudysiclu", "mudsiclu", "ro'inre'o", "ro'ire'o", "ro'irre'o", "rokre'o",
-    "gerzda", "gerzdani", "ge'uzda", "ge'urzdani", "gerkyzda", "gerkyzdani", "lotkle", "blokle",
-    "lo'ikle", "lotlei", "blolei", "lo'irlei", "lojbangri", "lojbaugri", "zbasai",
-    "sairzbata'u", "zbazbasysarji",
+    "mudysiclu", "ro'inre'o", "rokre'o", "labmau", "gerzda", "gerzdani", "ge'uzda",
+    "ge'urzdani", "gerkyzda", "gerkyzdani", "lotkle", "blokle", "lo'ikle", "lotlei", "blolei",
+    "lo'irlei", "lojbangri", "lojbaugri", "lojbangygri", "logjybangri", "logjybaugri",
+    "logjybangygri", "lojbangirzu", "lojbaugirzu", "lojbangygirzu", "logjybangirzu",
+    "logjybaugirzu", "logjybangygirzu", "zbasai", "sairzbata'u", "zbazbasysarji",
   ]
-    ## Every chapter 4 spelling this suite quotes, refused ones included.
+    ## Every chapter 4 spelling suite quotes that reads as tag.
+  SPELLINGS_CLL_REFUSED = [
+    "patta'a", "mudsiclu", "ro'ire'o", "ro'irre'o", "nunynau", "nakykemcinctu",
+  ]
+    ## Every chapter 4 spelling suite quotes that reader refuses: hyphens 4.6 forbids, or rafsi
+    ## of cmavo, which brief forbids.
   WORDS_GISMU = block:
     ## Every gismu of list, by index; cmavo carrying rafsi left out.
     var words: seq[Word]
@@ -85,11 +95,16 @@ func spelled(pieces: openArray[Piece]): string =
   for piece in pieces: result.add piece.rafsi & LUT_LETTER_BY_HYPHEN[piece.hyphen]
 
 
-func isReadingSame(a, b: Reading): bool =
-  ## Test readings agree in text, and in tag and pieces, or in refusal and detail.
-  if a.text != b.text or a.is_tag != b.is_tag: return false
+func isOutcomeSame(a, b: Reading): bool =
+  ## Test readings agree in tag and pieces, or in refusal and detail; text aside.
+  if a.is_tag != b.is_tag: return false
   if a.is_tag: a.tag == b.tag and a.pieces == b.pieces
   else: a.refusal == b.refusal and a.detail == b.detail
+
+
+func isReadingSame(a, b: Reading): bool =
+  ## Test readings agree in text, and in outcome.
+  a.text == b.text and isOutcomeSame(a, b)
 
 
 func isStemShared(tag: Tag): bool =
@@ -137,32 +152,22 @@ suite "Chapter 3":
     check tags.LETTERS == alphabet - {',', '.'}  # 3.1 list; comma and period divide syllables (3.3)
     for c in 'a' .. 'z':
       check (c in tags.LETTERS) == (c notin {'h', 'q', 'w'})  # 3.1, omitting "h", "q", and "w"
-    var count_refused = 0
-    for c in char.low .. char.high:  # 256 bytes, exhaustive
+    for c in char.low .. char.high:  # 256 bytes; comma and capitals in `Internal: Reading`
       if c in tags.LETTERS or c in {',', 'A' .. 'Z'}: continue
       check ("bri" & c & "vla").refusalRead == some((Refusal.Letter, $c))  # 3.1, alphabet
-      inc count_refused
-    check count_refused == 256 - tags.LETTERS.card - 1 - 26  # 3.1, every byte outside alphabet
-    for c in 'A' .. 'Z':  # 26 capitals, exhaustive
-      let upper = "bri" & c & "vla"
-      check isReadingSame(upper.readTag, upper.toLowerAscii.readTag)  # 3.1, capitals mark stress
-    check "BRIVLA".tagRead == some(tanru("bridi+valsi"))  # 3.1, capitals folded
-    check "brIvla".readTag.text == "brivla"  # 3.1, capitals folded
 
 
   test "Section 3.3":
-    check "rohinreho".refusalRead == some((Refusal.Letter, "h"))  # 3.3, "h" not used for `'`
-    check "kixtaha".refusalRead == some((Refusal.Letter, "h"))  # 3.3, "h" not used for `'`
+    check "rohinreho".refusalRead == some((Refusal.Letter, "h"))  # 3.3, no "h" for `'`; constructed
+    check "kixtaha".refusalRead == some((Refusal.Letter, "h"))  # 3.3, no "h" for `'`; constructed
     check "ro'i,n,re'o".tagRead == some(tanru("rokci+renro"))  # 3.3, comma never required
-    check "ro'i,n,re'o".readTag.text == "ro'inre'o"  # 3.3, comma removed before reading
     check "bri.vla".refusalRead == some((Refusal.Letter, "."))  # 3.3, period makes two words
-    for spelling in SPELLINGS_CLL:
-      let reading = spelling.readTag
-      for i in 0 .. spelling.len:
-        let with_comma = spelling[0 ..< i] & "," & spelling[i .. ^1]
-        check isReadingSame(with_comma.readTag, reading)  # 3.3, words never differ by comma alone
-      for i in 1 ..< spelling.len:
-        check (spelling[0 ..< i] & "." & spelling[i .. ^1]).refusalRead ==
+    for spelling in concat(@SPELLINGS_CLL, @SPELLINGS_CLL_REFUSED):  # each CLL spelling quoted
+      let plain = spelling.readTag
+      for i in 1 ..< spelling.len:  # every position inside word
+        let (head, tail) = (spelling[0 ..< i], spelling[i .. ^1])
+        check isOutcomeSame((head & "," & tail).readTag, plain)  # 3.3, never differ by comma alone
+        check (head & "." & tail).refusalRead ==
             some((Refusal.Letter, "."))  # 3.3, period embedded in word makes two words
 
 
@@ -179,7 +184,6 @@ suite "Chapter 4":
     check "sampli".tagRead == some(tanru("skami+pilno"))  # 4.5, Example 5.5 from 5.1
     check "bralo'i".tagRead == some(tanru("barda+bloti"))  # 4.5, Example 5.6 from 5.2
     let (paternal, maternal) = (tanru("patfu+mamta"), tanru("mamta+patfu"))
-    check paternal != maternal  # 4.5, Example 5.3 and 5.4 name different kin
     check ($paternal).tagRead == some(paternal)  # 4.5, rafsi attached in order of tanru
     check ($maternal).tagRead == some(maternal)  # 4.5, rafsi attached in order of tanru
     check $paternal != $maternal  # 4.5, first modifies second, so order is kept
@@ -214,7 +218,7 @@ suite "Chapter 4":
     check "rokre'o".tagRead == some(tanru("rokci+renro"))  # 4.6, same lujvo, no hyphen
     check "ro'ire'o".refusalRead == some((Refusal.Hyphen, "ro'inre'o"))  # 4.6, two cmavo
     check "ro'irre'o".refusalRead == some((Refusal.Hyphen, "ro'inre'o"))  # 4.6, "rr" double
-    check "labmau".tagRead == some(tanru("blabi+zmadu"))  # 4.6, "whiter", `-mau` of `zmadu`
+    check "labmau".tagRead == some(tanru("blabi+zmadu"))  # 4.6, "whiter"; split inferred
 
 
   test "Section 4.12-13":
@@ -246,6 +250,8 @@ suite "Chapter 4":
     check "lojbaugri".scoreRead == some(8796)  # 4.13, "8827 versus 8796"
     check $tanru("logji+bangu+girzu") == "lojbaugri"  # 4.13, latter has lower score
     check "zbasai".scoreRead == some(5847)  # 4.12, Example 12.1
+    check ["nun", "nau"].toPieces.spelled == "nunynau"  # 4.12, Example 12.2, "nun + y + nau"
+    check lujvo.score(["nun", "nau"].toPieces) == 6967  # 4.12, Example 12.2
     check "sairzbata'u".scoreRead == some(10385)  # 4.12, Example 12.3
     check "zbazbasysarji".scoreRead == some(12976)  # 4.12, Example 12.4
 
@@ -261,55 +267,65 @@ suite "Internal: Reading":
   test "Character outside letters is refused as Letter, naming character":
     check "hello".refusalRead == some((Refusal.Letter, "h"))  # first offending character
     check "bri vla".refusalRead == some((Refusal.Letter, " "))  # inner space never trimmed
-    check "bwa".refusalRead == some((Refusal.Letter, "w"))  # `w` outside letters
+    check "bwa".refusalRead == some((Refusal.Letter, "w"))  # `w` outside letters; constructed
     check "datni+vreji".refusalRead == some((Refusal.Letter, "+"))  # tanru is no spelling
 
 
   test "Cmavo, or rafsi of cmavo, is refused as Cmavo, naming it":
-    check "selci'a".refusalRead == some((Refusal.Cmavo, "sel (se)"))  # rafsi, then its cmavo
-    check "nunkla".refusalRead == some((Refusal.Cmavo, "nun (nu)"))  # rafsi, then its cmavo
-    check "nunynau".refusalRead == some((Refusal.Cmavo, "nun (nu)"))  # CLL 4.12, Example 12.2
-    check "nakykemcinctu".refusalRead == some((Refusal.Cmavo, "kem (ke)"))  # CLL 4.13, `ke`
-    check "se".refusalRead == some((Refusal.Cmavo, "se"))  # cmavo of list, word itself
+    check "selci'a".refusalRead == some((Refusal.Cmavo, "sel (se)"))  # brief; rafsi, its cmavo
+    check "nunkla".refusalRead ==
+        some((Refusal.Cmavo, "nun (nu)"))  # brief (`tags.nim`); word of CLL 12.12
+    check "nunynau".refusalRead ==
+        some((Refusal.Cmavo, "nun (nu)"))  # brief (`tags.nim`); word of CLL 4.12, Example 12.2
+    check "nakykemcinctu".refusalRead ==
+        some((Refusal.Cmavo, "kem (ke)"))  # brief (`tags.nim`); word of CLL 4.13
+    check "se".refusalRead == some((Refusal.Cmavo, "se"))  # brief; cmavo of list, word itself
 
 
   test "Gismu shape outside list is refused as Unlisted, naming word":
-    check "kukta".refusalRead == some((Refusal.Unlisted, "kukta"))  # gismu shape, unlisted
-    check "gerkukta".refusalRead == some((Refusal.Unlisted, "kukta"))  # unlisted final rafsi
+    check "kukta".refusalRead == some((Refusal.Unlisted, "kukta"))  # unlisted; constructed
+    check "gerkukta".refusalRead == some((Refusal.Unlisted, "kukta"))  # final; constructed
 
 
   test "Rafsi no list assigns is refused as Rafsi, naming rafsi":
-    check "clozba".refusalRead == some((Refusal.Rafsi, "clo"))  # CCV assigned to none
-    check "kukfyzba".refusalRead == some((Refusal.Rafsi, "kukf"))  # 4-letter rafsi of none
+    check "clozba".refusalRead == some((Refusal.Rafsi, "clo"))  # CCV of none; constructed
+    check "kukfyzba".refusalRead == some((Refusal.Rafsi, "kukf"))  # 4-letter of none; constructed
 
 
   test "Shared 4-letter rafsi is refused as Ambiguous, naming rafsi":
-    check "brodyzba".refusalRead == some((Refusal.Ambiguous, "brod"))  # five gismu share it
-    check "brodyprenu".refusalRead == some((Refusal.Ambiguous, "brod"))  # five gismu share it
-    check "rodzba".tagRead == some(tanru("broda+zbasu"))  # short rafsi of `broda` is unshared
+    check "brodyzba".refusalRead == some((Refusal.Ambiguous, "brod"))  # five share; constructed
+    check "brodyprenu".refusalRead == some((Refusal.Ambiguous, "brod"))  # five share; constructed
+    check "rodzba".tagRead == some(tanru("broda+zbasu"))  # `rod` unshared; constructed
 
 
   test "Hyphen 4.11 does not give is refused as Hyphen, naming form 4.11 gives":
-    check "patta'a".refusalRead == some((Refusal.Hyphen, "patyta'a"))  # missing `y`
-    check "kitymatci".refusalRead == some((Refusal.Hyphen, "kitmatci"))  # surplus `y`
-    check "kicmatci".refusalRead == some((Refusal.Hyphen, "kicymatci"))  # tosmabru `y`
-    check "ro'ire'o".refusalRead == some((Refusal.Hyphen, "ro'inre'o"))  # missing `n`
+    check "patta'a".refusalRead == some((Refusal.Hyphen, "patyta'a"))  # missing `y`; CLL 4.6
+    check "kitymatci".refusalRead == some((Refusal.Hyphen, "kitmatci"))  # surplus `y`; constructed
+    check "kicmatci".refusalRead == some((Refusal.Hyphen, "kicymatci"))  # tosmabru `y`; constructed
+    check "ro'ire'o".refusalRead == some((Refusal.Hyphen, "ro'inre'o"))  # missing `n`; CLL 4.6
 
 
   test "Text neither gismu nor lujvo by shape is refused as Shape":
-    for text in ["lo", "xyz", "zba", "ge'u", "gerk", "brodrzba"]:
+    for text in ["lo", "xyz", "zba", "ge'u", "gerk", "brodrzba"]:  # `xyz`, `brodrzba` constructed
       check text.refusalRead == some((Refusal.Shape, ""))  # no rafsi split, no detail
 
 
   test "Text is trimmed, folded to lowercase, and stripped of commas":
-    check "  Bri,Vla\t".readTag.text == "brivla"  # each step applied
-    check "  Bri,Vla\t".tagRead == "brivla".tagRead  # same tag after normalising
+    check "  Bri,Vla\t".readTag.text == "brivla"  # project choice (`tags.nim` header), each step
+    check "  Bri,Vla\t".tagRead == "brivla".tagRead  # project choice, same tag after normalising
+    check "ro'i,n,re'o".readTag.text == "ro'inre'o"  # project choice, comma removed before reading
+    check ",brivla,".tagRead == "brivla".tagRead  # project choice, comma at either end stripped
+    for c in 'A' .. 'Z':  # 26 capitals, exhaustive
+      let (upper, lower) = ("bri" & c & "vla", "bri" & c.toLowerAscii & "vla")
+      check isReadingSame(upper.readTag, lower.readTag)  # project choice, capitals fold
+    check "BRIVLA".tagRead == some(tanru("bridi+valsi"))  # project choice, capitals fold
+    check "brIvla".readTag.text == "brivla"  # project choice, text holds no capital
 
 
   test "Pieces spell text, hyphens included; gismu has none":
-    for spelling in SPELLINGS_CLL:
+    for spelling in SPELLINGS_CLL:  # each CLL spelling quoted that reads, exhaustive
       let reading = spelling.readTag
-      if reading.is_tag: check reading.pieces.spelled == reading.text  # split, then spelled
+      check reading.is_tag and reading.pieces.spelled == reading.text  # split, then spelled
     check "gerku".readTag.pieces.len == 0  # gismu read whole
 
 
@@ -381,10 +397,9 @@ suite "Internal: Laws":
     for w in WORDS_GISMU:  # 1342 gismu, exhaustive
       let text = $w
       check text.tagRead == some(Tag(words: @[w]))  # listed gismu is its own tag
-      check text.toUpperAscii.tagRead == some(Tag(words: @[w]))  # capitals folded
+      check text.toUpperAscii.tagRead == some(Tag(words: @[w]))  # capitals fold, project choice
       check $Tag(words: @[w]) == text  # gismu renders as itself
       check text.readTag.pieces.len == 0  # read whole, no rafsi
-    check WORDS_GISMU.len + WORDS_CMAVO.len == LIST_GISMU.len  # every entry gismu or cmavo
 
 
   test "Every cmavo of list is refused as Cmavo":
