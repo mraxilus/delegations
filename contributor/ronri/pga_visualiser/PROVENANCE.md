@@ -1055,6 +1055,25 @@ and not what is drawn.
 Verified by a run: every scripted desktop run passes at 1/120 s, in 400 frames. Verified by a
 render: the curve of the page and the plot of the window, before and after, in the pull request.
 
+**Each row of the breakdown of the page shows two figures, a short mean and a settled figure.** The
+short mean covers the last 200 ms, and is what to watch while something changes. The settled figure
+stands in brackets, and is the median of the whole ring, which one slow frame does not move. The
+desktop shows no such rows.
+
+**Where the clock of the page steps 1 ms or more, the settled figure is the mean of the ring.** A
+phase under one step reads 0 in most frames, so the median of those frames reads 0. The mean stays
+fair, because a step falls inside the phase in the share of frames that the phase fills. The page
+reads its step once, on load, and a note above the rows then says why once (repository issue 724).
+The clock of Firefox 158 steps 1 ms, and that of Chromium 0.1 ms.
+
+Rejected: the mean on every browser, which loses the resistance of the median to one slow frame
+where the clock is fine enough.
+
+*Checked.* Verified by driven check, on a page whose clock is cut to whole milliseconds before its
+scripts run. No row that ran this window reads 0.00 in brackets, and the note shows. Without the
+rule, the page fails that check, with 6 of 10 such rows at 0.00. On the real clock of Chromium, the
+brackets keep the median, and no note shows.
+
 ## PGA share
 
 **The diagnostics show the PGA share, and the share of each side of the algebra boundary.** A
