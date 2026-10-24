@@ -1853,31 +1853,26 @@ func twistEnds*(rig: Rig, arm: Arm): tuple[lower, upper: float] =
   if arm == Arm.Right: (twist_range.lower, twist_range.upper)
   else: (-twist_range.upper, -twist_range.lower)
 
-proc deepest(couple: Couple, i: int): tuple[depth: float, met: Stop, end_index: int] =
-  ## Deepest any link of any arm sits in anything, by engine's own manifolds,
-  ## and whether that is body or arm; `end_index` names which of connection `i`'s two
-  ## arms it is, where it is one of them.
+proc deepest(couple: Couple): tuple[depth: float, met: Stop, whose: Option[Hand]] =
+  ## Deepest any link of any arm sits in anything, by engine's own manifolds, whether
+  ## that is body or arm, and whose arm it is; none where no link touches anything.
   ##   Asked whatever hands are doing: hold that stands with arm through body
   ##     is not hold couple have, and before this only hands parting said so.
   ##   Every arm, held or free: free arm crushed between two torsos is arm
   ##     through body as much as held one, and asking only held arms let couple
   ##     stand with free arm inside partner and call it holding.
-  result = (0.0, Stop.None, -1)
+  result = (0.0, Stop.None, none(Hand))
   # Every arm's three links, and every shoulder girdle, which squeezed between
   # two torsos is shoulder through body.
-  var mine: seq[tuple[body: engine.BodyId, end_index: int]]
+  var mine: seq[tuple[body: engine.BodyId, hand: Hand]]
   for who in Body:
     for arm in Arm:
-      var end_index = 0
-      if i >= 0:
-        for side in 0..1:
-          if couple.links[i].ends[side] == (who, arm): end_index = side
       for limb in Limb:
-        mine.add (couple.who[who].arm[arm].link[limb], end_index)
-      mine.add (couple.who[who].arm[arm].girdle, end_index)
+        mine.add (couple.who[who].arm[arm].link[limb], (body: who, arm: arm))
+      mine.add (couple.who[who].arm[arm].girdle, (body: who, arm: arm))
   # One loop for each axis of data: own link, contact, dancer, arm.
   # Split would hide its shape.
-  for (me, end_index) in mine:
+  for (me, hand) in mine:
     # Room for every contact body has: asked with room for eight, forearm
     # touching nine things had its deepest dropped unseen, and two forearms
     # stood 22 mm through each other with nothing said.
@@ -1899,12 +1894,7 @@ proc deepest(couple: Couple, i: int): tuple[depth: float, met: Stop, end_index: 
         for point_index in 0..<folds[manifold_index].point_count:
           let depth = -float(folds[manifold_index].points[point_index].separation)
           if depth > result.depth:
-            result = (depth, (if is_trunk: Stop.Through else: Stop.Arms), end_index)
-
-proc metBy(couple: Couple, i: int): Stop =
-  ## What one connection's arms are against, if anything, once hands have parted.
-  let deep = deepest(couple, i)
-  if deep.depth > 0.0: deep.met else: Stop.None
+            result = (depth, (if is_trunk: Stop.Through else: Stop.Arms), some(hand))
 
 func freedom(joint_range: Range, value: float, as_both_ends: bool): float =
   ## How far value sits from nearer end of range, in that end's ease.
@@ -1952,14 +1942,17 @@ func isPastEdge(stance: Stance, arm: Arm, pose: ArmPose): bool =
   ## Decide whether upper arm lies past shoulder's edge by more than its give, `GIVE_EDGE`.
   outside(stance.toAxes, arm, pose).angle > GIVE_EDGE
 
-proc stoppedBy*(couple: Couple, i: int): tuple[why: Stop, end_index: int] =
-  ## What stops this connection here, if anything does, and at which of its two arms.
+proc stoppedBy*(couple: Couple, i: int): tuple[why: Stop, whose: Option[Hand]] =
+  ## What stops this connection here, if anything does, and at whose arm; none where nothing
+  ## does.
   ##   Swing is asked first and whatever hands are doing, because engine was never
   ##     given it: nothing else in model holds extension or adduction, so asking
   ##     only once hands had parted left them unheld through every hold that stood.
   ##     Swing is also upper arm past shoulder's edge by more than its give (`shoulder`).
   ##   Everything else engine itself enforces, so it can only be reached by hands
   ##     coming apart, and then engine's own joints say which gave.
+  ##   Arm through body or arm is named by its own hand, held or free (`deepest`).  Span
+  ##     names connection's first hand: two arms together fall short, and neither alone.
   let pose = poseLink(couple, i)
   for k in 0..1:
     let
@@ -1969,24 +1962,24 @@ proc stoppedBy*(couple: Couple, i: int): tuple[why: Stop, end_index: int] =
     if margin(couple.rig.range[Dof.Extend], arm_joints.extend) < -GIVE or
         margin(couple.rig.range[Dof.Across], arm_joints.across) < -GIVE or
         isPastEdge(stance, hand.arm, pose.arms[k]):
-      return (Stop.Swing, k)
-  let deep = deepest(couple, i)
+      return (Stop.Swing, some(hand))
+  let deep = deepest(couple)
   if deep.depth > THROUGH:
-    return (deep.met, deep.end_index)
+    return (deep.met, deep.whose)
   if pose.apart <= PARTED:
-    return (Stop.None, -1)
+    return (Stop.None, none(Hand))
   for k in 0..1:
     let
       hand = couple.links[i].ends[k]
       (lower, upper) = twistEnds(couple.rig, hand.arm)
     if pose.twist[k] <= lower + AT_END or pose.twist[k] >= upper - AT_END:
-      return (Stop.Twist, k)
+      return (Stop.Twist, some(hand))
     if pose.bend[k] >= couple.rig.range[Dof.Bend].upper - AT_END:
-      return (Stop.Elbow, k)
+      return (Stop.Elbow, some(hand))
     if pose.wrist[k] >= couple.rig.range[Dof.Wrist].upper - AT_END:
-      return (Stop.Wrist, k)
-  let met = metBy(couple, i)
-  if met != Stop.None: (met, 0) else: (Stop.Span, 0)
+      return (Stop.Wrist, some(hand))
+  # What arm is against once hands have parted, if anything, else span.
+  if deep.depth > 0.0: (deep.met, deep.whose) else: (Stop.Span, some(couple.links[i].ends[0]))
 
 proc stopLink*(couple: Couple, i: int): Stop = stoppedBy(couple, i).why
   ## What stops this connection here, if anything does.
@@ -2042,14 +2035,14 @@ proc lineFore(couple: Couple, who: Body, arm: Arm): tuple[a, z: Vector] =
   (couple.elbow(who, arm),
    asWorld(engine.pointOf(couple.who[who].arm[arm].link[Limb.Palm], engine.initVector(0, 0, 0))))
 
-proc crossing*(couple: Couple): tuple[is_crossed: bool, whose: Hand] =
-  ## Whether one dancer's own arms cross above elbow, and whose: elbows out of order, or other
-  ## arm against upper arm short of its elbow's end.
+proc crossing*(couple: Couple): Option[Hand] =
+  ## Whose arm crosses above elbow where one dancer's own arms do: elbows out of order, or
+  ## other arm against upper arm short of its elbow's end; none where no arms cross.
   for who in Body:
     let axes = couple.chestStance(who).toAxes
     if dot(couple.elbow(who, Arm.Right) - couple.elbow(who, Arm.Left), axes.right) <
         ELBOWS_APART:
-      return (true, (who, Arm.Right))
+      return some((body: who, arm: Arm.Right))
   for who in Body:
     for arm in Arm:
       let upper = couple.lineUpper(who, arm)
@@ -2061,10 +2054,10 @@ proc crossing*(couple: Couple): tuple[is_crossed: bool, whose: Hand] =
             let met = closest(upper.a, upper.z, line.a, line.z)
             if met.gap - 2.0 * couple.rig.limb < ON_UPPER and
                 (1.0 - met.t) * distance(upper.a, upper.z) > ELBOW_END:
-              return (true, (who, arm))
-  (false, (Body.One, Arm.Left))
+              return some((body: who, arm: arm))
+  none(Hand)
 
-proc crossed*(couple: Couple): bool = couple.crossing.is_crossed
+proc crossed*(couple: Couple): bool = couple.crossing.isSome
   ## Whether arms cross above elbow anywhere.
 
 proc handUnder*(couple: Couple, lower: float): Option[tuple[which: int, whose: Hand]] =
@@ -2093,7 +2086,7 @@ proc gives*(couple: Couple): Stop =
     let why = couple.stopLink(i)
     if why != Stop.None: return why
   if couple.stoppedFree.isSome: return Stop.Swing
-  let deep = deepest(couple, -1)
+  let deep = deepest(couple)
   if deep.depth > THROUGH: return deep.met
   if couple.crossed: return Stop.Crossed
   let is_facing = couple.band == Band.Crown and couple.up <= FACING

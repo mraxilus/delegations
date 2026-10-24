@@ -77,7 +77,7 @@ type
     at*: float  ## Turns reached when something gave, or where planned way's last moment stands.
     why*: Stop
     which*: Option[int]  ## Which connection gave, or none: free arm is no connection.
-    whose*: Hand  ## And whose hand, on which arm, it gave at.
+    whose*: Option[Hand]  ## And whose hand, on which arm, it gave at, or none where nothing gave.
     moments*: seq[Moment]
     path*: Path
       ## Planned turn engine stood for these moments, one plan for each (`plannedWay`); empty
@@ -294,14 +294,15 @@ func reflected(
 func reflected(walk: Walk, order: seq[int], rests: array[Body, float], partners: seq[int]):
     Walk =
   ## Walk of twin seen in mirror: walk of question it answers.
-  ##   Hand that gave is named where walk stopped; otherwise it names none.
+  ##   Hand that gave is other arm of same body, where any gave.
   ##   Planned way's path is seen in mirror too (`plan.mirrored`).
   result = Walk(found_rest: walk.found_rest, apart: walk.apart, is_stopped: walk.is_stopped,
                 at: walk.at, why: walk.why, which: walk.which, whose: walk.whose,
                 path: (if walk.isPlanned: mirrored(walk.path) else: walk.path))
   if walk.is_stopped and walk.why != Stop.None:
     if walk.which.isSome: result.which = some(order.find(walk.which.get))
-    result.whose = (walk.whose.body, otherArm(walk.whose.arm))
+    if walk.whose.isSome:
+      result.whose = some((body: walk.whose.get.body, arm: otherArm(walk.whose.get.arm)))
   for moment in walk.moments: result.moments.add reflected(moment, order, rests, partners)
 
 func reflected(stood: Stood): Stood =
@@ -367,7 +368,7 @@ iterator stands*(rig: Rig): float =
 
 
 proc toMoment(couple: Couple, at: float): tuple[moment: Moment, why: Stop,
-                                           which: Option[int], whose: Hand] =
+                                           which: Option[int], whose: Option[Hand]] =
   ## Read every connection at this moment, and say what gave, if anything: connection, or
   ## free arm, which names no connection (`rigid.stoppedFree`), or joined hand under crown.
   ##   Over crown, once couple are not face to face, joined hands stay above heads in every
@@ -387,6 +388,7 @@ proc toMoment(couple: Couple, at: float): tuple[moment: Moment, why: Stop,
       result.moment.girdles[shape.who][shape.arm] = (ends.a, ends.z, shape.radius)
   result.why = Stop.None
   result.which = none(int)
+  result.whose = none(Hand)
   for i in 0..<couple.links.len:
     let pose = couple.poseLink(i)
     result.moment.arms.add pose.arms
@@ -401,22 +403,22 @@ proc toMoment(couple: Couple, at: float): tuple[moment: Moment, why: Stop,
     result.moment.hands.add hands
     result.moment.room = min(result.moment.room, roomAt(couple, pose, i))
     if result.why == Stop.None:
-      let (gave, end_index) = couple.stoppedBy(i)
+      let (gave, whose) = couple.stoppedBy(i)
       if gave != Stop.None:
         result.why = gave
         result.which = some(i)
-        result.whose = couple.links[i].ends[end_index]
+        result.whose = whose
   # Free arm gives too, and no connection is it.
   if result.why == Stop.None:
     let free = couple.stoppedFree
-    if free.isSome: (result.why, result.whose) = (Stop.Swing, free.get)
+    if free.isSome: (result.why, result.whose) = (Stop.Swing, free)
   # Joined hand under crown gives once couple are not face to face.
   if result.why == Stop.None and couple.band == Band.Crown and couple.up >= 1.0:
     let under = couple.handUnder(couple.bandNow.lower)
     if under.isSome:
       result.why = Stop.Band
       let (which, whose) = under.get
-      (result.which, result.whose) = (some(which), whose)
+      (result.which, result.whose) = (some(which), some(whose))
 
 proc walkedRaw*(
   rig: Rig;
