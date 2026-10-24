@@ -201,6 +201,7 @@ const
     ("curl", "fetch faces asked of shared store, one level down through `koch fetch-assets`"),
     ("coreutils", "`base64` inlining those faces, and `sha256sum` store checks them with"),
     ("nodejs", "run type-checker `types` drives and harness `drive` runs"),
+    ("libbrotli1", "decode `woff2` font face page ships; `koch drive` reads its `cmap`"),
     ("git", "clone Dear ImGui and SDL3, and read commit `desktop` holds each of them at"),
     ("cmake", "build SDL3 from source, since no package of it exists on Ubuntu 24.04"),
     ("pkg-config", "read version of that SDL3, which `desktop` checks before compiling"),
@@ -877,6 +878,9 @@ proc drive() =
   ##   Drives desktop front-end too, and no longer conditionally: both front-ends draw same
   ##   scene from same core, and check that runs on one machine alone is check nobody runs.
   ##   `driven` alone drives desktop by itself.
+  ##   Harness also reads what page draws and declares, and control page `koch drive` writes,
+  ##     into `build/font-faces/written.json`; `koch drive` judges that file once this passes,
+  ##     and this judges no font face (`tools/drive/font_faces.ts`).
   ##   Skip is gone, and that is repository issue 91 ruled: `0 finding(s)` over 156 checks and
   ##   over 138 were two claims wearing one sentence, which rule that check gives same verdict
   ##   on same code forbids. Absent dependency now fails by name instead, and `desktop` fetches

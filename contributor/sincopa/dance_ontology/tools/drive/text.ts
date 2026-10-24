@@ -14,14 +14,24 @@
 //     `:has()` rules hide still carries computed style, so every state of page reads in one
 //     pass. Showing is for cost alone: Chromium styles hidden element on demand, one by one,
 //     where page shown whole is styled in one pass; gain on these pages unmeasured. `display`
-//     sets no font property, so no verdict moves.
+//     sets no font property, so no finding moves.
+//   Control page `koch drive` writes is read by this same collector, as page `control`. It holds
+//     numeral in paragraph, placeholder, `::before`, SVG text and text script writes on load, so
+//     place this collector skips is numeral `koch drive` reports missing (`main.ts`).
 //   Cost: page is read at one viewport, Playwright's default; string or stack that `@media`
 //     gates on other width is unread.
 //   Cost: page is read in state it opens on. Text that script writes only once reader acts,
 //     as Explorer writes moves of frame reached, is unread until then.
 
 import type { Page } from '@playwright/test';
-import type { Declared } from './faces';
+
+/** One `@font-face` rule as browser's CSSOM serialises it. */
+export interface Declared {
+  family: string;
+  weight: string;
+  range: string;
+  source: string;
+}
 
 /** One string page draws in one element, with stack and weight it is drawn at. */
 export interface Run {

@@ -6,8 +6,8 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 00884b0317038c80 |
-| Pruned  | f430fbb5863e817e9aff5c07df9f216e8baa16ec |
+| Rules   | c523b64950d1f7de |
+| Pruned  | f07b7566aac6619f19090f8341936158bf0e9800 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from three sources.
@@ -664,15 +664,17 @@ passes are drawn, between them, as a line through that body. `oneWayRound` in `r
 the way round once for a whole move, and every frame of the move uses it. Verified by `checkRules`,
 which samples each blend part way between two frames.
 
-**A hand leaves its side only when its hold names a level and a modifier (rules 2 to 6).** A level
+**A hand leaves its side only when its hold names a level and a modifier (rules 2 to 5).** A level
 alone does not say which side a hand goes to, so the hold must say lock or wrap as well. A hand
 settles in one of six places, each a bearing off its own dancer's facing (rule 3). `SLOT_OFFSET` in
 `body.nim` sets them 44 degrees apart, and two marks need 34.9 degrees, so no two marks touch.
 
 Both wraps go round the front to the front of the other hand, and a low lock goes round the back
-(rules 4 and 5). The drawing sends a high lock round the back too, as rule 6 asked. The Architect
-retired rule 6 on 2026-10-22, and #697 holds the change. Verified by `checkRules`, which checks
-where each hold settles and which way its route sets off.
+(rules 4 and 5). A high lock folds the arm in front, so its hand settles in the front slot of its
+own side (Architect, 2026-10-22). No rule sends its line round a body, so the line takes the short
+way. Rule 6 sent it round the back, and the Architect retired it. Verified by `checkRules`, which
+checks where each hold settles, and which way its route sets off where a rule sends it. Red first on
+2026-10-22: the check failed against the old settle table, which put a high lock in the back slot.
 
 **A lock or a wrap needs its line to go round the body (rule 7), except a high lock (rule 41).** On
 the four single holds, at quarter turns of the follow, the larger arc takes seven values. They are
@@ -692,17 +694,21 @@ high lock, which would still refuse the arcs below it, where rule 41 refuses non
 
 Verified by `checkRules`, which draws a high lock on each of the four single holds at each quarter
 turn of the follow. It prints how many hug less than rule 7 asks, and at which arcs. On 2026-10-22
-it was eight of sixteen, at 132, 135 or 141 degrees. The check demands at least one such, so it
-cannot pass while it holds nothing that rule 7 does not. Red first on 2026-10-22: before the fix,
-the drawing refused a high lock on Left to left with the follow turned a quarter.
+it was all sixteen, at 0, 48, 51, 87 or 90 degrees, because the line takes the short way. The check
+demands at least one such, so it cannot pass while it holds nothing that rule 7 does not. Red first
+on 2026-10-22: before the fix, the drawing refused a high lock on Left to left with the follow
+turned a quarter.
 
 Cost: the drawing refuses no high lock for its arc. The simulation reads a high lock on the arm of
 the follow at half and whole turns (`simulation/verdicts.md`), and no law holds those rows. Nothing
 asks it about a high lock at a quarter turn, so nothing says which of the drawn ones a couple can
 dance. No page draws a lock or a wrap yet.
 
-Between quarter turns, some locks that `isDanceable` admits find no route, high and low alike. The
-build then fails on an empty value, and does not refuse with a message (#688).
+Between quarter turns, a high lock finds a route at each whole degree that the follow turns, on each
+single hold. Verified by `checkRules`, which routes all of them. Red first on 2026-10-22, against
+the back way of rule 6, which found no route on Left to right from 275 to 298 degrees. Some low
+locks that `isDanceable` admits find no route between quarter turns. The build then fails on an
+empty value, and does not refuse with a message (#688).
 
 **Above takes no lock and no wrap, and its line passes over the body (rule 8).** Above is over the
 head, so from overhead nothing is under it, and `straightReach` draws its line straight. Verified by
@@ -2360,10 +2366,15 @@ holds the title of the Explorer to title case.
 Chromium through Playwright. Rejected: an absolute path for either in `design/shot.nim`, which pins
 a version in the least durable place there is (issue 62).
 
-`tools/build.nim` declares `git`, `binutils`, `nodejs` and `chromium` as data, each with what it is
-for and whether an installer takes it (`SYSTEM`). A `system` verb prints those that an installer
-takes, one to a line: `git`, `binutils` and `nodejs`. The `shot` verb prints `chromium` as what the
-helper needs, since a person runs the helper by hand.
+`tools/build.nim` declares `git`, `binutils`, `nodejs`, `libbrotli1` and `chromium` as data, each
+with what it is for and whether an installer takes it (`SYSTEM`). A `system` verb prints those that
+an installer takes, one to a line: `git`, `binutils`, `nodejs` and `libbrotli1`. The `shot` verb
+prints `chromium` as what the helper needs, since a person runs the helper by hand.
+
+`libbrotli1` serves `koch drive`, which reads the `cmap` of each font face that a page ships
+(Drive). The two font faces of Commit Mono ship as `woff2`, which keeps its tables in one Brotli
+stream. Verified by a run of `nim r tools/build.nim system` on 2026-10-23, which prints the four
+names.
 
 `shot.nim` takes Playwright from `DANCE_PLAYWRIGHT`, or from the bare module name that node
 resolves. It takes the browser from `DANCE_CHROMIUM`, then from `chromium` beside the store of
@@ -2408,10 +2419,10 @@ folds in.
 command and runs it from the project directory. The table at the head of the file names and explains
 each one except `engine` and `system`.
 
-The verbs are the pages and their assets, the type check of the harness (`types`), and the check
-that renders every page (`drive`). They are also the recordings that rewrite committed data nothing
-else may edit (`modelled`, `rig`, `verdicts`, `answers`), and `record`, which runs them all. The
-rest are the fixtures (`fixtures`, `confirmed`, `watched`), the floors of the planned sweep
+The verbs are the pages and their assets, the type check of the harness (`types`), and the verb that
+renders every page for `koch drive` (`drive`). They are also the recordings that rewrite committed
+data nothing else may edit (`modelled`, `rig`, `verdicts`, `answers`), and `record`, which runs them
+all. The rest are the fixtures (`fixtures`, `confirmed`, `watched`), the floors of the planned sweep
 (`floors`), the engine, the screenshot helper, the system declaration, and `clean`. Koch drives the
 tests, and holds no verb for pages.
 
@@ -2429,10 +2440,10 @@ stack. Verified by `suites/test_font_faces.nim`, test "every heading takes serif
 
 Labels drawn inside figures take Noto Sans rather than Commit Mono. The "code, data and figures" of
 X.8 reads as numbers, and a label that names a hand is interface text. Every label that the code
-draws names Noto Sans first. The check in `curator/audit/src/faces.nim` joins the literals that `&`
-carries across a line end, so it reads each label (#412). It holds a label only to a first family
-that X.8 names, so reading alone holds it to Noto Sans. Verified by hand with a search of the source
-on 2026-10-18, which finds Noto Sans first in every stack of a label.
+draws names Noto Sans first. The check in `curator/audit/src/font_families.nim` joins the literals
+that `&` carries across a line end, so it reads each label (#412). It holds a label only to a first
+family that X.8 names, so reading alone holds it to Noto Sans. Verified by hand with a search of the
+source on 2026-10-18, which finds Noto Sans first in every stack of a label.
 
 **No font family of the three draws every character that the pages draw, so each stack names two
 more.** Noto Sans and Noto Serif draw no arrow, and Commit Mono draws no `⇄`. Noto Sans Math draws
@@ -2442,83 +2453,19 @@ codepoint range of X.8. The maps were read with fontconfig 2.15.0 on 2026-10-03,
 font faces with the digests of the store.
 
 The wiring is verified by `suites/test_font_faces.nim`, test "every stack falls back to font
-families that draw what its own font family lacks". The coverage is verified by `drive`, below, on
-every page that `pages` writes, except the Explorer before `bundle` folds its script in. That page
-loads `app.js` from beside it, and its hosted copy finds none there. The bundled Explorer,
+families that draw what its own font family lacks". The coverage is verified by `koch drive`
+(Drive), on every page that `pages` writes, except the Explorer before `bundle` folds its script in.
+That page loads `app.js` from beside it, and its hosted copy finds none there. The bundled Explorer,
 `app/artifact.html`, is the same page as published, and `drive` renders it.
 
-**`drive` proves the font faces of every page, as `CONTRIBUTOR.md`, Pages and assets, asks.** It
-builds every page, and renders each one in Chromium as the publish host serves it. For each
-character beyond ASCII, it resolves the font stack of the element against the `cmap` of each
-font face that the page ships. A character that no font face of that stack maps is a finding. The
-finding names the page, the element and the codepoint. A font face that the browser does not load is
-a finding too.
-
-The harness is TypeScript under `tools/drive/`. TypeScript is admitted for the host API of a test
-driver. It checks each expression that runs inside the page against the types of the DOM. The
-verdict is Nim, in `design/render.nim`, where the suites reach it (Article II.9).
-
-**The harness and its verdict are copies, and they name no sibling (Architect, issue 670,
-2026-10-21).** This project names no other project, because it is concerned with itself alone. So
-the copies break the rule that each copy names its siblings (Article II.9). Cost: a fix found in
-another copy reaches these files by chance alone. The curator weighs one shared check of font faces
-(issue 671), which would remove the copies.
-
-Rejected: a harness in Nim compiled to JavaScript, as `shot` is, where each of those expressions is
-an unchecked string. Rejected: `CSS.getPlatformFontsForNode`, which answers only for text laid out
-alone.
-
-**A control page proves that the render sees.** It is built from
-`tests/drive/control_font_faces.json`, and dressed with every font face, as every page is. Two of
-its paragraphs write a character that no shipped font face maps under their stack. A third writes
-`𝐀` under the body stack, which Noto Sans Math maps. The drive fails where the control raises a
-finding that it does not expect, or misses one that it expects. The fixture is under `tests/`,
-because the static check of coverage reads every other file, and no font face maps these characters.
-
-**Each page is rendered inside the document skeleton that the publish host wraps it in.** So the
-charset and the viewport are the ones that a viewer gets. `SKELETON_HOST` was read off the
-Reference, version 11, on 2026-10-05. It is the host's own, so it can change. The style sheet of the
-host is left out, because its body stack leads with font families of the system, which X.8 forbids
-here.
-
-No check is lost by that. An element that inherits no stack from its page takes the default of the
-browser. That default is a font family of the system too, so the drive finds it either way.
-
-Verified by `suites/test_render.nim`, nine laws over the verdict. Without the line that keeps an
-expected finding of the control out of the findings, three of the nine fail. Verified by `drive` on
-2026-10-05, in Chromium 141 (revision 1194) under Playwright 1.63.0. No page that `pages` wrote then
-gave a finding, and the control raised its two findings. With Noto Sans Math taken out of
-`FONT_FACES`, the drive fails, and `p#closed` of the control is among its findings.
-
-Cost: a page is read at one viewport, in the state it opens on. Text that a script writes only after
-the reader acts, as the Explorer writes the moves of a frame, is not read. Cost: a character is
-resolved alone, as its `cmap` maps it. So a combining mark can draw from a font face that this does
-not name. Cost: the time that `drive` takes over the kept pages is unmeasured.
-
-**`package-lock.json` pins the node tools, and git ignores their checkout.** The project commits
-`package.json` and `package-lock.json`, which pin these versions. `typescript` 7.0.2 type-checks the
-harness, and `@playwright/test` 1.63.0 drives Chromium. Both are Microsoft's, under Apache-2.0.
-`@types/node` 22.20.2 is DefinitelyTyped's, under MIT, and types the node surface that the harness
-reaches. The `license` field of each entry in `package-lock.json` gives these licences, and the
-licences of what they bring.
-
-**Chromium is the one that Playwright pins, unless `DANCE_CHROMIUM` names one.** `package-lock.json`
-pins `@playwright/test`, and that version pins the revision of the browser. `drive` fetches it with
-`npx playwright install chromium`. Playwright publishes no checksum, so the bytes arrive on TLS
-alone. The run above used revision 1194 through `DANCE_CHROMIUM`, where Playwright 1.63.0 pins
-revision 1243.
-
-**`types` compiles this driver, and the project code that it imports, on the compiler of koch.**
-That holds while the pin of this project is the pin of koch, 2.2.12 for both. A pin that moves first
-splits the driver.
+Rejected: Commit Mono alone, which draws no `⇄`. Rejected: another mark for `place`, which would
+change the design.
 
 **Suites write pages apart from the directories that `pages` writes.** A page that a suite writes
 carries no font faces. So `test_marks` writes under `build/suites/`, and `pages` dresses only
 `build/app` and `build/design`. A suite page that stands where a published page stands could be
-published without its font faces. `drive` renders only what `pages` dresses.
-
-Rejected: Commit Mono alone, which draws no `⇄`. Rejected: another mark for `place`, which would
-change the design.
+published without its font faces. `drive` renders only what `pages` dresses, and the control page
+of `koch drive`.
 
 **A dressed page that declares no charset declares UTF-8.** The Reference, the rig viewer and the
 bundled Explorer are fragments, and publishing wraps each one in a document. Opened from a file,
@@ -2611,6 +2558,92 @@ can lose them.
 **A shipped label font face makes a card one picture on every machine.** A label in the reader's own
 sans draws a card differently on each machine, and X.8 forbids that. Verified by hand in
 Chromium 1194, 2026-09-10: none of 97 measured labels sits outside its viewBox.
+
+## Drive
+
+**`koch drive` proves the font faces of every page, as `CONTRIBUTOR.md`, Pages and assets, asks.**
+It writes a control page to `build/font-faces/control.html`, then runs `drive`. `drive` builds every
+page, and renders each one in Chromium as the publish host serves it. One collector reads each page
+and the control page. It writes `build/font-faces/written.json`, in the shape that
+`curator/audit/src/font_stacks.nim` gives, and names the control page `control`. Then `koch drive`
+resolves that file, writes `found.json` beside it, and reports each finding.
+
+A character beyond ASCII that a font face of the system draws on a page is a finding. The finding
+names the page, the element and the codepoint. A font face that the browser does not load is a
+finding too. So is a numeral of the control page that the collector does not read.
+
+The harness is TypeScript under `tools/drive/`. TypeScript is admitted for the host API of a test
+driver. It checks each expression that runs inside the page against the types of the DOM. The
+harness resolves nothing and judges nothing. `koch drive` reads the `cmap` of each font face,
+matches each weight and walks each font stack, once for every project.
+
+**No copy of the check stands here, and this project names no other project (Architect, issue 670,
+2026-10-21).** The curator holds the one check of font faces in `koch drive`, for every project
+(issue 671). This project keeps its collector, its pages and its choice of font faces.
+
+Rejected: a harness in Nim compiled to JavaScript, as `shot` is, where each of those expressions is
+an unchecked string.
+
+**The control page is the curator's, and it proves the collector on each run.** It holds the Chinese
+numerals one to five, each in one kind of place where text stands. Those places are a paragraph, the
+placeholder of a field, a `::before`, SVG text, and text that a script writes on load. No font face
+of the store maps any of them. So each numeral that the collector reads is in `found.json`, and a
+numeral that is missing names the place that the collector skips.
+
+`drive` reads the control page as `koch drive` writes it, outside the skeleton of the host. The page
+declares its own charset, and the skeleton adds no place where text stands. Where no control page
+stands, as when `drive` runs alone on a fresh build, `written.json` holds the pages alone, and
+`drive` says so. Verified by a run of `nim r tools/build.nim drive` alone on 2026-10-23.
+
+**Each rule names a file that holds the bytes of its font face.** The resolver of `koch drive` reads
+the `cmap` out of a file, and each font face is inlined as a `data:` source. So the collector writes
+the bytes of each source once into `build/font-faces/files/`, named by their SHA-256. Then
+`koch drive` reads the bytes that a viewer receives, from the page itself and not from the store.
+
+**Each page is rendered inside the document skeleton that the publish host wraps it in.** So the
+charset and the viewport are the ones that a viewer gets. `SKELETON_HOST` was read off the
+Reference, version 11, on 2026-10-05. It is the host's own, so it can change. The style sheet of the
+host is left out, because its body stack leads with font families of the system, which X.8 forbids
+here.
+
+No check is lost by that. An element that inherits no stack from its page takes the default of the
+browser. That default is a font family of the system too, so `koch drive` finds it either way.
+
+Verified by `suites/test_render.nim`, which holds each page inside the skeleton of the host, and the
+skeleton to no font family. Verified by `nim r koch drive contributor/sincopa/dance_ontology` on
+2026-10-23, in Chromium 153 (revision 1243) under Playwright 1.63.0. It gave no finding. No page
+that `pages` wrote draws a character from a font face of the system, and every font face loaded.
+Each of the five numerals of the control page was in `found.json`, at the element that holds it.
+
+Two breaks, each made by hand on 2026-10-23 and then reverted, show that the check sees. With the
+read of `placeholder` taken out of the collector, `koch drive` fails, and names `U+4E8C` in the
+placeholder of a field. With the two font faces of Commit Mono taken out of `FONT_FACES`, it fails
+with ten findings. Each one names the page, the element and the codepoint, as `button#next` of
+`design-rig` draws `U+2192`.
+
+Cost: a page is read at one viewport, in the state it opens on. Text that a script writes only after
+the reader acts, as the Explorer writes the moves of a frame, is not read. The `⇄` that the Explorer
+writes is such text, and Noto Sans Math alone maps it. So `koch drive` passes with Noto Sans Math
+taken out of `FONT_FACES`, and the static check of coverage reports that `⇄` instead. Both were
+measured by hand on 2026-10-23.
+
+Cost: the time that `drive` takes over the kept pages is unmeasured.
+
+**`package-lock.json` pins the node tools, and git ignores their checkout.** The project commits
+`package.json` and `package-lock.json`, which pin these versions. `typescript` 7.0.2 type-checks the
+harness, and `@playwright/test` 1.63.0 drives Chromium. Both are Microsoft's, under Apache-2.0.
+`@types/node` 22.20.2 is DefinitelyTyped's, under MIT, and types the node surface that the harness
+reaches. The `license` field of each entry in `package-lock.json` gives these licences, and the
+licences of what they bring.
+
+**Chromium is the one that Playwright pins, unless `DANCE_CHROMIUM` names one.** `package-lock.json`
+pins `@playwright/test`, and that version pins the revision of the browser. `drive` fetches it with
+`npx playwright install chromium`. Playwright publishes no checksum, so the bytes arrive on TLS
+alone. The run above used revision 1243, which Playwright 1.63.0 pins, with no `DANCE_CHROMIUM` set.
+
+**`types` compiles this driver, and the project code that it imports, on the compiler of koch.**
+That holds while the pin of this project is the pin of koch, 2.2.12 for both. A pin that moves first
+splits the driver.
 
 ## Mirror twins
 
