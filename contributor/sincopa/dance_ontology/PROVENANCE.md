@@ -507,8 +507,7 @@ Nothing the law calls touches the document, so a count for both needs no browser
 builds the viewer apart from `marks.PAGES`, so `suites/test_marks.nim` holds its prose in a law of
 its own. The law reads the header and the panel (`HEAD_BODY`), then the cards that `cardsBody` lays
 out from the Reference that the suite writes. The wrapper, the style sheets and the scripts hold no
-prose. Red first: the third paragraph of the header held seven sentences, and one of them held 26
-words.
+prose. Red first: the header held a paragraph of seven sentences, and a sentence of 26 words.
 
 Some prose is counted by nothing still. The Explorer writes what its live region says straight into
 the element, so no law reaches it. One verdict of the viewer opens `Stops at N turns:` and closes
