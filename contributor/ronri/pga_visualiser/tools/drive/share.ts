@@ -102,25 +102,33 @@ function reportAgreed(
   );
 }
 
-/** Assert page served without policy says why it cannot sample, in every row.
+/** Assert page served without policy says once why it cannot sample, in place of its rows.
  *
  *  Domain: page opened from file, as reader opens downloaded copy; browser has profiler,
- *  and refuses it to that page.
+ *  and refuses it to that page. Desktop's panel says its reason once too.
+ *  Reason written into each of four rows wrapped into row's own name, in drawer 400 px wide.
  */
 export async function driveShareRefused(page: Page): Promise<void> {
   const was = await openDiagnostics(page);
   const reason = await page.evaluate(() => nimWording(Wording.NoteDiagnosticsSharePolicy));
   await page.waitForFunction(
-    (given) => document.getElementById('diagnostic-share-pga')?.textContent === given,
+    (given) => document.getElementById('diagnostic-share-reason')?.textContent === given,
     reason,
   ).catch(() => undefined);
-  const rows = await page.evaluate(
-    (ids) => ids.map((id) => document.getElementById(id)?.textContent ?? ''),
-    SIDES_SHARE.map((side) => side.id),
-  );
+  const seen = await page.evaluate((ids) => {
+    const note = document.getElementById('diagnostic-share-reason');
+    const isShown = (element: Element | null | undefined) =>
+      (element?.getClientRects().length ?? 0) > 0;
+    return {
+      note: note?.textContent ?? '',
+      is_shown_note: isShown(note),
+      shown_rows: ids.filter((id) => isShown(document.getElementById(id)?.parentElement)).length,
+    };
+  }, SIDES_SHARE.map((side) => side.id));
   report(
-    'the page says why it cannot sample its PGA share, where the browser refuses',
-    rows.every((row) => row === reason), rows.join(' | '),
+    'the page says once why it cannot sample its PGA share, in place of its four rows',
+    seen.note === reason && seen.is_shown_note && seen.shown_rows === 0,
+    `"${seen.note}", shown ${seen.is_shown_note}, ${seen.shown_rows} of 4 rows shown`,
   );
   await closeDiagnostics(page, was);
 }
