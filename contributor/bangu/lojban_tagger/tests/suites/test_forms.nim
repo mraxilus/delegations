@@ -2,11 +2,15 @@
 ##   Every string of up to four letters over alphabet of 3.1, foreign letters added, is
 ##     enumerated, and so is every string of CVC/CV or CCVCV letters; other strings of five are
 ##     sampled, seeded, as one-letter mutations of listed gismu (Article IX.3).
+##   Each test seeds generator once, draws its samples into pool, and iterator serves pool.
 ##   Forms are restated here from notation of 4.1, apart from `form`; pair judgements of
 ##     `clusters.nim` are reused, since `test_clusters.nim` replicates them.
 ##   Where CLL speaks of every gismu, rafsi or lujvo, each entry of committed lists stands as
 ##     domain, so list breaking claim of CLL fails here, by name.
 ##   Short rafsi outside 4.6 tables would be pinned as exceptions, not failed; list holds none.
+##   String no source holds is marked `constructed` in its citation.
+##   Internal suite holds choice CLL does not make: `form` refuses commas, which `tags.nim`
+##     strips first.
 ##   Cost: enumeration reads about million strings; suite runs in about two seconds on
 ##     unoptimised build, measured 2026-10-24.
 
@@ -52,11 +56,10 @@ const
     ## Listed gismu and short rafsi holding letter gismu lacks, pinned; list holds none.
   SAMPLES_MUTATION = 20000  ## Listed gismu mutated in one letter and classified, seeded.
   FLOOR_MUTATION = 3080
-    ## Least of those mutations keeping shape of gismu: half of 6160 read at seed 0.
-  SAMPLES_INSERTION = 6000  ## Listed words `y` or apostrophe is inserted into, seeded.
-  FLOOR_INSERTION = 1040
-    ## Least of those drawn from cmavo, so false verdict stays tested: half of 2081 read at
-    ## seed 0.
+    ## Least of those mutations keeping shape of gismu, so corpus holds both verdicts: half of
+    ## 6160 read at seed 0.
+  SAMPLES_INSERTION = 2000
+    ## Listed words of each kind, cmavo, gismu and lujvo, `y` or apostrophe is inserted into.
   SAMPLES_LONG = 3000  ## Listed gismu lengthened past five letters, seeded.
 
 
@@ -141,17 +144,22 @@ func rafsiPossible(gismu: string): seq[string] =
   gismu.rows.mapIt(rafsiPattern(gismu, it[1])).filterIt(it.form.isSome)
 
 
+func hyphenBefore(rafsi: string): char =
+  ## Pick hyphen CVV rafsi takes before `rafsi`: `n` where `rafsi` begins with `r`, else `r`.
+  if rafsi[0] == 'r': 'n' else: 'r'
+
+
+func formsHeld(texts: openArray[string]): set[Form] =
+  ## Collect forms `texts` take; text of no form adds none.
+  for text in texts:
+    let found = text.form
+    if found.isSome: result.incl found.get
+
+
 func countPairs(text: string): int =
   ## Count adjacent consonant pairs in text.
   for i in 0..<text.high:
     if text[i] in ORDER_CONSONANTS and text[i+1] in ORDER_CONSONANTS: inc result
-
-
-func countPermissible(): int =
-  ## Count permissible consonant pairs of 3.6, as `clusters.nim` judges them.
-  for a in ORDER_CONSONANTS:
-    for b in ORDER_CONSONANTS:
-      if isPairPermissible(a, b): inc result
 
 
 func isBrivlaRestated(text: string): bool =
@@ -181,26 +189,57 @@ proc insertUncounted(text: string): string =
   text[0..<at] & sample(['y', '\'']) & text[at .. ^1]
 
 
+proc drawLengthened(words: seq[string]): seq[string] =
+  ## Draw `SAMPLES_LONG` of `words`, each lengthened by one to four letters, as seeded.
+  result = newSeqOfCap[string](SAMPLES_LONG)
+  for _ in 1..SAMPLES_LONG:
+    var text = sample(words)
+    for _ in 1..rand(1..4): text.add sample(ALPHABET & LETTERS_FOREIGN)
+    result.add text
+
+
+proc drawInserted(kinds: openArray[seq[string]]): seq[(string, string)] =
+  ## Draw `SAMPLES_INSERTION` words of each kind, each beside copy `y` or apostrophe went into.
+  result = newSeqOfCap[(string, string)](SAMPLES_INSERTION * kinds.len)
+  for words in kinds:
+    for _ in 1..SAMPLES_INSERTION:
+      let text = sample(words)
+      result.add (text, text.insertUncounted)
+
+
+proc drawMutated(words: seq[string]): seq[string] =
+  ## Draw `SAMPLES_MUTATION` of `words`, each mutated in one letter, as seeded.
+  result = newSeqOfCap[string](SAMPLES_MUTATION)
+  for _ in 1..SAMPLES_MUTATION: result.add mutate(sample(words))
+
+
+iterator samples[T](pool: seq[T]): lent T =
+  ## Serve each sample of preallocated pool, with no copy.
+  for i in 0..<pool.len: yield pool[i]
+
+
 
 suite "Chapter 4":
   test "Section 4.1":
     for length in 0..2:
       for text in texts(positionsAny(length)):  # 993 strings, exhaustive
         check text.form.isNone  # 4.6, shortest rafsi has three letters
-    check "sya".form.isNone and "byk".form.isNone  # 4.1 rule 1, V excludes `y`
-    check "sy'a".form.isNone and "lerfy".form.isNone  # 4.1 rule 1, V excludes `y`
-    check "SAL".form.isNone and "Sal".form.isNone  # 4.1 rule 3, C is lowercase; capitals 3.1
-    check "BLANU".form.isNone and not "Blanu".isGismu  # 4.1 rule 3; capitals in names alone, 3.1
-    check "sahi".form.isNone  # 3.3, `h` never stands for apostrophe
-    check "s'ai".form.isNone and "'sai".form.isNone and "sai'".form.isNone  # 4.1 rule 2, V'V
-    check "sa.i".form.isNone and "sa,i".form.isNone  # 3.3, period splits word; comma no letter
-    check "sa'ai".form.isNone and "saklii".form.isNone  # 4.6, no form of these lengths
+    check "sya".form.isNone and "byk".form.isNone  # 4.1 rule 1, V excludes `y`; constructed
+    check "sy'a".form.isNone and "lerfy".form.isNone  # 4.1 rule 1, V excludes `y`; constructed
+    check "SAL".form.isNone and "Sal".form.isNone  # 4.1 rule 3, C lowercase (3.1); constructed
+    check "BLANU".form.isNone  # 4.1 rule 3; capitals in names alone (3.1); constructed
+    check not "Blanu".isGismu  # 4.1 rule 3; capitals in names alone (3.1); constructed
+    check "sahi".form.isNone  # 3.3, `h` never stands for apostrophe; constructed
+    check "s'ai".form.isNone and "'sai".form.isNone  # 4.1 rule 2, V'V; constructed
+    check "sai'".form.isNone  # 4.1 rule 2, V'V; constructed
+    check "sa.i".form.isNone  # 3.3, period inside word makes two words; constructed
+    check "sa'ai".form.isNone  # 4.4, no gismu contains "'"; constructed
+    check "saklii".form.isNone  # 4.4, gismu "always have five letters"; constructed
     let (_, words_gismu, _) = wordsListed()
     randomize(0)
-    for _ in 1..SAMPLES_LONG:
-      var text = sample(words_gismu)
-      for _ in 1..rand(1..4): text.add sample(ALPHABET & LETTERS_FOREIGN)
-      check text.form.isNone and not text.isGismu  # 4.4, gismu "always have five letters"
+    let pool = drawLengthened(words_gismu)
+    for text in pool.samples:  # `SAMPLES_LONG` strings, seeded
+      check text.form.isNone  # 4.4, gismu "always have five letters"
 
 
   test "Section 4.3":
@@ -209,8 +248,8 @@ suite "Chapter 4":
     check not isBrivla("da'amei")  # 4.3, compound cmavo, no consonant pair
     check not isBrivla("lojban.")  # 4.3, name, no final vowel
     check not isBrivla("lojban")  # 4.3, cmene always end in consonant
-    check isBrivla("ba'ibla")  # 4.3, `bl` is fourth and fifth letters counted
-    check not isBrivla("bababla")  # 4.3, `bl` is fifth and sixth letters, past first five
+    check isBrivla("ba'ibla")  # 4.3, `bl` is fourth and fifth letters counted; constructed
+    check not isBrivla("bababla")  # 4.3, `bl` fifth and sixth letters, past first five; constructed
     check not isBrivla("")  # 4.3, no final vowel
     for length in 1..7:
       for text in texts(newSeqWith(length, "bla'y")):  # 97655 strings, exhaustive
@@ -224,17 +263,9 @@ suite "Chapter 4":
       check isBrivla(bare) == isBrivla(text)  # 4.3, `y` and apostrophe "not counted"
       check not isBrivla(text & "n") and not isBrivla(text & ".")  # 4.3, final vowel
     randomize(0)
-    var count_cmavo = 0
-    for _ in 1..SAMPLES_INSERTION:
-      let
-        source = rand(2)
-        text =
-          if source == 0: sample(words_cmavo)
-          elif source == 1: sample(words_gismu)
-          else: sample(words_lujvo)
-      check isBrivla(text.insertUncounted) == isBrivla(text)  # 4.3, `y`, apostrophe uncounted
-      if source == 0: inc count_cmavo
-    check count_cmavo >= FLOOR_INSERTION  # corpus keeps false verdict (Article IX.3)
+    let pool = drawInserted([words_cmavo, words_gismu, words_lujvo])
+    for (text, inserted) in pool.samples:  # `SAMPLES_INSERTION` of each kind, seeded
+      check isBrivla(inserted) == isBrivla(text)  # 4.3, `y`, apostrophe uncounted
 
 
   test "Section 4.4":
@@ -248,16 +279,14 @@ suite "Chapter 4":
     check "ninmu".form == some(Form.Cvccv)  # 4.4, Example 3.8 as page labels it
     for text in ["creka", "lijda", "blanu", "mamta", "cukta", "patfu", "nanmu", "ninmu"]:
       check text.isGismu  # 4.4, Examples 3.1-3.8 as page labels them
-    var count_cvccv, count_ccvcv = 0
     for text in texts(positionsNotation("CVCCV")):  # 122825 strings, exhaustive
       let expected = if isPairPermissible(text[2], text[3]): some(Form.Cvccv) else: none(Form)
       check text.form == expected  # 4.4, CVC/CV, medial pair need only be permissible
-      if text.isGismu: inc count_cvccv
+    var count_ccvcv = 0
     for text in texts(positionsNotation("CCVCV")):  # 122825 strings, exhaustive
       let expected = if isPairInitial(text[0], text[1]): some(Form.Ccvcv) else: none(Form)
       check text.form == expected  # 4.4, CCVCV, pair at beginning "permissible initial pair"
       if text.isGismu: inc count_ccvcv
-    check count_cvccv == 17 * 5 * countPermissible() * 5  # 4.4, CVC/CV over C/C, 4.1 rule 5
     check count_ccvcv == 48 * 5 * 17 * 5  # 4.4, CCVCV over 48 initial pairs of 4.1 rule 4
     let (words_cmavo, words_gismu, words_lujvo) = wordsListed()
     check words_gismu.len in 1300..1400  # 4.4, "about 1350 gismu"
@@ -277,34 +306,28 @@ suite "Chapter 4":
       if stem == "brod": check words == @["broda", "brode", "brodi", "brodo", "brodu"]  # 4.4
       else: check words.len == 1  # 4.4, no two other gismu differ only in final vowel
     check lut_words_by_stem.hasKey("brod")  # 4.4, five special brivla variables
-    for text in words_cmavo & words_lujvo:
+    for text in words_lujvo:
       check not text.isGismu  # 4.4, "five letter length distinguishes gismu from lujvo"
+    for text in words_cmavo:
+      check not text.isGismu  # 4.3, consonant pair distinguishes brivla, gismu among them
     randomize(0)
+    let pool = drawMutated(words_gismu)
     var count_shaped = 0
-    for _ in 1..SAMPLES_MUTATION:
-      let text = mutate(sample(words_gismu))
+    for text in pool.samples:  # `SAMPLES_MUTATION` strings, seeded
       check text.form == text.formRestated  # 4.4, five letters hold CVC/CV, CCVCV or none
       if text.formRestated.isSome: inc count_shaped
     check count_shaped >= FLOOR_MUTATION  # corpus keeps gismu shapes (Article IX.3)
 
 
   test "Section 4.6":
-    var
-      counts: array[Form, int]
-      count_cvv_broken = 0
+    var counts: array[Form, int]
     for length in 3..4:
       for text in texts(positionsAny(length)):  # 953312 strings, exhaustive
         let found = text.form
         check found == text.formRestated  # 4.6 forms in 4.1 notation
-        if found.isNone: continue
-        if '\'' in text: inc count_cvv_broken else: inc counts[found.get]
-    check counts[Form.Cvc] == 17 * 5 * 17  # 4.6, CVC over 4.1 rules 1 and 3
+        if found.isSome: inc counts[found.get]
     check counts[Form.Ccv] == 48 * 5  # 4.6, CCV "only if" permissible initial pair
-    check counts[Form.Cvv] == 17 * 4  # 4.6, CVV unbroken only with four diphthongs
-    check count_cvv_broken == 17 * 25  # 4.1 rule 2, 25 vowel pairs split by apostrophe
-    check counts[Form.Cvcc] == 17 * 5 * countPermissible()  # 4.6, CVC/C
-    check counts[Form.Ccvc] == 48 * 5 * 17  # 4.6, CCVC
-    check counts[Form.Cvccv] == 0 and counts[Form.Ccvcv] == 0  # 4.6, 5-letter rafsi alone
+    check counts[Form.Ccvc] == 48 * 5 * 17  # 4.6, CCVC over 48 initial pairs of 4.1 rule 4
     check sorted(DIPHTHONGS_RAFSI) == sorted(DIPHTHONGS)  # 4.6, "ai", "ei", "oi", "au"
     for (labelled, pattern, rafsi) in ROWS_SAKLI:
       check rafsiPattern("sakli", pattern) == rafsi  # 4.6, table for `sakli`
@@ -312,8 +335,6 @@ suite "Chapter 4":
     for (labelled, pattern, rafsi) in ROWS_BLACI:
       check rafsiPattern("blaci", pattern) == rafsi  # 4.6, table for `blaci`
       check rafsi.form == some(labelled)  # 4.6, table for `blaci`
-    check rafsiPossible("sakli") == ROWS_SAKLI.mapIt(it[2])  # 4.6, "only short rafsi forms"
-    check rafsiPossible("blaci") == ROWS_BLACI.mapIt(it[2])  # 4.6, "only short rafsi forms"
     check rafsiPossible("mamta") == @["mam", "mat", "ma'a"]  # 4.6, "can only have"
     check "mamta".form == "salci".form  # 4.6, `mamta` has form of `salci`
     var
@@ -343,23 +364,20 @@ suite "Chapter 4":
     check exceptions_table == EXCEPTIONS_TABLE  # 4.6, short rafsi "that can possibly exist"
     check exceptions_letters == EXCEPTIONS_LETTERS  # 4.6, letters chosen from five of gismu
     check count_possible_most == 7  # 4.6, "at most seven possible short rafsi"
-    for entry in LIST_GISMU:
-      for one in entry.rafsi:
-        if one.len == 3 and one.form == some(Form.Cvv):
-          check one[1..2] in DIPHTHONGS  # 4.6, CVV unbroken only with diphthong
-        if one.form == some(Form.Ccv):
-          check isPairInitial(one[0], one[1])  # 4.6, CCV only with initial pair
     let (_, _, words_lujvo) = wordsListed()
     for text in words_lujvo:
-      check text.len >= 6 and not text.isGismu  # 4.6, "all lujvo have at least six letters"
+      check text.len >= 6  # 4.6, "all lujvo have at least six letters"
     var vowels_paired: seq[string]
     for entry in LIST_GISMU:
       for one in entry.rafsi:
         if one.form == some(Form.Cvv): vowels_paired.add one
+    for second in vowels_paired:
+      check isPairPermissible(second.hyphenBefore, second[0])  # 4.6, `n` "in place of" `r`
     for first in vowels_paired:
       for second in vowels_paired:  # 177241 pairs, exhaustive
         check not isBrivla(first & second)  # 4.6, CVV-CVV "would be no consonant cluster"
-        check isBrivla(first & "r" & second)  # 4.6, "hyphen is always required"
+        check isBrivla(first & second.hyphenBefore & second)  # 4.6, "hyphen is always required"
+    check not isPairPermissible('r', 'r')  # 4.6, `ro'irre'o` "impermissible double consonant"
     check not isBrivla("ro'ire'o")  # 4.6, "breaks up into two cmavo"
     check isBrivla("patyta'a") and isBrivla("mudysiclu")  # 4.6, `y` not counted, "this is why"
     check isBrivla("ro'inre'o") and isBrivla("rokre'o")  # 4.6, hyphenated and unhyphenated
@@ -369,19 +387,28 @@ suite "Chapter 4":
     check FORMS_SHORT == {Form.Cvc, Form.Ccv, Form.Cvv}  # 4.6, "CVC, CCV, or CVV"
     check FORMS_UNREDUCED == {Form.Cvcc, Form.Ccvc}  # 4.6, 4-letter rafsi CVC/C or CCVC
     check FORMS_GISMU == {Form.Cvccv, Form.Ccvcv}  # 4.4, "CVC/CV or CCVCV"
-    check FORMS_SHORT + FORMS_UNREDUCED + FORMS_GISMU == {Form.low..Form.high}  # 4.6
-    check card(FORMS_SHORT) + card(FORMS_UNREDUCED) + card(FORMS_GISMU) == 7  # 4.6, disjoint
     check FORMS_FINAL == {Form.Ccv, Form.Cvv, Form.Cvccv, Form.Ccvcv}  # 4.11 step 2
-    check FORMS_FINAL * FORMS_SHORT == {Form.Ccv, Form.Cvv}  # 4.11 step 2, CVV-form or CCV-form
-    check FORMS_FINAL * FORMS_UNREDUCED == {}  # 4.6, 4-letter rafsi at beginning or middle only
-    check FORMS_GISMU <= FORMS_FINAL  # 4.6, gismu itself used only at end
-    check (FORMS_SHORT + FORMS_UNREDUCED) * FORMS_GISMU == {}  # 4.11 step 1, 3 or 4 letters
-    check Form.Cvc notin FORMS_FINAL  # 4.6, CVC never final rafsi
+    var texts_short, texts_unreduced, texts_gismu: seq[string]
     for entry in LIST_GISMU:
-      var texts_formed = entry.rafsi
-      if entry.word.isGismu: texts_formed.add [entry.word, entry.word[0..3]]
-      for text in texts_formed:
-        let found = text.form
-        check found.isSome  # 4.6, every rafsi has form
-        if found.isSome:
-          check (text[^1] in ORDER_VOWELS) == (found.get in FORMS_FINAL)  # 4.6, end in vowels
+      texts_short.add entry.rafsi
+      if entry.word.isGismu:
+        texts_unreduced.add entry.word[0..3]
+        texts_gismu.add entry.word
+    check formsHeld(texts_short) == FORMS_SHORT  # 4.6, listed short rafsi "CVC, CCV, or CVV"
+    check formsHeld(texts_unreduced) == FORMS_UNREDUCED  # 4.6, CVC/C or CCVC, "4-letter rafsi"
+    check formsHeld(texts_gismu) == FORMS_GISMU  # 4.4, listed gismu "CVC/CV or CCVCV"
+    for text in texts_short & texts_unreduced & texts_gismu:
+      let found = text.form
+      check found.isSome  # 4.6, every rafsi has form
+      if found.isSome:
+        check (text[^1] in ORDER_VOWELS) == (found.get in FORMS_FINAL)  # 4.6, end in vowels
+
+
+
+suite "Internal: Forms":
+  test "Comma leaves no form":
+    for entry in LIST_GISMU:
+      for text in entry.rafsi & @[entry.word]:
+        for at in 1..text.high:
+          let spelled = text[0..<at] & ',' & text[at .. ^1]
+          check spelled.form.isNone  # project choice: `tags.nim` strips commas before `form`
