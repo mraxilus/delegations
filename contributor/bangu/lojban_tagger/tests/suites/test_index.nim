@@ -105,6 +105,21 @@ suite "Internal: Index":
         check tag in once.entity(name).get.tags  # every tag given is held
 
 
+  test "adding no tag changes nothing, so text written still reads back":
+    # Regression: `addTags(name, [])` made entity with no tag, whose written line reader refuses.
+    var index: Index
+    index.addTags("notes", [])
+    check index.entity("notes").isNone  # case as found: no entity made
+    check index.toText.readIndex.is_loaded  # case as found: text reads back
+    randomize(SEED)
+    for _ in 1..SAMPLES:  # domain: no tag added to random name of random index
+      let (before, name) = (indexRandom(), nameRandom())
+      var after = before
+      after.addTags(name, [])
+      check after == before  # domain: no tag changes nothing
+      check after.toText.readIndex.is_loaded  # domain: text reads back
+
+
   test "removing tags added to fresh entity restores index":
     randomize(SEED)
     var passed = 0
