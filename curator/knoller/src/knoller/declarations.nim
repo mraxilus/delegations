@@ -16,14 +16,38 @@
 ##     parameter without type reads otherwise.
 ##   Checks and fixers share one reading (`movesDoc`, `defaults`), so each rule is written once
 ##     (Article II.1).
+##   Missing doc (VI.1): every declaration takes doc, as `declared.nim` reads it, but local
+##     binding, parameter and placeholder, which take none (Architect's ruling on review page
+##     of repository issue 443). Names sharing one line share one doc, so line reports once.
+##     Name inside value or signature of declaration above it is part of it, and takes none:
+##     field of tuple in brackets, or parameter of proc type.
+##     Doc anywhere rule of position reads passes: on declaration's line, whole line just above
+##     at its indent, or whole line below it or below its value, one level in; place is rule of
+##     position's. `TODO: Document.` passes; doc awaiting text under other TODO is fixed, and
+##     that TODO moves above declaration as `#` comment, so no design note is lost.
+##   Declaration runs to line closing each bracket it opens and each string past its line;
+##     binding's value runs on through each line below it, deeper than it; routine's signature
+##     runs past line ending in `:` and takes pragma line below it, until line ending in `=`.
+##   Fix writes `TODO: Document.` where STYLE.md §5 puts doc: routine's on first line of body,
+##     at its indent; value of several lines takes it on line after its last, one level in, as
+##     every such doc of repository stands; other doc on declaration's line where it fits, else
+##     next line, one level in, or at indent of body that line opens. Fix writes comments
+##     alone, so every token outside them stays as written.
+##     Value opening body, as `block:` or lambda, takes doc on first line of body, since doc
+##       last in body would stand where its value is; body opening below first line of value
+##       takes doc above declaration, at its indent.
+##   One-line borrow or forward in run under one group comment passes, as VI.1 excepts it, and
+##     so does declaration inside `quote do:`, which is generated code.
 ##
 ##   Cost: scanner, never parser (`tokens.nim`); declaration it cannot place surely stays.
 ##   Cost: literal with suffix (`0'u8`) and raw string keep their type, though it is exact.
+##   Cost: enum members listed on one line are left out; whether each takes line and doc of its
+##     own is open question of record.
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, sequtils, strutils]
-import ./[form, reports, tokens, views]
+import std/[algorithm, sequtils, strutils, tables]
+import ./[declared, form, reports, tokens, views]
 
 
 type
@@ -35,9 +59,9 @@ type
   MoveDoc = object
     ## Define one doc to move: declaration line, shape, lines replacing declaration and doc.
     line: int  ## Zero-based line of declaration.
-    shape: Shape
+    shape: Shape  ## Move doc takes.
     last: int  ## Zero-based last line replaced: doc's line, or declaration's own.
-    lines: seq[string]
+    lines: seq[string]  ## Lines replacing declaration and doc.
 
   Default = object
     ## Define type to drop from parameter: byte span from name's end to `=`, and type read.
@@ -45,6 +69,28 @@ type
     first: int  ## Byte offset after parameter's name.
     after: int  ## Byte offset of `=`.
     got: string  ## Parameter as written.
+
+  Missing = object
+    ## Define one declaration line taking no doc, or whose doc awaits text under other TODO.
+    line: int  ## Zero-based line of declaration.
+    last: int  ## Zero-based last line of declaration: routine's signature, else its value.
+    is_routine: bool  ## Routine, whose doc opens its body.
+    opening: int
+      ## Zero-based line of value that opens body below it, as `block:`; `-1` where none.
+    got: string  ## Kind and names, as finding echoes them.
+    is_commented: bool  ## Line carries `#` comment, so doc cannot join it.
+    doc: int  ## Zero-based line of doc holding other TODO; `-1` where declaration holds none.
+    column: int  ## Byte offset of `##` of that doc on its line.
+    todo: string  ## Text of that TODO, which moves above declaration.
+
+  Reading = object  ## Define views of source rule of missing doc reads, line by line.
+    lines: seq[string]  ## Lines as written.
+    code: seq[string]  ## Lines with comments and literals blanked.
+    kept: seq[string]  ## Lines with literals alone blanked.
+    reached: seq[int]
+      ## Last line that token running past each line's end reaches, as string of several lines;
+      ##   line itself where none.
+    ends: seq[string]  ## Spelling of last token of each line but comment; empty where none.
 
 
 const
@@ -59,6 +105,11 @@ const
   ]
     ## Keyword operators line may end on, continuing expression on next line.
   STEP_INDENT = 2  ## Spaces one level indents (Article X.1).
+  TEXT_TODO = "TODO: Document."  ## Doc awaiting honest text (Article VI.1).
+  KINDS_DOCUMENTED = {
+    KindName.Binding, KindName.Field, KindName.Member, KindName.Routine, KindName.Type,
+  }
+    ## Kinds whose declaration takes doc; parameter and placeholder take none.
 
 
 func wordFirst(code: string): string =
@@ -195,6 +246,247 @@ func fixDocs*(path, source: string): Fix =
   result.source = lines.join("\n")
   for move in moves: result.fixed.add initReport(path, move.line + 1, Rule.PositionDoc)
   if moves.len > 0: result.origin = origin
+
+
+func keywordSection(code: seq[string], d: int): string =
+  ## Read keyword of section binding at line `d` stands in: on its own line, else above it.
+  if code[d].wordFirst in KEYWORDS_SECTION: return code[d].wordFirst
+  var indent = code[d].indentWidth
+  for k in countdown(d - 1, 0):
+    if code[k].strip.len == 0 or code[k].indentWidth >= indent: continue
+    if code[k].wordFirst in KEYWORDS_SECTION: return code[k].wordFirst
+    indent = code[k].indentWidth
+  ""
+
+
+func linesQuoted(code: seq[string]): seq[bool] =
+  ## Mark each line inside `quote do:` block, whose declarations are generated code.
+  result = newSeq[bool](code.len)
+  var indent = -1
+  for d, line in code:
+    let s = line.strip
+    if s.len == 0 or (indent >= 0 and line.indentWidth > indent):
+      result[d] = indent >= 0
+      continue
+    indent = if s.endsWith(" do:") and "quote" in s.wordsCode: line.indentWidth else: -1
+
+
+func initReading(source: string): Reading =
+  ## Construct views of source, each split into its lines.
+  var starts = @[0]
+  for k, c in source:
+    if c == '\n': starts.add k + 1
+  result = Reading(
+    lines: source.split('\n'),
+    code: source.codeOnly.split('\n'),
+    kept: source.codeAndComments.split('\n'),
+    reached: toSeq(0..<starts.len),
+    ends: newSeq[string](starts.len),
+  )
+  for t in source.tokens:
+    let last = starts.upperBound(t.after - 1) - 1
+    for line in t.line..<last: result.reached[line] = max(result.reached[line], last)
+    if t.kind == KindToken.Comment: continue
+    for line in t.line..last: result.ends[line] = t.spelling(source)
+
+
+func isContent(r: Reading, j: int): bool =
+  ## Decide whether line `j` is content: code or literal, so neither blank nor comment alone.
+  r.code[j].strip.len > 0 or (r.lines[j].strip.len > 0 and r.kept[j].strip.len == 0)
+
+
+func lastDeclaration(r: Reading, d: int, kind: KindName): int =
+  ## Find last line of declaration opening at `d`: line closing each bracket it opens and each
+  ##   string running past its line. Routine's signature runs past line ending in `:`, whose
+  ##   return type stands below, and takes pragma block standing on its own line below it;
+  ##   line ending in `=` opens body, so signature ends there.
+  ##   Binding's value runs on each line below it that is content, deeper than it.
+  var depth = 0
+  result = d
+  while result + 1 < r.code.len:
+    for c in r.code[result]:
+      if c in {'(', '[', '{'}: inc depth
+      elif c in {')', ']', '}'}: dec depth
+    let below = result + 1
+    var is_open = depth > 0 or r.reached[result] > result
+    case kind
+    of KindName.Routine:
+      let is_continued = r.ends[result] == ":" or r.code[below].strip.startsWith("{.")
+      is_open = is_open or (is_continued and r.ends[result] != "=")
+    of KindName.Binding:
+      is_open = is_open or
+          (r.isContent(below) and r.lines[below].indentWidth > r.lines[d].indentWidth)
+    else: discard
+    if not is_open: return
+    result = below
+
+
+func lineOpening(r: Reading; d, last: int): int =
+  ## Find line of value from `d` to `last` that opens body below it, outside brackets: line
+  ##   ending in `:`, as `block:`, or in `=` after routine keyword, as lambda's; `-1` where none.
+  var depth = 0
+  for j in d..<last:
+    for c in r.code[j]:
+      if c in {'(', '[', '{'}: inc depth
+      elif c in {')', ']', '}'}: dec depth
+    let is_lambda = r.ends[j] == "=" and r.code[j].wordsCode.anyIt(it in KEYWORDS_ROUTINE)
+    if depth <= 0 and (r.ends[j] == ":" or is_lambda): return j
+  -1
+
+
+func isOneLine(r: Reading, d: int): bool =
+  ## Decide whether routine opening at `d` stands on its line alone, no body below it.
+  if r.code[d].wordFirst notin KEYWORDS_ROUTINE or r.lastDeclaration(d, KindName.Routine) != d:
+    return false
+  var below = d + 1
+  while below < r.code.len and r.code[below].strip.len == 0: inc below
+  below >= r.code.len or r.code[below].indentWidth <= r.code[d].indentWidth
+
+
+func isDelegationStacked(r: Reading, d: int): bool =
+  ## Decide whether routine at `d` is one-line delegation in run under one group comment, as VI.1
+  ##   excepts: run of one-line routines at one indent, whose first line follows `#` comment.
+  if not r.isOneLine(d): return false
+  var first = d
+  while first > 0 and r.isOneLine(first - 1) and
+      r.code[first-1].indentWidth == r.code[d].indentWidth:
+    dec first
+  if first == 0: return false
+  let above = r.kept[first-1].strip
+  r.code[first-1].strip.len == 0 and above.startsWith("#") and not above.startsWith("##") and
+      not above.startsWith("#[") and r.kept[first-1].indentWidth == r.code[d].indentWidth
+
+
+func marker(code, kept: seq[string]; d: int): int =
+  ## Find byte offset of `#` comment trailing code of line `d`; `-1` where none.
+  kept[d].find('#', code[d].strip(leading = false).len)
+
+
+func lineDoc(lines, code, kept: seq[string]; d, last: int): int =
+  ## Find line of doc of declaration opening at `d` and closing at `last`: trailing on either,
+  ##   whole line just above at its indent, or whole line below either, one level in or deeper;
+  ##   `-1` where none. Place among these is rule of position's (`movesDoc`).
+  let indent = lines[d].indentWidth
+  for line in [d, last]:
+    let at = marker(code, kept, line)
+    if at >= 0 and kept[line][at .. ^1].startsWith("##"): return line
+  if d > 0 and isDoc(code[d-1], kept[d-1]) and lines[d-1].indentWidth == indent:
+    return d - 1
+  for line in [d + 1, last + 1]:
+    if line < lines.len and isDoc(code[line], kept[line]) and lines[line].indentWidth > indent:
+      return line
+  -1
+
+
+func docsMissing(source: string): seq[Missing] =
+  ## Find each declaration line taking no doc, or whose doc awaits text under other TODO (VI.1).
+  ##   Kinds and places follow header; members sharing one line are left out, and so is name
+  ##   inside value or signature of declaration above it, as field of tuple in brackets.
+  let
+    r = source.initReading
+    quoted = r.code.linesQuoted
+  var named: OrderedTable[int, seq[Declared]]
+  for item in source.declarations:
+    if item.kind notin KINDS_DOCUMENTED: continue
+    if item.kind == KindName.Binding and item.reach != Reach.Global: continue
+    named.mgetOrPut(item.line - 1, @[]).add item
+
+  # Judge each line once, by kind of its first name, in order of lines.
+  var covered = -1
+  for d in named.keys.toSeq.sorted:
+    let
+      items = named[d]
+      kind = items[0].kind
+    if d >= r.lines.len or d <= covered or quoted[d]: continue
+    if kind == KindName.Member and items.len > 1: continue
+    if kind == KindName.Routine and r.isDelegationStacked(d): continue
+    let
+      last = r.lastDeclaration(d, kind)
+      doc = lineDoc(r.lines, r.code, r.kept, d, last)
+      at = marker(r.code, r.kept, d)
+      word =
+        case kind
+        of KindName.Binding: r.code.keywordSection(d)
+        of KindName.Routine: items[0].keyword
+        of KindName.Type: "type"
+        of KindName.Field: "field"
+        else: "member"
+    covered = last
+    var missing = Missing(
+      line: d,
+      last: last,
+      is_routine: kind == KindName.Routine,
+      opening: if kind == KindName.Routine: -1 else: r.lineOpening(d, last),
+      got: (word & " " & items.mapIt(it.name).join(", ")).strip,
+      is_commented: at >= 0,
+      doc: -1,
+    )
+    if doc < 0:
+      result.add missing
+      continue
+
+    # Doc stands; it awaits text where its summary is TODO other than `TODO: Document.`.
+    let
+      column =
+        if doc == d or doc == last: marker(r.code, r.kept, doc) else: r.kept[doc].find("##")
+      text = r.kept[doc][column+2 .. ^1].strip
+    if not text.startsWith("TODO") or text == TEXT_TODO: continue
+    missing.doc = doc
+    missing.column = column
+    missing.todo = text
+    result.add missing
+
+
+func checkDocsMissing*(path, source: string): seq[Report] =
+  ## Report declaration taking no doc, and doc awaiting text under other TODO (VI.1).
+  ##   Named by its suite and `chain.nim` alone until static pass calls it (`fixes.nim`).
+  for m in source.docsMissing:
+    let message =
+      if m.doc >= 0: "Doc awaiting text reads `" & TEXT_TODO & "` alone; got `## " & m.todo & "`."
+      else: "Declaration takes doc comment; got `" & m.got & "`."
+    result.add initReport(path, m.line + 1, Rule.DocMissing, message)
+
+
+func fixDocsMissing*(path, source: string): Fix =
+  ## Write `TODO: Document.` doc for each declaration check reports, last first; other TODO of
+  ##   doc moves above declaration as `#` comment. Each new line traces to declaration's line.
+  let found = source.docsMissing
+  var
+    lines = source.split('\n')
+    origin = toSeq(1..lines.len)
+
+  template insert(at: int, line: string, traced: int) =
+    ## Insert line at `at`, tracing it to line `traced` of source.
+    lines.insert(line, at)
+    origin.insert(traced, at)
+
+  func indentBelow(lines: seq[string]; at, indent: int): int =
+    ## Count indent of doc line written at `at` for declaration at `indent`: that of first line
+    ##   below with text, where deeper, so doc stands in body it opens; else one level in.
+    var k = at
+    while k < lines.len and lines[k].strip.len == 0: inc k
+    if k < lines.len and lines[k].indentWidth > indent: lines[k].indentWidth
+    else: indent + STEP_INDENT
+
+  for m in found.reversed:
+    let
+      indent = lines[m.line].indentWidth
+      joined = lines[m.line] & ' '.repeat(GAP_COMMENT) & "## " & TEXT_TODO
+      traced = origin[m.line]
+    if m.doc >= 0:
+      lines[m.doc] = lines[m.doc][0..<m.column] & "## " & TEXT_TODO
+      insert(min(m.line, m.doc), ' '.repeat(indent) & "# " & m.todo, traced)
+    elif m.opening > m.line: insert(m.line, ' '.repeat(indent) & "## " & TEXT_TODO, traced)
+    elif m.opening == m.line:
+      let below = lines.indentBelow(m.line + 1, indent)
+      insert(m.line + 1, ' '.repeat(below) & "## " & TEXT_TODO, traced)
+    elif m.is_routine or m.last > m.line or m.is_commented or joined.isWide:
+      let below = lines.indentBelow(m.last + 1, indent)
+      insert(m.last + 1, ' '.repeat(below) & "## " & TEXT_TODO, traced)
+    else: lines[m.line] = joined
+  result.source = lines.join("\n")
+  for m in found: result.fixed.add initReport(path, m.line + 1, Rule.DocMissing)
+  if found.len > 0: result.origin = origin
 
 
 func typeLiteral(tokens: openArray[Token]; a, b: int; source: string): string =

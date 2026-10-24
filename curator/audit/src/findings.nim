@@ -84,6 +84,7 @@ const CITATIONS*: array[Rule, string] = [
   Rule.ListUnordered: "X.10",
   Rule.LinesBlankTest: "X.2",
   Rule.LinesBlankHelper: "STYLE.md §1",
+  Rule.DocMissing: "VI.1",
   Rule.PositionDoc: "STYLE.md §5",
   Rule.DefaultLiteral: "X.12",
   Rule.SpacingExpression: "X.9",

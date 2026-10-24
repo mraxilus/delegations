@@ -69,6 +69,7 @@ type Rule* {.pure.} = enum  ## Define one rule knoller fixes or reports, in orde
   ListUnordered = "unordered list"  ## List language leaves unordered is alphabetised.
   LinesBlankTest = "test blank lines"  ## Blank lines beside suite and test follow tier.
   LinesBlankHelper = "helper blank lines"  ## Nested helper takes one blank line each side.
+  DocMissing = "doc missing"  ## Declaration takes doc, and doc awaiting text reads one TODO.
   PositionDoc = "doc position"  ## Doc stands where shape of declaration puts it.
   DefaultLiteral = "literal default"  ## Parameter with literal default states no type.
   SpacingExpression = "expression spacing"  ## Space stands only where expression rule puts it.

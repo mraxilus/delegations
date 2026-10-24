@@ -101,7 +101,10 @@ func steps(dialect: Dialect): seq[Step] =
     proving(fixParentheses),
   ]
   for fixer in dialect.fixersIdiom: result.add guarded(fixer)
-  result.add @[guarded(fixBlanks), guarded(fixDocs), guarded(fixDefaults), widening(fixSpacing)]
+  result.add @[
+    guarded(fixBlanks), guarded(fixDocsMissing), guarded(fixDocs), guarded(fixDefaults),
+    widening(fixSpacing),
+  ]
   result.add STEPS_WRAPPING
   result.add guarded(fixCommentsAbove)
 
@@ -126,8 +129,9 @@ func checkFormattingUnfenced(path, view: string; dialect: Dialect; proofs: Proof
   ##   Parentheses check reads answers of parser, so it names only groups they prove.
   let checks = [
     checkComments, checkBanners, checkMessages, checkMixtures, checkNegations, checkTargets,
-    checkCommands, checkBlanks, checkDocs, checkDefaults, checkSpacing, checkSeparators,
-    checkSignatures, checkCalls, checkContinuations, checkTrailing, checkCommentsAbove,
+    checkCommands, checkBlanks, checkDocsMissing, checkDocs, checkDefaults, checkSpacing,
+    checkSeparators, checkSignatures, checkCalls, checkContinuations, checkTrailing,
+    checkCommentsAbove,
   ]
   for check in checks: result.add check(path, view)
   result.add checkParentheses(path, view, proofs)

@@ -27,14 +27,15 @@ const
     "  second_item_named_at_length_so_list_crosses_column\n]\necho h(q=1)\nexport y, x\n"
     ## Nim source breaking each layout rule `checkFormatting` holds.
   ROWS_FENCED =
-    "let m = matrix(\n  #!fix off\n  1,  0,\n\n  0,  1,\n  #!fix on\n)\n" &
-    "let n = matrix(1+2)\n"
+    "let m = matrix(\n  #!fix off\n  1,  0,\n\n  0,  1,\n  #!fix on\n)\n  ## Rows by hand.\n" &
+    "let n = matrix(1+2)  ## Rows by fix.\n"
     ## Nim source whose hand-shaped rows fence keeps, and whose call after fence fix reaches.
   LOCK =
     "{\n  \"items\": {},\n  \"nimbleFile\": {\n    \"filename\": \"alpha.nimble\",\n" &
     "    \"content\": []\n  }\n}\n"
     ## Atlas lock holding copy of nimble file `alpha.nimble`.
-  HEAD = STRICT_FUNCS & "\n\nproc p() =\n"  ## Opening of each case: module pragma and routine.
+  HEAD = STRICT_FUNCS & "\n\nproc p() =\n  ## Do.\n"
+    ## Opening of each case: module pragma and routine.
   PICKING =
       "  let\n    lateral = tangent_half_view*hypot(clip_x/depth*float(width)/float(height), " &
       "clip_y/depth)\n"
@@ -97,7 +98,7 @@ const
       "    \"388-38a 38c 38e-3a1 3a3-3ce 3d5 1e80-1e85 1ef2-1ef3 2010-201e 2020-2022 2026 2030 " &
       "2032-2033 \" &\n" &
       "    \"2039-203a 203c 203e 2044 204a 2070 2074-208e 20a3-20a4 20a7 20ac 2105 2113 " &
-      "2116-2117 2122\"\n"
+      "2116-2117 2122\"\n    ## Codepoints Commit Mono maps.\n"
     ## Value of `assets.nim` of `audit` two spaces in, whose second line is 100 runes.
   TWIST =
       "  let\n    (lower, upper) =\n      if arm == Arm.Right:\n" &
@@ -144,29 +145,31 @@ suite "Chain":
   test "every layout rule settles in one run, and second run writes nothing":
     let found = checkFormatting("a.nim", LAYOUT, Dialect.Module)
     for rule in ["First-tier banner", "Binary operator", "Parameters take", "Signature", "Call",
-                 "trailing separator", "share one bracket", "alphabetised", "`=` takes"]:
+                 "trailing separator", "share one bracket", "alphabetised", "`=` takes",
+                 "Declaration takes doc"]:
       check found.anyIt(rule in it.message)  # each rule reported
     let fix = formatted("a.nim", LAYOUT, Dialect.Module)
     check fix.source == "## Do.\n\n" & STRICT_FUNCS & "\n\nimport std/[os, strutils]\n" &
       "\n\n\n#[ Section ]#\n\n" &
       "proc f(a: int, b: string): int {.inline, noSideEffect.} = a + b.len\n" &
-      "proc g(a: int) = discard\n" &
-      "let x = foo(1, 2)\necho x\n" &
+      "  ## TODO: Document.\nproc g(a: int) = discard\n  ## TODO: Document.\n" &
+      "let x = foo(1, 2)  ## TODO: Document.\necho x\n" &
       "let y = @[\n  first_item_named_at_length_so_list_crosses_column,\n" &
-      "  second_item_named_at_length_so_list_crosses_column,\n]\necho h(q = 1)\nexport x, y\n"
+      "  second_item_named_at_length_so_list_crosses_column,\n]\n  ## TODO: Document.\n" &
+      "echo h(q = 1)\nexport x, y\n"
     check checkFormatting("a.nim", fix.source, Dialect.Module).len == 0  # all cleared
     check formatted("a.nim", fix.source, Dialect.Module).source == fix.source  # settled
     check fix.fixed.allIt(it.line in 0 .. LAYOUT.count('\n'))  # each report names line as given
 
 
   test "dialect decides idiom fixers and checks: module reads them, script does not":
-    let breach = "import std/os\nimport std/strutils\nlet a = b+c\n"
+    let breach = "import std/os\nimport std/strutils\nlet a = b+c  ## Sum.\n"
     check checkFormatting("a.nims", breach, Dialect.Script).allIt(it.rule == Rule.SpacingExpression)
     check checkFormatting("a.nim", breach, Dialect.Module).len == 2  # brackets too
     check formatted("a.nims", breach, Dialect.Script).source ==
-      "import std/os\nimport std/strutils\nlet a = b + c\n"  # imports left to module
+      "import std/os\nimport std/strutils\nlet a = b + c  ## Sum.\n"  # imports left to module
     check formatted("a.nim", breach, Dialect.Module).source == STRICT_FUNCS &
-      "\n\nimport std/[os, strutils]\nlet a = b + c\n"  # pragma and bracket too
+      "\n\nimport std/[os, strutils]\nlet a = b + c  ## Sum.\n"  # pragma and bracket too
 
 
   test "idioms of any Nim code reach script and package, checks and fixers, module's do not":
@@ -174,14 +177,15 @@ suite "Chain":
     #   idiom fixers in module alone (`audit.nim`, `steps`), so script and package read none
     #   (#557); domain is each dialect, idioms of any Nim code in each, module's in module alone.
     let breach =
-      "let A = 1\nlet B = 2\n{.push inline.}\nproc f(): int =\n  return result\n{.pop.}\n"
+        "let A = 1  ## One.\nlet B = 2  ## Two.\n{.push inline.}\nproc f(): int =\n  ## Do.\n" &
+        "  return result\n{.pop.}\n"
     for dialect in Dialect:
       let rules = checkSource("a" & EXTENSIONS[dialect], breach, dialect).mapIt(it.rule)
       check Rule.BindingsSingle in rules and Rule.ReturnResult in rules  # fixer reaches both
       check Rule.PushForeign in rules  # no fixer reaches it
       check (Rule.StrictFuncs in rules) == (dialect == Dialect.Module)  # STYLE.md §2: module
       check formatted("a" & EXTENSIONS[dialect], breach, dialect).source.contains(
-        "let\n  A = 1\n  B = 2\n",
+        "let\n  A = 1  ## One.\n  B = 2  ## Two.\n",
       )  # bindings share keyword in every dialect
     check checkSource("tests/a.nims", "echo x\n", Dialect.Script).mapIt(it.rule) ==
       @[Rule.OutputDebug]  # test rules of any Nim code read script under `tests/`
@@ -193,14 +197,14 @@ suite "Chain":
       source = "## Do.\n\n" & STRICT_FUNCS & "\n\n" & ROWS_FENCED
       unfenced = source.replace("  " & FENCE_OFF & "\n", "").replace("  " & FENCE_ON & "\n", "")
     check checkFormatting("a.nim", unfenced, Dialect.Module).anyIt(it.line == 5)  # rows join
-    check checkFormatting("a.nim", source, Dialect.Module).mapIt(it.line) == @[12]  # after fence
+    check checkFormatting("a.nim", source, Dialect.Module).mapIt(it.line) == @[13]  # after fence
     check formatted("a.nim", source, Dialect.Module).source == source.replace("1+2", "1 + 2")
 
 
   test "fence names each rule broken inside, by count and first line, in order of `Rule`":
     let
-      source = "let A = 1\n" & FENCE_OFF & "\nlet B = 1+2\nlet C = not A == B\nlet D = 3*4\n" &
-        FENCE_ON & "\n"
+      source = "let A = 1  ## One.\n" & FENCE_OFF & "\nlet B = 1+2  ## Sum.\n" &
+        "let C = not A == B  ## Test.\nlet D = 3*4  ## Product.\n" & FENCE_ON & "\n"
       unfenced = source.replace(FENCE_OFF, "# Rows.").replace(FENCE_ON, "# Rows.")
       held = checkFenceHeld("a.nims", source, Dialect.Script)
     check held.len == 1 and held[0].line == 2 and held[0].rule == Rule.FenceHeld  # at marker
@@ -216,8 +220,8 @@ suite "Chain":
 
   test "each fence gives one line: clean one breaks nothing, and open one runs to last line":
     let
-      source = "let A = 1+2\n" & FENCE_OFF & "\nlet B = 1+2\n" & FENCE_ON & "\nlet C = 3\n" &
-        FENCE_OFF & "\nlet D = 4\n"
+      source = "let A = 1+2  ## Sum.\n" & FENCE_OFF & "\nlet B = 1+2  ## Sum.\n" & FENCE_ON &
+        "\nlet C = 3  ## Three.\n" & FENCE_OFF & "\nlet D = 4  ## Four.\n"
       held = checkFenceHeld("a.nims", source, Dialect.Script)
     check held.mapIt(it.line) == @[2, 6]  # one for each fence
     check held[0].message.contains(" expression-spacing breaks once at line 3; got")  # 1 outside
@@ -228,14 +232,14 @@ suite "Chain":
 
   test "fence counts idioms of its dialect, and module's own in module alone":
     let source =
-      FENCE_OFF & "\nimport std/[strutils, os]\nlet A = 1\nlet B = 2\nproc f(): int =\n" &
-        "  return result\n"
+      FENCE_OFF & "\nimport std/[strutils, os]\nlet A = 1  ## One.\nlet B = 2  ## Two.\n" &
+        "proc f(): int =\n  ## Do.\n  return result\n"
     check checkFenceHeld("a.nim", source, Dialect.Module)[0].message.contains(
-      "inside them return-result breaks once at line 6, bracket-import once at line 2 and " &
+      "inside them return-result breaks once at line 7, bracket-import once at line 2 and " &
         "single-bindings once at line 3; got",
     )
     check checkFenceHeld("a.nims", source, Dialect.Script)[0].message.contains(
-      "inside them return-result breaks once at line 6 and single-bindings once at line 3; got",
+      "inside them return-result breaks once at line 7 and single-bindings once at line 3; got",
     )  # script keeps its imports
 
 
@@ -278,7 +282,7 @@ suite "Repair that widens its line":
     check (STRICT_FUNCS & "\n\n" & VERDICTS).fixed == STRICT_FUNCS & "\n\nvar\n" &
         "  READINGS_KEPT*: Readings  ## Readings report renders from.\n" &
         "  SWEEPS_WANTED: seq[SweepAsk]\n    ## Sweeps render asked for and `READINGS_KEPT` " &
-        "lacks, in order asked.\n  RUNGS_WANTED: seq[RungAsk]\n"
+        "lacks, in order asked.\n  RUNGS_WANTED: seq[RungAsk]  ## TODO: Document.\n"
     check (STRICT_FUNCS & "\n\n" & VERDICTS).fixed.isSettled
 
 
@@ -313,14 +317,14 @@ suite "Repair that widens its line":
         "bounds.forward.y +\n      offset_z * bounds.forward.z\n  if flag: total = " &
         "offset_x*forward_x + offset_y*forward_y + offset_z*forward_z + offset_w*forward_w\n"
     check checkFormatting("a.nim", fix.source, Dialect.Module).mapIt(it.line).deduplicate ==
-        @[6]  # finding stays on held line alone
+        @[7]  # finding stays on held line alone
     check attempted("a.nim", HEAD & HELD, Dialect.Module.steps).attempts == 2  # one holds it
     check formatted("a.nim", fix.source, Dialect.Module).source == fix.source  # settled
 
 
   test "continuation run with line no wrap fits keeps its indent whole, with its findings":
     check (HEAD & PACKED).fixed == HEAD & PACKED  # no continuation parts from its run
-    check checkFormatting("a.nim", HEAD & PACKED, Dialect.Module).mapIt(it.line) == @[5]
+    check checkFormatting("a.nim", HEAD & PACKED, Dialect.Module).mapIt(it.line) == @[6]
 
 
   test "argument continued at its own indent stays, since its first piece opens its line":
@@ -409,7 +413,7 @@ suite "Repair that widens its line":
       "nothing inside breaks",
     )
     check checkFenceHeld("a.nim", fenced, Dialect.Module, fenced.proofsModule)[0].message.contains(
-      "needless-parentheses breaks 2 times from line 5",
+      "needless-parentheses breaks 2 times from line 6",
     )  # answer for source as given counts its groups
 
 
