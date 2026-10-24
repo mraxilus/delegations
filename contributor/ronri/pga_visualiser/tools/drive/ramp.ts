@@ -6,7 +6,7 @@
 
 import type { Page } from '@playwright/test';
 import { waitUntil } from './clock';
-import { settleReading } from './frame';
+import { settleReading, waitFrames } from './frame';
 import { report } from './report';
 
 /** Open drawer, its diagnostics section and every branch of tree.
@@ -263,5 +263,73 @@ export async function driveSums(page: Page): Promise<void> {
     summed.placing > 0.01 && summed.emitting > 0.01,
     `placing peaked at ${summed.placing.toFixed(2)} ms, emitting at ` +
       `${summed.emitting.toFixed(2)} ms`,
+  );
+}
+
+
+/** Frames page draws before its brackets are read: enough to fill most of ring. */
+const FRAMES_RING_FILLED = 120;
+
+/** Clock step in ms that page under this check takes, as Firefox 158 steps it. */
+const MILLISECONDS_STEP_COARSE = 1;
+
+/** Cut page's clock to whole steps of `MILLISECONDS_STEP_COARSE`, before its scripts run.
+ *
+ *  Call before `goto`: page reads its clock step once, on load.
+ */
+export async function coarsenClock(page: Page): Promise<void> {
+  await page.addInitScript((step) => {
+    const read = performance.now.bind(performance);
+    performance.now = () => Math.floor(read() / step) * step;
+  }, MILLISECONDS_STEP_COARSE);
+}
+
+/** Assert that each phase that ran shows figure above zero in its brackets, under coarse clock.
+ *
+ *  Phase under one step reads 0 in most frames, so median of its ring reads 0 while its mean
+ *  stays fair (repository issue 724). Row whose 200 ms mean reads above zero ran this window,
+ *  so its settled figure must read above zero too. Note that says why stands once, shown.
+ */
+export async function driveBracketsCoarse(page: Page): Promise<void> {
+  await openEveryBranch(page);
+  await waitFrames(page, FRAMES_RING_FILLED);
+  await settleReading(page);
+  const seen = await page.evaluate(() => {
+    const rows = Array.from(document.querySelectorAll('.drawer b[id^="diagnostic-"]'))
+      .map((element) => /^([\d.]+) \(([\d.]+)\) ms$/.exec(element.textContent ?? ''))
+      .flatMap((match) => (match === null ? [] :
+        [{ recent: Number(match[1]), settled: Number(match[2]) }]));
+    const note = document.getElementById('diagnostic-clock-coarse');
+    return {
+      count_rows: rows.length,
+      count_ran: rows.filter((row) => row.recent > 0).length,
+      count_zeroed: rows.filter((row) => row.recent > 0 && row.settled === 0).length,
+      note: note === null ? '' : (note.textContent ?? '').trim(),
+      is_note_shown: note !== null && note.getClientRects().length > 0,
+    };
+  });
+  report(
+    'under a clock that steps 1 ms, each phase that ran shows a figure above zero in its ' +
+      'brackets, and the panel says why once',
+    seen.count_ran > 0 && seen.count_zeroed === 0 && seen.is_note_shown && seen.note.length > 0,
+    `${seen.count_zeroed} of ${seen.count_ran} rows that ran read 0.00 in brackets, of ` +
+      `${seen.count_rows} rows; note "${seen.note}", shown ${seen.is_note_shown}`,
+  );
+}
+
+
+/** Assert that clock stepping under `MILLISECONDS_STEP_COARSE` keeps median in brackets.
+ *
+ *  Read on real-clock page of this browser, whose step is 0.1 ms or finer, so note stays hidden.
+ */
+export async function driveBracketsFine(page: Page): Promise<void> {
+  const seen = await page.evaluate(() => {
+    const note = document.getElementById('diagnostic-clock-coarse');
+    return { is_coarse: is_clock_coarse, is_note_shown: (note?.getClientRects().length ?? 0) > 0 };
+  });
+  report(
+    'under a clock that steps under 1 ms, the brackets keep the median, and no note shows',
+    !seen.is_coarse && !seen.is_note_shown,
+    `coarse ${seen.is_coarse}, note shown ${seen.is_note_shown}`,
   );
 }

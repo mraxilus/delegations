@@ -61,7 +61,9 @@ import { driveSurfacesFilled } from './surface';
 import { driveHeapUnit, drivePhaseSums, driveTree } from './diagnostics';
 import { driveCrossingsCounted, driveShareAgrees, driveShareRefused } from './share';
 import { driveAxis, driveAxisGlide, driveCurve, driveScaleSwitch } from './exceedance';
-import { driveSums, driveTint, openEveryBranch } from './ramp';
+import {
+  coarsenClock, driveBracketsCoarse, driveBracketsFine, driveSums, driveTint, openEveryBranch,
+} from './ramp';
 import {
   drivePinAnchor, drivePinGrid, drivePinMarker, drivePinPick, drivePinPool,
   MILLISECONDS_PICK_HOVER_LOADED,
@@ -322,6 +324,7 @@ async function driveMeasured(browser: Browser): Promise<void> {
   await driveTree(page);
   await driveTint(page);
   await driveSums(page);
+  await driveBracketsFine(page);
   await driveHeapUnit(page);
   await driveRingsTimed(page);
   await driveKinds(page);
@@ -367,6 +370,19 @@ async function driveServed(browser: Browser): Promise<void> {
   await page.close();
 }
 
+/** Drive brackets of breakdown under clock that steps 1 ms, as Firefox's does.
+ *
+ *  Page of its own, since clock is cut before page's scripts run, and page reads its step once.
+ */
+async function driveCoarse(browser: Browser): Promise<void> {
+  const page = await browser.newPage({ viewport: SIZE_VIEW, hasTouch: true });
+  await coarsenClock(page);
+  await page.goto(`file://${PATH_PAGE}`);
+  await waitScene(page);
+  await driveBracketsCoarse(page);
+  await page.close();
+}
+
 async function main(): Promise<void> {
   const executable = chromiumChosen();
   const browser = await chromium.launch({
@@ -377,6 +393,7 @@ async function main(): Promise<void> {
   await driveSimulated(browser);
   await driveMeasured(browser);
   await driveServed(browser);
+  await driveCoarse(browser);
   // Page of its own, since host it stands in has to be there before page's script runs.
   await driveHostSave(browser, `file://${PATH_PAGE}`, SIZE_VIEW);
 
