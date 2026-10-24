@@ -5,6 +5,8 @@
 ##     built binary for wiring to file and streams (Article IX.5).
 ##   Random argument lists draw verb, name and word from small vocabularies holding refused,
 ##     misspelt and usage-breaking choices, so every exit code is reached (Article IX.3).
+##   Samples are drawn into pools allocated once, after one seeding per test, and served by
+##     `served`.
 ##   Corpus holds no argument list of more than four arguments after verb.
 
 {.experimental: "strictFuncs".}
@@ -20,7 +22,7 @@ import ../../src/lojban_tagger/[commands, dictionary, index, tags]
 const
   SEED = 1997  ## Seed of every random draw, year of CLL first edition.
   SAMPLES = 800  ## Random argument lists, and random queries, each law is checked over.
-  SAMPLES_FLOOR = 100  ## Fewest samples guard must pass, so guard rejecting most fails.
+  FLOOR_TAGGING = 160  ## Fewest argument lists done tagging; 215 of `SAMPLES` read at `SEED`.
   VERBS = ["tag", "untag", "find", "show", "read", "frob", "TAG"]  ## Verbs random lists draw.
   VERBS_TAGGING = ["tag", "untag"]  ## Verbs that change index, drawn half time.
   NAMES = ["cats", "notes", "photo", "missing"]  ## Names random lists draw.
@@ -67,6 +69,25 @@ proc argumentsRandom(): seq[string] =
     let is_refused = rand(7) == 0
     if i == 1: result.add (if is_refused: NAMES_REFUSED.sample else: NAMES.sample)
     else: result.add (if is_refused: WORDS_REFUSED.sample else: WORDS.sample)
+
+
+proc poolArguments(): seq[seq[string]] =
+  ## Draw `SAMPLES` random argument lists into pool allocated once; caller seeds first.
+  result = newSeqOfCap[seq[string]](SAMPLES)
+  for _ in 1..SAMPLES: result.add argumentsRandom()
+
+
+proc poolQueries(): seq[seq[string]] =
+  ## Draw `SAMPLES` queries of one or two terms of `TERMS` into pool allocated once; caller
+  ##   seeds first.
+  result = newSeqOfCap[seq[string]](SAMPLES)
+  for _ in 1..SAMPLES:
+    result.add @[TERMS.sample] & (if rand(1) == 0: @[TERMS.sample] else: @[])
+
+
+iterator served[T](pool: seq[T]): lent T =
+  ## Serve each sample of pool in order, with no copy.
+  for i in 0..<pool.len: yield pool[i]
 
 
 
@@ -142,10 +163,9 @@ suite "Internal: Commands":
     check unknown.report == "`qwzx` reads as neither tag nor English of lists, so finds " &
         "nothing; " & readTag("qwzx").explain & "\n"  # report says why
     randomize(SEED)
-    for _ in 1..SAMPLES:
-      let
-        terms = @[TERMS.sample] & (if rand(1) == 0: @[TERMS.sample] else: @[])
-        found = run(@["find"] & terms, index)
+    let pool = poolQueries()
+    for terms in served(pool):
+      let found = run(@["find"] & terms, index)
       var lines = ""
       for name in ["cats", "notes", "photo"]:
         if found.output.contains(name & "\t"): lines.add run(["show", name], index).output
@@ -214,11 +234,11 @@ suite "Internal: Commands":
 
   test "verb changes index only where it says so, and only `tag` and `untag` do":
     randomize(SEED)
+    let pool = poolArguments()
     var passed = 0
-    for _ in 1..SAMPLES:
+    for arguments in served(pool):
       let
         before = indexSample()
-        arguments = argumentsRandom()
         outcome = run(arguments, before)
       check outcome.code in [0, 1, 2]  # exit codes of header alone
       check outcome.is_changed == (outcome.index != before)  # flag tells caller truth
@@ -231,4 +251,4 @@ suite "Internal: Commands":
       inc passed
       let again = run(arguments, outcome.index)
       check not again.is_changed and again.output == outcome.output  # idempotent verb
-    check passed >= SAMPLES_FLOOR  # guard leaves enough tagging done
+    check passed >= FLOOR_TAGGING  # guard leaves enough tagging done
