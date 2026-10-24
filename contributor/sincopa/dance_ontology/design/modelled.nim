@@ -29,7 +29,7 @@
 
 when compileOption("profiler"): import std/nimprof
 
-import std/[json, os, sequtils, strformat, tables]
+import std/[json, options, os, sequtils, strformat, tables]
 
 import ../simulation/[body, hold, rig, walk]
 import ./[asks, parts, stamps]
@@ -53,7 +53,7 @@ type Question* = object  ## One card's question, as data, so threads may share i
   turns*: float  ## How far `who` turns, simulation's own sense: to still, or carried.
   is_either_way*: bool  ## Still that fixes no way about: wound either way.
   who*, head*: Body  ## Who turns, and whose crown hands go over: one dancer.
-  over*: int  ## Lead's arm still card lays over, by ordinal; below nought where none.
+  over*: Option[Arm]  ## Lead's arm still card lays over, or none.
 
 
 func moving(key: string, links: seq[Link], is_away: bool, manner: Manner, amount: float): Question =
@@ -73,7 +73,7 @@ func moving(key: string, links: seq[Link], is_away: bool, manner: Manner, amount
     turns: turns,
     who: who,
     head: who,
-    over: -1,
+    over: none(Arm),
   )
 
 func questions*(): seq[Question] =

@@ -1991,17 +1991,17 @@ proc stoppedBy*(couple: Couple, i: int): tuple[why: Stop, end_index: int] =
 proc stopLink*(couple: Couple, i: int): Stop = stoppedBy(couple, i).why
   ## What stops this connection here, if anything does.
 
-proc stoppedFree*(couple: Couple): tuple[why: Stop, whose: Hand] =
-  ## What stops couple at arm that holds nothing, if anything does, and whose: its upper arm
-  ## past shoulder's edge by more than its give, as `stoppedBy` asks of held arm.
+proc stoppedFree*(couple: Couple): Option[Hand] =
+  ## Whose arm that holds nothing stops couple by swing, if any does: its upper arm past
+  ## shoulder's edge by more than its give, as `stoppedBy` asks of held arm.
   ##   Free arm is arm as much as held one: wall holds it (`holdSwing`), and arm hanging
   ##     where no shoulder takes it is pose no couple stand in.
   for who in Body:
     for arm in Arm:
       if couple.isHeld(who, arm): continue
       if isPastEdge(couple.chestStance(who), arm, couple.armPoseNow(who, arm)):
-        return (Stop.Swing, (who, arm))
-  (Stop.None, (Body.One, Arm.Left))
+        return some((body: who, arm: arm))
+  none(Hand)
 
 const
   FACING* = 0.05  ## Of way up (`up`), within which couple count as facing and
@@ -2092,8 +2092,7 @@ proc gives*(couple: Couple): Stop =
   for i in 0..<couple.links.len:
     let why = couple.stopLink(i)
     if why != Stop.None: return why
-  let free = couple.stoppedFree
-  if free.why != Stop.None: return free.why
+  if couple.stoppedFree.isSome: return Stop.Swing
   let deep = deepest(couple, -1)
   if deep.depth > THROUGH: return deep.met
   if couple.crossed: return Stop.Crossed
