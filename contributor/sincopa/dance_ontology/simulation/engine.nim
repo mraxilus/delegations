@@ -128,14 +128,14 @@ type
     points* {.importc.}: array[4, TouchPoint]
     point_count* {.importc: "pointCount".}: cint
   WeldDefinition* {.bycopy, importc: "b3WeldJointDef".} = object
-    ## Joint holding two bodies as one, or as one on spring: shoulder girdle.
+    ## Joint holding two bodies as one, or as one on spring.
     base* {.importc.}: JointDefinition
     linear_hertz* {.importc: "linearHertz".}: cfloat  ## Nought is rigid.
     angular_hertz* {.importc: "angularHertz".}: cfloat
     linear_damping_ratio* {.importc: "linearDampingRatio".}: cfloat
     angular_damping_ratio* {.importc: "angularDampingRatio".}: cfloat
   DistanceDefinition* {.bycopy, importc: "b3DistanceJointDef".} = object
-    ## Joint holding two points within some distance of each other: girdle's rope.
+    ## Joint holding two points within some distance of each other.
     base* {.importc.}: JointDefinition
     length* {.importc.}: cfloat
     should_spring* {.importc: "enableSpring".}: bool

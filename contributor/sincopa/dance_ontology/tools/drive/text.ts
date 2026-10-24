@@ -98,7 +98,10 @@ export async function readWritten(page: Page): Promise<Written> {
     const beyondAscii = (text: string): number[] => {
       const codepoints = new Set<number>();
       for (const character of text) {
-        const codepoint = character.codePointAt(0) ?? 0;
+        const codepoint = character.codePointAt(0);
+        if (codepoint === undefined) {
+          throw new Error(`A string yields an empty character; got \`${text}\`.`);
+        }
         if (codepoint > 0x7F) codepoints.add(codepoint);
       }
       return [...codepoints];

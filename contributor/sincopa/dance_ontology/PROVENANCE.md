@@ -1856,11 +1856,11 @@ Two joined pairs of one still may stand close, and may touch. Only pairs that ho
 connected or interlocked. So A10 stands, where the two pairs almost meet over the head, as the
 Architect ruled.
 
-Two readings of section A come apart at A09 and A11, which draw the same-name pair face to face.
-Rule 31 of the project itself says that this frame state has its connections lying through each
-other.
-Wound there from `Face-to-back` as the card says, the model stands them at ease, one connection over
-the other. That is a finding against the reading of the rule, and not a number bent toward the page.
+A09 and A11 draw the same-name pair face to face. Rule 31 of the project itself says that there its
+two connections cross, one over the other. The pair rests `Face-to-back`, because there they run
+parallel and cross nothing. Wound face to face from `Face-to-back` as the card says, the model
+stands them at ease, one connection over the other. That agrees with the rule, and is not a number
+bent toward the page.
 
 Sections B and E being whole is a weak result. Every card in them is held above, where a single
 hold sweeps free past two turns, so they test the model hardly at all. The cards that discriminate
@@ -3178,6 +3178,25 @@ Verified for the rename of `Stop.Reach` to `Stop.Span`, with jq 1.7 and GNU diff
 same. A change of docs alone keeps every kept file to the last bit but its stamp, verified by git
 diff on 2026-10-11.
 
+**A value that may be missing is a type that its reader unwraps.** IV.4 and STYLE ask it of
+expected absence, and an empty unwrap fails at once. So each of these is an `Option`: the arm that
+a card lays over (`over`), and the connection that gave (`Walk.which`). The distance that the
+stance search chooses (`chosen`) and the free arm that stops a couple (`stoppedFree`) are too. So
+are the weight that the planner may take from its style, and the moment that couple last faced.
+
+On the pages, the card of a rig entry and a span of the Reference are each an `Option` too. A
+capsule names its owner, trunk, limb or face, and only a limb carries an arm and a part
+(`plan.Shape`). Verified by the compiler, and by the full recording of 2026-10-24, which kept every
+kept file to the last bit but its stamp.
+
+An empty value stays where the rule allows one, as for the identifier of a rig entry that no card
+shows. A bound outside the range stays where a fold reads it as the bound of an empty set, and its
+doc says so. So `Inf` stays for the least gap of a link that meets no part. So does `-Inf` for the
+turns of a walk that holds no rest. IV.5 lets a module decide that policy.
+
+Three results still carry a default where their search found nothing, beside a flag that says so:
+`Walk.whose`, `Tight` and `Strain` (Open questions).
+
 ## Toolchain
 
 **The compiler is pinned exactly, at the version this project was verified on.**
@@ -3250,6 +3269,12 @@ to tidy the line away shows up only as suites that fail to build. `result +=` on
   there beside the answer of the simulation and what stops it (Against the floor). Where the two
   disagree, the ruling is the Architect's. So is whether a high lock goes a whole turn, and what
   moves in the body when it does.
+- **A result that found nothing still carries a default.** Three results hold one, such as the
+  left hand of dancer one. They are the hand of a walk that nothing stopped (`Walk.whose`), and the
+  joint of a reading where no arm is held (`Tight`). The third is the joint of a strain where no
+  pose holds (`Strain`). Each sits beside a flag that says so, but its reader need not unwrap it.
+  The recording of the rig writes that default too, so typing it moves the recording and the rig
+  viewer (Form of the source).
 - **The radius of the girdle, 60 mm, is an estimate and not tape.**
 - **The breadth of the hand is not held to the bound of a leap (#605).** In L-r low, the edge of a
   held hand moves 150 mm at most in one moment, at 0.38 of a turn. The join moves 137 there.
