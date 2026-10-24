@@ -63,15 +63,16 @@ translation is printed in one table, and nothing is tuned to make them agree.
 ```sh
 nim r koch check                                   # root: every check a pull request runs
 nim r koch test contributor/sincopa/dance_ontology  # this project alone, every suite of it
+nim r koch drive contributor/sincopa/dance_ontology # drive, then font faces of every page proven
 nim r tools/build.nim assets                       # font faces every page ships, into build/fonts
 nim r tools/build.nim pages                        # every page and script, into build/
-nim r tools/build.nim drive                        # every page rendered, and every font face proven
+nim r tools/build.nim drive                        # every page read, for koch drive to prove
 nim r tools/build.nim verdicts                     # rewrite simulation/verdicts.md
 nim r tools/build.nim floors                       # how far a plan carries each rig sweep above
 nim r tools/build.nim shot                         # screenshot helper, for node and Playwright
 ```
 
-The first two run from the repository root, and the rest from this directory. This needs
+The first three run from the repository root, and the rest from this directory. This needs
 git, and the compiler that this project pins in `dance_ontology.nimble`. `drive` also needs node,
 with the tools of `package-lock.json` installed by `npm ci`.
 
@@ -136,7 +137,7 @@ tests/                             the simulation's laws (test_rigid, test_read)
                                    JavaScript; test_suites, which runs
                                    every other suite as one binary from suites/: the laws
                                    over every pair of frames, the tape's (test_limb) and the
-                                   workbench's gates (test_marks); drive/, fixtures `drive` reads
+                                   workbench's gates (test_marks)
 build/                             every page and script; ignored by git
 ```
 

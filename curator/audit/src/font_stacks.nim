@@ -10,8 +10,8 @@
 ##     Project's `drive` reads each page it builds, and control page as page `control`, with
 ##       one collector, and writes `build/font-faces/written.json`.
 ##     Once `drive` passes, that file resolves into `found.json` beside it, which is judged.
-##   Project writing no `written.json` is not reported yet: report would redden every project
-##     before any can port, since port needs this on `main` (CURATOR.md duty 3).
+##   Project writing no `written.json` is finding: rule asks every project with pages for it,
+##     and verdict over no file would pass pages nobody read.
 ##
 ##   Control page holds Chinese numerals one to five, each in one kind of place text stands:
 ##     paragraph, placeholder of field, `::before`, SVG text, and text script writes on load.
@@ -287,11 +287,16 @@ proc writeControl*(root, project: string) =
 
 proc checkFontFaces*(root, project: string): seq[Finding] =
   ## Resolve `written.json` of `project`, write `found.json` beside it, and judge it; project
-  ##   writing none is not reported yet (header).
+  ##   writing none is finding (header).
   let
     folder = root / project / DIRECTORY_FONT_FACES
     path = project / DIRECTORY_FONT_FACES / FILE_WRITTEN
-  if not fileExists(folder / FILE_WRITTEN): return
+  if not fileExists(folder / FILE_WRITTEN):
+    return @[finding(
+      path, 0,
+      "Drive of project with pages writes what its collector read, control page included " &
+        "(CONTRIBUTOR.md, Pages and assets); got no file.",
+    )]
   var found: JsonNode
   try:
     found = parseFile(folder / FILE_WRITTEN).toFound(folder)

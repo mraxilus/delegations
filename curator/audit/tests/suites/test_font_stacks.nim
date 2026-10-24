@@ -250,11 +250,14 @@ suite "Font faces judged":
     removeDir(root)
 
 
-  test "project writing no written file is not reported yet (CURATOR.md duty 3)":
-    # Report would redden every project before any can port; it follows ports.
+  test "project writing no written file is finding naming file it lacks":
+    # Verdict over no file would pass pages nobody read.
     let root = createTempDir("delegations_", "_font_faces")
     createDir(root / PROJECT)
-    check checkFontFaces(root, PROJECT).len == 0
+    let missing = checkFontFaces(root, PROJECT)
+    check missing.len == 1
+    check missing[0].path == PROJECT / DIRECTORY_FONT_FACES / FILE_WRITTEN
+    check "got no file" in missing[0].message
     check not fileExists(root / PROJECT / DIRECTORY_FONT_FACES / FILE_FOUND)
     removeDir(root)
 

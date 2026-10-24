@@ -183,7 +183,7 @@ type
                         ## both waists and every shoulder girdle.
     most*: float  ## Nought outside every ease, one at some end, more past it.
     whose*: Hand  ## Arm it sits at, where it is arm's.
-    what*: string  ## Which joint: freedom's name, `waist` or `girdle`.
+    what*: string  ## Which joint: freedom's name, `waist`, `collar Fore` or `collar Up`.
 
 
 
@@ -333,10 +333,14 @@ const
                    ## deltoid and trapezius, estimate and not tape.  Architect's
                    ## to measure.
   COLLAR_HERTZ = 4.5  ## Hertz of spring holding each collarbone hinge where tape
-                   ## puts shoulder.  Girdle weighs some two kilograms twelve
-                   ## centimetres out, so this is about twenty newton metres per
-                   ## radian: `MUSCLE`, what one arm pulls with, rolls shoulder
-                   ## half way to its ease, and it costs from there.  Girdle was
+                   ## puts shoulder.  Engine sizes hinge's spring from inertias
+                   ## of two bodies it joins, so this is about seven newton
+                   ## metres per radian fore and aft, and four up and down.
+                   ## `MUSCLE`, what one arm pulls with, put on shoulder
+                   ## twelve centimetres out, is about 4.8 newton metres: it
+                   ## carries shoulder into its ease, where `COLLAR_LEAN` holds
+                   ## it near 19 degrees fore and 33 up.  Those figures are
+                   ## computed from capsules, and not measured.  Girdle was
                    ## welded on linear spring of three hertz with rope at five
                    ## centimetres, forty newtons moving it whole five, which is
                    ## scapula hanging slack; dancer's is held by its own muscle,
@@ -374,8 +378,9 @@ const
   TRUNK_BIT = 1'u64  ## Torso, neck and head.
   ARM_BIT: array[Body, uint64] = [2'u64, 4'u64]  ## Lead's arms, follow's arms.
   FACE_BIT = 8'u64  ## Faces, which meet arms and partner's girdles alone, since own girdles share
-                   ## their group.  Trunks keep heads apart, and two faces of couple chest to chest
-                   ## overlap 2 cm, computed from tape, where dancers turn heads aside.
+                   ## their group.  Trunks keep heads apart: chest to chest, two faces of couple
+                   ## stand 9.5 mm apart, computed from tape (`stadium`, `faceCapsule`), so no
+                   ## face meets another.
   EVERY = high(uint64)  ## Meets everything.
 
 func ownGroup(who: Body): cint =
@@ -730,11 +735,10 @@ proc buildArm(couple: var Couple, who: Body, arm: Arm, group: cint): ArmRig =
     origin: engine.initVector(0, 0, 0),
     rotation: engine.IDENTITY,
   )
-  # Upper arm and girdle overlap at joint by construction and never collide;
-  # upper arm and chest are no longer one joint apart, so they do, and arm
-  # hung from chest no longer sinks into own torso, neck and head unseen --
-  # 67 mm inside own head by capsule geometry while engine reported no touch,
-  # before shoulder was told to collide with what it hung from.
+  # Upper arm and girdle overlap at joint by construction and never collide.
+  # Upper arm hangs three joints from chest, through girdle and collarbone, and
+  # engine skips only bodies that one joint joins, so arm meets own torso, neck
+  # and head.
   # Held arm is placed by its hold and biased alone; free arm hangs by weight.
   ball.should_spring = true
   ball.hertz = cfloat(if couple.isHeld(who, arm): EASE else: HANG_HERTZ)
@@ -1095,8 +1099,8 @@ proc muscle(couple: Couple, arm_rig: ArmRig, force: Vector) =
   ##     any socket in life: muscle spans joint and pushes against link on its
   ##     other side.  Torque at joint is lever from joint to wrist crossed with
   ##     force, so what arm feels is force at wrist, and what socket feels is
-  ##     nothing.  Shoulder's reaction goes to girdle, which is welded rigid in
-  ##     turn to chest, and chest to hips.
+  ##     nothing.  Shoulder's reaction goes to girdle, which swings on sprung
+  ##     hinges of its collarbone, and on to chest, which yaws on sprung waist.
   ##   Wrist is carried, never levered: hand is what band is asked of, and force
   ##     put on fingertip as torque at wrist too bent every wrist to its cone in
   ##     first moments of rise, hand being lightest link and torque sized for
@@ -1939,8 +1943,8 @@ func roomAt*(couple: Couple, pose: Pose, i: int): float =
     result = min(result, freedom(couple.rig.range[Dof.Wrist], pose.wrist[k], false))
 
 func restStance*(rig: Rig, apart: float, is_away = false): array[Body, Stance] =
-  ## Where couple start.  Same-name pair is built Face-to-back: face to face its two
-  ## connections lie through each other, so couple would not collect it there.
+  ## Where couple start.  Same-name pair is built Face-to-back, where its two connections
+  ## run parallel and cross nothing; face to face they cross, one over other (rule 31).
   result = facing(rig, apart)
   if is_away: result = turned(result, Body.Two, 0.5)
 
@@ -1987,17 +1991,17 @@ proc stoppedBy*(couple: Couple, i: int): tuple[why: Stop, end_index: int] =
 proc stopLink*(couple: Couple, i: int): Stop = stoppedBy(couple, i).why
   ## What stops this connection here, if anything does.
 
-proc stoppedFree*(couple: Couple): tuple[why: Stop, whose: Hand] =
-  ## What stops couple at arm that holds nothing, if anything does, and whose: its upper arm
-  ## past shoulder's edge by more than its give, as `stoppedBy` asks of held arm.
+proc stoppedFree*(couple: Couple): Option[Hand] =
+  ## Whose arm that holds nothing stops couple by swing, if any does: its upper arm past
+  ## shoulder's edge by more than its give, as `stoppedBy` asks of held arm.
   ##   Free arm is arm as much as held one: wall holds it (`holdSwing`), and arm hanging
   ##     where no shoulder takes it is pose no couple stand in.
   for who in Body:
     for arm in Arm:
       if couple.isHeld(who, arm): continue
       if isPastEdge(couple.chestStance(who), arm, couple.armPoseNow(who, arm)):
-        return (Stop.Swing, (who, arm))
-  (Stop.None, (Body.One, Arm.Left))
+        return some((body: who, arm: arm))
+  none(Hand)
 
 const
   FACING* = 0.05  ## Of way up (`up`), within which couple count as facing and
@@ -2088,8 +2092,7 @@ proc gives*(couple: Couple): Stop =
   for i in 0..<couple.links.len:
     let why = couple.stopLink(i)
     if why != Stop.None: return why
-  let free = couple.stoppedFree
-  if free.why != Stop.None: return free.why
+  if couple.stoppedFree.isSome: return Stop.Swing
   let deep = deepest(couple, -1)
   if deep.depth > THROUGH: return deep.met
   if couple.crossed: return Stop.Crossed

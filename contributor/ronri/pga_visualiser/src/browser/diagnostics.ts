@@ -1088,6 +1088,9 @@ const rows_share = ([
   [4, 'diagnostic-share-euclidean', Wording.TipDiagnosticsEuclidean],
 ] as const).map(([owner, id, tip]) => ({ owner, element: elementById(id), tip }));
 for (const row of rows_share) row.element.parentElement!.title = nimWording(row.tip);
+// Why page cannot sample, said once in place of four shares, as desktop's panel says it.
+const note_share = elementById('diagnostic-share-reason');
+let is_shown_rows_share = true; // Whether four shares stand, rather than reason in their place.
 let profiler_share: ProfilerShare | null = null; // Profiler sampling now, if any.
 let ms_profiler_share_opened = 0; // When it began, on page's clock.
 let reason_share: Wording | null = null; // Why page cannot sample, once known.
@@ -1157,6 +1160,14 @@ function openProfilerShare() {
   }
 }
 
+// Show four shares, or reason in their place; DOM is touched on change alone.
+function showRowsShare(is_shown: boolean) {
+  if (is_shown === is_shown_rows_share) return;
+  is_shown_rows_share = is_shown;
+  note_share.hidden = is_shown;
+  for (const row of rows_share) row.element.parentElement!.hidden = !is_shown;
+}
+
 // Keep profiler running while section is shown, turn it each window, and write every row.
 function tickShare(is_shown: boolean) {
   if (!is_shown) { closeProfilerShare(); return; }
@@ -1168,10 +1179,11 @@ function tickShare(is_shown: boolean) {
     if (profiler_share === null) openProfilerShare();
   }
   if (reason_share !== null) {
-    const reason = nimWording(reason_share);
-    for (const row of rows_share) writeText(row.element, reason);
+    writeText(note_share, nimWording(reason_share));
+    showRowsShare(false);
     return;
   }
+  showRowsShare(true);
   const pooled = nimSharePooled();
   const busy = pooled.reduce((sum, count) => sum + count, 0);
   for (const row of rows_share) {

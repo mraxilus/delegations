@@ -1,152 +1,24 @@
-## Judge what harness found when it rendered pages, and hold it to control that proves it sees.
-##   Harness (`tools/drive/`) renders each page and writes, as data, every character beyond ASCII
-##     that font face of system would draw, and every font face browser does not load. It judges
-##     nothing: wording and verdict are here, where suites reach them (Article II.9).
-##   Control is whole document set in this project's body stack, since pages here are whole
-##     documents, and `drive` dresses it with every font face as `pages` dresses every page.
-##   Control page is positive control of render. Its paragraphs come from fixture
-##     `tests/drive/control_font_faces.json`. Paragraph marked drawn by system writes character no
-##     shipped font face maps under its stack; other paragraph writes one shipped font face does
-##     map. Control's expected findings are never page's failure. Expected finding absent is finding
-##     instead, since render that misses it is blind; finding control does not expect is one too.
-##   Fixture lives under `tests/`: static coverage check (`curator/audit/src/coverage.nim`) reads
-##     every file of project outside it, and control's characters are ones no font face maps.
-##   Harness names element with id as `<tag>#<id>` (`tools/drive/text.ts`), so control's
-##     paragraph `han` is `p#han`; misnamed one reads as blind, so drive holds naming too.
-##   Every page is rendered as publish host serves it, inside host's document skeleton
-##     (`SKELETON_HOST`), so charset and viewport are what viewer gets.
-##     Host's style sheet is left out: its body stack leads with font families of system, which
-##       no file here may name (X.8). Nothing is lost: element that inherits no stack from page
-##       takes browser's default, also font family of system, so drive finds it either way.
+## Wrap each page `drive` renders in skeleton publish host serves it in, so charset and viewport
+## are what viewer gets.
+##   Host's style sheet is left out: its body stack leads with font families of system, which no
+##     file here may name (X.8). Nothing is lost: element that inherits no stack from page takes
+##     browser's default, also font family of system, so `koch drive` finds it either way.
+##   Findings on font faces are `koch drive`'s (CONTRIBUTOR.md, Pages and assets): harness
+##     (`tools/drive/`) writes what it reads, and nothing here judges it.
 
 {.experimental: "strictFuncs".}
 
-import std/[json, os, strutils, unicode]
-from std/xmltree import nil
 
-import ./font_faces
-
-
-type
-  ParagraphControl* = object  ## Define one paragraph of control page.
-    id*: string  ## Id harness names paragraph by, as `p#<id>`.
-    stack*: string  ## Font stack paragraph sets inline; empty keeps page's own.
-    text*: string  ## Text paragraph writes.
-    is_drawn_by_system*: bool  ## Every character of text beyond ASCII must raise finding.
-
-  FindingExpected* = tuple[element: string, codepoint: int]
-    ## Define finding control must raise: element, as harness names it, and codepoint.
-
-  Finding* = object  ## Define one failure of drive, located at page it was found on.
-    path*: string  ## Page failing, project-relative.
-    message*: string  ## Statement ending with value got.
-
-
-const
-  CONTROL* = "control_font_faces"  ## Name control page renders under, beside every page.
-  ASCII_MAX = 0x7F  ## Last codepoint of ASCII, which render never reads.
-  SKELETON_HOST* = (
-    "<!doctype html><html><head><meta charset=utf8><meta name=viewport " &
-        "content=\"width=device-width,initial-scale=1,viewport-fit=cover\"></head><body>\n",
-    "\n</body></html>",
-  )
-    ## Document skeleton publish host wraps page in: opening, then closing.
-    ##   Read off Reference, version 11, as published on 2026-10-05, with host's style
-    ##     sheet left out, as module's head says why. Host's own, so it can change under us.
-
-
-
-#[ Control ]#
-
-func codepointText*(codepoint: int): string =
-  ## Spell codepoint as Unicode names it, at least four digits, as `U+2603`.
-  "U+" & codepoint.toHex.strip(trailing = false, chars = {'0'}).align(4, '0')
-
-
-func toParagraphs*(control: JsonNode): seq[ParagraphControl] =
-  ## Read paragraphs of control fixture, in order written.
-  for paragraph in control{"paragraphs"}.getElems:
-    result.add ParagraphControl(
-      id: paragraph{"id"}.getStr,
-      stack: paragraph{"stack"}.getStr,
-      text: paragraph{"text"}.getStr,
-      is_drawn_by_system: paragraph{"is_drawn_by_system"}.getBool,
-    )
-
-
-func pageControl*(paragraphs: openArray[ParagraphControl]): string =
-  ## Render control as whole document set in body stack pages use, one paragraph each, its
-  ##   stack set inline where it names one; font faces are dressing's to add, as on every page.
-  result = "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n" &
-      "<title>Font Faces Control</title>\n<style>body { font-family: " & SANS_SERIF &
-      "; }</style>\n</head>\n<body>\n"
-  for paragraph in paragraphs:
-    let style =
-      if paragraph.stack.len == 0: ""
-      else: " style=\"font-family: " & xmltree.escape(paragraph.stack) & "\""
-    result.add "<p id=\"" & xmltree.escape(paragraph.id) & "\"" & style & ">" &
-        xmltree.escape(paragraph.text) & "</p>\n"
-  result.add "</body>\n</html>\n"
-
-
-func findingsExpected*(paragraphs: openArray[ParagraphControl]): seq[FindingExpected] =
-  ## List findings control must raise: each character beyond ASCII that system draws.
-  for paragraph in paragraphs:
-    if not paragraph.is_drawn_by_system: continue
-    for rune in paragraph.text.runes:
-      let expected = (element: "p#" & paragraph.id, codepoint: int(rune))
-      if int(rune) > ASCII_MAX and expected notin result: result.add expected
+const SKELETON_HOST* = (
+  "<!doctype html><html><head><meta charset=utf8><meta name=viewport " &
+      "content=\"width=device-width,initial-scale=1,viewport-fit=cover\"></head><body>\n",
+  "\n</body></html>",
+)
+  ## Document skeleton publish host wraps page in: opening, then closing.
+  ##   Read off Reference, version 11, as published on 2026-10-05, with host's style
+  ##     sheet left out, as module's head says why. Host's own, so it can change under us.
 
 
 func hosted*(page: string): string =
   ## Wrap built page in skeleton publish host serves it in, as `drive` renders it.
   SKELETON_HOST[0] & page & SKELETON_HOST[1]
-
-
-
-#[ Verdict ]#
-
-func render*(finding: Finding): string =
-  ## Render finding as `path:0: message`, since whole page fails rather than one line.
-  finding.path & ":0: " & finding.message
-
-
-func checkRendered*(
-  found: JsonNode; expected: openArray[FindingExpected]; control, directory: string
-): seq[Finding] =
-  ## Turn what harness found into findings, each at page it was found on; hold control to
-  ##   exactly findings it expects.
-  ##   Document maps page name to its `characters` (element, codepoint) and its `faces` (family,
-  ##   weight, status); control absent from it raised nothing, so each expected is blind.
-  var seen: seq[FindingExpected]
-  for page, document in found.pairs:
-    let path = directory / page & ".html"
-    for font_face in document{"faces"}.getElems:
-      result.add Finding(
-        path: path,
-        message: "@font-face " & font_face{"family"}.getStr & " " & font_face{"weight"}.getStr &
-            ": Font face does not load; got `" & font_face{"status"}.getStr & "`.",
-      )
-    for character in document{"characters"}.getElems:
-      let pair = (element: character{"element"}.getStr, codepoint: character{"codepoint"}.getInt)
-      if page == control and pair in expected:
-        seen.add pair
-        continue
-      result.add Finding(
-        path: path,
-        message: pair.element & ": Character drawn by font face of system; got `" &
-            codepointText(pair.codepoint) & "`.",
-      )
-  let path_control = directory / control & ".html"
-  if expected.len == 0:
-    result.add Finding(
-      path: path_control,
-      message: "Control expects no finding, so render proves nothing; got `0` expected.",
-    )
-  for pair in expected:
-    if pair in seen: continue
-    result.add Finding(
-      path: path_control,
-      message: pair.element & ": Check is blind, since control raised no finding here; got " &
-          "none for `" & codepointText(pair.codepoint) & "`.",
-    )

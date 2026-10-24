@@ -1,3 +1,6 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>@WORD:NameTitle@</title>
 <style>
   :root {
@@ -1000,6 +1003,16 @@
     justify-content: space-between;
   }
   .diagnostic-line b { color: var(--ink); font-variant-numeric: tabular-nums; }
+  /* Row's `display` beats `[hidden]` of UA stylesheet, as `.help-row` found. */
+  .diagnostic-line[hidden] { display: none; }
+  /* Reason section cannot give its figures, said once across drawer's width in place of its
+     rows. Written into each row's value instead, it wrapped into row's own name. */
+  .diagnostic-note {
+    font-size: 11.5px;
+    line-height: 1.35;
+    color: var(--ink);
+    margin: 6px 0;
+  }
   /* Label's line box set by its own size, not by every face it draws from: arrow of
      crossing rows comes from maths face, whose taller box would stand its row 5 px above
      others. */
@@ -1420,6 +1433,8 @@
              side of algebra boundary, pooled over last 20 seconds by browser's own sampling
              profiler; see `tickShare`. Desktop shows same four rows, from its own sampler. -->
         <div class="diagnostic-legend"><span>@WORD:NameDiagnosticsShare@</span></div>
+        <!-- Why page cannot sample, said once in place of four shares, as desktop says it. -->
+        <p class="diagnostic-note" id="diagnostic-share-reason" hidden></p>
         <div class="diagnostic-line"><span>@WORD:NameDiagnosticsPga@</span
           ><b id="diagnostic-share-pga">&mdash;</b></div>
         <div class="diagnostic-line"><span>@WORD:NameDiagnosticsAlgebra@</span

@@ -7,8 +7,9 @@
 ##   Given shoulder and join, pose has three freedoms: which way
 ##     hand points off wrist (two), and where elbow sits on
 ##     circle its two-link chain leaves it (one).  Everything else follows.  So
-##     solver next door searches three numbers per arm, and every pose it
-##     ever tries has its lengths right by construction.
+##     `posed` lays arm from three numbers, for laws of
+##     `tests/suites/test_limb.nim`, and every pose it lays has its lengths
+##     right by construction.
 ##   Joints are read back off pose, in body's own terms, and
 ##     left arm is read in mirror so that one set of ranges serves both.
 ##     Shoulder's twist is read swing-and-twist: arm at rest hangs
@@ -41,8 +42,8 @@ type
     stretch*: float  ## Shoulder to wrist: over `upper + fore` is out of reach.
 
   Circle* = object  ## Circle elbow can sit on for one join and hand.
-    ##   Everything `posed` works out that does not depend on swivel, kept
-    ##     so seed can try every swivel round it for price of one.
+    ##   Everything `posed` works out that does not depend on swivel; `posed`
+    ##     alone builds it, once for each arm it lays.
     shoulder*, wrist*: Vector  ## Shoulder and wrist.
     stretch*: float  ## Shoulder to wrist.
     axis*: Vector  ## Unit, shoulder towards wrist; zero where two coincide.
@@ -121,8 +122,8 @@ func posed*(
   ## unit `hand_direction`, holding `depth` past wrist, and elbow at `swivel` round its
   ## circle, nought being lowest elbow can hang.
   ##   Out of reach is not refused here: elbow goes as far as it can and
-  ##     forearm is left too long, so that searcher minimising
-  ##     overshoot has something smooth to descend.
+  ##     forearm is left too long, which `stretch` shows.  Laws of
+  ##     `tests/suites/test_limb.nim` read it, and hold lengths only within reach.
   posedOn(
     rig,
     initCircle(rig, shoulder_point, join_point, hand_direction, depth),
@@ -276,9 +277,8 @@ func room*(rig: Rig, arm_joints: Joints): float =
 func comfort*(rig: Rig, arm_joints: Joints): float =
   ## Smooth cost of pose: how far every joint sits from its rest,
   ## squared and summed, with arm's lift counted too.
-  ##   Minimised by solver among poses that hold, so that neighbouring
-  ##     turns get neighbouring poses and hanging arm is preferred to
-  ##     raised one where both would do.
+  ##   Nothing calls it.  Planner's cost of comfort is its own routine,
+  ##     `plan.comfort`.
   for dof in Dof:
     let from_neutral = eased(rig.range[dof], reading(arm_joints, dof))
     result += from_neutral * from_neutral

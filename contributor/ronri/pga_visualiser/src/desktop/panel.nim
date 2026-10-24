@@ -43,7 +43,7 @@ import std/[options, strformat]
 import pga
 import ./[gui, sampler]
 import ../pga_visualiser/[
-  boundary, camera, format, framing, help, history, message, orrery, picking,
+  boundary, camera, format, framing, help, history, interaction, message, orrery, picking,
   scene, selection, share, tessellate, timings, wording,
 ]
 
@@ -52,9 +52,6 @@ import ../pga_visualiser/[
 #[ Panel Configuration ]#
 
 const
-  INSET_MENU_POINTER = 8.0'f32
-    ## Set how far menu's corner stands from pointer that opened it, in pixels.
-    ##   Context menu's own convention: beside pointer, not under it.
   PATH_MAX* = 256  ## Bound length of export path user may type.
   WIDTH_PANEL* = 440.0'f32
     ## Set width panels open at, in pixels.
@@ -231,6 +228,11 @@ type
     is_menu_selection_hovered*: bool  ## Whether pointer was over that menu as last laid out.
       ## Dear ImGui's own reading, as `gui.wantsMouse` is, so both name one frame.
     position_menu_selection*: array[2, cfloat]  ## Where that menu sits, in window pixels.
+    box_menu_selection*: array[4, cfloat]
+      ## Where that menu was laid out last, as left, top, width and height in window pixels.
+      ##   Its size keeps next frame's menu inside view.
+      ##   Read by scripted run's verdict, which asks where menu hangs, not where it was asked to.
+    anchor_menu_selection*: array[2, cfloat]  ## Place of object menu last followed, likewise.
       ## Kept between frames.
       ##   Object it follows can pass behind camera, and menu that vanished for those
       ##   frames would be worse than one staying put.
@@ -334,7 +336,7 @@ func showSelectionMenuAt*(panel: var Panel, pointer: ScreenPosition) =
   panel.showSelectionMenu()
   panel.corner_menu_pointer = some(
     [
-      cfloat(pointer.x) + INSET_MENU_POINTER, cfloat(pointer.y) + INSET_MENU_POINTER,
+      cfloat(pointer.x + PIXELS_INSET_MENU_POINTER), cfloat(pointer.y + PIXELS_INSET_MENU_POINTER),
     ],
   )
 
@@ -1375,15 +1377,6 @@ func stepHistory*(
 #[ Selection Menu ]#
 
 const
-  OFFSET_MENU_SELECTION = 46.0'f32
-    ## Lift menu this far above object it follows, in pixels.
-    ##   Above rather than on: ImGui window makes `gui.wantsMouse` true wherever it sits,
-    ##   and menu straddling its object would swallow next drag off it.
-    ##   Clears selection marker too.
-    ##   Matches browser's lift less this row's height, browser measuring in CSS pixels.
-  MARGIN_MENU_SELECTION = 8.0'f32
-    ## Keep menu at least this far inside viewport.
-    ##   Object near edge then does not push half of it off screen.
   PADDING_MENU_PICKER = 36.0'f32
     ## Pad widest notation offered by this much, for combo's frame and arrow.
 
@@ -1463,6 +1456,7 @@ proc layoutSelectionMenu*(
   ##   state is which is on line so far.
   panel.is_menu_selection_hovered = false
   if not panel.is_menu_selection_shown or panel.selection.len == 0: return
+  if anchor.isSome: panel.anchor_menu_selection = [anchor.get.x, anchor.get.y]
   # Turn pointer's corner into offset from object once both are known.
   #   Menu then follows object at that offset; see `showSelectionMenu`.
   if panel.corner_menu_pointer.isSome:
@@ -1476,10 +1470,16 @@ proc layoutSelectionMenu*(
     let offset = panel.offset_menu_selection.get
     panel.position_menu_selection = [anchor.get.x + offset[0], anchor.get.y + offset[1]]
   elif anchor.isSome:
-    panel.position_menu_selection = [
-      anchor.get.x,
-      max(anchor.get.y - OFFSET_MENU_SELECTION, MARGIN_MENU_SELECTION),
-    ]
+    # Hang from point core names, as page hangs it; see `interaction.pointMenuHung`.
+    #   Size is last frame's: window takes its size from what it holds, once laid out.
+    let hung = pointMenuHung(
+      ScreenPosition(x: anchor.get.x, y: anchor.get.y),
+      gui.viewportWidth(),
+      gui.viewportHeight(),
+      panel.box_menu_selection[2],
+      panel.box_menu_selection[3],
+    )
+    panel.position_menu_selection = [cfloat(hung.x), cfloat(hung.y)]
   # Hang pointer-placed menu from its top-left corner, anchored one from bottom middle.
   #   Anchored menu stands above object; pointer-placed one beside pointer.
   let
@@ -1492,18 +1492,19 @@ proc layoutSelectionMenu*(
     "##selection_menu",
     clamp(
       panel.position_menu_selection[0],
-      MARGIN_MENU_SELECTION,
-      gui.viewportWidth() - MARGIN_MENU_SELECTION,
+      PIXELS_MARGIN_MENU_SELECTION,
+      gui.viewportWidth() - PIXELS_MARGIN_MENU_SELECTION,
     ),
     clamp(
       panel.position_menu_selection[1],
-      MARGIN_MENU_SELECTION,
-      gui.viewportHeight() - MARGIN_MENU_SELECTION,
+      PIXELS_MARGIN_MENU_SELECTION,
+      gui.viewportHeight() - PIXELS_MARGIN_MENU_SELECTION,
     ),
     pivot_x,
     pivot_y,
   ):
     panel.is_menu_selection_hovered = gui.isWindowHovered()
+    panel.box_menu_selection = gui.windowBox()
     if count <= 2:
       layoutSelectionMenuApply(panel, scene, camera, history, now)
       is_line_started = true
