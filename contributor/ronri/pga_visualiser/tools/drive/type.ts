@@ -186,3 +186,24 @@ export async function driveTypeLigatures(page: Page): Promise<void> {
     await page.evaluate(() => { document.getElementById('probe-ligature')?.remove(); });
   }
 }
+
+/** Assert page declares its doctype and charset, so copy opened from file reads as host shows it.
+ *
+ *  Host wraps published page in skeleton that declares both; file copy has only what page
+ *  says. Without either it rendered in quirks mode and decoded as Windows-1252, so arrow of
+ *  crossing rows came out as three other letters.
+ *  Arrow compared against escape written here, since page's own strings decode same way.
+ */
+export async function driveTypeDecoded(page: Page): Promise<void> {
+  const seen = await page.evaluate(() => ({
+    mode: document.compatMode,
+    charset: document.characterSet,
+    label: document.getElementById('diagnostic-crossing-to-algebra')?.parentElement
+      ?.querySelector('span')?.textContent ?? '',
+  }));
+  report(
+    'the page declares its doctype and charset, so a copy opened from file reads its arrows',
+    seen.mode === 'CSS1Compat' && seen.charset === 'UTF-8' && seen.label.includes('\u2192'),
+    `${seen.mode}, ${seen.charset}, crossing row named "${seen.label}"`,
+  );
+}

@@ -95,7 +95,9 @@ if plan != "none":
     let pages = Target(directory: directory)
 
     root.writeInto(directory & "/plan.txt", "none")
-    check runDriven(root, [pages]).len == 0  # verb wrote no file: not reported yet
+    let missing = runDriven(root, [pages])
+    check missing.len == 1  # verb wrote no file
+    check missing[0].path == directory / DIRECTORY_FONT_FACES / FILE_WRITTEN
     check fileExists(root / directory / DIRECTORY_FONT_FACES / FILE_CONTROL)
     root.writeInto(directory & "/plan.txt", "all")
     check runDriven(root, [pages]).len == 0  # each numeral collected
