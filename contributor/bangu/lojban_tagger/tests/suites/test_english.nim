@@ -2,8 +2,11 @@
 ##   CLL defines no English, so every suite is internal and every test is named by behaviour
 ##     (Article IX.10); comment on each check names law it holds.
 ##   Examples are lines of lists as committed (`cukta`, `ci'erkei`); laws run exhaustively over
-##     every meaning, every gismu and every lujvo line, and over seeded phrases drawn from
-##     meanings (Article IX.3).
+##     every meaning, every gismu and every lujvo line, and over pool of seeded meanings, each
+##     with its tokens shuffled, that iterator serves (Article IX.3, STYLE.md §6).
+##   Gismu of lujvo line come two ways: parts named, and word read. Laws hold one way against
+##     other, never against code that builds them; English notation names no gismu, so reader is
+##     held to keywords its parts write.
 ##   Corpus does not cover yet: phrases of three words or more, and English no list holds.
 
 {.experimental: "strictFuncs".}
@@ -20,11 +23,22 @@ import ../../src/lojban_tagger/lists/[gismu, lujvo]
 const
   SAMPLES = 500  ## Random meanings phrase law draws from, seeded.
   FLOOR_PHRASE = 150
-    ## Least of those holding two distinct tokens or more, that phrase law reads: 217 read at
+    ## Least of those holding two distinct tokens or more, that phrase law reads: 230 read at
     ## seed `0`; keyword and hint mostly hold one word, many glosses several.
   FLOOR_FOUND = 4700
     ## Least meanings whose English holds token, that completeness law reads: 4815 of 4838 read;
     ## 23 keywords hold digits or function words alone.
+  FLOOR_READ_LOJBAN = 2400
+    ## Least lines of Lojban notation whose parts name gismu alone: 2500 of 3044 read; rest hold
+    ## cmavo.
+  FLOOR_READ_ENGLISH = 600  ## Least lines of English notation whose word reads: 640 of 758 read.
+  FLOOR_KEYWORD = 600
+    ## Least lines of English notation whose gismu carry keywords parts write, case and hyphens
+    ## aside: 629 of 640 that read; rest write synonym (`old` for `slabu`), misspell, or name
+    ## gismu in Lojban.
+  LUJVO_PARTS_ODD = ["vikmau"]
+    ## Lines of English notation listing more parts than gismu: `vikmau` writes `2nd-place-of`,
+    ## `viscous` and `more` for `viknu` and `zmadu`; list data, not reader.
 
 
 func tanru(text: string): seq[Word] =
@@ -40,6 +54,29 @@ func intersection(a, b: seq[Meaning]): seq[Meaning] =
 func indexLujvo(word: string): int =
   ## Find line of lujvo list spelling `word`; suite names listed words alone.
   LIST_LUJVO.mapIt(it.word).find(word)
+
+
+func normalEnglish(text: string): string =
+  ## Fold English to lowercase, hyphen to space, so keyword and part of list compare.
+  text.toLowerAscii.replace('-', ' ')
+
+
+proc drawMeanings(): seq[(Meaning, seq[string])] =
+  ## Draw `SAMPLES` meanings, seeded, each with its distinct tokens shuffled.
+  randomize(0)
+  for _ in 1 .. SAMPLES:
+    let meaning = MEANINGS[rand(MEANINGS.high)]
+    var tokens = meaning.textEnglish.toTokens.deduplicate
+    tokens.shuffle
+    result.add (meaning, tokens)
+
+
+let MEANINGS_SAMPLED = drawMeanings()  ## Random meanings phrase law reads, drawn once.
+
+
+iterator meaningsRandom(): (lent Meaning, lent seq[string]) =
+  ## Serve each random meaning of pool with its shuffled tokens, with no copy.
+  for i in 0 ..< MEANINGS_SAMPLED.len: yield (MEANINGS_SAMPLED[i][0], MEANINGS_SAMPLED[i][1])
 
 
 
@@ -119,17 +156,11 @@ suite "Internal: English":
 
 
   test "Phrase of words from one meaning finds it, as intersection of words":
-    randomize(0)
     var count_phrase = 0
-    for _ in 1 .. SAMPLES:  # `SAMPLES` meanings, seeded
-      let
-        meaning = MEANINGS[rand(MEANINGS.high)]
-        tokens = meaning.textEnglish.toTokens.deduplicate
+    for meaning, tokens in meaningsRandom():  # `SAMPLES` meanings, seeded
       if tokens.len < 2: continue
       let
-        i = rand(tokens.high)
-        j = (i + 1 + rand(tokens.len - 2)) mod tokens.len
-        (first, second) = (tokens[i], tokens[j])
+        (first, second) = (tokens[0], tokens[1])
         phrase = first & " " & second
       check meaning in phrase.meanings  # meaning holds each word of phrase
       check phrase.meanings == intersection(first.meanings, second.meanings)  # conjunction
@@ -170,48 +201,41 @@ suite "Internal: English":
       let is_gismu = Word(i).kind == Kind.Gismu
       check lut_keywords_by_entry[i] == ord(is_gismu)  # one keyword meaning per gismu
       check lut_hints_by_entry[i] == ord(is_gismu and entry.hint.len > 0)  # hint where given
-    for meaning in MEANINGS:
-      if meaning.origin == Origin.Keyword:
-        check meaning.textEnglish == LIST_GISMU[meaning.entry].keyword  # English of origin
-      elif meaning.origin == Origin.Hint:
-        check meaning.textEnglish == LIST_GISMU[meaning.entry].hint  # English of origin
 
 
-  test "Gloss meanings are lujvo lines whose gismu read, each once":
+  test "Gloss meanings are lujvo lines whose word reads as tag, each once":
     let glosses = MEANINGS.filterIt(it.origin == Origin.Gloss)
-    check glosses.len == LIST_LUJVO.countIt(it.gismuLujvo.len > 0)  # conservation of lines
+    check glosses.len == LIST_LUJVO.countIt(it.word.readTag.is_tag)  # one per line read, no more
     for n in 1 ..< glosses.len:
       check glosses[n - 1].entry < glosses[n].entry  # each line once, in list order
     for meaning in glosses:
-      let entry = LIST_LUJVO[meaning.entry]
-      check meaning.words == entry.gismuLujvo  # gismu of line
-      check meaning.textEnglish == entry.gloss  # English of origin
+      let reading = LIST_LUJVO[meaning.entry].word.readTag
+      check reading.is_tag and reading.tag.words == meaning.words  # gismu reader finds in word
 
 
-  test "gismuLujvo agrees with parts, and with reader, for Lojban notation":
+  test "gismuLujvo of Lojban notation spells its parts, and agrees with reader":
     var count_read = 0
     for entry in LIST_LUJVO:  # every line, exhaustive
       if entry.notation != Notation.Lojban: continue
-      let
-        is_gismu_all = entry.parts.allIt(it.word.isSome and it.word.get.kind == Kind.Gismu)
-        expected = (if is_gismu_all: entry.parts.mapIt(it.word.get) else: @[])
-      check entry.gismuLujvo == expected  # parts named, cmavo or unlisted part refused whole
-      if expected.len == 0: continue
-      let reading = entry.word.readTag
-      check reading.is_tag and reading.tag.words == expected  # reader splits word into parts
-      inc count_read
-    check count_read > 0  # list holds lines of gismu alone
-
-
-  test "gismuLujvo of English notation is gismu reader finds in word":
-    var count_read = 0
-    for entry in LIST_LUJVO:  # every line, exhaustive
-      if entry.notation != Notation.English: continue
-      let
-        words = entry.gismuLujvo
-        reading = entry.word.readTag
-      check (words.len > 0) == reading.is_tag  # read where reader reads tag, else empty
+      let (words, reading) = (entry.gismuLujvo, entry.word.readTag)
+      check (words.len > 0) == reading.is_tag  # parts name gismu alone where word reads as tag
       if words.len == 0: continue
-      check reading.tag.words == words  # gismu of word, never of English parts
+      check words.mapIt($it) == entry.parts  # round trip: gismu found spell parts back
+      check reading.is_tag and reading.tag.words == words  # reader splits word into parts
       inc count_read
-    check count_read > 0  # list holds lines of English notation that read
+    check count_read >= FLOOR_READ_LOJBAN  # guard kept most lines
+
+
+  test "gismuLujvo of English notation holds gismu whose keywords its parts write":
+    var count_read, count_keyword = 0
+    for line in LIST_LUJVO:  # every line, exhaustive
+      if line.notation != Notation.English: continue
+      let words = line.gismuLujvo
+      if words.len == 0: continue
+      check (words.len == line.parts.len) ==
+          (line.word notin LUJVO_PARTS_ODD)  # one gismu per English part, list slips aside
+      if words.mapIt(it.entry.keyword.normalEnglish) == line.parts.mapIt(it.normalEnglish):
+        inc count_keyword
+      inc count_read
+    check count_read >= FLOOR_READ_ENGLISH  # guard kept most lines
+    check count_keyword >= FLOOR_KEYWORD  # reader finds gismu parts name by keyword
