@@ -353,6 +353,13 @@ Architect, so that turn signs off as `waiting`, even while other work goes on. E
 subagent that has not reported is then a row of the table. The message that ends that turn, and
 the message of a handover, closes with one block, `## Sign-off`. Nothing follows it.
 
+**Read the open issues on your role in the turn that signs off.** A request can arrive while you
+work, and the reads at the start see none of it. The coordinator reads the `architect` label
+instead, since no item carries its role. A read is a call of `mcp__github__list_issues` or of
+`gh issue list` that names that label, or no label. The `stop` hook refuses a sign-off from a
+turn with no such read. Where it refuses, read them, take first what waits, and reply with one
+line that names it, and no diff.
+
 **Any other turn that ends while your work goes on does not sign off.** A run or a subagent that has
 not reported is such work. Where that turn pushed or posted, its message closes with one line
 instead. The line opens `**Working:**`, then names what runs and what wakes you:
