@@ -530,6 +530,7 @@ proc checkRules*() =
   # RULES 7 AND 41, between quarter turns.  Each lock or wrap that drawing allows is one
   # it draws: route found at every whole degree of follow's turn, on each single hold.
   # Rule 7 binds every landing here but high lock, whose line takes short way (rule 41).
+  # Rule 7's measure and drawing stop at same `PASSES_MAX` of `route.nim`, which this holds.
   var allowed, tried = 0
   for landing in landings:
     for single in SINGLES:
