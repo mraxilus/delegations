@@ -1,8 +1,12 @@
 ## Ask body simulation about every card Reference draws, and write down which it agrees with.
 ##
 ##   Reference carries two badges on each cell.  `kept` is Architect's, given by eye
-##     on floor.  `modelled` is this one: whether simulation reaches what card draws.  Goal is
-##     both at hundred per cent, and gap between them is work left.
+##     on floor.  Other is simulation's, and `modelled.json` records what it reads: whether
+##     simulation reaches each card.  Goal is both at hundred per cent, and gap between them
+##     is work left.
+##     Simulation's badge reads *not modelled* where simulation misses any of card,
+##       *unconfirmed* where it reaches card whole, and *modelled* only once card's name is
+##       in `CONFIRMED` too (`reference_page`).
 ##   Written here rather than on page because asking simulation costs minutes and page is
 ##     markup.
 ##   Badge must not touch fixtures.  `reference_page.drawing` cuts cards back out of built
@@ -25,7 +29,7 @@
 
 when compileOption("profiler"): import std/nimprof
 
-import std/[json, os, sequtils, strformat, tables]
+import std/[json, options, os, sequtils, strformat, tables]
 
 import ../simulation/[body, hold, rig, walk]
 import ./[asks, parts, stamps]
@@ -36,8 +40,9 @@ const KEPT_MODELLED* = currentSourcePath().parentDir / "modelled.json"
 
 
 const CROWN = Band.Crown
-  ## Whole Reference is drawn over crown: `design/parts` picks `ABOVE_BOTH` for chains
-  ## and `ABOVE_ONE`/`ABOVE_OTHER` for singles, so no card asks about any other band.
+  ## Sections `B` to `G` are drawn over crown: `design/parts` picks `ABOVE_BOTH` for
+  ## chains and `ABOVE_ONE`/`ABOVE_OTHER` for singles.  Section `A` draws no level, and
+  ## is asked over crown too, so no card asks about any other band.
 
 
 type Question* = object  ## One card's question, as data, so threads may share it.
@@ -48,7 +53,7 @@ type Question* = object  ## One card's question, as data, so threads may share i
   turns*: float  ## How far `who` turns, simulation's own sense: to still, or carried.
   is_either_way*: bool  ## Still that fixes no way about: wound either way.
   who*, head*: Body  ## Who turns, and whose crown hands go over: one dancer.
-  over*: int  ## Lead's arm still card lays over, by ordinal; below nought where none.
+  over*: Option[Arm]  ## Lead's arm still card lays over, or none.
 
 
 func moving(key: string, links: seq[Link], is_away: bool, manner: Manner, amount: float): Question =
@@ -68,7 +73,7 @@ func moving(key: string, links: seq[Link], is_away: bool, manner: Manner, amount
     turns: turns,
     who: who,
     head: who,
-    over: -1,
+    over: none(Arm),
   )
 
 func questions*(): seq[Question] =

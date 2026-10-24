@@ -14,7 +14,7 @@ cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on -d:danger $opti
 
 when compileOption("profiler"): import std/nimprof
 
-import std/[atomics, cpuinfo, math, random, strformat, tables, typedthreads, unittest]
+import std/[atomics, cpuinfo, math, options, random, strformat, tables, typedthreads, unittest]
 
 import ../simulation/[body, hold, limb, read, rig, rigid, vector]
 import ./fixtures
@@ -199,9 +199,10 @@ suite "Internal: Two hands":
 
     func marginsHeld(
       stance: array[Body, Stance], links: seq[Link], arms: Arms, tight: Tight
-    ): tuple[least, named: float] =
-      ## Least margin of any joint of any held arm, and margin of joint `tight` names.
-      result = (Inf, NaN)
+    ): tuple[least: float, named: Option[float]] =
+      ## Least margin of any joint of any held arm, and margin of joint `tight` names, or
+      ## none where no held arm has that joint.
+      result = (Inf, none(float))
       for i in 0..<links.len:
         for k in 0..1:
           let
@@ -210,7 +211,7 @@ suite "Internal: Two hands":
           for dof in Dof:
             let joint_margin = margin(HUMAN.range[dof], arm_joints.reading(dof))
             result.least = min(result.least, joint_margin)
-            if dof == tight.dof and hand == tight.whose: result.named = joint_margin
+            if dof == tight.dof and hand == tight.whose: result.named = some(joint_margin)
 
     settleAll()
     let links = @[Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Right)])]
@@ -231,7 +232,7 @@ suite "Internal: Two hands":
         (least, named) = marginsHeld(stance, pose_links, arms, tight)
       check tight.room < Inf
       check tight.strain >= 0.0 and tight.strain <= 1.0
-      check named =~ tight.room
+      check named.get =~ tight.room
       check least =~ tight.room
     check strain(Tight(room: 0.0)) =~ 1.0
     check strain(Tight(room: 1.0)) =~ 0.0

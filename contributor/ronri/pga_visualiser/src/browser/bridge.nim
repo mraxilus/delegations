@@ -418,6 +418,7 @@ var
   FLAT_PAN_HELD = initFlatFloats(3)
   FLAT_MENU = initFlatFloats(3 * (ord(DragChoice.high) + 1))
   FLAT_MENU_CENTRE = initFlatFloats(2)
+  FLAT_MENU_HUNG = initFlatFloats(2)
   FLAT_VIEW: seq[float32] = newSeq[float32](16)
   IS_CULLING = true  ## Whether points outside view are skipped before emitting.
     ## Off only through `nimSetCulling`, for check that culling changes no pixel.
@@ -1786,6 +1787,25 @@ proc nimRevealsWithoutPicking(has_selection, is_menu_shown: bool): bool {.export
   ## Say whether menu-revealing click should only reveal, leaving selection alone.
   ##   Forwards to `interaction.isRevealingWithoutPicking`; desktop asks identical question.
   isRevealingWithoutPicking(has_selection, is_menu_shown)
+
+
+proc nimMenuHung(x, y, width, height, width_menu, height_menu: cfloat): FlatBuffer {.exportc.} =
+  ## Report point selection menu hangs from by its bottom middle, where no pointer opened it.
+  ##   Forwards to `interaction.pointMenuHung` for anchor at `x`, `y` in canvas pixels, and
+  ##   menu of that size; desktop's `layoutSelectionMenu` asks same rule.
+  ##   View over `FLAT_MENU_HUNG`.
+  let hung = pointMenuHung(
+    ScreenPosition(x: float(x), y: float(y)),
+    float(width),
+    float(height),
+    float(width_menu),
+    float(height_menu),
+  )
+  FLAT_MENU_HUNG.fill2(float32(hung.x), float32(hung.y))
+
+
+proc nimInsetMenuPointer(): cfloat {.exportc.} = cfloat(PIXELS_INSET_MENU_POINTER)
+  ## Report how far corner of menu pointer opened stands from pointer, as desktop's does.
 
 
 proc nimHelpEntries(): seq[cstring] {.exportc.} =

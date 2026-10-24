@@ -5,8 +5,9 @@
 ##     and only workbench drew them; Explorer draws them now, so
 ##     words move to where drawing is and ledger stays where
 ##     argument is (`design/rules.nim`, which re-exports this).
-##   Settle table encodes rules 4 and 5, and Architect's high lock, once; where hand
-##     lands and which way its line goes round are derived from it, never restated.
+##   Settle table encodes rules 4 and 5, and Architect's high lock, once; where hand lands,
+##     which way it winds there and which way its line goes round are derived from it, never
+##     restated.
 ##     Cost of one table: reader of `body` or `route` follows lookup here
 ##       to see what dance says.  Accepted -- alternative is same
 ##       fact written twice, which is how two of these rules were broken.

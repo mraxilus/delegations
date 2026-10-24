@@ -534,11 +534,6 @@ function hideSelectionMenu() {
 //   instead of snapping it back to object's centre next frame -- what every frame used
 //   to do, one frame after click had placed it.
 let offset_menu_selection: PointLocal | null = null;
-// How far menu's corner stands from pointer that opened it, in pixels.
-//   Context menu's own convention: beside pointer, not under it.
-const INSET_MENU_POINTER = 8;
-// How far menu stands above object it was opened over with no pointer, in pixels.
-const LIFT_MENU_ANCHOR = 60;
 
 // Read where last-picked object stands on canvas, or null off screen or behind eye.
 function anchorOfSelectionMenu() {
@@ -563,11 +558,22 @@ function placeSelectionMenu(corner_local: PointLocal) {
     Math.max(8, Math.min(rect.top + corner_local.y, window.innerHeight - 60)) + 'px';
 }
 
+// Hang menu by its bottom middle above object, where no pointer opened it.
+//   Point is `interaction.pointMenuHung`'s, which desktop hangs its own from too.
+function hangSelectionMenu(anchor: PointLocal) {
+  const [width, height] = [menu_selection.offsetWidth, menu_selection.offsetHeight];
+  const hung = nimMenuHung(
+    anchor.x, anchor.y, canvas.clientWidth, canvas.clientHeight, width, height,
+  );
+  const rect = canvas.getBoundingClientRect();
+  menu_selection.style.left = rect.left + (hung[0] ?? 0) - width / 2 + 'px';
+  menu_selection.style.top = rect.top + (hung[1] ?? 0) - height + 'px';
+}
+
 // Open menu beside pointer, and remember where that is from object it is about.
 function positionSelectionMenuAt(position_local: PointLocal) {
-  const corner = {
-    x: position_local.x + INSET_MENU_POINTER, y: position_local.y + INSET_MENU_POINTER,
-  };
+  const inset = nimInsetMenuPointer();
+  const corner = { x: position_local.x + inset, y: position_local.y + inset };
   const anchor = anchorOfSelectionMenu();
   offset_menu_selection = anchor ? { x: corner.x - anchor.x, y: corner.y - anchor.y } : null;
   placeSelectionMenu(corner);
@@ -585,7 +591,7 @@ function updateSelectionMenuPosition() {
       x: anchor.x + offset_menu_selection.x, y: anchor.y + offset_menu_selection.y,
     });
   } else {
-    placeSelectionMenu({ x: anchor.x, y: anchor.y - LIFT_MENU_ANCHOR });
+    hangSelectionMenu(anchor);
   }
 }
 

@@ -103,9 +103,18 @@ const
     ## Harness as dispatcher's `types` emits it, run by node.
   BUILD_HOSTED = BUILD / "hosted"
     ## Directory each page lands in as publish host serves it, for harness to render.
-  PATH_FOUND = BUILD / "found.json"  ## What harness found on each page, as data (`render.nim`).
+  PATH_CROWDED = BUILD / "crowded.json"
+    ## Pairs of blocks of card harness found too close, page by page, as data (`render.nim`).
+  BUILD_FONT_FACES = BUILD / "font-faces"
+    ## Directory `koch drive` writes its control page into, and resolves what harness writes
+    ##   there; twin of `DIRECTORY_FONT_FACES` in `curator/audit/src/font_stacks.nim`, as are
+    ##   names of both files below.
+  PATH_CONTROL_FONT_FACES = BUILD_FONT_FACES / "control.html"
+    ## Control page of font faces `koch drive` writes before `drive`; absent outside it.
+  PATH_WRITTEN = BUILD_FONT_FACES / "written.json"
+    ## What harness read of each page, in shape `koch drive` resolves.
   PATH_CONTROL = "tests" / "fixtures" / "control_render.json"
-    ## Fixture control page is built from; under `tests/`, as `render.nim` says why.
+    ## Fixture control page of layout is built from; under `tests/`, as `render.nim` says why.
   RUNS_EVALUATION = 5  ## Timed runs of each binary per evaluation, alternating.
   RUNS_BENCH = 5
     ## Timed runs of each algebra's bench, and of each swept dimension, alternating algebras, so
@@ -760,33 +769,45 @@ proc pages() =
 proc renderedChecked(
   built: OrderedTable[string, string], font_faces: Table[string, string]
 ): seq[Finding] =
-  ## Render every built page and control as publish host serves them, and judge what harness
-  ##   found: each page held to font faces it ships and to blocks of card that do not touch,
-  ##   control to findings it expects (`render.nim`).
+  ## Render every built page and control pages as publish host serves them; write what each page
+  ##   draws for `koch drive` to judge, and judge where blocks of card touch, control to cards it
+  ##   expects (`render.nim`).
   ##   Harness and browser are dispatcher's to ready, before `drive` reaches here.
-  let
-    control = readDocument(PATH_CONTROL)
-    paragraphs = paragraphs(control)
-    cards = cards(control)
-  var pages = built
-  pages[CONTROL] =
-    assemble(readFile(PATH_SHELL), "Render Control", bodyControl(paragraphs, cards), font_faces)
+
+  # Write each page, and control page of layout, as publish host serves it.
+  let cards = cards(readDocument(PATH_CONTROL))
   createDir BUILD_HOSTED
   var paths: seq[string]
-  for name, page in pages.pairs:
+  for name, page in built.pairs:
     let path = BUILD_HOSTED / name & ".html"
     writeFile(path, hosted(page))
     paths.add path
-  removeFile PATH_FOUND
-  let code = runStatus("node", @[ENTRY_HARNESS, PATH_FOUND] & paths)
+  let path_control = BUILD_HOSTED / CONTROL & ".html"
+  writeFile(
+    path_control,
+    hosted(assemble(readFile(PATH_SHELL), "Render Control", bodyControl(cards), font_faces)),
+  )
+
+  # Read control page of font faces where `koch drive` wrote one, and say where none stands.
+  let control_font_faces =
+    if fileExists(PATH_CONTROL_FONT_FACES): some(PATH_CONTROL_FONT_FACES) else: none(string)
+  if control_font_faces.isNone:
+    echo "No control page at ", PATH_CONTROL_FONT_FACES, ", which `koch drive` writes; ",
+      PATH_WRITTEN, " holds pages alone."
+
+  # Render, then judge crowded file; `koch drive` judges written file once `drive` passes.
+  removeFile PATH_WRITTEN
+  removeFile PATH_CROWDED
+  let
+    arguments =
+      argumentsHarness(PATH_WRITTEN, PATH_CROWDED, path_control, paths, control_font_faces)
+    code = runStatus("node", @[ENTRY_HARNESS] & arguments)
   if code != 0:
     return @[Finding(
       path: PATH_HARNESS,
       message: "Render of pages failed, as harness printed above; got exit `" & $code & "`.",
     )]
-  let found = readDocument(PATH_FOUND)
-  checkRendered(found, findingsExpected(paragraphs), CONTROL, BUILD_HOSTED) &
-    checkCrowded(found, crowdedExpected(cards), CONTROL, BUILD_HOSTED)
+  checkCrowded(readDocument(PATH_CROWDED), crowdedExpected(cards), CONTROL, BUILD_HOSTED)
 
 
 proc publishedAt(name, url: string) =
@@ -1036,8 +1057,9 @@ proc pinnedChecked(pin: string, built: OrderedTable[string, string]): seq[Findin
 proc drive() =
   ## Inspect, check against baselines, and hold committed list and docket to regeneration.
   ##   Hold every measurement, evaluation, file, page and checkout to pin; read no head.
-  ##   Render every page, and hold each character beyond ASCII to font faces page ships;
-  ##   render control too, and hold it to findings it expects, so blind render is finding.
+  ##   Render every page, and write what each draws and font faces it ships for `koch drive` to
+  ##     judge, with control page it writes; hold each card to its spacing, and control of
+  ##     layout to cards it expects crowded, so blind read is finding.
   let pin = commitPga()
   var findings = checkoutChecked()
   inspect()

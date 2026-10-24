@@ -8,12 +8,13 @@
 
 import { chromium, type Browser, type Page } from '@playwright/test';
 import { accessSync, constants, existsSync, readFileSync } from 'node:fs';
-import { delimiter, join } from 'node:path';
+import { basename, delimiter, join } from 'node:path';
 import { countFailed, countRun, report } from './report';
 import { focusCanvas } from './gestures';
 import { driveBulkUndo, driveFieldsHeld, driveHoverWhileMoving } from './acts';
 import { driveKeys, driveKeysChorded } from './keys';
 import { driveEscape } from './escape';
+import { driveMenuHung, driveMoreAtPointer } from './menus';
 import { driveAim, driveLook, drivePan, driveStretch } from './pan';
 import { driveWheel } from './wheel';
 import { driveFingerTurntable, driveTouchSelect, drivePinch, openTouch } from './touch';
@@ -34,8 +35,8 @@ import {
 import {
   driveChipRowFits, driveHelp, driveHoverDuringGesture, driveHoverFollowsMouse,
 } from './chrome';
-import { driveTypeDrawn, driveTypeLigatures, driveTypeRoles } from './type';
-import { driveFacesCovered } from './faces';
+import { driveTypeDecoded, driveTypeDrawn, driveTypeLigatures, driveTypeRoles } from './type';
+import { readFontFaces, writeFontFaces } from './font_faces';
 import { driveCreep, drivePlaneBuilt, driveRuler } from './finger';
 import { driveSceneBuilt } from './built';
 import { driveDrawerCost } from './pool';
@@ -62,7 +63,7 @@ import { driveSurfacesFilled } from './surface';
 import { driveHeapUnit, drivePhaseSums, driveTree } from './diagnostics';
 import { driveCrossingsCounted, driveShareAgrees, driveShareRefused } from './share';
 import { driveAxis, driveAxisGlide, driveCurve, driveScaleSwitch } from './exceedance';
-import { driveSums, driveTint, openEveryBranch } from './ramp';
+import { driveSidesCarryTime, driveSums, driveTint, openEveryBranch } from './ramp';
 import {
   drivePinAnchor, drivePinGrid, drivePinMarker, drivePinPick, drivePinPool,
   MILLISECONDS_PICK_HOVER_LOADED,
@@ -221,9 +222,10 @@ async function driveSimulated(browser: Browser): Promise<void> {
   await driveTypeRoles(page);
   await driveTypeDrawn(page);
   await driveTypeLigatures(page);
-  // After role checks: those ask which face each role draws in, and this asks whether each
-  //   character page writes has glyph there.
-  await driveFacesCovered(page);
+  await driveTypeDecoded(page);
+  // After role checks, with help open, so its tab strip stands to be read; `koch drive` judges
+  //   what this reads, once whole drive passes.
+  await readFontFaces(page, basename(PATH_PAGE, '.html'), true);
   await driveShadedFromAbove(page);
   await driveVeilCovers(page);
   await driveMarkerShapedOnce(page);
@@ -251,9 +253,12 @@ async function driveSimulated(browser: Browser): Promise<void> {
   await driveRuler(page);
   await driveSceneBuilt(page);
   await driveDrawerCost(page);
-  // Key checks and acts both front-ends share, last on opening scene: demo below replaces it.
+  // Key and menu checks, and acts both front-ends share, last on opening scene: demo below
+  //   replaces it.
   await driveKeysChorded(page);
   await driveEscape(page);
+  await driveMenuHung(page);
+  await driveMoreAtPointer(page);
   await driveBulkUndo(page);
   await driveFieldsHeld(page);
   await driveHoverWhileMoving(page);
@@ -342,6 +347,8 @@ async function driveMeasured(browser: Browser): Promise<void> {
   await drivePlacingCost(page, objects_largest);
   await drivePinPickLoaded(page, MILLISECONDS_PICK_HOVER_LOADED);
   await driveLoadedAccounting(page);
+  // Last: its frames turn camera, which checks above read as framed.
+  await driveSidesCarryTime(page);
 
   report(
     'the measured page raised no error', errors_page.length === 0, errors_page.join(' | '),
@@ -383,6 +390,8 @@ async function main(): Promise<void> {
   await driveServed(browser);
   // Page of its own, since host it stands in has to be there before page's script runs.
   await driveHostSave(browser, `file://${PATH_PAGE}`, SIZE_VIEW);
+  // Last, so control page is read once page itself was.
+  await writeFontFaces(browser);
 
   await browser.close();
   console.log(`\n${countRun() - countFailed()} of ${countRun()} checks passed.`);
