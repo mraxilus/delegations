@@ -67,7 +67,9 @@ func entity*(index: Index, name: string): Option[Entity] =
 
 func addTags*(index: var Index, name: string, tags: openArray[Tag]) =
   ## Tag entity named `name` with each tag it lacks; entity is made where index holds none.
+  ##   No tag changes nothing, so no entity without tag is ever made, which reader would refuse.
   assert name.isNameValid, "Name should hold no tab or line break; got `" & name & "`."
+  if tags.len == 0: return
   let at = index.position(name)
   if at == index.entities.len or index.entities[at].name != name:
     index.entities.insert(Entity(name: name), at)
