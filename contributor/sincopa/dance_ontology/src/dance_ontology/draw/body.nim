@@ -131,10 +131,16 @@ func settledWind*(arm: Arm, level: Option[Level], modifier: Option[Modifier]): f
   ##   Winding is measured off hand's own side and runs towards back
   ##     for either hand, so this is only place two conventions are
   ##     reconciled.
+  ##   Hold that sends its line back way winds its hand back way too (rule 5): positive, and
+  ##     under one turn.  Same spot either way round, but `border` breaks rim where winding
+  ##     says hand went, so low lock wound round front would draw one stretch through both
+  ##     hands (`checks.checkFrame` refuses that).
   let
     landed = slotHand(arm, level, modifier)
     aim = slotBearing(landed.arm, landed.slot)
-  if arm == Arm.Left: -ARM_REST - aim else: aim - ARM_REST
+    front_way = if arm == Arm.Left: -ARM_REST - aim else: aim - ARM_REST
+  if sendsHold(level, modifier) == some(Sends.BackWay): floorMod(front_way, 360.0)
+  else: front_way
 
 
 func handPoint*(centre: Point, facing: float, arm: Arm, wind = 0.0): Point =
