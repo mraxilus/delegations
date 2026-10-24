@@ -3333,6 +3333,12 @@ suiteInProc "Internal: Driver":
     check "(\"nodejs\"," in driver  # node that render runs under, declared
 
 
+  test "dispatcher declares libbrotli1 exactly while pages ship woff2 font face":
+    let is_woff2_shipped = FONT_FACES.anyIt(it.endsWith(".woff2"))
+    check is_woff2_shipped  # Commit Mono ships as `woff2` at pin, so law below reads something
+    check ("(\"libbrotli1\"," in driver) == is_woff2_shipped  # CONTRIBUTOR.md, Pages and assets
+
+
   test "render runs harness on command line render.nim builds, and judges crowded file it writes":
     let
       start = verbs.find("proc renderedChecked(")

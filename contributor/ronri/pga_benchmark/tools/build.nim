@@ -81,12 +81,15 @@ const
     ("valgrind", "`lackey` traces machine build, whose instructions and bytes `inspect` counts"),
     ("coreutils", "`sha256sum` store checks those font faces with"),
     ("nodejs", "run type-checker `types` drives and harness `drive` runs"),
+    ("libbrotli1", "`koch drive` decodes Commit Mono, which pages ship as `woff2`, through Brotli"),
   ]
     ## System packages build needs beyond compiler.
     ##   Compiler is toolchain, pinned in nimble file.
     ##   Library is Atlas checkout, pinned in lock.
     ##   Font faces come from repository's store.
     ##   Type-checker and Playwright are node packages, pinned by `package-lock.json`.
+    ##   `libbrotli1` serves `koch drive`, whose verdict reads each font face page ships; its job
+    ##     installs only what project declares (CONTRIBUTOR.md, Pages and assets).
   USAGE = "Usage: nim r tools/build.nim " &
       "<inspect|bench|baseline|guard|evaluate|restamp|pages|types|published|drive|head|gaps|show|" &
       "sweep|unitized|system|clean> [name|symbol] [url|algebra|--thorough]\n"
