@@ -1,19 +1,20 @@
-# P10: Give homogeneous scalars a division, a root and an exponential
+# P10: Give homogeneous scalars the functions of Lengyel's dual number
 
 **What it is.** A new module, `pga/scalars.nim`, treats x𝟏 + y𝟙 as one value, the homogeneous
-scalar. At pin each norm returns it, as `MultivectorScalars`. The module gives it an inverse, a
-root and an exponential under each product, and a division.
+scalar. At pin each norm returns it, as `MultivectorScalars`. The module gives it the functions of
+Lengyel's `DualNum` under each product, each written once in ε², the square of 𝟙.
 
-**What it is for.** A caller divides, roots and raises a norm as one value, and keeps a distance
-with its weight. At cga4d and cga5d the radius norm of an imaginary object is an imaginary radius,
-where pin gives NaN.
+**What it is for.** A caller divides, roots, raises and takes the sine of a norm as one value, and
+keeps a distance with its weight. A function without a value for some pair returns an `Option`, so
+no NaN reaches the caller. At cga4d and cga5d the radius norm of an imaginary object is an
+imaginary radius, where pin gives NaN.
 
-**What it costs.** The alias `normRadius` stops forwarding to its operator `|⊘`. At cga3d and
-cga6d the radius norm of an imaginary object stays NaN, as at pin.
+**What it costs.** The type of the root and of the radius norm differs by algebra. The alias
+`normRadius` stops forwarding to its operator `|⊘`.
 
 ## Problem
 
-At pin, each norm returns `MultivectorScalars`, the pair of the scalar and the antiscalar, and
+At pin, every norm returns `MultivectorScalars`, the pair of the scalar and the antiscalar, and
 takes a float root of one coefficient. The pair has `+` and `=~`, and no product, inverse, root or
 exponential. Section 4.3 of the book defines the radius norm as √(𝐮 ∘ 𝐮), in (4.45). It is real
 for a real object, and imaginary for an imaginary one. Under the conformal metric, 𝐦 ∘ 𝐦 is
@@ -25,18 +26,29 @@ negative for about half of all multivectors, and there the float root of `|⊘` 
   𝟏 and 𝟙. So it holds two coefficients, 16 bytes at 64 bits, in each algebra. Its bulk x lies on
   𝟏, and its weight y on 𝟙. It stands for the value x/y, kept with its weight y, as a homogeneous
   point keeps a position with its weight.
-- **Products.** 𝟏 is the unit of the geometric product, and 𝟙 is the unit of the antiproduct. P04
-  emits the antiproduct from the table of the library, and no geometric product.
-- **Squares.** `SQUARE_WEIGHT` reads the 𝟏 term of 𝟙 ⟑ 𝟙 from the table of the geometric
-  product. `SQUARE_BULK` reads the 𝟙 term of 𝟏 ⟇ 𝟏 from the table of the antiproduct. The two
-  are equal, and the Architect ruled on 2026-10-09 that the rule reads them from the table.
-- **Functions.** `inverse`, `sqrt` and `exp` work under the geometric product, as Lengyel's
-  `Inverse`, `Sqrt` and `Exp` do. A `when` on the square chooses the dual, the complex or the
-  split-complex form as the program compiles. `inverseAnti`, `sqrtAnti` and `expAnti` work under
-  the antiproduct, as `AntiInverse`, `AntiSqrt` and `AntiExp` do. Each is the complement of its
-  form under the geometric product, since the complement swaps 𝟏 and 𝟙. Division is under the
-  antiproduct, as in Lengyel's `DualNum`. Each function takes one form under each product, as
-  the Architect ruled on 2026-10-10.
+- **Square.** ε² is the square of 𝟙, as 𝟙 ⟑ 𝟙 = ε²𝟏, and it fixes the arithmetic of the pair.
+  `SQUARE_WEIGHT` reads it from the table of the geometric product, and `SQUARE_BULK` reads the
+  square of 𝟏 from the table of the antiproduct. The Architect ruled on 2026-10-09 that the rule
+  reads them from the table. A static check holds both equal to rev(n) det 𝖌, from the metric, as
+  the Architect ruled on 2026-10-24. The symbol follows the dual unit ε of Lengyel's `DualNum`,
+  which writes the pair s + tε with ε² = 0.
+- **Products.** 𝟏 is the unit of the geometric product, and 𝟙 is the unit of the antiproduct. The
+  module multiplies two pairs from ε² alone, in the block of the table that its static check
+  holds. Each form under the antiproduct is the complement of its form under the geometric
+  product.
+- **Functions.** Each of seven functions has a form under each product, as in Lengyel's `DualNum`,
+  with a division. They are the inverse, the root, the inverse root, the exponential, the sine, the
+  cosine and the tangent. Each is written once in ε²:
+  - The inverse is (x𝟏 − y𝟙) / (x² − ε²y²).
+  - The root solves b² + ε²a² = x and 2ab = y through ρ = √(x² − ε²y²). The larger part comes from
+    a root, and the smaller part from a division, so neither cancels.
+  - The exponential is eˣ (C(y)𝟏 + S(y)𝟙). C and S are the even and odd parts of e^(y𝟙) under ε².
+    The sine and the cosine take −ε².
+  - The inverse root, the tangent and the division come from these.
+- **Absence.** The inverse, the inverse root, the tangent and the division return an `Option`,
+  because each lacks a value for some pair. The root returns a plain pair at cga4d and cga5d, where
+  every pair has a root, and an `Option` elsewhere, as the Architect ruled on 2026-10-23. So its
+  type is `MultivectorScalarsRoot`, which the square fixes. No function returns infinity or NaN.
 - **Norms.** Under the rigid metric, the bulk norm of pin equals the root of 𝐦 ∙ 𝐦 under the
   geometric product. Its weight norm equals the root of 𝐦 ∘ 𝐦 under the antiproduct, as the wiki
   takes both. So they stay as at pin. A division by the weight norm unitizes a multivector. It
@@ -45,31 +57,27 @@ negative for about half of all multivectors, and there the float root of `|⊘` 
   radius norm of the book.
 
 The sign of 𝟙 ⟑ 𝟙 is the determinant of the metric on vectors, times (−1)^(n(n − 1)/2) for the
-reverse of n vectors. The rigid metric is degenerate, so there the square is 0, and the pair is a
-dual number. The conformal metric has two null vectors whose dot is −1, so its determinant is −1.
-The reverse gives +1 at cga4d and cga5d, and −1 at cga3d and cga6d. So 𝟙 ⟑ 𝟙 = −𝟏 at cga4d and
-cga5d, where the pair is a complex number. It is +𝟏 at cga3d and cga6d, where the pair is a
-split-complex number.
+reverse of n vectors. The rigid metric is degenerate, so there the square is 0. The conformal
+metric has two null vectors whose dot is −1, so its determinant is −1.
 
-So one formula cannot serve every metric. The table squares two roots of z = 4𝟙 + 4𝟏 again, with
-the antiproduct of the library.
-
-| Root | Squared at rga4d | Squared at cga5d |
-|------|------------------|------------------|
-| Dual form, 2𝟙 + 1𝟏 | 4𝟙 + 4𝟏 | 3𝟙 + 4𝟏 |
-| Complex form, 2.197𝟙 + 0.910𝟏 | 4.828𝟙 + 4𝟏 | 4𝟙 + 4𝟏 |
-
-Each form holds under its own metric alone. At cga3d and cga6d the split-complex form holds alone
-in the same way. The forms agree on a pure weight above zero. They differ where both parts are
-nonzero, or where the weight is negative. Under the geometric product the same table holds, with
-𝟏 and 𝟙 swapped.
+| Algebra        | det 𝖌 | rev(n) | ε² | Pair          |
+|----------------|-------|--------|----|---------------|
+| rga2d to rga6d | 0     | ±1     | 0  | dual          |
+| cga3d          | −1    | −1     | +1 | split-complex |
+| cga4d          | −1    | +1     | −1 | complex       |
+| cga5d          | −1    | +1     | −1 | complex       |
+| cga6d          | −1    | −1     | +1 | split-complex |
 
 ## Alternatives
 
 | Option | Why it lost |
 |--------|-------------|
 | Dual form under every metric | Its root squares back wrong under the conformal metric |
-| `unitize` by the weight norm | Spends a whole ⟇, and gives NaN where the weight norm is zero |
+| One form for each metric, by `when` | Three forms each, and a root that cancels a small part |
+| Infinity or NaN for no value | No compiler makes a caller handle NaN in a float (IV.4) |
+| An `Option` from the root in every algebra | Every pair has a root at cga4d and cga5d (IV.5) |
+| ε² from the metric, held to the table | The Architect kept the table as the source on 2026-10-24 |
+| `unitize` by the weight norm | Spends a whole ⟇, and has no value where the weight norm is zero |
 | `sqrtAnti` in a conformal `unitize` | Is 0 at zero radius, and lies on 𝟏 where 𝐮 ∘ 𝐮 is negative |
 
 `unitize` keeps `^m`, which leaves a multivector of zero weight norm as it is. Under the conformal
@@ -81,6 +89,15 @@ At pin the library names the pair `MultivectorScalars`, and this proposal takes 
 Architect ruled `ScalarHomogeneous` on 2026-10-10, for the type that this proposal then added. The
 constructor is `initMultivectorScalars`, as `init` names the constructor of a type.
 
+| Lengyel | Proposed | Why |
+|---------|----------|-----|
+| `Inverse`, `Sqrt`, `Exp` | `inverse`, `sqrt`, `exp` | Bare noun of the function (V.3) |
+| `Sin`, `Cos`, `Tan` | `sin`, `cos`, `tan` | Bare noun of the function (V.3) |
+| `InverseSqrt` | `sqrtInverse` | Head first, the qualifier last (V.2) |
+| `AntiInverse` and the other anti forms | `inverseAnti` and kin | Head first, as `wedgeAnti` |
+| Square of the dual unit | `SQUARE_WEIGHT`, `SQUARE_BULK` | Square of 𝟙 under ⟑, and of 𝟏 under ⟇ |
+| None | `MultivectorScalarsRoot` | Type of the root, which the square fixes |
+
 - Lengyel's wiki calls the pair a magnitude. The library and the wiki also use that word for the
   size of a quantity, so this proposal does not.
 - Nor does it name the pair dual. The pair is no dual number under the conformal metric, and the
@@ -89,11 +106,16 @@ constructor is `initMultivectorScalars`, as `init` names the constructor of a ty
 ## Costs
 
 - **One alias.** Under the conformal metric, `normRadius` stops forwarding to its operator `|⊘`,
-  which keeps its float root. Both return `MultivectorScalars`, so no caller changes its text. No
-  function or test of the library calls `normRadius`. The catalogue of this project lists it only
-  as an alias, so no expression changes.
-- **Split-complex root.** At cga3d and cga6d the pair is split-complex, and a negative square has
-  no root. So there the radius norm of an imaginary object stays NaN, as at pin.
+  which keeps its float root. It returns `MultivectorScalarsRoot[SQUARE_BULK]`: a plain pair at
+  cga4d and cga5d, and an `Option` at cga3d and cga6d. No function or test of the library calls
+  `normRadius`. The catalogue of this project lists it only as an alias, so no expression changes.
+- **Type by algebra.** A caller that spans algebras branches on the type of the root. One build is
+  one algebra, so no build sees two types.
+- **Split-complex root.** At cga3d and cga6d a negative square has no root. So there the radius
+  norm of an imaginary object is none.
+- **Two swaps.** Each form under the antiproduct swaps the parts of the pair twice. Unmeasured.
+- **Square outside −1 to 1.** No metric of the library gives one. Such a metric needs a scaling by
+  the root of its square, in the exponential and in the root of a negative bulk.
 - **Division of a multivector.** It is a whole ⟇ of the library. By the static baseline at pin,
   that ⟇ spends 192 multiplies at rga4d and 1 024 at cga5d, where `^∘` spends 24 and 40.
 - **Conformal part norms.** At pin each conformal norm of the library is the size of its own part,
@@ -107,10 +129,8 @@ constructor is `initMultivectorScalars`, as `init` names the constructor of a ty
   conformal metric. It divides a round object by its round weight norm, and any other element by
   √|𝐮 ∘ 𝐮| of that element. So a division by the weight norm here unitizes under the rigid metric
   alone.
-- **Four functions.** Lengyel's `DualNum` also has an inverse root, a sine, a cosine and a
-  tangent, each in both forms, and none is here.
 - **Squared norms.** The radius norm reads the antidot of the library on a whole `Multivector`,
-  since P04 emits no squared norm. Each squared norm would be a unary 2D table.
+  since no change emits a squared norm. Each squared norm would be a unary 2D table.
 
 ## Open decisions
 
@@ -118,11 +138,11 @@ None.
 
 ## Landing
 
-- **Order.** P04 lands first. The division of two pairs is the antiproduct of P04, and
-  `pga/scalars.nim` imports `pga/basis_sets.nim`, which P04 adds.
-- **Imports of `pga.nim`.** P04 adds `basis_sets` to the import and export lines of `pga.nim`, and
-  this proposal adds `scalars`. The changes `doc-comments` and `doc-comments-2` quote those lines
-  too, so whichever lands later quotes them again.
+- **Order.** None. The module reads the tables of the library at pin, and no change of another
+  proposal.
+- **Imports of `pga.nim`.** This proposal adds `scalars` to the import and export lines of
+  `pga.nim`. P04 adds `basis_sets` to the same lines, and the changes `doc-comments` and
+  `doc-comments-2` quote them too. So whichever lands later quotes them again.
 - **Float width.** Each part of the pair is `Coefficient`, so the arithmetic builds at each width.
 - **P09, P11 and change `conformal-norms`.** Each edits other lines, so either order holds. P11
   edits `normalizeWeight` and `unitize` of `pga.nim`, and `|∘`, `^∘` and `^` of
@@ -132,43 +152,49 @@ None.
 
 ## Evidence
 
-`laws.nim` holds each law on 256 seeded samples. It imports the library with P04 and this change
-applied, and nothing else. Each law compares against a product or a norm of the library, so no law
-tests the emission of P04 against itself.
+`laws.nim` holds each law on 4096 seeded samples, beside structured ones such as zero, the basis
+elements and the edges of each domain. It imports the library with this change applied, and
+nothing else. Each law compares against a product, a complement or a norm of the library, or
+against an authority:
 
-- The square read from each table equals that of the product of the library, with the sign that
-  the metric gives.
-- The complement of a homogeneous scalar equals that of the library.
-- 𝟏 is the unit of ⟑, and z ⟑ z⁻¹ = 𝟏. 𝟙 is the unit of ⟇, and z ⟇ z⁻¹ = 𝟙. Also (y / z) ⟇ z = y.
-- √z ⟑ √z = z and √z ⟇ √z = z, for each z with a root. Under the rigid metric the unit part of z
-  is positive. In a complex algebra z is any. In a split-complex one the unit part is larger than
-  the size of the other part. The root of zero is zero under each product.
-- exp z equals its power series under each product, to 30 terms. exp(y + z) = exp y ⟑ exp z, and
-  the same holds under ⟇.
-- Where the pair has a root, the root of 𝐦 ∙ 𝐦 under ⟑ is not NaN. Its square under ⟑ is 𝐦 ∙ 𝐦.
-- Under the rigid metric, the root of 𝐦 ∙ 𝐦 under ⟑ equals the bulk norm of the library. The root
-  of 𝐦 ∘ 𝐦 under ⟇ equals its weight norm. Each holds on each sample and on each basis element. On a
-  basis element one part of each root is zero, as for a point at the origin or a direction. The
-  weight norm squared under ⟇ gives 𝐦 ∘ 𝐦 back. A multivector divided by its weight norm equals
+- Lengyel's `DualNum` at each RGA, for all fourteen functions.
+- `std/complex` at cga4d and cga5d.
+- The function on each idempotent at cga3d and cga6d.
+
+The laws:
+
+- The products and the complement of pairs equal those of the library.
+- z ⟑ z⁻¹ = 𝟏 and z ⟇ z⁻¹ = 𝟙. The inverse is none exactly where x² − ε²y² is zero at the scale of
+  its terms.
+- √z ⟑ √z = z, with a bulk of zero or more. The root is none exactly outside its domain. Where the
+  weight is small, the square of the root misses it by a few rounding errors at most.
+- (1/√z)² ⟑ z = 𝟏, and tan z ⟑ cos z = sin z, wherever each has a value.
+- The exponential, the sine and the cosine equal their power series, to 30 terms.
+  e^(y + z) = eʸ ⟑ eᶻ, and sin² z + cos² z = 𝟏.
+- (y / z) ⟇ z = y, for a pair and for a multivector.
+- Each law holds under the antiproduct as well.
+- Under the rigid metric, the root of 𝐦 ∙ 𝐦 under ⟑ equals the bulk norm of the library, and the
+  root of 𝐦 ∘ 𝐦 under ⟇ equals its weight norm. A multivector divided by its weight norm equals
   `^` of the library.
-- Under the conformal metric, the radius norm squared gives 𝐦 ∘ 𝐦 back. Round points of radius r
-  take 2aʷaᵘ − |a|² = ±r², as Table 4.13 gives. At cga4d and cga5d, the radius norm of each is r𝟙
-  where the point is real, and r𝟏, as i, where it is imaginary. At cga3d and cga6d, the radius
-  norm of an imaginary round point is NaN.
+- Under the conformal metric, the radius norm squared under ⟇ gives 𝐦 ∘ 𝐦 back. It has a value
+  exactly where the pair has a root. Round points of radius r take 2aʷaᵘ − |a|² = ±r², as Table
+  4.13 gives, and the radius norm of each is r𝟙, r𝟏 or none.
 
-A copy that takes the dual form under the conformal metric fails the law of the root at cga5d. So
-the laws see the rule.
+A copy whose root takes the smaller part by its own root fails the law of the small part at cga3d
+and cga4d. Its root of 1𝟏 + 10⁻¹⁰𝟙 misses the weight by 10⁻¹⁰, and the law stops it. So the laws
+see the cancellation.
 
-Each coefficient of the 256 samples lies in [−1, 1]. The table counts the samples whose root of
-𝐦 ∘ 𝐦 is NaN.
+The laws held at each of the nine algebras on `linux amd64, 4 cores`, on 2026-10-24. The table
+counts the pairs with a root, of 4112. It also counts the radius norms that are none, beside the
+float roots of `|⊘` that are NaN, on the same 4096 multivectors.
 
-| Algebra | Float root at pin | `normRadius` |
-|---------|-------------------|--------------|
-| cga3d | 128 of 256 | 128 of 256 |
-| cga4d | 141 of 256 | 0 of 256 |
-| cga5d | 114 of 256 | 0 of 256 |
-| cga6d | 117 of 256 | 117 of 256 |
+| Algebra        | ε² | Pairs with a root | Float root NaN | `normRadius` none |
+|----------------|----|-------------------|----------------|-------------------|
+| rga2d to rga6d | 0  | 2111              |                |                   |
+| cga3d          | +1 | 1089              | 2022           | 2022              |
+| cga4d          | −1 | 4112              | 2095           | 0                 |
+| cga5d          | −1 | 4112              | 2043           | 0                 |
+| cga6d          | +1 | 1089              | 2061           | 2061              |
 
-No record times a function of this proposal, since the bench times the operators. Each function
-on a homogeneous scalar spends a few operations on two coefficients. The runs of `laws.nim` took
-pin on this machine on 2026-10-19.
+No record times a function of this proposal, since the bench times the operators. Each function on
+a homogeneous scalar spends a few operations on two coefficients.

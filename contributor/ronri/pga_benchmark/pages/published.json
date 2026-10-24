@@ -1,55 +1,55 @@
 {
   "docket": {
     "url": "https://claude.ai/artifact/XyT583x9RnTKixers2q4gT",
-    "digest": "bcd18bf6ea25dc62"
+    "digest": "a77f960d59631109"
   },
   "cayley-derivation": {
     "url": "https://claude.ai/artifact/2fi2hTpobqChXSTPq4vB6q",
-    "digest": "6359d4381b164ec7"
+    "digest": "235a2c2736e5a099"
   },
   "typed-multivectors": {
     "url": "https://claude.ai/artifact/V34TAWXNvrHBGN9fNBWYWX",
-    "digest": "e8ed3846b9b97284"
+    "digest": "b3d92366ac8f4104"
   },
   "partner-sign": {
     "url": "https://claude.ai/artifact/2fUYLonsQo7ejouCvCnpWf",
-    "digest": "5daf6fc7c4f7602c"
+    "digest": "806234de3ed87001"
   },
   "exact-kinds": {
     "url": "https://claude.ai/artifact/UPfjVLGbsVLBz756DMkPJe",
-    "digest": "914b678c4d9260cd"
+    "digest": "02735d8364a8de44"
   },
   "multivector-align": {
     "url": "https://claude.ai/artifact/AB3BNtWPEzguWswwnx5ckh",
-    "digest": "970b4d69fe6b8edf"
+    "digest": "79b390041da4f84f"
   },
   "proposals": {
     "url": "https://claude.ai/artifact/CW9ZL5eotsVYrZPjMnTLoG",
-    "digest": "91baaff479e677b1"
+    "digest": "14e49455adeea3b1"
   },
   "float-width": {
     "url": "https://claude.ai/artifact/Q3R1yz93Drk7Cwq5qhymDZ",
-    "digest": "5dfbfda5016967a5"
+    "digest": "0a538fa133be976d"
   },
   "part-scale": {
     "url": "https://claude.ai/artifact/6hW9rjiotnjdjBVwatW5Dj",
-    "digest": "61e529846beef348"
+    "digest": "28144d88e10f878e"
   },
   "compound-tables": {
     "url": "https://claude.ai/artifact/TczTs551nkXVaWiyHzfVAn",
-    "digest": "b58f73bc3cd29d15"
+    "digest": "75a2e304e6c29cf0"
   },
   "object-names": {
     "url": "https://claude.ai/artifact/XtPy7LToDTT2P8S1FfGauX",
-    "digest": "2dca282aac4d6747"
+    "digest": "0444a9c57858e570"
   },
   "homogeneous-scalar": {
     "url": "https://claude.ai/artifact/5NwSv2YW9ZfDa5BbbVrv1D",
-    "digest": "ef57a04f1c48c009"
+    "digest": "9e3a5df283d0ed37"
   },
   "unitize-general": {
     "url": "https://claude.ai/artifact/3P9PNEcD7JyH3YAb5GuUqy",
-    "digest": "f8e107506e7e56a5"
+    "digest": "4f39331a9f7666fc"
   },
   "progress": {
     "url": "https://claude.ai/artifact/TsUU8dwwthrgRvbAvCeinV",
