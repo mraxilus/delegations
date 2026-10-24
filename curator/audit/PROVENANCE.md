@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 0ff7fe750293e4e9 |
+| Rules   | 302c5428c1ee80de |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 | Pruned  | ab8fb063b62bb03ba9fd7f2964a1866b3862909b |
 
@@ -1729,7 +1729,7 @@ the input line of each output line. `chain` traces every later report through th
 **The layout checks are written, and the static pass does not run them yet.** Their fixers run,
 because a fixer reports nothing new. So each project clears its findings with
 `nim r koch fix contributor/<domain>/<project>` on its own branch, and never by hand. A check
-that reddens a project merges only after that project fixes (CURATOR.md, duty 3), so #380
+that reddens a project merges only after that project fixes (CURATOR.md, duty 3), so #443
 queues the wiring.
 
 **`checkFormatting` of knoller is the one list of checks that the next pull request wires.**
@@ -2310,6 +2310,26 @@ heading is present, and else the last line.
   delegate that stops behind a working line passes, and only a reader sees it.
 - Cost: `stop` reads a turn that pushed or posted, and no other. A turn that reaches its stop
   by a change of label or draft alone is not asked for a sign-off.
+
+**A sign-off follows a read of the open issues on its role, in the turn that signs off.** The
+Architect ruled this check on 2026-10-24 (D2 a of #742). A request can arrive while a delegate
+works, and the reads at the start see none of it. `stop` takes the
+role from the role line of the sign-off. The coordinator reads `architect` instead, since no
+item carries its role. The check reads every turn, as the check of `#N` does, because a sign-off
+can close a turn that posted nothing.
+
+- A read is a call of `mcp__github__list_issues` whose `labels` hold the role, or none, and
+  whose `state` is not closed. That tool returns both states where none is given. A shell read
+  counts through `gh issue list`, and through a `gh api` list of issues with its query. `stop`
+  reads their filters as `gh` reads them, and each of them lists open issues alone by default.
+- A refusal asks for the read, and no diff. What waits in the queue can change the sign-off, so
+  the delegate takes it first, and names it in one line.
+- Rejected: a ledger report of a request that no comment of its role answered. That report lands
+  in the queue that went unread, and up to a day late.
+- Cost: the hook sees that a read happened, and never that the delegate took what it showed.
+- Cost: a read through any other tool, as a search, counts for nothing.
+- Verified by `suites/test_hooks.nim`: the case as found, each form of read, a closed state and
+  another label, the coordinator, and the reason of a refusal.
 
 **`stop` names each `#N` of the closing message that stands outside a link and outside code.**
 Each issue and pull request goes by a short description and its number, as one link (`GUIDE.md`,
