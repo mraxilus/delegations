@@ -589,6 +589,32 @@ suite "Internal: Simulation against Reference":
     check twins > 0
 
 
+  test "every sweep and still names hand that gave, and none where nothing gave":
+    ## Recording names hand each stop gave at, dancer and arm by ordinal, and `null` where
+    ##   nothing gave: way that ran free, way no plan carries further, and still, which stands
+    ##   where nothing gives (`seen.Shown`).  Twin card keeping no still of its own names no stop.
+    ##   Red with hand kept as plain value, measured 2026-10-24: 4 sweeps and 57 stills that
+    ##     nothing stopped named lead's left hand.
+    let kept = parseFile(KEPT_RIG)
+    var (named, unnamed) = (0, 0)
+    for entry in kept["sweeps"].getElems & kept["stills"].getElems:
+      if not entry.hasKey("why"): continue
+      let (hold, why, whose) = (entry["hold"].getStr, entry["why"].getStr, entry["whose"])
+      checkpoint &"`{hold}` stopped by `{why}` names hand `{whose}`"
+      if why == $Stop.None:
+        check whose.kind == JNull
+        inc unnamed
+        continue
+      inc named
+      check whose.kind == JArray and whose.len == 2
+      if whose.kind == JArray and whose.len == 2:
+        check whose[0].getInt in 0..ord(Body.high)
+        check whose[1].getInt in 0..ord(Arm.high)
+    checkpoint &"`{named}` name a hand, `{unnamed}` name none"
+    check named > 0
+    check unnamed > 0
+
+
   test "each arm's girdle stands on its own side of its chest, in every still page shows":
     ## Page colours each arm by side it is named for (`rig_view.inkArm`), so arm named left
     ##   is to stand left.  Twin card's still is mirrored, so each arm is named as arm of
