@@ -8,8 +8,7 @@ import std/[
   math, options, os, random, sets, strformat, strutils, tables, unicode, unittest,
 ]
 
-# `pga` arrives through `projections`, which stands in for four it has withdrawn.
-import ../../src/pga_visualiser/projections
+import pga
 import ../../src/pga_visualiser/[
   boundary, camera, format, framing, help, history, interaction, marker, message, motors,
   neighbourhood, objects, orrery, picking, scene, selection, shown, starfield, storyboard,
@@ -25,7 +24,7 @@ when not defined(js):
 # Re-exported, so each suite module imports this one module and names nothing twice.
 export
   math, options, os, random, sets, strformat, strutils, tables, unicode, unittest,
-  projections, boundary, camera, format, framing, help, history, interaction, marker, message,
+  pga, boundary, camera, format, framing, help, history, interaction, marker, message,
   motors, neighbourhood, objects, orrery, picking, scene, selection, shown, starfield,
   storyboard, tessellate, wording
 when not defined(js):
@@ -137,8 +136,10 @@ var MESHES_SCENE*: Meshes
 var SCRATCH*: DrawScratch
 
 
-func `=~`*(a, b: float): bool =
+func `=~`*[F: SomeFloat](a, b: F): bool =
   ## Compare approximate equality between scalars.
+  ##   Generic, so pga's own scalar `=~` outranks it inside pga's generic multivector `=~`,
+  ##   which compiles where caller instantiates it; plain `float` overload tied with it there.
   abs(a - b) <= TOLERANCE_TEST * max(1.0, max(abs(a), abs(b)))
 
 
