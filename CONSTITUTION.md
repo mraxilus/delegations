@@ -313,13 +313,14 @@ CAYLEYS_WEDGE  # module constant
 
 ## Article VI: Documentation is an outline
 
-1. Every declaration gets a doc comment, public or not. The one exception is a one-line
-   mechanical delegation (a borrow, a forward) that stands in a stack under one group comment. A
-   doc is imperative and opens with a verb, and a type opens with "Define …". It holds one
-   summary line that ends in a period, and it cites formal notation inline with `i.e.`. Where you
-   cannot write honest text yet, write the doc `TODO: Document.`, and never leave the doc empty.
-   A generator carries its docs through a required parameter of the emitting helper, so that an
-   undocumented emission cannot compile.
+1. Every declaration gets a doc comment, public or not, but a local binding, a parameter and a
+   generic placeholder take none. The one exception is a one-line mechanical delegation (a
+   borrow, a forward) that stands in a stack under one group comment. A doc is imperative and
+   opens with a verb, and a type opens with "Define …". It holds one summary line that ends in a
+   period, and it cites formal notation inline with `i.e.`. Where you cannot write honest text
+   yet, write the doc `TODO: Document.`, and never leave the doc empty. A generator carries its
+   docs through a required parameter of the emitting helper, so that an undocumented emission
+   cannot compile.
 2. Elaboration is a hanging outline. Each deeper nuance is indented two more spaces under its
    parent, with one claim to a line. Docs render as a tree of claims, and not as a paragraph.
 3. Length follows weight. Where a façade exists, it carries the full explanation, and the
