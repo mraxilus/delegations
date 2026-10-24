@@ -14,9 +14,12 @@ hand-rolled typed reference spends, derived from Lengyel's own forms.
 
 A home page and three views answer the question: Progress, Performance and Proposals. Each page is
 built from committed files alone. `drive` holds each file to the library at pin, and `head` holds
-the pin to library head. `drive` also renders each page, and fails where a font face of the system
-draws a character beyond ASCII. A control page beside them proves that the render sees. A bar on top
-of each page links the home page and the three views.
+the pin to library head. A bar on top of each page links the home page and the three views.
+
+`drive` also renders each page, and writes what each page draws for `koch drive` to judge. Then
+`koch drive` fails where a font face of the system draws a character beyond ASCII. Its own control
+page proves that the render reads every kind of place where text stands. `drive` itself fails where
+two blocks of a card touch, and a control page of the project proves that read.
 
 | Page | Kind | What it shows |
 |------|------|---------------|
@@ -88,8 +91,9 @@ one issue open until the pin follows. To follow head:
 ```sh
 nim r koch check                                # repository root: every check a pull request runs
 nim r koch test contributor/ronri/pga_benchmark  # this project alone, on the pinned compiler
+nim r koch drive contributor/ronri/pga_benchmark  # drive, then the verdict on font faces
 nim r tools/build.nim types         # type-check the render harness, with no browser
-nim r tools/build.nim drive         # project directory: every check CI runs, all at pin
+nim r tools/build.nim drive         # project directory: drive at pin, with no verdict on font faces
 nim r tools/build.nim head          # compare pin with library head, as the daily workflow does
 nim r tools/build.nim bench         # five alternating runs into baseline/runtime_<algebra>.json
 nim r tools/build.nim baseline      # re-record static and machine measurements after a change
@@ -144,8 +148,8 @@ src/pga_benchmark/head.nim         hold pin to head, and every file and page to 
 src/pga_benchmark/pages/           shell assembly, one renderer per page kind, docket's search
 tools/build.nim                    driver: every verb, standard library alone
 tools/verbs.nim                    each verb that compiles project code, run through the driver
-tools/drive/                       render harness: each font stack against shipped font faces
-tests/                             suites, the testament stubs that run them, and the render control
+tools/drive/                       render harness: what pages draw and ship, and crowded cards
+tests/                             suites, the testament stubs that run them, and the layout control
 ```
 
 ## Status

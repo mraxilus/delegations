@@ -707,7 +707,8 @@ string and the header table name the same verbs.
 `system` prints the packages of `SYSTEM`, and each one carries its reason there. Git reads the
 library head, and `curl` and `coreutils` serve `koch fetch-assets`, which fetches and checks the
 font faces. `binutils` gives `show` its `objdump`. `nodejs` runs the type checker of `types` and the
-render harness of `drive`.
+render harness of `drive`. `libbrotli1` serves `koch drive`, which reads the `woff2` of Commit Mono
+through it. Suite `Internal: Driver` holds that package to the `woff2` font face that pages ship.
 
 **The driver dispatches, and imports the standard library alone.** `koch check-types` runs
 `types` on the compiler of koch, and a type check compiles no project code (`CONTRIBUTOR.md`,
@@ -913,8 +914,8 @@ page is 4.3 to 5.2 MiB, against 0.9 to 1.8 MiB with the subsets, by `ls -l build
 **Each stack holds every family of the sans stack before any family of the system.** So a character
 that the first families of a stack lack falls to a font face that the page ships. Noto Sans draws
 `ₙ`, `ₖ` and `ᵀ` in code, which no family of the mono stack holds, at a width that is not one
-column. Verified by `test_rga4d.nim`, which reads the stacks of the shell, and by `drive`, which
-renders every page (below).
+column. Verified by `test_rga4d.nim`, which reads the stacks of the shell, and by `koch drive`,
+which judges every page that `drive` renders (below).
 
 **A proposal can carry a figure.** A paragraph of one image alone, as
 `![Derivation map.](../../pages/derivation-map.svg)`, embeds the SVG that it names. The SVG lives
@@ -1034,66 +1035,46 @@ signatures an edit defines or sits in, and a header that closes at its own inden
 
 ## Render of pages
 
-**`drive` renders every page, and fails where a font face of the system draws a character beyond
-ASCII** (`CONTRIBUTOR.md`, Pages and assets). The driver builds the pages once, for the digests and
-for the render. It wraps each page in the skeleton that the publish host adds, and writes it to
+**`drive` renders every page, and `koch drive` judges the font faces that each page draws**
+(`CONTRIBUTOR.md`, Pages and assets). The driver builds the pages once, for the digests and for the
+render. It wraps each page in the skeleton that the publish host adds, and writes it to
 `build/hosted/`. The harness in `tools/drive/` loads each one in Chromium through Playwright, and
-opens every `details`. It reads each string that the page draws, with the font stack, weight and
-case transform of its element. That covers text nodes, SVG text, placeholders, and the strings of
-`content` on `::before`, `::after` and `::marker`.
+opens every `details`. Its collector reads each string that the page draws, with the font stack,
+weight and case transform of its element. That covers text nodes, SVG text, placeholders, and the
+strings of `content` on `::before`, `::after` and `::marker`.
 
-The harness resolves each character beyond ASCII down its stack, against the `@font-face` rules and
-the `cmap` of each font face. The font faces come out of the page itself, as the `data:` sources of
-its rules. So the check reads the bytes that a viewer receives. A family that the page does not ship
-ends the search, because a font face of the viewer would draw the character there. The harness
-writes each such character as data, with each font face that the browser does not load.
-`src/pga_benchmark/pages/render.nim` turns each one into a finding at its hosted page:
+The collector also reads each `@font-face` rule of the page, and each font face that the browser
+does not load. The harness writes what it reads into `build/font-faces/written.json`, in the shape
+that `font_stacks.nim` in `curator/audit/src/` gives. Each rule there names the file of its font
+face. The harness writes the bytes of each `data:` source into `build/font-faces/files/`, and names
+each file by the digest of its bytes. So `koch drive` reads the bytes that a viewer receives, and
+the harness writes each font face once, however many pages ship it.
 
-```text
-build/hosted/docket.html:0: p.note: Character drawn by font face of system; got `U+2603`.
-```
+**`koch drive` gives the verdict, and its control page proves the collector.** Before it runs
+`drive`, it writes a control page to `build/font-faces/control.html`. The collector reads that page
+as it reads every other page, and the harness writes it as page `control`. Once `drive` passes,
+`koch drive` resolves the stack of each string against the font faces of its page. It writes
+`build/font-faces/found.json`, and fails where a font face of the system draws a character beyond
+ASCII. It also fails where a font face does not load, or where the collector misses a numeral of the
+control page.
 
-Rejected: `CSS.getPlatformFontsForNode`, which in Chromium 141 on 2026-10-04 returned no font for
-an element with `display: none`.
+The project keeps no reader of `cmap` and no judge of font faces. The costs of the resolver are in
+the header of `font_stacks.nim`. A run of `drive` outside `koch drive` finds no control page. Then
+the harness writes `written.json` with the pages alone, and the driver prints that it does so.
+Nothing judges that file, because only `koch drive` resolves it.
 
-Before it reads, the harness shows every element through one `display: revert` rule. Chromium
+Before it reads, the collector shows every element through one `display: revert` rule. Chromium
 styles a hidden element on demand, one at a time, and the docket hides 28 540 of its 31 355
 elements. One read of the docket took 65 s that way, and three reads took 1.4 to 1.7 s with the
 rule. `Date.now()` in node timed each read, in Chromium 141 on `linux amd64, 4 cores` on
 2026-10-04. `display` sets no property of a font, and the 2 623 strings that the docket draws read
 identical both ways.
 
-**A standing control proves that the render sees.** `drive` renders a control page beside the pages,
-built through the shell from `tests/fixtures/control_render.json`, so it ships the same font faces.
-Two of its paragraphs write a character that no shipped font face maps under their stack. One writes
-`U+4E2D` under the stack of the page, and one `U+2603` under `"Noto Sans", sans-serif`. A third
-writes `U+2603` under the stack of the page, which Noto Sans Symbols 2 maps. The control must raise
-exactly the two expected findings, and they never count against a page.
-
-An expected finding that is absent is a finding, because the check is then blind. A finding that
-the control does not expect is a finding too, and so is a control that expects nothing. The
-fixture lives under `tests/`, because the static coverage check reads every file outside it.
-Rejected: the control as HTML under `pages/`, where the layout admits HTML, since coverage reads it.
-
-Costs: the harness reads one viewport, the default of Playwright. So a string or a stack that
-`@media` adds at another width is unread. It resolves each character alone, and a browser picks a
-font face for each cluster. So a combining mark can draw from a font face that the harness does not
-name. Three runs of the harness over the nine pages took 7.4 to 7.8 s, and one run of `drive` took
-166 s. The wall clock timed both, on the same machine and date.
-
-Verified by driven check on 2026-10-04, in Chromium 141 that `PGA_CHROMIUM` named, and not in the
-revision that the lock pins. Every page held no finding, and the control raised its two. With the
-resolver blinded by hand, so that a shipped font face drew every character, `drive` failed so:
-
-```text
-build/hosted/control_render.html:0: p#han: Check is blind, since control raised no finding here;
-got none for `U+4E2D`.
-```
-
-**Each card holds its blocks apart.** Before it reads font faces, the harness reads layout, in
+**Each card holds its blocks apart.** Before the collector reads, the harness reads layout, in
 `tools/drive/layout.ts`. It opens each `details.card`, then checks each tab that `nav.tabs` offers,
 since a card behind another tab draws no box. Two blocks of one card that share a column and stand
-closer than 4 px are one finding at their page:
+closer than 4 px are one crowded pair. The harness writes each pair into `build/crowded.json`, and
+`src/pga_benchmark/pages/render.nim` turns each one into a finding at its page:
 
 ```text
 build/hosted/proposals.html:0: details#change-imports-narrow.card: Blocks of card touch; got `p, p`
@@ -1105,17 +1086,40 @@ one box, so that gap stops at the summary. The shell gives each block after the 
 of 10 px, the gap of a card that is not a `details`. Without that rule, 34 pairs on the proposal
 list touched, and 17 pages held none.
 
-The control page holds two cards for this check. The card `crowded` sets an inline margin of zero
-on its second block, and no rule of the shell outranks it. So that card must raise one finding.
-The card `spaced` keeps the margins of the shell, so it must raise none, and it fails where the
-shell loses the rule. The verdict holds the control to exactly the cards that it expects, as it
-does for characters.
+**A control page of the project proves the layout read.** `drive` builds it through the shell from
+`tests/fixtures/control_render.json`, so it ships the same styles as every page. The card `crowded`
+sets an inline margin of zero on its second block, and no rule of the shell outranks it. So that
+card must raise one finding. The card `spaced` keeps the margins of the shell, so it must raise
+none, and it fails where the shell loses the rule.
 
-Costs: the layout is read at one viewport, as the font faces are. Two blocks side by side, as the
-columns of a grid, are not compared.
+The verdict holds the control to exactly the cards that it expects. An expected pair that is absent
+is a finding, because the read is then blind. A pair that the control does not expect is a finding
+too, and so is a control that expects nothing. The harness reads this page for layout alone, so it
+stays out of `written.json`. It is no page that the project ships, and `koch drive` would judge it
+as one. The fixture lives under `tests/`, since the suites read it as `drive` does.
 
-Suite `Internal: Render` of `test_rga4d.nim` holds the verdict and the control. Suite
-`Internal: Pages` holds the skeleton, and suite `Internal: Driver` holds one build for both uses.
+Costs: the harness reads one viewport, the default of Playwright. So a string, a stack or a card
+that `@media` changes at another width is unread. The harness compares no two blocks that stand
+side by side, as the columns of a grid do.
+
+Three runs of the harness over every page and both control pages took 11.4 to 12.0 s. The harness
+that resolved each character itself, built from `28c559ae`, took 11.3 to 11.6 s in three runs. Those
+runs read every page and the control page of layout. The wall clock timed each run, on
+`linux amd64, 4 cores` on 2026-10-24.
+
+Verified by `koch drive` on 2026-10-24, in Chromium 153.0.8010.12, which is revision 1243 that the
+lock pins. Every page held no finding, and `found.json` held each numeral of the control page. A run
+of `drive` alone with no control page wrote `written.json` with the pages alone, and said so. With
+the read of placeholders removed by hand, `koch drive` failed so:
+
+```text
+contributor/ronri/pga_benchmark/build/font-faces/written.json: Collector reads text in every kind
+of place control page holds; got `U+4E8C` in placeholder of field uncollected.
+```
+
+Suite `Internal: Render` of `test_rga4d.nim` holds the verdict on cards, its control, and the
+command line of the harness. Suite `Internal: Pages` holds the skeleton, and suite
+`Internal: Driver` holds one build for both uses.
 
 The one script is the search box of the docket. It is Nim, `pages/find.nim`, which the driver
 compiles to JavaScript under the flags of every build. The compiler is pinned, so the script
