@@ -6,7 +6,8 @@
 ##     and `DIGEST_LUJVO` pin, carriage return removed as `readSource` removes it; doc of each
 ##     names its line. CI installs no `lojban-common`, so no law needs it: one test compares
 ##     with installed lujvo list where present, and skips with reason where absent (IX.9).
-##   Random entries hold words of one to twenty characters, `"` among them, one space apart.
+##   Random entries hold words of one to twenty characters, `"` among them, one space apart;
+##     spaced texts hold runs of one to five spaces, at either end too.
 ##     Corpus holds no backslash, which `toLiteral` leaves unescaped since lists hold none, and
 ##     no word too long for any line, which no wrap at spaces can split (Article IX.4).
 
@@ -84,6 +85,28 @@ const
     ## Sample lines of `gismu.txt` after header, in its order.
   TEXT_GISMU = LINE_HEADER & "\n" & LINES_GISMU.join("\n") & "\n"
     ## Sample of `gismu.txt`: header, then each sample line.
+  LINE_COA =
+      " co'a          co'a initiative                                interval event con" &
+      "tour: at the starting point of ...; initiative                   >|<    |      -" &
+      "         [beginning (= co'a(r)-)]; (cf. cfari, krasi, clira)"
+    ## Line 219 of `gismu.txt`: `co'a`, definition holding run of spaces.
+  LINE_COU =
+      " co'u          co'u cessative                                 interval event con" &
+      "tour: at the ending point of ... even if not done; cessative      |  >< |      -" &
+      "         [ending (= co'u(r)-)]; (cf. sisti, fanmo)"
+    ## Line 221 of `gismu.txt`: `co'u`, definition holding run of spaces.
+  LINE_SIRJI =
+      " sirji sir          straight                                  x1 is straight/dir" &
+      "ect/line segment/interval between x2 and x3; (adjective:)  x1 is linear        6" &
+      "f  13    (cf. korcu, linji, kruvi, kuspe)"
+    ## Line 1083 of `gismu.txt`: `sirji`, definition holding run of spaces.
+  LINE_ZAO =
+      " za'o          za'o superfective                              interval event con" &
+      "tour: continuing too long after natural end of ...; superfective  |     ---->  a" &
+      "t   0    (cf. dukse)"
+    ## Line 1397 of `gismu.txt`: `za'o`, definition holding run of spaces.
+  TEXT_SPACED = LINE_HEADER & "\n" & [LINE_COA, LINE_COU, LINE_SIRJI, LINE_ZAO].join("\n") & "\n"
+    ## Sample of `gismu.txt` whose definitions hold runs of spaces, header first.
   EXPECTED_GISMU = [
     EntryGismu(
       word: "bacru",
@@ -256,6 +279,14 @@ proc textRandom(count: int): string =
   words.join(" ")
 
 
+proc textSpaced(count: int): string =
+  ## Draw text of `count` words, one to five spaces apart, with spaces at either end sometimes.
+  for n in 0 ..< count:
+    if n > 0 or rand(3) == 0: result.add repeat(' ', rand(1..5))
+    for _ in 1..rand(1..20): result.add CHARACTERS_TEXT.sample
+  if rand(3) == 0: result.add repeat(' ', rand(1..5))
+
+
 proc entryGismuRandom(): EntryGismu =
   ## Draw gismu entry whose fields are random text, definition long enough to wrap often.
   EntryGismu(
@@ -399,3 +430,33 @@ suite "Internal: Lists":
         let converted = source.text.toEntriesLujvo
         check converted.entries == @LIST_LUJVO  # committed list is converter's output
         check converted.count_left == COUNT_LINES_LUJVO - LIST_LUJVO.len  # lines conserved
+
+  test "wrapped string keeps every space, runs included":
+    # Regression: `toLinesWrapped` split text by `splitWhitespace` and joined it with one space,
+    #   so committed definitions of `co'a`, `co'u`, `sirji` and `za'o` lost runs of spaces.
+    let entries = TEXT_SPACED.toEntriesGismu
+    check entries.len == 4  # four sample lines read
+    for entry in entries:
+      check entry.definition.contains("  ")  # sample holds run of spaces
+      check entryGismu(entry.word).get == entry  # case as found: committed entry equals source
+      check toModuleGismu([entry], DIGEST_GISMU).textsField("    definition: ") ==
+          @[entry.definition]  # case as found: wrapping keeps run
+    randomize(SEED)
+    for _ in 1..SAMPLES:  # domain: spaced text, long enough to wrap often
+      let
+        text = textSpaced(rand(1..30))
+        entry = EntryGismu(word: "x", rafsi: @[], keyword: "x", hint: "", definition: text)
+        rendered = toModuleGismu([entry], DIGEST_GISMU)
+      check rendered.textsField("    definition: ") == @[text]  # domain: every space kept
+      check rendered.splitLines.allIt(it.len <= WIDTH)  # X.1, wrapping still bounds lines
+
+
+  test "committed gismu list is list converted from installed file":
+    if not fileExists(getEnv(KEY_LISTS, DIRECTORY_LISTS) / "gismu.txt"):
+      skip()  # `lojban-common` absent, as in CI; `head` compares where present
+    else:
+      let source = readSource("gismu.txt")
+      if source.digest != DIGEST_GISMU:
+        skip()  # installed list moved from its pin, which `head` reports
+      else:
+        check source.text.toEntriesGismu == @LIST_GISMU  # committed list is converter's output
