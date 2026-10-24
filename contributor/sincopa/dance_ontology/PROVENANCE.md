@@ -731,11 +731,10 @@ the follow at half and whole turns (`simulation/verdicts.md`), and no law holds 
 asks it about a high lock at a quarter turn, so nothing says which of the drawn ones a couple can
 dance. No page draws a lock or a wrap yet.
 
-Between quarter turns, a high lock finds a route at each whole degree that the follow turns, on each
-single hold. Verified by `checkRules`, which routes all of them. Red first on 2026-10-22, against
-the back way of rule 6, which found no route on Left to right from 275 to 298 degrees. Some low
-locks that `isDanceable` admits find no route between quarter turns. The build then fails on an
-empty value, and does not refuse with a message (#688).
+Between quarter turns, each lock and wrap that the drawing allows finds a route at each whole degree
+of turn, on each single hold. Verified by `checkRules`, which routes all of them. Red first on
+2026-10-24, where a low lock on Left to right found no route at 62 degrees. Red first on 2026-10-22
+for a high lock, against the back way of rule 6, which the Architect retired.
 
 **Above takes no lock and no wrap, and its line passes over the body (rule 8).** Above is over the
 head, so from overhead nothing is under it, and `straightReach` draws its line straight. Verified by
@@ -912,6 +911,25 @@ colour of an arm would say the same thing twice. One sign is enough.
 where a straight line would cross a body. Everywhere else it is straight. With nothing said, it
 takes the short way, and there is no standing preference for the front of a dancer. Verified by
 `checkFrame`, which checks that no reach enters a body and that each ends on its hand.
+
+**The drawing walks a line as far as rule 7 measures it.** In each pass of the walk, each end slides
+3 degrees round its rim if the straight stretch still cuts its body. The drawing (`taut`) and the
+measure of rule 7 (`wrapArc`) stop at the same limit, `PASSES_MAX`, of 240 passes. So each lock or
+wrap that the measure admits is one that the drawing can route. Verified by `checkRules`, which
+routes each allowed lock and wrap at each whole degree of the follow's turn.
+
+The most that an allowed lock or wrap takes is 132 passes. That is a low lock on a crossed hold with
+the follow turned 85 degrees, where the two ends slide mostly in turn. At 90 passes, below the limit
+of the measure, a low lock on a crossed hold finds no route for 24 degrees. Those are 62 to 85
+degrees on Left to right, and 275 to 298 on Right to left. Measured 2026-10-24.
+
+Rejected: a refusal of each lock that the drawing cannot route. Its edge would come from a limit of
+the drawing, which no rule names. Locks and wraps are a later step of the project, and no page draws
+one yet. So the limit keeps the drawing true to rule 7 until then, and changes no rule.
+
+Cost: a lock in that band hugs both bodies far, 156 to 180 degrees of the lead and 198 to 225
+degrees of the follow. At 86 degrees on Left to right, the stretch never cuts the follow, so the hug
+of the follow falls from 225 degrees to 0. A move across that degree would show the line jump.
 
 **Where a hand has left its place, the place it left is drawn as a grey outline.** So a picture
 shows both where a hand is and where it came from (`figure.ghosts`). No check holds this, and none
