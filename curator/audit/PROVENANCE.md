@@ -1729,7 +1729,7 @@ the input line of each output line. `chain` traces every later report through th
 **The layout checks are written, and the static pass does not run them yet.** Their fixers run,
 because a fixer reports nothing new. So each project clears its findings with
 `nim r koch fix contributor/<domain>/<project>` on its own branch, and never by hand. A check
-that reddens a project merges only after that project fixes (CURATOR.md, duty 3), so #380
+that reddens a project merges only after that project fixes (CURATOR.md, duty 3), so #443
 queues the wiring.
 
 **`checkFormatting` of knoller is the one list of checks that the next pull request wires.**
