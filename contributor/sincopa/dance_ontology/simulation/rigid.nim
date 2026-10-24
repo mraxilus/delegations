@@ -182,8 +182,9 @@ type
   Strain* = object  ## Where couple's pose is nearest some end, over every arm,
                         ## both waists and every shoulder girdle.
     most*: float  ## Nought outside every ease, one at some end, more past it.
-    whose*: Hand  ## Arm it sits at, where it is arm's.
-    what*: string  ## Which joint: freedom's name, `waist`, `collar Fore` or `collar Up`.
+    at*: Option[tuple[who: Body, arm: Option[Arm], what: string]]
+      ## Joint it sits at: whose, on which arm where joint is arm's, and which, by freedom's
+      ## name, `waist`, `collar Fore` or `collar Up`; none where every joint sits in its ease.
 
 
 
@@ -2124,11 +2125,11 @@ proc strainWorst*(couple: Couple): Strain =
   ##     partner's trunk is strain couple feel, and asking held arms alone let
   ##     couple stand with free arm at its end and read as at ease.
   const names: array[Dof, string] = ["extend", "across", "twist", "bend", "wrist"]
-  result = Strain(most: 0.0, what: "")
+  result = Strain(most: 0.0)
   for who in Body:
     let waist = strainRange(couple.rig.waist, float(engine.angleOf(couple.who[who].waist)))
     if waist > result.most:
-      result = Strain(most: waist, whose: (who, Arm.Left), what: "waist")
+      result = Strain(most: waist, at: some((who: who, arm: none(Arm), what: "waist")))
     for arm in Arm:
       let
         (swings, twist_angle, bend_angle, wrist_angle) = couple.jointsNow(who, arm)
@@ -2146,11 +2147,11 @@ proc strainWorst*(couple: Couple): Strain =
                           (Dof.Wrist, couple.rig.range[Dof.Wrist], wrist_angle)]:
         let got = strainRange(joint_range, value)
         if got > result.most:
-          result = Strain(most: got, whose: (who, arm), what: names[dof])
+          result = Strain(most: got, at: some((who: who, arm: some(arm), what: names[dof])))
       for k in Collar:
         let got = strainRange(
           collarRange(couple.rig, arm, k),
           float(engine.angleOf(couple.who[who].arm[arm].swing[k])),
         )
         if got > result.most:
-          result = Strain(most: got, whose: (who, arm), what: "collar " & $k)
+          result = Strain(most: got, at: some((who: who, arm: some(arm), what: "collar " & $k)))

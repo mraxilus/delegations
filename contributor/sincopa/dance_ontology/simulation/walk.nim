@@ -98,7 +98,8 @@ type
     apart*: float  ## Distance chosen, metres axis to axis.
     turns*: float  ## Way couple were wound there, signed: their own where still
                    ## fixes neither.
-    strain*: Strain  ## How near pose there is to any end.
+    strain*: Strain
+      ## How near pose there is to any end: `Inf` where no distance holds, bound of empty set.
     tried*: seq[Option[float]]  ## Strain of each distance and way tried, in order: none gave.
 
 
@@ -960,7 +961,7 @@ const
           inc k
     styles
 
-type Followed* = tuple[is_holding: bool, at: float, why: Stop, strain: Strain]
+type Followed* = tuple[is_holding: bool, at: float, why: Stop]
   ## How far engine followed plan, and what gave if anything did.
 
 proc follow(
@@ -977,7 +978,7 @@ proc follow(
   couple.steer(path.plans[0], STEER)
   couple.settle()
   var
-    said: Followed = (couple.gives == Stop.None, 0.0, couple.gives, couple.strainWorst)
+    said: Followed = (couple.gives == Stop.None, 0.0, couple.gives)
     i = 1
   while said.is_holding and i < path.plans.len:
     # Steered toward plan planned again from where engine has couple, so drift is
@@ -997,12 +998,12 @@ proc follow(
       STEER,
     )
     let why = couple.gives
-    said = (why == Stop.None, path.winds[i], why, couple.strainWorst)
+    said = (why == Stop.None, path.winds[i], why)
     inc i
   if said.is_holding and should_stand:
     couple.advance(SETTLE)
     let why = couple.gives
-    said = (why == Stop.None, said.at, why, couple.strainWorst)
+    said = (why == Stop.None, said.at, why)
   (said, couple)
 
 proc builtFor*(rig: Rig, band: Band, links: seq[Link], is_away: bool, head: Body, path: Path):
@@ -1038,12 +1039,12 @@ proc replay*(
   for i in 0..<path.plans.len:
     couple.standMoment(path, i, is_away)
     let why = couple.gives
-    said = (why == Stop.None, path.winds[i], why, couple.strainWorst)
+    said = (why == Stop.None, path.winds[i], why)
     if not said.is_holding: break
   if said.is_holding and should_stand:
     couple.advance(SETTLE)
     let why = couple.gives
-    said = (why == Stop.None, said.at, why, couple.strainWorst)
+    said = (why == Stop.None, said.at, why)
   (said, couple)
 
 proc replayed*(
@@ -1051,7 +1052,7 @@ proc replayed*(
 ): Followed =
   ## Whether engine stands every moment of plan, and at its end where `should_stand`
   ## (`replay`).
-  if not path.is_reached or path.plans.len == 0: return (false, 0.0, Stop.None, Strain())
+  if not path.is_reached or path.plans.len == 0: return (false, 0.0, Stop.None)
   let (said, couple) = replay(rig, band, links, is_away, head, path, should_stand)
   couple.free()
   said
@@ -1061,7 +1062,7 @@ proc followed*(
 ): Followed =
   ## Whether engine follows plan through every moment of path, and stands at its end
   ## where `should_stand` (`follow`).
-  if not path.is_reached or path.plans.len == 0: return (false, 0.0, Stop.None, Strain())
+  if not path.is_reached or path.plans.len == 0: return (false, 0.0, Stop.None)
   let (said, couple) = follow(rig, band, links, is_away, head, path, should_stand)
   couple.free()
   said
