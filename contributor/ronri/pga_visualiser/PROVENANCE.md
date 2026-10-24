@@ -2452,6 +2452,14 @@ copy by the function that calls `nimCopy`, from the stack. Over 3 frames at 5,03
 9,639 copies of the project and 30,663 of the library, 13,434 a frame in all. With each object
 placed whole by `placeObject`, a counter that is not kept read 64,232 a frame, on 2026-10-05.
 
+**The hang of the selection menu writes its place field by field too** (Interaction model). The
+page hangs the menu on each frame that it shows, and an object built into the result of the hang
+costs one `nimCopy`. `driveMenuHungCopies` hangs a small menu and one larger than the view, from 25
+anchors past, near and between the edges of the canvas. It counts the outermost `nimCopy` calls,
+and fails at one. Rejected: a bound in `driveCopiesStill`, which passes fewer copies than the scene
+has objects. Verified by a read of the emitted code, 2026-10-24: no `nimCopy` stands in
+`pointMenuHung`.
+
 **A lift writes its coefficients, and a read-out reads them.** Geometry goes through the operators,
 and the crossing is the coefficient table. A sum of blades made 23 arrays for a motor, and a write
 makes one. **`sight` reads the stance once for each event**, off one lift and one antireverse.
