@@ -11,7 +11,7 @@
 when compileOption("profiler"):
   import std/nimprof
 
-import std/[options, random, sequtils, strutils, unittest]
+import std/[algorithm, options, random, sequtils, strutils, unittest]
 
 import ../../src/lojban_tagger/[dictionary, english, entries, tags]
 import ../../src/lojban_tagger/lists/[gismu, lujvo]
@@ -64,6 +64,18 @@ suite "Internal: English":
     check "the".meanings.len == 0  # article leads nowhere
     check "the book".meanings == "book".meanings  # article never narrows phrase
     check "a book".meanings == "book".meanings  # one-letter token never narrows phrase
+
+
+  test "Every function word is dropped, since list is sorted for binary search":
+    # Regression: `english.nim` held `something` before `someone`, so binary search missed
+    #   `someone`, and `meanings` of it found 62.
+    check WORDS_FUNCTION.isSorted  # binary search reads sorted list
+    check "someone".toTokens.len == 0  # case as found: search missed it
+    check "someone".meanings.len == 0  # case as found: it led to 62 meanings
+    for word in WORDS_FUNCTION:  # every function word, exhaustive
+      check word.toTokens.len == 0  # domain: each one dropped
+    for meaning in MEANINGS:  # every meaning, exhaustive
+      check meaning.textEnglish.toTokens.allIt(it notin WORDS_FUNCTION)  # domain: none indexed
 
 
   test "Keyword leads to its gismu":
