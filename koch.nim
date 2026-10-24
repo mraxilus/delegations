@@ -304,6 +304,7 @@ proc runHook(root, event, input: string): int =
       let turn = readFile(data{"transcript_path"}.getStr).parseTurn
       var found = checkNumbersBare(turn.text)
       found.add checkReferencesBare(turn.text)
+      found.add checkLinksReference(turn.text)
       if turn.calls.isTurnWriting: found.add checkEndTurn(turn.text, branch_root)
       if found.len == 0: return 0
       echo %*{"decision": "block", "reason": found.reasonStop}
