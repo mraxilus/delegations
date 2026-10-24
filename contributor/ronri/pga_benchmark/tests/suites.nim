@@ -3181,54 +3181,30 @@ suiteInProc "Internal: Library map":
 
 
 suiteInProc "Internal: Render":
-  const fixture = staticRead("fixtures/control_render.json")  ## Control page `drive` renders.
-  let expected = @[(element: "p#han", codepoint: 0x4E2D), (element: "p#open", codepoint: 0x2603)]
-    ## Findings control of these tests expects.
-
-  func documentFound(characters: openArray[(string, string, int)]): JsonNode =
-    ## Build document harness writes: page, element and codepoint of each character found.
-    result = newJObject()
-    for (page, element, codepoint) in characters:
-      if not result.hasKey(page): result[page] = %*{"characters": [], "faces": []}
-      result[page]["characters"].add %*{"element": element, "codepoint": codepoint}
-
-
-  test "control fixture expects findings, and its page writes each paragraph it names":
-    let
-      paragraphs = paragraphs(parseJson(fixture))
-      body = bodyControl(paragraphs, [])
-    check findingsExpected(paragraphs).len > 0  # control proves something
-    check findingsExpected(paragraphs).allIt(it.codepoint > 0x7F)  # beyond ASCII alone
-    check paragraphs.anyIt(not it.is_drawn_by_system)  # one shipped font face draws, unexpected
-    for paragraph in paragraphs:
-      check "<p id=\"" & paragraph.id & "\"" in body  # each paragraph on page, by id
-      if paragraph.stack.len > 0:
-        check "font-family: " & escapeHtml(paragraph.stack) & "\"" in body  # own stack, inline
+  const fixture = staticRead("fixtures/control_render.json")  ## Control page of layout.
 
 
   test "control fixture expects one crowded card, and its page writes each card it names":
     let
       cards = cards(parseJson(fixture))
-      body = bodyControl([], cards)
+      body = bodyControl(cards)
     check crowdedExpected(cards).len > 0  # control proves something
     check cards.anyIt(not it.is_crowded)  # one card keeps margins of shell, unexpected
     for card in cards:
       let opening = "<details class=\"card\" id=\"" & card.id & "\" open>"
       check opening in body  # each card on page, open, by id
-      check (crowdedExpected(cards).contains("details#" & card.id & ".card")) == card.is_crowded
+      check crowdedExpected(cards).contains("details#" & card.id & ".card") == card.is_crowded
     check body.count("margin-top: 0 !important") == cards.countIt(it.is_crowded)  # crowded alone
 
 
   test "crowded pair reads as finding at its page, and control passes on cards it expects":
     let
       expected = @["details#crowded.card"]
-      found = %*{
-        "proposals": {"crowded": [
-          {"element": "details#change-x.card", "between": "p, p", "gap": 0}]},
-        "control": {"crowded": [
-          {"element": "details#crowded.card", "between": "p, p", "gap": 0}]},
+      crowded = %*{
+        "proposals": [{"element": "details#change-x.card", "between": "p, p", "gap": 0}],
+        "control": [{"element": "details#crowded.card", "between": "p, p", "gap": 0}],
       }
-    check checkCrowded(found, expected, "control", "h").mapIt(it.render) == @[
+    check checkCrowded(crowded, expected, "control", "h").mapIt(it.render) == @[
       "h/proposals.html:0: details#change-x.card: Blocks of card touch; got `p, p` at `0 px`.",
     ]  # page's pair is finding, control's expected pair is not
 
@@ -3236,63 +3212,30 @@ suiteInProc "Internal: Render":
   test "crowded control card absent is blind, and one nobody expects is finding":
     let
       expected = @["details#crowded.card"]
-      blind = checkCrowded(%*{"control": {"crowded": []}}, expected, "control", "h")
-    check blind.len == 1 and "Check is blind" in blind[0].message  # render missed it
-    let spaced = %*{"control": {"crowded": [
+      blind = checkCrowded(%*{"control": []}, expected, "control", "h")
+    check blind.len == 1 and "Check is blind" in blind[0].message  # read missed it
+    let spaced = %*{"control": [
       {"element": "details#crowded.card", "between": "p, p", "gap": 0},
-      {"element": "details#spaced.card", "between": "p, p", "gap": 0}]}}
+      {"element": "details#spaced.card", "between": "p, p", "gap": 0}]}
     check checkCrowded(spaced, expected, "control", "h").len == 1  # shell left spaced card crowded
     let none = checkCrowded(newJObject(), [], "control", "h")
     check none.len == 1 and "proves nothing" in none[0].message  # vacuous control refused
 
 
-  test "codepoint reads as Unicode names it":
-    check codepointText(0xE9) == "U+00E9"  # four digits at least
-    check codepointText(0x2603) == "U+2603"
-    check codepointText(0x1D400) == "U+1D400"  # beyond plane 0, five
-
-
-  test "character found on page reads as finding at its hosted page, ending in codepoint":
-    let
-      characters = [
-        ("docket", "p.note", 0x2603),
-        ("control", "p#han", 0x4E2D),
-        ("control", "p#open", 0x2603),
-      ]
-      findings = checkRendered(documentFound(characters), expected, "control", "build/hosted")
-    check findings.mapIt(it.render) == @[
-      "build/hosted/docket.html:0: p.note: Character drawn by font face of system; got `U+2603`.",
-    ]  # one finding, at page, element first, codepoint last
-
-
-  test "control passes on findings it expects, and one absent is blind":
-    let both = [("control", "p#han", 0x4E2D), ("control", "p#open", 0x2603)]
-    check checkRendered(documentFound(both), expected, "control", "h").len == 0  # sees, so passes
-    let blind = checkRendered(documentFound(both[0..0]), expected, "control", "h")
-    check blind.len == 1 and "Check is blind" in blind[0].message  # absent one is blind
-    check blind[0].message.endsWith("got none for `U+2603`.")  # names codepoint it missed
-    check checkRendered(newJObject(), expected, "control", "h").len == 2  # never rendered
-
-
-  test "control finding nobody expects, or expected one on other page, is finding":
-    let both = @[("control", "p#han", 0x4E2D), ("control", "p#open", 0x2603)]
-    check checkRendered(
-      documentFound(both & ("control", "p#closed", 0x2603)), expected, "control", "h"
-    ).len == 1  # control raises exactly what it expects
-    check checkRendered(
-      documentFound(both & ("docket", "p#han", 0x4E2D)), expected, "control", "h"
-    ).len == 1  # expectation holds on control alone
-
-
-  test "control expecting nothing proves nothing, and font face not loaded is finding":
-    let none = checkRendered(newJObject(), [], "control", "h")
-    check none.len == 1 and "proves nothing" in none[0].message  # vacuous control refused
-    let refused = %*{"docket": {"characters": [], "faces": [
-      {"family": "Noto Sans", "weight": "400", "status": "error"}]}}
-    let
-      messages = checkRendered(refused, expected, "control", "h").mapIt(it.message)
-      refusal = "@font-face Noto Sans 400: Font face does not load; got `error`."
-    check refusal in messages  # refused font face named with status
+  test "harness reads control of layout for layout alone, and of font faces for text alone":
+    let pages = ["h/docket.html", "h/home.html"]
+    check argumentsHarness(
+      "f/written.json", "b/crowded.json", "h/control_render.html", pages, some("f/control.html")
+    ) == @[
+      "f/written.json", "b/crowded.json", "h/docket.html", "h/home.html",
+      "--layout-only", "h/control_render.html", "--text-only", "f/control.html",
+    ]  # each page read for both, control of layout never for text, so out of `written.json`
+    check argumentsHarness(
+      "f/written.json", "b/crowded.json", "h/control_render.html", pages, none(string)
+    ) == @[
+      "f/written.json", "b/crowded.json", "h/docket.html", "h/home.html",
+      "--layout-only", "h/control_render.html",
+    ]  # no control page of font faces, so `written.json` holds pages alone
 
 
 
@@ -3390,9 +3333,24 @@ suiteInProc "Internal: Driver":
     check "(\"nodejs\"," in driver  # node that render runs under, declared
 
 
+  test "dispatcher declares libbrotli1 exactly while pages ship woff2 font face":
+    let is_woff2_shipped = FONT_FACES.anyIt(it.endsWith(".woff2"))
+    check is_woff2_shipped  # Commit Mono ships as `woff2` at pin, so law below reads something
+    check ("(\"libbrotli1\"," in driver) == is_woff2_shipped  # CONTRIBUTOR.md, Pages and assets
+
+
+  test "render runs harness on command line render.nim builds, and judges crowded file it writes":
+    let
+      start = verbs.find("proc renderedChecked(")
+      body = verbs[start..<verbs.find("\n\n\n", start)]
+    check "argumentsHarness(PATH_WRITTEN, PATH_CROWDED," in body  # held by `Internal: Render`
+    check "checkCrowded(readDocument(PATH_CROWDED)" in body  # judge reads file harness writes
+
+
   test "header table names files verbs write":
     check "`baseline/runtime_<algebra>.json`" in driver  # what `bench` records
     check "`baseline/static_<algebra>.json`" in driver  # what `baseline` records
     check "| drive     | inspect, guard," in driver  # drive runs guard, not retired check
+    check "`build/font-faces/written.json`" in driver  # what drive writes for `koch drive`
     check "`evaluations/<name>.json`" in driver  # what evaluate writes
     check "`pages/published.json`" in driver  # what published writes

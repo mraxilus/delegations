@@ -1,8 +1,9 @@
 # The rotation mark workbench
 
 This directory holds the Reference, which draws the marks for rotation before the Explorer draws
-them, and the rig viewer. The project stands behind both pages. The reason for each choice is in
-`../PROVENANCE.md`, under the rules of the drawing, the frame picture and the design workbench.
+them, and the rig viewer. The project stands behind both pages. The reasons are in
+`../PROVENANCE.md`, under the rules of the drawing, the frame picture, the design workbench and the
+prose of the pages.
 
 **A check holds a drawing to a rule as it is written.** It does not show that a couple can dance
 what the drawing shows. The frame states to trust are cells of the Reference that are kept, modelled

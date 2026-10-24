@@ -520,8 +520,9 @@ func windSense*(manner: Manner): float =
 const PAIRED*: Holds = [some Arm.Left, some Arm.Right]
   ## Same-name chain: lead's left to follow's left, right to right.  Index is
   ## lead's arm and value is follow's it joins, as `HAND_TO_HAND` is read.
-  ##   Rests Face-to-back rather than Face-to-face, since Face-to-face its two
-  ##     connections lie through each other (rule 31).
+  ##   Rests Face-to-back rather than Face-to-face, since Face-to-back its two
+  ##     connections run parallel and cross nothing; Face-to-face they cross,
+  ##     one over other (rule 31).
 
 
 func chainTurnParts*(holds: Holds, key: string): Parts =

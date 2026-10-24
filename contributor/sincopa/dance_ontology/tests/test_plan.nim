@@ -17,7 +17,7 @@ cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on -d:danger $opti
 
 when compileOption("profiler"): import std/nimprof
 
-import std/[math, random, strformat, unittest]
+import std/[math, options, random, strformat, unittest]
 
 import ../simulation/[body, hold, limb, plan {.all.}, rig, rigid, vector, walk]
 import ./fixtures
@@ -227,7 +227,7 @@ suite "Internal: Planner and engine are one rig":
         else:
           inc held_inside
           check got.why != Stop.Swing
-      check held_couple.stoppedFree.why == Stop.None
+      check held_couple.stoppedFree.isNone
       held_couple.free()
       # Same pose, nothing held: every arm is free.
       var free_couple = build(HUMAN, restStance(HUMAN, plan[0]), Band.Crown, @[], Body.Two)
@@ -240,11 +240,11 @@ suite "Internal: Planner and engine are one rig":
       if past.len > 0:
         inc free_past
         check free_couple.gives == Stop.Swing
-        check free_couple.stoppedFree == (Stop.Swing, past[0])
+        check free_couple.stoppedFree == some(past[0])
       else:
         inc free_inside
         check free_couple.gives != Stop.Swing
-        check free_couple.stoppedFree.why == Stop.None
+        check free_couple.stoppedFree.isNone
       free_couple.free()
     checkpoint &"held arm stopped by edge alone {held_past}, connection inside {held_inside}, " &
         &"free couple past {free_past}, inside {free_inside}"

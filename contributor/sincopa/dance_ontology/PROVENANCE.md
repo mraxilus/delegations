@@ -7,7 +7,7 @@
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
 | Rules   | c523b64950d1f7de |
-| Pruned  | f430fbb5863e817e9aff5c07df9f216e8baa16ec |
+| Pruned  | f07b7566aac6619f19090f8341936158bf0e9800 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from three sources.
@@ -471,6 +471,119 @@ The Reference and the rig viewer are build products under `build/design/`.
 `suites/test_marks.nim` drives the build of each page of `marks.PAGES` under testament, so every
 check runs with the suites.
 
+**The check of the single-hand turns measures each reach as the Reference draws it.**
+`checkSingleTurns` reads the line of each moving figure frame by frame, and the line of each still,
+off the markup. It measures the bow of rule 14 on each frame, and on each blend of two frames that
+the browser draws. It measures the daylight of rule 22 and the crest of rule 24 on each still. On
+the first frame of each move, the straight line runs into a mark, so the exemption of rule 22 is
+used for something. Rejected: lines that the check builds itself, which no drawing can fail, since a
+straight line built there never bows.
+
+The markup writes each point to one decimal, which moves a point by at most 0.07. Daylight and crest
+take that, but turning does not. One decimal can turn a corner of the shortest reach by up to 20
+degrees, where a routed corner turns less than 3 degrees. So the check counts the turning of rules
+23 and 24 on a route of each settled place. It holds every drawn still to that route within 0.07.
+
+Rejected: turning counted off the markup, which counted a bend in 40 of the 56 straight reaches.
+Cost: the check routes each settled place once, as the figure of that place does. The two laws below
+run the check five more times. In three runs of each debug build, the marks suite took 8.9 s to 9.6
+s without them. With them it took 11.4 s to 12.8 s, on four cores under a load average of 25, on
+2026-10-23.
+
+Verified by `suites/test_marks.nim`. One law bows one frame of a transition and of a whole round,
+and the check refuses each under rule 14. Another law pulls the reach of three kinds of still
+through the chevron of the lead. They are a position, the still of an edge and the still of a round.
+The check refuses each under rule 22. Red first on 2026-10-23: the check passed all five changed
+figures while it measured lines of its own.
+
+**To dress a page twice gives the same bytes as to dress it once.** `dress()` walks every page under
+`build/app` and `build/design`, and not only the pages of the run. So a page that the run did not
+write is dressed again. `fontFaceStyle` marks its block `<style data-font-faces>`, and
+`withFontFaces` removes an earlier block before it adds the new one. Rejected: to skip a dressed
+page, which keeps old font faces after a font face changes.
+
+Verified by `suites/test_font_faces.nim`, test "dressing is not doubled where it runs twice", which
+dresses both shapes of page twice and demands the same bytes. Verified by hand on 2026-10-02: two
+`pages` runs over one tree gave pages that compare equal by `cmp`, byte for byte. No verb writes a
+page under `build/simulation/`.
+
+**The four are a manner of turn, and not a way of turning.** `Manner` and `MANNERS` name the four
+through the workbench. The pages, the checks and the ledger say "manner". "Way" names clockwise
+against anticlockwise, as `wayTurn` and `wayName` return it. Rejected: one word for both senses.
+Rejected: a rename of `Way` as well, which leaves the direction of the turn unnamed.
+
+The lock or wrap of the drawing is `terms.Modifier`, so `Way` names the direction alone
+(`rotation.Way`).
+
+Cost: no test reads the `_Avoid_` line of the manner of turn. `test_glossary.nim` reads the
+`_Avoid_` lines of the steps of the chain, of the lead and the follow, and of the facing. It also
+reads those of the Explorer and the Reference, and no others. So "way" can drift back into the sense
+of "manner" without a test noticing.
+
+**The moving sections show a walk whole before they show it in pieces.** Each manner of each hold
+takes two cells in sections E, F and G of the Reference. Those are the whole walk, and the same
+walk step by step, with a button for each step. Rejected: a cell for each edge, which gives 112
+cells of animation to scroll past. Section E holds 64 animated edges, and sections F and G hold 24
+each.
+
+`turnWalk` takes `steps` and `has_return`, so one builder makes three things. They are a single
+rocking edge, a whole round of four quarters, and a whole chain of six halves out and back. The
+round closes on itself and needs no return. The chain does need one, because it has ends.
+
+The switching is a radio button and a sibling rule, so the page stays markup that a browser draws
+with nothing running. Rejected: script, which these pages have never needed.
+
+The fixture covers every drawing in a cell, because a ruling on a cell is a ruling on all of it.
+
+Cost: fewer cells, and a larger page. A walk shown whole is drawn as well as its pieces, and not
+instead of them. Of the 10.2 MB of the Reference, the walks shown whole take 4.3 MB. Measured on
+2026-10-08, on the page that `suites/test_marks.nim` writes without font faces.
+
+Every animation runs at one pace (`WALK_SECONDS`), so the length of a loop says how far it goes
+rather than how fast. The whole chain is six times an edge, which is a long loop.
+
+Verified by `suites/test_marks.nim`, which drives the build and so the gates. The 16 rounds are
+counted, and each one is asserted to close where it set off. The whole-walk figures are held to the
+same hatch laws as the edges.
+
+**A ruling is given on a picture, so the picture is held as a fixture.** `reference_page.nim` lays
+out every frame state that the project draws as a card. Those are the standard diagrams and the one
+anticlockwise counterpart. They are also the distinct single-hand turn frame states, both chains,
+and every animated edge of the last two. Each card carries the identifier to quote back, and
+whatever has been ruled on it.
+
+**Each identifier is the letter of its section and two digits, from A01 to G08.** So no identifier
+reads as a decision of a sign-off, which `GUIDE.md` numbers from `D1`. The Architect ruled this on
+2026-10-04. The questions of sections A, C and D take the same names, because each question is keyed
+by its card. Verified by `suites/test_marks.nim`, which reads each identifier off the written page.
+It failed on 57 of 107 cards, which had one digit.
+
+Rejected: the decisions numbered D01, with the cards left as they were. The Architect chose the
+cards.
+
+A rename of the cards changes no answer of the simulation. After it, each recording was the one
+before to the last bit, apart from its names and its stamp, compared on 2026-10-04. The store of
+answers keys each answer by what it asks, and not by the name of its card (`walk.Store`).
+
+The identifiers that the Architect has kept or dropped are named in the module. What each one was
+drawn as when it was ruled on is its fixture, held as a hash in `design/review-fixtures.json`. The
+build refuses to write the page when the drawing of a ruled card has moved.
+
+Rejected: a ruling taken as given on the identifier, because a mend that reaches too far then
+carries an approval that nobody gave. The guard was proved by a widened clearance on a break. It
+then named the twelve kept cards that carry a crossing.
+
+Fixtures are rewritten only by `tools/build.nim fixtures`, which is a deliberate second step. A
+ruling and its fixture are added together or not at all. To run it to quiet a complaint would hand
+the approval to the new picture. Cost: the rulings live in the module, so every ruling is a commit.
+
+Verified by `suites/test_marks.nim`, which builds the page under testament. Verified by the tally
+being counted off the built page, rather than kept while it is built. What the page says of itself
+cannot then drift from what it holds. The page prints that tally where a reader sees it, which is
+why no number of it is written here.
+
+## Prose of the pages
+
 **Every page says its prose in Simplified Technical English.** The Architect requires the prose in
 the subset of the charter (`GUIDE.md`, Article VI.8). Two rules of that subset can be counted, and
 `design/plain.nim` counts them off the markup. A sentence of prose holds at most `WORDS` words, and
@@ -562,92 +675,6 @@ of the Reference. Three were messages of the rig viewer that said `Viewer page`.
 Cost: the shell of the Explorer is not read. Its markup names the element `app` and the script
 `app.js`, and its one line of text is its title. Cost: a word that names a page in a comment or in
 the record is held by reading alone.
-
-**To dress a page twice gives the same bytes as to dress it once.** `dress()` walks every page under
-`build/app` and `build/design`, and not only the pages of the run. So a page that the run did not
-write is dressed again. `fontFaceStyle` marks its block `<style data-font-faces>`, and
-`withFontFaces` removes an earlier block before it adds the new one. Rejected: to skip a dressed
-page, which keeps old font faces after a font face changes.
-
-Verified by `suites/test_font_faces.nim`, test "dressing is not doubled where it runs twice", which
-dresses both shapes of page twice and demands the same bytes. Verified by hand on 2026-10-02: two
-`pages` runs over one tree gave pages that compare equal by `cmp`, byte for byte. No verb writes a
-page under `build/simulation/`.
-
-**The four are a manner of turn, and not a way of turning.** `Manner` and `MANNERS` name the four
-through the workbench. The pages, the checks and the ledger say "manner". "Way" names clockwise
-against anticlockwise, as `wayTurn` and `wayName` return it. Rejected: one word for both senses.
-Rejected: a rename of `Way` as well, which leaves the direction of the turn unnamed.
-
-The lock or wrap of the drawing is `terms.Modifier`, so `Way` names the direction alone
-(`rotation.Way`).
-
-Cost: no test reads the `_Avoid_` line of the manner of turn. `test_glossary.nim` reads the
-`_Avoid_` lines of the steps of the chain, of the lead and the follow, and of the facing. It also
-reads those of the Explorer and the Reference, and no others. So "way" can drift back into the sense
-of "manner" without a test noticing.
-
-**The moving sections show a walk whole before they show it in pieces.** Each manner of each hold
-takes two cells in sections E, F and G of the Reference. Those are the whole walk, and the same
-walk step by step, with a button for each step. Rejected: a cell for each edge, which gives 112
-cells of animation to scroll past. Section E holds 64 animated edges, and sections F and G hold 24
-each.
-
-`turnWalk` takes `steps` and `has_return`, so one builder makes three things. They are a single
-rocking edge, a whole round of four quarters, and a whole chain of six halves out and back. The
-round closes on itself and needs no return. The chain does need one, because it has ends.
-
-The switching is a radio button and a sibling rule, so the page stays markup that a browser draws
-with nothing running. Rejected: script, which these pages have never needed.
-
-The fixture covers every drawing in a cell, because a ruling on a cell is a ruling on all of it.
-
-Cost: fewer cells, and a larger page. A walk shown whole is drawn as well as its pieces, and not
-instead of them. Of the 10.2 MB of the Reference, the walks shown whole take 4.3 MB. Measured on
-2026-10-08, on the page that `suites/test_marks.nim` writes without font faces.
-
-Every animation runs at one pace (`WALK_SECONDS`), so the length of a loop says how far it goes
-rather than how fast. The whole chain is six times an edge, which is a long loop.
-
-Verified by `suites/test_marks.nim`, which drives the build and so the gates. The 16 rounds are
-counted, and each one is asserted to close where it set off. The whole-walk figures are held to the
-same hatch laws as the edges.
-
-**A ruling is given on a picture, so the picture is held as a fixture.** `reference_page.nim` lays
-out every frame state that the project draws as a card. Those are the standard diagrams and the one
-anticlockwise counterpart. They are also the distinct single-hand turn frame states, both chains,
-and every animated edge of the last two. Each card carries the identifier to quote back, and
-whatever has been ruled on it.
-
-**Each identifier is the letter of its section and two digits, from A01 to G08.** So no identifier
-reads as a decision of a sign-off, which `GUIDE.md` numbers from `D1`. The Architect ruled this on
-2026-10-04. The questions of sections A, C and D take the same names, because each question is keyed
-by its card. Verified by `suites/test_marks.nim`, which reads each identifier off the written page.
-It failed on 57 of 107 cards, which had one digit.
-
-Rejected: the decisions numbered D01, with the cards left as they were. The Architect chose the
-cards.
-
-A rename of the cards changes no answer of the simulation. After it, each recording was the one
-before to the last bit, apart from its names and its stamp, compared on 2026-10-04. The store of
-answers keys each answer by what it asks, and not by the name of its card (`walk.Store`).
-
-The identifiers that the Architect has kept or dropped are named in the module. What each one was
-drawn as when it was ruled on is its fixture, held as a hash in `design/review-fixtures.json`. The
-build refuses to write the page when the drawing of a ruled card has moved.
-
-Rejected: a ruling taken as given on the identifier, because a mend that reaches too far then
-carries an approval that nobody gave. The guard was proved by a widened clearance on a break. It
-then named the twelve kept cards that carry a crossing.
-
-Fixtures are rewritten only by `tools/build.nim fixtures`, which is a deliberate second step. A
-ruling and its fixture are added together or not at all. To run it to quiet a complaint would hand
-the approval to the new picture. Cost: the rulings live in the module, so every ruling is a commit.
-
-Verified by `suites/test_marks.nim`, which builds the page under testament. Verified by the tally
-being counted off the built page, rather than kept while it is built. What the page says of itself
-cannot then drift from what it holds. The page prints that tally where a reader sees it, which is
-why no number of it is written here.
 
 ## Rules of the drawing
 
@@ -766,8 +793,8 @@ move, and only a moving picture can show it.
 **A settled reach passes clear of every mark it does not join (rule 22).** It is a line pulled taut
 past both chevrons and every hand but its own two, bent round each and straight elsewhere. The gap
 is taken from what is drawn, with half the width of the line added. A moving reach may pass a mark,
-as the rule allows. Verified by `checkSingleTurns`, which checks both halves. The frame picture
-does not follow rule 22 yet, because it does not pass `should_clear_marks`.
+as the rule allows. Verified by `checkSingleTurns`, which reads both halves as drawn. The frame
+picture does not follow rule 22 yet, because it does not pass `should_clear_marks`.
 
 **A reach is judged on its length and its bends together (rule 23).** The shortest way past the
 marks weaves, and a reader must follow each change of way. So a bend costs `BEND_COST` of length,
@@ -784,7 +811,7 @@ corner in it. Verified by `checkSingleTurns`, which checks the corner of the sto
 `ROUTE_COUNT` points, so that it can move from one shape to the next. Drawn with straight pieces, a
 swan turns back inside a few points and shows its facets. So `route.smoothed` makes each sampled
 point a control point and draws through the midpoints between them. The ends stay on their hands,
-and the checks measure the stored points, and not the drawn curve. Verified by `checkHandTurns`.
+and the checks measure the sampled points, and not the drawn curve. Verified by `checkHandTurns`.
 
 **How wide the swan swings is set by eye, and not by a check (rules 33 to 35).** `SWAN_SWING` in
 `route.nim` holds it. Rule 34 took back the width that rule 33 asked for, and rule 35 set it again.
@@ -872,6 +899,18 @@ one part of a dancer that nothing else uses. `outlineRadius` in `body.nim` is th
 the edge, so the routing and the drawing agree on it. The rim says only that a body is there. It is
 one quiet stroke, broken round each hand by `HAND_GAP`, and it carries no colour of a side. Verified
 by `checkFrame`.
+
+**The rim breaks where a hand is, because a settled hand winds the way its hold sends its line.**
+`border` reads where each hand went from how far its arm has wound, and not from where the hand
+sits. So a low lock winds round the back to the back slot of the other side, as rule 5 sends its
+line (`body.settledWind`). Wound round the front to the same spot, it would draw one stretch through
+both hands. A wrap and a high lock wind round the front.
+
+Where two hands stand closer than two hand gaps, the stretch between them is not drawn. A settled
+wrap puts its hands 44 degrees apart, so the two stretches tile the rim only where no stretch is
+squeezed between two hands. Verified by `checkFrame`, which reads each drawn rim at every settle, on
+each single hold at each quarter turn of the follow. It holds every stretch a hand gap off both
+hands of its dancer. Red first on 2026-10-23, on the low lock of every single hold.
 
 **The rim shows no progress.** The connection shows the wrap already, so a ring that filled in the
 colour of an arm would say the same thing twice. One sign is enough.
@@ -1825,11 +1864,11 @@ Two joined pairs of one still may stand close, and may touch. Only pairs that ho
 connected or interlocked. So A10 stands, where the two pairs almost meet over the head, as the
 Architect ruled.
 
-Two readings of section A come apart at A09 and A11, which draw the same-name pair face to face.
-Rule 31 of the project itself says that this frame state has its connections lying through each
-other.
-Wound there from `Face-to-back` as the card says, the model stands them at ease, one connection over
-the other. That is a finding against the reading of the rule, and not a number bent toward the page.
+A09 and A11 draw the same-name pair face to face. Rule 31 of the project itself says that there its
+two connections cross, one over the other. The pair rests `Face-to-back`, because there they run
+parallel and cross nothing. Wound face to face from `Face-to-back` as the card says, the model
+stands them at ease, one connection over the other. That agrees with the rule, and is not a number
+bent toward the page.
 
 Sections B and E being whole is a weak result. Every card in them is held above, where a single
 hold sweeps free past two turns, so they test the model hardly at all. The cards that discriminate
@@ -2385,10 +2424,15 @@ holds the title of the Explorer to title case.
 Chromium through Playwright. Rejected: an absolute path for either in `design/shot.nim`, which pins
 a version in the least durable place there is (issue 62).
 
-`tools/build.nim` declares `git`, `binutils`, `nodejs` and `chromium` as data, each with what it is
-for and whether an installer takes it (`SYSTEM`). A `system` verb prints those that an installer
-takes, one to a line: `git`, `binutils` and `nodejs`. The `shot` verb prints `chromium` as what the
-helper needs, since a person runs the helper by hand.
+`tools/build.nim` declares `git`, `binutils`, `nodejs`, `libbrotli1` and `chromium` as data, each
+with what it is for and whether an installer takes it (`SYSTEM`). A `system` verb prints those that
+an installer takes, one to a line: `git`, `binutils`, `nodejs` and `libbrotli1`. The `shot` verb
+prints `chromium` as what the helper needs, since a person runs the helper by hand.
+
+`libbrotli1` serves `koch drive`, which reads the `cmap` of each font face that a page ships
+(Drive). The two font faces of Commit Mono ship as `woff2`, which keeps its tables in one Brotli
+stream. Verified by a run of `nim r tools/build.nim system` on 2026-10-23, which prints the four
+names.
 
 `shot.nim` takes Playwright from `DANCE_PLAYWRIGHT`, or from the bare module name that node
 resolves. It takes the browser from `DANCE_CHROMIUM`, then from `chromium` beside the store of
@@ -2433,10 +2477,10 @@ folds in.
 command and runs it from the project directory. The table at the head of the file names and explains
 each one except `engine` and `system`.
 
-The verbs are the pages and their assets, the type check of the harness (`types`), and the check
-that renders every page (`drive`). They are also the recordings that rewrite committed data nothing
-else may edit (`modelled`, `rig`, `verdicts`, `answers`), and `record`, which runs them all. The
-rest are the fixtures (`fixtures`, `confirmed`, `watched`), the floors of the planned sweep
+The verbs are the pages and their assets, the type check of the harness (`types`), and the verb that
+renders every page for `koch drive` (`drive`). They are also the recordings that rewrite committed
+data nothing else may edit (`modelled`, `rig`, `verdicts`, `answers`), and `record`, which runs them
+all. The rest are the fixtures (`fixtures`, `confirmed`, `watched`), the floors of the planned sweep
 (`floors`), the engine, the screenshot helper, the system declaration, and `clean`. Koch drives the
 tests, and holds no verb for pages.
 
@@ -2467,83 +2511,19 @@ codepoint range of X.8. The maps were read with fontconfig 2.15.0 on 2026-10-03,
 font faces with the digests of the store.
 
 The wiring is verified by `suites/test_font_faces.nim`, test "every stack falls back to font
-families that draw what its own font family lacks". The coverage is verified by `drive`, below, on
-every page that `pages` writes, except the Explorer before `bundle` folds its script in. That page
-loads `app.js` from beside it, and its hosted copy finds none there. The bundled Explorer,
+families that draw what its own font family lacks". The coverage is verified by `koch drive`
+(Drive), on every page that `pages` writes, except the Explorer before `bundle` folds its script in.
+That page loads `app.js` from beside it, and its hosted copy finds none there. The bundled Explorer,
 `app/artifact.html`, is the same page as published, and `drive` renders it.
 
-**`drive` proves the font faces of every page, as `CONTRIBUTOR.md`, Pages and assets, asks.** It
-builds every page, and renders each one in Chromium as the publish host serves it. For each
-character beyond ASCII, it resolves the font stack of the element against the `cmap` of each
-font face that the page ships. A character that no font face of that stack maps is a finding. The
-finding names the page, the element and the codepoint. A font face that the browser does not load is
-a finding too.
-
-The harness is TypeScript under `tools/drive/`. TypeScript is admitted for the host API of a test
-driver. It checks each expression that runs inside the page against the types of the DOM. The
-verdict is Nim, in `design/render.nim`, where the suites reach it (Article II.9).
-
-**The harness and its verdict are copies, and they name no sibling (Architect, issue 670,
-2026-10-21).** This project names no other project, because it is concerned with itself alone. So
-the copies break the rule that each copy names its siblings (Article II.9). Cost: a fix found in
-another copy reaches these files by chance alone. The curator weighs one shared check of font faces
-(issue 671), which would remove the copies.
-
-Rejected: a harness in Nim compiled to JavaScript, as `shot` is, where each of those expressions is
-an unchecked string. Rejected: `CSS.getPlatformFontsForNode`, which answers only for text laid out
-alone.
-
-**A control page proves that the render sees.** It is built from
-`tests/drive/control_font_faces.json`, and dressed with every font face, as every page is. Two of
-its paragraphs write a character that no shipped font face maps under their stack. A third writes
-`𝐀` under the body stack, which Noto Sans Math maps. The drive fails where the control raises a
-finding that it does not expect, or misses one that it expects. The fixture is under `tests/`,
-because the static check of coverage reads every other file, and no font face maps these characters.
-
-**Each page is rendered inside the document skeleton that the publish host wraps it in.** So the
-charset and the viewport are the ones that a viewer gets. `SKELETON_HOST` was read off the
-Reference, version 11, on 2026-10-05. It is the host's own, so it can change. The style sheet of the
-host is left out, because its body stack leads with font families of the system, which X.8 forbids
-here.
-
-No check is lost by that. An element that inherits no stack from its page takes the default of the
-browser. That default is a font family of the system too, so the drive finds it either way.
-
-Verified by `suites/test_render.nim`, nine laws over the verdict. Without the line that keeps an
-expected finding of the control out of the findings, three of the nine fail. Verified by `drive` on
-2026-10-05, in Chromium 141 (revision 1194) under Playwright 1.63.0. No page that `pages` wrote then
-gave a finding, and the control raised its two findings. With Noto Sans Math taken out of
-`FONT_FACES`, the drive fails, and `p#closed` of the control is among its findings.
-
-Cost: a page is read at one viewport, in the state it opens on. Text that a script writes only after
-the reader acts, as the Explorer writes the moves of a frame, is not read. Cost: a character is
-resolved alone, as its `cmap` maps it. So a combining mark can draw from a font face that this does
-not name. Cost: the time that `drive` takes over the kept pages is unmeasured.
-
-**`package-lock.json` pins the node tools, and git ignores their checkout.** The project commits
-`package.json` and `package-lock.json`, which pin these versions. `typescript` 7.0.2 type-checks the
-harness, and `@playwright/test` 1.63.0 drives Chromium. Both are Microsoft's, under Apache-2.0.
-`@types/node` 22.20.2 is DefinitelyTyped's, under MIT, and types the node surface that the harness
-reaches. The `license` field of each entry in `package-lock.json` gives these licences, and the
-licences of what they bring.
-
-**Chromium is the one that Playwright pins, unless `DANCE_CHROMIUM` names one.** `package-lock.json`
-pins `@playwright/test`, and that version pins the revision of the browser. `drive` fetches it with
-`npx playwright install chromium`. Playwright publishes no checksum, so the bytes arrive on TLS
-alone. The run above used revision 1194 through `DANCE_CHROMIUM`, where Playwright 1.63.0 pins
-revision 1243.
-
-**`types` compiles this driver, and the project code that it imports, on the compiler of koch.**
-That holds while the pin of this project is the pin of koch, 2.2.12 for both. A pin that moves first
-splits the driver.
+Rejected: Commit Mono alone, which draws no `⇄`. Rejected: another mark for `place`, which would
+change the design.
 
 **Suites write pages apart from the directories that `pages` writes.** A page that a suite writes
 carries no font faces. So `test_marks` writes under `build/suites/`, and `pages` dresses only
 `build/app` and `build/design`. A suite page that stands where a published page stands could be
-published without its font faces. `drive` renders only what `pages` dresses.
-
-Rejected: Commit Mono alone, which draws no `⇄`. Rejected: another mark for `place`, which would
-change the design.
+published without its font faces. `drive` renders only what `pages` dresses, and the control page
+of `koch drive`.
 
 **A dressed page that declares no charset declares UTF-8.** The Reference, the rig viewer and the
 bundled Explorer are fragments, and publishing wraps each one in a document. Opened from a file,
@@ -2636,6 +2616,92 @@ can lose them.
 **A shipped label font face makes a card one picture on every machine.** A label in the reader's own
 sans draws a card differently on each machine, and X.8 forbids that. Verified by hand in
 Chromium 1194, 2026-09-10: none of 97 measured labels sits outside its viewBox.
+
+## Drive
+
+**`koch drive` proves the font faces of every page, as `CONTRIBUTOR.md`, Pages and assets, asks.**
+It writes a control page to `build/font-faces/control.html`, then runs `drive`. `drive` builds every
+page, and renders each one in Chromium as the publish host serves it. One collector reads each page
+and the control page. It writes `build/font-faces/written.json`, in the shape that
+`curator/audit/src/font_stacks.nim` gives, and names the control page `control`. Then `koch drive`
+resolves that file, writes `found.json` beside it, and reports each finding.
+
+A character beyond ASCII that a font face of the system draws on a page is a finding. The finding
+names the page, the element and the codepoint. A font face that the browser does not load is a
+finding too. So is a numeral of the control page that the collector does not read.
+
+The harness is TypeScript under `tools/drive/`. TypeScript is admitted for the host API of a test
+driver. It checks each expression that runs inside the page against the types of the DOM. The
+harness resolves nothing and judges nothing. `koch drive` reads the `cmap` of each font face,
+matches each weight and walks each font stack, once for every project.
+
+**No copy of the check stands here, and this project names no other project (Architect, issue 670,
+2026-10-21).** The curator holds the one check of font faces in `koch drive`, for every project
+(issue 671). This project keeps its collector, its pages and its choice of font faces.
+
+Rejected: a harness in Nim compiled to JavaScript, as `shot` is, where each of those expressions is
+an unchecked string.
+
+**The control page is the curator's, and it proves the collector on each run.** It holds the Chinese
+numerals one to five, each in one kind of place where text stands. Those places are a paragraph, the
+placeholder of a field, a `::before`, SVG text, and text that a script writes on load. No font face
+of the store maps any of them. So each numeral that the collector reads is in `found.json`, and a
+numeral that is missing names the place that the collector skips.
+
+`drive` reads the control page as `koch drive` writes it, outside the skeleton of the host. The page
+declares its own charset, and the skeleton adds no place where text stands. Where no control page
+stands, as when `drive` runs alone on a fresh build, `written.json` holds the pages alone, and
+`drive` says so. Verified by a run of `nim r tools/build.nim drive` alone on 2026-10-23.
+
+**Each rule names a file that holds the bytes of its font face.** The resolver of `koch drive` reads
+the `cmap` out of a file, and each font face is inlined as a `data:` source. So the collector writes
+the bytes of each source once into `build/font-faces/files/`, named by their SHA-256. Then
+`koch drive` reads the bytes that a viewer receives, from the page itself and not from the store.
+
+**Each page is rendered inside the document skeleton that the publish host wraps it in.** So the
+charset and the viewport are the ones that a viewer gets. `SKELETON_HOST` was read off the
+Reference, version 11, on 2026-10-05. It is the host's own, so it can change. The style sheet of the
+host is left out, because its body stack leads with font families of the system, which X.8 forbids
+here.
+
+No check is lost by that. An element that inherits no stack from its page takes the default of the
+browser. That default is a font family of the system too, so `koch drive` finds it either way.
+
+Verified by `suites/test_render.nim`, which holds each page inside the skeleton of the host, and the
+skeleton to no font family. Verified by `nim r koch drive contributor/sincopa/dance_ontology` on
+2026-10-23, in Chromium 153 (revision 1243) under Playwright 1.63.0. It gave no finding. No page
+that `pages` wrote draws a character from a font face of the system, and every font face loaded.
+Each of the five numerals of the control page was in `found.json`, at the element that holds it.
+
+Two breaks, each made by hand on 2026-10-23 and then reverted, show that the check sees. With the
+read of `placeholder` taken out of the collector, `koch drive` fails, and names `U+4E8C` in the
+placeholder of a field. With the two font faces of Commit Mono taken out of `FONT_FACES`, it fails
+with ten findings. Each one names the page, the element and the codepoint, as `button#next` of
+`design-rig` draws `U+2192`.
+
+Cost: a page is read at one viewport, in the state it opens on. Text that a script writes only after
+the reader acts, as the Explorer writes the moves of a frame, is not read. The `⇄` that the Explorer
+writes is such text, and Noto Sans Math alone maps it. So `koch drive` passes with Noto Sans Math
+taken out of `FONT_FACES`, and the static check of coverage reports that `⇄` instead. Both were
+measured by hand on 2026-10-23.
+
+Cost: the time that `drive` takes over the kept pages is unmeasured.
+
+**`package-lock.json` pins the node tools, and git ignores their checkout.** The project commits
+`package.json` and `package-lock.json`, which pin these versions. `typescript` 7.0.2 type-checks the
+harness, and `@playwright/test` 1.63.0 drives Chromium. Both are Microsoft's, under Apache-2.0.
+`@types/node` 22.20.2 is DefinitelyTyped's, under MIT, and types the node surface that the harness
+reaches. The `license` field of each entry in `package-lock.json` gives these licences, and the
+licences of what they bring.
+
+**Chromium is the one that Playwright pins, unless `DANCE_CHROMIUM` names one.** `package-lock.json`
+pins `@playwright/test`, and that version pins the revision of the browser. `drive` fetches it with
+`npx playwright install chromium`. Playwright publishes no checksum, so the bytes arrive on TLS
+alone. The run above used revision 1243, which Playwright 1.63.0 pins, with no `DANCE_CHROMIUM` set.
+
+**`types` compiles this driver, and the project code that it imports, on the compiler of koch.**
+That holds while the pin of this project is the pin of koch, 2.2.12 for both. A pin that moves first
+splits the driver.
 
 ## Mirror twins
 
@@ -3131,6 +3197,25 @@ Verified for the rename of `Stop.Reach` to `Stop.Span`, with jq 1.7 and GNU diff
 same. A change of docs alone keeps every kept file to the last bit but its stamp, verified by git
 diff on 2026-10-11.
 
+**A value that may be missing is a type that its reader unwraps.** IV.4 and STYLE ask it of
+expected absence, and an empty unwrap fails at once. So each of these is an `Option`: the arm that
+a card lays over (`over`), and the connection that gave (`Walk.which`). The distance that the
+stance search chooses (`chosen`) and the free arm that stops a couple (`stoppedFree`) are too. So
+are the weight that the planner may take from its style, and the moment that couple last faced.
+
+On the pages, the card of a rig entry and a span of the Reference are each an `Option` too. A
+capsule names its owner, trunk, limb or face, and only a limb carries an arm and a part
+(`plan.Shape`). Verified by the compiler, and by the full recording of 2026-10-24, which kept every
+kept file to the last bit but its stamp.
+
+An empty value stays where the rule allows one, as for the identifier of a rig entry that no card
+shows. A bound outside the range stays where a fold reads it as the bound of an empty set, and its
+doc says so. So `Inf` stays for the least gap of a link that meets no part. So does `-Inf` for the
+turns of a walk that holds no rest. IV.5 lets a module decide that policy.
+
+Three results still carry a default where their search found nothing, beside a flag that says so:
+`Walk.whose`, `Tight` and `Strain` (Open questions).
+
 ## Toolchain
 
 **The compiler is pinned exactly, at the version this project was verified on.**
@@ -3203,6 +3288,12 @@ to tidy the line away shows up only as suites that fail to build. `result +=` on
   there beside the answer of the simulation and what stops it (Against the floor). Where the two
   disagree, the ruling is the Architect's. So is whether a high lock goes a whole turn, and what
   moves in the body when it does.
+- **A result that found nothing still carries a default.** Three results hold one, such as the
+  left hand of dancer one. They are the hand of a walk that nothing stopped (`Walk.whose`), and the
+  joint of a reading where no arm is held (`Tight`). The third is the joint of a strain where no
+  pose holds (`Strain`). Each sits beside a flag that says so, but its reader need not unwrap it.
+  The recording of the rig writes that default too, so typing it moves the recording and the rig
+  viewer (Form of the source).
 - **The radius of the girdle, 60 mm, is an estimate and not tape.**
 - **The breadth of the hand is not held to the bound of a leap (#605).** In L-r low, the edge of a
   held hand moves 150 mm at most in one moment, at 0.38 of a turn. The join moves 137 there.

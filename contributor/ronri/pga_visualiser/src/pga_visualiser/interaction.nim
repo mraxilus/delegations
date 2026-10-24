@@ -199,6 +199,14 @@ const
     ##   it asked for cut nothing but rounding, and rolled view 1.3e-9 radians where fingers
     ##   asked no roll.
 
+  PIXELS_LIFT_MENU_SELECTION* = 46.0
+    ## Lift selection menu opened with no pointer this far above object it follows.
+    ##   Above rather than on: menu straddling its object would swallow next drag off it.
+  PIXELS_INSET_MENU_POINTER* = 8.0
+    ## Stand corner of menu pointer opened this far from pointer: beside it, not under it.
+  PIXELS_MARGIN_MENU_SELECTION* = 8.0
+    ## Keep selection menu at least this far inside view, all of it where no pointer opened it.
+
 
 
 #[ Type Definitions ]#
@@ -575,6 +583,22 @@ func isRevealingWithoutPicking*(has_selection, is_menu_shown: bool): bool =
   ##   Shift never comes here: shifted click always adds or drops, then reveals.
   ##     Caller applies that, knowing modifier.
   has_selection and not is_menu_shown
+
+
+func pointMenuHung*(
+  anchor: ScreenPosition, width, height, width_menu, height_menu: float
+): ScreenPosition =
+  ## Place point selection menu hangs from by its bottom middle, where no pointer opened it.
+  ##   Centred `PIXELS_LIFT_MENU_SELECTION` above object it follows; both front-ends hang it here.
+  ##   Near edge, moved only as far as keeps whole menu `PIXELS_MARGIN_MENU_SELECTION` inside
+  ##   view. Lower bound wins, so menu larger than view keeps its left and top edges inside.
+  let
+    margin = PIXELS_MARGIN_MENU_SELECTION
+    half = width_menu / 2
+  ScreenPosition(
+    x: max(margin + half, min(width - margin - half, anchor.x)),
+    y: max(margin + height_menu, min(height - margin, anchor.y - PIXELS_LIFT_MENU_SELECTION)),
+  )
 
 
 func toDrag*(choice: DragChoice): Option[DragOperation] =
