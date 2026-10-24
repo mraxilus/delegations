@@ -3120,7 +3120,7 @@ are the weight that the planner may take from its style, and the moment that cou
 
 On the pages, the card of a rig entry and a span of the Reference are each an `Option` too. A
 capsule names its owner, trunk, limb or face, and only a limb carries an arm and a part
-(`plan.Shape`). Verified by the compiler, and by the full recording of 2026-10-23, which kept every
+(`plan.Shape`). Verified by the compiler, and by the full recording of 2026-10-24, which kept every
 kept file to the last bit but its stamp.
 
 An empty value stays where the rule allows one, as for the identifier of a rig entry that no card
