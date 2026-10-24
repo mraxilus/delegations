@@ -607,8 +607,8 @@ static pass of `audit` does not run this check yet.
 **Each layout rule that has one right answer has a check and a fixer, from one reading.** The
 checks and fixers of separators, signatures, calls and trailing separators share the reading of
 `wrapping.nim`. Spaces read `spacing.nim`, and `## Spaces` gives them. Blank lines read
-`blanks.nim`, and docs and defaults `declarations.nim`. A construct that the scanner cannot read
-with certainty stays as written, and its check stays silent.
+`blanks.nim`, and `## Declarations` gives docs and defaults. A construct that the scanner
+cannot read with certainty stays as written, and its check stays silent.
 
 **Parameters take commas while each type appears once, and semicolons where a group shares a
 type (STYLE.md §5).** The rule holds on one line and across several, the trailing separator
@@ -758,6 +758,56 @@ moves.
 - Cost: a helper inside a `when`, an `if` or a loop of the body is not read. X.11 asks each
   helper first in the body.
 
+**A rewrite that widens its line past `LINE_MAX` stays only where a wrap fits.** `## Wraps` gives
+which fixers widen, which wraps follow, and what the chain holds where none fits.
+
+## Declarations
+
+**Docs and defaults of declarations read `declarations.nim`.** Each rule has a check and a
+fixer, from one reading, as each layout rule does.
+
+**Each declaration takes a doc, as VI.1 asks, and the fix writes `TODO: Document.` where it has
+none.** The rule and its reading follow the ruling of the Architect on 2026-10-21, on the page of
+knoller rules of #443. The reader of names (`declared.nim`) gives each declaration its kind and
+reach. A global binding, a routine, a type, a field and an enum member alone on its line take a
+doc. A local binding, a parameter and a generic placeholder take none.
+
+- Names that share one line, as `left*, right*: T`, share one doc, so that line reports once.
+- A doc passes in each place that the rule of doc position reads. That is the line of the
+  declaration, or a whole line just above it at its indent. It is also a whole line below the
+  declaration or its value, one level in. The place is the rule of position's, which runs next.
+- `TODO: Document.` passes. A doc whose text opens with another TODO still awaits text, so the
+  fix writes `TODO: Document.` there. The other TODO moves above the declaration, and above a
+  doc that stands above it, as a `#` comment. So no design note is lost.
+- A declaration runs to the line that closes each bracket it opens, and each string that runs
+  past its line. The value of a binding also runs on through each line below it that is deeper
+  than it. The signature of a routine ends at a line that ends in `=`. Before that, it runs past
+  a line that ends in `:`, and takes a pragma line below it.
+- A name inside the value or the signature of the declaration above it is part of that
+  declaration, and takes no doc. Such a name is a field of a tuple in brackets, or a parameter
+  of a proc type.
+- The fix puts the doc of a routine on the first line of its body, at the indent of the body. A
+  value of several lines takes its doc on the line after its last line, one level in. All 128
+  such docs of the repository stand there. Any other doc joins the line of its declaration
+  where it fits, else it takes the next line, one level in.
+- A value that opens a body on its first line, as `block:` or a lambda, takes its doc on the
+  first line of the body. A doc last in the body stands where the value of the body is. Nim
+  then reads that value as an expression left unused. A body that opens below the first line
+  of a value takes the doc above the declaration, at its indent.
+- The fix writes comments alone, so each token outside them stays as written.
+- A one-line borrow or forward in a run under one `#` group comment passes, as VI.1 excepts it.
+  A declaration inside `quote do:` passes, because a generator carries its docs through a
+  parameter.
+- Rejected: a doc for a local binding, a parameter or a placeholder. The Architect ruled that
+  each takes none, and VI.1 says so.
+- Rejected: a doc on the first line of a value of several lines. A doc after `,` or `:` inside
+  brackets does not parse, and a doc inside a string changes the string.
+- Cost: the rule joins `koch fix` and the check of knoller, and not the static pass of `koch
+  check`. The checks of the fix wait for their wiring (#443).
+- Verified by `suites/test_declarations.nim`: each kind, each place of a doc and each exception.
+  It also holds the other TODO, and each shape of the fix, settled on a second run. It holds
+  each shape of a declaration that runs past its line too.
+
 **A one-line doc of a type, a field, a binding or an enum member stands on its line (STYLE.md
 §5).** It takes two spaces before `##`, where the joined line fits `LINE_MAX`. Otherwise it takes
 the next line, one level in. A trailing doc that widens its line past `LINE_MAX` moves there. A
@@ -777,9 +827,6 @@ literal gives `string` or `char`. `default(T)` gives `T`, and `none(T)` gives `O
 - A template and a macro stay, because a parameter of theirs without a type reads otherwise.
 - Cost: a literal with a suffix, such as `0'u8`, and a raw string keep their type, though it is
   exact.
-
-**A rewrite that widens its line past `LINE_MAX` stays only where a wrap fits.** `## Wraps` gives
-which fixers widen, which wraps follow, and what the chain holds where none fits.
 
 ## Spaces
 
@@ -1606,6 +1653,10 @@ there is unverified.
 
 ## Open questions
 
+- Enum members listed on one line, as `Pascal, Camel, Snake`, take no doc of their own yet.
+  STYLE.md §5 puts the doc of a member on its line, and one line cannot hold one for each. Each
+  member could take a line and a doc, or the list could pass under the doc of its type. The
+  Architect has not ruled.
 - Install by git URL needs the `?subdir=curator/knoller` form of nimble. It is not verified with
   the nimble that 2.2.12 ships.
 - Some rules read paths in the layout of this repository: `tests/`, a test stub, a drive file
