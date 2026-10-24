@@ -62,7 +62,7 @@ import { driveSurfacesFilled } from './surface';
 import { driveHeapUnit, drivePhaseSums, driveTree } from './diagnostics';
 import { driveCrossingsCounted, driveShareAgrees, driveShareRefused } from './share';
 import { driveAxis, driveAxisGlide, driveCurve, driveScaleSwitch } from './exceedance';
-import { driveSums, driveTint, openEveryBranch } from './ramp';
+import { driveSidesCarryTime, driveSums, driveTint, openEveryBranch } from './ramp';
 import {
   drivePinAnchor, drivePinGrid, drivePinMarker, drivePinPick, drivePinPool,
   MILLISECONDS_PICK_HOVER_LOADED,
@@ -342,6 +342,8 @@ async function driveMeasured(browser: Browser): Promise<void> {
   await drivePlacingCost(page, objects_largest);
   await drivePinPickLoaded(page, MILLISECONDS_PICK_HOVER_LOADED);
   await driveLoadedAccounting(page);
+  // Last: its frames turn camera, which checks above read as framed.
+  await driveSidesCarryTime(page);
 
   report(
     'the measured page raised no error', errors_page.length === 0, errors_page.join(' | '),
