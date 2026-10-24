@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | c523b64950d1f7de |
+| Rules   | 0ff7fe750293e4e9 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 | Pruned  | ab8fb063b62bb03ba9fd7f2964a1866b3862909b |
 
@@ -2206,6 +2206,14 @@ update ends no turn with a sign-off.
   once the hook reads it, so each line sent again reads twice. The reply passes unread, since
   `stop_hook_active` is set, so the `-` line that repeats a wrong phrase refuses nothing.
   Rejected: corrected lines alone, which a delegate read as each whole paragraph sent again.
+- **A message gives each long form once.** Its first mention of an issue or a pull request is
+  a link with a short description. After it, the number alone names the same item, as Claude
+  Code links it. A row of the sign-off names its item in its own cells. An article or a duty is
+  described at its first citation, and cited bare after it. Rejected: the long form at each
+  mention, which repeats what the reader read a line before.
+- **A message writes each link inline.** Claude Code shows a reference link as raw text where
+  its definition stands below it, so `stop` reports each message that defines one. Rejected:
+  definitions above their first use, which render, but which a delegate must order by hand.
 - Cost: in a project thread, the Architect reads a reply, which is a tool call. `stop` reads
   only the text of the turn, so it holds the shape of a sign-off in that text alone. Reading
   holds the shape of the reply, as it does outside Claude Code. Verified by hand through the

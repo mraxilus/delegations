@@ -300,12 +300,19 @@ suite "Hooks":
       .messages.anyIt("got `working`" in it and "**Working:**" in it)  # no state for work
 
 
-  test "message names issue and pull request by link, never by bare number":
-    # Short description and number, as one link (GUIDE.md, Output contract).
+  test "message names issue and pull request by link first, then by number alone":
+    # Long form once, as one link of short description and number (GUIDE.md, Output contract).
     const linked = "[the ledger fix (#456)](https://x/456), [#457] and " &
       "[the fixers (#441)][#441].\n\n[#457]: https://x/457\n[#441]: https://x/441\n"
     check checkNumbersBare(linked).len == 0
-    check checkNumbersBare("Merged #463.\n").messages.anyIt("`#463` outside link" in it)
+    check checkNumbersBare("Merged #463.\n").messages.anyIt("`#463` bare before any link" in it)
+    check checkNumbersBare("[the ledger fix (#456)](https://x/456) merged, so #456 closes.\n")
+      .len == 0  # after its link, number alone
+    check checkNumbersBare("Merged #456.\n\n[The ledger fix (#456)](https://x/456) holds.\n")
+      .len == 1  # bare before its link
+    check checkNumbersBare("#456 is [the ledger fix (#456)](https://x/456).\n").len == 1  # line
+    check checkNumbersBare("| 1 | ✅ | Gap list | #331 | green |\n\nThen #331 waits.\n")
+      .len == 0  # row names its item
     check checkNumbersBare("See `#463` and\n```\n#464\n```\n").len == 0  # code
     check checkNumbersBare("``run `#463` here``\n").len == 0  # span of two backticks
     check checkNumbersBare("Undefined [#465] stays bare.\n").len == 1  # no definition
@@ -313,13 +320,23 @@ suite "Hooks":
     check checkNumbersBare("#463 then #463 again, and #7\n").len == 2  # each number once
 
 
+  test "message writes each link inline, since reference link defined below shows raw":
+    # Claude Code shows `[text][label]` as text where its definition stands below it.
+    check checkLinksReference("[the ledger fix (#456)](https://x/456) merged.\n").len == 0
+    check checkLinksReference("[the fixers (#441)][#441].\n\n[#441]: https://x/441\n")
+      .messages.anyIt("`[#441]` by reference" in it)
+    check checkLinksReference("```\n[#441]: https://x/441\n```\n").len == 0  # code
+    check checkLinksReference("[#1]: https://x/1\n[#2]: https://x/2\n").len == 1  # once
+
+
   test "message cites each charter reference by short description, never bare":
     # Short description and its reference, as `names read head first (V.2)` (GUIDE.md, Output
     #   contract). Each passing form stands beside bare `V.2`, so stub reporting nothing fails it
     #   as stub reporting every reference does.
     check checkReferencesBare("X.9 says so.\n").messages == @[
-      "Message cites `X.9` with no description; cite each article and duty by short " &
-        "description and its reference, as `expression spacing (X.9)` (GUIDE.md, Output contract).",
+      "Message cites `X.9` with no description; cite each article and duty first by short " &
+        "description and its reference, as `expression spacing (X.9)`, then reference alone " &
+        "(GUIDE.md, Output contract).",
     ]
     check citedBare("It holds under V.2 here.\n") == @["V.2"]
     check citedBare("Then duty 3 waits.\n") == @["duty 3"]
@@ -337,6 +354,9 @@ suite "Hooks":
     check citedBare("Nim 2.2.12, D1, D2, §5, MIX.3, IX.2.1 and a/V.2, and V.2 alone.\n") ==
       @["V.2"]  # version, decision, section, longer token
     check citedBare("X.9 then X.9 again, Duty 3 and duty 3.\n") == @["X.9", "Duty 3"]  # once
+    check citedBare("Expression spacing (X.9) holds, so X.9 alone after it.\n").len == 0
+    check citedBare("A check that reddens a project (duty 3), then Duty 3 alone.\n").len == 0
+    check citedBare("X.9 first, then expression spacing (X.9).\n") == @["X.9"]  # bare before
 
 
   test "sign-off decision is card coordinator lifts unchanged":
