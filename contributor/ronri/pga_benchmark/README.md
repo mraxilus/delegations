@@ -18,8 +18,8 @@ the pin to library head. A bar on top of each page links the home page and the t
 
 `drive` also renders each page, and writes what each page draws for `koch drive` to judge. Then
 `koch drive` fails where a font face of the system draws a character beyond ASCII. Its own control
-page proves that the render reads every kind of place where text stands. `drive` itself fails where
-two blocks of a card touch, and a control page of the project proves that read.
+page proves that the render reads text in each of the five kinds of place that it holds. `drive`
+itself fails where two blocks of a card touch, and a control page of the project proves that read.
 
 | Page | Kind | What it shows |
 |------|------|---------------|

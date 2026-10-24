@@ -1048,20 +1048,24 @@ does not load. The harness writes what it reads into `build/font-faces/written.j
 that `font_stacks.nim` in `curator/audit/src/` gives. Each rule there names the file of its font
 face. The harness writes the bytes of each `data:` source into `build/font-faces/files/`, and names
 each file by the digest of its bytes. So `koch drive` reads the bytes that a viewer receives, and
-the harness writes each font face once, however many pages ship it.
+the harness writes each font face once, however many pages ship it. Verified by hand on 2026-10-24:
+one run wrote six files, and their names equal those of the six files of the store.
 
-**`koch drive` gives the verdict, and its control page proves the collector.** Before it runs
-`drive`, it writes a control page to `build/font-faces/control.html`. The collector reads that page
-as it reads every other page, and the harness writes it as page `control`. Once `drive` passes,
-`koch drive` resolves the stack of each string against the font faces of its page. It writes
-`build/font-faces/found.json`, and fails where a font face of the system draws a character beyond
-ASCII. It also fails where a font face does not load, or where the collector misses a numeral of the
-control page.
+**`koch drive` gives the verdict, and its control page proves the collector in five kinds of
+place.** Before it runs `drive`, it writes a control page to `build/font-faces/control.html`. The
+collector reads that page as it reads every other page, and the harness writes it as page `control`.
+Once `drive` passes, `koch drive` resolves the stack of each string against the font faces of its
+page. It writes `build/font-faces/found.json`, and fails where a font face of the system draws a
+character beyond ASCII. It also fails where a font face does not load, or where the collector misses
+a numeral of the control page.
+
+The suite of the resolver, `test_font_stacks.nim` in `curator/audit`, holds each of the three.
 
 The project keeps no reader of `cmap` and no judge of font faces. The costs of the resolver are in
-the header of `font_stacks.nim`. A run of `drive` outside `koch drive` finds no control page. Then
-the harness writes `written.json` with the pages alone, and the driver prints that it does so.
-Nothing judges that file, because only `koch drive` resolves it.
+the header of `font_stacks.nim`. `koch drive` leaves its control page in `build/font-faces/`, so a
+later run of `drive` alone reads it too. Where that folder holds no control page, the harness writes
+`written.json` with the pages alone, and the driver prints that it does so. Nothing judges that
+file, because only `koch drive` resolves it.
 
 Before it reads, the collector shows every element through one `display: revert` rule. Chromium
 styles a hidden element on demand, one at a time, and the docket hides 28 540 of its 31 355
@@ -1104,8 +1108,9 @@ side by side, as the columns of a grid do.
 
 Three runs of the harness over every page and both control pages took 11.4 to 12.0 s. The harness
 that resolved each character itself, built from `28c559ae`, took 11.3 to 11.6 s in three runs. Those
-runs read every page and the control page of layout. The wall clock timed each run, on
-`linux amd64, 4 cores` on 2026-10-24.
+runs read every page and the control page of layout. The wall clock timed each run, on `linux amd64,
+4 cores` on 2026-10-24. The resolver of `koch drive` is unmeasured, so the pair holds the harness
+alone.
 
 Verified by `koch drive` on 2026-10-24, in Chromium 153.0.8010.12, which is revision 1243 that the
 lock pins. Every page held no finding, and `found.json` held each numeral of the control page. A run
