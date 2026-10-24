@@ -45,9 +45,13 @@ type
 
 const WORDS_FUNCTION* = [
   "an", "and", "as", "at", "be", "by", "for", "from", "in", "into", "is", "it", "of", "on",
-  "or", "so", "something", "someone", "the", "to", "with",
+  "or", "so", "someone", "something", "the", "to", "with",
 ]
   ## English function words glosses use as glue, never as content; sorted for search.
+
+static:
+  doAssert WORDS_FUNCTION.isSorted,
+    "Function words should be sorted for binary search; got `" & $WORDS_FUNCTION & "`."
 
 
 func toTokens*(english: string): seq[string] =
