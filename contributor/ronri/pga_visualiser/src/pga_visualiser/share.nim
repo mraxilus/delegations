@@ -3,7 +3,7 @@
 ## Sampling profiler answers it: each sample is one stack of calls, and one rule names its owner.
 ##   Sample belongs to side whose code it was running: owner of innermost frame that has one.
 ##     PGA owns time in its own operators, whoever called them.
-##     Algebra owns `motors`, `projections` and `objects`, which compose PGA's operators.
+##     Algebra owns `motors` and `objects`, which compose PGA's operators.
 ##     Boundary owns `boundary`, which lifts into algebra and reads back out.
 ##     Euclidean owns `euclid` and `mesh`, which never name multivector.
 ##   Rest is everything else: consumers' own work, panel, browser's or driver's own work.
@@ -61,7 +61,7 @@ const
   PATH_PGA = "/projective_geometric_algebra_illuminated/pga"
     ## Name reference library by tail of its path: module `pga` and every module under it.
   MODULES_SIDE* = [
-    ("motors", Owner.Algebra), ("projections", Owner.Algebra), ("objects", Owner.Algebra),
+    ("motors", Owner.Algebra), ("objects", Owner.Algebra),
     ("boundary", Owner.Boundary),
     ("euclid", Owner.Euclidean), ("mesh", Owner.Euclidean),
   ]

@@ -8,20 +8,19 @@
 ##   than naming modules it happens to need today (Article I.6).
 ##
 ## Order of bootstrapping, by what each module needs before it, one line for each module:
-##   Need nothing here: euclid, format, message, motors, neighbourhood, objects, projections,
-##   ramp, starfield, timings, wording.
+##   Need nothing here: euclid, format, message, motors, neighbourhood, objects, ramp,
+##   starfield, timings, wording.
 ##   [euclid, objects] -> boundary
 ##   euclid -> mesh
-##   [boundary, mesh, projections, timings] -> tessellate
-##   [boundary, motors, projections, tessellate] -> camera
-##   [boundary, format, projections, tessellate] -> scene
+##   [boundary, mesh, timings] -> tessellate
+##   [boundary, motors, tessellate] -> camera
+##   [boundary, format, motors, tessellate] -> scene
 ##   [camera, scene] -> history
 ##   [boundary, camera, euclid, neighbourhood, objects, scene, starfield, tessellate]
 ##     -> orrery
 ##   [boundary, camera, euclid, scene, tessellate] -> picking
 ##   [boundary, scene, tessellate] -> storyboard
-##   [boundary, camera, format, picking, projections, scene, tessellate, wording]
-##     -> interaction
+##   [boundary, camera, format, picking, scene, tessellate, wording] -> interaction
 ##   [boundary, camera, picking, tessellate] -> marker
 ##   [interaction, scene, wording] -> help
 ##   [marker, scene] -> selection
@@ -31,7 +30,6 @@
 ##   | Module           | Holds                                                        |
 ##   |------------------|--------------------------------------------------------------|
 ##   | `objects`        | Point, line and plane as multivectors, and their shapes      |
-##   | `projections`    | Projections `pga` withdrew, until library's own return       |
 ##   | `euclid`         | Positions, directions, matrices, tolerance comparison        |
 ##   | `format`         | Magnitudes and coefficients as text, same on both backends   |
 ##   | `message`        | What each outcome says, and how long it stands               |
@@ -63,11 +61,11 @@ when compileOption("profiler"): import std/nimprof
 
 import ./pga_visualiser/[
   boundary, camera, euclid, format, framing, help, history, interaction, marker,
-  mesh, message, neighbourhood, objects, orrery, picking, projections, ramp, scene,
-  selection, starfield, storyboard, tessellate, timings, wording,
+  mesh, message, neighbourhood, objects, orrery, picking, ramp, scene, selection,
+  starfield, storyboard, tessellate, timings, wording,
 ]
 
 export
   boundary, camera, euclid, format, framing, help, history, interaction, marker,
-  mesh, message, neighbourhood, objects, orrery, picking, projections, ramp, scene,
-  selection, starfield, storyboard, tessellate, timings, wording
+  mesh, message, neighbourhood, objects, orrery, picking, ramp, scene, selection,
+  starfield, storyboard, tessellate, timings, wording

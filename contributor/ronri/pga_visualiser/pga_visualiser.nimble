@@ -14,4 +14,4 @@ srcDir = "src"
 #   with characters no release lexes, and commit is where Nim added them. CI builds it from
 #   source and caches per commit; see PROVENANCE.md, Dependencies / Vendoring.
 requires "nim == 27763495bcfe265507ca98aedc1c7064bf1e0e4d"
-requires "https://gitlab.com/mraxilus/replications#295bafc"
+requires "https://gitlab.com/mraxilus/replications#3d9696e"

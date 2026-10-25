@@ -1072,7 +1072,7 @@ owner of the innermost owned frame on its stack. The Architect set the PGA share
 
 **PGA owns the time in its own operators, whoever called them.** PGA calls back into nothing of the
 project, so a frame in `pga` is the innermost owned frame wherever it stands. The algebra side owns
-`motors`, `projections` and `objects`, which compose the operators of PGA. The boundary owns
+`motors` and `objects`, which compose the operators of PGA. The boundary owns
 `boundary`, which lifts into the algebra and reads back out. The Euclidean side owns `euclid` and
 `mesh`, which never name a multivector. A frame that no side owns, such as a copy in `system`,
 belongs to the owned frame that called it.
@@ -1126,9 +1126,14 @@ page less the engine over seven runs.
 | Page, 7 runs | 22.3 to 31.4% | 0.8 to 2.0% | 4.8 to 8.9% | 1.5 to 3.4% | 355 to 404 |
 | Page less engine | -2.5 to +4.3 | -0.9 to +0.4 | -2.7 to +1.6 | -1.3 to +0.5 | |
 
+**The loop that the suite samples reads the clock once for 256 products.** A read of the CPU clock
+of the process is a system call. With the pinned library, it costs about as much as one product.
+With a read for each product, the share read 44 to 59% in 12 runs on 2026-10-22, against a bound of
+50%. With one read for 256 products, it read 82 to 94% in 12 runs.
+
 *Checked.* Verified by `suites.nim`: the rule names the owner of names from the built page and of
 desktop paths. It names a stack by its innermost owned frame, and the ring pools 20 s. On Linux, the
-sampler counts a loop of products as PGA's, at 82 to 85% of about 100 samples. Verified by driven
+sampler counts a loop of products as PGA's, at 82 to 94% of about 100 samples. Verified by driven
 check: the page from a file says why once, and the served page agrees with the engine on each side.
 Verified on 2026-10-06 by `xvfb-run -a binaries/rga_visualiser --hidden --novsync --timings
 --frames:300 --demo:5038`: the desktop figures above.
@@ -1191,7 +1196,7 @@ row. Verified on 2026-10-06 by `xvfb-run -a binaries/rga_visualiser --hidden --n
 |  |  | `scene`, `selection`, `picking`, `marker`, `framing`, `interaction`, |
 |  |  | `storyboard`, `orrery`, `neighbourhood`, `starfield`, `history`, |
 |  |  | `format`, `help`, `message`, `wording`, `timings`, `ramp`, |
-|  |  | `projections` |
+|  |  | `motors`, `share`, `shown` |
 | `src/desktop` | `main.nim` alone | `main`, `panel`, `renderer`, `gui`, `gui_shim.cpp`, |
 |  |  | `opengl`, `sdl3`, `image`, `gif`, `arena` |
 | `src/browser` | `bridge.nim` alone | `bridge.nim` and the page's own scripts |
@@ -2775,11 +2780,11 @@ about a line and a slide along that same line.
 base form, `⟇` for this one), the antireverse (`~∘`), the weight and bulk split, and `unitize`. It
 carries no motor type, no `exp` and no `log`.
 
-The library names that gap twice as its own work. `multivectors.nim` asks for an even grade basis,
-and names motors as the reason. `operators.nim` names motors beside the sandwich macro that it
-leaves commented out. So this module stands in until the library returns, on the pattern of
-`projections.nim`. A compile guard refuses the build once the pinned library carries its own `exp`.
-Nothing here reimplements a library operation, which Article II.8 forbids.
+The library names a motor once, among the compact types that it has yet to write
+(`multivectors.nim`). It carries `MultivectorEven`, the even-grade set that a motor lives in, but
+its operators take a full multivector. So this module stands in until the library carries motors.
+A compile guard refuses the build once the pinned library carries its own `exp`. Nothing here
+reimplements a library operation, which Article II.8 forbids.
 
 **A motor lives in the algebra of the antiproduct, and not in that of the base product.** A probe
 read the rows below off the pinned tree, and the suite pins every one of them.
@@ -2788,12 +2793,20 @@ read the rows below off the pinned tree, and the suite pins every one of them.
 - The turn generator is the line direction (`E41`, `E42`, `E43`), which antisquares to `-𝟙`.
 - The slide generator is the line moment (`E23`, `E31`, `E12`), which antisquares to zero.
 - The sandwich is `Q ⟇ m ⟇ ~∘Q`. One form serves a point, a line and a plane alike.
-- A turn by `+θ` about a unit line is `exp(-(θ/2)L)`, and `turnAbout` holds that sign.
+- A turn by `+θ` about a unit line is `exp((θ/2)L)`, right-handed about the direction of the line.
+  `turnAbout` holds that sign.
+- A slide by `t` is `𝟙 + ½t`, with `t` written as a moment, and `motorSliding` holds that sign.
 - Motors compose right to left, so `m.carried(a).carried(b)` is `m.carried(b ⟇ a)`.
 
 The base product is not this algebra. Under `⟑` the two halves swap roles: the moment squares to
 `-1`, and the direction squares to zero. A sandwich built there turns about the line at infinity
 rather than about the line meant, and both products compile.
+
+**The signs of a turn and a slide are the signs that Lengyel writes.** At the pin, the antiproduct
+of two basis elements is the right complement of the product of their left complements, as
+`/((\m) ⟑ (\n))`. That holds for all 256 pairs. The library at `295bafc` gives the opposite sign for
+84 of them, and there a turn and a slide take the opposite signs. So one stance has a different
+motor at each pin: its six line coefficients change sign, and its antiscalar and scalar stay.
 
 **Neither `exp` nor `log` needs a degenerate branch.** Both read two series of the half-angle,
 `sin(a)/a` and `(a*cos(a) - sin(a))/a³`, which are finite at zero, where they read 1 and `-1/3`. A
@@ -2830,6 +2843,10 @@ back with `carried`. Nothing else in the tree names a motor.
 - the identity, the inverse through `~∘`, and the grade that survives a sandwich;
 - the distance and the weight that a rigid motion keeps;
 - the order of composition.
+
+Verified by a probe on 2026-10-22: the complements give the antiproduct for 256 of 256 pairs at
+the pin, and for 172 at `295bafc`. At the signs of `295bafc`, 127 of 481 cases of the C suite fail
+at the pin, the camera's among them. At the signs above, none fails.
 
 Assumed: that `unitize` is the motor norm for any unit motor. The suite reads it back for every
 motor that `exp` builds. Nothing renormalises a composed stance. Natively on 2026-09-24, 10^6 turns
@@ -4392,14 +4409,23 @@ inside it. So the requirement in `pga_visualiser.nimble` names the repository by
 it to. `koch fetch-deps` replays that lock, and nothing is committed (Article XI.3).
 
 Both projects are under the Prosperity Public License 3.0.0. Rejected: a project verb that clones
-it, because CI runs `check-files`, `fetch-deps` and `test`, and never the build driver of a project.
+it, because koch restores the lock before each verb that compiles the code of a project.
 
 **This project tracks the head of pga, and says so when it cannot.** The standing instruction of the
 Architect is to take the latest pga. Where the latest does not work, pin the most recent commit that
 does, record which and why, and move forward when it works again. Every pull request states which
-commit of pga it builds against, and whether that is head. The pin stands at head,
-`295bafc5e97e8ee94943c6f4c7a92f215a74e5e7`, which costs two things, and the instruction is to pay
-both rather than trail behind.
+commit of pga it builds against, and whether that is head. The pin stands at
+`3d9696edbaaa5dca655c3024174bd46fd156d7c6`, which was the head of the library on 2026-10-22.
+
+**The `head` verb holds the pin to the head, and only a daily run reads it.** `nim r tools/build.nim
+head` compares the directory of the library at the pin with the same directory at the head of
+`replications`. It compares trees and not commits, because a commit elsewhere in that repository
+changes nothing here. A finding exits 1, and `head.yml` then keeps one issue open for this project
+while the pin lags. No merge waits on the verb, because its verdict moves with the library.
+
+`tools/head.nim` holds the comparison as pure functions, so the suite reads it on both backends. The
+build driver holds git and the network, and it compiles no project code. Rejected: a comparison of
+commits, which opens an issue for each commit to another directory of `replications`.
 
 **The compiler is pinned by commit, and not by release.** Head spells its operators in prefix and
 compound form (`☆m`, `m ∧☆ n`), which needs seven Unicode operator characters that Nim gained in
@@ -4412,37 +4438,59 @@ release, which is months of standing behind the library that this project exists
 pin moves to a release once one carries 26074. The lexer change reaches the own source of this
 project: `-☆(m)` lexes as the single operator `-☆`, and is spelled `-(☆m)`.
 
-**Four projections are withdrawn at head, and `projections.nim` stands in until they return.**
-`projectCentral`, `projectCentralAnti`, `projectOrthogonal` and `projectOrthogonalAnti` are declared
-`{.error.}` while the library rebuilds them as compound operators (`∨∧★`, `∧∨★`, `∨∧☆`, `∧∨☆`). This
-project calls two of them at eight sites, so head alone does not compile here. Each stand-in is a
-template that carries the definition which the own operator table of the library gives. It is
-copied, and never derived, so nothing about the algebra is invented here (Article II.8).
+**Head carries the four projections, so the project calls them from `pga`.** `projectCentral`,
+`projectCentralAnti`, `projectOrthogonal` and `projectOrthogonalAnti` have bodies at the pin. Each
+is the definition that the operator table of the library gives. `scene`, `tessellate`, `camera`,
+`interaction` and the suite import `pga` itself.
 
-The module is a seam. `scene`, `tessellate`, `interaction` and the suite import it instead of `pga`,
-and `export pga except` those four keeps the names from colliding. An import of both raises an
-ambiguous call rather than answers from the wrong one. **The guard makes this transitional rather
-than a fork.** A `compiles` probe through a qualified call reads the own declaration of the library.
-An `{.error.}` then refuses the build the day it gains a body, and names the module to delete and
-the imports to restore.
+**Head gives a turn and a slide the signs that Lengyel writes.** Its antiproduct agrees with its
+complements, so the signs of a motor follow from the operator table and not from this project. See
+Motors.
 
-Rejected: a pin held one commit back, which leaves the project behind its own dependency. Rejected:
-a reshape of the call sites, which lets the library's build state decide what the visualiser offers.
+**The multivector `=~` of head is generic, so the scalar `=~` of the suite is generic too.** A
+generic of the library compiles where its caller instantiates it. There, the private scalar `=~` of
+the library and the exported one of the suite are an ambiguous call. A generic over `SomeFloat`
+ranks below the exact match of the library, which then wins inside its own `=~`. Everywhere else the
+suite reads its own. Rejected: a rename of the scalar `=~` of the suite, which changes each of its
+calls.
+
+**The rest of head reaches this project unchanged.** `MultivectorOf[B]` and its aliases, a
+configurable `Coefficient`, and norms that return `MultivectorScalars` compile under every call
+here. Head prints its multivector aliases while it compiles, through `expandMacros`. That adds about
+ten lines to each build log, and changes nothing that is built.
+
+**On the page, head makes a frame cheaper in calls, and its lattice dearer in copies.** A probe
+counted calls and copies in V8 with its optimiser off, on 2026-10-22, at `295bafc` and at the pin.
+Each count is of the opening scene, with its plane picked and the camera at 300, after one frame
+that is not counted.
+
+| Count | At `295bafc` | At the pin |
+|-------|--------------|------------|
+| Calls of a frame with no lattice | 25,163 | 16,484 |
+| Calls of a frame with the lattice | 566,902 | 553,658 |
+| Calls that the lattice adds to 9 moving frames | 4,847,207 | 4,817,506 |
+| Copies that the lattice adds to those frames | 340,767 | 356,725 |
+| Copies and calls of a marker and its pulse, over 5 objects | 15,883 and 48,642 | the same |
+
+The counted build is not the build that ships, which runs the optimiser. The lattice uploads the
+same bytes at both pins, and every speed check passes at the pin.
 
 **Two Atlas defects stand, and the workaround is by hand.** `atlas pin` writes `"objects": {}` for a
 repository that carries no nimble file, so the resolved commit is patched into `atlas.lock` by hand.
 `atlas` also calls the nimble file "broken" because it cannot parse a commit where it expects a
 version, which is cosmetic. The stored nimble of the lock must equal the committed one exactly, or
-`rep` reverts the pin silently (repository issue 25). The static pass refuses the difference, so the
-hand-patch is checked rather than trusted.
+`rep` reverts the pin silently (repository issue 25). The static pass refuses the difference, and
+the suite holds the commit of the lock to the requirement of the nimble file.
 
 *Checked.* Verified by a run on the pinned commit, through `koch test`: every suite on the C
-backend, on JS, and at reduced capacities. It ran at the same case counts that the previous pin
-produced, which says the stand-ins behave as the own ones of the library did. Verified: with
-`dependencies/` deleted, `atlas --noexec rep` clones and checks out `295bafc`, `atlas changed` exits
-0, and the nimble file is byte-identical afterwards. Verified by a run that the guard fires.
-`pga.nim` patched to give `projectOrthogonal` a body refuses the build at `projections.nim(40, 10)`,
-and names the module to delete and the four imports to restore.
+backend, on JS, and at reduced capacities. Verified: in a worktree with no `dependencies/`, `koch
+fetch-deps` clones and checks out `3d9696e`. The nimble file and the lock are byte-identical
+afterwards.
+
+Verified by `suites.nim`: the comparison, and the commit of the lock against the nimble file.
+Verified by runs of the verb on 2026-10-22. It exits 0 at the pin. With the lock set to `295bafc`,
+it exits 1 and names both commits. With a commit that the checkout lacks, it exits 1 and names the
+pin.
 
 Verified: the pinned compiler reports `git hash: 27763495bcfe265507ca98aedc1c7064bf1e0e4d`, which
 `toolchain.runningCompiler` reads. Assumed: that no release carries 26074. 2.2.12, 2.4.0 and 2.6.0

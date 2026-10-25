@@ -197,8 +197,8 @@ const LUT_TEXT_BY_WORDING: array[Wording, cstring] = [
         "inside PGA, the reference library, whatever called it. A sampling profiler counts " &
         "it, so read it as about right rather than exact; n is how many samples it rests on.",
   TipDiagnosticsAlgebra:
-    "Share of the same busy time that ran in this project's algebra outside PGA: its motors, " &
-        "its projections, and its incidence questions, which compose PGA's operators.",
+    "Share of the same busy time that ran in this project's algebra outside PGA: its motors " &
+        "and its incidence questions, which compose PGA's operators.",
   TipDiagnosticsBoundary:
     "Share of the same busy time that ran in the boundary, which lifts positions, directions " &
         "and motors into the algebra and reads them back out.",
