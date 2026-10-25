@@ -8,7 +8,7 @@ _Who made this, from what, and how far it has been checked._
 | Author  | Claude Opus 5 and Claude Sonnet 5 |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | c523b64950d1f7de |
+| Rules   | 0ff7fe750293e4e9 |
 | Pruned  | 49b8f1c6ca50b0bb20472edd1cc819a6d7222045 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
@@ -704,6 +704,13 @@ Verified by a run, 2026-10-23, in the Chromium that Playwright pins, with the ra
 `CSS.getPlatformFontsForNode` still names Noto Sans Math and Noto Sans Symbols 2 for operators at
 600. Those operators carry 39% more ink than under the range. Cost: no check fails on that cut,
 since `koch drive` takes the font face at 400 for 600, as the browser does.
+
+**Commit Mono is declared over 400 to 700.** It ships one weight, and so does the desktop atlas.
+Mono asked at 600 or 700 then draws its regular glyphs on both front-ends, and never a bold that the
+browser synthesises (Article X.8). The collector asks each stack at each weight in play, and the
+`<b>` of the drawer brings 700. Verified by a script that is not kept, which runs the verdict of
+`curator/audit/src/font_stacks.nim` at `e6c9d9c0` over `written.json`. It reads two findings on
+`main` at `9b6c445d`, and none here.
 
 **Each face is held to its own load status**, by `driveTypeRoles`, because `document.fonts.check`
 answers true where no face matches at all. Verified by a run, 2026-10-07, in Chrome for Testing 153:
