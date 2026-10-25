@@ -29,8 +29,7 @@
 
 import std/[math, options]
 
-import pga
-import ./[boundary, camera, picking, scene, selection, tessellate]
+import ./[boundary, camera, picking, projections, scene, selection, tessellate]
 
 
 
@@ -408,9 +407,9 @@ func stanceFor*(aim: CameraAim; camera: Camera; width, height: int): CameraStanc
 func stanceApproaching*(
   shaped: Kind, radius: float, place: Position, camera: Camera, scale: DrawExtent
 ): Option[CameraStance] =
-  ## Resolve where camera ends after pointer pick: object centred, and come in to.
-  ##   Pivot goes onto object's own anchor, so it sits at middle of frame and orbit turns
-  ##   about it rather than about empty point beside it.
+  ## Resolve where camera ends after pick of object alone: object centred, and come in to.
+  ##   Pivot goes onto `place` on object itself, so it sits at middle of frame and orbit
+  ##   turns about it rather than about empty point beside it.
   ##     Held under pointer before, on whichever pixel reader clicked. Pivot then stood on
   ##     sight line at that object's depth, units away from object itself, and every orbit
   ##     swung object round screen rather than turning it where it stood.
@@ -431,6 +430,8 @@ func stanceApproaching*(
   ##   None where object is not ahead of eye, leaving caller `stanceFor`. Centring one
   ##   behind reader would slide camera back past it rather than turn, which is jump
   ##   nobody asked for; frame rule turns nothing and handles it by its own bound.
+  ##     Line is exempt: its place is its point nearest eye (ruling of #767), which stands
+  ##     beside eye as often as ahead, and slide there is what that ruling asks.
   ##     Ahead is judged against object's own reach from eye: depth no more than
   ##     `TOLERANCE_ABS` of it stands in eye's plane. Never against fixed millionth,
   ##     which object picked from hundredth of millionth off stands well under.
@@ -438,7 +439,8 @@ func stanceApproaching*(
     (eye, frame) = camera.sight
     centre = place.toView(camera.originView)
     reach_now = distanceBetween(centre.toMultivector, eye.toMultivector)
-  if depthAlong(eye, frame.forward, centre) <= TOLERANCE_ABS * reach_now: return
+  if shaped != Kind.Line and depthAlong(eye, frame.forward, centre) <= TOLERANCE_ABS * reach_now:
+    return
   var depth_end = min(reach_now, camera.distance)
   case shaped
   of Kind.Point:
@@ -453,6 +455,18 @@ func stanceApproaching*(
     if depth_end <= 1.0e-6: return
   of Kind.Line: discard
   some(camera.stanceDollied(camera.stanceRepivotedAt(place), distanceHeld(depth_end)))
+
+
+func positionOnLineNearest(placed: Placement, place: Position): Position =
+  ## Find point of line `placed` places that stands nearest `place`, both in world.
+  ##   Orthogonal projection onto line: `offerAim` brings pivot there for line picked alone.
+  ##     Not support: line's point nearest world origin can stand millions of units off
+  ##     reader, inside object (#767).
+  ##   Held in world, as scene stores line: from star 4.7e6 units out, point lands 4e-11
+  ##   off line, which is fifth of pixel at orbit distance of 2.4e-7, frame 900 high.
+  ##   Support itself where projection has no weight.
+  let line = wedge(placed.at.toMultivector, placed.toward.toMultivector)
+  position(projectOrthogonal(place.toMultivector, line)).get(placed.at)
 
 
 func stanceLifted*(stance: CameraStance, camera: Camera, normal: Direction): CameraStance =
@@ -596,6 +610,8 @@ func offerAim*(
   ##     it and comes in to it (`stanceApproaching`); group and horizon shape frame as
   ##     ever, since group has to fit, which one object's reach cannot promise.
   ##   Every other pick of dot alone lands no nearer than its fit (`stanceFitted`).
+  ##   Line alone comes to its point nearest eye, picked by list as by pointer, and never
+  ##   to its support (ruling of #767); see `positionOnLineNearest`.
   ##   `placed` is frame's placements, where caller has them, so every object watched is
   ##   read as frame placed it; pass nothing and each is placed here; see `aimFor`.
   # Take caller's extent, not second derivation.
@@ -603,7 +619,10 @@ func offerAim*(
   let
     aim = aimFor(scene, picked, staged, placed)
     pick = pointer
+    # Selection changed since last offer is pick, by list as by pointer.
+    is_picked_anew = pick.isSome or picked.revision != tween.revision_offered
   pointer = none(PointerPick)
+  tween.revision_offered = picked.revision
   if aim.isNone:
     tween.release()
     return
@@ -639,13 +658,33 @@ func offerAim*(
       placement = placementAt(placed, scene, pick.get.handle)
       shaped = placement.kindFinite
     if shaped.isSome:
+      # Line comes to its point nearest eye (ruling of #767), all else to its own anchor.
+      let place =
+        if shaped.get == Kind.Line: placement.positionOnLineNearest(camera.eyeWorld)
+        else: placement.at
       destination = stanceApproaching(
         shaped.get,
         scene.radiusAt(pick.get.handle),
-        placement.at,
+        place,
         camera,
         scale,
       )
+  # Bring line alone to its point nearest reader, never to its support (ruling of #767).
+  #   Pick reads eye, once. Slide keeps sight, so eye's own nearest point then stands
+  #   further along line, and eye read at each offer would carry camera along it forever.
+  #   Same line offered again, rewritten or shown again, reads pivot and keeps distance:
+  #   pivot on line projects to itself, and nothing moves.
+  if destination.isNone and is_new_goal and staged.isNone and picked.len == 1 and
+      scene.isAlive(picked.at(0)):
+    let placement = placementAt(placed, scene, picked.at(0))
+    if placement.kind == Case.LineThrough:
+      if is_picked_anew:
+        destination = stanceApproaching(
+          Kind.Line, 0.0, placement.positionOnLineNearest(camera.eyeWorld), camera, scale
+        )
+      else:
+        destination =
+          some(camera.stanceRepivotedAt(placement.positionOnLineNearest(camera.pivotWorld)))
   # Frame what pointer pick did not place, and hold dot picked alone off its fit as it lands.
   #   Ruling of #535. Pointer pick's own approach already ends there. Goal already held is
   #   reader's own framing since, kept as lift below keeps it.
