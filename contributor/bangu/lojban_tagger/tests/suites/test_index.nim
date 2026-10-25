@@ -12,7 +12,8 @@
 ##     entity holds three times in four, all of them one time in three, so removals that change
 ##     index and that drop entity are common; floors hold both counts.
 ##   Samples are drawn into pools allocated once, after one seeding per test, and served by
-##     `served`; steps of walk are drawn before walk reads index they change.
+##     `served`; steps of walk are drawn before walk reads index they change. Regression test
+##     of adding no tag draws inside its loop, after one seeding.
 ##   Corpus holds no name of more than four pieces, and no tag of more than three gismu. Entity
 ##     holds at most 9 tags in random indexes and 19 in walks, measured at `SEED`, since names
 ##     collide and changes merge.
@@ -64,6 +65,7 @@ const
   CHANGES = 40  ## Changes in each random walk.
   FLOOR_CHANGING = 300  ## Fewest removals in walks that change index; 396 of 807 read at `SEED`.
   FLOOR_DROPPING = 140  ## Fewest removals in walks that drop entity; 187 read at `SEED`.
+  FLOOR_SHARED = 90  ## Fewest removals of tag another entity holds too; 124 read at `SEED`.
   PIECES_NAME = ["a", "b", " ", "/", "é"]  ## Pieces random name is spelled from.
   LINES_BAD = ["beta datni", "beta\tdatni\tvreji", "", "\tdatni"]  ## Bad lines cases insert.
   TEXTS_CANONICAL = [
@@ -372,3 +374,25 @@ suite "Internal: Index":
       check isNameValid("a" & character & "b") == not is_forbidden  # forbidden byte inside
     for name in ["notes/plan.md", "https://lojban.org/?q=1", " ", "é", "datni vreji"]:
       check isNameValid(name)  # path, URL, title: any other text
+
+
+  test "removing tag another entity holds leaves that entity whole":
+    randomize(SEED)
+    let shared = [readTanru("datni").get, readTanru("vreji").get, readTanru("datni+vreji").get]
+    var pool = newSeqOfCap[tuple[index: Index, name: string, tag: Tag]](SAMPLES)
+    for _ in 1..SAMPLES:
+      var index: Index
+      for n in 0 ..< rand(2..5): index.addTags($n, [shared.sample, shared.sample])
+      pool.add (index, $rand(0..4), shared.sample)
+    var count_shared = 0
+    for sample in served(pool):
+      var index = sample.index
+      index.removeTags(sample.name, [sample.tag])
+      check index.others(sample.name) == sample.index.others(sample.name)  # named entity alone
+      let
+        is_held_here = sample.index.entity(sample.name).isSome and
+            sample.tag in sample.index.entity(sample.name).get.tags
+        is_held_elsewhere =
+            sample.index.entities.anyIt(it.name != sample.name and sample.tag in it.tags)
+      if is_held_here and is_held_elsewhere: inc count_shared
+    check count_shared >= FLOOR_SHARED  # removals of tag other entity shares are common
