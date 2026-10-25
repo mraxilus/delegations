@@ -1369,6 +1369,8 @@ Verified by driven check:
 - a still camera over a still scene builds its whole records on every frame;
 - every edit reaches the canvas, and the frame after an undo draws the scene that it restored;
 - a still frame under the largest demo copies fewer values of its own than the scene has objects;
+- a still frame under the largest demo builds fewer multivectors of its own than the scene has
+  objects;
 - each frame build of the page lifts the motor once, still and while a drag orbits;
 - one frame of the page classifies each live object once, in each state that it counts.
 
@@ -1400,11 +1402,11 @@ clock of the page resolves. With every walk run to capacity, the still frame rea
 0.7 ms, as the build that walks to `bound` does. So no speed check can hold that fault.
 
 **`Scene.revision` counts the edits, and every writer sits inside `scene.nim`.** No geometry
-accessor returns a `var`, which would let a caller write with nothing recorded. Undo, redo, clear
-and every load replace the whole scene through `restoreFrom`. That call issues a revision **newer
-than every revision it ever handed out**, which is `max(live, snapshot) + 1`. Rejected: the count of
-the snapshot plus one, which a state between the two already wore. A reader keyed on it then takes
-the new scene for one that it read.
+accessor returns a `var` or a location, which would let a caller write with nothing recorded
+(Algebra boundary). Undo, redo, clear and every load replace the whole scene through `restoreFrom`.
+That call issues a revision **newer than every revision it ever handed out**, which is
+`max(live, snapshot) + 1`. Rejected: the count of the snapshot plus one, which a state between the
+two already wore. A reader keyed on it then takes the new scene for one that it read.
 
 **A placement falls out of date one handle at a time.** `Scene.revisions_placing` stamps each handle
 at the edit that last changed it, and `restoreFrom` stamps every live handle of the snapshot. Every
@@ -2515,6 +2517,41 @@ copy by the function that calls `nimCopy`, from the stack. Over 3 frames at 5,03
 9,639 copies of the project and 30,663 of the library, 13,434 a frame in all. With each object
 placed whole by `placeObject`, a counter that is not kept read 64,232 a frame, on 2026-10-05.
 
+**A read of a geometry builds no multivector.** On the JavaScript backend, `geometryAt` is a
+template whose expansion ends in a `block`. Rejected: a `lent` func there, which builds its default
+result, a fresh multivector of 128 bytes, at each call. It then returns the slot of the scene over
+that result. Placing reads each live object once in a frame, so such a func builds 5,038 in each
+still frame of the largest demo, for nothing.
+
+**The `block` keeps the read a value.** A write through the template fails to compile, as a write
+through a `lent` func does, on both backends (`test_scene`). The slot alone, as the last line of
+the template, is a location that a caller could write with nothing recorded (Scene storage). On the
+C backend `geometryAt` is a `lent` func, which returns a pointer and builds nothing. Rejected: the
+template on both backends, since a `block` on C copies its value into a temporary and out.
+Rejected: `noinit` on the func, which leaves the default result built on the JavaScript backend.
+
+**A count holds the design, as it holds the copies.** `driveBuiltStill` wraps the constructor of
+`Float64Array`, and counts each array of one multivector's length over 3 still frames of the
+largest demo. The check fails at one multivector of the project's own code for each object. One
+that a function of the library builds is counted apart and reported, and never bound. That count
+above zero also shows that the wrapper saw multivectors at all.
+
+Over 3 frames at 5,038 objects the check reads 1,467 multivectors of the project and 7,605 of the
+library. On `64efd55d`, which adds the check to the page of `28c559ae`, it reads 16,581 and 7,605.
+
+Measured on 2026-10-24 on one delegate, on the real clock, by a harness that is not kept. It loads
+the largest demo at 1200 by 900 px under SwiftShader, and reads the median of `ms_place` and
+`ms_build` over about 50 frames. Three runs of `main` at `28c559ae` and of this design ran in turn,
+in ms:
+
+| Diagnostics | Placing, `main` | Placing, after | Build, `main` | Build, after |
+|-------------|-----------------|----------------|---------------|--------------|
+| Shut | 10.8 to 12.0 | 7.7 to 8.1 | 12.7 to 14.0 | 9.5 to 10.0 |
+| Open | 15.2 to 16.9 | 12.0 to 12.8 | 19.1 to 20.7 | 15.9 to 16.9 |
+
+With the diagnostics open, the page also times the placing and the emitting of each object. In each
+run here that adds 3.7 to 5.4 ms to placing, and 5.6 to 7.4 ms to the build.
+
 **A lift writes its coefficients, and a read-out reads them.** Geometry goes through the operators,
 and the crossing is the coefficient table. A sum of blades made 23 arrays for a motor, and a write
 makes one. **`sight` reads the stance once for each event**, off one lift and one antireverse.
@@ -2581,9 +2618,17 @@ A turn and a frame build take 0.93 to 0.94 ms, against 0.86 to 0.94.
 
 Verified by `suites.nim`: placing charges the placing side on each of its seven exits, and a stretch
 that leaves early fails to build. Verified by driven check: a still frame under the largest demo
-copies fewer values than the scene has objects. Verified by a read of the emitted code on
-2026-10-04: no `nimCopy` stands in the six operators, `addRing` or `addDisc` on the JavaScript
-backend. On the C backend each operator is three field stores with no fill.
+copies fewer values than the scene has objects. It also builds fewer multivectors than the scene
+has objects. Verified by `suites.nim`: a geometry read by handle refuses a write, on both backends.
+Verified by a read of the emitted code on 2026-10-04: no `nimCopy` stands in the six operators,
+`addRing` or `addDisc` on the JavaScript backend. On the C backend each operator is three field
+stores with no fill.
+
+Verified by a read of the emitted code of the suite and of probes on 2026-10-24. On C, `geometryAt`
+returns a pointer, and a `block` copies its value into a temporary and out. On JavaScript, a `lent`
+func builds its default result, with `noinit` and without it. Verified by a probe on the same day:
+through a template that ends in the slot alone, a whole write compiles. So do a write of a field
+and a `var` argument.
 
 ## Origins
 
@@ -3181,7 +3226,7 @@ that a hover or a wheel names is read from its placement too, so the pick classi
 **The pick rejects a plane before it meets it.** `isBeyondDisc` bounds the screen extent of the disc
 by the silhouette of the sphere that contains it, conservative in the depth and off-axis terms.
 20,000 random configurations with 300 surface samples each found no silhouette point outside the
-bound. `geometryAt` hands back a `lent` view, and `projectToScreen` is three dot products in local
+bound. `geometryAt` reads the slot in place, and `projectToScreen` is three dot products in local
 floats. Rejected: a 4×4 multiply with two typed arrays allocated for each call, which was 43% of a
 15.4 ms pick over 10,000 handles.
 

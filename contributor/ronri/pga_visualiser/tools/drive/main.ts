@@ -79,7 +79,8 @@ import {
 import { driveGround } from './ground';
 import { driveAntialias, driveBlankRefused } from './canvas';
 import {
-  driveCopiesStill, driveFrameWork, driveLoopRuns, driveStanceReadOnce, watchFrames,
+  driveBuiltStill, driveCopiesStill, driveFrameWork, driveLoopRuns, driveStanceReadOnce,
+  watchFrames,
 } from './frame';
 import { driveHostSave } from './host';
 import { driveVeilCovers } from './veil';
@@ -276,6 +277,7 @@ async function driveSimulated(browser: Browser): Promise<void> {
   await loadDemo(page, objects_largest);
   // First, while demo stands as loaded and nothing in it moves.
   await driveCopiesStill(page, objects_largest);
+  await driveBuiltStill(page, objects_largest);
   await driveCulling(page);
   // Beside cull, under largest demo, where objects stand at every edge of frame.
   await driveCullHeld(page, devtools);
