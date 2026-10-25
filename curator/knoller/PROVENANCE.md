@@ -781,6 +781,113 @@ literal gives `string` or `char`. `default(T)` gives `T`, and `none(T)` gives `O
 **A rewrite that widens its line past `LINE_MAX` stays only where a wrap fits.** `## Wraps` gives
 which fixers widen, which wraps follow, and what the chain holds where none fits.
 
+## Missing docs
+
+**Each declaration takes a doc where its shape puts it, and `## TODO: Document.` waits for its
+text (VI.1).** The rule reads each name that `declared.nim` declares. A local, a parameter and a
+placeholder take none. Names that one line declares share one doc, so that line reports once.
+A line of enum members is such a line (D1 a of #752). The check and the fixer share one reading,
+`writesDoc` of `declarations.nim`.
+
+- A doc counts where it trails the line of the declaration, or the last line of its value or its
+  type. A doc that opens the first line below either one, at a deeper indent, counts too. The doc
+  of a routine counts on the first line below its signature.
+- The value of a binding runs on over each line of code below it at a deeper indent. Examples
+  are the branches of `when`, a sum after `+`, and a `block:` below `=`. Nim reads those lines as
+  part of the value, and `nim jsondoc` reads the doc below the last of them. Verified by hand
+  with `nim jsondoc` of 2.2.12 and of the commit pin of `ronri`, 2026-10-25.
+- A line of enum members ends on itself, because the `,` that closes it opens the next member.
+- A name on a line that opens inside a bracket is part of an expression, and takes no doc. Such a
+  name is a field of a tuple type, or a parameter of a routine type, over several lines. A doc
+  among them breaks the parse, as one after the last field before `]` does. A routine declared
+  there, as in `compiles(block: …)`, takes its doc as the first line of its body.
+- A doc that holds another TODO, such as `## TODO: Make distinct.`, holds a design note and no
+  text. The fixer moves the note above the declaration as a `#` comment (VIII.3), and the doc
+  becomes `## TODO: Document.`. A doc of several lines that opens with a note stays for hand,
+  because its outline can elaborate the note or the text.
+- A one-line borrow or forward in a stack under a group comment passes (VI.1). The stack is a run
+  of routines on one line each, at one indent, with the group comment right above it. The group
+  comment is a `#` comment. A `##` doc right above the run is no group comment. Inside a
+  routine, it is the doc of that routine.
+- Code in `quote do:` passes too, since its generator carries its docs through a parameter. So
+  does a doc on the line above, at the indent of the declaration, because it stands out of place.
+- The rule reads the end of each line from its tokens. A string, the closing `"""` of a long
+  string and a character literal hold no bracket and no comment for it. A line whose last token
+  is `,`, or an operator that ends in `=` or `&`, continues its statement.
+- A value or a body that opens a long string, or a comment of several lines, takes its doc where
+  that string or comment closes. A doc written on its first line would stand inside the string,
+  and change its value.
+- Nim 2.2.12 and the commit pin of `ronri` refuse a doc after the `=` of an argument inside an
+  open bracket. They refuse one after the `:` of a field or a key there too, as `expression
+  expected`. Verified by hand with both compilers, 2026-10-25.
+
+**The fixer writes each doc where doc position puts it and `nim doc` reads it (D2 a of #760).** A
+declaration on one line takes it joined to that line, where the joined line fits and holds no
+comment. Otherwise the doc takes the next line, one level in (STYLE.md §5). A routine takes it as
+the first line of its body, at the indent of the body.
+
+- A value or a type over several lines takes the doc after an `=` that ends its first line,
+  where that line fits. The library writes it so, as `Cayley1D* =  ## …`. Otherwise the value
+  takes the doc joined to its last line, or on the line below it, one level in.
+- A `case` value takes the doc on the line below its last branch, because `nim doc` reads none
+  that trails a branch.
+- A value that opens `block` on its first line stays for hand. Its report asks for the doc after
+  `=`, with `block` on the next line.
+- `nim jsondoc` of 2.2.12 and of the commit pin reads a doc in each of these places. It reads
+  none after the `(` of a call, after `[`, `,` or a binary operator, after `block:`, or first in
+  the body of `block:`. Verified by hand with both compilers, 2026-10-25.
+- Nim parses no doc on the line below an `=` that ends the first line. So a first line too wide
+  for a joined doc sends the doc to the close. Verified by hand with both compilers, 2026-10-25.
+- No comment alone gives a value that opens `block` on its first line a doc that `nim doc` reads.
+  `nim jsondoc` reads none after `block:`, first in the body, after its last line, or below it at
+  the indent of the declaration. A doc below the body at the indent of the body leaves its last
+  value unused, as `nim check` reports. Verified by hand with both compilers, 2026-10-25.
+
+**A forward declaration takes the doc of its routine, and the fix leaves that move for hand.**
+`nim doc` of Nim 2.2.12 reads the doc of a forward declaration, and drops the doc of the
+definition. Where the forward declaration holds no doc, the page shows none. Verified by hand
+with `nim doc` of 2.2.12, 2026-10-25. A `## TODO: Document.` there would hide the doc below it, so
+the fix writes none.
+
+**Missing doc runs after the wraps, and before the comment above.** A doc joins a line only where
+the line fits once the wraps settle it. Rejected: missing doc before the wraps. There a doc that
+trails a line which opens a bracket holds apart a call that the wraps would join.
+
+- A nested helper on one line that takes its doc stands on two lines. So the next round gives it
+  a blank line on each side (STYLE.md §1), and the chain settles in two rounds still. Verified by
+  hand with `knoller --check` on each project of this repository, 2026-10-25: no file stays
+  unsettled.
+
+- Verified by `suites/test_declarations.nim`: each kind and shape of declaration, and what passes.
+  It holds a shared line, a line of enum members, a design note, a forward declaration and the
+  lines that the fix traces. It holds a value over lines in each shape that takes its own place,
+  and a value that opens `block` and stays for hand.
+  It also holds cases of this repository whose value or signature runs past its first line, each
+  named where it stands.
+- Verified by `suites/test_chain.nim`: a call that the wraps join takes the doc after them.
+- Verified by hand on the PGA library at `3d9696e`, 2026-10-25, with a driver that runs
+  `fixDocsMissing` alone. It writes 43 docs, and leaves 8 values that open `block:` for hand.
+  `nim jsondoc` of the commit pin reads 42 of those docs, in the rigid and the conformal
+  configuration. The other one is the doc of a private field, which `nim doc` shows nowhere.
+  Knoller built at `cb433e68` and knoller of this rule give outputs that differ by those writes
+  alone, and a second run reports `0 to fix`.
+- Verified by hand on that output, 2026-10-25: the suites of `rga3d` and `cga4d` compile and
+  pass, with the commit pin of the library.
+- Verified by hand with that driver over each Nim file of this repository and of the library,
+  2026-10-25. A second fix writes nothing, and no token but a comment changes. A probe parses
+  each file the fix writes with `parseStmt`, under 2.2.12 and under the commit pin of `ronri`, and
+  each one parses.
+- Cost: a doc that opens the line right below the first line of a declaration counts, though the
+  value runs on past it. That holds for the first line of a `block:`, and for a line inside a
+  bracket, where `nim jsondoc` reads no doc. Verified by hand with `nim jsondoc` of 2.2.12,
+  2026-10-25. The fixer never writes a doc there.
+- Cost: a routine with no body reads as a forward declaration where any overload of its name
+  follows.
+- Cost: a routine on one line reads as a forward where its body after `= ` is shorter than
+  `BODY_FORWARD_MAX`, 40 bytes. A forward calls one routine with the arguments it takes, as
+  `entry(PICK)` does, and a longer body holds logic of its own. The bound is chosen and not
+  measured, so a short helper under a group comment passes too.
+
 ## Spaces
 
 **Each space inside an expression takes the count of the list of X.9.** A binary operator and

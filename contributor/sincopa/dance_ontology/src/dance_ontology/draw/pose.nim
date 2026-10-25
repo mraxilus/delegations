@@ -119,7 +119,7 @@ func spinAbout*(pose: Pose, who: Dancer, degrees: float): Pose =
 
 func orbit*(pose: Pose, who: Dancer, degrees: float, is_locked = true): Pose =
   ## Walk one dancer round other, who stands still.
-  ##   `locked` is what orbit is (rule 32): **whatever side of walker
+  ##   `is_locked` is what orbit is (rule 32): **whatever side of walker
   ##     faced centre goes on facing it**, so their facing swings with
   ##     radius and they turn as far as they travel.  Where they set off
   ##     facing their partner they keep facing them; where they set off
@@ -269,7 +269,7 @@ func turnWalk*(
   ##     Landing between two of them is held for beat, as landing
   ##       between stages is: without it walk reads as one long slide
   ##       and its steps cannot be counted by eye.
-  ##   `back` says whether same again in reverse follows, so going and
+  ##   `has_return` says whether same again in reverse follows, so going and
   ##     coming read from one figure.  Walk that closes on itself needs
   ##     no return and takes none: round of four quarters ends where it
   ##     began.

@@ -151,12 +151,13 @@ const RULES* = [
   "half-closed, Left to left held low: wrap at left@0.5, lock at right@1",
   "that applies to everything but high lock",
 ]  ## Each rule verbatim, one-indexed in prose as `RULES[i - 1]`.
-  ##   Rules 10 to 14 govern rotation page: rotation as edges over
-  ##     Explorer's eight frames, everything held high.
+  ##   Rules 10 to 14 name rotation page, which is retired: rotation as edges
+  ##     over Explorer's eight frames, everything held high.
+  ##     `design/README.md` says where each stands: 10 and 12 replaced, 11 and
+  ##       14 held by `checkSingleTurns`, 13 replaced by rules 28 and 31.
   ##   In rule 13 twisted states are ends of chain, not cycle --
   ##     middle edge is full turn that swaps which arm is over.
-  ##     That chain shape is implementer's reading of words, flagged
-  ##       on page as thing to check.
+  ##     That chain shape is implementer's reading of words.
   ##   Rule 14 rules out drawing first draft reached for: at high
   ##     arms are up, so connection passes *over* turning body and
   ##     never routes round one.  Twist is said as crossover is
@@ -184,7 +185,7 @@ const RULES* = [
   ##     their own bearing, arriving facing way they set off.
   ##     **Rule 32 has since reversed this**, and paragraphs below are
   ##       kept for what they measured rather than for what they concluded.
-  ##     `pose.orbit` has always had this as `locked = false`; locked
+  ##     `pose.orbit` has always had this as `is_locked = false`; locked
   ##       form keeps orbiter's face to their partner, which is
   ##       orbit and axis turn danced together, not orbit.
   ##     Measured with bearing kept: two orbits reach one round of
@@ -205,8 +206,8 @@ const RULES* = [
   ##     costs reader one turn to follow at every change of direction.
   ##     So length is not only price route pays.  Bend is worth
   ##       `route.BEND_COST` of line, and route is chosen on both
-  ##       together; rule's own reading of "ideally 1" is that route
-  ##       is left alone once it turns no more than once.
+  ##       together, every time: bend must save more than `BEND_COST` of
+  ##       line to be kept.
   ##   Rule 24 asks one bend to be curve rather than corner.  Rule
   ##     23's one-bend route was hull of marks, and hull is
   ##     polyline: its apex is break.  Quadratic bezier over same
@@ -342,9 +343,9 @@ const RULES* = [
   ##       hands and other carries all of it.  Handed *over* and not
   ##       merely given up, or loops would be too shallow to read as
   ##       thing going round.
-  ##     And straight one is one on top at first crossing, which
-  ##       by alternation dives only once: broken twice, there would be
-  ##       no straight line left in middle for anything to surround.
+  ##     And snake is one on top at first crossing, so by alternation it
+  ##       dives once and straight one dives twice (`route.straightArm`):
+  ##       Architect's reading, 2026-09-07, ruled again 2026-10-05 (#375).
   ##   Rule 32 corrects rule 20, and says what orbit is for good:
   ##     walker keeps **whatever side of them faced centre facing it**,
   ##     so they turn as far as they travel.
@@ -356,7 +357,7 @@ const RULES* = [
   ##       no quantity, and two of four manners of turn did not walk
   ##       chain at all.  Facing centre, orbit winds exactly as far
   ##       as it carries, and every way steps one position per half turn.
-  ##     `pose.orbit` has always had this as `locked = true`; rule 20 turned
+  ##     `pose.orbit` has always had this as `is_locked = true`; rule 20 turned
   ##       it off and rule 32 turns it back on.  What rule 20 objected to --
   ##       *"combining orbit and axis turns"* -- is same arithmetic seen
   ##       from other side, and it is bearing-keeping walk that is
@@ -431,9 +432,8 @@ const RULES* = [
   ##     table puts hand in front slot of its own side and sends its line
   ##     no way, so it takes short way.  Entry note is transition
   ##     fact, first ledger has that is about safety rather than
-  ##     shape; `simulation/verdicts.md` records what jointed-arm simulation makes of
-  ##     low lock: hand led behind back at whole turn,
-  ##     block just past it.
+  ##     shape; `simulation/verdicts.md` gives what jointed-arm simulation
+  ##     finds for low lock.
   ##   Rule 38's under-or-over *other* arm is mark no drawing here
   ##     makes yet: settled reach bends around hands it does not join
   ##     (rule 22), so crossing wrap makes with its dancer's other
@@ -442,17 +442,15 @@ const RULES* = [
   ##     than patched: saying it needs other arm in picture, and
   ##     decision about rule 22's scope.
   ##   Rule 39 makes modifiers per-arm for either dancer, up to one
-  ##     each.  Drawing model holds level and modifier per *connection*
-  ##     and settles only follow, which covers sheet's validated
-  ##     rows but not its enumeration; widening it is restructure, noted
-  ##     in `PROVENANCE.md`'s open questions rather than done quietly here.
+  ##     each.  Drawing model holds level and modifier per *connection*,
+  ##     and settles both hands of each connection, lead's and follow's.
+  ##     That covers sheet's validated rows but not its enumeration;
+  ##     widening it is restructure, noted in `PROVENANCE.md`'s open
+  ##     questions rather than done quietly here.
   ##   Rule 40 is sheet's one filled rotation row, and simulation asks it
-  ##     independently (`simulation/verdicts.md`): from Left to left held low,
-  ##     jointed-arm simulation reads lock as row does -- hand led
-  ##     behind back, whole turn reached -- and blocks wrap
-  ##     at three tenths of turn, at lead's shoulder twist, short of
-  ##     row's half.  One place row and simulation differ, recorded;
-  ##     neither was told other's answer.
+  ##     independently: `simulation/verdicts.md` gives what it finds for
+  ##     Left to left held low, turned from face to face.  Neither was told
+  ##     other's answer.
   ##   Rule 41 answers rule 7: its second sentence, that lock or wrap
   ##     means nothing unless line goes round body, holds for every
   ##     hold but high lock.  High lock folds arm in front, hand on top of

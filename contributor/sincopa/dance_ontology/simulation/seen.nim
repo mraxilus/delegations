@@ -56,7 +56,7 @@ type
     turns*: float  ## How far it got.
     is_stopped*: bool
     why*: Stop
-    whose*: Hand  ## Whose hand it gave at.
+    whose*: Option[Hand]  ## Whose hand it gave at, or none where nothing gave.
     stills*: seq[Still]
     is_planned*: bool
       ## Whether planner stood it: still no distance of carried walk held, or sweep's way over

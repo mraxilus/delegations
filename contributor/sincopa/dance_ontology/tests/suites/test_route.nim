@@ -75,8 +75,8 @@ suite "Internal: Reach breaks":
 
 
   test "a break falls where the lines cross":
-    # Crossing nearer than half break to either hand cannot be covered
-    # and still leave reach whole; every other one is covered.
+    # Crossing within `SEEN_RUN + LINK_WIDTH / 2` (5.1) of either hand gets no
+    # break (`gapFor`); every other one is covered.  `BREAK / 2` skips that and more.
     let span = float(POINT_COUNT - 1) * STEP
     for i in 0..<POINT_COUNT:
       let at = float(i) * STEP

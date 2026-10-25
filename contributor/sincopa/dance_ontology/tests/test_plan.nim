@@ -38,8 +38,8 @@ const
   HAND_TO_HAND = @[Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Right)]),
                    Link(ends: [(Body.One, Arm.Right), (Body.Two, Arm.Left)])]
     ## Cross-name two-hand hold, uncrossed Face-to-face: chain this suite turns.
-  CROSS = 0.5  ## Turns from rest to its cross: shortest wind that lifts hands over crown
-              ## and brings them down again facing.
+  CROSS = 0.5  ## Turns from rest to its cross, Face-to-back: shortest wind of chain that
+              ## lifts hands over crown, where they stay.
   JOINED = 1e-3  ## Metres planned joined hands may sit apart: `plan.KEPT` is millimetre
                 ## squared over whole violation, so one pair is never further.
   TIED = 1e-4  ## Metres engine may part tie of hands stood where plan joins them: tenth of
@@ -190,9 +190,9 @@ suite "Internal: Planner and engine are one rig":
 
 
   test "judge stops at every arm stood past shoulder's edge, held or free, and names it":
-    ## Upper arm past edge by more than `GIVE_EDGE` stops connection holding it, at that end, as
-    ## swing past its range does (`stoppedBy`, `Stop.Swing`).  Free arm past it stops couple,
-    ## named by its hand (`stoppedFree`, `gives`).  Arm inside stops nothing by swing.
+    ## Upper arm past edge by more than `GIVE_EDGE` stops connection holding it, named by its
+    ## hand, as swing past its range does (`stoppedBy`, `Stop.Swing`).  Free arm past it stops
+    ## couple, named by its hand (`stoppedFree`, `gives`).  Arm inside stops nothing by swing.
     ##   Engine's wall keeps every recorded arm inside give, so no recording reaches judge:
     ##     poses here are seeded, and stood where plan places them, nothing stepped.
     ##   Red with no reading of edge in judge: arm past edge and inside both swing ranges
@@ -208,7 +208,7 @@ suite "Internal: Planner and engine are one rig":
                              Body.Two)
       held_couple.placeBodies(start.chests, start.arms)
       for i, link in HAND_TO_HAND:
-        var expected = (why: Stop.None, end_index: -1)
+        var expected = (why: Stop.None, whose: none(Hand))
         for k in 0..1:
           let
             (who, arm) = (link.ends[k].body, link.ends[k].arm)
@@ -218,7 +218,7 @@ suite "Internal: Planner and engine are one rig":
             is_swung = margin(HUMAN.range[Dof.Extend], swing.extend) < -GIVE or
                 margin(HUMAN.range[Dof.Across], swing.across) < -GIVE
           if expected.why != Stop.None or not (is_swung or isPast(stance, arm, pose)): continue
-          expected = (Stop.Swing, k)
+          expected = (Stop.Swing, some(link.ends[k]))
           if not is_swung: inc held_past
         let got = held_couple.stoppedBy(i)
         if expected.why == Stop.Swing:
@@ -428,7 +428,7 @@ suite "Internal: Planned turn":
 
 
   test "engine sprung toward plan follows it to cross and stands there":
-    ## Engine judges as it judges every walk (`rigid.gives`): nothing through anything,
+    ## Engine judges as it judges every still (`rigid.gives`): nothing through anything,
     ## no joint past its end, hands not parted.
     ##   Red with shoulder aimed at plan's turn outside its rest frame: Reach at first moment.
     ##     Red with collarbone's lift read back with wrong sign: arm met arm at cross.  Both
