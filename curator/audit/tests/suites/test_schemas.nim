@@ -64,10 +64,11 @@ suite "Schemas":
       "  reserved 7;\n  reserved \"ALGEBRA\";\n")).len == 0  # value deleted, both kept
 
 
-  test "renumbered value, or deleted, retyped or renamed field, breaks it, naming its rule":
+  test "renumbered value, or deleted, retyped or renamed field, or changed optional, breaks it":
     # Case held: version 6 of scene file dropped `Algebra` and moved every later hue one down,
     #   so older file read wrong colours, and only code written by hand caught it (#755).
-    #   Domain is each edit category `WIRE_JSON` of `buf breaking` refuses.
+    #   Domain is each edit category `WIRE_JSON` of `buf breaking` refuses, and each change of
+    #   `optional`, which bytes hide but absent field reads differently under.
     let edits = [
       (SHIPPED.replace("ALGEBRA = 7;\n  INVALID = 8;\n  ROSE = 9;\n  COPPER = 10;",
         "INVALID = 7;\n  ROSE = 8;\n  COPPER = 9;"),
@@ -82,7 +83,13 @@ suite "Schemas":
           "to \"float\""),
       (SHIPPED.replace("bool is_hidden = 2;", "bool hidden = 2;"),
         "Field \"2\" on message \"Object\" changed name from \"is_hidden\" to \"hidden\""),
-    ]  # renumbered, value deleted, field deleted, retyped, renamed
+      (SHIPPED.replace("optional double radius", "double radius"),
+        "Field \"4\" with name \"radius\" on message \"Object\" changed cardinality from " &
+          "\"optional with explicit presence\" to \"optional with implicit presence\""),
+      (SHIPPED.replace("bool is_hidden", "optional bool is_hidden"),
+        "Field \"2\" with name \"is_hidden\" on message \"Object\" changed cardinality from " &
+          "\"optional with implicit presence\" to \"optional with explicit presence\""),
+    ]  # renumbered, value deleted, field deleted, retyped, renamed, `optional` dropped or added
     for (edit, rule) in edits:
       let found = held(edit)
       check found.anyIt(rule in it.message)  # `buf` names rule edit breaks

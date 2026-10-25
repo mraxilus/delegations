@@ -3,6 +3,9 @@
 ##     is added under new number, and deleted only by reserving its number and name; none is
 ##     renumbered, retyped or renamed. Category `WIRE_JSON` of `buf breaking` refuses each of
 ##     those, naming field or value, and passes what neither bytes nor JSON text can see.
+##   Rule `FIELD_SAME_CARDINALITY` refuses field gaining or losing `optional` too, which
+##     `WIRE_JSON` passes: bytes stay, but `optional` decides whether absent field reads as zero
+##     or as absent, so each older file changes meaning.
 ##   Shipped is schema at tip of base, not at merge base: newest version anyone may have written
 ##     files under is what branch must still read. Branch side is HEAD, as changed paths are.
 ##   Unit held is folder: each folder holding changed schema is one module of `buf`, read at tip
@@ -26,8 +29,10 @@ import ./[bufbuild, findings, tree]
 
 const
   EXT_SCHEMA = ".proto"  ## Extension of protobuf schema (`kinds.nim`).
-  CONFIG_BREAKING = "version: v2\nbreaking:\n  use:\n    - WIRE_JSON\n"
-    ## Config each module carries: category holding bytes and JSON text, never file layout.
+  CONFIG_BREAKING =
+    "version: v2\nbreaking:\n  use:\n    - WIRE_JSON\n    - FIELD_SAME_CARDINALITY\n"
+    ## Config each module carries: category holding bytes and JSON text, never file layout,
+    ##   and rule holding presence of each field.
   CODE_BREAKING = 100  ## Exit code of `buf` where it found breaking change or compile error.
   SIDES = ["before", "after"]  ## Module folders under work: shipped, then branch.
 
