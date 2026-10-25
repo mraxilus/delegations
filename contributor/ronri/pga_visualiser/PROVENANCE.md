@@ -3077,6 +3077,18 @@ The worst case of a marker lies along orientation, so a sweep of camera *distanc
 against its own length. The two vanishing points sit at screen distances in a ratio of 314. Rails
 are shortened **after the projection**.
 
+**Each rail is cut to the view before it is sized and drawn** (`cutToView`). With the eye far off a
+line, the cut of a rail at the near plane projects up to 1e17 px out. Uncut, a browser clamps that
+coordinate and draws the rail at 45° where the line runs at 59° (repository issue 767). The cut
+reads its fractions from the end nearer the middle of the view. A fraction read from the far end
+loses whole pixels to rounding.
+
+**Where the support stands behind the eye, the rails start where the line enters the view.** The
+depth of the support then clamps to the near plane, so a gap stated there reads as no pixel in view.
+The rails also run to a shared head that is not on the line, so from a support that far back they
+shed their offset. So `markerRails` finds the point of the line under the entry of its image
+(`placeAtScreen`), and states the gap at its depth.
+
 **The frame of the horizon plane is an expanding circle that becomes the screen edge.** At each
 angle the radius is `progress × half-diagonal`, or the distance to the inset edge, whichever is
 smaller. It runs over `SEGMENTS_MARKER_FRAME` 64 even steps, with `CORNERS_MARKER_FRAME` 4 corner
@@ -3098,6 +3110,7 @@ measured 0.14999999999997 against 0.15.
 - the points of the loop on the plane (1.1e-15 on the antiscalar);
 - each kind reading at most its fixed points out of the algebra, with a pulse and without;
 - the straightness of the rails, and their widest reading over an orientation sweep;
+- the rails of a line whose support stands 4.7e6 units behind the eye, in view and 14.5 px apart;
 - the 68 points of the frame at 296.8 px flat at half progress;
 - a matured hold taken once;
 - a line's label over two orbits of 1,257 steps each, with no isolated step;

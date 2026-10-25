@@ -317,6 +317,64 @@ suite "Marker":
     check shapeMarker(through_eye).isNone
 
 
+  test "a line far behind the eye keeps its rails in view, apart, and along its own image":
+    # As found on published page, 2026-10-25, from Ross 794 (#767).
+    #   Star picked from 4.7 million units out holds eye 2.4e-7 off it, so near plane stands
+    #   6e-10 ahead. Rails of `sol ∧ earth`, whose support stood behind eye, ran from their
+    #   near-plane cut, projected 1e17 px out: browser drew both at 45 degrees against
+    #   line's 59, and gap stated at near plane read as no pixels, so pair fell on one line.
+    #   Line here runs through origin 2.4 degrees off sight, as that one stands from star.
+    let
+      star = Position(x: 1072071.0, y: 4533088.5, z: 171618.671875)
+      sight = (1.0 / norm(star - ORIGIN)) * (star - ORIGIN)
+      aside = normalize(cross(sight, Direction(x: 0.0, y: 0.0, z: 1.0))).get
+      along = sight + tan(degToRad(2.4)) * aside
+      placement = cameraAround(star, 2.414213562373095e-7, -sight)
+      scale = placement.drawExtentFor(height_mark, 0.0)
+      view_projection = placement.initMatrixViewProjection(width_mark / height_mark)
+      line_far = ORIGIN.toMultivector ∧ (ORIGIN + along).toMultivector
+      marker = shapedMarkerFor(
+        line_far,
+        none(Position),
+        scale,
+        placement,
+        view_projection,
+        width_mark,
+        height_mark,
+      )
+    check marker.isSome
+    let shown = marker.get
+    check shown.count_segment >= 2
+    # Every rail point stands in view, where any renderer draws it as computed.
+    for i in 0..<shown.count_segment:
+      for point in shown.segments[i]:
+        check point.x >= -TOLERANCE_SINGLE and point.x <= float(width_mark) + TOLERANCE_SINGLE
+        check point.y >= -TOLERANCE_SINGLE and point.y <= float(height_mark) + TOLERANCE_SINGLE
+    # Pair reads its stated gap at its widest, as at every other stance.
+    #   Measured over two pieces: half of each rail that runs toward eye lies behind it.
+    var apart = 0.0
+    for (own, other) in [(0, 1), (1, 0)]:
+      for point in shown.segments[own]:
+        apart = max(
+          apart, awayFromScreen(point, shown.segments[other][0], shown.segments[other][1])
+        )
+    check apart >= 0.95 * 2.0 * OFFSET_MARKER_RAIL
+    check apart <= 2.0 * OFFSET_MARKER_RAIL + tolerance_pixel_tilt
+    # Each rail runs along line's own image, which two of its points far ahead give.
+    let
+      ahead = projectToScreen(
+        view_projection, width_mark, height_mark, (ORIGIN + 1.0e8 * along).toView(scale.origin)
+      )
+      beyond = projectToScreen(
+        view_projection, width_mark, height_mark, (ORIGIN + 1.0e11 * along).toView(scale.origin)
+      )
+      angle_image = arctan2(beyond.y - ahead.y, beyond.x - ahead.x)
+    for i in 0..<shown.count_segment:
+      let (tail, head) = (shown.segments[i][0], shown.segments[i][1])
+      check abs(sin(arctan2(head.y - tail.y, head.x - tail.x) - angle_image)) <
+        sin(degToRad(2.0))
+
+
   test "a plane's marker circle lies on that plane, at every one of its points":
     let (placement, _, scale) = setUp()
     let
