@@ -1817,12 +1817,18 @@ object cost what the three of a `Position` cost. `boundary.nim` lifts them where
 once for each frame, not for each object. `picking.pickWalk` derives the eye and frame before its
 walk, and `drawExtentFor` hands every reader one extent, as `mesh.directionAcross` does.
 
-**Each frame reads the eye and frame once, and hands both to every reader.** Each front-end calls
-`moveOriginView` after the ease moves the camera. It moves the view origin to the eye, and reads the
-eye and frame about it off the same lift (Origins). It hands both to the near reach, the extent, the
-frustum and the transform, because each read of `eye` or `frame` lifts the motor again. A hold of
-the aim can move the camera, so a front-end reads again only where the motor moved. Rejected: the
-first read for the transform too, which draws where the camera stood before the hold.
+**Each frame reads the eye and frame once, and again only where the hold moves the camera.** Each
+front-end calls `moveOriginView` after the ease moves the camera. It moves the view origin to the
+eye, and reads the eye and frame about it off the same lift (Origins). It hands both to the near
+reach and the extent, which the aim reads, because each read of `eye` or `frame` lifts the motor
+again. A hold of the aim can move the camera, so a front-end reads again only where the motor moved.
+The frustum and the transform read that second read, so a frame culls and draws from one stance.
+
+The frustum takes the field of view and the height from the extent, and no hold moves either. Its
+near and far depths read the local scale that the near reach of the first read sets. Rejected: the
+first read for the frustum or the transform. It is the stance that the gesture asks for, before a
+hold of the aim moves the camera. Points at the edge of the frame then go out while two fingers
+spread at the floor of the frame rule (Framing). They come back when the fingers stop.
 
 **The overlay shares its extent within a frame by what the camera holds, and never by what it reads
 out.** The browser's `SettingsOverlay` takes the view origin, the motor and the depth. Those are the
@@ -1931,7 +1937,15 @@ Verified by driven checks:
 - an anchor lookup takes 3.750 µs, against 488.250 µs keyed on the read-out pivot and angles;
 - the view section shows sixteen coefficients, and a typed one settles on a unit motor;
 - it reads speed with nothing selected, and distance with a selection;
-- each frame build of the page lifts the motor once, still or orbiting, against 11 on `4a478976`.
+- each frame build of the page lifts the motor once, still or orbiting, against 11 on `4a478976`;
+- each frame that a hold moves draws the points, on screen, that a second build at that moment
+  draws. The holds are the frame floor, by fingers and by key, the bound of a sky point and the
+  fill of a point. On `674b910c`, 18 of 72 frames break it at the floor by fingers, and all but 13
+  at the bound of a sky point. The floor by key and the fill hold there too (`driveCullHeld`).
+
+Verified on 2026-10-24 by a harness that is not kept, in Chromium under SwiftShader. With the near
+reach and the extent derived after the hold too, each frame of a spread at the floor draws 327
+points. So does the fix.
 
 Verified by a probe in Chromium under SwiftShader on 2026-10-04, on an Intel Xeon at 2.10 GHz,
 against `4a478976`. Over 80 frames, the records and the transform that each frame hands the GPU
