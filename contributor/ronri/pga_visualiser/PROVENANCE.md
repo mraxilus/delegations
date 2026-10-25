@@ -2204,10 +2204,12 @@ Verified by driven checks, in Chromium on 2026-09-26:
 Verified by driven check, in Chromium on 2026-10-01: a right drag of 360.6 px over nothing carried
 the pivot 360.6 px at its own depth. The fixed share of separation carried it 626.7 px.
 
-Verified by driven check, in Chromium on 2026-10-02: three vertical right drags with one object
+Verified by driven check, in Chromium on 2026-10-25: three vertical right drags with one object
 picked turned the view 0.000000. Each held its point 0.000 px off the cursor's height. The
-separation went from 19.00 to 10.73, to 6.22, then out to 32.09. A drag down from the top, drifting
-2 to 4 px across at each of 24 steps, turned at most 0.0166 radians in one step.
+separation went from 19.00 to 10.73, out to 55.39, then in to 32.09. The drag below the row of the
+pivot runs last, from far out. At 10.73 units the ground covers the lower half of the frame, and a
+plane short of nine tenths is a handle (Picking). A drag down from the top, drifting 2 to 4 px
+across at each of 24 steps, turned at most 0.0166 radians in one step.
 
 ## Records and shaders
 
@@ -3078,18 +3080,26 @@ that it draws as. The horizon plane matches every ray, so it comes last. The ext
 `algebraFilled`, the one derivation point, because built field by field, a horizon point is
 unpickable with its multivector twins zero.
 
-**The sky is a click and hold target, and never a drag handle, and so is a plane or a point that
-fills the view.** With a horizon plane visible the cursor is over *something* almost everywhere. A
-press on empty space becomes a camera move precisely because nothing was hovered. A finite plane
-whose disc reaches every corner of the frame (`picking.isCoveringView`) leaves no empty glass at
-all. Every corner is half the diagonal from the middle, 750 px on a 1200×900 frame. Rejected: the
-longer side, 1200 px, under which a plane that covers the whole window still reads as a handle.
+**The sky is a click and hold target and never a drag handle, as is a plane that nearly fills the
+view.** With a horizon plane visible the cursor is over *something* almost everywhere. A press on
+empty space becomes a camera move precisely because nothing was hovered. A finite plane whose disc
+covers nine tenths of the frame or more leaves bare glass only in slivers (repository issue 758). No
+reader aims a press at those. `picking.fractionDiscFilled` reads that share where the disc stands,
+on a grid of 32 columns.
 
-A point fills the frame as the zoom comes in to it, and its drawn sphere is held to the same corners
-(`mesh.radiusDrawnAt`). Rejected: a point that is always a handle, which zoomed in until it covers
-the frame leaves no glass to press. `SLACK_COVERED` 1e-9 lets a disc fall that fraction short of the
-corners and still cover. An eye held at the fill stands one ulp short of it, and a bare `>=` reads
-the point there as a handle.
+Rejected: a disc that reaches every corner of the frame, by its radius about the middle. It reads
+the disc as if it faced the eye, so it reads a slanted plane wrong both ways. A ground covering
+98.2% of the frame, with bare corners, read as a handle under the mouse. A ground covering 53%, all
+of the lower half, read as backdrop with bare glass above it. Rejected: the longer side, 1200 px on
+a 1200×900 frame, which asked more still.
+
+A point is backdrop once it fills the frame, as the zoom comes in to it: its drawn sphere must reach
+every corner (`picking.isCoveringView`, `mesh.radiusDrawnAt`). Every corner is half the diagonal
+from the middle, 750 px on a 1200×900 frame. The zoom toward a point stops at that fill
+(`framing.holdFilled`), so a point keeps the rule of the corners. Rejected: a point that is always a
+handle, which zoomed in until it covers the frame leaves no glass to press. `SLACK_COVERED` 1e-9
+lets a disc fall that fraction short of the corners and still cover. An eye held at the fill stands
+one ulp short of it.
 
 `isBackdropUnder` folds every case into one answer, which `beginDrag`, `destination` and
 `interaction.is_hover_backdrop` read. A click on empty space selects the sky rather than clears the
@@ -3140,8 +3150,10 @@ destination, and a removal of an object clears the highlight on both paths.
 - the disc bound sampled from inside the view;
 - the ground hovered from half a unit (backdrop, drag refused) and from forty (drag starts);
 - a point reads as backdrop at 0.8 of its fill depth, as a handle at 1.25 of it and 1,000 units;
-- a disc spanning 965.7 px read as backdrop and one spanning 724.3 px did not, against a corner 750
-  px from the middle;
+- the ground reads as backdrop from 9 units, and as a handle from 12, under nine tenths covered;
+- the ground covering 99.7% of a frame of 1058 by 994 px, with bare corners, reads as backdrop;
+- over 96 seeded stances at two frames, a plane is backdrop exactly where a pick finds it under nine
+  tenths or more of the frame. 87 stances stand clear of the bound, 20 of them over;
 - a point ahead of the eye reads in front and is picked at each decade from 1e-8 to 1,000 units;
 - a point as far behind the eye reads behind;
 - a plane a camera stands millionths off is picked, and found under the pointer.
