@@ -16,9 +16,9 @@ English word that leads to one. The system uses only the compound and parsable n
 The authority is The Complete Lojban Language (CLL), by John Woldemar Cowan, first edition, 1997,
 from the Logical Language Group. The text used is the edition at `lojban.github.io/cll`, which is
 the first edition with errata. Chapter 3 gives the consonant clusters, and chapter 4 gives the
-shapes of words and the algorithm that makes a lujvo. Chapters 5, 7, 9, 12 and 15 give the scope
-of each cmavo that a tag can hold. The suites carry the names of those chapters, and each assertion
-cites its section or example.
+shapes of words and the algorithm that makes a lujvo. Chapters 5, 7, 9, 12 and 15 tell which words
+the cmavo SE, NAhE, NA, NU, `ke`, `ke'e`, `bo`, `kei` and `co` bind. The suites carry the names of
+those chapters, and each assertion cites its section or example.
 
 ## Clusters and forms
 
@@ -142,34 +142,51 @@ case is a choice of this project, since CLL writes no capital in a brivla. Verif
 in the offending text. Where the rafsi are known and only the hyphens are wrong, the detail is
 the form that 4.11 gives, as `patyta'a` for `patta'a`.
 
-## Scope of cmavo
+## What cmavo bind
 
 **A tag folds into units, and each unit is one word with the cmavo that bind it.** The cmavo that
 bind come from CLL. SE binds the next brivla or equivalent unit (9.4), and NAhE binds close to its
-brivla (15.4). NU rafsi act as short-scope modifiers in a lujvo (12.12), and the rafsi `nar` of
-`na` is kept for lujvo (15.2). Every other cmavo binds nothing and stands as a unit of its own.
-Verified by `suites/test_units.nim`.
+brivla (15.4). A NU rafsi modifies the next unit alone (12.12). Every other cmavo binds nothing,
+and stands as a unit of its own where it does not only group. Verified by `suites/test_units.nim`.
 
-**A run of SE composes into one conversion.** The inner conversion applies first (9.4), so
-`te se ciska` puts the third place of `ciska` first. Two `se` cancel (12.11), so `se se ciska`
-folds to `ciska`. Other cmavo keep their order against the conversions. Verified by
-`suites/test_units.nim`, over every chain of up to four SE.
+**`na` binds the whole tag.** 15.2 says that negation with `na` applies to an entire bridi, and
+not to just part of a selbri. So an odd count of `na`, wherever it stands, folds as one `na` before
+a group of the whole tag. An even count folds as none, because adjacent negations cancel out
+(15.2). Verified by `suites/test_units.nim`.
+
+**A run of SE that binds one unit composes into one conversion.** The inner conversion applies
+first (9.4), so `te se ciska` puts the third place of `ciska` first. Two `se` cancel (12.11), so
+`se se ciska` folds to `ciska`. Other cmavo keep their order against the conversions. Verified by
+`suites/test_units.nim`, over every chain of up to four SE, and by `se na'e se ciska`.
 
 **A group of one unit is that unit.** `ke` opens a group, and `ke'e` or the end of the tag closes
 it (5.5). A cmavo before `ke` binds the whole group, as in `selkemdzukla` (12.11). So `se ke ciska`
 folds to `se ciska`, and `selkemci'avei` holds no unit `se ciska`. Verified by
 `suites/test_units.nim`, over every chain of up to two of `se`, `te`, `na'e` and `nu`.
 
-**A cmavo that only groups drops.** The rank reads a run of units, and a run holds no grouping. So
-the `ke` and `ke'e` of a group that no cmavo binds drop, and `kemdatnyvei` folds as `datnyvei`.
-`bo` only groups (5.3), and drops too. `kei` drops, because a NU rafsi that acts on the next unit
-needs no `kei` to close it (12.13). Verified by `suites/test_units.nim`.
+**A cmavo that only groups drops.** The rank reads no grouping that no cmavo binds. So the `ke` and
+`ke'e` of a group that no cmavo binds drop, and `kemdatnyvei` folds as `datnyvei`. A group whose
+cmavo cancel binds nothing, so it drops too. `bo` only groups (5.3), and drops. Verified by
+`suites/test_units.nim`.
 
-**A lujvo leaves `ke` out in two places that CLL names.** Two SE in a row read as SE `ke` SE, so
-the first one converts the rest of the tag (12.11). A `ke'e` that closes nothing implies a `ke`
-after the cmavo that open the tag (15.4). Where no cmavo opens the tag, CLL gives that `ke` no
-place, so the `ke'e` only groups, and it drops. Cost: the fold reads every tag as a lujvo, so a
-tag read from tanru text follows 12.11 too. Verified by `suites/test_units.nim`.
+**`kei` closes an abstraction.** Rule 152 of 21.2 ends a NU with `kei`. So the fold reads `kei` as
+a `ke'e` that closes a `ke` after its NU, and `nu citka gasnu kei klama` abstracts two units. After
+one unit, that group holds one unit, as 12.13 says of `nunctikezgau`. A `kei` with no NU before it
+drops. Verified by `suites/test_units.nim`.
+
+**No group holds `co`.** 5.8 puts a `ke'e` before `co` for each group that is open there. Cost:
+`co` inverts the order of a tanru (5.8), but the fold keeps the written order. So the rank does not
+see a run across `co`. Verified by `suites/test_units.nim`.
+
+**A lujvo leaves `ke` out in two places that CLL names.** Two SE in a row read as SE `ke` SE
+(12.11). So the first one converts the rest of the tag, up to a `ke'e` that closes it. A `ke'e`
+that closes nothing implies a `ke` after the nearest run of binding cmavo with two units or more
+after it (15.4). With no such run, the `ke'e` only groups, and it drops. Verified by
+`suites/test_units.nim`.
+
+Cost: the fold reads every tag as a lujvo, so a tag read from tanru text follows 12.11 too. Cost: in
+a run of `na'e se` before such a group, both cmavo bind the group, where 15.4 names the negation
+alone.
 
 **CLL spells one example with a rafsi that the list gives to another gismu.** 15.4 writes
 `na'e ke sutra cadzu ke'e klama` as `nalsu'adzuke'ekla`. The list gives `su'a` to `stura`, and
@@ -177,13 +194,17 @@ gives `sutra` only `sut`, so the reader reads that example as `stura`. The suite
 the example, which the choice of gismu does not change. Verified by `suites/test_units.nim`,
 Section 15.4.
 
-Cost: CLL gives no scope for some cmavo that have rafsi, such as `pe'a` and the tense cmavo. They
-bind nothing here, so `pevyselci'a` ranks for `selci'a`, although `pe'a` makes it figurative
-(13.13). `co` inverts the order of a tanru (5.8), but the fold keeps the written order, so a run
-across `co` is not seen. Verified by `suites/test_units.nim` and `suites/test_search.nim`.
+13.13 makes a lujvo with `pev` figurative as a whole, and 5.13 gives a tense the whole bridi. The
+fold binds nothing to them. Cost: `pevyselci'a` ranks for `selci'a`, although `pe'a` makes it
+figurative. Verified by `suites/test_units.nim` and `suites/test_search.nim`.
 
-JAI binds as SE does (5.11), but the list gives `jai` no rafsi, so no tag holds it. A static check
-in `units.nim` fails the build where the list gains `jai`.
+Rule 152 of 21.2 makes a number and its MOI one tanru unit, but the fold keeps each digit as a unit
+of its own. Cost: the term `pavmomci'a` ranks the tag `relpavmomci'a`, whose number is 21, not 1.
+Verified by hand with `tagger find` on 2026-10-25. That such tags are rare is assumed.
+
+JAI binds as SE does (5.11), but the list gives `jai` no rafsi, so no tag holds it. CLL 12.12 gives
+`jai` the rafsi `jax`, which the list does not hold. A static check in `units.nim` fails the build
+where the list gains `jai`.
 
 ## English
 
@@ -222,12 +243,12 @@ leads to. Every term of a query must match. So `vreji` finds a thing tagged `dat
 Cost: order and relation are lost, so
 `patfu mamta` and `mampa'u` find each other. Verified by `suites/test_search.nim`.
 
-**A Lojban term that holds a cmavo ranks first each tag that holds its units unbroken.** The
-Architect ruled that a search for `selci'a` lists first each thing with a tag that holds `se`
-right before `ciska`, wherever the pair stands. The net result of the cmavo around the pair
-decides, and a longer term ranks by an unbroken run too. A search for `ciska` gives no priority.
-So the search finds what the gismu find. Then it puts first each entity with a tag whose units
-hold the units of the term in order, with nothing between them.
+**A Lojban term that holds a cmavo ranks first each entity with a tag that holds its units
+unbroken.** The Architect ruled that a search for `selci'a` lists first each thing with a tag that
+holds `se` right before `ciska`, wherever the pair stands. The net result of the cmavo around the
+pair decides, and a longer term ranks by an unbroken run too. A search for `ciska` gives no
+priority. So the search finds what the gismu find. Then it puts first each entity with a tag whose
+units hold the units of the term in order, with nothing between them.
 
 So `selci'a`, `selci'avei` and `veirselci'a` rank for `selci'a`. `selselci'a`, `terselci'a` and
 `nalselci'a` do not, because their cmavo convert or negate `se ciska`. A term whose cmavo all fold
@@ -235,16 +256,20 @@ away ranks nothing, as a gismu does. Each of the two tiers keeps the order of th
 term ranks nothing, because the ruling names a term typed in Lojban. Verified by
 `suites/test_search.nim`.
 
-A run that is the whole content of a group that cmavo bind does not rank, because those cmavo
-change the run itself. 12.11 reads `selselci'avei` as `se ke se ciska vreji`, the converse of
-`selci'avei`. So the term `selci'avei` does not rank it, but the term `selci'a` does, because
-`se ciska` stays a modifier inside the group. Verified by `suites/test_units.nim` and
+A group that cmavo bind changes a run inside it in three ways, and then the run does not rank. A
+run that ends where the group ends holds its head, which a conversion converts (5.11) and an
+abstraction turns to an event (12.12). A negation denies every part of the group (15.4). A group
+that the run leaves open must end where the run ends. Verified by `suites/test_units.nim` and
 `suites/test_search.nim`.
 
-The test is a run of units, and not a part of the grouped tanru, because a lujvo does not record
-its grouping. Lujvo makers leave `ke` out (4.10, 12.11), so the rafsi show only the run. Cost: the
-term `selci'avei` ranks a tag of `vreta se ciska vreji`, where `vreta` groups with `se ciska`
-first (5.3). Verified by `suites/test_search.nim`.
+So the term `selci'avei` does not rank `selselci'avei`, which 12.11 reads as the converse of
+`selci'avei`. The term `selci'a` does not rank `selkemveiselci'a` or `nalkemselci'avei`. A modifier
+inside a converted group keeps its places, so the term `selci'a` ranks `selselci'avei`.
+
+The test is a run of units, and not a part of the grouped tanru, because a lujvo often leaves its
+grouping out. Lujvo makers often leave `ke` out (4.10, 12.11), so the rafsi hold only the run.
+Cost: the term `selci'avei` ranks a tag of `vreta se ciska vreji`, where `vreta` groups with
+`se ciska` first (5.3). Verified by `suites/test_search.nim`.
 
 ## Command line
 
@@ -282,10 +307,10 @@ Each figure below comes from an Intel Xeon at 2.10 GHz with four cores, Nim 2.2.
   front end of `nim check app/tagger.nim` took 2.4 s and 2.9 s over two runs. A copy that maps
   the whole list again for each part never finishes. The compile-time VM stops it at its limit of
   10,000,000 iterations, so that form is a trap, not a slower choice.
-- **Release build.** `nim c -f -d:release app/tagger.nim` took between 5.4 s and 6.2 s over three
+- **Release build.** `nim c -f -d:release app/tagger.nim` took between 5.6 s and 6.5 s over three
   runs.
-- **Suites.** `nim c -r -d:testing tests/test_suites.nim` compiled and ran every suite in 24.9 s
-  and 26.7 s, over two runs from an empty cache.
+- **Suites.** `nim c -r -d:testing tests/test_suites.nim` compiled and ran every suite in 26.5 s
+  and 28.8 s, over two runs from an empty cache.
 - Search and reading are unmeasured. The tool reads and writes the whole index for each command.
 
 ## Open questions
