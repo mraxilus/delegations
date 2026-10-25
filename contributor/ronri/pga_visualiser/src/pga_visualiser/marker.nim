@@ -700,6 +700,38 @@ func clipToView(tail, head: ScreenPosition; width, height: int): Option[(float, 
   some((fraction_enter, fraction_leave))
 
 
+func cutToView(
+  tail, head: ScreenPosition; width, height: int
+): Option[(ScreenPosition, ScreenPosition)] =
+  ## Cut screen segment to viewport, still running from tail to head; none where it misses.
+  ##   Fractions are read from end nearer view's middle: near-plane cut of eye far off line
+  ##   projects 1e17 px out, and fraction read from there loses whole pixels (#767).
+  ##   Depth at each cut is perspective-correct, since reciprocal of depth runs linear on
+  ##   screen: depth where line enters view is what `markerRails` states gap at.
+  ##   End standing in view is kept to its bit, as `towards` keeps end of fraction one.
+  let
+    (middle_x, middle_y) = (0.5 * float(width), 0.5 * float(height))
+    is_tail_nearer =
+      hypot(tail.x - middle_x, tail.y - middle_y) <= hypot(head.x - middle_x, head.y - middle_y)
+    (near_end, far_end) = if is_tail_nearer: (tail, head) else: (head, tail)
+    cut = clipToView(near_end, far_end, width, height)
+  if cut.isNone: return
+
+  # Step fraction of way from near end, depth by reciprocal, and either end itself where reached.
+  template at(fraction: float): ScreenPosition =
+    if fraction <= 0.0: near_end
+    elif fraction >= 1.0: far_end
+    else:
+      ScreenPosition(
+        x: near_end.x + fraction * (far_end.x - near_end.x),
+        y: near_end.y + fraction * (far_end.y - near_end.y),
+        depth: 1.0 / ((1.0 - fraction) / near_end.depth + fraction / far_end.depth),
+      )
+
+  let (enter, leave) = (at(cut.get[0]), at(cut.get[1]))
+  if is_tail_nearer: some((enter, leave)) else: some((leave, enter))
+
+
 func placeLabelBesideLine(
   marker: var Marker;
   anchor: Position;
@@ -859,16 +891,16 @@ func markerRing(
   true
 
 
-func offsetMarkerRail(anchor: Position, scale: DrawExtent, clearance = 0.0): float =
+func offsetMarkerRail(depth: float, scale: DrawExtent, clearance = 0.0): float =
   ## Size how far to each side of line its rails stand, in world units.
   ##   *World* offset, so rails are lines genuinely parallel to one they flank, sharing
   ##   its vanishing points, each one straight line.
   ##     Screen offset bought flat gap at price of bend where rail's halves met; see
   ##     `markerRails`.
-  ##   Reads as `OFFSET_MARKER_RAIL` pixels at support and less further off; caller does
-  ##   not take figure as final, see `apartWidest`.
+  ##   Reads as `OFFSET_MARKER_RAIL` pixels at `depth`, where reader first sees line, and
+  ##   less further off; caller does not take figure as final, see `apartWidest`.
   ##   `clearance` widens pair by that many further pixels, for touch hold.
-  (OFFSET_MARKER_RAIL + clearance) * worldPerPixelAt(anchor, scale)
+  (OFFSET_MARKER_RAIL + clearance) * worldPerPixelAtDepth(depth, scale)
 
 
 func directionAcross(geometry: Multivector, eye: Position): Option[Direction] =
@@ -933,6 +965,35 @@ func isWithinView*(point: ScreenPosition; width, height: int): bool =
       point.y >= 0.0 and point.y <= float(height)
 
 
+func placeAtScreen(
+  anchor: Position;
+  axis: Direction;
+  at: ScreenPosition;
+  view_projection: Matrix4;
+  width, height: int;
+): Option[Position] =
+  ## Find point of line through `anchor` along `axis` that projects onto `at`, on its image.
+  ##   Line's clip coordinates run linear in its parameter, so one division answers: by
+  ##   x where that moves faster along line, else by y. Depth along segment toward rails'
+  ##   shared head is no line's depth, since that head is not on line.
+  ##   None where line stands square on, and projects to one point.
+  template clip(row: int, place: Position): float =
+    float(view_projection.at(row, 0)) * place.x + float(view_projection.at(row, 1)) * place.y +
+      float(view_projection.at(row, 2)) * place.z + float(view_projection.at(row, 3))
+  template clipToward(row: int, way: Direction): float =
+    float(view_projection.at(row, 0)) * way.x + float(view_projection.at(row, 1)) * way.y +
+      float(view_projection.at(row, 2)) * way.z
+  let
+    (ndc_x, ndc_y) = (2.0 * at.x / float(width) - 1.0, 1.0 - 2.0 * at.y / float(height))
+    rate_x = clipToward(0, axis) - ndc_x * clipToward(3, axis)
+    rate_y = clipToward(1, axis) - ndc_y * clipToward(3, axis)
+  if rate_x == 0.0 and rate_y == 0.0: return
+  let along =
+    if abs(rate_x) >= abs(rate_y): (ndc_x * clip(3, anchor) - clip(0, anchor)) / rate_x
+    else: (ndc_y * clip(3, anchor) - clip(1, anchor)) / rate_y
+  some(anchor + along * axis)
+
+
 func railsAt(
   anchor: Position;
   axis, across: Direction;
@@ -971,8 +1032,13 @@ func railsAt(
         tail = projectToScreen(view_projection, width, height, position_tail)
         head = projectToScreen(view_projection, width, height, position_head)
       if not (tail.isInFront and head.isInFront): continue
-      let drawn =
-        [tail, tail.towards(head, progress * fractionLeavingView(tail, head, width, height))]
+      # Cut to view before anything reads it: tail cut at near plane, with eye far off line,
+      #   projects past any bound renderer draws to, and pair sized there falls on one line.
+      let shown = cutToView(tail, head, width, height)
+      if shown.isNone: continue
+      let
+        (tail_shown, head_shown) = shown.get
+        drawn = [tail_shown, tail_shown.towards(head_shown, progress)]
       marker.segments[marker.count_segment] = drawn
       inc marker.count_segment
       # Order along line: `-axis` end, support, then `+axis` end.
@@ -1057,12 +1123,37 @@ func markerRails(
     counts: array[2, int]  ## How many of each side's three points that was.
     origins: array[2, int]  ## Where support landed in each, for pulse to measure on.
     tracks: array[2, PulseTrack]  ## Each side's reach either way from that support.
-  let offset_stated = offsetMarkerRail(anchor, scale, clearance)
+  # Start rails where reader first sees line: at support while it stands ahead of eye.
+  #   Behind eye, depth there clamps to near plane, so gap stated there read as no pixel,
+  #   and rails ran from support to their shared head, shedding offset on way (#767).
+  #   There they start at line's own point where its image enters view, nearest eye.
+  var base = anchor
+  if dot(anchor - scale.eye, scale.forward) <= scale.depthNear:
+    railsAt(
+      anchor,
+      placed.toward,
+      across.get,
+      0.0,
+      scale,
+      view_projection,
+      width,
+      height,
+      1.0,
+      marker,
+      walks,
+    )
+    if walks[0][1].isNone: return
+    let entering =
+      placeAtScreen(anchor, placed.toward, walks[0][1].get, view_projection, width, height)
+    if entering.isNone or dot(entering.get - scale.eye, scale.forward) <= scale.depthNear:
+      return
+    base = entering.get
+  let offset_stated = offsetMarkerRail(dot(base - scale.eye, scale.forward), scale, clearance)
   # Settle against finished rail, then draw at progress asked for.
   #   Settling against partial rail made gap widen as hold filled, pair breathing
   #   sideways.
   railsAt(
-    anchor,
+    base,
     placed.toward,
     across.get,
     offset_stated,
@@ -1089,7 +1180,7 @@ func markerRails(
     if widest <= ceiling: break
     offset = offset * ceiling / widest
     railsAt(
-      anchor,
+      base,
       placed.toward,
       across.get,
       offset,
@@ -1105,7 +1196,7 @@ func markerRails(
 
   if progress < 1.0:
     railsAt(
-      anchor,
+      base,
       placed.toward,
       across.get,
       offset,
