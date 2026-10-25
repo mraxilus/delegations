@@ -168,7 +168,7 @@ suite "Chapter 3":
       let plain = spelling.readTag
       for i in 1 ..< spelling.len:  # every position inside word
         let (head, tail) = (spelling[0 ..< i], spelling[i .. ^1])
-        check isOutcomeSame((head & "," & tail).readTag, plain)  # 3.3, never differ by comma alone
+        check isReadingSame((head & "," & tail).readTag, plain)  # 3.3, never differ by comma alone
         check (head & "." & tail).refusalRead ==
             some((Refusal.Letter, "."))  # 3.3, period embedded in word makes two words
 
@@ -292,7 +292,7 @@ suite "Internal: Reading":
     check selcia.get != Tag(words: @[ciska])  # `selci'a` and `ciska` are two tags
     check $selcia.get == "selci'a"  # 4.12, `sel` and `ci'a` score lowest; constructed word
     check "nunkla".tagRead.get.toTanru == "nu+klama"  # ruling; word of CLL 12.12
-    check "nunynau".tagRead.get.words[0] == "nu".word.get  # ruling; CLL 4.12, Example 12.2
+    check "nunynau".tagRead.get.toTanru == "nu+nanmu"  # ruling; CLL 4.12, Example 12.2
     let kem = "nakykemcinctu".tagRead
     check kem.get.toTanru == "nakni+ke+cinse+ctuca"  # 4.13, tanru `nakni ke cinse ctuca`
     check $kem.get == "nakykemcinctu"  # 4.13, shortest form, preferred by scoring
@@ -331,6 +331,10 @@ suite "Internal: Reading":
     check "  Bri,Vla\t".tagRead == "brivla".tagRead  # project choice, same tag after normalising
     check "ro'i,n,re'o".readTag.text == "ro'inre'o"  # project choice, comma removed before reading
     check ",brivla,".tagRead == "brivla".tagRead  # project choice, comma at either end stripped
+    for spelling in concat(@SPELLINGS_CLL, @SPELLINGS_CLL_REFUSED):  # each CLL spelling quoted
+      let plain = spelling.readTag
+      for text in ["," & spelling, spelling & ",", "," & spelling & ","]:
+        check isReadingSame(text.readTag, plain)  # project choice, comma at ends stripped too
     for c in 'A' .. 'Z':  # 26 capitals, exhaustive
       let (upper, lower) = ("bri" & c & "vla", "bri" & c.toLowerAscii & "vla")
       check isReadingSame(upper.readTag, lower.readTag)  # project choice, capitals fold
