@@ -434,6 +434,74 @@ suite "Camera Aim":
     check not scene.isBackdropUnder(ground, scaleAt(12.0), wide, tall)
 
 
+  test "a plane whose disc covers nine tenths of the frame is backdrop, wherever it stands":
+    # Architect's report of 2026-10-25 (repository issue 758), on page under mouse: ground
+    #   filling frame but for two corners read as drag handle. Rule asked disc's radius to
+    #   reach every corner from middle, and ground covering 98.2% of frame read as handle.
+    #   Share is read by pick, pixel by pixel on grid of its own, as reader's pointer finds
+    #   disc. Stance whose share stands within `slack_share` of bound is left out, since
+    #   two grids may part there.
+    const
+      share_backdrop = 0.9  ## Nine tenths of frame, as issue 758 sets it.
+      count_stances = 96  ## Stances sampled, at two frames.
+      count_kept_least = 64  ## Least stances clear of bound, so law holds over most.
+      count_side_least = 16  ## Least stances kept on each side of bound.
+      slack_share = 0.03  ## Band about bound that two grids may disagree in.
+      columns_pick = 48  ## Columns pick reads share on; rows follow frame's shape.
+      seed_stances = 2026_10_25
+    proc sharePicked(scene: Scene; camera: Camera; width, height: int): float =
+      ## Read share of grid's pixels that pick finds plane under.
+      let
+        scale = camera.drawExtentFor(height, 0.0)
+        view_projection = camera.initMatrixViewProjection(float(width) / float(height))
+        rows = max(1, int(round(float(columns_pick * height) / float(width))))
+      var found = 0
+      for row in 0..<rows:
+        for column in 0..<columns_pick:
+          let cursor = ScreenPosition(
+            x: (float(column) + 0.5) * float(width) / float(columns_pick),
+            y: (float(row) + 0.5) * float(height) / float(rows),
+          )
+          if pickNearest(scene, camera, scale, view_projection, width, height, cursor).isSome:
+            found += 1
+      float(found) / float(rows * columns_pick)
+
+    var scene = initScene()
+    let ground = scene.addObject(groundPlane(), "ground", inkCycled(0))
+    # Case as found: disc covering all of frame but slivers at its corners reads as handle.
+    #   In report's screenshot, fill took 94.6% of pixels and bare background 3.3%.
+    block:
+      const (wide, tall) = (1058, 994)
+      let
+        camera = cameraAround(ORIGIN, 13.47, Direction(x: 0.6, y: -1.2, z: 13.4))
+        share = sharePicked(scene, camera, wide, tall)
+      checkpoint(&"share picked {share}")
+      check share >= 0.95 and share < 1.0
+      check scene.isBackdropUnder(ground, camera.drawExtentFor(tall, 0.0), wide, tall)
+    # Law over sampled stances: backdrop exactly where share is nine tenths or more.
+    var
+      generator = initRand(seed_stances)
+      (kept, backdrops, handles) = (0, 0, 0)
+    for index in 0..<count_stances:
+      let
+        (wide, tall) = if index mod 2 == 0: (1200, 900) else: (412, 915)
+        elevation = degToRad(generator.rand(35.0..90.0))
+        azimuth = degToRad(generator.rand(0.0..360.0))
+        pivot = Position(x: generator.rand(-3.0..3.0), y: generator.rand(-3.0..3.0), z: 0.0)
+        out_to = Direction(
+          x: cos(elevation) * cos(azimuth), y: cos(elevation) * sin(azimuth), z: sin(elevation)
+        )
+        camera = cameraAround(pivot, generator.rand(8.0..24.0), out_to)
+        share = sharePicked(scene, camera, wide, tall)
+      if abs(share - share_backdrop) <= slack_share: continue
+      kept += 1
+      let is_backdrop = scene.isBackdropUnder(ground, camera.drawExtentFor(tall, 0.0), wide, tall)
+      check is_backdrop == (share >= share_backdrop)
+      if share >= share_backdrop: backdrops += 1 else: handles += 1
+    check kept >= count_kept_least
+    check backdrops >= count_side_least and handles >= count_side_least
+
+
   test "a point whose drawn sphere reaches every corner of the frame is backdrop":
     # Fault: point was never backdrop, so one zoomed in until it filled frame left no glass
     #   to press, and every press beside its middle armed drag rather than moving view.
