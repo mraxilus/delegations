@@ -1404,6 +1404,100 @@ suite "Camera Aim":
       check norm(camera.pivotWorld - Position(x: eye.x, y: 3.2, z: 0.0)) <= 1.0e-9
       check abs(camera.distance / distance_picked - 1.0) < 1.0e-9
 
+  test "a line picked far off is drawn and picked through the middle of the frame":
+    # Pick from star 4.7e6 units out lands eye 2.4e-7 off line, which passes 1e-8 from eye,
+    #   while line's support stands at origin, behind eye. Point ahead stands 8,000 units
+    #   off, as star field does on page.
+    const duration = 0.35
+    let
+      star = Position(x: 1072071.0, y: 4533088.5, z: 171618.671875)
+      sight = (1.0 / norm(star - ORIGIN)) * (star - ORIGIN)
+      aside = normalize(cross(sight, Direction(x: 0.0, y: 0.0, z: 1.0))).get
+      tilted = sight + tan(degToRad(2.4)) * aside
+      along = (1.0 / norm(tilted)) * tilted
+      line = ORIGIN.toMultivector ∧ (ORIGIN + along).toMultivector
+    var camera = cameraAround(star, 2.414213562373095e-7, -sight)
+    let nearest = ORIGIN + dot(camera.eyeWorld - ORIGIN, along) * along
+    var (scene, picked) = initScenePicked(line)
+    discard scene.addObject((nearest + 8000.0 * sight).toMultivector, "ahead", Ink.Jade)
+    var
+      tween: CameraTween
+      pointer = some(PointerPick(handle: picked.at(0)))
+    tween.offerAim(
+      camera,
+      scene,
+      picked,
+      none(Preview),
+      camera.drawExtentFor(height_aim, 0.0),
+      width_aim,
+      height_aim,
+      0.0,
+      duration,
+      pointer,
+    )
+    tween.advance(camera, duration, easeOutCubic)
+    # Read frame as front-ends do: placements, nearest reach ahead, extent, transform.
+    var placed = newSeq[Placement](scene.bound)
+    for handle in 0..<scene.bound:
+      placed[handle] = placeObject(scene.geometryAt(handle), scene.anchorOverrideAt(handle))
+    let (eye, frame) = camera.moveOriginView
+    camera.reach_near = reachNear(
+      placed, scene, camera.originView, eye, eye + camera.distance * frame.forward, frame.forward
+    )
+    let
+      scale = camera.drawExtentFor(eye, frame, height_aim, reachFar(placed, scene))
+      view_projection = camera.initMatrixViewProjection(eye, frame, width_aim / height_aim)
+      middle = ScreenPosition(x: 0.5 * float(width_aim), y: 0.5 * float(height_aim))
+      vanishing = projectToScreen(
+        view_projection, width_aim, height_aim, eye + scale.radiusHorizon * along
+      )
+    # Near clip stands short of pivot, so line where it passes pivot is in frame.
+    check scale.depthNear < camera.distance
+    # Both halves are drawn through middle, where pivot stands on line: one runs on to
+    #   vanishing point, other out past edge of frame on far side of middle from it.
+    proc offSegment(at, tail, head: ScreenPosition): float =
+      ## Measure pixels from `at` to nearest point of screen segment `tail` to `head`.
+      let
+        (run_x, run_y) = (head.x - tail.x, head.y - tail.y)
+        length_squared = run_x * run_x + run_y * run_y
+        dot_run = (at.x - tail.x) * run_x + (at.y - tail.y) * run_y
+        along = if length_squared == 0.0: 0.0 else: clamp(dot_run / length_squared, 0.0, 1.0)
+      hypot(at.x - (tail.x + along * run_x), at.y - (tail.y + along * run_y))
+    MESHES_SCENE.clearMeshes
+    discard MESHES_SCENE.tessellateObject(placed[picked.at(0)], Ink.Rose.colour, scale)
+    var (halves_drawn, is_vanishing_reached, is_edge_reached) = (0, false, false)
+    for index in 0..<MESHES_SCENE.ribbons.count:
+      let corners = expandRibbon(MESHES_SCENE.ribbons.records[index], scale.toScale)
+      if corners[0].alpha == 0.0: continue
+      inc halves_drawn
+      var ends: array[2, ScreenPosition]
+      for side, (first, second) in [(0, 5), (1, 2)]:
+        ends[side] = projectToScreen(view_projection, width_aim, height_aim, Position(
+          x: 0.5 * (float(corners[first].x) + float(corners[second].x)),
+          y: 0.5 * (float(corners[first].y) + float(corners[second].y)),
+          z: 0.5 * (float(corners[first].z) + float(corners[second].z)),
+        ))
+      check offSegment(middle, ends[0], ends[1]) < 1.0
+      for drawn_end in ends:
+        if hypot(drawn_end.x - vanishing.x, drawn_end.y - vanishing.y) < 1.0:
+          is_vanishing_reached = true
+        let beyond = ((drawn_end.x - middle.x) * (middle.x - vanishing.x) +
+            (drawn_end.y - middle.y) * (middle.y - vanishing.y)) /
+            hypot(middle.x - vanishing.x, middle.y - vanishing.y)
+        if beyond > float(width_aim): is_edge_reached = true
+    check halves_drawn == 2
+    check is_vanishing_reached
+    check is_edge_reached
+    # Cursor on image, 200 px from middle toward eye's side of line, picks line.
+    let
+      reach = hypot(middle.x - vanishing.x, middle.y - vanishing.y)
+      cursor = ScreenPosition(
+        x: middle.x + 200.0 * (middle.x - vanishing.x) / reach,
+        y: middle.y + 200.0 * (middle.y - vanishing.y) / reach,
+      )
+      report = pickAt(scene, camera, scale, view_projection, width_aim, height_aim, cursor, placed)
+    check report.handle == some(picked.at(0))
+
 
   test "a point picked from the list never lands nearer than its fit, and one further out stays":
     # Ruling of #535: selection never starts nearer than its fit. Wheel over empty sky shrinks
