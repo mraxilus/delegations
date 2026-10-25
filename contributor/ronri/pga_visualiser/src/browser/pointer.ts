@@ -39,6 +39,10 @@ let cursor_last: PointLocal | null = null;
 //   both walk whole scene, and pointer or trackpad reports several times between two
 //   frames; see frame loop, which is where each of these is spent.
 let is_hover_stale = false;
+// Whether pointer last on canvas is mouse, whose cursor stays where it was left.
+//   Frame loop then picks in every frame, as desktop's does, so hover follows what slides
+//   under still cursor (repository issue 632). Finger leaves no cursor; see `nimClearHover`.
+let is_cursor_mouse = false;
 let notches_wheel = 0; // Summed wheel notches awaiting one dolly; `sumWheel` says why.
 
 // Touch long-press-to-select / tap-to-toggle / drag-to-construct state.
@@ -86,6 +90,7 @@ canvas.addEventListener('pointerdown', (e) => {
   const rect = canvas.getBoundingClientRect();
   const local = { x: e.clientX - rect.left, y: e.clientY - rect.top };
   pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  is_cursor_mouse = e.pointerType === 'mouse';
 
   if (e.pointerType === 'mouse') {
     nimUpdateCursor(local.x, local.y);
@@ -168,6 +173,7 @@ canvas.addEventListener('pointermove', (e) => {
   cursor_last = { x: e.clientX - rect.left, y: e.clientY - rect.top };
 
   if (e.pointerType === 'mouse') {
+    is_cursor_mouse = true;
     nimUpdateCursor(cursor_last.x, cursor_last.y);
     if (button_mouse_drag !== null && typeof button_mouse_drag === 'number') {
       // Re-check hover for drag's own destination preview -- next frame, not now; see.
@@ -625,7 +631,7 @@ menu_selection_hide.addEventListener('click', () => {
   //   back from same place -- `nimSelectionAllHidden` owns what "hidden" means for
   //   whole selection, way row button reads `nimObjectVisible` for one object.
   const show = nimSelectionAllHidden();
-  for (const handle of handles_selection) nimSetVisible(handle, show);
+  nimSetSelectionVisible(show); // One step of undo for whole selection, as desktop takes.
   toast(nimVisibilityMessage(handles_selection.length, show));
   refreshSelectionMenu(null); // Relabels button for what it would now do.
   refreshObjectsUI(); // Selection itself is kept -- hiding doesn't invalidate handle.
@@ -633,7 +639,9 @@ menu_selection_hide.addEventListener('click', () => {
 
 menu_selection_delete.addEventListener('click', () => {
   const n = handles_selection.length;
-  for (const handle of handles_selection) nimRemoveObject(handle);
+  // Session against one of these has nothing left to commit to, as desktop's menu holds.
+  if (handles_selection.some((handle) => isEditing(handle))) endEditSession();
+  nimRemoveSelection(); // One step of undo for whole selection, as desktop takes.
   toast(nimDeletedMessage(n));
   clearSelection();
   refreshObjectsUI();

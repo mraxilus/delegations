@@ -56,8 +56,9 @@ const
     ## couple's own middle.
     ##   Same twenty-five to twenty-nine, so nothing that places
     ##     picture has to move; sized to what drawing actually reaches,
-    ##     which is 58.5 across by 98.2 down, measured over all sixteen
-    ##     pictures with every stroke's cap counted in.
+    ##     which is 53.5 across by 98.4 down, measured over all seventeen
+    ##     distinct pictures with every stroke's cap counted in (probe outside
+    ##     tree, 2026-10-23).
     ##   Taller than drawing is wide, and air is left at sides:
     ##     two bodies one above other make tall picture, and cropping
     ##     to it would make every node on every map tall and thin.

@@ -37,16 +37,23 @@ let are_fields_camera_focused = false;
   element.addEventListener('focus', () => { are_fields_camera_focused = true; });
   element.addEventListener('blur', () => { are_fields_camera_focused = false; });
 });
-// Commit each field on change.
-//   Falls back to value camera treats as its own floor for that quantity where box is
-//   left empty or unparseable.
+// Commit each field on change, then show at once value camera settled on.
+//   Core holds each inside its bounds, as desktop's field does: distance at zero or below
+//   lands on near limit, and field of view stays inside 10 to 120 degrees
+//   (`camera.distanceHeld`, `camera.fieldOfViewHeld`; repository issue 632).
+//   Box left empty or unparseable changes nothing, as Dear ImGui's typed entry does.
 function commitCameraField(
-  field: HTMLInputElement, apply: (value: number) => void, fallback: number,
+  name: keyof typeof fields_camera, apply: (value: number) => void, read: () => number,
 ) {
-  field.addEventListener('change', () => apply(parseFloat(field.value) || fallback));
+  fields_camera[name].addEventListener('change', () => {
+    const value = parseFloat(fields_camera[name].value);
+    if (Number.isFinite(value)) apply(value);
+    camera_written[name] = NaN;
+    writeCameraField(name, read());
+  });
 }
-commitCameraField(fields_camera.distance, nimSetCameraDistance, 0.1);
-commitCameraField(fields_camera.fov, nimSetCameraFov, 45);
+commitCameraField('distance', nimSetCameraDistance, nimCameraDistance);
+commitCameraField('fov', nimSetCameraFov, nimCameraFov);
 // Coefficient left empty reads as zero, as construct grid's own do.
 //   Field is rewritten from motor at once, so value settled on shows where typed one stood.
 fields_motor.forEach((field, basis) => {

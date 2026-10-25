@@ -473,8 +473,8 @@ proc checkRules*() =
   # nothing loads yet -- see TODO in `rules.nim`.  One doAssert used to
   # compare it to its own spelled-out copy here, which checked nothing;
   # what drawing can actually be held to is half above.
-  told.add "`above` takes no lock or wrap, and leads only to high wrap " &
-      "or default"
+  told.add "`above` takes no lock or wrap; where it may lead next (`FROM_ABOVE`) " &
+      "is not checked"
 
   # RULE 9.  Connecting line's two halves are its two hands' own
   # colours.  Shades are asked of palette rather than spelled out
@@ -1175,7 +1175,7 @@ func inkLength(figure, ink: string): float =
   ##   Counting pieces one reach is drawn in cannot see break that falls
   ##     where two shades meet -- it makes one piece of each rather than
   ##     two of one.  Length can see it wherever it falls: broken reach
-  ##     draws one `BREAK` less than whole one.
+  ##     draws less than whole one by gap `hidesAt` sizes.
   ##   Reach is drawn as quadratics through midpoints between its
   ##     sampled points (rule 35), and every one of those points is
   ##     control point of curve -- so reading `M`, each `Q`'s
@@ -1467,9 +1467,9 @@ proc checkHandTurns*(built: Parts) =
       "is stored as, so what turns hard reads as turning rather than as a " &
       "run of corners"
 
-  # And crossing is drawn as crossing: reach that dives loses one
-  # `BREAK` of its own length, and reach that dives twice loses two --
-  # which is alternation, measured rather than assumed.
+  # And crossing is drawn as crossing: reach that dives loses one gap
+  # of its own length, as `hidesAt` sizes it, and reach that dives twice
+  # loses two -- which is alternation, measured rather than assumed.
   for i, position in CHAIN:
     let
       figure = built[&"hh_{i}"]

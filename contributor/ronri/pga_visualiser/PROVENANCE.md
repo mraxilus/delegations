@@ -160,6 +160,7 @@ and this file does not:
 | `keys`, `wheel`, `pan` | held keys, wheel zoom, mouse pan, what zoom settles onto |
 | `touch`, `construct`, `finger` | pinch, long press, drag construction, crowd, paused drag |
 | `apply`, `framing`, `label`, `view` | pickers, what picking does to camera, names, view section |
+| `acts` | one undo for a whole selection, typed camera fields, hover while camera moves |
 | `chrome`, `comet`, `ground` | hover during gesture, help, horizon comet, lattice's reach |
 | `frame`, `classified`, `diagnostics`, `ramp` | frame's own clocks and counts, tree, colours |
 | `exceedance`, `rings` | distribution curve, its axis, rings each reading is taken over |
@@ -932,11 +933,12 @@ Software GL reports no multisampled visual, so thin lines alias.
 **The suites test the rules, `tools/drive/` tests the wiring of the browser, and this tests the
 wiring of the desktop.** The entry point carries scripted runs: `--drive-keys`, `--drive-sky`,
 `--drive-undo`, `--drive-select`, `--drive-drag`, `--drive-search`, `--drive-menu`, `--drive-faces`,
-`--drive-edit`, `--drive-wheel`, and `--drive-help:<tab>`, one for each tab. Each pushes real
-events through the queue of SDL, but `--drive-edit` calls the procs of the buttons (Desktop
-front-end). `driven` runs all of them and reports every failure, and not the first. It asks the
-binary which help tabs exist (`--help-tabs`), so `help.HelpPath` stays their one home (Article
-I.4). `drive` chains it, here and on the runner (repository issue 91).
+`--drive-edit`, `--drive-wheel`, `--drive-bulk`, `--drive-fields`, `--drive-hover`, and
+`--drive-help:<tab>`, one for each tab. Each pushes real events through the queue of SDL, but
+`--drive-edit`, `--drive-bulk` and `--drive-fields` call the procs that the buttons and fields call
+(Desktop front-end). `driven` runs all of them and reports every failure, and not the first. It
+asks the binary which help tabs exist (`--help-tabs`), so `help.HelpPath` stays their one home
+(Article I.4). `drive` chains it, here and on the runner (repository issue 91).
 
 **A run that reaches a window of Dear ImGui names that window on its motion.** The SDL3 backend of
 Dear ImGui drops motion that names no window of its own. `--drive-select` and `--drive-wheel` name
@@ -956,7 +958,10 @@ it, so Dear ImGui reads the pointer over the menu as it reads a hand. Verified b
 - a scene filled to capacity leaves what follows its list on the window;
 - the menu opens and offers the demo at every size that `orrery` has;
 - an edit opened far out and saved unchanged keeps every coefficient and its radius to the bit;
-- a wheel over the selection menu zooms the view about the pick, as on the page.
+- a wheel over the selection menu zooms the view about the pick, as on the page;
+- a hide or a delete of two picked objects takes one step of undo, as on the page;
+- typed values past the bounds of the view section land inside them, as on the page;
+- hover follows an ease under a still pointer, and drops while a held key moves the camera.
 
 **An absent face is a finding, and never an abort.** Dear ImGui asserts inside `AddFontFromFileTTF`
 where it cannot open a path, and an assertion is SIGABRT rather than a report. `faceAt` resolves
@@ -1062,6 +1067,25 @@ and not what is drawn.
 Verified by a run: every scripted desktop run passes at 1/120 s, in 400 frames. Verified by a
 render: the curve of the page and the plot of the window, before and after, in the pull request.
 
+**Each row of the breakdown of the page shows two figures, a short mean and a settled figure.** The
+short mean covers the last 200 ms, and is what to watch while something changes. The settled figure
+stands in brackets, and is the median of the whole ring, which one slow frame does not move. The
+desktop shows no such rows.
+
+**Where the clock of the page steps 1 ms or more, the settled figure is the mean of the ring.** A
+phase under one step reads 0 in most frames, so the median of those frames reads 0. The mean stays
+fair, because a step falls inside the phase in the share of frames that the phase fills. The page
+reads its step once, on load, and a note above the rows then says why once (repository issue 724).
+The clock of Firefox 158 steps 1 ms, and that of Chromium 0.1 ms.
+
+Rejected: the mean on every browser, which loses the resistance of the median to one slow frame
+where the clock is fine enough.
+
+*Checked.* Verified by driven check, on a page whose clock is cut to whole milliseconds before its
+scripts run. No row that ran this window reads 0.00 in brackets, and the note shows. Without the
+rule, the page fails that check, with 6 of 10 such rows at 0.00. On the real clock of Chromium, the
+brackets keep the median, and no note shows.
+
 ## PGA share
 
 **The diagnostics show the PGA share, and the share of each side of the algebra boundary.** A
@@ -1126,9 +1150,14 @@ page less the engine over seven runs.
 | Page, 7 runs | 22.3 to 31.4% | 0.8 to 2.0% | 4.8 to 8.9% | 1.5 to 3.4% | 355 to 404 |
 | Page less engine | -2.5 to +4.3 | -0.9 to +0.4 | -2.7 to +1.6 | -1.3 to +0.5 | |
 
+**The loop that the suite samples reads the clock once for 256 products.** A read of the CPU clock
+of the process is a system call, and it costs about as much as one product. That cost falls outside
+PGA. With a read for each product, the runner read 49.5% on 2026-10-24, against a bound of 50%. On
+one delegate, 12 runs read 73.7 to 87.9% that way, and 94.9 to 100% with one read for 256 products.
+
 *Checked.* Verified by `suites.nim`: the rule names the owner of names from the built page and of
 desktop paths. It names a stack by its innermost owned frame, and the ring pools 20 s. On Linux, the
-sampler counts a loop of products as PGA's, at 82 to 85% of about 100 samples. Verified by driven
+sampler counts a loop of products as PGA's, at 94.9 to 100% of 99 samples. Verified by driven
 check: the page from a file says why once, and the served page agrees with the engine on each side.
 Verified on 2026-10-06 by `xvfb-run -a binaries/rga_visualiser --hidden --novsync --timings
 --frames:300 --demo:5038`: the desktop figures above.
@@ -1340,6 +1369,8 @@ Verified by driven check:
 - a still camera over a still scene builds its whole records on every frame;
 - every edit reaches the canvas, and the frame after an undo draws the scene that it restored;
 - a still frame under the largest demo copies fewer values of its own than the scene has objects;
+- a still frame under the largest demo builds fewer multivectors of its own than the scene has
+  objects;
 - each frame build of the page lifts the motor once, still and while a drag orbits;
 - one frame of the page classifies each live object once, in each state that it counts.
 
@@ -1371,11 +1402,11 @@ clock of the page resolves. With every walk run to capacity, the still frame rea
 0.7 ms, as the build that walks to `bound` does. So no speed check can hold that fault.
 
 **`Scene.revision` counts the edits, and every writer sits inside `scene.nim`.** No geometry
-accessor returns a `var`, which would let a caller write with nothing recorded. Undo, redo, clear
-and every load replace the whole scene through `restoreFrom`. That call issues a revision **newer
-than every revision it ever handed out**, which is `max(live, snapshot) + 1`. Rejected: the count of
-the snapshot plus one, which a state between the two already wore. A reader keyed on it then takes
-the new scene for one that it read.
+accessor returns a `var` or a location, which would let a caller write with nothing recorded
+(Algebra boundary). Undo, redo, clear and every load replace the whole scene through `restoreFrom`.
+That call issues a revision **newer than every revision it ever handed out**, which is
+`max(live, snapshot) + 1`. Rejected: the count of the snapshot plus one, which a state between the
+two already wore. A reader keyed on it then takes the new scene for one that it read.
 
 **A placement falls out of date one handle at a time.** `Scene.revisions_placing` stamps each handle
 at the edit that last changed it, and `restoreFrom` stamps every live handle of the snapshot. Every
@@ -1788,12 +1819,18 @@ object cost what the three of a `Position` cost. `boundary.nim` lifts them where
 once for each frame, not for each object. `picking.pickWalk` derives the eye and frame before its
 walk, and `drawExtentFor` hands every reader one extent, as `mesh.directionAcross` does.
 
-**Each frame reads the eye and frame once, and hands both to every reader.** Each front-end calls
-`moveOriginView` after the ease moves the camera. It moves the view origin to the eye, and reads the
-eye and frame about it off the same lift (Origins). It hands both to the near reach, the extent, the
-frustum and the transform, because each read of `eye` or `frame` lifts the motor again. A hold of
-the aim can move the camera, so a front-end reads again only where the motor moved. Rejected: the
-first read for the transform too, which draws where the camera stood before the hold.
+**Each frame reads the eye and frame once, and again only where the hold moves the camera.** Each
+front-end calls `moveOriginView` after the ease moves the camera. It moves the view origin to the
+eye, and reads the eye and frame about it off the same lift (Origins). It hands both to the near
+reach and the extent, which the aim reads, because each read of `eye` or `frame` lifts the motor
+again. A hold of the aim can move the camera, so a front-end reads again only where the motor moved.
+The frustum and the transform read that second read, so a frame culls and draws from one stance.
+
+The frustum takes the field of view and the height from the extent, and no hold moves either. Its
+near and far depths read the local scale that the near reach of the first read sets. Rejected: the
+first read for the frustum or the transform. It is the stance that the gesture asks for, before a
+hold of the aim moves the camera. Points at the edge of the frame then go out while two fingers
+spread at the floor of the frame rule (Framing). They come back when the fingers stop.
 
 **The overlay shares its extent within a frame by what the camera holds, and never by what it reads
 out.** The browser's `SettingsOverlay` takes the view origin, the motor and the depth. Those are the
@@ -1804,13 +1841,24 @@ eighteen sandwiches to decide whether to skip four. `drivePinAnchor` allows an a
 
 **An orbit distance has a floor and no ceiling.** `DISTANCE_LIMIT_NEAR` at 10⁻¹³ is geometry: at
 zero the eye coincides with its pivot, and every direction that `camera.frame` derives collapses.
-`distanceHeld` is the one statement of it.
+`distanceHeld` is the one statement of it. Both distance fields write through it, so a typed zero or
+less lands on the near limit. A field left empty changes nothing on either. Dear ImGui keeps the
+value of a typed entry left empty, and the page does the same, so the two front-ends stay in sync.
 
 It is tiny rather than small: 1.5 cm, so an object a metre wide fills the frame. The stance, the
 records and the transform are held about the view origin, near the eye. So doubles and float32 hold
 that close-up wherever the eye stands (Origins). The near clip is a four-hundredth of the local
 scale, and the logarithmic depth spans it out to a far bound millions of units off. There is no
 ceiling, which would read as a camera bounded to a region, and which nothing downstream needs.
+
+**The field of view is held inside 10 to 120 degrees.** `fieldOfViewHeld` holds
+`DEGREES_FIELD_OF_VIEW_LEAST` and `DEGREES_FIELD_OF_VIEW_MOST`, and both fields write through it,
+typed or dragged. Rejected: bounds on the widget alone, which a typed entry passes in Dear ImGui.
+
+Verified by `--drive-fields` and the page's `driveFieldsHeld`, 2026-10-22. A field of view of 200
+read 120, and 1 read 10. A distance of 0 or -5 read 10⁻¹³, the near limit, and an empty field kept
+a typed 7. On the code of `main` at `85ccefc1`, the page took 200 and 1 as typed, and read 0 and an
+empty field as 0.1. The desktop took a typed 200 too.
 
 **One transform serves the GPU, the picks and markers, about the view origin.** Its translation is
 the remainder of the eye about that origin, under half a world step. `Matrix4` stays in doubles,
@@ -1891,7 +1939,15 @@ Verified by driven checks:
 - an anchor lookup takes 3.750 µs, against 488.250 µs keyed on the read-out pivot and angles;
 - the view section shows sixteen coefficients, and a typed one settles on a unit motor;
 - it reads speed with nothing selected, and distance with a selection;
-- each frame build of the page lifts the motor once, still or orbiting, against 11 on `4a478976`.
+- each frame build of the page lifts the motor once, still or orbiting, against 11 on `4a478976`;
+- each frame that a hold moves draws the points, on screen, that a second build at that moment
+  draws. The holds are the frame floor, by fingers and by key, the bound of a sky point and the
+  fill of a point. On `674b910c`, 18 of 72 frames break it at the floor by fingers, and all but 13
+  at the bound of a sky point. The floor by key and the fill hold there too (`driveCullHeld`).
+
+Verified on 2026-10-24 by a harness that is not kept, in Chromium under SwiftShader. With the near
+reach and the extent derived after the hold too, each frame of a spread at the floor draws 327
+points. So does the fix.
 
 Verified by a probe in Chromium under SwiftShader on 2026-10-04, on an Intel Xeon at 2.10 GHz,
 against `4a478976`. Over 80 frames, the records and the transform that each frame hands the GPU
@@ -2204,10 +2260,12 @@ Verified by driven checks, in Chromium on 2026-09-26:
 Verified by driven check, in Chromium on 2026-10-01: a right drag of 360.6 px over nothing carried
 the pivot 360.6 px at its own depth. The fixed share of separation carried it 626.7 px.
 
-Verified by driven check, in Chromium on 2026-10-02: three vertical right drags with one object
+Verified by driven check, in Chromium on 2026-10-25: three vertical right drags with one object
 picked turned the view 0.000000. Each held its point 0.000 px off the cursor's height. The
-separation went from 19.00 to 10.73, to 6.22, then out to 32.09. A drag down from the top, drifting
-2 to 4 px across at each of 24 steps, turned at most 0.0166 radians in one step.
+separation went from 19.00 to 10.73, out to 55.39, then in to 32.09. The drag below the row of the
+pivot runs last, from far out. At 10.73 units the ground covers the lower half of the frame, and a
+plane short of nine tenths is a handle (Picking). A drag down from the top, drifting 2 to 4 px
+across at each of 24 steps, turned at most 0.0166 radians in one step.
 
 ## Records and shaders
 
@@ -2467,6 +2525,41 @@ and fails at one. Rejected: a bound in `driveCopiesStill`, which passes fewer co
 has objects. Verified by a read of the emitted code, 2026-10-24: no `nimCopy` stands in
 `pointMenuHung`.
 
+**A read of a geometry builds no multivector.** On the JavaScript backend, `geometryAt` is a
+template whose expansion ends in a `block`. Rejected: a `lent` func there, which builds its default
+result, a fresh multivector of 128 bytes, at each call. It then returns the slot of the scene over
+that result. Placing reads each live object once in a frame, so such a func builds 5,038 in each
+still frame of the largest demo, for nothing.
+
+**The `block` keeps the read a value.** A write through the template fails to compile, as a write
+through a `lent` func does, on both backends (`test_scene`). The slot alone, as the last line of
+the template, is a location that a caller could write with nothing recorded (Scene storage). On the
+C backend `geometryAt` is a `lent` func, which returns a pointer and builds nothing. Rejected: the
+template on both backends, since a `block` on C copies its value into a temporary and out.
+Rejected: `noinit` on the func, which leaves the default result built on the JavaScript backend.
+
+**A count holds the design, as it holds the copies.** `driveBuiltStill` wraps the constructor of
+`Float64Array`, and counts each array of one multivector's length over 3 still frames of the
+largest demo. The check fails at one multivector of the project's own code for each object. One
+that a function of the library builds is counted apart and reported, and never bound. That count
+above zero also shows that the wrapper saw multivectors at all.
+
+Over 3 frames at 5,038 objects the check reads 1,467 multivectors of the project and 7,605 of the
+library. On `64efd55d`, which adds the check to the page of `28c559ae`, it reads 16,581 and 7,605.
+
+Measured on 2026-10-24 on one delegate, on the real clock, by a harness that is not kept. It loads
+the largest demo at 1200 by 900 px under SwiftShader, and reads the median of `ms_place` and
+`ms_build` over about 50 frames. Three runs of `main` at `28c559ae` and of this design ran in turn,
+in ms:
+
+| Diagnostics | Placing, `main` | Placing, after | Build, `main` | Build, after |
+|-------------|-----------------|----------------|---------------|--------------|
+| Shut | 10.8 to 12.0 | 7.7 to 8.1 | 12.7 to 14.0 | 9.5 to 10.0 |
+| Open | 15.2 to 16.9 | 12.0 to 12.8 | 19.1 to 20.7 | 15.9 to 16.9 |
+
+With the diagnostics open, the page also times the placing and the emitting of each object. In each
+run here that adds 3.7 to 5.4 ms to placing, and 5.6 to 7.4 ms to the build.
+
 **A lift writes its coefficients, and a read-out reads them.** Geometry goes through the operators,
 and the crossing is the coefficient table. A sum of blades made 23 arrays for a motor, and a write
 makes one. **`sight` reads the stance once for each event**, off one lift and one antireverse.
@@ -2533,9 +2626,17 @@ A turn and a frame build take 0.93 to 0.94 ms, against 0.86 to 0.94.
 
 Verified by `suites.nim`: placing charges the placing side on each of its seven exits, and a stretch
 that leaves early fails to build. Verified by driven check: a still frame under the largest demo
-copies fewer values than the scene has objects. Verified by a read of the emitted code on
-2026-10-04: no `nimCopy` stands in the six operators, `addRing` or `addDisc` on the JavaScript
-backend. On the C backend each operator is three field stores with no fill.
+copies fewer values than the scene has objects. It also builds fewer multivectors than the scene
+has objects. Verified by `suites.nim`: a geometry read by handle refuses a write, on both backends.
+Verified by a read of the emitted code on 2026-10-04: no `nimCopy` stands in the six operators,
+`addRing` or `addDisc` on the JavaScript backend. On the C backend each operator is three field
+stores with no fill.
+
+Verified by a read of the emitted code of the suite and of probes on 2026-10-24. On C, `geometryAt`
+returns a pointer, and a `block` copies its value into a temporary and out. On JavaScript, a `lent`
+func builds its default result, with `noinit` and without it. Verified by a probe on the same day:
+through a template that ends in the slot alone, a whole write compiles. So do a write of a field
+and a `var` argument.
 
 ## Origins
 
@@ -3086,18 +3187,26 @@ that it draws as. The horizon plane matches every ray, so it comes last. The ext
 `algebraFilled`, the one derivation point, because built field by field, a horizon point is
 unpickable with its multivector twins zero.
 
-**The sky is a click and hold target, and never a drag handle, and so is a plane or a point that
-fills the view.** With a horizon plane visible the cursor is over *something* almost everywhere. A
-press on empty space becomes a camera move precisely because nothing was hovered. A finite plane
-whose disc reaches every corner of the frame (`picking.isCoveringView`) leaves no empty glass at
-all. Every corner is half the diagonal from the middle, 750 px on a 1200×900 frame. Rejected: the
-longer side, 1200 px, under which a plane that covers the whole window still reads as a handle.
+**The sky is a click and hold target and never a drag handle, as is a plane that nearly fills the
+view.** With a horizon plane visible the cursor is over *something* almost everywhere. A press on
+empty space becomes a camera move precisely because nothing was hovered. A finite plane whose disc
+covers nine tenths of the frame or more leaves bare glass only in slivers (repository issue 758). No
+reader aims a press at those. `picking.fractionDiscFilled` reads that share where the disc stands,
+on a grid of 32 columns.
 
-A point fills the frame as the zoom comes in to it, and its drawn sphere is held to the same corners
-(`mesh.radiusDrawnAt`). Rejected: a point that is always a handle, which zoomed in until it covers
-the frame leaves no glass to press. `SLACK_COVERED` 1e-9 lets a disc fall that fraction short of the
-corners and still cover. An eye held at the fill stands one ulp short of it, and a bare `>=` reads
-the point there as a handle.
+Rejected: a disc that reaches every corner of the frame, by its radius about the middle. It reads
+the disc as if it faced the eye, so it reads a slanted plane wrong both ways. A ground covering
+98.2% of the frame, with bare corners, read as a handle under the mouse. A ground covering 53%, all
+of the lower half, read as backdrop with bare glass above it. Rejected: the longer side, 1200 px on
+a 1200×900 frame, which asked more still.
+
+A point is backdrop once it fills the frame, as the zoom comes in to it: its drawn sphere must reach
+every corner (`picking.isCoveringView`, `mesh.radiusDrawnAt`). Every corner is half the diagonal
+from the middle, 750 px on a 1200×900 frame. The zoom toward a point stops at that fill
+(`framing.holdFilled`), so a point keeps the rule of the corners. Rejected: a point that is always a
+handle, which zoomed in until it covers the frame leaves no glass to press. `SLACK_COVERED` 1e-9
+lets a disc fall that fraction short of the corners and still cover. An eye held at the fill stands
+one ulp short of it.
 
 `isBackdropUnder` folds every case into one answer, which `beginDrag`, `destination` and
 `interaction.is_hover_backdrop` read. A click on empty space selects the sky rather than clears the
@@ -3105,11 +3214,16 @@ selection. A tap still treats it as empty space, because a tap on empty space is
 finger has to dismiss a selection. Touch reaches the sky by a long press.
 
 **The pick runs once for each frame, and not for each input event.** A pick walks every live handle,
-which is linear in the scene. Each pointer move marks hover stale, that of a mouse with no button
-down included, and the frame loop picks once after `nimDriveHeld`. The wheel sums its notches and
-the loop applies one dolly, the same zoom, because notches compose (`interaction.factorWheel`).
-Rejected: a pick for each notch, at 83.8 ms of picking for six notches a frame. Three paths pick in
-their handler, because they answer before it returns: `pointerdown`, a touch-down and `handleTap`.
+which is linear in the scene. While a mouse is the pointer, the frame loop picks in every frame
+after `nimDriveHeld`, as the desktop does. Hover then follows what the camera carries under a still
+cursor, and drops while the camera moves (`interaction.updateHover`). That is one pick in each
+frame, the cost that the desktop pays, measured below. A finger leaves no cursor, so only its move
+marks hover stale, and `nimClearHover` drops hover once it lifts.
+
+The wheel sums its notches and the loop applies one dolly, the same zoom, because notches compose
+(`interaction.factorWheel`). Rejected: a pick for each notch, at 83.8 ms of picking for six notches
+a frame. Three paths pick in their handler, because they answer before it returns: `pointerdown`, a
+touch-down and `handleTap`.
 
 **The pick ranks what was drawn.** It takes the placements of the frame and dispatches on
 `Placement.kind`, rather than asks `position`, `direction`, `frame` and `spanPerpendicular` again
@@ -3120,7 +3234,7 @@ that a hover or a wheel names is read from its placement too, so the pick classi
 **The pick rejects a plane before it meets it.** `isBeyondDisc` bounds the screen extent of the disc
 by the silhouette of the sphere that contains it, conservative in the depth and off-axis terms.
 20,000 random configurations with 300 surface samples each found no silhouette point outside the
-bound. `geometryAt` hands back a `lent` view, and `projectToScreen` is three dot products in local
+bound. `geometryAt` reads the slot in place, and `projectToScreen` is three dot products in local
 floats. Rejected: a 4×4 multiply with two typed arrays allocated for each call, which was 43% of a
 15.4 ms pick over 10,000 handles.
 
@@ -3148,8 +3262,10 @@ destination, and a removal of an object clears the highlight on both paths.
 - the disc bound sampled from inside the view;
 - the ground hovered from half a unit (backdrop, drag refused) and from forty (drag starts);
 - a point reads as backdrop at 0.8 of its fill depth, as a handle at 1.25 of it and 1,000 units;
-- a disc spanning 965.7 px read as backdrop and one spanning 724.3 px did not, against a corner 750
-  px from the middle;
+- the ground reads as backdrop from 9 units, and as a handle from 12, under nine tenths covered;
+- the ground covering 99.7% of a frame of 1058 by 994 px, with bare corners, reads as backdrop;
+- over 96 seeded stances at two frames, a plane is backdrop exactly where a pick finds it under nine
+  tenths or more of the frame. 87 stances stand clear of the bound, 20 of them over;
 - a point ahead of the eye reads in front and is picked at each decade from 1e-8 to 1,000 units;
 - a point as far behind the eye reads behind;
 - a plane a camera stands millionths off is picked, and found under the pointer.
@@ -3163,6 +3279,12 @@ out. A right drag of 180 px on it moves the view and builds nothing.
 
 Verified by driven check on the page, through pointer events alone (`driveHoverFollowsMouse`). A
 mouse moved onto an object with no button down hovers it, and moved off it hovers nothing.
+
+Verified by `--drive-hover` and the page's `driveHoverWhileMoving`, 2026-10-22. A pick by keyboard
+eased its object under a still pointer, and hover named it once the ease arrived. A right arrow held
+for twelve frames lit hover in none of them, and hover named the pick again three frames after the
+release. On the frame loop of `main` at `85ccefc1`, the page hovered the ground plane after the
+ease, and through all twelve frames.
 
 Measured then, and not since: one pick went from 11.4 to 3.9 ms p50 at 1,024, and from 15.4 to 4.7
 ms at 10,000. A hover pick is 0.7, 1.6 and 3.5 ms at 60, 360 and 5,038.
@@ -3474,6 +3596,15 @@ ink, and the `save` of an edit session. That save is the "edit committed" moment
 widgets lack. It is one fixed array plus one cursor, and not two stacks. An entry is a `Step {scene,
 stance}`, and both are plain value types, so a record is a copy and `entries[cursor].scene` is
 exactly the live scene. `CAPACITY_HISTORY` is 32.
+
+**A hide or a delete of the whole selection is one step.** Both menus act through
+`selection.setVisibleAll` and `selection.removeAll`, and record the act once. So one undo takes it
+back on both builds, as one press made it. A delete also ends an edit session against any of the
+objects, which has nothing left to commit to.
+
+Verified by `--drive-bulk` and the page's `driveBulkUndo`, 2026-10-22, with two objects picked. A
+hide and then one undo left both shown, and a delete and then one undo left both standing. On the
+code of `main` at `85ccefc1`, one undo on the page brought back one object of the two, each time.
 
 **The array is a ring.** `first` names the handle that holds the oldest step, and `handleAt` is the
 one place where a timeline position becomes an index. To retire the oldest entry moves one integer.
@@ -4519,12 +4650,5 @@ that the runner carries that library. Assumed: nothing about the suite itself.
   it joins. The error is 0.4 px at an orbit distance of 0.0001, and 3.2 px at 0.00001. Float32 holds
   about 0.06 of a unit at 530,000 units, and the record stores the vanishing point in it. The near
   crossing is not the cause (Records and shaders).
-- The two front-ends still differ in these inputs. A read of the code on 2026-10-12 found them, and
-  no run has checked them yet:
-  - Hide or delete of several objects takes one step of undo on the desktop, and one for each
-    object on the page.
-  - The field of view takes any value on the page, and 10 to 120 by drag on the desktop.
-  - An empty distance field reads 0.1 on the page, and the near limit on the desktop.
-  - While the camera moves, the page keeps hover on what slid under a still pointer.
 
 [replications]: https://gitlab.com/mraxilus/replications
