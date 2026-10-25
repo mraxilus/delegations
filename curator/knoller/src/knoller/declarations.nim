@@ -18,7 +18,8 @@
 ##     (Article II.1).
 ##   Missing doc (VI.1): every declaration takes doc, as `declared.nim` reads it, but local
 ##     binding, parameter and placeholder, which take none (Architect's ruling on review page
-##     of repository issue 443). Names sharing one line share one doc, so line reports once.
+##     of repository issue 443). Names sharing one line share one doc, so line reports once;
+##     enum members listed on one line among them, by Architect's ruling on D1 of #752.
 ##     Name inside value or signature of declaration above it is part of it, and takes none:
 ##     field of tuple in brackets, or parameter of proc type.
 ##     Doc anywhere rule of position reads passes: on declaration's line, whole line just above
@@ -41,8 +42,6 @@
 ##
 ##   Cost: scanner, never parser (`tokens.nim`); declaration it cannot place surely stays.
 ##   Cost: literal with suffix (`0'u8`) and raw string keep their type, though it is exact.
-##   Cost: enum members listed on one line are left out; whether each takes line and doc of its
-##     own is open question of record.
 
 {.experimental: "strictFuncs".}
 
@@ -398,7 +397,6 @@ func docsMissing(source: string): seq[Missing] =
       items = named[d]
       kind = items[0].kind
     if d >= r.lines.len or d <= covered or quoted[d]: continue
-    if kind == KindName.Member and items.len > 1: continue
     if kind == KindName.Routine and r.isDelegationStacked(d): continue
     let
       last = r.lastDeclaration(d, kind)

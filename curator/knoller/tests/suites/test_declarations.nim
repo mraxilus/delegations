@@ -109,13 +109,25 @@ suite "Declarations":
     check fixDocsMissing("a.nim", bare).fixed[0].rule == Rule.DocMissing
 
 
-  test "local binding, parameter, placeholder and members sharing line take no doc":
-    # Architect's ruling on review page of #443; members sharing line are open question.
-    let source = "proc f*[T](x: T): T =\n  ## Echo.\n  let y = x\n  y\n" &
-        "type Kind* = enum  ## Kind.\n  A, B, C\n"
+  test "local binding, parameter and placeholder take no doc":
+    # Architect's ruling on review page of #443.
+    let source = "proc f*[T](x: T): T =\n  ## Echo.\n  let y = x\n  y\n"
     check checkDocsMissing("a.nim", source).len == 0
     let single = "type Kind* = enum  ## Kind.\n  A\n  B  ## Second.\n"
     check checkDocsMissing("a.nim", single).mapIt(it.line) == @[2]  # member alone on line
+
+
+  test "enum members sharing line share its one doc, which describes each of them":
+    # Architect's ruling on D1 of #752: members listed on one line share doc of that line.
+    let
+      shared = "type Kind* = enum  ## Kind.\n  A, B, C\n"
+      found = checkDocsMissing("a.nim", shared)
+    check found.mapIt(it.line) == @[2]  # line reports once
+    check found[0].message == "Declaration takes doc comment; got `member A, B, C`."
+    check shared.fixedMissing == "type Kind* = enum  ## Kind.\n  A, B, C  ## TODO: Document.\n"
+    check shared.fixedMissing.isSettledMissing
+    let documented = "type Kind* = enum  ## Kind.\n  A, B, C  ## Letters.\n"
+    check checkDocsMissing("a.nim", documented).len == 0
 
 
   test "doc in each place rule of position reads passes, since place is that rule's":
