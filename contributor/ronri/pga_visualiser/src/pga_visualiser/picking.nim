@@ -56,6 +56,16 @@ const
     ##   Free flight takes object at any depth: wheel there refers to object under pointer,
     ##   and band about separation left it nothing to refer to once flight had moved on
     ##   while separation stood (repository issue 535).
+  FRACTION_FILLED_BACKDROP* = 0.9
+    ## Take plane as backdrop where its disc covers this share of frame or more.
+    ##   Plane nearly filling frame leaves bare glass only in slivers, which no reader aims
+    ##   press at, so press on plane must move view, as press on sky does.
+    ##   Share measured where disc stands, not its reach about middle: disc reaching
+    ##   every corner was asked before, and ground covering 98.2% of frame read as handle
+    ##   (repository issue 758).
+  COUNT_SAMPLES_FILLED* = 32
+    ## Sample frame on this many columns, and on rows in proportion, to read share disc covers.
+    ##   One sample is 1/32 of width, 33 px on frame 1058 px wide.
   SLACK_COVERED* = 1.0e-9
     ## Allow disc this fraction short of frame's corners, and still count as covering it.
     ##   Eye held on fill (`framing.holdFilled`) stands exactly at `depthFilling`, and bare
@@ -811,7 +821,8 @@ proc pickNearest*(
 func isCoveringView*(centre: Position; radius: float; scale: DrawExtent; width, height: int): bool =
   ## Report whether disc of `radius` about `centre` reaches every corner of frame.
   ##   Cursor over such disc has no empty glass beside it to press instead, so it is
-  ##   treated as backdrop; see `isBackdropUnder`. Plane's disc or point's sphere alike.
+  ##   treated as backdrop; see `isBackdropUnder`. Point's sphere; plane's disc is judged
+  ##   by share it covers, `fractionDiscFilled`.
   ##   Half of diagonal is reach from middle of frame to furthest corner, which is what
   ##   covering every pixel asks for. Longer side was asked for before, which is 1.6 times
   ##   that on 4:3 frame: plane covering whole window still read as drag handle, and view
@@ -820,6 +831,36 @@ func isCoveringView*(centre: Position; radius: float; scale: DrawExtent; width, 
   ##   by reach it has rather than by where it sits.
   radius / worldPerPixelAt(centre, scale.scale) >=
       0.5 * hypot(float(width), float(height)) * (1.0 - SLACK_COVERED)
+
+
+func fractionDiscFilled*(
+  at: Position; normal: Direction; scale: DrawScale; width, height: int
+): float =
+  ## Read share of frame that plane's disc covers, where it stands; see `isBackdropPlaced`.
+  ##   Disc is `EXTENT_PLANE_F` about `at`, square to `normal`, both about view origin.
+  ##   Ray through middle of each cell of grid meets plane ahead of near clip, inside disc.
+  ##   Euclidean, as `isCoveringView` is: it sizes picture, and asks algebra nothing.
+  ##     Ray's forward part is one, so its parameter at meet is depth along sight.
+  let
+    columns = COUNT_SAMPLES_FILLED
+    rows = max(1, int(round(float(columns) * float(height) / float(width))))
+    aspect = float(width) / float(height)
+    slant = dot(at - scale.eye, normal)
+  var covered = 0
+  for row in 0..<rows:
+    for column in 0..<columns:
+      let
+        across = (2.0 * (float(column) + 0.5) / float(columns) - 1.0) * aspect
+        up = 1.0 - 2.0 * (float(row) + 0.5) / float(rows)
+        ray = scale.forward + (across * scale.tangent_half_view) * scale.axis_right +
+          (up * scale.tangent_half_view) * scale.axis_up
+        facing = dot(ray, normal)
+      # Ray along plane meets it nowhere.
+      if facing == 0.0: continue
+      let depth = slant / facing
+      if depth >= scale.depth_near and norm(scale.eye + depth * ray - at) <= EXTENT_PLANE_F:
+        covered += 1
+  float(covered) / float(rows * columns)
 
 
 func depthFilling*(radius: float; scale: DrawExtent; width, height: int): float =
@@ -852,7 +893,9 @@ func isBackdropPlaced(
   case placed.kind
   of Case.PlaneEverywhere: true
   of Case.PlaneOn:
-    isCoveringView(placed.at.toView(scale.origin), EXTENT_PLANE_F, scale, width, height)
+    fractionDiscFilled(
+      placed.at.toView(scale.origin), placed.axes.normal, scale.scale, width, height
+    ) >= FRACTION_FILLED_BACKDROP
   of Case.PointAt, Case.PointToward:
     let anchor = anchorFor(placed, scale)
     anchor.isSome and isCoveringView(
@@ -868,7 +911,8 @@ func isBackdropUnder*(
   width, height: int;
   placed: openArray[Placement] = [];
 ): bool =
-  ## Report whether hovered object is backdrop: horizon plane, or plane or point filling view.
+  ## Report whether hovered object is backdrop: horizon plane, plane nearly filling view, or
+  ## point filling it.
   ##   Backdrop is click and hold pivot, never drag handle: press on it falls through to
   ##   camera, or view cannot be moved while plane fills every pixel.
   ##   Point fills view as reader zooms into it, and then left no glass to press: drag

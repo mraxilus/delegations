@@ -1,16 +1,19 @@
 ## Draw each of Explorer's frames, through marks workbench settled.
 ##
-##   This is only place two vocabularies meet.  Model says `Side`
-##     and `Site` -- hand of lead, hand of follow, told apart by
-##     their types -- and drawing says `Arm` for either, told apart by
-##     which dancer is holding it.  Translating is whole of this module.
+##   Model says `Side` and `Site` -- hand of lead, hand of follow, told
+##     apart by their types -- and drawing says `Arm` for either, told apart
+##     by which dancer is holding it.  This translates one into other for
+##     frame picture.  `map` does same for inks of its lines, and workbench
+##     where it reads Explorer's frames (`design/asks`, `design/checks`,
+##     `design/reference_page`).
 ##   It reaches model through `../frame` and **never** through
 ##     `../rotation`, which is not oversight: rotation names `Dancer` and
 ##     `Level` of its own, and its `Way` is clockwise against anticlockwise
 ##     where drawing's `Modifier` is lock against wrap.  Module that
 ##     imported both would have to say which it meant at every use, and would
-##     eventually say wrong one.  So this takes plain `facing: bool` and
-##     lets `diagram` do arithmetic that needs rotation's words.
+##     eventually say wrong one.  So this takes two plain flags, `is_facing`
+##     and `is_clockwise`, and lets `diagram` do arithmetic that needs
+##     rotation's words.
 ##   Every scene is built **at compile time**.  Nothing here has side
 ##     effect, so whole chain -- settling hands, routing each
 ##     connection round bodies, breaking one that passes underneath
@@ -22,8 +25,9 @@
 ##       formats every coordinate once, in one backend, so JS build
 ##       cannot round last digit differently from C one.
 ##     Cost of building them all: every frame is drawn whether session
-##       ever shows it or not.  Accepted -- there are sixteen, and whole
-##       table is smaller than code that would make one.
+##       ever shows it or not.  Accepted -- there are twenty-four, seventeen
+##       of them distinct, and whole table is smaller than code that would
+##       make one.
 
 {.experimental: "strictFuncs".}
 
@@ -34,9 +38,10 @@ import ./[figure, pose, route, terms]
 
 
 const HOW_MANY = FRAMES.len * 3
-  ## Every frame, facing and turned: whole of what picture can say.
-  ##   Follow's facing is only rotation frame picture carries, and
-  ##     only its parity, so half turn and one and one-half turns draw alike.
+  ## Every frame, facing and turned each way: whole of what picture can say.
+  ##   Follow's facing is only rotation frame picture carries: its parity, and
+  ##     which way follow turned where two connections cross (`renderScene`).
+  ##     So half turn and one and one-half turns same way draw alike.
 
 
 func toArm(side: Side): Arm {.compileTime.} =
@@ -114,7 +119,7 @@ func sceneFor*(target: Frame; is_facing, is_clockwise: bool): string =
   ## Get picture of this frame, seen with follow facing or turned one way.
   ##   Invalid frame has no picture rather than blank one: it is not
   ##     state, so there is nothing to draw and nothing to make up.
-  ##   `clockwise` is read only where follow is turned, and says which way
+  ##   `is_clockwise` is read only where follow is turned, and says which way
   ##     follow turned to get there.  Caller does that arithmetic, since
   ##     naming it here would need `rotation`'s words.
   let at = frameIndex(target)

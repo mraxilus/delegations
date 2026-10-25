@@ -203,6 +203,7 @@ the sentence ends, as in ``Bracket import is alphabetised (X.5); got `strutils, 
 | `operator-wrapping` | A line that fits nowhere else breaks after a binary operator. |
 | `continuation-indent` | Each line past its statement line takes four spaces more than it. |
 | `trailing-separator` | A list of one item to a line ends in a separator. |
+| `missing-doc` | A declaration takes a doc, and `## TODO: Document.` waits for its text. |
 | `comment-above` | A trailing comment that does not fit moves to its own line above. |
 | `fence` | A fence closes inside the bracket, string or comment it opens in. No fix reaches it. |
 | `fence-held` | A fence keeps its lines as written, and each run names what breaks inside it. |
