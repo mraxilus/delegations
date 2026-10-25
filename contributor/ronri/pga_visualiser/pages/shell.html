@@ -34,21 +34,21 @@
     --speed-good: #14a06e;
     --speed-fair: #bb8215;
     --speed-poor: #d03b3b;
-    /* Every stack names maths and symbol families after its text faces: none of Commit
+    /* Every stack names maths and symbol families after its text font faces: none of Commit
        Mono, Noto Serif and Noto Sans carries every operator and symbol page writes. Without
        them bold operand or wedge falls through to whatever viewer's system happens to
-       have, which is one outcome embedding faces exists to rule out -- and it renders fine
+       have, which is one outcome embedding font faces exists to rule out -- and it renders fine
        on machine that has DejaVu, so it does not show up locally. "Noto Sans UI" follows
-       mono and serif faces too, so what neither carries draws in interface face before
+       mono and serif font faces too, so what neither carries draws in interface font face before
        maths. Listing family costs nothing: CSS falls back per character, and
-       range-restricted faces only ever match characters they are declared for. */
+       range-restricted font faces only ever match characters they are declared for. */
     --mono: "Commit Mono UI", "Noto Sans UI", "Noto Sans Math UI", "Noto Sans Symbols UI",
       ui-monospace, "SF Mono", Consolas, monospace;
     --sans: "Noto Sans UI", "Noto Sans Math UI", "Noto Sans Symbols UI", -apple-system,
       "Segoe UI", "Helvetica Neue", Arial, sans-serif;
     --serif: "Noto Serif UI", "Noto Sans UI", "Noto Sans Math UI", "Noto Sans Symbols UI",
       Georgia, "Times New Roman", serif;
-    /* **Three faces, three roles, and nothing else picks between them.**
+    /* **Three font faces, three roles, and nothing else picks between them.**
          `--serif` draws titles: heading that names section or view, and application's own
        name. `--sans` draws everything reader reads or operates -- body, controls, labels,
        tabs, figures. `--mono` draws code and text whose columns carry meaning: key names,
@@ -56,7 +56,7 @@
          Split follows type systems that state roles outright rather than taste: display
        styles are for headings, label styles for text inside components (Material 3), and
        monospace is for code rather than for numbers, which want tabular figures in
-       proportional face instead (`font-variant-numeric`, used below). That is why tab strip
+       proportional font face instead (`font-variant-numeric`, used below). That is why tab strip
        and toggle chips are `--sans` although they were `--mono`, and why count beside
        heading is `--sans` although heading is serif.
          Desktop front-end draws same three roles from same three families, through
@@ -70,19 +70,19 @@
   }
 
   /* Embedded rather than linked: artifact page cannot reach external font
-     host, and naming face viewer may not have installed would leave two
-     builds looking different. Faces and weights are exactly what UI uses.
+     host, and naming font face viewer may not have installed would leave two
+     builds looking different. Font faces and weights are exactly what UI uses.
      Noto Sans has no mathematical operators or bold operands and Noto Sans Math
      has no stars or crosses, so all three are declared under one family and
      separated by unicode-range -- same split `gui_shim.cpp` merges into one
      atlas for desktop.
-       Each `@EMBED:<file>@` names face in `build/fonts` that `tools/build.nim web`
+       Each `@EMBED:<file>@` names font face in `build/fonts` that `tools/build.nim web`
      replaces with that file's own base64 data URL. Payload stays out of this
      file, so fonts stay out of tree -- fetched by digest from shared store, never
      committed. Family, weight and unicode-range are tracked here beside codepoints
      they cover; only bytes are injected.
-       Each Noto face is whole, as TrueType of its own release, so no character
-     falls outside it to face of viewer's system (Article X.8). Commit Mono is no
+       Each Noto font face is whole, as TrueType of its own release, so no character
+     falls outside it to font face of viewer's system (Article X.8). Commit Mono is no
      Noto, and stays its Latin WOFF2. */
   @font-face { font-family: "Noto Sans UI"; font-style: normal; font-weight: 400;
     font-display: block;
@@ -90,15 +90,15 @@
   @font-face { font-family: "Noto Sans UI"; font-style: normal; font-weight: 600;
     font-display: block;
     src: url(@EMBED:NotoSans-SemiBold.ttf@) format("truetype"); }
-  /* Maths and symbols each take family of their own, which every stack names after text face.
-     Not under "Noto Sans UI" by unicode-range: faces of family that declare one weight form
+  /* Maths and symbols each take family of their own, which every stack names after text font face.
+     Not under "Noto Sans UI" by unicode-range: font faces of family that declare one weight form
      one set, engine picks one set for weight asked, and set at 400 to 600 wins both 400 and
-     600 from text faces, which then never load, so Latin draws in viewer's face. Not
+     600 from text font faces, which then never load, so Latin draws in viewer's font face. Not
      declared again at 400 and at 600 to join those sets, which embeds each file twice,
      1.7 MB more. Order of stack is precedence, as merge order is in desktop's atlas: text
-     face draws what it holds, maths and symbols draw rest.
+     font face draws what it holds, maths and symbols draw rest.
        Each ships one weight, declared over 400 to 600: semibold label or chip then draws
-     its operators from them, as they are, and never from face of viewer's system. */
+     its operators from them, as they are, and never from font face of viewer's system. */
   @font-face { font-family: "Noto Sans Math UI"; font-style: normal; font-weight: 400 600;
     font-display: block;
     unicode-range: U+2190-21FF, U+2200-22FF, U+2300-23FF, U+27C0-27EF, U+2A00-2AFF, U+1D400-1D7FF;
@@ -107,7 +107,7 @@
     font-display: block;
     unicode-range: U+25A0-25FF, U+2600-26FF, U+2700-27BF;
     src: url(@EMBED:NotoSansSymbols2-Regular.ttf@) format("truetype"); }
-  /* Serif ships at 600 alone, which is weight every title is set at; 400 would be face
+  /* Serif ships at 600 alone, which is weight every title is set at; 400 would be font face
      nothing draws, and browser asked for 600 would fake bold from it. */
   @font-face { font-family: "Noto Serif UI"; font-style: normal; font-weight: 600;
     font-display: block;
@@ -301,7 +301,7 @@
     border: 1px solid transparent;
     background: transparent;
     color: var(--ink-muted);
-    /* Label role, so interface face: these name what button does, and mono face is
+    /* Label role, so interface font face: these name what button does, and mono font face is
        kept for code and for text whose columns line up (see type roles above). */
     font-family: var(--sans);
     font-size: 11px;
@@ -461,7 +461,7 @@
   }
   .help-tab {
     /* Tab strip names views, but tab is control rather than heading: label role, so
-       interface face. Uppercase and its tracking stay -- caps work at this size when
+       interface font face. Uppercase and its tracking stay -- caps work at this size when
        letterspaced, and they are what tells strip apart from rows beneath it. */
     font-family: var(--sans);
     font-size: 10.5px;
@@ -784,7 +784,7 @@
     background: color-mix(in srgb, rgb(22 27 34) 88%, var(--bg));
     border: 0;
     color: var(--ink);
-    /* Title role: heading naming section takes serif face, which is only role it is
+    /* Title role: heading naming section takes serif font face, which is only role it is
        drawn in (see type roles above). Weight stays 600, and serif ships at 600 for it:
        serif at 13px against dark ground thins, and heading has to hold its row. */
     font-family: var(--serif);
@@ -907,7 +907,7 @@
 
   /* ---- Objects list ---- */
   /* Count rides inside heading and would inherit its serif; figures belong in interface
-     face with tabular numerals, so it says so rather than inheriting.
+     font face with tabular numerals, so it says so rather than inheriting.
      Pushed to right edge by its own margin, which is why objects heading needs no wrapper
      of its own: it was one, carrying inline width, purely to place mark that now leads. */
   .objects-count { font-family: var(--sans); font-size: 11px; color: var(--ink-faint);
@@ -993,7 +993,7 @@
   .coefficient-grade-row { display: flex; flex-wrap: wrap; gap: 5px; }
   .coefficient-grade-row .field { flex: 1 1 56px; min-width: 56px; }
   /* Grade of six as two rows of three: six cells in one line left each 46px of text, and
-     a four-digit coefficient with its sign and point takes 57px in the mono face. */
+     a four-digit coefficient with its sign and point takes 57px in the mono font face. */
   .coefficient-grade-row:has(> .field:nth-child(6)) > .field { flex-basis: 30%; }
   .swatch { width: 10px; height: 10px; border-radius: 50%; flex: none; }
 
@@ -1016,8 +1016,8 @@
     color: var(--ink);
     margin: 6px 0;
   }
-  /* Label's line box set by its own size, not by every face it draws from: arrow of
-     crossing rows comes from maths face, whose taller box would stand its row 5 px above
+  /* Label's line box set by its own size, not by every font face it draws from: arrow of
+     crossing rows comes from maths font face, whose taller box would stand its row 5 px above
      others. */
   .diagnostic-line > span { line-height: 1; }
   /* Parent row is button so it is reachable by keyboard and announced as one, and is

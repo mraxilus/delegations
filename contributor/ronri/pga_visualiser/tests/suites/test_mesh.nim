@@ -1621,7 +1621,7 @@ suite "Mesh":
   test "the categorical run is contiguous, so a picker can walk it as one block":
     # Colour picker offers `COUNT_INK_CATEGORICAL` entries starting at.
     #   `LUT_NAME_BY_INK[INK_CATEGORICAL_FIRST]`, which is only correct while every
-    #   categorical slot follows every structural one, with no gaps.
+    #   categorical ink follows every structural one, with no gaps.
     check COUNT_INK_CATEGORICAL == 5
     check inkCategorical(0) == INK_CATEGORICAL_FIRST
     check inkCategorical(COUNT_INK_CATEGORICAL - 1) == Ink.high
@@ -1629,7 +1629,7 @@ suite "Mesh":
       check categoricalIndex(inkCategorical(index)) == index
 
 
-  test "a colour picker offers every categorical slot and no structural one":
+  test "a colour picker offers every categorical ink and no structural one":
     var offered: seq[string]
     for index in 0..<COUNT_INK_CATEGORICAL: offered.add($inkCategorical(index))
     check offered == @["Rose", "Copper", "Olive", "Jade", "Cobalt"]

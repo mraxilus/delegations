@@ -36,7 +36,7 @@ type Step* = object  ## Define one scripted construction step.
   operation*: Operation  ## Operation applied to operands below.
   index_first*: int  ## Scene index of left operand.
   index_second*: int  ## Scene index of right operand; ignored where operation is unary.
-  ink*: Ink  ## Palette slot derived object is drawn with.
+  ink*: Ink  ## Palette index derived object is drawn with.
 
 
 

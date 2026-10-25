@@ -59,8 +59,8 @@ const
   HEIGHT_MARKER_LABEL* = 16.0
     ## Set nominal height of selected object's name label, in pixels.
     ##   Label's centre is placed half this above marker's top, so text box sits clear
-    ##   of outline whichever face each front-end sets; faces differ, metrics stay theirs.
-    ##   Fourteen is comfortable floor glanceable on-screen text research puts on face
+    ##   of outline whichever font face each front-end sets; font faces differ, metrics stay theirs.
+    ##   Fourteen is comfortable floor glanceable on-screen text research puts on font face
     ##   size, and read small over scene; sixteen asked for by eye, at semibold weight.
   WIDTH_MARKER_LABEL_HALO* = 2.0
     ## Set width of halo around label's letters, in pixels.

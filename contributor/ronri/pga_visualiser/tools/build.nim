@@ -12,11 +12,12 @@
 ##   | declare  | derive `bridge.d.ts` from bridge's own `exportc` signatures            |
 ##   | types    | declare, then type-check page's scripts and harness against it         |
 ##   | web      | declare, compile bridge through JS backend, type-check and emit        |
-##   |          | TypeScript, inline faces, fold everything into one self-contained page |
-##   | drive    | fetch faces and browser, build page, drive it, report every check      |
+##   |          | TypeScript, inline font faces, fold everything into one self-contained |
+##   |          | page                                                                   |
+##   | drive    | fetch font faces and browser, build page, drive it, report every check |
 ##   | desktop  | fetch SDL3 and Dear ImGui, compile desktop front-end into `binaries/`  |
 ##   | driven   | build desktop front-end, drive it through every scripted run, report   |
-##   | assets   | fetch vendored faces page embeds, and verify each against its pin      |
+##   | assets   | fetch vendored font faces page embeds, and verify each against its pin |
 ##   | system   | print system packages build needs, one per line, for caller to install |
 ##   | clean    | remove `build`, `binaries` and `nimcache`                              |
 ##   |----------|-----------------------------------------------------------------------|
@@ -24,7 +25,7 @@
 ##   Exit: 0 done, 1 command failed, 2 usage error.
 ##
 ##   Page is one file, so it opens from `file://` or artefact host reaching no font host
-##     and no script host. That is why faces are inlined and why scripts concatenate.
+##     and no script host. That is why font faces are inlined and why scripts concatenate.
 ##   Scripts share one global scope rather than importing each other: TypeScript 7 removed
 ##     `outFile`, so compiler no longer bundles, and page cannot resolve ES imports without
 ##     server. Files therefore carry no top-level `import` or `export`, compiler checks them
@@ -56,14 +57,14 @@ const
   BINARIES = "binaries"  ## Directory compiled binaries land in.
   BUILD_BROWSER = BUILD / "browser"  ## Directory browser products land in.
   DIRECTORY_FONTS = BUILD / "fonts"
-    ## Directory vendored faces land in; never committed (Article XI.3).
+    ## Directory vendored font faces land in; never committed (Article XI.3).
   PATH_KOCH = ".." / ".." / ".." / "koch.nim"
-    ## Repository's own driver, which `assets` asks for faces through.
+    ## Repository's own driver, which `assets` asks for font faces through.
     ##   Relative to this project rather than absolute: derived from where project sits in
     ##   repository, which is what CONTRIBUTOR.md allows and what naming one machine's layout
     ##   is not.
-  PATH_FACES_FROM = DIRECTORY_FONTS / "store.list"
-    ## Which store entry each face was copied from, written by `assets` and read by `web`.
+  PATH_FONT_FACES_FROM = DIRECTORY_FONTS / "store.list"
+    ## Which store entry each font face was copied from, written by `assets` and read by `web`.
     ##   Under `build/` because it is derived rather than declared, and because it holds paths
     ##   into one machine's own store.
   PATH_BRIDGE_NIM = "src" / "browser" / "bridge.nim"
@@ -84,8 +85,8 @@ const
   PATH_TSCONFIG_DRIVE = "tsconfig.drive.json"
     ## Harness's own type-checker configuration, targeting node not browser.
   DRIVES = [
-    "keys", "sky", "undo", "select", "drag", "search", "menu", "faces", "edit", "wheel", "escape",
-    "chords", "bulk", "fields", "hover",
+    "keys", "sky", "undo", "select", "drag", "search", "menu", "font-faces", "edit", "wheel",
+    "escape", "chords", "bulk", "fields", "hover",
   ]
     ## Scripted runs entry point carries, each reporting checks of its own.
     ##   Help's runs are not here: one per tab, and tabs are read from binary rather than
@@ -95,11 +96,11 @@ const
   PATH_DESKTOP_BINARY = BINARIES / "pga_visualiser"
     ## Desktop binary that verb writes; never committed, since `.gitignore` covers `binaries/`.
   ENV_FONT = "PGA_FONT"
-    ## Environment name overriding face front-end sets its interface in.
+    ## Environment name overriding font face front-end sets its interface in.
     ##   Declared by `src/desktop/main.nim`, which says what all four are for; named again
     ##   here rather than imported, since driver compiles no project code.
-  PATH_FONT_ABSENT = "/nonexistent/no-such-face.ttf"
-    ## Path no machine carries, so faceless run asks same question everywhere.
+  PATH_FONT_ABSENT = "/nonexistent/no-such-font-face.ttf"
+    ## Path no machine carries, so run with no font face asks same question everywhere.
   DIRECTORY_IMGUI = "dependencies" / "imgui"
     ## Dear ImGui checkout desktop front-end compiles into itself; see `gui.PATH_IMGUI`.
   URL_IMGUI = "https://github.com/ocornut/imgui.git"
@@ -134,15 +135,15 @@ const
     ##   must arrive.
   COMMIT_IMGUI = "fd13a1e8923a0a7077b404fc36fd063b25a0c0b5"
     ## Commit that checkout must stand at, i.e. `v1.92.9b-docking-35-gfd13a1e`, MIT licence.
-    ##   Pinned for reason `FACES` are: this is fetched at build time and compiled into
+    ##   Pinned for reason `FONT_FACES` are: this is fetched at build time and compiled into
     ##   binary reader runs, so which commit it is has to be stated rather than taken.
     ##   Docking branch rather than master: `gui` asks for docking, which master lacks.
   PATH_SHELL = "pages" / "shell.html"
-    ## Committed markup, carrying `@EMBED:<face>@` and `@SCRIPT@` tokens.
+    ## Committed markup, carrying `@EMBED:<font face>@` and `@SCRIPT@` tokens.
   PATH_PAGE = BUILD / "pga_visualiser.html"  ## Assembled page.
   TOKEN_SCRIPT = "@SCRIPT@"
     ## Token every script replaces, so committed shell stays whole document.
-  TOKEN_EMBED = "@EMBED:"  ## Opening of token one face replaces.
+  TOKEN_EMBED = "@EMBED:"  ## Opening of token one font face replaces.
   TOKEN_WORD = "@WORD:"
     ## Opening of token one catalogue entry replaces, closed by `@`.
     ##   Page's own labels sit in markup rather than in script, so they cannot be assigned at
@@ -163,7 +164,7 @@ const
     ##   Each names what it holds; `dom` first because every later script looks elements
     ##   up through it, `gl` next because every later script draws through it, and `frame`
     ##   last because it starts loop everything else has to be ready for.
-  FACES = [
+  FONT_FACES = [
     "commit-mono-latin-400-normal.woff2",
     "NotoSans-Regular.ttf",
     "NotoSans-SemiBold.ttf",
@@ -171,18 +172,18 @@ const
     "NotoSansSymbols2-Regular.ttf",
     "NotoSerif-SemiBold.ttf",
   ]
-    ## Faces page embeds. Names alone: what bytes each name is, and where they come from, is
+    ## Font faces page embeds. Names alone: what bytes each name is, and where they come from, is
     ##   `curator/audit/src/assets.nim`, and `koch fetch-assets` fetches and checks them.
     ##   **Choice is this project's; digest is repository's.** These six are what this page
     ##   draws -- three of Article X.8's families, plus maths and symbols no other target
     ##   asks for -- and that stays here because it differs per target. What left is version
     ##   and SHA-256, which two projects had written identically (repository issue 116).
-    ##   Store keeps entries by digest, so face this project shares with another is one file
+    ##   Store keeps entries by digest, so font face this project shares with another is one file
     ##   on disk rather than two, and pin that moves is different entry rather than stale one.
-    ##   Each Noto face ships whole, as TrueType of its own release (Article X.8): subset
+    ##   Each Noto font face ships whole, as TrueType of its own release (Article X.8): subset
     ##   drew any character past its range from viewer's system (repository issue 411).
     ##   Commit Mono is no Noto, and stays Latin `woff2`.
-  FACES_DESKTOP = [
+  FONT_FACES_DESKTOP = [
     "NotoSans-Regular.ttf",
     "NotoSans-Bold.ttf",
     "NotoSerif-SemiBold.ttf",
@@ -190,16 +191,16 @@ const
     "NotoSansSymbols2-Regular.ttf",
     "CommitMonoV142-400Regular.otf",
   ]
-    ## Faces desktop front-end loads, named same way and from same store.
+    ## Font faces desktop front-end loads, named same way and from same store.
     ##   Six for three roles page draws too: `NotoSans` regular and bold for interface and for
     ##   name labels, `NotoSerif` semibold for headings, `CommitMono` for notation and
-    ##   figures, and two supplementary Noto faces merged into whichever carries notation.
+    ##   figures, and two supplementary Noto font faces merged into whichever carries notation.
     ##   Separate list rather than one: binary reads outlines and cannot read `woff2`, and
     ##   two front-ends set labels at different weights, so what each wants differs even where
     ##   family is same. Lists overlap where both draw one file, and `assets` asks once.
   PACKAGES_SYSTEM = [
-    ("curl", "fetch faces asked of shared store, one level down through `koch fetch-assets`"),
-    ("coreutils", "`base64` inlining those faces, and `sha256sum` store checks them with"),
+    ("curl", "fetch font faces asked of shared store, one level down through `koch fetch-assets`"),
+    ("coreutils", "`base64` inlining those font faces, and `sha256sum` store checks them with"),
     ("nodejs", "run type-checker `types` drives and harness `drive` runs"),
     ("libbrotli1", "decode `woff2` font face page ships; `koch drive` reads its `cmap`"),
     ("git", "clone Dear ImGui and SDL3, and read commit `desktop` holds each of them at"),
@@ -218,7 +219,7 @@ const
     ##   neither.
     ##   No version is pinned and none is invented: package's version is whatever machine
     ##   carries, which is honest limit rather than omission. What *is* pinned is every byte
-    ##   fetched at build time -- see `FACES`, `COMMIT_IMGUI` and `COMMIT_SDL3` -- which is
+    ##   fetched at build time -- see `FONT_FACES`, `COMMIT_IMGUI` and `COMMIT_SDL3` -- which is
     ##   what keeps unpinned download out of merge process.
     ##   Dear ImGui and SDL3 are absent deliberately: neither arrives as package. Dear ImGui
     ##   is compiled from source into binary, and Ubuntu 24.04 carries no `libsdl3-dev` at all
@@ -440,16 +441,16 @@ proc system() =
   for (package, _) in PACKAGES_SYSTEM: echo package
 
 
-proc facesFromStore(names: openArray[string]): seq[string] =
-  ## Ask `koch fetch-assets` for each face named, and read back path it holds in shared store.
+proc fontFacesFromStore(names: openArray[string]): seq[string] =
+  ## Ask `koch fetch-assets` for each font face named, and read back path it holds in shared store.
   ##   Repository's verb is `fetch-assets` and this project's own verb below is `assets`; they
   ##   are different drivers, and one asks other. Store serves any file fetched at build time,
-  ##   of which faces are only instances today.
+  ##   of which font faces are only instances today.
   ##   Store is repository's (`curator/audit/src/assets.nim`), keyed by digest, and verb
   ##   fetches what is missing and refuses bytes no row declares -- so verifying here as well
   ##   would be checking answer against question it was derived from.
   ##   Paths come back one per line in order asked, and count is asserted rather than trusted:
-  ##   verb prints nothing for face it could not serve, and silently short list would leave
+  ##   verb prints nothing for font face it could not serve, and silently short list would leave
   ##   copy below pairing wrong bytes with right name.
   ##   Compiler chatter is turned off rather than filtered, since paths are what is parsed.
   let (written, code) = execCmdEx(
@@ -459,93 +460,107 @@ proc facesFromStore(names: openArray[string]): seq[string] =
   if code != 0:
     raise newException(
       OSError,
-      "`koch fetch-assets` would not serve every face; got exit `" & $code & "` --\n`" & written &
-      "`.",
+      "`koch fetch-assets` would not serve every font face; got exit `" & $code & "` --\n`" &
+      written & "`.",
     )
   for line in written.strip.splitLines:
     let path = line.strip
     if path.len > 0 and fileExists(path): result.add path
   if result.len != names.len:
-    raise newException(OSError,
-      "`koch fetch-assets` named " & $result.len & " paths for " & $names.len & " faces asked for.")
+    raise newException(
+      OSError,
+      "`koch fetch-assets` named " & $result.len & " paths for " & $names.len &
+      " font faces asked for.",
+    )
 
 
 proc assets() =
-  ## Copy every face both front-ends draw with out of shared store into `build/fonts`.
-  ##   Faces are binary, which audit cannot read, so they are never committed and this verb
+  ## Copy every font face both front-ends draw with out of shared store into `build/fonts`.
+  ##   Font faces are binary, which audit cannot read, so they are never committed and this verb
   ##   is how contributor gets them (CONTRIBUTOR.md, "Pages and assets").
   ##   Fetching and checking is `koch fetch-assets`, not this: digest belongs to repository,
-  ##   since two projects draw same files, and this verb names which faces rather than what bytes
-  ##   they are (repository issues 116 and 124).
-  ##   Copied rather than read from store where they sit: desktop binary finds its faces beside
+  ##   since two projects draw same files, and this verb names which font faces rather than what
+  ##   bytes they are (repository issues 116 and 124).
+  ##   Copied rather than read from store where they sit: desktop binary finds its font faces beside
   ##   itself, and page's build reads them from one directory whether store is warm or cold.
-  ##   Face already identical to its store entry is left alone, so verb stays idempotent and
+  ##   Font face already identical to its store entry is left alone, so verb stays idempotent and
   ##   second run copies nothing.
   createDir DIRECTORY_FONTS
   let
-    names = deduplicate(@FACES & @FACES_DESKTOP)
-    paths = facesFromStore(names)
+    names = deduplicate(@FONT_FACES & @FONT_FACES_DESKTOP)
+    paths = fontFacesFromStore(names)
   var
     manifest: seq[string]
     copied = 0
-  for i, face in names:
-    let (source, destination) = (paths[i], DIRECTORY_FONTS / face)
-    manifest.add face & " " & source
+  for i, font_face in names:
+    let (source, destination) = (paths[i], DIRECTORY_FONTS / font_face)
+    manifest.add font_face & " " & source
     if fileExists(destination) and sameFileContent(source, destination):
-      echo "Kept ", face, ", already what the store holds"
+      echo "Kept ", font_face, ", already what the store holds"
       continue
     copyFile(source, destination)
     copied += 1
-    echo "Copied ", face, " from store"
-  writeFile(PATH_FACES_FROM, manifest.join("\n") & "\n")
-  echo "Wrote ", DIRECTORY_FONTS, " (", names.len, " faces, ", copied, " copied)."
+    echo "Copied ", font_face, " from store"
+  writeFile(PATH_FONT_FACES_FROM, manifest.join("\n") & "\n")
+  echo "Wrote ", DIRECTORY_FONTS, " (", names.len, " font faces, ", copied, " copied)."
 
 
 proc storePathsCopied(): Table[string, string] =
-  ## Read which store entry each face in `build/fonts` was copied from.
+  ## Read which store entry each font face in `build/fonts` was copied from.
   ##   Written by `assets` rather than derived here, so nothing in this project has to know
   ##   where store lives or what digest names its entries -- both are `assets.nim`'s.
-  if not fileExists(PATH_FACES_FROM): return
-  for line in readFile(PATH_FACES_FROM).strip.splitLines:
+  if not fileExists(PATH_FONT_FACES_FROM): return
+  for line in readFile(PATH_FONT_FACES_FROM).strip.splitLines:
     let parts = line.strip.split(' ', 1)
     if parts.len == 2: result[parts[0]] = parts[1]
 
 
-func mediaType(face: string): string =
-  ## Name media type data URL of `face` declares, read off its extension.
+func mediaType(font_face: string): string =
+  ## Name media type data URL of `font_face` declares, read off its extension.
   ##   Browser reads TrueType, OpenType and WOFF2 alike; type stated is what `format()` beside
   ##   it in shell says, so two never disagree about one file.
-  case face.splitFile.ext
+  case font_face.splitFile.ext
   of ".ttf": "font/ttf"
   of ".otf": "font/otf"
   of ".woff2": "font/woff2"
-  else: raise newException(ValueError, "Face is TrueType, OpenType or WOFF2; got `" & face & "`.")
+  else: raise newException(
+    ValueError,
+    "Font face is TrueType, OpenType or WOFF2; got `" & font_face & "`.",
+  )
 
 
-proc checkFace(face: string, copied: Table[string, string]) =
-  ## Raise unless face on disk is still byte for byte what store served for it.
+proc checkFontFace(font_face: string, copied: Table[string, string]) =
+  ## Raise unless font face on disk is still byte for byte what store served for it.
   ##   Second reading, at moment bytes are embedded rather than only when they were copied:
   ##   `assets` may have run long ago, and what this embeds is what every reader downloads.
   ##   Compared against store's own file rather than against digest written down here, which
   ##   is what adopting store means -- there is one declaration of these bytes and it is not
   ##   this file.
-  let path = DIRECTORY_FONTS / face
-  if face notin copied:
-    raise newException(OSError, "Face `" & face & "` names no store entry; run `assets` first.")
-  if not fileExists(copied[face]):
-    raise newException(OSError,
-      "Store no longer holds `" & copied[face] & "` for `" & face & "`; run `assets` again.")
-  if not sameFileContent(path, copied[face]):
-    raise newException(OSError,
-      "Face `" & face & "` is not what the store served; compare `" & path & "` against `" &
-      copied[face] & "`.")
+  let path = DIRECTORY_FONTS / font_face
+  if font_face notin copied:
+    raise newException(
+      OSError,
+      "Font face `" & font_face & "` names no store entry; run `assets` first.",
+    )
+  if not fileExists(copied[font_face]):
+    raise newException(
+      OSError,
+      "Store no longer holds `" & copied[font_face] & "` for `" & font_face &
+      "`; run `assets` again.",
+    )
+  if not sameFileContent(path, copied[font_face]):
+    raise newException(
+      OSError,
+      "Font face `" & font_face & "` is not what the store served; compare `" & path &
+      "` against `" & copied[font_face] & "`.",
+    )
 
 
 proc browser() =
   ## Fetch Chromium Playwright pins, unless environment names browser outright.
   ##   Harness drives Playwright's own build by default, and `tools/drive/main.ts` says in
   ##   what order; nothing else on machine installs it, so this satisfies its own
-  ##   precondition exactly as `assets` does for faces.
+  ##   precondition exactly as `assets` does for font faces.
   ##   Pin is version rather than digest: `package-lock.json` fixes `@playwright/test` and
   ##   version fixes browser revision, but Playwright publishes no checksum for archive it
   ##   serves. So bytes arrive on TLS alone, as compiler tarballs do, and PROVENANCE.md
@@ -584,8 +599,8 @@ proc worded(page: string): string =
 
 
 proc web() =
-  ## Assemble whole page: declarations, type-check, bridge, scripts, faces, markup.
-  ##   Fails with reason rather than emitting broken page: absent face renders as box and
+  ## Assemble whole page: declarations, type-check, bridge, scripts, font faces, markup.
+  ##   Fails with reason rather than emitting broken page: absent font face renders as box and
   ##   absent script as blank canvas, neither reporting itself.
   ##   `types` runs first, and emits every script this reads, under flags curator ratified
   ##   (repository issue 27).
@@ -608,19 +623,19 @@ proc web() =
 
   var page = readFile(PATH_SHELL)
   let copied = storePathsCopied()
-  for face in FACES:
-    let token = TOKEN_EMBED & face & "@"
+  for font_face in FONT_FACES:
+    let token = TOKEN_EMBED & font_face & "@"
     if token notin page: continue
-    let path = DIRECTORY_FONTS / face
+    let path = DIRECTORY_FONTS / font_face
     if not fileExists(path):
-      raise newException(OSError, "Missing face `" & path & "`; run `assets` first.")
+      raise newException(OSError, "Missing font face `" & path & "`; run `assets` first.")
     # Read again here, not only where copied: `assets` may have run long ago, and what this
     #   embeds is what every reader downloads. Wrong byte stops build rather than ships.
-    checkFace(face, copied)
+    checkFontFace(font_face, copied)
     run("bash", ["-c", "base64 -w0 " & quoteShell(path) & " > " & quoteShell(path & ".b64")])
     page = page.replace(
       token,
-      "data:" & mediaType(face) & ";base64," & readFile(path & ".b64").strip,
+      "data:" & mediaType(font_face) & ";base64," & readFile(path & ".b64").strip,
     )
 
   page = page.worded
@@ -652,7 +667,7 @@ proc checkCommit(directory, commit, what: string) =
 proc imgui() =
   ## Clone Dear ImGui at pinned commit, unless checkout already stands somewhere.
   ##   Verb fetches what it compiles rather than asking caller to, for reason `drive` fetches
-  ##   faces: check that first wants command run by hand is check runner will not run
+  ##   font faces: check that first wants command run by hand is check runner will not run
   ##   (CONTRIBUTOR.md, "One command drives it").
   ##   Leaves existing checkout alone rather than resetting it: `checkImgui` reads what is
   ##   there next and refuses wrong commit by name, so contributor pointing this at their own
@@ -666,7 +681,7 @@ proc imgui() =
 
 proc checkImgui() =
   ## Raise unless Dear ImGui checkout stands at commit pinned for it.
-  ##   Refuses by name rather than compiling whatever is there, for reason `checkFace` gives:
+  ##   Refuses by name rather than compiling whatever is there, for reason `checkFontFace` gives:
   ##   these sources are compiled into binary reader runs, so wrong commit is wrong binary,
   ##   and C++ differing by one release fails far from here with no word of why.
   if not dirExists(DIRECTORY_IMGUI):
@@ -696,7 +711,7 @@ proc versionSdl3(): string =
 proc sdl3() =
   ## Build SDL3 at pinned tag into `build/`, unless machine already reports that version.
   ##   No package carries it (see `VERSION_SDL3`), so this is how machine gets one, and verb
-  ##   fetching what it compiles is same rule `assets` follows for faces.
+  ##   fetching what it compiles is same rule `assets` follows for font faces.
   ##   Installs into tree rather than over `/usr/local`: build needing root is build CI cannot
   ##   run unattended without granting it, and prefix under `build/` is removed by `clean`
   ##   like any other product. Cost is `-rpath` below, since loader would not find library
@@ -829,7 +844,7 @@ proc driven() =
   ##   Exit follows checks: non-zero where any failed, so one command is whole answer.
   ##   Every failure is reported before exit rather than first one raising: run takes seconds,
   ##   and knowing which three broke beats knowing that one did.
-  ##   Fetches faces first, for reason `drive` does: front-end draws in faces this project
+  ##   Fetches font faces first, for reason `drive` does: front-end draws in font faces this project
   ##   ships, and run against absent one checks nothing anybody would ship.
   assets()
   desktop()
@@ -847,13 +862,13 @@ proc driven() =
   echo "== --drive-keys, with the scene filled to capacity"
   if not reported(["--hidden", "--fill", "--drive-keys"]): failed.add "drive-keys filled"
 
-  # Machine carrying no face, driven once, since that is machine this had never been run on.
+  # Machine carrying no font face, driven once, since that is machine this had never been run on.
   #   `PGA_FONT` names path no machine has rather than one this machine happens to lack, so
-  #   run asks same question everywhere. Interface face alone is hidden: it is one Dear ImGui
+  #   run asks same question everywhere. Interface font face alone is hidden: it is one Dear ImGui
   #   asserted on, and other three are reached through same code.
-  echo "== --drive-keys, with no face to load"
+  echo "== --drive-keys, with no font face to load"
   putEnv(ENV_FONT, PATH_FONT_ABSENT)
-  if not reported(["--hidden", "--drive-keys"]): failed.add "drive-keys without face"
+  if not reported(["--hidden", "--drive-keys"]): failed.add "drive-keys without font face"
   delEnv(ENV_FONT)
   if failed.len > 0:
     raise newException(OSError,
@@ -866,14 +881,14 @@ proc drive() =
   ##   Builds page first: harness against stale page checks build nobody has, and `web`
   ##   runs `types`, which type-checks this harness too.
   ##   Exit follows harness: non-zero where any check failed, so one command is whole answer.
-  ##   Fetches faces first, so verb satisfies its own precondition rather than assuming someone
+  ##   Fetches font faces first, so verb satisfies its own precondition rather than assuming someone
   ##   ran `assets` by hand. Cold checkout is where that assumption showed: runner builds every
   ##   step and stops at embedding, which is one line to prevent (repository issue 47).
-  ##   `web` keeps refusing absent face by name instead, since caller reaching for it directly
+  ##   `web` keeps refusing absent font face by name instead, since caller reaching for it directly
   ##   is asking to build page rather than to be given one.
-  ##   Fetches browser for same reason it fetches faces: harness drives Playwright's own
+  ##   Fetches browser for same reason it fetches font faces: harness drives Playwright's own
   ##   pinned build by default, and nothing else on machine installs it.
-  ##   Costs nothing warm: `assets` skips every face already carrying its pinned digest, and
+  ##   Costs nothing warm: `assets` skips every font face already carrying its pinned digest, and
   ##   `browser` skips build already at pinned revision.
   ##   Drives desktop front-end too, and no longer conditionally: both front-ends draw same
   ##   scene from same core, and check that runs on one machine alone is check nobody runs.

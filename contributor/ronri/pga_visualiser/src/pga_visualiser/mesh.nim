@@ -279,8 +279,8 @@ static:
 #[ Type Definitions ]#
 
 type
-  Ink* {.pure.} = enum  ## Define palette slot, so every colour in output lives in one table.
-    ## Structural slots, spent on furniture of drawing itself.
+  Ink* {.pure.} = enum  ## Define palette index, so every colour in output lives in one table.
+    ## Structural inks, spent on furniture of drawing itself.
     Backdrop,  ## Colour framebuffer is cleared to.
     AxisX,  ## World x axis through origin; standard convention is red.
     AxisY,  ## World y axis through origin; standard convention is green.
@@ -288,8 +288,8 @@ type
     Grid,  ## Lattice ruled on picked plane.
     Guide,  ## Construction helper, e.g. plane normal.
     Outline,  ## Selection outline drawn around highlighted object.
-      ## Never cycled to, only drawn where caller names slot as highlighted (see
-      ## `renderer.drawOutline`).
+      ## Never cycled to, only drawn where caller names object as highlighted (see
+      ## `main.drawSelectionMarker`).
     Invalid,  ## Reserved for object that is wrong rather than merely coloured.
       ## Magenta no object may be assigned, so seeing it always means something is
       ## invalid.
@@ -297,17 +297,17 @@ type
       ##   (`interaction.inkOfDrag`), warning arriving before release.
       ##   Never leaned on alone: magenta reads as blue under deuteranopia, so that drag
       ##   also shows no preview.
-    ## Categorical slots, spent by caller on telling one object from another.
+    ## Categorical inks, spent by caller on telling one object from another.
     ##   Named by hue rather than role, as caller alone knows what objects mean.
     ##     Grade is legible from shape, so colour carries identity.
     ##   Declared in this order for cycling: consecutive names sit far apart on wheel, so
     ##   two objects added one after another read as different even under colour-vision
     ##   deficiency.
-    ##   Five slots, not sixteen and not eight.
-    ##     Sixteen packed into band clear of three axis colours left every slot reading
+    ##   Five inks, not sixteen and not eight.
+    ##     Sixteen packed into band clear of three axis colours left every ink reading
     ##     as shade of teal, blue, violet or magenta; reserving magenta for `Invalid`
     ##     cost three more.
-    ##     Adding hues back was measured and reproduced sixteen-slot failure; see
+    ##     Adding hues back was measured and reproduced sixteen-ink failure; see
     ##     `LUT_RGBA_BY_INK`.
     Rose, Copper, Olive, Jade, Cobalt,
 
@@ -683,7 +683,7 @@ const LUT_RGBA_BY_INK: array[Ink, Rgba] = [
   Ink.Olive: Rgba(red: 0.341, green: 0.431, blue: 0.000, alpha: 1.0),
   Ink.Jade: Rgba(red: 0.133, green: 0.655, blue: 0.478, alpha: 1.0),
   Ink.Cobalt: Rgba(red: 0.357, green: 0.565, blue: 0.780, alpha: 1.0),
-]  ## Map palette slot to colour: five assignable hues, magenta `Invalid` held out of run.
+]  ## Map palette index to colour: five assignable hues, magenta `Invalid` held out of run.
   ##   Held to floors `REQUIREMENTS.md` states by `tools/check_palette`, which reads this
   ##   table itself: typical vision, red-green deficiency, tritanopia, and every hue
   ##   against `Invalid` and each axis.
@@ -695,7 +695,7 @@ const LUT_RGBA_BY_INK: array[Ink, Rgba] = [
 
 
 const
-  COUNT_INK* = ord(Ink.high) + 1  ## Count palette slots, structural and categorical alike.
+  COUNT_INK* = ord(Ink.high) + 1  ## Count inks palette holds, structural and categorical alike.
 
   INK_CATEGORICAL_FIRST* = Ink.Rose
     ## Name where categorical run begins.
@@ -703,27 +703,27 @@ const
     ##   object wear backdrop, world axis or outline.
 
   COUNT_INK_CATEGORICAL* = ord(Ink.high) - ord(INK_CATEGORICAL_FIRST) + 1
-    ## Count slots colour picker may offer.
+    ## Count inks colour picker may offer.
     ##   Callers walk run as one contiguous block, so `Ink`'s declaration order is
-    ##   load-bearing: every categorical slot follows every structural one.
+    ##   load-bearing: every categorical ink follows every structural one.
     ##     `static` assertion below enforces it.
 
 static:
   doAssert COUNT_INK_CATEGORICAL == 5,
-    &"Ink's categorical slots must stay one contiguous run of five ending at Ink.high, " &
+    &"Categorical inks must stay one contiguous run of five ending at Ink.high, " &
     &"or a colour picker offers a different run; got `{COUNT_INK_CATEGORICAL}`."
 
 
 func inkCategorical*(index: int): Ink = Ink(ord(INK_CATEGORICAL_FIRST) + index)
-  ## Read palette slot at position within categorical run.
+  ## Read ink at position within categorical run.
 
 
 func categoricalIndex*(ink: Ink): int = ord(ink) - ord(INK_CATEGORICAL_FIRST)
-  ## Read palette slot's position within categorical run. Negative for structural slot.
+  ## Read ink's position within categorical run. Negative for structural ink.
 
 
 let LUT_NAME_BY_INK* = block:
-  ## Name each palette slot, for offering them in picker.
+  ## Name each ink, for offering them in picker.
   ##   Bound as `let` rather than `const`, since picker needs address of first entry.
   var lut: array[Ink, cstring]
   for ink in Ink: lut[ink] = cstring($ink)
@@ -731,7 +731,7 @@ let LUT_NAME_BY_INK* = block:
 
 
 func colour*(ink: Ink): lent Rgba = LUT_RGBA_BY_INK[ink]
-  ## Read colour of palette slot.
+  ## Read colour of ink.
   ##   Borrowed, not returned by value: JS backend deep-copied entry per call, once per
   ##   object per frame (Art. VII.1).
 
@@ -935,8 +935,8 @@ func expandRibbon*(record: RibbonRecord, scale: DrawScale): array[6, Vertex] =
       near - offset_near, far - offset_far, far + offset_far, near + offset_near,
     ]
     tints = [tint_near, tint_far, tint_far, tint_near]
-  for slot, index in [0, 1, 2, 0, 2, 3]:
-    result[slot] = Vertex(
+  for i, index in [0, 1, 2, 0, 2, 3]:
+    result[i] = Vertex(
       x: float32(corners[index].x),
       y: float32(corners[index].y),
       z: float32(corners[index].z),

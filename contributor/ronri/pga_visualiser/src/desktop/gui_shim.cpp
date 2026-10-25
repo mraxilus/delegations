@@ -19,12 +19,12 @@
 #include <cfloat>
 #include <utility>
 
-// Build atlas from three faces, merged in order of decreasing generality.
-//   No single face covers what this GUI writes.
+// Build atlas from three font faces, merged in order of decreasing generality.
+//   No single font face covers what this GUI writes.
 //   Range lists below bind only Dear ImGui's legacy path. Renderer keeping textures of its
-//   own, as OpenGL 3 backend does, loads each glyph on demand from first merged face whose
+//   own, as OpenGL 3 backend does, loads each glyph on demand from first merged font face whose
 //   `cmap` holds it (`imgui_draw.cpp`, `ImFontBaked_BuildLoadGlyph`), so merge order is
-//   precedence. `--drive-faces` asks each role's face for every codepoint build writes.
+//   precedence. `--drive-font-faces` asks each role's font face for every codepoint build writes.
 static const ImWchar RANGES_TEXT[] = {
   0x0020, 0x00FF, // Latin and supplement.
   0x02B0, 0x02FF, // Spacing modifiers, which notation accents its operands with.
@@ -48,18 +48,18 @@ static const ImWchar RANGES_SYMBOL[] = {
   0,
 };
 
-// Remember whether requested face was accepted.
+// Remember whether requested font face was accepted.
 //   Dear ImGui reports that only at moment of loading, and caller wants to say so once,
 //   at startup.
 static bool is_font_loaded = false;
-// Hold face selected object's name label is set in, heavier than UI text.
-//   Null where its file was missing, and label falls back to UI face.
+// Hold font face selected object's name label is set in, heavier than UI text.
+//   Null where its file was missing, and label falls back to UI font face.
 static ImFont *font_label = nullptr;
 static float size_font_label = 0.0f;
-// Hold two faces standing for other two roles page's stylesheet names: title face every
-//   heading is set in, and mono face notation and figures are.
-//   Null where file was missing, and role falls back to UI face rather than to nothing --
-//   same degrading absent face already earns everywhere else here.
+// Hold two font faces standing for other two roles page's stylesheet names: title font face every
+//   heading is set in, and mono font face notation and figures are.
+//   Null where file was missing, and role falls back to UI font face rather than to nothing --
+//   same degrading absent font face already earns everywhere else here.
 static ImFont *font_title = nullptr;
 static ImFont *font_mono = nullptr;
 
@@ -87,7 +87,7 @@ bool guiInit(SDL_Window* window, SDL_GLContext context, const char* path_font,
     ImFontAtlas* atlas = ImGui::GetIO().Fonts;
     is_font_loaded =
         atlas->AddFontFromFileTTF(path_font, size_font, nullptr, RANGES_TEXT) != nullptr;
-    // Merge two supplementary faces into that same font rather than adding separate fonts.
+    // Merge two supplementary font faces into that same font rather than adding separate fonts.
     //   Merged range is drawn without caller having to push font around whichever
     //   character happens to need it, which no caller could do mid-string anyway.
     ImFontConfig merge;
@@ -98,8 +98,8 @@ bool guiInit(SDL_Window* window, SDL_GLContext context, const char* path_font,
       if (atlas->AddFontFromFileTTF(pair.first, size_font, &merge, pair.second) == nullptr)
         is_font_loaded = false;
     }
-    // Add label's own face second, so UI face stays atlas's default.
-    //   Same two supplementary faces merged in at label's size: label carries operator
+    // Add label's own font face second, so UI font face stays atlas's default.
+    //   Same two supplementary font faces merged in at label's size: label carries operator
     //   notation too, and wedge drew as box without them.
     size_font_label = size_label;
     if (path_font_label != nullptr && path_font_label[0] != '\0') {
@@ -112,18 +112,18 @@ bool guiInit(SDL_Window* window, SDL_GLContext context, const char* path_font,
         }
       }
     }
-    // Add title face third, at UI size. No supplementary range is merged into it:
+    // Add title font face third, at UI size. No supplementary range is merged into it:
     //   headings are words this source writes -- `apply`, `view`, `diagnostics`,
     //   `objects (n of m)` -- and none carries operator or subscript. Merging both ranges
     //   again would cost atlas two more copies of them for glyphs no heading asks for.
     if (path_font_title != nullptr && path_font_title[0] != '\0')
       font_title = atlas->AddFontFromFileTTF(path_font_title, size_font, nullptr, RANGES_TEXT);
-    // Add mono face last, with both supplementary faces merged in, then interface face.
+    // Add mono font face last, both supplementary font faces merged in, then interface font face.
     //   Unlike headings, text set in it is exactly text carrying notation: coefficient
     //   line reads `horizon plane: 2.038 e321` with wedge and subscripts in it, so absent
-    //   merge would draw boxes in very rows this face exists for.
-    //   Interface face comes last, for postfix accents no other face here carries: `ˍ` and
-    //   `˷`. Last, so it supplies only what three before it lack, and Commit Mono keeps
+    //   merge would draw boxes in very rows this font face exists for.
+    //   Interface font face comes last, for postfix accents no other font face here carries: `ˍ`
+    //   and `˷`. Last, so it supplies only what three before it lack, and Commit Mono keeps
     //   every glyph it has.
     if (path_font_mono != nullptr && path_font_mono[0] != '\0') {
       font_mono = atlas->AddFontFromFileTTF(path_font_mono, size_font, nullptr, RANGES_TEXT);
@@ -148,19 +148,19 @@ void guiShutdown() {
 
 bool guiFontLoaded() { return is_font_loaded; }
 
-// Report whether title and mono roles got faces of their own, rather than falling back.
-//   Separate from `guiFontLoaded`, which answers for interface face and its merged ranges:
-//   role drawn in wrong face is not run that failed to start, and headless run says which.
+// Report whether title and mono roles got font faces of their own, rather than falling back.
+//   Separate from `guiFontLoaded`, which answers for interface font face and its merged ranges:
+//   role drawn in wrong font face is not run that failed to start, and headless run says which.
 bool guiFontTitleLoaded() { return font_title != nullptr; }
 
 bool guiFontMonoLoaded() { return font_mono != nullptr; }
 
-// Report whether face that role sets text in draws `codepoint` from glyph of its own.
-//   Loads glyph as drawing does, through every face merged into role's, so false is exactly
+// Report whether font face that role sets text in draws `codepoint` from glyph of its own.
+//   Loads glyph as drawing does, through every font face merged into role's, so false is exactly
 //   codepoint that would draw as fallback box.
-//   Role whose face is missing answers for interface face, which role then falls back to.
-//   `role` is ordinal of `gui.FaceRole`.
-bool guiFaceHasGlyph(int role, unsigned int codepoint) {
+//   Role whose font face is missing answers for interface font face, which role then falls back to.
+//   `role` is ordinal of `gui.RoleFontFace`.
+bool guiFontFaceHasGlyph(int role, unsigned int codepoint) {
   ImFontAtlas* atlas = ImGui::GetIO().Fonts;
   if (atlas->Fonts.Size == 0) return false;
   ImFont* font = role == 1 ? font_label : role == 2 ? font_title : role == 3 ? font_mono : nullptr;
@@ -334,9 +334,9 @@ bool guiHeader(const char* label, bool is_open_first) {
   ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.106f, 0.129f, 0.169f, 1.0f));
   ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.165f, 0.196f, 0.239f, 1.0f));
   ImGui::PushStyleColor(ImGuiCol_HeaderActive, ImVec4(0.204f, 0.243f, 0.298f, 1.0f));
-  // Heading is title role, so it is set in title face -- here rather than at call sites,
+  // Heading is title role, so it is set in title font face -- here rather than at call sites,
   //   since every heading this panel has comes through this one door.
-  //   `0.0f` keeps current size: face is chosen, scale is not.
+  //   `0.0f` keeps current size: font face is chosen, scale is not.
   if (font_title != nullptr) ImGui::PushFont(font_title, 0.0f);
   const bool is_open = ImGui::CollapsingHeader(
       label, is_open_first ? ImGuiTreeNodeFlags_DefaultOpen : 0);
@@ -345,11 +345,11 @@ bool guiHeader(const char* label, bool is_open_first) {
   return is_open;
 }
 
-// Set text between these two in mono face, for notation and for figures whose columns line up.
+// Set text between these two in mono font face, for notation and for figures whose columns line up.
 //   Pair rather than one entry point per widget: callers already draw such text through
 //   `guiText`, `guiTextWrapped` and `guiTextTinted`, and wrapping each would be three more
 //   doors for one decision.
-//   No-op where mono face was not loaded, so absent face degrades to UI face.
+//   No-op where mono font face was not loaded, so absent font face degrades to UI font face.
 void guiMonoPush() {
   if (font_mono != nullptr) ImGui::PushFont(font_mono, 0.0f);
 }
@@ -758,7 +758,7 @@ void guiOverlayChip(float centre_x, float centre_y, float width, float height, f
 // Write text centred on `centre_x`/`centre_y` onto drag menu's own layer, above every window.
 //   In font already loaded.
 //   Centred here rather than by caller so measurement and placement use same font
-//   metrics; caller offsetting by its own guess drifts as soon as face loaded is not one
+//   metrics; caller offsetting by its own guess drifts as soon as font face loaded is not one
 //   it guessed against.
 void guiOverlayText(float centre_x, float centre_y, float red, float green, float blue, float alpha,
                     const char *text) {
@@ -772,7 +772,7 @@ void guiOverlayText(float centre_x, float centre_y, float red, float green, floa
 //   Outline is text drawn again at eight one-pixel offsets beneath fill: draw list has
 //   no stroked text, and eight copies read as round outline at this size.
 //   Background list rather than menu's own, as markers are: beneath panels, over scene.
-// Measure name label as `guiOverlayLabel` will draw it, in its own face and size.
+// Measure name label as `guiOverlayLabel` will draw it, in its own font face and size.
 float guiLabelWidth(const char *text) {
   ImFont *font = font_label != nullptr ? font_label : ImGui::GetFont();
   const float size = size_font_label > 0.0f ? size_font_label : ImGui::GetFontSize();
@@ -782,7 +782,7 @@ float guiLabelWidth(const char *text) {
 void guiOverlayLabel(float centre_x, float centre_y, float fill_red, float fill_green,
                      float fill_blue, float stroke_red, float stroke_green, float stroke_blue,
                      float alpha, const char *text) {
-  // Set in label face at its own size; UI face where label face was not loaded.
+  // Set in label font face at its own size; UI font face where label font face was not loaded.
   ImFont *font = font_label != nullptr ? font_label : ImGui::GetFont();
   const float size = size_font_label > 0.0f ? size_font_label : ImGui::GetFontSize();
   const ImVec2 extent = font->CalcTextSizeA(size, FLT_MAX, 0.0f, text);

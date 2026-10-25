@@ -229,7 +229,7 @@ function parseAndLoadScene(buffer: ArrayBuffer) {
       version, object.ink, object.visible, object.label, object.coefficients, object.radius,
       count_object, arrived,
     );
-    if (handle < 0) throw new Error('File names an unknown palette slot or radius for an object.');
+    if (handle < 0) throw new Error('File names an unknown palette index or radius for an object.');
   }
   return 'Loaded ' + count_object + ' object(s) from scene file.';
 }

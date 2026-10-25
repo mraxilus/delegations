@@ -134,43 +134,43 @@ const
     ##   this thin.
   PIXELS_WIDTH* {.define: "visualiser.pixels_width".} = 1440
   PIXELS_HEIGHT* {.define: "visualiser.pixels_height".} = 900
-  DIRECTORY_FACES* {.define: "visualiser.directory_faces".} = "../build/fonts"
-    ## Directory shipped faces sit in, relative to binary rather than to any machine.
+  DIRECTORY_FONT_FACES* {.define: "visualiser.directory_font_faces".} = "../build/fonts"
+    ## Directory shipped font faces sit in, relative to binary rather than to any machine.
     ##   `tools/build.nim assets` fetches them there, each pinned by tag and digest, and
-    ##   `binaries/` sits beside `build/` -- so binary and faces move together and neither is
+    ##   `binaries/` sits beside `build/` -- so binary and font faces move together and neither is
     ##   found by absolute path (Article X.8; CONTRIBUTOR.md, "System dependencies").
-  FACE_FONT* {.define: "visualiser.face_font".} = "NotoSans-Regular.ttf"
+  FONT_FACE* {.define: "visualiser.font_face".} = "NotoSans-Regular.ttf"
     ## Carry UI's text: Latin, punctuation, subscripts and combining marks.
-    ##   `PGA_FONT` names another outright, for reason `faceAt` gives. Three below follow
+    ##   `PGA_FONT` names another outright, for reason `fontFaceAt` gives. Three below follow
     ##   same pattern.
-  FACE_FONT_MATH* {.define: "visualiser.face_font_math".} = "NotoSansMath-Regular.ttf"
+  FONT_FACE_MATH* {.define: "visualiser.font_face_math".} = "NotoSansMath-Regular.ttf"
     ## Carry operators notation is written with, and Lengyel's bold operands.
     ##   Neither is in Noto Sans; merged into same atlas font; see `gui_shim.cpp`.
-  FACE_FONT_SYMBOL* {.define: "visualiser.face_font_symbol".} = "NotoSansSymbols2-Regular.ttf"
+  FONT_FACE_SYMBOL* {.define: "visualiser.font_face_symbol".} = "NotoSansSymbols2-Regular.ttf"
     ## Carry bulk and weight dual stars and abandon button's cross. Merged same way.
-  FACE_FONT_LABEL* {.define: "visualiser.face_font_label".} = "NotoSans-Bold.ttf"
+  FONT_FACE_LABEL* {.define: "visualiser.font_face_label".} = "NotoSans-Bold.ttf"
     ## Set selected object's name label, heavier than UI text as browser's semibold is.
-    ##   Bold is heaviest weight Noto Sans ships as static face; no semibold there.
-    ##   Own face rather than merged: label alone is set in it, at `HEIGHT_MARKER_LABEL`.
-  FACE_FONT_TITLE* {.define: "visualiser.face_font_title".} = "NotoSerif-SemiBold.ttf"
+    ##   Bold is heaviest weight Noto Sans ships as static font face; no semibold there.
+    ##   Own font face rather than merged: label alone is set in it, at `HEIGHT_MARKER_LABEL`.
+  FONT_FACE_TITLE* {.define: "visualiser.font_face_title".} = "NotoSerif-SemiBold.ttf"
     ## Set every heading, which is title role page's stylesheet names as well.
     ##   Serif against interface's sans, so heading is told from row beneath it by shape
     ##   rather than by weight alone.
     ##   Semibold rather than regular, matching 600 page sets its own titles at: same role
     ##   drawn at same weight through both mechanisms.
-  FACE_FONT_MONO* {.define: "visualiser.face_font_mono".} = "CommitMonoV142-400Regular.otf"
+  FONT_FACE_MONO* {.define: "visualiser.font_face_mono".} = "CommitMonoV142-400Regular.otf"
     ## Set notation, figures and message line: text whose columns carry meaning.
     ##   `otf` rather than `ttf` because that is what its author publishes; `stb_truetype`
     ##   reads its CFF outlines, driven rather than assumed.
     ##   Ligatures it carries are drawn by page and not here: Dear ImGui shapes no text, so
     ##   `liga` and `calt` never fire. Letterforms are shared, ligatures are not.
   ENV_FONT* = "PGA_FONT"
-    ## Environment name carrying interface face's location, where machine keeps its own.
-  ENV_FONT_MATH* = "PGA_FONT_MATH"  ## Environment name carrying operator face's location.
-  ENV_FONT_SYMBOL* = "PGA_FONT_SYMBOL"  ## Environment name carrying symbol face's location.
-  ENV_FONT_LABEL* = "PGA_FONT_LABEL"  ## Environment name carrying label face's location.
-  ENV_FONT_TITLE* = "PGA_FONT_TITLE"  ## Environment name carrying title face's location.
-  ENV_FONT_MONO* = "PGA_FONT_MONO"  ## Environment name carrying mono face's location.
+    ## Environment name carrying interface font face's location, where machine keeps its own.
+  ENV_FONT_MATH* = "PGA_FONT_MATH"  ## Environment name carrying operator font face's location.
+  ENV_FONT_SYMBOL* = "PGA_FONT_SYMBOL"  ## Environment name carrying symbol font face's location.
+  ENV_FONT_LABEL* = "PGA_FONT_LABEL"  ## Environment name carrying label font face's location.
+  ENV_FONT_TITLE* = "PGA_FONT_TITLE"  ## Environment name carrying title font face's location.
+  ENV_FONT_MONO* = "PGA_FONT_MONO"  ## Environment name carrying mono font face's location.
   SIZE_FONT* = 16.0'f32
   PATH_EXPORT_DEFAULT* = "pga_visualiser.png"
 
@@ -404,7 +404,7 @@ type
     is_menu_driven: bool  ## Whether to open top menu at startup, with no click.
       ## Headless run has no pointer to press `☰` with, exactly as it has none for help's
       ## tabs; verdict then reads what menu laid out.
-    is_faces_driven: bool  ## Whether to ask each role's face for every codepoint build writes.
+    is_font_faces_driven: bool  ## Whether to ask each role's font face for every codepoint shown.
       ## Headless run then shows no text drawn falls to `.notdef`; see `shown`.
     is_edit_driven: bool  ## Whether to open edit on object far out and save it unchanged.
       ## Headless run then shows what staging keeps of it; see `driveEdit`.
@@ -507,7 +507,7 @@ proc applyOption(options: var Options; key, value: string) =
   of "drive-sky": options.is_sky_driven = true
   of "drive-search": options.is_search_driven = true
   of "drive-menu": options.is_menu_driven = true
-  of "drive-faces": options.is_faces_driven = true
+  of "drive-font-faces": options.is_font_faces_driven = true
   of "drive-edit": options.is_edit_driven = true
   of "drive-wheel": options.is_wheel_driven = true
   of "drive-escape": options.is_escape_driven = true
@@ -524,7 +524,7 @@ proc applyOption(options: var Options; key, value: string) =
     doAssert false,
       "Option must be one of screenshot, storyboard, load-scene, frames, hidden, " &
       "timings, novsync, fill, demo[:<objects>], help-tabs, drive-drag, drive-keys, " &
-      "drive-select, drive-undo, drive-sky, drive-search, drive-menu, drive-faces, " &
+      "drive-select, drive-undo, drive-sky, drive-search, drive-menu, drive-font-faces, " &
       "drive-edit, drive-wheel, drive-escape, drive-chords, drive-bulk, drive-fields, " &
       "drive-hover or drive-help; " &
       &"got `--{key}`."
@@ -534,7 +534,7 @@ func isDriven(options: Options): bool =
   ## Report whether any scripted run was asked for.
   options.is_drag_driven or options.is_key_driven or options.is_select_driven or
       options.is_undo_driven or options.is_sky_driven or options.is_search_driven or
-      options.is_menu_driven or options.is_faces_driven or options.is_edit_driven or
+      options.is_menu_driven or options.is_font_faces_driven or options.is_edit_driven or
       options.is_wheel_driven or options.is_escape_driven or options.is_chords_driven or
       options.is_bulk_driven or options.is_fields_driven or options.is_hover_driven or
       options.path_help_driven.isSome
@@ -563,23 +563,24 @@ proc parseOptions(): Options =
 
 #[ Frame Assembly ]#
 
-proc faceAt(name_environment, face: string): string =
-  ## Read face's location from environment, else from faces this build ships; empty where none.
-  ##   Shipped face is found beside binary rather than at absolute path: no machine's layout is
+proc fontFaceAt(name_environment, font_face: string): string =
+  ## Read font face's location from environment, else from font faces this build ships.
+  ##   Empty where neither holds it.
+  ##   Shipped font face is found beside binary rather than at absolute path: no machine's layout is
   ##   named in source, and checkout moves without editing anything.
-  ##   Environment first because machine keeping its own faces says so rather than rebuilding.
+  ##   Environment first because machine keeping its own font faces says so rather than rebuilding.
   ##   Empty variable counts as unset, since exporting nothing is how shell clears one.
-  ##   Empty result rather than raising: `gui.init` skips face whose path is empty, so
+  ##   Empty result rather than raising: `gui.init` skips font face whose path is empty, so
   ##   interface draws in what is left and run reaches its verdict. Dear ImGui asserts on
   ##   path it cannot open, and assertion is abort rather than finding, so path it cannot
   ##   open must not reach it (repository issue 93).
-  ##   Says which face and what to install, since finding naming neither is one nobody acts
+  ##   Says which font face and what to install, since finding naming neither is one nobody acts
   ##   on.
   let
     named = getEnv(name_environment)
-    path = if named.len > 0: named else: getAppDir() / DIRECTORY_FACES / face
+    path = if named.len > 0: named else: getAppDir() / DIRECTORY_FONT_FACES / font_face
   if fileExists(path): return path
-  echo &"No face at `{path}`; set `{name_environment}`, or run `tools/build.nim assets`."
+  echo &"No font face at `{path}`; set `{name_environment}`, or run `tools/build.nim assets`."
   ""
 
 
@@ -2473,14 +2474,14 @@ proc verdictDriven(
     if not is_passing: inc count_failed
     echo (if is_passing: "  ok   " else: " FAIL  ") & name & " -- " & detail
 
-  # Face nobody installed is its own verdict, and fires only in run driven without one.
+  # Font face nobody installed is its own verdict, and fires only in run driven without one.
   #   Claim is that run did its scripted work anyway: focus moved, which is what
-  #   `--drive-keys` is for, while Dear ImGui had no face to set interface in.
+  #   `--drive-keys` is for, while Dear ImGui had no font face to set interface in.
   if not gui.isFontLoaded():
     report(
-      "a face nobody installed leaves the run standing, and names itself",
+      "a font face nobody installed leaves the run standing, and names itself",
       interaction.index_focus.isSome and scene.bound > 0,
-      &"focus {interaction.index_focus}, {scene.bound} objects, no face loaded",
+      &"focus {interaction.index_focus}, {scene.bound} objects, no font face loaded",
     )
 
   if options.is_search_driven:
@@ -2557,15 +2558,15 @@ proc verdictDriven(
       &"radius {radius_saved:.10g} for {RADIUS_EDIT_DRIVEN:.10g}",
     )
 
-  # Faces are their own verdict, and fire only in run that asked for them.
-  #   Claim is that every codepoint each role sets draws from glyph of some face merged into
+  # Font faces are their own verdict, and fire only in run that asked for them.
+  #   Claim is that every codepoint each role sets draws from glyph of some font face merged into
   #   that role's, never from `.notdef` (Article X.8). Title role sets panel headings alone,
   #   and is asked for those; other three are asked for every text build writes.
-  if options.is_faces_driven:
+  if options.is_font_faces_driven:
     let codepoints_shown = codepointsShown()
-    for role in FaceRole:
+    for role in RoleFontFace:
       let codepoints =
-        if role == FaceRole.Title:
+        if role == RoleFontFace.Title:
           codepoints([
             $wordingText(NameHeadApply), $wordingText(NameHeadObjects),
             $wordingText(NameHeadView), $wordingText(NameHeadDiagnostics),
@@ -2576,20 +2577,20 @@ proc verdictDriven(
         if not gui.hasGlyph(role, uint32(codepoint)): missing.add &"U+{codepoint:04X}"
       let named = if missing.len == 0: "none" else: missing.join(", ")
       report(
-        &"every codepoint the {role} face sets has a glyph, and none draws as .notdef",
+        &"every codepoint the {role} font face sets has a glyph, and none draws as .notdef",
         missing.len == 0,
         &"{codepoints.len} codepoints asked, missing {named}",
       )
 
-  # Three roles, three faces, and every run says so.
-  #   Claim is that each role got face of its own rather than falling back to interface
-  #   face: fallback draws readable panel and silently loses distinction between heading,
+  # Three roles, three font faces, and every run says so.
+  #   Claim is that each role got font face of its own rather than falling back to interface
+  #   font face: fallback draws readable panel and silently loses distinction between heading,
   #   body and notation, which is exactly failure nobody would see in headless run.
-  #   Skipped where interface face itself is absent, since that run is already reported
+  #   Skipped where interface font face itself is absent, since that run is already reported
   #   above and asking two questions about one missing directory says nothing new.
   if gui.isFontLoaded():
     report(
-      "each type role is drawn in a face of its own",
+      "each type role is drawn in a font face of its own",
       gui.isFontTitleLoaded() and gui.isFontMonoLoaded(),
       &"title {gui.isFontTitleLoaded()}, mono {gui.isFontMonoLoaded()}, interface true",
     )
@@ -3359,12 +3360,12 @@ proc main() =
   echo &"OpenGL: {gl.getString(gl.VERSION)}"
 
   let
-    path_font = faceAt(ENV_FONT, FACE_FONT)
-    path_font_math = faceAt(ENV_FONT_MATH, FACE_FONT_MATH)
-    path_font_symbol = faceAt(ENV_FONT_SYMBOL, FACE_FONT_SYMBOL)
-    path_font_label = faceAt(ENV_FONT_LABEL, FACE_FONT_LABEL)
-    path_font_title = faceAt(ENV_FONT_TITLE, FACE_FONT_TITLE)
-    path_font_mono = faceAt(ENV_FONT_MONO, FACE_FONT_MONO)
+    path_font = fontFaceAt(ENV_FONT, FONT_FACE)
+    path_font_math = fontFaceAt(ENV_FONT_MATH, FONT_FACE_MATH)
+    path_font_symbol = fontFaceAt(ENV_FONT_SYMBOL, FONT_FACE_SYMBOL)
+    path_font_label = fontFaceAt(ENV_FONT_LABEL, FONT_FACE_LABEL)
+    path_font_title = fontFaceAt(ENV_FONT_TITLE, FONT_FACE_TITLE)
+    path_font_mono = fontFaceAt(ENV_FONT_MONO, FONT_FACE_MONO)
   # Conversion is explicit, since implicit one from `let` is warned on and will be error.
   #   Four bindings outlive call, and Dear ImGui copies each path before returning, so no
   #   pointer here outlives string behind it.
@@ -3382,9 +3383,9 @@ proc main() =
   ), "Dear ImGui must start; got `false` from `gui.init`."
   defer: gui.shutdown()
   # Second line only where there was file to load: absent one is already reported by
-  #   `faceAt`, with what to do about it, and repeating it with empty path says less.
+  #   `fontFaceAt`, with what to do about it, and repeating it with empty path says less.
   if not gui.isFontLoaded() and path_font.len > 0:
-    echo &"Face `{path_font}` would not load; operator notation will draw as boxes."
+    echo &"Font face `{path_font}` would not load; operator notation will draw as boxes."
 
   let renderer = initRenderer()
   var

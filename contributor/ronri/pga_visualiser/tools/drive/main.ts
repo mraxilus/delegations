@@ -223,7 +223,7 @@ async function driveSimulated(browser: Browser): Promise<void> {
   // Sweeps viewport and puts it back; kept beside other chrome checks rather than among
   //   drawer's, since what it reads is row above drawer and not drawer itself.
   await driveChipRowFits(page);
-  // After help, so tab strip exists to be asked which face it is drawn in.
+  // After help, so tab strip exists to be asked which font face it is drawn in.
   await driveTypeRoles(page);
   await driveTypeDrawn(page);
   await driveTypeLigatures(page);
