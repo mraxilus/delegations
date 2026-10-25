@@ -704,6 +704,13 @@ Verified by a run, 2026-10-23, in the Chromium that Playwright pins, with the ra
 600. Those operators carry 39% more ink than under the range. Cost: no check fails on that cut,
 since `koch drive` takes the font face at 400 for 600, as the browser does.
 
+**Commit Mono is declared over 400 to 700.** It ships one weight, and so does the desktop atlas.
+Mono asked at 600 or 700 then draws its regular glyphs on both front-ends, and never a bold that the
+browser synthesises (Article X.8). The collector asks each stack at each weight in play, and the
+`<b>` of the drawer brings 700. Verified by a script that is not kept, which runs the verdict of
+`curator/audit/src/font_stacks.nim` at `e6c9d9c0` over `written.json`. It reads two findings on
+`main` at `9b6c445d`, and none here.
+
 **Each face is held to its own load status**, by `driveTypeRoles`, because `document.fonts.check`
 answers true where no face matches at all. Verified by a run, 2026-10-07, in Chrome for Testing 153:
 all six faces load. A read of `CSS.getPlatformFontsForNode` over every element of the open drawer
