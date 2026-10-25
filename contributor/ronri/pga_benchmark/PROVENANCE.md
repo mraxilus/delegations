@@ -789,7 +789,7 @@ that commit.
 A program claim names its program relative to its proposal, so a new directory name moves no
 digest.
 
-**A program runs against the library with its bases applied.** So `laws.nim` of P09
+**A program runs against the library with its bases applied.** So `laws.nim` of P09 and of P10
 imports `pga` alone, and reaches the products of basis-set types that the change of P04 adds. A
 program may still import a program of a base by a path relative to its own directory, and no
 proposal does so now. The digest of an evaluation reads the programs of each base first, and then
