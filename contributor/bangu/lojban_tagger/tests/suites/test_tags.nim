@@ -33,6 +33,8 @@ const
   FLOOR_LOWEST = 650
     ## Least samples of two gismu or more, free of those, that lowest score law reads: 719 read
     ## at seed `0`; three quarters expected.
+  FLOOR_FINAL_CMAVO = 25
+    ## Least CVV and CCV rafsi of cmavo, which could end word, that final law reads: 30 of list.
   ALPHABET = "',.abcdefgijklmnoprstuvxyz"  ## Letters and symbols of 3.1, in its order.
   GISMU_STEM_SHARED = ["brodi", "brodo", "brodu"]
     ## Gismu holding no short rafsi, so only non-final rafsi is `brod`, which `broda` and `brode`
@@ -271,15 +273,29 @@ suite "Internal: Reading":
     check "datni+vreji".refusalRead == some((Refusal.Letter, "+"))  # tanru is no spelling
 
 
-  test "Cmavo, or rafsi of cmavo, is refused as Cmavo, naming it":
-    check "selci'a".refusalRead == some((Refusal.Cmavo, "sel (se)"))  # brief; rafsi, its cmavo
-    check "nunkla".refusalRead ==
-        some((Refusal.Cmavo, "nun (nu)"))  # brief (`tags.nim`); word of CLL 12.12
-    check "nunynau".refusalRead ==
-        some((Refusal.Cmavo, "nun (nu)"))  # brief (`tags.nim`); word of CLL 4.12, Example 12.2
-    check "nakykemcinctu".refusalRead ==
-        some((Refusal.Cmavo, "kem (ke)"))  # brief (`tags.nim`); word of CLL 4.13
-    check "se".refusalRead == some((Refusal.Cmavo, "se"))  # brief; cmavo of list, word itself
+  test "Cmavo alone, or lujvo ending in cmavo, is refused as Cmavo, naming it":
+    check "se".refusalRead == some((Refusal.Cmavo, "se"))  # cmavo of list is no brivla
+    check "zbadoi".refusalRead ==
+        some((Refusal.Cmavo, "doi (do)"))  # 4.11 step 2, tanru ends in gismu; constructed
+    check "zbadu'o".refusalRead ==
+        some((Refusal.Cmavo, "du'o (du)"))  # 4.11 step 2, tanru ends in gismu; constructed
+
+
+  test "Lujvo holding rafsi of cmavo is tag keeping cmavo, matched by its gismu":
+    let
+      se = "se".word.get
+      ciska = "ciska".word.get
+      selcia = "selci'a".tagRead
+    check selcia == some(Tag(words: @[se, ciska]))  # Architect's ruling: `selci'a` tags
+    check selcia.get.gismu == @[ciska]  # ruling: acts as `ciska` in search
+    check not selcia.get.isGismuAlone  # tag keeps cmavo it converts with
+    check selcia.get != Tag(words: @[ciska])  # `selci'a` and `ciska` are two tags
+    check $selcia.get == "selci'a"  # 4.12, `sel` and `ci'a` score lowest; constructed word
+    check "nunkla".tagRead.get.toTanru == "nu+klama"  # ruling; word of CLL 12.12
+    check "nunynau".tagRead.get.words[0] == "nu".word.get  # ruling; CLL 4.12, Example 12.2
+    let kem = "nakykemcinctu".tagRead
+    check kem.get.toTanru == "nakni+ke+cinse+ctuca"  # 4.13, tanru `nakni ke cinse ctuca`
+    check $kem.get == "nakykemcinctu"  # 4.13, shortest form, preferred by scoring
 
 
   test "Gismu shape outside list is refused as Unlisted, naming word":
@@ -369,10 +385,16 @@ suite "Internal: Laws":
         check joinRafsi([one, "zbasu"]).tagRead == some(head)  # rafsi names one gismu (CLL 4.6)
         if one.form.get in FORMS_FINAL:
           check joinRafsi(["zba", one]).tagRead == some(final)  # rafsi names one gismu (CLL 4.6)
+    var count_final_cmavo = 0
     for w in WORDS_CMAVO:  # 94 cmavo, every rafsi, exhaustive
       for one in w.entry.rafsi:
-        check joinRafsi([one, "zbasu"]).refusalRead ==
-            some((Refusal.Cmavo, one & " (" & $w & ")"))  # gismu alone admitted, cmavo named
+        check joinRafsi([one, "zbasu"]).tagRead ==
+            some(Tag(words: @[w, zbasu]))  # ruling: rafsi of cmavo tags, before gismu (4.6)
+        if one.form.get notin FORMS_FINAL: continue
+        check joinRafsi(["zba", one]).refusalRead ==
+            some((Refusal.Cmavo, one & " (" & $w & ")"))  # 4.11 step 2, tanru ends in gismu
+        inc count_final_cmavo
+    check count_final_cmavo >= FLOOR_FINAL_CMAVO  # guard reaches cmavo rafsi that end words
 
 
   test "Rendering scores lowest of every spelling that reads back":
@@ -405,7 +427,9 @@ suite "Internal: Laws":
   test "Every cmavo of list is refused as Cmavo":
     for w in WORDS_CMAVO:  # 94 cmavo, exhaustive
       check ($w).refusalRead == some((Refusal.Cmavo, $w))  # cmavo named as itself
-    check readTanru("se+cusku").isNone  # tanru holding cmavo is no tag
+    check readTanru("se+cusku").get.toTanru == "se+cusku"  # ruling: tanru may hold cmavo
+    check readTanru("cusku+se").isNone  # 4.11 step 2, tanru ends in gismu
+    check readTanru("se").isNone  # cmavo alone is no tag
     check readTanru("datni++vreji").isNone  # empty part is no gismu
 
 

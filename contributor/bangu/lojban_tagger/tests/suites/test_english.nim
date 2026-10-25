@@ -28,17 +28,33 @@ const
   FLOOR_FOUND = 4700
     ## Least meanings whose English holds token, that completeness law reads: 4815 of 4838 read;
     ## 23 keywords hold digits or function words alone.
-  FLOOR_READ_LOJBAN = 2400
-    ## Least lines of Lojban notation whose parts name gismu alone: 2500 of 3044 read; rest hold
-    ## cmavo.
-  FLOOR_READ_ENGLISH = 600  ## Least lines of English notation whose word reads: 640 of 758 read.
+  FLOOR_READ_LOJBAN = 2950
+    ## Least lines of Lojban notation whose parts are listed words ending in gismu: 3038 of 3044
+    ## read; rest name compound cmavo or English, as `LUJVO_READ_ODD` pins.
+  FLOOR_READ_ENGLISH = 740  ## Least lines of English notation whose word reads: 755 of 758 read.
+  FLOOR_MEANINGS_CMAVO = 600
+    ## Least meanings whose tanru holds cmavo, which ruling admits: 653 of 5491 read.
   FLOOR_KEYWORD = 600
     ## Least lines of English notation whose gismu carry keywords parts write, case and hyphens
     ## aside: 629 of 640 that read; rest write synonym (`old` for `slabu`), misspell, or name
     ## gismu in Lojban.
-  LUJVO_PARTS_ODD = ["vikmau"]
-    ## Lines of English notation listing more parts than gismu: `vikmau` writes `2nd-place-of`,
-    ## `viscous` and `more` for `viknu` and `zmadu`; list data, not reader.
+  LUJVO_PARTS_ODD = ["tolmipygau", "vikmau"]
+    ## Lines of English notation whose part count differs from word count; list data, not reader.
+    ##   `tolmipygau` writes `secret` and `do` for `to'e`, `mipri` and `gasnu`.
+    ##   `vikmau` writes `2nd-place-of`, `viscous` and `more` for `viknu` and `zmadu`.
+  LUJVO_READ_ODD = ["dazmoipru", "mibma'o", "pavmoijbe", "zgijvexajmi"]
+    ## Lines of Lojban notation whose parts and word disagree on reading at all; list data.
+    ##   `dazmoipru` and `pavmoijbe` name compound cmavo `da'amoi`, `pamoi`, which list lacks.
+    ##   `mibma'o` names `me`, whose list rafsi is no `mib`; `zgijvexajmi` names English `and`.
+  LUJVO_RAFSI_OLD = [
+    "kamfe'idzeseltru", "kamnakydzeseltru", "mumcte", "mumdei", "mumdo'i", "mumvanbi",
+    "narmitsi'u", "narselfendi", "nildicka'ukezyjdika", "xavdei", "xavdo'i", "xavycte",
+    "xavyvanbi",
+  ]
+    ## Lines of Lojban notation whose word reads as other words than parts name; list data.
+    ##   `mum`, `xav`, `nar` name `re`, `na'e` where list gives them to `mu`, `xa`, `na`.
+    ##   `kamfe'idzeseltru` and `kamnakydzeseltru` list two parts in other order than spelled.
+    ##   `nildicka'ukezyjdika` spells `kez`, rafsi of `kei`, which parts leave out.
 
 
 func tanru(text: string): seq[Word] =
@@ -182,12 +198,15 @@ suite "Internal: English":
     check count_found >= FLOOR_FOUND  # guard kept nearly every meaning
 
 
-  test "Every meaning holds gismu alone":
+  test "Every meaning ends in gismu, and keyword and hint lead to own gismu":
+    var count_cmavo = 0
     for meaning in MEANINGS:  # every meaning, exhaustive
       check meaning.words.len > 0  # meaning leads somewhere
-      check meaning.words.allIt(it.kind == Kind.Gismu)  # tag is made of gismu alone
+      check meaning.words[^1].kind == Kind.Gismu  # tanru ends in gismu, as CLL 4.11 step 2 has
+      if meaning.words.anyIt(it.kind == Kind.Cmavo): inc count_cmavo
       if meaning.origin != Origin.Gloss:
         check meaning.words == @[Word(meaning.entry)]  # keyword and hint lead to own gismu
+    check count_cmavo >= FLOOR_MEANINGS_CMAVO  # ruling admits tanru holding cmavo
 
 
   test "Every gismu has keyword meaning, and hint meaning where list gives hint":
@@ -203,34 +222,41 @@ suite "Internal: English":
       check lut_hints_by_entry[i] == ord(is_gismu and entry.hint.len > 0)  # hint where given
 
 
-  test "Gloss meanings are lujvo lines whose word reads as tag, each once":
+  test "Gloss meanings are lujvo lines whose tanru reads, each once":
     let glosses = MEANINGS.filterIt(it.origin == Origin.Gloss)
-    check glosses.len == LIST_LUJVO.countIt(it.word.readTag.is_tag)  # one per line read, no more
+    check glosses.len == LIST_LUJVO.countIt(it.wordsLujvo.len > 0)  # one per line read, no more
     for n in 1 ..< glosses.len:
       check glosses[n - 1].entry < glosses[n].entry  # each line once, in list order
     for meaning in glosses:
-      let reading = LIST_LUJVO[meaning.entry].word.readTag
-      check reading.is_tag and reading.tag.words == meaning.words  # gismu reader finds in word
+      let entry = LIST_LUJVO[meaning.entry]
+      check meaning.words == entry.wordsLujvo  # meaning is tanru line names
+      if entry.word in LUJVO_RAFSI_OLD or entry.word in LUJVO_READ_ODD: continue
+      let reading = entry.word.readTag
+      check reading.is_tag and reading.tag.words == meaning.words  # reader agrees, faults aside
 
 
-  test "gismuLujvo of Lojban notation spells its parts, and agrees with reader":
-    var count_read = 0
+  test "wordsLujvo of Lojban notation spells its parts, and agrees with reader":
+    var
+      count_read = 0
+      odd_read, odd_rafsi: seq[string]
     for entry in LIST_LUJVO:  # every line, exhaustive
       if entry.notation != Notation.Lojban: continue
-      let (words, reading) = (entry.gismuLujvo, entry.word.readTag)
-      check (words.len > 0) == reading.is_tag  # parts name gismu alone where word reads as tag
+      let (words, reading) = (entry.wordsLujvo, entry.word.readTag)
+      if (words.len > 0) != reading.is_tag: odd_read.add entry.word
       if words.len == 0: continue
-      check words.mapIt($it) == entry.parts  # round trip: gismu found spell parts back
-      check reading.is_tag and reading.tag.words == words  # reader splits word into parts
+      check words.mapIt($it) == entry.parts  # round trip: words found spell parts back
+      if reading.is_tag and reading.tag.words != words: odd_rafsi.add entry.word
       inc count_read
+    check odd_read == @LUJVO_READ_ODD  # parts read where word reads, faults pinned
+    check odd_rafsi == @LUJVO_RAFSI_OLD  # reader splits word into parts, faults pinned
     check count_read >= FLOOR_READ_LOJBAN  # guard kept most lines
 
 
-  test "gismuLujvo of English notation holds gismu whose keywords its parts write":
+  test "wordsLujvo of English notation holds gismu whose keywords its parts write":
     var count_read, count_keyword = 0
     for line in LIST_LUJVO:  # every line, exhaustive
       if line.notation != Notation.English: continue
-      let words = line.gismuLujvo
+      let words = line.wordsLujvo
       if words.len == 0: continue
       check (words.len == line.parts.len) ==
           (line.word notin LUJVO_PARTS_ODD)  # one gismu per English part, list slips aside

@@ -115,7 +115,7 @@ suite "Internal: Commands":
     check outcome.report ==
         readTag("qqqqq").explain & "\n" & readTag("bi").explain & "\n"  # each refusal, in turn
     check outcome.report.splitLines[1] ==
-        "Tag should be made of gismu alone; got cmavo `bi` in `bi`."  # refusal names cmavo
+        "Tag should end in gismu, as CLL 4.11 step 2 ends tanru; got cmavo `bi` in `bi`."  # cmavo
     var covered: set[Refusal]
     for (refusal, text) in REFUSED:
       let reading = readTag(text)

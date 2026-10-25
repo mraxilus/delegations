@@ -1,22 +1,24 @@
-## Read text as tag, i.e. gismu or lujvo made of gismu alone, and reduce it to gismu of its tanru.
+## Read text as tag, i.e. gismu or lujvo, and reduce it to words of its tanru, gismu among them.
 ##
 ##   |---------------------|-------------------------------------------------------------|
 ##   | Code                | Meaning                                                     |
 ##   |---------------------|-------------------------------------------------------------|
-##   | Tag                 | gismu of one tanru, in order; one alone for gismu           |
+##   | Tag                 | words of one tanru, in order; one gismu alone for gismu     |
+##   | gismu               | gismu of tag, cmavo left out; what search matches on        |
 ##   | readTag             | read text as tag, or refuse it with reason                  |
 ##   | Refusal             | why text is no tag                                          |
 ##   | `$`                 | lujvo form 4.12 scores lowest, or gismu itself              |
-##   | toTanru, readTanru  | gismu joined by `+`, as lujvo list writes tanru             |
+##   | toTanru, readTanru  | words joined by `+`, as lujvo list writes tanru             |
 ##   |---------------------|-------------------------------------------------------------|
 ##
-##   Tag is its gismu, never its spelling: rafsi chosen do not change lujvo (CLL 4.5), so
-##     `brivla`, `brivalsi`, `bridyvla` and `bridyvalsi` read as one tag, and `$` renders form
-##     4.12 prefers. Order of gismu stays, since tanru is modifier then head (4.5).
-##   Lujvo holding rafsi of cmavo is refused, naming rafsi and cmavo: Architect's brief admits
-##     lujvo made of gismu alone. Reader still knows every rafsi of cmavo list carries, so
-##     refusal says why rather than calling rafsi unknown.
-##     Cost: `selci'a` and every lujvo converting place with `se` cannot tag (open decision).
+##   Tag is words of its tanru, never its spelling: rafsi chosen do not change lujvo (CLL 4.5),
+##     so `brivla`, `brivalsi`, `bridyvla` and `bridyvalsi` read as one tag, and `$` renders form
+##     4.12 prefers. Order of words stays, since tanru is modifier then head (4.5).
+##   Lujvo holding rafsi of cmavo is tag, keeping cmavo: Architect ruled that `selci'a` tags, acts
+##     as `ciska` in search, and ranks first where searched for itself. So tag keeps `se`, and
+##     `gismu` gives what search matches on. `selci'a` and `ciska` are two tags.
+##   Cmavo alone is no tag, nor lujvo of cmavo alone, nor lujvo ending in cmavo: 4.11 step 2
+##     ends tanru in gismu, and tag holding no gismu would match every entity.
 ##   Text is trimmed, folded to lowercase, and stripped of commas before reading. Capital marks
 ##     irregular stress, which no brivla carries (3.1, 3.9); comma marks syllable break, and no
 ##     two words differ by comma alone (3.3). Folding is project's choice; CLL writes neither.
@@ -35,13 +37,13 @@ import ./[dictionary, forms, lujvo]
 
 
 type
-  Tag* = object  ## Define tag: gismu of its tanru, in order.
-    words*: seq[Word]  ## Gismu, one alone for gismu tag.
+  Tag* = object  ## Define tag: words of its tanru, gismu and cmavo, in order, last one gismu.
+    words*: seq[Word]  ## Words of tanru; one gismu alone for gismu tag.
 
   Refusal* {.pure.} = enum  ## Define why text is no tag.
     Empty  ## Text holds nothing but spaces.
     Letter  ## Character outside Lojban letters; detail is that character.
-    Cmavo  ## Word is cmavo, or lujvo holds rafsi of cmavo; detail names it.
+    Cmavo  ## Word is cmavo, or lujvo holds no gismu or ends in cmavo; detail names it.
     Unlisted  ## Gismu shape, but list holds no such gismu; detail is word.
     Rafsi  ## Rafsi no list assigns; detail is rafsi.
     Ambiguous  ## 4-letter rafsi several gismu share; detail is rafsi.
@@ -67,7 +69,13 @@ const LETTERS* = {
 
 
 func `==`*(a, b: Tag): bool = a.words == b.words
-  ## Compare tags by gismu, in order.
+  ## Compare tags by words of tanru, in order, cmavo included.
+
+func gismu*(tag: Tag): seq[Word] = tag.words.filterIt(it.kind == Kind.Gismu)
+  ## Read gismu of tag, in order, cmavo left out; search matches on these alone.
+
+func isGismuAlone*(tag: Tag): bool = tag.words.allIt(it.kind == Kind.Gismu)
+  ## Test tag holds gismu alone, i.e. no cmavo converts or groups them.
 
 
 
@@ -97,7 +105,7 @@ func refuse(text: string, refusal: Refusal, detail = ""): Reading =
 
 
 func readLujvo(text: string): Reading =
-  ## Read text as lujvo whose rafsi all stand for listed gismu.
+  ## Read text as lujvo whose rafsi all stand for listed words, last one gismu.
   let splits = text.splitLujvo
   if splits.len == 0:
     let segments = text.segmentLujvo
@@ -113,15 +121,14 @@ func readLujvo(text: string): Reading =
         break
       words.add found[0]
     if words.len < pieces.len: continue
-    for i, w in words:
-      if w.kind == Kind.Cmavo:
-        return refuse(text, Refusal.Cmavo, pieces[i].rafsi & " (" & $w & ")")
+    if words[^1].kind == Kind.Cmavo:  # 4.11 step 2: tanru ends in gismu; so tag holds one
+      return refuse(text, Refusal.Cmavo, pieces[^1].rafsi & " (" & $words[^1] & ")")
     return Reading(text: text, is_tag: true, tag: Tag(words: words), pieces: pieces)
   refuse(text, first_refusal[0], first_refusal[1])
 
 
 func readTag*(text: string): Reading =
-  ## Read text as tag: gismu of list, or lujvo whose rafsi all stand for gismu of list.
+  ## Read text as tag: gismu of list, or lujvo whose rafsi stand for listed words, last gismu.
   let letters = text.strip.toLowerAscii.replace(",", "")
   if letters.len == 0: return refuse(letters, Refusal.Empty)
   for character in letters:
@@ -138,15 +145,16 @@ func readTag*(text: string): Reading =
 #[ Rendering ]#
 
 func choices(w: Word, is_final: bool): seq[string] =
-  ## List rafsi of gismu 4.11 allows at its position, steps 1 and 2.
+  ## List rafsi of word 4.11 allows at its position, steps 1 and 2; cmavo has short rafsi alone.
   ##   4-letter rafsi several gismu share is left out where gismu has any other.
   let entry = w.entry
   if is_final:
     for one in entry.rafsi:
       if one.form.get in {Form.Ccv, Form.Cvv}: result.add one
-    result.add entry.word
+    if w.kind == Kind.Gismu: result.add entry.word
     return
   result = entry.rafsi
+  if w.kind != Kind.Gismu: return
   let stem = entry.word[0 .. 3]
   if stem.wordsStem.len == 1 or result.len == 0: result.add stem
 
@@ -168,15 +176,17 @@ func `$`*(tag: Tag): string =
 
 
 func toTanru*(tag: Tag): string =
-  ## Render tag as its gismu joined by `+`, as lujvo list writes tanru.
+  ## Render tag as its words joined by `+`, as lujvo list writes tanru.
   tag.words.mapIt($it).join("+")
 
 
 func readTanru*(text: string): Option[Tag] =
-  ## Read gismu joined by `+` as tag; `none` where any part is no gismu of list.
+  ## Read listed words joined by `+` as tag; `none` where any part is unlisted, or last part
+  ##   is no gismu (4.11 step 2).
   var words: seq[Word]
   for part in text.split('+'):
     let found = part.word
-    if found.isNone or found.get.kind != Kind.Gismu: return none(Tag)
+    if found.isNone: return none(Tag)
     words.add found.get
+  if words[^1].kind != Kind.Gismu: return none(Tag)
   some(Tag(words: words))

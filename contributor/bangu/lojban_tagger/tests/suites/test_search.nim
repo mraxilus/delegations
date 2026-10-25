@@ -161,10 +161,10 @@ func termsGismu(words: openArray[Word]): seq[Term] =
 
 
 func union(index: Index, term: Term): tuple[found: seq[string], widest: int] =
-  ## Find names any meaning of term finds as gismu, in order of index, and most one meaning finds.
+  ## Find names any meaning of term finds by its gismu, in order of index, and most one finds.
   var names_union: seq[string]
   for meaning in term.meanings:
-    let found = index.find(termsGismu(meaning.words)).names
+    let found = index.find(termsGismu(meaning.words.filterIt(it.kind == Kind.Gismu))).names
     names_union.add found
     result.widest = max(result.widest, found.len)
   result.found = index.entities.names.filterIt(it in names_union)

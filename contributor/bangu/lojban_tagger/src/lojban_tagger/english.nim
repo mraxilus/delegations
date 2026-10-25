@@ -3,7 +3,7 @@
 ##   |--------------------------|---------------------------------------------------------|
 ##   | Code                     | Meaning                                                 |
 ##   |--------------------------|---------------------------------------------------------|
-##   | Meaning                  | gismu English leads to, in order of tanru, and origin   |
+##   | Meaning                  | words of tanru English leads to, and origin             |
 ##   | MEANINGS                 | every meaning lists give                                |
 ##   | toTokens(english)        | lowercase content words of English                      |
 ##   | meanings(english)        | every meaning whose English holds each word given       |
@@ -14,7 +14,8 @@
 ##     gloss of lujvo line in Lojban notation leads to gismu its parts name;
 ##     gloss of lujvo line in English notation leads to gismu reader finds in its word, since
 ##     those parts are English keywords, never gismu (`entries.nim`).
-##   Meaning holding cmavo, or word no list holds, is left out: tag is made of gismu alone.
+##   Meaning keeps cmavo of its tanru, as tag does (`tags.nim`), and search matches it on its
+##     gismu alone. Tanru holding word no list holds, or ending in cmavo, is left out.
 ##   Rejected: words of definitions, which lead `book` to `papri` and every place structure
 ##     mentioning books; Architect chose keywords and glosses.
 ##   English is folded to lowercase and split at every character outside `a .. z`; tokens of
@@ -37,8 +38,8 @@ type
   Origin* {.pure.} = enum  ## Define which text of which list English came from.
     Keyword, Hint, Gloss
 
-  Meaning* = object  ## Define what English word leads to: gismu of one tanru, and origin.
-    words*: seq[Word]  ## Gismu in order of tanru; one alone for keyword or hint.
+  Meaning* = object  ## Define what English word leads to: words of one tanru, and origin.
+    words*: seq[Word]  ## Words of tanru, cmavo included, last one gismu; one gismu for keyword.
     origin*: Origin  ## Field English came from.
     entry*: int  ## Index into `LIST_GISMU` for keyword or hint, into `LIST_LUJVO` for gloss.
 
@@ -68,15 +69,16 @@ func textEnglish*(meaning: Meaning): string =
   of Origin.Gloss: LIST_LUJVO[meaning.entry].gloss
 
 
-func gismuLujvo*(entry: EntryLujvo): seq[Word] =
-  ## Read gismu of lujvo line: parts named in Lojban, or word read where parts are English.
-  ##   Empty where any part is no gismu of list, or word reads as no tag.
+func wordsLujvo*(entry: EntryLujvo): seq[Word] =
+  ## Read words of tanru of lujvo line: parts named in Lojban, or word read where parts are
+  ##   English. Empty where any part is unlisted, last part is cmavo, or word reads as no tag.
   case entry.notation
   of Notation.Lojban:
     for part in entry.parts:
       let found = part.word
-      if found.isNone or found.get.kind != Kind.Gismu: return @[]
+      if found.isNone: return @[]
       result.add found.get
+    if result[^1].kind != Kind.Gismu: return @[]  # 4.11 step 2, as `readTanru` holds
   of Notation.English:
     let reading = entry.word.readTag
     if reading.is_tag: result = reading.tag.words
@@ -84,13 +86,13 @@ func gismuLujvo*(entry: EntryLujvo): seq[Word] =
 
 func constructMeanings(): seq[Meaning] {.compileTime.} =
   ## Build every meaning English leads to: keyword and hint of each gismu, then gloss of each
-  ##   lujvo whose tanru holds listed gismu alone.
+  ##   lujvo whose tanru holds listed words, last one gismu.
   for i, entry in LIST_GISMU:
     if not entry.word.isGismu: continue
     result.add Meaning(words: @[Word(i)], origin: Origin.Keyword, entry: i)
     if entry.hint.len > 0: result.add Meaning(words: @[Word(i)], origin: Origin.Hint, entry: i)
   for i, entry in LIST_LUJVO:
-    let words = entry.gismuLujvo
+    let words = entry.wordsLujvo
     if words.len > 0: result.add Meaning(words: words, origin: Origin.Gloss, entry: i)
 
 

@@ -51,8 +51,8 @@ func explain*(reading: Reading): string =
   of Refusal.Empty: "Tag should hold letters; got ``."
   of Refusal.Letter: "Tag should hold Lojban letters alone; got `" & reading.detail & "` in " &
       text & "."
-  of Refusal.Cmavo: "Tag should be made of gismu alone; got cmavo `" & reading.detail &
-      "` in " & text & "."
+  of Refusal.Cmavo: "Tag should end in gismu, as CLL 4.11 step 2 ends tanru; got cmavo `" &
+      reading.detail & "` in " & text & "."
   of Refusal.Unlisted: "Gismu should be in gismu list; got " & text & "."
   of Refusal.Rafsi: "Rafsi should be assigned in gismu list; got `" & reading.detail &
       "` in " & text & "."
@@ -72,7 +72,11 @@ func describe(term: Term): string =
   ## Render how term read: as tag with its gismu, as English with its meanings, or as nothing.
   let text = "`" & term.reading.text & "`"
   if term.reading.is_tag:
-    return text & " reads as tag `" & term.reading.tag.toTanru & "`.\n"
+    let ranking =
+      if term.specific.len > 0: ", matched by its gismu; things tagged `" & term.reading.text &
+          "` come first"
+      else: ""
+    return text & " reads as tag `" & term.reading.tag.toTanru & "`" & ranking & ".\n"
   if term.meanings.len == 0:
     return text & " reads as neither tag nor English of lists, so finds nothing; " &
         term.reading.explain & "\n"
