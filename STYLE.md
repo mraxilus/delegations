@@ -160,6 +160,34 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
 - Give an object field its default inline (`is_negated*: bool = false`).
 - Use `seq`, `Table` and `string` as data structures only at compile time, or in a tool that
   a shell runs once. At runtime, use `string` only for display (`$`, messages).
+- Write data that a person keeps as a module of typed constants, one constructor to each entry.
+  Mark each field whose absence is a mistake `{.requiresInit.}`, so that the compiler names the
+  entry that lacks it:
+
+  ```nim
+  type
+    Claim* = object  ## Define one claim that evaluation checks.
+      kind*: KindClaim
+      path* {.requiresInit.}: string  ## Program that claim runs, relative to its proposal.
+
+  const CLAIMS* = [
+    Claim(kind: KindClaim.Program, path: "width.nim"),
+  ]
+  ```
+
+- Read and write a protobuf message only through the types that `import_proto3` generates from
+  its schema. Check the tag, the length and the checksum of a kept file first. Catch
+  `SerializationError` where the bytes come from outside. Give an `optional` field its default
+  with `get`:
+
+  ```nim
+  import protobuf_serialization, protobuf_serialization/files/type_generator
+  import_proto3 "scene.proto"
+
+  let scene = Protobuf.decode(bytes, Scene)
+  for one in scene.objects: draw(one.label, one.radius.get(RADIUS_DEFAULT))
+  writeFile(path, Protobuf.encode(scene))
+  ```
 
 ## 5. Signatures, imports, calls
 

@@ -61,6 +61,7 @@ import ./curator/audit/src/[
   plan,
   projects,
   role,
+  schemas,
   scope,
   symbols,
   tree,
@@ -78,6 +79,7 @@ Verbs:
   check-scope    branch name, and every changed path inside branch's folder
   check-commits  commits since base: subject form, scope, test before fix, body, record apart
   check-drift    charter or checker that base gained and branch lacks
+  check-schemas  each folder of protobuf schemas branch changed, against version base shipped
   check-role     pull request's role line and label, from ROLE_BODY and ROLE_LABELS
   hook           answer one hook event named as argument, from its JSON or refs on stdin
   test           fetch deps, then testament over tests/t*.nim, on project's own pin
@@ -306,8 +308,9 @@ proc runHook(root, event, input: string): int =
       found.add checkReferencesBare(turn.text)
       found.add checkLinksReference(turn.text)
       if turn.calls.isTurnWriting: found.add checkEndTurn(turn.text, branch_root)
-      if found.len == 0: return 0
-      echo %*{"decision": "block", "reason": found.reasonStop}
+      let unread = checkSignoffRead(turn.text, turn.calls)
+      if found.len == 0 and unread.len == 0: return 0
+      echo %*{"decision": "block", "reason": reasonStop(found, unread)}
       0
   of "start":
     var drift: seq[Finding]
@@ -360,6 +363,7 @@ proc run(options: Options): int =
     found.add checkScope(branch, pathsChanged(options.root, base), pathsMoved(options.root, base))
     found.add checkHistory(branch, commitsBranch(options.root, base))
     found.add checkBase(pathsGained(options.root, base))
+    found.add checkSchemas(options.root, base)
     # Curator branch holds what reddens contributor project (duty 3), and blocks on rest.
     let (held, own) = splitHeld(branch, found)
     if own.len > 0:
@@ -409,6 +413,9 @@ proc run(options: Options): int =
   of "check-drift":
     if not options.isReadAll({Root, Base}): return options.refused
     found = checkBase(pathsGained(options.root, options.baseOrDefault))
+  of "check-schemas":
+    if not options.isReadAll({Root, Base}): return options.refused
+    found = checkSchemas(options.root, options.baseOrDefault)
   of "check-role":
     # Pull request's own facts, which runner alone holds: they arrive through environment,
     #   never interpolated into script, as branch and event kind already do.

@@ -7,11 +7,13 @@
 #   subset of same list, building each page and driving it through real events.
 #   `check-types` type-checks scripts of every changed project carrying node manifest beside
 #   its lock. `check-drift` refuses branch predating base's charter or checker.
+#   `check-schemas` holds each folder of protobuf schemas branch changed to version base
+#   shipped, through `buf`; weekly run skips it, since it names no base.
 #   `test-windows` runs suites of knoller on Windows, whenever `list-projects` names knoller,
 #   since knoller runs there and koch does not: it compiles and runs suite file itself, with
 #   options its testament header names. `summarize` reads verdicts of `list-projects`,
-#   `check-files`, `test`, `test-windows`, `drive`, `check-types` and `check-drift`, and is
-#   gate branch protection requires, since matrix job names vary;
+#   `check-files`, `test`, `test-windows`, `drive`, `check-types`, `check-drift` and
+#   `check-schemas`, and is gate branch protection requires, since matrix job names vary;
 #   `check-scope` and `check-commits` are required by name (CURATOR.md, repository settings
 #   section).
 #
@@ -38,7 +40,7 @@
 #   key, so stale entry is unreachable rather than wrong. Store and SDL3 prefix are keyed
 #   loosely, with `restore-keys`, since each entry there is named by digest or commit and
 #   checked on restore, so stale entry heals rather than ships; their steps say why.
-#   Rejected: caching apt archives and `nimcache`, each small beside `drive` job's total
+#   Rejected: caching apt archives, `nimcache` and `buf`, each small beside job it serves
 #   (curator/audit/PROVENANCE.md, Runner caches).
 #   Actions are pinned to majors running node24, since runner retires node20. `cache@v5` and
 #   later want runner 2.327.1 or newer. `checkout@v7` breaks only `pull_request_target`
@@ -385,8 +387,36 @@ jobs:
           parent-nim-install-directory: ${{ runner.temp }}
       - run: nim r koch check-drift
 
+  check-schemas:
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    env:
+      BASE: >-
+        ${{ github.event_name == 'pull_request'
+            && format('origin/{0}', github.base_ref)
+            || github.event.before }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: jiro4989/setup-nim-action@v2
+        with:
+          nim-version: ${{ env.NIM_VERSION }}
+          parent-nim-install-directory: ${{ runner.temp }}
+      # `koch` fetches `buf` (`curator/audit/src/bufbuild.nim`) only where branch changed schema
+      #   in folder base also holds; fetch takes seconds, so no cache serves it.
+      - run: nim r koch check-schemas
+
   summarize:
-    needs: [list-projects, check-files, test, test-windows, drive, check-types, check-drift]
+    needs:
+      - list-projects
+      - check-files
+      - test
+      - test-windows
+      - drive
+      - check-types
+      - check-drift
+      - check-schemas
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -400,6 +430,7 @@ jobs:
             drive=${{ needs.drive.result }}
             check-types=${{ needs.check-types.result }}
             check-drift=${{ needs.check-drift.result }}
+            check-schemas=${{ needs.check-schemas.result }}
         run: |
           echo "$VERDICTS"
           case "$VERDICTS" in

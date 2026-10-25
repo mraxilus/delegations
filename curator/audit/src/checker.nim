@@ -82,11 +82,25 @@ const
     ## Characters option name is built from, as `--dry-run` spells it.
 
 
+func linesQuoted(source: string): seq[bool] =
+  ## Mark each line opening inside multi-line string literal, whose text is data, never code.
+  ##   Line literal opens on is code up to its quote, so it stays unmarked.
+  result = newSeq[bool](source.count('\n') + 1)
+  for t in source.tokens:
+    if t.kind == KindToken.Text:
+      for line in t.line + 1 .. t.lineLast(source): result[line] = true
+
+
 func routinesExported*(source: string): seq[string] =
   ## Collect names routines export, i.e. `func name*` and its keyword siblings.
   ##   Operator, written in backticks, is skipped: it is spelled where used rather than
   ##   named, so counting identifiers can never find its callers. Cost, deliberate.
-  for line in source.splitLines:
+  ##   Line opening inside multi-line string is data, so it declares nothing.
+  let
+    quoted = source.linesQuoted
+    lines = source.splitLines
+  for i, line in lines:
+    if quoted[i]: continue
     let words = line.splitWhitespace
     if words.len < 2 or words[0] notin ROUTINES: continue
     let name = words[1].split({'*', '(', '[', ':', ','})[0]
@@ -151,11 +165,14 @@ func fixExportsDead*(
   ## Drop `*` of each routine `dead` names that its own module calls; leave one nothing calls.
   ##   Call is name read as code token beyond its declarations, so comment and string count
   ##   none; to delete routine nothing calls is choice, and its finding stays for hand.
+  ##   Declaration is read on code line alone, as `routinesExported` reads it.
   result.source = source
   var lines = source.split('\n')
+  let quoted = source.linesQuoted
   for name in dead:
     var declared: seq[int]
     for i, line in lines:
+      if quoted[i]: continue
       let words = line.splitWhitespace
       if words.len >= 2 and words[0] in ROUTINES and words[1].startsWith(name & "*"): declared.add i
     let named = source.tokens.countIt(it.kind == KindToken.Word and it.spelling(source) == name)

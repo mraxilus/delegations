@@ -19,6 +19,8 @@
 ##   | Html          | .html                         | Xml         | yes   | no   | no    |
 ##   | Svg           | .svg                          | Xml         | yes   | no   | no    |
 ##   | Json          | .json atlas.config atlas.lock | None        | no    | no   | no    |
+##   | Protobuf      | .proto                        | Slash       | yes   | no   | no    |
+##   | ProtobufText  | .txtpb                        | HashSpaced  | yes   | no   | no    |
 ##   | Shell         | .sh pre-push commit-msg       | Hash        | yes   | yes  | no    |
 ##   |---------------|-------------------------------|-------------|-------|------|-------|
 ##
@@ -34,6 +36,10 @@
 ##   Nimble files are NimScript; Configuration covers `nim.cfg` Atlas writes and `koch.nim.cfg`.
 ##   TypeScript and Json registered ahead of use: owner allows TypeScript where JavaScript
 ##     is forced, and its tooling needs JSON configuration.
+##   Protobuf is schema of data one program writes and another reads (#761), so rule admits it
+##     rather than gate: no Nim serves schema both Nim and browser read. ProtobufText is its text
+##     format, which committed record takes, and which build turns into bytes; its `#` comment
+##     opens line or follows whitespace, as YAML's does.
 ##   Cpp and C carry binding shim for library no Nim import expresses; `.hpp` is C++ header
 ##     and `.h` is C one, since name alone cannot tell them apart.
 ##   Retired: Makefile, with make itself; registry admits no second build verb.
@@ -63,7 +69,7 @@ type
 
   Kind* {.pure.} = enum  ## Define file kinds checker reads.
     Nim, NimScript, Nimble, Configuration, Markdown, Yaml, GitIgnore, GitAttributes, TypeScript,
-    Cpp, C, Html, Svg, Json, Shell
+    Cpp, C, Html, Svg, Json, Protobuf, ProtobufText, Shell
 
   RuleKind* = object  ## Define how one kind is read.
     syntax*: Syntax  ## Comment syntax scanner applies.
@@ -87,6 +93,8 @@ const LUT_RULE_BY_KIND*: array[Kind, RuleKind] = [
   Kind.Html: RuleKind(syntax: Syntax.Xml, is_prose: true),
   Kind.Svg: RuleKind(syntax: Syntax.Xml, is_prose: true),
   Kind.Json: RuleKind(syntax: Syntax.None),
+  Kind.Protobuf: RuleKind(syntax: Syntax.Slash, is_prose: true),
+  Kind.ProtobufText: RuleKind(syntax: Syntax.HashSpaced, is_prose: true),
   Kind.Shell: RuleKind(syntax: Syntax.Hash, is_prose: true, is_gated: true),
 ]
   ## Map kind to its rule; header table is derived view of this array.
@@ -114,6 +122,8 @@ func classify*(path: string): Option[Kind] =
   of ".html": some(Kind.Html)
   of ".svg": some(Kind.Svg)
   of ".json": some(Kind.Json)
+  of ".proto": some(Kind.Protobuf)
+  of ".txtpb": some(Kind.ProtobufText)
   of ".sh": some(Kind.Shell)
   else: none(Kind)
 

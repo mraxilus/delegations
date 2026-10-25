@@ -275,13 +275,83 @@ suite "Hooks":
   test "stop hook asks for diff of each error alone, never whole message or its lines again":
     # Message stands on screen once hook reads it, so resent message reads twice (D1 of #570),
     #   and so does each paragraph sent again around one mended phrase.
-    let reason = reasonStop(checkEndTurn("Pushed.\n", BRANCH) & checkNumbersBare("See #12.\n"))
+    let reason =
+      reasonStop(checkEndTurn("Pushed.\n", BRANCH) & checkNumbersBare("See #12.\n"), [])
     check reason.startsWith("Mend message that ends this turn (GUIDE.md, Output contract).")
     check "Reply with a diff of each error alone: one `diff` block" in reason
     check "each wrong phrase after `-`, that phrase mended after `+`" in reason
     check "never send it, a line of it, or its sign-off again" in reason
     check reason.splitLines.len == 3  # reason line, then one line for each finding
     check "got neither" in reason.splitLines[1]
+
+
+  test "stop hook asks for read of unread queue, and no diff for it (#742)":
+    # What waits in queue can change sign-off, so delegate reads it and names it in one line.
+    let
+      unread = checkSignoffRead(PLAIN, [])
+      reason = reasonStop([], unread)
+      both = reasonStop(checkNumbersBare("See #12.\n"), unread)
+    check reason.startsWith("Read queue before this sign-off stands (GUIDE.md, Output contract)")
+    check "take first what waits there, and reply with one line naming it, and no diff" in reason
+    check "Mend message" notin reason
+    check reason.splitLines.len == 2  # reason line, then finding
+    check both.startsWith("Mend message") and "Read queue before" in both
+    check both.splitLines.len == 4  # each reason line, each before its finding
+
+
+  test "sign-off follows read of open issues of its role, in its turn (#742)":
+    # Case as found: curator signed off `done` on 2026-10-24 from turn that read runs alone,
+    #   while request #730 on label `curator` waited 13 hours unread.
+    const list = "mcp__github__list_issues"
+    let curator = PLAIN.replace("contributor/ronri/pga_benchmark, `gap-list`", "curator, at main")
+    check checkSignoffRead(curator, [Call(name: "mcp__github__actions_list")])
+      .messages.anyIt("labelled `curator`" in it and "got none" in it)
+
+    # Tool read counts where it names role label or none, and asks for more than closed issues.
+    check checkSignoffRead(curator, [Call(name: list, labels: @["curator"], state: "open")])
+      .len == 0
+    check checkSignoffRead(curator, [Call(name: list, labels: @["curator"])]).len == 0  # both
+    check checkSignoffRead(curator, [Call(name: list, state: "open")]).len == 0  # every label
+    check checkSignoffRead(curator, [Call(name: list, labels: @["curator"], state: "closed")])
+      .len == 1
+    check checkSignoffRead(curator, [Call(name: list, labels: @["architect"])]).len == 1
+
+    # Shell read counts through `gh issue list` and `gh api`, in each form of flag `gh` takes.
+    for command in [
+      "gh issue list --label curator",
+      "gh issue list -l curator --limit 10",
+      "gh issue ls --label=curator",
+      "gh issue list -lcurator",
+      "gh issue list -l 'architect,curator'",
+      "cd /x && gh issue list --state open -l curator",
+      "gh issue list",
+      "gh api 'repos/o/r/issues?labels=curator&state=open'",
+      "gh api repos/{owner}/{repo}/issues",
+    ]:
+      check checkSignoffRead(curator, [Call(name: "Bash", command: command)]).len == 0
+    for command in [
+      "gh issue list -l curator --state closed",
+      "gh issue list -s closed -l curator",
+      "gh issue view 730",
+      "gh pr list -l curator",
+      "gh api 'repos/o/r/issues?labels=curator&state=closed'",
+      "gh api repos/o/r/issues/730/comments",
+      "gh api 'search/issues?q=label:curator'",
+    ]:
+      check checkSignoffRead(curator, [Call(name: "Bash", command: command)]).len == 1
+
+    # Role comes from sign-off: contributor reads its own label, coordinator reads `architect`.
+    const encoded = "gh api 'repos/o/r/issues?labels=contributor%2Fronri%2Fpga_benchmark'"
+    check checkSignoffRead(PLAIN, [Call(name: "Bash", command: encoded)]).len == 0
+    check checkSignoffRead(PLAIN, [Call(name: list, labels: @["curator"])]).len == 1
+    let coordinator = PLAIN.replace("contributor/ronri/pga_benchmark, `gap-list`", "coordinator")
+    check checkSignoffRead(coordinator, [Call(name: list, labels: @["architect"])]).len == 0
+    check checkSignoffRead(coordinator, [Call(name: list, labels: @["coordinator"])]).len == 1
+
+    # Message with no sign-off, or role line naming no role string, asks nothing here.
+    check checkSignoffRead("Done.\n", []).len == 0
+    check checkSignoffRead(PLAIN.replace("contributor/ronri/pga_benchmark", "maintainer"), [])
+      .len == 0
 
 
   test "turn ends with sign-off once delegate stops, else with working line":
@@ -598,6 +668,17 @@ suite "Hooks":
     check turn.calls.len == 1 and turn.calls[0].command == "git push"
     check turn.text.startsWith("Done.")
     check turn.calls.isTurnWriting
+
+
+  test "transcript parse keeps labels and state that list of issues filters on (#742)":
+    const transcript =
+      "{\"type\":\"user\",\"message\":{\"content\":\"read queue\"}}\n" &
+      "{\"type\":\"assistant\",\"message\":{\"content\":[{\"type\":\"tool_use\"," &
+      "\"name\":\"mcp__github__list_issues\",\"input\":{\"labels\":[\"curator\"]," &
+      "\"state\":\"OPEN\"}}]}}\n"
+    let turn = transcript.parseTurn
+    check turn.calls.len == 1 and turn.calls[0].labels == @["curator"]
+    check turn.calls[0].state == "open"
 
 
   test "hook binary is built again where source at HEAD moves, and only there":
