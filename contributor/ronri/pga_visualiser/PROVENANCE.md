@@ -49,10 +49,12 @@ button, or seen this on real GPU hardware.** Every figure here was software-rend
 names one sense of an older word, and the other senses keep that word. An explicit list spares them,
 rather than a rule.
 
-`handle` names the address of an object, and `slot` still names an `Ink` palette position and a
-timing array position. `pivot` names the orbit centre. `target` still names the object a press
-points at, the DOM event target, a render target and a plain goal. `budget` names real allowances of
-time, pixels and segments. The frame-rate lines are `mark`s, because nothing is held to them.
+`handle` names the address of an object, and `slot` names a place in a pool or a timing ring. A
+palette index names a position in the palette, and an `Ink` names the entry there. `face` alone
+names a face of a mesh and the verb, and a font face is always named in full. `pivot` names the
+orbit centre, and `budget` names real allowances of time, pixels and segments. `target` still names
+the object a press points at, the DOM event target, a render target and a plain goal. The
+frame-rate lines are `mark`s, because nothing is held to them.
 
 **Three names could not be taken, and each says why in place.** `object` is reserved in Nim, so the
 code-position `item` took a role instead. It is `one` where an object is reached through the
@@ -88,7 +90,7 @@ compile, rather than fails to match.
 TypeScript: 44 static text nodes against 6 from scripts. A script sets each tooltip. To set each
 label from a script would empty 44 elements, invent 44 ids, and blank the page until scripts ran.
 
-`tools/build.nim` rewrites `shell.html` on the way out for `@SCRIPT@` and `@EMBED:<face>@`, and
+`tools/build.nim` rewrites `shell.html` on the way out for `@SCRIPT@` and `@EMBED:<font face>@`, and
 `@WORD:<key>@` joins that pass. The real text is in the committed markup, and reads at first paint
 and with scripts refused. A token that names a key the catalogue does not carry stops the build.
 
@@ -166,7 +168,8 @@ and this file does not:
 | `exceedance`, `rings` | distribution curve, its axis, rings each reading is taken over |
 | `scenery`, `pins`, `built`, `pool` | what scene costs, repaired faults, each frame built, drawer |
 | `demo`, `loaded`, `objects` | preset, culling, occlusion, a line through a point, loaded |
-| `message`, `style`, `type`, `canvas` | outcome fade, declared CSS, faces in roles, blank refused |
+| `message`, `style` | outcome fade, declared CSS |
+| `type`, `canvas` | font faces in roles, blank refused |
 | `host`, `shade` | save through the artifact host, every point shaded from world-up |
 | `surface` | no backdrop filter on the page, and the fill of every surface |
 | `veil` | the veil of a plane over every spot its pick finds it at |
@@ -499,12 +502,12 @@ their verdicts agree.
 ## Browser front-end
 
 **The page is one self-contained file.** It opens from `file://`, or from an artefact host that
-reaches no font host and no script host. So every face is inlined as base64, and `tools/build.nim
-web` concatenates every script into `pages/shell.html` at its `@SCRIPT@` token. `pages/shell.html`
-stays whole markup, rather than ends mid-`<script>`, because a committed page that cannot parse
-alone is a page that no checker can read. The page declares its own doctype, charset and viewport,
-because a copy opened from file has nothing else to declare them. Without them that copy rendered in
-quirks mode, and decoded its text as Windows-1252.
+reaches no font host and no script host. So every font face is inlined as base64, and
+`tools/build.nim web` concatenates every script into `pages/shell.html` at its `@SCRIPT@` token.
+`pages/shell.html` stays whole markup, rather than ends mid-`<script>`, because a committed page
+that cannot parse alone is a page that no checker can read. The page declares its own doctype,
+charset and viewport, because a copy opened from file has nothing else to declare them. Without them
+that copy rendered in quirks mode, and decoded its text as Windows-1252.
 
 **Scripts share one global scope, rather than import each other.** TypeScript 7 removed `outFile`,
 so the compiler does not bundle, and the page cannot resolve ES imports without a server. Files
@@ -633,8 +636,8 @@ entry of a zip that ends `.pgascene` or `.rgascene`, stored or deflated. Rejecte
 second format to read.
 
 *Checked.* Verified by a cold run. `clean` removes `build`, `binaries` and `nimcache`. Then `drive`
-fetches every face, builds both front-ends, and drives them with no step run by hand, as the runner
-does. A second run fetches nothing.
+fetches every font face, builds both front-ends, and drives them with no step run by hand, as the
+runner does. A second run fetches nothing.
 
 Verified by type-checker: every script is clean under the three flags above, with no `any` and no
 non-null assertion. Verified by driven check: `driveTypeRoles`, `driveTypeDrawn` and
@@ -644,31 +647,31 @@ Verified by driven check against a stand-in host: a scene saves as a zip and loa
 saves as itself. A declined save offers no link. Verified by `unzip -t`: the zip is sound.
 **Untested**: the real host. **Unverified**: no human has driven this page.
 
-## Faces
+## Font faces
 
-**`drive` fetches faces, and `web` refuses without them**, because a caller who reaches for `web`
-directly is building, rather than being given.
+**`drive` fetches font faces, and `web` refuses without them**, because a caller who reaches for
+`web` directly is building, rather than being given.
 
-**Faces come from the store of the repository, and which faces is this project's.** `koch
+**Font faces come from the store of the repository, and which font faces is this project's.** `koch
 fetch-assets` holds any file fetched at build time: the names, the digests and the fetch, in
-`curator/audit/src/assets.nim`. The `assets` verb of this project copies the faces of both
+`curator/audit/src/assets.nim`. The `assets` verb of this project copies the font faces of both
 front-ends out of it (repository issues 116 and 124). It writes `build/fonts/store.list`, one line
-for each face, naming the store entry it was copied from. `web` compares its input against that
+for each font face, naming the store entry it was copied from. `web` compares its input against that
 entry before it embeds. Verified by a break of it, twice: `store.list` moved away, and one byte
-appended to a copied face.
+appended to a copied font face.
 
 The page takes Commit Mono as the Latin `woff2` of `@fontsource`. It takes Noto Sans at 400 and 600,
 Noto Sans Math, Noto Sans Symbols 2 and Noto Serif, as TrueType from their own releases. The desktop
-takes its own list, `FACES_DESKTOP`, and the two lists share files. Commit Mono is `otf` there,
+takes its own list, `FONT_FACES_DESKTOP`, and the two lists share files. Commit Mono is `otf` there,
 which is what its author publishes, and `stb_truetype` reads its CFF outlines. All are under the SIL
 Open Font License 1.1.
 
-**Three faces, three roles, and nothing else picks between them.** The standard of the Architect is
-Noto Serif for titles, Noto Sans for body, and Commit Mono for code and monospace. The page draws
-them through `--serif`, `--sans` and `--mono`, and the desktop through `guiHeader` and `guiMonoPush`
-with `guiMonoPop`. Material 3 puts text inside components in the label role, so the help tab strip
-and the toggle chips stay sans. The serif takes the headings that name a section, and the name of
-the application itself.
+**Three font faces, three roles, and nothing else picks between them.** The standard of the
+Architect is Noto Serif for titles, Noto Sans for body, and Commit Mono for code and monospace. The
+page draws them through `--serif`, `--sans` and `--mono`, and the desktop through `guiHeader` and
+`guiMonoPush` with `guiMonoPop`. Material 3 puts text inside components in the label role, so the
+help tab strip and the toggle chips stay sans. The serif takes the headings that name a section, and
+the name of the application itself.
 
 **Commit Mono splits its ligatures across two switches, and the page needs both.** The distributed
 `woff2` carries `calt`, which browsers apply unasked, and which most ligatures ride on. The opt-in
@@ -679,26 +682,27 @@ sets are `ss01` to `ss05`, which the arrows and comparisons come from. So the st
 No combination moves a column. Noto Sans Math publishes an `ss01` that the mono stack falls through
 to, and the operators render the same either way.
 
-**Each Noto face of the page ships whole** (Article X.8, as the Architect ruled it on 2026-10-03). A
-Latin subset leaves each character past its range to a face of the viewer's system. `ˍ` and `˷` of
-the notation are two (repository issue 411). The cost is weight: the built page is 7,830,702 bytes,
-against 4,271,072 with the subsets. Measured on 2026-10-03 with `ls -l build/rga_visualiser.html`,
-at `main` and at this change. Rejected: a Noto Sans subset cut for the two accents, which no store
-row hosts without a release.
+**Each Noto font face of the page ships whole** (Article X.8, as the Architect ruled it on
+2026-10-03). A Latin subset leaves each character past its range to a font face of the viewer's
+system. `ˍ` and `˷` of the notation are two (repository issue 411). The cost is weight: the built
+page is 7,830,702 bytes, against 4,271,072 with the subsets. Measured on 2026-10-03 with
+`ls -l build/rga_visualiser.html`, at `main` and at this change. Rejected: a Noto Sans subset cut
+for the two accents, which no store row hosts without a release.
 
-**The maths and symbol faces each take a family of their own, after the text faces in every stack.**
-Within one family, the faces that declare one weight form a set. The engine picks one set for the
-weight asked, and asks only its faces. The order of a stack is then the precedence, as merge order
-is in the desktop atlas. Rejected: those faces under "Noto Sans UI", whose set at 400 to 600 wins
-both weights from the text faces. Liberation Sans then draws 1,156 glyphs of the open drawer.
+**The maths and symbol font faces each take a family of their own, after the text font faces in
+every stack.** Within one family, the font faces that declare one weight form a set. The engine
+picks one set for the weight asked, and asks only its font faces. The order of a stack is then the
+precedence, as merge order is in the desktop atlas. Rejected: those font faces under "Noto Sans UI",
+whose set at 400 to 600 wins both weights from the text font faces. Liberation Sans then draws 1,156
+glyphs of the open drawer.
 
 Rejected: each of them declared again at 400 and at 600, which embeds each file twice, 1,744,560
 bytes more on a page of 7,718,414.
 
-**The maths and symbol faces are declared over 400 to 600.** Each ships one weight. Declared at 400
-alone, they still draw at 600, but the browser synthesises their bold. Such a weight is a font face
-that nothing ships (Article X.8). Cost: regular operators beside semibold letters, which the desktop
-label also draws.
+**The maths and symbol font faces are declared over 400 to 600.** Each ships one weight. Declared at
+400 alone, they still draw at 600, but the browser synthesises their bold. Such a weight is a font
+face that nothing ships (Article X.8). Cost: regular operators beside semibold letters, which the
+desktop label also draws.
 
 Verified by a run, 2026-10-23, in the Chromium that Playwright pins, with the range cut to 400.
 `CSS.getPlatformFontsForNode` still names Noto Sans Math and Noto Sans Symbols 2 for operators at
@@ -712,10 +716,11 @@ browser synthesises (Article X.8). The collector asks each stack at each weight 
 `curator/audit/src/font_stacks.nim` at `e6c9d9c0` over `written.json`. It reads two findings on
 `main` at `9b6c445d`, and none here.
 
-**Each face is held to its own load status**, by `driveTypeRoles`, because `document.fonts.check`
-answers true where no face matches at all. Verified by a run, 2026-10-07, in Chrome for Testing 153:
-all six faces load. A read of `CSS.getPlatformFontsForNode` over every element of the open drawer
-finds no glyph from a face of the system. Noto Sans draws 946 glyphs and its semibold 204.
+**Each font face is held to its own load status**, by `driveTypeRoles`, because
+`document.fonts.check` answers true where no font face matches at all. Verified by a run,
+2026-10-07, in Chrome for Testing 153: all six font faces load. A read of
+`CSS.getPlatformFontsForNode` over every element of the open drawer finds no glyph from a font face
+of the system. Noto Sans draws 946 glyphs and its semibold 204.
 
 **Each element is read in the stack that the browser resolves for it, and `koch drive` judges it**
 (`CONTRIBUTOR.md`, Pages and assets). `readFontFaces` reads the computed `font-family` and
@@ -727,10 +732,10 @@ that a font face of the system draws.
 
 **Text that a script writes later is one run for each stack in use, and for each stack that a rule
 declares.** `nimCodepointsShown` gives the catalogue, the help, the notation and the units, as
-`--drive-faces` reads them. The strings of the scripts and the text on the page join them. There is
-one such run at each weight that an element resolves to, that a rule declares, and that a font face
-declares. Each is named by the element or the rule of its stack, and by its weight, as `text written
-later in rule .later-panel at 600`.
+`--drive-font-faces` reads them. The strings of the scripts and the text on the page join them.
+There is one such run at each weight that an element resolves to, that a rule declares, and that a
+font face declares. Each is named by the element or the rule of its stack, and by its weight, as
+`text written later in rule .later-panel at 600`.
 
 **The collector reads the declared stacks through the CSSOM, and the browser resolves each one.** It
 walks every rule of every sheet, into `@media`, `@supports`, `@layer`, nested rules and imported
@@ -744,10 +749,10 @@ Rejected: `var()` read from the custom properties of the root, which misses a va
 under `@media` declares.
 
 So each stack in use, and each stack that a rule declares, must map every character that the page
-can write. That is why every stack names the maths and symbol families after its own faces. The cost
-is that a stack for titles alone must map the operators too. A checkbox and a file field show no
-text that the page writes, so they are not a stack in use. Both resolve to Arial, and the button of
-a file field shows the words of the browser.
+can write. That is why every stack names the maths and symbol families after its own font faces. The
+cost is that a stack for titles alone must map the operators too. A checkbox and a file field show
+no text that the page writes, so they are not a stack in use. Both resolve to Arial, and the button
+of a file field shows the words of the browser.
 
 The collector reads each `@font-face` rule through the CSSOM, and writes the bytes of its `data:`
 source to a file named by their SHA-256. So `koch drive` reads the bytes that a viewer receives. The
@@ -792,16 +797,16 @@ pins: no finding, and the control page gives each numeral. Verified by breaks on
 With the maths and symbols under "Noto Sans UI" at 400 to 600, `koch drive` gives 894 findings. They
 name the Latin text of each element in the sans stack, as `button#button-add` drawing U+0061. For
 Latin in that stack, `CSS.getPlatformFontsForNode` names a font face of the system. Verified by a
-run, 2026-10-03: the other page checks pass with the whole faces.
+run, 2026-10-03: the other page checks pass with the whole font faces.
 
 **The serif ships at 600 alone, because every title is set at 600.** A weight that nothing ships is
-a face that the browser of the reader invents (Article X.8). The check reads pixels, and not width,
-which cannot part the two faces. The heading shot as the page has it, and again with the interface
-face forced onto it, must make two pictures.
+a font face that the browser of the reader invents (Article X.8). The check reads pixels, and not
+width, which cannot part the two font faces. The heading shot as the page has it, and again with the
+interface font face forced onto it, must make two pictures.
 
 **The desktop draws the same three roles.** `NotoSerif-SemiBold` matches the 600 of the page, and
 `CommitMonoV142-400Regular` sets notation. The supplementary ranges are merged into the mono and
-interface faces, because those rows carry wedges. Commit Mono comes from the repository of its
+interface font faces, because those rows carry wedges. Commit Mono comes from the repository of its
 author, because `@fontsource` ships no TrueType. **Ligatures cannot reach the desktop**, because
 Dear ImGui shapes no text, so no GSUB feature fires.
 
@@ -932,13 +937,13 @@ Software GL reports no multisampled visual, so thin lines alias.
 
 **The suites test the rules, `tools/drive/` tests the wiring of the browser, and this tests the
 wiring of the desktop.** The entry point carries scripted runs: `--drive-keys`, `--drive-sky`,
-`--drive-undo`, `--drive-select`, `--drive-drag`, `--drive-search`, `--drive-menu`, `--drive-faces`,
-`--drive-edit`, `--drive-wheel`, `--drive-bulk`, `--drive-fields`, `--drive-hover`, and
-`--drive-help:<tab>`, one for each tab. Each pushes real events through the queue of SDL, but
-`--drive-edit`, `--drive-bulk` and `--drive-fields` call the procs that the buttons and fields call
-(Desktop front-end). `driven` runs all of them and reports every failure, and not the first. It
-asks the binary which help tabs exist (`--help-tabs`), so `help.HelpPath` stays their one home
-(Article I.4). `drive` chains it, here and on the runner (repository issue 91).
+`--drive-undo`, `--drive-select`, `--drive-drag`, `--drive-search`, `--drive-menu`,
+`--drive-font-faces`, `--drive-edit`, `--drive-wheel`, `--drive-bulk`, `--drive-fields`,
+`--drive-hover`, and `--drive-help:<tab>`, one for each tab. Each pushes real events through the
+queue of SDL, but `--drive-edit`, `--drive-bulk` and `--drive-fields` call the procs that the
+buttons and fields call (Desktop front-end). `driven` runs all of them and reports every failure,
+and not the first. It asks the binary which help tabs exist (`--help-tabs`), so `help.HelpPath`
+stays their one home (Article I.4). `drive` chains it, here and on the runner (repository issue 91).
 
 **A run that reaches a window of Dear ImGui names that window on its motion.** The SDL3 backend of
 Dear ImGui drops motion that names no window of its own. `--drive-select` and `--drive-wheel` name
@@ -952,9 +957,9 @@ it, so Dear ImGui reads the pointer over the menu as it reads a hand. Verified b
 - undo takes a construction back, and returns the view to where it built from;
 - the choice menu does not swallow the drag after it;
 - every help tab opens with rows in it;
-- a run whose face is missing still does its scripted work;
-- every type role is drawn in a face of its own;
-- every codepoint that each role sets has a glyph in the face of that role;
+- a run whose font face is missing still does its scripted work;
+- every type role is drawn in a font face of its own;
+- every codepoint that each role sets has a glyph in the font face of that role;
 - a scene filled to capacity leaves what follows its list on the window;
 - the menu opens and offers the demo at every size that `orrery` has;
 - an edit opened far out and saved unchanged keeps every coefficient and its radius to the bit;
@@ -963,40 +968,40 @@ it, so Dear ImGui reads the pointer over the menu as it reads a hand. Verified b
 - typed values past the bounds of the view section land inside them, as on the page;
 - hover follows an ease under a still pointer, and drops while a held key moves the camera.
 
-**An absent face is a finding, and never an abort.** Dear ImGui asserts inside `AddFontFromFileTTF`
-where it cannot open a path, and an assertion is SIGABRT rather than a report. `faceAt` resolves
-each face to empty where the file is not there. It says which face is missing, which variable names
-it, and which verb fetches it. The interface draws in what is left.
+**An absent font face is a finding, and never an abort.** Dear ImGui asserts inside
+`AddFontFromFileTTF` where it cannot open a path, and an assertion is SIGABRT rather than a report.
+`fontFaceAt` resolves each font face to empty where the file is not there. It says which font face
+is missing, which variable names it, and which verb fetches it. The interface draws in what is left.
 
-Locations come from the environment first, with one `PGA_FONT…` name for each face, and fall back to
-the faces that this build ships. `driven` drives the case by a run of `--drive-keys` with `PGA_FONT`
-naming a path that no machine carries.
+Locations come from the environment first, with one `PGA_FONT…` name for each font face, and fall
+back to the font faces that this build ships. `driven` drives the case by a run of `--drive-keys`
+with `PGA_FONT` naming a path that no machine carries.
 
-**This half ships the faces that it draws with** (Article X.8; repository issue 93).
-`DIRECTORY_FACES` is relative to the binary through `getAppDir()`, so no source names the layout of
-any machine. The faces come from the release repository of the Noto project. A tag and a digest pin
-each family, because the families move on their own: `NotoSans-v2.013`, `NotoSansMath-v2.539` and
-`NotoSansSymbols2-v2.006`. A read of each `cmap` against the ranges that `gui_shim.cpp` declares
-gives the coverage: math holds 1,773 of the 1,952 wanted. The faces cost about 2.5 MB fetched into
-`build/fonts`, because `stb_truetype` reads uncompressed faces.
+**This half ships the font faces that it draws with** (Article X.8; repository issue 93).
+`DIRECTORY_FONT_FACES` is relative to the binary through `getAppDir()`, so no source names the
+layout of any machine. The font faces come from the release repository of the Noto project. A tag
+and a digest pin each family, because the families move on their own: `NotoSans-v2.013`,
+`NotoSansMath-v2.539` and `NotoSansSymbols2-v2.006`. A read of each `cmap` against the ranges that
+`gui_shim.cpp` declares gives the coverage: math holds 1,773 of the 1,952 wanted. The font faces
+cost about 2.5 MB fetched into `build/fonts`, because `stb_truetype` reads uncompressed font faces.
 
-**Every codepoint that the build writes is asked of the face that sets it** (Article X.8).
-`shown.codepointsShown` gathers the text from where it is composed, for `--drive-faces` and for the
-page alike. That is the wording catalogue, help, the notation of each operation, the basis names,
-the wheel and the units. It adds printable ASCII, since a reader names objects in it. `gui.hasGlyph`
-loads each codepoint through the face of each role, as drawing does, and reports each one that would
-draw as `.notdef`. The title role is asked for the panel headings alone, because nothing is merged
-into its face.
+**Every codepoint that the build writes is asked of the font face that sets it** (Article X.8).
+`shown.codepointsShown` gathers the text from where it is composed, for `--drive-font-faces` and for
+the page alike. That is the wording catalogue, help, the notation of each operation, the basis
+names, the wheel and the units. It adds printable ASCII, since a reader names objects in it.
+`gui.hasGlyph` loads each codepoint through the font face of each role, as drawing does, and reports
+each one that would draw as `.notdef`. The title role is asked for the panel headings alone, because
+nothing is merged into its font face.
 
 **Merge order is precedence, and the range lists bind only the legacy path.** From Dear ImGui 1.92,
 a renderer that keeps textures of its own loads each glyph on demand. It takes the glyph from the
-first merged face whose `cmap` holds it (`imgui_draw.cpp`, `ImFontBaked_BuildLoadGlyph`). So the
-check does not read each `cmap` against the range lists, which asks what drawing does not ask.
+first merged font face whose `cmap` holds it (`imgui_draw.cpp`, `ImFontBaked_BuildLoadGlyph`). So
+the check does not read each `cmap` against the range lists, which asks what drawing does not ask.
 
-**The mono role merges the interface face last.** Commit Mono, Noto Sans Math and Noto Sans Symbols
-2 carry no glyph for `ˍ` (U+02CD) or `˷` (U+02F7). Those are the postfix accents of left complement
-and antireverse, and Noto Sans carries both. It comes last, so it supplies only what the three faces
-before it lack. The cost is that its two accents are proportional in a mono line.
+**The mono role merges the interface font face last.** Commit Mono, Noto Sans Math and Noto Sans
+Symbols 2 carry no glyph for `ˍ` (U+02CD) or `˷` (U+02F7). Those are the postfix accents of left
+complement and antireverse, and Noto Sans carries both. It comes last, so it supplies only what the
+three font faces before it lack. The cost is that its two accents are proportional in a mono line.
 
 **A scripted run keeps its own clock.** Each frame drawn advances it by `SECONDS_FRAME_DRIVEN`,
 1/120 s, one frame at the least workable rate (Diagnostics). The opening scene is born at zero.
@@ -1020,10 +1025,10 @@ rebuilt nothing. `--drive-keys`, run three times, read azimuth 1.0094, elevation
 `FAIL  a drag from one object onto another opens its choice menu`, and the verb names
 `drive-drag`, with exit 1.
 
-Verified by a run, 2026-10-02: without Noto Sans merged into the mono role, `--drive-faces` reports
-`FAIL every codepoint the Mono face sets has a glyph` with `missing U+02CD, U+02F7`. With it, all
-four roles pass. Verified by a read of each face's `cmap`, 2026-10-02, with a scratch reader: Noto
-Sans holds both codepoints, and the other three faces hold neither.
+Verified by a run, 2026-10-02: without Noto Sans merged into the mono role, `--drive-font-faces`
+reports `FAIL every codepoint the Mono font face sets has a glyph` with `missing U+02CD, U+02F7`.
+With it, all four roles pass. Verified by a read of each font face's `cmap`, 2026-10-02, with a
+scratch reader. Noto Sans holds both codepoints, and the other three font faces hold neither.
 
 Verified by looking, 2026-10-02, at the operations tab that this command draws. Both accents draw as
 `�` without the merge, and as accents with it:
@@ -1186,9 +1191,9 @@ that `objects` hands out. Nor are the coordinates that `camera` reads for its be
 that `framing` and `picking` read. `camera` reads its carried direction through
 `boundary.directionFrom`, so that crossing counts.
 
-**The arrow of each label comes from the maths face, so the label sets its own line height.** The
-line box of that face stands taller than the box of the text face. With the line height of the text
-face, the two crossing rows stand 5 px above the others.
+**The arrow of each label comes from the maths font face, so the label sets its own line height.**
+The line box of that font face stands taller than the box of the text font face. With the line
+height of the text font face, the two crossing rows stand 5 px above the others.
 
 | Front-end and scene | `euclidean → algebra` | `algebra → euclidean` |
 |---------------------|-----------------------|-----------------------|
@@ -1536,9 +1541,9 @@ deuteranopia. So `Cobalt` is derived lighter and bluer (`#5b90c7`), which reopen
 yellow-green at CVD ΔE 0.4, and two blues at normal-vision ΔE 5.6. The axis hues flank the reserved
 arc on both sides, and leave one warm arc and one cool arc, 162° in total. Five hues are what fits.
 
-**A structural slot is never offered as the colour of an object.** `mesh` names the boundary once,
+**A structural ink is never offered as the colour of an object.** `mesh` names the boundary once,
 in `INK_CATEGORICAL_FIRST`, `COUNT_INK_CATEGORICAL`, `inkCategorical` and `categoricalIndex`, and
-both pickers and `inkCycled` derive from it. The structural slots are declared first and the
+both pickers and `inkCycled` derive from it. The structural inks are declared first and the
 categorical run last, so the run is one block, which a `static: doAssert` on the count holds.
 
 The floors below were derived under the `check_palette` of the prototype, which measured them on
@@ -3047,11 +3052,11 @@ front-end centres its own text.
   **The halo is the backdrop colour, not the marker white.** A halo blends with the background to
   knock the surroundings out of the letters. A contrasting halo dominates them instead (Peterson,
   *Cartographer's Toolkit*; Dawson, *About label halos*). It is `WIDTH_MARKER_LABEL_HALO` 2 px of
-  `Ink.Backdrop` at `ALPHA_MARKER_LABEL_HALO` 0.85, on a 16 px face at weight 600.
+  `Ink.Backdrop` at `ALPHA_MARKER_LABEL_HALO` 0.85, on a 16 px font face at weight 600.
 
-  The desktop sets the label in `FACE_FONT_LABEL`, with the math and symbol faces merged in, so `G =
-  L ∧ c` keeps its wedge. It has no stroked text, so it draws the label at eight one-pixel offsets
-  in the halo colour. The browser stages one SVG `<text>` for each selected handle, with
+  The desktop sets the label in `FONT_FACE_LABEL`, with the math and symbol font faces merged in, so
+  `G = L ∧ c` keeps its wedge. It has no stroked text, so it draws the label at eight one-pixel
+  offsets in the halo colour. The browser stages one SVG `<text>` for each selected handle, with
   `paint-order: stroke`.
 
 **The loop of a plane lies on the plane.** It is traced from the frame of the plane, about the
@@ -3740,9 +3745,10 @@ scene. Reading is written once against `VERSION_SCENE`. The difference of each p
 one `upgradedFrom<n>`, and `objectUpgraded` walks an `ObjectSaved` up the chain one step at a time.
 
 Version 3 costs sizes, with `upgradedFrom3` filling `RADIUS_OBJECT_DEFAULT`. The chain refuses a
-radius that is zero, negative or NaN, as it refuses an unknown palette slot. Version 1 costs colours
-alone: its ordinals name a palette that no longer exists, folded by the same cycle that `inkCycled`
-walks. It is bounded by `ORDINAL_INK_HIGH_V1` 14, so a byte that version 1 never wrote is refused.
+radius that is zero, negative or NaN, as it refuses an unknown palette index. Version 1 costs
+colours alone: its ordinals name a palette that no longer exists, folded by the same cycle that
+`inkCycled` walks. It is bounded by `ORDINAL_INK_HIGH_V1` 14, so a byte that version 1 never wrote
+is refused.
 
 **A wrong hue is recoverable, and a refused scene is not.** `loadScene` parses into a staging scene,
 and replaces the caller's only on complete success. It is native-only.
@@ -3979,9 +3985,9 @@ written `` m.`∧ ☆`n ``.
 
 *Checked.* Verified by suite: every entry non-empty, the placeholder rules of the substitution, and
 every parenthesis case. Verified by driven check: a join of joins flat, and a meet of joins
-parenthesised on the page. Verified by driven check on the desktop: `--drive-faces` asks each face
-for every codepoint of the notation (Desktop driven checks). On the page, `koch drive` judges what
-`readFontFaces` reads (Faces).
+parenthesised on the page. Verified by driven check on the desktop: `--drive-font-faces` asks each
+font face for every codepoint of the notation (Desktop driven checks). On the page, `koch drive`
+judges what `readFontFaces` reads (Font faces).
 
 ## Naming and number formatting
 
