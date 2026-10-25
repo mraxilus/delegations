@@ -69,12 +69,15 @@ suite "Article VI":
     check texts("let c = 'it\\'s'; // yes\n", Syntax.Slash) == @["yes"]  # escaped quote
 
 
-  test "VI.5 FlatBuffers schema slash forms, doc line among them":
-    # `///` documents field, and `flatc` carries it into generated code; third slash is no word.
-    const schema = "/// Scene file.\ntable Object {\n  label: string = \"a//b\";  // shown\n" &
-      "  radius: double = 0.08;  /* world units */\n}\n"
-    check texts(schema, classify("scene.fbs").get.rule.syntax) ==
-      @["Scene file.", "shown", "world units"]  # doc, line after string, block
+  test "VI.5 protobuf schema and its text format comment forms":
+    # Schema documents declaration with `//` line above it; record comments with `#`.
+    const schema = "// Scene file.\nmessage Object {\n  string label = 3 [json_name = \"a//b\"];" &
+      "  // shown\n  double radius = 4;  /* world units */\n}\n"
+    check texts(schema, classify("scene.proto").get.rule.syntax) ==
+      @["Scene file.", "shown", "world units"]  # line, line after string, block
+    const record = "# Tour scene.\nobjects { label: \"a # b\"  # shown\n}\n"
+    check texts(record, classify("tour.txtpb").get.rule.syntax) ==
+      @["Tour scene.", "shown"]  # line, line after string holding `#`
 
 
   test "VI.5 markup comments span lines and repeat":
