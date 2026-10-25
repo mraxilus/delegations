@@ -211,7 +211,7 @@ suite "Plan":
     # No project here declares anything, so what comes back is koch's own alone, which
     #   makes this readable without running any project's verb.
     check systemRepository(".", treeGood(), newSeq[string]()) ==
-      @["cmake", "coreutils", "curl", "g++", "git", "libbrotli1", "tar"]
+      @["coreutils", "curl", "git", "libbrotli1", "tar"]
     check SYSTEM_KOCH.mapIt(it[0]).deduplicate.len == SYSTEM_KOCH.len  # each package once
     for (package, why) in SYSTEM_KOCH:
       check package.len > 0

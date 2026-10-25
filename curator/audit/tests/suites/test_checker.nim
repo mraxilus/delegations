@@ -42,8 +42,8 @@ suite "Checker":
 
 
   test "line opening inside multi-line string is data, never routine, and fixer leaves it":
-    # Case held: edits `flatc.nim` carries quote Nim runtime of FlatBuffers in `"""`, and
-    #   `proc Finish*` inside one read as routine exported and named by nothing (#755). Domain
+    # Case held: module patching generated code quoted Nim runtime of FlatBuffers in `"""`, and
+    #   `proc Finish*` inside one read as routine exported and named by nothing (#761). Domain
     #   is each routine keyword, on line opening inside multi-line string literal.
     for keyword in ["func", "proc", "iterator", "template", "macro", "converter", "method"]:
       let

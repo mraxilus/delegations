@@ -28,8 +28,8 @@
 ##     is; it never says which files target wants, and targets differ -- one draws maths and
 ##     symbols, other draws italic serif. So per-project autonomy CONTRIBUTOR.md argues for
 ##     is untouched: what stops being written twice is only what was already identical.
-##   This is repository's first shared build input. Patched `flatc` (`flatc.nim`) is second, for
-##     same reason: one patch serves every project. Compilers are pinned per project in nimble
+##   This is repository's first shared build input. Binary of `buf` (`bufbuild.nim`) is second,
+##     for same reason: one pin serves every schema. Compilers are pinned per project in nimble
 ##     files, Atlas checkouts per project, npm per project, each deliberately. Bytes of file
 ##     are not toolchain: they are same bytes whoever fetches.
 ##

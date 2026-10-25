@@ -57,7 +57,6 @@ import ./curator/audit/src/[
   domains,
   findings,
   fixes,
-  flatc,
   hooks,
   plan,
   projects,
@@ -80,7 +79,7 @@ Verbs:
   check-scope    branch name, and every changed path inside branch's folder
   check-commits  commits since base: subject form, scope, test before fix, body, record apart
   check-drift    charter or checker that base gained and branch lacks
-  check-schemas  each FlatBuffers schema branch changed, against version base shipped
+  check-schemas  each folder of protobuf schemas branch changed, against version base shipped
   check-role     pull request's role line and label, from ROLE_BODY and ROLE_LABELS
   hook           answer one hook event named as argument, from its JSON or refs on stdin
   test           fetch deps, then testament over tests/t*.nim, on project's own pin
@@ -89,7 +88,6 @@ Verbs:
   fix            apply in place each fix checks name, refusing all where path is out of scope
   fetch-deps     check out what each atlas.lock pins, and confirm checkouts match
   fetch-assets   fetch named files into store, print each path; none named prints table
-  fetch-flatc    build flatc at its pin with curator's patch, once; print folder holding it
   list-packages  OS packages koch and projects need, one per line
   list-projects  projects to compile, as JSON for CI matrix
   stamp          print rules stamp; --write sets every Rules row to it
@@ -530,20 +528,6 @@ proc run(options: Options): int =
         )])
       else: echo path
     if found.len == 0: return 0
-  of "fetch-flatc":
-    # Build is repository's, as store of assets is: one patch serves every project, so caller
-    #   reads one folder holding `bin/flatc` and `nim/flatbuffers`, and never builds its own.
-    #   Build prints its progress to stderr, so stdout is folder alone.
-    if not options.isReadAll({}): return options.refused
-    let folder = flatcIn(rootFlatc(getEnv(KEY_FLATC)))
-    if folder.isSome:
-      echo folder.get
-      return 0
-    found.add finding(
-      "curator/audit/src/flatc.nim", 0,
-      "Flatc could not be fetched, patched or built at its pin; reason is above; got `" &
-        KEY_BUILD & "`.",
-    )
   of "list-packages":
     # Named project answers for that project, which is what runner asks per matrix job.
     #   Named none answers for machine: koch's own packages and every project's, unscoped,

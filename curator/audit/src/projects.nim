@@ -45,8 +45,6 @@ const
     ("tar", "that download is archive, and unpacking it is what makes it toolchain"),
     ("coreutils", "`sha256sum` checking it against digest published beside it"),
     ("libbrotli1", "`drive` reads `cmap` of `woff2` font face page ships, in one Brotli stream"),
-    ("cmake", "`fetch-flatc` builds patched `flatc` from its pinned source (`flatc.nim`)"),
-    ("g++", "compiler that build runs, since `flatc` is C++"),
   ]
     ## System packages koch itself needs, whatever any project declares. Same shape rule asks
     ## of every project, kept by driver that enforces it: declaration is data carrying its
