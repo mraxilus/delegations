@@ -197,7 +197,14 @@ suite "Chapter 15":
   test "Section 15.2":
     check "narselci'a".readTag.tag.units == @[
       unit("ciska", @[operator("na"), conversion([2, 1, 3, 4, 5])]),
-    ]  # 15.2, `-nar-` reserved for `na`; binds as negation of next unit
+    ]  # 15.2, `na` applies to entire bridi, here of one unit
+    check "narselci'avei".readTag.tag.units == @[
+      unit("ke", @[operator("na")]), unit("ciska", @[conversion([2, 1, 3, 4, 5])]), unit("vreji"),
+    ]  # 15.2, `na` applies to entire bridi, and not to just part of selbri
+    check folded("vreji+na+se+ciska") ==
+        folded("na+vreji+se+ciska")  # 15.2, entire bridi, wherever `na` stands in tag
+    check folded("na+na+se+ciska") == folded("se+ciska")  # 15.2, adjacent `na` cancel out
+    check "narnarselci'a".readTag.tag.units == folded("se+ciska")  # 15.2, as above
 
 
   test "Section 15.4":
