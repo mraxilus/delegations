@@ -4,9 +4,9 @@
 ##   Examples are lines of lists as committed (`cukta`, `ci'erkei`); laws run exhaustively over
 ##     every meaning, every gismu and every lujvo line, and over pool of seeded meanings, each
 ##     with its tokens shuffled, that iterator serves (Article IX.3, STYLE.md §6).
-##   Gismu of lujvo line come two ways: parts named, and word read. Laws hold one way against
-##     other, never against code that builds them; English notation names no gismu, so reader is
-##     held to keywords its parts write.
+##   Words of lujvo line come two ways: parts named, and word read. For Lojban notation, laws
+##     hold one way against other. English notation names no word, so meaning comes from reader
+##     itself there, and reader is held to keywords its parts write instead.
 ##   Corpus does not cover yet: phrases of three words or more, and English no list holds.
 
 {.experimental: "strictFuncs".}
@@ -35,9 +35,10 @@ const
   FLOOR_MEANINGS_CMAVO = 600
     ## Least meanings whose tanru holds cmavo, which ruling admits: 653 of 5491 read.
   FLOOR_KEYWORD = 600
-    ## Least lines of English notation whose gismu carry keywords parts write, case and hyphens
-    ## aside: 629 of 640 that read; rest write synonym (`old` for `slabu`), misspell, or name
-    ## gismu in Lojban.
+    ## Least lines of English notation whose words carry keywords parts write, case and hyphens
+    ## aside: 631 of 755 that read. Rest write phrase for cmavo (`2nd-place-of` for `se`),
+    ## synonym (`old` for `slabu`), misspell, name gismu in Lojban, name rafsi of other gismu
+    ## (`sakybasti` spells `sak` of `sakci`), or list other count of parts (`LUJVO_PARTS_ODD`).
   LUJVO_PARTS_ODD = ["tolmipygau", "vikmau"]
     ## Lines of English notation whose part count differs from word count; list data, not reader.
     ##   `tolmipygau` writes `secret` and `do` for `to'e`, `mipri` and `gasnu`.

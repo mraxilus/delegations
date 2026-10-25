@@ -154,7 +154,7 @@ suite "Chapter 3":
     check tags.LETTERS == alphabet - {',', '.'}  # 3.1 list; comma and period divide syllables (3.3)
     for c in 'a' .. 'z':
       check (c in tags.LETTERS) == (c notin {'h', 'q', 'w'})  # 3.1, omitting "h", "q", and "w"
-    for c in char.low .. char.high:  # 256 bytes; comma and capitals in `Internal: Reading`
+    for c in char.low .. char.high:  # 256 bytes; inner comma in 3.3, ends and capitals internal
       if c in tags.LETTERS or c in {',', 'A' .. 'Z'}: continue
       check ("bri" & c & "vla").refusalRead == some((Refusal.Letter, $c))  # 3.1, alphabet
 
@@ -267,7 +267,7 @@ suite "Internal: Reading":
 
 
   test "Character outside letters is refused as Letter, naming character":
-    check "hello".refusalRead == some((Refusal.Letter, "h"))  # first offending character
+    check "hello".refusalRead == some((Refusal.Letter, "h"))  # first offending; constructed
     check "bri vla".refusalRead == some((Refusal.Letter, " "))  # inner space never trimmed
     check "bwa".refusalRead == some((Refusal.Letter, "w"))  # `w` outside letters; constructed
     check "datni+vreji".refusalRead == some((Refusal.Letter, "+"))  # tanru is no spelling

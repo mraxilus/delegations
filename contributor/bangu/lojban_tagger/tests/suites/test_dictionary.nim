@@ -289,7 +289,8 @@ suite "Chapter 4":
       @GISMU_ASSIGNABLE, @GISMU_COINED, @GISMU_METRIC_SMALL, @GISMU_METRIC_LARGE,
       @GISMU_SCIENTIFIC, @GISMU_CULTURAL,
     ]
-    check concat(groups).deduplicate.len == COUNT_LISTED_4_15  # 4.15, every gismu page lists, once
+    check concat(groups).len == COUNT_LISTED_4_15  # guards copy of 4.15 lists in suite alone
+    check concat(groups).deduplicate.len == COUNT_LISTED_4_15  # copy names each gismu once
     for group in groups:
       for text in group:
         let found = word(text)

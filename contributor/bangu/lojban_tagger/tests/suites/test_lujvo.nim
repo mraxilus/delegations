@@ -69,7 +69,7 @@ const
   KEYWORDS = constructKeywords()  ## Keyword of every gismu, lowercase, sorted.
   EXCEPTIONS_SPLIT = [
     "maicpukai",  # CVV opening three-part lujvo lacks `r` of 4.11 step 4a
-    "natmyrgu'e",  # no segmentation joins back: `r` after `natmy` fits no rafsi
+    "natmyrgu'e",  # no segmentation at all: letter `r` after `natmy` fits no rafsi
   ]
     ## Entries of either notation that do not split exactly once, with reason.
   EXCEPTIONS_LOJBAN = [

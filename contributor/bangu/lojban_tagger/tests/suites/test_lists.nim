@@ -5,12 +5,14 @@
 ##   Sample lines are copied byte for byte from `gismu.txt` and `lujvo.txt` that `DIGEST_GISMU`
 ##     and `DIGEST_LUJVO` pin, carriage return removed as `readSource` removes it; doc of each
 ##     names its line. CI installs no `lojban-common`, so no law needs it: one test compares
-##     with installed lujvo list where present, and skips with reason where absent (IX.9).
+##     with installed gismu list and one with lujvo list where present, and each skips with
+##     reason where absent (IX.9).
 ##   Random entries hold words of one to twenty characters, `"` among them, one space apart;
 ##     spaced texts hold runs of one to five spaces, at either end too.
 ##     Corpus holds no backslash, which `toLiteral` leaves unescaped since lists hold none, and
 ##     no word too long for any line, which no wrap at spaces can split (Article IX.4).
-##   Samples are drawn into pools allocated once, after one seeding per test, and served by
+##   Regression test of wrapping draws its spaced texts inside its loop, after one seeding.
+##   Other samples are drawn into pools allocated once, after one seeding per test, and served by
 ##     `served`.
 
 {.experimental: "strictFuncs".}

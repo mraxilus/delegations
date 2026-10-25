@@ -9,8 +9,9 @@
 ##     domain, so list breaking claim of CLL fails here, by name.
 ##   Short rafsi outside 4.6 tables would be pinned as exceptions, not failed; list holds none.
 ##   String no source holds is marked `constructed` in its citation.
-##   Internal suite holds choice CLL does not make: `form` refuses commas, which `tags.nim`
-##     strips first.
+##   Comma stands in enumerated alphabet of chapter 4, since 3.1 lists it among symbols; it is
+##     neither C nor V of 4.1, so no form holds it. Internal suite holds choice CLL does not
+##     make: reader strips commas (`tags.nim`) before any form is asked.
 ##   Cost: enumeration reads about million strings; suite runs in about two seconds on
 ##     unoptimised build, measured 2026-10-24.
 
@@ -317,6 +318,7 @@ suite "Chapter 4":
       check text.form == text.formRestated  # 4.4, five letters hold CVC/CV, CCVCV or none
       if text.formRestated.isSome: inc count_shaped
     check count_shaped >= FLOOR_MUTATION  # corpus keeps gismu shapes (Article IX.3)
+    check count_shaped <= SAMPLES_MUTATION - FLOOR_MUTATION  # corpus keeps other strings too
 
 
   test "Section 4.6":
