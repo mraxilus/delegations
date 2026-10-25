@@ -138,11 +138,14 @@ the hook glue of the curator: the command that Claude Code runs, and the scripts
 as hooks. It never enters a project, by the ruling of the Architect (CONTRIBUTOR.md, The
 language is Nim). Verified by `suites/test_layout.nim`.
 
-**FlatBuffers is admitted by rule, and not by gate.** It is the schema of data that one program
-writes and another reads, as the Architect ruled on #755. No Nim serves a schema that both Nim
-and TypeScript generate code from, so no header argues for it. Its comments are the `//`
-syntax, with `///` as its doc line. Verified by `suites/test_kinds.nim`, which holds its row, and
-by `suites/test_comments.nim`, which reads a doc line, a line comment after a string, and a block.
+**Protocol Buffers is admitted by rule, and not by gate.** Its schema is the form of data that
+one program writes and another reads, as the Architect ruled on #761. No Nim serves a schema
+that both Nim and a page read, so no header argues for it. A schema takes the `//` syntax. A
+record in text format takes `#` at line start or after whitespace, outside quotes, as YAML does.
+Verified by `suites/test_kinds.nim`, which holds both rows, and by `suites/test_comments.nim`.
+
+- Cost: text format also opens a comment at a `#` that follows a value with no space. The
+  scanner reads that `#` as text, so that comment goes unchecked.
 
 ## Comment extraction
 
@@ -151,10 +154,9 @@ by `suites/test_comments.nim`, which reads a doc line, a line comment after a st
 - Nim: line, doc and nesting block comments, plain, triple and generalized raw strings, char
   literals, and numeric suffix quotes.
 - Configuration: `#`, unless `\#`.
-- YAML: `#` at line start, or after whitespace, outside quotes.
+- YAML and protobuf text format: `#` at line start, or after whitespace, outside quotes.
 - Ignore files: a leading `#` only.
-- TypeScript and FlatBuffers: `//`, `/* */`, the string forms, and doc stars stripped. The
-  third slash of a `///` doc line is dropped too, because it is no word.
+- TypeScript and protobuf schemas: `//`, `/* */`, the string forms, and doc stars stripped.
 - Markup: `<!-- -->`, which may span lines.
 
 Whitespace runs collapse, so texts compare stably.
@@ -984,69 +986,97 @@ that a contributor may write is a scope boundary the branch grammar cannot check
 
 **Data takes its form from who writes it and who reads it, as the Architect ruled on #755.**
 Data that a person writes is a typed Nim module. Data that one program writes and another reads
-is FlatBuffers, with a committed schema that carries the versions of the format. A record that
-the repository commits is FlatBuffers JSON text, and each build turns it into a buffer.
-`CONTRIBUTOR.md`, Data, states the rule.
+is Protocol Buffers, as the Architect ruled on #761. Its committed schema carries the versions
+of the format. A record that the repository commits is in text format, and each build turns it
+into binary. `CONTRIBUTOR.md`, Data, states the rule.
 
 - Rejected: a Nim module that the writing program emits, for a committed record. The Architect
   ruled against it, because it leaves us to keep our own code for reading and for versions.
 - Measured for that option, 2026-10-25: `design/rig.json` of dance_ontology, 1.36 MB, compiled
   as a typed constant in 3.2 s at 203 MiB peak. As JSON read through `staticRead`, it took 2.9 s
   at 82 MiB.
-- Rejected: a committed buffer, because binaries are never committed. One baseline of
-  pga_benchmark is 7,256 B as a buffer against 21,430 B as text. A review of the buffer shows
+- Rejected: a committed binary, because binaries are never committed. A review of one shows
   only that the files differ.
-- Rejected, by the survey of #755: the text format of Protocol Buffers, which no Nim reads.
-- Rejected, by the same survey: Cap'n Proto, whose Nim library has had no release since 2021.
-  Dhall and CUE each need a foreign toolchain, and KDL and TOML each need a new kind and a
-  dependency.
+- Rejected: FlatBuffers. Its generator of Nim has seven faults at release 25.12.19, all still on
+  upstream `master` of 2026-10-21. A table inside a table crashed the reader, and a value equal
+  to zero read back as the default of the schema. Its runtime has no verifier, crashes on an
+  enum value that its enum lacks, and does not compile to JavaScript. The Architect chose
+  Protocol Buffers over a patched `flatc`, which would be ours to keep.
+- Rejected: Cap'n Proto. Its Nim library `capnp.nim` has had no commit since 2021-01-05, and its
+  README says that it is not actively maintained. With its dependency `collections.nim`, it
+  fails to compile on Nim 2, with 65 errors from `nim check`. No tool was found that compares
+  two versions of its schema.
+- Rejected: Avro and Thrift, which have no library in the registry of Nim. CBOR, MessagePack and
+  BSON have libraries, but no schema. Dhall and CUE each need a foreign toolchain, and KDL and
+  TOML each need a new kind and a dependency.
 
-**`flatc` is built at a pinned commit with the curator's patch, and no other `flatc` serves.**
-`flatc.nim` pins release 25.12.19 and holds seven exact edits to its Nim generator and runtime.
-Each edit names the text that it replaces, found exactly once at the pin, or the build stops.
-Each fault below was found on records of this repository on 2026-10-25. Each is still on
-upstream `master` of 2026-10-21.
+**Nim reads and writes protobuf through `protobuf_serialization` of Status, at 0.6.2.** Its
+`import_proto3` turns a schema into plain Nim types at compile time, so no generated code is
+committed. A page reads the same schema through `protobufjs` 8.8.1. Its `dist/protobuf.min.js`
+is one script of 104,182 B, so a page needs no bundler. Measured 2026-10-25 on the scene file of
+pga_visualiser, written as a schema at its versions 3, 7 and 8.
 
-- A table inside a table, or a list of tables, crashed the reader. The getter read the slot of
-  the field, where the slot holds an offset to the table. The baseline `machine_rga4d` of
-  pga_benchmark crashed on `algebra` and on `measurands`.
-- The writer skipped a value equal to the zero of its type, where the reader returns the default
-  of the schema. So a hidden object of a scene read back visible, in the C++ reader of `flatc` too.
-- The adder of a table field wrote it as a struct in place, and the runtime quit.
-- The runtime wrote no file identifier, so a TypeScript reader that checks it refused each file
-  that Nim wrote.
-- `-o` made the folder of the namespace under the working directory, wrote nothing, and exited 0.
-- Verified by `suites/test_flatc.nim`. It generates Nim from a fixture schema, writes and reads one
-  buffer, and has the C++ reader of `flatc` read the same bytes. The same fixture failed on the
-  unpatched build at `-o`, then where it wrote the table field.
-- Upstream's own Nim test passes on both builds, because it reads no table inside a table.
-- Rejected: a change sent upstream, which the Architect declined.
-- Rejected: an edit of the generated Nim in the build of each project. A new `flatc` can stop it
-  matching with no warning, and each project would copy it.
-- Rejected: Ubuntu's `flatbuffers-compiler`, 2.0.8, which predates the Nim generator of 22.10.25.
-- The build is the repository's, as the store of assets is, because one patch serves every
-  project. It lives in `~/.cache/koch/flatc`, named by the pin and a digest of the edits, and it
-  moves in only whole.
-- Cost: a cold build fetches the pin, and compiles for about a minute on 4 cores. It shells out to
-  `git`, `cmake` and `g++`.
-- Cost: the edits transcribe upstream text. A bump of the pin re-reads each edit, and the build
-  refuses one that no longer matches.
-- Cost: the runtimes of Nim and TypeScript verify nothing in a buffer. A file cut to 300 of its
-  584 B crashed the reader of Nim, and the reader of TypeScript gave wrong labels with no error.
-  So a file that a person keeps holds a length and a checksum, as `CONTRIBUTOR.md`, Data, asks.
-- Cost: the getter of an enum stops on a value that its enum lacks. A hue of 14 crashed the reader
-  of Nim, where TypeScript returned 14. So a field of an enum that may grow takes its integer
-  type.
+- Nested and repeated messages read back whole. Nim and JavaScript each read the bytes that the
+  other wrote.
+- A reader of version 7 reads a file of version 3, with the new field absent. A reader of
+  version 3 reads a file of version 7, and skips the field that it lacks.
+- A cut file is refused, in Nim with `SerializationError`, and in JavaScript with an error.
+- Cost: a file cut between two top-level fields reads as fewer objects in both readers, with no
+  error. So a file that a person keeps holds a tag of its format, a length and a checksum.
+- Cost: the reader of Nim reads an enum value that its enum lacks as zero, with no error, where
+  JavaScript keeps the number. So value zero of each enum means unknown.
+- Cost: proto3 gives no default except zero. So a field with another default is `optional`, and
+  the code gives the default.
+- Cost: the library marks itself experimental. It fails 33 cases of the official conformance
+  suite. Two are required cases of proto3, both on unknown fields when a message is written
+  again.
+- Cost: its CI runs the C and C++ backends alone. On the JavaScript backend it fails to compile,
+  on `memfiles`, so a page reads through `protobufjs`.
 
-**`check-schemas` holds each changed schema to the version that base shipped.** `flatc
---conform` refuses a renumbered enum, a moved, deleted or retyped field, and a new default. It
-names what broke. A field added with a default, or marked deprecated, passes. The shipped version
-is the schema at the tip of base, the newest one that anyone may have written files under.
+**A committed record is text format, and the build of each project encodes it with `protoc`.**
+`protoc --encode` refuses a misspelt field, an unknown enum value and a wrong type, and names
+each. Measured 2026-10-25 with `protoc` 3.21.12, the version that Ubuntu 24.04 offers, and with
+the newer one of `grpcio-tools` 1.84.1. Both wrote the same bytes.
 
+- Rejected: `buf convert`, which drops a misspelt field of text format, with no error.
+- Rejected: JSON for a record. `buf convert` reads it leniently: it drops a misspelt key, and
+  reads a bad enum value as zero.
+
+**`check-schemas` holds each folder of changed schemas to the version that base shipped.** It
+runs `buf breaking` with category `WIRE_JSON`, which guards the bytes and the JSON text, and
+never the layout of files. It refuses a renumbered enum value, and a deleted, retyped or renamed
+field or value. A field or value added under a new number passes. One deleted with its number
+and name reserved passes too. The shipped version is the schema at the tip of base.
+
+- The tip of base holds the newest version that anyone may have written files under, so the
+  branch must still read it.
+- Each folder that holds a changed schema is one module, read at the tip of base and at `HEAD`.
+  So an import between schemas of one folder resolves on both sides, and a message moved between
+  them is no deletion.
 - Verified by `suites/test_schemas.nim`, over the scene file of pga_visualiser written as a
   schema. Its version 6 dropped `Algebra` and moved every later hue, and the check refuses that.
-- Cost: an `include` of the shipped schema resolves against the tree of the branch.
-- Cost: a schema deleted on the branch passes, because a retired format is a decision, not drift.
+  Each edit that breaks is held to the message of its own rule.
+- Rejected: `protoc`, which compiles a schema and holds none to an older version.
+- Rejected: category `FILE` of `buf`, which refuses a message moved to another file, though no
+  byte changes. Measured 2026-10-25 with `buf` 1.75.0.
+- Cost: an import resolves in the folder of its schema, as both readers resolve it. A schema
+  that imports from another folder fails to compile in the check.
+- Cost: a message deleted whole passes, because bytes carry no name of a message. A field of its
+  type, where one exists, is deleted too, and the check holds that deletion.
+- Cost: a folder new on the branch, or gone from base, passes, because nothing shipped holds it.
+
+**`buf` 1.75.0 comes from the registry of npm, checked against its SHA-512.** npm serves the
+binary of each platform as a tarball, and publishes its digest beside it. `bufbuild.nim` pins
+the version and the digest. The tarball is checked before it is unpacked, and the binary moves
+into the store whole.
+
+- The binary is the repository's, as the store of assets is, because one check serves every
+  schema. It lives in `~/.cache/koch/buf`, named by its version.
+- Verified by `suites/test_bufbuild.nim`. The pinned binary reports its version, and a binary
+  already in the store is read with no fetch.
+- Cost: the tarball is 33 MB, and the binary is 47 MB.
+- Cost: Linux on x86-64 alone. Any other machine gets a finding that names what to add.
+- Cost: no test fetches a tarball whose digest differs, because its address is a constant.
 
 ## Ledger
 
@@ -1423,8 +1453,7 @@ absent package names itself.
 for the tarball that `fetchRelease` unpacks, and `coreutils` for `sha256sum`. It also holds
 `libbrotli1`, because `koch drive` and the suite of the store read `woff2` font faces through
 `font_files.nim`. The runner holds it: verified by run 906 of `check`, whose `test` job
-ran that suite and passed. It holds `cmake` and `g++` too, because `koch fetch-flatc` builds the
-patched `flatc` from its source.
+ran that suite and passed.
 
 `koch list-packages` with no project prints those and every project's, unscoped, so one
 command answers what a machine needs before any of this runs. To name a project keeps the
@@ -2557,10 +2586,10 @@ mistake is easy to make and impossible to see afterwards.
   skipped, and the gate passes on a skipped dependency. The gate passes on `skipped`, and fails
   on `failure` or `cancelled`.
 
-**`check-schemas` builds the patched `flatc`, then holds each schema that the change touched.**
-It runs on pull requests and on pushes to `main`, each against its own base. The weekly run
-skips it, because that run names no base. It builds `flatc` on every run, so the run that
-changed the patch proves each edit on the runner. The gate reads its verdict.
+**`check-schemas` holds each folder of schemas that the change touched.** It runs on pull
+requests and on pushes to `main`, each against its own base. The weekly run skips it, because
+that run names no base. `koch` fetches `buf` only where a folder needs it. The gate reads its
+verdict.
 
 **`test-windows` runs the suites of knoller on Windows, whenever `list-projects` names knoller.**
 Knoller runs on Windows and koch does not. So the job compiles and runs the suite file itself,
@@ -2621,10 +2650,11 @@ the runner rather than by a curator who reads.
 - A routine opens with any keyword of a routine, `method` among them (`ROUTINES`). Verified by
   `suites/test_checker.nim`: an exported routine of each keyword reads, and its `*` drops where
   its own module calls it.
-- A line that opens inside a multi-line string literal is data, and declares no routine. The
-  edits of `flatc.nim` quote Nim source, so a collector that reads lines alone takes them for
-  routines. `linesQuoted` marks such lines from the tokens of knoller, for the collector and for
-  the fixer of dead exports. Verified by `suites/test_checker.nim`, for each keyword.
+- A line that opens inside a multi-line string literal is data, and declares no routine. A
+  module may quote Nim source in such a literal, and a collector that reads lines alone takes
+  that source for routines. `linesQuoted` marks such lines from the tokens of knoller, for the
+  collector and for the fixer of dead exports. Verified by `suites/test_checker.nim`, for each
+  keyword.
 - **Missing suite**: a check module without `tests/suites/test_<module>.nim`.
 - **Verb mismatch**: one set named three times. The names are the verbs that koch dispatches,
   the verbs that its usage lists, and the rows of the checks table in CURATOR.md. Usage lists
@@ -2769,12 +2799,6 @@ SDL3, so `sdl3` clones, configures and builds it from source. That is 55.8 s of 
   commit rather than a mutable tag, so what the cache hides is a rebuild, and not an upstream
   that moved.
 
-**The patched `flatc` is cached on `flatc.nim`, with `restore-keys`.** That file holds the pin
-and the edits, so a change of either misses the exact key. Each build folder is named by the pin
-and a digest of the edits, so an older entry is unreachable rather than wrong. `check-schemas`,
-`test` and `drive` restore one entry. A cold build takes 47 s to 54 s on 4 cores, measured
-2026-10-25 on the machine of this change. Unverified on the runner until a run restores it.
-
 **`nimcache` is not cached on the runner.** A cache of it can skip Nim compilation alone: at
 most about 16 s of a 357 s `drive` job. The steps that dominate such a job are the ones it
 cannot serve. Measured from one `drive` job on the runner, recorded 2026-09-10. The figures
@@ -2788,6 +2812,10 @@ expire with the job they measured.
 
 **Apt archives are not cached.** A cache saves the download and not the install: 2.8 s of the
 same 357 s job, 0.8%, for a root-owned directory and one key.
+
+**`buf` is not cached on the runner.** A cold fetch of its tarball, checked and unpacked, took
+1.4 s, twice, measured 2026-10-25 in a cloud container through `bufbuildIn`. That is small
+beside any job that runs it, as the download of apt archives is. Unverified on the runner.
 
 ## The shared allowance
 
