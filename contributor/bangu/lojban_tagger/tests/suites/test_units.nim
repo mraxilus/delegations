@@ -97,6 +97,13 @@ suite "Chapter 5":
     ]  # 5.5, group inside group: `ke'e` closes inner one, and end of tag outer one
 
 
+  test "Section 5.8":
+    check folded("se+ke+ciska+co+gunka") ==
+        folded("se+ciska+co+gunka")  # 5.8, `ke'e` goes in before `co`, so group holds one unit
+    check not "selkemselci'aveicolgu'a".readTag.tag.units.isHoldingUnchanged(
+        folded("se+ciska+vreji"))  # 5.8, group ends before `co`, so `se` converts run whole
+
+
   test "Section 5.11":
     check folded("se+cadzu+klama") ==
         @[unit("cadzu", @[conversion([2, 1, 3, 4, 5])]), unit("klama")]  # 5.11, Example 11.5
@@ -162,6 +169,9 @@ suite "Chapter 12":
         folded("se+se+ciska+vreji"))  # 12.11, outer `se` here converts group up to `gunka`
     check folded("se+se+ciska+vreji").isHoldingUnchanged(
         folded("se+se+ciska+vreji"))  # 12.11, same group, closed by end of both
+    check folded("se+se+ke+ciska+vreji") ==
+        folded("ciska+vreji")  # 12.11, two `se` cancel, so group they bind binds nothing
+    check "selselkemci'avei".readTag.tag.units == folded("ciska+vreji")  # 12.11, as above
 
 
   test "Section 12.12":
@@ -177,6 +187,9 @@ suite "Chapter 12":
     check "nunctikezgau".readTag.tag.units == @[
       unit("citka", @[operator("nu")]), unit("gasnu"),
     ]  # 12.13, `nun` and `kez` tell only what we would already have guessed
+    check "nunctigaukezykla".readTag.tag.units == @[
+      unit("ke", @[operator("nu")]), unit("citka"), unit("gasnu"), unit("ke'e"), unit("klama"),
+    ]  # 21.2, rule 152: `kei` closes abstraction, here of two units
 
 
 
@@ -197,8 +210,12 @@ suite "Chapter 15":
         folded("se+ciska"))  # 15.4, `na'e ke` denies whole group, so no part holds as it is
     check folded("se+ciska+vreji+ke'e+gunka") ==
         folded("se+ke+ciska+vreji+ke'e+gunka")  # 15.4, `ke` implied after opening cmavo
+    check folded("vreji+na'e+ciska+gunka+ke'e+klama") == @[
+      unit("vreji"), unit("ke", @[operator("na'e")]), unit("ciska"), unit("gunka"), unit("ke'e"),
+      unit("klama"),
+    ]  # 15.4, `ke'e` implies `ke` after negation, wherever negation stands
     check folded("vreji+ciska+ke'e+gunka") ==
-        folded("vreji+ciska+gunka")  # 15.4 implies `ke` after opening cmavo alone; here drops
+        folded("vreji+ciska+gunka")  # 15.4 implies `ke` after binding cmavo; none here, so drops
 
 
   test "Section 15.5":
