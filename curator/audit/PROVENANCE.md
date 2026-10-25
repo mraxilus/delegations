@@ -997,15 +997,18 @@ into binary. `CONTRIBUTOR.md`, Data, states the rule.
   at 82 MiB.
 - Rejected: a committed binary, because binaries are never committed. A review of one shows
   only that the files differ.
-- Rejected: FlatBuffers. Its generator of Nim has seven faults at release 25.12.19, all still on
-  upstream `master` of 2026-10-21. A table inside a table crashed the reader, and a value equal
-  to zero read back as the default of the schema. Its runtime has no verifier, crashes on an
-  enum value that its enum lacks, and does not compile to JavaScript. The Architect chose
-  Protocol Buffers over a patched `flatc`, which would be ours to keep.
+- Rejected: FlatBuffers. Its Nim code has five faults at release 25.12.19, which took seven
+  edits to mend, each still on upstream `master` of 2026-10-21. A table inside a table crashed
+  the reader, and a value equal to zero read back as the default of the schema. Found
+  2026-10-25 on records of this repository, and replicated by the suites of commit `eded0523`.
+- Its runtime has no verifier, crashes on an enum value that its enum lacks, and does not
+  compile to JavaScript. Measured 2026-10-25 with Nim 2.2.12. A patched `flatc` would be ours
+  to keep (#761).
 - Rejected: Cap'n Proto. Its Nim library `capnp.nim` has had no commit since 2021-01-05, and its
   README says that it is not actively maintained. With its dependency `collections.nim`, it
-  fails to compile on Nim 2, with 65 errors from `nim check`. No tool was found that compares
-  two versions of its schema.
+  fails to compile, with 65 errors from `nim check`. Measured 2026-10-25 with Nim 2.2.12.
+- Assumed, not verified: no tool compares two versions of a schema of Cap'n Proto, as
+  `buf breaking` does for protobuf.
 - Rejected: Avro and Thrift, which have no library in the registry of Nim. CBOR, MessagePack and
   BSON have libraries, but no schema. Dhall and CUE each need a foreign toolchain, and KDL and
   TOML each need a new kind and a dependency.
@@ -1028,25 +1031,32 @@ pga_visualiser, written as a schema at its versions 3, 7 and 8.
 - Cost: proto3 gives no default except zero. So a field with another default is `optional`, and
   the code gives the default.
 - Cost: the library marks itself experimental. It fails 33 cases of the official conformance
-  suite. Two are required cases of proto3, both on unknown fields when a message is written
-  again.
-- Cost: its CI runs the C and C++ backends alone. On the JavaScript backend it fails to compile,
-  on `memfiles`, so a page reads through `protobufjs`.
+  suite, as its `tests/conformance/failure_list.txt` of 2026-10-18 lists. Two are required
+  cases of proto3, both on unknown fields when a message is written again.
+- Cost: its CI runs the C and C++ backends alone, as its `.github/workflows/ci.yml` states. On
+  the JavaScript backend it fails to compile, on `memfiles`, measured 2026-10-25 with Nim
+  2.2.12. So a page reads through `protobufjs`.
 
 **A committed record is text format, and the build of each project encodes it with `protoc`.**
 `protoc --encode` refuses a misspelt field, an unknown enum value and a wrong type, and names
 each. Measured 2026-10-25 with `protoc` 3.21.12, the version that Ubuntu 24.04 offers, and with
 the newer one of `grpcio-tools` 1.84.1. Both wrote the same bytes.
 
-- Rejected: `buf convert`, which drops a misspelt field of text format, with no error.
+- Rejected: `buf convert`, which drops a misspelt field of text format, with no error. It
+  refuses a bad enum value and a wrong type. Measured 2026-10-25 with `buf` 1.75.0.
 - Rejected: JSON for a record. `buf convert` reads it leniently: it drops a misspelt key, and
-  reads a bad enum value as zero.
+  reads a bad enum value as zero. Measured 2026-10-25 with `buf` 1.75.0.
 
 **`check-schemas` holds each folder of changed schemas to the version that base shipped.** It
 runs `buf breaking` with category `WIRE_JSON`, which guards the bytes and the JSON text, and
 never the layout of files. It refuses a renumbered enum value, and a deleted, retyped or renamed
 field or value. A field or value added under a new number passes. One deleted with its number
 and name reserved passes too. The shipped version is the schema at the tip of base.
+
+- Rule `FIELD_SAME_CARDINALITY` also refuses a field that gains or loses `optional`. The bytes
+  stay, but `optional` decides whether an absent field reads as zero or as absent. So each
+  older file changes meaning. `WIRE_JSON` alone passes both directions, measured 2026-10-25
+  with `buf` 1.75.0.
 
 - The tip of base holds the newest version that anyone may have written files under, so the
   branch must still read it.
