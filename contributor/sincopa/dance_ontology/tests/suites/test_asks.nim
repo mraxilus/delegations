@@ -7,10 +7,10 @@ import std/[algorithm, json, math, options, sequtils, sets, strformat, strutils,
 
 import ../../design/[asks, modelled, parts, rig_page, twins, watch]
 from ../../design/rig as recording import KEPT_RIG, rigStamp
-from ../../design/rig {.all.} import PLACE, SHOWN
+from ../../design/rig {.all.} import BANDS, PLACE, SHOWN
 import ../../simulation/[body, hold, limb, read, rig, vector, words]
 from ../../simulation/plan import isMirrorSame, STRIDE
-from ../../simulation/rigid import ELBOW_END, ELBOWS_APART, faceCapsule, Mark, ON_UPPER,
+from ../../simulation/rigid import ELBOW_END, ELBOWS_APART, faceCapsule, Mark, ON_UPPER, OVER,
   restStance, SAG, trunkCapsules
 from ../../simulation/rigid {.all.} import RAISE
 from ../../simulation/walk import mirrored, MOST, stands, STEP, STYLES, twinAnswering
@@ -30,6 +30,9 @@ const
                     ## resolves (`test_rigid.SLOP`).
   PLACE_RIG = 1.0 / 10.0^PLACE
     ## Rig's recording rounds every figure to this, metres and turns alike (`design/rig.PLACE`).
+  LEAP_RIG = 2.0 * PI * STEP * (HUMAN.shoulder_out + span(HUMAN)) + 0.08
+    ## Furthest any joint of joined hand's arm, or any join, may move between two moments of rig
+    ##   sweep: bound each walk is held to (`test_rigid.LEAP`), 195 mm on true-size hand.
   FLOOR_AWAY_RIG = 106
     ## Least moments past face to face law on hands over crown reads from rig's sweeps over
     ##   crown: half of 213 read 2026-10-12, on recording of wall on step.  Fix may stop sweep
@@ -256,30 +259,24 @@ func heldMoments(recording: JsonNode): int =
   recording["at"].len -
       (if recording["stopped"].getBool and not recording{"planned"}.getBool: 1 else: 0)
 
-func liftedRig(recording: JsonNode): tuple[hands: seq[Lifted], moments: int] =
-  ## Every joined hand of one rig sweep at every moment couple are `RAISE` or more from face to
-  ## face, where it is carried: middle of its hand's three capsules (`rigid.handCapsules`), run
-  ## back its radius to wrist, then `rig.carry` along it, as `limb.pointCarried` reads it.
-  ##   Joined hand is one of each dancer whose line passes nearest each join at rest.  Rest is
-  ##     Face-to-back where two chests face one way at nought.
-  ##   Sweep that stops keeps moment it stops at (`seen.shownAsked`), where walk gave: that one
-  ##     is left out, so moments read are those walk holds (`heldMoments`).
-  let
-    card = recording["hold"].getStr & " · " & recording["band"].getStr
-    tags = recording["tag"].getElems
-    (look, joins) = (recording["faces"][0], recording["joins"][0])
-    is_away = look[2].getFloat * look[6].getFloat + look[3].getFloat * look[7].getFloat > 0.0
-  var middle: array[Body, array[Arm, int]]
+func palmMiddles(recording: JsonNode): array[Body, array[Arm, int]] =
+  ## Capsule of each hand that `rig.carry` is read along: middle of its three
+  ## (`rigid.handCapsules`).
   for who in Body:
     for arm in Arm:
       var seen = 0
-      for i, tag in tags:
+      for i, tag in recording["tag"].getElems:
         if tag[0].getInt != ord(who) or tag[1].getInt != ord(arm) or
             tag[2].getInt != ord(Mark.Palm): continue
-        if seen == 1: middle[who][arm] = i
+        if seen == 1: result[who][arm] = i
         inc seen
-  # Name each join's two hands at rest.
-  var held: seq[Hand]
+
+func heldRig(recording: JsonNode): seq[Hand] =
+  ## Joined hands of one rig sweep: of each dancer, one whose hand's line passes nearest each
+  ## join at rest, two to each join.
+  let
+    middle = palmMiddles(recording)
+    joins = recording["joins"][0]
   for j in 0 ..< joins.len div 3:
     let join: Vector = (joins[3*j].getFloat, joins[3*j+1].getFloat, joins[3*j+2].getFloat)
     for who in Body:
@@ -289,17 +286,71 @@ func liftedRig(recording: JsonNode): tuple[hands: seq[Lifted], moments: int] =
           line = capsuleAt(recording["points"][0], middle[who][arm])
           off = closest(join, join, line.a, line.z).gap
         if off < gap: (nearest, gap) = (arm, off)
-      held.add (who, nearest)
+      result.add (who, nearest)
+
+func carriedRig(recording: JsonNode, m: int, hand: Hand): Vector =
+  ## Where `hand` is carried at moment `m`: middle of its hand's capsules, run back its radius
+  ## to wrist, then `rig.carry` along it, as `limb.pointCarried` reads it.
+  let
+    i = palmMiddles(recording)[hand.body][hand.arm]
+    (a, z) = capsuleAt(recording["points"][m], i)
+  a + unit(z - a) * (HUMAN.carry - recording["radii"][i].getFloat)
+
+func liftedRig(recording: JsonNode): tuple[hands: seq[Lifted], moments: int] =
+  ## Every joined hand of one rig sweep at every moment couple are `RAISE` or more from face to
+  ## face, where it is carried (`carriedRig`).
+  ##   Joined hand is one of each dancer whose line passes nearest each join at rest
+  ##     (`heldRig`).  Rest is Face-to-back where two chests face one way at nought.
+  ##   Sweep that stops keeps moment it stops at (`seen.shownAsked`), where walk gave: that one
+  ##     is left out, so moments read are those walk holds (`heldMoments`).
+  let
+    card = recording["hold"].getStr & " · " & recording["band"].getStr
+    look = recording["faces"][0]
+    is_away = look[2].getFloat * look[6].getFloat + look[3].getFloat * look[7].getFloat > 0.0
+    held = heldRig(recording)
   for m in 0..<heldMoments(recording):
     let at = recording["at"][m].getFloat
     if away(at, is_away) < RAISE: continue
     inc result.moments
     for hand in held:
+      result.hands.add (card, at, hand.body, hand.arm, carriedRig(recording, m, hand).z)
+
+func jointsHeld(recording, frame: JsonNode, held: seq[Hand]): seq[Vector] =
+  ## Shoulder, elbow and wrist of each joined hand's arm at one recorded moment: each arm
+  ## capsule stops its radius short of both joints (`plan.placeArm`), as `isCrossed` reads it.
+  let (tags, radii) = (recording["tag"], recording["radii"])
+  for hand in held:
+    for i in 0..<tags.len:
+      let mark = tags[i][2].getInt
+      if tags[i][0].getInt != ord(hand.body) or tags[i][1].getInt != ord(hand.arm) or
+          mark notin [ord(Mark.Upper), ord(Mark.Fore)]: continue
       let
-        i = middle[hand.body][hand.arm]
-        (a, z) = capsuleAt(recording["points"][m], i)
-        carried = a + unit(z - a) * (HUMAN.carry - recording["radii"][i].getFloat)
-      result.hands.add (card, at, hand.body, hand.arm, carried.z)
+        (a, z) = capsuleAt(frame, i)
+        along = unit(z - a) * radii[i].getFloat
+      if mark == ord(Mark.Upper): result.add [a - along, z + along]
+      else: result.add z + along
+
+func leapsRig(recording: JsonNode): seq[tuple[at, leap: float]] =
+  ## Furthest any joint of joined hand's arm, or any join, moves into each moment one rig
+  ## sweep holds, from moment before (`jointsHeld`, `heldMoments`).
+  let
+    held = heldRig(recording)
+    frames = recording["points"]
+    joins = recording["joins"]
+  for m in 1..<heldMoments(recording):
+    let
+      before = jointsHeld(recording, frames[m-1], held)
+      now = jointsHeld(recording, frames[m], held)
+    var leap = 0.0
+    for k in 0..<now.len: leap = max(leap, distance(before[k], now[k]))
+    for j in 0 ..< joins[m].len div 3:
+      let
+        join_before: Vector = (joins[m-1][3*j].getFloat, joins[m-1][3*j+1].getFloat,
+                               joins[m-1][3*j+2].getFloat)
+        join_now: Vector = (joins[m][3*j].getFloat, joins[m][3*j+1].getFloat,
+                            joins[m][3*j+2].getFloat)
+      leap = max(leap, distance(join_before, join_now))
+    result.add (recording["at"][m].getFloat, leap)
 
 func named(hand: Lifted): string =
   ## Name joined hand at one moment as pages name it: card, whose hand, turns, and height.
@@ -858,6 +909,89 @@ suite "Internal: Simulation against Reference":
     checkpoint &"Rig sweeps read: `{read}`.  Gaps: `{gaps.join(\", \")}`."
     check read >= sweeps_least
     check gaps.len == 0
+
+
+  test "every rig sweep moves no joint of joined hand's arm, nor its join, past leap":
+    ## Architect, issue 375, 2026-10-08: eight sweeps of rig viewer look comfortable frame by
+    ##   frame.  D5 there, 2026-10-04: each sweep is planned moment by moment, as still is.
+    ##   Leap is bound each walk is held to (`LEAP_RIG`).  Read: shoulder, elbow and wrist of each
+    ##     joined hand's arm, and each join (`leapsRig`), and not breadth of hand (issue 605).
+    ##   Domain: every moment each rig sweep holds (`heldMoments`), way that turns positive.
+    ##   Rig rounds every figure, so leap may read long by twice that.
+    ##   Red with six sweeps carried, read 2026-10-25 on recording of `b1ff5d83`: 19 moments of
+    ##     4 sweeps, 478 mm at most, `Chain, same name · high` at +0.02.
+    var
+      over: seq[string]
+      (moments, worst) = (0, 0.0)
+    for sweep in parseFile(KEPT_RIG)["sweeps"]:
+      if not sweep.hasKey("at"): continue
+      let card = sweep["hold"].getStr & " · " & sweep["band"].getStr
+      for (at, leap) in leapsRig(sweep):
+        inc moments
+        worst = max(worst, leap)
+        if leap > LEAP_RIG + 2.0 * PLACE_RIG:
+          over.add &"{card} {at:+.2f}: {int(round(leap * 1000.0))} mm"
+    checkpoint &"`{over.len}` of `{moments}` moments leap past " &
+        &"`{int(round(LEAP_RIG * 1000.0))}` mm, worst `{int(round(worst * 1000.0))}` mm: " &
+        over[0..<min(over.len, 12)].join(", ")
+    check moments > 0
+    check over.len == 0
+
+
+  test "every rig sweep crosses dancer's own arms below elbow alone, in every moment":
+    ## D5 on issue 375, 2026-10-04: every still and plan keeps elbow rule, and each sweep keeps it
+    ##   once planned as still is.  Read as still law below reads it (`isCrossed`).
+    ##   Domain: every moment each rig sweep holds (`heldMoments`), way that turns positive.
+    ##   Red with six sweeps carried, read 2026-10-25 on recording of `b1ff5d83`: 4 moments of
+    ##     `Chain, cross name · high`, +0.88 to +0.94.
+    var
+      crossed: seq[string]
+      moments = 0
+    for sweep in parseFile(KEPT_RIG)["sweeps"]:
+      if not sweep.hasKey("at"): continue
+      let card = sweep["hold"].getStr & " · " & sweep["band"].getStr
+      for m in 0..<heldMoments(sweep):
+        inc moments
+        if isCrossed(sweep, sweep["points"][m]):
+          crossed.add &"{card} {sweep[\"at\"][m].getFloat:+.2f}"
+    checkpoint &"`{crossed.len}` of `{moments}` moments cross above elbow: " &
+        crossed[0..<min(crossed.len, 12)].join(", ")
+    check moments > 0
+    check crossed.len == 0
+
+
+  test "every rig sweep held low or high keeps joined hands in its band, in every moment":
+    ## Plan holds each joined hand's carried point in band of hold (`plan.bandAt`), as judge reads
+    ##   that point (`rigid.pointCarried`): under band by `SAG` stops hold (`rigid.handUnder`), and
+    ##   plan lets hand over band by `OVER`, as facing over crown.
+    ##   Domain: every moment each rig sweep held low or high holds (`heldMoments`), every joined
+    ##     hand (`heldRig`), way that turns positive.
+    ##   Rig rounds its figures, so hand may read off band by its rounding (`roundedUnder`).
+    ##   Red with those sweeps carried, read 2026-10-25 on recording of `b1ff5d83`: 151 joined
+    ##     hands off band, in each of four sweeps, carried from 0.878 to 1.597 m.
+    let rounding = roundedUnder(PLACE_RIG, gripAtPalm(HUMAN), HUMAN.carry - handThick(HUMAN) / 2.0)
+    var
+      off: seq[string]
+      (moments, sweeps) = (0, 0)
+    for sweep in parseFile(KEPT_RIG)["sweeps"]:
+      let named = sweep["band"].getStr
+      if named == BANDS[ord(Band.Crown)] or not sweep.hasKey("at"): continue
+      inc sweeps
+      let
+        card = sweep["hold"].getStr & " · " & named
+        band = HUMAN.band[(if named == BANDS[ord(Band.Torso)]: Band.Torso else: Band.Neck)]
+        held = heldRig(sweep)
+      for m in 0..<heldMoments(sweep):
+        inc moments
+        for hand in held:
+          let z = carriedRig(sweep, m, hand).z
+          if z < band.lower - SAG - rounding or z > band.upper + OVER + rounding:
+            off.add &"{card} {hand.body} {hand.arm} {sweep[\"at\"][m].getFloat:+.2f}: {z:.3f} m"
+    checkpoint &"`{off.len}` joined hands off band in `{moments}` moments of `{sweeps}` sweeps: " &
+        off[0..<min(off.len, 12)].join(", ")
+    check sweeps == SHOWN.countIt(it.band != Band.Crown)
+    check moments > 0
+    check off.len == 0
 
 
   test "every still crosses arms below elbow alone, in every moment":
