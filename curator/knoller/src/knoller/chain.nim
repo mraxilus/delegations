@@ -26,6 +26,8 @@
 ##     layouts join groups with separator they read, call layout breaks line at operator where
 ##     no call split fits, continuation indent follows lines call layout moves, and trailing
 ##     separator goes only where no layout wrote one.
+##   - missing doc after wrapping: doc joins line only as wrapping leaves it, since doc trailing
+##     line that opens bracket keeps call apart that wrapping would join;
 ##   - comment last: plain `#` trailing comment of line still wide moves to own line above,
 ##     since no wrap reads line holding comment; next round lays out line it leaves.
 ##   Chain is list of steps: fixer guarded on every line, widener (`reports.nim`), i.e. tab,
@@ -103,7 +105,7 @@ func steps(dialect: Dialect): seq[Step] =
   for fixer in dialect.fixersIdiom: result.add guarded(fixer)
   result.add @[guarded(fixBlanks), guarded(fixDocs), guarded(fixDefaults), widening(fixSpacing)]
   result.add STEPS_WRAPPING
-  result.add guarded(fixCommentsAbove)
+  result.add @[guarded(fixDocsMissing), guarded(fixCommentsAbove)]
 
 
 func nimblesLocked*(files: openArray[(string, string)]): seq[string] =
@@ -127,7 +129,8 @@ func checkFormattingUnfenced(path, view: string; dialect: Dialect; proofs: Proof
   let checks = [
     checkComments, checkBanners, checkMessages, checkMixtures, checkNegations, checkTargets,
     checkCommands, checkBlanks, checkDocs, checkDefaults, checkSpacing, checkSeparators,
-    checkSignatures, checkCalls, checkContinuations, checkTrailing, checkCommentsAbove,
+    checkSignatures, checkCalls, checkContinuations, checkTrailing, checkDocsMissing,
+    checkCommentsAbove,
   ]
   for check in checks: result.add check(path, view)
   result.add checkParentheses(path, view, proofs)

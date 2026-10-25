@@ -73,15 +73,16 @@ suite "Proofs":
     # Scanner reads `(-b)` as prefix term beside `-`, and no guard of it looks past `-1`. Parser
     #   reads group as callee of command `(-b) -1`, and without it, `-` over command `b -1`.
     check provenBy(["let z = a - (-b) -1\n"]) == @[newSeq[int]()]
-    check (HEAD & "let z = a - (-b) -1\n").fixedBy == HEAD & "let z = a - (-b) -1\n"
-    check (HEAD & "let z = a - (-b) - 1\n").fixedBy == HEAD & "let z = a - -b - 1\n"  # binary
+    check (HEAD & "let z = a - (-b) -1  ## Z.\n").fixedBy == HEAD & "let z = a - (-b) -1  ## Z.\n"
+    # binary
+    check (HEAD & "let z = a - (-b) - 1  ## Z.\n").fixedBy == HEAD & "let z = a - -b - 1  ## Z.\n"
 
 
   test "chain removes what parser proves and nothing more, and second run writes nothing":
     for (given, mended) in [
-      ("let s = @(x)\n", "let s = @x\n"),
+      ("let s = @(x)  ## S.\n", "let s = @x  ## S.\n"),
       ("links = @(PAIRS[task.pair][0])\n", "links = @(PAIRS[task.pair][0])\n"),
-      ("let x = (a.b(c)[i]) + @(f(a))\n", "let x = a.b(c)[i] + @(f(a))\n"),
+      ("let x = (a.b(c)[i]) + @(f(a))  ## X.\n", "let x = a.b(c)[i] + @(f(a))  ## X.\n"),
     ]:
       check (HEAD & given).fixedBy == HEAD & mended
       check (HEAD & mended).fixedBy == HEAD & mended  # second run writes nothing
