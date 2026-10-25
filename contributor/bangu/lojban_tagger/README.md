@@ -1,10 +1,12 @@
 # lojban_tagger
 
-A system that tags anything with Lojban words and finds it again. A tag is a gismu, or a lujvo
-made only of gismu. The parser reduces each tag to the gismu of its tanru. So a search for one
-gismu finds every thing whose tag holds that gismu, alone or inside a lujvo. A search can also
-use an English word. The keywords of the gismu list and the glosses of the lujvo list lead that
-word to gismu.
+A system that tags anything with Lojban words and finds it again. A tag is a gismu or a lujvo.
+The parser reduces each tag to the words of its tanru, and a search matches on its gismu. So a
+search for one gismu finds every thing whose tag holds that gismu, alone or inside a lujvo. A
+search for a lujvo that holds a cmavo, such as `selci'a`, lists the things tagged with it first.
+
+A search can also use an English word. The keywords of the gismu list and the glosses of the
+lujvo list lead that word to gismu.
 
 ```text
 $ tagger tag notes/plan.md notci datnyvei
