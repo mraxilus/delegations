@@ -344,9 +344,9 @@ each build that turns a record into binary.
   folder as one unit.
 - **The field numbers carry the versions of the format.** Add a field or an enum value under a
   new number. Delete one only when you reserve its number and its name. Never renumber, retype
-  or rename one. `koch check-schemas` refuses each of those against the schema on `main`,
-  through `buf breaking`. A change of meaning with no change of layout is a new field, because
-  a reader can see nothing else.
+  or rename one, and never add or drop the `optional` of a field. `koch check-schemas` refuses
+  each of those against the schema on `main`, through `buf breaking`. A change of meaning with
+  no change of layout is a new field, because a reader can see nothing else.
 - **A field whose default is not zero is `optional`.** Proto3 gives no default except zero. So
   an older file that lacks the field reads as absent, and the code gives the default.
 - **Value zero of each enum means unknown.** Name it `<ENUM>_UNSPECIFIED`, and never write it.
