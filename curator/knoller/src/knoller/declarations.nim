@@ -361,26 +361,36 @@ func marker(code, kept: seq[string]; d: int): int =
   kept[d].find('#', code[d].strip(leading = false).len)
 
 
-func lineDoc(lines, code, kept: seq[string]; d, last: int): int =
+func isHeldAbove(r: Reading; declaring: seq[bool]; d: int): bool =
+  ## Decide whether doc lines just above line `d` hang below shallower declaration: its own doc,
+  ##   as rule of position reads its next line, never doc of name below it.
+  var above = d - 1
+  while above >= 0 and isDoc(r.code[above], r.kept[above]): dec above
+  above >= 0 and declaring[above] and r.lines[above].indentWidth < r.lines[d].indentWidth
+
+
+func lineDoc(r: Reading; declaring: seq[bool]; d, last: int): int =
   ## Find line of doc of declaration opening at `d` and closing at `last`: trailing on either,
-  ##   whole line just above at its indent, or whole line below either, one level in or deeper;
-  ##   `-1` where none. Place among these is rule of position's (`movesDoc`).
-  let indent = lines[d].indentWidth
+  ##   whole line just above at its indent where no declaration above holds it (`isHeldAbove`),
+  ##   or whole line below either, one level in or deeper; `-1` where none.
+  let indent = r.lines[d].indentWidth
   for line in [d, last]:
-    let at = marker(code, kept, line)
-    if at >= 0 and kept[line][at .. ^1].startsWith("##"): return line
-  if d > 0 and isDoc(code[d-1], kept[d-1]) and lines[d-1].indentWidth == indent:
+    let at = marker(r.code, r.kept, line)
+    if at >= 0 and r.kept[line][at .. ^1].startsWith("##"): return line
+  if d > 0 and isDoc(r.code[d-1], r.kept[d-1]) and r.lines[d-1].indentWidth == indent and
+      not r.isHeldAbove(declaring, d):
     return d - 1
   for line in [d + 1, last + 1]:
-    if line < lines.len and isDoc(code[line], kept[line]) and lines[line].indentWidth > indent:
+    if line < r.lines.len and isDoc(r.code[line], r.kept[line]) and
+        r.lines[line].indentWidth > indent:
       return line
   -1
 
 
 func docsMissing(source: string): seq[Missing] =
   ## Find each declaration line taking no doc, or whose doc awaits text under other TODO (VI.1).
-  ##   Kinds and places follow header; members sharing one line are left out, and so is name
-  ##   inside value or signature of declaration above it, as field of tuple in brackets.
+  ##   Kinds and places follow header; name inside value or signature of declaration above it is
+  ##   left out, as field of tuple in brackets.
   let
     r = source.initReading
     quoted = r.code.linesQuoted
@@ -390,17 +400,26 @@ func docsMissing(source: string): seq[Missing] =
     if item.kind == KindName.Binding and item.reach != Reach.Global: continue
     named.mgetOrPut(item.line - 1, @[]).add item
 
-  # Judge each line once, by kind of its first name, in order of lines.
-  var covered = -1
+  # Span each line declaring, so doc hanging below one is never doc of name below it.
+  var
+    spans: seq[tuple[line, last: int]]
+    declaring = newSeq[bool](r.lines.len)
+    covered = -1
   for d in named.keys.toSeq.sorted:
+    if d >= r.lines.len or d <= covered or quoted[d]: continue
+    let last = r.lastDeclaration(d, named[d][0].kind)
+    covered = last
+    spans.add (line: d, last: last)
+    for j in d..last: declaring[j] = true
+
+  # Judge each line once, by kind of its first name, in order of lines.
+  for (d, last) in spans:
     let
       items = named[d]
       kind = items[0].kind
-    if d >= r.lines.len or d <= covered or quoted[d]: continue
     if kind == KindName.Routine and r.isDelegationStacked(d): continue
     let
-      last = r.lastDeclaration(d, kind)
-      doc = lineDoc(r.lines, r.code, r.kept, d, last)
+      doc = lineDoc(r, declaring, d, last)
       at = marker(r.code, r.kept, d)
       word =
         case kind
@@ -409,7 +428,6 @@ func docsMissing(source: string): seq[Missing] =
         of KindName.Type: "type"
         of KindName.Field: "field"
         else: "member"
-    covered = last
     var missing = Missing(
       line: d,
       last: last,
