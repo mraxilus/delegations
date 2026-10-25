@@ -245,17 +245,40 @@ suite "Declarations":
     for source in [value, wide, body]: check source.documented.isDocumented
 
 
-  test "value whose first line ends on entry of argument or field takes doc where it closes":
-    # Nim 2.2.12 refuses doc after `=` of named argument and after `:` of field or table key
-    #   inside open bracket, as `expression expected`; after `(`, `,` or operator it parses.
+  test "value over lines takes doc after `=` ending its first line, else at its close":
+    # `nim jsondoc` of Nim 2.2.12 reads doc of value over lines there alone, and of `case` value
+    #   on line below last branch. Nim parses no doc below `=` ending first line, nor after `=`
+    #   of named argument or `:` of field inside open bracket.
     let
       field = "const P = Pair(a:\n  1, b: 2)\n"
       argument = "const Q = foo(a =\n  2, b = 3)\n"
       opened = "const R = foo(\n  1, 2)\n"
+      chained = "const S = 1 +\n  2\n"
+      equals = "const T =\n  foo(1)\n"
+      wide = "const " & "W".repeat(90) & " =\n  foo(1)\n"
+      cased = "const U = case K\n  of A: 1\n  of B: 2\n"
     check field.documented == "const P = Pair(a:\n  1, b: 2)  ## TODO: Document.\n"
     check argument.documented == "const Q = foo(a =\n  2, b = 3)  ## TODO: Document.\n"
-    check opened.documented == "const R = foo(  ## TODO: Document.\n  1, 2)\n"  # first line
-    for source in [field, argument, opened]: check source.documented.isDocumented
+    check opened.documented == "const R = foo(\n  1, 2)  ## TODO: Document.\n"
+    check chained.documented == "const S = 1 +\n  2  ## TODO: Document.\n"
+    check equals.documented == "const T =  ## TODO: Document.\n  foo(1)\n"
+    check wide.documented == wide.replace("foo(1)\n", "foo(1)  ## TODO: Document.\n")
+      # joined first line would not fit
+    check cased.documented == cased & "  ## TODO: Document.\n"
+    for source in [field, argument, opened, chained, equals, wide, cased]:
+      check source.documented.isDocumented
+
+
+  test "value opening `block` on its first line stays for hand, as no comment gives it doc":
+    # `nim jsondoc` of Nim 2.2.12 reads none after `block:`, first in body or after its last
+    #   line; doc below body at its indent leaves last value unused.
+    let blocked = "const V = block:\n  1\nconst W = block outer:\n  2\n"
+    check checkDocsMissing("a.nim", blocked).mapIt((it.line, it.message)) == @[
+      (1, "Value opening `block` takes doc after `=`, with `block` on next line; got `const V`."),
+      (3, "Value opening `block` takes doc after `=`, with `block` on next line; got `const W`."),
+    ]
+    check blocked.documented == blocked
+    check "const V =  ## Value.\n  block:\n    1\n".isDocumented  # as message asks
 
 
   test "type running over lines reads doc where it closes, and name inside its brackets none":
@@ -279,7 +302,7 @@ suite "Declarations":
     check declared.documented == "check not compiles(block:\n  proc leaving() =\n" &
         "    ## TODO: Document.\n    return\n  leaving())\n"
     let bare = "type Pair = tuple[a: int,\n  b: int]\n"
-    check bare.documented == "type Pair = tuple[a: int,  ## TODO: Document.\n  b: int]\n"
+    check bare.documented == "type Pair = tuple[a: int,\n  b: int]  ## TODO: Document.\n"
 
 
   test "one-line routine reads as stacked only under run of such routines and its comment":

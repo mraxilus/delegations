@@ -152,12 +152,13 @@ suite "Chain":
       check found.anyIt(rule in it.message)  # each rule reported
     let fix = formatted("a.nim", LAYOUT, Dialect.Module)
     check fix.source == "## Do.\n\n" & STRICT_FUNCS & "\n\nimport std/[os, strutils]\n" &
-      "\n\n\n#[ Section ]#\n\n" &
-      "proc f(a: int, b: string): int {.inline, noSideEffect.} = a + b.len\n" &
-      "  ## TODO: Document.\nproc g(a: int) = discard\n  ## TODO: Document.\n" &
-      "let x = foo(1, 2)  ## TODO: Document.\necho x\n" &
-      "let y = @[  ## TODO: Document.\n  first_item_named_at_length_so_list_crosses_column,\n" &
-      "  second_item_named_at_length_so_list_crosses_column,\n]\necho h(q = 1)\nexport x, y\n"
+        "\n\n\n#[ Section ]#\n\n" &
+        "proc f(a: int, b: string): int {.inline, noSideEffect.} = a + b.len\n" &
+        "  ## TODO: Document.\nproc g(a: int) = discard\n  ## TODO: Document.\n" &
+        "let x = foo(1, 2)  ## TODO: Document.\necho x\n" &
+        "let y = @[\n  first_item_named_at_length_so_list_crosses_column,\n" &
+        "  second_item_named_at_length_so_list_crosses_column,\n]  ## TODO: Document.\n" &
+        "echo h(q = 1)\nexport x, y\n"
     check checkFormatting("a.nim", fix.source, Dialect.Module).len == 0  # all cleared
     check formatted("a.nim", fix.source, Dialect.Module).source == fix.source  # settled
     check fix.fixed.allIt(it.line in 0 .. LAYOUT.count('\n'))  # each report names line as given
@@ -211,7 +212,7 @@ suite "Chain":
       (12, Rule.SpacingExpression), (5, Rule.DocMissing), (12, Rule.DocMissing),
     ]
     check formatted("a.nim", source, Dialect.Module).source == source.replace(
-      "let m = matrix(\n", "let m = matrix(  ## TODO: Document.\n"
+      "  #!fix on\n)\n", "  #!fix on\n)  ## TODO: Document.\n"
     ).replace("let n = matrix(1+2)\n", "let n = matrix(1 + 2)  ## TODO: Document.\n")
 
 

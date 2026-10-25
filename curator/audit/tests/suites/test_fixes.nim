@@ -134,12 +134,13 @@ suite "Fixes":
     check checkIdioms(path, written[0].content).len == 0
     check fixEntries(BRANCH_CURATOR, written).written.len == 0  # second run writes nothing
     check written[0].content == "## Do.\n\n" & STRICT_FUNCS & "\n\nimport std/[os, strutils]\n" &
-      "\n\n\n#[ Section ]#\n\n" &
-      "proc f(a: int, b: string): int {.inline, noSideEffect.} = a + b.len\n" &
-      "  ## TODO: Document.\nproc g(a: int) = discard\n  ## TODO: Document.\n" &
-      "let x = foo(1, 2)  ## TODO: Document.\necho x\n" &
-      "let y = @[  ## TODO: Document.\n  first_item_named_at_length_so_list_crosses_column,\n" &
-      "  second_item_named_at_length_so_list_crosses_column,\n]\necho h(q = 1)\nexport x, y\n"
+        "\n\n\n#[ Section ]#\n\n" &
+        "proc f(a: int, b: string): int {.inline, noSideEffect.} = a + b.len\n" &
+        "  ## TODO: Document.\nproc g(a: int) = discard\n  ## TODO: Document.\n" &
+        "let x = foo(1, 2)  ## TODO: Document.\necho x\n" &
+        "let y = @[\n  first_item_named_at_length_so_list_crosses_column,\n" &
+        "  second_item_named_at_length_so_list_crosses_column,\n]  ## TODO: Document.\n" &
+        "echo h(q = 1)\nexport x, y\n"
     check fixed.allIt(it.line in 0 .. LAYOUT.count('\n'))  # each report names line as given
 
 
@@ -165,10 +166,11 @@ suite "Fixes":
       .replace("'a'..'z'", "'a' .. 'z'")
     check fixEntries(BRANCH_CURATOR, [entry(path, spaced)]).written[0].content == ranged
     let (written, fixed, _, _, _, _) = fixEntries(BRANCH_CURATOR, [entry(path, wide)])
-    check written[0].content == head & "let x = foo(  ## TODO: Document.\n  s[0..<n],\n" &
-      "  t[1 .. ^1],\n  " & "a".repeat(40) & ",\n  " & "b".repeat(26) & ",\n)\n" &
-      "f(s[0..<n], t[1 .. ^1])\nproc h(\n  " & "a".repeat(20) & ": range[0..9], " &
-      "b".repeat(24) & ": array[0..<4, int], c: int\n): int = c\n  ## TODO: Document.\n"
+    check written[0].content == head & "let x = foo(\n  s[0..<n],\n" &
+        "  t[1 .. ^1],\n  " & "a".repeat(40) & ",\n  " & "b".repeat(26) & ",\n" &
+        ")  ## TODO: Document.\nf(s[0..<n], t[1 .. ^1])\nproc h(\n  " & "a".repeat(20) &
+        ": range[0..9], " & "b".repeat(24) & ": array[0..<4, int], c: int\n): int = c\n" &
+        "  ## TODO: Document.\n"
       # split, joined and wrapped, ranges kept, and each declaration takes doc
     check not fixed.anyIt(it.message.startsWith("expression spacing"))  # no range respaced
     check fixEntries(BRANCH_CURATOR, written).written.len == 0  # second run writes nothing
@@ -211,7 +213,7 @@ suite "Fixes":
     ]
     let plan = fixEntries(BRANCH_CURATOR, [entry(path, source)])
     check plan.written[0].content == source.replace(
-      "let m = matrix(\n", "let m = matrix(  ## TODO: Document.\n"
+      "  #!fix on\n)\n", "  #!fix on\n)  ## TODO: Document.\n"
     ).replace("let n = matrix(1+2)\n", "let n = matrix(1 + 2)  ## TODO: Document.\n")
       # rows kept, blank line too
     check checkFormatting(path, plan.written[0].content, Kind.Nim).len == 0
