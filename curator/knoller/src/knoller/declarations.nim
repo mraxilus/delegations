@@ -10,12 +10,14 @@
 ##     signature. Value of binding runs on over each line of code below it at deeper indent, as
 ##     branch of `when`; line of enum members ends on itself, since `,` closing it opens next
 ##     member.
-##   Fixer writes `## TODO: Document.` where doc position puts doc: joined to declaration's first
-##     line where joined line fits and holds no comment, even where value runs on; else on next
-##     line, one level in; routine's as first line of its body. Value or body opening string or
-##     comment that spans lines takes doc where that closes, since doc on its first line would
-##     stand inside string and change its value. So does value whose first line ends on `=` of
-##     argument or `:` of field inside open bracket, after which Nim 2.2.12 parses no doc.
+##   Fixer writes `## TODO: Document.` where doc position puts doc and `nim doc` reads it:
+##     joined to declaration's one line where joined line fits and holds no comment, else on
+##     next line, one level in; routine's as first line of its body. Value or type over lines
+##     takes it after `=` closing its first line, where it fits; else joined to its last line,
+##     or on line below, one level in; `case` value on line below its last branch. Doc never
+##     joins first line inside string or bracket opening there, nor stands below `=` closing it,
+##     where Nim parses none. Value opening `block` on its first line stays for hand, since no
+##     comment there gives doc `nim doc` reads (`nim jsondoc` of Nim 2.2.12).
 ##   Doc holding other TODO holds design note (VIII.3), never text: fixer moves note above
 ##     declaration as `#` comment, and doc takes `## TODO: Document.`. Doc of several lines
 ##     opening with note stays for hand, since its outline may elaborate note or text.
@@ -65,6 +67,7 @@ type
     Note  ## Doc on line `at` holds design note: note moves above, and doc waits for text.
     Hand  ## Doc of several lines opens with design note, so fix leaves it for hand.
     Forward  ## Forward declaration with no doc, whose routine follows: move stays for hand.
+    Block  ## Value opens `block` on declaration's line, where no comment gives doc `nim doc` reads.
 
   WriteDoc = object
     ## Define one doc to write: declaration with none in its place, or with note as its doc.
@@ -125,6 +128,14 @@ func isDoc(code, kept: string): bool =
   ## Decide whether line holds `##` doc alone, never block doc.
   let text = kept.strip
   code.strip.len == 0 and text.startsWith("##") and not text.startsWith("##[")
+
+
+func isOpeningBlock(code: string): bool =
+  ## Decide whether code line ends opening `block`, labelled or not.
+  let s = code.strip
+  if not s.endsWith(":"): return false
+  let words = s[0 ..< ^1].splitWhitespace
+  words.len > 1 and (words[^1] == "block" or words[^2] == "block")
 
 
 func writesDoc(source: string): seq[WriteDoc] =
@@ -242,6 +253,11 @@ func writesDoc(source: string): seq[WriteDoc] =
         return (below, lines[below].indentWidth)
     (-1, -1)
 
+  func isJoinable(j: int): bool =
+    ## Decide whether doc joins line `j`: line holds no comment, and joined line fits.
+    not commented[j] and
+        not (lines[j].strip(leading = false) & ' '.repeat(GAP_COMMENT) & DOC_EMPTY).isWide
+
   # Mark lines statements run past or open inside brackets, docs trail or open, routine keywords,
   #   and generated code.
   var depth = 0  # Brackets open before token.
@@ -322,8 +338,9 @@ func writesDoc(source: string): seq[WriteDoc] =
         lines[i-1].indentWidth == indent and not is_owned:
       continue
 
-    # Write doc where doc position puts it: below routine's signature, else joined where it fits;
-    #   forward declaration's waits for doc its routine holds.
+    # Write doc where `nim doc` reads it: below routine's signature; on declaration's one line,
+    #   else below it; for value or type over lines, after `=` closing first line, else at its
+    #   close. Forward declaration's waits for doc its routine holds.
     seen.add i
     let
       shown =
@@ -331,19 +348,19 @@ func writesDoc(source: string): seq[WriteDoc] =
         of KindName.Routine: d.keyword & " " & d.name
         of KindName.Binding: section(i) & " " & d.name
         else: ($d.kind).toLowerAscii & " " & d.name
-      # Line ends on `=` of argument or `:` of field inside open bracket, where doc parses not.
-      is_entry_open = endings[i] in ["=", ":"] and
-          code[i].count({'(', '[', '{'}) > code[i].count({')', ']', '}'})
-      at =
-        if d.kind == KindName.Routine or (i + 1 < lines.len and spanned[i+1]) or is_entry_open: e
-        else: i  # value opening string, comment or entry over lines takes doc where it closes
-      joined = lines[at].strip(leading = false) & ' '.repeat(GAP_COMMENT) & DOC_EMPTY
       is_forward = d.kind == KindName.Routine and not is_bodied and
           found.anyIt(it.kind == KindName.Routine and it.name == d.name and it.line > d.line)
-      shape =
-        if is_forward: ShapeWrite.Forward
-        elif d.kind == KindName.Routine or commented[at] or joined.isWide: ShapeWrite.Below
-        else: ShapeWrite.Join
+      # `=` closing first line outside bracket, with no string or comment running past it.
+      is_equals = endings[i] == "=" and not (i + 1 < lines.len and spanned[i+1]) and
+          code[i].count({'(', '[', '{'}) <= code[i].count({')', ']', '}'})
+      (at, shape) =
+        if is_forward: (e, ShapeWrite.Forward)
+        elif d.kind == KindName.Routine: (e, ShapeWrite.Below)
+        elif e == i: (i, if isJoinable(i): ShapeWrite.Join else: ShapeWrite.Below)
+        elif code[i].isOpeningBlock: (i, ShapeWrite.Block)
+        elif is_equals and isJoinable(i): (i, ShapeWrite.Join)  # doc below `=` parses not
+        elif " = case " in code[i]: (e, ShapeWrite.Below)  # doc trailing last branch reads not
+        else: (e, if isJoinable(e): ShapeWrite.Join else: ShapeWrite.Below)
     var below = e + 1  # First line of routine's body, whose indent its doc takes.
     while below < lines.len and lines[below].strip.len == 0: inc below
     let indent_body =
@@ -370,6 +387,9 @@ func checkDocsMissing*(path, source: string): seq[Report] =
         "Declaration takes doc comment; got `" & write.got & "`."
       of ShapeWrite.Note, ShapeWrite.Hand:
         "Doc holds `TODO: Document.` and nothing else; got `" & write.got & "`."
+      of ShapeWrite.Block:
+        "Value opening `block` takes doc after `=`, with `block` on next line; got `" &
+            write.got & "`."
       of ShapeWrite.Forward:
         "Forward declaration takes doc of its routine, which `nim doc` reads there; got `" &
             write.got & "`."
@@ -379,7 +399,9 @@ func checkDocsMissing*(path, source: string): seq[Report] =
 func fixDocsMissing*(path, source: string): Fix =
   ## Write each doc check reports, last first, but those left for hand; each line written new
   ##   traces to none.
-  let writes = source.writesDoc.filterIt(it.shape notin {ShapeWrite.Hand, ShapeWrite.Forward})
+  let writes = source.writesDoc.filterIt(
+    it.shape notin {ShapeWrite.Hand, ShapeWrite.Forward, ShapeWrite.Block},
+  )
   var
     lines = source.split('\n')
     origin = toSeq(1..lines.len)
@@ -396,7 +418,7 @@ func fixDocsMissing*(path, source: string): Fix =
       lines[write.at] = lines[write.at][0..<write.offset] & DOC_EMPTY
       lines.insert(' '.repeat(write.indent) & "# " & note[3 .. ^1], write.line)
       origin.insert(0, write.line)
-    of ShapeWrite.Hand, ShapeWrite.Forward: discard
+    of ShapeWrite.Hand, ShapeWrite.Forward, ShapeWrite.Block: discard
   result.source = lines.join("\n")
   for write in writes: result.fixed.add initReport(path, write.line + 1, Rule.DocMissing)
   if writes.len > 0: result.origin = origin
