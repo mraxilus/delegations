@@ -10,6 +10,8 @@
 ##   Union law adds two or three entities, each tagged with gismu of one meaning of English word
 ##     whose meanings hold two gismu sets, neither inside other, so union outgrows every meaning
 ##     alone often; floor holds that count.
+##   Ranking law adds tag of `se` or `te` and one gismu of `POOL` to one to three names, so term
+##     holding cmavo ranks some entity often; floor holds count where order moved.
 ##   Samples are drawn into pools allocated once, after one seeding per test, and served by
 ##     `served`.
 ##   Corpus holds no index of more than thirteen names: ten random, three tagged by meanings. No
@@ -43,6 +45,7 @@ const
   FLOOR_LUJVO = 380  ## Fewest cases whose lujvo reads back as its tag; 400 read at `SEED`.
   FLOOR_ENGLISH = 10000  ## Fewest terms of union law read as English; 10800 read at `SEED`.
   FLOOR_WIDER = 160  ## Fewest cases where union outgrows every meaning alone; 210 read at `SEED`.
+  FLOOR_REORDERED = 130  ## Fewest cases where ranking moves entity; 177 read at `SEED`.
   POOL = [
     "cukta", "datni", "gerku", "liste", "mamta", "mlatu", "papri", "patfu", "skami", "tcidu",
     "vreji", "zdani",
@@ -270,3 +273,48 @@ suite "Internal: Search":
     check index.find([readTerm("datnyvei")]).names == @["apart"]  # gismu held apart satisfy it
     check index.find([readTerm("datni"), readTerm("vreji")]).names == @["apart"]  # same set
     check index.find([readTerm("datni")]).names == @["apart", "data"]  # gismu alone finds more
+
+
+  test "Lojban term holding cmavo ranks its own tag first, as Architect ruled":
+    let
+      selcia = readTag("selci'a").tag
+      (ciska, notci) = (readTag("ciska").tag, readTag("notci").tag)
+    var index: Index
+    index.addTags("a/writer", [ciska])
+    index.addTags("m/notes", [ciska, notci])
+    index.addTags("z/letter", [selcia, notci])
+    check index.find([readTerm("selci'a")]).names ==
+        @["z/letter", "a/writer", "m/notes"]  # ruling: own tag first, rest in order of index
+    check index.find([readTerm("ciska")]).names ==
+        @["a/writer", "m/notes", "z/letter"]  # ruling: gismu term ranks nothing
+    check index.find([readTerm("selci'a"), readTerm("notci")]).names ==
+        @["z/letter", "m/notes"]  # ranked tier first, conjunction kept
+    check readTerm("selci'a").alternatives == readTerm("ciska").alternatives  # acts as `ciska`
+    check readTerm("selci'a").specific == selcia.words  # term keeps tanru it ranks by
+    check readTerm("ciska").specific.len == 0  # gismu term holds no tanru to rank by
+    check readTerm("write").specific.len == 0  # English term ranks nothing
+
+
+  test "ranking reorders what gismu find, never adds or drops":
+    randomize(SEED)
+    var samples: seq[tuple[index: Index, term, plain: Term]]
+    for _ in 1..SAMPLES:
+      var index = indexRandom()
+      let
+        head = POOL.sample
+        converted = readTanru(["se", "te"].sample & "+" & head).get
+      for _ in 1..rand(1..3): index.addTags($rand(0..9), [converted])
+      samples.add (index, readTerm($converted), readTerm(head))
+    var count_reordered = 0
+    for sample in samples.served:
+      let
+        found = sample.index.find([sample.term])
+        found_plain = sample.index.find([sample.plain])
+        ranked = found_plain.filterIt(it.tags.anyIt(it.words == sample.term.specific))
+      check found.names.sorted == found_plain.names.sorted  # ruling: matched by gismu alone
+      check found.names ==
+          ranked.names & found_plain.filterIt(it notin ranked).names  # own tag first, tiers kept
+      check found_plain.names ==
+          sample.index.entities.names.filterIt(it in found_plain.names)  # gismu term ranks none
+      if found.names != found_plain.names: inc count_reordered
+    check count_reordered >= FLOOR_REORDERED  # ranking moves entities often enough to test
