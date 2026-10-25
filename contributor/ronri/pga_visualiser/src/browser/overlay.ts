@@ -32,7 +32,7 @@ for (let ink = 0; ink < nimInkCount(); ink += 1) {
   const blue = Math.round(flatAt(rgb, 2) * 255);
   COLOUR_INK_CSS.push('rgb(' + red + ',' + green + ',' + blue + ')');
 }
-// Label's face sized to box marker.nim placed it in, so one number decides both.
+// Label's font face sized to box marker.nim placed it in, so one number decides both.
 svg_overlay.style.fontSize = HEIGHT_LABEL_MARKER + 'px';
 // Halo in scene's own backdrop colour, at halo width and alpha marker.nim states.
 //   Halo that blends with ground knocks surroundings out of letters; marker's white
@@ -142,11 +142,11 @@ function appendMarkerPulse(
 // Write selected object's name above its marker.
 //   Filled in object's own ink and haloed in backdrop's colour, so letters read against
 //   whatever they stand over. Where it sits is `marker.Marker.label_at`'s decision,
-//   centred here on both axes; face is `svg#overlay text`'s in shell.html.
+//   centred here on both axes; font face is `svg#overlay text`'s in shell.html.
 //   Text set on element rather than through attributes: `stageElement` strips and sets
 //   attributes only, and recycled <text> keeps last content unless overwritten.
 //   Line's label comes as anchor on line plus direction to push it: text is measured
-//   here, where its face is, and pushed by `nimLabelClearance` so its own box clears
+//   here, where its font face is, and pushed by `nimLabelClearance` so its own box clears
 //   line at any angle; see `marker.Marker.is_label_beside`. Every label is then held
 //   wholly inside canvas by `nimLabelInView`, with same measured text.
 //   Measured on layer: `<text>` staged fresh, or recycled after frame without it, stands
@@ -341,11 +341,11 @@ function refreshOverlay(cursor: PointLocal | null) {
 //   call release resolves through, so highlight is never second opinion about where cursor is.
 //   Wedge label's laid-out width, measured once per label and remembered.
 //   Still measured from what browser actually laid it out as -- never estimated from character
-//   count, which drifts moment face loaded is not one estimate was tuned against -- but label's
-//   metrics cannot change between frames, and `getBBox` forces layout, so paying it once per label
-//   is whole point.
+//   count, which drifts moment font face loaded is not one estimate was tuned against -- but
+//   label's metrics cannot change between frames, and `getBBox` forces layout, so paying it once
+//   per label is whole point.
 //   Cache empties when document's fonts finish loading, in case early measure ran against fallback
-//   face.
+//   font face.
 const widths_menu_label = new Map<string, number>();
 document.fonts.ready.then(() => widths_menu_label.clear());
 function widthMenuLabel(label: string) {

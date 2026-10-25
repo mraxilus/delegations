@@ -1,8 +1,8 @@
-// Checks that three faces page embeds are drawn in three roles page declares, and that
+// Checks that three font faces page embeds are drawn in three roles page declares, and that
 //   Commit Mono's ligatures reach reader; not Nim because what is asked is browser's own
 //   resolved style and its own text measurement, which Nim reaches only through glue that
 //   would leave every expression here unchecked string.
-//   Declared family is not drawn face: stylesheet naming serif proves nothing where face
+//   Declared family is not drawn font face: stylesheet naming serif proves nothing where font face
 //   never loaded, and stack falls through per character. So each role is checked twice --
 //   what page asks for, and what reader gets, measured.
 
@@ -28,10 +28,10 @@ const FEATURES_SETS = '"calt" 1, "ss01" 1, "ss02" 1';
 const FEATURES_CALT = '"calt" 1, "ss01" 0, "ss02" 0';
 const FEATURES_NONE = '"calt" 0, "ss01" 0, "ss02" 0';
 
-/** Face each role is drawn in, by first family its stack names. */
-const FACE_TITLE = 'Noto Serif UI';
-const FACE_BODY = 'Noto Sans UI';
-const FACE_CODE = 'Commit Mono UI';
+/** Font face each role is drawn in, by first family its stack names. */
+const FONT_FACE_TITLE = 'Noto Serif UI';
+const FONT_FACE_BODY = 'Noto Sans UI';
+const FONT_FACE_CODE = 'Commit Mono UI';
 
 /** Say first family of resolved stack, unquoted, for element selector names. */
 async function familyOf(page: Page, selector: string): Promise<string> {
@@ -51,57 +51,58 @@ async function openDrawer(page: Page): Promise<void> {
   await waitUntil(page, () => drawer.classList.contains('open'), null);
 }
 
-/** Assert every embedded face loaded, and that each of three roles resolves to its own.
+/** Assert every embedded font face loaded, and that each of three roles resolves to its own.
  *
  *  Roles are checked on elements page builds rather than on probes, so rule is held against
  *  what reader meets: heading, body line and coefficient expression.
  */
 export async function driveTypeRoles(page: Page): Promise<void> {
   await openDrawer(page);
-  // Each face asked its own status: `document.fonts.check` answers true where no face matches
-  //   at all, as where other set of faces in family wins weight asked.
-  const faces = await page.evaluate(() => [...document.fonts].map((face) => ({
-    name: `${face.family.replace(/"/g, '')} ${face.weight}`, status: face.status,
+  // Each font face asked its own status: `document.fonts.check` answers true where no font face
+  //   matches at all, as where other set of font faces in family wins weight asked.
+  const font_faces = await page.evaluate(() => [...document.fonts].map((font_face) => ({
+    name: `${font_face.family.replace(/"/g, '')} ${font_face.weight}`, status: font_face.status,
   })));
-  const unloaded = faces.filter((face) => face.status !== 'loaded').map((face) => face.name);
+  const unloaded = font_faces.filter((font_face) => font_face.status !== 'loaded')
+    .map((font_face) => font_face.name);
   report(
-    'every face the page embeds is loaded, not merely named',
-    faces.length > 0 && unloaded.length === 0,
-    `${faces.length - unloaded.length} of ${faces.length} faces loaded; unloaded ` +
+    'every font face the page embeds is loaded, not merely named',
+    font_faces.length > 0 && unloaded.length === 0,
+    `${font_faces.length - unloaded.length} of ${font_faces.length} font faces loaded; unloaded ` +
       `${unloaded.length === 0 ? 'none' : unloaded.join(', ')}`,
   );
 
   const family_title = await familyOf(page, '.section-header');
   report(
-    'a heading that names a section asks for the title face',
-    family_title === FACE_TITLE, `.section-header resolves to ${family_title || 'nothing'}`,
+    'a heading that names a section asks for the title font face',
+    family_title === FONT_FACE_TITLE, `.section-header resolves to ${family_title || 'nothing'}`,
   );
   const family_body = await familyOf(page, 'body');
   report(
-    'and body text asks for the interface face',
-    family_body === FACE_BODY, `body resolves to ${family_body || 'nothing'}`,
+    'and body text asks for the interface font face',
+    family_body === FONT_FACE_BODY, `body resolves to ${family_body || 'nothing'}`,
   );
   const family_count = await familyOf(page, '.objects-count');
   report(
-    'and a figure inside that heading stays in the interface face rather than inheriting it',
-    family_count === FACE_BODY, `.objects-count resolves to ${family_count || 'nothing'}`,
+    'and a figure inside that heading stays in the interface font face rather than inheriting it',
+    family_count === FONT_FACE_BODY, `.objects-count resolves to ${family_count || 'nothing'}`,
   );
   const family_tab = await familyOf(page, '.help-tab');
   report(
     'and a control that names a view is a label, not a title',
-    family_tab === '' || family_tab === FACE_BODY,
+    family_tab === '' || family_tab === FONT_FACE_BODY,
     `.help-tab resolves to ${family_tab || 'no tab built yet'}`,
   );
 }
 
-/** Assert heading is drawn in title face, rather than only asking for it.
+/** Assert heading is drawn in title font face, rather than only asking for it.
  *
  *  Asked in pixels rather than in widths, and that is second attempt worth recording: first
- *  compared heading's own width against canvas measuring same string in each face, and it was
+ *  compared heading's own width against canvas measuring same string in each font face, and it was
  *  wrong twice. Heading carries `letter-spacing`, which canvas does not, so live width sat
- *  above both figures; and two faces measured `apply` at same 35.0 px anyway, so width could
+ *  above both figures; and two font faces measured `apply` at same 35.0 px anyway, so width could
  *  not have parted them even without that. Picture parts them whatever their advances.
- *  Heading is shot as page has it, then again with interface face forced onto it: same picture
+ *  Heading is shot as page has it, then again with interface font face forced onto it: same picture
  *  twice means serif never arrived and stack fell through, which is exactly failure declared
  *  family cannot see.
  */
@@ -118,9 +119,10 @@ export async function driveTypeDrawn(page: Page): Promise<void> {
     const drawn = await shotWith('');
     const sans = await shotWith('var(--sans)');
     report(
-      'the heading is drawn in the title face, in pixels rather than in what it asked for',
+      'the heading is drawn in the title font face, in pixels rather than in what it asked for',
       !drawn.equals(sans),
-      `${drawn.length} bytes as the page has it, ${sans.length} bytes forced to the interface face`,
+      `${drawn.length} bytes as the page has it, ${sans.length} bytes forced to the interface`
+        + ' font face',
     );
   } finally {
     await page.evaluate(() => {
@@ -130,7 +132,7 @@ export async function driveTypeDrawn(page: Page): Promise<void> {
   }
 }
 
-/** Draw probe in mono face under one feature setting, and say its picture and its width. */
+/** Draw probe in mono font face under one feature setting, and say its picture and its width. */
 async function probeDrawn(
   page: Page, text: string, features: string,
 ): Promise<{ shot: Buffer, width: number }> {
@@ -152,7 +154,7 @@ async function probeDrawn(
 
 /** Assert both halves of Commit Mono's ligatures reach reader, and that they cost no column.
  *
- *  Face splits them: `calt` carries most and is on unasked, while arrows and comparisons come
+ *  Font face splits them: `calt` carries most and is on unasked, while arrows and comparisons come
  *  from `ss01` and `ss02`, which are opt-in. Page asks for sets and protects `calt`, so both
  *  are checked -- arrow row against sets, and everything-off against `calt` alone, which is
  *  what would break where reset wrote `font-variant-ligatures: none` for crispness.

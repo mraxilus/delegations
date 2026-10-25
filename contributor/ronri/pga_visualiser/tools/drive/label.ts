@@ -341,12 +341,12 @@ export async function driveLabelWorn(page: Page): Promise<void> {
     // Halo wears backdrop's colour at marker.nim's alpha; see `overlay.COLOUR_LABEL_HALO`.
     const halo = 'rgba(' + paint(nimInkColor(nimInkBackdrop())) + ',' +
       (nimOverlayMetrics()[5] ?? 0) + ')';
-    const face = texts().length > 0 ? getComputedStyle(texts()[0] as Element) : null;
+    const style = texts().length > 0 ? getComputedStyle(texts()[0] as Element) : null;
     return {
       count: two.length, first: two.find((text) => text.text === nimObjectLabel(one)),
       ink: 'rgb(' + paint(rgb) + ')', halo, anchor_y: anchor[1] ?? 0,
       labels: [nimObjectLabel(one), nimObjectLabel(given[1] ?? 0)],
-      weight: face?.fontWeight ?? '', size: face?.fontSize ?? '',
+      weight: style?.fontWeight ?? '', size: style?.fontSize ?? '',
     };
   }, points);
 

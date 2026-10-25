@@ -1705,8 +1705,8 @@ proc layoutMenu(
   ##   Same `☰`, same three groups, same order as browser's `.top-menu`: save, load, demo.
   ##   Browser hides these because its chip row is one line on phone; desktop follows it so
   ##   reader meeting both meets one arrangement rather than two (repository issue 136).
-  ##   `☰` is U+2630, same character browser's button carries. Interface face merges symbol
-  ##   range it is in, so it draws here without any face being pushed.
+  ##   `☰` is U+2630, same character browser's button carries. Interface font face merges symbol
+  ##   range it is in, so it draws here without any font face being pushed.
   ##   Paths sit above groups rather than beside their buttons: both groups read them, and
   ##   browser has no such field only because its own save and load go through download and
   ##   file picker rather than through file system.

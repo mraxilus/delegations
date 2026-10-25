@@ -168,7 +168,7 @@ type
     ##   Kind reading works in, and thing `upgradedFrom<n>` carries between versions.
     ##   Distinct from `Object`: value read off bytes that may not describe anything this
     ##   build can make yet.
-    ink_ordinal*: int  ## Palette slot, as writing version's `Ink` numbered it.
+    ink_ordinal*: int  ## Palette index, as writing version's `Ink` numbered it.
     is_visible*: bool  ## Whether object was hidden when saved.
     label*: string  ## Display label, decoded from file's UTF-8 bytes.
     geometry*: Multivector  ## Object itself, one coefficient per basis term.
@@ -253,8 +253,8 @@ const LUT_NOTATION_BY_OPERATION* = [
   ##     Combining marks need shaper Dear ImGui lacks, landing beside operand instead of
   ##     over it; spacing modifier carries own advance, so both renderers place it same
   ##     way.
-  ##   Not second plain-ASCII table: atlas merges faces carrying astral-plane glyphs (see
-  ##   `visualiser.face_font_math`).
+  ##   Not second plain-ASCII table: atlas merges font faces carrying astral-plane glyphs (see
+  ##   `visualiser.font_face_math`).
   ##   `const` of `string`, with `cstring` array picker needs built from it below.
   ##     `help.nim` builds own table at compile time, so catalogue tab needs text before
   ##     program runs; addresses derive from text, never text from addresses.
@@ -596,7 +596,7 @@ const
 
 func formatMultivector*(m: Multivector, storage: var openArray[char], cursor: var int) =
   ## Print multivector into fixed storage, in same shape library's `$` uses.
-  ##   Basis elements named exactly as library names them; both GUIs carry faces covering
+  ##   Basis elements named exactly as library names them; both GUIs carry font faces covering
   ##   those codepoints.
   ##   Magnitudes stay project's four significant digits.
   ##   Appends from `cursor` rather than returning `string`, so redrawing every visible
@@ -816,7 +816,7 @@ func label*(one: Object): lent Label = one.scene.labels[one.handle]
 
 
 func ink*(one: Object): Ink = one.scene.inks[one.handle]
-  ## Read object's palette slot, straight out of scene handle points at.
+  ## Read object's palette index, straight out of scene handle points at.
 
 
 func isVisible*(one: Object): bool = one.scene.are_visible[one.handle]
@@ -891,7 +891,7 @@ func isVisible*(scene: Scene, handle: int): bool =
 
 
 func inkAt*(scene: Scene, handle: int): Ink =
-  ## Read object's palette slot, by handle rather than through `Object`.
+  ## Read object's palette index, by handle rather than through `Object`.
   ##   Beside `Object.ink` for caller reading many objects per frame.
   ##     Under JS backend `Object` holds `Scene` by value, so constructing one to read single
   ##     field copies whole scene.
@@ -1094,7 +1094,7 @@ func previewStaging*(geometry: Multivector, radius: float): Preview =
 
 
 func setInk*(scene: var Scene, handle: int, ink: Ink) =
-  ## Rewrite object's palette slot, by handle.
+  ## Rewrite object's palette index, by handle.
   doAssert scene.isAlive(handle), &"Object handle must be alive; got `{handle}`."
   scene.inks[handle] = ink
   scene.markEdited()
@@ -1225,7 +1225,7 @@ func removeObject*(scene: var Scene, handle: int) =
 ##   | 7       | Exactly.                                                          |
 ##   | 6       | Exactly, except one byte follows each object's radius, saying     |
 ##   |         |   whether it shone; read and dropped; see `upgradedFrom6`.        |
-##   | 5       | As 6, and palette had one more structural slot, `Algebra`, at     |
+##   | 5       | As 6, and palette had one more structural ink, `Algebra`, at      |
 ##   |         |   ordinal 7; every hue past it moves one down; see                |
 ##   |         |   `upgradedFrom5`.                                                |
 ##   | 4       | Exactly; see `upgradedFrom4`.                                     |
@@ -1276,7 +1276,7 @@ const
     ##   Reading old version costs mapping func and suite case; refusing costs scene.
 
 func inkCycled*(index: int): Ink = inkCategorical(index mod COUNT_INK_CATEGORICAL)
-  ## Choose palette slot for object at given position, cycling categorical slots.
+  ## Choose palette index for object at given position, cycling categorical inks.
   ##   Same run colour picker offers, so nothing cycles to colour user could not have
   ##   chosen.
 
@@ -1305,11 +1305,11 @@ const
     ## Record where categorical hues began in `Ink` version-1 file was written under.
     ##   That palette ran `Backdrop, AxisX, AxisY, AxisZ, Grid, Guide, Outline` then eight
     ##   hues `Rose, Copper, Olive, Jade, Cobalt, Violet, Magenta, Cerise`.
-    ##   Seven structural slots are unchanged; structural slot reserved after them,
+    ##   Seven structural inks are unchanged; structural ink reserved after them,
     ##   `Invalid`, moves hues along, so fold reads today's start through `inkCycled`.
     ##   Recorded as number because enum it indexes no longer exists.
   ORDINAL_INK_HIGH_V1* = 14
-    ## Record last palette slot version-1 file could name, `Cerise`'s.
+    ## Record last palette index version-1 file could name, `Cerise`'s.
     ##   Bounded because fold would otherwise turn any number into some hue, and quietly
     ##   colouring corrupt byte is guessing format refuses everywhere else.
 
@@ -1332,8 +1332,8 @@ func isCarryingShine*(version: uint8): bool =
 
 
 const ORDINAL_INK_ALGEBRA_V5 = 7
-  ## Record structural slot `Algebra`, debug layer's hue, held in palette up to version 5.
-  ##   Sat after `Outline` and before `Invalid`, so every handle past it is one down today.
+  ## Record structural ink `Algebra`, debug layer's hue, held in palette up to version 5.
+  ##   Sat after `Outline` and before `Invalid`, so every ink past it is one down today.
   ##   Recorded as number because enum entry it indexes no longer exists.
 
 
@@ -1341,7 +1341,7 @@ func upgradedFrom1(saved: ObjectSaved): Option[ObjectSaved] =
   ## Carry one object from what version 1 meant to what version 2 means.
   ##   None where version 1 could not have written it.
   ##   Only palette moved: version 1's hues began earlier and ran three longer.
-  ##     Seven structural slots untouched, five surviving hues land on today's first five,
+  ##     Seven structural inks untouched, five surviving hues land on today's first five,
   ##     three retired ones fold onto hues by same cycle `inkCycled` walks.
   ##   One file this gets wrong is browser's own, which stamped version 1 onto version-2
   ##   content for while; nothing in bytes tells it apart.
@@ -1384,7 +1384,7 @@ func upgradedFrom4(saved: ObjectSaved): Option[ObjectSaved] = some(saved)
 func upgradedFrom5(saved: ObjectSaved): Option[ObjectSaved] =
   ## Carry one object from what version 5 meant to what version 6 means.
   ##   Version 6 dropped `Algebra` from palette; hues past it move one down.
-  ##   None for object wearing it: structural slot no build ever assigned to object, so
+  ##   None for object wearing it: structural ink no build ever assigned to object, so
   ##   byte saying so is corrupt, refused as every other unwritable byte is.
   if saved.ink_ordinal == ORDINAL_INK_ALGEBRA_V5: return none(ObjectSaved)
   var carried = saved
@@ -1419,7 +1419,7 @@ func objectUpgraded*(saved: ObjectSaved, version: uint8): Option[ObjectSaved] =
     if stepped.isNone: return none(ObjectSaved)
     carried = stepped.get
   if carried.ink_ordinal notin ord(Ink.low)..ord(Ink.high): return none(ObjectSaved)
-  # Refuse radius no build could have written, as palette slot is refused above.
+  # Refuse radius no build could have written, as palette index is refused above.
   #   Zero or negative would draw nothing and trip `addObject`; NaN compares false to both.
   if not (carried.radius > 0.0): return none(ObjectSaved)
   some(carried)
@@ -1606,7 +1606,7 @@ when not defined(js):
         version,
       )
       if carried.isNone:
-        return &"`{path}` names an unknown palette slot or radius for object {index}."
+        return &"`{path}` names an unknown palette index or radius for object {index}."
 
       # Add in file order, so staging scene's ordinals come out as file's sequence.
       let handle = staging.addObject(
