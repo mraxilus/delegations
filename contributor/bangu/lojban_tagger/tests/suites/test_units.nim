@@ -104,6 +104,10 @@ suite "Chapter 5":
         @[unit("cadzu"), unit("klama", @[conversion([2, 1, 3, 4, 5])])]  # 5.11, Example 11.6
     check folded("se+ke+cadzu+klama") ==
         @[unit("ke", @[conversion([2, 1, 3, 4, 5])]), unit("cadzu"), unit("klama")]  # 5.11, 11.4
+    check not "selkemveiselci'a".readTag.tag.units.isHoldingUnchanged(
+        folded("se+ciska"))  # 5.11, converting tanru converts its head: here `se se ciska`
+    check "selkemselci'avei".readTag.tag.units.isHoldingUnchanged(
+        folded("se+ciska"))  # 5.11, modifier of converted tanru keeps its own places
 
 
 
@@ -154,6 +158,10 @@ suite "Chapter 12":
     check converse.isHoldingUnchanged(folded("se+gleki"))  # 12.11, `se gleki` modifies `zmadu`
     check folded("se+gleki+zmadu").isHoldingUnchanged(
         folded("se+gleki+zmadu"))  # 12.11, `selgekmau` holds itself unchanged
+    check not folded("se+se+ciska+vreji+gunka").isHoldingUnchanged(
+        folded("se+se+ciska+vreji"))  # 12.11, outer `se` here converts group up to `gunka`
+    check folded("se+se+ciska+vreji").isHoldingUnchanged(
+        folded("se+se+ciska+vreji"))  # 12.11, same group, closed by end of both
 
 
   test "Section 12.12":
@@ -161,6 +169,8 @@ suite "Chapter 12":
         @[unit("klama", @[operator("nu")])]  # 12.12, NU rafsi modifies next unit alone
     for text in ABSTRACTORS:
       check folded(text & "+klama") == @[unit("klama", @[operator(text)])]  # 12.12, each NU
+    check not "nunkemveiselci'a".readTag.tag.units.isHoldingUnchanged(
+        folded("se+ciska"))  # 12.12, x1 of abstraction is event, so head of group changes
 
 
   test "Section 12.13":
@@ -183,6 +193,8 @@ suite "Chapter 15":
     ]  # 15.4, `ke'e` implies `ke` after `-nal-`; list gives `su'a` to `stura`, not `sutra`
     check folded("na'e+se+ciska") ==
         @[unit("ciska", @[operator("na'e"), conversion([2, 1, 3, 4, 5])])]  # 15.4, close-binding
+    check not "nalkemselci'avei".readTag.tag.units.isHoldingUnchanged(
+        folded("se+ciska"))  # 15.4, `na'e ke` denies whole group, so no part holds as it is
     check folded("se+ciska+vreji+ke'e+gunka") ==
         folded("se+ke+ciska+vreji+ke'e+gunka")  # 15.4, `ke` implied after opening cmavo
     check folded("vreji+ciska+ke'e+gunka") ==

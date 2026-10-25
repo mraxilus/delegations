@@ -330,11 +330,14 @@ suite "Internal: Search":
       ("k/converse", "selselci'avei"),  # `se ke se ciska vreji` keeps `se ciska` (12.11)
       ("l/figure", "pevyselci'a"),  # cost: `pe'a` binds nothing, though figurative (13.13)
       ("m/reclining", "vreselci'avei"),  # cost: run read whole, though `vreta` groups first
+      ("n/head", "selkemveiselci'a"),  # `se ke vreji se ciska`: `se` converts head (5.11)
+      ("o/denied", "nalkemselci'avei"),  # `na'e ke se ciska vreji`: group denied (15.4)
     ]:
       index.addTags(name, [readTag(text).tag])
     check index.find([readTerm("selci'a")]).names == @[
       "b/record", "e/minutes", "k/converse", "l/figure", "m/reclining", "a/jobs", "c/plain",
-      "d/apart", "f/grouped", "g/cancel", "h/medium", "i/negated", "j/closed",
+      "d/apart", "f/grouped", "g/cancel", "h/medium", "i/negated", "j/closed", "n/head",
+      "o/denied",
     ]  # ruling: unit `se ciska` ranks first wherever it stands, net of cmavo around it
     check index.find([readTerm("ciska")]).names ==
         index.entities.names  # ruling: gismu term ranks nothing
@@ -343,9 +346,11 @@ suite "Internal: Search":
     check readTerm("selselci'a").specific.len == 0  # its two `se` cancel (12.11)
     check index.find([readTerm("selci'avei")]).names == @[
       "b/record", "m/reclining", "d/apart", "e/minutes", "f/grouped", "j/closed", "k/converse",
+      "n/head", "o/denied",
     ]  # ruling: units of longer term stand unbroken; `k/converse` converts them whole (12.11)
     check index.find([readTerm("selci'a"), readTerm("vreji")]).names == @[
       "b/record", "e/minutes", "k/converse", "m/reclining", "d/apart", "f/grouped", "j/closed",
+      "n/head", "o/denied",
     ]  # ranked tier first, conjunction kept
 
 
