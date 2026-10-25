@@ -77,6 +77,7 @@ import {
   driveAllowance, driveKinds, driveMoving, driveSceneryBound, driveSceneryEvery,
 } from './scenery';
 import { driveGround } from './ground';
+import { driveBufferCovered } from './buffer';
 import { driveAntialias, driveBlankRefused } from './canvas';
 import {
   driveBuiltStill, driveCopiesStill, driveFrameWork, driveLoopRuns, driveStanceReadOnce,
@@ -413,6 +414,8 @@ async function main(): Promise<void> {
   await driveCoarse(browser);
   // Page of its own, since host it stands in has to be there before page's script runs.
   await driveHostSave(browser, `file://${PATH_PAGE}`, SIZE_VIEW);
+  // Page of its own too, since limit it runs under has to be there before page's script runs.
+  await driveBufferCovered(browser, `file://${PATH_PAGE}`);
   // Last, so control page is read once page itself was.
   await writeFontFaces(browser);
 
