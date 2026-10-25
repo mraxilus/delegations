@@ -14,7 +14,7 @@ import { focusCanvas } from './gestures';
 import { driveBulkUndo, driveFieldsHeld, driveHoverWhileMoving } from './acts';
 import { driveKeys, driveKeysChorded } from './keys';
 import { driveEscape } from './escape';
-import { driveMenuHung, driveMoreAtPointer } from './menus';
+import { driveMenuHung, driveMenuHungCopies, driveMoreAtPointer } from './menus';
 import { driveAim, driveLook, drivePan, driveStretch } from './pan';
 import { driveWheel } from './wheel';
 import { driveFingerTurntable, driveTouchSelect, drivePinch, openTouch } from './touch';
@@ -263,6 +263,7 @@ async function driveSimulated(browser: Browser): Promise<void> {
   await driveKeysChorded(page);
   await driveEscape(page);
   await driveMenuHung(page);
+  await driveMenuHungCopies(page);
   await driveMoreAtPointer(page);
   await driveBulkUndo(page);
   await driveFieldsHeld(page);

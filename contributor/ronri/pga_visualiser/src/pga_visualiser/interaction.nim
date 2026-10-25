@@ -592,13 +592,13 @@ func pointMenuHung*(
   ##   Centred `PIXELS_LIFT_MENU_SELECTION` above object it follows; both front-ends hang it here.
   ##   Near edge, moved only as far as keeps whole menu `PIXELS_MARGIN_MENU_SELECTION` inside
   ##   view. Lower bound wins, so menu larger than view keeps its left and top edges inside.
+  ##   Written field by field, never assigned whole: page hangs menu every frame it shows, and
+  ##   object built into `result` is copy on JS backend (read in emitted JS).
   let
     margin = PIXELS_MARGIN_MENU_SELECTION
     half = width_menu / 2
-  ScreenPosition(
-    x: max(margin + half, min(width - margin - half, anchor.x)),
-    y: max(margin + height_menu, min(height - margin, anchor.y - PIXELS_LIFT_MENU_SELECTION)),
-  )
+  result.x = max(margin + half, min(width - margin - half, anchor.x))
+  result.y = max(margin + height_menu, min(height - margin, anchor.y - PIXELS_LIFT_MENU_SELECTION))
 
 
 func toDrag*(choice: DragChoice): Option[DragOperation] =
