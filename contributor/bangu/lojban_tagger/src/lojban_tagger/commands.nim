@@ -78,7 +78,7 @@ func describe(term: Term): string =
         if term.specific.len > 0: ", matched by its gismu; things whose tag holds `" & tanru &
             "` unchanged come first"
         elif not term.reading.tag.isGismuAlone:
-          ", matched by its gismu; its cmavo change nothing, so nothing comes first"
+          ", matched by its gismu; its cmavo only group or cancel, so nothing comes first"
         else: ""
     return text & " reads as tag `" & tanru & "`" & ranking & ".\n"
   if term.meanings.len == 0:
