@@ -812,8 +812,8 @@ A line of enum members is such a line (D1 a of #752). The check and the fixer sh
   because its outline can elaborate the note or the text.
 - A one-line borrow or forward in a stack under a group comment passes (VI.1). The stack is a run
   of routines on one line each, at one indent, with the group comment right above it. The group
-  comment is a `#` comment. A `##` doc right above the run is the doc of the routine that holds
-  it.
+  comment is a `#` comment. A `##` doc right above the run is no group comment. Inside a
+  routine, it is the doc of that routine.
 - Code in `quote do:` passes too, since its generator carries its docs through a parameter. So
   does a doc on the line above, at the indent of the declaration, because it stands out of place.
 - The rule reads the end of each line from its tokens. A string, the closing `"""` of a long
@@ -859,7 +859,8 @@ trails a line which opens a bracket holds apart a call that the wraps would join
   each one parses.
 - Cost: a doc that opens the line right below the first line of a declaration counts, though the
   value runs on past it. That holds for the first line of a `block:`, and for a line inside a
-  bracket, where `nim jsondoc` reads no doc. `## Open questions` holds the place of such a doc.
+  bracket, where `nim jsondoc` reads no doc. Verified by hand with `nim jsondoc` of 2.2.12,
+  2026-10-25. `## Open questions` holds the place of such a doc.
 - Cost: a routine with no body reads as a forward declaration where any overload of its name
   follows.
 - Cost: a routine on one line reads as a forward where its body after `= ` is shorter than
