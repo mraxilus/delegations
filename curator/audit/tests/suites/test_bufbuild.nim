@@ -30,7 +30,8 @@ suite "Bufbuild":
     defer: removeDir(store)
     createDir(pathBufbuild(store).parentDir)
     writeFile(pathBufbuild(store), "")
-    check bufbuildIn(store) == some(pathBufbuild(store))  # empty file stands: no fetch ran
+    check bufbuildIn(store) == some(pathBufbuild(store))
+    check getFileSize(pathBufbuild(store)) == 0  # empty file stands, so no fetch ran
 
 
   test "pinned binary reports its version":
