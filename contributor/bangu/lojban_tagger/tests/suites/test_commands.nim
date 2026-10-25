@@ -165,7 +165,10 @@ suite "Internal: Commands":
     let cancel = run(["find", "selselci'a"], written)
     check cancel.output == selcia.output  # `selselci'a` finds what its gismu find
     check cancel.report == "`selselci'a` reads as tag `se+se+ciska`, matched by its gismu; its " &
-        "cmavo change nothing, so nothing comes first.\n"  # two `se` cancel (CLL 12.11)
+        "cmavo only group or cancel, so nothing comes first.\n"  # two `se` cancel (CLL 12.11)
+    check run(["find", "kemdatnyvei"], index).report == "`kemdatnyvei` reads as tag " &
+        "`ke+datni+vreji`, matched by its gismu; its cmavo only group or cancel, so nothing " &
+        "comes first.\n"  # `ke` changes grouping, which rank does not read
     let none = run(["find", "gerku"], index)
     check none.code == 1 and none.output == ""  # nothing found exits 1, as `grep` does
     let unknown = run(["find", "qwzx"], index)
