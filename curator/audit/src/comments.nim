@@ -186,7 +186,8 @@ func scanHashLeading(source: string): seq[Comment] =
 #[ Slash ]#
 
 func scanSlash(source: string): seq[Comment] =
-  ## Scan TypeScript: `//` line, `/* */` block, string and template literals.
+  ## Scan TypeScript and FlatBuffers schema: `//` line, `/* */` block, string and template
+  ##   literals.
   type State {.pure.} = enum Code, StrDouble, StrSingle, StrTemplate, Line, Block
   var
     scan = Scan(line: 1)
@@ -209,8 +210,9 @@ func scanSlash(source: string): seq[Comment] =
     case state
     of State.Code:
       if c == '/' and at(i + 1) == '/':
+        # Third slash opens doc line schema carries into generated code; it is no word.
         state = State.Line
-        i += 2
+        i += (if at(i + 2) == '/': 3 else: 2)
         continue
       if c == '/' and at(i + 1) == '*':
         # Opener counts as line start so documentation `/**` sheds its second star.

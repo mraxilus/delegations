@@ -2,7 +2,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[sequtils, unittest]
+import std/[options, sequtils, unittest]
 import ../../src/[comments, kinds]
 
 
@@ -67,6 +67,14 @@ suite "Article VI":
     check texts("let s = `//${x}`; // yes\n", Syntax.Slash) == @["yes"]  # template literal
     check texts("/**\n * Doc line\n * more\n */\n", Syntax.Slash) == @["Doc line", "more"]  # stars
     check texts("let c = 'it\\'s'; // yes\n", Syntax.Slash) == @["yes"]  # escaped quote
+
+
+  test "VI.5 FlatBuffers schema slash forms, doc line among them":
+    # `///` documents field, and `flatc` carries it into generated code; third slash is no word.
+    const schema = "/// Scene file.\ntable Object {\n  label: string = \"a//b\";  // shown\n" &
+      "  radius: double = 0.08;  /* world units */\n}\n"
+    check texts(schema, classify("scene.fbs").get.rule.syntax) ==
+      @["Scene file.", "shown", "world units"]  # doc, line after string, block
 
 
   test "VI.5 markup comments span lines and repeat":

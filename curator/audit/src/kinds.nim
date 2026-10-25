@@ -19,6 +19,7 @@
 ##   | Html          | .html                         | Xml         | yes   | no   | no    |
 ##   | Svg           | .svg                          | Xml         | yes   | no   | no    |
 ##   | Json          | .json atlas.config atlas.lock | None        | no    | no   | no    |
+##   | FlatBuffers   | .fbs                          | Slash       | yes   | no   | no    |
 ##   | Shell         | .sh pre-push commit-msg       | Hash        | yes   | yes  | no    |
 ##   |---------------|-------------------------------|-------------|-------|------|-------|
 ##
@@ -34,6 +35,9 @@
 ##   Nimble files are NimScript; Configuration covers `nim.cfg` Atlas writes and `koch.nim.cfg`.
 ##   TypeScript and Json registered ahead of use: owner allows TypeScript where JavaScript
 ##     is forced, and its tooling needs JSON configuration.
+##   FlatBuffers is schema of data one program writes and another reads (#755), so rule
+##     admits it rather than gate: no Nim serves schema both Nim and TypeScript generate from.
+##     Json serves its committed records too, as text `flatc` turns into buffer at build.
 ##   Cpp and C carry binding shim for library no Nim import expresses; `.hpp` is C++ header
 ##     and `.h` is C one, since name alone cannot tell them apart.
 ##   Retired: Makefile, with make itself; registry admits no second build verb.
@@ -63,7 +67,7 @@ type
 
   Kind* {.pure.} = enum  ## Define file kinds checker reads.
     Nim, NimScript, Nimble, Configuration, Markdown, Yaml, GitIgnore, GitAttributes, TypeScript,
-    Cpp, C, Html, Svg, Json, Shell
+    Cpp, C, Html, Svg, Json, FlatBuffers, Shell
 
   RuleKind* = object  ## Define how one kind is read.
     syntax*: Syntax  ## Comment syntax scanner applies.
@@ -87,6 +91,7 @@ const LUT_RULE_BY_KIND*: array[Kind, RuleKind] = [
   Kind.Html: RuleKind(syntax: Syntax.Xml, is_prose: true),
   Kind.Svg: RuleKind(syntax: Syntax.Xml, is_prose: true),
   Kind.Json: RuleKind(syntax: Syntax.None),
+  Kind.FlatBuffers: RuleKind(syntax: Syntax.Slash, is_prose: true),
   Kind.Shell: RuleKind(syntax: Syntax.Hash, is_prose: true, is_gated: true),
 ]
   ## Map kind to its rule; header table is derived view of this array.
@@ -114,6 +119,7 @@ func classify*(path: string): Option[Kind] =
   of ".html": some(Kind.Html)
   of ".svg": some(Kind.Svg)
   of ".json": some(Kind.Json)
+  of ".fbs": some(Kind.FlatBuffers)
   of ".sh": some(Kind.Shell)
   else: none(Kind)
 
