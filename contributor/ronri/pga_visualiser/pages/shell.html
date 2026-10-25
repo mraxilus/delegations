@@ -112,7 +112,10 @@
   @font-face { font-family: "Noto Serif UI"; font-style: normal; font-weight: 600;
     font-display: block;
     src: url(@EMBED:NotoSerif-SemiBold.ttf@) format("truetype"); }
-  @font-face { font-family: "Commit Mono UI"; font-style: normal; font-weight: 400;
+  /* Commit Mono ships one weight, declared over 400 to 700 as maths and symbols are: mono
+     asked at 600 or 700 then draws its regular glyphs, as desktop's atlas does, and never
+     bold browser synthesises (Article X.8). */
+  @font-face { font-family: "Commit Mono UI"; font-style: normal; font-weight: 400 700;
     font-display: block;
     src: url(@EMBED:commit-mono-latin-400-normal.woff2@) format("woff2"); }
 
