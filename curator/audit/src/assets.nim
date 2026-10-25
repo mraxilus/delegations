@@ -28,9 +28,10 @@
 ##     is; it never says which files target wants, and targets differ -- one draws maths and
 ##     symbols, other draws italic serif. So per-project autonomy CONTRIBUTOR.md argues for
 ##     is untouched: what stops being written twice is only what was already identical.
-##   This is repository's first shared build input, and stays only one. Compilers are pinned
-##     per project in nimble files, Atlas checkouts per project, npm per project, each
-##     deliberately. Bytes of file are not toolchain: they are same bytes whoever fetches.
+##   This is repository's first shared build input. Patched `flatc` (`flatc.nim`) is second, for
+##     same reason: one patch serves every project. Compilers are pinned per project in nimble
+##     files, Atlas checkouts per project, npm per project, each deliberately. Bytes of file
+##     are not toolchain: they are same bytes whoever fetches.
 ##
 ##   Store is `$KOCH_ASSETS_DIR`, else `~/.cache/koch/assets`: repository's own, so koch's, while
 ##     compiler cache `~/.cache/knoller/nim` is knoller's, which koch uses too. Both stay outside

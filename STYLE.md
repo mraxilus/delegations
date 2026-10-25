@@ -160,6 +160,30 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
 - Give an object field its default inline (`is_negated*: bool = false`).
 - Use `seq`, `Table` and `string` as data structures only at compile time, or in a tool that
   a shell runs once. At runtime, use `string` only for display (`$`, messages).
+- Write data that a person keeps as a module of typed constants, one constructor to each entry.
+  Mark each field whose absence is a mistake `{.requiresInit.}`, so that the compiler names the
+  entry that lacks it:
+
+  ```nim
+  type
+    Claim* = object  ## Define one claim that evaluation checks.
+      kind*: KindClaim
+      path* {.requiresInit.}: string  ## Program that claim runs, relative to its proposal.
+
+  const CLAIMS* = [
+    Claim(kind: KindClaim.Program, path: "width.nim"),
+  ]
+  ```
+
+- Read a FlatBuffers buffer through its generated code, and never by offset. Open it with
+  `GetRootAs` once the format's own check passes. Finish a buffer you write with the `Finish`
+  of its root, which writes the identifier of the schema:
+
+  ```nim
+  var scene: Scene
+  scene.GetRootAs(bytes, 0)
+  for one in scene.objects: draw(one.label.get, one.radius)
+  ```
 
 ## 5. Signatures, imports, calls
 

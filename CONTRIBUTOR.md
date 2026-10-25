@@ -324,6 +324,39 @@ API of a test driver.
   itself. A driven check that first wants some other verb run by hand is a check that the
   runner will not run.
 
+## Data
+
+Data takes its form from who writes it and who reads it. The compiler, or the schema, then
+checks each field. The cost is a schema beside each format between programs, and the curator's
+`flatc` in every build that reads one.
+
+- **Data that a person writes, or a fixed list that code reads, is a Nim module of typed
+  constants.** A field whose absence is a mistake takes `{.requiresInit.}`. A verb renders a
+  list that comes from outside, and the header of the module names that verb. `STYLE.md` §4
+  gives the idiom.
+- **Data that one program writes and another reads is FlatBuffers.** Its schema is a committed
+  `.fbs` file beside the code that owns the format. Read and write a buffer only through the
+  code that `flatc` generates, so that the writer and the reader never disagree.
+- **The schema carries the versions of the format.** Add a field with a default, or mark a
+  field `deprecated`. Never remove, move, retype or renumber a field, and never change a
+  default. `koch check-schemas` refuses each of those against the schema on `main`. A change of
+  meaning with no change of layout is a new field, because a reader can see nothing else.
+- **A buffer that the repository does not hold is binary.** It is a file that a person saves,
+  or a file that one verb writes for another under `build/`. A record that the repository
+  commits is FlatBuffers JSON text, as `flatc -t --strict-json --defaults-json` writes it. Your
+  build turns it into a buffer with `flatc -b`, because binaries are never committed.
+- **`flatc` is the curator's patched build.** `koch fetch-flatc` builds it once and prints its
+  folder, which holds `bin/flatc` and the Nim runtime under `nim/flatbuffers`. Generate code
+  under `build/`, and pass that runtime to the compiler with `--path`. The runtime is no Atlas
+  dependency, because it must match the generator. Release 25.12.19 has faults in its Nim
+  code, so no other `flatc` serves (`curator/audit/src/flatc.nim`).
+- **The readers of Nim and TypeScript check nothing in a buffer.** So a file that a person
+  keeps holds the length and a checksum of its buffer, and the reader checks both before it
+  reads. A later version may extend an enum. So a field of such an enum takes its integer
+  type, because the reader of Nim stops on a value that its enum lacks.
+- **JSON stays only where a tool forces it**: npm, `tsc`, Atlas, Claude Code hooks, GitHub
+  Actions and `gh`.
+
 ## Pages and assets
 
 A page that the project stands behind lives in `pages/`. A one-off exploration kept for
