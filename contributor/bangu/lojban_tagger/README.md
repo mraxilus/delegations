@@ -3,9 +3,9 @@
 A system that tags anything with Lojban words and finds it again. A tag is a gismu or a lujvo.
 The parser reduces each tag to the words of its tanru, and a search matches on its gismu. So a
 search for one gismu finds every thing whose tag holds that gismu, alone or inside a lujvo. A
-search for a lujvo with a cmavo, such as `selci'a`, lists first each tag that holds it with an
-unchanged meaning. So `selci'avei` comes first, but `selselci'a` does not, because its two `se`
-cancel.
+search for a lujvo with a cmavo, such as `selci'a`, lists first each thing whose tag holds it,
+net of the cmavo around it. So `selci'avei` comes first, but `selselci'a` does not, because its
+two `se` cancel.
 
 A search can also use an English word. The keywords of the gismu list and the glosses of the
 lujvo list lead that word to gismu.
@@ -27,8 +27,9 @@ In this example, four spaces stand for the tab that separates a name from its ta
 
 The project replicates the morphology of The Complete Lojban Language (CLL), by John Woldemar
 Cowan, first edition, 1997. Chapter 3 gives the consonant clusters. Chapter 4 gives the shapes
-of words, the rafsi, and the algorithms that make and score a lujvo. The suites carry the names
-of those chapters, and each assertion cites its section.
+of words, the rafsi, and the algorithms that make and score a lujvo. Chapters 5, 7, 9, 12 and 15
+tell which words the cmavo of a tag bind. The suites carry the names of those chapters, and each
+assertion cites its section.
 
 The word lists come from the Logical Language Group, which placed them in the public domain.
 The project commits them as typed Nim modules under `src/lojban_tagger/lists/`.

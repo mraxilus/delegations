@@ -12,21 +12,21 @@
 ##     so each finds other (CLL 4.5 calls tanru ambiguous for same reason).
 ##   Matching reads gismu alone, so `selci'a` finds what `ciska` finds. Lojban term holding cmavo
 ##     also ranks first each entity holding tag whose tanru units hold units of term unbroken,
-##     in order (`units.nim`). Architect ruled that search for `selci'a` lists first each tag
-##     holding `se` right before `ciska`, wherever pair stands, as `selci'a`, `selci'avei` and
-##     `veirselci'a` do; that net result of cmavo around pair decides; that longer term ranks by
-##     unbroken run too; and that search for `ciska` gives no priority. English term ranks
-##     nothing, since ruling names term typed in Lojban.
-##     Units, not words: scope of SE is only following brivla or equivalent unit (CLL 9.4), so
+##     in order (`units.nim`). Architect ruled that search for `selci'a` lists first each entity
+##     whose tag holds `se` right before `ciska`, wherever pair stands, as `selci'a`,
+##     `selci'avei` and `veirselci'a` do; that net result of cmavo around pair decides; that
+##     longer term ranks by unbroken run too; and that search for `ciska` gives no priority.
+##     English term ranks nothing, since ruling names term typed in Lojban.
+##     Units, not words: SE binds only following brivla or equivalent unit (CLL 9.4), so
 ##     `se ciska` is one unit wherever it stands, and folding gives what cmavo around it do.
 ##     `selselci'a` holds words `se ciska` yet folds to `ciska`, since two `se` cancel (12.11);
 ##     `selkemci'avei` holds no such unit, since there `se` converts whole group. Run that group
 ##     around it changes does not rank: its head, where conversion or abstraction binds group
 ##     (5.11, 12.12), any part, where negation binds it (15.4), and run whose open group runs
 ##     on in tag. So term `selci'avei` ranks no `selselci'avei`, converse of `selci'avei`.
-##     Run, not part of grouped tanru: lujvo makers leave `ke` out (4.10, 12.11), so rafsi do not
-##     record grouping, and run is what they record. So term `selci'avei` ranks tag `vreta se
-##     ciska vreji`, where left grouping (5.3) binds `vreta` to `se ciska` first.
+##     Run, not part of grouped tanru: lujvo makers often leave `ke` out (4.10, 12.11), so rafsi
+##     often leave grouping out, and run is what they hold. So term `selci'avei` ranks tag
+##     `vreta se ciska vreji`, where left grouping (5.3) binds `vreta` to `se ciska` first.
 ##     Term whose cmavo all fold away, as `selselci'a`, ranks nothing, as gismu term does.
 ##     Cost: rank is two tiers, ranked then rest, each in order of index.
 ##   Term reading as neither Lojban nor known English holds no alternative, so query finds
