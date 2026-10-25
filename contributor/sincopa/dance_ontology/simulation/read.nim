@@ -39,9 +39,11 @@ type
                                  ## and `rigid.Pose` both hand them over.
 
   Tight* = object  ## Joint nearest its edge across every held arm.
-    room*: float  ## `margin` of that joint: nought at edge, one ease in, negative past.
-    dof*: Dof
-    whose*: Hand
+    room*: float
+      ## `margin` of that joint: nought at edge, one ease in, negative past; `Inf` where no arm
+      ## is held, bound of empty set.
+    at*: Option[tuple[dof: Dof, whose: Hand]]
+      ## Which joint, of whose held arm; none where no arm is held.
 
 
 func endOwn*(links: seq[Link], i: int, who: Body): int =
@@ -170,7 +172,7 @@ func crossings*(arms: Arms): seq[Crossing] =
 
 
 func tightest*(rig: Rig, stance: array[Body, Stance], links: seq[Link], arms: Arms): Tight =
-  ## Which joint of which held arm is nearest its edge, and how near.
+  ## Which joint of which held arm is nearest its edge, and how near; none where no arm is held.
   ##   Read off pose by `joints`, so it says same thing whichever model posed it.
   ##   `joints` reads left arm in mirror, so rig's own ranges serve both arms as
   ##     they stand: twist's ends are swapped only for engine's own reading
@@ -191,7 +193,7 @@ func tightest*(rig: Rig, stance: array[Body, Stance], links: seq[Link], arms: Ar
         room = margins(rig, joints(stance[hand.body], hand.arm, arms[i][k]))
       for dof in Dof:
         if room[dof] < result.room:
-          result = Tight(room: room[dof], dof: dof, whose: hand)
+          result = Tight(room: room[dof], at: some((dof: dof, whose: hand)))
 
 func strain*(tight: Tight): float =
   ## How far into last stretch before edge tightest joint is: one is edge.

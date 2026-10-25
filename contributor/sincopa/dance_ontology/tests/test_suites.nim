@@ -2,7 +2,7 @@ discard """
 action: run
 cmd: "nim c --hints:off -d:testing $options $file"
 """
-## Run every suite that needs neither engine nor browser, as one binary (STYLE.md §6).
+## Run every suite that drives neither engine nor browser, as one binary (STYLE.md §6).
 ##
 ##   Each suite under `suites/` was its own binary, and each paid its own compile of
 ##     standard library and of whatever it imports.  Nineteen binaries took 62.4 s under
@@ -15,9 +15,11 @@ cmd: "nim c --hints:off -d:testing $options $file"
 ##     Release keeps `doAssert`, `assert`, bounds and overflow checks too, so this choice
 ##     is about time alone.  `test_asks` and `test_limb` were `-d:danger`, which drops bounds,
 ##     overflow and `assert`; built here they keep all three.
-##   Suites that link engine's C archive (`test_engine`, `test_plan`, `test_read`, `test_rigid`)
-##     cannot share this binary, and `test_said` is compiled to JavaScript, so those stay
-##     binaries of their own.
+##   Suites that drive engine (`test_engine`, `test_plan`, `test_read`, `test_rigid`) stay
+##     binaries of their own, three of them with `-d:danger`, because sweeps are slow.
+##     `test_said` is compiled to JavaScript, so it stays one too.
+##   This binary links engine's C archive too, through `simulation/rigid.nim`, and calls
+##     nothing in it.
 
 {.experimental: "strictFuncs".}
 

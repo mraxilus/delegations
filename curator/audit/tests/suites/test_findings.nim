@@ -62,6 +62,7 @@ suite "Findings":
       (Rule.BindingsSingle, "single bindings (X.5)"),
       (Rule.ImportProfiler, "profiler import (STYLE.md §3)"),
       (Rule.PositionDoc, "doc position (STYLE.md §5)"),
+      (Rule.DocMissing, "missing doc (VI.1)"),
       (Rule.DefaultLiteral, "literal default (X.12)"),
       (Rule.WrappingSignature, "signature wrapping (X.3)"),
     ]
@@ -96,7 +97,7 @@ suite "Findings":
 
   test "finding of knoller's check reads as koch prints it, article where sentence ends":
     let
-      fenced = "let A = 1\n" & FENCE_OFF & "\nlet B = 1+2\n" & FENCE_ON & "\n"
+      fenced = "let A = 1  ## One.\n" & FENCE_OFF & "\nlet B = 1+2  ## Sum.\n" & FENCE_ON & "\n"
       crossing = "let m = f(\n  " & FENCE_OFF & "\n  1,\n)\n" & FENCE_ON & "\n"
       late = "import std/os\n" & STRICT_FUNCS & "\n"
       stub = "discard \"\"\"\naction: run\ncmd: \"nim c -r $file\"\njoinable: false\n\"\"\"\n"
@@ -133,7 +134,9 @@ suite "Findings":
           checkBanners("a.nim", "x = 1\n\n\n\n#[[ Child ]]#\n\ny = 2\n") &
           checkBanners("a.nim", "x = 1\n\n\n\n#[ Section ]#\ny = 2\n") &
           checkComments("a.nim", "let a = 1 # One.\n") & checkMessages("a.nim", tail) &
-          checkSpacing("a.nim", "let r = 0 .. n\n")
+          checkSpacing("a.nim", "let r = 0 .. n\n") & checkDocsMissing("a.nim", "const A = 1\n") &
+          checkDocsMissing("a.nim", "func f*(): int =\n  ## TODO: Make distinct.\n  1\n") &
+          checkDocsMissing("a.nim", "proc f()\n\nproc f() =\n  ## Do.\n  discard\n")
     check found.toFindings.mapIt(it.message) == @[
       "First-tier banner takes three blank lines before it (X.2); got `2`.",
       "Second-tier banner takes two blank lines before it (X.2); got `3`.",
@@ -141,6 +144,10 @@ suite "Findings":
       "Trailing comment takes two spaces before its marker (X.9); got `1`.",
       "Message ends echoing value in backticks, as ``…; got `{value}`.`` (IV.4); got `$count`.",
       "Range operator takes no space (X.9); got `0 .. n`.",
+      "Declaration takes doc comment (VI.1); got `const A`.",
+      "Doc holds `TODO: Document.` and nothing else (VI.1); got `## TODO: Make distinct.`.",
+      "Forward declaration takes doc of its routine, which `nim doc` reads there (VI.1); got " &
+      "`proc f`.",
     ]  # text koch would print, once static pass runs these checks
 
 

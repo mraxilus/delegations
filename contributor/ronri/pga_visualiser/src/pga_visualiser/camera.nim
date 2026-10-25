@@ -94,6 +94,10 @@ const
     ##     (`tessellate.CELLS_GRID_HALF_MAX`).
     ##     What degrades far out is float32 in what stands far from eye: object million
     ##     units from it carries under tenth of unit, which is invisible at that reach.
+  DEGREES_FIELD_OF_VIEW_LEAST* = 10.0
+    ## Bound how narrow vertical field of view may be set, through `fieldOfViewHeld`.
+  DEGREES_FIELD_OF_VIEW_MOST* = 120.0
+    ## Bound how wide vertical field of view may be set, through `fieldOfViewHeld`.
   MARGIN_REACH_FAR* = 1.05
     ## Widen far bound past scene's reach by this, so farthest object never sits on it.
   SLACK_CLIP_FAR* = 1.0 / 1024.0
@@ -393,6 +397,13 @@ func distanceHeld*(distance: float): float = max(distance, DISTANCE_LIMIT_NEAR)
   ##   front-ends' numeric fields, fitted distance framing solves), so floor is stated
   ##   once.
   ##   Replaced `clamp` written at each site, shape limit takes when site is missed.
+
+
+func fieldOfViewHeld*(degrees: float): float =
+  ## Hold vertical field of view inside `DEGREES_FIELD_OF_VIEW_LEAST` to `_MOST`.
+  ##   Both front-ends' fields write it through here, typed value as well as dragged one,
+  ##   so bounds are stated once (repository issue 632).
+  clamp(degrees, DEGREES_FIELD_OF_VIEW_LEAST, DEGREES_FIELD_OF_VIEW_MOST)
 
 
 func motorFacing*(eye, pivot: Position): Motor =
