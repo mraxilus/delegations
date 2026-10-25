@@ -22,10 +22,12 @@
 ##     enum members listed on one line among them, by Architect's ruling on D1 of #752.
 ##     Name inside value or signature of declaration above it is part of it, and takes none:
 ##     field of tuple in brackets, or parameter of proc type.
-##     Doc anywhere rule of position reads passes: on declaration's line, whole line just above
-##     at its indent, or whole line below it or below its value, one level in; place is rule of
-##     position's. `TODO: Document.` passes; doc awaiting text under other TODO is fixed, and
-##     that TODO moves above declaration as `#` comment, so no design note is lost.
+##     Doc passes on declaration's line, or whole line below it or below its value, one level
+##     in, as rule of position reads them; whole line just above at its indent passes too, and
+##     that rule leaves it there. Doc hanging below declaration is its own, as that rule reads
+##     next line, so it never passes for name below it at its indent (`isHeldAbove`).
+##     `TODO: Document.` passes; doc awaiting text under other TODO is fixed, and that TODO
+##     moves above declaration as `#` comment, so no design note is lost.
 ##   Declaration runs to line closing each bracket it opens and each string past its line;
 ##     binding's value runs on through each line below it, deeper than it; routine's signature
 ##     runs past line ending in `:` and takes pragma line below it, until line ending in `=`.
