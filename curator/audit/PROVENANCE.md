@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | c523b64950d1f7de |
+| Rules   | 0ff7fe750293e4e9 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 | Pruned  | ab8fb063b62bb03ba9fd7f2964a1866b3862909b |
 
@@ -1565,12 +1565,21 @@ code.
 - A path of one machine is a finding in every kind but Markdown (CONTRIBUTOR.md, System). The
   checker names such paths as fixtures, so its own project is left out, as the font families check
   leaves it out.
+- A prefix names a path only where it opens one. That is where no letter, digit, `_`, `.` or `~`
+  stands before it, since a word or a path ends on each of those. A flag of one letter before it
+  opens a path too, as `-I/home/me` does. So a word that holds a prefix names no path, as
+  `nest/home/abode` in the word list of `lojban_tagger` (#753).
+- Rejected: a list of the characters that open a token, as a quote, a space, `=`, `(` and `:`. It
+  passes a path after `[`, `,`, a backtick or the third slash of `file:///home/me`.
+- Cost: a path written after a letter that opens no flag passes, as `x/home/me`, since the check
+  reads it as a word.
 - `tsconfig.json` sets its three flags to `true`, read as text, because TypeScript admits
   comments that `std/json` refuses.
 - Rejected: the idioms on `.nim` alone, which leave `.nims` and `.nimble` unread, though
   bindings, pragmas and `return result` mean the same there.
 - Verified by `suites/test_idioms.nim` and `suites/test_audit.nim`. Each rule prints as koch prints
-  it, and each kind of Nim takes the idioms of any Nim code.
+  it, and each kind of Nim takes the idioms of any Nim code. The case as found on #753 passes, and
+  a path after each kind of opener, a flag included, stays a finding.
 
 ## Knoller
 
@@ -2206,6 +2215,14 @@ update ends no turn with a sign-off.
   once the hook reads it, so each line sent again reads twice. The reply passes unread, since
   `stop_hook_active` is set, so the `-` line that repeats a wrong phrase refuses nothing.
   Rejected: corrected lines alone, which a delegate read as each whole paragraph sent again.
+- **A message gives each long form once.** Its first mention of an issue or a pull request is
+  a link with a short description. After it, the number alone names the same item, as Claude
+  Code links it. A row of the sign-off names its item in its own cells. An article or a duty is
+  described at its first citation, and cited bare after it. Rejected: the long form at each
+  mention, which repeats what the reader read a line before.
+- **A message writes each link inline.** Claude Code shows a reference link as raw text where
+  its definition stands below it, so `stop` reports each message that defines one. Rejected:
+  definitions above their first use, which render, but which a delegate must order by hand.
 - Cost: in a project thread, the Architect reads a reply, which is a tool call. `stop` reads
   only the text of the turn, so it holds the shape of a sign-off in that text alone. Reading
   holds the shape of the reply, as it does outside Claude Code. Verified by hand through the

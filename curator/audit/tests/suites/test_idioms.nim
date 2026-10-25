@@ -177,6 +177,21 @@ suite "Idioms":
     check checkPathsMachine("a.nim", "let p = getEnv(\"HOME\")\n").len == 0
 
 
+  test "machine path opens where no name character stands before it, so word holding one passes":
+    # Case as found on #753: word list of `lojban_tagger` defines gismu `xabju` at
+    #   `location/habitat/nest/home/abode x2`, and check read `/home/` inside that text.
+    let found = "  (\"xabju\", \"x1 dwells at location/habitat/nest/home/abode x2\"),\n"
+    check checkPathsMachine("a.nim", found).len == 0  # CONTRIBUTOR.md, System: no path there
+    for word in ["docs/home/index.html", "../home/x", "Shared/Users/x", "ABC:\\x", "~/home/x"]:
+      check checkPathsMachine("a.nim", "let p = \"" & word & "\"\n").len == 0  # path runs on
+    for opened in [
+      "/home/me\n", "let p = r\"C:\\Users\"\n", "path=/home/me\n", "let t = `/home/me`\n",
+      "let l = [\"x\",/home/me]\n", "let u = \"file:///home/me\"\n",
+      "--passC:\"-I/home/me/include\"\n",
+    ]:
+      check checkPathsMachine("a.nim", opened).len == 1  # each opener, flag of one letter too
+
+
   test "tsconfig sets every flag to true, read as text":
     let all_set = """{
   // TypeScript admits comments, which std/json refuses.
