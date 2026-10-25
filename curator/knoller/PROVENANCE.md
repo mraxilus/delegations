@@ -769,13 +769,18 @@ fixer, from one reading, as each layout rule does.
 **Each declaration takes a doc, as VI.1 asks, and the fix writes `TODO: Document.` where it has
 none.** The rule and its reading follow the ruling of the Architect on 2026-10-21, on the page of
 knoller rules of #443. The reader of names (`declared.nim`) gives each declaration its kind and
-reach. A global binding, a routine, a type, a field and an enum member alone on its line take a
-doc. A local binding, a parameter and a generic placeholder take none.
+reach. A global binding, a routine, a type, a field and an enum member take a doc. A local
+binding, a parameter and a generic placeholder take none.
 
-- Names that share one line, as `left*, right*: T`, share one doc, so that line reports once.
-- A doc passes in each place that the rule of doc position reads. That is the line of the
-  declaration, or a whole line just above it at its indent. It is also a whole line below the
-  declaration or its value, one level in. The place is the rule of position's, which runs next.
+- Names that share one line share one doc, which describes each of them, so that line reports
+  once. Fields such as `left*, right*: T` share it, and so do enum members listed on one line,
+  by the ruling on D1 of #752.
+- A doc passes on the line of the declaration, or on a whole line below it or its value, one
+  level in. Those are the places that the rule of doc position reads, and it runs next.
+- A whole line just above the declaration at its indent passes too, and the rule of position
+  leaves it there. But a doc that hangs below a declaration is that declaration's own, as the
+  rule of position reads its next line. So it never passes for a name below it, as for the
+  first field of an object under the doc of its type.
 - `TODO: Document.` passes. A doc whose text opens with another TODO still awaits text, so the
   fix writes `TODO: Document.` there. The other TODO moves above the declaration, and above a
   doc that stands above it, as a `#` comment. So no design note is lost.
@@ -806,7 +811,8 @@ doc. A local binding, a parameter and a generic placeholder take none.
   check`. The checks of the fix wait for their wiring (#443).
 - Verified by `suites/test_declarations.nim`: each kind, each place of a doc and each exception.
   It also holds the other TODO, and each shape of the fix, settled on a second run. It holds
-  each shape of a declaration that runs past its line too.
+  each shape of a declaration that runs past its line too, members on one line, and a doc that
+  hangs below a parent.
 
 **A one-line doc of a type, a field, a binding or an enum member stands on its line (STYLE.md
 §5).** It takes two spaces before `##`, where the joined line fits `LINE_MAX`. Otherwise it takes
@@ -1653,10 +1659,6 @@ there is unverified.
 
 ## Open questions
 
-- Enum members listed on one line, as `Pascal, Camel, Snake`, take no doc of their own yet.
-  STYLE.md §5 puts the doc of a member on its line, and one line cannot hold one for each. Each
-  member could take a line and a doc, or the list could pass under the doc of its type. The
-  Architect has not ruled.
 - Install by git URL needs the `?subdir=curator/knoller` form of nimble. It is not verified with
   the nimble that 2.2.12 ships.
 - Some rules read paths in the layout of this repository: `tests/`, a test stub, a drive file
