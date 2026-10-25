@@ -632,6 +632,27 @@ host saves only the extensions on its list, and `.pgascene` is not one. Loading 
 entry of a zip that ends `.pgascene` or `.rgascene`, stored or deflated. Rejected: a JSON scene, a
 second format to read.
 
+**The drawing buffer stays inside the viewport limit of the GL.** The GL clamps a viewport to
+`MAX_VIEWPORT_DIMS`, and a browser can keep a buffer wider than that, as one Firefox does. The scene
+then fills the viewport alone, and draws narrower than its canvas, with a bare band at the right
+(repository issue 725). So `ratioPixel` lowers the device pixel ratio, after its cap of 2.5, until
+the buffer fits that limit on both axes. One ratio serves both axes, so each pixel stays square, and
+the least diameter of a point follows it. Rejected: a viewport set from `drawingBufferWidth`, which
+the GL clamps the same way.
+
+Verified by a probe in the Architect's Firefox 152 on Windows, 2026-10-25. At a pixel ratio of 2, a
+canvas 2,472 px wide kept a buffer of 4,944 by 4,092 under a limit of 4,096. The field filled 4,096
+columns, 0.83 of the width, and left the rest bare. In a second reading, the canvas was 2,816 px
+wide, and the field stopped at 0.73. That Firefox reads back the viewport as asked, so only the
+picture shows the clamp. Rejected: a cap at `MAX_RENDERBUFFER_SIZE` too, which it reports as 2,048
+while it draws a buffer of 4,944.
+
+Verified by driven check: `driveBufferCovered` stands in a viewport limit of 3,300 below a buffer of
+4,000 by 1,750. The page then asks 3,300 by 1,444, and its viewport covers all of it. Verified by a
+break on purpose: without the lowered ratio, the viewport covers 3,300 of 4,000 columns. Chromium
+with SwiftShader cuts a buffer asked at 10,000 to 8,192, its viewport limit, so it shows no band
+unaided. **Unverified**: the page with this fix, in that Firefox.
+
 *Checked.* Verified by a cold run. `clean` removes `build`, `binaries` and `nimcache`. Then `drive`
 fetches every face, builds both front-ends, and drives them with no step run by hand, as the runner
 does. A second run fetches nothing.
