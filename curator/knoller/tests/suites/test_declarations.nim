@@ -130,7 +130,18 @@ suite "Declarations":
     check checkDocsMissing("a.nim", documented).len == 0
 
 
-  test "doc in each place rule of position reads passes, since place is that rule's":
+  test "doc hanging below declaration is its own, never doc of name below it at its indent":
+    # Cases as found over repository at `26475d42`: 76 fields, members, routines and types
+    #   passed under next-line doc of type or routine above them, which is that one's doc.
+    let held = "type\n  T* = object\n    ## Hold.\n    a*: int\n" &
+      "  E* = enum\n    ## Pick.\n    A, B\n" &
+      "proc p*() =\n  ## Do.\n  proc q() = discard\n"
+    check checkDocsMissing("a.nim", held).mapIt(it.line) == @[4, 7, 10]
+    let own = "const\n  A* = 1\n  ## Above, at its indent.\n  B* = 2\n"
+    check checkDocsMissing("a.nim", own).mapIt(it.line) == @[2]  # doc above B is B's own
+
+
+  test "doc in each place rule reads passes: own line, just above at its indent, one level in":
     let placed = "let a = 1  ## Same line.\n" &
         "## Above, at its indent.\nlet b = 2\n" &
         "const C = [\n  1, 2,\n]\n  ## After closing bracket, as `TYPES_BUILTIN` stands.\n" &
