@@ -2745,7 +2745,14 @@ proc nimBuildFrame(
   var (eye, frame) = CAMERA_PAGE.moveOriginView
   # Read local scale once for this frame, before extent reads clip planes off it.
   #   Walks every placement, so here rather than in `ensureViewOverlay`; see `REACH_NEAR`.
-  REACH_NEAR = reachNear(placements, SCENE_PAGE, CAMERA_PAGE.originView, eye, frame.forward)
+  REACH_NEAR = reachNear(
+    placements,
+    SCENE_PAGE,
+    CAMERA_PAGE.originView,
+    eye,
+    eye + CAMERA_PAGE.distance * frame.forward,
+    frame.forward,
+  )
   CAMERA_PAGE.reach_near = REACH_NEAR
   # Take framebuffer's height, not window's.
   #   Ribbon's width is measured in pixels drawn, and this build renders at

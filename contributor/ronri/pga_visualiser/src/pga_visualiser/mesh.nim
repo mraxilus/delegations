@@ -473,6 +473,8 @@ type
       ## Reader of world place reads it about this, once (`euclid.toView`).
     eye*: Position  ## Camera's eye position about `origin`, horizon geometry is anchored to.
       ## Stays in fixed apparent direction as camera pans or dollies.
+    pivot*: Position  ## Camera's pivot about `origin`: point reader looks at.
+      ## Line is drawn and picked from its point nearest it; see `tessellate`.
     radius_horizon*: float  ## How far from `eye` horizon geometry is drawn.
     forward*: Direction  ## Camera's sight axis, depth is measured along.
     axis_right*: Direction  ## Camera's screen-right axis; point's disc spans it.

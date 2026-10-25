@@ -1234,7 +1234,9 @@ proc renderFrame(
   #   `camera.drawExtentFor`.
   var (eye, frame) = camera.moveOriginView
   # Read local scale once for this frame, before extent reads clip planes off it.
-  REACH_NEAR = reachNear(placements, scene, camera.originView, eye, frame.forward)
+  REACH_NEAR = reachNear(
+    placements, scene, camera.originView, eye, eye + camera.distance * frame.forward, frame.forward
+  )
   camera.reach_near = REACH_NEAR
 
   # Derive extent aim reads, and keep motor before aim, so hold it makes is seen below.

@@ -1127,6 +1127,7 @@ func drawExtentFor*(
       extent_furniture: extentFurnitureFor(camera.scaleLocal * FACTOR_CLIP_FAR),
       origin: camera.origin_view,
       eye: eye,
+      pivot: eye + camera.distance * frame.forward,
       radius_horizon: radiusHorizonFor(far),
       forward: frame.forward,
       axis_right: frame.axis_right,

@@ -165,18 +165,23 @@ func reachFar*(placed: openArray[Placement], scene: Scene): float =
 
 
 func reachNear*(
-  placed: openArray[Placement]; scene: Scene; origin, eye: Position; forward: Direction
+  placed: openArray[Placement]; scene: Scene; origin, eye, pivot: Position; forward: Direction
 ): float =
   ## Measure how near nearest drawn object stands ahead of eye, along sight.
   ##   For `Camera.reach_near`, from frame's own placements.
-  ##   `eye` is about view `origin`; each world place is read about it, in components, so
-  ##   walk builds nothing for each object (Art. VII.1).
+  ##   `eye` and `pivot` are about view `origin`; each world place is read about it, in
+  ##   components, so walk builds nothing for each object (Art. VII.1).
   ##   Depth along sight, never distance, and never behind eye.
   ##     What reader turned away from is not drawn, and scale read off it would follow
   ##     that.
   ##   Object's own middle, with no drawn radius taken off: camera at planet's surface
   ##   then reads that planet's radius rather than zero, and near clip of one
   ##   four-hundredth of it still holds whole planet.
+  ##   Line stands where it passes nearest `pivot`, which is where it is drawn from; see
+  ##   `tessellate`.
+  ##     Never at its support: support, its point nearest world origin, stood 4.7e6 units
+  ##     behind eye of line picked far out, and next object ahead put near clip at 21.3
+  ##     units, so line 2.4e-7 off was cut away (#767).
   ##   Horizon kinds answer nothing, as they do for `reachOfPlacement`: neither stands
   ##   anywhere.
   ##   Zero where nothing is drawn ahead, which hands scale back to separation.
@@ -185,9 +190,21 @@ func reachNear*(
     if not scene.isAlive(handle) or not scene.isVisible(handle): continue
     template place: untyped = placed[handle]  # Alias; `let` deep-copies on JS backend.
     if place.kind notin {Case.PointAt, Case.LineThrough, Case.PlaneOn}: continue
-    let depth = ((place.at.x - origin.x) - eye.x) * forward.x +
-        ((place.at.y - origin.y) - eye.y) * forward.y +
-        ((place.at.z - origin.z) - eye.z) * forward.z
+    var
+      at_x = place.at.x - origin.x
+      at_y = place.at.y - origin.y
+      at_z = place.at.z - origin.z
+    if place.kind == Case.LineThrough:
+      # Slide support along line to its point nearest pivot, in components.
+      let length_squared = place.toward.x * place.toward.x +
+          place.toward.y * place.toward.y + place.toward.z * place.toward.z
+      if length_squared > 0.0:
+        let along = ((pivot.x - at_x) * place.toward.x + (pivot.y - at_y) * place.toward.y +
+            (pivot.z - at_z) * place.toward.z) / length_squared
+        at_x += along * place.toward.x
+        at_y += along * place.toward.y
+        at_z += along * place.toward.z
+    let depth = (at_x - eye.x) * forward.x + (at_y - eye.y) * forward.y + (at_z - eye.z) * forward.z
     if depth <= 0.0: continue
     if result <= 0.0 or depth < result: result = depth
 
