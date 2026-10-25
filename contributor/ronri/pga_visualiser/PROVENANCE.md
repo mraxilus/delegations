@@ -506,6 +506,27 @@ alone is a page that no checker can read. The page declares its own doctype, cha
 because a copy opened from file has nothing else to declare them. Without them that copy rendered in
 quirks mode, and decoded its text as Windows-1252.
 
+**The page draws through WebGL2 where the browser offers it, and through WebGL1 where it does not.**
+WebGL2 makes per-fragment depth and instancing core, where WebGL1 offers them as extensions. The
+Architect's phone offered WebGL1 without `EXT_frag_depth`, and WebGL2 with `gl_FragDepth`
+(repository issue 743). So on WebGL1 that phone kept linear depth, and the fault of the far field
+with it. The page asks for `webgl2` first, and falls back to `webgl`, so a browser without WebGL2
+still draws. The Architect ruled this order, D8 a, 2026-10-25.
+
+**One source serves both dialects.** Each shader is written once, in GLSL ES 1.00. Under WebGL2 a
+prelude opens it with `#version 300 es`, and maps `attribute`, `varying`, `gl_FragColor` and
+`gl_FragDepthEXT` onto their names in 3.00. A source asks for per-fragment depth through
+`DEPTH_FRAGMENT`, which each prelude defines where that depth exists. Rejected: a second copy of
+each of the nine sources in 3.00, which the sibling rule would hold in step by hand. Rejected:
+WebGL2 alone, which leaves a browser without it with no picture.
+
+Verified by driven check: `driveContextPaths` draws the opening scene through WebGL2, through
+WebGL1, and through WebGL1 without `EXT_frag_depth`. A stand-in browser refuses what each path
+lacks, on a page of its own. Once the picture stands still, WebGL2 and WebGL1 with the extension
+draw it the same to the pixel, and WebGL1 without it draws its own. Verified by a break on purpose:
+on `main`, which asks for WebGL1 alone, the first of these fails. **Unverified**: the Architect's
+phone.
+
 **Scripts share one global scope, rather than import each other.** TypeScript 7 removed `outFile`,
 so the compiler does not bundle, and the page cannot resolve ES imports without a server. Files
 carry no top-level `import` or `export`. `SCRIPTS` in `tools/build.nim` is the order they
@@ -1883,8 +1904,8 @@ field on the camera is dropped by `home`, and by every path that replaces the ca
 
 **Depth is logarithmic, and written for each fragment.** Every fragment shader on both front-ends
 writes `camera.depthClip` of its own view depth, which is `log2(D / near) / log2(far / near)` scaled
-to clip depth. It writes through `EXT_frag_depth` or through the `gl_FragDepth` of GL 3.3, so
-resolution is a fixed fraction of distance at every distance.
+to clip depth. It writes through the `gl_FragDepth` of WebGL2 and of GL 3.3, or through
+`EXT_frag_depth` on WebGL1. So resolution is a fixed fraction of distance at every distance.
 
 Rejected: linear depth with the near plane raised to hold the ratio at 100,000, which spends nearly
 every step inside the first orbit distances. An Android GPU then dropped the whole star field from
@@ -2292,8 +2313,9 @@ cut. The drawn line stands 0.466 px off exact either way, and the written depth 
 
 **The widening runs in the vertex shader on both front-ends.** One `RibbonRecord` of fifteen floats
 crosses the wire for each segment, or sixteen with the `fog` flag, where six CPU vertices cost 42
-floats. An instanced draw expands it: GL 3.3 core on the desktop, and `ANGLE_instanced_arrays` on
-WebGL1. Each vertex derives the across as `cross(head − tail, eye − tail)`.
+floats. An instanced draw expands it: GL 3.3 core on the desktop, WebGL2 core on the page, and
+`ANGLE_instanced_arrays` on WebGL1. Each vertex derives the across as `cross(head − tail, eye −
+tail)`.
 
 **Chain of custody.** The GLSL ships, and `mesh.expandRibbon` is its reference in Nim,
 sibling-marked with both shader sources. The suite holds the reference to the algebra. The near clip
@@ -4626,8 +4648,8 @@ that the runner carries that library. Assumed: nothing about the suite itself.
 - The conformal metric (`IS_CONFORMAL`) is unfinished in the library, and this build is rigid 4D.
 - A scene file is little-endian by rule, but only a little-endian host has ever written or read one,
   so the byte-swapping path is unexercised.
-- A page whose WebGL lacks `EXT_frag_depth` keeps linear depth. It keeps the fault of the far field
-  with it, and the disc of every plane at the depth of its centre.
+- A page on WebGL1 without `EXT_frag_depth` keeps linear depth. It keeps the fault of the far
+  field with it, and the disc of every plane at the depth of its centre.
 - The planet inclinations, ring phases and neighbour planes of the demo are stated simplifications.
 - Far from the world origin, storage steps: by 17 to 35 m two million units out, as at HD 222237 b
   of the demo. A stance that history restores, and the aim of several objects, step with it
