@@ -190,9 +190,9 @@ suite "Internal: Planner and engine are one rig":
 
 
   test "judge stops at every arm stood past shoulder's edge, held or free, and names it":
-    ## Upper arm past edge by more than `GIVE_EDGE` stops connection holding it, at that end, as
-    ## swing past its range does (`stoppedBy`, `Stop.Swing`).  Free arm past it stops couple,
-    ## named by its hand (`stoppedFree`, `gives`).  Arm inside stops nothing by swing.
+    ## Upper arm past edge by more than `GIVE_EDGE` stops connection holding it, named by its
+    ## hand, as swing past its range does (`stoppedBy`, `Stop.Swing`).  Free arm past it stops
+    ## couple, named by its hand (`stoppedFree`, `gives`).  Arm inside stops nothing by swing.
     ##   Engine's wall keeps every recorded arm inside give, so no recording reaches judge:
     ##     poses here are seeded, and stood where plan places them, nothing stepped.
     ##   Red with no reading of edge in judge: arm past edge and inside both swing ranges
@@ -208,7 +208,7 @@ suite "Internal: Planner and engine are one rig":
                              Body.Two)
       held_couple.placeBodies(start.chests, start.arms)
       for i, link in HAND_TO_HAND:
-        var expected = (why: Stop.None, end_index: -1)
+        var expected = (why: Stop.None, whose: none(Hand))
         for k in 0..1:
           let
             (who, arm) = (link.ends[k].body, link.ends[k].arm)
@@ -218,7 +218,7 @@ suite "Internal: Planner and engine are one rig":
             is_swung = margin(HUMAN.range[Dof.Extend], swing.extend) < -GIVE or
                 margin(HUMAN.range[Dof.Across], swing.across) < -GIVE
           if expected.why != Stop.None or not (is_swung or isPast(stance, arm, pose)): continue
-          expected = (Stop.Swing, k)
+          expected = (Stop.Swing, some(link.ends[k]))
           if not is_swung: inc held_past
         let got = held_couple.stoppedBy(i)
         if expected.why == Stop.Swing:

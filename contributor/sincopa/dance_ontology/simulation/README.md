@@ -61,7 +61,7 @@ rig.nim      every measurement, with its source
 body.nim     two bodies standing and facing; where the shoulders are
 limb.nim     one arm: forward kinematics, inverse kinematics, joint readings
 shoulder.nim where a shoulder lets its upper arm point, as two studies measured it
-contact.nim  arms against bodies and against arms, as geometry
+contact.nim  arms against bodies, as geometry
 hold.nim     what the couple is asked: which hands are joined, what may stop
 engine.nim   the rigid body engine, bound; nothing above it knows it is C
 rigid.nim    two dancers in that engine: capsules, joints, their ranges,
