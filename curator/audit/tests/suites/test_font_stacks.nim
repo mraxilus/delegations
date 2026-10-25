@@ -45,6 +45,14 @@ func charactersFound(found: JsonNode): seq[int] =
   found["index"]["characters"].getElems.mapIt(it["codepoint"].getInt).sorted
 
 
+func synthesisedFound(found: JsonNode): seq[(string, string, int, int)] =
+  ## Read each run `found.json` reports for page `index` drawn in bold browser synthesises:
+  ##   element, family, weight asked and weight its font face holds.
+  found["index"]["synthesised"].getElems.mapIt(
+    (it["element"].getStr, it["family"].getStr, it["weight"].getInt, it["matched"].getInt)
+  )
+
+
 func control(skipped: openArray[int] = []): JsonNode =
   ## Render control page as collector writes it, each numeral in run of its own, but `skipped`.
   result = %*{"runs": [], "declared": [], "refused": []}
@@ -180,6 +188,46 @@ suite "Font stacks":
     check found["index"]["refused"][0]["status"].getStr == "error"
 
 
+  test "run asking bold of family whose matched font face is lighter is synthesised (#730)":
+    # Case as found: pga_visualiser cut its maths font face to 400 alone, in copy of its page.
+    #   Chromium drew operators at 600 with 39% more ink, in bold it synthesised, and resolver
+    #   found nothing, since character counted as drawn.
+    let found = page(
+      "\"Noto Sans Math\"", 600, [OMEGA, ARROW], [rule("Noto Sans Math", "400", math)],
+    ).toFound(directory)
+    check found.charactersFound.len == 0  # drawn by font face page ships
+    check found.synthesisedFound == @[("p", "noto sans math", 600, 400)]  # once for family
+
+
+  test "bold is synthesised from weight 600 asked, where set matched is lighter":
+    # Chromium (`kBoldThreshold`) and Firefox (`SupportsBold`) bound it at 600; CSS Fonts 4 names
+    #   no bound (2.2.2).
+
+    proc synthesised(wanted: int, declared: openArray[string]): seq[(string, string, int, int)] =
+      ## Resolve omega at `wanted` against one rule for each weight `declared`.
+      page("Test", wanted, [OMEGA], declared.mapIt(rule("Test", it, math))).toFound(directory)
+        .synthesisedFound
+
+    check synthesised(600, ["400"]) == @[("p", "test", 600, 400)]  # first reading of #730
+    check synthesised(700, ["400", "600"]).len == 0  # second reading: 600 matched is bold
+    check synthesised(599, ["400"]).len == 0  # under bound, drawn as font face holds it
+    check synthesised(600, ["400 600"]).len == 0  # range holds weight asked
+    check synthesised(600, ["400 599"]) == @[("p", "test", 600, 599)]  # heaviest under bound
+    check synthesised(600, ["400", "700"]).len == 0  # past 500, upward first, to bold
+    check synthesised(900, ["300", "500"]) == @[("p", "test", 900, 500)]  # downward, to light
+    check synthesised(700, ["bold"]).len == 0  # keyword `bold` is `700`
+
+
+  test "family that draws character is judged, and family that lacks it is passed by":
+    # Mono ships 400 alone and lacks omega, so Sans draws omega at 600 it ships.
+    let rules = [rule("Mono", "400", sans), rule("Sans", "400", math), rule("Sans", "600", math)]
+    check page("Mono, Sans", 600, [E_ACUTE, OMEGA], rules).toFound(directory)
+      .synthesisedFound == @[("p", "mono", 600, 400)]  # e acute, which Mono draws
+    check page("Mono, Sans", 600, [OMEGA], rules).toFound(directory).synthesisedFound.len == 0
+    check page("Inter, Test", 700, [OMEGA], [rule("Test", "400", math)]).toFound(directory)
+      .synthesisedFound.len == 0  # font face of system draws, finding of its own
+
+
   removeDir(directory)
 
 
@@ -224,6 +272,20 @@ suite "Font faces judged":
     let verdict = found.toVerdict("written.json")
     check verdict.len == 1
     check "`Noto Sans` at weight `700`, status `error`" in verdict[0].message
+
+
+  test "run drawn in bold browser synthesises is finding, naming weight asked and found (#730)":
+    let found = %*{
+      "index": {"characters": [], "synthesised": [
+        {"element": "div#ruler", "family": "commit mono ui", "weight": 600, "matched": 400},
+      ], "refused": []},
+      "control": foundControl(),
+    }
+    let verdict = found.toVerdict("written.json")
+    check verdict.len == 1
+    check "`index`: `div#ruler` asks `commit mono ui` for weight `600`" in verdict[0].message
+    check "font face of weight `400`" in verdict[0].message
+    check verdict[0].path == "written.json"
 
 
   test "control page holding each numeral passes, and its characters are no finding":
