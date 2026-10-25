@@ -1068,31 +1068,31 @@ proc followed*(
   said
 
 func keyOfPlan(
-  rig: Rig, links: seq[Link], is_away: bool, wind: float, style: Style, turner: Body
+  rig: Rig, band: Band, links: seq[Link], is_away: bool, wind: float, style: Style, turner: Body
 ): string =
   ## Key of one path: every argument `planPath` reads, style field by field.
-  key(rig, links, $is_away, bits(wind), $turner, bits(style.gather), bits(style.leap),
+  key(rig, links, $band, $is_away, bits(wind), $turner, bits(style.gather), bits(style.leap),
       bits(style.stay), $style.seed, bits(style.margin), bits(style.room),
       bits(style.clearance), bits(style.slack))
 
 proc planned(
-  rig: Rig, links: seq[Link], is_away: bool, wind: float, style: Style, turner: Body
+  rig: Rig, band: Band, links: seq[Link], is_away: bool, wind: float, style: Style, turner: Body
 ): Path =
   ## Path `planPath` plans for these arguments, planned once in run whichever job asks it.
-  kept(PLANS, keyOfPlan(rig, links, is_away, wind, style, turner),
-       planPath(rig, links, is_away, wind, style, turner))
+  kept(PLANS, keyOfPlan(rig, band, links, is_away, wind, style, turner),
+       planPath(rig, band, links, is_away, wind, style, turner))
 
 proc pathsFor(
-  rig: Rig, links: seq[Link], is_away: bool, wind: float, style: Style, turner: Body
+  rig: Rig, band: Band, links: seq[Link], is_away: bool, wind: float, style: Style, turner: Body
 ): seq[Path] =
   ## Way this style plans wind, and where hold is its own mirror image, same style's plan
   ## of other way seen in mirror: rig is same either side, planner's starts are not.
-  result.add planned(rig, links, is_away, wind, style, turner)
+  result.add planned(rig, band, links, is_away, wind, style, turner)
   if isMirrorSame(links):
-    result.add mirrored(planned(rig, links, is_away, -wind, style, turner))
+    result.add mirrored(planned(rig, band, links, is_away, -wind, style, turner))
 
-type PlanAsk = tuple[rig: Rig, links: seq[Link], is_away: bool, wind: float, style: Style,
-                     turner: Body]
+type PlanAsk = tuple[rig: Rig, band: Band, links: seq[Link], is_away: bool, wind: float,
+                     style: Style, turner: Body]
   ## One path planned card may ask for, by every argument `planPath` reads.
 
 proc plannedIfFree(ask: PlanAsk): bool {.gcsafe, nimcall.} =
@@ -1100,18 +1100,21 @@ proc plannedIfFree(ask: PlanAsk): bool {.gcsafe, nimcall.} =
   ##   Path another thread is planning is passed over, not waited on: card's own fold
   ##     waits for it, and this thread plans another meanwhile.
   {.cast(gcsafe).}:
-    let key = keyOfPlan(ask.rig, ask.links, ask.is_away, ask.wind, ask.style, ask.turner)
+    let key = keyOfPlan(ask.rig, ask.band, ask.links, ask.is_away, ask.wind, ask.style,
+                        ask.turner)
     if not PLANS.claimed(key): return false
     var path: Path
     try:
-      path = planPath(ask.rig, ask.links, ask.is_away, ask.wind, ask.style, ask.turner)
+      path = planPath(ask.rig, ask.band, ask.links, ask.is_away, ask.wind, ask.style, ask.turner)
     except CatchableError:
       PLANS.forget(key)
       return false
     PLANS.keep(key, path)
     true
 
-proc planAhead(rig: Rig, links: seq[Link], is_away: bool, winds: seq[float], turner: Body) =
+proc planAhead(
+  rig: Rig, band: Band, links: seq[Link], is_away: bool, winds: seq[float], turner: Body
+) =
   ## Plan every path that these winds ask in every style, on every core at once, where
   ## answers are kept; card then folds them in its own order, as one thread would.
   ##   Each path is pure function of its arguments, so which thread plans it and when
@@ -1120,8 +1123,8 @@ proc planAhead(rig: Rig, links: seq[Link], is_away: bool, winds: seq[float], tur
   var asks: seq[PlanAsk]
   for wind in winds:
     for style in STYLES:
-      asks.add (rig, links, is_away, wind, style, turner)
-      if isMirrorSame(links): asks.add (rig, links, is_away, -wind, style, turner)
+      asks.add (rig, band, links, is_away, wind, style, turner)
+      if isMirrorSame(links): asks.add (rig, band, links, is_away, -wind, style, turner)
   discard onEveryCore(asks, plannedIfFree)
 
 type PlannedStill* = object
@@ -1154,10 +1157,10 @@ proc plannedStill*(
   ##   Plan at ease ends search, since nothing betters it; earlier of two equal plans is
   ##     kept.
   let ways = (if is_either_way: @[turns, -turns] else: @[turns])
-  planAhead(rig, links, is_away, ways, who)
+  planAhead(rig, band, links, is_away, ways, who)
   for way in ways:
     for style in STYLES:
-      for path in pathsFor(rig, links, is_away, way, style, who):
+      for path in pathsFor(rig, band, links, is_away, way, style, who):
         if not path.is_reached:
           result.tried.add none(float)
           continue
@@ -1217,9 +1220,9 @@ proc isPlannedReaching*(
     return isPlannedReaching(rig, band, twin.links, twin.turns, is_away, who, head)
 
   proc asked(): bool =
-    planAhead(rig, links, is_away, @[turns], who)
+    planAhead(rig, band, links, is_away, @[turns], who)
     for style in STYLES:
-      for path in pathsFor(rig, links, is_away, turns, style, who):
+      for path in pathsFor(rig, band, links, is_away, turns, style, who):
         if replayed(rig, band, links, is_away, head, path, should_stand = false).is_holding:
           return true
     false
@@ -1258,10 +1261,10 @@ proc plannedWay*(
   ##   Way that ends short of `most` stops where its last moment stands, and names nothing that
   ##     gave: no planned pose stands further on.
   let turns = (if step >= 0.0: abs(most) else: -abs(most))
-  planAhead(rig, links, is_away, @[turns], who)
+  planAhead(rig, band, links, is_away, @[turns], who)
   block search:
     for style in STYLES:
-      for path in pathsFor(rig, links, is_away, turns, style, who):
+      for path in pathsFor(rig, band, links, is_away, turns, style, who):
         let got = replayedWay(rig, band, links, is_away, head, path)
         if turnsHeld(got) > turnsHeld(result): result = got
         if turnsHeld(result) >= abs(most) - 1e-9: break search

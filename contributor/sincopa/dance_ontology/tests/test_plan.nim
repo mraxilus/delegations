@@ -381,7 +381,7 @@ suite "Internal: Planner and engine are one rig":
           i = (k - first_arm) div per_arm
           (owner, part) = ((if i < 2: Body.One else: Body.Two), (k - first_arm) mod per_arm)
         if part >= 1 or owner != who: expected.add k
-      for (a, b) in pairsCollided(initProblem(HUMAN, HAND_TO_HAND, false)):
+      for (a, b) in pairsCollided(initProblem(HUMAN, Band.Crown, HAND_TO_HAND, false)):
         if a == face: paired.add b
         elif b == face: paired.add a
       check paired.len == expected.len
@@ -390,7 +390,7 @@ suite "Internal: Planner and engine are one rig":
 
 
 suite "Internal: Planned turn":
-  let path = planPath(HUMAN, HAND_TO_HAND, false, CROSS, STYLES[0])
+  let path = planPath(HUMAN, Band.Crown, HAND_TO_HAND, false, CROSS, STYLES[0])
 
 
   test "plan winds hand-to-hand from rest to its cross":
@@ -491,9 +491,9 @@ suite "Internal: Planner's cost":
     for links in [HAND_TO_HAND, same_name, @[HAND_TO_HAND[0]]]:
       for is_away in [false, true]:
         for style in [STYLES[0], STYLES[13]]:
-          var problem = initProblem(HUMAN, links, is_away)
+          var problem = initProblem(HUMAN, Band.Crown, links, is_away)
           problem.style = style
-          (problem.lower, problem.upper) = bandAt(HUMAN, 0.3, 1.0, is_away, style.room)
+          (problem.lower, problem.upper) = bandAt(HUMAN, Band.Crown, 0.3, 1.0, is_away, style.room)
           let
             bounds = initBounds(HUMAN, style.margin, links)
             moving = movedPairs(HUMAN, problem)
