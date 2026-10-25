@@ -1150,9 +1150,14 @@ page less the engine over seven runs.
 | Page, 7 runs | 22.3 to 31.4% | 0.8 to 2.0% | 4.8 to 8.9% | 1.5 to 3.4% | 355 to 404 |
 | Page less engine | -2.5 to +4.3 | -0.9 to +0.4 | -2.7 to +1.6 | -1.3 to +0.5 | |
 
+**The loop that the suite samples reads the clock once for 256 products.** A read of the CPU clock
+of the process is a system call, and it costs about as much as one product. That cost falls outside
+PGA. With a read for each product, the runner read 49.5% on 2026-10-24, against a bound of 50%. On
+one delegate, 12 runs read 73.7 to 87.9% that way, and 94.9 to 100% with one read for 256 products.
+
 *Checked.* Verified by `suites.nim`: the rule names the owner of names from the built page and of
 desktop paths. It names a stack by its innermost owned frame, and the ring pools 20 s. On Linux, the
-sampler counts a loop of products as PGA's, at 82 to 85% of about 100 samples. Verified by driven
+sampler counts a loop of products as PGA's, at 94.9 to 100% of 99 samples. Verified by driven
 check: the page from a file says why once, and the served page agrees with the engine on each side.
 Verified on 2026-10-06 by `xvfb-run -a binaries/rga_visualiser --hidden --novsync --timings
 --frames:300 --demo:5038`: the desktop figures above.
