@@ -13,19 +13,23 @@ cmd: "nim $target --hints:off -d:testing -d:nodejs -d:nimUnittestAbortOnError:on
 ##     return: law runs where mechanism runs (Article IX.5).  Viewer writes its
 ##     sentences straight into elements, so they are held in one table
 ##     (`rig_view.VERDICTS`) that law reads instead.
-##   Neither needs browser: nothing called here touches document.
+##   No law needs browser.  Laws that count touch no document, and law of verdict writes only
+##     into one `std/dom` keeps in node for tests (`-d:nodejs`).
 ##   Runs on JS target alone, because both pages import `std/dom`.
 ##   Also holds what viewer says of where couple stand to recording it plays: its line is
 ##     built from recording (`rig_view.where`), so law reads recording itself, through node.
+##   Also holds verdict viewer gives each still to how simulation reached it, as recording
+##     marks it: caption writes verdict into element, so law runs caption and reads element.
 
 {.experimental: "strictFuncs".}
 
 when compileOption("profiler"): import std/nimprof
 
-import std/[jsffi, math, options, os, strutils, unittest]
+import std/[jsffi, json, math, options, os, strutils, unittest]
+from std/dom import `id=`, appendChild, createElement, document, getElementById
 
-import ../design/[plain, rig_view]
-from ../design/rig_view {.all.} import toFixed, where
+import ../design/[plain, rig_view, twins]
+from ../design/rig_view {.all.} import caption, ENTRIES_ALL, PICK, toFixed, where
 import ../app/app {.all.}
 import ../src/dance_ontology
 
@@ -36,6 +40,9 @@ const
   FLOOR_MOMENTS = 394
     ## Least moments read: half of 788, every still's and sweep's, read 2026-10-12.  Reader that
     ##   loses its way, by wrong file or wrong keys, reads nearly none.
+  FLOOR_STILLS_PLANNED = 4
+    ## Least planned stills read that hold: half of nine, rounded down, read 2026-10-23.
+  FLOOR_STILLS_WOUND = 43  ## Least wound stills read that hold: half of 86, read 2026-10-23.
 
 
 proc readText(path: cstring): cstring {.importjs: "require('fs').readFileSync(#, 'utf8')".}
@@ -141,4 +148,50 @@ suite "Internal: The rig viewer says where couple stand":
     checkpoint "Moments read: `" & $read & "`.  Wrong distance: `" & $wrong.len & "`, from: `" &
         wrong[0 ..< min(wrong.len, 6)].join(", ") & "`."
     check read >= FLOOR_MOMENTS
+    check wrong.len == 0
+
+
+
+suite "Internal: The rig viewer says how the simulation reached each still":
+  test "every still that holds is said to be planned or wound, as the recording marks it":
+    ## Viewer's verdict on still that holds (`rig_view.caption`) says how simulation reached it:
+    ##   wound from rest and let settle (`walk.stood`), or planned arm by arm, engine standing
+    ##   each moment of plan (`walk.plannedStill`), as recording marks it (`planned`).
+    ##   Domain: every still page shows (`twins.stillsShown`), twin card as still it names,
+    ##     mirrored, so C06 and C07 keep mark of C02 and C01.  Still that holds no pose keeps no
+    ##     moment and is passed over; recording keeps none now.
+    ##   Caption writes into element rather than returning markup, so law gives it two elements
+    ##     it writes into, and reads verdict back (Article IX.5).
+    ##   Regression of finding B-15 of issue 698, as found on 2026-10-22 in audit of project:
+    ##     viewer said every still that holds was wound from rest and let settle, where seven
+    ##     kept stills come from plan, A11, C01, C02, D01, D03, D06 and D07, and C06 and C07
+    ##     mirror two of them.
+    document.body = document.createElement("body")
+    for name in [cstring"where", cstring"verdict"]:
+      let element = document.createElement("p")
+      element.id = name
+      document.body.appendChild(element)
+    let shown = stillsShown(parseJson($readText(cstring(KEPT_RIG))))
+    ENTRIES_ALL = parsed(cstring($ %shown))
+    var
+      wrong: seq[string]
+      planned, wound = 0
+    for i, still in shown:
+      if not still.hasKey("at") or still["at"].len == 0: continue
+      PICK = i
+      caption()
+      let said = $document.getElementById("verdict").innerHTML
+      if still{"planned"}.getBool:
+        inc planned
+        # Whole verdict that bounds above count, saying still holds, planned and never wound.
+        if said notin VERDICTS or not said.startsWith("Holds.") or "planned" notin said or
+            "wound" in said:
+          wrong.add still["key"].getStr
+      else:
+        inc wound
+        if said != VERDICTS[0]: wrong.add still["key"].getStr
+    checkpoint "Planned read: `" & $planned & "`.  Wound read: `" & $wound & "`.  " &
+        "Said wrongly: `" & $wrong.len & "`, of: `" & wrong.join(", ") & "`."
+    check planned >= FLOOR_STILLS_PLANNED
+    check wound >= FLOOR_STILLS_WOUND
     check wrong.len == 0

@@ -147,8 +147,9 @@ export async function drivePan(page: Page): Promise<void> {
  *  holds it by projection; this holds page's wiring: press takes point, and step reads
  *  canvas size and selection's reach.
  *  Off middle column, where that turn was greatest. Pressed where nothing stands, since right
- *  press on object arms drag instead. Last drag runs down from top of frame with drift
- *  across, as hand drags.
+ *  press on object arms drag instead. Drag below runs from where drag toward leaves camera,
+ *  far out: nearer, ground covers lower half of frame, and plane short of filling frame is
+ *  handle. Last drag runs down from top of frame with drift across, as hand drags.
  */
 export async function driveStretch(page: Page): Promise<void> {
   await clearTheGlass(page);
@@ -162,11 +163,11 @@ export async function driveStretch(page: Page): Promise<void> {
   const row = size.height / 2;
   const column = size.width / 2;
 
-  // Away from pivot's row on either side, and toward it.
+  // Away from pivot's row above, toward it, then away below from far out.
   const drags = [
     { way: 'above it and away', press: { x: column + 80, y: row - 90 }, reach: row - 220 },
-    { way: 'below it and away', press: { x: column - 80, y: row + 90 }, reach: row + 210 },
     { way: 'toward it', press: { x: column + 80, y: row - 380 }, reach: row - 60 },
+    { way: 'below it and away', press: { x: column - 80, y: row + 90 }, reach: row + 210 },
   ];
   for (const { way, press, reach } of drags) {
     const is_open = await page.evaluate(({ x, y }) => {

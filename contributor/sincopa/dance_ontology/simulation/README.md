@@ -6,11 +6,11 @@ from `../src`. The notation is a shorthand for two people with arms of a given l
 shorthand cannot check itself. The simulation is what the notation is a shorthand for. It is kept
 apart so that what it says is evidence, and not an echo.
 
-It is not kept apart in its words. It uses the agreed words of the project where one fits, and
-`GLOSSARY.md` holds the four that are its own: rig, pose, strain and block. It is a witness because
-it imports no code and is told no answer. Where the simulation measures what the ontology states,
-the translation is evidence and not identity. So `words.nim` holds that translation in one table,
-and `verdicts.nim` uses it.
+It is not kept apart in its words. It uses the agreed words of the project where one fits.
+`GLOSSARY.md` holds those that are its own, such as rig, pose, strain, block, band, sweep, walk,
+path, style and verdict. It is a witness because it imports no code and is told no answer. Where the
+simulation measures what the ontology states, the translation is evidence and not identity. So
+`words.nim` holds that translation in one table, and `verdicts.nim` uses it.
 
 ## What it is
 
@@ -23,12 +23,12 @@ A joint resists as it comes near the end of its range, and does not stop at a wa
 shoulder has no ease, because no source gives one, so a stiff wall holds every upper arm there, held
 or free. A turn is walked a fiftieth of a turn at a time, and the engine carries the arms on. So an
 arm that has gone round a body stays round it. Where the couple stand is chosen for each turn, and
-nothing is fixed except that the two bodies stay apart. Over the crown, a joined hand that sinks
-under the band stops the walk once the couple are not face to face.
+nothing is fixed except that the two bodies stay apart. Held above, a joined hand that sinks under
+the band stops the walk once the couple are not face to face.
 
 Where the walk gives short, the turn is planned. The plan chooses every joint of both arms at each
-moment, and keeps every capsule clear and every joint in its range. The engine then follows the
-plan, and judges it as it judges a walk.
+moment, and keeps every capsule clear and every joint in its range. The engine then stands every
+moment of the plan, and judges it as it judges a still (`rigid.gives`).
 
 `PROVENANCE.md` records the design and the reason for each part of it. See Body rig, Rigid body
 engine, Joints that give, Walk and lift, Stance and strain, and Planned turn.
@@ -61,7 +61,7 @@ rig.nim      every measurement, with its source
 body.nim     two bodies standing and facing; where the shoulders are
 limb.nim     one arm: forward kinematics, inverse kinematics, joint readings
 shoulder.nim where a shoulder lets its upper arm point, as two studies measured it
-contact.nim  arms against bodies and against arms, as geometry
+contact.nim  arms against bodies, as geometry
 hold.nim     what the couple is asked: which hands are joined, what may stop
 engine.nim   the rigid body engine, bound; nothing above it knows it is C
 rigid.nim    two dancers in that engine: capsules, joints, their ranges,

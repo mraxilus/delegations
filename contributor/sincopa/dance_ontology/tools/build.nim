@@ -50,7 +50,7 @@
 ##   Cost: `types` and `drive` need node and npm, and `drive` needs Chromium, which it fetches
 ##     through Playwright unless `DANCE_CHROMIUM` names one.
 ##   Cost: `types` compiles this driver, and so project code it imports, on koch's compiler
-##     (`curator/audit/src/plan.nim`, `typeJobs`). That holds while project's pin is koch's,
+##     (`curator/audit/src/plan.nim`, `runJobsType`). That holds while project's pin is koch's,
 ##     2.2.12 both; pin that moves first splits driver.
 
 {.experimental: "strictFuncs".}
@@ -89,14 +89,17 @@ const
     ##   carries, which is honest limit rather than omission.
     ##   Flag says whether runner installs it: it installs what `system` prints, and opens
     ##   nothing else.  `engine` needs first two and C compiler, which Nim brings already and
-    ##   so is not named twice, and every suite builds engine.  `types` and `drive` need node.
+    ##   so is not named twice, and each suite compiled to C builds engine.  `types` and
+    ##   `drive` need node.
     ##   `libbrotli1` serves `koch drive`, which reads `cmap` of each font face pages ship:
     ##   Commit Mono ships as `woff2`, whose tables are one Brotli stream (CONTRIBUTOR.md,
     ##   Pages and assets).
     ##   Chromium that `drive` renders with is Playwright's own, which `drive` fetches at
     ##   revision lock pins, so runner installs no browser.  `chromium` here is `shot`'s, which
     ##   person runs by hand, and `shot` prints it where it builds.  `pages`, `fixtures`,
-    ##   `confirmed`, `watched`, `verdicts` and `clean` need Nim alone.
+    ##   `confirmed`, `watched` and `clean` need Nim alone.  `verdicts` compiles engine, as
+    ##   `rig`, `modelled`, `answers`, `record` and `floors` do, so each needs what `engine`
+    ##   needs.
   SOURCES = [
     ("box3d", "https://github.com/erincatto/box3d",
      "47d7f7cc7e091142c08d11dc7d2e493c5d34f536",
@@ -214,8 +217,9 @@ proc engine() =
   ## Clone engine at its pinned commit and archive it into one library.
   ##   Built by C compiler and `ar` rather than by engine's own CMake: CMake would be
   ##     third build driver in one project, where registry admits no second, and nothing
-  ##     in library's fifty files needs generating. Cost: build flags are this file's
-  ##     rather than upstream's, and `-O2 -std=c17` is what upstream's release build sets.
+  ##     in library's fifty files needs generating. Cost: build flags are this file's,
+  ##     `-O2 -std=c17`, rather than upstream's; upstream's Linux release build sets
+  ##     `-O3 -DNDEBUG -std=gnu17 -ffp-contract=off` (`PROVENANCE.md`, Rigid body engine).
   ##   Rebuilt only where library is absent, since fifty files cost twenty seconds.
   ##   Cloned whole rather than shallow at ref: engine's history is 41 commits and 4.6 MB, so
   ##     whole clone costs nothing and reaches any commit without ref to fetch. Pin is therefore
