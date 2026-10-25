@@ -6,14 +6,15 @@
 ##     are spelled from five pieces, space, `/` and `é` among them, so names collide and share
 ##     prefixes often; tags draw one to three gismu from every gismu of list (Article IX.3).
 ##   Canonical text is written by suite, never by `toText`: names sorted and distinct, tags
-##     distinct and spelled as gismu joined by `+`, so reader and writer are held apart.
+##     distinct and spelled as gismu joined by `+`. One text is also read into values written
+##     out by hand, so reader is held apart from writer, and no fault both share cancels.
 ##   Steps of random walk change entity index holds three times in four, and removal takes tags
 ##     entity holds three times in four, all of them one time in three, so removals that change
 ##     index and that drop entity are common; floors hold both counts.
 ##   Samples are drawn into pools allocated once, after one seeding per test, and served by
 ##     `served`; steps of walk are drawn before walk reads index they change.
 ##   Corpus holds no name of more than four pieces, and no tag of more than three gismu. Entity
-##     holds at most 8 tags in random indexes and 19 in walks, measured at `SEED`, since names
+##     holds at most 9 tags in random indexes and 19 in walks, measured at `SEED`, since names
 ##     collide and changes merge.
 
 {.experimental: "strictFuncs".}
@@ -72,7 +73,7 @@ const
   ]
     ## Canonical texts written by hand: empty index, one entity, names of space, path and `é`.
   WORDS_GISMU = block:
-    ## Every gismu of list, cmavo left out, since tag holds gismu alone.
+    ## Every gismu of list, cmavo left out, since random tags draw gismu alone.
     var words: seq[Word]
     for i in 0..<LIST_GISMU.len:
       if Word(i).kind == Kind.Gismu: words.add Word(i)
@@ -215,6 +216,13 @@ suite "Internal: Index":
     for text in TEXTS_CANONICAL:
       let loaded = text.readIndex
       check loaded.is_loaded and loaded.index.toText == text  # round trip, text by hand
+    let read = TEXTS_CANONICAL[2].readIndex.index
+    check read.names == @[" a", "notes/plan.md", "é"]  # reader alone: names as written
+    check read.entity("notes/plan.md").get.tags == @[
+      readTanru("vreji").get, readTanru("datni").get, readTanru("datni+datni").get,
+    ]  # reader alone: tags in order written, writer never asked
+    check read.entity(" a").get.tags ==
+        @[readTanru("datni+vreji").get, readTanru("cukta").get]  # reader alone, first line
     let unfinished = readIndex(HEADER & "\nnotes\tdatni")
     check unfinished.is_loaded and unfinished.index.names == @["notes"]  # final line feed optional
     for (text, canonical) in [  # non-canonical text: line feed missing, tag repeated, spaces
