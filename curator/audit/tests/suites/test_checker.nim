@@ -41,6 +41,21 @@ suite "Checker":
     check routinesExported("func `<`*(a, b: Finding): bool =\n").len == 0
 
 
+  test "line opening inside multi-line string is data, never routine, and fixer leaves it":
+    # Case held: edits `flatc.nim` carries quote Nim runtime of FlatBuffers in `"""`, and
+    #   `proc Finish*` inside one read as routine exported and named by nothing (#755). Domain
+    #   is each routine keyword, on line opening inside multi-line string literal.
+    for keyword in ["func", "proc", "iterator", "template", "macro", "converter", "method"]:
+      let
+        quoted = "const EDIT = \"\"\"\n" & keyword & " Finish*(this) =\n  discard\n\"\"\"\n"
+        calls = "let x = Finish(1)\nlet y = Finish(2)\n"
+      check routinesExported(quoted & "func real*(): int = 1\n") == @["real"]
+      check checkExportsDead(["m.nim", "n.nim"], [quoted, "let x = 1\n"], []).len == 0
+      # Two calls outnumber one declaration, so fixer reading quoted line as declaration drops
+      #   its `*`, and so rewrites data.
+      check fixExportsDead("m.nim", quoted & calls, ["Finish"]).source == quoted & calls
+
+
   test "exported routine of every keyword is collected, `method` among them, and fixed alike":
     # Case held: `ROUTINES` of `checker.nim` lacked `method`, so exported `method` nothing names
     #   was never dead, and its `*` never dropped (#557); domain is each keyword opening routine.
