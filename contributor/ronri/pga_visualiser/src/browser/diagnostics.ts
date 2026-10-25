@@ -223,6 +223,31 @@ function meanPhase(name: string, frames: number) {
   }
   return count === 0 ? null : total / count;
 }
+// Step of clock at or over which brackets show ring's mean rather than its median.
+//   Phase under one step reads 0 in most frames, so median of those frames is 0, while mean
+//   stays fair: step falls inside phase in share of frames phase fills (repository issue 724).
+//   Firefox steps 1 ms, and Chromium 0.1 ms.
+const MILLISECONDS_STEP_COARSE = 1;
+// Calls of clock that read of its step makes at most: simulated clock of driven checks never
+//   moves, so count ends read where time cannot.
+const CALLS_STEP_CLOCK = 200000;
+// Read smallest step page's clock takes, over its first few; 0 where it took none.
+function readStepClock(): number {
+  let step = Infinity;
+  let last = performance.now();
+  let steps = 0;
+  for (let i = 0; i < CALLS_STEP_CLOCK && steps < 4; i += 1) {
+    const now = performance.now();
+    if (now === last) continue;
+    step = Math.min(step, now - last);
+    last = now;
+    steps += 1;
+  }
+  return step === Infinity ? 0 : step;
+}
+// Whether clock is too coarse for median, read once: step is browser's, and fixed for page.
+const is_clock_coarse = readStepClock() >= MILLISECONDS_STEP_COARSE;
+elementById('diagnostic-clock-coarse').hidden = !is_clock_coarse;
 // Scratch median borrows rather than allocating: this runs per phase per refresh, and.
 //   rows tree can hold grow faster than frames between refreshes do. Filter
 //   plus sort built two arrays each time and threw both away.
@@ -1303,19 +1328,20 @@ function refreshDiagnostics() {
 
   // Each step of drawing process, as `mean over 200 ms (median over the ring)`:
   //   short mean is what reader watches while changing something, long median is settled figure to
-  //   act on.
+  //   act on. Where clock is coarse, ring's mean stands in for median; see `is_clock_coarse`.
   //   Phase that has not run at all stays em dash.
   for (const [name] of PHASES_DIAGNOSTIC) {
     if (!isPhaseShown(name)) continue; // Inside closed node; nobody is reading it.
     const median = medianPhaseHeld(name);
     if (median === null) continue;
-    // Phase idle for whole window shows its median rather than nothing: it is step.
+    const settled = is_clock_coarse ? meanPhase(name, FRAMES_HISTORY) : median;
+    // Phase idle for whole window shows its settled figure rather than nothing: it is step.
     //   that runs, and "0.00" would claim it had run for free this window.
     const recent = meanPhase(name, frames_recent);
-    const shown = recent === null ? median : recent;
+    const shown = recent === null ? settled : recent;
     writeText(
       element_phase[name] ?? null,
-      (shown ?? 0).toFixed(2) + ' (' + (median ?? 0).toFixed(2) + ') ms');
+      (shown ?? 0).toFixed(2) + ' (' + (settled ?? 0).toFixed(2) + ') ms');
     // Count beside row's own name, so **every** value ends in `ms` and times.
     //   down tree finish in one column. Zero is shown rather than left off: kind
     //   present but empty says something kind that is absent does not.
