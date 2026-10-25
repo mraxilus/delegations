@@ -1,320 +1,398 @@
 # Arithmetic of homogeneous scalars, and the radius norm as their root
 
-At pin, each norm returns `MultivectorScalars`, the pair x𝟏 + y𝟙 of the scalar and the antiscalar,
+At pin, each norm returns `MultivectorScalars`, the pair s𝟏 + t𝟙 of the scalar and the antiscalar,
 and takes a float root of one coefficient. A new module, `pga/scalars.nim`, gives that pair the
 functions of Lengyel's `DualNum` under each product. They are an inverse, a root, an inverse root,
 an exponential, a sine, a cosine and a tangent, with a division. Each is written once in ε², the
-square of 𝟙, and a function without a value for some pair returns an `Option`. Under the conformal
-metric, the radius norm becomes the root of 𝐦 ∘ 𝐦 under the antiproduct. So at cga4d and cga5d an
-imaginary object has an imaginary radius, where pin gives NaN.
+square of 𝟙, and its form under the antiproduct is derived from it at compile time. A function
+without a value for some pair returns an `Option`, in every algebra.
+
+The products of pairs are the basis-set products of P04. P04 lacks `⟑`, so this change adds it to
+`pga/basis_sets.nim` until P04 gives it. Under the conformal metric, the radius norm becomes the
+root of 𝐦 ∘ 𝐦 under the antiproduct. So at cga4d and cga5d an imaginary object has an imaginary
+radius, where pin gives NaN.
 
 ## Add `pga/scalars.nim`
 
 ```nim
-## Define functions of homogeneous scalar x𝟏 + y𝟙 under each product, for any algebra.
+## Define functions of homogeneous scalar s𝟏 + t𝟙 under each product, for any algebra.
 ##
 ## Map of names to Lengyel's `DualNum` (`TSDualNum.h`, Terathon Math Library) and notation:
 ##
 ##   |-----------------|-----------------|-----------------|
 ##   | Name            | Lengyel         | Notation        |
 ##   |-----------------|-----------------|-----------------|
-##   | inverse         | Inverse         | z⁻¹             |
-##   | sqrt            | Sqrt            | √z              |
-##   | sqrtInverse     | InverseSqrt     | 1 / √z          |
-##   | exp             | Exp             | eᶻ              |
-##   | sin             | Sin             | sin z           |
-##   | cos             | Cos             | cos z           |
-##   | tan             | Tan             | tan z           |
-##   | inverseAnti     | AntiInverse     | z⁻¹ under ⟇     |
-##   | sqrtAnti        | AntiSqrt        | √z under ⟇      |
-##   | sqrtInverseAnti | AntiInverseSqrt | 1 / √z under ⟇  |
-##   | expAnti         | AntiExp         | eᶻ under ⟇      |
-##   | sinAnti         | AntiSin         | sin z under ⟇   |
-##   | cosAnti         | AntiCos         | cos z under ⟇   |
-##   | tanAnti         | AntiTan         | tan z under ⟇   |
-##   | /               | operator /      | y ⟇ z⁻¹         |
+##   | inverse         | Inverse         | 𝐦⟑⁻¹            |
+##   | inverseAnti     | AntiInverse     | 𝐦⟇⁻¹            |
+##   | sqrt            | Sqrt            | ⟑√𝐦             |
+##   | sqrtAnti        | AntiSqrt        | ⟇√𝐦             |
+##   | sqrtInverse     | InverseSqrt     | (⟑√𝐦)⟑⁻¹        |
+##   | sqrtInverseAnti | AntiInverseSqrt | (⟇√𝐦)⟇⁻¹        |
+##   | exp             | Exp             | exp⟑𝐦           |
+##   | expAnti         | AntiExp         | exp⟇𝐦           |
+##   | sin             | Sin             | sin⟑𝐦           |
+##   | sinAnti         | AntiSin         | sin⟇𝐦           |
+##   | cos             | Cos             | cos⟑𝐦           |
+##   | cosAnti         | AntiCos         | cos⟇𝐦           |
+##   | tan             | Tan             | tan⟑𝐦           |
+##   | tanAnti         | AntiTan         | tan⟇𝐦           |
+##   | /               | operator /      | 𝐦 ⟇ 𝐧⟇⁻¹        |
 ##   |-----------------|-----------------|-----------------|
 ##
-## Square ε² of 𝟙, i.e. 𝟙 ⟑ 𝟙 = ε²𝟏, fixes arithmetic of pair:
+## Square ε² of 𝟙 under geometric product, i.e. 𝟙 ⟑ 𝟙 = ε²𝟏, fixes arithmetic of pair:
 ##   0 under rigid metric, so pair is dual number, as Lengyel's `DualNum` is;
 ##   -1 at cga4d and cga5d, so pair is complex number;
 ##   +1 at cga3d and cga6d, so pair is split-complex number.
 ##   Symbol follows dual unit ε of `DualNum`, which writes pair s + tε with ε² = 0.
-## ε² is read from library's table of geometric product, and static check holds it to metric 𝖌.
-##   Check holds it equal to rev(n) det 𝖌, for any dimension and metric, so table that disagrees
-##     with metric fails build.
-##   𝟙 ⟑ 𝟙̃ = (𝟙 • 𝟙)𝟏, where 𝟙 • 𝟙 = det 𝖌 is entry of exomorphism 𝐆 on 𝟙.
-##   Reverse gives 𝟙̃ = rev(n) 𝟙, with rev(n) = (-1)^(n(n - 1)/2), so 𝟙 ⟑ 𝟙 = rev(n) det 𝖌 𝟏.
-##   Determinant takes off-diagonal null pair of conformal metric as it is, and degenerate metric
-##     gives 0 whatever sign of reverse.
-##   Check compares two paths from 𝐆: short one takes its entry on 𝟙 with sign of reverse, long one
-##     runs through dual and transwedges to product table.
+##   Coefficients s and t lie on 𝟏 and 𝟙, as basis table of `algebra.nim` names them.
+## Squares are constructed from product tables, as Architect ruled for P10 on 2026-10-09.
+##   Static check holds them to rev(n) det 𝖌, which 𝟙 ⟑ 𝟙 equals for any dimension and metric.
+##     𝟙 ⟑ 𝟙̃ = (𝟙 • 𝟙)𝟏, where 𝟙 • 𝟙 = det 𝖌 is entry of exomorphism 𝐆 on 𝟙, by definition.
+##     Reverse gives 𝟙̃ = rev(n) 𝟙, with rev(n) = (-1)^(n(n - 1)/2).
+##   Check is short path from 𝐆; table is long path from 𝐆, through dual and transwedges.
+##   Cost: check trusts 𝐆, as both paths start there.
 ## Each function is written once in ε², as f on eigenvalues of pair.
 ##   Dual form reduces to Lengyel's, complex to principal complex function, split-complex to f on
 ##     each idempotent.
 ##   Cost: ε² outside -1..1 needs scaling by its root, which no metric of library gives.
-## Each form under antiproduct is complement of its form under geometric product.
-##   Complement swaps 𝟏 and 𝟙 and carries ⟑ to ⟇, as library derives each antiproduct.
-##   Cost: two swaps for each call, unmeasured.
-## Absence lives in return type, never NaN.
-##   Inverse, inverse root, tangent and division are optional, as each lacks value somewhere.
-##   Root is plain where every pair has root, as in complex algebra, else optional.
-##   Cost: caller spanning algebras branches on `MultivectorScalarsRoot`.
+## Each form under antiproduct is derived from its form under geometric product at compile time.
+##   Complement swaps 𝟏 and 𝟙 and carries ⟑ to ⟇, as `constructAnti` derives each table.
+##     So `defineAnti` emits body again, with each name of `LUT_COMPLEMENT_BY_NAME` swapped.
+##     Each call becomes call of its form under ⟇ where one is declared, so compositions follow.
+##   Functions are not linear, so no table holds them, and derivation acts on their code.
+##   Cost: body calls each float function through its operand, e.g. `t.sqrt`, or by module.
+## Products of pairs are basis-set forms of P04, so module writes none of them.
+## Absence lives in return type, never NaN, and each function has one type in every algebra.
+##   Inverse, root, inverse root, tangent and division are optional, as each lacks value somewhere.
+##   Each unwraps by test and `get`, as `gradeAnti` does, and never by `map`.
+##     Closure for `map` allocates on heap where it captures, as generated C shows.
+##   Cost: root is never none at cga4d and cga5d, yet caller there unwraps it.
 ## Root takes larger part by root and smaller by division, so neither cancels.
-##   Cost: one branch on sign of bulk.
+##   Cost: one branch on sign of s.
 ## Domain of root compares exactly, as no scale is in hand there.
 ##   Cost: 𝐦∘𝐦 of point on null cone rounds either side of zero, so caller compares at scale of 𝐦.
+## Each definition precedes its use, as `codeReordering` cannot see functions `defineAnti` emits.
+##   Cost: helpers such as `constructSquare` come before what they serve.
 
 {.experimental: "strictFuncs".}
 
-import std/[math, options, strformat]
+import std/[macros, math, options, strformat, tables]
 
-import ./[algebra, cayleys, multivectors, operators]
-
-
-
-#[ Type Definitions ]#
-
-type MultivectorScalarsRoot*[S: static int] =
-  (when S == -1: MultivectorScalars else: Option[MultivectorScalars])
-  ## Define root under square `S` of non-unit part: plain where every pair has root, else optional.
-  ##   Only complex pair, `S` = -1, has root of each pair.
+import ./[algebra, basis_sets, cayleys {.all.}, emitters, multivectors, operators]
 
 
 
-#[ Square Of Antiscalar ]#
+#[ Square Definitions ]#
 
-func coefficient(terms: seq[BasisSigned], target: Basis): int {.compileTime.} =
-  ## Sum signed coefficients of target in entry of library's table.
-  ##   Empty entry gives 0, as degenerate metric leaves exomorphism of 𝟙 empty.
-  ##   Term landing on other basis fails build, since pair would not close under product.
-  for term in terms:
-    doAssert term.basis == target, &"Entry must land on `{target}` alone; got `{term.basis}`."
-    result += (if term.is_negated: -1 else: 1)
-
-
-const
-  SQUARE_WEIGHT* =
-      coefficient(CAYLEYS_WEDGE_DOT.base[Basis.scalarAnti][Basis.scalarAnti], Basis.scalar)
-    ## Square ε² of 𝟙 under geometric product, read from library's table, i.e. 𝟙 ⟑ 𝟙 = ε²𝟏.
-  SQUARE_BULK* =
-      coefficient(CAYLEYS_WEDGE_DOT.anti[Basis.scalar][Basis.scalar], Basis.scalarAnti)
-    ## Square ε² of 𝟏 under antiproduct, read from library's table, i.e. 𝟏 ⟇ 𝟏 = ε²𝟙.
-
-# Validate squares read from product tables against metric, and block of 𝟏 and 𝟙 pair assumes.
-#   Metrics of library give ε² in -1..1; outside, lift range by scaling by its root in
-#     `cosSin` and in root of negative bulk.
-static:
-  doAssert SQUARE_WEIGHT in -1..1,
-    &"Square of 𝟙 under ⟑ must be -1, 0 or 1; got `{SQUARE_WEIGHT}`."
-  doAssert SQUARE_BULK == SQUARE_WEIGHT,
-    &"Complement must carry ⟑ to ⟇, so squares agree; got `{SQUARE_BULK=}`."
-  let squares_metric = [
-    coefficient(CAYLEYS_REVERSE.base[Basis.scalarAnti], Basis.scalarAnti) *
-        coefficient(CAYLEYS_EXOMORPHISM_METRIC.base[Basis.scalarAnti], Basis.scalarAnti),
-    coefficient(CAYLEYS_REVERSE.anti[Basis.scalar], Basis.scalar) *
-        coefficient(CAYLEYS_EXOMORPHISM_METRIC.anti[Basis.scalar], Basis.scalar),
-  ]
-  doAssert squares_metric == [SQUARE_WEIGHT, SQUARE_BULK],
-    &"Squares of product tables must equal rev(n) det 𝖌; got `{squares_metric}`."
-  let units = [
-    coefficient(CAYLEYS_WEDGE_DOT.base[Basis.scalar][Basis.scalarAnti], Basis.scalarAnti),
-    coefficient(CAYLEYS_WEDGE_DOT.base[Basis.scalarAnti][Basis.scalar], Basis.scalarAnti),
-  ]
-  doAssert units == [1, 1], &"𝟏 must be unit of ⟑ on each side of 𝟙; got `{units}`."
-
-
-
-#[ Pair Arithmetic ]#
-
-func initMultivectorScalars*(bulk, weight: Coefficient): MultivectorScalars {.noinit.} =
-  ## Make homogeneous scalar bulk 𝟏 + weight 𝟙.
-  result[Basis.scalar] = bulk
-  result[Basis.scalarAnti] = weight
-
-
-func complement(z: MultivectorScalars): MultivectorScalars =
-  ## Get complement of homogeneous scalar, i.e. z̅: swap parts, as 𝟏̅ = 𝟙 and 𝟙̅ = 𝟏.
-  ##   Not inline, so `Option.map` takes it as callback.
-  initMultivectorScalars(z[Basis.scalarAnti], z[Basis.scalar])
-
-
-func wedgeDot(y, z: MultivectorScalars): MultivectorScalars =
-  ## Multiply homogeneous scalars through geometric product, i.e. y ⟑ z, as Lengyel's `WedgeDot`.
-  ##   Reads block of table that static check holds: 𝟏 is unit, and 𝟙 ⟑ 𝟙 = ε²𝟏.
-  ##   TODO: Take basis-set product once P04 emits it.
+func constructSquare(
+  wedge_dots: Spatial[Cayley2D], spatiality: Spatiality
+): Coefficient {.compileTime.} =
+  ## Construct square of non-unit element of homogeneous scalar under (anti)product.
+  ##   I.e. ε² of 𝟙 ⟑ 𝟙 = ε²𝟏 under geometric product, or of 𝟏 ⟇ 𝟏 = ε²𝟙 under antiproduct.
+  ##   Unit must be identity of product, so pair closes under it.
   let
-    (y_bulk, y_weight) = (y[Basis.scalar], y[Basis.scalarAnti])
-    (z_bulk, z_weight) = (z[Basis.scalar], z[Basis.scalarAnti])
-  initMultivectorScalars(
-    y_bulk * z_bulk + Coefficient(SQUARE_WEIGHT) * y_weight * z_weight,
-    y_bulk * z_weight + y_weight * z_bulk,
+    (wedge_dot, unit, element) = case spatiality
+      of Spatiality.Base: (wedge_dots.base, Basis.scalar, Basis.scalarAnti)
+      of Spatiality.Anti: (wedge_dots.anti, Basis.scalarAnti, Basis.scalar)
+    element_signed = @[BasisSigned(basis: element)]
+    square = wedge_dot[element][element]
+  doAssert wedge_dot[unit][element] == element_signed and
+      wedge_dot[element][unit] == element_signed,
+    &"Provided product whose unit is not identity; got `{wedge_dot[unit][element]}`."
+  doAssert square.len <= 1 and (square.len == 0 or square[0].basis == unit),
+    &"Provided product whose square leaves unit; got `{square}`."
+  if square.len == 0: 0.0
+  elif square[0].is_negated: -1.0
+  else: 1.0
+
+
+const SQUARES_WEDGE_DOT* = Spatial[Coefficient](
+  base: constructSquare(CAYLEYS_WEDGE_DOT, Spatiality.Base),
+  anti: constructSquare(CAYLEYS_WEDGE_DOT, Spatiality.Anti),
+)
+  ## Square ε² of 𝟙 under geometric product and of 𝟏 under antiproduct, read from their tables.
+
+# Hold squares against metric, and range that arithmetic of pair covers.
+#   Metrics of library give ε² in -1..1; outside, lift range by scaling by its root in
+#     `cosSin` and in root of negative s.
+static:
+  doAssert SQUARES_WEDGE_DOT.base in [-1.0, 0.0, 1.0],
+    &"Square of 𝟙 under ⟑ must be -1, 0 or 1; got `{SQUARES_WEDGE_DOT.base}`."
+  doAssert SQUARES_WEDGE_DOT.anti == SQUARES_WEDGE_DOT.base,
+    &"Complement must carry ⟑ to ⟇, so squares agree; got `{SQUARES_WEDGE_DOT}`."
+  let
+    exomorphism_antiscalar = CAYLEYS_EXOMORPHISM_METRIC.base[Basis.scalarAnti]
+    reverse_antiscalar = CAYLEYS_REVERSE.base[Basis.scalarAnti][0]
+    square_metric =
+      if exomorphism_antiscalar.len == 0: 0.0
+      elif exomorphism_antiscalar[0].is_negated xor reverse_antiscalar.is_negated: -1.0
+      else: 1.0
+  doAssert SQUARES_WEDGE_DOT.base == square_metric,
+    &"Square of product table must equal rev(n) det 𝖌; got `{square_metric=}`."
+
+
+
+#[ Scalar Construction ]#
+
+func initMultivectorScalars*(s, t: Coefficient): MultivectorScalars {.noinit.} =
+  ## Initialize homogeneous scalar as s𝟏 + t𝟙.
+  result[Basis.scalar] = s
+  result[Basis.scalarAnti] = t
+
+
+
+#[ Derivation Macros ]#
+
+const LUT_COMPLEMENT_BY_NAME = block:
+  ## Construct LUT for complement of each name in function body.
+  var lut: Table[string, string]
+  for (name, name_complement) in [
+    ("scalar", "scalarAnti"),  # Bases.
+    ("s", "t"),  # Coefficients on bases.
+    ("base", "anti"),  # Squares under each product.
+    ("⟑", "⟇"),  # Products.
+  ]:
+    lut[name] = name_complement
+    lut[name_complement] = name
+  lut
+
+# Hold swap of bases against complement table, so names swap as complement does.
+static:
+  for (b, b_complement) in [
+    (Basis.scalar, Basis.scalarAnti), (Basis.scalarAnti, Basis.scalar)
+  ]:
+    let
+      b_signed = @[BasisSigned(basis: b_complement)]
+      complements = [CAYLEYS_COMPLEMENT.right[b], CAYLEYS_COMPLEMENT.left[b]]
+    doAssert complements == [b_signed, b_signed],
+      &"Complements must swap `{b}` for `{b_complement}`, unsigned; got `{complements}`."
+
+
+func emitAnti(definition: NimNode, docs: string): NimNode {.compileTime.} =
+  ## Emit form under antiproduct of function definition under geometric product.
+
+  func emitComplement(node: NimNode): NimNode =
+    ## Emit node with each name that complement swaps swapped, and each call under antiproduct.
+    if node.kind == nnkIdent:
+      return ident(LUT_COMPLEMENT_BY_NAME.getOrDefault($node, $node))
+    result = node.copyNimNode
+    for child in node: result.add emitComplement(child)
+
+    # Call form under antiproduct where one is declared, as complement carries composition.
+    if node.kind in {nnkCall, nnkCommand} and node[0].kind == nnkIdent:
+      var call_anti = result.copyNimTree
+      call_anti[0] = ident($node[0] & "Anti")
+      result = nnkWhenStmt.newTree(
+        nnkElifBranch.newTree(newCall(ident"declared", ident($node[0] & "Anti")), call_anti),
+        nnkElse.newTree(result),
+      )
+
+  # Construct body without docs under ⟑, which docs under ⟇ replace.
+  var body = newNimNode(nnkStmtList)
+  for statement in definition.body:
+    if statement.kind != nnkCommentStmt: body.add emitComplement(statement)
+
+  # Construct function definition from complemented body.
+  emitFunc(
+    name = $definition.name & "Anti",
+    docs = docs,
+    params = definition.params.copyNimTree,
+    pragma = definition.pragma.copyNimTree,
+    body = body,
+    is_public = definition[0].kind == nnkPostfix,
   )
 
 
-func wedgeDotAnti(y, z: MultivectorScalars): MultivectorScalars {.inline.} =
-  ## Multiply homogeneous scalars through antiproduct, i.e. y ⟇ z, as complement of y̅ ⟑ z̅.
-  complement(wedgeDot(complement(y), complement(z)))
+macro defineAnti(docs: static[string], definition: untyped): untyped =
+  ## Define function under geometric product, and its form under antiproduct by complement.
+  ##   Form under ⟇ is derived once at compile time, as each table of antiproduct is.
+  let definition_base = definition[0]
+  newStmtList(definition_base, emitAnti(definition_base, docs))
 
 
 
-#[ Inverse and Root ]#
+#[ Inverses and Roots ]#
 
-func inverse*(z: MultivectorScalars): Option[MultivectorScalars] =
-  ## Get inverse under geometric product, i.e. z⁻¹ = (x𝟏 − y𝟙) / (x² − ε²y²) for z = x𝟏 + y𝟙.
-  ##   None where modulus x² − ε²y² is zero at scale of its two terms.
-  ##     Zero pair has none in each algebra, as has pure 𝟙 when dual and x = ±y when split.
-  let
-    (bulk, weight) = (z[Basis.scalar], z[Basis.scalarAnti])
-    modulus_squared = bulk * bulk - Coefficient(SQUARE_WEIGHT) * weight * weight
-    scale = bulk * bulk + abs(Coefficient(SQUARE_WEIGHT)) * weight * weight
-  if abs(modulus_squared) <= TOLERANCE_ABS * scale: return none(MultivectorScalars)
-  some(initMultivectorScalars(bulk / modulus_squared, -weight / modulus_squared))
-
-
-func sqrt*(z: MultivectorScalars): MultivectorScalarsRoot[SQUARE_WEIGHT] =
-  ## Get principal root under geometric product, i.e. √z with √z ⟑ √z = z and bulk ≥ 0.
-  ##   Solve b² + ε²a² = x and 2ab = y through modulus ρ = √(x² − ε²y²), as b² = (x + ρ) / 2.
-  ##   Complex pair always has root; negative bulk roots onto 𝟙, as i.
-  ##   Dual pair needs positive bulk or zero; split-complex pair needs bulk ≥ |weight|.
-  let (bulk, weight) = (z[Basis.scalar], z[Basis.scalarAnti])
-
-  # Refuse pair outside domain of real roots.
-  when SQUARE_WEIGHT == 0:
-    if bulk < 0 or (bulk == 0 and weight != 0): return none(MultivectorScalars)
-  elif SQUARE_WEIGHT == 1:
-    if bulk < abs(weight): return none(MultivectorScalars)
-
-  # Take larger part by root and smaller by division, so neither cancels.
-  let
-    modulus =
-      when SQUARE_WEIGHT == -1: hypot(bulk, weight)
-      elif SQUARE_WEIGHT == 0: bulk
-      else: math.sqrt((bulk - abs(weight)) * (bulk + abs(weight)))
-    size = math.sqrt((abs(bulk) + modulus) / 2)
-    root =
-      if size == 0: initMultivectorScalars(0, 0)
-      elif bulk >= 0: initMultivectorScalars(size, weight / (2 * size))
-      else: initMultivectorScalars(abs(weight) / (2 * size), copySign(size, weight))
-  when SQUARE_WEIGHT == -1: root else: some(root)
+defineAnti(
+  docs = "Get inverse of homogeneous scalar under antiproduct, i.e. 𝐦⟇⁻¹ with 𝐦 ⟇ 𝐦⟇⁻¹ = 𝟙.",
+):
+  func inverse*(m: MultivectorScalars): Option[MultivectorScalars] =
+    ## Get inverse of homogeneous scalar under geometric product, i.e. 𝐦⟑⁻¹ with 𝐦 ⟑ 𝐦⟑⁻¹ = 𝟏.
+    ##   I.e. (s𝟏 − t𝟙) / (s² − ε²t²) for 𝐦 = s𝟏 + t𝟙.
+    ##   None where modulus s² − ε²t² is zero at scale of its two terms.
+    ##     Zero pair has none in each algebra, as has pure 𝟙 when dual and s = ±t when split.
+    let
+      (s, t) = (m[Basis.scalar], m[Basis.scalarAnti])
+      modulus_squared = s * s - SQUARES_WEDGE_DOT.base * t * t
+      scale = s * s + abs(SQUARES_WEDGE_DOT.base) * t * t
+    if abs(modulus_squared) <= TOLERANCE_ABS * scale: return
+    some(initMultivectorScalars(s = s / modulus_squared, t = -t / modulus_squared))
 
 
-func sqrtInverse*(z: MultivectorScalars): Option[MultivectorScalars] =
-  ## Get inverse root under geometric product, i.e. 1 / √z; none without root or its inverse.
-  when SQUARE_WEIGHT == -1: inverse(sqrt(z)) else: sqrt(z).flatMap(inverse)
+defineAnti(
+  docs = "Get principal root of homogeneous scalar under antiproduct, i.e. ⟇√𝐦 with t ≥ 0.",
+):
+  func sqrt*(m: MultivectorScalars): Option[MultivectorScalars] =
+    ## Get principal root of homogeneous scalar under geometric product, i.e. ⟑√𝐦 with s ≥ 0.
+    ##   Solve p² + ε²q² = s and 2pq = t for root p𝟏 + q𝟙, through modulus ρ = √(s² − ε²t²).
+    ##   Complex pair always has root; negative s roots onto 𝟙, as i.
+    ##   Dual pair needs positive s or zero; split-complex pair needs s ≥ |t|.
+    let (s, t) = (m[Basis.scalar], m[Basis.scalarAnti])
+
+    # Refuse pair outside domain of real roots.
+    when SQUARES_WEDGE_DOT.base == 0:
+      if s < 0 or (s == 0 and t != 0): return
+    elif SQUARES_WEDGE_DOT.base == 1:
+      if s < abs(t): return
+
+    # Take larger part by root and smaller by division, so neither cancels.
+    let
+      modulus =
+        when SQUARES_WEDGE_DOT.base == -1: hypot(s, t)
+        elif SQUARES_WEDGE_DOT.base == 0: s
+        else: ((s - abs(t)) * (s + abs(t))).sqrt
+      size = ((abs(s) + modulus) / 2).sqrt
+      root =
+        if size == 0: initMultivectorScalars(s = 0, t = 0)
+        elif s >= 0: initMultivectorScalars(s = size, t = t / (2 * size))
+        else: initMultivectorScalars(s = abs(t) / (2 * size), t = copySign(size, t))
+    some(root)
+
+
+defineAnti(
+  docs = "Get inverse root of homogeneous scalar under antiproduct, i.e. (⟇√𝐦)⟇⁻¹.",
+):
+  func sqrtInverse*(m: MultivectorScalars): Option[MultivectorScalars] =
+    ## Get inverse root of homogeneous scalar under geometric product, i.e. (⟑√𝐦)⟑⁻¹.
+    ##   None without root or its inverse.
+    let root = sqrt(m)
+    if root.isNone: return
+    inverse(root.get)
 
 
 
 #[ Exponential Family ]#
 
-func cosSin(angle: Coefficient, square: static int): tuple[cos, sin: Coefficient] =
-  ## Get even and odd parts of e^(angle 𝐯) for 𝐯 ⟑ 𝐯 = square 𝟏, i.e. its 𝟏 part and its 𝐯 part.
+func cosSin(angle: Coefficient, square: static[Coefficient]): tuple[cos, sin: Coefficient] =
+  ## Get even and odd parts of exp(angle 𝐯) for 𝐯 𝐯 = square 𝐮, i.e. its 𝐮 part and its 𝐯 part.
+  ##   Unit 𝐮 is 𝟏 and 𝐯 is 𝟙 under ⟑, and 𝐮 is 𝟙 and 𝐯 is 𝟏 under ⟇.
   ##   Even part sums squareᵏ angle²ᵏ / (2k)!, and odd part sums squareᵏ angle²ᵏ⁺¹ / (2k + 1)!.
   ##   Square -1 gives cosine and sine, 0 gives 1 and angle, +1 gives their hyperbolic forms.
-  ##   Named for Lengyel's `CosSin`, which returns both parts at once.
-  when square == -1: (math.cos(angle), math.sin(angle))
+  when square == -1: (angle.cos, angle.sin)
   elif square == 0: (Coefficient(1), angle)
-  else: (math.cosh(angle), math.sinh(angle))
+  else: (angle.cosh, angle.sinh)
 
 
-func exp*(z: MultivectorScalars): MultivectorScalars =
-  ## Raise e to homogeneous scalar under geometric product, i.e. eᶻ = eˣ (C(y) 𝟏 + S(y) 𝟙).
-  ##   C and S are even and odd parts of e^(y𝟙), under ε².
-  let
-    (bulk, weight) = (z[Basis.scalar], z[Basis.scalarAnti])
-    (scale, parts) = (math.exp(bulk), cosSin(weight, SQUARE_WEIGHT))
-  initMultivectorScalars(scale * parts.cos, scale * parts.sin)
+defineAnti(
+  docs = "Raise e to homogeneous scalar under antiproduct, i.e. exp⟇𝐦 = eᵗ (S(s) 𝟏 + C(s) 𝟙).",
+):
+  func exp*(m: MultivectorScalars): MultivectorScalars {.noinit.} =
+    ## Raise e to homogeneous scalar under geometric product, i.e. exp⟑𝐦 = eˢ (C(t) 𝟏 + S(t) 𝟙).
+    ##   C and S are even and odd parts of exp⟑(t𝟙), under ε².
+    let
+      (s, t) = (m[Basis.scalar], m[Basis.scalarAnti])
+      (scale, parts) = (s.exp, cosSin(t, SQUARES_WEDGE_DOT.base))
+    result[Basis.scalar] = scale * parts.cos
+    result[Basis.scalarAnti] = scale * parts.sin
 
 
-func sin*(z: MultivectorScalars): MultivectorScalars =
-  ## Get sine under geometric product, i.e. sin z = sin x C(y) 𝟏 + cos x S(y) 𝟙.
-  ##   C and S take -ε², as sine and cosine alternate signs of exponential series.
-  let
-    (bulk, weight) = (z[Basis.scalar], z[Basis.scalarAnti])
-    parts = cosSin(weight, -SQUARE_WEIGHT)
-  initMultivectorScalars(math.sin(bulk) * parts.cos, math.cos(bulk) * parts.sin)
+defineAnti(
+  docs = """Get sine of homogeneous scalar under antiproduct, i.e. sin⟇𝐦.
+  I.e. cos t S(s) 𝟏 + sin t C(s) 𝟙.""",
+):
+  func sin*(m: MultivectorScalars): MultivectorScalars {.noinit.} =
+    ## Get sine of homogeneous scalar under geometric product, i.e. sin⟑𝐦.
+    ##   I.e. sin s C(t) 𝟏 + cos s S(t) 𝟙.
+    ##   C and S take -ε², as sine and cosine alternate signs of exponential series.
+    let
+      (s, t) = (m[Basis.scalar], m[Basis.scalarAnti])
+      parts = cosSin(t, -SQUARES_WEDGE_DOT.base)
+    result[Basis.scalar] = s.sin * parts.cos
+    result[Basis.scalarAnti] = s.cos * parts.sin
 
 
-func cos*(z: MultivectorScalars): MultivectorScalars =
-  ## Get cosine under geometric product, i.e. cos z = cos x C(y) 𝟏 − sin x S(y) 𝟙.
-  ##   C and S take -ε², as for sine.
-  let
-    (bulk, weight) = (z[Basis.scalar], z[Basis.scalarAnti])
-    parts = cosSin(weight, -SQUARE_WEIGHT)
-  initMultivectorScalars(math.cos(bulk) * parts.cos, -math.sin(bulk) * parts.sin)
+defineAnti(
+  docs = """Get cosine of homogeneous scalar under antiproduct, i.e. cos⟇𝐦.
+  I.e. −sin t S(s) 𝟏 + cos t C(s) 𝟙.""",
+):
+  func cos*(m: MultivectorScalars): MultivectorScalars {.noinit.} =
+    ## Get cosine of homogeneous scalar under geometric product, i.e. cos⟑𝐦.
+    ##   I.e. cos s C(t) 𝟏 − sin s S(t) 𝟙.
+    ##   C and S take -ε², as for sine.
+    let
+      (s, t) = (m[Basis.scalar], m[Basis.scalarAnti])
+      parts = cosSin(t, -SQUARES_WEDGE_DOT.base)
+    result[Basis.scalar] = s.cos * parts.cos
+    result[Basis.scalarAnti] = -s.sin * parts.sin
 
 
-func tan*(z: MultivectorScalars): Option[MultivectorScalars] =
-  ## Get tangent under geometric product, i.e. tan z = sin z ⟑ (cos z)⁻¹.
-  ##   None where cosine has no inverse, as at each pole.
-  ##   Product rather than closed form over cos 2x, which cancels near pole.
-  let cosine_inverse = inverse(cos(z))
-  if cosine_inverse.isNone: return none(MultivectorScalars)
-  some(wedgeDot(sin(z), cosine_inverse.get))
-
-
-
-#[ Forms Under Antiproduct ]#
-
-func inverseAnti*(z: MultivectorScalars): Option[MultivectorScalars] {.inline.} =
-  ## Get inverse under antiproduct, i.e. z⁻¹ with z ⟇ z⁻¹ = 𝟙, as complement of z̅⁻¹.
-  inverse(complement(z)).map(complement)
-
-func sqrtAnti*(z: MultivectorScalars): MultivectorScalarsRoot[SQUARE_BULK] {.inline.} =
-  ## Get principal root under antiproduct, i.e. w with w ⟇ w = z, as complement of √z̅.
-  when SQUARE_BULK == -1: complement(sqrt(complement(z)))
-  else: sqrt(complement(z)).map(complement)
-
-func sqrtInverseAnti*(z: MultivectorScalars): Option[MultivectorScalars] {.inline.} =
-  ## Get inverse root under antiproduct, as complement of inverse root of z̅.
-  sqrtInverse(complement(z)).map(complement)
-
-func expAnti*(z: MultivectorScalars): MultivectorScalars {.inline.} =
-  ## Raise e to homogeneous scalar under antiproduct, as complement of exponential of z̅.
-  complement(exp(complement(z)))
-
-func sinAnti*(z: MultivectorScalars): MultivectorScalars {.inline.} =
-  ## Get sine under antiproduct, as complement of sine of z̅.
-  complement(sin(complement(z)))
-
-func cosAnti*(z: MultivectorScalars): MultivectorScalars {.inline.} =
-  ## Get cosine under antiproduct, as complement of cosine of z̅.
-  complement(cos(complement(z)))
-
-func tanAnti*(z: MultivectorScalars): Option[MultivectorScalars] {.inline.} =
-  ## Get tangent under antiproduct, as complement of tangent of z̅.
-  tan(complement(z)).map(complement)
+defineAnti(
+  docs = "Get tangent of homogeneous scalar under antiproduct, i.e. tan⟇𝐦 = sin⟇𝐦 ⟇ (cos⟇𝐦)⟇⁻¹.",
+):
+  func tan*(m: MultivectorScalars): Option[MultivectorScalars] =
+    ## Get tangent of homogeneous scalar under geometric product, i.e. tan⟑𝐦 = sin⟑𝐦 ⟑ (cos⟑𝐦)⟑⁻¹.
+    ##   None where cosine has no inverse, as at each pole.
+    ##   Product rather than closed form over cos 2s, which cancels near pole.
+    let cosine_inverse = inverse(cos(m))
+    if cosine_inverse.isNone: return
+    some(sin(m) ⟑ cosine_inverse.get)
 
 
 
 #[ Division ]#
 
-func `/`*(y, z: MultivectorScalars): Option[MultivectorScalars] =
-  ## Divide under antiproduct, i.e. y ⟇ z⁻¹, as Lengyel's `DualNum` does.
-  ##   None where z has no inverse under antiproduct.
-  let inverse_anti = inverseAnti(z)
-  if inverse_anti.isNone: return none(MultivectorScalars)
-  some(wedgeDotAnti(y, inverse_anti.get))
+func `/`*(m, n: MultivectorScalars): Option[MultivectorScalars] =
+  ## Divide homogeneous scalars under antiproduct, i.e. 𝐦 ⟇ 𝐧⟇⁻¹, as Lengyel's `DualNum` does.
+  ##   None where 𝐧 has no inverse under antiproduct.
+  let n_inverse_anti = inverseAnti(n)
+  if n_inverse_anti.isNone: return
+  some(m ⟇ n_inverse_anti.get)
 
 
-func `/`*(m: Multivector, z: MultivectorScalars): Option[Multivector] =
-  ## Divide multivector by homogeneous scalar under antiproduct, i.e. 𝐦 ⟇ z⁻¹.
-  ##   Cost: whole antiproduct of library, as no basis-set product exists at pin.
-  let inverse_anti = inverseAnti(z)
-  if inverse_anti.isNone: return none(Multivector)
-  some(m ⟇ inverse_anti.get.toMultivector)
+func `/`*(m: Multivector, n: MultivectorScalars): Option[Multivector] =
+  ## Divide multivector by homogeneous scalar under antiproduct, i.e. 𝐦 ⟇ 𝐧⟇⁻¹.
+  let n_inverse_anti = inverseAnti(n)
+  if n_inverse_anti.isNone: return
+  some(m ⟇ n_inverse_anti.get)
+```
+
+## Edit `pga/basis_sets.nim`
+
+```nim
+func `⟇`*[A, B: static Bases](
+  m: MultivectorOf[A], n: MultivectorOf[B]
+): typeReached(CAYLEYS_WEDGE_DOT.anti, A, B) {.noinit.} =
+  ## Multiply through geometric antiproduct, i.e. 𝐦 ⟇ 𝐧; result holds exactly bases reached.
+  defineProduct(CAYLEYS_WEDGE_DOT.anti, A, B)
+```
+
+```nim
+func `⟑`*[A, B: static Bases](
+  m: MultivectorOf[A], n: MultivectorOf[B]
+): typeReached(CAYLEYS_WEDGE_DOT.base, A, B) {.noinit.} =
+  ## Multiply through geometric product, i.e. 𝐦 ⟑ 𝐧; result holds exactly bases reached.
+  defineProduct(CAYLEYS_WEDGE_DOT.base, A, B)
+
+
+func `⟇`*[A, B: static Bases](
+  m: MultivectorOf[A], n: MultivectorOf[B]
+): typeReached(CAYLEYS_WEDGE_DOT.anti, A, B) {.noinit.} =
+  ## Multiply through geometric antiproduct, i.e. 𝐦 ⟇ 𝐧; result holds exactly bases reached.
+  defineProduct(CAYLEYS_WEDGE_DOT.anti, A, B)
 ```
 
 ## Edit `pga.nim`
 
 ```nim
-import ./pga/[algebra, cayleys, multivectors, operators]
-export algebra, cayleys, multivectors, operators
+import ./pga/[algebra, basis_sets, cayleys, multivectors, operators]
+export algebra, basis_sets, cayleys, multivectors, operators
 ```
 
 ```nim
-import ./pga/[algebra, cayleys, multivectors, operators, scalars]
-export algebra, cayleys, multivectors, operators, scalars
+import std/options
+
+import ./pga/[algebra, basis_sets, cayleys, multivectors, operators, scalars]
+export algebra, basis_sets, cayleys, multivectors, operators, scalars
 ```
 
 ## Edit `pga.nim`
@@ -325,9 +403,9 @@ export algebra, cayleys, multivectors, operators, scalars
 ```
 
 ```nim
-  func normRadius*(m: Multivector): MultivectorScalarsRoot[SQUARE_BULK] {.inline.} =
-    ## Get radius norm of multivector as root under antiproduct, i.e. ‖𝐦‖⊘ = √(𝐦∘𝐦), book's (4.45).
-    ##   Real for real object, on 𝟙. Imaginary object has root on 𝟏, as i, at cga4d and cga5d;
-    ##     split-complex pair of cga3d and cga6d has none, so radius norm is optional there.
-    sqrtAnti(initMultivectorScalars(0, (m ∘ m)[Basis.scalarAnti]))
+  func normRadius*(m: Multivector): Option[MultivectorScalars] {.inline.} =
+    ## Get radius norm of multivector as root under antiproduct, i.e. ‖𝐦‖⊘ = ⟇√(𝐦∘𝐦), book's (4.45).
+    ##   Real for real object, on 𝟙. Imaginary object has root on 𝟏, as i, at cga4d and cga5d.
+    ##   None where 𝐦∘𝐦 has no root, as for imaginary object at cga3d and cga6d.
+    sqrtAnti(initMultivectorScalars(s = 0, t = (m ∘ m)[Basis.scalarAnti]))
 ```

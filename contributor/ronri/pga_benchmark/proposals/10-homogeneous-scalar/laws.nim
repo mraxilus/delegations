@@ -1,4 +1,4 @@
-## Hold laws of homogeneous scalar x𝟏 + y𝟙, as library carrying this change exports it
+## Hold laws of homogeneous scalar s𝟏 + t𝟙, as library carrying this change exports it
 ##   (`homogeneous-scalar`).
 ##   Evaluation compiles this against library with change applied, at each algebra its claim
 ##     names, and exit code is verdict: every law below holds, or program stops on assertion.
@@ -16,7 +16,6 @@ when compileOption("profiler"):
 import std/[complex, fenv, math, options, random, strformat]
 
 import pga
-import pga/scalars {.all.}
 
 
 const
@@ -32,29 +31,34 @@ const
 
 #[ Oracles ]#
 
-func scale(z: MultivectorScalars, factor: Coefficient): MultivectorScalars =
+func scale(m: MultivectorScalars, factor: Coefficient): MultivectorScalars =
   ## Scale both parts of homogeneous scalar by factor.
-  initMultivectorScalars(factor * z[Basis.scalar], factor * z[Basis.scalarAnti])
+  initMultivectorScalars(factor * m[Basis.scalar], factor * m[Basis.scalarAnti])
 
 
-func product(y, z: MultivectorScalars): MultivectorScalars =
-  ## Multiply homogeneous scalars through library's geometric product, i.e. y ⟑ z.
-  toMultivectorScalars(y.toMultivector ⟑ z.toMultivector)
+func complement(m: MultivectorScalars): MultivectorScalars =
+  ## Get complement of homogeneous scalar through library's, i.e. /𝐦.
+  toMultivectorScalars(/m.toMultivector)
 
 
-func productAnti(y, z: MultivectorScalars): MultivectorScalars =
-  ## Multiply homogeneous scalars through library's antiproduct, i.e. y ⟇ z.
-  toMultivectorScalars(y.toMultivector ⟇ z.toMultivector)
+func product(m, n: MultivectorScalars): MultivectorScalars =
+  ## Multiply homogeneous scalars through library's geometric product, i.e. 𝐦 ⟑ 𝐧.
+  toMultivectorScalars(m.toMultivector ⟑ n.toMultivector)
+
+
+func productAnti(m, n: MultivectorScalars): MultivectorScalars =
+  ## Multiply homogeneous scalars through library's antiproduct, i.e. 𝐦 ⟇ 𝐧.
+  toMultivectorScalars(m.toMultivector ⟇ n.toMultivector)
 
 
 func series(
-  z: MultivectorScalars, terms: array[TERMS_SERIES, Coefficient], as_anti: static bool
+  m: MultivectorScalars, terms: array[TERMS_SERIES, Coefficient], as_anti: static bool
 ): MultivectorScalars =
-  ## Sum power series Σ cₖ zᵏ under library's product or antiproduct; independent of closed forms.
+  ## Sum power series Σ cₖ 𝐦ᵏ under library's product or antiproduct; independent of closed forms.
   var power = when as_anti: initMultivectorScalars(0, 1) else: initMultivectorScalars(1, 0)
   for term in terms:
     result = result + power.scale(term)
-    power = when as_anti: productAnti(power, z) else: product(power, z)
+    power = when as_anti: productAnti(power, m) else: product(power, m)
 
 
 func constructTerms(phase: static int): array[TERMS_SERIES, Coefficient] {.compileTime.} =
@@ -70,19 +74,14 @@ func constructTerms(phase: static int): array[TERMS_SERIES, Coefficient] {.compi
 
 
 const
-  TERMS_EXP = constructTerms(-1)  ## Coefficients of eᶻ.
-  TERMS_SIN = constructTerms(1)  ## Coefficients of sin z.
-  TERMS_COS = constructTerms(0)  ## Coefficients of cos z.
+  TERMS_EXP = constructTerms(-1)  ## Coefficients of exp⟑𝐦.
+  TERMS_SIN = constructTerms(1)  ## Coefficients of sin⟑𝐦.
+  TERMS_COS = constructTerms(0)  ## Coefficients of cos⟑𝐦.
 
 
-func toOption(root: MultivectorScalarsRoot[SQUARE_WEIGHT]): Option[MultivectorScalars] =
-  ## Read root as optional pair, whichever type algebra gives it.
-  when SQUARE_WEIGHT == -1: some(root) else: root
-
-
-func size(z: MultivectorScalars): Coefficient =
-  ## Get larger part of homogeneous scalar in magnitude, i.e. max(|x|, |y|).
-  max(abs(z[Basis.scalar]), abs(z[Basis.scalarAnti]))
+func size(m: MultivectorScalars): Coefficient =
+  ## Get larger part of homogeneous scalar in magnitude, i.e. max(|s|, |t|).
+  max(abs(m[Basis.scalar]), abs(m[Basis.scalarAnti]))
 
 
 func isNear(actual, expected: MultivectorScalars; scale: Coefficient): bool =
@@ -94,25 +93,25 @@ func isNear(actual, expected: MultivectorScalars; scale: Coefficient): bool =
   true
 
 
-func isRooted(z: MultivectorScalars): bool =
+func isRooted(m: MultivectorScalars): bool =
   ## Decide whether pair has real root under geometric product, by domain of its algebra.
-  let (bulk, weight) = (z[Basis.scalar], z[Basis.scalarAnti])
-  when SQUARE_WEIGHT == -1: true
-  elif SQUARE_WEIGHT == 0: bulk > 0 or (bulk == 0 and weight == 0)
-  else: bulk >= abs(weight)
+  let (s, t) = (m[Basis.scalar], m[Basis.scalarAnti])
+  when SQUARES_WEDGE_DOT.base == -1: true
+  elif SQUARES_WEDGE_DOT.base == 0: s > 0 or (s == 0 and t == 0)
+  else: s >= abs(t)
 
 
-func isInvertible(z: MultivectorScalars): bool =
-  ## Decide whether pair has inverse: modulus x² − ε²y² beyond zero at scale of its terms.
+func isInvertible(m: MultivectorScalars): bool =
+  ## Decide whether pair has inverse: modulus s² − ε²t² beyond zero at scale of its terms.
   let
-    (bulk, weight) = (z[Basis.scalar], z[Basis.scalarAnti])
-    modulus_squared = bulk * bulk - Coefficient(SQUARE_WEIGHT) * weight * weight
-  abs(modulus_squared) > TOLERANCE_ABS * (bulk * bulk + abs(Coefficient(SQUARE_WEIGHT)) * weight^2)
+    (s, t) = (m[Basis.scalar], m[Basis.scalarAnti])
+    modulus_squared = s * s - SQUARES_WEDGE_DOT.base * t * t
+  abs(modulus_squared) > TOLERANCE_ABS * (s * s + abs(SQUARES_WEDGE_DOT.base) * t * t)
 
 
-func toComplex(z: MultivectorScalars): Complex64 =
+func toComplex(m: MultivectorScalars): Complex64 =
   ## Map pair to complex number, 𝟏 to 1 and 𝟙 to i, where ε² = -1.
-  complex64(z[Basis.scalar], z[Basis.scalarAnti])
+  complex64(m[Basis.scalar], m[Basis.scalarAnti])
 
 
 func toScalars(c: Complex64): MultivectorScalars =
@@ -121,12 +120,12 @@ func toScalars(c: Complex64): MultivectorScalars =
 
 
 func idempotent(
-  z: MultivectorScalars, function: proc (x: float): float {.nimcall, noSideEffect.}
+  m: MultivectorScalars, function: proc (x: float): float {.nimcall, noSideEffect.}
 ): MultivectorScalars =
-  ## Apply function on each idempotent of split-complex pair, i.e. at x + y and at x − y.
+  ## Apply function on each idempotent of split-complex pair, i.e. at s + t and at s − t.
   let
-    (bulk, weight) = (z[Basis.scalar], z[Basis.scalarAnti])
-    (plus, minus) = (function(bulk + weight), function(bulk - weight))
+    (s, t) = (m[Basis.scalar], m[Basis.scalarAnti])
+    (plus, minus) = (function(s + t), function(s - t))
   initMultivectorScalars((plus + minus) / 2, (plus - minus) / 2)
 
 
@@ -177,145 +176,144 @@ func tanLengyel(s, t: Coefficient): MultivectorScalars =
 #[ Laws ]#
 
 proc holdTables() =
-  ## Hold square from metric, complement and pair products against library.
+  ## Hold squares and products of pairs against library.
   let (one, one_anti) = (initElement(Basis.scalar), initElement(Basis.scalarAnti))
-  doAssert (one_anti ⟑ one_anti) =~ Coefficient(SQUARE_WEIGHT) * one,
-    &"Square from metric must agree with library's ⟑; got `{SQUARE_WEIGHT=}`."
-  doAssert (one ⟇ one) =~ Coefficient(SQUARE_BULK) * one_anti,
-    &"Square from metric must agree with library's ⟇; got `{SQUARE_BULK=}`."
+  doAssert (one_anti ⟑ one_anti) =~ SQUARES_WEDGE_DOT.base * one,
+    &"Square must agree with library's ⟑; got `{SQUARES_WEDGE_DOT.base}`."
+  doAssert (one ⟇ one) =~ SQUARES_WEDGE_DOT.anti * one_anti,
+    &"Square must agree with library's ⟇; got `{SQUARES_WEDGE_DOT.anti}`."
   for _ in 1..SAMPLES:
     let
-      y = initMultivectorScalars(rand(-1.0..1.0), rand(-1.0..1.0))
-      z = initMultivectorScalars(rand(-1.0..1.0), rand(-1.0..1.0))
-    doAssert complement(z).toMultivector =~ /z.toMultivector, "Complement must equal library's."
-    doAssert wedgeDot(y, z) =~ product(y, z), "Pair ⟑ must equal library's."
-    doAssert wedgeDotAnti(y, z) =~ productAnti(y, z), "Pair ⟇ must equal library's."
+      m = initMultivectorScalars(rand(-1.0..1.0), rand(-1.0..1.0))
+      n = initMultivectorScalars(rand(-1.0..1.0), rand(-1.0..1.0))
+    doAssert (m ⟑ n) =~ product(m, n), "Pair ⟑ must equal library's."
+    doAssert (m ⟇ n) =~ productAnti(m, n), "Pair ⟇ must equal library's."
 
 
 proc holdFunctions(pairs: openArray[MultivectorScalars]): array[8, int] =
   ## Hold law of each function and its anti form on pairs; count samples each guarded law passed.
   let (unit, unit_anti) = (initMultivectorScalars(1, 0), initMultivectorScalars(0, 1))
-  for i, z in pairs:
+  for i, m in pairs:
     let
-      (bulk, weight) = (z[Basis.scalar], z[Basis.scalarAnti])
-      is_small = abs(bulk) <= 1 and abs(weight) <= 1
+      (s, t) = (m[Basis.scalar], m[Basis.scalarAnti])
+      is_small = abs(s) <= 1 and abs(t) <= 1
 
-    # Hold inverse: z ⟑ z⁻¹ = 𝟏 and z ⟇ z⁻¹ = 𝟙, and none exactly where modulus vanishes.
-    let (inverse_z, inverse_anti) = (inverse(z), inverseAnti(z))
-    doAssert inverse_z.isSome == isInvertible(z), &"Inverse exists by modulus; got `{z=}`."
-    doAssert inverse_anti.isSome == isInvertible(complement(z)), &"Antiinverse; got `{z=}`."
-    if inverse_z.isSome:
+    # Hold inverse: 𝐦 ⟑ 𝐦⟑⁻¹ = 𝟏 and 𝐦 ⟇ 𝐦⟇⁻¹ = 𝟙, and none exactly where modulus vanishes.
+    let (inverse_m, inverse_anti) = (inverse(m), inverseAnti(m))
+    doAssert inverse_m.isSome == isInvertible(m), &"Inverse exists by modulus; got `{m=}`."
+    doAssert inverse_anti.isSome == isInvertible(complement(m)), &"Antiinverse; got `{m=}`."
+    if inverse_m.isSome:
       inc result[0]
-      doAssert product(z, inverse_z.get).isNear(unit, z.size * inverse_z.get.size),
-        &"z ⟑ z⁻¹ must be 𝟏; got `{z=}`."
+      doAssert product(m, inverse_m.get).isNear(unit, m.size * inverse_m.get.size),
+        &"𝐦 ⟑ 𝐦⟑⁻¹ must be 𝟏; got `{m=}`."
     if inverse_anti.isSome:
-      doAssert productAnti(z, inverse_anti.get).isNear(unit_anti, z.size * inverse_anti.get.size),
-        &"z ⟇ z⁻¹ must be 𝟙; got `{z=}`."
+      doAssert productAnti(m, inverse_anti.get).isNear(unit_anti, m.size * inverse_anti.get.size),
+        &"𝐦 ⟇ 𝐦⟇⁻¹ must be 𝟙; got `{m=}`."
 
-    # Hold root: √z ⟑ √z = z with bulk ≥ 0, and none exactly outside domain.
-    let (root, root_anti) = (sqrt(z).toOption, sqrtAnti(z).toOption)
-    doAssert root.isSome == isRooted(z), &"Root exists by domain; got `{z=}`."
-    doAssert root_anti.isSome == isRooted(complement(z)), &"Antiroot by domain; got `{z=}`."
+    # Hold root: ⟑√𝐦 ⟑ ⟑√𝐦 = 𝐦 with s ≥ 0, and none exactly outside domain.
+    let (root, root_anti) = (sqrt(m), sqrtAnti(m))
+    doAssert root.isSome == isRooted(m), &"Root exists by domain; got `{m=}`."
+    doAssert root_anti.isSome == isRooted(complement(m)), &"Antiroot by domain; got `{m=}`."
     if root.isSome:
       inc result[1]
-      doAssert product(root.get, root.get) =~ z and root.get[Basis.scalar] >= 0,
-        &"√z ⟑ √z must be z, bulk ≥ 0; got `{root.get.toMultivector}` for `{z.toMultivector}`."
+      doAssert product(root.get, root.get) =~ m and root.get[Basis.scalar] >= 0,
+        &"⟑√𝐦 ⟑ ⟑√𝐦 must be 𝐦, s ≥ 0; got `{root.get.toMultivector}` for `{m.toMultivector}`."
     if root_anti.isSome:
-      doAssert productAnti(root_anti.get, root_anti.get) =~ z and
+      doAssert productAnti(root_anti.get, root_anti.get) =~ m and
           root_anti.get[Basis.scalarAnti] >= 0,
-        &"√z ⟇ √z must be z, weight ≥ 0; got `{root_anti.get.toMultivector}`."
+        &"⟇√𝐦 ⟇ ⟇√𝐦 must be 𝐦, t ≥ 0; got `{root_anti.get.toMultivector}`."
 
-    # Hold inverse root: (1 / √z)² ⟑ z = 𝟏 where root and its inverse exist.
-    let root_inverse = sqrtInverse(z)
+    # Hold inverse root: (⟑√𝐦)⟑⁻¹ squared, times 𝐦 under ⟑, is 𝟏 where root and inverse exist.
+    let root_inverse = sqrtInverse(m)
     if root_inverse.isSome:
       inc result[2]
       let square = product(root_inverse.get, root_inverse.get)
-      doAssert product(square, z).isNear(unit, square.size * z.size),
-        &"(1 / √z)² ⟑ z must be 𝟏; got `{z=}`."
-    let root_inverse_anti = sqrtInverseAnti(z)
+      doAssert product(square, m).isNear(unit, square.size * m.size),
+        &"Square of (⟑√𝐦)⟑⁻¹, times 𝐦, must be 𝟏; got `{m=}`."
+    let root_inverse_anti = sqrtInverseAnti(m)
     if root_inverse_anti.isSome:
       let square_anti = productAnti(root_inverse_anti.get, root_inverse_anti.get)
-      doAssert productAnti(square_anti, z).isNear(unit_anti, square_anti.size * z.size),
-        &"(1 / √z)² ⟇ z must be 𝟙; got `{z=}`."
+      doAssert productAnti(square_anti, m).isNear(unit_anti, square_anti.size * m.size),
+        &"Square of (⟇√𝐦)⟇⁻¹, times 𝐦, must be 𝟙; got `{m=}`."
 
     # Hold exponential, sine and cosine against power series, and their addition laws.
     if is_small:
       inc result[3]
-      doAssert exp(z) =~ series(z, TERMS_EXP, as_anti = false), &"eᶻ is series; got `{z=}`."
-      doAssert sin(z) =~ series(z, TERMS_SIN, as_anti = false), &"sin is series; got `{z=}`."
-      doAssert cos(z) =~ series(z, TERMS_COS, as_anti = false), &"cos is series; got `{z=}`."
-      doAssert expAnti(z) =~ series(z, TERMS_EXP, as_anti = true), &"eᶻ under ⟇; got `{z=}`."
-      doAssert sinAnti(z) =~ series(z, TERMS_SIN, as_anti = true), &"sin under ⟇; got `{z=}`."
-      doAssert cosAnti(z) =~ series(z, TERMS_COS, as_anti = true), &"cos under ⟇; got `{z=}`."
-    let y = pairs[(i+1) mod pairs.len]
-    doAssert exp(y + z) =~ product(exp(y), exp(z)), &"e^(y + z) = eʸ ⟑ eᶻ; got `{z=}`."
-    doAssert expAnti(y + z) =~ productAnti(expAnti(y), expAnti(z)), &"Same under ⟇; got `{z=}`."
-    doAssert product(sin(z), sin(z)) + product(cos(z), cos(z)) =~ unit,
-      &"sin² + cos² must be 𝟏; got `{z=}`."
-    doAssert productAnti(sinAnti(z), sinAnti(z)) + productAnti(cosAnti(z), cosAnti(z)) =~
+      doAssert exp(m) =~ series(m, TERMS_EXP, as_anti = false), &"exp⟑ is series; got `{m=}`."
+      doAssert sin(m) =~ series(m, TERMS_SIN, as_anti = false), &"sin⟑ is series; got `{m=}`."
+      doAssert cos(m) =~ series(m, TERMS_COS, as_anti = false), &"cos⟑ is series; got `{m=}`."
+      doAssert expAnti(m) =~ series(m, TERMS_EXP, as_anti = true), &"exp⟇ is series; got `{m=}`."
+      doAssert sinAnti(m) =~ series(m, TERMS_SIN, as_anti = true), &"sin⟇ is series; got `{m=}`."
+      doAssert cosAnti(m) =~ series(m, TERMS_COS, as_anti = true), &"cos⟇ is series; got `{m=}`."
+    let n = pairs[(i+1) mod pairs.len]
+    doAssert exp(n + m) =~ product(exp(n), exp(m)), &"exp⟑ of sum is product; got `{m=}`."
+    doAssert expAnti(n + m) =~ productAnti(expAnti(n), expAnti(m)), &"Same under ⟇; got `{m=}`."
+    doAssert product(sin(m), sin(m)) + product(cos(m), cos(m)) =~ unit,
+      &"Squares of sin⟑𝐦 and cos⟑𝐦 must sum to 𝟏; got `{m=}`."
+    doAssert productAnti(sinAnti(m), sinAnti(m)) + productAnti(cosAnti(m), cosAnti(m)) =~
         unit_anti,
-      &"sin² + cos² under ⟇ must be 𝟙; got `{z=}`."
+      &"Squares of sin⟇𝐦 and cos⟇𝐦 must sum to 𝟙; got `{m=}`."
 
-    # Hold tangent: tan z ⟑ cos z = sin z, and none exactly where cosine has no inverse.
-    let (tangent, tangent_anti) = (tan(z), tanAnti(z))
-    doAssert tangent.isSome == isInvertible(cos(z)), &"Tangent exists by cosine; got `{z=}`."
+    # Hold tangent: tan⟑𝐦 ⟑ cos⟑𝐦 = sin⟑𝐦, and none exactly where cosine has no inverse.
+    let (tangent, tangent_anti) = (tan(m), tanAnti(m))
+    doAssert tangent.isSome == isInvertible(cos(m)), &"Tangent exists by cosine; got `{m=}`."
     if tangent.isSome:
       inc result[4]
-      doAssert product(tangent.get, cos(z)).isNear(sin(z), tangent.get.size * cos(z).size),
-        &"tan z ⟑ cos z = sin z; got `{z=}`."
+      doAssert product(tangent.get, cos(m)).isNear(sin(m), tangent.get.size * cos(m).size),
+        &"tan⟑𝐦 ⟑ cos⟑𝐦 must be sin⟑𝐦; got `{m=}`."
     if tangent_anti.isSome:
-      let scale_anti = tangent_anti.get.size * cosAnti(z).size
-      doAssert productAnti(tangent_anti.get, cosAnti(z)).isNear(sinAnti(z), scale_anti),
-        &"tan z ⟇ cos z = sin z under ⟇; got `{z=}`."
+      let scale_anti = tangent_anti.get.size * cosAnti(m).size
+      doAssert productAnti(tangent_anti.get, cosAnti(m)).isNear(sinAnti(m), scale_anti),
+        &"tan⟇𝐦 ⟇ cos⟇𝐦 must be sin⟇𝐦; got `{m=}`."
 
-    # Hold division: (y / z) ⟇ z = y, for pair and for multivector.
-    let quotient = y / z
+    # Hold division: (𝐧 / 𝐦) ⟇ 𝐦 = 𝐧, for pair and for multivector.
+    let quotient = n / m
     if quotient.isSome:
       inc result[5]
-      doAssert productAnti(quotient.get, z).isNear(y, quotient.get.size * z.size),
-        &"(y / z) ⟇ z must be y; got `{z=}`."
-      let whole = toMultivectorScalars((y.toMultivector / z).get ⟇ z.toMultivector)
-      doAssert whole.isNear(y, quotient.get.size * z.size), "(𝐦 / z) ⟇ z must be 𝐦."
+      doAssert productAnti(quotient.get, m).isNear(n, quotient.get.size * m.size),
+        &"(𝐧 / 𝐦) ⟇ 𝐦 must be 𝐧; got `{m=}`."
+      let whole = toMultivectorScalars((n.toMultivector / m).get ⟇ m.toMultivector)
+      doAssert whole.isNear(n, quotient.get.size * m.size), "(𝐧 / 𝐦) ⟇ 𝐦 must be 𝐧, as multivector."
 
     # Hold authority of algebra: Lengyel's forms, complex functions, or idempotents.
-    when SQUARE_WEIGHT == 0:
-      doAssert exp(z) =~ expLengyel(bulk, weight), &"`Exp` of Lengyel; got `{z=}`."
-      doAssert sin(z) =~ sinLengyel(bulk, weight), &"`Sin` of Lengyel; got `{z=}`."
-      doAssert cos(z) =~ cosLengyel(bulk, weight), &"`Cos` of Lengyel; got `{z=}`."
-      doAssert expAnti(z) =~ complement(expLengyel(weight, bulk)), "`AntiExp` of Lengyel."
-      if bulk > 0:
+    when SQUARES_WEDGE_DOT.base == 0:
+      doAssert exp(m) =~ expLengyel(s, t), &"`Exp` of Lengyel; got `{m=}`."
+      doAssert sin(m) =~ sinLengyel(s, t), &"`Sin` of Lengyel; got `{m=}`."
+      doAssert cos(m) =~ cosLengyel(s, t), &"`Cos` of Lengyel; got `{m=}`."
+      doAssert expAnti(m) =~ complement(expLengyel(t, s)), "`AntiExp` of Lengyel."
+      if s > 0:
         inc result[6]
-        doAssert root.get =~ sqrtLengyel(bulk, weight), &"`Sqrt` of Lengyel; got `{z=}`."
-        doAssert root_inverse.get =~ sqrtInverseLengyel(bulk, weight), "`InverseSqrt`."
-        doAssert inverse_z.get =~ inverseLengyel(bulk, weight), &"`Inverse`; got `{z=}`."
-      if weight > 0:
-        doAssert root_anti.get =~ complement(sqrtLengyel(weight, bulk)), "`AntiSqrt` of Lengyel."
-        doAssert inverse_anti.get =~ complement(inverseLengyel(weight, bulk)), "`AntiInverse`."
+        doAssert root.get =~ sqrtLengyel(s, t), &"`Sqrt` of Lengyel; got `{m=}`."
+        doAssert root_inverse.get =~ sqrtInverseLengyel(s, t), "`InverseSqrt`."
+        doAssert inverse_m.get =~ inverseLengyel(s, t), &"`Inverse`; got `{m=}`."
+      if t > 0:
+        doAssert root_anti.get =~ complement(sqrtLengyel(t, s)), "`AntiSqrt` of Lengyel."
+        doAssert inverse_anti.get =~ complement(inverseLengyel(t, s)), "`AntiInverse`."
       if tangent.isSome:
-        doAssert tangent.get =~ tanLengyel(bulk, weight), &"`Tan` of Lengyel; got `{z=}`."
-    elif SQUARE_WEIGHT == -1:
+        doAssert tangent.get =~ tanLengyel(s, t), &"`Tan` of Lengyel; got `{m=}`."
+    elif SQUARES_WEDGE_DOT.base == -1:
       inc result[6]
-      doAssert root.get =~ sqrt(z.toComplex).toScalars, &"Principal complex root; got `{z=}`."
-      doAssert exp(z) =~ exp(z.toComplex).toScalars, &"Complex exponential; got `{z=}`."
-      doAssert sin(z) =~ sin(z.toComplex).toScalars, &"Complex sine; got `{z=}`."
-      doAssert cos(z) =~ cos(z.toComplex).toScalars, &"Complex cosine; got `{z=}`."
-      if inverse_z.isSome:
-        doAssert inverse_z.get =~ inv(z.toComplex).toScalars, &"Complex inverse; got `{z=}`."
+      doAssert root.get =~ sqrt(m.toComplex).toScalars, &"Principal complex root; got `{m=}`."
+      doAssert exp(m) =~ exp(m.toComplex).toScalars, &"Complex exponential; got `{m=}`."
+      doAssert sin(m) =~ sin(m.toComplex).toScalars, &"Complex sine; got `{m=}`."
+      doAssert cos(m) =~ cos(m.toComplex).toScalars, &"Complex cosine; got `{m=}`."
+      if inverse_m.isSome:
+        doAssert inverse_m.get =~ inv(m.toComplex).toScalars, &"Complex inverse; got `{m=}`."
       if tangent.isSome:
-        doAssert tangent.get =~ tan(z.toComplex).toScalars, &"Complex tangent; got `{z=}`."
+        doAssert tangent.get =~ tan(m.toComplex).toScalars, &"Complex tangent; got `{m=}`."
     else:
-      doAssert exp(z) =~ z.idempotent(math.exp), &"Exponential on idempotents; got `{z=}`."
-      doAssert sin(z) =~ z.idempotent(math.sin), &"Sine on idempotents; got `{z=}`."
-      doAssert cos(z) =~ z.idempotent(math.cos), &"Cosine on idempotents; got `{z=}`."
+      doAssert exp(m) =~ m.idempotent(math.exp), &"Exponential on idempotents; got `{m=}`."
+      doAssert sin(m) =~ m.idempotent(math.sin), &"Sine on idempotents; got `{m=}`."
+      doAssert cos(m) =~ m.idempotent(math.cos), &"Cosine on idempotents; got `{m=}`."
       if root.isSome:
         inc result[6]
-        doAssert root.get =~ z.idempotent(math.sqrt), &"Root on idempotents; got `{z=}`."
+        doAssert root.get =~ m.idempotent(math.sqrt), &"Root on idempotents; got `{m=}`."
 
     # Hold root of small part without cancellation: residual of 𝟙 within few rounding errors.
-    if root.isSome and abs(weight) > 0:
-      let residual = abs(product(root.get, root.get)[Basis.scalarAnti] - weight)
-      doAssert residual <= 8 * epsilon(Coefficient) * max(abs(bulk), abs(weight)),
-        &"Root must not cancel small part; got `{residual=}` for `{z.toMultivector}`."
+    if root.isSome and abs(t) > 0:
+      let residual = abs(product(root.get, root.get)[Basis.scalarAnti] - t)
+      doAssert residual <= 8 * epsilon(Coefficient) * max(abs(s), abs(t)),
+        &"Root must not cancel small part; got `{residual=}` for `{m.toMultivector}`."
       inc result[7]
 
 
@@ -324,32 +322,33 @@ proc holdNorms(): tuple[nan_float, radius_none: int] =
   ##   radius norm under conformal one; count float roots of 𝐦∘𝐦 that `|⊘` leaves NaN.
   doAssert sizeof(MultivectorScalars) == 2 * sizeof(Coefficient),
     &"Homogeneous scalar must hold two coefficients unpadded; got `{sizeof(MultivectorScalars)}`."
-  doAssert SQUARE_BULK == 0 xor IS_CONFORMAL, "Pair must be dual under rigid metric alone."
+  doAssert (SQUARES_WEDGE_DOT.anti == 0) xor IS_CONFORMAL,
+    "Pair must be dual under rigid metric alone."
 
   # Hold roots of basis elements against norms of library, where one part of root is zero.
   when IS_RIGID:
     for basis in Basis:
       let
         element = initElement(basis)
-        bulk = sqrt(initMultivectorScalars((element ∙ element)[Basis.scalar], 0)).toOption
+        bulk = sqrt(initMultivectorScalars((element ∙ element)[Basis.scalar], 0))
         weight = sqrtAnti(initMultivectorScalars(0, (element ∘ element)[Basis.scalarAnti]))
       doAssert bulk.isSome and bulk.get =~ |∙element,
         &"Root of 𝐞∙𝐞 under ⟑ must equal bulk norm of library; got `{bulk}`."
-      doAssert weight.toOption.isSome and weight.toOption.get =~ |∘element,
+      doAssert weight.isSome and weight.get =~ |∘element,
         &"Root of 𝐞∘𝐞 under ⟇ must equal weight norm of library; got `{weight}`."
 
   # Hold norms on seeded multivectors.
   for _ in 1..SAMPLES:
     var m: Multivector
     for basis in Basis: m[basis] = rand(-1.0..1.0)
-    let root_dot = sqrt(initMultivectorScalars((m ∙ m)[Basis.scalar], 0)).toOption
+    let root_dot = sqrt(initMultivectorScalars((m ∙ m)[Basis.scalar], 0))
     if root_dot.isSome:
       doAssert product(root_dot.get, root_dot.get).toMultivector =~ (m ∙ m),
-        &"√(𝐦∙𝐦) ⟑ √(𝐦∙𝐦) must be 𝐦∙𝐦; got `{root_dot.get.toMultivector}`."
+        &"⟑√(𝐦∙𝐦), squared under ⟑, must be 𝐦∙𝐦; got `{root_dot.get.toMultivector}`."
     when IS_RIGID:
       let
         (bulk, weight) = (normBulk(m), normWeight(m))
-        root_weight = sqrtAnti(initMultivectorScalars(0, (m ∘ m)[Basis.scalarAnti])).toOption
+        root_weight = sqrtAnti(initMultivectorScalars(0, (m ∘ m)[Basis.scalarAnti]))
         unitized = norm(m) / weight
         divided = m / weight
       doAssert root_dot.isSome and root_dot.get =~ bulk,
@@ -365,9 +364,9 @@ proc holdNorms(): tuple[nan_float, radius_none: int] =
     else:
       let
         square = (m ∘ m)[Basis.scalarAnti]
-        radius = normRadius(m).toOption
+        radius = normRadius(m)
       if sqrt(square).isNaN: inc result.nan_float
-      doAssert radius.isSome == (SQUARE_BULK == -1 or square >= 0),
+      doAssert radius.isSome == (SQUARES_WEDGE_DOT.anti == -1 or square >= 0),
         &"Radius norm exists exactly where pair has root; got `{radius}` for `{square=}`."
       if radius.isNone:
         inc result.radius_none
@@ -390,14 +389,14 @@ when IS_CONFORMAL:
         point[Basis.infinity] = (distance_squared + sign * radius^2) / 2
         let
           square = (point ∘ point)[Basis.scalarAnti]
-          root = normRadius(point).toOption
+          root = normRadius(point)
         doAssert abs(square - sign * radius^2) <= TOLERANCE_ABS,
           &"Square must be 2aʷaᵘ - |a|², by Table 4.13; got `{square}` for radius `{radius}`."
         if sign > 0:
           doAssert root.isSome and abs(root.get[Basis.scalarAnti] - radius) <= TOLERANCE_ABS and
               root.get[Basis.scalar] == 0,
             &"Real radius norm must land on 𝟙; got `{root}`."
-        elif SQUARE_WEIGHT == -1:
+        elif SQUARES_WEDGE_DOT.base == -1:
           doAssert root.isSome and abs(root.get[Basis.scalar] - radius) <= TOLERANCE_ABS and
               root.get[Basis.scalarAnti] == 0,
             &"Imaginary radius norm must land on 𝟏, as i; got `{root}`."
@@ -415,7 +414,7 @@ proc holdRadius(): tuple[float_nan, root_none, point_nan, point_none, point_imag
       for basis in Basis: m[basis] = rand(-1.0..1.0)
       let
         dot_anti = toMultivectorScalars(m ∘ m)
-        radius = sqrtAnti(dot_anti).toOption
+        radius = sqrtAnti(dot_anti)
       if (|⊘m)[Basis.scalarAnti].isNaN: inc result.float_nan
       if radius.isNone: inc result.root_none
       else:
@@ -429,7 +428,7 @@ proc holdRadius(): tuple[float_nan, root_none, point_nan, point_none, point_imag
         point[basis] = weight * rand(-1.0..1.0)
         distance_squared += point[basis]^2
       point[Basis.infinity] = distance_squared / (2 * weight)
-      let radius = sqrtAnti(toMultivectorScalars(point ∘ point)).toOption
+      let radius = sqrtAnti(toMultivectorScalars(point ∘ point))
       if (|⊘point)[Basis.scalarAnti].isNaN: inc result.point_nan
       if radius.isNone: inc result.point_none
       elif radius.get[Basis.scalar] > 0: inc result.point_imaginary
@@ -444,9 +443,10 @@ proc holdSuiteSample() =
       dot_anti = toMultivectorScalars(𝐦 ∘ 𝐦)
       radius = sqrtAnti(dot_anti)
     doAssert (|⊘𝐦)[Basis.scalarAnti].isNaN, "Float root of library prints NaN, as found."
-    doAssert radius =~ initMultivectorScalars(0.6657714603000752, 0),
-      &"Radius norm must be imaginary 0.665771𝟏; got `{radius.toMultivector}`."
-    doAssert productAnti(radius, radius) =~ dot_anti, "‖𝐦‖⊘ ⟇ ‖𝐦‖⊘ must be 𝐦∘𝐦."
+    doAssert radius.isSome, "Complex pair must have root."
+    doAssert radius.get =~ initMultivectorScalars(0.6657714603000752, 0),
+      &"Radius norm must be imaginary 0.665771𝟏; got `{radius.get.toMultivector}`."
+    doAssert productAnti(radius.get, radius.get) =~ dot_anti, "‖𝐦‖⊘ ⟇ ‖𝐦‖⊘ must be 𝐦∘𝐦."
 
 
 proc main(): int =
@@ -454,12 +454,12 @@ proc main(): int =
   randomize(SEED)
   holdTables()
   var pairs: seq[MultivectorScalars]
-  for (bulk, weight) in [
+  for (s, t) in [
     (0.0, 0.0), (1.0, 0.0), (-1.0, 0.0), (0.0, 1.0), (0.0, -1.0), (1.0, 1.0), (1.0, -1.0),
     (-1.0, 1.0), (2.0, 1.0), (1.0, 2.0), (1.0, 1e-10), (-1.0, 1e-10), (1e-10, 1.0),
     (-0.44325163735009460, 0.0), (0.0, -0.44325163735009460), (PI / 2, 0.0),
   ]:
-    pairs.add initMultivectorScalars(bulk, weight)
+    pairs.add initMultivectorScalars(s, t)
   for _ in 1..SAMPLES: pairs.add initMultivectorScalars(rand(-1.0..1.0), rand(-1.0..1.0))
   let passed = holdFunctions(pairs)
   for count in passed:
@@ -468,8 +468,10 @@ proc main(): int =
   holdSuiteSample()
   let norms = holdNorms()
   when IS_CONFORMAL: holdPointsRound()
-  let kind = if IS_CONFORMAL: "conformal" else: "rigid"
-  echo &"homogeneous-scalar: laws hold at {DIMENSIONS}D {kind}, ε² = {SQUARE_WEIGHT}, " &
+  let
+    kind = if IS_CONFORMAL: "conformal" else: "rigid"
+    square = SQUARES_WEDGE_DOT.base
+  echo &"homogeneous-scalar: laws hold at {DIMENSIONS}D {kind}, ε² = {square}, " &
       &"{pairs.len} pairs; passed inverse {passed[0]}, root {passed[1]}, inverse root " &
       &"{passed[2]}, series " &
       &"{passed[3]}, tangent {passed[4]}, quotient {passed[5]}, authority {passed[6]}, small " &
