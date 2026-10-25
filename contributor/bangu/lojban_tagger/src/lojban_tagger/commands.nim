@@ -72,11 +72,15 @@ func describe(term: Term): string =
   ## Render how term read: as tag with its gismu, as English with its meanings, or as nothing.
   let text = "`" & term.reading.text & "`"
   if term.reading.is_tag:
-    let ranking =
-      if term.specific.len > 0: ", matched by its gismu; things tagged `" & term.reading.text &
-          "` come first"
-      else: ""
-    return text & " reads as tag `" & term.reading.tag.toTanru & "`" & ranking & ".\n"
+    let
+      tanru = term.reading.tag.toTanru
+      ranking =
+        if term.specific.len > 0: ", matched by its gismu; things whose tag holds `" & tanru &
+            "` unchanged come first"
+        elif not term.reading.tag.isGismuAlone:
+          ", matched by its gismu; its cmavo change nothing, so nothing comes first"
+        else: ""
+    return text & " reads as tag `" & tanru & "`" & ranking & ".\n"
   if term.meanings.len == 0:
     return text & " reads as neither tag nor English of lists, so finds nothing; " &
         term.reading.explain & "\n"

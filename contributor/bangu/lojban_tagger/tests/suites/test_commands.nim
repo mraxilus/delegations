@@ -156,6 +156,16 @@ suite "Internal: Commands":
     let file = run(["find", "file"], index)
     check file.output == "notes\tdatnyvei\n"  # English leads to gismu of gloss
     check file.report.startsWith("`file` reads as English: datni+vreji (file")  # meaning named
+    var written = index
+    written.addTags("letter", [readTag("veirselci'a").tag])
+    let selcia = run(["find", "selci'a"], written)
+    check selcia.output == "letter\tveirselci'a\n"  # tag holding `se ciska` inside longer tanru
+    check selcia.report == "`selci'a` reads as tag `se+ciska`, matched by its gismu; things " &
+        "whose tag holds `se+ciska` unchanged come first.\n"  # report names unit that ranks
+    let cancel = run(["find", "selselci'a"], written)
+    check cancel.output == selcia.output  # `selselci'a` finds what its gismu find
+    check cancel.report == "`selselci'a` reads as tag `se+se+ciska`, matched by its gismu; its " &
+        "cmavo change nothing, so nothing comes first.\n"  # two `se` cancel (CLL 12.11)
     let none = run(["find", "gerku"], index)
     check none.code == 1 and none.output == ""  # nothing found exits 1, as `grep` does
     let unknown = run(["find", "qwzx"], index)

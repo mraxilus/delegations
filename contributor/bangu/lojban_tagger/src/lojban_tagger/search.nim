@@ -11,9 +11,22 @@
 ##     Cost: order and relation of gismu are lost; `patfu mamta` and `mampa'u` hold one set,
 ##     so each finds other (CLL 4.5 calls tanru ambiguous for same reason).
 ##   Matching reads gismu alone, so `selci'a` finds what `ciska` finds. Lojban term holding cmavo
-##     also ranks first each entity holding tag of exactly its tanru: Architect ruled that search
-##     for `selci'a` lists `selci'a` first, and search for `ciska` gives no priority. English term
-##     ranks nothing, since ruling names term typed in Lojban.
+##     also ranks first each entity holding tag whose tanru units hold units of term unbroken,
+##     in order (`units.nim`). Architect ruled that search for `selci'a` lists first each tag
+##     holding `se` right before `ciska`, wherever pair stands, as `selci'a`, `selci'avei` and
+##     `veirselci'a` do; that net result of cmavo around pair decides; that longer term ranks by
+##     unbroken run too; and that search for `ciska` gives no priority. English term ranks
+##     nothing, since ruling names term typed in Lojban.
+##     Units, not words: scope of SE is only following brivla or equivalent unit (CLL 9.4), so
+##     `se ciska` is one unit wherever it stands, and folding gives what cmavo around it do.
+##     `selselci'a` holds words `se ciska` yet folds to `ciska`, since two `se` cancel (12.11);
+##     `selkemci'avei` holds no such unit, since there `se` converts whole group. Run that is
+##     whole content of group cmavo bind does not rank: term `selci'avei` ranks no
+##     `selselci'avei`, which 12.11 reads as converse of `selci'avei`.
+##     Run, not part of grouped tanru: lujvo makers leave `ke` out (4.10, 12.11), so rafsi do not
+##     record grouping, and run is what they record. So term `selci'avei` ranks tag `vreta se
+##     ciska vreji`, where left grouping (5.3) binds `vreta` to `se ciska` first.
+##     Term whose cmavo all fold away, as `selselci'a`, ranks nothing, as gismu term does.
 ##     Cost: rank is two tiers, ranked then rest, each in order of index.
 ##   Term reading as neither Lojban nor known English holds no alternative, so query finds
 ##     nothing; caller reports term, so empty result says why.
@@ -24,7 +37,7 @@
 
 import std/[algorithm, sequtils]
 
-import ./[dictionary, english, index, tags]
+import ./[dictionary, english, index, tags, units]
 
 
 type
@@ -32,17 +45,20 @@ type
     reading*: Reading  ## Term read as Lojban tag, refused or not.
     meanings*: seq[Meaning]  ## Meanings term leads to as English; empty where Lojban read.
     alternatives*: seq[seq[Word]]  ## Gismu sets, any one of which satisfies term.
-    specific*: seq[Word]
-      ## Tanru of Lojban term holding cmavo, which ranks entities first; empty otherwise.
+    specific*: seq[TanruUnit]
+      ## Units of Lojban term holding cmavo after folding, which rank entities first; empty
+      ##   where term holds none, or where its cmavo all fold away.
 
 
 func readTerm*(text: string): Term =
   ## Read term as Lojban tag, else as English.
   result.reading = text.readTag
   if result.reading.is_tag:
-    let tag = result.reading.tag
+    let
+      tag = result.reading.tag
+      folded = tag.units
     result.alternatives = @[tag.gismu.deduplicate.sorted]
-    if not tag.isGismuAlone: result.specific = tag.words
+    if folded.anyIt(it.links.len > 0 or it.word.kind == Kind.Cmavo): result.specific = folded
     return
   result.meanings = text.meanings
   for meaning in result.meanings:
@@ -63,9 +79,9 @@ func isSatisfying*(entity: Entity, term: Term): bool =
 
 
 func isRanked*(entity: Entity, terms: openArray[Term]): bool =
-  ## Test entity holds tag whose tanru is specific tanru of some term.
+  ## Test entity holds tag whose units hold specific units of some term unbroken and unchanged.
   for term in terms:
-    if term.specific.len > 0 and entity.tags.anyIt(it.words == term.specific): return true
+    if entity.tags.anyIt(it.units.isHoldingUnchanged(term.specific)): return true
   false
 
 
