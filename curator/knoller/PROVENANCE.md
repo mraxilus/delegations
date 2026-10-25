@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-10-04 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 99c9b45b0f5bc5fa |
+| Rules   | c3894986d1543e01 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: a curator project, from the brief of the Architect. It holds the fixers of `koch fix`
