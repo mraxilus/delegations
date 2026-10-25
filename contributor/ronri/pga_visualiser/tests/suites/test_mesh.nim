@@ -238,14 +238,13 @@ suite "Mesh":
     discard MESHES_SCENE.tessellateObject(placed, Ink.Rose.colour, scale_far)
     let vertex = MESHES_SCENE.points.vertices[0]
     check float(vertex.x) == 0.25 and float(vertex.y) == 0.5 and float(vertex.z) == -0.125
-    # Line's support is nearest world origin: on line through `at` along x, that is `at`
-    #   less its x.
+    # Line's halves meet at its point nearest pivot, which hand-built extent leaves at view
+    #   origin: on line through `at` along x, that is `at` less its offset along x.
     placed = placeObject(line)
-    let support = placed.at.toView(origin)
     discard MESHES_SCENE.tessellateObject(placed, Ink.Rose.colour, scale_far)
     let ribbon = MESHES_SCENE.ribbons.records[0]
     check float(ribbon.tail_y) == 0.5 and float(ribbon.tail_z) == -0.125
-    check float(ribbon.tail_x) == float32(support.x)
+    check float(ribbon.tail_x) == 0.0
     placed = placeObject(plane, some(at))
     discard MESHES_SCENE.tessellateObject(placed, Ink.Rose.colour, scale_far)
     check float(MESHES_SCENE.discs.records[0].centre_y) == 0.5

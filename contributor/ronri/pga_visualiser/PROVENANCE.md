@@ -1597,10 +1597,10 @@ weight, so that sign survives. `depthAgainst` is linear in its point. A meet pas
 therefore reports its depth **negated** on every plane met from behind its normal. Such a plane
 picks at 0 of 462 sampled pixels, while the ground plane hides the fault.
 
-**Line.** Two segments meet on the line at its support, and each runs out to one of the two
-vanishing points of the line, `eye ± radius_horizon*axis`. A vanishing point is a property of the
-*eye*, which forces this shape. An end anchored at a fixed reach from the support stops short of it,
-by about 6.7° for a support 40 units out.
+**Line.** Two segments meet on the line at its point nearest the pivot. Each runs out to one of the
+two vanishing points of the line, `eye ± radius_horizon*axis`. A vanishing point is a property of
+the *eye*, which forces this shape. An end anchored at a fixed reach from the support stops short of
+it, by about 6.7° for a support 40 units out.
 
 Each segment lies in the plane through the eye that contains the line. The pair therefore draws over
 the true projection of the line, within 1e-16 of screen skew. That skew holds only while the
@@ -1608,6 +1608,13 @@ near-plane crossing is stepped from the end that it stands nearer (Records and s
 from the far end, the two halves part on screen. The far ends sit off the line along the view ray,
 so occlusion is approximate there. `picking` tests both halves through `clipToEyeSide`, a near-plane
 clip written by hand, because this reach puts an endpoint behind the eye.
+
+**The halves meet where the line passes nearest the pivot, and not at its support.** The image is
+the same from any point of the line, so the point only sets what a float32 record holds.
+`DrawScale.pivot` carries the pivot about the view origin, and `picking` and `isLineShownCentrally`
+test the same halves. Rejected: the support, which a line picked far off has 4.7e6 units behind the
+eye. A record stepped from there loses the line where it passes the eye, 1e-8 off. On the page that
+line then ran about 30° off its own image.
 
 **Horizon objects are drawn as sky.** A horizon point is a fixed star at `eye +
 radius_horizon*heading`. A horizon line is a great circle about the eye. A horizon plane is a
@@ -2085,6 +2092,11 @@ It is the middle of the object, with no drawn radius taken off. A camera at the 
 then reads its radius rather than zero. A near clip of one four-hundredth of that still holds the
 whole planet. It is never the depth of the pointer, which would move the furniture and the depth
 mapping at every pointer move of a still camera.
+
+**A line stands where it passes nearest the pivot**, as it is drawn (Geometry and drawing).
+`reachNear` reads that point in components, as it reads every place. Rejected: its support, the
+point nearest the world origin. A line picked far off has it 4.7e6 units behind the eye. The next
+object ahead then sets the near clip at 21.3 units, and cuts away the line 2.4e-7 ahead.
 
 **It is read once for each frame, and never for each overlay call.** `reachNear` walks every
 placement of the frame, and `ensureViewOverlay` runs many times over one frame: the anchor, each
@@ -4211,8 +4223,9 @@ Verified by driven check:
 
 **A pointer pick centres its object, and comes in to it.** A click or a tap on a point or a line
 records a `framing.PointerPick`, which `offerAim` consumes on the next frame. The destination is
-`stanceApproaching`, which puts the pivot on the own anchor of the object. Every pick therefore
-centres, whether a pointer made it or the objects list did.
+`stanceApproaching`, which puts the pivot on the object itself. That is its own anchor, or for a
+line the point nearest the eye. Every pick therefore centres, whether a pointer made it or the
+objects list did.
 
 The camera slides and never turns, so the angles and roll survive. `stanceRepivoted` carries the
 pivot onto the object, and `stanceDollied` sets the reach. Rejected: the object held under the pixel
@@ -4233,11 +4246,11 @@ units. The pivot lands on it there, and it reads in front (Camera aiming, Pickin
 keeps it mid-frame however far out it stands, and however far off the pick starts. The destination
 is held about the place of the star itself, and the ease lands on it exactly (Origins).
 
-**An object behind the reader is left to the frame rule.** To centre one would slide the camera back
-past it rather than turn, which is a jump nobody asked for. `stanceApproaching` answers none there,
-and `stanceFor` takes it by its own bound. Ahead is judged against the reach of the object from the
-eye, as a pick judges a hit (Picking). Verified by `suites.nim`: a pointer pick of a small object up
-close comes in to it, and one behind does not.
+**A point or a plane behind the reader is left to the frame rule.** To centre one would slide the
+camera back past it rather than turn, which is a jump nobody asked for. `stanceApproaching` answers
+none there, and `stanceFor` takes it by its own bound. Ahead is judged against the reach of the
+object from the eye, as a pick judges a hit (Picking). Verified by `suites.nim`: a pointer pick of a
+small object up close comes in to it, and one behind does not.
 
 **A dot picked alone never lands nearer than its fit**, by the ruling of #535. The fit is the depth
 that a pointer pick of the dot comes in to. The wheel over empty sky can take the separation to
@@ -4246,16 +4259,41 @@ about 20 px across. `stanceFitted` dollies the destination of the frame rule out
 as a new goal lands. A separation past the fit stays, and so does a stance set after the pick.
 
 A point seen at its size has no fit, so the working scale of the reader stays. The fit is capped at
-the reach of the dot, so the eye never moves further off than the dot stands. A group, a line and a
-plane keep the frame rule alone. `stanceFitted` reads the dot by its reach from the eye. Rejected:
-its depth along the sight, which reads every dot behind the eye as seen at its size. Rejected: a fit
-for every point, which takes a point at working scale out to 19.3 units.
+the reach of the dot, so the eye never moves further off than the dot stands. A group and a plane
+keep the frame rule alone, and a line its own rule below. `stanceFitted` reads the dot by its reach
+from the eye. Rejected: its depth along the sight, which reads every dot behind the eye as seen at
+its size. Rejected: a fit for every point, which takes a point at working scale out to 19.3 units.
 
 Verified by `suites.nim`: a point picked from the list never lands nearer than its fit, and one
 further out stays. Verified by a Playwright script that is not kept, in the Chromium of Playwright
 under SwiftShader, on 2026-10-05. After 175 notches over empty sky in the demo of 5,038 objects, a
 tick of HD 222237b settles at 2.414e-7 units. The star then draws 7.7 px across in a canvas 771 px
 tall, against 19.9 px at 9.38e-8 without the floor.
+
+**A line picked alone comes to its point nearest the eye, and never to its support**, by the ruling
+of #767. The support is the point of the line nearest the world origin. From a far star, the support
+of `sol ∧ earth` is the centre of Sol, and a pivot there puts the eye inside it. The pivot goes to
+the orthogonal projection of the eye onto the line (`framing.positionOnLineNearest`), by pointer and
+by list alike. The separation stays where the line stands further off than that, and else the eye
+comes in to the reach of the line. That point stands beside the eye as often as ahead, so a line is
+exempt from the check that refuses an object behind the reader.
+
+**The eye is read once, at the pick.** The slide keeps the sight, so after it the point of the line
+nearest the eye stands further along the line. An eye read at each offer would carry the camera
+along the line without end. The same line offered again, as when it is rewritten or shown again,
+projects the pivot instead and keeps the distance. A pivot on the line projects to itself, so
+nothing moves. A pick is a pointer pick, or a change of `Selection.revision` since the last offer,
+which `CameraTween.revision_offered` holds.
+
+The projection is held in world coordinates, as the scene stores the line. A probe that is not kept
+measured it on 2026-10-25, in exact rational arithmetic. From a star 4.7e6 units out, the pivot
+lands 4.4e-11 off the line. That is a fifth of a pixel at the orbit distance, in a frame 900 px
+high. The frame reads the line from the same point, for its near clip and its drawn halves (Free
+flight, Geometry and drawing).
+
+Rejected: the eye read at each offer. For a line moved across itself in 20 frames, the pivot slides
+9.89 units along it, and the distance loses 51%. Rejected: the frame rule, which centres a lone line
+on its support.
 
 *Checked.* Verified by `suites.nim`:
 
@@ -4267,6 +4305,12 @@ tall, against 19.9 px at 9.38e-8 without the floor.
 - their pivot stands on it to a millionth of the separation, and an orbit keeps it there;
 - the arrival distance equals the fit, and the reach to the object equals it too;
 - a near point and a line keep the orbit distance, and one behind the reader is refused;
+- a line picked alone from 4.7e6 units out, by pointer and by list, lands its pivot on its point
+  nearest the eye to 1e-6;
+- a line moved across itself for 20 frames carries the pivot straight across, and the distance
+  stays, to 1e-9;
+- a line picked far off keeps the near clip short of the pivot, with a point 8,000 units ahead;
+- both its drawn halves pass within a pixel of the middle, and a cursor 200 px off picks it;
 - the arrival of the plane from 12 units and from 1.
 
 That sweep, on the C build on 2026-10-17, reads the worst pivot 1.7e-8 of the separation off. A

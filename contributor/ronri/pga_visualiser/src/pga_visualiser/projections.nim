@@ -17,7 +17,7 @@
 ##
 ## Seam, so caller imports this instead of `pga` and reaches both. Importing both raises
 ## ambiguous call on these four names — never silently wrong answer.
-##   Callers today: `scene`, `tessellate`, `interaction`, and suite. Every other module
+##   Callers today: `scene`, `tessellate`, `interaction`, `framing`, and suite. Every other module
 ##   imports `pga` directly, since none calls projection.
 
 {.experimental: "strictFuncs".}
