@@ -85,7 +85,7 @@ const
     ## Harness's own type-checker configuration, targeting node not browser.
   DRIVES = [
     "keys", "sky", "undo", "select", "drag", "search", "menu", "faces", "edit", "wheel", "escape",
-    "chords",
+    "chords", "bulk", "fields", "hover",
   ]
     ## Scripted runs entry point carries, each reporting checks of its own.
     ##   Help's runs are not here: one per tab, and tabs are read from binary rather than
