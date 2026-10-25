@@ -801,11 +801,6 @@ A line of enum members is such a line (D1 a of #752). The check and the fixer sh
   name is a field of a tuple type, or a parameter of a routine type, over several lines. A doc
   among them breaks the parse, as one after the last field before `]` does. A routine declared
   there, as in `compiles(block: …)`, takes its doc as the first line of its body.
-- The fixer writes the doc where doc position puts it (STYLE.md §5). A type, a field, a binding
-  and an enum member take it joined to their first line. The joined line must fit, and hold no
-  comment. That holds where the value runs on, as the library writes `Cayley1D* =  ## …`.
-  Otherwise the doc takes the next line, one level in. A routine takes it as the first line of
-  its body, at the indent of the body.
 - A doc that holds another TODO, such as `## TODO: Make distinct.`, holds a design note and no
   text. The fixer moves the note above the declaration as a `#` comment (VIII.3), and the doc
   becomes `## TODO: Document.`. A doc of several lines that opens with a note stays for hand,
@@ -822,10 +817,31 @@ A line of enum members is such a line (D1 a of #752). The check and the fixer sh
 - A value or a body that opens a long string, or a comment of several lines, takes its doc where
   that string or comment closes. A doc written on its first line would stand inside the string,
   and change its value.
-- Inside an open bracket, a line can end on the `=` of an argument, or the `:` of a field or a
-  key. The value of that line takes its doc where it closes too. Nim 2.2.12 and the commit pin
-  of `ronri` refuse a doc there, as `expression expected`. After `(`, `[`, `{`, `,`, a binary
-  operator or `block:`, both parse it. Verified by hand with both compilers, 2026-10-25.
+- Nim 2.2.12 and the commit pin of `ronri` refuse a doc after the `=` of an argument inside an
+  open bracket. They refuse one after the `:` of a field or a key there too, as `expression
+  expected`. Verified by hand with both compilers, 2026-10-25.
+
+**The fixer writes each doc where doc position puts it and `nim doc` reads it (D2 a of #760).** A
+declaration on one line takes it joined to that line, where the joined line fits and holds no
+comment. Otherwise the doc takes the next line, one level in (STYLE.md §5). A routine takes it as
+the first line of its body, at the indent of the body.
+
+- A value or a type over several lines takes the doc after an `=` that ends its first line,
+  where that line fits. The library writes it so, as `Cayley1D* =  ## …`. Otherwise the value
+  takes the doc joined to its last line, or on the line below it, one level in.
+- A `case` value takes the doc on the line below its last branch, because `nim doc` reads none
+  that trails a branch.
+- A value that opens `block` on its first line stays for hand. Its report asks for the doc after
+  `=`, with `block` on the next line.
+- `nim jsondoc` of 2.2.12 and of the commit pin reads a doc in each of these places. It reads
+  none after the `(` of a call, after `[`, `,` or a binary operator, after `block:`, or first in
+  the body of `block:`. Verified by hand with both compilers, 2026-10-25.
+- Nim parses no doc on the line below an `=` that ends the first line. So a first line too wide
+  for a joined doc sends the doc to the close. Verified by hand with both compilers, 2026-10-25.
+- No comment alone gives a value that opens `block` on its first line a doc that `nim doc` reads.
+  `nim jsondoc` reads none after `block:`, first in the body, after its last line, or below it at
+  the indent of the declaration. A doc below the body at the indent of the body leaves its last
+  value unused, as `nim check` reports. Verified by hand with both compilers, 2026-10-25.
 
 **A forward declaration takes the doc of its routine, and the fix leaves that move for hand.**
 `nim doc` of Nim 2.2.12 reads the doc of a forward declaration, and drops the doc of the
@@ -844,15 +860,19 @@ trails a line which opens a bracket holds apart a call that the wraps would join
 
 - Verified by `suites/test_declarations.nim`: each kind and shape of declaration, and what passes.
   It holds a shared line, a line of enum members, a design note, a forward declaration and the
-  lines that the fix traces.
+  lines that the fix traces. It holds a value over lines in each shape that takes its own place,
+  and a value that opens `block` and stays for hand.
   It also holds cases of this repository whose value or signature runs past its first line, each
   named where it stands.
 - Verified by `suites/test_chain.nim`: a call that the wraps join takes the doc after them.
 - Verified by hand on the PGA library at `3d9696e`, 2026-10-25, with a driver that runs
-  `fixDocsMissing` alone. It writes the edits of the prototype of the rule, byte for byte. Knoller
-  built at `cb433e68` and knoller of this rule give outputs that differ by those edits alone, and
-  a second run reports `0 to fix`. The suites of `rga3d` and `cga4d` compile and pass on that
-  output, with the commit pin of the library.
+  `fixDocsMissing` alone. It writes 43 docs, and leaves 8 values that open `block:` for hand.
+  `nim jsondoc` of the commit pin reads 42 of those docs, in the rigid and the conformal
+  configuration. The other one is the doc of a private field, which `nim doc` shows nowhere.
+  Knoller built at `cb433e68` and knoller of this rule give outputs that differ by those writes
+  alone, and a second run reports `0 to fix`.
+- Verified by hand on that output, 2026-10-25: the suites of `rga3d` and `cga4d` compile and
+  pass, with the commit pin of the library.
 - Verified by hand with that driver over each Nim file of this repository and of the library,
   2026-10-25. A second fix writes nothing, and no token but a comment changes. A probe parses
   each file the fix writes with `parseStmt`, under 2.2.12 and under the commit pin of `ronri`, and
@@ -860,7 +880,7 @@ trails a line which opens a bracket holds apart a call that the wraps would join
 - Cost: a doc that opens the line right below the first line of a declaration counts, though the
   value runs on past it. That holds for the first line of a `block:`, and for a line inside a
   bracket, where `nim jsondoc` reads no doc. Verified by hand with `nim jsondoc` of 2.2.12,
-  2026-10-25. `## Open questions` holds the place of such a doc.
+  2026-10-25. The fixer never writes a doc there.
 - Cost: a routine with no body reads as a forward declaration where any overload of its name
   follows.
 - Cost: a routine on one line reads as a forward where its body after `= ` is shorter than
@@ -1695,20 +1715,6 @@ there is unverified.
 
 - Install by git URL needs the `?subdir=curator/knoller` form of nimble. It is not verified with
   the nimble that 2.2.12 ships.
-- Where does the doc of a value over several lines go? `nim jsondoc` of 2.2.12 and of the commit
-  pin reads such a doc in three places. They are after an `=` that ends the first line, after
-  the close of the value, and on the line below that close. It reads none after the `(` of a
-  call, after `[`, `,` or a binary operator, or after `block:`.
-  - The fixer joins the doc to the first line. So 16 of the 51 docs that it writes into the PGA
-    library at `3d9696e` stand where `nim doc` reads none. Of those, 8 follow a `(`, and 8
-    follow `block:`. Verified by hand with `nim jsondoc` of the commit pin over the fixed
-    library, in its rigid and its conformal configuration, 2026-10-25.
-- A value that opens `block:` on its first line has no place for a doc that `nim doc` reads and
-  that a comment alone gives. Verified by hand with `nim jsondoc`, 2026-10-25, which reads no doc
-  in four places. The four places are after `block:`, first in the body, after its last line,
-  and below it at the indent of the declaration. A doc below the body at the indent of the body
-  is part of the body, and leaves its last value unused. Verified by hand with `nim check` of
-  both compilers, 2026-10-25.
 - Some rules read paths in the layout of this repository: `tests/`, a test stub, a drive file
   under `tests` or `tools`, and the umbrella `<project>/src/<project>.nim`. They read the whole
   path, so the spelling of a path changes nothing. In another repository they would need to read
