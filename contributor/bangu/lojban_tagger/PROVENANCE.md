@@ -9,10 +9,9 @@
 | Rules   | 0ff7fe750293e4e9 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
-Origin: a contributor project, from the brief of the Architect. A tag is a gismu, or a lujvo made
-only of gismu, that describes a thing which somebody tags. A search finds every tagged thing by a
-gismu, or by an English word that leads to one. The system uses only the compound and parsable
-nature of Lojban.
+Origin: a contributor project, from the brief of the Architect. A tag is a gismu or a lujvo that
+describes a thing which somebody tags. A search finds every tagged thing by a gismu, or by an
+English word that leads to one. The system uses only the compound and parsable nature of Lojban.
 
 The authority is The Complete Lojban Language (CLL), by John Woldemar Cowan, first edition, 1997,
 from the Logical Language Group. The text used is the edition at `lojban.github.io/cll`, which is
@@ -68,6 +67,11 @@ scores of 4.12 and 4.13 exactly. CLL misstates one part of one score: 4.13 gives
 but the word has two vowels. The total that CLL gives, 5878, is right, and the suite holds the
 total. Verified by `suites/test_lujvo.nim`.
 
+**The split agrees with strict reference parsers.** On 41 words read by camxes, vlatai, the
+`is_valid_lujvo` of jbofihe and latkerlo-jvotci on 2026-10-24, the split finds one lujvo exactly
+where CLL makes one. Where the strict tools disagree, as on `saircli` and `branlatu`, this project
+follows CLL. Verified by `suites/test_references.nim`, which cites the deciding rule of each word.
+
 ## Word lists
 
 **The lists are the public-domain lists of the Logical Language Group, as Debian packages them.**
@@ -100,6 +104,12 @@ place structures.
 Cost: a verb that wants one of those changes the converter and both lists in
 one commit. Verified by `suites/test_lists.nim`, on lines copied from both files.
 
+**Rendering keeps every character of each field.** A string too long for one line is split after
+a run of spaces, so its pieces join back into the field exactly. The definitions of `co'a`,
+`co'u`, `sirji` and `za'o` hold runs of spaces, and the suite holds them against lines copied from
+`gismu.txt`. Verified by `suites/test_lists.nim`, which also compares the whole committed list
+with the installed file where `lojban-common` is present.
+
 **The lujvo list writes a tanru in two notations, and the converter keeps both.** Most lines name
 the parts in Lojban, after a colon. Other lines name them by English keywords of gismu, after
 `#`, as `ci'erkei#system+play`. For those lines, the English index reads the gismu from the word
@@ -108,15 +118,18 @@ place of a word, the line with no gloss, and the comma inside a tanru are such s
 
 ## Tags
 
-**A tag is its gismu, never its spelling.** 4.5 says that the rafsi chosen do not change a lujvo.
-So `brivla`, `brivalsi`, `bridyvla` and `bridyvalsi` read as one tag, `bridi+valsi`. The order of
-the gismu stays, because a tanru is a modifier, then a head. `$` renders the form that 4.12 scores
-lowest, and the first in order of choice on a tie. Verified by `suites/test_tags.nim`.
+**A tag is the words of its tanru, never its spelling.** 4.5 says that the rafsi chosen do not
+change a lujvo. So `brivla`, `brivalsi`, `bridyvla` and `bridyvalsi` read as one tag,
+`bridi+valsi`. The order of the words stays, because a tanru is a modifier, then a head. `$`
+renders the form that 4.12 scores lowest, and the first in order of choice on a tie. Verified by
+`suites/test_tags.nim`.
 
-**A lujvo that holds a rafsi of a cmavo is refused.** The brief admits a lujvo made of gismu alone.
-The reader still knows every rafsi of a cmavo that the gismu list carries. So the refusal names the
-rafsi and its cmavo, as `sel (se)`, rather than calls the rafsi unknown. Cost: `selci'a`, and every
-lujvo that converts a place with `se`, cannot be a tag. This choice waits on the Architect.
+**A lujvo that holds a rafsi of a cmavo is a tag, and keeps its cmavo.** The Architect ruled that
+`selci'a` is a tag, which acts as `ciska` in search, and ranks first where somebody searches for
+`selci'a` itself. So the tag keeps `se`, and `gismu` gives the words that search matches on.
+
+A cmavo alone is no tag. Neither is a lujvo that ends in a cmavo, because 4.11 step 2 ends a tanru
+in a gismu. A tag with no gismu would match every entity. Verified by `suites/test_tags.nim`.
 
 **The reader folds case and drops commas, and it refuses `h`.** A capital marks irregular stress,
 which no brivla carries (3.1, 3.9). A comma marks a syllable break, and no two words differ by a
@@ -131,21 +144,31 @@ the form that 4.11 gives, as `patyta'a` for `patta'a`.
 ## English
 
 **English leads to gismu through keywords and glosses.** The keyword and the hint of each gismu
-lead to that gismu. The gloss of each lujvo leads to the gismu of its tanru. The Architect chose
-these sources. Rejected: the words of the definitions, which lead `book` to `papri` and to every
-place structure that mentions a book. Verified by `suites/test_english.nim`.
+lead to that gismu. The gloss of each lujvo leads to the words of its tanru, cmavo included, and
+search matches them on their gismu. The Architect chose these sources. Rejected: the words of the
+definitions, which lead `book` to `papri` and to every place structure that mentions a book.
+Verified by `suites/test_english.nim`.
+
+**Seventeen lines of the lujvo list disagree with their own spelling.** Thirteen name the earlier
+owner of a rafsi, as `mumcte` names `re` where the list now gives `mum` to `mu`. Four name a
+compound cmavo or an English word, as `dazmoipru` names `da'amoi`. A meaning takes the parts that
+the line names, and the suite pins each such line by name, so a change to the list shows.
 
 **Function words lead nowhere.** The tokenizer folds case, splits at each character outside `a`
 to `z`, and drops tokens of one letter. It also drops the words of `WORDS_FUNCTION`, such as
-`the` and `of`, so a phrase is never narrowed by glue. Cost: the list is a judgement, not a
-standard, and a word that it holds cannot be searched alone.
+`the` and `of`, so a phrase is never narrowed by glue. The search for those words is binary, so a
+static check fails the build where the list falls out of order. Cost: the list is a judgement, not
+a standard, and a word that it holds cannot be searched alone.
 
 ## Index and search
 
 **The index is one text file that its reader types.** A header line names the format and its
 version. Each other line holds a name, a tab, then each tag as a tanru, as `datni+vreji`. The
 reader refuses the whole file at the first bad line, and names the line. A writer that kept part
-would drop the rest of the index on its next write. Verified by `suites/test_index.nim`.
+would drop the rest of the index on its next write.
+
+Adding no tag changes nothing, so no entity is ever left without a tag. Verified by
+`suites/test_index.nim`.
 
 **A term becomes sets of gismu, and an entity matches where it holds one set whole.** A Lojban
 term gives one set, the gismu of its tanru. An English term gives one set for each meaning that it
@@ -154,6 +177,12 @@ leads to. Every term of a query must match. So `vreji` finds a thing tagged `dat
 
 Cost: order and relation are lost, so
 `patfu mamta` and `mampa'u` find each other. Verified by `suites/test_search.nim`.
+
+**A Lojban term that holds a cmavo ranks its own tag first.** The Architect ruled that a search
+for `selci'a` lists the things tagged `selci'a` first, and that a search for `ciska` gives no
+priority. So the search finds what the gismu find, then puts first each entity that holds a tag of
+exactly that tanru. Each of the two tiers keeps the order of the index. An English term ranks
+nothing, because the ruling names a term typed in Lojban. Verified by `suites/test_search.nim`.
 
 ## Command line
 
@@ -185,13 +214,16 @@ no pin, so their version is what the machine has.
 ## Figures
 
 Each figure below comes from an Intel Xeon at 2.10 GHz with four cores, Nim 2.2.12, on
-2026-10-24.
+2026-10-25.
 
-- **Compile of the English index.** The front end of `nim check app/tagger.nim` took 7.3 s and
-  7.2 s where the list of words was mapped again for each part of each lujvo. It took 2.5 s and
-  2.4 s where the map is made once. The pair is two rounds of the same probe, run in turn.
-- **Release build.** `nim c -f -d:release app/tagger.nim` took between 5.2 s and 6.1 s over three
+- **Compile of the English index.** Each part of each lujvo line is found by binary search. The
+  front end of `nim check app/tagger.nim` took 2.4 s and 2.9 s over two runs. A copy that maps
+  the whole list again for each part never finishes. The compile-time VM stops it at its limit of
+  10,000,000 iterations, so that form is a trap, not a slower choice.
+- **Release build.** `nim c -f -d:release app/tagger.nim` took between 5.0 s and 5.4 s over three
   runs.
+- **Suites.** `nim c -r -d:testing tests/test_suites.nim` compiled and ran every suite in 18.8 s,
+  one run.
 - Search and reading are unmeasured. The tool reads and writes the whole index for each command.
 
 ## Open questions
@@ -201,5 +233,6 @@ Each figure below comes from an Intel Xeon at 2.10 GHz with four cores, Nim 2.2.
 - **The 4-letter rafsi `brod`.** Five gismu share it, and CLL does not say which one it names. The
   reader refuses it as ambiguous. `brodi`, `brodo` and `brodu` have no short rafsi. So a tag
   that holds one of them before its head renders with `brod`, and does not read back.
-- **The definition of `xabju`.** The check for machine paths reads `nest/home/abode` as a path.
-  So no push can land until a curator changes the check, or the Architect picks a workaround.
+- **English terms and rank.** An English term whose meaning holds a cmavo, such as a gloss of
+  `selci'a`, ranks nothing, since the ruling names a term typed in Lojban. Whether such a meaning
+  should rank its tag first is not decided.
