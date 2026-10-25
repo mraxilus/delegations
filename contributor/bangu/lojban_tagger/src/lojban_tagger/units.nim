@@ -9,7 +9,7 @@
 ##   | Places              | place of word standing at each position after conversion   |
 ##   | units               | fold words of tag into tanru units                          |
 ##   | positions           | every place where run stands unbroken                       |
-##   | isHoldingUnchanged  | run stands unbroken, and no cmavo binds it as whole group   |
+##   | isHoldingUnchanged  | run stands unbroken, and no group around it changes it      |
 ##   |---------------------|-------------------------------------------------------------|
 ##
 ##   Cmavo binding next unit: SE, as scope of SE is only following brivla or equivalent unit
@@ -34,9 +34,13 @@
 ##     something (15.4, `nalsu'adzuke'ekla`); in tag opening with other word it only groups.
 ##   Group of two units or more stands as unit `ke` carrying cmavo of group, then its units, then
 ##     `ke'e` where written; so its units stay whole, as modifier inside converted group does.
-##   Run that is whole content of group cmavo bind is held changed: those cmavo convert or negate
-##     run itself, so `se ke se ciska vreji` holds `se ciska vreji` converted (12.11), yet holds
-##     `se ciska` unchanged, as modifier inside that group.
+##   Group that cmavo bind changes run inside it in three ways. Run ending where group ends holds
+##     its head, which conversion converts (5.11) and abstraction turns to event (12.12), so
+##     `se ke vreji se ciska` holds `se ciska` changed. Negation denies every part of group
+##     (15.4), so `na'e ke se ciska vreji` holds none unchanged. Group that run leaves open must
+##     end where run ends, else group in tag runs on, and its cmavo bind more than in run.
+##     Modifier inside converted group keeps its places: `se ke se ciska vreji` holds `se ciska`
+##     unchanged, yet `se ciska vreji` converted (12.11).
 ##   Cost: 12.11 reads lujvo, yet tag read from tanru text folds by it too, as tag is lujvo.
 ##   Cost: cmavo CLL gives no scope for, such as `pe'a` and tense, bind nothing here.
 
@@ -74,6 +78,8 @@ const
   WORD_KEHE = "ke'e".word.get  ## Cmavo closing group (5.5).
   WORDS_GROUPING = ["bo", "kei"].mapIt(it.word.get)
     ## Cmavo that only group wherever they stand: `bo` (5.3) and `kei` (12.13).
+  WORDS_NEGATION = ["na", "na'e", "no'e", "to'e"].mapIt(it.word.get)
+    ## Binding cmavo that deny what they bind: NA (15.2) and NAhE (15.4, 15.5).
 
 static:
   for word in WORDS_CONVERSION & WORDS_OPERATOR & WORDS_GROUPING & @[WORD_KE, WORD_KEHE]:
@@ -202,20 +208,34 @@ func positions*[T](items, run: openArray[T]): seq[int] =
     if (0 ..< run.len).allIt(items[start + it] == run[it]): result.add start
 
 
-func isBoundWhole(units: openArray[TanruUnit], start, stop: int): bool =
-  ## Test units from `start` to before `stop` are whole content of group that cmavo bind.
-  if start == 0 or units[start - 1].word != WORD_KE or units[start - 1].links.len == 0:
-    return false
+func isChanged(units: openArray[TanruUnit], start, stop: int): bool =
+  ## Test group around units from `start` to before `stop` changes them: group run leaves open
+  ##   runs on past it, or group that encloses run ends where run ends, so run holds its head
+  ##   (5.11, 12.12), or cmavo deny group that encloses run (15.4).
+  var open = 0
+  for i in start ..< stop:
+    if units[i].word == WORD_KE: inc open
+    elif units[i].word == WORD_KEHE and open > 0: dec open
+  var finish = stop
+  for _ in 1 .. open:
+    if finish == units.len: break
+    if units[finish].word != WORD_KEHE: return true
+    inc finish
+  let words = units.mapIt(it.word)
   var depth = 0
-  for i in start ..< units.len:
-    if units[i].word == WORD_KE: inc depth
-    elif units[i].word == WORD_KEHE:
-      if depth == 0: return i == stop
-      dec depth
-  stop == units.len
+  for i in countdown(start - 1, 0):
+    if units[i].word == WORD_KEHE:
+      inc depth
+    elif units[i].word == WORD_KE:
+      if depth > 0:
+        dec depth
+        continue
+      if units[i].links.anyIt(it.operator.isSome and it.operator.get in WORDS_NEGATION):
+        return true
+      if words.ending(i) == finish: return true
+  false
 
 
 func isHoldingUnchanged*(units, run: openArray[TanruUnit]): bool =
-  ## Test `run` stands in `units` unbroken somewhere it is not whole content of group that cmavo
-  ##   bind, since there those cmavo change it (12.11).
-  units.positions(run).anyIt(not units.isBoundWhole(it, it + run.len))
+  ## Test `run` stands in `units` unbroken somewhere no group around it changes it.
+  units.positions(run).anyIt(not units.isChanged(it, it + run.len))

@@ -20,9 +20,10 @@
 ##     Units, not words: scope of SE is only following brivla or equivalent unit (CLL 9.4), so
 ##     `se ciska` is one unit wherever it stands, and folding gives what cmavo around it do.
 ##     `selselci'a` holds words `se ciska` yet folds to `ciska`, since two `se` cancel (12.11);
-##     `selkemci'avei` holds no such unit, since there `se` converts whole group. Run that is
-##     whole content of group cmavo bind does not rank: term `selci'avei` ranks no
-##     `selselci'avei`, which 12.11 reads as converse of `selci'avei`.
+##     `selkemci'avei` holds no such unit, since there `se` converts whole group. Run that group
+##     around it changes does not rank: its head, where conversion or abstraction binds group
+##     (5.11, 12.12), any part, where negation binds it (15.4), and run whose open group runs
+##     on in tag. So term `selci'avei` ranks no `selselci'avei`, converse of `selci'avei`.
 ##     Run, not part of grouped tanru: lujvo makers leave `ke` out (4.10, 12.11), so rafsi do not
 ##     record grouping, and run is what they record. So term `selci'avei` ranks tag `vreta se
 ##     ciska vreji`, where left grouping (5.3) binds `vreta` to `se ciska` first.
