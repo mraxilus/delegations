@@ -3,7 +3,9 @@
 A system that tags anything with Lojban words and finds it again. A tag is a gismu or a lujvo.
 The parser reduces each tag to the words of its tanru, and a search matches on its gismu. So a
 search for one gismu finds every thing whose tag holds that gismu, alone or inside a lujvo. A
-search for a lujvo that holds a cmavo, such as `selci'a`, lists the things tagged with it first.
+search for a lujvo with a cmavo, such as `selci'a`, lists first each tag that holds it with an
+unchanged meaning. So `selci'avei` comes first, but `selselci'a` does not, because its two `se`
+cancel.
 
 A search can also use an English word. The keywords of the gismu list and the glosses of the
 lujvo list lead that word to gismu.
