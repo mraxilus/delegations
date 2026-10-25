@@ -48,7 +48,7 @@ const
   FLOOR_LOST = 85  ## Fewest cases where tag removed makes query find less; 112 read at `SEED`.
   FLOOR_LUJVO = 380  ## Fewest cases whose lujvo reads back as its tag; 400 read at `SEED`.
   FLOOR_ENGLISH = 10000  ## Fewest terms of union law read as English; 10800 read at `SEED`.
-  FLOOR_WIDER = 160  ## Fewest cases where union outgrows every meaning alone; 210 read at `SEED`.
+  FLOOR_WIDER = 160  ## Fewest cases where union outgrows every meaning alone; 228 read at `SEED`.
   FLOOR_REORDERED = 180  ## Fewest cases where ranking moves entity; 244 read at `SEED`.
   FLOOR_INSIDE = 180  ## Fewest cases ranking entity by run in longer tanru; 240 read at `SEED`.
   FLOOR_APART = 155  ## Fewest cases leaving cmavo apart from head unranked; 208 read at `SEED`.
@@ -347,6 +347,18 @@ suite "Internal: Search":
     check index.find([readTerm("selci'a"), readTerm("vreji")]).names == @[
       "b/record", "e/minutes", "k/converse", "m/reclining", "d/apart", "f/grouped", "j/closed",
     ]  # ranked tier first, conjunction kept
+
+
+  test "Lojban term whose only cmavo binds nothing ranks tag holding its units":
+    let figure = readTag("pevrisnyjelca").tag
+    var index: Index
+    index.addTags("a/burn", [readTag("risnyjelca").tag])
+    index.addTags("b/figure", [figure])
+    check readTerm("pevrisnyjelca").specific == figure.units  # `pe'a` stays unit, at cost
+    check index.find([readTerm("pevrisnyjelca")]).names ==
+        @["b/figure", "a/burn"]  # its own tag first, though `pe'a` binds nothing
+    check index.find([readTerm("risnyjelca")]).names ==
+        @["a/burn", "b/figure"]  # gismu term ranks nothing
 
 
   test "run stands in tanru exactly where its text does, over every short tanru":

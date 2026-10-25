@@ -1,7 +1,8 @@
-## Replicate scope of cmavo in CLL chapters 5, 7, 9, 12 and 15 against `units.nim`: which word
+## Replicate what cmavo bind in CLL chapters 5, 7, 9, 12 and 15 against `units.nim`: which word
 ##   each cmavo binds, how conversions compose, and where lujvo leaves `ke` out.
-##   Each assertion folds words of example CLL gives, read as tanru text, so no rafsi choice
-##     enters; where CLL gives lujvo, its words are those reader gives it.
+##   Each assertion folds example CLL gives, or tanru of `ciska`, `vreji` and `gunka` where
+##     section gives none holding SE. Tanru is read as text, so no rafsi choice enters; where
+##     CLL gives lujvo, its words are those reader gives it.
 ##   Laws enumerate small domains whole: every chain of SE up to `LENGTH_CHAIN`, every chain of
 ##     binding cmavo up to `LENGTH_GROUPED` before group of one, every tanru over `ALPHABET` up
 ##     to `LENGTH_TANRU` words; counts are named beside each claim.
@@ -29,6 +30,10 @@ const
   LENGTH_TANRU = 4  ## Longest tanru gismu law folds, last word gismu.
   COUNT_TANRU = (1 + 7 + 49 + 343) * 2  ## Tanru of that law: prefix of up to three, then gismu.
   CONVERSIONS = ["se", "te", "ve", "xe"]  ## SE cmavo, as 9.4 orders them.
+  ABSTRACTORS = [
+    "du'u", "jei", "ka", "li'i", "mu'e", "ni", "nu", "pu'u", "si'o", "su'u", "za'i", "zu'o",
+  ]
+    ## NU cmavo that list gives rafsi (11.13).
 
 
 func folded(text: string): seq[TanruUnit] =
@@ -86,11 +91,10 @@ suite "Chapter 5":
     let closed = folded("se+ke+ciska+vreji+ke'e+gunka")
     check not closed.isHoldingUnchanged(folded("ciska+vreji"))  # 5.5, `se` binds group whole
     check closed.isHoldingUnchanged(folded("ciska"))  # 5.5, part of group stays as it is
-    check folded("ke+se+ciska+vreji") ==
-        folded("se+ciska+vreji")  # 5.5, group no cmavo binds only groups, so it drops
-    check "kemdatnyvei".readTag.tag.units == folded("datni+vreji")  # 5.5, as group above
-    check folded("vreji+ke+se+ciska+vreji+ke'e+gunka") ==
-        folded("vreji+se+ciska+vreji+gunka")  # 5.5, `ke'e` of dropped group drops with it
+    check folded("se+ke+te+ke+ciska+vreji+ke'e+gunka") == @[
+      unit("ke", @[conversion([2, 1, 3, 4, 5])]), unit("ke", @[conversion([3, 2, 1, 4, 5])]),
+      unit("ciska"), unit("vreji"), unit("ke'e"), unit("gunka"),
+    ]  # 5.5, group inside group: `ke'e` closes inner one, and end of tag outer one
 
 
   test "Section 5.11":
@@ -122,6 +126,9 @@ suite "Chapter 9":
         @[unit("klama", @[conversion([1, 3, 2, 4, 5])])]  # 9.4, "setese" swaps x2 and x3
     check folded("se+ke+blanu+zdani") ==
         @[unit("ke", @[conversion([2, 1, 3, 4, 5])]), unit("blanu"), unit("zdani")]  # 9.4, 4.8
+    check folded("se+na'e+se+ciska") == @[unit("ciska", @[
+      conversion([2, 1, 3, 4, 5]), operator("na'e"), conversion([2, 1, 3, 4, 5]),
+    ])]  # 9.4, SE converts following unit, here `na'e se ciska` (21.2, rule 152)
 
 
 
@@ -151,7 +158,9 @@ suite "Chapter 12":
 
   test "Section 12.12":
     check "nunkla".readTag.tag.units ==
-        @[unit("klama", @[operator("nu")])]  # 12.12, NU rafsi as short-scope modifier
+        @[unit("klama", @[operator("nu")])]  # 12.12, NU rafsi modifies next unit alone
+    for text in ABSTRACTORS:
+      check folded(text & "+klama") == @[unit("klama", @[operator(text)])]  # 12.12, each NU
 
 
   test "Section 12.13":
@@ -195,11 +204,18 @@ suite "Internal: Convention":
     ]  # 5.8 reads `A co B` as `ke B ke'e A`; fold keeps written order, at cost
 
 
-  test "`pe'a` and tense cmavo bind nothing, though CLL gives no scope for them":
+  test "`pe'a` and tense cmavo bind nothing, though CLL gives them whole lujvo or bridi":
     check "pevyselci'a".readTag.tag.units ==
-        @[unit("pe'a"), unit("ciska", @[conversion([2, 1, 3, 4, 5])])]  # 13.13 names no scope
+        @[unit("pe'a"), unit("ciska", @[conversion([2, 1, 3, 4, 5])])]  # 13.13, figurative lujvo
     check folded("co'a+se+ciska") ==
-        @[unit("co'a"), unit("ciska", @[conversion([2, 1, 3, 4, 5])])]  # 5.13 names no lujvo rule
+        @[unit("co'a"), unit("ciska", @[conversion([2, 1, 3, 4, 5])])]  # 5.13, tense of bridi
+
+
+  test "group no cmavo binds drops, though 5.5 makes it one component":
+    check folded("ke+se+ciska+vreji") == folded("se+ciska+vreji")  # rank reads no such group
+    check "kemdatnyvei".readTag.tag.units == folded("datni+vreji")  # as group above
+    check folded("vreji+ke+se+ciska+vreji+ke'e+gunka") ==
+        folded("vreji+se+ciska+vreji+gunka")  # `ke'e` of dropped group drops with it
 
 
 
