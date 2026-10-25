@@ -194,7 +194,8 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
 - A doc comment is `##`, so an empty doc is `## TODO: Document.` (VI.1). A doc takes one
   position for each shape of declaration (VI.9). A type, a field, a binding and an enum member
   take it after them on the same line, where the joined line fits. Otherwise the doc takes the
-  next line, indented one level.
+  next line, indented one level. Names that one line declares share one doc, which describes
+  each.
 - A one-line routine takes its doc on the next line, indented to the body. A longer routine
   takes it as the first line of the body. A `type` block takes a group doc on the keyword line.
 - Group related bindings under one `const`, `let` or `var` section (X.5).

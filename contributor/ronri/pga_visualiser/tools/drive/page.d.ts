@@ -64,6 +64,9 @@ declare function askSlowPass(
   is_curve: boolean, is_sparkline: boolean, is_medians: boolean, is_pool: boolean,
 ): void;
 
+/** Whether page's clock steps 1 ms or more, so brackets hold mean; read once, on load. */
+declare const is_clock_coarse: boolean;
+
 /** How many buckets window is cut into. */
 declare const BUCKETS_EXCEEDANCE: number;
 

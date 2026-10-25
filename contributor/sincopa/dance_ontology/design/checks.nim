@@ -473,8 +473,8 @@ proc checkRules*() =
   # nothing loads yet -- see TODO in `rules.nim`.  One doAssert used to
   # compare it to its own spelled-out copy here, which checked nothing;
   # what drawing can actually be held to is half above.
-  told.add "`above` takes no lock or wrap, and leads only to high wrap " &
-      "or default"
+  told.add "`above` takes no lock or wrap; where it may lead next (`FROM_ABOVE`) " &
+      "is not checked"
 
   # RULE 9.  Connecting line's two halves are its two hands' own
   # colours.  Shades are asked of palette rather than spelled out
@@ -522,29 +522,38 @@ proc checkRules*() =
           short_seen.incl int(max(arcs.get.a, arcs.get.b))
   doAssert short_freed > 0,
     "No high lock hugs less than rule 7 asks, so nothing here tests rule 41."
-  # And between quarter turns: no rule sends line of high lock, so it takes short way,
-  # which finds route at every whole degree of follow's turn.  Back way of retired
-  # rule 6 found none in two bands on each crossed hold (repository issue 688).
-  var degrees_routed = 0
-  for single in SINGLES:
-    let arm = if single.holds[Arm.Left].isSome: Arm.Left else: Arm.Right
-    for degree in 0..359:
-      let
-        pose = canonicalise(spinAbout(rest(), Dancer.Follow, float(degree)))
-        levels = said(some freed.level, arm)
-        modifiers = said(some freed.modifier, arm)
-        hands = handPoints(settled(pose, single.holds, levels, modifiers))
-        ends: route.Ends = (hands[Dancer.Lead][arm], hands[Dancer.Follow][single.holds[arm].get],
-          (pose.place[Dancer.Lead], pose.facing[Dancer.Lead]),
-          (pose.place[Dancer.Follow], pose.facing[Dancer.Follow]))
-      doAssert routed(ends, wayFor(ends, levels[arm], modifiers[arm])).isSome,
-        &"A high lock found no route; got `{single.name}` at `{degree}` degrees."
-      inc degrees_routed
   let shorts = short_seen.toSeq.sorted
   told.add &"a high lock stands whatever its line hugs: {drawn_freed} drawn, every single " &
       &"hold at every quarter turn, {short_freed} of them short of {WRAP_MIN} degrees, " &
-      &"at [{shorts.mapIt($it).join(\", \")}]; and it finds a route at each whole degree of " &
-      &"turn, {degrees_routed div SINGLES.len} on each of {SINGLES.len} single holds"
+      &"at [{shorts.mapIt($it).join(\", \")}]"
+
+  # RULES 7 AND 41, between quarter turns.  Each lock or wrap that drawing allows is one
+  # it draws: route found at every whole degree of follow's turn, on each single hold.
+  # Rule 7 binds every landing here but high lock, whose line takes short way (rule 41).
+  # Rule 7's measure and drawing stop at same `PASSES_MAX` of `route.nim`, which this holds.
+  var allowed, tried = 0
+  for landing in landings:
+    for single in SINGLES:
+      let
+        arm = if single.holds[Arm.Left].isSome: Arm.Left else: Arm.Right
+        levels = said(some landing.level, arm)
+        modifiers = said(some landing.modifier, arm)
+      for degree in 0..359:
+        let pose = canonicalise(spinAbout(rest(), Dancer.Follow, float(degree)))
+        inc tried
+        if not isDanceable(pose, single.holds, levels, modifiers):
+          continue
+        let
+          hands = handPoints(settled(pose, single.holds, levels, modifiers))
+          ends: route.Ends = (hands[Dancer.Lead][arm], hands[Dancer.Follow][single.holds[arm].get],
+            (pose.place[Dancer.Lead], pose.facing[Dancer.Lead]),
+            (pose.place[Dancer.Follow], pose.facing[Dancer.Follow]))
+        doAssert routed(ends, wayFor(ends, levels[arm], modifiers[arm])).isSome,
+          &"A lock or wrap that the drawing allows found no route; got `{landing.level} " &
+          &"{landing.modifier}` on `{single.name}` at `{degree}` degrees."
+        inc allowed
+  told.add &"each lock and wrap that the drawing allows finds a route at each whole degree " &
+      &"of turn: {allowed} of {tried} allowed, on {SINGLES.len} single holds"
 
   for line in told:
     echo &"  rule: {line}"
@@ -1175,7 +1184,7 @@ func inkLength(figure, ink: string): float =
   ##   Counting pieces one reach is drawn in cannot see break that falls
   ##     where two shades meet -- it makes one piece of each rather than
   ##     two of one.  Length can see it wherever it falls: broken reach
-  ##     draws one `BREAK` less than whole one.
+  ##     draws less than whole one by gap `hidesAt` sizes.
   ##   Reach is drawn as quadratics through midpoints between its
   ##     sampled points (rule 35), and every one of those points is
   ##     control point of curve -- so reading `M`, each `Q`'s
@@ -1467,9 +1476,9 @@ proc checkHandTurns*(built: Parts) =
       "is stored as, so what turns hard reads as turning rather than as a " &
       "run of corners"
 
-  # And crossing is drawn as crossing: reach that dives loses one
-  # `BREAK` of its own length, and reach that dives twice loses two --
-  # which is alternation, measured rather than assumed.
+  # And crossing is drawn as crossing: reach that dives loses one gap
+  # of its own length, as `hidesAt` sizes it, and reach that dives twice
+  # loses two -- which is alternation, measured rather than assumed.
   for i, position in CHAIN:
     let
       figure = built[&"hh_{i}"]

@@ -780,6 +780,15 @@ suite "Camera":
     check camera.depthLogScale(reach) =~ 2.0 / log2(far / camera.distanceNear)
 
 
+  test "a field of view is held inside 10 to 120 degrees, typed or dragged":
+    # Both front-ends' fields write it through `fieldOfViewHeld` (repository issue 632).
+    check fieldOfViewHeld(200.0) =~ DEGREES_FIELD_OF_VIEW_MOST
+    check fieldOfViewHeld(1.0) =~ DEGREES_FIELD_OF_VIEW_LEAST
+    check fieldOfViewHeld(-30.0) =~ DEGREES_FIELD_OF_VIEW_LEAST
+    for degrees in [10.0, 45.0, 90.0, 120.0]:
+      check fieldOfViewHeld(degrees) =~ degrees
+
+
   test "an orbit distance has a floor and no ceiling":
     # Floor is geometry: at zero eye coincides with its pivot and every direction.
     #   derived from line joining them collapses. Ceiling was round number, and

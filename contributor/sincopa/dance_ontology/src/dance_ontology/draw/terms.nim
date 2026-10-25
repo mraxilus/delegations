@@ -14,9 +14,11 @@
 ##   These names deliberately overlap `dance_ontology/rotation`'s, and do not
 ##     mean same things: both name `Dancer` and `Level`.  `Modifier` is lock
 ##     against wrap here, and `rotation.Way` is clockwise against anticlockwise,
-##     so `Way` names one thing in project.  No module may import both -- see
-##     `draw/scene`, which is only place two vocabularies meet and
-##     keeps them apart by touching only one of them.
+##     so `Way` names one thing in project.  Module importing both must qualify
+##     every name they share.  `draw/scene` imports only this one, and reaches
+##     model through `frame`: it translates model's `Side` and `Site` into `Arm`
+##     for frame picture, as `map` does for its inks and workbench where it
+##     reads Explorer's frames.
 
 {.experimental: "strictFuncs".}
 

@@ -14,9 +14,9 @@ import ./stubs
 
 
 const
-  DIRTY = "let X = a+b # c\nproc f(a: int; b: string) = discard\n"
-    ## Nim source breaking spacing, comment gap and separators, and lacking `strictFuncs`.
-  CLEAN = "{.experimental: \"strictFuncs\".}\n\nlet X = a + b  # c\n"  ## Nim source fix leaves.
+  DIRTY = "let X = a+b ## Sum.\nproc f(a: int; b: string) = discard\n  ## Do.\n"
+    ## Nim source breaking spacing, doc gap and separators, and lacking `strictFuncs`.
+  CLEAN = "{.experimental: \"strictFuncs\".}\n\nlet X = a + b  ## Sum.\n"  ## Nim source fix leaves.
   README = currentSourcePath().parentDir.parentDir.parentDir / "README.md"
     ## Record listing every rule id output cites.
   SUITES =
@@ -27,7 +27,7 @@ const
     ## Testament stub whose `cmd` holds `-r`.
   UMBRELLA = "{.experimental: \"strictFuncs\".}\n\nimport ./p/a\n"
     ## Library umbrella lacking profiler import.
-  GROUPED = "{.experimental: \"strictFuncs\".}\n\nlet S = @(x) + @(x[0])\n"
+  GROUPED = "{.experimental: \"strictFuncs\".}\n\nlet S = @(x) + @(x[0])  ## Sequences.\n"
     ## Nim source holding group parser proves needless, and group it refuses.
   NIM = getCurrentCompilerExe()  ## Compiler building suite, 2.2.12, whose parser answers.
   COMMIT = "27763495bcfe265507ca98aedc1c7064bf1e0e4d"  ## Commit pin of `ronri` projects.
@@ -153,7 +153,9 @@ suite "Command line":
 
 
   test "finding left prints at its line in file as given, as each rewrite does":
-    let outcome = outcome([("a.nim", "let A = 1\nlet B = not x == y\n")], [], is_check = true)
+    let
+      source = "let A = 1  ## One.\nlet B = not x == y  ## Same.\n"
+      outcome = outcome([("a.nim", source)], [], is_check = true)
     check outcome.lines.len == 4
     check outcome.lines[0 .. 1] == @["a.nim: strictfuncs to fix", "a.nim:1: single-bindings to fix"]
     check outcome.lines[2].startsWith("a.nim:2: not-over-binary left: ")  # fix moves it to 5
@@ -207,7 +209,7 @@ suite "Command line":
     #   (D2 of #572).
     let source =
         "import std/json\n\nfunc toJSON*(text: string): JsonNode = parseJson(text)\n" &
-        "type GLContext* = object\n"
+        "  ## Parse.\ntype GLContext* = object  ## Context.\n"
     for path in ["a.nim", "a.nims", "a.nimble"]:
       let
         given = if path.endsWith(".nim"): "{.experimental: \"strictFuncs\".}\n\n" & source
@@ -218,7 +220,7 @@ suite "Command line":
 
   test "each fence prints as warning naming what breaks inside it, and changes no exit code":
     let
-      fenced = "let A = 1\n#!fix off\nlet B = 1+2\n#!fix on\n"
+      fenced = "let A = 1  ## One.\n#!fix off\nlet B = 1+2  ## Sum.\n#!fix on\n"
       outcome = outcome([("a.nims", fenced)], [], is_check = true)
     check outcome.lines == @[
       "a.nims:2: fence-held warning: Fence keeps its lines as written, and inside them " &
@@ -341,7 +343,8 @@ suite "Command line":
 
 
   test "conversion semantic pass settles is fixed first, and pass that resolves none warns":
-    const source = "{.experimental: \"strictFuncs\".}\n\nfunc twice(x: int): float = x.float * 2\n"
+    const source =
+      "{.experimental: \"strictFuncs\".}\n\nfunc twice(x: int): float = x.float * 2\n  ## Double.\n"
     var answer = Answer(path: "a.nim")
     answer.symbols[(3, 30)] = Symbol(kind: "skType")
     answer.symbols[(3, 28)] = Symbol(kind: "skParam")
@@ -390,7 +393,8 @@ suite "Command line":
 
 
   test "rename planned is written first, and rename refused warns where it is declared":
-    const source = "{.experimental: \"strictFuncs\".}\n\nfunc twice(Count: int): int = Count * 2\n"
+    const source =
+      "{.experimental: \"strictFuncs\".}\n\nfunc twice(Count: int): int = Count * 2\n  ## Double.\n"
     let
       rename = Rename(
         path: "a.nim", line: 3, column: 11, name: "Count", renamed: "count", rule: Rule.CaseName
@@ -457,8 +461,9 @@ suite "Command line":
       check outcome.written.len == 0 and outcome.code == 0  # nothing due, nothing left
       check outcome.lines.len == 2 and outcome.lines[^1] == "0 to fix."
       check outcome.lines[0].startsWith("needless-parentheses warning: ")  # one line, before count
-    let dirty =
-      outcomeProven([("a.nim", DIRTY & "let S = @(x) + 1\n")], [], true, "/", proverFailing)
+    let dirty = outcomeProven(
+      [("a.nim", DIRTY & "let S = @(x) + 1  ## One.\n")], [], true, "/", proverFailing
+    )
     check dirty.code == 1 and dirty.lines[^1] == "4 to fix."  # other rules still due
     check dirty.lines[^2] == "needless-parentheses warning: Compiler ran no probe; got `x`."
 

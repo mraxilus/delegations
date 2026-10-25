@@ -1,5 +1,5 @@
 {
-  "stamp": "4ce9e044156453d3",
+  "stamp": "81fc1f9d1006400c",
   "sweeps": {
     "1|0|false|0.0|00": {
       "found_rest": true,
@@ -19,7 +19,7 @@
         "apart": 0.497877807448612,
         "why": 7,
         "whose": {
-          "body": 0,
+          "body": 1,
           "arm": 0
         }
       },
@@ -278,7 +278,7 @@
         "apart": 0.45787780744861195,
         "why": 7,
         "whose": {
-          "body": 0,
+          "body": 1,
           "arm": 0
         }
       },
@@ -851,7 +851,7 @@
         "apart": 0.45787780744861195,
         "why": 7,
         "whose": {
-          "body": 0,
+          "body": 1,
           "arm": 1
         }
       },
@@ -1115,7 +1115,7 @@
         "apart": 0.497877807448612,
         "why": 7,
         "whose": {
-          "body": 0,
+          "body": 1,
           "arm": 1
         }
       },
@@ -4148,20 +4148,14 @@
         "at": 0.0,
         "apart": 0.43787780744861193,
         "why": 0,
-        "whose": {
-          "body": 0,
-          "arm": 0
-        }
+        "whose": null
       },
       "positive": {
         "is_stopped": false,
         "at": 0.0,
         "apart": 0.45787780744861195,
         "why": 0,
-        "whose": {
-          "body": 0,
-          "arm": 0
-        }
+        "whose": null
       },
       "glances": [
         {
@@ -4407,20 +4401,14 @@
         "at": 0.0,
         "apart": 0.45787780744861195,
         "why": 0,
-        "whose": {
-          "body": 0,
-          "arm": 0
-        }
+        "whose": null
       },
       "positive": {
         "is_stopped": false,
         "at": 0.0,
         "apart": 0.4178778074486119,
         "why": 0,
-        "whose": {
-          "body": 0,
-          "arm": 0
-        }
+        "whose": null
       },
       "glances": [
         {
@@ -4925,20 +4913,14 @@
         "at": 0.0,
         "apart": 0.4178778074486119,
         "why": 0,
-        "whose": {
-          "body": 0,
-          "arm": 0
-        }
+        "whose": null
       },
       "positive": {
         "is_stopped": false,
         "at": 0.0,
         "apart": 0.45787780744861195,
         "why": 0,
-        "whose": {
-          "body": 0,
-          "arm": 0
-        }
+        "whose": null
       },
       "glances": [
         {
@@ -5184,20 +5166,14 @@
         "at": 0.0,
         "apart": 0.45787780744861195,
         "why": 0,
-        "whose": {
-          "body": 0,
-          "arm": 0
-        }
+        "whose": null
       },
       "positive": {
         "is_stopped": false,
         "at": 0.0,
         "apart": 0.43787780744861193,
         "why": 0,
-        "whose": {
-          "body": 0,
-          "arm": 0
-        }
+        "whose": null
       },
       "glances": [
         {
@@ -5444,8 +5420,8 @@
         "apart": 0.6378778074486121,
         "why": 7,
         "whose": {
-          "body": 0,
-          "arm": 1
+          "body": 1,
+          "arm": 0
         }
       },
       "positive": {

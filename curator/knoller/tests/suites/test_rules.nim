@@ -59,7 +59,7 @@ suite "Rules":
     let
       suites = "import std/unittest\nsuite \"A\":\n  test \"a\":\n    check true\n"
       defaults = "proc f(n: int = 1) = discard\n"
-      fenced = "let A = 1\n" & FENCE_OFF & "\nlet B = 1+2\n" & FENCE_ON & "\n"
+      fenced = "let A = 1  ## One.\n" & FENCE_OFF & "\nlet B = 1+2  ## Sum.\n" & FENCE_ON & "\n"
       found =
           checkBlanks("tests/test_a.nim", suites) & checkDefaults("a.nim", defaults) &
           checkFenceHeld("a.nims", fenced, Dialect.Script)

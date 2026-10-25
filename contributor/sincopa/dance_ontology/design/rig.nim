@@ -162,7 +162,11 @@ proc bodyOfSweep(recording: Shown, key = "", mirror = ""): string =
                                recording.why == Stop.None:
                              "no plan carries the turn further"
                            else: recording.why.says) & "\""
-  bits.add &"\"whose\":[{ord(recording.whose.body)},{ord(recording.whose.arm)}]"
+  let whose =
+    if recording.whose.isSome:
+      &"[{ord(recording.whose.get.body)},{ord(recording.whose.get.arm)}]"
+    else: "null"
+  bits.add &"\"whose\":{whose}"
   if recording.stills.len == 0:
     bits.add "\"stills\":[]"
     return "{" & bits.join(",\n") & "}"
