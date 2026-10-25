@@ -58,7 +58,7 @@ func mirrored*(kept: JsonNode; key: string; marks, dofs: seq[string]): JsonNode 
   result["hold"] = %key
   if result.hasKey("mirror"): result.delete("mirror")
   result["turns"] = negated(kept["turns"])
-  if kept["why"].getStr != "None":
+  if kept["whose"].kind != JNull:
     result["whose"] = %[kept["whose"][0].getInt, 1 - kept["whose"][1].getInt]
   if not kept.hasKey("at"): return
   var tag = newJArray()

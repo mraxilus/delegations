@@ -77,7 +77,7 @@ type
     at*: float  ## Turns reached when something gave, or where planned way's last moment stands.
     why*: Stop
     which*: Option[int]  ## Which connection gave, or none: free arm is no connection.
-    whose*: Hand  ## And whose hand, on which arm, it gave at.
+    whose*: Option[Hand]  ## And whose hand, on which arm, it gave at, or none where nothing gave.
     moments*: seq[Moment]
     path*: Path
       ## Planned turn engine stood for these moments, one plan for each (`plannedWay`); empty
@@ -98,7 +98,8 @@ type
     apart*: float  ## Distance chosen, metres axis to axis.
     turns*: float  ## Way couple were wound there, signed: their own where still
                    ## fixes neither.
-    strain*: Strain  ## How near pose there is to any end.
+    strain*: Strain
+      ## How near pose there is to any end: `Inf` where no distance holds, bound of empty set.
     tried*: seq[Option[float]]  ## Strain of each distance and way tried, in order: none gave.
 
 
@@ -294,14 +295,15 @@ func reflected(
 func reflected(walk: Walk, order: seq[int], rests: array[Body, float], partners: seq[int]):
     Walk =
   ## Walk of twin seen in mirror: walk of question it answers.
-  ##   Hand that gave is named where walk stopped; otherwise it names none.
+  ##   Hand that gave is other arm of same body, where any gave.
   ##   Planned way's path is seen in mirror too (`plan.mirrored`).
   result = Walk(found_rest: walk.found_rest, apart: walk.apart, is_stopped: walk.is_stopped,
                 at: walk.at, why: walk.why, which: walk.which, whose: walk.whose,
                 path: (if walk.isPlanned: mirrored(walk.path) else: walk.path))
   if walk.is_stopped and walk.why != Stop.None:
     if walk.which.isSome: result.which = some(order.find(walk.which.get))
-    result.whose = (walk.whose.body, otherArm(walk.whose.arm))
+    if walk.whose.isSome:
+      result.whose = some((body: walk.whose.get.body, arm: otherArm(walk.whose.get.arm)))
   for moment in walk.moments: result.moments.add reflected(moment, order, rests, partners)
 
 func reflected(stood: Stood): Stood =
@@ -367,7 +369,7 @@ iterator stands*(rig: Rig): float =
 
 
 proc toMoment(couple: Couple, at: float): tuple[moment: Moment, why: Stop,
-                                           which: Option[int], whose: Hand] =
+                                           which: Option[int], whose: Option[Hand]] =
   ## Read every connection at this moment, and say what gave, if anything: connection, or
   ## free arm, which names no connection (`rigid.stoppedFree`), or joined hand under crown.
   ##   Over crown, once couple are not face to face, joined hands stay above heads in every
@@ -387,6 +389,7 @@ proc toMoment(couple: Couple, at: float): tuple[moment: Moment, why: Stop,
       result.moment.girdles[shape.who][shape.arm] = (ends.a, ends.z, shape.radius)
   result.why = Stop.None
   result.which = none(int)
+  result.whose = none(Hand)
   for i in 0..<couple.links.len:
     let pose = couple.poseLink(i)
     result.moment.arms.add pose.arms
@@ -401,22 +404,22 @@ proc toMoment(couple: Couple, at: float): tuple[moment: Moment, why: Stop,
     result.moment.hands.add hands
     result.moment.room = min(result.moment.room, roomAt(couple, pose, i))
     if result.why == Stop.None:
-      let (gave, end_index) = couple.stoppedBy(i)
+      let (gave, whose) = couple.stoppedBy(i)
       if gave != Stop.None:
         result.why = gave
         result.which = some(i)
-        result.whose = couple.links[i].ends[end_index]
+        result.whose = whose
   # Free arm gives too, and no connection is it.
   if result.why == Stop.None:
     let free = couple.stoppedFree
-    if free.isSome: (result.why, result.whose) = (Stop.Swing, free.get)
+    if free.isSome: (result.why, result.whose) = (Stop.Swing, free)
   # Joined hand under crown gives once couple are not face to face.
   if result.why == Stop.None and couple.band == Band.Crown and couple.up >= 1.0:
     let under = couple.handUnder(couple.bandNow.lower)
     if under.isSome:
       result.why = Stop.Band
       let (which, whose) = under.get
-      (result.which, result.whose) = (some(which), whose)
+      (result.which, result.whose) = (some(which), some(whose))
 
 proc walkedRaw*(
   rig: Rig;
@@ -620,8 +623,8 @@ proc standingSearched(
   ##   Every distance is asked, and one at ease is taken over one that merely
   ##     holds.  First distance that held was taken before, and first is chest to
   ##     chest: couple asked Face-to-back there had follow's free arm crushed between two
-  ##     torsos, shoulder at its rope's end, twist at its end, waist at forty,
-  ##     with nothing held -- couple would stand anywhere else.  Of two equal
+  ##     torsos, twist at its end, waist at forty, with nothing held -- couple would
+  ##     stand anywhere else.  Of two equal
   ##     distances, nearer is taken, as before.
   ##   Distance at ease outright ends search: no distance further out is nearer
   ##     to ease than nought, and of two equal, nearer is kept, so first at ease is
@@ -958,7 +961,7 @@ const
           inc k
     styles
 
-type Followed* = tuple[is_holding: bool, at: float, why: Stop, strain: Strain]
+type Followed* = tuple[is_holding: bool, at: float, why: Stop]
   ## How far engine followed plan, and what gave if anything did.
 
 proc follow(
@@ -975,7 +978,7 @@ proc follow(
   couple.steer(path.plans[0], STEER)
   couple.settle()
   var
-    said: Followed = (couple.gives == Stop.None, 0.0, couple.gives, couple.strainWorst)
+    said: Followed = (couple.gives == Stop.None, 0.0, couple.gives)
     i = 1
   while said.is_holding and i < path.plans.len:
     # Steered toward plan planned again from where engine has couple, so drift is
@@ -995,12 +998,12 @@ proc follow(
       STEER,
     )
     let why = couple.gives
-    said = (why == Stop.None, path.winds[i], why, couple.strainWorst)
+    said = (why == Stop.None, path.winds[i], why)
     inc i
   if said.is_holding and should_stand:
     couple.advance(SETTLE)
     let why = couple.gives
-    said = (why == Stop.None, said.at, why, couple.strainWorst)
+    said = (why == Stop.None, said.at, why)
   (said, couple)
 
 proc builtFor*(rig: Rig, band: Band, links: seq[Link], is_away: bool, head: Body, path: Path):
@@ -1036,12 +1039,12 @@ proc replay*(
   for i in 0..<path.plans.len:
     couple.standMoment(path, i, is_away)
     let why = couple.gives
-    said = (why == Stop.None, path.winds[i], why, couple.strainWorst)
+    said = (why == Stop.None, path.winds[i], why)
     if not said.is_holding: break
   if said.is_holding and should_stand:
     couple.advance(SETTLE)
     let why = couple.gives
-    said = (why == Stop.None, said.at, why, couple.strainWorst)
+    said = (why == Stop.None, said.at, why)
   (said, couple)
 
 proc replayed*(
@@ -1049,7 +1052,7 @@ proc replayed*(
 ): Followed =
   ## Whether engine stands every moment of plan, and at its end where `should_stand`
   ## (`replay`).
-  if not path.is_reached or path.plans.len == 0: return (false, 0.0, Stop.None, Strain())
+  if not path.is_reached or path.plans.len == 0: return (false, 0.0, Stop.None)
   let (said, couple) = replay(rig, band, links, is_away, head, path, should_stand)
   couple.free()
   said
@@ -1059,7 +1062,7 @@ proc followed*(
 ): Followed =
   ## Whether engine follows plan through every moment of path, and stands at its end
   ## where `should_stand` (`follow`).
-  if not path.is_reached or path.plans.len == 0: return (false, 0.0, Stop.None, Strain())
+  if not path.is_reached or path.plans.len == 0: return (false, 0.0, Stop.None)
   let (said, couple) = follow(rig, band, links, is_away, head, path, should_stand)
   couple.free()
   said
@@ -1262,8 +1265,9 @@ proc plannedWay*(
         let got = replayedWay(rig, band, links, is_away, head, path)
         if turnsHeld(got) > turnsHeld(result): result = got
         if turnsHeld(result) >= abs(most) - 1e-9: break search
-  # TODO: Name what ends planned way short of `most`: `Stop.None` with `which` at -1 names
-  #   nothing, so `design/rig` says in own words that no plan carries turn further.
+  # TODO: Name what ends planned way short of `most`: `Stop.None`, with no connection in
+  #   `which` and no hand in `whose`, names nothing, so `design/rig` says in own words that no
+  #   plan carries turn further.
   #   Candidates: `Stop` member for plan that ends, which says only that it ends; or stop read
   #     off plan's terms one solve past its end, which says which term gave, but that solve broke
   #     several terms at once, each by about 1 mm, on cross-name chain, 2026-10-12.

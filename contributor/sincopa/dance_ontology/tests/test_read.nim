@@ -211,7 +211,7 @@ suite "Internal: Two hands":
           for dof in Dof:
             let joint_margin = margin(HUMAN.range[dof], arm_joints.reading(dof))
             result.least = min(result.least, joint_margin)
-            if dof == tight.dof and hand == tight.whose: result.named = some(joint_margin)
+            if tight.at == some((dof: dof, whose: hand)): result.named = some(joint_margin)
 
     settleAll()
     let links = @[Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Right)])]
@@ -231,11 +231,21 @@ suite "Internal: Two hands":
         tight = tightest(HUMAN, stance, pose_links, arms)
         (least, named) = marginsHeld(stance, pose_links, arms, tight)
       check tight.room < Inf
+      check tight.at.isSome
       check tight.strain >= 0.0 and tight.strain <= 1.0
       check named.get =~ tight.room
       check least =~ tight.room
     check strain(Tight(room: 0.0)) =~ 1.0
     check strain(Tight(room: 1.0)) =~ 0.0
+
+
+  test "couple holding nothing reads no tightest joint, and room without bound":
+    ## No held arm has joint, so reading names none, and its room is bound of empty set
+    ##   (`read.Tight`): strain there is nought.
+    let tight = tightest(HUMAN, restStance(HUMAN, APART), @[], @[])
+    check tight.at.isNone
+    check tight.room == Inf
+    check tight.strain =~ 0.0
 
 
   test "pose and its mirror read same tightest joint, on mirrored arm":
@@ -290,7 +300,9 @@ suite "Internal: Two hands":
         seen_tight = tightest(HUMAN, inMirror(stance), seen_links, seen)
       checkpoint &"twist {degrees}: room {tight.room}, in mirror {seen_tight.room}"
       check seen_tight.room =~ tight.room
-      check seen_tight.dof == tight.dof
-      check seen_tight.whose == otherArm(tight.whose)
-      if tight.dof == Dof.Twist and tight.whose == links[0].ends[0]: inc swept
+      check tight.at.isSome and seen_tight.at.isSome
+      let (at, seen_at) = (tight.at.get, seen_tight.at.get)
+      check seen_at.dof == at.dof
+      check seen_at.whose == otherArm(at.whose)
+      if at.dof == Dof.Twist and at.whose == links[0].ends[0]: inc swept
     check swept > 0

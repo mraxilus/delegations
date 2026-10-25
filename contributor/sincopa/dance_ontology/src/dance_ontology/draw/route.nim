@@ -20,7 +20,15 @@ import std/[algorithm, math, options, sequtils, strformat, strutils]
 import ./[body, geometry, style, terms]
 
 
-const ROUTE_COUNT* = 33  ## Points in every emitted reach, so frames can morph.
+const
+  ROUTE_COUNT* = 33  ## Points in every emitted reach, so frames can morph.
+  PASSES_MAX = 240
+    ## Passes walk round both rims may take, for drawing (`taut`) and for rule 7's measure
+    ##   (`wrapArc`) alike.  Each pass slides each end `RIM_STEP` round its rim, if straight
+    ##   stretch still cuts its body.
+    ##   One limit, so every lock or wrap that measure admits is one drawing can route.  Longest
+    ##     walk of any allowed lock or wrap: 132 passes, low lock on crossed hold with follow
+    ##     turned 85 degrees, where two ends slide mostly in turn.
 
 type
   Body* = tuple  ## One dancer, as routing sees them.
@@ -230,19 +238,19 @@ func isSegmentHitting*(p, q: Point; body: Body): bool =
   false
 
 
-func taut*(ends: Ends, way: WayRound, cap = 90): Option[tuple[points: seq[Point],
-    length: float]] =
+func taut*(ends: Ends, way: WayRound): Option[tuple[points: seq[Point], length: float]] =
   ## Pull string tight from hand to hand around two bodies.
   ##   Each end pays out along its own outline, sample by sample, until
   ##     straight stretch between two free ends clears both bodies --
   ##     so reach hugs rim exactly as far as it has to, and where
   ##     straight way is already clear it never hugs at all.
+  ##   None after `PASSES_MAX` passes, where `wrapArc` gives up too.
   var
     bearing_a = bearing(ends.a.x - ends.body_a.centre.x, ends.a.y - ends.body_a.centre.y)
     bearing_b = bearing(ends.b.x - ends.body_b.centre.x, ends.b.y - ends.body_b.centre.y)
     arc_a = @[ends.a]
     arc_b = @[ends.b]
-  for _ in 0..<cap:
+  for _ in 0..<PASSES_MAX:
     let
       free_a = arc_a[^1]
       free_b = arc_b[^1]
@@ -372,7 +380,7 @@ func wrapArc*(ends: Ends, way: WayRound): Option[tuple[a, b: float]] =
     free_b = ends.b
     steps_a = 0
     steps_b = 0
-  for _ in 0..<240:
+  for _ in 0..<PASSES_MAX:
     let
       is_hitting_a = isSegmentHitting(free_a, free_b, ends.body_a)
       is_hitting_b = isSegmentHitting(free_a, free_b, ends.body_b)

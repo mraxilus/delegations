@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 0ff7fe750293e4e9 |
+| Rules   | 50ecd726ec1a5108 |
 | Pruned  | f07b7566aac6619f19090f8341936158bf0e9800 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
@@ -738,11 +738,10 @@ the follow at half and whole turns (`simulation/verdicts.md`), and no law holds 
 asks it about a high lock at a quarter turn, so nothing says which of the drawn ones a couple can
 dance. No page draws a lock or a wrap yet.
 
-Between quarter turns, a high lock finds a route at each whole degree that the follow turns, on each
-single hold. Verified by `checkRules`, which routes all of them. Red first on 2026-10-22, against
-the back way of rule 6, which found no route on Left to right from 275 to 298 degrees. Some low
-locks that `isDanceable` admits find no route between quarter turns. The build then fails on an
-empty value, and does not refuse with a message (#688).
+Between quarter turns, each lock and wrap that the drawing allows finds a route at each whole degree
+of turn, on each single hold. Verified by `checkRules`, which routes all of them. Red first on
+2026-10-24, where a low lock on Left to right found no route at 62 degrees. Red first on 2026-10-22
+for a high lock, against the back way of rule 6, which the Architect retired.
 
 **Above takes no lock and no wrap, and its line passes over the body (rule 8).** Above is over the
 head, so from overhead nothing is under it, and `straightReach` draws its line straight. Verified by
@@ -919,6 +918,25 @@ colour of an arm would say the same thing twice. One sign is enough.
 where a straight line would cross a body. Everywhere else it is straight. With nothing said, it
 takes the short way, and there is no standing preference for the front of a dancer. Verified by
 `checkFrame`, which checks that no reach enters a body and that each ends on its hand.
+
+**The drawing walks a line as far as rule 7 measures it.** In each pass of the walk, each end slides
+3 degrees round its rim if the straight stretch still cuts its body. The drawing (`taut`) and the
+measure of rule 7 (`wrapArc`) stop at the same limit, `PASSES_MAX`, of 240 passes. So each lock or
+wrap that the measure admits is one that the drawing can route. Verified by `checkRules`, which
+routes each allowed lock and wrap at each whole degree of the follow's turn.
+
+The most that an allowed lock or wrap takes is 132 passes. That is a low lock on a crossed hold with
+the follow turned 85 degrees, where the two ends slide mostly in turn. At 90 passes, below the limit
+of the measure, a low lock on a crossed hold finds no route for 24 degrees. Those are 62 to 85
+degrees on Left to right, and 275 to 298 on Right to left. Measured 2026-10-24.
+
+Rejected: a refusal of each lock that the drawing cannot route. Its edge would come from a limit of
+the drawing, which no rule names. Locks and wraps are a later step of the project, and no page draws
+one yet. So the limit keeps the drawing true to rule 7 until then, and changes no rule.
+
+Cost: a lock in that band hugs both bodies far, 156 to 180 degrees of the lead and 198 to 225
+degrees of the follow. At 86 degrees on Left to right, the stretch never cuts the follow, so the hug
+of the follow falls from 225 degrees to 0. A move across that degree would show the line jump.
 
 **Where a hand has left its place, the place it left is drawn as a grey outline.** So a picture
 shows both where a hand is and where it came from (`figure.ghosts`). No check holds this, and none
@@ -1222,9 +1240,9 @@ of the free arm, and no connection. The stop says that the upper arm swings no f
 (`hold.says`), and the report says "shoulder, swing" (`words.why`).
 
 Verified by `test_plan.nim`: at 64 seeded poses that the plan stands, held and free, the judge stops
-at each arm past the give. It names the end that holds the arm, or the hand of a free arm. It stops
-no arm that lies inside the edge and inside both ranges of the swing. Red first, with no reading of
-the edge in the judge.
+at each arm past the give. It names the hand of that arm, held or free. It stops no arm that lies
+inside the edge and inside both ranges of the swing. Red first, with no reading of the edge in the
+judge.
 
 The wall does not hold every arm within the give. Left to left low, from the stances that the report
 tells, stops three times at the edge (`simulation/verdicts.md`, Standing closer, and further). From
@@ -1597,6 +1615,11 @@ What stops a turn is one thing, asked in order over every arm, held or free:
   (`SAG`, `Stop.Band`). A hold whose hands never rose is a hold at some other height. A still
   reads this from the end of the rise (`height`). A walk reads it only when held above, once the
   couple are not face to face (below).
+
+Each stop names the hand of the arm that it is at, held or free (`Walk.whose`). An arm through a
+body or through an arm is the arm whose link sits deepest (`deepest`). Span names the first hand of
+its connection by convention, since the two arms fall short together. Where nothing stops, the walk
+names no hand.
 
 Verified by `test_rigid.nim`. Hands that are joined stay joined. No joint goes past what the rig
 allows while the hold stands. Capsules move where the couple move.
@@ -3203,6 +3226,16 @@ a card lays over (`over`), and the connection that gave (`Walk.which`). The dist
 stance search chooses (`chosen`) and the free arm that stops a couple (`stoppedFree`) are too. So
 are the weight that the planner may take from its style, and the moment that couple last faced.
 
+The hand that a stop gave at is an `Option` (`Walk.whose`), and so is whose arms cross
+(`crossing`). The joint that a reading names (`Tight`) and the joint of the worst strain (`Strain`)
+are too. Each is none where its search found nothing. That is a walk that nothing stopped, a
+reading where no arm is held, or a pose where each joint sits in its ease. A waist names no arm. The
+rig recording writes `null` for the hand of a sweep or a still that nothing stopped.
+
+Verified by a second full recording of 2026-10-24, compared with the first, stamps dropped. It moved
+the hand alone: to `null` at 61 entries of the rig recording and 8 ways of the readings. At 5 ways
+that an arm against an arm stops, the readings name the follow's arm, whose link sits deepest.
+
 On the pages, the card of a rig entry and a span of the Reference are each an `Option` too. A
 capsule names its owner, trunk, limb or face, and only a limb carries an arm and a part
 (`plan.Shape`). Verified by the compiler, and by the full recording of 2026-10-24, which kept every
@@ -3211,10 +3244,8 @@ kept file to the last bit but its stamp.
 An empty value stays where the rule allows one, as for the identifier of a rig entry that no card
 shows. A bound outside the range stays where a fold reads it as the bound of an empty set, and its
 doc says so. So `Inf` stays for the least gap of a link that meets no part. So does `-Inf` for the
-turns of a walk that holds no rest. IV.5 lets a module decide that policy.
-
-Three results still carry a default where their search found nothing, beside a flag that says so:
-`Walk.whose`, `Tight` and `Strain` (Open questions).
+turns of a walk that holds no rest. So does `Inf` for the room of a reading where no arm is held,
+and for the strain of a still that no distance holds. IV.5 lets a module decide that policy.
 
 ## Toolchain
 
@@ -3288,12 +3319,11 @@ to tidy the line away shows up only as suites that fail to build. `result +=` on
   there beside the answer of the simulation and what stops it (Against the floor). Where the two
   disagree, the ruling is the Architect's. So is whether a high lock goes a whole turn, and what
   moves in the body when it does.
-- **A result that found nothing still carries a default.** Three results hold one, such as the
-  left hand of dancer one. They are the hand of a walk that nothing stopped (`Walk.whose`), and the
-  joint of a reading where no arm is held (`Tight`). The third is the joint of a strain where no
-  pose holds (`Strain`). Each sits beside a flag that says so, but its reader need not unwrap it.
-  The recording of the rig writes that default too, so typing it moves the recording and the rig
-  viewer (Form of the source).
+- **Two more results carry a default beside a flag.** Where no distance holds a still, its distance
+  and its turns read 0, beside `is_holding` (`Stood`, `answers.Stand`). Past the count of crossings
+  in a glance, the connection on top reads 0, beside `crossed` (`Glance.over`). The readings of the
+  report keep those zeros in `simulation/verdicts.json`, and the report reads up to the count.
+  Typing them changes the shape of the kept files (Form of the source).
 - **The radius of the girdle, 60 mm, is an estimate and not tape.**
 - **The breadth of the hand is not held to the bound of a leap (#605).** In L-r low, the edge of a
   held hand moves 150 mm at most in one moment, at 0.38 of a turn. The join moves 137 there.
