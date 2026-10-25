@@ -14,13 +14,18 @@
 ##
 ##   Cmavo binding next unit: SE, as SE binds only following brivla or equivalent unit
 ##     (CLL 9.4); NAhE, close-binding on individual brivla (15.4); NU, whose rafsi modify next
-##     unit alone, as SE and NAhE rafsi do (12.12); NA, whose rafsi `nar` is reserved for
-##     lujvo (15.2). Grammar puts SE and NAhE on one tanru unit (21.2, rule 152). JAI binds too,
-##     but list gives `jai` no rafsi, so no tag holds it. Every other cmavo binds nothing and
-##     stands as unit of its own: KOhA fills place of what follows (7.15), JA joins (5.6).
-##   Run of SE composes into one conversion, inner first (9.4): `te se ciska` puts x3 of
-##     `ciska` first, and `se se ciska` is `ciska`, since two `se` cancel (12.11). Conversion
-##     composing to no change leaves. Other cmavo keep their order against conversion.
+##     unit alone, as SE and NAhE rafsi do (12.12). Grammar puts SE and NAhE on one tanru unit
+##     (21.2, rule 152). JAI binds too, but list gives `jai` no rafsi, so no tag holds it.
+##   NA binds whole tag: `na` applies to entire bridi, and not to part of selbri (15.2). So odd
+##     count of `na`, wherever it stands, folds as one `na` before group of whole tag, and even
+##     count as none, since adjacent `na` cancel out (15.2).
+##   Every other cmavo binds nothing, and stands as unit of its own where it does not only
+##     group: KOhA fills place of what follows (7.15), JA joins (5.6).
+##     Cost: number and MOI form one tanru unit (21.2, rule 152), yet each digit stands as unit,
+##     so term `pavmomci'a` ranks tag `relpavmomci'a`.
+##   Run of SE binding one unit composes into one conversion, inner first (9.4): `te se ciska`
+##     puts x3 of `ciska` first, and `se se ciska` is `ciska`, since two `se` cancel (12.11).
+##     Conversion composing to no change leaves. Other cmavo keep their order against it.
 ##   `ke` opens group, closed by `ke'e` or by end of tag, since `ke'e` elides at end (5.5). Cmavo
 ##     before `ke` binds whole group (9.4; 12.11, `selkemdzukla`). Group of one unit is that
 ##     unit, so `se ke ciska` is `se ciska`, and its cmavo join cmavo of that unit.
@@ -83,6 +88,7 @@ const
   WORDS_ABSTRACTION = ABSTRACTIONS.mapIt(it.word.get)  ## NU cmavo, as words of list.
   WORDS_NEGATION = NEGATIONS.mapIt(it.word.get)  ## Denying cmavo, as words of list.
   WORDS_OPERATOR = WORDS_ABSTRACTION & WORDS_NEGATION  ## Binding cmavo other than SE.
+  WORD_NA = "na".word.get  ## Cmavo denying entire bridi (15.2).
   WORD_KE = "ke".word.get  ## Cmavo opening group (5.5).
   WORD_KEHE = "ke'e".word.get  ## Cmavo closing group (5.5).
   WORD_KEI = "kei".word.get  ## Cmavo closing abstraction (21.2, rule 152).
@@ -167,11 +173,14 @@ func placeOpening(words: openArray[Word]): int =
 
 
 func withImplied(words: openArray[Word]): seq[Word] =
-  ## Insert `ke` and `ke'e` that lujvo leaves out. `ke` goes after first of two SE in row
-  ##   (12.11). `kei` reads as `ke'e` closing `ke` after nearest NU it may close (21.2, rule
-  ##   152), and drops where no NU stands before it.
+  ## Insert `ke` and `ke'e` that lujvo leaves out. Odd count of `na` sets one `na ke` before
+  ##   whole tag, and even count none, as `na` applies to entire bridi and two cancel (15.2).
+  ##   `ke` goes after first of two SE in row (12.11). `kei` reads as `ke'e` closing `ke` after
+  ##   nearest NU it may close (21.2, rule 152), and drops where no NU stands before it.
+  let plain = words.filterIt(it != WORD_NA)
+  if (words.len - plain.len) mod 2 == 1: result.add [WORD_NA, WORD_KE]
   var abstractions: seq[int]
-  for i, word in words:
+  for i, word in plain:
     if word == WORD_KEI:
       if abstractions.len > 0:
         result.insert(WORD_KE, abstractions.pop + 1)
@@ -179,7 +188,7 @@ func withImplied(words: openArray[Word]): seq[Word] =
       continue
     if word in WORDS_ABSTRACTION: abstractions.add result.len
     result.add word
-    if i + 1 < words.len and word.swapping > 0 and words[i + 1].swapping > 0:
+    if i + 1 < plain.len and word.swapping > 0 and plain[i + 1].swapping > 0:
       result.add WORD_KE
 
 
