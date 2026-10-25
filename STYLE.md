@@ -175,14 +175,18 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
   ]
   ```
 
-- Read a FlatBuffers buffer through its generated code, and never by offset. Open it with
-  `GetRootAs` once the format's own check passes. Finish a buffer you write with the `Finish`
-  of its root, which writes the identifier of the schema:
+- Read and write a protobuf message only through the types that `import_proto3` generates from
+  its schema. Check the tag, the length and the checksum of a kept file first. Catch
+  `SerializationError` where the bytes come from outside. Give an `optional` field its default
+  with `get`:
 
   ```nim
-  var scene: Scene
-  scene.GetRootAs(bytes, 0)
-  for one in scene.objects: draw(one.label.get, one.radius)
+  import protobuf_serialization, protobuf_serialization/files/type_generator
+  import_proto3 "scene.proto"
+
+  let scene = Protobuf.decode(bytes, Scene)
+  for one in scene.objects: draw(one.label, one.radius.get(RADIUS_DEFAULT))
+  writeFile(path, Protobuf.encode(scene))
   ```
 
 ## 5. Signatures, imports, calls

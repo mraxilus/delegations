@@ -327,33 +327,40 @@ API of a test driver.
 ## Data
 
 Data takes its form from who writes it and who reads it. The compiler, or the schema, then
-checks each field. The cost is a schema beside each format between programs, and the curator's
-`flatc` in every build that reads one.
+checks each field. The cost is a schema beside each format between programs, and `protoc` in
+each build that turns a record into binary.
 
 - **Data that a person writes, or a fixed list that code reads, is a Nim module of typed
   constants.** A field whose absence is a mistake takes `{.requiresInit.}`. A verb renders a
   list that comes from outside, and the header of the module names that verb. `STYLE.md` §4
   gives the idiom.
-- **Data that one program writes and another reads is FlatBuffers.** Its schema is a committed
-  `.fbs` file beside the code that owns the format. Read and write a buffer only through the
-  code that `flatc` generates, so that the writer and the reader never disagree.
-- **The schema carries the versions of the format.** Add a field with a default, or mark a
-  field `deprecated`. Never remove, move, retype or renumber a field, and never change a
-  default. `koch check-schemas` refuses each of those against the schema on `main`. A change of
-  meaning with no change of layout is a new field, because a reader can see nothing else.
-- **A buffer that the repository does not hold is binary.** It is a file that a person saves,
+- **Data that one program writes and another reads is Protocol Buffers.** Its schema is a
+  committed `.proto` file, in the folder of the code that owns the format. Nim reads and writes
+  it through `import_proto3` of `protobuf_serialization`, which Atlas pins. A page reads it
+  through `protobufjs`, which loads the same schema. Both read one schema, so the writer and the
+  reader never disagree.
+- **Keep the schemas of one format in one folder, and import them by file name.** Each reader
+  finds an import in the folder of the schema that imports it. `koch check-schemas` reads each
+  folder as one unit.
+- **The field numbers carry the versions of the format.** Add a field or an enum value under a
+  new number. Delete one only when you reserve its number and its name. Never renumber, retype
+  or rename one. `koch check-schemas` refuses each of those against the schema on `main`,
+  through `buf breaking`. A change of meaning with no change of layout is a new field, because
+  a reader can see nothing else.
+- **A field whose default is not zero is `optional`.** Proto3 gives no default except zero. So
+  an older file that lacks the field reads as absent, and the code gives the default.
+- **Value zero of each enum means unknown.** Name it `<ENUM>_UNSPECIFIED`, and never write it.
+  The reader of Nim reads a value that its enum lacks as zero, and a page reads it as a bare
+  number. So the code refuses zero, and a page also refuses a number that its enum lacks.
+- **A message that the repository does not hold is binary.** It is a file that a person saves,
   or a file that one verb writes for another under `build/`. A record that the repository
-  commits is FlatBuffers JSON text, as `flatc -t --strict-json --defaults-json` writes it. Your
-  build turns it into a buffer with `flatc -b`, because binaries are never committed.
-- **`flatc` is the curator's patched build.** `koch fetch-flatc` builds it once and prints its
-  folder, which holds `bin/flatc` and the Nim runtime under `nim/flatbuffers`. Generate code
-  under `build/`, and pass that runtime to the compiler with `--path`. The runtime is no Atlas
-  dependency, because it must match the generator. Release 25.12.19 has faults in its Nim
-  code, so no other `flatc` serves (`curator/audit/src/flatc.nim`).
-- **The readers of Nim and TypeScript check nothing in a buffer.** So a file that a person
-  keeps holds the length and a checksum of its buffer, and the reader checks both before it
-  reads. A later version may extend an enum. So a field of such an enum takes its integer
-  type, because the reader of Nim stops on a value that its enum lacks.
+  commits is text format, in a `.txtpb` file. Your build turns it into binary with
+  `protoc --encode`, because binaries are never committed. `protoc` refuses a misspelt field and
+  an unknown enum value, so declare `protobuf-compiler` in your `system` verb. Do not use
+  `buf convert`, which drops a misspelt field and gives no error.
+- **The readers check no length and no checksum.** A file cut between two fields still reads,
+  as fewer objects. So a file that a person keeps starts with a fixed tag that names its format,
+  then the length and a checksum of its message. The reader checks all three before it decodes.
 - **JSON stays only where a tool forces it**: npm, `tsc`, Atlas, Claude Code hooks, GitHub
   Actions and `gh`.
 
