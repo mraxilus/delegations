@@ -12,9 +12,8 @@
 ##     sweep at every distance couple may stand at; carrying this much at each of
 ##     them would cost tens of times what answering costs.  So sweep is answered
 ##     first, and only one that won is recorded.
-##   Way over crown that walk stops short of all it asks, by whatever stopped it, is recorded as
-##     planned way where that holds further: its moments are stood again from plan, as
-##     `walk.plannedWay` stood them.
+##   Each sweep is recorded as planned way, at band of its hold, however far walk would carry
+##     it: its moments are stood again from plan, as `walk.plannedWay` stood them.
 
 {.experimental: "strictFuncs".}
 
@@ -59,8 +58,8 @@ type
     whose*: Option[Hand]  ## Whose hand it gave at, or none where nothing gave.
     stills*: seq[Still]
     is_planned*: bool
-      ## Whether planner stood it: still no distance of carried walk held, or sweep's way over
-      ## crown that walk stops short of all it asks (`walk.swept`).
+      ## Whether planner stood it: still no distance of carried walk held, or sweep, whose way
+      ## is planned wherever it holds rest (`walk.swept`).
     strain*: float  ## Worst joint of still, nought at ease and one at end.
     tried*: seq[Option[float]]  ## Strain of each pose its search tried, in order: none gave.
 
@@ -176,9 +175,9 @@ proc shownAsked(
   ## Walk one way from wherever it carries furthest, keeping every moment whole.
   ##   Distance is asked of `walk.swept`, so page shows couple standing exactly
   ##     where model has them stand and not somewhere chosen for drawing.
-  ##   Way over crown that walk stops short of all it asks is planned way, as `walk.swept` keeps
-  ##     it: each moment it keeps is stood again from plan (`walk.standMoment`), as
-  ##     `walk.replayedWay` stood it, and none past them.
+  ##   Each way is planned way, as `walk.swept` keeps it where `should_plan`: each moment it
+  ##     keeps is stood again from plan (`walk.standMoment`), as `walk.replayedWay` stood it, and
+  ##     none past them.
   let
     sweep = swept(
       rig,
@@ -204,23 +203,12 @@ proc shownAsked(
   )
   if not best.found_rest:
     return
-  if best.isPlanned:
-    var planned = builtFor(rig, band, links, is_away, head, best.path)
-    for i in 0..<best.path.plans.len:
-      planned.standMoment(best.path, i, is_away)
-      result.stills.add toStill(planned, best.path.winds[i])
-    planned.free()
-    return
-  var couple = build(rig, restStance(rig, best.apart, is_away), band, links, head, is_away)
-  couple.settle()
-  var at = 0.0
-  result.stills.add toStill(couple, at)
-  let most = (if best.is_stopped: best.at else: MOST)
-  while abs(at) < most:
-    couple.turn(who, step, BEATS)
-    at += step
-    result.stills.add toStill(couple, at)
-  couple.free()
+  doAssert best.isPlanned, "Rig sweep holds rest with no plan; got `" & name & "`."
+  var planned = builtFor(rig, band, links, is_away, head, best.path)
+  for i in 0..<best.path.plans.len:
+    planned.standMoment(best.path, i, is_away)
+    result.stills.add toStill(planned, best.path.winds[i])
+  planned.free()
 
 
 

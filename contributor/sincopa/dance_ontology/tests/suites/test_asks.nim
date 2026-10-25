@@ -3,13 +3,15 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, json, math, options, sequtils, sets, strformat, strutils, tables, unittest]
+import std/[algorithm, json, jsonutils, math, options, sequtils, sets, strformat, strutils, tables,
+            unittest]
 
 import ../../design/[asks, modelled, parts, rig_page, twins, watch]
 from ../../design/rig as recording import KEPT_RIG, rigStamp
 from ../../design/rig {.all.} import BANDS, PLACE, SHOWN
 import ../../simulation/[body, hold, limb, read, rig, vector, words]
 from ../../simulation/plan import isMirrorSame, STRIDE
+from ../../simulation/readings import KEPT_READINGS, Readings
 from ../../simulation/rigid import ELBOW_END, ELBOWS_APART, faceCapsule, Mark, ON_UPPER, OVER,
   restStance, SAG, trunkCapsules
 from ../../simulation/rigid {.all.} import RAISE
@@ -301,8 +303,8 @@ func liftedRig(recording: JsonNode): tuple[hands: seq[Lifted], moments: int] =
   ## face, where it is carried (`carriedRig`).
   ##   Joined hand is one of each dancer whose line passes nearest each join at rest
   ##     (`heldRig`).  Rest is Face-to-back where two chests face one way at nought.
-  ##   Sweep that stops keeps moment it stops at (`seen.shownAsked`), where walk gave: that one
-  ##     is left out, so moments read are those walk holds (`heldMoments`).
+  ##   Moments read are those sweep holds (`heldMoments`): every rig sweep is planned, and keeps
+  ##     no moment that gave (`seen.shownAsked`).
   let
     card = recording["hold"].getStr & " · " & recording["band"].getStr
     look = recording["faces"][0]
@@ -644,6 +646,9 @@ suite "Internal: Simulation against Reference":
     ## Recording names hand each stop gave at, dancer and arm by ordinal, and `null` where
     ##   nothing gave: way that ran free, way no plan carries further, and still, which stands
     ##   where nothing gives (`seen.Shown`).  Twin card keeping no still of its own names no stop.
+    ##   Domain: rig's sweeps and stills, and each way report reads (`readings.WayRead`).  Rig's
+    ##     sweeps are planned and its stills stand, so no rig entry names hand; report's walks
+    ##     stop, and name one.
     ##   Red with hand kept as plain value, measured 2026-10-24: 4 sweeps and 57 stills that
     ##     nothing stopped named lead's left hand.
     let kept = parseFile(KEPT_RIG)
@@ -661,6 +666,15 @@ suite "Internal: Simulation against Reference":
       if whose.kind == JArray and whose.len == 2:
         check whose[0].getInt in 0..ord(Body.high)
         check whose[1].getInt in 0..ord(Arm.high)
+    for key, sweep in parseFile(KEPT_READINGS).jsonTo(Readings).sweeps:
+      for (way, reading) in [("negative", sweep.negative), ("positive", sweep.positive)]:
+        checkpoint &"`{key}` {way} stopped by `{reading.why}` names hand `{reading.whose}`"
+        if reading.why == Stop.None:
+          check reading.whose.isNone
+          inc unnamed
+        else:
+          check reading.whose.isSome
+          inc named
     checkpoint &"`{named}` name a hand, `{unnamed}` name none"
     check named > 0
     check unnamed > 0
@@ -763,14 +777,11 @@ suite "Internal: Simulation against Reference":
     ##   Carried point is read (`limb.pointCarried`), and not join: ruling quotes band, 1.735 to
     ##     2.00 m, and join may sit under it while carried point is inside, as in stills.
     ##   Domain: every moment of rig's four sweeps over crown, way each turns positive
-    ##     (`seen.shown`), at least `FLOOR_AWAY_RIG` of them.  Moments are those walk holds: rig's
-    ##     sweep keeps moment it stops at too (`seen.shownAsked`), where something gave, and that
-    ##     one is not read; planned way keeps none (`heldMoments`).
+    ##     (`seen.shown`), at least `FLOOR_AWAY_RIG` of them.  Each is planned, and keeps no
+    ##     moment that gave (`seen.shownAsked`, `heldMoments`).
     ##     Cost: rig sweeps way that turns positive alone, so no law reads hands of way that
     ##       turns negative, where lowest hand found sank.
-    ##     Cost: viewer draws that moment, hands and all, under words of its stop; law of
-    ##       shoulder's edge reads it (`test_shoulder.nim`), and Architect rules which holds.
-    ##     Law reads hands of moments walk holds, and not how far walk turns: law below holds
+    ##     Law reads hands of moments sweep holds, and not how far it turns: law below holds
     ##       that each way turns as far as plan carries it with hands lifted.
     ##   Architect, pull request 629, 2026-10-12, D2: joined hands must be above from quarter
     ##     turn away from face to face, as walk's judge reads it (`rigid.up` whole), and this law
@@ -779,7 +790,7 @@ suite "Internal: Simulation against Reference":
     ##     (`roundedUnder`): hand gripped palm deep, nearest its wrist, turns most.
     ##   Regression of issue 611, as found on 2026-10-11, each card kept and its quoted hand read
     ##     wherever its moment is still recorded:
-    ##     L-r above at +1.42: follow's right hand at 1.405 m.  Rig sweeps same walk, read next.
+    ##     L-r above at +1.42: follow's right hand at 1.405 m.  Rig sweeps same hold, read next.
     ##     `One hand, cross name · above` at +1.42: follow's right hand at 1.406 m.
     ##     `Chain, cross name · above` at +0.60: follow's left hand at 1.696 m.
     ##     L-l above at -0.40, follow's left hand at 1.363 m, R-r above at +0.40 its mirror, and
@@ -841,11 +852,12 @@ suite "Internal: Simulation against Reference":
 
   test "every way rig sweeps over crown turns as far as plan carries it":
     ## Architect, pull request 629, 2026-10-12, D1: where walk alone lets joined hands sink, plan
-    ##   lifts them, and recording keeps planned turn where walk falls short.  Plan keeps joined
-    ##   hands inside band and every upper arm inside shoulder's edge (`plan.bandAt`,
-    ##   `plan.marginsArm`), so turn it carries is floor of each way (`TURNS_PLANNED`).
-    ##   Way holds as far as its furthest moment, in turns from rest: rig's sweep keeps moment it
-    ##     stops at, where walk gave, and that one is not read (`heldMoments`).
+    ##   lifts them.  Issue 375, 2026-10-04, D5: recording keeps planned turn of each sweep, as
+    ##   each still is planned.  Plan keeps joined hands inside band and every upper arm inside
+    ##   shoulder's edge (`plan.bandAt`, `plan.marginsArm`), so turn it carries is floor of each
+    ##   way (`TURNS_PLANNED`).
+    ##   Way holds as far as its furthest moment, in turns from rest (`heldMoments`): planned way
+    ##     keeps no moment that gave.
     ##   Domain: way of each of rig's four sweeps over crown that turns positive (`seen.shown`).
     ##     Every hold read names its floor, and none is left unread.
     ##     Cost: way that turns negative is held to no floor, since rig keeps none.

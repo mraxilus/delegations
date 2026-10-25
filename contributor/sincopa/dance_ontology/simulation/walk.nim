@@ -16,14 +16,15 @@
 ##     Cost: cross-name chain held above is carried 1.26 of turn, from 0.54 m.  Without this,
 ##       wall with its slope at 270 carries it 1.60, from 0.86 m, with hands down to 1.594 m at
 ##       26 moments of rig's sweep, measured 2026-10-12.
-##   Where walk over crown stops short of `MOST`, whatever stopped it, rig's recording keeps
-##     planned way where it holds further: plan answers every stop, not only hand walk lets sink
-##     (Architect, pull request 629, 2026-10-12, D1 of its notes).  Engine stands each planned
-##     moment, and still's judge reads it (`plannedWay`).  Every other sweep is walk alone
-##     (`swept`, `should_plan`).
-##     So same-name chain, which lead's wrist and arm through arm stop, is planned too.
-##     Cost: recording plans 64 paths over crown, both chains toward both ways in every style
-##       (`planAhead`).  Plan carries same-name chain to 2.5 both ways, and cross-name chain to
+##   Rig's recording keeps planned way of each of its sweeps, at band of its hold, however far
+##     walk would carry it: each moment is planned as still is (Architect, issue 375,
+##     2026-10-04, D5), and plan answers every stop, not only hand walk lets sink (Architect,
+##     pull request 629, 2026-10-12, D1 of its notes).  Engine stands each planned moment, and
+##     still's judge reads it (`plannedWay`).  Every other sweep is walk alone (`swept`,
+##     `should_plan`).
+##     Cost: way plan carries less far than walk would ends there, since each moment it keeps
+##       stands as still would.
+##     Plan carries same-name chain over crown to 2.5 both ways, and cross-name chain to
 ##       1.5275 of turn, its upper arm riding plan's six degrees inside shoulder's edge.  Edge
 ##       holds it near there: plan with edge's margin at 0 or 3 degrees stands no path past 1.540
 ##       or 1.526, and plan with no edge term stands none past 1.4475, engine stopping each by
@@ -848,23 +849,19 @@ proc ways(
   ##     take either stand for that one.
   ##   Hold that is its own mirror walks way that turns positive, and other way is it
   ##     reflected (`twinAnswering`), unless it rests face to back or sweep is raw.
-  ##   Where `should_plan`, way over crown that walk stops short of `most` is planned, whatever
-  ##     stopped walk, and planned way is kept where it holds further (`plannedWay`,
-  ##     `turnsHeld`): plan answers wrist, arm through arm and every other stop, not only joined
-  ##     hands that sink (Architect, pull request 629, 2026-10-12, D1 of its notes).
+  ##   Where `should_plan`, each way is planned way, at band of hold, however far walk would
+  ##     carry it (`plannedWay`): each moment planned as still is (Architect, issue 375,
+  ##     2026-10-04, D5), and every stop answered (pull request 629, 2026-10-12, D1 of its
+  ##     notes).
 
   proc way(towards: float): Walk =
-    ## One way, `towards` its own step: engine's own walk where raw, and planned way where
-    ##   `should_plan` and walk over crown stops short of `most`, by whatever stopped it.
-    result =
-      if apart > 0.0 and is_raw:
-        walkedRaw(rig, band, links, who, apart, most, towards, is_away, head)
-      elif apart > 0.0: walked(rig, band, links, who, apart, most, towards, is_away, head)
-      else: furthest(rig, band, links, who, most, towards, is_away, head, is_raw)
-    if not should_plan or band != Band.Crown or (result.found_rest and not result.is_stopped):
-      return
-    let planned = plannedWay(rig, band, links, who, most, towards, is_away, head)
-    if turnsHeld(planned) > turnsHeld(result): result = planned
+    ## One way, `towards` its own step: planned way where `should_plan`, engine's own walk
+    ##   where raw, and walk alone otherwise.
+    if should_plan: plannedWay(rig, band, links, who, most, towards, is_away, head)
+    elif apart > 0.0 and is_raw:
+      walkedRaw(rig, band, links, who, apart, most, towards, is_away, head)
+    elif apart > 0.0: walked(rig, band, links, who, apart, most, towards, is_away, head)
+    else: furthest(rig, band, links, who, most, towards, is_away, head, is_raw)
 
   if isMirrorSame(links) and not is_away and not is_raw:
     let
@@ -900,9 +897,9 @@ proc swept*(
   ##     one's that turns negative (`twinAnswering`).
   ##   Raw sweep is engine's own: it reflects no twin, and keeps nothing, so no other
   ##     sweep reads it.
-  ##   Where `should_plan`, way over crown that walk stops short of `most`, by whatever stopped
-  ##     it, is planned way where that holds further: what rig's recording keeps (`seen.shown`),
-  ##     where every other sweep is walk alone (`ways`).
+  ##   Where `should_plan`, each way is planned way, at band of hold, however far walk would
+  ##     carry it: what rig's recording keeps (`seen.shown`), where every other sweep is walk
+  ##     alone (`ways`).
   if is_raw:
     let (positive, negative) =
       ways(rig, band, links, who, most, step, apart, is_away, head, true, should_plan)
