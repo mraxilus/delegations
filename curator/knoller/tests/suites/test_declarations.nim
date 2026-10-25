@@ -131,7 +131,7 @@ suite "Declarations":
       "const N = 3  ## Size.\n",
       "const\n  N = 3\n    ## Size.\n",  # next line, one level in
       "const T = [\n  1,\n]  ## Table.\n",  # last line of value
-      "const T = block:\n  ## Table.\n  1\n",  # value opening block ends on its own line
+      "const T = block:\n  ## Table.\n  1\n",  # doc right below first line counts, as cost
       "proc f[T](x: T): T =\n  ## Echo.\n  let y = x\n  y\n",
       "func g() =\n  ##[ Block doc. ]##\n  discard\n",
       "macro m(): untyped =\n  ## Emit.\n  quote do:\n    proc h() = discard\n",
@@ -224,7 +224,7 @@ suite "Declarations":
         # `simulation/words.nim` of `dance_ontology`: `block:` below `=`
       "const WIDE_TEMPO* = Tempo(\n  ## Hold how long this drawing takes to say move.\n" &
       "  quick: 1)\n",
-        # `src/dance_ontology/map.nim` of `dance_ontology`: doc opening line inside bracket
+        # `src/dance_ontology/map.nim` of `dance_ontology`: doc right below first line, as cost
     ]:
       check kept.isDocumented
     check checkDocsMissing("a.nim", "let s = \"\"\"\nx\n\"\"\"  ## Text.\nlet t = 1\n").mapIt(
