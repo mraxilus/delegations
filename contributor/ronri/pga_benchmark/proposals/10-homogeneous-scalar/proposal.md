@@ -108,8 +108,9 @@ constructor is `initMultivectorScalars`, as `init` names the constructor of a ty
 
 - The parts on 𝟏 and 𝟙 are s and t, as the basis table of `algebra.nim` names them. The operands
   are m and n, as the library names its variables.
-- The mark of the product sits where Lengyel puts it, under both products. It comes after the
-  inverse, as in 𝐦⟑⁻¹, before a root, as in ⟇√𝐦, and after the name of a function, as in sin⟑𝐦.
+- The mark of the product sits where Lengyel puts it, under both products. It comes before a root,
+  as in ⟇√𝐦, and after the name of a function, as in sin⟑𝐦. The inverse takes the mark after its
+  operand, as in 𝐦⟑⁻¹, which the curator chose and the Architect took on 2026-10-25.
 - Lengyel's wiki calls the pair a magnitude. The library and the wiki also use that word for the
   size of a quantity, so this proposal does not.
 - Nor does it name the pair dual. The pair is no dual number under the conformal metric, and the
@@ -132,7 +133,8 @@ constructor is `initMultivectorScalars`, as `init` names the constructor of a ty
 - **Division of a multivector.** It is the `⟇` of P04 of 𝐦 by a pair, so it reads the columns of
   𝟏 and 𝟙 of the table alone.
 - **A fallback `⟑`.** This change adds `⟑` to `basis_sets.nim`, in the shape of the `⟇` of P04.
-  It goes once P04 gives `⟑` itself.
+  It goes once P04 gives `⟑` itself. At each RGA it stops the compile for two antiscalars, because
+  𝟙 ⟑ 𝟙 is zero there. No caller compiles that call at pin either, so nothing breaks.
 - **Conformal part norms.** At pin each conformal norm of the library is the size of its own part,
   as Table 4.12 defines. The change `conformal-norms` fills the center norm, `normCenter`, in the
   same way. This proposal keeps the four part norms and `normCenter` as at pin. In the conformal
