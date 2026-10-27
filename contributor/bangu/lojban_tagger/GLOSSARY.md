@@ -34,6 +34,11 @@ _Avoid_: affix, combining form, stem
 An ordered sequence of words in which each word modifies the next, so the last word is the head.
 _Avoid_: metaphor, phrase
 
+**tanru unit**:
+One word of a tanru with the cmavo that bind it, as the grammar of CLL names it (21.2, rule 152).
+Its conversions count by their net result, so `se se ciska` is the tanru unit `ciska`.
+_Avoid_: unit, operand, converted word
+
 **lujvo**:
 A compound word joined from rafsi, with the hyphens that CLL 4.11 requires. It stands for one
 tanru, whichever rafsi it uses.
