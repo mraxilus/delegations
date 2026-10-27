@@ -16,7 +16,9 @@
 ##     first each entity whose tag holds `se` right before `ciska`, wherever pair stands, as
 ##     `selci'a`, `selci'avei` and `veirselci'a` do; that net result of cmavo around pair
 ##     decides; that longer term ranks by unbroken run too; and that search for `ciska` gives
-##     no priority. English term ranks nothing, since ruling names term typed in Lojban.
+##     no priority. English term ranks nothing, as Architect ruled, since ruling on rank names
+##     term typed in Lojban: word may lead to several meanings, and one holding cmavo would rank
+##     what user may not mean, as `writing` would rank jokes by `xajmi se finti`.
 ##     Tanru units, not words: SE binds only following brivla or "equivalent unit" (CLL 9.4),
 ##     so `se ciska` is one tanru unit wherever it stands, and folding gives what cmavo around
 ##     it do. `selselci'a` holds words `se ciska` yet folds to `ciska`, since two `se` cancel
