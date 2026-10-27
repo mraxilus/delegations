@@ -311,7 +311,21 @@ suite "Internal: Search":
     check readTerm("selci'a").alternatives == readTerm("ciska").alternatives  # acts as `ciska`
     check readTerm("selci'a").specific == selcia.tanruUnits  # term keeps tanru units it ranks by
     check readTerm("ciska").specific.len == 0  # gismu term holds no tanru to rank by
-    check readTerm("write").specific.len == 0  # English term ranks nothing
+    check readTerm("write").specific.len == 0  # ruling: English term ranks nothing
+
+
+  test "English term ranks nothing, though meaning it leads to holds cmavo, as Architect ruled":
+    var index: Index
+    index.addTags("a/desk", [readTanru("ciska+jubme").get])
+    index.addTags("b/humor", [readTanru("xajmi+finti").get])
+    index.addTags("c/joke", [readTanru("xajmi+se+finti").get])
+    check readTerm("writing").meanings.filterIt(it.words.anyIt(it.kind == Kind.Cmavo)).mapIt(
+        it.words) == @[readTanru("xajmi+se+finti").get.words]  # only joke holds cmavo: `se`
+    check readTerm("writing").specific.len == 0  # ruling: no tanru units to rank by
+    check index.find([readTerm("writing")]).names ==
+        @["a/desk", "b/humor", "c/joke"]  # ruling: English term ranks nothing
+    check index.find([readTerm("xamselfi'i")]).names ==
+        @["c/joke", "b/humor"]  # same tanru typed in Lojban ranks its tag first
 
 
   test "Lojban term holding cmavo ranks tag holding its tanru units unbroken, as Architect ruled":
