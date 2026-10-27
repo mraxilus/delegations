@@ -28,7 +28,7 @@ when compileOption("profiler"):
 
 import std/[algorithm, options, random, sequtils, strutils, unittest]
 
-import ../../src/lojban_tagger/[dictionary, english, index, search, tags, units]
+import ../../src/lojban_tagger/[dictionary, english, index, search, tags, tanru_units]
 
 
 type
@@ -309,12 +309,12 @@ suite "Internal: Search":
     check index.find([readTerm("selci'a"), readTerm("notci")]).names ==
         @["z/letter", "m/notes"]  # ranked tier first, conjunction kept
     check readTerm("selci'a").alternatives == readTerm("ciska").alternatives  # acts as `ciska`
-    check readTerm("selci'a").specific == selcia.units  # term keeps units it ranks by
+    check readTerm("selci'a").specific == selcia.tanruUnits  # term keeps tanru units it ranks by
     check readTerm("ciska").specific.len == 0  # gismu term holds no tanru to rank by
     check readTerm("write").specific.len == 0  # English term ranks nothing
 
 
-  test "Lojban term holding cmavo ranks tag holding its units unbroken, as Architect ruled":
+  test "Lojban term holding cmavo ranks tag holding its tanru units unbroken, as Architect ruled":
     var index: Index
     for (name, text) in [
       ("a/jobs", "ci'arseljibri"),  # `ciska` then `se jibri`: both held, `se` not before `ciska`
@@ -338,7 +338,7 @@ suite "Internal: Search":
       "b/record", "e/minutes", "k/converse", "l/figure", "m/reclining", "a/jobs", "c/plain",
       "d/apart", "f/grouped", "g/cancel", "h/medium", "i/negated", "j/closed", "n/head",
       "o/denied",
-    ]  # ruling: unit `se ciska` ranks first wherever it stands, net of cmavo around it
+    ]  # ruling: tanru unit `se ciska` ranks first wherever it stands, net of cmavo around it
     check index.find([readTerm("ciska")]).names ==
         index.entities.names  # ruling: gismu term ranks nothing
     check index.find([readTerm("selselci'a")]).names ==
@@ -347,19 +347,19 @@ suite "Internal: Search":
     check index.find([readTerm("selci'avei")]).names == @[
       "b/record", "m/reclining", "d/apart", "e/minutes", "f/grouped", "j/closed", "k/converse",
       "n/head", "o/denied",
-    ]  # ruling: units of longer term stand unbroken; `k/converse` converts them whole (12.11)
+    ]  # ruling: tanru units of longer term stand unbroken; `k/converse` converts them whole (12.11)
     check index.find([readTerm("selci'a"), readTerm("vreji")]).names == @[
       "b/record", "e/minutes", "k/converse", "m/reclining", "d/apart", "f/grouped", "j/closed",
       "n/head", "o/denied",
     ]  # ranked tier first, conjunction kept
 
 
-  test "Lojban term whose only cmavo binds nothing ranks tag holding its units":
+  test "Lojban term whose only cmavo binds nothing ranks tag holding its tanru units":
     let figure = readTag("pevrisnyjelca").tag
     var index: Index
     index.addTags("a/burn", [readTag("risnyjelca").tag])
     index.addTags("b/figure", [figure])
-    check readTerm("pevrisnyjelca").specific == figure.units  # `pe'a` stays unit, at cost
+    check readTerm("pevrisnyjelca").specific == figure.tanruUnits  # `pe'a` is tanru unit, at cost
     check index.find([readTerm("pevrisnyjelca")]).names ==
         @["b/figure", "a/burn"]  # its own tag first, though `pe'a` binds nothing
     check index.find([readTerm("risnyjelca")]).names ==
