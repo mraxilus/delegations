@@ -877,10 +877,10 @@ the build at cga3d and cga6d. `proposals/11-unitize-general/laws.nim` holds the
 laws of its rule, and `limits.nim` its limits over long chains and frames, at rga3d, rga4d, cga4d
 and cga5d.
 
-A form of P04 that reaches no basis stops the compile. So its laws hold such a form to zero in the
-library, at each type and pair that they sweep. Where a map drops the sign of its table, the laws
-fail at rga4d. Where a squared norm reads half its table, they fail at cga5d and hold at rga4d,
-whose metric is diagonal.
+A basis-set form of P04 that reaches no basis stops the compile. So its laws hold such a form to
+zero in the library, at each type and pair that they sweep. Where a map drops the sign of its
+table, the laws fail at rga4d. Where a squared norm reads half its table, they fail at cga5d and
+hold at rga4d, whose metric is diagonal.
 
 Up to 4D the laws of P04 sweep each product over every pair of named types and the whole
 multivector. At 5D and 6D they sweep a vector with each type. The compiler takes about 0.3 MiB

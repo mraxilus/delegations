@@ -1,9 +1,9 @@
 # P04: Return exactly the bases an operator reaches
 
 **What it is.** At pin, one generic type holds the coefficients of any set of bases. This proposal
-gives these types a form of each operator that the library builds from one table. Each form
-returns exactly the bases that its table can reach. It also aligns each type to the largest power
-of two that divides its bytes, at most one cache line.
+gives these types a basis-set form of each operator that the library builds from one table. Each
+form returns exactly the bases that its table can reach. It also aligns each type to the largest
+power of two that divides its bytes, at most one cache line.
 
 **What it is for.** A form writes only the coefficients that it reaches, so a dot product or a
 squared norm writes one number and not a whole multivector. The type of the result also says
@@ -49,11 +49,11 @@ The index of a basis is the count of the bases of `B` below it, which `index` fo
 basis is static. A static basis outside `B` stops the compile. `toMultivector` widens a
 basis-set type, and `toMultivectorOf` narrows it. This proposal reads all of these, and adds none.
 
-### Forms
+### Basis-set forms
 
 The library builds 21 operators from one table each in a rigid build, and 27 in a conformal
-build. This proposal gives each one a form of basis-set types. `pga.nim` gives each form the alias
-of its operator, where the library names one:
+build. This proposal gives each one a basis-set form, as the glossary names it. `pga.nim` gives
+each form the alias of its operator, where the library names one:
 
 | Kind | Operators | Algebras |
 |------|-----------|----------|
