@@ -8,9 +8,9 @@
     "sizeof_multivector": 256
   },
   "taken": {
-    "date": "2026-10-19",
+    "date": "2026-10-28",
     "machine": "linux amd64, 4 cores",
-    "nim": "27763495bcfe265507ca98aedc1c7064bf1e0e4d",
+    "nim": "14991af742d0833503741fd9a0918133d1bcf8a4",
     "pga": "3d9696edbaaa5dca655c3024174bd46fd156d7c6",
     "flags": "-d:release"
   },
@@ -121,7 +121,7 @@
         "checks": 3,
         "calls": 3,
         "allocations": 2,
-        "lines": 62
+        "lines": 58
       },
       "total": {
         "multiplies": 0,
@@ -131,10 +131,10 @@
         "fills_zero": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 27,
+        "checks": 25,
         "calls": 88,
         "allocations": 8,
-        "lines": 8116
+        "lines": 7000
       },
       "movement": {
         "bytes_read": 0,
@@ -998,10 +998,10 @@
         "fills_zero": 1,
         "intermediates": 0,
         "copies": 0,
-        "checks": 96,
+        "checks": 0,
         "calls": 96,
         "allocations": 0,
-        "lines": 49
+        "lines": 35
       },
       "total": {
         "multiplies": 0,
@@ -1011,10 +1011,10 @@
         "fills_zero": 1,
         "intermediates": 0,
         "copies": 0,
-        "checks": 96,
+        "checks": 0,
         "calls": 96,
         "allocations": 0,
-        "lines": 337
+        "lines": 323
       },
       "movement": {
         "bytes_read": 512,
@@ -1086,10 +1086,10 @@
         "fills_zero": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 96,
+        "checks": 0,
         "calls": 96,
         "allocations": 0,
-        "lines": 50
+        "lines": 39
       },
       "total": {
         "multiplies": 0,
@@ -1099,10 +1099,10 @@
         "fills_zero": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 96,
+        "checks": 0,
         "calls": 96,
         "allocations": 0,
-        "lines": 338
+        "lines": 327
       },
       "movement": {
         "bytes_read": 512,
@@ -1171,34 +1171,34 @@
         "adds": 0,
         "subtractions": 0,
         "divides": 0,
-        "fills_zero": 3,
-        "intermediates": 2,
-        "copies": 1,
+        "fills_zero": 2,
+        "intermediates": 1,
+        "copies": 0,
         "checks": 2,
         "calls": 2,
         "allocations": 0,
-        "lines": 19
+        "lines": 16
       },
       "total": {
         "multiplies": 486,
         "adds": 422,
         "subtractions": 0,
         "divides": 0,
-        "fills_zero": 3,
-        "intermediates": 2,
-        "copies": 1,
+        "fills_zero": 2,
+        "intermediates": 1,
+        "copies": 0,
         "checks": 2,
         "calls": 2,
         "allocations": 0,
-        "lines": 83
+        "lines": 80
       },
       "movement": {
         "bytes_read": 512,
         "bytes_written": 256,
-        "bytes_zeroed": 768,
-        "bytes_copied": 256,
-        "bytes_intermediates": 512,
-        "bytes_moved": 2304
+        "bytes_zeroed": 512,
+        "bytes_copied": 0,
+        "bytes_intermediates": 256,
+        "bytes_moved": 1536
       }
     },
     "denseProjectCentral(Multivector,Multivector)": {
@@ -1259,34 +1259,34 @@
         "adds": 0,
         "subtractions": 0,
         "divides": 0,
-        "fills_zero": 3,
-        "intermediates": 2,
-        "copies": 1,
+        "fills_zero": 2,
+        "intermediates": 1,
+        "copies": 0,
         "checks": 2,
         "calls": 2,
         "allocations": 0,
-        "lines": 19
+        "lines": 16
       },
       "total": {
         "multiplies": 486,
         "adds": 422,
         "subtractions": 0,
         "divides": 0,
-        "fills_zero": 3,
-        "intermediates": 2,
-        "copies": 1,
+        "fills_zero": 2,
+        "intermediates": 1,
+        "copies": 0,
         "checks": 2,
         "calls": 2,
         "allocations": 0,
-        "lines": 83
+        "lines": 80
       },
       "movement": {
         "bytes_read": 512,
         "bytes_written": 256,
-        "bytes_zeroed": 768,
-        "bytes_copied": 256,
-        "bytes_intermediates": 512,
-        "bytes_moved": 2304
+        "bytes_zeroed": 512,
+        "bytes_copied": 0,
+        "bytes_intermediates": 256,
+        "bytes_moved": 1536
       }
     },
     "denseProjectCentralAnti(Multivector,Multivector)": {
@@ -1347,34 +1347,34 @@
         "adds": 0,
         "subtractions": 0,
         "divides": 0,
-        "fills_zero": 3,
-        "intermediates": 2,
-        "copies": 1,
+        "fills_zero": 2,
+        "intermediates": 1,
+        "copies": 0,
         "checks": 2,
         "calls": 2,
         "allocations": 0,
-        "lines": 19
+        "lines": 16
       },
       "total": {
         "multiplies": 486,
         "adds": 422,
         "subtractions": 0,
         "divides": 0,
-        "fills_zero": 3,
-        "intermediates": 2,
-        "copies": 1,
+        "fills_zero": 2,
+        "intermediates": 1,
+        "copies": 0,
         "checks": 2,
         "calls": 2,
         "allocations": 0,
-        "lines": 83
+        "lines": 80
       },
       "movement": {
         "bytes_read": 512,
         "bytes_written": 256,
-        "bytes_zeroed": 768,
-        "bytes_copied": 256,
-        "bytes_intermediates": 512,
-        "bytes_moved": 2304
+        "bytes_zeroed": 512,
+        "bytes_copied": 0,
+        "bytes_intermediates": 256,
+        "bytes_moved": 1536
       }
     },
     "denseProjectOrthogonal(Multivector,Multivector)": {
@@ -1435,34 +1435,34 @@
         "adds": 0,
         "subtractions": 0,
         "divides": 0,
-        "fills_zero": 3,
-        "intermediates": 2,
-        "copies": 1,
+        "fills_zero": 2,
+        "intermediates": 1,
+        "copies": 0,
         "checks": 2,
         "calls": 2,
         "allocations": 0,
-        "lines": 19
+        "lines": 16
       },
       "total": {
         "multiplies": 486,
         "adds": 422,
         "subtractions": 0,
         "divides": 0,
-        "fills_zero": 3,
-        "intermediates": 2,
-        "copies": 1,
+        "fills_zero": 2,
+        "intermediates": 1,
+        "copies": 0,
         "checks": 2,
         "calls": 2,
         "allocations": 0,
-        "lines": 83
+        "lines": 80
       },
       "movement": {
         "bytes_read": 512,
         "bytes_written": 256,
-        "bytes_zeroed": 768,
-        "bytes_copied": 256,
-        "bytes_intermediates": 512,
-        "bytes_moved": 2304
+        "bytes_zeroed": 512,
+        "bytes_copied": 0,
+        "bytes_intermediates": 256,
+        "bytes_moved": 1536
       }
     },
     "denseProjectOrthogonalAnti(Multivector,Multivector)": {
@@ -1526,10 +1526,10 @@
         "fills_zero": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 64,
+        "checks": 0,
         "calls": 64,
         "allocations": 0,
-        "lines": 44
+        "lines": 36
       },
       "total": {
         "multiplies": 32,
@@ -1539,10 +1539,10 @@
         "fills_zero": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 64,
+        "checks": 0,
         "calls": 64,
         "allocations": 0,
-        "lines": 236
+        "lines": 228
       },
       "movement": {
         "bytes_read": 264,
@@ -2301,10 +2301,10 @@
         "fills_zero": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 64,
+        "checks": 0,
         "calls": 64,
         "allocations": 0,
-        "lines": 44
+        "lines": 36
       },
       "total": {
         "multiplies": 0,
@@ -2314,10 +2314,10 @@
         "fills_zero": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 64,
+        "checks": 0,
         "calls": 64,
         "allocations": 0,
-        "lines": 236
+        "lines": 228
       },
       "movement": {
         "bytes_read": 256,
@@ -2989,10 +2989,10 @@
         "fills_zero": 1,
         "intermediates": 1,
         "copies": 0,
-        "checks": 65,
+        "checks": 1,
         "calls": 65,
         "allocations": 0,
-        "lines": 71
+        "lines": 60
       },
       "total": {
         "multiplies": 40,
@@ -3002,10 +3002,10 @@
         "fills_zero": 1,
         "intermediates": 1,
         "copies": 0,
-        "checks": 65,
+        "checks": 1,
         "calls": 65,
         "allocations": 0,
-        "lines": 295
+        "lines": 284
       },
       "movement": {
         "bytes_read": 256,
@@ -3035,7 +3035,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 53
+        "lines": 48
       },
       "total": {
         "multiplies": 40,
@@ -3048,7 +3048,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 53
+        "lines": 48
       },
       "movement": {
         "bytes_read": 256,
@@ -3075,10 +3075,10 @@
         "fills_zero": 1,
         "intermediates": 1,
         "copies": 0,
-        "checks": 65,
+        "checks": 1,
         "calls": 65,
         "allocations": 0,
-        "lines": 71
+        "lines": 60
       },
       "total": {
         "multiplies": 40,
@@ -3088,10 +3088,10 @@
         "fills_zero": 1,
         "intermediates": 1,
         "copies": 0,
-        "checks": 65,
+        "checks": 1,
         "calls": 65,
         "allocations": 0,
-        "lines": 295
+        "lines": 284
       },
       "movement": {
         "bytes_read": 256,
@@ -3121,7 +3121,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 53
+        "lines": 48
       },
       "total": {
         "multiplies": 40,
@@ -3134,7 +3134,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 53
+        "lines": 48
       },
       "movement": {
         "bytes_read": 256,
@@ -3164,7 +3164,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 53
+        "lines": 48
       },
       "total": {
         "multiplies": 40,
@@ -3177,7 +3177,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 53
+        "lines": 48
       },
       "movement": {
         "bytes_read": 256,
@@ -4153,7 +4153,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 1192
+        "lines": 1094
       },
       "total": {
         "multiplies": 324,
@@ -4166,7 +4166,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 1192
+        "lines": 1094
       },
       "movement": {
         "bytes_read": 256,
@@ -4197,7 +4197,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 10
+        "lines": 30
       },
       "total": {
         "multiplies": 20,
@@ -4210,7 +4210,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 10
+        "lines": 30
       },
       "movement": {
         "bytes_read": 80,
@@ -4241,7 +4241,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 10
+        "lines": 40
       },
       "total": {
         "multiplies": 30,
@@ -4254,7 +4254,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 10
+        "lines": 40
       },
       "movement": {
         "bytes_read": 120,
@@ -4285,7 +4285,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 10
+        "lines": 40
       },
       "total": {
         "multiplies": 30,
@@ -4298,7 +4298,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 10
+        "lines": 40
       },
       "movement": {
         "bytes_read": 120,
@@ -4329,7 +4329,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 5
+        "lines": 35
       },
       "total": {
         "multiplies": 20,
@@ -4342,7 +4342,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 5
+        "lines": 35
       },
       "movement": {
         "bytes_read": 120,
@@ -4373,7 +4373,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 5
+        "lines": 35
       },
       "total": {
         "multiplies": 20,
@@ -4386,7 +4386,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 5
+        "lines": 35
       },
       "movement": {
         "bytes_read": 120,
@@ -4417,7 +4417,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 5
+        "lines": 45
       },
       "total": {
         "multiplies": 30,
@@ -4430,7 +4430,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 5
+        "lines": 45
       },
       "movement": {
         "bytes_read": 160,
@@ -4461,7 +4461,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 10
+        "lines": 30
       },
       "total": {
         "multiplies": 20,
@@ -4474,7 +4474,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 10
+        "lines": 30
       },
       "movement": {
         "bytes_read": 80,
@@ -4505,7 +4505,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 10
+        "lines": 40
       },
       "total": {
         "multiplies": 30,
@@ -4518,7 +4518,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 10
+        "lines": 40
       },
       "movement": {
         "bytes_read": 120,
@@ -4549,7 +4549,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 10
+        "lines": 40
       },
       "total": {
         "multiplies": 30,
@@ -4562,7 +4562,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 10
+        "lines": 40
       },
       "movement": {
         "bytes_read": 120,
@@ -4593,7 +4593,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 5
+        "lines": 45
       },
       "total": {
         "multiplies": 30,
@@ -4606,7 +4606,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 5
+        "lines": 45
       },
       "movement": {
         "bytes_read": 160,
@@ -4637,7 +4637,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 5
+        "lines": 35
       },
       "total": {
         "multiplies": 20,
@@ -4650,7 +4650,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 5
+        "lines": 35
       },
       "movement": {
         "bytes_read": 120,
@@ -4681,7 +4681,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 5
+        "lines": 35
       },
       "total": {
         "multiplies": 20,
@@ -4694,7 +4694,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 5
+        "lines": 35
       },
       "movement": {
         "bytes_read": 120,
@@ -4769,7 +4769,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 23
+        "lines": 3
       },
       "total": {
         "multiplies": 10,
@@ -4782,7 +4782,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 23
+        "lines": 3
       },
       "movement": {
         "bytes_read": 160,
@@ -4813,7 +4813,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 23
+        "lines": 3
       },
       "total": {
         "multiplies": 10,
@@ -4826,7 +4826,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 23
+        "lines": 3
       },
       "movement": {
         "bytes_read": 160,
@@ -4945,7 +4945,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 23
+        "lines": 3
       },
       "total": {
         "multiplies": 10,
@@ -4958,7 +4958,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 23
+        "lines": 3
       },
       "movement": {
         "bytes_read": 160,
@@ -4989,7 +4989,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 23
+        "lines": 3
       },
       "total": {
         "multiplies": 10,
@@ -5002,7 +5002,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 23
+        "lines": 3
       },
       "movement": {
         "bytes_read": 160,
@@ -5076,7 +5076,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 5
+        "lines": 15
       },
       "total": {
         "multiplies": 0,
@@ -5089,7 +5089,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 5
+        "lines": 15
       },
       "movement": {
         "bytes_read": 40,
@@ -5119,7 +5119,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 5
+        "lines": 15
       },
       "total": {
         "multiplies": 0,
@@ -5132,7 +5132,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 5
+        "lines": 15
       },
       "movement": {
         "bytes_read": 40,
@@ -5158,11 +5158,11 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 1
+        "lines": 15
       },
       "total": {
         "multiplies": 0,
@@ -5171,19 +5171,19 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 1
+        "lines": 15
       },
       "movement": {
         "bytes_read": 40,
         "bytes_written": 40,
         "bytes_zeroed": 0,
-        "bytes_copied": 40,
+        "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 120
+        "bytes_moved": 80
       }
     },
     "reverseAnti(PointRound)": {
@@ -5201,11 +5201,11 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 1
+        "lines": 15
       },
       "total": {
         "multiplies": 0,
@@ -5214,19 +5214,19 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 1
+        "lines": 15
       },
       "movement": {
         "bytes_read": 40,
         "bytes_written": 40,
         "bytes_zeroed": 0,
-        "bytes_copied": 40,
+        "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 120
+        "bytes_moved": 80
       }
     },
     "dualBulk(PointRound)": {
@@ -5248,7 +5248,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 5
+        "lines": 15
       },
       "total": {
         "multiplies": 0,
@@ -5261,7 +5261,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 5
+        "lines": 15
       },
       "movement": {
         "bytes_read": 40,
@@ -5291,7 +5291,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 5
+        "lines": 15
       },
       "total": {
         "multiplies": 0,
@@ -5304,7 +5304,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 5
+        "lines": 15
       },
       "movement": {
         "bytes_read": 40,
@@ -5330,11 +5330,11 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 7
+        "lines": 11
       },
       "total": {
         "multiplies": 0,
@@ -5343,19 +5343,19 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 7
+        "lines": 11
       },
       "movement": {
         "bytes_read": 40,
         "bytes_written": 40,
         "bytes_zeroed": 0,
-        "bytes_copied": 40,
+        "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 120
+        "bytes_moved": 80
       }
     },
     "weight(PointRound)": {
@@ -5373,7 +5373,7 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
@@ -5386,7 +5386,7 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
@@ -5396,9 +5396,9 @@
         "bytes_read": 40,
         "bytes_written": 40,
         "bytes_zeroed": 0,
-        "bytes_copied": 40,
+        "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 120
+        "bytes_moved": 80
       }
     },
     "bulkFlat(PointRound)": {
@@ -5416,7 +5416,7 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
@@ -5429,7 +5429,7 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
@@ -5439,9 +5439,9 @@
         "bytes_read": 40,
         "bytes_written": 40,
         "bytes_zeroed": 0,
-        "bytes_copied": 40,
+        "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 120
+        "bytes_moved": 80
       }
     },
     "weightFlat(PointRound)": {
@@ -5549,7 +5549,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 4
+        "lines": 12
       },
       "total": {
         "multiplies": 0,
@@ -5562,7 +5562,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 4
+        "lines": 12
       },
       "movement": {
         "bytes_read": 40,
@@ -5631,11 +5631,11 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 7
+        "lines": 15
       },
       "total": {
         "multiplies": 5,
@@ -5644,19 +5644,19 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 7
+        "lines": 15
       },
       "movement": {
         "bytes_read": 40,
         "bytes_written": 40,
         "bytes_zeroed": 0,
-        "bytes_copied": 40,
+        "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 120
+        "bytes_moved": 80
       }
     },
     "container(PointRound)": {
@@ -5678,7 +5678,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 5
+        "lines": 15
       },
       "total": {
         "multiplies": 8,
@@ -5691,7 +5691,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 5
+        "lines": 15
       },
       "movement": {
         "bytes_read": 40,
@@ -5717,11 +5717,11 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 9
+        "lines": 17
       },
       "total": {
         "multiplies": 10,
@@ -5730,19 +5730,19 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 9
+        "lines": 17
       },
       "movement": {
         "bytes_read": 40,
         "bytes_written": 40,
         "bytes_zeroed": 0,
-        "bytes_copied": 40,
+        "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 120
+        "bytes_moved": 80
       }
     },
     "complementRight(Dipole)": {
@@ -5764,7 +5764,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 14
+        "lines": 30
       },
       "total": {
         "multiplies": 0,
@@ -5777,7 +5777,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 14
+        "lines": 30
       },
       "movement": {
         "bytes_read": 80,
@@ -5807,7 +5807,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 14
+        "lines": 30
       },
       "total": {
         "multiplies": 0,
@@ -5820,7 +5820,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 14
+        "lines": 30
       },
       "movement": {
         "bytes_read": 80,
@@ -5846,11 +5846,11 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 16
+        "lines": 30
       },
       "total": {
         "multiplies": 0,
@@ -5859,19 +5859,19 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 16
+        "lines": 30
       },
       "movement": {
         "bytes_read": 80,
         "bytes_written": 80,
         "bytes_zeroed": 0,
-        "bytes_copied": 80,
+        "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 240
+        "bytes_moved": 160
       }
     },
     "reverseAnti(Dipole)": {
@@ -5889,11 +5889,11 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 16
+        "lines": 30
       },
       "total": {
         "multiplies": 0,
@@ -5902,19 +5902,19 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 16
+        "lines": 30
       },
       "movement": {
         "bytes_read": 80,
         "bytes_written": 80,
         "bytes_zeroed": 0,
-        "bytes_copied": 80,
+        "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 240
+        "bytes_moved": 160
       }
     },
     "dualBulk(Dipole)": {
@@ -5936,7 +5936,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 12
+        "lines": 30
       },
       "total": {
         "multiplies": 0,
@@ -5949,7 +5949,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 12
+        "lines": 30
       },
       "movement": {
         "bytes_read": 80,
@@ -5979,7 +5979,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 12
+        "lines": 30
       },
       "total": {
         "multiplies": 0,
@@ -5992,7 +5992,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 12
+        "lines": 30
       },
       "movement": {
         "bytes_read": 80,
@@ -6018,11 +6018,11 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 14
+        "lines": 16
       },
       "total": {
         "multiplies": 0,
@@ -6031,19 +6031,19 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 14
+        "lines": 16
       },
       "movement": {
         "bytes_read": 80,
         "bytes_written": 80,
         "bytes_zeroed": 0,
-        "bytes_copied": 80,
+        "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 240
+        "bytes_moved": 160
       }
     },
     "weight(Dipole)": {
@@ -6061,11 +6061,11 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 14
+        "lines": 16
       },
       "total": {
         "multiplies": 0,
@@ -6074,19 +6074,19 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 14
+        "lines": 16
       },
       "movement": {
         "bytes_read": 80,
         "bytes_written": 80,
         "bytes_zeroed": 0,
-        "bytes_copied": 80,
+        "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 240
+        "bytes_moved": 160
       }
     },
     "bulkFlat(Dipole)": {
@@ -6104,11 +6104,11 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 12
+        "lines": 16
       },
       "total": {
         "multiplies": 0,
@@ -6117,19 +6117,19 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 12
+        "lines": 16
       },
       "movement": {
         "bytes_read": 80,
         "bytes_written": 80,
         "bytes_zeroed": 0,
-        "bytes_copied": 80,
+        "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 240
+        "bytes_moved": 160
       }
     },
     "weightFlat(Dipole)": {
@@ -6147,7 +6147,7 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
@@ -6160,7 +6160,7 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
@@ -6170,9 +6170,9 @@
         "bytes_read": 80,
         "bytes_written": 80,
         "bytes_zeroed": 0,
-        "bytes_copied": 80,
+        "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 240
+        "bytes_moved": 160
       }
     },
     "attitude(Dipole)": {
@@ -6194,7 +6194,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 5
+        "lines": 13
       },
       "total": {
         "multiplies": 0,
@@ -6207,7 +6207,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 5
+        "lines": 13
       },
       "movement": {
         "bytes_read": 80,
@@ -6237,7 +6237,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 10
+        "lines": 18
       },
       "total": {
         "multiplies": 0,
@@ -6250,7 +6250,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 10
+        "lines": 18
       },
       "movement": {
         "bytes_read": 80,
@@ -6280,7 +6280,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 4
+        "lines": 12
       },
       "total": {
         "multiplies": 0,
@@ -6293,7 +6293,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 4
+        "lines": 12
       },
       "movement": {
         "bytes_read": 80,
@@ -6323,7 +6323,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 9
+        "lines": 25
       },
       "total": {
         "multiplies": 16,
@@ -6336,7 +6336,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 9
+        "lines": 25
       },
       "movement": {
         "bytes_read": 80,
@@ -6366,7 +6366,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 13
+        "lines": 25
       },
       "total": {
         "multiplies": 18,
@@ -6379,7 +6379,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 13
+        "lines": 25
       },
       "movement": {
         "bytes_read": 80,
@@ -6405,11 +6405,11 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 32
+        "lines": 34
       },
       "total": {
         "multiplies": 29,
@@ -6418,19 +6418,19 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 32
+        "lines": 34
       },
       "movement": {
         "bytes_read": 80,
         "bytes_written": 80,
         "bytes_zeroed": 0,
-        "bytes_copied": 80,
+        "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 240
+        "bytes_moved": 160
       }
     },
     "complementRight(Circle)": {
@@ -6452,7 +6452,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 14
+        "lines": 30
       },
       "total": {
         "multiplies": 0,
@@ -6465,7 +6465,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 14
+        "lines": 30
       },
       "movement": {
         "bytes_read": 80,
@@ -6495,7 +6495,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 14
+        "lines": 30
       },
       "total": {
         "multiplies": 0,
@@ -6508,7 +6508,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 14
+        "lines": 30
       },
       "movement": {
         "bytes_read": 80,
@@ -6534,11 +6534,11 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 16
+        "lines": 30
       },
       "total": {
         "multiplies": 0,
@@ -6547,19 +6547,19 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 16
+        "lines": 30
       },
       "movement": {
         "bytes_read": 80,
         "bytes_written": 80,
         "bytes_zeroed": 0,
-        "bytes_copied": 80,
+        "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 240
+        "bytes_moved": 160
       }
     },
     "reverseAnti(Circle)": {
@@ -6577,11 +6577,11 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 16
+        "lines": 30
       },
       "total": {
         "multiplies": 0,
@@ -6590,19 +6590,19 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 16
+        "lines": 30
       },
       "movement": {
         "bytes_read": 80,
         "bytes_written": 80,
         "bytes_zeroed": 0,
-        "bytes_copied": 80,
+        "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 240
+        "bytes_moved": 160
       }
     },
     "dualBulk(Circle)": {
@@ -6624,7 +6624,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 12
+        "lines": 30
       },
       "total": {
         "multiplies": 0,
@@ -6637,7 +6637,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 12
+        "lines": 30
       },
       "movement": {
         "bytes_read": 80,
@@ -6667,7 +6667,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 12
+        "lines": 30
       },
       "total": {
         "multiplies": 0,
@@ -6680,7 +6680,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 12
+        "lines": 30
       },
       "movement": {
         "bytes_read": 80,
@@ -6706,7 +6706,7 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
@@ -6719,7 +6719,7 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
@@ -6729,9 +6729,9 @@
         "bytes_read": 80,
         "bytes_written": 80,
         "bytes_zeroed": 0,
-        "bytes_copied": 80,
+        "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 240
+        "bytes_moved": 160
       }
     },
     "weight(Circle)": {
@@ -6749,11 +6749,11 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 12
+        "lines": 16
       },
       "total": {
         "multiplies": 0,
@@ -6762,19 +6762,19 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 12
+        "lines": 16
       },
       "movement": {
         "bytes_read": 80,
         "bytes_written": 80,
         "bytes_zeroed": 0,
-        "bytes_copied": 80,
+        "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 240
+        "bytes_moved": 160
       }
     },
     "bulkFlat(Circle)": {
@@ -6792,11 +6792,11 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 14
+        "lines": 16
       },
       "total": {
         "multiplies": 0,
@@ -6805,19 +6805,19 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 14
+        "lines": 16
       },
       "movement": {
         "bytes_read": 80,
         "bytes_written": 80,
         "bytes_zeroed": 0,
-        "bytes_copied": 80,
+        "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 240
+        "bytes_moved": 160
       }
     },
     "weightFlat(Circle)": {
@@ -6835,11 +6835,11 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 14
+        "lines": 16
       },
       "total": {
         "multiplies": 0,
@@ -6848,19 +6848,19 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 14
+        "lines": 16
       },
       "movement": {
         "bytes_read": 80,
         "bytes_written": 80,
         "bytes_zeroed": 0,
-        "bytes_copied": 80,
+        "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 240
+        "bytes_moved": 160
       }
     },
     "attitude(Circle)": {
@@ -6882,7 +6882,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 10
+        "lines": 22
       },
       "total": {
         "multiplies": 0,
@@ -6895,7 +6895,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 10
+        "lines": 22
       },
       "movement": {
         "bytes_read": 80,
@@ -6925,7 +6925,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 4
+        "lines": 12
       },
       "total": {
         "multiplies": 0,
@@ -6938,7 +6938,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 4
+        "lines": 12
       },
       "movement": {
         "bytes_read": 80,
@@ -6968,7 +6968,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 8
+        "lines": 18
       },
       "total": {
         "multiplies": 0,
@@ -6981,7 +6981,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 8
+        "lines": 18
       },
       "movement": {
         "bytes_read": 80,
@@ -7011,7 +7011,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 9
+        "lines": 25
       },
       "total": {
         "multiplies": 18,
@@ -7024,7 +7024,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 9
+        "lines": 25
       },
       "movement": {
         "bytes_read": 80,
@@ -7054,7 +7054,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 5
+        "lines": 25
       },
       "total": {
         "multiplies": 16,
@@ -7067,7 +7067,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 5
+        "lines": 25
       },
       "movement": {
         "bytes_read": 80,
@@ -7093,11 +7093,11 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 24
+        "lines": 34
       },
       "total": {
         "multiplies": 29,
@@ -7106,19 +7106,19 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 24
+        "lines": 34
       },
       "movement": {
         "bytes_read": 80,
         "bytes_written": 80,
         "bytes_zeroed": 0,
-        "bytes_copied": 80,
+        "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 240
+        "bytes_moved": 160
       }
     },
     "complementRight(Sphere)": {
@@ -7140,7 +7140,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 5
+        "lines": 15
       },
       "total": {
         "multiplies": 0,
@@ -7153,7 +7153,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 5
+        "lines": 15
       },
       "movement": {
         "bytes_read": 40,
@@ -7183,7 +7183,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 5
+        "lines": 15
       },
       "total": {
         "multiplies": 0,
@@ -7196,7 +7196,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 5
+        "lines": 15
       },
       "movement": {
         "bytes_read": 40,
@@ -7222,11 +7222,11 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 1
+        "lines": 15
       },
       "total": {
         "multiplies": 0,
@@ -7235,19 +7235,19 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 1
+        "lines": 15
       },
       "movement": {
         "bytes_read": 40,
         "bytes_written": 40,
         "bytes_zeroed": 0,
-        "bytes_copied": 40,
+        "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 120
+        "bytes_moved": 80
       }
     },
     "reverseAnti(Sphere)": {
@@ -7265,11 +7265,11 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 1
+        "lines": 15
       },
       "total": {
         "multiplies": 0,
@@ -7278,19 +7278,19 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 1
+        "lines": 15
       },
       "movement": {
         "bytes_read": 40,
         "bytes_written": 40,
         "bytes_zeroed": 0,
-        "bytes_copied": 40,
+        "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 120
+        "bytes_moved": 80
       }
     },
     "dualBulk(Sphere)": {
@@ -7312,7 +7312,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 5
+        "lines": 15
       },
       "total": {
         "multiplies": 0,
@@ -7325,7 +7325,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 5
+        "lines": 15
       },
       "movement": {
         "bytes_read": 40,
@@ -7355,7 +7355,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 5
+        "lines": 15
       },
       "total": {
         "multiplies": 0,
@@ -7368,7 +7368,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 5
+        "lines": 15
       },
       "movement": {
         "bytes_read": 40,
@@ -7437,7 +7437,7 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
@@ -7450,7 +7450,7 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
@@ -7460,9 +7460,9 @@
         "bytes_read": 40,
         "bytes_written": 40,
         "bytes_zeroed": 0,
-        "bytes_copied": 40,
+        "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 120
+        "bytes_moved": 80
       }
     },
     "bulkFlat(Sphere)": {
@@ -7480,7 +7480,7 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
@@ -7493,7 +7493,7 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
@@ -7503,9 +7503,9 @@
         "bytes_read": 40,
         "bytes_written": 40,
         "bytes_zeroed": 0,
-        "bytes_copied": 40,
+        "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 120
+        "bytes_moved": 80
       }
     },
     "weightFlat(Sphere)": {
@@ -7523,11 +7523,11 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 7
+        "lines": 11
       },
       "total": {
         "multiplies": 0,
@@ -7536,19 +7536,19 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 7
+        "lines": 11
       },
       "movement": {
         "bytes_read": 40,
         "bytes_written": 40,
         "bytes_zeroed": 0,
-        "bytes_copied": 40,
+        "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 120
+        "bytes_moved": 80
       }
     },
     "attitude(Sphere)": {
@@ -7570,7 +7570,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 10
+        "lines": 18
       },
       "total": {
         "multiplies": 0,
@@ -7583,7 +7583,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 10
+        "lines": 18
       },
       "movement": {
         "bytes_read": 40,
@@ -7656,7 +7656,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 4
+        "lines": 12
       },
       "total": {
         "multiplies": 0,
@@ -7669,7 +7669,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 4
+        "lines": 12
       },
       "movement": {
         "bytes_read": 40,
@@ -7699,7 +7699,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 5
+        "lines": 15
       },
       "total": {
         "multiplies": 8,
@@ -7712,7 +7712,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 5
+        "lines": 15
       },
       "movement": {
         "bytes_read": 40,
@@ -7738,11 +7738,11 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 7
+        "lines": 15
       },
       "total": {
         "multiplies": 5,
@@ -7751,19 +7751,19 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 7
+        "lines": 15
       },
       "movement": {
         "bytes_read": 40,
         "bytes_written": 40,
         "bytes_zeroed": 0,
-        "bytes_copied": 40,
+        "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 120
+        "bytes_moved": 80
       }
     },
     "partner(Sphere)": {
@@ -7781,11 +7781,11 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 9
+        "lines": 17
       },
       "total": {
         "multiplies": 10,
@@ -7794,19 +7794,19 @@
         "divides": 0,
         "fills_zero": 0,
         "intermediates": 0,
-        "copies": 1,
+        "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 9
+        "lines": 17
       },
       "movement": {
         "bytes_read": 40,
         "bytes_written": 40,
         "bytes_zeroed": 0,
-        "bytes_copied": 40,
+        "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 120
+        "bytes_moved": 80
       }
     },
     "grade(Basis)": {
@@ -7871,7 +7871,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 202
+        "lines": 169
       },
       "total": {
         "multiplies": 0,
@@ -7884,7 +7884,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 202
+        "lines": 169
       },
       "movement": {
         "bytes_read": 0,
@@ -7912,10 +7912,10 @@
         "fills_zero": 1,
         "intermediates": 0,
         "copies": 0,
-        "checks": 2,
+        "checks": 0,
         "calls": 2,
         "allocations": 0,
-        "lines": 54
+        "lines": 46
       },
       "total": {
         "multiplies": 0,
@@ -7925,10 +7925,10 @@
         "fills_zero": 1,
         "intermediates": 0,
         "copies": 0,
-        "checks": 2,
+        "checks": 0,
         "calls": 2,
         "allocations": 0,
-        "lines": 60
+        "lines": 52
       },
       "movement": {
         "bytes_read": 264,
@@ -7956,10 +7956,10 @@
         "fills_zero": 1,
         "intermediates": 0,
         "copies": 0,
-        "checks": 3,
+        "checks": 1,
         "calls": 3,
         "allocations": 0,
-        "lines": 57
+        "lines": 51
       },
       "total": {
         "multiplies": 0,
@@ -7969,10 +7969,10 @@
         "fills_zero": 1,
         "intermediates": 0,
         "copies": 0,
-        "checks": 3,
+        "checks": 1,
         "calls": 3,
         "allocations": 0,
-        "lines": 74
+        "lines": 68
       },
       "movement": {
         "bytes_read": 264,
@@ -8128,10 +8128,10 @@
         "fills_zero": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 1,
+        "checks": 0,
         "calls": 1,
         "allocations": 0,
-        "lines": 31
+        "lines": 26
       },
       "total": {
         "multiplies": 0,
@@ -8141,10 +8141,10 @@
         "fills_zero": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 1,
+        "checks": 0,
         "calls": 1,
         "allocations": 0,
-        "lines": 34
+        "lines": 29
       },
       "movement": {
         "bytes_read": 0,
@@ -8171,10 +8171,10 @@
         "fills_zero": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 1,
+        "checks": 0,
         "calls": 1,
         "allocations": 0,
-        "lines": 30
+        "lines": 25
       },
       "total": {
         "multiplies": 0,
@@ -8184,10 +8184,10 @@
         "fills_zero": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 1,
+        "checks": 0,
         "calls": 1,
         "allocations": 0,
-        "lines": 33
+        "lines": 28
       },
       "movement": {
         "bytes_read": 0,
@@ -8211,26 +8211,26 @@
         "adds": 0,
         "subtractions": 0,
         "divides": 0,
-        "fills_zero": 1,
+        "fills_zero": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 1,
+        "checks": 0,
         "calls": 1,
         "allocations": 0,
-        "lines": 12
+        "lines": 3
       },
       "total": {
         "multiplies": 0,
         "adds": 0,
         "subtractions": 0,
         "divides": 0,
-        "fills_zero": 2,
+        "fills_zero": 1,
         "intermediates": 0,
         "copies": 0,
-        "checks": 1,
+        "checks": 0,
         "calls": 1,
         "allocations": 0,
-        "lines": 15
+        "lines": 6
       },
       "movement": {
         "bytes_read": 0,
@@ -8300,23 +8300,23 @@
         "fills_zero": 1,
         "intermediates": 0,
         "copies": 0,
-        "checks": 225,
+        "checks": 96,
         "calls": 257,
         "allocations": 0,
-        "lines": 114
+        "lines": 99
       },
       "total": {
         "multiplies": 0,
         "adds": 0,
         "subtractions": 0,
         "divides": 0,
-        "fills_zero": 98,
+        "fills_zero": 66,
         "intermediates": 0,
         "copies": 0,
-        "checks": 289,
+        "checks": 96,
         "calls": 321,
         "allocations": 0,
-        "lines": 2359
+        "lines": 1896
       },
       "movement": {
         "bytes_read": 256,
@@ -8340,34 +8340,34 @@
         "adds": 0,
         "subtractions": 0,
         "divides": 0,
-        "fills_zero": 3,
-        "intermediates": 2,
-        "copies": 1,
+        "fills_zero": 2,
+        "intermediates": 1,
+        "copies": 0,
         "checks": 2,
         "calls": 2,
         "allocations": 0,
-        "lines": 19
+        "lines": 16
       },
       "total": {
         "multiplies": 243,
         "adds": 211,
         "subtractions": 0,
         "divides": 0,
-        "fills_zero": 3,
-        "intermediates": 2,
-        "copies": 1,
+        "fills_zero": 2,
+        "intermediates": 1,
+        "copies": 0,
         "checks": 2,
         "calls": 2,
         "allocations": 0,
-        "lines": 83
+        "lines": 80
       },
       "movement": {
         "bytes_read": 256,
         "bytes_written": 256,
-        "bytes_zeroed": 768,
-        "bytes_copied": 256,
-        "bytes_intermediates": 512,
-        "bytes_moved": 2048
+        "bytes_zeroed": 512,
+        "bytes_copied": 0,
+        "bytes_intermediates": 256,
+        "bytes_moved": 1280
       }
     },
     "⊙(Multivector)": {
@@ -8383,34 +8383,34 @@
         "adds": 0,
         "subtractions": 0,
         "divides": 0,
-        "fills_zero": 3,
-        "intermediates": 2,
-        "copies": 1,
+        "fills_zero": 1,
+        "intermediates": 1,
+        "copies": 0,
         "checks": 2,
         "calls": 2,
         "allocations": 0,
-        "lines": 19
+        "lines": 15
       },
       "total": {
         "multiplies": 486,
         "adds": 422,
         "subtractions": 0,
         "divides": 0,
-        "fills_zero": 6,
-        "intermediates": 4,
-        "copies": 2,
+        "fills_zero": 3,
+        "intermediates": 2,
+        "copies": 0,
         "checks": 4,
         "calls": 4,
         "allocations": 0,
-        "lines": 134
+        "lines": 127
       },
       "movement": {
         "bytes_read": 256,
         "bytes_written": 256,
-        "bytes_zeroed": 1536,
-        "bytes_copied": 512,
-        "bytes_intermediates": 1024,
-        "bytes_moved": 3584
+        "bytes_zeroed": 768,
+        "bytes_copied": 0,
+        "bytes_intermediates": 512,
+        "bytes_moved": 1792
       }
     },
     "⊡(Multivector)": {
@@ -8426,34 +8426,34 @@
         "adds": 0,
         "subtractions": 0,
         "divides": 0,
-        "fills_zero": 4,
-        "intermediates": 3,
-        "copies": 1,
+        "fills_zero": 3,
+        "intermediates": 2,
+        "copies": 0,
         "checks": 3,
         "calls": 3,
         "allocations": 0,
-        "lines": 25
+        "lines": 22
       },
       "total": {
         "multiplies": 243,
         "adds": 211,
         "subtractions": 0,
         "divides": 0,
-        "fills_zero": 4,
-        "intermediates": 3,
-        "copies": 1,
+        "fills_zero": 3,
+        "intermediates": 2,
+        "copies": 0,
         "checks": 3,
         "calls": 3,
         "allocations": 0,
-        "lines": 121
+        "lines": 118
       },
       "movement": {
         "bytes_read": 256,
         "bytes_written": 256,
-        "bytes_zeroed": 1024,
-        "bytes_copied": 256,
-        "bytes_intermediates": 768,
-        "bytes_moved": 2560
+        "bytes_zeroed": 768,
+        "bytes_copied": 0,
+        "bytes_intermediates": 512,
+        "bytes_moved": 1792
       }
     },
     "⊛(Multivector)": {
@@ -8469,34 +8469,34 @@
         "adds": 0,
         "subtractions": 0,
         "divides": 0,
-        "fills_zero": 6,
-        "intermediates": 5,
-        "copies": 1,
+        "fills_zero": 4,
+        "intermediates": 4,
+        "copies": 0,
         "checks": 8,
         "calls": 8,
         "allocations": 0,
-        "lines": 65
+        "lines": 61
       },
       "total": {
         "multiplies": 518,
         "adds": 422,
         "subtractions": 0,
         "divides": 0,
-        "fills_zero": 108,
-        "intermediates": 8,
-        "copies": 2,
-        "checks": 367,
+        "fills_zero": 73,
+        "intermediates": 6,
+        "copies": 0,
+        "checks": 109,
         "calls": 399,
         "allocations": 0,
-        "lines": 3018
+        "lines": 2530
       },
       "movement": {
         "bytes_read": 256,
         "bytes_written": 256,
-        "bytes_zeroed": 27648,
-        "bytes_copied": 512,
-        "bytes_intermediates": 2048,
-        "bytes_moved": 30720
+        "bytes_zeroed": 18688,
+        "bytes_copied": 0,
+        "bytes_intermediates": 1536,
+        "bytes_moved": 20736
       }
     },
     "formatValue(NimStringV2*,NimStringV2)": {
@@ -8532,7 +8532,7 @@
         "checks": 9,
         "calls": 6,
         "allocations": 3,
-        "lines": 485
+        "lines": 480
       },
       "movement": {
         "bytes_read": 0,
@@ -8576,7 +8576,7 @@
         "checks": 10,
         "calls": 8,
         "allocations": 3,
-        "lines": 703
+        "lines": 665
       },
       "movement": {
         "bytes_read": 0,
@@ -8604,10 +8604,10 @@
         "fills_zero": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 2,
+        "checks": 1,
         "calls": 2,
         "allocations": 0,
-        "lines": 19
+        "lines": 16
       },
       "total": {
         "multiplies": 0,
@@ -8617,10 +8617,10 @@
         "fills_zero": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 12,
+        "checks": 10,
         "calls": 74,
         "allocations": 3,
-        "lines": 7315
+        "lines": 6241
       },
       "movement": {
         "bytes_read": 0,
@@ -8664,7 +8664,7 @@
         "checks": 0,
         "calls": 1,
         "allocations": 0,
-        "lines": 211
+        "lines": 178
       },
       "movement": {
         "bytes_read": 0,
@@ -8710,7 +8710,7 @@
         "checks": 0,
         "calls": 65,
         "allocations": 0,
-        "lines": 6798
+        "lines": 5742
       },
       "movement": {
         "bytes_read": 0,
@@ -8737,10 +8737,10 @@
         "fills_zero": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 1,
+        "checks": 0,
         "calls": 1,
         "allocations": 0,
-        "lines": 13
+        "lines": 3
       },
       "total": {
         "multiplies": 0,
@@ -8750,10 +8750,10 @@
         "fills_zero": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 1,
+        "checks": 0,
         "calls": 66,
         "allocations": 0,
-        "lines": 6811
+        "lines": 5745
       },
       "movement": {
         "bytes_read": 0,
