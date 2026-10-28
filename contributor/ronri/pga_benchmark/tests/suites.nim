@@ -61,6 +61,13 @@ const
     ## Library operators, generated and hand-written.
   SOURCE_MULTIVECTORS = staticRead(LIBRARY & "/pga/multivectors.nim")
     ## Library arithmetic and accessors.
+  SOURCES_REFERENCE = [
+    ("reference/rigid2", staticRead("../src/pga_benchmark/reference/rigid2.nim")),
+    ("reference/rigid3", staticRead("../src/pga_benchmark/reference/rigid3.nim")),
+    ("reference/conformal2", staticRead("../src/pga_benchmark/reference/conformal2.nim")),
+    ("reference/conformal3", staticRead("../src/pga_benchmark/reference/conformal3.nim")),
+  ]
+    ## Typed reference modules by tail of module path, whose docs state counts of each form.
   SYMBOLS_EXCLUDED = ["==", "=~", "$", "*"]
     ## Exported symbols catalogue leaves out on purpose.
     ##   Poisoned equality, approximate comparison and display are predicates or text.
@@ -159,6 +166,44 @@ macro checkReferencesWiki(measurands: static seq[Measurand]): untyped =
     result.add quote do:
       suite "Wiki":
         `tests`
+
+
+macro checkTransformsAnyNorm(measurands: static seq[Measurand]): untyped =
+  ## Emit suite holding each motor transform of typed reference to library at motor scaled by 2.
+  ##   Scaled motor has norm 2, so transform taking motor as unit misses factor 4 of operation.
+  ##   One skipped test stands where algebra carries no transform.
+  var tests = newStmtList()
+  let (m, n) = (ident"m", ident"n")  # plain idents, so expression and reference bind them
+  for p in measurands:
+    if not p.reference.startsWith("transform("): continue
+    let
+      expression = parseExpr(p.expression)
+      reference = parseExpr(p.reference)
+      m_library = parseExpr(namePoolLibrary(p.operands[0], p.grade))
+      n_library = parseExpr(namePoolLibrary(p.operands[1], p.grade))
+      m_reference = parseExpr(namePoolReference(p.operands[0]))
+      n_reference = parseExpr(namePoolReference(p.operands[1]))
+      name = newLit(p.id & " at motor scaled by 2  # " & p.cite)
+    tests.add quote do:
+      test `name`:
+        for i in 0..<OBJECTS:
+          let
+            j = (i * 7 + 3) mod OBJECTS
+            expected = block:
+              let
+                `m` = `m_reference`[i]
+                `n` = toMotor(2.0 * widen(`n_reference`[j]))
+              widen(`reference`)
+            got = block:
+              let
+                `m` = `m_library`[i]
+                `n` = 2.0 * `n_library`[j]
+              `expression`
+          check widen(got) =~ expected  # library and reference agree at motor of norm 2
+  if tests.len == 0: tests.add emitTestSkipped()
+  result = quote do:
+    suiteInProc "Reference: Motor of any norm":
+      `tests`
 
 
 func isNear[B: static Bases](got, expected: MultivectorOf[B]): bool =
@@ -332,6 +377,7 @@ suiteInProc "Chapter 2":
 
 
 checkReferencesWiki(CATALOGUE)
+checkTransformsAnyNorm(CATALOGUE)
 
 
 
@@ -842,7 +888,7 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
     check compared == CATALOGUE.countIt(it.reference.len == 0)  # every general row has one
 
 
-  test "typed reference spends no fill and no error check, so it is optimal code":
+  test "typed reference spends no fill, no copy and no error check, so it is optimal code":
     if not CATALOGUE.anyIt(it.reference.len > 0):
       echo "    typed reference exists at rga3d, rga4d, cga4d and cga5d alone, so law skips (IX.9)"
       skip()
@@ -851,10 +897,62 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
       for f in INSPECTED:
         if not f.module.tailModule.startsWith("reference/"): continue
         let counts = count(f.body)
-        checkpoint f.key & " fills " & $counts.fills_zero & ", checks " & $counts.checks
+        checkpoint f.key & " fills " & $counts.fills_zero & ", copies " & $counts.copies &
+            ", checks " & $counts.checks
         # Call to Nim function costs fill of its result and check of error flag after it,
-        #   so form shared with another function is spelled in place or is template.
-        check counts.fills_zero == 0 and counts.checks == 0  # straight line, as hand code is
+        #   so form shared with another function is spelled in place. Result built in
+        #   temporary and copied whole is written twice, so form writes it once from scalars.
+        check counts.fills_zero == 0 and counts.copies == 0 and counts.checks == 0  # as hand code
+        inc compared
+      check compared >= FLOOR_FUNCTIONS_REFERENCE  # guard skips no reference function
+
+  test "doc of each typed reference form states multiplies, adds and divides its C spends":
+    func countsStated(source: string): Table[string, array[3, int]] =
+      ## Read multiplies, adds with subtractions, and divides each form's doc states, keyed as
+      ##   inspector keys its C, e.g. `wedge(Point,Point)`.
+      var key = ""
+      for line in source.splitLines:
+        if line.startsWith("func ") and "*(" in line:
+          let params = line[line.find("*(") + 2 ..< line.find("):")]
+          var names, stems: seq[string]
+          for part in params.split(", "):
+            let at = part.find(": ")
+            names.add(if at < 0: part else: part[0 ..< at])
+            if at >= 0:
+              for _ in names: stems.add part[at + 2 .. ^1]
+              names.setLen 0
+          key = line["func ".len ..< line.find("*(")] & "(" & stems.join(",") & ")"
+          result[key] = [0, 0, 0]
+        elif key.len > 0 and line.startsWith("  ##"):
+          let words = line.splitWhitespace
+          for i in 1 ..< words.len:
+            if not words[i - 1].allCharsInSet(Digits): continue
+            case words[i].strip(chars = {',', '.', ';'})
+            of "mul": result[key][0] += words[i - 1].parseInt
+            of "add", "sub": result[key][1] += words[i - 1].parseInt
+            of "div": result[key][2] += words[i - 1].parseInt
+            else: discard
+        else:
+          key = ""
+
+    if not CATALOGUE.anyIt(it.reference.len > 0):
+      echo "    typed reference exists at rga3d, rga4d, cga4d and cga5d alone, so law skips (IX.9)"
+      skip()
+    else:
+      var
+        stated: Table[string, array[3, int]]
+        compared = 0
+      for (module, source) in SOURCES_REFERENCE:
+        for key, counts in source.countsStated: stated[module & " " & key] = counts
+      for f in INSPECTED:
+        let module = f.module.tailModule
+        if not module.startsWith("reference/"): continue
+        let
+          counts = count(f.body)
+          spent = [counts.multiplies, counts.adds + counts.subtractions, counts.divides]
+        checkpoint f.key & " states " & $stated.getOrDefault(module & " " & f.key) & ", spends " &
+            $spent
+        check stated.getOrDefault(module & " " & f.key, [-1, -1, -1]) == spent  # doc reads C
         inc compared
       check compared >= FLOOR_FUNCTIONS_REFERENCE  # guard skips no reference function
 
