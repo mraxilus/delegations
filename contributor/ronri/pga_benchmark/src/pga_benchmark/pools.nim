@@ -121,8 +121,10 @@ when IS_RIGID and DIMENSIONS == 4:
 
   proc axisUnitRandom(): Vector3 =
     ## Draw unit vector, Gaussian direction normalized.
-    let v = Vector3(x: gauss(0.0, 1.0), y: gauss(0.0, 1.0), z: gauss(0.0, 1.0))
-    v * (1.0 / sqrt(dot(v, v)))
+    let
+      v = Vector3(x: gauss(0.0, 1.0), y: gauss(0.0, 1.0), z: gauss(0.0, 1.0))
+      f = 1.0 / sqrt(v.x * v.x + v.y * v.y + v.z * v.z)
+    Vector3(x: v.x * f, y: v.y * f, z: v.z * f)
 
   proc motorRandom(): Motor =
     ## Draw unit motor: translation by Gaussian vector after rotation by Gaussian angle.
