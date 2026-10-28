@@ -12,8 +12,7 @@ srcDir = "src"
 #   `nim.cfg` names path Atlas restores it to. Pin follows library's head, as Architect
 #   instructed; every pull request says which commit it measured and whether that is
 #   head.
-# Compiler is pinned by commit rather than release: library's head spells its operators
-#   with characters no release lexes. Same commit `pga_visualiser` pins, so one cached
-#   build serves both projects; see PROVENANCE.md, Dependencies.
-requires "nim == 27763495bcfe265507ca98aedc1c7064bf1e0e4d"
+# Compiler is pinned by release: 2.4.0 is first release whose lexer holds seven operators
+#   library's head spells; see PROVENANCE.md, Dependencies.
+requires "nim == 2.4.0"
 requires "https://gitlab.com/mraxilus/replications#3d9696e"
