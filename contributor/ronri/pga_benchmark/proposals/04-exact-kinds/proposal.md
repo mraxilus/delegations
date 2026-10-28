@@ -216,7 +216,8 @@ bare noun (V.3).
 - **Float width.** Each basis-set type holds `Coefficient`, and `alignment` reads its size. So a
   32-bit build aligns by the same rule, and at least to 4 bytes.
 - **P09 and P10.** P09, `object-names`, names the objects of the book by the aliases at pin. P10,
-  `homogeneous-scalar`, gives arithmetic to the type of two scalars that each norm returns.
+  `homogeneous-scalar`, gives arithmetic to the type of two scalars that each norm returns. It
+  multiplies its pairs through the `⟑` and `⟇` of this change.
 
 ## Evidence
 

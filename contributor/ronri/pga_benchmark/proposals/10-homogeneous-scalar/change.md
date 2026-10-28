@@ -7,10 +7,9 @@ an exponential, a sine, a cosine and a tangent, with a division. Each is written
 square of 𝟙, and its form under the antiproduct is derived from it at compile time. A function
 without a value for some pair returns an `Option`, in every algebra.
 
-The products of pairs are the basis-set products of P04. P04 lacks `⟑`, so this change adds it to
-`pga/basis_sets.nim` until P04 gives it. Under the conformal metric, the radius norm becomes the
-root of 𝐦 ∘ 𝐦 under the antiproduct. So at cga4d and cga5d an imaginary object has an imaginary
-radius, where pin gives NaN.
+The products of pairs are the basis-set forms `⟑` and `⟇` of P04. Under the conformal metric, the
+radius norm becomes the root of 𝐦 ∘ 𝐦 under the antiproduct. So at cga4d and cga5d an imaginary
+object has an imaginary radius, where pin gives NaN.
 
 ## Add `pga/scalars.nim`
 
@@ -354,31 +353,6 @@ func `/`*(m: Multivector, n: MultivectorScalars): Option[Multivector] =
   let n_inverse_anti = inverseAnti(n)
   if n_inverse_anti.isNone: return
   some(m ⟇ n_inverse_anti.get)
-```
-
-## Edit `pga/basis_sets.nim`
-
-```nim
-func `⟇`*[A, B: static Bases](
-  m: MultivectorOf[A], n: MultivectorOf[B]
-): typeReached(CAYLEYS_WEDGE_DOT.anti, A, B) {.noinit.} =
-  ## Multiply through geometric antiproduct, i.e. 𝐦 ⟇ 𝐧; result holds exactly bases reached.
-  defineProduct(CAYLEYS_WEDGE_DOT.anti, A, B)
-```
-
-```nim
-func `⟑`*[A, B: static Bases](
-  m: MultivectorOf[A], n: MultivectorOf[B]
-): typeReached(CAYLEYS_WEDGE_DOT.base, A, B) {.noinit.} =
-  ## Multiply through geometric product, i.e. 𝐦 ⟑ 𝐧; result holds exactly bases reached.
-  defineProduct(CAYLEYS_WEDGE_DOT.base, A, B)
-
-
-func `⟇`*[A, B: static Bases](
-  m: MultivectorOf[A], n: MultivectorOf[B]
-): typeReached(CAYLEYS_WEDGE_DOT.anti, A, B) {.noinit.} =
-  ## Multiply through geometric antiproduct, i.e. 𝐦 ⟇ 𝐧; result holds exactly bases reached.
-  defineProduct(CAYLEYS_WEDGE_DOT.anti, A, B)
 ```
 
 ## Edit `pga.nim`
