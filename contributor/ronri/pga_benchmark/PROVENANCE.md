@@ -83,10 +83,10 @@ They cover every product, complement, dual, part, attitude, carrier and cocarrie
 
 The expansion also reproduces the support, center, container and partner on one integer operand of
 each grade. The attitude takes 𝐞̅₃, the complement of the origin, as it takes 𝐞̅₄ at cga5d. The
-motor transforms take the form of Terathon for a unit motor, 15 multiplies where the expansion
-spends 30. The partners are factored by hand, 15 multiplies for a dipole where the expansion spends
-36. The script stays out of the tree, because no checker reads its kind of file. The law suites hold
-every form to the library on the pools instead.
+motor transforms factor the expansion to 14 multiplies, where it spends 30. The partners are
+factored by hand, 15 multiplies for a dipole where the expansion spends 36. The script stays out of
+the tree, because no checker reads its kind of file. The law suites hold every form to the library
+on the pools instead.
 
 Where the sign conventions of the library differ from Terathon's, the library's were adopted,
 because the library is what is measured. The bulk and weight duals of points and planes carry
@@ -108,28 +108,79 @@ with its weight negated, unitizes as the library unitizes it. The pools draw w n
 the negation no measurand sees the sign.
 
 Every form is `{.inline.}`, so it lands in the same nimcache as the operators of the library, and
-the same reader counts it. Object construction goes through the `zero3` and `read3` templates,
-rather than `Vector3()` defaults and whole-object field copies. In C, a default zero-fills its field
-through `nimZeroMem`, and a whole-object copy calls the `=dup` hook that the compiler makes for
-`Vector3`. Either cost would charge the reference for work that hand-written code does not do.
+the same reader counts it.
 
-Three builds of the bench differ only in these two templates: as committed, `Vector3()` for
-`zero3`, and a whole copy for `read3`. Five alternating runs of each, on `linux amd64, 4 cores` on
-2026-10-03 at `3121342`, time them at rga4d and cga5d. At rga4d `bulk_line` runs 2.61 ns as
-committed, 23.49 ns with `Vector3()` and 4.19 ns with the copy. The other three line rows with a
-default run 22.5 to 23.5 ns, and `attitude_plane` runs 3.35 ns against 2.14 ns.
+**Each form that builds an object reads its operands into scalars, and writes its result from
+them alone.** A scalar takes the notation of the header of its module (III.5). So `pˣ` is the x of
+a point `p`, and `lᵛˣ` is the x of the direction of a line `l`. A zero is `0.0` in each component,
+and a copy goes component by component. In C, a `Vector3()` default zero-fills through
+`nimZeroMem`, and a whole-object copy calls the `=dup` hook that the compiler makes for `Vector3`.
+Either cost would charge the reference for work that hand-written code does not do.
 
-Rows that use neither template move ×0.65 to ×1.29, so the copy in `transform_line_motor`, ×1.04,
-does not show. At cga5d a default adds 18 to 30 ns to eight rows, and a copy adds 1.6 to 4.4 ns to
-seven. Why a default costs 20 ns in a line row and 1.2 ns in `attitude_plane` is not isolated.
+The result arrives by pointer, which gcc must take as a possible alias of an operand. So a form
+that writes one field before it reads the next stops gcc from using vector instructions. With each
+read first, `reverse(Line)` at rga4d takes 14 instructions under Nim 2.4.0, and 22 where each
+component is read just before its write. Measured on 2026-10-28 by `objdump` of a `noipa`
+wrapper of each form, built with the flags of the machine build.
+
+Rejected: a vector template that holds a `let`. Nim 2.4.0 zero-fills an object that `let` binds
+to the result of such a template. The forms that used them held 52 fills at rga3d and rga4d.
+Rejected too: `{.noalias.}` on each operand, which gives the same instructions as the scalars. It
+is a promise that the compiler never checks, and it keeps the copies of the templates in C.
+
+Three builds of the bench timed zeros and copies at rga4d and cga5d, five alternating runs each.
+They ran on `linux amd64, 4 cores` on 2026-10-03 at `3121342`. The builds spell zeros and copies by
+component, through `Vector3()`, and as a whole copy. At rga4d `bulk_line` runs 2.61 ns by component,
+23.49 ns with `Vector3()` and 4.19 ns with the copy. The other three line rows with a default run
+22.5 to 23.5 ns, and `attitude_plane` runs 3.35 ns against 2.14 ns.
+
+Rows that use neither move ×0.65 to ×1.29, so the copy in `transform_line_motor`, ×1.04, does not
+show. At cga5d a default adds 18 to 30 ns to eight rows, and a copy adds 1.6 to 4.4 ns to seven.
+Why a default costs 20 ns in a line row and 1.2 ns in `attitude_plane` is not isolated.
 
 Unitize forms take one reciprocal and multiply, as Terathon does, where the library divides each
-component. The divide column shows both.
+component. The divide column shows both. A form selects the factor 1 at zero weight, in place of
+an early `return`. Nim 2.4.0 fills the whole result of a function that returns early, and gcc
+keeps that fill, since the result can alias the operand.
+
+**Each motor transform spells the antisandwich 𝐐 ⟇ 𝐱 ⟇ 𝐐̰ exactly, for every motor.** In 3D the
+rotation is the matrix of the quaternion (Qᵛ, Qᵛʷ), scaled by its squared norm s. The translation
+is 𝐭 = 2(Qᵛʷ Qᵐ − Qᵐʷ Qᵛ + Qᵛ × Qᵐ). The weight of a point and the position of a plane take s.
+The moment of a line gains 2(Qᵐʷ 𝐤 + kʷ Qᵐ + Qᵐ × 𝐤), from the quaternion k = lᵛ (Qᵛʷ, −Qᵛ).
+
+In 2D the cosine is (Qʷ Qʷ − Qᶻ Qᶻ), and the weight takes the factor (Qᶻ Qᶻ + Qʷ Qʷ). The Architect
+asked on 2026-10-28 for the form most accurate to each operation (D2 of #772). That holds even
+where the form changes.
+
+The motors of the pools are unit only to within rounding. So a form that takes s as 1 errs by
+as much as it rounds. The table holds each form against the antisandwich in exact rational
+arithmetic, on motors drawn as the pools draw them. Each cell reads the unit form, then the
+exact one:
+
+| Transform | Multiplies | Worst error | Root mean square error |
+|-----------|------------|-------------|------------------------|
+| 3D point | 25 → 35 | 1.9e-15 → 1.3e-15 | 1.79e-16 → 1.45e-16 |
+| 3D line | 57 → 52 | 4.4e-15 → 2.0e-15 | 2.53e-16 → 1.69e-16 |
+| 3D plane | 36 → 35 | 4.3e-15 → 2.1e-15 | 2.28e-16 → 1.47e-16 |
+| 2D point | 15 → 14 | 1.71e-15 → 1.71e-15 | 1.68e-16 → 1.60e-16 |
+| 2D line | 15 → 14 | 2.37e-15 → 2.37e-15 | 1.62e-16 → 1.56e-16 |
+
+Measured on 2026-10-28 by a script in Python 3 with `fractions`. It evaluates the antisandwich
+from the definitions of the book, on 6 000 samples at rga4d and 4 000 at rga3d, seed 772.
+The same script holds each exact form equal to the antisandwich on 300 arbitrary rational motors,
+so the form errs by rounding alone. The script stays out of the tree, as the expansion does.
+Verified by `test_rga4d.nim` and `test_rga3d.nim`, suite `Reference: Motor of any norm`: each
+transform equals the library at each motor of the pool, scaled by 2.
+
+Rejected: a matrix that takes the motor as unit, 45 multiplies for a line, which keeps the error
+of the unit form. Rejected too: the exact form through the quaternion, as the unit form spells it.
+Its root mean square error is higher for each transform. It spends 30 multiplies for a point
+against 35, 64 for a line against 52, and 38 for a plane against 35.
 
 **No reference function calls another.** Under `--panics:off`, each call to a Nim function
 fills its result with zeros and branches on the error flag after it. Hand-written code spends
-neither. So the vector helpers and the rotation are templates, and a form that two functions
-share is spelled in each. A spelled form carries the terms of the form it repeats, so their
+neither. So each form spells every component itself, and a form that two functions share is
+spelled in each. A spelled form carries the terms of the form it repeats, so their
 arithmetic counts are equal.
 
 Five alternating runs on `linux amd64, 4 cores` on 2026-10-02 time the reference with and without
@@ -146,10 +197,9 @@ algebra that the sweep alone reaches holds one skipped test in each of those sui
 the gap. Suite `Internal: Catalogue` holds every typed cite under
 chapter 2 or a wiki page, so no cite falls outside every suite.
 
-Suite `Internal: Inspector` reads the nimcache of the test binary itself. It finds
-that `wedge(Point,Point)` spends twelve multiplies and six subtractions at rga4d, and six and
-three at rga3d, as its documentation states. It holds every reference function in that
-nimcache to no zero fill and no error check. The count it reads must reach
+Suite `Internal: Inspector` reads the nimcache of the test binary itself. It holds the doc of
+every reference function to the multiplies, adds and divides that its C spends. It holds every
+reference function to no zero fill, no whole copy and no error check. The count it reads must reach
 `FLOOR_FUNCTIONS_REFERENCE`, which is 73 at rga4d, 84 at cga5d, 50 at rga3d and 66 at cga4d.
 
 The movement model reads the size of a typed stem from the module of the function that reads
@@ -1349,12 +1399,11 @@ That commit is the head of the library on 2026-10-19, as the standing instructio
 Architect asks. Both projects are under the Prosperity Public License 3.0.0. Rejected: a copy
 of the library in this tree, which Article XI.3 forbids.
 
-**The compiler is pinned by commit**, `27763495bcfe265507ca98aedc1c7064bf1e0e4d`, which is
-the same pin that `pga_visualiser` carries. The library spells seven operators with
-characters that no Nim release lexes. One cached build therefore serves both projects. Atlas
-writes `"objects": {}` for a repository without a nimble file, so the resolved commit is
-patched into `atlas.lock` by hand. The stored copies in the lock of the nimble file and of
-`nim.cfg` are kept byte-identical to the committed files, which the static pass checks.
+**The compiler is pinned by release**, Nim 2.4.0. It is the first release whose lexer holds the
+seven operators that the library spells, which nim-lang/Nim#26074 added. Nim 2.2.14 holds none of
+them. Atlas writes `"objects": {}` for a repository without a nimble file, so the resolved commit is
+patched into `atlas.lock` by hand. The stored copies in the lock of the nimble file and of `nim.cfg`
+are kept byte-identical to the committed files, which the static pass checks.
 
 **`package-lock.json` pins the Node tools, and git ignores their checkout.** The project commits
 `package.json` and `package-lock.json` with the versions that `pga_visualiser` pins.
@@ -1446,8 +1495,8 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
   tolerance absorbs some of that, and the rest is why timing never guards.
 - Movement is modelled from the bytes that the code names, and never measured as cache
   traffic.
-- The inspector reads text patterns of this compiler commit. Another commit could spell the
-  same C differently. The suite that holds the reader to the nimcache of the test binary is
+- The inspector reads text patterns of Nim 2.4.0. Another release could spell the same C
+  differently. The suite that holds the reader to the nimcache of the test binary is
   what would say so. A loop whose bound is a variable counts once.
 - 32-bit floats and SIMD forms are unmeasured, and the SSE paths of Terathon were not
   compared. The Architect ruled on 2026-10-06 that they stay unmeasured while the library holds
