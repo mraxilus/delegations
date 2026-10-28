@@ -915,6 +915,19 @@ that the first families of a stack lack falls to a font face that the page ships
 column. Verified by `test_rga4d.nim`, which reads the stacks of the shell, and by `koch drive`,
 which judges every page that `drive` renders (below).
 
+**Each family of one font face is declared over the weights 400 to 700** (Article X.8). Commit
+Mono, Noto Sans Math and Noto Sans Symbols 2 each ship one file, at weight 400. Headings, table
+heads and strong text ask them for 600 and 700. Over its declared range, the browser draws the file
+as it is, and never a bold of its own. So bold code and bold maths draw their regular glyphs, at
+the width that they had. `pga_visualiser` declares the same files over a range in the same way.
+Rejected: a bold file of Commit Mono, since the pages ship the six font faces of `pga_visualiser`,
+and maths and symbols have no bold file at all.
+
+The collector keeps the characters beyond ASCII alone, so `koch drive` cannot see a bold that the
+browser synthesises over ASCII, as in bold code. So `test_rga4d.nim` holds each family of the shell
+to a font face of weight 600 or more, whatever text the family draws. Verified on 2026-10-28 in
+Chromium, where bold code keeps its width and draws 32 % less ink than the bold of the browser.
+
 **A proposal can carry a figure.** A paragraph of one image alone, as
 `![Derivation map.](../../pages/derivation-map.svg)`, embeds the SVG that it names. The SVG lives
 under `pages/`, since the layout admits hand-written markup there alone. Its colours are shell
