@@ -117,11 +117,12 @@ and a copy goes component by component. In C, a `Vector3()` default zero-fills t
 `nimZeroMem`, and a whole-object copy calls the `=dup` hook that the compiler makes for `Vector3`.
 Either cost would charge the reference for work that hand-written code does not do.
 
-The result arrives by pointer, which gcc must take as a possible alias of an operand. So a form
-that writes one field before it reads the next stops gcc from using vector instructions. With each
-read first, `reverse(Line)` at rga4d takes 14 instructions under Nim 2.4.0, and 22 where each
-component is read just before its write. Measured on 2026-10-28 by `objdump` of a `noipa`
-wrapper of each form, built with the flags of the machine build.
+The result arrives by pointer, and Nim builds C with `-fno-strict-aliasing`. So gcc must take the
+result as a possible overlap of an operand. Then a form that writes one field before it reads the
+next gets no vector instruction. With each read first, `reverse(Line)` at rga4d takes 14
+instructions under Nim 2.4.0, and 22 where each component is read just before its write. Measured
+on 2026-10-28 by `objdump` of a `noipa` wrapper of each form, built with the flags of the machine
+build.
 
 Rejected: a vector template that holds a `let`. Nim 2.4.0 zero-fills an object that `let` binds
 to the result of such a template. The forms that used them held 52 fills at rga3d and rga4d.
@@ -265,10 +266,15 @@ with or without the fill. So there a fill gives no measurand a discount, and the
 keeps it so as the catalogue grows. Both figures are from `linux amd64, 4 cores` on 2026-10-02.
 
 **A result of three floats or fewer is bound before it is stored.** Nim returns such a result by
-value, through a temporary that the call site fills with zeros. In a large function, the
-compiler keeps that fill as a call to an out-of-line `rep stosq`. A caller of normal size pays
-nothing, because there the fill is two stores that the compiler deletes.
-Of the 2D reference rows, 30 return such a result, and of the 3D ones none.
+value. Stored straight into its element, it passes under Nim 2.3.1 through a temporary that the
+call site fills with zeros. In a large function, gcc keeps that fill as a call to an out-of-line
+`rep stosq`. A caller of normal size pays nothing, because there the fill is two stores that gcc
+deletes. Nim 2.4.0 stores such a result in place, so the binding holds the loop free of that fill
+under either.
+
+Of the 2D reference rows, 30 return such a result, and of the 3D ones none. Compiled unbound at
+rga3d on 2026-10-28, Nim 2.3.1 sends 26 of 144 reference calls through a filled temporary, and Nim
+2.4.0 sends none.
 
 Two sessions of five alternating runs on `linux amd64, 4 cores` on 2026-10-03 time the 2D
 references, one with the fill and one bound first. With the fill, those 26 rows at rga3d and 4
@@ -276,9 +282,9 @@ at cga4d take 12.1 to 15.5 ns. Bound first, they take 0.8 to 5.0 ns. Within each
 library over reference for `complement_left_line` reads ×0.20 with the fill and ×2.98 bound
 first. The other reference rows move ×0.42 to ×1.70 between the sessions.
 
-The session bound first is the committed baseline, and the session with the fill is not
-committed. Bound first or not, the C at rga4d and cga5d is the same byte for byte. Suite
-`Internal: Inspector` holds the loop to no temporary filled with zeros.
+Neither session is committed, and both ran under Nim 2.3.1. Bound first or not, the C at rga4d and
+cga5d is the same byte for byte. Suite `Internal: Inspector` holds the loop to no temporary filled
+with zeros.
 
 `bench` runs `ROUNDS` rounds over `OBJECTS` objects, and reports the median and minimum
 nanoseconds for each object: the runtime measurements. The allocation gauge is live only
@@ -297,11 +303,11 @@ One run times both implementations, so the runs pair by index, and each run give
 ratio. The docket draws one tick for each of those ratios. Rejected: the spread of rounds inside
 one run, because it misses drift between runs. That drift is the larger part on this machine.
 
-**The runtime baselines are from 2026-10-19 at all four algebras**, five runs each on `linux
-amd64, 4 cores`. At rga3d, cga4d and cga5d they ran at the pin `3d9696e`, with nothing else on the
-machine. At rga4d they ran at `3838c54`, which emits the same C as the pin, so `restamp` carries
-them. Each algebra keeps the take whose median paired spread is smaller, as the Architect ruled on
-2026-10-19 (D5).
+**The runtime baselines are from 2026-10-28 at all four algebras**, five runs each on `linux
+amd64, 4 cores`. They ran at the pin `3d9696e` under Nim 2.4.0, with nothing else on the machine.
+Each algebra keeps the take whose median paired spread is smaller, as the Architect ruled on
+2026-10-19 (D5). A take under another compiler times other C, so this take is the only one at the
+pin.
 
 The bench of 2026-10-01, run at `3121342` on 2026-10-02 in turn with the baselines of that day,
 gives the drift between days. At rga4d its library runs ×1.19 to
@@ -311,11 +317,11 @@ to ×1.01. The bench of 2026-10-02 runs ×0.99 to ×1.01 of it in the same runs.
 So the machine moves between days, and not by one factor for each implementation. Times
 taken at different hours never compare, and ratios within one run do.
 
-Within these baselines, the least and greatest run ratios of the median measurand are ×1.15
-to ×1.19 apart at each algebra. The widest measurand spreads ×2.01, as `select_part` at cga4d
-does. Its library takes 0.82 to 1.81 ns across the five runs, and its dense form 0.82 to 0.97 ns.
-The take of 2026-10-03 spread ×1.10 to ×1.12 at the median measurand, so this host now spreads
-more, with no other work on it.
+Within these baselines, the least and greatest run ratios of the median measurand are ×1.03
+to ×1.13 apart at each algebra. The widest measurand spreads ×1.87, as `complement_left_point` at
+rga3d does. Its library takes 2.41 to 3.55 ns across the five runs, and its reference 0.63 to
+1.74 ns, both slowest in the fourth run. Under Nim 2.3.1, the takes of 2026-10-03 and 2026-10-19
+spread ×1.10 to ×1.12 and ×1.15 to ×1.19, so this figure moves between takes.
 
 So one run's time ratio is weak evidence, and the ticks on the docket say how weak.
 
@@ -489,8 +495,13 @@ runner and of a delegate, and no record holds them.
 - Cost: the counted build is not the build that ships. A shipped caller inlines the operator,
   and the driver calls the wrapper. The flags lift limits that gcc keeps for a shipped build. So
   the counts are evidence for this build alone (VII.11).
-- Cost: the wrapper returns its expression as `result`. So the count holds what that call site
-  pays, such as a temporary that is filled with zeros and copied.
+- Cost: the wrapper returns its expression as `result`, so the count holds what that call site
+  pays. Under Nim 2.4.0 the operator writes straight into that result, with no temporary. Nim
+  builds C with `-fno-strict-aliasing`, so gcc must take that result as a possible overlap of the
+  operand. Then a map that writes one element before it reads the next gets no vector
+  instruction, as `reverse` at rga4d shows in 45 instructions. The temporary of Nim 2.3.1 lets gcc
+  vectorise it in 27, as does `restrict` on both pointers of its C body. Read with gcc 13.3.0 on
+  2026-10-28.
 - Cost: the counts are for one pair of operands. A path that another operand takes is not
   counted, such as `sqrt` of a negative number, which calls the C library.
 - Cost: the C compiler joins the build. A runner image with another gcc package fails `drive`
