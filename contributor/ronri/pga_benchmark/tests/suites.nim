@@ -977,8 +977,9 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
 
   test "timed loop binds result returned by value, so no temporary is zero-filled":
     # Result of three floats or fewer returns by value; assigned straight into its element, it
-    #   passes through temporary that call site zero-fills, out of line where function is
-    #   large, about 11 ns. Reference returns so, and library's norms return two scalars so.
+    #   passed under Nim 2.3.1 through temporary that call site zero-filled, out of line where
+    #   function is large, about 11 ns; Nim 2.4.0 assigns it in place. Reference returns so, and
+    #   library's norms return two scalars so.
     let returning_scalars = INSPECTED.filterIt(it.stem_result == "MultivectorScalars")
         .mapIt(it.name)
     var calls, filled, calls_library, filled_library = 0
