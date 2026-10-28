@@ -871,13 +871,11 @@ Alternation does not cancel all drift of a shared machine, so the time of one ev
 weak evidence alone. Counts are exact, and carry the verdicts.
 
 The laws of P04 and P10 hold against the library with their changes applied. They hold at each of
-the nine algebras of the library, from rga2d to rga6d and from cga3d to cga6d. A product of P04
-that reaches no basis stops the compile, so its laws leave out the bulk of a bivector at rga2d and
-cga3d. Without its fix, the law of the root of zero
-fails at rga2d to rga4d. Without its split-complex
-form, P10 stops the build at cga3d and cga6d. `proposals/11-unitize-general/laws.nim` holds the
-laws of its rule, and `limits.nim` its limits over long chains and frames, at rga3d, rga4d, cga4d
-and cga5d.
+the nine algebras of the library, from rga2d to rga6d and from cga3d to cga6d. A product of P04 that
+reaches no basis stops the compile, so its laws leave out the bulk of a bivector at rga2d and cga3d.
+A copy of P10 whose root takes the smaller part by its own root fails the law of the small part at
+cga3d and cga4d. `proposals/11-unitize-general/laws.nim` holds the laws of its rule, and
+`limits.nim` its limits over long chains and frames, at rga3d, rga4d, cga4d and cga5d.
 
 Verified by `test_rga4d.nim` and the other stubs, suites `Internal: Markdown`, `Internal: Changes`,
 `Internal: Proposals`, `Internal: Evaluations`, `Internal: Cells` and `Internal: Figures`. They
