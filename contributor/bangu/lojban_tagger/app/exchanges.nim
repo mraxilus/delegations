@@ -35,6 +35,11 @@
 ##     no name.
 ##     Cost: context holds one pin at time, so sends sharing context run in turn, as `suggester`
 ##     runs them; through proxy, target host is pinned for tunnel.
+##   Proxy URL should be `http://`, in any case, else `send` refuses it before client exists:
+##     https proxy takes TLS of its own, which no pin covers, and client opens it even for http
+##     URL, on context `send` may lack; client reads `socks5` as http proxy, and only `socks5h`
+##     as SOCKS, so one kind of proxy stays, which suite drives.
+##     Cost: proxy reachable only by https or SOCKS is refused, naming its scheme.
 ##   `redirect` resolves location as RFC 3986 section 5.2 resolves reference, read strictly:
 ##     reference holding scheme keeps it, so `http:g` names no host and gives no redirect.
 ##     Cost: location `http:/page` that browser takes as relative is no redirect here.
@@ -495,6 +500,7 @@ proc send*(
   ##   redirect; read body until `bytes_max`; end when `deadline` completes first.
   ##   URL holding whitespace or control character is refused, naming byte, and nothing is sent.
   ##   Deadline finished already sends nothing, since client still connecting would send later.
+  ##   Proxy URL whose scheme is other than `http`, in any case, sends nothing.
   ##   https URL pins its host on `context`, so certificate naming other host is refused; no
   ##     context, or host TLS cannot pin, sends nothing.
   ##   Agent, encoding and bearer are its own, whatever caller headers name.
@@ -513,6 +519,10 @@ proc send*(
     return Sent(is_replied: false, problem: "URL should hold no whitespace or control " &
         "character; got byte `" & $ord(url[at]) & "` at `" & $at & "`.")
   if deadline.finished: return Sent(is_replied: false, problem: "deadline passed")
+  if proxy_url.isSome:
+    let scheme = proxy_url.get.parseUri.scheme
+    if scheme.toLowerAscii != "http":
+      return Sent(is_replied: false, problem: "Proxy should be `http://`; got `" & scheme & "`.")
   when defined(ssl):
     let uri = url.parseUri
     if uri.scheme.toLowerAscii == "https":
