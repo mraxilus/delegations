@@ -26,10 +26,15 @@
 ##   `-` reads passage from standard input, so it never stands on command line, which `ps` shows
 ##     every user; at most `BYTES_PAGE_MAX` bytes, as page, else exit 2. Text read goes as text
 ##     given: shortcut, passage, request; URL it holds is text, never fetched.
-##   Service, endpoint, model, effort and credential come from environment on each run, as
-##     index path does for `tagger`: credential exists only at run time, and rest must agree
-##     with it (Article II.2). Credential is read from `LOJBAN_TAGGER_API_KEY`, then from usual
-##     name of service; report names variable, never value. `ANTHROPIC_BASE_URL` is never read.
+##   Service, endpoint, model, effort, workspace and credential come from environment on each
+##     run, as index path does for `tagger`: credential exists only at run time, and rest must
+##     agree with it (Article II.2). Credential is read from `LOJBAN_TAGGER_API_KEY`, then from
+##     usual name of service; report names variable, never value. `ANTHROPIC_BASE_URL` is never
+##     read.
+##   `LOJBAN_TAGGER_WORKSPACE` names workspace `claude` sends as `anthropic-workspace-id`, which
+##     key scoped to no workspace needs on every request; ID of `wrkspc_` and visible ASCII
+##     alone, at most `BYTES_WORKSPACE_MAX` bytes, so no line break reaches header. Other service
+##     refuses any value. It stays out of stamp, so recording replays under any workspace.
 ##   Usual name of service is read only where endpoint has host of default endpoint of service,
 ##     compared without case: key exported for other tools never goes to other host, which
 ##     reads `LOJBAN_TAGGER_API_KEY` alone, as `chat` does.
@@ -123,6 +128,10 @@ const
   KEY_ENDPOINT = "LOJBAN_TAGGER_ENDPOINT"  ## Environment name overriding endpoint.
   KEY_MODEL = "LOJBAN_TAGGER_MODEL"  ## Environment name overriding model.
   KEY_EFFORT = "LOJBAN_TAGGER_EFFORT"  ## Environment name of effort.
+  KEY_WORKSPACE = "LOJBAN_TAGGER_WORKSPACE"  ## Environment name of workspace `claude` sends.
+  OPENING_WORKSPACE = "wrkspc_"  ## Opening of ID of workspace, as Anthropic issues it.
+  BYTES_WORKSPACE_MAX = 128
+    ## Most bytes of ID of workspace read; project cap, past length of IDs Anthropic issues.
   KEY_CREDENTIAL = "LOJBAN_TAGGER_API_KEY"  ## Environment name read first for credential.
   LUT_KEY_CREDENTIAL_BY_SERVICE: array[Service, string] =
     ["ANTHROPIC_API_KEY", "OPENROUTER_API_KEY", ""]
@@ -187,8 +196,10 @@ proc readInput(): Option[string] =
   if text.len > BYTES_PAGE_MAX: none(string) else: some(text)
 
 
-func readSettings(service, endpoint, model, effort: string): Configured =
+func readSettings(service, endpoint, model, effort, workspace: string): Configured =
   ## Read settings from environment values; empty value takes default of service.
+  ##   Workspace is for `claude` alone: `OPENING_WORKSPACE`, then visible ASCII alone, so no line
+  ##     break splits header, at most `BYTES_WORKSPACE_MAX` bytes; empty names none.
 
   func refuse(text, name: string): Configured =
     ## Build outcome refusing settings, naming variable.
@@ -217,6 +228,15 @@ func readSettings(service, endpoint, model, effort: string): Configured =
       return Configured(is_valid: false, problem: "Effort should be `low`, `medium`, `high`, " &
           "`xhigh` or `max`; got `" & effort.toPrintable(RUNES_SHOWN) & "` for `" & KEY_EFFORT &
           "`.")
+  let shown = "`" & workspace.toPrintable(RUNES_SHOWN) & "` for `" & KEY_WORKSPACE & "`."
+  if workspace.len > 0 and chosen != Service.Claude:
+    return Configured(is_valid: false, problem: "Workspace should be named for service " &
+        "`claude` alone; got " & shown)
+  if workspace.len > 0 and (not workspace.startsWith(OPENING_WORKSPACE) or
+      workspace.len > BYTES_WORKSPACE_MAX or workspace.anyIt(it notin {'!'..'~'})):
+    return Configured(is_valid: false, problem: "Workspace should open with `" &
+        OPENING_WORKSPACE & "` and hold at most " & $BYTES_WORKSPACE_MAX & " bytes of " &
+        "visible ASCII; got " & shown)
   Configured(
     is_valid: true,
     settings: Settings(
@@ -224,6 +244,7 @@ func readSettings(service, endpoint, model, effort: string): Configured =
       endpoint: endpoint_used,
       model: model_used,
       effort: effort_used,
+      workspace: workspace,
     ),
   )
 
@@ -482,6 +503,7 @@ proc main(): int =
     getEnv(KEY_ENDPOINT),
     getEnv(KEY_MODEL),
     getEnv(KEY_EFFORT),
+    getEnv(KEY_WORKSPACE),
   )
   if not configured.is_valid:
     stderr.writeLine configured.problem
