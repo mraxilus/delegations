@@ -15,8 +15,8 @@
 ##     wording, never how they arise.
 ##   Samples are drawn into pools allocated once, after one seeding per test, and served by
 ##     `served`.
-##   Corpus does not cover yet: page URL holding ill-formed UTF-8; escape of U+0000; word of
-##     answer holding control character.
+##   Corpus does not cover yet: page URL holding ill-formed UTF-8; word of answer holding
+##     control character.
 
 {.experimental: "strictFuncs".}
 
@@ -735,12 +735,12 @@ proc poolBytes(): seq[string] =
 
 proc poolPrintable(): seq[(string, int)] =
   ## Draw `SAMPLES_BYTES` texts, each with cap of up to `RUNES_CAP_MAX` characters, into pool
-  ##   allocated once: words, spaces, `…`, ill-formed bytes, and every code point report escapes
-  ##   but U+0000; caller seeds first.
+  ##   allocated once: words, spaces, `…`, ill-formed bytes, and every code point report escapes;
+  ##   caller seeds first.
   var fragments = @[
     "word", " ", "  ", "\t", "\u2026", "\u65E5\u672C", "\u{1F600}", "\\u{1}", "\xFF", "\xE2\x82",
   ]
-  for code in 0x01..0x9F:
+  for code in 0x00..0x9F:
     if code.isEscaped: fragments.add code.encode
   for code in MARKS_BIDIRECTIONAL: fragments.add code.encode
   result = newSeqOfCap[(string, int)](SAMPLES_BYTES)
@@ -1572,7 +1572,8 @@ suite "Internal: Page":
 
 suite "Internal: Report":
   test "printable text holds no control or bidirectional mark, and stays within its cap":
-    for code in 0x01..0x9F:
+    check toPrintable("\x00", 10) == "\\u{0}"  # case as found in suite review: escape held no digit
+    for code in 0x00..0x9F:
       if not code.isEscaped: continue
       check toPrintable(code.encode, 1) == "\\u{" & code.toHexadecimal & "}"  # C0, DEL, C1
     for code in MARKS_BIDIRECTIONAL:  # 12 marks, exhaustive
