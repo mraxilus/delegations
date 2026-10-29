@@ -23,11 +23,14 @@
 ##   | toText              | component recomposition (5.3)                               |
 ##   |---------------------|-------------------------------------------------------------|
 ##
-##   Every routine but `send` is pure, so suites hold each choice by table; `send` alone opens
-##     socket, and suite drives it over loopback.
+##   Every routine but `send` and what it calls to reach socket and TLS context (`pinHost`,
+##     `exchange`, `readBody` and bindings of OpenSSL) is pure, so suites hold each choice by
+##     table; suite drives `send` over loopback.
 ##   `send` makes fresh client for each request and follows no redirect: client loop would keep
 ##     its headers across hosts, so credential could reach other host, and it would keep one
 ##     proxy for every hop. `suggester` follows page redirects itself, choosing proxy again.
+##     Cost: each hop and service request opens new connection, and new TLS handshake for
+##     https; no connection is reused.
 ##   `send` pins host of https URL on its context before client exists, since async client of
 ##     `std/httpclient` names host for SNI alone and checks no certificate against it: name pins
 ##     as name, address as address, other kind cleared, so trusted leaf naming other host is
@@ -54,14 +57,25 @@
 ##     by `redirect` as target: such byte would split or corrupt request line, and client checks
 ##     line break alone, by assertion.
 ##   Deadline is future caller passes, so suite completes it itself and reads no clock; body
-##     is read from stream up to its cap, so huge page never fills memory.
+##     is read from stream up to its cap, so huge body never fills memory.
+##     Cost: head of reply has no byte cap: client counts header names against `headerLimit`,
+##     never bytes, appends folded line to its value uncounted, and reads line past 1,000,000
+##     bytes as next one, so peer sending head until deadline makes process hold all of it.
 ##     Cost: name lookup blocks before deadline exists; through proxy, only proxy host resolves.
 ##     `send` races deadline by `addCallback`, so other waiters on it keep their callbacks.
 ##     Cost: `or` that caller puts on deadline after `send` clears callback of `send`.
 ##     Cost: deadline that completes while client connects ends `send`, yet request goes out once
 ##     connection opens: client cancels nothing, and closes no socket it has not opened.
+##   Service request waits for whole reply, not streamed, on socket client opens with no TCP
+##     keep-alive and keeps private, so `send` cannot set it.
+##     Cost: connection network drops while model thinks loses answer service still bills, and
+##     record mode writes nothing, so next run pays again; streaming, which keeps bytes moving,
+##     is documented remedy, not taken.
 ##   Credential goes as Bearer on service request alone, never on page; its `$` is poisoned,
-##     so no report or recording can render it.
+##     so no report or recording can render it. Bearer is how authentication guide of Anthropic
+##     sends API key, and `x-api-key` its legacy header
+##     (https://platform.claude.com/docs/en/manage-claude/authentication, read 2026-10-29).
+##     Cost: service reading key from `x-api-key` alone answers 401.
 ##   Recording is text its own reader types, as index file is: request and body carry byte
 ##     counts, so any bytes read back. Stamp is FNV-1a 64, which resists no collision, so
 ##     whole request is stored and compared. Sibling of `stamp` in

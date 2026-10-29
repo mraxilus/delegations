@@ -1,5 +1,5 @@
 ## Hold transport of `exchanges.nim` to its laws: stamp, recording file, URL tests, proxy,
-##   redirect and credential by table and sample, and `send` over loopback.
+##   redirect and credential by table and sample, and `send` over loopback, TLS included.
 ##   CLL covers no transport, so suites are `Internal:`, tests named by behaviour (Article IX.10).
 ##   Stamp meets published vectors of FNV-1a 64, and one law of its arithmetic: each step maps
 ##     state one to one, so requests of one length that differ in one byte never share stamp.
@@ -10,7 +10,11 @@
 ##   Malformed files take one recording whose request and body span lines, each piece of its
 ##     file with each fault that piece admits; file is written by suite, never by `toText`, and
 ##     each expected line is counted from pieces before it.
-##     Each file holds line too: faulty line itself, as `readIndex` names it.
+##     Each file holds line too: faulty line itself, as `readIndex` names it; problem ends in what
+##     piece holds, line made printable or bytes left of block, as `readIndex` echoes line.
+##   Port of URL is held by table of its bounds and by random ports with zeros before them,
+##     through `isURL`, `isEndpoint` and `redirect`; scheme of URL and of proxy takes every
+##     spelling of `http` and `https` in any case.
 ##   Redirect resolves every example of RFC 3986 section 5.4; `http:g` keeps its scheme, as
 ##     strict parser reads it, so has no host and gives no redirect. References of one to three
 ##     path segments, dot segments among them, hold laws: dot segments removed, target resolves
@@ -29,10 +33,21 @@
 ##     `std/asyncdispatch` replaces callbacks of futures it waits on, so it would unhook `send`.
 ##     Waiters that keep callbacks, `addCallback` and `await`, share deadline with sends, and
 ##     every one wakes; deadline finished before `send` leaves server with no connection.
+##     Refused port is held by bound socket that never listens, open for whole test, so no other
+##     socket takes port.
+##   TLS runs in same process: suite makes test root and four leaves with `openssl` command at
+##     run time, in fresh directory it removes at end, so no key is committed, and serves each
+##     leaf on `127.0.0.1`; tunnel is raw proxy of `std/asyncnet` answering `CONNECT` and relaying
+##     bytes. Each leaf goes to name and to address after every other case, on one context, so
+##     pin of one send never decides next; refused handshake shows server read no byte.
+##     Cost: suite needs `openssl` command, which `system` of `tools/build.nim` declares; each
+##     certificate holds one day from its making, as OpenSSL checks it against clock of machine.
+##     Cost: `localhost` resolves through host file, so name lookup runs for it, and socket of
+##     other process on `::1` at same port would answer first.
+##     Cost: TLS needs `-d:ssl`, which stub gives; suite run alone without it skips TLS tests
+##     (Article IX.9).
 ##   Samples are drawn into pools allocated once, after one seeding per test, and served by
 ##     `served`.
-##   Cost: stub builds without `-d:ssl`, so TLS and tunnel through proxy stay untested, and every
-##     host is address, so name lookup does too; placeholder test reports gap (Article IX.9).
 
 {.experimental: "strictFuncs".}
 
