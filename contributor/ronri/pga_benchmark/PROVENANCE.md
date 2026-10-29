@@ -487,10 +487,10 @@ amd64, 4 cores`, on 2026-10-28 and 2026-10-29. In each run, each count of each m
 its baseline. `guard` gave no finding and no notice in any run. The fault was read on a copy of the
 library at the pin, with `inline` taken from `+` in `pga/multivectors.nim`.
 
-The runner of CI read the same under Nim 2.3.1. Run 1340 of `check`, on 2026-10-22, gave no finding
-and no notice, under the same gcc package. Runs 1296, 1298 and 1306, on 2026-10-21, gave no
-finding. So the spread of unchanged code is zero, and the fault reads beyond it at the instructions
-of `add`.
+The runner of CI reads the same under Nim 2.4.0. Run 1501 of `check`, on 2026-10-29, gave no finding
+and no notice, under the same gcc package. Under Nim 2.3.1, runs 1296, 1298, 1306 and 1340, on
+2026-10-21 and 2026-10-22, gave no finding either. So the spread of unchanged code is zero, and the
+fault reads beyond it at the instructions of `add`.
 
 A wrapper that reaches a shared object is a finding. Its band would need readings of the
 runner and of a delegate, and no record holds them.
