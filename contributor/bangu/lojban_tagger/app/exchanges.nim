@@ -10,6 +10,7 @@
 ##   | send                | send one request within deadline, body read up to cap       |
 ##   | Recording           | one exchange as file keeps it: label, request, reply        |
 ##   | stamp               | FNV-1a 64 of request, which names recording file            |
+##   | requestService      | request of service exchange: `POST`, endpoint, then body    |
 ##   |---------------------|-------------------------------------------------------------|
 ##
 ##   |---------------------|-------------------------------------------------------------|
@@ -471,6 +472,13 @@ func stamp*(request: string): string =
   var hash = 0xcbf29ce484222325'u64
   for character in request: hash = (hash xor uint64(ord(character))) * 0x100000001b3'u64
   hash.toHex.toLowerAscii
+
+
+func requestService*(settings: Settings, body: string): string =
+  ## Build request of service exchange, which stamp names and recording keeps: `POST` and
+  ##   endpoint, line break, then body, so recording replays for its endpoint alone.
+  ##   Sibling of `toRecordings` in `tools/examples.nim`, which builds same request (II.9).
+  "POST " & settings.endpoint & "\n" & body
 
 
 
