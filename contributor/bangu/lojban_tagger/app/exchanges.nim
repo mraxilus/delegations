@@ -201,6 +201,41 @@ func isPort(text: string): bool =
   text.len in 1..5 and text.allIt(it in Digits) and text.parseInt in 1..65_535
 
 
+func toReference(text: string): Reference =
+  ## Split text into five components of reference, as regular expression of RFC 3986 appendix
+  ##   `B` splits it; empty query or fragment stays apart from none.
+  ##   Sibling of `dropSecrets` of `src/lojban_tagger/suggestions.nim`, which splits URL by same
+  ##     expression; that pure module cannot import this one, which imports it (Article II.9).
+  var rest = text
+  let at_scheme = rest.find({':', '/', '?', '#'})
+  if at_scheme > 0 and rest[at_scheme] == ':':
+    result.scheme = some(rest[0..<at_scheme])
+    rest = rest[at_scheme+1 .. ^1]
+  if rest.startsWith("//"):
+    var stop = rest.find({'/', '?', '#'}, 2)
+    if stop < 0: stop = rest.len
+    result.authority = some(rest[2..<stop])
+    rest = rest[stop .. ^1]
+  let at_fragment = rest.find('#')
+  if at_fragment >= 0:
+    result.fragment = some(rest[at_fragment+1 .. ^1])
+    rest = rest[0..<at_fragment]
+  let at_query = rest.find('?')
+  if at_query >= 0:
+    result.query = some(rest[at_query+1 .. ^1])
+    rest = rest[0..<at_query]
+  result.path = rest
+
+
+func toText(reference: Reference): string =
+  ## Recompose reference from its components, i.e. section 5.3 of RFC 3986.
+  if reference.scheme.isSome: result.add reference.scheme.get & ":"
+  if reference.authority.isSome: result.add "//" & reference.authority.get
+  result.add reference.path
+  if reference.query.isSome: result.add "?" & reference.query.get
+  if reference.fragment.isSome: result.add "#" & reference.fragment.get
+
+
 func isURL*(text: string): bool =
   ## Test text is one http or https URL with host, port of `isPort` or none, and no whitespace,
   ##   which `suggester` fetches.
@@ -261,32 +296,6 @@ func proxy*(url: string, environment: openArray[(string, string)]): Option[strin
   some(if "://" in value: value else: "http://" & value)
 
 
-func toReference(text: string): Reference =
-  ## Split text into five components of reference, as regular expression of RFC 3986 appendix
-  ##   `B` splits it; empty query or fragment stays apart from none.
-  ##   Sibling of `dropSecrets` of `src/lojban_tagger/suggestions.nim`, which splits URL by same
-  ##     expression; that pure module cannot import this one, which imports it (Article II.9).
-  var rest = text
-  let at_scheme = rest.find({':', '/', '?', '#'})
-  if at_scheme > 0 and rest[at_scheme] == ':':
-    result.scheme = some(rest[0..<at_scheme])
-    rest = rest[at_scheme+1 .. ^1]
-  if rest.startsWith("//"):
-    var stop = rest.find({'/', '?', '#'}, 2)
-    if stop < 0: stop = rest.len
-    result.authority = some(rest[2..<stop])
-    rest = rest[stop .. ^1]
-  let at_fragment = rest.find('#')
-  if at_fragment >= 0:
-    result.fragment = some(rest[at_fragment+1 .. ^1])
-    rest = rest[0..<at_fragment]
-  let at_query = rest.find('?')
-  if at_query >= 0:
-    result.query = some(rest[at_query+1 .. ^1])
-    rest = rest[0..<at_query]
-  result.path = rest
-
-
 func removeDotSegments(path: string): string =
   ## Remove segments `.` and `..` from path, i.e. remove_dot_segments of RFC 3986 section 5.2.4;
   ##   branches run its steps `A` to `E` in order.
@@ -327,15 +336,6 @@ func resolve(reference, base: Reference): Reference =
     if reference.query.isNone: result.query = base.query
   elif reference.path.startsWith('/'): result.path = removeDotSegments(reference.path)
   else: result.path = removeDotSegments(base.merge(reference.path))
-
-
-func toText(reference: Reference): string =
-  ## Recompose reference from its components, i.e. section 5.3 of RFC 3986.
-  if reference.scheme.isSome: result.add reference.scheme.get & ":"
-  if reference.authority.isSome: result.add "//" & reference.authority.get
-  result.add reference.path
-  if reference.query.isSome: result.add "?" & reference.query.get
-  if reference.fragment.isSome: result.add "#" & reference.fragment.get
 
 
 func lowercaseScheme(url: string): string =
