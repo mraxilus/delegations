@@ -97,7 +97,6 @@ const
   MS_DEADLINE_PAGE = 30_000  ## Milliseconds one page hop may take, whole.
   MS_DEADLINE_SERVICE = 600_000
     ## Milliseconds service request may take, whole; long answer without streaming needs it.
-  RUNES_SHOWN = 200  ## Most characters of outside text report shows.
 
 
 

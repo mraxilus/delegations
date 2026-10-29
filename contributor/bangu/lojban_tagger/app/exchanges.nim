@@ -426,7 +426,9 @@ func readRecording*(text: string): Recorded =
     ##   line it holds made printable, empty where text ends before line break.
     let
       close = cursor.text.find('\n', cursor.at_piece)
-      held = if close < 0: "" else: cursor.text[cursor.at_piece..<close].toPrintable(80)
+      held =
+        if close < 0: ""
+        else: cursor.text[cursor.at_piece..<close].toPrintable(RUNES_ANSWER_SHOWN)
     Recorded(is_read: false, line: cursor.line_piece, problem: shape & "; got `" & held & "`.")
 
   func refuseBlock(cursor: Cursor, shape: string): Recorded =
@@ -475,7 +477,7 @@ func readRecording*(text: string): Recorded =
   recording.reply.body = bytes.get
   if cursor.at != text.len:  # Byte after body stands on line of cursor, opening no piece.
     return Recorded(is_read: false, line: cursor.line, problem: "Recording should end after " &
-        "body; got `" & text[cursor.at .. ^1].toPrintable(80) & "`.")
+        "body; got `" & text[cursor.at .. ^1].toPrintable(RUNES_ANSWER_SHOWN) & "`.")
   Recorded(is_read: true, recording: recording)
 
 
