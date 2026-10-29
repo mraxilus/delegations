@@ -607,6 +607,21 @@ func problemProxyPort(port: string): string =
   "Proxy should name port of one to five digits from 1 to 65535, or none; got `" & port & "`."
 
 
+func problemProxyAuthority(hosted: string): string =
+  ## Build problem `send` gives for proxy URL whose host and port RFC 3986 section 3.2 refuses:
+  ##   names text after user part, never user part itself.
+  "Proxy should name host and port as RFC 3986 section 3.2 splits them; got `" & hosted & "`."
+
+
+func splitsPort(digits: string): seq[string] =
+  ## Build port text with one or two colons put between its digits, each way: `C(n-1, 1)` and
+  ##   `C(n-1, 2)` of them for `n` digits.
+  for first in 1..<digits.len:
+    result.add digits[0..<first] & ":" & digits[first .. ^1]
+    for second in first+1..<digits.len:
+      result.add digits[0..<first] & ":" & digits[first..<second] & ":" & digits[second .. ^1]
+
+
 func spellingsCase(word: string): seq[string] =
   ## Build every spelling of word in any case, each letter lower or upper: 2^n for n letters.
   result = @[""]
@@ -1864,6 +1879,42 @@ suite "Internal: Send":
       )
     check control.outcome == "replied"  # port of five digits taken, user part beside it
     check server.targets == @["http://example.org/page"]  # domain: refused proxy reached nothing
+    check server.count_connections == 1  # domain: no connection but control's
+    stopServer(server)
+
+
+  test "proxy authority whose colons `std/uri` joins into one port is refused, reaching nothing":
+    # Regression, found in recheck of review fixes: check of proxy read port `std/uri` joins from
+    #   digits after each colon, so proxy named `127.0.0.1:41:234` was reached at port `41234`.
+    let
+      server = startServer()
+      splits = splitsPort($server.port)
+      found = sendLoopback(
+        "http://example.org/page",
+        "",
+        proxy_url = some("http://127.0.0.1:" & splits[0]),
+      )
+    check found.outcome == problemProxyAuthority("127.0.0.1:" & splits[0])  # case as found
+    check splits.len == ($server.port).len - 1 + (($server.port).len - 1) *
+        (($server.port).len - 2) div 2  # domain: C(n-1, 1) + C(n-1, 2) placings of colons
+    for split in splits:
+      for (user, password) in USERS_PROXY:
+        let
+          hosted = "127.0.0.1:" & split
+          sent = sendLoopback(
+            "http://example.org/page",
+            "",
+            proxy_url = some("http://" & user & ":" & password & "@" & hosted),
+          )
+        check hosted & ": " & sent.outcome ==
+            hosted & ": " & problemProxyAuthority(hosted)  # RFC 3986 3.2.3: port after one colon
+    let control = sendLoopback(
+      "http://example.org/page",
+      "",
+      proxy_url = some("http://127.0.0.1:" & $server.port),
+    )
+    check control.outcome == "replied"  # port as written taken, so server listened all along
+    check server.targets == @["http://example.org/page"]  # domain: joined port reached nothing
     check server.count_connections == 1  # domain: no connection but control's
     stopServer(server)
 
