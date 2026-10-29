@@ -18,6 +18,7 @@
 ##   | Reference           | R: scheme, authority, path, query, fragment                 |
 ##   | toReference         | parse of R by regular expression of appendix `B`            |
 ##   | isAuthority         | authority (3.2): userinfo `@`, host (3.2.2), `:` port       |
+##   | readPort            | port (3.2.3), split past userinfo and host (3.2.2)          |
 ##   | isPort              | port (3.2.3), 1 to 65535 as RFC 6335 section 6 ranges it    |
 ##   | lowercaseScheme     | scheme compared without case (3.1), lowercased (6.2.2.1)    |
 ##   | resolve             | T: reference R resolved against Base (5.2.2), strictly      |
@@ -221,27 +222,39 @@ func isPort(text: string): bool =
   text.len in 1..5 and text.allIt(it in Digits) and text.parseInt in 1..65_535
 
 
-func isAuthority(text: string): bool =
-  ## Test text is authority as RFC 3986 section 3.2 splits it: user part to last `@`, holding no
-  ##   bracket; IPv6 address in brackets, or host holding no colon or bracket; then port of
-  ##   `isPort`, empty, or none.
-  ##   Client of `std/uri` joins digits after each colon into one port, so `127.0.0.1:80:90`
-  ##     would reach 8090, and drops each bracket, so `[example.org]` would reach that name.
+func readPort(authority: string): Option[string] =
+  ## Read port of authority as RFC 3986 section 3.2 splits it, colon opening it included, empty
+  ##   where authority names none: past user part, which runs to last `@` and holds no bracket,
+  ##   and past host, IPv6 address in brackets or text to first colon holding no bracket; `none`
+  ##   where user part or host fails, so no port splits from authority.
+  ##   Client of `std/uri` drops each bracket, so `[example.org]` would reach that name.
   ##   Brackets hold IPv6 address alone, as URL Standard of WHATWG reads host.
   ##     Cost: IPvFuture of RFC 3986 section 3.2.2, and zone of RFC 6874, are refused.
-  let at_host = text.rfind('@') + 1
-  if text[0..<at_host].anyIt(it in {'[', ']'}): return false
-  var (host, port) = (text[at_host .. ^1], "")
-  if host.startsWith('['):
-    let close = host.find(']')
-    if close < 0 or ':' notin host[1..<close] or not host[1..<close].isIpAddress: return false
-    (host, port) = (host[0..close], host[close+1 .. ^1])
-    if port.len > 0 and port[0] != ':': return false
-  else:
-    let colon = host.find(':')
-    if colon >= 0: (host, port) = (host[0..<colon], host[colon .. ^1])
-    if host.anyIt(it in {'[', ']'}): return false
-  port.len <= 1 or port[1 .. ^1].isPort
+  let
+    at_host = authority.rfind('@') + 1
+    hosted = authority[at_host .. ^1]
+  if authority[0..<at_host].anyIt(it in {'[', ']'}): return none(string)
+  if hosted.startsWith('['):
+    let close = hosted.find(']')
+    if close < 0 or ':' notin hosted[1..<close] or not hosted[1..<close].isIpAddress:
+      return none(string)
+    let port = hosted[close+1 .. ^1]
+    if port.len > 0 and port[0] != ':': return none(string)
+    return some(port)
+  let
+    colon = hosted.find(':')
+    stop = if colon < 0: hosted.len else: colon
+  if hosted[0..<stop].anyIt(it in {'[', ']'}): return none(string)
+  some(hosted[stop .. ^1])
+
+
+func isAuthority(text: string): bool =
+  ## Test text is authority as RFC 3986 section 3.2 splits it (`readPort`), then port of `isPort`,
+  ##   empty, or none.
+  ##   Client of `std/uri` joins digits after each colon into one port, so `127.0.0.1:80:90`
+  ##     would reach 8090.
+  let port = text.readPort
+  port.isSome and (port.get.len <= 1 or port.get[1 .. ^1].isPort)
 
 
 func toReference(text: string): Reference =
