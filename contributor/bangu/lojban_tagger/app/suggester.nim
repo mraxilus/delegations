@@ -195,8 +195,9 @@ proc exchange(
       return Exchanged(is_replied: false, failure: Failure.Recording,
           detail: (path & " holds other request").toPrintable(RUNES_SHOWN))
     if command.mode == Mode.Replay or recorded.recording.reply.status in 200..399:
+      let label = recorded.recording.label.toPrintable(RUNES_SHOWN)
       return Exchanged(is_replied: true, reply: recorded.recording.reply,
-          note: "Reply replayed from `" & path & "`: " & recorded.recording.label & ".")
+          note: "Reply replayed from `" & path & "`: " & label & ".")
   if command.mode == Mode.Replay:
     return Exchanged(is_replied: false, failure: Failure.Recording,
         detail: (path & " missing").toPrintable(RUNES_SHOWN))
