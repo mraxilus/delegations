@@ -22,6 +22,8 @@
 ##     symbols no problem holds, so any byte of it leaking into problem shows. Proxy `send` takes
 ##     meets pin, which refuses https URL for want of context, so laws open no socket; loopback
 ##     proxy shows what wraps and what is taken.
+##     Port `std/uri` joins from colons is named as RFC 3986 section 3.2 splits it from host, and
+##       authority where no port splits from host.
 ##     Each user part, empty or holding user, password or both, goes with each spelling of `http`
 ##       and `https` through tunnel to TLS server: https URL is refused where proxy holds user or
 ##       password, else tunnelled, server reading no login; http URL is taken, proxy reading login.
@@ -340,6 +342,15 @@ const
   COUNT_PROXIES = 432
     ## Proxy URLs leak law sends: each of `OPENINGS_PROXY`, `HOSTS_PROXY`, `PORTS_PROXY` and
     ##   `USERS_PROXY` with each other.
+  PORTS_JOINED = ["65536", "70000", "99999", "123456", "8a0"]
+    ## Ports whose colons, put between their digits by `splitsPort`, `std/uri` joins into port
+    ##   `isPort` refuses: past 65535, six digits, and letter.
+  HOSTS_JOINED = [("127.0.0.1", true), ("[::1]", true), ("[v1.x]", false), ("exa]mple.org", false)]
+    ## Hosts of proxy URL joined port law sends, beside whether RFC 3986 section 3.2 splits port
+    ##   from each: IPv4 address, IPv6 address in brackets; IPvFuture, and bracket inside name.
+  COUNT_JOINED = 576
+    ## Proxy URLs joined port law sends: each split of `PORTS_JOINED` with each of `HOSTS_JOINED`
+    ##   and `USERS_PROXY`.
   LOGINS_PROXY = [
     ("", "", ""), ("@", "", ""), (":@", "", ""), (":+=~@", "", "+=~"), ("!$&*@", "!$&*", ""),
     ("!$&*:@", "!$&*", ""), ("!$&*:+=~@", "!$&*", "+=~"),
@@ -659,6 +670,19 @@ func casesProxy(): seq[tuple[url, problem: string]] =
           else: problemProxyUser(host)
         for (user, password) in USERS_PROXY:
           result.add (opening & user & ":" & password & "@" & host & ":" & port, problem)
+
+
+func casesJoined(): seq[tuple[url, problem: string]] =
+  ## Build proxy URL of each split of `PORTS_JOINED` with each of `HOSTS_JOINED` and
+  ##   `USERS_PROXY`, beside problem `sendProxied` should give: port as RFC 3986 section 3.2
+  ##   splits it from host, or authority past user part where no port splits from host.
+  for split in PORTS_JOINED.mapIt(splitsPort(it)).concat:
+    for (host, is_host) in HOSTS_JOINED:
+      let
+        hosted = host & ":" & split
+        problem = if is_host: problemProxyPort(split) else: problemProxyAuthority(hosted)
+      for (user, password) in USERS_PROXY:
+        result.add ("http://" & user & ":" & password & "@" & hosted, problem)
 
 
 func values(head: Head, name: string): seq[string] =
@@ -1917,6 +1941,30 @@ suite "Internal: Send":
     check server.targets == @["http://example.org/page"]  # domain: joined port reached nothing
     check server.count_connections == 1  # domain: no connection but control's
     stopServer(server)
+
+
+  test "proxy port joined past its bounds is refused naming it as RFC 3986 section 3.2 splits it":
+    # Regression, found in recheck claim completeness-6, 2026-10-29: problem named port `std/uri`
+    #   joins from digits after each colon, which proxy never holds.
+    when not defined(ssl): skip()  # Article IX.9: proxy taken meets pin, which needs `-d:ssl`
+    else:
+      check sendProxied("http://127.0.0.1:99999:1").outcome ==
+          problemProxyPort("99999:1")  # case as found: got `999991`
+      check sendProxied("http://127.0.0.1:1:2:3:4:5:6").outcome ==
+          problemProxyPort("1:2:3:4:5:6")  # case as found: got `123456`
+      check sendProxied("http://127.0.0.1:80a:1").outcome ==
+          problemProxyPort("80a:1")  # case as found: got `80a1`
+      check sendProxied("http://2001:db8::1:8080").outcome ==
+          problemProxyPort("db8::1:8080")  # case as found: got `db818080`, IPv6 unbracketed
+      let cases = casesJoined()
+      check cases.len == COUNT_JOINED  # each split of each port with each host and user part
+      for (url, problem) in cases:
+        let
+          sent = sendProxied(url)
+          named = url & ": "
+        check named & sent.outcome == named & problem  # domain: RFC 3986 3.2, port as it splits
+        check named & $sent.outcome.anyIt(it in SYMBOLS_USER) ==
+            named & "false"  # domain: no byte of user part
 
 
   test "proxy port of one to five digits from 1 to 65535, or none, is taken, and no other":
