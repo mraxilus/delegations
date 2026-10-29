@@ -545,12 +545,17 @@ func refusePage(detail: string): Paged =
   Paged(is_read: false, detail: detail.toPrintable(RUNES_SHOWN))
 
 
+func isIdentity(coding: string): bool =
+  ## Test content coding is identity: absent, or `identity` in any case, as RFC 9110 8.4.1 reads.
+  coding.toLowerAscii in ["", "identity"]
+
+
 func readPage*(url: string, reply: Reply): Paged =
   ## Read page as passage: status 2xx, encoding identity, type text or markup, charset of UTF-8
   ##   or windows-1252 group; markup read as text in one pass.
   ##   Byte order mark is dropped first, so it hides no markup from type read off body.
   if reply.status notin 200..299: return refusePage("status " & $reply.status)
-  if reply.content_encoding notin ["", "identity"]:
+  if not reply.content_encoding.isIdentity:
     return refusePage("content encoding " & reply.content_encoding)
   let kind = reply.content_type.split(';')[0].strip.toLowerAscii
   if kind.len > 0 and not kind.startsWith("text/") and kind != "application/xhtml+xml":
@@ -745,7 +750,7 @@ func readAnswer(text, model: string): Suggestion =
 
 func readError(status: int, node: JsonNode): Suggestion =
   ## Read error envelope of either wire format: `Declined` where it names refusal, else
-  ##   `Status` with status, type and message.
+  ##   `Status` with status, type where envelope has one, and message.
   let error = node{"error"}
   if error.isNil or error.kind != JObject: return fail(Failure.Status, $status)
   let kind =
@@ -753,7 +758,7 @@ func readError(status: int, node: JsonNode): Suggestion =
     else: error{"metadata", "error_type"}.getStr
   let message = error{"message"}.getStr
   if kind in ["refusal", "content_policy_violation"]: return fail(Failure.Declined, message)
-  fail(Failure.Status, $status & " " & kind & ": " & message)
+  fail(Failure.Status, $status & (if kind.len > 0: " " & kind else: "") & ": " & message)
 
 
 func readClaude(status: int, parsed: Option[JsonNode]): Suggestion =
@@ -818,7 +823,7 @@ func readReply*(service: Service, reply: Reply): Suggestion =
   ## Read reply: cut, encoding, status, stop or finish reason, answer of schema, each word,
   ##   readback. Never raises: arrays through `getElems`, objects through `{}` with string keys.
   if reply.is_cut: return fail(Failure.Malformed, "reply over " & $BYTES_REPLY_MAX & " bytes")
-  if reply.content_encoding notin ["", "identity"]:
+  if not reply.content_encoding.isIdentity:
     return fail(Failure.Malformed, "content encoding " & reply.content_encoding)
   if reply.status in 300..399:
     return fail(Failure.Status, $reply.status & " to " & reply.location)
