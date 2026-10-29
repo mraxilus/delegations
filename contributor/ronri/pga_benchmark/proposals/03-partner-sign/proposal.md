@@ -44,8 +44,8 @@ read, the sign is exact when every term of the operand has the same grade.
   no check runs, and such an operand gets a value that means nothing. Each caller of `partner`
   in `pga.nim` keeps its signature, so no caller changes.
 - **Two calls.** The chain still calls two functions. Its first step writes a local declared
-  `noinit`, since the compiler fills the temporary of a call with zeros. So the partner keeps
-  one zero fill and two error checks, for one intermediate and two calls.
+  `noinit`, since the compiler fills the temporary of a call to a `noinit` callee with zeros. So
+  the partner keeps two error checks and two calls, and its one local takes no zero fill.
 - **No table of three operands.** The partner is cubic, so no one table of two operands holds it.
   A table of three operands would, and the emitter reads none.
 
