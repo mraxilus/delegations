@@ -150,6 +150,8 @@ const
     ## Stop reason of reply stopped at limit in wire format of each service.
   BODIES_MALFORMED = ["", "not json", "[]", "{\"tanru\": [\"ciska\"]"]
     ## Bodies of 2xx reply reading as no reply of either wire format.
+  BODY_ERROR_INSIDE = """{"error":{"code":502,"message":"provider down"}}"""
+    ## Body of 200 OpenRouter gives where provider fails after it accepts request, as review found.
   LABEL_FOUND = "evil \e[31mred\e[0m \u202Eabc"
     ## Label suite review found printed raw: escape sequences, then right-to-left override.
   LABEL_CONTROLS = block:
@@ -251,6 +253,27 @@ func toReplyStopped(service: Service; reason, model: string): Reply =
         }],
       }
   Reply(status: 200, content_type: "application/json", body: $body)
+
+
+func toReplies(service: Service, model: string): seq[Reply] =
+  ## Build reply of each outcome `readReply` gives, in wire format of service: tag, error by status,
+  ##   error inside 2xx, choice ending in error, redirect, refusal, stop at limit, body of no reply,
+  ##   and answer naming unlisted word, ending in cmavo, past cap, or failing readback.
+  @[
+    toReplyAnswer(service, toAnswer(["xatra", "ciska"]), model),
+    toReplyError(service, 401),
+    toReplyError(service, 529),
+    Reply(status: 200, content_type: "application/json", body: BODY_ERROR_INSIDE),
+    toReplyStopped(service, "error", model),
+    Reply(status: 307, location: "/elsewhere"),
+    toReplyStopped(service, LUT_REASON_DECLINED_BY_SERVICE[service], model),
+    toReplyStopped(service, LUT_REASON_TRUNCATED_BY_SERVICE[service], model),
+    Reply(status: 200, content_type: "application/json", body: "not json"),
+    toReplyAnswer(service, toAnswer(["datna"]), model),
+    toReplyAnswer(service, toAnswer(["ciska", "se"]), model),
+    toReplyAnswer(service, newSeqWith(COUNT_WORDS_MAX + 1, "ciska").toAnswer, model),
+    toReplyAnswer(service, toAnswer(["brodi", "ciska"]), model),
+  ]
 
 
 
@@ -855,42 +878,104 @@ suite "Internal: Suggester":
       stopServer(server)
 
 
-  test "record writes reply of any status, replays 2xx and 3xx alone, and replay replays any":
+  test "record writes reply of any status, replays tag or paid failure alone, and replay any":
+    # Review findings wire-1 and logic-4, 2026-10-29: record replayed service reply by status
+    #   alone, so error inside 2xx, which service bills not, was replayed on every later run.
+    let text = example("lojban")
+    var
+      covered: set[Failure]
+      count_kept, count_sent = 0
+    for service in Service:
+      let
+        server = startServer()
+        settings = service.toSettings(server.port)
+        passage = text.argument.toPassage
+      for i, reply in service.toReplies(settings.model):
+        server.routes = @[(PATH_SERVICE, reply)]
+        let
+          directory_case = directory / "statuses" / $service / $i
+          record = @["--record:" & directory_case, text.argument]
+          path = pathRecording(directory_case, "POST " & settings.toBody(passage))
+          suggestion = service.readReply(reply)
+          is_kept = suggestion.is_suggested or suggestion.failure != Failure.Status
+          count_before = server.heard.len
+          first = binary.run(settings.toEnvironment, record)
+          recorded = readFile(path).readRecording
+        check first == toOutcome(suggestion, passage, settings.model,
+            [noteCredential(KEY_CREDENTIAL), noteWritten(path)])  # sent and written, any status
+        check recorded.is_read and recorded.recording.reply == reply  # reply as served
+        if not recorded.is_read: continue
+        let second = binary.run(settings.toEnvironment, record)
+        check second == toOutcome(suggestion, passage, settings.model, [
+          noteCredential(KEY_CREDENTIAL),
+          if is_kept: noteReplayed(path, recorded.recording.label) else: noteWritten(path),
+        ])  # tag and paid failure replayed; `Status` sent and written again (`Mode.Record`)
+        check server.heard.len - count_before ==
+            (if is_kept: 1 else: 2)  # sent again where reply reads as `Status` alone
+        let
+          label = readFile(path).readRecording.recording.label
+          replayed = binary.run(settings.toEnvironment, ["--replay:" & directory_case,
+              text.argument])
+        check replayed == toOutcome(suggestion, passage, settings.model,
+            [noteReplayed(path, label)])  # any reply replayed, credential unread
+        check server.heard.len - count_before == (if is_kept: 1 else: 2)  # replay sends nothing
+        if not suggestion.is_suggested: covered.incl suggestion.failure
+        if is_kept: inc count_kept else: inc count_sent
+      stopServer(server)
+    check covered == {Failure.Status..Failure.high}  # each failure `readReply` gives, exhaustive
+    check count_kept > 0 and count_sent > 0  # both sides of law reached
+
+
+  test "record sends again OpenRouter reply of 200 holding error, and never replays it":
+    let
+      port = portClosed()
+      settings = Service.OpenRouter.toSettings(port)
+      directory_case = directory / "inside"
+      text = "mi ciska lo xatra"
+      request = "POST " & settings.toBody(text.toPassage)
+      reply = Reply(status: 200, content_type: "application/json", body: BODY_ERROR_INSIDE)
+    writeRecordings(directory_case, [Recording(label: LABEL_SUITE, request: request, reply: reply)])
+    let outcome = binary.run(settings.toEnvironment, ["--record:" & directory_case, text])
+    check outcome.code == 1 and outcome.output == ""  # no tag
+    check outcome.report.startsWith(noteCredential(KEY_CREDENTIAL) &
+        "\nService or page should answer; got `")  # review finding wire-1, 2026-10-29: `Network`
+    check "replayed" notin outcome.report  # request went out again, to port that refuses
+    check readFile(pathRecording(directory_case, request)).readRecording.recording.reply ==
+        reply  # recording kept, since no reply came to write over it
+
+
+  test "record replays page hop of 2xx or 3xx, and sends other hop again, as before":
     let
       server = startServer()
-      text = example("lojban")
       settings = Service.Claude.toSettings(server.port)
-      passage = text.argument.toPassage
-    for reply in [
-      toReplyError(Service.Claude, 401),
-      toReplyError(Service.Claude, 529),
-      Reply(status: 307, location: "/elsewhere"),
-      toReplyMessages(text.answer, settings.model),
+      url = urlLoopback(server.port, "/start")
+      page = Reply(status: 200, content_type: "text/plain", body: example("alice").argument)
+    server.routes = @[
+      ("/start", page),
+      ("/fresh", page),
+      (PATH_SERVICE, toReplyMessages(example("alice").answer, settings.model)),
+    ]
+    for i, recorded in [
+      Reply(status: 200, content_type: "text/plain", body: "recorded page"),
+      Reply(status: 302, location: "/fresh"),
+      Reply(status: 304),
+      Reply(status: 404, content_type: "text/html", body: "<p>gone</p>"),
+      Reply(status: 500),
     ]:
-      server.routes = @[(PATH_SERVICE, reply)]
       let
-        directory_case = directory / "statuses" / $reply.status
-        record = @["--record:" & directory_case, text.argument]
-        path = pathRecording(directory_case, "POST " & settings.toBody(passage))
-        suggestion = Service.Claude.readReply(reply)
-        is_kept = reply.status in 200..399
+        directory_case = directory / "hops_kept" / $i
+        path = pathRecording(directory_case, "GET " & url)
+        is_kept = recorded.status in 200..399
+        note = if is_kept: noteReplayed(path, LABEL_PAGE) else: noteWritten(path)
         count_before = server.heard.len
-        first = binary.run(settings.toEnvironment, record)
-        recorded = readFile(path).readRecording
-      check first == toOutcome(suggestion, passage, settings.model,
-          [noteCredential(KEY_CREDENTIAL), noteWritten(path)])  # sent and written, any status
-      check recorded.is_read and recorded.recording.reply == reply  # reply as served
-      if not recorded.is_read: continue
-      let second = binary.run(settings.toEnvironment, record)
-      check second == toOutcome(suggestion, passage, settings.model, [
-        noteCredential(KEY_CREDENTIAL),
-        if is_kept: noteReplayed(path, recorded.recording.label) else: noteWritten(path),
-      ])  # 2xx and 3xx replayed, rest sent and written again
-      check server.heard.len - count_before == (if is_kept: 1 else: 2)  # sent again unless kept
-      let label = readFile(path).readRecording.recording.label
-      check binary.run([], ["--replay:" & directory_case, text.argument]) ==
-          toOutcome(suggestion, passage, settings.model, [noteReplayed(path, label)])  # any
-      check server.heard.len - count_before == (if is_kept: 1 else: 2)  # replay sends nothing
+      writeRecordings(directory_case, [Recording(label: LABEL_PAGE, request: "GET " & url,
+          reply: recorded)])
+      let
+        outcome = binary.run(settings.toEnvironment, ["--record:" & directory_case, url])
+        lines = outcome.report.splitLines
+        is_sent = "/start" in server.heard[count_before .. ^1].mapIt(it.target)
+      check lines.len > 1 and lines[1] == note  # hop of 2xx or 3xx replayed, other one written
+      check is_sent != is_kept  # page sent again exactly where its status is no 2xx or 3xx
     stopServer(server)
 
 
