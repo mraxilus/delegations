@@ -434,6 +434,15 @@ proc readGuarded(service: Service, reply: Reply): Option[Suggestion] =
     none(Suggestion)
 
 
+func casings(text: string): seq[string] =
+  ## List every casing of ASCII text, each letter lower or upper: 2^n of them for n letters.
+  for mask in 0 ..< 1 shl text.len:
+    var cased = text
+    for k in 0..<text.len:
+      if (mask and (1 shl k)) != 0: cased[k] = cased[k].toUpperAscii
+    result.add cased
+
+
 proc explainGuarded(suggestion: Suggestion): Option[string] =
   ## Explain suggestion, catching any exception, defect included; `none` where explaining raised.
   try:
@@ -1284,10 +1293,27 @@ suite "Internal: Reply":
         body: CAPTURE_MESSAGES)).failureRead == some((Failure.Status,
         "401 authentication_error: x-api-key header is required"))  # captured, Messages API
     for service in [Service.OpenRouter, Service.Chat]:
-      let failure = readReply(service, Reply(status: 401, body: CAPTURE_CHAT)).failureRead
-      check failure.isSome and failure.get[0] == Failure.Status  # captured, OpenRouter
-      check failure.isSome and failure.get[1].startsWith("401") and
-          failure.get[1].endsWith("No cookie auth credentials found")  # status and message
+      check readReply(service, Reply(status: 401, body: CAPTURE_CHAT)).failureRead ==
+          some((Failure.Status, "401: No cookie auth credentials found"))  # captured, no type
+
+
+  test "error envelope names status, then type where it has one, then message":
+    for status in [400, 401, 429, 500, 529]:  # client and server errors both formats document
+      for (kind, message) in [("", ""), ("", "Overloaded"), ("x_error", ""),
+          ("x_error", "Overloaded")]:  # type and message each present or absent, exhaustive
+        let
+          detail = $status & (if kind.len > 0: " " & kind else: "") & ": " & message
+          error_claude = %*{"message": message}
+          error_chat = %*{"code": status, "message": message}
+        if kind.len > 0:
+          error_claude["type"] = %kind
+          error_chat["metadata"] = %*{"error_type": kind}
+        check readReply(Service.Claude, toReply(%*{"type": "error", "error": error_claude},
+            status)).failureRead == some((Failure.Status, detail))  # Messages API, errors
+        for service in [Service.OpenRouter, Service.Chat]:
+          for status_served in [status, 200]:  # error by status, then inside 2xx by code
+            check readReply(service, toReply(%*{"error": error_chat}, status_served)).
+                failureRead == some((Failure.Status, detail))  # chat completion, errors
 
 
   test "each worked example reads to its tanru under every service":
@@ -1301,6 +1327,34 @@ suite "Internal: Reply":
             suggestion.model == LUT_MODEL_BY_SERVICE[service]  # model of service named
       check readReply(Service.Chat, toReplyChat(example.answer, MODEL_SUITE)).tagRead ==
           some(tanru(example.tanru))  # `chat` reads chat completion as `openrouter` does
+
+
+  test "content coding is read without case, so every casing of identity is no coding":
+    let
+      answer = toAnswer(["ciska"])
+      completion = toCompletion(%*{"finish_reason": "stop", "message": {"content": answer}}).body
+      lut_body_by_service: array[Service, string] =
+        [toMessage(%*[{"type": "text", "text": answer}]).body, completion, completion]
+    var page = Reply(status: 200, content_type: "text/plain", content_encoding: "Identity",
+        body: "x")
+    check readPage(URL_SUITE, page).is_read  # case as found in suite review: refused
+    check readReply(Service.Claude, Reply(status: 200, content_encoding: "IDENTITY",
+        body: lut_body_by_service[Service.Claude])).tagRead ==
+        some(tanru("ciska"))  # case as found in suite review: refused
+    for coding in "identity".casings:  # 256 casings, exhaustive
+      page.content_encoding = coding
+      check readPage(URL_SUITE, page).is_read  # RFC 9110 8.4.1, codings are case-insensitive
+      for service in Service:  # 3 services, exhaustive
+        check readReply(service, Reply(status: 200, content_encoding: coding,
+            body: lut_body_by_service[service])).tagRead == some(tanru("ciska"))  # 8.4.1
+    for coding in ["gzip", "GZIP", "Br", "deflate", "Compress", "x-gzip", "zstd", "identity, br"]:
+      page.content_encoding = coding
+      let paged = readPage(URL_SUITE, page)
+      check not paged.is_read and paged.detail == "content encoding " & coding  # named as given
+      for service in Service:  # 3 services, exhaustive
+        check readReply(service, Reply(status: 200, content_encoding: coding,
+            body: lut_body_by_service[service])).failureRead ==
+            some((Failure.Malformed, "content encoding " & coding))  # named as given
 
 
 
