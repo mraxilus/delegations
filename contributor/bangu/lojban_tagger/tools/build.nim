@@ -12,7 +12,8 @@
 ##   |           | `binaries/suggester`                                                     |
 ##   | examples  | write worked examples of `suggester` as recordings under                 |
 ##   |           | `build/examples/`, and print command replaying each                      |
-##   | system    | print packages verbs and `suggester` need, one per line                  |
+##   | system    | print packages verbs, `suggester` and suites need, one per line:         |
+##   |           | `openssl` command among them, which `test_exchanges` runs                |
 ##   |-----------|--------------------------------------------------------------------------|
 ##   Exit: 0 done, 1 command failed or lists differ, 2 usage error.
 ##
@@ -49,8 +50,8 @@ const
     ("ca-certificates", "roots `suggester` checks services and pages against"),
     ("openssl", "command `test_exchanges` makes test root and leaves with, at run time"),
   ]
-    ## Packages verbs and suites need, each with reason (Article II.8); `system` prints names
-    ##   alone.
+    ## Packages verbs, `suggester` and suites need, each with reason (Article II.8); `system`
+    ##   prints names alone.
 
 
 
