@@ -425,6 +425,12 @@ proc run(
   child.close()
 
 
+func requestService(settings: Settings, passage: Passage): string =
+  ## Build request of service exchange as binary stamps and keeps it: method and endpoint, then
+  ##   body on next line, so recording replays for its endpoint alone.
+  "POST " & settings.endpoint & "\n" & settings.toBody(passage)
+
+
 func pathRecording(directory, request: string): string =
   ## Build path binary keeps recording of request at: stamp of request, in directory.
   directory / (request.stamp & ".recording")
@@ -703,7 +709,7 @@ suite "Internal: Suggester":
       inc passed
       let
         passage = text.toPassage
-        request = "POST " & sample.settings.toBody(passage)
+        request = requestService(sample.settings, passage)
         path = pathRecording(directory_case, request)
         suggestion = sample.settings.service.readReply(sample.reply)
       writeFile(path, Recording(label: sample.label, request: request, reply: sample.reply).toText)
@@ -765,7 +771,7 @@ suite "Internal: Suggester":
       inc count_asked
       let
         passage = text.toPassage
-        shown = pathShown(directory_case, "POST " & settings.toBody(passage))
+        shown = pathShown(directory_case, requestService(settings, passage))
       check outcome == toOutcome(toSuggestionRecording("missing at " & shown), passage,
           settings.model, [])  # sent to service, whose recording is missing
     check count_given >= FLOOR_GIVEN  # texts reading as tag are common
@@ -777,7 +783,12 @@ suite "Internal: Suggester":
     for example in EXAMPLES:
       for service in [Service.Claude, Service.OpenRouter]:
         let directory_case = directory / "unread" / (example.name & "_" & $service)
-        writeRecordings(directory_case, example.toRecordings(service))
+        var
+          settings = service.toSettings
+          recordings = example.toRecordings(service)
+        settings.endpoint = urlLoopback(endpoint.port, PATH_SERVICE)
+        recordings[^1].request = requestService(settings, example.toPassage)  # endpoint named
+        writeRecordings(directory_case, recordings)
         let outcome = binary.run(
           [
             (KEY_SERVICE, $service),
@@ -804,7 +815,7 @@ suite "Internal: Suggester":
       (text, page) = (example("lojban"), example("page"))
       settings = Service.Claude.toSettings
       passage = text.argument.toPassage
-      shown_text = pathShown(directory_case, "POST " & settings.toBody(passage))
+      shown_text = pathShown(directory_case, requestService(settings, passage))
       shown_page = pathShown(directory_case, "GET " & page.argument)
     check binary.run([], ["--replay:" & directory_case, text.argument]) ==
         toOutcome(toSuggestionRecording("missing at " & shown_text), passage, settings.model,
@@ -816,7 +827,7 @@ suite "Internal: Suggester":
       directory_hops = directory / "hops"
       hops = page.toRecordings(Service.Claude)[0 ..< ^1]
       passage_hops = page.toPassage
-      shown_service = pathShown(directory_hops, "POST " & settings.toBody(passage_hops))
+      shown_service = pathShown(directory_hops, requestService(settings, passage_hops))
     writeRecordings(directory_hops, hops)
     check binary.run([], ["--replay:" & directory_hops, page.argument]) ==
         toOutcome(toSuggestionRecording("missing at " & shown_service), passage_hops,
@@ -830,7 +841,7 @@ suite "Internal: Suggester":
       text = example("lojban")
       settings = Service.Claude.toSettings
       passage = text.argument.toPassage
-      request = "POST " & settings.toBody(passage)
+      request = requestService(settings, passage)
       path = pathRecording(directory_case, request)
       reply = toReplyMessages(text.answer, settings.model)
       whole = Recording(label: LABEL_SUITE, request: request, reply: reply).toText
@@ -862,7 +873,7 @@ suite "Internal: Suggester":
       settings = Service.Claude.toSettings(server.port)
       text = example("lojban")
       passage = text.argument.toPassage
-      request = "POST " & settings.toBody(passage)
+      request = requestService(settings, passage)
       reply = toReplyMessages(text.answer, settings.model)
       long = directory / "long" / "d".repeat(99) / "e".repeat(99) / "f".repeat(99)
       name = request.stamp & ".recording"
@@ -870,16 +881,16 @@ suite "Internal: Suggester":
       replay = ["--replay:" & long, text.argument]
     server.routes = @[(PATH_SERVICE, reply)]
     check long.len >= 300  # directory name of 300 characters, past `RUNES_SHOWN`
-    let missing = binary.run([], replay)
+    let missing = binary.run(settings.toEnvironment, replay)
     check missing == toOutcome(toSuggestionRecording("missing at " & pathShown(long, request)),
         passage, settings.model, [])  # `--replay:<long directory> 'mi ciska lo xatra'`
     createDir(long)
     writeFile(long / name, Recording(label: LABEL_SUITE, request: "POST {}", reply: reply).toText)
-    let other = binary.run([], replay)
+    let other = binary.run(settings.toEnvironment, replay)
     check other == toOutcome(toSuggestionRecording("other request at " & pathShown(long,
         request)), passage, settings.model, [])  # other request, then path
     writeFile(long / name, "")
-    let malformed = binary.run([], replay)
+    let malformed = binary.run(settings.toEnvironment, replay)
     check malformed == toOutcome(toSuggestionRecording(detailMalformed("".readRecording, long,
         request)), passage, settings.model, [])  # problem of reader, then line and path
     writeFile(below.parentDir, "")
@@ -893,6 +904,33 @@ suite "Internal: Suggester":
     stopServer(server)
 
 
+  test "recording replays for endpoint it was made for alone, as its request names endpoint":
+    # Review finding logic-9, 2026-10-29: request stamped and kept was `POST` and body alone, so
+    #   reply recorded from one server replayed as reply of other.
+    let
+      text = example("lojban")
+      passage = text.argument.toPassage
+      directory_case = directory / "endpoints"
+    for service in Service:
+      var (settings_a, settings_b) = (service.toSettings, service.toSettings)
+      settings_a.endpoint = "https://a.example.org/v1/messages"  # replay sends nothing to either
+      settings_b.endpoint = "https://b.example.org/v1/messages"
+      if service == Service.Chat: (settings_a.model, settings_b.model) = (MODEL_SUITE, MODEL_SUITE)
+      let
+        request_a = requestService(settings_a, passage)
+        reply = toReplyAnswer(service, text.answer, settings_a.model)
+        directory_service = directory_case / $service
+        replay = ["--replay:" & directory_service, text.argument]
+      writeRecordings(directory_service, [Recording(label: LABEL_SUITE, request: request_a,
+          reply: reply)])
+      check binary.run(settings_a.toEnvironment, replay) == toOutcome(service.readReply(reply),
+          passage, settings_a.model, [noteReplayed(pathRecording(directory_service, request_a),
+          LABEL_SUITE)])  # endpoint recording was made for replays it
+      check binary.run(settings_b.toEnvironment, replay) == toOutcome(toSuggestionRecording(
+          "missing at " & pathShown(directory_service, requestService(settings_b, passage))),
+          passage, settings_b.model, [])  # other endpoint misses it, under its own stamp
+
+
   test "replay note names label made printable and cut, as report names other outside text":
     # Regression, found in suite review: note named label as file held it, control bytes raw.
     let
@@ -900,7 +938,7 @@ suite "Internal: Suggester":
       text = example("lojban")
       settings = Service.Claude.toSettings
       passage = text.argument.toPassage
-      request = "POST " & settings.toBody(passage)
+      request = requestService(settings, passage)
       path = pathRecording(directory_case, request)
       reply = toReplyMessages(text.answer, settings.model)
       suggestion = Service.Claude.readReply(reply)
@@ -929,7 +967,7 @@ suite "Internal: Suggester":
         directory_case = directory / "record" / $service
         passage = text.argument.toPassage
         body = settings.toBody(passage)
-        path = pathRecording(directory_case, "POST " & body)
+        path = pathRecording(directory_case, requestService(settings, passage))
         reply = toReplyAnswer(service, text.answer, settings.model)
         suggestion = service.readReply(reply)
       server.routes = @[(PATH_SERVICE, reply)]
@@ -953,7 +991,8 @@ suite "Internal: Suggester":
       check recorded.is_read  # file binary wrote reads back
       if not recorded.is_read: continue
       let label = recorded.recording.label
-      check recorded.recording.request == "POST " & body  # whole request, no credential
+      check recorded.recording.request ==
+          requestService(settings, passage)  # endpoint and body, no credential
       check recorded.recording.reply == reply  # reply as served
       check label.startsWith("recorded ") and label["recorded ".len .. ^1].isDate  # date of run
       check walkDir(directory_case).toSeq.len == 1  # recording alone, sibling renamed over it
@@ -1020,7 +1059,7 @@ suite "Internal: Suggester":
         let
           directory_case = directory / "statuses" / $service / $i
           record = @["--record:" & directory_case, text.argument]
-          path = pathRecording(directory_case, "POST " & settings.toBody(passage))
+          path = pathRecording(directory_case, requestService(settings, passage))
           suggestion = service.readReply(reply)
           is_kept = suggestion.is_suggested or suggestion.failure != Failure.Status
           count_before = server.heard.len
@@ -1057,7 +1096,7 @@ suite "Internal: Suggester":
       settings = Service.OpenRouter.toSettings(port)
       directory_case = directory / "inside"
       text = "mi ciska lo xatra"
-      request = "POST " & settings.toBody(text.toPassage)
+      request = requestService(settings, text.toPassage)
       reply = Reply(status: 200, content_type: "application/json", body: BODY_ERROR_INSIDE)
     writeRecordings(directory_case, [Recording(label: LABEL_SUITE, request: request, reply: reply)])
     let outcome = binary.run(settings.toEnvironment, ["--record:" & directory_case, text])
@@ -1137,7 +1176,7 @@ suite "Internal: Suggester":
       file = directory / "unmade" / "file"
       opening = noteCredential(KEY_CREDENTIAL) &
           "\nRecording should hold this request; got `unwritable: "
-      shown_found = pathShown(file, "POST " & settings.toBody("mi ciska".toPassage))
+      shown_found = pathShown(file, requestService(settings, "mi ciska".toPassage))
     server.routes = @[
       (PATH_SERVICE, toReplyMessages(text.answer, settings.model)),
       ("/page", Reply(status: 200, content_type: "text/plain", body: example("alice").argument)),
@@ -1151,7 +1190,7 @@ suite "Internal: Suggester":
     check server.heard.len == 0  # nothing sent, so nothing paid for
     for directory_record in [file, file / "below"]:  # file, then directory below file
       for (argument, request) in [
-        (text.argument, "POST " & settings.toBody(text.argument.toPassage)),
+        (text.argument, requestService(settings, text.argument.toPassage)),
         (url, "GET " & url),  # page, refused before its first hop
       ]:
         let
@@ -1176,7 +1215,7 @@ suite "Internal: Suggester":
       passage = text.argument.toPassage
       answer = toReplyMessages(text.answer, settings.model)
       directory_case = directory / "unwritten"
-      path = pathRecording(directory_case, "POST " & settings.toBody(passage))
+      path = pathRecording(directory_case, requestService(settings, passage))
       opening = noteCredential(KEY_CREDENTIAL) & "\nReply should be written to `"
     for (blocked, reply) in [
       (path, answer),  # directory at `<stamp>.recording`, so rename fails: as found in suite review
@@ -1201,7 +1240,7 @@ suite "Internal: Suggester":
       page = Reply(status: 200, content_type: "text/plain", body: example("alice").argument)
       passage_page = url.readPage(page).passage
       path_page = pathRecording(directory_case, "GET " & url)
-      path_service = pathRecording(directory_case, "POST " & settings.toBody(passage_page))
+      path_service = pathRecording(directory_case, requestService(settings, passage_page))
       expected_page = toOutcome(Service.Claude.readReply(answer), passage_page, settings.model,
           [noteWritten(path_service)])
     server.routes = @[("/page", page), (PATH_SERVICE, answer)]
@@ -1226,7 +1265,7 @@ suite "Internal: Suggester":
       text = example("lojban")
       standing = directory / "private"  # made by suite with mode 0755, so record keeps it
       directory_case = standing / "made" / "below"
-      path = pathRecording(directory_case, "POST " & settings.toBody(text.argument.toPassage))
+      path = pathRecording(directory_case, requestService(settings, text.argument.toPassage))
       mode_standing = {fpUserRead, fpUserWrite, fpUserExec, fpGroupRead, fpGroupExec,
           fpOthersRead, fpOthersExec}
     server.routes = @[(PATH_SERVICE, toReplyMessages(text.answer, settings.model))]
@@ -1250,7 +1289,7 @@ suite "Internal: Suggester":
       settings = Service.Claude.toSettings(server.port)
       text = example("lojban")
       passage = text.argument.toPassage
-      request = "POST " & settings.toBody(passage)
+      request = requestService(settings, passage)
       reply = toReplyMessages(text.answer, settings.model)
       url = urlLoopback(server.port, "/page")
       shared = directory / "shared"
@@ -1282,7 +1321,7 @@ suite "Internal: Suggester":
       text = example("lojban")
       settings = Service.Claude.toSettings
       passage = text.argument.toPassage
-      request = "POST " & settings.toBody(passage)
+      request = requestService(settings, passage)
       directory_case = directory / "caps"
       path = pathRecording(directory_case, request)
       shown = pathShown(directory_case, request)
@@ -1318,7 +1357,7 @@ suite "Internal: Suggester":
       settings = Service.Claude.toSettings(server.port)
       text = example("lojban")
       directory_case = directory / "unreadable"
-      request = "POST " & settings.toBody(text.argument.toPassage)
+      request = requestService(settings, text.argument.toPassage)
       path = pathRecording(directory_case, request)
       opening = "Recording should hold this request; got `unreadable: "
     server.routes = @[(PATH_SERVICE, toReplyMessages(text.answer, settings.model))]
@@ -1386,7 +1425,7 @@ suite "Internal: Suggester":
       url_moved = urlLoopback(server.port, "/moved")
       url_page = urlLoopback(server.port, "/page")
       passage = url_page.readPage(reply_page).passage
-      requests = @["GET " & url_moved, "GET " & url_page, "POST " & settings.toBody(passage)]
+      requests = @["GET " & url_moved, "GET " & url_page, requestService(settings, passage)]
       paths = requests.mapIt(pathRecording(directory_case, it))
     check binary.run(settings.toEnvironment, ["--record:" & directory_case, url_moved]) ==
         toOutcome(suggestion, passage, settings.model,
@@ -1398,9 +1437,9 @@ suite "Internal: Suggester":
       check recordings.mapIt(it.recording.request) == requests  # each hop, then service
       check recordings.mapIt(it.recording.reply) ==
           @[Reply(status: 302, location: "/page"), reply_page, reply_service]  # as served
-      check binary.run([], ["--replay:" & directory_case, url_moved]) ==
+      check binary.run(settings.toEnvironment, ["--replay:" & directory_case, url_moved]) ==
           toOutcome(suggestion, passage, settings.model, (0..2).mapIt(noteReplayed(paths[it],
-          recordings[it].recording.label)))  # same tag, read from files alone
+          recordings[it].recording.label)))  # same tag, read from files alone, same endpoint
 
 
   test "page refused by status, type, coding, charset or text exits 1 with `Page`, naming it":
@@ -1637,7 +1676,7 @@ suite "Internal: Suggester":
     ]:
       let
         passage = text.toPassage
-        shown = pathShown(directory_case, "POST " & settings.toBody(passage))
+        shown = pathShown(directory_case, requestService(settings, passage))
       check binary.run([], @["--replay:" & directory_case] & arguments) ==
           toOutcome(toSuggestionRecording("missing at " & shown), passage, settings.model,
           [])  # passage after `--` read as text, flag of mode among it too
@@ -1666,7 +1705,7 @@ suite "Internal: Suggester":
       inc count_visible
       let
         passage = text.toPassage
-        shown = pathShown(directory_case, "POST " & settings.toBody(passage))
+        shown = pathShown(directory_case, requestService(settings, passage))
         expected =
           if text.readTagGiven.isSome: text.toOutcomeGiven
           else: toOutcome(toSuggestionRecording("missing at " & shown), passage,
@@ -1703,7 +1742,7 @@ suite "Internal: Suggester":
     for text in ["https://example.org/alice", "a".repeat(BYTES_PAGE_MAX)]:  # URL, text at cap
       let
         passage = text.toPassage
-        shown = pathShown(missing, "POST " & settings.toBody(passage))
+        shown = pathShown(missing, requestService(settings, passage))
       check binary.run([], ["--replay:" & missing, "-"], input = text) == toOutcome(
           toSuggestionRecording("missing at " & shown), passage, settings.model,
           [])  # text whole, never page fetched
@@ -1728,7 +1767,7 @@ suite "Internal: Suggester":
       text = example("lojban").argument
       settings = Service.Claude.toSettings
       passage = text.toPassage
-      request = "POST " & settings.toBody(passage)
+      request = requestService(settings, passage)
     var covered: set[Failure]
     for reply in [
       toReplyError(Service.Claude, 529),
