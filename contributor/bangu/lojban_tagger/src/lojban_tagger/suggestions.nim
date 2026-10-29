@@ -164,6 +164,7 @@ const
   ]
     ## Code point of bytes `0x80` to `0x9F` in windows-1252, as index of WHATWG Encoding
     ##   Standard gives it; other bytes are their own code point.
+    ##   HTML maps numeric references 128 to 159 by same table.
   LABELS_UNICODE = [
     "unicode-1-1-utf-8", "unicode11utf8", "unicode20utf8", "utf-8", "utf8", "x-unicode20utf8",
   ]
@@ -320,11 +321,16 @@ func toPrintable*(text: string, runes_max: int): string =
     inc count
 
 
+func dropMark(text: string): string =
+  ## Drop byte order mark U+FEFF opening text, as decode of WHATWG Encoding Standard does.
+  if text.startsWith("\xEF\xBB\xBF"): text[3 .. ^1] else: text
+
+
 func toPassage*(text: string, url = "", is_page_cut = false): Passage =
   ## Build passage: byte order mark dropped, ill-formed UTF-8 repaired and counted, text cut at
   ##   `BYTES_PASSAGE_MAX` on character boundary.
   let
-    bytes = if text.startsWith("\xEF\xBB\xBF"): text[3 .. ^1] else: text
+    bytes = text.dropMark
     (repaired, count_repaired) = repairEncoding(bytes)
   result = Passage(
     text: cut(repaired, BYTES_PASSAGE_MAX),
@@ -350,6 +356,7 @@ func readTagGiven*(text: string): Option[Tag] =
 func readReference(markup: string, at: int): tuple[text: string, size: int] =
   ## Read character reference opening at `at`: its text and bytes it spans; `&` alone where
   ##   name is unknown or reference has no `;` within 32 bytes.
+  ##   Numbers 128 to 159 read through windows-1252, as HTML maps them.
   let close = markup.find(';', at + 1, min(markup.high, at + 32))
   if close < 0: return ("&", 1)
   let name = markup[at+1..<close]
@@ -363,6 +370,7 @@ func readReference(markup: string, at: int): tuple[text: string, size: int] =
       if is_hexadecimal and digit in HexDigits: code = code * 16 + parseHexInt($digit)
       elif not is_hexadecimal and digit in Digits: code = code * 10 + (ord(digit) - ord('0'))
       else: return ("&", 1)
+    if code in 0x80..0x9F: code = LUT_RUNE_BY_BYTE[code-0x80]
     return ((if code == 0: REPLACEMENT else: code.toBytes), close - at + 1)
   for (known, text) in LUT_TEXT_BY_REFERENCE:
     if known == name: return (text, close - at + 1)
@@ -415,6 +423,7 @@ func readMarkup(markup: string): string =
   ## Read markup as text in one pass: comments, declarations and skipped elements dropped,
   ##   block edges as line breaks, references decoded, spaces collapsed, empty lines dropped.
   ##   Tag ends at first `>` outside quoted value; quote opens value alone (`findCloseTag`).
+  ##   Space reference stands for collapses as written one does, so block edges alone break line.
   ##   Raw text ends at own closing element alone, whatever it holds, wherever element stands.
   ##   Skipped element ends where levels of its name close, so one nested in it is skipped whole.
   var
@@ -468,10 +477,10 @@ func readMarkup(markup: string): string =
       continue
     if character == '&':
       let (decoded, size) = markup.readReference(i)
-      text.add decoded
+      for code_unit in decoded: text.add (if code_unit in SPACES_MARKUP: ' ' else: code_unit)
       inc i, size
       continue
-    text.add (if character in {'\t', '\n', '\r', '\f'}: ' ' else: character)
+    text.add (if character in SPACES_MARKUP: ' ' else: character)
     inc i
   var lines: seq[string]
   for line in text.replace("\xC2\xA0", " ").split('\n'):
@@ -534,6 +543,7 @@ func refusePage(detail: string): Paged =
 func readPage*(url: string, reply: Reply): Paged =
   ## Read page as passage: status 2xx, encoding identity, type text or markup, charset of UTF-8
   ##   or windows-1252 group; markup read as text in one pass.
+  ##   Byte order mark is dropped first, so it hides no markup from type read off body.
   if reply.status notin 200..299: return refusePage("status " & $reply.status)
   if reply.content_encoding notin ["", "identity"]:
     return refusePage("content encoding " & reply.content_encoding)
@@ -541,10 +551,11 @@ func readPage*(url: string, reply: Reply): Paged =
   if kind.len > 0 and not kind.startsWith("text/") and kind != "application/xhtml+xml":
     return refusePage("type " & kind)
   let
+    body = reply.body.dropMark
     is_markup = kind in ["text/html", "application/xhtml+xml"] or
-        (kind.len == 0 and reply.body.strip(trailing = false).startsWith('<'))
-    label = readCharset(reply.content_type, reply.body, is_markup)
-    decoded = decode(reply.body, label)
+        (kind.len == 0 and body.strip(trailing = false).startsWith('<'))
+    label = readCharset(reply.content_type, body, is_markup)
+    decoded = decode(body, label)
   if decoded.isNone: return refusePage("charset " & label)
   let passage = toPassage(
     if is_markup: decoded.get.readMarkup else: decoded.get, url, reply.is_cut
