@@ -97,7 +97,8 @@
 ##     unfolds label; status takes one to three digits, as `send` gives 0 to 599. So every reply
 ##     `send` gives records, and replay reads it back.
 ##   Proxy follows curl: `https_proxy` then `HTTPS_PROXY` for https, `http_proxy` alone for
-##     http, `no_proxy` then `NO_PROXY` for bypass; loopback always goes direct.
+##     http, `no_proxy` then `NO_PROXY` for bypass; loopback always goes direct. Value naming no
+##     port, or empty one, takes port 1080, as curl assumes, where client would dial 80.
 ##     Cost: bypass entry of address range is never matched, so such host goes through proxy.
 
 {.experimental: "strictFuncs".}
@@ -166,6 +167,7 @@ const
     ## Opening of credentials each service issues; opening of other service is refused.
   PROBLEM_CONTEXT = "TLS context should exist for https URL; got ``."
     ## Problem `send` gives for https URL with no context, whose host it cannot pin.
+  PORT_CURL = "1080"  ## Port curl assumes where proxy string specifies none, as `proxy` gives.
 
 
 func `$`*(credential: Credential): string {.error:
@@ -283,7 +285,8 @@ func lookup(environment: openArray[(string, string)], names: openArray[string]):
 func proxy*(url: string, environment: openArray[(string, string)]): Option[string] =
   ## Choose proxy for URL: https takes `https_proxy`, else `HTTPS_PROXY`; http takes
   ##   `http_proxy` alone, as curl reads it; loopback and bypassed hosts go direct; `http://`
-  ##   added where value has no scheme.
+  ##   added where value has no scheme, and port 1080 where client would read none, as curl
+  ##   assumes 1080 where proxy names no port, and client would dial 80.
   let uri = url.parseUri
   if uri.hostname.isLoopback: return none(string)
   if uri.hostname.isBypassed(environment.lookup(["no_proxy", "NO_PROXY"])): return none(string)
@@ -293,7 +296,11 @@ func proxy*(url: string, environment: openArray[(string, string)]): Option[strin
     of "http": environment.lookup(["http_proxy"])
     else: ""
   if value.len == 0: return none(string)
-  some(if "://" in value: value else: "http://" & value)
+  var reference = (if "://" in value: value else: "http://" & value).toReference
+  if reference.authority.isSome and reference.toText.parseUri.port.len == 0:
+    let authority = reference.authority.get
+    reference.authority = some(authority & (if authority.endsWith(':'): "" else: ":") & PORT_CURL)
+  some(reference.toText)
 
 
 func removeDotSegments(path: string): string =
