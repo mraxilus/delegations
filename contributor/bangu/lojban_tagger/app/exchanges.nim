@@ -205,6 +205,29 @@ func isPort(text: string): bool =
   text.len in 1..5 and text.allIt(it in Digits) and text.parseInt in 1..65_535
 
 
+func isAuthority(text: string): bool =
+  ## Test text is authority as RFC 3986 section 3.2 splits it: user part to last `@`, holding no
+  ##   bracket; IPv6 address in brackets, or host holding no colon or bracket; then port of
+  ##   `isPort`, empty, or none.
+  ##   Client of `std/uri` joins digits after each colon into one port, so `127.0.0.1:80:90`
+  ##     would reach 8090, and drops each bracket, so `[example.org]` would reach that name.
+  ##   Brackets hold IPv6 address alone, as URL Standard of WHATWG reads host.
+  ##     Cost: IPvFuture of RFC 3986 section 3.2.2, and zone of RFC 6874, are refused.
+  let at_host = text.rfind('@') + 1
+  if text[0..<at_host].anyIt(it in {'[', ']'}): return false
+  var (host, port) = (text[at_host .. ^1], "")
+  if host.startsWith('['):
+    let close = host.find(']')
+    if close < 0 or ':' notin host[1..<close] or not host[1..<close].isIpAddress: return false
+    (host, port) = (host[0..close], host[close+1 .. ^1])
+    if port.len > 0 and port[0] != ':': return false
+  else:
+    let colon = host.find(':')
+    if colon >= 0: (host, port) = (host[0..<colon], host[colon .. ^1])
+    if host.anyIt(it in {'[', ']'}): return false
+  port.len <= 1 or port[1 .. ^1].isPort
+
+
 func toReference(text: string): Reference =
   ## Split text into five components of reference, as regular expression of RFC 3986 appendix
   ##   `B` splits it; empty query or fragment stays apart from none.
@@ -241,12 +264,14 @@ func toText(reference: Reference): string =
 
 
 func isURL*(text: string): bool =
-  ## Test text is one http or https URL with host, port of `isPort` or none, and no whitespace,
-  ##   which `suggester` fetches.
+  ## Test text is one http or https URL with host, authority `isAuthority` takes, so port of
+  ##   `isPort` or none, and no whitespace, which `suggester` fetches.
   if text.len == 0 or text.anyIt(it in Whitespace): return false
-  let uri = text.parseUri
+  let
+    uri = text.parseUri
+    authority = text.toReference.authority
   uri.scheme.toLowerAscii in ["http", "https"] and uri.hostname.len > 0 and
-      (uri.port.len == 0 or uri.port.isPort)
+      authority.isSome and authority.get.isAuthority
 
 
 func isLoopback*(host: string): bool =
