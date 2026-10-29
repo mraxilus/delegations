@@ -44,6 +44,7 @@ when compileOption("profiler"):
 import std/[
   asyncdispatch, asyncnet, json, options, os, osproc, random, sequtils, strutils, unittest,
 ]
+from std/posix import chmod, Mode
 from std/unicode import Rune, toUTF8
 
 import ../../app/exchanges
@@ -141,6 +142,8 @@ const
     ##   spaces and marks up to ideographic space; no zero, which no argument carries.
   CODES_HIGH = [0xFEFF, 0xFFFD, 0x1F600]
     ## Code points past low run random texts draw too: byte order mark, replacement, emoji.
+  BYTES_FIELDS_MAX = 65_536
+    ## Bytes recording file may hold past its request and cap of its body, as binary sets it.
   WORDS_PASSAGE = [
     "Alice", "was", "tired", "mi", "ciska", "<passage>", "</passage>", "&amp;", "\"sister\"",
     "it's", "line\nbreak", "tab\there", "caf\xC3\xA9", "\xE2\x80\xA6", "\xC4\x89u", "\xFF",
@@ -1151,6 +1154,95 @@ suite "Internal: Suggester":
     check error_page.isSome and error_page.get.len > 0 and
         '\n' notin error_page.get  # page hop named, service request written after it
     stopServer(server)
+
+
+  test "record makes each directory it makes with mode 0700, and each recording with 0600":
+    # Review finding security-5, 2026-10-29: under umask `0022`, directory and recording, which
+    #   hold passage, page and reply, were readable by every user.
+    let
+      server = startServer()
+      settings = Service.Claude.toSettings(server.port)
+      text = example("lojban")
+      standing = directory / "private"  # made by suite with mode 0755, so record keeps it
+      directory_case = standing / "made" / "below"
+      path = pathRecording(directory_case, "POST " & settings.toBody(text.argument.toPassage))
+      mode_standing = {fpUserRead, fpUserWrite, fpUserExec, fpGroupRead, fpGroupExec,
+          fpOthersRead, fpOthersExec}
+    server.routes = @[(PATH_SERVICE, toReplyMessages(text.answer, settings.model))]
+    createDir(standing)
+    setFilePermissions(standing, mode_standing)
+    check binary.run(settings.toEnvironment, ["--record:" & directory_case,
+        text.argument]).code == 0  # tag printed, recording written
+    check getFilePermissions(standing) == mode_standing  # directory standing keeps its mode
+    for made in [standing / "made", directory_case]:
+      check getFilePermissions(made) == {fpUserRead, fpUserWrite, fpUserExec}  # 0700 where made
+    check getFilePermissions(path) == {fpUserRead, fpUserWrite}  # recording 0600
+    check walkDir(directory_case).toSeq.mapIt(it.path) == @[path]  # recording alone, renamed
+    stopServer(server)
+
+
+  test "directory every user may write is refused, naming it, before any send or read":
+    # Review finding security-4, 2026-10-29: other user may plant link in such directory, so
+    #   replay printed file it named, and record wrote over it.
+    let
+      server = startServer()
+      settings = Service.Claude.toSettings(server.port)
+      text = example("lojban")
+      passage = text.argument.toPassage
+      request = "POST " & settings.toBody(passage)
+      reply = toReplyMessages(text.answer, settings.model)
+      url = urlLoopback(server.port, "/page")
+      shared = directory / "shared"
+      refused = toSuggestion(Failure.Recording, shared & " writable by every user")
+    server.routes = @[
+      (PATH_SERVICE, reply),
+      ("/page", Reply(status: 200, content_type: "text/plain", body: example("alice").argument)),
+    ]
+    writeRecordings(shared, [Recording(label: LABEL_SUITE, request: request, reply: reply)])
+    check chmod(shared.cstring, Mode(0o1777)) == 0  # mode of `/tmp`
+    for (flags, notes) in [
+      (@["--record:" & shared], @[noteCredential(KEY_CREDENTIAL)]),
+      (@["--replay:" & shared], @[]),
+    ]:
+      check binary.run(settings.toEnvironment, flags & @[text.argument]) == toOutcome(refused,
+          passage, settings.model, notes)  # refused, though recording of request stands there
+      check binary.run(settings.toEnvironment, flags & @[url]) == toOutcome(Failure.Recording,
+          refused.detail, notes)  # page refused before its first hop
+    check server.heard.len == 0  # nothing sent
+    check walkDir(shared).toSeq.len == 1  # nothing written beside recording standing
+    stopServer(server)
+
+
+  test "recording past its caps is refused: file before it is read, and body past its cap":
+    # Review finding security-4, 2026-10-29: replay read recording of any size, and replayed
+    #   body past cap of reply.
+    let
+      text = example("lojban")
+      settings = Service.Claude.toSettings
+      passage = text.argument.toPassage
+      request = "POST " & settings.toBody(passage)
+      directory_case = directory / "caps"
+      path = pathRecording(directory_case, request)
+      bytes_file_max = request.len + BYTES_REPLY_MAX + BYTES_FIELDS_MAX
+      whole = Recording(label: LABEL_SUITE, request: request,
+          reply: toReplyMessages(text.answer, settings.model)).toText
+      replay = ["--replay:" & directory_case, text.argument]
+    createDir(directory_case)
+    for size in [bytes_file_max + 1, bytes_file_max + BYTES_REPLY_MAX]:
+      writeFile(path, whole & "x".repeat(size - whole.len))  # read whole, it would be malformed
+      check binary.run([], replay) == toOutcome(toSuggestion(Failure.Recording, path &
+          " larger than " & $bytes_file_max & " bytes"), passage, settings.model,
+          [])  # refused by size alone
+    for count in [BYTES_REPLY_MAX + 1, BYTES_REPLY_MAX + 1_000]:
+      let body = Reply(status: 200, content_type: "application/json", body: "x".repeat(count))
+      writeFile(path, Recording(label: LABEL_SUITE, request: request, reply: body).toText)
+      check getFileSize(path) <= bytes_file_max  # file within its cap, so body is read
+      check binary.run([], replay) == toOutcome(toSuggestion(Failure.Recording, path &
+          " holds body over " & $BYTES_REPLY_MAX & " bytes"), passage, settings.model,
+          [])  # body past cap of reply never replayed
+    writeFile(path, whole & "x".repeat(bytes_file_max - whole.len))
+    check binary.run([], replay).report.startsWith("Recording should hold this request; got `" &
+        path & ":")  # file at its cap is read, and reader refuses what follows body
 
 
   test "page over loopback follows redirect, reads markup, and cuts page past its cap":
