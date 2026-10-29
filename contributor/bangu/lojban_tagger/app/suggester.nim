@@ -139,6 +139,8 @@ type
 const
   USAGE = "Usage: suggester [--record:<directory>|--replay:<directory>] [--] <text>...|<url>|-\n"
     ## Text printed on usage error.
+  RULE_PORT = "name port of one to five digits from 1 to 65535, or none"
+    ## Rule problem of URL argument and of endpoint states where port alone fails `isURL`.
   FLAG_RECORD = "--record:"  ## Prefix of flag naming directory record mode writes.
   FLAG_REPLAY = "--replay:"  ## Prefix of flag naming directory replay mode reads.
   KEY_SERVICE = "LOJBAN_TAGGER_SERVICE"  ## Environment name of service.
@@ -213,8 +215,8 @@ func readCommand(arguments: openArray[string]): Commanded =
   command.argument = rest.join(" ")
   if command.argument.isBlank: return Commanded(is_read: false)
   if rest.len == 1 and rest[0].isPortRefused:
-    return Commanded(is_read: false, problem: "URL should name port of one to five digits " &
-        "from 1 to 65535, or none; got `" & rest[0].dropSecrets.toPrintable(RUNES_SHOWN) & "`.")
+    return Commanded(is_read: false, problem: "URL should " & RULE_PORT & "; got `" &
+        rest[0].dropSecrets.toPrintable(RUNES_SHOWN) & "`.")
   command.is_url = rest.len == 1 and rest[0].isURL
   command.is_input = rest == @["-"]
   Commanded(is_read: true, command: command)
@@ -231,6 +233,8 @@ proc readInput(): Option[string] =
 
 func readSettings(service, endpoint, model, effort, workspace: string): Configured =
   ## Read settings from environment values; empty value takes default of service.
+  ##   Endpoint refused names its fault: port where port alone fails `isURL` (`isPortRefused`),
+  ##     else shape of URL; scheme, https or http to loopback host, only where URL is well formed.
   ##   Workspace is for `claude` alone: `OPENING_WORKSPACE`, then visible ASCII alone, so no line
   ##     break splits header, at most `BYTES_WORKSPACE_MAX` bytes; empty names none.
 
@@ -248,6 +252,12 @@ func readSettings(service, endpoint, model, effort, workspace: string): Configur
     model_used = if model.len > 0: model else: LUT_MODEL_BY_SERVICE[chosen]
   if endpoint_used.len == 0:
     return refuse("Endpoint should be named for service `" & $chosen & "`", KEY_ENDPOINT)
+  if not endpoint_used.isURL:
+    let rule =
+      if endpoint_used.isPortRefused: RULE_PORT
+      else: "be http or https URL with host and no whitespace"
+    return Configured(is_valid: false, problem: "Endpoint should " & rule & "; got `" &
+        endpoint_used.toPrintable(RUNES_SHOWN) & "` for `" & KEY_ENDPOINT & "`.")
   if not endpoint_used.isEndpoint:
     return Configured(is_valid: false, problem: "Endpoint should be https, or http to " &
         "loopback host; got `" & endpoint_used.toPrintable(RUNES_SHOWN) & "` for `" &
