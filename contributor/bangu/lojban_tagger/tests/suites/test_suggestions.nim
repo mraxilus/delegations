@@ -1776,8 +1776,10 @@ suite "Internal: Reply":
           "usage": {"input_tokens": 412, "output_tokens": 0},
         },
       )
+    # Regression, found in review (wire-6, 2026-10-29): detail was `cyber` alone, so explanation
+    #   that refusals page asks to display was dropped.
     check readReply(Service.Claude, found).failureRead ==
-        some((Failure.Declined, "cyber: " & cyber))  # review finding wire-6, 2026-10-29
+        some((Failure.Declined, "cyber: " & cyber))  # case as found
 
     # Compose detail of every refusal, each field absent, null or given.
     let fields = [
@@ -1909,8 +1911,10 @@ suite "Internal: Reply":
             "metadata": {"error_type": "rate_limit_exceeded"}}},
       ),
     )
+    # Regression, found in review (logic-4, 2026-10-29): explain said status should be 2xx,
+    #   though OpenRouter answered 200 and put error inside body.
     check found.explain == "Service should answer without error; got `429 " &
-        "rate_limit_exceeded: Rate limit exceeded`."  # review finding logic-4, 2026-10-29
+        "rate_limit_exceeded: Rate limit exceeded`."  # case as found
     let bodies = [
       $ %*{"type": "error", "error": {"type": "api_error", "message": "Internal error"}},
       $ %*{"error": {"code": 502, "message": "Provider down", "metadata": {
