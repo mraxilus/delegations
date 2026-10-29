@@ -34,6 +34,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[json, options, sequtils, strutils]
+from std/unicode import runes
 
 import ./[commands, dictionary, forms, tags]
 import ./lists/gismu
@@ -192,6 +193,16 @@ const
     0x2069,
   ]
     ## Marks that reorder text on terminal, so report escapes them.
+  RUNES_BLANK = [
+    0x0000..0x0020, 0x007F..0x00A0, 0x00AD..0x00AD, 0x1680..0x1680, 0x2000..0x200F,
+    0x2028..0x202F, 0x205F..0x2064, 0x2066..0x2069, 0x3000..0x3000, 0xFEFF..0xFEFF,
+  ]
+    ## Code points no reader sees, merged as ranges: `White_Space` of Unicode, i.e. `9`-`D`, `20`,
+    ##   `85`, `A0`, `1680`, `2000`-`200A`, `2028`, `2029`, `202F`, `205F`, `3000`; controls of
+    ##   category Cc, `0`-`1F` and `7F`-`9F`; default-ignorable format marks `AD`, `200B`-`200F`,
+    ##   `202A`-`202E`, `2060`-`2064`, `2066`-`2069` and `FEFF`.
+    ##   Project choice: common format marks alone, so rarer default-ignorables, as U+061C, U+180E,
+    ##     U+206A to U+206F and tags, count as visible. Cost: page of them alone is sent.
   REPLACEMENT = "\xEF\xBF\xBD"  ## U+FFFD, which stands for each ill-formed subpart.
   CHARACTERS_NAME = {'a'..'z', 'A'..'Z', '0'..'9', '-', ':'}
     ## Characters name of element may hold.
@@ -350,6 +361,14 @@ func toPrintable*(text: string, runes_max: int): string =
       result.add repaired[i..<i+size]
     inc i, size
     inc count
+
+
+func isBlank*(text: string): bool =
+  ## Test text holds no visible character: each code point is in `RUNES_BLANK`; ill-formed UTF-8
+  ##   counts as visible, since repair puts visible U+FFFD in its place.
+  for rune in repairEncoding(text).text.runes:
+    if not RUNES_BLANK.anyIt(int(rune) in it): return false
+  true
 
 
 func dropMark(text: string): string =
@@ -642,6 +661,7 @@ func readPage*(url: string, reply: Reply): Paged =
   ##     6.1 and encoding sniffing of HTML 13.2.3.2, step 1, read it: UTF-8 mark wins over header
   ##     and meta; UTF-16 mark is refused, since UTF-16 is never decoded.
   ##   Mark is dropped before type is read off body, so it hides no markup.
+  ##   Passage holding no visible character (`isBlank`) gives no text, so it is never sent.
   if reply.status notin 200..299: return refusePage("status " & $reply.status)
   if not reply.content_encoding.isIdentity:
     return refusePage("content encoding " & reply.content_encoding)
@@ -662,7 +682,7 @@ func readPage*(url: string, reply: Reply): Paged =
   let passage = toPassage(
     if is_markup: decoded.get.readMarkup else: decoded.get, url, reply.is_cut
   )
-  if passage.text.strip.len == 0: return refusePage("no text")
+  if passage.text.isBlank: return refusePage("no text")
   Paged(is_read: true, passage: passage)
 
 
