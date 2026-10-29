@@ -120,6 +120,7 @@ type
     at: int  ## Byte read next.
     line: int  ## Line of `at`, counted from one.
     line_piece: int  ## Line piece read last opens on, so refusal names faulty line itself.
+    at_piece: int  ## Byte piece read last opens at, so refusal echoes what piece holds.
 
   Reference = object  ## Define reference as five components, i.e. R of RFC 3986 section 5.2.
     scheme: Option[string]  ## Scheme, before `:`; `none` where reference holds none.
@@ -369,7 +370,7 @@ func toText*(recording: Recording): string =
 
 func readLine(cursor: var Cursor): Option[string] =
   ## Read line at cursor, its break consumed; `none` where text ends first.
-  cursor.line_piece = cursor.line
+  (cursor.line_piece, cursor.at_piece) = (cursor.line, cursor.at)
   let close = cursor.text.find('\n', cursor.at)
   if close < 0: return none(string)
   result = some(cursor.text[cursor.at..<close])
@@ -379,7 +380,7 @@ func readLine(cursor: var Cursor): Option[string] =
 
 func readBlock(cursor: var Cursor, count: int): Option[string] =
   ## Read `count` bytes at cursor and line break after them; `none` where text holds fewer.
-  cursor.line_piece = cursor.line
+  (cursor.line_piece, cursor.at_piece) = (cursor.line, cursor.at)
   if count < 0 or cursor.at + count >= cursor.text.len or cursor.text[cursor.at+count] != '\n':
     return none(string)
   result = some(cursor.text[cursor.at..<cursor.at+count])
@@ -398,32 +399,43 @@ func readRecording*(text: string): Recorded =
   ## Read recording file; refuse at first malformed line, naming it, as `readIndex` does.
   var cursor = Cursor(text: text, line: 1)
 
-  func refuse(cursor: Cursor, problem: string): Recorded =
-    ## Build outcome refusing recording at line piece read last opens on: faulty line itself.
-    Recorded(is_read: false, line: cursor.line_piece, problem: problem)
+  func refuse(cursor: Cursor, shape: string): Recorded =
+    ## Build outcome refusing line piece read last on its own line: shape it should have, then
+    ##   line it holds made printable, empty where text ends before line break.
+    let
+      close = cursor.text.find('\n', cursor.at_piece)
+      held = if close < 0: "" else: cursor.text[cursor.at_piece..<close].toPrintable(80)
+    Recorded(is_read: false, line: cursor.line_piece, problem: shape & "; got `" & held & "`.")
+
+  func refuseBlock(cursor: Cursor, shape: string): Recorded =
+    ## Build outcome refusing block read last on line it opens on: shape it should have, then
+    ##   bytes left from where it opens.
+    let left = cursor.text.len - cursor.at_piece
+    Recorded(is_read: false, line: cursor.line_piece, problem: shape & "; got `" & $left &
+        "` bytes left.")
 
   let header = cursor.readLine
   if header.isNone or header.get != HEADER_RECORDING:
-    return cursor.refuse("Recording should open with `" & HEADER_RECORDING & "`; got `" &
-        (if header.isSome: header.get.toPrintable(80) else: "") & "`.")
+    return cursor.refuse("Recording should open with `" & HEADER_RECORDING & "`")
   var recording: Recording
   let label = cursor.readField("label")
-  if label.isNone: return cursor.refuse("Line should be `label <text>`.")
+  if label.isNone: return cursor.refuse("Line should be `label <text>`")
   recording.label = label.get
   let count_request = cursor.readField("request")
   if count_request.isNone or not count_request.get.allIt(it in Digits) or
       count_request.get.len notin 1..9:
-    return cursor.refuse("Line should be `request <bytes>`.")
+    return cursor.refuse("Line should be `request <bytes>`")
   let request = cursor.readBlock(count_request.get.parseInt)
-  if request.isNone: return cursor.refuse("Request should hold bytes its line counts.")
+  if request.isNone:
+    return cursor.refuseBlock("Request should hold bytes its line counts, then line break")
   recording.request = request.get
   let status = cursor.readField("status")
   if status.isNone or not status.get.allIt(it in Digits) or status.get.len notin 1..3:
-    return cursor.refuse("Line should be `status <code>`, one to three digits.")
+    return cursor.refuse("Line should be `status <code>`, one to three digits")
   recording.reply.status = status.get.parseInt
   for (name, field) in [("content-type", 0), ("content-encoding", 1), ("location", 2)]:
     let value = cursor.readField(name)
-    if value.isNone: return cursor.refuse("Line should be `" & name & " <value>`.")
+    if value.isNone: return cursor.refuse("Line should be `" & name & " <value>`")
     case field
     of 0: recording.reply.content_type = value.get
     of 1: recording.reply.content_encoding = value.get
@@ -433,13 +445,15 @@ func readRecording*(text: string): Recorded =
     words = if body.isSome: body.get.split(' ') else: @[]
   if words.len != 2 or words[0] notin ["whole", "cut"] or not words[1].allIt(it in Digits) or
       words[1].len notin 1..9:
-    return cursor.refuse("Line should be `body <whole|cut> <bytes>`.")
+    return cursor.refuse("Line should be `body <whole|cut> <bytes>`")
   recording.reply.is_cut = words[0] == "cut"
   let bytes = cursor.readBlock(words[1].parseInt)
-  if bytes.isNone: return cursor.refuse("Body should hold bytes its line counts.")
+  if bytes.isNone:
+    return cursor.refuseBlock("Body should hold bytes its line counts, then line break")
   recording.reply.body = bytes.get
   if cursor.at != text.len:  # Byte after body stands on line of cursor, opening no piece.
-    return Recorded(is_read: false, line: cursor.line, problem: "Recording should end after body.")
+    return Recorded(is_read: false, line: cursor.line, problem: "Recording should end after " &
+        "body; got `" & text[cursor.at .. ^1].toPrintable(80) & "`.")
   Recorded(is_read: true, recording: recording)
 
 
