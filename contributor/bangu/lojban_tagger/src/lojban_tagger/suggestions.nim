@@ -89,7 +89,7 @@ type
     Declined  ## Model or classifier declined; detail is category or refusal text.
     Truncated  ## Answer stopped at token or context limit; detail is stop reason.
     Malformed  ## Reply holds no answer of schema; detail says what is missing.
-    Word  ## Word of answer is no gismu or cmavo of list; detail is word.
+    Word  ## Word of answer is no gismu or cmavo of list, or is past its cap; detail is word.
     Cmavo  ## Answer ends in cmavo, which 4.11 step 2 forbids; detail is tanru.
     Long  ## Answer holds more than `COUNT_WORDS_MAX` words; detail is count.
     Readback  ## Rendered lujvo reads back as no tag or other tag, as `brod` does; detail is lujvo.
@@ -103,6 +103,9 @@ type
     of false:
       failure*: Failure  ## Why no tag.
       detail*: string  ## Offending value, made printable.
+      is_past_cap*: bool = false
+        ## Word held over `BYTES_ELEMENT_MAX` bytes, so reader never read it; set when failure is
+        ##   made, since escapes lengthen detail.
 
 
 const
@@ -687,9 +690,14 @@ func toJSON(text: string): Option[JsonNode] =
       result = none(JsonNode)
 
 
-func fail(failure: Failure, detail: string): Suggestion =
-  ## Build suggestion that failed, detail made printable.
-  Suggestion(is_suggested: false, failure: failure, detail: detail.toPrintable(RUNES_SHOWN))
+func fail(failure: Failure, detail: string, is_past_cap = false): Suggestion =
+  ## Build suggestion that failed, detail made printable; `is_past_cap` marks word never read.
+  Suggestion(
+    is_suggested: false,
+    failure: failure,
+    detail: detail.toPrintable(RUNES_SHOWN),
+    is_past_cap: is_past_cap,
+  )
 
 
 func readAnswer(text, model: string): Suggestion =
@@ -709,7 +717,7 @@ func readAnswer(text, model: string): Suggestion =
   for item in items:
     if item.kind != JString: return fail(Failure.Malformed, "tanru holds no string: " & $item)
     let element = item.getStr
-    if element.len > BYTES_ELEMENT_MAX: return fail(Failure.Word, element)
+    if element.len > BYTES_ELEMENT_MAX: return fail(Failure.Word, element, is_past_cap = true)
     let reading = element.readTag
     if reading.is_tag:
       words.add reading.tag.words
@@ -825,6 +833,14 @@ func readReply*(service: Service, reply: Reply): Suggestion =
 func explain*(suggestion: Suggestion): string =
   ## Render why no tag was suggested, ending in offending value; `Word` and `Readback` end in
   ##   `explain` of their reading (`commands.nim`), so refusal wording stays in one place.
+  ##   Word past cap is named by cap, as `readAnswer` decided when it failed, never by detail.
+  ##   Detail reading as tag has no refusal, so its wording ends in detail alone; never raises.
+
+  func explainReading(heading, detail: string): string =
+    ## Render heading, then why reader refuses detail; heading alone where detail reads as tag.
+    let reading = detail.readTag
+    if reading.is_tag: heading & "; got `" & detail & "`." else: heading & ". " & reading.explain
+
   let detail = suggestion.detail
   case suggestion.failure
   of Failure.Network: "Service or page should answer; got `" & detail & "`."
@@ -836,14 +852,14 @@ func explain*(suggestion: Suggestion): string =
       "passage; got `" & detail & "`."
   of Failure.Malformed: "Reply should hold answer of schema; got `" & detail & "`."
   of Failure.Word:
-    if suggestion.detail.len > BYTES_ELEMENT_MAX:
+    if suggestion.is_past_cap:
       "Word of answer should hold at most " & $BYTES_ELEMENT_MAX & " bytes; got `" & detail & "`."
-    else: "Answer should name gismu or cmavo of list. " & suggestion.detail.readTag.explain
+    else: explainReading("Answer should name gismu or cmavo of list", detail)
   of Failure.Cmavo: "Answer should end in gismu, as CLL 4.11 step 2 ends tanru; got `" &
       detail & "`."
   of Failure.Long: "Answer should hold at most " & $COUNT_WORDS_MAX & " words; got `" & detail &
       "`."
-  of Failure.Readback: "Form should read back as its tag. " & suggestion.detail.readTag.explain
+  of Failure.Readback: explainReading("Form should read back as its tag", detail)
 
 
 func toReport*(suggestion: Suggestion, passage: Passage, model_asked: string): string =
