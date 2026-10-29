@@ -8,6 +8,7 @@
 ##   |---------------------------|--------------------------------------------------------|
 ##   | suggester <text>...       | ask service for tag of text; print tag                 |
 ##   | suggester <url>           | fetch page, then ask service for tag of its text       |
+##   | suggester -               | read text of standard input, as text given goes        |
 ##   | --record:<directory>      | replay page of 2xx or 3xx, and service reply reading   |
 ##   |                           | as tag or paid failure; send rest; write each reply    |
 ##   | --replay:<directory>      | read every exchange from recordings; send nothing      |
@@ -22,6 +23,9 @@
 ##     Cost: text opening with `-` needs `--` before it.
 ##   Text given that reads as tag already asks no service, so it needs no credential; text given
 ##     holding no visible character (`isBlank`) exits 2, as page holding none gives no text.
+##   `-` reads passage from standard input, so it never stands on command line, which `ps` shows
+##     every user; at most `BYTES_PAGE_MAX` bytes, as page, else exit 2. Text read goes as text
+##     given: shortcut, passage, request; URL it holds is text, never fetched.
 ##   Service, endpoint, model, effort and credential come from environment on each run, as
 ##     index path does for `tagger`: credential exists only at run time, and rest must agree
 ##     with it (Article II.2). Credential is read from `LOJBAN_TAGGER_API_KEY`, then from usual
@@ -62,8 +66,9 @@ type
   Command = object  ## Define what arguments ask.
     mode: Mode  ## How run reaches exchanges.
     directory: string  ## Directory of recordings; empty for live run.
-    argument: string  ## Text given, joined by one space, or URL.
+    argument: string  ## Text given, joined by one space, or URL; text of input once read.
     is_url: bool  ## Argument is one http or https URL, so page is fetched.
+    is_input: bool  ## Argument is `-` alone, so passage is read from standard input.
 
   Configured = object  ## Define outcome of reading settings from environment.
     case is_valid: bool  ## Every variable read is valid.
@@ -92,7 +97,7 @@ type
 
 
 const
-  USAGE = "Usage: suggester [--record:<directory>|--replay:<directory>] [--] <text>...|<url>\n"
+  USAGE = "Usage: suggester [--record:<directory>|--replay:<directory>] [--] <text>...|<url>|-\n"
     ## Text printed on usage error.
   FLAG_RECORD = "--record:"  ## Prefix of flag naming directory record mode writes.
   FLAG_REPLAY = "--replay:"  ## Prefix of flag naming directory replay mode reads.
@@ -148,7 +153,17 @@ func readCommand(arguments: openArray[string]): Option[Command] =
   command.argument = rest.join(" ")
   if command.argument.isBlank: return none(Command)
   command.is_url = rest.len == 1 and rest[0].isURL
+  command.is_input = rest == @["-"]
   some(command)
+
+
+proc readInput(): Option[string] =
+  ## Read passage from standard input, at most `BYTES_PAGE_MAX` bytes, as page is read; `none`
+  ##   where input holds more, so huge input never fills memory; `IOError` where it cannot be read.
+  ##   Cost: buffer of cap is allocated, whatever input holds.
+  var text = newString(BYTES_PAGE_MAX + 1)
+  text.setLen(stdin.readBuffer(text[0].addr, text.len))
+  if text.len > BYTES_PAGE_MAX: none(string) else: some(text)
 
 
 func readSettings(service, endpoint, model, effort: string): Configured =
@@ -325,7 +340,26 @@ proc main(): int =
   if parsed.isNone:
     stderr.write USAGE
     return 2
-  let command = parsed.get
+  var command = parsed.get
+
+  # Read passage of standard input, capped as page, before any setting; it goes as text given.
+  if command.is_input:
+    try:
+      let text = readInput()
+      if text.isNone:
+        stderr.writeLine "Text on standard input should hold at most " & $BYTES_PAGE_MAX &
+            " bytes; got more than `" & $BYTES_PAGE_MAX & "`."
+        return 2
+      command.argument = text.get
+    except IOError as error:
+      stderr.writeLine "Text on standard input should be readable; got `" &
+          error.msg.splitLines[0].toPrintable(RUNES_SHOWN) & "`."
+      return 2
+    if command.argument.isBlank:
+      stderr.write USAGE
+      return 2
+
+  # Answer text given as tag at once; else read settings and credential, then ask service.
   if not command.is_url:
     let given = command.argument.readTagGiven
     if given.isSome and not given.get.is_suggested:
