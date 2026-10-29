@@ -8,7 +8,8 @@
 ##   |---------------------------|--------------------------------------------------------|
 ##   | suggester <text>...       | ask service for tag of text; print tag                 |
 ##   | suggester <url>           | fetch page, then ask service for tag of its text       |
-##   | --record:<directory>      | replay recorded reply of 2xx or 3xx; send rest; write  |
+##   | --record:<directory>      | replay page of 2xx or 3xx, and service reply reading   |
+##   |                           | as tag or paid failure; send rest; write each reply    |
 ##   | --replay:<directory>      | read every exchange from recordings; send nothing      |
 ##   |---------------------------|--------------------------------------------------------|
 ##   Exit: 0 tag printed, 1 no tag and failure named, 2 usage or settings error, nothing sent.
@@ -28,6 +29,11 @@
 ##   Record mode makes its directory before it sends, so directory it cannot make refuses run
 ##     with `Recording`, and nothing is paid for; recording it cannot write after reply is named
 ##     in note, and tag still prints. Cost: failed send leaves empty directory behind.
+##   Record mode replays service reply by how `readReply` reads it, never by status alone: tag,
+##     and failure of answer service bills, replay, so no answer is paid twice; reply reading as
+##     `Status` goes out again, as OpenRouter answers 200 holding provider error, which it does
+##     not bill and which passes.
+##     Cost: recorded reply is read twice, once to choose and once to report.
 
 {.experimental: "strictFuncs".}
 
@@ -43,7 +49,9 @@ import ./exchanges
 type
   Mode {.pure.} = enum  ## Define how run reaches each exchange.
     Live  ## Send every exchange; write nothing.
-    Record  ## Replay recording of 2xx or 3xx for same request; send rest, and write each reply.
+    Record
+      ## Replay recording of same request: page hop of 2xx or 3xx, or service reply reading as
+      ##   tag or failure of answer service bills; send rest, and write each reply.
     Replay  ## Read every exchange from recordings; send nothing, read no credential.
 
   Command = object  ## Define what arguments ask.
@@ -178,17 +186,29 @@ proc findCredential(service: Service): Credentialed =
   Credentialed(is_read: false, problem: "Credential should be set in " & named & "; got none.")
 
 
+func isReplayed(reply: Reply, service: Option[Service]): bool =
+  ## Test record mode replays recorded reply: page hop of 2xx or 3xx; reply of `service` reading
+  ##   as tag or as failure of answer service bills, never as `Status`, so error by status, error
+  ##   inside 2xx and redirect go out again.
+  if service.isNone: return reply.status in 200..399
+  let suggestion = service.get.readReply(reply)
+  suggestion.is_suggested or suggestion.failure != Failure.Status
+
+
 proc exchange(
   request, url, body: string;
   headers: seq[(string, string)];
   credential: Option[Credential];
+  service: Option[Service];
   bytes_max, ms_deadline: int;
   command: Command;
   context: var SslContext;
 ): Exchanged =
   ## Answer one exchange by mode: replay recording, or send, and write recording in record mode.
+  ##   `service` names wire format of service exchange, whose reply record mode reads before it
+  ##     replays it (`isReplayed`); `none` for page hop.
   ##   Record mode makes directory before sending, refusing where it cannot; write failing after
-  ##   reply is named in note, and reply is kept.
+  ##     reply is named in note, and reply is kept.
   let path = command.directory / (request.stamp & ".recording")
   if command.mode != Mode.Live and fileExists(path):
     let recorded = readFile(path).readRecording
@@ -198,7 +218,7 @@ proc exchange(
     if recorded.recording.request != request:
       return Exchanged(is_replied: false, failure: Failure.Recording,
           detail: (path & " holds other request").toPrintable(RUNES_SHOWN))
-    if command.mode == Mode.Replay or recorded.recording.reply.status in 200..399:
+    if command.mode == Mode.Replay or recorded.recording.reply.isReplayed(service):
       let label = recorded.recording.label.toPrintable(RUNES_SHOWN)
       return Exchanged(is_replied: true, reply: recorded.recording.reply,
           note: "Reply replayed from `" & path & "`: " & label & ".")
@@ -252,7 +272,7 @@ proc fetch(url: string, command: Command, context: var SslContext): Fetched =
     notes: seq[string]
   for hop in 0..COUNT_REDIRECTS_MAX:
     let exchanged = exchange("GET " & current, current, "", @[], none(Credential),
-        BYTES_PAGE_MAX, MS_DEADLINE_PAGE, command, context)
+        none(Service), BYTES_PAGE_MAX, MS_DEADLINE_PAGE, command, context)
     if not exchanged.is_replied:
       return Fetched(notes: notes, is_read: false, failure: exchanged.failure,
           detail: exchanged.detail)
@@ -334,7 +354,8 @@ proc main(): int =
   let
     body = settings.toBody(passage)
     exchanged = exchange("POST " & body, settings.endpoint, body, settings.toHeaders,
-        credential, BYTES_REPLY_MAX, MS_DEADLINE_SERVICE, command, context)
+        credential, some(settings.service), BYTES_REPLY_MAX, MS_DEADLINE_SERVICE, command,
+        context)
     suggestion =
       if exchanged.is_replied: settings.service.readReply(exchanged.reply)
       else: Suggestion(is_suggested: false, failure: exchanged.failure, detail: exchanged.detail)
