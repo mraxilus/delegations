@@ -134,10 +134,13 @@ const
   NAME_SCHEMA = "lojban_tag"  ## Name Chat Completions gives schema of answer.
   RUNES_SHOWN = 200  ## Most characters of outside text report shows.
   RUNES_ANSWER_SHOWN = 80  ## Most characters of malformed answer report shows.
-  ELEMENTS_SKIPPED = [
-    "iframe", "math", "noscript", "object", "script", "style", "svg", "template",
-  ]
-    ## Elements whose content is no text of page.
+  ELEMENTS_RAW = ["iframe", "noscript", "script", "style"]
+    ## Elements whose content is raw text, and no text of page: HTML tokenizer reads no markup
+    ##   inside them until own closing element.
+  ELEMENTS_SKIPPED = ["math", "object", "svg", "template"]
+    ## Elements whose content is markup, and no text of page.
+  CHARACTERS_CLOSING_RAW = {'\t', '\n', '\f', '\r', ' ', '/', '>'}
+    ## Characters after name by which `</` and name close raw text, as HTML tokenizer takes them.
   ELEMENTS_BLOCK = [
     "address", "article", "aside", "blockquote", "br", "dd", "div", "dl", "dt", "figcaption",
     "footer", "h1", "h2", "h3", "h4", "h5", "h6", "header", "hr", "li", "main", "nav", "ol", "p",
@@ -363,9 +366,23 @@ func readReference(markup: string, at: int): tuple[text: string, size: int] =
   ("&", 1)
 
 
+func findClosingRaw(markup, name: string, at: int): int =
+  ## Find own closing element of raw text `name` from `at`: `</`, name in any case, then
+  ##   character of `CHARACTERS_CLOSING_RAW`; `markup.len` where none, so raw text runs to end.
+  var candidate = markup.find("</", at)
+  while candidate >= 0:
+    let after = candidate + 2 + name.len
+    if after < markup.len and markup[after] in CHARACTERS_CLOSING_RAW and
+        cmpIgnoreCase(markup[candidate+2..<after], name) == 0:
+      return candidate
+    candidate = markup.find("</", candidate + 2)
+  markup.len
+
+
 func readMarkup(markup: string): string =
   ## Read markup as text in one pass: comments, declarations and skipped elements dropped,
   ##   block edges as line breaks, references decoded, spaces collapsed, empty lines dropped.
+  ##   Raw text ends at own closing element alone, whatever it holds, wherever element stands.
   var
     text = newStringOfCap(markup.len div 2)
     skipping = ""
@@ -403,6 +420,9 @@ func readMarkup(markup: string): string =
         inc close
       if close >= markup.len: break
       i = close + 1
+      if not is_closing and name in ELEMENTS_RAW:
+        if markup[close-1] != '/': i = markup.findClosingRaw(name, i)
+        continue
       if skipping.len > 0:
         if is_closing and name == skipping: skipping = ""
         continue
