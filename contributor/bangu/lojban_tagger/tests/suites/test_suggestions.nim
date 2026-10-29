@@ -158,6 +158,10 @@ const
     ## Body of 401 Messages API gave keyless request, captured 2026-10-28.
   CAPTURE_CHAT = "{\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}"
     ## Body of 401 chat completion of OpenRouter gave keyless request, captured 2026-10-28.
+  BODY_GATEWAY = "<html><body>Bad Gateway</body></html>"
+    ## Body of error page gateway serves: markup, which neither wire format reads.
+  CODINGS_OTHER = ["gzip", "GZIP", "Br", "deflate", "Compress", "x-gzip", "zstd", "identity, br"]
+    ## Content codings other than identity, in casings servers write, and two codings listed.
   GISMU_STEM_SHARED = ["brodi", "brodo", "brodu"]
     ## Gismu holding no short rafsi, so only rafsi `$` writes for them before head is `brod`,
     ##   which several share.
@@ -1120,6 +1124,189 @@ func prescanReference(bytes: string): tuple[label: string, is_pragma: bool] =
 
 
 
+#[ Replies ]#
+
+func bodyAnswer(service: Service): string =
+  ## Render body of reply answering `ciska`, as wire format of service documents it.
+  let answer = toAnswer(["ciska"])
+  if service == Service.Claude: toMessage(%*[{"type": "text", "text": answer}]).body
+  else: toCompletion(%*{"finish_reason": "stop", "message": {"content": answer}}).body
+
+
+func envelopeServer(service: Service): string =
+  ## Render envelope of server error, as wire format of service documents it.
+  if service == Service.Claude:
+    $ %*{"type": "error", "error": {"type": "api_error", "message": "Internal error"}}
+  else:
+    $ %*{"error": {"code": 500, "message": "Internal error", "metadata": {
+      "error_type": "server"}}}
+
+
+func bodiesError(): array[3, string] =
+  ## List bodies naming error: envelope of each wire format, and choice ending in error.
+  [
+    envelopeServer(Service.Claude),
+    $ %*{"error": {"code": 502, "message": "Provider down", "metadata": {
+        "error_type": "provider_unavailable"}}},
+    toCompletion(
+      %*{"finish_reason": "error", "message": {"content": "partial"},
+          "error": {"code": 502, "message": "Provider disconnected mid-stream"}},
+    ).body,
+  ]
+
+
+func rowsMessages(): seq[(Reply, (Failure, string))] =
+  ## List reply table of Messages API: each reply with failure and detail it reads as under
+  ##   `claude`, so every failure reply alone can name is reached.
+  let answer = bodyAnswer(Service.Claude)
+  @[
+    (Reply(status: 200, body: answer, is_cut: true),
+        (Failure.Malformed, "reply over 1048576 bytes")),
+    (Reply(status: 200, content_encoding: "gzip", body: answer),
+        (Failure.Malformed, "content encoding gzip")),
+    (Reply(status: 302, location: "https://example.org/v1"),
+        (Failure.Status, "302 to https://example.org/v1")),
+    (Reply(status: 200, body: "[]"), (Failure.Malformed, "reply is no JSON object")),
+    (Reply(status: 200, body: "<html>"), (Failure.Malformed, "reply is no JSON object")),
+    (Reply(status: 200, body: "[".repeat(COUNT_NESTED)),
+        (Failure.Malformed, "reply is no JSON object")),
+    (toReply(%*{"type": "error", "error": {"type": "overloaded_error",
+        "message": "Overloaded"}}, 529), (Failure.Status, "529 overloaded_error: Overloaded")),
+    (Reply(status: 413, body: "<html>Request Entity Too Large</html>"), (Failure.Status, "413")),
+    (toReply(%*{"content": [], "stop_reason": "refusal", "stop_details": nil}),
+        (Failure.Declined, "none")),
+    (toReply(%*{"content": [], "stop_reason": "refusal", "stop_details": {"type": "refusal",
+        "category": "cyber", "recommended_model": "claude-opus-4-8"}}),
+        (Failure.Declined, "cyber, recommended model claude-opus-4-8")),
+    (toReply(%*{"content": [], "stop_reason": "refusal", "stop_details": {"type": "refusal",
+        "category": "bio", "recommended_model": nil}}), (Failure.Declined, "bio")),
+    (toReply(%*{"content": [], "stop_reason": "max_tokens"}),
+        (Failure.Truncated, "max_tokens")),
+    (toReply(%*{"content": [], "stop_reason": "model_context_window_exceeded"}),
+        (Failure.Truncated, "model_context_window_exceeded")),
+    (toReply(%*{"content": [], "stop_reason": "tool_use"}),
+        (Failure.Malformed, "stop reason tool_use")),
+    (toReply(%*{"content": [], "stop_reason": "pause_turn"}),
+        (Failure.Malformed, "stop reason pause_turn")),
+    (toReply(%*{"content": [], "stop_reason": "stop_sequence"}),
+        (Failure.Malformed, "stop reason stop_sequence")),
+    (toReply(%*{"content": [], "stop_reason": "unforeseen"}),
+        (Failure.Malformed, "stop reason unforeseen")),
+    (toReply(%*{"content": []}), (Failure.Malformed, "stop reason absent")),
+    (toMessage(%*[{"type": "thinking", "thinking": "", "signature": "x"}]),
+        (Failure.Malformed, "no text block")),
+    (toMessage(%*[{"type": "text", "text": "I cannot help."}]),
+        (Failure.Malformed, "answer is no JSON object: I cannot help.")),
+    (toMessage(%*[{"type": "text", "text": toAnswer(["datna"])}]), (Failure.Word, "datna")),
+    (toMessage(%*[{"type": "text", "text": toAnswer(["ciska", "se"])}]),
+        (Failure.Cmavo, "ciska+se")),
+    (toMessage(%*[{"type": "text", "text": newSeqWith(7, "ciska").toAnswer}]),
+        (Failure.Long, "7")),
+    (toMessage(%*[{"type": "text", "text": toAnswer(["brodi", "ciska"])}]),
+        (Failure.Readback, "brodyci'a")),
+  ]
+
+
+func rowsRefusal(): seq[(Reply, string)] =
+  ## List refusal of every composition of `stop_details`, each field absent, null or given, with
+  ##   detail each reads as: category, then recommended model, then explanation.
+  let fields = [
+    ("category", "bio"), ("recommended_model", "claude-opus-4-8"),
+    ("explanation", "This request was declined because it could enable biological harm."),
+  ]
+  for category in [none(JsonNode), some(newJNull()), some(%fields[0][1])]:
+    for model in [none(JsonNode), some(newJNull()), some(%fields[1][1])]:
+      for explanation in [none(JsonNode), some(newJNull()), some(%fields[2][1])]:
+        let details = %*{"type": "refusal"}
+        for (key, field) in [(fields[0][0], category), (fields[1][0], model),
+            (fields[2][0], explanation)]:
+          if field.isSome: details[key] = field.get
+        let
+          reply = toReply(%*{"content": [], "stop_reason": "refusal", "stop_details": details})
+          detail =
+              (if category.textField.len > 0: category.textField else: "none") &
+              (if model.textField.len > 0: ", recommended model " & model.textField else: "") &
+              (if explanation.textField.len > 0: ": " & explanation.textField else: "")
+        result.add (reply, detail)
+
+
+func rowsCompletion(): seq[(Reply, (Failure, string))] =
+  ## List reply table of chat completion: each reply with failure and detail it reads as under
+  ##   either chat format, so every failure reply alone can name is reached.
+  @[
+    (Reply(status: 200, body: "{}", is_cut: true),
+        (Failure.Malformed, "reply over 1048576 bytes")),
+    (Reply(status: 200, content_encoding: "br", body: "{}"),
+        (Failure.Malformed, "content encoding br")),
+    (Reply(status: 307, location: "/v1"), (Failure.Status, "307 to /v1")),
+    (Reply(status: 200, body: "\"text\""), (Failure.Malformed, "reply is no JSON object")),
+    (toReply(%*{"error": {"code": 403, "message": "Flagged", "metadata": {
+        "error_type": "refusal"}}}, 403), (Failure.Declined, "Flagged")),
+    (toReply(%*{"error": {"code": 403, "message": "Flagged", "metadata": {
+        "error_type": "content_policy_violation"}}}, 403), (Failure.Declined, "Flagged")),
+    (toReply(%*{"error": {"code": 429, "message": "Rate limit exceeded", "metadata": {
+        "error_type": "rate_limit_exceeded"}}}, 429),
+        (Failure.Status, "429 rate_limit_exceeded: Rate limit exceeded")),
+    (Reply(status: 502, body: "Bad Gateway"), (Failure.Status, "502")),
+    (toReply(%*{"id": "gen-suite", "error": {"code": 502, "message": "Provider down",
+        "metadata": {"error_type": "provider_unavailable"}}}),
+        (Failure.Status, "502 provider_unavailable: Provider down")),
+    (toReply(%*{"id": "gen-suite", "error": {"code": 403, "message": "Declined",
+        "metadata": {"error_type": "refusal"}}}), (Failure.Declined, "Declined")),
+    (toReply(%*{"id": "gen-suite"}), (Failure.Malformed, "no choice")),
+    (toReply(%*{"choices": []}), (Failure.Malformed, "no choice")),
+    (toCompletion(%*{"finish_reason": "error", "message": {"content": "partial"},
+        "error": {"code": 502, "message": "Provider disconnected mid-stream"}}),
+        (Failure.Status, "502: Provider disconnected mid-stream")),
+    (toCompletion(%*{"finish_reason": "error", "message": {"content": "partial"}}),
+        (Failure.Status, "200: ")),
+    (toCompletion(%*{"finish_reason": "content_filter", "message": {"content": nil,
+        "refusal": "I cannot help."}}), (Failure.Declined, "I cannot help.")),
+    (toCompletion(%*{"finish_reason": "content_filter", "message": {"content": nil,
+        "refusal": nil}}), (Failure.Declined, "content_filter")),
+    (toCompletion(%*{"finish_reason": "length", "message": {"content": ""}}),
+        (Failure.Truncated, "length")),
+    (toCompletion(%*{"finish_reason": "tool_calls", "message": {"content": nil}}),
+        (Failure.Malformed, "finish reason tool_calls")),
+    (toCompletion(%*{"finish_reason": nil, "message": {"content": "x"}}),
+        (Failure.Malformed, "finish reason absent")),
+    (toCompletion(%*{"finish_reason": "unforeseen", "message": {"content": "x"}}),
+        (Failure.Malformed, "finish reason unforeseen")),
+    (toCompletion(%*{"finish_reason": "stop", "message": {"content": nil}}),
+        (Failure.Malformed, "content is no string")),
+    (toCompletion(%*{"finish_reason": "stop", "message": {"content": [{"type": "text",
+        "text": "x"}]}}), (Failure.Malformed, "content is no string")),
+    (toCompletion(%*{"finish_reason": "stop", "message": {"content": toAnswer(["datna"])}}),
+        (Failure.Word, "datna")),
+    (toCompletion(%*{"finish_reason": "stop", "message": {"content": toAnswer(["ciska",
+        "se"])}}), (Failure.Cmavo, "ciska+se")),
+    (toCompletion(%*{"finish_reason": "stop", "message": {"content": toAnswer(
+        newSeqWith(8, "ciska"))}}), (Failure.Long, "8")),
+    (toCompletion(%*{"finish_reason": "stop", "message": {"content": toAnswer(["brodo",
+        "ciska"])}}), (Failure.Readback, "brodyci'a")),
+  ]
+
+
+func rowsEnvelope(service: Service): seq[(Reply, string)] =
+  ## List error envelope of wire format of service, with detail each reads as: client and server
+  ##   errors both formats document, type and message each present or absent; chat formats
+  ##   serve each by status, then inside 2xx by code.
+  for status in [400, 401, 429, 500, 529]:
+    for (kind, message) in [("", ""), ("", "Overloaded"), ("x_error", ""),
+        ("x_error", "Overloaded")]:
+      let detail = $status & (if kind.len > 0: " " & kind else: "") & ": " & message
+      if service == Service.Claude:
+        let error = %*{"message": message}
+        if kind.len > 0: error["type"] = %kind
+        result.add (toReply(%*{"type": "error", "error": error}, status), detail)
+        continue
+      let error = %*{"code": status, "message": message}
+      if kind.len > 0: error["metadata"] = %*{"error_type": kind}
+      for status_served in [status, 200]:
+        result.add (toReply(%*{"error": error}, status_served), detail)
+
+
+
 #[ Pools ]#
 
 proc poolTanru(): seq[seq[string]] =
@@ -1690,54 +1877,8 @@ suite "Internal: Request":
 
 suite "Internal: Reply":
   test "each row of reply table of Messages API gives its result":
-    let answer = toMessage(%*[{"type": "text", "text": toAnswer(["ciska"])}])
     var covered: set[Failure]
-    for (reply, failure) in [
-      (Reply(status: 200, body: answer.body, is_cut: true),
-          (Failure.Malformed, "reply over 1048576 bytes")),
-      (Reply(status: 200, content_encoding: "gzip", body: answer.body),
-          (Failure.Malformed, "content encoding gzip")),
-      (Reply(status: 302, location: "https://example.org/v1"),
-          (Failure.Status, "302 to https://example.org/v1")),
-      (Reply(status: 200, body: "[]"), (Failure.Malformed, "reply is no JSON object")),
-      (Reply(status: 200, body: "<html>"), (Failure.Malformed, "reply is no JSON object")),
-      (Reply(status: 200, body: "[".repeat(COUNT_NESTED)),
-          (Failure.Malformed, "reply is no JSON object")),
-      (toReply(%*{"type": "error", "error": {"type": "overloaded_error",
-          "message": "Overloaded"}}, 529), (Failure.Status, "529 overloaded_error: Overloaded")),
-      (Reply(status: 413, body: "<html>Request Entity Too Large</html>"), (Failure.Status, "413")),
-      (toReply(%*{"content": [], "stop_reason": "refusal", "stop_details": nil}),
-          (Failure.Declined, "none")),
-      (toReply(%*{"content": [], "stop_reason": "refusal", "stop_details": {"type": "refusal",
-          "category": "cyber", "recommended_model": "claude-opus-4-8"}}),
-          (Failure.Declined, "cyber, recommended model claude-opus-4-8")),
-      (toReply(%*{"content": [], "stop_reason": "refusal", "stop_details": {"type": "refusal",
-          "category": "bio", "recommended_model": nil}}), (Failure.Declined, "bio")),
-      (toReply(%*{"content": [], "stop_reason": "max_tokens"}),
-          (Failure.Truncated, "max_tokens")),
-      (toReply(%*{"content": [], "stop_reason": "model_context_window_exceeded"}),
-          (Failure.Truncated, "model_context_window_exceeded")),
-      (toReply(%*{"content": [], "stop_reason": "tool_use"}),
-          (Failure.Malformed, "stop reason tool_use")),
-      (toReply(%*{"content": [], "stop_reason": "pause_turn"}),
-          (Failure.Malformed, "stop reason pause_turn")),
-      (toReply(%*{"content": [], "stop_reason": "stop_sequence"}),
-          (Failure.Malformed, "stop reason stop_sequence")),
-      (toReply(%*{"content": [], "stop_reason": "unforeseen"}),
-          (Failure.Malformed, "stop reason unforeseen")),
-      (toReply(%*{"content": []}), (Failure.Malformed, "stop reason absent")),
-      (toMessage(%*[{"type": "thinking", "thinking": "", "signature": "x"}]),
-          (Failure.Malformed, "no text block")),
-      (toMessage(%*[{"type": "text", "text": "I cannot help."}]),
-          (Failure.Malformed, "answer is no JSON object: I cannot help.")),
-      (toMessage(%*[{"type": "text", "text": toAnswer(["datna"])}]), (Failure.Word, "datna")),
-      (toMessage(%*[{"type": "text", "text": toAnswer(["ciska", "se"])}]),
-          (Failure.Cmavo, "ciska+se")),
-      (toMessage(%*[{"type": "text", "text": newSeqWith(7, "ciska").toAnswer}]),
-          (Failure.Long, "7")),
-      (toMessage(%*[{"type": "text", "text": toAnswer(["brodi", "ciska"])}]),
-          (Failure.Readback, "brodyci'a")),
-    ]:
+    for (reply, failure) in rowsMessages():
       check readReply(Service.Claude, reply).failureRead ==
           some(failure)  # Messages API reference: Message object, errors
       covered.incl failure[0]
@@ -1759,8 +1900,10 @@ suite "Internal: Reply":
     )
     check joined.tagRead == some(tanru("pixra+cukta"))  # text blocks joined, others skipped
     check joined.is_suggested and joined.model == "claude-opus-4-8"  # model served is named
-    check readReply(Service.Claude, Reply(status: 200, content_encoding: "identity",
-        body: answer.body)).tagRead == some(tanru("ciska"))  # identity is no encoding
+    check readReply(
+      Service.Claude,
+      Reply(status: 200, content_encoding: "identity", body: bodyAnswer(Service.Claude)),
+    ).tagRead == some(tanru("ciska"))  # identity is no encoding
 
 
   test "refusal names category, then recommended model, then explanation, each where given":
@@ -1781,26 +1924,10 @@ suite "Internal: Reply":
     check readReply(Service.Claude, found).failureRead ==
         some((Failure.Declined, "cyber: " & cyber))  # case as found
 
-    # Compose detail of every refusal, each field absent, null or given.
-    let fields = [
-      ("category", "bio"), ("recommended_model", "claude-opus-4-8"),
-      ("explanation", "This request was declined because it could enable biological harm."),
-    ]
-    for category in [none(JsonNode), some(newJNull()), some(%fields[0][1])]:
-      for model in [none(JsonNode), some(newJNull()), some(%fields[1][1])]:
-        for explanation in [none(JsonNode), some(newJNull()), some(%fields[2][1])]:  # 27, all
-          let details = %*{"type": "refusal"}
-          for (key, field) in [(fields[0][0], category), (fields[1][0], model),
-              (fields[2][0], explanation)]:
-            if field.isSome: details[key] = field.get
-          let
-            reply = toReply(%*{"content": [], "stop_reason": "refusal", "stop_details": details})
-            expected =
-                (if category.textField.len > 0: category.textField else: "none") &
-                (if model.textField.len > 0: ", recommended model " & model.textField else: "") &
-                (if explanation.textField.len > 0: ": " & explanation.textField else: "")
-          check readReply(Service.Claude, reply).failureRead ==
-              some((Failure.Declined, expected))  # refusals and fallback page, `stop_details`
+    # Read detail of every refusal, each field absent, null or given.
+    for (reply, detail) in rowsRefusal():  # 27, all
+      check readReply(Service.Claude, reply).failureRead ==
+          some((Failure.Declined, detail))  # refusals and fallback page, `stop_details`
     let
       long = "Declined \x1B[2J" & "x".repeat(RUNES_SHOWN)
       reply_long = toReply(
@@ -1814,58 +1941,7 @@ suite "Internal: Reply":
   test "each row of reply table of chat completion gives its result":
     for service in [Service.OpenRouter, Service.Chat]:  # both readers of format, exhaustive
       var covered: set[Failure]
-      for (reply, failure) in [
-        (Reply(status: 200, body: "{}", is_cut: true),
-            (Failure.Malformed, "reply over 1048576 bytes")),
-        (Reply(status: 200, content_encoding: "br", body: "{}"),
-            (Failure.Malformed, "content encoding br")),
-        (Reply(status: 307, location: "/v1"), (Failure.Status, "307 to /v1")),
-        (Reply(status: 200, body: "\"text\""), (Failure.Malformed, "reply is no JSON object")),
-        (toReply(%*{"error": {"code": 403, "message": "Flagged", "metadata": {
-            "error_type": "refusal"}}}, 403), (Failure.Declined, "Flagged")),
-        (toReply(%*{"error": {"code": 403, "message": "Flagged", "metadata": {
-            "error_type": "content_policy_violation"}}}, 403), (Failure.Declined, "Flagged")),
-        (toReply(%*{"error": {"code": 429, "message": "Rate limit exceeded", "metadata": {
-            "error_type": "rate_limit_exceeded"}}}, 429),
-            (Failure.Status, "429 rate_limit_exceeded: Rate limit exceeded")),
-        (Reply(status: 502, body: "Bad Gateway"), (Failure.Status, "502")),
-        (toReply(%*{"id": "gen-suite", "error": {"code": 502, "message": "Provider down",
-            "metadata": {"error_type": "provider_unavailable"}}}),
-            (Failure.Status, "502 provider_unavailable: Provider down")),
-        (toReply(%*{"id": "gen-suite", "error": {"code": 403, "message": "Declined",
-            "metadata": {"error_type": "refusal"}}}), (Failure.Declined, "Declined")),
-        (toReply(%*{"id": "gen-suite"}), (Failure.Malformed, "no choice")),
-        (toReply(%*{"choices": []}), (Failure.Malformed, "no choice")),
-        (toCompletion(%*{"finish_reason": "error", "message": {"content": "partial"},
-            "error": {"code": 502, "message": "Provider disconnected mid-stream"}}),
-            (Failure.Status, "502: Provider disconnected mid-stream")),
-        (toCompletion(%*{"finish_reason": "error", "message": {"content": "partial"}}),
-            (Failure.Status, "200: ")),
-        (toCompletion(%*{"finish_reason": "content_filter", "message": {"content": nil,
-            "refusal": "I cannot help."}}), (Failure.Declined, "I cannot help.")),
-        (toCompletion(%*{"finish_reason": "content_filter", "message": {"content": nil,
-            "refusal": nil}}), (Failure.Declined, "content_filter")),
-        (toCompletion(%*{"finish_reason": "length", "message": {"content": ""}}),
-            (Failure.Truncated, "length")),
-        (toCompletion(%*{"finish_reason": "tool_calls", "message": {"content": nil}}),
-            (Failure.Malformed, "finish reason tool_calls")),
-        (toCompletion(%*{"finish_reason": nil, "message": {"content": "x"}}),
-            (Failure.Malformed, "finish reason absent")),
-        (toCompletion(%*{"finish_reason": "unforeseen", "message": {"content": "x"}}),
-            (Failure.Malformed, "finish reason unforeseen")),
-        (toCompletion(%*{"finish_reason": "stop", "message": {"content": nil}}),
-            (Failure.Malformed, "content is no string")),
-        (toCompletion(%*{"finish_reason": "stop", "message": {"content": [{"type": "text",
-            "text": "x"}]}}), (Failure.Malformed, "content is no string")),
-        (toCompletion(%*{"finish_reason": "stop", "message": {"content": toAnswer(["datna"])}}),
-            (Failure.Word, "datna")),
-        (toCompletion(%*{"finish_reason": "stop", "message": {"content": toAnswer(["ciska",
-            "se"])}}), (Failure.Cmavo, "ciska+se")),
-        (toCompletion(%*{"finish_reason": "stop", "message": {"content": toAnswer(
-            newSeqWith(8, "ciska"))}}), (Failure.Long, "8")),
-        (toCompletion(%*{"finish_reason": "stop", "message": {"content": toAnswer(["brodo",
-            "ciska"])}}), (Failure.Readback, "brodyci'a")),
-      ]:
+      for (reply, failure) in rowsCompletion():
         check readReply(service, reply).failureRead ==
             some(failure)  # chat completion of OpenRouter: errors, choices, finish reasons
         covered.incl failure[0]
@@ -1884,14 +1960,9 @@ suite "Internal: Reply":
 
   test "no status gives tag with error envelope, empty body or markup body":
     for service in Service:  # 3 services, exhaustive
-      let envelope =
-        if service == Service.Claude:
-          $ %*{"type": "error", "error": {"type": "api_error", "message": "Internal error"}}
-        else:
-          $ %*{"error": {"code": 500, "message": "Internal error", "metadata": {
-            "error_type": "server"}}}
+      let envelope = envelopeServer(service)
       for status in 100..599:  # 500 statuses, exhaustive
-        for body in [envelope, "", "<html><body>Bad Gateway</body></html>"]:
+        for body in [envelope, "", BODY_GATEWAY]:
           let
             failure = readReply(service, Reply(status: status, body: body)).failureRead
             expected =
@@ -1915,19 +1986,10 @@ suite "Internal: Reply":
     #   though OpenRouter answered 200 and put error inside body.
     check found.explain == "Service should answer without error; got `429 " &
         "rate_limit_exceeded: Rate limit exceeded`."  # case as found
-    let bodies = [
-      $ %*{"type": "error", "error": {"type": "api_error", "message": "Internal error"}},
-      $ %*{"error": {"code": 502, "message": "Provider down", "metadata": {
-          "error_type": "provider_unavailable"}}},
-      toCompletion(
-        %*{"finish_reason": "error", "message": {"content": "partial"},
-            "error": {"code": 502, "message": "Provider disconnected mid-stream"}},
-      ).body,
-    ]
     var count_inside = 0
     for service in Service:  # 3 services, exhaustive
       for status in 100..599:  # 500 statuses, exhaustive
-        for body in bodies:  # error of each format, and of choice
+        for body in bodiesError():  # error of each format, and of choice
           let suggestion = readReply(service, Reply(status: status, body: body))
           if suggestion.is_suggested or suggestion.failure != Failure.Status: continue
           check suggestion.explain == "Service should answer without error; got `" &
@@ -1966,22 +2028,13 @@ suite "Internal: Reply":
 
 
   test "error envelope names status, then type where it has one, then message":
-    for status in [400, 401, 429, 500, 529]:  # client and server errors both formats document
-      for (kind, message) in [("", ""), ("", "Overloaded"), ("x_error", ""),
-          ("x_error", "Overloaded")]:  # type and message each present or absent, exhaustive
-        let
-          detail = $status & (if kind.len > 0: " " & kind else: "") & ": " & message
-          error_claude = %*{"message": message}
-          error_chat = %*{"code": status, "message": message}
-        if kind.len > 0:
-          error_claude["type"] = %kind
-          error_chat["metadata"] = %*{"error_type": kind}
-        check readReply(Service.Claude, toReply(%*{"type": "error", "error": error_claude},
-            status)).failureRead == some((Failure.Status, detail))  # Messages API, errors
-        for service in [Service.OpenRouter, Service.Chat]:
-          for status_served in [status, 200]:  # error by status, then inside 2xx by code
-            check readReply(service, toReply(%*{"error": error_chat}, status_served)).
-                failureRead == some((Failure.Status, detail))  # chat completion, errors
+    for (reply, detail) in rowsEnvelope(Service.Claude):  # 5 statuses, type and message each
+      check readReply(Service.Claude, reply).failureRead ==
+          some((Failure.Status, detail))  # Messages API, errors
+    for service in [Service.OpenRouter, Service.Chat]:
+      for (reply, detail) in rowsEnvelope(service):  # by status, then inside 2xx by code
+        check readReply(service, reply).failureRead ==
+            some((Failure.Status, detail))  # chat completion, errors
 
 
   test "each worked example reads to its tanru under every service":
@@ -1998,11 +2051,8 @@ suite "Internal: Reply":
 
 
   test "content coding is read without case, so every casing of identity is no coding":
-    let
-      answer = toAnswer(["ciska"])
-      completion = toCompletion(%*{"finish_reason": "stop", "message": {"content": answer}}).body
-      lut_body_by_service: array[Service, string] =
-        [toMessage(%*[{"type": "text", "text": answer}]).body, completion, completion]
+    let lut_body_by_service: array[Service, string] =
+      [bodyAnswer(Service.Claude), bodyAnswer(Service.OpenRouter), bodyAnswer(Service.Chat)]
     var page = Reply(status: 200, content_type: "text/plain", content_encoding: "Identity",
         body: "x")
     check readPage(URL_SUITE, page).is_read  # case as found in suite review: refused
@@ -2017,7 +2067,7 @@ suite "Internal: Reply":
       for service in Service:  # 3 services, exhaustive
         check readReply(service, Reply(status: 200, content_encoding: coding,
             body: lut_body_by_service[service])).tagRead == some(tanru("ciska"))  # 8.4.1
-    for coding in ["gzip", "GZIP", "Br", "deflate", "Compress", "x-gzip", "zstd", "identity, br"]:
+    for coding in CODINGS_OTHER:
       page.content_encoding = coding
       let paged = readPage(URL_SUITE, page)
       check not paged.is_read and paged.detail == "content encoding " & coding  # named as given
