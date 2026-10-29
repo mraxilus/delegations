@@ -15,6 +15,11 @@
 ##   Port of URL is held by table of its bounds and by random ports with zeros before them,
 ##     through `isURL`, `isEndpoint` and `redirect`; scheme of URL and of proxy takes every
 ##     spelling of `http` and `https` in any case.
+##   Proxy URL is held through `send`, port by table of its bounds and by random ports; each
+##     opening, host, port and user part with each other is refused naming first part failing of
+##     host, scheme and port, user part spelled from symbols no problem holds, so any byte of it
+##     leaking into problem shows. Proxy `send` takes meets pin, which refuses https URL for want
+##     of context, so laws open no socket; loopback proxy shows what wraps and what is taken.
 ##   Redirect resolves every example of RFC 3986 section 5.4; `http:g` keeps its scheme, as
 ##     strict parser reads it, so has no host and gives no redirect. References of one to three
 ##     path segments, dot segments among them, hold laws: dot segments removed, target resolves
@@ -265,6 +270,28 @@ const
     ## Problem `send` gives for https URL with no context.
   COUNT_SPELLINGS_HTTP = 16  ## Spellings of `http` in any case, i.e. 2^4.
   COUNT_SPELLINGS_HTTPS = 32  ## Spellings of `https` in any case, i.e. 2^5.
+  PROBLEM_PROXY_HOST = "Proxy should name host after `//`; got ``."
+    ## Problem `send` gives for proxy URL naming no host after `//`.
+  SYMBOLS_USER = "!$&*+=~"
+    ## Bytes user part of proxy URL here is spelled from: RFC 3986 takes each there, no problem
+    ##   holds one, and `+` reads as scheme where `//` is absent.
+  USERS_PROXY = [("+", "!$&*=~"), ("!$&*", "+=~"), ("~", "")]
+    ## User and password each proxy URL of leak law holds: user of scheme characters alone, user
+    ##   of other symbols, and password empty.
+  OPENINGS_PROXY = ["http://", "HTTP://", "https://", "socks5h://", "//", ""]
+    ## Openings of proxy URL before its user part: scheme `send` takes, in two cases; schemes it
+    ##   refuses; none before `//`; and no `//`, so curl reads text as `user:password@host`.
+  HOSTS_PROXY = ["127.0.0.1", ""]  ## Hosts of proxy URL: address, and none.
+  PORTS_PROXY = [
+    ("", true), ("0", false), ("1", true), ("00080", true), ("65535", true), ("65536", false),
+    ("65616", false), ("70000", false), ("99999", false), ("000080", false), ("8a", false),
+    ("-1", false),
+  ]
+    ## Ports of proxy URL at bounds of one to five digits from 1 to 65535, beside whether `send`
+    ##   takes each: none, zero, five digits with zeros leading, past 65535, six digits, no digits.
+  COUNT_PROXIES = 432
+    ## Proxy URLs leak law sends: each of `OPENINGS_PROXY`, `HOSTS_PROXY`, `PORTS_PROXY` and
+    ##   `USERS_PROXY` with each other.
 
 
 func lineFirst(piece: Piece): int =
@@ -484,6 +511,11 @@ func problemProxy(scheme: string): string =
   "Proxy should be `http://`; got `" & scheme & "`."
 
 
+func problemProxyPort(port: string): string =
+  ## Build problem `send` gives for proxy URL whose port client would read as other port.
+  "Proxy should name port of one to five digits from 1 to 65535, or none; got `" & port & "`."
+
+
 func spellingsCase(word: string): seq[string] =
   ## Build every spelling of word in any case, each letter lower or upper: 2^n for n letters.
   result = @[""]
@@ -504,6 +536,23 @@ func casesSecured(): seq[tuple[leaf: Leaf, host: string, should_tunnel: bool]] =
     for (leaf_before, host_before) in cases:
       for (leaf, host) in cases:
         result.add @[(leaf_before, host_before, should_tunnel), (leaf, host, should_tunnel)]
+
+
+func casesProxy(): seq[tuple[url, problem: string]] =
+  ## Build proxy URL of each opening, host, port and user part with each other, beside outcome
+  ##   `sendProxied` should give: first part failing of host, scheme and port named, else pin
+  ##   refusing for want of context.
+  for opening in OPENINGS_PROXY:
+    let scheme = if "://" in opening: opening[0..<opening.find("://")] else: ""
+    for host in HOSTS_PROXY:
+      for (port, is_taken) in PORTS_PROXY:
+        let problem =
+          if opening.len == 0 or host.len == 0: PROBLEM_PROXY_HOST
+          elif scheme.toLowerAscii != "http": problemProxy(scheme)
+          elif not is_taken: problemProxyPort(port)
+          else: PROBLEM_CONTEXT
+        for (user, password) in USERS_PROXY:
+          result.add (opening & user & ":" & password & "@" & host & ":" & port, problem)
 
 
 func values(head: Head, name: string): seq[string] =
@@ -813,6 +862,21 @@ when defined(ssl):
       result.connect = waitFor tunnelling
       proxy.close()
     listener.close()
+
+
+  proc sendProxied(proxy_url: string): Sent =
+    ## Send request with credential to https URL through `proxy_url`, with no TLS context, so
+    ##   proxy `send` takes meets pin, which refuses for want of context, and no socket opens.
+    waitFor send(
+      "https://api.example.test/v1/messages",
+      "{}",
+      @[],
+      CREDENTIAL_GIVEN,
+      some(proxy_url),
+      nil,
+      BYTES_CAP,
+      newFuture[void]("deadline"),
+    )
 
 
 
@@ -1561,6 +1625,87 @@ suite "Internal: Send":
         newSeqWith(COUNT_SPELLINGS_HTTP, "http://example.org/page")  # domain: refused sent nothing
     check server.count_connections == COUNT_SPELLINGS_HTTP  # domain: no connection but accepted
     stopServer(server)
+
+
+  test "proxy port past 65535 is refused naming it, and port it would wrap onto hears nothing":
+    # Regression, found in review: client reads port of proxy modulo 65536, as it reads port of
+    #   URL, so proxy named at `P + 65536` was reached at `P`.
+    let
+      server = startServer()
+      wrapped = $(server.port + 65_536)
+      found = sendLoopback(
+        "http://example.org/page",
+        "",
+        proxy_url = some("http://127.0.0.1:" & wrapped),
+      )
+    check found.outcome ==
+        problemProxyPort(wrapped)  # case as found: review finding logic-8, 2026-10-29
+    check server.targets.len == 0  # case as found: was reached at port it wraps onto
+    for port in [
+      "0", "65536", $(server.port + 2 * 65_536), "0" & $server.port, "00" & $server.port,
+    ]:
+      let sent = sendLoopback(
+        "http://example.org/page",
+        "",
+        proxy_url = some("http://127.0.0.1:" & port),
+      )
+      check port & ": " & sent.outcome ==
+          port & ": " & problemProxyPort(port)  # domain: RFC 6335 6, each wraps onto 0 or `P`
+    let
+      (user, password) = USERS_PROXY[0]
+      control = sendLoopback(
+        "http://example.org/page",
+        "",
+        proxy_url = some("http://" & user & ":" & password & "@127.0.0.1:" & $server.port),
+      )
+    check control.outcome == "replied"  # port of five digits taken, user part beside it
+    check server.targets == @["http://example.org/page"]  # domain: refused proxy reached nothing
+    check server.count_connections == 1  # domain: no connection but control's
+    stopServer(server)
+
+
+  test "proxy port of one to five digits from 1 to 65535, or none, is taken, and no other":
+    when not defined(ssl): skip()  # Article IX.9: proxy taken meets pin, which needs `-d:ssl`
+    else:
+      for (port, is_taken) in PORTS_PROXY:
+        let
+          sent = sendProxied("http://127.0.0.1:" & port)
+          expected = if is_taken: PROBLEM_CONTEXT else: problemProxyPort(port)
+          named = port & ": "
+        check named & sent.outcome == named & expected  # RFC 6335 6: port of 16 bits, 0 reserved
+      randomize(0)
+      let pool = poolPorts()
+      for port in served(pool):
+        let
+          is_taken = port.len <= 5 and port.parseInt in 1..65_535
+          sent = sendProxied("http://127.0.0.1:" & port)
+          expected = if is_taken: PROBLEM_CONTEXT else: problemProxyPort(port)
+          named = port & ": "
+        check named & sent.outcome == named & expected  # domain: RFC 6335 6
+      check authority.problem == ""  # `openssl` made root and leaves
+      let tunnelled = authority.sendSecured(Leaf.Both, "localhost", should_tunnel = true)
+      check tunnelled.sent.outcome == "replied"  # proxy taken still tunnels
+      check tunnelled.connect.filterIt(it.startsWith("CONNECT ")) ==
+          @["CONNECT localhost:" & $tunnelled.port & " HTTP/1.1"]  # RFC 9110 9.3.6, tunnel
+
+
+  test "proxy refusal names host, scheme or port, first that fails, and never byte of user part":
+    when not defined(ssl): skip()  # Article IX.9: proxy taken meets pin, which needs `-d:ssl`
+    else:
+      let found = sendProxied("alice:secret@127.0.0.1:3128")
+      check found.outcome ==
+          PROBLEM_PROXY_HOST  # case as found fixing review finding logic-8, 2026-10-29
+      check "alice" notin found.outcome and
+          "secret" notin found.outcome  # case as found: `alice`, user as curl reads it, echoed
+      let cases = casesProxy()
+      check cases.len == COUNT_PROXIES  # each opening, host, port and user part with each other
+      for (url, problem) in cases:
+        let
+          sent = sendProxied(url)
+          named = url & ": "
+        check named & sent.outcome == named & problem  # domain: host, then scheme, then port
+        check named & $sent.outcome.anyIt(it in SYMBOLS_USER) ==
+            named & "false"  # domain: no byte of user part, as curl reads `user:password@host`
 
 
   test "https URL in any case opens tunnel through proxy, so proxy never sees credential":
