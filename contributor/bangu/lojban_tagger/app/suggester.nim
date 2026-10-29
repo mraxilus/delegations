@@ -94,7 +94,9 @@ type
       note: string  ## Report line naming recording replayed, written or unwritten; empty if live.
     of false:
       failure: Failure  ## `Network` or `Recording`.
-      detail: string  ## Offending value, made printable.
+      detail: string
+        ## Offending value, made printable; for `Recording`, problem, then path whose directory
+        ##   alone is cut.
 
   Fetched = object  ## Define outcome of fetching page: passage, or failure; notes of each hop.
     notes: seq[string]  ## Report line of each hop replayed or written.
@@ -296,17 +298,23 @@ proc exchange(
   ##     request, `bytes_max` and `BYTES_FIELDS_MAX` is refused before it is read, and body past
   ##     `bytes_max` is refused once read.
   ##   Recording that stands but cannot be read is refused, naming first line of error.
+  ##   Refusal names problem in words of tool first, then path, so long directory never hides
+  ##     either: outside text, directory and error, is made printable and cut alone, and name
+  ##     holding stamp stays whole.
 
   func refuse(detail: string): Exchanged =
-    ## Build outcome refusing recording, detail made printable.
-    Exchanged(
-      is_replied: false,
-      failure: Failure.Recording,
-      detail: detail.toPrintable(RUNES_SHOWN),
-    )
+    ## Build outcome refusing recording; caller made each outside part of detail printable.
+    Exchanged(is_replied: false, failure: Failure.Recording, detail: detail)
+
+  func toLine(error: ref Exception): string =
+    ## Render first line of error, made printable and cut, as outside text.
+    error.msg.splitLines[0].toPrintable(RUNES_SHOWN)
 
   let
-    path = command.directory / (request.stamp & ".recording")
+    name = request.stamp & ".recording"
+    path = command.directory / name
+    shown_directory = command.directory.toPrintable(RUNES_SHOWN)
+    shown = shown_directory / name
     bytes_file_max = request.len + bytes_max + BYTES_FIELDS_MAX
 
   # Make directory of record mode, private where made, then refuse directory every user writes.
@@ -314,30 +322,32 @@ proc exchange(
     try:
       createDirectoryPrivate(command.directory)
     except CatchableError as error:
-      return refuse(path & " unwritable: " & error.msg.splitLines[0])
+      return refuse("unwritable: " & error.toLine & " at " & shown)
   if command.mode != Mode.Live and command.directory.isShared:
-    return refuse(command.directory & " writable by every user")
+    return refuse("writable by every user at " & shown_directory)
 
   # Replay recording of same request within its caps, as mode and `isReplayed` choose.
   if command.mode != Mode.Live and fileExists(path):
     var text = ""
     try:
       if getFileSize(path) > bytes_file_max:
-        return refuse(path & " larger than " & $bytes_file_max & " bytes")
+        return refuse("larger than " & $bytes_file_max & " bytes at " & shown)
       text = readFile(path)
     except CatchableError as error:
-      return refuse(path & " unreadable: " & error.msg.splitLines[0])
+      return refuse("unreadable: " & error.toLine & " at " & shown)
     let recorded = text.readRecording
     if not recorded.is_read:
-      return refuse(path & ":" & $recorded.line & ": " & recorded.problem)
-    if recorded.recording.request != request: return refuse(path & " holds other request")
+      var problem = recorded.problem  # Words of reader, piece it echoes made printable and cut.
+      problem.removeSuffix('.')
+      return refuse(problem & " at line " & $recorded.line & " of " & shown)
+    if recorded.recording.request != request: return refuse("other request at " & shown)
     if recorded.recording.reply.body.len > bytes_max:
-      return refuse(path & " holds body over " & $bytes_max & " bytes")
+      return refuse("body over " & $bytes_max & " bytes at " & shown)
     if command.mode == Mode.Replay or recorded.recording.reply.isReplayed(service):
       let label = recorded.recording.label.toPrintable(RUNES_SHOWN)
       return Exchanged(is_replied: true, reply: recorded.recording.reply,
           note: "Reply replayed from `" & path & "`: " & label & ".")
-  if command.mode == Mode.Replay: return refuse(path & " missing")
+  if command.mode == Mode.Replay: return refuse("missing at " & shown)
 
   # Send within deadline, through proxy environment names.
   when defined(ssl):
@@ -370,8 +380,7 @@ proc exchange(
       note = "Reply written to `" & path & "`."
     except CatchableError as error:
       discard tryRemoveFile(path & ".writing")
-      note = "Reply should be written to `" & path & "`; got `" &
-          error.msg.splitLines[0].toPrintable(RUNES_SHOWN) & "`."
+      note = "Reply should be written to `" & path & "`; got `" & error.toLine & "`."
   Exchanged(is_replied: true, reply: sent.reply, note: note)
 
 
