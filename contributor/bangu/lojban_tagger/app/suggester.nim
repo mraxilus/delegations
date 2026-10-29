@@ -47,6 +47,9 @@
 ##   Recording file past its request, cap of its body and `BYTES_FIELDS_MAX` is refused before it
 ##     is read, and body past its cap once read, so replay holds no more than send would.
 ##     Recording that stands but cannot be read is refused with `Recording`, never traceback.
+##   Request of service exchange, which stamp names and recording keeps, is `POST` and endpoint,
+##     line break, then body, so recording replays for its endpoint alone; request of page hop
+##     is `GET` and URL. Credential stays out, so recording replays under any credential.
 ##   Record mode replays service reply by how `readReply` reads it, never by status alone: tag,
 ##     and failure of answer service bills, replay, so no answer is paid twice; reply reading as
 ##     `Status` goes out again, as OpenRouter answers 200 holding provider error, which it does
@@ -384,6 +387,13 @@ proc exchange(
   Exchanged(is_replied: true, reply: sent.reply, note: note)
 
 
+func requestService(settings: Settings, body: string): string =
+  ## Build request of service exchange, which stamp names and recording keeps: `POST` and
+  ##   endpoint, line break, then body, so recording replays for its endpoint alone.
+  ##   Sibling of `toRecordings` in `tools/examples.nim`, which builds same request (II.9).
+  "POST " & settings.endpoint & "\n" & body
+
+
 proc fetch(url: string, command: Command, context: var SslContext): Fetched =
   ## Fetch page through `exchange`, following at most `COUNT_REDIRECTS_MAX` redirects, refusing
   ##   loop and fall from https to http.
@@ -493,9 +503,9 @@ proc main(): int =
     passage = command.argument.toPassage
   let
     body = settings.toBody(passage)
-    exchanged = exchange("POST " & body, settings.endpoint, body, settings.toHeaders,
-        credential, some(settings.service), BYTES_REPLY_MAX, MS_DEADLINE_SERVICE, command,
-        context)
+    exchanged = exchange(settings.requestService(body), settings.endpoint, body,
+        settings.toHeaders, credential, some(settings.service), BYTES_REPLY_MAX,
+        MS_DEADLINE_SERVICE, command, context)
     suggestion =
       if exchanged.is_replied: settings.service.readReply(exchanged.reply)
       else: Suggestion(is_suggested: false, failure: exchanged.failure, detail: exchanged.detail)

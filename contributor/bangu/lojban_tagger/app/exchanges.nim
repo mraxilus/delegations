@@ -124,7 +124,9 @@ type
 
   Recording* = object  ## Define one exchange as file keeps it: origin, request and reply.
     label*: string  ## Origin: `recorded <date>`, or documented shape of reply.
-    request*: string  ## `GET <url>` of page, or `POST <body>` of service; no credential.
+    request*: string
+      ## `GET <url>` of page, or `POST <endpoint>`, line break, then body of service, so
+      ##   recording replays for its endpoint alone; no credential.
     reply*: Reply  ## Reply as read.
 
   Recorded* = object  ## Define outcome of reading recording file.

@@ -16,8 +16,9 @@
 ##     Reply captured live replaces it once credential exists (open question in PROVENANCE).
 ##   Page sample holds what reader must handle: redirect, `<meta>` charset of windows-1252,
 ##     bytes `93` and `94`, title, script, style, comment and character references.
-##   Recordings hold requests this build sends under default settings of each service, so they
-##     replay only while prompt, schema and passage reading stay; suite holds that.
+##   Recordings hold requests this build sends under default settings of each service, endpoint
+##     included, so they replay only while endpoint, prompt, schema and passage reading stay;
+##     suite holds that.
 ##   Data person writes is typed Nim, as committed lists are; recording files are written at
 ##     run time and never committed.
 
@@ -154,9 +155,10 @@ func toRecordings*(example: Example, service: Service): seq[Recording] =
     reply =
       if service == Service.Claude: toReplyMessages(example.answer, settings.model)
       else: toReplyChat(example.answer, settings.model)
-  result.add Recording(
+  result.add Recording(  # Request as sibling `requestService` of `app/suggester.nim` builds it.
     label: if service == Service.Claude: LABEL_MESSAGES else: LABEL_CHAT,
-    request: "POST " & settings.toBody(example.toPassage), reply: reply,
+    request: "POST " & settings.endpoint & "\n" & settings.toBody(example.toPassage),
+    reply: reply,
   )
 
 
