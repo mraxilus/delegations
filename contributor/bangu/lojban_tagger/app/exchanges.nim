@@ -155,7 +155,7 @@ const
   CHARACTERS_CONTROL = {'\0'..'\x1F', '\x7F'}  ## Control characters of ASCII: C0 set and DEL.
   LUT_OPENING_BY_SERVICE*: array[Service, string] = ["sk-ant-", "sk-or-", ""]
     ## Opening of credentials each service issues; opening of other service is refused.
-  PROBLEM_CONTEXT = "TLS context should exist for https URL; got none."
+  PROBLEM_CONTEXT = "TLS context should exist for https URL; got ``."
     ## Problem `send` gives for https URL with no context, whose host it cannot pin.
 
 
