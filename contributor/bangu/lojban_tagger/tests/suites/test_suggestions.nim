@@ -228,11 +228,12 @@ const
     ## Fragments random passages join: text that could close element, forge attribute or turn,
     ##   break line, or break UTF-8.
   URLS_PASSAGE = [
-    "", URL_SUITE, "https://example.org/a?b=1&c=\"d\"<e>f", "http://127.0.0.1:8080/x#y",
-    "https://example.org/caf\xE9", "https://example.org/\xF0\x9F\x98x\xFF",
+    "", URL_SUITE, "https://example.org/a?b=1&c=\"d\"<e>f", "https://example.org/a&c=\"d\"<e>f",
+    "http://127.0.0.1:8080/x#y", "https://example.org/caf\xE9",
+    "https://example.org/\xF0\x9F\x98x\xFF",
   ]
-    ## URLs random passages come from: none, plain, holding every character element escapes, and
-    ##   holding ill-formed UTF-8.
+    ## URLs random passages come from: none, plain, holding every character element escapes in
+    ##   query, which passage drops, and in path, which it keeps, and holding ill-formed UTF-8.
   KEYS_WIRE = [
     "category", "choices", "code", "content", "error", "error_type", "finish_reason", "gloss",
     "message", "metadata", "model", "recommended_model", "refusal", "stop_details",
@@ -467,6 +468,25 @@ func attribute(opening: string, name: string): string =
 func unescape(text: string): string =
   ## Read character references element escapes back as their characters, in one pass.
   text.multiReplace(("&lt;", "<"), ("&gt;", ">"), ("&quot;", "\""), ("&amp;", "&"))
+
+
+func dropSecretsReference(url: string): string =
+  ## Keep scheme, authority past its last `@`, and path of URL, walked as regular expression of
+  ##   RFC 3986 appendix `B` reads them; user part, query and fragment dropped.
+  var at = 0
+  while at < url.len and url[at] notin {':', '/', '?', '#'}: inc at
+  if at == 0 or at == url.len or url[at] != ':': at = 0
+  else: inc at  # Past `:` ending scheme.
+  result = url[0..<at]
+  if url.continuesWith("//", at):
+    var finish = at + 2
+    while finish < url.len and url[finish] notin {'/', '?', '#'}: inc finish
+    let authority = url[at+2..<finish]
+    result.add "//" & authority[authority.rfind('@')+1 .. ^1]
+    at = finish
+  var stop = at
+  while stop < url.len and url[stop] notin {'?', '#'}: inc stop
+  result.add url[at..<stop]
 
 
 proc readGuarded(service: Service, reply: Reply): Option[Suggestion] =
@@ -1837,7 +1857,43 @@ suite "Internal: Page":
     let pool = poolBytes()
     for bytes in served(pool):  # `SAMPLES_BYTES` strings, seeded
       check toPassage("x", bytes).url ==
-          bytes.repairReference.text  # substitution of maximal subparts, chapter 3
+          bytes.dropSecretsReference.repairReference.text  # RFC 3986 appendix `B`, then repair
+
+
+  test "URL of passage keeps scheme, host, port and path alone, so no secret leaves for service":
+    let
+      found = toPassage("x", "http://127.0.0.1:8080/shared/doc?access_token=SECRET-CAPABILITY-123")
+      signed = readPage(
+        "http://127.0.0.1:8080/bucket/obj?X-Amz-Signature=SIGNED-SECRET-456&" &
+        "X-Amz-Credential=AKIAPROBE",
+        Reply(status: 200, content_type: "text/plain", body: "x"),
+      )
+      failed = Suggestion(is_suggested: false, failure: Failure.Long, detail: "7")
+    check found.url ==
+        "http://127.0.0.1:8080/shared/doc"  # review finding security-7, 2026-10-29: token sent
+    check signed.is_read and signed.passage.url ==
+        "http://127.0.0.1:8080/bucket/obj"  # review finding security-7, 2026-10-29: signature sent
+    for service in Service:  # 3 services, exhaustive
+      check "SECRET" notin
+          initSettings(service, some(EFFORT_DEFAULT)).toBody(found)  # token stays on machine
+    check signed.is_read and "SECRET" notin
+        failed.toReport(signed.passage, MODEL_SUITE)  # report names no signature
+    var wrong: seq[string]
+    for scheme in ["http://", "HTTPS://"]:
+      for user in ["", "alice@", "alice:SECRET-PASSWORD@", "a@b:SECRET-PASSWORD@"]:
+        for host in ["example.org", "127.0.0.1", "[::1]"]:
+          for port in ["", ":8080"]:
+            for path in ["", "/", "/shared/doc", "/a@b", "/caf\xE9"]:
+              for query in ["", "?", "?access_token=SECRET-TOKEN", "?a=/b@c"]:
+                for fragment in ["", "#", "#SECRET-FRAGMENT", "#/a?b@c"]:  # 3,840 URLs, exhaustive
+                  let
+                    url = scheme & user & host & port & path & query & fragment
+                    passage = toPassage("x", url)
+                  if passage.url != repairReference(scheme & host & port & path).text or
+                      "SECRET" in passage.toElement or
+                      "SECRET" in failed.toReport(passage, MODEL_SUITE):
+                    wrong.add url
+    check wrong == newSeq[string]()  # RFC 3986 appendix `B`: user part, query, fragment dropped
 
 
   test "page refusals by table: status, encoding, type, charset, no text":
