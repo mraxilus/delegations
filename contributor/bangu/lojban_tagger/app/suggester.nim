@@ -44,6 +44,9 @@
 ##   Page redirects are followed here, at most `COUNT_REDIRECTS_MAX`, choosing proxy again for
 ##     each hop; https never falls to http, and URL seen twice ends loop. Service redirect is
 ##     never followed, so credential stays with its endpoint.
+##     Refusal of redirect names location or URL seen twice by scheme, host, port and path alone
+##       (`dropSecrets`), as report names page URL, so token in user part, query or fragment,
+##       which page may give, never reaches report. Cost: token held in path is named.
 ##   Record mode makes its directory before it reads or sends, so directory it cannot make refuses
 ##     run with `Recording`, and nothing is paid for; recording it cannot write after reply is
 ##     named in note, and tag still prints. Cost: failed send leaves empty directory behind.
@@ -433,6 +436,8 @@ func requestService(settings: Settings, body: string): string =
 proc fetch(url: string, command: Command, context: var SslContext): Fetched =
   ## Fetch page through `exchange`, following at most `COUNT_REDIRECTS_MAX` redirects, refusing
   ##   loop and fall from https to http.
+  ##   Refusal names location or URL seen twice by scheme, host, port and path alone
+  ##     (`dropSecrets`), as report names page URL.
   var
     current = url
     seen = @[url]
@@ -447,15 +452,16 @@ proc fetch(url: string, command: Command, context: var SslContext): Fetched =
     let target = current.redirect(exchanged.reply)
     if target.isNone:
       if exchanged.reply.status in STATUSES_REDIRECT:
+        let location = exchanged.reply.location.dropSecrets
         return Fetched(notes: notes, is_read: false, failure: Failure.Page,
-            detail: ("redirect to " & exchanged.reply.location).toPrintable(RUNES_SHOWN))
+            detail: ("redirect to " & location).toPrintable(RUNES_SHOWN))
       let paged = current.readPage(exchanged.reply)
       if not paged.is_read:
         return Fetched(notes: notes, is_read: false, failure: Failure.Page, detail: paged.detail)
       return Fetched(notes: notes, is_read: true, passage: paged.passage)
     if target.get in seen:
       return Fetched(notes: notes, is_read: false, failure: Failure.Page,
-          detail: ("redirect loop at " & target.get).toPrintable(RUNES_SHOWN))
+          detail: ("redirect loop at " & target.get.dropSecrets).toPrintable(RUNES_SHOWN))
     seen.add target.get
     current = target.get
   Fetched(notes: notes, is_read: false, failure: Failure.Page,
