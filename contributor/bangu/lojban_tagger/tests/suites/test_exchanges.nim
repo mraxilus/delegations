@@ -405,6 +405,9 @@ const
     ##   `PORTS_VALUE` and `CLOSINGS_VALUE` with each other.
   PORT_CURL = "1080"
     ## Port curl assumes where proxy string specifies none (curl manual, option `--proxy`).
+  COUNT_VALUES_SPLIT = 3_360
+    ## Proxy values split law reads: each authority `COUNT_AUTHORITIES` counts, with no scheme and
+    ##   with `http://`, and with each of `CLOSINGS_VALUE`.
 
 
 func lineFirst(piece: Piece, pieces: array[Piece, string]): int =
@@ -716,6 +719,26 @@ func casesProxy(): seq[tuple[url, problem: string]] =
           else: problemProxyUser(host)
         for (user, password) in USERS_PROXY:
           result.add (opening & user & ":" & password & "@" & host & ":" & port, problem)
+
+
+func casesAuthority(): seq[tuple[value, expected: string]] =
+  ## Build proxy value of each user part, host and port of `USERS_AUTHORITY`, `HOSTS_AUTHORITY`
+  ##   and `PORTS_AUTHORITY`, with no scheme and with `http://`, and each of `CLOSINGS_VALUE`;
+  ##   beside value `proxy` should give: `http://` added where no scheme stands, and port 1080
+  ##   where user part and host split as RFC 3986 section 3.2 splits them and port is none.
+  var authorities: seq[tuple[text, added: string]]
+  for (user_part, is_user) in USERS_AUTHORITY:
+    for (host, is_host) in HOSTS_AUTHORITY:
+      for (port, _) in PORTS_AUTHORITY:
+        let added =
+          if not is_user or not is_host or port.len > 1: ""
+          elif port == ":": PORT_CURL
+          else: ":" & PORT_CURL
+        authorities.add (user_part & host & port, added)
+  for opening in ["", "http://"]:
+    for (authority, added) in authorities:
+      for closing in CLOSINGS_VALUE:
+        result.add (opening & authority & closing, "http://" & authority & added & closing)
 
 
 func casesSpilled(): seq[tuple[url, problem: string]] =
@@ -1451,6 +1474,28 @@ suite "Internal: Exchange":
                 check named & chosen.get.parseUri.port ==
                     named & port_dialed  # domain: port client dials, as it reads value
     check count == COUNT_VALUES  # each opening, user part, host, port and closing with each other
+
+
+  test "proxy value takes port 1080 only where authority splits as RFC 3986 section 3.2 splits it":
+    # Regression, found in recheck claim regressions-lib-4, 2026-10-29: `proxy` read port as
+    #   `parseUri` reads it, which takes every colon after unclosed `[` into host, so it added
+    #   port 1080 to authority naming port, or refused, and `send` then echoed `1080`.
+    let
+      unclosed = "https://api.example.org/v1".proxy(@[("https_proxy", "[fd00::1")])
+      named = "https://api.example.org/v1".proxy(
+          @[("https_proxy", "http://al[ice:secret@proxy:3128")])
+    check unclosed == some("http://[fd00::1")  # case as found: was `http://[fd00::1:1080`
+    check named == some("http://al[ice:secret@proxy:3128")  # case as found: port 1080 added
+    check sendLoopback("http://example.org/page", "", proxy_url = unclosed).outcome ==
+        problemProxyAuthority("[fd00::1")  # case as found: got `[fd00::1:1080`
+    check sendLoopback("http://example.org/page", "", proxy_url = named).outcome ==
+        problemProxyAuthority("proxy:3128")  # case as found: got `proxy:3128:1080`
+    let cases = casesAuthority()
+    check cases.len == COUNT_VALUES_SPLIT  # each authority, with scheme and without, each closing
+    for (value, expected) in cases:
+      let chosen = "https://api.example.org/v1".proxy(@[("https_proxy", value)])
+      check value & ": " & $chosen ==
+          value & ": " & $some(expected)  # domain: RFC 3986 3.2, then curl manual, `--proxy`
 
 
   test "bypass list names host by `*`, host itself or domain it ends in, case folded":
