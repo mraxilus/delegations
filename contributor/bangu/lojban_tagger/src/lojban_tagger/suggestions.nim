@@ -139,8 +139,11 @@ const
     ##   inside them until own closing element.
   ELEMENTS_SKIPPED = ["math", "object", "svg", "template"]
     ## Elements whose content is markup, and no text of page.
-  CHARACTERS_CLOSING_RAW = {'\t', '\n', '\f', '\r', ' ', '/', '>'}
-    ## Characters after name by which `</` and name close raw text, as HTML tokenizer takes them.
+  SPACES_MARKUP = {'\t', '\n', '\f', '\r', ' '}
+    ## Characters HTML reads as space in markup: tab, line feed, form feed, carriage return, space.
+  CHARACTERS_ENDING_NAME = SPACES_MARKUP + {'/', '>'}
+    ## Characters ending name of element, as HTML tokenizer takes them; `</` and name before one
+    ##   close raw text.
   ELEMENTS_BLOCK = [
     "address", "article", "aside", "blockquote", "br", "dd", "div", "dl", "dt", "figcaption",
     "footer", "h1", "h2", "h3", "h4", "h5", "h6", "header", "hr", "li", "main", "nav", "ol", "p",
@@ -368,20 +371,50 @@ func readReference(markup: string, at: int): tuple[text: string, size: int] =
 
 func findClosingRaw(markup, name: string, at: int): int =
   ## Find own closing element of raw text `name` from `at`: `</`, name in any case, then
-  ##   character of `CHARACTERS_CLOSING_RAW`; `markup.len` where none, so raw text runs to end.
+  ##   character of `CHARACTERS_ENDING_NAME`; `markup.len` where none, so raw text runs to end.
   var candidate = markup.find("</", at)
   while candidate >= 0:
     let after = candidate + 2 + name.len
-    if after < markup.len and markup[after] in CHARACTERS_CLOSING_RAW and
+    if after < markup.len and markup[after] in CHARACTERS_ENDING_NAME and
         cmpIgnoreCase(markup[candidate+2..<after], name) == 0:
       return candidate
     candidate = markup.find("</", candidate + 2)
   markup.len
 
 
+func findCloseTag(markup: string, at: int): int =
+  ## Find `>` closing tag from `at`, past letters of its name, reading as HTML tokenizer does:
+  ##   quote opens value alone, right after `=` that follows attribute name, so quote anywhere
+  ##   else is character; `markup.len` where tag never closes.
+  var
+    i = at
+    is_named = false  # Attribute name read, so `=` opens its value.
+  while i < markup.len and markup[i] notin CHARACTERS_ENDING_NAME: inc i  # Rest of tag name.
+  while i < markup.len:
+    let character = markup[i]
+    if character == '>': return i
+    if character != '=' or not is_named:
+      is_named = character != '/' and (is_named or character notin SPACES_MARKUP)
+      inc i
+      continue
+
+    # Read value: spaces, then quoted value to its own quote, or unquoted one to space or `>`.
+    inc i
+    while i < markup.len and markup[i] in SPACES_MARKUP: inc i
+    if i < markup.len and markup[i] in {'"', '\''}:
+      let close = markup.find(markup[i], i + 1)
+      if close < 0: return markup.len
+      i = close + 1
+    else:
+      while i < markup.len and markup[i] notin SPACES_MARKUP and markup[i] != '>': inc i
+    is_named = false
+  markup.len
+
+
 func readMarkup(markup: string): string =
   ## Read markup as text in one pass: comments, declarations and skipped elements dropped,
   ##   block edges as line breaks, references decoded, spaces collapsed, empty lines dropped.
+  ##   Tag ends at first `>` outside quoted value; quote opens value alone (`findCloseTag`).
   ##   Raw text ends at own closing element alone, whatever it holds, wherever element stands.
   ##   Skipped element ends where levels of its name close, so one nested in it is skipped whole.
   var
@@ -411,15 +444,9 @@ func readMarkup(markup: string): string =
         continue
       var finish = start
       while finish < markup.len and markup[finish] in CHARACTERS_NAME: inc finish
-      let name = markup[start..<finish].toLowerAscii
-      var (close, quote) = (finish, '\0')
-      while close < markup.len:
-        let inside = markup[close]
-        if quote != '\0':
-          if inside == quote: quote = '\0'
-        elif inside in {'"', '\''}: quote = inside
-        elif inside == '>': break
-        inc close
+      let
+        name = markup[start..<finish].toLowerAscii
+        close = markup.findCloseTag(finish)
       if close >= markup.len: break
       i = close + 1
       if not is_closing and name in ELEMENTS_RAW:
