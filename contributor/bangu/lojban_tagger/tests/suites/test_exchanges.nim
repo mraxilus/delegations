@@ -17,9 +17,13 @@
 ##     spelling of `http` and `https` in any case.
 ##   Proxy URL is held through `send`, port by table of its bounds and by random ports; each
 ##     opening, host, port and user part with each other is refused naming first part failing of
-##     host, scheme and port, user part spelled from symbols no problem holds, so any byte of it
-##     leaking into problem shows. Proxy `send` takes meets pin, which refuses https URL for want
-##     of context, so laws open no socket; loopback proxy shows what wraps and what is taken.
+##     host, scheme, port and user part, which https URL refuses; user part is spelled from
+##     symbols no problem holds, so any byte of it leaking into problem shows. Proxy `send` takes
+##     meets pin, which refuses https URL for want of context, so laws open no socket; loopback
+##     proxy shows what wraps and what is taken.
+##     Each user part, empty or holding user, password or both, goes with each spelling of `http`
+##       and `https` through tunnel to TLS server: https URL is refused where proxy holds user or
+##       password, else tunnelled, server reading no login; http URL is taken, proxy reading login.
 ##   Redirect resolves every example of RFC 3986 section 5.4; `http:g` keeps its scheme, as
 ##     strict parser reads it, so has no host and gives no redirect. References of one to three
 ##     path segments, dot segments among them, hold laws: dot segments removed, target resolves
@@ -43,8 +47,10 @@
 ##   TLS runs in same process: suite makes test root and four leaves with `openssl` command at
 ##     run time, in fresh directory it removes at end, so no key is committed, and serves each
 ##     leaf on `127.0.0.1`; tunnel is raw proxy of `std/asyncnet` answering `CONNECT` and relaying
-##     bytes. Each leaf goes to name and to address after every other case, on one context, so
-##     pin of one send never decides next; refused handshake shows server read no byte.
+##     bytes, and answering other request itself, as proxy of http URL does. Each leaf goes to
+##     name and to address after every other case, on one context, so pin of one send never
+##     decides next; refused handshake shows server read no byte. Listeners close once `send`
+##     ends, so send refused before any connection shows nothing read, never waits.
 ##     Cost: suite needs `openssl` command, which `system` of `tools/build.nim` declares; each
 ##     certificate holds one day from its making, as OpenSSL checks it against clock of machine.
 ##     Cost: `localhost` resolves through host file, so name lookup runs for it, and socket of
@@ -60,8 +66,8 @@ when compileOption("profiler"):
   import std/nimprof
 
 import std/[
-  asyncdispatch, asynchttpserver, asyncnet, net, options, os, osproc, random, sequtils, streams,
-  strutils, tempfiles, unittest, uri,
+  asyncdispatch, asynchttpserver, asyncnet, base64, net, options, os, osproc, random, sequtils,
+  streams, strutils, tempfiles, unittest, uri,
 ]
 
 import ../../app/exchanges
@@ -292,6 +298,15 @@ const
   COUNT_PROXIES = 432
     ## Proxy URLs leak law sends: each of `OPENINGS_PROXY`, `HOSTS_PROXY`, `PORTS_PROXY` and
     ##   `USERS_PROXY` with each other.
+  LOGINS_PROXY = [
+    ("", "", ""), ("@", "", ""), (":@", "", ""), (":+=~@", "", "+=~"), ("!$&*@", "!$&*", ""),
+    ("!$&*:@", "!$&*", ""), ("!$&*:+=~@", "!$&*", "+=~"),
+  ]
+    ## User part opening authority of proxy URL login law sends through, beside user and password
+    ##   it holds: none, empty, empty pair, password alone, user alone, user with empty password,
+    ##   and both; spelled from `SYMBOLS_USER`, so any byte leaking into problem shows.
+  COUNT_LOGINS = 336
+    ## Sends login law makes: each of `LOGINS_PROXY` with each spelling of `http` and `https`.
 
 
 func lineFirst(piece: Piece): int =
@@ -518,6 +533,13 @@ func problemProxy(scheme: string): string =
   "Proxy should be `http://`; got `" & scheme & "`."
 
 
+func problemProxyUser(host: string): string =
+  ## Build problem `send` gives for https URL through proxy URL holding user or password: names
+  ##   host of proxy, never its user part.
+  "Proxy should hold no user part for https URL, since client repeats `Proxy-Authorization` " &
+      "inside tunnel; got user part for `" & host & "`."
+
+
 func problemProxyPort(port: string): string =
   ## Build problem `send` gives for proxy URL whose port client would read as other port.
   "Proxy should name port of one to five digits from 1 to 65535, or none; got `" & port & "`."
@@ -547,8 +569,8 @@ func casesSecured(): seq[tuple[leaf: Leaf, host: string, should_tunnel: bool]] =
 
 func casesProxy(): seq[tuple[url, problem: string]] =
   ## Build proxy URL of each opening, host, port and user part with each other, beside outcome
-  ##   `sendProxied` should give: first part failing of host, scheme and port named, else pin
-  ##   refusing for want of context.
+  ##   `sendProxied` should give: first part failing of host, scheme, port and user part named,
+  ##   user part failing for https URL `sendProxied` sends, as each of `USERS_PROXY` holds user.
   for opening in OPENINGS_PROXY:
     let scheme = if "://" in opening: opening[0..<opening.find("://")] else: ""
     for host in HOSTS_PROXY:
@@ -557,7 +579,7 @@ func casesProxy(): seq[tuple[url, problem: string]] =
           if opening.len == 0 or host.len == 0: PROBLEM_PROXY_HOST
           elif scheme.toLowerAscii != "http": problemProxy(scheme)
           elif not is_taken: problemProxyPort(port)
-          else: PROBLEM_CONTEXT
+          else: problemProxyUser(host)
         for (user, password) in USERS_PROXY:
           result.add (opening & user & ":" & password & "@" & host & ":" & port, problem)
 
@@ -638,14 +660,25 @@ proc relay(source, sink: AsyncSocket) {.async.} =
 proc tunnel(listener: AsyncSocket): Future[seq[string]] {.async.} =
   ## Accept one connection of unbuffered listener and read its head; for `CONNECT`, connect to
   ##   `127.0.0.1` at port it names, whatever host it names, answer `200`, and relay bytes both
-  ##   ways until either way ends; give head read.
+  ##   ways until either way ends; for other request, as proxy takes http URL, read body
+  ##   `content-length` names and answer `ANSWER_RAW`; give head read.
   let client = await listener.accept()
   var lines: seq[string]
   while true:
     let line = await client.recvLine()
     if line in ["", "\r\n"]: break
     lines.add line
-  if lines.len == 0 or not lines[0].startsWith("CONNECT "):
+  if lines.len == 0:
+    client.close()
+    return lines
+  if not lines[0].startsWith("CONNECT "):
+    let lengths = Head(lines: lines).values("content-length")
+    var body = ""
+    while lengths.len > 0 and body.len < lengths[0].parseInt:
+      let data = await client.recv(lengths[0].parseInt - body.len)
+      if data.len == 0: break
+      body.add data
+    await client.send(ANSWER_RAW)
     client.close()
     return lines
   let
@@ -837,17 +870,25 @@ when defined(ssl):
       )
 
 
-  proc sendSecured(authority: Authority, leaf: Leaf, host: string, should_tunnel = false): Secured =
-    ## Send request with credential to server presenting `leaf` at `https://<host>:<port>`,
-    ##   directly or through tunnel of `CONNECT` proxy, by context every call shares; close
-    ##   listeners once `send` ends, then drive loop until server and tunnel end.
+  proc sendSecured(
+    authority: Authority,
+    leaf: Leaf,
+    host: string,
+    should_tunnel = false,
+    scheme = "https",
+    user_part = "",
+  ): Secured =
+    ## Send request with credential to server presenting `leaf` at `<scheme>://<host>:<port>`,
+    ##   directly or through tunnel of `CONNECT` proxy whose URL opens authority with `user_part`,
+    ##   by context every call shares; close listeners once `send` ends, then drive loop until
+    ##   server and tunnel end.
     ##   Server and tunnel accept before `send` ends, as handshake and tunnel need them, or
     ##     never: closing listener fails accept still waiting, which reads as nothing read, so
     ##     refusal before any connection ends red, never waiting on connection that never comes.
     let listener = listenRaw()
     result.port = int(listener.getLocalAddr[1])
     let
-      url = "https://" & host & ":" & $result.port & "/v1/messages"
+      url = scheme & "://" & host & ":" & $result.port & "/v1/messages"
       reading = listener.readHead(context = authority.servers[leaf])
     var
       proxy: AsyncSocket
@@ -856,7 +897,7 @@ when defined(ssl):
     if should_tunnel:
       proxy = listenRaw(is_buffered = false)
       tunnelling = proxy.tunnel
-      proxy_url = some(urlLoopback(int(proxy.getLocalAddr[1]), ""))
+      proxy_url = some("http://" & user_part & "127.0.0.1:" & $int(proxy.getLocalAddr[1]))
     result.sent = waitFor send(
       url,
       "{}",
@@ -1701,7 +1742,7 @@ suite "Internal: Send":
           @["CONNECT localhost:" & $tunnelled.port & " HTTP/1.1"]  # RFC 9110 9.3.6, tunnel
 
 
-  test "proxy refusal names host, scheme or port, first that fails, and never byte of user part":
+  test "proxy refusal names host, scheme, port or user part, first failing, never its user part":
     when not defined(ssl): skip()  # Article IX.9: proxy taken meets pin, which needs `-d:ssl`
     else:
       let found = sendProxied("alice:secret@127.0.0.1:3128")
@@ -1715,9 +1756,64 @@ suite "Internal: Send":
         let
           sent = sendProxied(url)
           named = url & ": "
-        check named & sent.outcome == named & problem  # domain: host, then scheme, then port
+        check named & sent.outcome == named & problem  # domain: host, scheme, port, user part
         check named & $sent.outcome.anyIt(it in SYMBOLS_USER) ==
             named & "false"  # domain: no byte of user part, as curl reads `user:password@host`
+
+
+  test "proxy holding user or password is refused for https URL, so login never enters tunnel":
+    # Regression, found in recheck claim regressions-app-7, 2026-10-29: client of
+    #   `std/httpclient` writes `Proxy-Authorization` on each request it builds, so request
+    #   inside tunnel took proxy login to service and page.
+    when not defined(ssl): skip()  # Article IX.9: TLS needs `-d:ssl`, which stub gives
+    else:
+      check authority.problem == ""  # `openssl` made root and leaves
+      let found = authority.sendSecured(
+        Leaf.Both,
+        "localhost",
+        should_tunnel = true,
+        user_part = "alice:proxy-s3cret@",
+      )
+      check $found.head.values("proxy-authorization") ==
+          "@[]"  # case as found: server read `Basic YWxpY2U6cHJveHktczNjcmV0`, proxy login
+      check found.sent.outcome == problemProxyUser("127.0.0.1")  # case as found: refused
+      check found.connect.len == 0  # case as found: proxy read nothing
+      check "alice" notin found.sent.outcome and
+          "proxy-s3cret" notin found.sent.outcome  # case as found: no byte of login
+      var count = 0
+      for (user_part, user, password) in LOGINS_PROXY:
+        let is_login = user.len > 0 or password.len > 0
+        for scheme in spellingsCase("https") & spellingsCase("http"):
+          let
+            secured = authority.sendSecured(
+              Leaf.Both,
+              "localhost",
+              should_tunnel = true,
+              scheme = scheme,
+              user_part = user_part,
+            )
+            is_secured = scheme.toLowerAscii == "https"
+            proxied = Head(lines: secured.connect)
+            named = scheme & " " & user_part & ": "
+          inc count
+          check named & $secured.head.values("proxy-authorization") ==
+              named & "@[]"  # domain: server never reads login of proxy
+          check named & $secured.sent.outcome.anyIt(it in SYMBOLS_USER) ==
+              named & "false"  # domain: no byte of user part
+          if is_secured and is_login:
+            check named & secured.sent.outcome ==
+                named & problemProxyUser("127.0.0.1")  # domain: refused before client exists
+            check named & $secured.connect.len == named & "0"  # domain: proxy read nothing
+            continue
+          check named & secured.sent.outcome == named & "replied"  # domain: rest taken
+          if is_secured:
+            check named & $proxied.values("proxy-authorization") ==
+                named & "@[]"  # domain: no login, so none at proxy either
+            continue
+          let logins = if user.len > 0: @["Basic " & encode(user & ":" & password)] else: @[]
+          check named & $proxied.values("proxy-authorization") ==
+              named & $logins  # domain: http keeps login, which proxy itself reads
+      check count == COUNT_LOGINS  # each user part with each spelling of `http` and `https`
 
 
   test "https URL in any case opens tunnel through proxy, so proxy never sees credential":
@@ -1932,6 +2028,7 @@ suite "Internal: Send":
         ("http://127.0.0.1:9/a", some("http://:3128")),  # proxy naming no host
         ("http://127.0.0.1:9/a", some("socks5h://127.0.0.1:1080")),  # proxy of other scheme
         ("http://127.0.0.1:9/a", some("http://127.0.0.1:70000")),  # proxy port past 65535
+        ("https://127.0.0.1:9/a", some("http://alice:secret@127.0.0.1:3128")),  # login, https
         ("https://127.0.0.1:9/a", none(string)),  # https URL with no context
       ]:
         let sent = sendLoopback(url, "{}", credential = CREDENTIAL_GIVEN, proxy_url = proxy_url)
