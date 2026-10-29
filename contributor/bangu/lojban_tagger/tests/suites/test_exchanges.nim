@@ -10,8 +10,7 @@
 ##   Malformed files take one recording whose request and body span lines, each piece of its
 ##     file with each fault that piece admits; file is written by suite, never by `toText`, and
 ##     each expected line is counted from pieces before it.
-##     Reader names line after faulty line it reads whole, so line is held only where reader
-##     stops before reading faulty line: text ends there, or block miscounts (TODO in test).
+##     Each file holds line too: faulty line itself, as `readIndex` names it.
 ##   Redirect resolves examples of RFC 3986 section 5.4 but five whose dot segments `combine` of
 ##     `std/uri` resolves otherwise: `.`, `..`, `../..`, `./g/.` and `../../../../g`; should
 ##     `redirect` resolve them itself?
@@ -501,6 +500,9 @@ suite "Internal: Exchange":
   test "malformed recording is refused naming its first faulty piece, each piece with each fault":
     check RECORDING_BASE.toText == PIECES_BASE.join  # file holds pieces in order format names
     check RECORDING_BASE.toText.readRecording.is_read  # whole file reads, so fault alone refuses
+    # Regression, found in review: reader named line after faulty line it had read whole.
+    check readRecording("lojban_tagger recording 1\nLabel x\n").line == 2  # case as found: was 3
+    check readRecording("Lojban_tagger recording 1\n").line == 1  # case as found: was 2
     let cases = casesMalformed()
     var (pieces, faults) = (default(set[Piece]), default(set[Fault]))
     for malformed in cases:
@@ -510,10 +512,7 @@ suite "Internal: Exchange":
       check not recorded.is_read  # refused
       if recorded.is_read: continue
       check named & recorded.problem == named & malformed.problem  # what faulty line should be
-      # TODO: Hold line of fault reader reads whole too, once it names that line, not next one.
-      if malformed.fault in {Fault.Missing, Fault.Unbroken, Fault.Trailing} or
-          malformed.at in {Piece.RequestBytes, Piece.BodyBytes}:
-        check named & $recorded.line == named & $malformed.line  # line of fault, from one
+      check named & $recorded.line == named & $malformed.line  # domain: faulty line, from one
       pieces.incl malformed.piece
       faults.incl malformed.fault
     check cases.len == COUNT_MALFORMED  # every piece with every fault and value it admits
