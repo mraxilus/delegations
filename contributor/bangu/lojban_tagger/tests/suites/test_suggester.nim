@@ -46,7 +46,7 @@ import std/[
 ]
 
 import ../../app/exchanges
-from ../../app/suggester {.all.} import COUNT_REDIRECTS_MAX, RUNES_SHOWN, USAGE
+from ../../app/suggester {.all.} import COUNT_REDIRECTS_MAX, USAGE
 import ../../src/lojban_tagger/[suggestions, tags]
 import ../../tools/examples
 

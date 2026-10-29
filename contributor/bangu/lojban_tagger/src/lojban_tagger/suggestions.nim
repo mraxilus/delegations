@@ -136,8 +136,9 @@ const
   VERSION_ANTHROPIC = "2026-10-21"  ## Version of Messages API body is written for.
   BETA_FALLBACK = "server-side-fallback-2026-07-01"  ## Beta `fallbacks: "default"` needs.
   NAME_SCHEMA = "lojban_tag"  ## Name Chat Completions gives schema of answer.
-  RUNES_SHOWN = 200  ## Most characters of outside text report shows.
-  RUNES_ANSWER_SHOWN = 80  ## Most characters of malformed answer report shows.
+  RUNES_SHOWN* = 200  ## Most characters of outside text report shows.
+  RUNES_ANSWER_SHOWN* = 80
+    ## Most characters of malformed answer, or of faulty line of recording, report shows.
   ELEMENTS_RAW = ["iframe", "noscript", "script", "style"]
     ## Elements whose content is raw text, and no text of page: HTML tokenizer reads no markup
     ##   inside them until own closing element.
