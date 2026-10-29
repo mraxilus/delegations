@@ -46,9 +46,11 @@ nim r tools/build.nim lists                       # write both lists again from 
 nim r tools/build.nim head                        # compare committed lists with lojban-common
 ```
 
-The build and the tests need only the compiler that `lojban_tagger.nimble` pins. The verbs
-`lists` and `head` also need the Debian package `lojban-common`. `suggester` also needs
-`libssl3` and `ca-certificates` when it runs. The verb `system` declares all of them.
+The build needs the compiler that `lojban_tagger.nimble` pins, and `libssl3`, because
+`suggester` and the suites compile with TLS. The suites also run the command `openssl`, which
+makes a test root for each run. `suggester` needs `ca-certificates` when it runs. The verbs
+`lists` and `head` also need the Debian package `lojban-common`. The verb `system` declares all
+of them.
 
 ## Use
 
@@ -69,34 +71,55 @@ data directory of the user.
 prints the tag alone, so `tagger tag` can take it:
 
 ```sh
-tagger tag notes/plan.md "$(binaries/suggester "$(cat notes/plan.md)")"
+tagger tag notes/plan.md "$(binaries/suggester - < notes/plan.md)"
 page=https://www.gutenberg.org/ebooks/11
 tagger tag "$page" "$(binaries/suggester "$page")"
 ```
 
+The argument `-` reads the text from standard input. Use it for a long or private text, because
+every user of the machine can read the command line of a process.
+
 The model names the words of a tanru from the word lists. The tool checks each word against
 the lists, and builds the lujvo that CLL 4.12 prefers. It refuses an answer that does not read
-back as the same tag. A text that already reads as a tag asks no service, and needs no key.
+back as the same tag. A text that already reads as a tag of at most six words asks no service,
+and needs no key.
 
-Usage: `suggester [--record:<directory>|--replay:<directory>] <text>...|<url>`
+Usage: `suggester [--record:<directory>|--replay:<directory>] [--] <text>...|<url>|-`
+
+An argument that starts with `-` and is no flag is a usage error, so a mistyped flag never sends
+a paid request. Put `--` before a text that starts with `-`.
 
 | Variable | Default | Effect |
 |---|---|---|
 | `LOJBAN_TAGGER_SERVICE` | `claude` | `claude`, `openrouter`, or `chat` for another server |
 | `LOJBAN_TAGGER_ENDPOINT` | the URL of the service | `chat` needs one |
 | `LOJBAN_TAGGER_MODEL` | `claude-opus-5-5`, or `anthropic/claude-opus-5.5` | `chat` needs one |
-| `LOJBAN_TAGGER_EFFORT` | `medium` | `low`, `medium`, `high`, `xhigh` or `max` |
+| `LOJBAN_TAGGER_EFFORT` | `medium`, none for `chat` | `low`, `medium`, `high`, `xhigh` or `max` |
 | `LOJBAN_TAGGER_API_KEY` | none | The key, read first |
+| `LOJBAN_TAGGER_WORKSPACE` | none | Workspace ID for a key that no workspace scopes |
 
 Where `LOJBAN_TAGGER_API_KEY` is unset, `claude` reads `ANTHROPIC_API_KEY`, and `openrouter`
-reads `OPENROUTER_API_KEY`. The report names the variable that it read, and never the key. Get
-a Claude key at `https://platform.claude.com/settings/keys`, and an OpenRouter key at
-`https://openrouter.ai/settings/keys`. Put the key in the environment, never on the command
-line.
+reads `OPENROUTER_API_KEY`. Each reads that name only for the host of its default endpoint. So a
+key that you set for other tools never goes to another host. The report names the variable that
+it read, and never the key. Put the key in the environment, never on the command line.
 
-- `--record:<directory>` writes each reply to a file. A later run replays that file, so the
-  same request never pays twice.
+Get a Claude key at `https://platform.claude.com/settings/keys`, and scope it to one workspace
+when you create it. Otherwise, set `LOJBAN_TAGGER_WORKSPACE` to the ID of the workspace, which
+starts with `wrkspc_`. Get an OpenRouter key at `https://openrouter.ai/settings/keys`.
+
+The tool reads `https_proxy`, `HTTPS_PROXY`, `http_proxy` and `no_proxy` as curl reads them, and
+a proxy with no port takes port 1080. A proxy must start with `http://`. For an https URL, the
+proxy must hold no user name or password. The client would also send them to the host behind
+the proxy.
+
+- `--record:<directory>` writes each reply to a file. A later run replays a page reply of 2xx or
+  3xx, and a service reply that reads as an answer. So the same request never pays twice. It
+  sends other requests again, such as an error that the service reports.
 - `--replay:<directory>` reads every reply from files. It needs no key and no network.
+- A recording holds the text and the reply, so the tool makes the directory with mode 0700, and
+  writes each file with mode 0600. It refuses a directory that every user may write, such as
+  `/tmp`.
+- A recording holds its endpoint too, so it replays only for that endpoint.
 - `nim r tools/build.nim examples` writes worked examples to `build/examples/`, and prints the
   command that replays each one. Their replies are documented shapes, not live replies.
 
