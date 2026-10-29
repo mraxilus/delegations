@@ -103,6 +103,14 @@ const
     ## Migration guide: "There is no server-side fallback for Claude Haiku 5.5".
   URL_BETA = "https://platform.claude.com/docs/en/api/beta/messages"
     ## Beta Messages reference: on model with no fallback, `"default"` runs requested model alone.
+  URL_CACHING = "https://openrouter.ai/docs/guides/best-practices/prompt-caching"
+    ## Prompt caching guide of OpenRouter: `session_id` as key of sticky routing.
+  URL_COMPLETION = "https://openrouter.ai/docs/api/api-reference/chat/create-a-chat-completion"
+    ## Chat completion reference of OpenRouter: `session_id` at most 256 characters.
+  ID_SESSION_STICKY = "lojban_tagger"
+    ## Session OpenRouter body names, project choice: one for every request, as `URL_CACHING`
+    ##   keeps one endpoint for one session.
+  CHARACTERS_SESSION_MAX = 256  ## Most characters of `session_id`, as `URL_COMPLETION` gives.
   ROWS_FALLBACK = [
     (model: "claude-fable-5-1", is_fallback: true, page: URL_REFUSALS),
     (model: "claude-mythos-5-1", is_fallback: true, page: URL_REFUSALS),
@@ -487,6 +495,7 @@ func toBodyDocumented(settings: Settings, element: string): JsonNode =
     result["reasoning"]["exclude"] = %true
     result["response_format"] = format
     result["provider"] = %*{"require_parameters": true}
+    result["session_id"] = %ID_SESSION_STICKY
     result["messages"] = %*[
       {"role": "system", "content": [
         {"type": "text", "text": PROMPT_SYSTEM, "cache_control": {"type": "ephemeral"}},
@@ -1300,6 +1309,24 @@ suite "Internal: Request":
       check escapeJson(PROMPT_SYSTEM) in prefix  # system text stands before user turn
       for passage in served(pool):  # `SAMPLES_PASSAGE` passages, seeded
         check settings.toBody(passage).prefixTurn == prefix  # cache law: prefix never moves
+
+
+  test "OpenRouter body names one session for every passage, so routing keeps its cache":
+    let found = initSettings(Service.OpenRouter, some(EFFORT_DEFAULT)).toBody(toPassage("x"))
+    check parseJson(found){"session_id"}.getStr ==
+        ID_SESSION_STICKY  # review finding wire-3, 2026-10-29: none, so passage set endpoint
+    randomize(0)
+    let pool = poolPassages()
+    for service in Service:  # 3 services, exhaustive
+      for passage in served(pool):  # `SAMPLES_PASSAGE` passages, seeded
+        let
+          body = parseJson(initSettings(service, some(EFFORT_DEFAULT)).toBody(passage))
+          session = body{"session_id"}.getStr
+          is_routed = service == Service.OpenRouter
+        check (service, body.hasKey("session_id")) == (service, is_routed)  # OpenRouter alone
+        check (service, session) ==
+            (service, if is_routed: ID_SESSION_STICKY else: "")  # `URL_CACHING`, never passage
+        check session.len <= CHARACTERS_SESSION_MAX  # `URL_COMPLETION`, at most 256 characters
 
 
   test "passage element closes once and reads back as passage text and URL":
