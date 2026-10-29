@@ -15,9 +15,8 @@
 ##     wording, never how they arise.
 ##   Samples are drawn into pools allocated once, after one seeding per test, and served by
 ##     `served`.
-##   Corpus does not cover yet: skipped element inside one of same name; quote inside unquoted
-##     attribute value; page URL holding ill-formed UTF-8; escape of U+0000; word of answer
-##     holding control character.
+##   Corpus does not cover yet: quote inside unquoted attribute value; page URL holding
+##     ill-formed UTF-8; escape of U+0000; word of answer holding control character.
 
 {.experimental: "strictFuncs".}
 
@@ -64,6 +63,7 @@ const
   DEPTH_MARKUP_MAX = 8  ## Most levels of elements random tree nests.
   FLOOR_DEEP = 80  ## Fewest random trees nesting `DEPTH_MARKUP_MAX` levels; 98 read at seed `0`.
   COUNT_NESTED = 100_000  ## Elements nested in one page, far past depth recursion could hold.
+  LEVELS_SKIPPED_MAX = 4  ## Most levels of one skipped element exhaustive nesting law reads.
   SAMPLES_BYTES = 1000  ## Random byte strings repair, cut and printable laws read, seeded.
   BYTES_SAMPLE_MAX = 4096  ## Most bytes of random byte string.
   RUNES_CAP_MAX = 40  ## Most characters random cap of printable law allows, so cap often cuts.
@@ -548,9 +548,10 @@ proc caseRandom(name: string): string =
   else: name.capitalizeAscii
 
 
-proc nodeRandom(depth: int, skipped: string): Node =
-  ## Draw node nesting at most `depth` levels of elements; inside skipped element `skipped`, no
-  ##   element takes its name, since its first closing element would end it.
+proc nodeRandom(depth: int, raw: string): Node =
+  ## Draw node nesting at most `depth` levels of elements; inside raw text element `raw`, no
+  ##   element takes its name, since its first closing element ends raw text, while skipped
+  ##   element of markup may nest in one of same name.
   case rand(if depth > 0: 11 else: 4)
   of 0..1: return Node(part: Part.Text, text: TEXTS_MARKUP.sample)
   of 2:
@@ -566,10 +567,10 @@ proc nodeRandom(depth: int, skipped: string): Node =
     )
   of 5..7: result = Node(part: Part.Block, name: NAMES_BLOCK.sample)
   of 8..9: result = Node(part: Part.Inline, name: NAMES_INLINE.sample)
-  else: result = Node(part: Part.Skipped, name: NAMES_SKIPPED.filterIt(it != skipped).sample)
+  else: result = Node(part: Part.Skipped, name: NAMES_SKIPPED.filterIt(it != raw).sample)
 
   # Name element, then fill it, unless skipped element closes itself.
-  let inside = if result.part == Part.Skipped and skipped.len == 0: result.name else: skipped
+  let inside = if raw.len == 0 and result.name in NAMES_RAW: result.name else: raw
   result.name = result.name.caseRandom
   result.attributes = ATTRIBUTES.sample
   if result.part == Part.Skipped and rand(3) == 0:
@@ -1292,6 +1293,23 @@ suite "Internal: Page":
         for markup in markupsRaw(name, raw):
           check readMarkup(markup) == "a\nb"  # HTML tokenizer, end tag name state of raw text
       check readMarkup("<p>a</p><" & name & ">x<b") == "a"  # raw text never closed runs to end
+
+
+  test "skipped element nested in one of same name is skipped whole":
+    check readMarkup("<template><template></template>secret</template><p>Hello</p>") ==
+        "Hello"  # case as found in suite review: inner closing element ended skip
+    for name in NAMES_SKIPPED:
+      if name in NAMES_RAW: continue  # raw text nests nothing; test above holds it
+      for levels in 1..LEVELS_SKIPPED_MAX:  # 1 to 4 levels, exhaustive
+        for (opening, closing) in [(name, name.toUpperAscii), (name.capitalizeAscii, name)]:
+          let markup = "<p>a</p>" & ("<" & opening & ">x").repeat(levels) &
+              ("</" & closing & ">y").repeat(levels) & "<p>b</p>"
+          check readMarkup(markup) == "a\ny\nb"  # text after outermost closing element alone
+      check readMarkup("<p>a</p><" & name & "><" & name & "/>x</" & name & "><p>b</p>") ==
+          "a\nb"  # element closing itself opens no level
+      let deep = ("<" & name & ">").repeat(COUNT_NESTED) &
+          ("</" & name & ">hidden").repeat(COUNT_NESTED - 1) & "</" & name & "><p>deep</p>"
+      check readMarkup(deep) == "deep"  # levels counted, not recursed, so nesting overflows nothing
 
 
   test "100,000 nested elements read in one pass":
