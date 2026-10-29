@@ -11,9 +11,10 @@
 ##     file with each fault that piece admits; file is written by suite, never by `toText`, and
 ##     each expected line is counted from pieces before it.
 ##     Each file holds line too: faulty line itself, as `readIndex` names it.
-##   Redirect resolves examples of RFC 3986 section 5.4 but five whose dot segments `combine` of
-##     `std/uri` resolves otherwise: `.`, `..`, `../..`, `./g/.` and `../../../../g`; should
-##     `redirect` resolve them itself?
+##   Redirect resolves every example of RFC 3986 section 5.4; `http:g` keeps its scheme, as
+##     strict parser reads it, so has no host and gives no redirect. References of one to three
+##     path segments, dot segments among them, hold laws: dot segments removed, target resolves
+##     to itself, and `./` before relative path names same place.
 ##   URL holding whitespace or control character is refused by `redirect` and by `send`, each such
 ##     byte at start, middle and end; `send` meets live server, so refusal shows nothing went out.
 ##   Credential laws take every byte at start, middle and end of value; random secrets are spelled
@@ -199,6 +200,11 @@ const
     ## Reply `send` should read from `ANSWER_ODD`: each fold one space.
   FOLDS = [" ", "\t", " \t  "]  ## Spaces and tabs opening continuation line of folded header.
   URL_BASE = "http://a/b/c/d;p?q"  ## URL examples of RFC 3986 section 5.4 resolve against.
+  SEGMENTS_DOT = ["", ".", "..", "g", "g.", ".g", "..g", ";x"]
+    ## Path segments references are built from: empty, dot segments, and names dots stand in.
+  COUNT_REFERENCES = 2_175
+    ## References of one to three `SEGMENTS_DOT`: relative or absolute, with or without query and
+    ##   fragment, but none empty and none opening with `//`, which names authority.
   CHARACTERS_CONTROL = {'\0'..'\x1F', '\x7F'}  ## Control characters of ASCII: C0 set and DEL.
 
 
@@ -261,6 +267,22 @@ func casesMalformed(): seq[Malformed] =
           line: line,
           problem: problem,
         )
+
+
+func referencesDotted(): seq[string] =
+  ## Build each reference of one to three `SEGMENTS_DOT` joined by `/`, relative or absolute,
+  ##   with or without query and fragment holding dot segments; none empty, none opening `//`.
+  var paths: seq[string]
+  for a in SEGMENTS_DOT:
+    paths.add a
+    for b in SEGMENTS_DOT:
+      paths.add a & "/" & b
+      for c in SEGMENTS_DOT: paths.add a & "/" & b & "/" & c
+  for path in paths:
+    for opening in ["", "/"]:
+      for closing in ["", "?y/../x#s/./x"]:
+        let reference = opening & path & closing
+        if reference.len > 0 and not reference.startsWith("//"): result.add reference
 
 
 proc lineRandom(length_max: int): string =
@@ -760,12 +782,16 @@ suite "Internal: Exchange":
       (";x", "http://a/b/c/;x"),
       ("g;x", "http://a/b/c/g;x"),
       ("g;x?y#s", "http://a/b/c/g;x?y#s"),
+      (".", "http://a/b/c/"),  # case as found in review: was `http://a/b/c/.`
       ("./", "http://a/b/c/"),
+      ("..", "http://a/b/"),  # case as found: was `http://a/b/c/..`
       ("../", "http://a/b/"),
       ("../g", "http://a/b/g"),
+      ("../..", "http://a/"),  # case as found: was `http://a/b/..`
       ("../../", "http://a/"),
       ("../../g", "http://a/g"),  # last of normal examples, 5.4.1
       ("../../../g", "http://a/g"),  # first of abnormal examples, 5.4.2
+      ("../../../../g", "http://a/g"),  # case as found: was `http://a/.g`
       ("/./g", "http://a/g"),
       ("/../g", "http://a/g"),
       ("g.", "http://a/b/c/g."),
@@ -773,6 +799,7 @@ suite "Internal: Exchange":
       ("g..", "http://a/b/c/g.."),
       ("..g", "http://a/b/c/..g"),
       ("./../g", "http://a/b/g"),
+      ("./g/.", "http://a/b/c/g/"),  # case as found: was `http://a/b/c/g/.`
       ("g/./h", "http://a/b/c/g/h"),
       ("g/../h", "http://a/b/c/h"),
       ("g;x=1/./y", "http://a/b/c/g;x=1/y"),
@@ -784,6 +811,26 @@ suite "Internal: Exchange":
     ]:
       check URL_BASE.redirect(Reply(status: 302, location: reference)) ==
           some(expected)  # RFC 3986 5.4, base `http://a/b/c/d;p?q`
+
+
+  test "redirect removes dot segments of any path, and resolves its own target to itself":
+    # Regression, found in review: `combine` of `std/uri` kept dot segments that end path, as `.`
+    #   and `..`, and gave `http://a/.g` for `../../../../g`.
+    let references = referencesDotted()
+    check references.len == COUNT_REFERENCES  # guard leaves every reference but `//` and empty
+    for reference in references:
+      let
+        target = URL_BASE.redirect(Reply(status: 302, location: reference))
+        named = reference & ": "
+      check named & $target.isSome == named & "true"  # domain: path reference resolves
+      if target.isNone: continue
+      let segments = target.get.parseUri.path.split('/')
+      check named & $segments.filterIt(it in [".", ".."]) == named & "@[]"  # domain: removed
+      check named & $URL_BASE.redirect(Reply(status: 302, location: target.get)) ==
+          named & $target  # domain: target resolves to itself
+      if reference[0] notin {'/', '?', '#'}:
+        check named & $URL_BASE.redirect(Reply(status: 302, location: "./" & reference)) ==
+            named & $target  # domain: `./` before relative path names same place
 
 
   test "redirect follows statuses of `STATUSES_REDIRECT` alone, and only to http or https":
@@ -804,6 +851,7 @@ suite "Internal: Exchange":
       ("https://example.org/a", "javascript:alert(1)", none(string)),
       ("https://example.org/a", "mailto:someone@example.org", none(string)),
       ("https://example.org/a", "g:h", none(string)),  # RFC 3986 5.4.1, scheme `g`
+      (URL_BASE, "http:g", none(string)),  # RFC 3986 5.4.2, strict: scheme kept, so no host
       ("https://example.org/a", "", none(string)),  # no location
     ]:
       for status in STATUSES_REDIRECT:
