@@ -35,7 +35,8 @@
 ##     `std/httpclient` names host for SNI alone and checks no certificate against it: name pins
 ##     as name, address as address, other kind cleared, so trusted leaf naming other host is
 ##     refused before any byte of request leaves. Empty host is refused, since empty pin checks
-##     no name.
+##     no name, and so is host opening with dot, since OpenSSL reads such name as any subdomain
+##     of rest, which would take leaf naming other host.
 ##     Cost: context holds one pin at time, so sends sharing context run in turn, as `suggester`
 ##     runs them; through proxy, target host is pinned for tunnel.
 ##   Proxy URL should be `http://`, in any case, with host, and port `isPort` takes or none, else
@@ -518,9 +519,10 @@ when defined(ssl):
   proc pinHost(context: SslContext, host: string): bool =
     ## Pin host on context, so each connection it opens next refuses certificate naming other
     ##   host: name as name, address as address, other kind cleared; false where host is empty,
-    ##   whose pin checks nothing, or where OpenSSL refuses it.
+    ##   whose pin checks nothing, opens with dot, which OpenSSL reads as any subdomain of rest,
+    ##   or where OpenSSL refuses it.
     ##   Host `parseUri` gives holds no brackets, so IPv6 address reads as address.
-    if host.len == 0: return false
+    if host.len == 0 or host.startsWith('.'): return false
     let parameters = SSL_CTX_get0_param(context.context)
     if host.isIpAddress:
       X509_VERIFY_PARAM_set1_ip_asc(parameters, host.cstring) == 1 and
