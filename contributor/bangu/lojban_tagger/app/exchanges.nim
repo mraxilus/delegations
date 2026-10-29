@@ -17,6 +17,9 @@
 ##   `send` makes fresh client for each request and follows no redirect: client loop would keep
 ##     its headers across hosts, so credential could reach other host, and it would keep one
 ##     proxy for every hop. `suggester` follows page redirects itself, choosing proxy again.
+##   URL holding whitespace or control character is refused by `send` before client exists, and
+##     by `redirect` as target: line break would split request line, and client asserts it holds
+##     none, so its `AssertionDefect` would escape `send`.
 ##   Deadline is future caller passes, so suite completes it itself and reads no clock; body
 ##     is read from stream up to its cap, so huge page never fills memory.
 ##     Cost: name lookup blocks before deadline exists; through proxy, only proxy host resolves.
@@ -54,7 +57,7 @@ type
     of true:
       reply*: Reply  ## Reply as read, body cut at its cap.
     of false:
-      problem*: string  ## `deadline passed`, or first line of error; never holds credential.
+      problem*: string  ## `deadline passed`, URL refused, or first line of error; no credential.
 
   Recording* = object  ## Define one exchange as file keeps it: origin, request and reply.
     label*: string  ## Origin: `recorded <date>`, or documented shape of reply.
@@ -79,6 +82,7 @@ const
   HEADER_RECORDING* = "lojban_tagger recording 1"  ## First line of recording file: format, version.
   USER_AGENT* = "lojban_tagger"  ## Agent every request names.
   STATUSES_REDIRECT* = [301, 302, 303, 307, 308]  ## Statuses `redirect` follows, as client does.
+  CHARACTERS_CONTROL = {'\0'..'\x1F', '\x7F'}  ## Control characters of ASCII: C0 set and DEL.
   LUT_OPENING_BY_SERVICE*: array[Service, string] = ["sk-ant-", "sk-or-", ""]
     ## Opening of credentials each service issues; opening of other service is refused.
 
@@ -170,15 +174,17 @@ func proxy*(url: string, environment: openArray[(string, string)]): Option[strin
 
 func redirect*(url: string, reply: Reply): Option[string] =
   ## Resolve URL redirect names; `none` where status is no redirect, location is no http or
-  ##   https URL, or https falls to http.
+  ##   https URL, target holds whitespace or control character, or https falls to http.
   if reply.status notin STATUSES_REDIRECT or reply.location.len == 0: return none(string)
   let
     origin = url.parseUri
-    target = combine(origin, reply.location.strip.parseUri)
-    scheme = target.scheme.toLowerAscii
-  if scheme notin ["http", "https"] or target.hostname.len == 0: return none(string)
+    resolved = combine(origin, reply.location.strip.parseUri)
+    scheme = resolved.scheme.toLowerAscii
+    target = $resolved
+  if scheme notin ["http", "https"] or resolved.hostname.len == 0: return none(string)
+  if target.find(Whitespace + CHARACTERS_CONTROL) >= 0: return none(string)
   if origin.scheme.toLowerAscii == "https" and scheme == "http": return none(string)
-  some($target)
+  some(target)
 
 
 func stamp*(request: string): string =
@@ -322,6 +328,11 @@ proc send*(
     Future[Sent] {.async.} =
   ## Send one request, GET or POST where body holds text, through fresh client following no
   ##   redirect; read body until `bytes_max`; end when `deadline` completes first.
+  ##   URL holding whitespace or control character is refused, naming byte, and nothing is sent.
+  let at = url.find(Whitespace + CHARACTERS_CONTROL)
+  if at >= 0:
+    return Sent(is_replied: false, problem: "URL should hold no whitespace or control " &
+        "character; got byte `" & $ord(url[at]) & "` at `" & $at & "`.")
   let proxy_used = if proxy_url.isSome: newProxy(proxy_url.get) else: nil
   when defined(ssl):
     let client = newAsyncHttpClient(
