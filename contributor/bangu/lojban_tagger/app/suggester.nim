@@ -30,6 +30,9 @@
 ##     index path does for `tagger`: credential exists only at run time, and rest must agree
 ##     with it (Article II.2). Credential is read from `LOJBAN_TAGGER_API_KEY`, then from usual
 ##     name of service; report names variable, never value. `ANTHROPIC_BASE_URL` is never read.
+##   Usual name of service is read only where endpoint has host of default endpoint of service,
+##     compared without case: key exported for other tools never goes to other host, which
+##     reads `LOJBAN_TAGGER_API_KEY` alone, as `chat` does.
 ##   Second binary, not verb of `tagger`: `-d:ssl` loads libssl when program starts, so every
 ##     verb of `tagger` would need it; Architect chose second binary.
 ##   Page redirects are followed here, at most `COUNT_REDIRECTS_MAX`, choosing proxy again for
@@ -61,7 +64,7 @@
 when compileOption("profiler"):
   import std/nimprof
 
-import std/[asyncdispatch, net, options, os, sequtils, strutils, times]
+import std/[asyncdispatch, net, options, os, sequtils, strutils, times, uri]
 from std/posix import close, mkdir, O_CREAT, O_EXCL, open, O_WRONLY
 
 import ../src/lojban_tagger/[suggestions, tags]
@@ -228,14 +231,23 @@ func readSettings(service, endpoint, model, effort: string): Configured =
 
 #[ Exchanges ]#
 
-proc findCredential(service: Service): Credentialed =
+proc findCredential(settings: Settings): Credentialed =
   ## Read credential from first variable holding one: `LOJBAN_TAGGER_API_KEY`, then usual name
-  ##   of service.
-  let names = [KEY_CREDENTIAL, LUT_KEY_CREDENTIAL_BY_SERVICE[service]]
+  ##   of service, read only where endpoint has host of default endpoint of service, compared
+  ##   without case; other host reads first alone, so key exported for other tools never goes
+  ##   there, and problem says why.
+  let
+    host = LUT_ENDPOINT_BY_SERVICE[settings.service].parseUri.hostname
+    is_usual = host.len > 0 and settings.endpoint.parseUri.hostname.toLowerAscii == host
+    names =
+      if is_usual: @[KEY_CREDENTIAL, LUT_KEY_CREDENTIAL_BY_SERVICE[settings.service]]
+      else: @[KEY_CREDENTIAL]
   for name in names:
-    if name.len > 0 and getEnv(name).strip.len > 0:
-      return readCredential(name, getEnv(name), service)
-  let named = names.filterIt(it.len > 0).mapIt("`" & it & "`").join(" or ")
+    if getEnv(name).strip.len > 0: return readCredential(name, getEnv(name), settings.service)
+  let named = names.mapIt("`" & it & "`").join(" or ")
+  if host.len > 0 and not is_usual:
+    return Credentialed(is_read: false, problem: "Credential should be set in " & named &
+        " alone, since host of endpoint is not `" & host & "`; got none.")
   Credentialed(is_read: false, problem: "Credential should be set in " & named & "; got none.")
 
 
@@ -481,7 +493,7 @@ proc main(): int =
     context: SslContext = nil
     passage: Passage
   if command.mode != Mode.Replay:
-    let found = settings.service.findCredential
+    let found = settings.findCredential
     if not found.is_read:
       stderr.writeLine found.problem
       return 2
