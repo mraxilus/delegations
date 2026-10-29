@@ -11,6 +11,7 @@
 ##   | toBody, toHeaders  | request service expects; same bytes for same passage           |
 ##   | Reply              | reply as read: status, headers kept, body up to its cap        |
 ##   | readReply          | read reply into suggestion: tag checked, or failure named      |
+##   | isAnswered         | reply holds completion model produced, which record replays    |
 ##   | Suggestion         | tag checked against lists, or why none                         |
 ##   |--------------------|----------------------------------------------------------------|
 ##
@@ -1149,6 +1150,43 @@ func readReply*(service: Service, reply: Reply): Suggestion {.raises: [].} =
   case service
   of Service.Claude: readClaude(reply.status, parsed)
   of Service.OpenRouter, Service.Chat: readChat(reply.status, parsed)
+
+
+func isAnswered*(service: Service, reply: Reply): bool {.raises: [].} =
+  ## Test reply holds completion model produced: status 2xx, body whole in identity coding,
+  ##   parsing as JSON object, and ending as answer ends.
+  ##   Answer of `claude` ends at stop reason `end_turn`, `max_tokens` or
+  ##     `model_context_window_exceeded`; answer of chat formats holds no error object, and ends
+  ##     at first choice holding neither error object nor refusal, finishing at `stop` or
+  ##     `length`.
+  ##   Refusal, error inside 2xx and body holding no JSON object are no answers, so record mode
+  ##     of `app/suggester.nim` sends them again: `readReply` reads answer as tag or as failure
+  ##     of answer itself, never as `Status`, `Declined` or `Malformed` naming reply around it.
+  ##     Cost: refusal service bills is paid again on next record run: one in category `bio`,
+  ##       `frontier_llm` or `reasoning_extraction`, or one after partial output, as refusals
+  ##       page bills them.
+  ##   Never raises: `{.raises: [].}` holds exceptions; defects, and reading of `readReply`,
+  ##     held by test "reply holds answer exactly where reader reads tag or failure of answer
+  ##     itself" of `test_suggestions.nim`.
+
+  func isObject(node: JsonNode): bool =
+    ## Test node is JSON object; false where field is absent.
+    not node.isNil and node.kind == JObject
+
+  if reply.is_cut or not reply.content_encoding.isIdentity or reply.status notin 200..299:
+    return false
+  let parsed = reply.body.toJSON
+  if parsed.isNone or not parsed.get.isObject: return false
+  let node = parsed.get
+  case service
+  of Service.Claude:
+    node{"stop_reason"}.getStr in ["end_turn", "max_tokens", "model_context_window_exceeded"]
+  of Service.OpenRouter, Service.Chat:
+    let choices = node{"choices"}.getElems
+    if node{"error"}.isObject or choices.len == 0: return false
+    let choice = choices[0]
+    not choice{"error"}.isObject and choice{"message", "refusal"}.getStr.len == 0 and
+        choice{"finish_reason"}.getStr in ["stop", "length"]
 
 
 

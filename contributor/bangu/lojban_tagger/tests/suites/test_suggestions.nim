@@ -75,6 +75,9 @@ const
   FLOOR_SUGGESTED = 45
     ## Fewest random replies reading as tag under each service; 56 read under `claude`, 81 under
     ##   others, at seed `0`.
+  FLOOR_ANSWERED = 400
+    ## Fewest replies of `repliesKnown` and random ones holding answer under each service; 446
+    ##   read under `claude`, 807 under others, at seed `0`.
   SAMPLES_GIVEN = 20  ## Random lujvo of each count of words shortcut law reads, seeded.
   COUNT_WORDS_GIVEN_MAX = 18
     ## Most words shortcut law joins into one lujvo: as many as `TEXT_GIVEN_LONG` holds.
@@ -162,6 +165,12 @@ const
     ## Body of error page gateway serves: markup, which neither wire format reads.
   CODINGS_OTHER = ["gzip", "GZIP", "Br", "deflate", "Compress", "x-gzip", "zstd", "identity, br"]
     ## Content codings other than identity, in casings servers write, and two codings listed.
+  DETAILS_REPLY = [
+    "reply over ", "content encoding ", "reply is no JSON object", "stop reason ",
+    "finish reason ", "no choice",
+  ]
+    ## Openings of `Malformed` detail naming reply around answer, never answer model gave: cap,
+    ##   coding, body, stop or finish reason, choice.
   GISMU_STEM_SHARED = ["brodi", "brodo", "brodu"]
     ## Gismu holding no short rafsi, so only rafsi `$` writes for them before head is `brod`,
     ##   which several share.
@@ -456,6 +465,16 @@ func failureRead(suggestion: Suggestion): Option[(Failure, string)] =
   else: some((suggestion.failure, suggestion.detail))
 
 
+func isAnswerRead(suggestion: Suggestion): bool =
+  ## Test reader read answer model gave: tag, or failure of answer itself, never of reply around
+  ##   it: no `Status`, no `Declined`, no `Malformed` opening with one of `DETAILS_REPLY`.
+  if suggestion.is_suggested: return true
+  case suggestion.failure
+  of Failure.Truncated, Failure.Word, Failure.Cmavo, Failure.Long, Failure.Readback: true
+  of Failure.Malformed: not DETAILS_REPLY.anyIt(suggestion.detail.startsWith(it))
+  of Failure.Network, Failure.Recording, Failure.Page, Failure.Status, Failure.Declined: false
+
+
 func tagGiven(text: string): Option[Tag] =
   ## Read tag shortcut takes from text given; `none` where text goes to service, or fails.
   let given = text.readTagGiven
@@ -633,6 +652,14 @@ proc readGuarded(service: Service, reply: Reply): Option[Suggestion] =
     some(readReply(service, reply))
   except Exception:
     none(Suggestion)
+
+
+proc isAnsweredGuarded(service: Service, reply: Reply): Option[bool] =
+  ## Test reply holds answer, catching any exception, defect included; `none` where test raised.
+  try:
+    some(isAnswered(service, reply))
+  except Exception:
+    none(bool)
 
 
 func casings(text: string): seq[string] =
@@ -1304,6 +1331,73 @@ func rowsEnvelope(service: Service): seq[(Reply, string)] =
       if kind.len > 0: error["metadata"] = %*{"error_type": kind}
       for status_served in [status, 200]:
         result.add (toReply(%*{"error": error}, status_served), detail)
+
+
+func repliesFields(): seq[Reply] =
+  ## List reply of every combination of fields answer law reads, each answering `ciska`: status
+  ##   at each bound of 2xx, coding absent, identity or other, body whole or cut; stop reason of
+  ##   Messages API, each one documented, other or absent; error of chat completion absent,
+  ##   object or other kind, choices absent, empty or first one no object, and first choice
+  ##   holding error, refusal and finish reason, each in every kind reader tells apart.
+  let answer = toAnswer(["ciska"])
+  var bodies: seq[string]
+
+  # Write body of Messages API ending at each stop reason.
+  for reason in ["end_turn", "max_tokens", "model_context_window_exceeded", "refusal",
+      "pause_turn", "stop_sequence", "tool_use", "unforeseen", ""]:
+    let body = %*{"content": [{"type": "text", "text": answer}]}
+    if reason.len > 0: body["stop_reason"] = %reason
+    bodies.add $body
+
+  # Write chat completion under each error, with each value of `choices`.
+  let errors = [none(JsonNode), some(%*{"code": 502, "message": "Provider down"}), some(%"down")]
+  for error in errors:
+    var values_choices = @[none(JsonNode), some(newJArray()), some(%*["choice"])]
+    for error_choice in errors:
+      for refusal in [none(JsonNode), some(newJNull()), some(%""), some(%"I cannot help.")]:
+        for reason in ["stop", "length", "content_filter", "error", "tool_calls", ""]:
+          let choice = %*{"message": {"content": answer}}
+          if error_choice.isSome: choice["error"] = error_choice.get
+          if refusal.isSome: choice["message"]["refusal"] = refusal.get
+          if reason.len > 0: choice["finish_reason"] = %reason
+          values_choices.add some(%*[choice])
+    for value in values_choices:
+      let body = newJObject()
+      if error.isSome: body["error"] = error.get
+      if value.isSome: body["choices"] = value.get
+      bodies.add $body
+
+  # Serve each body under each status, coding and cut.
+  for status in [199, 200, 299, 300]:
+    for coding in ["", "identity", "gzip"]:
+      for is_cut in [false, true]:
+        for body in bodies:
+          result.add Reply(status: status, content_encoding: coding, body: body, is_cut: is_cut)
+
+
+func repliesKnown(): seq[Reply] =
+  ## List every reply suite reads through `readReply` but random ones: rows of each table,
+  ##   refusals, envelopes, bodies of error and of no answer at every status, captures, worked
+  ##   examples, answer under each coding, and every combination of fields answer law reads
+  ##   (`repliesFields`).
+  ##   Reply built for one check alone stays in its test: each is of kind corpus holds.
+  for (reply, _) in rowsMessages(): result.add reply
+  for (reply, _) in rowsRefusal(): result.add reply
+  for (reply, _) in rowsCompletion(): result.add reply
+  for service in Service:
+    for (reply, _) in rowsEnvelope(service): result.add reply
+    for coding in "identity".casings & @CODINGS_OTHER:
+      result.add Reply(status: 200, content_encoding: coding, body: bodyAnswer(service))
+  for status in 100..599:
+    for body in @(bodiesError()) & @[envelopeServer(Service.Chat), "", BODY_GATEWAY]:
+      result.add Reply(status: status, body: body)
+  result.add Reply(status: 401, content_type: "application/json", body: CAPTURE_MESSAGES)
+  result.add Reply(status: 401, body: CAPTURE_CHAT)
+  for example in EXAMPLES:
+    for service in [Service.Claude, Service.OpenRouter]:
+      result.add example.toRecordings(service)[^1].reply
+    result.add toReplyChat(example.answer, MODEL_SUITE)
+  result.add repliesFields()
 
 
 
@@ -2077,6 +2171,50 @@ suite "Internal: Reply":
           Reply(status: 200, content_encoding: coding, body: lut_body_by_service[service]),
         ).failureRead ==
             some((Failure.Malformed, "content encoding " & coding))  # named as given
+
+
+  test "reply holds answer exactly where reader reads tag or failure of answer itself":
+    let
+      refusal = toReply(
+        %*{
+          "id": "msg_suite", "type": "message", "role": "assistant", "model": "claude-opus-5-5",
+          "content": [], "stop_reason": "refusal",
+          "stop_details": {"type": "refusal", "category": "cyber",
+              "recommended_model": "claude-opus-4-8",
+              "explanation": "This request was declined because it could enable cyber harm."},
+          "usage": {"input_tokens": 412, "output_tokens": 0},
+        },
+      )
+      gateway = Reply(status: 200, content_type: "text/html",
+          body: "<html><body><h1>Gateway maintenance</h1></body></html>")
+      flagged = %*{"error": {"code": 403, "message": "Flagged",
+          "metadata": {"error_type": "content_policy_violation"}}}
+    # Recheck claims completeness-1 and regressions-cli-1, 2026-10-29: record mode replayed each
+    #   reply below on every later run, `Reply replayed from …: recorded 2026-10-29.`, and never
+    #   asked service again, since it replayed every reply but one reading as `Status`.
+    check not isAnswered(Service.Claude, refusal)  # case as found: refusal naming model to retry
+    for service in Service:  # 3 services, exhaustive
+      check not isAnswered(service, gateway)  # case as found: page of gateway, no JSON object
+    for status in [403, 200]:  # moderation envelope by status, then inside 2xx
+      check not isAnswered(Service.OpenRouter, toReply(flagged, status))  # cases as found
+    check not isAnswered(Service.Chat, Reply(status: 503, body: "x".repeat(BYTES_REPLY_MAX),
+        is_cut: true))  # case as found: error past cap
+    check not isAnswered(Service.Chat, Reply(status: 502, content_encoding: "gzip",
+        body: "\x1F\x8B\x08"))  # case as found: error in coding gzip
+
+    # Hold law over every reply of `repliesKnown` and random ones, under each service.
+    randomize(0)
+    let replies = repliesKnown() & poolReplies()
+    for service in Service:  # 3 services, exhaustive
+      var count_answered = 0
+      for reply in served(replies):  # every shape of `repliesKnown`, then `SAMPLES_REPLY` drawn
+        let outcome = isAnsweredGuarded(service, reply)
+        check outcome.isSome  # never raises, defect included
+        if outcome.isNone: continue
+        check outcome.get ==
+            readReply(service, reply).isAnswerRead  # doc of `isAnswered`: tag or failure of answer
+        if outcome.get: inc count_answered
+      check count_answered >= FLOOR_ANSWERED  # corpus reaches answers under each service
 
 
 
