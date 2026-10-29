@@ -92,6 +92,7 @@ const
   KEY_MODEL = "LOJBAN_TAGGER_MODEL"  ## Environment name binary reads model from.
   KEY_EFFORT = "LOJBAN_TAGGER_EFFORT"  ## Environment name binary reads effort from.
   KEY_CREDENTIAL = "LOJBAN_TAGGER_API_KEY"  ## Environment name binary reads credential from first.
+  KEY_WORKSPACE = "LOJBAN_TAGGER_WORKSPACE"  ## Environment name binary reads workspace from.
   KEY_BASE = "ANTHROPIC_BASE_URL"  ## Environment name agent reads endpoint from; binary never does.
   LUT_KEY_CREDENTIAL_BY_SERVICE: array[Service, string] =
     ["ANTHROPIC_API_KEY", "OPENROUTER_API_KEY", ""]
@@ -100,13 +101,17 @@ const
     ## Variables binary reads credential from, under any service.
   NAMES_PROXY = ["HTTPS_PROXY", "HTTP_PROXY", "NO_PROXY", "http_proxy", "https_proxy", "no_proxy"]
     ## Proxy variables, in both cases curl and host set.
-  NAMES_BLANK = @[KEY_EFFORT, KEY_ENDPOINT, KEY_MODEL, KEY_SERVICE] & NAMES_CREDENTIAL &
-      @NAMES_PROXY
+  NAMES_BLANK = @[KEY_EFFORT, KEY_ENDPOINT, KEY_MODEL, KEY_SERVICE, KEY_WORKSPACE] &
+      NAMES_CREDENTIAL & @NAMES_PROXY
     ## Variables each run blanks where test gives no value: each binary reads, and every proxy.
   MS_POLL = 5
     ## Most milliseconds `poll` waits for event while child runs; exit of child ends loop, so no
     ##   verdict reads time.
   CREDENTIAL_SUITE = "credential-for-suite"  ## Credential live and record runs carry.
+  WORKSPACE_LONG = "wrkspc_" & "a".repeat(122)  ## Workspace of 129 bytes, one past cap.
+  PROBLEM_WORKSPACE = "Workspace should open with `wrkspc_` and hold at most 128 bytes of " &
+      "visible ASCII; got "
+    ## Opening of problem binary gives where it refuses workspace of `claude`.
   MODEL_SUITE = "model-of-suite"  ## Model runs name where service has none, or default moves.
   MODEL_SERVED = "model-served"  ## Model reply names where it is not model asked.
   GLOSS_SUITE = "gloss of suite"  ## Gloss answers give where test names none.
@@ -1011,6 +1016,31 @@ suite "Internal: Suggester":
       stopServer(server)
 
 
+  test "workspace of `LOJBAN_TAGGER_WORKSPACE` goes in header of `claude`, and none where empty":
+    # Review finding wire-2, 2026-10-29: key scoped to no workspace got 400 on every request, and
+    #   no variable named workspace, so `anthropic-workspace-id` never went.
+    let
+      server = startServer()
+      text = example("lojban")
+    for workspace in ["wrkspc_01jdemo0workspace0suite", WORKSPACE_LONG[0 ..< ^1], ""]:
+      var settings = Service.Claude.toSettings(server.port)
+      settings.workspace = workspace
+      server.routes = @[(PATH_SERVICE, toReplyMessages(text.answer, settings.model))]
+      let
+        count_before = server.heard.len
+        outcome = binary.run(settings.toEnvironment & @[(KEY_WORKSPACE, workspace)],
+            [text.argument])
+      check outcome.code == 0  # tag printed
+      check server.heard.len == count_before + 1  # one request sent
+      if server.heard.len != count_before + 1: continue
+      let heard = server.heard[^1]
+      check heard.values("anthropic-workspace-id") ==
+          (if workspace.len > 0: @[workspace] else: @[])  # once where set, at cap too; else none
+      check settings.toHeaders.allIt(heard.values(it[0]) == @[it[1]])  # headers of `toHeaders`
+      check heard.body == settings.toBody(text.argument.toPassage)  # body holds no workspace
+    stopServer(server)
+
+
   test "credential comes from `LOJBAN_TAGGER_API_KEY` first, then usual name of service":
     let
       text = example("lojban")
@@ -1647,6 +1677,20 @@ suite "Internal: Suggester":
           "for `LOJBAN_TAGGER_ENDPOINT`."),
       (every, chat[0..1], "Model should be named for service `chat`; got `` for " &
           "`LOJBAN_TAGGER_MODEL`."),
+      (every, @[(KEY_WORKSPACE, "wrkspc_a\rb")], PROBLEM_WORKSPACE & "`wrkspc_a\\u{D}b` for " &
+          "`LOJBAN_TAGGER_WORKSPACE`."),  # carriage return would split header
+      (every, @[(KEY_WORKSPACE, "wrkspc_a\nb")], PROBLEM_WORKSPACE & "`wrkspc_a\\u{A}b` for " &
+          "`LOJBAN_TAGGER_WORKSPACE`."),
+      (every, @[(KEY_WORKSPACE, "wrkspc_a b")], PROBLEM_WORKSPACE & "`wrkspc_a b` for " &
+          "`LOJBAN_TAGGER_WORKSPACE`."),
+      (every, @[(KEY_WORKSPACE, "workspace_a")], PROBLEM_WORKSPACE & "`workspace_a` for " &
+          "`LOJBAN_TAGGER_WORKSPACE`."),  # opening other than ID of workspace
+      (every, @[(KEY_WORKSPACE, WORKSPACE_LONG)], PROBLEM_WORKSPACE & "`" & WORKSPACE_LONG &
+          "` for `LOJBAN_TAGGER_WORKSPACE`."),  # one byte past cap
+      (every, @[(KEY_SERVICE, "openrouter"), (KEY_WORKSPACE, "wrkspc_a")], "Workspace should " &
+          "be named for service `claude` alone; got `wrkspc_a` for `LOJBAN_TAGGER_WORKSPACE`."),
+      (every, chat & @[(KEY_WORKSPACE, " ")], "Workspace should be named for service `claude` " &
+          "alone; got ` ` for `LOJBAN_TAGGER_WORKSPACE`."),  # any value set, blank included
       (sending, @[(KEY_ENDPOINT, endpoint), (KEY_CREDENTIAL, "sk-ant-sec\rret")],
           "Credential should hold visible ASCII alone; got byte `13` at `10` for " &
           "`LOJBAN_TAGGER_API_KEY`."),  # carriage return would split header
