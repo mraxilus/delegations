@@ -12,11 +12,27 @@
 ##   | stamp               | FNV-1a 64 of request, which names recording file            |
 ##   |---------------------|-------------------------------------------------------------|
 ##
+##   |---------------------|-------------------------------------------------------------|
+##   | Code                | RFC 3986, which `redirect` follows                          |
+##   |---------------------|-------------------------------------------------------------|
+##   | Reference           | R: scheme, authority, path, query, fragment                 |
+##   | toReference         | parse of R by regular expression of appendix `B`            |
+##   | resolve             | T: reference R resolved against Base (5.2.2), strictly      |
+##   | merge               | merge (5.2.3)                                               |
+##   | removeDotSegments   | remove_dot_segments (5.2.4)                                 |
+##   | toText              | component recomposition (5.3)                               |
+##   |---------------------|-------------------------------------------------------------|
+##
 ##   Every routine but `send` is pure, so suites hold each choice by table; `send` alone opens
 ##     socket, and suite drives it over loopback.
 ##   `send` makes fresh client for each request and follows no redirect: client loop would keep
 ##     its headers across hosts, so credential could reach other host, and it would keep one
 ##     proxy for every hop. `suggester` follows page redirects itself, choosing proxy again.
+##   `redirect` resolves location as RFC 3986 section 5.2 resolves reference, read strictly:
+##     reference holding scheme keeps it, so `http:g` names no host and gives no redirect.
+##     Cost: location `http:/page` that browser takes as relative is no redirect here.
+##     Rejected: `combine` of `std/uri`, which keeps dot segments that end path and reads empty
+##     query or fragment as none.
 ##   URL holding whitespace or control character is refused by `send` before client exists, and
 ##     by `redirect` as target: such byte would split or corrupt request line, and client checks
 ##     line break alone, by assertion.
@@ -85,6 +101,13 @@ type
     at: int  ## Byte read next.
     line: int  ## Line of `at`, counted from one.
     line_piece: int  ## Line piece read last opens on, so refusal names faulty line itself.
+
+  Reference = object  ## Define reference as five components, i.e. R of RFC 3986 section 5.2.
+    scheme: Option[string]  ## Scheme, before `:`; `none` where reference holds none.
+    authority: Option[string]  ## Authority, after `//`; `none` where reference holds none.
+    path: string  ## Path; empty where reference holds none.
+    query: Option[string]  ## Query, after `?`; `none` where reference holds none.
+    fragment: Option[string]  ## Fragment, after `#`; `none` where reference holds none.
 
 
 const
@@ -181,18 +204,91 @@ func proxy*(url: string, environment: openArray[(string, string)]): Option[strin
   some(if "://" in value: value else: "http://" & value)
 
 
+func toReference(text: string): Reference =
+  ## Split text into five components of reference, as regular expression of RFC 3986 appendix
+  ##   `B` splits it; empty query or fragment stays apart from none.
+  var rest = text
+  let at_scheme = rest.find({':', '/', '?', '#'})
+  if at_scheme > 0 and rest[at_scheme] == ':':
+    result.scheme = some(rest[0..<at_scheme])
+    rest = rest[at_scheme+1 .. ^1]
+  if rest.startsWith("//"):
+    var stop = rest.find({'/', '?', '#'}, 2)
+    if stop < 0: stop = rest.len
+    result.authority = some(rest[2..<stop])
+    rest = rest[stop .. ^1]
+  let at_fragment = rest.find('#')
+  if at_fragment >= 0:
+    result.fragment = some(rest[at_fragment+1 .. ^1])
+    rest = rest[0..<at_fragment]
+  let at_query = rest.find('?')
+  if at_query >= 0:
+    result.query = some(rest[at_query+1 .. ^1])
+    rest = rest[0..<at_query]
+  result.path = rest
+
+
+func removeDotSegments(path: string): string =
+  ## Remove segments `.` and `..` from path, i.e. remove_dot_segments of RFC 3986 section 5.2.4;
+  ##   branches run its steps `A` to `E` in order.
+  var input = path
+  while input.len > 0:
+    if input.startsWith("../"): input = input[3 .. ^1]
+    elif input.startsWith("./"): input = input[2 .. ^1]
+    elif input.startsWith("/./"): input = input[2 .. ^1]
+    elif input == "/.": input = "/"
+    elif input.startsWith("/../") or input == "/..":
+      input = "/" & input[min(4, input.len) .. ^1]
+      result.setLen max(result.rfind('/'), 0)
+    elif input in [".", ".."]: input = ""
+    else:
+      var stop = input.find('/', 1)
+      if stop < 0: stop = input.len
+      result.add input[0..<stop]
+      input = input[stop .. ^1]
+
+
+func merge(base: Reference, path: string): string =
+  ## Merge relative path with path of base, i.e. merge of RFC 3986 section 5.2.3.
+  if base.authority.isSome and base.path.len == 0: return "/" & path
+  base.path[0..base.path.rfind('/')] & path
+
+
+func resolve(reference, base: Reference): Reference =
+  ## Resolve reference against base, i.e. T of RFC 3986 section 5.2.2, read strictly: reference
+  ##   holding scheme keeps it, even scheme of base.
+  result = reference
+  if reference.scheme.isSome or reference.authority.isSome:
+    if reference.scheme.isNone: result.scheme = base.scheme
+    result.path = removeDotSegments(reference.path)
+    return
+  (result.scheme, result.authority) = (base.scheme, base.authority)
+  if reference.path.len == 0:
+    result.path = base.path
+    if reference.query.isNone: result.query = base.query
+  elif reference.path.startsWith('/'): result.path = removeDotSegments(reference.path)
+  else: result.path = removeDotSegments(base.merge(reference.path))
+
+
+func toText(reference: Reference): string =
+  ## Recompose reference from its components, i.e. section 5.3 of RFC 3986.
+  if reference.scheme.isSome: result.add reference.scheme.get & ":"
+  if reference.authority.isSome: result.add "//" & reference.authority.get
+  result.add reference.path
+  if reference.query.isSome: result.add "?" & reference.query.get
+  if reference.fragment.isSome: result.add "#" & reference.fragment.get
+
+
 func redirect*(url: string, reply: Reply): Option[string] =
-  ## Resolve URL redirect names; `none` where status is no redirect, location is no http or
-  ##   https URL, target holds whitespace or control character, or https falls to http.
+  ## Resolve URL redirect names, as RFC 3986 section 5.2 resolves location against `url`;
+  ##   `none` where status is no redirect, target is no http or https URL with host, holds
+  ##   whitespace or control character, or https falls to http.
   if reply.status notin STATUSES_REDIRECT or reply.location.len == 0: return none(string)
-  let
-    origin = url.parseUri
-    resolved = combine(origin, reply.location.strip.parseUri)
-    scheme = resolved.scheme.toLowerAscii
-    target = $resolved
-  if scheme notin ["http", "https"] or resolved.hostname.len == 0: return none(string)
-  if target.find(Whitespace + CHARACTERS_CONTROL) >= 0: return none(string)
-  if origin.scheme.toLowerAscii == "https" and scheme == "http": return none(string)
+  let target = reply.location.strip.toReference.resolve(url.toReference).toText
+  if not target.isURL or target.find(Whitespace + CHARACTERS_CONTROL) >= 0: return none(string)
+  let is_falling = url.parseUri.scheme.toLowerAscii == "https" and
+      target.parseUri.scheme.toLowerAscii == "http"
+  if is_falling: return none(string)
   some(target)
 
 
