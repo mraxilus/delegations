@@ -42,7 +42,7 @@ when compileOption("profiler"):
   import std/nimprof
 
 import std/[
-  asyncdispatch, asyncnet, json, options, os, osproc, random, sequtils, strutils, unittest,
+  asyncdispatch, asyncnet, json, options, os, osproc, random, sequtils, strutils, unittest, uri,
 ]
 from std/posix import chmod, Mode
 from std/unicode import Rune, toUTF8
@@ -1012,20 +1012,15 @@ suite "Internal: Suggester":
 
 
   test "credential comes from `LOJBAN_TAGGER_API_KEY` first, then usual name of service":
-    let text = example("lojban")
-    for (service, environment, name, value) in [
-      (Service.Claude, @[(KEY_CREDENTIAL, "first"), ("ANTHROPIC_API_KEY", "second")],
-          KEY_CREDENTIAL, "first"),
-      (Service.Claude, @[("ANTHROPIC_API_KEY", "second")], "ANTHROPIC_API_KEY", "second"),
-      (Service.Claude, @[(KEY_CREDENTIAL, " \t"), ("ANTHROPIC_API_KEY", "second")],
-          "ANTHROPIC_API_KEY", "second"),  # blank value reads as unset
-      (Service.Claude, @[(KEY_CREDENTIAL, " first\t")], KEY_CREDENTIAL, "first"),  # trimmed
+    let
+      text = example("lojban")
+      passage = text.argument.toPassage
+    for (service, environment, value) in [
+      (Service.Claude, @[(KEY_CREDENTIAL, "first"), ("ANTHROPIC_API_KEY", "second")], "first"),
+      (Service.Claude, @[(KEY_CREDENTIAL, " first\t")], "first"),  # trimmed
       (Service.OpenRouter, @[(KEY_CREDENTIAL, "first"), ("OPENROUTER_API_KEY", "second")],
-          KEY_CREDENTIAL, "first"),
-      (Service.OpenRouter, @[("OPENROUTER_API_KEY", "second"), ("ANTHROPIC_API_KEY", "other")],
-          "OPENROUTER_API_KEY", "second"),  # usual name of service, never of other
-      (Service.Chat, @[(KEY_CREDENTIAL, "first"), ("ANTHROPIC_API_KEY", "other")],
-          KEY_CREDENTIAL, "first"),
+          "first"),
+      (Service.Chat, @[(KEY_CREDENTIAL, "first"), ("ANTHROPIC_API_KEY", "other")], "first"),
     ]:
       let
         server = startServer()
@@ -1035,11 +1030,85 @@ suite "Internal: Suggester":
       let
         named = settings.toEnvironment.filterIt(it[0] notin NAMES_CREDENTIAL) & environment
         outcome = binary.run(named, [text.argument])
-      check outcome == toOutcome(service.readReply(reply), text.argument.toPassage,
-          settings.model, [noteCredential(name)])  # variable named, never value
+      check outcome == toOutcome(service.readReply(reply), passage, settings.model,
+          [noteCredential(KEY_CREDENTIAL)])  # variable named, never value
       check server.heard.mapIt(it.values("authorization")) ==
           @[@["Bearer " & value]]  # value of first variable set, trimmed, as Bearer
       stopServer(server)
+    for (service, environment, name) in [
+      (Service.Claude, @[("ANTHROPIC_API_KEY", "second")], "ANTHROPIC_API_KEY"),
+      (Service.Claude, @[(KEY_CREDENTIAL, " \t"), ("ANTHROPIC_API_KEY", "second")],
+          "ANTHROPIC_API_KEY"),  # blank value reads as unset
+      (Service.OpenRouter, @[("OPENROUTER_API_KEY", "second"), ("ANTHROPIC_API_KEY", "other")],
+          "OPENROUTER_API_KEY"),  # usual name of service, never of other
+    ]:
+      let
+        settings = service.toSettings  # default endpoint, whose host usual name serves
+        request = requestService(settings, passage)
+        reply = toReplyAnswer(service, text.answer, settings.model)
+        directory_case = directory / "usual" / $service / name
+      writeRecordings(directory_case, [Recording(label: LABEL_SUITE, request: request,
+          reply: reply)])
+      check binary.run(@[(KEY_SERVICE, $service)] & environment, ["--record:" & directory_case,
+          text.argument]) == toOutcome(service.readReply(reply), passage, settings.model, [
+        noteCredential(name),
+        noteReplayed(pathRecording(directory_case, request), LABEL_SUITE),
+      ])  # usual name read for default endpoint; recording replays, so nothing is sent
+
+
+  test "usual name of credential is read for host of default endpoint of service alone":
+    # Review finding security-6, 2026-10-29: key in `ANTHROPIC_API_KEY` went as Bearer to
+    #   endpoint of any host, where `LOJBAN_TAGGER_API_KEY` was unset.
+    let
+      server = startServer()
+      text = example("lojban")
+      passage = text.argument.toPassage
+      found = Service.Claude.toSettings(server.port)
+      refused = "Credential should be set in `LOJBAN_TAGGER_API_KEY` alone, since host of " &
+          "endpoint is not `api.anthropic.com`; got none.\n"
+    check binary.run(found.toEnvironment.filterIt(it[0] != KEY_CREDENTIAL) &
+        @[("ANTHROPIC_API_KEY", CREDENTIAL_SUITE)], [text.argument]) == Outcome(report: refused,
+        code: 2)  # case as found: endpoint on loopback names `LOJBAN_TAGGER_API_KEY` alone
+    var count_usual, count_refused = 0
+    for service in [Service.Claude, Service.OpenRouter]:
+      let
+        usual = LUT_KEY_CREDENTIAL_BY_SERVICE[service]
+        host = LUT_ENDPOINT_BY_SERVICE[service].parseUri.hostname
+      for endpoint in [
+        LUT_ENDPOINT_BY_SERVICE[service],
+        LUT_ENDPOINT_BY_SERVICE[service].replace(host, host.toUpperAscii),  # host without case
+        "https://" & host & ":443/v1/messages",
+        "https://" & host & ".example.org/v1/messages",  # host longer, of other domain
+        "https://" & host & "@example.org/v1/messages",  # user part naming host, of other host
+        "https://example.org/v1/messages",
+        urlLoopback(server.port, PATH_SERVICE),
+      ]:
+        var settings = service.toSettings
+        settings.endpoint = endpoint
+        let
+          request = requestService(settings, passage)
+          reply = toReplyAnswer(service, text.answer, settings.model)
+          directory_case = directory / "hosts" / $service / endpoint.stamp
+          is_usual = endpoint.parseUri.hostname.toLowerAscii == host
+        writeRecordings(directory_case, [Recording(label: LABEL_SUITE, request: request,
+            reply: reply)])
+        let outcome = binary.run(
+          [(KEY_SERVICE, $service), (KEY_ENDPOINT, endpoint), (usual, CREDENTIAL_SUITE)],
+          ["--record:" & directory_case, text.argument],
+        )
+        if is_usual:
+          inc count_usual
+          check outcome == toOutcome(service.readReply(reply), passage, settings.model,
+              [noteCredential(usual), noteReplayed(pathRecording(directory_case, request),
+              LABEL_SUITE)])  # usual name read for host of default endpoint, without case
+          continue
+        inc count_refused
+        check outcome == Outcome(report: "Credential should be set in `LOJBAN_TAGGER_API_KEY` " &
+            "alone, since host of endpoint is not `" & host & "`; got none.\n",
+            code: 2)  # other host reads first name alone, and says why
+    check count_usual == 6 and count_refused == 8  # both sides of law, for both services
+    check server.heard.len == 0  # usual key never sent, nor any request
+    stopServer(server)
 
 
   test "record writes reply of any status, replays tag or paid failure alone, and replay any":
@@ -1584,17 +1653,22 @@ suite "Internal: Suggester":
       (sending, @[(KEY_ENDPOINT, endpoint), (KEY_CREDENTIAL, "sk-or-secret")],
           "Credential should be issued by service `claude`; got opening `sk-or-` for " &
           "`LOJBAN_TAGGER_API_KEY`."),
-      (sending, @[(KEY_ENDPOINT, endpoint), ("ANTHROPIC_API_KEY", "sk-or-secret")],
-          "Credential should be issued by service `claude`; got opening `sk-or-` for " &
-          "`ANTHROPIC_API_KEY`."),
-      (sending, @[(KEY_SERVICE, "openrouter"), (KEY_ENDPOINT, endpoint),
-          ("OPENROUTER_API_KEY", "sk-ant-secret")], "Credential should be issued by service " &
-          "`openrouter`; got opening `sk-ant-` for `OPENROUTER_API_KEY`."),
+      (sending, @[("ANTHROPIC_API_KEY", "sk-or-secret")], "Credential should be issued by " &
+          "service `claude`; got opening `sk-or-` for `ANTHROPIC_API_KEY`."),  # default endpoint
+      (sending, @[(KEY_SERVICE, "openrouter"), ("OPENROUTER_API_KEY", "sk-ant-secret")],
+          "Credential should be issued by service `openrouter`; got opening `sk-ant-` for " &
+          "`OPENROUTER_API_KEY`."),
+      (sending, @[], "Credential should be set in `LOJBAN_TAGGER_API_KEY` or " &
+          "`ANTHROPIC_API_KEY`; got none."),
+      (sending, @[(KEY_SERVICE, "openrouter"), ("ANTHROPIC_API_KEY", "sk-ant-secret")],
+          "Credential should be set in `LOJBAN_TAGGER_API_KEY` or `OPENROUTER_API_KEY`; got " &
+          "none."),  # usual name of other service unread
       (sending, @[(KEY_ENDPOINT, endpoint)], "Credential should be set in " &
-          "`LOJBAN_TAGGER_API_KEY` or `ANTHROPIC_API_KEY`; got none."),
-      (sending, @[(KEY_SERVICE, "openrouter"), (KEY_ENDPOINT, endpoint), ("ANTHROPIC_API_KEY",
-          "sk-ant-secret")], "Credential should be set in `LOJBAN_TAGGER_API_KEY` or " &
-          "`OPENROUTER_API_KEY`; got none."),  # usual name of other service unread
+          "`LOJBAN_TAGGER_API_KEY` alone, since host of endpoint is not `api.anthropic.com`; " &
+          "got none."),  # endpoint off host of service reads first name alone
+      (sending, @[(KEY_SERVICE, "openrouter"), (KEY_ENDPOINT, endpoint), ("OPENROUTER_API_KEY",
+          "sk-or-secret")], "Credential should be set in `LOJBAN_TAGGER_API_KEY` alone, since " &
+          "host of endpoint is not `openrouter.ai`; got none."),
       (sending, chat & @[("ANTHROPIC_API_KEY", "sk-ant-secret"), ("OPENROUTER_API_KEY",
           "sk-or-secret")], "Credential should be set in `LOJBAN_TAGGER_API_KEY`; got none."),
     ]:
