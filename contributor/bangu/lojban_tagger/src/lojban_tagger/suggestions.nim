@@ -87,7 +87,7 @@ type
     Recording  ## Recording missing, malformed or holding other request; detail names file.
     Page  ## Page gives no text: status, type, encoding or charset; detail names it.
     Status  ## Service answered error, by status or inside 2xx; detail: status, type, message.
-    Declined  ## Model or classifier declined; detail is category or refusal text.
+    Declined  ## Model or classifier declined; detail is category and explanation, or refusal text.
     Truncated  ## Answer stopped at token or context limit; detail is stop reason.
     Malformed  ## Reply holds no answer of schema; detail says what is missing.
     Word  ## Word of answer is no gismu or cmavo of list, or is past its cap; detail is word.
@@ -890,6 +890,8 @@ func readError(status: int, node: JsonNode): Suggestion =
 
 func readClaude(status: int, parsed: Option[JsonNode]): Suggestion =
   ## Read reply of Messages API: error by status, then stop reason, then text blocks by type.
+  ##   Refusal names category, recommended model and explanation, each where given; explanation
+  ##     is shown, never parsed, as refusals and fallback page asks, since its text is unstable.
   if status notin 200..299:
     return readError(status, if parsed.isSome: parsed.get else: newJNull())
   if parsed.isNone or parsed.get.kind != JObject:
@@ -901,8 +903,11 @@ func readClaude(status: int, parsed: Option[JsonNode]): Suggestion =
   of "refusal":
     var detail = node{"stop_details", "category"}.getStr
     if detail.len == 0: detail = "none"
-    let recommended = node{"stop_details", "recommended_model"}.getStr
+    let
+      recommended = node{"stop_details", "recommended_model"}.getStr
+      explanation = node{"stop_details", "explanation"}.getStr
     if recommended.len > 0: detail.add ", recommended model " & recommended
+    if explanation.len > 0: detail.add ": " & explanation
     fail(Failure.Declined, detail)
   of "max_tokens", "model_context_window_exceeded": fail(Failure.Truncated, reason)
   of "end_turn":
