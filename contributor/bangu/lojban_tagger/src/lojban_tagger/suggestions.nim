@@ -58,6 +58,11 @@ type
     endpoint*: string  ## URL request goes to.
     model*: string  ## Model, as service names it.
     effort*: Option[Effort]  ## Effort body sends; `none` sends none, as `chat` does by default.
+    workspace*: string
+      ## Workspace ID header of `claude` names; empty sends none. Key scoped to no workspace
+      ##   needs it on every request, and gets 400 without it:
+      ##     https://platform.claude.com/docs/en/api/overview
+      ##     https://platform.claude.com/docs/en/manage-claude/authentication
 
   Reply* = object  ## Define one reply as read: status, headers kept, body up to its cap.
     status*: int  ## Status code.
@@ -797,9 +802,12 @@ func toBody*(settings: Settings, passage: Passage): string =
 func toHeaders*(settings: Settings): seq[(string, string)] =
   ## Render headers service needs, sorted; credential, agent and encoding aside, which `send`
   ##   adds.
+  ##   Workspace goes in header of `claude` alone, where named, and never in body, so stamp of
+  ##     request holds none, as it holds no credential.
   if settings.service == Service.Claude:
     if settings.isFallback: result.add ("anthropic-beta", BETA_FALLBACK)
     result.add ("anthropic-version", VERSION_ANTHROPIC)
+    if settings.workspace.len > 0: result.add ("anthropic-workspace-id", settings.workspace)
   result.add ("content-type", "application/json")
 
 
