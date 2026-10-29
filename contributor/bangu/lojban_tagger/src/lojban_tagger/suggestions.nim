@@ -971,9 +971,11 @@ func readChat(status: int, parsed: Option[JsonNode]): Suggestion =
   else: fail(Failure.Malformed, "finish reason " & (if reason.len > 0: reason else: "absent"))
 
 
-func readReply*(service: Service, reply: Reply): Suggestion =
+func readReply*(service: Service, reply: Reply): Suggestion {.raises: [].} =
   ## Read reply: cut, encoding, status, stop or finish reason, answer of schema, each word,
   ##   readback. Never raises: arrays through `getElems`, objects through `{}` with string keys.
+  ##   `{.raises: [].}` holds exceptions; defects held by test "random bodies with random
+  ##     statuses never raise, and any tag keeps its promise" of `test_suggestions.nim`.
   if reply.is_cut: return fail(Failure.Malformed, "reply over " & $BYTES_REPLY_MAX & " bytes")
   if not reply.content_encoding.isIdentity:
     return fail(Failure.Malformed, "content encoding " & reply.content_encoding)
@@ -988,12 +990,14 @@ func readReply*(service: Service, reply: Reply): Suggestion =
 
 #[ Report ]#
 
-func explain*(suggestion: Suggestion): string =
+func explain*(suggestion: Suggestion): string {.raises: [].} =
   ## Render why no tag was suggested, ending in offending value; `Word` and `Readback` end in
   ##   `reason`, `explain` of reading made when failure was (`commands.nim`), so refusal wording
   ##   stays in one place, and explain reads no value again: escapes of detail never reach reader.
   ##   Word past cap is named by cap, as `readAnswer` decided when it failed, never by detail.
-  ##   Failure with no reason ends in detail alone; never raises.
+  ##   Failure with no reason ends in detail alone.
+  ##   Never raises: `{.raises: [].}` holds exceptions; defects held by test "each failure
+  ##     explains itself, ending in its detail in backticks" of `test_suggestions.nim`.
 
   func explainReason(heading, reason, detail: string): string =
     ## Render heading, then reason; heading and detail where no reason was kept.
