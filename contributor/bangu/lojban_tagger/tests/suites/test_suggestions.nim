@@ -240,6 +240,36 @@ const
     ##   6.1; no mark first, naming none.
   SPACES_ASCII = ["", " ", "\t", "\n", "\f", "\r", " \t"]
     ## Runs of ASCII whitespace of HTML around `=` after `charset`: none, each one alone, and two.
+  CHARACTERS_SPACE = {'\t', '\n', '\f', '\r', ' '}
+    ## ASCII whitespace of HTML: tab, line feed, form feed, carriage return, space.
+  BYTES_PRESCAN_MAX = 1024  ## Bytes of page prescan reads, as HTML 13.2.3.2 encourages.
+  SAMPLES_PRESCAN = 1000  ## Random heads of markup prescan law reads, seeded.
+  FLOOR_PRESCAN_LABEL = 450  ## Fewest random heads whose meta names label; 538 read at seed `0`.
+  FLOOR_PRESCAN_PRAGMA = 40
+    ## Fewest random heads whose label `content` names under pragma; 50 read at seed `0`.
+  LABELS_PRESCAN = block:
+    ## Labels random metas name: none, each group reader decodes, UTF-16, `x-user-defined`, and
+    ##   labels of other encodings; each label of WHATWG Encoding Standard, so getting encoding
+    ##   fails for empty one alone.
+    @[""] & @LABELS_GROUP_UNICODE & @LABELS_GROUP_WINDOWS & @LABELS_GROUP_SIXTEEN & @[
+      "x-user-defined", "big5", "euc-jp", "gbk", "iso-8859-2", "koi8-r", "shift_jis",
+      "windows-1251",
+    ]
+  CONTENTS_META = [
+    "text/html; charset=@", "text/html;charset=@", "text/html; charset = @", "charset=@",
+    "text/html; charset='@'", "How to set charset=@ in MySQL", "text/html",
+    "width=device-width, initial-scale=1",
+  ]
+    ## Contents random metas hold, `@` standing for label: pragma value, spaced, alone, quoted,
+    ##   prose naming charset, and none naming one.
+  PRAGMAS_META = ["content-type", "Content-Type", "CONTENT-TYPE", "content-type ", "refresh"]
+    ## Values of `http-equiv` random metas draw: pragma in each case, pragma with space, other.
+  PIECES_HEAD = [
+    "<!DOCTYPE html>", "<?php echo 1; ?>", "</head>", "</ p>", "a < b", "<meta>",
+    "<p>caf\xC3\xA9</p>",
+  ]
+    ## Markup random heads draw beside metas: declaration, instruction, closing elements, `<`
+    ##   opening nothing, meta with no space after name, and text.
   LUT_TEXT_BY_NAME = [
     ("amp", "&"), ("apos", "'"), ("bull", "\u2022"), ("copy", "\u00A9"), ("deg", "\u00B0"),
     ("gt", ">"), ("hellip", "\u2026"), ("laquo", "\u00AB"), ("ldquo", "\u201C"),
@@ -948,6 +978,139 @@ func measureComment(text: string): Option[int] =
 
 
 
+#[ Prescan ]#
+
+func isPrefixed(bytes: string, at: int, prefix: string): bool =
+  ## Test bytes from `at` open with lowercase `prefix`, ASCII letters of bytes lowered first.
+  if at + prefix.len > bytes.len: return false
+  for k in 0..<prefix.len:
+    if bytes[at+k].toLowerAscii != prefix[k]: return false
+  true
+
+
+func attributeReference(bytes: string, at: var int): Option[(string, string)] =
+  ## Read attribute from `at` as HTML 13.2.3.2 gets attribute, steps 1 to 12, uppercase ASCII
+  ##   lowered in name and value; `none` where `>` ends tag first, or where bytes run out, `at`
+  ##   then past `bytes`.
+  var (name, value) = ("", "")
+
+  # Pass spaces and `/`; `>` ends tag with no attribute (steps 1 and 2).
+  while at < bytes.len and bytes[at] in CHARACTERS_SPACE + {'/'}: inc at
+  if at >= bytes.len or bytes[at] == '>': return none((string, string))
+
+  # Read name to `=` after its first byte, or to space, `/` or `>` (steps 3 to 5).
+  while at < bytes.len and not (bytes[at] == '=' and name.len > 0) and
+      bytes[at] notin CHARACTERS_SPACE + {'/', '>'}:
+    name.add bytes[at].toLowerAscii
+    inc at
+  if at >= bytes.len: return none((string, string))
+  if bytes[at] in {'/', '>'}: return some((name, ""))
+  if bytes[at] in CHARACTERS_SPACE:
+    while at < bytes.len and bytes[at] in CHARACTERS_SPACE: inc at  # Spaces, step 6.
+    if at >= bytes.len: return none((string, string))
+    if bytes[at] != '=': return some((name, ""))  # Step 7.
+  inc at  # Past `=`, step 4 or 8.
+
+  # Read value: quoted to its own quote, else to space or `>` (steps 9 to 12).
+  while at < bytes.len and bytes[at] in CHARACTERS_SPACE: inc at
+  if at >= bytes.len: return none((string, string))
+  if bytes[at] == '>': return some((name, ""))
+  if bytes[at] in {'"', '\''}:
+    let quote = bytes[at]
+    inc at
+    while at < bytes.len and bytes[at] != quote:
+      value.add bytes[at].toLowerAscii
+      inc at
+    if at >= bytes.len: return none((string, string))
+    inc at
+    return some((name, value))
+  while at < bytes.len and bytes[at] notin CHARACTERS_SPACE + {'>'}:
+    value.add bytes[at].toLowerAscii
+    inc at
+  if at >= bytes.len: return none((string, string))
+  some((name, value))
+
+
+func extractReference(text: string): string =
+  ## Extract label from value of `content` as extracting character encoding from meta element
+  ##   does, HTML 2.5.3, steps 1 to 6; empty where none, as getting encoding fails for empty
+  ##   label alone among labels drawn.
+  var at = 0
+  while true:
+    let found = text.find("charset", at)
+    if found < 0: return ""
+    at = found + "charset".len
+    while at < text.len and text[at] in CHARACTERS_SPACE: inc at
+    if at < text.len and text[at] == '=': break
+  inc at
+  while at < text.len and text[at] in CHARACTERS_SPACE: inc at
+  if at >= text.len: return ""
+  if text[at] in {'"', '\''}:
+    let close = text.find(text[at], at + 1)
+    if close < 0: return ""
+    return text[at+1..<close].strip(chars = CHARACTERS_SPACE)
+  var finish = at
+  while finish < text.len and text[finish] notin CHARACTERS_SPACE + {';'}: inc finish
+  text[at..<finish]
+
+
+func prescanReference(bytes: string): tuple[label: string, is_pragma: bool] =
+  ## Prescan first `BYTES_PRESCAN_MAX` bytes as HTML 13.2.3.2 does, steps 1, 3 and 4: label meta
+  ##   names, and whether `content` named it under pragma; empty where none does, or where bytes
+  ##   run out first.
+  ##   Getting encoding strips spaces and fails for empty label alone, since every label drawn is
+  ##     one of WHATWG Encoding Standard; no UTF-16 declaration (step 2) and no XML encoding read,
+  ##     as library reads neither.
+  let head = bytes[0..<min(bytes.len, BYTES_PRESCAN_MAX)]
+  var at = 0
+  while at < head.len:
+    if head.isPrefixed(at, "<!--"):  # Comment: to `>` after two dashes, `<!--` holding them too.
+      at += 2
+      while at + 2 < head.len and not head.isPrefixed(at, "-->"): inc at
+      if at + 2 >= head.len: return ("", false)
+      at += 2
+    elif head.isPrefixed(at, "<meta") and at + 5 < head.len and
+        head[at+5] in CHARACTERS_SPACE + {'/'}:  # Meta, steps 1 to 16 of its branch.
+      at += 5
+      var
+        names: seq[string]
+        charset = none(string)  # Empty label stands for failure, distinct from none (step 5).
+        is_pragma_needed = none(bool)  # Need pragma of HTML.
+        found_pragma = false  # Got pragma of HTML.
+      while true:
+        let attribute = head.attributeReference(at)
+        if attribute.isNone:
+          if at >= head.len: return ("", false)
+          break
+        let (name, value) = attribute.get
+        if name in names: continue
+        names.add name
+        if name == "http-equiv" and value == "content-type": found_pragma = true
+        elif name == "content" and charset.isNone and value.extractReference.len > 0:
+          (charset, is_pragma_needed) = (some(value.extractReference), some(true))
+        elif name == "charset":
+          (charset, is_pragma_needed) =
+            (some(value.strip(chars = CHARACTERS_SPACE)), some(false))
+      if is_pragma_needed.isSome and (found_pragma or not is_pragma_needed.get) and
+          charset.get.len > 0:
+        let label =
+          if charset.get in LABELS_GROUP_SIXTEEN: "utf-8"
+          elif charset.get == "x-user-defined": "windows-1252"
+          else: charset.get
+        return (label, is_pragma_needed.get)
+    elif head.isPrefixed(at, "<") and at + 1 < head.len and (head[at+1] in strutils.Letters or
+        (head[at+1] == '/' and at + 2 < head.len and head[at+2] in strutils.Letters)):  # Tag.
+      while at < head.len and head[at] notin CHARACTERS_SPACE + {'>'}: inc at
+      while head.attributeReference(at).isSome: discard
+      if at >= head.len: return ("", false)
+    elif head.isPrefixed(at, "<!") or head.isPrefixed(at, "</") or head.isPrefixed(at, "<?"):
+      at = head.find('>', at + 1)
+      if at < 0: return ("", false)
+    inc at  # Next byte, step 4.
+  ("", false)
+
+
+
 #[ Pools ]#
 
 proc poolTanru(): seq[seq[string]] =
@@ -1004,6 +1167,47 @@ proc poolHyphened(): seq[string] =
       doubled = fitting.filterIt(it[0] == word[^1])
     word.add (if doubled.len > 0: doubled else: fitting).sample
     result.add word
+
+
+proc metaRandom(): string =
+  ## Draw meta of one to four attributes in random order, names repeating among them: names and
+  ##   labels in random case, values quoted, single-quoted or bare, `SPACES_ASCII` around `=`,
+  ##   space after each, so bare value never meets `/` of `/>`; empty value always quoted.
+  result = "<meta".caseRandom & [" ", "\t", "\n", "/"].sample
+  for _ in 1..rand(1..4):
+    let
+      (name, value) =
+        case rand(3)
+        of 0: ("charset", LABELS_PRESCAN.sample.caseRandom)
+        of 1: ("content", CONTENTS_META.sample.replace("@", LABELS_PRESCAN[1 .. ^1].sample))
+        of 2: ("http-equiv", PRAGMAS_META.sample)
+        else: (["name", "property"].sample, ["description", "viewport"].sample)
+      quote = if value.len == 0: ["\"", "'"].sample else: ["\"", "'", ""].sample
+    result.add name.caseRandom & SPACES_ASCII.sample & "=" & SPACES_ASCII.sample & quote & value &
+        quote & [" ", "\t", "\n"].sample
+  result.add [">", "/>"].sample
+
+
+proc headRandom(): string =
+  ## Draw head of markup: one to six pieces, each meta, meta in comment, meta after comment that
+  ##   closes at once or at `--!>`, meta in attribute of other element, other markup, or spaces
+  ##   putting what follows near or past `BYTES_PRESCAN_MAX`.
+  for _ in 1..rand(1..6):
+    result.add (
+      case rand(9)
+      of 0..3: metaRandom()
+      of 4: "<!--" & metaRandom() & "-->"
+      of 5: ["<!-->", "<!--->", "<!-- x --!>"].sample & metaRandom()
+      of 6: "<div title=\"" & metaRandom() & "\">"
+      of 7: PIECES_HEAD.sample
+      else: " ".repeat(rand(0..BYTES_PRESCAN_MAX))
+    )
+
+
+proc poolHeads(): seq[string] =
+  ## Draw `SAMPLES_PRESCAN` heads of markup into pool allocated once; caller seeds first.
+  result = newSeqOfCap[string](SAMPLES_PRESCAN)
+  for _ in 1..SAMPLES_PRESCAN: result.add headRandom()
 
 
 proc poolPassages(): seq[Passage] =
@@ -2054,6 +2258,7 @@ suite "Internal: Page":
                 if marked.len > 0: marked
                 elif header.len > 0: header
                 elif is_markup and meta in LABELS_GROUP_SIXTEEN: "utf-8"
+                elif is_markup and meta == "x-user-defined": "windows-1252"
                 elif is_markup and meta.len > 0: meta
                 else: "utf-8"
               word =
@@ -2114,6 +2319,33 @@ suite "Internal: Page":
               "windows-1252"  # HTML 2.5.3, steps 3 and 5: spaces after `charset` and `=` skipped
     check readCharset("text/html; charset x; charset=latin1", "", true) ==
         "latin1"  # HTML 2.5.3, step 4: `charset` with no `=` after it is passed by
+
+
+  test "meta is read as prescan of HTML 13.2.3.2 reads it, past comments and other tags":
+    for (body, label, text) in [
+      ("<meta name=\"description\" content=\"How to set charset=latin1 in MySQL\">" &
+          "<meta charset=\"utf-8\"><p>caf\xC3\xA9 na\xC3\xAFve</p>", "utf-8",
+          "café naïve"),
+      ("<!--<meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-1\">-->" &
+          "<meta charset=\"utf-8\"><p>caf\xC3\xA9</p>", "utf-8", "café"),
+      ("<meta charset=\"x-user-defined\"><p>caf\xE9</p>", "windows-1252", "café"),
+    ]:
+      let paged = readPage(URL_SUITE, Reply(status: 200, content_type: "text/html", body: body))
+      check readCharset("text/html", body, true) ==
+          label  # recheck claim completeness-3, 2026-10-29: `latin1`, `iso-8859-1`, refused
+      check paged.is_read and paged.passage.text ==
+          text  # recheck claim completeness-3, 2026-10-29: `cafÃ©`, then refused
+    randomize(0)
+    let pool = poolHeads()
+    var (count_label, count_pragma) = (0, 0)
+    for head in served(pool):  # `SAMPLES_PRESCAN` heads, seeded
+      let (label, is_pragma) = head.prescanReference
+      check readCharset("text/html", head, true) ==
+          (if label.len > 0: label else: "utf-8")  # HTML 13.2.3.2, prescan, steps 1, 3 and 4
+      if label.len > 0: inc count_label
+      if is_pragma: inc count_pragma
+    check count_label >= FLOOR_PRESCAN_LABEL  # corpus reaches meta naming label often
+    check count_pragma >= FLOOR_PRESCAN_PRAGMA  # corpus reaches label of `content` under pragma
 
 
   test "cut keeps longest prefix within cap on character boundary":
