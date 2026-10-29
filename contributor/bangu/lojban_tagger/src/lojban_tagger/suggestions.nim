@@ -383,9 +383,11 @@ func readMarkup(markup: string): string =
   ## Read markup as text in one pass: comments, declarations and skipped elements dropped,
   ##   block edges as line breaks, references decoded, spaces collapsed, empty lines dropped.
   ##   Raw text ends at own closing element alone, whatever it holds, wherever element stands.
+  ##   Skipped element ends where levels of its name close, so one nested in it is skipped whole.
   var
     text = newStringOfCap(markup.len div 2)
     skipping = ""
+    depth = 0  # Levels of `skipping` open.
     i = 0
   while i < markup.len:
     let character = markup[i]
@@ -424,10 +426,13 @@ func readMarkup(markup: string): string =
         if markup[close-1] != '/': i = markup.findClosingRaw(name, i)
         continue
       if skipping.len > 0:
-        if is_closing and name == skipping: skipping = ""
+        if name == skipping:
+          if is_closing: dec depth
+          elif markup[close-1] != '/': inc depth
+          if depth == 0: skipping = ""
         continue
       if not is_closing and name in ELEMENTS_SKIPPED:
-        if markup[close-1] != '/': skipping = name
+        if markup[close-1] != '/': (skipping, depth) = (name, 1)
         continue
       if name in ELEMENTS_BLOCK: text.add '\n'
       continue
