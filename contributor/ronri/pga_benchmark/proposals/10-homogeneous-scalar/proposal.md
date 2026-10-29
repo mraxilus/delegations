@@ -11,7 +11,7 @@ imaginary radius, where pin gives NaN.
 
 **What it costs.** The root and the radius norm return an `Option` in every algebra, so a caller
 at cga4d and cga5d unwraps a root that always exists. The alias `normRadius` stops forwarding to
-its operator `|⊘`. The change builds on P04, and adds the `⟑` that P04 lacks.
+its operator `|⊘`. The change builds on P04, whose basis-set forms give the products of pairs.
 
 ## Problem
 
@@ -34,9 +34,8 @@ negative for about half of all multivectors, and there the float root of `|⊘` 
   rev(n) det 𝖌, from the metric, as the Architect ruled on 2026-10-24. The symbol follows the dual
   unit ε of Lengyel's `DualNum`, which writes the pair s + tε with ε² = 0.
 - **Products.** 𝟏 is the unit of the geometric product, and 𝟙 is the unit of the antiproduct. The
-  module writes no product of pairs. It takes the `⟑` and `⟇` of P04, which read the table of each
-  product over 𝟏 and 𝟙 alone. P04 lacks `⟑`, so this change adds it to `basis_sets.nim`, in the
-  shape of the `⟇` of P04, until P04 gives it.
+  module writes no product of pairs. It takes the basis-set forms `⟑` and `⟇` of P04, which read
+  the table of each product over 𝟏 and 𝟙 alone.
 - **Functions.** Each of seven functions has a form under each product, as in Lengyel's `DualNum`,
   with a division. They are the inverse, the root, the inverse root, the exponential, the sine, the
   cosine and the tangent. Each is written once in ε²:
@@ -132,9 +131,9 @@ constructor is `initMultivectorScalars`, as `init` names the constructor of a ty
   the root of its square, in the exponential and in the root of a negative s.
 - **Division of a multivector.** It is the `⟇` of P04 of 𝐦 by a pair, so it reads the columns of
   𝟏 and 𝟙 of the table alone.
-- **A fallback `⟑`.** This change adds `⟑` to `basis_sets.nim`, in the shape of the `⟇` of P04.
-  It goes once P04 gives `⟑` itself. At each RGA it stops the compile for two antiscalars, because
-  𝟙 ⟑ 𝟙 is zero there. No caller compiles that call at pin either, so nothing breaks.
+- **The `⟑` of P04.** At each RGA it stops the compile for two antiscalars, because 𝟙 ⟑ 𝟙 is zero
+  there. No caller compiles that call at pin either, so nothing breaks. A pair holds 𝟏 as well, so
+  each product of pairs compiles.
 - **Conformal part norms.** At pin each conformal norm of the library is the size of its own part,
   as Table 4.12 defines. The change `conformal-norms` fills the center norm, `normCenter`, in the
   same way. This proposal keeps the four part norms and `normCenter` as at pin. In the conformal
@@ -155,8 +154,7 @@ None.
 
 ## Landing
 
-- **Order.** After P04, since the module takes the products of its basis-set types. Once P04
-  gives `⟑`, this change drops its own.
+- **Order.** After P04, since the module takes its basis-set forms `⟑` and `⟇`.
 - **Imports of `pga.nim`.** This proposal adds `scalars` to the import and export lines of
   `pga.nim`, and `std/options` above them. P04 adds `basis_sets` to the same lines, and this edit
   quotes them as P04 leaves them. The changes `doc-comments` and `doc-comments-2` quote them too.
