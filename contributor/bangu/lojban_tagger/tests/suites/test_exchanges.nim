@@ -1037,6 +1037,34 @@ suite "Internal: Send":
     listener.close()
 
 
+  test "agent of tool replaces agent caller names, in any spelling and any count":
+    # Regression, found in review: caller header `User-Agent: decoy` replaced `USER_AGENT`.
+    let
+      listener = listenRaw()
+      url = urlLoopback(int(listener.getLocalAddr[1]), "/page")
+      reading_found = listener.readHead
+      found = sendLoopback(url, "", @[("User-Agent", "decoy")])
+    check found.is_replied  # answered
+    if found.is_replied:
+      let head = waitFor reading_found
+      check head.values("user-agent") == @[USER_AGENT]  # case as found: was `decoy`
+    for decoys in [
+      @[("user-agent", "decoy")], @[("USER-AGENT", "decoy")], @[("uSeR-aGeNt", "decoy")],
+      @[("User-Agent", "a"), ("user-agent", "b")],
+    ]:
+      for body in ["", "{}"]:
+        let
+          reading = listener.readHead
+          sent = sendLoopback(url, body, decoys, CREDENTIAL_GIVEN)
+          named = $decoys & " " & body & ": "
+        check sent.is_replied  # answered
+        if not sent.is_replied: continue
+        let head = waitFor reading
+        check named & $head.values("user-agent") ==
+            named & $(@[USER_AGENT])  # domain: one agent, tool's own
+    listener.close()
+
+
   test "redirect comes back unfollowed, and server at its location sees nothing":
     let (origin, target) = (startServer(), startServer())
     var count = 0
