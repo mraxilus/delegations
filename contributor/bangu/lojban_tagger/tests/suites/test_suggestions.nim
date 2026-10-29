@@ -2604,7 +2604,7 @@ suite "Internal: Page":
           bytes.dropSecretsReference.repairReference.text  # RFC 3986 appendix `B`, then repair
 
 
-  test "URL of passage keeps scheme, host, port and path, so user part, query and fragment stay":
+  test "URL of passage drops user part, query and fragment, which reach neither service nor report":
     let
       found = toPassage("x", "http://127.0.0.1:8080/shared/doc?access_token=SECRET-CAPABILITY-123")
       signed = readPage(
@@ -2619,7 +2619,7 @@ suite "Internal: Page":
         "http://127.0.0.1:8080/bucket/obj"  # review finding security-7, 2026-10-29: signature sent
     for service in Service:  # 3 services, exhaustive
       check "SECRET" notin
-          initSettings(service, some(EFFORT_DEFAULT)).toBody(found)  # token stays on machine
+          initSettings(service, some(EFFORT_DEFAULT)).toBody(found)  # token reaches no service
     check signed.is_read and "SECRET" notin
         failed.toReport(signed.passage, MODEL_SUITE)  # report names no signature
     var wrong: seq[string]
