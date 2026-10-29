@@ -1,15 +1,17 @@
-# P04: Return exactly the bases a product reaches
+# P04: Return exactly the bases an operator reaches
 
 **What it is.** At pin, one generic type holds the coefficients of any set of bases. This proposal
-adds products of two such types that return exactly the bases that their table can reach. It also
-aligns each type to the largest power of two that divides its bytes, at most one cache line.
+gives these types a basis-set form of each operator that the library builds from one table. Each
+form returns exactly the bases that its table can reach. It also aligns each type to the largest
+power of two that divides its bytes, at most one cache line.
 
-**What it is for.** A product writes only the coefficients that it reaches, so a dot product
-writes one number and not a whole multivector. The type of the result also says what it is.
+**What it is for.** A form writes only the coefficients that it reaches, so a dot product or a
+squared norm writes one number and not a whole multivector. The type of the result also says
+what it is.
 
-**What it costs.** The compiler builds a body for each pair of types that a program uses, and no
-measurement covers that cost. Only `∧`, `⟇`, `∙`, `∘` and the round parts take basis-set types,
-so each other operator needs a widen first.
+**What it costs.** The compiler builds a body for each type or pair of types that a program uses.
+Each term of a body takes about 0.3 MiB of compiler memory. A form that reaches no basis stops
+the compile, where a widened call gives zero.
 
 ## Problem
 
@@ -47,29 +49,46 @@ The index of a basis is the count of the bases of `B` below it, which `index` fo
 basis is static. A static basis outside `B` stops the compile. `toMultivector` widens a
 basis-set type, and `toMultivectorOf` narrows it. This proposal reads all of these, and adds none.
 
-### Products
+### Basis-set forms
 
-The emitter walks the whole table of the library over the bases of the two operands. It finds the
-bases that the product can reach, and writes one line for each. `defineProduct` and `defineMap`
+The library builds 21 operators from one table each in a rigid build, and 27 in a conformal
+build. This proposal gives each one a basis-set form, as the glossary names it. `pga.nim` gives
+each form the alias of its operator, where the library names one:
+
+| Kind | Operators | Algebras |
+|------|-----------|----------|
+| Products | `∧`, `∨`, `⟑`, `⟇`, `∙`, `∘` | every algebra |
+| Interior products | `∧★`, `∧☆`, `∨★`, `∨☆` | every algebra |
+| Parts and maps | `∙`, `∘`, `/`, `\`, `~`, `~∘`, `★`, `☆`, `⊖` | every algebra |
+| Squared norms | `‖𝐦‖∙²`, `‖𝐦‖∘²` | every algebra |
+| Parts and maps | `■`, `□`, `⊟` | conformal |
+| Squared norms | `‖𝐦‖■²`, `‖𝐦‖□²`, `‖𝐦‖⊘²` | conformal |
+
+The emitter walks the whole table of the library over the bases of the operands. It finds the
+bases that the form can reach, and writes one line for each. `defineProduct` and `defineMap`
 read the same tables as `defineOperator`, over the bases of the operands alone. So the tables stay
-whole, and their count does not grow with the count of types. Products are generic, so a program
-makes only the pairs of types that it uses.
+whole, and their count does not grow with the count of types. Forms are generic, so a program
+makes only the types and pairs of types that it uses.
 
-A product reaches every coefficient of its exact basis-set type. So each product is `noinit`, and
+A squared norm applies a table of two operands to one operand. So `defineProduct` reads that
+operand on both sides, as `as_unary` of the library does. The library spells the squared norms
+`|∙²` to `|⊘²`, names no alias for them, and this proposal adds none.
+
+A form reaches every coefficient of its exact basis-set type. So each form is `noinit`, and
 writes each coefficient once. `typeReached` names the result type, and `defineProduct` or
 `defineMap` fills it. Both read the same table, so the type and the body agree.
 
 Nim reads the argument of a generic type as it is spelled. `MultivectorOf[{Basis.E1..Basis.E4}]`
 is not `Multivector1`, which lists its four bases, and a set of all bases listed is not
 `Multivector`, which spells a range. So `typeReached` lists each basis through
-`emitMultivectorOf`, as the aliases of each grade and parity do. Where a product reaches every
+`emitMultivectorOf`, as the aliases of each grade and parity do. Where a form reaches every
 basis, it names `Multivector`, so each operator of the library takes the result.
 
-A product that reaches no basis is zero for any operands. The pinned compiler instantiates no
+A form that reaches no basis is zero for any operands. The pinned compiler instantiates no
 `MultivectorOf` of an empty set: `B.card` stops on `firstOrd(tyEmpty)`, and `index` on an empty
 range. So `typeReached` stops the compile there, and says why.
 
-Nim prefers the operator of the library to a generic one that also matches. So a product of two
+Nim prefers the operator of the library to a generic one that also matches. So an operator on
 whole multivectors stays as at pin, and returns `Multivector`. A product of a whole multivector
 and a basis-set type had no operator at pin, and takes the generic one.
 
@@ -110,6 +129,7 @@ withdrawn.
 
 | Option | Why it lost |
 |--------|-------------|
+| Forms of `∧`, `⟇`, `∙`, `∘` and the round parts alone | Each other operator widens, then narrows |
 | Smallest named basis-set type, as P02 | Bulk of a bivector holds zeros in half its coefficients |
 | `Coefficient` for a product of one coefficient | Scalar and antiscalar become one type; basis is
 lost |
@@ -132,20 +152,23 @@ bare noun (V.3).
 
 | Item | Proposed | Options weighed |
 |------|----------|-----------------|
-| Type a product reaches | `typeReached(cayley, A, B)` | `kindOf`: glossary keeps kind for operand |
+| Type a form reaches | `typeReached(cayley, A, B)` | `kindOf`: glossary keeps kind for operand |
 | Alignment of a count | `alignment(count)` | `alignmentOf`: V.3 wants the bare noun |
 | Module | `basis_sets` | `products`: `operators.nim` holds products too |
+| Product of one operand | `as_unary`, as the library names it | `defineSquare`: a second macro |
 
 ## Costs
 
-- **Compile time.** Each instance of a generic product takes a whole `Cayley2D` as a static
-  argument. No measurement covers its cost in compile time.
-- **Few generic operators.** Only `∧`, `⟇`, the binary `∙` and `∘`, and the round parts are
-  generic here. These stay on `Multivector` alone: `∨` and `⟑`, the duals, complements and
-  reverses, and the flat parts. So do the interior products, the squared norms and norms,
-  `unitize`, the chains, `-`, `$` and `grade`. A caller widens a basis-set type for each of them,
-  and narrows the result back. At pin `+` and `=~` already take any basis-set type. The library
-  names no flat basis-set type.
+- **Compile memory.** The compiler takes about 0.3 MiB for each term that a form emits, and about
+  1 MiB for each instance. At rga4d, 63 instances of `⟑` over the pairs of named types emit 1 536
+  terms. They take 495 MiB above the 218 MiB of the library alone. Each instance takes a whole
+  table as a static argument, and that costs little: 63 instances of `∙` take 74 MiB. A sweep of
+  every form over every pair of types emits about 20 000 terms at rga5d, and peaks at 7 158 MiB.
+  Compile time is unmeasured, apart from the runs of `laws.nim`.
+- **Operators from no table.** These stay on `Multivector` alone: the norms, `unitize`, the
+  supports and the projections. So do the cocarrier, center, container and partner, and `-`, `$`
+  and `grade`. A caller widens a basis-set type for each of them, and narrows the result back. At
+  pin `+` and `=~` already take any basis-set type. The library names no flat basis-set type.
 - **Reach of the table.** The reach is what the table can produce, not what the algebra
   guarantees. A sandwich of a vector comes back as `MultivectorOdd` at each of the four algebras,
   although its value lies in grade 1. An operator that knows better declares its product set. The
@@ -155,20 +178,21 @@ bare noun (V.3).
   `MultivectorOf[{Basis.E41, Basis.E42, Basis.E43, Basis.E23, Basis.E31, Basis.E12}]`. A compiler
   message can print any name of the type. The alias serves where the importer writes a type in
   source.
-- **Product that reaches no basis.** It stops the compile, so generic code over every pair of
-  sets must leave it out. At rga2d the wedge of a vector and a bivector is one, and at rga2d and
-  cga3d the bulk of a bivector.
-- **Norms.** A norm takes a root of a squared norm, and at pin it returns `MultivectorScalars`, so
-  this proposal does not cover it. The change emits no squared norm. The library reads each one
-  from a 2D table with one operand, and `defineProduct` takes two. A call with one type and one
-  operand twice would emit it, and no law holds that form.
+- **Form that reaches no basis.** It stops the compile, where a widened call gives zero. So
+  generic code over every pair of sets must leave it out. At rga2d the wedge of a vector and a
+  bivector is one, and at rga2d and cga3d the bulk of a bivector. Under the rigid metric the bulk
+  dual of the antiscalar is one, and so is the geometric product of two antiscalars. `laws.nim`
+  counts them at each algebra.
+- **Norms.** A norm takes a root of its squared norm, and at pin it returns `MultivectorScalars`.
+  So a norm stays on `Multivector`, and this proposal does not cover it. Each squared norm has a
+  form, and that form of a vector writes 8 bytes.
 - **Alignment.** A basis-set type of an odd count keeps the alignment of its coefficient, so it
   can still cross a line. Only padding would prevent that, and padding costs more than the line. An
   alias holds no field of its own. So `laws.nim` writes each number into its laws, and not into a
   type.
-- **Callers.** No caller must migrate, since every type and operator at pin stays. A product of
-  two whole multivectors keeps the operator of the library. A product of a whole multivector and a
-  basis-set type had no operator at pin. The field `elements` stays private, so `laws.nim` samples
+- **Callers.** No caller must migrate, since every type and operator at pin stays. An operator on
+  whole multivectors keeps its form at pin. A product of a whole multivector and a basis-set type
+  had no operator at pin. The field `elements` stays private, so `laws.nim` samples
   each type through the narrow.
 - **Machines.** The runtime measurements of basis-set types come from two Intel Xeons. None
   covers an AMD or an ARM core.
@@ -177,8 +201,6 @@ bare noun (V.3).
 
 - Choose the operators that declare a product set, such as the sandwiches and projections.
 - Generate and test the conformal flat basis-set types.
-- Whether the library emits the squared norms as exact basis-set types, through `defineProduct`
-  with one operand twice.
 - Whether a product that reaches no basis stops the compile, as here, or the library admits a
   basis-set type of an empty set.
 
@@ -194,7 +216,8 @@ bare noun (V.3).
 - **Float width.** Each basis-set type holds `Coefficient`, and `alignment` reads its size. So a
   32-bit build aligns by the same rule, and at least to 4 bytes.
 - **P09 and P10.** P09, `object-names`, names the objects of the book by the aliases at pin. P10,
-  `homogeneous-scalar`, gives arithmetic to the type of two scalars that each norm returns.
+  `homogeneous-scalar`, gives arithmetic to the type of two scalars that each norm returns. It
+  multiplies its pairs through the `⟑` and `⟇` of this change.
 
 ## Evidence
 
@@ -213,16 +236,46 @@ library.
 | `∙ m`, bulk of bivector | 48, 80 | 24 | 24 |
 | `∘ m`, weight of vector | 32, 40 | 8 | 8 |
 | Even sandwich of vector | 64, 128 | 64 | 128 |
+| `‖p‖∙²`, squared norm of vector | 8, 8 | 8 | 8 |
+| `/ p`, complement of vector | 32, 40 | 32 | 40 |
+| `★ p`, bulk dual of vector | 32, 40 | 24 | 40 |
+| `☆ p`, weight dual of vector | 32, 40 | 8 | 40 |
+| `p ⟑ q`, two vectors | 64, 128 | 56 | 88 |
 
-A result of one coefficient writes 8 bytes, which meets the multivector lower bound. P02 also
-returns one coefficient for a dot, as the alias of grade 0 or of grade N. So this proposal gains
-over P02 on the parts, and not on the dots. For the squared norms, the 8 bytes are a claim of design
-alone, since the change emits none.
+A result of one coefficient writes 8 bytes, which meets the multivector lower bound. The rule of
+P02 also gives one coefficient for a dot or a squared norm, the alias of grade 0 or of grade N. So
+this proposal gains over that rule on the parts, the duals at rga4d and the product of two vectors.
+It gains nothing on the dots and the squared norms.
 
 The prototype of P02 counts the terms that a motor sandwich on a point emits at 4D, with the
 second product kept to grade 1. It counts 384 untyped, 96 over contiguous ranges with the motor at
 full width, and 48 over named basis-set types. An exact basis-set type holds a subset of the bases
 of the smallest named type that holds it, so it spends at most 48. `laws.nim` does not count them.
+
+### Laws
+
+`laws.nim` holds each form against the operator of the library, on 256 seeded samples of each type
+or pair. It sweeps each part, map and squared norm over each named type. Up to 4D it sweeps each
+product over every pair of named types and the whole multivector. At 5D and 6D a vector pairs with
+each type, on either side, since the compiler takes about 0.3 MiB for each term. Where a form stops
+the compile, the operator of the library gives zero on each sample.
+
+| Algebra | Pairs of each product | Forms that hold | Forms that stop | Peak of build |
+|---------|-----------------------|----------------:|----------------:|--------------:|
+| rga2d | every pair | 302 | 103 | 554 MiB |
+| rga3d | every pair | 409 | 137 | 1 132 MiB |
+| rga4d | every pair | 524 | 183 | 2 579 MiB |
+| rga5d | a vector with each type | 195 | 63 | 1 683 MiB |
+| rga6d | a vector with each type | 216 | 73 | 3 941 MiB |
+| cga3d | every pair | 472 | 110 | 1 415 MiB |
+| cga4d | every pair | 595 | 154 | 3 371 MiB |
+| cga5d | a vector with each type | 235 | 71 | 2 230 MiB |
+| cga6d | a vector with each type | 262 | 81 | 5 334 MiB |
+
+Each alias returns the type of its operator, and equals it. Each reverse keeps its type, and each
+complement takes grade k to grade N - k. A map that drops the sign of its table fails at rga4d, at
+the right complement of a bivector. A squared norm that reads half its table holds at rga4d, whose
+metric is diagonal. It fails at cga5d, at the squared radius norm of a vector.
 
 ### Alignment
 

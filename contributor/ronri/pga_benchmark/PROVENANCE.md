@@ -935,11 +935,20 @@ Alternation does not cancel all drift of a shared machine, so the time of one ev
 weak evidence alone. Counts are exact, and carry the verdicts.
 
 The laws of P04 and P10 hold against the library with their changes applied. They hold at each of
-the nine algebras of the library, from rga2d to rga6d and from cga3d to cga6d. A product of P04 that
-reaches no basis stops the compile, so its laws leave out the bulk of a bivector at rga2d and cga3d.
-A copy of P10 whose root takes the smaller part by its own root fails the law of the small part at
-cga3d and cga4d. `proposals/11-unitize-general/laws.nim` holds the laws of its rule, and
-`limits.nim` its limits over long chains and frames, at rga3d, rga4d, cga4d and cga5d.
+the nine algebras of the library, from rga2d to rga6d and from cga3d to cga6d. A copy of P10 whose
+root takes the smaller part by its own root fails the law of the small part at cga3d and cga4d.
+`proposals/11-unitize-general/laws.nim` holds the laws of its rule, and `limits.nim` its limits
+over long chains and frames, at rga3d, rga4d, cga4d and cga5d.
+
+A basis-set form of P04 that reaches no basis stops the compile. So its laws hold such a form to
+zero in the library, at each type and pair that they sweep. Where a map drops the sign of its
+table, the laws fail at rga4d. Where a squared norm reads half its table, they fail at cga5d and
+hold at rga4d, whose metric is diagonal.
+
+Up to 4D the laws of P04 sweep each product over every pair of named types and the whole
+multivector. At 5D and 6D they sweep a vector with each type. The compiler takes about 0.3 MiB
+for each term that a form emits. Every pair at rga5d emits some 20 000 terms, and its build peaks
+at 7 158 MiB.
 
 Verified by `test_rga4d.nim` and the other stubs, suites `Internal: Markdown`, `Internal: Changes`,
 `Internal: Proposals`, `Internal: Evaluations`, `Internal: Cells` and `Internal: Figures`. They
@@ -978,6 +987,20 @@ that the first families of a stack lack falls to a font face that the page ships
 `ₙ`, `ₖ` and `ᵀ` in code, which no family of the mono stack holds, at a width that is not one
 column. Verified by `test_rga4d.nim`, which reads the stacks of the shell, and by `koch drive`,
 which judges every page that `drive` renders (below).
+
+**Each family of one font face is declared over the weights 400 to 700** (Article X.8). Commit
+Mono, Noto Sans Math and Noto Sans Symbols 2 each ship one file, at weight 400. Headings, table
+heads and strong text ask them for 600 and 700. Over its declared range, the browser draws the file
+as it is, and never a bold of its own. So bold code and bold maths draw their regular glyphs, at
+the width that they had. `pga_visualiser` declares the same files over a range in the same way.
+
+- Rejected: a bold file of Commit Mono. The pages ship the six font faces of `pga_visualiser`, and
+  maths and symbols have no bold file at all.
+
+The collector keeps the characters beyond ASCII alone, so `koch drive` cannot see a bold that the
+browser synthesises over ASCII, as in bold code. So `test_rga4d.nim` holds each family of the shell
+to a font face of weight 600 or more, whatever text the family draws. Verified on 2026-10-28 in
+Chromium, where bold code keeps its width and draws 32 % less ink than the bold of the browser.
 
 **A proposal can carry a figure.** A paragraph of one image alone, as
 `![Derivation map.](../../pages/derivation-map.svg)`, embeds the SVG that it names. The SVG lives
@@ -1538,11 +1561,11 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
   grade of its operand. At cga5d, P03 on P01 and P08 spends the chain bound of 324 multiplies,
   three zero fills and two error checks. P01 and P08 alone spend 437, 104 and 268. Both are the
   counts after the edits in `evaluations/partner-sign.json` and `evaluations/compound-tables.json`.
-- Whether the library takes P04, `exact-kinds`, so that a product returns the exact basis-set
-  type of the bases it reaches. At rga4d 16 measurands stand above the byte bound only because
-  they write a whole multivector for one coefficient, and at cga5d 15 do. Each is a dot, an antidot
-  or a squared norm. Under P04 each dot and antidot writes 8 bytes. The squared norms reach 8 bytes
-  only once the library emits them as exact basis-set types, which the change does not.
+- Whether the library takes P04, `exact-kinds`, so that each operator from one table returns the
+  exact basis-set type of the bases it reaches. At rga4d 16 measurands stand above the byte bound
+  only because they write a whole multivector for one coefficient, and at cga5d 15 do. Each is a
+  dot, an antidot or a squared norm. Under P04 each of them writes 8 bytes on a basis-set type.
+  The measurands hold whole multivectors, so they keep the operators of the library.
 - Whether the library takes P05, `multivector-align`. It aligns the whole set to `min(64, size)`,
   one cache line from three dimensions up, so it pads no multivector. P04 aligns every basis-set
   type to `alignment` of its count instead, as the Architect ruled on 2026-10-04. That is the

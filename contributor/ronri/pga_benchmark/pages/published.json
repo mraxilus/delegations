@@ -1,62 +1,62 @@
 {
   "docket": {
     "url": "https://claude.ai/artifact/XyT583x9RnTKixers2q4gT",
-    "digest": "d87ae0f4c0125563"
+    "digest": "51d9e24e053d45c6"
   },
   "cayley-derivation": {
     "url": "https://claude.ai/artifact/2fi2hTpobqChXSTPq4vB6q",
-    "digest": "6359d4381b164ec7"
+    "digest": "310290e6d4df7326"
   },
   "typed-multivectors": {
     "url": "https://claude.ai/artifact/V34TAWXNvrHBGN9fNBWYWX",
-    "digest": "e8ed3846b9b97284"
+    "digest": "5f17c1da7d2dfcd9"
   },
   "partner-sign": {
     "url": "https://claude.ai/artifact/2fUYLonsQo7ejouCvCnpWf",
-    "digest": "5daf6fc7c4f7602c"
+    "digest": "f063dde3d49bb6c3"
   },
   "exact-kinds": {
     "url": "https://claude.ai/artifact/UPfjVLGbsVLBz756DMkPJe",
-    "digest": "ee252c60d1de22d4"
+    "digest": "aea8f1eba510fa58"
   },
   "multivector-align": {
     "url": "https://claude.ai/artifact/AB3BNtWPEzguWswwnx5ckh",
-    "digest": "970b4d69fe6b8edf"
+    "digest": "d5c2878d0709afc9"
   },
   "proposals": {
     "url": "https://claude.ai/artifact/CW9ZL5eotsVYrZPjMnTLoG",
-    "digest": "801e156775496d4a"
+    "digest": "50528a2fca66c5c0"
   },
   "float-width": {
     "url": "https://claude.ai/artifact/Q3R1yz93Drk7Cwq5qhymDZ",
-    "digest": "5dfbfda5016967a5"
+    "digest": "f07eb08ffaa4fa88"
   },
   "part-scale": {
     "url": "https://claude.ai/artifact/6hW9rjiotnjdjBVwatW5Dj",
-    "digest": "61e529846beef348"
+    "digest": "39819512ed01aa2b"
   },
   "compound-tables": {
     "url": "https://claude.ai/artifact/TczTs551nkXVaWiyHzfVAn",
-    "digest": "b58f73bc3cd29d15"
+    "digest": "4edb571a86b79f08"
   },
   "object-names": {
     "url": "https://claude.ai/artifact/XtPy7LToDTT2P8S1FfGauX",
-    "digest": "2dca282aac4d6747"
+    "digest": "b6a605c1f712be0c"
   },
   "homogeneous-scalar": {
     "url": "https://claude.ai/artifact/5NwSv2YW9ZfDa5BbbVrv1D",
-    "digest": "67af6f4ccaf51080"
+    "digest": "869b75ffe885bc02"
   },
   "unitize-general": {
     "url": "https://claude.ai/artifact/3P9PNEcD7JyH3YAb5GuUqy",
-    "digest": "f8e107506e7e56a5"
+    "digest": "db14f7ca8575b873"
   },
   "progress": {
     "url": "https://claude.ai/artifact/TsUU8dwwthrgRvbAvCeinV",
-    "digest": "1fd8b0fc0f1f359c"
+    "digest": "0170b08cfd05edb7"
   },
   "home": {
     "url": "https://claude.ai/artifact/UVdybSYjYs3oHkt6bsR1sU",
-    "digest": "7b6c2bf1ce11bfb1"
+    "digest": "15d1d7ea70ae21a8"
   }
 }
