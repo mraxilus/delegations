@@ -4,8 +4,9 @@
 ##   | Code               | Meaning                                                        |
 ##   |--------------------|----------------------------------------------------------------|
 ##   | Service            | wire format service speaks: `claude`, `openrouter` or `chat`   |
-##   | Settings           | service, endpoint, model and effort of one run                 |
+##   | Settings           | service, endpoint, model, effort and workspace of one run      |
 ##   | Passage            | text suggestion is for: text given, or text of page            |
+##   | readTagGiven       | read text given as tag: tag, `Long` past cap, or none to send  |
 ##   | readPage           | read page reply as passage: status, type, charset, markup      |
 ##   | toBody, toHeaders  | request service expects; same bytes for same passage           |
 ##   | Reply              | reply as read: status, headers kept, body up to its cap        |
@@ -13,22 +14,59 @@
 ##   | Suggestion         | tag checked against lists, or why none                         |
 ##   |--------------------|----------------------------------------------------------------|
 ##
+##   |--------------------|----------------------------------------------------------------|
+##   | Code               | Authority                                                      |
+##   |--------------------|----------------------------------------------------------------|
+##   | repairEncoding     | substitution of maximal subparts, Unicode chapter 3, Table 3-7 |
+##   | decode, LABELS_*   | labels of WHATWG Encoding Standard                             |
+##   | LUT_RUNE_BY_BYTE   | index-windows-1252, WHATWG Encoding Standard                   |
+##   | readReference      | character reference states of HTML tokenizer                   |
+##   | findCloseTag       | attribute states of HTML tokenizer                             |
+##   | findClosingRaw     | RAWTEXT end tag name state of HTML tokenizer                   |
+##   | isIdentity         | RFC 9110 8.4.1, content codings                                |
+##   |--------------------|----------------------------------------------------------------|
+##
 ##   Service names tanru, and tool makes tag: each word of answer goes through `readTag`, tanru
 ##     through `readTanru`, and form through `$`, so 4.11 and 4.12 stay in `tags.nim` and
 ##     `lujvo.nim` alone (Article II.1). Form must read back as same tag, so tool never prints
-##     tag `tagger tag` refuses; `brod` is only form that fails (open question in PROVENANCE).
+##     tag `tagger tag` refuses.
+##     Cost: answer whose form holds `brod`, only form failing, is refused after service is
+##       paid (open question in PROVENANCE).
 ##   System text holds every word of gismu list, with keyword and hint, so model sees words
 ##     reader accepts; it is same bytes on every request, so service caches it.
 ##     Rejected: definitions too, at five times size.
+##     Cost: prompt of 24,918 bytes on every request, which cache helps only within its lifetime.
 ##   Passage is untrusted: it goes inside one `<passage>` element with `&`, `<`, `>` and `"`
 ##     escaped, so it can never close element; system text calls it data.
+##     Cost: model reads each of those four as character reference, never as itself.
 ##   Every module here is pure: `app/suggester.nim` reads environment, sends requests and
 ##     writes files, so suites drive each step without network (Article IX.5).
-##   Answer is capped at `COUNT_WORDS_MAX` words, since `$` scores every choice of rafsi;
-##     each word at `BYTES_ELEMENT_MAX` bytes, since `readTag` time grows faster than length.
+##     Cost: wiring is held by `test_suggester.nim` alone, which builds binary and drives it.
+##   Answer and text given as tag are capped at `COUNT_WORDS_MAX` words, since `$` scores every
+##     choice of rafsi; each word at `BYTES_ELEMENT_MAX` bytes, since `readTag` time grows
+##     faster than length. Bytes cap no words: 64 bytes hold lujvo of 18, so both caps hold.
+##     Cost: answer past cap fails as `Long` after service is paid; text given, before request.
+##   Failure keeps reason of reader, made printable as word or form is read, so `explain` reads
+##     no value again: escape of detail never reaches reader.
+##     Cost: failure built by hand holds no reason, so its wording ends in detail alone.
+##   Refusal shows explanation of classifier as given, never parsed, as refusals page asks.
+##     Cost: wording of report moves whenever service rewords explanation.
+##   Body of `claude` asks server-side fallback of every model but `MODELS_FALLBACK_NONE`,
+##     since `"default"` runs model with none alone.
+##     Cost: refusal in billed category is billed beside fallback request, and answer may come
+##       from other model, which report names.
+##   Body of `openrouter` names one session, so sticky routing keeps cached system text on one
+##     endpoint, which passage would key apart otherwise.
+##     Cost: requests of one account go to that endpoint while it answers, never spread.
+##   Workspace goes in header of `claude` alone, never in body, so stamp of request holds
+##     none, as it holds no credential.
+##     Cost: recording replays under any workspace, as under any credential.
 ##   No retry: refused answer is named to user, who may run again; key is for sparing use.
+##     Cost: passing failure, as overload or limit of rate, ends run; next run pays again for
+##       prompt where cache lapsed.
 ##   Markup is read in one linear pass with no recursion, so nesting cannot overflow stack.
 ##     Rejected: `std/htmlparser`, deprecated in Nim 2.2, recursive, and keeping script text.
+##     Cost: 23 named references decoded, so `&eacute;` stays as written.
 ##   Cost: replies of 2xx are read in documented shapes alone until live reply is recorded.
 
 {.experimental: "strictFuncs".}
@@ -120,13 +158,13 @@ type
 const
   COUNT_WORDS_MAX* = 6
     ## Most words answer or text given as tag may hold: `$` scores every choice of rafsi, about
-    ##   4x per word. Worst case, 6 words of `bloti`, takes 2,151 µs release, 14,697 µs debug;
-    ##   7 words take 8,241 and 68,105 µs (measured 2026-10-29). Schema of Claude takes no
-    ##   `maxItems`, so reader holds cap.
+    ##   4x per word, slowest for 6 words of `bloti` (figures in PROVENANCE.md, Figures). Schema
+    ##   of Claude takes no `maxItems`, so reader holds cap.
   BYTES_ELEMENT_MAX* = 64
     ## Most bytes of one word of answer, and of text shortcut reads as tag; lujvo of 6 words is
-    ##   shorter, and time of `readTag` grows faster than length (516 letters: 0.9 ms, measured).
-    ##   Cap of bytes caps no words: 64 bytes hold lujvo of 18, so shortcut counts words too.
+    ##   shorter, and time of `readTag` grows faster than length (figures in PROVENANCE.md,
+    ##   Figures). Cap of bytes caps no words: 64 bytes hold lujvo of 18, so shortcut counts
+    ##   words too.
   BYTES_PASSAGE_MAX* = 65_536  ## Most bytes of text model reads, i.e. 64 KiB; cut is reported.
   BYTES_PAGE_MAX* = 4_194_304  ## Most bytes of page read, i.e. 4 MiB; rest unread, and reported.
   BYTES_REPLY_MAX* = 1_048_576  ## Most bytes of service reply read, i.e. 1 MiB; more is malformed.
