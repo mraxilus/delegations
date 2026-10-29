@@ -15,6 +15,8 @@
 ##   Redirect resolves examples of RFC 3986 section 5.4 but five whose dot segments `combine` of
 ##     `std/uri` resolves otherwise: `.`, `..`, `../..`, `./g/.` and `../../../../g`; should
 ##     `redirect` resolve them itself?
+##   URL holding whitespace or control character is refused by `redirect` and by `send`, each such
+##     byte at start, middle and end; `send` meets live server, so refusal shows nothing went out.
 ##   Credential laws take every byte at start, middle and end of value; random secrets are spelled
 ##     from symbols no problem text holds, so any byte of value leaking into problem shows.
 ##   `send` meets servers of `std/asynchttpserver` in same process, on `127.0.0.1` at port system
@@ -172,7 +174,11 @@ const
     body: "hello",
   )
     ## Reply `send` should read from `ANSWER_RAW`.
+  ANSWER_FOLDED = "HTTP/1.1 302 Found\r\nlocation: /a\r\n /b\r\ncontent-length: 0\r\n" &
+      "connection: close\r\n\r\n"
+    ## Answer raw listener gives where redirect folds its location onto second line.
   URL_BASE = "http://a/b/c/d;p?q"  ## URL examples of RFC 3986 section 5.4 resolve against.
+  CHARACTERS_CONTROL = {'\0'..'\x1F', '\x7F'}  ## Control characters of ASCII: C0 set and DEL.
 
 
 func lineFirst(piece: Piece): int =
@@ -330,6 +336,12 @@ func urlLoopback(port: int, path: string): string =
   "http://127.0.0.1:" & $port & path
 
 
+func problemURL(code, at: int): string =
+  ## Build problem `send` gives for URL holding byte `code` at `at`.
+  "URL should hold no whitespace or control character; got byte `" & $code & "` at `" & $at &
+      "`."
+
+
 func values(head: Head, name: string): seq[string] =
   ## Read value of each header line naming `name`, compared without case, as `send` writes it.
   for i in 1..<head.lines.len:
@@ -357,8 +369,8 @@ proc listenRaw(): AsyncSocket =
   result.listen()
 
 
-proc readHead(listener: AsyncSocket): Future[Head] {.async.} =
-  ## Accept one connection, read its request byte for byte, answer `ANSWER_RAW`, then close.
+proc readHead(listener: AsyncSocket, answer: string = ANSWER_RAW): Future[Head] {.async.} =
+  ## Accept one connection, read its request byte for byte, give it `answer`, then close.
   let client = await listener.accept()
   var head: Head
   while true:
@@ -367,7 +379,7 @@ proc readHead(listener: AsyncSocket): Future[Head] {.async.} =
     head.lines.add line
   let lengths = head.values("content-length")
   if lengths.len > 0: head.body = await client.recv(lengths[0].parseInt)
-  await client.send(ANSWER_RAW)
+  await client.send(answer)
   client.close()
   return head
 
@@ -704,6 +716,32 @@ suite "Internal: Exchange":
             expected  # target resolved, or none where it leaves http and https or falls
 
 
+  test "redirect refuses target holding whitespace or control character, wherever it stands":
+    # Regression: target kept space and line break, which `send` then wrote into request line.
+    let base = "http://a.example/"
+    check base.redirect(Reply(status: 302, location: "/b c")).isNone  # case as found in review
+    check base.redirect(Reply(status: 302, location: "/a\n /b")).isNone  # case as found: folded
+    for code in 0..255:
+      let
+        character = char(code)
+        is_refused = character in Whitespace + CHARACTERS_CONTROL
+      for (location, is_end) in [
+        (character & "/c", true), ("/c" & character & "d", false), ("/c" & character, true),
+      ]:
+        let
+          target = base.redirect(Reply(status: 302, location: location))
+          is_trimmed = is_end and character in Whitespace
+          named = location.escape & ": "
+        check named & $target.isSome ==
+            named & $(is_trimmed or not is_refused)  # domain: refused unless trimmed at end
+        if target.isSome:
+          check named & $target.get.find(Whitespace + CHARACTERS_CONTROL) ==
+              named & "-1"  # domain: target holds none
+      let moved = (base & "b" & character & "/").redirect(Reply(status: 302, location: "c"))
+      check $code & ": " & $moved.isSome ==
+          $code & ": " & $(not is_refused)  # domain: base holding one refused too
+
+
   test "credential is read trimmed, and refused naming variable and fault, never value":
     for (value, service, expected) in [
       ("sk-ant-secret", Service.Claude, "sk-ant-secret"),
@@ -947,6 +985,37 @@ suite "Internal: Send":
     if not sent.is_replied:
       check sent.problem.len > 0 and '\n' notin sent.problem  # first line of error alone
       check CREDENTIAL_SUITE notin sent.problem  # credential never in problem
+
+
+  test "URL holding whitespace or control character is refused naming byte, and nothing goes out":
+    # Regression: line break in URL let `AssertionDefect` of client out of `send`; folded
+    #   location of redirect led there.
+    let found = sendLoopback("http://127.0.0.1:9/a\nb", "")  # case as found in review
+    check not found.is_replied and found.problem == problemURL(10, 20)  # case as found: refused
+    let
+      listener = listenRaw()
+      url_moved = urlLoopback(int(listener.getLocalAddr[1]), "/moved")
+      reading = listener.readHead(ANSWER_FOLDED)
+      moved = sendLoopback(url_moved, "")
+    discard waitFor reading
+    check moved.is_replied and moved.reply.status == 302  # case as found: folded answer read
+    check moved.is_replied and url_moved.redirect(moved.reply).isNone  # case as found: refused
+    listener.close()
+    let
+      server = startServer()
+      url = urlLoopback(server.port, "/count")
+    for code in 0..255:
+      let character = char(code)
+      if character notin Whitespace + CHARACTERS_CONTROL: continue
+      for (text, at) in [
+        (character & url, 0), (url & character & "x", url.len), (url & character, url.len),
+      ]:
+        let sent = sendLoopback(text, "{}", credential = CREDENTIAL_GIVEN)
+        check not sent.is_replied and sent.problem == problemURL(code, at)  # domain: byte named
+    check server.targets.len == 0 and server.count_connections == 0  # domain: nothing went out
+    let control = sendLoopback(url, "")
+    check control.is_replied and server.targets == @["/count"]  # yet it listened all along
+    stopServer(server)
 
 
   test "https goes through context and tunnel of proxy given":
