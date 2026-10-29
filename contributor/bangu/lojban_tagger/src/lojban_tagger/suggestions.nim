@@ -1030,8 +1030,9 @@ func readReply*(service: Service, reply: Reply): Suggestion {.raises: [].} =
 
 func explain*(suggestion: Suggestion): string {.raises: [].} =
   ## Render why no tag was suggested, ending in offending value; `Word` and `Readback` end in
-  ##   `reason`, `explain` of reading made when failure was (`commands.nim`), so refusal wording
-  ##   stays in one place, and explain reads no value again: escapes of detail never reach reader.
+  ##   `reason`, `explain` of reading (`commands.nim`) kept when failure was made, so refusal
+  ##   wording stays in one place, and explain reads no value again: escapes of detail never
+  ##   reach reader.
   ##   Word past cap is named by cap, as `readAnswer` decided when it failed, never by detail.
   ##   Failure with no reason ends in detail alone.
   ##   Never raises: `{.raises: [].}` holds exceptions; defects held by test "each failure
