@@ -15,8 +15,8 @@
 ##     wording, never how they arise.
 ##   Samples are drawn into pools allocated once, after one seeding per test, and served by
 ##     `served`.
-##   Corpus does not cover yet: quote inside unquoted attribute value; page URL holding
-##     ill-formed UTF-8; escape of U+0000; word of answer holding control character.
+##   Corpus does not cover yet: page URL holding ill-formed UTF-8; escape of U+0000; word of
+##     answer holding control character.
 
 {.experimental: "strictFuncs".}
 
@@ -245,9 +245,11 @@ const
     ##   closed, quote, element, and closing element of skipped element around raw one.
   ATTRIBUTES = [
     "", " class=\"x\"", " title='a>b'", " data-x=\"<p>&amp;\"", " hidden", " id=x1",
-    " title=\"it's\"",
+    " title=\"it's\"", " href=x'y", " data-x=a\"b", " x'y", " x\"y='z>w'", " b=c\"d e='f>g'",
+    " a = 'x>y'",
   ]
-    ## Attributes random elements draw: quoted values holding `>`, `<` and other quote.
+    ## Attributes random elements draw: quoted values holding `>`, `<` and other quote; quote in
+    ##   unquoted value or in name, which opens nothing; spaces around `=`.
   COMMENTS = [
     "<!-- note -->", "<!---->", "<!-- <p>x</p> &amp; -->", "<!DOCTYPE html>",
     "<?xml version=\"1.0\"?>",
@@ -1310,6 +1312,20 @@ suite "Internal: Page":
       let deep = ("<" & name & ">").repeat(COUNT_NESTED) &
           ("</" & name & ">hidden").repeat(COUNT_NESTED - 1) & "</" & name & "><p>deep</p>"
       check readMarkup(deep) == "deep"  # levels counted, not recursed, so nesting overflows nothing
+
+
+  test "quote opens attribute value alone, so quote in name or unquoted value closes nothing":
+    check readMarkup("<a href=x'y>text</a><p>Hello</p>") ==
+        "text\nHello"  # case as found in suite review: quote in unquoted value lost rest of page
+    for attribute in ATTRIBUTES:  # 13 attributes, exhaustive
+      for (name, text) in [
+        ("p", "a\nx\nb"), ("span", "a\nx\nb"), ("template", "a\nb"), ("script", "a\nb"),
+      ]:
+        let markup = "<p>a</p><" & name & attribute & ">x</" & name & attribute & "><p>b</p>"
+        check readMarkup(markup) == text  # HTML tokenizer, before attribute value state
+    check readMarkup("<p>a</p><span =\"x>\">y</span>") ==
+        "a\n\">y"  # `=` opening name is no assignment, so quote after it opens nothing
+    check readMarkup("<p>a</p><span title='x>y") == "a"  # quoted value never closed runs to end
 
 
   test "100,000 nested elements read in one pass":
