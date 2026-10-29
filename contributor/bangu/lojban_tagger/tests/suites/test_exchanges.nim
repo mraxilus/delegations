@@ -13,6 +13,8 @@
 ##     Each file holds line too: faulty line itself, as `readIndex` names it; problem ends in what
 ##     piece holds made printable, as `readIndex` echoes line: its line, running to end of text
 ##     where no line break closes it, which problem then names, or bytes left from block.
+##     Page recordings whose URL holds user part, query or fragment take same faults; problem
+##       shows URL as `dropSecrets` keeps it, words of secrets spelled so any leaking shows.
 ##   Port of URL is held by table of its bounds and by random ports with zeros before them,
 ##     through `isURL`, `isEndpoint` and `redirect`; scheme of URL and of proxy takes every
 ##     spelling of `http` and `https` in any case.
@@ -251,6 +253,24 @@ const
   ]
     ## Values each piece refuses: whole line of header, else value after name of field.
   COUNT_MALFORMED = 75  ## Malformed files: every piece with every fault and value it admits.
+  URLS_PAGE = [
+    ("https://docs.example.org/report", "https://docs.example.org/report"),
+    ("https://docs.example.org/report?token=TOKEN", "https://docs.example.org/report"),
+    ("https://docs.example.org/report#FRAGMENT", "https://docs.example.org/report"),
+    ("https://alice@docs.example.org/report", "https://docs.example.org/report"),
+    ("https://alice:hunter2@docs.example.org/report", "https://docs.example.org/report"),
+    ("https://alice:hunter2@TOKEN@docs.example.org/", "https://docs.example.org/"),
+    ("HTTP://alice:hunter2@example.org:8080/a?TOKEN#FRAGMENT", "HTTP://example.org:8080/a"),
+  ]
+    ## URLs of page recordings malformed files hold, beside URL reader shows of each: scheme,
+    ##   host, port and path, as `dropSecrets` keeps them; none to drop, query, fragment, user,
+    ##   user and password, password holding `@`, and each with port and scheme in capitals.
+  SECRETS_PAGE = ["alice", "hunter2", "TOKEN", "FRAGMENT"]
+    ## Words user part, query and fragment of `URLS_PAGE` are spelled from; no problem holds one.
+  COUNT_MALFORMED_PAGES = 546
+    ## Malformed page files: each of `URLS_PAGE` with each piece, fault and value
+    ##   `COUNT_MALFORMED` counts, and with its URL line where header and label stand, both
+    ##   missing, and with copy of file after body.
   ANSWER_RAW = "HTTP/1.1 201 Created\r\ncontent-type: text/plain; charset=utf-8\r\n" &
       "content-encoding: identity\r\nlocation: /next\r\ncontent-length: 5\r\n" &
       "connection: close\r\n\r\nhello"
@@ -377,19 +397,20 @@ const
     ## Port curl assumes where proxy string specifies none (curl manual, option `--proxy`).
 
 
-func lineFirst(piece: Piece): int =
-  ## Count first line of piece in `PIECES_BASE`, from one.
+func lineFirst(piece: Piece, pieces: array[Piece, string]): int =
+  ## Count first line of piece in `pieces`, from one.
   result = 1
   for before in Piece:
-    if before < piece: result += PIECES_BASE[before].count('\n')
+    if before < piece: result += pieces[before].count('\n')
 
 
-func problemExpected(piece: Piece, text: string): string =
-  ## Build problem reader gives at piece of text: what piece should be, then what it holds made
-  ##   printable and cut at `RUNES_ANSWER_SHOWN`: line, running to end of text where no line
-  ##   break closes it, which problem then names; or bytes left from where block opens.
+func problemExpected(piece: Piece, text: string, pieces: array[Piece, string]): string =
+  ## Build problem reader gives at piece of text, file of `pieces` with one fault: what piece
+  ##   should be, then what it holds made printable and cut at `RUNES_ANSWER_SHOWN`: line, running
+  ##   to end of text where no line break closes it, which problem then names; or bytes left from
+  ##   where block opens.
   var opening = 0
-  for _ in 1..<lineFirst(piece): opening = text.find('\n', opening) + 1
+  for _ in 1..<lineFirst(piece, pieces): opening = text.find('\n', opening) + 1
   if piece in PIECES_BLOCK:
     return LUT_PROBLEM_BY_PIECE[piece] & "; got `" &
         text[opening .. ^1].toPrintable(RUNES_ANSWER_SHOWN) & "`."
@@ -401,17 +422,30 @@ func problemExpected(piece: Piece, text: string): string =
       text[opening..<stop].toPrintable(RUNES_ANSWER_SHOWN) & "`."
 
 
-func casesMalformed(): seq[Malformed] =
-  ## Build each piece of `PIECES_BASE` with each fault, and each value, `LUT_FAULTS_BY_PIECE`
-  ##   and `LUT_VALUES_BY_PIECE` give it; reader should refuse at piece, or at next one where
-  ##   copy stands in its place.
+func piecesPage(url: string): array[Piece, string] =
+  ## Build file of page recording of `GET <url>`, piece by piece, as format names them: status
+  ##   200, and body spanning two lines, as body of `RECORDING_BASE` does.
+  let request = "GET " & url
+  [
+    HEADER_RECORDING & "\n", "label recorded 2026-10-29\n", "request " & $request.len & "\n",
+    request & "\n", "status 200\n", "content-type text/html\n", "content-encoding \n",
+    "location \n", "body whole 8\n", "<p>\n</p>\n",
+  ]
+
+
+func casesMalformed(pieces: array[Piece, string], url = "", url_shown = ""): seq[Malformed] =
+  ## Build each of `pieces` with each fault, and each value, `LUT_FAULTS_BY_PIECE` and
+  ##   `LUT_VALUES_BY_PIECE` give it; reader should refuse at piece, or at next one where copy
+  ##   stands in its place.
+  ##   Problem echoes `url_shown` wherever text holds `url`: page URL request holds, and URL
+  ##     reader shows of it, user part, query and fragment dropped.
   for piece in Piece:
     var before, after: string
     for other in Piece:
-      if other < piece: before.add PIECES_BASE[other]
-      elif other > piece: after.add PIECES_BASE[other]
+      if other < piece: before.add pieces[other]
+      elif other > piece: after.add pieces[other]
     let
-      own = PIECES_BASE[piece]
+      own = pieces[piece]
       space = own.find(' ')
     for fault in LUT_FAULTS_BY_PIECE[piece]:
       var (texts, at) = (newSeq[string](), piece)
@@ -429,16 +463,18 @@ func casesMalformed(): seq[Malformed] =
         for value in LUT_VALUES_BY_PIECE[piece]: texts.add before & name & value & "\n" & after
       of Fault.Short, Fault.Long:
         let
-          line_count = PIECES_BASE[pred(piece)]
+          line_count = pieces[pred(piece)]
           opening = before[0 ..< ^line_count.len] & line_count[0..line_count.rfind(' ')]
           count = own.len - 1 + (if fault == Fault.Short: 1 else: -1)
         texts.add opening & $count & "\n" & own & after
       of Fault.Trailing: texts.add before & own & "x"
       for text in texts:
-        let (line, problem) =
-          if fault == Fault.Trailing:
-            (lineFirst(piece) + own.count('\n'), PROBLEM_END & "; got `x`.")
-          else: (lineFirst(at), problemExpected(at, text))
+        let
+          shown = if url.len > 0: text.replace(url, url_shown) else: text
+          (line, problem) =
+            if fault == Fault.Trailing:
+              (lineFirst(piece, pieces) + own.count('\n'), PROBLEM_END & "; got `x`.")
+            else: (lineFirst(at, pieces), problemExpected(at, shown, pieces))
         result.add Malformed(
           piece: piece,
           fault: fault,
@@ -1139,7 +1175,7 @@ suite "Internal: Exchange":
         "break; got `status 200`."  # case as found: got ``, regressions-app-6
     check counted.problem == "Request should hold bytes its line counts, then line break; " &
         "got `GET /page\\u{A}`."  # case as found: got `10` bytes left, rules-1
-    let cases = casesMalformed()
+    let cases = casesMalformed(PIECES_BASE)
     var (pieces, faults) = (default(set[Piece]), default(set[Fault]))
     for malformed in cases:
       let
@@ -1153,6 +1189,44 @@ suite "Internal: Exchange":
       faults.incl malformed.fault
     check cases.len == COUNT_MALFORMED  # every piece with every fault and value it admits
     check pieces == {Piece.low..Piece.high} and faults == {Fault.low..Fault.high}  # exhaustive
+
+
+  test "refusal of malformed page recording shows no user part, query or fragment of its URL":
+    # Regression, found in recheck claim regressions-lib-1, 2026-10-29: refusal of request block
+    #   echoed bytes left from where block opens, and page recording keeps whole URL, so request
+    #   counted one byte long gave `GET https://docs.example.org/report?token=SECRET-7f3a91c2…`.
+    let
+      pieces = piecesPage("https://docs.example.org/report?token=SECRET-7f3a91c2")
+      found = readRecording(pieces[Piece.Header..Piece.Label].join & "request 58\n" &
+          pieces[Piece.RequestBytes..Piece.BodyBytes].join)
+    check found.problem == "Request should hold bytes its line counts, then line break; got " &
+        "`GET https://docs.example.org/report\\u{A}status 200\\u{A}content-type text/html\\u{A}" &
+        "content-en…`."  # case as found: echoed `?token=SECRET-7f3a91c2`
+    var count = 0
+    for (url, url_shown) in URLS_PAGE:
+      let pieces = piecesPage(url)
+      for malformed in casesMalformed(pieces, url, url_shown):
+        let
+          recorded = malformed.text.readRecording
+          named = url & " " & $malformed.piece & " " & $malformed.fault & ": "
+        inc count
+        check named & recorded.problem ==
+            named & malformed.problem  # domain: echo holds URL as `dropSecrets` keeps it
+        check named & $SECRETS_PAGE.filterIt(it in recorded.problem) ==
+            named & "@[]"  # domain: no byte of user part, query or fragment
+      for (text, place) in [
+        (pieces[Piece.RequestBytes..Piece.BodyBytes].join, "header"),
+        (pieces[Piece.Header] & pieces[Piece.RequestBytes..Piece.BodyBytes].join, "label"),
+        (pieces.join & pieces.join, "after body"),
+      ]:
+        let
+          recorded = text.readRecording
+          named = url & " " & place & ": "
+        inc count
+        check named & $recorded.is_read == named & "false"  # URL line stands at place, refused
+        check named & $SECRETS_PAGE.filterIt(it in recorded.problem) ==
+            named & "@[]"  # domain: no byte of user part, query or fragment, whatever line shows
+    check count == COUNT_MALFORMED_PAGES  # each URL with every piece, fault and value, and places
 
 
   test "URL is one http or https URL with host and no whitespace":
