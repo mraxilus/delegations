@@ -23,7 +23,7 @@ when compileOption("profiler"):
 
 import std/[algorithm, json, options, random, sequtils, strutils, unittest]
 
-import ../../src/lojban_tagger/[commands, dictionary, forms, suggestions {.all.}, tags]
+import ../../src/lojban_tagger/[commands, dictionary, forms, lujvo, suggestions {.all.}, tags]
 import ../../src/lojban_tagger/lists/gismu
 import ../../tools/examples
 
@@ -69,6 +69,14 @@ const
   FLOOR_SUGGESTED = 45
     ## Fewest random replies reading as tag under each service; 56 read under `claude`, 81 under
     ##   others, at seed `0`.
+  SAMPLES_GIVEN = 20  ## Random lujvo of each count of words shortcut law reads, seeded.
+  COUNT_WORDS_GIVEN_MAX = 18
+    ## Most words shortcut law joins into one lujvo: as many as `TEXT_GIVEN_LONG` holds.
+  FLOOR_GIVEN_LONG = 200
+    ## Fewest random lujvo past `COUNT_WORDS_MAX` words within `BYTES_ELEMENT_MAX` bytes; 238 of
+    ##   240 read at seed `0`.
+  TEXT_GIVEN_LONG = "lotconrotybanbalbapybembedbejbesybefybevbixybimbolbogbotmlatu"
+    ## Text reading as tag of 18 words in 61 bytes, which shortcut rendered without bound.
   SAMPLES_MARKUP = 300  ## Random markup trees reader is held to, seeded.
   DEPTH_MARKUP_MAX = 8  ## Most levels of elements random tree nests.
   FLOOR_DEEP = 80  ## Fewest random trees nesting `DEPTH_MARKUP_MAX` levels; 98 read at seed `0`.
@@ -113,6 +121,14 @@ const
     for i, entry in LIST_GISMU:
       if not entry.word.isGismu: words.add Word(i)
     words
+  RAFSI_CVC = block:
+    ## Every CVC rafsi of gismu of list, with gismu it stands for.
+    var rafsi: seq[(Word, string)]
+    for i, entry in LIST_GISMU:
+      if not entry.word.isGismu: continue
+      for one in entry.rafsi:
+        if one.form.get == Form.Cvc: rafsi.add (Word(i), one)
+    rafsi
   ROWS_WELL_FORMED = [
     (first: 0x00..0x7F, second: 0x00..0xFF, length: 1),
     (first: 0xC2..0xDF, second: 0x80..0xBF, length: 2),
@@ -344,6 +360,12 @@ func failureRead(suggestion: Suggestion): Option[(Failure, string)] =
   ## Read failure of suggestion with its detail; `none` where tag was suggested.
   if suggestion.is_suggested: none((Failure, string))
   else: some((suggestion.failure, suggestion.detail))
+
+
+func tagGiven(text: string): Option[Tag] =
+  ## Read tag shortcut takes from text given; `none` where text goes to service, or fails.
+  let given = text.readTagGiven
+  if given.isSome: given.get.tagRead else: none(Tag)
 
 
 func isStemShared(words: openArray[string]): bool =
@@ -884,6 +906,25 @@ proc poolTanru(): seq[seq[string]] =
         else: $WORDS_GISMU.sample
       )
     result.add words
+
+
+proc poolLujvo(): seq[(seq[Word], string)] =
+  ## Draw `SAMPLES_GIVEN` lujvo of each count of words, one to `COUNT_WORDS_GIVEN_MAX`, into pool
+  ##   allocated once: CVC rafsi of random gismu before head, head random gismu whole, joined as
+  ##   4.11 joins them, and gismu alone for one word; caller seeds first.
+  result = newSeqOfCap[(seq[Word], string)](SAMPLES_GIVEN * COUNT_WORDS_GIVEN_MAX)
+  for count in 1..COUNT_WORDS_GIVEN_MAX:
+    for _ in 1..SAMPLES_GIVEN:
+      var
+        words: seq[Word]
+        rafsi: seq[string]
+      for _ in 1..<count:
+        let (w, one) = RAFSI_CVC.sample
+        words.add w
+        rafsi.add one
+      let head = WORDS_GISMU.sample
+      words.add head
+      result.add (words, if count == 1: $head else: joinRafsi(rafsi & @[$head]))
 
 
 proc poolPassages(): seq[Passage] =
@@ -2167,14 +2208,39 @@ suite "Internal: Report":
 
 
   test "text reading as tag already takes shortcut; prose, cmavo alone and long text do not":
-    check readTagGiven("datnyvreji") == some(tanru("datni+vreji"))  # reads as tag, no service
-    check readTagGiven(" Datnyvreji\n") == some(tanru("datni+vreji"))  # folded as reader folds
-    check readTagGiven("ciska") == some(tanru("ciska"))  # gismu is tag
+    check tagGiven("datnyvreji") == some(tanru("datni+vreji"))  # reads as tag, no service
+    check tagGiven(" Datnyvreji\n") == some(tanru("datni+vreji"))  # folded as reader folds
+    check tagGiven("ciska") == some(tanru("ciska"))  # gismu is tag
+    let given = readTagGiven("datnyvreji")
+    check given.isSome and given.get.is_suggested and given.get.gloss == "" and
+        given.get.model == ""  # no service asked, so none glosses or is named
     for text in ["mi nelci lo nu tcidu lo cukta", "Lojban", "se", "lo", "", "datni+vreji",
         "picture book"]:
       check readTagGiven(text).isNone  # prose, English, cmavo alone, tanru go to service
     let padded = " ".repeat(BYTES_ELEMENT_MAX - 5) & "ciska"
-    check readTagGiven(padded) == some(tanru("ciska"))  # 64 bytes reach reader
+    check tagGiven(padded) == some(tanru("ciska"))  # 64 bytes reach reader
     check readTagGiven(" " & padded).isNone  # 65 bytes never reach it
     check toReportGiven(" datnyvreji\n", tanru("datni+vreji")) == "`datnyvreji` reads as tag " &
         "`datni+vreji` already, so no service is asked.\n"  # text given, trimmed, and its tanru
+
+
+  test "text given as tag past `COUNT_WORDS_MAX` words is Long, named by count, never rendered":
+    let found = readTagGiven(TEXT_GIVEN_LONG)
+    check found.isSome and found.get.failureRead ==
+        some((Failure.Long, "18"))  # review finding logic-1, 2026-10-29: rendered without bound
+    check found.isSome and found.get.explain ==
+        "Tag should hold at most 6 words; got `18`."  # cap named from `COUNT_WORDS_MAX`
+    randomize(0)
+    let pool = poolLujvo()
+    var count_long = 0
+    for (words, text) in served(pool):  # `SAMPLES_GIVEN` lujvo of each count, 1 to 18, seeded
+      let given = readTagGiven(text)
+      if text.len > BYTES_ELEMENT_MAX:
+        check given.isNone  # past cap of bytes, sent to service unread
+      elif words.len > COUNT_WORDS_MAX:
+        check given.isSome and given.get.failureRead ==
+            some((Failure.Long, $words.len))  # count named; `$`, 4x per word, never runs
+        inc count_long
+      else:
+        check given.isSome and given.get.tagRead == some(Tag(words: words))  # within cap, tag
+    check count_long >= FLOOR_GIVEN_LONG  # corpus reaches lujvo past cap often

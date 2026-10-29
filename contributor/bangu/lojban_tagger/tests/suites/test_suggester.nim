@@ -113,6 +113,8 @@ const
   STATUS_MISSING = 404  ## Status server answers where no route names target.
   TEXT_GIVEN = "datnyvreji"  ## Text reading as tag already, i.e. `datni+vreji`.
   FORM_GIVEN = "datnyvei"  ## Form 4.12 prefers for `TEXT_GIVEN`, which binary prints.
+  TEXT_GIVEN_LONG = "lotconrotybanbalbapybembedbejbesybefybevbixybimbolbogbotmlatu"
+    ## Text reading as tag of 18 words in 61 bytes, which binary rendered without bound.
   PIECE_PAGE = "Alice was beginning to get very tired. "  ## Text large page repeats.
   SAMPLES_REPLAY = 200  ## Random replays wiring law reads, seeded.
   FLOOR_REPLAYED = 180  ## Fewest random replays whose text reads as no tag; 200 read at seed `0`.
@@ -426,9 +428,11 @@ func toOutcome(failure: Failure, detail: string, notes: openArray[string]): Outc
 
 
 func toOutcomeGiven(text: string): Outcome =
-  ## Build outcome of text reading as tag already: form alone on output, report naming tanru.
-  let tag = text.readTagGiven.get
-  Outcome(output: $tag & "\n", report: toReportGiven(text, tag), code: 0)
+  ## Build outcome of text reading as tag already: form alone on output, report naming tanru;
+  ##   failure explained alone, exit 1.
+  let given = text.readTagGiven.get
+  if not given.is_suggested: return Outcome(report: given.explain & "\n", code: 1)
+  Outcome(output: $given.tag & "\n", report: toReportGiven(text, given.tag), code: 0)
 
 
 func isDate(text: string): bool =
@@ -628,6 +632,12 @@ suite "Internal: Suggester":
     check endpoint.heard.len == 0  # no service asked
     check not dirExists(directory_case)  # no recording read or written
     stopServer(endpoint)
+
+
+  test "text reading as tag past `COUNT_WORDS_MAX` words exits 1 with `Long`, reading no setting":
+    let expected = Outcome(report: toSuggestion(Failure.Long, "18").explain & "\n", code: 1)
+    check binary.run([(KEY_SERVICE, "bogus")], [TEXT_GIVEN_LONG]) ==
+        expected  # review finding logic-1, 2026-10-29: memory grew without bound; service unread
 
 
   test "text prints form exactly where `readTagGiven` reads it as tag, and asks service else":
