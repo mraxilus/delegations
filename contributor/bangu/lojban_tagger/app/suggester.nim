@@ -70,8 +70,8 @@
 ##   Request of service exchange, which stamp names and recording keeps, is `POST` and endpoint,
 ##     line break, then body, so recording replays for its endpoint alone; request of page hop
 ##     is `GET` and URL. Credential stays out, so recording replays under any credential.
-##   Refusal of recording names problem first, then path, whose directory alone is made
-##     printable and cut, so long directory hides neither problem nor stamp.
+##   Refusal and note of recording name path whose directory alone is made printable and cut;
+##     refusal names problem first, so long directory hides neither problem nor stamp.
 
 {.experimental: "strictFuncs".}
 
@@ -119,7 +119,9 @@ type
     case is_replied: bool  ## Reply came, sent or replayed.
     of true:
       reply: Reply  ## Reply sent or replayed.
-      note: string  ## Report line naming recording replayed, written or unwritten; empty if live.
+      note: string
+        ## Report line naming recording replayed, written or unwritten, at path refusal names;
+        ##   empty if live.
     of false:
       failure: Failure  ## `Network` or `Recording`.
       detail: string
@@ -379,7 +381,7 @@ proc exchange(
   ##   Recording that stands but cannot be read is refused, naming first line of error.
   ##   Refusal names problem in words of tool first, then path, so long directory never hides
   ##     either: outside text, directory and error, is made printable and cut alone, and name
-  ##     holding stamp stays whole.
+  ##     holding stamp stays whole. Note names path as refusal does.
 
   func refuse(detail: string): Exchanged =
     ## Build outcome refusing recording; caller made each outside part of detail printable.
@@ -425,7 +427,7 @@ proc exchange(
     if command.mode == Mode.Replay or recorded.recording.reply.isReplayed(service):
       let label = recorded.recording.label.toPrintable(RUNES_SHOWN)
       return Exchanged(is_replied: true, reply: recorded.recording.reply,
-          note: "Reply replayed from `" & path & "`: " & label & ".")
+          note: "Reply replayed from `" & shown & "`: " & label & ".")
   if command.mode == Mode.Replay: return refuse("missing at " & shown)
 
   # Send within deadline, through proxy environment names.
@@ -456,10 +458,10 @@ proc exchange(
       discard tryRemoveFile(path & ".writing")  # Sibling left by run that ended before rename.
       writePrivate(path & ".writing", recording.toText)
       moveFile(path & ".writing", path)
-      note = "Reply written to `" & path & "`."
+      note = "Reply written to `" & shown & "`."
     except CatchableError as error:
       discard tryRemoveFile(path & ".writing")
-      note = "Reply should be written to `" & path & "`; got `" & error.toLine & "`."
+      note = "Reply should be written to `" & shown & "`; got `" & error.toLine & "`."
   Exchanged(is_replied: true, reply: sent.reply, note: note)
 
 
