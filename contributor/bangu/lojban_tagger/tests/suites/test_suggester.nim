@@ -1462,8 +1462,10 @@ suite "Internal: Suggester":
     createDir(pathRecording(directory_case, request_page))
     let
       outcome_page = binary.run(environment, ["--record:" & directory_case, url])
-      error_page = outcome_page.report.readFramed(opening & pathShown(directory_case,
-          request_page) & "`; got `", "`.\n" & expected_page.report)
+      error_page = outcome_page.report.readFramed(
+        opening & pathShown(directory_case, request_page) & "`; got `",
+        "`.\n" & expected_page.report,
+      )
     check outcome_page.output == expected_page.output and outcome_page.code == 0  # tag kept
     check error_page.isSome and error_page.get.len > 0 and
         '\n' notin error_page.get  # page hop named, service request written after it
@@ -1912,8 +1914,10 @@ suite "Internal: Suggester":
         settings.endpoint = opening & port & "/v1/messages"
         let
           named = "`" & settings.endpoint & "` for `" & KEY_ENDPOINT & "`.\n"
-          outcome = binary.run([(KEY_ENDPOINT, settings.endpoint)], ["--replay:" & missing,
-              text.argument])
+          outcome = binary.run(
+            [(KEY_ENDPOINT, settings.endpoint)],
+            ["--replay:" & missing, text.argument],
+          )
         if not is_taken:
           inc count_port
           check outcome == Outcome(report: PROBLEM_ENDPOINT_PORT & named,
