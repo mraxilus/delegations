@@ -280,9 +280,10 @@ const
     "datnyvreji", "selci'a", "Ciska", "datna", "lo", "cihska", "",
   ]
     ## Words random answers draw: gismu, cmavo, lujvo, shared stem, and refused words.
-  FILLERS_WORD = ["q", "\x01", "\x7F", "\xFF", "\u202E", "\u{1F600}"]
+  FILLERS_WORD = ["q", "\x01", "\x7F", "\xFF", "\u00E9", "\u2019", "\u202E", "\u{1F600}"]
     ## Characters word of answer repeats: letter outside lists, controls report escapes, byte
-    ##   repair replaces, bidirectional mark, and character of four bytes.
+    ##   repair replaces, letters of two and three bytes, bidirectional mark, and character of four
+    ##   bytes.
   TEXTS_MARKUP = [
     "word", "two words", " ", "\t", "\n", "\r\n", "x>y", "a;b", "#", "q\"uote'", "\u0109u",
     "\u65E5\u672C", "\u{1F600}", "\u00A0", "-->", "]]>", "end.",
@@ -1128,11 +1129,18 @@ suite "Internal: Answer":
         "`."  # reader never runs past cap
 
 
-  test "explain judges word by its bytes as answered, never by detail that escapes lengthen":
-    let found = readAnswer(toAnswer(["\x01".repeat(13)]), MODEL_SUITE)
-    check found.explain == "Answer should name gismu or cmavo of list. " &
-        found.detail.readTag.explain  # case as found in suite review: 13 bytes judged past cap
-    for filler in FILLERS_WORD:  # 6 characters, exhaustive
+  test "explain judges and explains word as answered, never by detail that escapes change":
+    let found = "\x01".repeat(13)  # case as found in suite review: 13 bytes judged past cap
+    check readAnswer(toAnswer([found]), MODEL_SUITE).explain ==
+        "Answer should name gismu or cmavo of list. " &
+        found.readTag.explain.toPrintableReference(RUNES_SHOWN)  # judged by bytes as answered
+    check readAnswer(toAnswer(["café"]), MODEL_SUITE).explain == "Answer should name " &
+        "gismu or cmavo of list. Tag should hold Lojban letters alone; got `é` in " &
+        "`café`."  # review finding logic-6, 2026-10-29: named byte `C3` alone
+    check readAnswer(toAnswer(["ci\x01ska"]), MODEL_SUITE).explain == "Answer should name " &
+        "gismu or cmavo of list. Tag should hold Lojban letters alone; got `\\u{1}` in " &
+        "`ci\\u{1}ska`."  # review finding logic-6, 2026-10-29: named `\`, never answered
+    for filler in FILLERS_WORD:  # 8 characters, exhaustive
       for count in 1 .. BYTES_ELEMENT_MAX + 1:  # each length to cap and past it, exhaustive
         let
           element = filler.repeat(count)
@@ -1141,9 +1149,15 @@ suite "Internal: Answer":
           explained =
             if element.len > BYTES_ELEMENT_MAX:
               "Word of answer should hold at most 64 bytes; got `" & detail & "`."
-            else: "Answer should name gismu or cmavo of list. " & detail.readTag.explain
+            else:
+              "Answer should name gismu or cmavo of list. " &
+                  element.readTag.explain.toPrintableReference(RUNES_SHOWN)
         check suggestion.failureRead == some((Failure.Word, detail))  # word named, printable
-        check suggestion.explain == explained  # cap judged by bytes of word as answered
+        check suggestion.explain == explained  # judged and explained as answered, cap included
+        check suggestion.explain.isPrintable  # whole characters, none report escapes
+    check readAnswer(toAnswer(["brodi", "ciska"]), MODEL_SUITE).explain == "Form should read " &
+        "back as its tag. Rafsi should name one gismu; got `brod`, which several share, in " &
+        "`brodyci'a`."  # form `$` wrote is explained as read too, unchanged
 
 
   test "count of words: none is Malformed, one to six pass, seven and eight are Long":

@@ -20,8 +20,9 @@ when compileOption("profiler"):
   import std/nimprof
 
 import std/[options, random, sequtils, strutils, unittest]
+from std/unicode import validateUtf8
 
-import ../../src/lojban_tagger/[dictionary, forms, lujvo, tags]
+import ../../src/lojban_tagger/[commands, dictionary, forms, lujvo, tags]
 import ../../src/lojban_tagger/lists/gismu
 
 
@@ -67,6 +68,13 @@ const
     for i, entry in LIST_GISMU:
       if not entry.word.isGismu: words.add Word(i)
     words
+  CHARACTERS_FOREIGN = [
+    "\u0080", "é", "ĉ", "ʼ", "߿", "ࠀ", "’", "日", "�",
+    "￿", "\u{10000}", "\u{1D44E}", "\u{1F600}", "\u{10FFFF}",
+  ]
+    ## Characters outside letters, by bytes of UTF-8 each takes, Table 3-6 of Unicode Standard:
+    ##   two (`é`, `ĉ`, modifier apostrophe, both ends of range), three (curly apostrophe,
+    ##   ideograph, U+FFFD, both ends), four (mathematical italic, emoji, both ends).
 
 
 func tanru(text: string): Tag =
@@ -271,6 +279,17 @@ suite "Internal: Reading":
     check "bri vla".refusalRead == some((Refusal.Letter, " "))  # inner space never trimmed
     check "bwa".refusalRead == some((Refusal.Letter, "w"))  # `w` outside letters; constructed
     check "datni+vreji".refusalRead == some((Refusal.Letter, "+"))  # tanru is no spelling
+
+
+  test "Character outside letters is named whole, so report of UTF-8 stays UTF-8":
+    check "café".refusalRead ==
+        some((Refusal.Letter, "é"))  # review finding logic-6, 2026-10-29: named byte `C3`
+    check "ci’a".refusalRead ==
+        some((Refusal.Letter, "’"))  # review finding logic-6, 2026-10-29: named byte `E2`
+    for character in CHARACTERS_FOREIGN:  # 14 characters of 2, 3 and 4 bytes, exhaustive
+      for text in [character & "brivla", "bri" & character & "vla", "brivla" & character]:
+        check text.refusalRead == some((Refusal.Letter, character))  # lead and continuation
+        check text.readTag.explain.validateUtf8 == -1  # report well-formed, at each position
 
 
   test "Cmavo alone, or lujvo ending in cmavo, is refused as Cmavo, naming it":
