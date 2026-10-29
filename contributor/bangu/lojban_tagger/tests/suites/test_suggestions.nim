@@ -121,6 +121,8 @@ const
     ## Authentication page, select workspace: header on each request of such key, else 400.
   WORKSPACE_SUITE = "wrkspc_01JwQvzr7rXLA5AGx3HKfFUJ"
     ## Workspace ID suite names, as `URL_AUTHENTICATION` writes its example.
+  PAGE_CHOICE = "project choice, as `URL_BETA` allows"
+    ## Page row of model no page names cites: project choice, as beta reference allows it.
   ROWS_FALLBACK = [
     (model: "claude-fable-5-1", is_fallback: true, page: URL_REFUSALS),
     (model: "claude-mythos-5-1", is_fallback: true, page: URL_REFUSALS),
@@ -132,11 +134,16 @@ const
     (model: "claude-sonnet-5", is_fallback: true, page: URL_BETA),
     (model: "claude-opus-4-8", is_fallback: true, page: URL_BETA),
     (model: "claude-opus-4-6", is_fallback: true, page: URL_BETA),
-    (model: MODEL_SUITE, is_fallback: true, page: "project choice, as `URL_BETA` allows"),
+    (model: MODEL_SUITE, is_fallback: true, page: PAGE_CHOICE),
+    (model: "", is_fallback: true, page: PAGE_CHOICE),
+    (model: "Claude-Opus-5-5", is_fallback: true, page: PAGE_CHOICE),
+    (model: "anthropic/claude-opus-5.5", is_fallback: true, page: PAGE_CHOICE),
   ]
     ## Whether body under `claude` asks fallback of each model, with page each row cites: every
     ##   model refusals page covers asks but Claude Haiku 5.5, which has no fallback; other models
     ##   ask too, as beta reference runs `"default"` on requested model alone there.
+    ##   Model of suite, empty one, capitalised one and one with provider prefix are inputs suite
+    ##     owns, so no page names them; each asks, project choice.
   TOKENS_ANSWER = 16_000  ## Most tokens of answer each body asks, thinking included.
   NAME_SCHEMA_ANSWER = "lojban_tag"  ## Name chat completion gives schema of answer.
   PATTERN_LETTERS = "^['abcdefgijklmnoprstuvxyz]+$"
@@ -1635,7 +1642,7 @@ suite "Internal: Request":
     check parseJson(found.toBody(toPassage("x"))){"fallbacks"}.getStr ==
         "default"  # review finding wire-5, 2026-10-29: model of refusals page example asked none
     for service in Service:  # 3 services, exhaustive
-      for row in ROWS_FALLBACK:  # 11 models, each with page it cites, exhaustive
+      for row in ROWS_FALLBACK:  # 14 models, each with page it cites, exhaustive
         let
           settings = Settings(service: service, endpoint: URL_SUITE, model: row.model,
               effort: some(EFFORT_DEFAULT))
@@ -1659,7 +1666,7 @@ suite "Internal: Request":
     check ("anthropic-workspace-id", WORKSPACE_SUITE) in
         found.toHeaders  # review finding wire-2, 2026-10-29: key of no workspace got 400 always
     for service in Service:  # 3 services, exhaustive
-      for row in ROWS_FALLBACK:  # 11 models, with beta and without, exhaustive
+      for row in ROWS_FALLBACK:  # 14 models, with beta and without, exhaustive
         for workspace in ["", WORKSPACE_SUITE]:  # none and one, exhaustive
           let
             settings = Settings(service: service, endpoint: URL_SUITE, model: row.model,
