@@ -307,6 +307,21 @@ const
     ##   and both; spelled from `SYMBOLS_USER`, so any byte leaking into problem shows.
   COUNT_LOGINS = 336
     ## Sends login law makes: each of `LOGINS_PROXY` with each spelling of `http` and `https`.
+  OPENINGS_VALUE = ["", "http://", "HTTP://", "socks5h://"]
+    ## Openings of proxy value port law reads: none, which `proxy` reads as `http://`, scheme in
+    ##   two cases, and other scheme.
+  USERS_VALUE = ["", "alice@", "alice:secret@", ":secret@", "a:b:c@"]
+    ## User parts of proxy value: none, user, both, password alone, and password holding colon.
+  HOSTS_VALUE = ["proxy.example", "203.0.113.7", "[2001:db8::7]"]
+    ## Hosts of proxy value: name, IPv4 address, and IPv6 address, whose colons are no port.
+  PORTS_VALUE = ["", ":", ":3128", ":1080", ":65535"]
+    ## Ports of proxy value: none, empty, and three named, 1080 among them.
+  CLOSINGS_VALUE = ["", "/"]  ## Closings of proxy value: none, and path.
+  COUNT_VALUES = 600
+    ## Proxy values port law reads: each of `OPENINGS_VALUE`, `USERS_VALUE`, `HOSTS_VALUE`,
+    ##   `PORTS_VALUE` and `CLOSINGS_VALUE` with each other.
+  PORT_CURL = "1080"
+    ## Port curl assumes where proxy string specifies none (curl manual, option `--proxy`).
 
 
 func lineFirst(piece: Piece): int =
@@ -1165,6 +1180,33 @@ suite "Internal: Exchange":
       (https, newSeq[(string, string)](), none(string)),  # environment names no proxy
     ]:
       check url.proxy(environment) == expected  # variable as curl picks it, bypass, then scheme
+
+
+  test "proxy value naming no port takes 1080, as curl assumes, whatever else value holds":
+    # Regression, found in recheck of transport, 2026-10-29: header says proxy follows curl, which
+    #   assumes port 1080 where value names none, yet client dialed 80 for such value.
+    let found = "https://api.example.org/v1".proxy(@[("https_proxy", "proxy.example")])
+    check found == some("http://proxy.example:1080")  # case as found: was `http://proxy.example`
+    check found.isSome and found.get.parseUri.port == PORT_CURL  # case as found: client read ``
+    var count = 0
+    for opening in OPENINGS_VALUE:
+      for user_part in USERS_VALUE:
+        for host in HOSTS_VALUE:
+          for port in PORTS_VALUE:
+            for closing in CLOSINGS_VALUE:
+              let
+                value = opening & user_part & host & port & closing
+                port_dialed = if port.len <= 1: PORT_CURL else: port[1 .. ^1]
+                scheme = if opening.len > 0: opening else: "http://"
+                expected = scheme & user_part & host & ":" & port_dialed & closing
+                chosen = "https://api.example.org/v1".proxy(@[("https_proxy", value)])
+                named = value & ": "
+              inc count
+              check named & $chosen == named & $some(expected)  # domain: curl manual, `--proxy`
+              if chosen.isSome:
+                check named & chosen.get.parseUri.port ==
+                    named & port_dialed  # domain: port client dials, as it reads value
+    check count == COUNT_VALUES  # each opening, user part, host, port and closing with each other
 
 
   test "bypass list names host by `*`, host itself or domain it ends in, case folded":
