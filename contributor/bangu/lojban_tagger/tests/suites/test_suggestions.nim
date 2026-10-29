@@ -83,6 +83,8 @@ const
     ##   240 read at seed `0`.
   TEXT_GIVEN_LONG = "lotconrotybanbalbapybembedbejbesybefybevbixybimbolbogbotmlatu"
     ## Text reading as tag of 18 words in 61 bytes, which shortcut rendered without bound.
+    ##   Sibling of `TEXT_GIVEN_LONG` in `test_suggester.nim` (II.9): each suite runs alone, and
+    ##     import of one by other would run its tests too, so copy is forced.
   SAMPLES_MARKUP = 300  ## Random markup trees reader is held to, seeded.
   DEPTH_MARKUP_MAX = 8  ## Most levels of elements random tree nests.
   FLOOR_DEEP = 80  ## Fewest random trees nesting `DEPTH_MARKUP_MAX` levels; 98 read at seed `0`.
