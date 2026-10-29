@@ -444,12 +444,14 @@ func dropMark(text: string): string =
   if text.startsWith("\xEF\xBB\xBF"): text[3 .. ^1] else: text
 
 
-func dropSecrets(url: string): string =
+func dropSecrets*(url: string): string =
   ## Keep scheme, host, port and path of URL alone: user part, query and fragment dropped, since
   ##   signed or capability URL holds its secret there.
   ##   Parts are those regular expression of RFC 3986 appendix `B` splits. Sibling of `toReference`
   ##     of `app/exchanges.nim`, which imports this pure module, so this one cannot import it.
   ##   User part ends at last `@` of authority, as URL Standard of WHATWG reads it, so none stays.
+  ##   Exported for `app/suggester.nim`, which trims URL that redirect detail names by it, as
+  ##     passage URL is trimmed.
   let
     stop = url.find({'?', '#'})
     kept = if stop < 0: url else: url[0..<stop]
