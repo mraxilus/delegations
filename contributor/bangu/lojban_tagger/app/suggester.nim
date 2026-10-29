@@ -11,11 +11,15 @@
 ##   | --record:<directory>      | replay page of 2xx or 3xx, and service reply reading   |
 ##   |                           | as tag or paid failure; send rest; write each reply    |
 ##   | --replay:<directory>      | read every exchange from recordings; send nothing      |
+##   | --                        | end flags, so passage may open with `-`                |
 ##   |---------------------------|--------------------------------------------------------|
 ##   Exit: 0 tag printed, 1 no tag and failure named, 2 usage or settings error, nothing sent.
 ##
 ##   Standard output gets tag alone, so `tagger tag <name> "$(suggester ...)"` composes both
 ##     tools; report goes to standard error.
+##   Leading argument opening with `-` is flag; flag usage does not take exits 2 before any
+##     setting, credential or socket, so mistyped flag never goes out as passage of paid request.
+##     Cost: text opening with `-` needs `--` before it.
 ##   Text given that reads as tag already asks no service, so it needs no credential.
 ##   Service, endpoint, model, effort and credential come from environment on each run, as
 ##     index path does for `tagger`: credential exists only at run time, and rest must agree
@@ -87,10 +91,10 @@ type
 
 
 const
-  USAGE = "Usage: suggester [--record:<directory>|--replay:<directory>] <text>...|<url>\n"
+  USAGE = "Usage: suggester [--record:<directory>|--replay:<directory>] [--] <text>...|<url>\n"
     ## Text printed on usage error.
-  FLAG_RECORD = "--record:"  ## Prefix of first argument naming directory record mode writes.
-  FLAG_REPLAY = "--replay:"  ## Prefix of first argument naming directory replay mode reads.
+  FLAG_RECORD = "--record:"  ## Prefix of flag naming directory record mode writes.
+  FLAG_REPLAY = "--replay:"  ## Prefix of flag naming directory replay mode reads.
   KEY_SERVICE = "LOJBAN_TAGGER_SERVICE"  ## Environment name of service.
   KEY_ENDPOINT = "LOJBAN_TAGGER_ENDPOINT"  ## Environment name overriding endpoint.
   KEY_MODEL = "LOJBAN_TAGGER_MODEL"  ## Environment name overriding model.
@@ -112,18 +116,31 @@ const
 
 func readCommand(arguments: openArray[string]): Option[Command] =
   ## Read mode and passage from arguments; `none` where usage is wrong.
+  ##   Leading arguments opening with `-` are flags: one `--record:<directory>` or
+  ##     `--replay:<directory>`, directory nonempty, then `--`, which ends flags; any other flag
+  ##     is usage error, so mistyped flag never goes out as passage of paid request.
+  ##   Without `--`, passage holds no flag of mode, and opens with `-` only where `-` is all of
+  ##     it, so flag is never read as text.
   var
-    rest = @arguments
     command = Command(mode: Mode.Live)
-  if rest.len > 0:
-    for (flag, mode) in [(FLAG_RECORD, Mode.Record), (FLAG_REPLAY, Mode.Replay)]:
-      if rest[0].startsWith(flag):
-        command.mode = mode
-        command.directory = rest[0][flag.len .. ^1]
-        rest.delete(0)
-        break
-  if command.mode != Mode.Live and command.directory.len == 0: return none(Command)
-  if rest.len == 0 or rest.anyIt(it.startsWith(FLAG_RECORD) or it.startsWith(FLAG_REPLAY)):
+    at = 0
+    is_ended = false  # `--` read, so rest is passage, whatever it holds.
+  while at < arguments.len and arguments[at].startsWith('-') and arguments[at] != "-":
+    let flag = arguments[at]
+    inc at
+    if flag == "--":
+      is_ended = true
+      break
+    var is_taken = false
+    for (prefix, mode) in [(FLAG_RECORD, Mode.Record), (FLAG_REPLAY, Mode.Replay)]:
+      if command.mode == Mode.Live and flag.startsWith(prefix) and flag.len > prefix.len:
+        (command.mode, command.directory) = (mode, flag[prefix.len .. ^1])
+        is_taken = true
+    if not is_taken: return none(Command)
+  let rest = @arguments[at .. ^1]
+  if rest.len == 0: return none(Command)
+  if not is_ended and ((rest[0] == "-" and rest.len > 1) or
+      rest.anyIt(it.startsWith(FLAG_RECORD) or it.startsWith(FLAG_REPLAY))):
     return none(Command)
   command.argument = rest.join(" ")
   if command.argument.strip.len == 0: return none(Command)
