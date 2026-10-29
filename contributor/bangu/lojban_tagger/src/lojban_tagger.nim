@@ -14,6 +14,7 @@
 ##   | index        | tagged entities, and file holding them               |             |
 ##   | search       | terms read as Lojban or English, and entities found  |             |
 ##   | commands     | verbs of `tagger`, as pure functions                 |             |
+##   | suggestions  | tag model suggests for passage, checked by lists     |             |
 ##   |--------------|------------------------------------------------------|-------------|
 ##
 ##   Order of compile-time type bootstrapping:
@@ -22,6 +23,7 @@
 ##     Word -> Tag
 ##     [LIST_GISMU, LIST_LUJVO, Tag] -> MEANINGS
 ##     Tag -> [Entity, Term]
+##     [LIST_GISMU, COUNT_WORDS_MAX] -> PROMPT_SYSTEM
 ##   Lists are data that `nim r tools/build.nim lists` renders; `Word` is range over entries of
 ##     gismu list, so its bound follows list with no number written twice (Article II.5).
 
@@ -31,7 +33,9 @@ when compileOption("profiler"):
   import std/nimprof
 
 import ./lojban_tagger/[
-  clusters, commands, dictionary, english, entries, forms, index, lujvo, search, tags,
+  clusters, commands, dictionary, english, entries, forms, index, lujvo, search, suggestions,
+  tags,
 ]
 
-export clusters, commands, dictionary, english, entries, forms, index, lujvo, search, tags
+export clusters, commands, dictionary, english, entries, forms, index, lujvo, search,
+  suggestions, tags
