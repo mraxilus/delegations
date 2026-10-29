@@ -27,8 +27,11 @@
 ##   Labels of recordings suite writes hold control bytes, bidirectional marks, ill-formed UTF-8
 ##     and more than `RUNES_SHOWN` characters: replay note names label made printable and cut,
 ##     as report names other outside text.
-##   Corpus holds no directory of recordings binary cannot make or write: binary raises there,
-##     after service answered; should it name failure, and keep reply it paid for?
+##   Record makes its directory before it sends, refusing where it cannot, so nothing is paid
+##     for; recording it cannot write after reply is named in note, and reply is read still.
+##     Error text is system's, so checks read its frame: path named, then one line of error.
+##     Cost: write refused by permission stays undriven, since suite may run as root, whom no
+##     permission refuses; file or directory in way of recording stands in for it.
 ##   Cost: no root signs loopback server, so TLS past tunnel request and name lookup stay
 ##     undriven, and tunnel test needs trusted roots of host, as every https request does;
 ##     deadline reads real clock, so its placeholder skips (Article IX.9).
@@ -432,6 +435,14 @@ func isDate(text: string): bool =
   ## Test text is date as `yyyy-MM-dd` writes it: four digits, two, then two, joined by `-`.
   text.len == 10 and text[4] == '-' and text[7] == '-' and
       (text[0..3] & text[5..6] & text[8..9]).allIt(it in Digits)
+
+
+func readFramed(text, opening, closing: string): Option[string] =
+  ## Read what text holds between opening and closing; `none` where text holds other frame.
+  if text.len < opening.len + closing.len or not text.startsWith(opening) or
+      not text.endsWith(closing):
+    return none(string)
+  some(text[opening.len..<text.len-closing.len])
 
 
 
@@ -891,7 +902,98 @@ suite "Internal: Suggester":
         let detail = outcome.report[opening.len ..< ^3]
         check detail.len > 0 and '\n' notin detail  # first line of error alone
         check CREDENTIAL_SUITE notin detail  # credential never in error
-    check not dirExists(directory_case)  # failed transport writes nothing
+    check dirExists(directory_case)  # record makes directory before it sends
+    check walkDir(directory_case).toSeq.len == 0  # failed transport writes nothing
+
+
+  test "record refuses directory it cannot make before it sends, naming recording":
+    # Regression, found in suite review: record made directory only after reply, then raised.
+    let
+      server = startServer()
+      settings = Service.Claude.toSettings(server.port)
+      environment = settings.toEnvironment
+      text = example("lojban")
+      url = urlLoopback(server.port, "/page")
+      file = directory / "unmade" / "file"
+      opening = noteCredential(KEY_CREDENTIAL) & "\nRecording should hold this request; got `"
+      path_found = pathRecording(file, "POST " & settings.toBody("mi ciska".toPassage))
+    server.routes = @[
+      (PATH_SERVICE, toReplyMessages(text.answer, settings.model)),
+      ("/page", Reply(status: 200, content_type: "text/plain", body: example("alice").argument)),
+    ]
+    createDir(file.parentDir)
+    writeFile(file, "")  # `touch F`
+    let
+      found = binary.run(environment, ["--record:" & file, "mi ciska"])  # `--record:F 'mi ciska'`
+      error_found = found.report.readFramed(opening & path_found & " unwritable: ", "`.\n")
+    check found.code == 1 and found.output == "" and error_found.isSome  # as found in review
+    check server.heard.len == 0  # nothing sent, so nothing paid for
+    for directory_record in [file, file / "below"]:  # file, then directory below file
+      for (argument, request) in [
+        (text.argument, "POST " & settings.toBody(text.argument.toPassage)),
+        (url, "GET " & url),  # page, refused before its first hop
+      ]:
+        let
+          outcome = binary.run(environment, ["--record:" & directory_record, argument])
+          error = outcome.report.readFramed(opening & pathRecording(directory_record, request) &
+              " unwritable: ", "`.\n")
+        check outcome.code == 1 and outcome.output == ""  # no tag
+        check error.isSome and error.get.len > 0 and '\n' notin error.get  # path, then error
+    check server.heard.len == 0  # nothing sent for any directory, text or page
+    check readFile(file) == ""  # file in way left as it was
+    stopServer(server)
+
+
+  test "record keeps reply whose recording it cannot write, naming path and error in note":
+    # Regression, found in suite review: record raised where it could not write recording, after
+    #   service answered, so tag paid for was lost.
+    let
+      server = startServer()
+      settings = Service.Claude.toSettings(server.port)
+      environment = settings.toEnvironment
+      text = example("lojban")
+      passage = text.argument.toPassage
+      answer = toReplyMessages(text.answer, settings.model)
+      directory_case = directory / "unwritten"
+      path = pathRecording(directory_case, "POST " & settings.toBody(passage))
+      opening = noteCredential(KEY_CREDENTIAL) & "\nReply should be written to `"
+    for (blocked, reply) in [
+      (path, answer),  # directory at `<stamp>.recording`, so rename fails: as found in suite review
+      (path, toReplyError(Service.Claude, 529)),  # reply giving no tag
+      (path & ".writing", answer),  # directory at sibling, so write fails before rename
+      (path & ".writing", toReplyError(Service.Claude, 529)),
+    ]:
+      server.routes = @[(PATH_SERVICE, reply)]
+      removeDir(directory_case)
+      createDir(blocked)
+      let
+        count_before = server.heard.len
+        expected = toOutcome(Service.Claude.readReply(reply), passage, settings.model, [])
+        outcome = binary.run(environment, ["--record:" & directory_case, text.argument])
+        error = outcome.report.readFramed(opening & path & "`; got `", "`.\n" & expected.report)
+      check outcome.output == expected.output and outcome.code == expected.code  # tag kept
+      check error.isSome and error.get.len > 0 and '\n' notin error.get  # path, then error
+      check server.heard.len == count_before + 1  # sent once, and read
+      check walkDir(directory_case).toSeq.mapIt(it.path) == @[blocked]  # nothing left beside
+    let
+      url = urlLoopback(server.port, "/page")
+      page = Reply(status: 200, content_type: "text/plain", body: example("alice").argument)
+      passage_page = url.readPage(page).passage
+      path_page = pathRecording(directory_case, "GET " & url)
+      path_service = pathRecording(directory_case, "POST " & settings.toBody(passage_page))
+      expected_page = toOutcome(Service.Claude.readReply(answer), passage_page, settings.model,
+          [noteWritten(path_service)])
+    server.routes = @[("/page", page), (PATH_SERVICE, answer)]
+    removeDir(directory_case)
+    createDir(path_page)
+    let
+      outcome_page = binary.run(environment, ["--record:" & directory_case, url])
+      error_page = outcome_page.report.readFramed(opening & path_page & "`; got `", "`.\n" &
+          expected_page.report)
+    check outcome_page.output == expected_page.output and outcome_page.code == 0  # tag kept
+    check error_page.isSome and error_page.get.len > 0 and
+        '\n' notin error_page.get  # page hop named, service request written after it
+    stopServer(server)
 
 
   test "page over loopback follows redirect, reads markup, and cuts page past its cap":
