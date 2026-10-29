@@ -371,6 +371,16 @@ const
   COUNT_JOINED = 576
     ## Proxy URLs joined port law sends: each split of `PORTS_JOINED` with each of `HOSTS_JOINED`
     ##   and `USERS_PROXY`.
+  PROBLEM_PROXY_SPILLED = "Proxy should percent-encode `/`, `?` and `#` in user part; got ``."
+    ## Problem `send` gives for proxy URL holding `@` past its authority, which user part ran past.
+  BYTES_SPILLING = ['/', '?', '#']  ## Bytes ending authority, which user part holds unencoded.
+  PASSWORDS_SPILLED = ["!$", "12", "1:2", "", "+@~:12"]
+    ## Bytes of password before byte of `BYTES_SPILLING`, each reaching check whose problem echoed
+    ##   it: port `std/uri` refuses; port taken, so client dialed user as host; port split refuses;
+    ##   none, taken too; and `@`, so user part refusal named rest as host.
+  COUNT_SPILLED = 540
+    ## Proxy URLs spill law sends: each of `OPENINGS_PROXY`, `PASSWORDS_SPILLED`, `BYTES_SPILLING`,
+    ##   users of `USERS_PROXY` and `HOSTS_PROXY` with each other.
   LOGINS_PROXY = [
     ("", "", ""), ("@", "", ""), (":@", "", ""), (":+=~@", "", "+=~"), ("!$&*@", "!$&*", ""),
     ("!$&*:@", "!$&*", ""), ("!$&*:+=~@", "!$&*", "+=~"),
@@ -706,6 +716,26 @@ func casesProxy(): seq[tuple[url, problem: string]] =
           else: problemProxyUser(host)
         for (user, password) in USERS_PROXY:
           result.add (opening & user & ":" & password & "@" & host & ":" & port, problem)
+
+
+func casesSpilled(): seq[tuple[url, problem: string]] =
+  ## Build proxy URL of each opening, user, password and host with each other, password closing
+  ##   in byte of `BYTES_SPILLING` then `~`, so `@` and host stand past authority; beside problem
+  ##   `sendProxied` should give: first part failing of host and scheme, else spill.
+  var passwords: seq[string]
+  for before in PASSWORDS_SPILLED:
+    for spilling in BYTES_SPILLING: passwords.add before & spilling & "~"
+  for opening in OPENINGS_PROXY:
+    let
+      scheme = if "://" in opening: opening[0..<opening.find("://")] else: ""
+      problem =
+        if opening.len == 0: PROBLEM_PROXY_HOST
+        elif scheme.toLowerAscii != "http": problemProxy(scheme)
+        else: PROBLEM_PROXY_SPILLED
+    for (user, _) in USERS_PROXY:
+      for password in passwords:
+        for host in HOSTS_PROXY:
+          result.add (opening & user & ":" & password & "@" & host & ":3128", problem)
 
 
 func casesJoined(): seq[tuple[url, problem: string]] =
@@ -2083,6 +2113,35 @@ suite "Internal: Send":
         check named & sent.outcome == named & problem  # domain: host, scheme, port, user part
         check named & $sent.outcome.anyIt(it in SYMBOLS_USER) ==
             named & "false"  # domain: no byte of user part, as curl reads `user:password@host`
+
+
+  test "proxy whose user part runs past `/`, `?` or `#` is refused, echoing no byte of it":
+    # Regression, found in recheck claim regressions-lib-2, 2026-10-29: authority ends at first
+    #   `/`, `?` or `#`, so bytes of password stood where host and port stand, and problems
+    #   echoed them: `http://alice:hunter2#x@proxy.example:3128` gave port problem `hunter2`.
+    when not defined(ssl): skip()  # Article IX.9: proxy taken meets pin, which needs `-d:ssl`
+    else:
+      let asked = "https://api.example.test/v1/messages".proxy(
+          @[("HTTPS_PROXY", "alice:s3cr3t?x@proxy.example:3128")])
+      check sendProxied("http://alice:hunter2#x@proxy.example:3128").outcome ==
+          PROBLEM_PROXY_SPILLED  # case as found: got `hunter2`
+      check asked.isSome and sendProxied(asked.get).outcome ==
+          PROBLEM_PROXY_SPILLED  # case as found: got `s3cr3t`, value as curl reads it
+      check sendProxied("http://alice:pa/ss@proxy:3128").outcome ==
+          PROBLEM_PROXY_SPILLED  # case as found: got `pa`
+      check sendProxied("http://alice:1234:5/x@proxy:3128").outcome ==
+          PROBLEM_PROXY_SPILLED  # case as found: authority problem got `alice:1234:5`
+      check sendProxied("http://alice:1234/x@proxy.example:3128").outcome ==
+          PROBLEM_PROXY_SPILLED  # case as found in recheck: taken, client dialing `alice` at 1234
+      let cases = casesSpilled()
+      check cases.len == COUNT_SPILLED  # each opening, user, password and host with each other
+      for (url, problem) in cases:
+        let
+          sent = sendProxied(url)
+          named = url & ": "
+        check named & sent.outcome == named & problem  # domain: host, scheme, then spill
+        check named & $sent.outcome.anyIt(it in SYMBOLS_USER) ==
+            named & "false"  # domain: no byte of user part, whichever byte ends authority
 
 
   test "proxy holding user or password is refused for https URL, so login never enters tunnel":
