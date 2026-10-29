@@ -46,6 +46,18 @@ type
     is_void: bool  ## Element is opened alone, holding nothing, as `br` is.
     children: seq[Node]  ## Nodes inside element.
 
+  StateComment {.pure.} = enum  ## Define state of HTML tokenizer inside comment (13.2.5.43 on).
+    Start  ## Comment start state, 13.2.5.43.
+    StartDash  ## Comment start dash state, 13.2.5.44.
+    Text  ## Comment state, 13.2.5.45.
+    LessThan  ## Comment less-than sign state, 13.2.5.46.
+    LessThanBang  ## Comment less-than sign bang state, 13.2.5.47.
+    LessThanBangDash  ## Comment less-than sign bang dash state, 13.2.5.48.
+    LessThanBangDashDash  ## Comment less-than sign bang dash dash state, 13.2.5.49.
+    EndDash  ## Comment end dash state, 13.2.5.50.
+    End  ## Comment end state, 13.2.5.51.
+    EndBang  ## Comment end bang state, 13.2.5.52.
+
 
 const
   SAMPLES_TANRU = 500  ## Random tanru 4.12 law reads, seeded.
@@ -283,6 +295,12 @@ const
   ]
     ## Attributes random elements draw: quoted values holding `>`, `<` and other quote; quote in
     ##   unquoted value or in name, which opens nothing; spaces around `=`.
+  CHARACTERS_COMMENT = {'!', '-', '<', '>', 'x'}
+    ## Characters comment texts of exhaustive law write: each one comment states read apart, and
+    ##   `x` for any other.
+  LENGTH_COMMENT_MAX = 6
+    ## Most characters of comment text exhaustive law writes; `<!--!>`, longest path to `>`
+    ##   through states, fits.
   COMMENTS = [
     "<!-- note -->", "<!---->", "<!-- <p>x</p> &amp; -->", "<!DOCTYPE html>",
     "<?xml version=\"1.0\"?>",
@@ -742,6 +760,70 @@ iterator markupsRaw(name, raw: string): string =
         let wrapped =
           if around.len == 0: element else: "<" & around & ">" & element & "</" & around & ">"
         yield "<p>a</p>" & wrapped & "<p>b</p>"
+
+
+func measureComment(text: string): Option[int] =
+  ## Measure comment `<!--` opened, running text after it through comment states of HTML
+  ##   tokenizer, 13.2.5.43 to 13.2.5.52, each reconsuming where it says: bytes up to `>` that
+  ##   emits comment, that `>` included; `none` where text ends first, as end of file emits it.
+  var
+    state = StateComment.Start
+    at = 0
+  while at < text.len:
+    let character = text[at]
+    case state
+    of StateComment.Start:
+      if character == '>': return some(at + 1)
+      if character != '-':
+        state = StateComment.Text
+        continue
+      state = StateComment.StartDash
+    of StateComment.StartDash:
+      if character == '>': return some(at + 1)
+      if character != '-':
+        state = StateComment.Text
+        continue
+      state = StateComment.End
+    of StateComment.Text:
+      if character == '<': state = StateComment.LessThan
+      elif character == '-': state = StateComment.EndDash
+    of StateComment.LessThan:
+      if character == '!': state = StateComment.LessThanBang
+      elif character != '<':
+        state = StateComment.Text
+        continue
+    of StateComment.LessThanBang:
+      if character != '-':
+        state = StateComment.Text
+        continue
+      state = StateComment.LessThanBangDash
+    of StateComment.LessThanBangDash:
+      if character != '-':
+        state = StateComment.EndDash
+        continue
+      state = StateComment.LessThanBangDashDash
+    of StateComment.LessThanBangDashDash:
+      state = StateComment.End
+      continue
+    of StateComment.EndDash:
+      if character != '-':
+        state = StateComment.Text
+        continue
+      state = StateComment.End
+    of StateComment.End:
+      if character == '>': return some(at + 1)
+      if character == '!': state = StateComment.EndBang
+      elif character != '-':
+        state = StateComment.Text
+        continue
+    of StateComment.EndBang:
+      if character == '>': return some(at + 1)
+      if character != '-':
+        state = StateComment.Text
+        continue
+      state = StateComment.EndDash
+    inc at
+  none(int)
 
 
 
@@ -1457,6 +1539,32 @@ suite "Internal: Page":
     check readMarkup("<p>a</p><span =\"x>\">y</span>") ==
         "a\n\">y"  # `=` opening name is no assignment, so quote after it opens nothing
     check readMarkup("<p>a</p><span title='x>y") == "a"  # quoted value never closed runs to end
+
+
+  test "comment ends where HTML tokenizer ends it: `-->`, also `<!-->`, `<!--->` and `--!>`":
+    for markup in ["<p>before</p><!--><p>after comment</p>",
+        "<p>before</p><!---><p>after comment</p>", "<p>before</p><!-- x --!><p>after comment</p>"]:
+      check readMarkup(markup) ==
+          "before\nafter comment"  # review finding logic-13, 2026-10-29: read `before` alone
+    check readMarkup("<p>before</p><!--[if !IE]><!--><p>after comment</p><!--<![endif]-->") ==
+        "before\nafter comment"  # control of review finding logic-13: conditional comments
+    var
+      texts = @[""]
+      level = @[""]
+    for _ in 1..LENGTH_COMMENT_MAX:
+      var longer: seq[string]
+      for text in level:
+        for character in CHARACTERS_COMMENT: longer.add text & character
+      texts.add longer
+      level = longer
+    var wrong: seq[string]
+    for text in texts:  # every text of 0 to `LENGTH_COMMENT_MAX` characters, exhaustive
+      let
+        rest = text & "<p>b</p>"
+        length = rest.measureComment
+        expected = if length.isNone: "a" else: readMarkup("<p>a</p>" & rest[length.get .. ^1])
+      if readMarkup("<p>a</p><!--" & rest) != expected: wrong.add text
+    check wrong == newSeq[string]()  # 13.2.5.43 to 13.2.5.52: comment reads as nothing, to end
 
 
   test "100,000 nested elements read in one pass":
