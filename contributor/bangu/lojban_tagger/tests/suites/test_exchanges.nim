@@ -707,6 +707,19 @@ proc readHeads(listener: AsyncSocket): Future[seq[Head]] {.async.} =
       return heads
 
 
+proc closeEach(listener: AsyncSocket): Future[int] {.async.} =
+  ## Accept each connection and close it at once, reading nothing, until listener closes; give
+  ##   count accepted, so any connection shows, and no client waits on answer that never comes.
+  var count = 0
+  while true:
+    try:
+      let client = await listener.accept()
+      client.close()
+      inc count
+    except CatchableError:
+      return count
+
+
 proc relay(source, sink: AsyncSocket) {.async.} =
   ## Copy bytes from source to sink until source ends, or either side fails as tunnel closes it.
   while true:
@@ -1776,8 +1789,13 @@ suite "Internal: Send":
   test "proxy whose scheme is other than `http`, in any case, is refused before client exists":
     # Regression, found in review: http URL through `https://` proxy made client open TLS to
     #   proxy on nil context, so program ended with `SIGSEGV`.
+    #   Refused scheme meets listener closing each connection unread, so scheme let through ends
+    #     red, never waiting on answer no server of http gives to SOCKS greeting.
     let
       server = startServer()
+      closing = listenRaw()
+      counting = closing.closeEach
+      port_closing = int(closing.getLocalAddr[1])
       found = sendLoopback(
         "http://example.org/page",
         "",
@@ -1789,18 +1807,21 @@ suite "Internal: Send":
     check spellingsCase("https").len == COUNT_SPELLINGS_HTTPS  # every spelling of `https`
     for scheme in spellingsCase("http") & spellingsCase("https") & @["socks5", "socks5h"]:
       let
-        proxy_url = some(scheme & "://127.0.0.1:" & $server.port)
+        proxy_taken = some(scheme & "://127.0.0.1:" & $server.port)
+        proxy_refused = some(scheme & "://127.0.0.1:" & $port_closing)
         named = scheme & ": "
       if scheme.toLowerAscii == "http":
-        let sent = sendLoopback("http://example.org/page", "", proxy_url = proxy_url)
+        let sent = sendLoopback("http://example.org/page", "", proxy_url = proxy_taken)
         check named & sent.outcome == named & "replied"  # domain: RFC 3986 3.1, scheme in any case
         continue
       for url in ["http://example.org/page", "https://example.org/page"]:
         let
-          sent = sendLoopback(url, "{}", credential = CREDENTIAL_GIVEN, proxy_url = proxy_url)
+          sent = sendLoopback(url, "{}", credential = CREDENTIAL_GIVEN, proxy_url = proxy_refused)
           named_url = named & url & ": "
         check named_url & sent.outcome ==
             named_url & problemProxy(scheme)  # domain: no proxy but `http`, scheme named
+    closing.close()  # every connection came before last send ended, so count ends with it
+    check (waitFor counting) == 0  # domain: refused scheme opened no connection
     check server.targets ==
         newSeqWith(COUNT_SPELLINGS_HTTP, "http://example.org/page")  # domain: refused sent nothing
     check server.count_connections == COUNT_SPELLINGS_HTTP  # domain: no connection but accepted
