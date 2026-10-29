@@ -929,8 +929,9 @@ Mono, Noto Sans Math and Noto Sans Symbols 2 each ship one file, at weight 400. 
 heads and strong text ask them for 600 and 700. Over its declared range, the browser draws the file
 as it is, and never a bold of its own. So bold code and bold maths draw their regular glyphs, at
 the width that they had. `pga_visualiser` declares the same files over a range in the same way.
-Rejected: a bold file of Commit Mono, since the pages ship the six font faces of `pga_visualiser`,
-and maths and symbols have no bold file at all.
+
+- Rejected: a bold file of Commit Mono. The pages ship the six font faces of `pga_visualiser`, and
+  maths and symbols have no bold file at all.
 
 The collector keeps the characters beyond ASCII alone, so `koch drive` cannot see a bold that the
 browser synthesises over ASCII, as in bold code. So `test_rga4d.nim` holds each family of the shell
