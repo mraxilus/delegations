@@ -1245,6 +1245,33 @@ suite "Internal: Suggester":
         path & ":")  # file at its cap is read, and reader refuses what follows body
 
 
+  test "recording that stands but cannot be read exits 1 with `Recording`, never traceback":
+    # Link at path of recording to `/proc/self/mem`: `fileExists` and size take it, and read at
+    #   offset 0 fails with `EIO` even for root, whom no permission refuses, as suite may run.
+    let
+      server = startServer()
+      settings = Service.Claude.toSettings(server.port)
+      text = example("lojban")
+      directory_case = directory / "unreadable"
+      path = pathRecording(directory_case, "POST " & settings.toBody(text.argument.toPassage))
+      opening = "Recording should hold this request; got `" & path & " unreadable: "
+    server.routes = @[(PATH_SERVICE, toReplyMessages(text.answer, settings.model))]
+    createDir(directory_case)
+    createSymlink("/proc/self/mem", path)
+    for (flags, notes) in [
+      (@["--replay:" & directory_case], ""),
+      (@["--record:" & directory_case], noteCredential(KEY_CREDENTIAL) & "\n"),
+    ]:
+      let
+        outcome = binary.run(settings.toEnvironment, flags & @[text.argument])
+        error = outcome.report.readFramed(notes & opening, "`.\n")
+      check outcome.code == 1 and outcome.output == ""  # no tag
+      check error.isSome and error.get.len > 0 and
+          '\n' notin error.get  # review finding logic-5, 2026-10-29: first line of error alone
+    check server.heard.len == 0  # recording standing is refused, never sent around
+    stopServer(server)
+
+
   test "page over loopback follows redirect, reads markup, and cuts page past its cap":
     let
       page = example("page")
