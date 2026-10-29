@@ -133,8 +133,13 @@ const
   LUT_MODEL_BY_SERVICE*: array[Service, string] =
     ["claude-opus-5-5", "anthropic/claude-opus-5.5", ""]
     ## Model of each service; `chat` has none, so environment names it.
-  MODELS_FALLBACK = ["claude-fable-5-1", "claude-opus-5", "claude-opus-5-5", "claude-sonnet-5-5"]
-    ## Models of Claude that take `fallbacks: "default"`, so body asks for it with them alone.
+  MODELS_FALLBACK_NONE = ["claude-haiku-5-5"]
+    ## Models of Claude with no server-side fallback, so body asks fallback of every other one.
+    ##   Claude Haiku 5.5 has none, by refusals and fallback page and by migration guide:
+    ##     https://platform.claude.com/docs/en/build-with-claude/refusals-and-fallback
+    ##     https://platform.claude.com/docs/en/about-claude/models/migration-guide
+    ##   Other model asks, since `"default"` on model with none runs requested model alone:
+    ##     https://platform.claude.com/docs/en/api/beta/messages
   TOKENS_MAX = 16_000
     ## Most tokens of answer, thinking included; guidance for request without streaming.
   VERSION_ANTHROPIC = "2026-10-21"  ## Version of Messages API body is written for.
@@ -729,8 +734,9 @@ func toSchema(): JsonNode =
 
 
 func isFallback(settings: Settings): bool =
-  ## Test body asks Claude for fallback model on refusal: `claude` and model taking it.
-  settings.service == Service.Claude and settings.model in MODELS_FALLBACK
+  ## Test body asks Claude for fallback model on refusal: `claude`, model outside
+  ##   `MODELS_FALLBACK_NONE`.
+  settings.service == Service.Claude and settings.model notin MODELS_FALLBACK_NONE
 
 
 func toBody*(settings: Settings, passage: Passage): string =
