@@ -15,9 +15,9 @@
 ##     wording, never how they arise.
 ##   Samples are drawn into pools allocated once, after one seeding per test, and served by
 ##     `served`.
-##   Corpus does not cover yet: script or style text holding `<` before letter, or `<!--`;
-##     skipped element inside one of same name; quote inside unquoted attribute value; page URL
-##     holding ill-formed UTF-8; escape of U+0000; word of answer holding control character.
+##   Corpus does not cover yet: skipped element inside one of same name; quote inside unquoted
+##     attribute value; page URL holding ill-formed UTF-8; escape of U+0000; word of answer
+##     holding control character.
 
 {.experimental: "strictFuncs".}
 
@@ -228,6 +228,21 @@ const
     ## Elements random trees draw whose edges break nothing.
   NAMES_SKIPPED = ["iframe", "math", "noscript", "object", "script", "style", "svg", "template"]
     ## Elements random trees draw whose content is no text.
+  NAMES_RAW = ["iframe", "noscript", "script", "style"]
+    ## Skipped elements whose content is raw text: HTML reads no markup inside but own closing
+    ##   element.
+  ENDINGS_RAW = [">", " >", "\t>", "\n>", "\f>", "\r>", "/>", " x=\"y>z\">"]
+    ## What closing element of raw text holds after its name: each space, `/`, `>`, and attribute
+    ##   holding `>`.
+  CHARACTERS_ENDING_RAW = {'\t', '\n', '\f', '\r', ' ', '/', '>'}
+    ## Characters after name by which `</` and name close raw text, as HTML tokenizer takes them.
+  TEXTS_RAW = [
+    "if (a<b) x();", "a<b{}", "s = \"<!--\";", "<!-- x -->", "<!--", "-->", "<!DOCTYPE x", "<?x",
+    "<![CDATA[x", "'", "\"", "<p class='x>", "<p>hidden</p>", "</p>", "&amp;", "<", "</", ">",
+    "</template>", "</object>",
+  ]
+    ## Raw texts markup reader would misread: `<` before letter, comment or declaration never
+    ##   closed, quote, element, and closing element of skipped element around raw one.
   ATTRIBUTES = [
     "", " class=\"x\"", " title='a>b'", " data-x=\"<p>&amp;\"", " hidden", " id=x1",
     " title=\"it's\"",
@@ -623,6 +638,44 @@ func depth(nodes: openArray[Node]): int =
   for node in nodes:
     if node.part in {Part.Block, Part.Inline, Part.Skipped}:
       result = max(result, 1 + depth(node.children))
+
+
+func textsRaw(name: string): seq[string] =
+  ## List raw texts element `name` may hold: `TEXTS_RAW`, closing element of each other raw
+  ##   element, and own name opened, cut, lengthened, spaced or left at end, none closing it.
+  result = @TEXTS_RAW
+  for other in NAMES_RAW:
+    if other != name: result.add "</" & other & ">"
+  for text in ["<" & name & ">", "</" & name & "s>", "</" & name & "-x>", "</" & name[0..^2] & ">",
+      "</ " & name & ">", "< /" & name & ">", "</" & name]:
+    result.add text
+
+
+func isClosingRaw(text, name: string): bool =
+  ## Test text closes raw text `name`: it holds `</`, name in any case, then character of
+  ##   `CHARACTERS_ENDING_RAW`, as HTML tokenizer ends raw text.
+  for at in 0 .. text.len - name.len - 3:
+    if text[at..at+1] == "</" and text[at+2..<at+2+name.len].toLowerAscii == name and
+        text[at+2+name.len] in CHARACTERS_ENDING_RAW:
+      return true
+  false
+
+
+iterator markupsRaw(name, raw: string): string =
+  ## Yield markup holding `raw` in raw text element `name` between two paragraphs: opening and
+  ##   closing in other case, closing in each ending of `ENDINGS_RAW`, at top level and inside
+  ##   `template` and `object`, whose content HTML reads as markup.
+  let casings = [
+    (name, name.toUpperAscii), (name.toUpperAscii, name.capitalizeAscii),
+    (name.capitalizeAscii, name),
+  ]
+  for (opening, closing) in casings:
+    for ending in ENDINGS_RAW:
+      let element = "<" & opening & ">" & raw & "</" & closing & ending
+      for around in ["", "template", "object"]:
+        let wrapped =
+          if around.len == 0: element else: "<" & around & ">" & element & "</" & around & ">"
+        yield "<p>a</p>" & wrapped & "<p>b</p>"
 
 
 
@@ -1225,6 +1278,20 @@ suite "Internal: Page":
           text.collapse  # text of tree, one pass, spaces collapsed
       if nodes.depth >= DEPTH_MARKUP_MAX: inc count_deep
     check count_deep >= FLOOR_DEEP  # corpus reaches deepest nesting often
+
+
+  test "raw text of script, style, iframe and noscript ends only at its own closing element":
+    check readMarkup("<script>if (a<b) x();</script><p>Hello</p>") ==
+        "Hello"  # case as found in suite review: `<` before letter lost rest of page
+    check readMarkup("<style>a<b{}</style><p>Hello</p>") == "Hello"  # case as found, in style
+    check readMarkup("<script>s = \"<!--\";</script><p>Hello</p>") ==
+        "Hello"  # case as found in suite review: `<!--` never closed lost rest of page
+    for name in NAMES_RAW:  # 4 elements, exhaustive
+      for raw in name.textsRaw:  # each raw text, exhaustive
+        check not raw.isClosingRaw(name)  # corpus never closes raw text early
+        for markup in markupsRaw(name, raw):
+          check readMarkup(markup) == "a\nb"  # HTML tokenizer, end tag name state of raw text
+      check readMarkup("<p>a</p><" & name & ">x<b") == "a"  # raw text never closed runs to end
 
 
   test "100,000 nested elements read in one pass":
