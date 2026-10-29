@@ -1095,7 +1095,7 @@ suite "Internal: Suggester":
       passage = text.argument.toPassage
       found = Service.Claude.toSettings(server.port)
       refused = "Credential should be set in `LOJBAN_TAGGER_API_KEY` alone, since host of " &
-          "endpoint is not `api.anthropic.com`; got none.\n"
+          "endpoint is not `api.anthropic.com`; got ``.\n"
     check binary.run(found.toEnvironment.filterIt(it[0] != KEY_CREDENTIAL) &
         @[("ANTHROPIC_API_KEY", CREDENTIAL_SUITE)], [text.argument]) == Outcome(report: refused,
         code: 2)  # case as found: endpoint on loopback names `LOJBAN_TAGGER_API_KEY` alone
@@ -1134,7 +1134,7 @@ suite "Internal: Suggester":
           continue
         inc count_refused
         check outcome == Outcome(report: "Credential should be set in `LOJBAN_TAGGER_API_KEY` " &
-            "alone, since host of endpoint is not `" & host & "`; got none.\n",
+            "alone, since host of endpoint is not `" & host & "`; got ``.\n",
             code: 2)  # other host reads first name alone, and says why
     check count_usual == 6 and count_refused == 8  # both sides of law, for both services
     check server.heard.len == 0  # usual key never sent, nor any request
@@ -1706,18 +1706,18 @@ suite "Internal: Suggester":
           "Credential should be issued by service `openrouter`; got opening `sk-ant-` for " &
           "`OPENROUTER_API_KEY`."),
       (sending, @[], "Credential should be set in `LOJBAN_TAGGER_API_KEY` or " &
-          "`ANTHROPIC_API_KEY`; got none."),
+          "`ANTHROPIC_API_KEY`; got ``."),
       (sending, @[(KEY_SERVICE, "openrouter"), ("ANTHROPIC_API_KEY", "sk-ant-secret")],
           "Credential should be set in `LOJBAN_TAGGER_API_KEY` or `OPENROUTER_API_KEY`; got " &
-          "none."),  # usual name of other service unread
+          "``."),  # usual name of other service unread
       (sending, @[(KEY_ENDPOINT, endpoint)], "Credential should be set in " &
           "`LOJBAN_TAGGER_API_KEY` alone, since host of endpoint is not `api.anthropic.com`; " &
-          "got none."),  # endpoint off host of service reads first name alone
+          "got ``."),  # endpoint off host of service reads first name alone
       (sending, @[(KEY_SERVICE, "openrouter"), (KEY_ENDPOINT, endpoint), ("OPENROUTER_API_KEY",
           "sk-or-secret")], "Credential should be set in `LOJBAN_TAGGER_API_KEY` alone, since " &
-          "host of endpoint is not `openrouter.ai`; got none."),
+          "host of endpoint is not `openrouter.ai`; got ``."),
       (sending, chat & @[("ANTHROPIC_API_KEY", "sk-ant-secret"), ("OPENROUTER_API_KEY",
-          "sk-or-secret")], "Credential should be set in `LOJBAN_TAGGER_API_KEY`; got none."),
+          "sk-or-secret")], "Credential should be set in `LOJBAN_TAGGER_API_KEY`; got ``."),
     ]:
       for flags in modes:
         let outcome = binary.run(environment, flags & @[example("lojban").argument])
