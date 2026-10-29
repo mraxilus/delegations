@@ -63,7 +63,7 @@ permissions:
   contents: read
 
 env:
-  NIM_VERSION: '2.2.12'
+  NIM_VERSION: '2.4.0'
 
 jobs:
   list-projects:
