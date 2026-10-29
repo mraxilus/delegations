@@ -124,6 +124,12 @@ const
   SAMPLES_GIVEN = 200  ## Random texts given shortcut law reads, seeded.
   FLOOR_GIVEN = 100  ## Fewest random texts read as tag; 128 read at seed `0`.
   FLOOR_ASKED = 55  ## Fewest random texts sent to service; 72 read at seed `0`.
+  SAMPLES_FLAGS = 100  ## Random flags usage law reads, seeded.
+  FLOOR_FLAGS = 80
+    ## Fewest random flags refused, past guard of flags usage takes; 97 read at seed `0`.
+  PIECES_FLAG = ["-", "h", "help", "record", "replay", ":", "=", " ", "dir", "R", "\xC3\xA9", "\t"]
+    ## Pieces random flag joins after its `-`: dashes, names of help and of modes, their
+    ##   separators and wrong ones, directory, capital, multibyte and whitespace.
   WORDS_PASSAGE = [
     "Alice", "was", "tired", "mi", "ciska", "<passage>", "</passage>", "&amp;", "\"sister\"",
     "it's", "line\nbreak", "tab\there", "caf\xC3\xA9", "\xE2\x80\xA6", "\xC4\x89u", "\xFF",
@@ -553,6 +559,28 @@ proc poolGiven(): seq[string] =
   ## Draw `SAMPLES_GIVEN` random texts given into pool allocated once; caller seeds first.
   result = newSeqOfCap[string](SAMPLES_GIVEN)
   for _ in 1..SAMPLES_GIVEN: result.add textGivenRandom()
+
+
+proc flagRandom(): string =
+  ## Draw flag: `-`, then one to four pieces of `PIECES_FLAG`, so it may spell `--`, help, mode
+  ##   with `:`, `=` or space, or none of them.
+  result = "-"
+  for _ in 1..rand(1..4): result.add PIECES_FLAG.sample
+
+
+proc poolFlags(directory: string): seq[seq[string]] =
+  ## Draw `SAMPLES_FLAGS` random argument lists into pool allocated once: random flag, after
+  ##   flag of replay into directory one time in two, then text; caller seeds first.
+  result = newSeqOfCap[seq[string]](SAMPLES_FLAGS)
+  for _ in 1..SAMPLES_FLAGS:
+    let leading = if rand(1) == 0: @["--replay:" & directory] else: @[]
+    result.add leading & @[flagRandom(), "mi ciska"]
+
+
+func isFlagTaken(flag: string): bool =
+  ## Test usage takes flag: `--`, or mode naming nonempty directory; `-` alone is passage.
+  flag == "--" or ((flag.startsWith("--record:") or flag.startsWith("--replay:")) and
+      flag.len > "--record:".len)
 
 
 iterator served[T](pool: seq[T]): lent T =
@@ -1340,11 +1368,59 @@ suite "Internal: Suggester":
       @[""],  # blank passage
       @[" ", "\t"],
       @["--record:" & directory_case, "\n"],
+      @["-", "mi ciska"],  # `-` opens passage of standard input alone, so text after it is flag
+      @["--record:" & directory_case, "-", "mi"],
     ]:
       check binary.run(environment, arguments) == Outcome(report: USAGE, code: 2)  # usage alone
     check server.heard.len == 0  # nothing sent
     check not dirExists(directory_case)  # nothing written
     stopServer(server)
+
+
+  test "flag before passage other than mode, `--` or `-` exits 2 with usage, sending nothing":
+    randomize(0)
+    let
+      server = startServer()
+      directory_case = directory / "flags"  # never made, so nothing reads or writes it
+      live = Service.Claude.toSettings(server.port).toEnvironment
+      pool = poolFlags(directory_case)
+    for arguments in [
+      @["--help"],
+      @["-h"],
+      @["--replay=" & directory_case, "mi ciska lo xatra"],
+      @["--replay", directory_case, "mi ciska lo xatra"],
+    ]:
+      for environment in [live, live & @[(KEY_SERVICE, "bogus")]]:  # credential, then bad service
+        check binary.run(environment, arguments) == Outcome(report: USAGE,
+            code: 2)  # review finding logic-3, 2026-10-29: each sent paid request with credential
+    var passed = 0
+    for arguments in served(pool):
+      if arguments[^2].isFlagTaken: continue  # random flag usage takes; tests above and below
+      inc passed
+      check binary.run(live, arguments) == Outcome(report: USAGE, code: 2)  # any other flag
+    check passed >= FLOOR_FLAGS  # guard leaves enough flags refused
+    check server.heard.len == 0  # nothing sent, though credential and endpoint are set
+    check not dirExists(directory_case)  # nothing written
+    stopServer(server)
+
+
+  test "`--` ends flags, so passage after it may open with `-`":
+    let
+      directory_case = directory / "dashes"  # never made, so recording of each request misses
+      settings = Service.Claude.toSettings
+    for (arguments, text) in [
+      (@["--", "-ish"], "-ish"),
+      (@["--", "--help"], "--help"),
+      (@["--", "-", "mi"], "- mi"),
+      (@["--", "--record:" & directory_case], "--record:" & directory_case),
+      (@["--", "mi", "--replay:" & directory_case], "mi --replay:" & directory_case),
+    ]:
+      let
+        passage = text.toPassage
+        path = pathRecording(directory_case, "POST " & settings.toBody(passage))
+      check binary.run([], @["--replay:" & directory_case] & arguments) ==
+          toOutcome(toSuggestion(Failure.Recording, path & " missing"), passage, settings.model,
+          [])  # passage after `--` read as text, flag of mode among it too
 
 
   test "each failure exits 1, prints nothing, and reports what pure pipeline names":
