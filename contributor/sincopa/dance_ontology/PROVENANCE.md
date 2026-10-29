@@ -2723,8 +2723,9 @@ pins `@playwright/test`, and that version pins the revision of the browser. `dri
 alone. The run above used revision 1243, which Playwright 1.63.0 pins, with no `DANCE_CHROMIUM` set.
 
 **`types` compiles this driver, and the project code that it imports, on the compiler of koch.**
-That holds while the pin of this project is the pin of koch, 2.2.12 for both. A pin that moves first
-splits the driver.
+The pin of koch is 2.2.12, and the pin of this project is 2.4.0. So the driver, and the code that it
+imports, compile on both compilers until the pin of koch moves. Verified 2026-10-29 by `koch check`,
+which ran `types` on 2.2.12 and the tests on 2.4.0.
 
 ## Mirror twins
 
@@ -2872,7 +2873,7 @@ Verified by `test_rigid.nim`, on 2026-09-24.
 **The version of Nim is not stamped.** The verbs of `tools/build.nim` run the `nim` on the path,
 and the suite runs the one that koch pins. A stamp with the version would agree on no machine
 where the two differ. Answers from Nim 2.2.4 walked the same under 2.2.12, number for number, on
-2026-09-24.
+2026-09-24. They walk the same under 2.4.0 too, by the same law, on 2026-10-29.
 
 **The live walks run on every core at once.** They are the fourteen ways of seven sweeps and two
 drawn walks. The suite walks each way of a raw sweep raw, as its search walked it. Each worker reads
@@ -3249,21 +3250,29 @@ and for the strain of a still that no distance holds. IV.5 lets a module decide 
 
 ## Toolchain
 
-**The compiler is pinned exactly, at the version this project was verified on.**
-`requires "nim == 2.2.12"` in `dance_ontology.nimble`.
+**The compiler is pinned exactly, at 2.4.0.** `requires "nim == 2.4.0"` in `dance_ontology.nimble`.
+It is the newest release, as the Architect asked on 2026-10-29.
 
-**A float `result` gets a value before `+=`.** From Nim 2.2.8, the VM gives an unassigned float
-`result` an int register, and then reads `floatVal` from that register. The compiler then stops with
-`field 'floatVal' is not accessible for type 'TFullReg' using 'kind = rkInt'`. The crash occurs only
-at compile time, and only where the VM reaches the function. That is `polylineLength` in
+On 2.4.0, every test file passes, and 2.4.0 warns of nothing that 2.2.12 does not. The Reference
+that it builds is byte for byte what 2.2.12 builds. Only the scripts that the compiler writes for
+the Explorer and the rig viewer differ. Verified 2026-10-29.
+
+**A float `result` gets a value before `+=`.** From Nim 2.2.8 to 2.2.12, the VM gives an unassigned
+float `result` an int register, and then reads `floatVal` from that register. The compiler then
+stops with `field 'floatVal' is not accessible for type 'TFullReg' using 'kind = rkInt'`. The crash
+occurs only at compile time, and only where the VM reaches the function. That is `polylineLength` in
 `draw/route.nim`, through `const SCENES = buildScenes()` in `draw/scene.nim`. So `result = 0.0`
 comes first there, with a comment, because the line reads redundant and is not.
 
 Five lines reproduce the crash on 2.2.12 with nothing from this project, verified 2026-09-10 (issue
-106). Verified by `suites/test_route.nim`, which takes a run length in a `const`. Without that law,
-to tidy the line away shows up only as suites that fail to build. `result +=` on a float survives in
-`limb.comfort`, `plan.comfort`, `plan.cramped`, `plan.gripBroken`, `plan.violation` and
-`checks.inkLength`, none of which the VM evaluates today. That is latent, and not urgent.
+106). The same five lines run on 2.4.0 and print 3.0, verified 2026-10-29. The line stays while koch
+compiles the driver on 2.2.12, because the driver imports the module that holds `SCENES`. Without
+the line, that build stops with the crash, and the build on 2.4.0 passes, verified 2026-10-29.
+
+So the type step holds the line now. `suites/test_route.nim` takes a run length in a `const`, but it
+runs on 2.4.0, where the line is not needed. `result +=` on a float survives in `limb.comfort`,
+`plan.comfort`, `plan.cramped`, `plan.gripBroken`, `plan.violation` and `checks.inkLength`, none of
+which the VM evaluates today. That is latent, and not urgent.
 
 ## Open questions
 
