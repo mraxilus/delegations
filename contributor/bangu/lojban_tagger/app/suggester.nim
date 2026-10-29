@@ -192,7 +192,7 @@ proc readInput(): Option[string] =
   ##   where input holds more, so huge input never fills memory; `IOError` where it cannot be read.
   ##   Cost: buffer of cap is allocated, whatever input holds.
   var text = newString(BYTES_PAGE_MAX + 1)
-  text.setLen(stdin.readBuffer(text[0].addr, text.len))
+  text.setLen stdin.readBuffer(text[0].addr, text.len)
   if text.len > BYTES_PAGE_MAX: none(string) else: some(text)
 
 
@@ -228,15 +228,15 @@ func readSettings(service, endpoint, model, effort, workspace: string): Configur
       return Configured(is_valid: false, problem: "Effort should be `low`, `medium`, `high`, " &
           "`xhigh` or `max`; got `" & effort.toPrintable(RUNES_SHOWN) & "` for `" & KEY_EFFORT &
           "`.")
-  let shown = "`" & workspace.toPrintable(RUNES_SHOWN) & "` for `" & KEY_WORKSPACE & "`."
+  let shown = workspace.toPrintable(RUNES_SHOWN)
   if workspace.len > 0 and chosen != Service.Claude:
     return Configured(is_valid: false, problem: "Workspace should be named for service " &
-        "`claude` alone; got " & shown)
+        "`claude` alone; got `" & shown & "` for `" & KEY_WORKSPACE & "`.")
   if workspace.len > 0 and (not workspace.startsWith(OPENING_WORKSPACE) or
       workspace.len > BYTES_WORKSPACE_MAX or workspace.anyIt(it notin {'!'..'~'})):
     return Configured(is_valid: false, problem: "Workspace should open with `" &
         OPENING_WORKSPACE & "` and hold at most " & $BYTES_WORKSPACE_MAX & " bytes of " &
-        "visible ASCII; got " & shown)
+        "visible ASCII; got `" & shown & "` for `" & KEY_WORKSPACE & "`.")
   Configured(
     is_valid: true,
     settings: Settings(
@@ -295,7 +295,7 @@ proc createDirectoryPrivate(directory: string) =
   ##   recordings; directory standing keeps its mode. `OSError` where one cannot be made.
   if directory.len == 0 or dirExists(directory): return
   createDirectoryPrivate(directory.parentDir)
-  if mkdir(directory.cstring, 0o700) == 0: return
+  if mkdir(cstring(directory), 0o700) == 0: return
   let error = osLastError()  # Before `dirExists`, whose failed `stat` would set its own.
   if not dirExists(directory): raiseOSError(error, directory)
 
@@ -304,7 +304,7 @@ proc writePrivate(path, text: string) =
   ## Write text to file made new at path with mode `0600`, so no other user reads it; file or
   ##   link standing at path is refused, as `O_EXCL` refuses it. `OSError` or `IOError` where
   ##   write fails.
-  let handle = open(path.cstring, O_WRONLY or O_CREAT or O_EXCL, cint(0o600))
+  let handle = open(cstring(path), O_WRONLY or O_CREAT or O_EXCL, cint(0o600))
   if handle < 0: raiseOSError(osLastError(), path)
   var file: File
   if not file.open(FileHandle(handle), fmWrite):

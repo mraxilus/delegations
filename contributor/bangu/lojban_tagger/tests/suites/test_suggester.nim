@@ -480,7 +480,7 @@ func pathShown(directory, request: string): string =
   directory.toPrintable(RUNES_SHOWN) / (request.stamp & ".recording")
 
 
-func detailMalformed(recorded: Recorded, directory, request: string): string =
+func detailMalformed(recorded: Recorded; directory, request: string): string =
   ## Render detail of malformed recording: problem reader names, period dropped, then its line
   ##   and path shown.
   var problem = recorded.problem
@@ -862,7 +862,7 @@ suite "Internal: Suggester":
       check not recorded.is_read  # file malformed
       if recorded.is_read: continue
       check binary.run([], ["--replay:" & directory_case, text.argument]) ==
-          toOutcome(toSuggestionRecording(detailMalformed(recorded, directory_case, request)),
+          toOutcome(detailMalformed(recorded, directory_case, request).toSuggestionRecording,
           passage, settings.model, [])  # problem of reader, then line and path
     writeFile(path, Recording(label: LABEL_SUITE, request: "POST {}", reply: reply).toText)
     check binary.run([], ["--replay:" & directory_case, text.argument]) ==
@@ -1177,8 +1177,8 @@ suite "Internal: Suggester":
             (if is_kept: 1 else: 2)  # sent again where reply reads as `Status` alone
         let
           label = readFile(path).readRecording.recording.label
-          replayed = binary.run(settings.toEnvironment, ["--replay:" & directory_case,
-              text.argument])
+          replay = ["--replay:" & directory_case, text.argument]
+          replayed = binary.run(settings.toEnvironment, replay)
         check replayed == toOutcome(suggestion, passage, settings.model,
             [noteReplayed(path, label)])  # any reply replayed, credential unread
         check server.heard.len - count_before == (if is_kept: 1 else: 2)  # replay sends nothing
@@ -1402,7 +1402,7 @@ suite "Internal: Suggester":
       ("/page", Reply(status: 200, content_type: "text/plain", body: example("alice").argument)),
     ]
     writeRecordings(shared, [Recording(label: LABEL_SUITE, request: request, reply: reply)])
-    check chmod(shared.cstring, Mode(0o1777)) == 0  # mode of `/tmp`
+    check chmod(cstring(shared), Mode(0o1777)) == 0  # mode of `/tmp`
     for (flags, notes) in [
       (@["--record:" & shared], @[noteCredential(KEY_CREDENTIAL)]),
       (@["--replay:" & shared], @[]),
@@ -1829,8 +1829,7 @@ suite "Internal: Suggester":
         shown = pathShown(directory_case, requestService(settings, passage))
         expected =
           if text.readTagGiven.isSome: text.toOutcomeGiven
-          else: toOutcome(toSuggestionRecording("missing at " & shown), passage,
-              settings.model, [])
+          else: toOutcome(toSuggestionRecording("missing at " & shown), passage, settings.model, [])
       check outcome == expected  # text holding visible character asks shortcut, then service
     check count_blank >= FLOOR_BLANK  # blank texts are common
     check count_visible >= FLOOR_VISIBLE  # texts holding visible character are common
@@ -1852,12 +1851,13 @@ suite "Internal: Suggester":
       for service in [Service.Claude, Service.OpenRouter]:
         let directory_example = directory_case / (example.name & "_" & $service)
         writeRecordings(directory_example, example.toRecordings(service))
-        let given = binary.run([(KEY_SERVICE, $service)], ["--replay:" & directory_example,
-            example.argument])
+        let
+          replay = @["--replay:" & directory_example]
+          given = binary.run([(KEY_SERVICE, $service)], replay & @[example.argument])
         check given.code == 0  # recording of text given as argument replays
         for flags in [@["-"], @["--", "-"]]:
-          check binary.run([(KEY_SERVICE, $service)], @["--replay:" & directory_example] & flags,
-              input = example.argument) == given  # same stamp, so same recording and report
+          check binary.run([(KEY_SERVICE, $service)], replay & flags, input = example.argument) ==
+              given  # same stamp, so same recording and report
     check binary.run([(KEY_SERVICE, "bogus")], ["-"], input = TEXT_GIVEN) ==
         TEXT_GIVEN.toOutcomeGiven  # shortcut reads text of input too, reading no setting
     for text in ["https://example.org/alice", "a".repeat(BYTES_PAGE_MAX)]:  # URL, text at cap
