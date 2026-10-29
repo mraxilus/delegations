@@ -1531,6 +1531,30 @@ suite "Internal: Reply":
           check failure.isSome and failure.get[1].startsWith($status)  # status named first
 
 
+  test "error is named as error, so error inside 2xx never reads as status other than 2xx":
+    let found = readReply(Service.OpenRouter, toReply(%*{"error": {"code": 429,
+        "message": "Rate limit exceeded", "metadata": {"error_type": "rate_limit_exceeded"}}}))
+    check found.explain == "Service should answer without error; got `429 " &
+        "rate_limit_exceeded: Rate limit exceeded`."  # review finding logic-4, 2026-10-29
+    let bodies = [
+      $ %*{"type": "error", "error": {"type": "api_error", "message": "Internal error"}},
+      $ %*{"error": {"code": 502, "message": "Provider down", "metadata": {
+          "error_type": "provider_unavailable"}}},
+      toCompletion(%*{"finish_reason": "error", "message": {"content": "partial"},
+          "error": {"code": 502, "message": "Provider disconnected mid-stream"}}).body,
+    ]
+    var count_inside = 0
+    for service in Service:  # 3 services, exhaustive
+      for status in 100..599:  # 500 statuses, exhaustive
+        for body in bodies:  # error of each format, and of choice
+          let suggestion = readReply(service, Reply(status: status, body: body))
+          if suggestion.is_suggested or suggestion.failure != Failure.Status: continue
+          check suggestion.explain == "Service should answer without error; got `" &
+              suggestion.detail & "`."  # error named, status claimed never
+          if status in 200..299: inc count_inside
+    check count_inside == 600  # chat formats read each error in 2xx: 2 services, 3 bodies, 100
+
+
   test "random bodies with random statuses never raise, and any tag keeps its promise":
     randomize(0)
     let pool = poolReplies()
