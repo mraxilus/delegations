@@ -22,6 +22,9 @@
 ##   Leading argument opening with `-` is flag; flag usage does not take exits 2 before any
 ##     setting, credential or socket, so mistyped flag never goes out as passage of paid request.
 ##     Cost: text opening with `-` needs `--` before it.
+##   One argument shaped as http or https URL, one token naming host, is page, never text: port
+##     `isURL` refuses exits 2 naming URL, before any setting, so mistyped port never goes out as
+##     passage of paid request. Cost: such text goes as passage only through `-`.
 ##   Text given that reads as tag already asks no service, so it needs no credential; text given
 ##     holding no visible character (`isBlank`) exits 2, as page holding none gives no text.
 ##   `-` reads passage from standard input, so it never stands on command line, which `ps` shows
@@ -97,6 +100,14 @@ type
     is_url: bool  ## Argument is one http or https URL, so page is fetched.
     is_input: bool  ## Argument is `-` alone, so passage is read from standard input.
 
+  Commanded = object  ## Define outcome of reading arguments: command, or usage error.
+    case is_read: bool  ## Arguments read as command usage takes.
+    of true:
+      command: Command  ## Command arguments ask.
+    of false:
+      problem: string
+        ## Fault printed before usage, ending in offending value; empty where usage alone tells it.
+
   Configured = object  ## Define outcome of reading settings from environment.
     case is_valid: bool  ## Every variable read is valid.
     of true:
@@ -156,8 +167,18 @@ const
 
 #[ Arguments ]#
 
-func readCommand(arguments: openArray[string]): Option[Command] =
-  ## Read mode and passage from arguments; `none` where usage is wrong.
+func isPortRefused(text: string): bool =
+  ## Test text is shaped as http or https URL, one token naming host, whose port `isURL` refuses:
+  ##   zero, past 65535, or of other than one to five digits.
+  ##   Shape is that `isURL` of `exchanges.nim` tests, port aside, so fix to either checks other
+  ##     (II.9).
+  if text.isURL or text.anyIt(it in Whitespace): return false
+  let uri = text.parseUri
+  uri.scheme.toLowerAscii in ["http", "https"] and uri.hostname.len > 0
+
+
+func readCommand(arguments: openArray[string]): Commanded =
+  ## Read mode and passage from arguments; usage error where usage is wrong.
   ##   Leading arguments opening with `-` are flags: one `--record:<directory>` or
   ##     `--replay:<directory>`, directory nonempty, then `--`, which ends flags; any other flag
   ##     is usage error, so mistyped flag never goes out as passage of paid request.
@@ -165,6 +186,9 @@ func readCommand(arguments: openArray[string]): Option[Command] =
   ##     it, so flag is never read as text.
   ##   Passage holding no visible character (`isBlank`) is usage error, as page holding none
   ##     gives no text, so empty passage never goes out.
+  ##   One argument shaped as URL whose port `isURL` refuses (`isPortRefused`) is usage error
+  ##     naming URL by scheme, host, port and path alone (`dropSecrets`), never passage, so
+  ##     mistyped port never goes out as paid request.
   var
     command = Command(mode: Mode.Live)
     at = 0
@@ -180,17 +204,20 @@ func readCommand(arguments: openArray[string]): Option[Command] =
       if command.mode == Mode.Live and flag.startsWith(prefix) and flag.len > prefix.len:
         (command.mode, command.directory) = (mode, flag[prefix.len .. ^1])
         is_taken = true
-    if not is_taken: return none(Command)
+    if not is_taken: return Commanded(is_read: false)
   let rest = @arguments[at .. ^1]
-  if rest.len == 0: return none(Command)
+  if rest.len == 0: return Commanded(is_read: false)
   if not is_ended and ((rest[0] == "-" and rest.len > 1) or
       rest.anyIt(it.startsWith(FLAG_RECORD) or it.startsWith(FLAG_REPLAY))):
-    return none(Command)
+    return Commanded(is_read: false)
   command.argument = rest.join(" ")
-  if command.argument.isBlank: return none(Command)
+  if command.argument.isBlank: return Commanded(is_read: false)
+  if rest.len == 1 and rest[0].isPortRefused:
+    return Commanded(is_read: false, problem: "URL should name port of one to five digits " &
+        "from 1 to 65535, or none; got `" & rest[0].dropSecrets.toPrintable(RUNES_SHOWN) & "`.")
   command.is_url = rest.len == 1 and rest[0].isURL
   command.is_input = rest == @["-"]
-  some(command)
+  Commanded(is_read: true, command: command)
 
 
 proc readInput(): Option[string] =
@@ -475,10 +502,11 @@ proc main(): int =
   ## Read arguments and environment, build passage, ask service or recording, print tag and
   ##   report.
   let parsed = commandLineParams().readCommand
-  if parsed.isNone:
+  if not parsed.is_read:
+    if parsed.problem.len > 0: stderr.writeLine parsed.problem
     stderr.write USAGE
     return 2
-  var command = parsed.get
+  var command = parsed.command
 
   # Read passage of standard input, capped as page, before any setting; it goes as text given.
   if command.is_input:
