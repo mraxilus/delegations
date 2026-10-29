@@ -57,6 +57,11 @@
 ##     Host is checked first: text naming none after `//` may hold user where scheme stands, as
 ##       curl reads `alice:secret@proxy:3128`; host and port stand after last `@` of authority,
 ##       so problem echoes no user part or password.
+##     User part holding `/`, `?` or `#` unencoded ends authority there, so its bytes stand where
+##       host and port do, and client would dial user as host: proxy holding `@` past authority
+##       is refused after its scheme, echoing nothing.
+##       Cost: proxy URL holding `@` in path, query or fragment is refused, though RFC 3986 takes
+##         it and client reads none of them.
 ##     Cost: proxy reachable only by https or SOCKS is refused, naming its scheme.
 ##     Cost: `socks5h` proxy is refused though client speaks it: `newConnection` of
 ##       `std/httpclient` opens SOCKS 5 handshake to it, which names host for proxy to resolve.
@@ -664,6 +669,8 @@ proc send*(
   ##   Proxy URL naming no host after `//`, scheme other than `http` in any case, or port other
   ##     than `isPort` takes sends nothing, problem naming first such part and no user part;
   ##     client sees scheme of URL and of proxy URL lowercased.
+  ##   Proxy URL holding `@` past authority, which user part holding `/`, `?` or `#` unencoded
+  ##     leaves there, sends nothing, problem echoing none of it.
   ##   Proxy URL holding user or password sends nothing for https URL, since client repeats its
   ##     login inside tunnel; problem names host of proxy, never user part.
   ##   https URL pins its host on `context`, so certificate naming other host is refused; no
@@ -695,8 +702,12 @@ proc send*(
       return Sent(is_replied: false, problem: "Proxy should be `http://`; got `" &
           proxied.scheme & "`.")
     let
-      authority = proxy_url.get.toReference.authority.get("")
+      reference = proxy_url.get.toReference
+      authority = reference.authority.get("")
       port = authority.readPort  # Port as written; none where host refused, which check names.
+    if '@' in reference.path & reference.query.get("") & reference.fragment.get(""):
+      return Sent(is_replied: false, problem: "Proxy should percent-encode `/`, `?` and `#` " &
+          "in user part; got ``.")  # User part ran past authority, so host and port hold it.
     if proxied.port.len > 0 and not proxied.port.isPort and port.isSome:
       return Sent(is_replied: false, problem: "Proxy should name port of one to five digits " &
           "from 1 to 65535, or none; got `" & port.get[1 .. ^1] & "`.")
