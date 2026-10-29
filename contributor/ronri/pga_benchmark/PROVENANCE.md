@@ -424,7 +424,8 @@ any file. Then what gcc inlines into a wrapper depends on that wrapper alone.
 
 Each wrapper has a copy, later in the same C file, which the driver calls on the same operands
 after every wrapper. `guard` makes a finding of a wrapper whose copy reads other counts. That
-finding holds the flags: without them, one copy reads apart at rga4d and one at cga5d.
+finding holds the flags: under Nim 2.3.1 without them, one copy reads apart at rga4d and one at
+cga5d.
 
 - Rejected: a twin of the same C over other operands, such as `wedge` beside `wedge_point_point`.
   `⊛` branches on the kind of its operand, so `partner` and `partner_dipole` read apart with no
@@ -453,7 +454,7 @@ of the measurand beside it, because that count names the line of C (VII.10). A m
 composes several calls names no library function, and its message says so.
 
 **The band of each count is zero, and this is its cause (VII.12).** Valgrind 3.22 ran the four
-algebras on `linux amd64, 4 cores` on 2026-10-21, at 451 measurands:
+algebras under Nim 2.3.1 on `linux amd64, 4 cores` on 2026-10-21, at 451 measurands:
 
 - Two runs of one binary gave the same counts for each measurand.
 - A run with `GLIBC_TUNABLES=glibc.cpu.hwcaps=-AVX2,-AVX512F,-ERMS,-AVX_Fast_Unaligned_Load,-FMA`
@@ -469,25 +470,27 @@ algebras on `linux amd64, 4 cores` on 2026-10-21, at 451 measurands:
 
 **The gate pins a fault that grows a count, and the record holds its reading beside unchanged
 code** (`CONTRIBUTOR.md`, Tests are paramount). The fault is `+` of the library without `inline`.
-Its C body stays the same, so no static count moves. Only the counts of `add` grow, at each
-algebra. In each cell below, the first figure is the slowest and the typical reading of unchanged
-code, which are equal. The second figure is the reading of the fault:
+Its C body stays the same, so no static count moves. Under Nim 2.4.0 only the instructions of
+`add` grow, by 2 at each algebra, and its bytes stay. In each cell below, the first figure is the
+slowest and the typical reading of unchanged code, which are equal. The second figure is the
+reading of the fault:
 
 | Algebra | Instructions | Bytes read | Bytes written |
 | --- | --- | --- | --- |
-| rga3d | 42, fault 56 | 225, fault 241 | 200, fault 216 |
-| rga4d | 82, fault 97 | 417, fault 433 | 392, fault 408 |
-| cga4d | 82, fault 97 | 417, fault 433 | 392, fault 408 |
-| cga5d | 146, fault 159 | 801, fault 817 | 776, fault 792 |
+| rga3d | 25, fault 27 | 136, fault 136 | 64, fault 64 |
+| rga4d | 42, fault 44 | 264, fault 264 | 128, fault 128 |
+| cga4d | 42, fault 44 | 264, fault 264 | 128, fault 128 |
+| cga5d | 72, fault 74 | 520, fault 520 | 256, fault 256 |
 
-The readings of unchanged code are 20 runs of `inspect` and `guard` on `linux amd64, 4 cores`, on
-2026-10-22. In each run, each count of each measurand equalled its baseline. `guard` gave no
-finding and no notice in any run. The fault was read on a copy of the library at the pin, with
-`inline` taken from `+` in `pga/multivectors.nim`.
+The readings of unchanged code are 20 runs of `inspect` and `guard` under Nim 2.4.0 on `linux
+amd64, 4 cores`, on 2026-10-28 and 2026-10-29. In each run, each count of each measurand equalled
+its baseline. `guard` gave no finding and no notice in any run. The fault was read on a copy of the
+library at the pin, with `inline` taken from `+` in `pga/multivectors.nim`.
 
-The runner of CI read the same. Run 1340 of `check`, on 2026-10-22, gave no finding and no notice,
-under the same gcc package. Runs 1296, 1298 and 1306, on 2026-10-21, gave no finding. So the spread
-of unchanged code is zero, and the fault reads beyond it at each count of `add`.
+The runner of CI read the same under Nim 2.3.1. Run 1340 of `check`, on 2026-10-22, gave no finding
+and no notice, under the same gcc package. Runs 1296, 1298 and 1306, on 2026-10-21, gave no
+finding. So the spread of unchanged code is zero, and the fault reads beyond it at the instructions
+of `add`.
 
 A wrapper that reaches a shared object is a finding. Its band would need readings of the
 runner and of a delegate, and no record holds them.
