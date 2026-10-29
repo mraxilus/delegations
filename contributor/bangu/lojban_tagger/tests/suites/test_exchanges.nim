@@ -244,6 +244,8 @@ const
   PROBLEM_VERIFY = "certificate verify failed"  ## Text OpenSSL gives where peer fails check.
   PROBLEM_CONTEXT = "TLS context should exist for https URL; got none."
     ## Problem `send` gives for https URL with no context.
+  COUNT_SPELLINGS_HTTP = 16  ## Spellings of `http` in any case, i.e. 2^4.
+  COUNT_SPELLINGS_HTTPS = 32  ## Spellings of `https` in any case, i.e. 2^5.
 
 
 func lineFirst(piece: Piece): int =
@@ -441,6 +443,21 @@ func problemHost(host: string): string =
 func outcome(sent: Sent): string =
   ## Read outcome of `send` as text: problem it gave, or `replied`, so check names either.
   if sent.is_replied: "replied" else: sent.problem
+
+
+func problemProxy(scheme: string): string =
+  ## Build problem `send` gives for proxy URL whose scheme is other than `http`.
+  "Proxy should be `http://`; got `" & scheme & "`."
+
+
+func spellingsCase(word: string): seq[string] =
+  ## Build every spelling of word in any case, each letter lower or upper: 2^n for n letters.
+  result = @[""]
+  for character in word:
+    var grown: seq[string]
+    for spelled in result: grown.add @[spelled & character.toLowerAscii,
+        spelled & character.toUpperAscii]
+    result = grown
 
 
 func casesSecured(): seq[tuple[leaf: Leaf, host: string, should_tunnel: bool]] =
@@ -1402,6 +1419,40 @@ suite "Internal: Send":
     check target.targets.len == 0  # no request went direct
     stopServer(proxy_server)
     stopServer(target)
+
+
+  test "proxy whose scheme is other than `http`, in any case, is refused before client exists":
+    # Regression, found in review: http URL through `https://` proxy made client open TLS to
+    #   proxy on nil context, so program ended with `SIGSEGV`.
+    let
+      server = startServer()
+      found = sendLoopback(
+        "http://example.org/page",
+        "",
+        proxy_url = some("https://127.0.0.1:" & $server.port),
+      )
+    check found.outcome ==
+        problemProxy("https")  # case as found: review finding logic-2, 2026-10-29
+    check spellingsCase("http").len == COUNT_SPELLINGS_HTTP  # every spelling of `http`
+    check spellingsCase("https").len == COUNT_SPELLINGS_HTTPS  # every spelling of `https`
+    for scheme in spellingsCase("http") & spellingsCase("https") & @["socks5", "socks5h"]:
+      let
+        proxy_url = some(scheme & "://127.0.0.1:" & $server.port)
+        named = scheme & ": "
+      if scheme.toLowerAscii == "http":
+        let sent = sendLoopback("http://example.org/page", "", proxy_url = proxy_url)
+        check named & sent.outcome == named & "replied"  # domain: RFC 3986 3.1, scheme in any case
+        continue
+      for url in ["http://example.org/page", "https://example.org/page"]:
+        let
+          sent = sendLoopback(url, "{}", credential = CREDENTIAL_GIVEN, proxy_url = proxy_url)
+          named_url = named & url & ": "
+        check named_url & sent.outcome ==
+            named_url & problemProxy(scheme)  # domain: no proxy but `http`, scheme named
+    check server.targets ==
+        newSeqWith(COUNT_SPELLINGS_HTTP, "http://example.org/page")  # domain: refused sent nothing
+    check server.count_connections == COUNT_SPELLINGS_HTTP  # domain: no connection but accepted
+    stopServer(server)
 
 
   test "closed port gives problem of one line, holding no credential":
