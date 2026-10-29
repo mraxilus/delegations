@@ -297,6 +297,7 @@ func cut(text: string, bytes_max: int): string =
 func toPrintable*(text: string, runes_max: int): string =
   ## Make outside text safe for terminal: repaired; C0, C1, `DEL` and bidirectional marks
   ##   escaped as `\u{…}`; cut with `…` past `runes_max` characters.
+  ##   Escape holds code point in hexadecimal with no leading zero, so U+0000 is `\u{0}`.
   let repaired = repairEncoding(text).text
   var (i, count) = (0, 0)
   while i < repaired.len:
@@ -313,8 +314,8 @@ func toPrintable*(text: string, runes_max: int): string =
     var code = if size == 1: int(lead) else: int(lead) and (0xFF shr (size + 1))
     for k in 1..<size: code = (code shl 6) or (int(uint8(repaired[i+k])) and 0x3F)
     if code < 0x20 or code in 0x7F..0x9F or code in RUNES_BIDIRECTIONAL:
-      result.add "\\u{" & code.toHex.strip(leading = true, trailing = false, chars = {'0'}) &
-          "}"
+      let digits = code.toHex.strip(leading = true, trailing = false, chars = {'0'})
+      result.add "\\u{" & (if digits.len > 0: digits else: "0") & "}"
     else:
       result.add repaired[i..<i+size]
     inc i, size
