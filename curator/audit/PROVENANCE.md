@@ -1152,16 +1152,17 @@ second copy drifts. `check.yml` must state it, and a commit pin is one finding, 
 workflows state a version. Verified by `suites/test_toolchain.nim` over both paths.
 
 **A pin moves on evidence, and the evidence is a run rather than a release note.** Nim assigns
-no CVE, so no release in the 2.2 series carries one. So the reason to move is what the release
-notes carry. Between 2.2.6 and 2.2.12 they fix a SIGSEGV under ARC, ORC and refc, and a use
-after free. They also fix an overlapping `copyMem`, and overflow checks that could be escaped.
-The curator projects pin 2.2.12 for that reason.
+no CVE, so no release carries one. So the reason to move is what the release notes carry, or a
+ruling. The curator projects pin 2.4.0, the stable release, as the Architect asked on
+2026-10-29. Its notes add a check of the host name of a certificate to `std/asyncnet`, and to
+`std/net` on Windows. No curator project opens a socket, so that check reaches none of them.
 
-- Verified by `nim r koch test` over `curator/audit` and `curator/probe` on 2.2.12,
-  2026-09-09: every suite passes.
-- Trap from 2.2.8 on: a `func` whose implicit `float` result is read by `+=` before it is ever
+- Verified by `nim r koch test` over `curator/knoller`, `curator/audit`, `curator/assayer` and
+  `curator/probe` on 2.4.0, 2026-10-29: every suite passes.
+- Trap from 2.2.8 to 2.2.12: a `func` whose implicit `float` result is read by `+=` before it is
   assigned gets an int register for it. To write `result = 0.0` first avoids it. The
-  `PROVENANCE.md` of `dance_ontology` holds the diagnosis.
+  `PROVENANCE.md` of `dance_ontology` holds the diagnosis. 2.4.0 reads that `result` as a float,
+  verified by hand, 2026-10-29.
 - Cost: the modules of koch compile under every pin in the tree, because the job of every
   project installs its own. The matrix proves that, and not this paragraph.
 
@@ -1915,9 +1916,9 @@ lines after the last pragma that opens the module, with a blank line on each sid
   stub of STYLE.md §6 as it is written instead.
 - Both lines of a split import trace to the line of the form on one line. So a later fixer
   reports at its line in the file as given.
-- Verified by hand with 2.2.12, 2026-10-08: `--profiler:on` builds and runs
-  `curator/probe/tests/test_modulus_4.nim`, whose import stands on two lines, and the run writes
-  `profile_results.txt`.
+- Verified by hand with 2.2.12, 2026-10-08, and with 2.4.0, 2026-10-29. `--profiler:on` builds
+  and runs `curator/probe/tests/test_modulus_4.nim`, whose import stands on two lines. The run
+  writes `profile_results.txt`.
 - Verified by `suites/test_idioms.nim` here and in knoller.
 
 **Four rules that the static pass already holds gain a fixer.**
@@ -2033,7 +2034,8 @@ of knoller, under Content fixes.
 
 - The pin is that of the project that holds the file, and that of `curator/audit` for a file at
   the root. `proversPin` of knoller serves it, through a `Toolchains` of its own.
-  So the `ronri` projects read with their commit pin, whose glyph operators 2.2.12 lexes as names.
+  So each project reads with the grammar of its own pin. 2.2.12 lexes as names the glyph
+  operators that 2.4.0 and the commit pin of the `ronri` projects lex as operators.
 - Where no compiler serves a pin, or a project pins none, no group goes. `koch fix` then prints
   one line `warning: needless-parentheses: <message>`, and the exit code stays.
 - An entry that asked nothing read only sources that hold an answer, and an answer never changes
