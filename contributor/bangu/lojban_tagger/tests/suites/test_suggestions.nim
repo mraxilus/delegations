@@ -114,6 +114,18 @@ const
   ]
     ## Well-formed UTF-8 byte sequences, Table 3-7 of Unicode Standard, chapter 3: first byte,
     ##   second byte, length; every later byte is `80` to `BF`, and one byte needs no second.
+  TEXT_ROWS = block:
+    ## Text of `x`, then lowest and highest character of each row of `ROWS_WELL_FORMED`: every
+    ##   bound of Table 3-7, in characters of one to four bytes.
+    var text = "x"
+    for row in ROWS_WELL_FORMED:
+      for (first, second, later) in [
+        (row.first.a, row.second.a, 0x80), (row.first.b, row.second.b, 0xBF),
+      ]:
+        text.add chr(first)
+        if row.length > 1: text.add chr(second)
+        for _ in 3..row.length: text.add chr(later)
+    text
   LUT_TEXT_BY_POINTER = [
     "\u20AC", "\u0081", "\u201A", "\u0192", "\u201E", "\u2026", "\u2020", "\u2021",
     "\u02C6", "\u2030", "\u0160", "\u2039", "\u0152", "\u008D", "\u017D", "\u008F",
@@ -510,6 +522,19 @@ func repairReference(bytes: string): tuple[text: string, count_repaired: int] =
       result.text.add "\uFFFD"
       inc result.count_repaired
     at += length
+
+
+func dropSequenceCutReference(bytes: string): string =
+  ## Drop sequence cut short where bytes end, measured by table: last maximal subpart, where its
+  ##   first byte opens row of two bytes or more and bytes end before it completes.
+  var at = 0
+  while at < bytes.len:
+    let (length, is_whole) = bytes.measureSubpart(at)
+    if at + length == bytes.len and not is_whole and
+        ROWS_WELL_FORMED.anyIt(int(uint8(bytes[at])) in it.first and it.length > 1):
+      return bytes[0..<at]
+    at += length
+  bytes
 
 
 func isWellFormed(text: string): bool =
@@ -1777,6 +1802,53 @@ suite "Internal: Page":
           check paged.passage == plain.passage  # mark changes no text, count or type read
         elif not paged.is_read and not plain.is_read:
           check paged.detail == plain.detail  # mark changes no refusal
+
+
+  test "page cut inside character drops it uncounted; ill-formed bytes cap never cut count":
+    let
+      found = ("<p>" & "é".repeat(BYTES_PAGE_MAX div 2))[0..<BYTES_PAGE_MAX]
+      paged = readPage(
+        URL_SUITE,
+        Reply(status: 200, content_type: "text/html", body: found, is_cut: true),
+      )
+      failed = Suggestion(is_suggested: false, failure: Failure.Long, detail: "7")
+    check found[^1] == '\xC3'  # cap ends page inside last `é`, after its lead
+    check paged.is_read and
+        paged.passage.count_repaired == 0  # review finding logic-12, 2026-10-29: counted `1`
+    check paged.is_read and "ill-formed" notin
+        failed.toReport(paged.passage, MODEL_SUITE)  # review finding logic-12: repair reported
+    for cut in 1..TEXT_ROWS.len:  # every cut point inside and between characters, exhaustive
+      for is_cut in [true, false]:
+        let
+          body = TEXT_ROWS[0..<cut]
+          read = readPage(
+            URL_SUITE,
+            Reply(status: 200, content_type: "text/plain", body: body, is_cut: is_cut),
+          )
+          expected = (if is_cut: body.dropSequenceCutReference else: body).repairReference
+        check read.is_read and read.passage.text == expected.text and
+            read.passage.count_repaired ==
+            expected.count_repaired  # cut body has no end: UTF-8 decoder waits on cut sequence
+    randomize(0)
+    let pool = poolBytes()
+    var bodies = FRAGMENTS_BYTES.mapIt("x" & it)
+    for bytes in served(pool): bodies.add "x" & bytes
+    for body in bodies:  # each fragment as ending, then `SAMPLES_BYTES` strings, seeded
+      let
+        read = readPage(
+          URL_SUITE,
+          Reply(status: 200, content_type: "text/plain", body: body, is_cut: true),
+        )
+        expected = body.dropSequenceCutReference.repairReference
+      check read.is_read and read.passage.text == expected.text and
+          read.passage.count_repaired ==
+          expected.count_repaired  # every ill-formed subpart cap never cut is counted
+    let latin = readPage(
+      URL_SUITE,
+      Reply(status: 200, content_type: "text/plain; charset=windows-1252", body: "x\xC3",
+          is_cut: true),
+    )
+    check latin.is_read and latin.passage.text == "xÃ"  # windows-1252 byte is whole character
 
 
   test "sample page of worked examples reads as text its paragraph gives":
