@@ -18,9 +18,17 @@
 ##   | Code               | Authority                                                      |
 ##   |--------------------|----------------------------------------------------------------|
 ##   | repairEncoding     | substitution of maximal subparts, Unicode chapter 3, Table 3-7 |
+##   | sequence           | row of Table 3-7 that lead byte opens                          |
+##   | dropSequenceCut    | UTF-8 decoder, WHATWG Encoding Standard 8.1.1, end of queue    |
+##   | isBlank            | `White_Space` and Cc of Unicode, common default-ignorables     |
+##   | dropSecrets        | components that RFC 3986 appendix `B` splits                   |
+##   | sniffMark          | BOM sniff, WHATWG Encoding Standard 6.1                        |
 ##   | decode, LABELS_*   | labels of WHATWG Encoding Standard                             |
 ##   | LUT_RUNE_BY_BYTE   | index-windows-1252, WHATWG Encoding Standard                   |
+##   | readLabel          | extracting encoding from meta element, HTML 2.5.3              |
+##   | readCharset        | prescan of HTML 13.2.3.2, step 14 for UTF-16                   |
 ##   | readReference      | character reference states of HTML tokenizer                   |
+##   | findCloseComment   | comment states of HTML tokenizer, 13.2.5.43 to 13.2.5.52       |
 ##   | findCloseTag       | attribute states of HTML tokenizer                             |
 ##   | findClosingRaw     | RAWTEXT end tag name state of HTML tokenizer                   |
 ##   | isIdentity         | RFC 9110 8.4.1, content codings                                |
@@ -112,7 +120,9 @@ type
 
   Passage* = object  ## Define text one suggestion is for: text given, or text of page.
     text*: string  ## Text model reads: well-formed UTF-8, at most `BYTES_PASSAGE_MAX` bytes.
-    url*: string  ## Final URL of page text came from, repaired as text is; empty for text given.
+    url*: string
+      ## Final URL of page text came from: scheme, host, port and path alone (`dropSecrets`),
+      ##   repaired as text is; empty for text given.
     count_bytes*: int  ## Bytes of text after repair, before cut.
     count_repaired*: int  ## Ill-formed UTF-8 subparts, each replaced by U+FFFD.
     is_cut*: bool  ## Text held more than `BYTES_PASSAGE_MAX`; model reads its start alone.
